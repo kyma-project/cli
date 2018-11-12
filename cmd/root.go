@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/kyma-incubator/kymactl/cmd/ctx"
-
 	"github.com/spf13/cobra"
 )
 
@@ -33,7 +31,7 @@ func init() {
 	// viper.SetDefault("author", "Borja Clemente <borja.clemente.castanera@sap.com>")
 
 	// subcommands
-	rootCmd.AddCommand(ctx.NewCmdCtx())
+
 	rootCmd.AddCommand(newCmdStatus())
 	rootCmd.AddCommand(newCmdVersion())
 }
