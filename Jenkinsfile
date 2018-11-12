@@ -53,7 +53,7 @@ podTemplate(label: label) {
                         }
 
                         stage("integration test $application") {
-                            sh "bin/kyma-cli-linux help"
+                            sh "bin/kymactl-linux help"
                         }
 
 

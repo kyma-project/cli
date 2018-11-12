@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Root is the entry point of the Kyma CLI tool
+// Root is the entry point of the Kymactl tool
 var rootCmd = &cobra.Command{
 	Use:   "kyma",
 	Short: "Kyma is a cloud extension platform for SAP Commerce products",

@@ -16,12 +16,12 @@ var (
 func newCmdVersion() *cobra.Command {
 	versionCmd := &cobra.Command{
 		Use:   "version",
-		Short: "Version of the Kyma CLI and connected Kyma cluster",
+		Short: "Version of the Kymactl and connected Kyma cluster",
 		Run: func(cmd *cobra.Command, args []string) {
 			if Version == "" {
-				fmt.Println("No Kyma-CLI version available")
+				fmt.Println("No Kymactl version available")
 			} else {
-				fmt.Printf("Kyma-CLI version %s\n", Version)
+				fmt.Printf("Kymactl version %s\n", Version)
 			}
 
 			kymaVersion := internal.RunKubeCmd(kymaVersionCmd)
