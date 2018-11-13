@@ -44,7 +44,7 @@ podTemplate(label: label) {
                             def flags = "-ldflags \"-X github.com/kyma-incubator/kymactl/cmd.Version=${appVersion}\""
                             execute("CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o ./bin/kymactl.exe ${flags}")
                             execute("CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/kymactl-linux ${flags}")
-                            execute("CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o ./bin/kymactl ${flags}")
+                            execute("CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o ./bin/kymactl-darwin ${flags}")
                         }
 
                         stage("test $application") {

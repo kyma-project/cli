@@ -4,12 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/kyma-incubator/kymactl/cmd/ctx"
-
 	"github.com/spf13/cobra"
 )
 
-// Root is the entry point of the Kymactl tool
+// Root is the entry point of the kymactl tool
 var rootCmd = &cobra.Command{
 	Use:   "kyma",
 	Short: "Kyma is a cloud extension platform for SAP Commerce products",
@@ -33,7 +31,7 @@ func init() {
 	// viper.SetDefault("author", "Borja Clemente <borja.clemente.castanera@sap.com>")
 
 	// subcommands
-	rootCmd.AddCommand(ctx.NewCmdCtx())
+
 	rootCmd.AddCommand(newCmdStatus())
 	rootCmd.AddCommand(newCmdVersion())
 }
