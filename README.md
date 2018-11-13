@@ -16,11 +16,11 @@ A command line tool to support Kyma developers
 
 ## kymactl as a kubectl plugin
 
-To follow this section a kubectl version of 1.12.0 or later is recommended.
+To follow this section a kubectl version of 1.12.0 or later is required.
 
 A plugin is nothing more than a standalone executable file, whose name begins with kubectl- . To install a plugin, simply move this executable file to anywhere on your PATH.
 
-Rename a `kymactl` binary to `kubectl-kymactl` and place it anywhere in your PATH:
+Rename a `kymactl` binary to `kubectl-kyma` and place it anywhere in your PATH:
 
 ```bash
 sudo mv ./kymactl /usr/local/bin/kubectl-kyma
