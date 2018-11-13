@@ -31,7 +31,7 @@ Run `kubectl plugin list` command and you will see your plugin in the list of av
 You may now invoke your plugin as a kubectl command:
 
 ```bash
-$ kubectl kymactl status
+$ kubectl kyma status
 Kyma is running!
 ```
 
