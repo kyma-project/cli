@@ -12,3 +12,5 @@
 
 # Vendored dependencies
 vendor
+go.mod
+go.sum
