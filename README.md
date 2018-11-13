@@ -23,7 +23,7 @@ A plugin is nothing more than a standalone executable file, whose name begins wi
 Rename a `kymactl` binary to `kubectl-kymactl` and place it anywhere in your PATH:
 
 ```bash
-sudo mv ./kubectl-kymactl /usr/local/bin
+sudo mv ./kymactl /usr/local/bin/kubectl-kyma
 ```
 
 Run `kubectl plugin list` command and you will see your plugin in the list of available plugins.
