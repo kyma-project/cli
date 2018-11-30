@@ -9,7 +9,9 @@ resolve:
 
 .PHONY: validate
 validate:
-	gometalinter --vendor --deadline=2m --disable-all --enable=vet ./...
+	go build -o golint-vendored ./vendor/github.com/golang/lint/golint
+	./golint-vendored
+	rm golint-vendored
 
 .PHONY: build
 build:
