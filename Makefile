@@ -1,6 +1,7 @@
 APP_NAME = kymactl
 IMG = $(DOCKER_PUSH_REPOSITORY)$(DOCKER_PUSH_DIRECTORY)/$(APP_NAME)
 TAG = $(DOCKER_TAG)
+FLAGS = "-ldflags \"-X github.com/kyma-incubator/kymactl/cmd.Version=${TAG}\""
 
 
 .PHONY: resolve
@@ -16,10 +17,9 @@ validate:
 .PHONY: build
 build:
 	go generate ./...
-	flags = "-ldflags \"-X github.com/kyma-incubator/kymactl/cmd.Version=${TAG}\""
-	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o ./bin/kymactl.exe ${flags}
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/kymactl-linux ${flags}
-	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o ./bin/kymactl-darwin ${flags}
+	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o ./bin/kymactl.exe ${FLAGS}
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/kymactl-linux ${FLAGS}
+	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o ./bin/kymactl-darwin ${FLAGS}
 
 .PHONY: test
 test:
