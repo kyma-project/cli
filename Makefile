@@ -16,7 +16,7 @@ validate:
 .PHONY: build
 build:
 	go generate ./...
-	flags = "-ldflags \"-X github.com/kyma-incubator/kymactl/cmd.Version=${TAG}
+	flags = "-ldflags \"-X github.com/kyma-incubator/kymactl/cmd.Version=${TAG}\""
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o ./bin/kymactl.exe ${flags}
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/kymactl-linux ${flags}
 	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o ./bin/kymactl-darwin ${flags}
