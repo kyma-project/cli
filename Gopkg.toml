@@ -24,11 +24,10 @@
 #   go-tests = true
 #   unused-packages = true
 
+required = [
+  "github.com/golang/lint/golint"
+]
 
 [prune]
   go-tests = true
   unused-packages = true
-
-required = [
-  "github.com/golang/lint/golint"
-]
