@@ -16,9 +16,9 @@ validate:
 .PHONY: build
 build:
 	go generate ./...
-	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o ./bin/kymactl.exe ${FLAGS}
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/kymactl-linux ${FLAGS}
-	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o ./bin/kymactl-darwin ${FLAGS}
+	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o ./bin/kymactl.exe $(FLAGS)
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/kymactl-linux $(FLAGS)
+	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o ./bin/kymactl-darwin $(FLAGS)
 
 .PHONY: test
 test:
@@ -26,7 +26,7 @@ test:
 
 .PHONY: archive
 archive:
-	cp -r bin/* $ARTIFACTS
+	cp -r bin/* $(ARTIFACTS)
 
 .PHONY: ci-pr
 ci-pr: resolve validate build test archive
