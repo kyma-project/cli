@@ -1,6 +1,6 @@
 APP_NAME = kymactl
 IMG = $(DOCKER_PUSH_REPOSITORY)$(DOCKER_PUSH_DIRECTORY)/$(APP_NAME)
-FLAGS = "-ldflags '-X github.com/kyma-incubator/kymactl/cmd.Version=$(DOCKER_TAG)'"
+FLAGS = -ldflags '-X github.com/kyma-incubator/kymactl/cmd.Version=$(DOCKER_TAG)'
 
 
 .PHONY: resolve
