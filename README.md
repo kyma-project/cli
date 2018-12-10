@@ -6,12 +6,12 @@ A command line tool to support Kyma developers
 
 ## Available Commands
 
-- `version`: Shows the kymactl version. The version is set at compile time passing it to the go linker as a flag:
+- `version`: Shows the kyma cluster version and the kymactl version. The kymactl version is set at compile time passing it to the go linker as a flag:
 
     ```bash
     go build -o kymactl -ldflags "-X github.com/kyma-incubator/kymactl/cmd.Version=1.5.0"
     ```
-- `status`: Tracks the status of a Kyma cluster (replaces the `is-installed.sh` script)
+- `status`: Tracks the installation status of a Kyma cluster (replaces the `is-installed.sh` script)
 - `help`: Displays usage for the given command (e.g. `kymactl help`, `kymactl help status`, etc...)
 
 ## kymactl as a kubectl plugin
