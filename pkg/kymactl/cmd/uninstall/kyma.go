@@ -13,13 +13,16 @@ const (
 	sleep = 10 * time.Second
 )
 
+//KymaOptions defines available options for the command
 type KymaOptions struct {
 }
 
+//NewKymaOptions creates options with default values
 func NewKymaOptions() *KymaOptions {
 	return &KymaOptions{}
 }
 
+//NewKymaCmd creates a new kyma command
 func NewKymaCmd(o *KymaOptions) *cobra.Command {
 
 	cmd := &cobra.Command{
@@ -40,25 +43,41 @@ The command will:
 	return cmd
 }
 
+//Run runs the command
 func (o *KymaOptions) Run() error {
 	fmt.Printf("Uninstalling kyma\n\n")
 
 	var spinner = internal.NewSpinner("Activate kyma-installer to uninstall kyma", "kyma-installer activated to uninstall kyma")
-	activateInstaller(o)
+	err := activateInstaller(o)
+	if err != nil {
+		return err
+	}
 	internal.StopSpinner(spinner)
 
-	waitForInstaller(o)
+	err = waitForInstaller(o)
+	if err != nil {
+		return err
+	}
 
 	spinner = internal.NewSpinner("Deleting namespace kyma-installer", "namespace kyma-installer deleted")
-	deleteNamespace("kyma-installer")
+	err = deleteNamespace("kyma-installer")
+	if err != nil {
+		return err
+	}
 	internal.StopSpinner(spinner)
 
 	spinner = internal.NewSpinner("Deleting tiller", "tiller deleted")
-	deleteTiller()
+	err = deleteTiller()
+	if err != nil {
+		return err
+	}
 	internal.StopSpinner(spinner)
 
 	spinner = internal.NewSpinner("Deleting ClusterRoleBinding for admin", "ClusterRoleBinding for admin deleted")
-	deleteClusterRoleBinding()
+	err = deleteClusterRoleBinding()
+	if err != nil {
+		return err
+	}
 	internal.StopSpinner(spinner)
 
 	fmt.Printf("\nkyma uninstalled\n")
@@ -67,26 +86,44 @@ func (o *KymaOptions) Run() error {
 }
 
 func activateInstaller(o *KymaOptions) error {
-	if !internal.IsPodDeployed("kyma-installer", "name", "kyma-installer") {
+	check, err := internal.IsPodDeployed("kyma-installer", "name", "kyma-installer")
+	if err != nil {
+		return err
+	}
+	if !check {
 		return nil
 	}
 
 	labelInstaller := []string{"label", "installation/kyma-installation", "action=uninstall"}
-	internal.RunKubeCmd(labelInstaller)
+	_, err = internal.RunKubectlCmd(labelInstaller)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
 
 func deleteNamespace(namespace string) error {
-	if !internal.IsClusterResourceDeployed("namespace", "app", "kymactl") {
+	check, err := internal.IsClusterResourceDeployed("namespace", "app", "kymactl")
+	if err != nil {
+		return err
+	}
+	if !check {
 		return nil
 	}
 
 	deleteNamespaceCmd := []string{"delete", "namespace", namespace}
-	internal.RunKubeCmd(deleteNamespaceCmd)
+	_, err = internal.RunKubectlCmd(deleteNamespaceCmd)
+	if err != nil {
+		return err
+	}
 
 	for {
-		if !internal.IsClusterResourceDeployed("namespace", "app", "kymactl") {
+		check, err := internal.IsClusterResourceDeployed("namespace", "app", "kymactl")
+		if err != nil {
+			return err
+		}
+		if !check {
 			break
 		}
 		time.Sleep(sleep)
@@ -95,35 +132,55 @@ func deleteNamespace(namespace string) error {
 }
 
 func deleteTiller() error {
-	if !internal.IsPodDeployed("kube-system", "name", "tiller") {
+	check, err := internal.IsPodDeployed("kube-system", "name", "tiller")
+	if err != nil {
+		return err
+	}
+	if !check {
 		return nil
 	}
 
 	deleteTiller := []string{"delete", "-f", "https://raw.githubusercontent.com/kyma-project/kyma/master/installation/resources/tiller.yaml"}
-	internal.RunKubeCmd(deleteTiller)
+	_, err = internal.RunKubectlCmd(deleteTiller)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 func deleteClusterRoleBinding() error {
-	if !internal.IsClusterResourceDeployed("clusterrolebinding", "app", "kymactl") {
+	check, err := internal.IsClusterResourceDeployed("clusterrolebinding", "app", "kymactl")
+	if err != nil {
+		return err
+	}
+	if !check {
 		return nil
 	}
 
 	deleteClusterRoleBindingCmd := []string{"delete", "clusterrolebinding", "cluster-admin-binding"}
-	internal.RunKubeCmd(deleteClusterRoleBindingCmd)
-
+	_, err = internal.RunKubectlCmd(deleteClusterRoleBindingCmd)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 func waitForInstaller(o *KymaOptions) error {
-	if !internal.IsPodDeployed("kyma-installer", "name", "kyma-installer") {
+	check, err := internal.IsPodDeployed("kyma-installer", "name", "kyma-installer")
+	if err != nil {
+		return err
+	}
+	if !check {
 		return nil
 	}
 
 	installStatusCmd := []string{"get", "installation/kyma-installation", "-o", "jsonpath='{.status.state}'"}
 	installDescriptionCmd := []string{"get", "installation/kyma-installation", "-o", "jsonpath='{.status.description}'"}
 
-	status := internal.RunKubeCmd(installStatusCmd)
+	status, err := internal.RunKubectlCmd(installStatusCmd)
+	if err != nil {
+		return err
+	}
 	if status == "Uninstalled" {
 		return nil
 	}
@@ -132,8 +189,14 @@ func waitForInstaller(o *KymaOptions) error {
 	var spinner chan struct{}
 
 	for {
-		status := internal.RunKubeCmd(installStatusCmd)
-		desc := internal.RunKubeCmd(installDescriptionCmd)
+		status, err := internal.RunKubectlCmd(installStatusCmd)
+		if err != nil {
+			return err
+		}
+		desc, err := internal.RunKubectlCmd(installDescriptionCmd)
+		if err != nil {
+			return err
+		}
 
 		switch status {
 		case "Uninstalled":
@@ -146,7 +209,10 @@ func waitForInstaller(o *KymaOptions) error {
 		case "Error":
 			fmt.Printf("Error installing Kyma: %s\n", desc)
 			installLogsCmd := []string{"-n", "kyma-installer", "logs", "-l", "name=kyma-installer"}
-			logs := internal.RunKubeCmd(installLogsCmd)
+			logs, err := internal.RunKubectlCmd(installLogsCmd)
+			if err != nil {
+				return err
+			}
 			fmt.Print(logs)
 
 		case "InProgress":

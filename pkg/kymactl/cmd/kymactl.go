@@ -7,14 +7,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
+//KymactlOptions defines available options for the command
 type KymactlOptions struct {
 	Verbose bool
 }
 
+//NewKymactlOptions creates options with default values
 func NewKymactlOptions() *KymactlOptions {
 	return &KymactlOptions{}
 }
 
+//NewKymactlCmd creates a new kymactl command
 func NewKymactlCmd(o *KymactlOptions) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "kymactl",
@@ -34,7 +37,7 @@ Find more information at: https://github.com/kyma-incubator/kymactl
 	versionCmd := newVersionCmd()
 	cmd.AddCommand(versionCmd)
 
-	completionCmd := newCompletionCmd()
+	completionCmd := NewCompletionCmd()
 	cmd.AddCommand(completionCmd)
 
 	installCmd := install.NewCmd()

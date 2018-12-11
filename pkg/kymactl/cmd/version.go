@@ -15,12 +15,12 @@ func newVersionCmd() *cobra.Command {
 		Short: "Version of the kymactl and connected Kyma cluster",
 		Long: `Prints the version of kymactl itself and the version of the kyma cluster connected by current KUBECONFIG
 `,
-		Run: version,
+		RunE: version,
 	}
 	return versionCmd
 }
 
-func version(cmd *cobra.Command, args []string) {
+func version(cmd *cobra.Command, args []string) error {
 	if Version == "" {
 		fmt.Println("No kymactl version available")
 	} else {
@@ -28,10 +28,14 @@ func version(cmd *cobra.Command, args []string) {
 	}
 
 	versionCmd := []string{"get", "installation/kyma-installation", "-o", "jsonpath='{.spec.version}'"}
-	kymaVersion := internal.RunKubeCmd(versionCmd)
+	kymaVersion, err := internal.RunKubectlCmd(versionCmd)
+	if err != nil {
+		return err
+	}
 	if kymaVersion == "" {
 		fmt.Println("No Kyma cluster version available")
 	} else {
 		fmt.Printf("Kyma cluster version: %s\n", kymaVersion)
 	}
+	return nil
 }

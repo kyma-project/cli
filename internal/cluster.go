@@ -2,7 +2,6 @@ package internal
 
 import (
 	"fmt"
-	"os"
 	"os/exec"
 	"strings"
 	"time"
@@ -14,49 +13,51 @@ const (
 	sleep = 5 * time.Second
 )
 
-func RunCmd(c string, args []string) string {
+// RunCmd executes a command with given arguments
+func RunCmd(c string, args []string) (string, error) {
 	cmd := exec.Command(c, args[0:]...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		fmt.Printf("Error executing command: '%s %s'\n", c, args)
-		fmt.Printf("Error message is: %s\n", out)
-		os.Exit(1)
+		return "", fmt.Errorf("Failed executing command '%s %s' with output '%s' and error message '%s'", c, args, out, err)
 	}
-	return strings.Replace(string(out), "'", "", -1)
+	return strings.Replace(string(out), "'", "", -1), nil
 }
 
-func RunKubeCmd(args []string) string {
+//RunKubectlCmd executes a kubectl command with given arguments
+func RunKubectlCmd(args []string) (string, error) {
 	cmd := exec.Command("kubectl", args[0:]...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		fmt.Printf("Error executing kubectl command: 'kubectl %s'\n", args)
-		fmt.Printf("Error message is: %s\n", out)
-		os.Exit(1)
+		return "", fmt.Errorf("Failed executing kubectl command 'kubectl %s' with output '%s' and error message '%s'", args, out, err)
 	}
-	return strings.Replace(string(out), "'", "", -1)
+	return strings.Replace(string(out), "'", "", -1), nil
 }
 
-func RunMinikubeCmd(args []string) string {
+//RunMinikubeCmd executes a minikube command with given arguments
+func RunMinikubeCmd(args []string) (string, error) {
 	cmd := exec.Command("minikube", args[0:]...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		fmt.Printf("Error executing minikube command: 'minikube %s'\n", args)
-		fmt.Printf("Error message is: %s\n", out)
-		os.Exit(1)
+		return "", fmt.Errorf("Failed executing minikube command 'minikube %s' with output '%s' and error message '%s'", args, out, err)
 	}
-	return strings.Replace(string(out), "'", "", -1)
+	return strings.Replace(string(out), "'", "", -1), nil
 }
 
-func RunMinikubeCmdE(c []string) string {
-	cmd := exec.Command("minikube", c[0:]...)
-	out, _ := cmd.Output()
-	return strings.Replace(string(out), "'", "", -1)
-
+//RunMinikubeCmdE executes a minikube command with given arguments ignoring any errors
+func RunMinikubeCmdE(args []string) (string, error) {
+	cmd := exec.Command("minikube", args[0:]...)
+	out, _ := cmd.CombinedOutput()
+	return strings.Replace(string(out), "'", "", -1), nil
 }
 
-func IsPodReady(namespace string, labelName string, labelValue string) string {
+//WaitForPod waits till a pod is deployed and has status 'running'.
+// The pod gets identified by the namespace and a lebel key=value pair.
+func WaitForPod(namespace string, labelName string, labelValue string) error {
 	for {
-		isDeployed := IsPodDeployed(namespace, labelName, labelValue)
+		isDeployed, err := IsPodDeployed(namespace, labelName, labelValue)
+		if err != nil {
+			return err
+		}
 		if isDeployed {
 			break
 		}
@@ -64,61 +65,91 @@ func IsPodReady(namespace string, labelName string, labelValue string) string {
 	}
 
 	for {
-		isReady := isReady(namespace, labelName, labelValue)
+		isReady, err := isReady(namespace, labelName, labelValue)
+		if err != nil {
+			return err
+		}
 		if isReady {
 			break
 		}
 		time.Sleep(sleep)
 	}
-	return ""
+	return nil
 }
 
-func IsPodDeployed(namespace string, labelName string, labelValue string) bool {
+//IsPodDeployed checks if a pod is deployed.
+// It will not wait till it is deployed.
+// The pod gets identified by the namespace and a lebel key=value pair.
+func IsPodDeployed(namespace string, labelName string, labelValue string) (bool, error) {
 	return IsResourceDeployed("pod", namespace, labelName, labelValue)
 }
 
-func IsResourceDeployed(resource string, namespace string, labelName string, labelValue string) bool {
+//IsResourceDeployed checks if a kubernetes resource is deployed.
+// It will not wait till it is deployed.
+// The resource gets identified by the namespace and a lebel key=value pair.
+func IsResourceDeployed(resource string, namespace string, labelName string, labelValue string) (bool, error) {
 	getResourceNameCmd := []string{"get", resource, "-n", namespace, "-l", labelName + "=" + labelValue, "-o", "jsonpath='{.items[*].metadata.name}'"}
-	resourceNames := RunKubeCmd(getResourceNameCmd)
-	if resourceNames == "" {
-		return false
+	resourceNames, err := RunKubectlCmd(getResourceNameCmd)
+	if err != nil {
+		return false, err
 	}
-	return true
+	if resourceNames == "" {
+		return false, nil
+	}
+	return true, nil
 }
 
-func IsClusterResourceDeployed(resource string, labelName string, labelValue string) bool {
+//IsClusterResourceDeployed checks if a kubernetes cluster resource is deployed.
+// It will not wait till it is deployed.
+// The resource gets identified by a lebel key=value pair.
+func IsClusterResourceDeployed(resource string, labelName string, labelValue string) (bool, error) {
 	getResourceNameCmd := []string{"get", resource, "-l", labelName + "=" + labelValue, "-o", "jsonpath='{.items[*].metadata.name}'"}
-	resourceNames := RunKubeCmd(getResourceNameCmd)
-	if resourceNames == "" {
-		return false
+	resourceNames, err := RunKubectlCmd(getResourceNameCmd)
+	if err != nil {
+		return false, err
 	}
-	return true
+	if resourceNames == "" {
+		return false, nil
+	}
+	return true, nil
 }
 
-func isReady(namespace string, labelName string, labelValue string) bool {
+func isReady(namespace string, labelName string, labelValue string) (bool, error) {
 	getPodNameCmd := []string{"get", "pods", "-n", namespace, "-l", labelName + "=" + labelValue, "-o", "jsonpath='{.items[*].metadata.name}'"}
-	podNames := RunKubeCmd(getPodNameCmd)
+	podNames, err := RunKubectlCmd(getPodNameCmd)
+	if err != nil {
+		return false, err
+	}
+
 	for _, pod := range strings.Split(podNames, "\\n") {
 		getContainerStatusCmd := []string{"get", "pods", "-n", namespace, "-l", labelName + "=" + labelValue, "-o", "jsonpath='{.items[*].status.containerStatuses[0].ready}'"}
-		containerStatus := RunKubeCmd(getContainerStatusCmd)
+		containerStatus, err := RunKubectlCmd(getContainerStatusCmd)
+		if err != nil {
+			return false, err
+		}
 
 		if containerStatus != "true" {
 			getEventsCmd := []string{"get", "event", "-n", namespace, "-o", "go-template='{{range .items}}{{if eq .involvedObject.name \"'" + pod + "'\"}}{{.message}}{{\"\\n\"}}{{end}}{{end}}'"}
-			events := RunKubeCmd(getEventsCmd)
+			events, err := RunKubectlCmd(getEventsCmd)
+			if err != nil {
+				fmt.Printf("Error while checking for pod events '%s'\n‚", err)
+			}
 			if events != "" {
 				fmt.Printf("Status '%s'", events)
 			}
-			return false
+			return false, nil
 		}
 	}
-	return true
+	return true, nil
 }
 
+//NewSpinner starts and returns a new terminal spinner using given text as progress and success text
 func NewSpinner(startText string, stopText string) chan struct{} {
 	s := ldng.NewSpin(ldng.SpinPrefix(fmt.Sprintf("%s", startText)), ldng.SpinPeriod(100*time.Millisecond), ldng.SpinSuccess(fmt.Sprintf("%s ✅\n", stopText)))
 	return s.Start()
 }
 
+//StopSpinner marks a terminal spinner as finished with success
 func StopSpinner(spinner chan struct{}) {
 	spinner <- struct{}{} // stop the spinner
 	<-spinner             // wait for the spinner to finish cleanup

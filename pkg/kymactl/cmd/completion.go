@@ -6,7 +6,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newCompletionCmd() *cobra.Command {
+//NewCompletionCmd creates a new completion command
+func NewCompletionCmd() *cobra.Command {
 	var completionCmd = &cobra.Command{
 		Use:   "completion",
 		Short: "Generates bash completion scripts for kymactl",
@@ -19,12 +20,13 @@ To configure your bash shell to load completions for each session add to your ba
 # ~/.bashrc or ~/.profile
 . <(bitbucket completion)
 `,
-		Run:     completion,
+		RunE:    completion,
 		Aliases: []string{},
 	}
 	return completionCmd
 }
 
-func completion(cmd *cobra.Command, args []string) {
-	cmd.GenBashCompletion(os.Stdout)
+func completion(cmd *cobra.Command, args []string) error {
+	err := cmd.GenBashCompletion(os.Stdout)
+	return err
 }
