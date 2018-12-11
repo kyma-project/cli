@@ -145,6 +145,16 @@ func deleteTiller() error {
 	if err != nil {
 		return err
 	}
+	for {
+		check, err := internal.IsPodDeployed("kube-system", "name", "tiller")
+		if err != nil {
+			return err
+		}
+		if !check {
+			break
+		}
+		time.Sleep(sleep)
+	}
 	return nil
 }
 
