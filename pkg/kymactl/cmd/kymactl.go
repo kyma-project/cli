@@ -24,6 +24,9 @@ kymactl controls a Kyma cluster.
 
 Find more information at: https://github.com/kyma-incubator/kymactl
 `,
+		// Affects children as well
+		SilenceErrors: false,
+		SilenceUsage:  true,
 	}
 
 	cmd.PersistentFlags().BoolVarP(&o.Verbose, "verbose", "v", false, "verbose output")

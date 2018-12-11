@@ -23,7 +23,7 @@ func NewKymaOptions() *KymaOptions {
 func NewKymaCmd(o *KymaOptions) *cobra.Command {
 
 	cmd := &cobra.Command{
-		Use:   "uninstall",
+		Use:   "kyma",
 		Short: "Uninstalls kyma from a running kubernetes cluster",
 		Long: `Uninstall kyma on a running kubernetes cluster.
 
@@ -43,63 +43,105 @@ The command will:
 func (o *KymaOptions) Run() error {
 	fmt.Printf("Uninstalling kyma\n\n")
 
-	var spinner = internal.NewSpinner("Activating kyma-installer to uninstall kyma", "kyma-installer activated to uninstall kyma")
-	labelInstaller := []string{"label", "installation/kyma-installation", "action=uninstall"}
-	internal.RunKubeCmd(labelInstaller)
+	var spinner = internal.NewSpinner("Activate kyma-installer to uninstall kyma", "kyma-installer activated to uninstall kyma")
+	activateInstaller(o)
 	internal.StopSpinner(spinner)
 
-	installerStatus(o)
+	waitForInstaller(o)
 
 	spinner = internal.NewSpinner("Deleting namespace kyma-installer", "namespace kyma-installer deleted")
 	deleteNamespace("kyma-installer")
 	internal.StopSpinner(spinner)
 
 	spinner = internal.NewSpinner("Deleting tiller", "tiller deleted")
-	deleteTiller := []string{"delete", "-f", "https://raw.githubusercontent.com/kyma-project/kyma/master/installation/resources/tiller.yaml"}
-	internal.RunKubeCmd(deleteTiller)
+	deleteTiller()
 	internal.StopSpinner(spinner)
 
 	spinner = internal.NewSpinner("Deleting ClusterRoleBinding for admin", "ClusterRoleBinding for admin deleted")
-	deleteClusterRoleBindingCmd := []string{"delete", "clusterrolebinding", "cluster-admin-binding"}
-	internal.RunKubeCmd(deleteClusterRoleBindingCmd)
+	deleteClusterRoleBinding()
 	internal.StopSpinner(spinner)
 
-	fmt.Printf("\nUninstalling kyma finished\n")
+	fmt.Printf("\nkyma uninstalled\n")
 
 	return nil
 }
 
-func deleteNamespace(namespace string) {
-	deleteNamespaceCmd := []string{"delete", "namespace", namespace}
-	internal.RunKubeCmd(deleteNamespaceCmd)
+func activateInstaller(o *KymaOptions) error {
+	if !internal.IsPodDeployed("kyma-installer", "name", "kyma-installer") {
+		return nil
+	}
+
+	labelInstaller := []string{"label", "installation/kyma-installation", "action=uninstall"}
+	internal.RunKubeCmd(labelInstaller)
+
+	return nil
 }
 
-func installerStatus(o *KymaOptions) error {
+func deleteNamespace(namespace string) error {
+	if !internal.IsClusterResourceDeployed("namespace", "app", "kymactl") {
+		return nil
+	}
+
+	deleteNamespaceCmd := []string{"delete", "namespace", namespace}
+	internal.RunKubeCmd(deleteNamespaceCmd)
+
+	for {
+		if !internal.IsClusterResourceDeployed("namespace", "app", "kymactl") {
+			break
+		}
+		time.Sleep(sleep)
+	}
+	return nil
+}
+
+func deleteTiller() error {
+	if !internal.IsPodDeployed("kube-system", "name", "tiller") {
+		return nil
+	}
+
+	deleteTiller := []string{"delete", "-f", "https://raw.githubusercontent.com/kyma-project/kyma/master/installation/resources/tiller.yaml"}
+	internal.RunKubeCmd(deleteTiller)
+	return nil
+}
+
+func deleteClusterRoleBinding() error {
+	if !internal.IsClusterResourceDeployed("clusterrolebinding", "app", "kymactl") {
+		return nil
+	}
+
+	deleteClusterRoleBindingCmd := []string{"delete", "clusterrolebinding", "cluster-admin-binding"}
+	internal.RunKubeCmd(deleteClusterRoleBindingCmd)
+
+	return nil
+}
+
+func waitForInstaller(o *KymaOptions) error {
+	if !internal.IsPodDeployed("kyma-installer", "name", "kyma-installer") {
+		return nil
+	}
+
+	installStatusCmd := []string{"get", "installation/kyma-installation", "-o", "jsonpath='{.status.state}'"}
+	installDescriptionCmd := []string{"get", "installation/kyma-installation", "-o", "jsonpath='{.status.description}'"}
+
+	status := internal.RunKubeCmd(installStatusCmd)
+	if status == "Uninstalled" {
+		return nil
+	}
+
 	currentDesc := ""
 	var spinner chan struct{}
 
 	for {
-		installStatusCmd := []string{"get", "installation/kyma-installation", "-o", "jsonpath='{.status.state}'"}
-		installDescriptionCmd := []string{"get", "installation/kyma-installation", "-o", "jsonpath='{.status.description}'"}
 		status := internal.RunKubeCmd(installStatusCmd)
 		desc := internal.RunKubeCmd(installDescriptionCmd)
 
 		switch status {
-		case "Installed":
+		case "Uninstalled":
 			if spinner != nil {
 				internal.StopSpinner(spinner)
 				spinner = nil
 			}
-			installVersionCmd := []string{"get", "installation/kyma-installation", "-o", "jsonpath='{.spec.version}'"}
-			version := internal.RunKubeCmd(installVersionCmd)
-			if version == "" {
-				version = "N/A"
-			}
-			fmt.Printf("Kyma is installed using version %s!\n", version)
-			clusterInfoCmd := []string{"cluster-info"}
-			clusterInfo := internal.RunKubeCmd(clusterInfoCmd)
-			fmt.Print(clusterInfo)
-			break
+			return nil
 
 		case "Error":
 			fmt.Printf("Error installing Kyma: %s\n", desc)
@@ -113,7 +155,6 @@ func installerStatus(o *KymaOptions) error {
 				if spinner != nil {
 					internal.StopSpinner(spinner)
 					spinner = nil
-					continue
 				} else {
 					spinner = internal.NewSpinner(desc, desc)
 					currentDesc = desc
@@ -126,4 +167,5 @@ func installerStatus(o *KymaOptions) error {
 		}
 		time.Sleep(sleep)
 	}
+	return nil
 }

@@ -49,42 +49,99 @@ The command will:
 func (o *KymaOptions) Run() error {
 	fmt.Printf("Installing kyma in version '%s' with admin user '%s'\n\n‚", o.Release, o.ClusterAdmin)
 
-	var spinner = internal.NewSpinner("Creating ClusterRoleBinding for admin"+o.ClusterAdmin, "ClusterRoleBinding created for admin"+o.ClusterAdmin)
-	createClusterRoleBindingCmd := []string{"create", "clusterrolebinding", "cluster-admin-binding", "--clusterrole=cluster-admin", "--user=" + o.ClusterAdmin}
-	internal.RunKubeCmd(createClusterRoleBindingCmd)
+	var spinner = internal.NewSpinner("Creating ClusterRoleBinding for admin "+o.ClusterAdmin, "ClusterRoleBinding created for admin "+o.ClusterAdmin)
+	createlusterRoleBinding(o)
 	internal.StopSpinner(spinner)
 
 	spinner = internal.NewSpinner("Installing tiller", "Tiller installed")
-	applyTiller := []string{"apply", "-f", "https://raw.githubusercontent.com/kyma-project/kyma/master/installation/resources/tiller.yaml"}
-	internal.RunKubeCmd(applyTiller)
-	internal.IsPodReady("kube-system", "name", "tiller")
+	installTiller()
 	internal.StopSpinner(spinner)
 
 	spinner = internal.NewSpinner("Installing kyma-installer", "kyma-installer installed")
-	applyInstaller := []string{"apply", "-f", "https://github.com/kyma-project/kyma/releases/download/" + o.Release + "/kyma-config-local.yaml"}
-	internal.RunKubeCmd(applyInstaller)
-	internal.IsPodReady("kyma-installer", "name", "kyma-installer")
+	installInstaller(o)
 	internal.StopSpinner(spinner)
 
-	spinner = internal.NewSpinner("Requesting kyma-installer to install kyma version "+o.Release, "kyma-installer is installing kyma in version "+o.Release)
-	labelInstaller := []string{"label", "installation/kyma-installation", "action=install"}
-	internal.RunKubeCmd(labelInstaller)
+	spinner = internal.NewSpinner("Requesting kyma-installer to install kyma", "kyma-installer is activated to install kyma")
+	activateInstaller()
 	internal.StopSpinner(spinner)
 
-	installerStatus(o)
+	waitForInstaller(o)
 
-	fmt.Printf("\nInstallation of kyma finished in version '%s' with admin user '%s'\n", o.Release, o.ClusterAdmin)
+	printSummary()
 
 	return nil
 }
 
-func installerStatus(o *KymaOptions) error {
+func createlusterRoleBinding(o *KymaOptions) error {
+	if internal.IsClusterResourceDeployed("clusterrolebinding", "app", "kymactl") {
+		return nil
+	}
+
+	createClusterRoleBindingCmd := []string{"create", "clusterrolebinding", "cluster-admin-binding", "--clusterrole=cluster-admin", "--user=" + o.ClusterAdmin}
+	internal.RunKubeCmd(createClusterRoleBindingCmd)
+
+	labelClusterRoleBindingCmd := []string{"label", "clusterrolebinding", "cluster-admin-binding", "app=kymactl"}
+	internal.RunKubeCmd(labelClusterRoleBindingCmd)
+
+	return nil
+}
+
+func installTiller() error {
+	if internal.IsPodDeployed("kube-system", "name", "tiller") {
+		return nil
+	}
+
+	applyTiller := []string{"apply", "-f", "https://raw.githubusercontent.com/kyma-project/kyma/master/installation/resources/tiller.yaml"}
+	internal.RunKubeCmd(applyTiller)
+	internal.IsPodReady("kube-system", "name", "tiller")
+	return nil
+}
+
+func installInstaller(o *KymaOptions) error {
+	if internal.IsPodDeployed("kyma-installer", "name", "kyma-installer") {
+		return nil
+	}
+
+	applyInstaller := []string{"apply", "-f", "https://github.com/kyma-project/kyma/releases/download/" + o.Release + "/kyma-config-local.yaml"}
+	internal.RunKubeCmd(applyInstaller)
+	internal.IsPodReady("kyma-installer", "name", "kyma-installer")
+
+	labelNamespaceCmd := []string{"label", "namespace", "kyma-installer", "app=kymactl"}
+	internal.RunKubeCmd(labelNamespaceCmd)
+
+	return nil
+}
+
+func activateInstaller() {
+	labelInstaller := []string{"label", "installation/kyma-installation", "action=install"}
+	internal.RunKubeCmd(labelInstaller)
+}
+
+func printSummary() {
+	installVersionCmd := []string{"get", "installation/kyma-installation", "-o", "jsonpath='{.spec.version}'"}
+	version := internal.RunKubeCmd(installVersionCmd)
+	if version == "" {
+		version = "N/A"
+	}
+	fmt.Printf("Kyma is installed using version %s!\n", version)
+	fmt.Println("Happy Kyma-ing!\n")
+	clusterInfoCmd := []string{"cluster-info"}
+	clusterInfo := internal.RunKubeCmd(clusterInfoCmd)
+	fmt.Println(clusterInfo)
+}
+
+func waitForInstaller(o *KymaOptions) error {
 	currentDesc := ""
 	var spinner chan struct{}
+	installStatusCmd := []string{"get", "installation/kyma-installation", "-o", "jsonpath='{.status.state}'"}
+	installDescriptionCmd := []string{"get", "installation/kyma-installation", "-o", "jsonpath='{.status.description}'"}
+
+	status := internal.RunKubeCmd(installStatusCmd)
+	if status == "Installed" {
+		return nil
+	}
 
 	for {
-		installStatusCmd := []string{"get", "installation/kyma-installation", "-o", "jsonpath='{.status.state}'"}
-		installDescriptionCmd := []string{"get", "installation/kyma-installation", "-o", "jsonpath='{.status.description}'"}
 		status := internal.RunKubeCmd(installStatusCmd)
 		desc := internal.RunKubeCmd(installDescriptionCmd)
 
@@ -94,22 +151,13 @@ func installerStatus(o *KymaOptions) error {
 				internal.StopSpinner(spinner)
 				spinner = nil
 			}
-			installVersionCmd := []string{"get", "installation/kyma-installation", "-o", "jsonpath='{.spec.version}'"}
-			version := internal.RunKubeCmd(installVersionCmd)
-			if version == "" {
-				version = "N/A"
-			}
-			fmt.Printf("Kyma is installed using version %s!\n", version)
-			clusterInfoCmd := []string{"cluster-info"}
-			clusterInfo := internal.RunKubeCmd(clusterInfoCmd)
-			fmt.Print(clusterInfo)
-			break
+			return nil
 
 		case "Error":
 			fmt.Printf("Error installing Kyma: %s\n", desc)
 			installLogsCmd := []string{"-n", "kyma-installer", "logs", "-l", "name=kyma-installer"}
 			logs := internal.RunKubeCmd(installLogsCmd)
-			fmt.Print(logs)
+			fmt.Println(logs)
 
 		case "InProgress":
 			// only do something if the description has changed
@@ -117,7 +165,6 @@ func installerStatus(o *KymaOptions) error {
 				if spinner != nil {
 					internal.StopSpinner(spinner)
 					spinner = nil
-					continue
 				} else {
 					spinner = internal.NewSpinner(desc, desc)
 					currentDesc = desc
