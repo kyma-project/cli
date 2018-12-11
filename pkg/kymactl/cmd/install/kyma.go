@@ -168,8 +168,17 @@ func installInstaller(o *KymaOptions) error {
 }
 
 func activateInstaller() error {
+	installStatusCmd := []string{"get", "installation/kyma-installation", "-o", "jsonpath='{.status.state}'"}
+	status, err := internal.RunKubectlCmd(installStatusCmd)
+	if err != nil {
+		return err
+	}
+	if status == "InProgress" {
+		return nil
+	}
+
 	labelInstaller := []string{"label", "installation/kyma-installation", "action=install"}
-	_, err := internal.RunKubectlCmd(labelInstaller)
+	_, err = internal.RunKubectlCmd(labelInstaller)
 	if err != nil {
 		return err
 	}
