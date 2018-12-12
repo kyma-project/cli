@@ -86,7 +86,7 @@ func (o *KymaOptions) Run() error {
 		return err
 	}
 
-	err = printSummary()
+	err = printSummary(o)
 	if err != nil {
 		return err
 	}
