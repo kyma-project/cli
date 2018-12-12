@@ -11,7 +11,9 @@ func NewCompletionCmd() *cobra.Command {
 	var completionCmd = &cobra.Command{
 		Use:   "completion",
 		Short: "Generates bash completion scripts for kymactl",
-		Long: `To load completion run
+		Long: `Output shell completion code for bash. The shell code must be evaluated to provide
+interactive completion of kymactl commands. This can be done by sourcing it from the .bash _profile.
+To load completion run
 
 . <(bitbucket completion)
 

@@ -136,7 +136,7 @@ func (o *MinikubeOptions) Run() error {
 	}
 	internal.StopSpinner(spinner)
 
-	fmt.Println("\nHappy Minikube-ing!\n")
+	fmt.Println("\nHappy Minikube-ing!")
 	clusterInfoCmd := []string{"status", "-b=" + bootstrapper}
 	clusterInfo, err := internal.RunMinikubeCmd(clusterInfoCmd)
 	if err != nil {
@@ -184,7 +184,7 @@ func checkKubectlVersion() error {
 	minorMustVersion, _ := strconv.Atoi(kubctlMustVersion[3])
 
 	if minorIsVersion-minorMustVersion < -1 || minorIsVersion-minorMustVersion > 1 {
-		return fmt.Errorf("Your kubectl version is '%s'. Supported versions of kubectl are from '%d.%d.*' to '%d.%d.*'", kubctlIsVersion[1], majorMustVersion, minorMustVersion-1, majorMustVersion, minorMustVersion+1)
+		fmt.Printf("Your kubectl version is '%s'. Supported versions of kubectl are from '%d.%d.*' to '%d.%d.*'", kubctlIsVersion[1], majorMustVersion, minorMustVersion-1, majorMustVersion, minorMustVersion+1)
 	}
 	if majorIsVersion != majorMustVersion {
 		return fmt.Errorf("Your kubectl version is '%s'. Supported versions of kubectl are from '%d.%d.*' to '%d.%d.*'", kubctlIsVersion[1], majorMustVersion, minorMustVersion-1, majorMustVersion, minorMustVersion+1)
@@ -273,6 +273,17 @@ func startMinikube(o *MinikubeOptions) error {
 	return nil
 }
 
+// fixes https://github.com/kyma-project/kyma/issues/1986
+func applyHotfix() error {
+	hotfixCmd := []string{"create", "clusterrolebinding", "kube-system-cluster-admin", "--clusterrole=cluster-admin", "--serviceaccount=kube-system:default"}
+	_, err := internal.RunKubectlCmd(hotfixCmd)
+	if err != nil {
+		fmt.Printf("\nTried to fix minikube setup for https://github.com/kyma-project/kyma/issues/1986 but failed")
+		fmt.Println(err)
+	}
+	return nil
+}
+
 func waitForMinikubeToBeUp() error {
 	for {
 		statusCmd := []string{"status", "-b=" + bootstrapper, "--format", "'{{.MinikubeStatus}}'"}
@@ -298,6 +309,15 @@ func waitForMinikubeToBeUp() error {
 			break
 		}
 		time.Sleep(sleep)
+	}
+
+	err := applyHotfix()
+	if err != nil {
+		return err
+	}
+	err = internal.WaitForPod("kube-system", "k8s-app", "kube-dns")
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -330,6 +350,18 @@ func addDevDomainsToEtcHosts(o *MinikubeOptions) error {
 	if err != nil {
 		return err
 	}
+
+	/* does not work because of permission denied
+	f, err := os.OpenFile(internal.HOSTS_FILE, os.O_APPEND|os.O_WRONLY, 0600)
+	if err != nil {
+		return err
+	}
+
+	defer f.Close()
+	_, err = f.WriteString(hostAlias)
+	if err != nil {
+		return err
+	}*/
 
 	return nil
 }

@@ -123,14 +123,12 @@ func installTiller() error {
 	if err != nil {
 		return err
 	}
-	if check {
-		return nil
-	}
-
-	applyTiller := []string{"apply", "-f", "https://raw.githubusercontent.com/kyma-project/kyma/master/installation/resources/tiller.yaml"}
-	_, err = internal.RunKubectlCmd(applyTiller)
-	if err != nil {
-		return err
+	if !check {
+		applyTiller := []string{"apply", "-f", "https://raw.githubusercontent.com/kyma-project/kyma/master/installation/resources/tiller.yaml"}
+		_, err = internal.RunKubectlCmd(applyTiller)
+		if err != nil {
+			return err
+		}
 	}
 	err = internal.WaitForPod("kube-system", "name", "tiller")
 	if err != nil {
@@ -144,22 +142,19 @@ func installInstaller(o *KymaOptions) error {
 	if err != nil {
 		return err
 	}
-	if check {
-		return nil
-	}
-
-	applyInstaller := []string{"apply", "-f", "https://github.com/kyma-project/kyma/releases/download/" + o.Release + "/kyma-config-local.yaml"}
-	_, err = internal.RunKubectlCmd(applyInstaller)
-	if err != nil {
-		return err
+	if !check {
+		applyInstaller := []string{"apply", "-f", "https://github.com/kyma-project/kyma/releases/download/" + o.Release + "/kyma-config-local.yaml"}
+		_, err = internal.RunKubectlCmd(applyInstaller)
+		if err != nil {
+			return err
+		}
+		labelNamespaceCmd := []string{"label", "namespace", "kyma-installer", "app=kymactl"}
+		_, err = internal.RunKubectlCmd(labelNamespaceCmd)
+		if err != nil {
+			return err
+		}
 	}
 	err = internal.WaitForPod("kyma-installer", "name", "kyma-installer")
-	if err != nil {
-		return err
-	}
-
-	labelNamespaceCmd := []string{"label", "namespace", "kyma-installer", "app=kymactl"}
-	_, err = internal.RunKubectlCmd(labelNamespaceCmd)
 	if err != nil {
 		return err
 	}
@@ -185,7 +180,7 @@ func activateInstaller() error {
 	return nil
 }
 
-func printSummary() error {
+func printSummary(o *KymaOptions) error {
 	installVersionCmd := []string{"get", "installation/kyma-installation", "-o", "jsonpath='{.spec.version}'"}
 	version, err := internal.RunKubectlCmd(installVersionCmd)
 	if err != nil {

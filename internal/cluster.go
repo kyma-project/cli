@@ -65,7 +65,7 @@ func WaitForPod(namespace string, labelName string, labelValue string) error {
 	}
 
 	for {
-		isReady, err := isReady(namespace, labelName, labelValue)
+		isReady, err := IsPodReady(namespace, labelName, labelValue)
 		if err != nil {
 			return err
 		}
@@ -79,7 +79,7 @@ func WaitForPod(namespace string, labelName string, labelValue string) error {
 
 //IsPodDeployed checks if a pod is deployed.
 // It will not wait till it is deployed.
-// The pod gets identified by the namespace and a lebel key=value pair.
+// The pod gets identified by the namespace and a label key=value pair.
 func IsPodDeployed(namespace string, labelName string, labelValue string) (bool, error) {
 	return IsResourceDeployed("pod", namespace, labelName, labelValue)
 }
@@ -114,11 +114,18 @@ func IsClusterResourceDeployed(resource string, labelName string, labelValue str
 	return true, nil
 }
 
-func isReady(namespace string, labelName string, labelValue string) (bool, error) {
+//IsPodReady checks if a pod is deployed and running.
+// It will not wait till it is deployed or running.
+// The pod gets identified by the namespace and a lebel key=value pair.
+func IsPodReady(namespace string, labelName string, labelValue string) (bool, error) {
 	getPodNameCmd := []string{"get", "pods", "-n", namespace, "-l", labelName + "=" + labelValue, "-o", "jsonpath='{.items[*].metadata.name}'"}
 	podNames, err := RunKubectlCmd(getPodNameCmd)
 	if err != nil {
 		return false, err
+	}
+
+	if podNames == "" {
+		return false, nil
 	}
 
 	for _, pod := range strings.Split(podNames, "\\n") {

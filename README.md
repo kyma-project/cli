@@ -2,16 +2,19 @@
 
 ## Overview
 
-A command line tool to support Kyma developers
+A command line tool to support developers of and with Kyma
 
 ## Available Commands
 
 - `version`: Shows the kyma cluster version and the kymactl version. The kymactl version is set at compile time passing it to the go linker as a flag:
 
     ```bash
-    go build -o kymactl -ldflags "-X github.com/kyma-incubator/kymactl/cmd.Version=1.5.0"
+    go build -o kymactl -ldflags "-X github.com/kyma-incubator/kymactl/pkg/kymactl/cmd.Version=1.5.0"
     ```
-- `status`: Tracks the installation status of a Kyma cluster (replaces the `is-installed.sh` script)
+- `install cluster minikube`: Initializes minikube with a new cluster (replaces the `minikube.sh` script) 
+- `install kyma`: Installs kyma to a cluster based on a release (replaces the `ìnstaller.sh` and `is-installed.sh` script)
+- `uninstall kyma`: Uninstalls all kyma related resources from a cluster
+- `completion`: Output shell completion code for bash.
 - `help`: Displays usage for the given command (e.g. `kymactl help`, `kymactl help status`, etc...)
 
 ## kymactl as a kubectl plugin
@@ -36,3 +39,15 @@ Kyma is running!
 ```
 
 To know more about extending kubectl with plugins read [kubernetes documentation](https://kubernetes.io/docs/tasks/extend-kubectl/kubectl-plugins/).
+
+## Roadmap
+- fix adding minikube domain to /etc/hosts
+- use latest release automically
+- remove orphaned minikube domain entries from /etc/hosts
+- install optional kyma module
+- uninstall optional kyma module
+- update kyma to newer release
+- list available releases
+- install gke cluster
+- execute acceptance tests against kyma cluster
+  
