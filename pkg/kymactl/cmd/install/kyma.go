@@ -47,7 +47,7 @@ The command will:
 	}
 
 	cmd.Flags().StringVarP(&o.ReleaseVersion, "release", "r", "0.5.0", "kyma release to use")
-	cmd.Flags().StringVar(&o.ReleaseConfig, "config", "c", "URL or path to the installer configuration yaml")
+	cmd.Flags().StringVarP(&o.ReleaseConfig, "config", "c", "", "URL or path to the installer configuration yaml")
 	cmd.Flags().StringVarP(&o.ClusterAdmin, "admin", "a", "default", "cluster admin user to configure")
 	cmd.Flags().BoolVarP(&o.NoWait, "noWait", "n", false, "Do not wait for completion of kyma-installer")
 	return cmd
