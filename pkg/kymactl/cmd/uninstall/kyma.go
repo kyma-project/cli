@@ -181,7 +181,7 @@ func deleteTiller(o *KymaOptions) error {
 		return nil
 	}
 
-	_, err = internal.RunKubectlCmd([]string{"delete", "ServiceAccount", "tiller"})
+	_, err = internal.RunKubectlCmd([]string{"-n", "kube-system", "delete", "ServiceAccount", "tiller"})
 	if err != nil {
 		return err
 	}
