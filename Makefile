@@ -29,6 +29,7 @@ test:
 .PHONY: archive
 archive:
 	cp -r bin/* $(ARTIFACTS)
+	cp -r bin/* $(ARTIFACTS)/../../../latest
 
 .PHONY: ci-pr
 ci-pr: resolve validate build test archive
