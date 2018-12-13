@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
 	"time"
 
 	"strconv"
@@ -343,8 +344,10 @@ func addDevDomainsToEtcHosts(o *MinikubeOptions) error {
 		}
 	}
 
-	hostAlias := minikubeIP + hostnames
+	hostAlias := strings.Trim(minikubeIP, "\n") + hostnames
 
+	fmt.Println("\nPlease add these lines to your /etc/hosts file:")
+	fmt.Println(hostAlias)
 	cmd = []string{hostAlias, "|", "sudo", "tee", "-a", "/etc/hosts", ">", "/dev/null"}
 	_, err = internal.RunCmd("echo", cmd)
 	if err != nil {
