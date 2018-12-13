@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"runtime"
 	"strings"
 	"time"
 
@@ -123,7 +124,7 @@ func (o *MinikubeOptions) Run() error {
 	}
 	internal.StopSpinner(spinner)
 
-	spinner = internal.NewSpinner("Adding hostnames to /etc/hosts", "Hostnames added to /etc/hosts")
+	spinner = internal.NewSpinner("Adding hostnames, please enter you password if requested", "Hostnames added to "+internal.HOSTS_FILE)
 	err = addDevDomainsToEtcHosts(o)
 	if err != nil {
 		return err
@@ -137,13 +138,9 @@ func (o *MinikubeOptions) Run() error {
 	}
 	internal.StopSpinner(spinner)
 
-	fmt.Println("\nHappy Minikube-ing!")
-	clusterInfoCmd := []string{"status", "-b=" + bootstrapper}
-	clusterInfo, err := internal.RunMinikubeCmd(clusterInfoCmd)
+	err = printSummary()
 	if err != nil {
-		fmt.Printf("Cannot show cluster-info because of '%s", err)
-	} else {
-		fmt.Println(clusterInfo)
+		return err
 	}
 
 	return nil
@@ -346,18 +343,25 @@ func addDevDomainsToEtcHosts(o *MinikubeOptions) error {
 
 	hostAlias := strings.Trim(minikubeIP, "\n") + hostnames
 
-	fmt.Println("")
-	fmt.Println("=====")
-	fmt.Println("Please add these lines to your /etc/hosts file:")
-	fmt.Println(hostAlias)
-	fmt.Println("=====")
+	if runtime.GOOS == "windows" {
+		fmt.Println("")
+		fmt.Println("=====")
+		fmt.Println("Please add these lines to your " + internal.HOSTS_FILE + " file:")
+		fmt.Println(hostAlias)
+		fmt.Println("=====")
+	} else {
+		cmd = []string{"/bin/sh", "-c", "sed -i '' \"/" + o.Domain + "/d\" " + internal.HOSTS_FILE}
+		_, err := internal.RunCmd("sudo", cmd)
+		if err != nil {
+			return err
+		}
 
-	/*does not work yet
-	cmd = []string{hostAlias, "|", "sudo", "tee", "-a", "/etc/hosts", ">", "/dev/null"}
-	_, err = internal.RunCmd("echo", cmd)
-	if err != nil {
-		return err
-	}*/
+		cmd = []string{"/bin/sh", "-c", "echo '" + hostAlias + "' >> " + internal.HOSTS_FILE}
+		_, err = internal.RunCmd("sudo", cmd)
+		if err != nil {
+			return err
+		}
+	}
 
 	/* does not work because of permission denied
 	f, err := os.OpenFile(internal.HOSTS_FILE, os.O_APPEND|os.O_WRONLY, 0600)
@@ -384,5 +388,18 @@ func increaseFsInotifyMaxUserInstances(o *MinikubeOptions) error {
 		}
 	}
 
+	return nil
+}
+
+func printSummary() error {
+	fmt.Println("\nHappy Minikube-ing!")
+
+	clusterInfoCmd := []string{"status", "-b=" + bootstrapper}
+	clusterInfo, err := internal.RunMinikubeCmd(clusterInfoCmd)
+	if err != nil {
+		fmt.Printf("Cannot show cluster-info because of '%s", err)
+	} else {
+		fmt.Println(clusterInfo)
+	}
 	return nil
 }

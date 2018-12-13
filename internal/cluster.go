@@ -16,7 +16,7 @@ const (
 // RunCmd executes a command with given arguments
 func RunCmd(c string, args []string) (string, error) {
 	cmd := exec.Command(c, args[0:]...)
-	out, err := cmd.CombinedOutput()
+	out, err := cmd.Output()
 	if err != nil {
 		return "", fmt.Errorf("Failed executing command '%s %s' with output '%s' and error message '%s'", c, args, out, err)
 	}
@@ -26,7 +26,7 @@ func RunCmd(c string, args []string) (string, error) {
 //RunKubectlCmd executes a kubectl command with given arguments
 func RunKubectlCmd(args []string) (string, error) {
 	cmd := exec.Command("kubectl", args[0:]...)
-	out, err := cmd.CombinedOutput()
+	out, err := cmd.Output()
 	if err != nil {
 		return "", fmt.Errorf("Failed executing kubectl command 'kubectl %s' with output '%s' and error message '%s'", args, out, err)
 	}
@@ -36,7 +36,7 @@ func RunKubectlCmd(args []string) (string, error) {
 //RunMinikubeCmd executes a minikube command with given arguments
 func RunMinikubeCmd(args []string) (string, error) {
 	cmd := exec.Command("minikube", args[0:]...)
-	out, err := cmd.CombinedOutput()
+	out, err := cmd.Output()
 	if err != nil {
 		return "", fmt.Errorf("Failed executing minikube command 'minikube %s' with output '%s' and error message '%s'", args, out, err)
 	}
@@ -46,7 +46,7 @@ func RunMinikubeCmd(args []string) (string, error) {
 //RunMinikubeCmdE executes a minikube command with given arguments ignoring any errors
 func RunMinikubeCmdE(args []string) (string, error) {
 	cmd := exec.Command("minikube", args[0:]...)
-	out, _ := cmd.CombinedOutput()
+	out, _ := cmd.Output()
 	return strings.Replace(string(out), "'", "", -1), nil
 }
 

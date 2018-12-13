@@ -15,8 +15,10 @@ const (
 
 //KymaOptions defines available options for the command
 type KymaOptions struct {
-	Release      string
-	ClusterAdmin string
+	ReleaseVersion string
+	ReleaseConfig  string
+	ClusterAdmin   string
+	NoWait         bool
 }
 
 //NewKymaOptions creates options with default values
@@ -44,14 +46,16 @@ The command will:
 		Aliases: []string{"i"},
 	}
 
-	cmd.Flags().StringVarP(&o.Release, "release", "r", "0.5.0", "kyma release to use")
+	cmd.Flags().StringVarP(&o.ReleaseVersion, "release", "r", "0.5.0", "kyma release to use")
+	cmd.Flags().StringVar(&o.ReleaseConfig, "config", "c", "URL or path to the installer configuration yaml")
 	cmd.Flags().StringVarP(&o.ClusterAdmin, "admin", "a", "default", "cluster admin user to configure")
+	cmd.Flags().BoolVarP(&o.NoWait, "noWait", "n", false, "Do not wait for completion of kyma-installer")
 	return cmd
 }
 
 //Run runs the command
 func (o *KymaOptions) Run() error {
-	fmt.Printf("Installing kyma in version '%s' with admin user '%s'\n\n‚", o.Release, o.ClusterAdmin)
+	fmt.Printf("Installing kyma in version '%s' with admin user '%s'\n\n‚", o.ReleaseVersion, o.ClusterAdmin)
 
 	var spinner = internal.NewSpinner("Creating ClusterRoleBinding for admin '"+o.ClusterAdmin+"'", "ClusterRoleBinding created for admin "+o.ClusterAdmin)
 	err := createlusterRoleBinding(o)
@@ -61,7 +65,7 @@ func (o *KymaOptions) Run() error {
 	internal.StopSpinner(spinner)
 
 	spinner = internal.NewSpinner("Installing tiller", "Tiller installed")
-	err = installTiller()
+	err = installTiller(o)
 	if err != nil {
 		return err
 	}
@@ -75,15 +79,17 @@ func (o *KymaOptions) Run() error {
 	internal.StopSpinner(spinner)
 
 	spinner = internal.NewSpinner("Requesting kyma-installer to install kyma", "kyma-installer is activated to install kyma")
-	err = activateInstaller()
+	err = activateInstaller(o)
 	if err != nil {
 		return err
 	}
 	internal.StopSpinner(spinner)
 
-	err = waitForInstaller(o)
-	if err != nil {
-		return err
+	if !o.NoWait {
+		err = waitForInstaller(o)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = printSummary(o)
@@ -118,13 +124,13 @@ func createlusterRoleBinding(o *KymaOptions) error {
 	return nil
 }
 
-func installTiller() error {
+func installTiller(o *KymaOptions) error {
 	check, err := internal.IsPodDeployed("kube-system", "name", "tiller")
 	if err != nil {
 		return err
 	}
 	if !check {
-		applyTiller := []string{"apply", "-f", "https://raw.githubusercontent.com/kyma-project/kyma/master/installation/resources/tiller.yaml"}
+		applyTiller := []string{"apply", "-f", "https://raw.githubusercontent.com/kyma-project/kyma/" + o.ReleaseVersion + "/installation/resources/tiller.yaml"}
 		_, err = internal.RunKubectlCmd(applyTiller)
 		if err != nil {
 			return err
@@ -143,7 +149,11 @@ func installInstaller(o *KymaOptions) error {
 		return err
 	}
 	if !check {
-		applyInstaller := []string{"apply", "-f", "https://github.com/kyma-project/kyma/releases/download/" + o.Release + "/kyma-config-local.yaml"}
+		relaseURL := "https://github.com/kyma-project/kyma/releases/download/" + o.ReleaseVersion + "/kyma-config-local.yaml"
+		if o.ReleaseConfig != "" {
+			relaseURL = o.ReleaseConfig
+		}
+		applyInstaller := []string{"apply", "-f", relaseURL}
 		_, err = internal.RunKubectlCmd(applyInstaller)
 		if err != nil {
 			return err
@@ -162,7 +172,7 @@ func installInstaller(o *KymaOptions) error {
 	return nil
 }
 
-func activateInstaller() error {
+func activateInstaller(o *KymaOptions) error {
 	installStatusCmd := []string{"get", "installation/kyma-installation", "-o", "jsonpath='{.status.state}'"}
 	status, err := internal.RunKubectlCmd(installStatusCmd)
 	if err != nil {
@@ -190,7 +200,8 @@ func printSummary(o *KymaOptions) error {
 		version = "N/A"
 	}
 	fmt.Printf("Kyma is installed using version %s!\n", version)
-	fmt.Println("Happy Kyma-ing!\n")
+	fmt.Println("Happy Kyma-ing!")
+	fmt.Println("")
 	clusterInfoCmd := []string{"cluster-info"}
 	clusterInfo, err := internal.RunKubectlCmd(clusterInfoCmd)
 	if err != nil {
