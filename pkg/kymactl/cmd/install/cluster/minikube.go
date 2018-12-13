@@ -164,8 +164,7 @@ func checkMinikubeVersion() error {
 }
 
 func checkKubectlVersion() error {
-	versionCmd := []string{"version", "--client", "--short"}
-	versionText, err := internal.RunKubectlCmd(versionCmd)
+	versionText, err := internal.RunKubectlCmd([]string{"version", "--client", "--short"})
 	if err != nil {
 		return err
 	}
@@ -191,8 +190,7 @@ func checkKubectlVersion() error {
 }
 
 func checkIfMinikubeIsInitialized(o *MinikubeOptions) error {
-	statusCmd := []string{"status", "-b=" + bootstrapper, "--format", "'{{.MinikubeStatus}}'"}
-	statusText, err := internal.RunMinikubeCmdE(statusCmd)
+	statusText, err := internal.RunMinikubeCmdE([]string{"status", "-b=" + bootstrapper, "--format", "'{{.MinikubeStatus}}'"})
 	if err != nil {
 		return err
 	}
@@ -213,8 +211,7 @@ func checkIfMinikubeIsInitialized(o *MinikubeOptions) error {
 			fmt.Println("=====")
 		}
 		if o.Silent || answer == "y\n" {
-			deleteCmd := []string{"delete"}
-			_, err := internal.RunMinikubeCmd(deleteCmd)
+			_, err := internal.RunMinikubeCmd([]string{"delete"})
 			if err != nil {
 				return err
 			}
@@ -227,21 +224,18 @@ func checkIfMinikubeIsInitialized(o *MinikubeOptions) error {
 
 func initializeMinikubeConfig() error {
 	// Disable default nginx ingress controller
-	ingressConfigCmd := []string{"config", "unset", "ingress"}
-	_, err := internal.RunMinikubeCmd(ingressConfigCmd)
+	_, err := internal.RunMinikubeCmd([]string{"config", "unset", "ingress"})
 	if err != nil {
 		return err
 	}
 	// Enable heapster addon
-	ingressHeapsterCmd := []string{"addons", "enable", "heapster"}
-	_, err = internal.RunMinikubeCmd(ingressHeapsterCmd)
+	_, err = internal.RunMinikubeCmd([]string{"addons", "enable", "heapster"})
 	if err != nil {
 		return err
 	}
 
 	// Disable bootstrapper warning
-	bootstrapperConfigCmd := []string{"config", "set", "ShowBootstrapperDeprecationNotification", "false"}
-	_, err = internal.RunMinikubeCmd(bootstrapperConfigCmd)
+	_, err = internal.RunMinikubeCmd([]string{"config", "set", "ShowBootstrapperDeprecationNotification", "false"})
 	if err != nil {
 		return err
 	}
@@ -273,8 +267,7 @@ func startMinikube(o *MinikubeOptions) error {
 
 // fixes https://github.com/kyma-project/kyma/issues/1986
 func applyHotfix() error {
-	hotfixCmd := []string{"create", "clusterrolebinding", "kube-system-cluster-admin", "--clusterrole=cluster-admin", "--serviceaccount=kube-system:default"}
-	_, err := internal.RunKubectlCmd(hotfixCmd)
+	_, err := internal.RunKubectlCmd([]string{"create", "clusterrolebinding", "kube-system-cluster-admin", "--clusterrole=cluster-admin", "--serviceaccount=kube-system:default"})
 	if err != nil {
 		fmt.Printf("\nTried to fix minikube setup for https://github.com/kyma-project/kyma/issues/1986 but failed")
 		fmt.Println(err)
@@ -284,8 +277,7 @@ func applyHotfix() error {
 
 func waitForMinikubeToBeUp() error {
 	for {
-		statusCmd := []string{"status", "-b=" + bootstrapper, "--format", "'{{.MinikubeStatus}}'"}
-		statusText, err := internal.RunMinikubeCmd(statusCmd)
+		statusText, err := internal.RunMinikubeCmd([]string{"status", "-b=" + bootstrapper, "--format", "'{{.MinikubeStatus}}'"})
 		if err != nil {
 			return err
 		}
@@ -297,8 +289,7 @@ func waitForMinikubeToBeUp() error {
 	}
 
 	for {
-		statusCmd := []string{"status", "-b=" + bootstrapper, "--format", "'{{.MinikubeStatus}}'"}
-		statusText, err := internal.RunMinikubeCmd(statusCmd)
+		statusText, err := internal.RunMinikubeCmd([]string{"status", "-b=" + bootstrapper, "--format", "'{{.ClusterStatus}}'"})
 		if err != nil {
 			return err
 		}
@@ -327,15 +318,13 @@ func addDevDomainsToEtcHosts(o *MinikubeOptions) error {
 		hostnames = hostnames + " " + v + "." + o.Domain
 	}
 
-	cmd := []string{"ip"}
-	minikubeIP, err := internal.RunMinikubeCmd(cmd)
+	minikubeIP, err := internal.RunMinikubeCmd([]string{"ip"})
 	if err != nil {
 		return err
 	}
 
 	if o.VMDriver != vmDriverNone {
-		cmd := []string{"ssh", "'echo \"127.0.0.1" + hostnames + "\" | sudo tee -a /etc/hosts'"}
-		_, err := internal.RunMinikubeCmd(cmd)
+		_, err := internal.RunMinikubeCmd([]string{"ssh", "'echo \"127.0.0.1" + hostnames + "\" | sudo tee -a /etc/hosts'"})
 		if err != nil {
 			return err
 		}
@@ -350,14 +339,12 @@ func addDevDomainsToEtcHosts(o *MinikubeOptions) error {
 		fmt.Println(hostAlias)
 		fmt.Println("=====")
 	} else {
-		cmd = []string{"/bin/sh", "-c", "sed -i '' \"/" + o.Domain + "/d\" " + internal.HOSTS_FILE}
-		_, err := internal.RunCmd("sudo", cmd)
+		_, err := internal.RunCmd("sudo", []string{"/bin/sh", "-c", "sed -i '' \"/" + o.Domain + "/d\" " + internal.HOSTS_FILE})
 		if err != nil {
 			return err
 		}
 
-		cmd = []string{"/bin/sh", "-c", "echo '" + hostAlias + "' >> " + internal.HOSTS_FILE}
-		_, err = internal.RunCmd("sudo", cmd)
+		_, err = internal.RunCmd("sudo", []string{"/bin/sh", "-c", "echo '" + hostAlias + "' >> " + internal.HOSTS_FILE})
 		if err != nil {
 			return err
 		}
@@ -381,8 +368,7 @@ func addDevDomainsToEtcHosts(o *MinikubeOptions) error {
 // Default value of 128 is not enough to perform “kubectl log -f” from pods, hence increased to 524288
 func increaseFsInotifyMaxUserInstances(o *MinikubeOptions) error {
 	if o.VMDriver != vmDriverNone {
-		cmd := []string{"ssh", "--", "'sudo sysctl -w fs.inotify.max_user_instances=524288'"}
-		_, err := internal.RunMinikubeCmd(cmd)
+		_, err := internal.RunMinikubeCmd([]string{"ssh", "--", "'sudo sysctl -w fs.inotify.max_user_instances=524288'"})
 		if err != nil {
 			return err
 		}
@@ -394,8 +380,7 @@ func increaseFsInotifyMaxUserInstances(o *MinikubeOptions) error {
 func printSummary() error {
 	fmt.Println("\nHappy Minikube-ing!")
 
-	clusterInfoCmd := []string{"status", "-b=" + bootstrapper}
-	clusterInfo, err := internal.RunMinikubeCmd(clusterInfoCmd)
+	clusterInfo, err := internal.RunMinikubeCmd([]string{"status", "-b=" + bootstrapper})
 	if err != nil {
 		fmt.Printf("Cannot show cluster-info because of '%s", err)
 	} else {

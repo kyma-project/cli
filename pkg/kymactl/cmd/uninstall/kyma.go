@@ -59,28 +59,31 @@ func (o *KymaOptions) Run() error {
 		return err
 	}
 
-	spinner = internal.NewSpinner("Deleting namespace kyma-installer", "namespace kyma-installer deleted")
-	err = deleteNamespace("kyma-installer")
+	spinner = internal.NewSpinner("Deleting kyma-installer", "kyma-installer deleted")
+	err = deleteInstaller(o)
 	if err != nil {
 		return err
 	}
 	internal.StopSpinner(spinner)
 
 	spinner = internal.NewSpinner("Deleting tiller", "tiller deleted")
-	err = deleteTiller()
+	err = deleteTiller(o)
 	if err != nil {
 		return err
 	}
 	internal.StopSpinner(spinner)
 
 	spinner = internal.NewSpinner("Deleting ClusterRoleBinding for admin", "ClusterRoleBinding for admin deleted")
-	err = deleteClusterRoleBinding()
+	err = deleteClusterRoleBinding(o)
 	if err != nil {
 		return err
 	}
 	internal.StopSpinner(spinner)
 
-	fmt.Printf("\nkyma uninstalled\n")
+	err = printSummary(o)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -94,8 +97,7 @@ func activateInstaller(o *KymaOptions) error {
 		return nil
 	}
 
-	labelInstaller := []string{"label", "installation/kyma-installation", "action=uninstall"}
-	_, err = internal.RunKubectlCmd(labelInstaller)
+	_, err = internal.RunKubectlCmd([]string{"label", "installation/kyma-installation", "action=uninstall"})
 	if err != nil {
 		return err
 	}
@@ -103,7 +105,7 @@ func activateInstaller(o *KymaOptions) error {
 	return nil
 }
 
-func deleteNamespace(namespace string) error {
+func deleteInstaller(o *KymaOptions) error {
 	check, err := internal.IsClusterResourceDeployed("namespace", "app", "kymactl")
 	if err != nil {
 		return err
@@ -112,8 +114,7 @@ func deleteNamespace(namespace string) error {
 		return nil
 	}
 
-	deleteNamespaceCmd := []string{"delete", "namespace", namespace}
-	_, err = internal.RunKubectlCmd(deleteNamespaceCmd)
+	_, err = internal.RunKubectlCmd([]string{"delete", "namespace", "kyma-installer"})
 	if err != nil {
 		return err
 	}
@@ -128,37 +129,67 @@ func deleteNamespace(namespace string) error {
 		}
 		time.Sleep(sleep)
 	}
+
+	_, err = internal.RunKubectlCmd([]string{"delete", "ClusterRoleBinding", "kyma-installer"})
+	if err != nil {
+		return nil
+	}
+
+	_, err = internal.RunKubectlCmd([]string{"delete", "ClusterRole", "kyma-installer-reader"})
+	if err != nil {
+		return err
+	}
+
+	_, err = internal.RunKubectlCmd([]string{"delete", "CustomResourceDefinition", "installations.installer.kyma-project.io"})
+	if err != nil {
+		return err
+	}
+
+	_, err = internal.RunKubectlCmd([]string{"delete", "CustomResourceDefinition", "releases.release.kyma-project.io"})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func deleteTiller() error {
+//cannot use the original yaml file as the version is not known or might be even custom
+func deleteTiller(o *KymaOptions) error {
 	check, err := internal.IsPodDeployed("kube-system", "name", "tiller")
 	if err != nil {
 		return err
 	}
-	if !check {
-		return nil
-	}
-
-	deleteTiller := []string{"delete", "-f", "https://raw.githubusercontent.com/kyma-project/kyma/master/installation/resources/tiller.yaml"}
-	_, err = internal.RunKubectlCmd(deleteTiller)
-	if err != nil {
-		return err
-	}
-	for {
-		check, err := internal.IsPodDeployed("kube-system", "name", "tiller")
+	if check {
+		_, err = internal.RunKubectlCmd([]string{"-n", "kube-system", "delete", "all", "-l", "name=tiller"})
 		if err != nil {
 			return err
 		}
-		if !check {
-			break
+		for {
+			check, err := internal.IsPodDeployed("kube-system", "name", "tiller")
+			if err != nil {
+				return err
+			}
+			if !check {
+				break
+			}
+			time.Sleep(sleep)
 		}
-		time.Sleep(sleep)
 	}
+
+	_, err = internal.RunKubectlCmd([]string{"delete", "ClusterRoleBinding", "tiller-cluster-admin"})
+	if err != nil {
+		return nil
+	}
+
+	_, err = internal.RunKubectlCmd([]string{"delete", "ServiceAccount", "tiller"})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func deleteClusterRoleBinding() error {
+func deleteClusterRoleBinding(o *KymaOptions) error {
 	check, err := internal.IsClusterResourceDeployed("clusterrolebinding", "app", "kymactl")
 	if err != nil {
 		return err
@@ -167,11 +198,15 @@ func deleteClusterRoleBinding() error {
 		return nil
 	}
 
-	deleteClusterRoleBindingCmd := []string{"delete", "clusterrolebinding", "cluster-admin-binding"}
-	_, err = internal.RunKubectlCmd(deleteClusterRoleBindingCmd)
+	_, err = internal.RunKubectlCmd([]string{"delete", "clusterrolebinding", "cluster-admin-binding"})
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func printSummary(o *KymaOptions) error {
+	fmt.Println("\nkyma uninstalled")
 	return nil
 }
 
@@ -184,10 +219,8 @@ func waitForInstaller(o *KymaOptions) error {
 		return nil
 	}
 
-	installStatusCmd := []string{"get", "installation/kyma-installation", "-o", "jsonpath='{.status.state}'"}
-	installDescriptionCmd := []string{"get", "installation/kyma-installation", "-o", "jsonpath='{.status.description}'"}
-
-	status, err := internal.RunKubectlCmd(installStatusCmd)
+	cmd := []string{"get", "installation/kyma-installation", "-o", "jsonpath='{.status.state}'"}
+	status, err := internal.RunKubectlCmd(cmd)
 	if err != nil {
 		return err
 	}
@@ -199,11 +232,11 @@ func waitForInstaller(o *KymaOptions) error {
 	var spinner chan struct{}
 
 	for {
-		status, err := internal.RunKubectlCmd(installStatusCmd)
+		status, err := internal.RunKubectlCmd(cmd)
 		if err != nil {
 			return err
 		}
-		desc, err := internal.RunKubectlCmd(installDescriptionCmd)
+		desc, err := internal.RunKubectlCmd([]string{"get", "installation/kyma-installation", "-o", "jsonpath='{.status.description}'"})
 		if err != nil {
 			return err
 		}
@@ -218,12 +251,11 @@ func waitForInstaller(o *KymaOptions) error {
 
 		case "Error":
 			fmt.Printf("Error installing Kyma: %s\n", desc)
-			installLogsCmd := []string{"-n", "kyma-installer", "logs", "-l", "name=kyma-installer"}
-			logs, err := internal.RunKubectlCmd(installLogsCmd)
+			out, err := internal.RunKubectlCmd([]string{"-n", "kyma-installer", "logs", "-l", "name=kyma-installer"})
 			if err != nil {
 				return err
 			}
-			fmt.Print(logs)
+			fmt.Print(out)
 
 		case "InProgress":
 			// only do something if the description has changed

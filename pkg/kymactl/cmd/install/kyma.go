@@ -108,15 +108,12 @@ func createlusterRoleBinding(o *KymaOptions) error {
 	if check {
 		return nil
 	}
-
-	createClusterRoleBindingCmd := []string{"create", "clusterrolebinding", "cluster-admin-binding", "--clusterrole=cluster-admin", "--user=" + o.ClusterAdmin}
-	_, err = internal.RunKubectlCmd(createClusterRoleBindingCmd)
+	_, err = internal.RunKubectlCmd([]string{"create", "clusterrolebinding", "cluster-admin-binding", "--clusterrole=cluster-admin", "--user=" + o.ClusterAdmin})
 	if err != nil {
 		return err
 	}
 
-	labelClusterRoleBindingCmd := []string{"label", "clusterrolebinding", "cluster-admin-binding", "app=kymactl"}
-	_, err = internal.RunKubectlCmd(labelClusterRoleBindingCmd)
+	_, err = internal.RunKubectlCmd([]string{"label", "clusterrolebinding", "cluster-admin-binding", "app=kymactl"})
 	if err != nil {
 		return err
 	}
@@ -130,8 +127,7 @@ func installTiller(o *KymaOptions) error {
 		return err
 	}
 	if !check {
-		applyTiller := []string{"apply", "-f", "https://raw.githubusercontent.com/kyma-project/kyma/" + o.ReleaseVersion + "/installation/resources/tiller.yaml"}
-		_, err = internal.RunKubectlCmd(applyTiller)
+		_, err = internal.RunKubectlCmd([]string{"apply", "-f", "https://raw.githubusercontent.com/kyma-project/kyma/" + o.ReleaseVersion + "/installation/resources/tiller.yaml"})
 		if err != nil {
 			return err
 		}
@@ -153,13 +149,11 @@ func installInstaller(o *KymaOptions) error {
 		if o.ReleaseConfig != "" {
 			relaseURL = o.ReleaseConfig
 		}
-		applyInstaller := []string{"apply", "-f", relaseURL}
-		_, err = internal.RunKubectlCmd(applyInstaller)
+		_, err = internal.RunKubectlCmd([]string{"apply", "-f", relaseURL})
 		if err != nil {
 			return err
 		}
-		labelNamespaceCmd := []string{"label", "namespace", "kyma-installer", "app=kymactl"}
-		_, err = internal.RunKubectlCmd(labelNamespaceCmd)
+		_, err = internal.RunKubectlCmd([]string{"label", "namespace", "kyma-installer", "app=kymactl"})
 		if err != nil {
 			return err
 		}
@@ -173,8 +167,7 @@ func installInstaller(o *KymaOptions) error {
 }
 
 func activateInstaller(o *KymaOptions) error {
-	installStatusCmd := []string{"get", "installation/kyma-installation", "-o", "jsonpath='{.status.state}'"}
-	status, err := internal.RunKubectlCmd(installStatusCmd)
+	status, err := internal.RunKubectlCmd([]string{"get", "installation/kyma-installation", "-o", "jsonpath='{.status.state}'"})
 	if err != nil {
 		return err
 	}
@@ -182,8 +175,7 @@ func activateInstaller(o *KymaOptions) error {
 		return nil
 	}
 
-	labelInstaller := []string{"label", "installation/kyma-installation", "action=install"}
-	_, err = internal.RunKubectlCmd(labelInstaller)
+	_, err = internal.RunKubectlCmd([]string{"label", "installation/kyma-installation", "action=install"})
 	if err != nil {
 		return err
 	}
@@ -191,8 +183,7 @@ func activateInstaller(o *KymaOptions) error {
 }
 
 func printSummary(o *KymaOptions) error {
-	installVersionCmd := []string{"get", "installation/kyma-installation", "-o", "jsonpath='{.spec.version}'"}
-	version, err := internal.RunKubectlCmd(installVersionCmd)
+	version, err := internal.RunKubectlCmd([]string{"get", "installation/kyma-installation", "-o", "jsonpath='{.spec.version}'"})
 	if err != nil {
 		return err
 	}
@@ -202,8 +193,7 @@ func printSummary(o *KymaOptions) error {
 	fmt.Printf("Kyma is installed using version %s!\n", version)
 	fmt.Println("Happy Kyma-ing!")
 	fmt.Println("")
-	clusterInfoCmd := []string{"cluster-info"}
-	clusterInfo, err := internal.RunKubectlCmd(clusterInfoCmd)
+	clusterInfo, err := internal.RunKubectlCmd([]string{"cluster-info"})
 	if err != nil {
 		return err
 	}
@@ -215,7 +205,6 @@ func waitForInstaller(o *KymaOptions) error {
 	currentDesc := ""
 	var spinner chan struct{}
 	installStatusCmd := []string{"get", "installation/kyma-installation", "-o", "jsonpath='{.status.state}'"}
-	installDescriptionCmd := []string{"get", "installation/kyma-installation", "-o", "jsonpath='{.status.description}'"}
 
 	status, err := internal.RunKubectlCmd(installStatusCmd)
 	if err != nil {
@@ -230,7 +219,7 @@ func waitForInstaller(o *KymaOptions) error {
 		if err != nil {
 			return err
 		}
-		desc, err := internal.RunKubectlCmd(installDescriptionCmd)
+		desc, err := internal.RunKubectlCmd([]string{"get", "installation/kyma-installation", "-o", "jsonpath='{.status.description}'"})
 		if err != nil {
 			return err
 		}
@@ -245,8 +234,7 @@ func waitForInstaller(o *KymaOptions) error {
 
 		case "Error":
 			fmt.Printf("Error installing Kyma: %s\n", desc)
-			installLogsCmd := []string{"-n", "kyma-installer", "logs", "-l", "name=kyma-installer"}
-			logs, err := internal.RunKubectlCmd(installLogsCmd)
+			logs, err := internal.RunKubectlCmd([]string{"-n", "kyma-installer", "logs", "-l", "name=kyma-installer"})
 			if err != nil {
 				return err
 			}

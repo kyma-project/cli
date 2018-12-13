@@ -41,13 +41,14 @@ Kyma is running!
 To know more about extending kubectl with plugins read [kubernetes documentation](https://kubernetes.io/docs/tasks/extend-kubectl/kubectl-plugins/).
 
 ## Roadmap
-- fix adding minikube domain to /etc/hosts
+- adding minikube domain to hosts file on windows
 - use latest release automically
 - remove orphaned minikube domain entries from /etc/hosts
-- install optional kyma module
+- install optional kyma module (ark, logging)
 - uninstall optional kyma module
 - update kyma to newer release
 - list available releases
 - install gke cluster
 - execute acceptance tests against kyma cluster
+- connect application to kyma
   

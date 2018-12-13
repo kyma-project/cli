@@ -27,8 +27,7 @@ func version(cmd *cobra.Command, args []string) error {
 		fmt.Printf("kymactl version %s\n", Version)
 	}
 
-	versionCmd := []string{"get", "installation/kyma-installation", "-o", "jsonpath='{.spec.version}'"}
-	kymaVersion, err := internal.RunKubectlCmd(versionCmd)
+	kymaVersion, err := internal.RunKubectlCmd([]string{"get", "installation/kyma-installation", "-o", "jsonpath='{.spec.version}'"})
 	if err != nil {
 		return err
 	}
