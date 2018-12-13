@@ -346,13 +346,18 @@ func addDevDomainsToEtcHosts(o *MinikubeOptions) error {
 
 	hostAlias := strings.Trim(minikubeIP, "\n") + hostnames
 
-	fmt.Println("\nPlease add these lines to your /etc/hosts file:")
+	fmt.Println("")
+	fmt.Println("=====")
+	fmt.Println("Please add these lines to your /etc/hosts file:")
 	fmt.Println(hostAlias)
+	fmt.Println("=====")
+
+	/*does not work yet
 	cmd = []string{hostAlias, "|", "sudo", "tee", "-a", "/etc/hosts", ">", "/dev/null"}
 	_, err = internal.RunCmd("echo", cmd)
 	if err != nil {
 		return err
-	}
+	}*/
 
 	/* does not work because of permission denied
 	f, err := os.OpenFile(internal.HOSTS_FILE, os.O_APPEND|os.O_WRONLY, 0600)
