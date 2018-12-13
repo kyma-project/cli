@@ -59,6 +59,13 @@ func (o *KymaOptions) Run() error {
 		return err
 	}
 
+	spinner = internal.NewSpinner("Deleting kyma-integration namespace as it is not getting cleaned properly", "kyma-integration namespace deleted")
+	err = deleteKymaIntegration(o)
+	if err != nil {
+		return err
+	}
+	internal.StopSpinner(spinner)
+
 	spinner = internal.NewSpinner("Deleting kyma-installer", "kyma-installer deleted")
 	err = deleteInstaller(o)
 	if err != nil {
@@ -150,6 +157,22 @@ func deleteInstaller(o *KymaOptions) error {
 		return err
 	}
 
+	return nil
+}
+
+func deleteKymaIntegration(o *KymaOptions) error {
+	_, err := internal.RunKubectlCmd([]string{"delete", "namespace", "kyma-integration"})
+	if err != nil {
+		fmt.Printf("%s", err)
+	} else {
+		for {
+			_, err := internal.RunKubectlCmd([]string{"get", "namespace", "kyma-integration"})
+			if err != nil {
+				break
+			}
+			time.Sleep(sleep)
+		}
+	}
 	return nil
 }
 

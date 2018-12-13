@@ -124,12 +124,12 @@ func (o *MinikubeOptions) Run() error {
 	}
 	internal.StopSpinner(spinner)
 
-	spinner = internal.NewSpinner("Adding hostnames, please enter you password if requested", "Hostnames added to "+internal.HOSTS_FILE)
+	fmt.Println("Adding hostnames, please enter your password if requested")
 	err = addDevDomainsToEtcHosts(o)
 	if err != nil {
 		return err
 	}
-	internal.StopSpinner(spinner)
+	fmt.Println("Hostnames added to " + internal.HOSTS_FILE)
 
 	spinner = internal.NewSpinner("Adjusting minikube cluster", "Minikube cluster adjusted")
 	err = increaseFsInotifyMaxUserInstances(o)
