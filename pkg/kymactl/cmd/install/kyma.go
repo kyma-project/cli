@@ -163,12 +163,9 @@ func activateInstaller(o *KymaOptions) error {
 }
 
 func printSummary(o *KymaOptions) error {
-	version, err := internal.RunKubectlCmd([]string{"get", "installation/kyma-installation", "-o", "jsonpath='{.spec.version}'"})
+	version, err := internal.GetKymaVersion()
 	if err != nil {
 		return err
-	}
-	if version == "" {
-		version = "N/A"
 	}
 
 	pwdEncoded, err := internal.RunKubectlCmd([]string{"-n", "kyma-system", "get", "secret", "admin-user", "-o", "jsonpath='{.data.password}'"})
@@ -199,7 +196,7 @@ func printSummary(o *KymaOptions) error {
 	fmt.Println()
 	fmt.Println(clusterInfo)
 	fmt.Println()
-	fmt.Printf("Kyma is installed using version %s\n", version)
+	fmt.Printf("Kyma is installed in version %s\n", version)
 	fmt.Printf("Kyma console:     https://console.%s\n", o.Domain)
 	fmt.Printf("Kyma admin email: %s\n", emailDecoded)
 	fmt.Printf("Kyma admin pwd:   %s\n", pwdDecoded)

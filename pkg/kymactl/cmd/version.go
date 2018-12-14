@@ -4,37 +4,53 @@ import (
 	"fmt"
 
 	"github.com/kyma-incubator/kymactl/internal"
+
 	"github.com/spf13/cobra"
 )
 
+//Version contains the kymactl binary version injected by the build system
 var Version string
 
-func newVersionCmd() *cobra.Command {
-	versionCmd := &cobra.Command{
+//VersionOptions defines available options for the command
+type VersionOptions struct {
+	Client bool
+}
+
+//NewVersionOptions creates options with default values
+func NewVersionOptions() *VersionOptions {
+	return &VersionOptions{}
+}
+
+//NewVersionCmd creates a new version command
+func NewVersionCmd(o *VersionOptions) *cobra.Command {
+	cmd := &cobra.Command{
 		Use:   "version",
 		Short: "Version of the kymactl and connected Kyma cluster",
 		Long: `Prints the version of kymactl itself and the version of the kyma cluster connected by current KUBECONFIG
 `,
-		RunE: version,
+		RunE: func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
-	return versionCmd
+	cmd.Flags().BoolVarP(&o.Client, "client", "c", false, "Client version only (no server required)")
+
+	return cmd
 }
 
-func version(cmd *cobra.Command, args []string) error {
-	if Version == "" {
-		fmt.Println("No kymactl version available")
-	} else {
-		fmt.Printf("kymactl version %s\n", Version)
+//Run runs the command
+func (o *VersionOptions) Run() error {
+
+	version := Version
+	if version == "" {
+		version = "N/A"
+	}
+	fmt.Printf("Kymactl version:      %s\n", version)
+
+	if !o.Client {
+		version, err := internal.GetKymaVersion()
+		if err != nil {
+			return err
+		}
+		fmt.Printf("Kyma cluster version: %s\n", version)
 	}
 
-	kymaVersion, err := internal.RunKubectlCmd([]string{"get", "installation/kyma-installation", "-o", "jsonpath='{.spec.version}'"})
-	if err != nil {
-		return err
-	}
-	if kymaVersion == "" {
-		fmt.Println("No Kyma cluster version available")
-	} else {
-		fmt.Printf("Kyma cluster version: %s\n", kymaVersion)
-	}
 	return nil
 }

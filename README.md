@@ -4,6 +4,21 @@
 
 A command line tool to support developers of and with Kyma
 
+## Usage
+
+Installation of kyma with minikube on Mac:
+```
+kymactl install cluster minikube
+kymactl install kyma
+```
+
+Installation of kyma with minikube on Windows:
+```
+kymactl install cluster minikube --vm-driver hyper-v
+kymactl install kyma
+```
+
+
 ## Available Commands
 
 - `version`: Shows the kyma cluster version and the kymactl version. The kymactl version is set at compile time passing it to the go linker as a flag:

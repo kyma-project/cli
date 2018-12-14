@@ -34,7 +34,7 @@ Find more information at: https://github.com/kyma-incubator/kymactl
 
 	cmd.PersistentFlags().BoolVarP(&o.Verbose, "verbose", "v", false, "verbose output")
 
-	versionCmd := newVersionCmd()
+	versionCmd := NewVersionCmd(NewVersionOptions())
 	cmd.AddCommand(versionCmd)
 
 	completionCmd := NewCompletionCmd()
