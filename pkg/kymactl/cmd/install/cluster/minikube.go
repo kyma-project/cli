@@ -17,10 +17,7 @@ const (
 	bootstrapper      string = "localkube"
 	vmDriverHyperkit  string = "hyperkit"
 	vmDriverNone      string = "none"
-)
-
-const (
-	sleep = 10 * time.Second
+	sleep                    = 10 * time.Second
 )
 
 var (
@@ -286,14 +283,16 @@ func addDevDomainsToEtcHosts(o *MinikubeOptions) error {
 		return err
 	}
 
+	hostAlias := "127.0.0.1" + hostnames
+
 	if o.VMDriver != vmDriverNone {
-		_, err := internal.RunMinikubeCmd([]string{"ssh", "'echo \"127.0.0.1" + hostnames + "\" | sudo tee -a /etc/hosts'"})
+		_, err := internal.RunMinikubeCmd([]string{"ssh", "sudo /bin/sh -c 'echo \"" + hostAlias + "\" >> /etc/hosts'"})
 		if err != nil {
 			return err
 		}
 	}
 
-	hostAlias := strings.Trim(minikubeIP, "\n") + hostnames
+	hostAlias = strings.Trim(minikubeIP, "\n") + hostnames
 
 	if runtime.GOOS == "windows" {
 		fmt.Println()
@@ -342,7 +341,7 @@ func increaseFsInotifyMaxUserInstances(o *MinikubeOptions) error {
 
 func printSummary() error {
 	fmt.Println()
-
+	fmt.Println("Minikube cluster is installed")
 	clusterInfo, err := internal.RunMinikubeCmd([]string{"status", "-b=" + bootstrapper})
 	if err != nil {
 		fmt.Printf("Cannot show cluster-info because of '%s", err)
@@ -350,7 +349,6 @@ func printSummary() error {
 		fmt.Println(clusterInfo)
 	}
 
-	fmt.Println()
 	fmt.Println("Happy Minikube-ing! :)")
 	return nil
 }

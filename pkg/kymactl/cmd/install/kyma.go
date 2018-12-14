@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	sleep = 10 * time.Second
+	sleep = 5 * time.Second
 )
 
 //KymaOptions defines available options for the command
@@ -55,7 +55,7 @@ The command will:
 
 //Run runs the command
 func (o *KymaOptions) Run() error {
-	fmt.Printf("Installing kyma in version '%s'\n‚", o.ReleaseVersion)
+	fmt.Printf("Installing kyma in version '%s'\n", o.ReleaseVersion)
 	fmt.Println()
 
 	spinner := internal.NewSpinner("Checking requirements", "Requirements are fine")
@@ -79,7 +79,7 @@ func (o *KymaOptions) Run() error {
 	}
 	internal.StopSpinner(spinner)
 
-	spinner = internal.NewSpinner("Requesting kyma-installer to install kyma", "kyma-installer is activated to install kyma")
+	spinner = internal.NewSpinner("Requesting kyma-installer to install kyma", "kyma-installer is installing kyma")
 	err = activateInstaller(o)
 	if err != nil {
 		return err
@@ -171,7 +171,7 @@ func printSummary(o *KymaOptions) error {
 		version = "N/A"
 	}
 
-	pwdEncoded, err := internal.RunKubectlCmd([]string{"-n", "kyma-system", "get", "secret", "admin-user", "jsonpath='{.data.password}'"})
+	pwdEncoded, err := internal.RunKubectlCmd([]string{"-n", "kyma-system", "get", "secret", "admin-user", "-o", "jsonpath='{.data.password}'"})
 	if err != nil {
 		return err
 	}
@@ -181,7 +181,7 @@ func printSummary(o *KymaOptions) error {
 		return err
 	}
 
-	emailEncoded, err := internal.RunKubectlCmd([]string{"-n", "kyma-system", "get", "secret", "admin-user", "jsonpath='{.data.email}'"})
+	emailEncoded, err := internal.RunKubectlCmd([]string{"-n", "kyma-system", "get", "secret", "admin-user", "-o", "jsonpath='{.data.email}'"})
 	if err != nil {
 		return err
 	}
@@ -191,18 +191,22 @@ func printSummary(o *KymaOptions) error {
 		return err
 	}
 
-	fmt.Printf("Kyma is installed using version %s!\n", version)
-	fmt.Printf("Kyma console:     https://console.%s!\n", o.Domain)
-	fmt.Printf("Kyma admin email: %s!\n", emailDecoded)
-	fmt.Printf("Kyma admin pwd:   %s!\n", pwdDecoded)
-	fmt.Println()
-	fmt.Println("Happy Kyma-ing! :)")
-	fmt.Println()
 	clusterInfo, err := internal.RunKubectlCmd([]string{"cluster-info"})
 	if err != nil {
 		return err
 	}
+
+	fmt.Println()
 	fmt.Println(clusterInfo)
+	fmt.Println()
+	fmt.Printf("Kyma is installed using version %s\n", version)
+	fmt.Printf("Kyma console:     https://console.%s\n", o.Domain)
+	fmt.Printf("Kyma admin email: %s\n", emailDecoded)
+	fmt.Printf("Kyma admin pwd:   %s\n", pwdDecoded)
+	fmt.Println()
+	fmt.Println("Happy Kyma-ing! :)")
+	fmt.Println()
+
 	return nil
 }
 
