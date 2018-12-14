@@ -1,6 +1,7 @@
 package install
 
 import (
+	"encoding/base64"
 	"fmt"
 	"os"
 	"time"
@@ -17,8 +18,8 @@ const (
 type KymaOptions struct {
 	ReleaseVersion string
 	ReleaseConfig  string
-	ClusterAdmin   string
 	NoWait         bool
+	Domain         string
 }
 
 //NewKymaOptions creates options with default values
@@ -36,7 +37,6 @@ func NewKymaCmd(o *KymaOptions) *cobra.Command {
 
 Assure that your KUBECONFIG is pointing to the target cluster already.
 The command will:
-- Add your account as the cluster administrator 
 - Install tiller
 - Install the Kyma installer
 - Configures the Kyma installer with the latest minimal configuration
@@ -48,17 +48,18 @@ The command will:
 
 	cmd.Flags().StringVarP(&o.ReleaseVersion, "release", "r", "0.5.0", "kyma release to use")
 	cmd.Flags().StringVarP(&o.ReleaseConfig, "config", "c", "", "URL or path to the installer configuration yaml")
-	cmd.Flags().StringVarP(&o.ClusterAdmin, "admin", "a", "default", "cluster admin user to configure")
 	cmd.Flags().BoolVarP(&o.NoWait, "noWait", "n", false, "Do not wait for completion of kyma-installer")
+	cmd.Flags().StringVarP(&o.Domain, "domain", "d", "kyma.local", "domain to use for installation")
 	return cmd
 }
 
 //Run runs the command
 func (o *KymaOptions) Run() error {
-	fmt.Printf("Installing kyma in version '%s' with admin user '%s'\n\n‚", o.ReleaseVersion, o.ClusterAdmin)
+	fmt.Printf("Installing kyma in version '%s'\n‚", o.ReleaseVersion)
+	fmt.Println()
 
-	var spinner = internal.NewSpinner("Creating ClusterRoleBinding for admin '"+o.ClusterAdmin+"'", "ClusterRoleBinding created for admin "+o.ClusterAdmin)
-	err := createlusterRoleBinding(o)
+	spinner := internal.NewSpinner("Checking requirements", "Requirements are fine")
+	err := internal.CheckKubectlVersion()
 	if err != nil {
 		return err
 	}
@@ -93,27 +94,6 @@ func (o *KymaOptions) Run() error {
 	}
 
 	err = printSummary(o)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func createlusterRoleBinding(o *KymaOptions) error {
-	check, err := internal.IsClusterResourceDeployed("clusterrolebinding", "app", "kymactl")
-	if err != nil {
-		return err
-	}
-	if check {
-		return nil
-	}
-	_, err = internal.RunKubectlCmd([]string{"create", "clusterrolebinding", "cluster-admin-binding", "--clusterrole=cluster-admin", "--user=" + o.ClusterAdmin})
-	if err != nil {
-		return err
-	}
-
-	_, err = internal.RunKubectlCmd([]string{"label", "clusterrolebinding", "cluster-admin-binding", "app=kymactl"})
 	if err != nil {
 		return err
 	}
@@ -190,9 +170,34 @@ func printSummary(o *KymaOptions) error {
 	if version == "" {
 		version = "N/A"
 	}
+
+	pwdEncoded, err := internal.RunKubectlCmd([]string{"-n", "kyma-system", "get", "secret", "admin-user", "jsonpath='{.data.password}'"})
+	if err != nil {
+		return err
+	}
+
+	pwdDecoded, err := base64.StdEncoding.DecodeString(pwdEncoded)
+	if err != nil {
+		return err
+	}
+
+	emailEncoded, err := internal.RunKubectlCmd([]string{"-n", "kyma-system", "get", "secret", "admin-user", "jsonpath='{.data.email}'"})
+	if err != nil {
+		return err
+	}
+
+	emailDecoded, err := base64.StdEncoding.DecodeString(emailEncoded)
+	if err != nil {
+		return err
+	}
+
 	fmt.Printf("Kyma is installed using version %s!\n", version)
-	fmt.Println("Happy Kyma-ing!")
-	fmt.Println("")
+	fmt.Printf("Kyma console:     https://console.%s!\n", o.Domain)
+	fmt.Printf("Kyma admin email: %s!\n", emailDecoded)
+	fmt.Printf("Kyma admin pwd:   %s!\n", pwdDecoded)
+	fmt.Println()
+	fmt.Println("Happy Kyma-ing! :)")
+	fmt.Println()
 	clusterInfo, err := internal.RunKubectlCmd([]string{"cluster-info"})
 	if err != nil {
 		return err

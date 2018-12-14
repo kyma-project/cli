@@ -4,20 +4,15 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"regexp"
 	"runtime"
 	"strings"
 	"time"
-
-	"strconv"
 
 	"github.com/kyma-incubator/kymactl/internal"
 	"github.com/spf13/cobra"
 )
 
 const (
-	minikubeVersion   string = "0.28.2"
-	kubectlVersion    string = "1.10.0"
 	kubernetesVersion string = "1.10.0"
 	bootstrapper      string = "localkube"
 	vmDriverHyperkit  string = "hyperkit"
@@ -86,15 +81,16 @@ func NewMinikubeCmd(o *MinikubeOptions) *cobra.Command {
 
 //Run runs the command
 func (o *MinikubeOptions) Run() error {
-	fmt.Printf("Installing minikube cluster using domain '%s' and vm-driver '%s'\n\n", o.Domain, o.VMDriver)
+	fmt.Printf("Installing minikube cluster using domain '%s' and vm-driver '%s'\n", o.Domain, o.VMDriver)
+	fmt.Println()
 
 	spinner := internal.NewSpinner("Checking requirements", "Requirements are fine")
-	err := checkMinikubeVersion()
+	err := internal.CheckMinikubeVersion()
 	if err != nil {
 		return err
 	}
 
-	err = checkKubectlVersion()
+	err = internal.CheckKubectlVersion()
 	if err != nil {
 		return err
 	}
@@ -122,6 +118,16 @@ func (o *MinikubeOptions) Run() error {
 	if err != nil {
 		return err
 	}
+
+	err = createClusterRoleBinding()
+	if err != nil {
+		return err
+	}
+
+	err = internal.WaitForPod("kube-system", "k8s-app", "kube-dns")
+	if err != nil {
+		return err
+	}
 	internal.StopSpinner(spinner)
 
 	fmt.Println("Adding hostnames, please enter your password if requested")
@@ -143,49 +149,6 @@ func (o *MinikubeOptions) Run() error {
 		return err
 	}
 
-	return nil
-}
-
-func checkMinikubeVersion() error {
-	versionCmd := []string{"version"}
-	versionText, err := internal.RunMinikubeCmd(versionCmd)
-	if err != nil {
-		return err
-	}
-
-	exp, _ := regexp.Compile("minikube version: v((\\d+.\\d+.\\d+))")
-	version := exp.FindStringSubmatch(versionText)
-
-	if version[1] != minikubeVersion {
-		return fmt.Errorf("Currently minikube in version '%s' is required", minikubeVersion)
-	}
-	return nil
-
-}
-
-func checkKubectlVersion() error {
-	versionText, err := internal.RunKubectlCmd([]string{"version", "--client", "--short"})
-	if err != nil {
-		return err
-	}
-
-	exp, _ := regexp.Compile("Client Version: v((\\d+).(\\d+).(\\d+))")
-	kubctlIsVersion := exp.FindStringSubmatch(versionText)
-
-	exp, _ = regexp.Compile("((\\d+).(\\d+).(\\d+))")
-	kubctlMustVersion := exp.FindStringSubmatch(kubectlVersion)
-
-	majorIsVersion, _ := strconv.Atoi(kubctlIsVersion[2])
-	majorMustVersion, _ := strconv.Atoi(kubctlMustVersion[2])
-	minorIsVersion, _ := strconv.Atoi(kubctlIsVersion[3])
-	minorMustVersion, _ := strconv.Atoi(kubctlMustVersion[3])
-
-	if minorIsVersion-minorMustVersion < -1 || minorIsVersion-minorMustVersion > 1 {
-		fmt.Printf("Your kubectl version is '%s'. Supported versions of kubectl are from '%d.%d.*' to '%d.%d.*'", kubctlIsVersion[1], majorMustVersion, minorMustVersion-1, majorMustVersion, minorMustVersion+1)
-	}
-	if majorIsVersion != majorMustVersion {
-		return fmt.Errorf("Your kubectl version is '%s'. Supported versions of kubectl are from '%d.%d.*' to '%d.%d.*'", kubctlIsVersion[1], majorMustVersion, minorMustVersion-1, majorMustVersion, minorMustVersion+1)
-	}
 	return nil
 }
 
@@ -266,11 +229,20 @@ func startMinikube(o *MinikubeOptions) error {
 }
 
 // fixes https://github.com/kyma-project/kyma/issues/1986
-func applyHotfix() error {
-	_, err := internal.RunKubectlCmd([]string{"create", "clusterrolebinding", "kube-system-cluster-admin", "--clusterrole=cluster-admin", "--serviceaccount=kube-system:default"})
+func createClusterRoleBinding() error {
+	check, err := internal.IsClusterResourceDeployed("clusterrolebinding", "app", "kyma")
 	if err != nil {
-		fmt.Printf("\nTried to fix minikube setup for https://github.com/kyma-project/kyma/issues/1986 but failed")
-		fmt.Println(err)
+		return err
+	}
+	if !check {
+		_, err := internal.RunKubectlCmd([]string{"create", "clusterrolebinding", "default-sa-cluster-admin", "--clusterrole=cluster-admin", "--serviceaccount=kube-system:default"})
+		if err != nil {
+			return err
+		}
+		_, err = internal.RunKubectlCmd([]string{"label", "clusterrolebinding", "default-sa-cluster-admin", "app=kyma"})
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -300,15 +272,6 @@ func waitForMinikubeToBeUp() error {
 		time.Sleep(sleep)
 	}
 
-	err := applyHotfix()
-	if err != nil {
-		return err
-	}
-	err = internal.WaitForPod("kube-system", "k8s-app", "kube-dns")
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -333,7 +296,7 @@ func addDevDomainsToEtcHosts(o *MinikubeOptions) error {
 	hostAlias := strings.Trim(minikubeIP, "\n") + hostnames
 
 	if runtime.GOOS == "windows" {
-		fmt.Println("")
+		fmt.Println()
 		fmt.Println("=====")
 		fmt.Println("Please add these lines to your " + internal.HOSTS_FILE + " file:")
 		fmt.Println(hostAlias)
@@ -378,7 +341,7 @@ func increaseFsInotifyMaxUserInstances(o *MinikubeOptions) error {
 }
 
 func printSummary() error {
-	fmt.Println("\nHappy Minikube-ing!")
+	fmt.Println()
 
 	clusterInfo, err := internal.RunMinikubeCmd([]string{"status", "-b=" + bootstrapper})
 	if err != nil {
@@ -386,5 +349,8 @@ func printSummary() error {
 	} else {
 		fmt.Println(clusterInfo)
 	}
+
+	fmt.Println()
+	fmt.Println("Happy Minikube-ing! :)")
 	return nil
 }

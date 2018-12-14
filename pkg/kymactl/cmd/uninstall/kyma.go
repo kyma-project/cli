@@ -2,7 +2,6 @@ package uninstall
 
 import (
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/kyma-incubator/kymactl/internal"
@@ -45,10 +44,18 @@ The command will:
 
 //Run runs the command
 func (o *KymaOptions) Run() error {
-	fmt.Printf("Uninstalling kyma\n\n")
+	fmt.Printf("Uninstalling kyma\n")
+	fmt.Println()
 
-	var spinner = internal.NewSpinner("Activate kyma-installer to uninstall kyma", "kyma-installer activated to uninstall kyma")
-	err := activateInstaller(o)
+	spinner := internal.NewSpinner("Checking requirements", "Requirements are fine")
+	err := internal.CheckKubectlVersion()
+	if err != nil {
+		return err
+	}
+	internal.StopSpinner(spinner)
+
+	spinner = internal.NewSpinner("Activate kyma-installer to uninstall kyma", "kyma-installer activated to uninstall kyma")
+	err = activateInstaller(o)
 	if err != nil {
 		return err
 	}
@@ -229,7 +236,8 @@ func deleteClusterRoleBinding(o *KymaOptions) error {
 }
 
 func printSummary(o *KymaOptions) error {
-	fmt.Println("\nkyma uninstalled")
+	fmt.Println()
+	fmt.Println("Kyma uninstalled! :(")
 	return nil
 }
 
@@ -293,10 +301,8 @@ func waitForInstaller(o *KymaOptions) error {
 			}
 
 		default:
-			fmt.Printf("Unexpected status: %s\n", status)
-			os.Exit(1)
+			return fmt.Errorf("Unexpected status: %s", status)
 		}
 		time.Sleep(sleep)
 	}
-	return nil
 }

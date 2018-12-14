@@ -43,7 +43,6 @@ To know more about extending kubectl with plugins read [kubernetes documentation
 ## Roadmap
 - adding minikube domain to hosts file on windows
 - use latest release automically
-- remove orphaned minikube domain entries from /etc/hosts
 - install optional kyma module (ark, logging)
 - uninstall optional kyma module
 - update kyma to newer release
@@ -51,4 +50,6 @@ To know more about extending kubectl with plugins read [kubernetes documentation
 - install gke cluster
 - execute acceptance tests against kyma cluster
 - connect application to kyma
+- use log framework with log levels and have verbose modes
+- support merging custom configuration from file
   
