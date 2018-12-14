@@ -4,6 +4,19 @@
 
 A command line tool to support developers of and with Kyma
 
+## Available Commands
+
+- `version`: Shows the kyma cluster version and the kymactl version. The kymactl version is set at compile time passing it to the go linker as a flag:
+
+    ```bash
+    go build -o ./bin/kymactl -ldflags “-X github.com/kyma-incubator/kymactl/pkg/kymactl/cmd.Version=1.5.0” ./cmd/kymactl.go
+    ```
+- `install cluster minikube`: Initializes minikube with a new cluster (replaces the `minikube.sh` script) 
+- `install kyma`: Installs kyma to a cluster based on a release (replaces the `ìnstaller.sh` and `is-installed.sh` script)
+- `uninstall kyma`: Uninstalls all kyma related resources from a cluster
+- `completion`: Output shell completion code for bash.
+- `help`: Displays usage for the given command (e.g. `kymactl help`, `kymactl help status`, etc...)
+
 ## Usage
 
 Installation of kyma with minikube on Mac:
@@ -15,24 +28,12 @@ kymactl install kyma
 Installation of kyma with minikube on Windows:
 ```
 kymactl install cluster minikube --vm-driver hyper-v
+# follow instructions to add hosts
+
 kymactl install kyma
 ```
 
-
-## Available Commands
-
-- `version`: Shows the kyma cluster version and the kymactl version. The kymactl version is set at compile time passing it to the go linker as a flag:
-
-    ```bash
-    go build -o kymactl -ldflags "-X github.com/kyma-incubator/kymactl/pkg/kymactl/cmd.Version=1.5.0"
-    ```
-- `install cluster minikube`: Initializes minikube with a new cluster (replaces the `minikube.sh` script) 
-- `install kyma`: Installs kyma to a cluster based on a release (replaces the `ìnstaller.sh` and `is-installed.sh` script)
-- `uninstall kyma`: Uninstalls all kyma related resources from a cluster
-- `completion`: Output shell completion code for bash.
-- `help`: Displays usage for the given command (e.g. `kymactl help`, `kymactl help status`, etc...)
-
-## kymactl as a kubectl plugin
+## Kymactl as a Kubectl plugin
 
 To follow this section a kubectl version of 1.12.0 or later is required.
 
