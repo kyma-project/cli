@@ -190,7 +190,7 @@ func checkIfMinikubeIsInitialized(o *MinikubeOptions) error {
 			}
 			fmt.Println("=====")
 		}
-		if o.Silent || strings.Trim(answer, "\n\t ") == "y" {
+		if o.Silent || strings.Trim(answer, "\n\t\r ") == "y" {
 			_, err := internal.RunMinikubeCmd([]string{"delete"})
 			if err != nil {
 				return err
