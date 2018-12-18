@@ -57,6 +57,15 @@ Kyma is running!
 To know more about extending kubectl with plugins read [kubernetes documentation](https://kubernetes.io/docs/tasks/extend-kubectl/kubectl-plugins/).
 
 ## Roadmap
+- Usability
+  - Renaming: Have project called 'kymactl' but all usage should be using term 'kyma', like 'kyma install'
+  - Better Command Structure?:
+    - kyma install
+    - kyma uninstall
+    - kyma add monitoring
+    - kyma cluster minikube
+    - kyma cluster gke
+    - kyma version
 - Portability
   - adding windows support (only hosts manipulation missing)
   - validate linux support
@@ -69,15 +78,16 @@ To know more about extending kubectl with plugins read [kubernetes documentation
   - install optional kyma module (ark, logging)
   - uninstall optional kyma module
   - update kyma to newer release
-- Kyma releases management
+- Release management
   - use latest release automically
   - list available releases
 - Application Connectivity
   - create remote environment and fetch connection token
   - manage APIs registered by an application
-- Testing
+- Testing/Validation
   - execute acceptance tests for kyma
   - connect mock application to kyma
+  - 'Check' a kyma installation for potential problems
 - CTL installation
   - homebrew support
   - support for edge releases
