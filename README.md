@@ -27,7 +27,7 @@ kymactl install kyma
 
 Installation of kyma with minikube on Windows:
 ```
-kymactl install cluster minikube --vm-driver hyperv
+kymactl install cluster minikube --vm-driver hyperv --hypervVirtualSwitch
 # follow instructions to add hosts
 
 kymactl install kyma
@@ -57,15 +57,31 @@ Kyma is running!
 To know more about extending kubectl with plugins read [kubernetes documentation](https://kubernetes.io/docs/tasks/extend-kubectl/kubectl-plugins/).
 
 ## Roadmap
-- adding minikube domain to hosts file on windows
-- use latest release automically
-- install optional kyma module (ark, logging)
-- uninstall optional kyma module
-- update kyma to newer release
-- list available releases
-- install gke cluster
-- execute acceptance tests against kyma cluster
-- connect application to kyma
-- use log framework with log levels and have verbose modes
-- support merging custom configuration from file
+- Portability
+  - adding windows support
+  - validate linux support
+- Cloud Provider support
+  - Google Kubernetes Engine
+- Kyma installation
+  - open the Kyma console in the default browser at the end of Kyma installation
+  - provide own command "dashboard" to open the conole in default browser
+  - support all configuration options of the kyma-installer
+  - install optional kyma module (ark, logging)
+  - uninstall optional kyma module
+  - update kyma to newer release
+- Kyma releases management
+  - use latest release automically
+  - list available releases
+- Application Connectivity
+  - create remote environment and fetch connection token
+  - manage APIs registered by an application
+- Testing
+  - execute acceptance tests for kyma
+  - connect mock application to kyma
+- CTL installation
+  - homebrew support
+  - support for edge releases
+- engineering
+  - use log framework with log levels and have verbose modes
+  - have tests
   

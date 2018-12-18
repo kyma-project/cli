@@ -190,7 +190,7 @@ func checkIfMinikubeIsInitialized(o *MinikubeOptions) error {
 			}
 			fmt.Println("=====")
 		}
-		if o.Silent || answer == "y\n" {
+		if o.Silent || strings.Trim(answer, "\n\t ") == "y" {
 			_, err := internal.RunMinikubeCmd([]string{"delete"})
 			if err != nil {
 				return err
@@ -226,7 +226,7 @@ func initializeMinikubeConfig() error {
 func startMinikube(o *MinikubeOptions) error {
 	virtualSwitchArg := ""
 	if o.VMDriver == vmDriverHyperv {
-		virtualSwitchArg = "--hyperv-virtual-switch='" + o.HypervVirtualSwitch + "'"
+		virtualSwitchArg = "--hyperv-virtual-switch=" + o.HypervVirtualSwitch
 	}
 
 	startCmd := []string{"start",
