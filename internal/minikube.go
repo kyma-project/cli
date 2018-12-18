@@ -40,7 +40,7 @@ func CheckMinikubeVersion() error {
 	version := exp.FindStringSubmatch(versionText)
 
 	if version[1] != minikubeVersion {
-		return fmt.Errorf("Currently minikube in version '%s' is required", minikubeVersion)
+		return fmt.Errorf("Your minikube version is '%s'. Currently only minikube in version '%s' is supported", version[1], minikubeVersion)
 	}
 	return nil
 

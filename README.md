@@ -27,7 +27,7 @@ kymactl install kyma
 
 Installation of kyma with minikube on Windows:
 ```
-kymactl install cluster minikube --vm-driver hyper-v
+kymactl install cluster minikube --vm-driver hyperv
 # follow instructions to add hosts
 
 kymactl install kyma

@@ -16,12 +16,13 @@ const (
 	kubernetesVersion string = "1.10.0"
 	bootstrapper      string = "localkube"
 	vmDriverHyperkit  string = "hyperkit"
+	vmDriverHyperv    string = "hyperv"
 	vmDriverNone      string = "none"
 	sleep                    = 10 * time.Second
 )
 
 var (
-	domains = [...]string{
+	domains = []string{
 		"apiserver",
 		"console",
 		"catalog",
@@ -38,16 +39,28 @@ var (
 		"gateway",
 		"connector-service",
 	}
+
+	drivers = []string{
+		"virtualbox",
+		"vmwarefusion",
+		"kvm",
+		"xhyve",
+		vmDriverHyperv,
+		vmDriverHyperkit,
+		"kvm2",
+		"none",
+	}
 )
 
 //MinikubeOptions defines available options for the command
 type MinikubeOptions struct {
-	Domain   string
-	VMDriver string
-	Silent   bool
-	DiskSize string
-	Memory   string
-	CPU      string
+	Domain              string
+	VMDriver            string
+	Silent              bool
+	DiskSize            string
+	Memory              string
+	CPU                 string
+	HypervVirtualSwitch string
 }
 
 //NewMinikubeOptions creates options with default values
@@ -68,7 +81,8 @@ func NewMinikubeCmd(o *MinikubeOptions) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.Domain, "domain", "d", "kyma.local", "domain to use")
-	cmd.Flags().StringVar(&o.VMDriver, "vm-driver", vmDriverHyperkit, "VMDriver to use")
+	cmd.Flags().StringVar(&o.VMDriver, "vm-driver", vmDriverHyperkit, "VMDriver to use, possible values are: "+strings.Join(drivers, ","))
+	cmd.Flags().StringVar(&o.HypervVirtualSwitch, "hypervVirtualSwitch", "", "Name of the hyperv switch to use, required if --vm-driver=hyperv")
 	cmd.Flags().StringVar(&o.DiskSize, "disk-size", "20g", "Disk size to use")
 	cmd.Flags().StringVar(&o.Memory, "memory", "8192", "Memory to use")
 	cmd.Flags().StringVar(&o.CPU, "cpu", "4", "CPUs to use")
@@ -82,6 +96,12 @@ func (o *MinikubeOptions) Run() error {
 	fmt.Println()
 
 	spinner := internal.NewSpinner("Checking requirements", "Requirements are fine")
+	if !driverSupported(o.VMDriver) {
+		return fmt.Errorf("Specified VMDriver '%s' is not supported by minikube", o.VMDriver)
+	}
+	if o.VMDriver == vmDriverHyperv && o.HypervVirtualSwitch == "" {
+		return fmt.Errorf("Specified VMDriver '%s' requires option --hypervVirtualSwitch to be provided", vmDriverHyperv)
+	}
 	err := internal.CheckMinikubeVersion()
 	if err != nil {
 		return err
@@ -204,6 +224,11 @@ func initializeMinikubeConfig() error {
 }
 
 func startMinikube(o *MinikubeOptions) error {
+	virtualSwitchArg := ""
+	if o.VMDriver == vmDriverHyperv {
+		virtualSwitchArg = "--hyperv-virtual-switch='" + o.HypervVirtualSwitch + "'"
+	}
+
 	startCmd := []string{"start",
 		"--memory", o.Memory,
 		"--cpus", o.CPU,
@@ -216,6 +241,7 @@ func startMinikube(o *MinikubeOptions) error {
 		"--vm-driver=" + o.VMDriver,
 		"--disk-size=" + o.DiskSize,
 		"--feature-gates='MountPropagation=false'",
+		virtualSwitchArg,
 		"-b=" + bootstrapper,
 	}
 	_, err := internal.RunMinikubeCmd(startCmd)
@@ -351,4 +377,13 @@ func printSummary() error {
 
 	fmt.Println("Happy Minikube-ing! :)")
 	return nil
+}
+
+func driverSupported(driver string) bool {
+	for _, element := range drivers {
+		if element == driver {
+			return true
+		}
+	}
+	return false
 }
