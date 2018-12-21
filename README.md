@@ -15,6 +15,7 @@ A command line tool to support developers of and with Kyma
 - `install kyma`: Installs kyma to a cluster based on a release (replaces the `ìnstaller.sh` and `is-installed.sh` script)
 - `uninstall kyma`: Uninstalls all kyma related resources from a cluster
 - `completion`: Output shell completion code for bash.
+- `releases`: Lists all avavilable Kyma releases
 - `help`: Displays usage for the given command (e.g. `kymactl help`, `kymactl help status`, etc...)
 
 ## Usage
