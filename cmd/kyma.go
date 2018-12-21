@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/kyma-incubator/kymactl/pkg/kymactl/cmd"
+	"github.com/kyma-incubator/kymactl/pkg/kyma/cmd"
 )
 
 func main() {
-	command := cmd.NewKymactlCmd(cmd.NewKymactlOptions())
+	command := cmd.NewKymaCmd(cmd.NewKymaOptions())
 
 	err := command.Execute()
 	if err != nil {

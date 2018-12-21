@@ -1,29 +1,29 @@
 package cmd
 
 import (
-	"github.com/kyma-incubator/kymactl/pkg/kymactl/cmd/install"
-	"github.com/kyma-incubator/kymactl/pkg/kymactl/cmd/install/cluster"
-	"github.com/kyma-incubator/kymactl/pkg/kymactl/cmd/uninstall"
+	"github.com/kyma-incubator/kymactl/pkg/kyma/cmd/install"
+	"github.com/kyma-incubator/kymactl/pkg/kyma/cmd/install/cluster"
+	"github.com/kyma-incubator/kymactl/pkg/kyma/cmd/uninstall"
 	"github.com/spf13/cobra"
 )
 
-//KymactlOptions defines available options for the command
-type KymactlOptions struct {
+//KymaOptions defines available options for the command
+type KymaOptions struct {
 	Verbose bool
 }
 
-//NewKymactlOptions creates options with default values
-func NewKymactlOptions() *KymactlOptions {
-	return &KymactlOptions{}
+//NewKymaOptions creates options with default values
+func NewKymaOptions() *KymaOptions {
+	return &KymaOptions{}
 }
 
-//NewKymactlCmd creates a new kymactl command
-func NewKymactlCmd(o *KymactlOptions) *cobra.Command {
+//NewKymaCmd creates a new kyma CLI command
+func NewKymaCmd(o *KymaOptions) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "kymactl",
-		Short: "kymactl controls a Kyma cluster.",
+		Use:   "kyma",
+		Short: "Controls a Kyma cluster.",
 		Long: `Kyma is a flexible and easy way to connect and extend enterprise applications in a cloud-native world.
-kymactl controls a Kyma cluster.
+kyma CLI controls a Kyma cluster.
 
 Find more information at: https://github.com/kyma-incubator/kymactl
 `,

@@ -25,8 +25,8 @@ func NewVersionOptions() *VersionOptions {
 func NewVersionCmd(o *VersionOptions) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "version",
-		Short: "Version of the kymactl and connected Kyma cluster",
-		Long: `Prints the version of kymactl itself and the version of the kyma cluster connected by current KUBECONFIG
+		Short: "Version of the kyma CLI and connected Kyma cluster",
+		Long: `Prints the version of kyma CLI itself and the version of the kyma cluster connected by current KUBECONFIG
 `,
 		RunE: func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
@@ -42,7 +42,7 @@ func (o *VersionOptions) Run() error {
 	if version == "" {
 		version = "N/A"
 	}
-	fmt.Printf("Kymactl version:      %s\n", version)
+	fmt.Printf("Kyma CLI version: %s\n", version)
 
 	if !o.Client {
 		version, err := internal.GetKymaVersion()
