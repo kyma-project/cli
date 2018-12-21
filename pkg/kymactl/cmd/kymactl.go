@@ -20,10 +20,10 @@ func NewKymactlOptions() *KymactlOptions {
 //NewKymactlCmd creates a new kymactl command
 func NewKymactlCmd(o *KymactlOptions) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "kymactl",
-		Short: "kymactl controls a Kyma cluster.",
+		Use:   "kyma",
+		Short: "Controls a Kyma cluster.",
 		Long: `Kyma is a flexible and easy way to connect and extend enterprise applications in a cloud-native world.
-kymactl controls a Kyma cluster.
+kyma CLI controls a Kyma cluster.
 
 Find more information at: https://github.com/kyma-incubator/kymactl
 `,

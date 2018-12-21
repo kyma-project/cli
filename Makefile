@@ -18,9 +18,9 @@ validate:
 .PHONY: build
 build:
 	go generate ./...
-	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o ./bin/kymactl.exe $(FLAGS) ./cmd/kymactl.go
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/kymactl-linux $(FLAGS) ./cmd/kymactl.go
-	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o ./bin/kymactl-darwin $(FLAGS) ./cmd/kymactl.go
+	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o ./bin/kyma.exe $(FLAGS) ./cmd/kymactl.go
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/kyma-linux $(FLAGS) ./cmd/kymactl.go
+	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o ./bin/kyma-darwin $(FLAGS) ./cmd/kymactl.go
 
 .PHONY: test
 test:
@@ -28,7 +28,7 @@ test:
 
 .PHONY: integration-test
 integration-test:
-	./bin/kymactl-linux help
+	./bin/kyma-linux help
 
 .PHONY: archive
 archive:

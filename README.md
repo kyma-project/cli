@@ -9,28 +9,30 @@ A command line tool to support developers of and with Kyma
 - `version`: Shows the kyma cluster version and the kymactl version. The kymactl version is set at compile time passing it to the go linker as a flag:
 
     ```bash
-    go build -o ./bin/kymactl -ldflags “-X github.com/kyma-incubator/kymactl/pkg/kymactl/cmd.Version=1.5.0” ./cmd/kymactl.go
+    go build -o ./bin/kyma -ldflags “-X github.com/kyma-incubator/kymactl/pkg/kymactl/cmd.Version=1.5.0” ./cmd/kymactl.go
     ```
 - `install cluster minikube`: Initializes minikube with a new cluster (replaces the `minikube.sh` script) 
 - `install kyma`: Installs kyma to a cluster based on a release (replaces the `ìnstaller.sh` and `is-installed.sh` script)
 - `uninstall kyma`: Uninstalls all kyma related resources from a cluster
 - `completion`: Output shell completion code for bash.
-- `help`: Displays usage for the given command (e.g. `kymactl help`, `kymactl help status`, etc...)
+- `help`: Displays usage for the given command (e.g. `kyma help`, `kyma help status`, etc...)
 
 ## Usage
 
 Installation of kyma with minikube on Mac:
-```
-kymactl install cluster minikube
-kymactl install kyma
+
+```bash
+kyma install cluster minikube
+kyma install kyma
 ```
 
 Installation of kyma with minikube on Windows:
-```
-kymactl install cluster minikube --vm-driver hyperv --hypervVirtualSwitch {YOUR_SWITCH_NAME}
+
+```bash
+kyma install cluster minikube --vm-driver hyperv --hypervVirtualSwitch {YOUR_SWITCH_NAME}
 # follow instructions to add hosts
 
-kymactl install kyma
+kyma install kyma
 ```
 
 ## Kymactl as a Kubectl plugin
@@ -39,10 +41,10 @@ To follow this section a kubectl version of 1.12.0 or later is required.
 
 A plugin is nothing more than a standalone executable file, whose name begins with kubectl- . To install a plugin, simply move this executable file to anywhere on your PATH.
 
-Rename a `kymactl` binary to `kubectl-kyma` and place it anywhere in your PATH:
+Rename a `kyma` binary to `kubectl-kyma` and place it anywhere in your PATH:
 
 ```bash
-sudo mv ./kymactl /usr/local/bin/kubectl-kyma
+sudo mv ./kyma /usr/local/bin/kubectl-kyma
 ```
 
 Run `kubectl plugin list` command and you will see your plugin in the list of available plugins.
@@ -57,8 +59,8 @@ Kyma is running!
 To know more about extending kubectl with plugins read [kubernetes documentation](https://kubernetes.io/docs/tasks/extend-kubectl/kubectl-plugins/).
 
 ## Roadmap
+
 - Usability
-  - Renaming: Have project called 'kymactl' but all usage should be using term 'kyma', like 'kyma install'
   - Better Command Structure?:
     - kyma install
     - kyma uninstall
