@@ -42,7 +42,7 @@ func (o *VersionOptions) Run() error {
 	if version == "" {
 		version = "N/A"
 	}
-	fmt.Printf("Kyma CLI version:      %s\n", version)
+	fmt.Printf("Kyma CLI version: %s\n", version)
 
 	if !o.Client {
 		version, err := internal.GetKymaVersion()
