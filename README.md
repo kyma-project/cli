@@ -6,7 +6,7 @@ A command line tool to support developers of and with Kyma
 
 ## Available Commands
 
-- `version`: Shows the kyma cluster version and the kymactl version. The kymactl version is set at compile time passing it to the go linker as a flag:
+- `version`: Shows the kyma cluster version and the Kyma CLI version. The Kyma CLI version is set at compile time passing it to the go linker as a flag:
 
     ```bash
     go build -o ./bin/kyma -ldflags “-X github.com/kyma-incubator/kymactl/pkg/kymactl/cmd.Version=1.5.0” ./cmd/kymactl.go
