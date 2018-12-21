@@ -9,7 +9,7 @@ A command line tool to support developers of and with Kyma
 - `version`: Shows the kyma cluster version and the Kyma CLI version. The Kyma CLI version is set at compile time passing it to the go linker as a flag:
 
     ```bash
-    go build -o ./bin/kyma -ldflags “-X github.com/kyma-incubator/kymactl/pkg/kyma/cmd.Version=1.5.0” ./cmd/kyma.go
+    go build -o ./bin/kyma -ldflags '-X github.com/kyma-incubator/kymactl/pkg/kyma/cmd.Version=1.5.0' ./cmd/kyma.go
     ```
 - `install cluster minikube`: Initializes minikube with a new cluster (replaces the `minikube.sh` script) 
 - `install kyma`: Installs kyma to a cluster based on a release (replaces the `ìnstaller.sh` and `is-installed.sh` script)
