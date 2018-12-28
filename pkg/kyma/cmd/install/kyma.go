@@ -20,6 +20,7 @@ import (
 	"github.com/kyma-incubator/kymactl/internal"
 	"github.com/kyma-incubator/kymactl/pkg/kyma/core"
 	"github.com/spf13/cobra"
+	"github.com/mitchellh/mapstructure"
 )
 
 const (
@@ -211,38 +212,28 @@ func installInstallerFromLocalSources(o *KymaOptions) error {
 func findInstallerImageName(resources []map[string]interface{}) (string, error) {
 	for _, res := range resources {
 		if res["kind"] == "Deployment" {
-			metadata, ok := res["metadata"].(map[interface{}]interface{})
-			if !ok {
-				return "", errors.New("malformed deployment metadata")
+			var deployment struct {
+				Metadata struct {
+					Name string
+				}
+				Spec struct {
+					Template struct {
+						Spec struct {
+							Containers []struct {
+								Image string
+							}
+						}
+					}
+				}
 			}
 
-			if metadata["name"] == "kyma-installer" {
-				spec, ok := res["spec"].(map[interface{}]interface{})
-				if !ok {
-					return "", errors.New("malformed installer deployment spec")
-				}
+			err := mapstructure.Decode(res, &deployment)
+			if err != nil {
+				return "", err
+			}
 
-				template, ok := spec["template"].(map[interface{}]interface{})
-				if !ok {
-					return "", errors.New("malformed installer deployment template")
-				}
-
-				templateSpec, ok := template["spec"].(map[interface{}]interface{})
-				if !ok {
-					return "", errors.New("malformed installer deployment template spec")
-				}
-
-				containers, ok := templateSpec["containers"].([]interface{})
-				if !ok {
-					return "", errors.New("malformed installer deployment containers")
-				}
-
-				container, ok := containers[0].(map[interface{}]interface{})
-				if !ok {
-					return "", errors.New("malformed installer deployment container")
-				}
-
-				return container["image"].(string), nil
+			if deployment.Metadata.Name == "kyma-installer" {
+				return deployment.Spec.Template.Spec.Containers[0].Image, nil
 			}
 		}
 	}
