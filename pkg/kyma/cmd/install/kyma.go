@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/fsouza/go-dockerclient"
+	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
@@ -187,24 +188,111 @@ func installInstallerFromRelease(o *KymaOptions) error {
 }
 
 func installInstallerFromLocalSources(o *KymaOptions) error {
-	err := buildKymaInstaller(o)
+	localResources, err := loadLocalResources(o)
 	if err != nil {
 		return err
 	}
 
-	err = applyKymaInstaller(o)
+	imageName, err := findInstallerImageName(localResources)
+	if err != nil {
+		return err
+	}
+
+	err = buildKymaInstaller(imageName, o)
+	if err != nil {
+		return err
+	}
+
+	err = applyKymaInstaller(localResources, o)
 
 	return labelInstallerNamespace()
 }
 
-func buildKymaInstaller(o *KymaOptions) error {
-	dc, err := internal.MinikubeDockerClient()
+func findInstallerImageName(resources []map[string]interface{}) (string, error) {
+	for _, res := range resources {
+		if res["kind"] == "Deployment" {
+			metadata, ok := res["metadata"].(map[interface{}]interface{})
+			if !ok {
+				return "", errors.New("malformed deployment metadata")
+			}
+
+			if metadata["name"] == "kyma-installer" {
+				spec, ok := res["spec"].(map[interface{}]interface{})
+				if !ok {
+					return "", errors.New("malformed installer deployment spec")
+				}
+
+				template, ok := spec["template"].(map[interface{}]interface{})
+				if !ok {
+					return "", errors.New("malformed installer deployment template")
+				}
+
+				templateSpec, ok := template["spec"].(map[interface{}]interface{})
+				if !ok {
+					return "", errors.New("malformed installer deployment template spec")
+				}
+
+				containers, ok := templateSpec["containers"].([]interface{})
+				if !ok {
+					return "", errors.New("malformed installer deployment containers")
+				}
+
+				container, ok := containers[0].(map[interface{}]interface{})
+				if !ok {
+					return "", errors.New("malformed installer deployment container")
+				}
+
+				return container["image"].(string), nil
+			}
+		}
+	}
+	return "", errors.New("'kyma-installer' deployment is missing")
+}
+
+func loadLocalResources(o *KymaOptions) ([]map[string]interface{}, error) {
+	resources := make([]map[string]interface{}, 0)
+
+	resources, err := loadInstallationResourcesFile("installer-local.yaml", resources, o)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	imageNameCmd := exec.Command(filepath.Join(o.LocalSrcPath, "installation", "scripts", "extract-kyma-installer-image.sh"))
-	imageName, err := imageNameCmd.Output()
+	resources, err = loadInstallationResourcesFile("installer-config-local.yaml.tpl", resources, o)
+	if err != nil {
+		return nil, err
+	}
+
+	resources, err = loadInstallationResourcesFile("installer-cr.yaml.tpl", resources, o)
+	if err != nil {
+		return nil, err
+	}
+
+	return resources, nil
+}
+
+func loadInstallationResourcesFile(name string, acc []map[string]interface{}, o *KymaOptions) ([]map[string]interface{}, error) {
+	path := filepath.Join(o.LocalSrcPath, "installation", "resources", name)
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = f.Close() }()
+	dec := yaml.NewDecoder(f)
+	for {
+		m := make(map[string]interface{})
+		err := dec.Decode(m)
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return nil, err
+		}
+		acc = append(acc, m)
+	}
+	return acc, nil
+}
+
+func buildKymaInstaller(imageName string, o *KymaOptions) error {
+	dc, err := internal.MinikubeDockerClient()
 	if err != nil {
 		return err
 	}
@@ -217,57 +305,7 @@ func buildKymaInstaller(o *KymaOptions) error {
 	})
 }
 
-func applyKymaInstaller(o *KymaOptions) error {
-	yamls := make([]map[string]interface{}, 0)
-	installerYamlPath := filepath.Join(o.LocalSrcPath, "installation", "resources", "installer-local.yaml")
-	installerYamlFile, err := os.Open(installerYamlPath)
-	if err != nil {
-		return err
-	}
-	defer func() { _ = installerYamlFile.Close() }()
-	dec := yaml.NewDecoder(installerYamlFile)
-	for {
-		m := make(map[string]interface{})
-		err := dec.Decode(m)
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			return err
-		}
-		yamls = append(yamls, m)
-	}
-
-	installerConfigYamlPath := filepath.Join(o.LocalSrcPath, "installation", "resources", "installer-config-local.yaml.tpl")
-	installerConfigYamlFile, err := os.Open(installerConfigYamlPath)
-	if err != nil {
-		return err
-	}
-	defer func() { _ = installerConfigYamlFile.Close() }()
-	dec = yaml.NewDecoder(installerConfigYamlFile)
-	for {
-		m := make(map[string]interface{})
-		err := dec.Decode(m)
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			return err
-		}
-		yamls = append(yamls, m)
-	}
-
-	installerCRYamlPath := filepath.Join(o.LocalSrcPath, "installation", "resources", "installer-cr.yaml.tpl")
-	installerCRYamlFile, err := os.Open(installerCRYamlPath)
-	if err != nil {
-		return err
-	}
-	defer func() { _ = installerCRYamlFile.Close() }()
-	dec = yaml.NewDecoder(installerCRYamlFile)
-	m := make(map[string]interface{})
-	err = dec.Decode(m)
-	if err != nil {
-		return err
-	}
-	yamls = append(yamls, m)
+func applyKymaInstaller(resources []map[string]interface{}, o *KymaOptions) error {
 	cmd := exec.Command("kubectl", "apply", "-f", "-")
 	stdinPipe, err := cmd.StdinPipe()
 	if err != nil {
@@ -276,7 +314,7 @@ func applyKymaInstaller(o *KymaOptions) error {
 	defer func() { _ = stdinPipe.Close() }()
 	buf := &bytes.Buffer{}
 	enc := yaml.NewEncoder(buf)
-	for _, y := range yamls {
+	for _, y := range resources {
 		err = enc.Encode(y)
 		if err != nil {
 			return err
