@@ -15,3 +15,6 @@ vendor
 go.mod
 go.sum
 bin
+
+# IDEs
+.idea

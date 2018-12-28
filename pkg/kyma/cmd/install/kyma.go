@@ -1,9 +1,17 @@
 package install
 
 import (
+	"bytes"
 	"encoding/base64"
 	"fmt"
+	"github.com/fsouza/go-dockerclient"
+	"gopkg.in/yaml.v2"
+	"io"
+	"io/ioutil"
 	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/kyma-incubator/kymactl/internal/step"
@@ -24,6 +32,8 @@ type KymaOptions struct {
 	ReleaseConfig  string
 	NoWait         bool
 	Domain         string
+	Local          bool
+	LocalPath      string
 }
 
 //NewKymaOptions creates options with default values
@@ -54,12 +64,24 @@ The command will:
 	cmd.Flags().StringVarP(&o.ReleaseConfig, "config", "c", "", "URL or path to the installer configuration yaml")
 	cmd.Flags().BoolVarP(&o.NoWait, "noWait", "n", false, "Do not wait for completion of kyma-installer")
 	cmd.Flags().StringVarP(&o.Domain, "domain", "d", "kyma.local", "domain to use for installation")
+
+	goPath := os.Getenv("GOPATH")
+	if goPath != "" {
+		defaultLocalPath := filepath.Join(goPath, "src", "github.com", "kyma-project", "kyma")
+		cmd.Flags().BoolVarP(&o.Local, "local", "l", false, "Install from sources")
+		cmd.Flags().StringVarP(&o.LocalPath, "local-path", "", defaultLocalPath, "Path to local sources to use")
+	}
+
 	return cmd
 }
 
 //Run runs the command
 func (o *KymaOptions) Run() error {
-	fmt.Printf("Installing kyma in version '%s'\n", o.ReleaseVersion)
+	if o.Local {
+		fmt.Printf("Local installation from: %s\n", o.LocalPath)
+	} else {
+		fmt.Printf("Installing kyma in version '%s'\n", o.ReleaseVersion)
+	}
 	fmt.Println()
 
 	s := o.NewStep(fmt.Sprintf("Checking requirements"))
@@ -133,18 +155,15 @@ func installInstaller(o *KymaOptions) error {
 		return err
 	}
 	if !check {
-		relaseURL := "https://github.com/kyma-project/kyma/releases/download/" + o.ReleaseVersion + "/kyma-config-local.yaml"
-		if o.ReleaseConfig != "" {
-			relaseURL = o.ReleaseConfig
+		if o.Local {
+			err = installInstallerFromLocalSources(o)
+		} else {
+			err = installInstallerFromRelease(o)
 		}
-		_, err = internal.RunKubectlCmd([]string{"apply", "-f", relaseURL})
 		if err != nil {
 			return err
 		}
-		_, err = internal.RunKubectlCmd([]string{"label", "namespace", "kyma-installer", "app=kymactl"})
-		if err != nil {
-			return err
-		}
+
 	}
 	err = internal.WaitForPod("kyma-installer", "name", "kyma-installer")
 	if err != nil {
@@ -154,7 +173,128 @@ func installInstaller(o *KymaOptions) error {
 	return nil
 }
 
-func activateInstaller(o *KymaOptions) error {
+func installInstallerFromRelease(o *KymaOptions) error {
+	relaseURL := "https://github.com/kyma-project/kyma/releases/download/" + o.ReleaseVersion + "/kyma-config-local.yaml"
+	if o.ReleaseConfig != "" {
+		relaseURL = o.ReleaseConfig
+	}
+	_, err := internal.RunKubectlCmd([]string{"apply", "-f", relaseURL})
+	if err != nil {
+		return err
+	}
+	return labelInstallerNamespace()
+}
+
+func installInstallerFromLocalSources(o *KymaOptions) error {
+	err := buildKymaInstaller(o)
+	if err != nil {
+		return err
+	}
+
+	err = applyKymaInstaller(o)
+
+	return labelInstallerNamespace()
+}
+
+func buildKymaInstaller(o *KymaOptions) error {
+	dc, err := internal.MinikubeDockerClient()
+	if err != nil {
+		return err
+	}
+
+	imageNameCmd := exec.Command(filepath.Join(o.LocalPath, "installation", "scripts", "extract-kyma-installer-image.sh"))
+	imageName, err := imageNameCmd.Output()
+	if err != nil {
+		return err
+	}
+
+	return dc.BuildImage(docker.BuildImageOptions{
+		Name:         strings.TrimSpace(string(imageName)),
+		Dockerfile:   filepath.Join("tools", "kyma-installer", "kyma.Dockerfile"),
+		OutputStream: ioutil.Discard,
+		ContextDir:   filepath.Join(o.LocalPath),
+	})
+}
+
+func applyKymaInstaller(o *KymaOptions) error {
+	yamls := make([]map[string]interface{}, 0)
+	installerYamlPath := filepath.Join(o.LocalPath, "installation", "resources", "installer-local.yaml")
+	installerYamlFile, err := os.Open(installerYamlPath)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = installerYamlFile.Close() }()
+	dec := yaml.NewDecoder(installerYamlFile)
+	for {
+		m := make(map[string]interface{})
+		err := dec.Decode(m)
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return err
+		}
+		yamls = append(yamls, m)
+	}
+
+	installerConfigYamlPath := filepath.Join(o.LocalPath, "installation", "resources", "installer-config-local.yaml.tpl")
+	installerConfigYamlFile, err := os.Open(installerConfigYamlPath)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = installerConfigYamlFile.Close() }()
+	dec = yaml.NewDecoder(installerConfigYamlFile)
+	for {
+		m := make(map[string]interface{})
+		err := dec.Decode(m)
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return err
+		}
+		yamls = append(yamls, m)
+	}
+
+	installerCRYamlPath := filepath.Join(o.LocalPath, "installation", "resources", "installer-cr.yaml.tpl")
+	installerCRYamlFile, err := os.Open(installerCRYamlPath)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = installerCRYamlFile.Close() }()
+	dec = yaml.NewDecoder(installerCRYamlFile)
+	m := make(map[string]interface{})
+	err = dec.Decode(m)
+	if err != nil {
+		return err
+	}
+	yamls = append(yamls, m)
+	cmd := exec.Command("kubectl", "apply", "-f", "-")
+	stdinPipe, err := cmd.StdinPipe()
+	if err != nil {
+		return err
+	}
+	defer func() { _ = stdinPipe.Close() }()
+	buf := &bytes.Buffer{}
+	enc := yaml.NewEncoder(buf)
+	for _, y := range yamls {
+		err = enc.Encode(y)
+		if err != nil {
+			return err
+		}
+	}
+	err = enc.Close()
+	if err != nil {
+		return err
+	}
+	cmd.Stdin = buf
+	return cmd.Run()
+}
+
+func labelInstallerNamespace() error {
+	_, err := internal.RunKubectlCmd([]string{"label", "namespace", "kyma-installer", "app=kymactl"})
+	return err
+}
+
+func activateInstaller(_ *KymaOptions) error {
 	status, err := internal.RunKubectlCmd([]string{"get", "installation/kyma-installation", "-o", "jsonpath='{.status.state}'"})
 	if err != nil {
 		return err
@@ -215,7 +355,7 @@ func printSummary(o *KymaOptions) error {
 	return nil
 }
 
-func waitForInstaller(o *KymaOptions) error {
+func waitForInstaller(_ *KymaOptions) error {
 	currentDesc := ""
 	var s step.Step
 	installStatusCmd := []string{"get", "installation/kyma-installation", "-o", "jsonpath='{.status.state}'"}
