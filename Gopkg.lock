@@ -354,7 +354,12 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:ee4d4af67d93cc7644157882329023ce9a7bcfce956a079069a9405521c7cc8d"
+  name = "github.com/mitchellh/mapstructure"
+  packages = ["."]
+  revision = "3536a929edddb9a5b34bd6861dc4a9647cb459fe"
+  version = "v1.1.2"
+
+[[projects]]
   name = "github.com/opencontainers/go-digest"
   packages = ["."]
   pruneopts = "UT"
@@ -770,24 +775,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  input-imports = [
-    "github.com/briandowns/spinner",
-    "github.com/fsouza/go-dockerclient",
-    "github.com/kyma-project/kyma/components/installer/pkg/apis/installer/v1alpha1",
-    "github.com/kyma-project/kyma/components/installer/pkg/client/clientset/versioned",
-    "github.com/pkg/errors",
-    "github.com/spf13/cobra",
-    "gopkg.in/yaml.v2",
-    "k8s.io/apimachinery/pkg/apis/meta/v1",
-    "k8s.io/client-go/kubernetes",
-    "k8s.io/client-go/plugin/pkg/client/auth/gcp",
-    "k8s.io/client-go/rest",
-    "k8s.io/client-go/tools/clientcmd",
-    "k8s.io/client-go/tools/portforward",
-    "k8s.io/client-go/transport/spdy",
-    "k8s.io/helm/pkg/helm",
-    "k8s.io/helm/pkg/helm/environment",
-    "k8s.io/helm/pkg/proto/hapi/release",
-  ]
+  inputs-digest = "3aa2062a57a23d35ae625b8765ab085cfc8d4081ebfdefa261ec3813cc54a71c"
   solver-name = "gps-cdcl"
   solver-version = 1
