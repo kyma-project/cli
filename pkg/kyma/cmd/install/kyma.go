@@ -33,7 +33,7 @@ type KymaOptions struct {
 	NoWait         bool
 	Domain         string
 	Local          bool
-	LocalPath      string
+	LocalSrcPath   string
 }
 
 //NewKymaOptions creates options with default values
@@ -66,11 +66,12 @@ The command will:
 	cmd.Flags().StringVarP(&o.Domain, "domain", "d", "kyma.local", "domain to use for installation")
 
 	goPath := os.Getenv("GOPATH")
+	var defaultLocalPath string
 	if goPath != "" {
-		defaultLocalPath := filepath.Join(goPath, "src", "github.com", "kyma-project", "kyma")
-		cmd.Flags().BoolVarP(&o.Local, "local", "l", false, "Install from sources")
-		cmd.Flags().StringVarP(&o.LocalPath, "local-path", "", defaultLocalPath, "Path to local sources to use")
+		defaultLocalPath = filepath.Join(goPath, "src", "github.com", "kyma-project", "kyma")
 	}
+	cmd.Flags().BoolVarP(&o.Local, "local", "l", false, "Install from sources")
+	cmd.Flags().StringVarP(&o.LocalSrcPath, "src-path", "", defaultLocalPath, "Path to local sources to use")
 
 	return cmd
 }
@@ -78,7 +79,7 @@ The command will:
 //Run runs the command
 func (o *KymaOptions) Run() error {
 	if o.Local {
-		fmt.Printf("Local installation from: %s\n", o.LocalPath)
+		fmt.Printf("Local installation from: %s\n", o.LocalSrcPath)
 	} else {
 		fmt.Printf("Installing kyma in version '%s'\n", o.ReleaseVersion)
 	}
@@ -202,7 +203,7 @@ func buildKymaInstaller(o *KymaOptions) error {
 		return err
 	}
 
-	imageNameCmd := exec.Command(filepath.Join(o.LocalPath, "installation", "scripts", "extract-kyma-installer-image.sh"))
+	imageNameCmd := exec.Command(filepath.Join(o.LocalSrcPath, "installation", "scripts", "extract-kyma-installer-image.sh"))
 	imageName, err := imageNameCmd.Output()
 	if err != nil {
 		return err
@@ -212,13 +213,13 @@ func buildKymaInstaller(o *KymaOptions) error {
 		Name:         strings.TrimSpace(string(imageName)),
 		Dockerfile:   filepath.Join("tools", "kyma-installer", "kyma.Dockerfile"),
 		OutputStream: ioutil.Discard,
-		ContextDir:   filepath.Join(o.LocalPath),
+		ContextDir:   filepath.Join(o.LocalSrcPath),
 	})
 }
 
 func applyKymaInstaller(o *KymaOptions) error {
 	yamls := make([]map[string]interface{}, 0)
-	installerYamlPath := filepath.Join(o.LocalPath, "installation", "resources", "installer-local.yaml")
+	installerYamlPath := filepath.Join(o.LocalSrcPath, "installation", "resources", "installer-local.yaml")
 	installerYamlFile, err := os.Open(installerYamlPath)
 	if err != nil {
 		return err
@@ -236,7 +237,7 @@ func applyKymaInstaller(o *KymaOptions) error {
 		yamls = append(yamls, m)
 	}
 
-	installerConfigYamlPath := filepath.Join(o.LocalPath, "installation", "resources", "installer-config-local.yaml.tpl")
+	installerConfigYamlPath := filepath.Join(o.LocalSrcPath, "installation", "resources", "installer-config-local.yaml.tpl")
 	installerConfigYamlFile, err := os.Open(installerConfigYamlPath)
 	if err != nil {
 		return err
@@ -254,7 +255,7 @@ func applyKymaInstaller(o *KymaOptions) error {
 		yamls = append(yamls, m)
 	}
 
-	installerCRYamlPath := filepath.Join(o.LocalPath, "installation", "resources", "installer-cr.yaml.tpl")
+	installerCRYamlPath := filepath.Join(o.LocalSrcPath, "installation", "resources", "installer-cr.yaml.tpl")
 	installerCRYamlFile, err := os.Open(installerCRYamlPath)
 	if err != nil {
 		return err
