@@ -18,9 +18,9 @@ validate:
 .PHONY: build
 build:
 	go generate ./...
-	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o ./bin/kyma.exe $(FLAGS) ./cmd/kyma.go
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/kyma-linux $(FLAGS) ./cmd/kyma.go
-	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o ./bin/kyma-darwin $(FLAGS) ./cmd/kyma.go
+	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o ./bin/kyma.exe $(FLAGS) ./cmd/kyma
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/kyma-linux $(FLAGS) ./cmd/kyma
+	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o ./bin/kyma-darwin $(FLAGS) ./cmd/kyma
 
 .PHONY: test
 test:
@@ -38,7 +38,10 @@ archive:
 clean:
 	rm -rf bin
 
-
+.PHONY: install
+install:
+	go generate ./...
+	go install $(FLAGS) ./cmd/kyma
 
 .PHONY: local
 local: validate build test
