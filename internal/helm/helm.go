@@ -14,6 +14,7 @@ import (
 	"k8s.io/helm/pkg/helm/environment"
 	"net/http"
 	"net/url"
+	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 )
 
 type Client struct {

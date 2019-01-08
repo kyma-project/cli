@@ -2,13 +2,10 @@
 
 
 [[projects]]
-  branch = "master"
-  name = "github.com/Azure/go-ansiterm"
-  packages = [
-    ".",
-    "winterm"
-  ]
-  revision = "d6e3b3328b783f23731bc4d058875b0371ff8109"
+  name = "cloud.google.com/go"
+  packages = ["compute/metadata"]
+  revision = "0ebda48a7f143b1cce9eb37a8c1106ac762a3430"
+  version = "v0.34.0"
 
 [[projects]]
   name = "github.com/BurntSushi/toml"
@@ -23,33 +20,10 @@
   version = "v1.4.2"
 
 [[projects]]
-  name = "github.com/Microsoft/go-winio"
-  packages = ["."]
-  revision = "97e4973ce50b2ff5f09635a57e2b88a037aae829"
-  version = "v0.4.11"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/Nvveen/Gotty"
-  packages = ["."]
-  revision = "cd527374f1e5bff4938207604a14f2e38a9cf512"
-
-[[projects]]
   name = "github.com/briandowns/spinner"
   packages = ["."]
-<<<<<<< Updated upstream
-  revision = "e1e72e9de974bd926e5c56f83753fba2df402ce5"
-  version = "v1.3.0"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/beorn7/perks"
-  packages = ["quantile"]
-  revision = "3a771d992973f24aa725d07868b467d1ddfceafb"
-=======
   revision = "dd69c579ff204842e8962816987f838e2c2c18d8"
   version = "1.4"
->>>>>>> Stashed changes
 
 [[projects]]
   branch = "master"
@@ -61,19 +35,6 @@
   revision = "fbe7b2adcb852d2cad6cd5c6525d32aa56b8a486"
 
 [[projects]]
-<<<<<<< Updated upstream
-  name = "github.com/davecgh/go-spew"
-  packages = ["spew"]
-  revision = "8991bc29aa16c548c550c7ff78260e27b9ab7c73"
-  version = "v1.1.1"
-=======
-  branch = "master"
-  name = "github.com/containerd/continuity"
-  packages = ["pathdriver"]
-  revision = "004b46473808b3e7a4a3049c20e4376c91eb966d"
->>>>>>> Stashed changes
-
-[[projects]]
   name = "github.com/docker/distribution"
   packages = [
     "digestset",
@@ -83,69 +44,7 @@
   version = "v2.7.0"
 
 [[projects]]
-<<<<<<< Updated upstream
-=======
   branch = "master"
->>>>>>> Stashed changes
-  name = "github.com/docker/docker"
-  packages = [
-    "api/types",
-    "api/types/blkiodev",
-    "api/types/container",
-    "api/types/filters",
-    "api/types/mount",
-    "api/types/network",
-    "api/types/registry",
-    "api/types/strslice",
-    "api/types/swarm",
-<<<<<<< Updated upstream
-    "api/types/versions",
-    "pkg/term",
-    "pkg/term/windows"
-  ]
-  revision = "092cba3727bb9b4a2f0e922cd6c0f93ea270e363"
-  version = "v1.13.1"
-=======
-    "api/types/swarm/runtime",
-    "api/types/versions",
-    "errdefs",
-    "opts",
-    "pkg/fileutils",
-    "pkg/homedir",
-    "pkg/idtools",
-    "pkg/ioutils",
-    "pkg/longpath",
-    "pkg/mount",
-    "pkg/pools",
-    "pkg/stdcopy",
-    "pkg/system"
-  ]
-  revision = "545d00e7521414f648140b5834d41a072592a484"
->>>>>>> Stashed changes
-
-[[projects]]
-  name = "github.com/docker/go-connections"
-  packages = ["nat"]
-  revision = "7395e3f8aa162843a74ed6d48e79627d9792ac55"
-  version = "v0.4.0"
-
-[[projects]]
-  name = "github.com/docker/go-units"
-  packages = ["."]
-  revision = "47565b4f722fb6ceae66b95f853feed578a4a51c"
-  version = "v0.3.3"
-
-[[projects]]
-  branch = "master"
-<<<<<<< Updated upstream
-=======
-  name = "github.com/docker/libnetwork"
-  packages = ["ipamutils"]
-  revision = "411d3142b9923e872f5a58fef53ebe9faf1e4dd8"
-
-[[projects]]
-  branch = "master"
->>>>>>> Stashed changes
   name = "github.com/docker/spdystream"
   packages = [
     ".",
@@ -158,17 +57,6 @@
   packages = ["."]
   revision = "5b77d2a35fb0ede96d138fc9a99f5c9b6aef11b4"
   version = "v1.7.0"
-
-[[projects]]
-  name = "github.com/fsouza/go-dockerclient"
-  packages = [
-    ".",
-    "internal/archive",
-    "internal/jsonmessage",
-    "internal/term"
-  ]
-  revision = "8300e91d8f670b3ae69ac75948337dba391a9768"
-  version = "v1.3.3"
 
 [[projects]]
   name = "github.com/ghodss/yaml"
@@ -207,15 +95,6 @@
   revision = "23def4e6c14b4da8ac2ed8007337bc5eb5007998"
 
 [[projects]]
-<<<<<<< Updated upstream
-  branch = "master"
-  name = "github.com/golang/groupcache"
-  packages = ["lru"]
-  revision = "6f2cf27854a4a29e3811b0371547be335d411b8b"
-
-[[projects]]
-=======
->>>>>>> Stashed changes
   branch = "travis-1.9"
   name = "github.com/golang/lint"
   packages = [
@@ -277,39 +156,16 @@
   version = "v1.1.5"
 
 [[projects]]
-  name = "github.com/konsorten/go-windows-terminal-sequences"
-  packages = ["."]
-  revision = "5c8c8bd35d3832f5d134ae1e1e375b69a4d25242"
-  version = "v1.0.1"
-
-[[projects]]
-<<<<<<< Updated upstream
-  branch = "master"
-  name = "github.com/mailru/easyjson"
-  packages = [
-    "buffer",
-    "jlexer",
-    "jwriter"
-  ]
-  revision = "60711f1a8329503b04e1c88535f419d0bb440bff"
-=======
   name = "github.com/mattn/go-colorable"
   packages = ["."]
   revision = "167de6bfdfba052fa6b2d3664c8f5272e23c9072"
   version = "v0.0.9"
->>>>>>> Stashed changes
 
 [[projects]]
   name = "github.com/mattn/go-isatty"
   packages = ["."]
   revision = "6ca4dbf54d38eea1a992b3c722a76a5d1c4cb25c"
   version = "v0.0.4"
-
-[[projects]]
-  name = "github.com/mitchellh/mapstructure"
-  packages = ["."]
-  revision = "3536a929edddb9a5b34bd6861dc4a9647cb459fe"
-  version = "v1.1.2"
 
 [[projects]]
   name = "github.com/modern-go/concurrent"
@@ -330,55 +186,10 @@
   version = "v1.0.0-rc1"
 
 [[projects]]
-<<<<<<< Updated upstream
-  name = "github.com/pborman/uuid"
-  packages = ["."]
-  revision = "adf5a7427709b9deb95d29d3fa8a2bf9cfd388f1"
-  version = "v1.2"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/petar/GoLLRB"
-  packages = ["llrb"]
-  revision = "53be0d36a84c2a886ca057d34b6aa4468df9ccb4"
-
-[[projects]]
-  name = "github.com/peterbourgon/diskv"
-  packages = ["."]
-  revision = "5f041e8faa004a95c88a202771f4cc3e991971e6"
-  version = "v2.0.1"
-=======
-  name = "github.com/opencontainers/image-spec"
-  packages = [
-    "specs-go",
-    "specs-go/v1"
-  ]
-  revision = "d60099175f88c47cd379c4738d158884749ed235"
-  version = "v1.0.1"
-
-[[projects]]
-  name = "github.com/opencontainers/runc"
-  packages = ["libcontainer/user"]
-  revision = "baf6536d6259209c3edfa2b22237af82942d3dfa"
-  version = "v0.1.1"
->>>>>>> Stashed changes
-
-[[projects]]
   name = "github.com/pkg/errors"
   packages = ["."]
   revision = "ba968bfe8b2f7e042a574c888954fccecfa385b4"
   version = "v0.8.1"
-
-[[projects]]
-  name = "github.com/sirupsen/logrus"
-  packages = ["."]
-<<<<<<< Updated upstream
-  revision = "05f3235734ad95d0016f6a23902f06461fcf567a"
-  version = "v1.5.2"
-=======
-  revision = "e1e72e9de974bd926e5c56f83753fba2df402ce5"
-  version = "v1.3.0"
->>>>>>> Stashed changes
 
 [[projects]]
   name = "github.com/spf13/cobra"
@@ -389,35 +200,21 @@
 [[projects]]
   name = "github.com/spf13/pflag"
   packages = ["."]
-<<<<<<< Updated upstream
-  revision = "9a97c102cda95a86cec2345a6f09f55a939babf5"
-  version = "v1.0.2"
-=======
   revision = "298182f68c66c05229eb03ac171abe6e309ee79a"
   version = "v1.0.3"
->>>>>>> Stashed changes
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
-<<<<<<< Updated upstream
-  packages = [
-    "ed25519",
-    "ed25519/internal/edwards25519",
-    "pbkdf2",
-    "ssh/terminal"
-  ]
-  revision = "0e37d006457bf46f9e6692014ba72ef82c33022c"
-=======
   packages = ["ssh/terminal"]
   revision = "ff983b9c42bc9fbf91556e191cc8efb585c16908"
->>>>>>> Stashed changes
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
   packages = [
     "context",
+    "context/ctxhttp",
     "http/httpguts",
     "http2",
     "http2/hpack",
@@ -425,7 +222,19 @@
     "internal/timeseries",
     "trace"
   ]
-  revision = "1a61f4433d8505ec66450dd581f6abb8e83cb4d9"
+  revision = "45ffb0cd1ba084b73e26dee67e667e1be5acce83"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/oauth2"
+  packages = [
+    ".",
+    "google",
+    "internal",
+    "jws",
+    "jwt"
+  ]
+  revision = "d668ce993890a79bda886613ee587a69dd5da7a6"
 
 [[projects]]
   branch = "master"
@@ -434,7 +243,7 @@
     "unix",
     "windows"
   ]
-  revision = "cb59ee3660675d463e86971646692ea3e470021c"
+  revision = "20be8e55dc7b4b7a1b1660728164a8509d8c9209"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -472,11 +281,24 @@
     "go/internal/gcimporter",
     "go/types/typeutil"
   ]
-<<<<<<< Updated upstream
-  revision = "e93be7f42f9fcac2c537bcd78bab08e6e63ed5bf"
-=======
   revision = "e063def13b29c433b3c57fc99257c18c1f9399ce"
->>>>>>> Stashed changes
+
+[[projects]]
+  name = "google.golang.org/appengine"
+  packages = [
+    ".",
+    "internal",
+    "internal/app_identity",
+    "internal/base",
+    "internal/datastore",
+    "internal/log",
+    "internal/modules",
+    "internal/remote_api",
+    "internal/urlfetch",
+    "urlfetch"
+  ]
+  revision = "e9657d882bb81064595ca3b56cbe2546bbabf7b1"
+  version = "v1.4.0"
 
 [[projects]]
   branch = "master"
@@ -672,8 +494,10 @@
     "pkg/apis/clientauthentication/v1alpha1",
     "pkg/version",
     "plugin/pkg/client/auth/exec",
+    "plugin/pkg/client/auth/gcp",
     "rest",
     "rest/watch",
+    "third_party/forked/golang/template",
     "tools/auth",
     "tools/clientcmd",
     "tools/clientcmd/api",
@@ -687,7 +511,8 @@
     "util/cert",
     "util/flowcontrol",
     "util/homedir",
-    "util/integer"
+    "util/integer",
+    "util/jsonpath"
   ]
   revision = "23781f4d6632d88e869066eaebb743857aa1ef9b"
   version = "v7.0.0"
@@ -790,24 +615,9 @@
   ]
   revision = "7b12a7850419804e15cc8ffc206dd9246707e902"
 
-<<<<<<< Updated upstream
-[[projects]]
-  branch = "master"
-  name = "k8s.io/utils"
-  packages = ["exec"]
-  revision = "8a16e7dd8fb6d97d1331b0c79a16722f934b00b1"
-
-[[projects]]
-  branch = "master"
-  name = "vbom.ml/util"
-  packages = ["sortorder"]
-  revision = "efcd4e0f97874370259c7d93e12aad57911dea81"
-
-=======
->>>>>>> Stashed changes
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "705bbc3be19926b14ec565e4a540981dfe06c3f489466bd7335b967889310a4d"
+  inputs-digest = "a67f222bb07a145ec87d9da9a14eb159f32151a9a913e973529937969dc414a4"
   solver-name = "gps-cdcl"
   solver-version = 1
