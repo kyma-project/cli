@@ -47,7 +47,7 @@ func NewCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringArrayVar(&opts.skip, "skip", []string{}, "Skip tests for these releases")
-	cmd.Flags().BoolVar(&opts.NonInteractive, "non-interactive", false, "Skip tests for these releases")
+	cmd.Flags().BoolVar(&opts.NonInteractive, "non-interactive", false, "Do not use spinners")
 	cmd.Flags().BoolVarP(&opts.verbose, "verbose", "v", false, "Print additional output")
 	return cmd
 }
