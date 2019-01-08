@@ -137,12 +137,12 @@ func (opts *Options) testRelease(client helm.Interface, s step.Step, release str
 	for {
 		select {
 		case err := <-errc:
-			if failed > 0 {
+			if err != nil {
 				return out.String(), false, err
 			}
 		case res, ok := <-c:
 			if !ok {
-				return out.String(), true, nil
+				return out.String(), failed == 0, nil
 			}
 			if res.Status == helm_release.TestRun_FAILURE {
 				failed++
