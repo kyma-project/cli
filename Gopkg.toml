@@ -57,5 +57,9 @@ required = [
   branch = "release-1.10"
 
 [[override]]
+  name = "k8s.io/apiextensions-apiserver"
+  branch = "release-1.10"
+
+[[override]]
   name = "github.com/russross/blackfriday"
   version = "v1.5.2"

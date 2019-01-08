@@ -4,23 +4,19 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/kyma-incubator/kymactl/internal"
-	"github.com/pkg/errors"
+	kyma_helm "github.com/kyma-incubator/kymactl/internal/helm"
+	"github.com/kyma-incubator/kymactl/internal/step"
 	"github.com/spf13/cobra"
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/tools/portforward"
-	"k8s.io/client-go/transport/spdy"
 	"k8s.io/helm/pkg/helm"
 	"k8s.io/helm/pkg/helm/environment"
-	hapi_release "k8s.io/helm/pkg/proto/hapi/release"
-	"net"
-	"net/http"
-	"net/url"
-	"strconv"
-	"strings"
+	helm_release "k8s.io/helm/pkg/proto/hapi/release"
 )
 
 type Options struct {
+	step.Factory
+	skip []string
+	verbose bool
 }
 
 var testNamespaces = []string{
@@ -30,13 +26,13 @@ var testNamespaces = []string{
 	"kyma-integration",
 }
 
-var testReleases = []string{
-	"core",
-	"monitoring",
-	"logging",
-	"istio",
-	"knative",
-	"application-connector",
+var testReleases = map[string]bool{
+	"core": true,
+	"monitoring": false,
+	"logging": false,
+	"istio": true,
+	"knative": true,
+	"application-connector": true,
 }
 
 //NewCmd creates a new install command
@@ -49,27 +45,24 @@ func NewCmd() *cobra.Command {
 			return opts.Run()
 		},
 	}
+
+	cmd.Flags().StringArrayVar(&opts.skip, "skip", []string{}, "Skip tests for these releases")
+	cmd.Flags().BoolVar(&opts.NonInteractive, "non-interactive", false, "Skip tests for these releases")
+	cmd.Flags().BoolVarP(&opts.verbose, "verbose", "v", false, "Print additional output")
 	return cmd
 }
 
 func (opts *Options) Run() error {
-	helmConfig := &environment.EnvSettings{}
+	helmConfig := &environment.EnvSettings{TillerConnectionTimeout: 300}
 	kubeConfig, err := clientcmd.BuildConfigFromFlags("", clientcmd.RecommendedHomeFile)
 	if err != nil {
 		return err
 	}
 
-	forwarder, err := setupTillerConnection(helmConfig, kubeConfig)
+	helmClient, err := kyma_helm.New(helmConfig, kubeConfig)
 	if err != nil {
 		return err
 	}
-	defer func(){
-		if forwarder != nil {
-			close(forwarder)
-		}
-	}()
-
-	helmClient := helm.NewClient(helm.Host(helmConfig.TillerHost), helm.ConnectTimeout(helmConfig.TillerConnectionTimeout))
 
 	for _, ns := range testNamespaces {
 		err := opts.cleanHelmTestPods(ns)
@@ -78,8 +71,24 @@ func (opts *Options) Run() error {
 		}
 	}
 
-	for _, rls := range testReleases {
-		err := opts.testRelease(helmClient, rls, false)
+	for release := range testReleases {
+		s := opts.NewStep(
+			fmt.Sprintf("Testing release %s", release),
+		)
+		s.Start()
+
+		if opts.skipRelease(helmClient, release) {
+			s.Successf("Skipping release %s", release)
+			continue
+		}
+
+		msg, success, err := opts.testRelease(helmClient, s, release)
+		s.Stop(success)
+		if msg != "" && (!success || opts.verbose) {
+			fmt.Println("--- Log ---")
+			fmt.Print(msg)
+			fmt.Println("---")
+		}
 		if err != nil {
 			return err
 		}
@@ -88,110 +97,59 @@ func (opts *Options) Run() error {
 	return nil
 }
 
-func setupTillerConnection(settings *environment.EnvSettings, config *rest.Config) (chan<- struct{}, error) {
-	if settings.TillerHost != "" {
-		return nil, nil
+func (opts *Options) skipRelease(client helm.Interface, release string) bool {
+	for _, skipped := range opts.skip {
+		if skipped == release {
+			return true
+		}
 	}
 
-	roundTripper, upgrader, err := spdy.RoundTripperFor(config)
-	if err != nil {
-		return nil, err
+	if !testReleases[release] {
+		_, err := client.ReleaseStatus(release)
+		if err != nil {
+			return true
+		}
 	}
 
-	path := fmt.Sprintf("/api/v1/namespaces/%s/pods/%s/portforward", "kube-system", "tiller")
-	hostIP := strings.TrimLeft(config.Host, "htps://")
-	serverURL := url.URL{Scheme: "https", Path: path, Host: hostIP}
-
-	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: roundTripper}, http.MethodPost, &serverURL)
-
-	stopChan, readyChan := make(chan struct{}, 1), make(chan struct{}, 1)
-	out, errOut := new(bytes.Buffer), new(bytes.Buffer)
-
-	port, err := getAvailablePort()
-	if err != nil {
-		return nil, err
-	}
-
-	forwarder, err := portforward.New(dialer, []string{fmt.Sprintf("%v:44134", port)}, stopChan, readyChan, out, errOut)
-	if err != nil {
-		return nil, err
-	}
-
-
-	errChan := make(chan error)
-	go func() {
-		errChan <- forwarder.ForwardPorts()
-	}()
-
-	select {
-	case err = <-errChan:
-		return nil, fmt.Errorf("forwarding ports: %v", err)
-	case <-forwarder.Ready:
-		settings.TillerHost = "127.0.0.1:44134"
-		return stopChan, nil
-	}
+	return false
 }
 
 func (opts *Options) cleanHelmTestPods(namespace string) error {
-	spinner := internal.NewSpinner(
+	s := opts.NewStep(
 		fmt.Sprintf("Cleaning up helm test pods in namespace %s", namespace),
-		fmt.Sprintf("Test pods in namespace %s cleaned", namespace),
 	)
+	s.Start()
+
 	_, err := internal.RunKubectlCmd([]string{"delete", "pod", "-n", namespace, "-l", "helm-chart-test=true"})
 	if err != nil {
+		s.Failure()
 		return err
 	}
-	internal.StopSpinner(spinner)
+
+	s.Success()
 	return nil
 }
 
-func (opts *Options) testRelease(helm helm.Interface, release string, optional bool) error {
-	_, err := helm.ReleaseStatus(release)
-	if err != nil {
-		if optional {
-			return nil
-		}
-		return err
-	}
-
-	rsps, errs := helm.RunReleaseTest(release)
-	spinner := internal.NewSpinner(
-		fmt.Sprintf("Testing release %s", release),
-		fmt.Sprintf("Release %s tests success", release),
-	)
-
+func (opts *Options) testRelease(client helm.Interface, s step.Step, release string) (string, bool, error) {
+	c, errc := client.RunReleaseTest(release, helm.ReleaseTestTimeout(600))
+	out := &bytes.Buffer{}
+	failed := 0
 	for {
 		select {
-		case rsp := <-rsps:
-			switch rsp.Status {
-			case hapi_release.TestRun_SUCCESS:
-				internal.StopSpinner(spinner)
-				return nil
-			case hapi_release.TestRun_FAILURE:
-				return errors.Errorf("FAILED: %s", rsp.Msg)
-			default:
-				continue
+		case err := <-errc:
+			if failed > 0 {
+				return out.String(), false, err
 			}
-		case err := <-errs:
-			return err
+		case res, ok := <-c:
+			if !ok {
+				return out.String(), true, nil
+			}
+			if res.Status == helm_release.TestRun_FAILURE {
+				failed++
+			}
+			out.WriteString(res.Msg)
+			out.WriteString("\n")
+			s.Status(res.Msg)
 		}
 	}
-}
-
-func getAvailablePort() (int, error) {
-	l, err := net.Listen("tcp", ":0")
-	if err != nil {
-		return 0, err
-	}
-	defer l.Close()
-
-	_, p, err := net.SplitHostPort(l.Addr().String())
-	if err != nil {
-		return 0, err
-	}
-	port, err := strconv.Atoi(p)
-	if err != nil {
-		return 0, err
-	}
-	return port, err
 }
