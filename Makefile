@@ -44,7 +44,7 @@ install:
 	go install $(FLAGS) ./cmd/kyma
 
 .PHONY: local
-local: validate build test
+local: validate test install
 
 .PHONY: ci-pr
 ci-pr: resolve validate build test integration-test archive
