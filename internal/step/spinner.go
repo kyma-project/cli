@@ -7,14 +7,18 @@ import (
 )
 
 func NewStepWithSpinner(msg string) Step {
-	s := spinner.New([]string{"/", "-", "\\", "|"}, time.Millisecond * 200)
-	s.Prefix = msg+" "
-	return  &stepWithSpinner{s, msg}
+	s := spinner.New(
+		[]string{"/", "-", "\\", "|"},
+		time.Millisecond*200,
+		spinner.WithColor("reset"),
+	)
+	s.Prefix = msg + " "
+	return &stepWithSpinner{s, msg}
 }
 
 type stepWithSpinner struct {
 	spinner *spinner.Spinner
-	msg string
+	msg     string
 }
 
 func (s *stepWithSpinner) Start() {
