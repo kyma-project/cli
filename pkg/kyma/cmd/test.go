@@ -3,10 +3,10 @@ package cmd
 import (
 	"bytes"
 	"fmt"
+
 	"github.com/kyma-incubator/kymactl/internal"
 	kyma_helm "github.com/kyma-incubator/kymactl/internal/helm"
 	"github.com/kyma-incubator/kymactl/internal/step"
-	"github.com/kyma-incubator/kymactl/pkg/installer"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -17,24 +17,15 @@ import (
 
 type TestOptions struct {
 	step.Factory
-	skip []string
+	skip    []string
 	verbose bool
 }
 
-var testNamespaces = []string{
+var namespacesToClean = []string{
 	"kyma-system",
 	"istio-system",
-	"knative-serving",
 	"kyma-integration",
-}
-
-var testReleases = map[string]bool{
-	"core": true,
-	"monitoring": false,
-	"logging": false,
-	"istio": true,
-	"knative": true,
-	"application-connector": true,
+	"knative-serving",
 }
 
 //NewCmd creates a new install command
@@ -71,13 +62,8 @@ func (opts *TestOptions) Run() error {
 		return err
 	}
 
-	components, err := installer.GetComponents(kubeConfig)
-	if err != nil {
-		return err
-	}
-
-	for _, component := range components {
-		err := opts.cleanHelmTestPods(component.Namespace)
+	for _, namespace := range namespacesToClean {
+		err := opts.cleanHelmTestPods(namespace)
 		if err != nil {
 			return err
 		}
@@ -111,13 +97,6 @@ func (opts *TestOptions) Run() error {
 func (opts *TestOptions) skipRelease(client helm.Interface, release string) bool {
 	for _, skipped := range opts.skip {
 		if skipped == release {
-			return true
-		}
-	}
-
-	if !testReleases[release] {
-		_, err := client.ReleaseStatus(release)
-		if err != nil {
 			return true
 		}
 	}
