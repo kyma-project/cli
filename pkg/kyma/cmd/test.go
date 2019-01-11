@@ -6,7 +6,9 @@ import (
 	"github.com/kyma-incubator/kymactl/internal"
 	kyma_helm "github.com/kyma-incubator/kymactl/internal/helm"
 	"github.com/kyma-incubator/kymactl/internal/step"
+	"github.com/kyma-incubator/kymactl/pkg/installer"
 	"github.com/spf13/cobra"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/helm/pkg/helm"
 	"k8s.io/helm/pkg/helm/environment"
@@ -64,14 +66,23 @@ func (opts *TestOptions) Run() error {
 		return err
 	}
 
-	for _, ns := range testNamespaces {
-		err := opts.cleanHelmTestPods(ns)
+	k8sClient, err := kubernetes.NewForConfig(kubeConfig)
+	if err != nil {
+		return err
+	}
+
+	components, err := installer.GetComponents(kubeConfig)
+	if err != nil {
+		return err
+	}
+
+	for _, component := range components {
+		err := opts.cleanHelmTestPods(component.Namespace)
 		if err != nil {
 			return err
 		}
-	}
 
-	for release := range testReleases {
+		release := component.ReleaseName
 		s := opts.NewStep(
 			fmt.Sprintf("Testing release %s", release),
 		)

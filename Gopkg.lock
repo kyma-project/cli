@@ -156,6 +156,17 @@
   version = "v1.1.5"
 
 [[projects]]
+  name = "github.com/kyma-project/kyma"
+  packages = [
+    "components/installer/pkg/apis/installer/v1alpha1",
+    "components/installer/pkg/client/clientset/versioned",
+    "components/installer/pkg/client/clientset/versioned/scheme",
+    "components/installer/pkg/client/clientset/versioned/typed/installer/v1alpha1"
+  ]
+  revision = "3bababa43441d7a2fb9058c88560490f57294d48"
+  version = "0.5.0"
+
+[[projects]]
   name = "github.com/mattn/go-colorable"
   packages = ["."]
   revision = "167de6bfdfba052fa6b2d3664c8f5272e23c9072"
@@ -618,6 +629,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a67f222bb07a145ec87d9da9a14eb159f32151a9a913e973529937969dc414a4"
+  inputs-digest = "133727c3e22e5d3c683046d934b68541392010ff1dd1858e225cba9e15e6f102"
   solver-name = "gps-cdcl"
   solver-version = 1
