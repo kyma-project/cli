@@ -3,7 +3,6 @@ package cmd
 import (
 	"github.com/kyma-incubator/kymactl/pkg/kyma/cmd/install"
 	"github.com/kyma-incubator/kymactl/pkg/kyma/cmd/install/cluster"
-	"github.com/kyma-incubator/kymactl/pkg/kyma/cmd/test"
 	"github.com/kyma-incubator/kymactl/pkg/kyma/cmd/uninstall"
 	"github.com/spf13/cobra"
 )
@@ -55,7 +54,7 @@ Find more information at: https://github.com/kyma-incubator/kymactl
 	uninstallCmd.AddCommand(uninstallKymaCmd)
 	cmd.AddCommand(uninstallCmd)
 
-	testCmd := test.NewCmd()
+	testCmd := NewTestCmd()
 	cmd.AddCommand(testCmd)
 
 	return cmd

@@ -1,4 +1,4 @@
-package test
+package cmd
 
 import (
 	"bytes"
@@ -13,7 +13,7 @@ import (
 	helm_release "k8s.io/helm/pkg/proto/hapi/release"
 )
 
-type Options struct {
+type TestOptions struct {
 	step.Factory
 	skip []string
 	verbose bool
@@ -36,8 +36,8 @@ var testReleases = map[string]bool{
 }
 
 //NewCmd creates a new install command
-func NewCmd() *cobra.Command {
-	opts := &Options{}
+func NewTestCmd() *cobra.Command {
+	opts := &TestOptions{}
 	cmd := &cobra.Command{
 		Use:   "test",
 		Short: "test kyma installation",
@@ -52,7 +52,7 @@ func NewCmd() *cobra.Command {
 	return cmd
 }
 
-func (opts *Options) Run() error {
+func (opts *TestOptions) Run() error {
 	helmConfig := &environment.EnvSettings{TillerConnectionTimeout: 300}
 	kubeConfig, err := clientcmd.BuildConfigFromFlags("", clientcmd.RecommendedHomeFile)
 	if err != nil {
@@ -97,7 +97,7 @@ func (opts *Options) Run() error {
 	return nil
 }
 
-func (opts *Options) skipRelease(client helm.Interface, release string) bool {
+func (opts *TestOptions) skipRelease(client helm.Interface, release string) bool {
 	for _, skipped := range opts.skip {
 		if skipped == release {
 			return true
@@ -114,7 +114,7 @@ func (opts *Options) skipRelease(client helm.Interface, release string) bool {
 	return false
 }
 
-func (opts *Options) cleanHelmTestPods(namespace string) error {
+func (opts *TestOptions) cleanHelmTestPods(namespace string) error {
 	s := opts.NewStep(
 		fmt.Sprintf("Cleaning up helm test pods in namespace %s", namespace),
 	)
@@ -130,7 +130,7 @@ func (opts *Options) cleanHelmTestPods(namespace string) error {
 	return nil
 }
 
-func (opts *Options) testRelease(client helm.Interface, s step.Step, release string) (string, bool, error) {
+func (opts *TestOptions) testRelease(client helm.Interface, s step.Step, release string) (string, bool, error) {
 	c, errc := client.RunReleaseTest(release, helm.ReleaseTestTimeout(600))
 	out := &bytes.Buffer{}
 	failed := 0
