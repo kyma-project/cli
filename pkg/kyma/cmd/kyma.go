@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/kyma-incubator/kymactl/internal/step"
 	"github.com/kyma-incubator/kymactl/pkg/kyma/cmd/install"
 	"github.com/kyma-incubator/kymactl/pkg/kyma/cmd/install/cluster"
 	"github.com/kyma-incubator/kymactl/pkg/kyma/cmd/uninstall"
@@ -10,6 +11,7 @@ import (
 //KymaOptions defines available options for the command
 type KymaOptions struct {
 	Verbose bool
+	step.Factory
 }
 
 //NewKymaOptions creates options with default values
@@ -33,6 +35,7 @@ Find more information at: https://github.com/kyma-incubator/kymactl
 	}
 
 	cmd.PersistentFlags().BoolVarP(&o.Verbose, "verbose", "v", false, "verbose output")
+	cmd.PersistentFlags().BoolVar(&o.NonInteractive, "non-interactive", false, "Do not use spinners")
 
 	versionCmd := NewVersionCmd(NewVersionOptions())
 	cmd.AddCommand(versionCmd)
@@ -54,7 +57,7 @@ Find more information at: https://github.com/kyma-incubator/kymactl
 	uninstallCmd.AddCommand(uninstallKymaCmd)
 	cmd.AddCommand(uninstallCmd)
 
-	testCmd := NewTestCmd()
+	testCmd := NewTestCmd(o)
 	cmd.AddCommand(testCmd)
 
 	return cmd

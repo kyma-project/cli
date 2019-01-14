@@ -16,9 +16,8 @@ import (
 )
 
 type TestOptions struct {
-	step.Factory
-	skip    []string
-	verbose bool
+	*KymaOptions
+	skip []string
 }
 
 var namespacesToClean = []string{
@@ -29,8 +28,8 @@ var namespacesToClean = []string{
 }
 
 //NewCmd creates a new install command
-func NewTestCmd() *cobra.Command {
-	opts := &TestOptions{}
+func NewTestCmd(o *KymaOptions) *cobra.Command {
+	opts := &TestOptions{KymaOptions: o}
 	cmd := &cobra.Command{
 		Use:   "test",
 		Short: "test kyma installation",
@@ -40,8 +39,6 @@ func NewTestCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringArrayVar(&opts.skip, "skip", []string{}, "Skip tests for these releases")
-	cmd.Flags().BoolVar(&opts.NonInteractive, "non-interactive", false, "Do not use spinners")
-	cmd.Flags().BoolVarP(&opts.verbose, "verbose", "v", false, "Print additional output")
 	return cmd
 }
 
@@ -81,7 +78,7 @@ func (opts *TestOptions) Run() error {
 
 		msg, success, err := opts.testRelease(helmClient, s, release)
 		s.Stop(success)
-		if msg != "" && (!success || opts.verbose) {
+		if msg != "" && (!success || opts.Verbose) {
 			fmt.Println("--- Log ---")
 			fmt.Print(msg)
 			fmt.Println("---")
