@@ -9,7 +9,6 @@ import (
 	"github.com/kyma-incubator/kymactl/internal/step"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/helm/pkg/helm"
 	"k8s.io/helm/pkg/helm/environment"
 	helm_release "k8s.io/helm/pkg/proto/hapi/release"
@@ -44,7 +43,7 @@ func NewTestCmd(o *KymaOptions) *cobra.Command {
 
 func (opts *TestOptions) Run() error {
 	helmConfig := &environment.EnvSettings{TillerConnectionTimeout: 300}
-	kubeConfig, err := clientcmd.BuildConfigFromFlags("", clientcmd.RecommendedHomeFile)
+	kubeConfig, err := opts.GetKubeconfig()
 	if err != nil {
 		return err
 	}
