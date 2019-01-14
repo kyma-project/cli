@@ -2,7 +2,6 @@ package step
 
 type Factory struct {
 	NonInteractive bool
-	CurrentStep Step
 }
 
 func (f *Factory) NewStep(msg string) Step {
