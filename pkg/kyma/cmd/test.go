@@ -7,16 +7,21 @@ import (
 	"github.com/kyma-incubator/kymactl/internal"
 	kyma_helm "github.com/kyma-incubator/kymactl/internal/helm"
 	"github.com/kyma-incubator/kymactl/internal/step"
+	"github.com/kyma-incubator/kymactl/pkg/installer"
+	"github.com/kyma-incubator/kymactl/pkg/kyma/core"
 	"github.com/spf13/cobra"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/helm/pkg/helm"
 	"k8s.io/helm/pkg/helm/environment"
 	helm_release "k8s.io/helm/pkg/proto/hapi/release"
 )
 
 type TestOptions struct {
-	*KymaOptions
+	*core.Options
 	skip []string
+}
+
+func NewTestOptions(o *core.Options) *TestOptions {
+	return &TestOptions{Options: o}
 }
 
 var namespacesToClean = []string{
@@ -26,18 +31,17 @@ var namespacesToClean = []string{
 	"knative-serving",
 }
 
-//NewCmd creates a new install command
-func NewTestCmd(o *KymaOptions) *cobra.Command {
-	opts := &TestOptions{KymaOptions: o}
+//NewTestCmd creates a new install command
+func NewTestCmd(o *TestOptions) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "test",
 		Short: "test kyma installation",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return opts.Run()
+			return o.Run()
 		},
 	}
 
-	cmd.Flags().StringArrayVar(&opts.skip, "skip", []string{}, "Skip tests for these releases")
+	cmd.Flags().StringArrayVar(&o.skip, "skip", []string{}, "Skip tests for these releases")
 	return cmd
 }
 
@@ -53,7 +57,7 @@ func (opts *TestOptions) Run() error {
 		return err
 	}
 
-	k8sClient, err := kubernetes.NewForConfig(kubeConfig)
+	components, err := installer.GetComponents(kubeConfig)
 	if err != nil {
 		return err
 	}
@@ -63,8 +67,10 @@ func (opts *TestOptions) Run() error {
 		if err != nil {
 			return err
 		}
+	}
 
-		release := component.ReleaseName
+	for _, component := range components {
+		release := component.Name
 		s := opts.NewStep(
 			fmt.Sprintf("Testing release %s", release),
 		)

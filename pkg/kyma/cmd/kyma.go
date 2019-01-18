@@ -1,29 +1,16 @@
 package cmd
 
 import (
-	"github.com/kyma-incubator/kymactl/internal/kube"
-	"github.com/kyma-incubator/kymactl/internal/step"
 	"github.com/kyma-incubator/kymactl/pkg/kyma/cmd/install"
 	"github.com/kyma-incubator/kymactl/pkg/kyma/cmd/install/cluster"
 	"github.com/kyma-incubator/kymactl/pkg/kyma/cmd/uninstall"
+	"github.com/kyma-incubator/kymactl/pkg/kyma/core"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-//KymaOptions defines available options for the command
-type KymaOptions struct {
-	Verbose bool
-	step.Factory
-	kube.ConfigFactory
-}
-
-//NewKymaOptions creates options with default values
-func NewKymaOptions() *KymaOptions {
-	return &KymaOptions{}
-}
-
 //NewKymaCmd creates a new kyma CLI command
-func NewKymaCmd(o *KymaOptions) *cobra.Command {
+func NewKymaCmd(o *core.Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "kyma",
 		Short: "Controls a Kyma cluster.",
@@ -41,7 +28,7 @@ Find more information at: https://github.com/kyma-incubator/kymactl
 	cmd.PersistentFlags().BoolVar(&o.NonInteractive, "non-interactive", false, "Do not use spinners")
 	cmd.PersistentFlags().StringVar(&o.KubeconfigPath, "kubeconfig", clientcmd.RecommendedHomeFile, "Path to kubeconfig")
 
-	versionCmd := NewVersionCmd(NewVersionOptions())
+	versionCmd := NewVersionCmd(NewVersionOptions(o))
 	cmd.AddCommand(versionCmd)
 
 	completionCmd := NewCompletionCmd()
@@ -50,18 +37,18 @@ Find more information at: https://github.com/kyma-incubator/kymactl
 	installCmd := install.NewCmd()
 	installClusterCmd := cluster.NewCmd()
 	installCmd.AddCommand(installClusterCmd)
-	installClusterMinikubeCmd := cluster.NewMinikubeCmd(cluster.NewMinikubeOptions())
+	installClusterMinikubeCmd := cluster.NewMinikubeCmd(cluster.NewMinikubeOptions(o))
 	installClusterCmd.AddCommand(installClusterMinikubeCmd)
-	installKymaCmd := install.NewKymaCmd(install.NewKymaOptions())
+	installKymaCmd := install.NewKymaCmd(install.NewKymaOptions(o))
 	installCmd.AddCommand(installKymaCmd)
 	cmd.AddCommand(installCmd)
 
 	uninstallCmd := uninstall.NewCmd()
-	uninstallKymaCmd := uninstall.NewKymaCmd(uninstall.NewKymaOptions())
+	uninstallKymaCmd := uninstall.NewKymaCmd(uninstall.NewKymaOptions(o))
 	uninstallCmd.AddCommand(uninstallKymaCmd)
 	cmd.AddCommand(uninstallCmd)
 
-	testCmd := NewTestCmd(o)
+	testCmd := NewTestCmd(NewTestOptions(o))
 	cmd.AddCommand(testCmd)
 
 	return cmd

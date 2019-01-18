@@ -15,8 +15,10 @@ func GetComponents(kubeConfig *rest.Config) ([]installer_api.KymaComponent, erro
 
 	installation, err := installerClient.InstallerV1alpha1().Installations("kyma-installer").Get("kyma-installation", metav1.GetOptions{})
 	if err != nil {
-		return nil, err
+		installation, err = installerClient.InstallerV1alpha1().Installations("default").Get("kyma-installation", metav1.GetOptions{})
+		if err != nil {
+			return nil, err
+		}
 	}
-
 	return installation.Spec.Components, nil
 }

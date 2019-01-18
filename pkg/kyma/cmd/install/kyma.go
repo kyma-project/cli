@@ -6,7 +6,10 @@ import (
 	"os"
 	"time"
 
+	"github.com/kyma-incubator/kymactl/internal/step"
+
 	"github.com/kyma-incubator/kymactl/internal"
+	"github.com/kyma-incubator/kymactl/pkg/kyma/core"
 	"github.com/spf13/cobra"
 )
 
@@ -16,6 +19,7 @@ const (
 
 //KymaOptions defines available options for the command
 type KymaOptions struct {
+	*core.Options
 	ReleaseVersion string
 	ReleaseConfig  string
 	NoWait         bool
@@ -23,8 +27,8 @@ type KymaOptions struct {
 }
 
 //NewKymaOptions creates options with default values
-func NewKymaOptions() *KymaOptions {
-	return &KymaOptions{}
+func NewKymaOptions(o *core.Options) *KymaOptions {
+	return &KymaOptions{Options: o}
 }
 
 //NewKymaCmd creates a new kyma command
@@ -58,33 +62,37 @@ func (o *KymaOptions) Run() error {
 	fmt.Printf("Installing kyma in version '%s'\n", o.ReleaseVersion)
 	fmt.Println()
 
-	spinner := internal.NewSpinner("Checking requirements", "Requirements are fine")
+	s := o.NewStep(fmt.Sprintf("Checking requirements"))
 	err := internal.CheckKubectlVersion()
 	if err != nil {
+		s.Failure()
 		return err
 	}
-	internal.StopSpinner(spinner)
+	s.Successf("Requirements are fine")
 
-	spinner = internal.NewSpinner("Installing tiller", "Tiller installed")
+	s = o.NewStep(fmt.Sprintf("Installing tiller"))
 	err = installTiller(o)
 	if err != nil {
+		s.Failure()
 		return err
 	}
-	internal.StopSpinner(spinner)
+	s.Successf("Tiller installed")
 
-	spinner = internal.NewSpinner("Installing kyma-installer", "kyma-installer installed")
+	s = o.NewStep(fmt.Sprintf("Installing kyma-installer"))
 	err = installInstaller(o)
 	if err != nil {
+		s.Failure()
 		return err
 	}
-	internal.StopSpinner(spinner)
+	s.Successf("kyma-installer installed")
 
-	spinner = internal.NewSpinner("Requesting kyma-installer to install kyma", "kyma-installer is installing kyma")
+	s = o.NewStep(fmt.Sprintf("Requesting kyma-installer to install kyma"))
 	err = activateInstaller(o)
 	if err != nil {
+		s.Failure()
 		return err
 	}
-	internal.StopSpinner(spinner)
+	s.Successf("kyma-installer is installing kyma")
 
 	if !o.NoWait {
 		err = waitForInstaller(o)
@@ -209,7 +217,7 @@ func printSummary(o *KymaOptions) error {
 
 func waitForInstaller(o *KymaOptions) error {
 	currentDesc := ""
-	var spinner chan struct{}
+	var s step.Step
 	installStatusCmd := []string{"get", "installation/kyma-installation", "-o", "jsonpath='{.status.state}'"}
 
 	status, err := internal.RunKubectlCmd(installStatusCmd)
@@ -232,13 +240,15 @@ func waitForInstaller(o *KymaOptions) error {
 
 		switch status {
 		case "Installed":
-			if spinner != nil {
-				internal.StopSpinner(spinner)
-				spinner = nil
+			if s != nil {
+				s.Success()
 			}
 			return nil
 
 		case "Error":
+			if s != nil {
+				s.Failure()
+			}
 			fmt.Printf("Error installing Kyma: %s\n", desc)
 			logs, err := internal.RunKubectlCmd([]string{"-n", "kyma-installer", "logs", "-l", "name=kyma-installer"})
 			if err != nil {
@@ -249,16 +259,18 @@ func waitForInstaller(o *KymaOptions) error {
 		case "InProgress":
 			// only do something if the description has changed
 			if desc != currentDesc {
-				if spinner != nil {
-					internal.StopSpinner(spinner)
-					spinner = nil
+				if s != nil {
+					s.Success()
 				} else {
-					spinner = internal.NewSpinner(desc, desc)
+					s = o.NewStep(fmt.Sprintf(desc))
 					currentDesc = desc
 				}
 			}
 
 		default:
+			if s != nil {
+				s.Failure()
+			}
 			fmt.Printf("Unexpected status: %s\n", status)
 			os.Exit(1)
 		}
