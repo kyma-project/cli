@@ -25,9 +25,41 @@
 #   unused-packages = true
 
 required = [
-  "github.com/golang/lint/golint"
+  "github.com/golang/lint/golint",
 ]
 
 [prune]
   go-tests = true
   unused-packages = true
+
+#[[constraint]]
+#  name = "k8s.io/client-go"
+#  version = "kubernetes-1.10.0"
+#
+#[[override]]
+#  name = "k8s.io/helm"
+#  version = "=2.10.0"
+#
+#[[override]]
+#  name = "k8s.io/kubernetes"
+#  branch = "release-1.10"
+#
+#[[override]]
+#  name = "k8s.io/api"
+#  branch = "release-1.10"
+#
+#[[override]]
+#  name = "k8s.io/apimachinery"
+#  branch = "release-1.10"
+#
+#[[override]]
+#  name = "k8s.io/apiserver"
+#  branch = "release-1.10"
+#
+#[[override]]
+#  name = "k8s.io/apiextensions-apiserver"
+#  branch = "release-1.10"
+
+[[override]]
+  name = "github.com/russross/blackfriday"
+  version = "v1.5.2"

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/kyma-incubator/kymactl/internal"
+	"github.com/kyma-incubator/kymactl/pkg/kyma/core"
 
 	"github.com/spf13/cobra"
 )
@@ -13,12 +14,13 @@ var Version string
 
 //VersionOptions defines available options for the command
 type VersionOptions struct {
+	*core.Options
 	Client bool
 }
 
 //NewVersionOptions creates options with default values
-func NewVersionOptions() *VersionOptions {
-	return &VersionOptions{}
+func NewVersionOptions(o *core.Options) *VersionOptions {
+	return &VersionOptions{Options: o}
 }
 
 //NewVersionCmd creates a new version command

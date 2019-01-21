@@ -5,10 +5,11 @@ import (
 	"os"
 
 	"github.com/kyma-incubator/kymactl/pkg/kyma/cmd"
+	"github.com/kyma-incubator/kymactl/pkg/kyma/core"
 )
 
 func main() {
-	command := cmd.NewKymaCmd(cmd.NewKymaOptions())
+	command := cmd.NewKymaCmd(core.NewOptions())
 
 	err := command.Execute()
 	if err != nil {

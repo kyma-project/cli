@@ -143,7 +143,8 @@ func CheckKubectlVersion() error {
 
 	if minorIsVersion-minorMustVersion < -1 || minorIsVersion-minorMustVersion > 1 {
 		fmt.Println()
-		fmt.Printf("Your kubectl version is '%s'. Supported versions of kubectl are from '%d.%d.*' to '%d.%d.*'", kubctlIsVersion[1], majorMustVersion, minorMustVersion-1, majorMustVersion, minorMustVersion+1)
+		fmt.Printf("WARNING: Your kubectl version is '%s'. Supported versions of kubectl are from '%d.%d.*' to '%d.%d.*'", kubctlIsVersion[1], majorMustVersion, minorMustVersion-1, majorMustVersion, minorMustVersion+1)
+		fmt.Println()
 	}
 	if majorIsVersion != majorMustVersion {
 		return fmt.Errorf("Your kubectl version is '%s'. Supported versions of kubectl are from '%d.%d.*' to '%d.%d.*'", kubctlIsVersion[1], majorMustVersion, minorMustVersion-1, majorMustVersion, minorMustVersion+1)

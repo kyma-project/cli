@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/kyma-incubator/kymactl/internal"
+	"github.com/kyma-incubator/kymactl/pkg/kyma/core"
 	"github.com/spf13/cobra"
 )
 
@@ -54,9 +55,9 @@ var (
 
 //MinikubeOptions defines available options for the command
 type MinikubeOptions struct {
+	*core.Options
 	Domain              string
 	VMDriver            string
-	Silent              bool
 	DiskSize            string
 	Memory              string
 	CPU                 string
@@ -64,13 +65,12 @@ type MinikubeOptions struct {
 }
 
 //NewMinikubeOptions creates options with default values
-func NewMinikubeOptions() *MinikubeOptions {
-	return &MinikubeOptions{}
+func NewMinikubeOptions(o *core.Options) *MinikubeOptions {
+	return &MinikubeOptions{Options: o}
 }
 
 //NewMinikubeCmd creates a new minikube command
 func NewMinikubeCmd(o *MinikubeOptions) *cobra.Command {
-
 	cmd := &cobra.Command{
 		Use:   "minikube",
 		Short: "Prepares a minikube cluster",
@@ -86,7 +86,6 @@ func NewMinikubeCmd(o *MinikubeOptions) *cobra.Command {
 	cmd.Flags().StringVar(&o.DiskSize, "disk-size", "20g", "Disk size to use")
 	cmd.Flags().StringVar(&o.Memory, "memory", "8192", "Memory to use")
 	cmd.Flags().StringVar(&o.CPU, "cpu", "4", "CPUs to use")
-	cmd.Flags().BoolVarP(&o.Silent, "silent", "s", false, "No interaction")
 	return cmd
 }
 
@@ -95,57 +94,66 @@ func (o *MinikubeOptions) Run() error {
 	fmt.Printf("Installing minikube cluster using domain '%s' and vm-driver '%s'\n", o.Domain, o.VMDriver)
 	fmt.Println()
 
-	spinner := internal.NewSpinner("Checking requirements", "Requirements are fine")
+	s := o.NewStep(fmt.Sprintf("Checking requirements"))
 	if !driverSupported(o.VMDriver) {
+		s.Failure()
 		return fmt.Errorf("Specified VMDriver '%s' is not supported by minikube", o.VMDriver)
 	}
 	if o.VMDriver == vmDriverHyperv && o.HypervVirtualSwitch == "" {
+		s.Failure()
 		return fmt.Errorf("Specified VMDriver '%s' requires option --hypervVirtualSwitch to be provided", vmDriverHyperv)
 	}
 	err := internal.CheckMinikubeVersion()
 	if err != nil {
+		s.Failure()
 		return err
 	}
 
 	err = internal.CheckKubectlVersion()
 	if err != nil {
+		s.Failure()
 		return err
 	}
-	internal.StopSpinner(spinner)
+	s.Successf("Requirements are fine")
 
 	err = checkIfMinikubeIsInitialized(o)
 	if err != nil {
 		return err
 	}
 
-	spinner = internal.NewSpinner("Initializing minikube config", "Minikube config initialized")
+	s = o.NewStep(fmt.Sprintf("Initializing minikube config"))
 	err = initializeMinikubeConfig()
 	if err != nil {
+		s.Failure()
 		return err
 	}
-	internal.StopSpinner(spinner)
+	s.Successf("Minikube config initialized")
 
-	spinner = internal.NewSpinner("Waiting for minikube to be up and running", "Minukube up and running")
+	s = o.NewStep(fmt.Sprintf("Waiting for minikube to be up and running"))
 	err = startMinikube(o)
 	if err != nil {
+		s.Failure()
 		return err
 	}
 
 	err = waitForMinikubeToBeUp()
 	if err != nil {
+		s.Failure()
 		return err
 	}
 
 	err = createClusterRoleBinding()
 	if err != nil {
+		s.Failure()
 		return err
 	}
 
 	err = internal.WaitForPod("kube-system", "k8s-app", "kube-dns")
 	if err != nil {
+		s.Failure()
 		return err
 	}
-	internal.StopSpinner(spinner)
+	s.Successf("Minukube up and running")
 
 	fmt.Println("Adding hostnames, please enter your password if requested")
 	err = addDevDomainsToEtcHosts(o)
@@ -154,12 +162,13 @@ func (o *MinikubeOptions) Run() error {
 	}
 	fmt.Println("Hostnames added to " + internal.HOSTS_FILE)
 
-	spinner = internal.NewSpinner("Adjusting minikube cluster", "Minikube cluster adjusted")
+	s = o.NewStep(fmt.Sprintf("Adjusting minikube cluster"))
 	err = increaseFsInotifyMaxUserInstances(o)
 	if err != nil {
+		s.Failure()
 		return err
 	}
-	internal.StopSpinner(spinner)
+	s.Successf("Minikube cluster adjusted")
 
 	err = printSummary()
 	if err != nil {
@@ -176,13 +185,13 @@ func checkIfMinikubeIsInitialized(o *MinikubeOptions) error {
 	}
 
 	if statusText != "" {
-		if !o.Silent {
+		if !o.NonInteractive {
 			fmt.Println("=====")
 			fmt.Printf("Minikube is initialized and status is '%s'\n", statusText)
 		}
 		reader := bufio.NewReader(os.Stdin)
 		answer := ""
-		if !o.Silent {
+		if !o.NonInteractive {
 			fmt.Printf("Do you want to remove previous minikube cluster [y/N]: ")
 			answer, err = reader.ReadString('\n')
 			if err != nil {
@@ -190,7 +199,7 @@ func checkIfMinikubeIsInitialized(o *MinikubeOptions) error {
 			}
 			fmt.Println("=====")
 		}
-		if o.Silent || strings.Trim(answer, "\n\t\r ") == "y" {
+		if o.NonInteractive || strings.Trim(answer, "\n\t\r ") == "y" {
 			_, err := internal.RunMinikubeCmd([]string{"delete"})
 			if err != nil {
 				return err

@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/kyma-incubator/kymactl/internal/step"
+
 	"github.com/kyma-incubator/kymactl/internal"
+	"github.com/kyma-incubator/kymactl/pkg/kyma/core"
 	"github.com/spf13/cobra"
 )
 
@@ -14,11 +17,12 @@ const (
 
 //KymaOptions defines available options for the command
 type KymaOptions struct {
+	*core.Options
 }
 
 //NewKymaOptions creates options with default values
-func NewKymaOptions() *KymaOptions {
-	return &KymaOptions{}
+func NewKymaOptions(o *core.Options) *KymaOptions {
+	return &KymaOptions{Options: o}
 }
 
 //NewKymaCmd creates a new kyma command
@@ -47,52 +51,59 @@ func (o *KymaOptions) Run() error {
 	fmt.Printf("Uninstalling kyma\n")
 	fmt.Println()
 
-	spinner := internal.NewSpinner("Checking requirements", "Requirements are fine")
+	s := o.NewStep(fmt.Sprintf("Checking requirements"))
+	s.Start()
 	err := internal.CheckKubectlVersion()
 	if err != nil {
+		s.Failure()
 		return err
 	}
-	internal.StopSpinner(spinner)
+	s.Successf("Requirements are fine")
 
-	spinner = internal.NewSpinner("Activate kyma-installer to uninstall kyma", "kyma-installer activated to uninstall kyma")
+	s = o.NewStep(fmt.Sprintf("Activate kyma-installer to uninstall kyma"))
 	err = activateInstaller(o)
 	if err != nil {
+		s.Failure()
 		return err
 	}
-	internal.StopSpinner(spinner)
+	s.Successf("kyma-installer activated to uninstall kyma")
 
 	err = waitForInstaller(o)
 	if err != nil {
 		return err
 	}
 
-	spinner = internal.NewSpinner("Deleting kyma-integration namespace as it is not getting cleaned properly", "kyma-integration namespace deleted")
+	s = o.NewStep(fmt.Sprintf("Deleting kyma-integration namespace as it is not getting cleaned properly"))
 	err = deleteKymaIntegration(o)
 	if err != nil {
+		s.Failure()
 		return err
 	}
-	internal.StopSpinner(spinner)
+	s.Successf("kyma-integration namespace deleted")
 
-	spinner = internal.NewSpinner("Deleting kyma-installer", "kyma-installer deleted")
+	s = o.NewStep(fmt.Sprintf("Deleting kyma-installer"))
 	err = deleteInstaller(o)
 	if err != nil {
+		s.Failure()
 		return err
 	}
-	internal.StopSpinner(spinner)
+	s.Successf("kyma-installer deleted")
 
-	spinner = internal.NewSpinner("Deleting tiller", "tiller deleted")
+	s = o.NewStep(fmt.Sprintf("Deleting tiller"))
 	err = deleteTiller(o)
 	if err != nil {
+		s.Failure()
 		return err
 	}
-	internal.StopSpinner(spinner)
+	s.Successf("tiller deleted")
 
-	spinner = internal.NewSpinner("Deleting ClusterRoleBinding for admin", "ClusterRoleBinding for admin deleted")
+	s = o.NewStep(fmt.Sprintf("Deleting ClusterRoleBinding for admin"))
 	err = deleteClusterRoleBinding(o)
 	if err != nil {
+		s.Failure()
 		return err
 	}
-	internal.StopSpinner(spinner)
+	s.Successf("ClusterRoleBinding for admin deleted")
 
 	err = printSummary(o)
 	if err != nil {
@@ -258,9 +269,8 @@ func waitForInstaller(o *KymaOptions) error {
 	if status == "Uninstalled" {
 		return nil
 	}
-
+	var s step.Step
 	currentDesc := ""
-	var spinner chan struct{}
 
 	for {
 		status, err := internal.RunKubectlCmd(cmd)
@@ -274,13 +284,15 @@ func waitForInstaller(o *KymaOptions) error {
 
 		switch status {
 		case "Uninstalled":
-			if spinner != nil {
-				internal.StopSpinner(spinner)
-				spinner = nil
+			if s != nil {
+				s.Success()
 			}
 			return nil
 
 		case "Error":
+			if s != nil {
+				s.Failure()
+			}
 			fmt.Printf("Error installing Kyma: %s\n", desc)
 			out, err := internal.RunKubectlCmd([]string{"-n", "kyma-installer", "logs", "-l", "name=kyma-installer"})
 			if err != nil {
@@ -291,16 +303,19 @@ func waitForInstaller(o *KymaOptions) error {
 		case "InProgress":
 			// only do something if the description has changed
 			if desc != currentDesc {
-				if spinner != nil {
-					internal.StopSpinner(spinner)
-					spinner = nil
+				if s != nil {
+					s.Success()
 				} else {
-					spinner = internal.NewSpinner(desc, desc)
+					s = o.NewStep(fmt.Sprintf(desc))
+					s.Start()
 					currentDesc = desc
 				}
 			}
 
 		default:
+			if s != nil {
+				s.Failure()
+			}
 			return fmt.Errorf("Unexpected status: %s", status)
 		}
 		time.Sleep(sleep)
