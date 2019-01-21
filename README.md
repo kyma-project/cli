@@ -35,6 +35,11 @@ kyma install cluster minikube --vm-driver hyperv --hypervVirtualSwitch {YOUR_SWI
 kyma install kyma
 ```
 
+Run tests on Kyma installation:
+```bash
+kyma test
+```
+
 ## Kymactl as a Kubectl plugin
 
 To follow this section a kubectl version of 1.12.0 or later is required.
