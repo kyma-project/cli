@@ -6,8 +6,8 @@ import (
 
 	"github.com/kyma-incubator/kymactl/internal"
 	kyma_helm "github.com/kyma-incubator/kymactl/internal/helm"
+	"github.com/kyma-incubator/kymactl/internal/installer"
 	"github.com/kyma-incubator/kymactl/internal/step"
-	"github.com/kyma-incubator/kymactl/pkg/installer"
 	"github.com/kyma-incubator/kymactl/pkg/kyma/core"
 	"github.com/spf13/cobra"
 	"k8s.io/helm/pkg/helm"
