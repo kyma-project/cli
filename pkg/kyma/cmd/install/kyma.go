@@ -4,9 +4,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
-	"github.com/fsouza/go-dockerclient"
-	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
 	"os"
@@ -15,12 +12,16 @@ import (
 	"strings"
 	"time"
 
+	docker "github.com/fsouza/go-dockerclient"
+	"github.com/pkg/errors"
+	yaml "gopkg.in/yaml.v2"
+
 	"github.com/kyma-incubator/kymactl/internal/step"
 
 	"github.com/kyma-incubator/kymactl/internal"
 	"github.com/kyma-incubator/kymactl/pkg/kyma/core"
-	"github.com/spf13/cobra"
 	"github.com/mitchellh/mapstructure"
+	"github.com/spf13/cobra"
 )
 
 const (
@@ -385,7 +386,7 @@ func printSummary(o *KymaOptions) error {
 	return nil
 }
 
-func waitForInstaller(_ *KymaOptions) error {
+func waitForInstaller(o *KymaOptions) error {
 	currentDesc := ""
 	var s step.Step
 	installStatusCmd := []string{"get", "installation/kyma-installation", "-o", "jsonpath='{.status.state}'"}
