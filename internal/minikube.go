@@ -2,9 +2,11 @@ package internal
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"regexp"
 	"strings"
+	"github.com/fsouza/go-dockerclient"
 )
 
 const (
@@ -43,5 +45,32 @@ func CheckMinikubeVersion() error {
 		return fmt.Errorf("Your minikube version is '%s'. Currently only minikube in version '%s' is supported", version[1], minikubeVersion)
 	}
 	return nil
+}
 
+func MinikubeDockerClient() (*docker.Client, error) {
+	envOut, err := RunMinikubeCmd([]string{"docker-env"})
+	if err != nil {
+		return nil, err
+	}
+
+	oldEnvs := make(map[string]string)
+	defer func() {
+		for key, val := range oldEnvs {
+			_ = os.Setenv(key, val)
+		}
+	}()
+	for _, line := range strings.Split(envOut, "\n") {
+		if strings.HasPrefix(line, "export") {
+			env := strings.SplitN(line, " ", 2)[1]
+			envParts := strings.SplitN(env, "=",2)
+			envKey := envParts[0]
+			envVal := strings.Trim(envParts[1], `"`)
+			oldEnvs[envKey] = os.Getenv(envKey)
+			err := os.Setenv(envKey, envVal)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	return docker.NewClientFromEnv()
 }
