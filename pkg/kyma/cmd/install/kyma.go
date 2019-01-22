@@ -81,20 +81,20 @@ The command will:
 
 //Run runs the command
 func (o *KymaOptions) Run() error {
-	if o.Local {
-		fmt.Printf("Local installation from: %s\n", o.LocalSrcPath)
-	} else {
-		fmt.Printf("Installing kyma in version '%s'\n", o.ReleaseVersion)
-	}
-	fmt.Println()
-
 	s := o.NewStep(fmt.Sprintf("Checking requirements"))
-	err := internal.CheckKubectlVersion()
+	err = checkReqs(o)
 	if err != nil {
 		s.Failure()
 		return err
 	}
 	s.Successf("Requirements are fine")
+
+	if o.Local {
+		fmt.Printf("Installing Kyma from local path: '%s'\n", o.LocalSrcPath)
+	} else {
+		fmt.Printf("Installing Kyma in version '%s'\n", o.ReleaseVersion)
+	}
+	fmt.Println()
 
 	s = o.NewStep(fmt.Sprintf("Installing tiller"))
 	err = installTiller(o)
@@ -133,6 +133,27 @@ func (o *KymaOptions) Run() error {
 	}
 
 	return nil
+}
+
+func checkReqs(o *KymaOptions) error {
+	err := internal.CheckKubectlVersion()
+	if err != nil {
+		return err
+	}
+	if o.LocalSrcPath != "" && !o.Local {
+		return fmt.Errorf("You specified 'src-path=%s' but no a local installation (--local)", o.LocalSrcPath)
+	}
+	if o.Local {
+		if o.LocalSrcPath == "" {
+			return fmt.Errorf("No local 'src-path' configured and no applicable default found, verify if you have exported a GOPATH?")
+		}
+		if _, err := os.Stat(o.LocalSrcPath); err != nil {
+			return fmt.Errorf("Configured 'src-path=%s' does not exist, please check if you configured a valid path", o.LocalSrcPath)
+		}
+		if _, err := os.Stat(filepath.Join(o.LocalSrcPath, "installation", "resources")); err != nil {
+			return fmt.Errorf("Configured 'src-path=%s' seems to not point to a Kyma repository, please verify if your repository contains a folder 'installation/resources'", o.LocalSrcPath)
+		}
+	}
 }
 
 func installTiller(o *KymaOptions) error {
