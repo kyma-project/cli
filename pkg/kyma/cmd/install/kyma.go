@@ -82,7 +82,7 @@ The command will:
 //Run runs the command
 func (o *KymaOptions) Run() error {
 	s := o.NewStep(fmt.Sprintf("Checking requirements"))
-	err = checkReqs(o)
+	err := checkReqs(o)
 	if err != nil {
 		s.Failure()
 		return err
@@ -154,6 +154,7 @@ func checkReqs(o *KymaOptions) error {
 			return fmt.Errorf("Configured 'src-path=%s' seems to not point to a Kyma repository, please verify if your repository contains a folder 'installation/resources'", o.LocalSrcPath)
 		}
 	}
+	return nil
 }
 
 func installTiller(o *KymaOptions) error {
