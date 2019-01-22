@@ -3,13 +3,13 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/kyma-incubator/kymactl/internal"
-	"github.com/kyma-incubator/kymactl/pkg/kyma/core"
+	"github.com/kyma-incubator/kyma-cli/internal"
+	"github.com/kyma-incubator/kyma-cli/pkg/kyma/core"
 
 	"github.com/spf13/cobra"
 )
 
-//Version contains the kymactl binary version injected by the build system
+//Version contains the kyma-cli binary version injected by the build system
 var Version string
 
 //VersionOptions defines available options for the command

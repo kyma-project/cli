@@ -16,10 +16,10 @@ import (
 	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/kyma-incubator/kymactl/internal/step"
+	"github.com/kyma-incubator/kyma-cli/internal/step"
 
-	"github.com/kyma-incubator/kymactl/internal"
-	"github.com/kyma-incubator/kymactl/pkg/kyma/core"
+	"github.com/kyma-incubator/kyma-cli/internal"
+	"github.com/kyma-incubator/kyma-cli/pkg/kyma/core"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
 )
@@ -343,7 +343,7 @@ func applyKymaInstaller(resources []map[string]interface{}, o *KymaOptions) erro
 }
 
 func labelInstallerNamespace() error {
-	_, err := internal.RunKubectlCmd([]string{"label", "namespace", "kyma-installer", "app=kymactl"})
+	_, err := internal.RunKubectlCmd([]string{"label", "namespace", "kyma-installer", "app=kyma-cli"})
 	return err
 }
 

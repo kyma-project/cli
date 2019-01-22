@@ -1,10 +1,10 @@
 package cmd
 
 import (
-	"github.com/kyma-incubator/kymactl/pkg/kyma/cmd/install"
-	"github.com/kyma-incubator/kymactl/pkg/kyma/cmd/install/cluster"
-	"github.com/kyma-incubator/kymactl/pkg/kyma/cmd/uninstall"
-	"github.com/kyma-incubator/kymactl/pkg/kyma/core"
+	"github.com/kyma-incubator/kyma-cli/pkg/kyma/cmd/install"
+	"github.com/kyma-incubator/kyma-cli/pkg/kyma/cmd/install/cluster"
+	"github.com/kyma-incubator/kyma-cli/pkg/kyma/cmd/uninstall"
+	"github.com/kyma-incubator/kyma-cli/pkg/kyma/core"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -17,7 +17,7 @@ func NewKymaCmd(o *core.Options) *cobra.Command {
 		Long: `Kyma is a flexible and easy way to connect and extend enterprise applications in a cloud-native world.
 kyma CLI controls a Kyma cluster.
 
-Find more information at: https://github.com/kyma-incubator/kymactl
+Find more information at: https://github.com/kyma-incubator/kyma-cli
 `,
 		// Affects children as well
 		SilenceErrors: false,

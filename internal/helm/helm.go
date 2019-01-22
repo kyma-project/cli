@@ -3,18 +3,19 @@ package helm
 import (
 	"bytes"
 	"fmt"
-	"github.com/kyma-incubator/kymactl/internal/net"
+	"net/http"
+	"net/url"
+
+	"github.com/kyma-incubator/kyma-cli/internal/net"
 	"github.com/pkg/errors"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/portforward"
 	"k8s.io/client-go/transport/spdy"
 	"k8s.io/helm/pkg/helm"
 	"k8s.io/helm/pkg/helm/environment"
-	"net/http"
-	"net/url"
-	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 )
 
 type Client struct {
@@ -79,7 +80,6 @@ func setupTillerConnection(settings *environment.EnvSettings, config *rest.Confi
 	if err != nil {
 		return nil, err
 	}
-
 
 	errChan := make(chan error)
 	go func() {

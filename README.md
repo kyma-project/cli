@@ -1,4 +1,4 @@
-# Kymactl
+# kyma-cli
 
 ## Overview
 
@@ -9,7 +9,7 @@ A command line tool to support developers of and with Kyma
 - `version`: Shows the kyma cluster version and the Kyma CLI version. The Kyma CLI version is set at compile time passing it to the go linker as a flag:
 
     ```bash
-    go build -o ./bin/kyma -ldflags '-X github.com/kyma-incubator/kymactl/pkg/kyma/cmd.Version=1.5.0' ./cmd/kyma
+    go build -o ./bin/kyma -ldflags '-X github.com/kyma-incubator/kyma-cli/pkg/kyma/cmd.Version=1.5.0' ./cmd/kyma
     ```
 - `install cluster minikube`: Initializes minikube with a new cluster (replaces the `minikube.sh` script) 
 - `install kyma`: Installs kyma to a cluster based on a release (replaces the `ìnstaller.sh` and `is-installed.sh` script)
@@ -40,7 +40,7 @@ Run tests on Kyma installation:
 kyma test
 ```
 
-## Kymactl as a Kubectl plugin
+## kyma-cli as a Kubectl plugin
 
 To follow this section a kubectl version of 1.12.0 or later is required.
 
