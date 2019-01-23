@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kyma-incubator/kymactl/internal/step"
+	"github.com/kyma-incubator/kyma-cli/internal/step"
 
-	"github.com/kyma-incubator/kymactl/internal"
-	"github.com/kyma-incubator/kymactl/pkg/kyma/core"
+	"github.com/kyma-incubator/kyma-cli/internal"
+	"github.com/kyma-incubator/kyma-cli/pkg/kyma/core"
 	"github.com/spf13/cobra"
 )
 
@@ -131,7 +131,7 @@ func activateInstaller(o *KymaOptions) error {
 }
 
 func deleteInstaller(o *KymaOptions) error {
-	check, err := internal.IsClusterResourceDeployed("namespace", "app", "kymactl")
+	check, err := internal.IsClusterResourceDeployed("namespace", "app", "kyma-cli")
 	if err != nil {
 		return err
 	}
@@ -145,7 +145,7 @@ func deleteInstaller(o *KymaOptions) error {
 	}
 
 	for {
-		check, err := internal.IsClusterResourceDeployed("namespace", "app", "kymactl")
+		check, err := internal.IsClusterResourceDeployed("namespace", "app", "kyma-cli")
 		if err != nil {
 			return err
 		}
@@ -231,7 +231,7 @@ func deleteTiller(o *KymaOptions) error {
 }
 
 func deleteClusterRoleBinding(o *KymaOptions) error {
-	check, err := internal.IsClusterResourceDeployed("clusterrolebinding", "app", "kymactl")
+	check, err := internal.IsClusterResourceDeployed("clusterrolebinding", "app", "kyma-cli")
 	if err != nil {
 		return err
 	}

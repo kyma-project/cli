@@ -1,8 +1,8 @@
 .DEFAULT_GOAL := local
 
-APP_NAME = kymactl
+APP_NAME = kyma-cli
 IMG = $(DOCKER_PUSH_REPOSITORY)$(DOCKER_PUSH_DIRECTORY)/$(APP_NAME)
-FLAGS = -ldflags '-X github.com/kyma-incubator/kymactl/pkg/kyma/cmd.Version=$(DOCKER_TAG)'
+FLAGS = -ldflags '-X github.com/kyma-incubator/kyma-cli/pkg/kyma/cmd.Version=$(DOCKER_TAG)'
 
 
 .PHONY: resolve

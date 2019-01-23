@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kyma-incubator/kymactl/internal"
-	"github.com/kyma-incubator/kymactl/pkg/kyma/core"
+	"github.com/kyma-incubator/kyma-cli/internal"
+	"github.com/kyma-incubator/kyma-cli/pkg/kyma/core"
 	"github.com/spf13/cobra"
 )
 

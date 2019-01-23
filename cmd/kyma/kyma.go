@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/kyma-incubator/kymactl/pkg/kyma/cmd"
-	"github.com/kyma-incubator/kymactl/pkg/kyma/core"
+	"github.com/kyma-incubator/kyma-cli/pkg/kyma/cmd"
+	"github.com/kyma-incubator/kyma-cli/pkg/kyma/core"
 )
 
 func main() {
