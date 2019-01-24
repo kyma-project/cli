@@ -1,4 +1,4 @@
-package cluster
+package prepare
 
 import (
 	"bufio"
@@ -73,8 +73,8 @@ func NewMinikubeOptions(o *core.Options) *MinikubeOptions {
 func NewMinikubeCmd(o *MinikubeOptions) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "minikube",
-		Short: "Prepares a minikube cluster",
-		Long: `Prepares a minikube cluster
+		Short: "Prepares minikube",
+		Long: `Prepares minikube for Kyma installation
 `,
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
 		Aliases: []string{"m"},
@@ -91,7 +91,7 @@ func NewMinikubeCmd(o *MinikubeOptions) *cobra.Command {
 
 //Run runs the command
 func (o *MinikubeOptions) Run() error {
-	fmt.Printf("Installing minikube cluster using domain '%s' and vm-driver '%s'\n", o.Domain, o.VMDriver)
+	fmt.Printf("Preparing minikube using domain '%s' and vm-driver '%s'\n", o.Domain, o.VMDriver)
 	fmt.Println()
 
 	s := o.NewStep(fmt.Sprintf("Checking requirements"))

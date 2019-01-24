@@ -1,12 +1,16 @@
 package cmd
 
 import (
-	"github.com/kyma-incubator/kyma-cli/pkg/kyma/cmd/install"
-	"github.com/kyma-incubator/kyma-cli/pkg/kyma/cmd/install/cluster"
-	"github.com/kyma-incubator/kyma-cli/pkg/kyma/cmd/uninstall"
+	"time"
+
+	"github.com/kyma-incubator/kyma-cli/pkg/kyma/cmd/prepare"
 	"github.com/kyma-incubator/kyma-cli/pkg/kyma/core"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/tools/clientcmd"
+)
+
+const (
+	sleep = 10 * time.Second
 )
 
 //NewKymaCmd creates a new kyma CLI command
@@ -34,18 +38,15 @@ Find more information at: https://github.com/kyma-incubator/kyma-cli
 	completionCmd := NewCompletionCmd()
 	cmd.AddCommand(completionCmd)
 
-	installCmd := install.NewCmd()
-	installClusterCmd := cluster.NewCmd()
-	installCmd.AddCommand(installClusterCmd)
-	installClusterMinikubeCmd := cluster.NewMinikubeCmd(cluster.NewMinikubeOptions(o))
-	installClusterCmd.AddCommand(installClusterMinikubeCmd)
-	installKymaCmd := install.NewKymaCmd(install.NewKymaOptions(o))
-	installCmd.AddCommand(installKymaCmd)
+	prepareCmd := prepare.NewCmd()
+	cmd.AddCommand(prepareCmd)
+	prepareMinikubeCmd := prepare.NewMinikubeCmd(prepare.NewMinikubeOptions(o))
+	prepareCmd.AddCommand(prepareMinikubeCmd)
+
+	installCmd := NewInstallCmd(NewInstallOptions(o))
 	cmd.AddCommand(installCmd)
 
-	uninstallCmd := uninstall.NewCmd()
-	uninstallKymaCmd := uninstall.NewKymaCmd(uninstall.NewKymaOptions(o))
-	uninstallCmd.AddCommand(uninstallKymaCmd)
+	uninstallCmd := NewUninstallCmd(NewUninstallOptions(o))
 	cmd.AddCommand(uninstallCmd)
 
 	testCmd := NewTestCmd(NewTestOptions(o))

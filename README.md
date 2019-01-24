@@ -11,10 +11,11 @@ A command line tool to support developers of and with Kyma
     ```bash
     go build -o ./bin/kyma -ldflags '-X github.com/kyma-incubator/kyma-cli/pkg/kyma/cmd.Version=1.5.0' ./cmd/kyma
     ```
-- `install cluster minikube`: Initializes minikube with a new cluster (replaces the `minikube.sh` script) 
-- `install kyma`: Installs kyma to a cluster based on a release (replaces the `ìnstaller.sh` and `is-installed.sh` script)
-- `uninstall kyma`: Uninstalls all kyma related resources from a cluster
+- `prepare minikube`: Initializes minikube with a new cluster (replaces the `minikube.sh` script) 
+- `install`: Installs kyma to a cluster based on a release (replaces the `ìnstaller.sh` and `is-installed.sh` script)
+- `uninstall`: Uninstalls all kyma related resources from a cluster
 - `completion`: Output shell completion code for bash.
+- `test`: Triggers and reports the tests for every Kyma module
 - `help`: Displays usage for the given command (e.g. `kyma help`, `kyma help status`, etc...)
 
 ## Usage
@@ -22,17 +23,17 @@ A command line tool to support developers of and with Kyma
 Installation of kyma with minikube on Mac:
 
 ```bash
-kyma install cluster minikube
-kyma install kyma
+kyma prepare minikube
+kyma install
 ```
 
 Installation of kyma with minikube on Windows:
 
 ```bash
-kyma install cluster minikube --vm-driver hyperv --hypervVirtualSwitch {YOUR_SWITCH_NAME}
+kyma prepare minikube --vm-driver hyperv --hypervVirtualSwitch {YOUR_SWITCH_NAME}
 # follow instructions to add hosts
 
-kyma install kyma
+kyma install
 ```
 
 Run tests on Kyma installation:
@@ -65,14 +66,6 @@ To know more about extending kubectl with plugins read [kubernetes documentation
 
 ## Roadmap
 
-- Usability
-  - Better Command Structure?:
-    - kyma install
-    - kyma uninstall
-    - kyma add monitoring
-    - kyma cluster minikube
-    - kyma cluster gke
-    - kyma version
 - Portability
   - adding windows support (only hosts manipulation missing)
   - validate linux support
@@ -86,13 +79,13 @@ To know more about extending kubectl with plugins read [kubernetes documentation
   - uninstall optional kyma module
   - update kyma to newer release
 - Release management
+  - SUpport for old releases
   - use latest release automically
   - list available releases
 - Application Connectivity
   - create remote environment and fetch connection token
   - manage APIs registered by an application
 - Testing/Validation
-  - execute acceptance tests for kyma
   - connect mock application to kyma
   - 'Check' a kyma installation for potential problems
 - CTL installation
