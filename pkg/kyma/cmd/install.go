@@ -1,4 +1,4 @@
-package install
+package cmd
 
 import (
 	"bytes"
@@ -24,12 +24,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	sleep = 5 * time.Second
-)
-
-//KymaOptions defines available options for the command
-type KymaOptions struct {
+//InstallOptions defines available options for the command
+type InstallOptions struct {
 	*core.Options
 	ReleaseVersion string
 	ReleaseConfig  string
@@ -39,18 +35,18 @@ type KymaOptions struct {
 	LocalSrcPath   string
 }
 
-//NewKymaOptions creates options with default values
-func NewKymaOptions(o *core.Options) *KymaOptions {
-	return &KymaOptions{Options: o}
+//NewInstallOptions creates options with default values
+func NewInstallOptions(o *core.Options) *InstallOptions {
+	return &InstallOptions{Options: o}
 }
 
-//NewKymaCmd creates a new kyma command
-func NewKymaCmd(o *KymaOptions) *cobra.Command {
+//NewInstallCmd creates a new kyma command
+func NewInstallCmd(o *InstallOptions) *cobra.Command {
 
 	cmd := &cobra.Command{
-		Use:   "kyma",
-		Short: "Installs kyma to a running kubernetes cluster",
-		Long: `Install kyma on a running kubernetes cluster.
+		Use:   "install",
+		Short: "Installs Kyma to a running kubernetes cluster",
+		Long: `Install Kyma on a running kubernetes cluster.
 
 Assure that your KUBECONFIG is pointing to the target cluster already.
 The command will:
@@ -80,7 +76,7 @@ The command will:
 }
 
 //Run runs the command
-func (o *KymaOptions) Run() error {
+func (o *InstallOptions) Run() error {
 	s := o.NewStep(fmt.Sprintf("Checking requirements"))
 	err := checkReqs(o)
 	if err != nil {
@@ -135,7 +131,7 @@ func (o *KymaOptions) Run() error {
 	return nil
 }
 
-func checkReqs(o *KymaOptions) error {
+func checkReqs(o *InstallOptions) error {
 	err := internal.CheckKubectlVersion()
 	if err != nil {
 		return err
@@ -157,7 +153,7 @@ func checkReqs(o *KymaOptions) error {
 	return nil
 }
 
-func installTiller(o *KymaOptions) error {
+func installTiller(o *InstallOptions) error {
 	check, err := internal.IsPodDeployed("kube-system", "name", "tiller")
 	if err != nil {
 		return err
@@ -175,7 +171,7 @@ func installTiller(o *KymaOptions) error {
 	return nil
 }
 
-func installInstaller(o *KymaOptions) error {
+func installInstaller(o *InstallOptions) error {
 	check, err := internal.IsPodDeployed("kyma-installer", "name", "kyma-installer")
 	if err != nil {
 		return err
@@ -199,7 +195,7 @@ func installInstaller(o *KymaOptions) error {
 	return nil
 }
 
-func installInstallerFromRelease(o *KymaOptions) error {
+func installInstallerFromRelease(o *InstallOptions) error {
 	relaseURL := "https://github.com/kyma-project/kyma/releases/download/" + o.ReleaseVersion + "/kyma-config-local.yaml"
 	if o.ReleaseConfig != "" {
 		relaseURL = o.ReleaseConfig
@@ -211,7 +207,7 @@ func installInstallerFromRelease(o *KymaOptions) error {
 	return labelInstallerNamespace()
 }
 
-func installInstallerFromLocalSources(o *KymaOptions) error {
+func installInstallerFromLocalSources(o *InstallOptions) error {
 	localResources, err := loadLocalResources(o)
 	if err != nil {
 		return err
@@ -263,7 +259,7 @@ func findInstallerImageName(resources []map[string]interface{}) (string, error) 
 	return "", errors.New("'kyma-installer' deployment is missing")
 }
 
-func loadLocalResources(o *KymaOptions) ([]map[string]interface{}, error) {
+func loadLocalResources(o *InstallOptions) ([]map[string]interface{}, error) {
 	resources := make([]map[string]interface{}, 0)
 
 	resources, err := loadInstallationResourcesFile("installer-local.yaml", resources, o)
@@ -284,7 +280,7 @@ func loadLocalResources(o *KymaOptions) ([]map[string]interface{}, error) {
 	return resources, nil
 }
 
-func loadInstallationResourcesFile(name string, acc []map[string]interface{}, o *KymaOptions) ([]map[string]interface{}, error) {
+func loadInstallationResourcesFile(name string, acc []map[string]interface{}, o *InstallOptions) ([]map[string]interface{}, error) {
 	path := filepath.Join(o.LocalSrcPath, "installation", "resources", name)
 	f, err := os.Open(path)
 	if err != nil {
@@ -305,7 +301,7 @@ func loadInstallationResourcesFile(name string, acc []map[string]interface{}, o 
 	return acc, nil
 }
 
-func buildKymaInstaller(imageName string, o *KymaOptions) error {
+func buildKymaInstaller(imageName string, o *InstallOptions) error {
 	dc, err := internal.MinikubeDockerClient()
 	if err != nil {
 		return err
@@ -319,7 +315,7 @@ func buildKymaInstaller(imageName string, o *KymaOptions) error {
 	})
 }
 
-func applyKymaInstaller(resources []map[string]interface{}, o *KymaOptions) error {
+func applyKymaInstaller(resources []map[string]interface{}, o *InstallOptions) error {
 	cmd := exec.Command("kubectl", "apply", "-f", "-")
 	stdinPipe, err := cmd.StdinPipe()
 	if err != nil {
@@ -347,7 +343,7 @@ func labelInstallerNamespace() error {
 	return err
 }
 
-func activateInstaller(_ *KymaOptions) error {
+func activateInstaller(_ *InstallOptions) error {
 	status, err := internal.RunKubectlCmd([]string{"get", "installation/kyma-installation", "-o", "jsonpath='{.status.state}'"})
 	if err != nil {
 		return err
@@ -363,7 +359,7 @@ func activateInstaller(_ *KymaOptions) error {
 	return nil
 }
 
-func printSummary(o *KymaOptions) error {
+func printSummary(o *InstallOptions) error {
 	version, err := internal.GetKymaVersion()
 	if err != nil {
 		return err
@@ -408,7 +404,7 @@ func printSummary(o *KymaOptions) error {
 	return nil
 }
 
-func waitForInstaller(o *KymaOptions) error {
+func waitForInstaller(o *InstallOptions) error {
 	currentDesc := ""
 	var s step.Step
 	installStatusCmd := []string{"get", "installation/kyma-installation", "-o", "jsonpath='{.status.state}'"}

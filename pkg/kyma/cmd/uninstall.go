@@ -1,4 +1,4 @@
-package uninstall
+package cmd
 
 import (
 	"fmt"
@@ -11,27 +11,23 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	sleep = 10 * time.Second
-)
-
-//KymaOptions defines available options for the command
-type KymaOptions struct {
+//UninstallOptions defines available options for the command
+type UninstallOptions struct {
 	*core.Options
 }
 
-//NewKymaOptions creates options with default values
-func NewKymaOptions(o *core.Options) *KymaOptions {
-	return &KymaOptions{Options: o}
+//NewUninstallOptions creates options with default values
+func NewUninstallOptions(o *core.Options) *UninstallOptions {
+	return &UninstallOptions{Options: o}
 }
 
-//NewKymaCmd creates a new kyma command
-func NewKymaCmd(o *KymaOptions) *cobra.Command {
+//NewUninstallCmd creates a new kyma command
+func NewUninstallCmd(o *UninstallOptions) *cobra.Command {
 
 	cmd := &cobra.Command{
-		Use:   "kyma",
-		Short: "Uninstalls kyma from a running kubernetes cluster",
-		Long: `Uninstall kyma on a running kubernetes cluster.
+		Use:   "uninstall",
+		Short: "Uninstalls Kyma from a running kubernetes cluster",
+		Long: `Uninstall Kyma on a running kubernetes cluster.
 
 Assure that your KUBECONFIG is pointing to the target cluster already.
 The command will:
@@ -47,8 +43,8 @@ The command will:
 }
 
 //Run runs the command
-func (o *KymaOptions) Run() error {
-	fmt.Printf("Uninstalling kyma\n")
+func (o *UninstallOptions) Run() error {
+	fmt.Printf("Uninstalling Kyma\n")
 	fmt.Println()
 
 	s := o.NewStep(fmt.Sprintf("Checking requirements"))
@@ -61,14 +57,14 @@ func (o *KymaOptions) Run() error {
 	s.Successf("Requirements are fine")
 
 	s = o.NewStep(fmt.Sprintf("Activate kyma-installer to uninstall kyma"))
-	err = activateInstaller(o)
+	err = activateInstallerForUninstall(o)
 	if err != nil {
 		s.Failure()
 		return err
 	}
 	s.Successf("kyma-installer activated to uninstall kyma")
 
-	err = waitForInstaller(o)
+	err = waitForInstallerToUninstall(o)
 	if err != nil {
 		return err
 	}
@@ -105,7 +101,7 @@ func (o *KymaOptions) Run() error {
 	}
 	s.Successf("ClusterRoleBinding for admin deleted")
 
-	err = printSummary(o)
+	err = printUninstallSummary(o)
 	if err != nil {
 		return err
 	}
@@ -113,7 +109,7 @@ func (o *KymaOptions) Run() error {
 	return nil
 }
 
-func activateInstaller(o *KymaOptions) error {
+func activateInstallerForUninstall(o *UninstallOptions) error {
 	check, err := internal.IsPodDeployed("kyma-installer", "name", "kyma-installer")
 	if err != nil {
 		return err
@@ -130,7 +126,7 @@ func activateInstaller(o *KymaOptions) error {
 	return nil
 }
 
-func deleteInstaller(o *KymaOptions) error {
+func deleteInstaller(o *UninstallOptions) error {
 	check, err := internal.IsClusterResourceDeployed("namespace", "app", "kyma-cli")
 	if err != nil {
 		return err
@@ -178,7 +174,7 @@ func deleteInstaller(o *KymaOptions) error {
 	return nil
 }
 
-func deleteKymaIntegration(o *KymaOptions) error {
+func deleteKymaIntegration(o *UninstallOptions) error {
 	_, err := internal.RunKubectlCmd([]string{"delete", "namespace", "kyma-integration"})
 	if err != nil {
 		fmt.Printf("%s", err)
@@ -195,7 +191,7 @@ func deleteKymaIntegration(o *KymaOptions) error {
 }
 
 //cannot use the original yaml file as the version is not known or might be even custom
-func deleteTiller(o *KymaOptions) error {
+func deleteTiller(o *UninstallOptions) error {
 	check, err := internal.IsPodDeployed("kube-system", "name", "tiller")
 	if err != nil {
 		return err
@@ -230,7 +226,7 @@ func deleteTiller(o *KymaOptions) error {
 	return nil
 }
 
-func deleteClusterRoleBinding(o *KymaOptions) error {
+func deleteClusterRoleBinding(o *UninstallOptions) error {
 	check, err := internal.IsClusterResourceDeployed("clusterrolebinding", "app", "kyma-cli")
 	if err != nil {
 		return err
@@ -246,13 +242,13 @@ func deleteClusterRoleBinding(o *KymaOptions) error {
 	return nil
 }
 
-func printSummary(o *KymaOptions) error {
+func printUninstallSummary(o *UninstallOptions) error {
 	fmt.Println()
 	fmt.Println("Kyma uninstalled! :(")
 	return nil
 }
 
-func waitForInstaller(o *KymaOptions) error {
+func waitForInstallerToUninstall(o *UninstallOptions) error {
 	check, err := internal.IsPodDeployed("kyma-installer", "name", "kyma-installer")
 	if err != nil {
 		return err
