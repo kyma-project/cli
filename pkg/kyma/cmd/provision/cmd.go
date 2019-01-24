@@ -7,7 +7,7 @@ import (
 //NewCmd creates a new provision command
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "Provisions",
+		Use:   "provision",
 		Short: "Provisions a cluster for installation",
 	}
 	return cmd
