@@ -63,14 +63,8 @@ The command will:
 	cmd.Flags().StringVarP(&o.ReleaseConfig, "config", "c", "", "URL or path to the installer configuration yaml")
 	cmd.Flags().BoolVarP(&o.NoWait, "noWait", "n", false, "Do not wait for completion of kyma-installer")
 	cmd.Flags().StringVarP(&o.Domain, "domain", "d", "kyma.local", "domain to use for installation")
-
-	goPath := os.Getenv("GOPATH")
-	var defaultLocalPath string
-	if goPath != "" {
-		defaultLocalPath = filepath.Join(goPath, "src", "github.com", "kyma-project", "kyma")
-	}
 	cmd.Flags().BoolVarP(&o.Local, "local", "l", false, "Install from sources")
-	cmd.Flags().StringVarP(&o.LocalSrcPath, "src-path", "", defaultLocalPath, "Path to local sources to use")
+	cmd.Flags().StringVarP(&o.LocalSrcPath, "src-path", "", "", "Path to local sources to use")
 
 	return cmd
 }
@@ -137,7 +131,13 @@ func checkReqs(o *InstallOptions) error {
 		return err
 	}
 	if o.LocalSrcPath != "" && !o.Local {
-		return fmt.Errorf("You specified 'src-path=%s' but no a local installation (--local)", o.LocalSrcPath)
+		return fmt.Errorf("You specified 'src-path=%s' without specifying --local", o.LocalSrcPath)
+	}
+	if o.LocalSrcPath == "" {
+		goPath := os.Getenv("GOPATH")
+		if goPath != "" {
+			o.LocalSrcPath = filepath.Join(goPath, "src", "github.com", "kyma-project", "kyma")
+		}
 	}
 	if o.Local {
 		if o.LocalSrcPath == "" {
