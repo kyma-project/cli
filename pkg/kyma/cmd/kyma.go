@@ -3,6 +3,7 @@ package cmd
 import (
 	"time"
 
+	"github.com/kyma-incubator/kyma-cli/pkg/kyma/cmd/provision"
 	"github.com/kyma-incubator/kyma-cli/pkg/kyma/core"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/tools/clientcmd"
