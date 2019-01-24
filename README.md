@@ -11,7 +11,7 @@ A command line tool to support developers of and with Kyma
     ```bash
     go build -o ./bin/kyma -ldflags '-X github.com/kyma-incubator/kyma-cli/pkg/kyma/cmd.Version=1.5.0' ./cmd/kyma
     ```
-- `prepare minikube`: Initializes minikube with a new cluster (replaces the `minikube.sh` script) 
+- `provision minikube`: Initializes minikube with a new cluster (replaces the `minikube.sh` script) 
 - `install`: Installs kyma to a cluster based on a release (replaces the `ìnstaller.sh` and `is-installed.sh` script)
 - `uninstall`: Uninstalls all kyma related resources from a cluster
 - `completion`: Output shell completion code for bash.
@@ -23,14 +23,14 @@ A command line tool to support developers of and with Kyma
 Installation of kyma with minikube on Mac:
 
 ```bash
-kyma prepare minikube
+kyma provision minikube
 kyma install
 ```
 
 Installation of kyma with minikube on Windows:
 
 ```bash
-kyma prepare minikube --vm-driver hyperv --hypervVirtualSwitch {YOUR_SWITCH_NAME}
+kyma provision minikube --vm-driver hyperv --hypervVirtualSwitch {YOUR_SWITCH_NAME}
 # follow instructions to add hosts
 
 kyma install

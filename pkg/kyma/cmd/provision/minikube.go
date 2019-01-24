@@ -1,4 +1,4 @@
-package prepare
+package provision
 
 import (
 	"bufio"
@@ -73,8 +73,8 @@ func NewMinikubeOptions(o *core.Options) *MinikubeOptions {
 func NewMinikubeCmd(o *MinikubeOptions) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "minikube",
-		Short: "Prepares minikube",
-		Long: `Prepares minikube for Kyma installation
+		Short: "Provisions minikube",
+		Long: `Provisions minikube for Kyma installation
 `,
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
 		Aliases: []string{"m"},

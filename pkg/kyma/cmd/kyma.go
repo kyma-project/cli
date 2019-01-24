@@ -3,7 +3,6 @@ package cmd
 import (
 	"time"
 
-	"github.com/kyma-incubator/kyma-cli/pkg/kyma/cmd/prepare"
 	"github.com/kyma-incubator/kyma-cli/pkg/kyma/core"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/tools/clientcmd"
@@ -38,10 +37,10 @@ Find more information at: https://github.com/kyma-incubator/kyma-cli
 	completionCmd := NewCompletionCmd()
 	cmd.AddCommand(completionCmd)
 
-	prepareCmd := prepare.NewCmd()
-	cmd.AddCommand(prepareCmd)
-	prepareMinikubeCmd := prepare.NewMinikubeCmd(prepare.NewMinikubeOptions(o))
-	prepareCmd.AddCommand(prepareMinikubeCmd)
+	provisionCmd := provision.NewCmd()
+	cmd.AddCommand(provisionCmd)
+	provisionMinikubeCmd := provision.NewMinikubeCmd(provision.NewMinikubeOptions(o))
+	provisionCmd.AddCommand(provisionMinikubeCmd)
 
 	installCmd := NewInstallCmd(NewInstallOptions(o))
 	cmd.AddCommand(installCmd)
