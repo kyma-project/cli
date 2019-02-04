@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	minikubeVersion string = "0.28.2"
+	minikubeVersion string = "0.31.0"
 )
 
 //RunMinikubeCmd executes a minikube command with given arguments

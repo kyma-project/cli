@@ -179,7 +179,7 @@ func (o *MinikubeOptions) Run() error {
 }
 
 func checkIfMinikubeIsInitialized(o *MinikubeOptions) error {
-	statusText, err := internal.RunMinikubeCmdE([]string{"status", "-b=" + bootstrapper, "--format", "'{{.MinikubeStatus}}'"})
+	statusText, err := internal.RunMinikubeCmdE([]string{"status", "-b=" + bootstrapper, "--format", "'{{.Host}}'"})
 	if err != nil {
 		return err
 	}
@@ -187,7 +187,7 @@ func checkIfMinikubeIsInitialized(o *MinikubeOptions) error {
 	if statusText != "" {
 		if !o.NonInteractive {
 			fmt.Println("=====")
-			fmt.Printf("Minikube is initialized and status is '%s'\n", statusText)
+			fmt.Printf("Minikube is initialized and status is '%s'\n ", statusText)
 		}
 		reader := bufio.NewReader(os.Stdin)
 		answer := ""
@@ -281,7 +281,7 @@ func createClusterRoleBinding() error {
 
 func waitForMinikubeToBeUp() error {
 	for {
-		statusText, err := internal.RunMinikubeCmd([]string{"status", "-b=" + bootstrapper, "--format", "'{{.MinikubeStatus}}'"})
+		statusText, err := internal.RunMinikubeCmd([]string{"status", "-b=" + bootstrapper, "--format", "'{{.Host}}'"})
 		if err != nil {
 			return err
 		}

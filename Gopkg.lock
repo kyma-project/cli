@@ -85,7 +85,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:b090e9cc078ff7b86465f84c10565bb5edef47575b6c9af4b2feabc0b5f6508d"
+  digest = "1:3179f3938d3f3d8244706bcca08b25b3c40f90724e26567007cd5c666b6d5646"
   name = "github.com/docker/docker"
   packages = [
     "api/types",
@@ -768,7 +768,7 @@
   revision = "86dbf26d38ed22c4f662432b5f6d7876c0237358"
 
 [[projects]]
-  digest = "1:e279716c70c94d12339813ae885157ff30c9440ce1e36ceec1c2a14def1b4ed8"
+  digest = "1:7d55862e3ff3565ea2d8837c55470bb7f79b6ed9bf8e3b7fe847617de6b7a9d4"
   name = "k8s.io/helm"
   packages = [
     "pkg/chartutil",
