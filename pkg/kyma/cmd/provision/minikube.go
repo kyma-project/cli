@@ -3,6 +3,7 @@ package provision
 import (
 	"bufio"
 	"fmt"
+	"github.com/kyma-incubator/kyma-cli/internal/step"
 	"os"
 	"runtime"
 	"strings"
@@ -14,8 +15,8 @@ import (
 )
 
 const (
-	kubernetesVersion string = "1.10.0"
-	bootstrapper      string = "localkube"
+	kubernetesVersion string = "1.11.5"
+	bootstrapper      string = "kubeadm"
 	vmDriverHyperkit  string = "hyperkit"
 	vmDriverHyperv    string = "hyperv"
 	vmDriverNone      string = "none"
@@ -129,30 +130,34 @@ func (o *MinikubeOptions) Run() error {
 	}
 	s.Successf("Minikube config initialized")
 
-	s = o.NewStep(fmt.Sprintf("Waiting for minikube to be up and running"))
+	s = o.NewStep(fmt.Sprintf("Create minikube instance"))
+	s.Status("Start minikube")
 	err = startMinikube(o)
 	if err != nil {
 		s.Failure()
 		return err
 	}
 
-	err = waitForMinikubeToBeUp()
+	s.Status("Await minikube to be up and running")
+	err = waitForMinikubeToBeUp(s)
 	if err != nil {
 		s.Failure()
 		return err
 	}
 
+	s.Status("Create default cluster role")
 	err = createClusterRoleBinding()
 	if err != nil {
 		s.Failure()
 		return err
 	}
 
-	err = internal.WaitForPod("kube-system", "k8s-app", "kube-dns")
-	if err != nil {
-		s.Failure()
-		return err
-	}
+	//s.Status("Await kube-dns to be up and running")
+	//err = internal.WaitForPod("kube-system", "k8s-app", "kube-dns")
+	//if err != nil {
+	//	s.Failure()
+	//	return err
+	//}
 	s.Successf("Minukube up and running")
 
 	fmt.Println("Adding hostnames, please enter your password if requested")
@@ -179,16 +184,12 @@ func (o *MinikubeOptions) Run() error {
 }
 
 func checkIfMinikubeIsInitialized(o *MinikubeOptions) error {
-	statusText, err := internal.RunMinikubeCmdE([]string{"status", "-b=" + bootstrapper, "--format", "'{{.MinikubeStatus}}'"})
+	statusText, err := internal.RunMinikubeCmdE("status")
 	if err != nil {
 		return err
 	}
 
-	if statusText != "" {
-		if !o.NonInteractive {
-			fmt.Println("=====")
-			fmt.Printf("Minikube is initialized and status is '%s'\n", statusText)
-		}
+	if strings.TrimSpace(statusText) != "" {
 		reader := bufio.NewReader(os.Stdin)
 		answer := ""
 		if !o.NonInteractive {
@@ -197,10 +198,9 @@ func checkIfMinikubeIsInitialized(o *MinikubeOptions) error {
 			if err != nil {
 				return err
 			}
-			fmt.Println("=====")
 		}
-		if o.NonInteractive || strings.Trim(answer, "\n\t\r ") == "y" {
-			_, err := internal.RunMinikubeCmd([]string{"delete"})
+		if o.NonInteractive || strings.TrimSpace(answer) == "y" {
+			_, err := internal.RunMinikubeCmd("delete")
 			if err != nil {
 				return err
 			}
@@ -213,18 +213,18 @@ func checkIfMinikubeIsInitialized(o *MinikubeOptions) error {
 
 func initializeMinikubeConfig() error {
 	// Disable default nginx ingress controller
-	_, err := internal.RunMinikubeCmd([]string{"config", "unset", "ingress"})
+	_, err := internal.RunMinikubeCmd("config", "unset", "ingress")
 	if err != nil {
 		return err
 	}
 	// Enable heapster addon
-	_, err = internal.RunMinikubeCmd([]string{"addons", "enable", "heapster"})
+	_, err = internal.RunMinikubeCmd("addons", "enable", "heapster")
 	if err != nil {
 		return err
 	}
 
 	// Disable bootstrapper warning
-	_, err = internal.RunMinikubeCmd([]string{"config", "set", "ShowBootstrapperDeprecationNotification", "false"})
+	_, err = internal.RunMinikubeCmd("config", "set", "ShowBootstrapperDeprecationNotification", "false")
 	if err != nil {
 		return err
 	}
@@ -233,27 +233,23 @@ func initializeMinikubeConfig() error {
 }
 
 func startMinikube(o *MinikubeOptions) error {
-	virtualSwitchArg := ""
-	if o.VMDriver == vmDriverHyperv {
-		virtualSwitchArg = "--hyperv-virtual-switch=" + o.HypervVirtualSwitch
-	}
-
 	startCmd := []string{"start",
 		"--memory", o.Memory,
 		"--cpus", o.CPU,
-		"--extra-config=apiserver.Authorization.Mode=RBAC",
-		"--extra-config=apiserver.GenericServerRunOptions.CorsAllowedOriginList='.*'",
-		"--extra-config=controller-manager.ClusterSigningCertFile='/var/lib/localkube/certs/ca.crt'",
-		"--extra-config=controller-manager.ClusterSigningKeyFile='/var/lib/localkube/certs/ca.key'",
-		"--extra-config=apiserver.admission-control='LimitRanger,ServiceAccount,DefaultStorageClass,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota'",
+		"--extra-config=apiserver.authorization-mode=RBAC",
+		"--extra-config=apiserver.cors-allowed-origins='http://*'",
+		"--extra-config=apiserver.enable-admission-plugins=DefaultStorageClass,LimitRanger,MutatingAdmissionWebhook,NamespaceExists,NamespaceLifecycle,ResourceQuota,ServiceAccount,ValidatingAdmissionWebhook",
 		"--kubernetes-version=v" + kubernetesVersion,
-		"--vm-driver=" + o.VMDriver,
-		"--disk-size=" + o.DiskSize,
-		"--feature-gates='MountPropagation=false'",
-		virtualSwitchArg,
-		"-b=" + bootstrapper,
+		"--vm-driver", o.VMDriver,
+		"--disk-size", o.DiskSize,
+		"-b", bootstrapper,
 	}
-	_, err := internal.RunMinikubeCmd(startCmd)
+
+	if o.VMDriver == vmDriverHyperv {
+		startCmd = append(startCmd, "--hyperv-virtual-switch=" + o.HypervVirtualSwitch)
+
+	}
+	_, err := internal.RunMinikubeCmd(startCmd...)
 	if err != nil {
 		return err
 	}
@@ -279,26 +275,28 @@ func createClusterRoleBinding() error {
 	return nil
 }
 
-func waitForMinikubeToBeUp() error {
+func waitForMinikubeToBeUp(step step.Step) error {
 	for {
-		statusText, err := internal.RunMinikubeCmd([]string{"status", "-b=" + bootstrapper, "--format", "'{{.MinikubeStatus}}'"})
+		statusText, err := internal.RunMinikubeCmd("status", "-b=" + bootstrapper, "--format", "'{{.Host}}'")
 		if err != nil {
 			return err
 		}
+		step.Status(statusText)
 
-		if statusText == "Running" {
+		if strings.TrimSpace(statusText) == "Running" {
 			break
 		}
 		time.Sleep(sleep)
 	}
 
 	for {
-		statusText, err := internal.RunMinikubeCmd([]string{"status", "-b=" + bootstrapper, "--format", "'{{.ClusterStatus}}'"})
+		statusText, err := internal.RunMinikubeCmd("status", "-b=" + bootstrapper, "--format", "'{{.Kubelet}}'")
 		if err != nil {
 			return err
 		}
+		step.Status(statusText)
 
-		if statusText == "Running" {
+		if strings.TrimSpace(statusText) == "Running" {
 			break
 		}
 		time.Sleep(sleep)
@@ -313,7 +311,7 @@ func addDevDomainsToEtcHosts(o *MinikubeOptions) error {
 		hostnames = hostnames + " " + v + "." + o.Domain
 	}
 
-	minikubeIP, err := internal.RunMinikubeCmd([]string{"ip"})
+	minikubeIP, err := internal.RunMinikubeCmd("ip")
 	if err != nil {
 		return err
 	}
@@ -321,7 +319,7 @@ func addDevDomainsToEtcHosts(o *MinikubeOptions) error {
 	hostAlias := "127.0.0.1" + hostnames
 
 	if o.VMDriver != vmDriverNone {
-		_, err := internal.RunMinikubeCmd([]string{"ssh", "sudo /bin/sh -c 'echo \"" + hostAlias + "\" >> /etc/hosts'"})
+		_, err := internal.RunMinikubeCmd("ssh", "sudo /bin/sh -c 'echo \"" + hostAlias + "\" >> /etc/hosts'")
 		if err != nil {
 			return err
 		}
@@ -365,7 +363,7 @@ func addDevDomainsToEtcHosts(o *MinikubeOptions) error {
 // Default value of 128 is not enough to perform “kubectl log -f” from pods, hence increased to 524288
 func increaseFsInotifyMaxUserInstances(o *MinikubeOptions) error {
 	if o.VMDriver != vmDriverNone {
-		_, err := internal.RunMinikubeCmd([]string{"ssh", "--", "'sudo sysctl -w fs.inotify.max_user_instances=524288'"})
+		_, err := internal.RunMinikubeCmd("ssh", "--", "'sudo sysctl -w fs.inotify.max_user_instances=524288'")
 		if err != nil {
 			return err
 		}
@@ -377,7 +375,7 @@ func increaseFsInotifyMaxUserInstances(o *MinikubeOptions) error {
 func printSummary() error {
 	fmt.Println()
 	fmt.Println("Minikube cluster is installed")
-	clusterInfo, err := internal.RunMinikubeCmd([]string{"status", "-b=" + bootstrapper})
+	clusterInfo, err := internal.RunMinikubeCmd("status", "-b=" + bootstrapper)
 	if err != nil {
 		fmt.Printf("Cannot show cluster-info because of '%s", err)
 	} else {

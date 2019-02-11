@@ -10,12 +10,12 @@ import (
 )
 
 const (
-	minikubeVersion string = "0.28.2"
+	minikubeVersion string = "0.33.0"
 )
 
 //RunMinikubeCmd executes a minikube command with given arguments
-func RunMinikubeCmd(args []string) (string, error) {
-	cmd := exec.Command("minikube", args[0:]...)
+func RunMinikubeCmd(args ...string) (string, error) {
+	cmd := exec.Command("minikube", args...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return "", fmt.Errorf("Failed executing minikube command 'minikube %s' with output '%s' and error message '%s'", args, out, err)
@@ -24,16 +24,15 @@ func RunMinikubeCmd(args []string) (string, error) {
 }
 
 //RunMinikubeCmdE executes a minikube command with given arguments ignoring any errors
-func RunMinikubeCmdE(args []string) (string, error) {
-	cmd := exec.Command("minikube", args[0:]...)
+func RunMinikubeCmdE(args ...string) (string, error) {
+	cmd := exec.Command("minikube", args...)
 	out, _ := cmd.CombinedOutput()
 	return strings.Replace(string(out), "'", "", -1), nil
 }
 
 //CheckMinikubeVersion assures that the minikube version used is compatible
 func CheckMinikubeVersion() error {
-	versionCmd := []string{"version"}
-	versionText, err := RunMinikubeCmd(versionCmd)
+	versionText, err := RunMinikubeCmd("version")
 	if err != nil {
 		return err
 	}
@@ -48,7 +47,7 @@ func CheckMinikubeVersion() error {
 }
 
 func MinikubeDockerClient() (*docker.Client, error) {
-	envOut, err := RunMinikubeCmd([]string{"docker-env"})
+	envOut, err := RunMinikubeCmd("docker-env")
 	if err != nil {
 		return nil, err
 	}
