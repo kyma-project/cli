@@ -1,4 +1,4 @@
-package provision
+package minikube
 
 import (
 	"bufio"
@@ -6,7 +6,6 @@ import (
 	"github.com/kyma-incubator/kyma-cli/internal/minikube"
 	"github.com/kyma-incubator/kyma-cli/internal/step"
 	"os"
-	"runtime"
 	"strings"
 	"time"
 
@@ -66,13 +65,13 @@ type MinikubeOptions struct {
 	HypervVirtualSwitch string
 }
 
-//NewMinikubeOptions creates options with default values
-func NewMinikubeOptions(o *core.Options) *MinikubeOptions {
+//NewOptions creates options with default values
+func NewOptions(o *core.Options) *MinikubeOptions {
 	return &MinikubeOptions{Options: o}
 }
 
-//NewMinikubeCmd creates a new minikube command
-func NewMinikubeCmd(o *MinikubeOptions) *cobra.Command {
+//NewCmd creates a new minikube command
+func NewCmd(o *MinikubeOptions) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "minikube",
 		Short: "Provisions minikube",
@@ -324,7 +323,7 @@ func addDevDomainsToEtcHosts(o *MinikubeOptions) error {
 	hostAlias := "127.0.0.1" + hostnames
 
 	if o.VMDriver != vmDriverNone {
-		_, err := minikube.RunCmd("ssh", "sudo /bin/sh -c 'echo \"" + hostAlias + "\" >> /etc/hosts'")
+		_, err := minikube.RunCmd("ssh", "sudo /bin/sh -c 'echo \""+hostAlias+"\" >> /etc/hosts'")
 		if err != nil {
 			return err
 		}
@@ -332,37 +331,7 @@ func addDevDomainsToEtcHosts(o *MinikubeOptions) error {
 
 	hostAlias = strings.Trim(minikubeIP, "\n") + hostnames
 
-	if runtime.GOOS == "windows" {
-		fmt.Println()
-		fmt.Println("=====")
-		fmt.Println("Please add these lines to your " + internal.HOSTS_FILE + " file:")
-		fmt.Println(hostAlias)
-		fmt.Println("=====")
-	} else {
-		_, err := internal.RunCmd("sudo", []string{"/bin/sh", "-c", "sed -i '' \"/" + o.Domain + "/d\" " + internal.HOSTS_FILE})
-		if err != nil {
-			return err
-		}
-
-		_, err = internal.RunCmd("sudo", []string{"/bin/sh", "-c", "echo '" + hostAlias + "' >> " + internal.HOSTS_FILE})
-		if err != nil {
-			return err
-		}
-	}
-
-	/* does not work because of permission denied
-	f, err := os.OpenFile(internal.HOSTS_FILE, os.O_APPEND|os.O_WRONLY, 0600)
-	if err != nil {
-		return err
-	}
-
-	defer f.Close()
-	_, err = f.WriteString(hostAlias)
-	if err != nil {
-		return err
-	}*/
-
-	return nil
+	return addDevDomainsToEtcHostsOSSpecific(o, hostAlias)
 }
 
 // Default value of 128 is not enough to perform “kubectl log -f” from pods, hence increased to 524288
