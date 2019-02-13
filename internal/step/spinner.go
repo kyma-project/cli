@@ -1,10 +1,12 @@
 package step
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/briandowns/spinner"
 	"io"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -87,4 +89,16 @@ func (s *stepWithSpinner) logTof(to io.Writer, format string, args ...interface{
 	if isActive {
 		s.spinner.Start()
 	}
+}
+
+func (s *stepWithSpinner) Prompt(msg string) (string, error) {
+	reader := bufio.NewReader(os.Stdin)
+	isActive := s.spinner.Active()
+	s.spinner.Stop()
+	fmt.Printf(msg)
+	answer, err := reader.ReadString('\n')
+	if isActive {
+		s.spinner.Start()
+	}
+	return strings.TrimSpace(answer), err
 }

@@ -1,11 +1,9 @@
 package minikube
 
 import (
-	"bufio"
 	"fmt"
 	"github.com/kyma-incubator/kyma-cli/internal/minikube"
 	"github.com/kyma-incubator/kyma-cli/internal/step"
-	"os"
 	"strings"
 	"time"
 
@@ -121,10 +119,13 @@ func (o *MinikubeOptions) Run() error {
 	}
 	s.Successf("Requirements are fine")
 
-	err = checkIfMinikubeIsInitialized(o)
+	s = o.NewStep("Check minikube existence")
+	err = checkIfMinikubeIsInitialized(o, s)
 	if err != nil {
+		s.Failure()
 		return err
 	}
+	s.Success()
 
 	s = o.NewStep(fmt.Sprintf("Initializing minikube config"))
 	err = initializeMinikubeConfig()
@@ -187,18 +188,14 @@ func (o *MinikubeOptions) Run() error {
 	return nil
 }
 
-func checkIfMinikubeIsInitialized(o *MinikubeOptions) error {
-	statusText, err := minikube.RunCmd("status", "-b", bootstrapper)
-	if err != nil {
-		return err
-	}
+func checkIfMinikubeIsInitialized(o *MinikubeOptions, s step.Step) error {
+	statusText, _ := minikube.RunCmd("status", "-b", bootstrapper, "--format", "{{.Host}}")
 
 	if strings.TrimSpace(statusText) != "" {
-		reader := bufio.NewReader(os.Stdin)
-		answer := ""
+		var answer string
+		var err error
 		if !o.NonInteractive {
-			fmt.Printf("Do you want to remove previous minikube cluster [y/N]: ")
-			answer, err = reader.ReadString('\n')
+			answer, err = s.Prompt("Do you want to remove previous minikube cluster [y/N]: ")
 			if err != nil {
 				return err
 			}

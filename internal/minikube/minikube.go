@@ -18,10 +18,11 @@ const (
 func RunCmd(args ...string) (string, error) {
 	cmd := exec.Command("minikube", args...)
 	out, err := cmd.CombinedOutput()
+	unquotedOut := strings.Replace(string(out), "'", "", -1)
 	if err != nil {
-		return "", fmt.Errorf("Failed executing minikube command 'minikube %s' with output '%s' and error message '%s'", args, out, err)
+		return unquotedOut, fmt.Errorf("Failed executing minikube command 'minikube %s' with output '%s' and error message '%s'", args, out, err)
 	}
-	return strings.Replace(string(out), "'", "", -1), nil
+	return unquotedOut, nil
 }
 
 //CheckVersion checks whether minikube version is supported

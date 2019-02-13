@@ -1,8 +1,10 @@
 package step
 
 import (
+	"bufio"
 	"fmt"
 	"os"
+	"strings"
 )
 
 type Step interface {
@@ -18,6 +20,7 @@ type Step interface {
 	LogInfof(format string, args ...interface{})
 	LogError(msg string)
 	LogErrorf(format string, args ...interface{})
+	Prompt(msg string) (string, error)
 }
 
 const (
@@ -86,4 +89,11 @@ func (s *simpleStep) LogError(msg string) {
 
 func (s *simpleStep) LogErrorf(format string, args ...interface{}) {
 	_, _ = fmt.Fprintf(os.Stderr, format+"\n", args...)
+}
+
+func (s *simpleStep) Prompt(msg string) (string, error) {
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Printf(msg)
+	answer, err := reader.ReadString('\n')
+	return strings.TrimSpace(answer), err
 }
