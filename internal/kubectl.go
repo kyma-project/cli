@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"bufio"
 	"fmt"
 	"os/exec"
 	"regexp"
@@ -101,8 +102,15 @@ func IsPodReady(namespace string, labelName string, labelValue string) (bool, er
 		return false, nil
 	}
 
-	for _, pod := range strings.Split(podNames, "\\n") {
-		getContainerStatusCmd := []string{"get", "pods", "-n", namespace, "-l", labelName + "=" + labelValue, "-o", "jsonpath='{.items[*].status.containerStatuses[0].ready}'"}
+	scanner := bufio.NewScanner(strings.NewReader(podNames))
+	scanner.Split(bufio.ScanWords)
+	for scanner.Scan() {
+		if err := scanner.Err(); err != nil {
+			return false, err
+		}
+
+		pod := scanner.Text()
+		getContainerStatusCmd := []string{"get", "pod", pod, "-n", namespace, "-o", "jsonpath='{.status.containerStatuses[0].ready}'"}
 		containerStatus, err := RunKubectlCmd(getContainerStatusCmd)
 		if err != nil {
 			return false, err

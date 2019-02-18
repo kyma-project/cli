@@ -152,12 +152,12 @@ func (o *MinikubeOptions) Run() error {
 		return err
 	}
 
-	//s.Status("Await kube-dns to be up and running")
-	//err = internal.WaitForPod("kube-system", "k8s-app", "kube-dns")
-	//if err != nil {
-	//	s.Failure()
-	//	return err
-	//}
+	s.Status("Await kube-dns to be up and running")
+	err = internal.WaitForPod("kube-system", "k8s-app", "kube-dns")
+	if err != nil {
+		s.Failure()
+		return err
+	}
 	s.Successf("Minukube up and running")
 
 	fmt.Println("Adding hostnames, please enter your password if requested")
@@ -184,7 +184,7 @@ func (o *MinikubeOptions) Run() error {
 }
 
 func checkIfMinikubeIsInitialized(o *MinikubeOptions) error {
-	statusText, err := internal.RunMinikubeCmdE("status")
+	statusText, err := internal.RunMinikubeCmdE("status", "-b", bootstrapper)
 	if err != nil {
 		return err
 	}
