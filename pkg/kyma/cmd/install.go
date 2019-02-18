@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
+	"github.com/fsouza/go-dockerclient"
+	"github.com/pkg/errors"
+	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
 	"os"
@@ -11,10 +14,6 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-
-	docker "github.com/fsouza/go-dockerclient"
-	"github.com/pkg/errors"
-	yaml "gopkg.in/yaml.v2"
 
 	"github.com/kyma-incubator/kyma-cli/internal/step"
 
@@ -450,10 +449,9 @@ func waitForInstaller(o *InstallOptions) error {
 			if desc != currentDesc {
 				if s != nil {
 					s.Success()
-				} else {
-					s = o.NewStep(fmt.Sprintf(desc))
-					currentDesc = desc
 				}
+				s = o.NewStep(fmt.Sprintf(desc))
+				currentDesc = desc
 			}
 
 		default:
