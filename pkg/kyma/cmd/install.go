@@ -81,7 +81,7 @@ func (o *InstallOptions) Run() error {
 	}
 
 	s := o.NewStep(fmt.Sprintf("Checking requirements"))
-	err := checkReqs(o)
+	err = checkReqs(o)
 	if err != nil {
 		s.Failure()
 		return err
