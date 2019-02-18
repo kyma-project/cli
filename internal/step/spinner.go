@@ -1,8 +1,12 @@
 package step
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/briandowns/spinner"
+	"io"
+	"os"
+	"strings"
 	"time"
 )
 
@@ -59,4 +63,42 @@ func (s *stepWithSpinner) Stop(success bool) {
 	}
 	s.spinner.FinalMSG = fmt.Sprintf("%s %s\n", s.msg, gliph)
 	s.spinner.Stop()
+}
+
+func (s *stepWithSpinner) LogInfo(msg string) {
+	s.logTof(os.Stdout, msg)
+}
+
+func (s *stepWithSpinner) LogInfof(format string, args ...interface{}) {
+	s.logTof(os.Stdout, format, args...)
+}
+
+func (s *stepWithSpinner) LogError(msg string) {
+	s.logTof(os.Stderr, msg)
+}
+
+func (s *stepWithSpinner) LogErrorf(format string, args ...interface{}) {
+	s.logTof(os.Stderr, format, args...)
+}
+
+
+func (s *stepWithSpinner) logTof(to io.Writer, format string, args ...interface{}) {
+	isActive := s.spinner.Active()
+	s.spinner.Stop()
+	_, _ = fmt.Fprintf(to, format+"\n", args...)
+	if isActive {
+		s.spinner.Start()
+	}
+}
+
+func (s *stepWithSpinner) Prompt(msg string) (string, error) {
+	reader := bufio.NewReader(os.Stdin)
+	isActive := s.spinner.Active()
+	s.spinner.Stop()
+	fmt.Printf(msg)
+	answer, err := reader.ReadString('\n')
+	if isActive {
+		s.spinner.Start()
+	}
+	return strings.TrimSpace(answer), err
 }

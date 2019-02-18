@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/fsouza/go-dockerclient"
+	"github.com/kyma-incubator/kyma-cli/internal/minikube"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 	"io"
@@ -301,7 +302,7 @@ func loadInstallationResourcesFile(name string, acc []map[string]interface{}, o 
 }
 
 func buildKymaInstaller(imageName string, o *InstallOptions) error {
-	dc, err := internal.MinikubeDockerClient()
+	dc, err := minikube.DockerClient()
 	if err != nil {
 		return err
 	}

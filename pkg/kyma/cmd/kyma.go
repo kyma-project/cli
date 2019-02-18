@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/kyma-incubator/kyma-cli/pkg/kyma/cmd/provision/minikube"
 	"time"
 
 	"github.com/kyma-incubator/kyma-cli/pkg/kyma/cmd/provision"
@@ -40,7 +41,7 @@ Find more information at: https://github.com/kyma-incubator/kyma-cli
 
 	provisionCmd := provision.NewCmd()
 	cmd.AddCommand(provisionCmd)
-	provisionMinikubeCmd := provision.NewMinikubeCmd(provision.NewMinikubeOptions(o))
+	provisionMinikubeCmd := minikube.NewCmd(minikube.NewOptions(o))
 	provisionCmd.AddCommand(provisionMinikubeCmd)
 
 	installCmd := NewInstallCmd(NewInstallOptions(o))

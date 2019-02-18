@@ -1,6 +1,11 @@
 package step
 
-import "fmt"
+import (
+	"bufio"
+	"fmt"
+	"os"
+	"strings"
+)
 
 type Step interface {
 	Start()
@@ -11,6 +16,11 @@ type Step interface {
 	Failuref(format string, args ...interface{})
 	Stop(success bool)
 	Stopf(success bool, format string, args ...interface{})
+	LogInfo(msg string)
+	LogInfof(format string, args ...interface{})
+	LogError(msg string)
+	LogErrorf(format string, args ...interface{})
+	Prompt(msg string) (string, error)
 }
 
 const (
@@ -56,11 +66,34 @@ func (s *simpleStep) Stopf(success bool, format string, args ...interface{}) {
 }
 
 func (s *simpleStep) Stop(success bool) {
-	var gliph string
+	var glyph string
 	if success {
-		gliph = successGliph
+		glyph = successGliph
 	} else {
-		gliph = failureGliph
+		glyph = failureGliph
 	}
-	fmt.Printf("%s %s\n", s.msg, gliph)
+	fmt.Printf("%s %s\n", s.msg, glyph)
+}
+
+func (s *simpleStep) LogInfo(msg string) {
+	fmt.Println(msg)
+}
+
+func (s *simpleStep) LogInfof(format string, args ...interface{}) {
+	fmt.Printf(format+"\n", args...)
+}
+
+func (s *simpleStep) LogError(msg string) {
+	_, _ = fmt.Fprintln(os.Stderr, msg)
+}
+
+func (s *simpleStep) LogErrorf(format string, args ...interface{}) {
+	_, _ = fmt.Fprintf(os.Stderr, format+"\n", args...)
+}
+
+func (s *simpleStep) Prompt(msg string) (string, error) {
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Printf(msg)
+	answer, err := reader.ReadString('\n')
+	return strings.TrimSpace(answer), err
 }
