@@ -149,8 +149,10 @@ func validateFlags(o *InstallOptions) error {
 		if _, err := os.Stat(filepath.Join(o.LocalSrcPath, "installation", "resources")); err != nil {
 			return fmt.Errorf("Configured 'src-path=%s' seems to not point to a Kyma repository, please verify if your repository contains a folder 'installation/resources'", o.LocalSrcPath)
 		}
+		
+		// This is to help developer and use appropriate repository if PR image is provided
 		if o.LocalInstallerDir == "" && strings.HasPrefix(o.LocalInstallerVersion, "PR-") {
-			o.LocalInstallerDir = " "
+			o.LocalInstallerDir = "eu.gcr.io/kyma-project/pr"
 		}
 	} else {
 		if o.LocalSrcPath != "" {
