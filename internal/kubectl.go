@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	kubectlVersion string = "1.10.0"
+	kubectlVersion string = "1.11.0"
 )
 
 //RunKubectlCmd executes a kubectl command with given arguments

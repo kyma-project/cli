@@ -4,10 +4,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
-	"github.com/fsouza/go-dockerclient"
-	"github.com/kyma-incubator/kyma-cli/internal/minikube"
-	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
 	"os"
@@ -15,6 +11,11 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	docker "github.com/fsouza/go-dockerclient"
+	"github.com/kyma-incubator/kyma-cli/internal/minikube"
+	"github.com/pkg/errors"
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/kyma-incubator/kyma-cli/internal/step"
 
@@ -61,7 +62,7 @@ The command will:
 		Aliases: []string{"i"},
 	}
 
-	cmd.Flags().StringVarP(&o.ReleaseVersion, "release", "r", "0.6.1", "kyma release to use")
+	cmd.Flags().StringVarP(&o.ReleaseVersion, "release", "r", "0.7.0", "kyma release to use")
 	cmd.Flags().StringVarP(&o.ReleaseConfig, "config", "c", "", "URL or path to the installer configuration yaml")
 	cmd.Flags().BoolVarP(&o.NoWait, "noWait", "n", false, "Do not wait for completion of kyma-installer")
 	cmd.Flags().StringVarP(&o.Domain, "domain", "d", "kyma.local", "domain to use for installation")
@@ -149,7 +150,7 @@ func validateFlags(o *InstallOptions) error {
 		if _, err := os.Stat(filepath.Join(o.LocalSrcPath, "installation", "resources")); err != nil {
 			return fmt.Errorf("Configured 'src-path=%s' seems to not point to a Kyma repository, please verify if your repository contains a folder 'installation/resources'", o.LocalSrcPath)
 		}
-		
+
 		// This is to help developer and use appropriate repository if PR image is provided
 		if o.LocalInstallerDir == "" && strings.HasPrefix(o.LocalInstallerVersion, "PR-") {
 			o.LocalInstallerDir = "eu.gcr.io/kyma-project/pr"
