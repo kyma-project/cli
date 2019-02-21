@@ -1,7 +1,8 @@
-package internal
+package kubectl
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os/exec"
 	"regexp"
@@ -11,11 +12,12 @@ import (
 )
 
 const (
-	kubectlVersion string = "1.11.0"
+	kubectlVersion string = "1.10.0"
+	sleep                 = 5 * time.Second
 )
 
-//RunKubectlCmd executes a kubectl command with given arguments
-func RunKubectlCmd(args []string) (string, error) {
+//RunCmd executes a kubectl command with given arguments
+func RunCmd(args []string) (string, error) {
 	cmd := exec.Command("kubectl", args[0:]...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -79,7 +81,7 @@ func IsPodDeployed(namespace string, labelName string, labelValue string) (bool,
 // The resource gets identified by the namespace and a lebel key=value pair.
 func IsResourceDeployed(resource string, namespace string, labelName string, labelValue string) (bool, error) {
 	getResourceNameCmd := []string{"get", resource, "-n", namespace, "-l", labelName + "=" + labelValue, "-o", "jsonpath='{.items[*].metadata.name}'"}
-	resourceNames, err := RunKubectlCmd(getResourceNameCmd)
+	resourceNames, err := RunCmd(getResourceNameCmd)
 	if err != nil {
 		return false, err
 	}
@@ -94,7 +96,7 @@ func IsResourceDeployed(resource string, namespace string, labelName string, lab
 // The resource gets identified by a lebel key=value pair.
 func IsClusterResourceDeployed(resource string, labelName string, labelValue string) (bool, error) {
 	getResourceNameCmd := []string{"get", resource, "-l", labelName + "=" + labelValue, "-o", "jsonpath='{.items[*].metadata.name}'"}
-	resourceNames, err := RunKubectlCmd(getResourceNameCmd)
+	resourceNames, err := RunCmd(getResourceNameCmd)
 	if err != nil {
 		return false, err
 	}
@@ -109,7 +111,7 @@ func IsClusterResourceDeployed(resource string, labelName string, labelValue str
 // The pod gets identified by the namespace and a lebel key=value pair.
 func IsPodReady(namespace string, labelName string, labelValue string) (bool, error) {
 	getPodNameCmd := []string{"get", "pods", "-n", namespace, "-l", labelName + "=" + labelValue, "-o", "jsonpath='{.items[*].metadata.name}'"}
-	podNames, err := RunKubectlCmd(getPodNameCmd)
+	podNames, err := RunCmd(getPodNameCmd)
 	if err != nil {
 		return false, err
 	}
@@ -127,14 +129,14 @@ func IsPodReady(namespace string, labelName string, labelValue string) (bool, er
 
 		pod := scanner.Text()
 		getContainerStatusCmd := []string{"get", "pod", pod, "-n", namespace, "-o", "jsonpath='{.status.containerStatuses[0].ready}'"}
-		containerStatus, err := RunKubectlCmd(getContainerStatusCmd)
+		containerStatus, err := RunCmd(getContainerStatusCmd)
 		if err != nil {
 			return false, err
 		}
 
 		if containerStatus != "true" {
 			getEventsCmd := []string{"get", "event", "-n", namespace, "-o", "go-template='{{range .items}}{{if eq .involvedObject.name \"'" + pod + "'\"}}{{.message}}{{\"\\n\"}}{{end}}{{end}}'"}
-			events, err := RunKubectlCmd(getEventsCmd)
+			events, err := RunCmd(getEventsCmd)
 			if err != nil {
 				fmt.Printf("Error while checking for pod events '%s'\n‚", err)
 			}
@@ -147,11 +149,11 @@ func IsPodReady(namespace string, labelName string, labelValue string) (bool, er
 	return true, nil
 }
 
-//CheckKubectlVersion assures that the kubectl version used is compatible
-func CheckKubectlVersion() error {
-	versionText, err := RunKubectlCmd([]string{"version", "--client", "--short"})
+//CheckVersion assures that the kubectl version used is compatible
+func CheckVersion() (string, error) {
+	versionText, err := RunCmd([]string{"version", "--client", "--short"})
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	exp, _ := regexp.Compile("Client Version: v((\\d+).(\\d+).(\\d+))")
@@ -165,13 +167,13 @@ func CheckKubectlVersion() error {
 	minorIsVersion, _ := strconv.Atoi(kubctlIsVersion[3])
 	minorMustVersion, _ := strconv.Atoi(kubctlMustVersion[3])
 
-	if minorIsVersion-minorMustVersion < -1 || minorIsVersion-minorMustVersion > 1 {
-		fmt.Println()
-		fmt.Printf("WARNING: Your kubectl version is '%s'. Supported versions of kubectl are from '%d.%d.*' to '%d.%d.*'", kubctlIsVersion[1], majorMustVersion, minorMustVersion-1, majorMustVersion, minorMustVersion+1)
-		fmt.Println()
-	}
+	message := fmt.Sprintf("Your kubectl version is '%s'. Supported versions of kubectl are from '%d.%d.*' to '%d.%d.*'", kubctlIsVersion[1], majorMustVersion, minorMustVersion-1, majorMustVersion, minorMustVersion+1)
+
 	if majorIsVersion != majorMustVersion {
-		return fmt.Errorf("Your kubectl version is '%s'. Supported versions of kubectl are from '%d.%d.*' to '%d.%d.*'", kubctlIsVersion[1], majorMustVersion, minorMustVersion-1, majorMustVersion, minorMustVersion+1)
+		return "", errors.New(message)
 	}
-	return nil
+	if minorIsVersion-minorMustVersion < -1 || minorIsVersion-minorMustVersion > 1 {
+		return message, nil
+	}
+	return "", nil
 }

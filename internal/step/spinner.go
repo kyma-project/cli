@@ -3,11 +3,12 @@ package step
 import (
 	"bufio"
 	"fmt"
-	"github.com/briandowns/spinner"
 	"io"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/briandowns/spinner"
 )
 
 func NewStepWithSpinner(msg string) Step {
@@ -74,13 +75,12 @@ func (s *stepWithSpinner) LogInfof(format string, args ...interface{}) {
 }
 
 func (s *stepWithSpinner) LogError(msg string) {
-	s.logTof(os.Stderr, msg)
+	s.logTof(os.Stderr, warningGliph+"  "+msg)
 }
 
 func (s *stepWithSpinner) LogErrorf(format string, args ...interface{}) {
-	s.logTof(os.Stderr, format, args...)
+	s.logTof(os.Stderr, warningGliph+"  "+format, args)
 }
-
 
 func (s *stepWithSpinner) logTof(to io.Writer, format string, args ...interface{}) {
 	isActive := s.spinner.Active()

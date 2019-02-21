@@ -5,10 +5,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kyma-incubator/kyma-cli/internal/kubectl"
 	"github.com/kyma-incubator/kyma-cli/internal/minikube"
 	"github.com/kyma-incubator/kyma-cli/internal/step"
 
-	"github.com/kyma-incubator/kyma-cli/internal"
 	"github.com/kyma-incubator/kyma-cli/pkg/kyma/core"
 	"github.com/spf13/cobra"
 )
@@ -91,42 +91,24 @@ func NewCmd(o *MinikubeOptions) *cobra.Command {
 
 //Run runs the command
 func (o *MinikubeOptions) Run() error {
-	fmt.Printf("Preparing minikube using domain '%s' and vm-driver '%s'\n", o.Domain, o.VMDriver)
-	fmt.Println()
-
-	s := o.NewStep(fmt.Sprintf("Checking requirements"))
-	if !driverSupported(o.VMDriver) {
-		s.Failure()
-		return fmt.Errorf("Specified VMDriver '%s' is not supported by minikube", o.VMDriver)
-	}
-	if o.VMDriver == vmDriverHyperv && o.HypervVirtualSwitch == "" {
-		s.Failure()
-		return fmt.Errorf("Specified VMDriver '%s' requires option --hypervVirtualSwitch to be provided", vmDriverHyperv)
-	}
-
-	isSupportedMinikube, err := minikube.CheckVersion()
-	if err != nil {
-		s.Failure()
-		return err
-	}
-	if !isSupportedMinikube {
-		s.LogError("You are using unsupported minikube version. This may not work.")
-	}
-
-	err = internal.CheckKubectlVersion()
+	s := o.NewStep("Checking requirements")
+	err := checkRequirements(o, s)
 	if err != nil {
 		s.Failure()
 		return err
 	}
 	s.Successf("Requirements are fine")
 
-	s = o.NewStep("Check minikube existence")
+	fmt.Printf("Preparing minikube using domain '%s' and vm-driver '%s'\n", o.Domain, o.VMDriver)
+	fmt.Println()
+
+	s = o.NewStep("Check minikube status")
 	err = checkIfMinikubeIsInitialized(o, s)
 	if err != nil {
 		s.Failure()
 		return err
 	}
-	s.Success()
+	s.Successf("Minikube status is fine")
 
 	s = o.NewStep(fmt.Sprintf("Initializing minikube config"))
 	err = initializeMinikubeConfig()
@@ -159,7 +141,8 @@ func (o *MinikubeOptions) Run() error {
 	}
 
 	s.Status("Await kube-dns to be up and running")
-	err = internal.WaitForPodReady("kube-system", "k8s-app", "kube-dns")
+
+	err = kubectl.WaitForPodReady("kube-system", "k8s-app", "kube-dns")
 	if err != nil {
 		s.Failure()
 		return err
@@ -171,7 +154,7 @@ func (o *MinikubeOptions) Run() error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("Hostnames added to " + internal.HOSTS_FILE)
+	fmt.Println("Hostnames added to " + HostsFile)
 
 	s = o.NewStep(fmt.Sprintf("Adjusting minikube cluster"))
 	err = increaseFsInotifyMaxUserInstances(o)
@@ -186,6 +169,36 @@ func (o *MinikubeOptions) Run() error {
 		return err
 	}
 
+	return nil
+}
+
+func checkRequirements(o *MinikubeOptions, s step.Step) error {
+	if !driverSupported(o.VMDriver) {
+		s.Failure()
+		return fmt.Errorf("Specified VMDriver '%s' is not supported by minikube", o.VMDriver)
+	}
+	if o.VMDriver == vmDriverHyperv && o.HypervVirtualSwitch == "" {
+		s.Failure()
+		return fmt.Errorf("Specified VMDriver '%s' requires option --hypervVirtualSwitch to be provided", vmDriverHyperv)
+	}
+
+	versionWarning, err := minikube.CheckVersion()
+	if err != nil {
+		s.Failure()
+		return err
+	}
+	if versionWarning != "" {
+		s.LogError(versionWarning)
+	}
+
+	versionWarning, err = kubectl.CheckVersion()
+	if err != nil {
+		s.Failure()
+		return err
+	}
+	if versionWarning != "" {
+		s.LogError(versionWarning)
+	}
 	return nil
 }
 
@@ -260,16 +273,16 @@ func startMinikube(o *MinikubeOptions) error {
 
 // fixes https://github.com/kyma-project/kyma/issues/1986
 func createClusterRoleBinding() error {
-	check, err := internal.IsClusterResourceDeployed("clusterrolebinding", "app", "kyma")
+	check, err := kubectl.IsClusterResourceDeployed("clusterrolebinding", "app", "kyma")
 	if err != nil {
 		return err
 	}
 	if !check {
-		_, err := internal.RunKubectlCmd([]string{"create", "clusterrolebinding", "default-sa-cluster-admin", "--clusterrole=cluster-admin", "--serviceaccount=kube-system:default"})
+		_, err := kubectl.RunCmd([]string{"create", "clusterrolebinding", "default-sa-cluster-admin", "--clusterrole=cluster-admin", "--serviceaccount=kube-system:default"})
 		if err != nil {
 			return err
 		}
-		_, err = internal.RunKubectlCmd([]string{"label", "clusterrolebinding", "default-sa-cluster-admin", "app=kyma"})
+		_, err = kubectl.RunCmd([]string{"label", "clusterrolebinding", "default-sa-cluster-admin", "app=kyma"})
 		if err != nil {
 			return err
 		}

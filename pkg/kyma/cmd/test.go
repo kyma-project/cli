@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/kyma-incubator/kyma-cli/internal"
 	kyma_helm "github.com/kyma-incubator/kyma-cli/internal/helm"
 	"github.com/kyma-incubator/kyma-cli/internal/installer"
+	"github.com/kyma-incubator/kyma-cli/internal/kubectl"
 	"github.com/kyma-incubator/kyma-cli/internal/step"
 	"github.com/kyma-incubator/kyma-cli/pkg/kyma/core"
 	"github.com/spf13/cobra"
@@ -112,7 +112,7 @@ func (opts *TestOptions) cleanHelmTestPods(namespace string) error {
 	)
 	s.Start()
 
-	_, err := internal.RunKubectlCmd([]string{"delete", "pod", "-n", namespace, "-l", "helm-chart-test=true"})
+	_, err := kubectl.RunCmd([]string{"delete", "pod", "-n", namespace, "-l", "helm-chart-test=true"})
 	if err != nil {
 		s.Failure()
 		return err

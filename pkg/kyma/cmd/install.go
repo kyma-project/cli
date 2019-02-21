@@ -13,6 +13,7 @@ import (
 	"time"
 
 	docker "github.com/fsouza/go-dockerclient"
+	"github.com/kyma-incubator/kyma-cli/internal/kubectl"
 	"github.com/kyma-incubator/kyma-cli/internal/minikube"
 	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
@@ -82,7 +83,7 @@ func (o *InstallOptions) Run() error {
 	}
 
 	s := o.NewStep(fmt.Sprintf("Checking requirements"))
-	err = checkReqs(o)
+	err = checkInstallRequirements(o, s)
 	if err != nil {
 		s.Failure()
 		return err
@@ -135,6 +136,18 @@ func (o *InstallOptions) Run() error {
 	return nil
 }
 
+func checkInstallRequirements(o *InstallOptions, s step.Step) error {
+	versionWarning, err := kubectl.CheckVersion()
+	if err != nil {
+		s.Failure()
+		return err
+	}
+	if versionWarning != "" {
+		s.LogError(versionWarning)
+	}
+	return nil
+}
+
 func validateFlags(o *InstallOptions) error {
 	if o.Local {
 		if o.LocalSrcPath == "" {
@@ -169,22 +182,18 @@ func validateFlags(o *InstallOptions) error {
 	return nil
 }
 
-func checkReqs(o *InstallOptions) error {
-	return internal.CheckKubectlVersion()
-}
-
 func installTiller(o *InstallOptions) error {
-	check, err := internal.IsPodDeployed("kube-system", "name", "tiller")
+	check, err := kubectl.IsPodDeployed("kube-system", "name", "tiller")
 	if err != nil {
 		return err
 	}
 	if !check {
-		_, err = internal.RunKubectlCmd([]string{"apply", "-f", "https://raw.githubusercontent.com/kyma-project/kyma/" + o.ReleaseVersion + "/installation/resources/tiller.yaml"})
+		_, err = kubectl.RunCmd([]string{"apply", "-f", "https://raw.githubusercontent.com/kyma-project/kyma/" + o.ReleaseVersion + "/installation/resources/tiller.yaml"})
 		if err != nil {
 			return err
 		}
 	}
-	err = internal.WaitForPodReady("kube-system", "name", "tiller")
+	err = kubectl.WaitForPodReady("kube-system", "name", "tiller")
 	if err != nil {
 		return err
 	}
@@ -192,7 +201,7 @@ func installTiller(o *InstallOptions) error {
 }
 
 func installInstaller(o *InstallOptions) error {
-	check, err := internal.IsPodDeployed("kyma-installer", "name", "kyma-installer")
+	check, err := kubectl.IsPodDeployed("kyma-installer", "name", "kyma-installer")
 	if err != nil {
 		return err
 	}
@@ -211,7 +220,7 @@ func installInstaller(o *InstallOptions) error {
 		}
 
 	}
-	err = internal.WaitForPodReady("kyma-installer", "name", "kyma-installer")
+	err = kubectl.WaitForPodReady("kyma-installer", "name", "kyma-installer")
 	if err != nil {
 		return err
 	}
@@ -220,8 +229,8 @@ func installInstaller(o *InstallOptions) error {
 }
 
 func installInstallerFromRelease(o *InstallOptions) error {
-	relaseURL := "https://github.com/kyma-project/kyma/releases/download/" + o.ReleaseVersion + "/kyma-installer-local.yaml"
-	_, err := internal.RunKubectlCmd([]string{"apply", "-f", relaseURL})
+	relaseURL := "https://github.com/kyma-project/kyma/releases/download/" + o.ReleaseVersion + "/kyma-config-local.yaml"
+	_, err := kubectl.RunCmd([]string{"apply", "-f", relaseURL})
 	if err != nil {
 		return err
 	}
@@ -381,12 +390,12 @@ func applyKymaInstaller(resources []map[string]interface{}, o *InstallOptions) e
 }
 
 func labelInstallerNamespace() error {
-	_, err := internal.RunKubectlCmd([]string{"label", "namespace", "kyma-installer", "app=kyma-cli"})
+	_, err := kubectl.RunCmd([]string{"label", "namespace", "kyma-installer", "app=kyma-cli"})
 	return err
 }
 
 func activateInstaller(_ *InstallOptions) error {
-	status, err := internal.RunKubectlCmd([]string{"get", "installation/kyma-installation", "-o", "jsonpath='{.status.state}'"})
+	status, err := kubectl.RunCmd([]string{"get", "installation/kyma-installation", "-o", "jsonpath='{.status.state}'"})
 	if err != nil {
 		return err
 	}
@@ -394,7 +403,7 @@ func activateInstaller(_ *InstallOptions) error {
 		return nil
 	}
 
-	_, err = internal.RunKubectlCmd([]string{"label", "installation/kyma-installation", "action=install"})
+	_, err = kubectl.RunCmd([]string{"label", "installation/kyma-installation", "action=install"})
 	if err != nil {
 		return err
 	}
@@ -407,7 +416,7 @@ func printSummary(o *InstallOptions) error {
 		return err
 	}
 
-	pwdEncoded, err := internal.RunKubectlCmd([]string{"-n", "kyma-system", "get", "secret", "admin-user", "-o", "jsonpath='{.data.password}'"})
+	pwdEncoded, err := kubectl.RunCmd([]string{"-n", "kyma-system", "get", "secret", "admin-user", "-o", "jsonpath='{.data.password}'"})
 	if err != nil {
 		return err
 	}
@@ -417,7 +426,7 @@ func printSummary(o *InstallOptions) error {
 		return err
 	}
 
-	emailEncoded, err := internal.RunKubectlCmd([]string{"-n", "kyma-system", "get", "secret", "admin-user", "-o", "jsonpath='{.data.email}'"})
+	emailEncoded, err := kubectl.RunCmd([]string{"-n", "kyma-system", "get", "secret", "admin-user", "-o", "jsonpath='{.data.email}'"})
 	if err != nil {
 		return err
 	}
@@ -427,7 +436,7 @@ func printSummary(o *InstallOptions) error {
 		return err
 	}
 
-	clusterInfo, err := internal.RunKubectlCmd([]string{"cluster-info"})
+	clusterInfo, err := kubectl.RunCmd([]string{"cluster-info"})
 	if err != nil {
 		return err
 	}
@@ -451,7 +460,7 @@ func waitForInstaller(o *InstallOptions) error {
 	var s step.Step
 	installStatusCmd := []string{"get", "installation/kyma-installation", "-o", "jsonpath='{.status.state}'"}
 
-	status, err := internal.RunKubectlCmd(installStatusCmd)
+	status, err := kubectl.RunCmd(installStatusCmd)
 	if err != nil {
 		return err
 	}
@@ -460,11 +469,11 @@ func waitForInstaller(o *InstallOptions) error {
 	}
 
 	for {
-		status, err := internal.RunKubectlCmd(installStatusCmd)
+		status, err := kubectl.RunCmd(installStatusCmd)
 		if err != nil {
 			return err
 		}
-		desc, err := internal.RunKubectlCmd([]string{"get", "installation/kyma-installation", "-o", "jsonpath='{.status.description}'"})
+		desc, err := kubectl.RunCmd([]string{"get", "installation/kyma-installation", "-o", "jsonpath='{.status.description}'"})
 		if err != nil {
 			return err
 		}
@@ -481,7 +490,7 @@ func waitForInstaller(o *InstallOptions) error {
 				s.Failure()
 			}
 			fmt.Printf("Error installing Kyma: %s\n", desc)
-			logs, err := internal.RunKubectlCmd([]string{"-n", "kyma-installer", "logs", "-l", "name=kyma-installer"})
+			logs, err := kubectl.RunCmd([]string{"-n", "kyma-installer", "logs", "-l", "name=kyma-installer"})
 			if err != nil {
 				return err
 			}

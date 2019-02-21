@@ -26,6 +26,7 @@ type Step interface {
 const (
 	successGliph = "✅"
 	failureGliph = "❌"
+	warningGliph = "⚠️"
 )
 
 func NewSimpleStep(msg string) Step {
