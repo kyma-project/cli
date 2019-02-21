@@ -69,13 +69,13 @@ func (o *UninstallOptions) Run() error {
 		return err
 	}
 
-	s = o.NewStep(fmt.Sprintf("Deleting kyma-integration namespace as it is not getting cleaned properly"))
+	/*s = o.NewStep(fmt.Sprintf("Deleting kyma-integration namespace as it is not getting cleaned properly"))
 	err = deleteKymaIntegration(o)
 	if err != nil {
 		s.Failure()
 		return err
 	}
-	s.Successf("kyma-integration namespace deleted")
+	s.Successf("kyma-integration namespace deleted")*/
 
 	s = o.NewStep(fmt.Sprintf("Deleting kyma-installer"))
 	err = deleteInstaller(o)
@@ -153,7 +153,7 @@ func deleteInstaller(o *UninstallOptions) error {
 
 	_, err = internal.RunKubectlCmd([]string{"delete", "ClusterRoleBinding", "kyma-installer"})
 	if err != nil {
-		return nil
+		return err
 	}
 
 	_, err = internal.RunKubectlCmd([]string{"delete", "ClusterRole", "kyma-installer-reader"})

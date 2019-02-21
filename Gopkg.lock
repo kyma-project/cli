@@ -329,8 +329,8 @@
     "components/installer/pkg/client/clientset/versioned/typed/installer/v1alpha1",
   ]
   pruneopts = "UT"
-  revision = "79d4bcb82badbb242c9c50072d0c2a53da125df1"
-  version = "0.6.1"
+  revision = "32fcb1868eee495544cec1555c02aa7c9ef55246"
+  version = "0.7.0"
 
 [[projects]]
   digest = "1:c658e84ad3916da105a761660dcaeb01e63416c8ec7bc62256a9b411a05fcd67"
@@ -811,6 +811,7 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/Masterminds/semver",
     "github.com/briandowns/spinner",
     "github.com/fsouza/go-dockerclient",
     "github.com/golang/lint/golint",

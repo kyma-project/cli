@@ -201,6 +201,10 @@ func installInstaller(o *InstallOptions) error {
 			err = installInstallerFromLocalSources(o)
 		} else {
 			err = installInstallerFromRelease(o)
+			if err != nil {
+				return err
+			}
+			err = configureInstallerFromRelease(o)
 		}
 		if err != nil {
 			return err
@@ -216,7 +220,7 @@ func installInstaller(o *InstallOptions) error {
 }
 
 func installInstallerFromRelease(o *InstallOptions) error {
-	relaseURL := "https://github.com/kyma-project/kyma/releases/download/" + o.ReleaseVersion + "/kyma-config-local.yaml"
+	relaseURL := "https://github.com/kyma-project/kyma/releases/download/" + o.ReleaseVersion + "/kyma-installer-local.yaml"
 	if o.ReleaseConfig != "" {
 		relaseURL = o.ReleaseConfig
 	}
@@ -225,6 +229,18 @@ func installInstallerFromRelease(o *InstallOptions) error {
 		return err
 	}
 	return labelInstallerNamespace()
+}
+
+func configureInstallerFromRelease(o *InstallOptions) error {
+	relaseURL := "https://github.com/kyma-project/kyma/releases/download/" + o.ReleaseVersion + "/kyma-config-local.yaml"
+	if o.ReleaseConfig != "" {
+		relaseURL = o.ReleaseConfig
+	}
+	_, err := internal.RunKubectlCmd([]string{"apply", "-f", relaseURL})
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func installInstallerFromLocalSources(o *InstallOptions) error {
