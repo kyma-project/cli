@@ -27,12 +27,14 @@ import (
 //InstallOptions defines available options for the command
 type InstallOptions struct {
 	*core.Options
-	ReleaseVersion string
-	ReleaseConfig  string
-	NoWait         bool
-	Domain         string
-	Local          bool
-	LocalSrcPath   string
+	ReleaseVersion        string
+	ReleaseConfig         string
+	NoWait                bool
+	Domain                string
+	Local                 bool
+	LocalSrcPath          string
+	LocalInstallerVersion string
+	LocalInstallerDir     string
 }
 
 //NewInstallOptions creates options with default values
@@ -65,14 +67,21 @@ The command will:
 	cmd.Flags().StringVarP(&o.Domain, "domain", "d", "kyma.local", "domain to use for installation")
 	cmd.Flags().BoolVarP(&o.Local, "local", "l", false, "Install from sources")
 	cmd.Flags().StringVarP(&o.LocalSrcPath, "src-path", "", "", "Path to local sources to use")
+	cmd.Flags().StringVarP(&o.LocalInstallerVersion, "installer-version", "", "", "Version of installer docker image to use while building locally")
+	cmd.Flags().StringVarP(&o.LocalInstallerDir, "installer-dir", "", "", "Directory of installer docker image to use while building locally")
 
 	return cmd
 }
 
 //Run runs the command
 func (o *InstallOptions) Run() error {
+	err := validateFlags(o)
+	if err != nil {
+		return err
+	}
+
 	s := o.NewStep(fmt.Sprintf("Checking requirements"))
-	err := checkReqs(o)
+	err = checkReqs(o)
 	if err != nil {
 		s.Failure()
 		return err
@@ -125,23 +134,14 @@ func (o *InstallOptions) Run() error {
 	return nil
 }
 
-func checkReqs(o *InstallOptions) error {
-	err := internal.CheckKubectlVersion()
-	if err != nil {
-		return err
-	}
-	if o.LocalSrcPath != "" && !o.Local {
-		return fmt.Errorf("You specified 'src-path=%s' without specifying --local", o.LocalSrcPath)
-	}
-	if o.LocalSrcPath == "" {
-		goPath := os.Getenv("GOPATH")
-		if goPath != "" {
-			o.LocalSrcPath = filepath.Join(goPath, "src", "github.com", "kyma-project", "kyma")
-		}
-	}
+func validateFlags(o *InstallOptions) error {
 	if o.Local {
 		if o.LocalSrcPath == "" {
-			return fmt.Errorf("No local 'src-path' configured and no applicable default found, verify if you have exported a GOPATH?")
+			goPath := os.Getenv("GOPATH")
+			if goPath == "" {
+				return fmt.Errorf("No local 'src-path' configured and no applicable default found, verify if you have exported a GOPATH?")
+			}
+			o.LocalSrcPath = filepath.Join(goPath, "src", "github.com", "kyma-project", "kyma")
 		}
 		if _, err := os.Stat(o.LocalSrcPath); err != nil {
 			return fmt.Errorf("Configured 'src-path=%s' does not exist, please check if you configured a valid path", o.LocalSrcPath)
@@ -149,8 +149,27 @@ func checkReqs(o *InstallOptions) error {
 		if _, err := os.Stat(filepath.Join(o.LocalSrcPath, "installation", "resources")); err != nil {
 			return fmt.Errorf("Configured 'src-path=%s' seems to not point to a Kyma repository, please verify if your repository contains a folder 'installation/resources'", o.LocalSrcPath)
 		}
+		
+		// This is to help developer and use appropriate repository if PR image is provided
+		if o.LocalInstallerDir == "" && strings.HasPrefix(o.LocalInstallerVersion, "PR-") {
+			o.LocalInstallerDir = "eu.gcr.io/kyma-project/pr"
+		}
+	} else {
+		if o.LocalSrcPath != "" {
+			return fmt.Errorf("You specified 'src-path=%s' without specifying --local", o.LocalSrcPath)
+		}
+		if o.LocalInstallerVersion != "" {
+			return fmt.Errorf("You specified 'installer-version=%s' without specifying --local", o.LocalInstallerVersion)
+		}
+		if o.LocalInstallerDir != "" {
+			return fmt.Errorf("You specified 'installer-dir=%s' without specifying --local", o.LocalInstallerDir)
+		}
 	}
 	return nil
+}
+
+func checkReqs(o *InstallOptions) error {
+	return internal.CheckKubectlVersion()
 }
 
 func installTiller(o *InstallOptions) error {
@@ -307,11 +326,20 @@ func buildKymaInstaller(imageName string, o *InstallOptions) error {
 		return err
 	}
 
+	var args []docker.BuildArg
+	if o.LocalInstallerDir != "" {
+		args = append(args, docker.BuildArg{Name: "INSTALLER_DIR", Value: o.LocalInstallerDir})
+	}
+	if o.LocalInstallerVersion != "" {
+		args = append(args, docker.BuildArg{Name: "INSTALLER_VERSION", Value: o.LocalInstallerVersion})
+	}
+
 	return dc.BuildImage(docker.BuildImageOptions{
 		Name:         strings.TrimSpace(string(imageName)),
 		Dockerfile:   filepath.Join("tools", "kyma-installer", "kyma.Dockerfile"),
 		OutputStream: ioutil.Discard,
 		ContextDir:   filepath.Join(o.LocalSrcPath),
+		BuildArgs:    args,
 	})
 }
 
