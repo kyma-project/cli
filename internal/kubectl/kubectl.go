@@ -2,13 +2,13 @@ package kubectl
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"os/exec"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Masterminds/semver"
 )
 
 const (
@@ -156,24 +156,23 @@ func CheckVersion() (string, error) {
 		return "", err
 	}
 
-	exp, _ := regexp.Compile("Client Version: v((\\d+).(\\d+).(\\d+))")
-	kubctlIsVersion := exp.FindStringSubmatch(versionText)
-
-	exp, _ = regexp.Compile("((\\d+).(\\d+).(\\d+))")
-	kubctlMustVersion := exp.FindStringSubmatch(kubectlVersion)
-
-	majorIsVersion, _ := strconv.Atoi(kubctlIsVersion[2])
-	majorMustVersion, _ := strconv.Atoi(kubctlMustVersion[2])
-	minorIsVersion, _ := strconv.Atoi(kubctlIsVersion[3])
-	minorMustVersion, _ := strconv.Atoi(kubctlMustVersion[3])
-
-	message := fmt.Sprintf("Your kubectl version is '%s'. Supported versions of kubectl are from '%d.%d.*' to '%d.%d.*'", kubctlIsVersion[1], majorMustVersion, minorMustVersion-1, majorMustVersion, minorMustVersion+1)
-
-	if majorIsVersion != majorMustVersion {
-		return "", errors.New(message)
+	exp, _ := regexp.Compile("Client Version: v(.*)")
+	versionString := exp.FindStringSubmatch(versionText)
+	version, err := semver.NewVersion(versionString[1])
+	if err != nil {
+		return "", err
 	}
-	if minorIsVersion-minorMustVersion < -1 || minorIsVersion-minorMustVersion > 1 {
-		return message, nil
+
+	constraintString := "~" + kubectlVersion
+	constraint, err := semver.NewConstraint(constraintString)
+	if err != nil {
+		return "", err
 	}
-	return "", nil
+
+	check := constraint.Check(version)
+	if check {
+		return "", nil
+	}
+
+	return fmt.Sprintf("You are using an unsupported minikube version '%s'. This may not work. It is recommended to use minikube version '%s'", version, kubectlVersion), nil
 }
