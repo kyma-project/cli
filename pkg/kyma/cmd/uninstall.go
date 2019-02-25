@@ -174,22 +174,6 @@ func deleteInstaller(o *UninstallOptions) error {
 	return nil
 }
 
-func deleteKymaIntegration(o *UninstallOptions) error {
-	_, err := internal.RunKubectlCmd([]string{"delete", "namespace", "kyma-integration"})
-	if err != nil {
-		fmt.Printf("%s", err)
-	} else {
-		for {
-			_, err := internal.RunKubectlCmd([]string{"get", "namespace", "kyma-integration"})
-			if err != nil {
-				break
-			}
-			time.Sleep(sleep)
-		}
-	}
-	return nil
-}
-
 //cannot use the original yaml file as the version is not known or might be even custom
 func deleteTiller(o *UninstallOptions) error {
 	check, err := internal.IsPodDeployed("kube-system", "name", "tiller")
