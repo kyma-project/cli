@@ -86,14 +86,13 @@ func (o *InstallOptions) Run() error {
 		s.Failure()
 		return err
 	}
-	s.Successf("Requirements are fine")
 
 	if o.Local {
-		fmt.Printf("Installing Kyma from local path: '%s'\n", o.LocalSrcPath)
+		s.LogInfof("Installing Kyma from local path: '%s'\n", o.LocalSrcPath)
 	} else {
-		fmt.Printf("Installing Kyma in version '%s'\n", o.ReleaseVersion)
+		s.LogInfof("Installing Kyma in version '%s'\n", o.ReleaseVersion)
 	}
-	fmt.Println()
+	s.Successf("Requirements are fine")
 
 	s = o.NewStep(fmt.Sprintf("Installing tiller"))
 	err = installTiller(o)
@@ -227,7 +226,7 @@ func installInstaller(o *InstallOptions) error {
 }
 
 func installInstallerFromRelease(o *InstallOptions) error {
-	relaseURL := "https://github.com/kyma-project/kyma/releases/download/" + o.ReleaseVersion + "/kyma-config-local.yaml"
+	relaseURL := "https://github.com/kyma-project/kyma/releases/download/" + o.ReleaseVersion + "/kyma-installer-local.yaml"
 	_, err := kubectl.RunCmd(o.Verbose, "apply", "-f", relaseURL)
 	if err != nil {
 		return err

@@ -97,10 +97,8 @@ func (o *MinikubeOptions) Run() error {
 		s.Failure()
 		return err
 	}
+	s.LogInfof("Preparing minikube using domain '%s' and vm-driver '%s'\n", o.Domain, o.VMDriver)
 	s.Successf("Requirements are fine")
-
-	fmt.Printf("Preparing minikube using domain '%s' and vm-driver '%s'\n", o.Domain, o.VMDriver)
-	fmt.Println()
 
 	s = o.NewStep("Check minikube status")
 	err = checkIfMinikubeIsInitialized(o, s)
@@ -149,14 +147,14 @@ func (o *MinikubeOptions) Run() error {
 	}
 	s.Successf("Minukube up and running")
 
-	fmt.Println("Adding hostnames, please enter your password if requested")
+	s = o.NewStep(fmt.Sprintf("Adjusting minikube cluster"))
+	s.LogInfo("Adding hostnames, please enter your password if requested")
 	err = addDevDomainsToEtcHosts(o)
 	if err != nil {
 		return err
 	}
-	fmt.Println("Hostnames added to " + HostsFile)
+	s.LogInfof("Hostnames added to %s", HostsFile)
 
-	s = o.NewStep(fmt.Sprintf("Adjusting minikube cluster"))
 	err = increaseFsInotifyMaxUserInstances(o)
 	if err != nil {
 		s.Failure()

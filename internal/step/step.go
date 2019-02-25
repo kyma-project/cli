@@ -24,9 +24,11 @@ type Step interface {
 }
 
 const (
-	successGliph = "✅"
-	failureGliph = "❌"
-	warningGliph = "⚠️"
+	successGliph  = "✅"
+	failureGliph  = "❌"
+	warningGliph  = "⚠️"
+	questionGliph = "❓"
+	infoGliph     = "ℹ️"
 )
 
 func NewSimpleStep(msg string) Step {
@@ -77,11 +79,11 @@ func (s *simpleStep) Stop(success bool) {
 }
 
 func (s *simpleStep) LogInfo(msg string) {
-	fmt.Println(msg)
+	fmt.Printf("%s %s\n", infoGliph, msg)
 }
 
 func (s *simpleStep) LogInfof(format string, args ...interface{}) {
-	fmt.Printf(format+"\n", args...)
+	s.LogInfo(fmt.Sprintf(format, args...))
 }
 
 func (s *simpleStep) LogError(msg string) {
@@ -89,12 +91,12 @@ func (s *simpleStep) LogError(msg string) {
 }
 
 func (s *simpleStep) LogErrorf(format string, args ...interface{}) {
-	_, _ = fmt.Fprintf(os.Stderr, format+"\n", args...)
+	s.LogError(fmt.Sprintf(format, args...))
 }
 
 func (s *simpleStep) Prompt(msg string) (string, error) {
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Printf(msg)
+	fmt.Printf("%s %s", questionGliph, msg)
 	answer, err := reader.ReadString('\n')
 	return strings.TrimSpace(answer), err
 }

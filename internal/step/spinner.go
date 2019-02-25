@@ -67,11 +67,11 @@ func (s *stepWithSpinner) Stop(success bool) {
 }
 
 func (s *stepWithSpinner) LogInfo(msg string) {
-	s.logTof(os.Stdout, msg)
+	s.logTof(os.Stdout, infoGliph+"  "+msg)
 }
 
 func (s *stepWithSpinner) LogInfof(format string, args ...interface{}) {
-	s.logTof(os.Stdout, format, args...)
+	s.logTof(os.Stdout, infoGliph+"  "+format, args...)
 }
 
 func (s *stepWithSpinner) LogError(msg string) {
@@ -95,7 +95,7 @@ func (s *stepWithSpinner) Prompt(msg string) (string, error) {
 	reader := bufio.NewReader(os.Stdin)
 	isActive := s.spinner.Active()
 	s.spinner.Stop()
-	fmt.Printf(msg)
+	fmt.Printf("%s %s", questionGliph, msg)
 	answer, err := reader.ReadString('\n')
 	if isActive {
 		s.spinner.Start()
