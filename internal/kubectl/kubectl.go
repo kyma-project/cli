@@ -206,5 +206,5 @@ func CheckVersion(verbose bool) (string, error) {
 		return "", nil
 	}
 
-	return fmt.Sprintf("You are using an unsupported minikube version '%s'. This may not work. It is recommended to use minikube version '%s'", version, kubectlVersion), nil
+	return fmt.Sprintf("You are using an unsupported kubectl version '%s'. This may not work. It is recommended to use kubectl version '%s'", version, kubectlVersion), nil
 }
