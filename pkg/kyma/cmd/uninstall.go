@@ -99,6 +99,7 @@ func (o *UninstallOptions) Run() error {
 	s.Successf("ClusterRoleBinding for admin deleted")
 
 	s = o.NewStep(fmt.Sprintf("Cleanup Namespaces"))
+	// see https://github.com/kyma-project/kyma/issues/1826
 	err = deleteLeftoverResources(o, "namespace", namespacesToDelete)
 	if err != nil {
 		s.Failure()
@@ -107,6 +108,7 @@ func (o *UninstallOptions) Run() error {
 	s.Successf("Namespaces deleted")
 
 	s = o.NewStep(fmt.Sprintf("Cleanup CRDs"))
+	// see https://github.com/kyma-project/kyma/issues/1826
 	err = deleteLeftoverResources(o, "crd", crdGroupsToDelete)
 	if err != nil {
 		s.Failure()
