@@ -51,7 +51,7 @@ The command will:
 
 //Run runs the command
 func (o *UninstallOptions) Run() error {
-	s := o.NewStep(fmt.Sprintf("Checking requirements"))
+	s := o.NewStep("Checking requirements")
 	err := checkUninstallRequirements(o, s)
 	if err != nil {
 		s.Failure()
@@ -59,9 +59,7 @@ func (o *UninstallOptions) Run() error {
 	}
 	s.Successf("Requirements are fine")
 
-	fmt.Printf("%s Uninstalling Kyma\n", step.InfoGliph)
-
-	s = o.NewStep(fmt.Sprintf("Activate kyma-installer to uninstall kyma"))
+	s = o.NewStep("Activate kyma-installer to uninstall kyma")
 	err = activateInstallerForUninstall(o)
 	if err != nil {
 		s.Failure()
@@ -69,12 +67,14 @@ func (o *UninstallOptions) Run() error {
 	}
 	s.Successf("kyma-installer activated to uninstall kyma")
 
+	s = o.NewStep("Uninstalling Kyma")
 	err = waitForInstallerToUninstall(o)
 	if err != nil {
 		return err
 	}
+	s.Successf("Kyma uninstalled successfully")
 
-	s = o.NewStep(fmt.Sprintf("Deleting kyma-installer"))
+	s = o.NewStep("Deleting kyma-installer")
 	err = deleteInstaller(o)
 	if err != nil {
 		s.Failure()
@@ -82,7 +82,7 @@ func (o *UninstallOptions) Run() error {
 	}
 	s.Successf("kyma-installer deleted")
 
-	s = o.NewStep(fmt.Sprintf("Deleting tiller"))
+	s = o.NewStep("Deleting tiller")
 	err = deleteTiller(o)
 	if err != nil {
 		s.Failure()
@@ -90,7 +90,7 @@ func (o *UninstallOptions) Run() error {
 	}
 	s.Successf("tiller deleted")
 
-	s = o.NewStep(fmt.Sprintf("Deleting ClusterRoleBinding for admin"))
+	s = o.NewStep("Deleting ClusterRoleBinding for admin")
 	err = deleteClusterRoleBinding(o)
 	if err != nil {
 		s.Failure()
@@ -98,7 +98,7 @@ func (o *UninstallOptions) Run() error {
 	}
 	s.Successf("ClusterRoleBinding for admin deleted")
 
-	s = o.NewStep(fmt.Sprintf("Cleanup Namespaces"))
+	s = o.NewStep("Cleanup Namespaces")
 	// see https://github.com/kyma-project/kyma/issues/1826
 	err = deleteLeftoverResources(o, "namespace", namespacesToDelete)
 	if err != nil {
@@ -107,7 +107,7 @@ func (o *UninstallOptions) Run() error {
 	}
 	s.Successf("Namespaces deleted")
 
-	s = o.NewStep(fmt.Sprintf("Cleanup CRDs"))
+	s = o.NewStep("Cleanup CRDs")
 	// see https://github.com/kyma-project/kyma/issues/1826
 	err = deleteLeftoverResources(o, "crd", crdGroupsToDelete)
 	if err != nil {

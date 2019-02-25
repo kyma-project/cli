@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	kubectlVersion string = "1.10.0"
+	kubectlVersion string = "1.11.0"
 	sleep                 = 5 * time.Second
 )
 
@@ -27,20 +27,15 @@ func RunCmd(verbose bool, args ...string) (string, error) {
 //RunApplyCmd executes a kubectl apply command with given resources
 func RunApplyCmd(resources []map[string]interface{}, verbose bool) (string, error) {
 	cmd := exec.Command("kubectl", "apply", "-f", "-")
-	stdinPipe, err := cmd.StdinPipe()
-	if err != nil {
-		return "", err
-	}
-	defer func() { _ = stdinPipe.Close() }()
 	buf := &bytes.Buffer{}
 	enc := yaml.NewEncoder(buf)
 	for _, y := range resources {
-		err = enc.Encode(y)
+		err := enc.Encode(y)
 		if err != nil {
 			return "", err
 		}
 	}
-	err = enc.Close()
+	err := enc.Close()
 	if err != nil {
 		return "", err
 	}

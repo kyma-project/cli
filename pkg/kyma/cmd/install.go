@@ -80,7 +80,7 @@ func (o *InstallOptions) Run() error {
 		return err
 	}
 
-	s := o.NewStep(fmt.Sprintf("Checking requirements"))
+	s := o.NewStep("Checking requirements")
 	err = checkInstallRequirements(o, s)
 	if err != nil {
 		s.Failure()
@@ -89,12 +89,12 @@ func (o *InstallOptions) Run() error {
 	s.Successf("Requirements are fine")
 
 	if o.Local {
-		fmt.Printf("%s Installing Kyma from local path: '%s'\n", step.InfoGliph, o.LocalSrcPath)
+		s.LogInfof("Installing Kyma from local path: '%s'",  o.LocalSrcPath)
 	} else {
-		fmt.Printf("%s Installing Kyma in version '%s'\n", step.InfoGliph, o.ReleaseVersion)
+		s.LogInfof("Installing Kyma in version '%s'", o.ReleaseVersion)
 	}
 
-	s = o.NewStep(fmt.Sprintf("Installing tiller"))
+	s = o.NewStep("Installing tiller")
 	err = installTiller(o)
 	if err != nil {
 		s.Failure()
@@ -102,7 +102,7 @@ func (o *InstallOptions) Run() error {
 	}
 	s.Successf("Tiller installed")
 
-	s = o.NewStep(fmt.Sprintf("Installing kyma-installer"))
+	s = o.NewStep("Installing kyma-installer")
 	err = installInstaller(o)
 	if err != nil {
 		s.Failure()
@@ -110,7 +110,7 @@ func (o *InstallOptions) Run() error {
 	}
 	s.Successf("kyma-installer installed")
 
-	s = o.NewStep(fmt.Sprintf("Requesting kyma-installer to install kyma"))
+	s = o.NewStep("Requesting kyma-installer to install kyma")
 	err = activateInstaller(o)
 	if err != nil {
 		s.Failure()
