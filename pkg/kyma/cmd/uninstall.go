@@ -52,8 +52,9 @@ func (o *UninstallOptions) Run() error {
 		s.Failure()
 		return err
 	}
-	s.LogInfo("Uninstalling Kyma\n")
 	s.Successf("Requirements are fine")
+
+	fmt.Printf("%s Uninstalling Kyma\n", step.InfoGliph)
 
 	s = o.NewStep(fmt.Sprintf("Activate kyma-installer to uninstall kyma"))
 	err = activateInstallerForUninstall(o)

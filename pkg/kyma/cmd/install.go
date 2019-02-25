@@ -86,13 +86,13 @@ func (o *InstallOptions) Run() error {
 		s.Failure()
 		return err
 	}
+	s.Successf("Requirements are fine")
 
 	if o.Local {
-		s.LogInfof("Installing Kyma from local path: '%s'\n", o.LocalSrcPath)
+		fmt.Printf("%s Installing Kyma from local path: '%s'\n", step.InfoGliph, o.LocalSrcPath)
 	} else {
-		s.LogInfof("Installing Kyma in version '%s'\n", o.ReleaseVersion)
+		fmt.Printf("%s Installing Kyma in version '%s'\n", step.InfoGliph, o.ReleaseVersion)
 	}
-	s.Successf("Requirements are fine")
 
 	s = o.NewStep(fmt.Sprintf("Installing tiller"))
 	err = installTiller(o)

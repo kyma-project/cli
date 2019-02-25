@@ -58,28 +58,28 @@ func (s *stepWithSpinner) Stopf(success bool, format string, args ...interface{}
 func (s *stepWithSpinner) Stop(success bool) {
 	var gliph string
 	if success {
-		gliph = successGliph
+		gliph = SuccessGliph
 	} else {
-		gliph = failureGliph
+		gliph = FailureGliph
 	}
 	s.spinner.FinalMSG = fmt.Sprintf("%s %s\n", gliph, s.msg)
 	s.spinner.Stop()
 }
 
 func (s *stepWithSpinner) LogInfo(msg string) {
-	s.logTof(os.Stdout, infoGliph+"  "+msg)
+	s.logTof(os.Stdout, InfoGliph+"  "+msg)
 }
 
 func (s *stepWithSpinner) LogInfof(format string, args ...interface{}) {
-	s.logTof(os.Stdout, infoGliph+"  "+format, args...)
+	s.logTof(os.Stdout, InfoGliph+"  "+format, args...)
 }
 
 func (s *stepWithSpinner) LogError(msg string) {
-	s.logTof(os.Stderr, warningGliph+"  "+msg)
+	s.logTof(os.Stderr, WarningGliph+"  "+msg)
 }
 
 func (s *stepWithSpinner) LogErrorf(format string, args ...interface{}) {
-	s.logTof(os.Stderr, warningGliph+"  "+format, args)
+	s.logTof(os.Stderr, WarningGliph+"  "+format, args)
 }
 
 func (s *stepWithSpinner) logTof(to io.Writer, format string, args ...interface{}) {
@@ -95,7 +95,7 @@ func (s *stepWithSpinner) Prompt(msg string) (string, error) {
 	reader := bufio.NewReader(os.Stdin)
 	isActive := s.spinner.Active()
 	s.spinner.Stop()
-	fmt.Printf("%s %s", questionGliph, msg)
+	fmt.Printf("%s %s", QuestionGliph, msg)
 	answer, err := reader.ReadString('\n')
 	if isActive {
 		s.spinner.Start()
