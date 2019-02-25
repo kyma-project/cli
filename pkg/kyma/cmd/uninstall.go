@@ -13,6 +13,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	namespacesToDelete = []string{"istio-system", "kyma-integration", "kyma-system", "natss"}
+	crdGroupsToDelete  = []string{"kyma-project.io", "istio.io", "dex.coreos.com"}
+)
+
 //UninstallOptions defines available options for the command
 type UninstallOptions struct {
 	*core.Options
@@ -93,8 +98,16 @@ func (o *UninstallOptions) Run() error {
 	}
 	s.Successf("ClusterRoleBinding for admin deleted")
 
+	s = o.NewStep(fmt.Sprintf("Cleanup Namespaces"))
+	err = deleteLeftoverResources(o, "namespace", namespacesToDelete)
+	if err != nil {
+		s.Failure()
+		return err
+	}
+	s.Successf("Namespaces deleted")
+
 	s = o.NewStep(fmt.Sprintf("Cleanup CRDs"))
-	err = deleteLeftoverCRDs(o)
+	err = deleteLeftoverResources(o, "crd", crdGroupsToDelete)
 	if err != nil {
 		s.Failure()
 		return err
@@ -211,21 +224,21 @@ func deleteClusterRoleBinding(o *UninstallOptions) error {
 	return nil
 }
 
-func deleteLeftoverCRDs(o *UninstallOptions) error {
-	crdNames, err := kubectl.RunCmd(o.Verbose, "get", "crd", "-o", "jsonpath='{.items[*].metadata.name}'")
+func deleteLeftoverResources(o *UninstallOptions, resourceType string, resources []string) error {
+	items, err := kubectl.RunCmd(o.Verbose, "get", resourceType, "-o", "jsonpath='{.items[*].metadata.name}'")
 	if err != nil {
 		return err
 	}
 
-	scanner := bufio.NewScanner(strings.NewReader(crdNames))
+	scanner := bufio.NewScanner(strings.NewReader(items))
 	scanner.Split(bufio.ScanWords)
 	for scanner.Scan() {
 		if err := scanner.Err(); err != nil {
 			return err
 		}
-		crd := scanner.Text()
-		if strings.HasSuffix(crd, "kyma-project.io") || strings.HasSuffix(crd, "istio.io") || strings.HasSuffix(crd, "dex.coreos.com") {
-			_, err := kubectl.RunCmd(o.Verbose, "delete", "crd", crd, "--timeout="+timeoutComplexDeletion, "--ignore-not-found=true")
+		item := scanner.Text()
+		if strings.HasSuffix(item, "kyma-project.io") || strings.HasSuffix(item, "istio.io") || strings.HasSuffix(item, "dex.coreos.com") {
+			_, err := kubectl.RunCmd(o.Verbose, "delete", resourceType, item, "--timeout="+timeoutComplexDeletion)
 			if err != nil {
 				return err
 			}
