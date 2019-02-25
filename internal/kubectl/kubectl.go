@@ -25,7 +25,7 @@ func RunCmd(verbose bool, args ...string) (string, error) {
 }
 
 //RunApplyCmd executes a kubectl apply command with given resources
-func RunApplyCmd(resources []interface{}, verbose bool) (string, error) {
+func RunApplyCmd(resources []map[string]interface{}, verbose bool) (string, error) {
 	cmd := exec.Command("kubectl", "apply", "-f", "-")
 	buf := &bytes.Buffer{}
 	enc := yaml.NewEncoder(buf)
