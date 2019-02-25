@@ -2,10 +2,11 @@ package minikube
 
 import (
 	"fmt"
-	"github.com/kyma-incubator/kyma-cli/internal/minikube"
-	"github.com/kyma-incubator/kyma-cli/internal/step"
 	"strings"
 	"time"
+
+	"github.com/kyma-incubator/kyma-cli/internal/minikube"
+	"github.com/kyma-incubator/kyma-cli/internal/step"
 
 	"github.com/kyma-incubator/kyma-cli/internal"
 	"github.com/kyma-incubator/kyma-cli/pkg/kyma/core"
@@ -158,7 +159,7 @@ func (o *MinikubeOptions) Run() error {
 	}
 
 	s.Status("Await kube-dns to be up and running")
-	err = internal.WaitForPod("kube-system", "k8s-app", "kube-dns")
+	err = internal.WaitForPodReady("kube-system", "k8s-app", "kube-dns")
 	if err != nil {
 		s.Failure()
 		return err
@@ -247,7 +248,7 @@ func startMinikube(o *MinikubeOptions) error {
 	}
 
 	if o.VMDriver == vmDriverHyperv {
-		startCmd = append(startCmd, "--hyperv-virtual-switch=" + o.HypervVirtualSwitch)
+		startCmd = append(startCmd, "--hyperv-virtual-switch="+o.HypervVirtualSwitch)
 
 	}
 	_, err := minikube.RunCmd(startCmd...)
@@ -278,7 +279,7 @@ func createClusterRoleBinding() error {
 
 func waitForMinikubeToBeUp(step step.Step) error {
 	for {
-		statusText, err := minikube.RunCmd("status", "-b=" + bootstrapper, "--format", "'{{.Host}}'")
+		statusText, err := minikube.RunCmd("status", "-b="+bootstrapper, "--format", "'{{.Host}}'")
 		if err != nil {
 			return err
 		}
@@ -291,7 +292,7 @@ func waitForMinikubeToBeUp(step step.Step) error {
 	}
 
 	for {
-		statusText, err := minikube.RunCmd("status", "-b=" + bootstrapper, "--format", "'{{.Kubelet}}'")
+		statusText, err := minikube.RunCmd("status", "-b="+bootstrapper, "--format", "'{{.Kubelet}}'")
 		if err != nil {
 			return err
 		}
@@ -346,7 +347,7 @@ func increaseFsInotifyMaxUserInstances(o *MinikubeOptions) error {
 func printSummary() error {
 	fmt.Println()
 	fmt.Println("Minikube cluster is installed")
-	clusterInfo, err := minikube.RunCmd("status", "-b=" + bootstrapper)
+	clusterInfo, err := minikube.RunCmd("status", "-b="+bootstrapper)
 	if err != nil {
 		fmt.Printf("Cannot show cluster-info because of '%s", err)
 	} else {

@@ -1,8 +1,9 @@
 package cmd
 
 import (
-	"github.com/kyma-incubator/kyma-cli/pkg/kyma/cmd/provision/minikube"
 	"time"
+
+	"github.com/kyma-incubator/kyma-cli/pkg/kyma/cmd/provision/minikube"
 
 	"github.com/kyma-incubator/kyma-cli/pkg/kyma/cmd/provision"
 	"github.com/kyma-incubator/kyma-cli/pkg/kyma/core"
@@ -11,7 +12,9 @@ import (
 )
 
 const (
-	sleep = 10 * time.Second
+	sleep                  = 10 * time.Second
+	timeoutSimpleDeletion  = "5s"
+	timeoutComplexDeletion = "30s"
 )
 
 //NewKymaCmd creates a new kyma CLI command

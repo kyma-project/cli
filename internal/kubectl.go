@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	kubectlVersion string = "1.10.0"
+	kubectlVersion string = "1.11.0"
 )
 
 //RunKubectlCmd executes a kubectl command with given arguments
@@ -24,9 +24,9 @@ func RunKubectlCmd(args []string) (string, error) {
 	return strings.Replace(string(out), "'", "", -1), nil
 }
 
-//WaitForPod waits till a pod is deployed and has status 'running'.
+//WaitForPodReady waits till a pod is deployed and has status 'running'.
 // The pod gets identified by the namespace and a lebel key=value pair.
-func WaitForPod(namespace string, labelName string, labelValue string) error {
+func WaitForPodReady(namespace string, labelName string, labelValue string) error {
 	for {
 		isDeployed, err := IsPodDeployed(namespace, labelName, labelValue)
 		if err != nil {
@@ -44,6 +44,22 @@ func WaitForPod(namespace string, labelName string, labelValue string) error {
 			return err
 		}
 		if isReady {
+			break
+		}
+		time.Sleep(sleep)
+	}
+	return nil
+}
+
+//WaitForPodGone waits till a pod is not existent anymore.
+// The pod gets identified by the namespace and a lebel key=value pair.
+func WaitForPodGone(namespace string, labelName string, labelValue string) error {
+	for {
+		check, err := IsPodDeployed(namespace, labelName, labelValue)
+		if err != nil {
+			return err
+		}
+		if !check {
 			break
 		}
 		time.Sleep(sleep)
