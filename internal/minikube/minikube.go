@@ -25,10 +25,10 @@ func RunCmd(verbose bool, args ...string) (string, error) {
 		if verbose {
 			fmt.Printf("\nExecuted command:\n  minikube %s\nwith output:\n  %s\nand error:\n  %s\n", strings.Join(args, " "), string(out), err)
 		}
-		return unquotedOut, fmt.Errorf("Failed executing minikube command 'minikube %s' with output '%s' and error message '%s'", args, out, err)
+		return unquotedOut, fmt.Errorf("Failed executing command 'minikube %s' with output '%s' and error message '%s'", strings.Join(args, " "), out, err)
 	}
 	if verbose {
-		fmt.Printf("\nExecuted minikube command:\n  %s\nwith output:\n  %s\n", args, string(out))
+		fmt.Printf("\nExecuted command:\n  minikube %s\nwith output:\n  %s\n", strings.Join(args, " "), string(out))
 	}
 	return unquotedOut, nil
 }
