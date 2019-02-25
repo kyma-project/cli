@@ -2,6 +2,7 @@ package kubectl
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"os/exec"
 	"regexp"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver"
+	yaml "gopkg.in/yaml.v2"
 )
 
 const (
@@ -17,20 +19,55 @@ const (
 )
 
 //RunCmd executes a kubectl command with given arguments
-func RunCmd(args []string) (string, error) {
+func RunCmd(verbose bool, args ...string) (string, error) {
 	cmd := exec.Command("kubectl", args[0:]...)
-	out, err := cmd.CombinedOutput()
+	return execCmd(cmd, strings.Join(args, " "), verbose)
+}
+
+//RunApplyCmd executes a kubectl apply command with given resources
+func RunApplyCmd(resources []map[string]interface{}, verbose bool) (string, error) {
+	cmd := exec.Command("kubectl", "apply", "-f", "-")
+	stdinPipe, err := cmd.StdinPipe()
 	if err != nil {
-		return "", fmt.Errorf("Failed executing kubectl command 'kubectl %s' with output '%s' and error message '%s'", args, out, err)
+		return "", err
 	}
-	return strings.Replace(string(out), "'", "", -1), nil
+	defer func() { _ = stdinPipe.Close() }()
+	buf := &bytes.Buffer{}
+	enc := yaml.NewEncoder(buf)
+	for _, y := range resources {
+		err = enc.Encode(y)
+		if err != nil {
+			return "", err
+		}
+	}
+	err = enc.Close()
+	if err != nil {
+		return "", err
+	}
+	cmd.Stdin = buf
+	return execCmd(cmd, fmt.Sprintf("apply -f -%s", resources), verbose)
+}
+
+func execCmd(cmd *exec.Cmd, inputText string, verbose bool) (string, error) {
+	out, err := cmd.CombinedOutput()
+	unquotedOut := strings.Replace(string(out), "'", "", -1)
+	if err != nil {
+		if verbose {
+			fmt.Printf("\nExecuted command:\n  kubectl %s\nwith output:\n  %s\nand error:\n  %s\n", inputText, string(out), err)
+		}
+		return unquotedOut, fmt.Errorf("Failed executing kubectl command 'kubectl %s' with output '%s' and error message '%s'", inputText, out, err)
+	}
+	if verbose {
+		fmt.Printf("\nExecuted kubectl command:\n  %s\nwith output:\n  %s\n", inputText, string(out))
+	}
+	return unquotedOut, nil
 }
 
 //WaitForPodReady waits till a pod is deployed and has status 'running'.
 // The pod gets identified by the namespace and a lebel key=value pair.
-func WaitForPodReady(namespace string, labelName string, labelValue string) error {
+func WaitForPodReady(namespace string, labelName string, labelValue string, verbose bool) error {
 	for {
-		isDeployed, err := IsPodDeployed(namespace, labelName, labelValue)
+		isDeployed, err := IsPodDeployed(namespace, labelName, labelValue, verbose)
 		if err != nil {
 			return err
 		}
@@ -41,7 +78,7 @@ func WaitForPodReady(namespace string, labelName string, labelValue string) erro
 	}
 
 	for {
-		isReady, err := IsPodReady(namespace, labelName, labelValue)
+		isReady, err := IsPodReady(namespace, labelName, labelValue, verbose)
 		if err != nil {
 			return err
 		}
@@ -55,9 +92,9 @@ func WaitForPodReady(namespace string, labelName string, labelValue string) erro
 
 //WaitForPodGone waits till a pod is not existent anymore.
 // The pod gets identified by the namespace and a lebel key=value pair.
-func WaitForPodGone(namespace string, labelName string, labelValue string) error {
+func WaitForPodGone(namespace string, labelName string, labelValue string, verbose bool) error {
 	for {
-		check, err := IsPodDeployed(namespace, labelName, labelValue)
+		check, err := IsPodDeployed(namespace, labelName, labelValue, verbose)
 		if err != nil {
 			return err
 		}
@@ -72,16 +109,15 @@ func WaitForPodGone(namespace string, labelName string, labelValue string) error
 //IsPodDeployed checks if a pod is deployed.
 // It will not wait till it is deployed.
 // The pod gets identified by the namespace and a label key=value pair.
-func IsPodDeployed(namespace string, labelName string, labelValue string) (bool, error) {
-	return IsResourceDeployed("pod", namespace, labelName, labelValue)
+func IsPodDeployed(namespace string, labelName string, labelValue string, verbose bool) (bool, error) {
+	return IsResourceDeployed("pod", namespace, labelName, labelValue, verbose)
 }
 
 //IsResourceDeployed checks if a kubernetes resource is deployed.
 // It will not wait till it is deployed.
 // The resource gets identified by the namespace and a lebel key=value pair.
-func IsResourceDeployed(resource string, namespace string, labelName string, labelValue string) (bool, error) {
-	getResourceNameCmd := []string{"get", resource, "-n", namespace, "-l", labelName + "=" + labelValue, "-o", "jsonpath='{.items[*].metadata.name}'"}
-	resourceNames, err := RunCmd(getResourceNameCmd)
+func IsResourceDeployed(resource string, namespace string, labelName string, labelValue string, verbose bool) (bool, error) {
+	resourceNames, err := RunCmd(verbose, "get", resource, "-n", namespace, "-l", labelName+"="+labelValue, "-o", "jsonpath='{.items[*].metadata.name}'")
 	if err != nil {
 		return false, err
 	}
@@ -94,9 +130,8 @@ func IsResourceDeployed(resource string, namespace string, labelName string, lab
 //IsClusterResourceDeployed checks if a kubernetes cluster resource is deployed.
 // It will not wait till it is deployed.
 // The resource gets identified by a lebel key=value pair.
-func IsClusterResourceDeployed(resource string, labelName string, labelValue string) (bool, error) {
-	getResourceNameCmd := []string{"get", resource, "-l", labelName + "=" + labelValue, "-o", "jsonpath='{.items[*].metadata.name}'"}
-	resourceNames, err := RunCmd(getResourceNameCmd)
+func IsClusterResourceDeployed(resource string, labelName string, labelValue string, verbose bool) (bool, error) {
+	resourceNames, err := RunCmd(verbose, "get", resource, "-l", labelName+"="+labelValue, "-o", "jsonpath='{.items[*].metadata.name}'")
 	if err != nil {
 		return false, err
 	}
@@ -109,9 +144,8 @@ func IsClusterResourceDeployed(resource string, labelName string, labelValue str
 //IsPodReady checks if a pod is deployed and running.
 // It will not wait till it is deployed or running.
 // The pod gets identified by the namespace and a lebel key=value pair.
-func IsPodReady(namespace string, labelName string, labelValue string) (bool, error) {
-	getPodNameCmd := []string{"get", "pods", "-n", namespace, "-l", labelName + "=" + labelValue, "-o", "jsonpath='{.items[*].metadata.name}'"}
-	podNames, err := RunCmd(getPodNameCmd)
+func IsPodReady(namespace string, labelName string, labelValue string, verbose bool) (bool, error) {
+	podNames, err := RunCmd(verbose, "get", "pods", "-n", namespace, "-l", labelName+"="+labelValue, "-o", "jsonpath='{.items[*].metadata.name}'")
 	if err != nil {
 		return false, err
 	}
@@ -128,15 +162,13 @@ func IsPodReady(namespace string, labelName string, labelValue string) (bool, er
 		}
 
 		pod := scanner.Text()
-		getContainerStatusCmd := []string{"get", "pod", pod, "-n", namespace, "-o", "jsonpath='{.status.containerStatuses[0].ready}'"}
-		containerStatus, err := RunCmd(getContainerStatusCmd)
+		containerStatus, err := RunCmd(verbose, "get", "pod", pod, "-n", namespace, "-o", "jsonpath='{.status.containerStatuses[0].ready}'")
 		if err != nil {
 			return false, err
 		}
 
 		if containerStatus != "true" {
-			getEventsCmd := []string{"get", "event", "-n", namespace, "-o", "go-template='{{range .items}}{{if eq .involvedObject.name \"'" + pod + "'\"}}{{.message}}{{\"\\n\"}}{{end}}{{end}}'"}
-			events, err := RunCmd(getEventsCmd)
+			events, err := RunCmd(verbose, "get", "event", "-n", namespace, "-o", "go-template='{{range .items}}{{if eq .involvedObject.name \"'"+pod+"'\"}}{{.message}}{{\"\\n\"}}{{end}}{{end}}'")
 			if err != nil {
 				fmt.Printf("Error while checking for pod events '%s'\n‚", err)
 			}
@@ -150,8 +182,8 @@ func IsPodReady(namespace string, labelName string, labelValue string) (bool, er
 }
 
 //CheckVersion assures that the kubectl version used is compatible
-func CheckVersion() (string, error) {
-	versionText, err := RunCmd([]string{"version", "--client", "--short"})
+func CheckVersion(verbose bool) (string, error) {
+	versionText, err := RunCmd(verbose, "version", "--client", "--short")
 	if err != nil {
 		return "", err
 	}

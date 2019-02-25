@@ -45,9 +45,9 @@ func NewTestCmd(o *TestOptions) *cobra.Command {
 	return cmd
 }
 
-func (opts *TestOptions) Run() error {
+func (o *TestOptions) Run() error {
 	helmConfig := &environment.EnvSettings{TillerConnectionTimeout: 300}
-	kubeConfig, err := opts.GetKubeconfig()
+	kubeConfig, err := o.GetKubeconfig()
 	if err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func (opts *TestOptions) Run() error {
 	}
 
 	for _, namespace := range namespacesToClean {
-		err := opts.cleanHelmTestPods(namespace)
+		err := o.cleanHelmTestPods(namespace)
 		if err != nil {
 			return err
 		}
@@ -71,19 +71,19 @@ func (opts *TestOptions) Run() error {
 
 	for _, component := range components {
 		release := component.Name
-		s := opts.NewStep(
+		s := o.NewStep(
 			fmt.Sprintf("Testing release %s", release),
 		)
 		s.Start()
 
-		if opts.skipRelease(helmClient, release) {
+		if o.skipRelease(helmClient, release) {
 			s.Successf("Skipping release %s", release)
 			continue
 		}
 
-		msg, success, err := opts.testRelease(helmClient, s, release)
+		msg, success, err := o.testRelease(helmClient, s, release)
 		s.Stop(success)
-		if msg != "" && (!success || opts.Verbose) {
+		if msg != "" && (!success || o.Verbose) {
 			fmt.Println("--- Log ---")
 			fmt.Print(msg)
 			fmt.Println("---")
@@ -96,8 +96,8 @@ func (opts *TestOptions) Run() error {
 	return nil
 }
 
-func (opts *TestOptions) skipRelease(client helm.Interface, release string) bool {
-	for _, skipped := range opts.skip {
+func (o *TestOptions) skipRelease(client helm.Interface, release string) bool {
+	for _, skipped := range o.skip {
 		if skipped == release {
 			return true
 		}
@@ -106,13 +106,13 @@ func (opts *TestOptions) skipRelease(client helm.Interface, release string) bool
 	return false
 }
 
-func (opts *TestOptions) cleanHelmTestPods(namespace string) error {
-	s := opts.NewStep(
+func (o *TestOptions) cleanHelmTestPods(namespace string) error {
+	s := o.NewStep(
 		fmt.Sprintf("Cleaning up helm test pods in namespace %s", namespace),
 	)
 	s.Start()
 
-	_, err := kubectl.RunCmd([]string{"delete", "pod", "-n", namespace, "-l", "helm-chart-test=true"})
+	_, err := kubectl.RunCmd(o.Verbose, "delete", "pod", "-n", namespace, "-l", "helm-chart-test=true")
 	if err != nil {
 		s.Failure()
 		return err
@@ -122,7 +122,7 @@ func (opts *TestOptions) cleanHelmTestPods(namespace string) error {
 	return nil
 }
 
-func (opts *TestOptions) testRelease(client helm.Interface, s step.Step, release string) (string, bool, error) {
+func (o *TestOptions) testRelease(client helm.Interface, s step.Step, release string) (string, bool, error) {
 	c, errc := client.RunReleaseTest(release, helm.ReleaseTestTimeout(600))
 	out := &bytes.Buffer{}
 	failed := 0

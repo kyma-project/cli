@@ -39,7 +39,6 @@ func NewVersionCmd(o *VersionOptions) *cobra.Command {
 
 //Run runs the command
 func (o *VersionOptions) Run() error {
-
 	version := Version
 	if version == "" {
 		version = "N/A"
@@ -47,7 +46,7 @@ func (o *VersionOptions) Run() error {
 	fmt.Printf("Kyma CLI version: %s\n", version)
 
 	if !o.Client {
-		version, err := internal.GetKymaVersion()
+		version, err := internal.GetKymaVersion(o.Verbose)
 		if err != nil {
 			return err
 		}

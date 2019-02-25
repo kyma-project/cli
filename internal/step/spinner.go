@@ -62,7 +62,7 @@ func (s *stepWithSpinner) Stop(success bool) {
 	} else {
 		gliph = failureGliph
 	}
-	s.spinner.FinalMSG = fmt.Sprintf("%s %s\n", s.msg, gliph)
+	s.spinner.FinalMSG = fmt.Sprintf("%s %s\n", gliph, s.msg)
 	s.spinner.Stop()
 }
 
