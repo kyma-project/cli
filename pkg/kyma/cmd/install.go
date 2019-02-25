@@ -184,7 +184,7 @@ func installTiller(o *InstallOptions) error {
 			return err
 		}
 	}
-	err = internal.WaitForPod("kube-system", "name", "tiller")
+	err = internal.WaitForPodReady("kube-system", "name", "tiller")
 	if err != nil {
 		return err
 	}
@@ -211,7 +211,7 @@ func installInstaller(o *InstallOptions) error {
 		}
 
 	}
-	err = internal.WaitForPod("kyma-installer", "name", "kyma-installer")
+	err = internal.WaitForPodReady("kyma-installer", "name", "kyma-installer")
 	if err != nil {
 		return err
 	}
