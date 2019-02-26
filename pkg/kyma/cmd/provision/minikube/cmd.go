@@ -14,12 +14,13 @@ import (
 )
 
 const (
-	kubernetesVersion string = "1.11.5"
-	bootstrapper      string = "kubeadm"
-	vmDriverHyperkit  string = "hyperkit"
-	vmDriverHyperv    string = "hyperv"
-	vmDriverNone      string = "none"
-	sleep                    = 10 * time.Second
+	kubernetesVersion  string = "1.11.5"
+	bootstrapper       string = "kubeadm"
+	vmDriverHyperkit   string = "hyperkit"
+	vmDriverHyperv     string = "hyperv"
+	vmDriverNone       string = "none"
+	vmDriverVirtualBox string = "virtualbox"
+	sleep                     = 10 * time.Second
 )
 
 var (
@@ -81,7 +82,7 @@ func NewCmd(o *MinikubeOptions) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.Domain, "domain", "d", "kyma.local", "domain to use")
-	cmd.Flags().StringVar(&o.VMDriver, "vm-driver", vmDriverHyperkit, "VMDriver to use, possible values are: "+strings.Join(drivers, ","))
+	cmd.Flags().StringVar(&o.VMDriver, "vm-driver", defaultVMDriver, "VMDriver to use, possible values are: "+strings.Join(drivers, ","))
 	cmd.Flags().StringVar(&o.HypervVirtualSwitch, "hypervVirtualSwitch", "", "Name of the hyperv switch to use, required if --vm-driver=hyperv")
 	cmd.Flags().StringVar(&o.DiskSize, "disk-size", "20g", "Disk size to use")
 	cmd.Flags().StringVar(&o.Memory, "memory", "8192", "Memory to use")
@@ -148,20 +149,19 @@ func (o *MinikubeOptions) Run() error {
 	}
 	s.Successf("Minukube up and running")
 
-	s.LogInfo("Adding hostnames, please enter your password if requested")
-	err = addDevDomainsToEtcHosts(o)
+	err = addDevDomainsToEtcHosts(o, s)
 	if err != nil {
 		return err
 	}
-	s.LogInfof("Hostnames added to %s", HostsFile)
 
 	s = o.NewStep(fmt.Sprintf("Adjusting minikube cluster"))
+	s.Status("Increase fs.inotify.max_user_instances")
 	err = increaseFsInotifyMaxUserInstances(o)
 	if err != nil {
 		s.Failure()
 		return err
 	}
-	s.Success()
+	s.Successf("Adjustments finished")
 
 	err = printSummary(o)
 	if err != nil {
@@ -319,7 +319,7 @@ func waitForMinikubeToBeUp(o *MinikubeOptions, step step.Step) error {
 	return nil
 }
 
-func addDevDomainsToEtcHosts(o *MinikubeOptions) error {
+func addDevDomainsToEtcHosts(o *MinikubeOptions, s step.Step) error {
 	hostnames := ""
 	for _, v := range domains {
 		hostnames = hostnames + " " + v + "." + o.Domain
@@ -341,7 +341,7 @@ func addDevDomainsToEtcHosts(o *MinikubeOptions) error {
 
 	hostAlias = strings.Trim(minikubeIP, "\n") + hostnames
 
-	return addDevDomainsToEtcHostsOSSpecific(o, hostAlias)
+	return addDevDomainsToEtcHostsOSSpecific(o, s, hostAlias)
 }
 
 // Default value of 128 is not enough to perform “kubectl log -f” from pods, hence increased to 524288

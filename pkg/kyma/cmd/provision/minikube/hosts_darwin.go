@@ -1,5 +1,4 @@
-// +build !windows
-// +build !darwin
+// +build darwin
 
 package minikube
 
@@ -10,7 +9,7 @@ import (
 
 const hostsFile = "/etc/hosts"
 
-const defaultVMDriver = vmDriverNone
+const defaultVMDriver = vmDriverHyperkit
 
 func addDevDomainsToEtcHostsOSSpecific(o *MinikubeOptions, s step.Step, hostAlias string) error {
 	s.LogInfo("Please enter your password if requested")
