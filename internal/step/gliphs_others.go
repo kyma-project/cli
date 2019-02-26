@@ -7,6 +7,6 @@ const (
 	failureGliph  = "X "
 	warningGliph  = "! "
 	questionGliph = "? "
-	infoGliph     = "I "
+	infoGliph     = "- "
 	waitGliph     = "- "
 )
