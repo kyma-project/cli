@@ -15,12 +15,3 @@ type Step interface {
 	LogErrorf(format string, args ...interface{})
 	Prompt(msg string) (string, error)
 }
-
-const (
-	successGliph  = "✅"
-	failureGliph  = "❌"
-	warningGliph  = "⚠️"
-	questionGliph = "❓"
-	infoGliph     = "ℹ️"
-	waitGliph     = "🕑"
-)
