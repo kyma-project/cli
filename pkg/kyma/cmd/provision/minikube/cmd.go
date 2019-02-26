@@ -99,9 +99,9 @@ func (o *MinikubeOptions) Run() error {
 	}
 	s.Successf("Requirements are fine")
 
+	s.LogInfof("Preparing minikube using domain '%s' and vm-driver '%s'", o.Domain, o.VMDriver)
 
 	s = o.NewStep("Check minikube status")
-	s.LogInfof("Preparing minikube using domain '%s' and vm-driver '%s'", o.Domain, o.VMDriver)
 	err = checkIfMinikubeIsInitialized(o, s)
 	if err != nil {
 		s.Failure()

@@ -71,9 +71,7 @@ func (o *TestOptions) Run() error {
 
 	for _, component := range components {
 		release := component.Name
-		s := o.NewStep(
-			fmt.Sprintf("Testing release %s", release),
-		)
+		s := o.NewStep(fmt.Sprintf("Testing release %s", release))
 		s.Start()
 
 		if o.skipRelease(helmClient, release) {

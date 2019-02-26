@@ -59,20 +59,20 @@ func (o *UninstallOptions) Run() error {
 	}
 	s.Successf("Requirements are fine")
 
-	s = o.NewStep("Activate kyma-installer to uninstall kyma")
+	s.LogInfof("Uninstalling Kyma")
+
+	s = o.NewStep("Requesting kyma-installer to uninstall Kyma")
 	err = activateInstallerForUninstall(o)
 	if err != nil {
 		s.Failure()
 		return err
 	}
-	s.Successf("kyma-installer activated to uninstall kyma")
+	s.Successf("kyma-installer is uninstalling Kyma")
 
-	s = o.NewStep("Uninstalling Kyma")
 	err = waitForInstallerToUninstall(o)
 	if err != nil {
 		return err
 	}
-	s.Successf("Kyma uninstalled successfully")
 
 	s = o.NewStep("Deleting kyma-installer")
 	err = deleteInstaller(o)
@@ -100,7 +100,7 @@ func (o *UninstallOptions) Run() error {
 
 	s = o.NewStep("Cleanup Namespaces")
 	// see https://github.com/kyma-project/kyma/issues/1826
-	err = deleteLeftoverResources(o, "namespace", namespacesToDelete)
+	err = deleteLeftoverResources(o, s, "namespace", namespacesToDelete)
 	if err != nil {
 		s.Failure()
 		return err
@@ -109,7 +109,7 @@ func (o *UninstallOptions) Run() error {
 
 	s = o.NewStep("Cleanup CRDs")
 	// see https://github.com/kyma-project/kyma/issues/1826
-	err = deleteLeftoverResources(o, "crd", crdGroupsToDelete)
+	err = deleteLeftoverResources(o, s, "crd", crdGroupsToDelete)
 	if err != nil {
 		s.Failure()
 		return err
@@ -226,7 +226,7 @@ func deleteClusterRoleBinding(o *UninstallOptions) error {
 	return nil
 }
 
-func deleteLeftoverResources(o *UninstallOptions, resourceType string, resources []string) error {
+func deleteLeftoverResources(o *UninstallOptions, s step.Step, resourceType string, resources []string) error {
 	items, err := kubectl.RunCmd(o.Verbose, "get", resourceType, "-o", "jsonpath='{.items[*].metadata.name}'")
 	if err != nil {
 		return err
@@ -239,10 +239,13 @@ func deleteLeftoverResources(o *UninstallOptions, resourceType string, resources
 			return err
 		}
 		item := scanner.Text()
-		if strings.HasSuffix(item, "kyma-project.io") || strings.HasSuffix(item, "istio.io") || strings.HasSuffix(item, "dex.coreos.com") {
-			_, err := kubectl.RunCmd(o.Verbose, "delete", resourceType, item, "--timeout="+timeoutComplexDeletion)
-			if err != nil {
-				return err
+		for _, v := range resources {
+			if strings.HasSuffix(item, v) {
+				s.Status(item)
+				_, err := kubectl.RunCmd(o.Verbose, "delete", resourceType, item, "--timeout="+timeoutComplexDeletion)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
