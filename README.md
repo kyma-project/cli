@@ -26,7 +26,7 @@ kyma install
 Installation of Kyma with minikube on Windows:
 
 ```bash
-kyma provision minikube --vm-driver hyperv --hypervVirtualSwitch {YOUR_SWITCH_NAME}
+kyma provision minikube
 # follow instructions to add hosts
 kyma install
 ```
@@ -43,22 +43,9 @@ Run tests on Kyma installation:
 ```bash
 kyma test
 ```
-## Installation Mac
-```
-curl -Lo kyma https://github.com/kyma-incubator/kyma-cli/releases/download/v0.3.0/kyma-darwin \
-  && chmod +x kyma
-sudo mv kyma /usr/local/bin
-```
+## Installation
 
-## Installation Linux
-```
-curl -Lo kyma https://github.com/kyma-incubator/kyma-cli/releases/download/v0.3.0/kyma-linux \
-  && chmod +x kyma
-sudo mv kyma /usr/local/bin
-```
-
-## Installation Windows
-Download [binary](https://github.com/kyma-incubator/kyma-cli/releases/download/v0.3.0/kyma.exe) and adjust your PATH.
+For the latest relase and installation instructions, see the [release page](https://github.com/kyma-incubator/kyma-cli/releases/tag/v0.3.0)
 
 ## Kyma-CLI as a Kubectl plugin
 
