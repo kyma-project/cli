@@ -20,7 +20,7 @@ func (s *simpleStep) Start() {
 }
 
 func (s *simpleStep) Status(msg string) {
-	fmt.Printf("%s : %s\n", s.msg, msg)
+	fmt.Printf("%s: %s\n", s.msg, msg)
 }
 
 func (s *simpleStep) Success() {
