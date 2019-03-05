@@ -1,38 +1,41 @@
-# kyma-cli
+# Kyma-CLI
 
 ## Overview
 
-A command line tool to support developers of and with Kyma
+A command line tool to support developers of and with [Kyma](https://github.com/kyma-project/kyma)
 
 ## Available Commands
 
-- `version`: Shows the kyma cluster version and the Kyma CLI version. The Kyma CLI version is set at compile time passing it to the go linker as a flag:
-
-    ```bash
-    go build -o ./bin/kyma -ldflags '-X github.com/kyma-incubator/kyma-cli/pkg/kyma/cmd.Version=1.5.0' ./cmd/kyma
-    ```
+- `version`: Shows the Kyma cluster version and the Kyma CLI version
 - `provision minikube`: Initializes minikube with a new cluster (replaces the `minikube.sh` script) 
-- `install`: Installs kyma to a cluster based on a release (replaces the `ìnstaller.sh` and `is-installed.sh` script)
-- `uninstall`: Uninstalls all kyma related resources from a cluster
-- `completion`: Output shell completion code for bash.
+- `install`: Installs Kyma to a cluster based on a release (replaces the `ìnstaller.sh` and `is-installed.sh` script)
+- `uninstall`: Uninstalls all Kyma related resources from a cluster
+- `completion`: Outputs shell completion code for bash
 - `test`: Triggers and reports the tests for every Kyma module
 - `help`: Displays usage for the given command (e.g. `kyma help`, `kyma help status`, etc...)
 
 ## Usage
 
-Installation of kyma with minikube on Mac:
+Installation of Kyma with minikube on Mac:
 
 ```bash
 kyma provision minikube
 kyma install
 ```
 
-Installation of kyma with minikube on Windows:
+Installation of Kyma with minikube on Windows:
 
 ```bash
 kyma provision minikube --vm-driver hyperv --hypervVirtualSwitch {YOUR_SWITCH_NAME}
 # follow instructions to add hosts
+kyma install
+```
 
+Installation of Kyma with minikube on Windows using HyperV:
+
+```bash
+kyma provision minikube --vm-driver hyperv --hypervVirtualSwitch {YOUR_SWITCH_NAME}
+# follow instructions to add hosts
 kyma install
 ```
 
@@ -40,8 +43,24 @@ Run tests on Kyma installation:
 ```bash
 kyma test
 ```
+## Installation Mac
+```
+curl -Lo kyma https://github.com/kyma-incubator/kyma-cli/releases/download/v0.3.0/kyma-darwin \
+  && chmod +x kyma
+sudo mv kyma /usr/local/bin
+```
 
-## kyma-cli as a Kubectl plugin
+## Installation Linux
+```
+curl -Lo kyma https://github.com/kyma-incubator/kyma-cli/releases/download/v0.3.0/kyma-linux \
+  && chmod +x kyma
+sudo mv kyma /usr/local/bin
+```
+
+## Installation Windows
+Download [binary](https://github.com/kyma-incubator/kyma-cli/releases/download/v0.3.0/kyma.exe) and adjust your PATH.
+
+## Kyma-CLI as a Kubectl plugin
 
 To follow this section a kubectl version of 1.12.0 or later is required.
 
@@ -85,9 +104,10 @@ To know more about extending kubectl with plugins read [kubernetes documentation
 - Application Connectivity
   - create remote environment and fetch connection token
   - manage APIs registered by an application
-- Testing/Validation
+- Testing/Validation/Debugging
   - connect mock application to kyma
   - 'Check' a kyma installation for potential problems
+  - Query logs of a pod/namespace
 - CTL installation
   - homebrew support
   - support for edge releases
