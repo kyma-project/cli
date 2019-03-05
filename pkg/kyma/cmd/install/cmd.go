@@ -12,12 +12,9 @@ import (
 	"time"
 
 	"github.com/fsouza/go-dockerclient"
-	"github.com/kyma-incubator/kyma-cli/internal/kubectl"
 	"github.com/kyma-incubator/kyma-cli/internal/minikube"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
-
-	"github.com/kyma-incubator/kyma-cli/internal/step"
 
 	"github.com/kyma-incubator/kyma-cli/internal"
 	"github.com/mitchellh/mapstructure"
@@ -29,7 +26,11 @@ type command struct {
 	core.Command
 }
 
-const sleep = 10 * time.Second
+const (
+	sleep                = 10 * time.Second
+	releaseSrcUrlPattern = "https://raw.githubusercontent.com/kyma-project/kyma/%s/%s"
+	releaseUrlPattern = "https://github.com/kyma-project/kyma/releases/download/%s/%s"
+)
 
 //NewCmd creates a new kyma command
 func NewCmd(o *Options) *cobra.Command {
@@ -180,7 +181,7 @@ func (cmd *command) installTiller() error {
 		return err
 	}
 	if !check {
-		_, err = cmd.Kubectl().RunCmd("apply", "-f", "https://raw.githubusercontent.com/kyma-project/kyma/"+cmd.opts.ReleaseVersion+"/installation/resources/tiller.yaml")
+		_, err = cmd.Kubectl().RunCmd("apply", "-f", cmd.releaseSrcFile("/installation/resources/tiller.yaml"))
 		if err != nil {
 			return err
 		}
@@ -221,7 +222,7 @@ func (cmd *command) installInstaller() error {
 }
 
 func (cmd *command) installInstallerFromRelease() error {
-	relaseURL := "https://github.com/kyma-project/kyma/releases/download/" + cmd.opts.ReleaseVersion + "/kyma-installer-local.yaml"
+	relaseURL := cmd.releaseFile("kyma-installer-local.yaml")
 	_, err := cmd.Kubectl().RunCmd("apply", "-f", relaseURL)
 	if err != nil {
 		return err
@@ -230,7 +231,7 @@ func (cmd *command) installInstallerFromRelease() error {
 }
 
 func (cmd *command) configureInstallerFromRelease() error {
-	configURL := "https://github.com/kyma-project/kyma/releases/download/" + cmd.opts.ReleaseVersion + "/kyma-config-local.yaml"
+	configURL := cmd.releaseFile("/kyma-config-local.yaml")
 	if cmd.opts.ReleaseConfig != "" {
 		configURL = cmd.opts.ReleaseConfig
 	}
@@ -428,7 +429,7 @@ func (cmd *command) printSummary() error {
 
 func (cmd *command) waitForInstaller() error {
 	currentDesc := ""
-	var s step.Step
+	_ = cmd.NewStep("Waiting for installation to start")
 
 	status, err := cmd.Kubectl().RunCmd("get", "installation/kyma-installation", "-o", "jsonpath='{.status.state}'")
 	if err != nil {
@@ -438,12 +439,15 @@ func (cmd *command) waitForInstaller() error {
 		return nil
 	}
 
-	timeout := time.After(cmd.opts.Timeout)
+	var timeout <-chan time.Time
+	if cmd.opts.Timeout > 0 {
+		timeout = time.After(cmd.opts.Timeout)
+	}
 
 	for {
 		select {
 		case <-timeout:
-			s.Failure()
+			cmd.CurrentStep.Failure()
 			_ = cmd.printInstallationErrorLog()
 			return errors.New("Timeout while awaiting installation to complete")
 		default:
@@ -454,31 +458,23 @@ func (cmd *command) waitForInstaller() error {
 
 			switch status {
 			case "Installed":
-				if s != nil {
-					s.Success()
-				}
+				cmd.CurrentStep.Success()
 				return nil
 
 			case "Error":
-				s.LogErrorf("Error installing Kyma: %s", desc)
-				if err != nil {
-					return err
-				}
+				cmd.CurrentStep.LogErrorf("Error installing Kyma: %s", desc)
+				cmd.CurrentStep.LogInfof("To fetch the logs from the installer execute: 'kubectl logs -n kyma-installer -l name=kyma-installer'", desc)
 
 			case "InProgress":
 				// only do something if the description has changed
 				if desc != currentDesc {
-					if s != nil {
-						s.Success()
-					}
-					s = cmd.opts.NewStep(fmt.Sprintf(desc))
+					cmd.CurrentStep.Success()
+					cmd.CurrentStep = cmd.opts.NewStep(fmt.Sprintf(desc))
 					currentDesc = desc
 				}
 
 			default:
-				if s != nil {
-					s.Failure()
-				}
+				cmd.CurrentStep.Failure()
 				fmt.Printf("Unexpected status: %s\n", status)
 				os.Exit(1)
 			}
@@ -497,9 +493,10 @@ func (cmd *command) getInstallationStatus() (status string, desc string, err err
 }
 
 func (cmd *command) printInstallationErrorLog() error {
-	logs, err := kubectl.RunCmd(cmd.opts.Verbose, "get", "installation", "kyma-installation", "-o", "go-template", `--template={{- range .status.errorLog }}
+	logs, err := cmd.Kubectl().RunCmd("get", "installation", "kyma-installation", "-o", "go-template", `--template={{- range .status.errorLog -}}
 {{.component}}:
-{{.log}}
+{{.log}} [{{.occurrences}}]
+
 {{- end}}
 `)
 	if err != nil {
@@ -507,4 +504,12 @@ func (cmd *command) printInstallationErrorLog() error {
 	}
 	fmt.Println(logs)
 	return nil
+}
+
+func (cmd *command) releaseSrcFile(path string) string {
+	return fmt.Sprintf(releaseSrcUrlPattern, cmd.opts.ReleaseVersion, path)
+}
+
+func (cmd *command) releaseFile(path string) string {
+	return fmt.Sprintf(releaseUrlPattern, cmd.opts.ReleaseVersion, path)
 }
