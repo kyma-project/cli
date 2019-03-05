@@ -16,8 +16,8 @@ func NewStepWithSpinner(msg string) Step {
 		[]string{"/", "-", "\\", "|"},
 		time.Millisecond*200,
 		spinner.WithColor("reset"),
+		spinner.WithSuffix(" "+msg),
 	)
-	s.Prefix = waitGliph + msg + " "
 	return &stepWithSpinner{s, msg}
 }
 
@@ -31,7 +31,7 @@ func (s *stepWithSpinner) Start() {
 }
 
 func (s *stepWithSpinner) Status(msg string) {
-	s.spinner.Suffix = fmt.Sprintf(" : %s", msg)
+	s.spinner.Suffix = fmt.Sprintf(" %s : %s", s.msg, msg)
 }
 
 func (s *stepWithSpinner) Success() {
@@ -58,28 +58,28 @@ func (s *stepWithSpinner) Stopf(success bool, format string, args ...interface{}
 func (s *stepWithSpinner) Stop(success bool) {
 	var gliph string
 	if success {
-		gliph = successGliph
+		gliph = successGlyph
 	} else {
-		gliph = failureGliph
+		gliph = failureGlyph
 	}
 	s.spinner.FinalMSG = fmt.Sprintf("%s%s\n", gliph, s.msg)
 	s.spinner.Stop()
 }
 
 func (s *stepWithSpinner) LogInfo(msg string) {
-	s.logTof(os.Stdout, infoGliph+msg)
+	s.logTof(os.Stdout, infoGlyph+msg)
 }
 
 func (s *stepWithSpinner) LogInfof(format string, args ...interface{}) {
-	s.logTof(os.Stdout, infoGliph+format, args...)
+	s.logTof(os.Stdout, infoGlyph+format, args...)
 }
 
 func (s *stepWithSpinner) LogError(msg string) {
-	s.logTof(os.Stderr, warningGliph+msg)
+	s.logTof(os.Stderr, warningGlyph+msg)
 }
 
 func (s *stepWithSpinner) LogErrorf(format string, args ...interface{}) {
-	s.logTof(os.Stderr, warningGliph+format, args)
+	s.logTof(os.Stderr, warningGlyph+format, args)
 }
 
 func (s *stepWithSpinner) logTof(to io.Writer, format string, args ...interface{}) {
@@ -95,7 +95,7 @@ func (s *stepWithSpinner) Prompt(msg string) (string, error) {
 	reader := bufio.NewReader(os.Stdin)
 	isActive := s.spinner.Active()
 	s.spinner.Stop()
-	fmt.Printf("%s%s", questionGliph, msg)
+	fmt.Printf("%s%s", questionGlyph, msg)
 	answer, err := reader.ReadString('\n')
 	if isActive {
 		s.spinner.Start()
