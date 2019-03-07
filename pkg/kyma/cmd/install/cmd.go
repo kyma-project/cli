@@ -462,8 +462,11 @@ func (cmd *command) waitForInstaller() error {
 				return nil
 
 			case "Error":
-				cmd.CurrentStep.LogErrorf("Error installing Kyma: %s", desc)
-				cmd.CurrentStep.LogInfof("To fetch the logs from the installer execute: 'kubectl logs -n kyma-installer -l name=kyma-installer'", desc)
+				if desc != "error" {
+					desc = "error"
+					cmd.CurrentStep.LogErrorf("Error installing Kyma: %s", desc)
+					cmd.CurrentStep.LogInfof("To fetch the logs from the installer execute: 'kubectl logs -n kyma-installer -l name=kyma-installer'")
+				}
 
 			case "InProgress":
 				// only do something if the description has changed
