@@ -20,7 +20,7 @@ func (s *simpleStep) Start() {
 }
 
 func (s *simpleStep) Status(msg string) {
-	fmt.Printf("%s%s : %s\n", waitGliph, s.msg, msg)
+	fmt.Printf("%s: %s\n", s.msg, msg)
 }
 
 func (s *simpleStep) Success() {
@@ -47,15 +47,15 @@ func (s *simpleStep) Stopf(success bool, format string, args ...interface{}) {
 func (s *simpleStep) Stop(success bool) {
 	var glyph string
 	if success {
-		glyph = successGliph
+		glyph = successGlyph
 	} else {
-		glyph = failureGliph
+		glyph = failureGlyph
 	}
 	fmt.Printf("%s%s\n", glyph, s.msg)
 }
 
 func (s *simpleStep) LogInfo(msg string) {
-	fmt.Printf("%s%s\n", infoGliph, msg)
+	fmt.Printf("%s%s\n", infoGlyph, msg)
 }
 
 func (s *simpleStep) LogInfof(format string, args ...interface{}) {
@@ -63,7 +63,7 @@ func (s *simpleStep) LogInfof(format string, args ...interface{}) {
 }
 
 func (s *simpleStep) LogError(msg string) {
-	_, _ = fmt.Fprintf(os.Stderr, "%s%s\n", warningGliph, msg)
+	_, _ = fmt.Fprintf(os.Stderr, "%s%s\n", warningGlyph, msg)
 }
 
 func (s *simpleStep) LogErrorf(format string, args ...interface{}) {
@@ -72,7 +72,7 @@ func (s *simpleStep) LogErrorf(format string, args ...interface{}) {
 
 func (s *simpleStep) Prompt(msg string) (string, error) {
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Printf("%s%s", questionGliph, msg)
+	fmt.Printf("%s%s", questionGlyph, msg)
 	answer, err := reader.ReadString('\n')
 	return strings.TrimSpace(answer), err
 }
