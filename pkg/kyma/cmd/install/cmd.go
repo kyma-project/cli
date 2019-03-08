@@ -440,6 +440,7 @@ func (cmd *command) waitForInstaller() error {
 	}
 
 	var timeout <-chan time.Time
+	var errorOccured bool
 	if cmd.opts.Timeout > 0 {
 		timeout = time.After(cmd.opts.Timeout)
 	}
@@ -462,13 +463,14 @@ func (cmd *command) waitForInstaller() error {
 				return nil
 
 			case "Error":
-				if desc != "error" {
-					desc = "error"
-					cmd.CurrentStep.LogErrorf("Error installing Kyma: %s", desc)
+				if !errorOccured {
+					errorOccured = true
+					cmd.CurrentStep.Failuref("Error installing Kyma: %s", desc)
 					cmd.CurrentStep.LogInfof("To fetch the logs from the installer execute: 'kubectl logs -n kyma-installer -l name=kyma-installer'")
 				}
 
 			case "InProgress":
+				errorOccured = false
 				// only do something if the description has changed
 				if desc != currentDesc {
 					cmd.CurrentStep.Success()
