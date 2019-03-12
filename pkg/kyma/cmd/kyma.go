@@ -2,20 +2,13 @@ package cmd
 
 import (
 	"github.com/kyma-incubator/kyma-cli/pkg/kyma/cmd/install"
-	"time"
-
 	"github.com/kyma-incubator/kyma-cli/pkg/kyma/cmd/provision/minikube"
+	"github.com/kyma-incubator/kyma-cli/pkg/kyma/cmd/uninstall"
 
 	"github.com/kyma-incubator/kyma-cli/pkg/kyma/cmd/provision"
 	"github.com/kyma-incubator/kyma-cli/pkg/kyma/core"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/tools/clientcmd"
-)
-
-const (
-	sleep                  = 10 * time.Second
-	timeoutSimpleDeletion  = "5s"
-	timeoutComplexDeletion = "30s"
 )
 
 //NewKymaCmd creates a new kyma CLI command
@@ -51,7 +44,7 @@ Find more information at: https://github.com/kyma-incubator/kyma-cli
 	installCmd := install.NewCmd(install.NewOptions(o))
 	cmd.AddCommand(installCmd)
 
-	uninstallCmd := NewUninstallCmd(NewUninstallOptions(o))
+	uninstallCmd := uninstall.NewCmd(uninstall.NewOptions(o))
 	cmd.AddCommand(uninstallCmd)
 
 	testCmd := NewTestCmd(NewTestOptions(o))
