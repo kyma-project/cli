@@ -275,7 +275,7 @@ func (cmd *command) waitForInstallerToUninstall() error {
 	if err != nil {
 		return err
 	}
-	if status == "Installed" {
+	if status == "Uninstalled" {
 		return nil
 	}
 
@@ -289,16 +289,16 @@ func (cmd *command) waitForInstallerToUninstall() error {
 		select {
 		case <-timeout:
 			cmd.CurrentStep.Failure()
-			_ = cmd.printInstallationErrorLog()
+			_ = cmd.printUninstallationErrorLog()
 			return errors.New("Timeout while awaiting uninstallation to complete")
 		default:
-			status, desc, err := cmd.getInstallationStatus()
+			status, desc, err := cmd.getUninstallationStatus()
 			if err != nil {
 				return err
 			}
 
 			switch status {
-			case "Installed":
+			case "Uninstalled":
 				cmd.CurrentStep.Success()
 				return nil
 
@@ -328,7 +328,7 @@ func (cmd *command) waitForInstallerToUninstall() error {
 	}
 }
 
-func (cmd *command) getInstallationStatus() (status string, desc string, err error) {
+func (cmd *command) getUninstallationStatus() (status string, desc string, err error) {
 	status, err = cmd.Kubectl().RunCmd("get", "installation/kyma-installation", "-o", "jsonpath='{.status.state}'")
 	if err != nil {
 		return
@@ -337,7 +337,7 @@ func (cmd *command) getInstallationStatus() (status string, desc string, err err
 	return
 }
 
-func (cmd *command) printInstallationErrorLog() error {
+func (cmd *command) printUninstallationErrorLog() error {
 	logs, err := cmd.Kubectl().RunCmd("get", "installation", "kyma-installation", "-o", "go-template", `--template={{- range .status.errorLog -}}
 {{.component}}:
 {{.log}} [{{.occurrences}}]
