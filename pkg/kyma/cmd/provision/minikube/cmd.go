@@ -161,6 +161,12 @@ func (o *MinikubeOptions) Run() error {
 		s.Failure()
 		return err
 	}
+	s.Status("Enable metrics server")
+	err = enableMetricsServer(o)
+	if err != nil {
+		s.Failure()
+		return err
+	}
 	s.Successf("Adjustments finished")
 
 	err = printSummary(o)
@@ -231,18 +237,6 @@ func initializeMinikubeConfig(o *MinikubeOptions) error {
 	if err != nil {
 		return err
 	}
-	// Enable heapster addon
-	_, err = minikube.RunCmd(o.Verbose, "addons", "enable", "heapster")
-	if err != nil {
-		return err
-	}
-
-	// Disable bootstrapper warning
-	_, err = minikube.RunCmd(o.Verbose, "config", "set", "ShowBootstrapperDeprecationNotification", "false")
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -353,6 +347,14 @@ func increaseFsInotifyMaxUserInstances(o *MinikubeOptions) error {
 		}
 	}
 
+	return nil
+}
+
+func enableMetricsServer(o *MinikubeOptions) error {
+	_, err := minikube.RunCmd(o.Verbose, "addons", "enable", "metrics-server")
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
