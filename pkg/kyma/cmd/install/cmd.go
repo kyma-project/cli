@@ -253,6 +253,11 @@ func (cmd *command) installInstallerFromLocalSources() error {
 		return err
 	}
 
+	err = cmd.setMinikubeIP(localResources)
+	if err != nil {
+		return err
+	}
+
 	err = cmd.buildKymaInstaller(imageName)
 	if err != nil {
 		return err
@@ -517,4 +522,25 @@ func (cmd *command) releaseSrcFile(path string) string {
 
 func (cmd *command) releaseFile(path string) string {
 	return fmt.Sprintf(releaseUrlPattern, cmd.opts.ReleaseVersion, path)
+}
+
+func (cmd *command) setMinikubeIP(resources []map[string]interface{}) error {
+	minikubeIP, err := minikube.RunCmd(cmd.opts.Verbose, "ip")
+	minikubeIP = strings.TrimSpace(minikubeIP)
+	if err != nil {
+		return err
+	}
+	for _, res := range resources {
+		if res["kind"] == "ConfigMap" {
+
+			data := res["data"].(map[interface{}]interface{})
+
+			for key := range data {
+				if strings.HasSuffix(key.(string), ".minikubeIP") {
+					data[key] = minikubeIP
+				}
+			}
+		}
+	}
+	return nil
 }
