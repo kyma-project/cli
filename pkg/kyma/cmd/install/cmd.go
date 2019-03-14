@@ -57,7 +57,7 @@ The command will:
 		Aliases: []string{"i"},
 	}
 
-	cobraCmd.Flags().StringVarP(&o.ReleaseVersion, "release", "r", "0.8.0-rc1", "kyma release to use")
+	cobraCmd.Flags().StringVarP(&o.ReleaseVersion, "release", "r", "0.8.0", "kyma release to use")
 	cobraCmd.Flags().StringVarP(&o.ReleaseConfig, "config", "c", "", "URL or path to the installer configuration yaml")
 	cobraCmd.Flags().BoolVarP(&o.NoWait, "noWait", "n", false, "Do not wait for completion of kyma-installer")
 	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", "kyma.local", "domain to use for installation")
