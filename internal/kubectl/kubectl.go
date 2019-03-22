@@ -3,6 +3,7 @@ package kubectl
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"fmt"
 	"os/exec"
 	"regexp"
@@ -22,6 +23,17 @@ const (
 func RunCmd(verbose bool, args ...string) (string, error) {
 	cmd := exec.Command("kubectl", args[0:]...)
 	return execCmd(cmd, strings.Join(args, " "), verbose)
+}
+
+func RunCmdWithTimeout(timeout time.Duration, verbose bool, args ...string) (string, error) {
+	ctx, timeoutF := context.WithTimeout(context.Background(), timeout)
+	defer timeoutF()
+	cmd := exec.CommandContext(ctx, "kubectl", args[0:]...)
+	result, err := execCmd(cmd, strings.Join(args, " "), verbose)
+	if ctx.Err() != nil {
+		result, err = "", ctx.Err()
+	}
+	return result, err
 }
 
 //RunApplyCmd executes a kubectl apply command with given resources
