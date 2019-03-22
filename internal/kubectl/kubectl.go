@@ -30,8 +30,8 @@ func RunCmdWithTimeout(timeout time.Duration, verbose bool, args ...string) (str
 	defer timeoutF()
 	cmd := exec.CommandContext(ctx, "kubectl", args[0:]...)
 	result, err := execCmd(cmd, strings.Join(args, " "), verbose)
-	if err = ctx.Err(); err != nil {
-		result, err = "", err
+	if ctx.Err() != nil {
+		result, err = "", ctx.Err()
 	}
 	return result, err
 }
