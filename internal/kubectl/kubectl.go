@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"os/exec"
 	"regexp"
@@ -30,11 +29,9 @@ func RunCmdWithTimeout(timeout time.Duration, verbose bool, args ...string) (str
 	ctx, timeoutF := context.WithTimeout(context.Background(), timeout)
 	defer timeoutF()
 	cmd := exec.CommandContext(ctx, "kubectl", args[0:]...)
-	var result string
-	var err error
-	result, err = execCmd(cmd, strings.Join(args, " "), verbose)
-	if ctx.Err() != nil {
-		result, err = "", errors.New("context deadline exceeded")
+	result, err := execCmd(cmd, strings.Join(args, " "), verbose)
+	if err = ctx.Err(); err != nil {
+		result, err = "", err
 	}
 	return result, err
 }
