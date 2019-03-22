@@ -48,7 +48,7 @@ func (o *VersionOptions) Run() error {
 	if !o.Client {
 		version, err := internal.GetKymaVersion(o.Verbose)
 		if err != nil {
-			fmt.Printf("Unable to get Kyma cluster version due to error: %s. Please check if your cluster available and has Kyma installed\r\n", err.Error())
+			fmt.Printf("Unable to get Kyma cluster version due to error: %s. Please check if your cluster is available and has Kyma installed\r\n", err.Error())
 			return nil
 		}
 		fmt.Printf("Kyma cluster version: %s\n", version)
