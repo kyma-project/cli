@@ -3,7 +3,6 @@ package install
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/kyma-incubator/kyma-cli/pkg/kyma/core"
 	"io"
 	"io/ioutil"
 	"os"
@@ -11,10 +10,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fsouza/go-dockerclient"
+	"github.com/kyma-incubator/kyma-cli/pkg/kyma/core"
+
+	docker "github.com/fsouza/go-dockerclient"
 	"github.com/kyma-incubator/kyma-cli/internal/minikube"
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/kyma-incubator/kyma-cli/internal"
 	"github.com/mitchellh/mapstructure"
@@ -29,7 +30,7 @@ type command struct {
 const (
 	sleep                = 10 * time.Second
 	releaseSrcUrlPattern = "https://raw.githubusercontent.com/kyma-project/kyma/%s/%s"
-	releaseUrlPattern = "https://github.com/kyma-project/kyma/releases/download/%s/%s"
+	releaseUrlPattern    = "https://github.com/kyma-project/kyma/releases/download/%s/%s"
 )
 
 //NewCmd creates a new kyma command
@@ -56,7 +57,7 @@ The command will:
 		Aliases: []string{"i"},
 	}
 
-	cobraCmd.Flags().StringVarP(&o.ReleaseVersion, "release", "r", "0.7.0", "kyma release to use")
+	cobraCmd.Flags().StringVarP(&o.ReleaseVersion, "release", "r", "0.8.0", "kyma release to use")
 	cobraCmd.Flags().StringVarP(&o.ReleaseConfig, "config", "c", "", "URL or path to the installer configuration yaml")
 	cobraCmd.Flags().BoolVarP(&o.NoWait, "noWait", "n", false, "Do not wait for completion of kyma-installer")
 	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", "kyma.local", "domain to use for installation")
