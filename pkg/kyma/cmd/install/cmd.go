@@ -66,6 +66,7 @@ The command will:
 	cobraCmd.Flags().StringVarP(&o.LocalInstallerVersion, "installer-version", "", "", "Version of installer docker image to use while building locally")
 	cobraCmd.Flags().StringVarP(&o.LocalInstallerDir, "installer-dir", "", "", "Directory of installer docker image to use while building locally")
 	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 0, "Timeout after which CLI should give up watching installation")
+	cobraCmd.Flags().StringVarP(&o.Password, "password", "p", "", "Pre-defined cluster password")
 
 	return cobraCmd
 }
@@ -236,9 +237,17 @@ func (cmd *command) configureInstallerFromRelease() error {
 	if cmd.opts.ReleaseConfig != "" {
 		configURL = cmd.opts.ReleaseConfig
 	}
+
 	_, err := cmd.Kubectl().RunCmd("apply", "-f", configURL)
 	if err != nil {
 		return err
+	}
+
+	if cmd.opts.Password != "" {
+		err = cmd.setAdminPassword()
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -267,6 +276,12 @@ func (cmd *command) installInstallerFromLocalSources() error {
 	_, err = cmd.Kubectl().RunApplyCmd(localResources)
 	if err != nil {
 		return err
+	}
+	if cmd.opts.Password != "" {
+		err = cmd.setAdminPassword()
+		if err != nil {
+			return err
+		}
 	}
 	return cmd.labelInstallerNamespace()
 }
@@ -329,7 +344,7 @@ func (cmd *command) loadInstallationResourcesFile(name string, acc []map[string]
 	if err != nil {
 		return nil, err
 	}
-	defer func() { _ = f.Close() }()
+	defer f.Close()
 	dec := yaml.NewDecoder(f)
 	for {
 		m := make(map[string]interface{})
@@ -386,6 +401,13 @@ func (cmd *command) activateInstaller() error {
 		return err
 	}
 	return nil
+}
+
+//TODO: Finish
+func (cmd *command) setAdminPassword() error {
+	encPass := base64.StdEncoding.EncodeToString([]byte(cmd.opts.Password))
+	_, err := cmd.Kubectl().RunCmd("-n", "kyma-installer", "patch", "configmap", "installation-config-overrides", fmt.Sprintf(`-p='{"data": {"global.adminPassword": "%s"}}'`, encPass), "-v=1")
+	return err
 }
 
 func (cmd *command) printSummary() error {

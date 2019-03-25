@@ -1,8 +1,9 @@
 package install
 
 import (
-	"github.com/kyma-incubator/kyma-cli/pkg/kyma/core"
 	"time"
+
+	"github.com/kyma-incubator/kyma-cli/pkg/kyma/core"
 )
 
 //Options defines available options for the command
@@ -17,10 +18,10 @@ type Options struct {
 	LocalInstallerVersion string
 	LocalInstallerDir     string
 	Timeout               time.Duration
+	Password              string
 }
 
 //NewOptions creates options with default values
 func NewOptions(o *core.Options) *Options {
 	return &Options{Options: o}
 }
-
