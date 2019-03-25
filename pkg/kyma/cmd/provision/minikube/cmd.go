@@ -1,6 +1,7 @@
 package minikube
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -52,6 +53,7 @@ var (
 		"kvm2",
 		"none",
 	}
+	ErrMinikubeRunning = errors.New("Minikube already running")
 )
 
 //MinikubeOptions defines available options for the command
@@ -73,10 +75,9 @@ func NewOptions(o *core.Options) *MinikubeOptions {
 //NewCmd creates a new minikube command
 func NewCmd(o *MinikubeOptions) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "minikube",
-		Short: "Provisions minikube",
-		Long: `Provisions minikube for Kyma installation
-`,
+		Use:     "minikube",
+		Short:   "Provisions minikube",
+		Long:    `Provisions minikube for Kyma installation`,
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
 		Aliases: []string{"m"},
 	}
@@ -104,7 +105,10 @@ func (o *MinikubeOptions) Run() error {
 
 	s = o.NewStep("Check minikube status")
 	err = checkIfMinikubeIsInitialized(o, s)
-	if err != nil {
+	switch err {
+	case ErrMinikubeRunning, nil:
+		break
+	default:
 		s.Failure()
 		return err
 	}
@@ -225,7 +229,7 @@ func checkIfMinikubeIsInitialized(o *MinikubeOptions, s step.Step) error {
 				return err
 			}
 		} else {
-			return fmt.Errorf("minikube installation cancelled")
+			return ErrMinikubeRunning
 		}
 	}
 	return nil
