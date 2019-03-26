@@ -67,6 +67,7 @@ The command will:
 	cobraCmd.Flags().StringVarP(&o.LocalInstallerDir, "installer-dir", "", "", "Directory of installer docker image to use while building locally")
 	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 0, "Timeout after which CLI should give up watching installation")
 	cobraCmd.Flags().StringVarP(&o.Password, "password", "p", "", "Pre-defined cluster password")
+	cobraCmd.Flags().VarP(&o.OverrideConfigs, "override", "o", "Path to YAML file with parameters to override. Multiple entries of this flag allowed")
 
 	return cobraCmd
 }
@@ -243,12 +244,16 @@ func (cmd *command) configureInstallerFromRelease() error {
 		return err
 	}
 
-	if cmd.opts.Password != "" {
-		err = cmd.setAdminPassword()
-		if err != nil {
-			return err
-		}
+	err = cmd.applyOverrideFiles()
+	if err != nil {
+		return err
 	}
+
+	err = cmd.setAdminPassword()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -277,11 +282,15 @@ func (cmd *command) installInstallerFromLocalSources() error {
 	if err != nil {
 		return err
 	}
-	if cmd.opts.Password != "" {
-		err = cmd.setAdminPassword()
-		if err != nil {
-			return err
-		}
+
+	err = cmd.applyOverrideFiles()
+	if err != nil {
+		return err
+	}
+
+	err = cmd.setAdminPassword()
+	if err != nil {
+		return err
 	}
 	return cmd.labelInstallerNamespace()
 }
@@ -403,7 +412,75 @@ func (cmd *command) activateInstaller() error {
 	return nil
 }
 
+func (cmd *command) applyOverrideFiles() error {
+	oFiles := cmd.opts.OverrideConfigs.Len()
+	if oFiles == 0 {
+		return nil
+	}
+
+	for _, file := range cmd.opts.OverrideConfigs {
+		oFile, err := os.Open(file)
+		if err != nil {
+			return fmt.Errorf("unable to open file: %s. Error: %s",
+				file, err.Error())
+		}
+		rawData, err := ioutil.ReadAll(oFile)
+		if err != nil {
+			return fmt.Errorf("unable to read data from file: %s. Error: %s",
+				file, err.Error())
+		}
+
+		configs := strings.Split(string(rawData), "---")
+
+		for _, c := range configs {
+			cfg := make(map[interface{}]interface{})
+			err = yaml.Unmarshal([]byte(c), &cfg)
+			if err != nil {
+				return fmt.Errorf("unable to parse file data: %s. Error: %s",
+					file, err.Error())
+			}
+
+			kind, ok := cfg["kind"].(string)
+			if !ok {
+				return fmt.Errorf("unable get kind of config. File: %s", file)
+			}
+
+			meta, ok := cfg["metadata"].(map[interface{}]interface{})
+			if !ok {
+				return fmt.Errorf("unable to get metadata from config. File: %s", file)
+			}
+
+			namespace, ok := meta["namespace"].(string)
+			if !ok {
+				return fmt.Errorf("unable to get namespace from config. File: %s", file)
+			}
+
+			name, ok := meta["name"].(string)
+			if !ok {
+				return fmt.Errorf("unable to get name from config. File: %s", file)
+			}
+
+			_, err := cmd.Kubectl().RunCmd("-n",
+				strings.ToLower(namespace),
+				"patch",
+				kind,
+				strings.ToLower(name),
+				"-p",
+				c)
+			if err != nil {
+				return fmt.Errorf("unable to override values. File: %s. Error: %s", file, err.Error())
+			}
+		}
+
+	}
+
+	return nil
+}
+
 func (cmd *command) setAdminPassword() error {
+	if cmd.opts.Password == "" {
+		return nil
+	}
 	encPass := base64.StdEncoding.EncodeToString([]byte(cmd.opts.Password))
 	_, err := cmd.Kubectl().RunCmd("-n", "kyma-installer", "patch", "configmap", "installation-config-overrides", fmt.Sprintf(`-p='{"data": {"global.adminPassword": "%s"}}'`, encPass), "-v=1")
 	return err

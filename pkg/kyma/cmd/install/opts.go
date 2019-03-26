@@ -1,10 +1,30 @@
 package install
 
 import (
+	"strings"
 	"time"
 
 	"github.com/kyma-incubator/kyma-cli/pkg/kyma/core"
 )
+
+type overrideFileList []string
+
+func (ovf *overrideFileList) String() string {
+	return "[" + strings.Join(*ovf, " ,") + "]"
+}
+
+func (ovf *overrideFileList) Set(value string) error {
+	*ovf = append(*ovf, value)
+	return nil
+}
+
+func (ovf *overrideFileList) Type() string {
+	return "[]string"
+}
+
+func (ovf *overrideFileList) Len() int {
+	return len(*ovf)
+}
 
 //Options defines available options for the command
 type Options struct {
@@ -19,6 +39,7 @@ type Options struct {
 	LocalInstallerDir     string
 	Timeout               time.Duration
 	Password              string
+	OverrideConfigs       overrideFileList
 }
 
 //NewOptions creates options with default values
