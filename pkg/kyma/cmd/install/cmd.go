@@ -403,7 +403,6 @@ func (cmd *command) activateInstaller() error {
 	return nil
 }
 
-//TODO: Finish
 func (cmd *command) setAdminPassword() error {
 	encPass := base64.StdEncoding.EncodeToString([]byte(cmd.opts.Password))
 	_, err := cmd.Kubectl().RunCmd("-n", "kyma-installer", "patch", "configmap", "installation-config-overrides", fmt.Sprintf(`-p='{"data": {"global.adminPassword": "%s"}}'`, encPass), "-v=1")
