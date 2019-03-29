@@ -4,6 +4,7 @@ import (
 	"github.com/kyma-incubator/kyma-cli/pkg/kyma/cmd/install"
 	"github.com/kyma-incubator/kyma-cli/pkg/kyma/cmd/provision/minikube"
 	"github.com/kyma-incubator/kyma-cli/pkg/kyma/cmd/uninstall"
+	"github.com/kyma-incubator/kyma-cli/pkg/kyma/cmd/update"
 
 	"github.com/kyma-incubator/kyma-cli/pkg/kyma/cmd/provision"
 	"github.com/kyma-incubator/kyma-cli/pkg/kyma/core"
@@ -43,6 +44,9 @@ Find more information at: https://github.com/kyma-incubator/kyma-cli
 
 	installCmd := install.NewCmd(install.NewOptions(o))
 	cmd.AddCommand(installCmd)
+
+	updateCmd := update.NewCmd(update.NewOptions(o))
+	cmd.AddCommand(updateCmd)
 
 	uninstallCmd := uninstall.NewCmd(uninstall.NewOptions(o))
 	cmd.AddCommand(uninstallCmd)

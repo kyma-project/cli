@@ -9,6 +9,7 @@ A command line tool to support developers of and with [Kyma](https://github.com/
 - `version`: Shows the Kyma cluster version and the Kyma CLI version
 - `provision minikube`: Initializes minikube with a new cluster (replaces the `minikube.sh` script) 
 - `install`: Installs Kyma to a cluster based on a release (replaces the `ìnstaller.sh` and `is-installed.sh` script)
+- `update`: Updates an already running Kyma cluster to the latest version
 - `uninstall`: Uninstalls all Kyma related resources from a cluster
 - `completion`: Outputs shell completion code for bash
 - `test`: Triggers and reports the tests for every Kyma module
