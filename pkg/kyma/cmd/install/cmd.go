@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -482,7 +483,8 @@ func (cmd *command) setAdminPassword() error {
 		return nil
 	}
 	encPass := base64.StdEncoding.EncodeToString([]byte(cmd.opts.Password))
-	_, err := cmd.Kubectl().RunCmd("-n", "kyma-installer", "patch", "configmap", "installation-config-overrides", fmt.Sprintf(`-p='{"data": {"global.adminPassword": "%s"}}'`, encPass), "-v=1")
+	c := exec.Command("/bin/sh", []string{"-c", fmt.Sprintf(`kubectl -n kyma-installer patch configmap installation-config-overrides --type=json --patch='[{"op": "replace", "path": "/data/global.adminPassword", "value":"%s"}]'`, encPass)}...)
+	_, err := c.CombinedOutput()
 	return err
 }
 
