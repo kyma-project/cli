@@ -482,7 +482,8 @@ func (cmd *command) setAdminPassword() error {
 		return nil
 	}
 	encPass := base64.StdEncoding.EncodeToString([]byte(cmd.opts.Password))
-	_, err := cmd.Kubectl().RunCmd("-n", "kyma-installer", "patch", "configmap", "installation-config-overrides", fmt.Sprintf(`-p='{"data": {"global.adminPassword": "%s"}}'`, encPass), "-v=1")
+	_, err := cmd.Kubectl().RunCmd("-n", "kyma-installer", "patch", "configmap", "installation-config-overrides", "--type=json",
+		fmt.Sprintf("--patch=[{'op': 'replace', 'path': '/data/global.adminPassword', 'value': '%s'}]", encPass))
 	return err
 }
 

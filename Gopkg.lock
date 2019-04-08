@@ -320,7 +320,7 @@
   version = "1.1.4"
 
 [[projects]]
-  digest = "1:8f896355953cb6674bb00ad862252dfef012c6303f5314c180c2c9c00022f592"
+  digest = "1:f430bbd1fcc1590e2720c1be647150535a5cba42d3bb11254903c0c6a10ffb7a"
   name = "github.com/kyma-project/kyma"
   packages = [
     "components/installer/pkg/apis/installer/v1alpha1",
@@ -329,8 +329,8 @@
     "components/installer/pkg/client/clientset/versioned/typed/installer/v1alpha1",
   ]
   pruneopts = "UT"
-  revision = "32fcb1868eee495544cec1555c02aa7c9ef55246"
-  version = "0.7.0"
+  revision = "1620e7c79788996e0abbdf8d4243273d64db591d"
+  version = "0.8.2"
 
 [[projects]]
   digest = "1:c658e84ad3916da105a761660dcaeb01e63416c8ec7bc62256a9b411a05fcd67"
@@ -813,6 +813,7 @@
   input-imports = [
     "github.com/Masterminds/semver",
     "github.com/briandowns/spinner",
+    "github.com/fatih/color",
     "github.com/fsouza/go-dockerclient",
     "github.com/golang/lint/golint",
     "github.com/kyma-project/kyma/components/installer/pkg/apis/installer/v1alpha1",
