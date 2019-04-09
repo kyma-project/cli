@@ -34,13 +34,15 @@ var (
 		"dex",
 		"docs",
 		"lambdas-ui",
-		"ui-api",
+		"console-backend",
 		"minio",
 		"jaeger",
 		"grafana",
 		"configurations-generator",
 		"gateway",
 		"connector-service",
+		"log-ui",
+		"loki",
 	}
 
 	drivers = []string{
@@ -85,7 +87,7 @@ func NewCmd(o *MinikubeOptions) *cobra.Command {
 	cmd.Flags().StringVarP(&o.Domain, "domain", "d", "kyma.local", "domain to use")
 	cmd.Flags().StringVar(&o.VMDriver, "vm-driver", defaultVMDriver, "VMDriver to use, possible values are: "+strings.Join(drivers, ","))
 	cmd.Flags().StringVar(&o.HypervVirtualSwitch, "hypervVirtualSwitch", "", "Name of the hyperv switch to use, required if --vm-driver=hyperv")
-	cmd.Flags().StringVar(&o.DiskSize, "disk-size", "20g", "Disk size to use")
+	cmd.Flags().StringVar(&o.DiskSize, "disk-size", "30g", "Disk size to use")
 	cmd.Flags().StringVar(&o.Memory, "memory", "8192", "Memory to use")
 	cmd.Flags().StringVar(&o.CPU, "cpu", "4", "CPUs to use")
 	return cmd
