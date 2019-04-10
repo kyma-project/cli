@@ -230,6 +230,7 @@ func (cmd *command) installInstallerFromRelease() error {
 	if err != nil {
 		return err
 	}
+
 	return cmd.labelInstallerNamespace()
 }
 
@@ -254,6 +255,11 @@ func (cmd *command) configureInstallerFromRelease() error {
 		return err
 	}
 
+	err = cmd.patchMinikubeIP()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -264,11 +270,6 @@ func (cmd *command) installInstallerFromLocalSources() error {
 	}
 
 	imageName, err := cmd.findInstallerImageName(localResources)
-	if err != nil {
-		return err
-	}
-
-	err = cmd.setMinikubeIP(localResources)
 	if err != nil {
 		return err
 	}
@@ -292,6 +293,12 @@ func (cmd *command) installInstallerFromLocalSources() error {
 	if err != nil {
 		return err
 	}
+
+	err = cmd.patchMinikubeIP()
+	if err != nil {
+		return err
+	}
+
 	return cmd.labelInstallerNamespace()
 }
 
@@ -622,6 +629,31 @@ func (cmd *command) releaseSrcFile(path string) string {
 
 func (cmd *command) releaseFile(path string) string {
 	return fmt.Sprintf(releaseUrlPattern, cmd.opts.ReleaseVersion, path)
+}
+
+func (cmd *command) patchMinikubeIP() error {
+	minikubeIP, err := minikube.RunCmd(cmd.opts.Verbose, "ip")
+	if err != nil {
+		return err
+	}
+	minikubeIP = strings.TrimSpace(minikubeIP)
+
+	patchMap := map[string][]string{
+		"configmap/application-connector-overrides":   []string{"application-registry.minikubeIP"},
+		"configmap/assetstore-overrides":              []string{"asset-store-controller-manager.minikubeIP", "test.integration.minikubeIP"},
+		"configmap/core-test-ui-acceptance-overrides": []string{"test.acceptance.ui.minikubeIP"},
+	}
+	for k, v := range patchMap {
+		for _, pData := range v {
+			_, err := cmd.Kubectl().RunCmd("-n", "kyma-installer", "patch", k, "--type=json",
+				fmt.Sprintf("--patch=[{'op': 'replace', 'path': '/data/%s', 'value': '%s'}]", pData, minikubeIP))
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 func (cmd *command) setMinikubeIP(resources []map[string]interface{}) error {
