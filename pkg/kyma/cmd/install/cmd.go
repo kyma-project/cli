@@ -717,24 +717,3 @@ func (cmd *command) patchMinikubeIP() error {
 
 	return nil
 }
-
-func (cmd *command) setMinikubeIP(resources []map[string]interface{}) error {
-	minikubeIP, err := minikube.RunCmd(cmd.opts.Verbose, "ip")
-	minikubeIP = strings.TrimSpace(minikubeIP)
-	if err != nil {
-		return err
-	}
-	for _, res := range resources {
-		if res["kind"] == "ConfigMap" {
-
-			data := res["data"].(map[interface{}]interface{})
-
-			for key := range data {
-				if strings.HasSuffix(key.(string), ".minikubeIP") {
-					data[key] = minikubeIP
-				}
-			}
-		}
-	}
-	return nil
-}
