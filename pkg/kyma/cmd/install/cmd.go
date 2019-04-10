@@ -255,6 +255,9 @@ func writeHelmFile(data map[interface{}]interface{}, helmData string, helmHome s
 		return fmt.Errorf("unable to get %s from helm secret data", filename)
 	}
 	valueDecoded, err := base64.StdEncoding.DecodeString(value)
+	if err != nil {
+		return err
+	}
 
 	err = ioutil.WriteFile(filepath.Join(helmHome, filename), valueDecoded, 0644)
 	if err != nil {
