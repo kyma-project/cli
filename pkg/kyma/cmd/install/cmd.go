@@ -252,7 +252,7 @@ func (cmd *command) configureHelm() error {
 func writeHelmFile(data map[interface{}]interface{}, helmData string, helmHome string, filename string) error {
 	value, ok := data[helmData].(string)
 	if !ok {
-		return fmt.Errorf("unable to get %s from helm secret data", filename)
+		return fmt.Errorf("unable to get %s from helm secret data", helmData)
 	}
 	valueDecoded, err := base64.StdEncoding.DecodeString(value)
 	if err != nil {
