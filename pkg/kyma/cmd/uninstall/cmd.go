@@ -3,11 +3,12 @@ package uninstall
 import (
 	"bufio"
 	"fmt"
-	"github.com/kyma-incubator/kyma-cli/pkg/kyma/core"
-	"github.com/pkg/errors"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/kyma-incubator/kyma-cli/pkg/kyma/core"
+	"github.com/pkg/errors"
 
 	"github.com/kyma-incubator/kyma-cli/internal/kubectl"
 	"github.com/spf13/cobra"
@@ -178,7 +179,7 @@ func (cmd *command) deleteInstaller() error {
 	}
 
 	for {
-		check, err := cmd.Kubectl().IsClusterResourceDeployed("namespace", "app", "kyma-cli")
+		check, err := cmd.Kubectl().IsClusterResourceDeployed("namespace", "kyma-project.io/installation", "")
 		if err != nil {
 			return err
 		}
@@ -188,7 +189,7 @@ func (cmd *command) deleteInstaller() error {
 		time.Sleep(sleep)
 	}
 
-	_, err = cmd.Kubectl().RunCmd( "delete", "ClusterRoleBinding", "kyma-installer", "--timeout="+timeoutSimpleDeletion, "--ignore-not-found=true")
+	_, err = cmd.Kubectl().RunCmd("delete", "ClusterRoleBinding", "kyma-installer", "--timeout="+timeoutSimpleDeletion, "--ignore-not-found=true")
 	if err != nil {
 		return err
 	}
@@ -250,7 +251,7 @@ func (cmd *command) deleteLeftoverResources(resourceType string, resources []str
 		for _, v := range resources {
 			if strings.HasSuffix(item, v) {
 				cmd.CurrentStep.Status(item)
-				_, err := cmd.Kubectl().RunCmd( "delete", resourceType, item, "--timeout="+timeoutComplexDeletion)
+				_, err := cmd.Kubectl().RunCmd("delete", resourceType, item, "--timeout="+timeoutComplexDeletion)
 				if err != nil {
 					return err
 				}

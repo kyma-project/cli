@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -57,7 +58,7 @@ The command will:
 		Aliases: []string{"i"},
 	}
 
-	cobraCmd.Flags().StringVarP(&o.ReleaseVersion, "release", "r", "0.8.2", "kyma release to use")
+	cobraCmd.Flags().StringVarP(&o.ReleaseVersion, "release", "r", "0.9.1", "kyma release to use")
 	cobraCmd.Flags().StringVarP(&o.ReleaseConfig, "config", "c", "", "URL or path to the installer configuration yaml")
 	cobraCmd.Flags().BoolVarP(&o.NoWait, "noWait", "n", false, "Do not wait for completion of kyma-installer")
 	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", "kyma.local", "domain to use for installation")
@@ -93,7 +94,7 @@ func (cmd *command) Run() error {
 		s.LogInfof("Installing Kyma in version '%s'", cmd.opts.ReleaseVersion)
 	}
 
-	s = cmd.NewStep("Installing tiller")
+	s = cmd.NewStep("Installing Tiller")
 	err = cmd.installTiller()
 	if err != nil {
 		s.Failure()
@@ -108,6 +109,14 @@ func (cmd *command) Run() error {
 		return err
 	}
 	s.Successf("kyma-installer installed")
+
+	s = cmd.NewStep("Configuring Helm")
+	err = cmd.configureHelm()
+	if err != nil {
+		s.Failure()
+		return err
+	}
+	s.Successf("Helm configured")
 
 	s = cmd.NewStep("Requesting kyma-installer to install kyma")
 	err = cmd.activateInstaller()
@@ -193,6 +202,67 @@ func (cmd *command) installTiller() error {
 	if err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func (cmd *command) configureHelm() error {
+	helmCmd := exec.Command("helm", "home")
+	helmHomeRaw, err := helmCmd.CombinedOutput()
+	if err != nil {
+		cmd.CurrentStep.LogError("Helm is not installed, will not configure it")
+		return nil
+	}
+	helmHome := strings.Replace(string(helmHomeRaw), "\n", "", -1)
+
+	secret, err := cmd.Kubectl().RunCmd("-n", "kyma-installer", "--ignore-not-found=false", "get", "secret", "helm-secret", "-o", "yaml")
+	if err != nil {
+		return err
+	}
+
+	cfg := make(map[interface{}]interface{})
+	err = yaml.Unmarshal([]byte(secret), &cfg)
+	if err != nil {
+		return err
+	}
+
+	data, ok := cfg["data"].(map[interface{}]interface{})
+	if !ok {
+		return fmt.Errorf("unable to get data from helm secret")
+	}
+
+	err = writeHelmFile(data, "global.helm.ca.crt", helmHome, "ca.pem")
+	if err != nil {
+		return err
+	}
+
+	err = writeHelmFile(data, "global.helm.tls.crt", helmHome, "cert.pem")
+	if err != nil {
+		return err
+	}
+
+	err = writeHelmFile(data, "global.helm.tls.key", helmHome, "key.pem")
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func writeHelmFile(data map[interface{}]interface{}, helmData string, helmHome string, filename string) error {
+	value, ok := data[helmData].(string)
+	if !ok {
+		return fmt.Errorf("unable to get %s from helm secret data", helmData)
+	}
+	valueDecoded, err := base64.StdEncoding.DecodeString(value)
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(filepath.Join(helmHome, filename), valueDecoded, 0644)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -230,7 +300,8 @@ func (cmd *command) installInstallerFromRelease() error {
 	if err != nil {
 		return err
 	}
-	return cmd.labelInstallerNamespace()
+
+	return nil
 }
 
 func (cmd *command) configureInstallerFromRelease() error {
@@ -254,6 +325,11 @@ func (cmd *command) configureInstallerFromRelease() error {
 		return err
 	}
 
+	err = cmd.patchMinikubeIP()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -264,11 +340,6 @@ func (cmd *command) installInstallerFromLocalSources() error {
 	}
 
 	imageName, err := cmd.findInstallerImageName(localResources)
-	if err != nil {
-		return err
-	}
-
-	err = cmd.setMinikubeIP(localResources)
 	if err != nil {
 		return err
 	}
@@ -292,7 +363,13 @@ func (cmd *command) installInstallerFromLocalSources() error {
 	if err != nil {
 		return err
 	}
-	return cmd.labelInstallerNamespace()
+
+	err = cmd.patchMinikubeIP()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (cmd *command) findInstallerImageName(resources []map[string]interface{}) (string, error) {
@@ -389,11 +466,6 @@ func (cmd *command) buildKymaInstaller(imageName string) error {
 		ContextDir:   filepath.Join(cmd.opts.LocalSrcPath),
 		BuildArgs:    args,
 	})
-}
-
-func (cmd *command) labelInstallerNamespace() error {
-	_, err := cmd.Kubectl().RunCmd("label", "namespace", "kyma-installer", "app=kyma-cli")
-	return err
 }
 
 func (cmd *command) activateInstaller() error {
@@ -624,23 +696,27 @@ func (cmd *command) releaseFile(path string) string {
 	return fmt.Sprintf(releaseUrlPattern, cmd.opts.ReleaseVersion, path)
 }
 
-func (cmd *command) setMinikubeIP(resources []map[string]interface{}) error {
+func (cmd *command) patchMinikubeIP() error {
 	minikubeIP, err := minikube.RunCmd(cmd.opts.Verbose, "ip")
-	minikubeIP = strings.TrimSpace(minikubeIP)
 	if err != nil {
 		return err
 	}
-	for _, res := range resources {
-		if res["kind"] == "ConfigMap" {
+	minikubeIP = strings.TrimSpace(minikubeIP)
 
-			data := res["data"].(map[interface{}]interface{})
-
-			for key := range data {
-				if strings.HasSuffix(key.(string), ".minikubeIP") {
-					data[key] = minikubeIP
-				}
+	patchMap := map[string][]string{
+		"configmap/application-connector-overrides":   []string{"application-registry.minikubeIP"},
+		"configmap/assetstore-overrides":              []string{"asset-store-controller-manager.minikubeIP", "test.integration.minikubeIP"},
+		"configmap/core-test-ui-acceptance-overrides": []string{"test.acceptance.ui.minikubeIP"},
+	}
+	for k, v := range patchMap {
+		for _, pData := range v {
+			_, err := cmd.Kubectl().RunCmd("-n", "kyma-installer", "patch", k, "--type=json",
+				fmt.Sprintf("--patch=[{'op': 'replace', 'path': '/data/%s', 'value': '%s'}]", pData, minikubeIP))
+			if err != nil {
+				return err
 			}
 		}
 	}
+
 	return nil
 }
