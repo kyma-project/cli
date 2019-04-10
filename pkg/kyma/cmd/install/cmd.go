@@ -256,7 +256,7 @@ func writeHelmFile(data map[interface{}]interface{}, helmData string, helmHome s
 	}
 	valueDecoded, err := base64.StdEncoding.DecodeString(value)
 
-	err = ioutil.WriteFile(filepath.Join(helmHome, filename), valueDecoded, 0777)
+	err = ioutil.WriteFile(filepath.Join(helmHome, filename), valueDecoded, 0644)
 	if err != nil {
 		return err
 	}
