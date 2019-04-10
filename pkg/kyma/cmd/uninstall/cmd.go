@@ -15,8 +15,8 @@ import (
 )
 
 var (
-	namespacesToDelete = []string{"istio-system", "kyma-integration", "kyma-system", "natss"}
-	crdGroupsToDelete  = []string{"kyma-project.io", "istio.io", "dex.coreos.com"}
+	namespacesToDelete = []string{"istio-system", "kyma-integration", "kyma-system", "natss", "knative-eventing", "knative-serving"}
+	crdGroupsToDelete  = []string{"kyma-project.io", "istio.io", "dex.coreos.com", "knative.dev"}
 )
 
 const (
