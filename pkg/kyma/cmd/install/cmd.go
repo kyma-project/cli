@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -93,7 +94,7 @@ func (cmd *command) Run() error {
 		s.LogInfof("Installing Kyma in version '%s'", cmd.opts.ReleaseVersion)
 	}
 
-	s = cmd.NewStep("Installing tiller")
+	s = cmd.NewStep("Installing Tiller")
 	err = cmd.installTiller()
 	if err != nil {
 		s.Failure()
@@ -108,6 +109,14 @@ func (cmd *command) Run() error {
 		return err
 	}
 	s.Successf("kyma-installer installed")
+
+	s = cmd.NewStep("Configuring Helm")
+	err = cmd.configureHelm()
+	if err != nil {
+		s.Failure()
+		return err
+	}
+	s.Successf("Helm configured")
 
 	s = cmd.NewStep("Requesting kyma-installer to install kyma")
 	err = cmd.activateInstaller()
@@ -193,6 +202,64 @@ func (cmd *command) installTiller() error {
 	if err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func (cmd *command) configureHelm() error {
+	helmCmd := exec.Command("helm", "home")
+	helmHomeRaw, err := helmCmd.CombinedOutput()
+	if err != nil {
+		cmd.CurrentStep.LogError("Helm is not installed, will not configure it")
+		return nil
+	}
+	helmHome := strings.Replace(string(helmHomeRaw), "\n", "", -1)
+
+	secret, err := cmd.Kubectl().RunCmd("-n", "kyma-installer", "--ignore-not-found=false", "get", "secret", "helm-secret", "-o", "yaml")
+	if err != nil {
+		return err
+	}
+
+	cfg := make(map[interface{}]interface{})
+	err = yaml.Unmarshal([]byte(secret), &cfg)
+	if err != nil {
+		return err
+	}
+
+	data, ok := cfg["data"].(map[interface{}]interface{})
+	if !ok {
+		return fmt.Errorf("unable to get data from helm secret")
+	}
+
+	err = writeHelmFile(data, "global.helm.ca.crt", helmHome, "ca.pem")
+	if err != nil {
+		return err
+	}
+
+	err = writeHelmFile(data, "global.helm.tls.crt", helmHome, "cert.pem")
+	if err != nil {
+		return err
+	}
+
+	err = writeHelmFile(data, "global.helm.tls.key", helmHome, "key.pem")
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func writeHelmFile(data map[interface{}]interface{}, helmData string, helmHome string, filename string) error {
+	value, ok := data[helmData].(string)
+	if !ok {
+		return fmt.Errorf("unable to get %s from helm secret data", filename)
+	}
+	valueDecoded, err := base64.StdEncoding.DecodeString(value)
+
+	err = ioutil.WriteFile(filepath.Join(helmHome, filename), valueDecoded, 0777)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -231,7 +298,7 @@ func (cmd *command) installInstallerFromRelease() error {
 		return err
 	}
 
-	return cmd.labelInstallerNamespace()
+	return nil
 }
 
 func (cmd *command) configureInstallerFromRelease() error {
@@ -299,7 +366,7 @@ func (cmd *command) installInstallerFromLocalSources() error {
 		return err
 	}
 
-	return cmd.labelInstallerNamespace()
+	return nil
 }
 
 func (cmd *command) findInstallerImageName(resources []map[string]interface{}) (string, error) {
@@ -396,11 +463,6 @@ func (cmd *command) buildKymaInstaller(imageName string) error {
 		ContextDir:   filepath.Join(cmd.opts.LocalSrcPath),
 		BuildArgs:    args,
 	})
-}
-
-func (cmd *command) labelInstallerNamespace() error {
-	_, err := cmd.Kubectl().RunCmd("label", "namespace", "kyma-installer", "app=kyma-cli")
-	return err
 }
 
 func (cmd *command) activateInstaller() error {
