@@ -347,7 +347,7 @@ func addDevDomainsToEtcHosts(o *MinikubeOptions, s step.Step) error {
 // Default value of 128 is not enough to perform “kubectl log -f” from pods, hence increased to 524288
 func increaseFsInotifyMaxUserInstances(o *MinikubeOptions) error {
 	if o.VMDriver != vmDriverNone {
-		_, err := minikube.RunCmd(o.Verbose, "ssh", "--", "'sudo sysctl -w fs.inotify.max_user_instances=524288'")
+		_, err := minikube.RunCmd(o.Verbose, "ssh", "--", "sudo sysctl -w fs.inotify.max_user_instances=524288")
 		if err != nil {
 			return err
 		}
