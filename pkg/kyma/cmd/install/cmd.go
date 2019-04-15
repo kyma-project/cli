@@ -213,7 +213,15 @@ func (cmd *command) configureHelm() error {
 		cmd.CurrentStep.LogError("Helm is not installed, will not configure it")
 		return nil
 	}
+
 	helmHome := strings.Replace(string(helmHomeRaw), "\n", "", -1)
+	if _, err := os.Stat(helmHome); os.IsNotExist(err) {
+		err = os.MkdirAll(helmHome, 0700)
+		if err != nil {
+			cmd.CurrentStep.LogError("Unable to create helm home directory")
+			return err
+		}
+	}
 
 	secret, err := cmd.Kubectl().RunCmd("-n", "kyma-installer", "--ignore-not-found=false", "get", "secret", "helm-secret", "-o", "yaml")
 	if err != nil {
