@@ -216,7 +216,11 @@ func (cmd *command) configureHelm() error {
 
 	helmHome := strings.Replace(string(helmHomeRaw), "\n", "", -1)
 	if _, err := os.Stat(helmHome); os.IsNotExist(err) {
-		os.MkdirAll(helmHome, 0700)
+		err = os.MkdirAll(helmHome, 0700)
+		if err != nil {
+			cmd.CurrentStep.LogError("Unable to create helm home directory")
+			return err
+		}
 	}
 
 	secret, err := cmd.Kubectl().RunCmd("-n", "kyma-installer", "--ignore-not-found=false", "get", "secret", "helm-secret", "-o", "yaml")
