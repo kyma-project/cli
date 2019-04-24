@@ -60,12 +60,12 @@
   revision = "9c37978a95bd5c709a15883b6242714ea6709e64"
 
 [[projects]]
-  digest = "1:2fd83c8c2b1ff53fd7c4376a63c3a2f31e002e9296df9d7f150b07da524de88d"
+  digest = "1:5b290e0afae8906d379aa7fe01ce2007930636bdb80a96e148346131dd433cb8"
   name = "github.com/briandowns/spinner"
   packages = ["."]
   pruneopts = "UT"
-  revision = "dd69c579ff204842e8962816987f838e2c2c18d8"
-  version = "1.4"
+  revision = "ac46072a5a9105597c1fd63f9e246477b116772e"
+  version = "1.6"
 
 [[projects]]
   branch = "master"
@@ -320,7 +320,7 @@
   version = "1.1.4"
 
 [[projects]]
-  digest = "1:f430bbd1fcc1590e2720c1be647150535a5cba42d3bb11254903c0c6a10ffb7a"
+  digest = "1:27657d18e0425800d65e62baa043a023263ca5e345098f56c0e59589b652b320"
   name = "github.com/kyma-project/kyma"
   packages = [
     "components/installer/pkg/apis/installer/v1alpha1",
@@ -329,8 +329,8 @@
     "components/installer/pkg/client/clientset/versioned/typed/installer/v1alpha1",
   ]
   pruneopts = "UT"
-  revision = "1620e7c79788996e0abbdf8d4243273d64db591d"
-  version = "0.8.2"
+  revision = "ecbd761ec6c8fa4ff000d093dd3f0435cf6a931a"
+  version = "0.9.1"
 
 [[projects]]
   digest = "1:c658e84ad3916da105a761660dcaeb01e63416c8ec7bc62256a9b411a05fcd67"
