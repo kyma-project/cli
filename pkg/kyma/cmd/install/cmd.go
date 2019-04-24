@@ -713,6 +713,7 @@ func (cmd *command) patchMinikubeIP() error {
 
 	patchMap := map[string][]string{
 		"configmap/application-connector-overrides": []string{"application-registry.minikubeIP"},
+		"configmap/core-overrides":                  []string{"test.acceptance.ui.minikubeIP", "apiserver-proxy.minikubeIP", "configurations-generator.minikubeIP"},
 		"configmap/assetstore-overrides":            []string{"asset-store-controller-manager.minikubeIP", "test.integration.minikubeIP"},
 	}
 	for k, v := range patchMap {
