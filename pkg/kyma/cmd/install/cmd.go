@@ -58,7 +58,7 @@ The command will:
 		Aliases: []string{"i"},
 	}
 
-	cobraCmd.Flags().StringVarP(&o.ReleaseVersion, "release", "r", "0.9.1", "kyma release to use")
+	cobraCmd.Flags().StringVarP(&o.ReleaseVersion, "release", "r", "1.0.0", "kyma release to use")
 	cobraCmd.Flags().StringVarP(&o.ReleaseConfig, "config", "c", "", "URL or path to the installer configuration yaml")
 	cobraCmd.Flags().BoolVarP(&o.NoWait, "noWait", "n", false, "Do not wait for completion of kyma-installer")
 	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", "kyma.local", "domain to use for installation")
@@ -712,9 +712,9 @@ func (cmd *command) patchMinikubeIP() error {
 	minikubeIP = strings.TrimSpace(minikubeIP)
 
 	patchMap := map[string][]string{
-		"configmap/application-connector-overrides":   []string{"application-registry.minikubeIP"},
-		"configmap/assetstore-overrides":              []string{"asset-store-controller-manager.minikubeIP", "test.integration.minikubeIP"},
-		"configmap/core-test-ui-acceptance-overrides": []string{"test.acceptance.ui.minikubeIP"},
+		"configmap/application-connector-overrides": []string{"application-registry.minikubeIP"},
+		"configmap/core-overrides":                  []string{"test.acceptance.ui.minikubeIP", "apiserver-proxy.minikubeIP", "configurations-generator.minikubeIP"},
+		"configmap/assetstore-overrides":            []string{"asset-store-controller-manager.minikubeIP", "test.integration.minikubeIP"},
 	}
 	for k, v := range patchMap {
 		for _, pData := range v {
