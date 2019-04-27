@@ -6,7 +6,6 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -14,6 +13,7 @@ import (
 	"github.com/kyma-incubator/kyma-cli/pkg/kyma/core"
 
 	docker "github.com/fsouza/go-dockerclient"
+	"github.com/kyma-incubator/kyma-cli/internal/helm"
 	"github.com/kyma-incubator/kyma-cli/internal/minikube"
 	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
@@ -207,22 +207,14 @@ func (cmd *command) installTiller() error {
 }
 
 func (cmd *command) configureHelm() error {
-	helmCmd := exec.Command("helm", "home")
-	helmHomeRaw, err := helmCmd.CombinedOutput()
+	helmHome, err := helm.GetHelmHome()
 	if err != nil {
-		cmd.CurrentStep.LogError("Helm is not installed, will not configure it")
+		return err
+	}
+	if helmHome != "" {
+		cmd.CurrentStep.LogInfof("Helm not installed")
 		return nil
 	}
-
-	helmHome := strings.Replace(string(helmHomeRaw), "\n", "", -1)
-	if _, err := os.Stat(helmHome); os.IsNotExist(err) {
-		err = os.MkdirAll(helmHome, 0700)
-		if err != nil {
-			cmd.CurrentStep.LogError("Unable to create helm home directory")
-			return err
-		}
-	}
-
 	secret, err := cmd.Kubectl().RunCmd("-n", "kyma-installer", "--ignore-not-found=false", "get", "secret", "helm-secret", "-o", "yaml")
 	if err != nil {
 		return err

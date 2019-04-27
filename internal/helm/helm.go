@@ -5,7 +5,11 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
+	"os/exec"
+	"strings"
 
+	"github.com/helm/helm/pkg/tlsutil"
 	"github.com/kyma-incubator/kyma-cli/internal/net"
 	"github.com/pkg/errors"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,7 +32,33 @@ func New(settings *environment.EnvSettings, config *rest.Config) (*Client, error
 	if err != nil {
 		return nil, err
 	}
-	helmClient := helm.NewClient(helm.Host(settings.TillerHost), helm.ConnectTimeout(settings.TillerConnectionTimeout))
+	settings.TLSServerName = settings.TillerHost
+	settings.TLSCaCertFile = settings.Home.TLSCaCert()
+	settings.TLSCertFile = settings.Home.TLSCert()
+	settings.TLSKeyFile = settings.Home.TLSKey()
+
+	options := []helm.Option{helm.Host(settings.TillerHost), helm.ConnectTimeout(settings.TillerConnectionTimeout)}
+
+	if settings.TLSVerify || settings.TLSEnable {
+		tlsopts := tlsutil.Options{
+			ServerName:         settings.TLSServerName,
+			KeyFile:            settings.TLSKeyFile,
+			CertFile:           settings.TLSCertFile,
+			InsecureSkipVerify: true,
+		}
+		if settings.TLSVerify {
+			tlsopts.CaCertFile = settings.TLSCaCertFile
+			tlsopts.InsecureSkipVerify = false
+		}
+		tlscfg, err := tlsutil.ClientConfig(tlsopts)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(2)
+		}
+		options = append(options, helm.WithTLS(tlscfg))
+	}
+	helmClient := helm.NewClient(options...)
+
 	return &Client{
 		Interface: helmClient,
 		forwarder: forwarder,
@@ -39,7 +69,6 @@ func setupTillerConnection(settings *environment.EnvSettings, config *rest.Confi
 	if settings.TillerHost != "" {
 		return nil, nil
 	}
-
 	roundTripper, upgrader, err := spdy.RoundTripperFor(config)
 	if err != nil {
 		return nil, err
@@ -70,7 +99,6 @@ func setupTillerConnection(settings *environment.EnvSettings, config *rest.Confi
 
 	stopChan, readyChan := make(chan struct{}, 1), make(chan struct{}, 1)
 	out, errOut := new(bytes.Buffer), new(bytes.Buffer)
-
 	port, err := net.GetAvailablePort()
 	if err != nil {
 		return nil, err
@@ -99,4 +127,21 @@ func (c *Client) Close() {
 	if c.forwarder != nil {
 		close(c.forwarder)
 	}
+}
+
+func GetHelmHome() (string, error) {
+	helmCmd := exec.Command("helm", "home")
+	helmHomeRaw, err := helmCmd.CombinedOutput()
+	if err != nil {
+		return "", nil
+	}
+
+	helmHome := strings.Replace(string(helmHomeRaw), "\n", "", -1)
+	if _, err := os.Stat(helmHome); os.IsNotExist(err) {
+		err = os.MkdirAll(helmHome, 0700)
+		if err != nil {
+			return "", err
+		}
+	}
+	return helmHome, nil
 }
