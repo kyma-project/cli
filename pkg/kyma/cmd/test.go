@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	"k8s.io/helm/pkg/helm"
 	"k8s.io/helm/pkg/helm/environment"
+	"k8s.io/helm/pkg/helm/helmpath"
 	helm_release "k8s.io/helm/pkg/proto/hapi/release"
 )
 
@@ -46,7 +47,12 @@ func NewTestCmd(o *TestOptions) *cobra.Command {
 }
 
 func (o *TestOptions) Run() error {
-	helmConfig := &environment.EnvSettings{TillerConnectionTimeout: 300}
+	helmHome, err := kyma_helm.GetHelmHome()
+	if err != nil {
+		return err
+	}
+
+	helmConfig := &environment.EnvSettings{Debug: true, TillerConnectionTimeout: 300, TLSEnable: true, TLSVerify: false, Home: helmpath.Home(helmHome)}
 	kubeConfig, err := o.GetKubeconfig()
 	if err != nil {
 		return err
