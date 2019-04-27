@@ -281,6 +281,14 @@
   revision = "787624de3eb7bd915c329cba748687a3b22666a6"
 
 [[projects]]
+  digest = "1:4ae68616c0177eece240c59046f2eb2db2db5ac8496a98f886f798d4750f1c63"
+  name = "github.com/helm/helm"
+  packages = ["pkg/tlsutil"]
+  pruneopts = "UT"
+  revision = "618447cbf203d147601b4b9bd7f8c37a5d39fbb4"
+  version = "v2.13.1"
+
+[[projects]]
   digest = "1:80544abec6a93301c477926d6ed12dffce5029ddb34101435d88277f98006844"
   name = "github.com/huandu/xstrings"
   packages = ["."]
@@ -329,8 +337,8 @@
     "components/installer/pkg/client/clientset/versioned/typed/installer/v1alpha1",
   ]
   pruneopts = "UT"
-  revision = "ecbd761ec6c8fa4ff000d093dd3f0435cf6a931a"
-  version = "0.9.1"
+  revision = "8953f221e43424c06dc1c53653a2dc036f078c80"
+  version = "1.0.0"
 
 [[projects]]
   digest = "1:c658e84ad3916da105a761660dcaeb01e63416c8ec7bc62256a9b411a05fcd67"
@@ -768,7 +776,7 @@
   revision = "86dbf26d38ed22c4f662432b5f6d7876c0237358"
 
 [[projects]]
-  digest = "1:e279716c70c94d12339813ae885157ff30c9440ce1e36ceec1c2a14def1b4ed8"
+  digest = "1:8c3379b0a4a5d64d073feebcd23afe4ac00382a95139484450f09c079de294ca"
   name = "k8s.io/helm"
   packages = [
     "pkg/chartutil",
@@ -786,6 +794,7 @@
     "pkg/renderutil",
     "pkg/storage/errors",
     "pkg/sympath",
+    "pkg/urlutil",
     "pkg/version",
   ]
   pruneopts = "UT"
@@ -816,6 +825,7 @@
     "github.com/fatih/color",
     "github.com/fsouza/go-dockerclient",
     "github.com/golang/lint/golint",
+    "github.com/helm/helm/pkg/tlsutil",
     "github.com/kyma-project/kyma/components/installer/pkg/apis/installer/v1alpha1",
     "github.com/kyma-project/kyma/components/installer/pkg/client/clientset/versioned",
     "github.com/mitchellh/mapstructure",
@@ -831,6 +841,7 @@
     "k8s.io/client-go/transport/spdy",
     "k8s.io/helm/pkg/helm",
     "k8s.io/helm/pkg/helm/environment",
+    "k8s.io/helm/pkg/helm/helmpath",
     "k8s.io/helm/pkg/proto/hapi/release",
   ]
   solver-name = "gps-cdcl"
