@@ -211,10 +211,12 @@ func (cmd *command) configureHelm() error {
 	if err != nil {
 		return err
 	}
-	if helmHome != "" {
+
+	if helmHome == "" {
 		cmd.CurrentStep.LogInfof("Helm not installed")
 		return nil
 	}
+
 	secret, err := cmd.Kubectl().RunCmd("-n", "kyma-installer", "--ignore-not-found=false", "get", "secret", "helm-secret", "-o", "yaml")
 	if err != nil {
 		return err
