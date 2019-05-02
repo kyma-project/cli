@@ -230,7 +230,7 @@ func (cmd *command) configureHelm() error {
 
 	data, ok := cfg["data"].(map[interface{}]interface{})
 	if !ok {
-		return fmt.Errorf("Unable to get data from helm secret")
+		return fmt.Errorf("unable to get data from helm secret")
 	}
 
 	err = writeHelmFile(data, "global.helm.ca.crt", helmHome, "ca.pem")
