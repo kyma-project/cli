@@ -211,10 +211,12 @@ func (cmd *command) configureHelm() error {
 	if err != nil {
 		return err
 	}
-	if helmHome != "" {
+
+	if helmHome == "" {
 		cmd.CurrentStep.LogInfof("Helm not installed")
 		return nil
 	}
+
 	secret, err := cmd.Kubectl().RunCmd("-n", "kyma-installer", "--ignore-not-found=false", "get", "secret", "helm-secret", "-o", "yaml")
 	if err != nil {
 		return err
@@ -228,7 +230,7 @@ func (cmd *command) configureHelm() error {
 
 	data, ok := cfg["data"].(map[interface{}]interface{})
 	if !ok {
-		return fmt.Errorf("unable to get data from helm secret")
+		return fmt.Errorf("Unable to get data from helm secret")
 	}
 
 	err = writeHelmFile(data, "global.helm.ca.crt", helmHome, "ca.pem")
