@@ -64,8 +64,9 @@ Run `kubectl plugin list` command and you will see your plugin in the list of av
 You may now invoke your plugin as a kubectl command:
 
 ```bash
-$ kubectl kyma status
-Kyma is running!
+$ kubectl kyma version
+Kyma CLI version: v0.6.1
+Kyma cluster version: 1.0.0
 ```
 
 To know more about extending kubectl with plugins read [kubernetes documentation](https://kubernetes.io/docs/tasks/extend-kubectl/kubectl-plugins/).
