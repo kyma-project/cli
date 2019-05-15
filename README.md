@@ -14,6 +14,12 @@ A command line tool to support developers of and with [Kyma](https://github.com/
 - `test`: Triggers and reports the tests for every Kyma module
 - `help`: Displays usage for the given command (e.g. `kyma help`, `kyma help status`, etc...)
 
+## Prerequisites
+
+In order to run the Kyma CLI you need the following software installed:
+- [kubectl](https://github.com/kubernetes/kubectl) 
+- [minikube](https://github.com/kubernetes/minikube) 
+
 ## Usage
 
 Installation of Kyma with minikube on Mac:
@@ -70,40 +76,3 @@ Kyma cluster version: 1.0.0
 ```
 
 To know more about extending kubectl with plugins read [kubernetes documentation](https://kubernetes.io/docs/tasks/extend-kubectl/kubectl-plugins/).
-
-## Roadmap
-
-- Portability
-  - adding windows support (only hosts manipulation missing)
-  - validate linux support
-- Cloud Provider support
-  - Google Kubernetes Engine
-- Kyma installation
-  - open the Kyma console in the default browser at the end of Kyma installation
-  - provide own command "dashboard" to open the conole in default browser
-  - support all configuration options of the kyma-installer
-  - install optional kyma module (ark, logging)
-  - uninstall optional kyma module
-  - update kyma to newer release
-- Release management
-  - SUpport for old releases
-  - use latest release automically
-  - list available releases
-- Application Connectivity
-  - create remote environment and fetch connection token
-  - manage APIs registered by an application
-- Testing/Validation/Debugging
-  - connect mock application to kyma
-  - 'Check' a kyma installation for potential problems
-  - Query logs of a pod/namespace
-- CTL installation
-  - homebrew support
-  - support for edge releases
-- Engineering
-  - use log framework with log levels and have verbose modes
-  - have tests
-  - use kubernetes go-client instead of kubectl command execution
-  - improve and review help texts
-- Service Catalog
-  - support for ServiceBindingUsage
-  
