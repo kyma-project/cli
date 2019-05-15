@@ -1,7 +1,7 @@
 package uninstall
 
 import (
-	"github.com/kyma-incubator/kyma-cli/pkg/kyma/core"
+	"github.com/kyma-project/cli/pkg/kyma/core"
 	"time"
 )
 

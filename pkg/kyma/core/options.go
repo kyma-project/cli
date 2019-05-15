@@ -1,8 +1,8 @@
 package core
 
 import (
-	"github.com/kyma-incubator/kyma-cli/internal/kube"
-	"github.com/kyma-incubator/kyma-cli/internal/step"
+	"github.com/kyma-project/cli/internal/kube"
+	"github.com/kyma-project/cli/internal/step"
 )
 
 //Options defines available options for the command

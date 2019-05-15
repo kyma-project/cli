@@ -5,7 +5,7 @@ package minikube
 import (
 	"fmt"
 
-	"github.com/kyma-incubator/kyma-cli/internal/step"
+	"github.com/kyma-project/cli/internal/step"
 )
 
 const hostsFile = "C:\\Windows\\system32\\drivers\\etc\\hosts"

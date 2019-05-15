@@ -1,4 +1,4 @@
-# Kyma-CLI
+# Kyma CLI
 
 ## Overview
 
@@ -51,9 +51,9 @@ kyma test
 ```
 ## Installation
 
-For the latest relase and installation instructions, see the [release page](https://github.com/kyma-incubator/kyma-cli/releases)
+For the latest relase and installation instructions, see the [release page](https://github.com/kyma-project/cli/releases)
 
-## Kyma-CLI as a Kubectl plugin
+## Kyma CLI as a Kubectl plugin
 
 To follow this section a kubectl version of 1.12.0 or later is required.
 

@@ -4,7 +4,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kyma-incubator/kyma-cli/pkg/kyma/core"
+	"github.com/kyma-project/cli/pkg/kyma/core"
 )
 
 type overrideFileList []string
