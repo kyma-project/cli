@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/helm/helm/pkg/tlsutil"
-	"github.com/kyma-incubator/kyma-cli/internal/net"
+	"github.com/kyma-project/cli/internal/net"
 	"github.com/pkg/errors"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"

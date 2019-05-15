@@ -4,7 +4,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kyma-incubator/kyma-cli/internal/kubectl"
+	"github.com/kyma-project/cli/internal/kubectl"
 )
 
 //GetKymaVersion determines the version of kyma installed to current cluster

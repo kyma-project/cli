@@ -6,11 +6,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kyma-incubator/kyma-cli/internal/kubectl"
-	"github.com/kyma-incubator/kyma-cli/internal/minikube"
-	"github.com/kyma-incubator/kyma-cli/internal/step"
+	"github.com/kyma-project/cli/internal/kubectl"
+	"github.com/kyma-project/cli/internal/minikube"
+	"github.com/kyma-project/cli/internal/step"
 
-	"github.com/kyma-incubator/kyma-cli/pkg/kyma/core"
+	"github.com/kyma-project/cli/pkg/kyma/core"
 	"github.com/spf13/cobra"
 )
 

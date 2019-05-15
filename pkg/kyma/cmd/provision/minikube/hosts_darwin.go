@@ -3,8 +3,8 @@
 package minikube
 
 import (
-	"github.com/kyma-incubator/kyma-cli/internal"
-	"github.com/kyma-incubator/kyma-cli/internal/step"
+	"github.com/kyma-project/cli/internal"
+	"github.com/kyma-project/cli/internal/step"
 )
 
 const hostsFile = "/etc/hosts"

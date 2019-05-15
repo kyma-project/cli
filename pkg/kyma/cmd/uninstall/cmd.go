@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kyma-incubator/kyma-cli/pkg/kyma/core"
+	"github.com/kyma-project/cli/pkg/kyma/core"
 	"github.com/pkg/errors"
 
-	"github.com/kyma-incubator/kyma-cli/internal/kubectl"
+	"github.com/kyma-project/cli/internal/kubectl"
 	"github.com/spf13/cobra"
 )
 

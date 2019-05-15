@@ -1,8 +1,8 @@
 package core
 
 import (
-	"github.com/kyma-incubator/kyma-cli/internal/kubectl"
-	"github.com/kyma-incubator/kyma-cli/internal/step"
+	"github.com/kyma-project/cli/internal/kubectl"
+	"github.com/kyma-project/cli/internal/step"
 )
 
 type Command struct {

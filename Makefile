@@ -1,12 +1,10 @@
 .DEFAULT_GOAL := local
 
-ifndef DOCKER_TAG
-	DOCKER_TAG = ${shell git describe --tags --always}
+ifndef VERSION
+	VERSION = ${shell git describe --tags --always}
 endif
 
-APP_NAME = kyma-cli
-IMG = $(DOCKER_PUSH_REPOSITORY)$(DOCKER_PUSH_DIRECTORY)/$(APP_NAME)
-FLAGS = -ldflags '-X github.com/kyma-incubator/kyma-cli/pkg/kyma/cmd.Version=$(DOCKER_TAG)'
+FLAGS = -ldflags '-X github.com/kyma-project/cli/pkg/kyma/cmd.Version=$(VERSION)'
 
 
 .PHONY: resolve

@@ -10,15 +10,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kyma-incubator/kyma-cli/pkg/kyma/core"
+	"github.com/kyma-project/cli/pkg/kyma/core"
 
 	docker "github.com/fsouza/go-dockerclient"
-	"github.com/kyma-incubator/kyma-cli/internal/helm"
-	"github.com/kyma-incubator/kyma-cli/internal/minikube"
+	"github.com/kyma-project/cli/internal/helm"
+	"github.com/kyma-project/cli/internal/minikube"
 	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/kyma-incubator/kyma-cli/internal"
+	"github.com/kyma-project/cli/internal"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
 )
