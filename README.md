@@ -14,6 +14,12 @@ A command line tool to support developers of and with [Kyma](https://github.com/
 - `test`: Triggers and reports the tests for every Kyma module
 - `help`: Displays usage for the given command (e.g. `kyma help`, `kyma help status`, etc...)
 
+## Prerequisites
+
+In order to run the Kyma CLI you need the following software installed:
+- [kubectl](https://github.com/kubernetes/kubectl) 
+- [minikube](https://github.com/kubernetes/minikube) 
+
 ## Usage
 
 Installation of Kyma with minikube on Mac:
