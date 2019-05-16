@@ -17,25 +17,20 @@ const hostsFile = "/etc/hosts"
 const defaultVMDriver = vmDriverHyperkit
 
 func isWithSudo() bool {
-	val := os.Getenv("SUDO_UID")
-	if val != "" {
-		return true
-	}
-	return false
+	return os.Getenv("SUDO_UID") != ""
 }
 
 func promptUser() bool {
 	for {
 		fmt.Print("Type [y/n]: ")
 		var res string
-		_, err := fmt.Scanf("%s", &res)
-		if err != nil {
+		if _, err := fmt.Scanf("%s", &res); err != nil {
 			return false
 		}
 		switch res {
-		case "yes":
+		case "yes", "y":
 			return true
-		case "no":
+		case "no", "n":
 			return false
 		default:
 			continue
