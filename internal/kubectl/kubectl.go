@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	kubectlVersion string = "1.12.0"
+	kubectlVersion string = "1.12.5"
 	sleep                 = 5 * time.Second
 )
 
