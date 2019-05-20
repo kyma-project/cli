@@ -36,11 +36,14 @@ func promptUser() bool {
 
 func addDevDomainsToEtcHostsOSSpecific(o *MinikubeOptions, s step.Step, hostAlias string) error {
 	notifyUserFunc := func(err error) {
-		s.LogInfof("Error: %s. Execute the following command manually to add mappings: sudo sed -i '' \"/"+o.Domain+"/d\" "+hostsFile+" && echo '%s' | sudo tee -a /etc/hosts\r\n", err.Error(), hostAlias)
+		if err != nil {
+			s.LogInfof("Error: %s", err.Error())
+		}
+		s.LogInfof("Execute the following command manually to add domain entries: sudo sed -i '' \"/"+o.Domain+"/d\" "+hostsFile+" && echo '%s' | sudo tee -a /etc/hosts\r\n", hostAlias)
 		return
 	}
 
-	s.LogInfo("Adding aliases to your 'hosts' file")
+	s.LogInfo("Adding domain mappings to your 'hosts' file")
 	if isWithSudo() {
 		s.LogInfo("You're running CLI with sudo. CLI has to add Kyma domain entries to your 'hosts'. Type 'y' to allow this action")
 		if !promptUser() {
