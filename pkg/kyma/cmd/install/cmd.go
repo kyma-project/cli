@@ -34,6 +34,23 @@ const (
 	releaseUrlPattern    = "https://github.com/kyma-project/kyma/releases/download/%s/%s"
 )
 
+var (
+	patchMap = map[string][]string{
+		"configmap/application-connector-overrides": []string{
+			"application-registry.minikubeIP"},
+		"configmap/core-overrides": []string{
+			"test.acceptance.ui.minikubeIP",
+			"apiserver-proxy.minikubeIP",
+			"configurations-generator.minikubeIP",
+			"console-backend-service.minikubeIP",
+			"test.acceptance.cbs.minikubeIP",
+			"test.acceptance.ui.logging.enabled"},
+		"configmap/assetstore-overrides": []string{
+			"asset-store-controller-manager.minikubeIP",
+			"test.integration.minikubeIP"},
+	}
+)
+
 //NewCmd creates a new kyma command
 func NewCmd(o *Options) *cobra.Command {
 
@@ -705,11 +722,6 @@ func (cmd *command) patchMinikubeIP() error {
 	}
 	minikubeIP = strings.TrimSpace(minikubeIP)
 
-	patchMap := map[string][]string{
-		"configmap/application-connector-overrides": []string{"application-registry.minikubeIP"},
-		"configmap/core-overrides":                  []string{"test.acceptance.ui.minikubeIP", "apiserver-proxy.minikubeIP", "configurations-generator.minikubeIP"},
-		"configmap/assetstore-overrides":            []string{"asset-store-controller-manager.minikubeIP", "test.integration.minikubeIP"},
-	}
 	for k, v := range patchMap {
 		for _, pData := range v {
 			_, err := cmd.Kubectl().RunCmd("-n", "kyma-installer", "patch", k, "--type=json",
