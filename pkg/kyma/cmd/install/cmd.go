@@ -34,6 +34,26 @@ const (
 	releaseUrlPattern    = "https://github.com/kyma-project/kyma/releases/download/%s/%s"
 )
 
+var (
+	patchMap = map[string][]string{
+		"configmap/application-connector-overrides": []string{
+			"application-registry.minikubeIP",
+		},
+		"configmap/core-overrides": []string{
+			"test.acceptance.ui.minikubeIP",
+			"apiserver-proxy.minikubeIP",
+			"configurations-generator.minikubeIP",
+			"console-backend-service.minikubeIP",
+			"test.acceptance.cbs.minikubeIP",
+			"test.acceptance.ui.logging.enabled",
+		},
+		"configmap/assetstore-overrides": []string{
+			"asset-store-controller-manager.minikubeIP",
+			"test.integration.minikubeIP",
+		},
+	}
+)
+
 //NewCmd creates a new kyma command
 func NewCmd(o *Options) *cobra.Command {
 
@@ -58,7 +78,7 @@ The command will:
 		Aliases: []string{"i"},
 	}
 
-	cobraCmd.Flags().StringVarP(&o.ReleaseVersion, "release", "r", "1.0.0", "kyma release to use")
+	cobraCmd.Flags().StringVarP(&o.ReleaseVersion, "release", "r", "1.1.0", "kyma release to use")
 	cobraCmd.Flags().StringVarP(&o.ReleaseConfig, "config", "c", "", "URL or path to the installer configuration yaml")
 	cobraCmd.Flags().BoolVarP(&o.NoWait, "noWait", "n", false, "Do not wait for completion of kyma-installer")
 	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", "kyma.local", "domain to use for installation")
@@ -707,11 +727,6 @@ func (cmd *command) patchMinikubeIP() error {
 	}
 	minikubeIP = strings.TrimSpace(minikubeIP)
 
-	patchMap := map[string][]string{
-		"configmap/application-connector-overrides": []string{"application-registry.minikubeIP"},
-		"configmap/core-overrides":                  []string{"test.acceptance.ui.minikubeIP", "apiserver-proxy.minikubeIP", "configurations-generator.minikubeIP"},
-		"configmap/assetstore-overrides":            []string{"asset-store-controller-manager.minikubeIP", "test.integration.minikubeIP"},
-	}
 	for k, v := range patchMap {
 		for _, pData := range v {
 			_, err := cmd.Kubectl().RunCmd("-n", "kyma-installer", "patch", k, "--type=json",
