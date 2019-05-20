@@ -598,7 +598,7 @@ func (cmd *command) printSummary() error {
 	fmt.Printf("Kyma is installed in version %s\n", version)
 	fmt.Printf("Kyma console:     https://console.%s\n", cmd.opts.Domain)
 	fmt.Printf("Kyma admin email: %s\n", emailDecoded)
-	if cmd.opts.Password == "" {
+	if cmd.opts.Password == "" || cmd.opts.NonInteractive {
 		fmt.Printf("Kyma admin pwd:   %s\n", pwdDecoded)
 	}
 	fmt.Println()
