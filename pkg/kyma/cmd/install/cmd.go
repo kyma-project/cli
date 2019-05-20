@@ -37,17 +37,20 @@ const (
 var (
 	patchMap = map[string][]string{
 		"configmap/application-connector-overrides": []string{
-			"application-registry.minikubeIP"},
+			"application-registry.minikubeIP",
+		},
 		"configmap/core-overrides": []string{
 			"test.acceptance.ui.minikubeIP",
 			"apiserver-proxy.minikubeIP",
 			"configurations-generator.minikubeIP",
 			"console-backend-service.minikubeIP",
 			"test.acceptance.cbs.minikubeIP",
-			"test.acceptance.ui.logging.enabled"},
+			"test.acceptance.ui.logging.enabled",
+		},
 		"configmap/assetstore-overrides": []string{
 			"asset-store-controller-manager.minikubeIP",
-			"test.integration.minikubeIP"},
+			"test.integration.minikubeIP",
+		},
 	}
 )
 

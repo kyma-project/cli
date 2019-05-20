@@ -43,7 +43,7 @@ var (
 		"connector-service",
 		"log-ui",
 		"loki",
-		"kiali"
+		"kiali",
 	}
 
 	drivers = []string{
