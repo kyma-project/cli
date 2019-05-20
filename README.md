@@ -51,7 +51,7 @@ kyma test
 ```
 ## Installation
 
-For the latest relase and installation instructions, see the [release page](https://github.com/kyma-project/cli/releases)
+For the latest release and installation instructions, see the [release page](https://github.com/kyma-project/cli/releases)
 
 ## Kyma CLI as a Kubectl plugin
 
