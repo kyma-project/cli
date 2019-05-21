@@ -40,7 +40,6 @@ func addDevDomainsToEtcHostsOSSpecific(o *MinikubeOptions, s step.Step, hostAlia
 			s.LogInfof("Error: %s", err.Error())
 		}
 		s.LogInfof("Execute the following command manually to add domain entries: sudo sed -i '' \"/"+o.Domain+"/d\" "+hostsFile+" && echo '%s' | sudo tee -a /etc/hosts\r\n", hostAlias)
-		return
 	}
 
 	s.LogInfo("Adding domain mappings to your 'hosts' file")
