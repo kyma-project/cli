@@ -35,22 +35,28 @@ func promptUser() bool {
 }
 
 func addDevDomainsToEtcHostsOSSpecific(o *MinikubeOptions, s step.Step, hostAlias string) error {
-	notifyUserFunc := func() {
-		s.LogInfof("Execute the following command manually to add mappings: sudo sed -i '' \"/"+o.Domain+"/d\" "+hostsFile+" && echo '%s' | sudo tee -a /etc/hosts\r\n", hostAlias)
-		return
+	notifyUserFunc := func(err error) {
+		if err != nil {
+			s.LogInfof("Error: %s", err.Error())
+		}
+		s.LogInfof("Execute the following command manually to add domain entries: sudo sed -i '' \"/"+o.Domain+"/d\" "+hostsFile+" && echo '%s' | sudo tee -a /etc/hosts\r\n", hostAlias)
 	}
 
-	s.LogInfo("Adding aliases to your 'hosts' file")
+	s.LogInfo("Adding domain mappings to your 'hosts' file")
 	if isWithSudo() {
 		s.LogInfo("You're running CLI with sudo. CLI has to add Kyma domain entries to your 'hosts'. Type 'y' to allow this action")
 		if !promptUser() {
-			notifyUserFunc()
+			notifyUserFunc(nil)
 			return nil
 		}
 	}
-	_, err := internal.RunCmd("sudo", []string{"/bin/sh", "-c", "sed -i '' \"/" + o.Domain + "/d\" " + hostsFile})
+	_, err := internal.RunCmd("sudo", []string{
+		"sed", "-i",
+		"''",
+		fmt.Sprintf("/%s/d", o.Domain),
+		hostsFile})
 	if err != nil {
-		notifyUserFunc()
+		notifyUserFunc(err)
 		return nil
 	}
 
@@ -58,13 +64,13 @@ func addDevDomainsToEtcHostsOSSpecific(o *MinikubeOptions, s step.Step, hostAlia
 	buf := &bytes.Buffer{}
 	_, err = fmt.Fprint(buf, hostAlias)
 	if err != nil {
-		notifyUserFunc()
+		notifyUserFunc(err)
 		return nil
 	}
 	cmd.Stdin = buf
 	err = cmd.Run()
 	if err != nil {
-		notifyUserFunc()
+		notifyUserFunc(err)
 		return nil
 	}
 	return nil
