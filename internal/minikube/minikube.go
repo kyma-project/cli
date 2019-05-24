@@ -25,7 +25,7 @@ func RunCmd(verbose bool, args ...string) (string, error) {
 		if verbose {
 			fmt.Printf("\nExecuted command:\n  minikube %s\nwith output:\n  %s\nand error:\n  %s\n", strings.Join(args, " "), string(out), err)
 		}
-		return unquotedOut, fmt.Errorf("Failed executing command 'minikube %s' with output '%s' and error message '%s'", strings.Join(args, " "), out, err)
+		return unquotedOut, fmt.Errorf("Failed executing the 'minikube %s' command with output '%s' and error message '%s'", strings.Join(args, " "), out, err)
 	}
 	if verbose {
 		fmt.Printf("\nExecuted command:\n  minikube %s\nwith output:\n  %s\n", strings.Join(args, " "), string(out))
@@ -57,7 +57,7 @@ func CheckVersion(verbose bool) (string, error) {
 	if check {
 		return "", nil
 	}
-	return fmt.Sprintf("You are using an unsupported minikube version '%s'. This may not work. It is recommended to use minikube version '%s'", version, minikubeVersion), nil
+	return fmt.Sprintf("You are using an unsupported Minikube version '%s'. This may not work. The recommended Minikube version is '%s'", version, minikubeVersion), nil
 }
 
 //DockerClient creates a docker client based on minikube "docker-env" configuration
