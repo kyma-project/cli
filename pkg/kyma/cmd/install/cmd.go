@@ -64,31 +64,31 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cobraCmd := &cobra.Command{
 		Use:   "install",
-		Short: "Installs Kyma to a running kubernetes cluster",
-		Long: `Install Kyma on a running kubernetes cluster.
+		Short: "Installs Kyma on a running Kubernetes cluster",
+		Long: `Install Kyma on a running Kubernetes cluster.
 
-Assure that your KUBECONFIG is pointing to the target cluster already.
-The command will:
-- Install tiller
-- Install the Kyma installer
-- Configures the Kyma installer with the latest minimal configuration
-- Triggers the installation
+Make sure that your KUBECONFIG is already pointing to the target cluster.
+The command:
+- Installs Tiller
+- Deploys the Kyma Installer
+- Configures the Kyma Installer using the latest minimal configuration
+- Triggers Kyma installation
 `,
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 		Aliases: []string{"i"},
 	}
 
-	cobraCmd.Flags().StringVarP(&o.ReleaseVersion, "release", "r", "1.1.0", "kyma release to use")
-	cobraCmd.Flags().StringVarP(&o.ReleaseConfig, "config", "c", "", "URL or path to the installer configuration yaml")
-	cobraCmd.Flags().BoolVarP(&o.NoWait, "noWait", "n", false, "Do not wait for completion of kyma-installer")
-	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", "kyma.local", "domain to use for installation")
+	cobraCmd.Flags().StringVarP(&o.ReleaseVersion, "release", "r", "1.1.0", "Kyma release to use")
+	cobraCmd.Flags().StringVarP(&o.ReleaseConfig, "config", "c", "", "URL or path to the Installer configuration YAML file")
+	cobraCmd.Flags().BoolVarP(&o.NoWait, "noWait", "n", false, "Do not wait for the Installer configuration to complete")
+	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", "kyma.local", "Domain used for installation")
 	cobraCmd.Flags().BoolVarP(&o.Local, "local", "l", false, "Install from sources")
-	cobraCmd.Flags().StringVarP(&o.LocalSrcPath, "src-path", "", "", "Path to local sources to use")
-	cobraCmd.Flags().StringVarP(&o.LocalInstallerVersion, "installer-version", "", "", "Version of installer docker image to use while building locally")
-	cobraCmd.Flags().StringVarP(&o.LocalInstallerDir, "installer-dir", "", "", "Directory of installer docker image to use while building locally")
-	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 0, "Timeout after which CLI should give up watching installation")
-	cobraCmd.Flags().StringVarP(&o.Password, "password", "p", "", "Pre-defined cluster password")
-	cobraCmd.Flags().VarP(&o.OverrideConfigs, "override", "o", "Path to YAML file with parameters to override. Multiple entries of this flag allowed")
+	cobraCmd.Flags().StringVarP(&o.LocalSrcPath, "src-path", "", "", "Path to local sources")
+	cobraCmd.Flags().StringVarP(&o.LocalInstallerVersion, "installer-version", "", "", "The version of Kyma Installer docker image used for local installation")
+	cobraCmd.Flags().StringVarP(&o.LocalInstallerDir, "installer-dir", "", "", "The directory of Kyma Installer docker image used for local installation")
+	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 0, "The timeout after which CLI stops watching the installation progress")
+	cobraCmd.Flags().StringVarP(&o.Password, "password", "p", "", "The predefined cluster password")
+	cobraCmd.Flags().VarP(&o.OverrideConfigs, "override", "o", "The path to YAML file with parameters to override. Multiple entries of this flag are allowed")
 
 	return cobraCmd
 }
@@ -106,7 +106,7 @@ func (cmd *command) Run() error {
 		s.Failure()
 		return err
 	}
-	s.Successf("Requirements are fine")
+	s.Successf("Requirements verified")
 
 	if cmd.opts.Local {
 		s.LogInfof("Installing Kyma from local path: '%s'", cmd.opts.LocalSrcPath)
@@ -122,13 +122,13 @@ func (cmd *command) Run() error {
 	}
 	s.Successf("Tiller installed")
 
-	s = cmd.NewStep("Installing kyma-installer")
+	s = cmd.NewStep("Deploying Kyma Installer")
 	err = cmd.installInstaller()
 	if err != nil {
 		s.Failure()
 		return err
 	}
-	s.Successf("kyma-installer installed")
+	s.Successf("Kyma Installer deployed")
 
 	s = cmd.NewStep("Configuring Helm")
 	err = cmd.configureHelm()
@@ -138,13 +138,13 @@ func (cmd *command) Run() error {
 	}
 	s.Successf("Helm configured")
 
-	s = cmd.NewStep("Requesting kyma-installer to install kyma")
+	s = cmd.NewStep("Requesting Kyma Installer to install Kyma")
 	err = cmd.activateInstaller()
 	if err != nil {
 		s.Failure()
 		return err
 	}
-	s.Successf("kyma-installer is installing kyma")
+	s.Successf("Kyma Installer is installing Kyma")
 
 	if !cmd.opts.NoWait {
 		err = cmd.waitForInstaller()
@@ -178,15 +178,15 @@ func (cmd *command) validateFlags() error {
 		if cmd.opts.LocalSrcPath == "" {
 			goPath := os.Getenv("GOPATH")
 			if goPath == "" {
-				return fmt.Errorf("No local 'src-path' configured and no applicable default found, verify if you have exported a GOPATH?")
+				return fmt.Errorf("No local 'src-path' configured and no applicable default found, have you exported a GOPATH?")
 			}
 			cmd.opts.LocalSrcPath = filepath.Join(goPath, "src", "github.com", "kyma-project", "kyma")
 		}
 		if _, err := os.Stat(cmd.opts.LocalSrcPath); err != nil {
-			return fmt.Errorf("Configured 'src-path=%s' does not exist, please check if you configured a valid path", cmd.opts.LocalSrcPath)
+			return fmt.Errorf("Configured 'src-path=%s' does not exist, check if you configured a valid path", cmd.opts.LocalSrcPath)
 		}
 		if _, err := os.Stat(filepath.Join(cmd.opts.LocalSrcPath, "installation", "resources")); err != nil {
-			return fmt.Errorf("Configured 'src-path=%s' seems to not point to a Kyma repository, please verify if your repository contains a folder 'installation/resources'", cmd.opts.LocalSrcPath)
+			return fmt.Errorf("Configured 'src-path=%s' seems to not point to a Kyma repository, verify if your repository contains the 'installation/resources' folder", cmd.opts.LocalSrcPath)
 		}
 
 		// This is to help developer and use appropriate repository if PR image is provided
@@ -250,7 +250,7 @@ func (cmd *command) configureHelm() error {
 
 	data, ok := cfg["data"].(map[interface{}]interface{})
 	if !ok {
-		return fmt.Errorf("unable to get data from helm secret")
+		return fmt.Errorf("Unable to get data from Helm secret")
 	}
 
 	err = writeHelmFile(data, "global.helm.ca.crt", helmHome, "ca.pem")
@@ -274,7 +274,7 @@ func (cmd *command) configureHelm() error {
 func writeHelmFile(data map[interface{}]interface{}, helmData string, helmHome string, filename string) error {
 	value, ok := data[helmData].(string)
 	if !ok {
-		return fmt.Errorf("unable to get %s from helm secret data", helmData)
+		return fmt.Errorf("Unable to get %s from Helm secret data", helmData)
 	}
 	valueDecoded, err := base64.StdEncoding.DecodeString(value)
 	if err != nil {
@@ -515,12 +515,12 @@ func (cmd *command) applyOverrideFiles() error {
 	for _, file := range cmd.opts.OverrideConfigs {
 		oFile, err := os.Open(file)
 		if err != nil {
-			return fmt.Errorf("unable to open file: %s. Error: %s",
+			return fmt.Errorf("Unable to open file: %s. Error: %s",
 				file, err.Error())
 		}
 		rawData, err := ioutil.ReadAll(oFile)
 		if err != nil {
-			return fmt.Errorf("unable to read data from file: %s. Error: %s",
+			return fmt.Errorf("Unable to read data from file: %s. Error: %s",
 				file, err.Error())
 		}
 
@@ -530,28 +530,28 @@ func (cmd *command) applyOverrideFiles() error {
 			cfg := make(map[interface{}]interface{})
 			err = yaml.Unmarshal([]byte(c), &cfg)
 			if err != nil {
-				return fmt.Errorf("unable to parse file data: %s. Error: %s",
+				return fmt.Errorf("Unable to parse file data: %s. Error: %s",
 					file, err.Error())
 			}
 
 			kind, ok := cfg["kind"].(string)
 			if !ok {
-				return fmt.Errorf("unable get kind of config. File: %s", file)
+				return fmt.Errorf("Unable to retrieve the kind of config. File: %s", file)
 			}
 
 			meta, ok := cfg["metadata"].(map[interface{}]interface{})
 			if !ok {
-				return fmt.Errorf("unable to get metadata from config. File: %s", file)
+				return fmt.Errorf("Unable to get metadata from config. File: %s", file)
 			}
 
 			namespace, ok := meta["namespace"].(string)
 			if !ok {
-				return fmt.Errorf("unable to get namespace from config. File: %s", file)
+				return fmt.Errorf("Unable to get Namespace from config. File: %s", file)
 			}
 
 			name, ok := meta["name"].(string)
 			if !ok {
-				return fmt.Errorf("unable to get name from config. File: %s", file)
+				return fmt.Errorf("Unable to get name from config. File: %s", file)
 			}
 
 			_, err := cmd.Kubectl().RunCmd("-n",
@@ -562,7 +562,7 @@ func (cmd *command) applyOverrideFiles() error {
 				"-p",
 				c)
 			if err != nil {
-				return fmt.Errorf("unable to override values. File: %s. Error: %s", file, err.Error())
+				return fmt.Errorf("Unable to override values. File: %s. Error: %s", file, err.Error())
 			}
 		}
 
@@ -619,7 +619,7 @@ func (cmd *command) printSummary() error {
 	fmt.Printf("Kyma console:     https://console.%s\n", cmd.opts.Domain)
 	fmt.Printf("Kyma admin email: %s\n", emailDecoded)
 	if cmd.opts.Password == "" || cmd.opts.NonInteractive {
-		fmt.Printf("Kyma admin pwd:   %s\n", pwdDecoded)
+		fmt.Printf("Kyma admin password:   %s\n", pwdDecoded)
 	}
 	fmt.Println()
 	fmt.Println("Happy Kyma-ing! :)")
@@ -651,7 +651,7 @@ func (cmd *command) waitForInstaller() error {
 		case <-timeout:
 			cmd.CurrentStep.Failure()
 			_ = cmd.printInstallationErrorLog()
-			return errors.New("Timeout while awaiting installation to complete")
+			return errors.New("Timeout reached while waiting for installation to complete")
 		default:
 			status, desc, err := cmd.getInstallationStatus()
 			if err != nil {
@@ -666,8 +666,8 @@ func (cmd *command) waitForInstaller() error {
 			case "Error":
 				if !errorOccured {
 					errorOccured = true
-					cmd.CurrentStep.Failuref("Error installing Kyma: %s", desc)
-					cmd.CurrentStep.LogInfof("To fetch the logs from the installer execute: 'kubectl logs -n kyma-installer -l name=kyma-installer'")
+					cmd.CurrentStep.Failuref("Kyma installation failed: %s", desc)
+					cmd.CurrentStep.LogInfof("To fetch the logs from the installer, run: 'kubectl logs -n kyma-installer -l name=kyma-installer'")
 				}
 
 			case "InProgress":

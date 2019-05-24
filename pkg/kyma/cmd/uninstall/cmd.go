@@ -40,20 +40,20 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cobraCmd := &cobra.Command{
 		Use:   "uninstall",
-		Short: "Uninstalls Kyma from a running kubernetes cluster",
-		Long: `Uninstall Kyma on a running kubernetes cluster.
+		Short: "Uninstalls Kyma from a running Kubernetes cluster",
+		Long: `Uninstalls Kyma from a running Kubernetes cluster.
 
-Assure that your KUBECONFIG is pointing to the target cluster already.
-The command will:
-- Removes your account as the cluster administrator 
-- Removes tiller
-- Removes the Kyma installer
+Make sure that your KUBECONFIG is already pointing to the target cluster.
+This command:
+- Removes your cluster administrator account
+- Removes Tiller
+- Removes the Kyma Installer
 `,
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 		Aliases: []string{"i"},
 	}
 
-	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 0, "Timeout after which CLI should give up watching installation")
+	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 0, "Timeout after which Kyma CLI stops watching the installation progress")
 
 	return cobraCmd
 }
@@ -66,7 +66,7 @@ func (cmd *command) Run() error {
 		s.Failure()
 		return err
 	}
-	s.Successf("Requirements are fine")
+	s.Successf("Requirements verified")
 
 	s.LogInfof("Uninstalling Kyma")
 
@@ -97,7 +97,7 @@ func (cmd *command) Run() error {
 		s.Failure()
 		return err
 	}
-	s.Successf("tiller deleted")
+	s.Successf("Tiller deleted")
 
 	s = cmd.NewStep("Deleting ClusterRoleBinding for admin")
 	err = cmd.deleteClusterRoleBinding()
@@ -291,7 +291,7 @@ func (cmd *command) waitForInstallerToUninstall() error {
 		case <-timeout:
 			cmd.CurrentStep.Failure()
 			_ = cmd.printUninstallationErrorLog()
-			return errors.New("Timeout while awaiting uninstallation to complete")
+			return errors.New("Timeout reached while waiting for Kyma to uninstall")
 		default:
 			status, desc, err := cmd.getUninstallationStatus()
 			if err != nil {
@@ -306,8 +306,8 @@ func (cmd *command) waitForInstallerToUninstall() error {
 			case "Error":
 				if !errorOccured {
 					errorOccured = true
-					cmd.CurrentStep.Failuref("Error uninstalling Kyma: %s", desc)
-					cmd.CurrentStep.LogInfof("To fetch the logs from the installer execute: 'kubectl logs -n kyma-installer -l name=kyma-installer'")
+					cmd.CurrentStep.Failuref("Kyma uninstallation failed: %s", desc)
+					cmd.CurrentStep.LogInfof("To fetch the logs from the Installer, run: 'kubectl logs -n kyma-installer -l name=kyma-installer'")
 				}
 
 			case "InProgress":
