@@ -2,7 +2,7 @@
 
 ## Overview
 
-Kyma CLI is a command line tool which supports [Kyma](https://github.com/kyma-project/kyma) developers. It features a set of commands to facilitate installing and managing Kyma.
+Kyma CLI is a command line tool which supports [Kyma](https://github.com/kyma-project/kyma) developers. It provides a set of commands you can use to install and test Kyma. 
 
 ## Prerequisites
 
@@ -12,7 +12,7 @@ Kyma CLI requires the following software:
 
 ## Installation
 
-For the latest release and installation instructions, see the [release page](https://github.com/kyma-project/cli/releases)
+For the installation instructions, see the [release page](https://github.com/kyma-project/cli/releases).
 
 ## Usage
 
@@ -24,57 +24,78 @@ Kyma CLI comes with a set of commands:
 - `provision minikube`: Initializes Minikube with a new cluster (replaces the `minikube.sh` script) 
 - `install`: Installs Kyma to a cluster based on a release (replaces the `ìnstaller.sh` and `is-installed.sh` script)
 - `uninstall`: Uninstalls all Kyma related resources from a cluster
-- `completion`: Outputs shell completion code for bash
+- `completion`: Generates and shows the bash completion script
 - `test`: Triggers and reports the tests for every Kyma module
-- `help`: Displays and explains usage of a given command, for example, `kyma help`, `kyma help status`
+- `help`: Displays and explains usage of a given command
+
 
 ### Use Kyma CLI
 
-Install Kyma with Minikube on Mac:
+Use the following syntax to run the commands from your terminal:
 
-```bash
-kyma provision minikube
-kyma install
+```
+kyma {COMMAND} {FLAGS}
+
+```
+where:
+
+* **{COMMAND}** specifies the operation you want to perform
+* **{FLAGS}** specify optional flags. For example, `-v` or `--verbose` for additional information on performed operations.
+
+Example:
+
+```
+kyma install --verbose
+
 ```
 
-Install Kyma with Minikube on Windows:
+Further usage examples include:
 
-```bash
-kyma provision minikube
-# follow instructions to add hosts
-kyma install
-```
+* Install Kyma with Minikube on Mac:
 
-Install Kyma with Minikube on Windows using HyperV:
+    ```bash
+    kyma provision minikube
+    kyma install
+    ```
 
-```bash
-kyma provision minikube --vm-driver hyperv --hypervVirtualSwitch {YOUR_SWITCH_NAME}
-# follow instructions to add hosts
-kyma install
-```
+* Install Kyma with Minikube on Windows:
 
-Run tests on Kyma:
-```bash
-kyma test
-```
+    ```bash
+    kyma provision minikube
+    # follow instructions to add hosts
+    kyma install
+    ```
+
+* Install Kyma with Minikube on Windows using HyperV:
+
+    ```bash
+    kyma provision minikube --vm-driver hyperv --hypervVirtualSwitch {YOUR_SWITCH_NAME}
+    # follow instructions to add hosts
+    kyma install
+    ```
+
+ * Run tests on Kyma:
+    ```bash
+    kyma test
+    ```
 
 ## Development
 
-### Kyma CLI as a Kubectl plugin
+### Kyma CLI as a kubectl plugin
 
-To follow this section a kubectl version of 1.12.0 or later is required.
+> **NOTE**: To use Kyma CLI as a kubectl plugin, your Kubernetes version must be 1.12.0 or higher.
 
-A plugin is nothing more than a standalone executable file, whose name begins with kubectl- . To install a plugin, simply move this executable file to anywhere on your PATH.
+A plugin is a standalone executable file with a name prefixed with `kubectl-` . To use the plugin perform the following steps:
 
-Rename a `kyma` binary to `kubectl-kyma` and place it anywhere in your PATH:
+1. Rename a `kyma` binary to `kubectl-kyma` and place it anywhere in your **{PATH}**:
 
 ```bash
 sudo mv ./kyma /usr/local/bin/kubectl-kyma
 ```
 
-Run `kubectl plugin list` command and you will see your plugin in the list of available plugins.
+2. Run `kubectl plugin list` command to see your plugin on the list of available plugins.
 
-You may now invoke your plugin as a kubectl command:
+3. Invoke your plugin as a kubectl command:
 
 ```bash
 $ kubectl kyma version
@@ -82,4 +103,4 @@ Kyma CLI version: v0.6.1
 Kyma cluster version: 1.0.0
 ```
 
-To know more about extending kubectl with plugins read [Kubernetes documentation](https://kubernetes.io/docs/tasks/extend-kubectl/kubectl-plugins/).
+For more information on extending kubectl with plugins read [Kubernetes documentation](https://kubernetes.io/docs/tasks/extend-kubectl/kubectl-plugins/).
