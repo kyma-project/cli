@@ -124,13 +124,15 @@ func setupTillerConnection(settings *environment.EnvSettings, config *rest.Confi
 }
 
 func (c *Client) Close() {
-	if c.forwarder != nil {
+	if c != nil && c.forwarder != nil {
 		close(c.forwarder)
 	}
 }
 
-func GetHelmHome() (string, error) {
-	helmCmd := exec.Command("helm", "home")
+var helmCmd = exec.Command("helm", "home")
+
+// Home returns the path to the helm configuration folder or an error
+func Home() (string, error) {
 	helmHomeRaw, err := helmCmd.CombinedOutput()
 	if err != nil {
 		return "", nil

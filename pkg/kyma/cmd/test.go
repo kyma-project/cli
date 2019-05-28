@@ -47,7 +47,7 @@ func NewTestCmd(o *TestOptions) *cobra.Command {
 }
 
 func (o *TestOptions) Run() error {
-	helmHome, err := kyma_helm.GetHelmHome()
+	helmHome, err := kyma_helm.Home()
 	if err != nil {
 		return err
 	}
