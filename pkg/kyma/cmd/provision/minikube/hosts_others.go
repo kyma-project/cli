@@ -50,11 +50,11 @@ func addDevDomainsToEtcHostsOSSpecific(o *MinikubeOptions, s step.Step, hostAlia
 			return nil
 		}
 	}
-	_, err := internal.RunCmd("sudo", []string{
+	_, err := internal.RunCmd("sudo",
 		"sed", "-i",
 		"''",
 		fmt.Sprintf("/%s/d", o.Domain),
-		hostsFile})
+		hostsFile)
 	if err != nil {
 		notifyUserFunc(err)
 		return nil
