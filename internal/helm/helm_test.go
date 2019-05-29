@@ -47,7 +47,7 @@ func TestHome(t *testing.T) {
 			expected:    helmDir,
 		},
 		{
-			name:        "Newline scraping.",
+			name:        "Newline scraping",
 			description: "Helm Home with new line characters.",
 			cmdOutput:   fmt.Sprintf("%s\n\n\n\n\n\n\n\n\n\n\n\n", helmDir),
 			expected:    helmDir,
@@ -93,7 +93,7 @@ func TestCLientClose(t *testing.T) {
 
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			require.NotPanics(t, test.c.Close, "")
+			require.NotPanics(t, test.c.Close, test.description)
 		})
 	}
 }
