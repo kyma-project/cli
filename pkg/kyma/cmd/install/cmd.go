@@ -559,7 +559,7 @@ func (cmd *command) applyOverrideFiles() error {
 				"patch",
 				kind,
 				strings.ToLower(name),
-				"--type='merge'",
+				"--type=merge",
 				"-p",
 				c)
 			if err != nil {
