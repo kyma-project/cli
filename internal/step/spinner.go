@@ -11,7 +11,7 @@ import (
 	"github.com/briandowns/spinner"
 )
 
-func NewStepWithSpinner(msg string) Step {
+func newStepWithSpinner(msg string) Step {
 	s := spinner.New(
 		[]string{"/", "-", "\\", "|"},
 		time.Millisecond*200,
