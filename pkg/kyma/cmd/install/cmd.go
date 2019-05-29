@@ -84,11 +84,11 @@ The command:
 	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", "kyma.local", "Domain used for installation")
 	cobraCmd.Flags().BoolVarP(&o.Local, "local", "l", false, "Install from sources")
 	cobraCmd.Flags().StringVarP(&o.LocalSrcPath, "src-path", "", "", "Path to local sources")
-	cobraCmd.Flags().StringVarP(&o.LocalInstallerVersion, "installer-version", "", "", "The version of Kyma Installer docker image used for local installation")
-	cobraCmd.Flags().StringVarP(&o.LocalInstallerDir, "installer-dir", "", "", "The directory of Kyma Installer docker image used for local installation")
-	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 0, "The timeout after which CLI stops watching the installation progress")
-	cobraCmd.Flags().StringVarP(&o.Password, "password", "p", "", "The predefined cluster password")
-	cobraCmd.Flags().VarP(&o.OverrideConfigs, "override", "o", "The path to YAML file with parameters to override. Multiple entries of this flag are allowed")
+	cobraCmd.Flags().StringVarP(&o.LocalInstallerVersion, "installer-version", "", "", "Version of the Kyma Installer Docker image used for local installation")
+	cobraCmd.Flags().StringVarP(&o.LocalInstallerDir, "installer-dir", "", "", "The directory of the Kyma Installer Docker image used for local installation")
+	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 0, "Timeout after which CLI stops watching the installation progress")
+	cobraCmd.Flags().StringVarP(&o.Password, "password", "p", "", "Predefined cluster password")
+	cobraCmd.Flags().VarP(&o.OverrideConfigs, "override", "o", "Path to YAML file with parameters to override. Multiple entries of this flag are allowed")
 
 	return cobraCmd
 }
@@ -178,15 +178,15 @@ func (cmd *command) validateFlags() error {
 		if cmd.opts.LocalSrcPath == "" {
 			goPath := os.Getenv("GOPATH")
 			if goPath == "" {
-				return fmt.Errorf("No local 'src-path' configured and no applicable default found, have you exported a GOPATH?")
+				return fmt.Errorf("No local 'src-path' configured and no applicable default found. Check if you exported a GOPATH.")
 			}
 			cmd.opts.LocalSrcPath = filepath.Join(goPath, "src", "github.com", "kyma-project", "kyma")
 		}
 		if _, err := os.Stat(cmd.opts.LocalSrcPath); err != nil {
-			return fmt.Errorf("Configured 'src-path=%s' does not exist, check if you configured a valid path", cmd.opts.LocalSrcPath)
+			return fmt.Errorf("Configured 'src-path=%s' does not exist. Check if you configured a valid path.", cmd.opts.LocalSrcPath)
 		}
 		if _, err := os.Stat(filepath.Join(cmd.opts.LocalSrcPath, "installation", "resources")); err != nil {
-			return fmt.Errorf("Configured 'src-path=%s' seems to not point to a Kyma repository, verify if your repository contains the 'installation/resources' folder", cmd.opts.LocalSrcPath)
+			return fmt.Errorf("Configured 'src-path=%s' does not seem to point to a Kyma repository. Check if your repository contains the 'installation/resources' folder.", cmd.opts.LocalSrcPath)
 		}
 
 		// This is to help developer and use appropriate repository if PR image is provided
@@ -250,7 +250,7 @@ func (cmd *command) configureHelm() error {
 
 	data, ok := cfg["data"].(map[interface{}]interface{})
 	if !ok {
-		return fmt.Errorf("Unable to get data from Helm secret")
+		return fmt.Errorf("Unable to get data from the Helm Secret")
 	}
 
 	err = writeHelmFile(data, "global.helm.ca.crt", helmHome, "ca.pem")
@@ -274,7 +274,7 @@ func (cmd *command) configureHelm() error {
 func writeHelmFile(data map[interface{}]interface{}, helmData string, helmHome string, filename string) error {
 	value, ok := data[helmData].(string)
 	if !ok {
-		return fmt.Errorf("Unable to get %s from Helm secret data", helmData)
+		return fmt.Errorf("Unable to get %s from Helm Secret data", helmData)
 	}
 	valueDecoded, err := base64.StdEncoding.DecodeString(value)
 	if err != nil {

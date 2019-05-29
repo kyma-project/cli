@@ -47,7 +47,7 @@ Make sure that your KUBECONFIG is already pointing to the target cluster.
 This command:
 - Removes your cluster administrator account
 - Removes Tiller
-- Removes the Kyma Installer
+- Removes Kyma Installer
 `,
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 		Aliases: []string{"i"},
@@ -306,7 +306,7 @@ func (cmd *command) waitForInstallerToUninstall() error {
 			case "Error":
 				if !errorOccured {
 					errorOccured = true
-					cmd.CurrentStep.Failuref("Kyma uninstallation failed: %s", desc)
+					cmd.CurrentStep.Failuref("Failed to uninstall Kyma: %s", desc)
 					cmd.CurrentStep.LogInfof("To fetch the logs from the Installer, run: 'kubectl logs -n kyma-installer -l name=kyma-installer'")
 				}
 

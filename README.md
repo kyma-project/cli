@@ -8,7 +8,7 @@ Kyma CLI is a command line tool which supports [Kyma](https://github.com/kyma-pr
 
 Kyma CLI requires the following software:
 - [kubectl](https://github.com/kubernetes/kubectl) 
-- [minikube](https://github.com/kubernetes/minikube) 
+- [Minikube](https://github.com/kubernetes/minikube) 
 
 ## Installation
 
@@ -16,17 +16,17 @@ For the installation instructions, see the [release page](https://github.com/kym
 
 ## Usage
 
-### Available commands
+### Commands
 
 Kyma CLI comes with a set of commands:
 
-- `version`: Shows the Kyma cluster version and the Kyma CLI version
-- `provision minikube`: Initializes Minikube with a new cluster (replaces the `minikube.sh` script) 
-- `install`: Installs Kyma to a cluster based on a release (replaces the `ìnstaller.sh` and `is-installed.sh` script)
-- `uninstall`: Uninstalls all Kyma related resources from a cluster
-- `completion`: Generates and shows the bash completion script
-- `test`: Triggers and reports the tests for every Kyma module
-- `help`: Displays and explains usage of a given command
+- `version` shows the Kyma cluster version and the Kyma CLI version.
+- `provision minikube` initializes Minikube on a new cluster. It replaces the `minikube.sh` script. 
+- `install` installs Kyma to a cluster based on the current release. It replaces the `ìnstaller.sh` and `is-installed.sh` script. 
+- `uninstall` uninstalls all Kyma-related resources from a cluster.
+- `completion` generates and shows the bash completion script.
+- `test` triggers and reports the tests for every Kyma module.
+- `help` displays and explains the usage of a given command.
 
 
 ### Use Kyma CLI
@@ -38,8 +38,8 @@ kyma {COMMAND} {FLAGS}
 ```
 where:
 
-* **{COMMAND}** specifies the operation you want to perform
-* **{FLAGS}** specify optional flags. For example, `-v` or `--verbose` for additional information on performed operations.
+* **{COMMAND}** specifies the operation you want to perform.
+* **{FLAGS}** specify optional flags. For example, use `-v` or `--verbose` for additional information on performed operations.
 
 Example:
 
@@ -83,15 +83,15 @@ Further usage examples include:
 
 > **NOTE**: To use Kyma CLI as a kubectl plugin, use Kubernetes version 1.12.0 or higher.
 
-A plugin is a standalone executable file with a name prefixed with `kubectl-` . To use the plugin perform the following steps:
+A plugin is a standalone executable file with a name prefixed with `kubectl-` .To use the plugin, perform the following steps:
 
-1. Rename a `kyma` binary to `kubectl-kyma` and place it anywhere in your **{PATH}**:
+1. Rename the `kyma` binary to `kubectl-kyma` and place it anywhere in your **{PATH}**:
 
 ```bash
 sudo mv ./kyma /usr/local/bin/kubectl-kyma
 ```
 
-2. Run `kubectl plugin list` command to see your plugin on the list of available plugins.
+2. Run `kubectl plugin list` command to see your plugin on the list of all available plugins.
 
 3. Invoke your plugin as a kubectl command:
 
@@ -101,4 +101,4 @@ Kyma CLI version: v0.6.1
 Kyma cluster version: 1.0.0
 ```
 
-For more information on extending kubectl with plugins read [Kubernetes documentation](https://kubernetes.io/docs/tasks/extend-kubectl/kubectl-plugins/).
+For more information on extending kubectl with plugins, read [Kubernetes documentation](https://kubernetes.io/docs/tasks/extend-kubectl/kubectl-plugins/).

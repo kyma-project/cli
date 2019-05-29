@@ -177,7 +177,7 @@ func IsPodReady(namespace string, labelName string, labelValue string, verbose b
 		if containerStatus != "true" {
 			events, err := RunCmd(verbose, "get", "event", "-n", namespace, "-o", "go-template='{{range .items}}{{if eq .involvedObject.name \"'"+pod+"'\"}}{{.message}}{{\"\\n\"}}{{end}}{{end}}'")
 			if err != nil {
-				fmt.Printf("Error occurred while checking for Pod Events '%s'\n‚", err)
+				fmt.Printf("Error occurred while searching for Pod Events '%s'\n‚", err)
 			}
 			if events != "" {
 				fmt.Printf("Status '%s'", events)
