@@ -62,7 +62,7 @@ func execCmd(cmd *exec.Cmd, inputText string, verbose bool) (string, error) {
 		if verbose {
 			fmt.Printf("\nExecuted command:\n  kubectl %s\nwith output:\n  %s\nand error:\n  %s\n", inputText, string(out), err)
 		}
-		return unquotedOut, fmt.Errorf("Failed executing kubectl command 'kubectl %s' with output '%s' and error message '%s'", inputText, out, err)
+		return unquotedOut, fmt.Errorf("Failed executing kubectl 'kubectl %s' command  with output '%s' and error message '%s'", inputText, out, err)
 	}
 	if verbose {
 		fmt.Printf("\nExecuted command:\n  kubectl %s\nwith output:\n  %s\n", inputText, string(out))
@@ -177,7 +177,7 @@ func IsPodReady(namespace string, labelName string, labelValue string, verbose b
 		if containerStatus != "true" {
 			events, err := RunCmd(verbose, "get", "event", "-n", namespace, "-o", "go-template='{{range .items}}{{if eq .involvedObject.name \"'"+pod+"'\"}}{{.message}}{{\"\\n\"}}{{end}}{{end}}'")
 			if err != nil {
-				fmt.Printf("Error while checking for pod events '%s'\n‚", err)
+				fmt.Printf("Error occurred while searching for Pod Events '%s'\n‚", err)
 			}
 			if events != "" {
 				fmt.Printf("Status '%s'", events)
@@ -213,5 +213,5 @@ func CheckVersion(verbose bool) (string, error) {
 		return "", nil
 	}
 
-	return fmt.Sprintf("You are using an unsupported kubectl version '%s'. This may not work. It is recommended to use kubectl version '%s'", version, kubectlVersion), nil
+	return fmt.Sprintf("You are using an unsupported kubectl version '%s'. This may not work. The recommended kubectl version is '%s'", version, kubectlVersion), nil
 }

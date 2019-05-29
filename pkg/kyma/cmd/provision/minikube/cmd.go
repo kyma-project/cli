@@ -79,15 +79,15 @@ func NewOptions(o *core.Options) *MinikubeOptions {
 func NewCmd(o *MinikubeOptions) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "minikube",
-		Short:   "Provisions minikube",
-		Long:    `Provisions minikube for Kyma installation`,
+		Short:   "Provisions Minikube",
+		Long:    `Provisions Minikube for Kyma installation`,
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
 		Aliases: []string{"m"},
 	}
 
 	cmd.Flags().StringVarP(&o.Domain, "domain", "d", "kyma.local", "domain to use")
 	cmd.Flags().StringVar(&o.VMDriver, "vm-driver", defaultVMDriver, "VMDriver to use, possible values are: "+strings.Join(drivers, ","))
-	cmd.Flags().StringVar(&o.HypervVirtualSwitch, "hypervVirtualSwitch", "", "Name of the hyperv switch to use, required if --vm-driver=hyperv")
+	cmd.Flags().StringVar(&o.HypervVirtualSwitch, "hypervVirtualSwitch", "", "Name of the hyperv switch, required if --vm-driver=hyperv")
 	cmd.Flags().StringVar(&o.DiskSize, "disk-size", "30g", "Disk size to use")
 	cmd.Flags().StringVar(&o.Memory, "memory", "8192", "Memory to use")
 	cmd.Flags().StringVar(&o.CPU, "cpu", "4", "CPUs to use")
@@ -102,11 +102,11 @@ func (o *MinikubeOptions) Run() error {
 		s.Failure()
 		return err
 	}
-	s.Successf("Requirements are fine")
+	s.Successf("Requirements verified")
 
-	s.LogInfof("Preparing minikube using domain '%s' and vm-driver '%s'", o.Domain, o.VMDriver)
+	s.LogInfof("Preparing Minikube using domain '%s' and vm-driver '%s'", o.Domain, o.VMDriver)
 
-	s = o.NewStep("Check minikube status")
+	s = o.NewStep("Check Minikube status")
 	err = checkIfMinikubeIsInitialized(o, s)
 	switch err {
 	case ErrMinikubeRunning, nil:
@@ -115,9 +115,9 @@ func (o *MinikubeOptions) Run() error {
 		s.Failure()
 		return err
 	}
-	s.Successf("Minikube status is fine")
+	s.Successf("Minikube status verified")
 
-	s = o.NewStep(fmt.Sprintf("Initializing minikube config"))
+	s = o.NewStep(fmt.Sprintf("Initializing Minikube config"))
 	err = initializeMinikubeConfig(o)
 	if err != nil {
 		s.Failure()
@@ -125,15 +125,15 @@ func (o *MinikubeOptions) Run() error {
 	}
 	s.Successf("Minikube config initialized")
 
-	s = o.NewStep(fmt.Sprintf("Create minikube instance"))
-	s.Status("Start minikube")
+	s = o.NewStep(fmt.Sprintf("Create Minikube instance"))
+	s.Status("Start Minikube")
 	err = startMinikube(o)
 	if err != nil {
 		s.Failure()
 		return err
 	}
 
-	s.Status("Await minikube to be up and running")
+	s.Status("Wait for Minikube to be up and running")
 	err = waitForMinikubeToBeUp(o, s)
 	if err != nil {
 		s.Failure()
@@ -147,7 +147,7 @@ func (o *MinikubeOptions) Run() error {
 		return err
 	}
 
-	s.Status("Await kube-dns to be up and running")
+	s.Status("Wait for kube-dns to be up and running")
 
 	err = kubectl.WaitForPodReady("kube-system", "k8s-app", "kube-dns", o.Verbose)
 	if err != nil {
@@ -161,7 +161,7 @@ func (o *MinikubeOptions) Run() error {
 		return err
 	}
 
-	s = o.NewStep(fmt.Sprintf("Adjusting minikube cluster"))
+	s = o.NewStep(fmt.Sprintf("Adjusting Minikube cluster"))
 	s.Status("Increase fs.inotify.max_user_instances")
 	err = increaseFsInotifyMaxUserInstances(o)
 	if err != nil {
@@ -187,11 +187,11 @@ func (o *MinikubeOptions) Run() error {
 func checkRequirements(o *MinikubeOptions, s step.Step) error {
 	if !driverSupported(o.VMDriver) {
 		s.Failure()
-		return fmt.Errorf("Specified VMDriver '%s' is not supported by minikube", o.VMDriver)
+		return fmt.Errorf("Specified VMDriver '%s' is not supported by Minikube", o.VMDriver)
 	}
 	if o.VMDriver == vmDriverHyperv && o.HypervVirtualSwitch == "" {
 		s.Failure()
-		return fmt.Errorf("Specified VMDriver '%s' requires option --hypervVirtualSwitch to be provided", vmDriverHyperv)
+		return fmt.Errorf("Specified VMDriver '%s' requires the --hypervVirtualSwitch option", vmDriverHyperv)
 	}
 
 	versionWarning, err := minikube.CheckVersion(o.Verbose)
@@ -221,7 +221,7 @@ func checkIfMinikubeIsInitialized(o *MinikubeOptions, s step.Step) error {
 		var answer string
 		var err error
 		if !o.NonInteractive {
-			answer, err = s.Prompt("Do you want to remove previous minikube cluster [y/N]: ")
+			answer, err = s.Prompt("Do you want to remove the existing Minikube cluster? [y/N]: ")
 			if err != nil {
 				return err
 			}
