@@ -35,7 +35,6 @@ Use the following syntax to run the commands from your terminal:
 
 ```
 kyma {COMMAND} {FLAGS}
-
 ```
 where:
 
@@ -46,7 +45,6 @@ Example:
 
 ```
 kyma install --verbose
-
 ```
 
 Further usage examples include:
@@ -83,7 +81,7 @@ Further usage examples include:
 
 ### Kyma CLI as a kubectl plugin
 
-> **NOTE**: To use Kyma CLI as a kubectl plugin, your Kubernetes version must be 1.12.0 or higher.
+> **NOTE**: To use Kyma CLI as a kubectl plugin, use Kubernetes version 1.12.0 or higher.
 
 A plugin is a standalone executable file with a name prefixed with `kubectl-` . To use the plugin perform the following steps:
 
