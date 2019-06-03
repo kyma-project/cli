@@ -13,6 +13,7 @@ import (
 	"k8s.io/helm/pkg/helm/environment"
 	"k8s.io/helm/pkg/helm/helmpath"
 	helm_release "k8s.io/helm/pkg/proto/hapi/release"
+	"k8s.io/apimachinery/pkg/api/errors"
 )
 
 type command struct {
@@ -26,6 +27,12 @@ var namespacesToClean = []string{
 	"kyma-integration",
 	"knative-serving",
 }
+
+const (
+	testingBundlesRepoName      = "testing-bundles-repos"
+	testingBundlesRepoNamespace = "kyma-system"
+	testingBundlesRepoVersion   = "0.6.0"
+)
 
 //NewTestCmd creates a new install command
 func NewTestCmd(o *options) *cobra.Command {
@@ -74,6 +81,11 @@ func (c *command) Run() error {
 			return err
 		}
 	}
+
+	if err := c.setUp(); err != nil {
+		return err
+	}
+	defer c.tearDown()
 
 	for _, component := range components {
 		release := component.Name
@@ -148,4 +160,31 @@ func (c *command) testRelease(client helm.Interface, s step.Step, release string
 			s.Status(res.Msg)
 		}
 	}
+}
+
+func (c *command) setUp() error {
+	s := c.NewStep(
+		fmt.Sprintf("Creating testing bundles repository `%s` in namespace %s", testingBundlesRepoName, testingBundlesRepoNamespace),
+	)
+	s.Start()
+	_, err := c.Kubectl().RunCmd("create", "configmap", testingBundlesRepoName, "-n", testingBundlesRepoNamespace, fmt.Sprintf("--from-literal=URLs=https://github.com/kyma-project/bundles/releases/download/%s/index-testing.yaml", testingBundlesRepoVersion))
+	if err != nil && !errors.IsAlreadyExists(err) {
+		s.Failure()
+		return err
+	}
+	s.Success()
+	return nil
+}
+
+func (c *command) tearDown() {
+	s := c.NewStep(
+		fmt.Sprintf("Deleting testing bundles repository `%s` from namespace %s", testingBundlesRepoName, testingBundlesRepoNamespace),
+	)
+	s.Start()
+	_, err := c.Kubectl().RunCmd("delete", "configmap", testingBundlesRepoName, "-n", testingBundlesRepoNamespace)
+	if err != nil && !errors.IsNotFound(err) {
+		s.Status(err.Error())
+		s.Failure()
+	}
+	s.Success()
 }
