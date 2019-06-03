@@ -24,9 +24,9 @@ func TestRunCmd(t *testing.T) {
 		{
 			name:           "Incorrect command",
 			description:    "test a command that exits with error",
-			cmd:            []string{"mkdir", "/no-permission"},
+			cmd:            []string{"ehco", "this is wrongly spelled"},
 			expectedOutput: "",
-			expectedErr:    errors.New("Failed executing command 'mkdir [/no-permission]' with output 'mkdir: /no-permission: Permission denied\n' and error message 'exit status 1'"),
+			expectedErr:    errors.New("Failed executing command 'ehco [this is wrongly spelled]' with output '' and error message 'exec: \"ehco\": executable file not found in $PATH'"),
 		},
 		{
 			name:           "Strip ' character",
