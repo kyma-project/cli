@@ -34,12 +34,12 @@ func promptUser() bool {
 	}
 }
 
-func addDevDomainsToEtcHostsOSSpecific(o *MinikubeOptions, s step.Step, hostAlias string) error {
+func addDevDomainsToEtcHostsOSSpecific(domain string, s step.Step, hostAlias string) error {
 	notifyUserFunc := func(err error) {
 		if err != nil {
 			s.LogInfof("Error: %s", err.Error())
 		}
-		s.LogInfof("Execute the following command manually to add domain entries:\n###\n sudo sed -i '' \"/"+o.Domain+"/d\" "+hostsFile+" && echo '%s' | sudo tee -a /etc/hosts\r\n###\n", hostAlias)
+		s.LogInfof("Execute the following command manually to add domain entries:\n###\n sudo sed -i '' \"/"+domain+"/d\" "+hostsFile+" && echo '%s' | sudo tee -a /etc/hosts\r\n###\n", hostAlias)
 	}
 
 	s.LogInfo("Adding domain mappings to your 'hosts' file")
@@ -53,7 +53,7 @@ func addDevDomainsToEtcHostsOSSpecific(o *MinikubeOptions, s step.Step, hostAlia
 	_, err := internal.RunCmd("sudo",
 		"sed", "-i",
 		"''",
-		fmt.Sprintf("/%s/d", o.Domain),
+		fmt.Sprintf("/%s/d", domain),
 		hostsFile)
 	if err != nil {
 		notifyUserFunc(err)

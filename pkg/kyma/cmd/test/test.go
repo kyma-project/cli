@@ -1,4 +1,4 @@
-package cmd
+package test
 
 import (
 	"bytes"
@@ -6,7 +6,6 @@ import (
 
 	kyma_helm "github.com/kyma-project/cli/internal/helm"
 	"github.com/kyma-project/cli/internal/installer"
-	"github.com/kyma-project/cli/internal/kubectl"
 	"github.com/kyma-project/cli/internal/step"
 	"github.com/kyma-project/cli/pkg/kyma/core"
 	"github.com/spf13/cobra"
@@ -16,13 +15,9 @@ import (
 	helm_release "k8s.io/helm/pkg/proto/hapi/release"
 )
 
-type TestOptions struct {
-	*core.Options
-	skip []string
-}
-
-func NewTestOptions(o *core.Options) *TestOptions {
-	return &TestOptions{Options: o}
+type command struct {
+	opts *options
+	core.Command
 }
 
 var namespacesToClean = []string{
@@ -33,12 +28,17 @@ var namespacesToClean = []string{
 }
 
 //NewTestCmd creates a new install command
-func NewTestCmd(o *TestOptions) *cobra.Command {
+func NewTestCmd(o *options) *cobra.Command {
+	c := command{
+		Command: core.Command{Options: o.Options},
+		opts:    o,
+	}
+
 	cmd := &cobra.Command{
 		Use:   "test",
 		Short: "test kyma installation",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return o.Run()
+			return c.Run()
 		},
 	}
 
@@ -46,14 +46,14 @@ func NewTestCmd(o *TestOptions) *cobra.Command {
 	return cmd
 }
 
-func (o *TestOptions) Run() error {
+func (c *command) Run() error {
 	helmHome, err := kyma_helm.Home()
 	if err != nil {
 		return err
 	}
 
 	helmConfig := &environment.EnvSettings{Debug: true, TillerConnectionTimeout: 300, TLSEnable: true, TLSVerify: false, Home: helmpath.Home(helmHome)}
-	kubeConfig, err := o.GetKubeconfig()
+	kubeConfig, err := c.GetKubeconfig()
 	if err != nil {
 		return err
 	}
@@ -69,7 +69,7 @@ func (o *TestOptions) Run() error {
 	}
 
 	for _, namespace := range namespacesToClean {
-		err := o.cleanHelmTestPods(namespace)
+		err := c.cleanHelmTestPods(namespace)
 		if err != nil {
 			return err
 		}
@@ -77,17 +77,17 @@ func (o *TestOptions) Run() error {
 
 	for _, component := range components {
 		release := component.Name
-		s := o.NewStep(fmt.Sprintf("Testing release %s", release))
+		s := c.NewStep(fmt.Sprintf("Testing release %s", release))
 		s.Start()
 
-		if o.skipRelease(helmClient, release) {
+		if c.skipRelease(helmClient, release) {
 			s.Successf("Skipping release %s", release)
 			continue
 		}
 
-		msg, success, err := o.testRelease(helmClient, s, release)
+		msg, success, err := c.testRelease(helmClient, s, release)
 		s.Stop(success)
-		if msg != "" && (!success || o.Verbose) {
+		if msg != "" && (!success || c.opts.Verbose) {
 			fmt.Println("--- Log ---")
 			fmt.Print(msg)
 			fmt.Println("---")
@@ -100,8 +100,8 @@ func (o *TestOptions) Run() error {
 	return nil
 }
 
-func (o *TestOptions) skipRelease(client helm.Interface, release string) bool {
-	for _, skipped := range o.skip {
+func (c *command) skipRelease(client helm.Interface, release string) bool {
+	for _, skipped := range c.opts.skip {
 		if skipped == release {
 			return true
 		}
@@ -110,13 +110,13 @@ func (o *TestOptions) skipRelease(client helm.Interface, release string) bool {
 	return false
 }
 
-func (o *TestOptions) cleanHelmTestPods(namespace string) error {
-	s := o.NewStep(
+func (c *command) cleanHelmTestPods(namespace string) error {
+	s := c.NewStep(
 		fmt.Sprintf("Cleaning up helm test pods in namespace %s", namespace),
 	)
 	s.Start()
 
-	_, err := kubectl.RunCmd(o.Verbose, "delete", "pod", "-n", namespace, "-l", "helm-chart-test=true")
+	_, err := c.Kubectl().RunCmd("delete", "pod", "-n", namespace, "-l", "helm-chart-test=true")
 	if err != nil {
 		s.Failure()
 		return err
@@ -126,8 +126,8 @@ func (o *TestOptions) cleanHelmTestPods(namespace string) error {
 	return nil
 }
 
-func (o *TestOptions) testRelease(client helm.Interface, s step.Step, release string) (string, bool, error) {
-	c, errc := client.RunReleaseTest(release, helm.ReleaseTestTimeout(600))
+func (c *command) testRelease(client helm.Interface, s step.Step, release string) (string, bool, error) {
+	ch, errc := client.RunReleaseTest(release, helm.ReleaseTestTimeout(600))
 	out := &bytes.Buffer{}
 	failed := 0
 	for {
@@ -136,7 +136,7 @@ func (o *TestOptions) testRelease(client helm.Interface, s step.Step, release st
 			if err != nil {
 				return out.String(), false, err
 			}
-		case res, ok := <-c:
+		case res, ok := <-ch:
 			if !ok {
 				return out.String(), failed == 0, nil
 			}

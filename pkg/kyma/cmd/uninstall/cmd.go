@@ -10,7 +10,6 @@ import (
 	"github.com/kyma-project/cli/pkg/kyma/core"
 	"github.com/pkg/errors"
 
-	"github.com/kyma-project/cli/internal/kubectl"
 	"github.com/spf13/cobra"
 )
 
@@ -134,7 +133,7 @@ func (cmd *command) Run() error {
 }
 
 func (cmd *command) checkUninstallRequirements() error {
-	versionWarning, err := kubectl.CheckVersion(cmd.Options.Verbose)
+	versionWarning, err := cmd.Kubectl().CheckVersion()
 	if err != nil {
 		cmd.CurrentStep.Failure()
 		return err
