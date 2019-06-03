@@ -2,7 +2,7 @@
 
 ## Overview
 
-Kyma CLI is a command line tool which supports [Kyma](https://github.com/kyma-project/kyma) developers. It provides a set of commands you can use to install and test Kyma. 
+Kyma CLI is a command line tool which supports [Kyma](https://github.com/kyma-project/kyma) developers. It provides a set of commands you can use to install Kyma. 
 
 ## Prerequisites
 
@@ -25,7 +25,6 @@ Kyma CLI comes with a set of commands:
 - `install` installs Kyma to a cluster based on the current release. It replaces the `ìnstaller.sh` and `is-installed.sh` script. 
 - `uninstall` uninstalls all Kyma-related resources from a cluster.
 - `completion` generates and shows the bash completion script.
-- `test` triggers and reports the tests for every Kyma module.
 - `help` displays and explains the usage of a given command.
 
 
@@ -70,11 +69,6 @@ Further usage examples include:
     kyma provision minikube --vm-driver hyperv --hypervVirtualSwitch {YOUR_SWITCH_NAME}
     # follow instructions to add hosts
     kyma install
-    ```
-
- * Run tests on Kyma:
-    ```bash
-    kyma test
     ```
 
 ## Development
