@@ -65,35 +65,3 @@ func TestHome(t *testing.T) {
 		})
 	}
 }
-
-func TestCLientClose(t *testing.T) {
-	cases := []struct {
-		name        string
-		description string
-		c           *Client
-	}{
-		{
-			name:        "Close client",
-			description: "Close a regular client",
-			c: &Client{
-				forwarder: make(chan<- struct{}),
-			},
-		},
-		{
-			name:        "Close empty client",
-			description: "Close an empty client",
-			c:           &Client{},
-		},
-		{
-			name:        "Close nil client",
-			description: "Close a nil client",
-			c:           nil,
-		},
-	}
-
-	for _, test := range cases {
-		t.Run(test.name, func(t *testing.T) {
-			require.NotPanics(t, test.c.Close, test.description)
-		})
-	}
-}
