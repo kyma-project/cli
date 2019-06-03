@@ -154,7 +154,7 @@ func (o *MinikubeOptions) Run() error {
 		s.Failure()
 		return err
 	}
-	s.Successf("Minukube up and running")
+	s.Successf("Minikube up and running")
 
 	err = addDevDomainsToEtcHosts(o, s)
 	if err != nil {
