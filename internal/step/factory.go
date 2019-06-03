@@ -8,7 +8,7 @@ type Factory struct {
 
 func (f *Factory) NewStep(msg string) Step {
 	if f.NonInteractive || runtime.GOOS != "darwin" {
-		return NewSimpleStep(msg)
+		return newSimpleStep(msg)
 	}
-	return NewStepWithSpinner(msg)
+	return newStepWithSpinner(msg)
 }

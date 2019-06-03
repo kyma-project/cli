@@ -9,7 +9,7 @@ import (
 	"github.com/kyma-project/cli/internal/step"
 )
 
-func addDevDomainsToEtcHostsOSSpecific(o *MinikubeOptions, s step.Step, hostAlias string) error {
+func addDevDomainsToEtcHostsOSSpecific(domain string, s step.Step, hostAlias string) error {
 
 	s.LogErrorf("Please add these lines to your " + hostsFile + " file:")
 	hostsArray := strings.Split(hostAlias, " ")

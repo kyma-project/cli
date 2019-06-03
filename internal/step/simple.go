@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func NewSimpleStep(msg string) Step {
+func newSimpleStep(msg string) Step {
 	return &simpleStep{msg}
 }
 

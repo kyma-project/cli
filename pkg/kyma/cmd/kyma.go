@@ -6,6 +6,7 @@ import (
 	"github.com/kyma-project/cli/pkg/kyma/cmd/uninstall"
 
 	"github.com/kyma-project/cli/pkg/kyma/cmd/provision"
+	"github.com/kyma-project/cli/pkg/kyma/cmd/test"
 	"github.com/kyma-project/cli/pkg/kyma/core"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/tools/clientcmd"
@@ -47,7 +48,7 @@ Find more information at: https://github.com/kyma-project/cli
 	uninstallCmd := uninstall.NewCmd(uninstall.NewOptions(o))
 	cmd.AddCommand(uninstallCmd)
 
-	testCmd := NewTestCmd(NewTestOptions(o))
+	testCmd := test.NewTestCmd(test.NewTestOptions(o))
 	cmd.AddCommand(testCmd)
 
 	return cmd

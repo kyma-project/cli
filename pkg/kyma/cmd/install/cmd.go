@@ -227,7 +227,7 @@ func (cmd *command) installTiller() error {
 }
 
 func (cmd *command) configureHelm() error {
-	helmHome, err := helm.GetHelmHome()
+	helmHome, err := helm.Home()
 	if err != nil {
 		return err
 	}

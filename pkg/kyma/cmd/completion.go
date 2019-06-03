@@ -15,12 +15,12 @@ func NewCompletionCmd() *cobra.Command {
 interactive completion of commands. This can be done by sourcing it from the .bash _profile.
 To load completion run
 
-. <(bitbucket completion)
+. <(kyma completion)
 
 To configure your bash shell to load completions for each session add to your bashrc
 
 # ~/.bashrc or ~/.profile
-. <(bitbucket completion)
+. <(kyma completion)
 `,
 		RunE:    completion,
 		Aliases: []string{},
