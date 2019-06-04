@@ -49,10 +49,10 @@ install:
 local: validate test install
 
 .PHONY: ci-pr
-ci-pr: resolve validate build test integration-test archive
+ci-pr: resolve validate build test integration-test
 
 .PHONY: ci-master
-ci-master: resolve validate build test integration-test archive
+ci-master: resolve validate build test integration-test
 
 .PHONY: ci-release
 ci-release: resolve validate build test integration-test archive
