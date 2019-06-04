@@ -1,11 +1,11 @@
 .DEFAULT_GOAL := local
 
+RELEASE_VERSION=v1.1.0-rc1
 ifndef VERSION
 	VERSION = ${shell git describe --tags --always}
 endif
 
 FLAGS = -ldflags '-X github.com/kyma-project/cli/pkg/kyma/cmd.Version=$(VERSION)'
-
 
 .PHONY: resolve
 resolve: 
@@ -36,6 +36,12 @@ integration-test:
 archive:
 	cp -r bin/* $(ARTIFACTS)
 
+.PHONY: release
+release:
+	git tag -a $(RELEASE_VERSION) -m "Release $(RELEASE_VERSION)"
+	git push origin $(RELEASE_VERSION)
+	curl -sL https://git.io/goreleaser | bash
+
 .PHONY: clean
 clean:
 	rm -rf bin
@@ -55,6 +61,5 @@ ci-pr: resolve validate build test integration-test
 ci-master: resolve validate build test integration-test
 
 .PHONY: ci-release
-ci-release: resolve validate build test integration-test archive
-
+ci-release: resolve validate build test integration-test archive release
 
