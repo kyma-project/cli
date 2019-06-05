@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -316,6 +317,18 @@ func (cmd *command) installInstaller() error {
 	return nil
 }
 
+func (cmd *command) downloadFile(path string) ([]byte, error) {
+	resp, err := http.Get(path)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var result []byte
+	_, err = io.ReadFull(resp.Body, result)
+	return result, nil
+}
+
 func (cmd *command) installInstallerFromRelease() error {
 	relaseURL := cmd.releaseFile("kyma-installer-local.yaml")
 	_, err := cmd.Kubectl().RunCmd("apply", "-f", relaseURL)
@@ -332,6 +345,7 @@ func (cmd *command) configureInstallerFromRelease() error {
 		configURL = cmd.opts.ReleaseConfig
 	}
 
+	//TODO: Download file from release by tag, aggregate, remote action label, apply.
 	_, err := cmd.Kubectl().RunCmd("apply", "-f", configURL)
 	if err != nil {
 		return err
@@ -357,6 +371,16 @@ func (cmd *command) configureInstallerFromRelease() error {
 
 func (cmd *command) installInstallerFromLocalSources() error {
 	localResources, err := cmd.loadLocalResources()
+	if err != nil {
+		return err
+	}
+
+	err = cmd.removeActionLabel(localResources)
+	if err != nil {
+		return err
+	}
+
+	err = cmd.createInstallationNamespace(localResources)
 	if err != nil {
 		return err
 	}
@@ -425,6 +449,38 @@ func (cmd *command) findInstallerImageName(resources []map[string]interface{}) (
 	return "", errors.New("'kyma-installer' deployment is missing")
 }
 
+func (cmd *command) createInstallationNamespace(resources []map[string]interface{}) error {
+	for _, res := range resources {
+		kind, ok := res["kind"]
+		if !ok {
+			continue
+		}
+
+		if kind != "Installation" {
+			continue
+		}
+
+		meta, ok := res["metadata"].(map[interface{}]interface{})
+		if !ok {
+			continue
+		}
+
+		namespace, ok := meta["namespace"].(string)
+		if !ok {
+			return errors.New("installation file contains no 'namespace' information")
+		}
+
+		_, err := cmd.Kubectl().RunCmd("create", "namespace", namespace)
+		if err != nil {
+			return err
+		}
+
+		return nil
+
+	}
+	return errors.New("unable to find 'installation' resource")
+}
+
 func (cmd *command) loadLocalResources() ([]map[string]interface{}, error) {
 	resources := make([]map[string]interface{}, 0)
 
@@ -444,6 +500,38 @@ func (cmd *command) loadLocalResources() ([]map[string]interface{}, error) {
 	}
 
 	return resources, nil
+}
+
+func (cmd *command) removeActionLabel(acc []map[string]interface{}) error {
+	for _, config := range acc {
+		kind, ok := config["kind"]
+		if !ok {
+			continue
+		}
+
+		if kind != "Installation" {
+			continue
+		}
+
+		meta, ok := config["metadata"].(map[interface{}]interface{})
+		if !ok {
+			return errors.New("Installation contains no METADATA section")
+		}
+
+		labels, ok := meta["labels"].(map[interface{}]interface{})
+		if !ok {
+			return errors.New("Installation contains no LABELS section")
+		}
+
+		_, ok = labels["action"].(string)
+		if !ok {
+			return nil
+		}
+
+		delete(labels, "action")
+
+	}
+	return nil
 }
 
 func (cmd *command) loadInstallationResourcesFile(name string, acc []map[string]interface{}) ([]map[string]interface{}, error) {
