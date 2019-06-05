@@ -1,6 +1,5 @@
 .DEFAULT_GOAL := local
 
-RELEASE_VERSION=v1.1.0-rc1
 ifndef VERSION
 	VERSION = ${shell git describe --tags --always}
 endif
@@ -38,8 +37,7 @@ archive:
 
 .PHONY: release
 release:
-	git tag -a $(RELEASE_VERSION) -m "Release $(RELEASE_VERSION)"
-	git push origin $(RELEASE_VERSION)
+	export GITHUB_TOKEN="$(BOT_GITHUB_TOKEN)"
 	curl -sL https://git.io/goreleaser | bash
 
 .PHONY: clean
