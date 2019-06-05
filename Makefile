@@ -37,7 +37,7 @@ archive:
 
 .PHONY: release
 release:
-	export GITHUB_TOKEN="$(BOT_GITHUB_TOKEN)"
+	@export GITHUB_TOKEN="$(BOT_GITHUB_TOKEN)"
 	curl -sL https://git.io/goreleaser | bash
 
 .PHONY: clean
