@@ -6,7 +6,6 @@ endif
 
 FLAGS = -ldflags '-X github.com/kyma-project/cli/pkg/kyma/cmd.Version=$(VERSION)'
 
-
 .PHONY: resolve
 resolve: 
 	dep ensure -vendor-only -v
@@ -36,6 +35,11 @@ integration-test:
 archive:
 	cp -r bin/* $(ARTIFACTS)
 
+.PHONY: release
+release:
+	export GITHUB_TOKEN="$(BOT_GITHUB_TOKEN)"
+	curl -sL https://git.io/goreleaser | bash
+
 .PHONY: clean
 clean:
 	rm -rf bin
@@ -55,6 +59,5 @@ ci-pr: resolve validate build test integration-test
 ci-master: resolve validate build test integration-test
 
 .PHONY: ci-release
-ci-release: resolve validate build test integration-test archive
-
+ci-release: resolve validate build test integration-test archive release
 
