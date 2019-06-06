@@ -30,9 +30,9 @@ type command struct {
 }
 
 const (
-	sleep                = 10 * time.Second
-	releaseSrcUrlPattern = "https://raw.githubusercontent.com/kyma-project/kyma/%s/%s"
-	releaseUrlPattern    = "https://github.com/kyma-project/kyma/releases/download/%s/%s"
+	sleep                  = 10 * time.Second
+	releaseSrcUrlPattern   = "https://raw.githubusercontent.com/kyma-project/kyma/%s/%s"
+	releaseResourcePattern = "https://raw.githubusercontent.com/kyma-project/kyma/%s/installation/resources/%s"
 )
 
 var (
@@ -299,10 +299,6 @@ func (cmd *command) installInstaller() error {
 			err = cmd.installInstallerFromLocalSources()
 		} else {
 			err = cmd.installInstallerFromRelease()
-			if err != nil {
-				return err
-			}
-			err = cmd.configureInstallerFromRelease()
 		}
 		if err != nil {
 			return err
@@ -317,36 +313,29 @@ func (cmd *command) installInstaller() error {
 	return nil
 }
 
-func (cmd *command) downloadFile(path string) ([]byte, error) {
-	resp, err := http.Get(path)
+func (cmd *command) downloadFile(path string) (io.ReadCloser, error) {
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+	}
+	resp, err := client.Get(path)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
-
-	var result []byte
-	_, err = io.ReadFull(resp.Body, result)
-	return result, nil
+	return resp.Body, nil
 }
 
 func (cmd *command) installInstallerFromRelease() error {
-	relaseURL := cmd.releaseFile("kyma-installer-local.yaml")
-	_, err := cmd.Kubectl().RunCmd("apply", "-f", relaseURL)
+	remoteResources, err := cmd.loadResources(false)
 	if err != nil {
 		return err
 	}
 
-	return nil
-}
-
-func (cmd *command) configureInstallerFromRelease() error {
-	configURL := cmd.releaseFile("/kyma-config-local.yaml")
-	if cmd.opts.ReleaseConfig != "" {
-		configURL = cmd.opts.ReleaseConfig
+	err = cmd.removeActionLabel(remoteResources)
+	if err != nil {
+		return err
 	}
 
-	//TODO: Download file from release by tag, aggregate, remote action label, apply.
-	_, err := cmd.Kubectl().RunCmd("apply", "-f", configURL)
+	_, err = cmd.Kubectl().RunApplyCmd(remoteResources)
 	if err != nil {
 		return err
 	}
@@ -370,17 +359,12 @@ func (cmd *command) configureInstallerFromRelease() error {
 }
 
 func (cmd *command) installInstallerFromLocalSources() error {
-	localResources, err := cmd.loadLocalResources()
+	localResources, err := cmd.loadResources(true)
 	if err != nil {
 		return err
 	}
 
 	err = cmd.removeActionLabel(localResources)
-	if err != nil {
-		return err
-	}
-
-	err = cmd.createInstallationNamespace(localResources)
 	if err != nil {
 		return err
 	}
@@ -456,7 +440,7 @@ func (cmd *command) createInstallationNamespace(resources []map[string]interface
 			continue
 		}
 
-		if kind != "Installation" {
+		if kind != "Namespace" {
 			continue
 		}
 
@@ -465,7 +449,7 @@ func (cmd *command) createInstallationNamespace(resources []map[string]interface
 			continue
 		}
 
-		namespace, ok := meta["namespace"].(string)
+		namespace, ok := meta["name"].(string)
 		if !ok {
 			return errors.New("installation file contains no 'namespace' information")
 		}
@@ -481,20 +465,22 @@ func (cmd *command) createInstallationNamespace(resources []map[string]interface
 	return errors.New("unable to find 'installation' resource")
 }
 
-func (cmd *command) loadLocalResources() ([]map[string]interface{}, error) {
+func (cmd *command) loadResources(isLocal bool) ([]map[string]interface{}, error) {
 	resources := make([]map[string]interface{}, 0)
-
-	resources, err := cmd.loadInstallationResourcesFile("installer-local.yaml", resources)
+	resources, err := cmd.loadInstallationResourceFile("installer-local.yaml",
+		isLocal, resources)
 	if err != nil {
 		return nil, err
 	}
 
-	resources, err = cmd.loadInstallationResourcesFile("installer-config-local.yaml.tpl", resources)
+	resources, err = cmd.loadInstallationResourceFile("installer-config-local.yaml.tpl",
+		isLocal, resources)
 	if err != nil {
 		return nil, err
 	}
 
-	resources, err = cmd.loadInstallationResourcesFile("installer-cr.yaml.tpl", resources)
+	resources, err = cmd.loadInstallationResourceFile("installer-cr.yaml.tpl",
+		isLocal, resources)
 	if err != nil {
 		return nil, err
 	}
@@ -534,14 +520,28 @@ func (cmd *command) removeActionLabel(acc []map[string]interface{}) error {
 	return nil
 }
 
-func (cmd *command) loadInstallationResourcesFile(name string, acc []map[string]interface{}) ([]map[string]interface{}, error) {
-	path := filepath.Join(cmd.opts.LocalSrcPath, "installation", "resources", name)
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, err
+func (cmd *command) loadInstallationResourceFile(resourcePath string, local bool,
+	acc []map[string]interface{}) ([]map[string]interface{}, error) {
+
+	var yamlReader io.ReadCloser
+	var err error
+
+	if !local {
+		yamlReader, err = cmd.downloadFile(cmd.releaseFile(resourcePath))
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		path := filepath.Join(cmd.opts.LocalSrcPath, "installation",
+			"resources", resourcePath)
+		yamlReader, err = os.Open(path)
+		if err != nil {
+			return nil, err
+		}
 	}
-	defer f.Close()
-	dec := yaml.NewDecoder(f)
+	defer yamlReader.Close()
+
+	dec := yaml.NewDecoder(yamlReader)
 	for {
 		m := make(map[string]interface{})
 		err := dec.Decode(m)
@@ -806,7 +806,7 @@ func (cmd *command) releaseSrcFile(path string) string {
 }
 
 func (cmd *command) releaseFile(path string) string {
-	return fmt.Sprintf(releaseUrlPattern, cmd.opts.ReleaseVersion, path)
+	return fmt.Sprintf(releaseResourcePattern, cmd.opts.ReleaseVersion, path)
 }
 
 func (cmd *command) patchMinikubeIP() error {
