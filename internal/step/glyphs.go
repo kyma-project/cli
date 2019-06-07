@@ -1,7 +1,7 @@
 package step
 
 var (
-	successGlyph  = "✓ "
+	successGlyph  = "- "
 	failureGlyph  = "X "
 	warningGlyph  = "! "
 	questionGlyph = "? "
