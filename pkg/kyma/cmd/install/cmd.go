@@ -37,7 +37,6 @@ const (
 	releaseSrcUrlPattern   = "https://raw.githubusercontent.com/kyma-project/kyma/%s/%s"
 	releaseResourcePattern = "https://raw.githubusercontent.com/kyma-project/kyma/%s/installation/resources/%s"
 	registryMasterPattern  = "eu.gcr.io/kyma-project/develop/kyma-installer:master-%s"
-	registryReleasePattern = "eu.gcr.io/kyma-project/kyma-installer:%s"
 )
 
 var (
@@ -337,6 +336,9 @@ func (cmd *command) getMasterHash() (string, error) {
 			Depth: 1,
 			URL:   "https://github.com/kyma-project/kyma",
 		})
+	if err != nil {
+		return "", err
+	}
 	h, err := r.Head()
 	if err != nil {
 		return "", err

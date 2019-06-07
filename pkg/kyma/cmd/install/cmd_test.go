@@ -60,7 +60,7 @@ func Test_RemoveActionLabel(t *testing.T) {
 			if tt.shouldFail {
 				t.Logf("\r\nResult:\t%v\r\nExpected:\t%v\r\n", tt.data,
 					tt.expectedResult)
-				t.Fatal("Test failed but it is expected not to: ", err.Error())
+				t.Fatal("Test failed but it is expected not to")
 			}
 		}
 
