@@ -1,6 +1,8 @@
 package step
 
-import "runtime"
+import (
+	"runtime"
+)
 
 type Factory struct {
 	NonInteractive bool
