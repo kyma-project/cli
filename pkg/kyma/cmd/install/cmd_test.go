@@ -1,8 +1,9 @@
 package install
 
 import (
-	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func Test_RemoveActionLabel(t *testing.T) {
@@ -38,6 +39,30 @@ func Test_RemoveActionLabel(t *testing.T) {
 			},
 			shouldFail: false,
 		},
+		{
+			testName: "incorrect data test",
+			data: []map[string]interface{}{
+				{
+					"apiVersion": "installer.kyma-project.io/v1alpha1",
+					"kind":       "Installation",
+					"metadata": map[interface{}]interface{}{
+						"name":   "kyma-installation",
+						"labels": map[interface{}]interface{}{},
+					},
+				},
+			},
+			expectedResult: []map[string]interface{}{
+				{
+					"apiVersion": "installer.kyma-project.io/v1alpha1",
+					"kind":       "Installation",
+					"metadata": map[interface{}]interface{}{
+						"name":   "kyma-installation",
+						"labels": map[interface{}]interface{}{},
+					},
+				},
+			},
+			shouldFail: true,
+		},
 	}
 
 	cmd := &command{
@@ -46,24 +71,12 @@ func Test_RemoveActionLabel(t *testing.T) {
 
 	for _, tt := range testData {
 		err := cmd.removeActionLabel(tt.data)
-
-		if !reflect.DeepEqual(tt.data, tt.expectedResult) {
-			t.Fatalf("\r\nResult:\t%v\r\nExpected:\t%v\r\n", tt.data,
-				tt.expectedResult)
-		}
-
-		if err != nil {
-			if !tt.shouldFail {
-				t.Fatal("Test expected to fail but it hasn't")
-			}
+		if !tt.shouldFail {
+			require.Nil(t, err, tt.testName)
+			require.Equal(t, tt.data, tt.expectedResult, tt.testName)
 		} else {
-			if tt.shouldFail {
-				t.Logf("\r\nResult:\t%v\r\nExpected:\t%v\r\n", tt.data,
-					tt.expectedResult)
-				t.Fatal("Test failed but it is expected not to")
-			}
+			require.Equal(t, tt.data, tt.expectedResult, tt.testName)
 		}
-
 	}
 }
 
@@ -125,16 +138,11 @@ func Test_ReplaceDockerImageURL(t *testing.T) {
 
 	for _, tt := range testData {
 		res, err := cmd.replaceDockerImageURL(tt.data, replacedWithData)
-		if err != nil {
-			if !tt.shouldFail {
-				t.Fatalf("Test '%s' failed but it shouldn't. Error: %s\r\n",
-					tt.testName, err.Error())
-			}
-		}
-		if !reflect.DeepEqual(res, tt.expectedResult) {
-			if !tt.shouldFail {
-				t.Fatalf("\r\nExpected:\t%v\r\nReceived:\t%v\r\n", tt.expectedResult, res)
-			}
+		if !tt.shouldFail {
+			require.Nil(t, err, tt.testName)
+			require.Equal(t, res, tt.expectedResult, tt.testName)
+		} else {
+			require.NotNil(t, err, tt.testName)
 		}
 	}
 }
