@@ -1,6 +1,7 @@
 package install
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -17,6 +18,8 @@ import (
 	"github.com/kyma-project/cli/internal/helm"
 	"github.com/kyma-project/cli/internal/minikube"
 	"github.com/pkg/errors"
+	"gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/storage/memory"
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/kyma-project/cli/internal"
@@ -33,6 +36,8 @@ const (
 	sleep                  = 10 * time.Second
 	releaseSrcUrlPattern   = "https://raw.githubusercontent.com/kyma-project/kyma/%s/%s"
 	releaseResourcePattern = "https://raw.githubusercontent.com/kyma-project/kyma/%s/installation/resources/%s"
+	registryMasterPattern  = "eu.gcr.io/kyma-project/develop/kyma-installer:master-%s"
+	registryReleasePattern = "eu.gcr.io/kyma-project/kyma-installer:%s"
 )
 
 var (
@@ -324,6 +329,85 @@ func (cmd *command) downloadFile(path string) (io.ReadCloser, error) {
 	return resp.Body, nil
 }
 
+func (cmd *command) getMasterHash() (string, error) {
+	ctx, timeoutF := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer timeoutF()
+	r, err := git.CloneContext(ctx, memory.NewStorage(), nil,
+		&git.CloneOptions{
+			Depth: 1,
+			URL:   "https://github.com/kyma-project/kyma",
+		})
+	h, err := r.Head()
+	if err != nil {
+		return "", err
+	}
+
+	return h.Hash().String()[:8], nil
+}
+
+func (cmd *command) buildDockerImageString(version string) string {
+	return fmt.Sprintf(registryMasterPattern, version)
+}
+
+func (cmd *command) replaceDockerImageURL(resources []map[string]interface{}, imageURL string) ([]map[string]interface{}, error) {
+	for _, config := range resources {
+		kind, ok := config["kind"]
+		if !ok {
+			continue
+		}
+
+		if kind != "Deployment" {
+			continue
+		}
+
+		spec, ok := config["spec"].(map[interface{}]interface{})
+		if !ok {
+			continue
+		}
+
+		template, ok := spec["template"].(map[interface{}]interface{})
+		if !ok {
+			continue
+		}
+
+		spec, ok = template["spec"].(map[interface{}]interface{})
+		if !ok {
+			continue
+		}
+
+		if accName, ok := spec["serviceAccountName"]; !ok {
+			continue
+		} else {
+			if accName != "kyma-installer" {
+				continue
+			}
+		}
+
+		containers, ok := spec["containers"].([]interface{})
+		if !ok {
+			continue
+		}
+		for _, c := range containers {
+			container := c.(map[interface{}]interface{})
+			cName, ok := container["name"]
+			if !ok {
+				continue
+			}
+
+			if cName != "kyma-installer-container" {
+				continue
+			}
+
+			if _, ok := container["image"]; !ok {
+				continue
+			}
+			container["image"] = imageURL
+			return resources, nil
+		}
+	}
+	return nil, errors.New("unable to find 'image' field for kyma installer 'Deployment'")
+}
+
 func (cmd *command) installInstallerFromRelease() error {
 	remoteResources, err := cmd.loadResources(false)
 	if err != nil {
@@ -333,6 +417,19 @@ func (cmd *command) installInstallerFromRelease() error {
 	err = cmd.removeActionLabel(remoteResources)
 	if err != nil {
 		return err
+	}
+
+	if strings.ToLower(cmd.opts.ReleaseVersion) == "master" {
+		masterHash, err := cmd.getMasterHash()
+		if err != nil {
+			return err
+		}
+
+		remoteResources, err = cmd.replaceDockerImageURL(remoteResources,
+			cmd.buildDockerImageString(masterHash))
+		if err != nil {
+			return err
+		}
 	}
 
 	_, err = cmd.Kubectl().RunApplyCmd(remoteResources)
