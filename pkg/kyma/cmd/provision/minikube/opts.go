@@ -9,7 +9,7 @@ type options struct {
 	VMDriver            string
 	DiskSize            string
 	Memory              string
-	CPU                 string
+	CPUS                string
 	HypervVirtualSwitch string
 }
 
