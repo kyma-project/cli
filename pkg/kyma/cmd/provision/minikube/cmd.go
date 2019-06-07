@@ -84,7 +84,7 @@ func NewCmd(o *options) *cobra.Command {
 	cmd.Flags().StringVar(&o.HypervVirtualSwitch, "hypervVirtualSwitch", "", "Name of the hyperv switch, required if --vm-driver=hyperv")
 	cmd.Flags().StringVar(&o.DiskSize, "disk-size", "30g", "Disk size to use")
 	cmd.Flags().StringVar(&o.Memory, "memory", "8192", "Memory to use")
-	cmd.Flags().StringVar(&o.CPU, "cpu", "4", "CPUs to use")
+	cmd.Flags().StringVar(&o.CPUS, "cpus", "4", "CPUs to use")
 	return cmd
 }
 
@@ -243,7 +243,7 @@ func (c *command) initializeMinikubeConfig() error {
 func (c *command) startMinikube() error {
 	startCmd := []string{"start",
 		"--memory", c.opts.Memory,
-		"--cpus", c.opts.CPU,
+		"--cpus", c.opts.CPUS,
 		"--extra-config=apiserver.authorization-mode=RBAC",
 		"--extra-config=apiserver.cors-allowed-origins='http://*'",
 		"--extra-config=apiserver.enable-admission-plugins=DefaultStorageClass,LimitRanger,MutatingAdmissionWebhook,NamespaceExists,NamespaceLifecycle,ResourceQuota,ServiceAccount,ValidatingAdmissionWebhook",
