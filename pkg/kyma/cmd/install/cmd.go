@@ -530,38 +530,6 @@ func (cmd *command) findInstallerImageName(resources []map[string]interface{}) (
 	return "", errors.New("'kyma-installer' deployment is missing")
 }
 
-func (cmd *command) createInstallationNamespace(resources []map[string]interface{}) error {
-	for _, res := range resources {
-		kind, ok := res["kind"]
-		if !ok {
-			continue
-		}
-
-		if kind != "Namespace" {
-			continue
-		}
-
-		meta, ok := res["metadata"].(map[interface{}]interface{})
-		if !ok {
-			continue
-		}
-
-		namespace, ok := meta["name"].(string)
-		if !ok {
-			return errors.New("installation file contains no 'namespace' information")
-		}
-
-		_, err := cmd.Kubectl().RunCmd("create", "namespace", namespace)
-		if err != nil {
-			return err
-		}
-
-		return nil
-
-	}
-	return errors.New("unable to find 'installation' resource")
-}
-
 func (cmd *command) loadResources(isLocal bool) ([]map[string]interface{}, error) {
 	resources := make([]map[string]interface{}, 0)
 	resources, err := cmd.loadInstallationResourceFile("installer-local.yaml",
