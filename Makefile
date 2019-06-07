@@ -37,7 +37,7 @@ archive:
 
 .PHONY: release
 release:
-	@export GITHUB_TOKEN="$(BOT_GITHUB_TOKEN)"
+	git remote add origin git@github.com:kyma-project/cli.git
 	curl -sL https://git.io/goreleaser | bash
 
 .PHONY: clean
