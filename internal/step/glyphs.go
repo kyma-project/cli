@@ -2,7 +2,7 @@ package step
 
 var (
 	successGlyph  = "✓ "
-	failureGlyph  = "✕ "
+	failureGlyph  = "X "
 	warningGlyph  = "! "
 	questionGlyph = "? "
 	infoGlyph     = "  "
