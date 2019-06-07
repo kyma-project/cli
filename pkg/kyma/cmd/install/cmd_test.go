@@ -124,7 +124,7 @@ func Test_ReplaceDockerImageURL(t *testing.T) {
 	}
 
 	for _, tt := range testData {
-		res, err := cmd.replaceDockerImageURL(tt.data, "testImage!")
+		res, err := cmd.replaceDockerImageURL(tt.data, replacedWithData)
 		if err != nil {
 			if !tt.shouldFail {
 				t.Fatalf("Test '%s' failed but it shouldn't. Error: %s\r\n",
