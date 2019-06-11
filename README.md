@@ -71,8 +71,6 @@ Further usage examples include:
     kyma install
     ```
 
-## Development
-
 ### Kyma CLI as a kubectl plugin
 
 > **NOTE**: To use Kyma CLI as a kubectl plugin, use Kubernetes version 1.12.0 or higher.
