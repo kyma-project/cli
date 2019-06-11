@@ -7,6 +7,9 @@ import (
 	"github.com/kyma-project/cli/pkg/kyma/core"
 )
 
+//DefaultKymaVersion contains the default Kyma version to be installed in case another version is not specified
+var DefaultKymaVersion string
+
 type overrideFileList []string
 
 func (ovf *overrideFileList) String() string {

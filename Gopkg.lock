@@ -162,14 +162,6 @@
   version = "v0.5"
 
 [[projects]]
-  branch = "master"
-  digest = "1:1ba1d79f2810270045c328ae5d674321db34e3aae468eb4233883b473c5c0467"
-  name = "github.com/golang/glog"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "23def4e6c14b4da8ac2ed8007337bc5eb5007998"
-
-[[projects]]
   branch = "travis-1.9"
   digest = "1:e8f5d9c09a7209c740e769713376abda388c41b777ba8e9ed52767e21acf379f"
   name = "github.com/golang/lint"
@@ -181,26 +173,12 @@
   revision = "883fe33ffc4344bad1ecd881f61afd5ec5d80e0a"
 
 [[projects]]
-  digest = "1:17fe264ee908afc795734e8c4e63db2accabaf57326dbf21763a7d6b86096260"
+  digest = "1:15042ad3498153684d09f393bbaec6b216c8eec6d61f63dff711de7d64ed8861"
   name = "github.com/golang/protobuf"
-  packages = [
-    "proto",
-    "ptypes",
-    "ptypes/any",
-    "ptypes/duration",
-    "ptypes/timestamp",
-  ]
+  packages = ["proto"]
   pruneopts = "UT"
   revision = "b4deda0973fb4c70b50d226b1af49f3da59f5265"
   version = "v1.1.0"
-
-[[projects]]
-  branch = "master"
-  digest = "1:0bfbe13936953a98ae3cfe8ed6670d396ad81edf069a806d2f6515d7bb6950df"
-  name = "github.com/google/btree"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "4030bb1f1f0c35b30ca7009e9ebd06849dd45306"
 
 [[projects]]
   digest = "1:41bfd4219241b7f7d6e6fdb13fc712576f1337e68e6b895136283b76928fdd66"
@@ -208,27 +186,6 @@
   packages = ["."]
   pruneopts = "UT"
   revision = "44d81051d367757e1c7c6a5a86423ece9afcf63c"
-
-[[projects]]
-  digest = "1:75eb87381d25cc75212f52358df9c3a2719584eaa9685cd510ce28699122f39d"
-  name = "github.com/googleapis/gnostic"
-  packages = [
-    "OpenAPIv2",
-    "compiler",
-    "extensions",
-  ]
-  pruneopts = "UT"
-  revision = "0c5108395e2debce0d731cf0287ddf7242066aba"
-
-[[projects]]
-  digest = "1:878f0defa9b853f9acfaf4a162ba450a89d0050eff084f9fe7f5bd15948f172a"
-  name = "github.com/gregjones/httpcache"
-  packages = [
-    ".",
-    "diskcache",
-  ]
-  pruneopts = "UT"
-  revision = "787624de3eb7bd915c329cba748687a3b22666a6"
 
 [[projects]]
   branch = "master"
@@ -683,47 +640,6 @@
   version = "v2.2.2"
 
 [[projects]]
-  digest = "1:0d299a04c6472e4458461d7034c76d014cc6f632a3262cbf21d123b19ce13e65"
-  name = "k8s.io/api"
-  packages = [
-    "admissionregistration/v1alpha1",
-    "admissionregistration/v1beta1",
-    "apps/v1",
-    "apps/v1beta1",
-    "apps/v1beta2",
-    "auditregistration/v1alpha1",
-    "authentication/v1",
-    "authentication/v1beta1",
-    "authorization/v1",
-    "authorization/v1beta1",
-    "autoscaling/v1",
-    "autoscaling/v2beta1",
-    "autoscaling/v2beta2",
-    "batch/v1",
-    "batch/v1beta1",
-    "batch/v2alpha1",
-    "certificates/v1beta1",
-    "coordination/v1beta1",
-    "core/v1",
-    "events/v1beta1",
-    "extensions/v1beta1",
-    "networking/v1",
-    "policy/v1beta1",
-    "rbac/v1",
-    "rbac/v1alpha1",
-    "rbac/v1beta1",
-    "scheduling/v1alpha1",
-    "scheduling/v1beta1",
-    "settings/v1alpha1",
-    "storage/v1",
-    "storage/v1alpha1",
-    "storage/v1beta1",
-  ]
-  pruneopts = "UT"
-  revision = "89a74a8d264df0e993299876a8cde88379b940ee"
-  version = "kubernetes-1.13.0"
-
-[[projects]]
   branch = "release-1.13"
   digest = "1:ca984b508e07171a344d8275ca7653763b6b13f01c4154079cd585528c1bdb04"
   name = "k8s.io/apimachinery"
@@ -767,11 +683,9 @@
 
 [[projects]]
   branch = "release-10.0"
-  digest = "1:2e2e0f88db913f73c34eda478f5a3c71ca85acb588eda47f5be7fb8df59e0326"
+  digest = "1:7b769cf3443e4f5f6bd5e4a2a104f8ef47413d26eded069db48e4557b7ddae91"
   name = "k8s.io/client-go"
   packages = [
-    "discovery",
-    "kubernetes/scheme",
     "pkg/apis/clientauthentication",
     "pkg/apis/clientauthentication/v1alpha1",
     "pkg/apis/clientauthentication/v1beta1",
@@ -822,8 +736,6 @@
     "github.com/fatih/color",
     "github.com/fsouza/go-dockerclient",
     "github.com/golang/lint/golint",
-    "github.com/kyma-project/kyma/components/installer/pkg/apis/installer/v1alpha1",
-    "github.com/kyma-project/kyma/components/installer/pkg/client/clientset/versioned",
     "github.com/mitchellh/mapstructure",
     "github.com/pkg/errors",
     "github.com/spf13/cobra",
@@ -831,7 +743,6 @@
     "gopkg.in/src-d/go-git.v4",
     "gopkg.in/src-d/go-git.v4/storage/memory",
     "gopkg.in/yaml.v2",
-    "k8s.io/apimachinery/pkg/apis/meta/v1",
     "k8s.io/client-go/plugin/pkg/client/auth/gcp",
     "k8s.io/client-go/rest",
     "k8s.io/client-go/tools/clientcmd",
