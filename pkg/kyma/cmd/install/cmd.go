@@ -1,10 +1,12 @@
 package install
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -16,6 +18,8 @@ import (
 	"github.com/kyma-project/cli/internal/helm"
 	"github.com/kyma-project/cli/internal/minikube"
 	"github.com/pkg/errors"
+	"gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/storage/memory"
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/kyma-project/cli/internal"
@@ -29,9 +33,10 @@ type command struct {
 }
 
 const (
-	sleep                = 10 * time.Second
-	releaseSrcUrlPattern = "https://raw.githubusercontent.com/kyma-project/kyma/%s/%s"
-	releaseUrlPattern    = "https://github.com/kyma-project/kyma/releases/download/%s/%s"
+	sleep                  = 10 * time.Second
+	releaseSrcUrlPattern   = "https://raw.githubusercontent.com/kyma-project/kyma/%s/%s"
+	releaseResourcePattern = "https://raw.githubusercontent.com/kyma-project/kyma/%s/installation/resources/%s"
+	registryMasterPattern  = "eu.gcr.io/kyma-project/develop/kyma-installer:master-%s"
 )
 
 var (
@@ -298,10 +303,6 @@ func (cmd *command) installInstaller() error {
 			err = cmd.installInstallerFromLocalSources()
 		} else {
 			err = cmd.installInstallerFromRelease()
-			if err != nil {
-				return err
-			}
-			err = cmd.configureInstallerFromRelease()
 		}
 		if err != nil {
 			return err
@@ -316,23 +317,124 @@ func (cmd *command) installInstaller() error {
 	return nil
 }
 
+func (cmd *command) downloadFile(path string) (io.ReadCloser, error) {
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+	}
+	resp, err := client.Get(path)
+	if err != nil {
+		return nil, err
+	}
+	return resp.Body, nil
+}
+
+func (cmd *command) getMasterHash() (string, error) {
+	ctx, timeoutF := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer timeoutF()
+	r, err := git.CloneContext(ctx, memory.NewStorage(), nil,
+		&git.CloneOptions{
+			Depth: 1,
+			URL:   "https://github.com/kyma-project/kyma",
+		})
+	if err != nil {
+		return "", err
+	}
+	h, err := r.Head()
+	if err != nil {
+		return "", err
+	}
+
+	return h.Hash().String()[:8], nil
+}
+
+func (cmd *command) buildDockerImageString(version string) string {
+	return fmt.Sprintf(registryMasterPattern, version)
+}
+
+func (cmd *command) replaceDockerImageURL(resources []map[string]interface{}, imageURL string) ([]map[string]interface{}, error) {
+	for _, config := range resources {
+		kind, ok := config["kind"]
+		if !ok {
+			continue
+		}
+
+		if kind != "Deployment" {
+			continue
+		}
+
+		spec, ok := config["spec"].(map[interface{}]interface{})
+		if !ok {
+			continue
+		}
+
+		template, ok := spec["template"].(map[interface{}]interface{})
+		if !ok {
+			continue
+		}
+
+		spec, ok = template["spec"].(map[interface{}]interface{})
+		if !ok {
+			continue
+		}
+
+		if accName, ok := spec["serviceAccountName"]; !ok {
+			continue
+		} else {
+			if accName != "kyma-installer" {
+				continue
+			}
+		}
+
+		containers, ok := spec["containers"].([]interface{})
+		if !ok {
+			continue
+		}
+		for _, c := range containers {
+			container := c.(map[interface{}]interface{})
+			cName, ok := container["name"]
+			if !ok {
+				continue
+			}
+
+			if cName != "kyma-installer-container" {
+				continue
+			}
+
+			if _, ok := container["image"]; !ok {
+				continue
+			}
+			container["image"] = imageURL
+			return resources, nil
+		}
+	}
+	return nil, errors.New("unable to find 'image' field for kyma installer 'Deployment'")
+}
+
 func (cmd *command) installInstallerFromRelease() error {
-	relaseURL := cmd.releaseFile("kyma-installer-local.yaml")
-	_, err := cmd.Kubectl().RunCmd("apply", "-f", relaseURL)
+	remoteResources, err := cmd.loadResources(false)
 	if err != nil {
 		return err
 	}
 
-	return nil
-}
-
-func (cmd *command) configureInstallerFromRelease() error {
-	configURL := cmd.releaseFile("/kyma-config-local.yaml")
-	if cmd.opts.ReleaseConfig != "" {
-		configURL = cmd.opts.ReleaseConfig
+	err = cmd.removeActionLabel(remoteResources)
+	if err != nil {
+		return err
 	}
 
-	_, err := cmd.Kubectl().RunCmd("apply", "-f", configURL)
+	if strings.ToLower(cmd.opts.ReleaseVersion) == "master" {
+		masterHash, err := cmd.getMasterHash()
+		if err != nil {
+			return err
+		}
+
+		remoteResources, err = cmd.replaceDockerImageURL(remoteResources,
+			cmd.buildDockerImageString(masterHash))
+		if err != nil {
+			return err
+		}
+	}
+
+	_, err = cmd.Kubectl().RunApplyCmd(remoteResources)
 	if err != nil {
 		return err
 	}
@@ -356,7 +458,12 @@ func (cmd *command) configureInstallerFromRelease() error {
 }
 
 func (cmd *command) installInstallerFromLocalSources() error {
-	localResources, err := cmd.loadLocalResources()
+	localResources, err := cmd.loadResources(true)
+	if err != nil {
+		return err
+	}
+
+	err = cmd.removeActionLabel(localResources)
 	if err != nil {
 		return err
 	}
@@ -425,20 +532,22 @@ func (cmd *command) findInstallerImageName(resources []map[string]interface{}) (
 	return "", errors.New("'kyma-installer' deployment is missing")
 }
 
-func (cmd *command) loadLocalResources() ([]map[string]interface{}, error) {
+func (cmd *command) loadResources(isLocal bool) ([]map[string]interface{}, error) {
 	resources := make([]map[string]interface{}, 0)
-
-	resources, err := cmd.loadInstallationResourcesFile("installer-local.yaml", resources)
+	resources, err := cmd.loadInstallationResourceFile("installer-local.yaml",
+		isLocal, resources)
 	if err != nil {
 		return nil, err
 	}
 
-	resources, err = cmd.loadInstallationResourcesFile("installer-config-local.yaml.tpl", resources)
+	resources, err = cmd.loadInstallationResourceFile("installer-config-local.yaml.tpl",
+		isLocal, resources)
 	if err != nil {
 		return nil, err
 	}
 
-	resources, err = cmd.loadInstallationResourcesFile("installer-cr.yaml.tpl", resources)
+	resources, err = cmd.loadInstallationResourceFile("installer-cr.yaml.tpl",
+		isLocal, resources)
 	if err != nil {
 		return nil, err
 	}
@@ -446,14 +555,60 @@ func (cmd *command) loadLocalResources() ([]map[string]interface{}, error) {
 	return resources, nil
 }
 
-func (cmd *command) loadInstallationResourcesFile(name string, acc []map[string]interface{}) ([]map[string]interface{}, error) {
-	path := filepath.Join(cmd.opts.LocalSrcPath, "installation", "resources", name)
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, err
+func (cmd *command) removeActionLabel(acc []map[string]interface{}) error {
+	for _, config := range acc {
+		kind, ok := config["kind"]
+		if !ok {
+			continue
+		}
+
+		if kind != "Installation" {
+			continue
+		}
+
+		meta, ok := config["metadata"].(map[interface{}]interface{})
+		if !ok {
+			return errors.New("Installation contains no METADATA section")
+		}
+
+		labels, ok := meta["labels"].(map[interface{}]interface{})
+		if !ok {
+			return errors.New("Installation contains no LABELS section")
+		}
+
+		_, ok = labels["action"].(string)
+		if !ok {
+			return nil
+		}
+
+		delete(labels, "action")
+
 	}
-	defer f.Close()
-	dec := yaml.NewDecoder(f)
+	return nil
+}
+
+func (cmd *command) loadInstallationResourceFile(resourcePath string, local bool,
+	acc []map[string]interface{}) ([]map[string]interface{}, error) {
+
+	var yamlReader io.ReadCloser
+	var err error
+
+	if !local {
+		yamlReader, err = cmd.downloadFile(cmd.releaseFile(resourcePath))
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		path := filepath.Join(cmd.opts.LocalSrcPath, "installation",
+			"resources", resourcePath)
+		yamlReader, err = os.Open(path)
+		if err != nil {
+			return nil, err
+		}
+	}
+	defer yamlReader.Close()
+
+	dec := yaml.NewDecoder(yamlReader)
 	for {
 		m := make(map[string]interface{})
 		err := dec.Decode(m)
@@ -718,7 +873,7 @@ func (cmd *command) releaseSrcFile(path string) string {
 }
 
 func (cmd *command) releaseFile(path string) string {
-	return fmt.Sprintf(releaseUrlPattern, cmd.opts.ReleaseVersion, path)
+	return fmt.Sprintf(releaseResourcePattern, cmd.opts.ReleaseVersion, path)
 }
 
 func (cmd *command) patchMinikubeIP() error {
