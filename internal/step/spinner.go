@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
+	"github.com/fatih/color"
 )
 
 func newStepWithSpinner(msg string) Step {
@@ -58,9 +59,9 @@ func (s *stepWithSpinner) Stopf(success bool, format string, args ...interface{}
 func (s *stepWithSpinner) Stop(success bool) {
 	var gliph string
 	if success {
-		gliph = successGlyph
+		gliph = color.GreenString(successGlyph)
 	} else {
-		gliph = failureGlyph
+		gliph = color.RedString(failureGlyph)
 	}
 	s.spinner.FinalMSG = fmt.Sprintf("%s%s\n", gliph, s.msg)
 	s.spinner.Stop()
@@ -75,11 +76,11 @@ func (s *stepWithSpinner) LogInfof(format string, args ...interface{}) {
 }
 
 func (s *stepWithSpinner) LogError(msg string) {
-	s.logTof(os.Stderr, warningGlyph+msg)
+	s.logTof(os.Stderr, color.YellowString(warningGlyph)+msg)
 }
 
 func (s *stepWithSpinner) LogErrorf(format string, args ...interface{}) {
-	s.logTof(os.Stderr, warningGlyph+format, args)
+	s.logTof(os.Stderr, color.YellowString(warningGlyph)+format, args)
 }
 
 func (s *stepWithSpinner) logTof(to io.Writer, format string, args ...interface{}) {
