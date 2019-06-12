@@ -187,7 +187,7 @@ func (c *command) checkRequirements(s step.Step) error {
 		return fmt.Errorf("Specified VMDriver '%s' requires the --hypervVirtualSwitch option", vmDriverHyperv)
 	}
 
-	versionWarning, err := minikube.CheckVersion(true)
+	versionWarning, err := minikube.CheckVersion(c.opts.Verbose)
 	if err != nil {
 		s.Failure()
 		return err
