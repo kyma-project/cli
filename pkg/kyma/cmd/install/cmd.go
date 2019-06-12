@@ -879,7 +879,8 @@ func (cmd *command) releaseFile(path string) string {
 func (cmd *command) patchMinikubeIP() error {
 	minikubeIP, err := minikube.RunCmd(cmd.opts.Verbose, "ip")
 	if err != nil {
-		return err
+		cmd.CurrentStep.LogInfo("unable to perform 'minikube ip' command. Patches won't be applied")
+		return nil
 	}
 	minikubeIP = strings.TrimSpace(minikubeIP)
 
