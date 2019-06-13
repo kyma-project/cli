@@ -886,8 +886,7 @@ func (cmd *command) patchMinikubeIP() error {
 
 	for k, v := range patchMap {
 		for _, pData := range v {
-			_, err := cmd.Kubectl().RunCmd("-n", "kyma-installer", "get", k)
-			if err != nil {
+			if _, err := cmd.Kubectl().RunCmd("-n", "kyma-installer", "get", k); err != nil {
 				continue
 			}
 
