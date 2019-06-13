@@ -886,7 +886,13 @@ func (cmd *command) patchMinikubeIP() error {
 
 	for k, v := range patchMap {
 		for _, pData := range v {
-			_, err := cmd.Kubectl().RunCmd("-n", "kyma-installer", "patch", k, "--type=json",
+			_, err := cmd.Kubectl().RunCmd("-n", "kyma-installer", "get", k)
+			if err != nil {
+				continue
+			}
+
+			_, err = cmd.Kubectl().RunCmd("-n", "kyma-installer", "patch", k, "--type=json",
+				"--allow-missing-template-keys=true",
 				fmt.Sprintf("--patch=[{'op': 'replace', 'path': '/data/%s', 'value': '%s'}]", pData, minikubeIP))
 			if err != nil {
 				return err
