@@ -879,13 +879,24 @@ func (cmd *command) releaseFile(path string) string {
 func (cmd *command) patchMinikubeIP() error {
 	minikubeIP, err := minikube.RunCmd(cmd.opts.Verbose, "ip")
 	if err != nil {
-		return err
+		cmd.CurrentStep.LogInfo("unable to perform 'minikube ip' command. Patches won't be applied")
+		return nil
 	}
 	minikubeIP = strings.TrimSpace(minikubeIP)
 
 	for k, v := range patchMap {
 		for _, pData := range v {
-			_, err := cmd.Kubectl().RunCmd("-n", "kyma-installer", "patch", k, "--type=json",
+			if _, err := cmd.Kubectl().RunCmd("-n", "kyma-installer", "get", k); err != nil {
+				if strings.Contains(err.Error(), "not found") {
+					cmd.CurrentStep.LogInfof("resource '%s' not found, won't be patched", k)
+					continue
+				} else {
+					return err
+				}
+			}
+
+			_, err = cmd.Kubectl().RunCmd("-n", "kyma-installer", "patch", k, "--type=json",
+				"--allow-missing-template-keys=true",
 				fmt.Sprintf("--patch=[{'op': 'replace', 'path': '/data/%s', 'value': '%s'}]", pData, minikubeIP))
 			if err != nil {
 				return err
