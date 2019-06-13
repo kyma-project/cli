@@ -887,7 +887,12 @@ func (cmd *command) patchMinikubeIP() error {
 	for k, v := range patchMap {
 		for _, pData := range v {
 			if _, err := cmd.Kubectl().RunCmd("-n", "kyma-installer", "get", k); err != nil {
-				continue
+				if strings.Contains(err.Error(), "not found") {
+					cmd.CurrentStep.LogInfof("resource '%s' not found, won't be patched", k)
+					continue
+				} else {
+					return err
+				}
 			}
 
 			_, err = cmd.Kubectl().RunCmd("-n", "kyma-installer", "patch", k, "--type=json",
