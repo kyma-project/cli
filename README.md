@@ -12,7 +12,9 @@ Kyma CLI requires the following software:
 
 ## Installation
 
-Use the following commands to install the Kyma CLI from the latest release. To install a different release change the line with `$()` in the first command to the desired version (e.g. `curl -Lo kyma.tar.gz https://github.com/kyma-project/cli/releases/download/1.2.0/kyma_Darwin_i386.tar.gz`).
+Use the following commands to install the Kyma CLI from the latest release. To install a different release change the path in the first command to point to the desired version. For example: 
+
+`curl -Lo kyma.tar.gz https://github.com/kyma-project/cli/releases/download/1.2.0/kyma_Darwin_i386.tar.gz`
 
 ### Homebrew (macOS)
 To install Kyma CLI using Homebrew, run:
