@@ -12,9 +12,10 @@ Kyma CLI requires the following software:
 
 ## Installation
 
-Following commands will install Kyma CLI from the latest release. To install another release, set `KYMA_VERSION` to the desired version in the first command.
+Use the following commands to install the Kyma CLI from the latest release. To install a different release set the **{KYMA_VERSION}**  in the first command to the desired version.
 
-### Installation on Linux (i386)
+### Linux (i386)
+To install Kyma CLI on Linux (i386), run:
 
 ```
 (export KYMA_VERSION=$(curl -s https://api.github.com/repos/kyma-project/cli/releases/latest | grep tag_name | cut -d '"' -f 4) \
@@ -23,7 +24,8 @@ Following commands will install Kyma CLI from the latest release. To install ano
  && rm -rf kyma-release kyma.tar.gz
 ```
 
-### Installation on Linux (x86_64)
+### Linux (x86_64)
+To install Kyma CLI on Linux (x86_64), run:
 
 ```
 (export KYMA_VERSION=$(curl -s https://api.github.com/repos/kyma-project/cli/releases/latest | grep tag_name | cut -d '"' -f 4) \
@@ -32,7 +34,8 @@ Following commands will install Kyma CLI from the latest release. To install ano
 && rm -rf kyma-release kyma.tar.gz
 ```
 
-### Installation on macOS (i386)
+### macOS (i386)
+To install Kyma CLI on macOS (i386), run:
 
 ```
 (export KYMA_VERSION=$(curl -s https://api.github.com/repos/kyma-project/cli/releases/latest | grep tag_name | cut -d '"' -f 4) \
@@ -41,7 +44,8 @@ Following commands will install Kyma CLI from the latest release. To install ano
 && rm -rf kyma-release kyma.tar.gz
 ```
 
-### Installation on macOS (x86_64)
+### macOS (x86_64)
+To install Kyma CLI on macOS (x86_84), run:
 
 ```
 (export KYMA_VERSION=$(curl -s https://api.github.com/repos/kyma-project/cli/releases/latest | grep tag_name | cut -d '"' -f 4) \
@@ -50,16 +54,16 @@ Following commands will install Kyma CLI from the latest release. To install ano
 && rm -rf kyma-release kyma.tar.gz
 ```
 
-### Installation via Homebrew (macOS)
-
+### Homebrew (macOS)
+To install Kyma CLI using Homebrew, run:
 ```
 brew tap kyma-incubator/kyma-incubator
 brew install kyma-incubator/kyma-incubator/kyma-cli
 ```
 
-### Installation on Windows
+### Windows
 
-Download the [binary](https://github.com/kyma-project/cli/releases) and adjust your PATH.
+To install Kyma CLI on Windows, download the [binary](https://github.com/kyma-project/cli/releases) and adjust your PATH.
 
 ## Usage
 
