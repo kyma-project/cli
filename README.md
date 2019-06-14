@@ -21,17 +21,8 @@ brew tap kyma-incubator/kyma-incubator
 brew install kyma-incubator/kyma-incubator/kyma-cli
 ```
 
-### macOS (i386)
-To install Kyma CLI on macOS (i386), run:
-
-```
-curl -Lo kyma.tar.gz https://github.com/kyma-project/cli/releases/download/$(curl -s https://api.github.com/repos/kyma-project/cli/releases/latest | grep tag_name | cut -d '"' -f 4)/kyma_Darwin_i386.tar.gz \
-&& mkdir kyma-release && tar -C kyma-release -zxvf kyma.tar.gz && chmod +x kyma-release/kyma && sudo mv kyma-release/kyma /usr/local/bin \
-&& rm -rf kyma-release kyma.tar.gz
-```
-
-### macOS (x86_64)
-To install Kyma CLI on macOS (x86_84), run:
+### macOS
+To install Kyma CLI on macOS, run:
 
 ```
 curl -Lo kyma.tar.gz https://github.com/kyma-project/cli/releases/download/$(curl -s https://api.github.com/repos/kyma-project/cli/releases/latest | grep tag_name | cut -d '"' -f 4)/kyma_Darwin_x86_64.tar.gz \
@@ -39,17 +30,8 @@ curl -Lo kyma.tar.gz https://github.com/kyma-project/cli/releases/download/$(cur
 && rm -rf kyma-release kyma.tar.gz
 ```
 
-### Linux (i386)
-To install Kyma CLI on Linux (i386), run:
-
-```
- curl -Lo kyma.tar.gz https://github.com/kyma-project/cli/releases/download/$(curl -s https://api.github.com/repos/kyma-project/cli/releases/latest | grep tag_name | cut -d '"' -f 4)/kyma_Linux_i386.tar.gz \
- && mkdir kyma-release && tar -C kyma-release -zxvf kyma.tar.gz && chmod +x kyma-release/kyma && sudo mv kyma-release/kyma /usr/local/bin \
- && rm -rf kyma-release kyma.tar.gz
-```
-
-### Linux (x86_64)
-To install Kyma CLI on Linux (x86_64), run:
+### Linux
+To install Kyma CLI on Linux, run:
 
 ```
 curl -Lo kyma.tar.gz https://github.com/kyma-project/cli/releases/download/$(curl -s https://api.github.com/repos/kyma-project/cli/releases/latest | grep tag_name | cut -d '"' -f 4)/kyma_Linux_x86_64.tar.gz \
