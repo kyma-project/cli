@@ -43,7 +43,7 @@ curl -Lo kyma.tar.gz https://github.com/kyma-project/cli/releases/download/$(cur
 
 ### Windows
 
-To install Kyma CLI on Windows, download the [binary](https://github.com/kyma-project/cli/releases) and adjust your PATH.
+To install Kyma CLI on Windows, download and unzip the [artifact](https://github.com/kyma-project/cli/releases), and adjust your PATH.
 
 ## Usage
 
