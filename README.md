@@ -12,7 +12,40 @@ Kyma CLI requires the following software:
 
 ## Installation
 
-For the installation instructions, see the [release page](https://github.com/kyma-project/cli/releases).
+Use the following commands to install the Kyma CLI from the latest release. To install a different release change the path in the first command to point to the desired version. For example: 
+
+```
+curl -Lo kyma.tar.gz https://github.com/kyma-project/cli/releases/download/1.2.0/kyma_Darwin_i386.tar.gz
+```
+
+### Homebrew (macOS)
+To install Kyma CLI using Homebrew, run:
+```
+brew tap kyma-incubator/kyma-incubator
+brew install kyma-incubator/kyma-incubator/kyma-cli
+```
+
+### macOS
+To install Kyma CLI on macOS, run:
+
+```
+curl -Lo kyma.tar.gz https://github.com/kyma-project/cli/releases/download/$(curl -s https://api.github.com/repos/kyma-project/cli/releases/latest | grep tag_name | cut -d '"' -f 4)/kyma_Darwin_x86_64.tar.gz \
+&& mkdir kyma-release && tar -C kyma-release -zxvf kyma.tar.gz && chmod +x kyma-release/kyma && sudo mv kyma-release/kyma /usr/local/bin \
+&& rm -rf kyma-release kyma.tar.gz
+```
+
+### Linux
+To install Kyma CLI on Linux, run:
+
+```
+curl -Lo kyma.tar.gz https://github.com/kyma-project/cli/releases/download/$(curl -s https://api.github.com/repos/kyma-project/cli/releases/latest | grep tag_name | cut -d '"' -f 4)/kyma_Linux_x86_64.tar.gz \
+&& mkdir kyma-release && tar -C kyma-release -zxvf kyma.tar.gz && chmod +x kyma-release/kyma && sudo mv kyma-release/kyma /usr/local/bin \
+&& rm -rf kyma-release kyma.tar.gz
+```
+
+### Windows
+
+To install Kyma CLI on Windows, download and unzip the [artifact](https://github.com/kyma-project/cli/releases). Remember to adjust your **PATH** environment variable.
 
 ## Usage
 
