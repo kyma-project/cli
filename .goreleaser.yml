@@ -12,7 +12,7 @@ before:
 builds:
 - env:
   - CGO_ENABLED=0
-  - KYMA_VERSION=1.2.0-rc2
+  - KYMA_VERSION=1.2.0
   ldflags: -X github.com/kyma-project/cli/pkg/kyma/cmd.Version={{.Version}} -X github.com/kyma-project/cli/pkg/kyma/cmd/install.DefaultKymaVersion={{.Env.KYMA_VERSION}}
   main: ./cmd/kyma/
 archives:
