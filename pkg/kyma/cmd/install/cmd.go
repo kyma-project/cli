@@ -6,11 +6,14 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/kyma-project/cli/internal/trust"
 
 	"github.com/kyma-project/cli/pkg/kyma/core"
 
@@ -29,6 +32,7 @@ import (
 
 type command struct {
 	opts *Options
+	cert trust.Certifier
 	core.Command
 }
 
@@ -64,6 +68,7 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cmd := command{
 		Command: core.Command{Options: o.Options},
+		cert:    trust.NewCertifier(),
 		opts:    o,
 	}
 
@@ -100,14 +105,12 @@ The command:
 
 //Run runs the command
 func (cmd *command) Run() error {
-	err := cmd.validateFlags()
-	if err != nil {
+	if err := cmd.validateFlags(); err != nil {
 		return err
 	}
 
 	s := cmd.NewStep("Checking requirements")
-	err = cmd.checkInstallRequirements()
-	if err != nil {
+	if err := cmd.checkInstallRequirements(); err != nil {
 		s.Failure()
 		return err
 	}
@@ -120,46 +123,49 @@ func (cmd *command) Run() error {
 	}
 
 	s = cmd.NewStep("Installing Tiller")
-	err = cmd.installTiller()
-	if err != nil {
+	if err := cmd.installTiller(); err != nil {
 		s.Failure()
 		return err
 	}
 	s.Successf("Tiller installed")
 
 	s = cmd.NewStep("Deploying Kyma Installer")
-	err = cmd.installInstaller()
-	if err != nil {
+	if err := cmd.installInstaller(); err != nil {
 		s.Failure()
 		return err
 	}
 	s.Successf("Kyma Installer deployed")
 
 	s = cmd.NewStep("Configuring Helm")
-	err = cmd.configureHelm()
-	if err != nil {
+	if err := cmd.configureHelm(); err != nil {
 		s.Failure()
 		return err
 	}
 	s.Successf("Helm configured")
 
 	s = cmd.NewStep("Requesting Kyma Installer to install Kyma")
-	err = cmd.activateInstaller()
-	if err != nil {
+	if err := cmd.activateInstaller(); err != nil {
 		s.Failure()
 		return err
 	}
 	s.Successf("Kyma Installer is installing Kyma")
 
 	if !cmd.opts.NoWait {
-		err = cmd.waitForInstaller()
-		if err != nil {
+		if err := cmd.waitForInstaller(); err != nil {
 			return err
 		}
+
+		s = cmd.NewStep("Importing Kyma root certificate")
+		if err := cmd.importCertificate(); err != nil {
+			cmd.CurrentStep.Failure()
+			return err
+		}
+		s.Successf("Kyma root certificate imported")
+	} else {
+		cmd.cert.Instructions()
 	}
 
-	err = cmd.printSummary()
-	if err != nil {
+	if err := cmd.printSummary(); err != nil {
 		return err
 	}
 
@@ -904,5 +910,35 @@ func (cmd *command) patchMinikubeIP() error {
 		}
 	}
 
+	return nil
+}
+
+func (cmd *command) importCertificate() error {
+	// get cert from cluster
+	cert, err := cmd.Kubectl().RunCmd("get", "configmap", "net-global-overrides", "-n", "kyma-installer", "-o", "jsonpath='{.data.global\\.ingress\\.tlsCrt}'")
+	if err != nil {
+		return err
+	}
+
+	decodedCert, err := base64.StdEncoding.DecodeString(cert)
+	if err != nil {
+		return err
+	}
+	tmpFile, err := ioutil.TempFile(os.TempDir(), "kyma-*.crt")
+	if err != nil {
+		log.Fatal("Cannot create temporary file for Kyma certificate", err)
+	}
+	defer os.Remove(tmpFile.Name())
+
+	if _, err = tmpFile.Write(decodedCert); err != nil {
+		log.Fatal("Failed to write the kyma certificate", err)
+	}
+	if err := tmpFile.Close(); err != nil {
+		return err
+	}
+
+	if err := cmd.cert.StoreCertificate(tmpFile.Name()); err != nil {
+		return err
+	}
 	return nil
 }
