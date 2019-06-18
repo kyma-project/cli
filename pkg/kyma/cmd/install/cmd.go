@@ -77,14 +77,41 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd := &cobra.Command{
 		Use:   "install",
 		Short: "Installs Kyma on a running Kubernetes cluster",
-		Long: `Install Kyma on a running Kubernetes cluster.
+		Long: `Installs Kyma on a running Kubernetes cluster.
 
-Make sure that your KUBECONFIG is already pointing to the target cluster.
-The command:
-- Installs Tiller
-- Deploys the Kyma Installer
-- Configures the Kyma Installer using the latest minimal configuration
-- Triggers Kyma installation
+Prerequisites:
+- Kyma is not installed.
+- Kubernetes cluster is available with your KUBECONFIG already pointing to it.
+
+Standard installation steps:
+1. Fetch the tiller.yaml file from /installation/resources directory and deploy it to the cluster.
+2. Deploy and configure Kyma Installer. This is a standard installation using the latest minimal configuration. 
+You can override the settings using the override and config flags.
+  2a) From release:
+	 - Fetch the current or specified release
+	 - Deploy it on the cluster
+	 - Apply overrides if applicable
+	 - Set admin password
+	 - Patch minikube IP
+  2b) From sources:
+	 - Fetch local resources YAML files
+	 - Build the Kyma Installer image which will generate a YAML configuration file
+	 - Deploy the configuration on the cluster
+	 - Apply overrides if applicable
+	 - Set admin password
+	 - Patch minikube IP
+3. Configure Helm (optional).If installed, Helm is automatically configured using certificates from tiller.
+4. Run Kyma installation until the status "Installed" confirms the success.
+
+Use cases
+1. Install Kyma from the current release
+   install kyma
+2. Install Kyma from sources
+   install kyma -l
+3. Install Kyma using your own configuration
+   install kyma -c
+4. Install Kyma and override parameters in YAML files
+   install kyma -o
 `,
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 		Aliases: []string{"i"},
@@ -129,7 +156,7 @@ func (cmd *command) Run() error {
 		s.Failure()
 		return err
 	}
-	s.Successf("Tiller installed")
+	s.Successf("Tiller deployed")
 
 	s = cmd.NewStep("Deploying Kyma Installer")
 	if err := cmd.installInstaller(); err != nil {
