@@ -87,5 +87,6 @@ func certDomain(certFile string) (string, error) {
 	if len(matches) < 2 {
 		return "", errors.New("Could not determine the certificate's DNS")
 	}
-	return strings.ReplaceAll(matches[1], "'", ""), nil
+
+	return strings.Replace(matches[1], "'", "", -1), nil
 }
