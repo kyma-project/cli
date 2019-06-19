@@ -707,6 +707,19 @@ func (cmd *command) applyOverrideFiles() error {
 				return fmt.Errorf("Unable to get name from config. File: %s", file)
 			}
 
+			if err := cmd.checkIfResourcePresent(namespace, kind, name); err != nil {
+				if strings.Contains(err.Error(), "not found") {
+					if err := cmd.applyResourceFile(file); err != nil {
+						return fmt.Errorf(
+							"Unable to apply file %s. Error: %s", file, err.Error())
+
+					}
+					continue
+				} else {
+					return fmt.Errorf("Unable to check if resource is installed. Error: %s", err.Error())
+				}
+			}
+
 			_, err := cmd.Kubectl().RunCmd("-n",
 				strings.ToLower(namespace),
 				"patch",
@@ -723,6 +736,16 @@ func (cmd *command) applyOverrideFiles() error {
 	}
 
 	return nil
+}
+
+func (cmd *command) checkIfResourcePresent(namespace, kind, name string) error {
+	_, err := cmd.Kubectl().RunCmd("-n", namespace, "get", kind, name)
+	return err
+}
+
+func (cmd *command) applyResourceFile(filepath string) error {
+	_, err := cmd.Kubectl().RunCmd("apply", "-f", filepath)
+	return err
 }
 
 func (cmd *command) setAdminPassword() error {
