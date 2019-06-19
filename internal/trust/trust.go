@@ -15,7 +15,7 @@ type Certifier interface {
 	Instructions() string
 }
 
-// informer defines the war ceertification management informs about its progress.
+// informer defines the way certification management informs about its progress.
 type Informer interface {
 	LogInfo(msg string)
 	LogInfof(format string, args ...interface{})

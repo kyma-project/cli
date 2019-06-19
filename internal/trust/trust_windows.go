@@ -41,14 +41,14 @@ func (c certutil) StoreCertificate(file string, i Informer) error {
 	if root.IsWithSudo() {
 		i.LogInfo("You're running CLI with sudo. CLI has to add the Kyma root certificate to the trusted certificates. Type 'y' to allow this action.")
 		if !root.PromptUser() {
-			i.LogInfo(fmt.Sprintf("\nCould not import the kyma root certificate, please follow the instructions below to import it manually:\n-----\n%s-----\n", c.Instructions()))
+			i.LogInfo(fmt.Sprintf("\nCould not import the Kyma root certificate, please follow the instructions below to import it manually:\n-----\n%s-----\n", c.Instructions()))
 			return nil
 		}
 		// Only automatically add the cert if already on admin mode, can't ask for admin password from go
 		_, err := internal.RunCmd("certutil", "-addstore", "-f", "Root", file)
 		return err
 	}
-	return errors.New(fmt.Sprintf("Could not import the kyma root certificate, please follow the instructions below to import them manually:\n-----\n%s-----\n", c.Instructions()))
+	return errors.New(fmt.Sprintf("Could not import the Kyma root certificate, please follow the instructions below to import them manually:\n-----\n%s-----\n", c.Instructions()))
 }
 
 func (certutil) Instructions() string {

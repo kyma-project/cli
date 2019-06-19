@@ -29,12 +29,12 @@ func NewCertifier(verbose bool) Certifier {
 func (k keychain) Certificate() ([]byte, error) {
 	cert, err := k.kubectl.RunCmd("get", "configmap", "net-global-overrides", "-n", "kyma-installer", "-o", "jsonpath='{.data.global\\.ingress\\.tlsCrt}'")
 	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("\nCould not obtain the kyma root certificate, please follow the instructions below to import it manually:\n-----\n%s-----\n", k.Instructions()))
+		return nil, errors.Wrap(err, fmt.Sprintf("\nCould not obtain the Kyma root certificate, please follow the instructions below to import it manually:\n-----\n%s-----\n", k.Instructions()))
 	}
 
 	decodedCert, err := base64.StdEncoding.DecodeString(cert)
 	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("\nCould not obtain the kyma root certificate, please follow the instructions below to import it manually:\n-----\n%s-----\n", k.Instructions()))
+		return nil, errors.Wrap(err, fmt.Sprintf("\nCould not obtain the Kyma root certificate, please follow the instructions below to import it manually:\n-----\n%s-----\n", k.Instructions()))
 	}
 
 	return decodedCert, nil
@@ -45,14 +45,14 @@ func (k keychain) StoreCertificate(file string, i Informer) error {
 	if root.IsWithSudo() {
 		i.LogInfo("You're running CLI with sudo. CLI has to add the Kyma certificate to the keychain. Type 'y' to allow this action.")
 		if !root.PromptUser() {
-			i.LogInfo(fmt.Sprintf("\nCould not import the kyma root certificate, please follow the instructions below to import it manually:\n-----\n%s-----\n", k.Instructions()))
+			i.LogInfo(fmt.Sprintf("\nCould not import the Kyma root certificate, please follow the instructions below to import it manually:\n-----\n%s-----\n", k.Instructions()))
 			return nil
 		}
 	}
 
 	_, err := internal.RunCmd("sudo", "security", "add-trusted-cert", "-d", "-r", "trustRoot", "-k", "/Library/Keychains/System.keychain", file)
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("\nCould not import the kyma root certificate, please follow the instructions below to import it manually:\n-----\n%s-----\n", k.Instructions()))
+		return errors.Wrap(err, fmt.Sprintf("\nCould not import the Kyma root certificate, please follow the instructions below to import it manually:\n-----\n%s-----\n", k.Instructions()))
 	}
 
 	return nil

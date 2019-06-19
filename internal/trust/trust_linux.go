@@ -44,7 +44,7 @@ func (c certauth) StoreCertificate(file string, i Informer) error {
 	if root.IsWithSudo() {
 		i.LogInfo("You're running CLI with sudo. CLI has to add the Kyma certificate to the trusted certificate store. Type 'y' to allow this action.")
 		if !root.PromptUser() {
-			i.LogInfo(fmt.Sprintf("\nCould not import the kyma root certificate, please follow the instructions below to import it manually:\n-----\n%s-----\n", c.Instructions()))
+			i.LogInfo(fmt.Sprintf("\nCould not import the Kyma root certificate, please follow the instructions below to import it manually:\n-----\n%s-----\n", c.Instructions()))
 			return nil
 		}
 	}
@@ -58,11 +58,11 @@ func (c certauth) StoreCertificate(file string, i Informer) error {
 
 	_, err = internal.RunCmd("sudo", "cp", file, fmt.Sprintf("/usr/local/share/ca-certificates/kyma-%s.crt", domain))
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("\nCould not import the kyma certificates, please follow the instructions below to import them manually:\n-----\n%s-----\n", c.Instructions()))
+		return errors.Wrap(err, fmt.Sprintf("\nCould not import the Kyma certificates, please follow the instructions below to import them manually:\n-----\n%s-----\n", c.Instructions()))
 	}
 	_, err = internal.RunCmd("sudo", "update-ca-certificates")
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("\nCould not import the kyma certificates, please follow the instructions below to import them manually:\n-----\n%s-----\n", c.Instructions()))
+		return errors.Wrap(err, fmt.Sprintf("\nCould not import the Kyma certificates, please follow the instructions below to import them manually:\n-----\n%s-----\n", c.Instructions()))
 	}
 
 	return nil
@@ -70,8 +70,8 @@ func (c certauth) StoreCertificate(file string, i Informer) error {
 
 func (certauth) Instructions() string {
 	return "1. Download the certificate: kubectl get configmap net-global-overrides -n kyma-installer -o jsonpath='{.data.global\\.ingress\\.tlsCrt}' | base64 --decode > kyma.crt\n" +
-		"2. Rename the certificate file: mv kyma.crt {NAME}\n" +
-		"3. Copy the certificate to the CA folder: sudo cp {NAME} /usr/local/share/ca-certificates/\n" +
+		"2. Rename the certificate file: mv kyma.crt {NEW_CERT_NAME}\n" +
+		"3. Copy the certificate to the CA folder: sudo cp {NEW_CERT_NAME} /usr/local/share/ca-certificates/\n" +
 		"4. Update the certificate registry: sudo update-ca-certificates\n"
 }
 
