@@ -215,12 +215,12 @@ func (cmd *command) deleteTiller() error {
 
 	_, err = cmd.Kubectl().RunCmd("-n", "kube-system", "delete", "RoleBinding", "tiller-certs", "--timeout="+timeoutSimpleDeletion, "--ignore-not-found=true")
 	if err != nil {
-		return nil
+		return err
 	}
 
 	_, err = cmd.Kubectl().RunCmd("-n", "kube-system", "delete", "Role", "tiller-certs-installer", "--timeout="+timeoutSimpleDeletion, "--ignore-not-found=true")
 	if err != nil {
-		return nil
+		return err
 	}
 
 	_, err = cmd.Kubectl().RunCmd("-n", "kube-system", "delete", "ServiceAccount", "tiller-certs-sa", "--timeout="+timeoutSimpleDeletion, "--ignore-not-found=true")
