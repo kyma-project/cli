@@ -203,7 +203,7 @@ func (cmd *command) deleteInstaller() error {
 
 //cannot use the original yaml file as the version is not known or might be even custom
 func (cmd *command) deleteTiller() error {
-	_, err := cmd.Kubectl().RunCmd("-n", "kube-system", "delete", "all", "-l", "name=tiller")
+	_, err := cmd.Kubectl().RunCmd("-n", "kube-system", "delete", "deployment,ServiceAccount,ClusterRoleBinding,Service,Job", "-l", "kyma-project.io/installation=")
 	if err != nil {
 		return err
 	}
@@ -213,12 +213,17 @@ func (cmd *command) deleteTiller() error {
 		return err
 	}
 
-	_, err = cmd.Kubectl().RunCmd("delete", "ClusterRoleBinding", "tiller-cluster-admin", "--timeout="+timeoutSimpleDeletion, "--ignore-not-found=true")
+	_, err = cmd.Kubectl().RunCmd("-n", "kube-system", "delete", "RoleBinding", "tiller-certs", "--timeout="+timeoutSimpleDeletion, "--ignore-not-found=true")
 	if err != nil {
 		return nil
 	}
 
-	_, err = cmd.Kubectl().RunCmd("-n", "kube-system", "delete", "ServiceAccount", "tiller", "--timeout="+timeoutSimpleDeletion, "--ignore-not-found=true")
+	_, err = cmd.Kubectl().RunCmd("-n", "kube-system", "delete", "Role", "tiller-certs-installer", "--timeout="+timeoutSimpleDeletion, "--ignore-not-found=true")
+	if err != nil {
+		return nil
+	}
+
+	_, err = cmd.Kubectl().RunCmd("-n", "kube-system", "delete", "ServiceAccount", "tiller-certs-sa", "--timeout="+timeoutSimpleDeletion, "--ignore-not-found=true")
 	if err != nil {
 		return err
 	}
