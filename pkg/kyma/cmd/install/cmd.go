@@ -793,10 +793,10 @@ func (cmd *command) printSummary() error {
 	fmt.Println(clusterInfo)
 	fmt.Println()
 	fmt.Printf("Kyma is installed in version %s\n", version)
-	fmt.Printf("Kyma console:     https://console.%s\n", cmd.opts.Domain)
-	fmt.Printf("Kyma admin email: %s\n", emailDecoded)
+	fmt.Printf("Kyma console:\t\thttps://console.%s\n", cmd.opts.Domain)
+	fmt.Printf("Kyma admin email:\t%s\n", emailDecoded)
 	if cmd.opts.Password == "" || cmd.opts.NonInteractive {
-		fmt.Printf("Kyma admin password:   %s\n", pwdDecoded)
+		fmt.Printf("Kyma admin password:\t%s\n", pwdDecoded)
 	}
 	fmt.Println()
 	fmt.Println("Happy Kyma-ing! :)")
