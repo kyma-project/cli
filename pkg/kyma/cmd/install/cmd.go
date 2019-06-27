@@ -104,14 +104,15 @@ You can override the settings using the override and config flags.
 4. Run Kyma installation until the status "Installed" confirms the success.
 
 Use cases
+The most common cases of using the install command include:
 1. Install Kyma from the current release
    install kyma
 2. Install Kyma from sources
-   install kyma -l
+   install kyma --local
 3. Install Kyma using your own configuration
-   install kyma -c
+   install kyma --config
 4. Install Kyma and override parameters in YAML files
-   install kyma -o
+   install kyma --override
 `,
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 		Aliases: []string{"i"},
