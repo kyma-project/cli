@@ -3,6 +3,10 @@ package cmd
 import (
 	"github.com/kyma-project/cli/pkg/kyma/cmd/install"
 	"github.com/kyma-project/cli/pkg/kyma/cmd/provision/minikube"
+	"github.com/kyma-project/cli/pkg/kyma/cmd/test"
+	del "github.com/kyma-project/cli/pkg/kyma/cmd/test/delete"
+	"github.com/kyma-project/cli/pkg/kyma/cmd/test/run"
+	"github.com/kyma-project/cli/pkg/kyma/cmd/test/status"
 	"github.com/kyma-project/cli/pkg/kyma/cmd/uninstall"
 
 	"github.com/kyma-project/cli/pkg/kyma/cmd/provision"
@@ -46,6 +50,16 @@ Find more information at: https://github.com/kyma-project/cli
 
 	uninstallCmd := uninstall.NewCmd(uninstall.NewOptions(o))
 	cmd.AddCommand(uninstallCmd)
+
+	testCmd := test.NewCmd()
+	testRunCmd := run.NewCmd(run.NewOptions(o))
+	testStatusCmd := status.NewCmd(status.NewOptions(o))
+	testDeleteCmd := del.NewCmd(del.NewOptions(o))
+	testCmd.AddCommand(testRunCmd)
+	testCmd.AddCommand(testStatusCmd)
+	testCmd.AddCommand(testDeleteCmd)
+
+	cmd.AddCommand(testCmd)
 
 	return cmd
 }
