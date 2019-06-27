@@ -79,40 +79,45 @@ func NewCmd(o *Options) *cobra.Command {
 		Short: "Installs Kyma on a running Kubernetes cluster",
 		Long: `Installs Kyma on a running Kubernetes cluster.
 
-Prerequisites:
+Prerequisites
 - Kyma is not installed.
 - Kubernetes cluster is available with your KUBECONFIG already pointing to it.
+- Helm binary is available (optional).
 
-Standard installation steps:
-1. Fetch the tiller.yaml file from /installation/resources directory and deploy it to the cluster.
-2. Deploy and configure Kyma Installer. This is a standard installation using the latest minimal configuration. 
-You can override the settings using the override and config flags.
-  2a) From release:
-	 - Fetch the current or specified release
-	 - Deploy it on the cluster
-	 - Apply overrides if applicable
-	 - Set admin password
-	 - Patch minikube IP
-  2b) From sources:
-	 - Fetch local resources YAML files
-	 - Build the Kyma Installer image which will generate a YAML configuration file
-	 - Deploy the configuration on the cluster
-	 - Apply overrides if applicable
-	 - Set admin password
-	 - Patch minikube IP
-3. Configure Helm (optional).If installed, Helm is automatically configured using certificates from tiller.
-4. Run Kyma installation until the status "Installed" confirms the success.
+During the installation, the system performs the following steps:
+1. Fetches the tiller.yaml file from /installation/resources directory and deploys it to the cluster.
+2. Deploys and configures the Kyma Installer. This is a standard installation using the latest minimal configuration. 
+You can override the settings using the --override or --config flag.
+  2a) If you choose to install Kyma from release, the system:
+	 - Fetches the latest or specified release along with configuration
+	 - Deploys the Kyma Installer on the cluster
+	 - Applies downloaded or defined configuration
+	 - Applies overrides if applicable
+	 - Sets admin password
+	 - Patches the minikube IP
+  2b) If you choose to install Kyma from local sources, the system:
+	 - Fetches local resources YAML files
+	 - Builds the Kyma Installer image
+	 - Deploys the Kyma Installer and applies the fetched configuration
+	 - Applies overrides if applicable
+	 - Sets admin password
+	 - Patches minikube IP
+3. Configures Helm (optional). If installed, Helm is automatically configured using certificates from tiller.
+4. Runs Kyma installation until the status "Installed" confirms the success.
 
 Use cases
-The most common cases of using the install command include:
-1. Install Kyma from the current release
+The following examples include the most common cases of using the install command. 
+1. Install Kyma from the current release:
    install kyma
-2. Install Kyma from sources
+
+2. Install Kyma from sources:
    install kyma --local
-3. Install Kyma using your own configuration
-   install kyma --config
-4. Install Kyma and override parameters in YAML files
-   install kyma --override
+
+3. Install Kyma using your own configuration:
+   install kyma --config {YAML_FILE_PATH}
+
+4. Install Kyma and override parameters listed in a YAML file:
+   install kyma --override {YAML_FILE_PATH}
 `,
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 		Aliases: []string{"i"},

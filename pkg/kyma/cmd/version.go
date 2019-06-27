@@ -30,10 +30,17 @@ func NewVersionCmd(o *VersionOptions) *cobra.Command {
 		Short: "Version of the Kyma CLI and connected Kyma cluster",
 		Long: `Prints the version of the Kyma CLI and the version of the Kyma cluster the current KUBECONFIG points to.
 
+		Prerequisites
+		- Kubernetes cluster is available with the KUBECONFIG already pointing to it (optional).
+
 		Use cases
-		The most common cases of using the install command include:
-		1. Print out only the client version
+		The following examples include the most common cases of using the version command.
+		1. Print out client and server version:
+		kyma version
+
+		2. Print out only the client version:
 		kyma version --client
+	
 		`,
 		RunE: func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
