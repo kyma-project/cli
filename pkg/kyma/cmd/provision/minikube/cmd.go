@@ -43,6 +43,7 @@ var (
 		"log-ui",
 		"loki",
 		"kiali",
+		"compass-gateway",
 	}
 
 	drivers = []string{
