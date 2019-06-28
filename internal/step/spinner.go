@@ -68,7 +68,7 @@ func (s *stepWithSpinner) Stop(success bool) {
 }
 
 func (s *stepWithSpinner) LogInfo(msg string) {
-	s.logTof(os.Stdout, infoGlyph+msg)
+	s.logTo(os.Stdout, infoGlyph+msg)
 }
 
 func (s *stepWithSpinner) LogInfof(format string, args ...interface{}) {
@@ -80,13 +80,22 @@ func (s *stepWithSpinner) LogError(msg string) {
 }
 
 func (s *stepWithSpinner) LogErrorf(format string, args ...interface{}) {
-	s.logTof(os.Stderr, color.YellowString(warningGlyph)+format, args)
+	s.logTof(os.Stderr, color.YellowString(warningGlyph)+format, args...)
 }
 
 func (s *stepWithSpinner) logTof(to io.Writer, format string, args ...interface{}) {
 	isActive := s.spinner.Active()
 	s.spinner.Stop()
 	_, _ = fmt.Fprintf(to, format+"\n", args...)
+	if isActive {
+		s.spinner.Start()
+	}
+}
+
+func (s *stepWithSpinner) logTo(to io.Writer, format string) {
+	isActive := s.spinner.Active()
+	s.spinner.Stop()
+	_, _ = fmt.Fprint(to, format+"\n")
 	if isActive {
 		s.spinner.Start()
 	}
