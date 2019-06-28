@@ -95,14 +95,6 @@ func (cmd *command) Run() error {
 	}
 	s.Successf("Tiller deleted")
 
-	s = cmd.NewStep("Deleting ClusterRoleBinding for admin")
-	err = cmd.K8s.RbacV1().ClusterRoleBindings().Delete("cluster-admin-binding", &metav1.DeleteOptions{})
-	if err != nil && !strings.Contains(err.Error(), "resource not found") {
-		s.Failure()
-		return err
-	}
-	s.Successf("ClusterRoleBinding for admin deleted")
-
 	s = cmd.NewStep("Deleting Namespaces")
 	// see https://github.com/kyma-project/kyma/issues/1826
 	err = cmd.deleteLeftoverResources("namespace", namespacesToDelete)
@@ -155,7 +147,7 @@ func (cmd *command) deleteInstaller() error {
 	}
 
 	err = cmd.K8s.CoreV1().Namespaces().Delete("kyma-installer", &metav1.DeleteOptions{})
-	if err != nil && !strings.Contains(err.Error(), "resource not found") { // treat not found as positive deletion
+	if err != nil && !strings.Contains(err.Error(), "not found") { // treat not found as positive deletion
 		return err
 	}
 
@@ -171,12 +163,12 @@ func (cmd *command) deleteInstaller() error {
 	}
 
 	err = cmd.K8s.RbacV1().ClusterRoleBindings().Delete("kyma-installer", &metav1.DeleteOptions{})
-	if err != nil && !strings.Contains(err.Error(), "resource not found") {
+	if err != nil && !strings.Contains(err.Error(), "not found") {
 		return err
 	}
 
 	err = cmd.K8s.RbacV1().ClusterRoles().Delete("kyma-installer-reader", &metav1.DeleteOptions{})
-	if err != nil && !strings.Contains(err.Error(), "resource not found") { // treat not found as positive deletion
+	if err != nil && !strings.Contains(err.Error(), "not found") { // treat not found as positive deletion
 		return err
 	}
 
@@ -191,21 +183,21 @@ func (cmd *command) deleteTiller() error {
 	}
 
 	err = cmd.K8s.RbacV1().RoleBindings("kube-system").Delete("tiller-certs", &metav1.DeleteOptions{})
-	if err != nil && !strings.Contains(err.Error(), "resource not found") {
+	if err != nil && !strings.Contains(err.Error(), "not found") {
 		return err
 	}
 
 	err = cmd.K8s.RbacV1().Roles("kube-system").Delete("tiller-certs-installer", &metav1.DeleteOptions{})
-	if err != nil && !strings.Contains(err.Error(), "resource not found") {
+	if err != nil && !strings.Contains(err.Error(), "not found") {
 		return err
 	}
 
 	err = cmd.K8s.CoreV1().ServiceAccounts("kube-system").Delete("tiller-certs-sa", &metav1.DeleteOptions{})
-	if err != nil && !strings.Contains(err.Error(), "resource not found") {
+	if err != nil && !strings.Contains(err.Error(), "not found") {
 		return err
 	}
 
-	err = cmd.K8s.WaitPodGone("kube-system", "tiller")
+	err = cmd.K8s.WaitPodsGone("kube-system", "name", "tiller")
 	if err != nil {
 		return err
 	}

@@ -55,10 +55,9 @@ var (
 		"configmap/core-overrides": []string{
 			"test.acceptance.ui.minikubeIP",
 			"apiserver-proxy.minikubeIP",
-			"configurations-generator.minikubeIP",
+			"iam-kubeconfig-service.minikubeIP",
 			"console-backend-service.minikubeIP",
 			"test.acceptance.cbs.minikubeIP",
-			"test.acceptance.ui.logging.enabled",
 		},
 		"configmap/assetstore-overrides": []string{
 			"asset-store-controller-manager.minikubeIP",
@@ -166,7 +165,6 @@ func (cmd *command) Run() error {
 	if err := cmd.printSummary(); err != nil {
 		return err
 	}
-
 	return nil
 }
 
@@ -725,16 +723,6 @@ func (cmd *command) printSummary() error {
 		return err
 	}
 
-	pwdDecoded, err := base64.StdEncoding.DecodeString(string(adm.Data["password"]))
-	if err != nil {
-		return err
-	}
-
-	emailDecoded, err := base64.StdEncoding.DecodeString(string(adm.Data["email"]))
-	if err != nil {
-		return err
-	}
-
 	clusterInfo, err := cmd.Kubectl().RunCmd("cluster-info")
 	if err != nil {
 		return err
@@ -745,9 +733,9 @@ func (cmd *command) printSummary() error {
 	fmt.Println()
 	fmt.Printf("Kyma is installed in version %s\n", v)
 	fmt.Printf("Kyma console:\t\thttps://console.%s\n", cmd.opts.Domain)
-	fmt.Printf("Kyma admin email:\t%s\n", emailDecoded)
+	fmt.Printf("Kyma admin email:\t%s\n", adm.Data["email"])
 	if cmd.opts.Password == "" || cmd.opts.NonInteractive {
-		fmt.Printf("Kyma admin password:\t%s\n", pwdDecoded)
+		fmt.Printf("Kyma admin password:\t%s\n", adm.Data["password"])
 	}
 	fmt.Println()
 	fmt.Println("Happy Kyma-ing! :)")
@@ -904,6 +892,5 @@ func (cmd *command) importCertificate(ca trust.Certifier) error {
 	} else {
 		cmd.CurrentStep.LogError(ca.Instructions())
 	}
-
 	return nil
 }

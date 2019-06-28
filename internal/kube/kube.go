@@ -14,7 +14,7 @@ type KymaKube interface {
 	// IsPodDeployed checks if a pod is in the given namespace (independently of its status)
 	IsPodDeployed(namespace, name string) (bool, error)
 
-	// IsPodDeployedByLabel checks if a pod is in the given namespace (independently of its status)
+	// IsPodDeployedByLabel checks if there is at least 1 pod in the given namespace with the given label  (independently of its status)
 	IsPodDeployedByLabel(namespace, labelName, labelValue string) (bool, error)
 
 	// WaitPodStatus waits for the given pod to rech the desired status.
@@ -24,8 +24,5 @@ type KymaKube interface {
 	WaitPodStatusByLabel(namespace, labelName, labelValue string, status corev1.PodPhase) error
 
 	// TODO we do not need more wait functions once deleteion is not done via Kubectl, the K8s API will wait on its own
-	WaitPodGone(namespace, name string) error
-
-	// JSONPath allows to run a JSON query on a given Kubernetes resource
-	JSONPath(res interface{}, query string) (string, error)
+	WaitPodsGone(namespace, labelName, labelValue string) error
 }

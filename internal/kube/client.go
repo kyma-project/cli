@@ -1,7 +1,6 @@
 package kube
 
 import (
-	"bytes"
 	"fmt"
 	"strings"
 	"time"
@@ -10,14 +9,13 @@ import (
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/util/jsonpath"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
 	defaultHTTPTimeout = 30 * time.Second
-	defaultWaitSleep   = 5 * time.Second
+	defaultWaitSleep   = 3 * time.Second
 )
 
 // client is the default KymaKube implementation
@@ -112,9 +110,9 @@ func (c *client) WaitPodStatusByLabel(namespace, labelName, labelValue string, s
 }
 
 // TODO we do not need more wait functions once deleteion is not done via Kubectl, the K8s API will wait on its own
-func (c *client) WaitPodGone(namespace, name string) error {
+func (c *client) WaitPodsGone(namespace, labelName, labelValue string) error {
 	for {
-		deployed, err := c.IsPodDeployed(namespace, name)
+		deployed, err := c.IsPodDeployedByLabel(namespace, labelName, labelValue)
 		if err != nil {
 			return err
 		}
@@ -124,18 +122,4 @@ func (c *client) WaitPodGone(namespace, name string) error {
 		}
 		time.Sleep(defaultWaitSleep)
 	}
-}
-
-func (c *client) JSONPath(res interface{}, query string) (string, error) {
-	j := jsonpath.New("kyma-jsonpath")
-	if err := j.Parse(query); err != nil {
-		return "", err
-	}
-
-	buf := new(bytes.Buffer)
-	if err := j.Execute(buf, res); err != nil {
-		return "", err
-	}
-
-	return buf.String(), nil
 }
