@@ -12,6 +12,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kyma-project/cli/pkg/kyma/cmd/version"
+
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/kyma-project/cli/internal/kube"
+
 	"github.com/kyma-project/cli/internal/trust"
 
 	"github.com/kyma-project/cli/pkg/kyma/core"
@@ -24,7 +31,6 @@ import (
 	"gopkg.in/src-d/go-git.v4/storage/memory"
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/kyma-project/cli/internal"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
 )
@@ -102,22 +108,22 @@ The command:
 
 //Run runs the command
 func (cmd *command) Run() error {
+	var err error
+	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
+		return errors.Wrap(err, "Could not initialize the Kubernetes client. Please make sure that you have a valid kubeconfig.")
+	}
+
 	if err := cmd.validateFlags(); err != nil {
 		return err
 	}
 
-	s := cmd.NewStep("Checking requirements")
-	if err := cmd.checkInstallRequirements(); err != nil {
-		s.Failure()
-		return err
-	}
-	s.Successf("Requirements verified")
-
+	s := cmd.NewStep("Checking installation source")
 	if cmd.opts.Local {
 		s.LogInfof("Installing Kyma from local path: '%s'", cmd.opts.LocalSrcPath)
 	} else {
 		s.LogInfof("Installing Kyma in version '%s'", cmd.opts.ReleaseVersion)
 	}
+	s.Successf("Installation source checked")
 
 	s = cmd.NewStep("Installing Tiller")
 	if err := cmd.installTiller(); err != nil {
@@ -152,7 +158,7 @@ func (cmd *command) Run() error {
 			return err
 		}
 	}
-	if err := cmd.importCertificate(trust.NewCertifier(cmd.opts.Verbose)); err != nil {
+	if err := cmd.importCertificate(trust.NewCertifier(cmd.K8s)); err != nil {
 		// certificate import errors do not mean installation failed
 		cmd.CurrentStep.LogError(err.Error())
 	}
@@ -161,18 +167,6 @@ func (cmd *command) Run() error {
 		return err
 	}
 
-	return nil
-}
-
-func (cmd *command) checkInstallRequirements() error {
-	versionWarning, err := cmd.Kubectl().CheckVersion()
-	if err != nil {
-		cmd.CurrentStep.Failure()
-		return err
-	}
-	if versionWarning != "" {
-		cmd.CurrentStep.LogError(versionWarning)
-	}
 	return nil
 }
 
@@ -211,22 +205,18 @@ func (cmd *command) validateFlags() error {
 }
 
 func (cmd *command) installTiller() error {
-	check, err := cmd.Kubectl().IsPodDeployed("kube-system", "name", "tiller")
+	deployed, err := cmd.K8s.IsPodDeployedByLabel("kube-system", "name", "tiller")
 	if err != nil {
 		return err
+
 	}
-	if !check {
+	if !deployed {
 		_, err = cmd.Kubectl().RunCmd("apply", "-f", cmd.releaseSrcFile("/installation/resources/tiller.yaml"))
 		if err != nil {
 			return err
 		}
 	}
-	err = cmd.Kubectl().WaitForPodReady("kube-system", "name", "tiller")
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return cmd.K8s.WaitPodStatusByLabel("kube-system", "name", "tiller", corev1.PodRunning)
 }
 
 func (cmd *command) configureHelm() error {
@@ -240,51 +230,22 @@ func (cmd *command) configureHelm() error {
 		return nil
 	}
 
-	secret, err := cmd.Kubectl().RunCmd("-n", "kyma-installer", "--ignore-not-found=false", "get", "secret", "helm-secret", "-o", "yaml")
+	secret, err := cmd.K8s.CoreV1().Secrets("kyma-installer").Get("helm-secret", metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
 
-	cfg := make(map[interface{}]interface{})
-	err = yaml.Unmarshal([]byte(secret), &cfg)
+	err = ioutil.WriteFile(filepath.Join(helmHome, "ca.pem"), secret.Data["global.helm.ca.crt"], 0644)
 	if err != nil {
 		return err
 	}
 
-	data, ok := cfg["data"].(map[interface{}]interface{})
-	if !ok {
-		return fmt.Errorf("Unable to get data from the Helm Secret")
-	}
-
-	err = writeHelmFile(data, "global.helm.ca.crt", helmHome, "ca.pem")
+	err = ioutil.WriteFile(filepath.Join(helmHome, "cert.pem"), secret.Data["global.helm.tls.crt"], 0644)
 	if err != nil {
 		return err
 	}
 
-	err = writeHelmFile(data, "global.helm.tls.crt", helmHome, "cert.pem")
-	if err != nil {
-		return err
-	}
-
-	err = writeHelmFile(data, "global.helm.tls.key", helmHome, "key.pem")
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func writeHelmFile(data map[interface{}]interface{}, helmData string, helmHome string, filename string) error {
-	value, ok := data[helmData].(string)
-	if !ok {
-		return fmt.Errorf("Unable to get %s from Helm Secret data", helmData)
-	}
-	valueDecoded, err := base64.StdEncoding.DecodeString(value)
-	if err != nil {
-		return err
-	}
-
-	err = ioutil.WriteFile(filepath.Join(helmHome, filename), valueDecoded, 0644)
+	err = ioutil.WriteFile(filepath.Join(helmHome, "key.pem"), secret.Data["global.helm.tls.key"], 0644)
 	if err != nil {
 		return err
 	}
@@ -292,11 +253,12 @@ func writeHelmFile(data map[interface{}]interface{}, helmData string, helmHome s
 }
 
 func (cmd *command) installInstaller() error {
-	check, err := cmd.Kubectl().IsPodDeployed("kyma-installer", "name", "kyma-installer")
+	deployed, err := cmd.K8s.IsPodDeployedByLabel("kyma-installer", "name", "kyma-installer")
 	if err != nil {
 		return err
 	}
-	if !check {
+
+	if !deployed {
 		if cmd.opts.Local {
 			err = cmd.installInstallerFromLocalSources()
 		} else {
@@ -305,14 +267,8 @@ func (cmd *command) installInstaller() error {
 		if err != nil {
 			return err
 		}
-
 	}
-	err = cmd.Kubectl().WaitForPodReady("kyma-installer", "name", "kyma-installer")
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return cmd.K8s.WaitPodStatusByLabel("kyma-installer", "name", "kyma-installer", corev1.PodRunning)
 }
 
 func (cmd *command) downloadFile(path string) (io.ReadCloser, error) {
@@ -759,27 +715,22 @@ func (cmd *command) setAdminPassword() error {
 }
 
 func (cmd *command) printSummary() error {
-	version, err := internal.GetKymaVersion(cmd.opts.Verbose)
+	v, err := version.KymaVersion(cmd.opts.Verbose, cmd.K8s)
 	if err != nil {
 		return err
 	}
 
-	pwdEncoded, err := cmd.Kubectl().RunCmd("-n", "kyma-system", "get", "secret", "admin-user", "-o", "jsonpath='{.data.password}'")
+	adm, err := cmd.K8s.CoreV1().Secrets("kyma-system").Get("admin-user", metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
 
-	pwdDecoded, err := base64.StdEncoding.DecodeString(pwdEncoded)
+	pwdDecoded, err := base64.StdEncoding.DecodeString(string(adm.Data["password"]))
 	if err != nil {
 		return err
 	}
 
-	emailEncoded, err := cmd.Kubectl().RunCmd("-n", "kyma-system", "get", "secret", "admin-user", "-o", "jsonpath='{.data.email}'")
-	if err != nil {
-		return err
-	}
-
-	emailDecoded, err := base64.StdEncoding.DecodeString(emailEncoded)
+	emailDecoded, err := base64.StdEncoding.DecodeString(string(adm.Data["email"]))
 	if err != nil {
 		return err
 	}
@@ -792,7 +743,7 @@ func (cmd *command) printSummary() error {
 	fmt.Println()
 	fmt.Println(clusterInfo)
 	fmt.Println()
-	fmt.Printf("Kyma is installed in version %s\n", version)
+	fmt.Printf("Kyma is installed in version %s\n", v)
 	fmt.Printf("Kyma console:\t\thttps://console.%s\n", cmd.opts.Domain)
 	fmt.Printf("Kyma admin email:\t%s\n", emailDecoded)
 	if cmd.opts.Password == "" || cmd.opts.NonInteractive {
