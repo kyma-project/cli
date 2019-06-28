@@ -1,6 +1,7 @@
 package core
 
 import (
+	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/kubectl"
 	"github.com/kyma-project/cli/internal/step"
 )
@@ -8,7 +9,8 @@ import (
 type Command struct {
 	*Options
 	CurrentStep step.Step
-	kubectl *kubectl.Wrapper
+	kubectl     *kubectl.Wrapper
+	K8s         kube.KymaKube
 }
 
 func (c *Command) NewStep(msg string) step.Step {

@@ -7,6 +7,9 @@ import (
 	"strings"
 	"time"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/pkg/kyma/core"
 	"github.com/pkg/errors"
 
@@ -59,19 +62,13 @@ This command:
 
 //Run runs the command
 func (cmd *command) Run() error {
-	s := cmd.NewStep("Checking requirements")
-	err := cmd.checkUninstallRequirements()
-	if err != nil {
-		s.Failure()
-		return err
+	var err error
+	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
+		return errors.Wrap(err, "Could not initialize the Kubernetes client. PLease make sure that you have a valid kubeconfig.")
 	}
-	s.Successf("Requirements verified")
 
-	s.LogInfof("Uninstalling Kyma")
-
-	s = cmd.NewStep("Requesting kyma-installer to uninstall Kyma")
-	err = cmd.activateInstallerForUninstall()
-	if err != nil {
+	s := cmd.NewStep("Uninstalling Kyma")
+	if err := cmd.activateInstallerForUninstall(); err != nil {
 		s.Failure()
 		return err
 	}
@@ -97,14 +94,6 @@ func (cmd *command) Run() error {
 		return err
 	}
 	s.Successf("Tiller deleted")
-
-	s = cmd.NewStep("Deleting ClusterRoleBinding for admin")
-	err = cmd.deleteClusterRoleBinding()
-	if err != nil {
-		s.Failure()
-		return err
-	}
-	s.Successf("ClusterRoleBinding for admin deleted")
 
 	s = cmd.NewStep("Deleting Namespaces")
 	// see https://github.com/kyma-project/kyma/issues/1826
@@ -132,33 +121,18 @@ func (cmd *command) Run() error {
 	return nil
 }
 
-func (cmd *command) checkUninstallRequirements() error {
-	versionWarning, err := cmd.Kubectl().CheckVersion()
-	if err != nil {
-		cmd.CurrentStep.Failure()
-		return err
-	}
-	if versionWarning != "" {
-		cmd.CurrentStep.LogError(versionWarning)
-	}
-	return nil
-}
-
 func (cmd *command) activateInstallerForUninstall() error {
-	check, err := cmd.Kubectl().IsPodDeployed("kyma-installer", "name", "kyma-installer")
+	deployed, err := cmd.K8s.IsPodDeployedByLabel("kyma-installer", "name", "kyma-installer")
 	if err != nil {
 		return err
 	}
-	if !check {
+
+	if !deployed {
 		return nil
 	}
 
 	_, err = cmd.Kubectl().RunCmd("label", "installation/kyma-installation", "action=uninstall")
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func (cmd *command) deleteInstaller() error {
@@ -172,29 +146,29 @@ func (cmd *command) deleteInstaller() error {
 		return err
 	}
 
-	_, err = cmd.Kubectl().RunCmd("delete", "namespace", "kyma-installer", "--timeout="+timeoutComplexDeletion, "--ignore-not-found=true")
-	if err != nil {
+	err = cmd.K8s.CoreV1().Namespaces().Delete("kyma-installer", &metav1.DeleteOptions{})
+	if err != nil && !strings.Contains(err.Error(), "not found") { // treat not found as positive deletion
 		return err
 	}
 
 	for {
-		check, err := cmd.Kubectl().IsClusterResourceDeployed("namespace", "kyma-project.io/installation", "")
+		ns, err := cmd.K8s.CoreV1().Namespaces().List(metav1.ListOptions{LabelSelector: "kyma-project.io/installation="})
 		if err != nil {
 			return err
 		}
-		if !check {
+		if len(ns.Items) == 0 {
 			break
 		}
 		time.Sleep(sleep)
 	}
 
-	_, err = cmd.Kubectl().RunCmd("delete", "ClusterRoleBinding", "kyma-installer", "--timeout="+timeoutSimpleDeletion, "--ignore-not-found=true")
-	if err != nil {
+	err = cmd.K8s.RbacV1().ClusterRoleBindings().Delete("kyma-installer", &metav1.DeleteOptions{})
+	if err != nil && !strings.Contains(err.Error(), "not found") {
 		return err
 	}
 
-	_, err = cmd.Kubectl().RunCmd("delete", "ClusterRole", "kyma-installer-reader", "--timeout="+timeoutSimpleDeletion, "--ignore-not-found=true")
-	if err != nil {
+	err = cmd.K8s.RbacV1().ClusterRoles().Delete("kyma-installer-reader", &metav1.DeleteOptions{})
+	if err != nil && !strings.Contains(err.Error(), "not found") { // treat not found as positive deletion
 		return err
 	}
 
@@ -208,34 +182,26 @@ func (cmd *command) deleteTiller() error {
 		return err
 	}
 
-	err = cmd.Kubectl().WaitForPodGone("kube-system", "name", "tiller")
+	err = cmd.K8s.RbacV1().RoleBindings("kube-system").Delete("tiller-certs", &metav1.DeleteOptions{})
+	if err != nil && !strings.Contains(err.Error(), "not found") {
+		return err
+	}
+
+	err = cmd.K8s.RbacV1().Roles("kube-system").Delete("tiller-certs-installer", &metav1.DeleteOptions{})
+	if err != nil && !strings.Contains(err.Error(), "not found") {
+		return err
+	}
+
+	err = cmd.K8s.CoreV1().ServiceAccounts("kube-system").Delete("tiller-certs-sa", &metav1.DeleteOptions{})
+	if err != nil && !strings.Contains(err.Error(), "not found") {
+		return err
+	}
+
+	err = cmd.K8s.WaitPodsGone("kube-system", "name", "tiller")
 	if err != nil {
 		return err
 	}
 
-	_, err = cmd.Kubectl().RunCmd("-n", "kube-system", "delete", "RoleBinding", "tiller-certs", "--timeout="+timeoutSimpleDeletion, "--ignore-not-found=true")
-	if err != nil {
-		return err
-	}
-
-	_, err = cmd.Kubectl().RunCmd("-n", "kube-system", "delete", "Role", "tiller-certs-installer", "--timeout="+timeoutSimpleDeletion, "--ignore-not-found=true")
-	if err != nil {
-		return err
-	}
-
-	_, err = cmd.Kubectl().RunCmd("-n", "kube-system", "delete", "ServiceAccount", "tiller-certs-sa", "--timeout="+timeoutSimpleDeletion, "--ignore-not-found=true")
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (cmd *command) deleteClusterRoleBinding() error {
-	_, err := cmd.Kubectl().RunCmd("delete", "clusterrolebinding", "cluster-admin-binding", "--timeout="+timeoutSimpleDeletion, "--ignore-not-found=true")
-	if err != nil {
-		return err
-	}
 	return nil
 }
 
