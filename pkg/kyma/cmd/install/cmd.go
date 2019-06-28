@@ -843,13 +843,9 @@ func (cmd *command) waitForInstaller() error {
 			case "Error":
 				if !errorOccured {
 					errorOccured = true
-					cmd.CurrentStep.LogInfof("%s failed", desc)
-					cmd.CurrentStep.LogInfof(`To fetch the error logs from the installer, run: kubectl get installation  kyma-installation -o go-template --template='{{- range .status.errorLog }}
-					{{.component}}:
-					{{.log}}
-					{{- end}}
-					'`)
-					cmd.CurrentStep.LogInfof("To fetch the application logs from the installer, run: 'kubectl logs -n kyma-installer -l name=kyma-installer'")
+					cmd.CurrentStep.LogErrorf("%s failed", desc)
+					cmd.CurrentStep.LogInfo("To fetch the error logs from the installer, run: kubectl get installation  kyma-installation -o go-template --template='{{- range .status.errorLog }}{{printf \"%s:\\n %s\\n\" .component .log}}{{- end}}'")
+					cmd.CurrentStep.LogInfo("To fetch the application logs from the installer, run: kubectl logs -n kyma-installer -l name=kyma-installer")
 				}
 
 			case "InProgress":
@@ -881,12 +877,7 @@ func (cmd *command) getInstallationStatus() (status string, desc string, err err
 }
 
 func (cmd *command) printInstallationErrorLog() error {
-	logs, err := cmd.Kubectl().RunCmd("get", "installation", "kyma-installation", "-o", "go-template", `--template={{- range .status.errorLog -}}
-{{.component}}:
-{{.log}} [{{.occurrences}}]
-
-{{- end}}
-`)
+	logs, err := cmd.Kubectl().RunCmd("get", "installation", "kyma-installation", "-o", "go-template", "--template={{- range .status.errorLog -}}{{printf \"%s:\n %s [%s]\n\" .component .log .occurrences}}{{- end}}")
 	if err != nil {
 		return err
 	}
