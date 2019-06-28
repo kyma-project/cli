@@ -843,8 +843,13 @@ func (cmd *command) waitForInstaller() error {
 			case "Error":
 				if !errorOccured {
 					errorOccured = true
-					cmd.CurrentStep.Failuref("Kyma installation failed: %s", desc)
-					cmd.CurrentStep.LogInfof("To fetch the logs from the installer, run: 'kubectl logs -n kyma-installer -l name=kyma-installer'")
+					cmd.CurrentStep.LogInfof("%s failed", desc)
+					cmd.CurrentStep.LogInfof(`To fetch the error logs from the installer, run: kubectl get installation  kyma-installation -o go-template --template='{{- range .status.errorLog }}
+					{{.component}}:
+					{{.log}}
+					{{- end}}
+					'`)
+					cmd.CurrentStep.LogInfof("To fetch the application logs from the installer, run: 'kubectl logs -n kyma-installer -l name=kyma-installer'")
 				}
 
 			case "InProgress":
