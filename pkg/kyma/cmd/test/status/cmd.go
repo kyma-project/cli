@@ -21,7 +21,7 @@ func NewCmd(o *options) *cobra.Command {
 		Short:   "Status of tests on a running Kyma cluster",
 		Long:    `Status of tests on a running Kyma cluster`,
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
-		Aliases: []string{"t"},
+		Aliases: []string{"s"},
 	}
 
 	cobraCmd.Flags().BoolVarP(&o.Wait, "wait", "w", false, "Wait for test execution to finish")

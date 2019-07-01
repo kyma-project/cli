@@ -21,7 +21,7 @@ func NewCmd(o *options) *cobra.Command {
 		Short:   "Delete tests on a running Kyma cluster",
 		Long:    `Delete tests on a running Kyma cluster`,
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
-		Aliases: []string{"t"},
+		Aliases: []string{"d"},
 	}
 
 	cobraCmd.Flags().StringVarP(&o.Name, "name", "n", "", "Test name to execute")

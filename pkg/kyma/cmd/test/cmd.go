@@ -4,6 +4,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const TestCrdDefinition = "testdefinitions.testing.kyma-project.io"
+
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "test",

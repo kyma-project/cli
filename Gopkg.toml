@@ -27,8 +27,8 @@ required = [
   version = "2.2.2"
 
 [[constraint]]
-  branch = "release-1.13"
   name = "k8s.io/apimachinery"
+  version = "kubernetes-1.12.3"
 
 [[constraint]]
   name = "k8s.io/client-go"
