@@ -159,6 +159,22 @@
   version = "v1.0.0"
 
 [[projects]]
+  digest = "1:edd2fa4578eb086265db78a9201d15e76b298dfd0d5c379da83e9c61712cf6df"
+  name = "github.com/go-logr/logr"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "9fb12b3b21c5415d16ac18dc5cd42c1cfdd40c4e"
+  version = "v0.1.0"
+
+[[projects]]
+  digest = "1:d81dfed1aa731d8e4a45d87154ec15ef18da2aa80fa9a2f95bec38577a244a99"
+  name = "github.com/go-logr/zapr"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "03f06a783fbb7dfaf3f629c7825480e43a7105e6"
+  version = "v0.1.1"
+
+[[projects]]
   digest = "1:b7a8552c62868d867795b63eaf4f45d3e92d36db82b428e680b9c95a8c33e5b1"
   name = "github.com/gogo/protobuf"
   packages = [
@@ -290,9 +306,12 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:428ff45e736062c8b654a6ddca2e918af54af385085d757461de60d8a9744b9f"
+  digest = "1:fbdb40af1fa09f652994cdea0c295f99e29f55a917c6b57f582641f2d4718621"
   name = "github.com/kyma-incubator/octopus"
-  packages = ["pkg/apis/testing/v1alpha1"]
+  packages = [
+    "pkg/apis",
+    "pkg/apis/testing/v1alpha1",
+  ]
   pruneopts = "UT"
   revision = "c919e4aed88265c9c6f3e8dd7105c014d78afb7a"
 
@@ -473,6 +492,37 @@
   pruneopts = "UT"
   revision = "6a3e2ff9e7c564f36873c2e36413f634534f1c44"
   version = "v0.2.1"
+
+[[projects]]
+  digest = "1:a5158647b553c61877aa9ae74f4015000294e47981e6b8b07525edcbb0747c81"
+  name = "go.uber.org/atomic"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "df976f2515e274675050de7b3f42545de80594fd"
+  version = "v1.4.0"
+
+[[projects]]
+  digest = "1:60bf2a5e347af463c42ed31a493d817f8a72f102543060ed992754e689805d1a"
+  name = "go.uber.org/multierr"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "3c4937480c32f4c13a875a1829af76c98ca3d40a"
+  version = "v1.1.0"
+
+[[projects]]
+  digest = "1:676160e6a4722b08e0e26b11521d575c2cb2b6f0c679e1ee6178c5d8dee51e5e"
+  name = "go.uber.org/zap"
+  packages = [
+    ".",
+    "buffer",
+    "internal/bufferpool",
+    "internal/color",
+    "internal/exit",
+    "zapcore",
+  ]
+  pruneopts = "UT"
+  revision = "27376062155ad36be76b0f12cf1572a221d3a48c"
+  version = "v1.10.0"
 
 [[projects]]
   digest = "1:dfcb1b2db354cafa48fc3cdafe4905a08bec4a9757919ab07155db0ca23855b4"
@@ -775,8 +825,7 @@
   version = "kubernetes-1.12.3"
 
 [[projects]]
-  branch = "release-9.0"
-  digest = "1:8290fcd92200920ee9e233c9f07914b0ae5497894300960dd8d2ce3cc8d1f537"
+  digest = "1:2016b778840cfa015ddeea77b09827c9df36843c2100141708a0e62b709eae9e"
   name = "k8s.io/client-go"
   packages = [
     "discovery",
@@ -855,6 +904,7 @@
     "plugin/pkg/client/auth/gcp",
     "rest",
     "rest/watch",
+    "restmapper",
     "testing",
     "third_party/forked/golang/template",
     "tools/auth",
@@ -873,7 +923,8 @@
     "util/jsonpath",
   ]
   pruneopts = "UT"
-  revision = "b6aa6aafe32b0767f075245e5d391381c5449c8a"
+  revision = "d082d5923d3cc0bfbb066ee5fbdea3d0ca79acf8"
+  version = "kubernetes-1.12.3"
 
 [[projects]]
   branch = "master"
@@ -884,9 +935,15 @@
   revision = "db7b694dc208eead64d38030265f702db593fcf2"
 
 [[projects]]
-  digest = "1:84a8609383bec11b71d52dd813f33f1d16614b91966940bdc2aa79bea864fa25"
+  digest = "1:0fa36a3b628957b84f36eed75e16c048262206b1e3e8fb1410e42649eb881f9f"
   name = "sigs.k8s.io/controller-runtime"
-  packages = ["pkg/runtime/scheme"]
+  packages = [
+    "pkg/client",
+    "pkg/client/apiutil",
+    "pkg/client/config",
+    "pkg/runtime/log",
+    "pkg/runtime/scheme",
+  ]
   pruneopts = "UT"
   revision = "f6f0bc9611363b43664d08fb097ab13243ef621d"
   version = "v0.1.9"
@@ -900,6 +957,7 @@
     "github.com/fatih/color",
     "github.com/fsouza/go-dockerclient",
     "github.com/golang/lint/golint",
+    "github.com/kyma-incubator/octopus/pkg/apis",
     "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1",
     "github.com/mitchellh/mapstructure",
     "github.com/pkg/errors",
@@ -911,13 +969,18 @@
     "k8s.io/api/core/v1",
     "k8s.io/api/rbac/v1",
     "k8s.io/apimachinery/pkg/apis/meta/v1",
+    "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured",
     "k8s.io/apimachinery/pkg/runtime",
+    "k8s.io/apimachinery/pkg/runtime/schema",
     "k8s.io/client-go/dynamic",
     "k8s.io/client-go/kubernetes",
     "k8s.io/client-go/kubernetes/fake",
+    "k8s.io/client-go/kubernetes/scheme",
     "k8s.io/client-go/plugin/pkg/client/auth/gcp",
     "k8s.io/client-go/testing",
     "k8s.io/client-go/tools/clientcmd",
+    "sigs.k8s.io/controller-runtime/pkg/client",
+    "sigs.k8s.io/controller-runtime/pkg/client/config",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

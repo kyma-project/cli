@@ -1,25 +1,50 @@
 package test
 
 import (
-	"strings"
+	"fmt"
 
-	"github.com/kyma-project/cli/internal/kubectl"
+	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
+	"github.com/kyma-project/cli/pkg/kyma/cmd/test/client"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func ListTestSuiteNames(kClient *kubectl.Wrapper) ([]string, error) {
-	res, err := kClient.RunCmd("-n", "kyma-system", "get", "clustertestsuites.testing.kyma-project.io", "-o", "custom-columns=:.metadata.name")
+const TestNamespace = "kyma-system"
 
+func ListTestDefinitionNames(cli client.TestRESTClient) ([]string, error) {
+	defs, err := cli.ListTestDefinitions()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to list test definitions. E: %s", err.Error())
 	}
-	return strings.Split(strings.TrimSpace(res), " "), nil
+
+	var result = make([]string, len(defs.Items))
+	for i := 0; i < len(defs.Items); i++ {
+		result[i] = defs.Items[i].GetName()
+	}
+	return result, nil
 }
 
-func ListTestDefinitionNames(kClient *kubectl.Wrapper) ([]string, error) {
-	res, err := kClient.RunCmd("-n", "kyma-system", "get", "testdefinitions.testing.kyma-project.io", "-o", "custom-columns=:.metadata.name")
-
+func ListTestSuiteNames(cli client.TestRESTClient) ([]string, error) {
+	suites, err := cli.ListTestSuites()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to list test suites. E: %s", err.Error())
 	}
-	return strings.Split(strings.TrimSpace(res), " "), nil
+
+	var result = make([]string, len(suites.Items))
+	for i := 0; i < len(suites.Items); i++ {
+		result[i] = suites.Items[i].GetName()
+	}
+	return result, nil
+}
+
+func NewTestSuite(name string) *oct.ClusterTestSuite {
+	return &oct.ClusterTestSuite{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "testing.kyma-project.io/v1alpha1",
+			Kind:       "ClusterTestSuite",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: TestNamespace,
+		},
+	}
 }
