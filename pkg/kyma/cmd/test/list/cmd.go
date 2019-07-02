@@ -50,13 +50,17 @@ func (cmd *command) Run() error {
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
 		return errors.Wrap(err, "Could not initialize the Kubernetes client. Please make sure that you have a valid kubeconfig.")
 	}
+	if !cmd.opts.Tests && !cmd.opts.Definitions {
+		cmd.opts.Tests = true
+		cmd.opts.Definitions = true
+	}
 	if cmd.opts.Tests {
 		fmt.Println("Test suites:")
 		if testSuites, err := test.ListTestSuiteNames(cli); err != nil {
 			return err
 		} else {
 			for _, t := range testSuites {
-				fmt.Println(t)
+				fmt.Printf("\t%s\r\n", t)
 			}
 		}
 	}
@@ -66,7 +70,7 @@ func (cmd *command) Run() error {
 			return err
 		} else {
 			for _, t := range testDefs {
-				fmt.Println(t)
+				fmt.Printf("\t%s\r\n", t)
 			}
 		}
 	}
