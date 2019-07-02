@@ -39,5 +39,5 @@ func TestKymaSubcommands(t *testing.T) {
 
 	sub := c.Commands()
 
-	require.Equal(t, 6, len(sub), "Number of kyma subcommands not as expected")
+	require.Equal(t, 7, len(sub), "Number of kyma subcommands not as expected")
 }

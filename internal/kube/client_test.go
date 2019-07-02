@@ -19,8 +19,8 @@ import (
 
 func TestIsPodDeployed(t *testing.T) {
 	//setup
-	c := fakeClinetWithNS()
-	c.CoreV1().Pods("ns").Create(&corev1.Pod{
+	c := fakeClientWithNS()
+	c.Static().CoreV1().Pods("ns").Create(&corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-pod1",
 		},
@@ -42,15 +42,15 @@ func TestIsPodDeployed(t *testing.T) {
 		return true, nil, errors.New("Error getting pod")
 	})
 
-	c.Interface = errClient
+	c.static = errClient
 	_, err = c.IsPodDeployed("ns", "test-pod1")
 	require.Error(t, err, "Checking if a pod is deployed error not as expected.")
 }
 
 func TestIsPodDeployedByLabel(t *testing.T) {
 	//setup
-	c := fakeClinetWithNS()
-	c.CoreV1().Pods("ns").Create(&corev1.Pod{
+	c := fakeClientWithNS()
+	c.Static().CoreV1().Pods("ns").Create(&corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   "test-pod1",
 			Labels: map[string]string{"team": "huskies"},
@@ -73,7 +73,7 @@ func TestIsPodDeployedByLabel(t *testing.T) {
 		return true, nil, errors.New("Error getting pod")
 	})
 
-	c.Interface = errClient
+	c.static = errClient
 	_, err = c.IsPodDeployedByLabel("ns", "team", "skydiving-tunas")
 	require.Error(t, err, "Checking if a pod is deployed error not as expected.")
 
@@ -81,7 +81,7 @@ func TestIsPodDeployedByLabel(t *testing.T) {
 
 func TestWaitPodStatus(t *testing.T) {
 	// setup
-	c := fakeClinetWithNS()
+	c := fakeClientWithNS()
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-pod1",
@@ -90,7 +90,7 @@ func TestWaitPodStatus(t *testing.T) {
 			Phase: corev1.PodPending,
 		},
 	}
-	c.CoreV1().Pods("ns").Create(pod)
+	c.Static().CoreV1().Pods("ns").Create(pod)
 
 	// wait for the pod to be running in a separate goroutine
 	waitCh := make(chan error)
@@ -102,7 +102,7 @@ func TestWaitPodStatus(t *testing.T) {
 	// wait a bit and set the pod to running
 	time.Sleep(1 * time.Second)
 	pod.Status.Phase = corev1.PodRunning
-	c.CoreV1().Pods("ns").UpdateStatus(pod)
+	c.Static().CoreV1().Pods("ns").UpdateStatus(pod)
 
 	// we block waiting for the pod to change its state
 	require.NoError(t, <-waitCh)
@@ -110,7 +110,7 @@ func TestWaitPodStatus(t *testing.T) {
 
 func TestWaitPodStatusByLabel(t *testing.T) {
 	// setup
-	c := fakeClinetWithNS()
+	c := fakeClientWithNS()
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   "test-pod1",
@@ -120,7 +120,7 @@ func TestWaitPodStatusByLabel(t *testing.T) {
 			Phase: corev1.PodPending,
 		},
 	}
-	c.CoreV1().Pods("ns").Create(pod)
+	c.Static().CoreV1().Pods("ns").Create(pod)
 
 	// wait for the pod to be running in a separate goroutine
 	waitCh := make(chan error)
@@ -132,18 +132,18 @@ func TestWaitPodStatusByLabel(t *testing.T) {
 	// wait a bit and set the pod to running
 	time.Sleep(1 * time.Second)
 	pod.Status.Phase = corev1.PodRunning
-	c.CoreV1().Pods("ns").UpdateStatus(pod)
+	c.Static().CoreV1().Pods("ns").UpdateStatus(pod)
 
 	// we block waiting for the pod to change its state
 	require.NoError(t, <-waitCh)
 }
 
-func fakeClinetWithNS() *client {
+func fakeClientWithNS() *client {
 	c := &client{
-		Interface: fake.NewSimpleClientset(),
+		static: fake.NewSimpleClientset(),
 	}
 
-	c.CoreV1().Namespaces().Create(&corev1.Namespace{
+	c.Static().CoreV1().Namespaces().Create(&corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "ns",
 		},
