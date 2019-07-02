@@ -29,5 +29,6 @@ func NewCmd(o *options) *cobra.Command {
 }
 
 func (cmd *command) Run() error {
-	return nil
+	_, err := cmd.Kubectl().RunCmd("-n", "kyma-system", "delete", "clustertestsuites.testing.kyma-project.io", cmd.opts.Name)
+	return err
 }

@@ -1,14 +1,19 @@
 package minikube
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
+
+	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/minikube"
 	"github.com/kyma-project/cli/internal/step"
 	"github.com/kyma-project/cli/pkg/kyma/core"
+	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/spf13/cobra"
 )
@@ -43,6 +48,7 @@ var (
 		"log-ui",
 		"loki",
 		"kiali",
+		"compass-gateway",
 	}
 
 	drivers = []string{
@@ -91,8 +97,7 @@ func NewCmd(o *options) *cobra.Command {
 //Run runs the command
 func (c *command) Run() error {
 	s := c.NewStep("Checking requirements")
-	err := c.checkRequirements(s)
-	if err != nil {
+	if err := c.checkRequirements(s); err != nil {
 		s.Failure()
 		return err
 	}
@@ -101,7 +106,7 @@ func (c *command) Run() error {
 	s.LogInfof("Preparing Minikube using domain '%s' and vm-driver '%s'", c.opts.Domain, c.opts.VMDriver)
 
 	s = c.NewStep("Check Minikube status")
-	err = c.checkIfMinikubeIsInitialized(s)
+	err := c.checkIfMinikubeIsInitialized(s)
 	switch err {
 	case ErrMinikubeRunning, nil:
 		break
@@ -134,6 +139,11 @@ func (c *command) Run() error {
 		return err
 	}
 
+	// K8s client needs to be created here because before the kubeconfig is not ready to use
+	if c.K8s, err = kube.NewFromConfig("", c.KubeconfigPath); err != nil {
+		return errors.Wrap(err, "Could not initialize the Kubernetes client. PLease make sure that you have a valid kubeconfig.")
+	}
+
 	s.Status("Create default cluster role")
 	err = c.createClusterRoleBinding()
 	if err != nil {
@@ -142,7 +152,7 @@ func (c *command) Run() error {
 	}
 
 	s.Status("Wait for kube-dns to be up and running")
-	err = c.Kubectl().WaitForPodReady("kube-system", "k8s-app", "kube-dns")
+	err = c.K8s.WaitPodStatusByLabel("kube-system", "k8s-app", "kube-dns", corev1.PodRunning)
 	if err != nil {
 		s.Failure()
 		return err
@@ -196,14 +206,6 @@ func (c *command) checkRequirements(s step.Step) error {
 		s.LogError(versionWarning)
 	}
 
-	versionWarning, err = c.Kubectl().CheckVersion()
-	if err != nil {
-		s.Failure()
-		return err
-	}
-	if versionWarning != "" {
-		s.LogError(versionWarning)
-	}
 	return nil
 }
 
@@ -266,21 +268,31 @@ func (c *command) startMinikube() error {
 
 // fixes https://github.com/kyma-project/kyma/issues/1986
 func (c *command) createClusterRoleBinding() error {
-	check, err := c.Kubectl().IsClusterResourceDeployed("clusterrolebinding", "app", "kyma")
+	var err error
+	bs, err := c.K8s.Static().RbacV1().ClusterRoleBindings().List(metav1.ListOptions{LabelSelector: "app=kyma"})
 	if err != nil {
 		return err
 	}
-	if !check {
-		_, err := c.Kubectl().RunCmd("create", "clusterrolebinding", "default-sa-cluster-admin", "--clusterrole=cluster-admin", "--serviceaccount=kube-system:default")
-		if err != nil {
-			return err
-		}
-		_, err = c.Kubectl().RunCmd("label", "clusterrolebinding", "default-sa-cluster-admin", "app=kyma")
-		if err != nil {
-			return err
-		}
+	if len(bs.Items) == 0 {
+		_, err = c.K8s.Static().RbacV1().ClusterRoleBindings().Create(&rbacv1.ClusterRoleBinding{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:   "default-sa-cluster-admin",
+				Labels: map[string]string{"app": "kyma"},
+			},
+			RoleRef: rbacv1.RoleRef{
+				Name: "cluster-admin",
+				Kind: "ClusterRole",
+			},
+			Subjects: []rbacv1.Subject{
+				{
+					Kind:      "ServiceAccount",
+					Namespace: "kube-system",
+					Name:      "default",
+				},
+			},
+		})
 	}
-	return nil
+	return err
 }
 
 func (c *command) waitForMinikubeToBeUp(step step.Step) error {

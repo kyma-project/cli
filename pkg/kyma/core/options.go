@@ -1,7 +1,6 @@
 package core
 
 import (
-	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/step"
 )
 
@@ -9,7 +8,7 @@ import (
 type Options struct {
 	Verbose bool
 	step.Factory
-	kube.ConfigFactory
+	KubeconfigPath string
 }
 
 //NewOptions creates options with default values

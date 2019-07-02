@@ -6,9 +6,9 @@ import (
 	"encoding/base64"
 	"fmt"
 
-	"github.com/kyma-project/cli/internal/step"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/kyma-project/cli/internal/kubectl"
+	"github.com/kyma-project/cli/internal/kube"
 
 	"github.com/kyma-project/cli/internal"
 	"github.com/kyma-project/cli/internal/root"
@@ -16,23 +16,22 @@ import (
 )
 
 type keychain struct {
-	kubectl *kubectl.Wrapper
-	step    step.Step
+	k8s kube.KymaKube
 }
 
-func NewCertifier(verbose bool) Certifier {
+func NewCertifier(k kube.KymaKube) Certifier {
 	return keychain{
-		kubectl: kubectl.NewWrapper(verbose),
+		k8s: k,
 	}
 }
 
 func (k keychain) Certificate() ([]byte, error) {
-	cert, err := k.kubectl.RunCmd("get", "configmap", "net-global-overrides", "-n", "kyma-installer", "-o", "jsonpath='{.data.global\\.ingress\\.tlsCrt}'")
+	cm, err := k.k8s.Static().CoreV1().ConfigMaps("kyma-installer").Get("net-global-overrides", metav1.GetOptions{})
 	if err != nil {
 		return nil, errors.Wrap(err, fmt.Sprintf("\nCould not obtain the Kyma root certificate, please follow the instructions below to import it manually:\n-----\n%s-----\n", k.Instructions()))
 	}
 
-	decodedCert, err := base64.StdEncoding.DecodeString(cert)
+	decodedCert, err := base64.StdEncoding.DecodeString(cm.Data["global.ingress.tlsCrt"])
 	if err != nil {
 		return nil, errors.Wrap(err, fmt.Sprintf("\nCould not obtain the Kyma root certificate, please follow the instructions below to import it manually:\n-----\n%s-----\n", k.Instructions()))
 	}

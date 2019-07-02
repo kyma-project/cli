@@ -1,16 +1,20 @@
 package run
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"strings"
 
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
+	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/pkg/kyma/cmd/test"
 	"github.com/kyma-project/cli/pkg/kyma/core"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type command struct {
@@ -40,6 +44,11 @@ func NewCmd(o *options) *cobra.Command {
 }
 
 func (cmd *command) Run() error {
+	var err error
+	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
+		return errors.Wrap(err, "Could not initialize the Kubernetes client. Please make sure that you have a valid kubeconfig.")
+	}
+
 	var testSuiteName string
 	if cmd.opts.Name == "" {
 		testSuiteName = cmd.opts.Name
@@ -61,13 +70,52 @@ func (cmd *command) Run() error {
 		return err
 	}
 
-	res, err := cmd.generateTestsYaml(cmd.opts.Name, testDefNames)
+	testResource := cmd.generateTestsResources(cmd.opts.Name, testDefNames)
 	if err != nil {
 		return err
 	}
 
-	//TODO: apply "res"
-	fmt.Println(res)
+	if err := cmd.applyTestResource(testResource); err != nil {
+		return err
+	}
+
+	//TODO: remote the next line
+	fmt.Println(testResource)
+
+	return nil
+}
+
+func (cmd *command) applyTestResource(resource *oct.ClusterTestSuite) error {
+	errorF := func(err error) error {
+		return fmt.Errorf("unable to apply test resource. E: %s", err.Error())
+	}
+
+	deploymentResource := schema.GroupVersionResource{
+		Group:    "testing.kyma-project.io",
+		Version:  "v1alpha1",
+		Resource: "ClusterTestSuite",
+	}
+
+	fmt.Println(deploymentResource)
+	marshalled, err := json.Marshal(resource)
+	if err != nil {
+		return errorF(err)
+	}
+
+	var data map[string]interface{}
+	if err := json.Unmarshal(marshalled, &data); err != nil {
+		return errorF(err)
+	}
+	fmt.Println(data)
+	deployment := &unstructured.Unstructured{
+		Object: data,
+	}
+
+	_, err = cmd.K8s.Dynamic().Resource(deploymentResource).Namespace("kyma-system").Create(deployment, metav1.CreateOptions{})
+	if err != nil {
+		return errorF(err)
+	}
+	fmt.Printf("Test successfully added")
 
 	return nil
 }
@@ -101,7 +149,7 @@ func (cmd *command) newTestSuite(name string) *oct.ClusterTestSuite {
 	}
 }
 
-func (cmd *command) generateTestsYaml(testName string, testsNames []string) (string, error) {
+func (cmd *command) generateTestsResources(testName string, testsNames []string) *oct.ClusterTestSuite {
 	octTestDefs := cmd.newTestSuite(testName)
 	matchNames := []oct.TestDefReference{}
 	for _, tName := range testsNames {
@@ -113,11 +161,8 @@ func (cmd *command) generateTestsYaml(testName string, testsNames []string) (str
 	octTestDefs.Spec.MaxRetries = 1
 	octTestDefs.Spec.Concurrency = 1
 	octTestDefs.Spec.Selectors.MatchNames = matchNames
-	res, err := yaml.Marshal(&octTestDefs)
-	if err != nil {
-		return "", nil
-	}
-	return string(res), nil
+
+	return octTestDefs
 }
 
 func (cmd *command) getClusterTestDefinitionNames() ([]string, error) {
@@ -125,6 +170,7 @@ func (cmd *command) getClusterTestDefinitionNames() ([]string, error) {
 }
 
 func (cmd *command) verifyIfTestNotExists() (bool, error) {
+
 	res, err := cmd.Kubectl().RunCmd("-n", "kyma-system", "get", test.TestCrdDefinition)
 	if err != nil {
 		return false, err

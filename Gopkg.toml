@@ -32,7 +32,7 @@ required = [
 
 [[constraint]]
   name = "k8s.io/client-go"
-  branch = "release-10.0"
+  branch = "release-9.0"
 
 [[constraint]]
   name = "github.com/stretchr/testify"
