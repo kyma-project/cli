@@ -13,7 +13,6 @@ import (
 	"github.com/kyma-project/cli/pkg/kyma/core"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type command struct {
@@ -109,21 +108,8 @@ func (cmd *command) verifyTestNames(cli client.TestRESTClient, testsNames []stri
 	return nil
 }
 
-func (cmd *command) newTestSuite(name string) *oct.ClusterTestSuite {
-	return &oct.ClusterTestSuite{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "testing.kyma-project.io/v1alpha1",
-			Kind:       "ClusterTestSuite",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: test.TestNamespace,
-		},
-	}
-}
-
 func (cmd *command) generateTestsResource(testName string, testsNames []string) *oct.ClusterTestSuite {
-	octTestDefs := cmd.newTestSuite(testName)
+	octTestDefs := test.NewTestSuite(testName)
 	matchNames := []oct.TestDefReference{}
 	for _, tName := range testsNames {
 		matchNames = append(matchNames, oct.TestDefReference{
