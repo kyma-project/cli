@@ -7,6 +7,7 @@ import (
 type options struct {
 	*core.Options
 	Wait bool
+	Jsn  bool
 	Logs string
 }
 

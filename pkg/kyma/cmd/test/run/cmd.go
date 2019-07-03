@@ -114,7 +114,7 @@ func (cmd *command) generateTestsResource(testName string, testsNames []string) 
 	for _, tName := range testsNames {
 		matchNames = append(matchNames, oct.TestDefReference{
 			Name:      tName,
-			Namespace: test.TestNamespace,
+			Namespace: client.TestNamespace,
 		})
 	}
 	octTestDefs.Spec.MaxRetries = 1

@@ -6,18 +6,21 @@ import (
 
 	"github.com/kyma-incubator/octopus/pkg/apis"
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
-
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	k8sRestClient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
+
+const TestNamespace = "kyma-system"
 
 type TestRESTClient interface {
 	ListTestDefinitions() (*oct.TestDefinitionList, error)
 	ListTestSuites() (*oct.ClusterTestSuiteList, error)
 	CreateTestSuite(cts *oct.ClusterTestSuite) error
 	DeleteTestSuite(cts *oct.ClusterTestSuite) error
+	GetTestSuiteByName(name string) (*oct.ClusterTestSuite, error)
 }
 
 type testRestClient struct {
@@ -57,6 +60,16 @@ func (t *testRestClient) DeleteTestSuite(cts *oct.ClusterTestSuite) error {
 	ctx, cancelF := context.WithTimeout(context.Background(), t.callTimeout)
 	defer cancelF()
 	return t.cli.Delete(ctx, cts)
+}
+
+func (t *testRestClient) GetTestSuiteByName(name string) (*oct.ClusterTestSuite, error) {
+	ctx, cancelF := context.WithTimeout(context.Background(), t.callTimeout)
+	defer cancelF()
+	result := &oct.ClusterTestSuite{}
+	err := t.cli.Get(ctx,
+		types.NamespacedName{Namespace: TestNamespace, Name: name},
+		result)
+	return result, err
 }
 
 func NewTestRESTClient(callTimeout time.Duration) (TestRESTClient, error) {
