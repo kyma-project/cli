@@ -13,8 +13,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
-const TestNamespace = "kyma-system"
-
 type TestRESTClient interface {
 	ListTestDefinitions() (*oct.TestDefinitionList, error)
 	ListTestSuites() (*oct.ClusterTestSuiteList, error)
@@ -67,7 +65,7 @@ func (t *testRestClient) GetTestSuiteByName(name string) (*oct.ClusterTestSuite,
 	defer cancelF()
 	result := &oct.ClusterTestSuite{}
 	err := t.cli.Get(ctx,
-		types.NamespacedName{Namespace: TestNamespace, Name: name},
+		types.NamespacedName{Name: name},
 		result)
 	return result, err
 }

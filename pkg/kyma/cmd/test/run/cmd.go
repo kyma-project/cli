@@ -7,11 +7,9 @@ import (
 	"time"
 
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
-	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/pkg/kyma/cmd/test"
 	"github.com/kyma-project/cli/pkg/kyma/cmd/test/client"
 	"github.com/kyma-project/cli/pkg/kyma/core"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -49,10 +47,6 @@ func (cmd *command) Run() error {
 		return fmt.Errorf("unable to create test REST client. E: %s", err)
 	}
 
-	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
-		return errors.Wrap(err, "Could not initialize the Kubernetes client. Please make sure that you have a valid kubeconfig.")
-	}
-
 	var testSuiteName string
 	if len(cmd.opts.Name) > 0 {
 		testSuiteName = cmd.opts.Name
@@ -69,12 +63,25 @@ func (cmd *command) Run() error {
 		return fmt.Errorf("test suite '%s' already exists\n", testSuiteName)
 	}
 
-	testDefNames := strings.Split(cmd.opts.Tests, ",")
-	if err := cmd.verifyTestNames(cli, testDefNames); err != nil {
-		return err
+	var testDefToApply []oct.TestDefinition
+
+	clusterTestDefs, err := cli.ListTestDefinitions()
+	if err != nil {
+		return fmt.Errorf("unable to get list of test definitions. E: %s",
+			err.Error())
 	}
 
-	testResource := cmd.generateTestsResource(cmd.opts.Name, testDefNames)
+	if cmd.opts.Tests != "" {
+		testDefNames := strings.Split(cmd.opts.Tests, ",")
+
+		var err error
+		if testDefToApply, err = cmd.matchTestDefinitionNames(cli, testDefNames,
+			clusterTestDefs.Items); err != nil {
+			return err
+		}
+	}
+
+	testResource := cmd.generateTestsResource(testSuiteName, testDefToApply)
 	if err != nil {
 		return err
 	}
@@ -83,38 +90,39 @@ func (cmd *command) Run() error {
 		return err
 	}
 
-	fmt.Printf("Test '%s' successfully created", cmd.opts.Name)
+	fmt.Printf("Test '%s' successfully created\r\n", testSuiteName)
 	return nil
 }
 
-func (cmd *command) verifyTestNames(cli client.TestRESTClient, testsNames []string) error {
-	clusterTestDefNames, err := test.ListTestDefinitionNames(cli)
-	if err != nil {
-		return err
-	}
+func (cmd *command) matchTestDefinitionNames(cli client.TestRESTClient,
+	testNames []string, testDefs []oct.TestDefinition) ([]oct.TestDefinition, error) {
 
-	for _, tName := range testsNames {
+	result := []oct.TestDefinition{}
+	for _, tName := range testNames {
 		found := false
-		for _, tDefName := range clusterTestDefNames {
-			if strings.ToLower(tName) == strings.ToLower(tDefName) {
+		for _, tDef := range testDefs {
+			if strings.ToLower(tName) == strings.ToLower(tDef.GetName()) {
 				found = true
+				result = append(result, tDef)
 				break
 			}
 		}
 		if !found {
-			return fmt.Errorf("test defintion '%s' not found in the list of cluster test definitions\n", tName)
+			return nil, fmt.Errorf("test defintion '%s' not found in the list of cluster test definitions\n", tName)
 		}
 	}
-	return nil
+	return result, nil
 }
 
-func (cmd *command) generateTestsResource(testName string, testsNames []string) *oct.ClusterTestSuite {
+func (cmd *command) generateTestsResource(testName string,
+	testDefinitions []oct.TestDefinition) *oct.ClusterTestSuite {
+
 	octTestDefs := test.NewTestSuite(testName)
 	matchNames := []oct.TestDefReference{}
-	for _, tName := range testsNames {
+	for _, td := range testDefinitions {
 		matchNames = append(matchNames, oct.TestDefReference{
-			Name:      tName,
-			Namespace: client.TestNamespace,
+			Name:      td.GetName(),
+			Namespace: td.GetNamespace(),
 		})
 	}
 	octTestDefs.Spec.MaxRetries = 1

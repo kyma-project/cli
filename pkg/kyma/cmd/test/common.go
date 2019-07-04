@@ -2,11 +2,16 @@ package test
 
 import (
 	"fmt"
+	"io"
 
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
+	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/pkg/kyma/cmd/test/client"
+	"github.com/olekukonko/tablewriter"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+const NamespaceForTests = "kyma-system"
 
 func ListTestDefinitionNames(cli client.TestRESTClient) ([]string, error) {
 	defs, err := cli.ListTestDefinitions()
@@ -59,7 +64,26 @@ func NewTestSuite(name string) *oct.ClusterTestSuite {
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
-			Namespace: client.TestNamespace,
+			Namespace: NamespaceForTests,
 		},
 	}
+}
+
+func GetTestSuiteByName(cli *client.TestRESTClient, kClient kube.KymaKube,
+	name string) (*oct.ClusterTestSuite, error) {
+
+	return nil, nil
+}
+
+func NewTableWriter(columns []string, out io.Writer) *tablewriter.Table {
+	writer := tablewriter.NewWriter(out)
+	writer.SetBorder(false)
+	writer.SetHeader(columns)
+	writer.SetAlignment(tablewriter.ALIGN_LEFT)
+	writer.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
+	writer.SetHeaderLine(false)
+	writer.SetRowSeparator("")
+	writer.SetCenterSeparator("")
+	writer.SetColumnSeparator("")
+	return writer
 }

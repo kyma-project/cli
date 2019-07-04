@@ -2,16 +2,14 @@ package list
 
 import (
 	"fmt"
+	"os"
+	"strconv"
 	"time"
 
-	"github.com/kyma-incubator/octopus/pkg/apis"
-	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/pkg/kyma/cmd/test"
 	"github.com/kyma-project/cli/pkg/kyma/cmd/test/client"
 	"github.com/kyma-project/cli/pkg/kyma/core"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"k8s.io/client-go/kubernetes/scheme"
 )
 
 type command struct {
@@ -34,45 +32,55 @@ func NewCmd(o *options) *cobra.Command {
 	}
 
 	cobraCmd.Flags().BoolVarP(&o.Definitions, "definitions", "d", false, "Show test definitions only")
-	cobraCmd.Flags().BoolVarP(&o.Tests, "tests", "t", false, "Show test-suites only")
 	return cobraCmd
 }
 
 func (cmd *command) Run() error {
-	var err error
-	apis.AddToScheme(scheme.Scheme)
-
 	cli, err := client.NewTestRESTClient(10 * time.Second)
 	if err != nil {
 		return fmt.Errorf("unable to create test REST client. E: %s", err)
 	}
 
-	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
-		return errors.Wrap(err, "Could not initialize the Kubernetes client. Please make sure that you have a valid kubeconfig.")
-	}
-	if !cmd.opts.Tests && !cmd.opts.Definitions {
-		cmd.opts.Tests = true
-		cmd.opts.Definitions = true
-	}
-	if cmd.opts.Tests {
-		fmt.Println("Test suites:")
-		if testSuites, err := test.ListTestSuiteNames(cli); err != nil {
-			return err
-		} else {
-			for _, t := range testSuites {
-				fmt.Printf("\t%s\r\n", t)
-			}
-		}
-	}
 	if cmd.opts.Definitions {
-		fmt.Println("Test definitions:")
 		if testDefs, err := test.ListTestDefinitionNames(cli); err != nil {
 			return err
 		} else {
 			for _, t := range testDefs {
-				fmt.Printf("\t%s\r\n", t)
+				fmt.Printf("%s\r\n", t)
 			}
 		}
+		return nil
 	}
+
+	testSuites, err := cli.ListTestSuites()
+	if err != nil {
+		return fmt.Errorf("unable to get list of test suites. E: %s", err.Error())
+	}
+
+	if len(testSuites.Items) == 0 {
+		return nil
+	}
+
+	writer := test.NewTableWriter([]string{"TEST NAME", "TESTS", "STATUS"}, os.Stdout)
+
+	for _, t := range testSuites.Items {
+		var testResult string
+		switch len(t.Status.Results) {
+		case 0:
+			testResult = "-"
+			break
+		case 1:
+			testResult = string(t.Status.Results[0].Status)
+		default:
+			testResult = string(t.Status.Results[len(t.Status.Results)-1].Status)
+		}
+		writer.Append([]string{
+			t.GetName(),
+			strconv.Itoa(len(t.Spec.Selectors.MatchNames)),
+			testResult,
+		})
+	}
+	writer.Render()
+
 	return nil
 }

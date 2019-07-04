@@ -91,10 +91,24 @@ func (cmd *command) printTestSuiteStatus(test *oct.ClusterTestSuite, raw bool) e
 		fmt.Println(string(d))
 		return nil
 	}
-	fmt.Println(test.GetName())
-	fmt.Printf("\ttests:\r\n")
+	fmt.Printf("Name:\t\t%s\r\n", test.GetName())
+	fmt.Printf("Concurrency:\t%d\r\n", test.Spec.Concurrency)
+	fmt.Printf("MaxRetries:\t%d\r\n", test.Spec.MaxRetries)
+	if test.Status.StartTime != nil {
+		fmt.Printf("StartTime:\t%s\r\n", test.Status.StartTime.String())
+	} else {
+		fmt.Printf("StartTime:\t%s\r\n", "not started yet")
+	}
+	if test.Status.CompletionTime != nil {
+		fmt.Printf("EndTime:\t%s\r\n", test.Status.CompletionTime)
+	} else {
+		fmt.Printf("EndTime:\t%s\r\n", "not finished yet")
+	}
+
+	fmt.Printf("Condition:\t%s\r\n", test.Status.Conditions[len(test.Status.Conditions)-1].Status)
+	fmt.Printf("Tests:\r\n")
 	for _, t := range test.Status.Results {
-		fmt.Printf("\t\t%s - %s\r\n", t.Name, t.Status)
+		fmt.Printf("\t%s - %s\r\n", t.Name, t.Status)
 	}
 	return nil
 }

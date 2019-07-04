@@ -39,15 +39,10 @@ func (cmd *command) Run() error {
 	if err != nil {
 		return fmt.Errorf("unable to create test REST client. E: %s", err)
 	}
-	return cmd.deleteTestSuiteByName(cmd.opts.Name, cli)
-}
-
-func (cmd *command) deleteTestSuiteByName(name string, cli client.TestRESTClient) error {
-	err := cli.DeleteTestSuite(test.NewTestSuite(name))
-	if err != nil {
+	if err := cli.DeleteTestSuite(test.NewTestSuite(cmd.opts.Name)); err != nil {
 		return fmt.Errorf("unable to delete test suite '%s'. E: %s",
 			cmd.opts.Name, err.Error())
 	}
-	fmt.Printf("test '%s' successfully delete\n", name)
+	fmt.Printf("test '%s' successfully delete\n", cmd.opts.Name)
 	return nil
 }
