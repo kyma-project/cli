@@ -6,7 +6,7 @@ Prints the version of the Kyma CLI and the version of the Kyma cluster the curre
 
 ## Usage 
 
-```
+```bash
 kyma version [OPTIONS]
 ```
 
@@ -14,7 +14,8 @@ kyma version [OPTIONS]
 
 | Name     | Short Name | Default value| Description|
 | ----------|---------|-----|------|
-| --client | -c ||false|Print out the client only. No server is required to get the client version.|
+| --client | -c |false|Print out the client only. No server is required to get the client version.|
+
 
 ## Examples
 

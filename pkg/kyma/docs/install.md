@@ -65,7 +65,7 @@ The following examples include the most common cases of using the install comman
    kyma install
    ```
 
-2. Install Kyma from sources:
+2. Install Kyma from sources. 
    ```bash
    kyma install --local
    ```
