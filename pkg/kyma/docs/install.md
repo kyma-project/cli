@@ -14,17 +14,17 @@ kyma install [OPTIONS]
 
 | Name     | Short Name | Default value| Description|
 | ----------|---------|-----|------|
-| --release | -r ||Kyma release to use|
-| --local | -r |false|Install from sources| 
-| --config | -r ||URL or path to the Installer configuration YAML file| 
-| --override | -r ||Path to YAML file with parameters to override. Multiple entries of this flag are allowed| 
-| --domain | -r |kyma.local|Domain used for installation| 
-| --password | -r ||Predefined cluster password| 
-| --noWait | -r |false|Do not wait for the Installer configuration to complete| 
-| --src-path | ||Path to local sources| 
-| --installer-version | ||Version of the Kyma Installer Docker image used for local installation| 
-| --installer-dir | ||The directory of the Kyma Installer Docker image used for local installation| 
-| --timeout |  |0|Timeout after which CLI stops watching the installation progress| 
+| --release | -r ||Specifies the Kyma release or git revision to be installed. Go to the [GitHub releases page](https://github.com/kyma-project/kyma/releases) to find out more about each of the available releases, or use the revision of your choice. For example, `kyma install --release master`.|
+| --local | -r |false|Indicates installtion from sources. To make it work, make sure you have **{GO_PATH}** set and the location of your sources complies with the Go file and naming convention.| 
+| --config | -r ||Specifies the URL or path to the Installer configuration YAML file.| 
+| --override | -r ||Specifies the path to YAML file with parameters to override. Multiple entries of this flag are allowed.| 
+| --domain | -r |kyma.local|Specifies the domain used for installation.| 
+| --password | -r ||Specifies the predefined cluster password.| 
+| --noWait | -r |false|Determines if the installation should wait for the Installer configuration to complete.| 
+| --src-path | ||Specifies the absolute path to local sources.| 
+| --installer-version | ||Specifies the version of the Kyma Installer Docker image used for the local installation.| 
+| --installer-dir | ||Specifies the directory of the Kyma Installer Docker image used for the local installation.| 
+| --timeout |  |0|Specifies the timeout after which CLI stops watching the installation progress.| 
 
 ## Detailed description 
 
@@ -53,27 +53,27 @@ You can override the settings using the --override or --config flag.
 	 - Applies overrides if applicable
 	 - Sets admin password
 	 - Patches minikube IP
-3. Configures Helm (optional). If installed, Helm is automatically configured using certificates from tiller.
-4. Runs Kyma installation until the status "Installed" confirms the success.
+3. Configures Helm (optional). 
+   If installed, Helm is automatically configured using certificates from tiller.
+4. Runs Kyma installation until the status `installed` confirms the success.
 
 ## Examples
 
 The following examples include the most common cases of using the install command. 
 1. Install Kyma from the current release:
    ```bash
-   install kyma
+   kyma install
    ```
 
 2. Install Kyma from sources:
    ```bash
-   install kyma --local
+   kyma install --local
    ```
-
-3. Install Kyma using your own configuration:
+3. Install Kyma using your own configuration. [Here](https://github.com/kyma-project/kyma/releases/download/1.2.2/kyma-installer-local.yaml) you can find an example of the Installer configuration file you can base your own configuration on.
    ```bash
-   install kyma --config {YAML_FILE_PATH}
+   kyma install --config {YAML_FILE_PATH}
    ```
-4. Install Kyma and override parameters listed in a YAML file:
+4. Install Kyma and override specific parameters. For more detailson overrides, see [this](https://kyma-project.io/docs/root/kyma#configuration-helm-overrides-for-kyma-installation) document.
    ```bash
-   install kyma --override {YAML_FILE_PATH}
+   kyma install --override {YAML_FILE_PATH}
    ```
