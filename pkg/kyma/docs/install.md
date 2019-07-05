@@ -15,12 +15,12 @@ kyma install [OPTIONS]
 | Name     | Short Name | Default value| Description|
 | ----------|---------|-----|------|
 | --release | -r ||Specifies the Kyma release or git revision to be installed. Go to the [GitHub releases page](https://github.com/kyma-project/kyma/releases) to find out more about each of the available releases, or use the revision of your choice. For example, `kyma install --release master`.|
-| --local | -r |`false`|Indicates local installation using Kyma sources. If the location of your cloned  `kyma-cli` repository follows the Go code conventions, the CLI finds it automatically. If not, you must configure the path explicitly using `--src-path`.| 
-| --config | -r ||Specifies the URL or path to the Installer configuration YAML file.| 
-| --override | -r ||Specifies the path to a `YAML` file with parameters to override. You can use this flag .| 
-| --domain | -r |`kyma.local`|Specifies the domain used for installation.| 
-| --password | -r ||Specifies the predefined cluster password.| 
-| --noWait | -r |`false`|Determines if the installation should wait for the Installer configuration to complete.| 
+| --local | -l |`false`|Indicates local installation using Kyma sources. If the location of your cloned  `kyma-cli` repository follows the Go code conventions, the CLI finds it automatically. If not, you must configure the path explicitly using `--src-path`.| 
+| --config | -c ||Specifies the URL or path to the Installer configuration YAML file.| 
+| --override | -o ||Specifies the path to a `YAML` file with parameters to override.| 
+| --domain | -d |`kyma.local`|Specifies the domain used for installation.| 
+| --password | -p ||Specifies the predefined cluster password.| 
+| --noWait | -n |`false`|Determines if the installation should wait for the Installer configuration to complete.| 
 | --src-path | ||Specifies the absolute path to local sources.| 
 | --installer-version | ||Specifies the version of the Kyma Installer Docker image used for the local installation.| 
 | --installer-dir | ||Specifies the directory of the Kyma Installer Docker image used for the local installation.| 
@@ -82,20 +82,27 @@ The following examples include the most common cases of using the install comman
    ```bash
    kyma install
    ```
-2. Install Kyma from your local Kyma branch. 
-   >**NOTE**: The location of branch must comply with Go code naming conventions. 
+2. Install Kyma from local sources:
+
+   >**NOTE**: The location of your cloned `kyma-cli` repository must comply with Go code naming conventions. 
+
    ```bash
    kyma install --local
    ```
-3. Install Kyma from local sources using the absolute **{SRC_PATH}**.
+3. Install Kyma from local sources using the absolute **{SRC_PATH}**:
    ```bash
    kyma install --src-path {SRC_PATH}
    ```
-3. Install Kyma using your own configuration. [Here](https://github.com/kyma-project/kyma/releases/download/1.2.2/kyma-installer-local.yaml) you can find an example of the Installer configuration file to base your own configuration on.
+3. Install Kyma using your own configuration:
+
    ```bash
    kyma install --config {YAML_FILE_PATH}
    ```
-4. Install Kyma and override specific parameters. For more detailson overrides, see [this](https://kyma-project.io/docs/root/kyma#configuration-helm-overrides-for-kyma-installation) document.
+   [Here](https://github.com/kyma-project/kyma/releases/download/1.2.2/kyma-installer-local.yaml) you can find an example of the Installer configuration `YAML` file to base your own configuration.
+
+4. Install Kyma and override specific parameters:
+
    ```bash
    kyma install --override {YAML_FILE_PATH}
    ```
+   For details on overrides, see [this](https://kyma-project.io/docs/root/kyma#configuration-helm-overrides-for-kyma-installation) document. 

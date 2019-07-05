@@ -14,7 +14,7 @@ kyma version [OPTIONS]
 
 | Name     | Short Name | Default value| Description|
 | ----------|---------|-----|------|
-| --client | -c |`false`|Print out the client only. No server is required to get the client version.|
+| --client | -c |`false`|Print out the client only. You don't need a valid KUBECONFIG to get the client version.|
 
 
 ## Examples
@@ -24,7 +24,7 @@ The following examples include the most common cases of using the install comman
    ```bash
    kyma version 
    ```
-2. Print out the version of Kyma CLI only
+2. Print out the version of Kyma CLI only:
    ```bash
    kyma version --client
    ```
