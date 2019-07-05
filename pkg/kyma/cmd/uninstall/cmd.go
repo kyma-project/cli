@@ -55,7 +55,7 @@ This command:
 		Aliases: []string{"i"},
 	}
 
-	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 0, "Timeout after which Kyma CLI stops watching the installation progress")
+	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 30*time.Minute, "Timeout after which Kyma CLI stops watching the uninstallation progress")
 
 	return cobraCmd
 }
@@ -276,8 +276,8 @@ func (cmd *command) waitForInstallerToUninstall() error {
 			case "Error":
 				if !errorOccured {
 					errorOccured = true
-					cmd.CurrentStep.Failuref("Failed to uninstall Kyma: %s", desc)
-					cmd.CurrentStep.LogInfof("To fetch the logs from the Installer, run: 'kubectl logs -n kyma-installer -l name=kyma-installer'")
+					cmd.CurrentStep.LogInfof("There was an error uninstalling Kyma, which might be OK. Will retry later...\n%s", desc)
+					cmd.CurrentStep.LogInfof("For more information, run: 'kubectl logs -n kyma-installer -l name=kyma-installer'")
 				}
 
 			case "InProgress":
