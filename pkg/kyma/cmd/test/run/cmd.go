@@ -51,6 +51,7 @@ func (cmd *command) Run() error {
 	if len(cmd.opts.Name) > 0 {
 		testSuiteName = cmd.opts.Name
 	} else {
+		rand.Seed(time.Now().UTC().UnixNano())
 		rnd := rand.Int31()
 		testSuiteName = fmt.Sprintf("test-%d", rnd)
 	}
