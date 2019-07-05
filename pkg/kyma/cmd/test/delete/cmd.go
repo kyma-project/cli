@@ -25,24 +25,44 @@ func NewCmd(o *options) *cobra.Command {
 		Use:     "delete",
 		Short:   "Delete tests on a running Kyma cluster",
 		Long:    `Delete tests on a running Kyma cluster`,
-		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
+		RunE:    func(_ *cobra.Command, args []string) error { return cmd.Run(args) },
 		Aliases: []string{"d"},
 	}
 
-	cobraCmd.Flags().StringVarP(&o.Name, "name", "n", "", "Test name to execute")
 	cobraCmd.Flags().BoolVarP(&o.All, "all", "a", false, "Delete all test suites")
 	return cobraCmd
 }
 
-func (cmd *command) Run() error {
+func (cmd *command) Run(args []string) error {
+	if len(args) < 1 && !cmd.opts.All {
+		return fmt.Errorf("test suite name requied")
+	}
+
 	cli, err := client.NewTestRESTClient(10 * time.Second)
 	if err != nil {
 		return fmt.Errorf("unable to create test REST client. E: %s", err)
 	}
-	if err := cli.DeleteTestSuite(test.NewTestSuite(cmd.opts.Name)); err != nil {
-		return fmt.Errorf("unable to delete test suite '%s'. E: %s",
-			cmd.opts.Name, err.Error())
+
+	if cmd.opts.All {
+		testSuites, err := cli.ListTestSuites()
+		if err != nil {
+			return fmt.Errorf("unable to list test suites. E: %s", err.Error())
+		}
+		for _, ts := range testSuites.Items {
+			if err := cmd.deleteTestSuite(cli, ts.GetName()); err != nil {
+				return err
+			}
+		}
 	}
-	fmt.Printf("test '%s' successfully delete\n", cmd.opts.Name)
+
+	return nil
+}
+
+func (cmd *command) deleteTestSuite(cli client.TestRESTClient, testName string) error {
+	if err := cli.DeleteTestSuite(test.NewTestSuite(testName)); err != nil {
+		return fmt.Errorf("unable to delete test suite '%s'. E: %s",
+			testName, err.Error())
+	}
+	fmt.Printf("test '%s' successfully delete\n", testName)
 	return nil
 }
