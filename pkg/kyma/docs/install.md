@@ -14,10 +14,10 @@ kyma install [OPTIONS]
 
 | Name                    | Short Name | Default value| Description|
 | :----------------------:|:---------:|:-----:|------|
-| **&#x2011;&#x2011;release**  | -r ||Specifies the Kyma release or git revision to be installed. Go to the [GitHub releases page](https://github.com/kyma-project/kyma/releases) to find out more about each of the available releases, or use the revision of your choice. For example, `kyma install --release master`.|
+| **&#x2011;&#x2011;release**  | -r ||Specifies the Kyma release or git revision to be installed. Go to the [GitHub releases page](https://github.com/kyma-project/kyma/releases) to find out more about each of the available releases, or use the revision of your choice. For example, write `kyma install --release master`.|
 | **&#x2011;&#x2011;local**    | -l |`false`|Indicates local installation using Kyma sources. If the location of your cloned  `kyma-cli` repository follows the Go code conventions, the CLI finds it automatically. If not, you must configure the path explicitly using `--src-path`.| 
-| **&#x2011;&#x2011;config**   | -c ||Specifies the URL or path to the Installer configuration YAML file.| 
-| **&#x2011;&#x2011;override** | -o ||Specifies the path to a `YAML` file with parameters to override.| 
+| **&#x2011;&#x2011;config**   | -c ||Specifies the URL or path to the Installer configuration `yaml` file.| 
+| **&#x2011;&#x2011;override** | -o ||Specifies the path to a `yaml` file with parameters to override.| 
 | **&#x2011;&#x2011;domain**   | -d |`kyma.local`|Specifies the domain used for installation.| 
 | **&#x2011;&#x2011;password** | -p ||Specifies the predefined cluster password.| 
 | **&#x2011;&#x2011;noWait**   | -n |`false`|Determines if the installation should wait for the Installer configuration to complete.| 
@@ -63,7 +63,7 @@ The standard installation uses the minimal configuration. The system performs th
     </summary>
     
     When you install Kyma locally from sources, the system:
-    1. Fetches the configuration YAML files from the local sources.
+    1. Fetches the configuration `yaml` files from the local sources.
     2. Builds the Kyma Installer image.
     3. Deploys the Kyma Installer and applies the fetched configuration.
     4. Applies overrides, if applicable.
@@ -96,13 +96,13 @@ The following examples include the most common uses of the `install` command.
 * Install Kyma using your own configuration:
 
    ```bash
-   kyma install --config {YAML_FILE_PATH}
+   kyma install --config {yaml_FILE_PATH}
    ```
-   [Here](https://github.com/kyma-project/kyma/releases/download/1.2.2/kyma-installer-local.yaml) you can find an example of the Installer configuration YAML file. Use it to create your own configuration.
+   [Here](https://github.com/kyma-project/kyma/releases/download/1.2.2/kyma-installer-local.yaml) you can find an example of the Installer configuration `yaml` file. Use it to create your own configuration.
 
 * Install Kyma and override specific parameters:
 
    ```bash
-   kyma install --override {YAML_FILE_PATH}
+   kyma install --override {yaml_FILE_PATH}
    ```
    For details on overrides, see [this](https://kyma-project.io/docs/root/kyma#configuration-helm-overrides-for-kyma-installation) document. 
