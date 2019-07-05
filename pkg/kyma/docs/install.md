@@ -13,18 +13,18 @@ kyma install [OPTIONS]
 ## Options
 
 | Name     | Short Name | Default value| Description|
-| ----------|---------|-----|------|
-| --release | -r ||Specifies the Kyma release or git revision to be installed. Go to the [GitHub releases page](https://github.com/kyma-project/kyma/releases) to find out more about each of the available releases, or use the revision of your choice. For example, `kyma install --release master`.|
-| --local | -l |`false`|Indicates local installation using Kyma sources. If the location of your cloned  `kyma-cli` repository follows the Go code conventions, the CLI finds it automatically. If not, you must configure the path explicitly using `--src-path`.| 
-| --config | -c ||Specifies the URL or path to the Installer configuration YAML file.| 
-| --override | -o ||Specifies the path to a `YAML` file with parameters to override.| 
-| --domain | -d |`kyma.local`|Specifies the domain used for installation.| 
-| --password | -p ||Specifies the predefined cluster password.| 
-| --noWait | -n |`false`|Determines if the installation should wait for the Installer configuration to complete.| 
-| --src-path | ||Specifies the absolute path to local sources.| 
-| --installer-version | ||Specifies the version of the Kyma Installer Docker image used for the local installation.| 
-| --installer-dir | ||Specifies the directory of the Kyma Installer Docker image used for the local installation.| 
-| --timeout |  |`30m`|Specifies the timeout after which the CLI stops watching the installation progress. The timeout value is a [duration string](https://golang.org/pkg/time/#ParseDuration) meaning a decimal number followed by a unit suffix.| 
+| :----------:|:---------:|:-----:|------|
+| **--release** | -r ||Specifies the Kyma release or git revision to be installed. Go to the [GitHub releases page](https://github.com/kyma-project/kyma/releases) to find out more about each of the available releases, or use the revision of your choice. For example, `kyma install --release master`.|
+| **--local** | -l |`false`|Indicates local installation using Kyma sources. If the location of your cloned  `kyma-cli` repository follows the Go code conventions, the CLI finds it automatically. If not, you must configure the path explicitly using `--src-path`.| 
+| **--config** | -c ||Specifies the URL or path to the Installer configuration YAML file.| 
+| **--override** | -o ||Specifies the path to a `YAML` file with parameters to override.| 
+| **--domain** | -d |`kyma.local`|Specifies the domain used for installation.| 
+| **--password**| -p ||Specifies the predefined cluster password.| 
+| **--noWait** | -n |`false`|Determines if the installation should wait for the Installer configuration to complete.| 
+| **--src-path** | ||Specifies the absolute path to local sources.| 
+| **--installer-version** | ||Specifies the version of the Kyma Installer Docker image used for the local installation.| 
+| **--installer-dir** | ||Specifies the directory of the Kyma Installer Docker image used for the local installation.| 
+| **--timeout** |  |`30m`|Specifies the timeout after which the CLI stops watching the installation progress. The timeout value is a [duration string](https://golang.org/pkg/time/#ParseDuration) meaning a decimal number followed by a unit suffix.| 
 
 ## Details
 
