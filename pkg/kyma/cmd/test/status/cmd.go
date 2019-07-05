@@ -105,7 +105,7 @@ func (cmd *command) printTestSuiteStatus(test *oct.ClusterTestSuite, raw bool) e
 		fmt.Printf("EndTime:\t%s\r\n", "not finished yet")
 	}
 
-	fmt.Printf("Condition:\t%s\r\n", test.Status.Conditions[len(test.Status.Conditions)-1].Status)
+	fmt.Printf("Condition:\t%s\r\n", test.Status.Conditions[len(test.Status.Conditions)-1].Type)
 	fmt.Printf("Tests:\r\n")
 	for _, t := range test.Status.Results {
 		fmt.Printf("\t%s - %s\r\n", t.Name, t.Status)
