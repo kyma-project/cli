@@ -15,47 +15,65 @@ kyma install [OPTIONS]
 | Name     | Short Name | Default value| Description|
 | ----------|---------|-----|------|
 | --release | -r ||Specifies the Kyma release or git revision to be installed. Go to the [GitHub releases page](https://github.com/kyma-project/kyma/releases) to find out more about each of the available releases, or use the revision of your choice. For example, `kyma install --release master`.|
-| --local | -r |false|Indicates installtion from sources. To make it work, make sure you have **{GO_PATH}** set and the location of your sources complies with the Go file and naming convention.| 
+| --local | -r |`false`|Indicates local installation using Kyma sources. If the location of your cloned  `kyma-cli` repository follows the Go code conventions, the CLI finds it automatically. If not, you must configure the path explicitly using `--src-path`.| 
 | --config | -r ||Specifies the URL or path to the Installer configuration YAML file.| 
-| --override | -r ||Specifies the path to YAML file with parameters to override. Multiple entries of this flag are allowed.| 
-| --domain | -r |kyma.local|Specifies the domain used for installation.| 
+| --override | -r ||Specifies the path to a `YAML` file with parameters to override. You can use this flag .| 
+| --domain | -r |`kyma.local`|Specifies the domain used for installation.| 
 | --password | -r ||Specifies the predefined cluster password.| 
-| --noWait | -r |false|Determines if the installation should wait for the Installer configuration to complete.| 
+| --noWait | -r |`false`|Determines if the installation should wait for the Installer configuration to complete.| 
 | --src-path | ||Specifies the absolute path to local sources.| 
 | --installer-version | ||Specifies the version of the Kyma Installer Docker image used for the local installation.| 
 | --installer-dir | ||Specifies the directory of the Kyma Installer Docker image used for the local installation.| 
-| --timeout |  |0|Specifies the timeout after which CLI stops watching the installation progress.| 
+| --timeout |  |`30m`|Specifies the timeout after which the CLI stops watching the installation progress. The timeout value is a [duration string](https://golang.org/pkg/time/#ParseDuration) meaning a decimal number followed by a unit suffix.| 
 
-## Detailed description 
+## Details
+
+Learn more about the actions triggered by using the command.
 
 ### Prerequisites
-- Kyma is not installed.
-- Kubernetes cluster is available with your KUBECONFIG already pointing to it.
-- Helm binary is available (optional).
+
+Before you use the command, make sure your setup meets the following prerequisites:
+
+* Kyma is not installed.
+* Kubernetes cluster is available with your KUBECONFIG already pointing to it.
+* Helm binary is available (optional).
 
 ### Installation flow 
 
-During the installation, the system performs the following steps:
-1. Fetches the tiller.yaml file from /installation/resources directory and deploys it to the cluster.
-2. Deploys and configures the Kyma Installer. This is a standard installation using the latest minimal configuration. 
-You can override the settings using the --override or --config flag.
-  2a) If you choose to install Kyma from release, the system:
-	 - Fetches the latest or specified release along with configuration
-	 - Deploys the Kyma Installer on the cluster
-	 - Applies downloaded or defined configuration
-	 - Applies overrides if applicable
-	 - Sets admin password
-	 - Patches the minikube IP
-  2b) If you choose to install Kyma from local sources, the system:
-	 - Fetches local resources YAML files
-	 - Builds the Kyma Installer image
-	 - Deploys the Kyma Installer and applies the fetched configuration
-	 - Applies overrides if applicable
-	 - Sets admin password
-	 - Patches minikube IP
-3. Configures Helm (optional). 
-   If installed, Helm is automatically configured using certificates from tiller.
+The standard installation using the minimal configuration, the system performs the following steps:
+1. Fetches the `tiller.yaml` file from the `/installation/resources` directory and deploys it to the cluster.
+2. Deploys and configures the Kyma Installer. At this point, the steps differ depending on the installation type.
+    <div tabs name="installation">
+    <details>
+    <summary>
+    From release
+    </summary>
+
+    When you install Kyma locally from release, the system:
+    1. Fetches the latest or specified release along with configuration.
+    2. Deploys the Kyma Installer on the cluster.
+    3. Applies downloaded or defined configuration.
+    4. Applies overrides if applicable.
+    5. Sets the admin password.
+    6. Patches the Minikube IP.
+    </details>
+    <details>
+    <summary>
+    From sources
+    </summary>
+    
+    When you install Kyma locally from sources, the system:
+    1. Fetches the `YAML` files of the local sources.
+    2. Builds the Kyma Installer image.
+    3. Deploys the Kyma Installer and applies the fetched configuration.
+    4. Applies overrides if applicable.
+    5. Sets the admin password.
+    6. Patches the Minikube IP.
+    </details>
+    </div>
+3. Configures Helm (optional). If installed, Helm is automatically configured using certificates from tiller.
 4. Runs Kyma installation until the status `installed` confirms the success.
+> **NOTE**: You can override the standard installation settings using the `--override` or `--config` flag.
 
 ## Examples
 
@@ -64,12 +82,16 @@ The following examples include the most common cases of using the install comman
    ```bash
    kyma install
    ```
-
-2. Install Kyma from sources. 
+2. Install Kyma from your local Kyma branch. 
+   >**NOTE**: The location of branch must comply with Go code naming conventions. 
    ```bash
    kyma install --local
    ```
-3. Install Kyma using your own configuration. [Here](https://github.com/kyma-project/kyma/releases/download/1.2.2/kyma-installer-local.yaml) you can find an example of the Installer configuration file you can base your own configuration on.
+3. Install Kyma from local sources using the absolute **{SRC_PATH}**.
+   ```bash
+   kyma install --src-path {SRC_PATH}
+   ```
+3. Install Kyma using your own configuration. [Here](https://github.com/kyma-project/kyma/releases/download/1.2.2/kyma-installer-local.yaml) you can find an example of the Installer configuration file to base your own configuration on.
    ```bash
    kyma install --config {YAML_FILE_PATH}
    ```
