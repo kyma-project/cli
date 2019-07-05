@@ -2,7 +2,7 @@
 
 ## Description
 
-Installs Kyma on a running Kubernetes cluster.
+Use this command to install Kyma on a running Kubernetes cluster.
 
 ## Usage
 
@@ -28,7 +28,7 @@ kyma install [OPTIONS]
 
 ## Details
 
-Learn more about the actions triggered by using the command.
+Learn more about the actions triggered by the command.
 
 ### Prerequisites
 
@@ -40,7 +40,7 @@ Before you use the command, make sure your setup meets the following prerequisit
 
 ### Installation flow 
 
-The standard installation using the minimal configuration, the system performs the following steps:
+The standard installation uses the minimal configuration. The system performs the following steps:
 1. Fetches the `tiller.yaml` file from the `/installation/resources` directory and deploys it to the cluster.
 2. Deploys and configures the Kyma Installer. At this point, the steps differ depending on the installation type.
     <div tabs name="installation">
@@ -63,44 +63,44 @@ The standard installation using the minimal configuration, the system performs t
     </summary>
     
     When you install Kyma locally from sources, the system:
-    1. Fetches the `YAML` files of the local sources.
+    1. Fetches the configuration YAML files from the local sources.
     2. Builds the Kyma Installer image.
     3. Deploys the Kyma Installer and applies the fetched configuration.
-    4. Applies overrides if applicable.
+    4. Applies overrides, if applicable.
     5. Sets the admin password.
     6. Patches the Minikube IP.
     </details>
     </div>
-3. Configures Helm (optional). If installed, Helm is automatically configured using certificates from tiller.
-4. Runs Kyma installation until the status `installed` confirms the success.
+3. Configures Helm. If installed, Helm is automatically configured using certificates from tiller. This step is optional.
+4. Runs Kyma installation until the `installed` status confirms the successful installation.
 > **NOTE**: You can override the standard installation settings using the `--override` or `--config` flag.
 
 ## Examples
 
-The following examples include the most common cases of using the install command. 
-1. Install Kyma from the current release:
+The following examples include the most common uses of the `install` command. 
+* Install Kyma from the current release:
    ```bash
    kyma install
    ```
-2. Install Kyma from local sources:
+* Install Kyma from local sources:
 
    >**NOTE**: The location of your cloned `kyma-cli` repository must comply with Go code naming conventions. 
 
    ```bash
    kyma install --local
    ```
-3. Install Kyma from local sources using the absolute **{SRC_PATH}**:
+* Install Kyma from local sources using the absolute **{SRC_PATH}**:
    ```bash
    kyma install --src-path {SRC_PATH}
    ```
-3. Install Kyma using your own configuration:
+* Install Kyma using your own configuration:
 
    ```bash
    kyma install --config {YAML_FILE_PATH}
    ```
-   [Here](https://github.com/kyma-project/kyma/releases/download/1.2.2/kyma-installer-local.yaml) you can find an example of the Installer configuration `YAML` file to base your own configuration.
+   [Here](https://github.com/kyma-project/kyma/releases/download/1.2.2/kyma-installer-local.yaml) you can find an example of the Installer configuration YAML file. Use it to create your own configuration.
 
-4. Install Kyma and override specific parameters:
+* Install Kyma and override specific parameters:
 
    ```bash
    kyma install --override {YAML_FILE_PATH}
