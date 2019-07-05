@@ -56,7 +56,7 @@ func (cmd *command) Run() error {
 		testSuiteName = fmt.Sprintf("test-%d", rnd)
 	}
 
-	tNotExists, err := cmd.verifyIfTestNotExists(testSuiteName, cli)
+	tNotExists, err := verifyIfTestNotExists(testSuiteName, cli)
 	if err != nil {
 		return err
 	}
@@ -76,13 +76,13 @@ func (cmd *command) Run() error {
 		testDefNames := strings.Split(cmd.opts.Tests, ",")
 
 		var err error
-		if testDefToApply, err = cmd.matchTestDefinitionNames(cli, testDefNames,
+		if testDefToApply, err = matchTestDefinitionNames(testDefNames,
 			clusterTestDefs.Items); err != nil {
 			return err
 		}
 	}
 
-	testResource := cmd.generateTestsResource(testSuiteName, testDefToApply)
+	testResource := generateTestsResource(testSuiteName, testDefToApply)
 	if err != nil {
 		return err
 	}
@@ -95,9 +95,8 @@ func (cmd *command) Run() error {
 	return nil
 }
 
-func (cmd *command) matchTestDefinitionNames(cli client.TestRESTClient,
-	testNames []string, testDefs []oct.TestDefinition) ([]oct.TestDefinition, error) {
-
+func matchTestDefinitionNames(testNames []string,
+	testDefs []oct.TestDefinition) ([]oct.TestDefinition, error) {
 	result := []oct.TestDefinition{}
 	for _, tName := range testNames {
 		found := false
@@ -115,7 +114,7 @@ func (cmd *command) matchTestDefinitionNames(cli client.TestRESTClient,
 	return result, nil
 }
 
-func (cmd *command) generateTestsResource(testName string,
+func generateTestsResource(testName string,
 	testDefinitions []oct.TestDefinition) *oct.ClusterTestSuite {
 
 	octTestDefs := test.NewTestSuite(testName)
@@ -133,7 +132,7 @@ func (cmd *command) generateTestsResource(testName string,
 	return octTestDefs
 }
 
-func (cmd *command) verifyIfTestNotExists(suiteName string,
+func verifyIfTestNotExists(suiteName string,
 	cli client.TestRESTClient) (bool, error) {
 	tests, err := test.ListTestSuiteNames(cli)
 	if err != nil {
