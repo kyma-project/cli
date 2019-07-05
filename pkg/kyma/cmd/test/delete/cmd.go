@@ -49,7 +49,7 @@ func (cmd *command) Run(args []string) error {
 			return fmt.Errorf("unable to list test suites. E: %s", err.Error())
 		}
 		for _, ts := range testSuites.Items {
-			if err := cmd.deleteTestSuite(cli, ts.GetName()); err != nil {
+			if err := deleteTestSuite(cli, ts.GetName()); err != nil {
 				return err
 			}
 		}
@@ -58,7 +58,7 @@ func (cmd *command) Run(args []string) error {
 	return nil
 }
 
-func (cmd *command) deleteTestSuite(cli client.TestRESTClient, testName string) error {
+func deleteTestSuite(cli client.TestRESTClient, testName string) error {
 	if err := cli.DeleteTestSuite(test.NewTestSuite(testName)); err != nil {
 		return fmt.Errorf("unable to delete test suite '%s'. E: %s",
 			testName, err.Error())
