@@ -21,10 +21,10 @@ kyma install [OPTIONS]
 | **&#x2011;&#x2011;domain**   | -d |`kyma.local`|Specifies the domain used for installation.| 
 | **&#x2011;&#x2011;password** | -p ||Specifies the predefined cluster password.| 
 | **&#x2011;&#x2011;noWait**   | -n |`false`|Determines if the installation should wait for the Installer configuration to complete.| 
-| **&#x2011;&#x2011;src-path**  | ||Specifies the absolute path to local sources.| 
-| **&#x2011;&#x2011;installer-version** | ||Specifies the version of the Kyma Installer Docker image used for the local installation.| 
-| **&#x2011;&#x2011;installer-dir**     | ||Specifies the directory of the Kyma Installer Docker image used for the local installation.| 
-|**&#x2011;&#x2011;timeout**           |  |`30m`|Specifies the timeout after which the CLI stops watching the installation progress. The timeout value is a [duration string](https://golang.org/pkg/time/#ParseDuration) meaning a decimal number followed by a unit suffix.| 
+| **&#x2011;&#x2011;src&#x2011;path**  | ||Specifies the absolute path to local sources.| 
+| **&#x2011;&#x2011;installer&#x2011;version** | ||Specifies the version of the Kyma Installer Docker image used for the local installation.| 
+| **&#x2011;&#x2011;installer&#x2011;dir**     | ||Specifies the directory of the Kyma Installer Docker image used for the local installation.| 
+| **&#x2011;&#x2011;timeout**           |  |`30m`|Specifies the timeout after which the CLI stops watching the installation progress. The timeout value is a [duration string](https://golang.org/pkg/time/#ParseDuration) meaning a decimal number followed by a unit suffix.| 
 
 ## Details
 
