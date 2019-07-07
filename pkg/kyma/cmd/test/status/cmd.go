@@ -58,6 +58,10 @@ func (cmd *command) Run(args []string) error {
 			return fmt.Errorf("unable to list test suites. E: %s", err.Error())
 		}
 
+		if len(testList.Items) == 0 {
+			return fmt.Errorf("no test suites in the cluster")
+		}
+
 		for _, t := range testList.Items {
 			if err := cmd.printTestSuiteStatus(&t, cmd.opts.Jsn); err != nil {
 				return err

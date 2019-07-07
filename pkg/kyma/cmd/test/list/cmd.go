@@ -45,6 +45,9 @@ func (cmd *command) Run() error {
 		if testDefs, err := test.ListTestDefinitionNames(cli); err != nil {
 			return err
 		} else {
+			if len(testDefs) == 0 {
+				fmt.Errorf("no test definitions in the cluster")
+			}
 			for _, t := range testDefs {
 				fmt.Printf("%s\r\n", t)
 			}
@@ -58,6 +61,7 @@ func (cmd *command) Run() error {
 	}
 
 	if len(testSuites.Items) == 0 {
+		return fmt.Errorf("no test suites in the cluster")
 		return nil
 	}
 
