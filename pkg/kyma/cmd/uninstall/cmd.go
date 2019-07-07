@@ -95,15 +95,6 @@ func (cmd *command) Run() error {
 	}
 	s.Successf("Tiller deleted")
 
-	s = cmd.NewStep("Deleting Namespaces")
-	// see https://github.com/kyma-project/kyma/issues/1826
-	err = cmd.deleteLeftoverResources("namespace", namespacesToDelete)
-	if err != nil {
-		s.Failure()
-		return err
-	}
-	s.Successf("Namespaces deleted")
-
 	s = cmd.NewStep("Deleting CRDs")
 	// see https://github.com/kyma-project/kyma/issues/1826
 	err = cmd.deleteLeftoverResources("crd", crdGroupsToDelete)
@@ -112,6 +103,15 @@ func (cmd *command) Run() error {
 		return err
 	}
 	s.Successf("CRDs deleted")
+
+	s = cmd.NewStep("Deleting Namespaces")
+	// see https://github.com/kyma-project/kyma/issues/1826
+	err = cmd.deleteLeftoverResources("namespace", namespacesToDelete)
+	if err != nil {
+		s.Failure()
+		return err
+	}
+	s.Successf("Namespaces deleted")
 
 	err = cmd.printUninstallSummary()
 	if err != nil {
