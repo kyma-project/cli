@@ -31,8 +31,8 @@ func NewCmd(o *options) *cobra.Command {
 		Aliases: []string{"s"},
 	}
 
-	cobraCmd.Flags().BoolVarP(&o.Wait, "wait", "w", false, "Wait for test execution to finish")
-	cobraCmd.Flags().StringVarP(&o.Logs, "logs", "l", "", "Test name to show logs")
+	//cobraCmd.Flags().BoolVarP(&o.Wait, "wait", "w", false, "Wait for test execution to finish")
+	//cobraCmd.Flags().StringVarP(&o.Logs, "logs", "l", "", "Test name to show logs")
 	cobraCmd.Flags().BoolVarP(&o.Jsn, "raw", "r", false,
 		"Print test status in raw json format")
 	return cobraCmd

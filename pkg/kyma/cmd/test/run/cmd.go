@@ -33,7 +33,8 @@ func NewCmd(o *options) *cobra.Command {
 	}
 
 	cobraCmd.Flags().StringVarP(&o.Name, "name", "n", "", "Name for the new test suite")
-	cobraCmd.Flags().StringVarP(&o.Tests, "tests", "s", "", "Test names to execute. Example: --tests=cluster-users-test,test-api-controller-acceptance")
+	cobraCmd.Flags().StringVarP(&o.Tests, "tests", "s", "", "Test names to execute. Example: --tests=cluster-users-test,test-api-controller-acceptance. Overlaps with --all")
+	cobraCmd.Flags().BoolVarP(&o.RunAll, "all", "a", false, "Run all test cases in the test suite. Overlaps with --tests")
 	cobraCmd.Flags().BoolVarP(&o.Wait, "wait", "w", false, "Wait for test execution to finish")
 	cobraCmd.Flags().IntVarP(&o.Timeout, "timeout", "t", 120, "Timeout for test execution (in seconds)")
 	return cobraCmd
@@ -72,7 +73,14 @@ func (cmd *command) Run() error {
 			err.Error())
 	}
 
-	if cmd.opts.Tests != "" {
+	if cmd.opts.RunAll {
+		if cmd.opts.Tests != "" {
+			return fmt.Errorf("-all flag is incompatible with --tests")
+		}
+	} else {
+		if cmd.opts.Tests == "" {
+			return fmt.Errorf("neither --tests nor --all flags provided")
+		}
 		testDefNames := strings.Split(cmd.opts.Tests, ",")
 
 		var err error
