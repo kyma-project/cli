@@ -2,7 +2,7 @@
 
 ## Description
 
-Use this command to get version of the Kyma CLI and the version of the Kyma cluster the current KUBECONFIG points to.
+Use this command to get the Kyma CLI version and the version of the Kyma cluster the current KUBECONFIG points to.
 
 ## Usage 
 

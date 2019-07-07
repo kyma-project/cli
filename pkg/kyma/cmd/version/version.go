@@ -28,7 +28,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "version",
 		Short: "Version of the Kyma CLI and connected Kyma cluster",
-		Long: `Prints the version of the Kyma CLI and the version of the Kyma cluster the current KUBECONFIG points to. For details, see https://github.com/kyma-project/cli/tree/master/pkg/kyma/docs/install.md.
+		Long: `Prints the version of the Kyma CLI and the version of the Kyma cluster the current KUBECONFIG points to. For details, see https://github.com/kyma-project/cli/tree/master/pkg/kyma/docs/version.md.
 `,
 		RunE: func(_ *cobra.Command, _ []string) error { return c.Run() },
 	}
