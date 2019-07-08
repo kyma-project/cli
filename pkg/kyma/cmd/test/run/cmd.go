@@ -77,6 +77,7 @@ func (cmd *command) Run() error {
 		if cmd.opts.Tests != "" {
 			return fmt.Errorf("-all flag is incompatible with --tests")
 		}
+		testDefToApply = clusterTestDefs.Items
 	} else {
 		if cmd.opts.Tests == "" {
 			return fmt.Errorf("neither --tests nor --all flags provided")

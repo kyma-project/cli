@@ -76,7 +76,7 @@ func (cmd *command) Run() error {
 		case 1:
 			testResult = string(t.Status.Results[0].Status)
 		default:
-			testResult = string(t.Status.Results[len(t.Status.Results)-1].Status)
+			testResult = string(t.Status.Conditions[len(t.Status.Conditions)-1].Type)
 		}
 		writer.Append([]string{
 			t.GetName(),
