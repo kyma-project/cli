@@ -21,7 +21,7 @@ func (c *Command) NewStep(msg string) step.Step {
 
 func (c *Command) Kubectl() *kubectl.Wrapper {
 	if c.kubectl == nil {
-		c.kubectl = kubectl.NewWrapper(c.Verbose)
+		c.kubectl = kubectl.NewWrapper(c.Verbose, c.Options.KubeconfigPath)
 	}
 	return c.kubectl
 }
