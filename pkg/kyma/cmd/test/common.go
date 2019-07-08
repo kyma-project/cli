@@ -6,7 +6,7 @@ import (
 
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
 	"github.com/kyma-project/cli/internal/kube"
-	"github.com/kyma-project/cli/pkg/kyma/cmd/test/client"
+	client "github.com/kyma-project/cli/pkg/api/test"
 	"github.com/olekukonko/tablewriter"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

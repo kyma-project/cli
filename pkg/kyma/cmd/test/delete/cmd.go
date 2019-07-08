@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"time"
 
+	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
+	client "github.com/kyma-project/cli/pkg/api/test"
 	"github.com/kyma-project/cli/pkg/kyma/cmd/test"
-	"github.com/kyma-project/cli/pkg/kyma/cmd/test/client"
 	"github.com/kyma-project/cli/pkg/kyma/core"
 	"github.com/spf13/cobra"
 )
@@ -43,15 +44,24 @@ func (cmd *command) Run(args []string) error {
 		return fmt.Errorf("unable to create test REST client. E: %s", err)
 	}
 
+	testSuites := &oct.ClusterTestSuiteList{}
 	if cmd.opts.All {
-		testSuites, err := cli.ListTestSuites()
+		var err error
+		testSuites, err = cli.ListTestSuites()
 		if err != nil {
 			return fmt.Errorf("unable to list test suites. E: %s", err.Error())
 		}
-		for _, ts := range testSuites.Items {
-			if err := deleteTestSuite(cli, ts.GetName()); err != nil {
-				return err
-			}
+	} else {
+		tSuites := []oct.ClusterTestSuite{}
+		for _, testName := range args {
+			ts := test.NewTestSuite(testName)
+			tSuites = append(tSuites, *ts)
+		}
+		testSuites.Items = tSuites
+	}
+	for _, ts := range testSuites.Items {
+		if err := deleteTestSuite(cli, ts.GetName()); err != nil {
+			return err
 		}
 	}
 

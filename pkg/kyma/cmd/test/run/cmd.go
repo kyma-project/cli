@@ -7,8 +7,8 @@ import (
 	"time"
 
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
+	client "github.com/kyma-project/cli/pkg/api/test"
 	"github.com/kyma-project/cli/pkg/kyma/cmd/test"
-	"github.com/kyma-project/cli/pkg/kyma/cmd/test/client"
 	"github.com/kyma-project/cli/pkg/kyma/core"
 	"github.com/spf13/cobra"
 )
