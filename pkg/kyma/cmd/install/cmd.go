@@ -77,14 +77,9 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd := &cobra.Command{
 		Use:   "install",
 		Short: "Installs Kyma on a running Kubernetes cluster",
-		Long: `Install Kyma on a running Kubernetes cluster.
+		Long: `Installs Kyma on a running Kubernetes cluster. For more information on the command, see https://github.com/kyma-project/cli/tree/master/pkg/kyma/docs/install.md.
 
-Make sure that your KUBECONFIG is already pointing to the target cluster.
-The command:
-- Installs Tiller
-- Deploys the Kyma Installer
-- Configures the Kyma Installer using the latest minimal configuration
-- Triggers Kyma installation
+
 `,
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 		Aliases: []string{"i"},
@@ -129,7 +124,7 @@ func (cmd *command) Run() error {
 		s.Failure()
 		return err
 	}
-	s.Successf("Tiller installed")
+	s.Successf("Tiller deployed")
 
 	s = cmd.NewStep("Deploying Kyma Installer")
 	if err := cmd.installInstaller(); err != nil {
