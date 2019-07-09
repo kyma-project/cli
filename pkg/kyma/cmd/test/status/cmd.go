@@ -3,6 +3,7 @@ package status
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"time"
 
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
@@ -80,37 +81,42 @@ func (cmd *command) Run(args []string) error {
 	return nil
 }
 
-func (cmd *command) printTestSuiteStatus(test *oct.ClusterTestSuite, raw bool) error {
-	if test == nil {
+func (cmd *command) printTestSuiteStatus(testSuite *oct.ClusterTestSuite, raw bool) error {
+	if testSuite == nil {
 		return fmt.Errorf("unable to print test suite. Nil pointer\r\n")
 	}
 	if raw {
-		d, err := json.MarshalIndent(test, "", "\t")
+		d, err := json.MarshalIndent(testSuite, "", "\t")
 		if err != nil {
 			return fmt.Errorf("unable to marshal test suite '%s'. E: %s\r\n",
-				test.GetName(), err.Error())
+				testSuite.GetName(), err.Error())
 		}
 		fmt.Println(string(d))
 		return nil
 	}
-	fmt.Printf("Name:\t\t%s\r\n", test.GetName())
-	fmt.Printf("Concurrency:\t%d\r\n", test.Spec.Concurrency)
-	fmt.Printf("MaxRetries:\t%d\r\n", test.Spec.MaxRetries)
-	if test.Status.StartTime != nil {
-		fmt.Printf("StartTime:\t%s\r\n", test.Status.StartTime.String())
+	fmt.Printf("Name:\t\t%s\r\n", testSuite.GetName())
+	fmt.Printf("Concurrency:\t%d\r\n", testSuite.Spec.Concurrency)
+	fmt.Printf("MaxRetries:\t%d\r\n", testSuite.Spec.MaxRetries)
+	if testSuite.Status.StartTime != nil {
+		fmt.Printf("StartTime:\t%s\r\n", testSuite.Status.StartTime.String())
 	} else {
 		fmt.Printf("StartTime:\t%s\r\n", "not started yet")
 	}
-	if test.Status.CompletionTime != nil {
-		fmt.Printf("EndTime:\t%s\r\n", test.Status.CompletionTime)
+	if testSuite.Status.CompletionTime != nil {
+		fmt.Printf("EndTime:\t%s\r\n", testSuite.Status.CompletionTime)
 	} else {
 		fmt.Printf("EndTime:\t%s\r\n", "not finished yet")
 	}
 
-	fmt.Printf("Condition:\t%s\r\n", test.Status.Conditions[len(test.Status.Conditions)-1].Type)
-	fmt.Printf("Tests:\r\n")
-	for _, t := range test.Status.Results {
-		fmt.Printf("\t%s - %s\r\n", t.Name, t.Status)
+	fmt.Printf("Condition:\t%s\r\n", testSuite.Status.Conditions[len(testSuite.Status.Conditions)-1].Type)
+
+	writer := test.NewTableWriter([]string{}, os.Stdout)
+	for _, t := range testSuite.Status.Results {
+		writer.Append([]string{t.Name, string(t.Status)})
 	}
+	fmt.Printf("Tests finished:\t%d/%d\r\n",
+		test.GetNumberOfFinishedTests(testSuite), len(testSuite.Status.Results))
+	writer.Render()
+
 	return nil
 }

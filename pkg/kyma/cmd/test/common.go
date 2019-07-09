@@ -91,3 +91,13 @@ func NewTableWriter(columns []string, out io.Writer) *tablewriter.Table {
 	writer.SetColumnSeparator("")
 	return writer
 }
+
+func GetNumberOfFinishedTests(testSuite *oct.ClusterTestSuite) int {
+	result := 0
+	for _, t := range testSuite.Status.Results {
+		if t.Status == oct.TestFailed || t.Status == oct.TestSucceeded || t.Status == oct.TestSkipped {
+			result += 1
+		}
+	}
+	return result
+}
