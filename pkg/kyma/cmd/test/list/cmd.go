@@ -65,7 +65,7 @@ func (cmd *command) Run() error {
 		return nil
 	}
 
-	writer := test.NewTableWriter([]string{"TEST NAME", "TESTS", "STATUS"}, os.Stdout)
+	writer := test.NewTableWriter([]string{"TEST NAME", "TESTS", "FINISHED", "STATUS"}, os.Stdout)
 
 	for _, t := range testSuites.Items {
 		var testResult string
@@ -81,6 +81,7 @@ func (cmd *command) Run() error {
 		writer.Append([]string{
 			t.GetName(),
 			strconv.Itoa(len(t.Spec.Selectors.MatchNames)),
+			fmt.Sprintf("%d/%d", test.GetNumberOfFinishedTests(&t), len(t.Status.Results)),
 			testResult,
 		})
 	}
