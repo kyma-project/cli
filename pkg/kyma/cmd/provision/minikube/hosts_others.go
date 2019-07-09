@@ -17,7 +17,7 @@ func addDevDomainsToEtcHostsOSSpecific(domain string, s step.Step, hostAlias str
 		if err != nil {
 			s.LogInfof("Error: %s", err.Error())
 		}
-		s.LogInfof("Execute the following command manually to add domain entries:\n###\n sudo sed -i '' \"/"+domain+"/d\" "+hostsFile+" && echo '%s' | sudo tee -a /etc/hosts\r\n###\n", hostAlias)
+		s.LogInfof("Execute the following command manually to add domain entries:\n###\n sudo sed -i.bak \"/"+domain+"/d\" "+hostsFile+" && echo '%s' | sudo tee -a /etc/hosts\r\n###\n", hostAlias)
 	}
 
 	s.LogInfo("Adding domain mappings to your 'hosts' file")
@@ -29,8 +29,7 @@ func addDevDomainsToEtcHostsOSSpecific(domain string, s step.Step, hostAlias str
 		}
 	}
 	_, err := internal.RunCmd("sudo",
-		"sed", "-i",
-		"''",
+		"sed", "-i.bak",
 		fmt.Sprintf("/%s/d", domain),
 		hostsFile)
 	if err != nil {
