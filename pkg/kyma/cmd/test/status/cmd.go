@@ -24,7 +24,7 @@ func NewCmd(o *options) *cobra.Command {
 	}
 
 	cobraCmd := &cobra.Command{
-		Use:     "status",
+		Use:     "status <test-suite name>",
 		Short:   "Status of tests on a running Kyma cluster",
 		Long:    `Status of tests on a running Kyma cluster`,
 		RunE:    func(_ *cobra.Command, args []string) error { return cmd.Run(args) },

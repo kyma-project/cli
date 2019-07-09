@@ -23,7 +23,7 @@ func NewCmd(o *options) *cobra.Command {
 	}
 
 	cobraCmd := &cobra.Command{
-		Use:     "delete",
+		Use:     "delete <test-suite name>",
 		Short:   "Delete tests on a running Kyma cluster",
 		Long:    `Delete tests on a running Kyma cluster`,
 		RunE:    func(_ *cobra.Command, args []string) error { return cmd.Run(args) },
@@ -36,7 +36,7 @@ func NewCmd(o *options) *cobra.Command {
 
 func (cmd *command) Run(args []string) error {
 	if len(args) < 1 && !cmd.opts.All {
-		return fmt.Errorf("test suite name requied")
+		return fmt.Errorf("test suite name required")
 	}
 
 	cli, err := client.NewTestRESTClient(10 * time.Second)
@@ -73,6 +73,6 @@ func deleteTestSuite(cli client.TestRESTClient, testName string) error {
 		return fmt.Errorf("unable to delete test suite '%s'. E: %s",
 			testName, err.Error())
 	}
-	fmt.Printf("test '%s' successfully delete\n", testName)
+	fmt.Printf("test '%s' successfully deleted\n", testName)
 	return nil
 }
