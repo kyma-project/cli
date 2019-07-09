@@ -10,7 +10,6 @@ type options struct {
 	Tests   string
 	Wait    bool
 	Timeout int
-	RunAll  bool
 }
 
 func NewOptions(o *core.Options) *options {

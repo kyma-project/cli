@@ -30,12 +30,11 @@ func NewCmd(o *options) *cobra.Command {
 		Aliases: []string{"d"},
 	}
 
-	cobraCmd.Flags().BoolVarP(&o.All, "all", "a", false, "Delete all test suites")
 	return cobraCmd
 }
 
 func (cmd *command) Run(args []string) error {
-	if len(args) < 1 && !cmd.opts.All {
+	if len(args) < 1 {
 		return fmt.Errorf("test suite name required")
 	}
 
@@ -45,20 +44,12 @@ func (cmd *command) Run(args []string) error {
 	}
 
 	testSuites := &oct.ClusterTestSuiteList{}
-	if cmd.opts.All {
-		var err error
-		testSuites, err = cli.ListTestSuites()
-		if err != nil {
-			return fmt.Errorf("unable to list test suites. E: %s", err.Error())
-		}
-	} else {
-		tSuites := []oct.ClusterTestSuite{}
-		for _, testName := range args {
-			ts := test.NewTestSuite(testName)
-			tSuites = append(tSuites, *ts)
-		}
-		testSuites.Items = tSuites
+	tSuites := []oct.ClusterTestSuite{}
+	for _, testName := range args {
+		ts := test.NewTestSuite(testName)
+		tSuites = append(tSuites, *ts)
 	}
+	testSuites.Items = tSuites
 	for _, ts := range testSuites.Items {
 		if err := deleteTestSuite(cli, ts.GetName()); err != nil {
 			return err
