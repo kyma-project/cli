@@ -127,3 +127,4 @@ Kyma cluster version: 1.0.0
 ```
 
 For more information on extending kubectl with plugins, read [Kubernetes documentation](https://kubernetes.io/docs/tasks/extend-kubectl/kubectl-plugins/).
+
