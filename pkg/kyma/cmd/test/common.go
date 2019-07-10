@@ -5,7 +5,6 @@ import (
 	"io"
 
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
-	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/pkg/api/octopus"
 	"github.com/olekukonko/tablewriter"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -67,12 +66,6 @@ func NewTestSuite(name string) *oct.ClusterTestSuite {
 			Namespace: NamespaceForTests,
 		},
 	}
-}
-
-func GetTestSuiteByName(cli *octopus.OctopusInterface, kClient kube.KymaKube,
-	name string) (*oct.ClusterTestSuite, error) {
-
-	return nil, nil
 }
 
 func NewTableWriter(columns []string, out io.Writer) *tablewriter.Table {
