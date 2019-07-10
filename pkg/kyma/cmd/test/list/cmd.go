@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"time"
 
-	client "github.com/kyma-project/cli/pkg/api/test"
+	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/pkg/kyma/cmd/test"
 	"github.com/kyma-project/cli/pkg/kyma/core"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -36,13 +36,17 @@ func NewCmd(o *options) *cobra.Command {
 }
 
 func (cmd *command) Run() error {
-	cli, err := client.NewTestRESTClient(10 * time.Second)
+	var err error
+	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
+		return errors.Wrap(err, "Could not initialize the Kubernetes client. Please make sure that you have a valid kubeconfig.")
+	}
+
 	if err != nil {
-		return fmt.Errorf("unable to create test REST client. E: %s", err)
+		return errors.Wrap(err, "unable to create test REST client")
 	}
 
 	if cmd.opts.Definitions {
-		if testDefs, err := test.ListTestDefinitionNames(cli); err != nil {
+		if testDefs, err := test.ListTestDefinitionNames(cmd.K8s.Octopus()); err != nil {
 			return err
 		} else {
 			if len(testDefs) == 0 {
@@ -55,13 +59,13 @@ func (cmd *command) Run() error {
 		return nil
 	}
 
-	testSuites, err := cli.ListTestSuites()
+	testSuites, err := cmd.K8s.Octopus().ListTestSuites()
 	if err != nil {
-		return fmt.Errorf("unable to get list of test suites. E: %s", err.Error())
+		return errors.Wrap(err, "unable to get list of test suites")
 	}
 
 	if len(testSuites.Items) == 0 {
-		return fmt.Errorf("no test suites in the cluster")
+		fmt.Println("no test suites in the cluster")
 		return nil
 	}
 

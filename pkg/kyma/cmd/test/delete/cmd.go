@@ -2,12 +2,13 @@ package del
 
 import (
 	"fmt"
-	"time"
 
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
-	client "github.com/kyma-project/cli/pkg/api/test"
+	"github.com/kyma-project/cli/internal/kube"
+	"github.com/kyma-project/cli/pkg/api/octopus"
 	"github.com/kyma-project/cli/pkg/kyma/cmd/test"
 	"github.com/kyma-project/cli/pkg/kyma/core"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -38,9 +39,9 @@ func (cmd *command) Run(args []string) error {
 		return fmt.Errorf("test suite name required")
 	}
 
-	cli, err := client.NewTestRESTClient(10 * time.Second)
-	if err != nil {
-		return fmt.Errorf("unable to create test REST client. E: %s", err)
+	var err error
+	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
+		return errors.Wrap(err, "could not initialize the Kubernetes client. Please make sure that you have a valid kubeconfig.")
 	}
 
 	testSuites := &oct.ClusterTestSuiteList{}
@@ -51,7 +52,7 @@ func (cmd *command) Run(args []string) error {
 	}
 	testSuites.Items = tSuites
 	for _, ts := range testSuites.Items {
-		if err := deleteTestSuite(cli, ts.GetName()); err != nil {
+		if err := deleteTestSuite(cmd.K8s.Octopus(), ts.GetName()); err != nil {
 			return err
 		}
 	}
@@ -59,10 +60,10 @@ func (cmd *command) Run(args []string) error {
 	return nil
 }
 
-func deleteTestSuite(cli client.TestRESTClient, testName string) error {
+func deleteTestSuite(cli octopus.OctopusInterface, testName string) error {
 	if err := cli.DeleteTestSuite(test.NewTestSuite(testName)); err != nil {
-		return fmt.Errorf("unable to delete test suite '%s'. E: %s",
-			testName, err.Error())
+		return errors.Wrap(err, fmt.Sprintf("unable to delete test suite '%s'",
+			testName))
 	}
 	fmt.Printf("test '%s' successfully deleted\n", testName)
 	return nil

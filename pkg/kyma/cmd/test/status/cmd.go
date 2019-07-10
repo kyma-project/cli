@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"time"
 
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
-	client "github.com/kyma-project/cli/pkg/api/test"
+	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/pkg/kyma/cmd/test"
 	"github.com/kyma-project/cli/pkg/kyma/core"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -38,27 +38,28 @@ func NewCmd(o *options) *cobra.Command {
 }
 
 func (cmd *command) Run(args []string) error {
-	cli, err := client.NewTestRESTClient(10 * time.Second)
-	if err != nil {
-		return fmt.Errorf("unable to create test REST client. E: %s", err)
+	var err error
+	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
+		return errors.Wrap(err, "Could not initialize the Kubernetes client. Please make sure that you have a valid kubeconfig.")
 	}
 
 	switch len(args) {
 	case 1:
-		testSuite, err := cli.GetTestSuiteByName(args[0])
+		testSuite, err := cmd.K8s.Octopus().GetTestSuiteByName(args[0])
 		if err != nil {
-			return fmt.Errorf("unable to get test suite '%s'. E: %s",
-				args[0], err.Error())
+			return errors.Wrap(err, fmt.Sprintf("unable to get test suite '%s'",
+				args[0]))
 		}
 		return cmd.printTestSuiteStatus(testSuite, cmd.opts.Jsn)
 	case 0:
-		testList, err := cli.ListTestSuites()
+		testList, err := cmd.K8s.Octopus().ListTestSuites()
 		if err != nil {
-			return fmt.Errorf("unable to list test suites. E: %s", err.Error())
+			return errors.Wrap(err, "unable to list test suites. E: %s")
 		}
 
 		if len(testList.Items) == 0 {
-			return fmt.Errorf("no test suites in the cluster")
+			fmt.Println("no test suites in the cluster")
+			return nil
 		}
 
 		for _, t := range testList.Items {
@@ -67,9 +68,9 @@ func (cmd *command) Run(args []string) error {
 			}
 		}
 	default:
-		testsList, err := test.ListTestSuitesByName(cli, args)
+		testsList, err := test.ListTestSuitesByName(cmd.K8s.Octopus(), args)
 		if err != nil {
-			return fmt.Errorf("unable to list test suites. E: %s", err.Error())
+			return errors.Wrap(err, "unable to list test suites")
 		}
 
 		for _, t := range testsList {

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
-	client "github.com/kyma-project/cli/pkg/api/test"
+	"github.com/kyma-project/cli/pkg/api/octopus"
 	"github.com/kyma-project/cli/pkg/kyma/cmd/test"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -201,7 +201,7 @@ func Test_verifyIfTestNotExists(t *testing.T) {
 	}
 
 	for _, tt := range testData {
-		mCli := client.NewMockedTestRestClient(nil, &oct.ClusterTestSuiteList{
+		mCli := octopus.NewMockedOctopusRestClient(nil, &oct.ClusterTestSuiteList{
 			Items: tt.inputSuites,
 		})
 		tExists, _ := verifyIfTestNotExists(tt.inputSuiteName, mCli)

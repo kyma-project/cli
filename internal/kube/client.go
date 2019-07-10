@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kyma-project/cli/pkg/api/octopus"
 	corev1 "k8s.io/api/core/v1"
 
 	"k8s.io/client-go/dynamic"
@@ -23,6 +24,7 @@ const (
 type client struct {
 	static  kubernetes.Interface
 	dynamic dynamic.Interface
+	octps   octopus.OctopusInterface
 }
 
 // NewFromConfig creates a new Kubernetes client based on the given Kubeconfig either provided by URL (in-cluster config) or via file (out-of-cluster config).
@@ -51,9 +53,15 @@ func NewFromConfigWithTimeout(url, file string, t time.Duration) (KymaKube, erro
 		return nil, err
 	}
 
+	octClient, err := octopus.NewOctopusRESTClient(2 * time.Second)
+	if err != nil {
+		return nil, err
+	}
+
 	return &client{
 			static:  sClient,
 			dynamic: dClient,
+			octps:   octClient,
 		},
 		nil
 
@@ -65,6 +73,10 @@ func (c *client) Static() kubernetes.Interface {
 
 func (c *client) Dynamic() dynamic.Interface {
 	return c.dynamic
+}
+
+func (c *client) Octopus() octopus.OctopusInterface {
+	return c.octps
 }
 
 func (c *client) IsPodDeployed(namespace, name string) (bool, error) {

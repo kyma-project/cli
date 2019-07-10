@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
-	client "github.com/kyma-project/cli/pkg/api/test"
+	"github.com/kyma-project/cli/pkg/api/octopus"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -69,7 +69,7 @@ func Test_deleteTestSuite(t *testing.T) {
 	}
 
 	for _, tt := range testData {
-		mCli := client.NewMockedTestRestClient(nil, tt.testSuitesAvailable)
+		mCli := octopus.NewMockedOctopusRestClient(nil, tt.testSuitesAvailable)
 		err := deleteTestSuite(mCli, tt.testSuiteNameToDelete)
 		if !tt.shouldFail {
 			require.Nil(t, err, tt.testName)

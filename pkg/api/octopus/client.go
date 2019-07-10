@@ -1,4 +1,4 @@
-package client
+package octopus
 
 import (
 	"context"
@@ -13,7 +13,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
-type TestRESTClient interface {
+type OctopusInterface interface {
 	ListTestDefinitions() (*oct.TestDefinitionList, error)
 	ListTestSuites() (*oct.ClusterTestSuiteList, error)
 	CreateTestSuite(cts *oct.ClusterTestSuite) error
@@ -21,12 +21,12 @@ type TestRESTClient interface {
 	GetTestSuiteByName(name string) (*oct.ClusterTestSuite, error)
 }
 
-type testRestClient struct {
+type OctopusRestClient struct {
 	cli         k8sRestClient.Client
 	callTimeout time.Duration
 }
 
-func (t *testRestClient) ListTestDefinitions() (*oct.TestDefinitionList, error) {
+func (t *OctopusRestClient) ListTestDefinitions() (*oct.TestDefinitionList, error) {
 	result := &oct.TestDefinitionList{}
 	ctx, cancelF := context.WithTimeout(context.Background(), t.callTimeout)
 	defer cancelF()
@@ -37,7 +37,7 @@ func (t *testRestClient) ListTestDefinitions() (*oct.TestDefinitionList, error) 
 	return result, nil
 }
 
-func (t *testRestClient) ListTestSuites() (*oct.ClusterTestSuiteList, error) {
+func (t *OctopusRestClient) ListTestSuites() (*oct.ClusterTestSuiteList, error) {
 	result := &oct.ClusterTestSuiteList{}
 	ctx, cancelF := context.WithTimeout(context.Background(), t.callTimeout)
 	defer cancelF()
@@ -48,19 +48,19 @@ func (t *testRestClient) ListTestSuites() (*oct.ClusterTestSuiteList, error) {
 	return result, nil
 }
 
-func (t *testRestClient) CreateTestSuite(cts *oct.ClusterTestSuite) error {
+func (t *OctopusRestClient) CreateTestSuite(cts *oct.ClusterTestSuite) error {
 	ctx, cancelF := context.WithTimeout(context.Background(), t.callTimeout)
 	defer cancelF()
 	return t.cli.Create(ctx, cts)
 }
 
-func (t *testRestClient) DeleteTestSuite(cts *oct.ClusterTestSuite) error {
+func (t *OctopusRestClient) DeleteTestSuite(cts *oct.ClusterTestSuite) error {
 	ctx, cancelF := context.WithTimeout(context.Background(), t.callTimeout)
 	defer cancelF()
 	return t.cli.Delete(ctx, cts)
 }
 
-func (t *testRestClient) GetTestSuiteByName(name string) (*oct.ClusterTestSuite, error) {
+func (t *OctopusRestClient) GetTestSuiteByName(name string) (*oct.ClusterTestSuite, error) {
 	ctx, cancelF := context.WithTimeout(context.Background(), t.callTimeout)
 	defer cancelF()
 	result := &oct.ClusterTestSuite{}
@@ -70,14 +70,14 @@ func (t *testRestClient) GetTestSuiteByName(name string) (*oct.ClusterTestSuite,
 	return result, err
 }
 
-func NewTestRESTClient(callTimeout time.Duration) (TestRESTClient, error) {
+func NewOctopusRESTClient(callTimeout time.Duration) (OctopusInterface, error) {
 	apis.AddToScheme(scheme.Scheme)
 	cli, err := k8sRestClient.New(config.GetConfigOrDie(), k8sRestClient.Options{})
 	if err != nil {
 		return nil, err
 	}
 
-	return &testRestClient{
+	return &OctopusRestClient{
 		cli:         cli,
 		callTimeout: callTimeout,
 	}, nil

@@ -6,14 +6,14 @@ import (
 
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
 	"github.com/kyma-project/cli/internal/kube"
-	client "github.com/kyma-project/cli/pkg/api/test"
+	"github.com/kyma-project/cli/pkg/api/octopus"
 	"github.com/olekukonko/tablewriter"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const NamespaceForTests = "kyma-system"
 
-func ListTestDefinitionNames(cli client.TestRESTClient) ([]string, error) {
+func ListTestDefinitionNames(cli octopus.OctopusInterface) ([]string, error) {
 	defs, err := cli.ListTestDefinitions()
 	if err != nil {
 		return nil, fmt.Errorf("unable to list test definitions. E: %s", err.Error())
@@ -26,7 +26,7 @@ func ListTestDefinitionNames(cli client.TestRESTClient) ([]string, error) {
 	return result, nil
 }
 
-func ListTestSuiteNames(cli client.TestRESTClient) ([]string, error) {
+func ListTestSuiteNames(cli octopus.OctopusInterface) ([]string, error) {
 	suites, err := cli.ListTestSuites()
 	if err != nil {
 		return nil, fmt.Errorf("unable to list test suites. E: %s", err.Error())
@@ -39,7 +39,7 @@ func ListTestSuiteNames(cli client.TestRESTClient) ([]string, error) {
 	return result, nil
 }
 
-func ListTestSuitesByName(cli client.TestRESTClient, names []string) ([]oct.ClusterTestSuite, error) {
+func ListTestSuitesByName(cli octopus.OctopusInterface, names []string) ([]oct.ClusterTestSuite, error) {
 	suites, err := cli.ListTestSuites()
 	if err != nil {
 		return nil, fmt.Errorf("unable to list test suites. E: %s", err.Error())
@@ -73,7 +73,7 @@ func NewTestSuite(name string) *oct.ClusterTestSuite {
 	}
 }
 
-func GetTestSuiteByName(cli *client.TestRESTClient, kClient kube.KymaKube,
+func GetTestSuiteByName(cli *octopus.OctopusInterface, kClient kube.KymaKube,
 	name string) (*oct.ClusterTestSuite, error) {
 
 	return nil, nil

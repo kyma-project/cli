@@ -7,9 +7,11 @@ import (
 	"time"
 
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
-	client "github.com/kyma-project/cli/pkg/api/test"
+	"github.com/kyma-project/cli/internal/kube"
+	"github.com/kyma-project/cli/pkg/api/octopus"
 	"github.com/kyma-project/cli/pkg/kyma/cmd/test"
 	"github.com/kyma-project/cli/pkg/kyma/core"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -41,10 +43,8 @@ func NewCmd(o *options) *cobra.Command {
 
 func (cmd *command) Run() error {
 	var err error
-
-	cli, err := client.NewTestRESTClient(10 * time.Second)
-	if err != nil {
-		return fmt.Errorf("unable to create test REST client. E: %s", err)
+	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
+		return errors.Wrap(err, "Could not initialize the Kubernetes client. Please make sure that you have a valid kubeconfig.")
 	}
 
 	var testSuiteName string
@@ -56,7 +56,7 @@ func (cmd *command) Run() error {
 		testSuiteName = fmt.Sprintf("test-%d", rnd)
 	}
 
-	tNotExists, err := verifyIfTestNotExists(testSuiteName, cli)
+	tNotExists, err := verifyIfTestNotExists(testSuiteName, cmd.K8s.Octopus())
 	if err != nil {
 		return err
 	}
@@ -66,10 +66,9 @@ func (cmd *command) Run() error {
 
 	var testDefToApply []oct.TestDefinition
 
-	clusterTestDefs, err := cli.ListTestDefinitions()
+	clusterTestDefs, err := cmd.K8s.Octopus().ListTestDefinitions()
 	if err != nil {
-		return fmt.Errorf("unable to get list of test definitions. E: %s",
-			err.Error())
+		return errors.Wrap(err, "unable to get list of test definitions")
 	}
 
 	if cmd.opts.Tests == "" {
@@ -88,7 +87,7 @@ func (cmd *command) Run() error {
 		return err
 	}
 
-	if err := cli.CreateTestSuite(testResource); err != nil {
+	if err := cmd.K8s.Octopus().CreateTestSuite(testResource); err != nil {
 		return err
 	}
 
@@ -134,7 +133,7 @@ func generateTestsResource(testName string,
 }
 
 func verifyIfTestNotExists(suiteName string,
-	cli client.TestRESTClient) (bool, error) {
+	cli octopus.OctopusInterface) (bool, error) {
 	tests, err := test.ListTestSuiteNames(cli)
 	if err != nil {
 		return false, err

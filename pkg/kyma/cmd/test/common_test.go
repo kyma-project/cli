@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
-	client "github.com/kyma-project/cli/pkg/api/test"
+	"github.com/kyma-project/cli/pkg/api/octopus"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -58,7 +58,7 @@ func Test_ListTestDefinitionNames(t *testing.T) {
 	}
 
 	for _, tt := range testData {
-		mCli := client.NewMockedTestRestClient(&tt.inputDefinitions, nil)
+		mCli := octopus.NewMockedOctopusRestClient(&tt.inputDefinitions, nil)
 		dNames, err := ListTestDefinitionNames(mCli)
 		if !tt.shouldFail {
 			require.Nil(t, err, tt.testName)
@@ -117,7 +117,7 @@ func Test_ListTestSuiteNames(t *testing.T) {
 		},
 	}
 	for _, tt := range testData {
-		mCli := client.NewMockedTestRestClient(nil, &tt.inputTestSuites)
+		mCli := octopus.NewMockedOctopusRestClient(nil, &tt.inputTestSuites)
 		dNames, err := ListTestSuiteNames(mCli)
 		if !tt.shouldFail {
 			require.Nil(t, err, tt.testName)
@@ -201,7 +201,7 @@ func Test_ListTestSuitesByName(t *testing.T) {
 		},
 	}
 	for _, tt := range testData {
-		mCli := client.NewMockedTestRestClient(nil, &tt.inputTestSuites)
+		mCli := octopus.NewMockedOctopusRestClient(nil, &tt.inputTestSuites)
 		dNames, err := ListTestSuitesByName(mCli, tt.inputNames)
 		if !tt.shouldFail {
 			require.Nil(t, err, tt.testName)
