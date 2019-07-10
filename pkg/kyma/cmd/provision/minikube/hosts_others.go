@@ -3,9 +3,9 @@
 package minikube
 
 import (
-	"github.com/kyma-project/cli/internal/root"
 	"bytes"
 	"fmt"
+	"github.com/kyma-project/cli/internal/root"
 	"os/exec"
 
 	"github.com/kyma-project/cli/internal"
