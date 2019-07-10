@@ -113,10 +113,6 @@ func Test_generateTestsResource(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "TestOneProper",
 					Namespace: test.NamespaceForTests,
-					Labels: map[string]string{
-						"requires-testing-bundle": "true",
-						"requires-test-user":      "true",
-					},
 				},
 				Spec: oct.TestSuiteSpec{
 					MaxRetries:  1,

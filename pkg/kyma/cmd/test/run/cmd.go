@@ -27,21 +27,20 @@ func NewCmd(o *options) *cobra.Command {
 	}
 
 	cobraCmd := &cobra.Command{
-		Use:     "run",
+		Use:     "run <test-definition-1> <test-defintion-2> ... <test-definition>-3",
 		Short:   "Run tests on a running Kyma cluster",
 		Long:    `Run tests on a running Kyma cluster`,
-		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
+		RunE:    func(_ *cobra.Command, args []string) error { return cmd.Run(args) },
 		Aliases: []string{"r"},
 	}
 
 	cobraCmd.Flags().StringVarP(&o.Name, "name", "n", "", "Name for the new test suite")
-	cobraCmd.Flags().StringVarP(&o.Tests, "tests", "s", "", "Test names to execute. Example: --tests=cluster-users-test,test-api-controller-acceptance. Overlaps with --all")
 	cobraCmd.Flags().BoolVarP(&o.Wait, "wait", "w", false, "Wait for test execution to finish")
 	cobraCmd.Flags().IntVarP(&o.Timeout, "timeout", "t", 120, "Timeout for test execution (in seconds)")
 	return cobraCmd
 }
 
-func (cmd *command) Run() error {
+func (cmd *command) Run(args []string) error {
 	var err error
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
 		return errors.Wrap(err, "Could not initialize the Kubernetes client. Please make sure that you have a valid kubeconfig.")
@@ -64,19 +63,16 @@ func (cmd *command) Run() error {
 		return fmt.Errorf("test suite '%s' already exists\n", testSuiteName)
 	}
 
-	var testDefToApply []oct.TestDefinition
-
 	clusterTestDefs, err := cmd.K8s.Octopus().ListTestDefinitions()
 	if err != nil {
 		return errors.Wrap(err, "unable to get list of test definitions")
 	}
 
-	if cmd.opts.Tests == "" {
+	var testDefToApply []oct.TestDefinition
+	if len(args) == 0 {
 		testDefToApply = clusterTestDefs.Items
 	} else {
-		testDefNames := strings.Split(cmd.opts.Tests, ",")
-
-		if testDefToApply, err = matchTestDefinitionNames(testDefNames,
+		if testDefToApply, err = matchTestDefinitionNames(args,
 			clusterTestDefs.Items); err != nil {
 			return err
 		}

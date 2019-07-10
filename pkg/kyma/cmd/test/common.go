@@ -65,10 +65,6 @@ func NewTestSuite(name string) *oct.ClusterTestSuite {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: NamespaceForTests,
-			Labels: map[string]string{
-				"requires-testing-bundle": "true",
-				"requires-test-user":      "true",
-			},
 		},
 	}
 }

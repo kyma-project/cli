@@ -230,10 +230,6 @@ func Test_NewTestSuite(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "test1",
 					Namespace: NamespaceForTests,
-					Labels: map[string]string{
-						"requires-testing-bundle": "true",
-						"requires-test-user":      "true",
-					},
 				},
 			},
 		},

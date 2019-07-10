@@ -7,7 +7,6 @@ import (
 type options struct {
 	*core.Options
 	Name    string
-	Tests   string
 	Wait    bool
 	Timeout int
 }
