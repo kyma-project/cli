@@ -22,9 +22,8 @@ var (
 )
 
 const (
-	sleep                  = 10 * time.Second
-	timeoutSimpleDeletion  = "5s"
-	timeoutComplexDeletion = "30s"
+	sleep           = 10 * time.Second
+	deletionTimeout = "120s"
 )
 
 type command struct {
@@ -136,12 +135,12 @@ func (cmd *command) activateInstallerForUninstall() error {
 }
 
 func (cmd *command) deleteInstaller() error {
-	_, err := cmd.Kubectl().RunCmd("delete", "CustomResourceDefinition", "installations.installer.kyma-project.io", "--timeout="+timeoutComplexDeletion, "--ignore-not-found=true")
+	_, err := cmd.Kubectl().RunCmd("delete", "CustomResourceDefinition", "installations.installer.kyma-project.io", "--timeout="+deletionTimeout, "--ignore-not-found=true")
 	if err != nil {
 		return err
 	}
 
-	_, err = cmd.Kubectl().RunCmd("delete", "CustomResourceDefinition", "releases.release.kyma-project.io", "--timeout="+timeoutComplexDeletion, "--ignore-not-found=true")
+	_, err = cmd.Kubectl().RunCmd("delete", "CustomResourceDefinition", "releases.release.kyma-project.io", "--timeout="+deletionTimeout, "--ignore-not-found=true")
 	if err != nil {
 		return err
 	}
@@ -221,7 +220,7 @@ func (cmd *command) deleteLeftoverResources(resourceType string, resources []str
 		for _, v := range resources {
 			if strings.HasSuffix(item, v) {
 				cmd.CurrentStep.Status(item)
-				_, err := cmd.Kubectl().RunCmd("delete", resourceType, item, "--timeout="+timeoutComplexDeletion)
+				_, err := cmd.Kubectl().RunCmd("delete", resourceType, item, "--timeout="+deletionTimeout)
 				if err != nil {
 					return err
 				}
