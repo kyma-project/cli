@@ -83,9 +83,6 @@ func (cmd *command) Run(args []string) error {
 }
 
 func (cmd *command) printTestSuiteStatus(testSuite *oct.ClusterTestSuite, raw bool) error {
-	if testSuite == nil {
-		return fmt.Errorf("unable to print test suite. Nil pointer\r\n")
-	}
 	if raw {
 		d, err := json.MarshalIndent(testSuite, "", "\t")
 		if err != nil {
