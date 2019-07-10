@@ -77,14 +77,9 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd := &cobra.Command{
 		Use:   "install",
 		Short: "Installs Kyma on a running Kubernetes cluster",
-		Long: `Install Kyma on a running Kubernetes cluster.
+		Long: `Installs Kyma on a running Kubernetes cluster. For more information on the command, see https://github.com/kyma-project/cli/tree/master/pkg/kyma/docs/install.md.
 
-Make sure that your KUBECONFIG is already pointing to the target cluster.
-The command:
-- Installs Tiller
-- Deploys the Kyma Installer
-- Configures the Kyma Installer using the latest minimal configuration
-- Triggers Kyma installation
+
 `,
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 		Aliases: []string{"i"},
@@ -98,7 +93,7 @@ The command:
 	cobraCmd.Flags().StringVarP(&o.LocalSrcPath, "src-path", "", "", "Path to local sources")
 	cobraCmd.Flags().StringVarP(&o.LocalInstallerVersion, "installer-version", "", "", "Version of the Kyma Installer Docker image used for local installation")
 	cobraCmd.Flags().StringVarP(&o.LocalInstallerDir, "installer-dir", "", "", "The directory of the Kyma Installer Docker image used for local installation")
-	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 0, "Timeout after which CLI stops watching the installation progress")
+	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 30*time.Minute, "Timeout after which CLI stops watching the installation progress")
 	cobraCmd.Flags().StringVarP(&o.Password, "password", "p", "", "Predefined cluster password")
 	cobraCmd.Flags().VarP(&o.OverrideConfigs, "override", "o", "Path to YAML file with parameters to override. Multiple entries of this flag are allowed")
 
@@ -129,7 +124,7 @@ func (cmd *command) Run() error {
 		s.Failure()
 		return err
 	}
-	s.Successf("Tiller installed")
+	s.Successf("Tiller deployed")
 
 	s = cmd.NewStep("Deploying Kyma Installer")
 	if err := cmd.installInstaller(); err != nil {
@@ -782,7 +777,7 @@ func (cmd *command) waitForInstaller() error {
 			case "Error":
 				if !errorOccured {
 					errorOccured = true
-					cmd.CurrentStep.LogErrorf("%s failed", desc)
+					cmd.CurrentStep.LogErrorf("%s failed, which may be OK. Will retry later...", desc)
 					cmd.CurrentStep.LogInfo("To fetch the error logs from the installer, run: kubectl get installation  kyma-installation -o go-template --template='{{- range .status.errorLog }}{{printf \"%s:\\n %s\\n\" .component .log}}{{- end}}'")
 					cmd.CurrentStep.LogInfo("To fetch the application logs from the installer, run: kubectl logs -n kyma-installer -l name=kyma-installer")
 				}

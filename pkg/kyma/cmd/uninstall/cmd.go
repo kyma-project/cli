@@ -22,9 +22,8 @@ var (
 )
 
 const (
-	sleep                  = 10 * time.Second
-	timeoutSimpleDeletion  = "5s"
-	timeoutComplexDeletion = "30s"
+	sleep           = 10 * time.Second
+	deletionTimeout = "120s"
 )
 
 type command struct {
@@ -55,7 +54,7 @@ This command:
 		Aliases: []string{"i"},
 	}
 
-	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 0, "Timeout after which Kyma CLI stops watching the installation progress")
+	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 30*time.Minute, "Timeout after which Kyma CLI stops watching the uninstallation progress")
 
 	return cobraCmd
 }
@@ -95,15 +94,6 @@ func (cmd *command) Run() error {
 	}
 	s.Successf("Tiller deleted")
 
-	s = cmd.NewStep("Deleting Namespaces")
-	// see https://github.com/kyma-project/kyma/issues/1826
-	err = cmd.deleteLeftoverResources("namespace", namespacesToDelete)
-	if err != nil {
-		s.Failure()
-		return err
-	}
-	s.Successf("Namespaces deleted")
-
 	s = cmd.NewStep("Deleting CRDs")
 	// see https://github.com/kyma-project/kyma/issues/1826
 	err = cmd.deleteLeftoverResources("crd", crdGroupsToDelete)
@@ -112,6 +102,15 @@ func (cmd *command) Run() error {
 		return err
 	}
 	s.Successf("CRDs deleted")
+
+	s = cmd.NewStep("Deleting Namespaces")
+	// see https://github.com/kyma-project/kyma/issues/1826
+	err = cmd.deleteLeftoverResources("namespace", namespacesToDelete)
+	if err != nil {
+		s.Failure()
+		return err
+	}
+	s.Successf("Namespaces deleted")
 
 	err = cmd.printUninstallSummary()
 	if err != nil {
@@ -136,12 +135,12 @@ func (cmd *command) activateInstallerForUninstall() error {
 }
 
 func (cmd *command) deleteInstaller() error {
-	_, err := cmd.Kubectl().RunCmd("delete", "CustomResourceDefinition", "installations.installer.kyma-project.io", "--timeout="+timeoutComplexDeletion, "--ignore-not-found=true")
+	_, err := cmd.Kubectl().RunCmd("delete", "CustomResourceDefinition", "installations.installer.kyma-project.io", "--timeout="+deletionTimeout, "--ignore-not-found=true")
 	if err != nil {
 		return err
 	}
 
-	_, err = cmd.Kubectl().RunCmd("delete", "CustomResourceDefinition", "releases.release.kyma-project.io", "--timeout="+timeoutComplexDeletion, "--ignore-not-found=true")
+	_, err = cmd.Kubectl().RunCmd("delete", "CustomResourceDefinition", "releases.release.kyma-project.io", "--timeout="+deletionTimeout, "--ignore-not-found=true")
 	if err != nil {
 		return err
 	}
@@ -221,7 +220,7 @@ func (cmd *command) deleteLeftoverResources(resourceType string, resources []str
 		for _, v := range resources {
 			if strings.HasSuffix(item, v) {
 				cmd.CurrentStep.Status(item)
-				_, err := cmd.Kubectl().RunCmd("delete", resourceType, item, "--timeout="+timeoutComplexDeletion)
+				_, err := cmd.Kubectl().RunCmd("delete", resourceType, item, "--timeout="+deletionTimeout)
 				if err != nil {
 					return err
 				}
@@ -276,8 +275,8 @@ func (cmd *command) waitForInstallerToUninstall() error {
 			case "Error":
 				if !errorOccured {
 					errorOccured = true
-					cmd.CurrentStep.Failuref("Failed to uninstall Kyma: %s", desc)
-					cmd.CurrentStep.LogInfof("To fetch the logs from the Installer, run: 'kubectl logs -n kyma-installer -l name=kyma-installer'")
+					cmd.CurrentStep.LogInfof("There was an error uninstalling Kyma, which might be OK. Will retry later...\n%s", desc)
+					cmd.CurrentStep.LogInfof("For more information, run: 'kubectl logs -n kyma-installer -l name=kyma-installer'")
 				}
 
 			case "InProgress":

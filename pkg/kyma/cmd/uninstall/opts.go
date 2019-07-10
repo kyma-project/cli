@@ -15,4 +15,3 @@ type Options struct {
 func NewOptions(o *core.Options) *Options {
 	return &Options{Options: o}
 }
-
