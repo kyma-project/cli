@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := local
 
-KYMA_VERSION = 1.3.0-rc1
+KYMA_VERSION = 1.3.0-rc2
 
 ifndef VERSION
 	VERSION = ${shell git describe --tags --always}
