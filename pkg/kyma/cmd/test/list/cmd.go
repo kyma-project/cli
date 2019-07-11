@@ -26,7 +26,7 @@ func NewCmd(o *options) *cobra.Command {
 	cobraCmd := &cobra.Command{
 		Use:     "list",
 		Short:   "List tests available for a provisioned Kyma cluster",
-		Long:    `Show available tests on a running Kyma cluster`,
+		Long:    `List tests available for a provisioned Kyma cluster`,
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 		Aliases: []string{"l"},
 	}
