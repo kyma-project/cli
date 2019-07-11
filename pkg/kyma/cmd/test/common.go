@@ -12,19 +12,6 @@ import (
 
 const NamespaceForTests = "kyma-system"
 
-func ListTestDefinitionNames(cli octopus.OctopusInterface) ([]string, error) {
-	defs, err := cli.ListTestDefinitions()
-	if err != nil {
-		return nil, fmt.Errorf("unable to list test definitions. E: %s", err.Error())
-	}
-
-	var result = make([]string, len(defs.Items))
-	for i := 0; i < len(defs.Items); i++ {
-		result[i] = defs.Items[i].GetName()
-	}
-	return result, nil
-}
-
 func ListTestSuiteNames(cli octopus.OctopusInterface) ([]string, error) {
 	suites, err := cli.ListTestSuites()
 	if err != nil {

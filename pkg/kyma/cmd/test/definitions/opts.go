@@ -1,4 +1,4 @@
-package list
+package definitions
 
 import "github.com/kyma-project/cli/pkg/kyma/core"
 

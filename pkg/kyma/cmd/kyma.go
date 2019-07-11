@@ -4,6 +4,7 @@ import (
 	"github.com/kyma-project/cli/pkg/kyma/cmd/install"
 	"github.com/kyma-project/cli/pkg/kyma/cmd/provision/minikube"
 	"github.com/kyma-project/cli/pkg/kyma/cmd/test"
+	"github.com/kyma-project/cli/pkg/kyma/cmd/test/definitions"
 	del "github.com/kyma-project/cli/pkg/kyma/cmd/test/delete"
 	"github.com/kyma-project/cli/pkg/kyma/cmd/test/list"
 	"github.com/kyma-project/cli/pkg/kyma/cmd/test/run"
@@ -52,7 +53,8 @@ Find more information at: https://github.com/kyma-project/cli
 	testStatusCmd := status.NewCmd(status.NewOptions(o))
 	testDeleteCmd := del.NewCmd(del.NewOptions(o))
 	testListCmd := list.NewCmd(list.NewOptions(o))
-	testCmd.AddCommand(testRunCmd, testStatusCmd, testDeleteCmd, testListCmd)
+	testDefsCmd := definitions.NewCmd(definitions.NewOptions(o))
+	testCmd.AddCommand(testRunCmd, testStatusCmd, testDeleteCmd, testListCmd, testDefsCmd)
 	cmd.AddCommand(testCmd)
 
 	return cmd

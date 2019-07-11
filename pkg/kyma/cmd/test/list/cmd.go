@@ -31,7 +31,6 @@ func NewCmd(o *options) *cobra.Command {
 		Aliases: []string{"l"},
 	}
 
-	cobraCmd.Flags().BoolVarP(&o.Definitions, "definitions", "d", false, "Show test definitions only")
 	return cobraCmd
 }
 
@@ -43,20 +42,6 @@ func (cmd *command) Run() error {
 
 	if err != nil {
 		return errors.Wrap(err, "unable to create test REST client")
-	}
-
-	if cmd.opts.Definitions {
-		if testDefs, err := test.ListTestDefinitionNames(cmd.K8s.Octopus()); err != nil {
-			return err
-		} else {
-			if len(testDefs) == 0 {
-				fmt.Errorf("no test definitions in the cluster")
-			}
-			for _, t := range testDefs {
-				fmt.Printf("%s\r\n", t)
-			}
-		}
-		return nil
 	}
 
 	testSuites, err := cmd.K8s.Octopus().ListTestSuites()

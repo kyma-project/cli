@@ -36,7 +36,7 @@ func NewCmd(o *options) *cobra.Command {
 
 	cobraCmd.Flags().StringVarP(&o.Name, "name", "n", "", "Name for the new test suite")
 	cobraCmd.Flags().BoolVarP(&o.Wait, "wait", "w", false, "Wait for test execution to finish")
-	cobraCmd.Flags().IntVarP(&o.Timeout, "timeout", "t", 120, "Timeout for test execution (in seconds)")
+	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "t", 120*time.Second, "Timeout for test execution (in seconds)")
 	return cobraCmd
 }
 
