@@ -39,7 +39,7 @@ func TestIsPodDeployed(t *testing.T) {
 	// simulate an unexpected error when contacting k8s
 	errClient := &fake.Clientset{}
 	errClient.Fake.AddReactor("get", "pods", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
-		return true, nil, errors.New("Error getting pod")
+		return true, nil, errors.New("Error while fetching Pod")
 	})
 
 	c.static = errClient
