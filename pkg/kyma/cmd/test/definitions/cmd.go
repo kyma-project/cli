@@ -39,7 +39,7 @@ func (cmd *command) Run() error {
 	}
 
 	if err != nil {
-		return errors.Wrap(err, "unable to create test REST client")
+		return errors.Wrap(err, "unable to create a test REST client")
 	}
 
 	if testDefs, err := listTestDefinitionNames(cmd.K8s.Octopus()); err != nil {
