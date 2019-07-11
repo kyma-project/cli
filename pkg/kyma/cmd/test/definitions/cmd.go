@@ -42,7 +42,7 @@ func (cmd *command) Run() error {
 		return errors.Wrap(err, "unable to create test REST client")
 	}
 
-	if testDefs, err := ListTestDefinitionNames(cmd.K8s.Octopus()); err != nil {
+	if testDefs, err := listTestDefinitionNames(cmd.K8s.Octopus()); err != nil {
 		return err
 	} else {
 		if len(testDefs) == 0 {
@@ -55,7 +55,7 @@ func (cmd *command) Run() error {
 	return nil
 }
 
-func ListTestDefinitionNames(cli octopus.OctopusInterface) ([]string, error) {
+func listTestDefinitionNames(cli octopus.OctopusInterface) ([]string, error) {
 	defs, err := cli.ListTestDefinitions()
 	if err != nil {
 		return nil, fmt.Errorf("unable to list test definitions. E: %s", err.Error())

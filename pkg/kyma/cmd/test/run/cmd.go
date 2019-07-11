@@ -128,9 +128,22 @@ func generateTestsResource(testName string,
 	return octTestDefs
 }
 
+func listTestSuiteNames(cli octopus.OctopusInterface) ([]string, error) {
+	suites, err := cli.ListTestSuites()
+	if err != nil {
+		return nil, fmt.Errorf("unable to list test suites. E: %s", err.Error())
+	}
+
+	var result = make([]string, len(suites.Items))
+	for i := 0; i < len(suites.Items); i++ {
+		result[i] = suites.Items[i].GetName()
+	}
+	return result, nil
+}
+
 func verifyIfTestNotExists(suiteName string,
 	cli octopus.OctopusInterface) (bool, error) {
-	tests, err := test.ListTestSuiteNames(cli)
+	tests, err := listTestSuiteNames(cli)
 	if err != nil {
 		return false, err
 	}

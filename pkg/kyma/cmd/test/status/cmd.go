@@ -7,6 +7,7 @@ import (
 
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
 	"github.com/kyma-project/cli/internal/kube"
+	"github.com/kyma-project/cli/pkg/api/octopus"
 	"github.com/kyma-project/cli/pkg/kyma/cmd/test"
 	"github.com/kyma-project/cli/pkg/kyma/core"
 	"github.com/pkg/errors"
@@ -68,7 +69,7 @@ func (cmd *command) Run(args []string) error {
 			}
 		}
 	default:
-		testsList, err := test.ListTestSuitesByName(cmd.K8s.Octopus(), args)
+		testsList, err := listTestSuitesByName(cmd.K8s.Octopus(), args)
 		if err != nil {
 			return errors.Wrap(err, "unable to list test suites")
 		}
@@ -117,4 +118,21 @@ func (cmd *command) printTestSuiteStatus(testSuite *oct.ClusterTestSuite, raw bo
 	writer.Render()
 
 	return nil
+}
+
+func listTestSuitesByName(cli octopus.OctopusInterface, names []string) ([]oct.ClusterTestSuite, error) {
+	suites, err := cli.ListTestSuites()
+	if err != nil {
+		return nil, fmt.Errorf("unable to list test suites. E: %s", err.Error())
+	}
+
+	result := []oct.ClusterTestSuite{}
+	for _, suite := range suites.Items {
+		for _, tName := range names {
+			if suite.ObjectMeta.Name == tName {
+				result = append(result, suite)
+			}
+		}
+	}
+	return result, nil
 }
