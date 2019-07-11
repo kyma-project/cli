@@ -35,6 +35,9 @@ func NewCmd(o *options) *cobra.Command {
 	}
 
 	cobraCmd.Flags().StringVarP(&o.Name, "name", "n", "", "Name of the new test suite")
+	cobraCmd.Flags().Int64VarP(&o.ExecutionCount, "count", "c", 1, "Number of times test suite should be executed")
+	cobraCmd.Flags().Int64VarP(&o.MaxRetries, "max-retries", "", 1, "Number of retries per test")
+	cobraCmd.Flags().Int64VarP(&o.Concurrency, "concurrency", "", 1, "Number of tests to be executed in parallel")
 	cobraCmd.Flags().BoolVarP(&o.Wait, "wait", "w", false, "Wait for test execution to finish")
 	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "t", 120*time.Second, "Time-out for test execution (in seconds)")
 	return cobraCmd
@@ -78,7 +81,9 @@ func (cmd *command) Run(args []string) error {
 		}
 	}
 
-	testResource := generateTestsResource(testSuiteName, testDefToApply)
+	testResource := generateTestsResource(testSuiteName,
+		cmd.opts.ExecutionCount, cmd.opts.MaxRetries,
+		cmd.opts.Concurrency, testDefToApply)
 	if err != nil {
 		return err
 	}
@@ -110,7 +115,8 @@ func matchTestDefinitionNames(testNames []string,
 	return result, nil
 }
 
-func generateTestsResource(testName string,
+func generateTestsResource(testName string, numberOfExecutions,
+	maxRetries, concurrency int64,
 	testDefinitions []oct.TestDefinition) *oct.ClusterTestSuite {
 
 	octTestDefs := test.NewTestSuite(testName)
@@ -121,8 +127,9 @@ func generateTestsResource(testName string,
 			Namespace: td.GetNamespace(),
 		})
 	}
-	octTestDefs.Spec.MaxRetries = 1
-	octTestDefs.Spec.Concurrency = 1
+	octTestDefs.Spec.MaxRetries = maxRetries
+	octTestDefs.Spec.Concurrency = concurrency
+	octTestDefs.Spec.Count = numberOfExecutions
 	octTestDefs.Spec.Selectors.MatchNames = matchNames
 
 	return octTestDefs

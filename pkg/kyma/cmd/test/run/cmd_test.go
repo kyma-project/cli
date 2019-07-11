@@ -79,6 +79,9 @@ func Test_generateTestsResource(t *testing.T) {
 		shouldFail           bool
 		inputTestName        string
 		inputTestDefinitions []oct.TestDefinition
+		inputExecutionCount  int64
+		inputMaxRetires      int64
+		inputConcurrency     int64
 		expectedResult       *oct.ClusterTestSuite
 	}{
 		{
@@ -105,6 +108,9 @@ func Test_generateTestsResource(t *testing.T) {
 					},
 				},
 			},
+			inputExecutionCount: 1,
+			inputMaxRetires:     2,
+			inputConcurrency:    3,
 			expectedResult: &oct.ClusterTestSuite{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: "testing.kyma-project.io/v1alpha1",
@@ -115,8 +121,9 @@ func Test_generateTestsResource(t *testing.T) {
 					Namespace: test.NamespaceForTests,
 				},
 				Spec: oct.TestSuiteSpec{
-					MaxRetries:  1,
-					Concurrency: 1,
+					Count:       1,
+					MaxRetries:  2,
+					Concurrency: 3,
 					Selectors: oct.TestsSelector{
 						MatchNames: []oct.TestDefReference{
 							{
@@ -137,6 +144,9 @@ func Test_generateTestsResource(t *testing.T) {
 	for _, tt := range testData {
 		result := generateTestsResource(
 			tt.inputTestName,
+			tt.inputExecutionCount,
+			tt.inputMaxRetires,
+			tt.inputConcurrency,
 			tt.inputTestDefinitions,
 		)
 		if tt.shouldFail {

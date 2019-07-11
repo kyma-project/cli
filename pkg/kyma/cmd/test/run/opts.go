@@ -8,9 +8,12 @@ import (
 
 type options struct {
 	*core.Options
-	Name    string
-	Wait    bool
-	Timeout time.Duration
+	Name           string
+	Wait           bool
+	Timeout        time.Duration
+	ExecutionCount int64
+	MaxRetries     int64
+	Concurrency    int64
 }
 
 func NewOptions(o *core.Options) *options {
