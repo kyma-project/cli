@@ -6,9 +6,9 @@ import (
 
 type options struct {
 	*core.Options
-	Wait bool
-	Jsn  bool
-	Logs string
+	Wait         bool
+	Logs         string
+	OutputFormat string
 }
 
 func NewOptions(o *core.Options) *options {

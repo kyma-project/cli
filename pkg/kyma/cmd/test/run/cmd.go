@@ -27,7 +27,7 @@ func NewCmd(o *options) *cobra.Command {
 	}
 
 	cobraCmd := &cobra.Command{
-		Use:     "run <test-definition-1> <test-defintion-2> ... <test-definition>-3",
+		Use:     "run <test-definition-1> <test-defintion-2> ... <test-definition-N>",
 		Short:   "Run tests on a running Kyma cluster",
 		Long:    `Run tests on a running Kyma cluster`,
 		RunE:    func(_ *cobra.Command, args []string) error { return cmd.Run(args) },
