@@ -65,7 +65,7 @@ func (cmd *command) Run(args []string) error {
 
 	clusterTestDefs, err := cmd.K8s.Octopus().ListTestDefinitions()
 	if err != nil {
-		return errors.Wrap(err, "unable to get list of test definitions")
+		return errors.Wrap(err, "unable to get the list of test definitions")
 	}
 
 	var testDefToApply []oct.TestDefinition
