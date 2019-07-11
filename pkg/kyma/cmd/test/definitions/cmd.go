@@ -35,7 +35,7 @@ func NewCmd(o *options) *cobra.Command {
 func (cmd *command) Run() error {
 	var err error
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
-		return errors.Wrap(err, "Could not initialize the Kubernetes client. Please make sure that you have a valid kubeconfig.")
+		return errors.Wrap(err, "could not initialize the Kubernetes client. Maje sure that your kubeconfig is valid.")
 	}
 
 	if err != nil {
