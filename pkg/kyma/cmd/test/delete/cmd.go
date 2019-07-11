@@ -41,7 +41,7 @@ func (cmd *command) Run(args []string) error {
 
 	var err error
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
-		return errors.Wrap(err, "could not initialize the Kubernetes client. Please make sure that you have a valid kubeconfig.")
+		return errors.Wrap(err, "could not initialize the Kubernetes client. Make sure your kubeconfig is valid.")
 	}
 
 	testSuites := &oct.ClusterTestSuiteList{}
