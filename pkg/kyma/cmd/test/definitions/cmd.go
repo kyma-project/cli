@@ -46,7 +46,8 @@ func (cmd *command) Run() error {
 		return err
 	} else {
 		if len(testDefs) == 0 {
-			fmt.Errorf("no test definitions in the cluster")
+			fmt.Println("no test definitions in the cluster")
+			return nil
 		}
 		for _, t := range testDefs {
 			fmt.Printf("%s\r\n", t)
@@ -58,7 +59,7 @@ func (cmd *command) Run() error {
 func listTestDefinitionNames(cli octopus.OctopusInterface) ([]string, error) {
 	defs, err := cli.ListTestDefinitions()
 	if err != nil {
-		return nil, fmt.Errorf("unable to list test definitions. E: %s", err.Error())
+		return nil, errors.Wrap(err, "unable to list test definitions")
 	}
 
 	var result = make([]string, len(defs.Items))

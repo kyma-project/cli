@@ -57,7 +57,7 @@ func (cmd *command) Run(args []string) error {
 	case 0:
 		testList, err := cmd.K8s.Octopus().ListTestSuites()
 		if err != nil {
-			return errors.Wrap(err, "unable to list test suites. E: %s")
+			return errors.Wrap(err, "unable to list test suites")
 		}
 
 		if len(testList.Items) == 0 {
@@ -137,7 +137,7 @@ func (cmd *command) printTestSuiteStatus(testSuite *oct.ClusterTestSuite, output
 func listTestSuitesByName(cli octopus.OctopusInterface, names []string) ([]oct.ClusterTestSuite, error) {
 	suites, err := cli.ListTestSuites()
 	if err != nil {
-		return nil, fmt.Errorf("unable to list test suites. E: %s", err.Error())
+		return nil, errors.Wrap(err, "unable to list test suites")
 	}
 
 	result := []oct.ClusterTestSuite{}
