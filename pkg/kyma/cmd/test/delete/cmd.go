@@ -25,8 +25,8 @@ func NewCmd(o *options) *cobra.Command {
 
 	cobraCmd := &cobra.Command{
 		Use:   "delete <test-suite-1> <test-suite-2> ... <test-suite-N>",
-		Short: "Delete tests available for a provisioned Kyma cluster",
-		Long: `Delete tests available for a provisioned Kyma cluster.
+		Short: "Delete test-suites available for a provisioned Kyma cluster",
+		Long: `Delete test-suites available for a provisioned Kyma cluster.
 
 At least one test suite name must be provided.`,
 		RunE:    func(_ *cobra.Command, args []string) error { return cmd.Run(args) },
@@ -67,6 +67,6 @@ func deleteTestSuite(cli octopus.OctopusInterface, testName string) error {
 		return errors.Wrap(err, fmt.Sprintf("unable to delete test suite '%s'",
 			testName))
 	}
-	fmt.Printf("test '%s' successfully deleted\n", testName)
+	fmt.Printf("test suite '%s' successfully deleted\n", testName)
 	return nil
 }

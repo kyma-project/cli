@@ -28,9 +28,17 @@ func NewCmd(o *options) *cobra.Command {
 	}
 
 	cobraCmd := &cobra.Command{
-		Use:     "status <test-suite name>",
-		Short:   "Show the status of tests on a running Kyma cluster",
-		Long:    `Show the status of tests on a running Kyma cluster`,
+		Use:   "status <test-suite-1> <test-suite-2> ... <test-suite-N>",
+		Short: "Shows the status of a test suite and it's related test executions",
+		Long: `Shows the status of a test suite and it's related test executions
+
+Status of all test suites will be printed if no arguments given
+
+#Print status of all test suites
+kyma test status
+
+#Print status of the specific test cases
+kyma test status testSuiteOne testSuiteTwo`,
 		RunE:    func(_ *cobra.Command, args []string) error { return cmd.Run(args) },
 		Aliases: []string{"s"},
 	}

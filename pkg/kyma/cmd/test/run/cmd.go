@@ -42,8 +42,8 @@ kyma test run -n example-test
 	}
 
 	cobraCmd.Flags().StringVarP(&o.Name, "name", "n", "", "Name of the new test suite")
-	cobraCmd.Flags().Int64VarP(&o.ExecutionCount, "count", "c", 1, "Number of times each test definition in the test suite should be executed")
-	cobraCmd.Flags().Int64VarP(&o.MaxRetries, "max-retries", "", 1, "Number of retries per test")
+	cobraCmd.Flags().Int64VarP(&o.ExecutionCount, "count", "c", 1, "Number of times every test in the suite should be executed, cannot be configured at the same time with max-retries")
+	cobraCmd.Flags().Int64VarP(&o.MaxRetries, "max-retries", "", 1, "Number of retries per failed test")
 	cobraCmd.Flags().Int64VarP(&o.Concurrency, "concurrency", "", 1, "Number of tests to be executed in parallel")
 	return cobraCmd
 }

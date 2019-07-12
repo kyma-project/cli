@@ -46,7 +46,7 @@ func (cmd *command) Run() error {
 		return err
 	} else {
 		if len(testDefs) == 0 {
-			fmt.Println("no test definitions in the cluster")
+			fmt.Println("no test definitions found")
 			return nil
 		}
 		for _, t := range testDefs {
