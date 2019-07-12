@@ -43,7 +43,7 @@ kyma test status testSuiteOne testSuiteTwo`,
 		Aliases: []string{"s"},
 	}
 
-	cobraCmd.Flags().StringVarP(&o.OutputFormat, "output", "o", "wide",
+	cobraCmd.Flags().StringVarP(&o.OutputFormat, "output", "o", "",
 		"Output format. One of: json|yaml|wide")
 	return cobraCmd
 }
@@ -114,32 +114,82 @@ func (cmd *command) printTestSuiteStatus(testSuite *oct.ClusterTestSuite, output
 		fmt.Println(string(d))
 		return nil
 	case "wide":
-		fmt.Printf("Name:\t\t%s\r\n", testSuite.GetName())
-		fmt.Printf("Concurrency:\t%d\r\n", testSuite.Spec.Concurrency)
-		fmt.Printf("MaxRetries:\t%d\r\n", testSuite.Spec.MaxRetries)
-		if testSuite.Status.StartTime != nil {
-			fmt.Printf("StartTime:\t%s\r\n", testSuite.Status.StartTime.String())
-		} else {
-			fmt.Printf("StartTime:\t%s\r\n", "not started yet")
-		}
-		if testSuite.Status.CompletionTime != nil {
-			fmt.Printf("EndTime:\t%s\r\n", testSuite.Status.CompletionTime)
-		} else {
-			fmt.Printf("EndTime:\t%s\r\n", "not finished yet")
-		}
-
-		fmt.Printf("Condition:\t%s\r\n", testSuite.Status.Conditions[len(testSuite.Status.Conditions)-1].Type)
-
-		writer := test.NewTableWriter([]string{}, os.Stdout)
-		for _, t := range testSuite.Status.Results {
-			writer.Append([]string{t.Name, string(t.Status)})
-		}
-		fmt.Printf("Completed:\t%d/%d\r\n",
-			test.GetNumberOfFinishedTests(testSuite), len(testSuite.Status.Results))
-		writer.Render()
+		printTestSuite(testSuite, true)
+	default:
+		printTestSuite(testSuite, false)
 	}
 
 	return nil
+}
+
+func printTestSuite(testSuite *oct.ClusterTestSuite, wide bool) {
+	fmt.Printf("Name:\t\t%s\r\n", testSuite.GetName())
+	fmt.Printf("Concurrency:\t%d\r\n", testSuite.Spec.Concurrency)
+	fmt.Printf("MaxRetries:\t%d\r\n", testSuite.Spec.MaxRetries)
+	if testSuite.Status.StartTime != nil {
+		fmt.Printf("StartTime:\t%s\r\n", testSuite.Status.StartTime.String())
+	} else {
+		fmt.Printf("StartTime:\t%s\r\n", "not started yet")
+	}
+	if testSuite.Status.CompletionTime != nil {
+		fmt.Printf("EndTime:\t%s\r\n", testSuite.Status.CompletionTime)
+	} else {
+		fmt.Printf("EndTime:\t%s\r\n", "not finished yet")
+	}
+
+	fmt.Printf("Condition:\t%s\r\n", testSuite.Status.Conditions[len(testSuite.Status.Conditions)-1].Type)
+
+	writer := test.NewTableWriter([]string{}, os.Stdout)
+	for _, t := range testSuite.Status.Results {
+
+		if wide {
+			writer.SetHeader([]string{"TEST", "STATUS", "NAMESPACE", "POD"})
+			var podName string
+			switch len(t.Executions) {
+			case 0:
+				break
+			case 1:
+				podName = t.Executions[0].ID
+			default:
+				podName = t.Executions[len(t.Executions)-1].ID
+			}
+			writer.Append([]string{t.Name, string(t.Status), t.Namespace, podName})
+		} else {
+			writer.Append([]string{t.Name, string(t.Status)})
+		}
+	}
+	fmt.Printf("Completed:\t%d/%d\r\n",
+		test.GetNumberOfFinishedTests(testSuite),
+		len(testSuite.Status.Results))
+	writer.Render()
+	if rc := generateRerunCommand(testSuite); rc != "" {
+		fmt.Println("Rerun failed tests:", rc)
+	}
+}
+
+func generateRerunCommand(testSuite *oct.ClusterTestSuite) string {
+	failedDefs := []string{}
+	for _, t := range testSuite.Status.Results {
+		if t.Status == oct.TestFailed {
+			failedDefs = append(failedDefs, t.Name)
+		}
+	}
+	if len(failedDefs) == 0 {
+		return ""
+	}
+
+	var result string
+	result = fmt.Sprintf("kyma test run %s", strings.Join(failedDefs, " "))
+	if testSuite.Spec.Concurrency != 1 {
+		result += fmt.Sprintf(" --concurrency=%d", testSuite.Spec.Concurrency)
+	}
+	if testSuite.Spec.MaxRetries != 1 {
+		result += fmt.Sprintf(" --max-retries=%d", testSuite.Spec.MaxRetries)
+	}
+	if testSuite.Spec.Count != 1 {
+		result += fmt.Sprintf(" --count=%d", testSuite.Spec.Count)
+	}
+	return result
 }
 
 func listTestSuitesByName(cli octopus.OctopusInterface, names []string) ([]oct.ClusterTestSuite, error) {
