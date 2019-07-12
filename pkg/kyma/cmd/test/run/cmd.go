@@ -97,7 +97,7 @@ func (cmd *command) Run(args []string) error {
 		return err
 	}
 
-	fmt.Printf("test '%s' successfully created\r\n", testSuiteName)
+	fmt.Printf("test suite '%s' successfully created\r\n", testSuiteName)
 	return nil
 }
 
