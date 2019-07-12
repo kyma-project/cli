@@ -134,7 +134,7 @@ func (cmd *command) printTestSuiteStatus(testSuite *oct.ClusterTestSuite, output
 		for _, t := range testSuite.Status.Results {
 			writer.Append([]string{t.Name, string(t.Status)})
 		}
-		fmt.Printf("Tests finished:\t%d/%d\r\n",
+		fmt.Printf("Completed:\t%d/%d\r\n",
 			test.GetNumberOfFinishedTests(testSuite), len(testSuite.Status.Results))
 		writer.Render()
 	}
