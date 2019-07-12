@@ -38,8 +38,6 @@ func NewCmd(o *options) *cobra.Command {
 	cobraCmd.Flags().Int64VarP(&o.ExecutionCount, "count", "c", 1, "Number of times test suite should be executed")
 	cobraCmd.Flags().Int64VarP(&o.MaxRetries, "max-retries", "", 1, "Number of retries per test")
 	cobraCmd.Flags().Int64VarP(&o.Concurrency, "concurrency", "", 1, "Number of tests to be executed in parallel")
-	cobraCmd.Flags().BoolVarP(&o.Wait, "wait", "w", false, "Wait for test execution to finish")
-	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "t", 120*time.Second, "Time-out for test execution (in seconds)")
 	return cobraCmd
 }
 
