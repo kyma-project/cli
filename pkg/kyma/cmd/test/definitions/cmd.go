@@ -22,7 +22,7 @@ func NewCmd(o *options) *cobra.Command {
 	}
 
 	cobraCmd := &cobra.Command{
-		Use:     "defintions",
+		Use:     "definitions",
 		Short:   "Show test definitions available for a provisioned Kyma cluster",
 		Long:    `Show test definitions available for a provisioned Kyma cluster`,
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
