@@ -1,7 +1,6 @@
 package definitions
 
 import (
-	"reflect"
 	"testing"
 
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
@@ -62,9 +61,9 @@ func Test_ListTestDefinitionNames(t *testing.T) {
 		dNames, err := listTestDefinitionNames(mCli)
 		if !tt.shouldFail {
 			require.Nil(t, err, tt.testName)
-			require.True(t, reflect.DeepEqual(dNames, tt.expectedResult))
+			require.Equal(t, dNames, tt.expectedResult)
 		} else {
-			require.False(t, reflect.DeepEqual(dNames, tt.expectedResult))
+			require.NotEqual(t, dNames, tt.expectedResult)
 		}
 
 	}

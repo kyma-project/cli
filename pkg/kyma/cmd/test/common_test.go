@@ -1,7 +1,6 @@
 package test
 
 import (
-	"reflect"
 	"testing"
 
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
@@ -33,6 +32,6 @@ func Test_NewTestSuite(t *testing.T) {
 
 	for _, tt := range testData {
 		result := NewTestSuite(tt.inputName)
-		require.True(t, reflect.DeepEqual(result, tt.expectedResult), tt.testName)
+		require.Equal(t, result, tt.expectedResult, tt.testName)
 	}
 }

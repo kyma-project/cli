@@ -1,7 +1,6 @@
 package run
 
 import (
-	"reflect"
 	"testing"
 
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
@@ -68,7 +67,7 @@ func Test_matchTestDefinitionNames(t *testing.T) {
 			require.NotNil(t, err, tt.testName)
 		} else {
 			require.Nil(t, err, tt.testName)
-			require.True(t, reflect.DeepEqual(result, tt.result), tt.testName)
+			require.Equal(t, result, tt.result, tt.testName)
 		}
 	}
 }
@@ -150,15 +149,9 @@ func Test_generateTestsResource(t *testing.T) {
 			tt.inputTestDefinitions,
 		)
 		if tt.shouldFail {
-			require.False(
-				t,
-				reflect.DeepEqual(result, tt.expectedResult),
-				tt.testName)
+			require.NotEqual(t, result, tt.expectedResult, tt.testName)
 		} else {
-			require.True(
-				t,
-				reflect.DeepEqual(result, tt.expectedResult),
-				tt.testName)
+			require.Equal(t, result, tt.expectedResult, tt.testName)
 		}
 	}
 }
@@ -266,9 +259,9 @@ func Test_ListTestSuiteNames(t *testing.T) {
 		dNames, err := listTestSuiteNames(mCli)
 		if !tt.shouldFail {
 			require.Nil(t, err, tt.testName)
-			require.True(t, reflect.DeepEqual(dNames, tt.expectedResult))
+			require.Equal(t, dNames, tt.expectedResult)
 		} else {
-			require.False(t, reflect.DeepEqual(dNames, tt.expectedResult))
+			require.NotEqual(t, dNames, tt.expectedResult)
 		}
 
 	}
