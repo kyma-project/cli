@@ -617,55 +617,68 @@ func (cmd *command) applyOverrideFiles() error {
 	for _, file := range cmd.opts.OverrideConfigs {
 		oFile, err := os.Open(file)
 		if err != nil {
-			return fmt.Errorf("Unable to open file: %s. Error: %s",
+			fmt.Printf("unable to open file: %s. error: %s\n",
 				file, err.Error())
+			continue
 		}
 		rawData, err := ioutil.ReadAll(oFile)
 		if err != nil {
-			return fmt.Errorf("Unable to read data from file: %s. Error: %s",
+			fmt.Printf("unable to read data from file: %s. error: %s\n",
 				file, err.Error())
+			continue
 		}
 
 		configs := strings.Split(string(rawData), "---")
 
 		for _, c := range configs {
+			if c == "" {
+				continue
+			}
+
 			cfg := make(map[interface{}]interface{})
 			err = yaml.Unmarshal([]byte(c), &cfg)
 			if err != nil {
-				return fmt.Errorf("Unable to parse file data: %s. Error: %s",
+				fmt.Printf("unable to parse file data: %s. error: %s\n",
 					file, err.Error())
+				continue
 			}
 
 			kind, ok := cfg["kind"].(string)
 			if !ok {
-				return fmt.Errorf("Unable to retrieve the kind of config. File: %s", file)
+				fmt.Printf("unable to retrieve the kind of config. file: %s\n", file)
+				continue
 			}
 
 			meta, ok := cfg["metadata"].(map[interface{}]interface{})
 			if !ok {
-				return fmt.Errorf("Unable to get metadata from config. File: %s", file)
+				fmt.Printf("unable to get metadata from config. file: %s\n", file)
+				continue
 			}
 
 			namespace, ok := meta["namespace"].(string)
 			if !ok {
-				return fmt.Errorf("Unable to get Namespace from config. File: %s", file)
+				fmt.Printf("unable to get Namespace from config. file: %s\n", file)
+				continue
 			}
 
 			name, ok := meta["name"].(string)
 			if !ok {
-				return fmt.Errorf("Unable to get name from config. File: %s", file)
+				fmt.Printf("unable to get name from config. file: %s\n", file)
+				continue
 			}
 
 			if err := cmd.checkIfResourcePresent(namespace, kind, name); err != nil {
 				if strings.Contains(err.Error(), "not found") {
 					if err := cmd.applyResourceFile(file); err != nil {
-						return fmt.Errorf(
-							"Unable to apply file %s. Error: %s", file, err.Error())
+						fmt.Printf(
+							"unable to apply file %s. error: %s\n", file, err.Error())
+						continue
 
 					}
 					continue
 				} else {
-					return fmt.Errorf("Unable to check if resource is installed. Error: %s", err.Error())
+					fmt.Printf("unable to check if resource is installed. error: %s\n", err.Error())
+					continue
 				}
 			}
 
@@ -678,7 +691,8 @@ func (cmd *command) applyOverrideFiles() error {
 				"-p",
 				c)
 			if err != nil {
-				return fmt.Errorf("Unable to override values. File: %s. Error: %s", file, err.Error())
+				fmt.Printf("unable to override values. File: %s. Error: %s\n", file, err.Error())
+				continue
 			}
 		}
 
