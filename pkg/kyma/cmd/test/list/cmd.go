@@ -39,10 +39,6 @@ func (cmd *command) Run() error {
 		return errors.Wrap(err, "could not initialize the Kubernetes client. Make sure that your kubeconfig is valid.")
 	}
 
-	if err != nil {
-		return errors.Wrap(err, "unable to create test REST client")
-	}
-
 	testSuites, err := cmd.K8s.Octopus().ListTestSuites()
 	if err != nil {
 		return errors.Wrap(err, "unable to get list of test suites")
