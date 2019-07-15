@@ -68,7 +68,7 @@ func (cmd *command) Run(args []string) error {
 		return err
 	}
 	if !tNotExists {
-		return fmt.Errorf("test suite '%s' already exists\n", testSuiteName)
+		return fmt.Errorf("test suite '%s' already exists", testSuiteName)
 	}
 
 	clusterTestDefs, err := cmd.K8s.Octopus().ListTestDefinitions()
@@ -114,7 +114,7 @@ func matchTestDefinitionNames(testNames []string,
 			}
 		}
 		if !found {
-			return nil, fmt.Errorf("test defintion '%s' not found in the list of cluster test definitions\n", tName)
+			return nil, fmt.Errorf("test defintion '%s' not found in the list of cluster test definitions", tName)
 		}
 	}
 	return result, nil
