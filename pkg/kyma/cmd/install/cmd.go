@@ -223,7 +223,7 @@ func (cmd *command) configureHelm() error {
 		return nil
 	}
 
-	secret, err := cmd.K8s.CoreV1().Secrets("kyma-installer").Get("helm-secret", metav1.GetOptions{})
+	secret, err := cmd.K8s.Static().CoreV1().Secrets("kyma-installer").Get("helm-secret", metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
@@ -713,7 +713,7 @@ func (cmd *command) printSummary() error {
 		return err
 	}
 
-	adm, err := cmd.K8s.CoreV1().Secrets("kyma-system").Get("admin-user", metav1.GetOptions{})
+	adm, err := cmd.K8s.Static().CoreV1().Secrets("kyma-system").Get("admin-user", metav1.GetOptions{})
 	if err != nil {
 		return err
 	}

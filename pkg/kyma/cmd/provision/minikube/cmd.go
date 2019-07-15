@@ -269,12 +269,12 @@ func (c *command) startMinikube() error {
 // fixes https://github.com/kyma-project/kyma/issues/1986
 func (c *command) createClusterRoleBinding() error {
 	var err error
-	bs, err := c.K8s.RbacV1().ClusterRoleBindings().List(metav1.ListOptions{LabelSelector: "app=kyma"})
+	bs, err := c.K8s.Static().RbacV1().ClusterRoleBindings().List(metav1.ListOptions{LabelSelector: "app=kyma"})
 	if err != nil {
 		return err
 	}
 	if len(bs.Items) == 0 {
-		_, err = c.K8s.RbacV1().ClusterRoleBindings().Create(&rbacv1.ClusterRoleBinding{
+		_, err = c.K8s.Static().RbacV1().ClusterRoleBindings().Create(&rbacv1.ClusterRoleBinding{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:   "default-sa-cluster-admin",
 				Labels: map[string]string{"app": "kyma"},

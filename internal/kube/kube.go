@@ -3,14 +3,17 @@ package kube
 import (
 	corev1 "k8s.io/api/core/v1"
 
+	"github.com/kyma-project/cli/pkg/api/octopus"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 )
 
 // KymaKube defines the Kyma-enhanced kubernetes API.
 // It provides all functionality of the Kubernetes API plus extra functionality
 type KymaKube interface {
-	kubernetes.Interface
-
+	Static() kubernetes.Interface
+	Dynamic() dynamic.Interface
+	Octopus() octopus.OctopusInterface
 	// IsPodDeployed checks if a pod is in the given namespace (independently of its status)
 	IsPodDeployed(namespace, name string) (bool, error)
 

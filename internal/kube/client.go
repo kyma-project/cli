@@ -5,8 +5,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kyma-project/cli/pkg/api/octopus"
 	corev1 "k8s.io/api/core/v1"
 
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
@@ -20,7 +22,9 @@ const (
 
 // client is the default KymaKube implementation
 type client struct {
-	kubernetes.Interface
+	static  kubernetes.Interface
+	dynamic dynamic.Interface
+	octps   octopus.OctopusInterface
 }
 
 // NewFromConfig creates a new Kubernetes client based on the given Kubeconfig either provided by URL (in-cluster config) or via file (out-of-cluster config).
@@ -39,20 +43,44 @@ func NewFromConfigWithTimeout(url, file string, t time.Duration) (KymaKube, erro
 
 	config.Timeout = t
 
-	clientset, err := kubernetes.NewForConfig(config)
+	sClient, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	dClient, err := dynamic.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	octClient, err := octopus.NewOctopusRESTClient(2 * time.Second)
 	if err != nil {
 		return nil, err
 	}
 
 	return &client{
-			Interface: clientset,
+			static:  sClient,
+			dynamic: dClient,
+			octps:   octClient,
 		},
 		nil
 
 }
 
+func (c *client) Static() kubernetes.Interface {
+	return c.static
+}
+
+func (c *client) Dynamic() dynamic.Interface {
+	return c.dynamic
+}
+
+func (c *client) Octopus() octopus.OctopusInterface {
+	return c.octps
+}
+
 func (c *client) IsPodDeployed(namespace, name string) (bool, error) {
-	_, err := c.CoreV1().Pods(namespace).Get(name, metav1.GetOptions{IncludeUninitialized: true})
+	_, err := c.Static().CoreV1().Pods(namespace).Get(name, metav1.GetOptions{IncludeUninitialized: true})
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
 			return false, nil
@@ -65,7 +93,7 @@ func (c *client) IsPodDeployed(namespace, name string) (bool, error) {
 }
 
 func (c *client) IsPodDeployedByLabel(namespace, labelName, labelValue string) (bool, error) {
-	pods, err := c.CoreV1().Pods(namespace).List(metav1.ListOptions{LabelSelector: fmt.Sprintf("%s=%s", labelName, labelValue)})
+	pods, err := c.Static().CoreV1().Pods(namespace).List(metav1.ListOptions{LabelSelector: fmt.Sprintf("%s=%s", labelName, labelValue)})
 	if err != nil {
 		return false, err
 	}
@@ -75,7 +103,7 @@ func (c *client) IsPodDeployedByLabel(namespace, labelName, labelValue string) (
 
 func (c *client) WaitPodStatus(namespace, name string, status corev1.PodPhase) error {
 	for {
-		pod, err := c.CoreV1().Pods(namespace).Get(name, metav1.GetOptions{IncludeUninitialized: true})
+		pod, err := c.Static().CoreV1().Pods(namespace).Get(name, metav1.GetOptions{IncludeUninitialized: true})
 		if err != nil && !strings.Contains(err.Error(), "not found") {
 			return err
 		}
@@ -89,7 +117,7 @@ func (c *client) WaitPodStatus(namespace, name string, status corev1.PodPhase) e
 
 func (c *client) WaitPodStatusByLabel(namespace, labelName, labelValue string, status corev1.PodPhase) error {
 	for {
-		pods, err := c.CoreV1().Pods(namespace).List(metav1.ListOptions{LabelSelector: fmt.Sprintf("%s=%s", labelName, labelValue)})
+		pods, err := c.Static().CoreV1().Pods(namespace).List(metav1.ListOptions{LabelSelector: fmt.Sprintf("%s=%s", labelName, labelValue)})
 		if err != nil {
 			return err
 		}

@@ -26,7 +26,7 @@ func NewCertifier(k kube.KymaKube) Certifier {
 }
 
 func (k keychain) Certificate() ([]byte, error) {
-	cm, err := k.k8s.CoreV1().ConfigMaps("kyma-installer").Get("net-global-overrides", metav1.GetOptions{})
+	cm, err := k.k8s.Static().CoreV1().ConfigMaps("kyma-installer").Get("net-global-overrides", metav1.GetOptions{})
 	if err != nil {
 		return nil, errors.Wrap(err, fmt.Sprintf("\nCould not obtain the Kyma root certificate, please follow the instructions below to import it manually:\n-----\n%s-----\n", k.Instructions()))
 	}

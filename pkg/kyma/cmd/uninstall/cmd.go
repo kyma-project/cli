@@ -145,13 +145,13 @@ func (cmd *command) deleteInstaller() error {
 		return err
 	}
 
-	err = cmd.K8s.CoreV1().Namespaces().Delete("kyma-installer", &metav1.DeleteOptions{})
+	err = cmd.K8s.Static().CoreV1().Namespaces().Delete("kyma-installer", &metav1.DeleteOptions{})
 	if err != nil && !strings.Contains(err.Error(), "not found") { // treat not found as positive deletion
 		return err
 	}
 
 	for {
-		ns, err := cmd.K8s.CoreV1().Namespaces().List(metav1.ListOptions{LabelSelector: "kyma-project.io/installation="})
+		ns, err := cmd.K8s.Static().CoreV1().Namespaces().List(metav1.ListOptions{LabelSelector: "kyma-project.io/installation="})
 		if err != nil {
 			return err
 		}
@@ -161,12 +161,12 @@ func (cmd *command) deleteInstaller() error {
 		time.Sleep(sleep)
 	}
 
-	err = cmd.K8s.RbacV1().ClusterRoleBindings().Delete("kyma-installer", &metav1.DeleteOptions{})
+	err = cmd.K8s.Static().RbacV1().ClusterRoleBindings().Delete("kyma-installer", &metav1.DeleteOptions{})
 	if err != nil && !strings.Contains(err.Error(), "not found") {
 		return err
 	}
 
-	err = cmd.K8s.RbacV1().ClusterRoles().Delete("kyma-installer-reader", &metav1.DeleteOptions{})
+	err = cmd.K8s.Static().RbacV1().ClusterRoles().Delete("kyma-installer-reader", &metav1.DeleteOptions{})
 	if err != nil && !strings.Contains(err.Error(), "not found") { // treat not found as positive deletion
 		return err
 	}
@@ -181,17 +181,17 @@ func (cmd *command) deleteTiller() error {
 		return err
 	}
 
-	err = cmd.K8s.RbacV1().RoleBindings("kube-system").Delete("tiller-certs", &metav1.DeleteOptions{})
+	err = cmd.K8s.Static().RbacV1().RoleBindings("kube-system").Delete("tiller-certs", &metav1.DeleteOptions{})
 	if err != nil && !strings.Contains(err.Error(), "not found") {
 		return err
 	}
 
-	err = cmd.K8s.RbacV1().Roles("kube-system").Delete("tiller-certs-installer", &metav1.DeleteOptions{})
+	err = cmd.K8s.Static().RbacV1().Roles("kube-system").Delete("tiller-certs-installer", &metav1.DeleteOptions{})
 	if err != nil && !strings.Contains(err.Error(), "not found") {
 		return err
 	}
 
-	err = cmd.K8s.CoreV1().ServiceAccounts("kube-system").Delete("tiller-certs-sa", &metav1.DeleteOptions{})
+	err = cmd.K8s.Static().CoreV1().ServiceAccounts("kube-system").Delete("tiller-certs-sa", &metav1.DeleteOptions{})
 	if err != nil && !strings.Contains(err.Error(), "not found") {
 		return err
 	}
