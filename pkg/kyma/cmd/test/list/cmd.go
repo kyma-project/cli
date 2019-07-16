@@ -24,8 +24,8 @@ func NewCmd(o *options) *cobra.Command {
 
 	cobraCmd := &cobra.Command{
 		Use:     "list",
-		Short:   "List test suites available for a provisioned Kyma cluster",
-		Long:    `List test suites available for a provisioned Kyma cluster`,
+		Short:   "Lists test suites available for a provisioned Kyma cluster.",
+		Long:    `Lists test suites available for a provisioned Kyma cluster.`,
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 		Aliases: []string{"l"},
 	}
@@ -36,16 +36,16 @@ func NewCmd(o *options) *cobra.Command {
 func (cmd *command) Run() error {
 	var err error
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
-		return errors.Wrap(err, "could not initialize the Kubernetes client. Make sure that your kubeconfig is valid.")
+		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure that your kubeconfig is valid.")
 	}
 
 	testSuites, err := cmd.K8s.Octopus().ListTestSuites()
 	if err != nil {
-		return errors.Wrap(err, "unable to get list of test suites")
+		return errors.Wrap(err, "Unable to get list of test suites")
 	}
 
 	if len(testSuites.Items) == 0 {
-		fmt.Println("no test suites found")
+		fmt.Println("No test suites found")
 		return nil
 	}
 
