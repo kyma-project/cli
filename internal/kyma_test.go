@@ -26,7 +26,7 @@ func TestRunCmd(t *testing.T) {
 			description:    "Checks if a command is correct. If not, exists and returns an error.",
 			cmd:            []string{"ehco", "This is spelled incorrectly"},
 			expectedOutput: "",
-			expectedErr:    errors.New("Executing command 'ehco [this is wrongly spelled]' failed with output '' and error message 'exec: \"ehco\": executable file not found in $PATH'"),
+			expectedErr:    errors.New("Executing command 'ehco [This is spelled incorrectly]' failed with output '' and error message 'exec: \"ehco\": executable file not found in $PATH'"),
 		},
 		{
 			name:           "Strip ' character",
