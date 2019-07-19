@@ -28,13 +28,13 @@ func TestIsPodDeployed(t *testing.T) {
 
 	// test finding the pod
 	found, err := c.IsPodDeployed("ns", "test-pod1")
-	require.NoError(t, err, "Checking if a pod is deployed error not as expected.")
-	require.True(t, found, "Checking if a pod is deployed should be true")
+	require.NoError(t, err, "Checking if the Pod is deployed and no errors occur.")
+	require.True(t, found, "Pod is deployed.")
 
 	// test checking non existing pod
 	found, err = c.IsPodDeployed("ns", "non-existing-pod")
-	require.NoError(t, err, "Checking if a pod is deployed error not as expected.")
-	require.False(t, found, "Checking if a pod is deployed should be false")
+	require.NoError(t, err, "Checking if the Pod is deployed and no errors occur.")
+	require.False(t, found, "Pod is not deployed")
 
 	// simulate an unexpected error when contacting k8s
 	errClient := &fake.Clientset{}
@@ -44,7 +44,7 @@ func TestIsPodDeployed(t *testing.T) {
 
 	c.static = errClient
 	_, err = c.IsPodDeployed("ns", "test-pod1")
-	require.Error(t, err, "Checking if a pod is deployed error not as expected.")
+	require.Error(t, err, "Checking if the Pod is deployed and if any errors occur.")
 }
 
 func TestIsPodDeployedByLabel(t *testing.T) {
@@ -59,13 +59,13 @@ func TestIsPodDeployedByLabel(t *testing.T) {
 
 	// test finding the pod
 	found, err := c.IsPodDeployedByLabel("ns", "team", "huskies")
-	require.NoError(t, err, "Checking if a pod is deployed error not as expected.")
-	require.True(t, found, "Checking if a pod is deployed should be true")
+	require.NoError(t, err, "Checking if the Pod is deployed and no errors occur.")
+	require.True(t, found, "Pod is deployed")
 
 	// test checking non existing pod
 	found, err = c.IsPodDeployedByLabel("ns", "team", "skydiving-tunas")
-	require.NoError(t, err, "Checking if a pod is deployed error not as expected.")
-	require.False(t, found, "Checking if a pod is deployed should be false")
+	require.NoError(t, err, "Checking if the Pod is deployed and no errors occur.")
+	require.False(t, found, "Pod is not deployed")
 
 	// simulate an unexpected error when contacting k8s
 	errClient := &fake.Clientset{}
@@ -75,7 +75,7 @@ func TestIsPodDeployedByLabel(t *testing.T) {
 
 	c.static = errClient
 	_, err = c.IsPodDeployedByLabel("ns", "team", "skydiving-tunas")
-	require.Error(t, err, "Checking if a pod is deployed error not as expected.")
+	require.Error(t, err, "Checking if the Pod is deployed and no errors occur.")
 
 }
 

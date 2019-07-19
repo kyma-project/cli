@@ -11,7 +11,7 @@ import (
 
 func addDevDomainsToEtcHostsOSSpecific(domain string, s step.Step, hostAlias string) error {
 
-	s.LogErrorf("Please add these lines to your " + hostsFile + " file:")
+	s.LogErrorf("Add these lines to your " + hostsFile + " file:")
 	hostsArray := strings.Split(hostAlias, " ")
 	ip := hostsArray[0]
 	hostsArray = hostsArray[1:]

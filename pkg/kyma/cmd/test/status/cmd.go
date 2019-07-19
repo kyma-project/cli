@@ -99,7 +99,7 @@ func (cmd *command) printTestSuiteStatus(testSuite *oct.ClusterTestSuite, output
 		d, err := yaml.Marshal(testSuite)
 		if err != nil {
 			return errors.Wrap(err,
-				fmt.Sprintf("unable to marshal test suite '%s' to yaml",
+				fmt.Sprintf("Unable to marshal test suite '%s' to yaml",
 					testSuite.GetName()))
 		}
 		fmt.Println(string(d))
@@ -108,7 +108,7 @@ func (cmd *command) printTestSuiteStatus(testSuite *oct.ClusterTestSuite, output
 		d, err := json.MarshalIndent(testSuite, "", "\t")
 		if err != nil {
 			return errors.Wrap(err,
-				fmt.Sprintf("unable to marshal test suite '%s' to json",
+				fmt.Sprintf("Unable to marshal test suite '%s' to json",
 					testSuite.GetName()))
 		}
 		fmt.Println(string(d))
@@ -129,12 +129,12 @@ func printTestSuite(testSuite *oct.ClusterTestSuite, wide bool) {
 	if testSuite.Status.StartTime != nil {
 		fmt.Printf("StartTime:\t%s\r\n", testSuite.Status.StartTime.String())
 	} else {
-		fmt.Printf("StartTime:\t%s\r\n", "not started yet")
+		fmt.Printf("StartTime:\t%s\r\n", "Not started yet")
 	}
 	if testSuite.Status.CompletionTime != nil {
 		fmt.Printf("EndTime:\t%s\r\n", testSuite.Status.CompletionTime)
 	} else {
-		fmt.Printf("EndTime:\t%s\r\n", "not finished yet")
+		fmt.Printf("EndTime:\t%s\r\n", "Not finished yet")
 	}
 
 	fmt.Printf("Condition:\t%s\r\n", testSuite.Status.Conditions[len(testSuite.Status.Conditions)-1].Type)
@@ -195,7 +195,7 @@ func generateRerunCommand(testSuite *oct.ClusterTestSuite) string {
 func listTestSuitesByName(cli octopus.OctopusInterface, names []string) ([]oct.ClusterTestSuite, error) {
 	suites, err := cli.ListTestSuites()
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to list test suites")
+		return nil, errors.Wrap(err, "Unable to list test suites")
 	}
 
 	result := []oct.ClusterTestSuite{}

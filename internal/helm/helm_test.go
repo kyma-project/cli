@@ -36,7 +36,7 @@ func TestHome(t *testing.T) {
 	}{
 		{
 			name:        "Helm home does not exist",
-			description: "Helm Home without helm folder",
+			description: "Helm Home without helm folder.",
 			cmdOutput:   helmDir,
 			expected:    helmDir,
 		},

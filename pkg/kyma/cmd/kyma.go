@@ -24,9 +24,9 @@ func NewKymaCmd(o *core.Options) *cobra.Command {
 		Use:   "kyma",
 		Short: "Controls a Kyma cluster.",
 		Long: `Kyma is a flexible and easy way to connect and extend enterprise applications in a cloud-native world.
-kyma CLI controls a Kyma cluster.
+Kyma CLI allows you to install and manage Kyma.
 
-Find more information at: https://github.com/kyma-project/cli
+For more information, see: https://github.com/kyma-project/cli
 `,
 		// Affects children as well
 		SilenceErrors: false,

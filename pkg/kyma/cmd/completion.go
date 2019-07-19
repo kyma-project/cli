@@ -13,11 +13,11 @@ func NewCompletionCmd() *cobra.Command {
 		Short: "Generates bash completion scripts",
 		Long: `Output shell completion code for bash. The shell code must be evaluated to provide
 interactive completion of commands. This can be done by sourcing it from the .bash _profile.
-To load completion run
+To load completion, run:
 
 . <(kyma completion)
 
-To configure your bash shell to load completions for each session add to your bashrc
+To configure your bash shell to load completions for each session, add to your bashrc:
 
 # ~/.bashrc or ~/.profile
 . <(kyma completion)

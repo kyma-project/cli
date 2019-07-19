@@ -26,7 +26,7 @@ func NewCertifier(k kube.KymaKube) Certifier {
 func (c certutil) Certificate() ([]byte, error) {
 	cm, err := c.k8s.Static().CoreV1().ConfigMaps("kyma-installer").Get("net-global-overrides", metav1.GetOptions{})
 	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("\nCould not obtain the Kyma root certificate, please follow the instructions below to import it manually:\n-----\n%s-----\n", c.Instructions()))
+		return nil, errors.Wrap(err, fmt.Sprintf("\nCould not retrieve the Kyma root certificate. Follow the instructions to import it manually:\n-----\n%s-----\n", c.Instructions()))
 	}
 
 	decodedCert, err := base64.StdEncoding.DecodeString(cm.Data["global.ingress.tlsCrt"])
@@ -50,11 +50,11 @@ func (c certutil) StoreCertificate(file string, i Informer) error {
 		_, err := internal.RunCmd("certutil", "-addstore", "-f", "Root", file)
 		return err
 	}
-	return errors.New(fmt.Sprintf("Could not import the Kyma root certificate, please follow the instructions below to import them manually:\n-----\n%s-----\n", c.Instructions()))
+	return errors.New(fmt.Sprintf("Could not import the Kyma root certificate. Follow the instructions to import them manually:\n-----\n%s-----\n", c.Instructions()))
 }
 
 func (certutil) Instructions() string {
-	return "1. Open a new command line with administrator rights.\n" +
+	return "1. Open a terminal window with administrator rights.\n" +
 		"2. Download the certificate: kubectl get configmap net-global-overrides -n kyma-installer -o jsonpath='{.data.global\\.ingress\\.tlsCrt}' | base64 --decode > kyma.crt\n" +
 		"3. Import the certificate: certutil -addstore -f Root kyma.crt\n"
 }

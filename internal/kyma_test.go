@@ -17,26 +17,26 @@ func TestRunCmd(t *testing.T) {
 	}{
 		{
 			name:           "Correct command",
-			description:    "Simple test checking that a correct command runs",
+			description:    "Checks if a command is correct.",
 			cmd:            []string{"echo", "Hello!"},
 			expectedOutput: "Hello!\n",
 		},
 		{
 			name:           "Incorrect command",
-			description:    "test a command that exits with error",
-			cmd:            []string{"ehco", "this is wrongly spelled"},
+			description:    "Checks if a command is correct. If not, exists and returns an error.",
+			cmd:            []string{"ehco", "This is spelled incorrectly"},
 			expectedOutput: "",
-			expectedErr:    errors.New("Failed executing command 'ehco [this is wrongly spelled]' with output '' and error message 'exec: \"ehco\": executable file not found in $PATH'"),
+			expectedErr:    errors.New("Executing command 'ehco [this is wrongly spelled]' failed with output '' and error message 'exec: \"ehco\": executable file not found in $PATH'"),
 		},
 		{
 			name:           "Strip ' character",
-			description:    "Check that ' character is stripped from output",
+			description:    "Checks if the ' character is stripped from output",
 			cmd:            []string{"echo", "This is a 'single-quoted output'"},
 			expectedOutput: "This is a single-quoted output\n",
 		},
 		{
 			name:           "No args",
-			description:    "test a command without args",
+			description:    "Tests a command without arguments.",
 			cmd:            []string{"echo"},
 			expectedOutput: "\n",
 		},

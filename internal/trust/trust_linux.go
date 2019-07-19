@@ -29,7 +29,7 @@ func NewCertifier(k kube.KymaKube) Certifier {
 func (c certauth) Certificate() ([]byte, error) {
 	cm, err := c.k8s.Static().CoreV1().ConfigMaps("kyma-installer").Get("net-global-overrides", metav1.GetOptions{})
 	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("\nCould not obtain the Kyma root certificate, please follow the instructions below to import it manually:\n-----\n%s-----\n", c.Instructions()))
+		return nil, errors.Wrap(err, fmt.Sprintf("\nCould not retrieve the Kyma root certificate. Follow the instructions to import it manually:\n-----\n%s-----\n", c.Instructions()))
 	}
 
 	decodedCert, err := base64.StdEncoding.DecodeString(cm.Data["global.ingress.tlsCrt"])
@@ -45,7 +45,7 @@ func (c certauth) StoreCertificate(file string, i Informer) error {
 	if root.IsWithSudo() {
 		i.LogInfo("You're running CLI with sudo. CLI has to add the Kyma certificate to the trusted certificate store. Type 'y' to allow this action.")
 		if !root.PromptUser() {
-			i.LogInfo(fmt.Sprintf("\nCould not import the Kyma root certificate, please follow the instructions below to import it manually:\n-----\n%s-----\n", c.Instructions()))
+			i.LogInfo(fmt.Sprintf("\nCould not import the Kyma root certificate. Follow the instructions to import it manually:\n-----\n%s-----\n", c.Instructions()))
 			return nil
 		}
 	}
@@ -59,11 +59,11 @@ func (c certauth) StoreCertificate(file string, i Informer) error {
 
 	_, err = internal.RunCmd("sudo", "cp", file, fmt.Sprintf("/usr/local/share/ca-certificates/kyma-%s.crt", domain))
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("\nCould not import the Kyma certificates, please follow the instructions below to import them manually:\n-----\n%s-----\n", c.Instructions()))
+		return errors.Wrap(err, fmt.Sprintf("\nCould not import the Kyma certificates. Follow the instructions to import them manually:\n-----\n%s-----\n", c.Instructions()))
 	}
 	_, err = internal.RunCmd("sudo", "update-ca-certificates")
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("\nCould not import the Kyma certificates, please follow the instructions below to import them manually:\n-----\n%s-----\n", c.Instructions()))
+		return errors.Wrap(err, fmt.Sprintf("\nCould not import the Kyma certificates. Follow the instructions to import them manually:\n-----\n%s-----\n", c.Instructions()))
 	}
 
 	return nil
