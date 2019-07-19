@@ -82,7 +82,7 @@ func (c *client) Octopus() octopus.OctopusInterface {
 func (c *client) IsPodDeployed(namespace, name string) (bool, error) {
 	_, err := c.Static().CoreV1().Pods(namespace).Get(name, metav1.GetOptions{IncludeUninitialized: true})
 	if err != nil {
-		if strings.Contains(err.Error(), "Not found") {
+		if strings.Contains(err.Error(), "not found") {
 			return false, nil
 		} else {
 			// actual errors
@@ -104,7 +104,7 @@ func (c *client) IsPodDeployedByLabel(namespace, labelName, labelValue string) (
 func (c *client) WaitPodStatus(namespace, name string, status corev1.PodPhase) error {
 	for {
 		pod, err := c.Static().CoreV1().Pods(namespace).Get(name, metav1.GetOptions{IncludeUninitialized: true})
-		if err != nil && !strings.Contains(err.Error(), "Not found") {
+		if err != nil && !strings.Contains(err.Error(), "not found") {
 			return err
 		}
 
