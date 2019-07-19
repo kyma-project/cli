@@ -27,7 +27,7 @@ import (
 	"github.com/kyma-project/cli/internal/helm"
 	"github.com/kyma-project/cli/internal/minikube"
 	"github.com/pkg/errors"
-	"gopkg.in/src-d/go-git.v4"
+	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/storage/memory"
 	yaml "gopkg.in/yaml.v2"
 
@@ -45,25 +45,6 @@ const (
 	releaseSrcUrlPattern   = "https://raw.githubusercontent.com/kyma-project/kyma/%s/%s"
 	releaseResourcePattern = "https://raw.githubusercontent.com/kyma-project/kyma/%s/installation/resources/%s"
 	registryMasterPattern  = "eu.gcr.io/kyma-project/develop/kyma-installer:master-%s"
-)
-
-var (
-	patchMap = map[string][]string{
-		"configmap/application-connector-overrides": []string{
-			"application-registry.minikubeIP",
-		},
-		"configmap/core-overrides": []string{
-			"test.acceptance.ui.minikubeIP",
-			"apiserver-proxy.minikubeIP",
-			"iam-kubeconfig-service.minikubeIP",
-			"console-backend-service.minikubeIP",
-			"test.acceptance.cbs.minikubeIP",
-		},
-		"configmap/assetstore-overrides": []string{
-			"asset-store-controller-manager.minikubeIP",
-			"test.integration.minikubeIP",
-		},
-	}
 )
 
 //NewCmd creates a new kyma command
@@ -792,7 +773,7 @@ func (cmd *command) waitForInstaller() error {
 				if !errorOccured {
 					errorOccured = true
 					cmd.CurrentStep.LogErrorf("%s failed, which may be OK. Will retry later...", desc)
-					cmd.CurrentStep.LogInfo("To fetch the error logs from the installer, run: kubectl get installation  kyma-installation -o go-template --template='{{- range .status.errorLog }}{{printf \"%s:\\n %s\\n\" .component .log}}{{- end}}'")
+					cmd.CurrentStep.LogInfo("To fetch the error logs from the installer, run: kubectl get installation kyma-installation -o go-template --template='{{- range .status.errorLog }}{{printf \"%s:\\n %s\\n\" .component .log}}{{- end}}'")
 					cmd.CurrentStep.LogInfo("To fetch the application logs from the installer, run: kubectl logs -n kyma-installer -l name=kyma-installer")
 				}
 
@@ -849,24 +830,19 @@ func (cmd *command) patchMinikubeIP() error {
 	}
 	minikubeIP = strings.TrimSpace(minikubeIP)
 
-	for k, v := range patchMap {
-		for _, pData := range v {
-			if _, err := cmd.Kubectl().RunCmd("-n", "kyma-installer", "get", k); err != nil {
-				if strings.Contains(err.Error(), "not found") {
-					cmd.CurrentStep.LogInfof("Resource '%s' not found, won't be patched", k)
-					continue
-				} else {
-					return err
-				}
-			}
-
-			_, err = cmd.Kubectl().RunCmd("-n", "kyma-installer", "patch", k, "--type=json",
-				"--allow-missing-template-keys=true",
-				fmt.Sprintf("--patch=[{'op': 'replace', 'path': '/data/%s', 'value': '%s'}]", pData, minikubeIP))
-			if err != nil {
-				return err
-			}
+	if _, err := cmd.Kubectl().RunCmd("-n", "kyma-installer", "get", "configmap/installation-config-overrides"); err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			cmd.CurrentStep.LogInfof("Resource '%s' not found, won't be patched", "configmap/installation-config-overrides")
+		} else {
+			return err
 		}
+	}
+
+	_, err = cmd.Kubectl().RunCmd("-n", "kyma-installer", "patch", "configmap/installation-config-overrides", "--type=json",
+		"--allow-missing-template-keys=true",
+		fmt.Sprintf("--patch=[{'op': 'replace', 'path': '/data/global.minikubeIP', 'value': '%s'}]", minikubeIP))
+	if err != nil {
+		return err
 	}
 
 	return nil
