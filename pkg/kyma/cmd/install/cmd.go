@@ -76,7 +76,7 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cobraCmd := &cobra.Command{
 		Use:   "install",
-		Short: "Installs Kyma on a running Kubernetes cluster",
+		Short: "Installs Kyma on a running Kubernetes cluster.",
 		Long: `Installs Kyma on a running Kubernetes cluster. For more information on the command, see https://github.com/kyma-project/cli/tree/master/pkg/kyma/docs/install.md.
 
 
@@ -85,17 +85,17 @@ func NewCmd(o *Options) *cobra.Command {
 		Aliases: []string{"i"},
 	}
 
-	cobraCmd.Flags().StringVarP(&o.ReleaseVersion, "release", "r", DefaultKymaVersion, "Kyma release to use")
-	cobraCmd.Flags().StringVarP(&o.ReleaseConfig, "config", "c", "", "URL or path to the Installer configuration YAML file")
-	cobraCmd.Flags().BoolVarP(&o.NoWait, "noWait", "n", false, "Do not wait for the Installer configuration to complete")
+	cobraCmd.Flags().StringVarP(&o.ReleaseVersion, "release", "r", DefaultKymaVersion, "Kyma release or Git revision to be installed")
+	cobraCmd.Flags().StringVarP(&o.ReleaseConfig, "config", "c", "", "URL or path to the Installer configuration yaml file")
+	cobraCmd.Flags().BoolVarP(&o.NoWait, "noWait", "n", false, "Do not wait for the Kyma installation to complete")
 	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", "kyma.local", "Domain used for installation")
-	cobraCmd.Flags().BoolVarP(&o.Local, "local", "l", false, "Install from sources")
+	cobraCmd.Flags().BoolVarP(&o.Local, "local", "l", false, "Install from sources. Go code conventions must be followed for this command to work properly")
 	cobraCmd.Flags().StringVarP(&o.LocalSrcPath, "src-path", "", "", "Path to local sources")
 	cobraCmd.Flags().StringVarP(&o.LocalInstallerVersion, "installer-version", "", "", "Version of the Kyma Installer Docker image used for local installation")
 	cobraCmd.Flags().StringVarP(&o.LocalInstallerDir, "installer-dir", "", "", "The directory of the Kyma Installer Docker image used for local installation")
-	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 30*time.Minute, "Timeout after which CLI stops watching the installation progress")
+	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 30*time.Minute, "Time-out after which CLI stops watching the installation progress")
 	cobraCmd.Flags().StringVarP(&o.Password, "password", "p", "", "Predefined cluster password")
-	cobraCmd.Flags().VarP(&o.OverrideConfigs, "override", "o", "Path to YAML file with parameters to override. Multiple entries of this flag are allowed")
+	cobraCmd.Flags().VarP(&o.OverrideConfigs, "override", "o", "Path to yaml file with parameters to override. Multiple entries of this flag are allowed")
 
 	return cobraCmd
 }
@@ -104,7 +104,7 @@ func NewCmd(o *Options) *cobra.Command {
 func (cmd *command) Run() error {
 	var err error
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
-		return errors.Wrap(err, "Could not initialize the Kubernetes client. Please make sure that you have a valid kubeconfig.")
+		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
 	}
 
 	if err := cmd.validateFlags(); err != nil {
@@ -168,12 +168,12 @@ func (cmd *command) validateFlags() error {
 		if cmd.opts.LocalSrcPath == "" {
 			goPath := os.Getenv("GOPATH")
 			if goPath == "" {
-				return fmt.Errorf("No local 'src-path' configured and no applicable default found. Check if you exported a GOPATH.")
+				return fmt.Errorf("No 'src-path' configured and no applicable default found. Check if you exported a GOPATH")
 			}
 			cmd.opts.LocalSrcPath = filepath.Join(goPath, "src", "github.com", "kyma-project", "kyma")
 		}
 		if _, err := os.Stat(cmd.opts.LocalSrcPath); err != nil {
-			return fmt.Errorf("Configured 'src-path=%s' does not exist. Check if you configured a valid path.", cmd.opts.LocalSrcPath)
+			return fmt.Errorf("Configured 'src-path=%s' does not exist. Check if you configured a valid path", cmd.opts.LocalSrcPath)
 		}
 		if _, err := os.Stat(filepath.Join(cmd.opts.LocalSrcPath, "installation", "resources")); err != nil {
 			return fmt.Errorf("Configured 'src-path=%s' does not seem to point to a Kyma repository. Check if your repository contains the 'installation/resources' folder.", cmd.opts.LocalSrcPath)
@@ -844,7 +844,7 @@ func (cmd *command) releaseFile(path string) string {
 func (cmd *command) patchMinikubeIP() error {
 	minikubeIP, err := minikube.RunCmd(cmd.opts.Verbose, "ip")
 	if err != nil {
-		cmd.CurrentStep.LogInfo("unable to perform 'minikube ip' command. Patches won't be applied")
+		cmd.CurrentStep.LogInfo("Unable to perform 'minikube ip' command. Patches won't be applied")
 		return nil
 	}
 	minikubeIP = strings.TrimSpace(minikubeIP)
@@ -853,7 +853,7 @@ func (cmd *command) patchMinikubeIP() error {
 		for _, pData := range v {
 			if _, err := cmd.Kubectl().RunCmd("-n", "kyma-installer", "get", k); err != nil {
 				if strings.Contains(err.Error(), "not found") {
-					cmd.CurrentStep.LogInfof("resource '%s' not found, won't be patched", k)
+					cmd.CurrentStep.LogInfof("Resource '%s' not found, won't be patched", k)
 					continue
 				} else {
 					return err

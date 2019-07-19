@@ -11,7 +11,7 @@ func RunCmd(c string, args ...string) (string, error) {
 	cmd := exec.Command(c, args...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return "", fmt.Errorf("Failed executing command '%s %s' with output '%s' and error message '%s'", c, args, out, err)
+		return "", fmt.Errorf("Executing command '%s %s' failed with output '%s' and error message '%s'", c, args, out, err)
 	}
 	return strings.Replace(string(out), "'", "", -1), nil
 }

@@ -54,7 +54,7 @@ This command:
 		Aliases: []string{"i"},
 	}
 
-	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 30*time.Minute, "Timeout after which Kyma CLI stops watching the uninstallation progress")
+	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 30*time.Minute, "Time-out after which Kyma CLI stops watching the uninstallation progress")
 
 	return cobraCmd
 }
@@ -63,7 +63,7 @@ This command:
 func (cmd *command) Run() error {
 	var err error
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
-		return errors.Wrap(err, "Could not initialize the Kubernetes client. PLease make sure that you have a valid kubeconfig.")
+		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid.")
 	}
 
 	s := cmd.NewStep("Uninstalling Kyma")
@@ -260,7 +260,7 @@ func (cmd *command) waitForInstallerToUninstall() error {
 		case <-timeout:
 			cmd.CurrentStep.Failure()
 			_ = cmd.printUninstallationErrorLog()
-			return errors.New("Timeout reached while waiting for Kyma to uninstall")
+			return errors.New("Time-out reached while waiting for Kyma to uninstall")
 		default:
 			status, desc, err := cmd.getUninstallationStatus()
 			if err != nil {
@@ -275,7 +275,7 @@ func (cmd *command) waitForInstallerToUninstall() error {
 			case "Error":
 				if !errorOccured {
 					errorOccured = true
-					cmd.CurrentStep.LogInfof("There was an error uninstalling Kyma, which might be OK. Will retry later...\n%s", desc)
+					cmd.CurrentStep.LogInfof("An error occurred while uninstalling Kyma, which might be OK. Will retry later...\n%s", desc)
 					cmd.CurrentStep.LogInfof("For more information, run: 'kubectl logs -n kyma-installer -l name=kyma-installer'")
 				}
 

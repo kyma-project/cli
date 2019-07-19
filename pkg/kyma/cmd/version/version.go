@@ -48,12 +48,12 @@ func (c command) Run() error {
 	if !c.opts.Client {
 		k8s, err := kube.NewFromConfigWithTimeout("", c.opts.KubeconfigPath, 2*time.Second)
 		if err != nil {
-			return errors.Wrap(err, "Could not initialize the Kubernetes client. PLease make sure that you have a valid kubeconfig.")
+			return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
 		}
 
 		version, err := KymaVersion(c.opts.Verbose, k8s)
 		if err != nil {
-			fmt.Printf("Unable to get Kyma cluster version due to error: %s. Please check if your cluster is available and has Kyma installed\r\n", err.Error())
+			fmt.Printf("Unable to get Kyma cluster version due to error: %s. Check if your cluster is available and has Kyma installed\r\n", err.Error())
 			return nil
 		}
 		fmt.Printf("Kyma cluster version: %s\n", version)

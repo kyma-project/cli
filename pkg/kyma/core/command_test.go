@@ -17,7 +17,7 @@ func TestNewStep(t *testing.T) {
 	// test current step update when creating a new step
 	s := c.NewStep("test-step")
 
-	require.Equal(t, s, c.CurrentStep, "Command's current step should be the newly created step.")
+	require.Equal(t, s, c.CurrentStep, "Command's current step must be the newly created step.")
 
 }
 

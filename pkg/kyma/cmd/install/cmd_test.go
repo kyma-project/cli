@@ -169,7 +169,7 @@ func TestImportCertificate(t *testing.T) {
 	}{
 		{
 			name:        "Certificate import",
-			description: "Correct certificate import",
+			description: "Imports the correct certificate",
 			cert: mocks.Certifier{
 				Crt: "Hi, I am a fake certificate!",
 			},
@@ -180,26 +180,26 @@ func TestImportCertificate(t *testing.T) {
 			expectedErr:        nil,
 		},
 		{
-			name:        "Certificate retrieval fail",
-			description: "Not possible to obtain the certificate",
+			name:        "Certificate retrieval failed",
+			description: "Not possible to retrieve the certificate",
 			cert: mocks.Certifier{
 				Crt: "",
 			},
 			wait:        true,
 			success:     false,
 			stopped:     false,
-			expectedErr: errors.New("Could not obtain certificate."),
+			expectedErr: errors.New("Could not retrieve the certificate"),
 		},
 		{
 			name:        "No Wait",
-			description: "No certificate import due to not waiting for kyma installation",
+			description: "Certificate not imported due to not waiting for Kyma installation",
 			cert: mocks.Certifier{
 				Crt: "", // empty because certificate retrieval should not be attempted
 			},
 			wait:               false,
 			success:            false,
 			stopped:            false,
-			expectedStepErrors: []string{"Manual certificate import instructions OS specific."},
+			expectedStepErrors: []string{"Manual OS-specific instructions for certificate import"},
 			expectedErr:        nil,
 		},
 	}
@@ -217,11 +217,11 @@ func TestImportCertificate(t *testing.T) {
 			err := cmd.importCertificate(test.cert)
 
 			require.Equal(t, test.expectedErr, err, "Error not as expected")
-			require.Equal(t, test.success, mockStep.IsSuccessful(), "Import certificate step should be successful")
-			require.Equal(t, test.stopped, mockStep.IsStopped(), "Import certificate step should not be stopped")
-			require.Equal(t, test.expectedStepStatus, mockStep.Statuses(), "Status messages are not as expected")
-			require.Equal(t, test.expectedStepInfos, mockStep.Infos(), "Logged info messages are not as expected")
-			require.Equal(t, test.expectedStepErrors, mockStep.Errors(), "Logged error messages are not as expected")
+			require.Equal(t, test.success, mockStep.IsSuccessful(), "Import certificate step must be successful")
+			require.Equal(t, test.stopped, mockStep.IsStopped(), "Import certificate step must not be stopped")
+			require.Equal(t, test.expectedStepStatus, mockStep.Statuses(), "Status messages not as expected")
+			require.Equal(t, test.expectedStepInfos, mockStep.Infos(), "Logged info messages not as expected")
+			require.Equal(t, test.expectedStepErrors, mockStep.Errors(), "Logged error messages not as expected")
 
 			mockStep.Reset()
 		})

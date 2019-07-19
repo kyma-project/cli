@@ -91,8 +91,8 @@ func NewCmd(o *options) *cobra.Command {
 		Aliases: []string{"m"},
 	}
 
-	cmd.Flags().StringVarP(&o.Domain, "domain", "d", "kyma.local", "domain to use")
-	cmd.Flags().StringVar(&o.VMDriver, "vm-driver", defaultVMDriver, "VMDriver to use, possible values are: "+strings.Join(drivers, ","))
+	cmd.Flags().StringVarP(&o.Domain, "domain", "d", "kyma.local", "Domain to use")
+	cmd.Flags().StringVar(&o.VMDriver, "vm-driver", defaultVMDriver, "VMDriver to use. Possible values: "+strings.Join(drivers, ","))
 	cmd.Flags().StringVar(&o.HypervVirtualSwitch, "hypervVirtualSwitch", "", "Name of the hyperv switch, required if --vm-driver=hyperv")
 	cmd.Flags().StringVar(&o.DiskSize, "disk-size", "30g", "Disk size to use")
 	cmd.Flags().StringVar(&o.Memory, "memory", "8192", "Memory to use")
@@ -111,7 +111,7 @@ func (c *command) Run() error {
 
 	s.LogInfof("Preparing Minikube using domain '%s' and vm-driver '%s'", c.opts.Domain, c.opts.VMDriver)
 
-	s = c.NewStep("Check Minikube status")
+	s = c.NewStep("Checking Minikube status")
 	err := c.checkIfMinikubeIsInitialized(s)
 	switch err {
 	case ErrMinikubeRunning, nil:
@@ -147,7 +147,7 @@ func (c *command) Run() error {
 
 	// K8s client needs to be created here because before the kubeconfig is not ready to use
 	if c.K8s, err = kube.NewFromConfig("", c.KubeconfigPath); err != nil {
-		return errors.Wrap(err, "Could not initialize the Kubernetes client. PLease make sure that you have a valid kubeconfig.")
+		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
 	}
 
 	s.Status("Create default cluster role")
@@ -378,7 +378,7 @@ func (c *command) enableMetricsServer() error {
 
 func (c *command) printSummary() error {
 	fmt.Println()
-	fmt.Println("Minikube cluster is installed")
+	fmt.Println("Minikube cluster installed")
 	clusterInfo, err := minikube.RunCmd(c.opts.Verbose, "status", "-b="+bootstrapper)
 	if err != nil {
 		fmt.Printf("Cannot show cluster-info because of '%s", err)

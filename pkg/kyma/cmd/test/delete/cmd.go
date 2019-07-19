@@ -25,10 +25,10 @@ func NewCmd(o *options) *cobra.Command {
 
 	cobraCmd := &cobra.Command{
 		Use:   "delete <test-suite-1> <test-suite-2> ... <test-suite-N>",
-		Short: "Delete test suites available for a provisioned Kyma cluster",
-		Long: `Delete test suites available for a provisioned Kyma cluster.
+		Short: "Deletes test suites available for a provisioned Kyma cluster.",
+		Long: `Deletes test suites available for a provisioned Kyma cluster.
 
-At least one test suite name must be provided.`,
+Provide at least one test suite name.`,
 		RunE:    func(_ *cobra.Command, args []string) error { return cmd.Run(args) },
 		Aliases: []string{"d"},
 	}
@@ -38,12 +38,12 @@ At least one test suite name must be provided.`,
 
 func (cmd *command) Run(args []string) error {
 	if len(args) < 1 {
-		return fmt.Errorf("test suite name required")
+		return fmt.Errorf("Test suite name required")
 	}
 
 	var err error
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
-		return errors.Wrap(err, "could not initialize the Kubernetes client. Make sure your kubeconfig is valid.")
+		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid.")
 	}
 
 	testSuites := &oct.ClusterTestSuiteList{}
@@ -64,9 +64,9 @@ func (cmd *command) Run(args []string) error {
 
 func deleteTestSuite(cli octopus.OctopusInterface, testName string) error {
 	if err := cli.DeleteTestSuite(test.NewTestSuite(testName)); err != nil {
-		return errors.Wrap(err, fmt.Sprintf("unable to delete test suite '%s'",
+		return errors.Wrap(err, fmt.Sprintf("Unable to delete test suite '%s'",
 			testName))
 	}
-	fmt.Printf("test suite '%s' successfully deleted\n", testName)
+	fmt.Printf("Test suite '%s' successfully deleted\n", testName)
 	return nil
 }

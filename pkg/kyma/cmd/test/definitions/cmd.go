@@ -23,8 +23,8 @@ func NewCmd(o *options) *cobra.Command {
 
 	cobraCmd := &cobra.Command{
 		Use:     "definitions",
-		Short:   "Show test definitions available for a provisioned Kyma cluster",
-		Long:    `Show test definitions available for a provisioned Kyma cluster`,
+		Short:   "Shows test definitions available for a provisioned Kyma cluster",
+		Long:    `Shows test definitions available for a provisioned Kyma cluster`,
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 		Aliases: []string{"def"},
 	}
@@ -35,14 +35,14 @@ func NewCmd(o *options) *cobra.Command {
 func (cmd *command) Run() error {
 	var err error
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
-		return errors.Wrap(err, "could not initialize the Kubernetes client. Make sure that your kubeconfig is valid.")
+		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid.")
 	}
 
 	if testDefs, err := listTestDefinitionNames(cmd.K8s.Octopus()); err != nil {
 		return err
 	} else {
 		if len(testDefs) == 0 {
-			fmt.Println("no test definitions found")
+			fmt.Println("No test definitions found")
 			return nil
 		}
 		for _, t := range testDefs {
@@ -55,7 +55,7 @@ func (cmd *command) Run() error {
 func listTestDefinitionNames(cli octopus.OctopusInterface) ([]string, error) {
 	defs, err := cli.ListTestDefinitions()
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to list test definitions")
+		return nil, errors.Wrap(err, "Unable to list test definitions")
 	}
 
 	var result = make([]string, len(defs.Items))

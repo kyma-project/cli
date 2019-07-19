@@ -47,7 +47,7 @@ func execCmd(cmd *exec.Cmd, inputText string, verbose bool) (string, error) {
 		if verbose {
 			fmt.Printf("\nExecuted command:\n  kubectl %s\nwith output:\n  %s\nand error:\n  %s\n", inputText, string(out), err)
 		}
-		return unquotedOut, fmt.Errorf("Failed executing kubectl 'kubectl %s' command  with output '%s' and error message '%s'", inputText, out, err)
+		return unquotedOut, fmt.Errorf("Executing kubectl 'kubectl %s' command  with output '%s' and error message '%s' failed", inputText, out, err)
 	}
 	if verbose {
 		fmt.Printf("\nExecuted command:\n  kubectl %s\nwith output:\n  %s\n", inputText, string(out))
