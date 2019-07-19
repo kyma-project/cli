@@ -182,17 +182,17 @@ func (cmd *command) deleteTiller() error {
 	}
 
 	err = cmd.K8s.Static().RbacV1().RoleBindings("kube-system").Delete("tiller-certs", &metav1.DeleteOptions{})
-	if err != nil && !strings.Contains(err.Error(), "Not found") {
+	if err != nil && !strings.Contains(err.Error(), "not found") {
 		return err
 	}
 
 	err = cmd.K8s.Static().RbacV1().Roles("kube-system").Delete("tiller-certs-installer", &metav1.DeleteOptions{})
-	if err != nil && !strings.Contains(err.Error(), "Not found") {
+	if err != nil && !strings.Contains(err.Error(), "not found") {
 		return err
 	}
 
 	err = cmd.K8s.Static().CoreV1().ServiceAccounts("kube-system").Delete("tiller-certs-sa", &metav1.DeleteOptions{})
-	if err != nil && !strings.Contains(err.Error(), "Not found") {
+	if err != nil && !strings.Contains(err.Error(), "not found") {
 		return err
 	}
 
