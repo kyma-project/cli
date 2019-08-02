@@ -56,7 +56,7 @@ var (
 		"kiali",
 		"compass-gateway",
 		"compass",
-		"compass-mf"
+		"compass-mf",
 	}
 
 	drivers = []string{
