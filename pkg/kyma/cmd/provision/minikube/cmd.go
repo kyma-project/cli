@@ -55,6 +55,8 @@ var (
 		"oathkeeper-api-server",
 		"kiali",
 		"compass-gateway",
+		"compass",
+		"compass-mf"
 	}
 
 	drivers = []string{
