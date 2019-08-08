@@ -10,6 +10,7 @@ import (
 	"github.com/kyma-project/cli/pkg/kyma/core"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type command struct {
@@ -63,7 +64,7 @@ func (cmd *command) Run(args []string) error {
 }
 
 func deleteTestSuite(cli octopus.OctopusInterface, testName string) error {
-	if err := cli.DeleteTestSuite(test.NewTestSuite(testName)); err != nil {
+	if err := cli.DeleteTestSuite(test.NewTestSuite(testName).GetName(), metav1.DeleteOptions{}); err != nil {
 		return errors.Wrap(err, fmt.Sprintf("Unable to delete test suite '%s'",
 			testName))
 	}

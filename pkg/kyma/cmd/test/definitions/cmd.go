@@ -8,6 +8,7 @@ import (
 	"github.com/kyma-project/cli/pkg/kyma/core"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type command struct {
@@ -53,7 +54,7 @@ func (cmd *command) Run() error {
 }
 
 func listTestDefinitionNames(cli octopus.OctopusInterface) ([]string, error) {
-	defs, err := cli.ListTestDefinitions()
+	defs, err := cli.ListTestDefinitions(metav1.ListOptions{})
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to list test definitions")
 	}

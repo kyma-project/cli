@@ -14,6 +14,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type command struct {
@@ -56,14 +57,14 @@ func (cmd *command) Run(args []string) error {
 
 	switch len(args) {
 	case 1:
-		testSuite, err := cmd.K8s.Octopus().GetTestSuiteByName(args[0])
+		testSuite, err := cmd.K8s.Octopus().GetTestSuite(args[0], metav1.GetOptions{})
 		if err != nil {
 			return errors.Wrap(err, fmt.Sprintf("unable to get test suite '%s'",
 				args[0]))
 		}
 		return cmd.printTestSuiteStatus(testSuite, cmd.opts.OutputFormat)
 	case 0:
-		testList, err := cmd.K8s.Octopus().ListTestSuites()
+		testList, err := cmd.K8s.Octopus().ListTestSuites(metav1.ListOptions{})
 		if err != nil {
 			return errors.Wrap(err, "unable to list test suites")
 		}
@@ -193,7 +194,7 @@ func generateRerunCommand(testSuite *oct.ClusterTestSuite) string {
 }
 
 func listTestSuitesByName(cli octopus.OctopusInterface, names []string) ([]oct.ClusterTestSuite, error) {
-	suites, err := cli.ListTestSuites()
+	suites, err := cli.ListTestSuites(metav1.ListOptions{})
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to list test suites")
 	}

@@ -13,6 +13,7 @@ import (
 	"github.com/kyma-project/cli/pkg/kyma/core"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type command struct {
@@ -71,7 +72,7 @@ func (cmd *command) Run(args []string) error {
 		return fmt.Errorf("Test suite '%s' already exists", testSuiteName)
 	}
 
-	clusterTestDefs, err := cmd.K8s.Octopus().ListTestDefinitions()
+	clusterTestDefs, err := cmd.K8s.Octopus().ListTestDefinitions(metav1.ListOptions{})
 	if err != nil {
 		return errors.Wrap(err, "Unable to get the list of test definitions")
 	}
@@ -93,7 +94,7 @@ func (cmd *command) Run(args []string) error {
 		return err
 	}
 
-	if err := cmd.K8s.Octopus().CreateTestSuite(testResource); err != nil {
+	if _, err := cmd.K8s.Octopus().CreateTestSuite(testResource); err != nil {
 		return err
 	}
 
@@ -141,7 +142,7 @@ func generateTestsResource(testName string, numberOfExecutions,
 }
 
 func listTestSuiteNames(cli octopus.OctopusInterface) ([]string, error) {
-	suites, err := cli.ListTestSuites()
+	suites, err := cli.ListTestSuites(metav1.ListOptions{})
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to list test suites")
 	}
