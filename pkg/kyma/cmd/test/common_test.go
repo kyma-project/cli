@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
+	"github.com/kyma-project/cli/pkg/api/octopus"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -24,7 +25,7 @@ func Test_NewTestSuite(t *testing.T) {
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "test1",
-					Namespace: NamespaceForTests,
+					Namespace: octopus.NamespaceForTests,
 				},
 			},
 		},

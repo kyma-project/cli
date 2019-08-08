@@ -5,7 +5,6 @@ import (
 
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
 	"github.com/kyma-project/cli/pkg/api/octopus"
-	"github.com/kyma-project/cli/pkg/kyma/cmd/test"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -117,7 +116,7 @@ func Test_generateTestsResource(t *testing.T) {
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "TestOneProper",
-					Namespace: test.NamespaceForTests,
+					Namespace: octopus.NamespaceForTests,
 				},
 				Spec: oct.TestSuiteSpec{
 					Count:       1,
