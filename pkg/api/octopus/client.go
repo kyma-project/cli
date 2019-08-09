@@ -1,84 +1,107 @@
 package octopus
 
 import (
-	"context"
-	"time"
-
 	"github.com/kyma-incubator/octopus/pkg/apis"
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
-	"k8s.io/apimachinery/pkg/types"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/kubernetes/scheme"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	k8sRestClient "sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
+	"k8s.io/client-go/rest"
 )
 
+const NamespaceForTests = "kyma-system"
+
 type OctopusInterface interface {
-	ListTestDefinitions() (*oct.TestDefinitionList, error)
-	ListTestSuites() (*oct.ClusterTestSuiteList, error)
-	CreateTestSuite(cts *oct.ClusterTestSuite) error
-	DeleteTestSuite(cts *oct.ClusterTestSuite) error
-	GetTestSuiteByName(name string) (*oct.ClusterTestSuite, error)
+	ListTestDefinitions(opts metav1.ListOptions) (result *oct.TestDefinitionList, err error)
+	ListTestSuites(opts metav1.ListOptions) (result *oct.ClusterTestSuiteList, err error)
+	CreateTestSuite(cts *oct.ClusterTestSuite) (result *oct.ClusterTestSuite, err error)
+	DeleteTestSuite(name string, options metav1.DeleteOptions) error
+	GetTestSuite(name string, options metav1.GetOptions) (result *oct.ClusterTestSuite, err error)
 }
 
 type OctopusRestClient struct {
-	cli         k8sRestClient.Client
-	callTimeout time.Duration
+	restClient rest.Interface
 }
 
-func (t *OctopusRestClient) ListTestDefinitions() (*oct.TestDefinitionList, error) {
-	result := &oct.TestDefinitionList{}
-	ctx, cancelF := context.WithTimeout(context.Background(), t.callTimeout)
-	defer cancelF()
-	err := t.cli.List(ctx, &client.ListOptions{}, result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
-func (t *OctopusRestClient) ListTestSuites() (*oct.ClusterTestSuiteList, error) {
-	result := &oct.ClusterTestSuiteList{}
-	ctx, cancelF := context.WithTimeout(context.Background(), t.callTimeout)
-	defer cancelF()
-	err := t.cli.List(ctx, &client.ListOptions{}, result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
-func (t *OctopusRestClient) CreateTestSuite(cts *oct.ClusterTestSuite) error {
-	ctx, cancelF := context.WithTimeout(context.Background(), t.callTimeout)
-	defer cancelF()
-	return t.cli.Create(ctx, cts)
-}
-
-func (t *OctopusRestClient) DeleteTestSuite(cts *oct.ClusterTestSuite) error {
-	ctx, cancelF := context.WithTimeout(context.Background(), t.callTimeout)
-	defer cancelF()
-	return t.cli.Delete(ctx, cts)
-}
-
-func (t *OctopusRestClient) GetTestSuiteByName(name string) (*oct.ClusterTestSuite, error) {
-	ctx, cancelF := context.WithTimeout(context.Background(), t.callTimeout)
-	defer cancelF()
-	result := &oct.ClusterTestSuite{}
-	err := t.cli.Get(ctx,
-		types.NamespacedName{Name: name},
-		result)
-	return result, err
-}
-
-func NewOctopusRESTClient(callTimeout time.Duration) (OctopusInterface, error) {
+func NewFromConfig(config *rest.Config) (OctopusInterface, error) {
 	apis.AddToScheme(scheme.Scheme)
-	cli, err := k8sRestClient.New(config.GetConfigOrDie(), k8sRestClient.Options{})
+	setConfigDefaults(config)
+
+	cl, err := rest.RESTClientFor(config)
 	if err != nil {
 		return nil, err
 	}
 
 	return &OctopusRestClient{
-		cli:         cli,
-		callTimeout: callTimeout,
+		restClient: cl,
 	}, nil
+}
+
+func (t *OctopusRestClient) ListTestDefinitions(opts metav1.ListOptions) (result *oct.TestDefinitionList, err error) {
+	result = &oct.TestDefinitionList{}
+	err = t.restClient.Get().
+		Namespace(NamespaceForTests).
+		Resource("testdefinitions").
+		VersionedParams(&opts, scheme.ParameterCodec).
+		Do().
+		Into(result)
+	return
+}
+
+func (t *OctopusRestClient) ListTestSuites(opts metav1.ListOptions) (result *oct.ClusterTestSuiteList, err error) {
+	result = &oct.ClusterTestSuiteList{}
+	err = t.restClient.Get().
+		Namespace(NamespaceForTests).
+		Resource("clustertestsuites").
+		VersionedParams(&opts, scheme.ParameterCodec).
+		Do().
+		Into(result)
+	return
+}
+
+func (t *OctopusRestClient) CreateTestSuite(cts *oct.ClusterTestSuite) (result *oct.ClusterTestSuite, err error) {
+	result = &oct.ClusterTestSuite{}
+	err = t.restClient.Post().
+		Namespace(NamespaceForTests).
+		Resource("clustertestsuites").
+		Body(cts).
+		Do().
+		Into(result)
+	return
+}
+
+func (t *OctopusRestClient) DeleteTestSuite(name string, options metav1.DeleteOptions) error {
+	return t.restClient.Delete().
+		Namespace(NamespaceForTests).
+		Resource("clustertestsuites").
+		Name(name).
+		// Reenable this when deleteing supports options
+		//Body(options).
+		Do().
+		Error()
+}
+
+func (t *OctopusRestClient) GetTestSuite(name string, options metav1.GetOptions) (result *oct.ClusterTestSuite, err error) {
+	result = &oct.ClusterTestSuite{}
+	err = t.restClient.Get().
+		Namespace(NamespaceForTests).
+		Resource("clustertestsuites").
+		Name(name).
+		VersionedParams(&options, scheme.ParameterCodec).
+		Do().
+		Into(result)
+	return
+}
+
+func setConfigDefaults(config *rest.Config) error {
+	gv := oct.SchemeGroupVersion
+	config.GroupVersion = &gv
+	config.APIPath = "/apis"
+	config.NegotiatedSerializer = serializer.DirectCodecFactory{CodecFactory: scheme.Codecs}
+
+	if config.UserAgent == "" {
+		config.UserAgent = rest.DefaultKubernetesUserAgent()
+	}
+
+	return nil
 }

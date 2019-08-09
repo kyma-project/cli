@@ -9,6 +9,7 @@ import (
 	"github.com/kyma-project/cli/pkg/kyma/core"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type command struct {
@@ -39,7 +40,7 @@ func (cmd *command) Run() error {
 		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure that your kubeconfig is valid.")
 	}
 
-	testSuites, err := cmd.K8s.Octopus().ListTestSuites()
+	testSuites, err := cmd.K8s.Octopus().ListTestSuites(metav1.ListOptions{})
 	if err != nil {
 		return errors.Wrap(err, "Unable to get list of test suites")
 	}

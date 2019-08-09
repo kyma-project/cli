@@ -53,7 +53,7 @@ func NewFromConfigWithTimeout(url, file string, t time.Duration) (KymaKube, erro
 		return nil, err
 	}
 
-	octClient, err := octopus.NewOctopusRESTClient(2 * time.Second)
+	octClient, err := octopus.NewFromConfig(config)
 	if err != nil {
 		return nil, err
 	}
