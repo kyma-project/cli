@@ -6,7 +6,7 @@ import (
 	"encoding/base64"
 	"fmt"
 
-	"github.com/kyma-project/cli/internal"
+	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/root"
 	"github.com/pkg/errors"
@@ -47,7 +47,7 @@ func (c certutil) StoreCertificate(file string, i Informer) error {
 			return nil
 		}
 		// Only automatically add the cert if already on admin mode, can't ask for admin password from go
-		_, err := internal.RunCmd("certutil", "-addstore", "-f", "Root", file)
+		_, err := cli.RunCmd("certutil", "-addstore", "-f", "Root", file)
 		return err
 	}
 	return errors.New(fmt.Sprintf("Could not import the Kyma root certificate. Follow the instructions to import them manually:\n-----\n%s-----\n", c.Instructions()))

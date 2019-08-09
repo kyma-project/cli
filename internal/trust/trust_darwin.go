@@ -8,9 +8,9 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
 
-	"github.com/kyma-project/cli/internal"
 	"github.com/kyma-project/cli/internal/root"
 	"github.com/pkg/errors"
 )
@@ -49,7 +49,7 @@ func (k keychain) StoreCertificate(file string, i Informer) error {
 		}
 	}
 
-	_, err := internal.RunCmd("sudo", "security", "add-trusted-cert", "-d", "-r", "trustRoot", "-k", "/Library/Keychains/System.keychain", file)
+	_, err := cli.RunCmd("sudo", "security", "add-trusted-cert", "-d", "-r", "trustRoot", "-k", "/Library/Keychains/System.keychain", file)
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("\nCould not import the Kyma root certificate. Follow the instructions below to import it manually:\n-----\n%s-----\n", k.Instructions()))
 	}
