@@ -3,6 +3,7 @@ package kyma
 import (
 	"github.com/kyma-project/cli/cmd/kyma/completion"
 	"github.com/kyma-project/cli/cmd/kyma/install"
+	"github.com/kyma-project/cli/cmd/kyma/provision/gcp"
 	"github.com/kyma-project/cli/cmd/kyma/provision/minikube"
 	"github.com/kyma-project/cli/cmd/kyma/test"
 	"github.com/kyma-project/cli/cmd/kyma/test/definitions"
@@ -40,6 +41,7 @@ For more information, see: https://github.com/kyma-project/cli
 
 	provisionCmd := provision.NewCmd()
 	provisionCmd.AddCommand(minikube.NewCmd(minikube.NewOptions(o)))
+	provisionCmd.AddCommand(gcp.NewCmd(gcp.NewOptions(o)))
 
 	cmd.AddCommand(
 		version.NewCmd(version.NewOptions(o)),
