@@ -74,12 +74,18 @@ func (c *command) run() error {
   resource "google_container_cluster" "gke_test_cluster" {
     name          = "${var.cluster_name}"
     location       = "${var.location}"
-	initial_node_count = "${var.node_count}"
+    initial_node_count = "${var.node_count}"
     min_master_version = "${var.kubernetes_version}"
     node_version = "${var.kubernetes_version}"
     
     node_config {
       machine_type = "${var.machine_type}"
+    }
+
+	  maintenance_policy {
+      daily_maintenance_window {
+        start_time = "03:00"
+      }
     }
   }
 `
