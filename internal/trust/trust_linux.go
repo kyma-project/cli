@@ -11,7 +11,7 @@ import (
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/kyma-project/cli/internal"
+	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/root"
 )
@@ -57,11 +57,11 @@ func (c certauth) StoreCertificate(file string, i Informer) error {
 		return err
 	}
 
-	_, err = internal.RunCmd("sudo", "cp", file, fmt.Sprintf("/usr/local/share/ca-certificates/kyma-%s.crt", domain))
+	_, err = cli.RunCmd("sudo", "cp", file, fmt.Sprintf("/usr/local/share/ca-certificates/kyma-%s.crt", domain))
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("\nCould not import the Kyma certificates. Follow the instructions to import them manually:\n-----\n%s-----\n", c.Instructions()))
 	}
-	_, err = internal.RunCmd("sudo", "update-ca-certificates")
+	_, err = cli.RunCmd("sudo", "update-ca-certificates")
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("\nCould not import the Kyma certificates. Follow the instructions to import them manually:\n-----\n%s-----\n", c.Instructions()))
 	}
@@ -78,7 +78,7 @@ func (certauth) Instructions() string {
 
 // certDomain returns the DNS info of the provided root certificate.
 func certDomain(certFile string) (string, error) {
-	certText, err := internal.RunCmd("openssl", "x509", "-text", "-noout", "-in", certFile)
+	certText, err := cli.RunCmd("openssl", "x509", "-text", "-noout", "-in", certFile)
 	if err != nil {
 		return "", err
 	}

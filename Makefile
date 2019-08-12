@@ -6,7 +6,7 @@ ifndef VERSION
 	VERSION = ${shell git describe --tags --always}
 endif
 
-FLAGS = -ldflags '-X github.com/kyma-project/cli/pkg/kyma/cmd/version.Version=$(VERSION) -X github.com/kyma-project/cli/pkg/kyma/cmd/install.DefaultKymaVersion=$(KYMA_VERSION)'
+FLAGS = -ldflags '-X github.com/kyma-project/cli/cmd/kyma/version.Version=$(VERSION) -X github.com/kyma-project/cli/cmd/kyma/install.DefaultKymaVersion=$(KYMA_VERSION)'
 
 .PHONY: resolve
 resolve: 
@@ -21,9 +21,9 @@ validate:
 .PHONY: build
 build:
 	go generate ./...
-	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o ./bin/kyma.exe $(FLAGS) ./cmd/kyma
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/kyma-linux $(FLAGS) ./cmd/kyma
-	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o ./bin/kyma-darwin $(FLAGS) ./cmd/kyma
+	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o ./bin/kyma.exe $(FLAGS) ./cmd
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/kyma-linux $(FLAGS) ./cmd
+	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o ./bin/kyma-darwin $(FLAGS) ./cmd
 
 .PHONY: test
 test:
@@ -49,7 +49,7 @@ clean:
 .PHONY: install
 install:
 	go generate ./...
-	go install $(FLAGS) ./cmd/kyma
+	go install $(FLAGS) ./cmd
 
 .PHONY: local
 local: validate test install

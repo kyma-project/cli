@@ -13,8 +13,8 @@ builds:
 - env:
   - CGO_ENABLED=0
   - KYMA_VERSION=master
-  ldflags: -X github.com/kyma-project/cli/pkg/kyma/cmd/version.Version={{.Version}} -X github.com/kyma-project/cli/pkg/kyma/cmd/install.DefaultKymaVersion={{.Env.KYMA_VERSION}}
-  main: ./cmd/kyma/
+  ldflags: -X github.com/kyma-project/cli/cmd/kyma/version.Version={{.Version}} -X github.com/kyma-project/cli/cmd/kyma/install.DefaultKymaVersion={{.Env.KYMA_VERSION}}
+  main: ./cmd/
   goos:
     - darwin
     - linux
