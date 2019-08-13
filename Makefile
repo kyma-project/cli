@@ -19,11 +19,23 @@ validate:
 	rm golint-vendored
 
 .PHONY: build
-build:
-	go generate ./...
+build: build-windows build-linux build-darwin
+
+.PHONY: build-windows
+build-windows: generate
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o ./bin/kyma.exe $(FLAGS) ./cmd
+
+.PHONY: build-linux
+build-linux: generate
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/kyma-linux $(FLAGS) ./cmd
+
+.PHONY: build-darwin
+build-darwin: generate
 	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o ./bin/kyma-darwin $(FLAGS) ./cmd
+
+.PHONY: generate
+generate:
+	go generate ./...
 
 .PHONY: test
 test:
