@@ -37,7 +37,7 @@ var (
 		"brokers",
 		"dex",
 		"docs",
-		"add-ons",
+		"addons",
 		"lambdas-ui",
 		"console-backend",
 		"minio",
