@@ -204,6 +204,20 @@ func (cmd *command) configureHelm() error {
 		return nil
 	}
 
+	// Wait for the job that generates the helm secret to finish
+	for {
+		j, err := cmd.K8s.Static().BatchV1().Jobs("kyma-installer").Get("helm-certs-job", metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+		if j.Status.Succeeded == 1 {
+			break
+		} else if j.Status.Failed == 1 {
+			return errors.New("Could not generate the Helm certificate.")
+		}
+		time.Sleep(1 * time.Second)
+	}
+
 	secret, err := cmd.K8s.Static().CoreV1().Secrets("kyma-installer").Get("helm-secret", metav1.GetOptions{})
 	if err != nil {
 		return err
