@@ -227,11 +227,13 @@ func (cmd *command) validateFlags() error {
 			return fmt.Errorf("You specified 'installer-dir=%s' without specifying --local", cmd.opts.LocalInstallerDir)
 		}
 	}
-	if cmd.opts.Domain != "" && cmd.opts.Domain != localDomain {
-		if cmd.opts.TLSKey == "" || cmd.opts.TLSCert == "" {
-			return fmt.Errorf("You specified 'domain=%s' without specifying --tlsKey and/or --tlsCert", cmd.opts.Domain)
-		}
+
+	// If one of the --domain, --tlsKey, or --tlsCert is specified, the others must be specified as well
+	if ((cmd.opts.Domain != "" && cmd.opts.Domain != localDomain) || cmd.opts.TLSKey != "" || cmd.opts.TLSCert != "") &&
+		!((cmd.opts.Domain != "" && cmd.opts.Domain != localDomain) && cmd.opts.TLSKey != "" && cmd.opts.TLSCert != "") {
+		return fmt.Errorf("You specified one of the --domain, --tlsKey, or --tlsCert without specifying the others. They must be specified together")
 	}
+
 	return nil
 }
 
@@ -788,7 +790,7 @@ func (cmd *command) printSummary() error {
 	fmt.Println(clusterInfo)
 	fmt.Println()
 	fmt.Printf("Kyma is installed in version %s\n", v)
-	fmt.Printf("Kyma console:\t\thttps://console.%s\n", vs.Spec.Hosts[0])
+	fmt.Printf("Kyma console:\t\thttps://%s\n", vs.Spec.Hosts[0])
 	fmt.Printf("Kyma admin email:\t%s\n", adm.Data["email"])
 	if cmd.opts.Password == "" || cmd.opts.NonInteractive {
 		fmt.Printf("Kyma admin password:\t%s\n", adm.Data["password"])
