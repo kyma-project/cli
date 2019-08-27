@@ -5,7 +5,6 @@ import "github.com/kyma-project/cli/internal/cli"
 //options defines available options for the minikube provisioning command
 type options struct {
 	*cli.Options
-	Domain              string
 	VMDriver            string
 	DiskSize            string
 	Memory              string

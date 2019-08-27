@@ -7,14 +7,14 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/kyma-project/cli/internal/cli"
-	"github.com/kyma-project/cli/internal/kube"
-	"github.com/kyma-project/cli/internal/minikube"
-	"github.com/kyma-project/cli/internal/step"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/kube"
+	"github.com/kyma-project/cli/internal/minikube"
+	"github.com/kyma-project/cli/internal/step"
 	"github.com/spf13/cobra"
 )
 
@@ -29,36 +29,6 @@ const (
 )
 
 var (
-	domains = []string{
-		"apiserver",
-		"console",
-		"catalog",
-		"instances",
-		"brokers",
-		"dex",
-		"docs",
-		"addons",
-		"lambdas-ui",
-		"console-backend",
-		"minio",
-		"jaeger",
-		"grafana",
-		"log-ui",
-		"loki",
-		"configurations-generator",
-		"gateway",
-		"connector-service",
-		"oauth2",
-		"oauth2-admin",
-		"oauth2-login-consent",
-		"oathkeeper-proxy",
-		"oathkeeper-api-server",
-		"kiali",
-		"compass-gateway",
-		"compass",
-		"compass-mf",
-	}
-
 	drivers = []string{
 		"virtualbox",
 		"vmwarefusion",
@@ -93,7 +63,6 @@ func NewCmd(o *options) *cobra.Command {
 		Aliases: []string{"m"},
 	}
 
-	cmd.Flags().StringVarP(&o.Domain, "domain", "d", "kyma.local", "Domain to use")
 	cmd.Flags().StringVar(&o.VMDriver, "vm-driver", defaultVMDriver, "VMDriver to use. Possible values: "+strings.Join(drivers, ","))
 	cmd.Flags().StringVar(&o.HypervVirtualSwitch, "hypervVirtualSwitch", "", "Name of the hyperv switch, required if --vm-driver=hyperv")
 	cmd.Flags().StringVar(&o.DiskSize, "disk-size", "30g", "Disk size to use")
@@ -111,7 +80,7 @@ func (c *command) Run() error {
 	}
 	s.Successf("Requirements verified")
 
-	s.LogInfof("Preparing Minikube using domain '%s' and vm-driver '%s'", c.opts.Domain, c.opts.VMDriver)
+	s.LogInfof("Preparing Minikube using vm-driver '%s'", c.opts.VMDriver)
 
 	s = c.NewStep("Checking Minikube status")
 	err := c.checkIfMinikubeIsInitialized(s)
@@ -167,11 +136,6 @@ func (c *command) Run() error {
 	}
 	s.Successf("Minikube up and running")
 
-	err = c.addDevDomainsToEtcHosts(s)
-	if err != nil {
-		return err
-	}
-
 	s = c.NewStep(fmt.Sprintf("Adjusting Minikube cluster"))
 	s.Status("Increase fs.inotify.max_user_instances")
 	err = c.increaseFsInotifyMaxUserInstances()
@@ -186,6 +150,14 @@ func (c *command) Run() error {
 		return err
 	}
 	s.Successf("Adjustments finished")
+
+	s = c.NewStep(fmt.Sprintf("Creating cluster info ConfigMap"))
+	err = c.createClusterInfoConfigMap()
+	if err != nil {
+		s.Failure()
+		return err
+	}
+	s.Successf("ConfigMap created")
 
 	err = c.printSummary()
 	if err != nil {
@@ -333,31 +305,6 @@ func (c *command) waitForMinikubeToBeUp(step step.Step) error {
 	return nil
 }
 
-func (c *command) addDevDomainsToEtcHosts(s step.Step) error {
-	hostnames := ""
-	for _, v := range domains {
-		hostnames = hostnames + " " + v + "." + c.opts.Domain
-	}
-
-	minikubeIP, err := minikube.RunCmd(c.opts.Verbose, "ip")
-	if err != nil {
-		return err
-	}
-
-	hostAlias := "127.0.0.1" + hostnames
-
-	if c.opts.VMDriver != vmDriverNone {
-		_, err := minikube.RunCmd(c.opts.Verbose, "ssh", "sudo /bin/sh -c 'echo \""+hostAlias+"\" >> /etc/hosts'")
-		if err != nil {
-			return err
-		}
-	}
-
-	hostAlias = strings.Trim(minikubeIP, "\n") + hostnames
-
-	return addDevDomainsToEtcHostsOSSpecific(c.opts.Domain, s, hostAlias)
-}
-
 // Default value of 128 is not enough to perform “kubectl log -f” from pods, hence increased to 524288
 func (c *command) increaseFsInotifyMaxUserInstances() error {
 	if c.opts.VMDriver != vmDriverNone {
@@ -399,4 +346,32 @@ func driverSupported(driver string) bool {
 		}
 	}
 	return false
+}
+
+func (c *command) createClusterInfoConfigMap() error {
+	minikubeIP := c.getMinikubeIP()
+
+	_, err := c.K8s.Static().CoreV1().ConfigMaps("kube-system").Create(&corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   "kyma-cluster-info",
+			Labels: map[string]string{"app": "kyma"},
+		},
+		Data: map[string]string{
+			"provider":      "minikube",
+			"isLocal":       "true",
+			"localIP":       minikubeIP,
+			"localVMDriver": c.opts.VMDriver,
+		},
+	})
+
+	return err
+}
+
+func (c *command) getMinikubeIP() string {
+	minikubeIP, err := minikube.RunCmd(c.opts.Verbose, "ip")
+	if err != nil {
+		c.CurrentStep.LogInfo("Unable to perform 'minikube ip' command. IP won't be passed to Kyma")
+		return ""
+	}
+	return strings.TrimSpace(minikubeIP)
 }

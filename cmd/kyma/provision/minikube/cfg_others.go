@@ -3,6 +3,4 @@
 
 package minikube
 
-const hostsFile = "/etc/hosts"
-
 const defaultVMDriver = vmDriverNone

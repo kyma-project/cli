@@ -1,6 +1,6 @@
 // +build windows
 
-package minikube
+package install
 
 import (
 	"fmt"

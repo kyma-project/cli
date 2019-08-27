@@ -36,6 +36,8 @@ type Options struct {
 	ReleaseConfig         string
 	NoWait                bool
 	Domain                string
+	TLSCert               string
+	TLSKey                string
 	Local                 bool
 	LocalSrcPath          string
 	LocalInstallerVersion string
