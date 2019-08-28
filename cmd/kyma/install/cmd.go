@@ -760,7 +760,7 @@ func (cmd *command) printSummary() error {
 	fmt.Println()
 
 	if cmd.opts.Domain != localDomain {
-		fmt.Printf("Follow this document to configure DNS for the cluster load balancer: https://kyma-project.io/docs/#installation-use-your-own-domain--provider-domain--gke--configure-dns-for-the-cluster-load-balancer")
+		fmt.Printf("To access the console, configure DNS for the cluster load balancer: https://kyma-project.io/docs/#installation-use-your-own-domain--provider-domain--gke--configure-dns-for-the-cluster-load-balancer")
 	}
 
 	fmt.Println()
