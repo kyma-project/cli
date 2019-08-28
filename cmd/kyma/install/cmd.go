@@ -426,22 +426,16 @@ func (cmd *command) replaceDockerImageURL(resources []map[string]interface{}, im
 }
 
 func (cmd *command) loadAndConfigureInstallationFiles(isLocalInstallation bool) ([]map[string]interface{}, error) {
-	var err error
-	var resources []map[string]interface{}
-
-	localInstallationFiles := []string{"installer-local.yaml", "installer-config-local.yaml.tpl", "installer-cr.yaml.tpl"}
-	remoteInstallationFiles := []string{"installer.yaml", "installer-cr-cluster.yaml.tpl"}
-
+	var installationFiles []string
 	if isLocalInstallation {
-		resources, err = cmd.loadInstallationResourceFiles(localInstallationFiles, cmd.opts.Local)
-		if err != nil {
-			return nil, err
-		}
+		installationFiles = []string{"installer-local.yaml", "installer-config-local.yaml.tpl", "installer-cr.yaml.tpl"}
 	} else {
-		resources, err = cmd.loadInstallationResourceFiles(remoteInstallationFiles, cmd.opts.Local)
-		if err != nil {
-			return nil, err
-		}
+		installationFiles = []string{"installer.yaml", "installer-cr-cluster.yaml.tpl"}
+	}
+
+	resources, err := cmd.loadInstallationResourceFiles(installationFiles, cmd.opts.Local)
+	if err != nil {
+		return nil, err
 	}
 
 	err = cmd.removeActionLabel(resources)
