@@ -4,6 +4,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 
 	"github.com/kyma-project/cli/pkg/api/octopus"
+	istioNet "github.com/kyma-project/kyma/components/api-controller/pkg/clients/networking.istio.io/clientset/versioned"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 )
@@ -14,6 +15,7 @@ type KymaKube interface {
 	Static() kubernetes.Interface
 	Dynamic() dynamic.Interface
 	Octopus() octopus.OctopusInterface
+	Istio() istioNet.Interface
 	// IsPodDeployed checks if a pod is in the given namespace (independently of its status)
 	IsPodDeployed(namespace, name string) (bool, error)
 

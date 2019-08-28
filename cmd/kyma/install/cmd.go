@@ -9,12 +9,16 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/kyma-project/cli/internal/step"
 
 	"github.com/kyma-project/cli/cmd/kyma/version"
 
 	corev1 "k8s.io/api/core/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kyma-project/cli/internal/kube"
@@ -40,11 +44,19 @@ type command struct {
 	cli.Command
 }
 
+type clusterInfo struct {
+	isLocal       bool
+	provider      string
+	localIP       string
+	localVMDriver string
+}
+
 const (
 	sleep                  = 10 * time.Second
 	releaseSrcUrlPattern   = "https://raw.githubusercontent.com/kyma-project/kyma/%s/%s"
 	releaseResourcePattern = "https://raw.githubusercontent.com/kyma-project/kyma/%s/installation/resources/%s"
 	registryMasterPattern  = "eu.gcr.io/kyma-project/develop/kyma-installer:master-%s"
+	localDomain            = "kyma.local"
 )
 
 //NewCmd creates a new kyma command
@@ -69,7 +81,9 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd.Flags().StringVarP(&o.ReleaseVersion, "release", "r", DefaultKymaVersion, "Kyma release or Git revision to be installed")
 	cobraCmd.Flags().StringVarP(&o.ReleaseConfig, "config", "c", "", "URL or path to the Installer configuration yaml file")
 	cobraCmd.Flags().BoolVarP(&o.NoWait, "noWait", "n", false, "Do not wait for the Kyma installation to complete")
-	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", "kyma.local", "Domain used for installation")
+	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", localDomain, "Domain used for installation")
+	cobraCmd.Flags().StringVarP(&o.TLSCert, "tlsCert", "", "", "TLS certificate for the domain used for installation")
+	cobraCmd.Flags().StringVarP(&o.TLSKey, "tlsKey", "", "", "TLS key for the domain used for installation")
 	cobraCmd.Flags().BoolVarP(&o.Local, "local", "l", false, "Install from sources. Go code conventions must be followed for this command to work properly")
 	cobraCmd.Flags().StringVarP(&o.LocalSrcPath, "src-path", "", "", "Path to local sources")
 	cobraCmd.Flags().StringVarP(&o.LocalInstallerVersion, "installer-version", "", "", "Version of the Kyma Installer Docker image used for local installation")
@@ -107,12 +121,48 @@ func (cmd *command) Run() error {
 	}
 	s.Successf("Tiller deployed")
 
+	s = cmd.NewStep("Reading cluster info from ConfigMap")
+	clusterConfig, err := cmd.getClusterInfoFromConfigMap()
+	if err != nil {
+		s.Failure()
+		return err
+	}
+	s.Successf("Cluster info read")
+
+	s = cmd.NewStep("Loading installation files")
+	resources, err := cmd.loadAndConfigureInstallationFiles(clusterConfig.isLocal)
+	if err != nil {
+		s.Failure()
+		return err
+	}
+	s.Successf("Installation files loaded")
+
 	s = cmd.NewStep("Deploying Kyma Installer")
-	if err := cmd.installInstaller(); err != nil {
+	if err := cmd.installInstaller(resources); err != nil {
 		s.Failure()
 		return err
 	}
 	s.Successf("Kyma Installer deployed")
+
+	if clusterConfig.isLocal {
+		s = cmd.NewStep("Adding Minikube IP to the overrides")
+		err := cmd.patchMinikubeIP(clusterConfig.localIP)
+		if err != nil {
+			s.Failure()
+			return err
+		}
+		s.Successf("Minikube IP added")
+	} else {
+		if cmd.opts.Domain != localDomain {
+			s = cmd.NewStep("Creating own domain ConfigMap")
+			err := cmd.createOwnDomainConfigMap()
+			if err != nil {
+				s.Failure()
+				return err
+			}
+			s.Successf("ConfigMap created")
+		}
+	}
 
 	s = cmd.NewStep("Configuring Helm")
 	if err := cmd.configureHelm(); err != nil {
@@ -136,6 +186,16 @@ func (cmd *command) Run() error {
 	if err := cmd.importCertificate(trust.NewCertifier(cmd.K8s)); err != nil {
 		// certificate import errors do not mean installation failed
 		cmd.CurrentStep.LogError(err.Error())
+	}
+
+	if clusterConfig.isLocal {
+		s = cmd.NewStep("Adding domains to /etc/hosts")
+		err = cmd.addDevDomainsToEtcHosts(s, clusterConfig.localIP, clusterConfig.localVMDriver)
+		if err != nil {
+			s.Failure()
+			return err
+		}
+		s.Successf("Domains added")
 	}
 
 	if err := cmd.printSummary(); err != nil {
@@ -175,6 +235,13 @@ func (cmd *command) validateFlags() error {
 			return fmt.Errorf("You specified 'installer-dir=%s' without specifying --local", cmd.opts.LocalInstallerDir)
 		}
 	}
+
+	// If one of the --domain, --tlsKey, or --tlsCert is specified, the others must be specified as well (XOR logic used below)
+	if (cmd.opts.Domain != localDomain || cmd.opts.TLSKey != "" || cmd.opts.TLSCert != "") &&
+		!(cmd.opts.Domain != localDomain && cmd.opts.TLSKey != "" && cmd.opts.TLSCert != "") {
+		return errors.New("You specified one of the --domain, --tlsKey, or --tlsCert without specifying the others. They must be specified together")
+	}
+
 	return nil
 }
 
@@ -240,18 +307,24 @@ func (cmd *command) configureHelm() error {
 	return nil
 }
 
-func (cmd *command) installInstaller() error {
+func (cmd *command) installInstaller(resources []map[string]interface{}) error {
 	deployed, err := cmd.K8s.IsPodDeployedByLabel("kyma-installer", "name", "kyma-installer")
 	if err != nil {
 		return err
 	}
 
 	if !deployed {
-		if cmd.opts.Local {
-			err = cmd.installInstallerFromLocalSources()
-		} else {
-			err = cmd.installInstallerFromRelease()
+		_, err := cmd.Kubectl().RunApplyCmd(resources)
+		if err != nil {
+			return err
 		}
+
+		err = cmd.applyOverrideFiles()
+		if err != nil {
+			return err
+		}
+
+		err = cmd.setAdminPassword()
 		if err != nil {
 			return err
 		}
@@ -352,95 +425,50 @@ func (cmd *command) replaceDockerImageURL(resources []map[string]interface{}, im
 	return nil, errors.New("unable to find 'image' field for kyma installer 'Deployment'")
 }
 
-func (cmd *command) installInstallerFromRelease() error {
-	remoteResources, err := cmd.loadResources(false)
-	if err != nil {
-		return err
+func (cmd *command) loadAndConfigureInstallationFiles(isLocalInstallation bool) ([]map[string]interface{}, error) {
+	var installationFiles []string
+	if isLocalInstallation {
+		installationFiles = []string{"installer-local.yaml", "installer-config-local.yaml.tpl", "installer-cr.yaml.tpl"}
+	} else {
+		installationFiles = []string{"installer.yaml", "installer-cr-cluster.yaml.tpl"}
 	}
 
-	err = cmd.removeActionLabel(remoteResources)
+	resources, err := cmd.loadInstallationResourceFiles(installationFiles, cmd.opts.Local)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	if strings.ToLower(cmd.opts.ReleaseVersion) == "master" {
-		masterHash, err := cmd.getMasterHash()
+	err = cmd.removeActionLabel(resources)
+	if err != nil {
+		return nil, err
+	}
+
+	if cmd.opts.Local {
+		imageName, err := cmd.findInstallerImageName(resources)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		remoteResources, err = cmd.replaceDockerImageURL(remoteResources,
-			cmd.buildDockerImageString(masterHash))
+		err = cmd.buildKymaInstaller(imageName)
 		if err != nil {
-			return err
+			return nil, err
+		}
+	} else {
+		if strings.ToLower(cmd.opts.ReleaseVersion) == "master" {
+			masterHash, err := cmd.getMasterHash()
+			if err != nil {
+				return nil, err
+			}
+
+			resources, err = cmd.replaceDockerImageURL(resources,
+				cmd.buildDockerImageString(masterHash))
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
-	_, err = cmd.Kubectl().RunApplyCmd(remoteResources)
-	if err != nil {
-		return err
-	}
-
-	err = cmd.applyOverrideFiles()
-	if err != nil {
-		return err
-	}
-
-	err = cmd.setAdminPassword()
-	if err != nil {
-		return err
-	}
-
-	err = cmd.patchMinikubeIP()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (cmd *command) installInstallerFromLocalSources() error {
-	localResources, err := cmd.loadResources(true)
-	if err != nil {
-		return err
-	}
-
-	err = cmd.removeActionLabel(localResources)
-	if err != nil {
-		return err
-	}
-
-	imageName, err := cmd.findInstallerImageName(localResources)
-	if err != nil {
-		return err
-	}
-
-	err = cmd.buildKymaInstaller(imageName)
-	if err != nil {
-		return err
-	}
-
-	_, err = cmd.Kubectl().RunApplyCmd(localResources)
-	if err != nil {
-		return err
-	}
-
-	err = cmd.applyOverrideFiles()
-	if err != nil {
-		return err
-	}
-
-	err = cmd.setAdminPassword()
-	if err != nil {
-		return err
-	}
-
-	err = cmd.patchMinikubeIP()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return resources, nil
 }
 
 func (cmd *command) findInstallerImageName(resources []map[string]interface{}) (string, error) {
@@ -472,29 +500,6 @@ func (cmd *command) findInstallerImageName(resources []map[string]interface{}) (
 		}
 	}
 	return "", errors.New("'kyma-installer' deployment is missing")
-}
-
-func (cmd *command) loadResources(isLocal bool) ([]map[string]interface{}, error) {
-	resources := make([]map[string]interface{}, 0)
-	resources, err := cmd.loadInstallationResourceFile("installer-local.yaml",
-		isLocal, resources)
-	if err != nil {
-		return nil, err
-	}
-
-	resources, err = cmd.loadInstallationResourceFile("installer-config-local.yaml.tpl",
-		isLocal, resources)
-	if err != nil {
-		return nil, err
-	}
-
-	resources, err = cmd.loadInstallationResourceFile("installer-cr.yaml.tpl",
-		isLocal, resources)
-	if err != nil {
-		return nil, err
-	}
-
-	return resources, nil
 }
 
 func (cmd *command) removeActionLabel(acc []map[string]interface{}) error {
@@ -529,39 +534,45 @@ func (cmd *command) removeActionLabel(acc []map[string]interface{}) error {
 	return nil
 }
 
-func (cmd *command) loadInstallationResourceFile(resourcePath string, local bool,
-	acc []map[string]interface{}) ([]map[string]interface{}, error) {
+func (cmd *command) loadInstallationResourceFiles(resourcePaths []string, fromLocalSources bool) ([]map[string]interface{}, error) {
 
-	var yamlReader io.ReadCloser
 	var err error
+	resources := make([]map[string]interface{}, 0)
 
-	if !local {
-		yamlReader, err = cmd.downloadFile(cmd.releaseFile(resourcePath))
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		path := filepath.Join(cmd.opts.LocalSrcPath, "installation",
-			"resources", resourcePath)
-		yamlReader, err = os.Open(path)
-		if err != nil {
-			return nil, err
-		}
-	}
-	defer yamlReader.Close()
+	for _, resourcePath := range resourcePaths {
 
-	dec := yaml.NewDecoder(yamlReader)
-	for {
-		m := make(map[string]interface{})
-		err := dec.Decode(m)
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			return nil, err
+		var yamlReader io.ReadCloser
+
+		if !fromLocalSources {
+			yamlReader, err = cmd.downloadFile(cmd.releaseFile(resourcePath))
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			path := filepath.Join(cmd.opts.LocalSrcPath, "installation",
+				"resources", resourcePath)
+			yamlReader, err = os.Open(path)
+			if err != nil {
+				return nil, err
+			}
 		}
-		acc = append(acc, m)
+
+		dec := yaml.NewDecoder(yamlReader)
+		for {
+			m := make(map[string]interface{})
+			err := dec.Decode(m)
+			if err == io.EOF {
+				break
+			} else if err != nil {
+				return nil, err
+			}
+			resources = append(resources, m)
+		}
+
+		yamlReader.Close()
 	}
-	return acc, nil
+
+	return resources, nil
 }
 
 func (cmd *command) buildKymaInstaller(imageName string) error {
@@ -727,6 +738,11 @@ func (cmd *command) printSummary() error {
 		return err
 	}
 
+	vs, err := cmd.K8s.Istio().NetworkingV1alpha3().VirtualServices("kyma-system").Get("core-console", metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
 	clusterInfo, err := cmd.Kubectl().RunCmd("cluster-info")
 	if err != nil {
 		return err
@@ -736,11 +752,17 @@ func (cmd *command) printSummary() error {
 	fmt.Println(clusterInfo)
 	fmt.Println()
 	fmt.Printf("Kyma is installed in version %s\n", v)
-	fmt.Printf("Kyma console:\t\thttps://console.%s\n", cmd.opts.Domain)
+	fmt.Printf("Kyma console:\t\thttps://%s\n", vs.Spec.Hosts[0])
 	fmt.Printf("Kyma admin email:\t%s\n", adm.Data["email"])
 	if cmd.opts.Password == "" || cmd.opts.NonInteractive {
 		fmt.Printf("Kyma admin password:\t%s\n", adm.Data["password"])
 	}
+	fmt.Println()
+
+	if cmd.opts.Domain != localDomain {
+		fmt.Printf("To access the console, configure DNS for the cluster load balancer: https://kyma-project.io/docs/#installation-use-your-own-domain--provider-domain--gke--configure-dns-for-the-cluster-load-balancer")
+	}
+
 	fmt.Println()
 	fmt.Println("Happy Kyma-ing! :)")
 	fmt.Println()
@@ -836,32 +858,6 @@ func (cmd *command) releaseFile(path string) string {
 	return fmt.Sprintf(releaseResourcePattern, cmd.opts.ReleaseVersion, path)
 }
 
-func (cmd *command) patchMinikubeIP() error {
-	minikubeIP, err := minikube.RunCmd(cmd.opts.Verbose, "ip")
-	if err != nil {
-		cmd.CurrentStep.LogInfo("Unable to perform 'minikube ip' command. Patches won't be applied")
-		return nil
-	}
-	minikubeIP = strings.TrimSpace(minikubeIP)
-
-	if _, err := cmd.Kubectl().RunCmd("-n", "kyma-installer", "get", "configmap/installation-config-overrides"); err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			cmd.CurrentStep.LogInfof("Resource '%s' not found, won't be patched", "configmap/installation-config-overrides")
-		} else {
-			return err
-		}
-	}
-
-	_, err = cmd.Kubectl().RunCmd("-n", "kyma-installer", "patch", "configmap/installation-config-overrides", "--type=json",
-		"--allow-missing-template-keys=true",
-		fmt.Sprintf("--patch=[{'op': 'replace', 'path': '/data/global.minikubeIP', 'value': '%s'}]", minikubeIP))
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (cmd *command) importCertificate(ca trust.Certifier) error {
 	if !cmd.opts.NoWait {
 		// get cert from cluster
@@ -892,4 +888,93 @@ func (cmd *command) importCertificate(ca trust.Certifier) error {
 		cmd.CurrentStep.LogError(ca.Instructions())
 	}
 	return nil
+}
+
+func (cmd *command) addDevDomainsToEtcHosts(s step.Step, IP string, VMDriver string) error {
+	hostnames := ""
+
+	vsList, err := cmd.K8s.Istio().NetworkingV1alpha3().VirtualServices("kyma-system").List(metav1.ListOptions{})
+	if err != nil {
+		return err
+	}
+
+	for _, v := range vsList.Items {
+		for _, host := range v.Spec.Hosts {
+			hostnames = hostnames + " " + host
+		}
+	}
+
+	hostAlias := "127.0.0.1" + hostnames
+
+	if VMDriver != "none" {
+		_, err := minikube.RunCmd(cmd.opts.Verbose, "ssh", "sudo /bin/sh -c 'echo \""+hostAlias+"\" >> /etc/hosts'")
+		if err != nil {
+			return err
+		}
+	}
+
+	hostAlias = strings.Trim(IP, "\n") + hostnames
+
+	return addDevDomainsToEtcHostsOSSpecific(cmd.opts.Domain, s, hostAlias)
+}
+
+func (cmd *command) getClusterInfoFromConfigMap() (clusterInfo, error) {
+	cm, err := cmd.K8s.Static().CoreV1().ConfigMaps("kube-system").Get("kyma-cluster-info", metav1.GetOptions{})
+	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			return clusterInfo{}, nil
+		}
+		return clusterInfo{}, err
+	}
+
+	isLocal, err := strconv.ParseBool(cm.Data["isLocal"])
+	if err != nil {
+		isLocal = false
+	}
+
+	clusterConfig := clusterInfo{
+		isLocal:       isLocal,
+		provider:      cm.Data["provider"],
+		localIP:       cm.Data["localIP"],
+		localVMDriver: cm.Data["localVMDriver"],
+	}
+
+	return clusterConfig, nil
+}
+
+func (cmd *command) patchMinikubeIP(minikubeIP string) error {
+	var err error
+	if _, err := cmd.Kubectl().RunCmd("-n", "kyma-installer", "get", "configmap/installation-config-overrides"); err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			cmd.CurrentStep.LogInfof("Resource '%s' not found, won't be patched", "configmap/installation-config-overrides")
+		} else {
+			return err
+		}
+	}
+
+	if minikubeIP != "" {
+		_, err = cmd.Kubectl().RunCmd("-n", "kyma-installer", "patch", "configmap/installation-config-overrides", "--type=json",
+			"--allow-missing-template-keys=true",
+			fmt.Sprintf("--patch=[{'op': 'replace', 'path': '/data/global.minikubeIP', 'value': '%s'}]", minikubeIP))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (cmd *command) createOwnDomainConfigMap() error {
+	_, err := cmd.K8s.Static().CoreV1().ConfigMaps("kyma-installer").Create(&corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   "owndomain-overrides",
+			Labels: map[string]string{"installer": "overrides"},
+		},
+		Data: map[string]string{
+			"global.domainName": cmd.opts.Domain,
+			"global.tlsCrt":     cmd.opts.TLSCert,
+			"global.tlsKey":     cmd.opts.TLSKey,
+		},
+	})
+
+	return err
 }

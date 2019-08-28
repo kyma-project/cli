@@ -315,6 +315,19 @@
   revision = "dee8148261ee04a32fedd107e5aa045faed6509f"
 
 [[projects]]
+  digest = "1:8fd3f90fcf6639e78a056efa3a785a8346b5d76bbe78313e8b50b03d90006a82"
+  name = "github.com/kyma-project/kyma"
+  packages = [
+    "components/api-controller/pkg/apis/networking.istio.io/v1alpha3",
+    "components/api-controller/pkg/clients/networking.istio.io/clientset/versioned",
+    "components/api-controller/pkg/clients/networking.istio.io/clientset/versioned/scheme",
+    "components/api-controller/pkg/clients/networking.istio.io/clientset/versioned/typed/networking.istio.io/v1alpha3",
+  ]
+  pruneopts = "UT"
+  revision = "8a1b035d7ba034fdbd50f65100e3b037107155ab"
+  version = "1.4.1"
+
+[[projects]]
   digest = "1:c658e84ad3916da105a761660dcaeb01e63416c8ec7bc62256a9b411a05fcd67"
   name = "github.com/mattn/go-colorable"
   packages = ["."]
@@ -970,6 +983,7 @@
     "github.com/fsouza/go-dockerclient",
     "github.com/kyma-incubator/octopus/pkg/apis",
     "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1",
+    "github.com/kyma-project/kyma/components/api-controller/pkg/clients/networking.istio.io/clientset/versioned",
     "github.com/mitchellh/mapstructure",
     "github.com/olekukonko/tablewriter",
     "github.com/pkg/errors",
@@ -981,6 +995,7 @@
     "gopkg.in/yaml.v2",
     "k8s.io/api/core/v1",
     "k8s.io/api/rbac/v1",
+    "k8s.io/apimachinery/pkg/api/errors",
     "k8s.io/apimachinery/pkg/apis/meta/v1",
     "k8s.io/apimachinery/pkg/runtime",
     "k8s.io/apimachinery/pkg/runtime/serializer",
