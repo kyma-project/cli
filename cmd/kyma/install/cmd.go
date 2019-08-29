@@ -743,10 +743,12 @@ func (cmd *command) printSummary() error {
 	switch {
 	case apiErrors.IsNotFound(err):
 		consoleURL = "not installed"
+	case err != nil:
+		return err
 	case vs != nil && vs.Spec != nil && len(vs.Spec.Hosts) > 0:
 		consoleURL = fmt.Sprintf("https://%s", vs.Spec.Hosts[0])
 	default:
-		return err
+		return errors.New("Console host could not be obtained.")
 	}
 
 	clusterInfo, err := cmd.Kubectl().RunCmd("cluster-info")
