@@ -742,11 +742,11 @@ func (cmd *command) printSummary() error {
 	vs, err := cmd.K8s.Istio().NetworkingV1alpha3().VirtualServices("kyma-system").Get("core-console", metav1.GetOptions{})
 	switch {
 	case apiErrors.IsNotFound(err):
-		consoleURL = "not found"
-	case err != nil:
-		return err
-	case vs != nil:
+		consoleURL = "not installed"
+	case vs != nil && vs.Spec != nil && len(vs.Spec.Hosts) > 0:
 		consoleURL = fmt.Sprintf("https://%s", vs.Spec.Hosts[0])
+	default:
+		return err
 	}
 
 	clusterInfo, err := cmd.Kubectl().RunCmd("cluster-info")
