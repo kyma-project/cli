@@ -85,6 +85,10 @@ func (s *Step) Prompt(msg string) (string, error) {
 	return msg, nil
 }
 
+func (s *Step) PromptYesNo(msg string) bool {
+	return true
+}
+
 func (s *Step) Reset() {
 	s.errs, s.infos, s.status = nil, nil, nil
 	s.stopped, s.success = false, false

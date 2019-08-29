@@ -14,4 +14,5 @@ type Step interface {
 	LogError(msg string)
 	LogErrorf(format string, args ...interface{})
 	Prompt(msg string) (string, error)
+	PromptYesNo(msg string) bool
 }

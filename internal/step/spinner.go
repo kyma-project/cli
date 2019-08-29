@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kyma-project/cli/internal/root"
+
 	"github.com/briandowns/spinner"
 	"github.com/fatih/color"
 )
@@ -111,4 +113,15 @@ func (s *stepWithSpinner) Prompt(msg string) (string, error) {
 		s.spinner.Start()
 	}
 	return strings.TrimSpace(answer), err
+}
+
+func (s *stepWithSpinner) PromptYesNo(msg string) bool {
+	isActive := s.spinner.Active()
+	s.spinner.Stop()
+	fmt.Printf("%s%s", questionGlyph, msg)
+	answer := root.PromptUser()
+	if isActive {
+		s.spinner.Start()
+	}
+	return answer
 }
