@@ -830,6 +830,9 @@ func (cmd *command) waitForInstaller() error {
 					currentDesc = desc
 				}
 
+			case "":
+				cmd.CurrentStep.LogInfo("Failed to get the installation status. Will retry later...")
+
 			default:
 				cmd.CurrentStep.Failure()
 				fmt.Printf("Unexpected status: %s\n", status)
