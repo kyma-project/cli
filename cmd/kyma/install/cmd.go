@@ -78,12 +78,13 @@ func NewCmd(o *Options) *cobra.Command {
 		Aliases: []string{"i"},
 	}
 
-	cobraCmd.Flags().StringVarP(&o.ReleaseVersion, "release", "r", DefaultKymaVersion, "Kyma release or Git revision to be installed")
+	//cobraCmd.Flags().StringVarP(&o.ReleaseVersion, "release", "r", DefaultKymaVersion, "Kyma release or Git revision to be installed")
 	cobraCmd.Flags().StringVarP(&o.ReleaseConfig, "config", "c", "", "URL or path to the Installer configuration yaml file")
 	cobraCmd.Flags().BoolVarP(&o.NoWait, "noWait", "n", false, "Do not wait for the Kyma installation to complete")
 	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", localDomain, "Domain used for installation")
 	cobraCmd.Flags().StringVarP(&o.TLSCert, "tlsCert", "", "", "TLS certificate for the domain used for installation")
 	cobraCmd.Flags().StringVarP(&o.TLSKey, "tlsKey", "", "", "TLS key for the domain used for installation")
+	cobraCmd.Flags().StringVarP(&o.Source, "source", "", "", "Installation source")
 	cobraCmd.Flags().BoolVarP(&o.Local, "local", "l", false, "Install from sources. Go code conventions must be followed for this command to work properly")
 	cobraCmd.Flags().StringVarP(&o.LocalSrcPath, "src-path", "", "", "Path to local sources")
 	cobraCmd.Flags().StringVarP(&o.LocalInstallerVersion, "installer-version", "", "", "Version of the Kyma Installer Docker image used for local installation")
@@ -205,7 +206,9 @@ func (cmd *command) Run() error {
 }
 
 func (cmd *command) validateFlags() error {
-	if cmd.opts.Local {
+	if cmd.opts.Source == "local" {
+		cmd.opts.ReleaseVersion = DefaultKymaVersion
+		cmd.opts.Local = true
 		if cmd.opts.LocalSrcPath == "" {
 			goPath := os.Getenv("GOPATH")
 			if goPath == "" {
@@ -226,13 +229,20 @@ func (cmd *command) validateFlags() error {
 		}
 	} else {
 		if cmd.opts.LocalSrcPath != "" {
-			return fmt.Errorf("You specified 'src-path=%s' without specifying --local", cmd.opts.LocalSrcPath)
+			return fmt.Errorf("You specified 'src-path=%s' without specifying -- source local", cmd.opts.LocalSrcPath)
 		}
 		if cmd.opts.LocalInstallerVersion != "" {
-			return fmt.Errorf("You specified 'installer-version=%s' without specifying --local", cmd.opts.LocalInstallerVersion)
+			return fmt.Errorf("You specified 'installer-version=%s' without specifying --source local", cmd.opts.LocalInstallerVersion)
 		}
 		if cmd.opts.LocalInstallerDir != "" {
-			return fmt.Errorf("You specified 'installer-dir=%s' without specifying --local", cmd.opts.LocalInstallerDir)
+			return fmt.Errorf("You specified 'installer-dir=%s' without specifying --source local", cmd.opts.LocalInstallerDir)
+		}
+
+		if res := strings.Split(cmd.opts.Source, ":"); len(res) == 1 {
+			cmd.opts.ReleaseVersion = res[0]
+		} else {
+			cmd.opts.RemoteImage = res[0]
+			cmd.opts.ReleaseVersion = res[1]
 		}
 	}
 

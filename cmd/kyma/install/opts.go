@@ -45,6 +45,8 @@ type Options struct {
 	Timeout               time.Duration
 	Password              string
 	OverrideConfigs       overrideFileList
+	Source                string
+	RemoteImage           string
 }
 
 //NewOptions creates options with default values
