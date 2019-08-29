@@ -738,9 +738,17 @@ func (cmd *command) printSummary() error {
 		return err
 	}
 
+	var consoleURL string
 	vs, err := cmd.K8s.Istio().NetworkingV1alpha3().VirtualServices("kyma-system").Get("core-console", metav1.GetOptions{})
-	if err != nil {
+	switch {
+	case apiErrors.IsNotFound(err):
+		consoleURL = "not installed"
+	case err != nil:
 		return err
+	case vs != nil && vs.Spec != nil && len(vs.Spec.Hosts) > 0:
+		consoleURL = fmt.Sprintf("https://%s", vs.Spec.Hosts[0])
+	default:
+		return errors.New("Console host could not be obtained.")
 	}
 
 	clusterInfo, err := cmd.Kubectl().RunCmd("cluster-info")
@@ -752,7 +760,7 @@ func (cmd *command) printSummary() error {
 	fmt.Println(clusterInfo)
 	fmt.Println()
 	fmt.Printf("Kyma is installed in version %s\n", v)
-	fmt.Printf("Kyma console:\t\thttps://%s\n", vs.Spec.Hosts[0])
+	fmt.Printf("Kyma console:\t\t%s\n", consoleURL)
 	fmt.Printf("Kyma admin email:\t%s\n", adm.Data["email"])
 	if cmd.opts.Password == "" || cmd.opts.NonInteractive {
 		fmt.Printf("Kyma admin password:\t%s\n", adm.Data["password"])
