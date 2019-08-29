@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/kyma-project/cli/internal/root"
 )
 
 func newSimpleStep(msg string) Step {
@@ -75,4 +77,10 @@ func (s *simpleStep) Prompt(msg string) (string, error) {
 	fmt.Printf("%s%s", questionGlyph, msg)
 	answer, err := reader.ReadString('\n')
 	return strings.TrimSpace(answer), err
+}
+
+func (s *simpleStep) PromptYesNo(msg string) bool {
+	fmt.Printf("%s%s", questionGlyph, msg)
+	answer := root.PromptUser()
+	return answer
 }

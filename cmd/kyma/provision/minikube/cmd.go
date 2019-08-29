@@ -193,15 +193,11 @@ func (c *command) checkIfMinikubeIsInitialized(s step.Step) error {
 	statusText, _ := minikube.RunCmd(c.opts.Verbose, "status", "-b", bootstrapper, "--format", "{{.Host}}")
 
 	if strings.TrimSpace(statusText) != "" {
-		var answer string
-		var err error
+		var answer bool
 		if !c.opts.NonInteractive {
-			answer, err = s.Prompt("Do you want to remove the existing Minikube cluster? [y/N]: ")
-			if err != nil {
-				return err
-			}
+			answer = s.PromptYesNo("Do you want to remove the existing Minikube cluster? ")
 		}
-		if c.opts.NonInteractive || strings.TrimSpace(answer) == "y" {
+		if c.opts.NonInteractive || answer {
 			_, err := minikube.RunCmd(c.opts.Verbose, "delete")
 			if err != nil {
 				return err
