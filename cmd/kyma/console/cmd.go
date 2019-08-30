@@ -2,7 +2,6 @@ package console
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
