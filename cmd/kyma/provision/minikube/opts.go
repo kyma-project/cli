@@ -3,7 +3,7 @@ package minikube
 import "github.com/kyma-project/cli/internal/cli"
 
 //options defines available options for the minikube provisioning command
-type options struct {
+type Options struct {
 	*cli.Options
 	VMDriver            string
 	DiskSize            string
@@ -13,6 +13,6 @@ type options struct {
 }
 
 //NewOptions creates options with default values
-func NewOptions(o *cli.Options) *options {
-	return &options{Options: o}
+func NewOptions(o *cli.Options) *Options {
+	return &Options{Options: o}
 }

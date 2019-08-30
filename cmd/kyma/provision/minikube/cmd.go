@@ -43,12 +43,12 @@ var (
 )
 
 type command struct {
-	opts *options
+	opts *Options
 	cli.Command
 }
 
 //NewCmd creates a new minikube command
-func NewCmd(o *options) *cobra.Command {
+func NewCmd(o *Options) *cobra.Command {
 
 	c := command{
 		Command: cli.Command{Options: o.Options},

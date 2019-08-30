@@ -2,6 +2,7 @@ package kyma
 
 import (
 	"github.com/kyma-project/cli/cmd/kyma/completion"
+	"github.com/kyma-project/cli/cmd/kyma/console"
 	"github.com/kyma-project/cli/cmd/kyma/install"
 	"github.com/kyma-project/cli/cmd/kyma/provision/minikube"
 	"github.com/kyma-project/cli/cmd/kyma/test"
@@ -47,6 +48,7 @@ For more information, see: https://github.com/kyma-project/cli
 		install.NewCmd(install.NewOptions(o)),
 		uninstall.NewCmd(uninstall.NewOptions(o)),
 		provisionCmd,
+		console.NewCmd(console.NewOptions(o)),
 	)
 
 	testCmd := test.NewCmd()
