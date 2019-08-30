@@ -84,11 +84,9 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", localDomain, "Domain used for installation")
 	cobraCmd.Flags().StringVarP(&o.TLSCert, "tlsCert", "", "", "TLS certificate for the domain used for installation")
 	cobraCmd.Flags().StringVarP(&o.TLSKey, "tlsKey", "", "", "TLS key for the domain used for installation")
-	cobraCmd.Flags().StringVarP(&o.Source, "source", "", "", "Installation source")
+	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", "", "Installation source")
 	cobraCmd.Flags().BoolVarP(&o.Local, "local", "l", false, "Install from sources. Go code conventions must be followed for this command to work properly")
 	cobraCmd.Flags().StringVarP(&o.LocalSrcPath, "src-path", "", "", "Path to local sources")
-	cobraCmd.Flags().StringVarP(&o.LocalInstallerVersion, "installer-version", "", "", "Version of the Kyma Installer Docker image used for local installation")
-	cobraCmd.Flags().StringVarP(&o.LocalInstallerDir, "installer-dir", "", "", "The directory of the Kyma Installer Docker image used for local installation")
 	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 30*time.Minute, "Time-out after which CLI stops watching the installation progress")
 	cobraCmd.Flags().StringVarP(&o.Password, "password", "p", "", "Predefined cluster password")
 	cobraCmd.Flags().VarP(&o.OverrideConfigs, "override", "o", "Path to yaml file with parameters to override. Multiple entries of this flag are allowed")
@@ -103,11 +101,14 @@ func (cmd *command) Run() error {
 		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
 	}
 
+	s := cmd.NewStep("Validating configuration")
 	if err := cmd.validateFlags(); err != nil {
+		s.Failure()
 		return err
 	}
+	s.Successf("Configuration validated")
 
-	s := cmd.NewStep("Checking installation source")
+	s = cmd.NewStep("Checking installation source")
 	if cmd.opts.Local {
 		s.LogInfof("Installing Kyma from local path: '%s'", cmd.opts.LocalSrcPath)
 	} else {
@@ -222,30 +223,18 @@ func (cmd *command) validateFlags() error {
 		if _, err := os.Stat(filepath.Join(cmd.opts.LocalSrcPath, "installation", "resources")); err != nil {
 			return fmt.Errorf("Configured 'src-path=%s' does not seem to point to a Kyma repository. Check if your repository contains the 'installation/resources' folder.", cmd.opts.LocalSrcPath)
 		}
-
-		// This is to help developer and use appropriate repository if PR image is provided
-		if cmd.opts.LocalInstallerDir == "" && strings.HasPrefix(cmd.opts.LocalInstallerVersion, "PR-") {
-			cmd.opts.LocalInstallerDir = "eu.gcr.io/kyma-project/pr"
-		}
 	} else {
 		if cmd.opts.LocalSrcPath != "" {
 			return fmt.Errorf("You specified 'src-path=%s' without specifying -- source local", cmd.opts.LocalSrcPath)
 		}
-		if cmd.opts.LocalInstallerVersion != "" {
-			return fmt.Errorf("You specified 'installer-version=%s' without specifying --source local", cmd.opts.LocalInstallerVersion)
-		}
-		if cmd.opts.LocalInstallerDir != "" {
-			return fmt.Errorf("You specified 'installer-dir=%s' without specifying --source local", cmd.opts.LocalInstallerDir)
-		}
-
 		if res := strings.Split(cmd.opts.Source, ":"); len(res) == 1 {
 			cmd.opts.ReleaseVersion = res[0]
 		} else {
-			cmd.opts.RemoteImage = res[0]
-			cmd.opts.ReleaseVersion = res[1]
+			cmd.CurrentStep.LogInfof("installing kyma %s with configuration from %s", cmd.opts.Source, DefaultKymaVersion)
+			cmd.opts.RemoteImage = cmd.opts.Source
+			cmd.opts.ReleaseVersion = DefaultKymaVersion
 		}
 	}
-
 	// If one of the --domain, --tlsKey, or --tlsCert is specified, the others must be specified as well (XOR logic used below)
 	if (cmd.opts.Domain != localDomain || cmd.opts.TLSKey != "" || cmd.opts.TLSCert != "") &&
 		!(cmd.opts.Domain != localDomain && cmd.opts.TLSKey != "" && cmd.opts.TLSCert != "") {
@@ -464,7 +453,13 @@ func (cmd *command) loadAndConfigureInstallationFiles(isLocalInstallation bool) 
 			return nil, err
 		}
 	} else {
-		if strings.ToLower(cmd.opts.ReleaseVersion) == "master" {
+		if cmd.opts.RemoteImage != "" {
+			resources, err = cmd.replaceDockerImageURL(resources,
+				cmd.opts.RemoteImage)
+			if err != nil {
+				return nil, err
+			}
+		} else if strings.ToLower(cmd.opts.ReleaseVersion) == "master" {
 			masterHash, err := cmd.getMasterHash()
 			if err != nil {
 				return nil, err
@@ -592,13 +587,6 @@ func (cmd *command) buildKymaInstaller(imageName string) error {
 	}
 
 	var args []docker.BuildArg
-	if cmd.opts.LocalInstallerDir != "" {
-		args = append(args, docker.BuildArg{Name: "INSTALLER_DIR", Value: cmd.opts.LocalInstallerDir})
-	}
-	if cmd.opts.LocalInstallerVersion != "" {
-		args = append(args, docker.BuildArg{Name: "INSTALLER_VERSION", Value: cmd.opts.LocalInstallerVersion})
-	}
-
 	return dc.BuildImage(docker.BuildImageOptions{
 		Name:         strings.TrimSpace(string(imageName)),
 		Dockerfile:   filepath.Join("tools", "kyma-installer", "kyma.Dockerfile"),

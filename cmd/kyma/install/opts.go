@@ -32,21 +32,19 @@ func (ovf *overrideFileList) Len() int {
 //Options defines available options for the command
 type Options struct {
 	*cli.Options
-	ReleaseVersion        string
-	ReleaseConfig         string
-	NoWait                bool
-	Domain                string
-	TLSCert               string
-	TLSKey                string
-	Local                 bool
-	LocalSrcPath          string
-	LocalInstallerVersion string
-	LocalInstallerDir     string
-	Timeout               time.Duration
-	Password              string
-	OverrideConfigs       overrideFileList
-	Source                string
-	RemoteImage           string
+	ReleaseVersion  string
+	ReleaseConfig   string
+	NoWait          bool
+	Domain          string
+	TLSCert         string
+	TLSKey          string
+	Local           bool
+	LocalSrcPath    string
+	Timeout         time.Duration
+	Password        string
+	OverrideConfigs overrideFileList
+	Source          string
+	RemoteImage     string
 }
 
 //NewOptions creates options with default values
