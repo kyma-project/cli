@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Masterminds/semver"
 	"github.com/kyma-project/cli/internal/step"
 
 	"github.com/kyma-project/cli/cmd/kyma/version"
@@ -52,11 +53,12 @@ type clusterInfo struct {
 }
 
 const (
-	sleep                  = 10 * time.Second
-	releaseSrcUrlPattern   = "https://raw.githubusercontent.com/kyma-project/kyma/%s/%s"
-	releaseResourcePattern = "https://raw.githubusercontent.com/kyma-project/kyma/%s/installation/resources/%s"
-	registryMasterPattern  = "eu.gcr.io/kyma-project/develop/kyma-installer:master-%s"
-	localDomain            = "kyma.local"
+	sleep                       = 10 * time.Second
+	releaseSrcUrlPattern        = "https://raw.githubusercontent.com/kyma-project/kyma/%s/%s"
+	releaseResourcePattern      = "https://raw.githubusercontent.com/kyma-project/kyma/%s/installation/resources/%s"
+	registryReleaseImagePattern = "eu.gcr.io/kyma-project/kyma-installer:%s"
+	registryMasterImagePattern  = "eu.gcr.io/kyma-project/develop/kyma-installer:%s"
+	localDomain                 = "kyma.local"
 )
 
 //NewCmd creates a new kyma command
@@ -78,7 +80,6 @@ func NewCmd(o *Options) *cobra.Command {
 		Aliases: []string{"i"},
 	}
 
-	cobraCmd.Flags().StringVarP(&o.ReleaseConfig, "config", "c", "", "URL or path to the Installer configuration yaml file")
 	cobraCmd.Flags().BoolVarP(&o.NoWait, "noWait", "n", false, "Do not wait for the Kyma installation to complete")
 	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", localDomain, "Domain used for installation")
 	cobraCmd.Flags().StringVarP(&o.TLSCert, "tlsCert", "", "", "TLS certificate for the domain used for installation")
@@ -111,7 +112,7 @@ func (cmd *command) Run() error {
 	if cmd.opts.Local {
 		s.LogInfof("Installing Kyma from local path: '%s'", cmd.opts.LocalSrcPath)
 	} else {
-		s.LogInfof("Installing Kyma in version '%s'", cmd.opts.ReleaseVersion)
+		s.LogInfof("Installing Kyma in version '%s'. Config version '%s'", cmd.opts.ReleaseVersion, cmd.opts.ConfigVersion)
 	}
 	s.Successf("Installation source checked")
 
@@ -205,10 +206,22 @@ func (cmd *command) Run() error {
 	return nil
 }
 
+func (cmd *command) isSemVer(s string) bool {
+	_, err := semver.NewVersion(s)
+	return err == nil
+}
+
+func (cmd *command) isDockerImage(s string) bool {
+	return len(strings.Split(s, "/")) > 1
+}
+
 func (cmd *command) validateFlags() error {
-	if cmd.opts.Source == "local" {
-		cmd.opts.ReleaseVersion = DefaultKymaVersion
+	switch {
+	//Install from local sources
+	case strings.ToLower(cmd.opts.Source) == "local":
 		cmd.opts.Local = true
+		cmd.opts.ReleaseVersion = DefaultKymaVersion
+		cmd.opts.ConfigVersion = DefaultKymaVersion
 		if cmd.opts.LocalSrcPath == "" {
 			goPath := os.Getenv("GOPATH")
 			if goPath == "" {
@@ -222,18 +235,35 @@ func (cmd *command) validateFlags() error {
 		if _, err := os.Stat(filepath.Join(cmd.opts.LocalSrcPath, "installation", "resources")); err != nil {
 			return fmt.Errorf("Configured 'src-path=%s' does not seem to point to a Kyma repository. Check if your repository contains the 'installation/resources' folder.", cmd.opts.LocalSrcPath)
 		}
-	} else {
-		if cmd.opts.LocalSrcPath != "" {
-			return fmt.Errorf("You specified 'src-path=%s' without specifying -- source local", cmd.opts.LocalSrcPath)
+		break
+
+	//Install the latest version (latest master)
+	case strings.ToLower(cmd.opts.Source) == "latest":
+		latest, err := cmd.getMasterHash()
+		if err != nil {
+			return fmt.Errorf("Unable to get latest version of kyma: %s", err.Error())
 		}
-		if res := strings.Split(cmd.opts.Source, ":"); len(res) == 1 {
-			cmd.opts.ReleaseVersion = res[0]
-		} else {
-			cmd.CurrentStep.LogInfof("installing kyma %s with configuration from %s", cmd.opts.Source, DefaultKymaVersion)
-			cmd.opts.RemoteImage = cmd.opts.Source
-			cmd.opts.ReleaseVersion = DefaultKymaVersion
-		}
+		cmd.opts.ReleaseVersion = fmt.Sprintf("master-%s", latest)
+		cmd.opts.ConfigVersion = DefaultKymaVersion
+		cmd.opts.RegistryTemplate = registryMasterImagePattern
+		break
+
+	//Install the specific version from release (ex: 1.3.0)
+	case cmd.isSemVer(cmd.opts.Source):
+		cmd.opts.ReleaseVersion = cmd.opts.Source
+		cmd.opts.ConfigVersion = cmd.opts.Source
+		cmd.opts.RegistryTemplate = registryReleaseImagePattern
+		break
+
+	//Install the kyma with the specific installer image (docker image URL)
+	case cmd.isDockerImage(cmd.opts.Source):
+		cmd.opts.RemoteImage = cmd.opts.Source
+		cmd.opts.ConfigVersion = DefaultKymaVersion
+		break
+	default:
+		return fmt.Errorf("Source flag is not specified or it is not 'local' or a valid semver (ex: 1.3.0) or a docker image url")
 	}
+
 	// If one of the --domain, --tlsKey, or --tlsCert is specified, the others must be specified as well (XOR logic used below)
 	if (cmd.opts.Domain != localDomain || cmd.opts.TLSKey != "" || cmd.opts.TLSCert != "") &&
 		!(cmd.opts.Domain != localDomain && cmd.opts.TLSKey != "" && cmd.opts.TLSCert != "") {
@@ -360,8 +390,8 @@ func (cmd *command) getMasterHash() (string, error) {
 	return h.Hash().String()[:8], nil
 }
 
-func (cmd *command) buildDockerImageString(version string) string {
-	return fmt.Sprintf(registryMasterPattern, version)
+func (cmd *command) buildDockerImageString(template string, version string) string {
+	return fmt.Sprintf(template, version)
 }
 
 func (cmd *command) replaceDockerImageURL(resources []map[string]interface{}, imageURL string) ([]map[string]interface{}, error) {
@@ -458,14 +488,9 @@ func (cmd *command) loadAndConfigureInstallationFiles(isLocalInstallation bool) 
 			if err != nil {
 				return nil, err
 			}
-		} else if strings.ToLower(cmd.opts.ReleaseVersion) == "master" {
-			masterHash, err := cmd.getMasterHash()
-			if err != nil {
-				return nil, err
-			}
-
+		} else {
 			resources, err = cmd.replaceDockerImageURL(resources,
-				cmd.buildDockerImageString(masterHash))
+				cmd.buildDockerImageString(cmd.opts.RegistryTemplate, cmd.opts.ReleaseVersion))
 			if err != nil {
 				return nil, err
 			}
@@ -848,11 +873,11 @@ func (cmd *command) printInstallationErrorLog() error {
 }
 
 func (cmd *command) releaseSrcFile(path string) string {
-	return fmt.Sprintf(releaseSrcUrlPattern, cmd.opts.ReleaseVersion, path)
+	return fmt.Sprintf(releaseSrcUrlPattern, cmd.opts.ConfigVersion, path)
 }
 
 func (cmd *command) releaseFile(path string) string {
-	return fmt.Sprintf(releaseResourcePattern, cmd.opts.ReleaseVersion, path)
+	return fmt.Sprintf(releaseResourcePattern, cmd.opts.ConfigVersion, path)
 }
 
 func (cmd *command) importCertificate(ca trust.Certifier) error {
