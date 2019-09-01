@@ -244,7 +244,7 @@ func (cmd *command) validateFlags() error {
 			return fmt.Errorf("Unable to get latest version of kyma: %s", err.Error())
 		}
 		cmd.opts.ReleaseVersion = fmt.Sprintf("master-%s", latest)
-		cmd.opts.ConfigVersion = DefaultKymaVersion
+		cmd.opts.ConfigVersion = "master"
 		cmd.opts.RegistryTemplate = registryMasterImagePattern
 		break
 
