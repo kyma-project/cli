@@ -113,8 +113,9 @@ func (cmd *command) Run() error {
 	} else {
 		if cmd.opts.ReleaseVersion == cmd.opts.ConfigVersion {
 			s.LogInfof("Installing Kyma in version '%s'.", cmd.opts.ReleaseVersion)
+		} else {
+			s.LogInfof("Installing Kyma in version '%s'. Config version '%s'", cmd.opts.ReleaseVersion, cmd.opts.ConfigVersion)
 		}
-		s.LogInfof("Installing Kyma in version '%s'. Config version '%s'", cmd.opts.ReleaseVersion, cmd.opts.ConfigVersion)
 	}
 	s.Successf("Installation source checked")
 
