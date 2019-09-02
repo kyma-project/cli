@@ -260,7 +260,7 @@ func (cmd *command) validateFlags() error {
 		cmd.opts.ConfigVersion = DefaultKymaVersion
 		break
 	default:
-		return fmt.Errorf("Source flag is not specified or it is not 'local' or a valid semver (ex: 1.3.0) or a docker image url")
+		return fmt.Errorf("Failed to parse the source flag. It can take one of the following: 'local', 'latest', release version (e.g. 1.4.1), or installer image")
 	}
 
 	// If one of the --domain, --tlsKey, or --tlsCert is specified, the others must be specified as well (XOR logic used below)
