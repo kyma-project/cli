@@ -111,6 +111,9 @@ func (cmd *command) Run() error {
 	if cmd.opts.Local {
 		s.LogInfof("Installing Kyma from local path: '%s'", cmd.opts.LocalSrcPath)
 	} else {
+		if cmd.opts.ReleaseVersion == cmd.opts.ConfigVersion {
+			s.LogInfof("Installing Kyma in version '%s'.", cmd.opts.ReleaseVersion)
+		}
 		s.LogInfof("Installing Kyma in version '%s'. Config version '%s'", cmd.opts.ReleaseVersion, cmd.opts.ConfigVersion)
 	}
 	s.Successf("Installation source checked")
