@@ -15,7 +15,6 @@ vendor
 go.mod
 go.sum
 bin
-docs/
 # IDEs
 .idea
 .vscode

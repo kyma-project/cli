@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra/doc"
 )
 
-const DocsTargetDir = "./docs"
+const DocsTargetDir = "./docs/gen-docs"
 
 func main() {
 	command := kyma.NewCmd(cli.NewOptions())
