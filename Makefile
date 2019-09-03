@@ -41,9 +41,7 @@ generate:
 
 .PHONY: docs
 docs:
-	CGO_ENABLED=0 GOOGS=darwin go build -o ./bin/kyma-darwin-doc -ldflags '-X main.AutoGenDoc=true' ./cmd
-	./bin/kyma-darwin-doc
-	rm ./bin/kyma-darwin-doc
+	go run ./cmd/gendocs/gendocs.go
 
 .PHONY: test
 test:
