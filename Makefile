@@ -39,6 +39,10 @@ build-darwin: generate
 generate:
 	go generate ./...
 
+.PHONY: docs
+docs:
+	go run ./cmd/gendocs/gendocs.go
+
 .PHONY: test
 test:
 	go test ./...
