@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	kubernetesVersion  string = "1.12.5"
+	kubernetesVersion  string = "1.13.10"
 	bootstrapper       string = "kubeadm"
 	vmDriverHyperkit   string = "hyperkit"
 	vmDriverHyperv     string = "hyperv"
