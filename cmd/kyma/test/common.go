@@ -4,7 +4,6 @@ import (
 	"io"
 
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
-	"github.com/kyma-project/cli/pkg/api/octopus"
 	"github.com/olekukonko/tablewriter"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -16,8 +15,7 @@ func NewTestSuite(name string) *oct.ClusterTestSuite {
 			Kind:       "ClusterTestSuite",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: octopus.NamespaceForTests,
+			Name: name,
 		},
 	}
 }

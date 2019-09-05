@@ -115,8 +115,7 @@ func Test_generateTestsResource(t *testing.T) {
 					Kind:       "ClusterTestSuite",
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "TestOneProper",
-					Namespace: octopus.NamespaceForTests,
+					Name: "TestOneProper",
 				},
 				Spec: oct.TestSuiteSpec{
 					Count:       1,
