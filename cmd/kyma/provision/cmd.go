@@ -8,7 +8,7 @@ import (
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "provision",
-		Short: "Provisions a cluster for installation",
+		Short: "Provisions a cluster for Kyma installation.",
 	}
 	return cmd
 }

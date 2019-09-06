@@ -72,9 +72,54 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd := &cobra.Command{
 		Use:   "install",
 		Short: "Installs Kyma on a running Kubernetes cluster.",
-		Long: `Installs Kyma on a running Kubernetes cluster. For more information on the command, see https://github.com/kyma-project/cli/tree/master/pkg/kyma/docs/install.md.
+		Long: `Use this command to install Kyma on a running Kubernetes cluster.
 
+### Detailed description
 
+Before you use the command, make sure your setup meets the following prerequisites:
+
+* Kyma is not installed.
+* Kubernetes cluster is available with your KUBECONFIG already pointing to it.
+* Helm binary is available (optional).
+
+Here are the installation steps:
+
+The standard installation uses the minimal configuration. The system performs the following steps:
+1. Fetches the  `+ "`tiller.yaml`"+` file from the `+"`/installation/resources`"+` directory and deploys it to the cluster.
+2. Deploys and configures the Kyma Installer. At this point, the steps differ depending on the installation type.
+    <div tabs name="installation">
+    <details>
+    <summary>
+    From release
+    </summary>
+
+    When you install Kyma locally from release, the system:
+    1. Fetches the latest or specified release along with configuration.
+    2. Deploys the Kyma Installer on the cluster.
+    3. Applies downloaded or defined configuration.
+    4. Applies overrides if applicable.
+    5. Sets the admin password.
+    6. Patches the Minikube IP.
+    </details>
+    <details>
+    <summary>
+    From sources
+    </summary>
+    
+    When you install Kyma locally from sources, the system:
+    1. Fetches the configuration yaml files from the local sources.
+    2. Builds the Kyma Installer image.
+    3. Deploys the Kyma Installer and applies the fetched configuration.
+    4. Applies overrides, if applicable.
+    5. Sets the admin password.
+    6. Patches the Minikube IP.
+    </details>
+    </div>
+3. Configures Helm. If installed, Helm is automatically configured using certificates from Tiller. This step is optional.
+4. Runs Kyma installation until the `+"installed"+` status confirms the successful installation.
+	> **NOTE**: You can override the standard installation settings using the `+"`--override`"+` or `+"`--config`"+` flag.
+
+### Usage
 `,
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 		Aliases: []string{"i"},
@@ -90,8 +135,10 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd.Flags().StringVarP(&o.Password, "password", "p", "", "Predefined cluster password")
 	cobraCmd.Flags().VarP(&o.OverrideConfigs, "override", "o", "Path to yaml file with parameters to override. Multiple entries of this flag are allowed")
 
+
 	return cobraCmd
 }
+
 
 //Run runs the command
 func (cmd *command) Run() error {

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Kyma CLI is a command line tool which supports [Kyma](https://github.com/kyma-project/kyma) developers. It provides a set of commands you can use to install Kyma. 
+Kyma CLI is a command line tool which supports [Kyma](https://github.com/kyma-project/kyma) developers. It provides a set of commands you can use to install, manage, and test Kyma. 
 
 ## Prerequisites
 
@@ -12,7 +12,7 @@ Kyma CLI requires the following software:
 
 ## Installation
 
-Use the following options to install the Kyma CLI from the latest release. 
+Use the following options to install Kyma CLI from the latest release. 
 
 ### Homebrew (macOS)
 To install Kyma CLI using Homebrew, run:
@@ -58,9 +58,11 @@ Kyma CLI comes with a set of commands:
 - `provision minikube` initializes Minikube on a new cluster. It replaces the `minikube.sh` script. 
 - `install` installs Kyma to a cluster based on the current release. It replaces the `ìnstaller.sh` and `is-installed.sh` script. 
 - `uninstall` uninstalls all Kyma-related resources from a cluster.
+- `test` runs tests on a provisioned Kyma cluster.
 - `completion` generates and shows the bash completion script.
 - `help` displays and explains the usage of a given command.
 
+For details on particular commands and options, see [this](https://github.com/kyma-project/cli/tree/master/docs/gen-docs) list.
 
 ### Use Kyma CLI
 

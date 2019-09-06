@@ -41,14 +41,16 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cobraCmd := &cobra.Command{
 		Use:   "uninstall",
-		Short: "Uninstalls Kyma from a running Kubernetes cluster",
+		Short: "Uninstalls Kyma from a running Kubernetes cluster.",
 		Long: `Uninstalls Kyma from a running Kubernetes cluster.
 
-Make sure that your KUBECONFIG is already pointing to the target cluster.
+Make sure that your KUBECONFIG is already pointing to the target cluster.<br>
 This command:
-- Removes your cluster administrator account
-- Removes Tiller
-- Removes Kyma Installer
+- Removes your cluster administrator account.
+- Removes Tiller.
+- Removes Kyma Installer.
+
+## Usage
 `,
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 		Aliases: []string{"i"},
