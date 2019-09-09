@@ -10,6 +10,7 @@ import (
 
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
 	istioNet "github.com/kyma-project/kyma/components/api-controller/pkg/clients/networking.istio.io/clientset/versioned"
@@ -27,6 +28,7 @@ type client struct {
 	dynamic dynamic.Interface
 	octps   octopus.OctopusInterface
 	istio   istioNet.Interface
+	cfg     *rest.Config
 }
 
 // NewFromConfig creates a new Kubernetes client based on the given Kubeconfig either provided by URL (in-cluster config) or via file (out-of-cluster config).
@@ -70,6 +72,7 @@ func NewFromConfigWithTimeout(url, file string, t time.Duration) (KymaKube, erro
 			dynamic: dClient,
 			octps:   octClient,
 			istio:   istioClient,
+			cfg:     config,
 		},
 		nil
 
@@ -89,6 +92,10 @@ func (c *client) Octopus() octopus.OctopusInterface {
 
 func (c *client) Istio() istioNet.Interface {
 	return c.istio
+}
+
+func (c *client) Config() *rest.Config {
+	return c.cfg
 }
 
 func (c *client) IsPodDeployed(namespace, name string) (bool, error) {

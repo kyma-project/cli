@@ -70,7 +70,7 @@ func DockerClient(verbose bool) (*docker.Client, error) {
 	oldEnvs := make(map[string]string)
 	defer func() {
 		for key, val := range oldEnvs {
-			_ = os.Setenv(key, val)
+			os.Setenv(key, val)
 		}
 	}()
 	for _, line := range strings.Split(envOut, "\n") {

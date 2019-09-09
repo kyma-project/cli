@@ -239,7 +239,7 @@ func (cmd *command) printUninstallSummary() error {
 
 func (cmd *command) waitForInstallerToUninstall() error {
 	currentDesc := ""
-	_ = cmd.NewStep("Waiting for uninstallation to start")
+	cmd.NewStep("Waiting for uninstallation to start")
 
 	status, err := cmd.Kubectl().RunCmd("get", "installation/kyma-installation", "-o", "jsonpath='{.status.state}'")
 	if err != nil {
@@ -259,7 +259,7 @@ func (cmd *command) waitForInstallerToUninstall() error {
 		select {
 		case <-timeout:
 			cmd.CurrentStep.Failure()
-			_ = cmd.printUninstallationErrorLog()
+			cmd.printUninstallationErrorLog()
 			return errors.New("Time-out reached while waiting for Kyma to uninstall")
 		default:
 			status, desc, err := cmd.getUninstallationStatus()
