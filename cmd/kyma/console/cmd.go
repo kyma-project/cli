@@ -28,7 +28,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "console",
 		Short:   "Open the Kyma Console in a web browser.",
-		Long: `Opens the Kyma in a web browser.
+		Long: `Use this command to open the Kyma Console in a web browser.
 
 ### Usage`,
 
