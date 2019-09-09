@@ -13,7 +13,7 @@ This command:
 - Removes Tiller.
 - Removes Kyma Installer.
 
-## Usage
+### Usage
 
 
 ```
@@ -24,15 +24,15 @@ kyma uninstall [flags]
 
 ```
   -h, --help               help for uninstall
-      --timeout duration   Time-out after which Kyma CLI stops watching the uninstallation progress (default 30m0s)
+      --timeout duration   Time-out after which Kyma CLI stops watching the uninstallation progress. (default 30m0s)
 ```
 
 ### Options inherited from parent commands
 
 ```
-      --kubeconfig string   Path to kubeconfig (default "/Users/d063295/.kube/config")
-      --non-interactive     Do not use spinners
-  -v, --verbose             verbose output
+      --kubeconfig string   Specifies the path to the KUBECONFIG file. (default "/Users/d063295/.kube/config")
+      --non-interactive     Enables the non-interactive shell mode.
+  -v, --verbose             Displays detailed details about the actions triggered by the command.
 ```
 
 ### SEE ALSO

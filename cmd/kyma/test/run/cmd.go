@@ -29,7 +29,7 @@ func NewCmd(o *options) *cobra.Command {
 
 	cobraCmd := &cobra.Command{
 		Use:   "run <test-definition-1> <test-defintion-2> ... <test-definition-N>",
-		Short: "Runs tests on a Kyma cluster",
+		Short: "Runs tests on a Kyma cluster.",
 		Long: `Use this command to run tests on a Kyma cluster.
 
 If you don't provide any specific test definitions, all available test definitions will be added to the newly created test suite.

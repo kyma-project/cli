@@ -51,13 +51,13 @@ This command:
 - Removes Tiller.
 - Removes Kyma Installer.
 
-## Usage
+### Usage
 `,
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 		Aliases: []string{"i"},
 	}
 
-	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 30*time.Minute, "Time-out after which Kyma CLI stops watching the uninstallation progress")
+	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 30*time.Minute, "Time-out after which Kyma CLI stops watching the uninstallation progress.")
 
 	return cobraCmd
 }

@@ -1,10 +1,10 @@
 ## kyma version
 
-Version of the Kyma CLI and connected Kyma cluster
+Displays the version of the Kyma CLI and the connected Kyma cluster.
 
 ### Synopsis
 
-Prints the version of the Kyma CLI and the version of the Kyma cluster the current KUBECONFIG points to. For details, see https://github.com/kyma-project/cli/tree/master/pkg/kyma/docs/version.md.
+Use this command to print the version of the Kyma CLI and the version of the Kyma cluster the current KUBECONFIG points to.
 
 
 ```
@@ -21,9 +21,9 @@ kyma version [flags]
 ### Options inherited from parent commands
 
 ```
-      --kubeconfig string   Path to kubeconfig (default "/Users/d063295/.kube/config")
-      --non-interactive     Do not use spinners
-  -v, --verbose             verbose output
+      --kubeconfig string   Specifies the path to the KUBECONFIG file. (default "/Users/d063295/.kube/config")
+      --non-interactive     Enables the non-interactive shell mode.
+  -v, --verbose             Displays detailed details about the actions triggered by the command.
 ```
 
 ### SEE ALSO

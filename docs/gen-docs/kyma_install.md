@@ -61,24 +61,24 @@ kyma install [flags]
 ### Options
 
 ```
-  -d, --domain string       Domain used for installation (default "kyma.local")
+  -d, --domain string       Specifies the domain used for installation. (default "kyma.local")
   -h, --help                help for install
-  -n, --noWait              Do not wait for the Kyma installation to complete
-  -o, --override []string   Path to yaml file with parameters to override. Multiple entries of this flag are allowed (default [])
-  -p, --password string     Predefined cluster password
-  -s, --source string       Installation source
-      --src-path string     Path to local sources
+  -n, --noWait              Determines if the command should wait for the Kyma installation to complete.
+  -o, --override []string   Specifies the path to a yaml file with parameters to override. (default [])
+  -p, --password string     Specifies the predefined cluster password.
+  -s, --source string       Specifies the installation source. To use the specific release, write kyma install --source=1.3.0. To use the latest master, write kyma install --source=latest. To use the local sources, write kyma install --source=local. To use the remote image, write kyma install --source=user/my-kyma-installer:v1.4.0
+      --src-path string     Specifies the absolute path to local sources.
       --timeout duration    Time-out after which CLI stops watching the installation progress (default 30m0s)
-      --tlsCert string      TLS certificate for the domain used for installation
-      --tlsKey string       TLS key for the domain used for installation
+      --tlsCert string      Specifies the TLS certificate for the domain used for installation.
+      --tlsKey string       Specifies the TLS key for the domain used for installation.
 ```
 
 ### Options inherited from parent commands
 
 ```
-      --kubeconfig string   Path to kubeconfig (default "/Users/d063295/.kube/config")
-      --non-interactive     Do not use spinners
-  -v, --verbose             verbose output
+      --kubeconfig string   Specifies the path to the KUBECONFIG file. (default "/Users/d063295/.kube/config")
+      --non-interactive     Enables the non-interactive shell mode.
+  -v, --verbose             Displays detailed details about the actions triggered by the command.
 ```
 
 ### SEE ALSO

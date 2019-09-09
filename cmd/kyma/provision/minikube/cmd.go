@@ -57,7 +57,7 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:     "minikube",
-		Short:   "Provisions Minikube",
+		Short:   "Provisions Minikube.",
 		Long:    `Use this command to provision Minikube for Kyma installation.`,
 		RunE:    func(_ *cobra.Command, _ []string) error { return c.Run() },
 		Aliases: []string{"m"},

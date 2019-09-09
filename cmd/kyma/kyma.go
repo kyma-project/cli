@@ -35,9 +35,9 @@ For more information, see: https://github.com/kyma-project/cli
 		SilenceUsage:  true,
 	}
 
-	cmd.PersistentFlags().BoolVarP(&o.Verbose, "verbose", "v", false, "verbose output")
-	cmd.PersistentFlags().BoolVar(&o.NonInteractive, "non-interactive", false, "Do not use spinners")
-	cmd.PersistentFlags().StringVar(&o.KubeconfigPath, "kubeconfig", clientcmd.RecommendedHomeFile, "Path to kubeconfig")
+	cmd.PersistentFlags().BoolVarP(&o.Verbose, "verbose", "v", false, "Displays detailed details about the actions triggered by the command.")
+	cmd.PersistentFlags().BoolVar(&o.NonInteractive, "non-interactive", false, "Enables the non-interactive shell mode.")
+	cmd.PersistentFlags().StringVar(&o.KubeconfigPath, "kubeconfig", clientcmd.RecommendedHomeFile, "Specifies the path to the KUBECONFIG file.")
 
 	provisionCmd := provision.NewCmd()
 	provisionCmd.AddCommand(minikube.NewCmd(minikube.NewOptions(o)))
