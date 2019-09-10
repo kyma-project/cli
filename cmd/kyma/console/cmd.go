@@ -35,7 +35,7 @@ func NewCmd(o *Options) *cobra.Command {
 		RunE:    func(_ *cobra.Command, _ []string) error { return c.Run() },
 		Aliases: []string{"c"},
 	}
-
+    cmd.Flags().Bool("help", false, "Displays help for the command.")
 	return cmd
 }
 

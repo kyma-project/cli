@@ -31,15 +31,15 @@ func NewCmd(o *options) *cobra.Command {
 	cobraCmd := &cobra.Command{
 		Use:   "status <test-suite-1> <test-suite-2> ... <test-suite-N>",
 		Short: "Shows the status of a test suite and it's related test executions",
-		Long: `Use this command to display the status of a test suite and the related test executions.
+		Long: `Use this command to display the status of a test suite and related test executions.
 
 If you don't provide any arguments, the status of all test suites will be printed.
 
-To print status of all test suites, run:
+To print the status of all test suites, run:
 
     kyma test status
 
-To print status of the specific test cases, run:
+To print the status of specific test cases, run:
 
 	kyma test status testSuiteOne testSuiteTwo`,
 		RunE:    func(_ *cobra.Command, args []string) error { return cmd.Run(args) },
@@ -48,6 +48,7 @@ To print status of the specific test cases, run:
 
 	cobraCmd.Flags().StringVarP(&o.OutputFormat, "output", "o", "",
 		"Output format. One of: json|yaml|wide")
+	cobraCmd.Flags().Bool("help", false, "Displays help for the command.")
 	return cobraCmd
 }
 

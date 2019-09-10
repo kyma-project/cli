@@ -44,12 +44,12 @@ func NewCmd(o *Options) *cobra.Command {
 		Short: "Uninstalls Kyma from a running Kubernetes cluster.",
 		Long: `Use this command to uninstall Kyma from a running Kubernetes cluster.
 
-Make sure that your KUBECONFIG is already pointing to the target cluster.<br>
+Make sure that your kubeconfig file is already pointing to the target cluster.<br>
 
 This command:
 - Removes your cluster administrator account.
 - Removes Tiller.
-- Removes Kyma Installer.
+- Removes the Kyma Installer.
 
 ### Usage
 `,
@@ -58,7 +58,7 @@ This command:
 	}
 
 	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 30*time.Minute, "Time-out after which Kyma CLI stops watching the uninstallation progress.")
-
+    cobraCmd.Flags().Bool("help", false, "Displays help for the command.")
 	return cobraCmd
 }
 

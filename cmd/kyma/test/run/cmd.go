@@ -46,6 +46,7 @@ kyma test run -n example-test
 	cobraCmd.Flags().Int64VarP(&o.ExecutionCount, "count", "c", 1, "Number of execution rounds for each test in the suite. You cannot configure this value in parallel with max-retries")
 	cobraCmd.Flags().Int64VarP(&o.MaxRetries, "max-retries", "", 1, "Number of retries for a failed test.")
 	cobraCmd.Flags().Int64VarP(&o.Concurrency, "concurrency", "", 1, "Number of tests to be executed in parallel.")
+	cobraCmd.Flags().Bool("help", false, "Displays help for the command.")
 	return cobraCmd
 }
 

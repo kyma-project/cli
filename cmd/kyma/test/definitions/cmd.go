@@ -29,7 +29,7 @@ func NewCmd(o *options) *cobra.Command {
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 		Aliases: []string{"def"},
 	}
-
+    cobraCmd.Flags().Bool("help", false, "Displays help for the command.")
 	return cobraCmd
 }
 

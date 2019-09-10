@@ -27,13 +27,13 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "version",
-		Short: "Displays the version of the Kyma CLI and the connected Kyma cluster.",
-		Long: `Use this command to print the version of the Kyma CLI and the version of the Kyma cluster the current KUBECONFIG points to.
+		Short: "Displays the version of Kyma CLI and the connected Kyma cluster.",
+		Long: `Use this command to print the version of Kyma CLI and the version of the Kyma cluster the current kubeconfig points to.
 `,
 		RunE: func(_ *cobra.Command, _ []string) error { return c.Run() },
 	}
 	cmd.Flags().BoolVarP(&o.Client, "client", "c", false, "Client version only (no server required)")
-
+    cmd.Flags().Bool("help", false, "Displays help for the command.")
 	return cmd
 }
 

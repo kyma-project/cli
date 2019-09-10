@@ -79,14 +79,14 @@ func NewCmd(o *Options) *cobra.Command {
 Before you use the command, make sure your setup meets the following prerequisites:
 
 * Kyma is not installed.
-* Kubernetes cluster is available with your KUBECONFIG already pointing to it.
+* Kubernetes cluster is available with your kubeconfig file already pointing to it.
 * Helm binary is available (optional).
 
 Here are the installation steps:
 
 The standard installation uses the minimal configuration. The system performs the following steps:
-1. Fetches the  `+ "`tiller.yaml`"+` file from the `+"`/installation/resources`"+` directory and deploys it to the cluster.
-2. Deploys and configures the Kyma Installer. At this point, the steps differ depending on the installation type.
+1. Fetches the `+ "`tiller.yaml`"+` file from the `+"`/installation/resources`"+` directory and deploys it to the cluster.
+2. Deploys and configures the Kyma Installer. At this point, steps differ depending on the installation type.
     <div tabs name="installation">
     <details>
     <summary>
@@ -97,7 +97,7 @@ The standard installation uses the minimal configuration. The system performs th
     1. Fetches the latest or specified release along with configuration.
     2. Deploys the Kyma Installer on the cluster.
     3. Applies downloaded or defined configuration.
-    4. Applies overrides if applicable.
+    4. Applies overrides, if applicable.
     5. Sets the admin password.
     6. Patches the Minikube IP.
     </details>
@@ -116,7 +116,7 @@ The standard installation uses the minimal configuration. The system performs th
     </details>
     </div>
 3. Configures Helm. If installed, Helm is automatically configured using certificates from Tiller. This step is optional.
-4. Runs Kyma installation until the `+"installed"+` status confirms the successful installation.
+4. Runs Kyma installation until the `+"**installed**"+` status confirms the successful installation.
 	> **NOTE**: You can override the standard installation settings using the `+"`--override`"+` or `+"`--config`"+` flag.
 
 ### Usage
@@ -134,7 +134,7 @@ The standard installation uses the minimal configuration. The system performs th
 	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 30*time.Minute, "Time-out after which CLI stops watching the installation progress")
 	cobraCmd.Flags().StringVarP(&o.Password, "password", "p", "", "Specifies the predefined cluster password.")
 	cobraCmd.Flags().VarP(&o.OverrideConfigs, "override", "o", "Specifies the path to a yaml file with parameters to override.")
-
+    cobraCmd.Flags().Bool("help", false, "Displays help for the command.")
 
 	return cobraCmd
 }
