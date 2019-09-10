@@ -13,7 +13,7 @@ kyma test list [flags]
 ### Options
 
 ```
-      --help   Displays help for the command.
+  -h, --help   Displays help for the command.
 ```
 
 ### Options inherited from parent commands
@@ -27,5 +27,4 @@ kyma test list [flags]
 ### SEE ALSO
 
 * [kyma test](kyma_test.md)	 - Run tests on a provisioned Kyma cluster.
-
 

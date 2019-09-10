@@ -17,7 +17,7 @@ kyma completion [flags]
 ### Options
 
 ```
-      --help   Displays help for the command.
+  -h, --help   Displays help for the command.
 ```
 
 ### Options inherited from parent commands
@@ -31,5 +31,4 @@ kyma completion [flags]
 ### SEE ALSO
 
 * [kyma](kyma.md)	 - Controls a Kyma cluster.
-
 

@@ -64,7 +64,7 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&o.VMDriver, "vm-driver", defaultVMDriver, "Specifies the VM driver. Possible values: "+strings.Join(drivers, ","))
-	cmd.Flags().StringVar(&o.HypervVirtualSwitch, "hypervVirtualSwitch", "", "Specifies the version of Hyper-V switch if you choose Hyper-V as the driver.")
+	cmd.Flags().StringVar(&o.HypervVirtualSwitch, "hypervVirtualSwitch", "", "Specifies the Hyper-V switch version if you choose Hyper-V as the driver.")
 	cmd.Flags().StringVar(&o.DiskSize, "disk-size", "30g", "Specifies the disk size used for installation.")
 	cmd.Flags().StringVar(&o.Memory, "memory", "8192", "Specifies RAM reserved for installation.")
 	cmd.Flags().StringVar(&o.CPUS, "cpus", "4", "Specifies the number of CPUs used for installation.")

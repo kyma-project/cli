@@ -9,7 +9,7 @@ Use this command to run tests on a provisioned Kyma cluster.
 ### Options
 
 ```
-      --help   Displays help for the command.
+  -h,  --help   Displays help for the command.
 ```
 
 ### Options inherited from parent commands
@@ -28,5 +28,4 @@ Use this command to run tests on a provisioned Kyma cluster.
 * [kyma test list](kyma_test_list.md)	 - Lists test suites available for a provisioned Kyma cluster.
 * [kyma test run](kyma_test_run.md)	 - Runs tests on a Kyma cluster.
 * [kyma test status](kyma_test_status.md)	 - Shows the status of a test suite and it's related test executions
-
 

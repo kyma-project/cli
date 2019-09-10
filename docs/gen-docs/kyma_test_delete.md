@@ -15,7 +15,7 @@ kyma test delete <test-suite-1> <test-suite-2> ... <test-suite-N> [flags]
 ### Options
 
 ```
-      --help   Displays help for the command.
+  -h, --help   Displays help for the command.
 ```
 
 ### Options inherited from parent commands

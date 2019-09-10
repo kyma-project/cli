@@ -15,7 +15,7 @@ kyma version [flags]
 
 ```
   -c, --client   Client version only (no server required)
-      --help     Displays help for the command.
+  -h,  --help     Displays help for the command.
 ```
 
 ### Options inherited from parent commands
@@ -29,5 +29,4 @@ kyma version [flags]
 ### SEE ALSO
 
 * [kyma](kyma.md)	 - Controls a Kyma cluster.
-
 

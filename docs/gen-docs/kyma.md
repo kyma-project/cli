@@ -13,7 +13,7 @@ For more information, see: https://github.com/kyma-project/cli
 ### Options
 
 ```
-      --help                Displays help for the command.
+  -h, --help                Displays help for the command.
       --kubeconfig string   Specifies the path to the kubeconfig file. (default "/Users/user/.kube/config")
       --non-interactive     Enables the non-interactive shell mode.
   -v, --verbose             Displays details of actions triggered by the command.
@@ -28,5 +28,4 @@ For more information, see: https://github.com/kyma-project/cli
 * [kyma test](kyma_test.md)	 - Run tests on a provisioned Kyma cluster.
 * [kyma uninstall](kyma_uninstall.md)	 - Uninstalls Kyma from a running Kubernetes cluster.
 * [kyma version](kyma_version.md)	 - Displays the version of Kyma CLI and the connected Kyma cluster.
-
 

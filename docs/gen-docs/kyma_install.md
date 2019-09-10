@@ -62,7 +62,7 @@ kyma install [flags]
 
 ```
   -d, --domain string       Specifies the domain used for installation. (default "kyma.local")
-      --help                Displays help for the command.
+  -h, --help                Displays help for the command.
   -n, --noWait              Determines if the command should wait for the Kyma installation to complete.
   -o, --override []string   Specifies the path to a yaml file with parameters to override. (default [])
   -p, --password string     Specifies the predefined cluster password.
@@ -84,5 +84,4 @@ kyma install [flags]
 ### SEE ALSO
 
 * [kyma](kyma.md)	 - Controls a Kyma cluster.
-
 

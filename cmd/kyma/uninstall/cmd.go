@@ -57,7 +57,7 @@ This command:
 		Aliases: []string{"i"},
 	}
 
-	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 30*time.Minute, "Time-out after which Kyma CLI stops watching the uninstallation progress.")
+	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 30*time.Minute, "Time-out after which Kyma CLI stops watching the the process of unstalling Kyma.")
     cobraCmd.Flags().Bool("help", false, "Displays help for the command.")
 	return cobraCmd
 }
