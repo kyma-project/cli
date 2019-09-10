@@ -65,7 +65,7 @@ func (s *simpleStep) LogInfof(format string, args ...interface{}) {
 }
 
 func (s *simpleStep) LogError(msg string) {
-	_, _ = fmt.Fprintf(os.Stderr, "%s%s\n", warningGlyph, msg)
+	fmt.Fprintf(os.Stderr, "%s%s\n", warningGlyph, msg)
 }
 
 func (s *simpleStep) LogErrorf(format string, args ...interface{}) {

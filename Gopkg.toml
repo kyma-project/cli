@@ -49,3 +49,7 @@ required = [
 [[override]]
   name = "github.com/russross/blackfriday"
   version = "1.4.0"  
+
+[[constraint]]
+  name = "github.com/daviddengcn/go-colortext"
+  revision = "186a3d44e9200d7eb331356ca4864f52708e1399"

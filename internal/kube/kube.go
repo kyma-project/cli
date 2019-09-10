@@ -7,6 +7,7 @@ import (
 	istioNet "github.com/kyma-project/kyma/components/api-controller/pkg/clients/networking.istio.io/clientset/versioned"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 )
 
 // KymaKube defines the Kyma-enhanced kubernetes API.
@@ -16,6 +17,10 @@ type KymaKube interface {
 	Dynamic() dynamic.Interface
 	Octopus() octopus.OctopusInterface
 	Istio() istioNet.Interface
+
+	// Config provides the configuration of the kubernetes client
+	Config() *rest.Config
+
 	// IsPodDeployed checks if a pod is in the given namespace (independently of its status)
 	IsPodDeployed(namespace, name string) (bool, error)
 

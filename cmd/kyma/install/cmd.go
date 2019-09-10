@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver"
+	"github.com/kyma-project/cli/internal/nice"
 	"github.com/kyma-project/cli/internal/step"
 
 	"github.com/kyma-project/cli/cmd/kyma/version"
@@ -21,6 +22,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/kyma-project/cli/internal/kube"
 
@@ -750,8 +752,11 @@ func (cmd *command) setAdminPassword() error {
 		return nil
 	}
 	encPass := base64.StdEncoding.EncodeToString([]byte(cmd.opts.Password))
-	_, err := cmd.Kubectl().RunCmd("-n", "kyma-installer", "patch", "configmap", "installation-config-overrides", "--type=json",
-		fmt.Sprintf("--patch=[{'op': 'replace', 'path': '/data/global.adminPassword', 'value': '%s'}]", encPass))
+	_, err := cmd.K8s.Static().CoreV1().ConfigMaps("kyma-installer").Patch("installation-config-overrides", types.JSONPatchType,
+		[]byte(fmt.Sprintf("[{\"op\": \"replace\", \"path\": \"/data/global.adminPassword\", \"value\": \"%s\"}]", encPass)))
+	if err != nil {
+		err = errors.Wrap(err, "Error setting admin password")
+	}
 	return err
 }
 
@@ -779,36 +784,44 @@ func (cmd *command) printSummary() error {
 		return errors.New("Console host could not be obtained.")
 	}
 
-	clusterInfo, err := cmd.Kubectl().RunCmd("cluster-info")
-	if err != nil {
-		return err
-	}
+	fmt.Println()
+	nice.PrintKyma()
+	fmt.Print(" is installed in version:\t")
+	nice.PrintImportant(v)
 
-	fmt.Println()
-	fmt.Println(clusterInfo)
-	fmt.Println()
-	fmt.Printf("Kyma is installed in version %s\n", v)
-	fmt.Printf("Kyma console:\t\t%s\n", consoleURL)
-	fmt.Printf("Kyma admin email:\t%s\n", adm.Data["email"])
+	nice.PrintKyma()
+	fmt.Print(" is running at:\t\t")
+	nice.PrintImportant(cmd.K8s.Config().Host)
+
+	nice.PrintKyma()
+	fmt.Print(" console:\t\t\t")
+	nice.PrintImportantf(consoleURL)
+
+	nice.PrintKyma()
+	fmt.Print(" admin email:\t\t")
+	nice.PrintImportant(string(adm.Data["email"]))
+
 	if cmd.opts.Password == "" || cmd.opts.NonInteractive {
-		fmt.Printf("Kyma admin password:\t%s\n", adm.Data["password"])
+		nice.PrintKyma()
+		fmt.Printf(" admin password:\t\t")
+		nice.PrintImportant(string(adm.Data["password"]))
 	}
-	fmt.Println()
 
 	if cmd.opts.Domain != localDomain {
-		fmt.Printf("To access the console, configure DNS for the cluster load balancer: https://kyma-project.io/docs/#installation-use-your-own-domain--provider-domain--gke--configure-dns-for-the-cluster-load-balancer")
+		fmt.Printf("\nTo access the console, configure DNS for the cluster load balancer: ")
+		nice.PrintImportant("https://kyma-project.io/docs/#installation-use-your-own-domain--provider-domain--gke--configure-dns-for-the-cluster-load-balancer")
 	}
 
-	fmt.Println()
-	fmt.Println("Happy Kyma-ing! :)")
-	fmt.Println()
+	fmt.Printf("\nHappy ")
+	nice.PrintKyma()
+	fmt.Printf("-ing! :)\n\n")
 
 	return nil
 }
 
 func (cmd *command) waitForInstaller() error {
 	currentDesc := ""
-	_ = cmd.NewStep("Waiting for installation to start")
+	cmd.NewStep("Waiting for installation to start")
 
 	status, err := cmd.Kubectl().RunCmd("get", "installation/kyma-installation", "-o", "jsonpath='{.status.state}'")
 	if err != nil {
@@ -828,7 +841,7 @@ func (cmd *command) waitForInstaller() error {
 		select {
 		case <-timeout:
 			cmd.CurrentStep.Failure()
-			_ = cmd.printInstallationErrorLog()
+			cmd.printInstallationErrorLog()
 			return errors.New("Timeout reached while waiting for installation to complete")
 		default:
 			status, desc, err := cmd.getInstallationStatus()
@@ -982,8 +995,7 @@ func (cmd *command) getClusterInfoFromConfigMap() (clusterInfo, error) {
 }
 
 func (cmd *command) patchMinikubeIP(minikubeIP string) error {
-	var err error
-	if _, err := cmd.Kubectl().RunCmd("-n", "kyma-installer", "get", "configmap/installation-config-overrides"); err != nil {
+	if _, err := cmd.K8s.Static().CoreV1().ConfigMaps("kyma-installer").Get("installation-config-overrides", metav1.GetOptions{}); err != nil {
 		if strings.Contains(err.Error(), "not found") {
 			cmd.CurrentStep.LogInfof("Resource '%s' not found, won't be patched", "configmap/installation-config-overrides")
 		} else {
@@ -992,9 +1004,8 @@ func (cmd *command) patchMinikubeIP(minikubeIP string) error {
 	}
 
 	if minikubeIP != "" {
-		_, err = cmd.Kubectl().RunCmd("-n", "kyma-installer", "patch", "configmap/installation-config-overrides", "--type=json",
-			"--allow-missing-template-keys=true",
-			fmt.Sprintf("--patch=[{'op': 'replace', 'path': '/data/global.minikubeIP', 'value': '%s'}]", minikubeIP))
+		_, err := cmd.K8s.Static().CoreV1().ConfigMaps("kyma-installer").Patch("installation-config-overrides", types.JSONPatchType,
+			[]byte(fmt.Sprintf("[{\"op\": \"replace\", \"path\": \"/data/global.minikubeIP\", \"value\": \"%s\"}]", minikubeIP)))
 		if err != nil {
 			return err
 		}
