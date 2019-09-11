@@ -27,13 +27,13 @@ func NewCmd(o *options) *cobra.Command {
 	cobraCmd := &cobra.Command{
 		Use:   "delete <test-suite-1> <test-suite-2> ... <test-suite-N>",
 		Short: "Deletes test suites available for a provisioned Kyma cluster.",
-		Long: `Deletes test suites available for a provisioned Kyma cluster.
+		Long: `Use this command to delete test suites available for a provisioned Kyma cluster.
 
 Provide at least one test suite name.`,
 		RunE:    func(_ *cobra.Command, args []string) error { return cmd.Run(args) },
 		Aliases: []string{"d"},
 	}
-
+	cobraCmd.Flags().Bool("help", false, "Displays help for the command.")
 	return cobraCmd
 }
 

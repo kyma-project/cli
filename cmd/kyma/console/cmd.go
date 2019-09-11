@@ -27,11 +27,15 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:     "console",
-		Short:   "Open the Kyma console in a web browser",
+		Short:   "Open the Kyma Console in a web browser.",
+		Long: `Use this command to open the Kyma Console in a web browser.
+
+### Usage`,
+
 		RunE:    func(_ *cobra.Command, _ []string) error { return c.Run() },
 		Aliases: []string{"c"},
 	}
-
+    cmd.Flags().Bool("help", false, "Displays help for the command.")
 	return cmd
 }
 

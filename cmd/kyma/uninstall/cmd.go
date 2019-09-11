@@ -41,21 +41,24 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cobraCmd := &cobra.Command{
 		Use:   "uninstall",
-		Short: "Uninstalls Kyma from a running Kubernetes cluster",
-		Long: `Uninstalls Kyma from a running Kubernetes cluster.
+		Short: "Uninstalls Kyma from a running Kubernetes cluster.",
+		Long: `Use this command to uninstall Kyma from a running Kubernetes cluster.
 
-Make sure that your KUBECONFIG is already pointing to the target cluster.
+Make sure that your kubeconfig file is already pointing to the target cluster.<br>
+
 This command:
-- Removes your cluster administrator account
-- Removes Tiller
-- Removes Kyma Installer
+- Removes your cluster administrator account.
+- Removes Tiller.
+- Removes the Kyma Installer.
+
+### Usage
 `,
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 		Aliases: []string{"i"},
 	}
 
-	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 30*time.Minute, "Time-out after which Kyma CLI stops watching the uninstallation progress")
-
+	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 30*time.Minute, "Time-out after which Kyma CLI stops watching the the process of unstalling Kyma.")
+    cobraCmd.Flags().Bool("help", false, "Displays help for the command.")
 	return cobraCmd
 }
 

@@ -26,7 +26,7 @@ func NewCmd(o *cli.Options) *cobra.Command {
 		Use:   "kyma",
 		Short: "Controls a Kyma cluster.",
 		Long: `Kyma is a flexible and easy way to connect and extend enterprise applications in a cloud-native world.
-Kyma CLI allows you to install and manage Kyma.
+Kyma CLI allows you to install, test, and manage Kyma.
 
 For more information, see: https://github.com/kyma-project/cli
 `,
@@ -35,10 +35,11 @@ For more information, see: https://github.com/kyma-project/cli
 		SilenceUsage:  true,
 	}
 
-	cmd.PersistentFlags().BoolVarP(&o.Verbose, "verbose", "v", false, "verbose output")
-	cmd.PersistentFlags().BoolVar(&o.NonInteractive, "non-interactive", false, "Do not use spinners")
-	cmd.PersistentFlags().StringVar(&o.KubeconfigPath, "kubeconfig", clientcmd.RecommendedHomeFile, "Path to kubeconfig")
-
+	cmd.PersistentFlags().BoolVarP(&o.Verbose, "verbose", "v", false, "Displays details of actions triggered by the command.")
+	cmd.PersistentFlags().BoolVar(&o.NonInteractive, "non-interactive", false, "Enables the non-interactive shell mode.")
+	cmd.PersistentFlags().StringVar(&o.KubeconfigPath, "kubeconfig", clientcmd.RecommendedHomeFile, "Specifies the path to the kubeconfig file.")
+	cmd.Flags().Bool("help", false, "Displays help for the command.")
+	
 	provisionCmd := provision.NewCmd()
 	provisionCmd.AddCommand(minikube.NewCmd(minikube.NewOptions(o)))
 

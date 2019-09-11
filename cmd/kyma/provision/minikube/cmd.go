@@ -57,17 +57,18 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:     "minikube",
-		Short:   "Provisions Minikube",
-		Long:    `Provisions Minikube for Kyma installation`,
+		Short:   "Provisions Minikube.",
+		Long:    `Use this command to provision Minikube for Kyma installation.`,
 		RunE:    func(_ *cobra.Command, _ []string) error { return c.Run() },
 		Aliases: []string{"m"},
 	}
 
-	cmd.Flags().StringVar(&o.VMDriver, "vm-driver", defaultVMDriver, "VMDriver to use. Possible values: "+strings.Join(drivers, ","))
-	cmd.Flags().StringVar(&o.HypervVirtualSwitch, "hypervVirtualSwitch", "", "Name of the hyperv switch, required if --vm-driver=hyperv")
-	cmd.Flags().StringVar(&o.DiskSize, "disk-size", "30g", "Disk size to use")
-	cmd.Flags().StringVar(&o.Memory, "memory", "8192", "Memory to use")
-	cmd.Flags().StringVar(&o.CPUS, "cpus", "4", "CPUs to use")
+	cmd.Flags().StringVar(&o.VMDriver, "vm-driver", defaultVMDriver, "Specifies the VM driver. Possible values: "+strings.Join(drivers, ","))
+	cmd.Flags().StringVar(&o.HypervVirtualSwitch, "hypervVirtualSwitch", "", "Specifies the Hyper-V switch version if you choose Hyper-V as the driver.")
+	cmd.Flags().StringVar(&o.DiskSize, "disk-size", "30g", "Specifies the disk size used for installation.")
+	cmd.Flags().StringVar(&o.Memory, "memory", "8192", "Specifies RAM reserved for installation.")
+	cmd.Flags().StringVar(&o.CPUS, "cpus", "4", "Specifies the number of CPUs used for installation.")
+	cmd.Flags().Bool("help", false, "Displays help for the command.")
 	return cmd
 }
 

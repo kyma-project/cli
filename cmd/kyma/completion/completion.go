@@ -10,21 +10,16 @@ import (
 func NewCmd() *cobra.Command {
 	var completionCmd = &cobra.Command{
 		Use:   "completion",
-		Short: "Generates bash completion scripts",
-		Long: `Output shell completion code for bash. The shell code must be evaluated to provide
-interactive completion of commands. This can be done by sourcing it from the .bash _profile.
-To load completion, run:
+		Short: "Generates bash completion scripts.",
+		Long: `Use this command to display the shell completion code used for interactive command completion. 
+To configure your bash shell to load completions, add ` + "`. <(kyma completion)`" + ` to your bash profile.
 
-. <(kyma completion)
-
-To configure your bash shell to load completions for each session, add to your bashrc:
-
-# ~/.bashrc or ~/.profile
-. <(kyma completion)
+### Usage 
 `,
 		RunE:    completion,
 		Aliases: []string{},
 	}
+	completionCmd.Flags().Bool("help", false, "Displays help for the command.")
 	return completionCmd
 }
 

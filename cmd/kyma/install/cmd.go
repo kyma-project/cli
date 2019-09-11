@@ -74,26 +74,73 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd := &cobra.Command{
 		Use:   "install",
 		Short: "Installs Kyma on a running Kubernetes cluster.",
-		Long: `Installs Kyma on a running Kubernetes cluster. For more information on the command, see https://github.com/kyma-project/cli/tree/master/pkg/kyma/docs/install.md.
+		Long: `Use this command to install Kyma on a running Kubernetes cluster.
 
+### Detailed description
 
+Before you use the command, make sure your setup meets the following prerequisites:
+
+* Kyma is not installed.
+* Kubernetes cluster is available with your kubeconfig file already pointing to it.
+* Helm binary is available (optional).
+
+Here are the installation steps:
+
+The standard installation uses the minimal configuration. The system performs the following steps:
+1. Fetches the `+ "`tiller.yaml`"+` file from the `+"`/installation/resources`"+` directory and deploys it to the cluster.
+2. Deploys and configures the Kyma Installer. At this point, steps differ depending on the installation type.
+    <div tabs name="installation">
+    <details>
+    <summary>
+    From release
+    </summary>
+
+    When you install Kyma locally from release, the system:
+    1. Fetches the latest or specified release along with configuration.
+    2. Deploys the Kyma Installer on the cluster.
+    3. Applies downloaded or defined configuration.
+    4. Applies overrides, if applicable.
+    5. Sets the admin password.
+    6. Patches the Minikube IP.
+    </details>
+    <details>
+    <summary>
+    From sources
+    </summary>
+    
+    When you install Kyma locally from sources, the system:
+    1. Fetches the configuration yaml files from the local sources.
+    2. Builds the Kyma Installer image.
+    3. Deploys the Kyma Installer and applies the fetched configuration.
+    4. Applies overrides, if applicable.
+    5. Sets the admin password.
+    6. Patches the Minikube IP.
+    </details>
+    </div>
+3. Configures Helm. If installed, Helm is automatically configured using certificates from Tiller. This step is optional.
+4. Runs Kyma installation until the `+"**installed**"+` status confirms the successful installation.
+	> **NOTE**: You can override the standard installation settings using the `+"`--override`"+` or `+"`--config`"+` flag.
+
+### Usage
 `,
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 		Aliases: []string{"i"},
 	}
 
-	cobraCmd.Flags().BoolVarP(&o.NoWait, "noWait", "n", false, "Do not wait for the Kyma installation to complete")
-	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", localDomain, "Domain used for installation")
-	cobraCmd.Flags().StringVarP(&o.TLSCert, "tlsCert", "", "", "TLS certificate for the domain used for installation")
-	cobraCmd.Flags().StringVarP(&o.TLSKey, "tlsKey", "", "", "TLS key for the domain used for installation")
-	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", DefaultKymaVersion, "Installation source")
-	cobraCmd.Flags().StringVarP(&o.LocalSrcPath, "src-path", "", "", "Path to local sources")
+	cobraCmd.Flags().BoolVarP(&o.NoWait, "noWait", "n", false, "Determines if the command should wait for the Kyma installation to complete.")
+	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", localDomain, "Specifies the domain used for installation.")
+	cobraCmd.Flags().StringVarP(&o.TLSCert, "tlsCert", "", "", "Specifies the TLS certificate for the domain used for installation.")
+	cobraCmd.Flags().StringVarP(&o.TLSKey, "tlsKey", "", "", "Specifies the TLS key for the domain used for installation.")
+	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", DefaultKymaVersion, "Specifies the installation source. To use the specific release, write kyma install --source=1.3.0. To use the latest master, write kyma install --source=latest. To use the local sources, write kyma install --source=local. To use the remote image, write kyma install --source=user/my-kyma-installer:v1.4.0")
+	cobraCmd.Flags().StringVarP(&o.LocalSrcPath, "src-path", "", "", "Specifies the absolute path to local sources.")
 	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 30*time.Minute, "Time-out after which CLI stops watching the installation progress")
-	cobraCmd.Flags().StringVarP(&o.Password, "password", "p", "", "Predefined cluster password")
-	cobraCmd.Flags().VarP(&o.OverrideConfigs, "override", "o", "Path to yaml file with parameters to override. Multiple entries of this flag are allowed")
+	cobraCmd.Flags().StringVarP(&o.Password, "password", "p", "", "Specifies the predefined cluster password.")
+	cobraCmd.Flags().VarP(&o.OverrideConfigs, "override", "o", "Specifies the path to a yaml file with parameters to override.")
+    cobraCmd.Flags().Bool("help", false, "Displays help for the command.")
 
 	return cobraCmd
 }
+
 
 //Run runs the command
 func (cmd *command) Run() error {

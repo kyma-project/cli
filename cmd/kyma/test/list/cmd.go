@@ -26,11 +26,11 @@ func NewCmd(o *options) *cobra.Command {
 	cobraCmd := &cobra.Command{
 		Use:     "list",
 		Short:   "Lists test suites available for a provisioned Kyma cluster.",
-		Long:    `Lists test suites available for a provisioned Kyma cluster.`,
+		Long:    `Use this command to list test suites available for a provisioned Kyma cluster.`,
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 		Aliases: []string{"l"},
 	}
-
+    cobraCmd.Flags().Bool("help", false, "Displays help for the command.")
 	return cobraCmd
 }
 
