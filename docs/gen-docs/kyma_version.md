@@ -21,7 +21,7 @@ kyma version [flags]
 ### Options inherited from parent commands
 
 ```
-      --kubeconfig string   Specifies the path to the kubeconfig file. (default "/Users/user/.kube/config")
+      --kubeconfig string   Specifies the path to the kubeconfig file. (default "/$HOME/.kube/config")
       --non-interactive     Enables the non-interactive shell mode.
   -v, --verbose             Displays details of actions triggered by the command.
 ```
