@@ -119,7 +119,7 @@ The standard installation uses the minimal configuration. The system performs th
     </div>
 3. Configures Helm. If installed, Helm is automatically configured using certificates from Tiller. This step is optional.
 4. Runs Kyma installation until the `+"**installed**"+` status confirms the successful installation.
-	> **NOTE**: You can override the standard installation settings using the `+"`--override`"+` or `+"`--config`"+` flag.
+	> **NOTE**: You can override the standard installation settings using the `+"`--override`"+` flag.
 
 ### Usage
 `,
