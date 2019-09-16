@@ -1,6 +1,8 @@
 package kyma
 
 import (
+	"os"
+
 	"github.com/kyma-project/cli/cmd/kyma/completion"
 	"github.com/kyma-project/cli/cmd/kyma/console"
 	"github.com/kyma-project/cli/cmd/kyma/install"
@@ -37,9 +39,9 @@ For more information, see: https://github.com/kyma-project/cli
 
 	cmd.PersistentFlags().BoolVarP(&o.Verbose, "verbose", "v", false, "Displays details of actions triggered by the command.")
 	cmd.PersistentFlags().BoolVar(&o.NonInteractive, "non-interactive", false, "Enables the non-interactive shell mode.")
-	cmd.PersistentFlags().StringVar(&o.KubeconfigPath, "kubeconfig", clientcmd.RecommendedHomeFile, "Specifies the path to the kubeconfig file.")
+	cmd.PersistentFlags().StringVar(&o.KubeconfigPath, "kubeconfig", defaultKubeconfig(), "Specifies the path to the kubeconfig file.")
 	cmd.Flags().Bool("help", false, "Displays help for the command.")
-	
+
 	provisionCmd := provision.NewCmd()
 	provisionCmd.AddCommand(minikube.NewCmd(minikube.NewOptions(o)))
 
@@ -62,4 +64,14 @@ For more information, see: https://github.com/kyma-project/cli
 	cmd.AddCommand(testCmd)
 
 	return cmd
+}
+
+func defaultKubeconfig() string {
+	env := os.Getenv("KUBECONFIG")
+
+	if env == "" {
+		return clientcmd.RecommendedHomeFile
+	}
+
+	return env
 }

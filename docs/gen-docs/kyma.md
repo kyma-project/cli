@@ -14,7 +14,7 @@ For more information, see: https://github.com/kyma-project/cli
 
 ```
   -h, --help                Displays help for the command.
-      --kubeconfig string   Specifies the path to the kubeconfig file. (default "/$HOME/.kube/config")
+      --kubeconfig string   Specifies the path to the kubeconfig file. (default KUBECONFIG environment variable or "/$HOME/.kube/config" if KUBECONFIG is not set)
       --non-interactive     Enables the non-interactive shell mode.
   -v, --verbose             Displays details of actions triggered by the command.
 ```
