@@ -1,8 +1,6 @@
 package kyma
 
 import (
-	"os"
-
 	"github.com/kyma-project/cli/cmd/kyma/completion"
 	"github.com/kyma-project/cli/cmd/kyma/console"
 	"github.com/kyma-project/cli/cmd/kyma/install"
@@ -19,7 +17,6 @@ import (
 	"github.com/kyma-project/cli/cmd/kyma/provision"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/spf13/cobra"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 //NewCmd creates a new kyma CLI command
@@ -39,7 +36,8 @@ For more information, see: https://github.com/kyma-project/cli
 
 	cmd.PersistentFlags().BoolVarP(&o.Verbose, "verbose", "v", false, "Displays details of actions triggered by the command.")
 	cmd.PersistentFlags().BoolVar(&o.NonInteractive, "non-interactive", false, "Enables the non-interactive shell mode.")
-	cmd.PersistentFlags().StringVar(&o.KubeconfigPath, "kubeconfig", defaultKubeconfig(), "Specifies the path to the kubeconfig file.")
+	// Kubeconfig env var and defualt paths are resolved by the kyma k8s client using the k8s defined resolution strategy.
+	cmd.PersistentFlags().StringVar(&o.KubeconfigPath, "kubeconfig", "", "Specifies the path to the kubeconfig file.")
 	cmd.Flags().Bool("help", false, "Displays help for the command.")
 
 	provisionCmd := provision.NewCmd()
@@ -64,14 +62,4 @@ For more information, see: https://github.com/kyma-project/cli
 	cmd.AddCommand(testCmd)
 
 	return cmd
-}
-
-func defaultKubeconfig() string {
-	env := os.Getenv("KUBECONFIG")
-
-	if env == "" {
-		return clientcmd.RecommendedHomeFile
-	}
-
-	return env
 }
