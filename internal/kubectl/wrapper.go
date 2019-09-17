@@ -15,7 +15,9 @@ func NewWrapper(verbose bool, kubeconfig string) *Wrapper {
 }
 
 func (w *Wrapper) RunCmd(args ...string) (string, error) {
-	args = append(args, fmt.Sprintf("--kubeconfig=%s", w.kubeconfig))
+	if len(w.kubeconfig) != 0 {
+		args = append(args, fmt.Sprintf("--kubeconfig=%s", w.kubeconfig))
+	}
 	return runCmd(w.verbose, args...)
 }
 
