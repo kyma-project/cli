@@ -58,7 +58,7 @@ This command:
 	}
 
 	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 30*time.Minute, "Time-out after which Kyma CLI stops watching the the process of unstalling Kyma.")
-    cobraCmd.Flags().Bool("help", false, "Displays help for the command.")
+	cobraCmd.Flags().Bool("help", false, "Displays help for the command.")
 	return cobraCmd
 }
 
@@ -246,7 +246,13 @@ func (cmd *command) waitForInstallerToUninstall() error {
 
 	status, err := cmd.Kubectl().RunCmd("get", "installation/kyma-installation", "-o", "jsonpath='{.status.state}'")
 	if err != nil {
-		return err
+		// A timeout when asking for the status can happen if the cluster is under high load while uninstalling Kyma.
+		// But it should not make the CLI stop waiting immediately.
+		if strings.Contains("operation timed out", err.Error()) {
+			cmd.CurrentStep.LogError("Could not get the status, retrying...")
+		} else {
+			return err
+		}
 	}
 	if status == "Uninstalled" {
 		return nil
