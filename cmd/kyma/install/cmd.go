@@ -87,7 +87,7 @@ Before you use the command, make sure your setup meets the following prerequisit
 Here are the installation steps:
 
 The standard installation uses the minimal configuration. The system performs the following steps:
-1. Fetches the `+ "`tiller.yaml`"+` file from the `+"`/installation/resources`"+` directory and deploys it to the cluster.
+1. Fetches the ` + "`tiller.yaml`" + ` file from the ` + "`/installation/resources`" + ` directory and deploys it to the cluster.
 2. Deploys and configures the Kyma Installer. At this point, steps differ depending on the installation type.
     <div tabs name="installation">
     <details>
@@ -118,8 +118,8 @@ The standard installation uses the minimal configuration. The system performs th
     </details>
     </div>
 3. Configures Helm. If installed, Helm is automatically configured using certificates from Tiller. This step is optional.
-4. Runs Kyma installation until the `+"**installed**"+` status confirms the successful installation.
-	> **NOTE**: You can override the standard installation settings using the `+"`--override`"+` flag.
+4. Runs Kyma installation until the ` + "**installed**" + ` status confirms the successful installation.
+	> **NOTE**: You can override the standard installation settings using the ` + "`--override`" + ` flag.
 
 ### Usage
 `,
@@ -136,11 +136,10 @@ The standard installation uses the minimal configuration. The system performs th
 	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 30*time.Minute, "Time-out after which CLI stops watching the installation progress")
 	cobraCmd.Flags().StringVarP(&o.Password, "password", "p", "", "Specifies the predefined cluster password.")
 	cobraCmd.Flags().VarP(&o.OverrideConfigs, "override", "o", "Specifies the path to a yaml file with parameters to override.")
-    cobraCmd.Flags().Bool("help", false, "Displays help for the command.")
+	cobraCmd.Flags().Bool("help", false, "Displays help for the command.")
 
 	return cobraCmd
 }
-
 
 //Run runs the command
 func (cmd *command) Run() error {
@@ -893,7 +892,13 @@ func (cmd *command) waitForInstaller() error {
 		default:
 			status, desc, err := cmd.getInstallationStatus()
 			if err != nil {
-				return err
+				// A timeout when asking for the status can happen if the cluster is under high load while installing Kyma.
+				// But it should not make the CLI stop waiting immediately.
+				if strings.Contains("operation timed out", err.Error()) {
+					cmd.CurrentStep.LogError("Could not get the status, retrying...")
+				} else {
+					return err
+				}
 			}
 
 			switch status {
