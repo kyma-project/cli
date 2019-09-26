@@ -16,14 +16,11 @@ func TestUninstallFlags(t *testing.T) {
 	c.SetOutput(ioutil.Discard) // not interested in the command's output
 
 	// test default flag values
-	require.Error(t, c.Execute(), "Command execution fails") // command fails becuase there is no kyma to uninstall, but it is ok.
 	require.Equal(t, 30*time.Minute, o.Timeout, "Incorrect default uninstall time-out")
 
 	// test passing flags
-	c.SetArgs([]string{"--timeout=60m0s"})
-
-	require.Error(t, c.Execute(), "Command execution fails")
-	require.Equal(t, 60*time.Minute, o.Timeout, "Incorrect default uninstall time-out")
+	c.ParseFlags([]string{"--timeout=60m0s"})
+	require.Equal(t, 60*time.Minute, o.Timeout, "Incorrect specified uninstall time-out")
 }
 
 func TestUninstallSubcommands(t *testing.T) {
