@@ -12,10 +12,11 @@ FLAGS = -ldflags '-X github.com/kyma-project/cli/cmd/kyma/version.Version=$(VERS
 
 .PHONY: resolve
 resolve: 
-	dep ensure -vendor-only -v
+	go mod tidy
 
 .PHONY: validate
 validate:
+	go mod vendor
 	go build -o golint-vendored ./vendor/golang.org/x/lint/golint
 	./golint-vendored
 	rm golint-vendored
