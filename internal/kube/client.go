@@ -102,7 +102,7 @@ func (c *client) Config() *rest.Config {
 }
 
 func (c *client) IsPodDeployed(namespace, name string) (bool, error) {
-	_, err := c.Static().CoreV1().Pods(namespace).Get(name, metav1.GetOptions{IncludeUninitialized: true})
+	_, err := c.Static().CoreV1().Pods(namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
 			return false, nil
@@ -125,7 +125,7 @@ func (c *client) IsPodDeployedByLabel(namespace, labelName, labelValue string) (
 
 func (c *client) WaitPodStatus(namespace, name string, status corev1.PodPhase) error {
 	for {
-		pod, err := c.Static().CoreV1().Pods(namespace).Get(name, metav1.GetOptions{IncludeUninitialized: true})
+		pod, err := c.Static().CoreV1().Pods(namespace).Get(name, metav1.GetOptions{})
 		if err != nil && !strings.Contains(err.Error(), "not found") {
 			return err
 		}
