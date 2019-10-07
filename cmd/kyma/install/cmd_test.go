@@ -107,7 +107,7 @@ func Test_ReplaceDockerImageURL(t *testing.T) {
 								"containers": []interface{}{
 									map[interface{}]interface{}{
 										"name":  "kyma-installer-container",
-										"image": "eu.gcr.io/kyma-project/develop/kyma-installer:63f27f76",
+										"image": "eu.gcr.io/kyma-project/kyma-installer:63f27f76",
 									},
 								},
 							},

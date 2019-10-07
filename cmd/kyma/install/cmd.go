@@ -58,8 +58,7 @@ const (
 	sleep                       = 10 * time.Second
 	releaseSrcUrlPattern        = "https://raw.githubusercontent.com/kyma-project/kyma/%s/%s"
 	releaseResourcePattern      = "https://raw.githubusercontent.com/kyma-project/kyma/%s/installation/resources/%s"
-	registryReleaseImagePattern = "eu.gcr.io/kyma-project/kyma-installer:%s"
-	registryMasterImagePattern  = "eu.gcr.io/kyma-project/develop/kyma-installer:%s"
+	registryImagePattern = "eu.gcr.io/kyma-project/kyma-installer:%s"
 	localDomain                 = "kyma.local"
 )
 
@@ -299,14 +298,14 @@ func (cmd *command) validateFlags() error {
 		}
 		cmd.opts.ReleaseVersion = fmt.Sprintf("master-%s", latest)
 		cmd.opts.ConfigVersion = "master"
-		cmd.opts.RegistryTemplate = registryMasterImagePattern
+		cmd.opts.RegistryTemplate = registryImagePattern
 		break
 
 	//Install the specific version from release (ex: 1.3.0)
 	case cmd.isSemVer(cmd.opts.Source):
 		cmd.opts.ReleaseVersion = cmd.opts.Source
 		cmd.opts.ConfigVersion = cmd.opts.Source
-		cmd.opts.RegistryTemplate = registryReleaseImagePattern
+		cmd.opts.RegistryTemplate = registryImagePattern
 		break
 
 	//Install the kyma with the specific installer image (docker image URL)
