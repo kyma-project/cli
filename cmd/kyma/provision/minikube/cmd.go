@@ -231,7 +231,7 @@ func (c *command) startMinikube() error {
 		"--vm-driver", c.opts.VMDriver,
 		"--disk-size", c.opts.DiskSize,
 		"-b", bootstrapper,
-		"-profile", c.opts.Profile,
+		"--profile", c.opts.Profile,
 	}
 
 	if c.opts.VMDriver == vmDriverHyperv {
