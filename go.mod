@@ -2,6 +2,8 @@ module github.com/kyma-project/cli
 
 go 1.11
 
+replace github.com/census-instrumentation/opencensus-proto v0.1.0-0.20181214143942-ba49f56771b8 => github.com/census-instrumentation/opencensus-proto v0.0.3-0.20181214143942-ba49f56771b8
+
 require (
 	cloud.google.com/go/bigtable v1.0.0 // indirect
 	cloud.google.com/go/storage v1.1.0 // indirect
@@ -12,18 +14,21 @@ require (
 	github.com/dustinkirkland/golang-petname v0.0.0-20190613200456-11339a705ed2 // indirect
 	github.com/fatih/color v1.7.0
 	github.com/fsouza/go-dockerclient v1.4.5-0.20190927145838-348231a36c19
-	github.com/gardener/gardener v0.0.0-20191004085047-5707d498b40c // indirect
+	github.com/gardener/gardener v0.0.0-20190906111529-f9ad04069615 // indirect
 	github.com/gogo/protobuf v1.3.0 // indirect
 	github.com/golangplus/bytes v0.0.0-20160111154220-45c989fe5450 // indirect
 	github.com/golangplus/fmt v0.0.0-20150411045040-2a5d6d7d2995 // indirect
 	github.com/golangplus/testing v0.0.0-20180327235837-af21d9c3145e // indirect
-	github.com/hashicorp/terraform v0.12.9 // indirect
+	github.com/hashicorp/go-cleanhttp v0.5.1 // indirect
+	github.com/hashicorp/go-version v1.2.0 // indirect
+	github.com/hashicorp/terraform v0.11.14 // indirect
 	github.com/imdario/mergo v0.3.8 // indirect
 	github.com/kyma-incubator/hydroform v0.0.0-20190930121416-6a54461f2038
-	github.com/kyma-incubator/octopus v0.0.0-20190906081952-61dd23f9bf59
+	github.com/kyma-incubator/octopus v0.0.0-20191009105757-2e9d86cd9967
 	github.com/kyma-incubator/terraform-provider-gardener v0.0.0-20191002133047-f98ea637a5da // indirect
 	github.com/kyma-project/kyma v0.5.1-0.20190909070658-69599d4a33a2
 	github.com/mattn/go-isatty v0.0.9 // indirect
+	github.com/mattn/go-runewidth v0.0.4 // indirect
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/olekukonko/tablewriter v0.0.1
 	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
