@@ -10,7 +10,7 @@ func PromptUser() bool {
 			return false
 		}
 		switch res {
-		case "Yes", "Y":
+		case "Yes", "Y", "yes", "y":
 			return true
 		case "no", "n":
 			return false
