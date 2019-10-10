@@ -10,6 +10,7 @@ type Options struct {
 	Memory              string
 	CPUS                string
 	HypervVirtualSwitch string
+	Profile             string
 }
 
 //NewOptions creates options with default values
