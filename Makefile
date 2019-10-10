@@ -12,7 +12,7 @@ FLAGS = -ldflags '-X github.com/kyma-project/cli/cmd/kyma/version.Version=$(VERS
 
 .PHONY: resolve
 resolve: 
-	go mod tidy -v
+	go mod tidy
 
 .PHONY: validate
 validate:
