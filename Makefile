@@ -16,10 +16,7 @@ resolve:
 
 .PHONY: validate
 validate:
-	go mod vendor
-	go build -o golint-vendored ./vendor/golang.org/x/lint/golint
-	./golint-vendored
-	rm golint-vendored
+	golint
 
 .PHONY: build
 build: build-windows build-linux build-darwin
