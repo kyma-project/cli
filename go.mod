@@ -4,6 +4,8 @@ go 1.12
 
 replace github.com/census-instrumentation/opencensus-proto v0.1.0-0.20181214143942-ba49f56771b8 => github.com/census-instrumentation/opencensus-proto v0.0.3-0.20181214143942-ba49f56771b8
 
+replace gomodules.xyz/jsonpatch/v2 => github.com/gomodules/jsonpatch v2.0.0+incompatible
+
 require (
 	cloud.google.com/go v0.46.3 // indirect
 	github.com/Masterminds/semver v1.5.0
@@ -41,9 +43,7 @@ require (
 	google.golang.org/grpc v1.24.0 // indirect
 	gopkg.in/src-d/go-git.v4 v4.13.1
 	gopkg.in/yaml.v2 v2.2.4
-	k8s.io/api v0.0.0-20190918195907-bd6ac527cfd2
-	k8s.io/apimachinery v0.0.0-20190817020851-f2f3a405f61d
+	k8s.io/api v0.0.0-20190620084959-7cf5895f2711
+	k8s.io/apimachinery v0.0.0-20190612205821-1799e75a0719
 	k8s.io/client-go v12.0.0+incompatible
-	k8s.io/kube-openapi v0.0.0-20190918143330-0270cf2f1c1d // indirect
-	k8s.io/utils v0.0.0-20190923111123-69764acb6e8e // indirect
 )
