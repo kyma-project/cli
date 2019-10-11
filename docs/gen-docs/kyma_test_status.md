@@ -23,7 +23,7 @@ kyma test status <test-suite-1> <test-suite-2> ... <test-suite-N> [flags]
 ### Options
 
 ```
-  -h  --help            Displays help for the command.
+  -h, --help            Displays help for the command.
   -o, --output string   Output format. One of: json|yaml|wide
 ```
 

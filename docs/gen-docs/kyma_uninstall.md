@@ -23,7 +23,7 @@ kyma uninstall [flags]
 ### Options
 
 ```
-  -h  --help               Displays help for the command.
+  -h, --help               Displays help for the command.
       --timeout duration   Time-out after which Kyma CLI stops watching the the process of unstalling Kyma. (default 30m0s)
 ```
 

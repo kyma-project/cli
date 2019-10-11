@@ -49,11 +49,11 @@ kyma install [flags]
 
 ```
   -d, --domain string                        Specifies the domain used for installation. (default "kyma.local")
-  -h  --help                                 Displays help for the command.
+  -h,  --help                                 Displays help for the command.
   -n, --noWait                               Determines if the command should wait for the Kyma installation to complete.
   -o, --override []string                    Specifies the path to a yaml file with parameters to override. (default [])
   -p, --password string                      Specifies the predefined cluster password.
-  -s, --source kyma install --source=1.3.0   Specifies the installation source. To use the specific release, write kyma install --source=1.3.0 . To use the latest master, write `kyma install --source=latest`. To use the local sources, write kyma install --source=local. To use the remote image, write kyma install --source=user/my-kyma-installer:v1.4.0
+  -s, --source   string                      Specifies the installation source. To use the specific release, write kyma install --source=1.3.0 . To use the latest master, write `kyma install --source=latest`. To use the local sources, write kyma install --source=local. To use the remote image, write kyma install --source=user/my-kyma-installer:v1.4.0
       --src-path string                      Specifies the absolute path to local sources.
       --timeout duration                     Time-out after which CLI stops watching the installation progress (default 30m0s)
       --tlsCert string                       Specifies the TLS certificate for the domain used for installation.
@@ -63,7 +63,7 @@ kyma install [flags]
 ### Options inherited from parent commands
 
 ```
-      --kubeconfig string   Use the default KUBECONFIG environment variable or /$HOME/.kube/config if KUBECONFIG is not set
+      --kubeconfig string   Specifies the path to the kubeconfig file. Use the default KUBECONFIG environment variable or /$HOME/.kube/config if KUBECONFIG is not set
       --non-interactive     Enables the non-interactive shell mode.
   -v, --verbose             Displays details of actions triggered by the command.
 ```

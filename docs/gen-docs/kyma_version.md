@@ -15,7 +15,7 @@ kyma version [flags]
 
 ```
   -c, --client   Client version only (no server required)
-  -h  --help     Displays help for the command.
+  -h, --help     Displays help for the command.
 ```
 
 ### Options inherited from parent commands

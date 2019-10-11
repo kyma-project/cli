@@ -15,7 +15,7 @@ kyma provision minikube [flags]
 ```
       --cpus string                  Specifies the number of CPUs used for installation. (default "4")
       --disk-size string             Specifies the disk size used for installation. (default "30g")
--h  --help                         Displays help for the command.
+-h,   --help                         Displays help for the command.
       --hypervVirtualSwitch string   Specifies the Hyper-V switch version if you choose Hyper-V as the driver.
       --memory string                Specifies RAM reserved for installation. (default "8192")
       --profile string               Specifies the minikube profile. (default "minikube")

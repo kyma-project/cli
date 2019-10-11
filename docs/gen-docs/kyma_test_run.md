@@ -22,7 +22,7 @@ kyma test run <test-definition-1> <test-defintion-2> ... <test-definition-N> [fl
 ```
       --concurrency int   Number of tests to be executed in parallel. (default 1)
   -c, --count int         Number of execution rounds for each test in the suite. You cannot configure this value in parallel with max-retries (default 1)
-      -h  --help              Displays help for the command.
+  -h, --help              Displays help for the command.
       --max-retries int   Number of retries for a failed test. (default 1)
   -n, --name string       Name of the new test suite
 ```

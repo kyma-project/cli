@@ -9,7 +9,7 @@ Provisions a cluster for Kyma installation.
 ### Options
 
 ```
-  -h  --help   Displays help for the command.
+  -h, --help   Displays help for the command.
 ```
 
 ### Options inherited from parent commands

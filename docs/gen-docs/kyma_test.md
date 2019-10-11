@@ -9,7 +9,7 @@ Use this command to run tests on a provisioned Kyma cluster.
 ### Options
 
 ```
-      -h  --help   Displays help for the command.
+-h,  --help   Displays help for the command.
 ```
 
 ### Options inherited from parent commands
