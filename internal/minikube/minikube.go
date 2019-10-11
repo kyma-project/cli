@@ -16,7 +16,13 @@ const (
 )
 
 //RunCmd executes a minikube command with given arguments
-func RunCmd(verbose bool, args ...string) (string, error) {
+func RunCmd(verbose bool, profile string, rawArgs ...string) (string, error) {
+	args := []string{}
+	if profile != "" {
+		args = append(args, "--profile")
+		args = append(args, profile)
+	}
+	args = append(args, rawArgs...)
 	cmd := exec.Command("minikube", args...)
 	out, err := cmd.CombinedOutput()
 	unquotedOut := strings.Replace(string(out), "'", "", -1)
@@ -35,7 +41,7 @@ func RunCmd(verbose bool, args ...string) (string, error) {
 
 //CheckVersion checks whether minikube version is supported
 func CheckVersion(verbose bool) (string, error) {
-	versionText, err := RunCmd(verbose, "version")
+	versionText, err := RunCmd(verbose, "", "version")
 	if err != nil {
 		return "", err
 	}
@@ -61,8 +67,8 @@ func CheckVersion(verbose bool) (string, error) {
 }
 
 //DockerClient creates a docker client based on minikube "docker-env" configuration
-func DockerClient(verbose bool) (*docker.Client, error) {
-	envOut, err := RunCmd(verbose, "docker-env")
+func DockerClient(verbose bool, profile string) (*docker.Client, error) {
+	envOut, err := RunCmd(verbose, profile, "docker-env")
 	if err != nil {
 		return nil, err
 	}
