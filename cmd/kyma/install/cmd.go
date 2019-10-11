@@ -50,16 +50,17 @@ type command struct {
 type clusterInfo struct {
 	isLocal       bool
 	provider      string
+	profile       string
 	localIP       string
 	localVMDriver string
 }
 
 const (
-	sleep                       = 10 * time.Second
-	releaseSrcUrlPattern        = "https://raw.githubusercontent.com/kyma-project/kyma/%s/%s"
-	releaseResourcePattern      = "https://raw.githubusercontent.com/kyma-project/kyma/%s/installation/resources/%s"
-	registryImagePattern = "eu.gcr.io/kyma-project/kyma-installer:%s"
-	localDomain                 = "kyma.local"
+	sleep                  = 10 * time.Second
+	releaseSrcUrlPattern   = "https://raw.githubusercontent.com/kyma-project/kyma/%s/%s"
+	releaseResourcePattern = "https://raw.githubusercontent.com/kyma-project/kyma/%s/installation/resources/%s"
+	registryImagePattern   = "eu.gcr.io/kyma-project/kyma-installer:%s"
+	localDomain            = "kyma.local"
 )
 
 //NewCmd creates a new kyma command
@@ -185,7 +186,7 @@ func (cmd *command) Run() error {
 	s.Successf("Cluster info read")
 
 	s = cmd.NewStep("Loading installation files")
-	resources, err := cmd.loadAndConfigureInstallationFiles(clusterConfig.isLocal)
+	resources, err := cmd.loadAndConfigureInstallationFiles(clusterConfig)
 	if err != nil {
 		s.Failure()
 		return err
@@ -506,9 +507,9 @@ func (cmd *command) replaceDockerImageURL(resources []map[string]interface{}, im
 	return nil, errors.New("unable to find 'image' field for kyma installer 'Deployment'")
 }
 
-func (cmd *command) loadAndConfigureInstallationFiles(isLocalInstallation bool) ([]map[string]interface{}, error) {
+func (cmd *command) loadAndConfigureInstallationFiles(clusterInfo clusterInfo) ([]map[string]interface{}, error) {
 	var installationFiles []string
-	if isLocalInstallation {
+	if clusterInfo.isLocal {
 		installationFiles = []string{"installer-local.yaml", "installer-config-local.yaml.tpl", "installer-cr.yaml.tpl"}
 	} else {
 		installationFiles = []string{"installer.yaml", "installer-cr-cluster.yaml.tpl"}
@@ -530,7 +531,7 @@ func (cmd *command) loadAndConfigureInstallationFiles(isLocalInstallation bool) 
 			return nil, err
 		}
 
-		err = cmd.buildKymaInstaller(imageName)
+		err = cmd.buildKymaInstaller(imageName, clusterInfo)
 		if err != nil {
 			return nil, err
 		}
@@ -657,8 +658,8 @@ func (cmd *command) loadInstallationResourceFiles(resourcePaths []string, fromLo
 	return resources, nil
 }
 
-func (cmd *command) buildKymaInstaller(imageName string) error {
-	dc, err := minikube.DockerClient(cmd.opts.Verbose)
+func (cmd *command) buildKymaInstaller(imageName string, clusterInfo clusterInfo) error {
+	dc, err := minikube.DockerClient(cmd.opts.Verbose, clusterInfo.profile)
 	if err != nil {
 		return err
 	}
@@ -1038,6 +1039,7 @@ func (cmd *command) getClusterInfoFromConfigMap() (clusterInfo, error) {
 	clusterConfig := clusterInfo{
 		isLocal:       isLocal,
 		provider:      cm.Data["provider"],
+		profile:       cm.Data["profile"],
 		localIP:       cm.Data["localIP"],
 		localVMDriver: cm.Data["localVMDriver"],
 	}

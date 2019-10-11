@@ -68,7 +68,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cmd.Flags().StringVar(&o.DiskSize, "disk-size", "30g", "Specifies the disk size used for installation.")
 	cmd.Flags().StringVar(&o.Memory, "memory", "8192", "Specifies RAM reserved for installation.")
 	cmd.Flags().StringVar(&o.CPUS, "cpus", "4", "Specifies the number of CPUs used for installation.")
-	cmd.Flags().StringVar(&o.Profile, "profile", "minikube", "Specifies the minikube profile.")
+	cmd.Flags().StringVar(&o.Profile, "profile", "", "Specifies the minikube profile.")
 	cmd.Flags().Bool("help", false, "Displays help for the command.")
 	return cmd
 }
@@ -192,7 +192,7 @@ func (c *command) checkRequirements(s step.Step) error {
 }
 
 func (c *command) checkIfMinikubeIsInitialized(s step.Step) error {
-	statusText, _ := minikube.RunCmd(c.opts.Verbose, "status", "-b", bootstrapper, "--format", "{{.Host}}")
+	statusText, _ := minikube.RunCmd(c.opts.Verbose, c.opts.Profile, "status", "-b", bootstrapper, "--format", "{{.Host}}")
 
 	if strings.TrimSpace(statusText) != "" {
 		var answer bool
@@ -200,7 +200,7 @@ func (c *command) checkIfMinikubeIsInitialized(s step.Step) error {
 			answer = s.PromptYesNo("Do you want to remove the existing Minikube cluster? ")
 		}
 		if c.opts.NonInteractive || answer {
-			_, err := minikube.RunCmd(c.opts.Verbose, "delete")
+			_, err := minikube.RunCmd(c.opts.Verbose, c.opts.Profile, "delete")
 			if err != nil {
 				return err
 			}
@@ -213,7 +213,7 @@ func (c *command) checkIfMinikubeIsInitialized(s step.Step) error {
 
 func (c *command) initializeMinikubeConfig() error {
 	// Disable default nginx ingress controller
-	_, err := minikube.RunCmd(c.opts.Verbose, "config", "unset", "ingress")
+	_, err := minikube.RunCmd(c.opts.Verbose, c.opts.Profile, "config", "unset", "ingress")
 	if err != nil {
 		return err
 	}
@@ -231,14 +231,12 @@ func (c *command) startMinikube() error {
 		"--vm-driver", c.opts.VMDriver,
 		"--disk-size", c.opts.DiskSize,
 		"-b", bootstrapper,
-		"--profile", c.opts.Profile,
 	}
 
 	if c.opts.VMDriver == vmDriverHyperv {
 		startCmd = append(startCmd, "--hyperv-virtual-switch="+c.opts.HypervVirtualSwitch)
-
 	}
-	_, err := minikube.RunCmd(c.opts.Verbose, startCmd...)
+	_, err := minikube.RunCmd(c.opts.Verbose, c.opts.Profile, startCmd...)
 	if err != nil {
 		return err
 	}
@@ -276,7 +274,7 @@ func (c *command) createClusterRoleBinding() error {
 
 func (c *command) waitForMinikubeToBeUp(step step.Step) error {
 	for {
-		statusText, err := minikube.RunCmd(c.opts.Verbose, "status", "-b="+bootstrapper, "--format", "'{{.Host}}'")
+		statusText, err := minikube.RunCmd(c.opts.Verbose, c.opts.Profile, "status", "-b="+bootstrapper, "--format", "'{{.Host}}'")
 		if err != nil {
 			return err
 		}
@@ -289,7 +287,7 @@ func (c *command) waitForMinikubeToBeUp(step step.Step) error {
 	}
 
 	for {
-		statusText, err := minikube.RunCmd(c.opts.Verbose, "status", "-b="+bootstrapper, "--format", "'{{.Kubelet}}'")
+		statusText, err := minikube.RunCmd(c.opts.Verbose, c.opts.Profile, "status", "-b="+bootstrapper, "--format", "'{{.Kubelet}}'")
 		if err != nil {
 			return err
 		}
@@ -307,7 +305,7 @@ func (c *command) waitForMinikubeToBeUp(step step.Step) error {
 // Default value of 128 is not enough to perform “kubectl log -f” from pods, hence increased to 524288
 func (c *command) increaseFsInotifyMaxUserInstances() error {
 	if c.opts.VMDriver != vmDriverNone {
-		_, err := minikube.RunCmd(c.opts.Verbose, "ssh", "--", "sudo sysctl -w fs.inotify.max_user_instances=524288")
+		_, err := minikube.RunCmd(c.opts.Verbose, c.opts.Profile, "ssh", "--", "sudo sysctl -w fs.inotify.max_user_instances=524288")
 		if err != nil {
 			return err
 		}
@@ -317,7 +315,7 @@ func (c *command) increaseFsInotifyMaxUserInstances() error {
 }
 
 func (c *command) enableMetricsServer() error {
-	_, err := minikube.RunCmd(c.opts.Verbose, "addons", "enable", "metrics-server")
+	_, err := minikube.RunCmd(c.opts.Verbose, c.opts.Profile, "addons", "enable", "metrics-server")
 	if err != nil {
 		return err
 	}
@@ -327,7 +325,7 @@ func (c *command) enableMetricsServer() error {
 func (c *command) printSummary() error {
 	fmt.Println()
 	fmt.Println("Minikube cluster installed")
-	clusterInfo, err := minikube.RunCmd(c.opts.Verbose, "status", "-b="+bootstrapper)
+	clusterInfo, err := minikube.RunCmd(c.opts.Verbose, c.opts.Profile, "status", "-b="+bootstrapper)
 	if err != nil {
 		fmt.Printf("Cannot show cluster-info because of '%s", err)
 	} else {
@@ -358,6 +356,7 @@ func (c *command) createClusterInfoConfigMap() error {
 		Data: map[string]string{
 			"provider":      "minikube",
 			"isLocal":       "true",
+			"profile":       c.opts.Profile,
 			"localIP":       minikubeIP,
 			"localVMDriver": c.opts.VMDriver,
 		},
@@ -367,7 +366,7 @@ func (c *command) createClusterInfoConfigMap() error {
 }
 
 func (c *command) getMinikubeIP() string {
-	minikubeIP, err := minikube.RunCmd(c.opts.Verbose, "ip")
+	minikubeIP, err := minikube.RunCmd(c.opts.Verbose, c.opts.Profile, "ip")
 	if err != nil {
 		c.CurrentStep.LogInfo("Unable to perform 'minikube ip' command. IP won't be passed to Kyma")
 		return ""
