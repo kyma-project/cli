@@ -9,8 +9,6 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-const NamespaceForTests = "kyma-system"
-
 type OctopusInterface interface {
 	ListTestDefinitions(opts metav1.ListOptions) (result *oct.TestDefinitionList, err error)
 	ListTestSuites(opts metav1.ListOptions) (result *oct.ClusterTestSuiteList, err error)
@@ -40,7 +38,6 @@ func NewFromConfig(config *rest.Config) (OctopusInterface, error) {
 func (t *OctopusRestClient) ListTestDefinitions(opts metav1.ListOptions) (result *oct.TestDefinitionList, err error) {
 	result = &oct.TestDefinitionList{}
 	err = t.restClient.Get().
-		Namespace(NamespaceForTests).
 		Resource("testdefinitions").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Do().
