@@ -90,7 +90,7 @@ The standard installation uses the minimal configuration. The system performs th
 1. Fetches the ` + "`tiller.yaml`" + ` file from the ` + "`/installation/resources`" + ` directory and deploys it to the cluster.
 2. Deploys and configures the Kyma Installer. At this point, steps differ depending on the installation type.
 
-    When you install Kyma locally from release, the system:
+    When you install Kyma locally ` + "**from release**" + `, the system:
     1. Fetches the latest or specified release along with configuration.
     2. Deploys the Kyma Installer on the cluster.
     3. Applies downloaded or defined configuration.
@@ -98,7 +98,7 @@ The standard installation uses the minimal configuration. The system performs th
     5. Sets the admin password.
     6. Patches the Minikube IP.
 	
-    When you install Kyma locally from sources, the system:
+    When you install Kyma locally ` + "**from sources**" + `, the system:
     1. Fetches the configuration yaml files from the local sources.
     2. Builds the Kyma Installer image.
     3. Deploys the Kyma Installer and applies the fetched configuration.
@@ -120,7 +120,7 @@ The standard installation uses the minimal configuration. The system performs th
 	cobraCmd.Flags().StringVarP(&o.TLSKey, "tlsKey", "", "", "Specifies the TLS key for the domain used for installation.")
 	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", DefaultKymaVersion, "Specifies the installation source. To use the specific release, write kyma install --source=1.3.0. To use the latest master, write kyma install --source=latest. To use the local sources, write kyma install --source=local. To use the remote image, write kyma install --source=user/my-kyma-installer:v1.4.0.")
 	cobraCmd.Flags().StringVarP(&o.LocalSrcPath, "src-path", "", "", "Specifies the absolute path to local sources.")
-	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 30*time.Minute, "Time-out after which CLI stops watching the installation progress")
+	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 30*time.Minute, "Time-out after which CLI stops watching the installation progress.")
 	cobraCmd.Flags().StringVarP(&o.Password, "password", "p", "", "Specifies the predefined cluster password.")
 	cobraCmd.Flags().VarP(&o.OverrideConfigs, "override", "o", "Specifies the path to a yaml file with parameters to override.")
 	cobraCmd.Flags().Bool("help", false, "Displays help for the command.")
