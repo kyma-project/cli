@@ -51,7 +51,7 @@ This command:
 - Removes Tiller.
 - Removes the Kyma Installer.
 
-### Usage
+
 `,
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 		Aliases: []string{"i"},

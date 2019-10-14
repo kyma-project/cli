@@ -21,7 +21,7 @@ kyma test run <test-definition-1> <test-defintion-2> ... <test-definition-N> [fl
 
 ```
       --concurrency int   Number of tests to be executed in parallel. (default 1)
-  -c, --count int         Number of execution rounds for each test in the suite. You cannot configure this value in parallel with max-retries (default 1)
+  -c, --count int         Number of execution rounds for each test in the suite. You cannot configure this value in parallel with max-retries. (default 1)
   -h, --help              Displays help for the command.
       --max-retries int   Number of retries for a failed test. (default 1)
   -n, --name string       Name of the new test suite
@@ -30,7 +30,7 @@ kyma test run <test-definition-1> <test-defintion-2> ... <test-definition-N> [fl
 ### Options inherited from parent commands
 
 ```
-      --kubeconfig string   Specifies the path to the kubeconfig file. Use the default KUBECONFIG environment variable or /$HOME/.kube/config if KUBECONFIG is not set.
+      --kubeconfig string   Specifies the path to the kubeconfig file. Use the default KUBECONFIG environment variable or /$HOME/.kube/config if KUBECONFIG is not set.
       --non-interactive     Enables the non-interactive shell mode.
   -v, --verbose             Displays details of actions triggered by the command.
 ```
@@ -38,5 +38,4 @@ kyma test run <test-definition-1> <test-defintion-2> ... <test-definition-N> [fl
 ### SEE ALSO
 
 * [kyma test](kyma_test.md)	 - Run tests on a provisioned Kyma cluster.
-
 

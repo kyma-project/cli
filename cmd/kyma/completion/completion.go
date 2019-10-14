@@ -14,7 +14,7 @@ func NewCmd() *cobra.Command {
 		Long: `Use this command to display the shell completion code used for interactive command completion. 
 To configure your bash shell to load completions, add ` + "`. <(kyma completion)`" + ` to your bash profile.
 
-### Usage 
+ 
 `,
 		RunE:    completion,
 		Aliases: []string{},
