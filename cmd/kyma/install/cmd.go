@@ -246,7 +246,7 @@ func (cmd *command) Run() error {
 
 	if clusterConfig.isLocal {
 		s = cmd.NewStep("Adding domains to /etc/hosts")
-		err = cmd.addDevDomainsToEtcHosts(s, clusterConfig.localIP, clusterConfig.localVMDriver)
+		err = cmd.addDevDomainsToEtcHosts(s, clusterConfig)
 		if err != nil {
 			s.Failure()
 			return err
@@ -994,7 +994,7 @@ func (cmd *command) importCertificate(ca trust.Certifier) error {
 	return nil
 }
 
-func (cmd *command) addDevDomainsToEtcHosts(s step.Step, IP string, VMDriver string) error {
+func (cmd *command) addDevDomainsToEtcHosts(s step.Step, clusterInfo clusterInfo) error {
 	hostnames := ""
 
 	vsList, err := cmd.K8s.Istio().NetworkingV1alpha3().VirtualServices("kyma-system").List(metav1.ListOptions{})
@@ -1010,14 +1010,14 @@ func (cmd *command) addDevDomainsToEtcHosts(s step.Step, IP string, VMDriver str
 
 	hostAlias := "127.0.0.1" + hostnames
 
-	if VMDriver != "none" {
-		_, err := minikube.RunCmd(cmd.opts.Verbose, "ssh", "sudo /bin/sh -c 'echo \""+hostAlias+"\" >> /etc/hosts'")
+	if clusterInfo.localVMDriver != "none" {
+		_, err := minikube.RunCmd(cmd.opts.Verbose, clusterInfo.profile, "ssh", "sudo /bin/sh -c 'echo \""+hostAlias+"\" >> /etc/hosts'")
 		if err != nil {
 			return err
 		}
 	}
 
-	hostAlias = strings.Trim(IP, "\n") + hostnames
+	hostAlias = strings.Trim(clusterInfo.localIP, "\n") + hostnames
 
 	return addDevDomainsToEtcHostsOSSpecific(cmd.opts.Domain, s, hostAlias)
 }
