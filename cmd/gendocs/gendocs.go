@@ -12,7 +12,7 @@ import (
 const DocsTargetDir = "./docs/gen-docs"
 
 func main() {
-	command := kyma.NewCmd(cli.NewOptions())
+	command := cmd.NewCmd(cli.NewOptions())
 	err := doc.GenMarkdownTree(command, DocsTargetDir)
 	if err != nil {
 		fmt.Println("unable to generate docs", err.Error())
