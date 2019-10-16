@@ -10,7 +10,7 @@ import (
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/pkg/api/octopus"
-	"github.com/kyma-project/cli/cmd/kyma/test"
+	"github.com/kyma-project/cli/internal/cmd/test"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"

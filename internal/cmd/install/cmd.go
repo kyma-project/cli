@@ -17,7 +17,7 @@ import (
 	"github.com/kyma-project/cli/internal/nice"
 	"github.com/kyma-project/cli/internal/step"
 
-	"github.com/kyma-project/cli/cmd/kyma/version"
+	"github.com/kyma-project/cli/internal/cmd/version"
 
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"

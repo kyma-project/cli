@@ -1,20 +1,20 @@
-package main
+package cmd
 
 import (
-	"github.com/kyma-project/cli/cmd/kyma/completion"
-	"github.com/kyma-project/cli/cmd/kyma/console"
-	"github.com/kyma-project/cli/cmd/kyma/install"
-	"github.com/kyma-project/cli/cmd/kyma/provision/minikube"
-	"github.com/kyma-project/cli/cmd/kyma/test"
-	"github.com/kyma-project/cli/cmd/kyma/test/definitions"
-	del "github.com/kyma-project/cli/cmd/kyma/test/delete"
-	"github.com/kyma-project/cli/cmd/kyma/test/list"
-	"github.com/kyma-project/cli/cmd/kyma/test/run"
-	"github.com/kyma-project/cli/cmd/kyma/test/status"
-	"github.com/kyma-project/cli/cmd/kyma/uninstall"
-	"github.com/kyma-project/cli/cmd/kyma/version"
+	"github.com/kyma-project/cli/internal/cmd/completion"
+	"github.com/kyma-project/cli/internal/cmd/console"
+	"github.com/kyma-project/cli/internal/cmd/install"
+	"github.com/kyma-project/cli/internal/cmd/provision/minikube"
+	"github.com/kyma-project/cli/internal/cmd/test"
+	"github.com/kyma-project/cli/internal/cmd/test/definitions"
+	del "github.com/kyma-project/cli/internal/cmd/test/delete"
+	"github.com/kyma-project/cli/internal/cmd/test/list"
+	"github.com/kyma-project/cli/internal/cmd/test/run"
+	"github.com/kyma-project/cli/internal/cmd/test/status"
+	"github.com/kyma-project/cli/internal/cmd/uninstall"
+	"github.com/kyma-project/cli/internal/cmd/version"
 
-	"github.com/kyma-project/cli/cmd/kyma/provision"
+	"github.com/kyma-project/cli/internal/cmd/provision"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/spf13/cobra"
 )

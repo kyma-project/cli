@@ -4,10 +4,11 @@ import (
 	"os"
 
 	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/cmd"
 )
 
 func main() {
-	command := NewCmd(cli.NewOptions())
+	command := cmd.NewCmd(cli.NewOptions())
 
 	err := command.Execute()
 	if err != nil {

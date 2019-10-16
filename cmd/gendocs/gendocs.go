@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/kyma-project/cli/cmd/kyma"
+	"github.com/kyma-project/cli/internal/cmd"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/spf13/cobra/doc"
 )

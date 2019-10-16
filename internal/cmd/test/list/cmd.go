@@ -6,7 +6,7 @@ import (
 
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
-	"github.com/kyma-project/cli/cmd/kyma/test"
+	"github.com/kyma-project/cli/internal/cmd/test"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
