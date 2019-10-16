@@ -1,4 +1,4 @@
-package kyma
+package main
 
 import (
 	"github.com/kyma-project/cli/cmd/kyma/completion"

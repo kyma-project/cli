@@ -1,4 +1,4 @@
-package kyma
+package main
 
 import (
 	"io/ioutil"
