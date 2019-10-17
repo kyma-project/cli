@@ -11,12 +11,11 @@ type Options struct {
 	TargetProvider    string
 	Secret            string
 	KubernetesVersion string
-	Location          string
+	Region            string
 	Zone              string
 	MachineType       string
 	CIDR              string
 	DiskType          string
-	CPUS              int
 	DiskSizeGB        int
 	NodeCount         int
 	ScalerMin         int

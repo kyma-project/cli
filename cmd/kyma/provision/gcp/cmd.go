@@ -31,7 +31,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "gcp",
 		Short: "Provisions a GCP cluster.",
-		Long:  `Use this command to provision GCP for Kyma installation.`,
+		Long:  `Use this command to provision a GCP cluster for Kyma installation.`,
 		RunE:  func(_ *cobra.Command, _ []string) error { return c.Run() },
 	}
 
@@ -42,7 +42,6 @@ func NewCmd(o *Options) *cobra.Command {
 	cmd.Flags().StringVarP(&o.Location, "location", "l", "europe-west3-a", "Location of the cluster to provision.")
 	cmd.Flags().StringVarP(&o.MachineType, "type", "t", "n1-standard-4", "Type of machine of the cluster to provision.")
 	cmd.Flags().IntVar(&o.DiskSizeGB, "disk-size", 30, "Specifies the disk size in GB of the cluster to provision.")
-	cmd.Flags().IntVar(&o.CPUS, "cpus", 4, "Specifies the number of CPUs of the cluster to provision.")
 	cmd.Flags().IntVar(&o.NodeCount, "nodes", 1, "Specifies the number of nodes of the cluster to provision.")
 	cmd.Flags().StringSliceVarP(&o.Extra, "extra", "e", nil, "Provide one or more arguments of the form NAME=VALUE to add extra configurations.")
 
@@ -94,7 +93,6 @@ func newCluster(o *Options) *types.Cluster {
 	return &types.Cluster{
 		Name:              o.Name,
 		KubernetesVersion: o.KubernetesVersion,
-		CPU:               o.CPUS,
 		DiskSizeGB:        o.DiskSizeGB,
 		NodeCount:         o.NodeCount,
 		Location:          o.Location,

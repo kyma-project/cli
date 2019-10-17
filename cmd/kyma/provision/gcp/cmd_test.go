@@ -21,7 +21,6 @@ func TestProvisionGCPFlags(t *testing.T) {
 	require.Equal(t, "europe-west3-a", o.Location, "Default value for the location flag not as expected.")
 	require.Equal(t, "n1-standard-4", o.MachineType, "Default value for the type flag not as expected.")
 	require.Equal(t, 30, o.DiskSizeGB, "Default value for the disk-size flag not as expected.")
-	require.Equal(t, 4, o.CPUS, "Default value for the cpus flag not as expected.")
 	require.Equal(t, 1, o.NodeCount, "Default value for the nodes flag not as expected.")
 	require.Empty(t, o.Extra, "Default value for the extra flag not as expected.")
 
@@ -34,7 +33,6 @@ func TestProvisionGCPFlags(t *testing.T) {
 		"-l", "us-central1-c",
 		"-t", "quantum-computer",
 		"--disk-size", "2000",
-		"--cpus", "50",
 		"--nodes", "7",
 		"--extra", "VAR1=VALUE1,VAR2=VALUE2",
 	})
@@ -45,7 +43,6 @@ func TestProvisionGCPFlags(t *testing.T) {
 	require.Equal(t, "us-central1-c", o.Location, "The parsed value for the location flag not as expected.")
 	require.Equal(t, "quantum-computer", o.MachineType, "The parsed value for the type flag not as expected.")
 	require.Equal(t, 2000, o.DiskSizeGB, "The parsed value for the disk-size flag not as expected.")
-	require.Equal(t, 50, o.CPUS, "The parsed value for the cpus flag not as expected.")
 	require.Equal(t, 7, o.NodeCount, "The parsed value for the nodes flag not as expected.")
 	require.Equal(t, []string{"VAR1=VALUE1", "VAR2=VALUE2"}, o.Extra, "The parsed value for the extra flag not as expected.")
 }
@@ -65,7 +62,6 @@ func TestNewCluster(t *testing.T) {
 		KubernetesVersion: "1.16.0",
 		Location:          "north-pole",
 		MachineType:       "HAL",
-		CPUS:              6,
 		DiskSizeGB:        9000,
 		NodeCount:         3,
 	}
@@ -75,7 +71,6 @@ func TestNewCluster(t *testing.T) {
 	require.Equal(t, o.KubernetesVersion, c.KubernetesVersion, "Cluster Kubernetes version not as expected.")
 	require.Equal(t, o.Location, c.Location, "Cluster location not as expected.")
 	require.Equal(t, o.MachineType, c.MachineType, "Cluster machine type not as expected.")
-	require.Equal(t, o.CPUS, c.CPU, "Cluster number of CPUs not as expected.")
 	require.Equal(t, o.DiskSizeGB, c.DiskSizeGB, "Cluster disk size not as expected.")
 	require.Equal(t, o.NodeCount, c.NodeCount, "Cluster number of nodes not as expected.")
 }

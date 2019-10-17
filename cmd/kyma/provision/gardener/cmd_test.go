@@ -20,12 +20,11 @@ func TestProvisionGardenerFlags(t *testing.T) {
 	require.Equal(t, "gcp", o.TargetProvider, "The parsed value for the credentials flag should gcp")
 	require.Equal(t, "", o.Secret, "The parsed value for the secret flag not as expected.")
 	require.Equal(t, "1.15.4", o.KubernetesVersion, "Default value for the kube-version flag not as expected.")
-	require.Equal(t, "europe-west3", o.Location, "Default value for the location flag not as expected.")
+	require.Equal(t, "europe-west3", o.Region, "Default value for the region flag not as expected.")
 	require.Equal(t, "europe-west3-a", o.Zone, "Default value for the zone flag not as expected.")
 	require.Equal(t, "n1-standard-4", o.MachineType, "Default value for the type flag not as expected.")
 	require.Equal(t, 30, o.DiskSizeGB, "Default value for the disk-size flag not as expected.")
 	require.Equal(t, "pd-standard", o.DiskType, "Default value for the disk-type flag not as expected.")
-	require.Equal(t, 4, o.CPUS, "Default value for the cpus flag not as expected.")
 	require.Equal(t, 2, o.NodeCount, "Default value for the nodes flag not as expected.")
 	require.Equal(t, 2, o.ScalerMin, "Default value for the scaler-min flag not as expected.")
 	require.Equal(t, 4, o.ScalerMax, "Default value for the scaler-max flag not as expected.")
@@ -43,11 +42,10 @@ func TestProvisionGardenerFlags(t *testing.T) {
 		"-s", "my-ali-key",
 		"--disk-type", "a big one",
 		"-k", "1.16.0",
-		"-l", "us-central",
+		"-r", "us-central",
 		"-z", "us-central1-b",
 		"-t", "quantum-computer",
 		"--disk-size", "2000",
-		"--cpus", "50",
 		"--nodes", "7",
 		"--scaler-min", "88",
 		"--scaler-max", "99",
@@ -63,12 +61,11 @@ func TestProvisionGardenerFlags(t *testing.T) {
 	require.Equal(t, "Alibaba", o.TargetProvider, "The parsed value for the target-provider flag not as expected.")
 	require.Equal(t, "my-ali-key", o.Secret, "The parsed value for the secret flag not as expected.")
 	require.Equal(t, "1.16.0", o.KubernetesVersion, "The parsed value for the kube-version flag not as expected.")
-	require.Equal(t, "us-central", o.Location, "The parsed value for the location flag not as expected.")
+	require.Equal(t, "us-central", o.Region, "The parsed value for the region flag not as expected.")
 	require.Equal(t, "us-central1-b", o.Zone, "The parsed value for the zone flag not as expected.")
 	require.Equal(t, "quantum-computer", o.MachineType, "The parsed value for the type flag not as expected.")
 	require.Equal(t, 2000, o.DiskSizeGB, "The parsed value for the disk-size flag not as expected.")
 	require.Equal(t, "a big one", o.DiskType, "The parsed value for the disk-type flag not as expected.")
-	require.Equal(t, 50, o.CPUS, "The parsed value for the cpus flag not as expected.")
 	require.Equal(t, 7, o.NodeCount, "The parsed value for the nodes flag not as expected.")
 	require.Equal(t, 88, o.ScalerMin, "The parsed value for the scaler-min flag not as expected.")
 	require.Equal(t, 99, o.ScalerMax, "The parsed value for the scaler-max flag not as expected.")
@@ -91,9 +88,8 @@ func TestNewCluster(t *testing.T) {
 	o := &Options{
 		Name:              "mega-cluster",
 		KubernetesVersion: "1.16.0",
-		Location:          "north-pole",
+		Region:            "north-pole",
 		MachineType:       "HAL",
-		CPUS:              6,
 		DiskSizeGB:        9000,
 		NodeCount:         3,
 	}
@@ -101,9 +97,8 @@ func TestNewCluster(t *testing.T) {
 	c := newCluster(o)
 	require.Equal(t, o.Name, c.Name, "Cluster name not as expected.")
 	require.Equal(t, o.KubernetesVersion, c.KubernetesVersion, "Cluster Kubernetes version not as expected.")
-	require.Equal(t, o.Location, c.Location, "Cluster location not as expected.")
+	require.Equal(t, o.Region, c.Location, "Cluster location not as expected.")
 	require.Equal(t, o.MachineType, c.MachineType, "Cluster machine type not as expected.")
-	require.Equal(t, o.CPUS, c.CPU, "Cluster number of CPUs not as expected.")
 	require.Equal(t, o.DiskSizeGB, c.DiskSizeGB, "Cluster disk size not as expected.")
 	require.Equal(t, o.NodeCount, c.NodeCount, "Cluster number of nodes not as expected.")
 }

@@ -11,7 +11,6 @@ type Options struct {
 	KubernetesVersion string
 	Location          string
 	MachineType       string
-	CPUS              int
 	DiskSizeGB        int
 	NodeCount         int
 	Extra             []string

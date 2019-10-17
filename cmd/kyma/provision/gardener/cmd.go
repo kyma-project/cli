@@ -31,23 +31,22 @@ func NewCmd(o *Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "gardener",
 		Short: "Provisions a Gardener cluster.",
-		Long:  `Use this command to provision Gardener for Kyma installation.`,
+		Long:  `Use this command to provision a Gardener cluster for Kyma installation.`,
 		RunE:  func(_ *cobra.Command, _ []string) error { return c.Run() },
 	}
 
 	cmd.Flags().StringVarP(&o.Name, "name", "n", "", "Name of the cluster to provision.")
 	cmd.Flags().StringVarP(&o.Project, "project", "p", "", "Name of the Gardener Project where to provision the cluster in.")
-	cmd.Flags().StringVarP(&o.CredentialsFile, "credentials", "c", "", "Path to the Gardener service account kubueconfig file.")
+	cmd.Flags().StringVarP(&o.CredentialsFile, "credentials", "c", "", "Path to the Gardener service account kubeconfig file.")
 	cmd.Flags().StringVar(&o.TargetProvider, "target-provider", "gcp", "Specify the cloud provider that Gardener should use to create the cluster.")
 	cmd.Flags().StringVarP(&o.Secret, "secret", "s", "", "Name of the Gardener secret to access the target provider.")
 	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.15.4", "Kubernetes version of the cluster to provision.")
-	cmd.Flags().StringVarP(&o.Location, "location", "l", "europe-west3", "Location of the cluster to provision.")
+	cmd.Flags().StringVarP(&o.Region, "region", "r", "europe-west3", "Region of the cluster to provision.")
 	cmd.Flags().StringVarP(&o.Zone, "zone", "z", "europe-west3-a", "Zone of the cluster to provision.")
 	cmd.Flags().StringVarP(&o.MachineType, "type", "t", "n1-standard-4", "Type of machine of the cluster to provision.")
 	cmd.Flags().StringVar(&o.CIDR, "cidr", "10.250.0.0/19", "Gardener CIDR of the cluster to provision.")
 	cmd.Flags().StringVar(&o.DiskType, "disk-type", "pd-standard", "Type of disk to use on the target provider.")
 	cmd.Flags().IntVar(&o.DiskSizeGB, "disk-size", 30, "Specifies the disk size in GB of the cluster to provision.")
-	cmd.Flags().IntVar(&o.CPUS, "cpus", 4, "Specifies the number of CPUs of the cluster to provision.")
 	cmd.Flags().IntVar(&o.NodeCount, "nodes", 2, "Specifies the number of nodes of the cluster to provision.")
 	cmd.Flags().IntVar(&o.ScalerMin, "scaler-min", 2, "Specifies the minimum autoscale of the cluster to provision.")
 	cmd.Flags().IntVar(&o.ScalerMax, "scaler-max", 4, "Specifies the maximum autoscale of the cluster to provision.")
@@ -103,10 +102,9 @@ func newCluster(o *Options) *types.Cluster {
 	return &types.Cluster{
 		Name:              o.Name,
 		KubernetesVersion: o.KubernetesVersion,
-		CPU:               o.CPUS,
 		DiskSizeGB:        o.DiskSizeGB,
 		NodeCount:         o.NodeCount,
-		Location:          o.Location,
+		Location:          o.Region,
 		MachineType:       o.MachineType,
 	}
 }
