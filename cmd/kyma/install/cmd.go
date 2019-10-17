@@ -997,19 +997,12 @@ func (cmd *command) importCertificate(ca trust.Certifier) error {
 func (cmd *command) addDevDomainsToEtcHosts(s step.Step, clusterInfo clusterInfo) error {
 	hostnames := ""
 
-	vsListKSystem, err := cmd.K8s.Istio().NetworkingV1alpha3().VirtualServices("kyma-system").List(metav1.ListOptions{})
+	vsList, err := cmd.K8s.Istio().NetworkingV1alpha3().VirtualServices("").List(metav1.ListOptions{})
 	if err != nil {
 		return err
 	}
 
-	vsListKIntegration, err := cmd.K8s.Istio().NetworkingV1alpha3().VirtualServices("kyma-integration").List(metav1.ListOptions{})
-	if err != nil {
-		return err
-	}
-
-	vsList := append(vsListKSystem.Items, vsListKIntegration.Items...)
-
-	for _, v := range vsList {
+	for _, v := range vsList.Items {
 		for _, host := range v.Spec.Hosts {
 			hostnames = hostnames + " " + host
 		}
