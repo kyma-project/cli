@@ -1067,7 +1067,27 @@ func (cmd *command) patchMinikubeIP(minikubeIP string) error {
 }
 
 func (cmd *command) createOwnDomainConfigMap() error {
-	_, err := cmd.K8s.Static().CoreV1().ConfigMaps("kyma-installer").Create(&corev1.ConfigMap{
+	cm, err := cmd.K8s.Static().CoreV1().ConfigMaps("kyma-installer").Get("owndomain-overrides", metav1.GetOptions{})
+	if err == nil && cm != nil {
+		fmt.Println("ConfigMap already exists")
+		if cm.Data == nil {
+			cm.Data = make(map[string]string)
+		}
+		cm.Data["global.domainName"] = cmd.opts.Domain
+		cm.Data["global.tlsCrt"] = cmd.opts.TLSCert
+		cm.Data["global.tlsKey"] = cmd.opts.TLSKey
+
+		_, err = cmd.K8s.Static().CoreV1().ConfigMaps("kyma-installer").Update(cm)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	} else if err != nil && !strings.Contains(err.Error(), "not found") {
+		return err
+	}
+
+	_, err = cmd.K8s.Static().CoreV1().ConfigMaps("kyma-installer").Create(&corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   "owndomain-overrides",
 			Labels: map[string]string{"installer": "overrides"},

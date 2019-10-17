@@ -346,9 +346,16 @@ func driverSupported(driver string) bool {
 }
 
 func (c *command) createClusterInfoConfigMap() error {
-	minikubeIP := c.getMinikubeIP()
+	cm, err := c.K8s.Static().CoreV1().ConfigMaps("kube-system").Get("kyma-cluster-info", metav1.GetOptions{})
+	if err == nil && cm != nil {
+		fmt.Println("ConfigMap already exists")
+		return nil
+	} else if err != nil && !strings.Contains(err.Error(), "not found") {
+		return err
+	}
 
-	_, err := c.K8s.Static().CoreV1().ConfigMaps("kube-system").Create(&corev1.ConfigMap{
+	minikubeIP := c.getMinikubeIP()
+	_, err = c.K8s.Static().CoreV1().ConfigMaps("kube-system").Create(&corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   "kyma-cluster-info",
 			Labels: map[string]string{"app": "kyma"},
