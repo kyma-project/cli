@@ -60,7 +60,7 @@ archive:
 .PHONY: release
 release:
 	git remote add origin git@github.com:kyma-project/cli.git
-	curl -sL https://git.io/goreleaser | bash
+	curl -sL https://git.io/goreleaser | VERSION=v0.118.2 bash
 
 .PHONY: clean
 clean:
