@@ -68,7 +68,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cmd.Flags().StringVar(&o.DiskSize, "disk-size", "30g", "Specifies the disk size used for installation.")
 	cmd.Flags().StringVar(&o.Memory, "memory", "8192", "Specifies RAM reserved for installation.")
 	cmd.Flags().StringVar(&o.CPUS, "cpus", "4", "Specifies the number of CPUs used for installation.")
-	cmd.Flags().StringVar(&o.Profile, "profile", "", "Specifies the minikube profile.")
+	cmd.Flags().StringVar(&o.Profile, "profile", "minikube", "Specifies the Minikube profile.")
 	cmd.Flags().Bool("help", false, "Displays help for the command.")
 	return cmd
 }

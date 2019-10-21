@@ -18,13 +18,14 @@ kyma provision minikube [flags]
   -h, --help                         Displays help for the command.
       --hypervVirtualSwitch string   Specifies the Hyper-V switch version if you choose Hyper-V as the driver.
       --memory string                Specifies RAM reserved for installation. (default "8192")
+      --profile string               Specifies the Minikube profile. (default "minikube")
       --vm-driver string             Specifies the VM driver. Possible values: virtualbox,vmwarefusion,kvm,xhyve,hyperv,hyperkit,kvm2,none (default "hyperkit")
 ```
 
 ### Options inherited from parent commands
 
 ```
-      --kubeconfig string   Specifies the path to the kubeconfig file. (default KUBECONFIG environment variable or "/$HOME/.kube/config" if KUBECONFIG is not set)
+      --kubeconfig string   Specifies the path to the kubeconfig file. By default, Kyma CLI uses the KUBECONFIG environment variable or  "/$HOME/.kube/config" if the variable is not set.
       --non-interactive     Enables the non-interactive shell mode.
   -v, --verbose             Displays details of actions triggered by the command.
 ```
