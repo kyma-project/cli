@@ -27,5 +27,5 @@ Use this command to run tests on a provisioned Kyma cluster.
 * [kyma test delete](kyma_test_delete.md)	 - Deletes test suites available for a provisioned Kyma cluster.
 * [kyma test list](kyma_test_list.md)	 - Lists test suites available for a provisioned Kyma cluster.
 * [kyma test run](kyma_test_run.md)	 - Runs tests on a Kyma cluster.
-* [kyma test status](kyma_test_status.md)	 - Shows the status of a test suite and its related test executions
+* [kyma test status](kyma_test_status.md)	 - Shows the status of a test suite and related test executions
 
