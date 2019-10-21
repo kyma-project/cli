@@ -1,6 +1,6 @@
 ## kyma test status
 
-Shows the status of a test suite and its related test executions
+Shows the status of a test suite and its related test executions.
 
 ### Synopsis
 

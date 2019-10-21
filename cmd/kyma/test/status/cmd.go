@@ -30,7 +30,7 @@ func NewCmd(o *options) *cobra.Command {
 
 	cobraCmd := &cobra.Command{
 		Use:   "status <test-suite-1> <test-suite-2> ... <test-suite-N>",
-		Short: "Shows the status of a test suite and related test executions",
+		Short: "Shows the status of a test suite and related test executions.",
 		Long: `Use this command to display the status of a test suite and related test executions.
 
 If you don't provide any arguments, the status of all test suites will be printed.
