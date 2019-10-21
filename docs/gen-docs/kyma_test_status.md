@@ -8,9 +8,9 @@ Use this command to display the status of a test suite and related test executio
 
 If you don't provide any arguments, the status of all test suites will be printed.
 
-To print the status of all test suites, `run kyma test status`
+To print the status of all test suites, `run kyma test status`.
 
-To print the status of specific test cases, `run kyma test status testSuiteOne testSuiteTwo`
+To print the status of specific test cases, `run kyma test status testSuiteOne testSuiteTwo`.
 
 
 ```
