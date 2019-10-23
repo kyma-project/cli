@@ -15,7 +15,7 @@ Use this command to run tests on a provisioned Kyma cluster.
 ### Options inherited from parent commands
 
 ```
-      --kubeconfig string   Specifies the path to the kubeconfig file. By default, Kyma CLI uses the KUBECONFIG environment variable or  "/$HOME/.kube/config" if the variable is not set.
+      --kubeconfig string   Specifies the path to the kubeconfig file. By default, Kyma CLI uses the KUBECONFIG environment variable or /$HOME/.kube/config if the variable is not set.
       --non-interactive     Enables the non-interactive shell mode.
   -v, --verbose             Displays details of actions triggered by the command.
 ```
@@ -28,4 +28,5 @@ Use this command to run tests on a provisioned Kyma cluster.
 * [kyma test list](kyma_test_list.md)	 - Lists test suites available for a provisioned Kyma cluster.
 * [kyma test run](kyma_test_run.md)	 - Runs tests on a Kyma cluster.
 * [kyma test status](kyma_test_status.md)	 - Shows the status of a test suite and related test executions.
+
 
