@@ -9,13 +9,13 @@ Provisions a cluster for Kyma installation.
 ### Options
 
 ```
- -h,  --help   Displays help for the command.
+  -h, --help   Displays help for the command.
 ```
 
 ### Options inherited from parent commands
 
 ```
-      --kubeconfig string   Specifies the path to the kubeconfig file. By default, Kyma CLI uses the KUBECONFIG environment variable or  "/$HOME/.kube/config" if the variable is not set.
+      --kubeconfig string   By default, Kyma CLI uses the KUBECONFIG environment variable or /$HOME/.kube/config if the variable is not set.
       --non-interactive     Enables the non-interactive shell mode.
   -v, --verbose             Displays details of actions triggered by the command.
 ```
@@ -23,5 +23,8 @@ Provisions a cluster for Kyma installation.
 ### SEE ALSO
 
 * [kyma](kyma.md)	 - Controls a Kyma cluster.
+* [kyma provision gardener](kyma_provision_gardener.md)	 - Provisions a Gardener cluster.
+* [kyma provision gcp](kyma_provision_gcp.md)	 - Provisions a GCP cluster.
 * [kyma provision minikube](kyma_provision_minikube.md)	 - Provisions Minikube.
+
 
