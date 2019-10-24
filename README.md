@@ -17,8 +17,7 @@ Use the following options to install Kyma CLI from the latest release.
 ### Homebrew (macOS)
 To install Kyma CLI using Homebrew, run:
 ```
-brew tap kyma-incubator/kyma-incubator
-brew install kyma-incubator/kyma-incubator/kyma-cli
+brew install kyma-cli
 ```
 
 ### macOS
