@@ -47,7 +47,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cmd.Flags().StringVar(&o.CIDR, "cidr", "10.250.0.0/19", "Gardener CIDR of the cluster to provision.")
 	cmd.Flags().StringVar(&o.DiskType, "disk-type", "pd-standard", "Type of disk to use on the target provider.")
 	cmd.Flags().IntVar(&o.DiskSizeGB, "disk-size", 30, "Specifies the disk size in GB of the cluster to provision.")
-	cmd.Flags().IntVar(&o.NodeCount, "nodes", 2, "Specifies the number of nodes of the cluster to provision.")
+	cmd.Flags().IntVar(&o.NodeCount, "nodes", 3, "Specifies the number of nodes of the cluster to provision.")
 	cmd.Flags().IntVar(&o.ScalerMin, "scaler-min", 2, "Specifies the minimum autoscale of the cluster to provision.")
 	cmd.Flags().IntVar(&o.ScalerMax, "scaler-max", 4, "Specifies the maximum autoscale of the cluster to provision.")
 	cmd.Flags().IntVar(&o.Surge, "surge", 4, "Specifies maximum surge of the cluster to provision.")

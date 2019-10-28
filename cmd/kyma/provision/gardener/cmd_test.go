@@ -25,7 +25,7 @@ func TestProvisionGardenerFlags(t *testing.T) {
 	require.Equal(t, "n1-standard-4", o.MachineType, "Default value for the type flag not as expected.")
 	require.Equal(t, 30, o.DiskSizeGB, "Default value for the disk-size flag not as expected.")
 	require.Equal(t, "pd-standard", o.DiskType, "Default value for the disk-type flag not as expected.")
-	require.Equal(t, 2, o.NodeCount, "Default value for the nodes flag not as expected.")
+	require.Equal(t, 3, o.NodeCount, "Default value for the nodes flag not as expected.")
 	require.Equal(t, 2, o.ScalerMin, "Default value for the scaler-min flag not as expected.")
 	require.Equal(t, 4, o.ScalerMax, "Default value for the scaler-max flag not as expected.")
 	require.Equal(t, 4, o.Surge, "Default value for the surge flag not as expected.")
