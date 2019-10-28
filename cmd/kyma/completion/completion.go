@@ -2,6 +2,7 @@ package completion
 
 import (
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/pkg/errors"
@@ -44,11 +45,23 @@ func completion(cmd *cobra.Command, args []string) error {
 		err := cmd.GenBashCompletion(os.Stdout)
 		return errors.Wrap(err, "Error generating bash completion")
 	case "zsh":
-		err := cmd.GenZshCompletion(os.Stdout)
+		err := genZshCompletion(cmd, os.Stdout)
 		return errors.Wrap(err, "Error generating zsh completion")
 	default:
 		fmt.Printf("Sorry, completion is not supported for %q", shell)
 	}
 
 	return nil
+}
+
+func genZshCompletion(cmd *cobra.Command, out io.Writer) error {
+	err := cmd.GenZshCompletion(out)
+	if err != nil {
+		return err
+	}
+
+	zshCompdef := "\ncompdef _kyma kyma\n"
+
+	_, err = io.WriteString(out, zshCompdef)
+	return err
 }
