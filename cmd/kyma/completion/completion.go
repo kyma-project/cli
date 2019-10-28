@@ -17,14 +17,6 @@ func NewCmd() *cobra.Command {
 		Short: "Generates bash or zsh completion scripts",
 		Long: `Use this command to display the shell completion code used for interactive command completion. 
 To configure your shell to load completions, add ` + "`. <(kyma completion bash)`" + ` to your bash profile or ` + "`. <(kyma completion zsh)`" + ` to your zsh profile.
-To load completion, run:
-. <(kyma completion bash|zsh)
-To configure your bash shell to load completions for each session, add ` + "`. <(kyma completion bash)`" + ` to your bashrc or profile.
-# ~/.bashrc or ~/.profile
-. <(kyma completion bash)
-To configure your zsh shell to load completions for each session add ` + "`. <(kyma completion zsh)`" + ` your zshrc.
-# ~/.zshrc
-. <(kyma completion zsh)
 `,
 		RunE:    completion,
 		Aliases: []string{},
