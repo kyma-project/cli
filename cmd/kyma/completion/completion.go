@@ -14,7 +14,7 @@ import (
 func NewCmd() *cobra.Command {
 	var completionCmd = &cobra.Command{
 		Use:   "completion bash|zsh",
-		Short: "Generates bash or zsh completion scripts",
+		Short: "Generates bash or zsh completion scripts.",
 		Long: `Use this command to display the shell completion code used for interactive command completion. 
 To configure your shell to load completions, add ` + "`. <(kyma completion bash)`" + ` to your bash profile or ` + "`. <(kyma completion zsh)`" + ` to your zsh profile.
 `,
