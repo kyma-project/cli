@@ -35,11 +35,11 @@ func NewCmd(o *Options) *cobra.Command {
 		RunE:  func(_ *cobra.Command, _ []string) error { return c.Run() },
 	}
 
-	cmd.Flags().StringVarP(&o.Name, "name", "n", "", "Name of the cluster to provision.")
-	cmd.Flags().StringVarP(&o.Project, "project", "p", "", "Name of the Gardener Project where to provision the cluster in.")
-	cmd.Flags().StringVarP(&o.CredentialsFile, "credentials", "c", "", "Path to the Gardener service account kubeconfig file.")
+	cmd.Flags().StringVarP(&o.Name, "name", "n", "", "Name of the cluster to provision. (required)")
+	cmd.Flags().StringVarP(&o.Project, "project", "p", "", "Name of the Gardener Project where to provision the cluster in. (required)")
+	cmd.Flags().StringVarP(&o.CredentialsFile, "credentials", "c", "", "Path to the Gardener service account kubeconfig file. (required)")
 	cmd.Flags().StringVar(&o.TargetProvider, "target-provider", "gcp", "Specify the cloud provider that Gardener should use to create the cluster.")
-	cmd.Flags().StringVarP(&o.Secret, "secret", "s", "", "Name of the Gardener secret to access the target provider.")
+	cmd.Flags().StringVarP(&o.Secret, "secret", "s", "", "Name of the Gardener secret to access the target provider. (required)")
 	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.15.4", "Kubernetes version of the cluster to provision.")
 	cmd.Flags().StringVarP(&o.Region, "region", "r", "europe-west3", "Region of the cluster to provision.")
 	cmd.Flags().StringVarP(&o.Zone, "zone", "z", "europe-west3-a", "Zone of the cluster to provision.")
