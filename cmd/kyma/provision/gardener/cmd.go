@@ -58,6 +58,10 @@ func NewCmd(o *Options) *cobra.Command {
 }
 
 func (c *command) Run() error {
+	if err := c.validateFlags(); err != nil {
+		return err
+	}
+
 	cluster := newCluster(c.opts)
 	provider, err := newProvider(c.opts)
 	if err != nil {
@@ -133,9 +137,31 @@ func newProvider(o *Options) (*types.Provider, error) {
 		v := strings.Split(e, "=")
 
 		if len(v) != 2 {
-			return p, errors.New(fmt.Sprintf("Wrong format for extra configuration %s. Please provide NAME=VALUE pairs.", e))
+			return p, fmt.Errorf("Wrong format for extra configuration %s. Please provide NAME=VALUE pairs.", e)
 		}
 		p.CustomConfigurations[v[0]] = v[1]
 	}
 	return p, nil
+}
+
+func (c *command) validateFlags() error {
+	var errMessage strings.Builder
+	// mandatory flags
+	if c.opts.Name == "" {
+		errMessage.WriteString("\nRequired flag `name` has not been set.")
+	}
+	if c.opts.Project == "" {
+		errMessage.WriteString("\nRequired flag `project` has not been set.")
+	}
+	if c.opts.CredentialsFile == "" {
+		errMessage.WriteString("\nRequired flag `credentials` has not been set.")
+	}
+	if c.opts.Secret == "" {
+		errMessage.WriteString("\nRequired flag `secret` has not been set.")
+	}
+
+	if errMessage.Len() != 0 {
+		return errors.New(errMessage.String())
+	}
+	return nil
 }

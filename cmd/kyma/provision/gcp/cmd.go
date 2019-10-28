@@ -42,13 +42,18 @@ func NewCmd(o *Options) *cobra.Command {
 	cmd.Flags().StringVarP(&o.Location, "location", "l", "europe-west3-a", "Location of the cluster to provision.")
 	cmd.Flags().StringVarP(&o.MachineType, "type", "t", "n1-standard-4", "Type of machine of the cluster to provision.")
 	cmd.Flags().IntVar(&o.DiskSizeGB, "disk-size", 30, "Specifies the disk size in GB of the cluster to provision.")
-	cmd.Flags().IntVar(&o.NodeCount, "nodes", 1, "Specifies the number of nodes of the cluster to provision.")
-	cmd.Flags().StringSliceVarP(&o.Extra, "extra", "e", nil, "Provide one or more arguments of the form NAME=VALUE to add extra configurations.")
+	cmd.Flags().IntVar(&o.NodeCount, "nodes", 3, "Specifies the number of nodes of the cluster to provision.")
+	// Temporary disabled flag. To be enabled when hydroform supports TF modules
+	//cmd.Flags().StringSliceVarP(&o.Extra, "extra", "e", nil, "Provide one or more arguments of the form NAME=VALUE to add extra configurations.")
 
 	return cmd
 }
 
 func (c *command) Run() error {
+	if err := c.validateFlags(); err != nil {
+		return err
+	}
+
 	cluster := newCluster(c.opts)
 	provider, err := newProvider(c.opts)
 	if err != nil {
@@ -112,9 +117,28 @@ func newProvider(o *Options) (*types.Provider, error) {
 		v := strings.Split(e, "=")
 
 		if len(v) != 2 {
-			return p, errors.New(fmt.Sprintf("Wrong format for extra configuration %s. Please provide NAME=VALUE pairs.", e))
+			return p, fmt.Errorf("Wrong format for extra configuration %s. Please provide NAME=VALUE pairs.", e)
 		}
 		p.CustomConfigurations[v[0]] = v[1]
 	}
 	return p, nil
+}
+
+func (c *command) validateFlags() error {
+	var errMessage strings.Builder
+	// mandatory flags
+	if c.opts.Name == "" {
+		errMessage.WriteString("\nRequired flag `name` has not been set.")
+	}
+	if c.opts.Project == "" {
+		errMessage.WriteString("\nRequired flag `project` has not been set.")
+	}
+	if c.opts.CredentialsFile == "" {
+		errMessage.WriteString("\nRequired flag `credentials` has not been set.")
+	}
+
+	if errMessage.Len() != 0 {
+		return errors.New(errMessage.String())
+	}
+	return nil
 }
