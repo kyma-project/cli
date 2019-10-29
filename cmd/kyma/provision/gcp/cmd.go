@@ -38,7 +38,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cmd.Flags().StringVarP(&o.Name, "name", "n", "", "Name of the cluster to provision. (required)")
 	cmd.Flags().StringVarP(&o.Project, "project", "p", "", "Name of the GCP Project where to provision the cluster in. (required)")
 	cmd.Flags().StringVarP(&o.CredentialsFile, "credentials", "c", "", "Path to the GCP service account key file. (required)")
-	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.14.6", "Kubernetes version of the cluster to provision.")
+	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.14", "Kubernetes version of the cluster to provision.")
 	cmd.Flags().StringVarP(&o.Location, "location", "l", "europe-west3-a", "Location of the cluster to provision.")
 	cmd.Flags().StringVarP(&o.MachineType, "type", "t", "n1-standard-4", "Type of machine of the cluster to provision.")
 	cmd.Flags().IntVar(&o.DiskSizeGB, "disk-size", 30, "Specifies the disk size in GB of the cluster to provision.")
