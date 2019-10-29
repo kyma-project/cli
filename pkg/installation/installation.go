@@ -29,7 +29,7 @@ const (
 	releaseResourcePattern = "https://raw.githubusercontent.com/kyma-project/kyma/%s/installation/resources/%s"
 	registryImagePattern   = "eu.gcr.io/kyma-project/kyma-installer:%s"
 	localDomain            = "kyma.local"
-	defaultKymaVersion     = "master"
+	defaultKymaVersion     = "latest"
 	defaultTimeout         = 1 * time.Hour
 )
 
@@ -177,7 +177,7 @@ func (i *Installation) validateConfigurations() error {
 		}
 
 	//Install the latest version (latest master)
-	case strings.ToLower(i.Options.Source) == "latest":
+	case strings.EqualFold(i.Options.Source, "latest"):
 		latest, err := i.getMasterHash()
 		if err != nil {
 			return fmt.Errorf("Unable to get latest version of kyma: %s", err.Error())
