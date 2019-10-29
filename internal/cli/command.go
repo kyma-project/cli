@@ -3,7 +3,7 @@ package cli
 import (
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/kubectl"
-	"github.com/kyma-project/cli/internal/step"
+	"github.com/kyma-project/cli/pkg/step"
 )
 
 type Command struct {

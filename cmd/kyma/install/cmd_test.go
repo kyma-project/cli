@@ -5,8 +5,8 @@ import (
 
 	"errors"
 
-	stepMocks "github.com/kyma-project/cli/internal/step/mocks"
 	trustMocks "github.com/kyma-project/cli/internal/trust/mocks"
+	stepMocks "github.com/kyma-project/cli/pkg/step/mocks"
 
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/stretchr/testify/require"
