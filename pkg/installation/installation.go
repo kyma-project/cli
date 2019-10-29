@@ -25,12 +25,12 @@ import (
 )
 
 const (
-	sleep                  = 10 * time.Second
 	releaseSrcURLPattern   = "https://raw.githubusercontent.com/kyma-project/kyma/%s/%s"
 	releaseResourcePattern = "https://raw.githubusercontent.com/kyma-project/kyma/%s/installation/resources/%s"
 	registryImagePattern   = "eu.gcr.io/kyma-project/kyma-installer:%s"
 	localDomain            = "kyma.local"
 	defaultKymaVersion     = "master"
+	defaultTimeout         = 1 * time.Hour
 )
 
 // Installation contains the installation elements and configuration options.
@@ -38,8 +38,11 @@ type Installation struct {
 	k8s         kube.KymaKube
 	kubectl     *kubectl.Wrapper
 	currentStep step.Step
-	Factory     step.Factory `json:"factory"`
-	Options     *Options     `json:"options"`
+	// Factory contains the option to determine the interactivity of a Step.
+	// +optional
+	Factory step.Factory `json:"factory,omitempty"`
+	// Options holds the configuration options for the installation.
+	Options *Options `json:"options"`
 }
 
 func (i *Installation) getKubectl() *kubectl.Wrapper {
@@ -155,7 +158,7 @@ func (i *Installation) InstallKyma() error {
 func (i *Installation) validateConfigurations() error {
 	switch {
 	//Install from local sources
-	case strings.ToLower(i.Options.Source) == "local":
+	case strings.EqualFold(i.Options.Source, "local"):
 		i.Options.fromLocalSources = true
 		i.Options.releaseVersion = defaultKymaVersion
 		i.Options.configVersion = defaultKymaVersion
@@ -606,7 +609,7 @@ func (i *Installation) waitForInstaller() error {
 				fmt.Printf("Unexpected status: %s\n", status)
 				os.Exit(1)
 			}
-			time.Sleep(sleep)
+			time.Sleep(10 * time.Second)
 		}
 	}
 }

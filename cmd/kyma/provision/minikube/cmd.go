@@ -19,13 +19,12 @@ import (
 )
 
 const (
-	kubernetesVersion  string = "1.14.6"
-	bootstrapper       string = "kubeadm"
-	vmDriverHyperkit   string = "hyperkit"
-	vmDriverHyperv     string = "hyperv"
-	vmDriverNone       string = "none"
-	vmDriverVirtualBox string = "virtualbox"
-	sleep                     = 10 * time.Second
+	kubernetesVersion string = "1.14.6"
+	bootstrapper      string = "kubeadm"
+	vmDriverHyperkit  string = "hyperkit"
+	vmDriverHyperv    string = "hyperv"
+	vmDriverNone      string = "none"
+	sleep                    = 10 * time.Second
 )
 
 var (

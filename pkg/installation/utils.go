@@ -150,7 +150,10 @@ func getInstallerImage(resources *[]map[string]interface{}) (string, error) {
 		if res["kind"] == "Deployment" {
 
 			var deployment v1.Deployment
-			mapstructure.Decode(res, &deployment)
+			err := mapstructure.Decode(res, &deployment)
+			if err != nil {
+				return "", err
+			}
 
 			if deployment.Spec.Template.Spec.Containers[0].Name == "kyma-installer-container" {
 				return deployment.Spec.Template.Spec.Containers[0].Image, nil

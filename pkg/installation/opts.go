@@ -2,7 +2,7 @@ package installation
 
 import "time"
 
-// Options holds the configuration options.
+// Options holds the configuration options for the installation.
 type Options struct {
 	// Source specifies the installation source. To use the specific release, pass the release version (e.g. 1.6.0).
 	// To use the latest master, pass "latest". To use the local sources, pass "local". To use the remote image, pass the installer image (e.g. user/my-kyma-installer:v1.6.0).
@@ -20,29 +20,43 @@ type Options struct {
 	fromLocalSources bool
 
 	// LocalSrcPath specifies the absolute path to local sources.
-	LocalSrcPath string `json:"localSrcPath"`
+	// +optional
+	LocalSrcPath string `json:"localSrcPath,omitempty"`
 	// OverrideConfigs specifies the path to a yaml file with parameters to override.
-	OverrideConfigs []string `json:"overrideConfigs"`
+	// +optional
+	OverrideConfigs []string `json:"overrideConfigs,omitempty"`
 	// Password specifies the predefined cluster password.
-	Password string `json:"password"`
+	// +optional
+	Password string `json:"password,omitempty"`
 	// Domain specifies the domain used for installation.
-	Domain string `json:"domain"`
+	// +optional
+	Domain string `json:"domain,omitempty"`
 	// TLSCert specifies the TLS certificate for the domain used for installation
-	TLSCert string `json:"tlsCert"`
+	// +optional
+	TLSCert string `json:"tlsCert,omitempty"`
 	// TLSKey specifies the TLS key for the domain used for installation.
-	TLSKey string `json:"tlsKey"`
+	// +optional
+	TLSKey string `json:"tlsKey,omitempty"`
 	// IsLocal indicates if the installation is on a local cluster.
-	IsLocal      bool          `json:"isLocal"`
-	LocalCluster *LocalCluster `json:"localCluster"`
+	// +optional
+	IsLocal bool `json:"isLocal,omitempty"`
+	// LocalCluster includes the configuration options of a local cluster.
+	// +optional
+	LocalCluster *LocalCluster `json:"localCluster,omitempty"`
 
 	// Timeout specifies the time-out after which watching the installation progress stops.
-	Timeout time.Duration `json:"timeout"`
+	// +optional
+	Timeout time.Duration `json:"timeout,omitempty"`
 	// NoWait determines if the Kyma installation should be waited to complete.
-	NoWait bool `json:"noWait"`
+	// +optional
+	NoWait bool `json:"noWait,omitempty"`
 	// Verbose enables displaying details of actions triggered.
-	Verbose bool `json:"verbose"`
-	// KubeconfigPath specifies the path to the kubeconfig file.
-	KubeconfigPath string `json:"kubeconfigPath"`
+	// +optional
+	Verbose bool `json:"verbose,omitempty"`
+	// KubeconfigPath specifies the path to the kubeconfig file. By default, the KUBECONFIG environment variable is used,
+	// or /$HOME/.kube/config is used if the variable is not set.
+	// +optional
+	KubeconfigPath string `json:"kubeconfigPath,omitempty"`
 }
 
 // LocalCluster includes the configuration options of a local cluster.
@@ -55,4 +69,14 @@ type LocalCluster struct {
 	IP string `json:"localIP"`
 	// VMDriver indicates the VM driver of the local cluster.
 	VMDriver string `json:"localVMDriver"`
+}
+
+//NewOptions creates options with default values.
+func NewOptions() *Options {
+	return &Options{
+		Timeout: defaultTimeout,
+		Domain:  localDomain,
+		Source:  defaultKymaVersion,
+		IsLocal: true,
+	}
 }

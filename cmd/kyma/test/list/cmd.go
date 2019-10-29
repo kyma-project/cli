@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/kyma-project/cli/cmd/kyma/test"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
-	"github.com/kyma-project/cli/cmd/kyma/test"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -30,7 +30,7 @@ func NewCmd(o *options) *cobra.Command {
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 		Aliases: []string{"l"},
 	}
-    cobraCmd.Flags().Bool("help", false, "Displays help for the command.")
+	cobraCmd.Flags().Bool("help", false, "Displays help for the command.")
 	return cobraCmd
 }
 
@@ -57,7 +57,6 @@ func (cmd *command) Run() error {
 		switch len(t.Status.Results) {
 		case 0:
 			testResult = "-"
-			break
 		case 1:
 			testResult = string(t.Status.Results[0].Status)
 		default:

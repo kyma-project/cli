@@ -293,7 +293,7 @@ func (cmd *command) waitForInstallerToUninstall() error {
 				// only do something if the description has changed
 				if desc != currentDesc {
 					cmd.CurrentStep.Success()
-					cmd.CurrentStep = cmd.opts.NewStep(fmt.Sprintf(desc))
+					cmd.CurrentStep = cmd.opts.NewStep(desc)
 					currentDesc = desc
 				}
 
