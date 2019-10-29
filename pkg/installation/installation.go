@@ -80,9 +80,9 @@ func (i *Installation) InstallKyma() error {
 			s.LogInfof("Using the installation configuration from '%s'", i.Options.configVersion)
 		}
 		if i.Options.remoteImage != "" {
-			s.LogInfof("Installing Kyma with installer image '%s'. ", i.Options.remoteImage)
+			s.LogInfof("Installing Kyma with installer image '%s' ", i.Options.remoteImage)
 		} else {
-			s.LogInfof("Installing Kyma in version '%s'. ", i.Options.releaseVersion)
+			s.LogInfof("Installing Kyma in version '%s' ", i.Options.releaseVersion)
 		}
 	}
 	s.Successf("Installation source checked")
