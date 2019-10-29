@@ -3,4 +3,3 @@
 package install
 
 const hostsFile = "/etc/hosts"
-
