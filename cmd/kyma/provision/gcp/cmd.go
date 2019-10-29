@@ -91,6 +91,8 @@ func (c *command) Run() error {
 		return err
 	}
 	s.Success()
+
+	fmt.Printf("\nGCP cluster installed\nKubectl correctly configured: pointing to %s\n\nHappy GCP-ing! :)\n", cluster.Name)
 	return nil
 }
 

@@ -99,6 +99,8 @@ func (c *command) Run() error {
 		return err
 	}
 	s.Success()
+
+	fmt.Printf("\nGardener cluster installed\nKubectl correctly configured: pointing to %s\n\nHappy Garden-ing! :)\n", cluster.Name)
 	return nil
 }
 
