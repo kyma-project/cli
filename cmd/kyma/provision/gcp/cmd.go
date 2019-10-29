@@ -35,20 +35,25 @@ func NewCmd(o *Options) *cobra.Command {
 		RunE:  func(_ *cobra.Command, _ []string) error { return c.Run() },
 	}
 
-	cmd.Flags().StringVarP(&o.Name, "name", "n", "", "Name of the cluster to provision.")
-	cmd.Flags().StringVarP(&o.Project, "project", "p", "", "Name of the GCP Project where to provision the cluster in.")
-	cmd.Flags().StringVarP(&o.CredentialsFile, "credentials", "c", "", "Path to the GCP service account key file.")
+	cmd.Flags().StringVarP(&o.Name, "name", "n", "", "Name of the cluster to provision. (required)")
+	cmd.Flags().StringVarP(&o.Project, "project", "p", "", "Name of the GCP Project where to provision the cluster in. (required)")
+	cmd.Flags().StringVarP(&o.CredentialsFile, "credentials", "c", "", "Path to the GCP service account key file. (required)")
 	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.14.6", "Kubernetes version of the cluster to provision.")
 	cmd.Flags().StringVarP(&o.Location, "location", "l", "europe-west3-a", "Location of the cluster to provision.")
 	cmd.Flags().StringVarP(&o.MachineType, "type", "t", "n1-standard-4", "Type of machine of the cluster to provision.")
 	cmd.Flags().IntVar(&o.DiskSizeGB, "disk-size", 30, "Specifies the disk size in GB of the cluster to provision.")
-	cmd.Flags().IntVar(&o.NodeCount, "nodes", 1, "Specifies the number of nodes of the cluster to provision.")
-	cmd.Flags().StringSliceVarP(&o.Extra, "extra", "e", nil, "Provide one or more arguments of the form NAME=VALUE to add extra configurations.")
+	cmd.Flags().IntVar(&o.NodeCount, "nodes", 3, "Specifies the number of nodes of the cluster to provision.")
+	// Temporary disabled flag. To be enabled when hydroform supports TF modules
+	//cmd.Flags().StringSliceVarP(&o.Extra, "extra", "e", nil, "Provide one or more arguments of the form NAME=VALUE to add extra configurations.")
 
 	return cmd
 }
 
 func (c *command) Run() error {
+	if err := c.validateFlags(); err != nil {
+		return err
+	}
+
 	cluster := newCluster(c.opts)
 	provider, err := newProvider(c.opts)
 	if err != nil {
@@ -86,6 +91,8 @@ func (c *command) Run() error {
 		return err
 	}
 	s.Success()
+
+	fmt.Printf("\nGCP cluster installed\nKubectl correctly configured: pointing to %s\n\nHappy GCP-ing! :)\n", cluster.Name)
 	return nil
 }
 
@@ -112,9 +119,28 @@ func newProvider(o *Options) (*types.Provider, error) {
 		v := strings.Split(e, "=")
 
 		if len(v) != 2 {
-			return p, errors.New(fmt.Sprintf("Wrong format for extra configuration %s. Please provide NAME=VALUE pairs.", e))
+			return p, fmt.Errorf("Wrong format for extra configuration %s. Please provide NAME=VALUE pairs.", e)
 		}
 		p.CustomConfigurations[v[0]] = v[1]
 	}
 	return p, nil
+}
+
+func (c *command) validateFlags() error {
+	var errMessage strings.Builder
+	// mandatory flags
+	if c.opts.Name == "" {
+		errMessage.WriteString("\nRequired flag `name` has not been set.")
+	}
+	if c.opts.Project == "" {
+		errMessage.WriteString("\nRequired flag `project` has not been set.")
+	}
+	if c.opts.CredentialsFile == "" {
+		errMessage.WriteString("\nRequired flag `credentials` has not been set.")
+	}
+
+	if errMessage.Len() != 0 {
+		return errors.New(errMessage.String())
+	}
+	return nil
 }
