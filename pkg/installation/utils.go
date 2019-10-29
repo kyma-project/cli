@@ -100,32 +100,24 @@ func (i *Installation) setAdminPassword() error {
 
 func removeActionLabel(acc *[]map[string]interface{}) error {
 	for _, config := range *acc {
-		kind, ok := config["kind"]
-		if !ok {
-			continue
+		if kind, ok := config["kind"]; ok && kind == "Installation" {
+			meta, ok := config["metadata"].(map[interface{}]interface{})
+			if !ok {
+				return errors.New("Installation contains no METADATA section")
+			}
+
+			labels, ok := meta["labels"].(map[interface{}]interface{})
+			if !ok {
+				return errors.New("Installation contains no LABELS section")
+			}
+
+			_, ok = labels["action"].(string)
+			if !ok {
+				return nil
+			}
+
+			delete(labels, "action")
 		}
-
-		if kind != "Installation" {
-			continue
-		}
-
-		meta, ok := config["metadata"].(map[interface{}]interface{})
-		if !ok {
-			return errors.New("Installation contains no METADATA section")
-		}
-
-		labels, ok := meta["labels"].(map[interface{}]interface{})
-		if !ok {
-			return errors.New("Installation contains no LABELS section")
-		}
-
-		_, ok = labels["action"].(string)
-		if !ok {
-			return nil
-		}
-
-		delete(labels, "action")
-
 	}
 	return nil
 }
@@ -164,59 +156,27 @@ func getInstallerImage(resources *[]map[string]interface{}) (string, error) {
 }
 
 func replaceInstallerImage(resources *[]map[string]interface{}, imageURL string) error {
+	// Check if installer deployment has all the neccessary fields and a container named kyma-installer-container.
+	// If so, replace the image with the imageURL parameter.
 	for _, config := range *resources {
-		kind, ok := config["kind"]
-		if !ok {
-			continue
-		}
-
-		if kind != "Deployment" {
-			continue
-		}
-
-		spec, ok := config["spec"].(map[interface{}]interface{})
-		if !ok {
-			continue
-		}
-
-		template, ok := spec["template"].(map[interface{}]interface{})
-		if !ok {
-			continue
-		}
-
-		spec, ok = template["spec"].(map[interface{}]interface{})
-		if !ok {
-			continue
-		}
-
-		if accName, ok := spec["serviceAccountName"]; !ok {
-			continue
-		} else {
-			if accName != "kyma-installer" {
-				continue
+		if kind, ok := config["kind"]; ok && kind == "Deployment" {
+			if spec, ok := config["spec"].(map[interface{}]interface{}); ok {
+				if template, ok := spec["template"].(map[interface{}]interface{}); ok {
+					if spec, ok = template["spec"].(map[interface{}]interface{}); ok {
+						if containers, ok := spec["containers"].([]interface{}); ok {
+							for _, c := range containers {
+								container := c.(map[interface{}]interface{})
+								if cName, ok := container["name"]; ok && cName == "kyma-installer-container" {
+									if _, ok := container["image"]; ok {
+										container["image"] = imageURL
+										return nil
+									}
+								}
+							}
+						}
+					}
+				}
 			}
-		}
-
-		containers, ok := spec["containers"].([]interface{})
-		if !ok {
-			continue
-		}
-		for _, c := range containers {
-			container := c.(map[interface{}]interface{})
-			cName, ok := container["name"]
-			if !ok {
-				continue
-			}
-
-			if cName != "kyma-installer-container" {
-				continue
-			}
-
-			if _, ok := container["image"]; !ok {
-				continue
-			}
-			container["image"] = imageURL
-			return nil
 		}
 	}
 	return errors.New("unable to find 'image' field for kyma installer 'Deployment'")
