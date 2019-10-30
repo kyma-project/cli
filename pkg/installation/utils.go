@@ -67,7 +67,7 @@ func (i *Installation) printInstallationErrorLog() error {
 }
 
 func (i *Installation) getMasterHash() (string, error) {
-	ctx, timeoutF := context.WithTimeout(context.Background(), 1*time.Minute)
+	ctx, timeoutF := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer timeoutF()
 	r, err := git.CloneContext(ctx, memory.NewStorage(), nil,
 		&git.CloneOptions{
