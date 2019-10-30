@@ -18,7 +18,7 @@ require (
 	github.com/golangplus/fmt v0.0.0-20150411045040-2a5d6d7d2995 // indirect
 	github.com/golangplus/testing v0.0.0-20180327235837-af21d9c3145e // indirect
 	github.com/imdario/mergo v0.3.8 // indirect
-	github.com/kyma-incubator/hydroform v0.0.0-20191015145515-4977abd24fbc
+	github.com/kyma-incubator/hydroform v0.0.0-20191024115454-24c2283ffad9
 	github.com/kyma-incubator/octopus v0.0.0-20191009105757-2e9d86cd9967
 	github.com/kyma-project/kyma v0.5.1-0.20190909070658-69599d4a33a2
 	github.com/mitchellh/mapstructure v1.1.2
@@ -27,11 +27,9 @@ require (
 	github.com/pkg/errors v0.8.1
 	github.com/spf13/cobra v0.0.5
 	github.com/stretchr/testify v1.4.0
-	github.com/ugorji/go/codec v1.1.7 // indirect
 	golang.org/x/crypto v0.0.0-20191002192127-34f69633bfdc // indirect
 	golang.org/x/net v0.0.0-20191003171128-d98b1b443823 // indirect
 	google.golang.org/genproto v0.0.0-20191002211648-c459b9ce5143 // indirect
-	gopkg.in/ini.v1 v1.44.0 // indirect
 	gopkg.in/src-d/go-git.v4 v4.13.1
 	gopkg.in/yaml.v2 v2.2.4
 	k8s.io/api v0.0.0-20190620084959-7cf5895f2711

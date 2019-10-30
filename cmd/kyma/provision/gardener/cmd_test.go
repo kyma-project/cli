@@ -25,7 +25,7 @@ func TestProvisionGardenerFlags(t *testing.T) {
 	require.Equal(t, "n1-standard-4", o.MachineType, "Default value for the type flag not as expected.")
 	require.Equal(t, 30, o.DiskSizeGB, "Default value for the disk-size flag not as expected.")
 	require.Equal(t, "pd-standard", o.DiskType, "Default value for the disk-type flag not as expected.")
-	require.Equal(t, 2, o.NodeCount, "Default value for the nodes flag not as expected.")
+	require.Equal(t, 3, o.NodeCount, "Default value for the nodes flag not as expected.")
 	require.Equal(t, 2, o.ScalerMin, "Default value for the scaler-min flag not as expected.")
 	require.Equal(t, 4, o.ScalerMax, "Default value for the scaler-max flag not as expected.")
 	require.Equal(t, 4, o.Surge, "Default value for the surge flag not as expected.")
@@ -34,7 +34,7 @@ func TestProvisionGardenerFlags(t *testing.T) {
 	require.Empty(t, o.Extra, "Default value for the extra flag not as expected.")
 
 	// test passing flags
-	c.ParseFlags([]string{
+	err := c.ParseFlags([]string{
 		"-n", "my-cluster",
 		"-p", "my-project",
 		"-c", "/my/credentials/file",
@@ -55,6 +55,7 @@ func TestProvisionGardenerFlags(t *testing.T) {
 		"--extra", "VAR1=VALUE1,VAR2=VALUE2",
 	})
 
+	require.NoError(t, err, "Parsing flags should not return an error")
 	require.Equal(t, "my-cluster", o.Name, "The parsed value for the name flag not as expected.")
 	require.Equal(t, "my-project", o.Project, "The parsed value for the project flag not as expected.")
 	require.Equal(t, "/my/credentials/file", o.CredentialsFile, "The parsed value for the credentials flag not as expected.")

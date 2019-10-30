@@ -120,7 +120,7 @@ The standard installation uses the minimal configuration. The system performs th
 	cobraCmd.Flags().StringVarP(&o.TLSKey, "tlsKey", "", "", "Specifies the TLS key for the domain used for installation.")
 	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", DefaultKymaVersion, "Specifies the installation source. To use the specific release, write kyma install --source=1.3.0. To use the latest master, write kyma install --source=latest. To use the local sources, write kyma install --source=local. To use the remote image, write kyma install --source=user/my-kyma-installer:v1.4.0.")
 	cobraCmd.Flags().StringVarP(&o.LocalSrcPath, "src-path", "", "", "Specifies the absolute path to local sources.")
-	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 30*time.Minute, "Time-out after which CLI stops watching the installation progress.")
+	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 1*time.Hour, "Time-out after which CLI stops watching the installation progress.")
 	cobraCmd.Flags().StringVarP(&o.Password, "password", "p", "", "Specifies the predefined cluster password.")
 	cobraCmd.Flags().VarP(&o.OverrideConfigs, "override", "o", "Specifies the path to a yaml file with parameters to override.")
 	cobraCmd.Flags().Bool("help", false, "Displays help for the command.")
@@ -276,7 +276,6 @@ func (cmd *command) validateFlags() error {
 		if _, err := os.Stat(filepath.Join(cmd.opts.LocalSrcPath, "installation", "resources")); err != nil {
 			return fmt.Errorf("Configured 'src-path=%s' does not seem to point to a Kyma repository. Check if your repository contains the 'installation/resources' folder.", cmd.opts.LocalSrcPath)
 		}
-		break
 
 	//Install the latest version (latest master)
 	case strings.ToLower(cmd.opts.Source) == "latest":
@@ -287,20 +286,17 @@ func (cmd *command) validateFlags() error {
 		cmd.opts.ReleaseVersion = fmt.Sprintf("master-%s", latest)
 		cmd.opts.ConfigVersion = "master"
 		cmd.opts.RegistryTemplate = registryImagePattern
-		break
 
 	//Install the specific version from release (ex: 1.3.0)
 	case cmd.isSemVer(cmd.opts.Source):
 		cmd.opts.ReleaseVersion = cmd.opts.Source
 		cmd.opts.ConfigVersion = cmd.opts.Source
 		cmd.opts.RegistryTemplate = registryImagePattern
-		break
 
 	//Install the kyma with the specific installer image (docker image URL)
 	case cmd.isDockerImage(cmd.opts.Source):
 		cmd.opts.RemoteImage = cmd.opts.Source
 		cmd.opts.ConfigVersion = DefaultKymaVersion
-		break
 	default:
 		return fmt.Errorf("Failed to parse the source flag. It can take one of the following: 'local', 'latest', release version (e.g. 1.4.1), or installer image")
 	}
@@ -874,7 +870,9 @@ func (cmd *command) waitForInstaller() error {
 		select {
 		case <-timeout:
 			cmd.CurrentStep.Failure()
-			cmd.printInstallationErrorLog()
+			if err := cmd.printInstallationErrorLog(); err != nil {
+				fmt.Println("Error fetching installation error log, please manually check the status of the cluster.")
+			}
 			return errors.New("Timeout reached while waiting for installation to complete")
 		default:
 			status, desc, err := cmd.getInstallationStatus()
@@ -906,7 +904,7 @@ func (cmd *command) waitForInstaller() error {
 				// only do something if the description has changed
 				if desc != currentDesc {
 					cmd.CurrentStep.Success()
-					cmd.CurrentStep = cmd.opts.NewStep(fmt.Sprintf(desc))
+					cmd.CurrentStep = cmd.opts.NewStep(desc)
 					currentDesc = desc
 				}
 

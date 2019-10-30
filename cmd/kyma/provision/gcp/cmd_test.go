@@ -17,15 +17,16 @@ func TestProvisionGCPFlags(t *testing.T) {
 	require.Equal(t, "", o.Name, "Default value for the name flag not as expected.")
 	require.Equal(t, "", o.Project, "Default value for the project flag not as expected.")
 	require.Equal(t, "", o.CredentialsFile, "Default value for the credentials flag not as expected.")
-	require.Equal(t, "1.14.6", o.KubernetesVersion, "Default value for the kube-version flag not as expected.")
+	require.Equal(t, "1.14", o.KubernetesVersion, "Default value for the kube-version flag not as expected.")
 	require.Equal(t, "europe-west3-a", o.Location, "Default value for the location flag not as expected.")
 	require.Equal(t, "n1-standard-4", o.MachineType, "Default value for the type flag not as expected.")
 	require.Equal(t, 30, o.DiskSizeGB, "Default value for the disk-size flag not as expected.")
-	require.Equal(t, 1, o.NodeCount, "Default value for the nodes flag not as expected.")
-	require.Empty(t, o.Extra, "Default value for the extra flag not as expected.")
+	require.Equal(t, 3, o.NodeCount, "Default value for the nodes flag not as expected.")
+	// Temporary disable flag. To be enabled when hydroform supports TF modules
+	//require.Empty(t, o.Extra, "Default value for the extra flag not as expected.")
 
 	// test passing flags
-	c.ParseFlags([]string{
+	err := c.ParseFlags([]string{
 		"-n", "my-cluster",
 		"-p", "my-project",
 		"-c", "/my/credentials/file",
@@ -34,8 +35,10 @@ func TestProvisionGCPFlags(t *testing.T) {
 		"-t", "quantum-computer",
 		"--disk-size", "2000",
 		"--nodes", "7",
-		"--extra", "VAR1=VALUE1,VAR2=VALUE2",
+		// Temporary disable flag. To be enabled when hydroform supports TF modules
+		//"--extra", "VAR1=VALUE1,VAR2=VALUE2",
 	})
+	require.NoError(t, err, "Parsing flags should not return an error")
 	require.Equal(t, "my-cluster", o.Name, "The parsed value for the name flag not as expected.")
 	require.Equal(t, "my-project", o.Project, "The parsed value for the project flag not as expected.")
 	require.Equal(t, "/my/credentials/file", o.CredentialsFile, "The parsed value for the credentials flag not as expected.")
@@ -44,7 +47,8 @@ func TestProvisionGCPFlags(t *testing.T) {
 	require.Equal(t, "quantum-computer", o.MachineType, "The parsed value for the type flag not as expected.")
 	require.Equal(t, 2000, o.DiskSizeGB, "The parsed value for the disk-size flag not as expected.")
 	require.Equal(t, 7, o.NodeCount, "The parsed value for the nodes flag not as expected.")
-	require.Equal(t, []string{"VAR1=VALUE1", "VAR2=VALUE2"}, o.Extra, "The parsed value for the extra flag not as expected.")
+	// Temporary disable flag. To be enabled when hydroform supports TF modules
+	//require.Equal(t, []string{"VAR1=VALUE1", "VAR2=VALUE2"}, o.Extra, "The parsed value for the extra flag not as expected.")
 }
 
 func TestProvisionGCPSubcommands(t *testing.T) {
