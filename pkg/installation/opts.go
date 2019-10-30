@@ -74,9 +74,9 @@ type LocalCluster struct {
 //NewOptions creates options with default values.
 func NewOptions() *Options {
 	return &Options{
-		Timeout: defaultTimeout,
+		Timeout: 1 * time.Hour,
 		Domain:  localDomain,
-		Source:  defaultKymaVersion,
+		Source:  "latest",
 		IsLocal: true,
 	}
 }

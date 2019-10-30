@@ -29,8 +29,6 @@ const (
 	releaseResourcePattern = "https://raw.githubusercontent.com/kyma-project/kyma/%s/installation/resources/%s"
 	registryImagePattern   = "eu.gcr.io/kyma-project/kyma-installer:%s"
 	localDomain            = "kyma.local"
-	defaultKymaVersion     = "latest"
-	defaultTimeout         = 1 * time.Hour
 )
 
 // Installation contains the installation elements and configuration options.
@@ -160,8 +158,6 @@ func (i *Installation) validateConfigurations() error {
 	//Install from local sources
 	case strings.EqualFold(i.Options.Source, "local"):
 		i.Options.fromLocalSources = true
-		i.Options.releaseVersion = defaultKymaVersion
-		i.Options.configVersion = defaultKymaVersion
 		if i.Options.LocalSrcPath == "" {
 			goPath := os.Getenv("GOPATH")
 			if goPath == "" {
@@ -195,7 +191,7 @@ func (i *Installation) validateConfigurations() error {
 	//Install the kyma with the specific installer image (docker image URL)
 	case isDockerImage(i.Options.Source):
 		i.Options.remoteImage = i.Options.Source
-		i.Options.configVersion = defaultKymaVersion
+		i.Options.configVersion = "master"
 	default:
 		return fmt.Errorf("Failed to parse the source flag. It can take one of the following: 'local', 'latest', release version (e.g. 1.4.1), or installer image")
 	}
@@ -213,10 +209,17 @@ func (i *Installation) installTiller() error {
 	deployed, err := i.k8s.IsPodDeployedByLabel("kube-system", "name", "tiller")
 	if err != nil {
 		return err
-
 	}
+
 	if !deployed {
-		_, err = i.getKubectl().RunCmd("apply", "-f", i.releaseSrcFile("/installation/resources/tiller.yaml"))
+		var path string
+		if i.Options.fromLocalSources {
+			path = filepath.Join(i.Options.LocalSrcPath, "installation", "resources", "tiller.yaml")
+		} else {
+			path = i.releaseSrcFile("/installation/resources/tiller.yaml")
+		}
+
+		_, err = i.getKubectl().RunCmd("apply", "-f", path)
 		if err != nil {
 			return err
 		}
@@ -232,7 +235,7 @@ func (i *Installation) loadAndConfigureInstallationFiles() ([]map[string]interfa
 		installationFiles = []string{"installer.yaml", "installer-cr-cluster.yaml.tpl"}
 	}
 
-	resources, err := i.loadInstallationResourceFiles(installationFiles, i.Options.fromLocalSources)
+	resources, err := i.loadInstallationResourceFiles(installationFiles)
 	if err != nil {
 		return nil, err
 	}
@@ -266,7 +269,7 @@ func (i *Installation) loadAndConfigureInstallationFiles() ([]map[string]interfa
 	return resources, nil
 }
 
-func (i *Installation) loadInstallationResourceFiles(resourcePaths []string, fromLocalSources bool) ([]map[string]interface{}, error) {
+func (i *Installation) loadInstallationResourceFiles(resourcePaths []string) ([]map[string]interface{}, error) {
 
 	var err error
 	resources := make([]map[string]interface{}, 0)
@@ -275,7 +278,7 @@ func (i *Installation) loadInstallationResourceFiles(resourcePaths []string, fro
 
 		var yamlReader io.ReadCloser
 
-		if !fromLocalSources {
+		if !i.Options.fromLocalSources {
 			yamlReader, err = downloadFile(i.releaseFile(resourcePath))
 			if err != nil {
 				return nil, err
