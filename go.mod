@@ -27,9 +27,11 @@ require (
 	github.com/pkg/errors v0.8.1
 	github.com/spf13/cobra v0.0.5
 	github.com/stretchr/testify v1.4.0
+	github.com/ugorji/go/codec v1.1.7 // indirect
 	golang.org/x/crypto v0.0.0-20191002192127-34f69633bfdc // indirect
 	golang.org/x/net v0.0.0-20191003171128-d98b1b443823 // indirect
 	google.golang.org/genproto v0.0.0-20191002211648-c459b9ce5143 // indirect
+	gopkg.in/ini.v1 v1.44.0 // indirect
 	gopkg.in/src-d/go-git.v4 v4.13.1
 	gopkg.in/yaml.v2 v2.2.4
 	k8s.io/api v0.0.0-20190620084959-7cf5895f2711

@@ -1,6 +1,8 @@
 package install
 
 import (
+	"fmt"
+	"github.com/kyma-project/cli/internal/nice"
 	"io/ioutil"
 	"os"
 	"strconv"
@@ -121,7 +123,7 @@ func (cmd *command) Run() error {
 	s.Successf("Cluster info read")
 
 	installation := cmd.configureInstallation(clusterConfig)
-	err = installation.InstallKyma()
+	result, err := installation.InstallKyma()
 	if err != nil {
 		return err
 	}
@@ -139,6 +141,11 @@ func (cmd *command) Run() error {
 			return err
 		}
 		s.Successf("Domains added")
+	}
+
+	err = cmd.printSummary(result)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -252,4 +259,39 @@ func (cmd *command) getClusterInfoFromConfigMap() (clusterInfo, error) {
 	}
 
 	return clusterConfig, nil
+}
+
+func (cmd *command) printSummary(result *installation.Result) error {
+	fmt.Println()
+	nice.PrintKyma()
+	fmt.Print(" is installed in version:\t")
+	nice.PrintImportant(result.KymaVersion)
+
+	nice.PrintKyma()
+	fmt.Print(" is running at:\t\t")
+	nice.PrintImportant(result.Host)
+
+	nice.PrintKyma()
+	fmt.Print(" console:\t\t\t")
+	nice.PrintImportantf(result.Console)
+
+	nice.PrintKyma()
+	fmt.Print(" admin email:\t\t")
+	nice.PrintImportant(result.AdminEmail)
+
+	if result.AdminPassword == "" || cmd.Factory.NonInteractive {
+		nice.PrintKyma()
+		fmt.Printf(" admin password:\t\t")
+		nice.PrintImportant(result.AdminPassword)
+	}
+
+	for _, warning := range result.Warnings {
+		nice.PrintImportant(warning)
+	}
+
+	fmt.Printf("\nHappy ")
+	nice.PrintKyma()
+	fmt.Printf("-ing! :)\n\n")
+
+	return nil
 }

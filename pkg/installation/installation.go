@@ -13,7 +13,6 @@ import (
 	"github.com/kyma-project/cli/internal/helm"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/kubectl"
-	"github.com/kyma-project/cli/internal/nice"
 	"github.com/kyma-project/cli/pkg/step"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
@@ -43,6 +42,22 @@ type Installation struct {
 	Options *Options `json:"options"`
 }
 
+// Result contains the resulting details related to the installation.
+type Result struct {
+	// KymaVersion indicates the installed Kyma version.
+	KymaVersion string
+	// Host indicates the host address where Kyma is installed.
+	Host string
+	// Console holds the address of Kyma console.
+	Console string
+	// AdminEmail indicates the Email address of the Admin user which can be used to login Kyma.
+	AdminEmail string
+	// AdminPassword indicates the password of the Admin user which can be used to login Kyma.
+	AdminPassword string
+	// Warnings includes a set of any warnings from the installation.
+	Warnings []string
+}
+
 func (i *Installation) getKubectl() *kubectl.Wrapper {
 	if i.kubectl == nil {
 		i.kubectl = kubectl.NewWrapper(i.Options.Verbose, i.Options.KubeconfigPath)
@@ -57,16 +72,16 @@ func (i *Installation) newStep(msg string) step.Step {
 }
 
 // InstallKyma triggers the installation of a Kyma cluster.
-func (i *Installation) InstallKyma() error {
+func (i *Installation) InstallKyma() (*Result, error) {
 	var err error
 	if i.k8s, err = kube.NewFromConfig("", i.Options.KubeconfigPath); err != nil {
-		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
+		return nil, errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
 	}
 
 	s := i.newStep("Validating configurations")
 	if err := i.validateConfigurations(); err != nil {
 		s.Failure()
-		return err
+		return nil, err
 	}
 	s.Successf("Configurations validated")
 
@@ -88,22 +103,22 @@ func (i *Installation) InstallKyma() error {
 	s = i.newStep("Installing Tiller")
 	if err := i.installTiller(); err != nil {
 		s.Failure()
-		return err
+		return nil, err
 	}
 	s.Successf("Tiller deployed")
 
 	s = i.newStep("Loading installation files")
-	resources, err := i.loadAndConfigureInstallationFiles()
+	resources, err := i.prepareInstallationFiles()
 	if err != nil {
 		s.Failure()
-		return err
+		return nil, err
 	}
 	s.Successf("Installation files loaded")
 
 	s = i.newStep("Deploying Kyma Installer")
 	if err := i.installInstaller(resources); err != nil {
 		s.Failure()
-		return err
+		return nil, err
 	}
 	s.Successf("Kyma Installer deployed")
 
@@ -112,16 +127,16 @@ func (i *Installation) InstallKyma() error {
 		err := i.patchMinikubeIP(i.Options.LocalCluster.IP)
 		if err != nil {
 			s.Failure()
-			return err
+			return nil, err
 		}
 		s.Successf("Minikube IP added")
 	} else {
-		if i.Options.Domain != localDomain {
+		if i.Options.Domain != "" && i.Options.Domain != localDomain {
 			s = i.newStep("Creating own domain ConfigMap")
 			err := i.createOwnDomainConfigMap()
 			if err != nil {
 				s.Failure()
-				return err
+				return nil, err
 			}
 			s.Successf("ConfigMap created")
 		}
@@ -130,27 +145,29 @@ func (i *Installation) InstallKyma() error {
 	s = i.newStep("Configuring Helm")
 	if err := i.configureHelm(); err != nil {
 		s.Failure()
-		return err
+		return nil, err
 	}
 	s.Successf("Helm configured")
 
 	s = i.newStep("Requesting Kyma Installer to install Kyma")
 	if err := i.activateInstaller(); err != nil {
 		s.Failure()
-		return err
+		return nil, err
 	}
 	s.Successf("Kyma Installer is installing Kyma")
 
 	if !i.Options.NoWait {
 		if err := i.waitForInstaller(); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
-	if err := i.printSummary(); err != nil {
-		return err
+	result, err := i.buildResult()
+	if err != nil {
+		return nil, err
 	}
-	return nil
+
+	return result, nil
 }
 
 func (i *Installation) validateConfigurations() error {
@@ -197,8 +214,8 @@ func (i *Installation) validateConfigurations() error {
 	}
 
 	// If one of the --domain, --tlsKey, or --tlsCert is specified, the others must be specified as well (XOR logic used below)
-	if (i.Options.Domain != localDomain || i.Options.TLSKey != "" || i.Options.TLSCert != "") &&
-		!(i.Options.Domain != localDomain && i.Options.TLSKey != "" && i.Options.TLSCert != "") {
+	if ((i.Options.Domain != localDomain && i.Options.Domain != "") || i.Options.TLSKey != "" || i.Options.TLSCert != "") &&
+		!((i.Options.Domain != localDomain && i.Options.Domain != "") && i.Options.TLSKey != "" && i.Options.TLSCert != "") {
 		return errors.New("You specified one of the --domain, --tlsKey, or --tlsCert without specifying the others. They must be specified together")
 	}
 
@@ -227,7 +244,7 @@ func (i *Installation) installTiller() error {
 	return i.k8s.WaitPodStatusByLabel("kube-system", "name", "tiller", corev1.PodRunning)
 }
 
-func (i *Installation) loadAndConfigureInstallationFiles() ([]map[string]interface{}, error) {
+func (i *Installation) prepareInstallationFiles() ([]map[string]interface{}, error) {
 	var installationFiles []string
 	if i.Options.IsLocal {
 		installationFiles = []string{"installer-local.yaml", "installer-config-local.yaml.tpl", "installer-cr.yaml.tpl"}
@@ -609,23 +626,22 @@ func (i *Installation) waitForInstaller() error {
 
 			default:
 				i.currentStep.Failure()
-				fmt.Printf("Unexpected status: %s\n", status)
-				os.Exit(1)
+				return fmt.Errorf("Unexpected status: %s\n", status)
 			}
 			time.Sleep(10 * time.Second)
 		}
 	}
 }
 
-func (i *Installation) printSummary() error {
+func (i *Installation) buildResult() (*Result, error) {
 	v, err := version.KymaVersion(i.Options.Verbose, i.k8s)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	adm, err := i.k8s.Static().CoreV1().Secrets("kyma-system").Get("admin-user", metav1.GetOptions{})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var consoleURL string
@@ -634,46 +650,26 @@ func (i *Installation) printSummary() error {
 	case apiErrors.IsNotFound(err):
 		consoleURL = "not installed"
 	case err != nil:
-		return err
+		return nil, err
 	case vs != nil && vs.Spec != nil && len(vs.Spec.Hosts) > 0:
 		consoleURL = fmt.Sprintf("https://%s", vs.Spec.Hosts[0])
 	default:
-		return errors.New("Console host could not be obtained.")
+		return nil, errors.New("Console host could not be obtained.")
 	}
 
-	fmt.Println()
-	nice.PrintKyma()
-	fmt.Print(" is installed in version:\t")
-	nice.PrintImportant(v)
-
-	nice.PrintKyma()
-	fmt.Print(" is running at:\t\t")
-	nice.PrintImportant(i.k8s.Config().Host)
-
-	nice.PrintKyma()
-	fmt.Print(" console:\t\t\t")
-	nice.PrintImportantf(consoleURL)
-
-	nice.PrintKyma()
-	fmt.Print(" admin email:\t\t")
-	nice.PrintImportant(string(adm.Data["email"]))
-
-	if i.Options.Password == "" || i.Factory.NonInteractive {
-		nice.PrintKyma()
-		fmt.Printf(" admin password:\t\t")
-		nice.PrintImportant(string(adm.Data["password"]))
-	}
-
+	var warning string
 	if i.Options.Domain != localDomain {
-		fmt.Printf("\nTo access the console, configure DNS for the cluster load balancer: ")
-		nice.PrintImportant("https://kyma-project.io/docs/#installation-use-your-own-domain--provider-domain--gke--configure-dns-for-the-cluster-load-balancer")
+		warning = "To access the console, configure DNS for the cluster load balancer: https://kyma-project.io/docs/#installation-install-kyma-with-your-own-domain-configure-dns-for-the-cluster-load-balancer"
 	}
 
-	fmt.Printf("\nHappy ")
-	nice.PrintKyma()
-	fmt.Printf("-ing! :)\n\n")
-
-	return nil
+	return &Result{
+		KymaVersion:   v,
+		Host:          i.k8s.Config().Host,
+		Console:       consoleURL,
+		AdminEmail:    string(adm.Data["email"]),
+		AdminPassword: string(adm.Data["password"]),
+		Warnings:      []string{warning},
+	}, nil
 }
 
 func (i *Installation) releaseSrcFile(path string) string {
