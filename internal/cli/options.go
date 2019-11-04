@@ -1,7 +1,7 @@
 package cli
 
 import (
-	"github.com/kyma-project/cli/internal/step"
+	"github.com/kyma-project/cli/pkg/step"
 )
 
 //Options defines available options for the command

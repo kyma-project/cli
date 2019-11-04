@@ -14,7 +14,7 @@ import (
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/minikube"
-	"github.com/kyma-project/cli/internal/step"
+	"github.com/kyma-project/cli/pkg/step"
 	"github.com/spf13/cobra"
 )
 

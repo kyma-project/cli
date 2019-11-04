@@ -7,10 +7,10 @@ import (
 	"time"
 
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
+	"github.com/kyma-project/cli/cmd/kyma/test"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/pkg/api/octopus"
-	"github.com/kyma-project/cli/cmd/kyma/test"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,7 +34,7 @@ func NewCmd(o *options) *cobra.Command {
 
 Remarks: 
 If you don't provide any specific test definitions, all available test definitions will be added to the newly created test suite.
-To execute all test defintions, run `+"`kyma test run -n example-test`"+`.
+To execute all test defintions, run ` + "`kyma test run -n example-test`" + `.
 
 `,
 		RunE:    func(_ *cobra.Command, args []string) error { return cmd.Run(args) },
@@ -108,7 +108,7 @@ func matchTestDefinitionNames(testNames []string,
 	for _, tName := range testNames {
 		found := false
 		for _, tDef := range testDefs {
-			if strings.ToLower(tName) == strings.ToLower(tDef.GetName()) {
+			if strings.EqualFold(tName, tDef.GetName()) {
 				found = true
 				result = append(result, tDef)
 				break

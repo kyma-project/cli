@@ -101,10 +101,9 @@ func (c *client) IsPodDeployed(namespace, name string) (bool, error) {
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
 			return false, nil
-		} else {
-			// actual errors
-			return false, err
 		}
+		// actual errors
+		return false, err
 	}
 	return true, nil
 }

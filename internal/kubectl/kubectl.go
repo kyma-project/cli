@@ -5,14 +5,8 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
-	"time"
 
-	yaml "gopkg.in/yaml.v2"
-)
-
-const (
-	kubectlVersion string = "1.14.6"
-	sleep                 = 5 * time.Second
+	"gopkg.in/yaml.v2"
 )
 
 //RunCmd executes a kubectl command with given arguments

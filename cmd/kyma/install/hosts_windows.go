@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/kyma-project/cli/internal/step"
+	"github.com/kyma-project/cli/pkg/step"
 )
 
 func addDevDomainsToEtcHostsOSSpecific(domain string, s step.Step, hostAlias string) error {

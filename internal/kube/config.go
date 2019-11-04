@@ -71,17 +71,17 @@ func RemoveConfig(cfg []byte, target string) error {
 	}
 
 	// remove contexts
-	for k, _ := range s.Contexts {
+	for k := range s.Contexts {
 		delete(t.Contexts, k)
 	}
 
 	// remove clusters
-	for k, _ := range s.Clusters {
+	for k := range s.Clusters {
 		delete(t.Clusters, k)
 	}
 
 	// remove authinfos
-	for k, _ := range s.AuthInfos {
+	for k := range s.AuthInfos {
 		delete(t.AuthInfos, k)
 	}
 

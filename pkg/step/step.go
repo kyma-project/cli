@@ -1,5 +1,6 @@
 package step
 
+// Step provides an interface for printing out the status in a structured way,
 type Step interface {
 	Start()
 	Status(msg string)
