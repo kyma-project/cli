@@ -2,11 +2,15 @@ package run
 
 import (
 	"testing"
+	"time"
 
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
 	"github.com/kyma-project/cli/pkg/api/octopus"
+	"github.com/kyma-project/cli/pkg/step/mocks"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/watch"
 )
 
 func Test_matchTestDefinitionNames(t *testing.T) {
@@ -200,7 +204,7 @@ func Test_verifyIfTestNotExists(t *testing.T) {
 	for _, tt := range testData {
 		mCli := octopus.NewMockedOctopusRestClient(nil, &oct.ClusterTestSuiteList{
 			Items: tt.inputSuites,
-		})
+		}, nil)
 		tExists, _ := verifyIfTestNotExists(tt.inputSuiteName, mCli)
 		require.Equal(t, tExists, tt.expectedExists)
 	}
@@ -253,7 +257,7 @@ func Test_ListTestSuiteNames(t *testing.T) {
 		},
 	}
 	for _, tt := range testData {
-		mCli := octopus.NewMockedOctopusRestClient(nil, &tt.inputTestSuites)
+		mCli := octopus.NewMockedOctopusRestClient(nil, &tt.inputTestSuites, nil)
 		dNames, err := listTestSuiteNames(mCli)
 		if !tt.shouldFail {
 			require.Nil(t, err, tt.testName)
@@ -262,5 +266,145 @@ func Test_ListTestSuiteNames(t *testing.T) {
 			require.NotEqual(t, dNames, tt.expectedResult)
 		}
 
+	}
+}
+
+func Test_WaitForTestSuite(t *testing.T) {
+	tests := map[string]struct {
+		expMessages      []string
+		statusesSequence []oct.TestSuiteStatus
+	}{
+		"waiting for test suite ended with success": {
+			expMessages: []string{
+				"0 out of 1 test(s) have finished (Succeeded: 0, Failed: 0, Skipped: 0)...",
+				"1 out of 1 test(s) have finished (Succeeded: 1, Failed: 0, Skipped: 0)...",
+				"Test suite 'fix-test' execution succeeded",
+			},
+			statusesSequence: []oct.TestSuiteStatus{
+				statusRunning(),
+				statusTestSucceeded(),
+				statusSuiteSucceeded(),
+			},
+		},
+		"waiting for test suite ended with failure": {
+			expMessages: []string{
+				"0 out of 1 test(s) have finished (Succeeded: 0, Failed: 0, Skipped: 0)...",
+				"1 out of 1 test(s) have finished (Succeeded: 0, Failed: 1, Skipped: 0)...",
+				"Test suite 'fix-test' execution failed",
+			},
+			statusesSequence: []oct.TestSuiteStatus{
+				statusRunning(),
+				statusTestFailed(),
+				statusSuiteFailed(),
+			},
+		},
+		"waiting for test suite ended with error": {
+			expMessages: []string{
+				"0 out of 1 test(s) have finished (Succeeded: 0, Failed: 0, Skipped: 0)...",
+				"1 out of 1 test(s) have finished (Succeeded: 0, Failed: 0, Skipped: 1)...",
+				"Test suite 'fix-test' execution errored",
+			},
+			statusesSequence: []oct.TestSuiteStatus{
+				statusRunning(),
+				statusTestSkipped(),
+				statusSuiteError(),
+			},
+		},
+	}
+	for tn, tc := range tests {
+		t.Run(tn, func(t *testing.T) {
+			// given
+			fixTestSuite := oct.ClusterTestSuite{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "fix-test",
+				},
+			}
+
+			inputTestSuites := oct.ClusterTestSuiteList{
+				Items: []oct.ClusterTestSuite{
+					*fixTestSuite.DeepCopy(),
+				},
+			}
+
+			fakeWatcher := watch.NewFake()
+			mStep := &mocks.Step{}
+			mCli := octopus.NewMockedOctopusRestClient(nil, &inputTestSuites, fakeWatcher)
+
+			// when
+			waitForTestSuiteDone := make(chan struct{}, 1)
+			var waitErr error
+			go func() {
+				waitErr = waitForTestSuite(mCli, fixTestSuite.Name, clusterTestSuiteCompleted(mStep), 5*time.Second)
+				waitForTestSuiteDone <- struct{}{}
+			}()
+
+			// simulates the octopus controller - emit events with modified statuses
+			for _, newStatus := range tc.statusesSequence {
+				modified := fixTestSuite.DeepCopy()
+				modified.Status = newStatus
+				fakeWatcher.Modify(modified)
+
+			}
+
+			// then
+			waitForChanAtMost(t, waitForTestSuiteDone, time.Second)
+			require.NoError(t, waitErr)
+			require.Equal(t, len(tc.expMessages), len(mStep.Statuses()))
+
+			for idx, msg := range mStep.Statuses() {
+				assert.Equal(t, tc.expMessages[idx], msg)
+			}
+			assert.Empty(t, mStep.Errors())
+		})
+	}
+}
+
+func waitForChanAtMost(t *testing.T, ch <-chan struct{}, timeout time.Duration) {
+	select {
+	case <-ch:
+	case <-time.After(timeout):
+		t.Fatalf("Waiting for channel result failed in given timeout %v.", timeout)
+	}
+}
+
+func statusRunning() oct.TestSuiteStatus {
+	return testSuiteStatus(oct.TestRunning, oct.SuiteRunning)
+}
+
+func statusTestSucceeded() oct.TestSuiteStatus {
+	return testSuiteStatus(oct.TestSucceeded, oct.SuiteRunning)
+}
+
+func statusSuiteSucceeded() oct.TestSuiteStatus {
+	return testSuiteStatus(oct.TestSucceeded, oct.SuiteSucceeded)
+}
+
+func statusSuiteFailed() oct.TestSuiteStatus {
+	return testSuiteStatus(oct.TestFailed, oct.SuiteFailed)
+}
+
+func statusTestFailed() oct.TestSuiteStatus {
+	return testSuiteStatus(oct.TestFailed, oct.SuiteRunning)
+}
+
+func statusSuiteError() oct.TestSuiteStatus {
+	return testSuiteStatus(oct.TestSkipped, oct.SuiteError)
+}
+
+func statusTestSkipped() oct.TestSuiteStatus {
+	return testSuiteStatus(oct.TestSkipped, oct.SuiteRunning)
+}
+
+func testSuiteStatus(testStatus oct.TestStatus, suiteStatus oct.TestSuiteConditionType) oct.TestSuiteStatus {
+	return oct.TestSuiteStatus{
+		Results: []oct.TestResult{
+			{Status: testStatus},
+		},
+		Conditions: []oct.TestSuiteCondition{
+			{
+				Type:   suiteStatus,
+				Status: oct.StatusTrue,
+			},
+		},
 	}
 }

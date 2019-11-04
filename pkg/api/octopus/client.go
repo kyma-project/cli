@@ -1,10 +1,13 @@
 package octopus
 
 import (
+	"time"
+
 	"github.com/kyma-incubator/octopus/pkg/apis"
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 )
@@ -15,6 +18,7 @@ type OctopusInterface interface {
 	CreateTestSuite(cts *oct.ClusterTestSuite) (result *oct.ClusterTestSuite, err error)
 	DeleteTestSuite(name string, options metav1.DeleteOptions) error
 	GetTestSuite(name string, options metav1.GetOptions) (result *oct.ClusterTestSuite, err error)
+	WatchTestSuite(opts metav1.ListOptions) (watch.Interface, error)
 }
 
 type OctopusRestClient struct {
@@ -22,7 +26,10 @@ type OctopusRestClient struct {
 }
 
 func NewFromConfig(config *rest.Config) (OctopusInterface, error) {
-	apis.AddToScheme(scheme.Scheme)
+	if err := apis.AddToScheme(scheme.Scheme); err != nil {
+		return nil, err
+	}
+
 	setConfigDefaults(config)
 
 	cl, err := rest.RESTClientFor(config)
@@ -86,15 +93,26 @@ func (t *OctopusRestClient) GetTestSuite(name string, options metav1.GetOptions)
 	return
 }
 
-func setConfigDefaults(config *rest.Config) error {
+func (t *OctopusRestClient) WatchTestSuite(opts metav1.ListOptions) (watch.Interface, error) {
+	var timeout time.Duration
+	if opts.TimeoutSeconds != nil {
+		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
+	}
+	opts.Watch = true
+	return t.restClient.Get().
+		Resource("clustertestsuites").
+		VersionedParams(&opts, scheme.ParameterCodec).
+		Timeout(timeout).
+		Watch()
+}
+
+func setConfigDefaults(config *rest.Config) {
 	gv := oct.SchemeGroupVersion
 	config.GroupVersion = &gv
 	config.APIPath = "/apis"
-	config.NegotiatedSerializer = serializer.DirectCodecFactory{CodecFactory: scheme.Codecs}
+	config.NegotiatedSerializer = serializer.WithoutConversionCodecFactory{CodecFactory: scheme.Codecs}
 
 	if config.UserAgent == "" {
 		config.UserAgent = rest.DefaultKubernetesUserAgent()
 	}
-
-	return nil
 }
