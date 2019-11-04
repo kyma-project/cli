@@ -8,7 +8,6 @@ release:
 before:
   hooks:
     - make resolve
-    - go generate ./...
 builds:
 - env:
   - CGO_ENABLED=0
