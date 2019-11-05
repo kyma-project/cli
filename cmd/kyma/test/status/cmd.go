@@ -46,7 +46,6 @@ To print the status of specific test cases, `+"`run kyma test status testSuiteOn
 
 	cobraCmd.Flags().StringVarP(&o.OutputFormat, "output", "o", "",
 		"Output format. One of: json|yaml|wide")
-	cobraCmd.Flags().Bool("help", false, "Displays help for the command.")
 	return cobraCmd
 }
 

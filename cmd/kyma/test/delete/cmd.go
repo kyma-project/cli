@@ -33,7 +33,6 @@ Provide at least one test suite name.`,
 		RunE:    func(_ *cobra.Command, args []string) error { return cmd.Run(args) },
 		Aliases: []string{"d"},
 	}
-	cobraCmd.Flags().Bool("help", false, "Displays help for the command.")
 	return cobraCmd
 }
 

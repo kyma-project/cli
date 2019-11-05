@@ -97,7 +97,11 @@ The standard installation uses the minimal configuration. The system performs th
 	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", localDomain, "Specifies the domain used for installation.")
 	cobraCmd.Flags().StringVarP(&o.TLSCert, "tlsCert", "", "", "Specifies the TLS certificate for the domain used for installation.")
 	cobraCmd.Flags().StringVarP(&o.TLSKey, "tlsKey", "", "", "Specifies the TLS key for the domain used for installation.")
-	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", DefaultKymaVersion, "Specifies the installation source. To use the specific release, write kyma install --source=1.3.0. To use the latest master, write kyma install --source=latest. To use the local sources, write kyma install --source=local. To use the remote image, write kyma install --source=user/my-kyma-installer:v1.4.0.")
+	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", DefaultKymaVersion, `Specifies the installation source. 
+	- To use the specific release, write "kyma install --source=1.3.0".
+	- To use the latest master, write "kyma install --source=latest".
+	- To use the local sources, write "kyma install --source=local". 
+	- To use the remote image, write kyma "install --source=user/my-kyma-installer:v1.4.0".`)
 	cobraCmd.Flags().StringVarP(&o.LocalSrcPath, "src-path", "", "", "Specifies the absolute path to local sources.")
 	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 1*time.Hour, "Time-out after which CLI stops watching the installation progress.")
 	cobraCmd.Flags().StringVarP(&o.Password, "password", "p", "", "Specifies the predefined cluster password.")

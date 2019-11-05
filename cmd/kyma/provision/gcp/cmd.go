@@ -30,19 +30,21 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "gcp",
-		Short: "Provisions a GCP cluster.",
-		Long:  `Use this command to provision a GCP cluster for Kyma installation.`,
+		Short: "Provisions a Google Kubernetes Engine (GKE) cluster on Google Cloud Platform (GCP).",
+		Long:  `Use this command to provision a Kubernetes cluster on GCP for Kyma installation. Use the flags to specify cluster details.
+NOTE: To access the provisioned cluster, make sure you get authenticated by Google Cloud SDK. To do so,run `+ "`gcloud auth application-default login`" + ` and log in with your Google Cloud credentials.`,
+
 		RunE:  func(_ *cobra.Command, _ []string) error { return c.Run() },
 	}
 
-	cmd.Flags().StringVarP(&o.Name, "name", "n", "", "Name of the cluster to provision. (required)")
-	cmd.Flags().StringVarP(&o.Project, "project", "p", "", "Name of the GCP Project where to provision the cluster in. (required)")
-	cmd.Flags().StringVarP(&o.CredentialsFile, "credentials", "c", "", "Path to the GCP service account key file. (required)")
-	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.14", "Kubernetes version of the cluster to provision.")
-	cmd.Flags().StringVarP(&o.Location, "location", "l", "europe-west3-a", "Location of the cluster to provision.")
-	cmd.Flags().StringVarP(&o.MachineType, "type", "t", "n1-standard-4", "Type of machine of the cluster to provision.")
-	cmd.Flags().IntVar(&o.DiskSizeGB, "disk-size", 30, "Specifies the disk size in GB of the cluster to provision.")
-	cmd.Flags().IntVar(&o.NodeCount, "nodes", 3, "Specifies the number of nodes of the cluster to provision.")
+	cmd.Flags().StringVarP(&o.Name, "name", "n", "", "Specifies the name of the GKE cluster to provision. (required)")
+	cmd.Flags().StringVarP(&o.Project, "project", "p", "", "Specifies the name of the GCP Project where you provision the GKE cluster. (required)")
+	cmd.Flags().StringVarP(&o.CredentialsFile, "credentials", "c", "", "Specifies the path to the GCP service account key file. (required)")
+	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.14", "Specifies the Kubernetes version of the cluster.")
+	cmd.Flags().StringVarP(&o.Location, "location", "l", "europe-west3-a", "Specifies the location of the cluster.")
+	cmd.Flags().StringVarP(&o.MachineType, "type", "t", "n1-standard-4", "Specifies the type of machine of the cluster.")
+	cmd.Flags().IntVar(&o.DiskSizeGB, "disk-size", 30, "Specifies the disk size in GB of the cluster.")
+	cmd.Flags().IntVar(&o.NodeCount, "nodes", 3, "Specifies the number of nodes of the cluster.")
 	// Temporary disabled flag. To be enabled when hydroform supports TF modules
 	//cmd.Flags().StringSliceVarP(&o.Extra, "extra", "e", nil, "Provide one or more arguments of the form NAME=VALUE to add extra configurations.")
 
