@@ -32,7 +32,7 @@ func NewCmd(o *Options) *cobra.Command {
 		Use:   "gardener",
 		Short: "Provisions a Kubernetes cluster using Gardener.",
 		Long:  `Use this command to use Gardener to provision Kubernetes clusters for Kyma installation. 
-NOTE: To successfully provision a cluster on a cloud provider of your choice, you must pass service account details as one of the parameters. 
+To successfully provision a cluster on a cloud provider of your choice, you must pass service account details as one of the parameters. 
 Use the following instructions to create a service account for a selected provider:
 - GCP: Check the roles and create a service account using instructions at https://gardener.cloud/050-tutorials/content/howto/gardener_gcp/
 - AWS: Check the roles and create a service account using instructions at https://gardener.cloud/050-tutorials/content/howto/gardener_aws/ 
