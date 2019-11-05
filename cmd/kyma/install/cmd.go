@@ -106,7 +106,6 @@ The standard installation uses the minimal configuration. The system performs th
 	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 1*time.Hour, "Time-out after which CLI stops watching the installation progress.")
 	cobraCmd.Flags().StringVarP(&o.Password, "password", "p", "", "Specifies the predefined cluster password.")
 	cobraCmd.Flags().StringArrayVarP(&o.OverrideConfigs, "override", "o", nil, "Specifies the path to a yaml file with parameters to override.")
-	cobraCmd.Flags().Bool("help", false, "Displays help for the command.")
 
 	return cobraCmd
 }
