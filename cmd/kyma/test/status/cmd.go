@@ -7,10 +7,9 @@ import (
 	"strings"
 
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
+	"github.com/kyma-project/cli/cmd/kyma/test"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
-	"github.com/kyma-project/cli/pkg/api/octopus"
-	"github.com/kyma-project/cli/cmd/kyma/test"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
@@ -35,9 +34,9 @@ func NewCmd(o *options) *cobra.Command {
 
 If you don't provide any arguments, the status of all test suites will be printed.
 
-To print the status of all test suites, `+"`run kyma test status`"+`.
+To print the status of all test suites, ` + "`run kyma test status`" + `.
 
-To print the status of specific test cases, `+"`run kyma test status testSuiteOne testSuiteTwo`"+`.
+To print the status of specific test cases, ` + "`run kyma test status testSuiteOne testSuiteTwo`" + `.
 `,
 
 		RunE:    func(_ *cobra.Command, args []string) error { return cmd.Run(args) },
@@ -80,7 +79,7 @@ func (cmd *command) Run(args []string) error {
 			}
 		}
 	default:
-		testsList, err := listTestSuitesByName(cmd.K8s.Octopus(), args)
+		testsList, err := test.ListTestSuitesByName(cmd.K8s.Octopus(), args)
 		if err != nil {
 			return errors.Wrap(err, "unable to list test suites")
 		}
@@ -191,21 +190,4 @@ func generateRerunCommand(testSuite *oct.ClusterTestSuite) string {
 		result += fmt.Sprintf(" --count=%d", testSuite.Spec.Count)
 	}
 	return result
-}
-
-func listTestSuitesByName(cli octopus.OctopusInterface, names []string) ([]oct.ClusterTestSuite, error) {
-	suites, err := cli.ListTestSuites(metav1.ListOptions{})
-	if err != nil {
-		return nil, errors.Wrap(err, "Unable to list test suites")
-	}
-
-	result := []oct.ClusterTestSuite{}
-	for _, suite := range suites.Items {
-		for _, tName := range names {
-			if suite.ObjectMeta.Name == tName {
-				result = append(result, suite)
-			}
-		}
-	}
-	return result, nil
 }

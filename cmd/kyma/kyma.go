@@ -11,6 +11,7 @@ import (
 	"github.com/kyma-project/cli/cmd/kyma/test/definitions"
 	del "github.com/kyma-project/cli/cmd/kyma/test/delete"
 	"github.com/kyma-project/cli/cmd/kyma/test/list"
+	"github.com/kyma-project/cli/cmd/kyma/test/logs"
 	"github.com/kyma-project/cli/cmd/kyma/test/run"
 	"github.com/kyma-project/cli/cmd/kyma/test/status"
 	"github.com/kyma-project/cli/cmd/kyma/uninstall"
@@ -62,7 +63,8 @@ For more information, see: https://github.com/kyma-project/cli
 	testDeleteCmd := del.NewCmd(del.NewOptions(o))
 	testListCmd := list.NewCmd(list.NewOptions(o))
 	testDefsCmd := definitions.NewCmd(definitions.NewOptions(o))
-	testCmd.AddCommand(testRunCmd, testStatusCmd, testDeleteCmd, testListCmd, testDefsCmd)
+	testLogsCmd := logs.NewCmd(logs.NewOptions(o))
+	testCmd.AddCommand(testRunCmd, testStatusCmd, testDeleteCmd, testListCmd, testDefsCmd, testLogsCmd)
 	cmd.AddCommand(testCmd)
 
 	return cmd
