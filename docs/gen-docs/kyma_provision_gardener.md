@@ -5,15 +5,11 @@ Provisions a Kubernetes cluster using Gardener.
 ### Synopsis
 
 Use this command to use Gardener to provision Kubernetes clusters for Kyma installation. 
-Gardener allows you to provision Kuberbetes clusters on a cloud platform of your choice. 
-Use the following instructions to provision the cluster:
-- GCP: https://gardener.cloud/050-tutorials/content/howto/gardener_gcp/
-- AWS: https://gardener.cloud/050-tutorials/content/howto/gardener_aws/ 
-- Azure: To provision a cluster on Azure, follow these steps:
-	1. Create a project in Gardener. 
-	2. Create a service account in Azure. Ensure it has the contributor role assigned.
-	3. Store the Azure Secret in Gardener. Use the Azure service account details to create a Secret.
-	4. Create a cluster. You can use instructions for GCP or AWS as the process is similar. 
+NOTE: To successfully provision a cluster on a cloud provider of your choice, you must pass service account details as one of the parameters. 
+Use the following instructions to create a service account for a selected provider:
+- GCP: Check the roles and create a service account using instructions at https://gardener.cloud/050-tutorials/content/howto/gardener_gcp/
+- AWS: Check the roles and create a service account using instructions at https://gardener.cloud/050-tutorials/content/howto/gardener_aws/ 
+- Azure: Create a service account with a `contributor` role. Use service account details to create a Secret and store it in Gardener.
 
 ```
 kyma provision gardener [flags]
@@ -23,7 +19,7 @@ kyma provision gardener [flags]
 
 ```
       --cidr string              Specifies the Gardener CIDR of the cluster. (default "10.250.0.0/19")
-  -c, --credentials string       Specifies the path to the kubeconfig file of the Gardener service account. (required)
+  -c, --credentials string       Specifies the path to the kubeconfig file of the Gardener service account for a given provider. (required)
       --disk-size int            Specifies the disk size in GB of the cluster. (default 30)
       --disk-type string         Specifies the type of disk to use on the target provider. (default "pd-standard")
   -e, --extra strings            Specifies one or more arguments as "NAME=VALUE" key-value pairs to configure additional cluster settings. You can use this flag multiple times or enter thet key-value pairs as a comma-separated list.

@@ -50,13 +50,13 @@ kyma install [flags]
 ```
   -d, --domain string          Specifies the domain used for installation. (default "kyma.local")
   -n, --noWait                 Determines if the command should wait for the Kyma installation to complete.
-  -o, --override stringArray   Specifies the path to a yaml file with parameters to override.
+  -o, --override stringArray   Specifies the path to a YAML file with parameters to override.
   -p, --password string        Specifies the predefined cluster password.
   -s, --source string          Specifies the installation source. 
                                	- To use the specific release, write "kyma install --source=1.3.0".
                                	- To use the latest master, write "kyma install --source=latest".
                                	- To use the local sources, write "kyma install --source=local". 
-                               	- To use the remote image, write kyma "install --source=user/my-kyma-installer:v1.4.0".
+                               	- To use a custom installer image, write kyma "install --source=user/my-kyma-installer:v1.4.0".
       --src-path string        Specifies the absolute path to local sources.
       --timeout duration       Time-out after which CLI stops watching the installation progress. (default 1h0m0s)
       --tlsCert string         Specifies the TLS certificate for the domain used for installation.
