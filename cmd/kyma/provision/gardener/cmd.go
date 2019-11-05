@@ -32,22 +32,18 @@ func NewCmd(o *Options) *cobra.Command {
 		Use:   "gardener",
 		Short: "Provisions a Kubernetes cluster using Gardener.",
 		Long:  `Use this command to use Gardener to provision Kubernetes clusters for Kyma installation. 
-Gardener allows you to provision Kuberbetes clusters on a cloud platform of your choice. 
-Use the following instructions to provision the cluster:
-- GCP: https://gardener.cloud/050-tutorials/content/howto/gardener_gcp/
-- AWS: https://gardener.cloud/050-tutorials/content/howto/gardener_aws/ 
-- Azure: To provision a cluster on Azure, follow these steps:
-	1. Create a project in Gardener. 
-	2. Create a service account in Azure. Ensure it has the contributor role assigned.
-	3. Store the Azure Secret in Gardener. Use the Azure service account details to create a Secret.
-	4. Create a cluster. You can use instructions for GCP or AWS as the process is similar. `,
+NOTE: To successfully provision a cluster on a cloud provider of your choice, you must pass service account details as one of the parameters. 
+Use the following instructions to create a service account for a selected provider:
+- GCP: Check the roles and create a service account using instructions at https://gardener.cloud/050-tutorials/content/howto/gardener_gcp/
+- AWS: Check the roles and create a service account using instructions at https://gardener.cloud/050-tutorials/content/howto/gardener_aws/ 
+- Azure: Create a service account with a `+ "`contributor`" +` role. Use service account details to create a Secret and store it in Gardener.`,
 
 		RunE:  func(_ *cobra.Command, _ []string) error { return c.Run() },
 	}
 
 	cmd.Flags().StringVarP(&o.Name, "name", "n", "", "Specifies the name of the cluster to provision. (required)")
 	cmd.Flags().StringVarP(&o.Project, "project", "p", "", "Specifies the name of the Gardener Project where you provision the cluster. (required)")
-	cmd.Flags().StringVarP(&o.CredentialsFile, "credentials", "c", "", "Specifies the path to the kubeconfig file of the Gardener service account. (required)")
+	cmd.Flags().StringVarP(&o.CredentialsFile, "credentials", "c", "", "Specifies the path to the kubeconfig file of the Gardener service account for a given provider. (required)")
 	cmd.Flags().StringVar(&o.TargetProvider, "target-provider", "gcp", "Specifies the cloud provider Gardener will use to create the cluster.")
 	cmd.Flags().StringVarP(&o.Secret, "secret", "s", "", "Specifies the name of the Gardener secret used to access the target provider. (required)")
 	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.15.4", "Specifies the Kubernetes version of the cluster.")
