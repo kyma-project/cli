@@ -1,6 +1,6 @@
 ## kyma test
 
-Run tests on a provisioned Kyma cluster.
+Runs tests on a provisioned Kyma cluster.
 
 ### Synopsis
 

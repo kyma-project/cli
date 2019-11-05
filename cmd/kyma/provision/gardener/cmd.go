@@ -62,7 +62,7 @@ Use the following instructions to provision the cluster:
 	cmd.Flags().IntVar(&o.ScalerMax, "scaler-max", 4, "Specifies the maximum autoscale value of the cluster.")
 	cmd.Flags().IntVar(&o.Surge, "surge", 4, "Specifies the maximum surge of the cluster.")
 	cmd.Flags().IntVarP(&o.Unavailable, "unavailable", "u", 1, "Specifies the maximum allowed number of unavailable nodes.")
-	cmd.Flags().StringSliceVarP(&o.Extra, "extra", "e", nil, "Specifies one or more arguments in the \"NAME=VALUE\" form to provide additional configurations.")
+	cmd.Flags().StringSliceVarP(&o.Extra, "extra", "e", nil, `Specifies one or more arguments as "NAME=VALUE" key-value pairs to configure additional cluster settings. You can use this flag multiple times or enter thet key-value pairs as a comma-separated list.`)
 
 	return cmd
 }

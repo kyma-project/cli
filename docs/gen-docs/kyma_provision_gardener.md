@@ -26,7 +26,7 @@ kyma provision gardener [flags]
   -c, --credentials string       Specifies the path to the kubeconfig file of the Gardener service account. (required)
       --disk-size int            Specifies the disk size in GB of the cluster. (default 30)
       --disk-type string         Specifies the type of disk to use on the target provider. (default "pd-standard")
-  -e, --extra strings            Specifies one or more arguments in the "NAME=VALUE" form to provide additional configurations.
+  -e, --extra strings            Specifies one or more arguments as "NAME=VALUE" key-value pairs to configure additional cluster settings. You can use this flag multiple times or enter thet key-value pairs as a comma-separated list.
   -k, --kube-version string      Specifies the Kubernetes version of the cluster. (default "1.15.4")
   -n, --name string              Specifies the name of the cluster to provision. (required)
       --nodes int                Specifies the number of nodes of the cluster. (default 3)

@@ -25,7 +25,7 @@ For more information, see: https://github.com/kyma-project/cli
 * [kyma console](kyma_console.md)	 - Opens the Kyma Console in a web browser.
 * [kyma install](kyma_install.md)	 - Installs Kyma on a running Kubernetes cluster.
 * [kyma provision](kyma_provision.md)	 - Provisions a cluster for Kyma installation.
-* [kyma test](kyma_test.md)	 - Run tests on a provisioned Kyma cluster.
+* [kyma test](kyma_test.md)	 - Runs tests on a provisioned Kyma cluster.
 * [kyma uninstall](kyma_uninstall.md)	 - Uninstalls Kyma from a running Kubernetes cluster.
 * [kyma version](kyma_version.md)	 - Displays the version of Kyma CLI and the connected Kyma cluster.
 
