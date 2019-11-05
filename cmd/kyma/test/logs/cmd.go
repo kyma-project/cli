@@ -42,8 +42,7 @@ Provide at least one test suite name.
 		RunE: func(_ *cobra.Command, args []string) error { return cmd.Run(args) },
 	}
 
-	cobraCmd.Flags().Bool("help", false, "Displays help for the command.")
-	cobraCmd.Flags().StringVar(&o.InStatus, "in-status", defaultLogsInStatus, "Display logs only from testing pods in given status.")
+	cobraCmd.Flags().StringVar(&o.InStatus, "test-status", defaultLogsInStatus, "Display logs only from testing pods in given status.")
 	cobraCmd.Flags().StringSliceVar(&o.IngoredContainers, "ignored-containers", defaultIgnoredContainers, "Specifies the containers name which are ignored when fetching logs from testing pods. Takes comma-separated list.")
 
 	return cobraCmd
@@ -58,11 +57,11 @@ func (cmd *command) Run(args []string) error {
 		return fmt.Errorf("Test suite name required")
 	}
 
-	k8sClient, err := kube.NewFromConfig("", cmd.KubeconfigPath)
+	var err error
+	cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath)
 	if err != nil {
 		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure that your kubeconfig is valid.")
 	}
-	cmd.K8s = k8sClient
 
 	logsStep := cmd.NewStep("Fetching logs")
 	logsStep.Start()
