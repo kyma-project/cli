@@ -5,7 +5,7 @@ Provisions a Kubernetes cluster using Gardener.
 ### Synopsis
 
 Use this command to use Gardener to provision Kubernetes clusters for Kyma installation. 
-NOTE: To successfully provision a cluster on a cloud provider of your choice, you must pass service account details as one of the parameters. 
+To successfully provision a cluster on a cloud provider of your choice, you must first create a service account to pass its details as one of the command parameters. 
 Use the following instructions to create a service account for a selected provider:
 - GCP: Check the roles and create a service account using instructions at https://gardener.cloud/050-tutorials/content/howto/gardener_gcp/
 - AWS: Check the roles and create a service account using instructions at https://gardener.cloud/050-tutorials/content/howto/gardener_aws/ 
@@ -18,24 +18,24 @@ kyma provision gardener [flags]
 ### Options
 
 ```
-      --cidr string              Specifies the Gardener CIDR of the cluster. (default "10.250.0.0/19")
-  -c, --credentials string       Specifies the path to the kubeconfig file of the Gardener service account for a given provider. (required)
-      --disk-size int            Specifies the disk size in GB of the cluster. (default 30)
+      --cidr string              Specifies Gardener Classless Inter-Domain Routing (CIDR) of the cluster. (default "10.250.0.0/19")
+  -c, --credentials string       Specifies the path to the kubeconfig file of the Gardener service account for a target provider. (required)
+      --disk-size int            Specifies the disk size (in GB) of the cluster. (default 30)
       --disk-type string         Specifies the type of disk to use on the target provider. (default "pd-standard")
   -e, --extra strings            Specifies one or more arguments as "NAME=VALUE" key-value pairs to configure additional cluster settings. You can use this flag multiple times or enter thet key-value pairs as a comma-separated list.
   -k, --kube-version string      Specifies the Kubernetes version of the cluster. (default "1.15.4")
   -n, --name string              Specifies the name of the cluster to provision. (required)
       --nodes int                Specifies the number of nodes of the cluster. (default 3)
-  -p, --project string           Specifies the name of the Gardener Project where you provision the cluster. (required)
+  -p, --project string           Specifies the name of the Gardener project where you provision the cluster. (required)
   -r, --region string            Specifies the region of the cluster. (default "europe-west3")
       --scaler-max int           Specifies the maximum autoscale value of the cluster. (default 4)
       --scaler-min int           Specifies the minimum autoscale value of the cluster. (default 2)
   -s, --secret string            Specifies the name of the Gardener secret used to access the target provider. (required)
       --surge int                Specifies the maximum surge of the cluster. (default 4)
       --target-provider string   Specifies the cloud provider Gardener will use to create the cluster. (default "gcp")
-  -t, --type string              Specifies the Type of machine of the cluster. (default "n1-standard-4")
+  -t, --type string              Specifies the type of machine of the cluster. (default "n1-standard-4")
   -u, --unavailable int          Specifies the maximum allowed number of unavailable nodes. (default 1)
-  -z, --zone string              Specifies the zone of the cluster to provision. (default "europe-west3-a")
+  -z, --zone string              Specifies the zone of the cluster. (default "europe-west3-a")
 ```
 
 ### Options inherited from parent commands
