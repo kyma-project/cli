@@ -53,7 +53,7 @@ To install Kyma CLI on Windows, download and unzip the [artifact](https://github
 
 Kyma CLI comes with a set of commands:
 
-|     Command        | Child commands |  Description  | Example |
+|     Command        | Child commands   |  Description  | Example |
 |--------------------|----------------|---------------|---------|
 | `completion`| None| Generates and displays the bash or zsh completion script. | `kyma completion`|
 | `console`| None|  Launches Kyma Console in a browser window. | `kyma console`  |
