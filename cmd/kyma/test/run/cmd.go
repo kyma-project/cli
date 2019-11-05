@@ -53,7 +53,7 @@ To execute all test defintions, run ` + "`kyma test run -n example-test`" + `.
 	cobraCmd.Flags().Int64VarP(&o.ExecutionCount, "count", "c", 1, `Defines how many times every test should be executed. "count" and "max-retries" flags are mutually exclusive.`)
 	cobraCmd.Flags().Int64VarP(&o.MaxRetries, "max-retries", "", 0, `Defines how many times a given test is retried when it fails. A suite is marked with a "succeeded" status even if some tests failed at first and then finally succeeded. The default value of 0 means that there are no retries of a given test.`)
 	cobraCmd.Flags().Int64VarP(&o.Concurrency, "concurrency", "", 1, "Specifies the number of tests to be executed in parallel.")
-	cobraCmd.Flags().DurationVar(&o.Timeout, "timeout", 10*time.Minute, `Maximum time during which the test suite is being watched. Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".`)
+	cobraCmd.Flags().DurationVar(&o.Timeout, "timeout", 0, `Maximum time during which the test suite is being watched, zero means infinite. Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".`)
 	cobraCmd.Flags().BoolVarP(&o.Watch, "watch", "w", o.Watch, "Watch the status of the test suite until it finishes or the defined `--timeout` occurs.")
 	return cobraCmd
 }
@@ -189,7 +189,10 @@ func verifyIfTestNotExists(suiteName string,
 
 // waitForTestSuite watches the given test suite until the exitCondition is true
 func waitForTestSuite(cli octopus.OctopusInterface, name string, exitCondition watchtools.ConditionFunc, timeout time.Duration) error {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	ctx, cancel := context.WithCancel(context.Background())
+	if timeout > 0 {
+		ctx, cancel = context.WithTimeout(ctx, timeout)
+	}
 	defer cancel()
 
 	preconditionFunc := func(store cache.Store) (bool, error) {
