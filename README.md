@@ -53,13 +53,15 @@ To install Kyma CLI on Windows, download and unzip the [artifact](https://github
 
 Kyma CLI comes with a set of commands:
 
-- `version` shows the Kyma cluster version and the Kyma CLI version.
-- `provision minikube` initializes Minikube on a new cluster. It replaces the `minikube.sh` script. 
-- `install` installs Kyma to a cluster based on the current release. It replaces the `ìnstaller.sh` and `is-installed.sh` script. 
-- `uninstall` uninstalls all Kyma-related resources from a cluster.
-- `test` runs tests on a provisioned Kyma cluster.
-- `completion` generates and shows the bash completion script.
-- `help` displays and explains the usage of a given command.
+|     Command        | Child commands   |  Description  | Example |
+|--------------------|----------------|---------------|---------|
+| `completion`| None| Generates and displays the bash or zsh completion script. | `kyma completion`|
+| `console`| None|  Launches Kyma Console in a browser window. | `kyma console`  |
+| `install`| None| Installs Kyma on a cluster based on the current or specified release. | `kyma install`|
+| `provision`| `provision minikube`<br> `provision gardener` <br> `provision gcp`| Provisions a new cluster on a platform of your choice. Currently, this command supports cluster provisioning on GCP, Gardener, and Minikube. | `kyma provision minikube`|
+| `test`|`test definitions`<br> `test delete` <br> `test list` <br> `test run` <br> `test status`<br> | Runs and manages tests on a provisioned Kyma cluster. Using child commands, you can run tests, view test definitions, list and delete test suites, and display test status.| `kyma test run`  |
+| `uninstall`|None| Uninstalls all Kyma-related resources from a cluster. | `kyma uninstall`  |
+| `version`|None| Shows the cluster version and the Kyma CLI version.|`kyma version`|
 
 For details on particular commands and options, see [this](https://github.com/kyma-project/cli/tree/master/docs/gen-docs) list.
 
@@ -108,7 +110,7 @@ Further usage examples include:
 
 ### Kyma CLI as a kubectl plugin
 
-> **NOTE**: To use Kyma CLI as a kubectl plugin, use Kubernetes version 1.12.0 or higher.
+>**NOTE**: To use Kyma CLI as a kubectl plugin, use Kubernetes version 1.12.0 or higher.
 
 A plugin is a standalone executable file with a name prefixed with `kubectl-` .To use the plugin, perform the following steps:
 

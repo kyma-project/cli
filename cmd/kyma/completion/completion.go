@@ -21,7 +21,6 @@ To configure your shell to load completions, add ` + "`. <(kyma completion bash)
 		RunE:    completion,
 		Aliases: []string{},
 	}
-	completionCmd.Flags().Bool("help", false, "Displays help for the command.")
 	return completionCmd
 }
 

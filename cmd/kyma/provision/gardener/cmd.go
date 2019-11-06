@@ -30,29 +30,35 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "gardener",
-		Short: "Provisions a Gardener cluster.",
-		Long:  `Use this command to provision a Gardener cluster for Kyma installation.`,
+		Short: "Provisions a Kubernetes cluster using Gardener.",
+		Long:  `Use this command to provision Kubernetes clusters with Gardener for Kyma installation. 
+To successfully provision a cluster on a cloud provider of your choice, you must first create a service account to pass its details as one of the command parameters. 
+Use the following instructions to create a service account for a selected provider:
+- GCP: Check the roles and create a service account using instructions at https://gardener.cloud/050-tutorials/content/howto/gardener_gcp/
+- AWS: Check the roles and create a service account using instructions at https://gardener.cloud/050-tutorials/content/howto/gardener_aws/ 
+- Azure: Create a service account with the `+ "`contributor`" +` role. Use service account details to create a Secret and store it in Gardener.`,
+
 		RunE:  func(_ *cobra.Command, _ []string) error { return c.Run() },
 	}
 
-	cmd.Flags().StringVarP(&o.Name, "name", "n", "", "Name of the cluster to provision. (required)")
-	cmd.Flags().StringVarP(&o.Project, "project", "p", "", "Name of the Gardener Project where to provision the cluster in. (required)")
-	cmd.Flags().StringVarP(&o.CredentialsFile, "credentials", "c", "", "Path to the Gardener service account kubeconfig file. (required)")
-	cmd.Flags().StringVar(&o.TargetProvider, "target-provider", "gcp", "Specify the cloud provider that Gardener should use to create the cluster.")
-	cmd.Flags().StringVarP(&o.Secret, "secret", "s", "", "Name of the Gardener secret to access the target provider. (required)")
-	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.15.4", "Kubernetes version of the cluster to provision.")
-	cmd.Flags().StringVarP(&o.Region, "region", "r", "europe-west3", "Region of the cluster to provision.")
-	cmd.Flags().StringVarP(&o.Zone, "zone", "z", "europe-west3-a", "Zone of the cluster to provision.")
-	cmd.Flags().StringVarP(&o.MachineType, "type", "t", "n1-standard-4", "Type of machine of the cluster to provision.")
-	cmd.Flags().StringVar(&o.CIDR, "cidr", "10.250.0.0/19", "Gardener CIDR of the cluster to provision.")
-	cmd.Flags().StringVar(&o.DiskType, "disk-type", "pd-standard", "Type of disk to use on the target provider.")
-	cmd.Flags().IntVar(&o.DiskSizeGB, "disk-size", 30, "Specifies the disk size in GB of the cluster to provision.")
-	cmd.Flags().IntVar(&o.NodeCount, "nodes", 3, "Specifies the number of nodes of the cluster to provision.")
-	cmd.Flags().IntVar(&o.ScalerMin, "scaler-min", 2, "Specifies the minimum autoscale of the cluster to provision.")
-	cmd.Flags().IntVar(&o.ScalerMax, "scaler-max", 4, "Specifies the maximum autoscale of the cluster to provision.")
-	cmd.Flags().IntVar(&o.Surge, "surge", 4, "Specifies maximum surge of the cluster to provision.")
-	cmd.Flags().IntVarP(&o.Unavailable, "unavailable", "u", 1, "Specifies the maximum number of unavailable nodes allowed.")
-	cmd.Flags().StringSliceVarP(&o.Extra, "extra", "e", nil, "Provide one or more arguments of the form NAME=VALUE to add extra configurations.")
+	cmd.Flags().StringVarP(&o.Name, "name", "n", "", "Specifies the name of the cluster to provision. (required)")
+	cmd.Flags().StringVarP(&o.Project, "project", "p", "", "Specifies the name of the Gardener project where you provision the cluster. (required)")
+	cmd.Flags().StringVarP(&o.CredentialsFile, "credentials", "c", "", "Specifies the path to the kubeconfig file of the Gardener service account for a target provider. (required)")
+	cmd.Flags().StringVar(&o.TargetProvider, "target-provider", "gcp", "Specifies the cloud provider that Gardener should use to create the cluster.")
+	cmd.Flags().StringVarP(&o.Secret, "secret", "s", "", "Specifies the name of the Gardener secret used to access the target provider. (required)")
+	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.15.4", "Specifies the Kubernetes version of the cluster.")
+	cmd.Flags().StringVarP(&o.Region, "region", "r", "europe-west3", "Specifies the region of the cluster.")
+	cmd.Flags().StringVarP(&o.Zone, "zone", "z", "europe-west3-a", "Specifies the zone of the cluster.")
+	cmd.Flags().StringVarP(&o.MachineType, "type", "t", "n1-standard-4", "Specifies the machine type used for the cluster.")
+	cmd.Flags().StringVar(&o.CIDR, "cidr", "10.250.0.0/19", "Specifies Gardener Classless Inter-Domain Routing (CIDR) of the cluster.")
+	cmd.Flags().StringVar(&o.DiskType, "disk-type", "pd-standard", "Specifies the type of disk to use on the target provider.")
+	cmd.Flags().IntVar(&o.DiskSizeGB, "disk-size", 30, "Specifies the disk size (in GB) of the cluster.")
+	cmd.Flags().IntVar(&o.NodeCount, "nodes", 3, "Specifies the number of cluster nodes.")
+	cmd.Flags().IntVar(&o.ScalerMin, "scaler-min", 2, "Specifies the minimum autoscale value of the cluster.")
+	cmd.Flags().IntVar(&o.ScalerMax, "scaler-max", 4, "Specifies the maximum autoscale value of the cluster.")
+	cmd.Flags().IntVar(&o.Surge, "surge", 4, "Specifies the maximum surge of the cluster.")
+	cmd.Flags().IntVarP(&o.Unavailable, "unavailable", "u", 1, "Specifies the maximum allowed number of unavailable nodes.")
+	cmd.Flags().StringSliceVarP(&o.Extra, "extra", "e", nil, `Specifies one or more arguments as "NAME=VALUE" key-value pairs to configure additional cluster settings. You can use this flag multiple times or enter the key-value pairs as a comma-separated list.`)
 
 	return cmd
 }
