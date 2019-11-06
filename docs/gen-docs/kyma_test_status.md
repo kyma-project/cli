@@ -20,7 +20,7 @@ kyma test status <test-suite-1> <test-suite-2> ... <test-suite-N> [flags]
 ### Options
 
 ```
-  -o, --output string   Output format. One of: json|yaml|wide
+  -o, --output string   Output format. One of: json|yaml|wide|junit
 ```
 
 ### Options inherited from parent commands

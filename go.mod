@@ -36,7 +36,9 @@ require (
 	google.golang.org/genproto v0.0.0-20191002211648-c459b9ce5143 // indirect
 	gopkg.in/src-d/go-git.v4 v4.13.1
 	gopkg.in/yaml.v2 v2.2.4
+	gotest.tools v2.2.0+incompatible
 	k8s.io/api v0.0.0-20190620084959-7cf5895f2711
 	k8s.io/apimachinery v0.0.0-20190612205821-1799e75a0719
 	k8s.io/client-go v12.0.0+incompatible
+	sigs.k8s.io/yaml v1.1.0
 )

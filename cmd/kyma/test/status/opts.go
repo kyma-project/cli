@@ -7,7 +7,6 @@ import (
 type options struct {
 	*cli.Options
 	Wait         bool
-	Logs         string
 	OutputFormat string
 }
 
