@@ -42,9 +42,9 @@ NOTE: To access the provisioned cluster, make sure you get authenticated by Goog
 	cmd.Flags().StringVarP(&o.CredentialsFile, "credentials", "c", "", "Specifies the path to the GCP service account key file. (required)")
 	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.14", "Specifies the Kubernetes version of the cluster.")
 	cmd.Flags().StringVarP(&o.Location, "location", "l", "europe-west3-a", "Specifies the location of the cluster.")
-	cmd.Flags().StringVarP(&o.MachineType, "type", "t", "n1-standard-4", "Specifies the type of machine of the cluster.")
-	cmd.Flags().IntVar(&o.DiskSizeGB, "disk-size", 30, "Specifies the disk size in GB of the cluster.")
-	cmd.Flags().IntVar(&o.NodeCount, "nodes", 3, "Specifies the number of nodes of the cluster.")
+	cmd.Flags().StringVarP(&o.MachineType, "type", "t", "n1-standard-4", "Specifies the machine type used for the cluster.")
+	cmd.Flags().IntVar(&o.DiskSizeGB, "disk-size", 30, "Specifies the disk size (in GB) of the cluster.")
+	cmd.Flags().IntVar(&o.NodeCount, "nodes", 3, "Specifies the number of cluster nodes.")
 	// Temporary disabled flag. To be enabled when hydroform supports TF modules
 	//cmd.Flags().StringSliceVarP(&o.Extra, "extra", "e", nil, "Provide one or more arguments of the form NAME=VALUE to add extra configurations.")
 
