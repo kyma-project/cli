@@ -51,13 +51,17 @@ func ListTestSuitesByName(cli octopus.OctopusInterface, names []string) ([]oct.C
 		return nil, errors.Wrap(err, "Unable to list test suites")
 	}
 
-	result := []oct.ClusterTestSuite{}
+	indexedNames := map[string]struct{}{}
+	for _, n := range names {
+		indexedNames[n] = struct{}{}
+	}
+
+	var result []oct.ClusterTestSuite
 	for _, suite := range suites.Items {
-		for _, tName := range names {
-			if suite.ObjectMeta.Name == tName {
-				result = append(result, suite)
-			}
+		if _, found := indexedNames[suite.Name]; found {
+			result = append(result, suite)
 		}
 	}
+
 	return result, nil
 }
