@@ -32,18 +32,18 @@ func NewCmd(o *options) *cobra.Command {
 
 	cobraCmd := &cobra.Command{
 		Use:   "logs <test-suite-1> <test-suite-2> ... <test-suite-N>",
-		Short: "Shows the logs of a related test executions pods.",
-		Long: `Use this command to display the logs of a test executing for given test suite.
+		Short: "Shows the logs of tests Pods for a given test suite.",
+		Long: `Use this command to display logs of a test executed for a given test suite. By default, the command displays logs for failed tests, but you can change this behavior using the "test-status" flag. 
 
-To print the status of specific test cases, ` + "`run kyma test logs testSuiteOne testSuiteTwo`" + `.
+To print the status of specific test cases, run ` + "`kyma test logs testSuiteOne testSuiteTwo`" + `.
 Provide at least one test suite name.
 `,
 
 		RunE: func(_ *cobra.Command, args []string) error { return cmd.Run(args) },
 	}
 
-	cobraCmd.Flags().StringVar(&o.InStatus, "test-status", defaultLogsInStatus, "Display logs only from testing pods in given status.")
-	cobraCmd.Flags().StringSliceVar(&o.IngoredContainers, "ignored-containers", defaultIgnoredContainers, "Specifies the containers name which are ignored when fetching logs from testing pods. Takes comma-separated list.")
+	cobraCmd.Flags().StringVar(&o.InStatus, "test-status", defaultLogsInStatus, "Displays logs coming only from testing Pods with a given status.")
+	cobraCmd.Flags().StringSliceVar(&o.IngoredContainers, "ignored-containers", defaultIgnoredContainers, "Container names which are ignored when fetching logs from testing Pods. Takes comma-separated list.")
 
 	return cobraCmd
 }
