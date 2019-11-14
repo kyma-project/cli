@@ -4,7 +4,9 @@ import (
 	"io"
 
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
+	"github.com/kyma-project/cli/pkg/api/octopus"
 	"github.com/olekukonko/tablewriter"
+	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -41,4 +43,25 @@ func GetNumberOfFinishedTests(testSuite *oct.ClusterTestSuite) int {
 		}
 	}
 	return result
+}
+
+func ListTestSuitesByName(cli octopus.OctopusInterface, names []string) ([]oct.ClusterTestSuite, error) {
+	suites, err := cli.ListTestSuites(metav1.ListOptions{})
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to list test suites")
+	}
+
+	indexedNames := map[string]struct{}{}
+	for _, n := range names {
+		indexedNames[n] = struct{}{}
+	}
+
+	var result []oct.ClusterTestSuite
+	for _, suite := range suites.Items {
+		if _, found := indexedNames[suite.Name]; found {
+			result = append(result, suite)
+		}
+	}
+
+	return result, nil
 }
