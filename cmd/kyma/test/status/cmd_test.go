@@ -81,7 +81,7 @@ func Test_ListTestSuitesByName(t *testing.T) {
 		},
 	}
 	for _, tt := range testData {
-		mCli := octopus.NewMockedOctopusRestClient(nil, &tt.inputTestSuites)
+		mCli := octopus.NewMockedOctopusRestClient(nil, &tt.inputTestSuites, nil)
 		dNames, err := listTestSuitesByName(mCli, tt.inputNames)
 		if !tt.shouldFail {
 			require.Nil(t, err, tt.testName)

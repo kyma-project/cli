@@ -69,7 +69,7 @@ func Test_deleteTestSuite(t *testing.T) {
 	}
 
 	for _, tt := range testData {
-		mCli := octopus.NewMockedOctopusRestClient(nil, tt.testSuitesAvailable)
+		mCli := octopus.NewMockedOctopusRestClient(nil, tt.testSuitesAvailable, nil)
 		err := deleteTestSuite(mCli, tt.testSuiteNameToDelete)
 		if !tt.shouldFail {
 			require.Nil(t, err, tt.testName)

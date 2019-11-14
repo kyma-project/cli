@@ -9,7 +9,7 @@ import (
 type options struct {
 	*cli.Options
 	Name           string
-	Wait           bool
+	Watch          bool
 	Timeout        time.Duration
 	ExecutionCount int64
 	MaxRetries     int64

@@ -57,7 +57,7 @@ func Test_ListTestDefinitionNames(t *testing.T) {
 	}
 
 	for _, tt := range testData {
-		mCli := octopus.NewMockedOctopusRestClient(&tt.inputDefinitions, nil)
+		mCli := octopus.NewMockedOctopusRestClient(&tt.inputDefinitions, nil, nil)
 		dNames, err := listTestDefinitionNames(mCli)
 		if !tt.shouldFail {
 			require.Nil(t, err, tt.testName)

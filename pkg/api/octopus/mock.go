@@ -5,17 +5,20 @@ import (
 
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/watch"
 )
 
 type MockedOctopusRestClient struct {
-	testDefs   *oct.TestDefinitionList
-	testSuites *oct.ClusterTestSuiteList
+	testDefs    *oct.TestDefinitionList
+	testSuites  *oct.ClusterTestSuiteList
+	fakeWatcher *watch.FakeWatcher
 }
 
-func NewMockedOctopusRestClient(testDefs *oct.TestDefinitionList, testSuites *oct.ClusterTestSuiteList) *MockedOctopusRestClient {
+func NewMockedOctopusRestClient(testDefs *oct.TestDefinitionList, testSuites *oct.ClusterTestSuiteList, watcher *watch.FakeWatcher) *MockedOctopusRestClient {
 	return &MockedOctopusRestClient{
-		testDefs:   testDefs,
-		testSuites: testSuites,
+		testDefs:    testDefs,
+		testSuites:  testSuites,
+		fakeWatcher: watcher,
 	}
 }
 
@@ -49,5 +52,10 @@ func (m *MockedOctopusRestClient) GetTestSuite(name string, options metav1.GetOp
 			return &m.testSuites.Items[i], nil
 		}
 	}
+
 	return nil, fmt.Errorf("not found")
+}
+
+func (m *MockedOctopusRestClient) WatchTestSuite(opts metav1.ListOptions) (watch.Interface, error) {
+	return m.fakeWatcher, nil
 }
