@@ -19,11 +19,11 @@ import (
 )
 
 type command struct {
-	opts *options
+	opts *Options
 	cli.Command
 }
 
-func NewCmd(o *options) *cobra.Command {
+func NewCmd(o *Options) *cobra.Command {
 	cmd := command{
 		Command: cli.Command{Options: o.Options},
 		opts:    o,
@@ -73,8 +73,8 @@ func (cmd *command) Run(args []string) error {
 			return nil
 		}
 
-		for _, t := range testList.Items {
-			if err := cmd.printTestSuiteStatus(&t, cmd.opts.OutputFormat); err != nil {
+		for idx := range testList.Items {
+			if err := cmd.printTestSuiteStatus(&testList.Items[idx], cmd.opts.OutputFormat); err != nil {
 				return err
 			}
 		}
@@ -84,8 +84,8 @@ func (cmd *command) Run(args []string) error {
 			return errors.Wrap(err, "unable to list test suites")
 		}
 
-		for _, t := range testsList {
-			if err := cmd.printTestSuiteStatus(&t, cmd.opts.OutputFormat); err != nil {
+		for idx := range testsList {
+			if err := cmd.printTestSuiteStatus(&testsList[idx], cmd.opts.OutputFormat); err != nil {
 				return err
 			}
 		}

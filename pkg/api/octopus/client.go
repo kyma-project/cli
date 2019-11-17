@@ -12,7 +12,7 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-type OctopusInterface interface {
+type Interface interface {
 	ListTestDefinitions(opts metav1.ListOptions) (result *oct.TestDefinitionList, err error)
 	ListTestSuites(opts metav1.ListOptions) (result *oct.ClusterTestSuiteList, err error)
 	CreateTestSuite(cts *oct.ClusterTestSuite) (result *oct.ClusterTestSuite, err error)
@@ -21,11 +21,11 @@ type OctopusInterface interface {
 	WatchTestSuite(opts metav1.ListOptions) (watch.Interface, error)
 }
 
-type OctopusRestClient struct {
+type RestClient struct {
 	restClient rest.Interface
 }
 
-func NewFromConfig(config *rest.Config) (OctopusInterface, error) {
+func NewFromConfig(config *rest.Config) (Interface, error) {
 	if err := apis.AddToScheme(scheme.Scheme); err != nil {
 		return nil, err
 	}
@@ -37,12 +37,12 @@ func NewFromConfig(config *rest.Config) (OctopusInterface, error) {
 		return nil, err
 	}
 
-	return &OctopusRestClient{
+	return &RestClient{
 		restClient: cl,
 	}, nil
 }
 
-func (t *OctopusRestClient) ListTestDefinitions(opts metav1.ListOptions) (result *oct.TestDefinitionList, err error) {
+func (t *RestClient) ListTestDefinitions(opts metav1.ListOptions) (result *oct.TestDefinitionList, err error) {
 	result = &oct.TestDefinitionList{}
 	err = t.restClient.Get().
 		Resource("testdefinitions").
@@ -52,7 +52,7 @@ func (t *OctopusRestClient) ListTestDefinitions(opts metav1.ListOptions) (result
 	return
 }
 
-func (t *OctopusRestClient) ListTestSuites(opts metav1.ListOptions) (result *oct.ClusterTestSuiteList, err error) {
+func (t *RestClient) ListTestSuites(opts metav1.ListOptions) (result *oct.ClusterTestSuiteList, err error) {
 	result = &oct.ClusterTestSuiteList{}
 	err = t.restClient.Get().
 		Resource("clustertestsuites").
@@ -62,7 +62,7 @@ func (t *OctopusRestClient) ListTestSuites(opts metav1.ListOptions) (result *oct
 	return
 }
 
-func (t *OctopusRestClient) CreateTestSuite(cts *oct.ClusterTestSuite) (result *oct.ClusterTestSuite, err error) {
+func (t *RestClient) CreateTestSuite(cts *oct.ClusterTestSuite) (result *oct.ClusterTestSuite, err error) {
 	result = &oct.ClusterTestSuite{}
 	err = t.restClient.Post().
 		Resource("clustertestsuites").
@@ -72,17 +72,17 @@ func (t *OctopusRestClient) CreateTestSuite(cts *oct.ClusterTestSuite) (result *
 	return
 }
 
-func (t *OctopusRestClient) DeleteTestSuite(name string, options metav1.DeleteOptions) error {
+func (t *RestClient) DeleteTestSuite(name string, options metav1.DeleteOptions) error {
 	return t.restClient.Delete().
 		Resource("clustertestsuites").
 		Name(name).
-		// Reenable this when deleteing supports options
+		// Reenable this when deleting supports options
 		//Body(options).
 		Do().
 		Error()
 }
 
-func (t *OctopusRestClient) GetTestSuite(name string, options metav1.GetOptions) (result *oct.ClusterTestSuite, err error) {
+func (t *RestClient) GetTestSuite(name string, options metav1.GetOptions) (result *oct.ClusterTestSuite, err error) {
 	result = &oct.ClusterTestSuite{}
 	err = t.restClient.Get().
 		Resource("clustertestsuites").
@@ -93,7 +93,7 @@ func (t *OctopusRestClient) GetTestSuite(name string, options metav1.GetOptions)
 	return
 }
 
-func (t *OctopusRestClient) WatchTestSuite(opts metav1.ListOptions) (watch.Interface, error) {
+func (t *RestClient) WatchTestSuite(opts metav1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second

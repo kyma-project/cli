@@ -19,11 +19,13 @@ import (
 )
 
 const (
-	kubernetesVersion  string = "1.14.6"
-	bootstrapper       string = "kubeadm"
-	vmDriverHyperkit   string = "hyperkit"
-	vmDriverHyperv     string = "hyperv"
-	vmDriverNone       string = "none"
+	kubernetesVersion string = "1.14.6"
+	bootstrapper      string = "kubeadm"
+	vmDriverHyperkit  string = "hyperkit"
+	vmDriverHyperv    string = "hyperv"
+	vmDriverNone      string = "none"
+	// it's used in cfg_windows.go
+	// nolint: deadcode,varcheck
 	vmDriverVirtualBox string = "virtualbox"
 	sleep                     = 10 * time.Second
 )

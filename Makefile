@@ -16,7 +16,7 @@ resolve:
 
 .PHONY: validate
 validate:
-	golint
+	./hack/verify-lint.sh
 
 .PHONY: build
 build: build-windows build-linux build-darwin

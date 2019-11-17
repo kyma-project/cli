@@ -25,7 +25,7 @@ const (
 type client struct {
 	static  kubernetes.Interface
 	dynamic dynamic.Interface
-	octps   octopus.OctopusInterface
+	octps   octopus.Interface
 	istio   istioNet.Interface
 	cfg     *rest.Config
 }
@@ -84,7 +84,7 @@ func (c *client) Dynamic() dynamic.Interface {
 	return c.dynamic
 }
 
-func (c *client) Octopus() octopus.OctopusInterface {
+func (c *client) Octopus() octopus.Interface {
 	return c.octps
 }
 

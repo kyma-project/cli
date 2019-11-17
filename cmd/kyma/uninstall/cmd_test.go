@@ -17,7 +17,8 @@ func TestUninstallFlags(t *testing.T) {
 	require.Equal(t, 30*time.Minute, o.Timeout, "Incorrect default uninstall time-out")
 
 	// test passing flags
-	c.ParseFlags([]string{"--timeout=60m0s"})
+	err := c.ParseFlags([]string{"--timeout=60m0s"})
+	require.NoError(t, err)
 	require.Equal(t, 60*time.Minute, o.Timeout, "Incorrect specified uninstall time-out")
 }
 

@@ -120,7 +120,7 @@ func newProvider(o *Options) (*types.Provider, error) {
 		v := strings.Split(e, "=")
 
 		if len(v) != 2 {
-			return p, fmt.Errorf("Wrong format for extra configuration %s. Please provide NAME=VALUE pairs.", e)
+			return p, fmt.Errorf("wrong format for extra configuration %s. Please provide NAME=VALUE pairs", e)
 		}
 		p.CustomConfigurations[v[0]] = v[1]
 	}

@@ -15,7 +15,7 @@ import (
 type KymaKube interface {
 	Static() kubernetes.Interface
 	Dynamic() dynamic.Interface
-	Octopus() octopus.OctopusInterface
+	Octopus() octopus.Interface
 	Istio() istioNet.Interface
 
 	// Config provides the configuration of the kubernetes client

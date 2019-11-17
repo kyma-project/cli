@@ -71,17 +71,17 @@ func TestImportCertificate(t *testing.T) {
 	mockStep := &stepMocks.Step{}
 	cmd.CurrentStep = mockStep
 
-	for _, test := range cases {
-		t.Run(test.name, func(t *testing.T) {
-			cmd.opts.NoWait = !test.wait
-			err := cmd.importCertificate(test.cert)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			cmd.opts.NoWait = !tc.wait
+			err := cmd.importCertificate(tc.cert)
 
-			require.Equal(t, test.expectedErr, err, "Error not as expected")
-			require.Equal(t, test.success, mockStep.IsSuccessful(), "Import certificate step must be successful")
-			require.Equal(t, test.stopped, mockStep.IsStopped(), "Import certificate step must not be stopped")
-			require.Equal(t, test.expectedStepStatus, mockStep.Statuses(), "Status messages not as expected")
-			require.Equal(t, test.expectedStepInfos, mockStep.Infos(), "Logged info messages not as expected")
-			require.Equal(t, test.expectedStepErrors, mockStep.Errors(), "Logged error messages not as expected")
+			require.Equal(t, tc.expectedErr, err, "Error not as expected")
+			require.Equal(t, tc.success, mockStep.IsSuccessful(), "Import certificate step must be successful")
+			require.Equal(t, tc.stopped, mockStep.IsStopped(), "Import certificate step must not be stopped")
+			require.Equal(t, tc.expectedStepStatus, mockStep.Statuses(), "Status messages not as expected")
+			require.Equal(t, tc.expectedStepInfos, mockStep.Infos(), "Logged info messages not as expected")
+			require.Equal(t, tc.expectedStepErrors, mockStep.Errors(), "Logged error messages not as expected")
 
 			mockStep.Reset()
 		})

@@ -5,6 +5,7 @@ import (
 	"os/exec"
 	"strings"
 
+	// Initialize GCP client auth plugins.
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 )
 

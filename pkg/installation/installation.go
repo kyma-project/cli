@@ -183,10 +183,10 @@ func (i *Installation) validateConfigurations() error {
 			i.Options.LocalSrcPath = filepath.Join(goPath, "src", "github.com", "kyma-project", "kyma")
 		}
 		if _, err := os.Stat(i.Options.LocalSrcPath); err != nil {
-			return fmt.Errorf("Configured 'src-path=%s' does not exist. Check if you configured a valid path", i.Options.LocalSrcPath)
+			return fmt.Errorf("configured 'src-path=%s' does not exist. Check if you configured a valid path", i.Options.LocalSrcPath)
 		}
 		if _, err := os.Stat(filepath.Join(i.Options.LocalSrcPath, "installation", "resources")); err != nil {
-			return fmt.Errorf("Configured 'src-path=%s' does not seem to point to a Kyma repository. Check if your repository contains the 'installation/resources' folder.", i.Options.LocalSrcPath)
+			return fmt.Errorf("configured 'src-path=%s' does not seem to point to a Kyma repository. Check if your repository contains the 'installation/resources' folder", i.Options.LocalSrcPath)
 		}
 
 	//Install the latest version (latest master)
@@ -518,7 +518,7 @@ func (i *Installation) configureHelm() error {
 		if j.Status.Succeeded == 1 {
 			break
 		} else if j.Status.Failed == 1 {
-			return errors.New("Could not generate the Helm certificate.")
+			return errors.New("could not generate the Helm certificate")
 		}
 		time.Sleep(1 * time.Second)
 	}
@@ -626,7 +626,7 @@ func (i *Installation) waitForInstaller() error {
 
 			default:
 				i.currentStep.Failure()
-				return fmt.Errorf("Unexpected status: %s\n", status)
+				return fmt.Errorf("unexpected status: %s", status)
 			}
 			time.Sleep(10 * time.Second)
 		}
@@ -654,7 +654,7 @@ func (i *Installation) buildResult() (*Result, error) {
 	case vs != nil && vs.Spec != nil && len(vs.Spec.Hosts) > 0:
 		consoleURL = fmt.Sprintf("https://%s", vs.Spec.Hosts[0])
 	default:
-		return nil, errors.New("Console host could not be obtained.")
+		return nil, errors.New("console host could not be obtained")
 	}
 
 	var warning string

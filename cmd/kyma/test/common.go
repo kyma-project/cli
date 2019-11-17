@@ -39,13 +39,13 @@ func GetNumberOfFinishedTests(testSuite *oct.ClusterTestSuite) int {
 	result := 0
 	for _, t := range testSuite.Status.Results {
 		if t.Status == oct.TestFailed || t.Status == oct.TestSucceeded || t.Status == oct.TestSkipped {
-			result += 1
+			result++
 		}
 	}
 	return result
 }
 
-func ListTestSuitesByName(cli octopus.OctopusInterface, names []string) ([]oct.ClusterTestSuite, error) {
+func ListTestSuitesByName(cli octopus.Interface, names []string) ([]oct.ClusterTestSuite, error) {
 	suites, err := cli.ListTestSuites(metav1.ListOptions{})
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to list test suites")

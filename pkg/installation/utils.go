@@ -170,7 +170,7 @@ func getInstallerImage(resources *[]map[string]interface{}) (string, error) {
 }
 
 func replaceInstallerImage(resources *[]map[string]interface{}, imageURL string) error {
-	// Check if installer deployment has all the neccessary fields and a container named kyma-installer-container.
+	// Check if installer deployment has all the necessary fields and a container named kyma-installer-container.
 	// If so, replace the image with the imageURL parameter.
 	for _, config := range *resources {
 		if kind, ok := config["kind"]; ok && kind == "Deployment" {

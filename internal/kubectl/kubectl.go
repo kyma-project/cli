@@ -17,7 +17,7 @@ func runCmd(verbose bool, args ...string) (string, error) {
 
 //RunApplyCmd executes a kubectl apply command with given resources
 func runApplyCmd(resources []map[string]interface{}, verbose bool, kubeconfig string) (string, error) {
-	cmd := exec.Command("kubectl", fmt.Sprintf("--kubeconfig=%s", kubeconfig), "apply", "-f", "-")
+	cmd := exec.Command("kubectl", fmt.Sprintf("--kubeconfig=%s", kubeconfig), "apply", "-f", "-") //nolint:gosec
 	buf := &bytes.Buffer{}
 	enc := yaml.NewEncoder(buf)
 	for _, y := range resources {
