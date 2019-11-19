@@ -9,7 +9,9 @@ import (
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
 	"github.com/kyma-project/cli/cmd/kyma/test"
 	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/junitxml"
 	"github.com/kyma-project/cli/internal/kube"
+	"github.com/kyma-project/cli/internal/logs"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
@@ -44,7 +46,7 @@ To print the status of specific test cases, ` + "`run kyma test status testSuite
 	}
 
 	cobraCmd.Flags().StringVarP(&o.OutputFormat, "output", "o", "",
-		"Output format. One of: json|yaml|wide")
+		"Output format. One of: json|yaml|wide|junit")
 	return cobraCmd
 }
 
@@ -98,23 +100,27 @@ func (cmd *command) printTestSuiteStatus(testSuite *oct.ClusterTestSuite, output
 	case "yaml":
 		d, err := yaml.Marshal(testSuite)
 		if err != nil {
-			return errors.Wrap(err,
-				fmt.Sprintf("Unable to marshal test suite '%s' to yaml",
-					testSuite.GetName()))
+			return errors.Wrapf(err, "Unable to marshal test suite '%s' to yaml",
+				testSuite.GetName())
 		}
 		fmt.Println(string(d))
 		return nil
 	case "json":
 		d, err := json.MarshalIndent(testSuite, "", "\t")
 		if err != nil {
-			return errors.Wrap(err,
-				fmt.Sprintf("Unable to marshal test suite '%s' to json",
-					testSuite.GetName()))
+			return errors.Wrapf(err, "Unable to marshal test suite '%s' to json",
+				testSuite.GetName())
 		}
 		fmt.Println(string(d))
 		return nil
 	case "wide":
 		printTestSuite(testSuite, true)
+	case "junit":
+		logsFetcher := logs.NewFetcherForTestingPods(cmd.K8s.Static().CoreV1(), []string{})
+		junitCreator := junitxml.NewCreator(logsFetcher)
+		if err := junitCreator.Write(os.Stdout, testSuite); err != nil {
+			return errors.Wrapf(err, "while writing junit report for '%s' test suite", testSuite.GetName())
+		}
 	default:
 		printTestSuite(testSuite, false)
 	}
@@ -143,17 +149,19 @@ func printTestSuite(testSuite *oct.ClusterTestSuite, wide bool) {
 	for _, t := range testSuite.Status.Results {
 
 		if wide {
-			writer.SetHeader([]string{"TEST", "STATUS", "NAMESPACE", "POD"})
+			writer.SetHeader([]string{"TEST", "STATUS", "RETRIED", "NAMESPACE", "POD"})
 			var podName string
+			retried := "No"
 			switch len(t.Executions) {
 			case 0:
 				break
 			case 1:
 				podName = t.Executions[0].ID
 			default:
+				retried = fmt.Sprintf("Yes - %d time(s)", len(t.Executions)-1)
 				podName = t.Executions[len(t.Executions)-1].ID
 			}
-			writer.Append([]string{t.Name, string(t.Status), t.Namespace, podName})
+			writer.Append([]string{t.Name, string(t.Status), retried, t.Namespace, podName})
 		} else {
 			writer.Append([]string{t.Name, string(t.Status)})
 		}
