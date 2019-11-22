@@ -51,6 +51,12 @@ integration-test:
 archive:
 	cp -r bin/* $(ARTIFACTS)
 
+.PHONY: upload-stable
+upload-stable: 
+ifdef STABLE
+	gsutil cp bin/* $(KYMA_CLI_STABLE_BUCKET)
+endif
+
 .PHONY: release
 release:
 	git remote add origin git@github.com:kyma-project/cli.git
@@ -71,7 +77,7 @@ local: validate test install
 ci-pr: resolve validate build test integration-test
 
 .PHONY: ci-master
-ci-master: resolve validate build test integration-test
+ci-master: resolve validate build test integration-test upload-stable
 
 .PHONY: ci-release
 ci-release: resolve validate build test integration-test archive release
