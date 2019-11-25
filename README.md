@@ -131,3 +131,14 @@ Kyma cluster version: 1.0.0
 ```
 
 For more information on extending kubectl with plugins, read [Kubernetes documentation](https://kubernetes.io/docs/tasks/extend-kubectl/kubectl-plugins/).
+
+### Kyma CLI stable binaries
+
+Kyma CLI is used in continuous integration jobs that install or uninstall Kyma or provision clusters. To effectively support this, we publish the stable binaries created from the `stable` tag which corresponds to the latest stable version of Kyma CLI.
+
+To download the binaries, run:
+
+```bash
+curl -Lo kyma https://storage.googleapis.com/kyma-cli-stable/kyma-darwin # kyma-linux or kyma.exe
+chmod +x kyma
+```
