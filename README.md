@@ -56,11 +56,11 @@ Kyma CLI comes with a set of commands:
 |     Command        | Child commands   |  Description  | Example |
 |--------------------|----------------|---------------|---------|
 | `completion`| None| Generates and displays the bash or zsh completion script. | `kyma completion`|
-| `console`| None|  Launches Kyma Console in a browser window. | `kyma console`  |
+| `console`| None| Launches Kyma Console in a browser window. | `kyma console` |
 | `install`| None| Installs Kyma on a cluster based on the current or specified release. | `kyma install`|
 | `provision`| `provision minikube`<br> `provision gardener` <br> `provision gcp`| Provisions a new cluster on a platform of your choice. Currently, this command supports cluster provisioning on GCP, Gardener, and Minikube. | `kyma provision minikube`|
-| `test`|`test definitions`<br> `test delete` <br> `test list` <br> `test run` <br> `test status`<br> | Runs and manages tests on a provisioned Kyma cluster. Using child commands, you can run tests, view test definitions, list and delete test suites, and display test status.| `kyma test run`  |
-| `uninstall`|None| Uninstalls all Kyma-related resources from a cluster. | `kyma uninstall`  |
+| `test`|`test definitions`<br> `test delete` <br> `test list` <br> `test run` <br> `test status`<br> `test logs`<br> | Runs and manages tests on a provisioned Kyma cluster. Using child commands, you can run tests, view test definitions, list and delete test suites, display test status, and fetch the logs of the tests.| `kyma test run` |
+| `uninstall`|None| Uninstalls all Kyma-related resources from a cluster. | `kyma uninstall` |
 | `version`|None| Shows the cluster version and the Kyma CLI version.|`kyma version`|
 
 For details on particular commands and options, see [this](https://github.com/kyma-project/cli/tree/master/docs/gen-docs) list.
