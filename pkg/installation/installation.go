@@ -592,7 +592,7 @@ func (i *Installation) waitForInstaller() error {
 			if err != nil {
 				// A timeout when asking for the status can happen if the cluster is under high load while installing Kyma.
 				// But it should not make the CLI stop waiting immediately.
-				if strings.Contains("operation timed out", err.Error()) {
+				if strings.Contains(err.Error(), "operation timed out") {
 					i.currentStep.LogError("Could not get the status, retrying...")
 				} else {
 					return err
