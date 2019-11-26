@@ -94,18 +94,18 @@ The standard installation uses the minimal configuration. The system performs th
 	}
 
 	cobraCmd.Flags().BoolVarP(&o.NoWait, "noWait", "n", false, "Determines if the command should wait for Kyma installation to complete.")
-	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", localDomain, "Specifies the domain used for installation.")
-	cobraCmd.Flags().StringVarP(&o.TLSCert, "tlsCert", "", "", "Specifies the TLS certificate for the domain used for installation.")
-	cobraCmd.Flags().StringVarP(&o.TLSKey, "tlsKey", "", "", "Specifies the TLS key for the domain used for installation.")
-	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", DefaultKymaVersion, `Specifies the installation source. 
+	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", localDomain, "Domain used for installation.")
+	cobraCmd.Flags().StringVarP(&o.TLSCert, "tlsCert", "", "", "TLS certificate for the domain used for installation.")
+	cobraCmd.Flags().StringVarP(&o.TLSKey, "tlsKey", "", "", "TLS key for the domain used for installation.")
+	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", DefaultKymaVersion, `Installation source. 
 	- To use the specific release, write "kyma install --source=1.3.0".
 	- To use the latest master, write "kyma install --source=latest".
 	- To use the local sources, write "kyma install --source=local". 
 	- To use a custom installer image, write kyma "install --source=user/my-kyma-installer:v1.4.0".`)
-	cobraCmd.Flags().StringVarP(&o.LocalSrcPath, "src-path", "", "", "Specifies the absolute path to local sources.")
+	cobraCmd.Flags().StringVarP(&o.LocalSrcPath, "src-path", "", "", "Absolute path to local sources.")
 	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 1*time.Hour, "Time-out after which CLI stops watching the installation progress.")
-	cobraCmd.Flags().StringVarP(&o.Password, "password", "p", "", "Specifies the predefined cluster password.")
-	cobraCmd.Flags().StringArrayVarP(&o.OverrideConfigs, "override", "o", nil, "Specifies the path to a YAML file with parameters to override.")
+	cobraCmd.Flags().StringVarP(&o.Password, "password", "p", "", "Predefined cluster password.")
+	cobraCmd.Flags().StringArrayVarP(&o.OverrideConfigs, "override", "o", nil, "Path to a YAML file with parameters to override.")
 
 	return cobraCmd
 }
