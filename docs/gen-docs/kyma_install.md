@@ -49,7 +49,7 @@ kyma install [flags]
 
 ```
   -d, --domain string          Domain used for installation. (default "kyma.local")
-  -n, --noWait                 Determines if the command should wait for Kyma installation to complete.
+  -n, --noWait                 Flag that determines if the command should wait for Kyma installation to complete.
   -o, --override stringArray   Path to a YAML file with parameters to override.
   -p, --password string        Predefined cluster password.
   -s, --source string          Installation source. 
