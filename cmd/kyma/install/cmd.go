@@ -2,12 +2,13 @@ package install
 
 import (
 	"fmt"
-	"github.com/kyma-project/cli/internal/nice"
 	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/kyma-project/cli/internal/nice"
 
 	"github.com/kyma-project/cli/pkg/step"
 
@@ -282,7 +283,7 @@ func (cmd *command) printSummary(result *installation.Result) error {
 	fmt.Print(" admin email:\t\t")
 	nice.PrintImportant(result.AdminEmail)
 
-	if result.AdminPassword == "" || cmd.Factory.NonInteractive {
+	if cmd.opts.Password == "" && !cmd.Factory.NonInteractive {
 		nice.PrintKyma()
 		fmt.Printf(" admin password:\t\t")
 		nice.PrintImportant(result.AdminPassword)
