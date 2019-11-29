@@ -39,7 +39,8 @@ golangci::run_checks() {
 
   ENABLE=$(sed 's/ /,/g' <<< "${LINTS[@]}")
 
-  golangci-lint -v --disable-all --enable="${ENABLE}"  --timeout=5m run ${ROOT_PATH}/...
+  echo "Checks: ${LINTS[*]}"
+  golangci-lint --disable-all --enable="${ENABLE}" --timeout=5m run ${ROOT_PATH}/...
 
   echo -e "${GREEN}√ run golangci-lint${NC}"
 }

@@ -39,7 +39,7 @@ func Test(t *testing.T) {
 	for tn, tc := range tests {
 		t.Run(tn, func(t *testing.T) {
 			// given
-			fakeCli, cleanup := NewFakePodsGetter(t, tc.pod, fixLogsResponse)
+			fakeCli, cleanup := newFakePodsGetter(t, tc.pod, fixLogsResponse)
 			defer cleanup()
 
 			fetcher := logs.NewFetcherForTestingPods(fakeCli, tc.ignoredCnt)
@@ -91,11 +91,11 @@ func fixPodWithContainers(containersName ...string) v1.Pod {
 	return pod
 }
 
-// FakePodGetter implements SIMPLY fake for getting pods and fetching associated logs
+// fakePodGetter implements SIMPLY fake for getting pods and fetching associated logs
 // Unfortunately needs to be implemented by us, because client-go fake client
 // in current implementation (client-go v1.12) returns zero-value `rest.Request`
 // and executing GetLogs(/*..*/).DoRaw() method, throws panic.
-type FakePodGetter struct {
+type fakePodGetter struct {
 	podName      string
 	podNamespace string
 	containers   []string
@@ -103,14 +103,14 @@ type FakePodGetter struct {
 	url          *url.URL
 }
 
-func NewFakePodsGetter(t *testing.T, pod v1.Pod, podlogs string) (*FakePodGetter, func()) {
+func newFakePodsGetter(t *testing.T, pod v1.Pod, podlogs string) (*fakePodGetter, func()) {
 	fakeAPIServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, podlogs)
 	}))
 	u, err := url.Parse(fakeAPIServer.URL)
 	require.NoError(t, err)
 
-	fakeCli := &FakePodGetter{
+	fakeCli := &fakePodGetter{
 		pod: pod,
 		url: u,
 	}
@@ -118,51 +118,51 @@ func NewFakePodsGetter(t *testing.T, pod v1.Pod, podlogs string) (*FakePodGetter
 	return fakeCli, fakeAPIServer.Close
 }
 
-func (f *FakePodGetter) Pods(namespace string) corev1.PodInterface {
+func (f *fakePodGetter) Pods(namespace string) corev1.PodInterface {
 	f.podNamespace = namespace
 	return f
 }
 
-func (f *FakePodGetter) Get(name string, options metav1.GetOptions) (*v1.Pod, error) {
+func (f *fakePodGetter) Get(name string, options metav1.GetOptions) (*v1.Pod, error) {
 	f.podName = name
 	return &f.pod, nil
 }
 
-func (f *FakePodGetter) GetLogs(name string, opts *v1.PodLogOptions) *rest.Request {
+func (f *fakePodGetter) GetLogs(name string, opts *v1.PodLogOptions) *rest.Request {
 	f.containers = append(f.containers, opts.Container)
 	return rest.NewRequest(nil, http.MethodGet, f.url, "", rest.ContentConfig{}, rest.Serializers{}, nil, nil, 0)
 }
 
 // Defined only to fulfil the `PodInterface` interface
 // should not be used by business logic.
-func (f *FakePodGetter) Create(*v1.Pod) (*v1.Pod, error) {
+func (f *fakePodGetter) Create(*v1.Pod) (*v1.Pod, error) {
 	panic("not implemented")
 }
 
-func (f *FakePodGetter) Update(*v1.Pod) (*v1.Pod, error) {
+func (f *fakePodGetter) Update(*v1.Pod) (*v1.Pod, error) {
 	panic("not implemented")
 }
-func (f *FakePodGetter) UpdateStatus(*v1.Pod) (*v1.Pod, error) {
+func (f *fakePodGetter) UpdateStatus(*v1.Pod) (*v1.Pod, error) {
 	panic("not implemented")
 }
-func (f *FakePodGetter) Delete(name string, options *metav1.DeleteOptions) error {
+func (f *fakePodGetter) Delete(name string, options *metav1.DeleteOptions) error {
 	panic("not implemented")
 }
-func (f *FakePodGetter) DeleteCollection(options *metav1.DeleteOptions, listOptions metav1.ListOptions) error {
+func (f *fakePodGetter) DeleteCollection(options *metav1.DeleteOptions, listOptions metav1.ListOptions) error {
 	panic("not implemented")
 }
-func (f *FakePodGetter) List(opts metav1.ListOptions) (*v1.PodList, error) {
+func (f *fakePodGetter) List(opts metav1.ListOptions) (*v1.PodList, error) {
 	panic("not implemented")
 }
-func (f *FakePodGetter) Watch(opts metav1.ListOptions) (watch.Interface, error) {
+func (f *fakePodGetter) Watch(opts metav1.ListOptions) (watch.Interface, error) {
 	panic("not implemented")
 }
-func (f *FakePodGetter) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.Pod, err error) {
+func (f *fakePodGetter) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.Pod, err error) {
 	panic("not implemented")
 }
-func (f *FakePodGetter) Bind(binding *v1.Binding) error {
+func (f *fakePodGetter) Bind(binding *v1.Binding) error {
 	panic("not implemented")
 }
-func (f *FakePodGetter) Evict(eviction *v1beta1.Eviction) error {
+func (f *fakePodGetter) Evict(eviction *v1beta1.Eviction) error {
 	panic("not implemented")
 }

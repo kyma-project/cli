@@ -75,7 +75,7 @@ func (c *Creator) getNumberOfFailedTests(testSuite *oct.ClusterTestSuite) int {
 	result := 0
 	for _, t := range testSuite.Status.Results {
 		if t.Status == oct.TestFailed {
-			result += 1
+			result++
 		}
 	}
 	return result
