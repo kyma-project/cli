@@ -2,14 +2,12 @@
 package files
 
 import (
-	"encoding/json"
 	"io/ioutil"
 	"os"
 	"os/user"
 	"path/filepath"
 	fp "path/filepath"
 
-	"github.com/kyma-incubator/hydroform/types"
 	"github.com/pkg/errors"
 )
 
@@ -35,7 +33,7 @@ func KymaHome() (string, error) {
 func Save(filePath string, content []byte) error {
 	kh, err := KymaHome()
 	if err != nil {
-		errors.Wrap(err, "Could not save file")
+		return errors.Wrap(err, "Could not save file")
 	}
 
 	filePath = fp.Join(kh, filePath)
@@ -55,35 +53,9 @@ func Save(filePath string, content []byte) error {
 func Load(filePath string) ([]byte, error) {
 	kh, err := KymaHome()
 	if err != nil {
-		errors.Wrap(err, "Could not load file")
+		return nil, errors.Wrap(err, "Could not load file")
 	}
 
 	filePath = fp.Join(kh, filePath)
 	return ioutil.ReadFile(filePath)
-}
-
-func SaveClusterState(cl *types.Cluster, p *types.Provider) error {
-	data, err := json.Marshal(cl)
-	if err != nil {
-		return errors.Wrap(err, "Error marshaling cluster information")
-	}
-
-	path := filepath.Join("clusters", string(p.Type), p.ProjectName, cl.Name, "state.json")
-
-	return Save(path, data)
-}
-
-func LoadClusterState(cl *types.Cluster, p *types.Provider) (*types.Cluster, error) {
-	path := filepath.Join("clusters", string(p.Type), p.ProjectName, cl.Name, "state.json")
-	data, err := Load(path)
-	if err != nil {
-		return cl, errors.Wrap(err, "Error loading cluster information")
-	}
-
-	state := &types.Cluster{}
-	if err := json.Unmarshal(data, state); err != nil {
-		return cl, err
-	}
-
-	return state, nil
 }

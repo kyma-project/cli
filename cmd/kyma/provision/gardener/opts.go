@@ -15,7 +15,9 @@ type Options struct {
 	Zone              string
 	MachineType       string
 	CIDR              string
+	WCIDR             string
 	DiskType          string
+	Seed              string
 	DiskSizeGB        int
 	NodeCount         int
 	ScalerMin         int
