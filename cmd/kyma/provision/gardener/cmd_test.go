@@ -109,10 +109,12 @@ func TestNewProvider(t *testing.T) {
 		Project:         "cool-project",
 		CredentialsFile: "/path/to/credentials",
 		TargetProvider:  "AlibabaCloud",
+		Seed:            "Tulip",
 		Secret:          "Open sesame!",
 		Zone:            "Desert",
 		DiskType:        "a big one",
 		CIDR:            "0.0.0.0/24",
+		WCIDR:           "0.0.0.1/19",
 		ScalerMin:       12,
 		ScalerMax:       26,
 		Surge:           35,
@@ -132,6 +134,7 @@ func TestNewProvider(t *testing.T) {
 	custom["VAR2"] = "VALUE2"
 	custom["target_secret"] = o.Secret
 	custom["target_provider"] = o.TargetProvider
+	custom["target_seed"] = o.Seed
 	custom["zone"] = o.Zone
 	custom["disk_type"] = o.DiskType
 	custom["autoscaler_min"] = o.ScalerMin
@@ -139,5 +142,6 @@ func TestNewProvider(t *testing.T) {
 	custom["max_surge"] = o.Surge
 	custom["max_unavailable"] = o.Unavailable
 	custom["cidr"] = o.CIDR
+	custom["workercidr"] = o.WCIDR
 	require.Equal(t, custom, p.CustomConfigurations, "Provider extra configurations not as expected.")
 }

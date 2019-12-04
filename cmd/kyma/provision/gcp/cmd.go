@@ -31,10 +31,10 @@ func NewCmd(o *Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "gcp",
 		Short: "Provisions a Google Kubernetes Engine (GKE) cluster on Google Cloud Platform (GCP).",
-		Long:  `Use this command to provision a Kubernetes cluster on GCP for Kyma installation. Use the flags to specify cluster details.
-NOTE: To access the provisioned cluster, make sure you get authenticated by Google Cloud SDK. To do so,run `+ "`gcloud auth application-default login`" + ` and log in with your Google Cloud credentials.`,
+		Long: `Use this command to provision a Kubernetes cluster on GCP for Kyma installation. Use the flags to specify cluster details.
+NOTE: To access the provisioned cluster, make sure you get authenticated by Google Cloud SDK. To do so,run ` + "`gcloud auth application-default login`" + ` and log in with your Google Cloud credentials.`,
 
-		RunE:  func(_ *cobra.Command, _ []string) error { return c.Run() },
+		RunE: func(_ *cobra.Command, _ []string) error { return c.Run() },
 	}
 
 	cmd.Flags().StringVarP(&o.Name, "name", "n", "", "Name of the GKE cluster to provision. (required)")
@@ -67,22 +67,21 @@ func (c *command) Run() error {
 		log.SetOutput(ioutil.Discard)
 	}
 	s := c.NewStep("Provisioning GCP cluster")
-	cluster, err = hf.Provision(cluster, provider)
+	home, err := files.KymaHome()
+	if err != nil {
+		s.Failure()
+		return err
+	}
+
+	cluster, err = hf.Provision(cluster, provider, types.WithDataDir(home), types.Persistent())
 	if err != nil {
 		s.Failure()
 		return err
 	}
 	s.Success()
 
-	s = c.NewStep("Saving cluster state")
-	if err := files.SaveClusterState(cluster, provider); err != nil {
-		s.Failure()
-		return err
-	}
-	s.Success()
-
 	s = c.NewStep("Importing kubeconfig")
-	kubeconfig, err := hf.Credentials(cluster, provider)
+	kubeconfig, err := hf.Credentials(cluster, provider, types.WithDataDir(home), types.Persistent())
 	if err != nil {
 		s.Failure()
 		return err
