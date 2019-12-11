@@ -43,7 +43,12 @@ func (c *Creator) Write(out io.Writer, suite *oct.ClusterTestSuite) error {
 }
 
 func (c *Creator) generateReport(suite *oct.ClusterTestSuite) (JUnitTestSuites, error) {
-	suiteTotalTime := suite.Status.CompletionTime.Sub(suite.Status.StartTime.Time)
+	var suiteTotalTime time.Duration
+	// CompletionTime is not set when test suite is timed out
+	if suite.Status.CompletionTime != nil {
+		suiteTotalTime = suite.Status.CompletionTime.Sub(suite.Status.StartTime.Time)
+	}
+
 	tc, err := c.mapToTestCases(suite.Status.Results)
 	if err != nil {
 		return JUnitTestSuites{}, errors.Wrap(err, "while mapping test results into junit test cases")
