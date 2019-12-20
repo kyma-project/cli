@@ -19,6 +19,9 @@ import (
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/storage/memory"
 	v1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
 
@@ -93,6 +96,17 @@ func (i *Installation) setAdminPassword() error {
 	_, err := i.k8s.Static().CoreV1().ConfigMaps("kyma-installer").Patch("installation-config-overrides", types.JSONPatchType,
 		[]byte(fmt.Sprintf("[{\"op\": \"replace\", \"path\": \"/data/global.adminPassword\", \"value\": \"%s\"}]", encPass)))
 	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			_, err = i.k8s.Static().CoreV1().ConfigMaps("kyma-installer").Create(&corev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:   "installation-config-overrides",
+					Labels: map[string]string{"installer": "overrides"},
+				},
+				Data: map[string]string{
+					"global.adminPassword": encPass,
+				},
+			})
+		}
 		err = errors.Wrap(err, "Error setting admin password")
 	}
 	return err
