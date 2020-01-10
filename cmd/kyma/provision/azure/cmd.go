@@ -9,8 +9,8 @@ import (
 
 	"github.com/kyma-project/cli/internal/kube"
 
-	hf "github.com/kyma-incubator/hydroform"
-	"github.com/kyma-incubator/hydroform/types"
+	hf "github.com/kyma-incubator/hydroform/provision"
+	"github.com/kyma-incubator/hydroform/provision/types"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/files"
 	"github.com/spf13/cobra"

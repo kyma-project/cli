@@ -3,7 +3,7 @@ package azure
 import (
 	"testing"
 
-	"github.com/kyma-incubator/hydroform/types"
+	"github.com/kyma-incubator/hydroform/provision/types"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/stretchr/testify/require"
 )
