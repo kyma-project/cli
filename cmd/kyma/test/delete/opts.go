@@ -2,12 +2,12 @@ package del
 
 import "github.com/kyma-project/cli/internal/cli"
 
-type options struct {
+type Options struct {
 	*cli.Options
 	Name string
 	All  bool
 }
 
-func NewOptions(o *cli.Options) *options {
-	return &options{Options: o}
+func NewOptions(o *cli.Options) *Options {
+	return &Options{Options: o}
 }

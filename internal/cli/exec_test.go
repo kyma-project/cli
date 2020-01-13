@@ -42,11 +42,11 @@ func TestRunCmd(t *testing.T) {
 		},
 	}
 
-	for _, test := range cases {
-		t.Run(test.name, func(t *testing.T) {
-			out, err := RunCmd(test.cmd[0], test.cmd[1:]...)
-			require.Equal(t, test.expectedOutput, out, test.description)
-			require.Equal(t, test.expectedErr, err)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			out, err := RunCmd(tc.cmd[0], tc.cmd[1:]...)
+			require.Equal(t, tc.expectedOutput, out, tc.description)
+			require.Equal(t, tc.expectedErr, err)
 		})
 	}
 }

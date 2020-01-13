@@ -54,14 +54,14 @@ func TestHome(t *testing.T) {
 		},
 	}
 
-	for _, test := range cases {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
 			// set desired helm home command mocked output
-			helmCmd = exec.Command("echo", test.cmdOutput)
+			helmCmd = exec.Command("echo", tc.cmdOutput) //nolint:gosec
 			home, err := Home()
 
-			require.Equal(t, test.expected, home, test.description)
-			require.Nil(t, err, test.description)
+			require.Equal(t, tc.expected, home, tc.description)
+			require.Nil(t, err, tc.description)
 		})
 	}
 }

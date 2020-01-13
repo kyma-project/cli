@@ -267,7 +267,11 @@ func (cmd *command) waitForInstallerToUninstall() error {
 		select {
 		case <-timeout:
 			cmd.CurrentStep.Failure()
-			cmd.printUninstallationErrorLog()
+			err := cmd.printUninstallationErrorLog()
+			if err != nil {
+				return errors.Wrap(err, "while printing uninstalling error log")
+			}
+
 			return errors.New("Time-out reached while waiting for Kyma to uninstall")
 		default:
 			status, desc, err := cmd.getUninstallationStatus()

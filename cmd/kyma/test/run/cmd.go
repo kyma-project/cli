@@ -25,18 +25,18 @@ import (
 )
 
 type command struct {
-	opts *options
+	opts *Options
 	cli.Command
 }
 
-func NewCmd(o *options) *cobra.Command {
+func NewCmd(o *Options) *cobra.Command {
 	cmd := command{
 		Command: cli.Command{Options: o.Options},
 		opts:    o,
 	}
 
 	cobraCmd := &cobra.Command{
-		Use:   "run <test-definition-1> <test-defintion-2> ... <test-definition-N>",
+		Use:   "run <test-definition-1> <test-definition-2> ... <test-definition-N>",
 		Short: "Runs tests on a Kyma cluster.",
 		Long: `Use this command to run tests on a Kyma cluster.
 
@@ -136,7 +136,7 @@ func matchTestDefinitionNames(testNames []string,
 			}
 		}
 		if !found {
-			return nil, fmt.Errorf("Test defintion '%s' not found in the list of cluster test definitions", tName)
+			return nil, fmt.Errorf("test definition '%s' not found in the list of cluster test definitions", tName)
 		}
 	}
 	return result, nil
@@ -162,7 +162,7 @@ func generateTestsResource(testName string, numberOfExecutions,
 	return octTestDefs
 }
 
-func listTestSuiteNames(cli octopus.OctopusInterface) ([]string, error) {
+func listTestSuiteNames(cli octopus.Interface) ([]string, error) {
 	suites, err := cli.ListTestSuites(metav1.ListOptions{})
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to list test suites")
@@ -176,7 +176,7 @@ func listTestSuiteNames(cli octopus.OctopusInterface) ([]string, error) {
 }
 
 func verifyIfTestNotExists(suiteName string,
-	cli octopus.OctopusInterface) (bool, error) {
+	cli octopus.Interface) (bool, error) {
 	tests, err := listTestSuiteNames(cli)
 	if err != nil {
 		return false, err
@@ -190,7 +190,7 @@ func verifyIfTestNotExists(suiteName string,
 }
 
 // waitForTestSuite watches the given test suite until the exitCondition is true
-func waitForTestSuite(cli octopus.OctopusInterface, name string, exitCondition watchtools.ConditionFunc, timeout time.Duration) error {
+func waitForTestSuite(cli octopus.Interface, name string, exitCondition watchtools.ConditionFunc, timeout time.Duration) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	if timeout > 0 {
 		ctx, cancel = context.WithTimeout(ctx, timeout)

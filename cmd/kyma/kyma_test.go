@@ -20,7 +20,8 @@ func TestKymaFlags(t *testing.T) {
 	require.False(t, o.NonInteractive, "Non-interactive flag must be false")
 
 	// test passing flags
-	c.ParseFlags([]string{"--kubeconfig=/some/file", "--non-interactive=true", "--verbose=true"})
+	err := c.ParseFlags([]string{"--kubeconfig=/some/file", "--non-interactive=true", "--verbose=true"})
+	require.NoError(t, err)
 	require.Equal(t, "/some/file", o.KubeconfigPath, "kubeconfig path must be the same as the flag provided")
 	require.True(t, o.Verbose, "Verbose flag must be true")
 	require.True(t, o.NonInteractive, "Non-interactive flag must be true")

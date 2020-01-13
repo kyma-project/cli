@@ -13,11 +13,11 @@ import (
 )
 
 type command struct {
-	opts *options
+	opts *Options
 	cli.Command
 }
 
-func NewCmd(o *options) *cobra.Command {
+func NewCmd(o *Options) *cobra.Command {
 	cmd := command{
 		Command: cli.Command{Options: o.Options},
 		opts:    o,
@@ -51,19 +51,20 @@ func (cmd *command) Run() error {
 
 	writer := test.NewTableWriter([]string{"TEST SUITE", "COMPLETED", "STATUS"}, os.Stdout)
 
-	for _, t := range testSuites.Items {
+	for idx := range testSuites.Items {
+		ts := testSuites.Items[idx]
 		var testResult string
-		switch len(t.Status.Results) {
+		switch len(ts.Status.Results) {
 		case 0:
 			testResult = "-"
 		case 1:
-			testResult = string(t.Status.Results[0].Status)
+			testResult = string(ts.Status.Results[0].Status)
 		default:
-			testResult = string(t.Status.Conditions[len(t.Status.Conditions)-1].Type)
+			testResult = string(ts.Status.Conditions[len(ts.Status.Conditions)-1].Type)
 		}
 		writer.Append([]string{
-			t.GetName(),
-			fmt.Sprintf("%d/%d", test.GetNumberOfFinishedTests(&t), len(t.Status.Results)),
+			ts.GetName(),
+			fmt.Sprintf("%d/%d", test.GetNumberOfFinishedTests(&ts), len(ts.Status.Results)),
 			testResult,
 		})
 	}

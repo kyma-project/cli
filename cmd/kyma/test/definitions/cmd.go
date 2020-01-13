@@ -12,11 +12,11 @@ import (
 )
 
 type command struct {
-	opts *options
+	opts *Options
 	cli.Command
 }
 
-func NewCmd(o *options) *cobra.Command {
+func NewCmd(o *Options) *cobra.Command {
 	cmd := command{
 		Command: cli.Command{Options: o.Options},
 		opts:    o,
@@ -38,21 +38,22 @@ func (cmd *command) Run() error {
 		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid.")
 	}
 
-	if testDefs, err := listTestDefinitionNames(cmd.K8s.Octopus()); err != nil {
+	testDefs, err := listTestDefinitionNames(cmd.K8s.Octopus())
+	if err != nil {
 		return err
-	} else {
-		if len(testDefs) == 0 {
-			fmt.Println("No test definitions found")
-			return nil
-		}
-		for _, t := range testDefs {
-			fmt.Printf("%s\r\n", t)
-		}
 	}
+	if len(testDefs) == 0 {
+		fmt.Println("No test definitions found")
+		return nil
+	}
+	for _, t := range testDefs {
+		fmt.Printf("%s\r\n", t)
+	}
+
 	return nil
 }
 
-func listTestDefinitionNames(cli octopus.OctopusInterface) ([]string, error) {
+func listTestDefinitionNames(cli octopus.Interface) ([]string, error) {
 	defs, err := cli.ListTestDefinitions(metav1.ListOptions{})
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to list test definitions")
