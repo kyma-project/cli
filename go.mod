@@ -13,6 +13,7 @@ replace (
 
 require (
 	github.com/Masterminds/semver v1.5.0
+	github.com/avast/retry-go v2.4.3+incompatible
 	github.com/briandowns/spinner v1.7.0
 	github.com/containerd/continuity v0.0.0-20190827140505-75bee3e2ccb6 // indirect
 	github.com/daviddengcn/go-colortext v0.0.0-20180409174941-186a3d44e920
@@ -22,7 +23,7 @@ require (
 	github.com/golangplus/fmt v0.0.0-20150411045040-2a5d6d7d2995 // indirect
 	github.com/golangplus/testing v0.0.0-20180327235837-af21d9c3145e // indirect
 	github.com/imdario/mergo v0.3.8 // indirect
-	github.com/kyma-incubator/hydroform/provision v0.0.0-20200113104102-4758e55b49a4
+	github.com/kyma-incubator/hydroform/provision v0.0.0-20200124103946-0c148d360a7f
 	github.com/kyma-incubator/octopus v0.0.0-20191009105757-2e9d86cd9967
 	github.com/kyma-project/kyma v0.5.1-0.20190909070658-69599d4a33a2
 	github.com/mattn/go-colorable v0.1.4 // indirect

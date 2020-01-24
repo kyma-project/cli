@@ -9,6 +9,7 @@ import (
 
 	"github.com/kyma-project/cli/internal/kube"
 
+	retry "github.com/avast/retry-go"
 	hf "github.com/kyma-incubator/hydroform/provision"
 	"github.com/kyma-incubator/hydroform/provision/types"
 	"github.com/kyma-project/cli/internal/cli"
@@ -53,8 +54,6 @@ Use the following instructions to create a service account for a selected provid
 	cmd.Flags().StringVar(&o.CIDR, "cidr", "10.250.0.0/19", "Gardener Classless Inter-Domain Routing (CIDR) used for the cluster.")
 	cmd.Flags().StringVar(&o.DiskType, "disk-type", "pd-standard", "Type of disk to use on the target provider.")
 	cmd.Flags().StringVar(&o.WCIDR, "workercidr", "10.250.0.0/19", "Specifies Gardener Classless Inter-Domain Routing (CIDR) of the workers of the cluster.")
-	// The seed default value is calculated depending on the target-provider.
-	cmd.Flags().StringVar(&o.Seed, "seed", "", "Gardener seed to use to provision the cluster.")
 	cmd.Flags().IntVar(&o.DiskSizeGB, "disk-size", 30, "Disk size (in GB) of the cluster.")
 	cmd.Flags().IntVar(&o.NodeCount, "nodes", 3, "Number of cluster nodes.")
 	cmd.Flags().IntVar(&o.ScalerMin, "scaler-min", 2, "Minimum autoscale value of the cluster.")
@@ -62,17 +61,6 @@ Use the following instructions to create a service account for a selected provid
 	cmd.Flags().IntVar(&o.Surge, "surge", 4, "Maximum surge of the cluster.")
 	cmd.Flags().IntVarP(&o.Unavailable, "unavailable", "u", 1, "Maximum allowed number of unavailable nodes.")
 	cmd.Flags().StringSliceVarP(&o.Extra, "extra", "e", nil, "One or more arguments provided as the `NAME=VALUE` key-value pairs to configure additional cluster settings. You can use this flag multiple times or enter the key-value pairs as a comma-separated list.")
-
-	if o.Seed == "" {
-		switch o.TargetProvider {
-		case string(types.GCP):
-			o.Seed = "gcp-eu1"
-		case string(types.AWS):
-			o.Seed = "aws-eu1"
-		case string(types.Azure):
-			o.Seed = "az-eu1"
-		}
-	}
 
 	return cmd
 }
@@ -100,7 +88,14 @@ func (c *command) Run() error {
 		s.Failure()
 		return err
 	}
-	cluster, err = hf.Provision(cluster, provider, types.WithDataDir(home), types.Persistent())
+
+	err = retry.Do(
+		func() error {
+			cluster, err = hf.Provision(cluster, provider, types.WithDataDir(home), types.Persistent())
+			return err
+		},
+		retry.Attempts(3))
+
 	if err != nil {
 		s.Failure()
 		return err
@@ -147,7 +142,6 @@ func newProvider(o *Options) (*types.Provider, error) {
 		p.CustomConfigurations["target_secret"] = o.Secret
 	}
 	p.CustomConfigurations["target_provider"] = o.TargetProvider
-	p.CustomConfigurations["target_seed"] = o.Seed
 	p.CustomConfigurations["zone"] = o.Zone
 	p.CustomConfigurations["disk_type"] = o.DiskType
 	p.CustomConfigurations["autoscaler_min"] = o.ScalerMin
