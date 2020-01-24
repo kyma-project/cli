@@ -30,12 +30,12 @@ const (
 
 var (
 	drivers = []string{
-		"virtualbox",
 		"vmwarefusion",
 		"kvm",
 		"xhyve",
 		vmDriverHyperv,
 		vmDriverHyperkit,
+		vmDriverVirtualBox,
 		"kvm2",
 		"none",
 	}

@@ -20,11 +20,11 @@ var (
 )
 
 type command struct {
-	opts *options
+	opts *Options
 	cli.Command
 }
 
-func NewCmd(o *options) *cobra.Command {
+func NewCmd(o *Options) *cobra.Command {
 	cmd := command{
 		Command: cli.Command{Options: o.Options},
 		opts:    o,

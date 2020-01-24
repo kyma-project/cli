@@ -4,21 +4,21 @@ import (
 	"fmt"
 
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
+	"github.com/kyma-project/cli/cmd/kyma/test"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/pkg/api/octopus"
-	"github.com/kyma-project/cli/cmd/kyma/test"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type command struct {
-	opts *options
+	opts *Options
 	cli.Command
 }
 
-func NewCmd(o *options) *cobra.Command {
+func NewCmd(o *Options) *cobra.Command {
 	cmd := command{
 		Command: cli.Command{Options: o.Options},
 		opts:    o,
@@ -62,7 +62,7 @@ func (cmd *command) Run(args []string) error {
 	return nil
 }
 
-func deleteTestSuite(cli octopus.OctopusInterface, testName string) error {
+func deleteTestSuite(cli octopus.Interface, testName string) error {
 	if err := cli.DeleteTestSuite(test.NewTestSuite(testName).GetName(), metav1.DeleteOptions{}); err != nil {
 		return errors.Wrap(err, fmt.Sprintf("Unable to delete test suite '%s'",
 			testName))

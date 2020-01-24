@@ -75,7 +75,7 @@ func (c *Creator) getNumberOfFailedTests(testSuite *oct.ClusterTestSuite) int {
 	result := 0
 	for _, t := range testSuite.Status.Results {
 		if t.Status == oct.TestFailed {
-			result += 1
+			result++
 		}
 	}
 	return result
@@ -120,15 +120,18 @@ func (c *Creator) mapToTestCases(results []oct.TestResult) ([]JUnitTestCase, err
 }
 
 func (c *Creator) newSuccessJUnitTestCase(tc oct.TestResult) JUnitTestCase {
-	var suiteTotalTime time.Duration
+	var totalExecutionTime time.Duration
 	for _, e := range tc.Executions {
-		suiteTotalTime += e.CompletionTime.Sub(e.StartTime.Time)
+		// CompletionTime is not set when test case is timed out or still running
+		if e.CompletionTime != nil {
+			totalExecutionTime += e.CompletionTime.Sub(e.StartTime.Time)
+		}
 	}
 
 	return JUnitTestCase{
 		Classname: "octopus",
 		Name:      fmt.Sprintf("[testing] %s/%s", tc.Namespace, tc.Name),
-		Time:      c.formatDurationAsSeconds(suiteTotalTime),
+		Time:      c.formatDurationAsSeconds(totalExecutionTime),
 	}
 }
 
@@ -146,15 +149,18 @@ func (c *Creator) newFailedJUnitTestCase(r oct.TestResult) (JUnitTestCase, error
 		return JUnitTestCase{}, errors.Wrapf(err, "while fetching logs for %s test", r.Name)
 	}
 
-	var suiteTotalTime time.Duration
+	var totalExecutionTime time.Duration
 	for _, e := range r.Executions {
-		suiteTotalTime += e.CompletionTime.Sub(e.StartTime.Time)
+		// CompletionTime is not set when test case is timed out or still running
+		if e.CompletionTime != nil {
+			totalExecutionTime += e.CompletionTime.Sub(e.StartTime.Time)
+		}
 	}
 
 	return JUnitTestCase{
 		Classname: "octopus",
 		Name:      fmt.Sprintf("[testing] %s/%s (executions: %d)", r.Namespace, r.Name, len(r.Executions)),
-		Time:      c.formatDurationAsSeconds(suiteTotalTime),
+		Time:      c.formatDurationAsSeconds(totalExecutionTime),
 		Failure: &JUnitFailure{
 			Message:  "Failed",
 			Contents: logs,
@@ -168,15 +174,18 @@ func (c *Creator) newRunningJUnitTestCase(r oct.TestResult) JUnitTestCase {
 		logs = fmt.Sprintf("Cannot fetch logs, got error: %v", err)
 	}
 
-	var suiteTotalTime time.Duration
+	var totalExecutionTime time.Duration
 	for _, e := range r.Executions {
-		suiteTotalTime += e.CompletionTime.Sub(e.StartTime.Time)
+		// CompletionTime is not set when test case is timed out or still running
+		if e.CompletionTime != nil {
+			totalExecutionTime += e.CompletionTime.Sub(e.StartTime.Time)
+		}
 	}
 
 	return JUnitTestCase{
 		Classname: "octopus",
 		Name:      fmt.Sprintf("[testing] %s/%s (executions: %d)", r.Namespace, r.Name, len(r.Executions)),
-		Time:      c.formatDurationAsSeconds(suiteTotalTime),
+		Time:      c.formatDurationAsSeconds(totalExecutionTime),
 		Failure: &JUnitFailure{
 			Message:  "Failed",
 			Contents: fmt.Sprintf("Test was marked as failed due to too long Running status: %s\n", logs),

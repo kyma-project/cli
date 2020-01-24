@@ -39,7 +39,7 @@ func Test(t *testing.T) {
 	for tn, tc := range tests {
 		t.Run(tn, func(t *testing.T) {
 			// given
-			fakeCli, cleanup := NewFakePodsGetter(t, tc.pod, fixLogsResponse)
+			fakeCli, cleanup := newFakePodsGetter(t, tc.pod, fixLogsResponse)
 			defer cleanup()
 
 			fetcher := logs.NewFetcherForTestingPods(fakeCli, tc.ignoredCnt)
@@ -103,7 +103,7 @@ type fakePodGetter struct {
 	url          *url.URL
 }
 
-func NewFakePodsGetter(t *testing.T, pod v1.Pod, podlogs string) (*fakePodGetter, func()) {
+func newFakePodsGetter(t *testing.T, pod v1.Pod, podlogs string) (*fakePodGetter, func()) {
 	fakeAPIServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, podlogs)
 	}))
