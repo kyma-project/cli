@@ -15,7 +15,6 @@ import (
 	"github.com/kyma-project/cli/cmd/kyma/test/logs"
 	"github.com/kyma-project/cli/cmd/kyma/test/run"
 	"github.com/kyma-project/cli/cmd/kyma/test/status"
-	"github.com/kyma-project/cli/cmd/kyma/uninstall"
 	"github.com/kyma-project/cli/cmd/kyma/version"
 
 	"github.com/kyma-project/cli/cmd/kyma/provision"
@@ -54,7 +53,6 @@ For more information, see: https://github.com/kyma-project/cli
 		version.NewCmd(version.NewOptions(o)),
 		completion.NewCmd(),
 		install.NewCmd(install.NewOptions(o)),
-		uninstall.NewCmd(uninstall.NewOptions(o)),
 		provisionCmd,
 		console.NewCmd(console.NewOptions(o)),
 	)

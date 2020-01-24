@@ -69,7 +69,7 @@ func (cmd *command) Run(args []string) error {
 		}
 
 		if len(testList.Items) == 0 {
-			fmt.Println("no test suites found")
+			fmt.Println("No test suites found")
 			return nil
 		}
 
