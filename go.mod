@@ -13,6 +13,7 @@ replace (
 
 require (
 	github.com/Masterminds/semver v1.5.0
+	github.com/avast/retry-go v2.4.3+incompatible
 	github.com/briandowns/spinner v1.7.0
 	github.com/containerd/continuity v0.0.0-20190827140505-75bee3e2ccb6 // indirect
 	github.com/daviddengcn/go-colortext v0.0.0-20180409174941-186a3d44e920

@@ -9,6 +9,7 @@ import (
 
 	"github.com/kyma-project/cli/internal/kube"
 
+	retry "github.com/avast/retry-go"
 	hf "github.com/kyma-incubator/hydroform/provision"
 	"github.com/kyma-incubator/hydroform/provision/types"
 	"github.com/kyma-project/cli/internal/cli"
@@ -88,14 +89,16 @@ func (c *command) Run() error {
 		return err
 	}
 
-	cluster, err = hf.Provision(cluster, provider, types.WithDataDir(home), types.Persistent())
-	if err != nil {
-		// try reconnecting if something went wrong
-		cluster, err = hf.Provision(cluster, provider, types.WithDataDir(home), types.Persistent())
-		if err != nil {
-			s.Failure()
+	err = retry.Do(
+		func() error {
+			cluster, err = hf.Provision(cluster, provider, types.WithDataDir(home), types.Persistent())
 			return err
-		}
+		},
+		retry.Attempts(3))
+
+	if err != nil {
+		s.Failure()
+		return err
 	}
 	s.Success()
 
