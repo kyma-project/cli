@@ -83,7 +83,6 @@ func (c *command) Run() error {
 	s := c.NewStep("Provisioning Gardener cluster")
 
 	home, err := files.KymaHome()
-	fmt.Println(home)
 	if err != nil {
 		s.Failure()
 		return err
