@@ -109,7 +109,6 @@ func TestNewProvider(t *testing.T) {
 		Project:         "cool-project",
 		CredentialsFile: "/path/to/credentials",
 		TargetProvider:  "AlibabaCloud",
-		Seed:            "Tulip",
 		Secret:          "Open sesame!",
 		Zone:            "Desert",
 		DiskType:        "a big one",
@@ -134,7 +133,6 @@ func TestNewProvider(t *testing.T) {
 	custom["VAR2"] = "VALUE2"
 	custom["target_secret"] = o.Secret
 	custom["target_provider"] = o.TargetProvider
-	custom["target_seed"] = o.Seed
 	custom["zone"] = o.Zone
 	custom["disk_type"] = o.DiskType
 	custom["autoscaler_min"] = o.ScalerMin

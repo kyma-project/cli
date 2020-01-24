@@ -17,7 +17,6 @@ type Options struct {
 	CIDR              string
 	WCIDR             string
 	DiskType          string
-	Seed              string
 	DiskSizeGB        int
 	NodeCount         int
 	ScalerMin         int

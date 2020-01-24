@@ -75,8 +75,12 @@ func (c *command) Run() error {
 
 	cluster, err = hf.Provision(cluster, provider, types.WithDataDir(home), types.Persistent())
 	if err != nil {
-		s.Failure()
-		return err
+		// try reconnecting if something went wrong
+		cluster, err = hf.Provision(cluster, provider, types.WithDataDir(home), types.Persistent())
+		if err != nil {
+			s.Failure()
+			return err
+		}
 	}
 	s.Success()
 
