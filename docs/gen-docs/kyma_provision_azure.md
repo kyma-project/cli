@@ -14,7 +14,7 @@ kyma provision azure [flags]
 ### Options
 
 ```
-  -c, --credentials string    Path to the TOML file containing the Azure Client ID and Client Secret. (required)
+  -c, --credentials string    Path to the TOML file containing the Azure Client ID (CLIENT_ID) and Client Secret (CLIENT_SECRET). (required)
       --disk-size int         Disk size (in GB) of the cluster. (default 35)
   -k, --kube-version string   Kubernetes version of the cluster. (default "1.15")
   -l, --location string       Location of the cluster. (default "westeurope")

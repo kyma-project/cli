@@ -40,7 +40,7 @@ NOTE: To provision and access the provisioned cluster, make sure you get authent
 
 	cmd.Flags().StringVarP(&o.Name, "name", "n", "", "Name of the Azure cluster to provision. (required)")
 	cmd.Flags().StringVarP(&o.Project, "project", "p", "", "Name of the Azure Resource Group where you provision the Azure cluster. (required)")
-	cmd.Flags().StringVarP(&o.CredentialsFile, "credentials", "c", "", "Path to the TOML file containing the Azure Client ID and Client Secret. (required)")
+	cmd.Flags().StringVarP(&o.CredentialsFile, "credentials", "c", "", "Path to the TOML file containing the Azure Client ID (CLIENT_ID) and Client Secret (CLIENT_SECRET). (required)")
 	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.15", "Kubernetes version of the cluster.")
 	cmd.Flags().StringVarP(&o.Location, "location", "l", "westeurope", "Location of the cluster.")
 	cmd.Flags().StringVarP(&o.MachineType, "type", "t", "Standard_D2_v3", "Machine type used for the cluster.")
