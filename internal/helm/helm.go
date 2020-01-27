@@ -16,7 +16,7 @@ var helmHomeCmd = exec.Command("helm", "home")
 func SupportedVersion() (bool, error) {
 	helmVersionRaw, err := helmVersionCmd.CombinedOutput()
 	if err != nil {
-		return false, nil
+		return false, err
 	}
 
 	if strings.Contains(string(helmVersionRaw), "v2") {
