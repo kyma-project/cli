@@ -57,10 +57,49 @@ func TestHome(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			// set desired helm home command mocked output
-			helmCmd = exec.Command("echo", tc.cmdOutput) //nolint:gosec
+			helmHomeCmd = exec.Command("echo", tc.cmdOutput) //nolint:gosec
 			home, err := Home()
 
 			require.Equal(t, tc.expected, home, tc.description)
+			require.Nil(t, err, tc.description)
+		})
+	}
+}
+
+func TestSupportedVersion(t *testing.T) {
+	cases := []struct {
+		name        string
+		description string
+		cmdOutput   string // mocked output of the helm version command
+		supported   bool
+	}{
+		{
+			name:        "Supported Helm version",
+			description: "Helm version is supported. (i.e v2.x.x)",
+			cmdOutput:   "Client: v2.1.16",
+			supported:   true,
+		},
+		{
+			name:        "Unsupported Helm version",
+			description: "Helm version is not supported. (e.g. v3.x.x)",
+			cmdOutput:   "v3.0.2",
+			supported:   false,
+		},
+		{
+			name:        "Empty string",
+			description: "Helm version returns empty string.",
+			cmdOutput:   "",
+			supported:   false,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			// set desired helm home command mocked output
+			helmVersionCmd = exec.Command("echo", tc.cmdOutput) //nolint:gosec
+			supported, err := SupportedVersion()
+
+			require.Equal(t, tc.supported, supported, tc.description)
 			require.Nil(t, err, tc.description)
 		})
 	}
