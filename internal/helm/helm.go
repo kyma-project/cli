@@ -9,11 +9,26 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 )
 
-var helmCmd = exec.Command("helm", "home")
+var helmVersionCmd = exec.Command("helm", "version", "--short", "--client")
+var helmHomeCmd = exec.Command("helm", "home")
+
+// SupportedVersion returns if the Helm version is supported by Kyma (currently v2.x.x)
+func SupportedVersion() (bool, error) {
+	helmVersionRaw, err := helmVersionCmd.CombinedOutput()
+	if err != nil {
+		return false, nil
+	}
+
+	if strings.Contains(string(helmVersionRaw), "v2") {
+		return true, nil
+	}
+
+	return false, nil
+}
 
 // Home returns the path to the helm configuration folder or an error
 func Home() (string, error) {
-	helmHomeRaw, err := helmCmd.CombinedOutput()
+	helmHomeRaw, err := helmHomeCmd.CombinedOutput()
 	if err != nil {
 		return "", nil
 	}

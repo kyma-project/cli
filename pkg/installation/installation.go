@@ -502,6 +502,16 @@ func (i *Installation) createOwnDomainConfigMap() error {
 }
 
 func (i *Installation) configureHelm() error {
+	supported, err := helm.SupportedVersion()
+	if err != nil {
+		return err
+	}
+
+	if !supported {
+		i.currentStep.LogInfo("Helm version not supported")
+		return nil
+	}
+
 	helmHome, err := helm.Home()
 	if err != nil {
 		return err
