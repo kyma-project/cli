@@ -95,7 +95,7 @@ func TestSupportedVersion(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			// set desired helm home command mocked output
+			// set desired helm version command mocked output
 			helmVersionCmd = exec.Command("echo", tc.cmdOutput) //nolint:gosec
 			supported, err := SupportedVersion()
 
