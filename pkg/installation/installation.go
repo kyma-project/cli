@@ -499,14 +499,25 @@ func (i *Installation) createOwnDomainConfigMap() error {
 }
 
 func (i *Installation) configureHelm() error {
-	helmHome, err := helm.Home()
-	if err != nil {
+	supported, err := helm.SupportedVersion()
+	if err != nil && strings.Contains(err.Error(), "not found") {
+		i.currentStep.LogInfo("Helm not installed")
+		return nil
+	} else if err != nil {
 		return err
 	}
 
-	if helmHome == "" {
+	if !supported {
+		i.currentStep.LogInfo("Helm version not supported")
+		return nil
+	}
+
+	helmHome, err := helm.Home()
+	if err != nil && strings.Contains(err.Error(), "not found") {
 		i.currentStep.LogInfo("Helm not installed")
 		return nil
+	} else if err != nil {
+		return err
 	}
 
 	// Wait for the job that generates the helm secret to finish
