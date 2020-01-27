@@ -262,7 +262,9 @@ func (i *Installation) prepareInstallationFiles() ([]map[string]interface{}, err
 		return nil, err
 	}
 
-	if i.Options.fromLocalSources {
+	//In case of local installation from local sources, build installer image.
+	//TODO: add image build & push functionality for remote installation from local sources.
+	if i.Options.fromLocalSources && i.Options.IsLocal {
 		imageName, err := getInstallerImage(&resources)
 		if err != nil {
 			return nil, err
