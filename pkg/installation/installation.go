@@ -262,7 +262,9 @@ func (i *Installation) prepareInstallationFiles() ([]map[string]interface{}, err
 		return nil, err
 	}
 
-	if i.Options.fromLocalSources {
+	//In case of local installation from local sources, build installer image.
+	//TODO: add image build & push functionality for remote installation from local sources.
+	if i.Options.fromLocalSources && i.Options.IsLocal {
 		imageName, err := getInstallerImage(&resources)
 		if err != nil {
 			return nil, err
@@ -272,7 +274,7 @@ func (i *Installation) prepareInstallationFiles() ([]map[string]interface{}, err
 		if err != nil {
 			return nil, err
 		}
-	} else {
+	} else if !i.Options.fromLocalSources {
 		if i.Options.remoteImage != "" {
 			err = replaceInstallerImage(&resources, i.Options.remoteImage)
 		} else {
@@ -295,18 +297,16 @@ func (i *Installation) loadInstallationResourceFiles(resourcePaths []string) ([]
 
 		var yamlReader io.ReadCloser
 
-		if !i.Options.fromLocalSources {
-			yamlReader, err = downloadFile(i.releaseFile(resourcePath))
-			if err != nil {
-				return nil, err
-			}
-		} else {
+		if i.Options.fromLocalSources {
 			path := filepath.Join(i.Options.LocalSrcPath, "installation",
 				"resources", resourcePath)
 			yamlReader, err = os.Open(path)
-			if err != nil {
-				return nil, err
-			}
+		} else {
+			yamlReader, err = downloadFile(i.releaseFile(resourcePath))
+		}
+
+		if err != nil {
+			return nil, err
 		}
 
 		dec := yaml.NewDecoder(yamlReader)

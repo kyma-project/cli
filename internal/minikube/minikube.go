@@ -68,7 +68,7 @@ func CheckVersion(verbose bool) (string, error) {
 
 //DockerClient creates a docker client based on minikube "docker-env" configuration
 func DockerClient(verbose bool, profile string) (*docker.Client, error) {
-	envOut, err := RunCmd(verbose, profile, "docker-env")
+	envOut, err := RunCmd(verbose, profile, "docker-env", "--shell", "bash")
 	if err != nil {
 		return nil, err
 	}
