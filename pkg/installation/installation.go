@@ -374,7 +374,7 @@ func (i *Installation) applyOverrideFiles() error {
 		configs := strings.Split(string(rawData), "---")
 
 		for _, c := range configs {
-			if c == "" {
+			if strings.TrimSpace(c) == "" {
 				continue
 			}
 
