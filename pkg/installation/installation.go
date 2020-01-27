@@ -301,14 +301,12 @@ func (i *Installation) loadInstallationResourceFiles(resourcePaths []string) ([]
 			path := filepath.Join(i.Options.LocalSrcPath, "installation",
 				"resources", resourcePath)
 			yamlReader, err = os.Open(path)
-			if err != nil {
-				return nil, err
-			}
 		} else {
 			yamlReader, err = downloadFile(i.releaseFile(resourcePath))
-			if err != nil {
-				return nil, err
-			}
+		}
+
+		if err != nil {
+			return nil, err
 		}
 
 		dec := yaml.NewDecoder(yamlReader)
