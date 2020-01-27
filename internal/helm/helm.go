@@ -30,7 +30,7 @@ func SupportedVersion() (bool, error) {
 func Home() (string, error) {
 	helmHomeRaw, err := helmHomeCmd.CombinedOutput()
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 
 	helmHome := strings.Replace(string(helmHomeRaw), "\n", "", -1)
