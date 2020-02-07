@@ -48,8 +48,7 @@ Use the following instructions to create a service account for a selected provid
 	cmd.Flags().StringVar(&o.TargetProvider, "target-provider", "gcp", "Cloud provider that Gardener should use to create the cluster.")
 	cmd.Flags().StringVarP(&o.Secret, "secret", "s", "", "Name of the Gardener secret used to access the target provider. (required)")
 	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.15.4", "Kubernetes version of the cluster.")
-	cmd.Flags().StringVarP(&o.Region, "region", "r", "europe-west3", "Region of the cluster.")
-	cmd.Flags().StringVarP(&o.Zone, "zone", "z", "europe-west3-a", "Zone of the cluster.")
+	cmd.Flags().StringVarP(&o.Region, "region", "r", "westeurope", "Region of the cluster.")
 	cmd.Flags().StringVarP(&o.MachineType, "type", "t", "n1-standard-4", "Machine type used for the cluster.")
 	cmd.Flags().StringVar(&o.CIDR, "cidr", "10.250.0.0/19", "Gardener Classless Inter-Domain Routing (CIDR) used for the cluster.")
 	cmd.Flags().StringVar(&o.DiskType, "disk-type", "pd-standard", "Type of disk to use on the target provider.")
@@ -60,6 +59,13 @@ Use the following instructions to create a service account for a selected provid
 	cmd.Flags().IntVar(&o.ScalerMax, "scaler-max", 4, "Maximum autoscale value of the cluster.")
 	cmd.Flags().IntVar(&o.Surge, "surge", 4, "Maximum surge of the cluster.")
 	cmd.Flags().IntVarP(&o.Unavailable, "unavailable", "u", 1, "Maximum allowed number of unavailable nodes.")
+	cmd.Flags().StringVar(&o.NetworkType, "network-type", "calico", "Network type to be used.")
+	cmd.Flags().StringVar(&o.NetworkNodes, "network-nodes", "", "CIDR of the entire node network.")
+	cmd.Flags().StringVar(&o.NetworkPods, "network-pods", "", "Network type to be used.")
+	cmd.Flags().StringVar(&o.NetworkServices, "network-services", "", "CIDR of the service network.")
+	cmd.Flags().StringVar(&o.MachineImageName, "machine-image-name", "coreos", "Version of the shoot's machine image name in any environment.")
+	cmd.Flags().StringVar(&o.MachineImageVersion, "machine-image-version", "2303.3.0", "Version of the shoot's machine image version in any environment.")
+	cmd.Flags().StringSliceVar(&o.ServiceEndpoints, "service-endpoints", nil, "list of Azure ServiceEndpoints which should be associated with the worker subnet.")
 	cmd.Flags().StringSliceVarP(&o.Extra, "extra", "e", nil, "One or more arguments provided as the `NAME=VALUE` key-value pairs to configure additional cluster settings. You can use this flag multiple times or enter the key-value pairs as a comma-separated list.")
 
 	return cmd
@@ -136,19 +142,28 @@ func newProvider(o *Options) (*types.Provider, error) {
 		CredentialsFilePath: o.CredentialsFile,
 	}
 
+	workerName := o.Name + "-worker"
+
 	p.CustomConfigurations = make(map[string]interface{})
 	if o.Secret != "" {
 		p.CustomConfigurations["target_secret"] = o.Secret
 	}
 	p.CustomConfigurations["target_provider"] = o.TargetProvider
-	p.CustomConfigurations["zone"] = o.Zone
 	p.CustomConfigurations["disk_type"] = o.DiskType
-	p.CustomConfigurations["autoscaler_min"] = o.ScalerMin
-	p.CustomConfigurations["autoscaler_max"] = o.ScalerMax
-	p.CustomConfigurations["max_surge"] = o.Surge
-	p.CustomConfigurations["max_unavailable"] = o.Unavailable
-	p.CustomConfigurations["cidr"] = o.CIDR
+	p.CustomConfigurations["worker_minimum"] = o.ScalerMin
+	p.CustomConfigurations["worker_maximum"] = o.ScalerMax
+	p.CustomConfigurations["worker_max_surge"] = o.Surge
+	p.CustomConfigurations["worker_max_unavailable"] = o.Unavailable
+	p.CustomConfigurations["vnetcidr"] = o.CIDR
 	p.CustomConfigurations["workercidr"] = o.WCIDR
+	p.CustomConfigurations["worker_name"] = workerName
+	p.CustomConfigurations["networking_nodes"] = o.NetworkNodes
+	p.CustomConfigurations["networking_pods"] = o.NetworkPods
+	p.CustomConfigurations["networking_services"] = o.NetworkServices
+	p.CustomConfigurations["networking_type"] = o.NetworkType
+	p.CustomConfigurations["machine_image_name"] = o.MachineImageName
+	p.CustomConfigurations["machine_image_version"] = o.MachineImageVersion
+	p.CustomConfigurations["service_endpoints"] = o.ServiceEndpoints
 
 	for _, e := range o.Extra {
 		v := strings.Split(e, "=")
@@ -176,6 +191,16 @@ func (c *command) validateFlags() error {
 	if c.opts.Secret == "" {
 		errMessage.WriteString("\nRequired flag `secret` has not been set.")
 	}
+	if c.opts.NetworkNodes == "" {
+		errMessage.WriteString("\nRequired flag `network nodes` has not been set.")
+	}
+	if c.opts.NetworkPods == "" {
+		errMessage.WriteString("\nRequired flag `network pods` has not been set.")
+	}
+	if c.opts.NetworkServices == "" {
+		errMessage.WriteString("\nRequired flag `network services` has not been set.")
+	}
+
 
 	if errMessage.Len() != 0 {
 		return errors.New(errMessage.String())

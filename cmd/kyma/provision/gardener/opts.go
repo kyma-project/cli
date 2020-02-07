@@ -24,6 +24,13 @@ type Options struct {
 	Surge             int
 	Unavailable       int
 	Extra             []string
+	NetworkType       string
+	NetworkNodes      string
+	NetworkPods       string
+	NetworkServices   string
+	MachineImageName string
+	MachineImageVersion string
+	ServiceEndpoints []string
 }
 
 //NewOptions creates options with default values
