@@ -65,7 +65,7 @@ Use the following instructions to create a service account for a selected provid
 	cmd.Flags().StringVar(&o.NetworkServices, "network-services", "", "CIDR of the service network.")
 	cmd.Flags().StringVar(&o.MachineImageName, "machine-image-name", "coreos", "Version of the shoot's machine image name in any environment.")
 	cmd.Flags().StringVar(&o.MachineImageVersion, "machine-image-version", "2303.3.0", "Version of the shoot's machine image version in any environment.")
-	cmd.Flags().StringSliceVar(&o.ServiceEndpoints, "service-endpoints", nil, "list of Azure ServiceEndpoints which should be associated with the worker subnet.")
+	cmd.Flags().StringSliceVar(&o.ServiceEndpoints, "service-endpoints", nil, "list of Azure ServiceEndpoints which should be associated with the worker subnet. eg. --service-endpoints=\"az1,az2\"")
 	cmd.Flags().StringSliceVarP(&o.Extra, "extra", "e", nil, "One or more arguments provided as the `NAME=VALUE` key-value pairs to configure additional cluster settings. You can use this flag multiple times or enter the key-value pairs as a comma-separated list.")
 
 	return cmd
@@ -142,8 +142,6 @@ func newProvider(o *Options) (*types.Provider, error) {
 		CredentialsFilePath: o.CredentialsFile,
 	}
 
-	workerName := o.Name + "-worker"
-
 	p.CustomConfigurations = make(map[string]interface{})
 	if o.Secret != "" {
 		p.CustomConfigurations["target_secret"] = o.Secret
@@ -156,7 +154,6 @@ func newProvider(o *Options) (*types.Provider, error) {
 	p.CustomConfigurations["worker_max_unavailable"] = o.Unavailable
 	p.CustomConfigurations["vnetcidr"] = o.CIDR
 	p.CustomConfigurations["workercidr"] = o.WCIDR
-	p.CustomConfigurations["worker_name"] = workerName
 	p.CustomConfigurations["networking_nodes"] = o.NetworkNodes
 	p.CustomConfigurations["networking_pods"] = o.NetworkPods
 	p.CustomConfigurations["networking_services"] = o.NetworkServices
