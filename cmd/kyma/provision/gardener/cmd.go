@@ -198,7 +198,6 @@ func (c *command) validateFlags() error {
 		errMessage.WriteString("\nRequired flag `network services` has not been set.")
 	}
 
-
 	if errMessage.Len() != 0 {
 		return errors.New(errMessage.String())
 	}
