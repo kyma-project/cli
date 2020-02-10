@@ -60,9 +60,9 @@ Use the following instructions to create a service account for a selected provid
 	cmd.Flags().IntVar(&o.Surge, "surge", 4, "Maximum surge of the cluster.")
 	cmd.Flags().IntVarP(&o.Unavailable, "unavailable", "u", 1, "Maximum allowed number of unavailable nodes.")
 	cmd.Flags().StringVar(&o.NetworkType, "network-type", "calico", "Network type to be used.")
-	cmd.Flags().StringVar(&o.NetworkNodes, "network-nodes", "", "CIDR of the entire node network.")
-	cmd.Flags().StringVar(&o.NetworkPods, "network-pods", "", "Network type to be used.")
-	cmd.Flags().StringVar(&o.NetworkServices, "network-services", "", "CIDR of the service network.")
+	cmd.Flags().StringVar(&o.NetworkNodes, "network-nodes", "", "CIDR of the entire node network. (required)")
+	cmd.Flags().StringVar(&o.NetworkPods, "network-pods", "100.96.0.0/11", "Network type to be used.")
+	cmd.Flags().StringVar(&o.NetworkServices, "network-services", "100.64.0.0/13", "CIDR of the service network.")
 	cmd.Flags().StringVar(&o.MachineImageName, "machine-image-name", "coreos", "Version of the shoot's machine image name in any environment.")
 	cmd.Flags().StringVar(&o.MachineImageVersion, "machine-image-version", "2303.3.0", "Version of the shoot's machine image version in any environment.")
 	cmd.Flags().StringSliceVar(&o.ServiceEndpoints, "service-endpoints", nil, "list of Azure ServiceEndpoints which should be associated with the worker subnet. eg. --service-endpoints=\"az1,az2\"")
@@ -190,12 +190,6 @@ func (c *command) validateFlags() error {
 	}
 	if c.opts.NetworkNodes == "" {
 		errMessage.WriteString("\nRequired flag `network nodes` has not been set.")
-	}
-	if c.opts.NetworkPods == "" {
-		errMessage.WriteString("\nRequired flag `network pods` has not been set.")
-	}
-	if c.opts.NetworkServices == "" {
-		errMessage.WriteString("\nRequired flag `network services` has not been set.")
 	}
 
 	if errMessage.Len() != 0 {
