@@ -221,6 +221,10 @@ func (i *Installation) validateConfigurations() error {
 		return errors.New("You specified one of the --domain, --tlsKey, or --tlsCert without specifying the others. They must be specified together")
 	}
 
+	if i.Options.CI {
+		i.Factory.NonInteractive = true
+	}
+
 	return nil
 }
 
