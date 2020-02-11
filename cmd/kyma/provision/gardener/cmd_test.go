@@ -20,7 +20,7 @@ func TestProvisionGardenerFlags(t *testing.T) {
 	require.Equal(t, "gcp", o.TargetProvider, "The parsed value for the credentials flag should gcp")
 	require.Equal(t, "", o.Secret, "The parsed value for the secret flag not as expected.")
 	require.Equal(t, "1.15.4", o.KubernetesVersion, "Default value for the kube-version flag not as expected.")
-	require.Equal(t, "europe-west3", o.Region, "Default value for the region flag not as expected.")
+	require.Equal(t, "westeurope", o.Region, "Default value for the region flag not as expected.")
 	require.Equal(t, "europe-west3-a", o.Zone, "Default value for the zone flag not as expected.")
 	require.Equal(t, "n1-standard-4", o.MachineType, "Default value for the type flag not as expected.")
 	require.Equal(t, 30, o.DiskSizeGB, "Default value for the disk-size flag not as expected.")
@@ -135,11 +135,19 @@ func TestNewProvider(t *testing.T) {
 	custom["target_provider"] = o.TargetProvider
 	custom["zone"] = o.Zone
 	custom["disk_type"] = o.DiskType
-	custom["autoscaler_min"] = o.ScalerMin
-	custom["autoscaler_max"] = o.ScalerMax
-	custom["max_surge"] = o.Surge
-	custom["max_unavailable"] = o.Unavailable
-	custom["cidr"] = o.CIDR
+	custom["worker_minimum"] = o.ScalerMin
+	custom["worker_maximum"] = o.ScalerMax
+	custom["worker_max_surge"] = o.Surge
+	custom["worker_max_unavailable"] = o.Unavailable
+	custom["vnetcidr"] = o.CIDR
 	custom["workercidr"] = o.WCIDR
+	custom["networking_nodes"] = o.NetworkNodes
+	custom["networking_pods"] = o.NetworkPods
+	custom["networking_services"] = o.NetworkServices
+	custom["networking_type"] = o.NetworkType
+	custom["machine_image_name"] = o.MachineImageName
+	custom["machine_image_version"] = o.MachineImageVersion
+	custom["service_endpoints"] = o.ServiceEndpoints
+
 	require.Equal(t, custom, p.CustomConfigurations, "Provider extra configurations not as expected.")
 }

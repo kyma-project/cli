@@ -395,18 +395,6 @@ github.com/kylelemons/godebug v0.0.0-20170820004349-d65d576e9348 h1:MtvEpTB6LX3v
 github.com/kylelemons/godebug v0.0.0-20170820004349-d65d576e9348/go.mod h1:B69LEHPfb2qLo0BaaOLcbitczOKLWTsrBG9LczfCD4k=
 github.com/kylelemons/godebug v1.1.0 h1:RPNrshWIDI6G2gRW9EHilWtl7Z6Sb1BR0xunSBf0SNc=
 github.com/kylelemons/godebug v1.1.0/go.mod h1:9/0rRGxNHcop5bhtWyNeEfOS8JIWk580+fNqagV/RAw=
-github.com/kyma-incubator/hydroform v0.0.0-20200210102722-75c5728c496b h1:zm6OLVFws43xMhPKyEbQJgucQ5Aa/w3TepWLr75/OTs=
-github.com/kyma-incubator/hydroform v0.0.0-20200210122259-7351214f83a1 h1:gecOR8yEapuMYdKOZqsDmAc04X3p5iACn7jOK89mXc8=
-github.com/kyma-incubator/hydroform/provision v0.0.0-20200205152421-fc453b43963f h1:KPJiT8C7TVnmt7UPCAYtxuhjyy7jS5rnYjksy4S30vQ=
-github.com/kyma-incubator/hydroform/provision v0.0.0-20200205152421-fc453b43963f/go.mod h1:8Rhb40oo6TOVz3rTN9SP6fSeoiAzdRjmJutgmHYk6sc=
-github.com/kyma-incubator/hydroform/provision v0.0.0-20200207102137-c9a717c2e36c h1:XKFFjuNmqnZQBdzpwnqLYuSBq9pXcOTlSLN2WxshcXU=
-github.com/kyma-incubator/hydroform/provision v0.0.0-20200207102137-c9a717c2e36c/go.mod h1:8Rhb40oo6TOVz3rTN9SP6fSeoiAzdRjmJutgmHYk6sc=
-github.com/kyma-incubator/hydroform/provision v0.0.0-20200210090640-b7d3b4560b13 h1:Li93Rss/Yi1CskX3/ZVPBG5bQyuppuZeGc4YLTWQmdo=
-github.com/kyma-incubator/hydroform/provision v0.0.0-20200210090640-b7d3b4560b13/go.mod h1:8Rhb40oo6TOVz3rTN9SP6fSeoiAzdRjmJutgmHYk6sc=
-github.com/kyma-incubator/hydroform/provision v0.0.0-20200210102722-75c5728c496b h1:FTe/2wWtVT1Z7wc5WXaBkvDT6yMrXdLl5mdsL02GIe0=
-github.com/kyma-incubator/hydroform/provision v0.0.0-20200210102722-75c5728c496b/go.mod h1:8Rhb40oo6TOVz3rTN9SP6fSeoiAzdRjmJutgmHYk6sc=
-github.com/kyma-incubator/hydroform/provision v0.0.0-20200210122259-7351214f83a1 h1:VIlQuOOzbVZOrO/IuOkxQaLkmTJP9FGxZGTU+CnoJ+Q=
-github.com/kyma-incubator/hydroform/provision v0.0.0-20200210122259-7351214f83a1/go.mod h1:8Rhb40oo6TOVz3rTN9SP6fSeoiAzdRjmJutgmHYk6sc=
 github.com/kyma-incubator/hydroform/provision v0.0.0-20200210125227-a182b69025de h1:hfSjlVEuMRt8VflFOowq6EfT9VM9UJS9DczwJfOgG3g=
 github.com/kyma-incubator/hydroform/provision v0.0.0-20200210125227-a182b69025de/go.mod h1:8Rhb40oo6TOVz3rTN9SP6fSeoiAzdRjmJutgmHYk6sc=
 github.com/kyma-incubator/octopus v0.0.0-20191009105757-2e9d86cd9967 h1:Y+lnL/+uWprDPOdUfbki2IaVuIIFoQTXhqGdrHSXFmI=
@@ -440,8 +428,6 @@ github.com/mattn/go-isatty v0.0.10 h1:qxFzApOv4WsAL965uUPIsXzAKCZxN2p9UqdhFS4ZW1
 github.com/mattn/go-isatty v0.0.10/go.mod h1:qgIWMr58cqv1PHHyhnkY9lrL7etaEgOFcMEpPG5Rm84=
 github.com/mattn/go-runewidth v0.0.4 h1:2BvfKmzob6Bmd4YsL0zygOqfdFnK7GR4QL06Do4/p7Y=
 github.com/mattn/go-runewidth v0.0.4/go.mod h1:LwmH8dsx7+W8Uxz3IHJYH5QSwggIsqBzpuz5H//U1FU=
-github.com/mattn/go-runewidth v0.0.8 h1:3tS41NlGYSmhhe/8fhGRzc+z3AYCw1Fe1WAyLuujKs0=
-github.com/mattn/go-runewidth v0.0.8/go.mod h1:H031xJmbD/WCDINGzjvQ9THkh0rPKHF+m2gUSrubnMI=
 github.com/mattn/go-shellwords v1.0.4/go.mod h1:3xCvwCdWdlDJUrvuMn7Wuy9eWs4pE8vqg+NOMyg4B2o=
 github.com/matttproud/golang_protobuf_extensions v1.0.1 h1:4hp9jkHxhMHkqkrB3Ix0jegS5sx/RkqARlsWZ6pIwiU=
 github.com/matttproud/golang_protobuf_extensions v1.0.1/go.mod h1:D8He9yQNgCq6Z5Ld7szi9bcBfOoFv/3dc6xSMkL2PC0=
@@ -544,8 +530,6 @@ github.com/prometheus/procfs v0.0.0-20180725123919-05ee40e3a273/go.mod h1:c3At6R
 github.com/prometheus/procfs v0.0.0-20181005140218-185b4288413d/go.mod h1:c3At6R/oaqEKCNdg8wHV1ftS6bRYblBhIjjI8uT2IGk=
 github.com/prometheus/procfs v0.0.0-20190117184657-bf6a532e95b1 h1:/K3IL0Z1quvmJ7X0A1AwNEK7CRkVK3YwfOU/QAL4WGg=
 github.com/prometheus/procfs v0.0.0-20190117184657-bf6a532e95b1/go.mod h1:c3At6R/oaqEKCNdg8wHV1ftS6bRYblBhIjjI8uT2IGk=
-github.com/rakesh-garimella/hydroform v0.0.0-20200210111044-08f6149233ed h1:wzNIBlxvusSmb2sE6Wmz5c60DE0hD/yGzvjYI23MrBI=
-github.com/rakesh-garimella/hydroform v0.0.0-20200210111044-08f6149233ed/go.mod h1:ZTv/TsNp3ZGZMefFxnlxwozGT4oOeOl9ZUtCPR3GM/Q=
 github.com/remyoudompheng/bigfft v0.0.0-20170806203942-52369c62f446/go.mod h1:uYEyJGbgTkfkS4+E/PavXkNJcbFIpEtjt2B0KDQ5+9M=
 github.com/rogpeppe/fastuuid v0.0.0-20150106093220-6724a57986af/go.mod h1:XWv6SoW27p1b0cqNHllgS5HIMJraePCO15w5zCzIWYg=
 github.com/russross/blackfriday v1.5.2 h1:HyvC0ARfnZBqnXwABFeSZHpKvJHJJfPz81GNueLj0oo=
