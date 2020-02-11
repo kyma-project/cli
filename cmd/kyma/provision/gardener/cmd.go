@@ -51,9 +51,9 @@ Use the following instructions to create a service account for a selected provid
 	cmd.Flags().StringVarP(&o.Region, "region", "r", "westeurope", "Region of the cluster.")
 	cmd.Flags().StringVarP(&o.Zone, "zone", "z", "europe-west3-a", "Zone of the cluster.")
 	cmd.Flags().StringVarP(&o.MachineType, "type", "t", "n1-standard-4", "Machine type used for the cluster.")
-	cmd.Flags().StringVar(&o.CIDR, "cidr", "10.250.0.0/19", "Gardener Classless Inter-Domain Routing (CIDR) used for the cluster.")
+	cmd.Flags().StringVar(&o.CIDR, "cidr", "10.250.0.0/16", "Gardener Classless Inter-Domain Routing (CIDR) used for the cluster.")
 	cmd.Flags().StringVar(&o.DiskType, "disk-type", "pd-standard", "Type of disk to use on the target provider.")
-	cmd.Flags().StringVar(&o.WCIDR, "workercidr", "10.250.0.0/19", "Specifies Gardener Classless Inter-Domain Routing (CIDR) of the workers of the cluster.")
+	cmd.Flags().StringVar(&o.WCIDR, "workercidr", "10.250.0.0/16", "Specifies Gardener Classless Inter-Domain Routing (CIDR) of the workers of the cluster.")
 	cmd.Flags().IntVar(&o.DiskSizeGB, "disk-size", 30, "Disk size (in GB) of the cluster.")
 	cmd.Flags().IntVar(&o.NodeCount, "nodes", 3, "Number of cluster nodes.")
 	cmd.Flags().IntVar(&o.ScalerMin, "scaler-min", 2, "Minimum autoscale value of the cluster.")
@@ -61,7 +61,7 @@ Use the following instructions to create a service account for a selected provid
 	cmd.Flags().IntVar(&o.Surge, "surge", 4, "Maximum surge of the cluster.")
 	cmd.Flags().IntVarP(&o.Unavailable, "unavailable", "u", 1, "Maximum allowed number of unavailable nodes.")
 	cmd.Flags().StringVar(&o.NetworkType, "network-type", "calico", "Network type to be used.")
-	cmd.Flags().StringVar(&o.NetworkNodes, "network-nodes", "", "CIDR of the entire node network. (required)")
+	cmd.Flags().StringVar(&o.NetworkNodes, "network-nodes", "10.250.0.0/16", "CIDR of the entire node network.")
 	cmd.Flags().StringVar(&o.NetworkPods, "network-pods", "100.96.0.0/11", "Network type to be used.")
 	cmd.Flags().StringVar(&o.NetworkServices, "network-services", "100.64.0.0/13", "CIDR of the service network.")
 	cmd.Flags().StringVar(&o.MachineImageName, "machine-image-name", "coreos", "Version of the shoot's machine image name in any environment.")
@@ -189,9 +189,6 @@ func (c *command) validateFlags() error {
 	}
 	if c.opts.Secret == "" {
 		errMessage.WriteString("\nRequired flag `secret` has not been set.")
-	}
-	if c.opts.NetworkNodes == "" {
-		errMessage.WriteString("\nRequired flag `network nodes` has not been set.")
 	}
 
 	if errMessage.Len() != 0 {

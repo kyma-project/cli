@@ -30,7 +30,7 @@ func TestProvisionGardenerFlags(t *testing.T) {
 	require.Equal(t, 4, o.ScalerMax, "Default value for the scaler-max flag not as expected.")
 	require.Equal(t, 4, o.Surge, "Default value for the surge flag not as expected.")
 	require.Equal(t, 1, o.Unavailable, "Default value for the unavailable flag not as expected.")
-	require.Equal(t, "10.250.0.0/19", o.CIDR, "Default value for the cidr flag not as expected.")
+	require.Equal(t, "10.250.0.0/16", o.CIDR, "Default value for the cidr flag not as expected.")
 	require.Empty(t, o.Extra, "Default value for the extra flag not as expected.")
 
 	// test passing flags
