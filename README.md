@@ -122,7 +122,7 @@ Further usage examples include:
 
 A plugin is a standalone executable file with a name prefixed with `kubectl-` .To use the plugin, perform the following steps:
 
-1. Rename the `kyma` binary to `kubectl-kyma` and place it anywhere in your **{PATH}**: 
+1. Rename the `kyma` binary to `kubectl-kyma` and place it anywhere in your **{PATH}**:
 
 ```bash
 sudo mv ./kyma /usr/local/bin/kubectl-kyma
