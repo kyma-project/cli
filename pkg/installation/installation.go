@@ -142,12 +142,14 @@ func (i *Installation) InstallKyma() (*Result, error) {
 		}
 	}
 
-	s = i.newStep("Configuring Helm")
-	if err := i.configureHelm(); err != nil {
-		s.Failure()
-		return nil, err
+	if !i.Options.CI {
+		s = i.newStep("Configuring Helm")
+		if err := i.configureHelm(); err != nil {
+			s.Failure()
+			return nil, err
+		}
+		s.Successf("Helm configured")
 	}
-	s.Successf("Helm configured")
 
 	s = i.newStep("Requesting Kyma Installer to install Kyma")
 	if err := i.activateInstaller(); err != nil {
