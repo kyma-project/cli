@@ -30,7 +30,7 @@ func TestProvisionGardenerFlags(t *testing.T) {
 	require.Equal(t, 4, o.ScalerMax, "Default value for the scaler-max flag not as expected.")
 	require.Equal(t, 4, o.Surge, "Default value for the surge flag not as expected.")
 	require.Equal(t, 1, o.Unavailable, "Default value for the unavailable flag not as expected.")
-	require.Equal(t, "10.250.0.0/19", o.CIDR, "Default value for the cidr flag not as expected.")
+	require.Equal(t, "10.250.0.0/16", o.CIDR, "Default value for the cidr flag not as expected.")
 	require.Empty(t, o.Extra, "Default value for the extra flag not as expected.")
 
 	// test passing flags
@@ -135,11 +135,19 @@ func TestNewProvider(t *testing.T) {
 	custom["target_provider"] = o.TargetProvider
 	custom["zone"] = o.Zone
 	custom["disk_type"] = o.DiskType
-	custom["autoscaler_min"] = o.ScalerMin
-	custom["autoscaler_max"] = o.ScalerMax
-	custom["max_surge"] = o.Surge
-	custom["max_unavailable"] = o.Unavailable
-	custom["cidr"] = o.CIDR
+	custom["worker_minimum"] = o.ScalerMin
+	custom["worker_maximum"] = o.ScalerMax
+	custom["worker_max_surge"] = o.Surge
+	custom["worker_max_unavailable"] = o.Unavailable
+	custom["vnetcidr"] = o.CIDR
 	custom["workercidr"] = o.WCIDR
+	custom["networking_nodes"] = o.NetworkNodes
+	custom["networking_pods"] = o.NetworkPods
+	custom["networking_services"] = o.NetworkServices
+	custom["networking_type"] = o.NetworkType
+	custom["machine_image_name"] = o.MachineImageName
+	custom["machine_image_version"] = o.MachineImageVersion
+	custom["service_endpoints"] = o.ServiceEndpoints
+
 	require.Equal(t, custom, p.CustomConfigurations, "Provider extra configurations not as expected.")
 }

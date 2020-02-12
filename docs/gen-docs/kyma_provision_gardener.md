@@ -18,25 +18,32 @@ kyma provision gardener [flags]
 ### Options
 
 ```
-      --cidr string              Gardener Classless Inter-Domain Routing (CIDR) used for the cluster. (default "10.250.0.0/19")
-  -c, --credentials string       Path to the kubeconfig file of the Gardener service account for a target provider. (required)
-      --disk-size int            Disk size (in GB) of the cluster. (default 30)
-      --disk-type string         Type of disk to use on the target provider. (default "pd-standard")
-  -e, --extra NAME=VALUE         One or more arguments provided as the NAME=VALUE key-value pairs to configure additional cluster settings. You can use this flag multiple times or enter the key-value pairs as a comma-separated list.
-  -k, --kube-version string      Kubernetes version of the cluster. (default "1.15.4")
-  -n, --name string              Name of the cluster to provision. (required)
-      --nodes int                Number of cluster nodes. (default 3)
-  -p, --project string           Name of the Gardener project where you provision the cluster. (required)
-  -r, --region string            Region of the cluster. (default "europe-west3")
-      --scaler-max int           Maximum autoscale value of the cluster. (default 4)
-      --scaler-min int           Minimum autoscale value of the cluster. (default 2)
-  -s, --secret string            Name of the Gardener secret used to access the target provider. (required)
-      --surge int                Maximum surge of the cluster. (default 4)
-      --target-provider string   Cloud provider that Gardener should use to create the cluster. (default "gcp")
-  -t, --type string              Machine type used for the cluster. (default "n1-standard-4")
-  -u, --unavailable int          Maximum allowed number of unavailable nodes. (default 1)
-      --workercidr string        Specifies Gardener Classless Inter-Domain Routing (CIDR) of the workers of the cluster. (default "10.250.0.0/19")
-  -z, --zone string              Zone of the cluster. (default "europe-west3-a")
+      --cidr string                    Gardener Classless Inter-Domain Routing (CIDR) used for the cluster. (default "10.250.0.0/16")
+  -c, --credentials string             Path to the kubeconfig file of the Gardener service account for a target provider. (required)
+      --disk-size int                  Disk size (in GB) of the cluster. (default 30)
+      --disk-type string               Type of disk to use on the target provider. (default "pd-standard")
+  -e, --extra NAME=VALUE               One or more arguments provided as the NAME=VALUE key-value pairs to configure additional cluster settings. You can use this flag multiple times or enter the key-value pairs as a comma-separated list.
+  -k, --kube-version string            Kubernetes version of the cluster. (default "1.15.4")
+      --machine-image-name string      Version of the shoot's machine image name in any environment. (default "coreos")
+      --machine-image-version string   Version of the shoot's machine image version in any environment. (default "2303.3.0")
+  -n, --name string                    Name of the cluster to provision. (required)
+      --network-nodes string           CIDR of the entire node network. (default "10.250.0.0/16")
+      --network-pods string            Network type to be used. (default "100.96.0.0/11")
+      --network-services string        CIDR of the service network. (default "100.64.0.0/13")
+      --network-type string            Network type to be used. (default "calico")
+      --nodes int                      Number of cluster nodes. (default 3)
+  -p, --project string                 Name of the Gardener project where you provision the cluster. (required)
+  -r, --region string                  Region of the cluster. (default "europe-west3")
+      --scaler-max int                 Maximum autoscale value of the cluster. (default 4)
+      --scaler-min int                 Minimum autoscale value of the cluster. (default 2)
+  -s, --secret string                  Name of the Gardener secret used to access the target provider. (required)
+      --service-endpoints strings      list of Azure ServiceEndpoints which should be associated with the worker subnet. eg. --service-endpoints="az1,az2"
+      --surge int                      Maximum surge of the cluster. (default 4)
+      --target-provider string         Cloud provider that Gardener should use to create the cluster. (default "gcp")
+  -t, --type string                    Machine type used for the cluster. (default "n1-standard-4")
+  -u, --unavailable int                Maximum allowed number of unavailable nodes. (default 1)
+      --workercidr string              Specifies Gardener Classless Inter-Domain Routing (CIDR) of the workers of the cluster. (default "10.250.0.0/16")
+  -z, --zone string                    Zone of the cluster. (default "europe-west3-a")
 ```
 
 ### Options inherited from parent commands
@@ -52,4 +59,4 @@ kyma provision gardener [flags]
 
 * [kyma provision](kyma_provision.md)	 - Provisions a cluster for Kyma installation.
 
-###### Auto generated by spf13/cobra on 27-Jan-2020
+###### Auto generated by spf13/cobra on 12-Feb-2020
