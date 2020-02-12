@@ -132,9 +132,11 @@ func (cmd *command) Run() error {
 		return err
 	}
 
-	if err := cmd.importCertificate(trust.NewCertifier(cmd.K8s)); err != nil {
-		// certificate import errors do not mean installation failed
-		cmd.CurrentStep.LogError(err.Error())
+	if !cmd.opts.CI {
+		if err := cmd.importCertificate(trust.NewCertifier(cmd.K8s)); err != nil {
+			// certificate import errors do not mean installation failed
+			cmd.CurrentStep.LogError(err.Error())
+		}
 	}
 
 	if clusterConfig.isLocal {
@@ -160,6 +162,7 @@ func (cmd *command) configureInstallation(clusterConfig clusterInfo) *installati
 		Options: &installation.Options{
 			NoWait:          cmd.opts.NoWait,
 			Verbose:         cmd.opts.Verbose,
+			CI:              cmd.opts.CI,
 			Timeout:         cmd.opts.Timeout,
 			KubeconfigPath:  cmd.opts.KubeconfigPath,
 			Domain:          cmd.opts.Domain,
