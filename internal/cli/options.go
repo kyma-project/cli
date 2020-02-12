@@ -6,6 +6,7 @@ import (
 
 //Options defines available options for the command
 type Options struct {
+	CI      bool
 	Verbose bool
 	step.Factory
 	KubeconfigPath string

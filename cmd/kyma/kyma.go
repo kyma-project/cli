@@ -39,6 +39,7 @@ For more information, see: https://github.com/kyma-project/cli
 
 	cmd.PersistentFlags().BoolVarP(&o.Verbose, "verbose", "v", false, "Displays details of actions triggered by the command.")
 	cmd.PersistentFlags().BoolVar(&o.NonInteractive, "non-interactive", false, "Enables the non-interactive shell mode.")
+	cmd.PersistentFlags().BoolVar(&o.CI, "ci", false, "Enables the CI mode to run on CI/CD systems.")
 	// Kubeconfig env var and default paths are resolved by the kyma k8s client using the k8s defined resolution strategy.
 	cmd.PersistentFlags().StringVar(&o.KubeconfigPath, "kubeconfig", "", `Specifies the path to the kubeconfig file. By default, Kyma CLI uses the KUBECONFIG environment variable or "/$HOME/.kube/config" if the variable is not set.`)
 	cmd.PersistentFlags().BoolP("help", "h", false, "Displays help for the command.")

@@ -142,12 +142,14 @@ func (i *Installation) InstallKyma() (*Result, error) {
 		}
 	}
 
-	s = i.newStep("Configuring Helm")
-	if err := i.configureHelm(); err != nil {
-		s.Failure()
-		return nil, err
+	if !i.Options.CI {
+		s = i.newStep("Configuring Helm")
+		if err := i.configureHelm(); err != nil {
+			s.Failure()
+			return nil, err
+		}
+		s.Successf("Helm configured")
 	}
-	s.Successf("Helm configured")
 
 	s = i.newStep("Requesting Kyma Installer to install Kyma")
 	if err := i.activateInstaller(); err != nil {
@@ -217,6 +219,10 @@ func (i *Installation) validateConfigurations() error {
 	if ((i.Options.Domain != localDomain && i.Options.Domain != "") || i.Options.TLSKey != "" || i.Options.TLSCert != "") &&
 		!((i.Options.Domain != localDomain && i.Options.Domain != "") && i.Options.TLSKey != "" && i.Options.TLSCert != "") {
 		return errors.New("You specified one of the --domain, --tlsKey, or --tlsCert without specifying the others. They must be specified together")
+	}
+
+	if i.Options.CI {
+		i.Factory.NonInteractive = true
 	}
 
 	return nil

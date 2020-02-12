@@ -47,6 +47,9 @@ type Options struct {
 	// Timeout specifies the time-out after which watching the installation progress stops.
 	// +optional
 	Timeout time.Duration `json:"timeout,omitempty"`
+	// CI enables skipping some steps not needed on CI/CD systems.
+	// +optional
+	CI bool `json:"ci,omitempty"`
 	// NoWait determines if the Kyma installation should be waited to complete.
 	// +optional
 	NoWait bool `json:"noWait,omitempty"`
