@@ -162,8 +162,9 @@ func newProvider(o *Options) (*types.Provider, error) {
 	p.CustomConfigurations["machine_image_name"] = o.MachineImageName
 	p.CustomConfigurations["machine_image_version"] = o.MachineImageVersion
 	p.CustomConfigurations["service_endpoints"] = o.ServiceEndpoints
-	p.CustomConfigurations["zone"] = o.Zone
-
+	if o.TargetProvider != "azure" {
+		p.CustomConfigurations["zone"] = o.Zone
+	}
 	for _, e := range o.Extra {
 		v := strings.Split(e, "=")
 
