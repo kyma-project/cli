@@ -8,11 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kyma-project/cli/internal/nice"
-
 	"github.com/kyma-project/cli/pkg/step"
 
 	"github.com/kyma-project/cli/internal/kube"
+	"github.com/kyma-project/cli/internal/nice"
 	"github.com/kyma-project/cli/internal/trust"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -269,6 +268,11 @@ func (cmd *command) getClusterInfoFromConfigMap() (clusterInfo, error) {
 }
 
 func (cmd *command) printSummary(result *installation.Result) error {
+	nice := nice.Nice{}
+	if cmd.Factory.NonInteractive || cmd.opts.CI {
+		nice.NonInteractive = true
+	}
+
 	fmt.Println()
 	nice.PrintKyma()
 	fmt.Print(" is installed in version:\t")
@@ -286,7 +290,7 @@ func (cmd *command) printSummary(result *installation.Result) error {
 	fmt.Print(" admin email:\t\t")
 	nice.PrintImportant(result.AdminEmail)
 
-	if cmd.opts.Password == "" && !cmd.Factory.NonInteractive {
+	if cmd.opts.Password == "" && (!cmd.Factory.NonInteractive || !cmd.opts.CI) {
 		nice.PrintKyma()
 		fmt.Printf(" admin password:\t\t")
 		nice.PrintImportant(result.AdminPassword)

@@ -1,4 +1,4 @@
-// package nice provides nice printing for the CLI
+// Package nice provides nice printing for the CLI
 package nice
 
 import (
@@ -7,19 +7,34 @@ import (
 	ct "github.com/daviddengcn/go-colortext"
 )
 
+// Nice contains the option to determine the interactivity of the printing.
+type Nice struct {
+	NonInteractive bool
+}
+
 // PrintKyma prints the Kyma word with its identity color
-func PrintKyma() {
-	ct.ChangeColor(ct.Cyan, false, ct.None, false)
-	fmt.Print("Kyma")
-	ct.ResetColor()
+func (n *Nice) PrintKyma() {
+	if n.NonInteractive {
+		fmt.Print("Kyma")
+	} else {
+		ct.ChangeColor(ct.Cyan, false, ct.None, false)
+		fmt.Print("Kyma")
+		ct.ResetColor()
+	}
 }
 
-func PrintImportant(s string) {
-	ct.ChangeColor(ct.Yellow, true, ct.None, false)
-	fmt.Println(s)
-	ct.ResetColor()
+// PrintImportant prints the line with yellow color
+func (n *Nice) PrintImportant(s string) {
+	if n.NonInteractive {
+		fmt.Println(s)
+	} else {
+		ct.ChangeColor(ct.Yellow, true, ct.None, false)
+		fmt.Println(s)
+		ct.ResetColor()
+	}
 }
 
-func PrintImportantf(format string, a ...interface{}) {
-	PrintImportant(fmt.Sprintf(format, a...))
+// PrintImportantf prints the line with yellow color
+func (n *Nice) PrintImportantf(format string, a ...interface{}) {
+	n.PrintImportant(fmt.Sprintf(format, a...))
 }
