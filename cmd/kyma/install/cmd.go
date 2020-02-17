@@ -268,40 +268,40 @@ func (cmd *command) getClusterInfoFromConfigMap() (clusterInfo, error) {
 }
 
 func (cmd *command) printSummary(result *installation.Result) error {
-	nice := nice.Nice{}
+	nicePrint := nice.Nice{}
 	if cmd.Factory.NonInteractive || cmd.opts.CI {
-		nice.NonInteractive = true
+		nicePrint.NonInteractive = true
 	}
 
 	fmt.Println()
-	nice.PrintKyma()
+	nicePrint.PrintKyma()
 	fmt.Print(" is installed in version:\t")
-	nice.PrintImportant(result.KymaVersion)
+	nicePrint.PrintImportant(result.KymaVersion)
 
-	nice.PrintKyma()
+	nicePrint.PrintKyma()
 	fmt.Print(" is running at:\t\t")
-	nice.PrintImportant(result.Host)
+	nicePrint.PrintImportant(result.Host)
 
-	nice.PrintKyma()
+	nicePrint.PrintKyma()
 	fmt.Print(" console:\t\t\t")
-	nice.PrintImportantf(result.Console)
+	nicePrint.PrintImportantf(result.Console)
 
-	nice.PrintKyma()
+	nicePrint.PrintKyma()
 	fmt.Print(" admin email:\t\t")
-	nice.PrintImportant(result.AdminEmail)
+	nicePrint.PrintImportant(result.AdminEmail)
 
 	if cmd.opts.Password == "" && (!cmd.Factory.NonInteractive || !cmd.opts.CI) {
-		nice.PrintKyma()
+		nicePrint.PrintKyma()
 		fmt.Printf(" admin password:\t\t")
-		nice.PrintImportant(result.AdminPassword)
+		nicePrint.PrintImportant(result.AdminPassword)
 	}
 
 	for _, warning := range result.Warnings {
-		nice.PrintImportant(warning)
+		nicePrint.PrintImportant(warning)
 	}
 
 	fmt.Printf("\nHappy ")
-	nice.PrintKyma()
+	nicePrint.PrintKyma()
 	fmt.Printf("-ing! :)\n\n")
 
 	return nil
