@@ -290,7 +290,7 @@ func (cmd *command) printSummary(result *installation.Result) error {
 	fmt.Print(" admin email:\t\t")
 	nicePrint.PrintImportant(result.AdminEmail)
 
-	if cmd.opts.Password == "" && (!cmd.Factory.NonInteractive || !cmd.opts.CI) {
+	if cmd.opts.Password == "" && !(cmd.Factory.NonInteractive || cmd.opts.CI) {
 		nicePrint.PrintKyma()
 		fmt.Printf(" admin password:\t\t")
 		nicePrint.PrintImportant(result.AdminPassword)
