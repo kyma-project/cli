@@ -46,6 +46,12 @@ golangci::run_checks() {
 }
 
 main() {
+  result=$(git status --porcelain)
+  if [[ "${result}" != "" ]]; then
+    echo "git is currently in a dirty state: ${result}"
+    exit 1
+  fi
+
   if [[ "${SKIP_INSTALL:-x}" != "true" ]]; then
     export INSTALL_DIR=${TMP_DIR}
     golangci::install
