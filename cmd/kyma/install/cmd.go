@@ -8,11 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kyma-project/cli/internal/nice"
-
 	"github.com/kyma-project/cli/pkg/step"
 
 	"github.com/kyma-project/cli/internal/kube"
+	"github.com/kyma-project/cli/internal/nice"
 	"github.com/kyma-project/cli/internal/trust"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -113,6 +112,10 @@ The standard installation uses the minimal configuration. The system performs th
 
 //Run runs the command
 func (cmd *command) Run() error {
+	if cmd.opts.CI {
+		cmd.Factory.NonInteractive = true
+	}
+
 	var err error
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
 		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
@@ -163,6 +166,7 @@ func (cmd *command) configureInstallation(clusterConfig clusterInfo) *installati
 			NoWait:          cmd.opts.NoWait,
 			Verbose:         cmd.opts.Verbose,
 			CI:              cmd.opts.CI,
+			NonInteractive:  cmd.Factory.NonInteractive,
 			Timeout:         cmd.opts.Timeout,
 			KubeconfigPath:  cmd.opts.KubeconfigPath,
 			Domain:          cmd.opts.Domain,
@@ -269,35 +273,40 @@ func (cmd *command) getClusterInfoFromConfigMap() (clusterInfo, error) {
 }
 
 func (cmd *command) printSummary(result *installation.Result) error {
+	nicePrint := nice.Nice{}
+	if cmd.Factory.NonInteractive {
+		nicePrint.NonInteractive = true
+	}
+
 	fmt.Println()
-	nice.PrintKyma()
+	nicePrint.PrintKyma()
 	fmt.Print(" is installed in version:\t")
-	nice.PrintImportant(result.KymaVersion)
+	nicePrint.PrintImportant(result.KymaVersion)
 
-	nice.PrintKyma()
+	nicePrint.PrintKyma()
 	fmt.Print(" is running at:\t\t")
-	nice.PrintImportant(result.Host)
+	nicePrint.PrintImportant(result.Host)
 
-	nice.PrintKyma()
+	nicePrint.PrintKyma()
 	fmt.Print(" console:\t\t\t")
-	nice.PrintImportantf(result.Console)
+	nicePrint.PrintImportantf(result.Console)
 
-	nice.PrintKyma()
+	nicePrint.PrintKyma()
 	fmt.Print(" admin email:\t\t")
-	nice.PrintImportant(result.AdminEmail)
+	nicePrint.PrintImportant(result.AdminEmail)
 
 	if cmd.opts.Password == "" && !cmd.Factory.NonInteractive {
-		nice.PrintKyma()
+		nicePrint.PrintKyma()
 		fmt.Printf(" admin password:\t\t")
-		nice.PrintImportant(result.AdminPassword)
+		nicePrint.PrintImportant(result.AdminPassword)
 	}
 
 	for _, warning := range result.Warnings {
-		nice.PrintImportant(warning)
+		nicePrint.PrintImportant(warning)
 	}
 
 	fmt.Printf("\nHappy ")
-	nice.PrintKyma()
+	nicePrint.PrintKyma()
 	fmt.Printf("-ing! :)\n\n")
 
 	return nil

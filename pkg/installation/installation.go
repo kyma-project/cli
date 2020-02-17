@@ -73,6 +73,10 @@ func (i *Installation) newStep(msg string) step.Step {
 
 // InstallKyma triggers the installation of a Kyma cluster.
 func (i *Installation) InstallKyma() (*Result, error) {
+	if i.Options.CI || i.Options.NonInteractive {
+		i.Factory.NonInteractive = true
+	}
+
 	var err error
 	if i.k8s, err = kube.NewFromConfig("", i.Options.KubeconfigPath); err != nil {
 		return nil, errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
@@ -219,10 +223,6 @@ func (i *Installation) validateConfigurations() error {
 	if ((i.Options.Domain != localDomain && i.Options.Domain != "") || i.Options.TLSKey != "" || i.Options.TLSCert != "") &&
 		!((i.Options.Domain != localDomain && i.Options.Domain != "") && i.Options.TLSKey != "" && i.Options.TLSCert != "") {
 		return errors.New("You specified one of the --domain, --tlsKey, or --tlsCert without specifying the others. They must be specified together")
-	}
-
-	if i.Options.CI {
-		i.Factory.NonInteractive = true
 	}
 
 	return nil
