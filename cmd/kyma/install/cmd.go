@@ -112,6 +112,10 @@ The standard installation uses the minimal configuration. The system performs th
 
 //Run runs the command
 func (cmd *command) Run() error {
+	if cmd.opts.CI {
+		cmd.Factory.NonInteractive = true
+	}
+
 	var err error
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
 		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
@@ -162,6 +166,7 @@ func (cmd *command) configureInstallation(clusterConfig clusterInfo) *installati
 			NoWait:          cmd.opts.NoWait,
 			Verbose:         cmd.opts.Verbose,
 			CI:              cmd.opts.CI,
+			NonInteractive:  cmd.Factory.NonInteractive,
 			Timeout:         cmd.opts.Timeout,
 			KubeconfigPath:  cmd.opts.KubeconfigPath,
 			Domain:          cmd.opts.Domain,
@@ -269,7 +274,7 @@ func (cmd *command) getClusterInfoFromConfigMap() (clusterInfo, error) {
 
 func (cmd *command) printSummary(result *installation.Result) error {
 	nicePrint := nice.Nice{}
-	if cmd.Factory.NonInteractive || cmd.opts.CI {
+	if cmd.Factory.NonInteractive {
 		nicePrint.NonInteractive = true
 	}
 
@@ -290,7 +295,7 @@ func (cmd *command) printSummary(result *installation.Result) error {
 	fmt.Print(" admin email:\t\t")
 	nicePrint.PrintImportant(result.AdminEmail)
 
-	if cmd.opts.Password == "" && !(cmd.Factory.NonInteractive || cmd.opts.CI) {
+	if cmd.opts.Password == "" && !cmd.Factory.NonInteractive {
 		nicePrint.PrintKyma()
 		fmt.Printf(" admin password:\t\t")
 		nicePrint.PrintImportant(result.AdminPassword)

@@ -50,6 +50,9 @@ type Options struct {
 	// CI enables skipping some steps not needed on CI/CD systems.
 	// +optional
 	CI bool `json:"ci,omitempty"`
+	// NonInteractive enables non-interactive mode.
+	// +optional
+	NonInteractive bool `json:"nonInteractive,omitempty"`
 	// NoWait determines if the Kyma installation should be waited to complete.
 	// +optional
 	NoWait bool `json:"noWait,omitempty"`
