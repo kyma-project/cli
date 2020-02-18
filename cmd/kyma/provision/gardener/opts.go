@@ -12,7 +12,7 @@ type Options struct {
 	Secret              string
 	KubernetesVersion   string
 	Region              string
-	Zone                string
+	Zone                []string
 	MachineType         string
 	CIDR                string
 	WCIDR               string
