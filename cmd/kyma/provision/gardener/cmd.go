@@ -49,7 +49,7 @@ Use the following instructions to create a service account for a selected provid
 	cmd.Flags().StringVarP(&o.Secret, "secret", "s", "", "Name of the Gardener secret used to access the target provider. (required)")
 	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.17.3", "Kubernetes version of the cluster.")
 	cmd.Flags().StringVarP(&o.Region, "region", "r", "europe-west3", "Region of the cluster.")
-	cmd.Flags().StringVarP(&o.Zone, "zone", "z", "europe-west3-a", "Zone of the cluster.")
+	cmd.Flags().StringSliceVarP(&o.Zone, "zone", "z", []string{"europe-west3-a"}, "Zone is a list of availability zones that are used to evenly distribute the worker pool. eg. --zone=\"europe-west3-a,europe-west3-b\"")
 	cmd.Flags().StringVarP(&o.MachineType, "type", "t", "n1-standard-4", "Machine type used for the cluster.")
 	cmd.Flags().StringVar(&o.CIDR, "cidr", "10.250.0.0/16", "Gardener Classless Inter-Domain Routing (CIDR) used for the cluster.")
 	cmd.Flags().StringVar(&o.DiskType, "disk-type", "pd-standard", "Type of disk to use on the target provider.")
@@ -141,7 +141,6 @@ func newProvider(o *Options) (*types.Provider, error) {
 		ProjectName:         o.Project,
 		CredentialsFilePath: o.CredentialsFile,
 	}
-
 	p.CustomConfigurations = make(map[string]interface{})
 	if o.Secret != "" {
 		p.CustomConfigurations["target_secret"] = o.Secret
@@ -160,9 +159,8 @@ func newProvider(o *Options) (*types.Provider, error) {
 	p.CustomConfigurations["networking_type"] = o.NetworkType
 	p.CustomConfigurations["machine_image_name"] = o.MachineImageName
 	p.CustomConfigurations["machine_image_version"] = o.MachineImageVersion
-	if o.TargetProvider != "azure" {
-		p.CustomConfigurations["zone"] = o.Zone
-	}
+	p.CustomConfigurations["zone"] = o.Zone
+
 	for _, e := range o.Extra {
 		v := strings.Split(e, "=")
 
