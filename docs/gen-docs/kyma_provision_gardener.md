@@ -43,7 +43,7 @@ kyma provision gardener [flags]
   -t, --type string                    Machine type used for the cluster. (default "n1-standard-4")
   -u, --unavailable int                Maximum allowed number of unavailable nodes. (default 1)
       --workercidr string              Specifies Gardener Classless Inter-Domain Routing (CIDR) of the workers of the cluster. (default "10.250.0.0/16")
-  -z, --zone strings                   Zone of the cluster. eg. --zone="europe-west3-a,europe-west3-b" (default [europe-west3-a])
+  -z, --zone strings                   Zone is a list of availability zones that are used to evenly distribute the worker pool. eg. --zone="europe-west3-a,europe-west3-b" (default [europe-west3-a])
 ```
 
 ### Options inherited from parent commands
