@@ -23,7 +23,7 @@ require (
 	github.com/golangplus/fmt v0.0.0-20150411045040-2a5d6d7d2995 // indirect
 	github.com/golangplus/testing v0.0.0-20180327235837-af21d9c3145e // indirect
 	github.com/imdario/mergo v0.3.8 // indirect
-	github.com/kyma-incubator/hydroform/provision v0.0.0-20200218091649-58653e3ba977
+	github.com/kyma-incubator/hydroform/provision v0.0.0-20200219125052-53a4479d3eca
 	github.com/kyma-incubator/octopus v0.0.0-20191009105757-2e9d86cd9967
 	github.com/kyma-project/kyma v0.5.1-0.20190909070658-69599d4a33a2
 	github.com/mattn/go-colorable v0.1.4 // indirect
