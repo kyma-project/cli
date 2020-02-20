@@ -47,7 +47,7 @@ Use the following instructions to create a service account for a selected provid
 	cmd.Flags().StringVarP(&o.CredentialsFile, "credentials", "c", "", "Path to the kubeconfig file of the Gardener service account for a target provider. (required)")
 	cmd.Flags().StringVar(&o.TargetProvider, "target-provider", "gcp", "Cloud provider that Gardener should use to create the cluster.")
 	cmd.Flags().StringVarP(&o.Secret, "secret", "s", "", "Name of the Gardener secret used to access the target provider. (required)")
-	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.15.4", "Kubernetes version of the cluster.")
+	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.16", "Kubernetes version of the cluster.")
 	cmd.Flags().StringVarP(&o.Region, "region", "r", "europe-west3", "Region of the cluster.")
 	cmd.Flags().StringSliceVarP(&o.Zone, "zone", "z", []string{"europe-west3-a"}, "Zone is a list of availability zones that are used to evenly distribute the worker pool. eg. --zone=\"europe-west3-a,europe-west3-b\"")
 	cmd.Flags().StringVarP(&o.MachineType, "type", "t", "n1-standard-4", "Machine type used for the cluster.")
@@ -66,7 +66,6 @@ Use the following instructions to create a service account for a selected provid
 	cmd.Flags().StringVar(&o.NetworkServices, "network-services", "100.64.0.0/13", "CIDR of the service network.")
 	cmd.Flags().StringVar(&o.MachineImageName, "machine-image-name", "coreos", "Version of the shoot's machine image name in any environment.")
 	cmd.Flags().StringVar(&o.MachineImageVersion, "machine-image-version", "2303.3.0", "Version of the shoot's machine image version in any environment.")
-	cmd.Flags().StringSliceVar(&o.ServiceEndpoints, "service-endpoints", nil, "list of Azure ServiceEndpoints which should be associated with the worker subnet. eg. --service-endpoints=\"az1,az2\"")
 	cmd.Flags().StringSliceVarP(&o.Extra, "extra", "e", nil, "One or more arguments provided as the `NAME=VALUE` key-value pairs to configure additional cluster settings. You can use this flag multiple times or enter the key-value pairs as a comma-separated list.")
 
 	return cmd
@@ -160,7 +159,6 @@ func newProvider(o *Options) (*types.Provider, error) {
 	p.CustomConfigurations["networking_type"] = o.NetworkType
 	p.CustomConfigurations["machine_image_name"] = o.MachineImageName
 	p.CustomConfigurations["machine_image_version"] = o.MachineImageVersion
-	p.CustomConfigurations["service_endpoints"] = o.ServiceEndpoints
 	p.CustomConfigurations["zone"] = o.Zone
 
 	for _, e := range o.Extra {
