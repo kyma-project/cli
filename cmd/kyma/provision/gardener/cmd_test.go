@@ -19,7 +19,7 @@ func TestProvisionGardenerFlags(t *testing.T) {
 	require.Equal(t, "", o.CredentialsFile, "Default value for the credentials flag not as expected.")
 	require.Equal(t, "gcp", o.TargetProvider, "The parsed value for the credentials flag should gcp")
 	require.Equal(t, "", o.Secret, "The parsed value for the secret flag not as expected.")
-	require.Equal(t, "1.17.3", o.KubernetesVersion, "Default value for the kube-version flag not as expected.")
+	require.Equal(t, "1.16", o.KubernetesVersion, "Default value for the kube-version flag not as expected.")
 	require.Equal(t, "europe-west3", o.Region, "Default value for the region flag not as expected.")
 	require.Equal(t, []string{"europe-west3-a"}, o.Zone, "Default value for the zone flag not as expected.")
 	require.Equal(t, "n1-standard-4", o.MachineType, "Default value for the type flag not as expected.")

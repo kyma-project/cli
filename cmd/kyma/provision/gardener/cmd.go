@@ -47,7 +47,7 @@ Use the following instructions to create a service account for a selected provid
 	cmd.Flags().StringVarP(&o.CredentialsFile, "credentials", "c", "", "Path to the kubeconfig file of the Gardener service account for a target provider. (required)")
 	cmd.Flags().StringVar(&o.TargetProvider, "target-provider", "gcp", "Cloud provider that Gardener should use to create the cluster.")
 	cmd.Flags().StringVarP(&o.Secret, "secret", "s", "", "Name of the Gardener secret used to access the target provider. (required)")
-	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.17.3", "Kubernetes version of the cluster.")
+	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.16", "Kubernetes version of the cluster.")
 	cmd.Flags().StringVarP(&o.Region, "region", "r", "europe-west3", "Region of the cluster.")
 	cmd.Flags().StringSliceVarP(&o.Zone, "zone", "z", []string{"europe-west3-a"}, "Zone is a list of availability zones that are used to evenly distribute the worker pool. eg. --zone=\"europe-west3-a,europe-west3-b\"")
 	cmd.Flags().StringVarP(&o.MachineType, "type", "t", "n1-standard-4", "Machine type used for the cluster.")
