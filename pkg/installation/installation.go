@@ -17,7 +17,6 @@ import (
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 	"k8s.io/apimachinery/pkg/types"
-
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -526,21 +525,7 @@ func (i *Installation) configureHelm() error {
 		return err
 	}
 
-	// Wait for the job that generates the helm secret to finish
-	for {
-		j, err := i.k8s.Static().BatchV1().Jobs("kyma-installer").Get("helm-certs-job", metav1.GetOptions{})
-		if err != nil {
-			return err
-		}
-		if j.Status.Succeeded == 1 {
-			break
-		} else if j.Status.Failed == 1 {
-			return errors.New("could not generate the Helm certificate")
-		}
-		time.Sleep(1 * time.Second)
-	}
-
-	secret, err := i.k8s.Static().CoreV1().Secrets("kyma-installer").Get("helm-secret", metav1.GetOptions{})
+    secret, err := i.getHelmSecret(time.Second*1,5)
 	if err != nil {
 		return err
 	}
@@ -695,4 +680,17 @@ func (i *Installation) releaseSrcFile(path string) string {
 
 func (i *Installation) releaseFile(path string) string {
 	return fmt.Sprintf(releaseResourcePattern, i.Options.configVersion, path)
+}
+
+func (i *Installation) getHelmSecret(interval time.Duration,retries int) (*corev1.Secret, error){
+	var secret *corev1.Secret
+	var err error
+	for j := 0; j < retries; j++ {
+		secret, err = i.k8s.Static().CoreV1().Secrets("kyma-installer").Get("helm-secret", metav1.GetOptions{})
+		time.Sleep(interval)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return secret, nil
 }
