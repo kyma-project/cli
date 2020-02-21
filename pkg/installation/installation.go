@@ -2,6 +2,7 @@ package installation
 
 import (
 	"fmt"
+	"github.com/avast/retry-go"
 	"io"
 	"io/ioutil"
 	"os"
@@ -16,11 +17,10 @@ import (
 	"github.com/kyma-project/cli/pkg/step"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
-	"k8s.io/apimachinery/pkg/types"
-
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 const (
@@ -526,21 +526,14 @@ func (i *Installation) configureHelm() error {
 		return err
 	}
 
-	// Wait for the job that generates the helm secret to finish
-	for {
-		j, err := i.k8s.Static().BatchV1().Jobs("kyma-installer").Get("helm-certs-job", metav1.GetOptions{})
+	var secret *corev1.Secret
+	err = retry.Do(func() error {
+		secret, err = i.getHelmSecret()
 		if err != nil {
 			return err
 		}
-		if j.Status.Succeeded == 1 {
-			break
-		} else if j.Status.Failed == 1 {
-			return errors.New("could not generate the Helm certificate")
-		}
-		time.Sleep(1 * time.Second)
-	}
-
-	secret, err := i.k8s.Static().CoreV1().Secrets("kyma-installer").Get("helm-secret", metav1.GetOptions{})
+		return nil
+	}, retry.Attempts(7), retry.Delay(1*time.Second))
 	if err != nil {
 		return err
 	}
@@ -695,4 +688,12 @@ func (i *Installation) releaseSrcFile(path string) string {
 
 func (i *Installation) releaseFile(path string) string {
 	return fmt.Sprintf(releaseResourcePattern, i.Options.configVersion, path)
+}
+
+func (i *Installation) getHelmSecret() (*corev1.Secret, error) {
+	secret, err := i.k8s.Static().CoreV1().Secrets("kyma-installer").Get("helm-secret", metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return secret, nil
 }
