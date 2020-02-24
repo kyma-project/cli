@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	SetupCloseHandler()
+	setupCloseHandler()
 	command := kyma.NewCmd(cli.NewOptions())
 
 	err := command.Execute()
@@ -21,7 +21,7 @@ func main() {
 
 }
 
-func SetupCloseHandler() {
+func setupCloseHandler() {
 	c := make(chan os.Signal, 2)
 	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
 	go func() {
