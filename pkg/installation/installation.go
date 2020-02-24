@@ -424,7 +424,7 @@ func (i *Installation) applyOverrideFiles() error {
 						return err
 
 					}
-					return err
+					continue
 				} else {
 					fmt.Printf("unable to check if resource is installed. error: %s\n", err.Error())
 					return err
