@@ -368,13 +368,13 @@ func (i *Installation) applyOverrideFiles() error {
 		if err != nil {
 			fmt.Printf("unable to open file: %s. error: %s\n",
 				file, err.Error())
-			continue
+			return err
 		}
 		rawData, err := ioutil.ReadAll(oFile)
 		if err != nil {
 			fmt.Printf("unable to read data from file: %s. error: %s\n",
 				file, err.Error())
-			continue
+			return err
 		}
 
 		configs := strings.Split(string(rawData), "---")
@@ -389,31 +389,31 @@ func (i *Installation) applyOverrideFiles() error {
 			if err != nil {
 				fmt.Printf("unable to parse file data: %s. error: %s\n",
 					file, err.Error())
-				continue
+				return err
 			}
 
 			kind, ok := cfg["kind"].(string)
 			if !ok {
 				fmt.Printf("unable to retrieve the kind of config. file: %s\n", file)
-				continue
+				return err
 			}
 
 			meta, ok := cfg["metadata"].(map[interface{}]interface{})
 			if !ok {
 				fmt.Printf("unable to get metadata from config. file: %s\n", file)
-				continue
+				return err
 			}
 
 			namespace, ok := meta["namespace"].(string)
 			if !ok {
-				fmt.Printf("unable to get Namespace from config. file: %s\n", file)
-				continue
+				msg := fmt.Sprintf("unable to get Namespace from config. file: %s\n", file)
+				return errors.New(msg)
 			}
 
 			name, ok := meta["name"].(string)
 			if !ok {
-				fmt.Printf("unable to get name from config. file: %s\n", file)
-				continue
+				msg := fmt.Sprintf("unable to get name from config. file: %s\n", file)
+				return errors.New(msg)
 			}
 
 			if err := i.checkIfResourcePresent(namespace, kind, name); err != nil {
@@ -421,13 +421,13 @@ func (i *Installation) applyOverrideFiles() error {
 					if err := i.applyResourceFile(file); err != nil {
 						fmt.Printf(
 							"unable to apply file %s. error: %s\n", file, err.Error())
-						continue
+						return err
 
 					}
-					continue
+					return err
 				} else {
 					fmt.Printf("unable to check if resource is installed. error: %s\n", err.Error())
-					continue
+					return err
 				}
 			}
 
@@ -440,8 +440,8 @@ func (i *Installation) applyOverrideFiles() error {
 				"-p",
 				c)
 			if err != nil {
-				fmt.Printf("unable to override values. File: %s. Error: %s\n", file, err.Error())
-				continue
+				msg := fmt.Sprintf("unable to override values. File: %s. Error: %s\n", file, err.Error())
+				return errors.New(msg)
 			}
 		}
 
