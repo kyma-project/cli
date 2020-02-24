@@ -23,10 +23,10 @@ func main() {
 
 func SetupCloseHandler() {
 	c := make(chan os.Signal, 2)
-	signal.Notify(c, os.Interrupt, syscall.SIGINT)
+	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
 	go func() {
-		<-c
-		fmt.Println("\r- Ctrl+C pressed in Terminal. Exiting...")
+		sig := <-c
+		fmt.Printf("\r- Signal '%v' received from Terminal. Exiting...\n ", sig)
 		os.Exit(0)
 	}()
 }
