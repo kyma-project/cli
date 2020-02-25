@@ -55,7 +55,7 @@ Use the following instructions to create a service account for a selected provid
 	cmd.Flags().StringVar(&o.DiskType, "disk-type", "pd-standard", "Type of disk to use on the target provider.")
 	cmd.Flags().StringVar(&o.WCIDR, "workercidr", "10.250.0.0/16", "Specifies Gardener Classless Inter-Domain Routing (CIDR) of the workers of the cluster.")
 	cmd.Flags().IntVar(&o.DiskSizeGB, "disk-size", 30, "Disk size (in GB) of the cluster.")
-	cmd.Flags().IntVar(&o.NodeCount, "nodes", 3, "Number of cluster nodes. This will be set as scaler-max value(maximum autoscale value for cluster).")
+	cmd.Flags().IntVar(&o.NodeCount, "nodes", 3, `Number of cluster nodes which also defines the maximum autoscale value for the cluster. The value you provide for this flag overrides the settings defined with the "scaler-max" flag.`)
 	cmd.Flags().IntVar(&o.ScalerMin, "scaler-min", 2, "Minimum autoscale value of the cluster.")
 	cmd.Flags().IntVar(&o.ScalerMax, "scaler-max", 3, "Maximum autoscale value of the cluster. The value of `nodes` overrides the scaler-max value.")
 	cmd.Flags().IntVar(&o.Surge, "surge", 3, "Maximum surge of the cluster.")
