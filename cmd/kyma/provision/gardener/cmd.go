@@ -57,7 +57,7 @@ Use the following instructions to create a service account for a selected provid
 	cmd.Flags().IntVar(&o.DiskSizeGB, "disk-size", 30, "Disk size (in GB) of the cluster.")
 	cmd.Flags().IntVar(&o.NodeCount, "nodes", 3, `Number of cluster nodes which also defines the maximum autoscale value for the cluster. The value you provide for this flag overrides the settings defined with the "scaler-max" flag.`)
 	cmd.Flags().IntVar(&o.ScalerMin, "scaler-min", 2, "Minimum autoscale value of the cluster.")
-	cmd.Flags().IntVar(&o.ScalerMax, "scaler-max", 3, `Maximum autoscale value of the cluster. If you use the "nodes" flag in parallel to this one, it will result in overriding the "scaler-max" flag.`
+	cmd.Flags().IntVar(&o.ScalerMax, "scaler-max", 3, `Maximum autoscale value of the cluster. If you use the "nodes" flag in parallel to this one, it will result in overriding the "scaler-max" flag.`)
 	cmd.Flags().IntVar(&o.Surge, "surge", 3, "Maximum surge of the cluster.")
 	cmd.Flags().IntVarP(&o.Unavailable, "unavailable", "u", 1, "Maximum allowed number of unavailable nodes.")
 	cmd.Flags().StringVar(&o.NetworkType, "network-type", "calico", "Network type to be used.")
