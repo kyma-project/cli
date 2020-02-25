@@ -55,10 +55,10 @@ Use the following instructions to create a service account for a selected provid
 	cmd.Flags().StringVar(&o.DiskType, "disk-type", "pd-standard", "Type of disk to use on the target provider.")
 	cmd.Flags().StringVar(&o.WCIDR, "workercidr", "10.250.0.0/16", "Specifies Gardener Classless Inter-Domain Routing (CIDR) of the workers of the cluster.")
 	cmd.Flags().IntVar(&o.DiskSizeGB, "disk-size", 30, "Disk size (in GB) of the cluster.")
-	cmd.Flags().IntVar(&o.NodeCount, "nodes", 3, "Number of cluster nodes.")
+	cmd.Flags().IntVar(&o.NodeCount, "nodes", 3, `Number of cluster nodes which also defines the maximum autoscale value for the cluster. The value you provide for this flag overrides the settings defined with the "scaler-max" flag.`)
 	cmd.Flags().IntVar(&o.ScalerMin, "scaler-min", 2, "Minimum autoscale value of the cluster.")
-	cmd.Flags().IntVar(&o.ScalerMax, "scaler-max", 4, "Maximum autoscale value of the cluster.")
-	cmd.Flags().IntVar(&o.Surge, "surge", 4, "Maximum surge of the cluster.")
+	cmd.Flags().IntVar(&o.ScalerMax, "scaler-max", 3, `Maximum autoscale value of the cluster. If you use the "nodes" flag in parallel to this one, it will result in overriding the "scaler-max" flag.`)
+	cmd.Flags().IntVar(&o.Surge, "surge", 3, "Maximum surge of the cluster.")
 	cmd.Flags().IntVarP(&o.Unavailable, "unavailable", "u", 1, "Maximum allowed number of unavailable nodes.")
 	cmd.Flags().StringVar(&o.NetworkType, "network-type", "calico", "Network type to be used.")
 	cmd.Flags().StringVar(&o.NetworkNodes, "network-nodes", "10.250.0.0/16", "CIDR of the entire node network.")
@@ -141,6 +141,7 @@ func newProvider(o *Options) (*types.Provider, error) {
 		ProjectName:         o.Project,
 		CredentialsFilePath: o.CredentialsFile,
 	}
+
 	p.CustomConfigurations = make(map[string]interface{})
 	if o.Secret != "" {
 		p.CustomConfigurations["target_secret"] = o.Secret
@@ -148,7 +149,7 @@ func newProvider(o *Options) (*types.Provider, error) {
 	p.CustomConfigurations["target_provider"] = o.TargetProvider
 	p.CustomConfigurations["disk_type"] = o.DiskType
 	p.CustomConfigurations["worker_minimum"] = o.ScalerMin
-	p.CustomConfigurations["worker_maximum"] = o.ScalerMax
+	p.CustomConfigurations["worker_maximum"] = o.NodeCount
 	p.CustomConfigurations["worker_max_surge"] = o.Surge
 	p.CustomConfigurations["worker_max_unavailable"] = o.Unavailable
 	p.CustomConfigurations["vnetcidr"] = o.CIDR
@@ -186,6 +187,12 @@ func (c *command) validateFlags() error {
 	}
 	if c.opts.Secret == "" {
 		errMessage.WriteString("\nRequired flag `secret` has not been set.")
+	}
+	if c.opts.ScalerMin < 2 {
+		errMessage.WriteString("\n Minimum node count should be atleast 2 nodes.")
+	}
+	if c.opts.ScalerMin > c.opts.NodeCount || c.opts.ScalerMin > c.opts.ScalerMax {
+		errMessage.WriteString("\n Minimum node count cannot be greater than maximum number nodes.")
 	}
 
 	if errMessage.Len() != 0 {
