@@ -1,14 +1,16 @@
 package installation
 
 import (
+	"bytes"
 	"fmt"
-	"github.com/avast/retry-go"
 	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/avast/retry-go"
 
 	"github.com/kyma-project/cli/cmd/kyma/version"
 	"github.com/kyma-project/cli/internal/helm"
@@ -370,14 +372,15 @@ func (i *Installation) applyOverrideFiles() error {
 				file, err.Error())
 			continue
 		}
-		rawData, err := ioutil.ReadAll(oFile)
-		if err != nil {
+
+		var rawData bytes.Buffer
+		if _, err = io.Copy(&rawData, oFile); err != nil {
 			fmt.Printf("unable to read data from file: %s. error: %s\n",
 				file, err.Error())
 			continue
 		}
 
-		configs := strings.Split(string(rawData), "---")
+		configs := strings.Split(rawData.String(), "---")
 
 		for _, c := range configs {
 			if strings.TrimSpace(c) == "" {
