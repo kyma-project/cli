@@ -27,8 +27,8 @@ func TestProvisionGardenerFlags(t *testing.T) {
 	require.Equal(t, "pd-standard", o.DiskType, "Default value for the disk-type flag not as expected.")
 	require.Equal(t, 3, o.NodeCount, "Default value for the nodes flag not as expected.")
 	require.Equal(t, 2, o.ScalerMin, "Default value for the scaler-min flag not as expected.")
-	require.Equal(t, 4, o.ScalerMax, "Default value for the scaler-max flag not as expected.")
-	require.Equal(t, 4, o.Surge, "Default value for the surge flag not as expected.")
+	require.Equal(t, 3, o.ScalerMax, "Default value for the scaler-max flag not as expected.")
+	require.Equal(t, 3, o.Surge, "Default value for the surge flag not as expected.")
 	require.Equal(t, 1, o.Unavailable, "Default value for the unavailable flag not as expected.")
 	require.Equal(t, "10.250.0.0/16", o.CIDR, "Default value for the cidr flag not as expected.")
 	require.Empty(t, o.Extra, "Default value for the extra flag not as expected.")
@@ -136,7 +136,7 @@ func TestNewProvider(t *testing.T) {
 	custom["zone"] = o.Zone
 	custom["disk_type"] = o.DiskType
 	custom["worker_minimum"] = o.ScalerMin
-	custom["worker_maximum"] = o.ScalerMax
+	custom["worker_maximum"] = o.NodeCount
 	custom["worker_max_surge"] = o.Surge
 	custom["worker_max_unavailable"] = o.Unavailable
 	custom["vnetcidr"] = o.CIDR

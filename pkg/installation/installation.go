@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/avast/retry-go"
-
 	"github.com/kyma-project/cli/cmd/kyma/version"
 	"github.com/kyma-project/cli/internal/helm"
 	"github.com/kyma-project/cli/internal/kube"
@@ -597,7 +596,7 @@ func (i *Installation) waitForInstaller() error {
 		case <-timeout:
 			i.currentStep.Failure()
 			if err := i.printInstallationErrorLog(); err != nil {
-				fmt.Println("Error fetching installation error log, please manually check the status of the cluster.")
+				fmt.Printf("Error fetching installation error log: %s\nPlease manually check the status of the cluster\n", err)
 			}
 			return errors.New("Timeout reached while waiting for installation to complete")
 		default:
