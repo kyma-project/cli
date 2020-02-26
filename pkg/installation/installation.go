@@ -1,6 +1,7 @@
 package installation
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -370,14 +371,15 @@ func (i *Installation) applyOverrideFiles() error {
 				file, err.Error())
 			continue
 		}
-		rawData, err := ioutil.ReadAll(oFile)
-		if err != nil {
+
+		var rawData bytes.Buffer
+		if _, err = io.Copy(&rawData, oFile); err != nil {
 			fmt.Printf("unable to read data from file: %s. error: %s\n",
 				file, err.Error())
 			continue
 		}
 
-		configs := strings.Split(string(rawData), "---")
+		configs := strings.Split(rawData.String(), "---")
 
 		for _, c := range configs {
 			if strings.TrimSpace(c) == "" {
