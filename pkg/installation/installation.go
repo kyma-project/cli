@@ -367,14 +367,12 @@ func (i *Installation) applyOverrideFiles() error {
 	for _, file := range i.Options.OverrideConfigs {
 		oFile, err := os.Open(file)
 		if err != nil {
-			return errors.Wrapf(err, "unable to open file: %s. error: %s\n",
-				file, err.Error())
+			return errors.Wrapf(err, "unable to open file: %s.\n", file)
 		}
 
 		var rawData bytes.Buffer
 		if _, err = io.Copy(&rawData, oFile); err != nil {
-			fmt.Printf("unable to read data from file: %s. error: %s\n",
-				file, err.Error())
+			fmt.Printf("unable to read data from file: %s.\n", file)
 		}
 
 		configs := strings.Split(rawData.String(), "---")
@@ -387,8 +385,7 @@ func (i *Installation) applyOverrideFiles() error {
 			cfg := make(map[interface{}]interface{})
 			err = yaml.Unmarshal([]byte(c), &cfg)
 			if err != nil {
-				return errors.Wrapf(err, "unable to parse file data: %s. error: %s\n",
-					file, err.Error())
+				return errors.Wrapf(err, "unable to parse file data: %s.\n", file)
 			}
 
 			kind, ok := cfg["kind"].(string)
@@ -414,11 +411,11 @@ func (i *Installation) applyOverrideFiles() error {
 			if err := i.checkIfResourcePresent(namespace, kind, name); err != nil {
 				if strings.Contains(err.Error(), "not found") {
 					if err := i.applyResourceFile(file); err != nil {
-						return errors.Wrapf(err, "unable to apply file %s. error: %s\n", file, err.Error())
+						return errors.Wrapf(err, "unable to apply file %s.\n", file)
 					}
 					continue
 				} else {
-					return errors.Wrapf(err, "unable to check if resource is installed. error: %s\n", err.Error())
+					return errors.Wrapf(err, "unable to check if resource is installed.\n")
 				}
 			}
 
@@ -431,7 +428,7 @@ func (i *Installation) applyOverrideFiles() error {
 				"-p",
 				c)
 			if err != nil {
-				msg := fmt.Sprintf("unable to override values. File: %s. Error: %s\n", file, err.Error())
+				msg := fmt.Sprintf("unable to override values. File: %s.\n", file)
 				return errors.New(msg)
 			}
 		}
