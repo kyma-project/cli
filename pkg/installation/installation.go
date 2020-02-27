@@ -1,8 +1,8 @@
 package installation
 
 import (
+	"bytes"
 	"fmt"
-	"github.com/avast/retry-go"
 	"io"
 	"io/ioutil"
 	"os"
@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/avast/retry-go"
 	"github.com/kyma-project/cli/cmd/kyma/version"
 	"github.com/kyma-project/cli/internal/helm"
 	"github.com/kyma-project/cli/internal/kube"
@@ -369,13 +370,14 @@ func (i *Installation) applyOverrideFiles() error {
 			return errors.Wrapf(err, "unable to open file: %s. error: %s\n",
 				file, err.Error())
 		}
-		rawData, err := ioutil.ReadAll(oFile)
-		if err != nil {
-			return errors.Wrapf(err, "unable to read data from file: %s. error: %s\n",
+
+		var rawData bytes.Buffer
+		if _, err = io.Copy(&rawData, oFile); err != nil {
+			fmt.Printf("unable to read data from file: %s. error: %s\n",
 				file, err.Error())
 		}
 
-		configs := strings.Split(string(rawData), "---")
+		configs := strings.Split(rawData.String(), "---")
 
 		for _, c := range configs {
 			if strings.TrimSpace(c) == "" {
@@ -583,7 +585,7 @@ func (i *Installation) waitForInstaller() error {
 		case <-timeout:
 			i.currentStep.Failure()
 			if err := i.printInstallationErrorLog(); err != nil {
-				fmt.Println("Error fetching installation error log, please manually check the status of the cluster.")
+				fmt.Printf("Error fetching installation error log: %s\nPlease manually check the status of the cluster\n", err)
 			}
 			return errors.New("Timeout reached while waiting for installation to complete")
 		default:
