@@ -142,6 +142,8 @@ func newProvider(o *Options) (*types.Provider, error) {
 		CredentialsFilePath: o.CredentialsFile,
 	}
 
+	gcpControlPlaneSet := false
+
 	p.CustomConfigurations = make(map[string]interface{})
 	if o.Secret != "" {
 		p.CustomConfigurations["target_secret"] = o.Secret
@@ -168,7 +170,13 @@ func newProvider(o *Options) (*types.Provider, error) {
 		if len(v) != 2 {
 			return p, fmt.Errorf("wrong format for extra configuration %s. Please provide NAME=VALUE pairs", e)
 		}
+		if v[0] == "gcp_control_plane_zone" && v[1] != "" && o.TargetProvider == "gcp" {
+			gcpControlPlaneSet = true
+		}
 		p.CustomConfigurations[v[0]] = v[1]
+	}
+	if !gcpControlPlaneSet && o.TargetProvider == "gcp" {
+		p.CustomConfigurations["gcp_control_plane_zone"] = o.Zone[0]
 	}
 	return p, nil
 }
