@@ -428,7 +428,7 @@ func (i *Installation) applyOverrideFiles() error {
 				"-p",
 				c)
 			if err != nil {
-				return fmt.Errorf("unable to override values. File: %s.\n", file)
+				return fmt.Errorf("unable to override values File: %s", file)
 			}
 		}
 
