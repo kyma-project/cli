@@ -172,9 +172,7 @@ func newProvider(o *Options) (*types.Provider, error) {
 		if len(v) != 2 {
 			return p, fmt.Errorf("wrong format for extra configuration %s. Please provide NAME=VALUE pairs", e)
 		}
-		if v[0] == "gcp_control_plane_zone" && v[1] != "" && o.TargetProvider == "gcp" {
-			p.CustomConfigurations["gcp_control_plane_zone"] = o.Zones[0]
-		}
+
 		p.CustomConfigurations[v[0]] = v[1]
 	}
 	return p, nil
