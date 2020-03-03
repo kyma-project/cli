@@ -367,16 +367,12 @@ func (i *Installation) applyOverrideFiles() error {
 	for _, file := range i.Options.OverrideConfigs {
 		oFile, err := os.Open(file)
 		if err != nil {
-			fmt.Printf("unable to open file: %s. error: %s\n",
-				file, err.Error())
-			continue
+			return errors.Wrapf(err, "unable to open file: %s.\n", file)
 		}
 
 		var rawData bytes.Buffer
 		if _, err = io.Copy(&rawData, oFile); err != nil {
-			fmt.Printf("unable to read data from file: %s. error: %s\n",
-				file, err.Error())
-			continue
+			fmt.Printf("unable to read data from file: %s.\n", file)
 		}
 
 		configs := strings.Split(rawData.String(), "---")
@@ -389,47 +385,37 @@ func (i *Installation) applyOverrideFiles() error {
 			cfg := make(map[interface{}]interface{})
 			err = yaml.Unmarshal([]byte(c), &cfg)
 			if err != nil {
-				fmt.Printf("unable to parse file data: %s. error: %s\n",
-					file, err.Error())
-				continue
+				return errors.Wrapf(err, "unable to parse file data: %s.\n", file)
 			}
 
 			kind, ok := cfg["kind"].(string)
 			if !ok {
-				fmt.Printf("unable to retrieve the kind of config. file: %s\n", file)
-				continue
+				return errors.Wrapf(err, "unable to retrieve the kind of config. file: %s\n", file)
 			}
 
 			meta, ok := cfg["metadata"].(map[interface{}]interface{})
 			if !ok {
-				fmt.Printf("unable to get metadata from config. file: %s\n", file)
-				continue
+				return errors.Wrapf(err, "unable to get metadata from config. file: %s\n", file)
 			}
 
 			namespace, ok := meta["namespace"].(string)
 			if !ok {
-				fmt.Printf("unable to get Namespace from config. file: %s\n", file)
-				continue
+				return errors.Wrapf(err, "unable to get Namespace from config. file: %s\n", file)
 			}
 
 			name, ok := meta["name"].(string)
 			if !ok {
-				fmt.Printf("unable to get name from config. file: %s\n", file)
-				continue
+				return errors.Wrapf(err, "unable to get name from config. file: %s\n", file)
 			}
 
 			if err := i.checkIfResourcePresent(namespace, kind, name); err != nil {
 				if strings.Contains(err.Error(), "not found") {
 					if err := i.applyResourceFile(file); err != nil {
-						fmt.Printf(
-							"unable to apply file %s. error: %s\n", file, err.Error())
-						continue
-
+						return errors.Wrapf(err, "unable to apply file %s.\n", file)
 					}
 					continue
 				} else {
-					fmt.Printf("unable to check if resource is installed. error: %s\n", err.Error())
-					continue
+					return errors.Wrapf(err, "unable to check if resource is installed.\n")
 				}
 			}
 
@@ -442,8 +428,7 @@ func (i *Installation) applyOverrideFiles() error {
 				"-p",
 				c)
 			if err != nil {
-				fmt.Printf("unable to override values. File: %s. Error: %s\n", file, err.Error())
-				continue
+				return fmt.Errorf("unable to override values File: %s", file)
 			}
 		}
 
