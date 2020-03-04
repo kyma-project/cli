@@ -49,7 +49,7 @@ Use the following instructions to create a service account for a selected provid
 	cmd.Flags().StringVarP(&o.Secret, "secret", "s", "", "Name of the Gardener secret used to access the target provider. (required)")
 	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.16", "Kubernetes version of the cluster.")
 	cmd.Flags().StringVarP(&o.Region, "region", "r", "europe-west3", "Region of the cluster.")
-	cmd.Flags().StringSliceVarP(&o.Zones, "zones", "z", []string{"europe-west3-a"}, "Zones is a list of availability zones that are used to evenly distribute the worker pool. eg. --zones=\"europe-west3-a,europe-west3-b\"")
+	cmd.Flags().StringSliceVarP(&o.Zones, "zones", "z", []string{"europe-west3-a"}, "Zones specify availability zones that are used to evenly distribute the worker pool. eg. --zones=\"europe-west3-a,europe-west3-b\"")
 	cmd.Flags().StringVarP(&o.MachineType, "type", "t", "n1-standard-4", "Machine type used for the cluster.")
 	cmd.Flags().StringVar(&o.CIDR, "cidr", "10.250.0.0/16", "Gardener Classless Inter-Domain Routing (CIDR) used for the cluster.")
 	cmd.Flags().StringVar(&o.DiskType, "disk-type", "pd-standard", "Type of disk to use on the target provider.")
