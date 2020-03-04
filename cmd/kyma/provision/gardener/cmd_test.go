@@ -21,7 +21,7 @@ func TestProvisionGardenerFlags(t *testing.T) {
 	require.Equal(t, "", o.Secret, "The parsed value for the secret flag not as expected.")
 	require.Equal(t, "1.16", o.KubernetesVersion, "Default value for the kube-version flag not as expected.")
 	require.Equal(t, "europe-west3", o.Region, "Default value for the region flag not as expected.")
-	require.Equal(t, []string{"europe-west3-a"}, o.Zone, "Default value for the zone flag not as expected.")
+	require.Equal(t, []string{"europe-west3-a"}, o.Zones, "Default value for the zone flag not as expected.")
 	require.Equal(t, "n1-standard-4", o.MachineType, "Default value for the type flag not as expected.")
 	require.Equal(t, 30, o.DiskSizeGB, "Default value for the disk-size flag not as expected.")
 	require.Equal(t, "pd-standard", o.DiskType, "Default value for the disk-type flag not as expected.")
@@ -63,7 +63,7 @@ func TestProvisionGardenerFlags(t *testing.T) {
 	require.Equal(t, "my-ali-key", o.Secret, "The parsed value for the secret flag not as expected.")
 	require.Equal(t, "1.16.0", o.KubernetesVersion, "The parsed value for the kube-version flag not as expected.")
 	require.Equal(t, "us-central", o.Region, "The parsed value for the region flag not as expected.")
-	require.Equal(t, []string{"us-central1-b"}, o.Zone, "The parsed value for the zone flag not as expected.")
+	require.Equal(t, []string{"us-central1-b"}, o.Zones, "The parsed value for the zone flag not as expected.")
 	require.Equal(t, "quantum-computer", o.MachineType, "The parsed value for the type flag not as expected.")
 	require.Equal(t, 2000, o.DiskSizeGB, "The parsed value for the disk-size flag not as expected.")
 	require.Equal(t, "a big one", o.DiskType, "The parsed value for the disk-type flag not as expected.")
@@ -110,7 +110,7 @@ func TestNewProvider(t *testing.T) {
 		CredentialsFile: "/path/to/credentials",
 		TargetProvider:  "AlibabaCloud",
 		Secret:          "Open sesame!",
-		Zone:            []string{"Desert"},
+		Zones:           []string{"Desert"},
 		DiskType:        "a big one",
 		CIDR:            "0.0.0.0/24",
 		WCIDR:           "0.0.0.1/19",
@@ -133,7 +133,7 @@ func TestNewProvider(t *testing.T) {
 	custom["VAR2"] = "VALUE2"
 	custom["target_secret"] = o.Secret
 	custom["target_provider"] = o.TargetProvider
-	custom["zone"] = o.Zone
+	custom["zone"] = o.Zones
 	custom["disk_type"] = o.DiskType
 	custom["worker_minimum"] = o.ScalerMin
 	custom["worker_maximum"] = o.NodeCount
