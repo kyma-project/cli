@@ -26,8 +26,10 @@ check_generated_docs() {
         "
         exit 1
     else
+        echo "inside else branch"
         echo -e "${GREEN}√ check that generated docs are up-to-date${NC}"
     fi
+    echo "outside else branch"
 }
 
 main() {
