@@ -142,13 +142,12 @@ func newProvider(o *Options) (*types.Provider, error) {
 		CredentialsFilePath: o.CredentialsFile,
 	}
 
-	if o.TargetProvider == "gcp" {
-		p.CustomConfigurations["gcp_control_plane_zone"] = o.Zones[0]
-	}
-
 	p.CustomConfigurations = make(map[string]interface{})
 	if o.Secret != "" {
 		p.CustomConfigurations["target_secret"] = o.Secret
+	}
+	if o.TargetProvider == "gcp" {
+		p.CustomConfigurations["gcp_control_plane_zone"] = o.Zones[0]
 	}
 	p.CustomConfigurations["target_provider"] = o.TargetProvider
 	p.CustomConfigurations["disk_type"] = o.DiskType
