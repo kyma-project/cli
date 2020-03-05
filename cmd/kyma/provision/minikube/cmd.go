@@ -40,7 +40,6 @@ var (
 		"none",
 	}
 	ErrMinikubeRunning = errors.New("Minikube already running")
-	defaultVMDrivers   = fmt.Sprintf("darwin: %s, windows: %s, others: %s", vmDriverHyperkit, vmDriverVirtualBox, vmDriverNone)
 )
 
 type command struct {
@@ -64,7 +63,7 @@ func NewCmd(o *Options) *cobra.Command {
 		Aliases: []string{"m"},
 	}
 
-	cmd.Flags().StringVar(&o.VMDriver, "vm-driver", defaultVMDrivers, "Specifies the VM driver. Possible values: "+strings.Join(drivers, ","))
+	cmd.Flags().StringVar(&o.VMDriver, "vm-driver", defaultVMDriver, "Specifies the VM driver. Possible values: "+strings.Join(drivers, ","))
 	cmd.Flags().StringVar(&o.HypervVirtualSwitch, "hypervVirtualSwitch", "", "Specifies the Hyper-V switch version if you choose Hyper-V as the driver.")
 	cmd.Flags().StringVar(&o.DiskSize, "disk-size", "30g", "Specifies the disk size used for installation.")
 	cmd.Flags().StringVar(&o.Memory, "memory", "8192", "Specifies RAM reserved for installation.")
