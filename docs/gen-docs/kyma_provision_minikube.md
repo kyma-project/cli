@@ -18,7 +18,7 @@ kyma provision minikube [flags]
       --hypervVirtualSwitch string   Specifies the Hyper-V switch version if you choose Hyper-V as the driver.
       --memory string                Specifies RAM reserved for installation. (default "8192")
       --profile string               Specifies the Minikube profile.
-      --vm-driver string             Specifies the VM driver. Possible values: vmwarefusion,kvm,xhyve,hyperv,hyperkit,virtualbox,kvm2,none (default "hyperkit")
+      --vm-driver string             Specifies the VM driver. Possible values: vmwarefusion,kvm,xhyve,hyperv,hyperkit,virtualbox,kvm2,none (default "none")
 ```
 
 ### Options inherited from parent commands
