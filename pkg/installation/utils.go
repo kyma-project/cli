@@ -119,7 +119,7 @@ func (i *Installation) getLatestAvailableMasterHash() (string, error) {
 
 	}
 
-	return "", errors.New("not found")
+	return "", errors.New("not found latest available master hash")
 }
 
 func (i *Installation) setAdminPassword() error {
