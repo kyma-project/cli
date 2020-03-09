@@ -198,7 +198,7 @@ func (i *Installation) validateConfigurations() error {
 
 	//Install the latest version (latest master)
 	case strings.EqualFold(i.Options.Source, "latest"):
-		latest, err := i.getMasterHash()
+		latest, err := i.getLatestAvailableMasterHash()
 		if err != nil {
 			return fmt.Errorf("Unable to get latest version of kyma: %s", err.Error())
 		}
