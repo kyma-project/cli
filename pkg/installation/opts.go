@@ -64,9 +64,9 @@ type Options struct {
 	// +optional
 	KubeconfigPath string `json:"kubeconfigPath,omitempty"`
 
-	// If source=latest, defines how many commits from master branch are taken into account if artifacts for newer commits does not exist yet
+	// If source=latest-published, defines how many commits from master branch are taken into account if artifacts for newer commits does not exist yet
 	// +optional
-	SourceLatestFallbackLevel int `json:"source_latest_fallback_level,omitempty"`
+	FallbackLevel int `json:"fallback_level,omitempty"`
 }
 
 // LocalCluster includes the configuration options of a local cluster.

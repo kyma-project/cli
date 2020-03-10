@@ -69,10 +69,30 @@ func (i *Installation) printInstallationErrorLog() error {
 	return nil
 }
 
+func (i *Installation) getMasterHash() (string, error) {
+	ctx, timeoutF := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer timeoutF()
+	maxCloningDepth := i.Options.FallbackLevel + 1
+	r, err := git.CloneContext(ctx, memory.NewStorage(), nil,
+		&git.CloneOptions{
+			Depth: maxCloningDepth,
+			URL:   "https://github.com/kyma-project/kyma",
+		})
+	if err != nil {
+		return "", errors.Wrap(err, "while cloning Kyma repository")
+	}
+
+	h, err := r.Head()
+	if err != nil {
+		return "", errors.Wrap(err, "while getting head of Kyma repository: %w")
+	}
+	return h.Hash().String()[:8], nil
+}
+
 func (i *Installation) getLatestAvailableMasterHash() (string, error) {
 	ctx, timeoutF := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer timeoutF()
-	maxCloningDepth := i.Options.SourceLatestFallbackLevel + 1
+	maxCloningDepth := i.Options.FallbackLevel + 1
 	r, err := git.CloneContext(ctx, memory.NewStorage(), nil,
 		&git.CloneOptions{
 			Depth: maxCloningDepth,
@@ -87,7 +107,7 @@ func (i *Installation) getLatestAvailableMasterHash() (string, error) {
 		return "", errors.Wrap(err, "while getting head of Kyma repository: %w")
 	}
 
-	if i.Options.SourceLatestFallbackLevel == 0 {
+	if i.Options.FallbackLevel == 0 {
 		return h.Hash().String()[:8], nil
 	}
 

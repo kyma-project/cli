@@ -100,14 +100,14 @@ The standard installation uses the minimal configuration. The system performs th
 	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", DefaultKymaVersion, `Installation source. 
 	- To use the specific release, write "kyma install --source=1.3.0".
 	- To use the latest master, write "kyma install --source=latest".
+	- To use the latest published master, write "kyma install --source=latest-published".
 	- To use the local sources, write "kyma install --source=local". 
 	- To use a custom installer image, write kyma "install --source=user/my-kyma-installer:v1.4.0".`)
 	cobraCmd.Flags().StringVarP(&o.LocalSrcPath, "src-path", "", "", "Absolute path to local sources.")
 	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 1*time.Hour, "Time-out after which CLI stops watching the installation progress.")
 	cobraCmd.Flags().StringVarP(&o.Password, "password", "p", "", "Predefined cluster password.")
 	cobraCmd.Flags().StringArrayVarP(&o.OverrideConfigs, "override", "o", nil, "Path to a YAML file with parameters to override.")
-	cobraCmd.Flags().IntVar(&o.SourceLatestFallbackLevel, "sourceLatestFallbackLevel", 0, "If source=latest, defines how many commits from master branch are taken into account if artifacts for newer commits does not exist yet")
-	_ = cobraCmd.Flags().MarkHidden("sourceLatestFallbackLevel")
+	cobraCmd.Flags().IntVar(&o.FallbackLevel, "fallbackLevel", 5, "If source=latest-published, defines how many commits from master branch are taken into account if artifacts for newer commits does not exist yet")
 	return cobraCmd
 }
 
@@ -167,18 +167,18 @@ func (cmd *command) configureInstallation(clusterConfig clusterInfo) *installati
 			NoWait:                    cmd.opts.NoWait,
 			Verbose:                   cmd.opts.Verbose,
 			CI:                        cmd.opts.CI,
-			NonInteractive:            cmd.Factory.NonInteractive,
-			Timeout:                   cmd.opts.Timeout,
-			KubeconfigPath:            cmd.opts.KubeconfigPath,
-			Domain:                    cmd.opts.Domain,
-			TLSCert:                   cmd.opts.TLSCert,
-			TLSKey:                    cmd.opts.TLSKey,
-			LocalSrcPath:              cmd.opts.LocalSrcPath,
-			Password:                  cmd.opts.Password,
-			OverrideConfigs:           cmd.opts.OverrideConfigs,
-			Source:                    cmd.opts.Source,
-			SourceLatestFallbackLevel: cmd.opts.SourceLatestFallbackLevel,
-			IsLocal:                   clusterConfig.isLocal,
+			NonInteractive:  cmd.Factory.NonInteractive,
+			Timeout:         cmd.opts.Timeout,
+			KubeconfigPath:  cmd.opts.KubeconfigPath,
+			Domain:          cmd.opts.Domain,
+			TLSCert:         cmd.opts.TLSCert,
+			TLSKey:          cmd.opts.TLSKey,
+			LocalSrcPath:    cmd.opts.LocalSrcPath,
+			Password:        cmd.opts.Password,
+			OverrideConfigs: cmd.opts.OverrideConfigs,
+			Source:          cmd.opts.Source,
+			FallbackLevel:   cmd.opts.FallbackLevel,
+			IsLocal:         clusterConfig.isLocal,
 			LocalCluster: &installation.LocalCluster{
 				IP:       clusterConfig.localIP,
 				Profile:  clusterConfig.profile,
