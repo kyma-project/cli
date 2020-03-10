@@ -72,10 +72,9 @@ func (i *Installation) printInstallationErrorLog() error {
 func (i *Installation) getMasterHash() (string, error) {
 	ctx, timeoutF := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer timeoutF()
-	maxCloningDepth := i.Options.FallbackLevel + 1
 	r, err := git.CloneContext(ctx, memory.NewStorage(), nil,
 		&git.CloneOptions{
-			Depth: maxCloningDepth,
+			Depth: 1,
 			URL:   "https://github.com/kyma-project/kyma",
 		})
 	if err != nil {
