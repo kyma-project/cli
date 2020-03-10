@@ -107,7 +107,7 @@ The standard installation uses the minimal configuration. The system performs th
 	cobraCmd.Flags().StringVarP(&o.Password, "password", "p", "", "Predefined cluster password.")
 	cobraCmd.Flags().StringArrayVarP(&o.OverrideConfigs, "override", "o", nil, "Path to a YAML file with parameters to override.")
 	cobraCmd.Flags().IntVar(&o.SourceLatestFallbackLevel, "sourceLatestFallbackLevel", 0, "If source=latest, defines how many commits from master branch are taken into account if artifacts for newer commits does not exist yet")
-	cobraCmd.Flags().MarkHidden("sourceLatestFallbackLevel")
+	_ = cobraCmd.Flags().MarkHidden("sourceLatestFallbackLevel")
 	return cobraCmd
 }
 
