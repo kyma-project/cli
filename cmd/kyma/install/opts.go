@@ -12,15 +12,16 @@ var DefaultKymaVersion string
 //Options defines available options for the command
 type Options struct {
 	*cli.Options
-	NoWait          bool
-	Domain          string
-	TLSCert         string
-	TLSKey          string
-	LocalSrcPath    string
-	Timeout         time.Duration
-	Password        string
-	OverrideConfigs []string
-	Source          string
+	NoWait                    bool
+	Domain                    string
+	TLSCert                   string
+	TLSKey                    string
+	LocalSrcPath              string
+	Timeout                   time.Duration
+	Password                  string
+	OverrideConfigs           []string
+	Source                    string
+	SourceLatestFallbackLevel int
 }
 
 //NewOptions creates options with default values

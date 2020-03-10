@@ -63,6 +63,10 @@ type Options struct {
 	// or /$HOME/.kube/config is used if the variable is not set.
 	// +optional
 	KubeconfigPath string `json:"kubeconfigPath,omitempty"`
+
+	// If source=latest, defines how many commits from master branch are taken into account if artifacts for newer commits does not exist yet
+	// +optional
+	SourceLatestFallbackLevel int `json:"source_latest_fallback_level,omitempty"`
 }
 
 // LocalCluster includes the configuration options of a local cluster.

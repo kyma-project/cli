@@ -72,7 +72,7 @@ func (i *Installation) printInstallationErrorLog() error {
 func (i *Installation) getLatestAvailableMasterHash() (string, error) {
 	ctx, timeoutF := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer timeoutF()
-	maxCloningDepth := 5
+	maxCloningDepth := i.Options.SourceLatestFallbackLevel + 1
 	r, err := git.CloneContext(ctx, memory.NewStorage(), nil,
 		&git.CloneOptions{
 			Depth: maxCloningDepth,
@@ -87,14 +87,17 @@ func (i *Installation) getLatestAvailableMasterHash() (string, error) {
 		return "", errors.Wrap(err, "while getting head of Kyma repository: %w")
 	}
 
+	if i.Options.SourceLatestFallbackLevel == 0 {
+		return h.Hash().String()[:8], nil
+	}
+
 	iter, err := r.Log(&git.LogOptions{From: h.Hash()})
 	if err != nil {
 		return "", errors.Wrap(err, "while getting logs of Kyma repository: %w")
 	}
 
 	defer iter.Close()
-
-	for i := 0; i < maxCloningDepth; i++ {
+	for k := 0; k < maxCloningDepth; k++ {
 		c, err := iter.Next()
 		if err != nil {
 			return "", errors.Wrap(err, "while iterating commit of Kyma repository: %w")
@@ -116,6 +119,7 @@ func (i *Installation) getLatestAvailableMasterHash() (string, error) {
 		} else if resp.StatusCode != http.StatusNotFound {
 			return "", fmt.Errorf("got unexpected status code when fetching example file from kyma-development artifacts, got: [%d] ", resp.StatusCode)
 		}
+		i.currentStep.LogInfof("Skipping version: [%s]: artifacts not yet available", abbrevHash)
 
 	}
 
