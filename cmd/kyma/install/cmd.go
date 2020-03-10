@@ -164,9 +164,9 @@ func (cmd *command) Run() error {
 func (cmd *command) configureInstallation(clusterConfig clusterInfo) *installation.Installation {
 	return &installation.Installation{
 		Options: &installation.Options{
-			NoWait:                    cmd.opts.NoWait,
-			Verbose:                   cmd.opts.Verbose,
-			CI:                        cmd.opts.CI,
+			NoWait:          cmd.opts.NoWait,
+			Verbose:         cmd.opts.Verbose,
+			CI:              cmd.opts.CI,
 			NonInteractive:  cmd.Factory.NonInteractive,
 			Timeout:         cmd.opts.Timeout,
 			KubeconfigPath:  cmd.opts.KubeconfigPath,
