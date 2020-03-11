@@ -203,7 +203,7 @@ func (i *Installation) validateConfigurations() error {
 	case strings.EqualFold(i.Options.Source, sourceLatest):
 		latest, err := i.getMasterHash()
 		if err != nil {
-			return fmt.Errorf("unable to get latest version of kyma: %s", err.Error())
+			return errors.Wrap(err,"unable to get latest version of kyma")
 		}
 		i.Options.releaseVersion = fmt.Sprintf("master-%s", latest)
 		i.Options.configVersion = "master"
@@ -212,7 +212,7 @@ func (i *Installation) validateConfigurations() error {
 	case strings.EqualFold(i.Options.Source, sourceLatestPublished):
 		latest, err := i.getLatestAvailableMasterHash()
 		if err != nil {
-			return fmt.Errorf("unable to get latest published version of kyma: %s", err.Error())
+			return errors.Wrap(err,"unable to get latest published version of kyma")
 		}
 		i.Options.releaseVersion = fmt.Sprintf("master-%s", latest)
 		i.Options.configVersion = "master"
