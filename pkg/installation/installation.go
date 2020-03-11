@@ -29,6 +29,9 @@ const (
 	releaseResourcePattern = "https://raw.githubusercontent.com/kyma-project/kyma/%s/installation/resources/%s"
 	registryImagePattern   = "eu.gcr.io/kyma-project/kyma-installer:%s"
 	localDomain            = "kyma.local"
+	sourceLatest           = "latest"
+	sourceLatestPublished  = "latest-published"
+	sourceLocal            = "local"
 )
 
 // Installation contains the installation elements and configuration options.
@@ -180,12 +183,12 @@ func (i *Installation) InstallKyma() (*Result, error) {
 func (i *Installation) validateConfigurations() error {
 	switch {
 	//Install from local sources
-	case strings.EqualFold(i.Options.Source, "local"):
+	case strings.EqualFold(i.Options.Source, sourceLocal):
 		i.Options.fromLocalSources = true
 		if i.Options.LocalSrcPath == "" {
 			goPath := os.Getenv("GOPATH")
 			if goPath == "" {
-				return fmt.Errorf("No 'src-path' configured and no applicable default found. Check if you exported a GOPATH")
+				return fmt.Errorf("no 'src-path' configured and no applicable default found. Check if you exported a GOPATH")
 			}
 			i.Options.LocalSrcPath = filepath.Join(goPath, "src", "github.com", "kyma-project", "kyma")
 		}
@@ -197,10 +200,19 @@ func (i *Installation) validateConfigurations() error {
 		}
 
 	//Install the latest version (latest master)
-	case strings.EqualFold(i.Options.Source, "latest"):
+	case strings.EqualFold(i.Options.Source, sourceLatest):
 		latest, err := i.getMasterHash()
 		if err != nil {
-			return fmt.Errorf("Unable to get latest version of kyma: %s", err.Error())
+			return errors.Wrap(err, "unable to get latest version of kyma")
+		}
+		i.Options.releaseVersion = fmt.Sprintf("master-%s", latest)
+		i.Options.configVersion = "master"
+		i.Options.registryTemplate = registryImagePattern
+
+	case strings.EqualFold(i.Options.Source, sourceLatestPublished):
+		latest, err := i.getLatestAvailableMasterHash()
+		if err != nil {
+			return errors.Wrap(err, "unable to get latest published version of kyma")
 		}
 		i.Options.releaseVersion = fmt.Sprintf("master-%s", latest)
 		i.Options.configVersion = "master"
@@ -217,7 +229,7 @@ func (i *Installation) validateConfigurations() error {
 		i.Options.remoteImage = i.Options.Source
 		i.Options.configVersion = "master"
 	default:
-		return fmt.Errorf("Failed to parse the source flag. It can take one of the following: 'local', 'latest', release version (e.g. 1.4.1), or installer image")
+		return fmt.Errorf("failed to parse the source flag. It can take one of the following: 'local', 'latest', 'latest-published', release version (e.g. 1.4.1), or installer image")
 	}
 
 	// If one of the --domain, --tlsKey, or --tlsCert is specified, the others must be specified as well (XOR logic used below)

@@ -12,13 +12,13 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver"
-	docker "github.com/fsouza/go-dockerclient"
+	"github.com/fsouza/go-dockerclient"
 	"github.com/kyma-project/cli/internal/minikube"
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
-	git "gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/storage/memory"
-	v1 "k8s.io/api/apps/v1"
+	"k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -78,14 +78,71 @@ func (i *Installation) getMasterHash() (string, error) {
 			URL:   "https://github.com/kyma-project/kyma",
 		})
 	if err != nil {
-		return "", err
-	}
-	h, err := r.Head()
-	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "while cloning Kyma repository")
 	}
 
+	h, err := r.Head()
+	if err != nil {
+		return "", errors.Wrap(err, "while getting head of Kyma repository: %w")
+	}
 	return h.Hash().String()[:8], nil
+}
+
+func (i *Installation) getLatestAvailableMasterHash() (string, error) {
+	ctx, timeoutF := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer timeoutF()
+	maxCloningDepth := i.Options.FallbackLevel + 1
+	r, err := git.CloneContext(ctx, memory.NewStorage(), nil,
+		&git.CloneOptions{
+			Depth: maxCloningDepth,
+			URL:   "https://github.com/kyma-project/kyma",
+		})
+	if err != nil {
+		return "", errors.Wrap(err, "while cloning Kyma repository")
+	}
+
+	h, err := r.Head()
+	if err != nil {
+		return "", errors.Wrap(err, "while getting head of Kyma repository: %w")
+	}
+
+	if i.Options.FallbackLevel == 0 {
+		return h.Hash().String()[:8], nil
+	}
+
+	iter, err := r.Log(&git.LogOptions{From: h.Hash()})
+	if err != nil {
+		return "", errors.Wrap(err, "while getting logs of Kyma repository: %w")
+	}
+
+	defer iter.Close()
+	for k := 0; k < maxCloningDepth; k++ {
+		c, err := iter.Next()
+		if err != nil {
+			return "", errors.Wrap(err, "while iterating commit of Kyma repository: %w")
+		}
+		if c == nil {
+			return "", errors.New("while iterating commit of Kyma repository: commit is nil")
+		}
+
+		abbrevHash := c.Hash.String()[:8]
+		resp, err := http.Head(fmt.Sprintf("https://storage.googleapis.com/kyma-development-artifacts/master-%s/kyma-installer-cluster.yaml", abbrevHash))
+		if err != nil {
+			return "", errors.Wrap(err, "while fetching example file from kyma-development-artifacts")
+		}
+		if err = resp.Body.Close(); err != nil {
+			return "", errors.Wrap(err, "while closing body")
+		}
+		if resp.StatusCode == http.StatusOK {
+			return abbrevHash, nil
+		} else if resp.StatusCode != http.StatusNotFound {
+			return "", fmt.Errorf("got unexpected status code when fetching example file from kyma-development artifacts, got: [%d] ", resp.StatusCode)
+		}
+		i.currentStep.LogInfof("Skipping version: [%s]: artifacts not yet available", abbrevHash)
+
+	}
+
+	return "", errors.New("not found latest available master hash")
 }
 
 func (i *Installation) setAdminPassword() error {

@@ -21,6 +21,7 @@ type Options struct {
 	Password        string
 	OverrideConfigs []string
 	Source          string
+	FallbackLevel   int
 }
 
 //NewOptions creates options with default values
