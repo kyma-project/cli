@@ -13,7 +13,7 @@ clean_up() {
     git reset --hard
 }
 
-trap cleanup EXIT SIGINT
+trap clean_up EXIT SIGINT
 
 generate_docs() {
     shout "Auto generate docs"
