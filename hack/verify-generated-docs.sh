@@ -3,10 +3,17 @@
 # standard bash error handling
 set -o nounset # treat unset variables as an error and exit immediately.
 set -o errexit # exit immediately when a command fails.
+set -E         # needs to be set if we want the ERR trap
 
 readonly CURRENT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 source "${CURRENT_DIR}/utilities.sh" || { echo 'Cannot load CI utilities.'; exit 1; }
+
+clean_up() {
+    git reset --hard
+}
+
+trap clean_up EXIT SIGINT
 
 generate_docs() {
     shout "Auto generate docs"
