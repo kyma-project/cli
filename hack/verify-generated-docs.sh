@@ -50,7 +50,6 @@ check_generated_docs() {
 main() {
     generate_docs
     check_generated_docs
-    clean_up
 }
 
 main
