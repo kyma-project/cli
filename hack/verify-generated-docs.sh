@@ -10,7 +10,7 @@ readonly CURRENT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 source "${CURRENT_DIR}/utilities.sh" || { echo 'Cannot load CI utilities.'; exit 1; }
 
 clean_up() {
-    git reset --hard
+    git checkout HEAD ./docs/gen-docs
 }
 
 trap clean_up EXIT SIGINT
