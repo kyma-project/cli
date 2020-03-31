@@ -12,13 +12,13 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver"
-	"github.com/fsouza/go-dockerclient"
+	docker "github.com/fsouza/go-dockerclient"
 	"github.com/kyma-project/cli/internal/minikube"
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/storage/memory"
-	"k8s.io/api/apps/v1"
+	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -169,25 +169,27 @@ func (i *Installation) setAdminPassword() error {
 	return err
 }
 
-func removeActionLabel(acc *[]map[string]interface{}) error {
-	for _, config := range *acc {
-		if kind, ok := config["kind"]; ok && kind == "Installation" {
-			meta, ok := config["metadata"].(map[interface{}]interface{})
-			if !ok {
-				return errors.New("Installation contains no METADATA section")
-			}
+func removeActionLabel(files []File) error {
+	for _, f := range files {
+		for _, config := range f {
+			if kind, ok := config["kind"]; ok && kind == "Installation" {
+				meta, ok := config["metadata"].(map[interface{}]interface{})
+				if !ok {
+					return errors.New("Installation contains no METADATA section")
+				}
 
-			labels, ok := meta["labels"].(map[interface{}]interface{})
-			if !ok {
-				return errors.New("Installation contains no LABELS section")
-			}
+				labels, ok := meta["labels"].(map[interface{}]interface{})
+				if !ok {
+					return errors.New("Installation contains no LABELS section")
+				}
 
-			_, ok = labels["action"].(string)
-			if !ok {
-				return nil
-			}
+				_, ok = labels["action"].(string)
+				if !ok {
+					return nil
+				}
 
-			delete(labels, "action")
+				delete(labels, "action")
+			}
 		}
 	}
 	return nil
@@ -208,39 +210,43 @@ func downloadFile(path string) (io.ReadCloser, error) {
 	return resp.Body, nil
 }
 
-func getInstallerImage(resources *[]map[string]interface{}) (string, error) {
-	for _, res := range *resources {
-		if res["kind"] == "Deployment" {
+func getInstallerImage(files []File) (string, error) {
+	for _, f := range files {
+		for _, res := range f {
+			if res["kind"] == "Deployment" {
 
-			var deployment v1.Deployment
-			err := mapstructure.Decode(res, &deployment)
-			if err != nil {
-				return "", err
-			}
+				var deployment v1.Deployment
+				err := mapstructure.Decode(res, &deployment)
+				if err != nil {
+					return "", err
+				}
 
-			if deployment.Spec.Template.Spec.Containers[0].Name == "kyma-installer-container" {
-				return deployment.Spec.Template.Spec.Containers[0].Image, nil
+				if deployment.Spec.Template.Spec.Containers[0].Name == "kyma-installer-container" {
+					return deployment.Spec.Template.Spec.Containers[0].Image, nil
+				}
 			}
 		}
 	}
 	return "", errors.New("'kyma-installer' deployment is missing")
 }
 
-func replaceInstallerImage(resources *[]map[string]interface{}, imageURL string) error {
+func replaceInstallerImage(files []File, imageURL string) error {
 	// Check if installer deployment has all the necessary fields and a container named kyma-installer-container.
 	// If so, replace the image with the imageURL parameter.
-	for _, config := range *resources {
-		if kind, ok := config["kind"]; ok && kind == "Deployment" {
-			if spec, ok := config["spec"].(map[interface{}]interface{}); ok {
-				if template, ok := spec["template"].(map[interface{}]interface{}); ok {
-					if spec, ok = template["spec"].(map[interface{}]interface{}); ok {
-						if containers, ok := spec["containers"].([]interface{}); ok {
-							for _, c := range containers {
-								container := c.(map[interface{}]interface{})
-								if cName, ok := container["name"]; ok && cName == "kyma-installer-container" {
-									if _, ok := container["image"]; ok {
-										container["image"] = imageURL
-										return nil
+	for _, f := range files {
+		for _, config := range f {
+			if kind, ok := config["kind"]; ok && kind == "Deployment" {
+				if spec, ok := config["spec"].(map[interface{}]interface{}); ok {
+					if template, ok := spec["template"].(map[interface{}]interface{}); ok {
+						if spec, ok = template["spec"].(map[interface{}]interface{}); ok {
+							if containers, ok := spec["containers"].([]interface{}); ok {
+								for _, c := range containers {
+									container := c.(map[interface{}]interface{})
+									if cName, ok := container["name"]; ok && cName == "kyma-installer-container" {
+										if _, ok := container["image"]; ok {
+											container["image"] = imageURL
+											return nil
+										}
 									}
 								}
 							}
