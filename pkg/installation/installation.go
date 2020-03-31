@@ -46,9 +46,9 @@ type Installation struct {
 	Options *Options `json:"options"`
 }
 
-// InstallationFile represents a Kyma installation yaml file in the form of a key value map
+// installation.File represents a Kyma installation yaml file in the form of a key value map
 // Type alias for clarity; It is still a map slice and can be used anywhere where []map[string]interface{} is used
-type InstallationFile = []map[string]interface{}
+type File = []map[string]interface{}
 
 // Result contains the resulting details related to the installation.
 type Result struct {
@@ -120,7 +120,7 @@ func (i *Installation) InstallKyma() (*Result, error) {
 	s.Successf("Tiller deployed")
 
 	s = i.newStep("Loading installation files")
-	resources, err := i.prepareInstallationFiles()
+	resources, err := i.prepareFiles()
 	if err != nil {
 		s.Failure()
 		return nil, err
@@ -267,20 +267,20 @@ func (i *Installation) installTiller() error {
 	return i.k8s.WaitPodStatusByLabel("kube-system", "name", "tiller", corev1.PodRunning)
 }
 
-func (i *Installation) prepareInstallationFiles() ([]InstallationFile, error) {
-	var installationFilePaths []string
+func (i *Installation) prepareFiles() ([]File, error) {
+	var FilePaths []string
 	if i.Options.IsLocal {
-		installationFilePaths = []string{"installer-local.yaml", "installer-config-local.yaml.tpl", "installer-cr.yaml.tpl"}
+		FilePaths = []string{"installer-local.yaml", "installer-config-local.yaml.tpl", "installer-cr.yaml.tpl"}
 	} else {
-		installationFilePaths = []string{"installer.yaml", "installer-cr-cluster.yaml.tpl"}
+		FilePaths = []string{"installer.yaml", "installer-cr-cluster.yaml.tpl"}
 	}
 
-	installationFiles, err := i.loadInstallationResourceFiles(installationFilePaths)
+	Files, err := i.loadInstallationResourceFiles(FilePaths)
 	if err != nil {
 		return nil, err
 	}
 
-	err = removeActionLabel(installationFiles)
+	err = removeActionLabel(Files)
 	if err != nil {
 		return nil, err
 	}
@@ -288,7 +288,7 @@ func (i *Installation) prepareInstallationFiles() ([]InstallationFile, error) {
 	//In case of local installation from local sources, build installer image.
 	//TODO: add image build & push functionality for remote installation from local sources.
 	if i.Options.fromLocalSources && i.Options.IsLocal {
-		imageName, err := getInstallerImage(installationFiles)
+		imageName, err := getInstallerImage(Files)
 		if err != nil {
 			return nil, err
 		}
@@ -299,24 +299,24 @@ func (i *Installation) prepareInstallationFiles() ([]InstallationFile, error) {
 		}
 	} else if !i.Options.fromLocalSources {
 		if i.Options.remoteImage != "" {
-			err = replaceInstallerImage(installationFiles, i.Options.remoteImage)
+			err = replaceInstallerImage(Files, i.Options.remoteImage)
 		} else {
-			err = replaceInstallerImage(installationFiles, buildDockerImageString(i.Options.registryTemplate, i.Options.releaseVersion))
+			err = replaceInstallerImage(Files, buildDockerImageString(i.Options.registryTemplate, i.Options.releaseVersion))
 		}
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return installationFiles, nil
+	return Files, nil
 }
 
 //
-func (i *Installation) loadInstallationResourceFiles(resourcePaths []string) ([]InstallationFile, error) {
+func (i *Installation) loadInstallationResourceFiles(resourcePaths []string) ([]File, error) {
 
 	var err error
 	// each installation file goes into a separate slice of map[string]interface{} so that they can be applied individually
-	resFiles := make([]InstallationFile, 0)
+	resFiles := make([]File, 0)
 
 	for _, resourcePath := range resourcePaths {
 
@@ -354,7 +354,7 @@ func (i *Installation) loadInstallationResourceFiles(resourcePaths []string) ([]
 	return resFiles, nil
 }
 
-func (i *Installation) installInstaller(files []InstallationFile) error {
+func (i *Installation) installInstaller(files []File) error {
 	deployed, err := i.k8s.IsPodDeployedByLabel("kyma-installer", "name", "kyma-installer")
 	if err != nil {
 		return err

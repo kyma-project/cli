@@ -9,13 +9,13 @@ import (
 func Test_RemoveActionLabel(t *testing.T) {
 	testData := []struct {
 		testName       string
-		data           []InstallationFile
-		expectedResult []InstallationFile
+		data           []File
+		expectedResult []File
 		shouldFail     bool
 	}{
 		{
 			testName: "correct data test",
-			data: []InstallationFile{
+			data: []File{
 				{
 					{
 						"apiVersion": "installer.kyma-project.io/v1alpha1",
@@ -29,7 +29,7 @@ func Test_RemoveActionLabel(t *testing.T) {
 					},
 				},
 			},
-			expectedResult: []InstallationFile{
+			expectedResult: []File{
 				{
 					{
 						"apiVersion": "installer.kyma-project.io/v1alpha1",
@@ -45,7 +45,7 @@ func Test_RemoveActionLabel(t *testing.T) {
 		},
 		{
 			testName: "incorrect data test",
-			data: []InstallationFile{
+			data: []File{
 				{
 					{
 						"apiVersion": "installer.kyma-project.io/v1alpha1",
@@ -57,7 +57,7 @@ func Test_RemoveActionLabel(t *testing.T) {
 					},
 				},
 			},
-			expectedResult: []InstallationFile{
+			expectedResult: []File{
 				{
 					{
 						"apiVersion": "installer.kyma-project.io/v1alpha1",
@@ -88,13 +88,13 @@ func Test_ReplaceDockerImageURL(t *testing.T) {
 	const replacedWithData = "testImage!"
 	testData := []struct {
 		testName       string
-		data           []InstallationFile
-		expectedResult []InstallationFile
+		data           []File
+		expectedResult []File
 		shouldFail     bool
 	}{
 		{
 			testName: "correct data test",
-			data: []InstallationFile{
+			data: []File{
 				{
 					{
 						"apiVersion": "installer.kyma-project.io/v1alpha1",
@@ -115,7 +115,7 @@ func Test_ReplaceDockerImageURL(t *testing.T) {
 					},
 				},
 			},
-			expectedResult: []InstallationFile{
+			expectedResult: []File{
 				{
 					{
 						"apiVersion": "installer.kyma-project.io/v1alpha1",

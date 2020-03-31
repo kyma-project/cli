@@ -169,7 +169,7 @@ func (i *Installation) setAdminPassword() error {
 	return err
 }
 
-func removeActionLabel(files []InstallationFile) error {
+func removeActionLabel(files []File) error {
 	for _, f := range files {
 		for _, config := range f {
 			if kind, ok := config["kind"]; ok && kind == "Installation" {
@@ -210,7 +210,7 @@ func downloadFile(path string) (io.ReadCloser, error) {
 	return resp.Body, nil
 }
 
-func getInstallerImage(files []InstallationFile) (string, error) {
+func getInstallerImage(files []File) (string, error) {
 	for _, f := range files {
 		for _, res := range f {
 			if res["kind"] == "Deployment" {
@@ -230,7 +230,7 @@ func getInstallerImage(files []InstallationFile) (string, error) {
 	return "", errors.New("'kyma-installer' deployment is missing")
 }
 
-func replaceInstallerImage(files []InstallationFile, imageURL string) error {
+func replaceInstallerImage(files []File, imageURL string) error {
 	// Check if installer deployment has all the necessary fields and a container named kyma-installer-container.
 	// If so, replace the image with the imageURL parameter.
 	for _, f := range files {
