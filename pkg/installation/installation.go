@@ -361,7 +361,7 @@ func (i *Installation) installInstaller(files []InstallationFile) error {
 	}
 
 	if !deployed {
-		// apply each instalation file individually
+		// apply each installation file individually
 		for _, f := range files {
 			_, err := i.getKubectl().RunApplyCmd(f)
 			if err != nil {
