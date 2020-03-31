@@ -46,6 +46,10 @@ type Installation struct {
 	Options *Options `json:"options"`
 }
 
+// InstallationFile represents a Kyma installation yaml file in the form of a key value map
+// Type alias for clarity; It is still a map slice and can be used anywhere where []map[string]interface{} is used
+type InstallationFile = []map[string]interface{}
+
 // Result contains the resulting details related to the installation.
 type Result struct {
 	// KymaVersion indicates the installed Kyma version.
@@ -263,20 +267,20 @@ func (i *Installation) installTiller() error {
 	return i.k8s.WaitPodStatusByLabel("kube-system", "name", "tiller", corev1.PodRunning)
 }
 
-func (i *Installation) prepareInstallationFiles() ([]map[string]interface{}, error) {
-	var installationFiles []string
+func (i *Installation) prepareInstallationFiles() ([]InstallationFile, error) {
+	var installationFilePaths []string
 	if i.Options.IsLocal {
-		installationFiles = []string{"installer-local.yaml", "installer-config-local.yaml.tpl", "installer-cr.yaml.tpl"}
+		installationFilePaths = []string{"installer-local.yaml", "installer-config-local.yaml.tpl", "installer-cr.yaml.tpl"}
 	} else {
-		installationFiles = []string{"installer.yaml", "installer-cr-cluster.yaml.tpl"}
+		installationFilePaths = []string{"installer.yaml", "installer-cr-cluster.yaml.tpl"}
 	}
 
-	resources, err := i.loadInstallationResourceFiles(installationFiles)
+	installationFiles, err := i.loadInstallationResourceFiles(installationFilePaths)
 	if err != nil {
 		return nil, err
 	}
 
-	err = removeActionLabel(&resources)
+	err = removeActionLabel(installationFiles)
 	if err != nil {
 		return nil, err
 	}
@@ -284,7 +288,7 @@ func (i *Installation) prepareInstallationFiles() ([]map[string]interface{}, err
 	//In case of local installation from local sources, build installer image.
 	//TODO: add image build & push functionality for remote installation from local sources.
 	if i.Options.fromLocalSources && i.Options.IsLocal {
-		imageName, err := getInstallerImage(&resources)
+		imageName, err := getInstallerImage(installationFiles)
 		if err != nil {
 			return nil, err
 		}
@@ -295,25 +299,28 @@ func (i *Installation) prepareInstallationFiles() ([]map[string]interface{}, err
 		}
 	} else if !i.Options.fromLocalSources {
 		if i.Options.remoteImage != "" {
-			err = replaceInstallerImage(&resources, i.Options.remoteImage)
+			err = replaceInstallerImage(installationFiles, i.Options.remoteImage)
 		} else {
-			err = replaceInstallerImage(&resources, buildDockerImageString(i.Options.registryTemplate, i.Options.releaseVersion))
+			err = replaceInstallerImage(installationFiles, buildDockerImageString(i.Options.registryTemplate, i.Options.releaseVersion))
 		}
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return resources, nil
+	return installationFiles, nil
 }
 
-func (i *Installation) loadInstallationResourceFiles(resourcePaths []string) ([]map[string]interface{}, error) {
+//
+func (i *Installation) loadInstallationResourceFiles(resourcePaths []string) ([]InstallationFile, error) {
 
 	var err error
-	resources := make([]map[string]interface{}, 0)
+	// each installation file goes into a separate slice of map[string]interface{} so that they can be applied individually
+	resFiles := make([]InstallationFile, 0)
 
 	for _, resourcePath := range resourcePaths {
 
+		resources := make([]map[string]interface{}, 0)
 		var yamlReader io.ReadCloser
 
 		if i.Options.fromLocalSources {
@@ -341,21 +348,25 @@ func (i *Installation) loadInstallationResourceFiles(resourcePaths []string) ([]
 		}
 
 		yamlReader.Close()
+		resFiles = append(resFiles, resources)
 	}
 
-	return resources, nil
+	return resFiles, nil
 }
 
-func (i *Installation) installInstaller(resources []map[string]interface{}) error {
+func (i *Installation) installInstaller(files []InstallationFile) error {
 	deployed, err := i.k8s.IsPodDeployedByLabel("kyma-installer", "name", "kyma-installer")
 	if err != nil {
 		return err
 	}
 
 	if !deployed {
-		_, err := i.getKubectl().RunApplyCmd(resources)
-		if err != nil {
-			return err
+		// apply each instalation file individually
+		for _, f := range files {
+			_, err := i.getKubectl().RunApplyCmd(f)
+			if err != nil {
+				return err
+			}
 		}
 
 		err = i.applyOverrideFiles()
