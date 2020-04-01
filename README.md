@@ -53,7 +53,7 @@ Invoke-WebRequest -OutFile kyma.zip https://github.com/kyma-project/cli/releases
 
 Expand-Archive -Path kyma.zip -DestinationPath .\kyma-cli
 
-Set-ItemProperty -Path 'Registry::HKEY_CURRENT_USER\Environment' -Name PATH -Value  "$((Get-ItemProperty -Path 'Registry::HKEY_CURRENT_USER\Environment' -Name PATH).path);$((Get-Location).path)\kyma-cli"
+cd kyma-cli
 ```
 ### General
 
