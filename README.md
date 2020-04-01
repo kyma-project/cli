@@ -65,7 +65,7 @@ kyma {COMMAND} {FLAGS}
 where:
 
 - **{COMMAND}** specifies the operation you want to perform.
-- **{FLAGS}** specify optional flags.
+- **{FLAGS}** specifies optional flags.
 
 Example:
 
@@ -84,8 +84,8 @@ Kyma CLI comes with a set of commands, each of which has its own specific set of
 | [`completion`](/docs/gen-docs/kyma_completion.md)| None| Generates and displays the bash or zsh completion script. | `kyma completion`|
 | [`console`](/docs/gen-docs/kyma_console.md)| None| Launches Kyma Console in a browser window. | `kyma console` |
 | [`install`](/docs/gen-docs/kyma_install.md)| None| Installs Kyma on a cluster based on the current or specified release. | `kyma install`|
-| [`provision`](/docs/gen-docs/kyma_provision.md)| [`provision minikube`](/docs/gen-docs/kyma_provision_minikube.md)<br> [`provision gardener`](/docs/gen-docs/kyma_provision_gardener.md) <br> [`provision gcp`](/docs/gen-docs/kyma_provision_gcp.md) <br> [`provision azure`](/docs/gen-docs/kyma_provision_azure.md)| Provisions a new cluster on a platform of your choice. Currently, this command supports cluster provisioning on GCP, Azure, Gardener, and Minikube. | `kyma provision minikube`|
-| [`test`](/docs/gen-docs/kyma_test.md)|[`test definitions`](/docs/gen-docs/kyma_test_definitions.md)<br> [`test delete`](/docs/gen-docs/kyma_test_delete.md) <br> [`test list`](/docs/gen-docs/kyma_test_list.md) <br> [`test run`](/docs/gen-docs/kyma_test_run.md) <br> [`test status`](/docs/gen-docs/kyma_test_status.md)<br> [`test logs`](/docs/gen-docs/kyma_test_logs.md) <br> | Runs and manages tests on a provisioned Kyma cluster. Using child commands, you can run tests, view test definitions, list and delete test suites, display test status, and fetch the logs of the tests.| `kyma test run` |
+| [`provision`](/docs/gen-docs/kyma_provision.md)| [`minikube`](/docs/gen-docs/kyma_provision_minikube.md)<br> [`gardener`](/docs/gen-docs/kyma_provision_gardener.md) <br> [`gcp`](/docs/gen-docs/kyma_provision_gcp.md) <br> [`azure`](/docs/gen-docs/kyma_provision_azure.md)| Provisions a new cluster on a platform of your choice. Currently, this command supports cluster provisioning on GCP, Azure, Gardener, and Minikube. | `kyma provision minikube`|
+| [`test`](/docs/gen-docs/kyma_test.md)|[`definitions`](/docs/gen-docs/kyma_test_definitions.md)<br> [`delete`](/docs/gen-docs/kyma_test_delete.md) <br> [`list`](/docs/gen-docs/kyma_test_list.md) <br> [`run`](/docs/gen-docs/kyma_test_run.md) <br> [`status`](/docs/gen-docs/kyma_test_status.md)<br> [`logs`](/docs/gen-docs/kyma_test_logs.md) <br> | Runs and manages tests on a provisioned Kyma cluster. Using child commands, you can run tests, view test definitions, list and delete test suites, display test status, and fetch the logs of the tests.| `kyma test run` |
 | [`version`](/docs/gen-docs/kyma_version.md)|None| Shows the cluster version and the Kyma CLI version.| `kyma version` |
 
 ### Usage examples
