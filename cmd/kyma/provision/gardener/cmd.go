@@ -61,9 +61,9 @@ Use the following instructions to create a service account for a selected provid
 	cmd.Flags().IntVar(&o.Surge, "surge", 3, "Maximum surge of the cluster.")
 	cmd.Flags().IntVarP(&o.Unavailable, "unavailable", "u", 1, "Maximum allowed number of unavailable nodes.")
 	cmd.Flags().StringVar(&o.NetworkType, "network-type", "calico", "Network type to be used.")
-	cmd.Flags().StringVar(&o.NetworkNodes, "network-nodes", "10.250.0.0/16", "CIDR of the entire node network.")
-	cmd.Flags().StringVar(&o.NetworkPods, "network-pods", "100.96.0.0/11", "Network type to be used.")
-	cmd.Flags().StringVar(&o.NetworkServices, "network-services", "100.64.0.0/13", "CIDR of the service network.")
+	cmd.Flags().StringVar(&o.NetworkNodes, "network-nodes", "", "CIDR of the entire node network.")
+	cmd.Flags().StringVar(&o.NetworkPods, "network-pods", "", "Network type to be used.")
+	cmd.Flags().StringVar(&o.NetworkServices, "network-services", "", "CIDR of the service network.")
 	cmd.Flags().StringVar(&o.MachineImageName, "machine-image-name", "coreos", "Version of the shoot's machine image name in any environment.")
 	cmd.Flags().StringVar(&o.MachineImageVersion, "machine-image-version", "2303.3.0", "Version of the shoot's machine image version in any environment.")
 	cmd.Flags().StringSliceVarP(&o.Extra, "extra", "e", nil, "One or more arguments provided as the `NAME=VALUE` key-value pairs to configure additional cluster settings. You can use this flag multiple times or enter the key-value pairs as a comma-separated list.")
@@ -163,7 +163,7 @@ func newProvider(o *Options) (*types.Provider, error) {
 	p.CustomConfigurations["networking_type"] = o.NetworkType
 	p.CustomConfigurations["machine_image_name"] = o.MachineImageName
 	p.CustomConfigurations["machine_image_version"] = o.MachineImageVersion
-	p.CustomConfigurations["zone"] = o.Zones
+	p.CustomConfigurations["zones"] = o.Zones
 
 	for _, e := range o.Extra {
 		v := strings.Split(e, "=")
