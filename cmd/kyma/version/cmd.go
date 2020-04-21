@@ -63,7 +63,6 @@ func (c command) Run() error {
 
 //KymaVersion determines the version of kyma installed in the cluster sccessible via the provided kubernetes client
 func KymaVersion(verbose bool, k8s kube.KymaKube) (string, error) {
-	//kymaVersion, err := kubectl.RunCmdWithTimeout(2*time.Second, verbose, "-n", "kyma-installer", "get", "pod", "-l", "name=kyma-installer", "-o", "jsonpath='{.items[*].spec.containers[0].image}'")
 	pods, err := k8s.Static().CoreV1().Pods("kyma-installer").List(metav1.ListOptions{LabelSelector: "name=kyma-installer"})
 	if err != nil {
 		return "", err
@@ -73,6 +72,10 @@ func KymaVersion(verbose bool, k8s kube.KymaKube) (string, error) {
 		return "N/A", nil
 	}
 
-	kymaVersion := pods.Items[0].Spec.Containers[0].Image
-	return strings.Split(kymaVersion, ":")[1], nil
+	imageParts := strings.Split(pods.Items[0].Spec.Containers[0].Image, ":")
+	if len(imageParts) < 2 {
+		return "N/A", nil
+	}
+
+	return imageParts[1], nil
 }
