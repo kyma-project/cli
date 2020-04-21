@@ -19,7 +19,7 @@ const (
 
 //RunCmd executes a minikube command with given arguments
 func RunCmd(verbose bool, profile string, rawArgs ...string) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
 
 	args := []string{}
