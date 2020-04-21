@@ -1,11 +1,13 @@
 package minikube
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/Masterminds/semver"
 	docker "github.com/fsouza/go-dockerclient"
@@ -17,15 +19,24 @@ const (
 
 //RunCmd executes a minikube command with given arguments
 func RunCmd(verbose bool, profile string, rawArgs ...string) (string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+
 	args := []string{}
 	if profile != "" {
 		args = append(args, "--profile")
 		args = append(args, profile)
 	}
 	args = append(args, rawArgs...)
-	cmd := exec.Command("minikube", args...)
+
+	cmd := exec.CommandContext(ctx, "minikube", args...)
+
 	out, err := cmd.CombinedOutput()
 	unquotedOut := strings.Replace(string(out), "'", "", -1)
+
+	if ctx.Err() == context.DeadlineExceeded {
+		return unquotedOut, fmt.Errorf("Executing 'minikube %s' command with output '%s' timed out, try running the command manually", strings.Join(args, " "), out)
+	}
 
 	if err != nil {
 		if verbose {
