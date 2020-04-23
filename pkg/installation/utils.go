@@ -31,7 +31,7 @@ func (i *Installation) applyResourceFile(filepath string) error {
 }
 
 func (i *Installation) buildKymaInstaller(imageName string) error {
-	dc, err := minikube.DockerClient(i.Options.Verbose, i.Options.LocalCluster.Profile)
+	dc, err := minikube.DockerClient(i.Options.Verbose, i.Options.LocalCluster.Profile, i.Options.Timeout)
 	if err != nil {
 		return err
 	}
