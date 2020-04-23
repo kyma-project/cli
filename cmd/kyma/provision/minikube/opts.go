@@ -1,6 +1,10 @@
 package minikube
 
-import "github.com/kyma-project/cli/internal/cli"
+import (
+	"time"
+
+	"github.com/kyma-project/cli/internal/cli"
+)
 
 //options defines available options for the minikube provisioning command
 type Options struct {
@@ -11,6 +15,7 @@ type Options struct {
 	CPUS                string
 	HypervVirtualSwitch string
 	Profile             string
+	Timeout             time.Duration
 }
 
 //NewOptions creates options with default values

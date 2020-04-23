@@ -238,7 +238,7 @@ func (cmd *command) addDevDomainsToEtcHosts(s step.Step, clusterInfo clusterInfo
 	hostAlias := "127.0.0.1" + hostnames
 
 	if clusterInfo.localVMDriver != "none" {
-		_, err := minikube.RunCmd(cmd.opts.Verbose, clusterInfo.profile, "ssh", "sudo /bin/sh -c 'echo \""+hostAlias+"\" >> /etc/hosts'")
+		_, err := minikube.RunCmd(cmd.opts.Verbose, clusterInfo.profile, cmd.opts.Timeout, "ssh", "sudo /bin/sh -c 'echo \""+hostAlias+"\" >> /etc/hosts'")
 		if err != nil {
 			return err
 		}
