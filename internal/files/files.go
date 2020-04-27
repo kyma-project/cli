@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
-	fp "path/filepath"
 
 	"github.com/pkg/errors"
 )
@@ -36,9 +35,9 @@ func Save(filePath string, content []byte) error {
 		return errors.Wrap(err, "Could not save file")
 	}
 
-	filePath = fp.Join(kh, filePath)
+	filePath = filepath.Join(kh, filePath)
 
-	err = os.MkdirAll(fp.Dir(filePath), 0700)
+	err = os.MkdirAll(filepath.Dir(filePath), 0700)
 	if err != nil {
 		return errors.Wrap(err, "Could not save file")
 	}
@@ -56,6 +55,6 @@ func Load(filePath string) ([]byte, error) {
 		return nil, errors.Wrap(err, "Could not load file")
 	}
 
-	filePath = fp.Join(kh, filePath)
+	filePath = filepath.Join(kh, filePath)
 	return ioutil.ReadFile(filePath)
 }
