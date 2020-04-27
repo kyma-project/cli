@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/kyma-project/cli/cmd/kyma"
+	"github.com/kyma-project/cli/cmd/kyma/kymacmd"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/spf13/cobra/doc"
 )
@@ -12,7 +12,7 @@ import (
 const DocsTargetDir = "./docs/gen-docs"
 
 func main() {
-	command := kyma.NewCmd(cli.NewOptions())
+	command := kymacmd.NewCmd(cli.NewOptions())
 	err := doc.GenMarkdownTree(command, DocsTargetDir)
 	if err != nil {
 		fmt.Println("unable to generate docs", err.Error())

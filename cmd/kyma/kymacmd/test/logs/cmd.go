@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
-	"github.com/kyma-project/cli/cmd/kyma/test"
+	"github.com/kyma-project/cli/cmd/kyma/kymacmd/test"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/pkg/errors"
