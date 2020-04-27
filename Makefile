@@ -24,15 +24,15 @@ build: build-windows build-linux build-darwin
 
 .PHONY: build-windows
 build-windows:
-	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o ./bin/kyma.exe $(FLAGS) ./cmd
+	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o ./bin/kyma.exe $(FLAGS) ./cmd/kyma
 
 .PHONY: build-linux
 build-linux:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/kyma-linux $(FLAGS) ./cmd
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/kyma-linux $(FLAGS) ./cmd/kyma
 
 .PHONY: build-darwin
 build-darwin:
-	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o ./bin/kyma-darwin $(FLAGS) ./cmd
+	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o ./bin/kyma-darwin $(FLAGS) ./cmd/kyma
 
 .PHONY: docs
 docs:
@@ -69,7 +69,7 @@ clean:
 
 .PHONY: install
 install:
-	go install $(FLAGS) ./cmd
+	go install $(FLAGS) ./cmd/kyma
 
 .PHONY: local
 local: validate test install
