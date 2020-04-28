@@ -1,4 +1,4 @@
-package gcp
+package aks
 
 import "github.com/kyma-project/cli/internal/cli"
 

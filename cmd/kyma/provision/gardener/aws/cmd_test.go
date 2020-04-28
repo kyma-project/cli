@@ -1,4 +1,4 @@
-package gardener
+package aws
 
 import (
 	"testing"
@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestProvisionGardenerFlags ensures that the provided command flags are stored in the options.
-func TestProvisionGardenerFlags(t *testing.T) {
+// TestProvisionGardenerAWSFlags ensures that the provided command flags are stored in the options.
+func TestProvisionGardenerAWSFlags(t *testing.T) {
 	o := NewOptions(&cli.Options{})
 	c := NewCmd(o)
 
@@ -17,7 +17,6 @@ func TestProvisionGardenerFlags(t *testing.T) {
 	require.Equal(t, "", o.Name, "Default value for the name flag not as expected.")
 	require.Equal(t, "", o.Project, "Default value for the project flag not as expected.")
 	require.Equal(t, "", o.CredentialsFile, "Default value for the credentials flag not as expected.")
-	require.Equal(t, "gcp", o.TargetProvider, "The parsed value for the credentials flag should gcp")
 	require.Equal(t, "", o.Secret, "The parsed value for the secret flag not as expected.")
 	require.Equal(t, "1.16", o.KubernetesVersion, "Default value for the kube-version flag not as expected.")
 	require.Equal(t, "europe-west3", o.Region, "Default value for the region flag not as expected.")
@@ -38,7 +37,6 @@ func TestProvisionGardenerFlags(t *testing.T) {
 		"-n", "my-cluster",
 		"-p", "my-project",
 		"-c", "/my/credentials/file",
-		"--target-provider", "Alibaba",
 		"-s", "my-ali-key",
 		"--disk-type", "a big one",
 		"-k", "1.16.0",
@@ -59,7 +57,6 @@ func TestProvisionGardenerFlags(t *testing.T) {
 	require.Equal(t, "my-cluster", o.Name, "The parsed value for the name flag not as expected.")
 	require.Equal(t, "my-project", o.Project, "The parsed value for the project flag not as expected.")
 	require.Equal(t, "/my/credentials/file", o.CredentialsFile, "The parsed value for the credentials flag not as expected.")
-	require.Equal(t, "Alibaba", o.TargetProvider, "The parsed value for the target-provider flag not as expected.")
 	require.Equal(t, "my-ali-key", o.Secret, "The parsed value for the secret flag not as expected.")
 	require.Equal(t, "1.16.0", o.KubernetesVersion, "The parsed value for the kube-version flag not as expected.")
 	require.Equal(t, "us-central", o.Region, "The parsed value for the region flag not as expected.")
@@ -76,7 +73,7 @@ func TestProvisionGardenerFlags(t *testing.T) {
 	require.Equal(t, []string{"VAR1=VALUE1", "VAR2=VALUE2"}, o.Extra, "The parsed value for the extra flag not as expected.")
 }
 
-func TestProvisionGardenerSubcommands(t *testing.T) {
+func TestProvisionGardenerAWSSubcommands(t *testing.T) {
 	o := NewOptions(&cli.Options{})
 	c := NewCmd(o)
 
@@ -108,7 +105,6 @@ func TestNewProvider(t *testing.T) {
 	o := &Options{
 		Project:         "cool-project",
 		CredentialsFile: "/path/to/credentials",
-		TargetProvider:  "AlibabaCloud",
 		Secret:          "Open sesame!",
 		Zones:           []string{"Desert"},
 		DiskType:        "a big one",
@@ -132,7 +128,7 @@ func TestNewProvider(t *testing.T) {
 	custom["VAR1"] = "VALUE1"
 	custom["VAR2"] = "VALUE2"
 	custom["target_secret"] = o.Secret
-	custom["target_provider"] = o.TargetProvider
+	custom["target_provider"] = "aws"
 	custom["zones"] = o.Zones
 	custom["disk_type"] = o.DiskType
 	custom["worker_minimum"] = o.ScalerMin

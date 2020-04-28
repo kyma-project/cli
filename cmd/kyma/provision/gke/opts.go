@@ -1,4 +1,4 @@
-package azure
+package gke
 
 import "github.com/kyma-project/cli/internal/cli"
 

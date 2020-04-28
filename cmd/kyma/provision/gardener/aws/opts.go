@@ -1,4 +1,4 @@
-package gardener
+package aws
 
 import "github.com/kyma-project/cli/internal/cli"
 
@@ -8,7 +8,6 @@ type Options struct {
 	Name                string
 	Project             string
 	CredentialsFile     string
-	TargetProvider      string
 	Secret              string
 	KubernetesVersion   string
 	Region              string

@@ -4,9 +4,12 @@ import (
 	"github.com/kyma-project/cli/cmd/kyma/completion"
 	"github.com/kyma-project/cli/cmd/kyma/console"
 	"github.com/kyma-project/cli/cmd/kyma/install"
-	"github.com/kyma-project/cli/cmd/kyma/provision/azure"
+	"github.com/kyma-project/cli/cmd/kyma/provision/aks"
 	"github.com/kyma-project/cli/cmd/kyma/provision/gardener"
-	"github.com/kyma-project/cli/cmd/kyma/provision/gcp"
+	"github.com/kyma-project/cli/cmd/kyma/provision/gardener/aws"
+	"github.com/kyma-project/cli/cmd/kyma/provision/gardener/az"
+	"github.com/kyma-project/cli/cmd/kyma/provision/gardener/gcp"
+	"github.com/kyma-project/cli/cmd/kyma/provision/gke"
 	"github.com/kyma-project/cli/cmd/kyma/provision/minikube"
 	"github.com/kyma-project/cli/cmd/kyma/test"
 	"github.com/kyma-project/cli/cmd/kyma/test/definitions"
@@ -46,9 +49,13 @@ For more information, see: https://github.com/kyma-project/cli
 
 	provisionCmd := provision.NewCmd()
 	provisionCmd.AddCommand(minikube.NewCmd(minikube.NewOptions(o)))
-	provisionCmd.AddCommand(gcp.NewCmd(gcp.NewOptions(o)))
-	provisionCmd.AddCommand(gardener.NewCmd(gardener.NewOptions(o)))
-	provisionCmd.AddCommand(azure.NewCmd(azure.NewOptions(o)))
+	provisionCmd.AddCommand(gke.NewCmd(gke.NewOptions(o)))
+	provisionCmd.AddCommand(aks.NewCmd(aks.NewOptions(o)))
+	gardenerCmd := gardener.NewCmd()
+	gardenerCmd.AddCommand(gcp.NewCmd(gcp.NewOptions(o)))
+	gardenerCmd.AddCommand(az.NewCmd(az.NewOptions(o)))
+	gardenerCmd.AddCommand(aws.NewCmd(aws.NewOptions(o)))
+	provisionCmd.AddCommand(gardenerCmd)
 
 	cmd.AddCommand(
 		version.NewCmd(version.NewOptions(o)),
