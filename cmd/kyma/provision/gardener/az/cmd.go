@@ -47,19 +47,10 @@ Create a service account with the ` + "`contributor`" + ` role. Use service acco
 	cmd.Flags().StringVarP(&o.Region, "region", "r", "westeurope", "Region of the cluster.")
 	cmd.Flags().StringSliceVarP(&o.Zones, "zones", "z", []string{"1"}, "Zones specify availability zones that are used to evenly distribute the worker pool. eg. --zones=\"europe-west3-a,europe-west3-b\"")
 	cmd.Flags().StringVarP(&o.MachineType, "type", "t", "Standard_D4_v3", "Machine type used for the cluster.")
-	cmd.Flags().StringVar(&o.CIDR, "cidr", "10.250.0.0/16", "Gardener Classless Inter-Domain Routing (CIDR) used for the cluster.")
 	cmd.Flags().StringVar(&o.DiskType, "disk-type", "Standard_LRS", "Type of disk to use on Azure.")
-	cmd.Flags().StringVar(&o.WCIDR, "workercidr", "10.250.0.0/16", "Specifies Gardener Classless Inter-Domain Routing (CIDR) of the workers of the cluster.")
 	cmd.Flags().IntVar(&o.DiskSizeGB, "disk-size", 50, "Disk size (in GB) of the cluster.")
-	cmd.Flags().IntVar(&o.NodeCount, "nodes", 3, `Number of cluster nodes which also defines the maximum autoscale value for the cluster. The value you provide for this flag overrides the settings defined with the "scaler-max" flag.`)
 	cmd.Flags().IntVar(&o.ScalerMin, "scaler-min", 2, "Minimum autoscale value of the cluster.")
-	cmd.Flags().IntVar(&o.ScalerMax, "scaler-max", 3, `Maximum autoscale value of the cluster. If you use the "nodes" flag in parallel to this one, it will result in overriding the "scaler-max" flag.`)
-	cmd.Flags().IntVar(&o.Surge, "surge", 1, "Maximum surge of the cluster.")
-	cmd.Flags().IntVarP(&o.Unavailable, "unavailable", "u", 1, "Maximum allowed number of unavailable nodes.")
-	cmd.Flags().StringVar(&o.NetworkType, "network-type", "calico", "Network type to be used.")
-	cmd.Flags().StringVar(&o.NetworkNodes, "network-nodes", "", "CIDR of the entire node network.")
-	cmd.Flags().StringVar(&o.NetworkPods, "network-pods", "", "Network type to be used.")
-	cmd.Flags().StringVar(&o.NetworkServices, "network-services", "", "CIDR of the service network.")
+	cmd.Flags().IntVar(&o.ScalerMax, "scaler-max", 3, "Maximum autoscale value of the cluster.")
 	cmd.Flags().StringSliceVarP(&o.Extra, "extra", "e", nil, "One or more arguments provided as the `NAME=VALUE` key-value pairs to configure additional cluster settings. You can use this flag multiple times or enter the key-value pairs as a comma-separated list.")
 
 	return cmd
@@ -123,7 +114,7 @@ func newCluster(o *Options) *types.Cluster {
 		Name:              o.Name,
 		KubernetesVersion: o.KubernetesVersion,
 		DiskSizeGB:        o.DiskSizeGB,
-		NodeCount:         o.NodeCount,
+		NodeCount:         o.ScalerMax,
 		Location:          o.Region,
 		MachineType:       o.MachineType,
 	}
@@ -144,15 +135,15 @@ func newProvider(o *Options) (*types.Provider, error) {
 	p.CustomConfigurations["target_provider"] = "azure"
 	p.CustomConfigurations["disk_type"] = o.DiskType
 	p.CustomConfigurations["worker_minimum"] = o.ScalerMin
-	p.CustomConfigurations["worker_maximum"] = o.NodeCount
-	p.CustomConfigurations["worker_max_surge"] = o.Surge
-	p.CustomConfigurations["worker_max_unavailable"] = o.Unavailable
-	p.CustomConfigurations["vnetcidr"] = o.CIDR
-	p.CustomConfigurations["workercidr"] = o.WCIDR
-	p.CustomConfigurations["networking_nodes"] = o.NetworkNodes
-	p.CustomConfigurations["networking_pods"] = o.NetworkPods
-	p.CustomConfigurations["networking_services"] = o.NetworkServices
-	p.CustomConfigurations["networking_type"] = o.NetworkType
+	p.CustomConfigurations["worker_maximum"] = o.ScalerMax
+	p.CustomConfigurations["worker_max_surge"] = 1
+	p.CustomConfigurations["worker_max_unavailable"] = 1
+	p.CustomConfigurations["vnetcidr"] = "10.250.0.0/16"
+	p.CustomConfigurations["workercidr"] = "10.250.0.0/16"
+	p.CustomConfigurations["networking_nodes"] = ""
+	p.CustomConfigurations["networking_pods"] = ""
+	p.CustomConfigurations["networking_services"] = ""
+	p.CustomConfigurations["networking_type"] = "calico"
 	p.CustomConfigurations["machine_image_name"] = "coreos"
 	p.CustomConfigurations["machine_image_version"] = "2303.3.0"
 	p.CustomConfigurations["zones"] = o.Zones
@@ -187,7 +178,7 @@ func (c *command) validateFlags() error {
 	if c.opts.ScalerMin < 2 {
 		errMessage.WriteString("\n Minimum node count should be atleast 2 nodes.")
 	}
-	if c.opts.ScalerMin > c.opts.NodeCount || c.opts.ScalerMin > c.opts.ScalerMax {
+	if c.opts.ScalerMin > c.opts.ScalerMax {
 		errMessage.WriteString("\n Minimum node count cannot be greater than maximum number nodes.")
 	}
 
