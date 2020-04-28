@@ -41,10 +41,10 @@ NOTE: To provision and access the provisioned cluster, make sure you get authent
 	cmd.Flags().StringVarP(&o.Name, "name", "n", "", "Name of the AKS cluster to provision. (required)")
 	cmd.Flags().StringVarP(&o.Project, "project", "p", "", "Name of the Azure Resource Group where you provision the AKS cluster. (required)")
 	cmd.Flags().StringVarP(&o.CredentialsFile, "credentials", "c", "", "Path to the TOML file containing the Azure Client ID (CLIENT_ID) and Client Secret (CLIENT_SECRET). (required)")
-	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.15", "Kubernetes version of the cluster.")
+	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.16", "Kubernetes version of the cluster.")
 	cmd.Flags().StringVarP(&o.Location, "location", "l", "westeurope", "Location of the cluster.")
-	cmd.Flags().StringVarP(&o.MachineType, "type", "t", "Standard_D2_v3", "Machine type used for the cluster.")
-	cmd.Flags().IntVar(&o.DiskSizeGB, "disk-size", 35, "Disk size (in GB) of the cluster.")
+	cmd.Flags().StringVarP(&o.MachineType, "type", "t", "Standard_D4_v3", "Machine type used for the cluster.")
+	cmd.Flags().IntVar(&o.DiskSizeGB, "disk-size", 50, "Disk size (in GB) of the cluster.")
 	cmd.Flags().IntVar(&o.NodeCount, "nodes", 3, "Number of cluster nodes.")
 	// Temporary disabled flag. To be enabled when hydroform supports TF modules
 	//cmd.Flags().StringSliceVarP(&o.Extra, "extra", "e", nil, "Provide one or more arguments of the form NAME=VALUE to add extra configurations.")

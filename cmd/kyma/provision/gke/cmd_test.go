@@ -17,10 +17,10 @@ func TestProvisionGKEFlags(t *testing.T) {
 	require.Equal(t, "", o.Name, "Default value for the name flag not as expected.")
 	require.Equal(t, "", o.Project, "Default value for the project flag not as expected.")
 	require.Equal(t, "", o.CredentialsFile, "Default value for the credentials flag not as expected.")
-	require.Equal(t, "1.15", o.KubernetesVersion, "Default value for the kube-version flag not as expected.")
+	require.Equal(t, "1.16", o.KubernetesVersion, "Default value for the kube-version flag not as expected.")
 	require.Equal(t, "europe-west3-a", o.Location, "Default value for the location flag not as expected.")
 	require.Equal(t, "n1-standard-4", o.MachineType, "Default value for the type flag not as expected.")
-	require.Equal(t, 30, o.DiskSizeGB, "Default value for the disk-size flag not as expected.")
+	require.Equal(t, 50, o.DiskSizeGB, "Default value for the disk-size flag not as expected.")
 	require.Equal(t, 3, o.NodeCount, "Default value for the nodes flag not as expected.")
 	// Temporary disable flag. To be enabled when hydroform supports TF modules
 	//require.Empty(t, o.Extra, "Default value for the extra flag not as expected.")
