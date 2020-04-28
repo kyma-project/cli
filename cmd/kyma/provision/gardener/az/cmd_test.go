@@ -121,9 +121,6 @@ func TestNewProvider(t *testing.T) {
 	custom["worker_max_unavailable"] = 1
 	custom["vnetcidr"] = "10.250.0.0/16"
 	custom["workercidr"] = "10.250.0.0/16"
-	custom["networking_nodes"] = ""
-	custom["networking_pods"] = ""
-	custom["networking_services"] = ""
 	custom["networking_type"] = "calico"
 	custom["machine_image_name"] = "coreos"
 	custom["machine_image_version"] = "2303.3.0"
