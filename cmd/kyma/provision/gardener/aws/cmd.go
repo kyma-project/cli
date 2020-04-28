@@ -154,6 +154,8 @@ func newProvider(o *Options) (*types.Provider, error) {
 	p.CustomConfigurations["networking_pods"] = o.NetworkPods
 	p.CustomConfigurations["networking_services"] = o.NetworkServices
 	p.CustomConfigurations["networking_type"] = o.NetworkType
+	p.CustomConfigurations["machine_image_name"] = "coreos"
+	p.CustomConfigurations["machine_image_version"] = "2303.3.0"
 	p.CustomConfigurations["zones"] = o.Zones
 
 	for _, e := range o.Extra {

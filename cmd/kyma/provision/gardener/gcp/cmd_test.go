@@ -142,6 +142,8 @@ func TestNewProvider(t *testing.T) {
 	custom["networking_pods"] = o.NetworkPods
 	custom["networking_services"] = o.NetworkServices
 	custom["networking_type"] = o.NetworkType
+	custom["machine_image_name"] = "coreos"
+	custom["machine_image_version"] = "2303.3.0"
 
 	require.Equal(t, custom, p.CustomConfigurations, "Provider extra configurations not as expected.")
 }
