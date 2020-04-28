@@ -15,30 +15,28 @@ kyma provision gardener az [flags]
 ### Options
 
 ```
-      --cidr string                    Gardener Classless Inter-Domain Routing (CIDR) used for the cluster. (default "10.250.0.0/16")
-  -c, --credentials string             Path to the kubeconfig file of the Gardener service account for Azure. (required)
-      --disk-size int                  Disk size (in GB) of the cluster. (default 30)
-      --disk-type string               Type of disk to use on Azure. (default "Standard_LRS")
-  -e, --extra NAME=VALUE               One or more arguments provided as the NAME=VALUE key-value pairs to configure additional cluster settings. You can use this flag multiple times or enter the key-value pairs as a comma-separated list.
-  -k, --kube-version string            Kubernetes version of the cluster. (default "1.16")
-      --machine-image-name string      Version of the shoot's machine image name in any environment. (default "coreos")
-      --machine-image-version string   Version of the shoot's machine image version in any environment. (default "2303.3.0")
-  -n, --name string                    Name of the cluster to provision. (required)
-      --network-nodes string           CIDR of the entire node network.
-      --network-pods string            Network type to be used.
-      --network-services string        CIDR of the service network.
-      --network-type string            Network type to be used. (default "calico")
-      --nodes int                      Number of cluster nodes which also defines the maximum autoscale value for the cluster. The value you provide for this flag overrides the settings defined with the "scaler-max" flag. (default 3)
-  -p, --project string                 Name of the Gardener project where you provision the cluster. (required)
-  -r, --region string                  Region of the cluster. (default "westeurope")
-      --scaler-max int                 Maximum autoscale value of the cluster. If you use the "nodes" flag in parallel to this one, it will result in overriding the "scaler-max" flag. (default 3)
-      --scaler-min int                 Minimum autoscale value of the cluster. (default 2)
-  -s, --secret string                  Name of the Gardener secret used to access Azure. (required)
-      --surge int                      Maximum surge of the cluster. (default 3)
-  -t, --type string                    Machine type used for the cluster. (default "Standard_D8_v3")
-  -u, --unavailable int                Maximum allowed number of unavailable nodes. (default 1)
-      --workercidr string              Specifies Gardener Classless Inter-Domain Routing (CIDR) of the workers of the cluster. (default "10.250.0.0/16")
-  -z, --zones strings                  Zones specify availability zones that are used to evenly distribute the worker pool. eg. --zones="europe-west3-a,europe-west3-b" (default [1])
+      --cidr string               Gardener Classless Inter-Domain Routing (CIDR) used for the cluster. (default "10.250.0.0/16")
+  -c, --credentials string        Path to the kubeconfig file of the Gardener service account for Azure. (required)
+      --disk-size int             Disk size (in GB) of the cluster. (default 50)
+      --disk-type string          Type of disk to use on Azure. (default "Standard_LRS")
+  -e, --extra NAME=VALUE          One or more arguments provided as the NAME=VALUE key-value pairs to configure additional cluster settings. You can use this flag multiple times or enter the key-value pairs as a comma-separated list.
+  -k, --kube-version string       Kubernetes version of the cluster. (default "1.16")
+  -n, --name string               Name of the cluster to provision. (required)
+      --network-nodes string      CIDR of the entire node network.
+      --network-pods string       Network type to be used.
+      --network-services string   CIDR of the service network.
+      --network-type string       Network type to be used. (default "calico")
+      --nodes int                 Number of cluster nodes which also defines the maximum autoscale value for the cluster. The value you provide for this flag overrides the settings defined with the "scaler-max" flag. (default 3)
+  -p, --project string            Name of the Gardener project where you provision the cluster. (required)
+  -r, --region string             Region of the cluster. (default "westeurope")
+      --scaler-max int            Maximum autoscale value of the cluster. If you use the "nodes" flag in parallel to this one, it will result in overriding the "scaler-max" flag. (default 3)
+      --scaler-min int            Minimum autoscale value of the cluster. (default 2)
+  -s, --secret string             Name of the Gardener secret used to access Azure. (required)
+      --surge int                 Maximum surge of the cluster. (default 1)
+  -t, --type string               Machine type used for the cluster. (default "Standard_D4_v3")
+  -u, --unavailable int           Maximum allowed number of unavailable nodes. (default 1)
+      --workercidr string         Specifies Gardener Classless Inter-Domain Routing (CIDR) of the workers of the cluster. (default "10.250.0.0/16")
+  -z, --zones strings             Zones specify availability zones that are used to evenly distribute the worker pool. eg. --zones="europe-west3-a,europe-west3-b" (default [1])
 ```
 
 ### Options inherited from parent commands

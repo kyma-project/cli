@@ -15,13 +15,13 @@ kyma provision aks [flags]
 
 ```
   -c, --credentials string    Path to the TOML file containing the Azure Client ID (CLIENT_ID) and Client Secret (CLIENT_SECRET). (required)
-      --disk-size int         Disk size (in GB) of the cluster. (default 35)
-  -k, --kube-version string   Kubernetes version of the cluster. (default "1.15")
+      --disk-size int         Disk size (in GB) of the cluster. (default 50)
+  -k, --kube-version string   Kubernetes version of the cluster. (default "1.16")
   -l, --location string       Location of the cluster. (default "westeurope")
   -n, --name string           Name of the AKS cluster to provision. (required)
       --nodes int             Number of cluster nodes. (default 3)
   -p, --project string        Name of the Azure Resource Group where you provision the AKS cluster. (required)
-  -t, --type string           Machine type used for the cluster. (default "Standard_D2_v3")
+  -t, --type string           Machine type used for the cluster. (default "Standard_D4_v3")
 ```
 
 ### Options inherited from parent commands
