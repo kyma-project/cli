@@ -17,9 +17,9 @@ kyma provision gardener aws [flags]
 
 ```
       --cidr string                    Gardener Classless Inter-Domain Routing (CIDR) used for the cluster. (default "10.250.0.0/16")
-  -c, --credentials string             Path to the kubeconfig file of the Gardener service account for a target provider. (required)
+  -c, --credentials string             Path to the kubeconfig file of the Gardener service account for AWS. (required)
       --disk-size int                  Disk size (in GB) of the cluster. (default 30)
-      --disk-type string               Type of disk to use on the target provider. (default "gp2")
+      --disk-type string               Type of disk to use on AWS. (default "gp2")
   -e, --extra NAME=VALUE               One or more arguments provided as the NAME=VALUE key-value pairs to configure additional cluster settings. You can use this flag multiple times or enter the key-value pairs as a comma-separated list.
   -k, --kube-version string            Kubernetes version of the cluster. (default "1.16")
       --machine-image-name string      Version of the shoot's machine image name in any environment. (default "coreos")
@@ -34,7 +34,7 @@ kyma provision gardener aws [flags]
   -r, --region string                  Region of the cluster. (default "eu-west-3")
       --scaler-max int                 Maximum autoscale value of the cluster. If you use the "nodes" flag in parallel to this one, it will result in overriding the "scaler-max" flag. (default 3)
       --scaler-min int                 Minimum autoscale value of the cluster. (default 2)
-  -s, --secret string                  Name of the Gardener secret used to access the target provider. (required)
+  -s, --secret string                  Name of the Gardener secret used to access AWS. (required)
       --surge int                      Maximum surge of the cluster. (default 3)
   -t, --type string                    Machine type used for the cluster. (default "m5.xlarge")
   -u, --unavailable int                Maximum allowed number of unavailable nodes. (default 1)

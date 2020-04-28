@@ -41,14 +41,14 @@ Create a service account with the ` + "`contributor`" + ` role. Use service acco
 
 	cmd.Flags().StringVarP(&o.Name, "name", "n", "", "Name of the cluster to provision. (required)")
 	cmd.Flags().StringVarP(&o.Project, "project", "p", "", "Name of the Gardener project where you provision the cluster. (required)")
-	cmd.Flags().StringVarP(&o.CredentialsFile, "credentials", "c", "", "Path to the kubeconfig file of the Gardener service account for a target provider. (required)")
-	cmd.Flags().StringVarP(&o.Secret, "secret", "s", "", "Name of the Gardener secret used to access the target provider. (required)")
+	cmd.Flags().StringVarP(&o.CredentialsFile, "credentials", "c", "", "Path to the kubeconfig file of the Gardener service account for Azure. (required)")
+	cmd.Flags().StringVarP(&o.Secret, "secret", "s", "", "Name of the Gardener secret used to access Azure. (required)")
 	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.16", "Kubernetes version of the cluster.")
 	cmd.Flags().StringVarP(&o.Region, "region", "r", "westeurope", "Region of the cluster.")
 	cmd.Flags().StringSliceVarP(&o.Zones, "zones", "z", []string{"1"}, "Zones specify availability zones that are used to evenly distribute the worker pool. eg. --zones=\"europe-west3-a,europe-west3-b\"")
 	cmd.Flags().StringVarP(&o.MachineType, "type", "t", "Standard_D8_v3", "Machine type used for the cluster.")
 	cmd.Flags().StringVar(&o.CIDR, "cidr", "10.250.0.0/16", "Gardener Classless Inter-Domain Routing (CIDR) used for the cluster.")
-	cmd.Flags().StringVar(&o.DiskType, "disk-type", "Standard_LRS", "Type of disk to use on the target provider.")
+	cmd.Flags().StringVar(&o.DiskType, "disk-type", "Standard_LRS", "Type of disk to use on Azure.")
 	cmd.Flags().StringVar(&o.WCIDR, "workercidr", "10.250.0.0/16", "Specifies Gardener Classless Inter-Domain Routing (CIDR) of the workers of the cluster.")
 	cmd.Flags().IntVar(&o.DiskSizeGB, "disk-size", 30, "Disk size (in GB) of the cluster.")
 	cmd.Flags().IntVar(&o.NodeCount, "nodes", 3, `Number of cluster nodes which also defines the maximum autoscale value for the cluster. The value you provide for this flag overrides the settings defined with the "scaler-max" flag.`)
@@ -143,7 +143,7 @@ func newProvider(o *Options) (*types.Provider, error) {
 		p.CustomConfigurations["target_secret"] = o.Secret
 	}
 
-	p.CustomConfigurations["target_provider"] = "az"
+	p.CustomConfigurations["target_provider"] = "azure"
 	p.CustomConfigurations["disk_type"] = o.DiskType
 	p.CustomConfigurations["worker_minimum"] = o.ScalerMin
 	p.CustomConfigurations["worker_maximum"] = o.NodeCount

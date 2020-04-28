@@ -128,7 +128,7 @@ func TestNewProvider(t *testing.T) {
 	custom["VAR1"] = "VALUE1"
 	custom["VAR2"] = "VALUE2"
 	custom["target_secret"] = o.Secret
-	custom["target_provider"] = "az"
+	custom["target_provider"] = "azure"
 	custom["zones"] = o.Zones
 	custom["disk_type"] = o.DiskType
 	custom["worker_minimum"] = o.ScalerMin
