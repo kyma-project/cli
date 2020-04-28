@@ -7,7 +7,7 @@ import (
 	"time"
 
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
-	"github.com/kyma-project/cli/cmd/kyma/kymacmd/version"
+	"github.com/kyma-project/cli/cmd/kyma/version"
 	"github.com/pkg/errors"
 )
 

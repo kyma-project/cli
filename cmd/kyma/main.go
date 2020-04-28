@@ -6,13 +6,13 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/kyma-project/cli/cmd/kyma/kymacmd"
+	"github.com/kyma-project/cli/cmd/kyma/kyma"
 	"github.com/kyma-project/cli/internal/cli"
 )
 
 func main() {
 	setupCloseHandler()
-	command := kymacmd.NewCmd(cli.NewOptions())
+	command := kyma.NewCmd(cli.NewOptions())
 
 	err := command.Execute()
 	if err != nil {

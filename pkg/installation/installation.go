@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/avast/retry-go"
-	"github.com/kyma-project/cli/cmd/kyma/kymacmd/version"
+	"github.com/kyma-project/cli/cmd/kyma/version"
 	"github.com/kyma-project/cli/internal/helm"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/kubectl"

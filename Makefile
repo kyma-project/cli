@@ -8,7 +8,7 @@ ifndef VERSION
 	VERSION = ${shell git describe --tags --always}
 endif
 
-FLAGS = -ldflags '-s -w -X github.com/kyma-project/cli/cmd/kyma/kymacmd/version.Version=$(VERSION) -X github.com/kyma-project/cli/cmd/kyma/kymacmd/install.DefaultKymaVersion=$(KYMA_VERSION)'
+FLAGS = -ldflags '-s -w -X github.com/kyma-project/cli/cmd/kyma/version.Version=$(VERSION) -X github.com/kyma-project/cli/cmd/kyma/install.DefaultKymaVersion=$(KYMA_VERSION)'
 
 .PHONY: resolve
 resolve: 
