@@ -60,8 +60,6 @@ Create a service account with the ` + "`contributor`" + ` role. Use service acco
 	cmd.Flags().StringVar(&o.NetworkNodes, "network-nodes", "", "CIDR of the entire node network.")
 	cmd.Flags().StringVar(&o.NetworkPods, "network-pods", "", "Network type to be used.")
 	cmd.Flags().StringVar(&o.NetworkServices, "network-services", "", "CIDR of the service network.")
-	cmd.Flags().StringVar(&o.MachineImageName, "machine-image-name", "coreos", "Version of the shoot's machine image name in any environment.")
-	cmd.Flags().StringVar(&o.MachineImageVersion, "machine-image-version", "2303.3.0", "Version of the shoot's machine image version in any environment.")
 	cmd.Flags().StringSliceVarP(&o.Extra, "extra", "e", nil, "One or more arguments provided as the `NAME=VALUE` key-value pairs to configure additional cluster settings. You can use this flag multiple times or enter the key-value pairs as a comma-separated list.")
 
 	return cmd
@@ -155,8 +153,6 @@ func newProvider(o *Options) (*types.Provider, error) {
 	p.CustomConfigurations["networking_pods"] = o.NetworkPods
 	p.CustomConfigurations["networking_services"] = o.NetworkServices
 	p.CustomConfigurations["networking_type"] = o.NetworkType
-	p.CustomConfigurations["machine_image_name"] = o.MachineImageName
-	p.CustomConfigurations["machine_image_version"] = o.MachineImageVersion
 	p.CustomConfigurations["zones"] = o.Zones
 
 	for _, e := range o.Extra {
