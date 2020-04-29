@@ -1,4 +1,4 @@
-package gcp
+package gke
 
 import (
 	"errors"
@@ -30,9 +30,9 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "gcp",
+		Use:   "gke",
 		Short: "Provisions a Google Kubernetes Engine (GKE) cluster on Google Cloud Platform (GCP).",
-		Long: `Use this command to provision a Kubernetes cluster on GCP for Kyma installation. Use the flags to specify cluster details.
+		Long: `Use this command to provision a GKE cluster on GCP for Kyma installation. Use the flags to specify cluster details.
 NOTE: To access the provisioned cluster, make sure you get authenticated by Google Cloud SDK. To do so,run ` + "`gcloud auth application-default login`" + ` and log in with your Google Cloud credentials.`,
 
 		RunE: func(_ *cobra.Command, _ []string) error { return c.Run() },
@@ -44,7 +44,7 @@ NOTE: To access the provisioned cluster, make sure you get authenticated by Goog
 	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.15", "Kubernetes version of the cluster.")
 	cmd.Flags().StringVarP(&o.Location, "location", "l", "europe-west3-a", "Location of the cluster.")
 	cmd.Flags().StringVarP(&o.MachineType, "type", "t", "n1-standard-4", "Machine type used for the cluster.")
-	cmd.Flags().IntVar(&o.DiskSizeGB, "disk-size", 30, "Disk size (in GB) of the cluster.")
+	cmd.Flags().IntVar(&o.DiskSizeGB, "disk-size", 50, "Disk size (in GB) of the cluster.")
 	cmd.Flags().IntVar(&o.NodeCount, "nodes", 3, "Number of cluster nodes.")
 	// Temporary disabled flag. To be enabled when hydroform supports TF modules
 	//cmd.Flags().StringSliceVarP(&o.Extra, "extra", "e", nil, "Provide one or more arguments of the form NAME=VALUE to add extra configurations.")
@@ -67,7 +67,7 @@ func (c *command) Run() error {
 		// discard all the noise from terraform logs if not verbose
 		log.SetOutput(ioutil.Discard)
 	}
-	s := c.NewStep("Provisioning GCP cluster")
+	s := c.NewStep("Provisioning GKE cluster")
 	home, err := files.KymaHome()
 	if err != nil {
 		s.Failure()
@@ -100,7 +100,7 @@ func (c *command) Run() error {
 	}
 	s.Success()
 
-	fmt.Printf("\nGCP cluster installed\nKubectl correctly configured: pointing to %s\n\nHappy GCP-ing! :)\n", cluster.Name)
+	fmt.Printf("\nGKE cluster installed\nKubectl correctly configured: pointing to %s\n\nHappy GKE-ing! :)\n", cluster.Name)
 	return nil
 }
 

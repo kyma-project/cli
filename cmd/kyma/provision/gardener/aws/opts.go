@@ -1,4 +1,4 @@
-package azure
+package aws
 
 import "github.com/kyma-project/cli/internal/cli"
 
@@ -8,11 +8,15 @@ type Options struct {
 	Name              string
 	Project           string
 	CredentialsFile   string
+	Secret            string
 	KubernetesVersion string
-	Location          string
+	Region            string
+	Zones             []string
 	MachineType       string
+	DiskType          string
 	DiskSizeGB        int
-	NodeCount         int
+	ScalerMin         int
+	ScalerMax         int
 	Extra             []string
 }
 

@@ -1,4 +1,4 @@
-package gardener
+package gcp
 
 import (
 	"testing"
@@ -9,7 +9,7 @@ import (
 )
 
 // TestProvisionGardenerFlags ensures that the provided command flags are stored in the options.
-func TestProvisionGardenerFlags(t *testing.T) {
+func TestProvisionGardenerGCPFlags(t *testing.T) {
 	o := NewOptions(&cli.Options{})
 	c := NewCmd(o)
 
@@ -17,20 +17,15 @@ func TestProvisionGardenerFlags(t *testing.T) {
 	require.Equal(t, "", o.Name, "Default value for the name flag not as expected.")
 	require.Equal(t, "", o.Project, "Default value for the project flag not as expected.")
 	require.Equal(t, "", o.CredentialsFile, "Default value for the credentials flag not as expected.")
-	require.Equal(t, "gcp", o.TargetProvider, "The parsed value for the credentials flag should gcp")
 	require.Equal(t, "", o.Secret, "The parsed value for the secret flag not as expected.")
 	require.Equal(t, "1.16", o.KubernetesVersion, "Default value for the kube-version flag not as expected.")
 	require.Equal(t, "europe-west3", o.Region, "Default value for the region flag not as expected.")
 	require.Equal(t, []string{"europe-west3-a"}, o.Zones, "Default value for the zone flag not as expected.")
 	require.Equal(t, "n1-standard-4", o.MachineType, "Default value for the type flag not as expected.")
-	require.Equal(t, 30, o.DiskSizeGB, "Default value for the disk-size flag not as expected.")
+	require.Equal(t, 50, o.DiskSizeGB, "Default value for the disk-size flag not as expected.")
 	require.Equal(t, "pd-standard", o.DiskType, "Default value for the disk-type flag not as expected.")
-	require.Equal(t, 3, o.NodeCount, "Default value for the nodes flag not as expected.")
 	require.Equal(t, 2, o.ScalerMin, "Default value for the scaler-min flag not as expected.")
 	require.Equal(t, 3, o.ScalerMax, "Default value for the scaler-max flag not as expected.")
-	require.Equal(t, 3, o.Surge, "Default value for the surge flag not as expected.")
-	require.Equal(t, 1, o.Unavailable, "Default value for the unavailable flag not as expected.")
-	require.Equal(t, "10.250.0.0/16", o.CIDR, "Default value for the cidr flag not as expected.")
 	require.Empty(t, o.Extra, "Default value for the extra flag not as expected.")
 
 	// test passing flags
@@ -38,7 +33,6 @@ func TestProvisionGardenerFlags(t *testing.T) {
 		"-n", "my-cluster",
 		"-p", "my-project",
 		"-c", "/my/credentials/file",
-		"--target-provider", "Alibaba",
 		"-s", "my-ali-key",
 		"--disk-type", "a big one",
 		"-k", "1.16.0",
@@ -46,12 +40,8 @@ func TestProvisionGardenerFlags(t *testing.T) {
 		"-z", "us-central1-b",
 		"-t", "quantum-computer",
 		"--disk-size", "2000",
-		"--nodes", "7",
 		"--scaler-min", "88",
 		"--scaler-max", "99",
-		"--surge", "100",
-		"-u", "45",
-		"--cidr", "0.0.0.0/24",
 		"--extra", "VAR1=VALUE1,VAR2=VALUE2",
 	})
 
@@ -59,7 +49,6 @@ func TestProvisionGardenerFlags(t *testing.T) {
 	require.Equal(t, "my-cluster", o.Name, "The parsed value for the name flag not as expected.")
 	require.Equal(t, "my-project", o.Project, "The parsed value for the project flag not as expected.")
 	require.Equal(t, "/my/credentials/file", o.CredentialsFile, "The parsed value for the credentials flag not as expected.")
-	require.Equal(t, "Alibaba", o.TargetProvider, "The parsed value for the target-provider flag not as expected.")
 	require.Equal(t, "my-ali-key", o.Secret, "The parsed value for the secret flag not as expected.")
 	require.Equal(t, "1.16.0", o.KubernetesVersion, "The parsed value for the kube-version flag not as expected.")
 	require.Equal(t, "us-central", o.Region, "The parsed value for the region flag not as expected.")
@@ -67,16 +56,12 @@ func TestProvisionGardenerFlags(t *testing.T) {
 	require.Equal(t, "quantum-computer", o.MachineType, "The parsed value for the type flag not as expected.")
 	require.Equal(t, 2000, o.DiskSizeGB, "The parsed value for the disk-size flag not as expected.")
 	require.Equal(t, "a big one", o.DiskType, "The parsed value for the disk-type flag not as expected.")
-	require.Equal(t, 7, o.NodeCount, "The parsed value for the nodes flag not as expected.")
 	require.Equal(t, 88, o.ScalerMin, "The parsed value for the scaler-min flag not as expected.")
 	require.Equal(t, 99, o.ScalerMax, "The parsed value for the scaler-max flag not as expected.")
-	require.Equal(t, 100, o.Surge, "The parsed value for the surge flag not as expected.")
-	require.Equal(t, 45, o.Unavailable, "The parsed value for the unavailable flag not as expected.")
-	require.Equal(t, "0.0.0.0/24", o.CIDR, "The parsed value for the cidr flag not as expected.")
 	require.Equal(t, []string{"VAR1=VALUE1", "VAR2=VALUE2"}, o.Extra, "The parsed value for the extra flag not as expected.")
 }
 
-func TestProvisionGardenerSubcommands(t *testing.T) {
+func TestProvisionGardenerGCPSubcommands(t *testing.T) {
 	o := NewOptions(&cli.Options{})
 	c := NewCmd(o)
 
@@ -92,7 +77,7 @@ func TestNewCluster(t *testing.T) {
 		Region:            "north-pole",
 		MachineType:       "HAL",
 		DiskSizeGB:        9000,
-		NodeCount:         3,
+		ScalerMax:         3,
 	}
 
 	c := newCluster(o)
@@ -101,23 +86,18 @@ func TestNewCluster(t *testing.T) {
 	require.Equal(t, o.Region, c.Location, "Cluster location not as expected.")
 	require.Equal(t, o.MachineType, c.MachineType, "Cluster machine type not as expected.")
 	require.Equal(t, o.DiskSizeGB, c.DiskSizeGB, "Cluster disk size not as expected.")
-	require.Equal(t, o.NodeCount, c.NodeCount, "Cluster number of nodes not as expected.")
+	require.Equal(t, o.ScalerMax, c.NodeCount, "Cluster number of nodes not as expected.")
 }
 
 func TestNewProvider(t *testing.T) {
 	o := &Options{
 		Project:         "cool-project",
 		CredentialsFile: "/path/to/credentials",
-		TargetProvider:  "AlibabaCloud",
 		Secret:          "Open sesame!",
 		Zones:           []string{"Desert"},
 		DiskType:        "a big one",
-		CIDR:            "0.0.0.0/24",
-		WCIDR:           "0.0.0.1/19",
 		ScalerMin:       12,
 		ScalerMax:       26,
-		Surge:           35,
-		Unavailable:     5,
 		Extra:           []string{"VAR1=VALUE1", "VAR2=VALUE2"},
 	}
 
@@ -132,21 +112,19 @@ func TestNewProvider(t *testing.T) {
 	custom["VAR1"] = "VALUE1"
 	custom["VAR2"] = "VALUE2"
 	custom["target_secret"] = o.Secret
-	custom["target_provider"] = o.TargetProvider
+	custom["target_provider"] = "gcp"
+	custom["gcp_control_plane_zone"] = o.Zones[0]
 	custom["zones"] = o.Zones
 	custom["disk_type"] = o.DiskType
 	custom["worker_minimum"] = o.ScalerMin
-	custom["worker_maximum"] = o.NodeCount
-	custom["worker_max_surge"] = o.Surge
-	custom["worker_max_unavailable"] = o.Unavailable
-	custom["vnetcidr"] = o.CIDR
-	custom["workercidr"] = o.WCIDR
-	custom["networking_nodes"] = o.NetworkNodes
-	custom["networking_pods"] = o.NetworkPods
-	custom["networking_services"] = o.NetworkServices
-	custom["networking_type"] = o.NetworkType
-	custom["machine_image_name"] = o.MachineImageName
-	custom["machine_image_version"] = o.MachineImageVersion
+	custom["worker_maximum"] = o.ScalerMax
+	custom["worker_max_surge"] = 1
+	custom["worker_max_unavailable"] = 1
+	custom["vnetcidr"] = "10.250.0.0/16"
+	custom["workercidr"] = "10.250.0.0/16"
+	custom["networking_type"] = "calico"
+	custom["machine_image_name"] = "coreos"
+	custom["machine_image_version"] = "2303.3.0"
 
 	require.Equal(t, custom, p.CustomConfigurations, "Provider extra configurations not as expected.")
 }
