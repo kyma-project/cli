@@ -134,7 +134,7 @@ func (i *Installation) InstallKyma() (*Result, error) {
 	}
 	s.Successf("Kyma Installer deployed")
 
-	if i.Options.IsLocal {
+	if i.Options.IsLocal && i.Options.Domain == localDomain {
 		s = i.newStep("Adding Minikube IP to the overrides")
 		err := i.patchMinikubeIP(i.Options.LocalCluster.IP)
 		if err != nil {
