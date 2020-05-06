@@ -150,8 +150,49 @@ func (i *Installation) setAdminPassword() error {
 		return nil
 	}
 	encPass := base64.StdEncoding.EncodeToString([]byte(i.Options.Password))
+
+	err := i.patchInstallationOverride("global.adminPassword", encPass)
+	if err != nil {
+		err = errors.Wrap(err, "Error setting admin password")
+	}
+	return err
+}
+
+func (i *Installation) setDomain() error {
+	if i.Options.Domain == "" || (i.Options.IsLocal && i.Options.Domain == defaultDomain) {
+		return nil
+	}
+	err := i.patchInstallationOverride("global.domainName", i.Options.Domain)
+	if err != nil {
+		err = errors.Wrap(err, "Error setting custom domain")
+		return err
+	}
+	err = i.patchInstallationOverride("global.tlsCrt", i.Options.TLSCert)
+	if err != nil {
+		err = errors.Wrap(err, "Error setting custom TLS certificate")
+		return err
+	}
+	err = i.patchInstallationOverride("global.tlsKey", i.Options.TLSKey)
+	if err != nil {
+		err = errors.Wrap(err, "Error setting custom TLS private key")
+	}
+	return err
+}
+
+func (i *Installation) setMinikubeIP() error {
+	if !i.Options.IsLocal {
+		return nil
+	}
+	err := i.patchInstallationOverride("global.minikubeIP", i.Options.LocalCluster.IP)
+	if err != nil {
+		err = errors.Wrap(err, "Error setting minikube IP")
+	}
+	return err
+}
+
+func (i *Installation) patchInstallationOverride(key string, value string) error {
 	_, err := i.k8s.Static().CoreV1().ConfigMaps("kyma-installer").Patch("installation-config-overrides", types.JSONPatchType,
-		[]byte(fmt.Sprintf("[{\"op\": \"replace\", \"path\": \"/data/global.adminPassword\", \"value\": \"%s\"}]", encPass)))
+		[]byte(fmt.Sprintf("[{\"op\": \"replace\", \"path\": \"/data/%s\", \"value\": \"%s\"}]", key, value)))
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
 			_, err = i.k8s.Static().CoreV1().ConfigMaps("kyma-installer").Create(&corev1.ConfigMap{
@@ -160,7 +201,7 @@ func (i *Installation) setAdminPassword() error {
 					Labels: map[string]string{"installer": "overrides"},
 				},
 				Data: map[string]string{
-					"global.adminPassword": encPass,
+					key: value,
 				},
 			})
 		}
