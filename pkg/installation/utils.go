@@ -205,7 +205,7 @@ func (i *Installation) patchOverride(override string, key string, value string) 
 				},
 			})
 		}
-		err = errors.Wrap(err, "Error setting admin password")
+		err = errors.Wrap(err, "Error patching overide configmap")
 	}
 	return err
 }
