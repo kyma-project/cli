@@ -95,8 +95,8 @@ The standard installation uses the minimal configuration. The system performs th
 
 	cobraCmd.Flags().BoolVarP(&o.NoWait, "noWait", "n", false, "Flag that determines if the command should wait for Kyma installation to complete.")
 	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", defaultDomain, "Domain used for installation.")
-	cobraCmd.Flags().StringVarP(&o.TLSCert, "tlsCert", "", "", "TLS certificate for the domain used for installation. The certificate must be passed as base64 encoded value.")
-	cobraCmd.Flags().StringVarP(&o.TLSKey, "tlsKey", "", "", "TLS key for the domain used for installation. The key must be passed as base64 encoded value.")
+	cobraCmd.Flags().StringVarP(&o.TLSCert, "tlsCert", "", "", "TLS certificate for the domain used for installation. The certificate must be a base64-encoded value.")
+	cobraCmd.Flags().StringVarP(&o.TLSKey, "tlsKey", "", "", "TLS key for the domain used for installation. The key must be a base64-encoded value.")
 	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", DefaultKymaVersion, `Installation source. 
 	- To use the specific release, write "kyma install --source=1.3.0".
 	- To use the latest master, write "kyma install --source=latest".
