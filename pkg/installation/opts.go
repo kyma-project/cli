@@ -85,7 +85,7 @@ type LocalCluster struct {
 func NewOptions() *Options {
 	return &Options{
 		Timeout: 1 * time.Hour,
-		Domain:  localDomain,
+		Domain:  defaultDomain,
 		Source:  "latest",
 		IsLocal: true,
 	}

@@ -21,14 +21,13 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 )
 
 const (
 	releaseSrcURLPattern   = "https://raw.githubusercontent.com/kyma-project/kyma/%s/%s"
 	releaseResourcePattern = "https://raw.githubusercontent.com/kyma-project/kyma/%s/installation/resources/%s"
 	registryImagePattern   = "eu.gcr.io/kyma-project/kyma-installer:%s"
-	localDomain            = "kyma.local"
+	defaultDomain          = "kyma.local"
 	sourceLatest           = "latest"
 	sourceLatestPublished  = "latest-published"
 	sourceLocal            = "local"
@@ -46,7 +45,7 @@ type Installation struct {
 	Options *Options `json:"options"`
 }
 
-// installation.File represents a Kyma installation yaml file in the form of a key value map
+// File represents a Kyma installation yaml file in the form of a key value map
 // Type alias for clarity; It is still a map slice and can be used anywhere where []map[string]interface{} is used
 type File = []map[string]interface{}
 
@@ -134,26 +133,6 @@ func (i *Installation) InstallKyma() (*Result, error) {
 	}
 	s.Successf("Kyma Installer deployed")
 
-	if i.Options.IsLocal && i.Options.Domain == localDomain {
-		s = i.newStep("Adding Minikube IP to the overrides")
-		err := i.patchMinikubeIP(i.Options.LocalCluster.IP)
-		if err != nil {
-			s.Failure()
-			return nil, err
-		}
-		s.Successf("Minikube IP added")
-	} else {
-		if i.Options.Domain != "" && i.Options.Domain != localDomain {
-			s = i.newStep("Creating own domain ConfigMap")
-			err := i.createOwnDomainConfigMap()
-			if err != nil {
-				s.Failure()
-				return nil, err
-			}
-			s.Successf("ConfigMap created")
-		}
-	}
-
 	if !i.Options.CI {
 		s = i.newStep("Configuring Helm")
 		if err := i.configureHelm(); err != nil {
@@ -237,8 +216,8 @@ func (i *Installation) validateConfigurations() error {
 	}
 
 	// If one of the --domain, --tlsKey, or --tlsCert is specified, the others must be specified as well (XOR logic used below)
-	if ((i.Options.Domain != localDomain && i.Options.Domain != "") || i.Options.TLSKey != "" || i.Options.TLSCert != "") &&
-		!((i.Options.Domain != localDomain && i.Options.Domain != "") && i.Options.TLSKey != "" && i.Options.TLSCert != "") {
+	if ((i.Options.Domain != defaultDomain && i.Options.Domain != "") || i.Options.TLSKey != "" || i.Options.TLSCert != "") &&
+		!((i.Options.Domain != defaultDomain && i.Options.Domain != "") && i.Options.TLSKey != "" && i.Options.TLSCert != "") {
 		return errors.New("You specified one of the --domain, --tlsKey, or --tlsCert without specifying the others. They must be specified together")
 	}
 
@@ -378,6 +357,16 @@ func (i *Installation) installInstaller(files []File) error {
 		if err != nil {
 			return err
 		}
+
+		err = i.setMinikubeIP()
+		if err != nil {
+			return err
+		}
+
+		err = i.setDomain()
+		if err != nil {
+			return err
+		}
 	}
 	return i.k8s.WaitPodStatusByLabel("kyma-installer", "name", "kyma-installer", corev1.PodRunning)
 }
@@ -458,60 +447,6 @@ func (i *Installation) applyOverrideFiles() error {
 	}
 
 	return nil
-}
-
-func (i *Installation) patchMinikubeIP(minikubeIP string) error {
-	if _, err := i.k8s.Static().CoreV1().ConfigMaps("kyma-installer").Get("installation-config-overrides", metav1.GetOptions{}); err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			i.currentStep.LogInfof("Resource '%s' not found, won't be patched", "configmap/installation-config-overrides")
-		} else {
-			return err
-		}
-	}
-
-	if minikubeIP != "" {
-		_, err := i.k8s.Static().CoreV1().ConfigMaps("kyma-installer").Patch("installation-config-overrides", types.JSONPatchType,
-			[]byte(fmt.Sprintf("[{\"op\": \"replace\", \"path\": \"/data/global.minikubeIP\", \"value\": \"%s\"}]", minikubeIP)))
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (i *Installation) createOwnDomainConfigMap() error {
-	cm, err := i.k8s.Static().CoreV1().ConfigMaps("kyma-installer").Get("owndomain-overrides", metav1.GetOptions{})
-	if err == nil && cm != nil {
-		if cm.Data == nil {
-			cm.Data = make(map[string]string)
-		}
-		cm.Data["global.domainName"] = i.Options.Domain
-		cm.Data["global.tlsCrt"] = i.Options.TLSCert
-		cm.Data["global.tlsKey"] = i.Options.TLSKey
-
-		_, err = i.k8s.Static().CoreV1().ConfigMaps("kyma-installer").Update(cm)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	} else if err != nil && !strings.Contains(err.Error(), "not found") {
-		return err
-	}
-
-	_, err = i.k8s.Static().CoreV1().ConfigMaps("kyma-installer").Create(&corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:   "owndomain-overrides",
-			Labels: map[string]string{"installer": "overrides"},
-		},
-		Data: map[string]string{
-			"global.domainName": i.Options.Domain,
-			"global.tlsCrt":     i.Options.TLSCert,
-			"global.tlsKey":     i.Options.TLSKey,
-		},
-	})
-
-	return err
 }
 
 func (i *Installation) configureHelm() error {
@@ -678,7 +613,7 @@ func (i *Installation) buildResult() (*Result, error) {
 	}
 
 	var warning string
-	if i.Options.Domain != localDomain {
+	if !i.Options.IsLocal && i.Options.Domain != defaultDomain {
 		warning = "To access the console, configure DNS for the cluster load balancer: https://kyma-project.io/docs/#installation-install-kyma-with-your-own-domain-configure-dns-for-the-cluster-load-balancer"
 	}
 
