@@ -61,8 +61,8 @@ kyma install [flags]
                                	- To use a custom installer image, write kyma "install --source=user/my-kyma-installer:v1.4.0".
       --src-path string        Absolute path to local sources.
       --timeout duration       Time-out after which CLI stops watching the installation progress. (default 1h0m0s)
-      --tlsCert string         TLS certificate for the domain used for installation. The certificate must be passed as base64 encoded value.
-      --tlsKey string          TLS key for the domain used for installation. The key must be passed as base64 encoded value.
+      --tlsCert string         TLS certificate for the domain used for installation. The certificate must be a base64-encoded value.
+      --tlsKey string          TLS key for the domain used for installation. The key must be a base64-encoded value.
 ```
 
 ### Options inherited from parent commands
