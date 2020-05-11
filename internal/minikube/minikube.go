@@ -35,7 +35,7 @@ func RunCmd(verbose bool, profile string, timeout time.Duration, rawArgs ...stri
 	unquotedOut := strings.Replace(string(out), "'", "", -1)
 
 	if ctx.Err() == context.DeadlineExceeded {
-		return unquotedOut, fmt.Errorf("Executing 'minikube %s' command with output '%s' timed out, try running the command manually", strings.Join(args, " "), out)
+		return unquotedOut, fmt.Errorf("Executing 'minikube %s' command with output '%s' timed out, try running the command manually or increasing timeout using the 'timeout' flag", strings.Join(args, " "), out)
 	}
 
 	if err != nil {
