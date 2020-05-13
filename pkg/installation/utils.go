@@ -159,7 +159,8 @@ func (i *Installation) setAdminPassword() error {
 }
 
 func (i *Installation) setDomain() error {
-	if i.Options.Domain == "" || (i.Options.IsLocal && i.Options.Domain == defaultDomain) {
+	// when no custom domain is set or it is already default, nothing needs to be done
+	if i.Options.Domain == "" || i.Options.Domain == defaultDomain {
 		return nil
 	}
 	err := i.patchOverride("installation-config-overrides", "global.domainName", i.Options.Domain)
