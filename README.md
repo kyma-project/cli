@@ -160,3 +160,11 @@ To download the binaries, run:
 curl -Lo kyma https://storage.googleapis.com/kyma-cli-stable/kyma-darwin # kyma-linux or kyma.exe
 chmod +x kyma
 ```
+
+### Post-release steps
+
+Once the CLI release is complete, the following steps need to be performed:
+
+1. Remove the existing `stable` tag and re-create it pointing to the latest commit on the `master` branch. Pushing this tag will trigger a postsubmit job that builds and pushes the latest stable binaries to a storage bucket. These are used by the continuous integration jobs.
+
+2. Update the Homebrew formula of the CLI to the just-released version by following this [guide](https://github.com/Homebrew/brew/blob/master/docs/How-To-Open-a-Homebrew-Pull-Request.md). For a sample Homebrew Kyma CLI formula version bump see the information in [this](https://github.com/Homebrew/homebrew-core/pull/52375) PR.
