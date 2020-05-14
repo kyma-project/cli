@@ -16,3 +16,6 @@ bin
 # IDEs
 .idea
 .vscode
+
+# Changelog temporary directory
+.changelog/
