@@ -60,8 +60,7 @@ endif
 
 .PHONY: release
 release:
-	git remote add origin git@github.com:kyma-project/cli.git
-	curl -sL https://git.io/goreleaser | VERSION=v0.118.2 bash
+	./hack/release.sh
 
 .PHONY: clean
 clean:
