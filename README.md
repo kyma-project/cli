@@ -173,3 +173,11 @@ chmod +x kyma
 ### Kyma CLI Homebrew formula
 
 If the Homebrew formula of the CLI does not get updated by the Homebrew team within three days of the release, update the formula of the CLI manually to the most recent version by following this [guide](https://github.com/Homebrew/brew/blob/master/docs/How-To-Open-a-Homebrew-Pull-Request.md). For a sample Homebrew Kyma CLI formula version bump, see [this](https://github.com/Homebrew/homebrew-core/pull/52375) PR.
+
+### Kyma CLI Chocolatey package
+
+The Kyma CLI Chocolatey package does not need to be bumped when there is a new release, as it has a script that will automatically check for new releases and update the package to the latest release.
+
+Nevertheless, the package still needs some maintenance to keep its dedicated [site](https://chocolatey.org/packages/kyma-cli) at chocolatey.org up to date (e.g. update description, details, screenshots, etc...).
+
+In order to maintain the [site](https://chocolatey.org/packages/kyma-cli), please send a Pull Request to Chocolatey's [github repository](https://github.com/dgalbraith/chocolatey-packages/tree/master/automatic/kyma-cli).
