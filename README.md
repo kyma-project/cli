@@ -160,3 +160,7 @@ To download the binaries, run:
 curl -Lo kyma https://storage.googleapis.com/kyma-cli-stable/kyma-darwin # kyma-linux or kyma.exe
 chmod +x kyma
 ```
+
+### Kyma CLI Homebrew formula
+
+If the Homebrew formula of the CLI does not get updated by the Homebrew team within three days of the release, update the formula of the CLI manually to the most recent version by following this [guide](https://github.com/Homebrew/brew/blob/master/docs/How-To-Open-a-Homebrew-Pull-Request.md). For a sample Homebrew Kyma CLI formula version bump, see [this](https://github.com/Homebrew/homebrew-core/pull/52375) PR.
