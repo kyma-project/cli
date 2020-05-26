@@ -180,4 +180,4 @@ The Kyma CLI Chocolatey package does not need to be bumped when there is a new r
 
 Nevertheless, the package still needs some maintenance to keep its dedicated [site](https://chocolatey.org/packages/kyma-cli) at chocolatey.org up to date (e.g. update description, details, screenshots, etc...).
 
-In order to maintain the [site](https://chocolatey.org/packages/kyma-cli), please send a Pull Request to Chocolatey's [github repository](https://github.com/dgalbraith/chocolatey-packages/tree/master/automatic/kyma-cli).
+In order to maintain the [site](https://chocolatey.org/packages/kyma-cli), send a pull request to Chocolatey's [GitHub repository](https://github.com/dgalbraith/chocolatey-packages/tree/master/automatic/kyma-cli).
