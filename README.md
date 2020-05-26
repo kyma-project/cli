@@ -55,6 +55,15 @@ Expand-Archive -Path kyma.zip -DestinationPath .\kyma-cli
 
 cd kyma-cli
 ```
+
+### Chocolatey (Windows)
+
+To install Kyma CLI on Windows using [Chocolatey](https://www.chocolatey.org), run:
+
+```PowerShell
+choco install kyma-cli
+```
+
 ### Other
 
 To install a different release, change the path to point to the desired version and architecture:
