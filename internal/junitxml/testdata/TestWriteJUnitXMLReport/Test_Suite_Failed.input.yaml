@@ -23,9 +23,9 @@ spec:
         namespace: kyma-system
       - name: core-cluster-users
         namespace: kyma-system
-      - name: core-console
+      - name: console-console
         namespace: kyma-system
-      - name: core-console-backend-service
+      - name: console-console-backend-service
         namespace: kyma-system
       - name: core-kubeless
         namespace: kyma-system
@@ -64,14 +64,14 @@ status:
     - disabledConcurrency: true
       executions:
         - completionTime: "2019-10-29T17:44:22Z"
-          id: oct-tp-testing-core-console-backend-service-0
+          id: oct-tp-testing-console-console-backend-service-0
           podPhase: Failed
           startTime: "2019-10-29T17:34:22Z"
         - completionTime: "2019-10-29T17:54:17Z"
-          id: oct-tp-testing-core-console-backend-service-1
+          id: oct-tp-testing-console-console-backend-service-1
           podPhase: Failed
           startTime: "2019-10-29T17:44:23Z"
-      name: core-console-backend-service
+      name: console-console-backend-service
       namespace: kyma-system
       status: Failed
     - executions:
@@ -134,14 +134,14 @@ status:
     - disabledConcurrency: true
       executions:
         - completionTime: "2019-10-29T18:10:10Z"
-          id: oct-tp-testing-core-console-0
+          id: oct-tp-testing-console-console-0
           podPhase: Failed
           startTime: "2019-10-29T17:54:49Z"
         - completionTime: "2019-10-29T18:26:01Z"
-          id: oct-tp-testing-core-console-1
+          id: oct-tp-testing-console-console-1
           podPhase: Failed
           startTime: "2019-10-29T18:10:10Z"
-      name: core-console
+      name: console-console
       namespace: kyma-system
       status: Failed
     - disabledConcurrency: true
