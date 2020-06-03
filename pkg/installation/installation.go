@@ -600,7 +600,7 @@ func (i *Installation) buildResult() (*Result, error) {
 	}
 
 	var consoleURL string
-	vs, err := i.k8s.Istio().NetworkingV1alpha3().VirtualServices("kyma-system").Get("console-console", metav1.GetOptions{})
+	vs, err := i.k8s.Istio().NetworkingV1alpha3().VirtualServices("kyma-system").Get("console-web", metav1.GetOptions{})
 	switch {
 	case apiErrors.IsNotFound(err):
 		consoleURL = "not installed"
