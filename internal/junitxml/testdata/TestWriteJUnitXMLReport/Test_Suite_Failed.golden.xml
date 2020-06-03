@@ -5,8 +5,8 @@
 			<property name="kyma.cli.version" value="N/A"></property>
 		</properties>
 		<testcase classname="octopus" name="[testing] kyma-system/core-api-controller" time="96.000000"></testcase>
-		<testcase classname="octopus" name="[testing] kyma-system/console-console-backend-service (executions: 2)" time="1194.000000">
-			<failure message="Failed" type=""><![CDATA[Faked logs for execution: console-console-backend-service]]></failure>
+		<testcase classname="octopus" name="[testing] kyma-system/console-backend (executions: 2)" time="1194.000000">
+			<failure message="Failed" type=""><![CDATA[Faked logs for execution: console-backend]]></failure>
 		</testcase>
 		<testcase classname="octopus" name="[testing] kyma-system/core-test-external-solution" time="202.000000"></testcase>
 		<testcase classname="octopus" name="[testing] kyma-system/kiali" time="7.000000"></testcase>
@@ -15,8 +15,8 @@
 		<testcase classname="octopus" name="[testing] kyma-system/dex-integration" time="21.000000"></testcase>
 		<testcase classname="octopus" name="[testing] kyma-system/logging" time="11.000000"></testcase>
 		<testcase classname="octopus" name="[testing] kyma-system/core" time="67.000000"></testcase>
-		<testcase classname="octopus" name="[testing] kyma-system/console-console (executions: 2)" time="1872.000000">
-			<failure message="Failed" type=""><![CDATA[Faked logs for execution: console-console]]></failure>
+		<testcase classname="octopus" name="[testing] kyma-system/console-web (executions: 2)" time="1872.000000">
+			<failure message="Failed" type=""><![CDATA[Faked logs for execution: console-web]]></failure>
 		</testcase>
 		<testcase classname="octopus" name="[testing] kyma-system/e2e-kubeless (executions: 2)" time="832.000000">
 			<failure message="Failed" type=""><![CDATA[Faked logs for execution: e2e-kubeless]]></failure>
