@@ -71,7 +71,7 @@ status:
           id: oct-tp-testing-console-backend-1
           podPhase: Failed
           startTime: "2019-10-29T17:44:23Z"
-      name: console-backend-service
+      name: console-backend
       namespace: kyma-system
       status: Failed
     - executions:
