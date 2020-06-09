@@ -14,6 +14,8 @@ import (
 
 	istioNet "github.com/kyma-project/kyma/components/api-controller/pkg/clients/networking.istio.io/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 )
 
 const (

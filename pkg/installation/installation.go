@@ -2,23 +2,22 @@ package installation
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
-	"github.com/avast/retry-go"
+	"github.com/kyma-incubator/hydroform/install/config"
+	installationSDK "github.com/kyma-incubator/hydroform/install/installation"
+	"github.com/kyma-incubator/hydroform/install/scheme"
 	"github.com/kyma-project/cli/cmd/kyma/version"
-	"github.com/kyma-project/cli/internal/helm"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/kubectl"
 	"github.com/kyma-project/cli/pkg/step"
-	"github.com/pkg/errors"
+	pkgErrors "github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
-	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -65,13 +64,6 @@ type Result struct {
 	Warnings []string
 }
 
-func (i *Installation) getKubectl() *kubectl.Wrapper {
-	if i.kubectl == nil {
-		i.kubectl = kubectl.NewWrapper(i.Options.Verbose, i.Options.KubeconfigPath)
-	}
-	return i.kubectl
-}
-
 func (i *Installation) newStep(msg string) step.Step {
 	s := i.Factory.NewStep(msg)
 	i.currentStep = s
@@ -85,8 +77,8 @@ func (i *Installation) InstallKyma() (*Result, error) {
 	}
 
 	var err error
-	if i.k8s, err = kube.NewFromConfig("", i.Options.KubeconfigPath); err != nil {
-		return nil, errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
+	if i.k8s, err = kube.NewFromConfigWithTimeout("", i.Options.KubeconfigPath, i.Options.Timeout); err != nil {
+		return nil, pkgErrors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
 	}
 
 	s := i.newStep("Validating configurations")
@@ -111,13 +103,6 @@ func (i *Installation) InstallKyma() (*Result, error) {
 	}
 	s.Successf("Installation source checked")
 
-	s = i.newStep("Installing Tiller")
-	if err := i.installTiller(); err != nil {
-		s.Failure()
-		return nil, err
-	}
-	s.Successf("Tiller deployed")
-
 	s = i.newStep("Loading installation files")
 	resources, err := i.prepareFiles()
 	if err != nil {
@@ -126,34 +111,12 @@ func (i *Installation) InstallKyma() (*Result, error) {
 	}
 	s.Successf("Installation files loaded")
 
-	s = i.newStep("Deploying Kyma Installer")
+	s = i.newStep("Installing Kyma")
 	if err := i.installInstaller(resources); err != nil {
 		s.Failure()
 		return nil, err
 	}
-	s.Successf("Kyma Installer deployed")
-
-	if !i.Options.CI {
-		s = i.newStep("Configuring Helm")
-		if err := i.configureHelm(); err != nil {
-			s.Failure()
-			return nil, err
-		}
-		s.Successf("Helm configured")
-	}
-
-	s = i.newStep("Requesting Kyma Installer to install Kyma")
-	if err := i.activateInstaller(); err != nil {
-		s.Failure()
-		return nil, err
-	}
-	s.Successf("Kyma Installer is installing Kyma")
-
-	if !i.Options.NoWait {
-		if err := i.waitForInstaller(); err != nil {
-			return nil, err
-		}
-	}
+	s.Successf("Kyma installed")
 
 	result, err := i.buildResult()
 	if err != nil {
@@ -186,7 +149,7 @@ func (i *Installation) validateConfigurations() error {
 	case strings.EqualFold(i.Options.Source, sourceLatest):
 		latest, err := i.getMasterHash()
 		if err != nil {
-			return errors.Wrap(err, "unable to get latest version of kyma")
+			return pkgErrors.Wrap(err, "unable to get latest version of kyma")
 		}
 		i.Options.releaseVersion = fmt.Sprintf("master-%s", latest)
 		i.Options.configVersion = "master"
@@ -195,7 +158,7 @@ func (i *Installation) validateConfigurations() error {
 	case strings.EqualFold(i.Options.Source, sourceLatestPublished):
 		latest, err := i.getLatestAvailableMasterHash()
 		if err != nil {
-			return errors.Wrap(err, "unable to get latest published version of kyma")
+			return pkgErrors.Wrap(err, "unable to get latest published version of kyma")
 		}
 		i.Options.releaseVersion = fmt.Sprintf("master-%s", latest)
 		i.Options.configVersion = "master"
@@ -218,48 +181,21 @@ func (i *Installation) validateConfigurations() error {
 	// If one of the --domain, --tlsKey, or --tlsCert is specified, the others must be specified as well (XOR logic used below)
 	if ((i.Options.Domain != defaultDomain && i.Options.Domain != "") || i.Options.TLSKey != "" || i.Options.TLSCert != "") &&
 		!((i.Options.Domain != defaultDomain && i.Options.Domain != "") && i.Options.TLSKey != "" && i.Options.TLSCert != "") {
-		return errors.New("You specified one of the --domain, --tlsKey, or --tlsCert without specifying the others. They must be specified together")
+		return pkgErrors.New("You specified one of the --domain, --tlsKey, or --tlsCert without specifying the others. They must be specified together")
 	}
 
 	return nil
 }
 
-func (i *Installation) installTiller() error {
-	deployed, err := i.k8s.IsPodDeployedByLabel("kube-system", "name", "tiller")
-	if err != nil {
-		return err
-	}
-
-	if !deployed {
-		var path string
-		if i.Options.fromLocalSources {
-			path = filepath.Join(i.Options.LocalSrcPath, "installation", "resources", "tiller.yaml")
-		} else {
-			path = i.releaseSrcFile("/installation/resources/tiller.yaml")
-		}
-
-		_, err = i.getKubectl().RunCmd("apply", "-f", path)
-		if err != nil {
-			return err
-		}
-	}
-	return i.k8s.WaitPodStatusByLabel("kube-system", "name", "tiller", corev1.PodRunning)
-}
-
 func (i *Installation) prepareFiles() ([]File, error) {
 	var FilePaths []string
 	if i.Options.IsLocal {
-		FilePaths = []string{"installer-local.yaml", "installer-config-local.yaml.tpl", "installer-cr.yaml.tpl"}
+		FilePaths = []string{"tiller.yaml", "installer-local.yaml", "installer-cr.yaml.tpl", "installer-config-local.yaml.tpl"}
 	} else {
-		FilePaths = []string{"installer.yaml", "installer-cr-cluster.yaml.tpl"}
+		FilePaths = []string{"tiller.yaml", "installer.yaml", "installer-cr-cluster.yaml.tpl"}
 	}
 
 	Files, err := i.loadInstallationResourceFiles(FilePaths)
-	if err != nil {
-		return nil, err
-	}
-
-	err = removeActionLabel(Files)
 	if err != nil {
 		return nil, err
 	}
@@ -290,7 +226,6 @@ func (i *Installation) prepareFiles() ([]File, error) {
 	return Files, nil
 }
 
-//
 func (i *Installation) loadInstallationResourceFiles(resourcePaths []string) ([]File, error) {
 
 	var err error
@@ -334,258 +269,95 @@ func (i *Installation) loadInstallationResourceFiles(resourcePaths []string) ([]
 }
 
 func (i *Installation) installInstaller(files []File) error {
-	deployed, err := i.k8s.IsPodDeployedByLabel("kyma-installer", "name", "kyma-installer")
-	if err != nil {
-		return err
-	}
 
-	if !deployed {
-		// apply each installation file individually
-		for _, f := range files {
-			_, err := i.getKubectl().RunApplyCmd(f)
+	stringFiles := []string{}
+	for _, file := range files {
+		buf := &bytes.Buffer{}
+		enc := yaml.NewEncoder(buf)
+		for _, y := range file {
+			err := enc.Encode(y)
 			if err != nil {
 				return err
 			}
 		}
-
-		err = i.applyOverrideFiles()
+		err := enc.Close()
 		if err != nil {
 			return err
 		}
-
-		err = i.setAdminPassword()
-		if err != nil {
-			return err
-		}
-
-		err = i.setMinikubeIP()
-		if err != nil {
-			return err
-		}
-
-		err = i.setDomain()
-		if err != nil {
-			return err
-		}
+		stringFiles = append(stringFiles, buf.String())
 	}
-	return i.k8s.WaitPodStatusByLabel("kyma-installer", "name", "kyma-installer", corev1.PodRunning)
-}
 
-func (i *Installation) applyOverrideFiles() error {
-	if len(i.Options.OverrideConfigs) < 1 {
+	tillerFile := stringFiles[0]
+	installerFile := stringFiles[1] + "---\n" + stringFiles[2]
+
+	var configuration installationSDK.Configuration
+
+	if i.Options.IsLocal {
+		localConfigFile := stringFiles[3]
+
+		for _, file := range i.Options.OverrideConfigs {
+			oFile, err := os.Open(file)
+			if err != nil {
+				return pkgErrors.Wrapf(err, "unable to open file: %s.\n", file)
+			}
+
+			var rawData bytes.Buffer
+			if _, err = io.Copy(&rawData, oFile); err != nil {
+				fmt.Printf("unable to read data from file: %s.\n", file)
+			}
+
+			localConfigFile = localConfigFile + "---\n" + rawData.String()
+		}
+
+		decoder, err := scheme.DefaultDecoder()
+		if err != nil {
+			return fmt.Errorf("error: failed to create default decoder: %s", err.Error())
+		}
+
+		configuration, err = config.YAMLToConfiguration(decoder, localConfigFile)
+		if err != nil {
+			return fmt.Errorf("error: failed to parse configurations: %s", err.Error())
+		}
+
+		configuration.Configuration.Set("global.minikubeIP", i.Options.LocalCluster.IP, false)
+	}
+
+	if i.Options.Password == "" {
+		configuration.Configuration.Set("global.adminPassword", i.Options.Password, true)
+	}
+	if i.Options.Domain != "" && i.Options.Domain != defaultDomain {
+		configuration.Configuration.Set("global.domainName", i.Options.Domain, false)
+		configuration.Configuration.Set("global.tlsCrt", i.Options.TLSCert, false)
+		configuration.Configuration.Set("global.tlsKey", i.Options.TLSKey, false)
+	}
+
+	installationService, err := NewInstallationService(i.k8s.Config(), i.Options.Timeout, "")
+	if err != nil {
+		fmt.Errorf("error: failed to create installation service: %s", err.Error())
+	}
+
+	installationState, err := installationService.CheckInstallationState(i.k8s.Config())
+	if err != nil {
+		installErr := installationSDK.InstallationError{}
+		if errors.As(err, &installErr) {
+			i.currentStep.LogInfo("Installation already in progress, proceeding to next step...")
+			return nil
+		}
+
+		return fmt.Errorf("error: failed to check installation state: %s", err.Error())
+	}
+
+	if installationState.State != installationSDK.NoInstallationState {
+		i.currentStep.LogInfo("Installation already in progress, proceeding to next step...")
 		return nil
 	}
 
-	for _, file := range i.Options.OverrideConfigs {
-		oFile, err := os.Open(file)
-		if err != nil {
-			return errors.Wrapf(err, "unable to open file: %s.\n", file)
-		}
-
-		var rawData bytes.Buffer
-		if _, err = io.Copy(&rawData, oFile); err != nil {
-			fmt.Printf("unable to read data from file: %s.\n", file)
-		}
-
-		configs := strings.Split(rawData.String(), "---")
-
-		for _, c := range configs {
-			if strings.TrimSpace(c) == "" {
-				continue
-			}
-
-			cfg := make(map[interface{}]interface{})
-			err = yaml.Unmarshal([]byte(c), &cfg)
-			if err != nil {
-				return errors.Wrapf(err, "unable to parse file data: %s.\n", file)
-			}
-
-			kind, ok := cfg["kind"].(string)
-			if !ok {
-				return errors.Wrapf(err, "unable to retrieve the kind of config. file: %s\n", file)
-			}
-
-			meta, ok := cfg["metadata"].(map[interface{}]interface{})
-			if !ok {
-				return errors.Wrapf(err, "unable to get metadata from config. file: %s\n", file)
-			}
-
-			namespace, ok := meta["namespace"].(string)
-			if !ok {
-				return errors.Wrapf(err, "unable to get Namespace from config. file: %s\n", file)
-			}
-
-			name, ok := meta["name"].(string)
-			if !ok {
-				return errors.Wrapf(err, "unable to get name from config. file: %s\n", file)
-			}
-
-			if err := i.checkIfResourcePresent(namespace, kind, name); err != nil {
-				if strings.Contains(err.Error(), "not found") {
-					if err := i.applyResourceFile(file); err != nil {
-						return errors.Wrapf(err, "unable to apply file %s.\n", file)
-					}
-					continue
-				} else {
-					return errors.Wrapf(err, "unable to check if resource is installed.\n")
-				}
-			}
-
-			_, err := i.getKubectl().RunCmd("-n",
-				strings.ToLower(namespace),
-				"patch",
-				kind,
-				strings.ToLower(name),
-				"--type=merge",
-				"-p",
-				c)
-			if err != nil {
-				return fmt.Errorf("unable to override values File: %s", file)
-			}
-		}
-
+	err = installationService.InstallKyma(i.k8s.Config(), tillerFile, installerFile, configuration, i.currentStep)
+	if err != nil {
+		return fmt.Errorf("error: failed to start installation: %s", err.Error())
 	}
 
 	return nil
-}
-
-func (i *Installation) configureHelm() error {
-	supported, err := helm.SupportedVersion()
-	if err != nil && strings.Contains(err.Error(), "not found") {
-		i.currentStep.LogInfo("Helm not installed")
-		return nil
-	} else if err != nil {
-		return err
-	}
-
-	if !supported {
-		i.currentStep.LogInfo("Helm version not supported")
-		return nil
-	}
-
-	helmHome, err := helm.Home()
-	if err != nil && strings.Contains(err.Error(), "not found") {
-		i.currentStep.LogInfo("Helm not installed")
-		return nil
-	} else if err != nil {
-		return err
-	}
-
-	var secret *corev1.Secret
-	err = retry.Do(func() error {
-		secret, err = i.getHelmSecret()
-		if err != nil {
-			return err
-		}
-		return nil
-	}, retry.Attempts(7), retry.Delay(1*time.Second))
-	if err != nil {
-		return err
-	}
-
-	err = ioutil.WriteFile(filepath.Join(helmHome, "ca.pem"), secret.Data["global.helm.ca.crt"], 0644)
-	if err != nil {
-		return err
-	}
-
-	err = ioutil.WriteFile(filepath.Join(helmHome, "cert.pem"), secret.Data["global.helm.tls.crt"], 0644)
-	if err != nil {
-		return err
-	}
-
-	err = ioutil.WriteFile(filepath.Join(helmHome, "key.pem"), secret.Data["global.helm.tls.key"], 0644)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (i *Installation) activateInstaller() error {
-	status, err := i.getKubectl().RunCmd("get", "installation/kyma-installation", "-o", "jsonpath='{.status.state}'")
-	if err != nil {
-		return err
-	}
-	if status == "InProgress" {
-		return nil
-	}
-
-	_, err = i.getKubectl().RunCmd("label", "installation/kyma-installation", "action=install")
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (i *Installation) waitForInstaller() error {
-	currentDesc := ""
-	i.newStep("Waiting for installation to start")
-
-	status, err := i.getKubectl().RunCmd("get", "installation/kyma-installation", "-o", "jsonpath='{.status.state}'")
-	if err != nil {
-		return err
-	}
-	if status == "Installed" {
-		return nil
-	}
-
-	var timeout <-chan time.Time
-	var errorOccured bool
-	if i.Options.Timeout > 0 {
-		timeout = time.After(i.Options.Timeout)
-	}
-
-	for {
-		select {
-		case <-timeout:
-			i.currentStep.Failure()
-			if err := i.printInstallationErrorLog(); err != nil {
-				fmt.Printf("Error fetching installation error log: %s\nPlease manually check the status of the cluster\n", err)
-			}
-			return errors.New("Timeout reached while waiting for installation to complete")
-		default:
-			status, desc, err := i.getInstallationStatus()
-			if err != nil {
-				// A timeout when asking for the status can happen if the cluster is under high load while installing Kyma.
-				// But it should not make the CLI stop waiting immediately.
-				if strings.Contains(err.Error(), "operation timed out") {
-					i.currentStep.LogError("Could not get the status, retrying...")
-				} else {
-					return err
-				}
-			}
-
-			switch status {
-			case "Installed":
-				i.currentStep.Success()
-				return nil
-
-			case "Error":
-				if !errorOccured {
-					errorOccured = true
-					i.currentStep.LogErrorf("%s failed, which may be OK. Will retry later...", desc)
-					i.currentStep.LogInfo("To fetch the error logs from the installer, run: kubectl get installation kyma-installation -o go-template --template='{{- range .status.errorLog }}{{printf \"%s:\\n %s\\n\" .component .log}}{{- end}}'")
-					i.currentStep.LogInfo("To fetch the application logs from the installer, run: kubectl logs -n kyma-installer -l name=kyma-installer")
-				}
-
-			case "InProgress":
-				errorOccured = false
-				// only do something if the description has changed
-				if desc != currentDesc {
-					i.currentStep.Success()
-					i.currentStep = i.newStep(desc)
-					currentDesc = desc
-				}
-
-			case "":
-				i.currentStep.LogInfo("Failed to get the installation status. Will retry later...")
-
-			default:
-				i.currentStep.Failure()
-				return fmt.Errorf("unexpected status: %s", status)
-			}
-			time.Sleep(10 * time.Second)
-		}
-	}
 }
 
 func (i *Installation) buildResult() (*Result, error) {
@@ -609,7 +381,7 @@ func (i *Installation) buildResult() (*Result, error) {
 	case vs != nil && vs.Spec != nil && len(vs.Spec.Hosts) > 0:
 		consoleURL = fmt.Sprintf("https://%s", vs.Spec.Hosts[0])
 	default:
-		return nil, errors.New("console host could not be obtained")
+		return nil, pkgErrors.New("console host could not be obtained")
 	}
 
 	var warning string
@@ -633,12 +405,4 @@ func (i *Installation) releaseSrcFile(path string) string {
 
 func (i *Installation) releaseFile(path string) string {
 	return fmt.Sprintf(releaseResourcePattern, i.Options.configVersion, path)
-}
-
-func (i *Installation) getHelmSecret() (*corev1.Secret, error) {
-	secret, err := i.k8s.Static().CoreV1().Secrets("kyma-installer").Get("helm-secret", metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-	return secret, nil
 }
