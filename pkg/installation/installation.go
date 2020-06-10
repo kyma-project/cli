@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/kyma-incubator/hydroform/install/config"
 	installationSDK "github.com/kyma-incubator/hydroform/install/installation"
@@ -18,6 +19,7 @@ import (
 	"github.com/kyma-project/cli/pkg/step"
 	pkgErrors "github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
+	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -62,6 +64,13 @@ type Result struct {
 	AdminPassword string
 	// Warnings includes a set of any warnings from the installation.
 	Warnings []string
+}
+
+func (i *Installation) getKubectl() *kubectl.Wrapper {
+	if i.kubectl == nil {
+		i.kubectl = kubectl.NewWrapper(i.Options.Verbose, i.Options.KubeconfigPath)
+	}
+	return i.kubectl
 }
 
 func (i *Installation) newStep(msg string) step.Step {
@@ -111,12 +120,18 @@ func (i *Installation) InstallKyma() (*Result, error) {
 	}
 	s.Successf("Installation files loaded")
 
-	s = i.newStep("Installing Kyma")
+	s = i.newStep("Requesting Kyma Installer to install Kyma")
 	if err := i.installInstaller(resources); err != nil {
 		s.Failure()
 		return nil, err
 	}
-	s.Successf("Kyma installed")
+	s.Successf("Kyma Installer is installing Kyma")
+
+	if !i.Options.NoWait {
+		if err := i.waitForInstaller(); err != nil {
+			return nil, err
+		}
+	}
 
 	result, err := i.buildResult()
 	if err != nil {
@@ -352,12 +367,84 @@ func (i *Installation) installInstaller(files []File) error {
 		return nil
 	}
 
-	err = installationService.InstallKyma(i.k8s.Config(), tillerFile, installerFile, configuration, i.currentStep)
+	err = installationService.TriggerInstallation(i.k8s.Config(), tillerFile, installerFile, configuration)
 	if err != nil {
 		return fmt.Errorf("error: failed to start installation: %s", err.Error())
 	}
 
-	return nil
+	return i.k8s.WaitPodStatusByLabel("kyma-installer", "name", "kyma-installer", corev1.PodRunning)
+}
+
+func (i *Installation) waitForInstaller() error {
+	currentDesc := ""
+	i.newStep("Waiting for installation to start")
+
+	status, err := i.getKubectl().RunCmd("get", "installation/kyma-installation", "-o", "jsonpath='{.status.state}'")
+	if err != nil {
+		return err
+	}
+	if status == "Installed" {
+		return nil
+	}
+
+	var timeout <-chan time.Time
+	var errorOccured bool
+	if i.Options.Timeout > 0 {
+		timeout = time.After(i.Options.Timeout)
+	}
+
+	for {
+		select {
+		case <-timeout:
+			i.currentStep.Failure()
+			if err := i.printInstallationErrorLog(); err != nil {
+				fmt.Printf("Error fetching installation error log: %s\nPlease manually check the status of the cluster\n", err)
+			}
+			return errors.New("Timeout reached while waiting for installation to complete")
+		default:
+			status, desc, err := i.getInstallationStatus()
+			if err != nil {
+				// A timeout when asking for the status can happen if the cluster is under high load while installing Kyma.
+				// But it should not make the CLI stop waiting immediately.
+				if strings.Contains(err.Error(), "operation timed out") {
+					i.currentStep.LogError("Could not get the status, retrying...")
+				} else {
+					return err
+				}
+			}
+
+			switch status {
+			case "Installed":
+				i.currentStep.Success()
+				return nil
+
+			case "Error":
+				if !errorOccured {
+					errorOccured = true
+					i.currentStep.LogErrorf("%s failed, which may be OK. Will retry later...", desc)
+					i.currentStep.LogInfo("To fetch the error logs from the installer, run: kubectl get installation kyma-installation -o go-template --template='{{- range .status.errorLog }}{{printf \"%s:\\n %s\\n\" .component .log}}{{- end}}'")
+					i.currentStep.LogInfo("To fetch the application logs from the installer, run: kubectl logs -n kyma-installer -l name=kyma-installer")
+				}
+
+			case "InProgress":
+				errorOccured = false
+				// only do something if the description has changed
+				if desc != currentDesc {
+					i.currentStep.Success()
+					i.currentStep = i.newStep(desc)
+					currentDesc = desc
+				}
+
+			case "":
+				i.currentStep.LogInfo("Failed to get the installation status. Will retry later...")
+
+			default:
+				i.currentStep.Failure()
+				return fmt.Errorf("unexpected status: %s", status)
+			}
+			time.Sleep(10 * time.Second)
+		}
+	}
 }
 
 func (i *Installation) buildResult() (*Result, error) {
