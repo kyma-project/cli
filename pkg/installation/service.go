@@ -2,11 +2,9 @@ package installation
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
-	"github.com/kyma-project/cli/pkg/step"
 	pkgErrors "github.com/pkg/errors"
 
 	"github.com/kyma-incubator/hydroform/install/installation"
@@ -20,14 +18,11 @@ const (
 	upgradeAction  = "upgrade"
 )
 
-//go:generate mockery -name=Service
 type Service interface {
-	InstallKyma(kubeconfig *rest.Config, tillerYaml string, installerYaml string, configuration installation.Configuration, currentStep step.Step) error
 	CheckInstallationState(kubeconfig *rest.Config) (installation.InstallationState, error)
 	TriggerInstallation(kubeconfig *rest.Config, tillerYaml string, installerYaml string, configuration installation.Configuration) error
 	TriggerUpgrade(kubeconfig *rest.Config, tillerYaml string, installerYaml string, configuration installation.Configuration) error
 	TriggerUninstall(kubeconfig *rest.Config) error
-	//PerformCleanup(kubeconfig *rest.Config) error
 }
 
 func NewInstallationService(kubeconfig *rest.Config, installationTimeout time.Duration, clusterCleanupResourceSelector string) (Service, error) {
@@ -48,14 +43,6 @@ type installationService struct {
 	kymaInstaller                  installation.Installer
 	clusterCleanupResourceSelector string
 }
-
-// func (s *installationService) PerformCleanup(kubeconfig *rest.Config) error {
-// 	cli, err := NewServiceCatalogClient(kubeconfig)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	return cli.PerformCleanup(s.clusterCleanupResourceSelector)
-// }
 
 func (s *installationService) TriggerInstallation(kubeconfig *rest.Config, tillerYaml string, installerYaml string, configuration installation.Configuration) error {
 	return s.triggerAction(tillerYaml, installerYaml, configuration, s.kymaInstaller, s.kymaInstaller.PrepareInstallation, installAction)
@@ -96,64 +83,10 @@ func (s *installationService) triggerAction(
 	return nil
 }
 
-func (s *installationService) InstallKyma(kubeconfig *rest.Config, tillerYaml string, installerYaml string, configuration installation.Configuration, currentStep step.Step) error {
-	installationConfig := installation.Installation{
-		TillerYaml:    tillerYaml,
-		InstallerYaml: installerYaml,
-		Configuration: configuration,
-	}
-
-	err := s.kymaInstaller.PrepareInstallation(installationConfig)
-	if err != nil {
-		return pkgErrors.Wrap(err, "Failed to prepare installation")
-	}
-
-	installationCtx, cancel := context.WithTimeout(context.Background(), s.kymaInstallationTimeout)
-	defer cancel()
-
-	stateChannel, errChannel, err := s.kymaInstaller.StartInstallation(installationCtx)
-	if err != nil {
-		return pkgErrors.Wrap(err, "Failed to start Kyma installation")
-	}
-
-	err = s.waitForInstallation(currentStep, stateChannel, errChannel)
-	if err != nil {
-		return pkgErrors.Wrap(err, "Error while waiting for Kyma to install")
-	}
-
-	return nil
-}
-
 func (s *installationService) CheckInstallationState(kubeconfig *rest.Config) (installation.InstallationState, error) {
 	return installation.CheckInstallationState(kubeconfig)
 }
 
 func (s *installationService) TriggerUninstall(kubeconfig *rest.Config) error {
 	return installation.TriggerUninstall(kubeconfig)
-}
-
-func (s *installationService) waitForInstallation(currentStep step.Step, stateChannel <-chan installation.InstallationState, errorChannel <-chan error) error {
-	for {
-		select {
-		case state, ok := <-stateChannel:
-			if !ok {
-				return nil
-			}
-			currentStep.LogInfof("Installing Kyma. Description: %s, State: %s", state.Description, state.State)
-		case err, ok := <-errorChannel:
-			if !ok {
-				continue
-			}
-
-			installationError := installation.InstallationError{}
-			if errors.Is(err, installationError) {
-				currentStep.LogInfof("Warning: installation error occurred while installing Kyma: %s. Details: %s", installationError.Error(), installationError.Details())
-				continue
-			}
-
-			return fmt.Errorf("an error occurred while installing Kyma: %s.", err.Error())
-		default:
-			time.Sleep(1 * time.Second)
-		}
-	}
 }
