@@ -25,7 +25,6 @@ import (
 )
 
 const (
-	releaseSrcURLPattern   = "https://raw.githubusercontent.com/kyma-project/kyma/%s/%s"
 	releaseResourcePattern = "https://raw.githubusercontent.com/kyma-project/kyma/%s/installation/resources/%s"
 	registryImagePattern   = "eu.gcr.io/kyma-project/kyma-installer:%s"
 	defaultDomain          = "kyma.local"
@@ -485,10 +484,6 @@ func (i *Installation) buildResult() (*Result, error) {
 		AdminPassword: string(adm.Data["password"]),
 		Warnings:      []string{warning},
 	}, nil
-}
-
-func (i *Installation) releaseSrcFile(path string) string {
-	return fmt.Sprintf(releaseSrcURLPattern, i.Options.configVersion, path)
 }
 
 func (i *Installation) releaseFile(path string) string {
