@@ -37,6 +37,7 @@ const (
 // Installation contains the installation elements and configuration options.
 type Installation struct {
 	k8s         kube.KymaKube
+	service     Service
 	kubectl     *kubectl.Wrapper
 	currentStep step.Step
 	// Factory contains the option to determine the interactivity of a Step.
@@ -88,6 +89,11 @@ func (i *Installation) InstallKyma() (*Result, error) {
 	var err error
 	if i.k8s, err = kube.NewFromConfigWithTimeout("", i.Options.KubeconfigPath, i.Options.Timeout); err != nil {
 		return nil, pkgErrors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
+	}
+
+	i.service, err = NewInstallationService(i.k8s.Config(), i.Options.Timeout, "")
+	if err != nil {
+		return nil, pkgErrors.Wrap(err, "Failed to create installation service. Make sure your kubeconfig is valid")
 	}
 
 	s := i.newStep("Validating configurations")
@@ -337,7 +343,7 @@ func (i *Installation) installInstaller(files []File) error {
 		configuration.Configuration.Set("global.minikubeIP", i.Options.LocalCluster.IP, false)
 	}
 
-	if i.Options.Password == "" {
+	if i.Options.Password != "" {
 		configuration.Configuration.Set("global.adminPassword", i.Options.Password, true)
 	}
 	if i.Options.Domain != "" && i.Options.Domain != defaultDomain {
@@ -346,12 +352,7 @@ func (i *Installation) installInstaller(files []File) error {
 		configuration.Configuration.Set("global.tlsKey", i.Options.TLSKey, false)
 	}
 
-	installationService, err := NewInstallationService(i.k8s.Config(), i.Options.Timeout, "")
-	if err != nil {
-		fmt.Errorf("error: failed to create installation service: %s", err.Error())
-	}
-
-	installationState, err := installationService.CheckInstallationState(i.k8s.Config())
+	installationState, err := i.service.CheckInstallationState(i.k8s.Config())
 	if err != nil {
 		installErr := installationSDK.InstallationError{}
 		if errors.As(err, &installErr) {
@@ -367,7 +368,7 @@ func (i *Installation) installInstaller(files []File) error {
 		return nil
 	}
 
-	err = installationService.TriggerInstallation(i.k8s.Config(), tillerFile, installerFile, configuration)
+	err = i.service.TriggerInstallation(i.k8s.Config(), tillerFile, installerFile, configuration)
 	if err != nil {
 		return fmt.Errorf("error: failed to start installation: %s", err.Error())
 	}
@@ -379,11 +380,11 @@ func (i *Installation) waitForInstaller() error {
 	currentDesc := ""
 	i.newStep("Waiting for installation to start")
 
-	status, err := i.getKubectl().RunCmd("get", "installation/kyma-installation", "-o", "jsonpath='{.status.state}'")
+	installationState, err := i.service.CheckInstallationState(i.k8s.Config())
 	if err != nil {
 		return err
 	}
-	if status == "Installed" {
+	if installationState.State == "Installed" {
 		return nil
 	}
 
@@ -402,7 +403,7 @@ func (i *Installation) waitForInstaller() error {
 			}
 			return errors.New("Timeout reached while waiting for installation to complete")
 		default:
-			status, desc, err := i.getInstallationStatus()
+			installationState, err := i.service.CheckInstallationState(i.k8s.Config())
 			if err != nil {
 				// A timeout when asking for the status can happen if the cluster is under high load while installing Kyma.
 				// But it should not make the CLI stop waiting immediately.
@@ -413,7 +414,7 @@ func (i *Installation) waitForInstaller() error {
 				}
 			}
 
-			switch status {
+			switch installationState.State {
 			case "Installed":
 				i.currentStep.Success()
 				return nil
@@ -421,7 +422,7 @@ func (i *Installation) waitForInstaller() error {
 			case "Error":
 				if !errorOccured {
 					errorOccured = true
-					i.currentStep.LogErrorf("%s failed, which may be OK. Will retry later...", desc)
+					i.currentStep.LogErrorf("%s failed, which may be OK. Will retry later...", installationState.Description)
 					i.currentStep.LogInfo("To fetch the error logs from the installer, run: kubectl get installation kyma-installation -o go-template --template='{{- range .status.errorLog }}{{printf \"%s:\\n %s\\n\" .component .log}}{{- end}}'")
 					i.currentStep.LogInfo("To fetch the application logs from the installer, run: kubectl logs -n kyma-installer -l name=kyma-installer")
 				}
@@ -429,10 +430,10 @@ func (i *Installation) waitForInstaller() error {
 			case "InProgress":
 				errorOccured = false
 				// only do something if the description has changed
-				if desc != currentDesc {
+				if installationState.Description != currentDesc {
 					i.currentStep.Success()
-					i.currentStep = i.newStep(desc)
-					currentDesc = desc
+					i.currentStep = i.newStep(installationState.Description)
+					currentDesc = installationState.Description
 				}
 
 			case "":
@@ -440,7 +441,7 @@ func (i *Installation) waitForInstaller() error {
 
 			default:
 				i.currentStep.Failure()
-				return fmt.Errorf("unexpected status: %s", status)
+				return fmt.Errorf("unexpected status: %s", installationState.State)
 			}
 			time.Sleep(10 * time.Second)
 		}

@@ -36,15 +36,6 @@ func (i *Installation) buildKymaInstaller(imageName string) error {
 	})
 }
 
-func (i *Installation) getInstallationStatus() (status string, desc string, err error) {
-	status, err = i.getKubectl().RunCmd("get", "installation/kyma-installation", "-o", "jsonpath='{.status.state}'")
-	if err != nil {
-		return
-	}
-	desc, err = i.getKubectl().RunCmd("get", "installation/kyma-installation", "-o", "jsonpath='{.status.description}'")
-	return
-}
-
 func (i *Installation) printInstallationErrorLog() error {
 	logs, err := i.getKubectl().RunCmd("get", "installation", "kyma-installation", "-o", "go-template", "--template={{- range .status.errorLog -}}{{printf \"%s:\\n %s [%s]\\n\" .component .log .occurrences}}{{- end}}")
 	if err != nil {
