@@ -2,6 +2,7 @@ package installation
 
 import (
 	"bytes"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
@@ -15,7 +16,6 @@ import (
 	"github.com/kyma-incubator/hydroform/install/scheme"
 	"github.com/kyma-project/cli/cmd/kyma/version"
 	"github.com/kyma-project/cli/internal/kube"
-	"github.com/kyma-project/cli/internal/kubectl"
 	"github.com/kyma-project/cli/pkg/step"
 	pkgErrors "github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
@@ -37,7 +37,6 @@ const (
 type Installation struct {
 	k8s         kube.KymaKube
 	service     Service
-	kubectl     *kubectl.Wrapper
 	currentStep step.Step
 	// Factory contains the option to determine the interactivity of a Step.
 	// +optional
@@ -64,13 +63,6 @@ type Result struct {
 	AdminPassword string
 	// Warnings includes a set of any warnings from the installation.
 	Warnings []string
-}
-
-func (i *Installation) getKubectl() *kubectl.Wrapper {
-	if i.kubectl == nil {
-		i.kubectl = kubectl.NewWrapper(i.Options.Verbose, i.Options.KubeconfigPath)
-	}
-	return i.kubectl
 }
 
 func (i *Installation) newStep(msg string) step.Step {
@@ -343,7 +335,7 @@ func (i *Installation) installInstaller(files []File) error {
 	}
 
 	if i.Options.Password != "" {
-		configuration.Configuration.Set("global.adminPassword", i.Options.Password, true)
+		configuration.Configuration.Set("global.adminPassword", base64.StdEncoding.EncodeToString([]byte(i.Options.Password)), false)
 	}
 	if i.Options.Domain != "" && i.Options.Domain != defaultDomain {
 		configuration.Configuration.Set("global.domainName", i.Options.Domain, false)
@@ -388,7 +380,7 @@ func (i *Installation) waitForInstaller() error {
 	}
 
 	var timeout <-chan time.Time
-	var errorOccured bool
+	//var errorOccured bool
 	if i.Options.Timeout > 0 {
 		timeout = time.After(i.Options.Timeout)
 	}
@@ -397,20 +389,19 @@ func (i *Installation) waitForInstaller() error {
 		select {
 		case <-timeout:
 			i.currentStep.Failure()
-			if err := i.printInstallationErrorLog(); err != nil {
-				fmt.Printf("Error fetching installation error log: %s\nPlease manually check the status of the cluster\n", err)
+			if _, err := i.service.CheckInstallationState(i.k8s.Config()); err != nil {
+				installationError := installationSDK.InstallationError{}
+				if ok := errors.As(err, &installationError); ok {
+					i.currentStep.LogErrorf("Installation error occurred while installing Kyma: %s. Details: %s", installationError.Error(), installationError.Details())
+				}
 			}
 			return errors.New("Timeout reached while waiting for installation to complete")
 		default:
 			installationState, err := i.service.CheckInstallationState(i.k8s.Config())
 			if err != nil {
-				// A timeout when asking for the status can happen if the cluster is under high load while installing Kyma.
-				// But it should not make the CLI stop waiting immediately.
-				if strings.Contains(err.Error(), "operation timed out") {
-					i.currentStep.LogError("Could not get the status, retrying...")
-				} else {
-					return err
-				}
+				i.currentStep.LogErrorf("%s failed, which may be OK. Will retry later...", installationState.Description)
+				i.currentStep.LogInfo("To fetch the error logs from the installer, run: kubectl get installation kyma-installation -o go-template --template='{{- range .status.errorLog }}{{printf \"%s:\\n %s\\n\" .component .log}}{{- end}}'")
+				i.currentStep.LogInfo("To fetch the application logs from the installer, run: kubectl logs -n kyma-installer -l name=kyma-installer")
 			}
 
 			switch installationState.State {
@@ -418,16 +409,16 @@ func (i *Installation) waitForInstaller() error {
 				i.currentStep.Success()
 				return nil
 
-			case "Error":
-				if !errorOccured {
-					errorOccured = true
-					i.currentStep.LogErrorf("%s failed, which may be OK. Will retry later...", installationState.Description)
-					i.currentStep.LogInfo("To fetch the error logs from the installer, run: kubectl get installation kyma-installation -o go-template --template='{{- range .status.errorLog }}{{printf \"%s:\\n %s\\n\" .component .log}}{{- end}}'")
-					i.currentStep.LogInfo("To fetch the application logs from the installer, run: kubectl logs -n kyma-installer -l name=kyma-installer")
-				}
+			// case "Error":
+			// 	if !errorOccured {
+			// 		errorOccured = true
+			// 		i.currentStep.LogErrorf("%s failed, which may be OK. Will retry later...", installationState.Description)
+			// 		i.currentStep.LogInfo("To fetch the error logs from the installer, run: kubectl get installation kyma-installation -o go-template --template='{{- range .status.errorLog }}{{printf \"%s:\\n %s\\n\" .component .log}}{{- end}}'")
+			// 		i.currentStep.LogInfo("To fetch the application logs from the installer, run: kubectl logs -n kyma-installer -l name=kyma-installer")
+			// 	}
 
 			case "InProgress":
-				errorOccured = false
+				//errorOccured = false
 				// only do something if the description has changed
 				if installationState.Description != currentDesc {
 					i.currentStep.Success()

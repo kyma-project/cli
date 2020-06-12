@@ -36,15 +36,6 @@ func (i *Installation) buildKymaInstaller(imageName string) error {
 	})
 }
 
-func (i *Installation) printInstallationErrorLog() error {
-	logs, err := i.getKubectl().RunCmd("get", "installation", "kyma-installation", "-o", "go-template", "--template={{- range .status.errorLog -}}{{printf \"%s:\\n %s [%s]\\n\" .component .log .occurrences}}{{- end}}")
-	if err != nil {
-		return err
-	}
-	fmt.Println(logs)
-	return nil
-}
-
 func (i *Installation) getMasterHash() (string, error) {
 	ctx, timeoutF := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer timeoutF()

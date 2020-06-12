@@ -153,7 +153,7 @@ func (c *client) WaitPodStatusByLabel(namespace, labelName, labelValue string, s
 	}
 }
 
-// TODO we do not need more wait functions once deleteion is not done via Kubectl, the K8s API will wait on its own
+// TODO we do not need more wait functions once deletion is not done via Kubectl, the K8s API will wait on its own
 func (c *client) WaitPodsGone(namespace, labelName, labelValue string) error {
 	for {
 		deployed, err := c.IsPodDeployedByLabel(namespace, labelName, labelValue)
