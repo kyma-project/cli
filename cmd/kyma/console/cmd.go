@@ -48,7 +48,7 @@ func (c *command) Run() error {
 	fmt.Println("Reading the Kyma console URL from the cluster")
 
 	var consoleURL string
-	vs, err := c.K8s.Istio().NetworkingV1alpha3().VirtualServices("kyma-system").Get("core-console", metav1.GetOptions{})
+	vs, err := c.K8s.Istio().NetworkingV1alpha3().VirtualServices("kyma-system").Get("console-web", metav1.GetOptions{})
 	switch {
 	case err != nil:
 		fmt.Printf("Unable to read the Kyma console URL due to error: %s. Check if your cluster is available and has Kyma installed\r\n", err.Error())
