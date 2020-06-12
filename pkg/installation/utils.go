@@ -127,43 +127,39 @@ func downloadFile(path string) (io.ReadCloser, error) {
 	return resp.Body, nil
 }
 
-func getInstallerImage(files []File) (string, error) {
-	for _, f := range files {
-		for _, res := range f {
-			if res["kind"] == "Deployment" {
+func getInstallerImage(installerFile File) (string, error) {
+	for _, res := range installerFile {
+		if res["kind"] == "Deployment" {
 
-				var deployment v1.Deployment
-				err := mapstructure.Decode(res, &deployment)
-				if err != nil {
-					return "", err
-				}
+			var deployment v1.Deployment
+			err := mapstructure.Decode(res, &deployment)
+			if err != nil {
+				return "", err
+			}
 
-				if deployment.Spec.Template.Spec.Containers[0].Name == "kyma-installer-container" {
-					return deployment.Spec.Template.Spec.Containers[0].Image, nil
-				}
+			if deployment.Spec.Template.Spec.Containers[0].Name == "kyma-installer-container" {
+				return deployment.Spec.Template.Spec.Containers[0].Image, nil
 			}
 		}
 	}
 	return "", errors.New("'kyma-installer' deployment is missing")
 }
 
-func replaceInstallerImage(files []File, imageURL string) error {
+func replaceInstallerImage(installerFile File, imageURL string) error {
 	// Check if installer deployment has all the necessary fields and a container named kyma-installer-container.
 	// If so, replace the image with the imageURL parameter.
-	for _, f := range files {
-		for _, config := range f {
-			if kind, ok := config["kind"]; ok && kind == "Deployment" {
-				if spec, ok := config["spec"].(map[interface{}]interface{}); ok {
-					if template, ok := spec["template"].(map[interface{}]interface{}); ok {
-						if spec, ok = template["spec"].(map[interface{}]interface{}); ok {
-							if containers, ok := spec["containers"].([]interface{}); ok {
-								for _, c := range containers {
-									container := c.(map[interface{}]interface{})
-									if cName, ok := container["name"]; ok && cName == "kyma-installer-container" {
-										if _, ok := container["image"]; ok {
-											container["image"] = imageURL
-											return nil
-										}
+	for _, config := range installerFile {
+		if kind, ok := config["kind"]; ok && kind == "Deployment" {
+			if spec, ok := config["spec"].(map[interface{}]interface{}); ok {
+				if template, ok := spec["template"].(map[interface{}]interface{}); ok {
+					if spec, ok = template["spec"].(map[interface{}]interface{}); ok {
+						if containers, ok := spec["containers"].([]interface{}); ok {
+							for _, c := range containers {
+								container := c.(map[interface{}]interface{})
+								if cName, ok := container["name"]; ok && cName == "kyma-installer-container" {
+									if _, ok := container["image"]; ok {
+										container["image"] = imageURL
+										return nil
 									}
 								}
 							}

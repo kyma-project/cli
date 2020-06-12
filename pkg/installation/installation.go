@@ -212,10 +212,12 @@ func (i *Installation) prepareFiles() ([]File, error) {
 		return nil, err
 	}
 
+	installerFile := Files[1]
+
 	//In case of local installation from local sources, build installer image.
 	//TODO: add image build & push functionality for remote installation from local sources.
 	if i.Options.fromLocalSources && i.Options.IsLocal {
-		imageName, err := getInstallerImage(Files)
+		imageName, err := getInstallerImage(installerFile)
 		if err != nil {
 			return nil, err
 		}
@@ -226,9 +228,9 @@ func (i *Installation) prepareFiles() ([]File, error) {
 		}
 	} else if !i.Options.fromLocalSources {
 		if i.Options.remoteImage != "" {
-			err = replaceInstallerImage(Files, i.Options.remoteImage)
+			err = replaceInstallerImage(installerFile, i.Options.remoteImage)
 		} else {
-			err = replaceInstallerImage(Files, buildDockerImageString(i.Options.registryTemplate, i.Options.releaseVersion))
+			err = replaceInstallerImage(installerFile, buildDockerImageString(i.Options.registryTemplate, i.Options.releaseVersion))
 		}
 		if err != nil {
 			return nil, err
@@ -245,7 +247,6 @@ func (i *Installation) loadInstallationResourceFiles(resourcePaths []string) ([]
 	resFiles := make([]File, 0)
 
 	for _, resourcePath := range resourcePaths {
-
 		resources := make([]map[string]interface{}, 0)
 		var yamlReader io.ReadCloser
 
