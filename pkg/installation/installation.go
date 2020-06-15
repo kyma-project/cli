@@ -304,37 +304,41 @@ func (i *Installation) installInstaller(files []File) error {
 	installerFile := stringFiles[1] + "---\n" + stringFiles[2]
 
 	var configuration installationSDK.Configuration
-
-	if i.Options.IsLocal {
-		localConfigFile := stringFiles[3]
-
-		for _, file := range i.Options.OverrideConfigs {
-			oFile, err := os.Open(file)
-			if err != nil {
-				return pkgErrors.Wrapf(err, "unable to open file: %s.\n", file)
-			}
-
-			var rawData bytes.Buffer
-			if _, err = io.Copy(&rawData, oFile); err != nil {
-				fmt.Printf("unable to read data from file: %s.\n", file)
-			}
-
-			localConfigFile = localConfigFile + "---\n" + rawData.String()
+	var configFile string
+	for _, file := range i.Options.OverrideConfigs {
+		oFile, err := os.Open(file)
+		if err != nil {
+			return pkgErrors.Wrapf(err, "unable to open file: %s.\n", file)
 		}
 
+		var rawData bytes.Buffer
+		if _, err = io.Copy(&rawData, oFile); err != nil {
+			fmt.Printf("unable to read data from file: %s.\n", file)
+		}
+
+		configFile = configFile + "---\n" + rawData.String()
+	}
+
+	if i.Options.IsLocal {
+		//Merge with local config file
+		configFile = stringFiles[3] + "---\n" + configFile
+	}
+
+	if configFile != "" {
 		decoder, err := scheme.DefaultDecoder()
 		if err != nil {
 			return fmt.Errorf("error: failed to create default decoder: %s", err.Error())
 		}
 
-		configuration, err = config.YAMLToConfiguration(decoder, localConfigFile)
+		configuration, err = config.YAMLToConfiguration(decoder, configFile)
 		if err != nil {
 			return fmt.Errorf("error: failed to parse configurations: %s", err.Error())
 		}
-
-		configuration.Configuration.Set("global.minikubeIP", i.Options.LocalCluster.IP, false)
 	}
 
+	if i.Options.IsLocal {
+		configuration.Configuration.Set("global.minikubeIP", i.Options.LocalCluster.IP, false)
+	}
 	if i.Options.Password != "" {
 		configuration.Configuration.Set("global.adminPassword", base64.StdEncoding.EncodeToString([]byte(i.Options.Password)), false)
 	}
