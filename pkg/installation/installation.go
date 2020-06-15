@@ -381,7 +381,6 @@ func (i *Installation) waitForInstaller() error {
 	}
 
 	var timeout <-chan time.Time
-	//var errorOccured bool
 	if i.Options.Timeout > 0 {
 		timeout = time.After(i.Options.Timeout)
 	}
@@ -410,16 +409,7 @@ func (i *Installation) waitForInstaller() error {
 				i.currentStep.Success()
 				return nil
 
-			// case "Error":
-			// 	if !errorOccured {
-			// 		errorOccured = true
-			// 		i.currentStep.LogErrorf("%s failed, which may be OK. Will retry later...", installationState.Description)
-			// 		i.currentStep.LogInfo("To fetch the error logs from the installer, run: kubectl get installation kyma-installation -o go-template --template='{{- range .status.errorLog }}{{printf \"%s:\\n %s\\n\" .component .log}}{{- end}}'")
-			// 		i.currentStep.LogInfo("To fetch the application logs from the installer, run: kubectl logs -n kyma-installer -l name=kyma-installer")
-			// 	}
-
 			case "InProgress":
-				//errorOccured = false
 				// only do something if the description has changed
 				if installationState.Description != currentDesc {
 					i.currentStep.Success()
