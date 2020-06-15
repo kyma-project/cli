@@ -316,7 +316,7 @@ func (i *Installation) installInstaller(files []File) error {
 			fmt.Printf("unable to read data from file: %s.\n", file)
 		}
 
-		configFile = configFile + "---\n" + rawData.String()
+		configFile = rawData.String() + "---\n" + configFile
 	}
 
 	if i.Options.IsLocal {
