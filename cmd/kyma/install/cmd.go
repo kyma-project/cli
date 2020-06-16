@@ -105,6 +105,7 @@ The standard installation uses the minimal configuration. The system performs th
 	cobraCmd.Flags().StringVarP(&o.Password, "password", "p", "", "Predefined cluster password.")
 	cobraCmd.Flags().StringArrayVarP(&o.OverrideConfigs, "override", "o", nil, "Path to a YAML file with parameters to override.")
 	cobraCmd.Flags().IntVar(&o.FallbackLevel, "fallbackLevel", 5, `If "source=latest-published", defines the number of commits from master branch taken into account if artifacts for newer commits do not exist yet`)
+	cobraCmd.Flags().BoolVarP(&o.Force, "force", "f", false, "Flag that determines if overrides and installation source should be considered in case a previous installation has already started.")
 	return cobraCmd
 }
 
@@ -175,6 +176,7 @@ func (cmd *command) configureInstallation(clusterConfig clusterInfo) *installati
 			OverrideConfigs: cmd.opts.OverrideConfigs,
 			Source:          cmd.opts.Source,
 			FallbackLevel:   cmd.opts.FallbackLevel,
+			Force:           cmd.opts.Force,
 			IsLocal:         clusterConfig.isLocal,
 			LocalCluster: &installation.LocalCluster{
 				IP:       clusterConfig.localIP,
