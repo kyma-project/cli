@@ -95,7 +95,7 @@ func (c *command) Run() error {
 	}
 	s.Successf("Minikube status verified")
 
-	s = c.NewStep(fmt.Sprintf("Initializing Minikube config"))
+	s = c.NewStep("Initializing Minikube config")
 	err = c.initializeMinikubeConfig()
 	if err != nil {
 		s.Failure()
@@ -103,7 +103,7 @@ func (c *command) Run() error {
 	}
 	s.Successf("Minikube config initialized")
 
-	s = c.NewStep(fmt.Sprintf("Create Minikube instance"))
+	s = c.NewStep("Create Minikube instance")
 	s.Status("Start Minikube")
 	err = c.startMinikube()
 	if err != nil {
@@ -138,7 +138,7 @@ func (c *command) Run() error {
 	}
 	s.Successf("Minikube up and running")
 
-	s = c.NewStep(fmt.Sprintf("Adjusting Minikube cluster"))
+	s = c.NewStep("Adjusting Minikube cluster")
 	s.Status("Increase fs.inotify.max_user_instances")
 	err = c.increaseFsInotifyMaxUserInstances()
 	if err != nil {
@@ -153,7 +153,7 @@ func (c *command) Run() error {
 	}
 	s.Successf("Adjustments finished")
 
-	s = c.NewStep(fmt.Sprintf("Creating cluster info ConfigMap"))
+	s = c.NewStep("Creating cluster info ConfigMap")
 	err = c.createClusterInfoConfigMap()
 	if err != nil {
 		s.Failure()

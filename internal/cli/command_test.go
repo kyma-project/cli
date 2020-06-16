@@ -20,18 +20,3 @@ func TestNewStep(t *testing.T) {
 	require.Equal(t, s, c.CurrentStep, "Command's current step must be the newly created step.")
 
 }
-
-func TestKubectl(t *testing.T) {
-	c := Command{} // uninitialized command
-
-	// test uninitialized command
-	require.Panics(t, func() { c.Kubectl() }, "Kubectl wrapper getter on uninitialized command should panic.")
-
-	c.Options = NewOptions() // properly initialize command
-
-	// test lazy init of kubectl wrapper
-	k := c.Kubectl()
-
-	require.NotNil(t, k, "Kubectl wrapper should be initialized on demand when getter is called.")
-
-}

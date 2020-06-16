@@ -2,7 +2,6 @@ package installation
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -19,16 +18,7 @@ import (
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/storage/memory"
 	v1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 )
-
-func (i *Installation) applyResourceFile(filepath string) error {
-	_, err := i.getKubectl().RunCmd("apply", "-f", filepath)
-	return err
-}
 
 func (i *Installation) buildKymaInstaller(imageName string) error {
 	dc, err := minikube.DockerClient(i.Options.Verbose, i.Options.LocalCluster.Profile, i.Options.Timeout)
@@ -44,29 +34,6 @@ func (i *Installation) buildKymaInstaller(imageName string) error {
 		ContextDir:   filepath.Join(i.Options.LocalSrcPath),
 		BuildArgs:    args,
 	})
-}
-
-func (i *Installation) checkIfResourcePresent(namespace, kind, name string) error {
-	_, err := i.getKubectl().RunCmd("-n", namespace, "get", kind, name)
-	return err
-}
-
-func (i *Installation) getInstallationStatus() (status string, desc string, err error) {
-	status, err = i.getKubectl().RunCmd("get", "installation/kyma-installation", "-o", "jsonpath='{.status.state}'")
-	if err != nil {
-		return
-	}
-	desc, err = i.getKubectl().RunCmd("get", "installation/kyma-installation", "-o", "jsonpath='{.status.description}'")
-	return
-}
-
-func (i *Installation) printInstallationErrorLog() error {
-	logs, err := i.getKubectl().RunCmd("get", "installation", "kyma-installation", "-o", "go-template", "--template={{- range .status.errorLog -}}{{printf \"%s:\\n %s [%s]\\n\" .component .log .occurrences}}{{- end}}")
-	if err != nil {
-		return err
-	}
-	fmt.Println(logs)
-	return nil
 }
 
 func (i *Installation) getMasterHash() (string, error) {
@@ -145,98 +112,6 @@ func (i *Installation) getLatestAvailableMasterHash() (string, error) {
 	return "", errors.New("not found latest available master hash")
 }
 
-func (i *Installation) setAdminPassword() error {
-	if i.Options.Password == "" {
-		return nil
-	}
-	encPass := base64.StdEncoding.EncodeToString([]byte(i.Options.Password))
-
-	err := i.patchOverride("installation-config-overrides", "global.adminPassword", encPass)
-	if err != nil {
-		err = errors.Wrap(err, "Error setting admin password")
-	}
-	return err
-}
-
-func (i *Installation) setDomain() error {
-	// when no custom domain is set or it is already default, nothing needs to be done
-	if i.Options.Domain == "" || i.Options.Domain == defaultDomain {
-		return nil
-	}
-	err := i.patchOverride("installation-config-overrides", "global.domainName", i.Options.Domain)
-	if err != nil {
-		err = errors.Wrap(err, "Error setting custom domain")
-		return err
-	}
-	err = i.patchOverride("cluster-certificate-overrides", "global.tlsCrt", i.Options.TLSCert)
-	if err != nil {
-		err = errors.Wrap(err, "Error setting custom TLS certificate")
-		return err
-	}
-	err = i.patchOverride("cluster-certificate-overrides", "global.tlsKey", i.Options.TLSKey)
-	if err != nil {
-		err = errors.Wrap(err, "Error setting custom TLS private key")
-	}
-	return err
-}
-
-func (i *Installation) setMinikubeIP() error {
-	if !i.Options.IsLocal {
-		return nil
-	}
-	err := i.patchOverride("installation-config-overrides", "global.minikubeIP", i.Options.LocalCluster.IP)
-	if err != nil {
-		err = errors.Wrap(err, "Error setting minikube IP")
-	}
-	return err
-}
-
-func (i *Installation) patchOverride(override string, key string, value string) error {
-	_, err := i.k8s.Static().CoreV1().ConfigMaps("kyma-installer").Patch(override, types.JSONPatchType,
-		[]byte(fmt.Sprintf("[{\"op\": \"replace\", \"path\": \"/data/%s\", \"value\": \"%s\"}]", key, value)))
-	if err != nil {
-		if apiErrors.IsNotFound(err) {
-			_, err = i.k8s.Static().CoreV1().ConfigMaps("kyma-installer").Create(&corev1.ConfigMap{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:   override,
-					Labels: map[string]string{"installer": "overrides"},
-				},
-				Data: map[string]string{
-					key: value,
-				},
-			})
-		}
-		err = errors.Wrap(err, "Error patching overide configmap")
-	}
-	return err
-}
-
-func removeActionLabel(files []File) error {
-	for _, f := range files {
-		for _, config := range f {
-			if kind, ok := config["kind"]; ok && kind == "Installation" {
-				meta, ok := config["metadata"].(map[interface{}]interface{})
-				if !ok {
-					return errors.New("Installation contains no METADATA section")
-				}
-
-				labels, ok := meta["labels"].(map[interface{}]interface{})
-				if !ok {
-					return errors.New("Installation contains no LABELS section")
-				}
-
-				_, ok = labels["action"].(string)
-				if !ok {
-					return nil
-				}
-
-				delete(labels, "action")
-			}
-		}
-	}
-	return nil
-}
-
 func buildDockerImageString(template string, version string) string {
 	return fmt.Sprintf(template, version)
 }
@@ -252,43 +127,39 @@ func downloadFile(path string) (io.ReadCloser, error) {
 	return resp.Body, nil
 }
 
-func getInstallerImage(files []File) (string, error) {
-	for _, f := range files {
-		for _, res := range f {
-			if res["kind"] == "Deployment" {
+func getInstallerImage(installerFile File) (string, error) {
+	for _, res := range installerFile {
+		if res["kind"] == "Deployment" {
 
-				var deployment v1.Deployment
-				err := mapstructure.Decode(res, &deployment)
-				if err != nil {
-					return "", err
-				}
+			var deployment v1.Deployment
+			err := mapstructure.Decode(res, &deployment)
+			if err != nil {
+				return "", err
+			}
 
-				if deployment.Spec.Template.Spec.Containers[0].Name == "kyma-installer-container" {
-					return deployment.Spec.Template.Spec.Containers[0].Image, nil
-				}
+			if deployment.Spec.Template.Spec.Containers[0].Name == "kyma-installer-container" {
+				return deployment.Spec.Template.Spec.Containers[0].Image, nil
 			}
 		}
 	}
 	return "", errors.New("'kyma-installer' deployment is missing")
 }
 
-func replaceInstallerImage(files []File, imageURL string) error {
+func replaceInstallerImage(installerFile File, imageURL string) error {
 	// Check if installer deployment has all the necessary fields and a container named kyma-installer-container.
 	// If so, replace the image with the imageURL parameter.
-	for _, f := range files {
-		for _, config := range f {
-			if kind, ok := config["kind"]; ok && kind == "Deployment" {
-				if spec, ok := config["spec"].(map[interface{}]interface{}); ok {
-					if template, ok := spec["template"].(map[interface{}]interface{}); ok {
-						if spec, ok = template["spec"].(map[interface{}]interface{}); ok {
-							if containers, ok := spec["containers"].([]interface{}); ok {
-								for _, c := range containers {
-									container := c.(map[interface{}]interface{})
-									if cName, ok := container["name"]; ok && cName == "kyma-installer-container" {
-										if _, ok := container["image"]; ok {
-											container["image"] = imageURL
-											return nil
-										}
+	for _, config := range installerFile {
+		if kind, ok := config["kind"]; ok && kind == "Deployment" {
+			if spec, ok := config["spec"].(map[interface{}]interface{}); ok {
+				if template, ok := spec["template"].(map[interface{}]interface{}); ok {
+					if spec, ok = template["spec"].(map[interface{}]interface{}); ok {
+						if containers, ok := spec["containers"].([]interface{}); ok {
+							for _, c := range containers {
+								container := c.(map[interface{}]interface{})
+								if cName, ok := container["name"]; ok && cName == "kyma-installer-container" {
+									if _, ok := container["image"]; ok {
+										container["image"] = imageURL
+										return nil
 									}
 								}
 							}

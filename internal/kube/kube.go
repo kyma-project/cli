@@ -32,7 +32,4 @@ type KymaKube interface {
 
 	// WaitPodStatusByLabel selects a set of pods by label and waits for them
 	WaitPodStatusByLabel(namespace, labelName, labelValue string, status corev1.PodPhase) error
-
-	// TODO we do not need more wait functions once deletion is not done via kubectl, the K8s API will wait on its own
-	WaitPodsGone(namespace, labelName, labelValue string) error
 }

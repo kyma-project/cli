@@ -8,6 +8,8 @@ import (
 
 	"github.com/kyma-project/cli/cmd/kyma"
 	"github.com/kyma-project/cli/internal/cli"
+
+	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 )
 
 func main() {

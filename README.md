@@ -8,7 +8,6 @@ Kyma CLI is a command line tool which supports [Kyma](https://github.com/kyma-pr
 
 Kyma CLI requires the following software:
 
-- [kubectl](https://github.com/kubernetes/kubectl) 
 - [Minikube](https://github.com/kubernetes/minikube)
 
 ## Installation
@@ -67,6 +66,7 @@ choco install kyma-cli
 ### Other
 
 To install a different release, change the path to point to the desired version and architecture:
+
 ```bash
 curl -Lo kyma.tar.gz https://github.com/kyma-project/cli/releases/download/${KYMA_VERSION}/kyma_${ARCH}.tar.gz
 ```
@@ -94,9 +94,9 @@ kyma install --source=latest
 
 ### Commands
 
-Kyma CLI comes with a set of commands, each of which has its own specific set of flags. 
+Kyma CLI comes with a set of commands, each of which has its own specific set of flags.
 
->**NOTE:** For the full list of commands and flags, see [this](https://github.com/kyma-project/cli/tree/master/docs/gen-docs) document. 
+>**NOTE:** For the full list of commands and flags, see [this](https://github.com/kyma-project/cli/tree/master/docs/gen-docs) document.
 
 |     Command        | Child commands   |  Description  | Example |
 |--------------------|----------------|---------------|---------|
