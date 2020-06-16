@@ -124,17 +124,17 @@ func (i *Installation) loadInstallationFiles() (map[string]*File, error) {
 	if i.Options.IsLocal {
 		installationFiles =
 			map[string]*File{
-				tillerFile:          {Path: tillerFilePath},
-				installerFile:       {Path: installerLocalFilePath},
-				installerCRFile:     {Path: installerCRFilePath},
-				installerConfigFile: {Path: installerLocalConfigFilePath},
+				tillerFile:          {Path: "tiller.yaml"},
+				installerFile:       {Path: "installer-local.yaml"},
+				installerCRFile:     {Path: "installer-cr.yaml.tpl"},
+				installerConfigFile: {Path: "installer-config-local.yaml.tpl"},
 			}
 	} else {
 		installationFiles =
 			map[string]*File{
-				tillerFile:      {Path: tillerFilePath},
-				installerFile:   {Path: installerFilePath},
-				installerCRFile: {Path: installerCRClusterFilePath},
+				tillerFile:      {Path: "tiller.yaml"},
+				installerFile:   {Path: "installer.yaml"},
+				installerCRFile: {Path: "installer-cr-cluster.yaml.tpl"},
 			}
 	}
 

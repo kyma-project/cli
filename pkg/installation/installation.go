@@ -30,13 +30,6 @@ const (
 	tillerFile          = "tiller"
 	installerCRFile     = "installerCR"
 	installerConfigFile = "installerConfig"
-
-	tillerFilePath               = "tiller.yaml"
-	installerLocalFilePath       = "installer-local.yaml"
-	installerCRFilePath          = "installer-cr.yaml.tpl"
-	installerLocalConfigFilePath = "installer-config-local.yaml.tpl"
-	installerFilePath            = "installer.yaml"
-	installerCRClusterFilePath   = "installer-cr-cluster.yaml.tpl"
 )
 
 // Installation contains the installation elements and configuration options.
