@@ -16,26 +16,26 @@ func Test_ReplaceDockerImageURL(t *testing.T) {
 	}{
 		{
 			testName: "correct data test",
-			data: File{
-				{
-					"apiVersion": "installer.kyma-project.io/v1alpha1",
-					"kind":       "Deployment",
-					"spec": map[interface{}]interface{}{
-						"template": map[interface{}]interface{}{
-							"spec": map[interface{}]interface{}{
-								"serviceAccountName": "kyma-installer",
-								"containers": []interface{}{
-									map[interface{}]interface{}{
-										"name":  "kyma-installer-container",
-										"image": "eu.gcr.io/kyma-project/kyma-installer:63f27f76",
-									},
+			data: File{Content: []map[string]interface{}{{
+				"apiVersion": "installer.kyma-project.io/v1alpha1",
+				"kind":       "Deployment",
+				"spec": map[interface{}]interface{}{
+					"template": map[interface{}]interface{}{
+						"spec": map[interface{}]interface{}{
+							"serviceAccountName": "kyma-installer",
+							"containers": []interface{}{
+								map[interface{}]interface{}{
+									"name":  "kyma-installer-container",
+									"image": "eu.gcr.io/kyma-project/kyma-installer:63f27f76",
 								},
 							},
 						},
 					},
 				},
 			},
-			expectedResult: File{
+			},
+			},
+			expectedResult: File{Content: []map[string]interface{}{
 				{
 					"apiVersion": "installer.kyma-project.io/v1alpha1",
 					"kind":       "Deployment",
@@ -53,6 +53,7 @@ func Test_ReplaceDockerImageURL(t *testing.T) {
 						},
 					},
 				},
+			},
 			},
 			shouldFail: false,
 		},

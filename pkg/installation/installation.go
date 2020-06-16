@@ -1,24 +1,18 @@
 package installation
 
 import (
-	"bytes"
-	"encoding/base64"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/kyma-incubator/hydroform/install/config"
 	installationSDK "github.com/kyma-incubator/hydroform/install/installation"
-	"github.com/kyma-incubator/hydroform/install/scheme"
 	"github.com/kyma-project/cli/cmd/kyma/version"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/pkg/step"
 	pkgErrors "github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,6 +25,18 @@ const (
 	sourceLatest           = "latest"
 	sourceLatestPublished  = "latest-published"
 	sourceLocal            = "local"
+
+	installerFile       = "installer"
+	tillerFile          = "tiller"
+	installerCRFile     = "installerCR"
+	installerConfigFile = "installerConfig"
+
+	tillerFilePath               = "tiller.yaml"
+	installerLocalFilePath       = "installer-local.yaml"
+	installerCRFilePath          = "installer-cr.yaml.tpl"
+	installerLocalConfigFilePath = "installer-config-local.yaml.tpl"
+	installerFilePath            = "installer.yaml"
+	installerCRClusterFilePath   = "installer-cr-cluster.yaml.tpl"
 )
 
 // Installation contains the installation elements and configuration options.
@@ -47,7 +53,11 @@ type Installation struct {
 
 // File represents a Kyma installation yaml file in the form of a key value map
 // Type alias for clarity; It is still a map slice and can be used anywhere where []map[string]interface{} is used
-type File = []map[string]interface{}
+type File struct {
+	Path          string
+	Content       []map[string]interface{}
+	StringContent string
+}
 
 // Result contains the resulting details related to the installation.
 type Result struct {
@@ -110,7 +120,7 @@ func (i *Installation) InstallKyma() (*Result, error) {
 	s.Successf("Installation source checked")
 
 	s = i.newStep("Loading installation files")
-	resources, err := i.prepareFiles()
+	files, err := i.prepareFiles()
 	if err != nil {
 		s.Failure()
 		return nil, err
@@ -118,7 +128,7 @@ func (i *Installation) InstallKyma() (*Result, error) {
 	s.Successf("Installation files loaded")
 
 	s = i.newStep("Requesting Kyma Installer to install Kyma")
-	if err := i.installInstaller(resources); err != nil {
+	if err := i.installInstaller(files); err != nil {
 		s.Failure()
 		return nil, err
 	}
@@ -199,25 +209,16 @@ func (i *Installation) validateConfigurations() error {
 	return nil
 }
 
-func (i *Installation) prepareFiles() ([]File, error) {
-	var FilePaths []string
-	if i.Options.IsLocal {
-		FilePaths = []string{"tiller.yaml", "installer-local.yaml", "installer-cr.yaml.tpl", "installer-config-local.yaml.tpl"}
-	} else {
-		FilePaths = []string{"tiller.yaml", "installer.yaml", "installer-cr-cluster.yaml.tpl"}
-	}
-
-	Files, err := i.loadInstallationResourceFiles(FilePaths)
+func (i *Installation) prepareFiles() (map[string]*File, error) {
+	files, err := i.loadInstallationFiles()
 	if err != nil {
 		return nil, err
 	}
 
-	installerFile := Files[1]
-
 	//In case of local installation from local sources, build installer image.
 	//TODO: add image build & push functionality for remote installation from local sources.
 	if i.Options.fromLocalSources && i.Options.IsLocal {
-		imageName, err := getInstallerImage(installerFile)
+		imageName, err := getInstallerImage(*files[installerFile])
 		if err != nil {
 			return nil, err
 		}
@@ -228,125 +229,19 @@ func (i *Installation) prepareFiles() ([]File, error) {
 		}
 	} else if !i.Options.fromLocalSources {
 		if i.Options.remoteImage != "" {
-			err = replaceInstallerImage(installerFile, i.Options.remoteImage)
+			err = replaceInstallerImage(*files[installerFile], i.Options.remoteImage)
 		} else {
-			err = replaceInstallerImage(installerFile, buildDockerImageString(i.Options.registryTemplate, i.Options.releaseVersion))
+			err = replaceInstallerImage(*files[installerFile], buildDockerImageString(i.Options.registryTemplate, i.Options.releaseVersion))
 		}
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return Files, nil
+	return files, nil
 }
 
-func (i *Installation) loadInstallationResourceFiles(resourcePaths []string) ([]File, error) {
-
-	var err error
-	// each installation file goes into a separate slice of map[string]interface{} so that they can be applied individually
-	resFiles := make([]File, 0)
-
-	for _, resourcePath := range resourcePaths {
-		resources := make([]map[string]interface{}, 0)
-		var yamlReader io.ReadCloser
-
-		if i.Options.fromLocalSources {
-			path := filepath.Join(i.Options.LocalSrcPath, "installation",
-				"resources", resourcePath)
-			yamlReader, err = os.Open(path)
-		} else {
-			yamlReader, err = downloadFile(i.releaseFile(resourcePath))
-		}
-
-		if err != nil {
-			return nil, err
-		}
-
-		dec := yaml.NewDecoder(yamlReader)
-		for {
-			m := make(map[string]interface{})
-			err := dec.Decode(m)
-			if err == io.EOF {
-				break
-			} else if err != nil {
-				return nil, err
-			}
-			resources = append(resources, m)
-		}
-
-		yamlReader.Close()
-		resFiles = append(resFiles, resources)
-	}
-
-	return resFiles, nil
-}
-
-func (i *Installation) installInstaller(files []File) error {
-
-	stringFiles := []string{}
-	for _, file := range files {
-		buf := &bytes.Buffer{}
-		enc := yaml.NewEncoder(buf)
-		for _, y := range file {
-			err := enc.Encode(y)
-			if err != nil {
-				return err
-			}
-		}
-		err := enc.Close()
-		if err != nil {
-			return err
-		}
-		stringFiles = append(stringFiles, buf.String())
-	}
-
-	tillerFile := stringFiles[0]
-	installerFile := stringFiles[1] + "---\n" + stringFiles[2]
-
-	var configuration installationSDK.Configuration
-	var configFile string
-	for _, file := range i.Options.OverrideConfigs {
-		oFile, err := os.Open(file)
-		if err != nil {
-			return pkgErrors.Wrapf(err, "unable to open file: %s.\n", file)
-		}
-
-		var rawData bytes.Buffer
-		if _, err = io.Copy(&rawData, oFile); err != nil {
-			fmt.Printf("unable to read data from file: %s.\n", file)
-		}
-
-		configFile = rawData.String() + "---\n" + configFile
-	}
-
-	if i.Options.IsLocal {
-		//Merge with local config file
-		configFile = stringFiles[3] + "---\n" + configFile
-	}
-
-	if configFile != "" {
-		decoder, err := scheme.DefaultDecoder()
-		if err != nil {
-			return fmt.Errorf("error: failed to create default decoder: %s", err.Error())
-		}
-
-		configuration, err = config.YAMLToConfiguration(decoder, configFile)
-		if err != nil {
-			return fmt.Errorf("error: failed to parse configurations: %s", err.Error())
-		}
-	}
-
-	if i.Options.IsLocal {
-		configuration.Configuration.Set("global.minikubeIP", i.Options.LocalCluster.IP, false)
-	}
-	if i.Options.Password != "" {
-		configuration.Configuration.Set("global.adminPassword", base64.StdEncoding.EncodeToString([]byte(i.Options.Password)), false)
-	}
-	if i.Options.Domain != "" && i.Options.Domain != defaultDomain {
-		configuration.Configuration.Set("global.domainName", i.Options.Domain, false)
-		configuration.Configuration.Set("global.tlsCrt", i.Options.TLSCert, false)
-		configuration.Configuration.Set("global.tlsKey", i.Options.TLSKey, false)
-	}
+func (i *Installation) installInstaller(files map[string]*File) error {
 
 	installationState, err := i.service.CheckInstallationState(i.k8s.Config())
 	if err != nil {
@@ -364,7 +259,14 @@ func (i *Installation) installInstaller(files []File) error {
 		return nil
 	}
 
-	err = i.service.TriggerInstallation(i.k8s.Config(), tillerFile, installerFile, configuration)
+	tillerFileContent := files[tillerFile].StringContent
+	mergedInstallerFileContent := files[installerFile].StringContent + "---\n" + files[installerCRFile].StringContent
+	configuration, err := i.loadConfigurations(files)
+	if err != nil {
+		return pkgErrors.Wrap(err, "unable to load the configurations")
+	}
+
+	err = i.service.TriggerInstallation(i.k8s.Config(), tillerFileContent, mergedInstallerFileContent, configuration)
 	if err != nil {
 		return fmt.Errorf("error: failed to start installation: %s", err.Error())
 	}
