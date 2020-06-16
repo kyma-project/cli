@@ -60,7 +60,7 @@ func Test_ReplaceDockerImageURL(t *testing.T) {
 	}
 
 	for _, tt := range testData {
-		err := replaceInstallerImage(tt.data, replacedWithData)
+		err := replaceInstallerImage(&tt.data, replacedWithData)
 		if !tt.shouldFail {
 			require.Nil(t, err, tt.testName)
 			require.Equal(t, tt.data, tt.expectedResult, tt.testName)

@@ -173,7 +173,7 @@ func (i *Installation) loadInstallationFiles() (map[string]*File, error) {
 		file.Content = resources
 	}
 
-	return loadStringContent(installationFiles)
+	return installationFiles, nil
 }
 
 func loadStringContent(installationFiles map[string]*File) (map[string]*File, error) {
@@ -265,7 +265,7 @@ func downloadFile(path string) (io.ReadCloser, error) {
 	return resp.Body, nil
 }
 
-func getInstallerImage(installerFile File) (string, error) {
+func getInstallerImage(installerFile *File) (string, error) {
 	for _, res := range installerFile.Content {
 		if res["kind"] == "Deployment" {
 
@@ -283,7 +283,7 @@ func getInstallerImage(installerFile File) (string, error) {
 	return "", errors.New("'kyma-installer' deployment is missing")
 }
 
-func replaceInstallerImage(installerFile File, imageURL string) error {
+func replaceInstallerImage(installerFile *File, imageURL string) error {
 	// Check if installer deployment has all the necessary fields and a container named kyma-installer-container.
 	// If so, replace the image with the imageURL parameter.
 	for _, config := range installerFile.Content {

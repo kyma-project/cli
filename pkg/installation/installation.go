@@ -211,7 +211,7 @@ func (i *Installation) prepareFiles() (map[string]*File, error) {
 	//In case of local installation from local sources, build installer image.
 	//TODO: add image build & push functionality for remote installation from local sources.
 	if i.Options.fromLocalSources && i.Options.IsLocal {
-		imageName, err := getInstallerImage(*files[installerFile])
+		imageName, err := getInstallerImage(files[installerFile])
 		if err != nil {
 			return nil, err
 		}
@@ -222,9 +222,9 @@ func (i *Installation) prepareFiles() (map[string]*File, error) {
 		}
 	} else if !i.Options.fromLocalSources {
 		if i.Options.remoteImage != "" {
-			err = replaceInstallerImage(*files[installerFile], i.Options.remoteImage)
+			err = replaceInstallerImage(files[installerFile], i.Options.remoteImage)
 		} else {
-			err = replaceInstallerImage(*files[installerFile], buildDockerImageString(i.Options.registryTemplate, i.Options.releaseVersion))
+			err = replaceInstallerImage(files[installerFile], buildDockerImageString(i.Options.registryTemplate, i.Options.releaseVersion))
 		}
 		if err != nil {
 			return nil, err
@@ -250,6 +250,11 @@ func (i *Installation) installInstaller(files map[string]*File) error {
 	if installationState.State != installationSDK.NoInstallationState {
 		i.currentStep.LogInfo("Installation already in progress, proceeding to next step...")
 		return nil
+	}
+
+	files, err = loadStringContent(files)
+	if err != nil {
+		return fmt.Errorf("error: failed to load installation files: %s", err.Error())
 	}
 
 	tillerFileContent := files[tillerFile].StringContent
