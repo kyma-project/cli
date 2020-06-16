@@ -149,10 +149,9 @@ func (i *Installation) loadInstallationFiles() (map[string]*File, error) {
 		} else {
 			reader, err = downloadFile(i.releaseFile(file.Path))
 		}
-		defer reader.Close()
 
 		if err != nil {
-			if name == tillerFile {
+			if name == tillerFile && (os.IsNotExist(err) || strings.Contains(err.Error(), "Not Found")) {
 				continue
 			}
 			return nil, err
@@ -170,6 +169,7 @@ func (i *Installation) loadInstallationFiles() (map[string]*File, error) {
 			resources = append(resources, m)
 		}
 
+		reader.Close()
 		file.Content = resources
 	}
 
@@ -177,25 +177,24 @@ func (i *Installation) loadInstallationFiles() (map[string]*File, error) {
 }
 
 func loadStringContent(installationFiles map[string]*File) (map[string]*File, error) {
-	for name, file := range installationFiles {
-		buf := &bytes.Buffer{}
-		enc := yaml.NewEncoder(buf)
-		for _, y := range file.Content {
-			err := enc.Encode(y)
+	for _, file := range installationFiles {
+		if file.Content != nil {
+			buf := &bytes.Buffer{}
+			enc := yaml.NewEncoder(buf)
+			for _, y := range file.Content {
+				err := enc.Encode(y)
+				if err != nil {
+					return installationFiles, err
+				}
+			}
+
+			err := enc.Close()
 			if err != nil {
 				return installationFiles, err
 			}
-		}
 
-		err := enc.Close()
-		if err != nil {
-			if name == tillerFile {
-				continue
-			}
-			return installationFiles, err
+			file.StringContent = buf.String()
 		}
-
-		file.StringContent = buf.String()
 	}
 
 	return installationFiles, nil
@@ -262,7 +261,12 @@ func downloadFile(path string) (io.ReadCloser, error) {
 	if err != nil {
 		return nil, err
 	}
-	return resp.Body, nil
+
+	if resp.StatusCode == http.StatusOK {
+		return resp.Body, nil
+	}
+
+	return nil, fmt.Errorf("couldn't download the file: %s, response: %v", path, resp.Status)
 }
 
 func getInstallerImage(installerFile *File) (string, error) {
