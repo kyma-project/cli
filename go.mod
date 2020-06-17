@@ -26,7 +26,7 @@ require (
 	github.com/kyma-incubator/hydroform/install v0.0.0-20200608065102-102f8232317b
 	github.com/kyma-incubator/hydroform/provision v0.0.0-20200528121905-83605518328f
 	github.com/kyma-incubator/octopus v0.0.0-20191009105757-2e9d86cd9967
-	github.com/kyma-project/kyma v0.5.1-0.20191106070956-5aa08d114ca0
+	github.com/kyma-project/kyma v0.5.1-0.20200211132707-0a36a0f31d7e
 	github.com/mattn/go-colorable v0.1.4 // indirect
 	github.com/mattn/go-isatty v0.0.10 // indirect
 	github.com/mitchellh/mapstructure v1.1.2

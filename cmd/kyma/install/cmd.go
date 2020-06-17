@@ -104,6 +104,7 @@ The standard installation uses the minimal configuration. The system performs th
 	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 1*time.Hour, "Time-out after which CLI stops watching the installation progress.")
 	cobraCmd.Flags().StringVarP(&o.Password, "password", "p", "", "Predefined cluster password.")
 	cobraCmd.Flags().StringArrayVarP(&o.OverrideConfigs, "override", "o", nil, "Path to a YAML file with parameters to override.")
+	cobraCmd.Flags().StringVarP(&o.ComponentsConfig, "components", "c", "", "Path to a YAML file with component list to override.")
 	cobraCmd.Flags().IntVar(&o.FallbackLevel, "fallbackLevel", 5, `If "source=latest-published", defines the number of commits from master branch taken into account if artifacts for newer commits do not exist yet`)
 	return cobraCmd
 }
@@ -164,21 +165,22 @@ func (cmd *command) Run() error {
 func (cmd *command) configureInstallation(clusterConfig clusterInfo) *installation.Installation {
 	return &installation.Installation{
 		Options: &installation.Options{
-			NoWait:          cmd.opts.NoWait,
-			Verbose:         cmd.opts.Verbose,
-			CI:              cmd.opts.CI,
-			NonInteractive:  cmd.Factory.NonInteractive,
-			Timeout:         cmd.opts.Timeout,
-			KubeconfigPath:  cmd.opts.KubeconfigPath,
-			Domain:          cmd.opts.Domain,
-			TLSCert:         cmd.opts.TLSCert,
-			TLSKey:          cmd.opts.TLSKey,
-			LocalSrcPath:    cmd.opts.LocalSrcPath,
-			Password:        cmd.opts.Password,
-			OverrideConfigs: cmd.opts.OverrideConfigs,
-			Source:          cmd.opts.Source,
-			FallbackLevel:   cmd.opts.FallbackLevel,
-			IsLocal:         clusterConfig.isLocal,
+			NoWait:           cmd.opts.NoWait,
+			Verbose:          cmd.opts.Verbose,
+			CI:               cmd.opts.CI,
+			NonInteractive:   cmd.Factory.NonInteractive,
+			Timeout:          cmd.opts.Timeout,
+			KubeconfigPath:   cmd.opts.KubeconfigPath,
+			Domain:           cmd.opts.Domain,
+			TLSCert:          cmd.opts.TLSCert,
+			TLSKey:           cmd.opts.TLSKey,
+			LocalSrcPath:     cmd.opts.LocalSrcPath,
+			Password:         cmd.opts.Password,
+			OverrideConfigs:  cmd.opts.OverrideConfigs,
+			ComponentsConfig: cmd.opts.ComponentsConfig,
+			Source:           cmd.opts.Source,
+			FallbackLevel:    cmd.opts.FallbackLevel,
+			IsLocal:          clusterConfig.isLocal,
 			LocalCluster: &installation.LocalCluster{
 				IP:       clusterConfig.localIP,
 				Profile:  clusterConfig.profile,

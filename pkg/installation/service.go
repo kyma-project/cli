@@ -8,7 +8,7 @@ import (
 	pkgErrors "github.com/pkg/errors"
 
 	"github.com/kyma-incubator/hydroform/install/installation"
-
+	"github.com/kyma-project/kyma/components/kyma-operator/pkg/apis/installer/v1alpha1"
 	"k8s.io/client-go/rest"
 )
 
@@ -25,8 +25,12 @@ type Service interface {
 	TriggerUninstall(kubeconfig *rest.Config) error
 }
 
-func NewInstallationService(kubeconfig *rest.Config, installationTimeout time.Duration, clusterCleanupResourceSelector string) (Service, error) {
-	installer, err := installation.NewKymaInstaller(kubeconfig, installation.WithTillerWaitTime(tillerWaitTime))
+func NewInstallationService(kubeconfig *rest.Config, installationTimeout time.Duration, clusterCleanupResourceSelector string, componentsConfig []v1alpha1.KymaComponent) (Service, error) {
+	installer, err := installation.NewKymaInstaller(
+		kubeconfig,
+		installation.WithTillerWaitTime(tillerWaitTime),
+		installation.WithInstallationCRModification(GetInstallationCRModificationFunc(componentsConfig)),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -89,4 +93,12 @@ func (s *installationService) CheckInstallationState(kubeconfig *rest.Config) (i
 
 func (s *installationService) TriggerUninstall(kubeconfig *rest.Config) error {
 	return installation.TriggerUninstall(kubeconfig)
+}
+
+func GetInstallationCRModificationFunc(componentsList []v1alpha1.KymaComponent) func(*v1alpha1.Installation) {
+	return func(installation *v1alpha1.Installation) {
+		if len(componentsList) > 0 {
+			installation.Spec.Components = componentsList
+		}
+	}
 }

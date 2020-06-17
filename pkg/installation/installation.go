@@ -12,6 +12,7 @@ import (
 	"github.com/kyma-project/cli/cmd/kyma/version"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/pkg/step"
+	"github.com/kyma-project/kyma/components/kyma-operator/pkg/apis/installer/v1alpha1"
 	pkgErrors "github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -31,6 +32,11 @@ const (
 	installerCRFile     = "installerCR"
 	installerConfigFile = "installerConfig"
 )
+
+// ComponentsConfig is used to parse component list from the configuration
+type ComponentsConfig struct {
+	Components []v1alpha1.KymaComponent `json:"components"`
+}
 
 // Installation contains the installation elements and configuration options.
 type Installation struct {
@@ -83,11 +89,6 @@ func (i *Installation) InstallKyma() (*Result, error) {
 	var err error
 	if i.k8s, err = kube.NewFromConfigWithTimeout("", i.Options.KubeconfigPath, i.Options.Timeout); err != nil {
 		return nil, pkgErrors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
-	}
-
-	i.service, err = NewInstallationService(i.k8s.Config(), i.Options.Timeout, "")
-	if err != nil {
-		return nil, pkgErrors.Wrap(err, "Failed to create installation service. Make sure your kubeconfig is valid")
 	}
 
 	s := i.newStep("Checking existence of previous installation")
@@ -280,7 +281,17 @@ func (i *Installation) prepareFiles() (map[string]*File, error) {
 }
 
 func (i *Installation) installInstaller(files map[string]*File) error {
-	files, err := loadStringContent(files)
+	componentList, err := i.loadComponentsConfig()
+	if err != nil {
+		return fmt.Errorf("error: Could not load components configuration file. Make sure file is a valid YAML and contains component list: %s", err.Error())
+	}
+
+	i.service, err = NewInstallationService(i.k8s.Config(), i.Options.Timeout, "", componentList)
+	if err != nil {
+		return fmt.Errorf("Failed to create installation service. Make sure your kubeconfig is valid: %s", err.Error())
+	}
+
+	files, err = loadStringContent(files)
 	if err != nil {
 		return fmt.Errorf("error: failed to load installation files: %s", err.Error())
 	}
