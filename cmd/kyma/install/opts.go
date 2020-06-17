@@ -22,7 +22,6 @@ type Options struct {
 	OverrideConfigs []string
 	Source          string
 	FallbackLevel   int
-	Force           bool
 }
 
 //NewOptions creates options with default values
