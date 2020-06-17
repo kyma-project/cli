@@ -1,22 +1,29 @@
 package installation
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/Masterminds/semver"
 	docker "github.com/fsouza/go-dockerclient"
+	"github.com/kyma-incubator/hydroform/install/config"
+	installationSDK "github.com/kyma-incubator/hydroform/install/installation"
+	"github.com/kyma-incubator/hydroform/install/scheme"
 	"github.com/kyma-project/cli/internal/minikube"
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/storage/memory"
+	"gopkg.in/yaml.v2"
 	v1 "k8s.io/api/apps/v1"
 )
 
@@ -112,6 +119,136 @@ func (i *Installation) getLatestAvailableMasterHash() (string, error) {
 	return "", errors.New("not found latest available master hash")
 }
 
+func (i *Installation) loadInstallationFiles() (map[string]*File, error) {
+	var installationFiles map[string]*File
+	if i.Options.IsLocal {
+		installationFiles =
+			map[string]*File{
+				tillerFile:          {Path: "tiller.yaml"},
+				installerFile:       {Path: "installer-local.yaml"},
+				installerCRFile:     {Path: "installer-cr.yaml.tpl"},
+				installerConfigFile: {Path: "installer-config-local.yaml.tpl"},
+			}
+	} else {
+		installationFiles =
+			map[string]*File{
+				tillerFile:      {Path: "tiller.yaml"},
+				installerFile:   {Path: "installer.yaml"},
+				installerCRFile: {Path: "installer-cr-cluster.yaml.tpl"},
+			}
+	}
+
+	for name, file := range installationFiles {
+		resources := make([]map[string]interface{}, 0)
+		var reader io.ReadCloser
+		var err error
+		if i.Options.fromLocalSources {
+			path := filepath.Join(i.Options.LocalSrcPath, "installation",
+				"resources", file.Path)
+			reader, err = os.Open(path)
+		} else {
+			reader, err = downloadFile(i.releaseFile(file.Path))
+		}
+
+		if err != nil {
+			if name == tillerFile && (os.IsNotExist(err) || strings.Contains(err.Error(), "Not Found")) {
+				continue
+			}
+			return nil, err
+		}
+
+		dec := yaml.NewDecoder(reader)
+		for {
+			m := make(map[string]interface{})
+			err := dec.Decode(m)
+			if err == io.EOF {
+				break
+			} else if err != nil {
+				return nil, err
+			}
+			resources = append(resources, m)
+		}
+
+		reader.Close()
+		file.Content = resources
+	}
+
+	return installationFiles, nil
+}
+
+func loadStringContent(installationFiles map[string]*File) (map[string]*File, error) {
+	for _, file := range installationFiles {
+		if file.Content != nil {
+			buf := &bytes.Buffer{}
+			enc := yaml.NewEncoder(buf)
+			for _, y := range file.Content {
+				err := enc.Encode(y)
+				if err != nil {
+					return installationFiles, err
+				}
+			}
+
+			err := enc.Close()
+			if err != nil {
+				return installationFiles, err
+			}
+
+			file.StringContent = buf.String()
+		}
+	}
+
+	return installationFiles, nil
+}
+
+func (i *Installation) loadConfigurations(files map[string]*File) (installationSDK.Configuration, error) {
+	var configuration installationSDK.Configuration
+	var configFileContent string
+	for _, file := range i.Options.OverrideConfigs {
+		oFile, err := os.Open(file)
+		if err != nil {
+			return configuration, fmt.Errorf("error: unable to open file: %s", err.Error())
+		}
+
+		var rawData bytes.Buffer
+		if _, err = io.Copy(&rawData, oFile); err != nil {
+			fmt.Printf("unable to read data from file: %s.\n", file)
+		}
+
+		configFileContent = rawData.String() + "---\n" + configFileContent
+	}
+
+	if i.Options.IsLocal {
+		//Merge with local config file
+		configFileContent = files[installerConfigFile].StringContent + "---\n" + configFileContent
+	}
+
+	if configFileContent != "" {
+		decoder, err := scheme.DefaultDecoder()
+		if err != nil {
+			return configuration, fmt.Errorf("error: failed to create default decoder: %s", err.Error())
+		}
+
+		configuration, err = config.YAMLToConfiguration(decoder, configFileContent)
+		if err != nil {
+			return configuration, fmt.Errorf("error: failed to parse configurations: %s", err.Error())
+		}
+	}
+
+	if i.Options.IsLocal {
+		configuration.Configuration.Set("global.minikubeIP", i.Options.LocalCluster.IP, false)
+	}
+	if i.Options.Password != "" {
+		configuration.Configuration.Set("global.adminPassword", base64.StdEncoding.EncodeToString([]byte(i.Options.Password)), false)
+	}
+	if i.Options.Domain != "" && i.Options.Domain != defaultDomain {
+		configuration.Configuration.Set("global.domainName", i.Options.Domain, false)
+		configuration.Configuration.Set("global.tlsCrt", i.Options.TLSCert, false)
+		configuration.Configuration.Set("global.tlsKey", i.Options.TLSKey, false)
+	}
+
+	return configuration, nil
+}
+
 func buildDockerImageString(template string, version string) string {
 	return fmt.Sprintf(template, version)
 }
@@ -124,11 +261,16 @@ func downloadFile(path string) (io.ReadCloser, error) {
 	if err != nil {
 		return nil, err
 	}
-	return resp.Body, nil
+
+	if resp.StatusCode == http.StatusOK {
+		return resp.Body, nil
+	}
+
+	return nil, fmt.Errorf("couldn't download the file: %s, response: %v", path, resp.Status)
 }
 
-func getInstallerImage(installerFile File) (string, error) {
-	for _, res := range installerFile {
+func getInstallerImage(installerFile *File) (string, error) {
+	for _, res := range installerFile.Content {
 		if res["kind"] == "Deployment" {
 
 			var deployment v1.Deployment
@@ -145,10 +287,10 @@ func getInstallerImage(installerFile File) (string, error) {
 	return "", errors.New("'kyma-installer' deployment is missing")
 }
 
-func replaceInstallerImage(installerFile File, imageURL string) error {
+func replaceInstallerImage(installerFile *File, imageURL string) error {
 	// Check if installer deployment has all the necessary fields and a container named kyma-installer-container.
 	// If so, replace the image with the imageURL parameter.
-	for _, config := range installerFile {
+	for _, config := range installerFile.Content {
 		if kind, ok := config["kind"]; ok && kind == "Deployment" {
 			if spec, ok := config["spec"].(map[interface{}]interface{}); ok {
 				if template, ok := spec["template"].(map[interface{}]interface{}); ok {
