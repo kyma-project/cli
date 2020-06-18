@@ -25,6 +25,9 @@ type Options struct {
 	// OverrideConfigs specifies the path to a yaml file with parameters to override.
 	// +optional
 	OverrideConfigs []string `json:"overrideConfigs,omitempty"`
+	// ComponentsConfig specifies the path to a yaml file with components to override.
+	// +optional
+	ComponentsConfig string `json:"componentsConfig,omitempty"`
 	// Password specifies the predefined cluster password.
 	// +optional
 	Password string `json:"password,omitempty"`

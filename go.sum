@@ -447,6 +447,8 @@ github.com/kyma-incubator/octopus v0.0.0-20191009105757-2e9d86cd9967 h1:Y+lnL/+u
 github.com/kyma-incubator/octopus v0.0.0-20191009105757-2e9d86cd9967/go.mod h1:iWcALHIWFfGRmnVFFhOjB83dMC8njfmoemA/XuKIpVY=
 github.com/kyma-project/kyma v0.5.1-0.20191106070956-5aa08d114ca0 h1:FOy/aPGEt+ycdWNfeGx6UFG/Ziiy7hEi0D6T0lCPonM=
 github.com/kyma-project/kyma v0.5.1-0.20191106070956-5aa08d114ca0/go.mod h1:cfj5AQwIOmmoXLZUhW3bIiaB66Z6vgjCYu7TRK3+1lc=
+github.com/kyma-project/kyma v0.5.1-0.20200211132707-0a36a0f31d7e h1:VhawsyycqPW3644aCK0nYl6lglLCroLu4Doi7AZI6vQ=
+github.com/kyma-project/kyma v0.5.1-0.20200211132707-0a36a0f31d7e/go.mod h1:cfj5AQwIOmmoXLZUhW3bIiaB66Z6vgjCYu7TRK3+1lc=
 github.com/lib/pq v1.0.0 h1:X5PMW56eZitiTeO7tKzZxFCSpbFZJtkMMooicw2us9A=
 github.com/lib/pq v1.0.0/go.mod h1:5WUZQaWbwv1U+lTReE5YruASi9Al49XbQIvNi/34Woo=
 github.com/lusis/go-artifactory v0.0.0-20160115162124-7e4ce345df82 h1:wnfcqULT+N2seWf6y4yHzmi7GD2kNx4Ute0qArktD48=

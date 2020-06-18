@@ -19,6 +19,7 @@ import (
 	installationSDK "github.com/kyma-incubator/hydroform/install/installation"
 	"github.com/kyma-incubator/hydroform/install/scheme"
 	"github.com/kyma-project/cli/internal/minikube"
+	"github.com/kyma-project/kyma/components/kyma-operator/pkg/apis/installer/v1alpha1"
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 	"gopkg.in/src-d/go-git.v4"
@@ -200,6 +201,31 @@ func loadStringContent(installationFiles map[string]*File) (map[string]*File, er
 	return installationFiles, nil
 }
 
+func (i *Installation) loadComponentsConfig() ([]v1alpha1.KymaComponent, error) {
+	if i.Options.ComponentsConfig != "" {
+		data, err := ioutil.ReadFile(i.Options.ComponentsConfig)
+		if err != nil {
+			return nil, err
+		}
+
+		var installationCR v1alpha1.Installation
+		err = yaml.Unmarshal(data, &installationCR)
+		if err != nil || len(installationCR.Spec.Components) < 1 {
+			var config ComponentsConfig
+			err = yaml.Unmarshal(data, &config)
+			if err != nil {
+				return nil, err
+			}
+
+			return config.Components, nil
+		}
+
+		return installationCR.Spec.Components, nil
+	}
+
+	return []v1alpha1.KymaComponent{}, nil
+}
+
 func (i *Installation) loadConfigurations(files map[string]*File) (installationSDK.Configuration, error) {
 	var configuration installationSDK.Configuration
 	var configFileContent string
@@ -214,12 +240,12 @@ func (i *Installation) loadConfigurations(files map[string]*File) (installationS
 			fmt.Printf("unable to read data from file: %s.\n", file)
 		}
 
-		configFileContent = rawData.String() + "---\n" + configFileContent
+		configFileContent = rawData.String() + "\n---\n" + configFileContent
 	}
 
 	if i.Options.IsLocal {
 		//Merge with local config file
-		configFileContent = files[installerConfigFile].StringContent + "---\n" + configFileContent
+		configFileContent = files[installerConfigFile].StringContent + "\n---\n" + configFileContent
 	}
 
 	if configFileContent != "" {
