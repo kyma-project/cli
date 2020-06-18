@@ -365,6 +365,17 @@ func (i *Installation) waitForInstaller(prevInstallationStatus string) error {
 }
 
 func (i *Installation) buildResult() (*Result, error) {
+	// In case that noWait flag is set, check that Kyma was actually installed before building the Result
+	if i.Options.NoWait {
+		installationState, err := i.service.CheckInstallationState(i.k8s.Config())
+		if err != nil {
+			return nil, err
+		}
+		if installationState.State != "Installed" {
+			return nil, nil
+		}
+	}
+
 	v, err := version.KymaVersion(i.Options.Verbose, i.k8s)
 	if err != nil {
 		return nil, err
