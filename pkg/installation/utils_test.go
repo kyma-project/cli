@@ -158,4 +158,14 @@ func Test_LoadComponentsConfig(t *testing.T) {
 	components, err := installation.loadComponentsConfig()
 	require.NoError(t, err)
 	require.Equal(t, 6, len(components))
+
+	installation2 := &Installation{
+		Options: &Options{
+			ComponentsConfig: path.Join("../../internal/testdata", "installationCR.yaml"),
+		},
+	}
+
+	components, err = installation2.loadComponentsConfig()
+	require.NoError(t, err)
+	require.Equal(t, 8, len(components))
 }

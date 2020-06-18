@@ -208,13 +208,19 @@ func (i *Installation) loadComponentsConfig() ([]v1alpha1.KymaComponent, error) 
 			return nil, err
 		}
 
-		var config ComponentsConfig
-		err = yaml.Unmarshal(data, &config)
-		if err != nil {
-			return nil, err
+		var installationCR v1alpha1.Installation
+		err = yaml.Unmarshal(data, &installationCR)
+		if err != nil || len(installationCR.Spec.Components) < 1 {
+			var config ComponentsConfig
+			err = yaml.Unmarshal(data, &config)
+			if err != nil {
+				return nil, err
+			}
+
+			return config.Components, nil
 		}
 
-		return config.Components, nil
+		return installationCR.Spec.Components, nil
 	}
 
 	return []v1alpha1.KymaComponent{}, nil
