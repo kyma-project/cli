@@ -132,6 +132,9 @@ func (cmd *command) Run() error {
 	if err != nil {
 		return err
 	}
+	if result == nil {
+		return nil
+	}
 
 	if !cmd.opts.CI {
 		if err := cmd.importCertificate(trust.NewCertifier(cmd.K8s)); err != nil {
