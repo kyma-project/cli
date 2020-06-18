@@ -11,4 +11,3 @@ components:
   namespace: "istio-system"
 - name: "dex"
   namespace: "kyma-system"
-

@@ -8,6 +8,33 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func Test_GetInstallerImage(t *testing.T) {
+	const image = "eu.gcr.io/kyma-project/kyma-installer:63f27f76"
+	testData := File{Content: []map[string]interface{}{{
+		"apiVersion": "installer.kyma-project.io/v1alpha1",
+		"kind":       "Deployment",
+		"spec": map[interface{}]interface{}{
+			"template": map[interface{}]interface{}{
+				"spec": map[interface{}]interface{}{
+					"serviceAccountName": "kyma-installer",
+					"containers": []interface{}{
+						map[interface{}]interface{}{
+							"name":  "kyma-installer-container",
+							"image": image,
+						},
+					},
+				},
+			},
+		},
+	},
+	},
+	}
+
+	insImage, err := getInstallerImage(&testData)
+	require.NoError(t, err)
+	require.Equal(t, image, insImage)
+}
+
 func Test_ReplaceDockerImageURL(t *testing.T) {
 	const replacedWithData = "testImage!"
 	testData := []struct {
