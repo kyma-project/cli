@@ -25,7 +25,20 @@ type Service interface {
 	TriggerUninstall(kubeconfig *rest.Config) error
 }
 
-func NewInstallationService(kubeconfig *rest.Config, installationTimeout time.Duration, clusterCleanupResourceSelector string, componentsConfig []v1alpha1.KymaComponent) (Service, error) {
+func NewInstallationService(kubeconfig *rest.Config, installationTimeout time.Duration, clusterCleanupResourceSelector string) (Service, error) {
+	installer, err := installation.NewKymaInstaller(kubeconfig)
+	if err != nil {
+		return nil, err
+	}
+
+	return &installationService{
+		kymaInstallationTimeout:        installationTimeout,
+		kymaInstaller:                  *installer,
+		clusterCleanupResourceSelector: clusterCleanupResourceSelector,
+	}, nil
+}
+
+func NewInstallationServiceWithComponents(kubeconfig *rest.Config, installationTimeout time.Duration, clusterCleanupResourceSelector string, componentsConfig []v1alpha1.KymaComponent) (Service, error) {
 	installer, err := installation.NewKymaInstaller(
 		kubeconfig,
 		installation.WithTillerWaitTime(tillerWaitTime),

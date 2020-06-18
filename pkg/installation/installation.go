@@ -153,13 +153,19 @@ func (i *Installation) InstallKyma() (*Result, error) {
 }
 
 func (i *Installation) checkPrevInstallation() (string, error) {
+	var err error
+	i.service, err = NewInstallationService(i.k8s.Config(), i.Options.Timeout, "")
+	if err != nil {
+		return "", fmt.Errorf("failed to create installation service. Make sure your kubeconfig is valid: %s", err.Error())
+	}
+
 	prevInstallationState, err := i.service.CheckInstallationState(i.k8s.Config())
 	if err != nil {
 		installErr := installationSDK.InstallationError{}
 		if errors.As(err, &installErr) {
 			prevInstallationState.State = "Error"
 		} else {
-			return "", fmt.Errorf("error: failed to check installation state: %s", err.Error())
+			return "", fmt.Errorf("failed to check installation state: %s", err.Error())
 		}
 	}
 
@@ -286,7 +292,7 @@ func (i *Installation) installInstaller(files map[string]*File) error {
 		return fmt.Errorf("error: Could not load components configuration file. Make sure file is a valid YAML and contains component list: %s", err.Error())
 	}
 
-	i.service, err = NewInstallationService(i.k8s.Config(), i.Options.Timeout, "", componentList)
+	i.service, err = NewInstallationServiceWithComponents(i.k8s.Config(), i.Options.Timeout, "", componentList)
 	if err != nil {
 		return fmt.Errorf("Failed to create installation service. Make sure your kubeconfig is valid: %s", err.Error())
 	}
