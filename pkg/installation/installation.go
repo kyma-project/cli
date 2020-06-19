@@ -156,7 +156,7 @@ func (i *Installation) checkPrevInstallation() (string, error) {
 	var err error
 	i.service, err = NewInstallationService(i.k8s.Config(), i.Options.Timeout, "")
 	if err != nil {
-		return "", fmt.Errorf("failed to create installation service. Make sure your kubeconfig is valid: %s", err.Error())
+		return "", fmt.Errorf("Failed to create installation service. Make sure your kubeconfig is valid: %s", err.Error())
 	}
 
 	prevInstallationState, err := i.service.CheckInstallationState(i.k8s.Config())
@@ -165,7 +165,7 @@ func (i *Installation) checkPrevInstallation() (string, error) {
 		if errors.As(err, &installErr) {
 			prevInstallationState.State = "Error"
 		} else {
-			return "", fmt.Errorf("failed to check installation state: %s", err.Error())
+			return "", fmt.Errorf("Failed to get installation state: %s", err.Error())
 		}
 	}
 
@@ -187,7 +187,7 @@ func (i *Installation) checkPrevInstallation() (string, error) {
 		i.currentStep.LogInfof("Installation in version %s is already in progress", kymaVersion)
 
 	case "":
-		return "", fmt.Errorf("failed to get the installation status")
+		return "", fmt.Errorf("Failed to get the installation status")
 	}
 
 	return prevInstallationState.State, nil
@@ -289,7 +289,7 @@ func (i *Installation) prepareFiles() (map[string]*File, error) {
 func (i *Installation) installInstaller(files map[string]*File) error {
 	componentList, err := i.loadComponentsConfig()
 	if err != nil {
-		return fmt.Errorf("error: Could not load components configuration file. Make sure file is a valid YAML and contains component list: %s", err.Error())
+		return fmt.Errorf("Could not load components configuration file. Make sure file is a valid YAML and contains component list: %s", err.Error())
 	}
 
 	i.service, err = NewInstallationServiceWithComponents(i.k8s.Config(), i.Options.Timeout, "", componentList)
@@ -299,7 +299,7 @@ func (i *Installation) installInstaller(files map[string]*File) error {
 
 	files, err = loadStringContent(files)
 	if err != nil {
-		return fmt.Errorf("error: failed to load installation files: %s", err.Error())
+		return fmt.Errorf("Failed to load installation files: %s", err.Error())
 	}
 
 	tillerFileContent := files[tillerFile].StringContent
@@ -311,7 +311,7 @@ func (i *Installation) installInstaller(files map[string]*File) error {
 
 	err = i.service.TriggerInstallation(i.k8s.Config(), tillerFileContent, mergedInstallerFileContent, configuration)
 	if err != nil {
-		return fmt.Errorf("error: failed to start installation: %s", err.Error())
+		return fmt.Errorf("Failed to start installation: %s", err.Error())
 	}
 
 	return i.k8s.WaitPodStatusByLabel("kyma-installer", "name", "kyma-installer", corev1.PodRunning)
@@ -325,6 +325,7 @@ func (i *Installation) waitForInstaller(prevInstallationStatus string) error {
 		i.newStep("Re-attaching installation status")
 	}
 
+	var errorOccured bool
 	var timeout <-chan time.Time
 	if i.Options.Timeout > 0 {
 		timeout = time.After(i.Options.Timeout)
@@ -346,13 +347,16 @@ func (i *Installation) waitForInstaller(prevInstallationStatus string) error {
 			if err != nil {
 				installErr := installationSDK.InstallationError{}
 				if errors.As(err, &installErr) {
-					i.currentStep.LogErrorf("%s, which may be OK. Will retry later...", installErr.Error())
-					i.currentStep.LogInfo("To fetch the error logs from the installer, run: kubectl get installation kyma-installation -o go-template --template='{{- range .status.errorLog }}{{printf \"%s:\\n %s\\n\" .component .log}}{{- end}}'")
-					i.currentStep.LogInfo("To fetch the application logs from the installer, run: kubectl logs -n kyma-installer -l name=kyma-installer")
+					if !errorOccured {
+						errorOccured = true
+						i.currentStep.LogErrorf("%s, which may be OK. Will retry later...", installErr.Error())
+						i.currentStep.LogInfo("To fetch the error logs from the installer, run: kubectl get installation kyma-installation -o go-template --template='{{- range .status.errorLog }}{{printf \"%s:\\n %s\\n\" .component .log}}{{- end}}'")
+						i.currentStep.LogInfo("To fetch the application logs from the installer, run: kubectl logs -n kyma-installer -l name=kyma-installer")
+					}
 					time.Sleep(10 * time.Second)
 					continue
 				} else {
-					return fmt.Errorf("error: failed to check installation state: %s", err.Error())
+					return fmt.Errorf("Failed to get installation state: %s", err.Error())
 				}
 			}
 
@@ -362,6 +366,7 @@ func (i *Installation) waitForInstaller(prevInstallationStatus string) error {
 				return nil
 
 			case "InProgress":
+				errorOccured = false
 				// only do something if the description has changed
 				if installationState.Description != currentDesc {
 					i.currentStep.Success()
