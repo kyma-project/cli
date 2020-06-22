@@ -237,7 +237,7 @@ func (i *Installation) validateConfigurations() error {
 		i.Options.configVersion = i.Options.Source
 		i.Options.registryTemplate = registryImagePattern
 
-	//Install the specific commit version (ex: 1.3.0)
+	//Install the specific commit hash (e.g. 34edf09a)
 	case isHex(i.Options.Source):
 		i.Options.releaseVersion = fmt.Sprintf("master-%s", i.Options.Source[:8])
 		i.Options.configVersion = i.Options.Source
