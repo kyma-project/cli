@@ -237,12 +237,18 @@ func (i *Installation) validateConfigurations() error {
 		i.Options.configVersion = i.Options.Source
 		i.Options.registryTemplate = registryImagePattern
 
+	//Install the specific commit version (ex: 1.3.0)
+	case isHex(i.Options.Source):
+		i.Options.releaseVersion = fmt.Sprintf("master-%s", i.Options.Source[:8])
+		i.Options.configVersion = i.Options.Source
+		i.Options.registryTemplate = registryImagePattern
+
 	//Install the kyma with the specific installer image (docker image URL)
 	case isDockerImage(i.Options.Source):
 		i.Options.remoteImage = i.Options.Source
 		i.Options.configVersion = "master"
 	default:
-		return fmt.Errorf("failed to parse the source flag. It can take one of the following: 'local', 'latest', 'latest-published', release version (e.g. 1.4.1), or installer image")
+		return fmt.Errorf("failed to parse the source flag. It can take one of the following: 'local', 'latest', 'latest-published', release version (e.g. 1.4.1), commit hash (e.g. 34edf09a) or installer image")
 	}
 
 	// If one of the --domain, --tlsKey, or --tlsCert is specified, the others must be specified as well (XOR logic used below)
