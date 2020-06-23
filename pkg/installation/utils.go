@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -347,4 +348,9 @@ func isDockerImage(s string) bool {
 func isSemVer(s string) bool {
 	_, err := semver.NewVersion(s)
 	return err == nil
+}
+
+func isHex(s string) bool {
+	_, err := hex.DecodeString(s)
+	return err == nil && len(s) > 7
 }

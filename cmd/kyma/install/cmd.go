@@ -98,6 +98,7 @@ The standard installation uses the minimal configuration. The system performs th
 	- To use the specific release, write "kyma install --source=1.3.0".
 	- To use the latest master, write "kyma install --source=latest".
 	- To use the latest published master, which is the latest commit with released images, write "kyma install --source=latest-published".
+	- To use a commit, write "kyma install --source=34edf09a". 
 	- To use the local sources, write "kyma install --source=local". 
 	- To use a custom installer image, write kyma "install --source=user/my-kyma-installer:v1.4.0".`)
 	cobraCmd.Flags().StringVarP(&o.LocalSrcPath, "src-path", "", "", "Absolute path to local sources.")
