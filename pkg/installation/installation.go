@@ -309,13 +309,17 @@ func (i *Installation) installInstaller(files map[string]*File) error {
 	}
 
 	tillerFileContent := files[tillerFile].StringContent
-	mergedInstallerFileContent := files[installerFile].StringContent + "---\n" + files[installerCRFile].StringContent
+	installerFileContent := files[installerFile].StringContent
+	installerCRFileContent := files[installerCRFile].StringContent
+	// RG: Remove merged
+	// mergedInstallerFileContent := files[installerFile].StringContent + "---\n" + files[installerCRFile].StringContent
 	configuration, err := i.loadConfigurations(files)
 	if err != nil {
 		return pkgErrors.Wrap(err, "unable to load the configurations")
 	}
 
-	err = i.service.TriggerInstallation(i.k8s.Config(), tillerFileContent, mergedInstallerFileContent, configuration)
+	// RG: Change the function call
+	err = i.service.TriggerInstallation(i.k8s.Config(), tillerFileContent, installerFileContent, installerCRFileContent, configuration)
 	if err != nil {
 		return fmt.Errorf("Failed to start installation: %s", err.Error())
 	}
