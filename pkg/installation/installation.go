@@ -216,9 +216,9 @@ func (i *Installation) checkUpgradeCompatability(kymaVersion string, cliVersion 
 	}
 
 	if kymaSemVersion.GreaterThan(cliSemVersion) {
-		return fmt.Errorf("Kyma version(%s) is greater than the cli version(%s). Kyma does not support a dedicated downgrade procedure.", kymaSemVersion.String(), cliSemVersion.String())
+		return fmt.Errorf("kyma version(%s) is greater than the cli version(%s). Kyma does not support a dedicated downgrade procedure.", kymaSemVersion.String(), cliSemVersion.String())
 	} else if kymaSemVersion.Equal(cliSemVersion) {
-		return fmt.Errorf("Kyma version(%s) is already matching the cli version(%s)", kymaSemVersion.String(), cliSemVersion.String())
+		return fmt.Errorf("kyma version(%s) is already matching the cli version(%s)", kymaSemVersion.String(), cliSemVersion.String())
 	} else if kymaSemVersion.Major() != cliSemVersion.Major() {
 		return fmt.Errorf("mismatch between kyma version(%s) and cli version(%s) is more than one minor version", kymaSemVersion.String(), cliSemVersion.String())
 	} else if kymaSemVersion.Minor() != cliSemVersion.Minor() && kymaSemVersion.Minor()+1 != cliSemVersion.Minor() {
@@ -240,13 +240,13 @@ func (i *Installation) promptMigrationGuide(kymaVersion string, cliVersion strin
 		return fmt.Errorf("unable to parse cli version(%s): %v", cliVersion, err)
 	}
 
-	guideUrl := fmt.Sprintf(
+	guideURL := fmt.Sprintf(
 		"https://github.com/kyma-project/kyma/blob/release-%v.%v/docs/migration-guides/%v.%v-%v.%v.md",
 		cliSemVersion.Major(), cliSemVersion.Minor(),
 		kymaSemVersion.Major(), kymaSemVersion.Minor(),
 		cliSemVersion.Major(), cliSemVersion.Minor(),
 	)
-	statusCode, err := doGet(guideUrl)
+	statusCode, err := doGet(guideURL)
 	if err != nil {
 		return fmt.Errorf("unable to check migration guide url: %v", err)
 	}
@@ -259,7 +259,7 @@ func (i *Installation) promptMigrationGuide(kymaVersion string, cliVersion strin
 		return fmt.Errorf("unexpected status code %v when checking migration guide url", statusCode)
 	}
 
-	promptMsg := fmt.Sprintf("Did you apply the migration guide? %s", guideUrl)
+	promptMsg := fmt.Sprintf("Did you apply the migration guide? %s", guideURL)
 	isGuideChecked := i.currentStep.PromptYesNo(promptMsg)
 	if !isGuideChecked {
 		return fmt.Errorf("migration guide must be applied before Kyma upgrade")

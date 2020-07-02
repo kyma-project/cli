@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func getHttpClient() *http.Client {
+func getHTTPClient() *http.Client {
 	client := &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
@@ -14,7 +14,7 @@ func getHttpClient() *http.Client {
 }
 
 func doGet(url string) (int, error) {
-	httpClient := getHttpClient()
+	httpClient := getHTTPClient()
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return 0, fmt.Errorf("cannot create a new HTTP request: %v", err)
