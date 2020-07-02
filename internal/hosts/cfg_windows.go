@@ -1,5 +1,5 @@
 // +build windows
 
-package install
+package hosts
 
 const hostsFile = "C:\\Windows\\system32\\drivers\\etc\\hosts"
