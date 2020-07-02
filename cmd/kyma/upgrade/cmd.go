@@ -35,6 +35,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd := &cobra.Command{
 		Use:   "upgrade",
 		Short: "Upgrades Kyma to match cli version.",
+		Long:  `Use this command to upgrade Kyma on a cluster in order to make its version matching the cli version`,
 		RunE:  func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 	}
 
