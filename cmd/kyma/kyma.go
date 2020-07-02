@@ -21,6 +21,7 @@ import (
 	"github.com/kyma-project/cli/cmd/kyma/version"
 
 	"github.com/kyma-project/cli/cmd/kyma/provision"
+	"github.com/kyma-project/cli/cmd/kyma/upgrade"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/spf13/cobra"
 )
@@ -63,6 +64,7 @@ For more information, see: https://github.com/kyma-project/cli
 		install.NewCmd(install.NewOptions(o)),
 		provisionCmd,
 		console.NewCmd(console.NewOptions(o)),
+		upgrade.NewCmd(upgrade.NewOptions(o)),
 	)
 
 	testCmd := test.NewCmd()
