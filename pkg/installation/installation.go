@@ -216,7 +216,7 @@ func (i *Installation) checkUpgradeCompatability(kymaVersion string, cliVersion 
 	}
 
 	if kymaSemVersion.GreaterThan(cliSemVersion) {
-		return fmt.Errorf("kyma version(%s) is greater than the cli version(%s). Kyma does not support a dedicated downgrade procedure.", kymaSemVersion.String(), cliSemVersion.String())
+		return fmt.Errorf("kyma version(%s) is greater than the cli version(%s). Kyma does not support a dedicated downgrade procedure", kymaSemVersion.String(), cliSemVersion.String())
 	} else if kymaSemVersion.Equal(cliSemVersion) {
 		return fmt.Errorf("kyma version(%s) is already matching the cli version(%s)", kymaSemVersion.String(), cliSemVersion.String())
 	} else if kymaSemVersion.Major() != cliSemVersion.Major() {
