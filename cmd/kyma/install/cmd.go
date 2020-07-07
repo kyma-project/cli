@@ -212,9 +212,8 @@ func (cmd *command) importCertificate(ca trust.Certifier) error {
 }
 
 func (cmd *command) printSummary(result *installation.Result) error {
-	nicePrint := nice.Nice{}
-	if cmd.Factory.NonInteractive {
-		nicePrint.NonInteractive = true
+	nicePrint := nice.Nice{
+		NonInteractive: cmd.Factory.NonInteractive,
 	}
 
 	fmt.Println()
