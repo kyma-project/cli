@@ -70,8 +70,8 @@ func (cmd *command) Run() error {
 	}
 	s.Successf("Cluster info read")
 
-	installationInstance := cmd.configureInstallation(clusterConfig)
-	result, err := installationInstance.InstallKyma(upgradeAction)
+	i := cmd.configureInstallation(clusterConfig)
+	result, err := i.InstallKyma(upgradeAction)
 	if err != nil {
 		return err
 	}
