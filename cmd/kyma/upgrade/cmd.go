@@ -34,19 +34,19 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cobraCmd := &cobra.Command{
 		Use:   "upgrade",
-		Short: "Upgrades Kyma to match cli version.",
-		Long:  `Use this command to upgrade Kyma on a cluster in order to make its version matching the cli version`,
+		Short: "Upgrades Kyma to match  the CLI version.",
+		Long:  `Use this command to upgrade the Kyma version on a cluster so that it matches the CLI version`,
 		RunE:  func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 	}
 
-	cobraCmd.Flags().BoolVarP(&o.NoWait, "noWait", "n", false, "Flag that determines if the command should wait for Kyma upgrade to complete.")
-	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", defaultDomain, "Domain used for upgrade.")
-	cobraCmd.Flags().StringVarP(&o.TLSCert, "tlsCert", "", "", "TLS certificate for the domain used for upgrade. The certificate must be a base64-encoded value.")
-	cobraCmd.Flags().StringVarP(&o.TLSKey, "tlsKey", "", "", "TLS key for the domain used for upgrade. The key must be a base64-encoded value.")
-	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 1*time.Hour, "Time-out after which CLI stops watching the upgrade progress.")
+	cobraCmd.Flags().BoolVarP(&o.NoWait, "noWait", "n", false, "Determines if the command should wait for the Kyma upgrade to complete.")
+	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", defaultDomain, "Domain used for the upgrade.")
+	cobraCmd.Flags().StringVarP(&o.TLSCert, "tlsCert", "", "", "TLS certificate for the domain used for the upgrade. The certificate must be a base64-encoded value.")
+	cobraCmd.Flags().StringVarP(&o.TLSKey, "tlsKey", "", "", "TLS key for the domain used for the upgrade. The key must be a base64-encoded value.")
+	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 1*time.Hour, "Timeout after which CLI stops watching the upgrade progress.")
 	cobraCmd.Flags().StringVarP(&o.Password, "password", "p", "", "Predefined cluster password.")
 	cobraCmd.Flags().StringArrayVarP(&o.OverrideConfigs, "override", "o", nil, "Path to a YAML file with parameters to override.")
-	cobraCmd.Flags().StringVarP(&o.ComponentsConfig, "components", "c", "", "Path to a YAML file with component list to override.")
+	cobraCmd.Flags().StringVarP(&o.ComponentsConfig, "components", "c", "", "Path to a YAML file with a component list to override.")
 
 	return cobraCmd
 }
