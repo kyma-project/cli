@@ -1,5 +1,5 @@
 // +build darwin
 
-package install
+package hosts
 
 const hostsFile = "/etc/hosts"
