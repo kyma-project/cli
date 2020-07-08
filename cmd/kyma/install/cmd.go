@@ -21,7 +21,6 @@ import (
 
 const (
 	defaultDomain = "kyma.local"
-	installAction = "installation"
 )
 
 type command struct {

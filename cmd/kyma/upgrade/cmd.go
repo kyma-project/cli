@@ -17,7 +17,6 @@ import (
 
 const (
 	defaultDomain = "kyma.local"
-	upgradeAction = "upgrade"
 )
 
 type command struct {
