@@ -8,6 +8,24 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func Test_GetMasterHash(t *testing.T) {
+	i := Installation{}
+	h, err := i.getMasterHash()
+	require.NoError(t, err)
+	require.True(t, isHex(h))
+}
+
+func Test_GetLatestAvailableMasterHash(t *testing.T) {
+	i := Installation{
+		Options: &Options{
+			FallbackLevel: 5,
+		},
+	}
+	h, err := i.getLatestAvailableMasterHash()
+	require.NoError(t, err)
+	require.True(t, isHex(h))
+}
+
 func Test_GetInstallerImage(t *testing.T) {
 	const image = "eu.gcr.io/kyma-project/kyma-installer:63f27f76"
 	testData := File{Content: []map[string]interface{}{{
