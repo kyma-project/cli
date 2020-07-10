@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver"
-	docker "github.com/fsouza/go-dockerclient"
+	docker "github.com/docker/docker/client"
 )
 
 const (
@@ -103,5 +103,5 @@ func DockerClient(verbose bool, profile string, timeout time.Duration) (*docker.
 			}
 		}
 	}
-	return docker.NewClientFromEnv()
+	return docker.NewClientWithOpts(docker.FromEnv)
 }
