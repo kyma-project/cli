@@ -4,21 +4,15 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"strconv"
-	"strings"
 	"time"
 
-	"github.com/kyma-project/cli/pkg/step"
-
+	"github.com/kyma-project/cli/internal/hosts"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/nice"
 	"github.com/kyma-project/cli/internal/trust"
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kyma-project/cli/internal/cli"
 
-	"github.com/kyma-project/cli/internal/minikube"
 	"github.com/kyma-project/cli/pkg/installation"
 	"github.com/pkg/errors"
 
@@ -32,14 +26,6 @@ const (
 type command struct {
 	opts *Options
 	cli.Command
-}
-
-type clusterInfo struct {
-	isLocal       bool
-	provider      string
-	profile       string
-	localIP       string
-	localVMDriver string
 }
 
 //NewCmd creates a new kyma command
@@ -122,15 +108,15 @@ func (cmd *command) Run() error {
 	}
 
 	s := cmd.NewStep("Reading cluster info from ConfigMap")
-	clusterConfig, err := cmd.getClusterInfoFromConfigMap()
+	clusterConfig, err := installation.GetClusterInfoFromConfigMap(cmd.K8s)
 	if err != nil {
 		s.Failure()
 		return err
 	}
 	s.Successf("Cluster info read")
 
-	installation := cmd.configureInstallation(clusterConfig)
-	result, err := installation.InstallKyma()
+	i := cmd.configureInstallation(clusterConfig)
+	result, err := i.InstallKyma()
 	if err != nil {
 		return err
 	}
@@ -145,9 +131,9 @@ func (cmd *command) Run() error {
 		}
 	}
 
-	if clusterConfig.isLocal {
+	if clusterConfig.IsLocal {
 		s = cmd.NewStep("Adding domains to /etc/hosts")
-		err = cmd.addDevDomainsToEtcHosts(s, clusterConfig)
+		err = hosts.AddDevDomainsToEtcHosts(s, clusterConfig, cmd.K8s, cmd.opts.Verbose, cmd.opts.Timeout, cmd.opts.Domain)
 		if err != nil {
 			s.Failure()
 			return err
@@ -163,7 +149,7 @@ func (cmd *command) Run() error {
 	return nil
 }
 
-func (cmd *command) configureInstallation(clusterConfig clusterInfo) *installation.Installation {
+func (cmd *command) configureInstallation(clusterConfig installation.ClusterInfo) *installation.Installation {
 	return &installation.Installation{
 		Options: &installation.Options{
 			NoWait:           cmd.opts.NoWait,
@@ -181,12 +167,12 @@ func (cmd *command) configureInstallation(clusterConfig clusterInfo) *installati
 			ComponentsConfig: cmd.opts.ComponentsConfig,
 			Source:           cmd.opts.Source,
 			FallbackLevel:    cmd.opts.FallbackLevel,
-			IsLocal:          clusterConfig.isLocal,
+			IsLocal:          clusterConfig.IsLocal,
 			LocalCluster: &installation.LocalCluster{
-				IP:       clusterConfig.localIP,
-				Profile:  clusterConfig.profile,
-				Provider: clusterConfig.provider,
-				VMDriver: clusterConfig.localVMDriver,
+				IP:       clusterConfig.LocalIP,
+				Profile:  clusterConfig.Profile,
+				Provider: clusterConfig.Provider,
+				VMDriver: clusterConfig.LocalVMDriver,
 			},
 		},
 	}
@@ -224,63 +210,9 @@ func (cmd *command) importCertificate(ca trust.Certifier) error {
 	return nil
 }
 
-func (cmd *command) addDevDomainsToEtcHosts(s step.Step, clusterInfo clusterInfo) error {
-	hostnames := ""
-
-	vsList, err := cmd.K8s.Istio().NetworkingV1alpha3().VirtualServices("").List(metav1.ListOptions{})
-	if err != nil {
-		return err
-	}
-
-	for _, v := range vsList.Items {
-		for _, host := range v.Spec.Hosts {
-			hostnames = hostnames + " " + host
-		}
-	}
-
-	hostAlias := "127.0.0.1" + hostnames
-
-	if clusterInfo.localVMDriver != "none" {
-		_, err := minikube.RunCmd(cmd.opts.Verbose, clusterInfo.profile, cmd.opts.Timeout, "ssh", "sudo /bin/sh -c 'echo \""+hostAlias+"\" >> /etc/hosts'")
-		if err != nil {
-			return err
-		}
-	}
-
-	hostAlias = strings.Trim(clusterInfo.localIP, "\n") + hostnames
-
-	return addDevDomainsToEtcHostsOSSpecific(cmd.opts.Domain, s, hostAlias)
-}
-
-func (cmd *command) getClusterInfoFromConfigMap() (clusterInfo, error) {
-	cm, err := cmd.K8s.Static().CoreV1().ConfigMaps("kube-system").Get("kyma-cluster-info", metav1.GetOptions{})
-	if err != nil {
-		if apiErrors.IsNotFound(err) {
-			return clusterInfo{}, nil
-		}
-		return clusterInfo{}, err
-	}
-
-	isLocal, err := strconv.ParseBool(cm.Data["isLocal"])
-	if err != nil {
-		isLocal = false
-	}
-
-	clusterConfig := clusterInfo{
-		isLocal:       isLocal,
-		provider:      cm.Data["provider"],
-		profile:       cm.Data["profile"],
-		localIP:       cm.Data["localIP"],
-		localVMDriver: cm.Data["localVMDriver"],
-	}
-
-	return clusterConfig, nil
-}
-
 func (cmd *command) printSummary(result *installation.Result) error {
-	nicePrint := nice.Nice{}
-	if cmd.Factory.NonInteractive {
-		nicePrint.NonInteractive = true
+	nicePrint := nice.Nice{
+		NonInteractive: cmd.Factory.NonInteractive,
 	}
 
 	fmt.Println()

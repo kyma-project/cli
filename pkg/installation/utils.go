@@ -15,18 +15,17 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver"
-	docker "github.com/fsouza/go-dockerclient"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/pkg/archive"
 	"github.com/kyma-incubator/hydroform/install/config"
 	installationSDK "github.com/kyma-incubator/hydroform/install/installation"
 	"github.com/kyma-incubator/hydroform/install/scheme"
 	"github.com/kyma-project/cli/internal/minikube"
 	"github.com/kyma-project/kyma/components/kyma-operator/pkg/apis/installer/v1alpha1"
-	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/storage/memory"
 	"gopkg.in/yaml.v2"
-	v1 "k8s.io/api/apps/v1"
 )
 
 func (i *Installation) buildKymaInstaller(imageName string) error {
@@ -35,14 +34,33 @@ func (i *Installation) buildKymaInstaller(imageName string) error {
 		return err
 	}
 
-	var args []docker.BuildArg
-	return dc.BuildImage(docker.BuildImageOptions{
-		Name:         strings.TrimSpace(string(imageName)),
-		Dockerfile:   filepath.Join("tools", "kyma-installer", "kyma.Dockerfile"),
-		OutputStream: ioutil.Discard,
-		ContextDir:   filepath.Join(i.Options.LocalSrcPath),
-		BuildArgs:    args,
-	})
+	reader, err := archive.TarWithOptions(filepath.Join(i.Options.LocalSrcPath), &archive.TarOptions{})
+	if err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(300)*time.Second)
+	defer cancel()
+
+	dc.NegotiateAPIVersion(ctx)
+
+	args := make(map[string]*string)
+	_, err = dc.ImageBuild(
+		ctx,
+		reader,
+		types.ImageBuildOptions{
+			Tags:           []string{strings.TrimSpace(string(imageName))},
+			SuppressOutput: true,
+			Remove:         true,
+			Dockerfile:     filepath.Join("tools", "kyma-installer", "kyma.Dockerfile"),
+			BuildArgs:      args,
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (i *Installation) getMasterHash() (string, error) {
@@ -297,17 +315,23 @@ func downloadFile(path string) (io.ReadCloser, error) {
 }
 
 func getInstallerImage(installerFile *File) (string, error) {
-	for _, res := range installerFile.Content {
-		if res["kind"] == "Deployment" {
-
-			var deployment v1.Deployment
-			err := mapstructure.Decode(res, &deployment)
-			if err != nil {
-				return "", err
-			}
-
-			if deployment.Spec.Template.Spec.Containers[0].Name == "kyma-installer-container" {
-				return deployment.Spec.Template.Spec.Containers[0].Image, nil
+	for _, config := range installerFile.Content {
+		if kind, ok := config["kind"]; ok && kind == "Deployment" {
+			if spec, ok := config["spec"].(map[interface{}]interface{}); ok {
+				if template, ok := spec["template"].(map[interface{}]interface{}); ok {
+					if spec, ok = template["spec"].(map[interface{}]interface{}); ok {
+						if containers, ok := spec["containers"].([]interface{}); ok {
+							for _, c := range containers {
+								container := c.(map[interface{}]interface{})
+								if cName, ok := container["name"]; ok && cName == "kyma-installer-container" {
+									if _, ok := container["image"]; ok {
+										return container["image"].(string), nil
+									}
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 	}
