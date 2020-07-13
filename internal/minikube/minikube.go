@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	minikubeVersion string = "1.6.2"
+	minikubeVersion string = "1.x"
 )
 
 //RunCmd executes a minikube command with given arguments
