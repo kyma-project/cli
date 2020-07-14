@@ -9,6 +9,7 @@ replace (
 	github.com/ugorji/go v0.0.0-20180813092308-00b869d2f4a5 => github.com/ugorji/go v0.0.0-20181204163529-d75b2dcb6bc8
 	// Docker client has an issue on windows with the latest sys package, we have to fix the version
 	golang.org/x/sys => golang.org/x/sys v0.0.0-20190710143415-6ec70d6a5542
+
 )
 
 require (
@@ -30,7 +31,7 @@ require (
 	github.com/golangplus/testing v0.0.0-20180327235837-af21d9c3145e // indirect
 	github.com/gorilla/mux v1.7.3 // indirect
 	github.com/imdario/mergo v0.3.8 // indirect
-	github.com/kyma-incubator/hydroform/install v0.0.0-20200624085426-7c04bd6a1185
+	github.com/kyma-incubator/hydroform/install v0.0.0-20200713083457-944d1a7c76ee
 	github.com/kyma-incubator/hydroform/provision v0.0.0-20200528121905-83605518328f
 	github.com/kyma-incubator/octopus v0.0.0-20191009105757-2e9d86cd9967
 	github.com/kyma-project/kyma v0.5.1-0.20200211132707-0a36a0f31d7e
