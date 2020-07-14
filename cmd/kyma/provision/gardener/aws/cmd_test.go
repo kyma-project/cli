@@ -122,8 +122,8 @@ func TestNewProvider(t *testing.T) {
 	custom["vnetcidr"] = "10.250.0.0/16"
 	custom["workercidr"] = "10.250.0.0/16"
 	custom["networking_type"] = "calico"
-	custom["machine_image_name"] = "coreos"
-	custom["machine_image_version"] = "2303.3.0"
+	custom["machine_image_name"] = "gardenlinux"
+	custom["machine_image_version"] = "27.1.0"
 
 	require.Equal(t, custom, p.CustomConfigurations, "Provider extra configurations not as expected.")
 }
