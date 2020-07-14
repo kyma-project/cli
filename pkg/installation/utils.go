@@ -1,10 +1,12 @@
 package installation
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -16,6 +18,7 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/docker/docker/api/types"
+	docker "github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/kyma-incubator/hydroform/install/config"
 	installationSDK "github.com/kyma-incubator/hydroform/install/installation"
@@ -28,8 +31,19 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// DockerErrorMessage is used to parse error messages coming from Docker
+type DockerErrorMessage struct {
+	Error string
+}
+
 func (i *Installation) buildKymaInstaller(imageName string) error {
-	dc, err := minikube.DockerClient(i.Options.Verbose, i.Options.LocalCluster.Profile, i.Options.Timeout)
+	var dc *docker.Client
+	var err error
+	if i.Options.IsLocal {
+		dc, err = minikube.DockerClient(i.Options.Verbose, i.Options.LocalCluster.Profile, i.Options.Timeout)
+	} else {
+		dc, err = docker.NewClientWithOpts(docker.FromEnv)
+	}
 	if err != nil {
 		return err
 	}
@@ -58,6 +72,51 @@ func (i *Installation) buildKymaInstaller(imageName string) error {
 	)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (i *Installation) pushKymaInstaller(imageName string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(300)*time.Second)
+	defer cancel()
+
+	dc, err := docker.NewClientWithOpts(docker.FromEnv)
+	if err != nil {
+		return err
+	}
+
+	dc.NegotiateAPIVersion(ctx)
+
+	authConfig := types.AuthConfig{
+		Username: i.Options.DockerUsername,
+		Password: i.Options.DockerPassword,
+	}
+	encodedJSON, err := json.Marshal(authConfig)
+	if err != nil {
+		return err
+	}
+	authStr := base64.URLEncoding.EncodeToString(encodedJSON)
+
+	pusher, err := dc.ImagePush(ctx, imageName, types.ImagePushOptions{RegistryAuth: authStr})
+	if err != nil {
+		return err
+	}
+
+	defer pusher.Close()
+
+	var errorMessage DockerErrorMessage
+	buffIOReader := bufio.NewReader(pusher)
+
+	for {
+		streamBytes, err := buffIOReader.ReadBytes('\n')
+		if err == io.EOF {
+			break
+		}
+		json.Unmarshal(streamBytes, &errorMessage)
+		if errorMessage.Error != "" {
+			return fmt.Errorf("failed to push Docker image: %s", errorMessage.Error)
+		}
 	}
 
 	return nil

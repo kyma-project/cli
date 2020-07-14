@@ -66,6 +66,15 @@ type Options struct {
 	// or /$HOME/.kube/config is used if the variable is not set.
 	// +optional
 	KubeconfigPath string `json:"kubeconfigPath,omitempty"`
+	// CustomImage determines the name for a custom Kyma installer image built for installation from local sources.
+	// +optional
+	CustomImage string `json:"customImage,omitempty"`
+	// DockerUsername specifies the username for Docker to push the custom Kyma installer image built for installation from local sources.
+	// +optional
+	DockerUsername string `json:"dockerUsername,omitempty"`
+	// DockerPassword specifies the password for Docker to push the custom Kyma installer image built for installation from local sources.
+	// +optional
+	DockerPassword string `json:"dockerPassword,omitempty"`
 
 	// If source=latest-published, defines how many commits from master branch are taken into account if artifacts for newer commits does not exist yet
 	// +optional

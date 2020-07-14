@@ -23,6 +23,9 @@ type Options struct {
 	ComponentsConfig string
 	Source           string
 	FallbackLevel    int
+	CustomImage      string
+	DockerUsername   string
+	DockerPassword   string
 }
 
 //NewOptions creates options with default values

@@ -93,6 +93,9 @@ The standard installation uses the minimal configuration. The system performs th
 	cobraCmd.Flags().StringArrayVarP(&o.OverrideConfigs, "override", "o", nil, "Path to a YAML file with parameters to override.")
 	cobraCmd.Flags().StringVarP(&o.ComponentsConfig, "components", "c", "", "Path to a YAML file with component list to override.")
 	cobraCmd.Flags().IntVar(&o.FallbackLevel, "fallbackLevel", 5, `If "source=latest-published", defines the number of commits from master branch taken into account if artifacts for newer commits do not exist yet`)
+	cobraCmd.Flags().StringVarP(&o.DockerUsername, "dockerUsername", "", "", "Docker username to push the custom image. Only used for installation from local sources to a remote cluster.")
+	cobraCmd.Flags().StringVarP(&o.DockerPassword, "dockerPassword", "", "", "Docker password to push the custom image. Only used for installation from local sources to a remote cluster.")
+	cobraCmd.Flags().StringVarP(&o.CustomImage, "customImage", "", "", "Full image name including the registry and the tag. Only used for installation from local sources to a remote cluster.")
 	return cobraCmd
 }
 
@@ -107,13 +110,13 @@ func (cmd *command) Run() error {
 		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
 	}
 
-	s := cmd.NewStep("Reading cluster info from ConfigMap")
+	s := cmd.NewStep("Determining cluster type for installation")
 	clusterConfig, err := installation.GetClusterInfoFromConfigMap(cmd.K8s)
 	if err != nil {
 		s.Failure()
 		return err
 	}
-	s.Successf("Cluster info read")
+	s.Successf("Cluster type determined")
 
 	i := cmd.configureInstallation(clusterConfig)
 	result, err := i.InstallKyma()
@@ -158,6 +161,9 @@ func (cmd *command) configureInstallation(clusterConfig installation.ClusterInfo
 			NonInteractive:   cmd.Factory.NonInteractive,
 			Timeout:          cmd.opts.Timeout,
 			KubeconfigPath:   cmd.opts.KubeconfigPath,
+			CustomImage:      cmd.opts.CustomImage,
+			DockerUsername:   cmd.opts.DockerUsername,
+			DockerPassword:   cmd.opts.DockerPassword,
 			Domain:           cmd.opts.Domain,
 			TLSCert:          cmd.opts.TLSCert,
 			TLSKey:           cmd.opts.TLSKey,
