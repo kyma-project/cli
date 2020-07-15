@@ -113,7 +113,10 @@ func (i *Installation) pushKymaInstaller(imageName string) error {
 		if err == io.EOF {
 			break
 		}
-		json.Unmarshal(streamBytes, &errorMessage)
+		err = json.Unmarshal(streamBytes, &errorMessage)
+		if err != nil {
+			return err
+		}
 		if errorMessage.Error != "" {
 			return fmt.Errorf("failed to push Docker image: %s", errorMessage.Error)
 		}
