@@ -84,8 +84,8 @@ The standard installation uses the minimal configuration. The system performs th
 	- To use the specific release, write "kyma install --source=1.3.0".
 	- To use the latest master, write "kyma install --source=latest".
 	- To use the latest published master, which is the latest commit with released images, write "kyma install --source=latest-published".
-	- To use a commit, write "kyma install --source=34edf09a". 
-	- To use the local sources, write "kyma install --source=local". 
+	- To use a commit, write "kyma install --source=34edf09a".
+	- To use the local sources, write "kyma install --source=local".
 	- To use a custom installer image, write kyma "install --source=user/my-kyma-installer:v1.4.0".`)
 	cobraCmd.Flags().StringVarP(&o.LocalSrcPath, "src-path", "", "", "Absolute path to local sources.")
 	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 1*time.Hour, "Time-out after which CLI stops watching the installation progress.")
@@ -93,9 +93,9 @@ The standard installation uses the minimal configuration. The system performs th
 	cobraCmd.Flags().StringArrayVarP(&o.OverrideConfigs, "override", "o", nil, "Path to a YAML file with parameters to override.")
 	cobraCmd.Flags().StringVarP(&o.ComponentsConfig, "components", "c", "", "Path to a YAML file with component list to override.")
 	cobraCmd.Flags().IntVar(&o.FallbackLevel, "fallbackLevel", 5, `If "source=latest-published", defines the number of commits from master branch taken into account if artifacts for newer commits do not exist yet`)
-	cobraCmd.Flags().StringVarP(&o.DockerUsername, "dockerUsername", "", "", "Docker username to push the custom image. Only used for installation from local sources to a remote cluster.")
-	cobraCmd.Flags().StringVarP(&o.DockerPassword, "dockerPassword", "", "", "Docker password to push the custom image. Only used for installation from local sources to a remote cluster.")
-	cobraCmd.Flags().StringVarP(&o.CustomImage, "customImage", "", "", "Full image name including the registry and the tag. Only used for installation from local sources to a remote cluster.")
+	cobraCmd.Flags().StringVarP(&o.DockerUsername, "docker-username", "", "", "Docker username to push the custom image. Only used for installation from local sources to a remote cluster.")
+	cobraCmd.Flags().StringVarP(&o.DockerPassword, "docker-password", "", "", "Docker password to push the custom image. Only used for installation from local sources to a remote cluster.")
+	cobraCmd.Flags().StringVarP(&o.CustomImage, "custom-image", "", "", "Full image name including the registry and the tag. Only used for installation from local sources to a remote cluster.")
 	return cobraCmd
 }
 

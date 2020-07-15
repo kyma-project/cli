@@ -216,7 +216,7 @@ func (i *Installation) validateConfigurations() error {
 		}
 
 		if !i.Options.IsLocal && (i.Options.CustomImage == "" || i.Options.DockerUsername == "" || i.Options.DockerPassword == "") {
-			return pkgErrors.New("You must specify --customImage, --dockerUsername, and --dockerPassword to install Kyma from local sources to a remote cluster.")
+			return pkgErrors.New("You must specify --custom-image, --docker-username, and --docker-password to install Kyma from local sources to a remote cluster.")
 		}
 
 	//Install the latest version (latest master)
