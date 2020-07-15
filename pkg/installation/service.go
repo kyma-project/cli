@@ -13,15 +13,14 @@ import (
 )
 
 const (
-	tillerWaitTime = 10 * time.Minute
-	installAction  = "installation"
-	upgradeAction  = "upgrade"
+	installAction = "installation"
+	upgradeAction = "upgrade"
 )
 
 type Service interface {
 	CheckInstallationState(kubeconfig *rest.Config) (installation.InstallationState, error)
-	TriggerInstallation(kubeconfig *rest.Config, tillerYaml string, installerYaml string, configuration installation.Configuration) error
-	TriggerUpgrade(kubeconfig *rest.Config, tillerYaml string, installerYaml string, configuration installation.Configuration) error
+	TriggerInstallation(kubeconfig *rest.Config, installerYaml string, configuration installation.Configuration) error
+	TriggerUpgrade(kubeconfig *rest.Config, installerYaml string, configuration installation.Configuration) error
 	TriggerUninstall(kubeconfig *rest.Config) error
 }
 
@@ -41,7 +40,6 @@ func NewInstallationService(kubeconfig *rest.Config, installationTimeout time.Du
 func NewInstallationServiceWithComponents(kubeconfig *rest.Config, installationTimeout time.Duration, clusterCleanupResourceSelector string, componentsConfig []v1alpha1.KymaComponent) (Service, error) {
 	installer, err := installation.NewKymaInstaller(
 		kubeconfig,
-		installation.WithTillerWaitTime(tillerWaitTime),
 		installation.WithInstallationCRModification(GetInstallationCRModificationFunc(componentsConfig)),
 	)
 	if err != nil {
@@ -61,16 +59,15 @@ type installationService struct {
 	clusterCleanupResourceSelector string
 }
 
-func (s *installationService) TriggerInstallation(kubeconfig *rest.Config, tillerYaml string, installerYaml string, configuration installation.Configuration) error {
-	return s.triggerAction(tillerYaml, installerYaml, configuration, s.kymaInstaller, s.kymaInstaller.PrepareInstallation, installAction)
+func (s *installationService) TriggerInstallation(kubeconfig *rest.Config, installerYaml string, configuration installation.Configuration) error {
+	return s.triggerAction(installerYaml, configuration, s.kymaInstaller, s.kymaInstaller.PrepareInstallation, installAction)
 }
 
-func (s *installationService) TriggerUpgrade(kubeconfig *rest.Config, tillerYaml string, installerYaml string, configuration installation.Configuration) error {
-	return s.triggerAction(tillerYaml, installerYaml, configuration, s.kymaInstaller, s.kymaInstaller.PrepareUpgrade, upgradeAction)
+func (s *installationService) TriggerUpgrade(kubeconfig *rest.Config, installerYaml string, configuration installation.Configuration) error {
+	return s.triggerAction(installerYaml, configuration, s.kymaInstaller, s.kymaInstaller.PrepareUpgrade, upgradeAction)
 }
 
 func (s *installationService) triggerAction(
-	tillerYaml string,
 	installerYaml string,
 	configuration installation.Configuration,
 	installer installation.Installer,
@@ -78,7 +75,6 @@ func (s *installationService) triggerAction(
 	actionName string) error {
 
 	installationConfig := installation.Installation{
-		TillerYaml:    tillerYaml,
 		InstallerYaml: installerYaml,
 		Configuration: configuration,
 	}

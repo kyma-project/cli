@@ -28,7 +28,6 @@ const (
 	sourceLocal            = "local"
 
 	installerFile       = "installer"
-	tillerFile          = "tiller"
 	installerCRFile     = "installerCR"
 	installerConfigFile = "installerConfig"
 )
@@ -308,14 +307,13 @@ func (i *Installation) installInstaller(files map[string]*File) error {
 		return fmt.Errorf("Failed to load installation files: %s", err.Error())
 	}
 
-	tillerFileContent := files[tillerFile].StringContent
 	mergedInstallerFileContent := files[installerFile].StringContent + "---\n" + files[installerCRFile].StringContent
 	configuration, err := i.loadConfigurations(files)
 	if err != nil {
 		return pkgErrors.Wrap(err, "unable to load the configurations")
 	}
 
-	err = i.service.TriggerInstallation(i.k8s.Config(), tillerFileContent, mergedInstallerFileContent, configuration)
+	err = i.service.TriggerInstallation(i.k8s.Config(), mergedInstallerFileContent, configuration)
 	if err != nil {
 		return fmt.Errorf("Failed to start installation: %s", err.Error())
 	}
