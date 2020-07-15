@@ -77,7 +77,7 @@ func (i *Installation) buildKymaInstaller(imageName string) error {
 	return nil
 }
 
-func (i *Installation) pushKymaInstaller(imageName string) error {
+func (i *Installation) pushKymaInstaller() error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(300)*time.Second)
 	defer cancel()
 
@@ -98,7 +98,7 @@ func (i *Installation) pushKymaInstaller(imageName string) error {
 	}
 	authStr := base64.URLEncoding.EncodeToString(encodedJSON)
 
-	pusher, err := dc.ImagePush(ctx, imageName, types.ImagePushOptions{RegistryAuth: authStr})
+	pusher, err := dc.ImagePush(ctx, i.Options.CustomImage, types.ImagePushOptions{RegistryAuth: authStr})
 	if err != nil {
 		return err
 	}

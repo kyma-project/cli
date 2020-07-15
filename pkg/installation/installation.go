@@ -307,7 +307,7 @@ func (i *Installation) prepareFiles() (map[string]*File, error) {
 				return nil, err
 			}
 
-			err = i.pushKymaInstaller(i.Options.CustomImage)
+			err = i.pushKymaInstaller()
 			if err != nil {
 				return nil, err
 			}
