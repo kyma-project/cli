@@ -40,19 +40,13 @@ func NewCmd(o *Options) *cobra.Command {
 		Use:   "install",
 		Short: "Installs Kyma on a running Kubernetes cluster.",
 		Long: `Use this command to install Kyma on a running Kubernetes cluster.
-
 ### Detailed description
-
 Before you use the command, make sure your setup meets the following prerequisites:
-
 * Kyma is not installed.
 * Kubernetes cluster is available with your kubeconfig file already pointing to it.
-
 Here are the installation steps:
-
 The standard installation uses the minimal configuration. The system performs the following steps:
 1. Deploys and configures the Kyma Installer. At this point, steps differ depending on the installation type.
-
     When you install Kyma locally ` + "**from release**" + `, the system:
     1. Fetches the latest or specified release along with configuration.
     2. Deploys the Kyma Installer on the cluster.
@@ -60,7 +54,7 @@ The standard installation uses the minimal configuration. The system performs th
     4. Applies overrides, if applicable.
     5. Sets the admin password.
     6. Patches the Minikube IP.
-	
+
     When you install Kyma locally ` + "**from sources**" + `, the system:
     1. Fetches the configuration yaml files from the local sources.
     2. Builds the Kyma Installer image.
@@ -68,9 +62,8 @@ The standard installation uses the minimal configuration. The system performs th
     4. Applies overrides, if applicable.
     5. Sets the admin password.
     6. Patches the Minikube IP.
-    
-2. Runs Kyma installation until the ` + "**installed**" + ` status confirms the successful installation. You can override the standard installation settings using the ` + "`--override`" + ` flag.
 
+2. Runs Kyma installation until the ` + "**installed**" + ` status confirms the successful installation. You can override the standard installation settings using the ` + "`--override`" + ` flag.
 `,
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 		Aliases: []string{"i"},
@@ -80,7 +73,7 @@ The standard installation uses the minimal configuration. The system performs th
 	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", defaultDomain, "Domain used for installation.")
 	cobraCmd.Flags().StringVarP(&o.TLSCert, "tlsCert", "", "", "TLS certificate for the domain used for installation. The certificate must be a base64-encoded value.")
 	cobraCmd.Flags().StringVarP(&o.TLSKey, "tlsKey", "", "", "TLS key for the domain used for installation. The key must be a base64-encoded value.")
-	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", DefaultKymaVersion, `Installation source. 
+	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", DefaultKymaVersion, `Installation source.
 	- To use the specific release, write "kyma install --source=1.3.0".
 	- To use the latest master, write "kyma install --source=latest".
 	- To use the latest published master, which is the latest commit with released images, write "kyma install --source=latest-published".

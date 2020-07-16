@@ -25,6 +25,7 @@ require (
 	github.com/docker/docker v1.4.2-0.20191101170500-ac7306503d23
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/fatih/color v1.7.0
+	github.com/fsouza/go-dockerclient v1.6.5
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golangplus/bytes v0.0.0-20160111154220-45c989fe5450 // indirect
 	github.com/golangplus/fmt v0.0.0-20150411045040-2a5d6d7d2995 // indirect
@@ -44,6 +45,7 @@ require (
 	github.com/opencontainers/runc v0.1.1 // indirect
 	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
 	github.com/pkg/errors v0.8.1
+	github.com/rancher/k3d v1.7.0 // indirect
 	github.com/spf13/cobra v0.0.5
 	github.com/stretchr/testify v1.4.0
 	golang.org/x/crypto v0.0.0-20200510223506-06a226fb4e37 // indirect

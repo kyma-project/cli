@@ -10,12 +10,16 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"time"
+
+	dockerclient "github.com/docker/docker/client"
+
+	"github.com/kyma-project/cli/internal/k3d"
 
 	"github.com/Masterminds/semver"
 	"github.com/docker/docker/api/types"
@@ -38,28 +42,28 @@ type DockerErrorMessage struct {
 }
 
 func (i *Installation) buildKymaInstaller(imageName string) error {
-	var dc *docker.Client
+	var dc *dockerclient.Client
 	var err error
-	if i.Options.IsLocal {
+	args := make(map[string]*string)
+	dockerfile := filepath.Join("tools", "kyma-installer", "kyma.Dockerfile")
+	var reader io.Reader
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(300)*time.Second)
+	defer cancel()
+	if i.Options.IsLocal && i.Options.LocalCluster.Provider == "minikube" {
 		dc, err = minikube.DockerClient(i.Options.Verbose, i.Options.LocalCluster.Profile, i.Options.Timeout)
+		if err != nil {
+			return errors.Wrapf(err, "failed while fetching docker client for minikube")
+		}
+		dc.NegotiateAPIVersion(ctx)
+
 	} else {
 		dc, err = docker.NewClientWithOpts(docker.FromEnv)
 	}
+
+	reader, err = archive.TarWithOptions(i.Options.LocalSrcPath, &archive.TarOptions{})
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "failed to archive image")
 	}
-
-	reader, err := archive.TarWithOptions(i.Options.LocalSrcPath, &archive.TarOptions{})
-	if err != nil {
-		return err
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(300)*time.Second)
-	defer cancel()
-
-	dc.NegotiateAPIVersion(ctx)
-
-	args := make(map[string]*string)
 	_, err = dc.ImageBuild(
 		ctx,
 		reader,
@@ -67,7 +71,7 @@ func (i *Installation) buildKymaInstaller(imageName string) error {
 			Tags:           []string{strings.TrimSpace(string(imageName))},
 			SuppressOutput: true,
 			Remove:         true,
-			Dockerfile:     path.Join("tools", "kyma-installer", "kyma.Dockerfile"),
+			Dockerfile:     dockerfile,
 			BuildArgs:      args,
 		},
 	)
@@ -75,6 +79,13 @@ func (i *Installation) buildKymaInstaller(imageName string) error {
 		return err
 	}
 
+	if i.Options.LocalCluster.Provider == "k3d" {
+		output, err := k3d.RunCmd(i.Options.Timeout, "import-images", "-n", "kyma", imageName)
+		if err != nil {
+			return errors.Wrapf(err, "failed to import image to the k3d cluster")
+		}
+		log.Println("import images: ", output)
+	}
 	return nil
 }
 
@@ -205,13 +216,24 @@ func (i *Installation) getLatestAvailableMasterHash() (string, error) {
 func (i *Installation) loadInstallationFiles() (map[string]*File, error) {
 	var installationFiles map[string]*File
 	if i.Options.IsLocal {
-		installationFiles =
-			map[string]*File{
-				tillerFile:          {Path: "tiller.yaml"},
-				installerFile:       {Path: "installer.yaml"},
-				installerCRFile:     {Path: "installer-cr.yaml.tpl"},
-				installerConfigFile: {Path: "installer-config-local.yaml.tpl"},
-			}
+		switch i.Options.LocalCluster.Provider {
+		case "minikube":
+			installationFiles =
+				map[string]*File{
+					tillerFile:          {Path: "tiller.yaml"},
+					installerFile:       {Path: "installer-local.yaml"},
+					installerCRFile:     {Path: "installer-cr.yaml.tpl"},
+					installerConfigFile: {Path: "installer-config-local.yaml.tpl"},
+				}
+		case "k3d":
+			installationFiles =
+				map[string]*File{
+					tillerFile:          {Path: "tiller.yaml"},
+					installerFile:       {Path: "installer.yaml"},
+					installerCRFile:     {Path: "installer-k3d-cr.yaml.tpl"},
+					installerConfigFile: {Path: "installer-config-k3d.yaml.tpl"},
+				}
+		}
 	} else {
 		installationFiles =
 			map[string]*File{
