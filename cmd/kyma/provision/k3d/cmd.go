@@ -154,7 +154,6 @@ func (c *command) Run() error {
 //}
 
 func (c *command) checkIfK3dIsInitialized(s step.Step) error {
-	log.Print("timeout: ", c.opts.Timeout)
 	statusText, _ := k3d.RunCmd(c.opts.Timeout, "list")
 	if strings.Contains(strings.TrimSpace(statusText), "running") {
 		var answer bool
@@ -257,7 +256,7 @@ func (c *command) PatchCoreDNSConfig() error {
 		return errors.Wrapf(err, "failed to fetch the docker IP for k3d master container")
 	}
 	dockerRegIP = strings.Trim(dockerRegIP, "\n")
-	newCoreDNSConfig := fmt.Sprintf("{\"data\": { \"Corefile\": \"registry.localhost:53 {\\n    hosts {\\n    %s registry.localhost\\n    }\\n}\\n.:53 {\\n    errors\\n    health\\n    rewrite name regex (.*)\\\\.local\\\\.kyma\\\\.pro istio-ingressgateway.istio-system.svc.cluster.local\\n    ready\\n    kubernetes cluster.local in-addr.arpa ip6.arpa {\\n      pods insecure\\n      upstream\\n      fallthrough in-addr.arpa ip6.arpa\\n    }\\n    hosts /etc/coredns/NodeHosts {\\n      reload 1s\\n      fallthrough\\n    }\\n    prometheus :9153\\n    forward . /etc/resolv.conf\\n    cache 30\\n    loop\\n    reload\\n    loadbalance\\n}\"}}", dockerRegIP)
+	newCoreDNSConfig := fmt.Sprintf("{\"data\": { \"Corefile\": \"registry.localhost:53 {\\n    hosts {\\n      %s registry.localhost\\n    }\\n}\\n.:53 {\\n    errors\\n    health\\n    rewrite name regex (.*)\\\\.local\\\\.kyma\\\\.pro istio-ingressgateway.istio-system.svc.cluster.local\\n    ready\\n    kubernetes cluster.local in-addr.arpa ip6.arpa {\\n      pods insecure\\n      upstream\\n      fallthrough in-addr.arpa ip6.arpa\\n    }\\n    hosts /etc/coredns/NodeHosts {\\n      reload 1s\\n      fallthrough\\n    }\\n    prometheus :9153\\n    forward . /etc/resolv.conf\\n    cache 30\\n    loop\\n    reload\\n    loadbalance\\n}\"}}", dockerRegIP)
 
 	_, err = c.K8s.Static().CoreV1().ConfigMaps("kube-system").Patch("coredns", types.StrategicMergePatchType, []byte(newCoreDNSConfig))
 	if err != nil {

@@ -3,14 +3,14 @@ package k3d
 import (
 	"context"
 	"fmt"
-	"os"
 	"os/exec"
 	"regexp"
 	"strings"
 	"time"
 
+	docker "github.com/docker/docker/client"
+
 	"github.com/Masterminds/semver"
-	docker "github.com/fsouza/go-dockerclient"
 )
 
 const (
@@ -67,15 +67,12 @@ func CheckVersion(verbose bool, timeout time.Duration) (string, error) {
 	return fmt.Sprintf("You are using an unsupported k3d version '%s'. This may not work. The recommended k3d version is '%s'", version, k3dVersion), nil
 }
 
-//DockerClient creates a docker client based on k3d "docker-env" configuration
-func DockerClient(verbose bool, profile string, timeout time.Duration) (*docker.Client, error) {
-	dc := &docker.Client{}
+//DockerClient creates a docker client based on local host env
+func DockerClient() (*docker.Client, error) {
+	dc, err := docker.NewClientWithOpts(docker.FromEnv)
+	if err != nil {
+		return nil, err
+	}
 
-	oldEnvs := make(map[string]string)
-	defer func() {
-		for key, val := range oldEnvs {
-			os.Setenv(key, val)
-		}
-	}()
 	return dc, nil
 }

@@ -17,13 +17,11 @@ import (
 	"strings"
 	"time"
 
-	dockerclient "github.com/docker/docker/client"
-
 	"github.com/kyma-project/cli/internal/k3d"
 
 	"github.com/Masterminds/semver"
 	"github.com/docker/docker/api/types"
-	docker "github.com/docker/docker/client"
+	dockerclient "github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/kyma-incubator/hydroform/install/config"
 	installationSDK "github.com/kyma-incubator/hydroform/install/installation"
@@ -57,7 +55,7 @@ func (i *Installation) buildKymaInstaller(imageName string) error {
 		dc.NegotiateAPIVersion(ctx)
 
 	} else {
-		dc, err = docker.NewClientWithOpts(docker.FromEnv)
+		dc, err = dockerclient.NewClientWithOpts(dockerclient.FromEnv)
 	}
 
 	reader, err = archive.TarWithOptions(i.Options.LocalSrcPath, &archive.TarOptions{})
@@ -93,7 +91,7 @@ func (i *Installation) pushKymaInstaller() error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(300)*time.Second)
 	defer cancel()
 
-	dc, err := docker.NewClientWithOpts(docker.FromEnv)
+	dc, err := dockerclient.NewClientWithOpts(dockerclient.FromEnv)
 	if err != nil {
 		return err
 	}
@@ -364,7 +362,7 @@ func (i *Installation) loadConfigurations(files map[string]*File) (installationS
 		}
 	}
 
-	if i.Options.IsLocal {
+	if i.Options.IsLocal && i.Options.LocalCluster.Provider == "minikube" {
 		configuration.Configuration.Set("global.minikubeIP", i.Options.LocalCluster.IP, false)
 	}
 	if i.Options.Password != "" {

@@ -127,7 +127,7 @@ func (cmd *command) Run() error {
 		}
 	}
 
-	if clusterConfig.IsLocal {
+	if clusterConfig.IsLocal && i.Options.LocalCluster.Provider == "minikube" {
 		s = cmd.NewStep("Adding domains to /etc/hosts")
 		err = hosts.AddDevDomainsToEtcHosts(s, clusterConfig, cmd.K8s, cmd.opts.Verbose, cmd.opts.Timeout, cmd.opts.Domain)
 		if err != nil {
