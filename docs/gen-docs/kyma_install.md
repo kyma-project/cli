@@ -46,9 +46,9 @@ kyma install [flags]
 
 ```
   -c, --components string        Path to a YAML file with component list to override.
-      --custom-image string      Full image name including the registry and the tag. Only used for installation from local sources to a remote cluster.
-      --docker-password string   Docker password to push the custom image. Only used for installation from local sources to a remote cluster.
-      --docker-username string   Docker username to push the custom image. Only used for installation from local sources to a remote cluster.
+      --custom-image string      Full image name including the registry and the tag. Used only for installation from local sources to a remote cluster.
+      --docker-password string   Docker password to push the custom image. Used only for installation from local sources to a remote cluster.
+      --docker-username string   Docker username to push the custom image. Used only for installation from local sources to a remote cluster.
   -d, --domain string            Domain used for installation. (default "kyma.local")
       --fallbackLevel int        If "source=latest-published", defines the number of commits from master branch taken into account if artifacts for newer commits do not exist yet (default 5)
   -n, --noWait                   Flag that determines if the command should wait for Kyma installation to complete.
