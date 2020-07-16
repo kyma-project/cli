@@ -14,22 +14,23 @@ replace (
 
 require (
 	github.com/Masterminds/semver v1.5.0
-	github.com/Microsoft/go-winio v0.4.14 // indirect
-	github.com/Microsoft/hcsshim v0.8.6 // indirect
+	github.com/Microsoft/go-winio v0.4.15-0.20200113171025-3fe6c5262873 // indirect
+	github.com/Microsoft/hcsshim v0.8.7 // indirect
 	github.com/avast/retry-go v2.4.3+incompatible
 	github.com/briandowns/spinner v1.7.0
 	github.com/containerd/containerd v1.3.0 // indirect
-	github.com/containerd/continuity v0.0.0-20190827140505-75bee3e2ccb6 // indirect
+	github.com/containerd/continuity v0.0.0-20200228182428-0f16d7a0959c // indirect
 	github.com/daviddengcn/go-colortext v0.0.0-20180409174941-186a3d44e920
 	github.com/docker/distribution v2.7.1+incompatible // indirect
-	github.com/docker/docker v1.4.2-0.20190927142053-ada3c14355ce
+	github.com/docker/docker v1.4.2-0.20191101170500-ac7306503d23
 	github.com/docker/go-connections v0.4.0 // indirect
-	github.com/docker/go-units v0.4.0 // indirect
 	github.com/fatih/color v1.7.0
+	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golangplus/bytes v0.0.0-20160111154220-45c989fe5450 // indirect
 	github.com/golangplus/fmt v0.0.0-20150411045040-2a5d6d7d2995 // indirect
 	github.com/golangplus/testing v0.0.0-20180327235837-af21d9c3145e // indirect
-	github.com/gorilla/mux v1.7.3 // indirect
+	github.com/google/go-cmp v0.4.0 // indirect
+	github.com/gorilla/mux v1.7.4 // indirect
 	github.com/imdario/mergo v0.3.8 // indirect
 	github.com/kyma-incubator/hydroform/install v0.0.0-20200713083457-944d1a7c76ee
 	github.com/kyma-incubator/hydroform/provision v0.0.0-20200528121905-83605518328f
@@ -37,9 +38,8 @@ require (
 	github.com/kyma-project/kyma v0.5.1-0.20200211132707-0a36a0f31d7e
 	github.com/mattn/go-colorable v0.1.4 // indirect
 	github.com/mattn/go-isatty v0.0.10 // indirect
-	github.com/morikuni/aec v0.0.0-20170113033406-39771216ff4c // indirect
+	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.1
-	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/opencontainers/runc v0.1.1 // indirect
 	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
@@ -50,7 +50,7 @@ require (
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
 	golang.org/x/sys v0.0.0-20191029155521-f43be2a4598c // indirect
 	google.golang.org/genproto v0.0.0-20191002211648-c459b9ce5143 // indirect
-	google.golang.org/grpc v1.22.0 // indirect
+	google.golang.org/grpc v1.27.1 // indirect
 	gopkg.in/src-d/go-git.v4 v4.13.1
 	gopkg.in/yaml.v2 v2.2.8
 	gotest.tools v2.2.0+incompatible

@@ -215,6 +215,10 @@ func (i *Installation) validateConfigurations() error {
 			return fmt.Errorf("configured 'src-path=%s' does not seem to point to a Kyma repository. Check if your repository contains the 'installation/resources' folder", i.Options.LocalSrcPath)
 		}
 
+		if !i.Options.IsLocal && (i.Options.CustomImage == "" || i.Options.DockerUsername == "" || i.Options.DockerPassword == "") {
+			return pkgErrors.New("You must specify --custom-image, --docker-username, and --docker-password to install Kyma from local sources to a remote cluster.")
+		}
+
 	//Install the latest version (latest master)
 	case strings.EqualFold(i.Options.Source, sourceLatest):
 		latest, err := i.getMasterHash()
@@ -284,19 +288,36 @@ func (i *Installation) prepareFiles() (map[string]*File, error) {
 		return nil, err
 	}
 
-	//In case of local installation from local sources, build installer image.
-	//TODO: add image build & push functionality for remote installation from local sources.
-	if i.Options.fromLocalSources && i.Options.IsLocal {
-		imageName, err := getInstallerImage(files[installerFile])
-		if err != nil {
-			return nil, err
-		}
+	if i.Options.fromLocalSources {
+		//In case of local installation from local sources, build installer image using Minikube Docker client.
+		if i.Options.IsLocal {
+			imageName, err := getInstallerImage(files[installerFile])
+			if err != nil {
+				return nil, err
+			}
 
-		err = i.buildKymaInstaller(imageName)
-		if err != nil {
-			return nil, err
+			err = i.buildKymaInstaller(imageName)
+			if err != nil {
+				return nil, err
+			}
+			//In case of remote cluster installation from local sources, build installer image using default Docker client and push the image.
+		} else {
+			err = i.buildKymaInstaller(i.Options.CustomImage)
+			if err != nil {
+				return nil, err
+			}
+
+			err = i.pushKymaInstaller()
+			if err != nil {
+				return nil, err
+			}
+
+			err = replaceInstallerImage(files[installerFile], i.Options.CustomImage)
+			if err != nil {
+				return nil, err
+			}
 		}
-	} else if !i.Options.fromLocalSources {
+	} else {
 		if i.Options.remoteImage != "" {
 			err = replaceInstallerImage(files[installerFile], i.Options.remoteImage)
 		} else {
