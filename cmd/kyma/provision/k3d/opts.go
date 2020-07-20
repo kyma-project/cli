@@ -10,8 +10,8 @@ import (
 type Options struct {
 	*cli.Options
 
-	PublishHTTP        string
-	PublishHTTPS        string
+	PublishHTTP    string
+	PublishHTTPS   string
 	EnableRegistry string
 	RegistryVolume string
 	RegistryName   string

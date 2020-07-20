@@ -164,20 +164,6 @@ func (c *command) startK3d() error {
 	return nil
 }
 
-func (c *command) setKubeconfigForK3dCluster(step step.Step) error {
-	for {
-		statusText, err := k3d.RunCmd(c.opts.Timeout, "get-kubeconfig", "-n", c.opts.Name)
-		log.Println(statusText)
-		if err != nil && !strings.Contains(err.Error(), "Couldnt copy kubeconfig.yaml") {
-			return err
-		}
-		os.Setenv("KUBECONFIG", statusText)
-		//step.Status(statusText)
-		time.Sleep(sleep)
-	}
-	return nil
-}
-
 func (c *command) waitForK3dToBeReady(step step.Step) error {
 	// TODO refactor
 	kubeConfigFile := ""

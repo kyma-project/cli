@@ -56,6 +56,9 @@ func (i *Installation) buildKymaInstaller(imageName string) error {
 
 	} else {
 		dc, err = dockerclient.NewClientWithOpts(dockerclient.FromEnv)
+		if err != nil {
+					return errors.Wrapf(err, "failed while fetching docker client from system env")
+				}
 	}
 
 	reader, err = archive.TarWithOptions(i.Options.LocalSrcPath, &archive.TarOptions{})
@@ -131,7 +134,6 @@ func (i *Installation) pushKymaInstaller() error {
 			return fmt.Errorf("failed to push Docker image: %s", errorMessage.Error)
 		}
 	}
-
 	return nil
 }
 
