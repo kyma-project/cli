@@ -13,7 +13,6 @@ replace (
 )
 
 require (
-	github.com/docker/docker v17.12.0-ce-rc1.0.20200528182317-b47e74255811+incompatible
 	github.com/Masterminds/semver v1.5.0
 	github.com/Microsoft/go-winio v0.4.15-0.20200113171025-3fe6c5262873 // indirect
 	github.com/Microsoft/hcsshim v0.8.7 // indirect
@@ -23,9 +22,10 @@ require (
 	github.com/containerd/continuity v0.0.0-20200228182428-0f16d7a0959c // indirect
 	github.com/daviddengcn/go-colortext v0.0.0-20180409174941-186a3d44e920
 	github.com/docker/distribution v2.7.1+incompatible // indirect
+	github.com/docker/docker v17.12.0-ce-rc1.0.20200528182317-b47e74255811+incompatible
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/fatih/color v1.7.0
-	github.com/fsouza/go-dockerclient v1.6.5
+	github.com/fsouza/go-dockerclient v1.6.5 // indirect
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golangplus/bytes v0.0.0-20160111154220-45c989fe5450 // indirect
 	github.com/golangplus/fmt v0.0.0-20150411045040-2a5d6d7d2995 // indirect
