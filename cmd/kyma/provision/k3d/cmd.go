@@ -67,14 +67,7 @@ func NewCmd(o *Options) *cobra.Command {
 
 //Run runs the command
 func (c *command) Run() error {
-	s := c.NewStep("Checking requirements: TODO")
-	//if err := c.checkRequirements(s); err != nil {
-	//	s.Failure()
-	//	return err
-	//}
-	s.Successf("Requirements verified")
-
-	s = c.NewStep("Checking K3d status")
+	s := c.NewStep("Checking K3d status")
 	err := c.checkIfK3dIsInitialized(s)
 	switch err {
 	case ErrK3dRunning, nil:
@@ -130,28 +123,6 @@ func (c *command) Run() error {
 
 	return nil
 }
-
-//func (c *command) checkRequirements(s step.Step) error {
-//	if !driverSupported(c.opts.VMDriver) {
-//		s.Failure()
-//		return fmt.Errorf("Specified VMDriver '%s' is not supported by Minikube", c.opts.VMDriver)
-//	}
-//	if c.opts.VMDriver == vmDriverHyperv && c.opts.HypervVirtualSwitch == "" {
-//		s.Failure()
-//		return fmt.Errorf("Specified VMDriver '%s' requires the --hypervVirtualSwitch option", vmDriverHyperv)
-//	}
-//
-//	versionWarning, err := minikube.CheckVersion(c.opts.Verbose, c.opts.Timeout)
-//	if err != nil {
-//		s.Failure()
-//		return err
-//	}
-//	if versionWarning != "" {
-//		s.LogError(versionWarning)
-//	}
-//
-//	return nil
-//}
 
 func (c *command) checkIfK3dIsInitialized(s step.Step) error {
 	statusText, _ := k3d.RunCmd(c.opts.Timeout, "list")
@@ -264,34 +235,6 @@ func (c *command) PatchCoreDNSConfig() error {
 	}
 	return nil
 }
-
-//func (c *command) createClusterRoleBinding() error {
-//	var err error
-//	bs, err := c.K8s.Static().RbacV1().ClusterRoleBindings().List(metav1.ListOptions{LabelSelector: "app=kyma"})
-//	if err != nil {
-//		return err
-//	}
-//	if len(bs.Items) == 0 {
-//		_, err = c.K8s.Static().RbacV1().ClusterRoleBindings().Create(&rbacv1.ClusterRoleBinding{
-//			ObjectMeta: metav1.ObjectMeta{
-//				Name:   "default-sa-cluster-admin",
-//				Labels: map[string]string{"app": "kyma"},
-//			},
-//			RoleRef: rbacv1.RoleRef{
-//				Name: "cluster-admin",
-//				Kind: "ClusterRole",
-//			},
-//			Subjects: []rbacv1.Subject{
-//				{
-//					Kind:      "ServiceAccount",
-//					Namespace: "kube-system",
-//					Name:      "default",
-//				},
-//			},
-//		})
-//	}
-//	return err
-//}
 
 func (c *command) printSummary() error {
 	//TODO: add total time taken to install

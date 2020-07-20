@@ -3,10 +3,7 @@
 package trust
 
 import (
-	"encoding/base64"
 	"fmt"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
@@ -16,27 +13,21 @@ import (
 )
 
 type keychain struct {
-	k8s kube.KymaKube
+	k8s    kube.KymaKube
+	source Source
 }
 
-func NewCertifier(k kube.KymaKube) Certifier {
+func NewCertifier(k kube.KymaKube, src Source) Certifier {
 	return keychain{
-		k8s: k,
+		k8s:    k,
+		source: src,
 	}
 }
-
 func (k keychain) Certificate() ([]byte, error) {
-	cm, err := k.k8s.Static().CoreV1().ConfigMaps("kyma-installer").Get("net-global-overrides", metav1.GetOptions{})
-	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("\nCould not retrieve the Kyma root certificate. Follow the instructions to import it manually:\n-----\n%s-----\n", k.Instructions()))
+	if k.source.resource == CertSourceSecret {
+		return certificateFromSecret(k)
 	}
-
-	decodedCert, err := base64.StdEncoding.DecodeString(cm.Data["global.ingress.tlsCrt"])
-	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("\nCould not retrieve the Kyma root certificate. Follow the instructions to import it manually:\n-----\n%s-----\n", k.Instructions()))
-	}
-
-	return decodedCert, nil
+	return certificateFromConfigMap(k)
 }
 
 func (k keychain) StoreCertificate(file string, i Informer) error {

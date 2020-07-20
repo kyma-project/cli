@@ -3,17 +3,14 @@
 package trust
 
 import (
-	"encoding/base64"
 	"fmt"
 	"regexp"
 	"strings"
 
-	"github.com/pkg/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/root"
+	"github.com/pkg/errors"
 )
 
 type certauth struct {
@@ -26,19 +23,26 @@ func NewCertifier(k kube.KymaKube) Certifier {
 	}
 }
 
-func (c certauth) Certificate() ([]byte, error) {
-	cm, err := c.k8s.Static().CoreV1().ConfigMaps("kyma-installer").Get("net-global-overrides", metav1.GetOptions{})
-	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("\nCould not retrieve the Kyma root certificate. Follow the instructions to import it manually:\n-----\n%s-----\n", c.Instructions()))
+func (k keychain) Certificate() ([]byte, error) {
+	if k.source.resource == "secret" {
+		return certificateFromSecret(k)
 	}
-
-	decodedCert, err := base64.StdEncoding.DecodeString(cm.Data["global.ingress.tlsCrt"])
-	if err != nil {
-		return nil, err
-	}
-
-	return decodedCert, nil
+	return certificateFromConfigMap(k)
 }
+
+//func (c certauth) Certificate() ([]byte, error) {
+//	cm, err := c.k8s.Static().CoreV1().ConfigMaps("kyma-installer").Get("net-global-overrides", metav1.GetOptions{})
+//	if err != nil {
+//		return nil, errors.Wrap(err, fmt.Sprintf("\nCould not retrieve the Kyma root certificate. Follow the instructions to import it manually:\n-----\n%s-----\n", c.Instructions()))
+//	}
+//
+//	decodedCert, err := base64.StdEncoding.DecodeString(cm.Data["global.ingress.tlsCrt"])
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	return decodedCert, nil
+//}
 
 func (c certauth) StoreCertificate(file string, i Informer) error {
 	i.LogInfo("Kyma wants to add its root certificate to the trusted certificate store.")

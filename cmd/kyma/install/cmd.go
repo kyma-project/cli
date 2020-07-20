@@ -121,7 +121,13 @@ func (cmd *command) Run() error {
 	}
 
 	if !cmd.opts.CI {
-		if err := cmd.importCertificate(trust.NewCertifier(cmd.K8s)); err != nil {
+		var source trust.Source
+		if i.Options.LocalCluster.Provider == "k3d" { // For k3d clusters, ingress-dns-cert creates a secret "kyma-gateway-certs" with cert details
+			source = trust.NewSource("kyma-gateway-certs", "istio-system", trust.CertSourceSecret)
+		} else { // For other xip-patch creates a cm net-global-overrides with cert details
+			source = trust.NewSource("net-global-overrides", "kyma-installer", trust.CertSourceConfigMap)
+		}
+		if err := cmd.importCertificate(trust.NewCertifier(cmd.K8s, source)); err != nil {
 			// certificate import errors do not mean installation failed
 			cmd.CurrentStep.LogError(err.Error())
 		}
