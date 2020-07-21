@@ -113,7 +113,7 @@ func (i *Installation) pushKymaInstaller() error {
 			return err
 		}
 		if errorMessage.Error != "" {
-			if strings.Contains(errorMessage.Error, "unauthorized") {
+			if strings.Contains(errorMessage.Error, "unauthorized") || strings.Contains(errorMessage.Error, "requested access to the resource is denied") {
 				return fmt.Errorf("failed to push Docker image: %s\nPlease run `docker login`", errorMessage.Error)
 			}
 			return fmt.Errorf("failed to push Docker image: %s", errorMessage.Error)
