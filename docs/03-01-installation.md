@@ -5,6 +5,12 @@ type: Details
 
 You can easily install Kyma CLI on macOS, Linux, or Windows. Follow the instructions described in the sections.
 
+## Prerequisites
+
+To work, Kyma CLI requires the following software:
+
+- [Minikube](https://github.com/kubernetes/minikube)
+
 ## Homebrew
 
 To install Kyma CLI using Homebrew, run:
@@ -12,6 +18,8 @@ To install Kyma CLI using Homebrew, run:
 ```bash
 brew install kyma-cli
 ```
+
+If the Homebrew formula of the CLI does not get updated by the Homebrew team within three days of the release, update the formula of the CLI manually to the most recent version by following this [guide](https://github.com/Homebrew/brew/blob/master/docs/How-To-Open-a-Homebrew-Pull-Request.md). For a sample Homebrew Kyma CLI formula version bump, see [this](https://github.com/Homebrew/homebrew-core/pull/52375) PR.
 
 ## macOS
 
@@ -53,6 +61,11 @@ To install Kyma CLI on Windows using [Chocolatey](https://www.chocolatey.org), r
 ```PowerShell
 choco install kyma-cli
 ```
+The Kyma CLI Chocolatey package does not need to be bumped when there is a new release, as it has a script that will automatically check for new releases and update the package to the latest release.
+
+Nevertheless, the package still needs some maintenance to keep its dedicated [site](https://chocolatey.org/packages/kyma-cli) at chocolatey.org up to date (e.g. update description, details, screenshots, etc...).
+
+In order to maintain the [site](https://chocolatey.org/packages/kyma-cli), send a pull request to Chocolatey's [GitHub repository](https://github.com/dgalbraith/chocolatey-packages/tree/master/automatic/kyma-cli).
 
 ## Other
 
