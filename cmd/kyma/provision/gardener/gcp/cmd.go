@@ -85,7 +85,7 @@ func (c *command) Run() error {
 			cluster, err = hf.Provision(cluster, provider, types.WithDataDir(home), types.Persistent())
 			return err
 		},
-		retry.Attempts(3))
+		retry.Attempts(3), retry.LastErrorOnly(!c.opts.Verbose))
 
 	if err != nil {
 		s.Failure()
