@@ -93,9 +93,7 @@ The standard installation uses the minimal configuration. The system performs th
 	cobraCmd.Flags().StringArrayVarP(&o.OverrideConfigs, "override", "o", nil, "Path to a YAML file with parameters to override.")
 	cobraCmd.Flags().StringVarP(&o.ComponentsConfig, "components", "c", "", "Path to a YAML file with component list to override.")
 	cobraCmd.Flags().IntVar(&o.FallbackLevel, "fallbackLevel", 5, `If "source=latest-published", defines the number of commits from master branch taken into account if artifacts for newer commits do not exist yet`)
-	cobraCmd.Flags().StringVarP(&o.DockerUsername, "docker-username", "", "", "Docker username to push the custom image. Used only for installation from local sources to a remote cluster.")
-	cobraCmd.Flags().StringVarP(&o.DockerPassword, "docker-password", "", "", "Docker password to push the custom image. Used only for installation from local sources to a remote cluster.")
-	cobraCmd.Flags().StringVarP(&o.CustomImage, "custom-image", "", "", "Full image name including the registry and the tag. Used only for installation from local sources to a remote cluster.")
+	cobraCmd.Flags().StringVarP(&o.CustomImage, "custom-image", "", "", "Full image name including the registry and the tag. Required for installation from local sources to a remote cluster.")
 	return cobraCmd
 }
 
@@ -162,8 +160,6 @@ func (cmd *command) configureInstallation(clusterConfig installation.ClusterInfo
 			Timeout:          cmd.opts.Timeout,
 			KubeconfigPath:   cmd.opts.KubeconfigPath,
 			CustomImage:      cmd.opts.CustomImage,
-			DockerUsername:   cmd.opts.DockerUsername,
-			DockerPassword:   cmd.opts.DockerPassword,
 			Domain:           cmd.opts.Domain,
 			TLSCert:          cmd.opts.TLSCert,
 			TLSKey:           cmd.opts.TLSKey,

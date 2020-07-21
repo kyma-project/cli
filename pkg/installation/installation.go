@@ -215,8 +215,8 @@ func (i *Installation) validateConfigurations() error {
 			return fmt.Errorf("configured 'src-path=%s' does not seem to point to a Kyma repository. Check if your repository contains the 'installation/resources' folder", i.Options.LocalSrcPath)
 		}
 
-		if !i.Options.IsLocal && (i.Options.CustomImage == "" || i.Options.DockerUsername == "" || i.Options.DockerPassword == "") {
-			return pkgErrors.New("You must specify --custom-image, --docker-username, and --docker-password to install Kyma from local sources to a remote cluster.")
+		if !i.Options.IsLocal && i.Options.CustomImage == "" {
+			return pkgErrors.New("You must specify --custom-image to install Kyma from local sources to a remote cluster.")
 		}
 
 	//Install the latest version (latest master)
