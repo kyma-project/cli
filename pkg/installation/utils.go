@@ -1,130 +1,29 @@
 package installation
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/Masterminds/semver"
-	"github.com/docker/docker/api/types"
-	docker "github.com/docker/docker/client"
-	"github.com/docker/docker/pkg/archive"
 	"github.com/kyma-incubator/hydroform/install/config"
 	installationSDK "github.com/kyma-incubator/hydroform/install/installation"
 	"github.com/kyma-incubator/hydroform/install/scheme"
-	"github.com/kyma-project/cli/internal/minikube"
 	"github.com/kyma-project/kyma/components/kyma-operator/pkg/apis/installer/v1alpha1"
 	"github.com/pkg/errors"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/storage/memory"
 	"gopkg.in/yaml.v2"
 )
-
-// DockerErrorMessage is used to parse error messages coming from Docker
-type DockerErrorMessage struct {
-	Error string
-}
-
-func (i *Installation) buildKymaInstaller(imageName string) error {
-	var dc *docker.Client
-	var err error
-	if i.Options.IsLocal {
-		dc, err = minikube.DockerClient(i.Options.Verbose, i.Options.LocalCluster.Profile, i.Options.Timeout)
-	} else {
-		dc, err = docker.NewClientWithOpts(docker.FromEnv)
-	}
-	if err != nil {
-		return err
-	}
-
-	reader, err := archive.TarWithOptions(i.Options.LocalSrcPath, &archive.TarOptions{})
-	if err != nil {
-		return err
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(300)*time.Second)
-	defer cancel()
-
-	dc.NegotiateAPIVersion(ctx)
-
-	args := make(map[string]*string)
-	_, err = dc.ImageBuild(
-		ctx,
-		reader,
-		types.ImageBuildOptions{
-			Tags:           []string{strings.TrimSpace(string(imageName))},
-			SuppressOutput: true,
-			Remove:         true,
-			Dockerfile:     path.Join("tools", "kyma-installer", "kyma.Dockerfile"),
-			BuildArgs:      args,
-		},
-	)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (i *Installation) pushKymaInstaller() error {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(300)*time.Second)
-	defer cancel()
-
-	dc, err := docker.NewClientWithOpts(docker.FromEnv)
-	if err != nil {
-		return err
-	}
-
-	dc.NegotiateAPIVersion(ctx)
-
-	authConfig := types.AuthConfig{
-		Username: i.Options.DockerUsername,
-		Password: i.Options.DockerPassword,
-	}
-	encodedJSON, err := json.Marshal(authConfig)
-	if err != nil {
-		return err
-	}
-	authStr := base64.URLEncoding.EncodeToString(encodedJSON)
-
-	pusher, err := dc.ImagePush(ctx, i.Options.CustomImage, types.ImagePushOptions{RegistryAuth: authStr})
-	if err != nil {
-		return err
-	}
-
-	defer pusher.Close()
-
-	var errorMessage DockerErrorMessage
-	buffIOReader := bufio.NewReader(pusher)
-
-	for {
-		streamBytes, err := buffIOReader.ReadBytes('\n')
-		if err == io.EOF {
-			break
-		}
-		err = json.Unmarshal(streamBytes, &errorMessage)
-		if err != nil {
-			return err
-		}
-		if errorMessage.Error != "" {
-			return fmt.Errorf("failed to push Docker image: %s", errorMessage.Error)
-		}
-	}
-
-	return nil
-}
 
 func (i *Installation) getMasterHash() (string, error) {
 	ctx, timeoutF := context.WithTimeout(context.Background(), 2*time.Minute)

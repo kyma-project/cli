@@ -21,8 +21,10 @@ require (
 	github.com/containerd/containerd v1.3.0 // indirect
 	github.com/containerd/continuity v0.0.0-20200228182428-0f16d7a0959c // indirect
 	github.com/daviddengcn/go-colortext v0.0.0-20180409174941-186a3d44e920
+	github.com/docker/cli v0.0.0-20190925022749-754388324470
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/docker v1.4.2-0.20191101170500-ac7306503d23
+	github.com/docker/docker-credential-helpers v0.6.3 // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/fatih/color v1.7.0
 	github.com/gogo/protobuf v1.3.1 // indirect
