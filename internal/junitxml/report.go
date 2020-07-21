@@ -11,7 +11,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-//go:generate mockery -name=logsFetcher -output=automock -outpkg=automock -case=underscore
+//go:generate mockery --name logsFetcher --structname LogsFetcher
 
 // logsFetcher allows you to fetch logs from the testing pods
 type logsFetcher interface {

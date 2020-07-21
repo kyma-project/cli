@@ -18,6 +18,8 @@ const (
 	upgradeAction  = "upgrade"
 )
 
+//go:generate mockery --name Service
+
 type Service interface {
 	CheckInstallationState(kubeconfig *rest.Config) (installation.InstallationState, error)
 	TriggerInstallation(kubeconfig *rest.Config, tillerYaml string, installerYaml string, installerCRYaml string, configuration installation.Configuration) error

@@ -10,6 +10,8 @@ import (
 	"k8s.io/client-go/rest"
 )
 
+//go:generate mockery --name KymaKube
+
 // KymaKube defines the Kyma-enhanced kubernetes API.
 // It provides all functionality of the Kubernetes API plus extra functionality
 type KymaKube interface {

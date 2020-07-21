@@ -9,7 +9,7 @@ import (
 
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
 	"github.com/kyma-project/cli/internal/junitxml"
-	"github.com/kyma-project/cli/internal/junitxml/automock"
+	"github.com/kyma-project/cli/internal/junitxml/mocks"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"gotest.tools/golden"
@@ -40,7 +40,7 @@ func TestWriteJUnitXMLReport(t *testing.T) {
 			// given
 			fixCTS := getCTSFromTestData(t)
 
-			mockedLogsFetcher := &automock.LogsFetcher{}
+			mockedLogsFetcher := &mocks.LogsFetcher{}
 			defer mockedLogsFetcher.AssertExpectations(t)
 
 			for _, result := range fixCTS.Status.Results {
