@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := local
 
 ifndef KYMA_VERSION
-	KYMA_VERSION = latest
+	KYMA_VERSION = 1.14.0-rc1
 endif
 
 ifndef VERSION
@@ -81,4 +81,3 @@ ci-master: resolve validate build test integration-test upload-stable
 
 .PHONY: ci-release
 ci-release: resolve validate build test integration-test archive release
-
