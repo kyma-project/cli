@@ -146,7 +146,7 @@ func (i *Installation) loadInstallationFiles() (map[string]*File, error) {
 	if i.Options.IsLocal {
 		installationFiles =
 			map[string]*File{
-				installerFile:       {Path: "installer.yaml"},
+				installerFile:       {Path: "installer-local.yaml"},
 				installerCRFile:     {Path: "installer-cr.yaml.tpl"},
 				installerConfigFile: {Path: "installer-config-local.yaml.tpl"},
 			}
