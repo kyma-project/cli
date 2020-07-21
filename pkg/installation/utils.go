@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -34,7 +35,8 @@ func (i *Installation) buildKymaInstaller(imageName string) error {
 		return err
 	}
 
-	reader, err := archive.TarWithOptions(filepath.Join(i.Options.LocalSrcPath), &archive.TarOptions{})
+	reader, err := archive.TarWithOptions(i.Options.LocalSrcPath, &archive.TarOptions{})
+
 	if err != nil {
 		return err
 	}
@@ -52,7 +54,7 @@ func (i *Installation) buildKymaInstaller(imageName string) error {
 			Tags:           []string{strings.TrimSpace(string(imageName))},
 			SuppressOutput: true,
 			Remove:         true,
-			Dockerfile:     filepath.Join("tools", "kyma-installer", "kyma.Dockerfile"),
+			Dockerfile:     path.Join("tools", "kyma-installer", "kyma.Dockerfile"),
 			BuildArgs:      args,
 		},
 	)
