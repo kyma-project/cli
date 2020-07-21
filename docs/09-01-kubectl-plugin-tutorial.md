@@ -1,5 +1,5 @@
 ---
-title: Use Kyma CLI as kubectl pliu
+title: Use Kyma CLI as kubectl plugin
 type: Tutorials
 ---
 

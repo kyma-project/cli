@@ -4,7 +4,7 @@
 
 Kyma CLI is a command line tool which supports [Kyma](https://github.com/kyma-project/kyma) developers. It provides a set of commands you can use to install, manage, and test Kyma.
 
-**TIP:** This document briefly describes the concept of Kyma CLI. Read the [complete documentation](https://github.com/kyma-project/cli/blob/master/docs) to learn more.
+>**TIP:** This document briefly describes the concept of Kyma CLI. Read the [complete documentation](https://github.com/kyma-project/cli/blob/master/docs) to learn more.
 
 ## Quick installation
 
@@ -47,9 +47,10 @@ Example:
 kyma install --source=latest
 ```
 
-Read more about the available [commands and flags](https://github.com/kyma-project/cli/blob/master/docs/03-02-use-kyma-cli.md)
+>**TIP:** 
 
-You can also try out Kyma CLI using [these examples](https://github.com/kyma-project/cli/blob/master/docs/03-03-examples.md)
+>Read more about the available [commands and flags](https://github.com/kyma-project/cli/blob/master/docs/03-02-use-kyma-cli.md).
+>You can also try out Kyma CLI using [these examples](https://github.com/kyma-project/cli/blob/master/docs/03-03-examples.md).
 
 ## Development
 
@@ -64,4 +65,6 @@ curl -Lo kyma https://storage.googleapis.com/kyma-cli-stable/kyma-darwin # kyma-
 chmod +x kyma
 ```
 
-To learn how to use Kyma CLI as a kubectl plugin, follow [this tutorial](https://github.com/kyma-project/cli/blob/master/docs/09-01-kubectl-plugin-tutorial.md)
+### Kyma CLI as kubectl plugin
+
+To learn how to use Kyma CLI as a kubectl plugin, follow [this tutorial](https://github.com/kyma-project/cli/blob/master/docs/09-01-kubectl-plugin-tutorial.md).
