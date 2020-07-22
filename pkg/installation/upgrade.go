@@ -195,7 +195,7 @@ func (i *Installation) triggerUpgrade(files map[string]*File) error {
 		return pkgErrors.Wrap(err, "unable to load the configurations")
 	}
 
-	err = i.service.TriggerUpgrade(i.k8s.Config(), tillerFileContent, installerFileContent, installerCRFileContent, configuration)
+	err = i.service.TriggerUpgrade(tillerFileContent, installerFileContent, installerCRFileContent, configuration)
 	if err != nil {
 		return fmt.Errorf("Failed to start upgrade: %s", err.Error())
 	}

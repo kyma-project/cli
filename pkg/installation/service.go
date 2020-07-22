@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	pkgErrors "github.com/pkg/errors"
+	"github.com/pkg/errors"
 
 	"github.com/kyma-incubator/hydroform/install/installation"
 	"github.com/kyma-project/kyma/components/kyma-operator/pkg/apis/installer/v1alpha1"
@@ -22,8 +22,8 @@ const (
 
 type Service interface {
 	CheckInstallationState(kubeconfig *rest.Config) (installation.InstallationState, error)
-	TriggerInstallation(kubeconfig *rest.Config, tillerYaml string, installerYaml string, installerCRYaml string, configuration installation.Configuration) error
-	TriggerUpgrade(kubeconfig *rest.Config, tillerYaml string, installerYaml string, installerCRYaml string, configuration installation.Configuration) error
+	TriggerInstallation(tillerYaml string, installerYaml string, installerCRYaml string, configuration installation.Configuration) error
+	TriggerUpgrade(tillerYaml string, installerYaml string, installerCRYaml string, configuration installation.Configuration) error
 	TriggerUninstall(kubeconfig *rest.Config) error
 }
 
@@ -63,12 +63,12 @@ type installationService struct {
 	clusterCleanupResourceSelector string
 }
 
-func (s *installationService) TriggerInstallation(kubeconfig *rest.Config, tillerYaml string, installerYaml string, installerCRYaml string, configuration installation.Configuration) error {
-	return s.triggerAction(tillerYaml, installerYaml, installerCRYaml, configuration, s.kymaInstaller, s.kymaInstaller.PrepareInstallation, installAction)
+func (s *installationService) TriggerInstallation(tillerYaml string, installerYaml string, installerCRYaml string, configuration installation.Configuration) error {
+	return s.triggerAction(tillerYaml, installerYaml, installerCRYaml, configuration, s.kymaInstaller.PrepareInstallation, installAction)
 }
 
-func (s *installationService) TriggerUpgrade(kubeconfig *rest.Config, tillerYaml string, installerYaml string, installerCRYaml string, configuration installation.Configuration) error {
-	return s.triggerAction(tillerYaml, installerYaml, installerCRYaml, configuration, s.kymaInstaller, s.kymaInstaller.PrepareUpgrade, upgradeAction)
+func (s *installationService) TriggerUpgrade(tillerYaml string, installerYaml string, installerCRYaml string, configuration installation.Configuration) error {
+	return s.triggerAction(tillerYaml, installerYaml, installerCRYaml, configuration, s.kymaInstaller.PrepareUpgrade, upgradeAction)
 }
 
 func (s *installationService) triggerAction(
@@ -76,7 +76,6 @@ func (s *installationService) triggerAction(
 	installerYaml string,
 	installerCRYaml string,
 	configuration installation.Configuration,
-	installer installation.Installer,
 	prepareFunction func(installation.Installation) error,
 	actionName string) error {
 
@@ -89,16 +88,16 @@ func (s *installationService) triggerAction(
 
 	err := prepareFunction(installationConfig)
 	if err != nil {
-		return pkgErrors.Wrap(err, fmt.Sprintf("Failed to prepare %s", actionName))
+		return errors.Wrap(err, fmt.Sprintf("Failed to prepare %s", actionName))
 	}
 
 	installationCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	// We are not waiting for events, just triggering installation
-	_, _, err = installer.StartInstallation(installationCtx)
+	_, _, err = s.kymaInstaller.StartInstallation(installationCtx)
 	if err != nil {
-		return pkgErrors.Wrap(err, fmt.Sprintf("Failed to start Kyma %s", actionName))
+		return errors.Wrap(err, fmt.Sprintf("Failed to start Kyma %s", actionName))
 	}
 
 	return nil
