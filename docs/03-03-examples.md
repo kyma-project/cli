@@ -10,7 +10,7 @@ The following examples show how to provision a cluster, install Kyma, and run th
 To provision a cluster on a specific cloud provider (in this example GCP), run:
 
 ```bash
-kyma provision gke -c {SERVICE_ACCOUNT_KEY_FILE_PATH} -n $CLUSTER_NAME -p $GCP_PROJECT 
+kyma provision gke -c {SERVICE_ACCOUNT_KEY_FILE_PATH} -n {CLUSTER_NAME} -p {GCP_PROJECT} 
 ```
 To provision a Minikube cluster, run:
 
@@ -36,7 +36,7 @@ To install Kyma using your own Kyma installer image, run:
 ```bash
 kyma install -s {IMAGE}
 ```
-To install Kyma using your local clone by providing an image name used for building and pushing a Kyma installer image, run:
+To build an image from your local sources and install Kyma based on this image, run:
 
 ```bash
 kyma install -s local --custom-image {IMAGE}

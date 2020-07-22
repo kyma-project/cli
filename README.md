@@ -42,7 +42,7 @@ where:
 Example:
 
 ```bash
-kyma install --source=latest
+kyma install -s latest
 ```
 
 >**TIP:** 

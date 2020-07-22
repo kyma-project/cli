@@ -11,16 +11,16 @@ For the commands and flags to work, they need to follow this syntax:
 kyma {COMMAND} {FLAGS}
 ```
 
-- **{COMMAND}** specifies the operation you want to perform, such as provisioning the cluster or installing Kyma,
-- **{FLAGS}** specifies optional flags you can use to enrich you command.
+- **{COMMAND}** specifies the operation you want to perform, such as provisioning the cluster or installing Kyma
+- **{FLAGS}** specifies optional flags you can use to enrich your command.
 
 See the example:
 
 ```bash
-kyma install --source=latest
+kyma install -s latest
 ```
 
->**TIP:** Documentation for particular commands is auto generated along with the code. See [the full list of commands and flags](https://github.com/kyma-project/cli/tree/master/docs/gen-docs).
+>**TIP:** Documentation for particular commands is generated automatically with the code. See [the full list of commands and flags](https://github.com/kyma-project/cli/tree/master/docs/gen-docs).
 
 |     Command        | Child commands   |  Description  | Example |
 |--------------------|----------------|---------------|---------|
