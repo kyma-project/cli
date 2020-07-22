@@ -35,13 +35,13 @@ func (_m *Service) CheckInstallationState(kubeconfig *rest.Config) (installation
 	return r0, r1
 }
 
-// TriggerInstallation provides a mock function with given fields: kubeconfig, tillerYaml, installerYaml, installerCRYaml, configuration
-func (_m *Service) TriggerInstallation(kubeconfig *rest.Config, tillerYaml string, installerYaml string, installerCRYaml string, configuration installation.Configuration) error {
-	ret := _m.Called(kubeconfig, tillerYaml, installerYaml, installerCRYaml, configuration)
+// TriggerInstallation provides a mock function with given fields: tillerYaml, installerYaml, installerCRYaml, configuration
+func (_m *Service) TriggerInstallation(tillerYaml string, installerYaml string, installerCRYaml string, configuration installation.Configuration) error {
+	ret := _m.Called(tillerYaml, installerYaml, installerCRYaml, configuration)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*rest.Config, string, string, string, installation.Configuration) error); ok {
-		r0 = rf(kubeconfig, tillerYaml, installerYaml, installerCRYaml, configuration)
+	if rf, ok := ret.Get(0).(func(string, string, string, installation.Configuration) error); ok {
+		r0 = rf(tillerYaml, installerYaml, installerCRYaml, configuration)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -63,13 +63,13 @@ func (_m *Service) TriggerUninstall(kubeconfig *rest.Config) error {
 	return r0
 }
 
-// TriggerUpgrade provides a mock function with given fields: kubeconfig, tillerYaml, installerYaml, installerCRYaml, configuration
-func (_m *Service) TriggerUpgrade(kubeconfig *rest.Config, tillerYaml string, installerYaml string, installerCRYaml string, configuration installation.Configuration) error {
-	ret := _m.Called(kubeconfig, tillerYaml, installerYaml, installerCRYaml, configuration)
+// TriggerUpgrade provides a mock function with given fields: tillerYaml, installerYaml, installerCRYaml, configuration
+func (_m *Service) TriggerUpgrade(tillerYaml string, installerYaml string, installerCRYaml string, configuration installation.Configuration) error {
+	ret := _m.Called(tillerYaml, installerYaml, installerCRYaml, configuration)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*rest.Config, string, string, string, installation.Configuration) error); ok {
-		r0 = rf(kubeconfig, tillerYaml, installerYaml, installerCRYaml, configuration)
+	if rf, ok := ret.Get(0).(func(string, string, string, installation.Configuration) error); ok {
+		r0 = rf(tillerYaml, installerYaml, installerCRYaml, configuration)
 	} else {
 		r0 = ret.Error(0)
 	}
