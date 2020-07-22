@@ -3,7 +3,7 @@ title: Kyma CLI usage examples
 type: Details
 ---
 
-The following examples show how 
+The following examples show how to use Kyma CLI.
 
 - Install Kyma with Minikube on Mac:
 

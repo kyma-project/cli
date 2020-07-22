@@ -2,7 +2,7 @@
 
 ## Overview
 
-Kyma CLI is a command line tool which supports [Kyma](https://github.com/kyma-project/kyma) developers. It provides a set of commands you can use to install, manage, and test Kyma.
+Kyma CLI is a command line tool which supports [Kyma](https://github.com/kyma-project/kyma) developers. It provides a set of commands you can use to provision clusters as well as install, manage, and test Kyma.
 
 >**TIP:** This document briefly describes the concept of Kyma CLI. Read the [complete documentation](https://github.com/kyma-project/cli/blob/master/docs) to learn more.
 
@@ -25,11 +25,9 @@ choco install kyma-cli
 ```
 Read more on [installation options](https://github.com/kyma-project/cli/blob/master/docs/03-01-installation.md).
 
-
 ## Use Kyma CLI
 
 Once you have already installed the CLI, you can use its set of handy commands and flags to set up your cluster locally or on one of the cloud providers, install Kyma, manage and test it.
-
 In a nutshell, this is the syntax you can use to run the commands from your terminal:
 
 ```bash
@@ -56,7 +54,7 @@ kyma install --source=latest
 
 ### Kyma CLI stable binaries
 
-Kyma CLI is used in continuous integration jobs that install or test Kyma or provision clusters. To effectively support this, we publish the stable binaries created from the `stable` tag which corresponds to the latest stable version of Kyma CLI.
+Kyma CLI is used in CI jobs that install or test Kyma or provision clusters. To effectively support this process, we publish the stable binaries created from the `stable` tag which corresponds to the latest stable version of Kyma CLI.
 
 To download the binaries, run:
 

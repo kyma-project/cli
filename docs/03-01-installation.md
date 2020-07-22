@@ -3,23 +3,13 @@ title: Install Kyma CLI
 type: Details
 ---
 
-You can easily install Kyma CLI on macOS, Linux, or Windows. Follow the instructions described in the sections.
+You can easily install Kyma CLI on macOS, Linux, or Windows. To do so, perform the instructions described in the following sections.
 
 ## Prerequisites
 
 To work, Kyma CLI requires the following software:
 
 - [Minikube](https://github.com/kubernetes/minikube)
-
-## Homebrew
-
-To install Kyma CLI using Homebrew, run:
-
-```bash
-brew install kyma-cli
-```
-
-If the Homebrew formula of the CLI does not get updated by the Homebrew team within three days of the release, update the formula of the CLI manually to the most recent version by following this [guide](https://github.com/Homebrew/brew/blob/master/docs/How-To-Open-a-Homebrew-Pull-Request.md). For a sample Homebrew Kyma CLI formula version bump, see [this](https://github.com/Homebrew/homebrew-core/pull/52375) PR.
 
 ## macOS
 
@@ -30,6 +20,17 @@ curl -Lo kyma.tar.gz "https://github.com/kyma-project/cli/releases/download/$(cu
 && mkdir kyma-release && tar -C kyma-release -zxvf kyma.tar.gz && chmod +x kyma-release/kyma && sudo mv kyma-release/kyma /usr/local/bin \
 && rm -rf kyma-release kyma.tar.gz
 ```
+
+### Homebrew
+
+To install Kyma CLI using Homebrew, run:
+
+```bash
+brew install kyma-cli
+```
+
+If the Homebrew team does not update the Homebrew formula of the CLI within three days of the release, follow this [guide](https://github.com/Homebrew/brew/blob/master/docs/How-To-Open-a-Homebrew-Pull-Request.md) to update it manually to the most recent version. For a sample Homebrew Kyma CLI formula version bump, see [this PR](https://github.com/Homebrew/homebrew-core/pull/52375).
+
 
 ## Linux
 
@@ -43,7 +44,7 @@ curl -Lo kyma.tar.gz "https://github.com/kyma-project/cli/releases/download/$(cu
 
 ## Windows
 
-To install Kyma CLI on Windows, download and unzip the [artifact](https://github.com/kyma-project/cli/releases). Remember to adjust your **PATH** environment variable.
+To install Kyma CLI on Windows, download and unzip the [release artifact](https://github.com/kyma-project/cli/releases). Remember to adjust your **PATH** environment variable.
 
 ```PowerShell
 ${KYMA_VERSION}=1.2.0
@@ -61,11 +62,9 @@ To install Kyma CLI on Windows using [Chocolatey](https://www.chocolatey.org), r
 ```PowerShell
 choco install kyma-cli
 ```
-The Kyma CLI Chocolatey package does not need to be bumped when there is a new release, as it has a script that will automatically check for new releases and update the package to the latest release.
+You don't have to bump Kyma CLI Chocolatey package manually with each new release, as it includes a script that automatically checks for new releases and updates the package to the latest one.
 
-Nevertheless, the package still needs some maintenance to keep its dedicated [site](https://chocolatey.org/packages/kyma-cli) at chocolatey.org up to date (e.g. update description, details, screenshots, etc...).
-
-In order to maintain the [site](https://chocolatey.org/packages/kyma-cli), send a pull request to Chocolatey's [GitHub repository](https://github.com/dgalbraith/chocolatey-packages/tree/master/automatic/kyma-cli).
+Still, the package requires some maintenance to keep its dedicated [site](https://chocolatey.org/packages/kyma-cli) at`chocolatey.org` up to datw. This means, you should regularly update the description, details, screenshots, etc. To keep the site up to date, submit a pull request to [Chocolatey's GitHub repository](https://github.com/dgalbraith/chocolatey-packages/tree/master/automatic/kyma-cli).
 
 ## Other
 

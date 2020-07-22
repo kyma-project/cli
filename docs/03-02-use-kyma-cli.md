@@ -20,9 +20,7 @@ See the example:
 kyma install --source=latest
 ```
 
-The 
-
->**TIP:** For the full list of commands and flags, see [this](https://github.com/kyma-project/cli/tree/master/docs/gen-docs) document.
+>**TIP:** Documentation for particular commands is auto generated along with the code. See [the full list of commands and flags](https://github.com/kyma-project/cli/tree/master/docs/gen-docs).
 
 |     Command        | Child commands   |  Description  | Example |
 |--------------------|----------------|---------------|---------|
