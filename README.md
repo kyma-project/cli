@@ -22,7 +22,7 @@ To install the latest release of Kyma CLI on Windows using [Chocolatey](https://
 ```PowerShell
 choco install kyma-cli
 ```
-Read more on [installation options](https://github.com/kyma-project/cli/blob/master/docs/03-01-installation.md).
+Read more about [installation options](https://github.com/kyma-project/cli/blob/master/docs/03-01-installation.md).
 
 ## Use Kyma CLI
 
