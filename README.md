@@ -6,19 +6,18 @@ Kyma CLI is a command line tool which supports [Kyma](https://github.com/kyma-pr
 
 >**TIP:** This document briefly describes the concept of Kyma CLI. Read the [complete documentation](https://github.com/kyma-project/cli/blob/master/docs) to learn more.
 
-## Quick installation
+## Installation
 
 >**NOTE:** Before you start with the installation, make sure you have [Minikube](https://github.com/kubernetes/minikube) installed.
 
-Use the following options to install Kyma CLI from the latest release.
 
-To install Kyma CLI on MacOS using Homebrew, run:
+To install the latest release of Kyma CLI on MacOS using Homebrew, run:
 
 ```bash
 brew install kyma-cli
 ```
 
-To install Kyma CLI on Windows using [Chocolatey](https://www.chocolatey.org), run:
+To install the latest release of Kyma CLI on Windows using [Chocolatey](https://www.chocolatey.org), run:
 
 ```PowerShell
 choco install kyma-cli
@@ -27,7 +26,8 @@ Read more on [installation options](https://github.com/kyma-project/cli/blob/mas
 
 ## Use Kyma CLI
 
-Once you have already installed the CLI, you can use its set of handy commands and flags to set up your cluster locally or on one of the cloud providers, install Kyma, manage and test it.
+Once you have already installed the CLI, you can use its set of commands and flags to provision a cluster and start working with Kyma.
+
 In a nutshell, this is the syntax you can use to run the commands from your terminal:
 
 ```bash
@@ -45,10 +45,7 @@ Example:
 kyma install -s latest
 ```
 
->**TIP:** 
-
->Read more about the available [commands and flags](https://github.com/kyma-project/cli/blob/master/docs/03-02-use-kyma-cli.md).
->You can also try out Kyma CLI using [these examples](https://github.com/kyma-project/cli/blob/master/docs/03-03-examples.md).
+>**TIP:** Read more about the available [commands and flags](https://github.com/kyma-project/cli/blob/master/docs/03-02-use-kyma-cli.md).You can also try out Kyma CLI using [these examples](https://github.com/kyma-project/cli/blob/master/docs/03-03-examples.md).
 
 ## Development
 

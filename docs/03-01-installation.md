@@ -64,7 +64,7 @@ choco install kyma-cli
 ```
 You don't have to bump Kyma CLI Chocolatey package manually with each new release, as it includes a script that automatically checks for new releases and updates the package to the latest one.
 
-Still, the package requires some maintenance to keep its dedicated [site](https://chocolatey.org/packages/kyma-cli) at`chocolatey.org` up to datw. This means, you should regularly update the description, details, screenshots, etc. To keep the site up to date, submit a pull request to [Chocolatey's GitHub repository](https://github.com/dgalbraith/chocolatey-packages/tree/master/automatic/kyma-cli).
+Still, the package requires some maintenance to keep its dedicated [site](https://chocolatey.org/packages/kyma-cli) at`chocolatey.org` up to date. This means you should regularly update the description, details, screenshots, etc. To keep the site up to date, submit a pull request to [Chocolatey's GitHub repository](https://github.com/dgalbraith/chocolatey-packages/tree/master/automatic/kyma-cli).
 
 ## Other
 

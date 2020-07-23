@@ -3,7 +3,7 @@ title: Use Kyma CLI
 type: Details
 ---
 
-Kyma CLI comes with a set of commands, each of which has its own specific set of flags. Use these to provision the cluster locally or using a chosen cloud provider, install, and test Kyma. 
+Kyma CLI comes with a set of commands, each of which has its own specific set of flags. Use them to provision the cluster locally or using a chosen cloud provider, install, and test Kyma. 
 
 For the commands and flags to work, they need to follow this syntax:
 
@@ -11,7 +11,7 @@ For the commands and flags to work, they need to follow this syntax:
 kyma {COMMAND} {FLAGS}
 ```
 
-- **{COMMAND}** specifies the operation you want to perform, such as provisioning the cluster or installing Kyma
+- **{COMMAND}** specifies the operation you want to perform, such as provisioning the cluster or installing Kyma.
 - **{FLAGS}** specifies optional flags you can use to enrich your command.
 
 See the example:
