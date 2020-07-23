@@ -385,19 +385,19 @@ func (i *Installation) waitForInstaller() error {
 		default:
 			installationState, err := i.service.CheckInstallationState(i.k8s.Config())
 			if err != nil {
-				installErr := installationSDK.InstallationError{}
-				if errors.As(err, &installErr) {
-					if !errorOccured {
-						errorOccured = true
+				if !errorOccured {
+					errorOccured = true
+					installErr := installationSDK.InstallationError{}
+					if errors.As(err, &installErr) {
 						i.currentStep.LogErrorf("%s, which may be OK. Will retry later...", installErr.Error())
 						i.currentStep.LogInfo("To fetch the error logs from the installer, run: kubectl get installation kyma-installation -o go-template --template='{{- range .status.errorLog }}{{printf \"%s:\\n %s\\n\" .component .log}}{{- end}}'")
 						i.currentStep.LogInfo("To fetch the application logs from the installer, run: kubectl logs -n kyma-installer -l name=kyma-installer")
+					} else {
+						i.currentStep.LogErrorf("Failed to get installation state, which may be OK. Will retry later...\nError: %s", err)
 					}
-					time.Sleep(10 * time.Second)
-					continue
-				} else {
-					return fmt.Errorf("Failed to get installation state: %s", err.Error())
 				}
+				time.Sleep(10 * time.Second)
+				continue
 			}
 
 			switch installationState.State {
