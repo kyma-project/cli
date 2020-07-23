@@ -20,13 +20,13 @@ See the example:
 kyma install -s latest
 ```
 
->**TIP:** Documentation for particular commands is generated automatically with the code. See [the full list of commands and flags](https://github.com/kyma-project/cli/tree/master/docs/gen-docs).
+See [the full list of commands and flags](https://kyma-project.io/docs/cli/commands/).
 
 |     Command        | Child commands   |  Description  | Example |
 |--------------------|----------------|---------------|---------|
-| [`completion`](/docs/gen-docs/kyma_completion.md)| None| Generates and displays the bash or zsh completion script. | `kyma completion`|
-| [`console`](/docs/gen-docs/kyma_console.md)| None| Launches Kyma Console in a browser window. | `kyma console` |
-| [`install`](/docs/gen-docs/kyma_install.md)| None| Installs Kyma on a cluster based on the current or specified release. | `kyma install`|
-| [`provision`](/docs/gen-docs/kyma_provision.md)| [`minikube`](/docs/gen-docs/kyma_provision_minikube.md)<br> [`gardener`](/docs/gen-docs/kyma_provision_gardener.md) <br> [`gke`](/docs/gen-docs/kyma_provision_gke.md) <br> [`aks`](/docs/gen-docs/kyma_provision_aks.md)| Provisions a new cluster on a platform of your choice. Currently, this command supports cluster provisioning on GCP, Azure, Gardener, and Minikube. | `kyma provision minikube`|
-| [`test`](/docs/gen-docs/kyma_test.md)|[`definitions`](/docs/gen-docs/kyma_test_definitions.md)<br> [`delete`](/docs/gen-docs/kyma_test_delete.md) <br> [`list`](/docs/gen-docs/kyma_test_list.md) <br> [`run`](/docs/gen-docs/kyma_test_run.md) <br> [`status`](/docs/gen-docs/kyma_test_status.md)<br> [`logs`](/docs/gen-docs/kyma_test_logs.md) <br> | Runs and manages tests on a provisioned Kyma cluster. Using child commands, you can run tests, view test definitions, list and delete test suites, display test status, and fetch the logs of the tests.| `kyma test run` |
-| [`version`](/docs/gen-docs/kyma_version.md)|None| Shows the cluster version and the Kyma CLI version.| `kyma version` |
+| [`completion`](/cli/commands#kyma-completion-kyma-completion)| None| Generates and displays the bash or zsh completion script. | `kyma completion`|
+| [`console`](/cli/commands#kyma-console-kyma-console)| None| Launches Kyma Console in a browser window. | `kyma console` |
+| [`install`](/cli/commands#kyma-install-kyma-install)| None| Installs Kyma on a cluster based on the current or specified release. | `kyma install`|
+| [`provision`](/cli/commands#kyma-provision-kyma-provision)| [`minikube`](/cli/commands#kyma-provision-minikube-kyma-provision-minikube)<br> [`gardener`](/cli/commands#kyma-provision-gardener-kyma-provision-gardener) <br> [`gke`](/cli/commands#kyma-provision-gke-kyma-provision-gke) <br> [`aks`](/cli/commands#kyma-provision-aks-kyma-provision-aks)| Provisions a new cluster on a platform of your choice. Currently, this command supports cluster provisioning on GCP, Azure, Gardener, and Minikube. | `kyma provision minikube`|
+| [`test`](/cli/commands#kyma-test-kyma-test)|[`definitions`](/cli/commands#kyma-test-definitions-kyma-test-definitions)<br> [`delete`](/cli/commands#kyma-test-delete-kyma-test-delete) <br> [`list`](/cli/commands#kyma-test-list-kyma-test-list) <br> [`run`](/cli/commands#kyma-test-run-kyma-test-run) <br> [`status`](/cli/commands#kyma-test-status-kyma-test-status)<br> [`logs`](/cli/commands#kyma-test-logs-kyma-test-logs) <br> | Runs and manages tests on a provisioned Kyma cluster. Using child commands, you can run tests, view test definitions, list and delete test suites, display test status, and fetch the logs of the tests.| `kyma test run` |
+| [`version`](/cli/commands#kyma-version-kyma-version)|None| Shows the cluster version and the Kyma CLI version.| `kyma version` |

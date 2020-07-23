@@ -4,7 +4,7 @@
 
 Kyma CLI is a command line tool which supports [Kyma](https://github.com/kyma-project/kyma) developers. It provides a set of commands you can use to provision clusters as well as install, manage, and test Kyma.
 
->**TIP:** This document briefly describes the concept of Kyma CLI. Read the [complete documentation](https://github.com/kyma-project/cli/blob/master/docs) to learn more.
+>**TIP:** This document briefly describes the concept of Kyma CLI. Read the [complete documentation](https://kyma-project.io/docs/cli/) to learn more.
 
 ## Installation
 
