@@ -26,6 +26,107 @@ func Test_GetLatestAvailableMasterHash(t *testing.T) {
 	require.True(t, isHex(h))
 }
 
+func Test_LoadInstallationFiles(t *testing.T) {
+	localInstallation := Installation{
+		Options: &Options{
+			IsLocal:          true,
+			fromLocalSources: false,
+			configVersion:    "master",
+		},
+	}
+
+	m, err := localInstallation.loadInstallationFiles()
+	require.NoError(t, err)
+	require.Equal(t, 4, len(m))
+
+	clusterInstallation := Installation{
+		Options: &Options{
+			IsLocal:          false,
+			fromLocalSources: false,
+			configVersion:    "master",
+		},
+	}
+
+	m, err = clusterInstallation.loadInstallationFiles()
+	require.NoError(t, err)
+	require.Equal(t, 3, len(m))
+
+	f, err := loadStringContent(m)
+	require.NoError(t, err)
+	require.Equal(t, 3, len(f))
+}
+
+func Test_LoadConfigurations(t *testing.T) {
+	domain := "test.kyma"
+	tlsCert := "testCert"
+	tlsKey := "testKey"
+	password := "testPass"
+
+	installation := &Installation{
+		Options: &Options{
+			OverrideConfigs: []string{path.Join("../../internal/testdata", "overrides.yaml")},
+			IsLocal:         false,
+			Domain:          domain,
+			TLSCert:         tlsCert,
+			TLSKey:          tlsKey,
+			Password:        password,
+		},
+	}
+
+	configurations, err := installation.loadConfigurations(nil)
+	require.NoError(t, err)
+	require.Equal(t, 4, len(configurations.Configuration))
+	dom, ok := configurations.Configuration.Get("global.domainName")
+	require.Equal(t, true, ok)
+	require.Equal(t, domain, dom.Value)
+	tlsC, ok := configurations.Configuration.Get("global.tlsCrt")
+	require.Equal(t, true, ok)
+	require.Equal(t, tlsCert, tlsC.Value)
+	tlsK, ok := configurations.Configuration.Get("global.tlsKey")
+	require.Equal(t, true, ok)
+	require.Equal(t, tlsKey, tlsK.Value)
+	pass, ok := configurations.Configuration.Get("global.adminPassword")
+	require.Equal(t, true, ok)
+	require.Equal(t, base64.StdEncoding.EncodeToString([]byte(password)), pass.Value)
+
+	require.Equal(t, 1, len(configurations.ComponentConfiguration))
+	require.Equal(t, "istio", configurations.ComponentConfiguration[0].Component)
+	cpuR, ok := configurations.ComponentConfiguration[0].Configuration.Get("global.proxy.resources.requests.cpu")
+	require.Equal(t, true, ok)
+	require.Equal(t, "490m", cpuR.Value)
+	memR, ok := configurations.ComponentConfiguration[0].Configuration.Get("global.proxy.resources.requests.memory")
+	require.Equal(t, true, ok)
+	require.Equal(t, "127Mi", memR.Value)
+	cpuL, ok := configurations.ComponentConfiguration[0].Configuration.Get("global.proxy.resources.limits.cpu")
+	require.Equal(t, true, ok)
+	require.Equal(t, "499m", cpuL.Value)
+	memL, ok := configurations.ComponentConfiguration[0].Configuration.Get("global.proxy.resources.limits.memory")
+	require.Equal(t, true, ok)
+	require.Equal(t, "1023Mi", memL.Value)
+}
+
+func Test_LoadComponentsConfig(t *testing.T) {
+	installation := &Installation{
+		Options: &Options{
+			ComponentsConfig: path.Join("../../internal/testdata", "components.yaml"),
+		},
+	}
+
+	components, err := installation.loadComponentsConfig()
+	require.NoError(t, err)
+	require.Equal(t, 6, len(components))
+
+	installation2 := &Installation{
+		Options: &Options{
+			ComponentsConfig: path.Join("../../internal/testdata", "installationCR.yaml"),
+		},
+	}
+
+	components, err = installation2.loadComponentsConfig()
+	require.NoError(t, err)
+	require.Equal(t, 8, len(components))
+}
+
 func Test_GetInstallerImage(t *testing.T) {
 	const image = "eu.gcr.io/kyma-project/kyma-installer:63f27f76"
 	testData := File{Content: []map[string]interface{}{{
@@ -117,73 +218,18 @@ func Test_ReplaceDockerImageURL(t *testing.T) {
 	}
 }
 
-func Test_LoadConfigurations(t *testing.T) {
-	domain := "test.kyma"
-	tlsCert := "testCert"
-	tlsKey := "testKey"
-	password := "testPass"
+func Test_IsDockerImage(t *testing.T) {
+	ok := isDockerImage("testRegistry/testImage:tag")
+	require.True(t, ok)
 
-	installation := &Installation{
-		Options: &Options{
-			OverrideConfigs: []string{path.Join("../../internal/testdata", "overrides.yaml")},
-			IsLocal:         false,
-			Domain:          domain,
-			TLSCert:         tlsCert,
-			TLSKey:          tlsKey,
-			Password:        password,
-		},
-	}
-
-	configurations, err := installation.loadConfigurations(nil)
-	require.NoError(t, err)
-	require.Equal(t, 4, len(configurations.Configuration))
-	dom, ok := configurations.Configuration.Get("global.domainName")
-	require.Equal(t, true, ok)
-	require.Equal(t, domain, dom.Value)
-	tlsC, ok := configurations.Configuration.Get("global.tlsCrt")
-	require.Equal(t, true, ok)
-	require.Equal(t, tlsCert, tlsC.Value)
-	tlsK, ok := configurations.Configuration.Get("global.tlsKey")
-	require.Equal(t, true, ok)
-	require.Equal(t, tlsKey, tlsK.Value)
-	pass, ok := configurations.Configuration.Get("global.adminPassword")
-	require.Equal(t, true, ok)
-	require.Equal(t, base64.StdEncoding.EncodeToString([]byte(password)), pass.Value)
-
-	require.Equal(t, 1, len(configurations.ComponentConfiguration))
-	require.Equal(t, "istio", configurations.ComponentConfiguration[0].Component)
-	cpuR, ok := configurations.ComponentConfiguration[0].Configuration.Get("global.proxy.resources.requests.cpu")
-	require.Equal(t, true, ok)
-	require.Equal(t, "490m", cpuR.Value)
-	memR, ok := configurations.ComponentConfiguration[0].Configuration.Get("global.proxy.resources.requests.memory")
-	require.Equal(t, true, ok)
-	require.Equal(t, "127Mi", memR.Value)
-	cpuL, ok := configurations.ComponentConfiguration[0].Configuration.Get("global.proxy.resources.limits.cpu")
-	require.Equal(t, true, ok)
-	require.Equal(t, "499m", cpuL.Value)
-	memL, ok := configurations.ComponentConfiguration[0].Configuration.Get("global.proxy.resources.limits.memory")
-	require.Equal(t, true, ok)
-	require.Equal(t, "1023Mi", memL.Value)
+	ok = isDockerImage("testImage")
+	require.False(t, ok)
 }
 
-func Test_LoadComponentsConfig(t *testing.T) {
-	installation := &Installation{
-		Options: &Options{
-			ComponentsConfig: path.Join("../../internal/testdata", "components.yaml"),
-		},
-	}
+func Test_IsSemVer(t *testing.T) {
+	ok := isSemVer("v1.2.3")
+	require.True(t, ok)
 
-	components, err := installation.loadComponentsConfig()
-	require.NoError(t, err)
-	require.Equal(t, 6, len(components))
-
-	installation2 := &Installation{
-		Options: &Options{
-			ComponentsConfig: path.Join("../../internal/testdata", "installationCR.yaml"),
-		},
-	}
-
-	components, err = installation2.loadComponentsConfig()
-	require.NoError(t, err)
-	require.Equal(t, 8, len(components))
+	ok = isSemVer("testVersion")
+	require.False(t, ok)
 }
