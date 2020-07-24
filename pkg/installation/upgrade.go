@@ -6,7 +6,6 @@ import (
 	"github.com/Masterminds/semver"
 	installationSDK "github.com/kyma-incubator/hydroform/install/installation"
 	"github.com/kyma-project/cli/cmd/kyma/version"
-	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/net"
 	pkgErrors "github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -16,10 +15,6 @@ import (
 func (i *Installation) UpgradeKyma() (*Result, error) {
 	if i.Options.CI || i.Options.NonInteractive {
 		i.Factory.NonInteractive = true
-	}
-	var err error
-	if i.k8s, err = kube.NewFromConfigWithTimeout("", i.Options.KubeconfigPath, i.Options.Timeout); err != nil {
-		return nil, pkgErrors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
 	}
 
 	s := i.newStep("Preparing Upgrade")
@@ -173,16 +168,7 @@ func (i *Installation) promptMigrationGuide(kymaVersion string, cliVersion strin
 }
 
 func (i *Installation) triggerUpgrade(files map[string]*File) error {
-	componentList, err := i.loadComponentsConfig()
-	if err != nil {
-		return fmt.Errorf("Could not load components configuration file. Make sure file is a valid YAML and contains component list: %s", err.Error())
-	}
-
-	i.service, err = NewInstallationServiceWithComponents(i.k8s.Config(), i.Options.Timeout, "", componentList)
-	if err != nil {
-		return fmt.Errorf("Failed to create installation service. Make sure your kubeconfig is valid: %s", err.Error())
-	}
-
+	var err error
 	files, err = loadStringContent(files)
 	if err != nil {
 		return fmt.Errorf("Failed to load installation files: %s", err.Error())
@@ -196,10 +182,10 @@ func (i *Installation) triggerUpgrade(files map[string]*File) error {
 		return pkgErrors.Wrap(err, "unable to load the configurations")
 	}
 
-	err = i.service.TriggerUpgrade(tillerFileContent, installerFileContent, installerCRFileContent, configuration)
+	err = i.Service.TriggerUpgrade(tillerFileContent, installerFileContent, installerCRFileContent, configuration)
 	if err != nil {
 		return fmt.Errorf("Failed to start upgrade: %s", err.Error())
 	}
 
-	return i.k8s.WaitPodStatusByLabel("kyma-installer", "name", "kyma-installer", corev1.PodRunning)
+	return i.K8s.WaitPodStatusByLabel("kyma-installer", "name", "kyma-installer", corev1.PodRunning)
 }

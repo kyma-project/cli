@@ -112,7 +112,7 @@ func Test_LoadComponentsConfig(t *testing.T) {
 		},
 	}
 
-	components, err := installation.loadComponentsConfig()
+	components, err := LoadComponentsConfig(installation.Options.ComponentsConfig)
 	require.NoError(t, err)
 	require.Equal(t, 6, len(components))
 
@@ -122,7 +122,7 @@ func Test_LoadComponentsConfig(t *testing.T) {
 		},
 	}
 
-	components, err = installation2.loadComponentsConfig()
+	components, err = LoadComponentsConfig(installation2.Options.ComponentsConfig)
 	require.NoError(t, err)
 	require.Equal(t, 8, len(components))
 }

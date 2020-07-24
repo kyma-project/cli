@@ -182,31 +182,6 @@ func loadStringContent(installationFiles map[string]*File) (map[string]*File, er
 	return installationFiles, nil
 }
 
-func (i *Installation) loadComponentsConfig() ([]v1alpha1.KymaComponent, error) {
-	if i.Options.ComponentsConfig != "" {
-		data, err := ioutil.ReadFile(i.Options.ComponentsConfig)
-		if err != nil {
-			return nil, err
-		}
-
-		var installationCR v1alpha1.Installation
-		err = yaml.Unmarshal(data, &installationCR)
-		if err != nil || len(installationCR.Spec.Components) < 1 {
-			var config ComponentsConfig
-			err = yaml.Unmarshal(data, &config)
-			if err != nil {
-				return nil, err
-			}
-
-			return config.Components, nil
-		}
-
-		return installationCR.Spec.Components, nil
-	}
-
-	return []v1alpha1.KymaComponent{}, nil
-}
-
 func (i *Installation) loadConfigurations(files map[string]*File) (installationSDK.Configuration, error) {
 	var configuration installationSDK.Configuration
 	var configFileContent string
@@ -254,6 +229,31 @@ func (i *Installation) loadConfigurations(files map[string]*File) (installationS
 	}
 
 	return configuration, nil
+}
+
+func LoadComponentsConfig(cfgFile string) ([]v1alpha1.KymaComponent, error) {
+	if cfgFile != "" {
+		data, err := ioutil.ReadFile(cfgFile)
+		if err != nil {
+			return nil, err
+		}
+
+		var installationCR v1alpha1.Installation
+		err = yaml.Unmarshal(data, &installationCR)
+		if err != nil || len(installationCR.Spec.Components) < 1 {
+			var config ComponentsConfig
+			err = yaml.Unmarshal(data, &config)
+			if err != nil {
+				return nil, err
+			}
+
+			return config.Components, nil
+		}
+
+		return installationCR.Spec.Components, nil
+	}
+
+	return []v1alpha1.KymaComponent{}, nil
 }
 
 func buildDockerImageString(template string, version string) string {
