@@ -7,6 +7,7 @@ import (
 	installationSDK "github.com/kyma-incubator/hydroform/install/installation"
 	"github.com/kyma-project/cli/cmd/kyma/version"
 	"github.com/kyma-project/cli/internal/kube"
+	"github.com/kyma-project/cli/internal/net"
 	pkgErrors "github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -150,7 +151,7 @@ func (i *Installation) promptMigrationGuide(kymaVersion string, cliVersion strin
 		kymaSemVersion.Major(), kymaSemVersion.Minor(),
 		cliSemVersion.Major(), cliSemVersion.Minor(),
 	)
-	statusCode, err := doGet(guideURL)
+	statusCode, err := net.DoGet(guideURL)
 	if err != nil {
 		return fmt.Errorf("unable to check migration guide url: %v", err)
 	}
