@@ -217,3 +217,19 @@ func Test_ReplaceDockerImageURL(t *testing.T) {
 		}
 	}
 }
+
+func Test_IsDockerImage(t *testing.T) {
+	ok := isDockerImage("testRegistry/testImage:tag")
+	require.True(t, ok)
+
+	ok = isDockerImage("testImage")
+	require.False(t, ok)
+}
+
+func Test_IsSemVer(t *testing.T) {
+	ok := isSemVer("v1.2.3")
+	require.True(t, ok)
+
+	ok = isSemVer("testVersion")
+	require.False(t, ok)
+}
