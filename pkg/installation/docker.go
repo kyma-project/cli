@@ -24,6 +24,10 @@ const (
 	defaultRegistry = "index.docker.io"
 )
 
+type dockerClient interface {
+	buildKymaInstaller(imageName string) error
+}
+
 // DockerErrorMessage is used to parse error messages coming from Docker
 type DockerErrorMessage struct {
 	Error string
