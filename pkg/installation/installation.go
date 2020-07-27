@@ -120,7 +120,7 @@ func (i *Installation) InstallKyma() (*Result, error) {
 			s.Failure()
 			return nil, err
 		}
-		s.Successf("Installation is ready")
+		s.Successf("Preparations done")
 
 	} else {
 		s.Successf(logInfo)

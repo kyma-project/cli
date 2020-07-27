@@ -93,6 +93,8 @@ func (i *Installation) pushKymaInstaller() error {
 	}
 	authStr := base64.URLEncoding.EncodeToString(encodedJSON)
 
+	i.currentStep.LogInfof("Pushing Docker image: '%s'", i.Options.CustomImage)
+
 	pusher, err := dc.ImagePush(ctx, i.Options.CustomImage, types.ImagePushOptions{RegistryAuth: authStr})
 	if err != nil {
 		return err
@@ -114,7 +116,7 @@ func (i *Installation) pushKymaInstaller() error {
 		}
 		if errorMessage.Error != "" {
 			if strings.Contains(errorMessage.Error, "unauthorized") || strings.Contains(errorMessage.Error, "requested access to the resource is denied") {
-				return fmt.Errorf("failed to push Docker image: %s\nPlease run `docker login`", errorMessage.Error)
+				return fmt.Errorf("missing permissions to push Docker image: %s\nPlease run `docker login` to authenticate", errorMessage.Error)
 			}
 			return fmt.Errorf("failed to push Docker image: %s", errorMessage.Error)
 		}
