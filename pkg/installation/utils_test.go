@@ -5,23 +5,18 @@ import (
 	"path"
 	"testing"
 
+	stepMocks "github.com/kyma-project/cli/pkg/step/mocks"
 	"github.com/stretchr/testify/require"
 )
 
 func Test_GetMasterHash(t *testing.T) {
-	i := Installation{}
-	h, err := i.getMasterHash()
+	h, err := getMasterHash()
 	require.NoError(t, err)
 	require.True(t, isHex(h))
 }
 
 func Test_GetLatestAvailableMasterHash(t *testing.T) {
-	i := Installation{
-		Options: &Options{
-			FallbackLevel: 5,
-		},
-	}
-	h, err := i.getLatestAvailableMasterHash()
+	h, err := getLatestAvailableMasterHash(&stepMocks.Step{}, 5)
 	require.NoError(t, err)
 	require.True(t, isHex(h))
 }
@@ -37,7 +32,7 @@ func Test_LoadInstallationFiles(t *testing.T) {
 
 	m, err := localInstallation.loadInstallationFiles()
 	require.NoError(t, err)
-	require.Equal(t, 4, len(m))
+	require.Equal(t, 3, len(m))
 
 	clusterInstallation := Installation{
 		Options: &Options{
@@ -49,11 +44,11 @@ func Test_LoadInstallationFiles(t *testing.T) {
 
 	m, err = clusterInstallation.loadInstallationFiles()
 	require.NoError(t, err)
-	require.Equal(t, 3, len(m))
+	require.Equal(t, 2, len(m))
 
 	f, err := loadStringContent(m)
 	require.NoError(t, err)
-	require.Equal(t, 3, len(f))
+	require.Equal(t, 2, len(f))
 }
 
 func Test_LoadConfigurations(t *testing.T) {

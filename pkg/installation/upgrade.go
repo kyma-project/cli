@@ -174,7 +174,6 @@ func (i *Installation) triggerUpgrade(files map[string]*File) error {
 		return fmt.Errorf("Failed to load installation files: %s", err.Error())
 	}
 
-	tillerFileContent := files[tillerFile].StringContent
 	installerFileContent := files[installerFile].StringContent
 	installerCRFileContent := files[installerCRFile].StringContent
 	configuration, err := i.loadConfigurations(files)
@@ -182,7 +181,7 @@ func (i *Installation) triggerUpgrade(files map[string]*File) error {
 		return pkgErrors.Wrap(err, "unable to load the configurations")
 	}
 
-	err = i.Service.TriggerUpgrade(tillerFileContent, installerFileContent, installerCRFileContent, configuration)
+	err = i.Service.TriggerUpgrade(installerFileContent, installerCRFileContent, configuration)
 	if err != nil {
 		return fmt.Errorf("Failed to start upgrade: %s", err.Error())
 	}

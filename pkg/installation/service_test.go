@@ -21,7 +21,6 @@ func TestTriggerInstallation(t *testing.T) {
 
 	// happy installation preparation
 	mockInstaller.On("PrepareInstallation", installation.Installation{
-		TillerYaml:      "tiller stuff",
 		InstallerYaml:   "installer stuff",
 		InstallerCRYaml: "Installer CR stuff",
 		Configuration:   installation.Configuration{},
@@ -29,7 +28,6 @@ func TestTriggerInstallation(t *testing.T) {
 
 	// error preparing installation
 	mockInstaller.On("PrepareInstallation", installation.Installation{
-		TillerYaml:      "tiller stuff",
 		InstallerYaml:   "installer CORRUPTED stuff",
 		InstallerCRYaml: "Installer CR stuff",
 		Configuration:   installation.Configuration{},
@@ -53,7 +51,6 @@ func TestTriggerInstallation(t *testing.T) {
 				kymaInstallationTimeout:        10 * time.Minute,
 			},
 			installCfg: installation.Installation{
-				TillerYaml:      "tiller stuff",
 				InstallerYaml:   "installer stuff",
 				InstallerCRYaml: "Installer CR stuff",
 				Configuration:   installation.Configuration{},
@@ -67,7 +64,6 @@ func TestTriggerInstallation(t *testing.T) {
 				kymaInstallationTimeout:        10 * time.Minute,
 			},
 			installCfg: installation.Installation{
-				TillerYaml:      "tiller stuff",
 				InstallerYaml:   "installer CORRUPTED stuff",
 				InstallerCRYaml: "Installer CR stuff",
 				Configuration:   installation.Configuration{},
@@ -77,7 +73,7 @@ func TestTriggerInstallation(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		err := c.service.TriggerInstallation(c.installCfg.TillerYaml, c.installCfg.InstallerYaml, c.installCfg.InstallerCRYaml, c.installCfg.Configuration)
+		err := c.service.TriggerInstallation(c.installCfg.InstallerYaml, c.installCfg.InstallerCRYaml, c.installCfg.Configuration)
 		if c.expectedErr != "" {
 			require.EqualError(t, err, c.expectedErr, fmt.Sprintf("Test Case: %s", c.name))
 		} else {
@@ -93,7 +89,6 @@ func TestTriggerUpgrade(t *testing.T) {
 
 	// happy upgrade preparation
 	mockInstaller.On("PrepareUpgrade", installation.Installation{
-		TillerYaml:      "tiller stuff",
 		InstallerYaml:   "installer stuff",
 		InstallerCRYaml: "Installer CR stuff",
 		Configuration:   installation.Configuration{},
@@ -101,7 +96,6 @@ func TestTriggerUpgrade(t *testing.T) {
 
 	// error preparing upgrade
 	mockInstaller.On("PrepareUpgrade", installation.Installation{
-		TillerYaml:      "tiller stuff",
 		InstallerYaml:   "installer CORRUPTED stuff",
 		InstallerCRYaml: "Installer CR stuff",
 		Configuration:   installation.Configuration{},
@@ -125,7 +119,6 @@ func TestTriggerUpgrade(t *testing.T) {
 				kymaInstallationTimeout:        10 * time.Minute,
 			},
 			installCfg: installation.Installation{
-				TillerYaml:      "tiller stuff",
 				InstallerYaml:   "installer stuff",
 				InstallerCRYaml: "Installer CR stuff",
 				Configuration:   installation.Configuration{},
@@ -139,7 +132,6 @@ func TestTriggerUpgrade(t *testing.T) {
 				kymaInstallationTimeout:        10 * time.Minute,
 			},
 			installCfg: installation.Installation{
-				TillerYaml:      "tiller stuff",
 				InstallerYaml:   "installer CORRUPTED stuff",
 				InstallerCRYaml: "Installer CR stuff",
 				Configuration:   installation.Configuration{},
@@ -149,7 +141,7 @@ func TestTriggerUpgrade(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		err := c.service.TriggerUpgrade(c.installCfg.TillerYaml, c.installCfg.InstallerYaml, c.installCfg.InstallerCRYaml, c.installCfg.Configuration)
+		err := c.service.TriggerUpgrade(c.installCfg.InstallerYaml, c.installCfg.InstallerCRYaml, c.installCfg.Configuration)
 		if c.expectedErr != "" {
 			require.EqualError(t, err, c.expectedErr, fmt.Sprintf("Test Case: %s", c.name))
 		} else {
