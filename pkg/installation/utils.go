@@ -18,6 +18,7 @@ import (
 	"github.com/kyma-incubator/hydroform/install/config"
 	installationSDK "github.com/kyma-incubator/hydroform/install/installation"
 	"github.com/kyma-incubator/hydroform/install/scheme"
+	"github.com/kyma-project/cli/pkg/step"
 	"github.com/kyma-project/kyma/components/kyma-operator/pkg/apis/installer/v1alpha1"
 	"github.com/pkg/errors"
 	"gopkg.in/src-d/go-git.v4"
@@ -25,7 +26,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func (i *Installation) getMasterHash() (string, error) {
+func getMasterHash() (string, error) {
 	ctx, timeoutF := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer timeoutF()
 	r, err := git.CloneContext(ctx, memory.NewStorage(), nil,
@@ -44,10 +45,10 @@ func (i *Installation) getMasterHash() (string, error) {
 	return h.Hash().String()[:8], nil
 }
 
-func (i *Installation) getLatestAvailableMasterHash() (string, error) {
+func getLatestAvailableMasterHash(currentStep step.Step, fallbackLevel int) (string, error) {
 	ctx, timeoutF := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer timeoutF()
-	maxCloningDepth := i.Options.FallbackLevel + 1
+	maxCloningDepth := fallbackLevel + 1
 	r, err := git.CloneContext(ctx, memory.NewStorage(), nil,
 		&git.CloneOptions{
 			Depth: maxCloningDepth,
@@ -62,7 +63,7 @@ func (i *Installation) getLatestAvailableMasterHash() (string, error) {
 		return "", errors.Wrap(err, "while getting head of Kyma repository: %w")
 	}
 
-	if i.Options.FallbackLevel == 0 {
+	if fallbackLevel == 0 {
 		return h.Hash().String()[:8], nil
 	}
 
@@ -94,7 +95,7 @@ func (i *Installation) getLatestAvailableMasterHash() (string, error) {
 		} else if resp.StatusCode != http.StatusNotFound {
 			return "", fmt.Errorf("got unexpected status code when fetching example file from kyma-development artifacts, got: [%d] ", resp.StatusCode)
 		}
-		i.currentStep.LogInfof("Skipping version: [%s]: artifacts not yet available", abbrevHash)
+		currentStep.LogInfof("Skipping version: [%s]: artifacts not yet available", abbrevHash)
 
 	}
 
@@ -106,7 +107,6 @@ func (i *Installation) loadInstallationFiles() (map[string]*File, error) {
 	if i.Options.IsLocal {
 		installationFiles =
 			map[string]*File{
-				tillerFile:          {Path: "tiller.yaml"},
 				installerFile:       {Path: "installer.yaml"},
 				installerCRFile:     {Path: "installer-cr.yaml.tpl"},
 				installerConfigFile: {Path: "installer-config-local.yaml.tpl"},
@@ -114,13 +114,12 @@ func (i *Installation) loadInstallationFiles() (map[string]*File, error) {
 	} else {
 		installationFiles =
 			map[string]*File{
-				tillerFile:      {Path: "tiller.yaml"},
 				installerFile:   {Path: "installer.yaml"},
 				installerCRFile: {Path: "installer-cr-cluster.yaml.tpl"},
 			}
 	}
 
-	for name, file := range installationFiles {
+	for _, file := range installationFiles {
 		resources := make([]map[string]interface{}, 0)
 		var reader io.ReadCloser
 		var err error
@@ -133,9 +132,6 @@ func (i *Installation) loadInstallationFiles() (map[string]*File, error) {
 		}
 
 		if err != nil {
-			if name == tillerFile && (os.IsNotExist(err) || strings.Contains(err.Error(), "Not Found")) {
-				continue
-			}
 			return nil, err
 		}
 

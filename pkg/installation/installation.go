@@ -28,7 +28,6 @@ const (
 	sourceLocal            = "local"
 
 	installerFile       = "installer"
-	tillerFile          = "tiller"
 	installerCRFile     = "installerCR"
 	installerConfigFile = "installerConfig"
 )
@@ -211,7 +210,7 @@ func (i *Installation) validateConfigurations() error {
 
 	//Install the latest version (latest master)
 	case strings.EqualFold(i.Options.Source, sourceLatest):
-		latest, err := i.getMasterHash()
+		latest, err := getMasterHash()
 		if err != nil {
 			return pkgErrors.Wrap(err, "unable to get latest version of kyma")
 		}
@@ -220,7 +219,7 @@ func (i *Installation) validateConfigurations() error {
 		i.Options.registryTemplate = registryImagePattern
 
 	case strings.EqualFold(i.Options.Source, sourceLatestPublished):
-		latest, err := i.getLatestAvailableMasterHash()
+		latest, err := getLatestAvailableMasterHash(i.currentStep, i.Options.FallbackLevel)
 		if err != nil {
 			return pkgErrors.Wrap(err, "unable to get latest published version of kyma")
 		}
@@ -328,7 +327,6 @@ func (i *Installation) triggerInstallation(files map[string]*File) error {
 		return fmt.Errorf("Failed to load installation files: %s", err.Error())
 	}
 
-	tillerFileContent := files[tillerFile].StringContent
 	installerFileContent := files[installerFile].StringContent
 	installerCRFileContent := files[installerCRFile].StringContent
 	configuration, err := i.loadConfigurations(files)
@@ -336,7 +334,7 @@ func (i *Installation) triggerInstallation(files map[string]*File) error {
 		return pkgErrors.Wrap(err, "unable to load the configurations")
 	}
 
-	err = i.Service.TriggerInstallation(tillerFileContent, installerFileContent, installerCRFileContent, configuration)
+	err = i.Service.TriggerInstallation(installerFileContent, installerCRFileContent, configuration)
 	if err != nil {
 		return fmt.Errorf("Failed to start installation: %s", err.Error())
 	}
