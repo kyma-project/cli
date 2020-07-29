@@ -116,7 +116,7 @@ func TestUpgradeKyma(t *testing.T) {
 	require.Empty(t, r)
 
 	// Error getting installation status
-	iServiceMock.On("CheckInstallationState", mock.Anything).Return(installSDK.InstallationState{}, errors.New("Installation is hiding from us.")).Once()
+	iServiceMock.On("CheckInstallationState", mock.Anything).Return(installSDK.InstallationState{}, errors.New("installation is hiding from us")).Once()
 
 	r, err = i.UpgradeKyma()
 	require.Error(t, err)
