@@ -50,7 +50,7 @@ func (c command) Run() error {
 			return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
 		}
 
-		version, err := KymaVersion(c.opts.Verbose, k8s)
+		version, err := KymaVersion(k8s)
 		if err != nil {
 			fmt.Printf("Unable to get Kyma cluster version due to error: %s. Check if your cluster is available and has Kyma installed\r\n", err.Error())
 			return nil
@@ -62,7 +62,7 @@ func (c command) Run() error {
 }
 
 //KymaVersion determines the version of kyma installed in the cluster sccessible via the provided kubernetes client
-func KymaVersion(verbose bool, k8s kube.KymaKube) (string, error) {
+func KymaVersion(k8s kube.KymaKube) (string, error) {
 	pods, err := k8s.Static().CoreV1().Pods("kyma-installer").List(metav1.ListOptions{LabelSelector: "name=kyma-installer"})
 	if err != nil {
 		return "", err

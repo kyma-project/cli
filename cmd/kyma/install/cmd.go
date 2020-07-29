@@ -174,7 +174,6 @@ func (cmd *command) configureInstallation(clusterConfig installation.ClusterInfo
 			CI:               cmd.opts.CI,
 			NonInteractive:   cmd.Factory.NonInteractive,
 			Timeout:          cmd.opts.Timeout,
-			KubeconfigPath:   cmd.opts.KubeconfigPath,
 			CustomImage:      cmd.opts.CustomImage,
 			Domain:           cmd.opts.Domain,
 			TLSCert:          cmd.opts.TLSCert,
