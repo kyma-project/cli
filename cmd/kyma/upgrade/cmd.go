@@ -69,7 +69,11 @@ func (cmd *command) Run() error {
 	}
 	s.Successf("Cluster info read")
 
-	i := cmd.configureInstallation(clusterConfig)
+	i, err := cmd.configureInstallation(clusterConfig)
+	if err != nil {
+		return err
+	}
+
 	result, err := i.UpgradeKyma()
 	if err != nil {
 		return err
@@ -96,8 +100,20 @@ func (cmd *command) Run() error {
 	return nil
 }
 
-func (cmd *command) configureInstallation(clusterConfig installation.ClusterInfo) *installation.Installation {
+func (cmd *command) configureInstallation(clusterConfig installation.ClusterInfo) (*installation.Installation, error) {
+
+	cmp, err := installation.LoadComponentsConfig(cmd.opts.ComponentsConfig)
+	if err != nil {
+		return &installation.Installation{}, errors.Wrap(err, "Could not load component configuration file. Make sure file is a valid YAML and contains a component list")
+	}
+	s, err := installation.NewInstallationService(cmd.K8s.Config(), cmd.opts.Timeout, "", cmp)
+	if err != nil {
+		return &installation.Installation{}, errors.Wrap(err, "Failed to create installation service. Make sure your kubeconfig is valid")
+	}
+
 	return &installation.Installation{
+		K8s:     cmd.K8s,
+		Service: s,
 		Options: &installation.Options{
 			NoWait:           cmd.opts.NoWait,
 			Verbose:          cmd.opts.Verbose,
@@ -119,7 +135,7 @@ func (cmd *command) configureInstallation(clusterConfig installation.ClusterInfo
 				VMDriver: clusterConfig.LocalVMDriver,
 			},
 		},
-	}
+	}, nil
 }
 
 func (cmd *command) printSummary(result *installation.Result) error {

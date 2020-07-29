@@ -28,7 +28,6 @@ const (
 	sourceLocal            = "local"
 
 	installerFile       = "installer"
-	tillerFile          = "tiller"
 	installerCRFile     = "installerCR"
 	installerConfigFile = "installerConfig"
 )
@@ -41,8 +40,9 @@ type ComponentsConfig struct {
 // Installation contains the installation elements and configuration options.
 type Installation struct {
 	k8s         kube.KymaKube
-	service     Service
 	Docker      DockerService
+	K8s         kube.KymaKube
+	Service     Service
 	currentStep step.Step
 	// Factory contains the option to determine the interactivity of a Step.
 	// +optional
@@ -86,10 +86,6 @@ func (i *Installation) InstallKyma() (*Result, error) {
 	if i.Options.CI || i.Options.NonInteractive {
 		i.Factory.NonInteractive = true
 	}
-	var err error
-	if i.k8s, err = kube.NewFromConfigWithTimeout("", i.Options.KubeconfigPath, i.Options.Timeout); err != nil {
-		return nil, pkgErrors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
-	}
 
 	s := i.newStep("Preparing installation")
 	// Checking existence of previous installation
@@ -126,7 +122,7 @@ func (i *Installation) InstallKyma() (*Result, error) {
 			s.Failure()
 			return nil, err
 		}
-		s.Successf("Installation is ready")
+		s.Successf("Preparations done")
 
 	} else {
 		s.Successf(logInfo)
@@ -152,13 +148,7 @@ func (i *Installation) InstallKyma() (*Result, error) {
 }
 
 func (i *Installation) checkPrevInstallation() (string, string, error) {
-	var err error
-	i.service, err = NewInstallationService(i.k8s.Config(), i.Options.Timeout, "")
-	if err != nil {
-		return "", "", fmt.Errorf("Failed to create installation service. Make sure your kubeconfig is valid: %s", err.Error())
-	}
-
-	prevInstallationState, err := i.service.CheckInstallationState(i.k8s.Config())
+	prevInstallationState, err := i.Service.CheckInstallationState(i.K8s.Config())
 	if err != nil {
 		installErr := installationSDK.InstallationError{}
 		if errors.As(err, &installErr) {
@@ -170,7 +160,7 @@ func (i *Installation) checkPrevInstallation() (string, string, error) {
 
 	var kymaVersion string
 	if prevInstallationState.State != installationSDK.NoInstallationState {
-		kymaVersion, err = version.KymaVersion(i.Options.Verbose, i.k8s)
+		kymaVersion, err = version.KymaVersion(i.Options.Verbose, i.K8s)
 		if err != nil {
 			return "", "", err
 		}
@@ -222,7 +212,7 @@ func (i *Installation) validateConfigurations() error {
 
 	//Install the latest version (latest master)
 	case strings.EqualFold(i.Options.Source, sourceLatest):
-		latest, err := i.getMasterHash()
+		latest, err := getMasterHash()
 		if err != nil {
 			return pkgErrors.Wrap(err, "unable to get latest version of kyma")
 		}
@@ -231,7 +221,7 @@ func (i *Installation) validateConfigurations() error {
 		i.Options.registryTemplate = registryImagePattern
 
 	case strings.EqualFold(i.Options.Source, sourceLatestPublished):
-		latest, err := i.getLatestAvailableMasterHash()
+		latest, err := getLatestAvailableMasterHash(i.currentStep, i.Options.FallbackLevel)
 		if err != nil {
 			return pkgErrors.Wrap(err, "unable to get latest published version of kyma")
 		}
@@ -335,22 +325,12 @@ func (i *Installation) prepareFiles() (map[string]*File, error) {
 }
 
 func (i *Installation) triggerInstallation(files map[string]*File) error {
-	componentList, err := i.loadComponentsConfig()
-	if err != nil {
-		return fmt.Errorf("Could not load components configuration file. Make sure file is a valid YAML and contains component list: %s", err.Error())
-	}
-
-	i.service, err = NewInstallationServiceWithComponents(i.k8s.Config(), i.Options.Timeout, "", componentList)
-	if err != nil {
-		return fmt.Errorf("Failed to create installation service. Make sure your kubeconfig is valid: %s", err.Error())
-	}
-
+	var err error
 	files, err = loadStringContent(files)
 	if err != nil {
 		return fmt.Errorf("Failed to load installation files: %s", err.Error())
 	}
 
-	tillerFileContent := files[tillerFile].StringContent
 	installerFileContent := files[installerFile].StringContent
 	installerCRFileContent := files[installerCRFile].StringContent
 	configuration, err := i.loadConfigurations(files)
@@ -358,12 +338,12 @@ func (i *Installation) triggerInstallation(files map[string]*File) error {
 		return pkgErrors.Wrap(err, "unable to load the configurations")
 	}
 
-	err = i.service.TriggerInstallation(tillerFileContent, installerFileContent, installerCRFileContent, configuration)
+	err = i.Service.TriggerInstallation(installerFileContent, installerCRFileContent, configuration)
 	if err != nil {
 		return fmt.Errorf("Failed to start installation: %s", err.Error())
 	}
 
-	return i.k8s.WaitPodStatusByLabel("kyma-installer", "name", "kyma-installer", corev1.PodRunning)
+	return i.K8s.WaitPodStatusByLabel("kyma-installer", "name", "kyma-installer", corev1.PodRunning)
 }
 
 func (i *Installation) waitForInstaller() error {
@@ -378,7 +358,7 @@ func (i *Installation) waitForInstaller() error {
 		select {
 		case <-timeout:
 			i.currentStep.Failure()
-			if _, err := i.service.CheckInstallationState(i.k8s.Config()); err != nil {
+			if _, err := i.Service.CheckInstallationState(i.K8s.Config()); err != nil {
 				installationError := installationSDK.InstallationError{}
 				if ok := errors.As(err, &installationError); ok {
 					i.currentStep.LogErrorf("Installation error occurred while installing Kyma: %s. Details: %s", installationError.Error(), installationError.Details())
@@ -386,7 +366,7 @@ func (i *Installation) waitForInstaller() error {
 			}
 			return errors.New("Timeout reached while waiting for installation to complete")
 		default:
-			installationState, err := i.service.CheckInstallationState(i.k8s.Config())
+			installationState, err := i.Service.CheckInstallationState(i.K8s.Config())
 			if err != nil {
 				if !errorOccured {
 					errorOccured = true
@@ -432,7 +412,7 @@ func (i *Installation) waitForInstaller() error {
 func (i *Installation) buildResult() (*Result, error) {
 	// In case that noWait flag is set, check that Kyma was actually installed before building the Result
 	if i.Options.NoWait {
-		installationState, err := i.service.CheckInstallationState(i.k8s.Config())
+		installationState, err := i.Service.CheckInstallationState(i.K8s.Config())
 		if err != nil {
 			return nil, err
 		}
@@ -441,18 +421,18 @@ func (i *Installation) buildResult() (*Result, error) {
 		}
 	}
 
-	v, err := version.KymaVersion(i.Options.Verbose, i.k8s)
+	v, err := version.KymaVersion(i.Options.Verbose, i.K8s)
 	if err != nil {
 		return nil, err
 	}
 
-	adm, err := i.k8s.Static().CoreV1().Secrets("kyma-system").Get("admin-user", metav1.GetOptions{})
+	adm, err := i.K8s.Static().CoreV1().Secrets("kyma-system").Get("admin-user", metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
 
 	var consoleURL string
-	vs, err := i.k8s.Istio().NetworkingV1alpha3().VirtualServices("kyma-system").Get("console-web", metav1.GetOptions{})
+	vs, err := i.K8s.Istio().NetworkingV1alpha3().VirtualServices("kyma-system").Get("console-web", metav1.GetOptions{})
 	switch {
 	case apiErrors.IsNotFound(err):
 		consoleURL = "not installed"
@@ -471,7 +451,7 @@ func (i *Installation) buildResult() (*Result, error) {
 
 	return &Result{
 		KymaVersion:   v,
-		Host:          i.k8s.Config().Host,
+		Host:          i.K8s.Config().Host,
 		Console:       consoleURL,
 		AdminEmail:    string(adm.Data["email"]),
 		AdminPassword: string(adm.Data["password"]),
