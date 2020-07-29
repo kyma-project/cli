@@ -42,6 +42,7 @@ type ComponentsConfig struct {
 type Installation struct {
 	k8s         kube.KymaKube
 	service     Service
+	Docker      DockerService
 	currentStep step.Step
 	// Factory contains the option to determine the interactivity of a Step.
 	// +optional
@@ -291,23 +292,25 @@ func (i *Installation) prepareFiles() (map[string]*File, error) {
 	if i.Options.fromLocalSources {
 		//In case of local installation from local sources, build installer image using Minikube Docker client.
 		if i.Options.IsLocal {
+			i.Docker, err = NewDockerMinkubeService(i.Options.Verbose, i.Options.LocalCluster.Profile, i.Options.Timeout)
 			imageName, err := getInstallerImage(files[installerFile])
 			if err != nil {
 				return nil, err
 			}
 
-			err = i.buildKymaInstaller(imageName)
+			err = i.BuildKymaInstaller(i.Options.LocalSrcPath, imageName)
 			if err != nil {
 				return nil, err
 			}
 			//In case of remote cluster installation from local sources, build installer image using default Docker client and push the image.
 		} else {
-			err = i.buildKymaInstaller(i.Options.CustomImage)
+			i.Docker, err = NewDockerService()
+			err = i.BuildKymaInstaller(i.Options.LocalSrcPath, i.Options.CustomImage)
 			if err != nil {
 				return nil, err
 			}
 
-			err = i.pushKymaInstaller()
+			err = i.PushKymaInstaller(i.Options.CustomImage)
 			if err != nil {
 				return nil, err
 			}

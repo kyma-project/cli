@@ -24,8 +24,14 @@ const (
 	defaultRegistry = "index.docker.io"
 )
 
-type dockerClient interface {
-	buildKymaInstaller(imageName string) error
+//go:generate mockery --name DockerService
+type DockerService interface {
+	// BuildKymaInstaller(localSrcPath, imageName string) error
+	// PushKymaInstaller(image string) error
+	ArchiveDirectory(srcPath string, options *archive.TarOptions) (io.ReadCloser, error)
+	NegotiateDockerAPIVersion(ctx context.Context)
+	ImagePush(ctx context.Context, image string, options types.ImagePushOptions) (io.ReadCloser, error)
+	DockerImageBuild(ctx context.Context, buildContext io.Reader, options types.ImageBuildOptions) (types.ImageBuildResponse, error)
 }
 
 // DockerErrorMessage is used to parse error messages coming from Docker
@@ -33,30 +39,62 @@ type DockerErrorMessage struct {
 	Error string
 }
 
-func (i *Installation) buildKymaInstaller(imageName string) error {
-	var dc *docker.Client
-	var err error
-	if i.Options.IsLocal {
-		dc, err = minikube.DockerClient(i.Options.Verbose, i.Options.LocalCluster.Profile, i.Options.Timeout)
-	} else {
-		dc, err = docker.NewClientWithOpts(docker.FromEnv)
+//NewDockerService creates docker client using docker environment of the OS
+func NewDockerService() (DockerService, error) {
+	dClient, err := docker.NewClientWithOpts(docker.FromEnv)
+	if err != nil {
+		return nil, err
 	}
+
+	return &dockerClientService{
+		dc: *dClient,
+	}, nil
+}
+
+//NewDockerMinkubeService creates docker client for minikube docker-env
+func NewDockerMinkubeService(verbosity bool, profile string, timeout time.Duration) (DockerService, error) {
+	dClient, err := minikube.DockerClient(verbosity, profile, timeout)
+	if err != nil {
+		return nil, err
+	}
+
+	return &dockerClientService{
+		dc: *dClient,
+	}, nil
+}
+
+var _ DockerService = (*dockerClientService)(nil)
+
+type dockerClientService struct {
+	dc docker.Client
+}
+
+func (d *dockerClientService) ArchiveDirectory(srcPath string, options *archive.TarOptions) (io.ReadCloser, error) {
+	return archive.TarWithOptions(srcPath, &archive.TarOptions{})
+}
+
+func (d *dockerClientService) NegotiateDockerAPIVersion(ctx context.Context) {
+	d.dc.NegotiateAPIVersion(ctx)
+}
+
+func (d *dockerClientService) ImagePush(ctx context.Context, image string, options types.ImagePushOptions) (io.ReadCloser, error) {
+	return d.dc.ImagePush(ctx, image, options)
+}
+
+func (d *dockerClientService) DockerImageBuild(ctx context.Context, buildContext io.Reader, options types.ImageBuildOptions) (types.ImageBuildResponse, error) {
+	return d.dc.ImageBuild(ctx, buildContext, options)
+}
+
+func (i *Installation) BuildKymaInstaller(localSrcPath, imageName string) error {
+	reader, err := i.Docker.ArchiveDirectory(localSrcPath, &archive.TarOptions{})
 	if err != nil {
 		return err
 	}
-
-	reader, err := archive.TarWithOptions(i.Options.LocalSrcPath, &archive.TarOptions{})
-	if err != nil {
-		return err
-	}
-
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(300)*time.Second)
 	defer cancel()
-
-	dc.NegotiateAPIVersion(ctx)
-
+	i.Docker.NegotiateDockerAPIVersion(ctx)
 	args := make(map[string]*string)
-	_, err = dc.ImageBuild(
+	_, err = i.Docker.DockerImageBuild(
 		ctx,
 		reader,
 		types.ImageBuildOptions{
@@ -74,18 +112,11 @@ func (i *Installation) buildKymaInstaller(imageName string) error {
 	return nil
 }
 
-func (i *Installation) pushKymaInstaller() error {
+func (i *Installation) PushKymaInstaller(image string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(300)*time.Second)
 	defer cancel()
-
-	dc, err := docker.NewClientWithOpts(docker.FromEnv)
-	if err != nil {
-		return err
-	}
-
-	dc.NegotiateAPIVersion(ctx)
-
-	domain, _ := splitDockerDomain(i.Options.CustomImage)
+	i.Docker.NegotiateDockerAPIVersion(ctx)
+	domain, _ := splitDockerDomain(image)
 	auth, err := resolve(domain)
 	if err != nil {
 		return err
@@ -96,8 +127,9 @@ func (i *Installation) pushKymaInstaller() error {
 		return err
 	}
 	authStr := base64.URLEncoding.EncodeToString(encodedJSON)
+	fmt.Printf("auth: %v+", auth)
 
-	pusher, err := dc.ImagePush(ctx, i.Options.CustomImage, types.ImagePushOptions{RegistryAuth: authStr})
+	pusher, err := i.Docker.ImagePush(ctx, image, types.ImagePushOptions{RegistryAuth: authStr})
 	if err != nil {
 		return err
 	}
