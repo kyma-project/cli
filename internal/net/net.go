@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 func GetAvailablePort() (int, error) {
@@ -30,6 +31,7 @@ func DoGet(url string) (int, error) {
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
+		Timeout: 5 * time.Second,
 	}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {

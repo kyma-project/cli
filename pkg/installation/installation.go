@@ -158,7 +158,7 @@ func (i *Installation) checkPrevInstallation() (string, string, error) {
 
 	var kymaVersion string
 	if prevInstallationState.State != installationSDK.NoInstallationState {
-		kymaVersion, err = version.KymaVersion(i.Options.Verbose, i.K8s)
+		kymaVersion, err = version.KymaVersion(i.K8s)
 		if err != nil {
 			return "", "", err
 		}
@@ -417,7 +417,7 @@ func (i *Installation) buildResult() (*Result, error) {
 		}
 	}
 
-	v, err := version.KymaVersion(i.Options.Verbose, i.K8s)
+	v, err := version.KymaVersion(i.K8s)
 	if err != nil {
 		return nil, err
 	}
