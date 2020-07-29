@@ -26,8 +26,6 @@ const (
 
 //go:generate mockery --name DockerService
 type DockerService interface {
-	// BuildKymaInstaller(localSrcPath, imageName string) error
-	// PushKymaInstaller(image string) error
 	ArchiveDirectory(srcPath string, options *archive.TarOptions) (io.ReadCloser, error)
 	NegotiateDockerAPIVersion(ctx context.Context)
 	ImagePush(ctx context.Context, image string, options types.ImagePushOptions) (io.ReadCloser, error)
@@ -127,7 +125,6 @@ func (i *Installation) PushKymaInstaller(image string) error {
 		return err
 	}
 	authStr := base64.URLEncoding.EncodeToString(encodedJSON)
-	fmt.Printf("auth: %v+", auth)
 
 	i.currentStep.LogInfof("Pushing Docker image: '%s'", image)
 

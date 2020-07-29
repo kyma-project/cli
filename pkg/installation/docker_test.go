@@ -87,12 +87,6 @@ func Test_Resolve_happy_path(t *testing.T) {
 	assert.Equal(t, dockerCFG.Password, "pass")
 }
 
-func Test_Resolve_no_file(t *testing.T) {
-	os.Setenv("DOCKER_CONFIG", "file-not-exist")
-	_, err := resolve("example.com/foo")
-	assert.ErrorContains(t, err, "file not found")
-}
-
 func Test_BuildKymaInstaller(t *testing.T) {
 	imageName := "kyma-project-foo"
 	fooLocalSrcPath := "foo"
@@ -156,8 +150,8 @@ func Test_PushKymaInstaller(t *testing.T) {
 	imagePushOptions := imageTypes.ImagePushOptions{RegistryAuth: fooAuthStr}
 	stringReader := strings.NewReader("foo")
 	fooReadCloser := ioutil.NopCloser(stringReader)
-	t.Logf("auhtstr: %v", fooAuthStr)
 
+	installer.currentStep = installer.newStep("test push kyma installer")
 	mockDocker.On("ImagePush", mock.Anything, image, imagePushOptions).Return(fooReadCloser, nil)
 
 	err = installer.PushKymaInstaller(image)
