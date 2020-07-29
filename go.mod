@@ -21,7 +21,6 @@ require (
 	github.com/briandowns/spinner v1.7.0
 	github.com/containerd/containerd v1.3.6 // indirect
 	github.com/containerd/continuity v0.0.0-20200710164510-efbc4488d8fe // indirect
-	github.com/coreos/etcd v3.3.13+incompatible
 	github.com/daviddengcn/go-colortext v0.0.0-20180409174941-186a3d44e920
 	github.com/docker/cli v0.0.0-20190925022749-754388324470
 	github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible // indirect
