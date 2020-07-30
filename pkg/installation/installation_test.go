@@ -2,6 +2,7 @@ package installation
 
 import (
 	"errors"
+	"os"
 	"testing"
 	"time"
 
@@ -148,6 +149,13 @@ func TestValidateConfigurations(t *testing.T) {
 
 	err = i.validateConfigurations()
 	require.NoError(t, err)
+
+	// Create fake local source path
+	fakePath := "/tmp/fake-path-for-cli-test"
+	i.Options.LocalSrcPath = fakePath
+	err = os.MkdirAll(fakePath+"/installation/resources", 0700)
+	require.NoError(t, err)
+	defer os.RemoveAll(fakePath)
 
 	// Source "local" and local installation
 	i.Options.IsLocal = true
