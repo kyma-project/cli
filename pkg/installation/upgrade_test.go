@@ -82,12 +82,6 @@ func TestUpgradeKyma(t *testing.T) {
 			OverrideConfigs:  nil,
 			ComponentsConfig: "",
 			IsLocal:          false,
-			LocalCluster: &LocalCluster{
-				IP:       "0.0.0.0",
-				Profile:  "test",
-				Provider: "fake-provider",
-				VMDriver: "fake-driver",
-			},
 		},
 	}
 	// version to upgrade to
