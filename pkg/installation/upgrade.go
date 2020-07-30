@@ -126,7 +126,7 @@ func (i *Installation) checkUpgradeCompatability(kymaVersion string, cliVersion 
 
 	// set the installation source to be the cli version
 	i.Options.Source = cliSemVersion.String()
-	i.currentStep.LogInfof("Upgrading Kyma from version %s to version %s", kymaSemVersion.String(), cliSemVersion.String())
+	i.CurrentStep.LogInfof("Upgrading Kyma from version %s to version %s", kymaSemVersion.String(), cliSemVersion.String())
 	return nil
 }
 
@@ -152,7 +152,7 @@ func (i *Installation) promptMigrationGuide(kymaVersion string, cliVersion strin
 	}
 	if statusCode == 404 {
 		// no migration guide for this release
-		i.currentStep.LogInfof("No migration guide available for %s release", cliSemVersion.String())
+		i.CurrentStep.LogInfof("No migration guide available for %s release", cliSemVersion.String())
 		return nil
 	}
 	if statusCode != 200 {
@@ -160,7 +160,7 @@ func (i *Installation) promptMigrationGuide(kymaVersion string, cliVersion strin
 	}
 
 	promptMsg := fmt.Sprintf("Did you apply the migration guide? %s", guideURL)
-	isGuideChecked := i.currentStep.PromptYesNo(promptMsg)
+	isGuideChecked := i.CurrentStep.PromptYesNo(promptMsg)
 	if !isGuideChecked {
 		return fmt.Errorf("migration guide must be applied before Kyma upgrade")
 	}

@@ -1,4 +1,4 @@
-package installation
+package docker
 
 import (
 	"encoding/base64"
@@ -14,7 +14,9 @@ import (
 	"github.com/docker/cli/cli/config/types"
 	imageTypes "github.com/docker/docker/api/types"
 	"github.com/docker/docker/pkg/archive"
-	"github.com/kyma-project/cli/pkg/installation/mocks"
+	"github.com/kyma-project/cli/pkg/docker/mocks"
+	"github.com/kyma-project/cli/pkg/step"
+
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"gotest.tools/assert"
@@ -92,18 +94,20 @@ func Test_BuildKymaInstaller(t *testing.T) {
 	fooLocalSrcPath := "foo"
 
 	// mocks
-	mockDocker := &mocks.DockerService{}
-	installer := Installation{
-		Docker: mockDocker,
-	}
+	mockDocker := &mocks.DockerClientService{}
+	// mockKymaDocker := mocks.KymaDockerService{}
 	stringReader := strings.NewReader("foo")
 	fooReadCloser := ioutil.NopCloser(stringReader)
 
 	fooArchiveTarOptions := &archive.TarOptions{}
 
+	k := kymaDockerClient{
+		kymaDocker: mockDocker,
+	}
+
 	mockDocker.On("ArchiveDirectory", fooLocalSrcPath, fooArchiveTarOptions).Return(fooReadCloser, nil)
 	// as context.deadline can have different clocks assume mock.anything here
-	mockDocker.On("NegotiateDockerAPIVersion", mock.Anything).Return(nil)
+	mockDocker.On("NegotiateAPIVersion", mock.Anything).Return(nil)
 	fooArgs := make(map[string]*string)
 	fooImageBuildOptions := imageTypes.ImageBuildOptions{
 		Tags:           []string{strings.TrimSpace(string(imageName))},
@@ -116,10 +120,10 @@ func Test_BuildKymaInstaller(t *testing.T) {
 		Body:   fooReadCloser,
 		OSType: "fooUnix",
 	}
-	mockDocker.On("DockerImageBuild", mock.Anything, fooReadCloser, fooImageBuildOptions).Return(fooImageBuildRes, nil)
+	mockDocker.On("ImageBuild", mock.Anything, fooReadCloser, fooImageBuildOptions).Return(fooImageBuildRes, nil)
 
 	// test the function
-	err := installer.BuildKymaInstaller(fooLocalSrcPath, imageName)
+	err := k.BuildKymaInstaller(fooLocalSrcPath, imageName)
 	assert.NilError(t, err)
 }
 
@@ -138,12 +142,13 @@ func Test_PushKymaInstaller(t *testing.T) {
 	image := "example.com/foo"
 
 	// mocks
-	mockDocker := &mocks.DockerService{}
-	installer := Installation{
-		Docker: mockDocker,
-	}
+	mockDocker := &mocks.DockerClientService{}
 	// as context.deadline can have different clocks assume mock.anything here
-	mockDocker.On("NegotiateDockerAPIVersion", mock.Anything).Return(nil)
+
+	k := kymaDockerClient{
+		kymaDocker: mockDocker,
+	}
+	mockDocker.On("NegotiateAPIVersion", mock.Anything).Return(nil)
 
 	encodedJSON, _ := json.Marshal(expectedAuth)
 	fooAuthStr := base64.URLEncoding.EncodeToString(encodedJSON)
@@ -151,10 +156,12 @@ func Test_PushKymaInstaller(t *testing.T) {
 	stringReader := strings.NewReader("foo")
 	fooReadCloser := ioutil.NopCloser(stringReader)
 
-	installer.currentStep = installer.newStep("test push kyma installer")
+	var step step.Factory
+	currentStep := step.NewStep("push kyma installer test")
+
 	mockDocker.On("ImagePush", mock.Anything, image, imagePushOptions).Return(fooReadCloser, nil)
 
-	err = installer.PushKymaInstaller(image)
+	err = k.PushKymaInstaller(image, currentStep)
 	assert.NilError(t, err)
 
 }

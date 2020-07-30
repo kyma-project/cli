@@ -11,6 +11,7 @@ import (
 	installationSDK "github.com/kyma-incubator/hydroform/install/installation"
 	"github.com/kyma-project/cli/cmd/kyma/version"
 	"github.com/kyma-project/cli/internal/kube"
+	"github.com/kyma-project/cli/pkg/docker"
 	"github.com/kyma-project/cli/pkg/step"
 	"github.com/kyma-project/kyma/components/kyma-operator/pkg/apis/installer/v1alpha1"
 	pkgErrors "github.com/pkg/errors"
@@ -40,10 +41,10 @@ type ComponentsConfig struct {
 // Installation contains the installation elements and configuration options.
 type Installation struct {
 	k8s         kube.KymaKube
-	Docker      DockerService
+	Docker      docker.KymaDockerService
 	K8s         kube.KymaKube
 	Service     Service
-	currentStep step.Step
+	CurrentStep step.Step
 	// Factory contains the option to determine the interactivity of a Step.
 	// +optional
 	Factory step.Factory `json:"factory,omitempty"`
@@ -77,7 +78,7 @@ type Result struct {
 
 func (i *Installation) newStep(msg string) step.Step {
 	s := i.Factory.NewStep(msg)
-	i.currentStep = s
+	i.CurrentStep = s
 	return s
 }
 
@@ -221,7 +222,7 @@ func (i *Installation) validateConfigurations() error {
 		i.Options.registryTemplate = registryImagePattern
 
 	case strings.EqualFold(i.Options.Source, sourceLatestPublished):
-		latest, err := getLatestAvailableMasterHash(i.currentStep, i.Options.FallbackLevel)
+		latest, err := getLatestAvailableMasterHash(i.CurrentStep, i.Options.FallbackLevel)
 		if err != nil {
 			return pkgErrors.Wrap(err, "unable to get latest published version of kyma")
 		}
@@ -260,15 +261,15 @@ func (i *Installation) validateConfigurations() error {
 
 func (i *Installation) checkInstallationSource() {
 	if i.Options.fromLocalSources {
-		i.currentStep.LogInfof("Installing Kyma from local path: '%s'", i.Options.LocalSrcPath)
+		i.CurrentStep.LogInfof("Installing Kyma from local path: '%s'", i.Options.LocalSrcPath)
 	} else {
 		if i.Options.releaseVersion != i.Options.configVersion {
-			i.currentStep.LogInfof("Using the installation configuration from '%s'", i.Options.configVersion)
+			i.CurrentStep.LogInfof("Using the installation configuration from '%s'", i.Options.configVersion)
 		}
 		if i.Options.remoteImage != "" {
-			i.currentStep.LogInfof("Installing Kyma with installer image '%s' ", i.Options.remoteImage)
+			i.CurrentStep.LogInfof("Installing Kyma with installer image '%s' ", i.Options.remoteImage)
 		} else {
-			i.currentStep.LogInfof("Installing Kyma in version '%s' ", i.Options.releaseVersion)
+			i.CurrentStep.LogInfof("Installing Kyma in version '%s' ", i.Options.releaseVersion)
 		}
 	}
 }
@@ -282,25 +283,26 @@ func (i *Installation) prepareFiles() (map[string]*File, error) {
 	if i.Options.fromLocalSources {
 		//In case of local installation from local sources, build installer image using Minikube Docker client.
 		if i.Options.IsLocal {
-			i.Docker, err = NewDockerMinkubeService(i.Options.Verbose, i.Options.LocalCluster.Profile, i.Options.Timeout)
+			i.Docker, err = docker.NewKymDockerClientService(true, i.Options.Verbose, i.Options.LocalCluster.Profile, i.Options.Timeout)
 			imageName, err := getInstallerImage(files[installerFile])
 			if err != nil {
 				return nil, err
 			}
 
-			err = i.BuildKymaInstaller(i.Options.LocalSrcPath, imageName)
+			err = i.Docker.BuildKymaInstaller(i.Options.LocalSrcPath, imageName)
 			if err != nil {
 				return nil, err
 			}
 			//In case of remote cluster installation from local sources, build installer image using default Docker client and push the image.
 		} else {
-			i.Docker, err = NewDockerService()
-			err = i.BuildKymaInstaller(i.Options.LocalSrcPath, i.Options.CustomImage)
+			// i.Docker, err = docker.NewDockerService()
+			i.Docker, err = docker.NewKymDockerClientService(false, i.Options.Verbose, i.Options.LocalCluster.Profile, i.Options.Timeout)
+			err = i.Docker.BuildKymaInstaller(i.Options.LocalSrcPath, i.Options.CustomImage)
 			if err != nil {
 				return nil, err
 			}
 
-			err = i.PushKymaInstaller(i.Options.CustomImage)
+			err = i.Docker.PushKymaInstaller(i.Options.CustomImage, i.CurrentStep)
 			if err != nil {
 				return nil, err
 			}
@@ -357,11 +359,11 @@ func (i *Installation) waitForInstaller() error {
 	for {
 		select {
 		case <-timeout:
-			i.currentStep.Failure()
+			i.CurrentStep.Failure()
 			if _, err := i.Service.CheckInstallationState(i.K8s.Config()); err != nil {
 				installationError := installationSDK.InstallationError{}
 				if ok := errors.As(err, &installationError); ok {
-					i.currentStep.LogErrorf("Installation error occurred while installing Kyma: %s. Details: %s", installationError.Error(), installationError.Details())
+					i.CurrentStep.LogErrorf("Installation error occurred while installing Kyma: %s. Details: %s", installationError.Error(), installationError.Details())
 				}
 			}
 			return errors.New("Timeout reached while waiting for installation to complete")
@@ -372,11 +374,11 @@ func (i *Installation) waitForInstaller() error {
 					errorOccured = true
 					installErr := installationSDK.InstallationError{}
 					if errors.As(err, &installErr) {
-						i.currentStep.LogErrorf("%s, which may be OK. Will retry later...", installErr.Error())
-						i.currentStep.LogInfo("To fetch the error logs from the installer, run: kubectl get installation kyma-installation -o go-template --template='{{- range .status.errorLog }}{{printf \"%s:\\n %s\\n\" .component .log}}{{- end}}'")
-						i.currentStep.LogInfo("To fetch the application logs from the installer, run: kubectl logs -n kyma-installer -l name=kyma-installer")
+						i.CurrentStep.LogErrorf("%s, which may be OK. Will retry later...", installErr.Error())
+						i.CurrentStep.LogInfo("To fetch the error logs from the installer, run: kubectl get installation kyma-installation -o go-template --template='{{- range .status.errorLog }}{{printf \"%s:\\n %s\\n\" .component .log}}{{- end}}'")
+						i.CurrentStep.LogInfo("To fetch the application logs from the installer, run: kubectl logs -n kyma-installer -l name=kyma-installer")
 					} else {
-						i.currentStep.LogErrorf("Failed to get installation state, which may be OK. Will retry later...\nError: %s", err)
+						i.CurrentStep.LogErrorf("Failed to get installation state, which may be OK. Will retry later...\nError: %s", err)
 					}
 				}
 				time.Sleep(10 * time.Second)
@@ -385,23 +387,23 @@ func (i *Installation) waitForInstaller() error {
 
 			switch installationState.State {
 			case "Installed":
-				i.currentStep.Success()
+				i.CurrentStep.Success()
 				return nil
 
 			case "InProgress":
 				errorOccured = false
 				// only do something if the description has changed
 				if installationState.Description != currentDesc {
-					i.currentStep.Success()
-					i.currentStep = i.newStep(installationState.Description)
+					i.CurrentStep.Success()
+					i.CurrentStep = i.newStep(installationState.Description)
 					currentDesc = installationState.Description
 				}
 
 			case "":
-				i.currentStep.LogInfo("Failed to get the installation status. Will retry later...")
+				i.CurrentStep.LogInfo("Failed to get the installation status. Will retry later...")
 
 			default:
-				i.currentStep.Failure()
+				i.CurrentStep.Failure()
 				return fmt.Errorf("unexpected status: %s", installationState.State)
 			}
 			time.Sleep(10 * time.Second)

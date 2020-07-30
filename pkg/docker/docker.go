@@ -1,4 +1,4 @@
-package installation
+package docker
 
 import (
 	"bufio"
@@ -18,18 +18,35 @@ import (
 	docker "github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/kyma-project/cli/internal/minikube"
+	"github.com/kyma-project/cli/pkg/step"
 )
 
 const (
 	defaultRegistry = "index.docker.io"
 )
 
-//go:generate mockery --name DockerService
-type DockerService interface {
+var _ DockerClientService = (*dockerClient)(nil)
+
+type dockerClient struct {
+	*docker.Client
+	// DockerClientService
+}
+
+type kymaDockerClient struct {
+	kymaDocker DockerClientService
+}
+
+//go:generate mockery --name DockerClientService
+type DockerClientService interface {
 	ArchiveDirectory(srcPath string, options *archive.TarOptions) (io.ReadCloser, error)
-	NegotiateDockerAPIVersion(ctx context.Context)
+	NegotiateAPIVersion(ctx context.Context)
 	ImagePush(ctx context.Context, image string, options types.ImagePushOptions) (io.ReadCloser, error)
-	DockerImageBuild(ctx context.Context, buildContext io.Reader, options types.ImageBuildOptions) (types.ImageBuildResponse, error)
+	ImageBuild(ctx context.Context, buildContext io.Reader, options types.ImageBuildOptions) (types.ImageBuildResponse, error)
+}
+
+type KymaDockerService interface {
+	PushKymaInstaller(image string, currentStep step.Step) error
+	BuildKymaInstaller(localSrcPath, imageName string) error
 }
 
 // DockerErrorMessage is used to parse error messages coming from Docker
@@ -38,61 +55,56 @@ type DockerErrorMessage struct {
 }
 
 //NewDockerService creates docker client using docker environment of the OS
-func NewDockerService() (DockerService, error) {
+func NewDockerService() (DockerClientService, error) {
 	dClient, err := docker.NewClientWithOpts(docker.FromEnv)
 	if err != nil {
 		return nil, err
 	}
 
-	return &dockerClientService{
-		dc: *dClient,
+	return &dockerClient{
+		dClient,
 	}, nil
 }
 
-//NewDockerMinkubeService creates docker client for minikube docker-env
-func NewDockerMinkubeService(verbosity bool, profile string, timeout time.Duration) (DockerService, error) {
+//NewDockerMinikubeService creates docker client for minikube docker-env
+func NewDockerMinikubeService(verbosity bool, profile string, timeout time.Duration) (DockerClientService, error) {
 	dClient, err := minikube.DockerClient(verbosity, profile, timeout)
 	if err != nil {
 		return nil, err
 	}
 
-	return &dockerClientService{
-		dc: *dClient,
+	return &dockerClient{
+		dClient,
 	}, nil
 }
 
-var _ DockerService = (*dockerClientService)(nil)
-
-type dockerClientService struct {
-	dc docker.Client
+func NewKymDockerClientService(isLocal bool, verbosity bool, profile string, timeout time.Duration) (KymaDockerService, error) {
+	var err error
+	var dc DockerClientService
+	if isLocal {
+		dc, err = NewDockerMinikubeService(verbosity, profile, timeout)
+	} else {
+		dc, err = NewDockerService()
+	}
+	return &kymaDockerClient{
+		kymaDocker: dc,
+	}, err
 }
 
-func (d *dockerClientService) ArchiveDirectory(srcPath string, options *archive.TarOptions) (io.ReadCloser, error) {
+func (d *dockerClient) ArchiveDirectory(srcPath string, options *archive.TarOptions) (io.ReadCloser, error) {
 	return archive.TarWithOptions(srcPath, &archive.TarOptions{})
 }
 
-func (d *dockerClientService) NegotiateDockerAPIVersion(ctx context.Context) {
-	d.dc.NegotiateAPIVersion(ctx)
-}
-
-func (d *dockerClientService) ImagePush(ctx context.Context, image string, options types.ImagePushOptions) (io.ReadCloser, error) {
-	return d.dc.ImagePush(ctx, image, options)
-}
-
-func (d *dockerClientService) DockerImageBuild(ctx context.Context, buildContext io.Reader, options types.ImageBuildOptions) (types.ImageBuildResponse, error) {
-	return d.dc.ImageBuild(ctx, buildContext, options)
-}
-
-func (i *Installation) BuildKymaInstaller(localSrcPath, imageName string) error {
-	reader, err := i.Docker.ArchiveDirectory(localSrcPath, &archive.TarOptions{})
+func (k *kymaDockerClient) BuildKymaInstaller(localSrcPath, imageName string) error {
+	reader, err := k.kymaDocker.ArchiveDirectory(localSrcPath, &archive.TarOptions{})
 	if err != nil {
 		return err
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(300)*time.Second)
 	defer cancel()
-	i.Docker.NegotiateDockerAPIVersion(ctx)
+	k.kymaDocker.NegotiateAPIVersion(ctx)
 	args := make(map[string]*string)
-	_, err = i.Docker.DockerImageBuild(
+	_, err = k.kymaDocker.ImageBuild(
 		ctx,
 		reader,
 		types.ImageBuildOptions{
@@ -110,10 +122,10 @@ func (i *Installation) BuildKymaInstaller(localSrcPath, imageName string) error 
 	return nil
 }
 
-func (i *Installation) PushKymaInstaller(image string) error {
+func (k *kymaDockerClient) PushKymaInstaller(image string, currentStep step.Step) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(300)*time.Second)
 	defer cancel()
-	i.Docker.NegotiateDockerAPIVersion(ctx)
+	k.kymaDocker.NegotiateAPIVersion(ctx)
 	domain, _ := splitDockerDomain(image)
 	auth, err := resolve(domain)
 	if err != nil {
@@ -126,9 +138,9 @@ func (i *Installation) PushKymaInstaller(image string) error {
 	}
 	authStr := base64.URLEncoding.EncodeToString(encodedJSON)
 
-	i.currentStep.LogInfof("Pushing Docker image: '%s'", image)
+	currentStep.LogInfof("Pushing Docker image: '%s'", image)
 
-	pusher, err := i.Docker.ImagePush(ctx, image, types.ImagePushOptions{RegistryAuth: authStr})
+	pusher, err := k.kymaDocker.ImagePush(ctx, image, types.ImagePushOptions{RegistryAuth: authStr})
 	if err != nil {
 		return err
 	}
