@@ -75,7 +75,7 @@ func NewMinikubeClient(verbosity bool, profile string, timeout time.Duration) (C
 	}, nil
 }
 
-func NewKymaDockerClientService(isLocal bool, verbosity bool, profile string, timeout time.Duration) (KymaClient, error) {
+func NewKymaClient(isLocal bool, verbosity bool, profile string, timeout time.Duration) (KymaClient, error) {
 	var err error
 	var dc Client
 	if isLocal {
