@@ -40,7 +40,7 @@ type ComponentsConfig struct {
 
 // Installation contains the installation elements and configuration options.
 type Installation struct {
-	Docker      docker.KymaDockerService
+	Docker      docker.KymaClient
 	K8s         kube.KymaKube
 	Service     Service
 	CurrentStep step.Step

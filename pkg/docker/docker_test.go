@@ -95,7 +95,7 @@ func Test_BuildKymaInstaller(t *testing.T) {
 	fooLocalSrcPath := "foo"
 
 	// mocks
-	mockDocker := &mocks.ClientService{}
+	mockDocker := &mocks.Client{}
 	// mockKymaDocker := mocks.KymaDockerService{}
 	stringReader := strings.NewReader("foo")
 	fooReadCloser := ioutil.NopCloser(stringReader)
@@ -103,7 +103,7 @@ func Test_BuildKymaInstaller(t *testing.T) {
 	fooArchiveTarOptions := &archive.TarOptions{}
 
 	k := kymaDockerClient{
-		kymaDocker: mockDocker,
+		Docker: mockDocker,
 	}
 
 	mockDocker.On("ArchiveDirectory", fooLocalSrcPath, fooArchiveTarOptions).Return(fooReadCloser, nil)
@@ -144,11 +144,11 @@ func Test_PushKymaInstaller(t *testing.T) {
 	image := "example.com/foo"
 
 	// mocks
-	mockDocker := &mocks.ClientService{}
+	mockDocker := &mocks.Client{}
 	// as context.deadline can have different clocks assume mock.anything here
 
 	k := kymaDockerClient{
-		kymaDocker: mockDocker,
+		Docker: mockDocker,
 	}
 	mockDocker.On("NegotiateAPIVersion", mock.Anything).Return(nil)
 
