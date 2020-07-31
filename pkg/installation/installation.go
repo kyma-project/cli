@@ -11,6 +11,7 @@ import (
 	installationSDK "github.com/kyma-incubator/hydroform/install/installation"
 	"github.com/kyma-project/cli/cmd/kyma/version"
 	"github.com/kyma-project/cli/internal/kube"
+	"github.com/kyma-project/cli/pkg/docker"
 	"github.com/kyma-project/cli/pkg/step"
 	"github.com/kyma-project/kyma/components/kyma-operator/pkg/apis/installer/v1alpha1"
 	pkgErrors "github.com/pkg/errors"
@@ -39,6 +40,7 @@ type ComponentsConfig struct {
 
 // Installation contains the installation elements and configuration options.
 type Installation struct {
+	Docker      docker.KymaClient
 	K8s         kube.KymaKube
 	Service     Service
 	currentStep step.Step
@@ -287,23 +289,31 @@ func (i *Installation) prepareFiles() (map[string]*File, error) {
 	if i.Options.fromLocalSources {
 		//In case of local installation from local sources, build installer image using Minikube Docker client.
 		if i.Options.IsLocal {
+			i.Docker, err = docker.NewKymaClient(i.Options.IsLocal, i.Options.Verbose, i.Options.LocalCluster.Profile, i.Options.Timeout)
+			if err != nil {
+				return nil, err
+			}
 			imageName, err := getInstallerImage(files[installerFile])
 			if err != nil {
 				return nil, err
 			}
 
-			err = i.buildKymaInstaller(imageName)
+			err = i.Docker.BuildKymaInstaller(i.Options.LocalSrcPath, imageName)
 			if err != nil {
 				return nil, err
 			}
 			//In case of remote cluster installation from local sources, build installer image using default Docker client and push the image.
 		} else {
-			err = i.buildKymaInstaller(i.Options.CustomImage)
+			i.Docker, err = docker.NewKymaClient(i.Options.IsLocal, i.Options.Verbose, i.Options.LocalCluster.Profile, i.Options.Timeout)
+			if err != nil {
+				return nil, err
+			}
+			err = i.Docker.BuildKymaInstaller(i.Options.LocalSrcPath, i.Options.CustomImage)
 			if err != nil {
 				return nil, err
 			}
 
-			err = i.pushKymaInstaller()
+			err = i.Docker.PushKymaInstaller(i.Options.CustomImage, i.currentStep)
 			if err != nil {
 				return nil, err
 			}
