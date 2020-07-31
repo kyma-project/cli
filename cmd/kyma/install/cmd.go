@@ -238,6 +238,11 @@ func (cmd *command) printSummary(result *installation.Result) error {
 	nicePrint.PrintImportant(result.KymaVersion)
 
 	nicePrint.PrintKyma()
+	fmt.Print(" installation took:\t\t")
+	nicePrint.PrintImportantf("%d hours %d minutes",
+		int64(result.Duration.Hours()), int64(result.Duration.Minutes()))
+
+	nicePrint.PrintKyma()
 	fmt.Print(" is running at:\t\t")
 	nicePrint.PrintImportant(result.Host)
 

@@ -147,5 +147,10 @@ func (cmd *command) printSummary(result *installation.Result) error {
 	fmt.Print(" is upgraded to version:\t")
 	nicePrint.PrintImportant(result.KymaVersion)
 
+	nicePrint.PrintKyma()
+	fmt.Print(" upgrade took:\t\t")
+	nicePrint.PrintImportantf("%d hours %d minutes",
+		int64(result.Duration.Hours()), int64(result.Duration.Minutes()))
+
 	return nil
 }
