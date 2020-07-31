@@ -58,7 +58,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "minikube",
 		Short:   "Provisions Minikube.",
-		Long:    `Use this command to provision a Minikube cluster for Kyma installation.`,
+		Long:    `Use this command to provision a Minikube cluster for Kyma installation. It requires to have Minikube installed upfront, see also https://github.com/kubernetes/minikube`,
 		RunE:    func(_ *cobra.Command, _ []string) error { return c.Run() },
 		Aliases: []string{"m"},
 	}
