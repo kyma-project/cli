@@ -283,7 +283,10 @@ func (i *Installation) prepareFiles() (map[string]*File, error) {
 	if i.Options.fromLocalSources {
 		//In case of local installation from local sources, build installer image using Minikube Docker client.
 		if i.Options.IsLocal {
-			i.Docker, err = docker.NewKymDockerClientService(true, i.Options.Verbose, i.Options.LocalCluster.Profile, i.Options.Timeout)
+			i.Docker, err = docker.NewKymDockerClientService(i.Options.IsLocal, i.Options.Verbose, i.Options.LocalCluster.Profile, i.Options.Timeout)
+			if err != nil {
+				return nil, err
+			}
 			imageName, err := getInstallerImage(files[installerFile])
 			if err != nil {
 				return nil, err
@@ -295,8 +298,10 @@ func (i *Installation) prepareFiles() (map[string]*File, error) {
 			}
 			//In case of remote cluster installation from local sources, build installer image using default Docker client and push the image.
 		} else {
-			// i.Docker, err = docker.NewDockerService()
-			i.Docker, err = docker.NewKymDockerClientService(false, i.Options.Verbose, i.Options.LocalCluster.Profile, i.Options.Timeout)
+			i.Docker, err = docker.NewKymDockerClientService(i.Options.IsLocal, i.Options.Verbose, i.Options.LocalCluster.Profile, i.Options.Timeout)
+			if err != nil {
+				return nil, err
+			}
 			err = i.Docker.BuildKymaInstaller(i.Options.LocalSrcPath, i.Options.CustomImage)
 			if err != nil {
 				return nil, err

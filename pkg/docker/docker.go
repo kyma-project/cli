@@ -25,19 +25,17 @@ const (
 	defaultRegistry = "index.docker.io"
 )
 
-var _ DockerClientService = (*dockerClient)(nil)
-
 type dockerClient struct {
 	*docker.Client
 	// DockerClientService
 }
 
 type kymaDockerClient struct {
-	kymaDocker DockerClientService
+	kymaDocker ClientService
 }
 
-//go:generate mockery --name DockerClientService
-type DockerClientService interface {
+//go:generate mockery --name ClientService
+type ClientService interface {
 	ArchiveDirectory(srcPath string, options *archive.TarOptions) (io.ReadCloser, error)
 	NegotiateAPIVersion(ctx context.Context)
 	ImagePush(ctx context.Context, image string, options types.ImagePushOptions) (io.ReadCloser, error)
@@ -49,13 +47,13 @@ type KymaDockerService interface {
 	BuildKymaInstaller(localSrcPath, imageName string) error
 }
 
-// DockerErrorMessage is used to parse error messages coming from Docker
-type DockerErrorMessage struct {
+// ErrorMessage is used to parse error messages coming from Docker
+type ErrorMessage struct {
 	Error string
 }
 
 //NewDockerService creates docker client using docker environment of the OS
-func NewDockerService() (DockerClientService, error) {
+func NewDockerService() (ClientService, error) {
 	dClient, err := docker.NewClientWithOpts(docker.FromEnv)
 	if err != nil {
 		return nil, err
@@ -67,7 +65,7 @@ func NewDockerService() (DockerClientService, error) {
 }
 
 //NewDockerMinikubeService creates docker client for minikube docker-env
-func NewDockerMinikubeService(verbosity bool, profile string, timeout time.Duration) (DockerClientService, error) {
+func NewDockerMinikubeService(verbosity bool, profile string, timeout time.Duration) (ClientService, error) {
 	dClient, err := minikube.DockerClient(verbosity, profile, timeout)
 	if err != nil {
 		return nil, err
@@ -80,7 +78,7 @@ func NewDockerMinikubeService(verbosity bool, profile string, timeout time.Durat
 
 func NewKymDockerClientService(isLocal bool, verbosity bool, profile string, timeout time.Duration) (KymaDockerService, error) {
 	var err error
-	var dc DockerClientService
+	var dc ClientService
 	if isLocal {
 		dc, err = NewDockerMinikubeService(verbosity, profile, timeout)
 	} else {
@@ -147,7 +145,7 @@ func (k *kymaDockerClient) PushKymaInstaller(image string, currentStep step.Step
 
 	defer pusher.Close()
 
-	var errorMessage DockerErrorMessage
+	var errorMessage ErrorMessage
 	buffIOReader := bufio.NewReader(pusher)
 
 	for {

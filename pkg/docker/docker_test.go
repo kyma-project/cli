@@ -56,7 +56,7 @@ var expectedAuth = types.AuthConfig{
 	RegistryToken: "registryFoo",
 }
 
-func genConfigFile(user, pwd string) *dockerConfigFile.ConfigFile {
+func genConfigFile() *dockerConfigFile.ConfigFile {
 	configFile := dockerConfigFile.New("tmpConfig")
 
 	authStr := exampleAuth.Username + ":" + exampleAuth.Password
@@ -75,11 +75,12 @@ func Test_Resolve_happy_path(t *testing.T) {
 	assert.NilError(t, err)
 	defer os.RemoveAll(tmpHome)
 
-	configFile := genConfigFile("user", "pass")
+	configFile := genConfigFile()
 	b, err := json.Marshal(configFile)
 	assert.NilError(t, err)
 	tmpFile := fmt.Sprintf("%s/config.json", tmpHome)
-	ioutil.WriteFile(tmpFile, b, 0644)
+	err = ioutil.WriteFile(tmpFile, b, 0600)
+	assert.NilError(t, err)
 
 	os.Setenv("DOCKER_CONFIG", tmpHome)
 
@@ -94,7 +95,7 @@ func Test_BuildKymaInstaller(t *testing.T) {
 	fooLocalSrcPath := "foo"
 
 	// mocks
-	mockDocker := &mocks.DockerClientService{}
+	mockDocker := &mocks.ClientService{}
 	// mockKymaDocker := mocks.KymaDockerService{}
 	stringReader := strings.NewReader("foo")
 	fooReadCloser := ioutil.NopCloser(stringReader)
@@ -132,17 +133,18 @@ func Test_PushKymaInstaller(t *testing.T) {
 	assert.NilError(t, err)
 	defer os.RemoveAll(tmpHome)
 
-	configFile := genConfigFile("user", "pass")
+	configFile := genConfigFile()
 	b, err := json.Marshal(configFile)
 	assert.NilError(t, err)
 	tmpFile := fmt.Sprintf("%s/config.json", tmpHome)
-	ioutil.WriteFile(tmpFile, b, 0644)
+	err = ioutil.WriteFile(tmpFile, b, 0600)
+	assert.NilError(t, err)
 
 	os.Setenv("DOCKER_CONFIG", tmpHome)
 	image := "example.com/foo"
 
 	// mocks
-	mockDocker := &mocks.DockerClientService{}
+	mockDocker := &mocks.ClientService{}
 	// as context.deadline can have different clocks assume mock.anything here
 
 	k := kymaDockerClient{
