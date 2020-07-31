@@ -174,7 +174,6 @@ func (cmd *command) configureInstallation(clusterConfig installation.ClusterInfo
 			CI:               cmd.opts.CI,
 			NonInteractive:   cmd.Factory.NonInteractive,
 			Timeout:          cmd.opts.Timeout,
-			KubeconfigPath:   cmd.opts.KubeconfigPath,
 			CustomImage:      cmd.opts.CustomImage,
 			Domain:           cmd.opts.Domain,
 			TLSCert:          cmd.opts.TLSCert,
@@ -237,6 +236,11 @@ func (cmd *command) printSummary(result *installation.Result) error {
 	nicePrint.PrintKyma()
 	fmt.Print(" is installed in version:\t")
 	nicePrint.PrintImportant(result.KymaVersion)
+
+	nicePrint.PrintKyma()
+	fmt.Print(" installation took:\t\t")
+	nicePrint.PrintImportantf("%d hours %d minutes",
+		int64(result.Duration.Hours()), int64(result.Duration.Minutes()))
 
 	nicePrint.PrintKyma()
 	fmt.Print(" is running at:\t\t")

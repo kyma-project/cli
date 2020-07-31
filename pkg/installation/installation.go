@@ -40,7 +40,6 @@ type ComponentsConfig struct {
 
 // Installation contains the installation elements and configuration options.
 type Installation struct {
-	k8s         kube.KymaKube
 	Docker      docker.KymaDockerService
 	K8s         kube.KymaKube
 	Service     Service
@@ -74,6 +73,8 @@ type Result struct {
 	AdminPassword string
 	// Warnings includes a set of any warnings from the installation.
 	Warnings []string
+	// Duration indicates the duration of the installation.
+	Duration time.Duration
 }
 
 func (i *Installation) newStep(msg string) step.Step {
@@ -84,6 +85,9 @@ func (i *Installation) newStep(msg string) step.Step {
 
 // InstallKyma triggers the installation of a Kyma cluster.
 func (i *Installation) InstallKyma() (*Result, error) {
+	// Start timer for the installation
+	installationTimer := time.Now()
+
 	if i.Options.CI || i.Options.NonInteractive {
 		i.Factory.NonInteractive = true
 	}
@@ -140,7 +144,9 @@ func (i *Installation) InstallKyma() (*Result, error) {
 		}
 	}
 
-	result, err := i.buildResult()
+	duration := time.Since(installationTimer)
+
+	result, err := i.buildResult(duration)
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +167,7 @@ func (i *Installation) checkPrevInstallation() (string, string, error) {
 
 	var kymaVersion string
 	if prevInstallationState.State != installationSDK.NoInstallationState {
-		kymaVersion, err = version.KymaVersion(i.Options.Verbose, i.K8s)
+		kymaVersion, err = version.KymaVersion(i.K8s)
 		if err != nil {
 			return "", "", err
 		}
@@ -416,7 +422,7 @@ func (i *Installation) waitForInstaller() error {
 	}
 }
 
-func (i *Installation) buildResult() (*Result, error) {
+func (i *Installation) buildResult(duration time.Duration) (*Result, error) {
 	// In case that noWait flag is set, check that Kyma was actually installed before building the Result
 	if i.Options.NoWait {
 		installationState, err := i.Service.CheckInstallationState(i.K8s.Config())
@@ -428,7 +434,7 @@ func (i *Installation) buildResult() (*Result, error) {
 		}
 	}
 
-	v, err := version.KymaVersion(i.Options.Verbose, i.K8s)
+	v, err := version.KymaVersion(i.K8s)
 	if err != nil {
 		return nil, err
 	}
@@ -463,6 +469,7 @@ func (i *Installation) buildResult() (*Result, error) {
 		AdminEmail:    string(adm.Data["email"]),
 		AdminPassword: string(adm.Data["password"]),
 		Warnings:      []string{warning},
+		Duration:      duration,
 	}, nil
 }
 

@@ -62,10 +62,6 @@ type Options struct {
 	// Verbose enables displaying details of actions triggered.
 	// +optional
 	Verbose bool `json:"verbose,omitempty"`
-	// KubeconfigPath specifies the path to the kubeconfig file. By default, the KUBECONFIG environment variable is used,
-	// or /$HOME/.kube/config is used if the variable is not set.
-	// +optional
-	KubeconfigPath string `json:"kubeconfigPath,omitempty"`
 	// CustomImage determines the name for a custom Kyma installer image built for installation from local sources.
 	// +optional
 	CustomImage string `json:"customImage,omitempty"`

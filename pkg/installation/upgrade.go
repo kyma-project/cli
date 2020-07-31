@@ -2,6 +2,7 @@ package installation
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/Masterminds/semver"
 	installationSDK "github.com/kyma-incubator/hydroform/install/installation"
@@ -13,6 +14,9 @@ import (
 
 // UpgradeKyma triggers the upgrade of a Kyma cluster.
 func (i *Installation) UpgradeKyma() (*Result, error) {
+	// Start timer for the upgrade
+	upgradeTimer := time.Now()
+
 	if i.Options.CI || i.Options.NonInteractive {
 		i.Factory.NonInteractive = true
 	}
@@ -78,7 +82,9 @@ func (i *Installation) UpgradeKyma() (*Result, error) {
 		}
 	}
 
-	result, err := i.buildResult()
+	duration := time.Since(upgradeTimer)
+
+	result, err := i.buildResult(duration)
 	if err != nil {
 		return nil, err
 	}
