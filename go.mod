@@ -37,7 +37,7 @@ require (
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/imdario/mergo v0.3.8 // indirect
 	github.com/kyma-incubator/hydroform/install v0.0.0-20200713083457-944d1a7c76ee
-	github.com/kyma-incubator/hydroform/provision v0.0.0-20200528121905-83605518328f
+	github.com/kyma-incubator/hydroform/provision v0.0.0-20200803123159-99d6ef03bf0c
 	github.com/kyma-incubator/octopus v0.0.0-20191009105757-2e9d86cd9967
 	github.com/kyma-project/kyma v0.5.1-0.20200211132707-0a36a0f31d7e
 	github.com/mattn/go-colorable v0.1.4 // indirect
