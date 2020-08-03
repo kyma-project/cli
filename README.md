@@ -8,9 +8,6 @@ Kyma CLI is a command line tool which supports [Kyma](https://github.com/kyma-pr
 
 ## Installation
 
->**NOTE:** Before you start with the installation, make sure you have [Minikube](https://github.com/kubernetes/minikube) installed.
-
-
 To install the latest release of Kyma CLI on MacOS using Homebrew, run:
 
 ```bash
@@ -22,11 +19,12 @@ To install the latest release of Kyma CLI on Windows using [Chocolatey](https://
 ```PowerShell
 choco install kyma-cli
 ```
+
 Read more about [installation options](https://github.com/kyma-project/cli/blob/master/docs/03-01-installation.md).
 
 ## Use Kyma CLI
 
-Once you have already installed the CLI, you can use its set of commands and flags to provision a cluster and start working with Kyma.
+Once you have installed the CLI, you can use its set of commands and flags to provision a cluster and start working with Kyma.
 
 In a nutshell, this is the syntax you can use to run the commands from your terminal:
 

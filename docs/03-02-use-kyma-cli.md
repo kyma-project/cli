@@ -3,7 +3,7 @@ title: Use Kyma CLI
 type: Details
 ---
 
-Kyma CLI comes with a set of commands, each of which has its own specific set of flags. Use them to provision the cluster locally or using a chosen cloud provider, install, and test Kyma. 
+Kyma CLI comes with a set of commands, each of which has its own specific set of flags. Use them to provision the cluster locally or using a chosen cloud provider, install, and test Kyma.
 
 For the commands and flags to work, they need to follow this syntax:
 
@@ -30,4 +30,3 @@ kyma install -s latest
 | [`provision`](/docs/gen-docs/kyma_provision.md)| [`minikube`](/docs/gen-docs/kyma_provision_minikube.md)<br> [`gardener`](/docs/gen-docs/kyma_provision_gardener.md) <br> [`gke`](/docs/gen-docs/kyma_provision_gke.md) <br> [`aks`](/docs/gen-docs/kyma_provision_aks.md)| Provisions a new cluster on a platform of your choice. Currently, this command supports cluster provisioning on GCP, Azure, Gardener, and Minikube. | `kyma provision minikube`|
 | [`test`](/docs/gen-docs/kyma_test.md)|[`definitions`](/docs/gen-docs/kyma_test_definitions.md)<br> [`delete`](/docs/gen-docs/kyma_test_delete.md) <br> [`list`](/docs/gen-docs/kyma_test_list.md) <br> [`run`](/docs/gen-docs/kyma_test_run.md) <br> [`status`](/docs/gen-docs/kyma_test_status.md)<br> [`logs`](/docs/gen-docs/kyma_test_logs.md) <br> | Runs and manages tests on a provisioned Kyma cluster. Using child commands, you can run tests, view test definitions, list and delete test suites, display test status, and fetch the logs of the tests.| `kyma test run` |
 | [`version`](/docs/gen-docs/kyma_version.md)|None| Shows the cluster version and the Kyma CLI version.| `kyma version` |
-
