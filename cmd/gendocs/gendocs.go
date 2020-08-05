@@ -155,8 +155,6 @@ func printSeeAlso(buf *bytes.Buffer, cmd *cobra.Command) {
 			continue
 		}
 		cname := name + " " + child.Name()
-		link := cname + ".md"
-		link = strings.Replace(link, " ", "_", -1)
 		buf.WriteString(fmt.Sprintf("* [%s](%s)\t - %s\n", cname, linkHandler(child), child.Short))
 	}
 	buf.WriteString("\n")
