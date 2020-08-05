@@ -20,7 +20,7 @@ See the example:
 kyma install -s latest
 ```
 
-See [the full list of commands and flags](https://kyma-project.io/docs/cli/commands/).
+See [the full list of commands and flags](/cli/commands/).
 
 |     Command        | Child commands   |  Description  | Example |
 |--------------------|----------------|---------------|---------|
