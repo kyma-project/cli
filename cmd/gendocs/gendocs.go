@@ -25,7 +25,6 @@ title: %s
 
 func main() {
 	command := kyma.NewCmd(cli.NewOptions())
-	command.DisableAutoGenTag = true
 
 	err := genMarkdownTree(command, docsTargetDir)
 	if err != nil {
