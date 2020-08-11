@@ -3,3 +3,6 @@
 
 # All .md files
 *.md @kazydek @klaudiagrz @bszwarc @mmitoraj @majakurcius @aleksandra-simeonova
+
+# Owners of the .kyma-project-io folder
+/.kyma-project-io/ @m00g3n @aerfio @pPrecel @magicmatatjahu
