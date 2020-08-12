@@ -29,6 +29,5 @@ For more information, see: https://github.com/kyma-project/cli
 * [kyma install](#kyma-install-kyma-install)	 - Installs Kyma on a running Kubernetes cluster.
 * [kyma provision](#kyma-provision-kyma-provision)	 - Provisions a cluster for Kyma installation.
 * [kyma test](#kyma-test-kyma-test)	 - Runs tests on a provisioned Kyma cluster.
-* [kyma upgrade](#kyma-upgrade-kyma-upgrade)	 - Upgrades Kyma to match  the CLI version.
 * [kyma version](#kyma-version-kyma-version)	 - Displays the version of Kyma CLI and the connected Kyma cluster.
 
