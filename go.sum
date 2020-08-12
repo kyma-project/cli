@@ -503,8 +503,8 @@ github.com/kylelemons/godebug v0.0.0-20170820004349-d65d576e9348 h1:MtvEpTB6LX3v
 github.com/kylelemons/godebug v0.0.0-20170820004349-d65d576e9348/go.mod h1:B69LEHPfb2qLo0BaaOLcbitczOKLWTsrBG9LczfCD4k=
 github.com/kylelemons/godebug v1.1.0 h1:RPNrshWIDI6G2gRW9EHilWtl7Z6Sb1BR0xunSBf0SNc=
 github.com/kylelemons/godebug v1.1.0/go.mod h1:9/0rRGxNHcop5bhtWyNeEfOS8JIWk580+fNqagV/RAw=
-github.com/kyma-incubator/hydroform/install v0.0.0-20200713083457-944d1a7c76ee h1:+v9KRSvMHfl3W6NHVavauX/U204yv2TMeY0J+eguigk=
-github.com/kyma-incubator/hydroform/install v0.0.0-20200713083457-944d1a7c76ee/go.mod h1:cu0KmMDfLm1nY+lkRWhckdjeo+lzUsI4YkLCkRc3zWY=
+github.com/kyma-incubator/hydroform/install v0.0.0-20200812115205-1299dd4d0c6c h1:joAO6GvxrVgNHezYcVU640FuIPvDy96uaZJwLKm08c4=
+github.com/kyma-incubator/hydroform/install v0.0.0-20200812115205-1299dd4d0c6c/go.mod h1:cu0KmMDfLm1nY+lkRWhckdjeo+lzUsI4YkLCkRc3zWY=
 github.com/kyma-incubator/hydroform/provision v0.0.0-20200803123159-99d6ef03bf0c h1:8I++RgeZyOCz3aw/tTQoIOm3QdmlLGNZYiA5/kvemyw=
 github.com/kyma-incubator/hydroform/provision v0.0.0-20200803123159-99d6ef03bf0c/go.mod h1:8Rhb40oo6TOVz3rTN9SP6fSeoiAzdRjmJutgmHYk6sc=
 github.com/kyma-incubator/octopus v0.0.0-20191009105757-2e9d86cd9967 h1:Y+lnL/+uWprDPOdUfbki2IaVuIIFoQTXhqGdrHSXFmI=
