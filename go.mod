@@ -11,7 +11,6 @@ replace (
 	github.com/ugorji/go v0.0.0-20180813092308-00b869d2f4a5 => github.com/ugorji/go v0.0.0-20181204163529-d75b2dcb6bc8
 	// Docker client has an issue on windows with the latest sys package, we have to fix the version
 	golang.org/x/sys => golang.org/x/sys v0.0.0-20190710143415-6ec70d6a5542
-
 )
 
 require (
