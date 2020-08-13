@@ -63,8 +63,6 @@ For more information, see: https://github.com/kyma-project/cli
 		install.NewCmd(install.NewOptions(o)),
 		provisionCmd,
 		console.NewCmd(console.NewOptions(o)),
-		// upgrade command is disabled for now and will be enabled in the next release (1.16) after testing it on the upgrade prow jobs
-		// upgrade.NewCmd(upgrade.NewOptions(o)),
 	)
 
 	testCmd := test.NewCmd()
