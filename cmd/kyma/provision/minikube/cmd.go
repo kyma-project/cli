@@ -70,6 +70,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cmd.Flags().StringVar(&o.CPUS, "cpus", "4", "Specifies the number of CPUs used for installation.")
 	cmd.Flags().StringVar(&o.Profile, "profile", "", "Specifies the Minikube profile.")
 	cmd.Flags().DurationVar(&o.Timeout, "timeout", 5*time.Minute, `Maximum time during which the provisioning takes place, where "0" means "infinite". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".`)
+	cmd.Flags().BoolVar(&o.UseVPNKitSock, "use-vpnkit-sock", false, `Uses vpnkit sock provided by Docker. This is useful when DNS Port (53) is being used by some other program like dns-proxy (eg. provided by Cisco Umbrella).`)
 	return cmd
 }
 
@@ -235,6 +236,15 @@ func (c *command) startMinikube() error {
 
 	if c.opts.VMDriver == vmDriverHyperv {
 		startCmd = append(startCmd, "--hyperv-virtual-switch="+c.opts.HypervVirtualSwitch)
+	}
+
+	if c.opts.UseVPNKitSock {
+		user, err := cli.RunCmd("whoami")
+		if err != nil {
+			return err
+		}
+		pathToVPNKitSock := fmt.Sprintf("/Users/%s/Library/Containers/com.docker.docker/Data/vpnkit.eth.sock", strings.TrimSuffix(user, "\n"))
+		startCmd = append(startCmd, "--hyperkit-vpnkit-sock="+pathToVPNKitSock)
 	}
 	_, err := minikube.RunCmd(c.opts.Verbose, c.opts.Profile, c.opts.Timeout, startCmd...)
 	if err != nil {

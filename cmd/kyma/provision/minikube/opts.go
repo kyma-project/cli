@@ -15,6 +15,7 @@ type Options struct {
 	CPUS                string
 	HypervVirtualSwitch string
 	Profile             string
+	UseVPNKitSock       bool
 	Timeout             time.Duration
 }
 
