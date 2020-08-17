@@ -89,7 +89,7 @@ The standard installation uses the minimal configuration. The system performs th
 	- To use the latest published master, which is the latest commit with released images, write "kyma install --source=latest-published".
 	- To use a commit, write "kyma install --source=34edf09a".
 	- To use the local sources, write "kyma install --source=local".
-	- To use a custom installer image, write kyma "install --source=user/my-kyma-installer:v1.4.0".`)
+	- To use a custom installer image, write "kyma install --source=user/my-kyma-installer:v1.4.0".`)
 	cobraCmd.Flags().StringVarP(&o.LocalSrcPath, "src-path", "", "", "Absolute path to local sources.")
 	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 1*time.Hour, "Time-out after which CLI stops watching the installation progress.")
 	cobraCmd.Flags().StringVarP(&o.Password, "password", "p", "", "Predefined cluster password.")
