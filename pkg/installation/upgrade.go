@@ -49,7 +49,7 @@ func (i *Installation) UpgradeKyma() (*Result, error) {
 			return nil, err
 		}
 
-		// Check for upgrade compatability and prompt migration guide only if both current and target Kyma versions are release versions
+		// Check for upgrade compatibility and prompt migration guide only if both current and target Kyma versions are release versions
 		if isCurrReleaseVersion && isTargetReleaseVersion {
 			// Checking upgrade compatibility
 			if err := i.checkUpgradeCompatibility(currSemVersion, targetSemVersion); err != nil {
