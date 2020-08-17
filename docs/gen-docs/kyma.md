@@ -9,7 +9,6 @@ Controls a Kyma cluster.
 Kyma is a flexible and easy way to connect and extend enterprise applications in a cloud-native world.
 Kyma CLI allows you to install, test, and manage Kyma.
 
-For more information, see: https://github.com/kyma-project/cli
 
 
 ## Options
