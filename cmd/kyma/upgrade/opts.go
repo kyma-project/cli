@@ -13,10 +13,14 @@ type Options struct {
 	Domain           string
 	TLSCert          string
 	TLSKey           string
+	LocalSrcPath     string
 	Timeout          time.Duration
 	Password         string
 	OverrideConfigs  []string
 	ComponentsConfig string
+	Source           string
+	FallbackLevel    int
+	CustomImage      string
 }
 
 //NewOptions creates options with default values
