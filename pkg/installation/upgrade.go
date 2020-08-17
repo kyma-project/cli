@@ -135,7 +135,7 @@ func (i *Installation) checkCurrVersion(currVersion string) (bool, *semver.Versi
 	currSemVersion, err := semver.NewVersion(currVersion)
 	if err != nil {
 		isReleaseVersion = false
-		promptMsg := fmt.Sprintf("Current Kyma version (%s) is not a release version, so it is not possible to check for upgrade compatibility.\n"+
+		promptMsg := fmt.Sprintf("Current Kyma version '%s' is not a release version, so it is not possible to check for upgrade compatibility.\n"+
 			"If you choose to continue the upgrade, you can compromise the functionality of your cluster.\n"+
 			"Are you sure you want to continue?",
 			currVersion,
@@ -157,7 +157,7 @@ func (i *Installation) checkTargetVersion() (bool, *semver.Version, error) {
 		targetSemVersion, err = semver.NewVersion(i.Options.Source)
 		if err != nil {
 			isReleaseVersion = false
-			promptMsg := fmt.Sprintf("Target Kyma version (%s) is not a release version, so it is not possible to check for upgrade compatibility.\n"+
+			promptMsg := fmt.Sprintf("Target Kyma version '%s' is not a release version, so it is not possible to check for upgrade compatibility.\n"+
 				"If you choose to continue the upgrade, you can compromise the functionality of your cluster.\n"+
 				"Are you sure you want to continue?",
 				i.Options.Source,
@@ -184,13 +184,13 @@ func (i *Installation) checkTargetVersion() (bool, *semver.Version, error) {
 
 func (i *Installation) checkUpgradeCompatibility(currSemVersion *semver.Version, targetSemVersion *semver.Version) error {
 	if currSemVersion.GreaterThan(targetSemVersion) {
-		return fmt.Errorf("Current Kyma version (%s) is greater than the target version (%s). Kyma does not support a dedicated downgrade procedure", currSemVersion.String(), targetSemVersion.String())
+		return fmt.Errorf("Current Kyma version '%s' is greater than the target version '%s'. Kyma does not support a dedicated downgrade procedure", currSemVersion.String(), targetSemVersion.String())
 	} else if currSemVersion.Equal(targetSemVersion) && i.Options.OverrideConfigs == nil {
-		return fmt.Errorf("Current Kyma version (%s) is already matching the target version (%s)", currSemVersion.String(), targetSemVersion.String())
+		return fmt.Errorf("Current Kyma version '%s' is already matching the target version '%s'", currSemVersion.String(), targetSemVersion.String())
 	} else if currSemVersion.Major() != targetSemVersion.Major() {
-		return fmt.Errorf("Mismatch between current Kyma version (%s) and target version (%s) is more than one minor version", currSemVersion.String(), targetSemVersion.String())
+		return fmt.Errorf("Mismatch between current Kyma version '%s' and target version '%s' is more than one minor version", currSemVersion.String(), targetSemVersion.String())
 	} else if currSemVersion.Minor() != targetSemVersion.Minor() && currSemVersion.Minor()+1 != targetSemVersion.Minor() {
-		return fmt.Errorf("Mismatch between current Kyma version (%s) and target version (%s) is more than one minor version", currSemVersion.String(), targetSemVersion.String())
+		return fmt.Errorf("Mismatch between current Kyma version '%s' and target version '%s' is more than one minor version", currSemVersion.String(), targetSemVersion.String())
 	}
 
 	return nil
@@ -225,7 +225,7 @@ func (i *Installation) promptMigrationGuide(currSemVersion *semver.Version, targ
 }
 
 func (i *Installation) logVersionUpgrade(currVersion string) {
-	i.currentStep.LogInfof("Upgrading Kyma from version %s to %s", currVersion, i.Options.Source)
+	i.currentStep.LogInfof("Upgrading Kyma from version '%s' to '%s'", currVersion, i.Options.Source)
 }
 
 func (i *Installation) triggerUpgrade(files map[string]*File) error {
