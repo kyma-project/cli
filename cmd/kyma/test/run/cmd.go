@@ -90,13 +90,12 @@ func (cmd *command) Run(args []string) error {
 		return fmt.Errorf("Test suite '%s' already exists", testSuiteName)
 	}
 
-	clusterTestDefs, err := cmd.K8s.Octopus().ListTestDefinitions(metav1.ListOptions{})
-	if err != nil {
-		return errors.Wrap(err, "Unable to get the list of test definitions")
-	}
-
 	opts := []TestSuiteOption{}
 	if len(args) > 0 {
+		clusterTestDefs, err := cmd.K8s.Octopus().ListTestDefinitions(metav1.ListOptions{})
+		if err != nil {
+			return errors.Wrap(err, "Unable to get the list of test definitions")
+		}
 		testDefToApply, err := matchTestDefinitionNames(args, clusterTestDefs.Items)
 		if err != nil {
 			return err
