@@ -5,12 +5,14 @@ import (
 	"time"
 
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
-	"github.com/kyma-project/cli/pkg/api/octopus"
-	"github.com/kyma-project/cli/pkg/step/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/watch"
+
+	"github.com/kyma-project/cli/pkg/api/octopus"
+	"github.com/kyma-project/cli/pkg/step/mocks"
 )
 
 func Test_matchTestDefinitionNames(t *testing.T) {
@@ -77,38 +79,40 @@ func Test_matchTestDefinitionNames(t *testing.T) {
 
 func Test_generateTestsResource(t *testing.T) {
 	testData := []struct {
-		testName             string
-		shouldFail           bool
-		inputTestName        string
-		inputTestDefinitions []oct.TestDefinition
-		inputExecutionCount  int64
-		inputMaxRetires      int64
-		inputConcurrency     int64
-		expectedResult       *oct.ClusterTestSuite
+		testName            string
+		shouldFail          bool
+		inputTestName       string
+		inputTestOptions    []TestSuiteOption
+		inputExecutionCount int64
+		inputMaxRetires     int64
+		inputConcurrency    int64
+		expectedResult      *oct.ClusterTestSuite
 	}{
 		{
 			testName:      "create test with existing test definition",
 			shouldFail:    false,
 			inputTestName: "TestOneProper",
-			inputTestDefinitions: []oct.TestDefinition{
-				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test1",
-						Namespace: "kyma-test",
+			inputTestOptions: []TestSuiteOption{
+				withMatchNamesSelector([]oct.TestDefinition{
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "test1",
+							Namespace: "kyma-test",
+						},
+						TypeMeta: metav1.TypeMeta{
+							APIVersion: "",
+						},
 					},
-					TypeMeta: metav1.TypeMeta{
-						APIVersion: "",
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "test2",
+							Namespace: "kyma-system",
+						},
+						TypeMeta: metav1.TypeMeta{
+							APIVersion: "",
+						},
 					},
-				},
-				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test2",
-						Namespace: "kyma-system",
-					},
-					TypeMeta: metav1.TypeMeta{
-						APIVersion: "",
-					},
-				},
+				}),
 			},
 			inputExecutionCount: 1,
 			inputMaxRetires:     2,
@@ -140,6 +144,103 @@ func Test_generateTestsResource(t *testing.T) {
 				},
 			},
 		},
+		{
+			testName:      "create test with label expressions",
+			shouldFail:    false,
+			inputTestName: "TestOneProper",
+			inputTestOptions: []TestSuiteOption{
+				func() TestSuiteOption {
+					sel, err := labels.Parse("superlabel")
+					if err != nil {
+						t.Errorf("could not parse expression %v", err)
+					}
+					return withMatchLabelsExpression(sel)
+				}(),
+				func() TestSuiteOption {
+					sel, err := labels.Parse("a=b")
+					if err != nil {
+						t.Errorf("could not parse expression %v", err)
+					}
+					return withMatchLabelsExpression(sel)
+				}(),
+			},
+			inputExecutionCount: 1,
+			inputMaxRetires:     2,
+			inputConcurrency:    3,
+			expectedResult: &oct.ClusterTestSuite{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "testing.kyma-project.io/v1alpha1",
+					Kind:       "ClusterTestSuite",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "TestOneProper",
+				},
+				Spec: oct.TestSuiteSpec{
+					Count:       1,
+					MaxRetries:  2,
+					Concurrency: 3,
+					Selectors: oct.TestsSelector{
+						MatchLabelExpressions: []string{
+							"superlabel",
+							"a=b",
+						},
+					},
+				},
+			},
+		},
+		{
+			testName:      "create test with label expressions and match names",
+			shouldFail:    false,
+			inputTestName: "TestOneProper",
+			inputTestOptions: []TestSuiteOption{
+				func() TestSuiteOption {
+					sel, err := labels.Parse("superlabel")
+					if err != nil {
+						t.Errorf("could not parse expression %v", err)
+					}
+					return withMatchLabelsExpression(sel)
+				}(),
+				withMatchNamesSelector([]oct.TestDefinition{
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "test1",
+							Namespace: "kyma-test",
+						},
+						TypeMeta: metav1.TypeMeta{
+							APIVersion: "",
+						},
+					},
+				}),
+			},
+			inputExecutionCount: 1,
+			inputMaxRetires:     2,
+			inputConcurrency:    3,
+			expectedResult: &oct.ClusterTestSuite{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "testing.kyma-project.io/v1alpha1",
+					Kind:       "ClusterTestSuite",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "TestOneProper",
+				},
+				Spec: oct.TestSuiteSpec{
+					Count:       1,
+					MaxRetries:  2,
+					Concurrency: 3,
+					Selectors: oct.TestsSelector{
+						MatchLabelExpressions: []string{
+							"superlabel",
+						},
+						MatchNames: []oct.TestDefReference{
+							{
+								Name:      "test1",
+								Namespace: "kyma-test",
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tt := range testData {
@@ -148,7 +249,7 @@ func Test_generateTestsResource(t *testing.T) {
 			tt.inputExecutionCount,
 			tt.inputMaxRetires,
 			tt.inputConcurrency,
-			tt.inputTestDefinitions,
+			tt.inputTestOptions...,
 		)
 		if tt.shouldFail {
 			require.NotEqual(t, result, tt.expectedResult, tt.testName)
