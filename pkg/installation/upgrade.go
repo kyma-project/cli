@@ -137,7 +137,7 @@ func (i *Installation) checkCurrVersion(currVersion string) (bool, *semver.Versi
 		isReleaseVersion = false
 		promptMsg := fmt.Sprintf("Current Kyma version '%s' is not a release version, so it is not possible to check for upgrade compatibility.\n"+
 			"If you choose to continue the upgrade, you can compromise the functionality of your cluster.\n"+
-			"Are you sure you want to continue?",
+			"Are you sure you want to continue? ",
 			currVersion,
 		)
 		continueUpgrade := i.currentStep.PromptYesNo(promptMsg)
@@ -159,7 +159,7 @@ func (i *Installation) checkTargetVersion() (bool, *semver.Version, error) {
 			isReleaseVersion = false
 			promptMsg := fmt.Sprintf("Target Kyma version '%s' is not a release version, so it is not possible to check for upgrade compatibility.\n"+
 				"If you choose to continue the upgrade, you can compromise the functionality of your cluster.\n"+
-				"Are you sure you want to continue?",
+				"Are you sure you want to continue? ",
 				i.Options.Source,
 			)
 			continueUpgrade := i.currentStep.PromptYesNo(promptMsg)
@@ -216,7 +216,7 @@ func (i *Installation) promptMigrationGuide(currSemVersion *semver.Version, targ
 		return fmt.Errorf("Unexpected status code %v when checking migration guide url", statusCode)
 	}
 
-	promptMsg := fmt.Sprintf("Did you check the migration guide? %s", guideURL)
+	promptMsg := fmt.Sprintf("Did you check the migration guide? '%s' ", guideURL)
 	isGuideChecked := i.currentStep.PromptYesNo(promptMsg)
 	if !isGuideChecked {
 		return fmt.Errorf("Migration guide must be checked before Kyma upgrade")
