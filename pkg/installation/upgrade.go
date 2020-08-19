@@ -135,7 +135,7 @@ func (i *Installation) checkCurrVersion(currVersion string) (bool, *semver.Versi
 	currSemVersion, err := semver.NewVersion(currVersion)
 	if err != nil {
 		isReleaseVersion = false
-		promptMsg := fmt.Sprintf("Current Kyma version '%s' is not a release version, so it is not possible to check for upgrade compatibility.\n"+
+		promptMsg := fmt.Sprintf("Current Kyma version '%s' is not a release version, so it is not possible to check the upgrade compatibility.\n"+
 			"If you choose to continue the upgrade, you can compromise the functionality of your cluster.\n"+
 			"Are you sure you want to continue? ",
 			currVersion,
@@ -157,7 +157,7 @@ func (i *Installation) checkTargetVersion() (bool, *semver.Version, error) {
 		targetSemVersion, err = semver.NewVersion(i.Options.Source)
 		if err != nil {
 			isReleaseVersion = false
-			promptMsg := fmt.Sprintf("Target Kyma version '%s' is not a release version, so it is not possible to check for upgrade compatibility.\n"+
+			promptMsg := fmt.Sprintf("Target Kyma version '%s' is not a release version, so it is not possible to check the upgrade compatibility.\n"+
 				"If you choose to continue the upgrade, you can compromise the functionality of your cluster.\n"+
 				"Are you sure you want to continue? ",
 				i.Options.Source,
