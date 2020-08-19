@@ -6,7 +6,7 @@ Upgrades Kyma
 
 ## Synopsis
 
-Use this command to upgrade the Kyma version on a cluster. If no source is specified, then Kyma is upgraded to the same version as the CLI
+Use this command to upgrade the Kyma version on a cluster.
 
 ```bash
 kyma upgrade [flags]
