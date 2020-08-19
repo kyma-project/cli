@@ -34,14 +34,14 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd := &cobra.Command{
 		Use:   "upgrade",
 		Short: "Upgrades Kyma",
-		Long:  `Use this command to upgrade the Kyma version on a cluster. If no source is specified, then Kyma is upgraded to the same version as the CLI`,
+		Long:  `Use this command to upgrade the Kyma version on a cluster.`,
 		RunE:  func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 	}
 
 	cobraCmd.Flags().BoolVarP(&o.NoWait, "noWait", "n", false, "Determines if the command should wait for the Kyma upgrade to complete.")
 	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", defaultDomain, "Domain used for the upgrade.")
 	cobraCmd.Flags().StringVarP(&o.TLSCert, "tlsCert", "", "", "TLS certificate for the domain used for the upgrade. The certificate must be a base64-encoded value.")
-	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", "", `Upgrade source. 
+	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", DefaultKymaVersion, `Upgrade source. 
 	- To use the specific release, write "kyma upgrade --source=1.3.0".
 	- To use the latest master, write "kyma upgrade --source=latest".
 	- To use the latest published master, which is the latest commit with released images, write "kyma upgrade --source=latest-published".

@@ -6,7 +6,6 @@ import (
 
 	"github.com/Masterminds/semver"
 	installationSDK "github.com/kyma-incubator/hydroform/install/installation"
-	"github.com/kyma-project/cli/cmd/kyma/version"
 	"github.com/kyma-project/cli/internal/net"
 	pkgErrors "github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -151,32 +150,18 @@ func (i *Installation) checkCurrVersion(currVersion string) (bool, *semver.Versi
 
 func (i *Installation) checkTargetVersion() (bool, *semver.Version, error) {
 	isReleaseVersion := true
-	var targetSemVersion *semver.Version
-	var err error
-	if i.Options.Source != "" {
-		targetSemVersion, err = semver.NewVersion(i.Options.Source)
-		if err != nil {
-			isReleaseVersion = false
-			promptMsg := fmt.Sprintf("Target Kyma version '%s' is not a release version, so it is not possible to check the upgrade compatibility.\n"+
-				"If you choose to continue the upgrade, you can compromise the functionality of your cluster.\n"+
-				"Are you sure you want to continue? ",
-				i.Options.Source,
-			)
-			continueUpgrade := i.currentStep.PromptYesNo(promptMsg)
-			if !continueUpgrade {
-				return false, nil, fmt.Errorf("Aborting upgrade")
-			}
+	targetSemVersion, err := semver.NewVersion(i.Options.Source)
+	if err != nil {
+		isReleaseVersion = false
+		promptMsg := fmt.Sprintf("Target Kyma version '%s' is not a release version, so it is not possible to check the upgrade compatibility.\n"+
+			"If you choose to continue the upgrade, you can compromise the functionality of your cluster.\n"+
+			"Are you sure you want to continue? ",
+			i.Options.Source,
+		)
+		continueUpgrade := i.currentStep.PromptYesNo(promptMsg)
+		if !continueUpgrade {
+			return false, nil, fmt.Errorf("Aborting upgrade")
 		}
-	} else {
-		// If no explicit source specified by the user, then the command attempts to upgrade Kyma to the same version as the CLI
-		// version.Version is the CLI version
-		targetSemVersion, err = semver.NewVersion(version.Version)
-		if err != nil {
-			// CLI version must be a release version if no explicit source is specified
-			return false, nil, fmt.Errorf("You must specify --source when you are trying to upgrade using a non-release version of CLI")
-		}
-		// Set the installation source to be the CLI version
-		i.Options.Source = targetSemVersion.String()
 	}
 
 	return isReleaseVersion, targetSemVersion, nil

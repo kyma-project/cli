@@ -6,6 +6,9 @@ import (
 	"github.com/kyma-project/cli/internal/cli"
 )
 
+//DefaultKymaVersion contains the default target Kyma version for upgrade in case another version is not specified
+var DefaultKymaVersion string
+
 //Options defines available options for the command
 type Options struct {
 	*cli.Options
