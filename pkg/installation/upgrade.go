@@ -22,27 +22,36 @@ func (i *Installation) UpgradeKyma() (*Result, error) {
 
 	s := i.newStep("Preparing Upgrade")
 	// Checking existence of previous installation
-	prevInstallationState, kymaVersion, err := i.checkPrevInstallation()
+	prevInstallationState, currVersion, err := i.checkPrevInstallation()
 	if err != nil {
 		s.Failure()
 		return nil, err
 	}
-	logInfo, err := i.getUpgradeLogInfo(prevInstallationState, kymaVersion)
+	logInfo, err := i.getUpgradeLogInfo(prevInstallationState, currVersion)
 	if err != nil {
 		s.Failure()
 		return nil, err
 	}
 
 	if prevInstallationState == "Installed" {
+		// Validating configurations
+		if err := i.validateConfigurations(); err != nil {
+			s.Failure()
+			return nil, err
+		}
+
+		// Get the target Kyma version in a suitable format to be shown to the user
+		targetVersion := i.getTargetVersion()
+
 		// Checking if current Kyma version is a release version
-		isCurrReleaseVersion, currSemVersion, err := i.checkCurrVersion(kymaVersion)
+		isCurrReleaseVersion, currSemVersion, err := i.checkCurrVersion(currVersion)
 		if err != nil {
 			s.Failure()
 			return nil, err
 		}
 
 		// Checking if target Kyma version is a release version
-		isTargetReleaseVersion, targetSemVersion, err := i.checkTargetVersion()
+		isTargetReleaseVersion, targetSemVersion, err := i.checkTargetVersion(targetVersion)
 		if err != nil {
 			s.Failure()
 			return nil, err
@@ -63,14 +72,8 @@ func (i *Installation) UpgradeKyma() (*Result, error) {
 			}
 		}
 
-		// Validating configurations
-		if err := i.validateConfigurations(); err != nil {
-			s.Failure()
-			return nil, err
-		}
-
 		// Logging current Kyma version and upgrade target version
-		i.logVersionUpgrade(kymaVersion)
+		i.logVersionUpgrade(currVersion, targetVersion)
 
 		// Loading upgrade files
 		files, err := i.prepareFiles()
@@ -129,6 +132,16 @@ func (i *Installation) getUpgradeLogInfo(prevInstallationState string, kymaVersi
 	return logInfo, nil
 }
 
+func (i *Installation) getTargetVersion() string {
+	if i.Options.fromLocalSources {
+		return i.Options.LocalSrcPath
+	} else if i.Options.remoteImage != "" {
+		return i.Options.remoteImage
+	} else {
+		return i.Options.releaseVersion
+	}
+}
+
 func (i *Installation) checkCurrVersion(currVersion string) (bool, *semver.Version, error) {
 	isReleaseVersion := true
 	currSemVersion, err := semver.NewVersion(currVersion)
@@ -148,7 +161,7 @@ func (i *Installation) checkCurrVersion(currVersion string) (bool, *semver.Versi
 	return isReleaseVersion, currSemVersion, nil
 }
 
-func (i *Installation) checkTargetVersion() (bool, *semver.Version, error) {
+func (i *Installation) checkTargetVersion(targetVersion string) (bool, *semver.Version, error) {
 	isReleaseVersion := true
 	targetSemVersion, err := semver.NewVersion(i.Options.Source)
 	if err != nil {
@@ -156,7 +169,7 @@ func (i *Installation) checkTargetVersion() (bool, *semver.Version, error) {
 		promptMsg := fmt.Sprintf("Target Kyma version '%s' is not a release version, so it is not possible to check the upgrade compatibility.\n"+
 			"If you choose to continue the upgrade, you can compromise the functionality of your cluster.\n"+
 			"Are you sure you want to continue? ",
-			i.Options.Source,
+			targetVersion,
 		)
 		continueUpgrade := i.currentStep.PromptYesNo(promptMsg)
 		if !continueUpgrade {
@@ -209,8 +222,8 @@ func (i *Installation) promptMigrationGuide(currSemVersion *semver.Version, targ
 	return nil
 }
 
-func (i *Installation) logVersionUpgrade(currVersion string) {
-	i.currentStep.LogInfof("Upgrading Kyma from version '%s' to '%s'", currVersion, i.Options.Source)
+func (i *Installation) logVersionUpgrade(currVersion string, targetVersion string) {
+	i.currentStep.LogInfof("Upgrading Kyma from version '%s' to version '%s'", currVersion, targetVersion)
 }
 
 func (i *Installation) triggerUpgrade(files map[string]*File) error {
