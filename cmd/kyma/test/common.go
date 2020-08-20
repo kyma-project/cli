@@ -4,14 +4,18 @@ import (
 	"io"
 
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
-	"github.com/kyma-project/cli/pkg/api/octopus"
 	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
+
+	"github.com/kyma-project/cli/pkg/api/octopus"
 )
 
-func NewTestSuite(name string) *oct.ClusterTestSuite {
-	return &oct.ClusterTestSuite{
+type SuiteOption func(suite *oct.ClusterTestSuite)
+
+func NewTestSuite(name string, options ...SuiteOption) *oct.ClusterTestSuite {
+	cts := &oct.ClusterTestSuite{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "testing.kyma-project.io/v1alpha1",
 			Kind:       "ClusterTestSuite",
@@ -19,6 +23,44 @@ func NewTestSuite(name string) *oct.ClusterTestSuite {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 		},
+	}
+
+	for _, opt := range options {
+		opt(cts)
+	}
+	return cts
+}
+
+func WithMaxRetries(maxRetries int64) SuiteOption {
+	return func(suite *oct.ClusterTestSuite) {
+		suite.Spec.MaxRetries = maxRetries
+	}
+}
+
+func WithConcurrency(concurrency int64) SuiteOption {
+	return func(suite *oct.ClusterTestSuite) {
+		suite.Spec.Concurrency = concurrency
+	}
+}
+
+func WithCount(count int64) SuiteOption {
+	return func(suite *oct.ClusterTestSuite) {
+		suite.Spec.Count = count
+	}
+}
+
+func WithMatchNamesSelector(testDefinition oct.TestDefinition) SuiteOption {
+	return func(suite *oct.ClusterTestSuite) {
+		suite.Spec.Selectors.MatchNames = append(suite.Spec.Selectors.MatchNames, oct.TestDefReference{
+			Name:      testDefinition.GetName(),
+			Namespace: testDefinition.GetNamespace(),
+		})
+	}
+}
+
+func WithMatchLabelsExpression(selector labels.Selector) SuiteOption {
+	return func(suite *oct.ClusterTestSuite) {
+		suite.Spec.Selectors.MatchLabelExpressions = append(suite.Spec.Selectors.MatchLabelExpressions, selector.String())
 	}
 }
 

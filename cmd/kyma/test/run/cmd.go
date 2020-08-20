@@ -90,7 +90,12 @@ func (cmd *command) Run(args []string) error {
 		return fmt.Errorf("Test suite '%s' already exists", testSuiteName)
 	}
 
-	opts := []TestSuiteOption{}
+	opts := []test.SuiteOption{
+		test.WithCount(cmd.opts.ExecutionCount),
+		test.WithConcurrency(cmd.opts.Concurrency),
+		test.WithMaxRetries(cmd.opts.MaxRetries),
+	}
+
 	if len(args) > 0 {
 		clusterTestDefs, err := cmd.K8s.Octopus().ListTestDefinitions(metav1.ListOptions{})
 		if err != nil {
@@ -100,7 +105,9 @@ func (cmd *command) Run(args []string) error {
 		if err != nil {
 			return err
 		}
-		opts = append(opts, withMatchNamesSelector(testDefToApply))
+		for _, testDef := range testDefToApply {
+			opts = append(opts, test.WithMatchNamesSelector(testDef))
+		}
 	}
 
 	for _, expr := range cmd.opts.LabelExpressions {
@@ -108,12 +115,10 @@ func (cmd *command) Run(args []string) error {
 		if err != nil {
 			return errors.Wrapf(err, "unable to parse label expression")
 		}
-		opts = append(opts, withMatchLabelsExpression(selector))
+		opts = append(opts, test.WithMatchLabelsExpression(selector))
 	}
 
-	testResource := generateTestsResource(testSuiteName,
-		cmd.opts.ExecutionCount, cmd.opts.MaxRetries,
-		cmd.opts.Concurrency, opts...)
+	testResource := test.NewTestSuite(testSuiteName, opts...)
 
 	if _, err := cmd.K8s.Octopus().CreateTestSuite(testResource); err != nil {
 		return err
@@ -149,43 +154,6 @@ func matchTestDefinitionNames(testNames []string,
 		}
 	}
 	return result, nil
-}
-
-func generateTestsResource(testName string, numberOfExecutions,
-	maxRetries, concurrency int64,
-	opts ...TestSuiteOption) *oct.ClusterTestSuite {
-
-	octTestDefs := test.NewTestSuite(testName)
-	octTestDefs.Spec.MaxRetries = maxRetries
-	octTestDefs.Spec.Concurrency = concurrency
-	octTestDefs.Spec.Count = numberOfExecutions
-	for _, opt := range opts {
-		opt(octTestDefs)
-	}
-
-	return octTestDefs
-}
-
-type TestSuiteOption func(suite *oct.ClusterTestSuite)
-
-func withMatchNamesSelector(testDefinitions []oct.TestDefinition) TestSuiteOption {
-	return func(suite *oct.ClusterTestSuite) {
-		matchNames := []oct.TestDefReference{}
-		for _, td := range testDefinitions {
-			matchNames = append(matchNames, oct.TestDefReference{
-				Name:      td.GetName(),
-				Namespace: td.GetNamespace(),
-			})
-		}
-		suite.Spec.Selectors.MatchNames = matchNames
-
-	}
-}
-
-func withMatchLabelsExpression(selector labels.Selector) TestSuiteOption {
-	return func(suite *oct.ClusterTestSuite) {
-		suite.Spec.Selectors.MatchLabelExpressions = append(suite.Spec.Selectors.MatchLabelExpressions, selector.String())
-	}
 }
 
 func listTestSuiteNames(cli octopus.Interface) ([]string, error) {
