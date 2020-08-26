@@ -6,7 +6,6 @@ import (
 	"time"
 
 	installSDK "github.com/kyma-incubator/hydroform/install/installation"
-	"github.com/kyma-project/cli/cmd/kyma/version"
 	k8sMocks "github.com/kyma-project/cli/internal/kube/mocks"
 	"github.com/kyma-project/cli/pkg/installation/mocks"
 	"github.com/kyma-project/kyma/components/api-controller/pkg/apis/networking.istio.io/v1alpha3"
@@ -82,10 +81,10 @@ func TestUpgradeKyma(t *testing.T) {
 			OverrideConfigs:  nil,
 			ComponentsConfig: "",
 			IsLocal:          false,
+			Source:           "1.11.1",
 		},
 	}
-	// version to upgrade to
-	version.Version = "1.11.1"
+
 	// Happy path
 	iServiceMock.On("CheckInstallationState", mock.Anything).Return(installSDK.InstallationState{State: "Installed"}, nil).Times(3)
 	iServiceMock.On("TriggerUpgrade", mock.Anything, mock.Anything, mock.Anything).Return(nil)

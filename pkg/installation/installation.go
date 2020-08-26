@@ -180,12 +180,12 @@ func (i *Installation) getInstallationLogInfo(prevInstallationState string, kyma
 	var logInfo string
 	switch prevInstallationState {
 	case "Installed":
-		logInfo = fmt.Sprintf("Kyma is already installed in version %s", kymaVersion)
+		logInfo = fmt.Sprintf("Kyma is already installed in version '%s'", kymaVersion)
 
 	case "InProgress", "Error":
 		// when installation is in in "Error" state, it doesn't mean that the installation has failed
 		// Installer might sill recover from the error and install Kyma successfully
-		logInfo = fmt.Sprintf("Installation in version %s is already in progress", kymaVersion)
+		logInfo = fmt.Sprintf("Installation in version '%s' is already in progress", kymaVersion)
 
 	case "":
 		return "", fmt.Errorf("Failed to get previous installation status")
