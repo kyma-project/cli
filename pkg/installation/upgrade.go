@@ -188,8 +188,6 @@ func (i *Installation) checkTargetVersion(targetVersion string) (bool, *semver.V
 func (i *Installation) checkUpgradeCompatibility(currSemVersion *semver.Version, targetSemVersion *semver.Version) error {
 	if currSemVersion.GreaterThan(targetSemVersion) {
 		return fmt.Errorf("Current Kyma version '%s' is greater than the target version '%s'. Kyma does not support a dedicated downgrade procedure", currSemVersion.String(), targetSemVersion.String())
-	} else if currSemVersion.Equal(targetSemVersion) && i.Options.OverrideConfigs == nil {
-		return fmt.Errorf("Current Kyma version '%s' is already matching the target version '%s'", currSemVersion.String(), targetSemVersion.String())
 	} else if currSemVersion.Major() != targetSemVersion.Major() {
 		return fmt.Errorf("Mismatch between current Kyma version '%s' and target version '%s' is more than one minor version", currSemVersion.String(), targetSemVersion.String())
 	} else if currSemVersion.Minor() != targetSemVersion.Minor() && currSemVersion.Minor()+1 != targetSemVersion.Minor() {
