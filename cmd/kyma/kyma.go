@@ -21,6 +21,7 @@ import (
 	"github.com/kyma-project/cli/cmd/kyma/version"
 
 	"github.com/kyma-project/cli/cmd/kyma/provision"
+	"github.com/kyma-project/cli/cmd/kyma/upgrade"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/spf13/cobra"
 )
@@ -33,7 +34,6 @@ func NewCmd(o *cli.Options) *cobra.Command {
 		Long: `Kyma is a flexible and easy way to connect and extend enterprise applications in a cloud-native world.
 Kyma CLI allows you to install, test, and manage Kyma.
 
-For more information, see: https://github.com/kyma-project/cli
 `,
 		// Affects children as well
 		SilenceErrors: false,
@@ -63,6 +63,7 @@ For more information, see: https://github.com/kyma-project/cli
 		install.NewCmd(install.NewOptions(o)),
 		provisionCmd,
 		console.NewCmd(console.NewOptions(o)),
+		upgrade.NewCmd(upgrade.NewOptions(o)),
 	)
 
 	testCmd := test.NewCmd()

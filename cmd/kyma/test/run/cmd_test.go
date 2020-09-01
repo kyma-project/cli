@@ -5,12 +5,13 @@ import (
 	"time"
 
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
-	"github.com/kyma-project/cli/pkg/api/octopus"
-	"github.com/kyma-project/cli/pkg/step/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
+
+	"github.com/kyma-project/cli/pkg/api/octopus"
+	"github.com/kyma-project/cli/pkg/step/mocks"
 )
 
 func Test_matchTestDefinitionNames(t *testing.T) {
@@ -71,89 +72,6 @@ func Test_matchTestDefinitionNames(t *testing.T) {
 		} else {
 			require.Nil(t, err, tt.testName)
 			require.Equal(t, result, tt.result, tt.testName)
-		}
-	}
-}
-
-func Test_generateTestsResource(t *testing.T) {
-	testData := []struct {
-		testName             string
-		shouldFail           bool
-		inputTestName        string
-		inputTestDefinitions []oct.TestDefinition
-		inputExecutionCount  int64
-		inputMaxRetires      int64
-		inputConcurrency     int64
-		expectedResult       *oct.ClusterTestSuite
-	}{
-		{
-			testName:      "create test with existing test definition",
-			shouldFail:    false,
-			inputTestName: "TestOneProper",
-			inputTestDefinitions: []oct.TestDefinition{
-				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test1",
-						Namespace: "kyma-test",
-					},
-					TypeMeta: metav1.TypeMeta{
-						APIVersion: "",
-					},
-				},
-				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test2",
-						Namespace: "kyma-system",
-					},
-					TypeMeta: metav1.TypeMeta{
-						APIVersion: "",
-					},
-				},
-			},
-			inputExecutionCount: 1,
-			inputMaxRetires:     2,
-			inputConcurrency:    3,
-			expectedResult: &oct.ClusterTestSuite{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: "testing.kyma-project.io/v1alpha1",
-					Kind:       "ClusterTestSuite",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "TestOneProper",
-				},
-				Spec: oct.TestSuiteSpec{
-					Count:       1,
-					MaxRetries:  2,
-					Concurrency: 3,
-					Selectors: oct.TestsSelector{
-						MatchNames: []oct.TestDefReference{
-							{
-								Name:      "test1",
-								Namespace: "kyma-test",
-							},
-							{
-								Name:      "test2",
-								Namespace: "kyma-system",
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	for _, tt := range testData {
-		result := generateTestsResource(
-			tt.inputTestName,
-			tt.inputExecutionCount,
-			tt.inputMaxRetires,
-			tt.inputConcurrency,
-			tt.inputTestDefinitions,
-		)
-		if tt.shouldFail {
-			require.NotEqual(t, result, tt.expectedResult, tt.testName)
-		} else {
-			require.Equal(t, result, tt.expectedResult, tt.testName)
 		}
 	}
 }

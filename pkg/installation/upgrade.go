@@ -6,7 +6,6 @@ import (
 
 	"github.com/Masterminds/semver"
 	installationSDK "github.com/kyma-incubator/hydroform/install/installation"
-	"github.com/kyma-project/cli/cmd/kyma/version"
 	"github.com/kyma-project/cli/internal/net"
 	pkgErrors "github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -23,35 +22,59 @@ func (i *Installation) UpgradeKyma() (*Result, error) {
 
 	s := i.newStep("Preparing Upgrade")
 	// Checking existence of previous installation
-	prevInstallationState, kymaVersion, err := i.checkPrevInstallation()
+	prevInstallationState, currVersion, err := i.checkPrevInstallation()
 	if err != nil {
 		s.Failure()
 		return nil, err
 	}
-	logInfo, err := i.getUpgradeLogInfo(prevInstallationState, kymaVersion)
+	logInfo, err := i.getUpgradeLogInfo(prevInstallationState, currVersion)
 	if err != nil {
 		s.Failure()
 		return nil, err
 	}
 
 	if prevInstallationState == "Installed" {
-		// Checking upgrade compatibility
-		if err := i.checkUpgradeCompatability(kymaVersion, version.Version); err != nil {
-			s.Failure()
-			return nil, err
-		}
-
-		// Checking migration guide
-		if err := i.promptMigrationGuide(kymaVersion, version.Version); err != nil {
-			s.Failure()
-			return nil, err
-		}
-
 		// Validating configurations
 		if err := i.validateConfigurations(); err != nil {
 			s.Failure()
 			return nil, err
 		}
+
+		// Get the target Kyma version in a suitable format to be shown to the user
+		targetVersion := i.getTargetVersion()
+
+		// Checking if current Kyma version is a release version
+		isCurrReleaseVersion, currSemVersion, err := i.checkCurrVersion(currVersion)
+		if err != nil {
+			s.Failure()
+			return nil, err
+		}
+
+		// Checking if target Kyma version is a release version
+		isTargetReleaseVersion, targetSemVersion, err := i.checkTargetVersion(targetVersion)
+		if err != nil {
+			s.Failure()
+			return nil, err
+		}
+
+		// Check for upgrade compatibility and prompt migration guide only if both current and target Kyma versions are release versions
+		if isCurrReleaseVersion && isTargetReleaseVersion {
+			// Checking upgrade compatibility
+			if err := i.checkUpgradeCompatibility(currSemVersion, targetSemVersion); err != nil {
+				s.Failure()
+				return nil, err
+			}
+			if !i.Options.NonInteractive {
+				// prompting migration guide
+				if err := i.promptMigrationGuide(currSemVersion, targetSemVersion); err != nil {
+					s.Failure()
+					return nil, err
+				}
+			}
+		}
+
+		// Logging current Kyma version and upgrade target version
+		i.logVersionUpgrade(currVersion, targetVersion)
 
 		// Loading upgrade files
 		files, err := i.prepareFiles()
@@ -110,67 +133,100 @@ func (i *Installation) getUpgradeLogInfo(prevInstallationState string, kymaVersi
 	return logInfo, nil
 }
 
-func (i *Installation) checkUpgradeCompatability(kymaVersion string, cliVersion string) error {
-	kymaSemVersion, err := semver.NewVersion(kymaVersion)
-	if err != nil {
-		return fmt.Errorf("unable to parse kyma version(%s): %v", kymaVersion, err)
+func (i *Installation) getTargetVersion() string {
+	if i.Options.fromLocalSources {
+		return i.Options.LocalSrcPath
+	} else if i.Options.remoteImage != "" {
+		return i.Options.remoteImage
+	} else {
+		return i.Options.releaseVersion
 	}
-	cliSemVersion, err := semver.NewVersion(cliVersion)
+}
+
+func (i *Installation) checkCurrVersion(currVersion string) (bool, *semver.Version, error) {
+	isReleaseVersion := true
+	currSemVersion, err := semver.NewVersion(currVersion)
 	if err != nil {
-		return fmt.Errorf("unable to parse cli version(%s): %v", cliVersion, err)
+		isReleaseVersion = false
+		if !i.Options.NonInteractive {
+			promptMsg := fmt.Sprintf("Current Kyma version '%s' is not a release version, so it is not possible to check the upgrade compatibility.\n"+
+				"If you choose to continue the upgrade, you can compromise the functionality of your cluster.\n"+
+				"Are you sure you want to continue? ",
+				currVersion,
+			)
+			continueUpgrade := i.currentStep.PromptYesNo(promptMsg)
+			if !continueUpgrade {
+				return false, nil, fmt.Errorf("Aborting upgrade")
+			}
+		}
 	}
 
-	if kymaSemVersion.GreaterThan(cliSemVersion) {
-		return fmt.Errorf("kyma version(%s) is greater than the cli version(%s). Kyma does not support a dedicated downgrade procedure", kymaSemVersion.String(), cliSemVersion.String())
-	} else if kymaSemVersion.Equal(cliSemVersion) {
-		return fmt.Errorf("kyma version(%s) is already matching the cli version(%s)", kymaSemVersion.String(), cliSemVersion.String())
-	} else if kymaSemVersion.Major() != cliSemVersion.Major() {
-		return fmt.Errorf("mismatch between kyma version(%s) and cli version(%s) is more than one minor version", kymaSemVersion.String(), cliSemVersion.String())
-	} else if kymaSemVersion.Minor() != cliSemVersion.Minor() && kymaSemVersion.Minor()+1 != cliSemVersion.Minor() {
-		return fmt.Errorf("mismatch between kyma version(%s) and cli version(%s) is more than one minor version", kymaSemVersion.String(), cliSemVersion.String())
+	return isReleaseVersion, currSemVersion, nil
+}
+
+func (i *Installation) checkTargetVersion(targetVersion string) (bool, *semver.Version, error) {
+	isReleaseVersion := true
+	targetSemVersion, err := semver.NewVersion(i.Options.Source)
+	if err != nil {
+		isReleaseVersion = false
+		if !i.Options.NonInteractive {
+			promptMsg := fmt.Sprintf("Target Kyma version '%s' is not a release version, so it is not possible to check the upgrade compatibility.\n"+
+				"If you choose to continue the upgrade, you can compromise the functionality of your cluster.\n"+
+				"Are you sure you want to continue? ",
+				targetVersion,
+			)
+			continueUpgrade := i.currentStep.PromptYesNo(promptMsg)
+			if !continueUpgrade {
+				return false, nil, fmt.Errorf("Aborting upgrade")
+			}
+		}
 	}
 
-	// set the installation source to be the cli version
-	i.Options.Source = cliSemVersion.String()
-	i.currentStep.LogInfof("Upgrading Kyma from version %s to version %s", kymaSemVersion.String(), cliSemVersion.String())
+	return isReleaseVersion, targetSemVersion, nil
+}
+
+func (i *Installation) checkUpgradeCompatibility(currSemVersion *semver.Version, targetSemVersion *semver.Version) error {
+	if currSemVersion.GreaterThan(targetSemVersion) {
+		return fmt.Errorf("Current Kyma version '%s' is greater than the target version '%s'. Kyma does not support a dedicated downgrade procedure", currSemVersion.String(), targetSemVersion.String())
+	} else if currSemVersion.Major() != targetSemVersion.Major() {
+		return fmt.Errorf("Mismatch between current Kyma version '%s' and target version '%s' is more than one minor version", currSemVersion.String(), targetSemVersion.String())
+	} else if currSemVersion.Minor() != targetSemVersion.Minor() && currSemVersion.Minor()+1 != targetSemVersion.Minor() {
+		return fmt.Errorf("Mismatch between current Kyma version '%s' and target version '%s' is more than one minor version", currSemVersion.String(), targetSemVersion.String())
+	}
+
 	return nil
 }
 
-func (i *Installation) promptMigrationGuide(kymaVersion string, cliVersion string) error {
-	kymaSemVersion, err := semver.NewVersion(kymaVersion)
-	if err != nil {
-		return fmt.Errorf("unable to parse kyma version(%s): %v", kymaVersion, err)
-	}
-	cliSemVersion, err := semver.NewVersion(cliVersion)
-	if err != nil {
-		return fmt.Errorf("unable to parse cli version(%s): %v", cliVersion, err)
-	}
-
+func (i *Installation) promptMigrationGuide(currSemVersion *semver.Version, targetSemVersion *semver.Version) error {
 	guideURL := fmt.Sprintf(
 		"https://github.com/kyma-project/kyma/blob/release-%v.%v/docs/migration-guides/%v.%v-%v.%v.md",
-		cliSemVersion.Major(), cliSemVersion.Minor(),
-		kymaSemVersion.Major(), kymaSemVersion.Minor(),
-		cliSemVersion.Major(), cliSemVersion.Minor(),
+		targetSemVersion.Major(), targetSemVersion.Minor(),
+		currSemVersion.Major(), currSemVersion.Minor(),
+		targetSemVersion.Major(), targetSemVersion.Minor(),
 	)
 	statusCode, err := net.DoGet(guideURL)
 	if err != nil {
-		return fmt.Errorf("unable to check migration guide url: %v", err)
+		return fmt.Errorf("Unable to check migration guide url: %v", err)
 	}
 	if statusCode == 404 {
 		// no migration guide for this release
-		i.currentStep.LogInfof("No migration guide available for %s release", cliSemVersion.String())
+		i.currentStep.LogInfof("No migration guide available for upgrade from version %s to %s", currSemVersion.String(), targetSemVersion.String())
 		return nil
 	}
 	if statusCode != 200 {
-		return fmt.Errorf("unexpected status code %v when checking migration guide url", statusCode)
+		return fmt.Errorf("Unexpected status code %v when checking migration guide url", statusCode)
 	}
 
-	promptMsg := fmt.Sprintf("Did you apply the migration guide? %s", guideURL)
+	promptMsg := fmt.Sprintf("Did you check the migration guide? '%s' ", guideURL)
 	isGuideChecked := i.currentStep.PromptYesNo(promptMsg)
 	if !isGuideChecked {
-		return fmt.Errorf("migration guide must be applied before Kyma upgrade")
+		return fmt.Errorf("Migration guide must be checked before Kyma upgrade")
 	}
 	return nil
+}
+
+func (i *Installation) logVersionUpgrade(currVersion string, targetVersion string) {
+	i.currentStep.LogInfof("Upgrading Kyma from version '%s' to version '%s'", currVersion, targetVersion)
 }
 
 func (i *Installation) triggerUpgrade(files map[string]*File) error {
