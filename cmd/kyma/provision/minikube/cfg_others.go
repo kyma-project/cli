@@ -6,7 +6,6 @@ package minikube
 import "github.com/spf13/cobra"
 
 const defaultVMDriver = vmDriverNone
-const allowVPNSock = false
 
 func osSpecificFlags(o *Options, cmd *cobra.Command) {
 }

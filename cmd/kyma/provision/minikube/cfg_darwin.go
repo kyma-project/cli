@@ -11,7 +11,6 @@ import (
 )
 
 const defaultVMDriver = vmDriverHyperkit
-const allowVPNSock = true
 
 func osSpecificFlags(o *Options, cmd *cobra.Command) {
 	cmd.Flags().BoolVar(&o.UseVPNKitSock, "use-hyperkit-vpnkit-sock", false, `Uses vpnkit sock provided by Docker. This is useful when DNS Port (53) is being used by some other program like dns-proxy (eg. provided by Cisco Umbrella).`)
