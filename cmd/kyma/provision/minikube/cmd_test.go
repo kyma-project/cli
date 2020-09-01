@@ -27,7 +27,10 @@ func TestProvisionMinikubeFlags(t *testing.T) {
 	require.Equal(t, "4096", o.Memory)
 	require.Equal(t, "kvm", o.VMDriver)
 	require.Equal(t, "fooProfile", o.Profile)
-	require.Equal(t, false, o.UseVPNKitSock)
+	if allowVPNSock {
+		require.Equal(t, false, o.UseVPNKitSock)
+	}
+
 }
 
 func TestCheckRequirements(t *testing.T) {
