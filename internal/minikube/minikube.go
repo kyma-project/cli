@@ -81,6 +81,10 @@ func CheckVersion(verbose bool, timeout time.Duration) (string, error) {
 func DockerClient(verbose bool, profile string, timeout time.Duration) (*docker.Client, error) {
 	envOut, err := RunCmd(verbose, profile, timeout, "docker-env", "--shell", "bash")
 	if err != nil {
+		if strings.Contains(err.Error(), "driver does not support 'minikube docker-env'"){
+			fmt.Println("docker-env not supported, skipped")
+			return docker.NewClientWithOpts(docker.FromEnv)
+		}
 		return nil, err
 	}
 
