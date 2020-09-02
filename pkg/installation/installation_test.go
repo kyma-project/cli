@@ -107,12 +107,15 @@ func TestInstallKyma(t *testing.T) {
 	require.Error(t, err)
 	require.Empty(t, r)
 
-	// Empty installation status
+	// Empty installation status will be treated the same way as a cluster with no installation, so we should have a happy path
 	iServiceMock.On("CheckInstallationState", mock.Anything).Return(installSDK.InstallationState{}, nil).Once()
+	iServiceMock.On("TriggerInstallation", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	iServiceMock.On("CheckInstallationState", mock.Anything).Return(installSDK.InstallationState{State: "Installed"}, nil).Once()
+	kymaMock.On("WaitPodStatusByLabel", "kyma-installer", "name", "kyma-installer", v1.PodRunning).Return(nil)
 
 	r, err = i.InstallKyma()
-	require.Error(t, err)
-	require.Empty(t, r)
+	require.NoError(t, err)
+	require.NotEmpty(t, r)
 
 	// Happy path
 	iServiceMock.On("CheckInstallationState", mock.Anything).Return(installSDK.InstallationState{State: installSDK.NoInstallationState}, nil).Once()
