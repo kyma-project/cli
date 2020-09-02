@@ -99,11 +99,7 @@ func (i *Installation) InstallKyma() (*Result, error) {
 		s.Failure()
 		return nil, err
 	}
-	logInfo, err := i.getInstallationLogInfo(prevInstallationState, kymaVersion)
-	if err != nil {
-		s.Failure()
-		return nil, err
-	}
+	logInfo := i.getInstallationLogInfo(prevInstallationState, kymaVersion)
 
 	if prevInstallationState == installationSDK.NoInstallationState || prevInstallationState == "" {
 		// Validating configurations
@@ -176,7 +172,7 @@ func (i *Installation) checkPrevInstallation() (string, string, error) {
 	return prevInstallationState.State, kymaVersion, nil
 }
 
-func (i *Installation) getInstallationLogInfo(prevInstallationState string, kymaVersion string) (string, error) {
+func (i *Installation) getInstallationLogInfo(prevInstallationState string, kymaVersion string) string {
 	var logInfo string
 	switch prevInstallationState {
 	case "Installed":
@@ -188,7 +184,7 @@ func (i *Installation) getInstallationLogInfo(prevInstallationState string, kyma
 		logInfo = fmt.Sprintf("Installation in version '%s' is already in progress", kymaVersion)
 	}
 
-	return logInfo, nil
+	return logInfo
 }
 
 func (i *Installation) validateConfigurations() error {
