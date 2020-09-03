@@ -28,6 +28,7 @@ require (
 	github.com/docker/docker-credential-helpers v0.6.3 // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/fatih/color v1.7.0
+	github.com/ghodss/yaml v1.0.0
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/golangplus/bytes v0.0.0-20160111154220-45c989fe5450 // indirect
@@ -35,7 +36,6 @@ require (
 	github.com/golangplus/testing v0.0.0-20180327235837-af21d9c3145e // indirect
 	github.com/gorilla/mux v1.7.4 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
-	github.com/imdario/mergo v0.3.8 // indirect
 	github.com/kyma-incubator/hydroform/install v0.0.0-20200812115205-1299dd4d0c6c
 	github.com/kyma-incubator/hydroform/provision v0.0.0-20200803123159-99d6ef03bf0c
 	github.com/kyma-incubator/octopus v0.0.0-20191009105757-2e9d86cd9967
@@ -49,9 +49,9 @@ require (
 	github.com/opencontainers/runc v1.0.0-rc91 // indirect
 	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/procfs v0.0.5 // indirect
+	github.com/sirupsen/logrus v1.6.0
 	github.com/spf13/cobra v0.0.5
-	github.com/stretchr/testify v1.4.0
+	github.com/stretchr/testify v1.5.1
 	go.opencensus.io v0.22.4 // indirect
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381 // indirect
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208 // indirect
@@ -62,9 +62,10 @@ require (
 	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/src-d/go-git.v4 v4.13.1
 	gopkg.in/yaml.v2 v2.2.8
+	gopkg.in/yaml.v3 v3.0.0-20190709130402-674ba3eaed22
 	gotest.tools v2.2.0+incompatible
-	k8s.io/api v0.0.0-20191114100237-2cd11237263f
-	k8s.io/apimachinery v0.0.0-20191004115701-31ade1b30762
+	k8s.io/api v0.17.4
+	k8s.io/apimachinery v0.17.4
 	k8s.io/client-go v12.0.0+incompatible
 	sigs.k8s.io/yaml v1.1.0
 )
