@@ -4,8 +4,11 @@ go 1.14
 
 replace (
 	github.com/Sirupsen/logrus => github.com/sirupsen/logrus v1.6.0
+	github.com/kyma-incubator/hydroform/function => github.com/pPrecel/hydroform/function v0.0.0-20200928191448-557119d735e9
 	// this is needed for terraform to work with the k8s 0.18 APIs, we should be able to remove it once we have terraform 0.13+
 	github.com/terraform-providers/terraform-provider-openstack => github.com/terraform-providers/terraform-provider-openstack v1.20.0
+	// grpc need to be compatible with direct dependencies in terraform (>=v1.29.1)
+	google.golang.org/grpc => google.golang.org/grpc v1.29.1
 )
 
 require (
@@ -21,8 +24,8 @@ require (
 	github.com/docker/cli v0.0.0-20200130152716-5d0cf8839492
 	github.com/docker/docker v1.4.2-0.20200203170920-46ec8731fbce
 	github.com/fatih/color v1.9.0
-	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/gorilla/mux v1.7.4 // indirect
+	github.com/kyma-incubator/hydroform/function v0.0.0-00010101000000-000000000000
 	github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90
 	github.com/kyma-incubator/hydroform/provision v0.0.0-20200922142757-cae045912c90
 	github.com/kyma-incubator/octopus v0.0.0-20200922132758-2b721e93b58b
@@ -34,13 +37,9 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.0.0
 	github.com/stretchr/testify v1.6.1
-	go.opencensus.io v0.22.4 // indirect
-	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208 // indirect
-	golang.org/x/sys v0.0.0-20200722175500-76b94024e4b6 // indirect
-	google.golang.org/grpc v1.29.1 // indirect
-	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/src-d/go-git.v4 v4.13.1
 	gopkg.in/yaml.v2 v2.3.0
+	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
 	gotest.tools v2.2.0+incompatible
 	istio.io/api v0.0.0-20200911191701-0dc35ad5c478
 	istio.io/client-go v0.0.0-20200807182027-d287a5abb594
