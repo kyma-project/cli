@@ -2,24 +2,31 @@ package kube
 
 import (
 	"errors"
+	"fmt"
+	"os"
 	"testing"
 	"time"
 
+	"github.com/kyma-incubator/hydroform/install/scheme"
 	"github.com/stretchr/testify/require"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	corev1 "k8s.io/api/core/v1"
 
+	"k8s.io/client-go/rest"
 	k8stesting "k8s.io/client-go/testing"
 
+	dynFake "k8s.io/client-go/dynamic/fake"
 	"k8s.io/client-go/kubernetes/fake"
 )
 
 func TestIsPodDeployed(t *testing.T) {
 	//setup
-	c := fakeClientWithNS(t)
+	c := fakeClientWithNS()
 	_, err := c.Static().CoreV1().Pods("ns").Create(&corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-pod1",
@@ -50,7 +57,7 @@ func TestIsPodDeployed(t *testing.T) {
 
 func TestIsPodDeployedByLabel(t *testing.T) {
 	//setup
-	c := fakeClientWithNS(t)
+	c := fakeClientWithNS()
 	_, err := c.Static().CoreV1().Pods("ns").Create(&corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   "test-pod1",
@@ -83,7 +90,7 @@ func TestIsPodDeployedByLabel(t *testing.T) {
 
 func TestWaitPodStatus(t *testing.T) {
 	// setup
-	c := fakeClientWithNS(t)
+	c := fakeClientWithNS()
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-pod1",
@@ -114,7 +121,7 @@ func TestWaitPodStatus(t *testing.T) {
 
 func TestWaitPodStatusByLabel(t *testing.T) {
 	// setup
-	c := fakeClientWithNS(t)
+	c := fakeClientWithNS()
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   "test-pod1",
@@ -144,17 +151,79 @@ func TestWaitPodStatusByLabel(t *testing.T) {
 	require.NoError(t, <-waitCh)
 }
 
-func fakeClientWithNS(t *testing.T) *client {
+func TestWatchResource(t *testing.T) {
 	c := &client{
-		static: fake.NewSimpleClientset(),
+		cfg: &rest.Config{},
+		dynamic: dynamicK8s(
+			&unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": "fakeAPI/fakeVersion",
+					"kind":       "fake",
+					"metadata": map[string]interface{}{
+						"name": "samus",
+					},
+					"status": map[string]interface{}{
+						"phase": "partying",
+					},
+				},
+			},
+		),
 	}
 
-	_, err := c.Static().CoreV1().Namespaces().Create(&corev1.Namespace{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "ns",
-		},
-	})
+	checkFn := func(u *unstructured.Unstructured) (bool, error) {
+		status, exists, err := unstructured.NestedString(u.Object, "status", "phase")
+		if err != nil {
+			return false, err
+		}
+		return exists && status == "partying", nil
+	}
+
+	// non namepsaced
+	err := c.WatchResource(schema.GroupVersionResource{Group: "fakeAPI", Version: "fakeVersion", Resource: "fakes"}, "samus", "", checkFn)
 	require.NoError(t, err)
 
-	return c
+	// namespaced
+	c.dynamic = dynamicK8s(
+		&corev1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "TallonIV",
+			},
+		},
+		&unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": "fakeAPI/fakeVersion",
+				"kind":       "fake",
+				"metadata": map[string]interface{}{
+					"name":      "samus",
+					"namespace": "TallonIV",
+				},
+				"status": map[string]interface{}{
+					"phase": "partying",
+				},
+			},
+		},
+	)
+	err = c.WatchResource(schema.GroupVersionResource{Group: "fakeAPI", Version: "fakeVersion", Resource: "fakes"}, "samus", "TallonIV", checkFn)
+	require.NoError(t, err)
+}
+
+func fakeClientWithNS() *client {
+	return &client{
+		static: fake.NewSimpleClientset(
+			&corev1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ns",
+				},
+			},
+		),
+	}
+}
+
+func dynamicK8s(objects ...runtime.Object) *dynFake.FakeDynamicClient {
+	resSchema, err := scheme.DefaultScheme()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	return dynFake.NewSimpleDynamicClient(resSchema, objects...)
 }
