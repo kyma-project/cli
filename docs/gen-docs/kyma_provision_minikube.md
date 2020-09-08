@@ -21,7 +21,7 @@ kyma provision minikube [flags]
       --memory string                Specifies RAM reserved for installation. (default "8192")
       --profile string               Specifies the Minikube profile.
       --timeout duration             Maximum time during which the provisioning takes place, where "0" means "infinite". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h". (default 5m0s)
-      --vm-driver string             Specifies the VM driver. Possible values: vmwarefusion,kvm,xhyve,hyperv,hyperkit,virtualbox,kvm2,none (default "hyperkit")
+      --vm-driver string             Specifies the VM driver. Possible values: vmwarefusion,kvm,xhyve,hyperv,hyperkit,virtualbox,kvm2,docker,none (default "hyperkit")
 ```
 
 ## Options inherited from parent commands
