@@ -1,6 +1,7 @@
 package system
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -52,7 +53,7 @@ To generate a new token, rerun the same command with the --update flag.
 
 	cmd.Flags().StringVarP(&o.Namespace, "namespace", "n", "", "Namespace to bind the system to.")
 	cmd.Flags().BoolVarP(&o.Update, "update", "u", false, "Update an existing system and/or generate a new token for it.")
-	cmd.Flags().StringVarP(&o.OutputFormat, "output", "o", "", "Specify the format of the output of the command. Supported formats: yaml.")
+	cmd.Flags().StringVarP(&o.OutputFormat, "output", "o", "", "Specify the format of the output of the command. Supported formats: yaml, json.")
 	cmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 2*time.Minute, "Time-out after which CLI stops watching the installation progress.")
 
 	return cmd
@@ -111,17 +112,24 @@ func (c *command) Run(args []string) error {
 	c.successStep("Token generated")
 
 	// print result
+	// remove fields that are irrelevant for the consumer:
+	unstructured.RemoveNestedField(token.Object, "context")
+
+	unstructured.RemoveNestedField(token.Object, "metadata", "generation")
+	unstructured.RemoveNestedField(token.Object, "metadata", "resourceVersion")
+	unstructured.RemoveNestedField(token.Object, "metadata", "selfLink")
+	unstructured.RemoveNestedField(token.Object, "metadata", "uid")
+
 	switch c.opts.OutputFormat {
 	case "yaml":
-		// remove fields that are irrelevant for the consumer:
-		unstructured.RemoveNestedField(token.Object, "context")
-
-		unstructured.RemoveNestedField(token.Object, "metadata", "generation")
-		unstructured.RemoveNestedField(token.Object, "metadata", "resourceVersion")
-		unstructured.RemoveNestedField(token.Object, "metadata", "selfLink")
-		unstructured.RemoveNestedField(token.Object, "metadata", "uid")
-
 		b, err := yaml.Marshal(token.Object)
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(b))
+
+	case "json":
+		b, err := json.MarshalIndent(token.Object, "", " ")
 		if err != nil {
 			return err
 		}

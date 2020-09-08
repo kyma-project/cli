@@ -25,7 +25,7 @@ kyma create system [flags]
 
 ```bash
   -n, --namespace string   Namespace to bind the system to.
-  -o, --output string      Specify the format of the output of the command. Supported formats: yaml.
+  -o, --output string      Specify the format of the output of the command. Supported formats: yaml, json.
       --timeout duration   Time-out after which CLI stops watching the installation progress. (default 2m0s)
   -u, --update             Update an existing system and/or generate a new token for it.
 ```
