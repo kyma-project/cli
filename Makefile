@@ -68,7 +68,8 @@ clean:
 
 .PHONY: install
 install:
-	go install $(FLAGS) ./cmd
+	CGO_ENABLED=0 go build -o ./bin/kyma $(FLAGS) ./cmd
+	mv ./bin/kyma ${GOPATH}/bin
 
 .PHONY: local
 local: validate test install
