@@ -99,13 +99,9 @@ func (i *Installation) InstallKyma() (*Result, error) {
 		s.Failure()
 		return nil, err
 	}
-	logInfo, err := i.getInstallationLogInfo(prevInstallationState, kymaVersion)
-	if err != nil {
-		s.Failure()
-		return nil, err
-	}
+	logInfo := i.getInstallationLogInfo(prevInstallationState, kymaVersion)
 
-	if prevInstallationState == installationSDK.NoInstallationState {
+	if prevInstallationState == installationSDK.NoInstallationState || prevInstallationState == "" {
 		// Validating configurations
 		if err := i.validateConfigurations(); err != nil {
 			s.Failure()
@@ -134,7 +130,7 @@ func (i *Installation) InstallKyma() (*Result, error) {
 	}
 
 	if prevInstallationState != "Installed" && !i.Options.NoWait {
-		if prevInstallationState == installationSDK.NoInstallationState {
+		if prevInstallationState == installationSDK.NoInstallationState || prevInstallationState == "" {
 			i.newStep("Waiting for installation to start")
 		} else {
 			i.newStep("Re-attaching installation status")
@@ -166,7 +162,7 @@ func (i *Installation) checkPrevInstallation() (string, string, error) {
 	}
 
 	var kymaVersion string
-	if prevInstallationState.State != installationSDK.NoInstallationState {
+	if prevInstallationState.State != installationSDK.NoInstallationState && prevInstallationState.State != "" {
 		kymaVersion, err = version.KymaVersion(i.K8s)
 		if err != nil {
 			return "", "", err
@@ -176,7 +172,7 @@ func (i *Installation) checkPrevInstallation() (string, string, error) {
 	return prevInstallationState.State, kymaVersion, nil
 }
 
-func (i *Installation) getInstallationLogInfo(prevInstallationState string, kymaVersion string) (string, error) {
+func (i *Installation) getInstallationLogInfo(prevInstallationState string, kymaVersion string) string {
 	var logInfo string
 	switch prevInstallationState {
 	case "Installed":
@@ -186,12 +182,9 @@ func (i *Installation) getInstallationLogInfo(prevInstallationState string, kyma
 		// when installation is in in "Error" state, it doesn't mean that the installation has failed
 		// Installer might sill recover from the error and install Kyma successfully
 		logInfo = fmt.Sprintf("Installation in version '%s' is already in progress", kymaVersion)
-
-	case "":
-		return "", fmt.Errorf("Failed to get previous installation status")
 	}
 
-	return logInfo, nil
+	return logInfo
 }
 
 func (i *Installation) validateConfigurations() error {
