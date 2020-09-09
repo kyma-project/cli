@@ -7,8 +7,9 @@ import (
 	"time"
 
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
-	"github.com/kyma-project/cli/cmd/kyma/version"
 	"github.com/pkg/errors"
+
+	"github.com/kyma-project/cli/cmd/kyma/version"
 )
 
 //go:generate mockery --name logsFetcher --structname LogsFetcher
@@ -49,7 +50,7 @@ func (c *Creator) generateReport(suite *oct.ClusterTestSuite) (JUnitTestSuites, 
 		suiteTotalTime = suite.Status.CompletionTime.Sub(suite.Status.StartTime.Time)
 	}
 
-	tc, err := c.mapToTestCases(suite.Status.Results)
+	tc, err := c.mapToTestCases(suite.Status.Results, suite.Name)
 	if err != nil {
 		return JUnitTestSuites{}, errors.Wrap(err, "while mapping test results into junit test cases")
 	}
@@ -94,32 +95,32 @@ func (c *Creator) packageProperties() []JUnitProperty {
 	}
 }
 
-func (c *Creator) mapToTestCases(results []oct.TestResult) ([]JUnitTestCase, error) {
+func (c *Creator) mapToTestCases(results []oct.TestResult, suiteName string) ([]JUnitTestCase, error) {
 	var cases []JUnitTestCase
 
 	for _, r := range results {
 		switch r.Status {
 		case oct.TestSucceeded:
-			cases = append(cases, c.newSuccessJUnitTestCase(r))
+			cases = append(cases, c.newSuccessJUnitTestCase(r, suiteName))
 		case oct.TestSkipped:
-			cases = append(cases, c.newSkippedJUnitTestCase(r))
+			cases = append(cases, c.newSkippedJUnitTestCase(r, suiteName))
 		case oct.TestFailed:
-			jtc, err := c.newFailedJUnitTestCase(r)
+			jtc, err := c.newFailedJUnitTestCase(r, suiteName)
 			if err != nil {
 				return nil, errors.Wrap(err, "while mapping octopus test result into JUnit test case")
 			}
 			cases = append(cases, jtc)
 		case oct.TestUnknown:
-			cases = append(cases, c.newUnknownJUnitTestCase(r))
+			cases = append(cases, c.newUnknownJUnitTestCase(r, suiteName))
 		case oct.TestRunning:
-			cases = append(cases, c.newRunningJUnitTestCase(r))
+			cases = append(cases, c.newRunningJUnitTestCase(r, suiteName))
 		}
 	}
 
 	return cases, nil
 }
 
-func (c *Creator) newSuccessJUnitTestCase(tc oct.TestResult) JUnitTestCase {
+func (c *Creator) newSuccessJUnitTestCase(tc oct.TestResult, suiteName string) JUnitTestCase {
 	var totalExecutionTime time.Duration
 	for _, e := range tc.Executions {
 		// CompletionTime is not set when test case is timed out or still running
@@ -130,20 +131,20 @@ func (c *Creator) newSuccessJUnitTestCase(tc oct.TestResult) JUnitTestCase {
 
 	return JUnitTestCase{
 		Classname: "octopus",
-		Name:      fmt.Sprintf("[testing] %s/%s", tc.Namespace, tc.Name),
+		Name:      fmt.Sprintf("[%s] %s/%s", suiteName, tc.Namespace, tc.Name),
 		Time:      c.formatDurationAsSeconds(totalExecutionTime),
 	}
 }
 
-func (c *Creator) newSkippedJUnitTestCase(r oct.TestResult) JUnitTestCase {
+func (c *Creator) newSkippedJUnitTestCase(r oct.TestResult, suiteName string) JUnitTestCase {
 	return JUnitTestCase{
 		Classname:   "octopus",
-		Name:        fmt.Sprintf("[testing] %s/%s", r.Namespace, r.Name),
+		Name:        fmt.Sprintf("[%s] %s/%s", suiteName, r.Namespace, r.Name),
 		SkipMessage: &JUnitSkipMessage{Message: "Test was skipped."},
 	}
 }
 
-func (c *Creator) newFailedJUnitTestCase(r oct.TestResult) (JUnitTestCase, error) {
+func (c *Creator) newFailedJUnitTestCase(r oct.TestResult, suiteName string) (JUnitTestCase, error) {
 	logs, err := c.logsFetcher.Logs(r)
 	if err != nil {
 		return JUnitTestCase{}, errors.Wrapf(err, "while fetching logs for %s test", r.Name)
@@ -159,7 +160,7 @@ func (c *Creator) newFailedJUnitTestCase(r oct.TestResult) (JUnitTestCase, error
 
 	return JUnitTestCase{
 		Classname: "octopus",
-		Name:      fmt.Sprintf("[testing] %s/%s (executions: %d)", r.Namespace, r.Name, len(r.Executions)),
+		Name:      fmt.Sprintf("[%s] %s/%s (executions: %d)", suiteName, r.Namespace, r.Name, len(r.Executions)),
 		Time:      c.formatDurationAsSeconds(totalExecutionTime),
 		Failure: &JUnitFailure{
 			Message:  "Failed",
@@ -168,7 +169,7 @@ func (c *Creator) newFailedJUnitTestCase(r oct.TestResult) (JUnitTestCase, error
 	}, nil
 }
 
-func (c *Creator) newRunningJUnitTestCase(r oct.TestResult) JUnitTestCase {
+func (c *Creator) newRunningJUnitTestCase(r oct.TestResult, suiteName string) JUnitTestCase {
 	logs, err := c.logsFetcher.Logs(r)
 	if err != nil {
 		logs = fmt.Sprintf("Cannot fetch logs, got error: %v", err)
@@ -184,7 +185,7 @@ func (c *Creator) newRunningJUnitTestCase(r oct.TestResult) JUnitTestCase {
 
 	return JUnitTestCase{
 		Classname: "octopus",
-		Name:      fmt.Sprintf("[testing] %s/%s (executions: %d)", r.Namespace, r.Name, len(r.Executions)),
+		Name:      fmt.Sprintf("[%s] %s/%s (executions: %d)", suiteName, r.Namespace, r.Name, len(r.Executions)),
 		Time:      c.formatDurationAsSeconds(totalExecutionTime),
 		Failure: &JUnitFailure{
 			Message:  "Failed",
@@ -193,10 +194,10 @@ func (c *Creator) newRunningJUnitTestCase(r oct.TestResult) JUnitTestCase {
 	}
 }
 
-func (c *Creator) newUnknownJUnitTestCase(r oct.TestResult) JUnitTestCase {
+func (c *Creator) newUnknownJUnitTestCase(r oct.TestResult, suiteName string) JUnitTestCase {
 	return JUnitTestCase{
 		Classname: "octopus",
-		Name:      fmt.Sprintf("[testing] %s/%s", r.Namespace, r.Name),
+		Name:      fmt.Sprintf("[%s] %s/%s", suiteName, r.Namespace, r.Name),
 		Failure: &JUnitFailure{
 			Message:  "Failed",
 			Contents: "Test status is marked as 'Unknown' by Octopus runner.",
