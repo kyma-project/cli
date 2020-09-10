@@ -35,14 +35,14 @@ func NewCmd(o *Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "system",
 		Short: "Creates a system on the Kyma cluster.",
-		Long: `Use this command to create a system on a Kyma cluster.
+		Long: `Use this command to create a system on the Kyma cluster.
 
 ### Detailed description
 
-A system in Kyma is used to bind external systems and applications into the cluster and allow Kyma services and functions to receive events and communicate with them.
-Once a system is created in kyma, use the token provided by this command to grant access to the external system into the kyma cluster.
+A system in Kyma is used to bind external systems and applications to the cluster and allow Kyma services and functions to communicate with them and receive events.
+Once a system is created in Kyma, use the token provided by this command to allow the external system to access the Kyma cluster.
 
-To generate a new token, rerun the same command with the --update flag.
+To generate a new token, rerun the same command with the ` + "`--update`" + ` flag.
 
 `,
 		RunE:    func(_ *cobra.Command, args []string) error { return c.Run(args) },
@@ -52,9 +52,9 @@ To generate a new token, rerun the same command with the --update flag.
 	cmd.Args = cobra.ExactArgs(1)
 
 	cmd.Flags().StringVarP(&o.Namespace, "namespace", "n", "", "Namespace to bind the system to.")
-	cmd.Flags().BoolVarP(&o.Update, "update", "u", false, "Update an existing system and/or generate a new token for it.")
-	cmd.Flags().StringVarP(&o.OutputFormat, "output", "o", "", "Specify the format of the output of the command. Supported formats: yaml, json.")
-	cmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 2*time.Minute, "Time-out after which CLI stops watching the installation progress.")
+	cmd.Flags().BoolVarP(&o.Update, "update", "u", false, "Updates an existing system and/or generates a new token for it.")
+	cmd.Flags().StringVarP(&o.OutputFormat, "output", "o", "", "Specifies the format of the command output. Supported formats: YAML, JSON.")
+	cmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 2*time.Minute, "Timeout after which CLI stops watching the installation progress.")
 
 	return cmd
 }

@@ -10,7 +10,9 @@ import (
 func NewCmd(o *cli.Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create",
-		Short: "Creates resources on the Kyma cluster",
+		Short: "Creates resources on the Kyma cluster.",
+		Long: `Use this command to create resources on the Kyma cluster.
+`,
 	}
 
 	cmd.AddCommand(system.NewCmd(system.NewOptions(o)))
