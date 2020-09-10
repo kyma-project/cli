@@ -2,11 +2,12 @@
 title: kyma create
 ---
 
-Creates resources on the Kyma cluster
+Creates resources on the Kyma cluster.
 
 ## Synopsis
 
-Creates resources on the Kyma cluster
+Use this command to create resources on the Kyma cluster.
+
 
 ## Options inherited from parent commands
 

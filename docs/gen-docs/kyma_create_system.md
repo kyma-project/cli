@@ -6,14 +6,14 @@ Creates a system on the Kyma cluster.
 
 ## Synopsis
 
-Use this command to create a system on a Kyma cluster.
+Use this command to create a system on the Kyma cluster.
 
 ### Detailed description
 
-A system in Kyma is used to bind external systems and applications into the cluster and allow Kyma services and functions to receive events and communicate with them.
-Once a system is created in kyma, use the token provided by this command to grant access to the external system into the kyma cluster.
+A system in Kyma is used to bind external systems and applications to the cluster and allow Kyma services and functions to communicate with them and receive events.
+Once a system is created in Kyma, use the token provided by this command to allow the external system to access the Kyma cluster.
 
-To generate a new token, rerun the same command with the --update flag.
+To generate a new token, rerun the same command with the `--update` flag.
 
 
 
@@ -25,9 +25,9 @@ kyma create system [flags]
 
 ```bash
   -n, --namespace string   Namespace to bind the system to.
-  -o, --output string      Specify the format of the output of the command. Supported formats: yaml, json.
-      --timeout duration   Time-out after which CLI stops watching the installation progress. (default 2m0s)
-  -u, --update             Update an existing system and/or generate a new token for it.
+  -o, --output string      Specifies the format of the command output. Supported formats: YAML, JSON.
+      --timeout duration   Timeout after which CLI stops watching the installation progress. (default 2m0s)
+  -u, --update             Updates an existing system and/or generates a new token for it.
 ```
 
 ## Options inherited from parent commands
@@ -42,5 +42,5 @@ kyma create system [flags]
 
 ## See also
 
-* [kyma create](#kyma-create-kyma-create)	 - Creates resources on the Kyma cluster
+* [kyma create](#kyma-create-kyma-create)	 - Creates resources on the Kyma cluster.
 
