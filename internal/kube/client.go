@@ -6,14 +6,17 @@ import (
 	"time"
 
 	"github.com/kyma-project/cli/pkg/api/octopus"
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
-	istioNet "github.com/kyma-project/kyma/components/api-controller/pkg/clients/networking.istio.io/clientset/versioned"
+	istio "github.com/kyma-project/kyma/components/api-controller/pkg/clients/networking.istio.io/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 const (
@@ -26,7 +29,7 @@ type client struct {
 	static  kubernetes.Interface
 	dynamic dynamic.Interface
 	octps   octopus.Interface
-	istio   istioNet.Interface
+	istio   istio.Interface
 	cfg     *rest.Config
 }
 
@@ -60,7 +63,7 @@ func NewFromConfigWithTimeout(url, file string, t time.Duration) (KymaKube, erro
 		return nil, err
 	}
 
-	istioClient, err := istioNet.NewForConfig(config)
+	istioClient, err := istio.NewForConfig(config)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +91,7 @@ func (c *client) Octopus() octopus.Interface {
 	return c.octps
 }
 
-func (c *client) Istio() istioNet.Interface {
+func (c *client) Istio() istio.Interface {
 	return c.istio
 }
 
@@ -150,5 +153,40 @@ func (c *client) WaitPodStatusByLabel(namespace, labelName, labelValue string, s
 			return nil
 		}
 		time.Sleep(defaultWaitSleep)
+	}
+}
+
+func (c *client) WatchResource(res schema.GroupVersionResource, name, namespace string, checkFn func(u *unstructured.Unstructured) (bool, error)) error {
+	var timeout <-chan time.Time
+	if c.cfg.Timeout > 0 {
+		timeout = time.After(c.cfg.Timeout)
+	}
+
+	for {
+		select {
+		case <-timeout:
+			return fmt.Errorf("Timeout reached while waiting for %s", res.Resource)
+
+		default:
+			var itm *unstructured.Unstructured
+			var err error
+			if namespace != "" {
+				itm, err = c.Dynamic().Resource(res).Namespace(namespace).Get(name, metav1.GetOptions{})
+			} else {
+				itm, err = c.Dynamic().Resource(res).Get(name, metav1.GetOptions{})
+			}
+			if err != nil {
+				return errors.Wrapf(err, "Failed to check %s", res.Resource)
+			}
+
+			finished, err := checkFn(itm)
+			if err != nil {
+				return err
+			}
+			if finished {
+				return nil
+			}
+			time.Sleep(defaultWaitSleep)
+		}
 	}
 }

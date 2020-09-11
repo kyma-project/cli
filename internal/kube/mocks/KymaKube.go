@@ -13,6 +13,10 @@ import (
 
 	rest "k8s.io/client-go/rest"
 
+	schema "k8s.io/apimachinery/pkg/runtime/schema"
+
+	unstructured "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
 	v1 "k8s.io/api/core/v1"
 
 	versioned "github.com/kyma-project/kyma/components/api-controller/pkg/clients/networking.istio.io/clientset/versioned"
@@ -166,6 +170,20 @@ func (_m *KymaKube) WaitPodStatusByLabel(namespace string, labelName string, lab
 	var r0 error
 	if rf, ok := ret.Get(0).(func(string, string, string, v1.PodPhase) error); ok {
 		r0 = rf(namespace, labelName, labelValue, status)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// WatchResource provides a mock function with given fields: res, name, namespace, checkFn
+func (_m *KymaKube) WatchResource(res schema.GroupVersionResource, name string, namespace string, checkFn func(*unstructured.Unstructured) (bool, error)) error {
+	ret := _m.Called(res, name, namespace, checkFn)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(schema.GroupVersionResource, string, string, func(*unstructured.Unstructured) (bool, error)) error); ok {
+		r0 = rf(res, name, namespace, checkFn)
 	} else {
 		r0 = ret.Error(0)
 	}
