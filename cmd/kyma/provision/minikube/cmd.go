@@ -37,6 +37,7 @@ var (
 		vmDriverHyperkit,
 		vmDriverVirtualBox,
 		"kvm2",
+		"docker",
 		"none",
 	}
 	ErrMinikubeRunning = errors.New("Minikube already running")
