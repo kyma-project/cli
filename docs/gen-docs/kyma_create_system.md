@@ -2,7 +2,7 @@
 title: kyma create system
 ---
 
-Creates a system on the Kyma cluster.
+Creates a system on the Kyma cluster with the specified name.
 
 ## Synopsis
 
@@ -18,7 +18,7 @@ To generate a new token, rerun the same command with the `--update` flag.
 
 
 ```bash
-kyma create system [flags]
+kyma create system SYSTEM_NAME [flags]
 ```
 
 ## Options
