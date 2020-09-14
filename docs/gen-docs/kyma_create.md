@@ -22,5 +22,5 @@ Use this command to create resources on the Kyma cluster.
 ## See also
 
 * [kyma](#kyma-kyma)	 - Controls a Kyma cluster.
-* [kyma create system](#kyma-create-system-kyma-create-system)	 - Creates a system on the Kyma cluster.
+* [kyma create system](#kyma-create-system-kyma-create-system)	 - Creates a system on the Kyma cluster with the specified name.
 
