@@ -3,7 +3,6 @@ package system
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -66,13 +65,13 @@ func (c *command) Run(args []string) error {
 		np.PrintImportant("WARNING: This command is experimental and might change in its final version.")
 	}
 
-	if err := c.validateFlags(); err != nil {
-		return err
-	}
-
 	var err error
 	if c.K8s, err = kube.NewFromConfigWithTimeout("", c.KubeconfigPath, c.opts.Timeout); err != nil {
 		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
+	}
+
+	if c.opts.Namespace == "" {
+		c.opts.Namespace = c.K8s.DefaultNamespace()
 	}
 
 	// validate cluster state
@@ -170,19 +169,6 @@ func (c *command) Run(args []string) error {
 		nicePrint.PrintImportant(url)
 	}
 
-	return nil
-}
-
-func (c *command) validateFlags() error {
-	var errMessage strings.Builder
-	// mandatory flags
-	if c.opts.Namespace == "" {
-		errMessage.WriteString("\nRequired flag `namespace` has not been set.")
-	}
-
-	if errMessage.Len() != 0 {
-		return errors.New(errMessage.String())
-	}
 	return nil
 }
 

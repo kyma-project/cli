@@ -12,6 +12,7 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd/api"
 
 	istio "github.com/kyma-project/kyma/components/api-controller/pkg/clients/networking.istio.io/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -22,6 +23,7 @@ import (
 const (
 	defaultHTTPTimeout = 30 * time.Second
 	defaultWaitSleep   = 3 * time.Second
+	defaultNamespace   = "default"
 )
 
 // client is the default KymaKube implementation
@@ -30,7 +32,8 @@ type client struct {
 	dynamic dynamic.Interface
 	octps   octopus.Interface
 	istio   istio.Interface
-	cfg     *rest.Config
+	restCfg *rest.Config
+	kubeCfg *api.Config
 }
 
 // NewFromConfig creates a new Kubernetes client based on the given Kubeconfig either provided by URL (in-cluster config) or via file (out-of-cluster config).
@@ -41,7 +44,7 @@ func NewFromConfig(url, file string) (KymaKube, error) {
 // NewFromConfigWithTimeout creates a new Kubernetes client based on the given Kubeconfig either provided by URL (in-cluster config) or via file (out-of-cluster config).
 // Allows to set a custom timeout for the Kubernetes HTTP client.
 func NewFromConfigWithTimeout(url, file string, t time.Duration) (KymaKube, error) {
-	config, err := Kubeconfig(url, file)
+	config, err := RestConfig(url, file)
 	if err != nil {
 		return nil, err
 	}
@@ -68,12 +71,18 @@ func NewFromConfigWithTimeout(url, file string, t time.Duration) (KymaKube, erro
 		return nil, err
 	}
 
+	kubeConfig, err := KubeConfig(url, file)
+	if err != nil {
+		return nil, err
+	}
+
 	return &client{
 			static:  sClient,
 			dynamic: dClient,
 			octps:   octClient,
 			istio:   istioClient,
-			cfg:     config,
+			restCfg: config,
+			kubeCfg: kubeConfig,
 		},
 		nil
 
@@ -95,8 +104,12 @@ func (c *client) Istio() istio.Interface {
 	return c.istio
 }
 
-func (c *client) Config() *rest.Config {
-	return c.cfg
+func (c *client) RestConfig() *rest.Config {
+	return c.restCfg
+}
+
+func (c *client) KubeConfig() *api.Config {
+	return c.kubeCfg
 }
 
 func (c *client) IsPodDeployed(namespace, name string) (bool, error) {
@@ -158,8 +171,8 @@ func (c *client) WaitPodStatusByLabel(namespace, labelName, labelValue string, s
 
 func (c *client) WatchResource(res schema.GroupVersionResource, name, namespace string, checkFn func(u *unstructured.Unstructured) (bool, error)) error {
 	var timeout <-chan time.Time
-	if c.cfg.Timeout > 0 {
-		timeout = time.After(c.cfg.Timeout)
+	if c.restCfg.Timeout > 0 {
+		timeout = time.After(c.restCfg.Timeout)
 	}
 
 	for {
@@ -189,4 +202,11 @@ func (c *client) WatchResource(res schema.GroupVersionResource, name, namespace 
 			time.Sleep(defaultWaitSleep)
 		}
 	}
+}
+
+func (c *client) DefaultNamespace() string {
+	if ctx, ok := c.KubeConfig().Contexts[c.KubeConfig().CurrentContext]; ok && ctx.Namespace != "" {
+		return ctx.Namespace
+	}
+	return defaultNamespace
 }
