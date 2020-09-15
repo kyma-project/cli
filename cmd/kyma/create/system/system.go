@@ -33,8 +33,8 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "system",
-		Short: "Creates a system on the Kyma cluster.",
+		Use:   "system SYSTEM_NAME",
+		Short: "Creates a system on the Kyma cluster with the specified name.",
 		Long: `Use this command to create a system on the Kyma cluster.
 
 ### Detailed description
