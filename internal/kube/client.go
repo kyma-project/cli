@@ -44,7 +44,7 @@ func NewFromConfig(url, file string) (KymaKube, error) {
 // NewFromConfigWithTimeout creates a new Kubernetes client based on the given Kubeconfig either provided by URL (in-cluster config) or via file (out-of-cluster config).
 // Allows to set a custom timeout for the Kubernetes HTTP client.
 func NewFromConfigWithTimeout(url, file string, t time.Duration) (KymaKube, error) {
-	config, err := RestConfig(url, file)
+	config, err := restConfig(url, file)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func NewFromConfigWithTimeout(url, file string, t time.Duration) (KymaKube, erro
 		return nil, err
 	}
 
-	kubeConfig, err := KubeConfig(url, file)
+	kubeConfig, err := kubeConfig(file)
 	if err != nil {
 		return nil, err
 	}
