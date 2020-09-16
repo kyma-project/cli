@@ -4,6 +4,7 @@ package mocks
 
 import (
 	dynamic "k8s.io/client-go/dynamic"
+	api "k8s.io/client-go/tools/clientcmd/api"
 
 	kubernetes "k8s.io/client-go/kubernetes"
 
@@ -27,17 +28,15 @@ type KymaKube struct {
 	mock.Mock
 }
 
-// Config provides a mock function with given fields:
-func (_m *KymaKube) Config() *rest.Config {
+// DefaultNamespace provides a mock function with given fields:
+func (_m *KymaKube) DefaultNamespace() string {
 	ret := _m.Called()
 
-	var r0 *rest.Config
-	if rf, ok := ret.Get(0).(func() *rest.Config); ok {
+	var r0 string
+	if rf, ok := ret.Get(0).(func() string); ok {
 		r0 = rf()
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*rest.Config)
-		}
+		r0 = ret.Get(0).(string)
 	}
 
 	return r0
@@ -117,6 +116,22 @@ func (_m *KymaKube) Istio() versioned.Interface {
 	return r0
 }
 
+// KubeConfig provides a mock function with given fields:
+func (_m *KymaKube) KubeConfig() *api.Config {
+	ret := _m.Called()
+
+	var r0 *api.Config
+	if rf, ok := ret.Get(0).(func() *api.Config); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*api.Config)
+		}
+	}
+
+	return r0
+}
+
 // Octopus provides a mock function with given fields:
 func (_m *KymaKube) Octopus() octopus.Interface {
 	ret := _m.Called()
@@ -127,6 +142,22 @@ func (_m *KymaKube) Octopus() octopus.Interface {
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(octopus.Interface)
+		}
+	}
+
+	return r0
+}
+
+// RestConfig provides a mock function with given fields:
+func (_m *KymaKube) RestConfig() *rest.Config {
+	ret := _m.Called()
+
+	var r0 *rest.Config
+	if rf, ok := ret.Get(0).(func() *rest.Config); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*rest.Config)
 		}
 	}
 
