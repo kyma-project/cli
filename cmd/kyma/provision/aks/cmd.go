@@ -32,7 +32,8 @@ func NewCmd(o *Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "aks",
 		Short: "Provisions an Azure Kubernetes Service (AKS) cluster on Azure.",
-		Long: `Use this command to provision an AKS cluster on Azure for Kyma installation. Use the flags to specify cluster details. NOTE: To provision and access the provisioned cluster, make sure you get authenticated by using the Azure CLI. To do so, run ` + "`az login`" + ` and log in with your Azure credentials.`,
+		Long: `Use this command to provision an AKS cluster on Azure for Kyma installation. Use the flags to specify cluster details. 
+	NOTE: To provision and access the provisioned cluster, make sure you get authenticated by using the Azure CLI. To do so,run ` + "`az login`" + ` and log in with your Azure credentials.`,
 
 		RunE: func(_ *cobra.Command, _ []string) error { return c.Run() },
 	}
