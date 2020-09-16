@@ -10,6 +10,7 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd/api"
 )
 
 //go:generate mockery --name KymaKube
@@ -22,8 +23,16 @@ type KymaKube interface {
 	Octopus() octopus.Interface
 	Istio() istio.Interface
 
-	// Config provides the configuration of the kubernetes client
-	Config() *rest.Config
+	// RestConfig provides the REST configuration of the kubernetes client
+	RestConfig() *rest.Config
+
+	// KubeConfig provides the currently used kubeconfig
+	KubeConfig() *api.Config
+
+	// DefaultNamespace finds out what the default namespace is based on:
+	// 1. Default namespace on the Kubeconfig
+	// 2. Default cluster namespace constant
+	DefaultNamespace() string
 
 	// IsPodDeployed checks if a pod is in the given namespace (independently of its status)
 	IsPodDeployed(namespace, name string) (bool, error)

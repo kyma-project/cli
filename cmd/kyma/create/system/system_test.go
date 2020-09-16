@@ -34,21 +34,6 @@ func TestValidateArgs(t *testing.T) {
 	require.Error(t, err, "Validate args should return an error if too many args are given.")
 }
 
-func TestValidateFlags(t *testing.T) {
-	c := command{
-		opts: NewOptions(nil),
-	}
-
-	// no flags
-	err := c.validateFlags()
-	require.Error(t, err, "Mandatory flags have not been set, error is expected.")
-
-	// mandatory flags set
-	c.opts.Namespace = "test"
-	err = c.validateFlags()
-	require.NoError(t, err, "Mandatory flags have been set, no error is expected.")
-}
-
 func TestSteps(t *testing.T) {
 	c := command{
 		Command: cli.Command{

@@ -19,6 +19,7 @@ import (
 
 	"k8s.io/client-go/rest"
 	k8stesting "k8s.io/client-go/testing"
+	"k8s.io/client-go/tools/clientcmd/api"
 
 	dynFake "k8s.io/client-go/dynamic/fake"
 	"k8s.io/client-go/kubernetes/fake"
@@ -153,7 +154,7 @@ func TestWaitPodStatusByLabel(t *testing.T) {
 
 func TestWatchResource(t *testing.T) {
 	c := &client{
-		cfg: &rest.Config{},
+		restCfg: &rest.Config{},
 		dynamic: dynamicK8s(
 			&unstructured.Unstructured{
 				Object: map[string]interface{}{
@@ -226,4 +227,29 @@ func dynamicK8s(objects ...runtime.Object) *dynFake.FakeDynamicClient {
 		os.Exit(1)
 	}
 	return dynFake.NewSimpleDynamicClient(resSchema, objects...)
+}
+
+func TestDefaultNamespace(t *testing.T) {
+	c := &client{
+		kubeCfg: &api.Config{},
+	}
+
+	// kubeconfig has no default NS
+	ns := c.DefaultNamespace()
+	require.Equal(t, defaultNamespace, ns, "The default namespace is expected if the kubeconfig has no default namespace.")
+
+	// kubeconfig has default NS but no context configured
+	c.kubeCfg.Contexts = map[string]*api.Context{
+		"mycontext": {
+			Cluster:   "some-cluster",
+			Namespace: "test",
+		},
+	}
+	ns = c.DefaultNamespace()
+	require.Equal(t, defaultNamespace, ns, "The default namespace is expected if the kubeconfig has no context configured.")
+
+	// kubeconfig has default NS and context
+	c.kubeCfg.CurrentContext = "mycontext"
+	ns = c.DefaultNamespace()
+	require.Equal(t, "test", ns, "The kubeconfig namespace is expected.")
 }

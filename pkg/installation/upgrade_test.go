@@ -64,7 +64,7 @@ func TestUpgradeKyma(t *testing.T) {
 
 	kymaMock.On("Static").Return(k8sMock)
 	kymaMock.On("Istio").Return(istioMock)
-	kymaMock.On("Config", mock.Anything).Return(&rest.Config{Host: "fake-kubeconfig-host"})
+	kymaMock.On("RestConfig", mock.Anything).Return(&rest.Config{Host: "fake-kubeconfig-host"})
 	kymaMock.On("WaitPodStatusByLabel", "kyma-installer", "name", "kyma-installer", v1.PodRunning).Return(nil)
 
 	i := &Installation{

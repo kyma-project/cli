@@ -83,7 +83,7 @@ func TestInstallKyma(t *testing.T) {
 
 	kymaMock.On("Static").Return(k8sMock)
 	kymaMock.On("Istio").Return(istioMock)
-	kymaMock.On("Config", mock.Anything).Return(&rest.Config{Host: "fake-kubeconfig-host"})
+	kymaMock.On("RestConfig", mock.Anything).Return(&rest.Config{Host: "fake-kubeconfig-host"})
 
 	// There is an existing installation
 	iServiceMock.On("CheckInstallationState", mock.Anything).Return(installSDK.InstallationState{State: "Installed"}, nil).Once()
