@@ -151,7 +151,7 @@ func (i *Installation) InstallKyma() (*Result, error) {
 }
 
 func (i *Installation) checkPrevInstallation() (string, string, error) {
-	prevInstallationState, err := i.Service.CheckInstallationState(i.K8s.Config())
+	prevInstallationState, err := i.Service.CheckInstallationState(i.K8s.RestConfig())
 	if err != nil {
 		installErr := installationSDK.InstallationError{}
 		if errors.As(err, &installErr) {
@@ -364,7 +364,7 @@ func (i *Installation) waitForInstaller() error {
 		select {
 		case <-timeout:
 			i.currentStep.Failure()
-			if _, err := i.Service.CheckInstallationState(i.K8s.Config()); err != nil {
+			if _, err := i.Service.CheckInstallationState(i.K8s.RestConfig()); err != nil {
 				installationError := installationSDK.InstallationError{}
 				if ok := errors.As(err, &installationError); ok {
 					i.currentStep.LogErrorf("Installation error occurred while installing Kyma: %s. Details: %s", installationError.Error(), installationError.Details())
@@ -372,7 +372,7 @@ func (i *Installation) waitForInstaller() error {
 			}
 			return errors.New("Timeout reached while waiting for installation to complete")
 		default:
-			installationState, err := i.Service.CheckInstallationState(i.K8s.Config())
+			installationState, err := i.Service.CheckInstallationState(i.K8s.RestConfig())
 			if err != nil {
 				if !errorOccured {
 					errorOccured = true
@@ -418,7 +418,7 @@ func (i *Installation) waitForInstaller() error {
 func (i *Installation) buildResult(duration time.Duration) (*Result, error) {
 	// In case that noWait flag is set, check that Kyma was actually installed before building the Result
 	if i.Options.NoWait {
-		installationState, err := i.Service.CheckInstallationState(i.K8s.Config())
+		installationState, err := i.Service.CheckInstallationState(i.K8s.RestConfig())
 		if err != nil {
 			return nil, err
 		}
@@ -457,7 +457,7 @@ func (i *Installation) buildResult(duration time.Duration) (*Result, error) {
 
 	return &Result{
 		KymaVersion:   v,
-		Host:          i.K8s.Config().Host,
+		Host:          i.K8s.RestConfig().Host,
 		Console:       consoleURL,
 		AdminEmail:    string(adm.Data["email"]),
 		AdminPassword: string(adm.Data["password"]),

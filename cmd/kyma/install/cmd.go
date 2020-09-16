@@ -163,7 +163,7 @@ func (cmd *command) configureInstallation(clusterConfig installation.ClusterInfo
 	if err != nil {
 		return &installation.Installation{}, errors.Wrap(err, "Could not load component configuration file. Make sure file is a valid YAML and contains a component list")
 	}
-	s, err := installation.NewInstallationService(cmd.K8s.Config(), cmd.opts.Timeout, "", cmp)
+	s, err := installation.NewInstallationService(cmd.K8s.RestConfig(), cmd.opts.Timeout, "", cmp)
 	if err != nil {
 		return &installation.Installation{}, errors.Wrap(err, "Failed to create installation service. Make sure your kubeconfig is valid")
 	}
