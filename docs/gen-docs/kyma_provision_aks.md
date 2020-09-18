@@ -6,8 +6,8 @@ Provisions an Azure Kubernetes Service (AKS) cluster on Azure.
 
 ## Synopsis
 
-Use this command to provision an AKS cluster on Azure for Kyma installation. Use the flags to specify cluster details.
-NOTE: To provision and access the provisioned cluster, make sure you get authenticated by using the Azure CLI. To do so,run `az login` and log in with your Azure credentials.
+Use this command to provision an AKS cluster on Azure for Kyma installation. Use the flags to specify cluster details. 
+	NOTE: To provision and access the provisioned cluster, make sure you get authenticated by using the Azure CLI. To do so,run `az login` and log in with your Azure credentials.
 
 ```bash
 kyma provision aks [flags]
