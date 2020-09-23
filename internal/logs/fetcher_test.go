@@ -1,6 +1,7 @@
 package logs_test
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -11,13 +12,14 @@ import (
 	"github.com/kyma-project/cli/internal/logs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/policy/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/util/flowcontrol"
 )
 
 func Test(t *testing.T) {
@@ -93,7 +95,7 @@ func fixPodWithContainers(containersName ...string) v1.Pod {
 
 // fakePodGetter implements SIMPLY fake for getting pods and fetching associated logs
 // Unfortunately needs to be implemented by us, because client-go fake client
-// in current implementation (client-go v1.12) returns zero-value `rest.Request`
+// in current implementation returns zero-value `rest.Request`
 // and executing GetLogs(/*..*/).DoRaw() method, throws panic.
 type fakePodGetter struct {
 	podName      string
@@ -123,46 +125,56 @@ func (f *fakePodGetter) Pods(namespace string) corev1.PodInterface {
 	return f
 }
 
-func (f *fakePodGetter) Get(name string, options metav1.GetOptions) (*v1.Pod, error) {
+func (f *fakePodGetter) Get(ctx context.Context, name string, opts metav1.GetOptions) (*v1.Pod, error) {
 	f.podName = name
 	return &f.pod, nil
 }
 
 func (f *fakePodGetter) GetLogs(name string, opts *v1.PodLogOptions) *rest.Request {
 	f.containers = append(f.containers, opts.Container)
-	return rest.NewRequest(nil, http.MethodGet, f.url, "", rest.ContentConfig{}, rest.Serializers{}, nil, nil, 0)
+	c, err := rest.NewRESTClient(f.url, "", rest.ClientContentConfig{}, flowcontrol.NewFakeAlwaysRateLimiter(), http.DefaultClient)
+	if err != nil {
+		return nil
+	}
+	return rest.NewRequest(c)
 }
 
 // Defined only to fulfil the `PodInterface` interface
 // should not be used by business logic.
-func (f *fakePodGetter) Create(*v1.Pod) (*v1.Pod, error) {
+func (f *fakePodGetter) Create(ctx context.Context, pod *v1.Pod, opts metav1.CreateOptions) (*v1.Pod, error) {
 	panic("not implemented")
 }
 
-func (f *fakePodGetter) Update(*v1.Pod) (*v1.Pod, error) {
+func (f *fakePodGetter) Update(ctx context.Context, pod *v1.Pod, opts metav1.UpdateOptions) (*v1.Pod, error) {
 	panic("not implemented")
 }
-func (f *fakePodGetter) UpdateStatus(*v1.Pod) (*v1.Pod, error) {
+func (f *fakePodGetter) UpdateStatus(ctx context.Context, pod *v1.Pod, opts metav1.UpdateOptions) (*v1.Pod, error) {
 	panic("not implemented")
 }
-func (f *fakePodGetter) Delete(name string, options *metav1.DeleteOptions) error {
+func (f *fakePodGetter) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
 	panic("not implemented")
 }
-func (f *fakePodGetter) DeleteCollection(options *metav1.DeleteOptions, listOptions metav1.ListOptions) error {
+func (f *fakePodGetter) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
 	panic("not implemented")
 }
-func (f *fakePodGetter) List(opts metav1.ListOptions) (*v1.PodList, error) {
+func (f *fakePodGetter) List(ctx context.Context, opts metav1.ListOptions) (*v1.PodList, error) {
 	panic("not implemented")
 }
-func (f *fakePodGetter) Watch(opts metav1.ListOptions) (watch.Interface, error) {
+func (f *fakePodGetter) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
 	panic("not implemented")
 }
-func (f *fakePodGetter) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.Pod, err error) {
+func (f *fakePodGetter) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.Pod, err error) {
 	panic("not implemented")
 }
-func (f *fakePodGetter) Bind(binding *v1.Binding) error {
+func (f *fakePodGetter) Bind(ctx context.Context, binding *v1.Binding, opts metav1.CreateOptions) error {
 	panic("not implemented")
 }
-func (f *fakePodGetter) Evict(eviction *v1beta1.Eviction) error {
+func (f *fakePodGetter) GetEphemeralContainers(ctx context.Context, podName string, options metav1.GetOptions) (*v1.EphemeralContainers, error) {
+	panic("not implemented")
+}
+func (f *fakePodGetter) UpdateEphemeralContainers(ctx context.Context, podName string, ephemeralContainers *v1.EphemeralContainers, opts metav1.UpdateOptions) (*v1.EphemeralContainers, error) {
+	panic("not implemented")
+}
+func (f *fakePodGetter) Evict(ctx context.Context, eviction *v1beta1.Eviction) error {
 	panic("not implemented")
 }

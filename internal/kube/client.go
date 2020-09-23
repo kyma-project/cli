@@ -1,6 +1,7 @@
 package kube
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -14,7 +15,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd/api"
 
-	istio "github.com/kyma-project/kyma/components/api-controller/pkg/clients/networking.istio.io/clientset/versioned"
+	istio "istio.io/client-go/pkg/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -113,7 +114,7 @@ func (c *client) KubeConfig() *api.Config {
 }
 
 func (c *client) IsPodDeployed(namespace, name string) (bool, error) {
-	_, err := c.Static().CoreV1().Pods(namespace).Get(name, metav1.GetOptions{})
+	_, err := c.Static().CoreV1().Pods(namespace).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
 			return false, nil
@@ -125,7 +126,7 @@ func (c *client) IsPodDeployed(namespace, name string) (bool, error) {
 }
 
 func (c *client) IsPodDeployedByLabel(namespace, labelName, labelValue string) (bool, error) {
-	pods, err := c.Static().CoreV1().Pods(namespace).List(metav1.ListOptions{LabelSelector: fmt.Sprintf("%s=%s", labelName, labelValue)})
+	pods, err := c.Static().CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{LabelSelector: fmt.Sprintf("%s=%s", labelName, labelValue)})
 	if err != nil {
 		return false, err
 	}
@@ -135,7 +136,7 @@ func (c *client) IsPodDeployedByLabel(namespace, labelName, labelValue string) (
 
 func (c *client) WaitPodStatus(namespace, name string, status corev1.PodPhase) error {
 	for {
-		pod, err := c.Static().CoreV1().Pods(namespace).Get(name, metav1.GetOptions{})
+		pod, err := c.Static().CoreV1().Pods(namespace).Get(context.Background(), name, metav1.GetOptions{})
 		if err != nil && !strings.Contains(err.Error(), "not found") {
 			return err
 		}
@@ -149,7 +150,7 @@ func (c *client) WaitPodStatus(namespace, name string, status corev1.PodPhase) e
 
 func (c *client) WaitPodStatusByLabel(namespace, labelName, labelValue string, status corev1.PodPhase) error {
 	for {
-		pods, err := c.Static().CoreV1().Pods(namespace).List(metav1.ListOptions{LabelSelector: fmt.Sprintf("%s=%s", labelName, labelValue)})
+		pods, err := c.Static().CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{LabelSelector: fmt.Sprintf("%s=%s", labelName, labelValue)})
 		if err != nil {
 			return err
 		}
@@ -184,9 +185,9 @@ func (c *client) WatchResource(res schema.GroupVersionResource, name, namespace 
 			var itm *unstructured.Unstructured
 			var err error
 			if namespace != "" {
-				itm, err = c.Dynamic().Resource(res).Namespace(namespace).Get(name, metav1.GetOptions{})
+				itm, err = c.Dynamic().Resource(res).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
 			} else {
-				itm, err = c.Dynamic().Resource(res).Get(name, metav1.GetOptions{})
+				itm, err = c.Dynamic().Resource(res).Get(context.Background(), name, metav1.GetOptions{})
 			}
 			if err != nil {
 				return errors.Wrapf(err, "Failed to check %s", res.Resource)

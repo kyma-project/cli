@@ -1,6 +1,7 @@
 package installation
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -432,19 +433,19 @@ func (i *Installation) buildResult(duration time.Duration) (*Result, error) {
 		return nil, err
 	}
 
-	adm, err := i.K8s.Static().CoreV1().Secrets("kyma-system").Get("admin-user", metav1.GetOptions{})
+	adm, err := i.K8s.Static().CoreV1().Secrets("kyma-system").Get(context.Background(), "admin-user", metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
 
 	var consoleURL string
-	vs, err := i.K8s.Istio().NetworkingV1alpha3().VirtualServices("kyma-system").Get("console-web", metav1.GetOptions{})
+	vs, err := i.K8s.Istio().NetworkingV1alpha3().VirtualServices("kyma-system").Get(context.Background(), "console-web", metav1.GetOptions{})
 	switch {
 	case apiErrors.IsNotFound(err):
 		consoleURL = "not installed"
 	case err != nil:
 		return nil, err
-	case vs != nil && vs.Spec != nil && len(vs.Spec.Hosts) > 0:
+	case vs != nil && len(vs.Spec.Hosts) > 0:
 		consoleURL = fmt.Sprintf("https://%s", vs.Spec.Hosts[0])
 	default:
 		return nil, pkgErrors.New("console host could not be obtained")

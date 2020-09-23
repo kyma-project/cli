@@ -1,6 +1,7 @@
 package octopus
 
 import (
+	"context"
 	"time"
 
 	"github.com/kyma-incubator/octopus/pkg/apis"
@@ -47,7 +48,7 @@ func (t *RestClient) ListTestDefinitions(opts metav1.ListOptions) (result *oct.T
 	err = t.restClient.Get().
 		Resource("testdefinitions").
 		VersionedParams(&opts, scheme.ParameterCodec).
-		Do().
+		Do(context.Background()).
 		Into(result)
 	return
 }
@@ -57,7 +58,7 @@ func (t *RestClient) ListTestSuites(opts metav1.ListOptions) (result *oct.Cluste
 	err = t.restClient.Get().
 		Resource("clustertestsuites").
 		VersionedParams(&opts, scheme.ParameterCodec).
-		Do().
+		Do(context.Background()).
 		Into(result)
 	return
 }
@@ -67,7 +68,7 @@ func (t *RestClient) CreateTestSuite(cts *oct.ClusterTestSuite) (result *oct.Clu
 	err = t.restClient.Post().
 		Resource("clustertestsuites").
 		Body(cts).
-		Do().
+		Do(context.Background()).
 		Into(result)
 	return
 }
@@ -78,7 +79,7 @@ func (t *RestClient) DeleteTestSuite(name string, options metav1.DeleteOptions) 
 		Name(name).
 		// Reenable this when deleting supports options
 		//Body(options).
-		Do().
+		Do(context.Background()).
 		Error()
 }
 
@@ -88,7 +89,7 @@ func (t *RestClient) GetTestSuite(name string, options metav1.GetOptions) (resul
 		Resource("clustertestsuites").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(context.Background()).
 		Into(result)
 	return
 }
@@ -103,7 +104,7 @@ func (t *RestClient) WatchTestSuite(opts metav1.ListOptions) (watch.Interface, e
 		Resource("clustertestsuites").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(context.Background())
 }
 
 func setConfigDefaults(config *rest.Config) {
