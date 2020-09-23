@@ -9,10 +9,11 @@ import (
 	installSDK "github.com/kyma-incubator/hydroform/install/installation"
 	k8sMocks "github.com/kyma-project/cli/internal/kube/mocks"
 	"github.com/kyma-project/cli/pkg/installation/mocks"
-	"github.com/kyma-project/kyma/components/api-controller/pkg/apis/networking.istio.io/v1alpha3"
-	fakeIstio "github.com/kyma-project/kyma/components/api-controller/pkg/clients/networking.istio.io/clientset/versioned/fake"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	networkingv1alpha3 "istio.io/api/networking/v1alpha3"
+	"istio.io/client-go/pkg/apis/networking/v1alpha3"
+	fakeIstio "istio.io/client-go/pkg/clientset/versioned/fake"
 	v1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
@@ -57,7 +58,7 @@ func TestInstallKyma(t *testing.T) {
 				Name:      "console-web",
 				Namespace: "kyma-system",
 			},
-			Spec: &v1alpha3.VirtualServiceSpec{
+			Spec: networkingv1alpha3.VirtualService{
 				Hosts: []string{"fake-console-url"},
 			},
 		},

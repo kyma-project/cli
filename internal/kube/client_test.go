@@ -1,6 +1,7 @@
 package kube
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -28,11 +29,11 @@ import (
 func TestIsPodDeployed(t *testing.T) {
 	//setup
 	c := fakeClientWithNS()
-	_, err := c.Static().CoreV1().Pods("ns").Create(&corev1.Pod{
+	_, err := c.Static().CoreV1().Pods("ns").Create(context.Background(), &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-pod1",
 		},
-	})
+	}, metav1.CreateOptions{})
 	require.NoError(t, err)
 
 	// test finding the pod
@@ -59,12 +60,12 @@ func TestIsPodDeployed(t *testing.T) {
 func TestIsPodDeployedByLabel(t *testing.T) {
 	//setup
 	c := fakeClientWithNS()
-	_, err := c.Static().CoreV1().Pods("ns").Create(&corev1.Pod{
+	_, err := c.Static().CoreV1().Pods("ns").Create(context.Background(), &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   "test-pod1",
 			Labels: map[string]string{"team": "huskies"},
 		},
-	})
+	}, metav1.CreateOptions{})
 	require.NoError(t, err)
 
 	// test finding the pod
@@ -100,7 +101,7 @@ func TestWaitPodStatus(t *testing.T) {
 			Phase: corev1.PodPending,
 		},
 	}
-	_, err := c.Static().CoreV1().Pods("ns").Create(pod)
+	_, err := c.Static().CoreV1().Pods("ns").Create(context.Background(), pod, metav1.CreateOptions{})
 	require.NoError(t, err)
 
 	// wait for the pod to be running in a separate goroutine
@@ -113,7 +114,7 @@ func TestWaitPodStatus(t *testing.T) {
 	// wait a bit and set the pod to running
 	time.Sleep(1 * time.Second)
 	pod.Status.Phase = corev1.PodRunning
-	_, err = c.Static().CoreV1().Pods("ns").UpdateStatus(pod)
+	_, err = c.Static().CoreV1().Pods("ns").UpdateStatus(context.Background(), pod, metav1.UpdateOptions{})
 	require.NoError(t, err)
 
 	// we block waiting for the pod to change its state
@@ -132,7 +133,7 @@ func TestWaitPodStatusByLabel(t *testing.T) {
 			Phase: corev1.PodPending,
 		},
 	}
-	_, err := c.Static().CoreV1().Pods("ns").Create(pod)
+	_, err := c.Static().CoreV1().Pods("ns").Create(context.Background(), pod, metav1.CreateOptions{})
 	require.NoError(t, err)
 
 	// wait for the pod to be running in a separate goroutine
@@ -145,7 +146,7 @@ func TestWaitPodStatusByLabel(t *testing.T) {
 	// wait a bit and set the pod to running
 	time.Sleep(1 * time.Second)
 	pod.Status.Phase = corev1.PodRunning
-	_, err = c.Static().CoreV1().Pods("ns").UpdateStatus(pod)
+	_, err = c.Static().CoreV1().Pods("ns").UpdateStatus(context.Background(), pod, metav1.UpdateOptions{})
 	require.NoError(t, err)
 
 	// we block waiting for the pod to change its state
