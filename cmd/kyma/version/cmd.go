@@ -1,6 +1,7 @@
 package version
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -63,7 +64,7 @@ func (c command) Run() error {
 
 //KymaVersion determines the version of kyma installed in the cluster sccessible via the provided kubernetes client
 func KymaVersion(k8s kube.KymaKube) (string, error) {
-	pods, err := k8s.Static().CoreV1().Pods("kyma-installer").List(metav1.ListOptions{LabelSelector: "name=kyma-installer"})
+	pods, err := k8s.Static().CoreV1().Pods("kyma-installer").List(context.Background(), metav1.ListOptions{LabelSelector: "name=kyma-installer"})
 	if err != nil {
 		return "", err
 	}

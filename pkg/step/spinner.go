@@ -34,7 +34,7 @@ func (s *stepWithSpinner) Start() {
 }
 
 func (s *stepWithSpinner) Status(msg string) {
-	s.spinner.Suffix = fmt.Sprintf(" %s: %s", s.msg, msg)
+	s.msg = fmt.Sprintf(" %s: %s", s.msg, msg)
 }
 
 func (s *stepWithSpinner) Success() {

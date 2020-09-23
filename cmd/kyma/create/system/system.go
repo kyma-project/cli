@@ -1,6 +1,7 @@
 package system
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -75,7 +76,7 @@ func (c *command) Run(args []string) error {
 	}
 
 	// validate cluster state
-	if _, err := c.K8s.Static().CoreV1().Namespaces().Get(c.opts.Namespace, metav1.GetOptions{}); err != nil {
+	if _, err := c.K8s.Static().CoreV1().Namespaces().Get(context.Background(), c.opts.Namespace, metav1.GetOptions{}); err != nil {
 		if k8sErrors.IsNotFound(err) {
 			return fmt.Errorf("Namespace %s does not exist", c.opts.Namespace)
 		}
@@ -199,7 +200,7 @@ func createSystem(name string, update bool, k8s kube.KymaKube) (*unstructured.Un
 		Version:  "v1alpha1",
 		Resource: "applications",
 	}
-	itm, err := k8s.Dynamic().Resource(sysRes).Get(name, metav1.GetOptions{})
+	itm, err := k8s.Dynamic().Resource(sysRes).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		if !k8sErrors.IsNotFound(err) {
 			return nil, errors.Wrap(err, "Failed to check System")
@@ -213,7 +214,7 @@ func createSystem(name string, update bool, k8s kube.KymaKube) (*unstructured.Un
 	if itm != nil && update {
 		// update fields here with "unstructured.SetNestedField()"
 
-		_, err = k8s.Dynamic().Resource(sysRes).Update(itm, metav1.UpdateOptions{})
+		_, err = k8s.Dynamic().Resource(sysRes).Update(context.Background(), itm, metav1.UpdateOptions{})
 		if err != nil {
 			return nil, errors.Wrap(err, "Failed to update system.")
 		}
@@ -228,7 +229,7 @@ func createSystem(name string, update bool, k8s kube.KymaKube) (*unstructured.Un
 			},
 		}
 
-		_, err = k8s.Dynamic().Resource(sysRes).Create(newSys, metav1.CreateOptions{})
+		_, err = k8s.Dynamic().Resource(sysRes).Create(context.Background(), newSys, metav1.CreateOptions{})
 		if err != nil {
 			return nil, errors.Wrap(err, "Failed to create system.")
 		}
@@ -248,7 +249,7 @@ func createSystem(name string, update bool, k8s kube.KymaKube) (*unstructured.Un
 		return nil, errors.Wrap(err, "Failed to wait for system deployment")
 	}
 
-	return k8s.Dynamic().Resource(sysRes).Get(name, metav1.GetOptions{})
+	return k8s.Dynamic().Resource(sysRes).Get(context.Background(), name, metav1.GetOptions{})
 }
 
 func bindNamespace(name string, namespace string, k8s kube.KymaKube) error {
@@ -257,7 +258,7 @@ func bindNamespace(name string, namespace string, k8s kube.KymaKube) error {
 		Version:  "v1alpha1",
 		Resource: "applicationmappings",
 	}
-	itm, err := k8s.Dynamic().Resource(sysMappingRes).Namespace(namespace).Get(name, metav1.GetOptions{})
+	itm, err := k8s.Dynamic().Resource(sysMappingRes).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		if !k8sErrors.IsNotFound(err) {
 			return errors.Wrap(err, "Failed to check System")
@@ -266,7 +267,7 @@ func bindNamespace(name string, namespace string, k8s kube.KymaKube) error {
 
 	if itm != nil {
 		// always update the mapping
-		_, err = k8s.Dynamic().Resource(sysMappingRes).Namespace(namespace).Update(itm, metav1.UpdateOptions{})
+		_, err = k8s.Dynamic().Resource(sysMappingRes).Namespace(namespace).Update(context.Background(), itm, metav1.UpdateOptions{})
 
 	} else {
 		newSysMapping := &unstructured.Unstructured{
@@ -279,7 +280,7 @@ func bindNamespace(name string, namespace string, k8s kube.KymaKube) error {
 			},
 		}
 
-		_, err = k8s.Dynamic().Resource(sysMappingRes).Namespace(namespace).Create(newSysMapping, metav1.CreateOptions{})
+		_, err = k8s.Dynamic().Resource(sysMappingRes).Namespace(namespace).Create(context.Background(), newSysMapping, metav1.CreateOptions{})
 	}
 	if err != nil {
 		return errors.Wrapf(err, "Failed to bind the system %s to namespace %s", name, namespace)
@@ -304,7 +305,7 @@ func createToken(name, namespace string, k8s kube.KymaKube) (*unstructured.Unstr
 	}
 
 	// Check if a token with that name already exists
-	itm, err := k8s.Dynamic().Resource(tokenRequestRes).Namespace(namespace).Get(name, metav1.GetOptions{})
+	itm, err := k8s.Dynamic().Resource(tokenRequestRes).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		if !k8sErrors.IsNotFound(err) {
 			return nil, errors.Wrap(err, "Failed to create Token, application does not exist")
@@ -313,7 +314,7 @@ func createToken(name, namespace string, k8s kube.KymaKube) (*unstructured.Unstr
 
 	if itm != nil {
 		// Token already exists, deleting it.
-		err = k8s.Dynamic().Resource(tokenRequestRes).Namespace(namespace).Delete(name, &metav1.DeleteOptions{})
+		err = k8s.Dynamic().Resource(tokenRequestRes).Namespace(namespace).Delete(context.Background(), name, metav1.DeleteOptions{})
 		if err != nil {
 			if !k8sErrors.IsNotFound(err) {
 				return nil, errors.Wrap(err, "Failed to remove Token")
@@ -321,13 +322,13 @@ func createToken(name, namespace string, k8s kube.KymaKube) (*unstructured.Unstr
 		}
 	}
 
-	_, err = k8s.Dynamic().Resource(tokenRequestRes).Namespace(namespace).Create(newToken, metav1.CreateOptions{})
+	_, err = k8s.Dynamic().Resource(tokenRequestRes).Namespace(namespace).Create(context.Background(), newToken, metav1.CreateOptions{})
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to create token.")
 	}
 
 	err = k8s.WatchResource(tokenRequestRes, name, namespace, func(u *unstructured.Unstructured) (bool, error) {
-		itm, err := k8s.Dynamic().Resource(tokenRequestRes).Namespace(namespace).Get(name, metav1.GetOptions{})
+		itm, err := k8s.Dynamic().Resource(tokenRequestRes).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
 		if err != nil {
 			return false, errors.Wrap(err, "Failed to request token")
 		}
@@ -340,5 +341,5 @@ func createToken(name, namespace string, k8s kube.KymaKube) (*unstructured.Unstr
 		return nil, err
 	}
 
-	return k8s.Dynamic().Resource(tokenRequestRes).Namespace(namespace).Get(name, metav1.GetOptions{})
+	return k8s.Dynamic().Resource(tokenRequestRes).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
 }
