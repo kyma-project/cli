@@ -104,19 +104,36 @@ func getLatestAvailableMasterHash(currentStep step.Step, fallbackLevel int) (str
 
 func (i *Installation) loadInstallationFiles() (map[string]*File, error) {
 	var installationFiles map[string]*File
-	if i.Options.IsLocal {
-		installationFiles =
-			map[string]*File{
-				installerFile:       {Path: "installer.yaml"},
-				installerCRFile:     {Path: "installer-cr.yaml.tpl"},
-				installerConfigFile: {Path: "installer-config-local.yaml.tpl"},
-			}
+	if i.Options.fromLocalSources {
+		if i.Options.IsLocal {
+			installationFiles =
+				map[string]*File{
+					installerFile:       {Path: "installer.yaml"},
+					installerCRFile:     {Path: "installer-cr.yaml.tpl"},
+					installerConfigFile: {Path: "installer-config-local.yaml.tpl"},
+				}
+		} else {
+			installationFiles =
+				map[string]*File{
+					installerFile:   {Path: "installer.yaml"},
+					installerCRFile: {Path: "installer-cr-cluster.yaml.tpl"},
+				}
+		}
 	} else {
-		installationFiles =
-			map[string]*File{
-				installerFile:   {Path: "installer.yaml"},
-				installerCRFile: {Path: "installer-cr-cluster.yaml.tpl"},
-			}
+		if i.Options.IsLocal {
+			installationFiles =
+				map[string]*File{
+					installerFile:       {Path: "kyma-installer-cluster.yaml"},
+					installerCRFile:     {Path: "kyma-installer-cr-local.yaml"},
+					installerConfigFile: {Path: "kyma-config-local.yaml"},
+				}
+		} else {
+			installationFiles =
+				map[string]*File{
+					installerFile:   {Path: "kyma-installer-cluster.yaml"},
+					installerCRFile: {Path: "kyma-installer-cr-cluster.yaml"},
+				}
+		}
 	}
 
 	for _, file := range installationFiles {

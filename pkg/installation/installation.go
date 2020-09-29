@@ -22,7 +22,9 @@ import (
 )
 
 const (
-	releaseResourcePattern = "https://raw.githubusercontent.com/kyma-project/kyma/%s/installation/resources/%s"
+	developmentBucket      = "kyma-development-artifacts"
+	releaseBucket          = "kyma-prow-artifacts"
+	releaseResourcePattern = "https://storage.googleapis.com/%s/%s/%s"
 	registryImagePattern   = "eu.gcr.io/kyma-project/kyma-installer:%s"
 	defaultDomain          = "kyma.local"
 	sourceLatest           = "latest"
@@ -218,7 +220,8 @@ func (i *Installation) validateConfigurations() error {
 			return pkgErrors.Wrap(err, "unable to get latest version of kyma")
 		}
 		i.Options.releaseVersion = fmt.Sprintf("master-%s", latest)
-		i.Options.configVersion = "master"
+		i.Options.configVersion = fmt.Sprintf("master-%s", latest)
+		i.Options.bucket = developmentBucket
 		i.Options.registryTemplate = registryImagePattern
 
 	case strings.EqualFold(i.Options.Source, sourceLatestPublished):
@@ -227,25 +230,40 @@ func (i *Installation) validateConfigurations() error {
 			return pkgErrors.Wrap(err, "unable to get latest published version of kyma")
 		}
 		i.Options.releaseVersion = fmt.Sprintf("master-%s", latest)
-		i.Options.configVersion = "master"
+		i.Options.configVersion = fmt.Sprintf("master-%s", latest)
+		i.Options.bucket = developmentBucket
 		i.Options.registryTemplate = registryImagePattern
 
-	//Install the specific version from release (ex: 1.3.0)
+	//Install the specific version from release (ex: 1.15.1)
 	case isSemVer(i.Options.Source):
 		i.Options.releaseVersion = i.Options.Source
 		i.Options.configVersion = i.Options.Source
+		i.Options.bucket = releaseBucket
 		i.Options.registryTemplate = registryImagePattern
 
 	//Install the specific commit hash (e.g. 34edf09a)
 	case isHex(i.Options.Source):
 		i.Options.releaseVersion = fmt.Sprintf("master-%s", i.Options.Source[:8])
+		i.Options.configVersion = fmt.Sprintf("master-%s", i.Options.Source[:8])
+		i.Options.bucket = developmentBucket
+		i.Options.registryTemplate = registryImagePattern
+
+	//Install the specific pull request (e.g. PR-9486)
+	case strings.HasPrefix(i.Options.Source, "PR-"):
+		i.Options.releaseVersion = i.Options.Source
 		i.Options.configVersion = i.Options.Source
+		i.Options.bucket = developmentBucket
 		i.Options.registryTemplate = registryImagePattern
 
 	//Install the kyma with the specific installer image (docker image URL)
 	case isDockerImage(i.Options.Source):
+		latest, err := getMasterHash()
+		if err != nil {
+			return pkgErrors.Wrap(err, "unable to get latest version of kyma")
+		}
 		i.Options.remoteImage = i.Options.Source
-		i.Options.configVersion = "master"
+		i.Options.configVersion = fmt.Sprintf("master-%s", latest)
+		i.Options.bucket = developmentBucket
 	default:
 		return fmt.Errorf("failed to parse the source flag. It can take one of the following: 'local', 'latest', 'latest-published', release version (e.g. 1.4.1), commit hash (e.g. 34edf09a) or installer image")
 	}
@@ -320,11 +338,9 @@ func (i *Installation) prepareFiles() (map[string]*File, error) {
 	} else {
 		if i.Options.remoteImage != "" {
 			err = replaceInstallerImage(files[installerFile], i.Options.remoteImage)
-		} else {
-			err = replaceInstallerImage(files[installerFile], buildDockerImageString(i.Options.registryTemplate, i.Options.releaseVersion))
-		}
-		if err != nil {
-			return nil, err
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -468,5 +484,5 @@ func (i *Installation) buildResult(duration time.Duration) (*Result, error) {
 }
 
 func (i *Installation) releaseFile(path string) string {
-	return fmt.Sprintf(releaseResourcePattern, i.Options.configVersion, path)
+	return fmt.Sprintf(releaseResourcePattern, i.Options.bucket, i.Options.configVersion, path)
 }
