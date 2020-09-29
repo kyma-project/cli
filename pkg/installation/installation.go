@@ -25,7 +25,6 @@ const (
 	developmentBucket      = "kyma-development-artifacts"
 	releaseBucket          = "kyma-prow-artifacts"
 	releaseResourcePattern = "https://storage.googleapis.com/%s/%s/%s"
-	registryImagePattern   = "eu.gcr.io/kyma-project/kyma-installer:%s"
 	defaultDomain          = "kyma.local"
 	sourceLatest           = "latest"
 	sourceLatestPublished  = "latest-published"
@@ -222,7 +221,6 @@ func (i *Installation) validateConfigurations() error {
 		i.Options.releaseVersion = fmt.Sprintf("master-%s", latest)
 		i.Options.configVersion = fmt.Sprintf("master-%s", latest)
 		i.Options.bucket = developmentBucket
-		i.Options.registryTemplate = registryImagePattern
 
 	case strings.EqualFold(i.Options.Source, sourceLatestPublished):
 		latest, err := getLatestAvailableMasterHash(i.currentStep, i.Options.FallbackLevel)
@@ -232,28 +230,24 @@ func (i *Installation) validateConfigurations() error {
 		i.Options.releaseVersion = fmt.Sprintf("master-%s", latest)
 		i.Options.configVersion = fmt.Sprintf("master-%s", latest)
 		i.Options.bucket = developmentBucket
-		i.Options.registryTemplate = registryImagePattern
 
 	//Install the specific version from release (ex: 1.15.1)
 	case isSemVer(i.Options.Source):
 		i.Options.releaseVersion = i.Options.Source
 		i.Options.configVersion = i.Options.Source
 		i.Options.bucket = releaseBucket
-		i.Options.registryTemplate = registryImagePattern
 
 	//Install the specific commit hash (e.g. 34edf09a)
 	case isHex(i.Options.Source):
 		i.Options.releaseVersion = fmt.Sprintf("master-%s", i.Options.Source[:8])
 		i.Options.configVersion = fmt.Sprintf("master-%s", i.Options.Source[:8])
 		i.Options.bucket = developmentBucket
-		i.Options.registryTemplate = registryImagePattern
 
 	//Install the specific pull request (e.g. PR-9486)
 	case strings.HasPrefix(i.Options.Source, "PR-"):
 		i.Options.releaseVersion = i.Options.Source
 		i.Options.configVersion = i.Options.Source
 		i.Options.bucket = developmentBucket
-		i.Options.registryTemplate = registryImagePattern
 
 	//Install the kyma with the specific installer image (docker image URL)
 	case isDockerImage(i.Options.Source):

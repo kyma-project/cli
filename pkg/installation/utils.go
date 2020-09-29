@@ -269,10 +269,6 @@ func LoadComponentsConfig(cfgFile string) ([]v1alpha1.KymaComponent, error) {
 	return []v1alpha1.KymaComponent{}, nil
 }
 
-func buildDockerImageString(template string, version string) string {
-	return fmt.Sprintf(template, version)
-}
-
 func downloadFile(path string) (io.ReadCloser, error) {
 	client := &http.Client{
 		Timeout: 5 * time.Second,
