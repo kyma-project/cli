@@ -83,7 +83,7 @@ func getLatestAvailableMasterHash(currentStep step.Step, fallbackLevel int) (str
 		}
 
 		abbrevHash := c.Hash.String()[:8]
-		resp, err := http.Head(fmt.Sprintf(releaseResourcePattern, developmentBucket, abbrevHash, "kyma-installer-cluster.yaml"))
+		resp, err := http.Head(fmt.Sprintf(releaseResourcePattern, developmentBucket, "master-"+abbrevHash, "kyma-installer-cluster.yaml"))
 		if err != nil {
 			return "", errors.Wrap(err, "while fetching example file from kyma-development-artifacts")
 		}
