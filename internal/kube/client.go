@@ -1,24 +1,30 @@
 package kube
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/kyma-project/cli/pkg/api/octopus"
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd/api"
 
-	istioNet "github.com/kyma-project/kyma/components/api-controller/pkg/clients/networking.istio.io/clientset/versioned"
+	istio "istio.io/client-go/pkg/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 const (
 	defaultHTTPTimeout = 30 * time.Second
 	defaultWaitSleep   = 3 * time.Second
+	defaultNamespace   = "default"
 )
 
 // client is the default KymaKube implementation
@@ -26,8 +32,9 @@ type client struct {
 	static  kubernetes.Interface
 	dynamic dynamic.Interface
 	octps   octopus.Interface
-	istio   istioNet.Interface
-	cfg     *rest.Config
+	istio   istio.Interface
+	restCfg *rest.Config
+	kubeCfg *api.Config
 }
 
 // NewFromConfig creates a new Kubernetes client based on the given Kubeconfig either provided by URL (in-cluster config) or via file (out-of-cluster config).
@@ -38,7 +45,7 @@ func NewFromConfig(url, file string) (KymaKube, error) {
 // NewFromConfigWithTimeout creates a new Kubernetes client based on the given Kubeconfig either provided by URL (in-cluster config) or via file (out-of-cluster config).
 // Allows to set a custom timeout for the Kubernetes HTTP client.
 func NewFromConfigWithTimeout(url, file string, t time.Duration) (KymaKube, error) {
-	config, err := Kubeconfig(url, file)
+	config, err := restConfig(url, file)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +67,12 @@ func NewFromConfigWithTimeout(url, file string, t time.Duration) (KymaKube, erro
 		return nil, err
 	}
 
-	istioClient, err := istioNet.NewForConfig(config)
+	istioClient, err := istio.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	kubeConfig, err := kubeConfig(file)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +82,8 @@ func NewFromConfigWithTimeout(url, file string, t time.Duration) (KymaKube, erro
 			dynamic: dClient,
 			octps:   octClient,
 			istio:   istioClient,
-			cfg:     config,
+			restCfg: config,
+			kubeCfg: kubeConfig,
 		},
 		nil
 
@@ -88,16 +101,20 @@ func (c *client) Octopus() octopus.Interface {
 	return c.octps
 }
 
-func (c *client) Istio() istioNet.Interface {
+func (c *client) Istio() istio.Interface {
 	return c.istio
 }
 
-func (c *client) Config() *rest.Config {
-	return c.cfg
+func (c *client) RestConfig() *rest.Config {
+	return c.restCfg
+}
+
+func (c *client) KubeConfig() *api.Config {
+	return c.kubeCfg
 }
 
 func (c *client) IsPodDeployed(namespace, name string) (bool, error) {
-	_, err := c.Static().CoreV1().Pods(namespace).Get(name, metav1.GetOptions{})
+	_, err := c.Static().CoreV1().Pods(namespace).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
 			return false, nil
@@ -109,7 +126,7 @@ func (c *client) IsPodDeployed(namespace, name string) (bool, error) {
 }
 
 func (c *client) IsPodDeployedByLabel(namespace, labelName, labelValue string) (bool, error) {
-	pods, err := c.Static().CoreV1().Pods(namespace).List(metav1.ListOptions{LabelSelector: fmt.Sprintf("%s=%s", labelName, labelValue)})
+	pods, err := c.Static().CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{LabelSelector: fmt.Sprintf("%s=%s", labelName, labelValue)})
 	if err != nil {
 		return false, err
 	}
@@ -119,7 +136,7 @@ func (c *client) IsPodDeployedByLabel(namespace, labelName, labelValue string) (
 
 func (c *client) WaitPodStatus(namespace, name string, status corev1.PodPhase) error {
 	for {
-		pod, err := c.Static().CoreV1().Pods(namespace).Get(name, metav1.GetOptions{})
+		pod, err := c.Static().CoreV1().Pods(namespace).Get(context.Background(), name, metav1.GetOptions{})
 		if err != nil && !strings.Contains(err.Error(), "not found") {
 			return err
 		}
@@ -133,7 +150,7 @@ func (c *client) WaitPodStatus(namespace, name string, status corev1.PodPhase) e
 
 func (c *client) WaitPodStatusByLabel(namespace, labelName, labelValue string, status corev1.PodPhase) error {
 	for {
-		pods, err := c.Static().CoreV1().Pods(namespace).List(metav1.ListOptions{LabelSelector: fmt.Sprintf("%s=%s", labelName, labelValue)})
+		pods, err := c.Static().CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{LabelSelector: fmt.Sprintf("%s=%s", labelName, labelValue)})
 		if err != nil {
 			return err
 		}
@@ -151,4 +168,46 @@ func (c *client) WaitPodStatusByLabel(namespace, labelName, labelValue string, s
 		}
 		time.Sleep(defaultWaitSleep)
 	}
+}
+
+func (c *client) WatchResource(res schema.GroupVersionResource, name, namespace string, checkFn func(u *unstructured.Unstructured) (bool, error)) error {
+	var timeout <-chan time.Time
+	if c.restCfg.Timeout > 0 {
+		timeout = time.After(c.restCfg.Timeout)
+	}
+
+	for {
+		select {
+		case <-timeout:
+			return fmt.Errorf("Timeout reached while waiting for %s", res.Resource)
+
+		default:
+			var itm *unstructured.Unstructured
+			var err error
+			if namespace != "" {
+				itm, err = c.Dynamic().Resource(res).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
+			} else {
+				itm, err = c.Dynamic().Resource(res).Get(context.Background(), name, metav1.GetOptions{})
+			}
+			if err != nil {
+				return errors.Wrapf(err, "Failed to check %s", res.Resource)
+			}
+
+			finished, err := checkFn(itm)
+			if err != nil {
+				return err
+			}
+			if finished {
+				return nil
+			}
+			time.Sleep(defaultWaitSleep)
+		}
+	}
+}
+
+func (c *client) DefaultNamespace() string {
+	if ctx, ok := c.KubeConfig().Contexts[c.KubeConfig().CurrentContext]; ok && ctx.Namespace != "" {
+		return ctx.Namespace
+	}
+	return defaultNamespace
 }

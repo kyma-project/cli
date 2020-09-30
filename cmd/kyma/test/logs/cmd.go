@@ -3,8 +3,9 @@ package logs
 import (
 	"bufio"
 	"fmt"
-	"github.com/kyma-project/cli/internal/logs"
 	"strings"
+
+	"github.com/kyma-project/cli/internal/logs"
 
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
 	"github.com/kyma-project/cli/cmd/kyma/test"

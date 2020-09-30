@@ -1,30 +1,39 @@
 package kube
 
 import (
+	"context"
 	"errors"
+	"fmt"
+	"os"
 	"testing"
 	"time"
 
+	"github.com/kyma-incubator/hydroform/install/scheme"
 	"github.com/stretchr/testify/require"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	corev1 "k8s.io/api/core/v1"
 
+	"k8s.io/client-go/rest"
 	k8stesting "k8s.io/client-go/testing"
+	"k8s.io/client-go/tools/clientcmd/api"
 
+	dynFake "k8s.io/client-go/dynamic/fake"
 	"k8s.io/client-go/kubernetes/fake"
 )
 
 func TestIsPodDeployed(t *testing.T) {
 	//setup
-	c := fakeClientWithNS(t)
-	_, err := c.Static().CoreV1().Pods("ns").Create(&corev1.Pod{
+	c := fakeClientWithNS()
+	_, err := c.Static().CoreV1().Pods("ns").Create(context.Background(), &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-pod1",
 		},
-	})
+	}, metav1.CreateOptions{})
 	require.NoError(t, err)
 
 	// test finding the pod
@@ -50,13 +59,13 @@ func TestIsPodDeployed(t *testing.T) {
 
 func TestIsPodDeployedByLabel(t *testing.T) {
 	//setup
-	c := fakeClientWithNS(t)
-	_, err := c.Static().CoreV1().Pods("ns").Create(&corev1.Pod{
+	c := fakeClientWithNS()
+	_, err := c.Static().CoreV1().Pods("ns").Create(context.Background(), &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   "test-pod1",
 			Labels: map[string]string{"team": "huskies"},
 		},
-	})
+	}, metav1.CreateOptions{})
 	require.NoError(t, err)
 
 	// test finding the pod
@@ -83,7 +92,7 @@ func TestIsPodDeployedByLabel(t *testing.T) {
 
 func TestWaitPodStatus(t *testing.T) {
 	// setup
-	c := fakeClientWithNS(t)
+	c := fakeClientWithNS()
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-pod1",
@@ -92,7 +101,7 @@ func TestWaitPodStatus(t *testing.T) {
 			Phase: corev1.PodPending,
 		},
 	}
-	_, err := c.Static().CoreV1().Pods("ns").Create(pod)
+	_, err := c.Static().CoreV1().Pods("ns").Create(context.Background(), pod, metav1.CreateOptions{})
 	require.NoError(t, err)
 
 	// wait for the pod to be running in a separate goroutine
@@ -105,7 +114,7 @@ func TestWaitPodStatus(t *testing.T) {
 	// wait a bit and set the pod to running
 	time.Sleep(1 * time.Second)
 	pod.Status.Phase = corev1.PodRunning
-	_, err = c.Static().CoreV1().Pods("ns").UpdateStatus(pod)
+	_, err = c.Static().CoreV1().Pods("ns").UpdateStatus(context.Background(), pod, metav1.UpdateOptions{})
 	require.NoError(t, err)
 
 	// we block waiting for the pod to change its state
@@ -114,7 +123,7 @@ func TestWaitPodStatus(t *testing.T) {
 
 func TestWaitPodStatusByLabel(t *testing.T) {
 	// setup
-	c := fakeClientWithNS(t)
+	c := fakeClientWithNS()
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   "test-pod1",
@@ -124,7 +133,7 @@ func TestWaitPodStatusByLabel(t *testing.T) {
 			Phase: corev1.PodPending,
 		},
 	}
-	_, err := c.Static().CoreV1().Pods("ns").Create(pod)
+	_, err := c.Static().CoreV1().Pods("ns").Create(context.Background(), pod, metav1.CreateOptions{})
 	require.NoError(t, err)
 
 	// wait for the pod to be running in a separate goroutine
@@ -137,24 +146,111 @@ func TestWaitPodStatusByLabel(t *testing.T) {
 	// wait a bit and set the pod to running
 	time.Sleep(1 * time.Second)
 	pod.Status.Phase = corev1.PodRunning
-	_, err = c.Static().CoreV1().Pods("ns").UpdateStatus(pod)
+	_, err = c.Static().CoreV1().Pods("ns").UpdateStatus(context.Background(), pod, metav1.UpdateOptions{})
 	require.NoError(t, err)
 
 	// we block waiting for the pod to change its state
 	require.NoError(t, <-waitCh)
 }
 
-func fakeClientWithNS(t *testing.T) *client {
+func TestWatchResource(t *testing.T) {
 	c := &client{
-		static: fake.NewSimpleClientset(),
+		restCfg: &rest.Config{},
+		dynamic: dynamicK8s(
+			&unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": "fakeAPI/fakeVersion",
+					"kind":       "fake",
+					"metadata": map[string]interface{}{
+						"name": "samus",
+					},
+					"status": map[string]interface{}{
+						"phase": "partying",
+					},
+				},
+			},
+		),
 	}
 
-	_, err := c.Static().CoreV1().Namespaces().Create(&corev1.Namespace{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "ns",
-		},
-	})
+	checkFn := func(u *unstructured.Unstructured) (bool, error) {
+		status, exists, err := unstructured.NestedString(u.Object, "status", "phase")
+		if err != nil {
+			return false, err
+		}
+		return exists && status == "partying", nil
+	}
+
+	// non namepsaced
+	err := c.WatchResource(schema.GroupVersionResource{Group: "fakeAPI", Version: "fakeVersion", Resource: "fakes"}, "samus", "", checkFn)
 	require.NoError(t, err)
 
-	return c
+	// namespaced
+	c.dynamic = dynamicK8s(
+		&corev1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "TallonIV",
+			},
+		},
+		&unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": "fakeAPI/fakeVersion",
+				"kind":       "fake",
+				"metadata": map[string]interface{}{
+					"name":      "samus",
+					"namespace": "TallonIV",
+				},
+				"status": map[string]interface{}{
+					"phase": "partying",
+				},
+			},
+		},
+	)
+	err = c.WatchResource(schema.GroupVersionResource{Group: "fakeAPI", Version: "fakeVersion", Resource: "fakes"}, "samus", "TallonIV", checkFn)
+	require.NoError(t, err)
+}
+
+func fakeClientWithNS() *client {
+	return &client{
+		static: fake.NewSimpleClientset(
+			&corev1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ns",
+				},
+			},
+		),
+	}
+}
+
+func dynamicK8s(objects ...runtime.Object) *dynFake.FakeDynamicClient {
+	resSchema, err := scheme.DefaultScheme()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	return dynFake.NewSimpleDynamicClient(resSchema, objects...)
+}
+
+func TestDefaultNamespace(t *testing.T) {
+	c := &client{
+		kubeCfg: &api.Config{},
+	}
+
+	// kubeconfig has no default NS
+	ns := c.DefaultNamespace()
+	require.Equal(t, defaultNamespace, ns, "The default namespace is expected if the kubeconfig has no default namespace.")
+
+	// kubeconfig has default NS but no context configured
+	c.kubeCfg.Contexts = map[string]*api.Context{
+		"mycontext": {
+			Cluster:   "some-cluster",
+			Namespace: "test",
+		},
+	}
+	ns = c.DefaultNamespace()
+	require.Equal(t, defaultNamespace, ns, "The default namespace is expected if the kubeconfig has no context configured.")
+
+	// kubeconfig has default NS and context
+	c.kubeCfg.CurrentContext = "mycontext"
+	ns = c.DefaultNamespace()
+	require.Equal(t, "test", ns, "The kubeconfig namespace is expected.")
 }

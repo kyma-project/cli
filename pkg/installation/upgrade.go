@@ -118,16 +118,13 @@ func (i *Installation) UpgradeKyma() (*Result, error) {
 func (i *Installation) getUpgradeLogInfo(prevInstallationState string, kymaVersion string) (string, error) {
 	var logInfo string
 	switch prevInstallationState {
-	case installationSDK.NoInstallationState:
+	case installationSDK.NoInstallationState, "":
 		return "", fmt.Errorf("It is not possible to upgrade, since Kyma is not installed on the cluster. Run \"kyma install\" to install Kyma")
 
 	case "InProgress", "Error":
 		// when installation is in in "Error" state, it doesn't mean that the installation has failed
 		// Installer might sill recover from the error and install Kyma successfully
-		logInfo = fmt.Sprintf("Installation in version %s is already in progress", kymaVersion)
-
-	case "":
-		return "", fmt.Errorf("Failed to get the installation status")
+		logInfo = fmt.Sprintf("Installation in version '%s' is already in progress", kymaVersion)
 	}
 
 	return logInfo, nil
@@ -210,7 +207,7 @@ func (i *Installation) promptMigrationGuide(currSemVersion *semver.Version, targ
 	}
 	if statusCode == 404 {
 		// no migration guide for this release
-		i.currentStep.LogInfof("No migration guide available for upgrade from version %s to %s", currSemVersion.String(), targetSemVersion.String())
+		i.currentStep.LogInfof("No migration guide available for upgrade from version '%s' to version '%s'", currSemVersion.String(), targetSemVersion.String())
 		return nil
 	}
 	if statusCode != 200 {

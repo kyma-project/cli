@@ -1,6 +1,7 @@
 package logs
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -36,7 +37,7 @@ func NewFetcherForTestingPods(podCli v1.PodsGetter, ignoredContainers []string) 
 func (f *FetcherForTestingPods) Logs(result oct.TestResult) (string, error) {
 	logs := strings.Builder{}
 	for _, exec := range result.Executions {
-		pod, err := f.podCli.Pods(result.Namespace).Get(exec.ID, metav1.GetOptions{})
+		pod, err := f.podCli.Pods(result.Namespace).Get(context.Background(), exec.ID, metav1.GetOptions{})
 		if err != nil {
 			return "", errors.Wrapf(err, "while getting %q pod", exec.ID)
 		}
@@ -53,7 +54,7 @@ func (f *FetcherForTestingPods) Logs(result oct.TestResult) (string, error) {
 			out, err := f.podCli.Pods(result.Namespace).GetLogs(exec.ID, &corev1.PodLogOptions{
 				Container: c,
 				Follow:    false,
-			}).DoRaw()
+			}).DoRaw(context.Background())
 
 			if err != nil {
 				return "", errors.Wrapf(err, "while fetching logs for pod %q", exec.ID)

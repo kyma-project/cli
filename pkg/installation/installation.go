@@ -1,6 +1,7 @@
 package installation
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -21,8 +22,9 @@ import (
 )
 
 const (
-	releaseResourcePattern = "https://raw.githubusercontent.com/kyma-project/kyma/%s/installation/resources/%s"
-	registryImagePattern   = "eu.gcr.io/kyma-project/kyma-installer:%s"
+	developmentBucket      = "kyma-development-artifacts"
+	releaseBucket          = "kyma-prow-artifacts"
+	releaseResourcePattern = "https://storage.googleapis.com/%s/%s/%s"
 	defaultDomain          = "kyma.local"
 	sourceLatest           = "latest"
 	sourceLatestPublished  = "latest-published"
@@ -99,13 +101,9 @@ func (i *Installation) InstallKyma() (*Result, error) {
 		s.Failure()
 		return nil, err
 	}
-	logInfo, err := i.getInstallationLogInfo(prevInstallationState, kymaVersion)
-	if err != nil {
-		s.Failure()
-		return nil, err
-	}
+	logInfo := i.getInstallationLogInfo(prevInstallationState, kymaVersion)
 
-	if prevInstallationState == installationSDK.NoInstallationState {
+	if prevInstallationState == installationSDK.NoInstallationState || prevInstallationState == "" {
 		// Validating configurations
 		if err := i.validateConfigurations(); err != nil {
 			s.Failure()
@@ -134,7 +132,7 @@ func (i *Installation) InstallKyma() (*Result, error) {
 	}
 
 	if prevInstallationState != "Installed" && !i.Options.NoWait {
-		if prevInstallationState == installationSDK.NoInstallationState {
+		if prevInstallationState == installationSDK.NoInstallationState || prevInstallationState == "" {
 			i.newStep("Waiting for installation to start")
 		} else {
 			i.newStep("Re-attaching installation status")
@@ -155,7 +153,7 @@ func (i *Installation) InstallKyma() (*Result, error) {
 }
 
 func (i *Installation) checkPrevInstallation() (string, string, error) {
-	prevInstallationState, err := i.Service.CheckInstallationState(i.K8s.Config())
+	prevInstallationState, err := i.Service.CheckInstallationState(i.K8s.RestConfig())
 	if err != nil {
 		installErr := installationSDK.InstallationError{}
 		if errors.As(err, &installErr) {
@@ -166,7 +164,7 @@ func (i *Installation) checkPrevInstallation() (string, string, error) {
 	}
 
 	var kymaVersion string
-	if prevInstallationState.State != installationSDK.NoInstallationState {
+	if prevInstallationState.State != installationSDK.NoInstallationState && prevInstallationState.State != "" {
 		kymaVersion, err = version.KymaVersion(i.K8s)
 		if err != nil {
 			return "", "", err
@@ -176,7 +174,7 @@ func (i *Installation) checkPrevInstallation() (string, string, error) {
 	return prevInstallationState.State, kymaVersion, nil
 }
 
-func (i *Installation) getInstallationLogInfo(prevInstallationState string, kymaVersion string) (string, error) {
+func (i *Installation) getInstallationLogInfo(prevInstallationState string, kymaVersion string) string {
 	var logInfo string
 	switch prevInstallationState {
 	case "Installed":
@@ -186,12 +184,9 @@ func (i *Installation) getInstallationLogInfo(prevInstallationState string, kyma
 		// when installation is in in "Error" state, it doesn't mean that the installation has failed
 		// Installer might sill recover from the error and install Kyma successfully
 		logInfo = fmt.Sprintf("Installation in version '%s' is already in progress", kymaVersion)
-
-	case "":
-		return "", fmt.Errorf("Failed to get previous installation status")
 	}
 
-	return logInfo, nil
+	return logInfo
 }
 
 func (i *Installation) validateConfigurations() error {
@@ -224,8 +219,8 @@ func (i *Installation) validateConfigurations() error {
 			return pkgErrors.Wrap(err, "unable to get latest version of kyma")
 		}
 		i.Options.releaseVersion = fmt.Sprintf("master-%s", latest)
-		i.Options.configVersion = "master"
-		i.Options.registryTemplate = registryImagePattern
+		i.Options.configVersion = fmt.Sprintf("master-%s", latest)
+		i.Options.bucket = developmentBucket
 
 	case strings.EqualFold(i.Options.Source, sourceLatestPublished):
 		latest, err := getLatestAvailableMasterHash(i.currentStep, i.Options.FallbackLevel)
@@ -233,25 +228,36 @@ func (i *Installation) validateConfigurations() error {
 			return pkgErrors.Wrap(err, "unable to get latest published version of kyma")
 		}
 		i.Options.releaseVersion = fmt.Sprintf("master-%s", latest)
-		i.Options.configVersion = "master"
-		i.Options.registryTemplate = registryImagePattern
+		i.Options.configVersion = fmt.Sprintf("master-%s", latest)
+		i.Options.bucket = developmentBucket
 
-	//Install the specific version from release (ex: 1.3.0)
+	//Install the specific version from release (ex: 1.15.1)
 	case isSemVer(i.Options.Source):
 		i.Options.releaseVersion = i.Options.Source
 		i.Options.configVersion = i.Options.Source
-		i.Options.registryTemplate = registryImagePattern
+		i.Options.bucket = releaseBucket
 
 	//Install the specific commit hash (e.g. 34edf09a)
 	case isHex(i.Options.Source):
 		i.Options.releaseVersion = fmt.Sprintf("master-%s", i.Options.Source[:8])
+		i.Options.configVersion = fmt.Sprintf("master-%s", i.Options.Source[:8])
+		i.Options.bucket = developmentBucket
+
+	//Install the specific pull request (e.g. PR-9486)
+	case strings.HasPrefix(i.Options.Source, "PR-"):
+		i.Options.releaseVersion = i.Options.Source
 		i.Options.configVersion = i.Options.Source
-		i.Options.registryTemplate = registryImagePattern
+		i.Options.bucket = developmentBucket
 
 	//Install the kyma with the specific installer image (docker image URL)
 	case isDockerImage(i.Options.Source):
+		latest, err := getMasterHash()
+		if err != nil {
+			return pkgErrors.Wrap(err, "unable to get latest version of kyma")
+		}
 		i.Options.remoteImage = i.Options.Source
-		i.Options.configVersion = "master"
+		i.Options.configVersion = fmt.Sprintf("master-%s", latest)
+		i.Options.bucket = developmentBucket
 	default:
 		return fmt.Errorf("failed to parse the source flag. It can take one of the following: 'local', 'latest', 'latest-published', release version (e.g. 1.4.1), commit hash (e.g. 34edf09a) or installer image")
 	}
@@ -326,11 +332,9 @@ func (i *Installation) prepareFiles() (map[string]*File, error) {
 	} else {
 		if i.Options.remoteImage != "" {
 			err = replaceInstallerImage(files[installerFile], i.Options.remoteImage)
-		} else {
-			err = replaceInstallerImage(files[installerFile], buildDockerImageString(i.Options.registryTemplate, i.Options.releaseVersion))
-		}
-		if err != nil {
-			return nil, err
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -371,7 +375,7 @@ func (i *Installation) waitForInstaller() error {
 		select {
 		case <-timeout:
 			i.currentStep.Failure()
-			if _, err := i.Service.CheckInstallationState(i.K8s.Config()); err != nil {
+			if _, err := i.Service.CheckInstallationState(i.K8s.RestConfig()); err != nil {
 				installationError := installationSDK.InstallationError{}
 				if ok := errors.As(err, &installationError); ok {
 					i.currentStep.LogErrorf("Installation error occurred while installing Kyma: %s. Details: %s", installationError.Error(), installationError.Details())
@@ -379,7 +383,7 @@ func (i *Installation) waitForInstaller() error {
 			}
 			return errors.New("Timeout reached while waiting for installation to complete")
 		default:
-			installationState, err := i.Service.CheckInstallationState(i.K8s.Config())
+			installationState, err := i.Service.CheckInstallationState(i.K8s.RestConfig())
 			if err != nil {
 				if !errorOccured {
 					errorOccured = true
@@ -425,7 +429,7 @@ func (i *Installation) waitForInstaller() error {
 func (i *Installation) buildResult(duration time.Duration) (*Result, error) {
 	// In case that noWait flag is set, check that Kyma was actually installed before building the Result
 	if i.Options.NoWait {
-		installationState, err := i.Service.CheckInstallationState(i.K8s.Config())
+		installationState, err := i.Service.CheckInstallationState(i.K8s.RestConfig())
 		if err != nil {
 			return nil, err
 		}
@@ -439,19 +443,19 @@ func (i *Installation) buildResult(duration time.Duration) (*Result, error) {
 		return nil, err
 	}
 
-	adm, err := i.K8s.Static().CoreV1().Secrets("kyma-system").Get("admin-user", metav1.GetOptions{})
+	adm, err := i.K8s.Static().CoreV1().Secrets("kyma-system").Get(context.Background(), "admin-user", metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
 
 	var consoleURL string
-	vs, err := i.K8s.Istio().NetworkingV1alpha3().VirtualServices("kyma-system").Get("console-web", metav1.GetOptions{})
+	vs, err := i.K8s.Istio().NetworkingV1alpha3().VirtualServices("kyma-system").Get(context.Background(), "console-web", metav1.GetOptions{})
 	switch {
 	case apiErrors.IsNotFound(err):
 		consoleURL = "not installed"
 	case err != nil:
 		return nil, err
-	case vs != nil && vs.Spec != nil && len(vs.Spec.Hosts) > 0:
+	case vs != nil && len(vs.Spec.Hosts) > 0:
 		consoleURL = fmt.Sprintf("https://%s", vs.Spec.Hosts[0])
 	default:
 		return nil, pkgErrors.New("console host could not be obtained")
@@ -464,7 +468,7 @@ func (i *Installation) buildResult(duration time.Duration) (*Result, error) {
 
 	return &Result{
 		KymaVersion:   v,
-		Host:          i.K8s.Config().Host,
+		Host:          i.K8s.RestConfig().Host,
 		Console:       consoleURL,
 		AdminEmail:    string(adm.Data["email"]),
 		AdminPassword: string(adm.Data["password"]),
@@ -474,5 +478,5 @@ func (i *Installation) buildResult(duration time.Duration) (*Result, error) {
 }
 
 func (i *Installation) releaseFile(path string) string {
-	return fmt.Sprintf(releaseResourcePattern, i.Options.configVersion, path)
+	return fmt.Sprintf(releaseResourcePattern, i.Options.bucket, i.Options.configVersion, path)
 }

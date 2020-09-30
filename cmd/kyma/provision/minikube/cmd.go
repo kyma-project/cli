@@ -1,6 +1,7 @@
 package minikube
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -37,6 +38,7 @@ var (
 		vmDriverHyperkit,
 		vmDriverVirtualBox,
 		"kvm2",
+		"docker",
 		"none",
 	}
 	ErrMinikubeRunning = errors.New("Minikube already running")
@@ -228,6 +230,9 @@ func (c *command) startMinikube() error {
 		"--extra-config=apiserver.authorization-mode=RBAC",
 		"--extra-config=apiserver.cors-allowed-origins='http://*'",
 		"--extra-config=apiserver.enable-admission-plugins=DefaultStorageClass,LimitRanger,MutatingAdmissionWebhook,NamespaceExists,NamespaceLifecycle,ResourceQuota,ServiceAccount,ValidatingAdmissionWebhook",
+		"--extra-config=apiserver.service-account-signing-key-file=/var/lib/minikube/certs/sa.key",
+		"--extra-config=apiserver.service-account-issuer=kubernetes/serviceaccount",
+		"--extra-config=apiserver.service-account-api-audiences=api",
 		"--kubernetes-version=v" + kubernetesVersion,
 		"--vm-driver", c.opts.VMDriver,
 		"--disk-size", c.opts.DiskSize,
@@ -252,12 +257,12 @@ func (c *command) startMinikube() error {
 // fixes https://github.com/kyma-project/kyma/issues/1986
 func (c *command) createClusterRoleBinding() error {
 	var err error
-	bs, err := c.K8s.Static().RbacV1().ClusterRoleBindings().List(metav1.ListOptions{LabelSelector: "app=kyma"})
+	bs, err := c.K8s.Static().RbacV1().ClusterRoleBindings().List(context.Background(), metav1.ListOptions{LabelSelector: "app=kyma"})
 	if err != nil {
 		return err
 	}
 	if len(bs.Items) == 0 {
-		_, err = c.K8s.Static().RbacV1().ClusterRoleBindings().Create(&rbacv1.ClusterRoleBinding{
+		_, err = c.K8s.Static().RbacV1().ClusterRoleBindings().Create(context.Background(), &rbacv1.ClusterRoleBinding{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:   "default-sa-cluster-admin",
 				Labels: map[string]string{"app": "kyma"},
@@ -273,7 +278,7 @@ func (c *command) createClusterRoleBinding() error {
 					Name:      "default",
 				},
 			},
-		})
+		}, metav1.CreateOptions{})
 	}
 	return err
 }
@@ -352,7 +357,7 @@ func driverSupported(driver string) bool {
 }
 
 func (c *command) createClusterInfoConfigMap() error {
-	cm, err := c.K8s.Static().CoreV1().ConfigMaps("kube-system").Get("kyma-cluster-info", metav1.GetOptions{})
+	cm, err := c.K8s.Static().CoreV1().ConfigMaps("kube-system").Get(context.Background(), "kyma-cluster-info", metav1.GetOptions{})
 	if err == nil && cm != nil {
 		return nil
 	} else if err != nil && !strings.Contains(err.Error(), "not found") {
@@ -360,7 +365,7 @@ func (c *command) createClusterInfoConfigMap() error {
 	}
 
 	minikubeIP := c.getMinikubeIP()
-	_, err = c.K8s.Static().CoreV1().ConfigMaps("kube-system").Create(&corev1.ConfigMap{
+	_, err = c.K8s.Static().CoreV1().ConfigMaps("kube-system").Create(context.Background(), &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   "kyma-cluster-info",
 			Labels: map[string]string{"app": "kyma"},
@@ -372,7 +377,7 @@ func (c *command) createClusterInfoConfigMap() error {
 			"localIP":       minikubeIP,
 			"localVMDriver": c.opts.VMDriver,
 		},
-	})
+	}, metav1.CreateOptions{})
 
 	return err
 }

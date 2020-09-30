@@ -3,6 +3,7 @@ package kyma
 import (
 	"github.com/kyma-project/cli/cmd/kyma/completion"
 	"github.com/kyma-project/cli/cmd/kyma/console"
+	"github.com/kyma-project/cli/cmd/kyma/create"
 	"github.com/kyma-project/cli/cmd/kyma/install"
 	"github.com/kyma-project/cli/cmd/kyma/provision/aks"
 	"github.com/kyma-project/cli/cmd/kyma/provision/gardener"
@@ -64,6 +65,7 @@ Kyma CLI allows you to install, test, and manage Kyma.
 		provisionCmd,
 		console.NewCmd(console.NewOptions(o)),
 		upgrade.NewCmd(upgrade.NewOptions(o)),
+		create.NewCmd(o),
 	)
 
 	testCmd := test.NewCmd()

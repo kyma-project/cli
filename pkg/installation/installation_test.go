@@ -9,10 +9,11 @@ import (
 	installSDK "github.com/kyma-incubator/hydroform/install/installation"
 	k8sMocks "github.com/kyma-project/cli/internal/kube/mocks"
 	"github.com/kyma-project/cli/pkg/installation/mocks"
-	"github.com/kyma-project/kyma/components/api-controller/pkg/apis/networking.istio.io/v1alpha3"
-	fakeIstio "github.com/kyma-project/kyma/components/api-controller/pkg/clients/networking.istio.io/clientset/versioned/fake"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	networkingv1alpha3 "istio.io/api/networking/v1alpha3"
+	"istio.io/client-go/pkg/apis/networking/v1alpha3"
+	fakeIstio "istio.io/client-go/pkg/clientset/versioned/fake"
 	v1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
@@ -33,7 +34,7 @@ func TestInstallKyma(t *testing.T) {
 				Containers: []v1.Container{
 					{
 						Name:  "Installer",
-						Image: "fake-registry/installer:1.11.0",
+						Image: "fake-registry/installer:1.15.1",
 					},
 				},
 			},
@@ -57,7 +58,7 @@ func TestInstallKyma(t *testing.T) {
 				Name:      "console-web",
 				Namespace: "kyma-system",
 			},
-			Spec: &v1alpha3.VirtualServiceSpec{
+			Spec: networkingv1alpha3.VirtualService{
 				Hosts: []string{"fake-console-url"},
 			},
 		},
@@ -77,13 +78,13 @@ func TestInstallKyma(t *testing.T) {
 			OverrideConfigs:  nil,
 			ComponentsConfig: "",
 			IsLocal:          false,
-			Source:           "1.11.0",
+			Source:           "1.15.1",
 		},
 	}
 
 	kymaMock.On("Static").Return(k8sMock)
 	kymaMock.On("Istio").Return(istioMock)
-	kymaMock.On("Config", mock.Anything).Return(&rest.Config{Host: "fake-kubeconfig-host"})
+	kymaMock.On("RestConfig", mock.Anything).Return(&rest.Config{Host: "fake-kubeconfig-host"})
 
 	// There is an existing installation
 	iServiceMock.On("CheckInstallationState", mock.Anything).Return(installSDK.InstallationState{State: "Installed"}, nil).Once()
@@ -107,12 +108,15 @@ func TestInstallKyma(t *testing.T) {
 	require.Error(t, err)
 	require.Empty(t, r)
 
-	// Empty installation status
+	// Empty installation status will be treated the same way as a cluster with no installation, so we should have a happy path
 	iServiceMock.On("CheckInstallationState", mock.Anything).Return(installSDK.InstallationState{}, nil).Once()
+	iServiceMock.On("TriggerInstallation", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	iServiceMock.On("CheckInstallationState", mock.Anything).Return(installSDK.InstallationState{State: "Installed"}, nil).Once()
+	kymaMock.On("WaitPodStatusByLabel", "kyma-installer", "name", "kyma-installer", v1.PodRunning).Return(nil)
 
 	r, err = i.InstallKyma()
-	require.Error(t, err)
-	require.Empty(t, r)
+	require.NoError(t, err)
+	require.NotEmpty(t, r)
 
 	// Happy path
 	iServiceMock.On("CheckInstallationState", mock.Anything).Return(installSDK.InstallationState{State: installSDK.NoInstallationState}, nil).Once()
@@ -130,7 +134,7 @@ func TestValidateConfigurations(t *testing.T) {
 	i := &Installation{
 		Options: &Options{
 			Domain: "irrelevant",
-			Source: "1.11.0",
+			Source: "1.15.1",
 		},
 	}
 
@@ -143,7 +147,7 @@ func TestValidateConfigurations(t *testing.T) {
 			Domain:  "irrelevant",
 			TLSCert: "fake-cert",
 			TLSKey:  "fake-key",
-			Source:  "1.11.0",
+			Source:  "1.15.1",
 		},
 	}
 
@@ -188,6 +192,11 @@ func TestValidateConfigurations(t *testing.T) {
 
 	// Source commit id
 	i.Options.Source = "34edf09a"
+	err = i.validateConfigurations()
+	require.NoError(t, err)
+
+	// Source pull request
+	i.Options.Source = "PR-9486"
 	err = i.validateConfigurations()
 	require.NoError(t, err)
 

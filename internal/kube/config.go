@@ -3,16 +3,27 @@ package kube
 import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/clientcmd/api"
 )
 
-// Kubeconfig loads the rest configuration needed by k8s clients to interact with clusters.
+// restConfig loads the rest configuration needed by k8s clients to interact with clusters based on the kubeconfig.
 // Loading rules are based on standard defined kubernetes config loading.
-func Kubeconfig(url, file string) (*rest.Config, error) {
+func restConfig(url, file string) (*rest.Config, error) {
 	// Default PathOptions gets kubeconfig in this order: the explicit path given, KUBECONFIG current context, recommentded file path
 	po := clientcmd.NewDefaultPathOptions()
 	po.LoadingRules.ExplicitPath = file
 
 	return clientcmd.BuildConfigFromKubeconfigGetter(url, po.GetStartingConfig)
+}
+
+// kubeConfig loads a structured representation of the Kubeconfig.
+// Loading rules are based on standard defined kubernetes config loading.
+func kubeConfig(file string) (*api.Config, error) {
+	// Default PathOptions gets kubeconfig in this order: the explicit path given, KUBECONFIG current context, recommentded file path
+	po := clientcmd.NewDefaultPathOptions()
+	po.LoadingRules.ExplicitPath = file
+
+	return po.GetStartingConfig()
 }
 
 // Append adds the provided kubeconfig in the []byte to the Kubeconfig in the target path without altering other existing conifgs.
