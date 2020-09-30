@@ -12,10 +12,10 @@ type Options struct {
 	releaseVersion string
 	// configVersion is set to the version of the configuration files being used.
 	configVersion string
+	// bucket is set to the name of the bucket where installation artifacts being stored.
+	bucket string
 	// remoteImage holds the image URL if the installation source is an image.
 	remoteImage string
-	// registryTemplate specifies the registry image pattern.
-	registryTemplate string
 	// fromLocalSources is set if the installation source is local.
 	fromLocalSources bool
 

@@ -34,7 +34,7 @@ func TestInstallKyma(t *testing.T) {
 				Containers: []v1.Container{
 					{
 						Name:  "Installer",
-						Image: "fake-registry/installer:1.11.0",
+						Image: "fake-registry/installer:1.15.1",
 					},
 				},
 			},
@@ -78,7 +78,7 @@ func TestInstallKyma(t *testing.T) {
 			OverrideConfigs:  nil,
 			ComponentsConfig: "",
 			IsLocal:          false,
-			Source:           "1.11.0",
+			Source:           "1.15.1",
 		},
 	}
 
@@ -134,7 +134,7 @@ func TestValidateConfigurations(t *testing.T) {
 	i := &Installation{
 		Options: &Options{
 			Domain: "irrelevant",
-			Source: "1.11.0",
+			Source: "1.15.1",
 		},
 	}
 
@@ -147,7 +147,7 @@ func TestValidateConfigurations(t *testing.T) {
 			Domain:  "irrelevant",
 			TLSCert: "fake-cert",
 			TLSKey:  "fake-key",
-			Source:  "1.11.0",
+			Source:  "1.15.1",
 		},
 	}
 
@@ -192,6 +192,11 @@ func TestValidateConfigurations(t *testing.T) {
 
 	// Source commit id
 	i.Options.Source = "34edf09a"
+	err = i.validateConfigurations()
+	require.NoError(t, err)
+
+	// Source pull request
+	i.Options.Source = "PR-9486"
 	err = i.validateConfigurations()
 	require.NoError(t, err)
 

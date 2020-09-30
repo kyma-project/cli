@@ -84,10 +84,11 @@ The standard installation uses the minimal configuration. The system performs th
 	cobraCmd.Flags().StringVarP(&o.TLSCert, "tlsCert", "", "", "TLS certificate for the domain used for installation. The certificate must be a base64-encoded value.")
 	cobraCmd.Flags().StringVarP(&o.TLSKey, "tlsKey", "", "", "TLS key for the domain used for installation. The key must be a base64-encoded value.")
 	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", DefaultKymaVersion, `Installation source. 
-	- To use the specific release, write "kyma install --source=1.3.0".
+	- To use the specific release, write "kyma install --source=1.15.1".
 	- To use the latest master, write "kyma install --source=latest".
 	- To use the latest published master, which is the latest commit with released images, write "kyma install --source=latest-published".
 	- To use a commit, write "kyma install --source=34edf09a".
+	- To use a pull request, write "kyma install --source=PR-9486".
 	- To use the local sources, write "kyma install --source=local".
 	- To use a custom installer image, write "kyma install --source=user/my-kyma-installer:v1.4.0".`)
 	cobraCmd.Flags().StringVarP(&o.LocalSrcPath, "src-path", "", "", "Absolute path to local sources.")

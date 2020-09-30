@@ -33,7 +33,7 @@ func TestUpgradeKyma(t *testing.T) {
 				Containers: []v1.Container{
 					{
 						Name:  "Installer",
-						Image: "fake-registry/installer:1.11.0",
+						Image: "fake-registry/installer:1.15.0",
 					},
 				},
 			},
@@ -82,7 +82,7 @@ func TestUpgradeKyma(t *testing.T) {
 			OverrideConfigs:  nil,
 			ComponentsConfig: "",
 			IsLocal:          false,
-			Source:           "1.11.1",
+			Source:           "1.15.1",
 		},
 	}
 

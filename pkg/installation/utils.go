@@ -83,7 +83,7 @@ func getLatestAvailableMasterHash(currentStep step.Step, fallbackLevel int) (str
 		}
 
 		abbrevHash := c.Hash.String()[:8]
-		resp, err := http.Head(fmt.Sprintf("https://storage.googleapis.com/kyma-development-artifacts/master-%s/kyma-installer-cluster.yaml", abbrevHash))
+		resp, err := http.Head(fmt.Sprintf(releaseResourcePattern, developmentBucket, "master-"+abbrevHash, "kyma-installer-cluster.yaml"))
 		if err != nil {
 			return "", errors.Wrap(err, "while fetching example file from kyma-development-artifacts")
 		}
@@ -104,19 +104,36 @@ func getLatestAvailableMasterHash(currentStep step.Step, fallbackLevel int) (str
 
 func (i *Installation) loadInstallationFiles() (map[string]*File, error) {
 	var installationFiles map[string]*File
-	if i.Options.IsLocal {
-		installationFiles =
-			map[string]*File{
-				installerFile:       {Path: "installer.yaml"},
-				installerCRFile:     {Path: "installer-cr.yaml.tpl"},
-				installerConfigFile: {Path: "installer-config-local.yaml.tpl"},
-			}
+	if i.Options.fromLocalSources {
+		if i.Options.IsLocal {
+			installationFiles =
+				map[string]*File{
+					installerFile:       {Path: "installer.yaml"},
+					installerCRFile:     {Path: "installer-cr.yaml.tpl"},
+					installerConfigFile: {Path: "installer-config-local.yaml.tpl"},
+				}
+		} else {
+			installationFiles =
+				map[string]*File{
+					installerFile:   {Path: "installer.yaml"},
+					installerCRFile: {Path: "installer-cr-cluster.yaml.tpl"},
+				}
+		}
 	} else {
-		installationFiles =
-			map[string]*File{
-				installerFile:   {Path: "installer.yaml"},
-				installerCRFile: {Path: "installer-cr-cluster.yaml.tpl"},
-			}
+		if i.Options.IsLocal {
+			installationFiles =
+				map[string]*File{
+					installerFile:       {Path: "kyma-installer-cluster.yaml"},
+					installerCRFile:     {Path: "kyma-installer-cr-local.yaml"},
+					installerConfigFile: {Path: "kyma-config-local.yaml"},
+				}
+		} else {
+			installationFiles =
+				map[string]*File{
+					installerFile:   {Path: "kyma-installer-cluster.yaml"},
+					installerCRFile: {Path: "kyma-installer-cr-cluster.yaml"},
+				}
+		}
 	}
 
 	for _, file := range installationFiles {
@@ -250,10 +267,6 @@ func LoadComponentsConfig(cfgFile string) ([]v1alpha1.KymaComponent, error) {
 	}
 
 	return []v1alpha1.KymaComponent{}, nil
-}
-
-func buildDockerImageString(template string, version string) string {
-	return fmt.Sprintf(template, version)
 }
 
 func downloadFile(path string) (io.ReadCloser, error) {
