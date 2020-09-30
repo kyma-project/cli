@@ -72,7 +72,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cmd.Flags().StringVar(&o.CPUS, "cpus", "4", "Specifies the number of CPUs used for installation.")
 	cmd.Flags().StringVar(&o.Profile, "profile", "", "Specifies the Minikube profile.")
 	cmd.Flags().DurationVar(&o.Timeout, "timeout", 5*time.Minute, `Maximum time during which the provisioning takes place, where "0" means "infinite". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".`)
-	cmd.Flags().BoolVar(&o.UseVPNKitSock, "use-hyperkit-vpnkit-sock", false, `Uses vpnkit sock provided by Docker. This is useful when DNS Port (53) is being used by some other program like dns-proxy (eg. provided by Cisco Umbrella.  This flag works only on Mac OS).`)
+	cmd.Flags().BoolVar(&o.UseVPNKitSock, "use-hyperkit-vpnkit-sock", false, `Uses vpnkit sock provided by Docker. This is useful when DNS Port (53) is being used by some other program like dns-proxy (eg. provided by Cisco Umbrella. This flag works only on Mac OS).`)
 	return cmd
 }
 

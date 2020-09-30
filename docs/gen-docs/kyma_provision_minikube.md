@@ -21,7 +21,7 @@ kyma provision minikube [flags]
       --memory string                Specifies RAM reserved for installation. (default "8192")
       --profile string               Specifies the Minikube profile.
       --timeout duration             Maximum time during which the provisioning takes place, where "0" means "infinite". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h". (default 5m0s)
-      --use-hyperkit-vpnkit-sock     Uses vpnkit sock provided by Docker. This is useful when DNS Port (53) is being used by some other program like dns-proxy (eg. provided by Cisco Umbrella.  This flag works only on Mac OS).
+      --use-hyperkit-vpnkit-sock     Uses vpnkit sock provided by Docker. This is useful when DNS Port (53) is being used by some other program like dns-proxy (eg. provided by Cisco Umbrella. This flag works only on Mac OS).
       --vm-driver string             Specifies the VM driver. Possible values: vmwarefusion,kvm,xhyve,hyperv,hyperkit,virtualbox,kvm2,docker,none (default "hyperkit")
 ```
 
