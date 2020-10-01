@@ -4,29 +4,29 @@
 		<properties>
 			<property name="kyma.cli.version" value="N/A"></property>
 		</properties>
-		<testcase classname="octopus" name="[testing] compass-system/compass-director (executions: 1)" time="0.000000">
+		<testcase classname="octopus" name="[testsuite-all] compass-system/compass-director (executions: 1)" time="0.000000">
 			<failure message="Failed" type=""><![CDATA[Test was marked as failed due to too long Running status: Faked logs for execution: compass-director
 ]]></failure>
 		</testcase>
-		<testcase classname="octopus" name="[testing] kyma-system/compass-e2e (executions: 1)" time="0.000000">
+		<testcase classname="octopus" name="[testsuite-all] kyma-system/compass-e2e (executions: 1)" time="0.000000">
 			<failure message="Failed" type=""><![CDATA[Test was marked as failed due to too long Running status: Faked logs for execution: compass-e2e
 ]]></failure>
 		</testcase>
-		<testcase classname="octopus" name="[testing] kyma-system/core-apiserver-proxy" time="148.000000"></testcase>
-		<testcase classname="octopus" name="[testing] kyma-system/dex-integration" time="28.000000"></testcase>
-		<testcase classname="octopus" name="[testing] kyma-system/service-catalog" time="82.000000"></testcase>
-		<testcase classname="octopus" name="[testing] kyma-system/dex-connection" time="2.000000"></testcase>
-		<testcase classname="octopus" name="[testing] knative-serving/knative-serving" time="44.000000"></testcase>
-		<testcase classname="octopus" name="[testing] kyma-integration/connector-service" time="31.000000"></testcase>
-		<testcase classname="octopus" name="[testing] kyma-system/api-gateway" time="135.000000"></testcase>
-		<testcase classname="octopus" name="[testing] compass-system/compass-runtime-agent-tests" time="486.000000"></testcase>
-		<testcase classname="octopus" name="[testing] kyma-system/kiali" time="3.000000"></testcase>
-		<testcase classname="octopus" name="[testing] kyma-system/monitoring" time="17.000000"></testcase>
-		<testcase classname="octopus" name="[testing] kyma-system/event-bus" time="61.000000"></testcase>
-		<testcase classname="octopus" name="[testing] kyma-system/logging" time="15.000000"></testcase>
-		<testcase classname="octopus" name="[testing] kyma-integration/connection-token-handler" time="15.000000"></testcase>
-		<testcase classname="octopus" name="[testing] kyma-system/core-api-controller" time="80.000000"></testcase>
-		<testcase classname="octopus" name="[testing] kyma-system/core-cluster-users" time="79.000000"></testcase>
-		<testcase classname="octopus" name="[testing] kyma-system/core-kubeless" time="119.000000"></testcase>
+		<testcase classname="octopus" name="[testsuite-all] kyma-system/core-apiserver-proxy" time="148.000000"></testcase>
+		<testcase classname="octopus" name="[testsuite-all] kyma-system/dex-integration" time="28.000000"></testcase>
+		<testcase classname="octopus" name="[testsuite-all] kyma-system/service-catalog" time="82.000000"></testcase>
+		<testcase classname="octopus" name="[testsuite-all] kyma-system/dex-connection" time="2.000000"></testcase>
+		<testcase classname="octopus" name="[testsuite-all] knative-serving/knative-serving" time="44.000000"></testcase>
+		<testcase classname="octopus" name="[testsuite-all] kyma-integration/connector-service" time="31.000000"></testcase>
+		<testcase classname="octopus" name="[testsuite-all] kyma-system/api-gateway" time="135.000000"></testcase>
+		<testcase classname="octopus" name="[testsuite-all] compass-system/compass-runtime-agent-tests" time="486.000000"></testcase>
+		<testcase classname="octopus" name="[testsuite-all] kyma-system/kiali" time="3.000000"></testcase>
+		<testcase classname="octopus" name="[testsuite-all] kyma-system/monitoring" time="17.000000"></testcase>
+		<testcase classname="octopus" name="[testsuite-all] kyma-system/event-bus" time="61.000000"></testcase>
+		<testcase classname="octopus" name="[testsuite-all] kyma-system/logging" time="15.000000"></testcase>
+		<testcase classname="octopus" name="[testsuite-all] kyma-integration/connection-token-handler" time="15.000000"></testcase>
+		<testcase classname="octopus" name="[testsuite-all] kyma-system/core-api-controller" time="80.000000"></testcase>
+		<testcase classname="octopus" name="[testsuite-all] kyma-system/core-cluster-users" time="79.000000"></testcase>
+		<testcase classname="octopus" name="[testsuite-all] kyma-system/core-kubeless" time="119.000000"></testcase>
 	</testsuite>
 </testsuites>
