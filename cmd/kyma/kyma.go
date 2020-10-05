@@ -80,9 +80,10 @@ Kyma CLI allows you to install, test, and manage Kyma.
 	testCmd.AddCommand(testRunCmd, testStatusCmd, testDeleteCmd, testListCmd, testDefsCmd, testLogsCmd)
 	cmd.AddCommand(testCmd)
 
-	applyCmd := apply.NewCmd(o)
-	initCmd := initial.NewCmd(o)
-	cmd.AddCommand(applyCmd, initCmd)
+	cmd.AddCommand(
+		initial.NewCmd(o),
+		apply.NewCmd(o),
+	)
 
 	return cmd
 }

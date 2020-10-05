@@ -10,6 +10,8 @@ const (
 	defaultRuntime   = "nodejs12"
 	defaultNamespace = "default"
 	defaultName      = "first-function"
+	defaultReference = "master"
+	defaultBaseDir   = "/"
 )
 
 type command struct {
@@ -42,10 +44,10 @@ Use the flags to specify the initial configuration for your Function or to choos
 	- python38`)
 
 	// git function options
-	cmd.Flags().StringVarP(&o.URL, "url", "", "", `Git repository URL`)
-	cmd.Flags().StringVarP(&o.RepositoryName, "repository-name", "", "", `The name of the git repository to be created`)
-	cmd.Flags().StringVarP(&o.Reference, "reference", "", "", `Commit hash or branch name`)
-	cmd.Flags().StringVarP(&o.BaseDir, "base-dir", "", "", `A directory in repository containing function sources`)
+	cmd.Flags().StringVar(&o.URL, "url", "", `Git repository URL`)
+	cmd.Flags().StringVar(&o.RepositoryName, "repository-name", o.Name, `The name of the git repository to be created`)
+	cmd.Flags().StringVar(&o.Reference, "reference", defaultReference, `Commit hash or branch name`)
+	cmd.Flags().StringVar(&o.BaseDir, "base-dir", defaultBaseDir, `A directory in repository containing function sources`)
 
 	return cmd
 }
@@ -53,18 +55,12 @@ Use the flags to specify the initial configuration for your Function or to choos
 func (c *command) Run() error {
 	s := c.NewStep("Generating project structure")
 
-	err := c.opts.IsValid()
-	if err != nil {
+	if err := c.opts.setDefaults(); err != nil {
 		s.Failure()
 		return err
 	}
 
-	if err = c.opts.SetDefaults(); err != nil {
-		s.Failure()
-		return err
-	}
-
-	source := c.opts.Source()
+	source := c.opts.source()
 
 	configuration := workspace.Cfg{
 		Runtime:   c.opts.Runtime,
@@ -73,7 +69,7 @@ func (c *command) Run() error {
 		Source:    source,
 	}
 
-	err = workspace.Initialize(configuration, c.opts.Dir)
+	err := workspace.Initialize(configuration, c.opts.Dir)
 	if err != nil {
 		s.Failure()
 		return err

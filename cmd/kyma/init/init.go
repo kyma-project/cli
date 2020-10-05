@@ -11,7 +11,7 @@ func NewCmd(o *cli.Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init",
 		Short: "Creates local resources for your project.",
-		Long:  "Use this command to create the local files and folders for your project.",
+		Long:  "Use this command to initialize the configuration.",
 	}
 
 	cmd.AddCommand(function.NewCmd(function.NewOptions(o)))

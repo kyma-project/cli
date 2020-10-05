@@ -4,9 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
-	"path"
-
 	"github.com/kyma-incubator/hydroform/function/pkg/client"
 	"github.com/kyma-incubator/hydroform/function/pkg/manager"
 	"github.com/kyma-incubator/hydroform/function/pkg/operator"
@@ -16,11 +13,10 @@ import (
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v2"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"os"
 )
-
-type Operators = map[operator.Operator][]operator.Operator
 
 type command struct {
 	opts *Options
@@ -43,12 +39,12 @@ Use the flags to specify the desired location for the source files or run the co
 		},
 	}
 
-	cmd.Flags().StringVarP(&o.Filename, "filename", "f", "", `Full path to the config file.`)
+	cmd.Flags().VarP(&o.Filename, "filename", "f", `Full path to the config file.`)
 	cmd.Flags().BoolVar(&o.DryRun, "dry-run", false, `Validated list of objects to be created from sources.`)
-	cmd.Flags().StringVar(&o.OnError, "onerror", NothingOnError, `Flag used to define reaction to the error. Use one of:
+	cmd.Flags().Var(&o.OnError, "onerror", `Flag used to define reaction to the error. Use one of: 
 - nothing
 - purge`)
-	cmd.Flags().StringVarP(&o.Output, "output", "o", TextOutput, `Flag used to define output of the command. Use one of:
+	cmd.Flags().VarP(&o.Output, "output", "o", `Flag used to define output of the command. Use one of:
 - text
 - json
 - yaml
@@ -58,17 +54,11 @@ Use the flags to specify the desired location for the source files or run the co
 }
 
 func (c *command) Run() error {
-	err := c.defaultFilename()
-	if err != nil {
-		return errors.Wrap(err, "Could not default all flags")
+	if c.opts.Filename.String() == "" {
+		c.opts.Filename = defaultFilename()
 	}
 
-	err = c.checkRequirements()
-	if err != nil {
-		return errors.Wrap(err, "Could not parse all flags")
-	}
-
-	file, err := os.Open(c.opts.Filename)
+	file, err := os.Open(c.opts.Filename.String())
 	if err != nil {
 		return err
 	}
@@ -94,8 +84,8 @@ func (c *command) Run() error {
 		return err
 	}
 
-	operators := Operators{
-		operator.GenericOperator(client.Resource(operator.GVKFunction).Namespace(configuration.Namespace), function): {
+	operators := map[operator.Operator][]operator.Operator{
+		operator.NewGenericOperator(client.Resource(operator.GVKFunction).Namespace(configuration.Namespace), function): {
 			operator.NewTriggersOperator(client.Resource(operator.GVKTriggers).Namespace(configuration.Namespace), triggers...),
 		},
 	}
@@ -105,7 +95,7 @@ func (c *command) Run() error {
 		if err != nil {
 			return errors.Wrap(err, "Unable to read git repository from configuration")
 		}
-		gitOperator := operator.GenericOperator(client.Resource(operator.GVRGitRepository).Namespace(configuration.Namespace), gitRepository)
+		gitOperator := operator.NewGenericOperator(client.Resource(operator.GVRGitRepository).Namespace(configuration.Namespace), gitRepository)
 		operators[gitOperator] = nil
 	}
 
@@ -118,47 +108,6 @@ func (c *command) Run() error {
 	}
 
 	return mgr.Do(context.Background(), options)
-}
-
-func (c *command) checkRequirements() error {
-	if !isOneOf(c.opts.Output, validOutput) {
-		return fmt.Errorf("specified value of Output flag: '%s' is not supported", c.opts.Output)
-	}
-	if !isOneOf(c.opts.OnError, validOnError) {
-		return fmt.Errorf("specified value of OnError flag: '%s' is not supported", c.opts.OnError)
-	}
-
-	return nil
-}
-
-func (c *command) defaultFilename() error {
-	if c.opts.Filename == "" {
-		var err error
-		c.opts.Filename, err = os.Getwd()
-		if err != nil {
-			return err
-		}
-		c.opts.Filename = path.Join(c.opts.Filename, workspace.CfgFilename)
-	} else {
-		fileInfo, err := os.Stat(c.opts.Filename)
-		if err != nil {
-			return err
-		}
-
-		if fileInfo.Mode().IsDir() {
-			c.opts.Filename = path.Join(c.opts.Filename, workspace.CfgFilename)
-		}
-	}
-	return nil
-}
-
-func isOneOf(item string, slice []string) bool {
-	for _, elem := range slice {
-		if elem == item {
-			return true
-		}
-	}
-	return false
 }
 
 const (
@@ -174,8 +123,8 @@ const (
 	jsonFormat          = "%s\n"
 )
 
-func chooseOnError(onErr OnError) manager.OnError {
-	if onErr == NothingOnError {
+func chooseOnError(onErr value) manager.OnError {
+	if onErr.value == NothingOnError {
 		return manager.NothingOnError
 
 	}
@@ -230,7 +179,7 @@ func (l *logger) pre(v interface{}, err error) error {
 		return errors.New("can't parse interface{} to the Unstructured")
 	}
 
-	switch l.opts.Output {
+	switch l.opts.Output.String() {
 	case TextOutput:
 		info := fmt.Sprintf(operatingFormat, entry.GetKind(), entry.GetName(), l.formatSuffix())
 		l.NewStep(info)
@@ -267,7 +216,7 @@ func (l *logger) post(v interface{}, err error) error {
 		return errors.New("can't parse interface{} to StatusEntry interface")
 	}
 
-	if l.opts.Output != TextOutput {
+	if l.opts.Output.String() != TextOutput {
 		return err
 	}
 	format := l.chooseFormat(entry.StatusType)

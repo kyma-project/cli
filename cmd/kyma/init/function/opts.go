@@ -1,11 +1,9 @@
 package function
 
 import (
-	"os"
-
 	"github.com/kyma-incubator/hydroform/function/pkg/workspace"
 	"github.com/kyma-project/cli/internal/cli"
-	reflectcli "github.com/kyma-project/cli/pkg/reflect"
+	"os"
 )
 
 //Options defines available options for the command
@@ -28,24 +26,7 @@ func NewOptions(o *cli.Options) *Options {
 	return &Options{Options: o}
 }
 
-var (
-	gitSourceOptionNames = []string{
-		"RepositoryName",
-		"Reference",
-		"BaseDir",
-	}
-)
-
-// IsValid checks if options are valid
-func (o Options) IsValid() (err error) {
-	if o.URL != "" {
-		return nil
-	}
-
-	return reflectcli.NoneOf(o, gitSourceOptionNames)
-}
-
-func (o *Options) SetDefaults() (err error) {
+func (o *Options) setDefaults() (err error) {
 	if o.Dir == "" {
 		o.Dir, err = os.Getwd()
 		if err != nil {
@@ -53,11 +34,7 @@ func (o *Options) SetDefaults() (err error) {
 		}
 	}
 
-	setIfZero(&o.RepositoryName, o.Name)
 	setIfZero(&o.SourcePath, o.Dir)
-	setIfZero(&o.BaseDir, "/")
-	setIfZero(&o.Reference, "master")
-
 	return
 }
 
@@ -67,7 +44,7 @@ func setIfZero(val *string, defaultValue string) {
 	}
 }
 
-func (o Options) Source() workspace.Source {
+func (o Options) source() workspace.Source {
 	if o.URL != "" {
 		return workspace.Source{
 			SourceGit: workspace.SourceGit{

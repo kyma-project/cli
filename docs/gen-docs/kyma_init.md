@@ -6,7 +6,7 @@ Creates local resources for your project.
 
 ## Synopsis
 
-Use this command to create the local files and folders for your project.
+Use this command to initialize the configuration.
 
 ## Options inherited from parent commands
 

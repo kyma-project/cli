@@ -1,48 +1,117 @@
 package function
 
 import (
+	"fmt"
+	"github.com/kyma-incubator/hydroform/function/pkg/workspace"
 	"github.com/kyma-project/cli/internal/cli"
+	"os"
+	"path"
 )
 
 //Options defines available options for the command
 type Options struct {
 	*cli.Options
 
-	OnError  OnError
-	Output   Output
-	Filename string
+	OnError  value
+	Output   value
+	Filename filename
 	DryRun   bool
-}
-
-type OnError = string
-
-const (
-	NothingOnError OnError = "nothing"
-	PurgeOnError   OnError = "purge"
-)
-
-var validOnError = []string{
-	NothingOnError,
-	PurgeOnError,
-}
-
-type Output = string
-
-const (
-	NoneOutput Output = "none"
-	JSONOutput Output = "json"
-	YAMLOutput Output = "yaml"
-	TextOutput Output = "text"
-)
-
-var validOutput = []string{
-	NoneOutput,
-	JSONOutput,
-	YAMLOutput,
-	TextOutput,
 }
 
 //NewOptions creates options with default values
 func NewOptions(o *cli.Options) *Options {
-	return &Options{Options: o}
+	return &Options{
+		Options: o,
+		OnError: newValue(NothingOnError, validOnError),
+		Output:  newValue(TextOutput, validOutput),
+	}
+}
+
+var (
+	validOnError = []string{
+		NothingOnError,
+		PurgeOnError,
+	}
+	validOutput = []string{
+		NoneOutput,
+		JSONOutput,
+		YAMLOutput,
+		TextOutput,
+	}
+)
+
+const (
+	NothingOnError = "nothing"
+	PurgeOnError   = "purge"
+)
+
+const (
+	NoneOutput = "none"
+	JSONOutput = "json"
+	YAMLOutput = "yaml"
+	TextOutput = "text"
+)
+
+type value struct {
+	value     string
+	available []string
+}
+
+func newValue(defaultVal string, available []string) value {
+	return value{
+		value:     defaultVal,
+		available: available,
+	}
+}
+
+func (g *value) String() string {
+	return g.value
+}
+
+func (g *value) Set(v string) error {
+	if g == nil {
+		return fmt.Errorf("nil pointer reference")
+	}
+	if v == "" {
+		return nil
+	} else if g.isOneOf(v) {
+		g.value = v
+		return nil
+	}
+	return fmt.Errorf("specified value: %s is not supported", v)
+}
+
+func (g value) isOneOf(item string) bool {
+	for _, elem := range g.available {
+		if elem == item {
+			return true
+		}
+	}
+	return false
+}
+
+func (g value) Type() string {
+	return "value"
+}
+
+type filename string
+
+func defaultFilename() filename {
+	pwd, _ := os.Getwd()
+	return filename(path.Join(pwd, workspace.CfgFilename))
+}
+
+func (f filename) String() string {
+	return string(f)
+}
+
+func (f filename) Type() string {
+	return "filename"
+}
+
+func (f *filename) Set(v string) error {
+	if v != "" {
+		*f = filename(v)
+	}
+	return nil
 }

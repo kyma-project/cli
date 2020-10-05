@@ -4,7 +4,7 @@ go 1.14
 
 replace (
 	github.com/Sirupsen/logrus => github.com/sirupsen/logrus v1.6.0
-	github.com/kyma-incubator/hydroform/function => github.com/m00g3n/hydroform/function v0.0.0-20201001123852-b7f8d414c872
+	github.com/kyma-incubator/hydroform/function => github.com/m00g3n/hydroform/function v0.0.0-20201005135221-ad1ad4f18a89
 	// this is needed for terraform to work with the k8s 0.18 APIs, we should be able to remove it once we have terraform 0.13+
 	github.com/terraform-providers/terraform-provider-openstack => github.com/terraform-providers/terraform-provider-openstack v1.20.0
 	// grpc need to be compatible with direct dependencies in terraform (>=v1.29.1)
@@ -39,7 +39,6 @@ require (
 	github.com/stretchr/testify v1.6.1
 	gopkg.in/src-d/go-git.v4 v4.13.1
 	gopkg.in/yaml.v2 v2.3.0
-	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
 	gotest.tools v2.2.0+incompatible
 	istio.io/api v0.0.0-20200911191701-0dc35ad5c478
 	istio.io/client-go v0.0.0-20200807182027-d287a5abb594
