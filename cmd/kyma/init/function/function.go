@@ -3,13 +3,17 @@ package function
 import (
 	"github.com/kyma-incubator/hydroform/function/pkg/workspace"
 	"github.com/kyma-project/cli/internal/cli"
+	reflectcli "github.com/kyma-project/cli/pkg/reflect"
 	"github.com/spf13/cobra"
+	"os"
 )
 
 const (
 	defaultRuntime   = "nodejs12"
 	defaultNamespace = "default"
 	defaultName      = "first-function"
+	defaultReference = "master"
+	defaultBaseDir   = "/"
 )
 
 type command struct {
@@ -42,10 +46,10 @@ Use the flags to specify the initial configuration for your Function or to choos
 	- python38`)
 
 	// git function options
-	cmd.Flags().StringVarP(&o.URL, "url", "", "", `Git repository URL`)
-	cmd.Flags().StringVarP(&o.RepositoryName, "repository-name", "", "", `The name of the git repository to be created`)
-	cmd.Flags().StringVarP(&o.Reference, "reference", "", "", `Commit hash or branch name`)
-	cmd.Flags().StringVarP(&o.BaseDir, "base-dir", "", "", `A directory in repository containing function sources`)
+	cmd.Flags().StringVar(&o.URL, "url", "", `Git repository URL`)
+	cmd.Flags().StringVar(&o.RepositoryName, "repository-name", o.Name, `The name of the git repository to be created`)
+	cmd.Flags().StringVar(&o.Reference, "reference", defaultReference, `Commit hash or branch name`)
+	cmd.Flags().StringVar(&o.BaseDir, "base-dir", defaultBaseDir, `A directory in repository containing function sources`)
 
 	return cmd
 }
@@ -53,18 +57,18 @@ Use the flags to specify the initial configuration for your Function or to choos
 func (c *command) Run() error {
 	s := c.NewStep("Generating project structure")
 
-	err := c.opts.IsValid()
+	err := c.opts.isValid()
 	if err != nil {
 		s.Failure()
 		return err
 	}
 
-	if err = c.opts.SetDefaults(); err != nil {
+	if err = c.opts.setDefaults(); err != nil {
 		s.Failure()
 		return err
 	}
 
-	source := c.opts.Source()
+	source := c.opts.source()
 
 	configuration := workspace.Cfg{
 		Runtime:   c.opts.Runtime,
@@ -80,4 +84,51 @@ func (c *command) Run() error {
 	}
 	s.Successf("Project generated in %s", c.opts.Dir)
 	return nil
+}
+
+// IsValid checks if options are valid
+func (o Options) isValid() (err error) {
+	if o.URL != "" {
+		return nil
+	}
+
+	return reflectcli.NoneOf(o, gitSourceOptionNames)
+}
+
+func (o *Options) setDefaults() (err error) {
+	if o.Dir == "" {
+		o.Dir, err = os.Getwd()
+		if err != nil {
+			return err
+		}
+	}
+
+	setIfZero(&o.SourcePath, o.Dir)
+	return
+}
+
+func setIfZero(val *string, defaultValue string) {
+	if *val == "" {
+		*val = defaultValue
+	}
+}
+
+func (o Options) source() workspace.Source {
+	if o.URL != "" {
+		return workspace.Source{
+			SourceGit: workspace.SourceGit{
+				BaseDir:    o.BaseDir,
+				Reference:  o.Reference,
+				Repository: o.RepositoryName,
+				URL:        o.URL,
+			},
+			Type: workspace.SourceTypeGit,
+		}
+	}
+	return workspace.Source{
+		SourceInline: workspace.SourceInline{
+			SourcePath: o.SourcePath,
+		},
+		Type: workspace.SourceTypeInline,
+	}
 }
