@@ -1,8 +1,12 @@
 package function
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"path"
+
 	"github.com/kyma-incubator/hydroform/function/pkg/client"
 	"github.com/kyma-incubator/hydroform/function/pkg/manager"
 	"github.com/kyma-incubator/hydroform/function/pkg/operator"
@@ -14,8 +18,6 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"os"
-	"path"
 )
 
 type Operators = map[operator.Operator][]operator.Operator
@@ -93,20 +95,29 @@ func (c *command) Run() error {
 	}
 
 	operators := Operators{
-		operator.NewFunctionsOperator(client.Resource(operator.GVKFunction).Namespace(configuration.Namespace), function): {
+		operator.GenericOperator(client.Resource(operator.GVKFunction).Namespace(configuration.Namespace), function): {
 			operator.NewTriggersOperator(client.Resource(operator.GVKTriggers).Namespace(configuration.Namespace), triggers...),
 		},
 	}
 
+	if configuration.Source.Type == workspace.SourceTypeGit {
+		gitRepository, err := resources.NewPublicGitRepository(configuration)
+		if err != nil {
+			return errors.Wrap(err, "Unable to read git repository from configuration")
+		}
+		gitOperator := operator.GenericOperator(client.Resource(operator.GVRGitRepository).Namespace(configuration.Namespace), gitRepository)
+		operators[gitOperator] = nil
+	}
+
 	mgr := manager.NewManager(operators)
-	options := manager.ManagerOptions{
+	options := manager.Options{
 		Callbacks:          callbacks(c),
 		OnError:            chooseOnError(c.opts.OnError),
 		DryRun:             c.opts.DryRun,
 		SetOwnerReferences: true, // add one more flag to set it to false or add: c.opts.Output != YAMLOutput && c.opts.Output != JSONOutput
 	}
 
-	return mgr.Do(options)
+	return mgr.Do(context.Background(), options)
 }
 
 func (c *command) checkRequirements() error {

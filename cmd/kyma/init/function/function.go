@@ -4,7 +4,6 @@ import (
 	"github.com/kyma-incubator/hydroform/function/pkg/workspace"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 const (
@@ -42,30 +41,39 @@ Use the flags to specify the initial configuration for your Function or to choos
 	- nodejs10
 	- python38`)
 
+	// git function options
+	cmd.Flags().StringVarP(&o.URL, "url", "", "", `Git repository URL`)
+	cmd.Flags().StringVarP(&o.RepositoryName, "repository-name", "", "", `The name of the git repository to be created`)
+	cmd.Flags().StringVarP(&o.Reference, "reference", "", "", `Commit hash or branch name`)
+	cmd.Flags().StringVarP(&o.BaseDir, "base-dir", "", "", `A directory in repository containing function sources`)
+
 	return cmd
 }
 
 func (c *command) Run() error {
 	s := c.NewStep("Generating project structure")
-	if c.opts.Dir == "" {
-		var err error
-		c.opts.Dir, err = os.Getwd()
-		if err != nil {
-			s.Failure()
-			return err
-		}
+
+	err := c.opts.IsValid()
+	if err != nil {
+		s.Failure()
+		return err
 	}
+
+	if err = c.opts.SetDefaults(); err != nil {
+		s.Failure()
+		return err
+	}
+
+	source := c.opts.Source()
 
 	configuration := workspace.Cfg{
 		Runtime:   c.opts.Runtime,
 		Name:      c.opts.Name,
 		Namespace: c.opts.Namespace,
-		Source: workspace.SourceInline{
-			BaseDir: c.opts.Dir,
-		},
+		Source:    source,
 	}
 
-	err := workspace.Initialize(configuration, c.opts.Dir)
+	err = workspace.Initialize(configuration, c.opts.Dir)
 	if err != nil {
 		s.Failure()
 		return err

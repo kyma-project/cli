@@ -4,7 +4,7 @@ go 1.14
 
 replace (
 	github.com/Sirupsen/logrus => github.com/sirupsen/logrus v1.6.0
-	github.com/kyma-incubator/hydroform/function => github.com/pPrecel/hydroform/function v0.0.0-20200928191448-557119d735e9
+	github.com/kyma-incubator/hydroform/function => github.com/m00g3n/hydroform/function v0.0.0-20201001123852-b7f8d414c872
 	// this is needed for terraform to work with the k8s 0.18 APIs, we should be able to remove it once we have terraform 0.13+
 	github.com/terraform-providers/terraform-provider-openstack => github.com/terraform-providers/terraform-provider-openstack v1.20.0
 	// grpc need to be compatible with direct dependencies in terraform (>=v1.29.1)
