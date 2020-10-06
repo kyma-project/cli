@@ -4,15 +4,15 @@ import "fmt"
 
 func PromptUser() bool {
 	for {
-		fmt.Print("Type [Y/n]: ")
+		fmt.Print("Type [y/N]: ")
 		var res string
 		if _, err := fmt.Scanf("%s", &res); err != nil {
 			return false
 		}
 		switch res {
-		case "Yes", "Y", "yes", "y":
+		case "yes", "y":
 			return true
-		case "no", "n":
+		case "No", "N", "no", "n":
 			return false
 		default:
 			continue
