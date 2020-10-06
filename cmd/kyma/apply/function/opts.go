@@ -14,7 +14,7 @@ type Options struct {
 
 	OnError  value
 	Output   value
-	Filename filename
+	Filename string
 	DryRun   bool
 }
 
@@ -74,14 +74,14 @@ func (g *value) Set(v string) error {
 	}
 	if v == "" {
 		return nil
-	} else if g.isOneOf(v) {
+	} else if g.isAllowed(v) {
 		g.value = v
 		return nil
 	}
 	return fmt.Errorf("specified value: %s is not supported", v)
 }
 
-func (g value) isOneOf(item string) bool {
+func (g value) isAllowed(item string) bool {
 	for _, elem := range g.available {
 		if elem == item {
 			return true
@@ -94,24 +94,7 @@ func (g value) Type() string {
 	return "value"
 }
 
-type filename string
-
-func defaultFilename() filename {
+func defaultFilename() string {
 	pwd, _ := os.Getwd()
-	return filename(path.Join(pwd, workspace.CfgFilename))
-}
-
-func (f filename) String() string {
-	return string(f)
-}
-
-func (f filename) Type() string {
-	return "filename"
-}
-
-func (f *filename) Set(v string) error {
-	if v != "" {
-		*f = filename(v)
-	}
-	return nil
+	return path.Join(pwd, workspace.CfgFilename)
 }

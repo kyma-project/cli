@@ -16,16 +16,16 @@ kyma apply function [flags]
 ## Options
 
 ```bash
-      --dry-run             Validated list of objects to be created from sources.
-  -f, --filename filename   Full path to the config file.
-      --onerror value       Flag used to define reaction to the error. Use one of: 
-                            - nothing
-                            - purge (default nothing)
-  -o, --output value        Flag used to define output of the command. Use one of:
-                            - text
-                            - json
-                            - yaml
-                            - none (default text)
+      --dry-run           Validated list of objects to be created from sources.
+  -f, --filename string   Full path to the config file.
+      --onerror value     Flag used to define the Kyma CLI's reaction to an error when applying resources to the cluster. Use one of these options: 
+                          - nothing
+                          - purge (default nothing)
+  -o, --output value      Flag used to define the command output format. Use one of these options:
+                          - text
+                          - json
+                          - yaml
+                          - none (default text)
 ```
 
 ## Options inherited from parent commands

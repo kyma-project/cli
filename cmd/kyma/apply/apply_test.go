@@ -16,5 +16,5 @@ func TestSubcommands(t *testing.T) {
 
 	sub := c.Commands()
 
-	require.Equal(t, 2, len(sub), "Number of create subcommands not as expected")
+	require.Equal(t, 2, len(sub), "Number of created subcommands not as expected")
 }

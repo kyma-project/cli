@@ -39,12 +39,12 @@ Use the flags to specify the desired location for the source files or run the co
 		},
 	}
 
-	cmd.Flags().VarP(&o.Filename, "filename", "f", `Full path to the config file.`)
+	cmd.Flags().StringVarP(&o.Filename, "filename", "f", "", `Full path to the config file.`)
 	cmd.Flags().BoolVar(&o.DryRun, "dry-run", false, `Validated list of objects to be created from sources.`)
-	cmd.Flags().Var(&o.OnError, "onerror", `Flag used to define reaction to the error. Use one of: 
+	cmd.Flags().Var(&o.OnError, "onerror", `Flag used to define the Kyma CLI's reaction to an error when applying resources to the cluster. Use one of these options: 
 - nothing
 - purge`)
-	cmd.Flags().VarP(&o.Output, "output", "o", `Flag used to define output of the command. Use one of:
+	cmd.Flags().VarP(&o.Output, "output", "o", `Flag used to define the command output format. Use one of these options:
 - text
 - json
 - yaml
@@ -54,11 +54,11 @@ Use the flags to specify the desired location for the source files or run the co
 }
 
 func (c *command) Run() error {
-	if c.opts.Filename.String() == "" {
+	if c.opts.Filename == "" {
 		c.opts.Filename = defaultFilename()
 	}
 
-	file, err := os.Open(c.opts.Filename.String())
+	file, err := os.Open(c.opts.Filename)
 	if err != nil {
 		return err
 	}
@@ -66,7 +66,7 @@ func (c *command) Run() error {
 	// Load project configuration
 	var configuration workspace.Cfg
 	if err := yaml.NewDecoder(file).Decode(&configuration); err != nil {
-		return errors.Wrap(err, "Could not decode configuration file")
+		return errors.Wrap(err, "Could not decode the configuration file")
 	}
 
 	if c.K8s, err = kube.NewFromConfig("", c.KubeconfigPath); err != nil {
@@ -93,7 +93,7 @@ func (c *command) Run() error {
 	if configuration.Source.Type == workspace.SourceTypeGit {
 		gitRepository, err := resources.NewPublicGitRepository(configuration)
 		if err != nil {
-			return errors.Wrap(err, "Unable to read git repository from configuration")
+			return errors.Wrap(err, "Unable to read the Git repository from the provided configuration")
 		}
 		gitOperator := operator.NewGenericOperator(client.Resource(operator.GVRGitRepository).Namespace(configuration.Namespace), gitRepository)
 		operators[gitOperator] = nil
@@ -104,7 +104,7 @@ func (c *command) Run() error {
 		Callbacks:          callbacks(c),
 		OnError:            chooseOnError(c.opts.OnError),
 		DryRun:             c.opts.DryRun,
-		SetOwnerReferences: true, // add one more flag to set it to false or add: c.opts.Output != YAMLOutput && c.opts.Output != JSONOutput
+		SetOwnerReferences: true,
 	}
 
 	return mgr.Do(context.Background(), options)
@@ -116,7 +116,8 @@ const (
 	updatedFormat       = "%s - %s updated %s"
 	skippedFormat       = "%s - %s unchanged %s"
 	deletedFormat       = "%s - %s deleted %s"
-	failedFormat        = "%s - %s can't be removed %s"
+	applyFailedFormat   = "%s - %s can't be applied %s"
+	deleteFailedFormat  = "%s - %s can't be removed %s"
 	unknownStatusFormat = "%s - %s can't resolve status %s"
 	dryRunSuffix        = "(dry run)"
 	yamlFormat          = "---\n%s\n"
@@ -141,8 +142,11 @@ func (l *logger) chooseFormat(status client.StatusType) string {
 		return skippedFormat
 	case client.StatusTypeDeleted:
 		return deletedFormat
-	case client.StatusTypeFailed:
-		return failedFormat
+	case client.StatusTypeApplyFailed:
+		return applyFailedFormat
+	case client.StatusTypeDeleteFailed:
+		return deleteFailedFormat
+
 	}
 	return unknownStatusFormat
 }
@@ -188,6 +192,8 @@ func (l *logger) pre(v interface{}, err error) error {
 		if err != nil {
 			return err
 		}
+		unstructured.RemoveNestedField(entry.Object, "metadata", "ownerReferences")
+		unstructured.RemoveNestedField(entry.Object, "metadata", "labels", "ownerID")
 		bytes, marshalError := json.MarshalIndent(entry.Object, "", "  ")
 		if marshalError != nil {
 			return marshalError
@@ -198,6 +204,8 @@ func (l *logger) pre(v interface{}, err error) error {
 		if err != nil {
 			return err
 		}
+		unstructured.RemoveNestedField(entry.Object, "metadata", "ownerReferences")
+		unstructured.RemoveNestedField(entry.Object, "metadata", "labels", "ownerID")
 		bytes, marshalError := yaml.Marshal(entry.Object)
 		if marshalError != nil {
 			return marshalError

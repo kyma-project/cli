@@ -16,13 +16,13 @@ kyma init function [flags]
 ## Options
 
 ```bash
-      --base-dir string          A directory in repository containing function sources (default "/")
+      --base-dir string          A directory in the repository containing the Function's sources (default "/")
   -d, --dir string               Full path to the directory where you want to save the project.
       --name string              Function name. (default "first-function")
       --namespace string         Namespace to which you want to apply your Function. (default "default")
       --reference string         Commit hash or branch name (default "master")
-      --repository-name string   The name of the git repository to be created (default "first-function")
-  -r, --runtime string           Flag used to define the environment for running you Function. Use one of:
+      --repository-name string   The name of the Git repository to be created (default "first-function")
+  -r, --runtime string           Flag used to define the environment for running your Function. Use one of these options:
                                  	- nodejs12
                                  	- nodejs10
                                  	- python38 (default "nodejs12")

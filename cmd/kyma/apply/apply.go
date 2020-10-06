@@ -11,7 +11,7 @@ func NewCmd(o *cli.Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "apply",
 		Short: "Applies local resources to the Kyma cluster.",
-		Long:  "Use this command to apply a configuration to the Kyma cluster.",
+		Long:  "Use this command to apply the resource configuration to the Kyma cluster.",
 	}
 
 	cmd.AddCommand(function.NewCmd(function.NewOptions(o)))

@@ -1,6 +1,7 @@
 package function
 
 import (
+	"fmt"
 	"github.com/kyma-incubator/hydroform/function/pkg/workspace"
 	"github.com/kyma-project/cli/internal/cli"
 	"os"
@@ -15,7 +16,7 @@ type Options struct {
 	Dir            string
 	Runtime        string
 	URL            string
-	RepositoryName string
+	RepositoryName repositoryName
 	Reference      string
 	BaseDir        string
 	SourcePath     string
@@ -23,7 +24,9 @@ type Options struct {
 
 //NewOptions creates options with default values
 func NewOptions(o *cli.Options) *Options {
-	return &Options{Options: o}
+	options := &Options{Options: o}
+	options.RepositoryName = newRepositoryName(&options.Name)
+	return options
 }
 
 func (o *Options) setDefaults() (err error) {
@@ -50,7 +53,7 @@ func (o Options) source() workspace.Source {
 			SourceGit: workspace.SourceGit{
 				BaseDir:    o.BaseDir,
 				Reference:  o.Reference,
-				Repository: o.RepositoryName,
+				Repository: o.RepositoryName.String(),
 				URL:        o.URL,
 			},
 			Type: workspace.SourceTypeGit,
@@ -62,4 +65,34 @@ func (o Options) source() workspace.Source {
 		},
 		Type: workspace.SourceTypeInline,
 	}
+}
+
+type repositoryName struct {
+	value *string
+}
+
+func newRepositoryName(defaultVal *string) repositoryName {
+	return repositoryName{value: defaultVal}
+}
+
+func (rn repositoryName) String() string {
+	if rn.value != nil {
+		return *rn.value
+	}
+	return ""
+}
+
+func (rn *repositoryName) Set(v string) error {
+	if rn == nil {
+		return fmt.Errorf("nil pointer reference")
+	}
+	if v != "" {
+		rn.value = &v
+	}
+
+	return nil
+}
+
+func (rn repositoryName) Type() string {
+	return "string"
 }

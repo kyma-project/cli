@@ -6,7 +6,7 @@ Applies local resources to the Kyma cluster.
 
 ## Synopsis
 
-Use this command to apply a configuration to the Kyma cluster.
+Use this command to apply the resource configuration to the Kyma cluster.
 
 ## Options inherited from parent commands
 

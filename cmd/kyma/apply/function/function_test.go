@@ -13,7 +13,7 @@ func TestUpgradeFlags(t *testing.T) {
 
 	// test default flag values
 	require.Equal(t, false, o.DryRun, "Default value for the --dry-run flag not as expected.")
-	require.Equal(t, "", o.Filename.String(), "Default value for the --filename flag not as expected.")
+	require.Equal(t, "", o.Filename, "Default value for the --filename flag not as expected.")
 	require.Equal(t, "nothing", o.OnError.String(), "The parsed value for the --onerror flag not as expected.")
 	require.Equal(t, "text", o.Output.String(), "The parsed value for the --output flag not as expected.")
 
@@ -25,7 +25,7 @@ func TestUpgradeFlags(t *testing.T) {
 		"--output", "json",
 	})
 	require.NoError(t, err, "Parsing flags should not return an error")
-	require.Equal(t, "/fakepath/config.yaml", o.Filename.String(), "The parsed value for the --filename flag not as expected.")
+	require.Equal(t, "/fakepath/config.yaml", o.Filename, "The parsed value for the --filename flag not as expected.")
 	require.Equal(t, true, o.DryRun, "The parsed value for the --dry-run flag not as expected.")
 	require.Equal(t, "purge", o.OnError.String(), "The parsed value for the --onerror flag not as expected.")
 	require.Equal(t, "json", o.Output.String(), "The parsed value for the --output flag not as expected.")
@@ -35,6 +35,6 @@ func TestUpgradeFlags(t *testing.T) {
 		"-o", "yaml",
 	})
 	require.NoError(t, err, "Parsing flags should not return an error")
-	require.Equal(t, "/config.yaml", o.Filename.String(), "The parsed value for the -f flag not as expected.")
+	require.Equal(t, "/config.yaml", o.Filename, "The parsed value for the -f flag not as expected.")
 	require.Equal(t, "yaml", o.Output.String(), "The parsed value for the -o flag not as expected.")
 }
