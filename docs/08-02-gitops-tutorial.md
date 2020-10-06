@@ -246,6 +246,6 @@ kubectl get triggers
 
 You can see that Flux synchronized the resources and the new Trigger CR for the Function was added to your cluster.
 
-## Flux's reverting functionality
+## Reverting feature
 
 Once you set it up, Flux will keep monitoring the given Git repository folder for any changes. If you modify the existing resources directly on the cluster, Flux will automatically revert these changes and update the given resource back its version on the `main` branch of the Git repository.  
