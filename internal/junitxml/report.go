@@ -50,10 +50,7 @@ func (c *Creator) generateReport(suite *oct.ClusterTestSuite) (JUnitTestSuites, 
 		suiteTotalTime = suite.Status.CompletionTime.Sub(suite.Status.StartTime.Time)
 	}
 
-	tc, err := c.mapToTestCases(suite.Status.Results, suite.Name)
-	if err != nil {
-		return JUnitTestSuites{}, errors.Wrap(err, "while mapping test results into junit test cases")
-	}
+	tc := c.mapToTestCases(suite.Status.Results, suite.Name)
 
 	junitSuite := JUnitTestSuite{
 		Name:       suite.Name,
@@ -95,7 +92,7 @@ func (c *Creator) packageProperties() []JUnitProperty {
 	}
 }
 
-func (c *Creator) mapToTestCases(results []oct.TestResult, suiteName string) ([]JUnitTestCase, error) {
+func (c *Creator) mapToTestCases(results []oct.TestResult, suiteName string) []JUnitTestCase {
 	var cases []JUnitTestCase
 
 	for _, r := range results {
@@ -113,7 +110,7 @@ func (c *Creator) mapToTestCases(results []oct.TestResult, suiteName string) ([]
 		}
 	}
 
-	return cases, nil
+	return cases
 }
 
 func (c *Creator) newSuccessJUnitTestCase(tc oct.TestResult, suiteName string) JUnitTestCase {
