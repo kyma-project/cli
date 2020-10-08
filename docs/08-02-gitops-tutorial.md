@@ -59,7 +59,7 @@ mkdir {WORKSPACE_FOLDER}
 2. Use the `init` Kyma CLI command to create a local workspace with default configuration for a Python Function:
 
 ```bash
-kyma init function --runtime python38 --dir ./{WORKSPACE_FOLDER}
+kyma init function --runtime python38 --dir $PWD/{WORKSPACE_FOLDER}
 ```
 
 This command will download the following files to your workspace folder:
@@ -68,7 +68,7 @@ This command will download the following files to your workspace folder:
 - `handler.py` with the Function's code and the simple "Hello World" logic
 - `requirements.txt` with an empty file for your Function's custom dependencies
 
-3. Modify the `config.yaml` file so that **sourcePath** points to the full path of the workspace folder you created in point 1:
+It will also set **sourcePath** in the `config.yaml` file to the full path of the workspace folder you created in point 1:
 
 ```yaml
 name: my-function
