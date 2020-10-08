@@ -31,10 +31,7 @@ func NewCreator(logsFetcher logsFetcher) *Creator {
 
 // Write creates an XML document for suite and writes it to out.
 func (c *Creator) Write(out io.Writer, suite *oct.ClusterTestSuite) error {
-	report, err := c.generateReport(suite)
-	if err != nil {
-		return errors.Wrap(err, "while generating JUnit XML report")
-	}
+	report := c.generateReport(suite)
 
 	if err := c.write(out, report); err != nil {
 		return errors.Wrap(err, "while writing JUnit XML")
@@ -43,7 +40,7 @@ func (c *Creator) Write(out io.Writer, suite *oct.ClusterTestSuite) error {
 	return nil
 }
 
-func (c *Creator) generateReport(suite *oct.ClusterTestSuite) (JUnitTestSuites, error) {
+func (c *Creator) generateReport(suite *oct.ClusterTestSuite) JUnitTestSuites {
 	var suiteTotalTime time.Duration
 	// CompletionTime is not set when test suite is timed out
 	if suite.Status.CompletionTime != nil {
@@ -63,7 +60,7 @@ func (c *Creator) generateReport(suite *oct.ClusterTestSuite) (JUnitTestSuites, 
 
 	return JUnitTestSuites{
 		Suites: []JUnitTestSuite{junitSuite},
-	}, nil
+	}
 }
 func (c *Creator) formatDurationAsSeconds(d time.Duration) string {
 	return fmt.Sprintf("%f", d.Seconds())
