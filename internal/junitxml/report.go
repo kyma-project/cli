@@ -155,8 +155,8 @@ func (c *Creator) newFailedJUnitTestCase(r oct.TestResult, suiteName string) JUn
 			Name: fmt.Sprintf("[%s] %s/%s (executions: %d)", suiteName, r.Namespace, r.Name, len(r.Executions)),
 			Time: c.formatDurationAsSeconds(totalExecutionTime),
 			Failure: &JUnitFailure{
-				Message:  "kyma cli log download failed",
-				Contents: fmt.Sprintf("while fetching logs for %s test", r.Name),
+				Message:  "Failed",
+				Contents: fmt.Sprintf("Cannot display output for %s test. Kyma CLI failed to fetch logs during report generation: %s", r.Name, err),
 			},
 		}
 	}
