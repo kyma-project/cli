@@ -31,10 +31,7 @@ func NewCreator(logsFetcher logsFetcher) *Creator {
 
 // Write creates an XML document for suite and writes it to out.
 func (c *Creator) Write(out io.Writer, suite *oct.ClusterTestSuite) error {
-	report, err := c.generateReport(suite)
-	if err != nil {
-		return errors.Wrap(err, "while generating JUnit XML report")
-	}
+	report := c.generateReport(suite)
 
 	if err := c.write(out, report); err != nil {
 		return errors.Wrap(err, "while writing JUnit XML")
@@ -43,17 +40,14 @@ func (c *Creator) Write(out io.Writer, suite *oct.ClusterTestSuite) error {
 	return nil
 }
 
-func (c *Creator) generateReport(suite *oct.ClusterTestSuite) (JUnitTestSuites, error) {
+func (c *Creator) generateReport(suite *oct.ClusterTestSuite) JUnitTestSuites {
 	var suiteTotalTime time.Duration
 	// CompletionTime is not set when test suite is timed out
 	if suite.Status.CompletionTime != nil {
 		suiteTotalTime = suite.Status.CompletionTime.Sub(suite.Status.StartTime.Time)
 	}
 
-	tc, err := c.mapToTestCases(suite.Status.Results, suite.Name)
-	if err != nil {
-		return JUnitTestSuites{}, errors.Wrap(err, "while mapping test results into junit test cases")
-	}
+	tc := c.mapToTestCases(suite.Status.Results, suite.Name)
 
 	junitSuite := JUnitTestSuite{
 		Name:       suite.Name,
@@ -66,7 +60,7 @@ func (c *Creator) generateReport(suite *oct.ClusterTestSuite) (JUnitTestSuites, 
 
 	return JUnitTestSuites{
 		Suites: []JUnitTestSuite{junitSuite},
-	}, nil
+	}
 }
 func (c *Creator) formatDurationAsSeconds(d time.Duration) string {
 	return fmt.Sprintf("%f", d.Seconds())
@@ -95,7 +89,7 @@ func (c *Creator) packageProperties() []JUnitProperty {
 	}
 }
 
-func (c *Creator) mapToTestCases(results []oct.TestResult, suiteName string) ([]JUnitTestCase, error) {
+func (c *Creator) mapToTestCases(results []oct.TestResult, suiteName string) []JUnitTestCase {
 	var cases []JUnitTestCase
 
 	for _, r := range results {
@@ -105,11 +99,7 @@ func (c *Creator) mapToTestCases(results []oct.TestResult, suiteName string) ([]
 		case oct.TestSkipped:
 			cases = append(cases, c.newSkippedJUnitTestCase(r, suiteName))
 		case oct.TestFailed:
-			jtc, err := c.newFailedJUnitTestCase(r, suiteName)
-			if err != nil {
-				return nil, errors.Wrap(err, "while mapping octopus test result into JUnit test case")
-			}
-			cases = append(cases, jtc)
+			cases = append(cases, c.newFailedJUnitTestCase(r, suiteName))
 		case oct.TestUnknown:
 			cases = append(cases, c.newUnknownJUnitTestCase(r, suiteName))
 		case oct.TestRunning:
@@ -117,7 +107,7 @@ func (c *Creator) mapToTestCases(results []oct.TestResult, suiteName string) ([]
 		}
 	}
 
-	return cases, nil
+	return cases
 }
 
 func (c *Creator) newSuccessJUnitTestCase(tc oct.TestResult, suiteName string) JUnitTestCase {
@@ -144,12 +134,7 @@ func (c *Creator) newSkippedJUnitTestCase(r oct.TestResult, suiteName string) JU
 	}
 }
 
-func (c *Creator) newFailedJUnitTestCase(r oct.TestResult, suiteName string) (JUnitTestCase, error) {
-	logs, err := c.logsFetcher.Logs(r)
-	if err != nil {
-		return JUnitTestCase{}, errors.Wrapf(err, "while fetching logs for %s test", r.Name)
-	}
-
+func (c *Creator) newFailedJUnitTestCase(r oct.TestResult, suiteName string) JUnitTestCase {
 	var totalExecutionTime time.Duration
 	for _, e := range r.Executions {
 		// CompletionTime is not set when test case is timed out or still running
@@ -158,15 +143,26 @@ func (c *Creator) newFailedJUnitTestCase(r oct.TestResult, suiteName string) (JU
 		}
 	}
 
-	return JUnitTestCase{
-		Classname: "octopus",
-		Name:      fmt.Sprintf("[%s] %s/%s (executions: %d)", suiteName, r.Namespace, r.Name, len(r.Executions)),
-		Time:      c.formatDurationAsSeconds(totalExecutionTime),
+	logs, err := c.logsFetcher.Logs(r)
+	if err != nil {
+		return JUnitTestCase{Classname: "octopus",
+			Name: fmt.Sprintf("[%s] %s/%s (executions: %d)", suiteName, r.Namespace, r.Name, len(r.Executions)),
+			Time: c.formatDurationAsSeconds(totalExecutionTime),
+			Failure: &JUnitFailure{
+				Message:  "Failed",
+				Contents: fmt.Sprintf("Cannot display output for %s test. Kyma CLI failed to fetch logs during report generation: %s", r.Name, err),
+			},
+		}
+	}
+
+	return JUnitTestCase{Classname: "octopus",
+		Name: fmt.Sprintf("[%s] %s/%s (executions: %d)", suiteName, r.Namespace, r.Name, len(r.Executions)),
+		Time: c.formatDurationAsSeconds(totalExecutionTime),
 		Failure: &JUnitFailure{
 			Message:  "Failed",
 			Contents: logs,
 		},
-	}, nil
+	}
 }
 
 func (c *Creator) newRunningJUnitTestCase(r oct.TestResult, suiteName string) JUnitTestCase {
