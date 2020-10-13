@@ -4,6 +4,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	"strings"
 	"time"
 
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
@@ -160,7 +161,7 @@ func (c *Creator) newFailedJUnitTestCase(r oct.TestResult, suiteName string) JUn
 		Time: c.formatDurationAsSeconds(totalExecutionTime),
 		Failure: &JUnitFailure{
 			Message:  "Failed",
-			Contents: logs,
+			Contents: strings.ToValidUTF8(logs, ""),
 		},
 	}
 }
