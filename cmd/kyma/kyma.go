@@ -1,9 +1,11 @@
 package kyma
 
 import (
+	"github.com/kyma-project/cli/cmd/kyma/apply"
 	"github.com/kyma-project/cli/cmd/kyma/completion"
 	"github.com/kyma-project/cli/cmd/kyma/console"
 	"github.com/kyma-project/cli/cmd/kyma/create"
+	initial "github.com/kyma-project/cli/cmd/kyma/init"
 	"github.com/kyma-project/cli/cmd/kyma/install"
 	"github.com/kyma-project/cli/cmd/kyma/provision/aks"
 	"github.com/kyma-project/cli/cmd/kyma/provision/gardener"
@@ -77,6 +79,11 @@ Kyma CLI allows you to install, test, and manage Kyma.
 	testLogsCmd := logs.NewCmd(logs.NewOptions(o))
 	testCmd.AddCommand(testRunCmd, testStatusCmd, testDeleteCmd, testListCmd, testDefsCmd, testLogsCmd)
 	cmd.AddCommand(testCmd)
+
+	cmd.AddCommand(
+		initial.NewCmd(o),
+		apply.NewCmd(o),
+	)
 
 	return cmd
 }
