@@ -85,6 +85,7 @@ Kyma CLI allows you to install, test, and manage Kyma.
 	cmd.AddCommand(
 		initial.NewCmd(o),
 		apply.NewCmd(o),
+		sync.NewCmd(o),
 	)
 
 	return cmd

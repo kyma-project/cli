@@ -4,6 +4,8 @@ go 1.14
 
 replace (
 	github.com/Sirupsen/logrus => github.com/sirupsen/logrus v1.6.0
+
+	github.com/kyma-incubator/hydroform => github.com/kfurgol/hydroform v0.0.0-20201015202003-07b40b6b6ca4
 	// this is needed for terraform to work with the k8s 0.18 APIs, we should be able to remove it once we have terraform 0.13+
 	github.com/terraform-providers/terraform-provider-openstack => github.com/terraform-providers/terraform-provider-openstack v1.20.0
 	// grpc need to be compatible with direct dependencies in terraform (>=v1.29.1)
@@ -28,6 +30,7 @@ require (
 	github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90
 	github.com/kyma-incubator/hydroform/provision v0.0.0-20200922142757-cae045912c90
 	github.com/kyma-incubator/octopus v0.0.0-20200922132758-2b721e93b58b
+	github.com/kyma-project/kyma/components/function-controller v0.0.0-20201015192321-5f629c52821b
 	github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20200923072402-e911fd636ae6
 	github.com/olekukonko/tablewriter v0.0.4
 	github.com/opencontainers/go-digest v1.0.0 // indirect

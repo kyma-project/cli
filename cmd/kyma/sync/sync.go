@@ -11,7 +11,7 @@ func NewCmd(o *cli.Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "sync",
 		Short: "Synchronises the function files from the cluster.",
-		Long:  "Use this command to synchronise the function files from the cluster.",//todo
+		Long:  "Use this command to synchronise the function files from the cluster.",
 	}
 
 	cmd.AddCommand(function.NewCmd(function.NewOptions(o)))
