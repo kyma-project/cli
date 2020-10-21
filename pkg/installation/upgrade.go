@@ -163,10 +163,10 @@ func (i *Installation) promptUpgradeWarning(isCurrReleaseVersion bool, currVersi
 		warning += ", so it is not possible to check the upgrade compatibility.\n" +
 			"If you choose to continue the upgrade, you can compromise the functionality of your cluster.\n" +
 			"Are you sure you want to continue? "
-	}
-	continueUpgrade := i.currentStep.PromptYesNo(warning)
-	if !continueUpgrade {
-		return fmt.Errorf("Aborting upgrade")
+		continueUpgrade := i.currentStep.PromptYesNo(warning)
+		if !continueUpgrade {
+			return fmt.Errorf("Aborting upgrade")
+		}
 	}
 
 	return nil
