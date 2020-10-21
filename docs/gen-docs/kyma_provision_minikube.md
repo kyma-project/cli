@@ -18,6 +18,7 @@ kyma provision minikube [flags]
       --cpus string                  Specifies the number of CPUs used for installation. (default "4")
       --disk-size string             Specifies the disk size used for installation. (default "30g")
       --hypervVirtualSwitch string   Specifies the Hyper-V switch version if you choose Hyper-V as the driver.
+  -k, --kube-version string          Kubernetes version of the cluster. (default "1.16.3")
       --memory string                Specifies RAM reserved for installation. (default "8192")
       --profile string               Specifies the Minikube profile.
       --timeout duration             Maximum time during which the provisioning takes place, where "0" means "infinite". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h". (default 5m0s)
