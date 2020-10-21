@@ -40,21 +40,21 @@ func (i *Installation) UpgradeKyma() (*Result, error) {
 			return nil, err
 		}
 
-		// Get the target Kyma version in a suitable format to be shown to the user
+		// Getting target Kyma version in a suitable format to be shown to the user
 		targetVersion := i.getTargetVersion()
 
-		// Checking if current Kyma version is a release version
-		isCurrReleaseVersion, currSemVersion, err := i.checkCurrVersion(currVersion)
-		if err != nil {
-			s.Failure()
-			return nil, err
-		}
+		// Getting current Kyma semantic version (if possible)
+		isCurrReleaseVersion, currSemVersion := i.getSemVersion(currVersion)
 
-		// Checking if target Kyma version is a release version
-		isTargetReleaseVersion, targetSemVersion, err := i.checkTargetVersion(targetVersion, isCurrReleaseVersion)
-		if err != nil {
-			s.Failure()
-			return nil, err
+		// Getting target Kyma semantic version (if possible)
+		isTargetReleaseVersion, targetSemVersion := i.getSemVersion(targetVersion)
+
+		// Prompting upgrade warning
+		if !i.Options.NonInteractive {
+			if err := i.promptUpgradeWarning(isCurrReleaseVersion, currVersion, isTargetReleaseVersion, targetVersion); err != nil {
+				s.Failure()
+				return nil, err
+			}
 		}
 
 		// Check for upgrade compatibility and prompt migration guide only if both current and target Kyma versions are release versions
@@ -65,7 +65,7 @@ func (i *Installation) UpgradeKyma() (*Result, error) {
 				return nil, err
 			}
 			if !i.Options.NonInteractive {
-				// prompting migration guide
+				// Prompting migration guide
 				if err := i.promptMigrationGuide(currSemVersion, targetSemVersion); err != nil {
 					s.Failure()
 					return nil, err
@@ -140,50 +140,36 @@ func (i *Installation) getTargetVersion() string {
 	}
 }
 
-func (i *Installation) checkCurrVersion(currVersion string) (bool, *semver.Version, error) {
+func (i *Installation) getSemVersion(version string) (bool, *semver.Version) {
 	isReleaseVersion := true
-	currSemVersion, err := semver.NewVersion(currVersion)
+	semVersion, err := semver.NewVersion(version)
 	if err != nil {
 		isReleaseVersion = false
-		if !i.Options.NonInteractive {
-			promptMsg := fmt.Sprintf("Current Kyma version '%s' is not a release version, so it is not possible to check the upgrade compatibility.\n"+
-				"If you choose to continue the upgrade, you can compromise the functionality of your cluster.\n"+
-				"Are you sure you want to continue? ",
-				currVersion,
-			)
-			continueUpgrade := i.currentStep.PromptYesNo(promptMsg)
-			if !continueUpgrade {
-				return false, nil, fmt.Errorf("Aborting upgrade")
-			}
-		}
 	}
-
-	return isReleaseVersion, currSemVersion, nil
+	return isReleaseVersion, semVersion
 }
 
-func (i *Installation) checkTargetVersion(targetVersion string, isCurrReleaseVersion bool) (bool, *semver.Version, error) {
-	isReleaseVersion := true
-	targetSemVersion, err := semver.NewVersion(i.Options.Source)
-	if err != nil {
-		isReleaseVersion = false
-		// prompt the warning to the user only if both conditions are met
-		// 1) the non-interactive option is not set
-		// 2) the current kyma version is a release version, since if it was a non-release version, then the user would
-		//    have already accepted the risk from the first warning and no need to prompt a second warning
-		if !i.Options.NonInteractive && isCurrReleaseVersion {
-			promptMsg := fmt.Sprintf("Target Kyma version '%s' is not a release version, so it is not possible to check the upgrade compatibility.\n"+
-				"If you choose to continue the upgrade, you can compromise the functionality of your cluster.\n"+
-				"Are you sure you want to continue? ",
-				targetVersion,
-			)
-			continueUpgrade := i.currentStep.PromptYesNo(promptMsg)
-			if !continueUpgrade {
-				return false, nil, fmt.Errorf("Aborting upgrade")
-			}
-		}
+func (i *Installation) promptUpgradeWarning(isCurrReleaseVersion bool, currVersion string, isTargetReleaseVersion bool, targetVersion string) error {
+	var warning string
+	if !isCurrReleaseVersion && !isTargetReleaseVersion {
+		warning = fmt.Sprintf("Current Kyma version '%s' and target Kyma version '%s' are not release versions", currVersion, targetVersion)
+	} else if !isCurrReleaseVersion {
+		warning = fmt.Sprintf("Current Kyma version '%s' is not a release version", currVersion)
+	} else if !isTargetReleaseVersion {
+		warning = fmt.Sprintf("Target Kyma version '%s' is not a release version", targetVersion)
 	}
 
-	return isReleaseVersion, targetSemVersion, nil
+	if !isCurrReleaseVersion || !isTargetReleaseVersion {
+		warning += ", so it is not possible to check the upgrade compatibility.\n" +
+			"If you choose to continue the upgrade, you can compromise the functionality of your cluster.\n" +
+			"Are you sure you want to continue? "
+	}
+	continueUpgrade := i.currentStep.PromptYesNo(warning)
+	if !continueUpgrade {
+		return fmt.Errorf("Aborting upgrade")
+	}
+
+	return nil
 }
 
 func (i *Installation) checkUpgradeCompatibility(currSemVersion *semver.Version, targetSemVersion *semver.Version) error {
