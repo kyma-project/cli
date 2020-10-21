@@ -1,6 +1,7 @@
 package installation
 
 import (
+	"context"
 	"strconv"
 
 	"github.com/kyma-project/cli/internal/kube"
@@ -17,7 +18,7 @@ type ClusterInfo struct {
 }
 
 func GetClusterInfoFromConfigMap(kymaKube kube.KymaKube) (ClusterInfo, error) {
-	cm, err := kymaKube.Static().CoreV1().ConfigMaps("kube-system").Get("kyma-cluster-info", metav1.GetOptions{})
+	cm, err := kymaKube.Static().CoreV1().ConfigMaps("kube-system").Get(context.Background(), "kyma-cluster-info", metav1.GetOptions{})
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
 			return ClusterInfo{}, nil

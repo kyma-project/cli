@@ -1,6 +1,7 @@
 package hosts
 
 import (
+	"context"
 	"strings"
 	"time"
 
@@ -15,7 +16,7 @@ func AddDevDomainsToEtcHosts(
 	s step.Step, clusterInfo installation.ClusterInfo, kymaKube kube.KymaKube, verbose bool, timeout time.Duration, domain string) error {
 	hostnames := ""
 
-	vsList, err := kymaKube.Istio().NetworkingV1alpha3().VirtualServices("").List(metav1.ListOptions{})
+	vsList, err := kymaKube.Istio().NetworkingV1alpha3().VirtualServices("").List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return err
 	}

@@ -1,6 +1,7 @@
 package console
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/kyma-project/cli/internal/cli"
@@ -48,12 +49,12 @@ func (c *command) Run() error {
 	fmt.Println("Reading the Kyma console URL from the cluster")
 
 	var consoleURL string
-	vs, err := c.K8s.Istio().NetworkingV1alpha3().VirtualServices("kyma-system").Get("console-web", metav1.GetOptions{})
+	vs, err := c.K8s.Istio().NetworkingV1alpha3().VirtualServices("kyma-system").Get(context.Background(), "console-web", metav1.GetOptions{})
 	switch {
 	case err != nil:
 		fmt.Printf("Unable to read the Kyma console URL due to error: %s. Check if your cluster is available and has Kyma installed\r\n", err.Error())
 		return nil
-	case vs != nil && vs.Spec != nil && len(vs.Spec.Hosts) > 0:
+	case vs != nil && len(vs.Spec.Hosts) > 0:
 		consoleURL = fmt.Sprintf("https://%s", vs.Spec.Hosts[0])
 	default:
 		fmt.Println("Kyma console URL could not be obtained.")
