@@ -20,7 +20,6 @@ import (
 )
 
 const (
-	kubernetesVersion  string = "1.16.3"
 	bootstrapper       string = "kubeadm"
 	vmDriverHyperkit   string = "hyperkit"
 	vmDriverHyperv     string = "hyperv"
@@ -73,6 +72,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cmd.Flags().StringVar(&o.Profile, "profile", "", "Specifies the Minikube profile.")
 	cmd.Flags().DurationVar(&o.Timeout, "timeout", 5*time.Minute, `Maximum time during which the provisioning takes place, where "0" means "infinite". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".`)
 	cmd.Flags().BoolVar(&o.UseVPNKitSock, "use-hyperkit-vpnkit-sock", false, `Uses vpnkit sock provided by Docker. This is useful when DNS Port (53) is being used by some other program like dns-proxy (eg. provided by Cisco Umbrella. This flag works only on Mac OS).`)
+	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.16.3", "Kubernetes version of the cluster.")
 	return cmd
 }
 
@@ -233,7 +233,7 @@ func (c *command) startMinikube() error {
 		"--extra-config=apiserver.service-account-signing-key-file=/var/lib/minikube/certs/sa.key",
 		"--extra-config=apiserver.service-account-issuer=kubernetes/serviceaccount",
 		"--extra-config=apiserver.service-account-api-audiences=api",
-		"--kubernetes-version=v" + kubernetesVersion,
+		"--kubernetes-version=v" + c.opts.KubernetesVersion,
 		"--vm-driver", c.opts.VMDriver,
 		"--disk-size", c.opts.DiskSize,
 		"-b", bootstrapper,
