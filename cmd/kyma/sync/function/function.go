@@ -27,7 +27,7 @@ func NewCmd(o *Options) *cobra.Command {
 		Use:   "function",
 		Short: "Synchronizes the local resources for your Function.",
 		Long: `Use this command to download the Function's code and dependencies from the cluster to create or update these resources in your local workspace.
-Use the flags to specify the name of your Function, the namespace, or the location for your project.`,
+Use the flags to specify the name of your Function, the Namespace, or the location for your project.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return c.Run()
 		},
