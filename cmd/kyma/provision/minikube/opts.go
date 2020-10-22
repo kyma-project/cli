@@ -17,6 +17,7 @@ type Options struct {
 	Profile             string
 	UseVPNKitSock       bool
 	Timeout             time.Duration
+	KubernetesVersion   string
 }
 
 //NewOptions creates options with default values
