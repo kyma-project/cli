@@ -34,7 +34,7 @@ Use the flags to specify the name of your Function, the Namespace, or the locati
 	}
 
 	cmd.Flags().StringVar(&o.Name, "name", "", `Function name.`)
-	cmd.Flags().StringVarP(&o.Namespace, "namespace", "n", "", `Namespace from which you want to sync Function.`)
+	cmd.Flags().StringVarP(&o.Namespace, "namespace", "n", "", `Namespace from which you want to sync the Function.`)
 	cmd.Flags().StringVarP(&o.OutputPath, "output", "o", "", `Full path to the directory where you want to save the project.`)
 
 	return cmd
