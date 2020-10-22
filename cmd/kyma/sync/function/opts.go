@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/kyma-project/cli/internal/cli"
 	"os"
+	"time"
 )
 
 //Options defines available options for the command
@@ -13,6 +14,7 @@ type Options struct {
 	Name       string
 	Namespace  string
 	OutputPath string
+	Timeout    time.Duration
 }
 
 //NewOptions creates options with default values
