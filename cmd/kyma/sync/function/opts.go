@@ -1,6 +1,7 @@
 package function
 
 import (
+	"fmt"
 	"github.com/kyma-project/cli/internal/cli"
 	"os"
 )
@@ -9,10 +10,9 @@ import (
 type Options struct {
 	*cli.Options
 
-	Name           string
-	Namespace      string
-	OutputPath     string
-	Kubeconfig     string
+	Name       string
+	Namespace  string
+	OutputPath string
 }
 
 //NewOptions creates options with default values
@@ -21,7 +21,7 @@ func NewOptions(o *cli.Options) *Options {
 	return options
 }
 
-func (o *Options) setDefaults() (err error) {
+func (o *Options) setDefaults(defaultNamespace string) (err error) {
 	if o.OutputPath == "" {
 		o.OutputPath, err = os.Getwd()
 		if err != nil {
@@ -29,12 +29,22 @@ func (o *Options) setDefaults() (err error) {
 		}
 	}
 
-	setIfZero(&o.Namespace, defaultNamespace)
+	setIfZero(&o.Namespace, defaultNamespace, "default")
+
+	if o.Name == "" {
+		return fmt.Errorf("flag 'name' is required")
+	}
+
 	return
 }
 
-func setIfZero(val *string, defaultValue string) {
-	if *val == "" {
-		*val = defaultValue
+func setIfZero(val *string, defaultValue string, defaultValues ...string) bool {
+	for _, v := range append([]string{defaultValue}, defaultValues...) {
+		if v == "" {
+			continue
+		}
+		*val = v
+		return true
 	}
+	return false
 }

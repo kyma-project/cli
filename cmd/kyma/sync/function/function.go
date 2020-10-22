@@ -2,21 +2,12 @@ package function
 
 import (
 	"context"
+	"github.com/kyma-incubator/hydroform/function/pkg/client"
 	"github.com/kyma-incubator/hydroform/function/pkg/workspace"
 	"github.com/kyma-project/cli/internal/cli"
-	"github.com/kyma-project/kyma/components/function-controller/pkg/apis/serverless/v1alpha1"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
 	"os"
-)
-
-const (
-	defaultNamespace = "default"
-	functions = "functions"
 )
 
 type command struct {
@@ -41,9 +32,8 @@ Use the flags to specify the initial configuration for your Function or to choos
 	}
 
 	cmd.Flags().StringVar(&o.Name, "name", "", `Function name.`)
-	cmd.Flags().StringVarP(&o.Namespace, "namespace","n", defaultNamespace, `Namespace from which you want to sync Function.`)
+	cmd.Flags().StringVarP(&o.Namespace, "namespace", "n", "", `Namespace from which you want to sync Function.`)
 	cmd.Flags().StringVarP(&o.OutputPath, "output", "o", "", `Full path to the directory where you want to save the project.`)
-	cmd.Flags().StringVarP(&o.Kubeconfig, "kubeconfig", "k", "", `Full path to the Kubeconfig file.`)
 
 	return cmd
 }
@@ -51,7 +41,7 @@ Use the flags to specify the initial configuration for your Function or to choos
 func (c *command) Run() error {
 	s := c.NewStep("Generating project structure")
 
-	if err := c.opts.setDefaults(); err != nil {
+	if err := c.opts.setDefaults(c.K8s.DefaultNamespace()); err != nil {
 		s.Failure()
 		return err
 	}
@@ -63,34 +53,18 @@ func (c *command) Run() error {
 		}
 	}
 
+	ctx := context.Background()
 
-	crdConfig, err := clientcmd.BuildConfigFromFlags("", c.opts.Kubeconfig)
-	if err != nil {
-		return err
+	var buildClient client.Build = func(namespace string, resource schema.GroupVersionResource) client.Client {
+		return c.K8s.Dynamic().Resource(resource).Namespace(namespace)
 	}
 
-	crdConfig.ContentConfig.GroupVersion = &schema.GroupVersion{Group: v1alpha1.GroupVersion.Group, Version: v1alpha1.GroupVersion.Version}
-	crdConfig.APIPath = "/apis"
-	crdConfig.NegotiatedSerializer = serializer.NewCodecFactory(scheme.Scheme)
-
-	restClient, err := rest.UnversionedRESTClientFor(crdConfig)
-	if err != nil {
-		panic(err.Error())
-	}
-
-
-	function := &v1alpha1.Function{}
-	err = restClient.Get().Resource(functions).Namespace(c.opts.Namespace).Name(c.opts.Name).Do(context.Background()).Into(function)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	configuration := workspace.Cfg{
+	cfg := workspace.Cfg{
 		Name:      c.opts.Name,
 		Namespace: c.opts.Namespace,
 	}
 
-	err = workspace.Synchronise(configuration,c.opts.OutputPath,*function,restClient)
+	err := workspace.Synchronise(ctx, cfg, c.opts.OutputPath, buildClient)
 	if err != nil {
 		s.Failure()
 		return err

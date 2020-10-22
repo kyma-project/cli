@@ -8,7 +8,9 @@ import (
 )
 
 func TestSubcommands(t *testing.T) {
-	c := NewCmd(&cli.Options{})
+	c := NewCmd(&cli.Options{
+		KubeconfigPath: "/fakepath",
+	})
 	c.SetOutput(ioutil.Discard) // not interested in the command's output
 
 	// test default flag values
