@@ -10,7 +10,7 @@ import (
 func NewCmd(o *cli.Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "sync",
-		Short: "Synchronises the function files from the cluster.",
+		Short: "Synchronizes the local resources for your Function.",
 		Long:  "Use this command to synchronise the function files from the cluster.",
 	}
 
