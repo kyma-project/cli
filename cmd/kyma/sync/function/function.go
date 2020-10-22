@@ -23,9 +23,9 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 	cmd := &cobra.Command{
 		Use:   "function",
-		Short: "Saves locally resources for requested Function.",
-		Long: `Use this command to create the local workspace with the default structure of your Function's code and dependencies. Update this configuration to your references and apply it to a Kyma cluster. 
-Use the flags to specify the initial configuration for your Function or to choose the location for your project.`, //todo
+		Short: "Synchronizes the local resources for your Function.",
+		Long: `Use this command to create the local workspace with the structure reflecting your Function's code and dependencies.
+Use the flags to specify the name of your Function, the namespace or choose the location for your project.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return c.Run()
 		},
