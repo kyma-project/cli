@@ -46,8 +46,7 @@ func (c *command) Run() error {
 		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
 	}
 
-	fmt.Println("Reading the Kyma console URL from the cluster")
-
+	// Reading the Kyma console URL from the cluster
 	var consoleURL string
 	vs, err := c.K8s.Istio().NetworkingV1alpha3().VirtualServices("kyma-system").Get(context.Background(), "console-web", metav1.GetOptions{})
 	switch {
@@ -61,11 +60,13 @@ func (c *command) Run() error {
 		return nil
 	}
 
-	fmt.Println("Opening the Kyma console in the default browser")
+	fmt.Printf("Opening the Kyma console in the default browser using the following url: %s\n", consoleURL)
 	err = browser.OpenURL(consoleURL)
 	if err != nil {
-		fmt.Println("Failed to open the Kyma console")
-		fmt.Printf("Visit %s in your browser to view the console\n", consoleURL)
+		fmt.Println("Failed to open the Kyma console. Try to open the url manually")
+		if c.opts.Verbose {
+			fmt.Printf("error: %v\n", err)
+		}
 	}
 
 	return nil
