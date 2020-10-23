@@ -29,7 +29,7 @@ func NewOptions(o *cli.Options) *Options {
 	return options
 }
 
-func (o *Options) setDefaults() (err error) {
+func (o *Options) setDefaults(defaultNamespace string) (err error) {
 	if o.Dir == "" {
 		o.Dir, err = os.Getwd()
 		if err != nil {
@@ -38,6 +38,7 @@ func (o *Options) setDefaults() (err error) {
 	}
 
 	setIfZero(&o.SourcePath, o.Dir)
+	setIfZero(&o.Namespace, defaultNamespace)
 	return
 }
 

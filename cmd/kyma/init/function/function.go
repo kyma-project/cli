@@ -9,7 +9,6 @@ import (
 
 const (
 	defaultRuntime   = "nodejs12"
-	defaultNamespace = "default"
 	defaultName      = "first-function"
 	defaultReference = "master"
 	defaultBaseDir   = "/"
@@ -37,7 +36,7 @@ Use the flags to specify the initial configuration for your Function or to choos
 	}
 
 	cmd.Flags().StringVar(&o.Name, "name", defaultName, `Function name.`)
-	cmd.Flags().StringVar(&o.Namespace, "namespace", defaultNamespace, `Namespace to which you want to apply your Function.`)
+	cmd.Flags().StringVar(&o.Namespace, "namespace", "", `Namespace to which you want to apply your Function.`)
 	cmd.Flags().StringVarP(&o.Dir, "dir", "d", "", `Full path to the directory where you want to save the project.`)
 	cmd.Flags().StringVarP(&o.Runtime, "runtime", "r", defaultRuntime, `Flag used to define the environment for running your Function. Use one of these options:
 	- nodejs12
@@ -56,7 +55,7 @@ Use the flags to specify the initial configuration for your Function or to choos
 func (c *command) Run() error {
 	s := c.NewStep("Generating project structure")
 
-	if err := c.opts.setDefaults(); err != nil {
+	if err := c.opts.setDefaults(c.K8s.DefaultNamespace()); err != nil {
 		s.Failure()
 		return err
 	}
