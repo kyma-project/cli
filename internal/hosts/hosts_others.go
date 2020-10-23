@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"fmt"
 	"os/exec"
+	"strings"
 
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/root"
@@ -36,6 +37,10 @@ func addDevDomainsToEtcHostsOSSpecific(domain string, s step.Step, hostAlias str
 	if err != nil {
 		notifyUserFunc(err)
 		return nil
+	}
+
+	if !strings.HasSuffix(hostAlias, "\n") {
+		hostAlias = hostAlias + "\n"
 	}
 
 	cmd := exec.Command("sudo", "tee", "-a", hostsFile)
