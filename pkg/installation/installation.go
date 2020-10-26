@@ -231,17 +231,17 @@ func (i *Installation) validateConfigurations() error {
 		i.Options.configVersion = fmt.Sprintf("master-%s", latest)
 		i.Options.bucket = developmentBucket
 
-	//Install the specific version from release (ex: 1.15.1)
-	case isSemVer(i.Options.Source):
-		i.Options.releaseVersion = i.Options.Source
-		i.Options.configVersion = i.Options.Source
-		i.Options.bucket = releaseBucket
-
 	//Install the specific commit hash (e.g. 34edf09a)
 	case isHex(i.Options.Source):
 		i.Options.releaseVersion = fmt.Sprintf("master-%s", i.Options.Source[:8])
 		i.Options.configVersion = fmt.Sprintf("master-%s", i.Options.Source[:8])
 		i.Options.bucket = developmentBucket
+
+	//Install the specific version from release (ex: 1.15.1)
+	case isSemVer(i.Options.Source):
+		i.Options.releaseVersion = i.Options.Source
+		i.Options.configVersion = i.Options.Source
+		i.Options.bucket = releaseBucket
 
 	//Install the specific pull request (e.g. PR-9486)
 	case strings.HasPrefix(i.Options.Source, "PR-"):
