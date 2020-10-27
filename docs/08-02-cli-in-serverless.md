@@ -45,9 +45,9 @@ Before you start, make sure you have the following tools installed:
 
   The `init` command downloads the following files to your workspace folder:
 
-  - `config.yaml`	with the Function's configuration
-  - `handler.py` with the Function's code and the simple "Hello World" logic
-  - `requirements.txt` with an empty file for your Function's custom dependencies
+    - `config.yaml`	with the Function's configuration
+    - `handler.py` with the Function's code and the simple "Hello World" logic
+    - `requirements.txt` with an empty file for your Function's custom dependencies
 
   This command also sets **sourcePath** in the `config.yaml` file to the full path of the workspace folder:
 
@@ -82,7 +82,7 @@ Before you start, make sure you have the following tools installed:
     kubectl edit function {FUNCTION_NAME}
     ```
 
-  b. Change the source as follows:
+  b. Modify **source** as follows:
 
     ```yaml
     ...
