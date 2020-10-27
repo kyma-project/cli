@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/blang/semver"
+	"github.com/blang/semver/v4"
 	docker "github.com/docker/docker/client"
 )
 
