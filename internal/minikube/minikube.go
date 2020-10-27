@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Masterminds/semver"
+	"github.com/blang/semver"
 	docker "github.com/docker/docker/client"
 )
 
@@ -59,21 +59,19 @@ func CheckVersion(verbose bool, timeout time.Duration) (string, error) {
 
 	exp, _ := regexp.Compile("minikube version: v(.*)")
 	versionString := exp.FindStringSubmatch(versionText)
-	version, err := semver.NewVersion(versionString[1])
+	version, err := semver.Parse(versionString[1])
 	if err != nil {
 		return "", err
 	}
 
-	constraintString := "~" + minikubeVersion
-	constraint, err := semver.NewConstraint(constraintString)
+	constraint, err := semver.ParseRange(">=1.0.0 <2.0.0")
 	if err != nil {
 		return "", err
 	}
-
-	check := constraint.Check(version)
-	if check {
+	if constraint(version) {
 		return "", nil
 	}
+
 	return fmt.Sprintf("You are using an unsupported Minikube version '%s'. This may not work. The recommended Minikube version is '%s'", version, minikubeVersion), nil
 }
 

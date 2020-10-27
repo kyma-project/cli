@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Masterminds/semver"
+	"github.com/blang/semver"
 	"github.com/kyma-incubator/hydroform/install/config"
 	installationSDK "github.com/kyma-incubator/hydroform/install/installation"
 	"github.com/kyma-incubator/hydroform/install/scheme"
@@ -341,7 +341,7 @@ func isDockerImage(s string) bool {
 }
 
 func isSemVer(s string) bool {
-	_, err := semver.NewVersion(s)
+	_, err := semver.Parse(s)
 	return err == nil
 }
 
