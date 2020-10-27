@@ -14,6 +14,7 @@ import (
 	"github.com/kyma-project/cli/cmd/kyma/provision/gardener/gcp"
 	"github.com/kyma-project/cli/cmd/kyma/provision/gke"
 	"github.com/kyma-project/cli/cmd/kyma/provision/minikube"
+	"github.com/kyma-project/cli/cmd/kyma/sync"
 	"github.com/kyma-project/cli/cmd/kyma/test"
 	"github.com/kyma-project/cli/cmd/kyma/test/definitions"
 	del "github.com/kyma-project/cli/cmd/kyma/test/delete"
@@ -83,6 +84,7 @@ Kyma CLI allows you to install, test, and manage Kyma.
 	cmd.AddCommand(
 		initial.NewCmd(o),
 		apply.NewCmd(o),
+		sync.NewCmd(o),
 	)
 
 	return cmd
