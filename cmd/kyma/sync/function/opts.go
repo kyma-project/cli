@@ -42,7 +42,7 @@ func (o *Options) setDefaults(defaultNamespace string) (err error) {
 
 func setIfZero(val *string, defaultValue string, defaultValues ...string) bool {
 	for _, v := range append([]string{defaultValue}, defaultValues...) {
-		if v == "" {
+		if v != "" {
 			continue
 		}
 		*val = v

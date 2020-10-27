@@ -2,6 +2,8 @@ package function
 
 import (
 	"context"
+	"os"
+
 	"github.com/kyma-incubator/hydroform/function/pkg/client"
 	"github.com/kyma-incubator/hydroform/function/pkg/workspace"
 	"github.com/kyma-project/cli/internal/cli"
@@ -9,7 +11,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"os"
 )
 
 type command struct {
