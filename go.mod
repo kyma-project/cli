@@ -3,7 +3,6 @@ module github.com/kyma-project/cli
 go 1.14
 
 replace (
-	github.com/kyma-incubator/hydroform/function => github.com/m00g3n/hydroform/function v0.0.0-20201021210504-5d757fc21aa6
 	// this is needed for terraform to work with the k8s 0.18 APIs, we should be able to remove it once we have terraform 0.13+
 	github.com/terraform-providers/terraform-provider-openstack => github.com/terraform-providers/terraform-provider-openstack v1.20.0
 	// grpc need to be compatible with direct dependencies in terraform (>=v1.29.1)
@@ -24,7 +23,7 @@ require (
 	github.com/docker/docker v1.4.2-0.20200203170920-46ec8731fbce
 	github.com/fatih/color v1.9.0
 	github.com/gorilla/mux v1.7.4 // indirect
-	github.com/kyma-incubator/hydroform/function v0.0.0-20201013144143-a2b21fbd1824
+	github.com/kyma-incubator/hydroform/function v0.0.0-20201027114347-8518b88c07b1
 	github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90
 	github.com/kyma-incubator/hydroform/provision v0.0.0-20200922142757-cae045912c90
 	github.com/kyma-incubator/octopus v0.0.0-20200922132758-2b721e93b58b
