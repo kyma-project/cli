@@ -74,7 +74,7 @@ Before you start, make sure you have the following tools installed:
   kubectl describe function {FUNCTION_NAME}
   ```
 
-6. Modify the Function's source on the cluster to return "Hello Serverless!":
+6. Change the Function's source code on the cluster to return "Hello Serverless!":
 
   a. Edit the Function:
 
