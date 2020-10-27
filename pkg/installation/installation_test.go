@@ -127,6 +127,17 @@ func TestInstallKyma(t *testing.T) {
 	r, err = i.InstallKyma()
 	require.NoError(t, err)
 	require.NotEmpty(t, r)
+
+	// Happy path with commit ID
+	iServiceMock.On("CheckInstallationState", mock.Anything).Return(installSDK.InstallationState{State: installSDK.NoInstallationState}, nil).Once()
+	iServiceMock.On("TriggerInstallation", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	iServiceMock.On("CheckInstallationState", mock.Anything).Return(installSDK.InstallationState{State: "Installed"}, nil).Once()
+	kymaMock.On("WaitPodStatusByLabel", "kyma-installer", "name", "kyma-installer", v1.PodRunning).Return(nil)
+
+	i.Options.Source = "23554405"
+	r, err = i.InstallKyma()
+	require.NoError(t, err)
+	require.NotEmpty(t, r)
 }
 
 func TestValidateConfigurations(t *testing.T) {
