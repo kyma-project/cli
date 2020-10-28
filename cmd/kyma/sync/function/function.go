@@ -34,13 +34,12 @@ Use the flags to specify the name of your Function, the Namespace, or the locati
 		},
 		Args: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
-				return errors.New("Please provide a name of the function.")
+				return errors.New("missing name of the function")
 			}
 			return nil
 		},
 	}
 
-	//cmd.Flags().StringVar(&o.Name, "name", "", `Function name.`)
 	cmd.Flags().StringVarP(&o.Namespace, "namespace", "n", "", `Namespace from which you want to sync the Function.`)
 	cmd.Flags().StringVarP(&o.Dir, "dir", "d", "", `Full path to the directory where you want to save the project.`)
 
