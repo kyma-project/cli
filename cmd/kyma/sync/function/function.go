@@ -30,20 +30,25 @@ func NewCmd(o *Options) *cobra.Command {
 		Long: `Use this command to download the Function's code and dependencies from the cluster to create or update these resources in your local workspace.
 Use the flags to specify the name of your Function, the Namespace, or the location for your project.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return c.Run()
+			return c.Run(args[0])
+		},
+		Args: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 1 {
+				return errors.New("Please provide a name of the function.")
+			}
+			return nil
 		},
 	}
 
-	cmd.Flags().StringVar(&o.Name, "name", "", `Function name.`)
+	//cmd.Flags().StringVar(&o.Name, "name", "", `Function name.`)
 	cmd.Flags().StringVarP(&o.Namespace, "namespace", "n", "", `Namespace from which you want to sync the Function.`)
-	cmd.Flags().StringVarP(&o.OutputPath, "output", "o", "", `Full path to the directory where you want to save the project.`)
+	cmd.Flags().StringVarP(&o.Dir, "dir", "d", "", `Full path to the directory where you want to save the project.`)
 
 	return cmd
 }
 
-func (c *command) Run() error {
+func (c *command) Run(name string) error {
 	s := c.NewStep("Generating project structure")
-
 	var err error
 	if c.K8s, err = kube.NewFromConfig("", c.KubeconfigPath); err != nil {
 		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
@@ -54,8 +59,8 @@ func (c *command) Run() error {
 		return err
 	}
 
-	if _, err := os.Stat(c.opts.OutputPath); os.IsNotExist(err) {
-		err = os.MkdirAll(c.opts.OutputPath, 0700)
+	if _, err := os.Stat(c.opts.Dir); os.IsNotExist(err) {
+		err = os.MkdirAll(c.opts.Dir, 0700)
 		if err != nil {
 			return err
 		}
@@ -68,16 +73,16 @@ func (c *command) Run() error {
 	}
 
 	cfg := workspace.Cfg{
-		Name:      c.opts.Name,
+		Name:      name,
 		Namespace: c.opts.Namespace,
 	}
 
-	err = workspace.Synchronise(ctx, cfg, c.opts.OutputPath, buildClient)
+	err = workspace.Synchronise(ctx, cfg, c.opts.Dir, buildClient)
 	if err != nil {
 		s.Failure()
 		return err
 	}
 
-	s.Successf("Function synchronised in %s", c.opts.OutputPath)
+	s.Successf("Function synchronised in %s", c.opts.Dir)
 	return nil
 }
