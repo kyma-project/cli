@@ -96,7 +96,7 @@ Before you start, make sure you have the following tools installed:
 7. Fetch the content of the resource to synchronize your local workspace sources with the cluster changes:
 
   ```bash
-  kyma sync function --name {FUNCTION_NAME}
+  kyma sync function {FUNCTION_NAME}
   ```
 
 8. Check the local `handler.py` file with the Function's code to make sure that the cluster changes were fetched:
