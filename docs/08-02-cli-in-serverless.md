@@ -15,9 +15,9 @@ This tutorial is based on a sample Python Function run on a lightweight [k3d](ht
 
 Before you start, make sure you have the following tools installed:
 
-- Kyma CLI
-- [k3d](https://k3d.io/)
 - [Docker](https://www.docker.com/)
+- [k3d](https://k3d.io/)
+- Kyma CLI
 
 ## Steps
 
