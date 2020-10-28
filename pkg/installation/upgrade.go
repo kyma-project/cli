@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Masterminds/semver"
+	"github.com/blang/semver/v4"
 	installationSDK "github.com/kyma-incubator/hydroform/install/installation"
 	"github.com/kyma-project/cli/internal/net"
 	pkgErrors "github.com/pkg/errors"
@@ -140,9 +140,9 @@ func (i *Installation) getTargetVersion() string {
 	}
 }
 
-func (i *Installation) getSemVersion(version string) (bool, *semver.Version) {
+func (i *Installation) getSemVersion(version string) (bool, semver.Version) {
 	isReleaseVersion := true
-	semVersion, err := semver.NewVersion(version)
+	semVersion, err := semver.Parse(version)
 	if err != nil {
 		isReleaseVersion = false
 	}
@@ -172,24 +172,24 @@ func (i *Installation) promptUpgradeWarning(isCurrReleaseVersion bool, currVersi
 	return nil
 }
 
-func (i *Installation) checkUpgradeCompatibility(currSemVersion *semver.Version, targetSemVersion *semver.Version) error {
-	if currSemVersion.GreaterThan(targetSemVersion) {
+func (i *Installation) checkUpgradeCompatibility(currSemVersion semver.Version, targetSemVersion semver.Version) error {
+	if currSemVersion.GT(targetSemVersion) {
 		return fmt.Errorf("Current Kyma version '%s' is greater than the target version '%s'. Kyma does not support a dedicated downgrade procedure", currSemVersion.String(), targetSemVersion.String())
-	} else if currSemVersion.Major() != targetSemVersion.Major() {
+	} else if currSemVersion.Major != targetSemVersion.Major {
 		return fmt.Errorf("Mismatch between current Kyma version '%s' and target version '%s' is more than one minor version", currSemVersion.String(), targetSemVersion.String())
-	} else if currSemVersion.Minor() != targetSemVersion.Minor() && currSemVersion.Minor()+1 != targetSemVersion.Minor() {
+	} else if currSemVersion.Minor != targetSemVersion.Minor && currSemVersion.Minor+1 != targetSemVersion.Minor {
 		return fmt.Errorf("Mismatch between current Kyma version '%s' and target version '%s' is more than one minor version", currSemVersion.String(), targetSemVersion.String())
 	}
 
 	return nil
 }
 
-func (i *Installation) promptMigrationGuide(currSemVersion *semver.Version, targetSemVersion *semver.Version) error {
+func (i *Installation) promptMigrationGuide(currSemVersion semver.Version, targetSemVersion semver.Version) error {
 	guideURL := fmt.Sprintf(
 		"https://github.com/kyma-project/kyma/blob/release-%v.%v/docs/migration-guides/%v.%v-%v.%v.md",
-		targetSemVersion.Major(), targetSemVersion.Minor(),
-		currSemVersion.Major(), currSemVersion.Minor(),
-		targetSemVersion.Major(), targetSemVersion.Minor(),
+		targetSemVersion.Major, targetSemVersion.Minor,
+		currSemVersion.Major, currSemVersion.Minor,
+		targetSemVersion.Major, targetSemVersion.Minor,
 	)
 	statusCode, err := net.DoGet(guideURL)
 	if err != nil {
