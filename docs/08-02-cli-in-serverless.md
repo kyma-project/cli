@@ -3,10 +3,10 @@ title: Use Kyma CLI to manage Functions
 type: Tutorials
 ---
 
-This tutorial shows how to use the available CLI commands to manage serverless Functions in Kyma. You will see how to:
+This tutorial shows how to use the available CLI commands to manage Functions in Kyma. You will see how to:
 
 1. Create local files that contain the basic configuration for a sample "Hello World" Python Function (`kyma init function`).
-2. Generate a Function custom resource from these files and apply it on your cluster (`kyma apply function`).
+2. Generate a Function custom resource (CR) from these files and apply it on your cluster (`kyma apply function`).
 3. Fetch the current state of your Function's cluster configuration after it was modified (`kyma sync function`).
 
 This tutorial is based on a sample Python Function run on a lightweight [k3d](https://k3d.io/) cluster.
@@ -27,7 +27,7 @@ Before you start, make sure you have the following tools installed:
   k3d cluster create {CLUSTER_NAME}
   ```
 
-2. Apply the `functions.serverless.kyma-project.io` CRD from sources in the [`kyma`](https://github.com/kyma-project/kyma/tree/master/resources/cluster-essentials/files) repository. You will need it to create a Function CR on the cluster based on this definition.
+2. Apply the `functions.serverless.kyma-project.io` CustomResourceDefinition (CRD) from sources in the [`kyma`](https://github.com/kyma-project/kyma/tree/master/resources/cluster-essentials/files) repository. You will need it to create a Function CR on the cluster based on this definition.
 
   ```bash
   kubectl apply -f https://raw.githubusercontent.com/kyma-project/kyma/master/resources/cluster-essentials/files/functions.serverless.crd.yaml
@@ -45,9 +45,9 @@ Before you start, make sure you have the following tools installed:
 
   The `init` command downloads the following files to your workspace folder:
 
-    - `config.yaml`	with the Function's configuration
-    - `handler.py` with the Function's code and the simple "Hello World" logic
-    - `requirements.txt` with an empty file for your Function's custom dependencies
+      - `config.yaml`	with the Function's configuration
+      - `handler.py` with the Function's code and the simple "Hello World" logic
+      - `requirements.txt` with an empty file for your Function's custom dependencies
 
   This command also sets **sourcePath** in the `config.yaml` file to the full path of the workspace folder:
 
@@ -76,22 +76,22 @@ Before you start, make sure you have the following tools installed:
 
 6. Change the Function's source code on the cluster to return "Hello Serverless!":
 
-  a. Edit the Function:
+  a) Edit the Function:
 
-    ```bash
-    kubectl edit function {FUNCTION_NAME}
-    ```
+  ```bash
+  kubectl edit function {FUNCTION_NAME}
+  ```
 
-  b. Modify **source** as follows:
+  b) Modify **source** as follows:
 
-    ```yaml
-    ...
-    spec:
-      runtime: python38
-      source: |-
-        def main(event, context):
-            return "Hello Serverless!"
-    ```
+  ```yaml
+  ...
+  spec:
+    runtime: python38
+    source: |-
+      def main(event, context):
+          return "Hello Serverless!"
+  ```
 
 7. Fetch the content of the resource to synchronize your local workspace sources with the cluster changes:
 
