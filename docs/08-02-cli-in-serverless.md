@@ -27,10 +27,16 @@ Before you start, make sure you have the following tools installed:
   k3d cluster create {CLUSTER_NAME}
   ```
 
-2. Apply the `functions.serverless.kyma-project.io` CustomResourceDefinition (CRD) from sources in the [`kyma`](https://github.com/kyma-project/kyma/tree/master/resources/cluster-essentials/files) repository. You will need it to create a Function CR on the cluster based on this definition.
+  This command also sets your context to the newly created cluster. To check that the context is set properly, run this command to display the cluster information:
 
   ```bash
-  kubectl apply -f https://raw.githubusercontent.com/kyma-project/kyma/master/resources/cluster-essentials/files/functions.serverless.crd.yaml
+  kubectl cluster-info
+  ```
+
+2. Apply the `functions.serverless.kyma-project.io` and `triggers.eventing.knative.dev` CustomResourceDefinitions (CRDs) from sources in the [`kyma`](https://github.com/kyma-project/kyma/tree/master/resources/cluster-essentials/files) repository. You will need both of them to create a Function CR on the cluster:
+
+  ```bash
+  kubectl apply -f https://raw.githubusercontent.com/kyma-project/kyma/master/resources/cluster-essentials/files/functions.serverless.crd.yaml && kubectl apply -f https://raw.githubusercontent.com/kyma-project/kyma/master/resources/cluster-essentials/files/triggers.eventing.knative.dev.crd.yaml
   ```
 
 3. Use the `init` Kyma CLI command to create local files with the default configuration for a Python Function. Go to the folder in which you want to initiate the workspace content and run this command:
@@ -43,7 +49,7 @@ Before you start, make sure you have the following tools installed:
 
   > **NOTE:** Python 3.8 is only one of the available runtimes. Read about all [supported runtimes and sample Functions to run on them](https://kyma-project.io/docs/master/components/serverless/#details-runtimes).
 
-  The `init` command downloads the following files to your workspace folder:
+  The `init` command creates the following files to your workspace folder:
 
   - `config.yaml`	with the Function's configuration
   - `handler.py` with the Function's code and the simple "Hello World" logic
