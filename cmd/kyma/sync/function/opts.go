@@ -1,7 +1,6 @@
 package function
 
 import (
-	"fmt"
 	"os"
 	"time"
 
@@ -12,10 +11,9 @@ import (
 type Options struct {
 	*cli.Options
 
-	Name       string
-	Namespace  string
-	OutputPath string
-	Timeout    time.Duration
+	Namespace string
+	Dir       string
+	Timeout   time.Duration
 }
 
 //NewOptions creates options with default values
@@ -25,8 +23,8 @@ func NewOptions(o *cli.Options) *Options {
 }
 
 func (o *Options) setDefaults(defaultNamespace string) (err error) {
-	if o.OutputPath == "" {
-		o.OutputPath, err = os.Getwd()
+	if o.Dir == "" {
+		o.Dir, err = os.Getwd()
 		if err != nil {
 			return err
 		}
@@ -34,10 +32,6 @@ func (o *Options) setDefaults(defaultNamespace string) (err error) {
 
 	if o.Namespace == "" {
 		o.Namespace = defaultNamespace
-	}
-
-	if o.Name == "" {
-		return fmt.Errorf("flag 'name' is required")
 	}
 
 	return
