@@ -49,7 +49,7 @@ Before you start, make sure you have the following tools installed:
 
   > **NOTE:** Python 3.8 is only one of the available runtimes. Read about all [supported runtimes and sample Functions to run on them](https://kyma-project.io/docs/master/components/serverless/#details-runtimes).
 
-  The `init` command creates the following files to your workspace folder:
+  The `init` command creates the following files in your workspace folder:
 
   - `config.yaml`	with the Function's configuration
   - `handler.py` with the Function's code and the simple "Hello World" logic
