@@ -45,7 +45,7 @@ Before you start, make sure you have the following tools installed:
   kyma init function --runtime python38 --name {FUNCTION_NAME}
   ```
 
-  Alternatively, use the `--dir {FULL_FOLDER_PATH}` flag to point to the directory where you want to save the fetched Function's source files.
+  Alternatively, use the `--dir {FULL_FOLDER_PATH}` flag to point to the directory where you want to create the Function's source files.
 
   > **NOTE:** Python 3.8 is only one of the available runtimes. Read about all [supported runtimes and sample Functions to run on them](https://kyma-project.io/docs/master/components/serverless/#details-runtimes).
 
