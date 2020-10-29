@@ -69,8 +69,10 @@ Before you start, make sure you have the following tools installed:
 4. Run the `apply` Kyma CLI command to create a Function CR in the YAML format on your cluster:
 
   ```bash
-  kyma apply function --filename $PWD/config.yaml
+  kyma apply function
   ```
+
+  > **TIP:** To apply a Function from a different location, use the `--filename` flag followed by the full path to the `config.yaml` file.
 
   Alternatively, use the `--dry-run` flag to list the file that will be created before you apply it. You can also preview the file's content in the format of your choice by adding the `--output {FILE_FORMAT}` flag, such as `--output yaml`.
 
