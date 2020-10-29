@@ -60,13 +60,13 @@ Before you start, make sure you have the following tools installed:
       sourcePath: {FULL_PATH_TO_WORKSPACE_FOLDER}
   ```
 
-4. Run the `apply` Kyma CLI command to create a Function CR in the YAML format on your cluster.
+4. Run the `apply` Kyma CLI command to create a Function CR in the YAML format on your cluster:
 
   ```bash
   kyma apply function --filename $PWD/config.yaml
   ```
 
-  Alternatively, use the `--dry-run` flag to list the file that will be created before you apply them. You can also preview the file's content in the format of your choice by adding the `--output {FILE_FORMAT}` flag, such as `--output yaml`.
+  Alternatively, use the `--dry-run` flag to list the file that will be created before you apply it. You can also preview the file's content in the format of your choice by adding the `--output {FILE_FORMAT}` flag, such as `--output yaml`.
 
 5. Once applied, view the Function's details on the cluster:
 
@@ -105,7 +105,7 @@ Before you start, make sure you have the following tools installed:
   cat handler.py
   ```
 
-  This command returns a result confirming that the local sources were synchronized with cluster changes:
+  This command returns the result confirming that the local sources were synchronized with cluster changes:
 
   ```py
   def main(event, context):
