@@ -16,30 +16,15 @@ This tutorial is based on a sample Python Function run on a lightweight [k3d](ht
 Before you start, make sure you have the following tools installed:
 
 - [Docker](https://www.docker.com/)
-- [k3d](https://k3d.io/)
-- Kyma CLI
+- [Kyma CLI](/overview/#installation-install-kyma-cli)
+- Kyma installed [locally](https://kyma-project.io/docs/master/root/kyma/#installation-install-kyma-locally) or [on a cluster](https://kyma-project.io/docs/master/root/kyma/#installation-install-kyma-on-a-cluster)
+
 
 ## Steps
 
-1. Create a default k3d cluster with a single server node:
+Follow these steps:
 
-  ```bash
-  k3d cluster create {CLUSTER_NAME}
-  ```
-
-  This command also sets your context to the newly created cluster. To check that the context is set properly, run this command to display the cluster information:
-
-  ```bash
-  kubectl cluster-info
-  ```
-
-2. Apply the `functions.serverless.kyma-project.io` and `triggers.eventing.knative.dev` CustomResourceDefinitions (CRDs) from sources in the [`kyma`](https://github.com/kyma-project/kyma/tree/master/resources/cluster-essentials/files) repository. You will need both of them to create a Function CR on the cluster:
-
-  ```bash
-  kubectl apply -f https://raw.githubusercontent.com/kyma-project/kyma/master/resources/cluster-essentials/files/functions.serverless.crd.yaml && kubectl apply -f https://raw.githubusercontent.com/kyma-project/kyma/master/resources/cluster-essentials/files/triggers.eventing.knative.dev.crd.yaml
-  ```
-
-3. Use the `init` Kyma CLI command to create local files with the default configuration for a Python Function. Go to the folder in which you want to initiate the workspace content and run this command:
+1. Run the `init` Kyma CLI command to create local files with the default configuration for a Python Function. Go to the folder in which you want to initiate the workspace content and run this command:
 
   ```bash
   kyma init function --runtime python38 --name {FUNCTION_NAME}
@@ -66,7 +51,7 @@ Before you start, make sure you have the following tools installed:
       sourcePath: {FULL_PATH_TO_WORKSPACE_FOLDER}
   ```
 
-4. Run the `apply` Kyma CLI command to create a Function CR in the YAML format on your cluster:
+2. Run the `apply` Kyma CLI command to create a Function CR in the YAML format on your cluster:
 
   ```bash
   kyma apply function
@@ -76,13 +61,13 @@ Before you start, make sure you have the following tools installed:
 
   Alternatively, use the `--dry-run` flag to list the file that will be created before you apply it. You can also preview the file's content in the format of your choice by adding the `--output {FILE_FORMAT}` flag, such as `--output yaml`.
 
-5. Once applied, view the Function's details on the cluster:
+3. Once applied, view the Function's details on the cluster:
 
   ```bash
   kubectl describe function {FUNCTION_NAME}
   ```
 
-6. Change the Function's source code on the cluster to return "Hello Serverless!":
+4. Change the Function's source code on the cluster to return "Hello Serverless!":
 
   a) Edit the Function:
 
@@ -101,13 +86,13 @@ Before you start, make sure you have the following tools installed:
           return "Hello Serverless!"
   ```
 
-7. Fetch the content of the resource to synchronize your local workspace sources with the cluster changes:
+5. Fetch the content of the resource to synchronize your local workspace sources with the cluster changes:
 
   ```bash
   kyma sync function {FUNCTION_NAME}
   ```
 
-8. Check the local `handler.py` file with the Function's code to make sure that the cluster changes were fetched:
+6. Check the local `handler.py` file with the Function's code to make sure that the cluster changes were fetched:
 
   ```bash
   cat handler.py
