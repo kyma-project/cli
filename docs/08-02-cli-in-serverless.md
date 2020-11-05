@@ -16,7 +16,7 @@ This tutorial is based on a sample Python Function run on a lightweight [k3d](ht
 Before you start, make sure you have the following tools installed:
 
 - [Docker](https://www.docker.com/)
-- [Kyma CLI](/overview/#installation-install-kyma-cli)
+- [Kyma CLI](#installation-install-kyma-cli)
 - Kyma installed [locally](https://kyma-project.io/docs/master/root/kyma/#installation-install-kyma-locally) or [on a cluster](https://kyma-project.io/docs/master/root/kyma/#installation-install-kyma-on-a-cluster)
 
 
