@@ -1,10 +1,13 @@
 package function
 
 import (
+	"os"
+
 	"github.com/kyma-incubator/hydroform/function/pkg/workspace"
 	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/kube"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 const (
@@ -55,6 +58,11 @@ Use the flags to specify the initial configuration for your Function or to choos
 func (c *command) Run() error {
 	s := c.NewStep("Generating project structure")
 
+	var err error
+	if c.K8s, err = kube.NewFromConfig("", c.KubeconfigPath); err != nil {
+		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
+	}
+
 	if err := c.opts.setDefaults(c.K8s.DefaultNamespace()); err != nil {
 		s.Failure()
 		return err
@@ -74,7 +82,7 @@ func (c *command) Run() error {
 		Source:    c.opts.source(),
 	}
 
-	err := workspace.Initialize(configuration, c.opts.Dir)
+	err = workspace.Initialize(configuration, c.opts.Dir)
 	if err != nil {
 		s.Failure()
 		return err
