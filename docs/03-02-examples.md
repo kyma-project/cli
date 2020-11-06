@@ -76,10 +76,29 @@ kyma install -o {YAML_FILE_PATH}
       component: ory
       kyma-project.io/installation: ""
   data:
-    hydra.deployment.resources.requests.cpu: "53m"
     hydra.deployment.resources.limits.cpu: "153m"
+    hydra.deployment.resources.requests.cpu: "53m"
+  ---
+  apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: monitoring-overrides
+    namespace: kyma-installer
+    labels:
+      installer: overrides
+      component: monitoring
+      kyma-project.io/installation: ""
+  data:
+    alertmanager.alertmanagerSpec.resources.limits.memory: "304Mi"
+    alertmanager.alertmanagerSpec.resources.requests.memory: "204Mi"
   ```
-- In this example, the values of `hydra.deployment.resources.requests.cpu` and `hydra.deployment.resources.limits.cpu` will be overriden to `53m` and `153m` respectively.
+- In this example, overrides are provided for 2 different components: `ory` and `monitoring`. For `ory`, the values of `hydra.deployment.resources.limits.cpu` and `hydra.deployment.resources.requests.cpu` will be overriden to `153m` and `53m` respectively. For `monitoring`, the values of `alertmanager.alertmanagerSpec.resources.limits.memory` and `alertmanager.alertmanagerSpec.resources.requests.memory` will be overriden to `304Mi` and `204Mi` respectively.
+
+- It is also possible to provide multiple override files at the same time
+  ```bash
+  kyma install --override {YAML_FILE_1_PATH} --override {YAML_FILE_2_PATH}
+  ```
+      
 
 ### Test Kyma
 
