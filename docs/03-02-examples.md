@@ -26,6 +26,18 @@ To install Kyma using your own domain, run:
 ```bash
 kyma install --domain {DOMAIN} --tlsCert {TLS_CERT} --tlsKey {TLS_KEY}
 ```
+- `{TLS_CERT}` and `{TLS_KEY}` are the TLS certificate and TLS key for the domain used. Note that both of them must be encoded in base64. You can use [OpenSSL](https://www.openssl.org/) (which is installed by default with macOS) to convert your TLS certificate and TLS key to base64-encoded values.
+- To simplify the process:
+  - You can first encode the TLS certificate and TLS key and export them as environment variables:
+  - ```bash
+    export TLS_CERT="$(openssl base64 -in {TLS_CERT_FILE_PATH})"
+    export TLS_KEY="$(openssl base64 -in {TLS_KEY_FILE_PATH})"
+    ```
+  - `{TLS_CERT_FILE_PATH}` is the path to the file containing the TLS certificate and `{TLS_KEY_FILE_PATH}` is the path to the file containing the TLS key.
+  - Now, you can use these environment variables to install Kyma with your own domain `{DOMAIN}` as shown below:
+  - ```bash
+    kyma install --domain {DOMAIN} --tlsCert $TLS_CERT --tlsKey $TLS_KEY
+    ```
 
 To install Kyma from the latest `master` branch, run:
 
@@ -39,32 +51,41 @@ To install Kyma using your own Kyma installer image, run:
 kyma install --source {IMAGE}
 ```
 
-To build an image from your local sources and install Kyma based on this image, run:
+To build an image from your local sources and install Kyma on a remote cluster based on this image, run:
 
 ```bash
 kyma install --source local --custom-image {IMAGE}
 ```
+- For example, if your `{IMAGE}` is `user/my-kyma-installer:v1.4.0`, then this command will build an image from your local sources and push it your repository `user/my-kyma-installer` with the tag `v1.4.0`. Then, this image `user/my-kyma-installer:v1.4.0` will be used in the `Deployment` for `kyma-installer`.
 
 To install kyma with only specific components, run:
 
 ```bash
-kyma install --components {YAML_FILE_PATH}
+kyma install --components {COMPONENTS_FILE_PATH}
 ```
-- {YAML_FILE_PATH} points to a YAML file with the desired component list to be installed such as the one below:
+- `{COMPONENTS_FILE_PATH}` is the path to a YAML file containing the desired component list to be installed such as the one below:
 - ```bash
   components:
   - name: "cluster-essentials"
     namespace: "kyma-system"
   - name: "testing"
     namespace: "kyma-system"
+  - name: "istio"
+    namespace: "istio-system"
+  - name: "xip-patch"
+    namespace: "kyma-installer"
+  - name: "istio-kyma-patch"
+    namespace: "istio-system"
+  - name: "dex"
+    namespace: "kyma-system"
   ```
-- In this example, only `cluster-essentials` and `testing` components will be installed on the cluster.
+- In this example, only these 6 components will be installed on the cluster.
 
 To override the standard Kyma installation, run:
 ```bash
-kyma install --override {YAML_FILE_PATH}
+kyma install --override {OVERRIDE_FILE_PATH}
 ```
-- {YAML_FILE_PATH} points to a YAML file with parameters to override such as the one below:
+- `{OVERRIDE_FILE_PATH}` is the path to a YAML file containing the parameters to override such as the one below:
 - ```bash
   apiVersion: v1
   kind: ConfigMap
@@ -96,7 +117,7 @@ kyma install --override {YAML_FILE_PATH}
 
 - It is also possible to provide multiple override files at the same time
   ```bash
-  kyma install --override {YAML_FILE_1_PATH} --override {YAML_FILE_2_PATH}
+  kyma install --override {OVERRIDEL_FILE_1_PATH} --override {OVERRIDE_FILE_2_PATH}
   ```
       
 
