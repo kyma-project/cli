@@ -151,14 +151,14 @@ func (c *command) validateFlags() error {
 	}
 
 	if len(strings.Split(c.opts.Location, "-")) <= 2 {
-		var answer bool
 		if !(c.opts.NonInteractive || c.opts.CI) {
-			answer = c.CurrentStep.PromptYesNo(fmt.Sprintf("Since you chose a region (%s) instead of a zone, %d number of nodes will be created on each zone in this region.\n"+
+			answer := c.CurrentStep.PromptYesNo(fmt.Sprintf("Since you chose a region (%s) instead of a zone, %d number of nodes will be created on each zone in this region.\n"+
 				"You can also provide a different number of nodes or specify a zone instead.\n"+
 				"Are you sure you want to continue? ", c.opts.Location, c.opts.NodeCount))
-		}
-		if !(c.opts.NonInteractive || c.opts.CI) && !answer {
-			return fmt.Errorf("Aborting provisioning")
+				
+			if !answer {
+				return fmt.Errorf("Aborting provisioning")
+			}
 		}
 	}
 
