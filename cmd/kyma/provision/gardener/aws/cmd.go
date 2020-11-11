@@ -180,6 +180,12 @@ func (c *command) validateFlags() error {
 		errMessage.WriteString("\n Minimum node count cannot be greater than maximum number nodes.")
 	}
 
+	for _, zone := range c.opts.Zones {
+		if !strings.HasPrefix(zone, c.opts.Region) {
+			errMessage.WriteString(fmt.Sprintf("\n Provided zone %s and region %s do not match. Please provide the right region for the zone.", zone, c.opts.Region))
+		}
+	}
+
 	if errMessage.Len() != 0 {
 		return errors.New(errMessage.String())
 	}

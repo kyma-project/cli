@@ -53,9 +53,12 @@ NOTE: To access the provisioned cluster, make sure you get authenticated by Goog
 }
 
 func (c *command) Run() error {
+	s := c.NewStep("Validating flags")
 	if err := c.validateFlags(); err != nil {
+		s.Failure()
 		return err
 	}
+	s.Success()
 
 	cluster := newCluster(c.opts)
 	provider, err := newProvider(c.opts)
@@ -67,7 +70,7 @@ func (c *command) Run() error {
 		// discard all the noise from terraform logs if not verbose
 		log.SetOutput(ioutil.Discard)
 	}
-	s := c.NewStep("Provisioning GKE cluster")
+	s = c.NewStep("Provisioning GKE cluster")
 	home, err := files.KymaHome()
 	if err != nil {
 		s.Failure()
@@ -145,6 +148,18 @@ func (c *command) validateFlags() error {
 	}
 	if c.opts.CredentialsFile == "" {
 		errMessage.WriteString("\nRequired flag `credentials` has not been set.")
+	}
+
+	if len(strings.Split(c.opts.Location, "-")) <= 2 {
+		var answer bool
+		if !(c.opts.NonInteractive || c.opts.CI) {
+			answer = c.CurrentStep.PromptYesNo(fmt.Sprintf("Since you chose a region (%s) instead of a zone, %d number of nodes will be created on each zone in this region.\n"+
+				"You can also provide a different number of nodes or specify a zone instead.\n"+
+				"Are you sure you want to continue? ", c.opts.Location, c.opts.NodeCount))
+		}
+		if !(c.opts.NonInteractive || c.opts.CI) && !answer {
+			return fmt.Errorf("Aborting provisioning")
+		}
 	}
 
 	if errMessage.Len() != 0 {
