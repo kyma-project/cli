@@ -8,6 +8,7 @@ import (
 )
 
 func TestRunCmd(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		name           string
 		description    string

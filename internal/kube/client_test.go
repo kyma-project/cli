@@ -27,6 +27,7 @@ import (
 )
 
 func TestIsPodDeployed(t *testing.T) {
+	t.Parallel()
 	//setup
 	c := fakeClientWithNS()
 	_, err := c.Static().CoreV1().Pods("ns").Create(context.Background(), &corev1.Pod{
@@ -58,6 +59,7 @@ func TestIsPodDeployed(t *testing.T) {
 }
 
 func TestIsPodDeployedByLabel(t *testing.T) {
+	t.Parallel()
 	//setup
 	c := fakeClientWithNS()
 	_, err := c.Static().CoreV1().Pods("ns").Create(context.Background(), &corev1.Pod{
@@ -91,6 +93,7 @@ func TestIsPodDeployedByLabel(t *testing.T) {
 }
 
 func TestWaitPodStatus(t *testing.T) {
+	t.Parallel()
 	// setup
 	c := fakeClientWithNS()
 	pod := &corev1.Pod{
@@ -122,6 +125,7 @@ func TestWaitPodStatus(t *testing.T) {
 }
 
 func TestWaitPodStatusByLabel(t *testing.T) {
+	t.Parallel()
 	// setup
 	c := fakeClientWithNS()
 	pod := &corev1.Pod{
@@ -154,6 +158,7 @@ func TestWaitPodStatusByLabel(t *testing.T) {
 }
 
 func TestWatchResource(t *testing.T) {
+	t.Parallel()
 	c := &client{
 		restCfg: &rest.Config{},
 		dynamic: dynamicK8s(

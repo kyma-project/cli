@@ -21,6 +21,7 @@ import (
 )
 
 func TestInstallKyma(t *testing.T) {
+	t.Parallel()
 	// prepare mocks
 	kymaMock := k8sMocks.KymaKube{}
 	iServiceMock := mocks.Service{}
@@ -141,6 +142,7 @@ func TestInstallKyma(t *testing.T) {
 }
 
 func TestValidateConfigurations(t *testing.T) {
+	t.Parallel()
 	// Domain is passed, but certificate and key are missing
 	i := &Installation{
 		Options: &Options{

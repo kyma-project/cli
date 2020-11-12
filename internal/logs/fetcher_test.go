@@ -23,6 +23,7 @@ import (
 )
 
 func Test(t *testing.T) {
+	t.Parallel()
 	const fixLogsResponse = `Lorem ipsum dolor sit amet.`
 
 	tests := map[string]struct {

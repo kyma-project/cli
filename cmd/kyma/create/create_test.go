@@ -9,6 +9,7 @@ import (
 )
 
 func TestSubcommands(t *testing.T) {
+	t.Parallel()
 	c := NewCmd(&cli.Options{})
 	c.SetOutput(ioutil.Discard) // not interested in the command's output
 

@@ -7,6 +7,7 @@ import (
 )
 
 func TestGetAvailablePort(t *testing.T) {
+	t.Parallel()
 	p, err := GetAvailablePort()
 
 	require.True(t, p > 0)
@@ -15,7 +16,7 @@ func TestGetAvailablePort(t *testing.T) {
 }
 
 func TestDoGet(t *testing.T) {
-
+	t.Parallel()
 	// Happy path
 	sc, err := DoGet("http://google.com")
 	require.NoError(t, err)

@@ -1,13 +1,15 @@
 package apply
 
 import (
-	"github.com/kyma-project/cli/internal/cli"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"testing"
+
+	"github.com/kyma-project/cli/internal/cli"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSubcommands(t *testing.T) {
+	t.Parallel()
 	c := NewCmd(&cli.Options{})
 	c.SetOutput(ioutil.Discard) // not interested in the command's output
 

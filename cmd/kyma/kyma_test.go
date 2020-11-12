@@ -10,6 +10,7 @@ import (
 
 // TestKymaFlags ensures that the provided command flags are stored in the options.
 func TestKymaFlags(t *testing.T) {
+	t.Parallel()
 	o := &cli.Options{}
 	c := NewCmd(o)
 	c.SetOutput(ioutil.Discard) // not interested in the command's output
@@ -28,6 +29,7 @@ func TestKymaFlags(t *testing.T) {
 }
 
 func TestKymaSubcommands(t *testing.T) {
+	t.Parallel()
 	c := NewCmd(&cli.Options{})
 	c.SetOutput(ioutil.Discard) // not interested in the command's output
 

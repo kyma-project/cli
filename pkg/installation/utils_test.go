@@ -10,18 +10,21 @@ import (
 )
 
 func Test_GetMasterHash(t *testing.T) {
+	t.Parallel()
 	h, err := getMasterHash()
 	require.NoError(t, err)
 	require.True(t, isHex(h))
 }
 
 func Test_GetLatestAvailableMasterHash(t *testing.T) {
+	t.Parallel()
 	h, err := getLatestAvailableMasterHash(&stepMocks.Step{}, 5)
 	require.NoError(t, err)
 	require.True(t, isHex(h))
 }
 
 func Test_LoadInstallationFiles(t *testing.T) {
+	t.Parallel()
 	localInstallation := Installation{
 		Options: &Options{
 			IsLocal:          true,
@@ -54,6 +57,7 @@ func Test_LoadInstallationFiles(t *testing.T) {
 }
 
 func Test_LoadConfigurations(t *testing.T) {
+	t.Parallel()
 	domain := "test.kyma"
 	tlsCert := "testCert"
 	tlsKey := "testKey"
@@ -103,6 +107,7 @@ func Test_LoadConfigurations(t *testing.T) {
 }
 
 func Test_LoadComponentsConfig(t *testing.T) {
+	t.Parallel()
 	installation := &Installation{
 		Options: &Options{
 			ComponentsConfig: path.Join("../../internal/testdata", "components.yaml"),
@@ -125,6 +130,7 @@ func Test_LoadComponentsConfig(t *testing.T) {
 }
 
 func Test_GetInstallerImage(t *testing.T) {
+	t.Parallel()
 	const image = "eu.gcr.io/kyma-project/kyma-installer:63f27f76"
 	testData := File{Content: []map[string]interface{}{{
 		"apiVersion": "installer.kyma-project.io/v1alpha1",
@@ -152,6 +158,7 @@ func Test_GetInstallerImage(t *testing.T) {
 }
 
 func Test_ReplaceDockerImageURL(t *testing.T) {
+	t.Parallel()
 	const replacedWithData = "testImage!"
 	testData := []struct {
 		testName       string
@@ -216,6 +223,7 @@ func Test_ReplaceDockerImageURL(t *testing.T) {
 }
 
 func Test_IsDockerImage(t *testing.T) {
+	t.Parallel()
 	ok := isDockerImage("testRegistry/testImage:tag")
 	require.True(t, ok)
 
@@ -224,6 +232,7 @@ func Test_IsDockerImage(t *testing.T) {
 }
 
 func Test_IsSemVer(t *testing.T) {
+	t.Parallel()
 	ok := isSemVer("1.2.3")
 	require.True(t, ok)
 

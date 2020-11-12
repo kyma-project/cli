@@ -15,6 +15,7 @@ import (
 )
 
 func TestGetClusterInfoFromConfigMap(t *testing.T) {
+	t.Parallel()
 	kymaMock := &mocks.KymaKube{}
 
 	// Happy path

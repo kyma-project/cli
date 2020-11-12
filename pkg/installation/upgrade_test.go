@@ -20,6 +20,7 @@ import (
 )
 
 func TestUpgradeKyma(t *testing.T) {
+	t.Parallel()
 	// prepare mocks
 	kymaMock := k8sMocks.KymaKube{}
 	iServiceMock := mocks.Service{}

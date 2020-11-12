@@ -15,6 +15,7 @@ import (
 )
 
 func Test_matchTestDefinitionNames(t *testing.T) {
+	t.Parallel()
 	testData := []struct {
 		testName        string
 		shouldFail      bool
@@ -77,6 +78,7 @@ func Test_matchTestDefinitionNames(t *testing.T) {
 }
 
 func Test_verifyIfTestNotExists(t *testing.T) {
+	t.Parallel()
 	testData := []struct {
 		testName       string
 		inputSuiteName string
@@ -129,6 +131,7 @@ func Test_verifyIfTestNotExists(t *testing.T) {
 }
 
 func Test_ListTestSuiteNames(t *testing.T) {
+	t.Parallel()
 	testData := []struct {
 		testName        string
 		shouldFail      bool
@@ -188,6 +191,7 @@ func Test_ListTestSuiteNames(t *testing.T) {
 }
 
 func Test_WaitForTestSuite(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		expMessages      []string
 		statusesSequence []oct.TestSuiteStatus

@@ -15,6 +15,7 @@ import (
 
 // TestInstallFlags ensures that the provided command flags are stored in the options.
 func TestInstallFlags(t *testing.T) {
+	t.Parallel()
 	o := NewOptions(&cli.Options{})
 	c := NewCmd(o)
 
@@ -63,6 +64,7 @@ func TestInstallFlags(t *testing.T) {
 }
 
 func TestImportCertificate(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		// params
 		name        string
