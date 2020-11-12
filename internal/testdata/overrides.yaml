@@ -2,15 +2,13 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: istio-overrides
+  name: ory-overrides
   namespace: kyma-installer
   labels:
     installer: overrides
-    component: istio
+    component: ory
     kyma-project.io/installation: ""
 data:
-  global.proxy.resources.requests.cpu: "490m"
-  global.proxy.resources.requests.memory: "127Mi"
-  global.proxy.resources.limits.cpu: "499m"
-  global.proxy.resources.limits.memory: "1023Mi"
+  hydra.deployment.resources.requests.cpu: "53m"
+  hydra.deployment.resources.limits.cpu: "153m"
 ---

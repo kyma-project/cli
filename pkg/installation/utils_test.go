@@ -91,19 +91,13 @@ func Test_LoadConfigurations(t *testing.T) {
 	require.Equal(t, base64.StdEncoding.EncodeToString([]byte(password)), pass.Value)
 
 	require.Equal(t, 1, len(configurations.ComponentConfiguration))
-	require.Equal(t, "istio", configurations.ComponentConfiguration[0].Component)
-	cpuR, ok := configurations.ComponentConfiguration[0].Configuration.Get("global.proxy.resources.requests.cpu")
+	require.Equal(t, "ory", configurations.ComponentConfiguration[0].Component)
+	cpuR, ok := configurations.ComponentConfiguration[0].Configuration.Get("hydra.deployment.resources.requests.cpu")
 	require.Equal(t, true, ok)
-	require.Equal(t, "490m", cpuR.Value)
-	memR, ok := configurations.ComponentConfiguration[0].Configuration.Get("global.proxy.resources.requests.memory")
+	require.Equal(t, "53m", cpuR.Value)
+	cpuL, ok := configurations.ComponentConfiguration[0].Configuration.Get("hydra.deployment.resources.limits.cpu")
 	require.Equal(t, true, ok)
-	require.Equal(t, "127Mi", memR.Value)
-	cpuL, ok := configurations.ComponentConfiguration[0].Configuration.Get("global.proxy.resources.limits.cpu")
-	require.Equal(t, true, ok)
-	require.Equal(t, "499m", cpuL.Value)
-	memL, ok := configurations.ComponentConfiguration[0].Configuration.Get("global.proxy.resources.limits.memory")
-	require.Equal(t, true, ok)
-	require.Equal(t, "1023Mi", memL.Value)
+	require.Equal(t, "153m", cpuL.Value)
 }
 
 func Test_LoadComponentsConfig(t *testing.T) {
