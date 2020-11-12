@@ -7,6 +7,7 @@ import (
 )
 
 func TestNewStep(t *testing.T) {
+	t.Parallel()
 	c := Command{} // uninitialized command
 
 	// test uninitialized command

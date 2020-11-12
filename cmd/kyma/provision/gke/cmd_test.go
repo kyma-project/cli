@@ -10,6 +10,7 @@ import (
 
 // TestProvisionGKEFlags ensures that the provided command flags are stored in the options.
 func TestProvisionGKEFlags(t *testing.T) {
+	t.Parallel()
 	o := NewOptions(&cli.Options{})
 	c := NewCmd(o)
 
@@ -52,6 +53,7 @@ func TestProvisionGKEFlags(t *testing.T) {
 }
 
 func TestProvisionGKESubcommands(t *testing.T) {
+	t.Parallel()
 	o := NewOptions(&cli.Options{})
 	c := NewCmd(o)
 
@@ -61,6 +63,7 @@ func TestProvisionGKESubcommands(t *testing.T) {
 }
 
 func TestNewCluster(t *testing.T) {
+	t.Parallel()
 	o := &Options{
 		Name:              "mega-cluster",
 		KubernetesVersion: "1.16.0",
@@ -80,6 +83,7 @@ func TestNewCluster(t *testing.T) {
 }
 
 func TestNewProvider(t *testing.T) {
+	t.Parallel()
 	o := &Options{
 		Project:         "cool-project",
 		CredentialsFile: "/path/to/credentials",

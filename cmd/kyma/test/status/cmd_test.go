@@ -8,6 +8,7 @@ import (
 )
 
 func Test_generateRerunCommand(t *testing.T) {
+	t.Parallel()
 	testData := []struct {
 		testName string
 		input    oct.ClusterTestSuite

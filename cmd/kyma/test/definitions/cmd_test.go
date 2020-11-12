@@ -10,6 +10,7 @@ import (
 )
 
 func Test_ListTestDefinitionNames(t *testing.T) {
+	t.Parallel()
 	testData := []struct {
 		testName         string
 		shouldFail       bool

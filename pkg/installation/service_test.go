@@ -15,7 +15,7 @@ import (
 )
 
 func TestTriggerInstallation(t *testing.T) {
-
+	t.Parallel()
 	// set all mocked outcomes
 	mockInstaller := &mocks.Installer{}
 
@@ -83,7 +83,7 @@ func TestTriggerInstallation(t *testing.T) {
 }
 
 func TestTriggerUpgrade(t *testing.T) {
-
+	t.Parallel()
 	// set all mocked outcomes
 	mockInstaller := &mocks.Installer{}
 
@@ -151,7 +151,7 @@ func TestTriggerUpgrade(t *testing.T) {
 }
 
 func TestGetInstallationCRModificationFunc(t *testing.T) {
-
+	t.Parallel()
 	comps := []v1alpha1.KymaComponent{
 		{
 			Name: "Comp 1",

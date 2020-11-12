@@ -10,6 +10,7 @@ import (
 
 // TestProvisionAKSFlags ensures that the provided command flags are stored in the options.
 func TestProvisionAKSFlags(t *testing.T) {
+	t.Parallel()
 	o := NewOptions(&cli.Options{})
 	c := NewCmd(o)
 
@@ -52,6 +53,7 @@ func TestProvisionAKSFlags(t *testing.T) {
 }
 
 func TestProvisionAKSSubcommands(t *testing.T) {
+	t.Parallel()
 	o := NewOptions(&cli.Options{})
 	c := NewCmd(o)
 
@@ -61,6 +63,7 @@ func TestProvisionAKSSubcommands(t *testing.T) {
 }
 
 func TestNewCluster(t *testing.T) {
+	t.Parallel()
 	o := &Options{
 		Name:              "mega-cluster",
 		KubernetesVersion: "1.16.0",

@@ -10,6 +10,7 @@ import (
 
 // TestProvisionGardenerAzureFlags ensures that the provided command flags are stored in the options.
 func TestProvisionGardenerAzureFlags(t *testing.T) {
+	t.Parallel()
 	o := NewOptions(&cli.Options{})
 	c := NewCmd(o)
 
@@ -62,6 +63,7 @@ func TestProvisionGardenerAzureFlags(t *testing.T) {
 }
 
 func TestProvisionGardenerAzureSubcommands(t *testing.T) {
+	t.Parallel()
 	o := NewOptions(&cli.Options{})
 	c := NewCmd(o)
 
@@ -71,6 +73,7 @@ func TestProvisionGardenerAzureSubcommands(t *testing.T) {
 }
 
 func TestNewCluster(t *testing.T) {
+	t.Parallel()
 	o := &Options{
 		Name:              "mega-cluster",
 		KubernetesVersion: "1.16.0",
@@ -90,6 +93,7 @@ func TestNewCluster(t *testing.T) {
 }
 
 func TestNewProvider(t *testing.T) {
+	t.Parallel()
 	o := &Options{
 		Project:         "cool-project",
 		CredentialsFile: "/path/to/credentials",

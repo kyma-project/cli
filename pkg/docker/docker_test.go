@@ -23,6 +23,7 @@ import (
 )
 
 func Test_SplitDockerDomain(t *testing.T) {
+	t.Parallel()
 	test1 := "localhost:5000/test/testImage:1"
 	d1, r1 := splitDockerDomain(test1)
 	require.Equal(t, d1, "localhost:5000")
@@ -70,7 +71,7 @@ func genConfigFile() *dockerConfigFile.ConfigFile {
 }
 
 func Test_Resolve_happy_path(t *testing.T) {
-
+	t.Parallel()
 	tmpHome, err := ioutil.TempDir("/tmp", "config-test")
 	assert.NilError(t, err)
 	defer os.RemoveAll(tmpHome)
@@ -91,6 +92,7 @@ func Test_Resolve_happy_path(t *testing.T) {
 }
 
 func Test_BuildKymaInstaller(t *testing.T) {
+	t.Parallel()
 	imageName := "kyma-project-foo"
 	fooLocalSrcPath := "foo"
 
@@ -129,6 +131,7 @@ func Test_BuildKymaInstaller(t *testing.T) {
 }
 
 func Test_PushKymaInstaller(t *testing.T) {
+	t.Parallel()
 	tmpHome, err := ioutil.TempDir("/tmp", "config-pus-kyma-test")
 	assert.NilError(t, err)
 	defer os.RemoveAll(tmpHome)

@@ -7,8 +7,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestUpgradeFlags ensures that the provided command flags are stored in the options.
-func TestUpgradeFlags(t *testing.T) {
+// TestFunctionFlags ensures that the provided command flags are stored in the options.
+func TestFunctionFlags(t *testing.T) {
+	t.Parallel()
 	o := NewOptions(&cli.Options{})
 	c := NewCmd(o)
 

@@ -25,6 +25,7 @@ import (
 // Example:
 //   go test ./internal/junitxml/... -v -test.update-golden
 func TestWriteJUnitXMLReport(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name string
 	}{

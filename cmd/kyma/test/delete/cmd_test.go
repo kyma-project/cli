@@ -10,6 +10,7 @@ import (
 )
 
 func Test_deleteTestSuite(t *testing.T) {
+	t.Parallel()
 	testData := []struct {
 		testName              string
 		shouldFail            bool

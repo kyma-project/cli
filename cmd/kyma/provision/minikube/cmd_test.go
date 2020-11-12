@@ -12,6 +12,7 @@ import (
 
 // TestProvisionGKEFlags ensures that the provided command flags are stored in the options.
 func TestProvisionMinikubeFlags(t *testing.T) {
+	t.Parallel()
 	o := NewOptions(&cli.Options{})
 	c := NewCmd(o)
 
@@ -30,7 +31,7 @@ func TestProvisionMinikubeFlags(t *testing.T) {
 }
 
 func TestCheckRequirements(t *testing.T) {
-
+	t.Parallel()
 	cases := []struct {
 		name        string
 		shouldFail  bool

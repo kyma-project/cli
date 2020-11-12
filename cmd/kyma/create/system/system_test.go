@@ -19,6 +19,7 @@ import (
 )
 
 func TestValidateArgs(t *testing.T) {
+	t.Parallel()
 	c := NewCmd(NewOptions(nil))
 
 	// no args
@@ -35,6 +36,7 @@ func TestValidateArgs(t *testing.T) {
 }
 
 func TestSteps(t *testing.T) {
+	t.Parallel()
 	c := command{
 		Command: cli.Command{
 			Options: cli.NewOptions(),
@@ -60,6 +62,7 @@ func TestSteps(t *testing.T) {
 }
 
 func TestCreateSystem(t *testing.T) {
+	t.Parallel()
 	k8s := &mocks.KymaKube{}
 	// mock watch because we can't mock the operator doing changes to the resource in real time
 	k8s.On("WatchResource", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
@@ -101,6 +104,7 @@ func TestCreateSystem(t *testing.T) {
 }
 
 func TestBindNamespace(t *testing.T) {
+	t.Parallel()
 	k8s := &mocks.KymaKube{}
 
 	dyn := dynamicK8s(
@@ -122,6 +126,7 @@ func TestBindNamespace(t *testing.T) {
 }
 
 func TestCreateToken(t *testing.T) {
+	t.Parallel()
 	k8s := &mocks.KymaKube{}
 	// mock watch because we can't mock the operator doing changes to the resource in real time
 	k8s.On("WatchResource", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)

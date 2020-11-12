@@ -10,6 +10,7 @@ import (
 
 // TestProvisionGardenerFlags ensures that the provided command flags are stored in the options.
 func TestProvisionGardenerGCPFlags(t *testing.T) {
+	t.Parallel()
 	o := NewOptions(&cli.Options{})
 	c := NewCmd(o)
 
@@ -62,6 +63,7 @@ func TestProvisionGardenerGCPFlags(t *testing.T) {
 }
 
 func TestProvisionGardenerGCPSubcommands(t *testing.T) {
+	t.Parallel()
 	o := NewOptions(&cli.Options{})
 	c := NewCmd(o)
 
@@ -90,6 +92,7 @@ func TestNewCluster(t *testing.T) {
 }
 
 func TestNewProvider(t *testing.T) {
+	t.Parallel()
 	o := &Options{
 		Project:         "cool-project",
 		CredentialsFile: "/path/to/credentials",

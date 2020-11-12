@@ -11,6 +11,7 @@ import (
 )
 
 func Test_NewTestSuite(t *testing.T) {
+	t.Parallel()
 	testData := []struct {
 		testName         string
 		shouldFail       bool
@@ -183,6 +184,7 @@ func Test_NewTestSuite(t *testing.T) {
 }
 
 func Test_ListTestSuitesByName(t *testing.T) {
+	t.Parallel()
 	testData := []struct {
 		testName        string
 		shouldFail      bool
