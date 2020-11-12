@@ -119,9 +119,12 @@ kyma install --override {OVERRIDE_FILE_PATH}
   ```bash
   kyma install --override {OVERRIDEL_FILE_1_PATH} --override {OVERRIDE_FILE_2_PATH}
   ```
-      
 
-### Test Kyma
+## Upgrade Kyma      
+
+To upgrade the Kyma version on the cluster, you can run the `upgrade` command which has the same structure and same flags as the `install` command.
+
+## Test Kyma
 
 To check which test definitions are deployed on the cluster, run:
 
