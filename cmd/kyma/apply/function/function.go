@@ -84,19 +84,21 @@ func (c *command) Run() error {
 		return err
 	}
 
-	operators := map[operator.Operator][]operator.Operator{
-		operator.NewGenericOperator(client.Resource(operator.GVKFunction).Namespace(configuration.Namespace), function): {
-			operator.NewTriggersOperator(client.Resource(operator.GVKTriggers).Namespace(configuration.Namespace), triggers...),
-		},
-	}
+	var gitOperator operator.Operator
 
 	if configuration.Source.Type == workspace.SourceTypeGit {
 		gitRepository, err := resources.NewPublicGitRepository(configuration)
 		if err != nil {
 			return errors.Wrap(err, "Unable to read the Git repository from the provided configuration")
 		}
-		gitOperator := operator.NewGenericOperator(client.Resource(operator.GVRGitRepository).Namespace(configuration.Namespace), gitRepository)
-		operators[gitOperator] = nil
+		gitOperator = operator.NewGenericOperator(client.Resource(operator.GVRGitRepository).Namespace(configuration.Namespace), gitRepository)
+	}
+
+	operators := map[operator.Operator][]operator.Operator{
+		gitOperator: {},
+		operator.NewGenericOperator(client.Resource(operator.GVKFunction).Namespace(configuration.Namespace), function): {
+			operator.NewTriggersOperator(client.Resource(operator.GVKTriggers).Namespace(configuration.Namespace), triggers...),
+		},
 	}
 
 	mgr := manager.NewManager(operators)
