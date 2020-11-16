@@ -54,6 +54,15 @@ func TestCheckRequirements(t *testing.T) {
 				VMDriver: "hyperv",
 			},
 		},
+		{
+			name:        "--docker-ports require VM Driver docker",
+			shouldFail:  true,
+			expectedErr: "docker-ports flag is applicable only for VMDriver 'docker'",
+			op: Options{
+				VMDriver: "hyperkit",
+				DockerPorts: []string{"8080:8081"},
+			},
+		},
 	}
 	var step step.Factory
 	s := step.NewStep("checking requirements")
