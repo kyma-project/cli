@@ -59,7 +59,7 @@ func TestCheckRequirements(t *testing.T) {
 			shouldFail:  true,
 			expectedErr: "docker-ports flag is applicable only for VMDriver 'docker'",
 			op: Options{
-				VMDriver: "hyperkit",
+				VMDriver:    "hyperkit",
 				DockerPorts: []string{"8080:8081"},
 			},
 		},
