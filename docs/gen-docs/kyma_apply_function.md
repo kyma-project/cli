@@ -16,16 +16,18 @@ kyma apply function [flags]
 ## Options
 
 ```bash
-      --dry-run           Validated list of objects to be created from sources.
-  -f, --filename string   Full path to the config file.
-      --onerror value     Flag used to define the Kyma CLI's reaction to an error when applying resources to the cluster. Use one of these options: 
-                          - nothing
-                          - purge (default nothing)
-  -o, --output value      Flag used to define the command output format. Use one of these options:
-                          - text
-                          - json
-                          - yaml
-                          - none (default text)
+      --dry-run            Validated list of objects to be created from sources.
+  -f, --filename string    Full path to the config file.
+      --onerror value      Flag used to define the Kyma CLI's reaction to an error when applying resources to the cluster. Use one of these options: 
+                           - nothing
+                           - purge (default nothing)
+  -o, --output value       Flag used to define the command output format. Use one of these options:
+                           - text
+                           - json
+                           - yaml
+                           - none (default text)
+  -t, --timeout duration   Maximum time during which the local resources are being applied, where "0" means "infinite". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+  -w, --watch              Watches resources applied to the cluster to be sure that everything is applying in the correct order.
 ```
 
 ## Options inherited from parent commands

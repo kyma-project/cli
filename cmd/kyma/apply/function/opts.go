@@ -6,6 +6,7 @@ import (
 	"github.com/kyma-project/cli/internal/cli"
 	"os"
 	"path"
+	"time"
 )
 
 //Options defines available options for the command
@@ -16,6 +17,8 @@ type Options struct {
 	Output   value
 	Filename string
 	DryRun   bool
+	Watch    bool
+	Timeout  time.Duration
 }
 
 //NewOptions creates options with default values

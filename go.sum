@@ -656,8 +656,6 @@ github.com/kubernetes-sigs/service-catalog v0.3.0/go.mod h1:zRfgMd1T9HuXR24Qj4GO
 github.com/kylelemons/godebug v0.0.0-20170820004349-d65d576e9348/go.mod h1:B69LEHPfb2qLo0BaaOLcbitczOKLWTsrBG9LczfCD4k=
 github.com/kylelemons/godebug v1.1.0 h1:RPNrshWIDI6G2gRW9EHilWtl7Z6Sb1BR0xunSBf0SNc=
 github.com/kylelemons/godebug v1.1.0/go.mod h1:9/0rRGxNHcop5bhtWyNeEfOS8JIWk580+fNqagV/RAw=
-github.com/kyma-incubator/hydroform/function v0.0.0-20201027114347-8518b88c07b1 h1:NjklnhjoHwImkBR/8XafD8mPLXxveESPQINP0uTyJBw=
-github.com/kyma-incubator/hydroform/function v0.0.0-20201027114347-8518b88c07b1/go.mod h1:JReEx5WFcFTJXKNR9PfKqNmLGr6pP/3dpK4lr3Rte9Q=
 github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90 h1:E9rWdmz/CEfO52VJ6P/1M3TysNbET/qyw6611RbKJo8=
 github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90/go.mod h1:/qouJL+g8Tsllh/VcxK1Li6NCyuqyXSlq1i9InKSZJk=
 github.com/kyma-incubator/hydroform/provision v0.0.0-20200922142757-cae045912c90 h1:AzOQsTYAIwpN2eltQcdMMwy2xjJf/Hvl++k0NmacD34=
@@ -821,6 +819,8 @@ github.com/opencontainers/runtime-spec v1.0.3-0.20200520003142-237cc4f519e2/go.m
 github.com/opencontainers/runtime-tools v0.0.0-20181011054405-1d69bd0f9c39/go.mod h1:r3f7wjNzSs2extwzU3Y+6pKfobzPh+kKFJ3ofN+3nfs=
 github.com/opencontainers/selinux v1.5.1/go.mod h1:yTcKuYAh6R95iDpefGLQaPaRwJFwyzAJufJyiTt7s0g=
 github.com/openzipkin/zipkin-go v0.1.1/go.mod h1:NtoC/o8u3JlF1lSlyPNswIbeQH9bJTmOf0Erfk+hxe8=
+github.com/pPrecel/hydroform/function v0.0.0-20201117194538-fb6c4f8c0d04 h1:UWqjhwpwHKhd39lsd8bXrmIlOzwY1IlvnVtsti6sl0s=
+github.com/pPrecel/hydroform/function v0.0.0-20201117194538-fb6c4f8c0d04/go.mod h1:JReEx5WFcFTJXKNR9PfKqNmLGr6pP/3dpK4lr3Rte9Q=
 github.com/packer-community/winrmcp v0.0.0-20180102160824-81144009af58/go.mod h1:f6Izs6JvFTdnRbziASagjZ2vmf55NSIkC/weStxCHqk=
 github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db h1:9uViuKtx1jrlXLBW/pMnhOfzn3iSEdLase/But/IZRU=
 github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db/go.mod h1:f6Izs6JvFTdnRbziASagjZ2vmf55NSIkC/weStxCHqk=
