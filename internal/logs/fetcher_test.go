@@ -63,6 +63,7 @@ func Test(t *testing.T) {
 }
 
 func Test_stripANSI(t *testing.T) {
+	t.Parallel()
 	testCases := []struct {
 		Got, Wanted string
 	}{
