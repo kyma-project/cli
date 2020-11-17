@@ -3,6 +3,7 @@ package logs
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
@@ -11,6 +12,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 )
+
+const ansi = "[\u001B\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[a-zA-Z\\d]*)*)?\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PRZcf-ntqry=><~]))"
 
 // FetcherForTestingPods provides functionality for fetching logs from test suite results
 type FetcherForTestingPods struct {
@@ -67,5 +70,10 @@ func (f *FetcherForTestingPods) Logs(result oct.TestResult) (string, error) {
 		}
 	}
 
-	return logs.String(), nil
+	return stripANSI(logs.String()), nil
+}
+
+func stripANSI(s string) string {
+	re := regexp.MustCompile(ansi)
+	return re.ReplaceAllString(s, "")
 }

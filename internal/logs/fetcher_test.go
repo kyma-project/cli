@@ -1,4 +1,4 @@
-package logs_test
+package logs
 
 import (
 	"context"
@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
-	"github.com/kyma-project/cli/internal/logs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/core/v1"
@@ -45,7 +44,7 @@ func Test(t *testing.T) {
 			fakeCli, cleanup := newFakePodsGetter(t, tc.pod, fixLogsResponse)
 			defer cleanup()
 
-			fetcher := logs.NewFetcherForTestingPods(fakeCli, tc.ignoredCnt)
+			fetcher := NewFetcherForTestingPods(fakeCli, tc.ignoredCnt)
 
 			fix := fixFailedTestResultForPod(tc.pod)
 
@@ -60,6 +59,33 @@ func Test(t *testing.T) {
 			assert.Equal(t, fakeCli.podNamespace, tc.pod.Namespace)
 			assert.NotContains(t, fakeCli.containers, tc.ignoredCnt)
 		})
+	}
+}
+
+func Test_stripANSI(t *testing.T) {
+	t.Parallel()
+	testCases := []struct {
+		Got, Wanted string
+	}{
+		{Got: `[?25l[09:33:25]  Verifying Cypress can run /root/.cache/Cypress/4.12.1/Cypress [started]
+[09:33:34]  Verifying Cypress can run /root/.cache/Cypress/4.12.1/Cypress [completed]
+[?25hOne login method detected, trying to login using email...`,
+			Wanted: `[09:33:25]  Verifying Cypress can run /root/.cache/Cypress/4.12.1/Cypress [started]
+[09:33:34]  Verifying Cypress can run /root/.cache/Cypress/4.12.1/Cypress [completed]
+One login method detected, trying to login using email...`,
+		},
+		{
+			Got:    "\u001B[4mUnicorn\u001B[0m",
+			Wanted: "Unicorn",
+		},
+		{
+			Got:    "\u001B[?25hcode is 1",
+			Wanted: "code is 1",
+		},
+	}
+	for _, tc := range testCases {
+		s := stripANSI(tc.Got)
+		assert.Equal(t, tc.Wanted, s)
 	}
 }
 
