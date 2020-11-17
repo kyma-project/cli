@@ -50,11 +50,11 @@ kyma install [flags]
 ## Options
 
 ```bash
-  -c, --components string      Path to a YAML file with component list to override.
+  -c, --components string      Path to a YAML file with a component list to override.
       --custom-image string    Full image name including the registry and the tag. Required for installation from local sources to a remote cluster.
   -d, --domain string          Domain used for installation. (default "kyma.local")
-      --fallbackLevel int      If "source=latest-published", defines the number of commits from master branch taken into account if artifacts for newer commits do not exist yet (default 5)
-  -n, --noWait                 Flag that determines if the command should wait for Kyma installation to complete.
+      --fallback-level int     If "source=latest-published", defines the number of commits from master branch taken into account if artifacts for newer commits do not exist yet (default 5)
+  -n, --no-wait                Determines if the command should wait for Kyma installation to complete.
   -o, --override stringArray   Path to a YAML file with parameters to override.
   -p, --password string        Predefined cluster password.
   -s, --source string          Installation source. 
@@ -66,9 +66,9 @@ kyma install [flags]
                                	- To use the local sources, write "kyma install --source=local".
                                	- To use a custom installer image, write "kyma install --source=user/my-kyma-installer:v1.4.0".
       --src-path string        Absolute path to local sources.
-      --timeout duration       Time-out after which CLI stops watching the installation progress. (default 1h0m0s)
-      --tlsCert string         TLS certificate for the domain used for installation. The certificate must be a base64-encoded value.
-      --tlsKey string          TLS key for the domain used for installation. The key must be a base64-encoded value.
+      --timeout duration       Timeout after which CLI stops watching the installation progress. (default 1h0m0s)
+      --tls-cert string        TLS certificate for the domain used for installation. The certificate must be a base64-encoded value.
+      --tls-key string         TLS key for the domain used for installation. The key must be a base64-encoded value.
 ```
 
 ## Options inherited from parent commands

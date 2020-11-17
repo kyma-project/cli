@@ -18,8 +18,8 @@ kyma upgrade [flags]
   -c, --components string      Path to a YAML file with a component list to override.
       --custom-image string    Full image name including the registry and the tag. Required for upgrading a remote cluster from local sources.
   -d, --domain string          Domain used for the upgrade. (default "kyma.local")
-      --fallbackLevel int      If "source=latest-published", defines the number of commits from master branch taken into account if artifacts for newer commits do not exist yet (default 5)
-  -n, --noWait                 Determines if the command should wait for the Kyma upgrade to complete.
+      --fallback-level int     If "source=latest-published", defines the number of commits from master branch taken into account if artifacts for newer commits do not exist yet (default 5)
+  -n, --no-wait                Determines if the command should wait for the Kyma upgrade to complete.
   -o, --override stringArray   Path to a YAML file with parameters to override.
   -p, --password string        Predefined cluster password.
   -s, --source string          Upgrade source. 
@@ -31,8 +31,8 @@ kyma upgrade [flags]
                                	- To use a custom installer image, write "kyma upgrade --source=user/my-kyma-installer:v1.4.0".
       --src-path string        Absolute path to local sources.
       --timeout duration       Timeout after which CLI stops watching the upgrade progress. (default 1h0m0s)
-      --tlsCert string         TLS certificate for the domain used for the upgrade. The certificate must be a base64-encoded value.
-      --tlsKey string          TLS key for the domain used for the upgrade. The key must be a base64-encoded value.
+      --tls-cert string        TLS certificate for the domain used for the upgrade. The certificate must be a base64-encoded value.
+      --tls-key string         TLS key for the domain used for the upgrade. The key must be a base64-encoded value.
 ```
 
 ## Options inherited from parent commands
