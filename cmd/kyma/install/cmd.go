@@ -79,10 +79,10 @@ The standard installation uses the minimal configuration. The system performs th
 		Aliases: []string{"i"},
 	}
 
-	cobraCmd.Flags().BoolVarP(&o.NoWait, "noWait", "n", false, "Flag that determines if the command should wait for Kyma installation to complete.")
+	cobraCmd.Flags().BoolVarP(&o.NoWait, "no-wait", "n", false, "Determines if the command should wait for Kyma installation to complete.")
 	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", defaultDomain, "Domain used for installation.")
-	cobraCmd.Flags().StringVarP(&o.TLSCert, "tlsCert", "", "", "TLS certificate for the domain used for installation. The certificate must be a base64-encoded value.")
-	cobraCmd.Flags().StringVarP(&o.TLSKey, "tlsKey", "", "", "TLS key for the domain used for installation. The key must be a base64-encoded value.")
+	cobraCmd.Flags().StringVarP(&o.TLSCert, "tls-cert", "", "", "TLS certificate for the domain used for installation. The certificate must be a base64-encoded value.")
+	cobraCmd.Flags().StringVarP(&o.TLSKey, "tls-key", "", "", "TLS key for the domain used for installation. The key must be a base64-encoded value.")
 	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", DefaultKymaVersion, `Installation source. 
 	- To use the specific release, write "kyma install --source=1.15.1".
 	- To use the latest master, write "kyma install --source=latest".
@@ -92,11 +92,11 @@ The standard installation uses the minimal configuration. The system performs th
 	- To use the local sources, write "kyma install --source=local".
 	- To use a custom installer image, write "kyma install --source=user/my-kyma-installer:v1.4.0".`)
 	cobraCmd.Flags().StringVarP(&o.LocalSrcPath, "src-path", "", "", "Absolute path to local sources.")
-	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 1*time.Hour, "Time-out after which CLI stops watching the installation progress.")
+	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 1*time.Hour, "Timeout after which CLI stops watching the installation progress.")
 	cobraCmd.Flags().StringVarP(&o.Password, "password", "p", "", "Predefined cluster password.")
 	cobraCmd.Flags().StringArrayVarP(&o.OverrideConfigs, "override", "o", nil, "Path to a YAML file with parameters to override.")
-	cobraCmd.Flags().StringVarP(&o.ComponentsConfig, "components", "c", "", "Path to a YAML file with component list to override.")
-	cobraCmd.Flags().IntVar(&o.FallbackLevel, "fallbackLevel", 5, `If "source=latest-published", defines the number of commits from master branch taken into account if artifacts for newer commits do not exist yet`)
+	cobraCmd.Flags().StringVarP(&o.ComponentsConfig, "components", "c", "", "Path to a YAML file with a component list to override.")
+	cobraCmd.Flags().IntVar(&o.FallbackLevel, "fallback-level", 5, `If "source=latest-published", defines the number of commits from master branch taken into account if artifacts for newer commits do not exist yet`)
 	cobraCmd.Flags().StringVarP(&o.CustomImage, "custom-image", "", "", "Full image name including the registry and the tag. Required for installation from local sources to a remote cluster.")
 	return cobraCmd
 }

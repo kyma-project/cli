@@ -49,7 +49,7 @@ func TestCheckRequirements(t *testing.T) {
 		{
 			name:        "VM Driver requires hypervVirtualSwitch",
 			shouldFail:  true,
-			expectedErr: "Specified VMDriver 'hyperv' requires the --hypervVirtualSwitch option",
+			expectedErr: "Specified VMDriver 'hyperv' requires the --hyperv-virtual-switch option",
 			op: Options{
 				VMDriver: "hyperv",
 			},
