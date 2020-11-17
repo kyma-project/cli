@@ -23,6 +23,7 @@ const (
 	bootstrapper       string = "kubeadm"
 	vmDriverHyperkit   string = "hyperkit"
 	vmDriverHyperv     string = "hyperv"
+	vmDriverDocker     string = "docker"
 	vmDriverNone       string = "none"
 	vmDriverVirtualBox string = "virtualbox"
 	sleep                     = 10 * time.Second
@@ -37,7 +38,7 @@ var (
 		vmDriverHyperkit,
 		vmDriverVirtualBox,
 		"kvm2",
-		"docker",
+		vmDriverDocker,
 		"none",
 	}
 	ErrMinikubeRunning = errors.New("Minikube already running")
@@ -66,6 +67,7 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cmd.Flags().StringVar(&o.VMDriver, "vm-driver", defaultVMDriver, "Specifies the VM driver. Possible values: "+strings.Join(drivers, ","))
 	cmd.Flags().StringVar(&o.HypervVirtualSwitch, "hypervVirtualSwitch", "", "Specifies the Hyper-V switch version if you choose Hyper-V as the driver.")
+	cmd.Flags().StringSliceVar(&o.DockerPorts, "docker-ports", []string{}, "List of ports that should be exposed if you choose Docker as the driver.")
 	cmd.Flags().StringVar(&o.DiskSize, "disk-size", "30g", "Specifies the disk size used for installation.")
 	cmd.Flags().StringVar(&o.Memory, "memory", "8192", "Specifies RAM reserved for installation.")
 	cmd.Flags().StringVar(&o.CPUS, "cpus", "4", "Specifies the number of CPUs used for installation.")
@@ -182,6 +184,11 @@ func (c *command) checkRequirements(s step.Step) error {
 		return fmt.Errorf("Specified VMDriver '%s' requires the --hypervVirtualSwitch option", vmDriverHyperv)
 	}
 
+	if len(c.opts.DockerPorts) > 0 && c.opts.VMDriver != vmDriverDocker {
+		s.Failure()
+		return fmt.Errorf("docker-ports flag is applicable only for VMDriver '%s'", vmDriverDocker)
+	}
+
 	versionWarning, err := minikube.CheckVersion(c.opts.Verbose, c.opts.Timeout)
 	if err != nil {
 		s.Failure()
@@ -241,6 +248,12 @@ func (c *command) startMinikube() error {
 
 	if c.opts.VMDriver == vmDriverHyperv {
 		startCmd = append(startCmd, "--hyperv-virtual-switch="+c.opts.HypervVirtualSwitch)
+	}
+
+	if c.opts.VMDriver == vmDriverDocker && len(c.opts.DockerPorts) > 0 {
+		for _, port := range c.opts.DockerPorts {
+			startCmd = append(startCmd, "--ports="+port)
+		}
 	}
 
 	startCmd, err := osSpecificRun(c, startCmd)

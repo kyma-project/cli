@@ -14,6 +14,7 @@ type Options struct {
 	Memory              string
 	CPUS                string
 	HypervVirtualSwitch string
+	DockerPorts         []string
 	Profile             string
 	UseVPNKitSock       bool
 	Timeout             time.Duration

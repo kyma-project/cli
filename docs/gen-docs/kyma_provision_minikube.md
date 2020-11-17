@@ -17,6 +17,7 @@ kyma provision minikube [flags]
 ```bash
       --cpus string                  Specifies the number of CPUs used for installation. (default "4")
       --disk-size string             Specifies the disk size used for installation. (default "30g")
+      --docker-ports strings         List of ports that should be exposed if you choose Docker as the driver.
       --hypervVirtualSwitch string   Specifies the Hyper-V switch version if you choose Hyper-V as the driver.
   -k, --kube-version string          Kubernetes version of the cluster. (default "1.16.15")
       --memory string                Specifies RAM reserved for installation. (default "8192")
