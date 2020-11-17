@@ -2,11 +2,10 @@ package function
 
 import (
 	"testing"
+	"time"
 
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/stretchr/testify/require"
-	"testing"
-	"time"
 )
 
 // TestFunctionFlags ensures that the provided command flags are stored in the options.
