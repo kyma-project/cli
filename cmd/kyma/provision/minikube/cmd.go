@@ -181,7 +181,7 @@ func (c *command) checkRequirements(s step.Step) error {
 	}
 	if c.opts.VMDriver == vmDriverHyperv && c.opts.HypervVirtualSwitch == "" {
 		s.Failure()
-		return fmt.Errorf("Specified VMDriver '%s' requires the --hypervVirtualSwitch option", vmDriverHyperv)
+		return fmt.Errorf("Specified VMDriver '%s' requires the --hyperv-virtual-switch option", vmDriverHyperv)
 	}
 
 	if len(c.opts.DockerPorts) > 0 && c.opts.VMDriver != vmDriverDocker {
