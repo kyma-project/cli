@@ -70,11 +70,10 @@ func (f *FetcherForTestingPods) Logs(result oct.TestResult) (string, error) {
 		}
 	}
 
-	return strip(logs.String()), nil
+	return stripANSI(logs.String()), nil
 }
 
-// strip removes ANSI escape sequences from the input string
-func strip(s string) string {
+func stripANSI(s string) string {
 	re := regexp.MustCompile(ansi)
 	return re.ReplaceAllString(s, "")
 }
