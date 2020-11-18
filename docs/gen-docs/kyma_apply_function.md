@@ -27,7 +27,7 @@ kyma apply function [flags]
                            - yaml
                            - none (default text)
   -t, --timeout duration   Maximum time during which the local resources are being applied, where "0" means "infinite". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
-  -w, --watch              Watches resources applied to the cluster to be sure that everything is applying in the correct order.
+  -w, --watch              Flag used to watch resources applied to the cluster to make sure that everything is applied in the correct order.
 ```
 
 ## Options inherited from parent commands
