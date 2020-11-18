@@ -89,17 +89,18 @@ func (c *command) Run() error {
 	}
 
 	if configuration.Source.Type == workspace.SourceTypeGit {
-		gitRepositorie, err := resources.NewPublicGitRepository(configuration)
+		gitRepository, err := resources.NewPublicGitRepository(configuration)
 		if err != nil {
 			return errors.Wrap(err, "Unable to read the Git repository from the provided configuration")
 		}
-		mgr.AddParent(operator.NewGenericOperator(client.Resource(operator.GVRGitRepository).Namespace(configuration.Namespace), gitRepositorie), nil)
+		mgr.AddParent(operator.NewGenericOperator(client.Resource(operator.GVRGitRepository).Namespace(configuration.Namespace), gitRepository), nil)
 	}
 
 	mgr.AddParent(
 		operator.NewGenericOperator(client.Resource(operator.GVKFunction).Namespace(configuration.Namespace), function),
 		[]operator.Operator{
-			operator.NewTriggersOperator(client.Resource(operator.GVKTriggers).Namespace(configuration.Namespace), triggers...),
+			operator.NewTriggersOperator(client.Resource(operator.GVKTriggers).Namespace(configuration.Namespace),
+				configuration.Name, configuration.Namespace, triggers...),
 		},
 	)
 
@@ -107,7 +108,7 @@ func (c *command) Run() error {
 		Callbacks:          callbacks(c),
 		OnError:            chooseOnError(c.opts.OnError),
 		DryRun:             c.opts.DryRun,
-		WaitForApplying:    c.opts.Watch,
+		WaitForApply:       c.opts.Watch,
 		SetOwnerReferences: true,
 	}
 
