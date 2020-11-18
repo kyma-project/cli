@@ -173,8 +173,8 @@ func (c *command) validateFlags() error {
 	if c.opts.Secret == "" {
 		errMessage.WriteString("\nRequired flag `secret` has not been set.")
 	}
-	if c.opts.ScalerMin < 2 {
-		errMessage.WriteString("\n Minimum node count should be atleast 2 nodes.")
+	if c.opts.ScalerMin < 1 {
+		errMessage.WriteString("\n Minimum node count should be at least 1 node.")
 	}
 	if c.opts.ScalerMin > c.opts.ScalerMax {
 		errMessage.WriteString("\n Minimum node count cannot be greater than maximum number nodes.")
