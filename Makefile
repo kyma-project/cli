@@ -40,6 +40,7 @@ build-darwin:
 
 .PHONY: docs
 docs:
+	rm -f ./docs/gen-docs/*
 	go run ./cmd/gendocs/gendocs.go
 
 .PHONY: test
