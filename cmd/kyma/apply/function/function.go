@@ -41,6 +41,8 @@ Use the flags to specify the desired location for the source files or run the co
 
 	cmd.Flags().StringVarP(&o.Filename, "filename", "f", "", `Full path to the config file.`)
 	cmd.Flags().BoolVar(&o.DryRun, "dry-run", false, `Validated list of objects to be created from sources.`)
+	cmd.Flags().DurationVarP(&o.Timeout, "timeout", "t", 0, `Maximum time during which the local resources are being applied, where "0" means "infinite". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".`)
+	cmd.Flags().BoolVarP(&o.Watch, "watch", "w", false, `Flag used to watch resources applied to the cluster to make sure that everything is applied in the correct order.`)
 	cmd.Flags().Var(&o.OnError, "onerror", `Flag used to define the Kyma CLI's reaction to an error when applying resources to the cluster. Use one of these options: 
 - nothing
 - purge`)
@@ -74,6 +76,8 @@ func (c *command) Run() error {
 	}
 	client := c.K8s.Dynamic()
 
+	mgr := manager.NewManager()
+
 	function, err := resources.NewFunction(configuration)
 	if err != nil {
 		return err
@@ -84,30 +88,37 @@ func (c *command) Run() error {
 		return err
 	}
 
-	operators := map[operator.Operator][]operator.Operator{
-		operator.NewGenericOperator(client.Resource(operator.GVKFunction).Namespace(configuration.Namespace), function): {
-			operator.NewTriggersOperator(client.Resource(operator.GVKTriggers).Namespace(configuration.Namespace), triggers...),
-		},
-	}
-
 	if configuration.Source.Type == workspace.SourceTypeGit {
 		gitRepository, err := resources.NewPublicGitRepository(configuration)
 		if err != nil {
 			return errors.Wrap(err, "Unable to read the Git repository from the provided configuration")
 		}
-		gitOperator := operator.NewGenericOperator(client.Resource(operator.GVRGitRepository).Namespace(configuration.Namespace), gitRepository)
-		operators[gitOperator] = nil
+		mgr.AddParent(operator.NewGenericOperator(client.Resource(operator.GVRGitRepository).Namespace(configuration.Namespace), gitRepository), nil)
 	}
 
-	mgr := manager.NewManager(operators)
+	mgr.AddParent(
+		operator.NewGenericOperator(client.Resource(operator.GVKFunction).Namespace(configuration.Namespace), function),
+		[]operator.Operator{
+			operator.NewTriggersOperator(client.Resource(operator.GVKTriggers).Namespace(configuration.Namespace),
+				configuration.Name, configuration.Namespace, triggers...),
+		},
+	)
+
 	options := manager.Options{
 		Callbacks:          callbacks(c),
 		OnError:            chooseOnError(c.opts.OnError),
 		DryRun:             c.opts.DryRun,
+		WaitForApply:       c.opts.Watch,
 		SetOwnerReferences: true,
 	}
 
-	return mgr.Do(context.Background(), options)
+	ctx, cancel := context.WithCancel(context.Background())
+	if c.opts.Timeout > 0 {
+		ctx, cancel = context.WithTimeout(ctx, c.opts.Timeout)
+	}
+	defer cancel()
+
+	return mgr.Do(ctx, options)
 }
 
 const (
