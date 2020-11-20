@@ -24,7 +24,7 @@ kyma provision minikube
 To install Kyma using your own domain, run:
 
 ```bash
-kyma install --domain {DOMAIN} --tlsCert {TLS_CERT} --tlsKey {TLS_KEY}
+kyma install --domain {DOMAIN} --tls-cert {TLS_CERT} --tls-key {TLS_KEY}
 ```
 - `{TLS_CERT}` and `{TLS_KEY}` are the TLS certificate and TLS key for the domain used. Note that both of them must be encoded in base64. You can use [OpenSSL](https://www.openssl.org/) (which is installed by default with macOS) to convert your TLS certificate and TLS key to base64-encoded values.
 - To simplify the process:
@@ -36,7 +36,7 @@ kyma install --domain {DOMAIN} --tlsCert {TLS_CERT} --tlsKey {TLS_KEY}
   - `{TLS_CERT_FILE_PATH}` is the path to the file containing the TLS certificate and `{TLS_KEY_FILE_PATH}` is the path to the file containing the TLS key.
   - Now, you can use these environment variables to install Kyma with your own domain `{DOMAIN}` as shown below:
   - ```bash
-    kyma install --domain {DOMAIN} --tlsCert $TLS_CERT --tlsKey $TLS_KEY
+    kyma install --domain {DOMAIN} --tls-cert $TLS_CERT --tls-key $TLS_KEY
     ```
 
 To install Kyma from the latest `master` branch, run:

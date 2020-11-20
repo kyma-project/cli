@@ -152,7 +152,7 @@ func TestValidateConfigurations(t *testing.T) {
 	}
 
 	err := i.validateConfigurations()
-	require.EqualError(t, err, "You specified one of the --domain, --tlsKey, or --tlsCert without specifying the others. They must be specified together")
+	require.EqualError(t, err, "You specified one of the --domain, --tls-key, or --tls-cert without specifying the others. They must be specified together")
 
 	// Domain, certificate, and key are passed
 	i = &Installation{

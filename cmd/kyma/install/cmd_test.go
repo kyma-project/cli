@@ -37,15 +37,15 @@ func TestInstallFlags(t *testing.T) {
 	err := c.ParseFlags([]string{
 		"-n", "true",
 		"-d", "fake-domain",
-		"--tlsCert", "fake-cert",
-		"--tlsKey", "fake-key",
+		"--tls-cert", "fake-cert",
+		"--tls-key", "fake-key",
 		"-s", "test-registry/test-image:1",
 		"--src-path", "fake/path/to/source",
 		"--timeout", "100s",
 		"-p", "fake-pwd",
 		"-o", "fake/path/to/overrides",
 		"-c", "fake/path/to/components",
-		"--fallbackLevel", "7",
+		"--fallback-level", "7",
 		"--custom-image", "test-registry/test-image:2",
 	})
 	require.NoError(t, err, "Parsing flags should not return an error")
