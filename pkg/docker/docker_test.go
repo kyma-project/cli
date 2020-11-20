@@ -40,25 +40,18 @@ func Test_SplitDockerDomain(t *testing.T) {
 	require.Equal(t, r3, "testImage")
 }
 
-var exampleAuth = types.AuthConfig{
-	Username:      "user",
-	Password:      "pass",
-	Auth:          "",
-	ServerAddress: "1.2.3.4",
-	Email:         "foo@bar.com",
-	IdentityToken: "identityFoo",
-	RegistryToken: "registryFoo",
-}
-
-var expectedAuth = types.AuthConfig{
-	Username:      "user",
-	Password:      "pass",
-	IdentityToken: "identityFoo",
-	RegistryToken: "registryFoo",
-}
-
 func genConfigFile() *dockerConfigFile.ConfigFile {
 	configFile := dockerConfigFile.New("tmpConfig")
+
+	exampleAuth := types.AuthConfig{
+		Username:      "user",
+		Password:      "pass",
+		Auth:          "",
+		ServerAddress: "1.2.3.4",
+		Email:         "foo@bar.com",
+		IdentityToken: "identityFoo",
+		RegistryToken: "registryFoo",
+	}
 
 	authStr := exampleAuth.Username + ":" + exampleAuth.Password
 
@@ -155,6 +148,12 @@ func Test_PushKymaInstaller(t *testing.T) {
 	}
 	mockDocker.On("NegotiateAPIVersion", mock.Anything).Return(nil)
 
+	expectedAuth := types.AuthConfig{
+		Username:      "user",
+		Password:      "pass",
+		IdentityToken: "identityFoo",
+		RegistryToken: "registryFoo",
+	}
 	encodedJSON, _ := json.Marshal(expectedAuth)
 	fooAuthStr := base64.URLEncoding.EncodeToString(encodedJSON)
 	imagePushOptions := imageTypes.ImagePushOptions{RegistryAuth: fooAuthStr}
