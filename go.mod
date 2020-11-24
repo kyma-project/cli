@@ -21,11 +21,11 @@ require (
 	github.com/daviddengcn/go-colortext v1.0.0
 	github.com/docker/cli v0.0.0-20200130152716-5d0cf8839492
 	github.com/docker/docker v1.4.2-0.20200203170920-46ec8731fbce
-	github.com/fatih/color v1.9.0
+	github.com/fatih/color v1.10.0
 	github.com/gorilla/mux v1.7.4 // indirect
 	github.com/kyma-incubator/hydroform/function v0.0.0-20201118130852-0a81dc80b5ea
 	github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90
-	github.com/kyma-incubator/hydroform/provision v0.0.0-20200922142757-cae045912c90
+	github.com/kyma-incubator/hydroform/provision v0.0.0-20201124135641-ca1a1a00c935
 	github.com/kyma-incubator/octopus v0.0.0-20200922132758-2b721e93b58b
 	github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20200923072402-e911fd636ae6
 	github.com/olekukonko/tablewriter v0.0.4
