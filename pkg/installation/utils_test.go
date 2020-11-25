@@ -250,6 +250,15 @@ func Test_InsertProfile(t *testing.T) {
 			}},
 			shouldFail: false,
 		},
+		{
+			testName: "incorrect data test",
+			data: File{Content: []map[string]interface{}{{
+				"apiVersion": "apps/v1",
+				"kind":       "Deployment",
+			},
+			}},
+			shouldFail: true,
+		},
 	}
 
 	for _, tt := range testData {
