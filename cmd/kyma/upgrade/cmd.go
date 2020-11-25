@@ -56,6 +56,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd.Flags().StringVarP(&o.ComponentsConfig, "components", "c", "", "Path to a YAML file with a component list to override.")
 	cobraCmd.Flags().IntVar(&o.FallbackLevel, "fallback-level", 5, `If "source=latest-published", defines the number of commits from master branch taken into account if artifacts for newer commits do not exist yet`)
 	cobraCmd.Flags().StringVarP(&o.CustomImage, "custom-image", "", "", "Full image name including the registry and the tag. Required for upgrading a remote cluster from local sources.")
+	cobraCmd.Flags().StringVarP(&o.Profile, "profile", "", "", "Kyma installation profile (evaluation|production).")
 	return cobraCmd
 }
 
@@ -139,6 +140,7 @@ func (cmd *command) configureInstallation(clusterConfig installation.ClusterInfo
 			ComponentsConfig: cmd.opts.ComponentsConfig,
 			Source:           cmd.opts.Source,
 			FallbackLevel:    cmd.opts.FallbackLevel,
+			Profile:          cmd.opts.Profile,
 			IsLocal:          clusterConfig.IsLocal,
 			LocalCluster: &installation.LocalCluster{
 				IP:       clusterConfig.LocalIP,

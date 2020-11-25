@@ -24,6 +24,7 @@ type Options struct {
 	Source           string
 	FallbackLevel    int
 	CustomImage      string
+	Profile          string
 }
 
 //NewOptions creates options with default values
