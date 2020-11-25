@@ -1,6 +1,9 @@
 package kyma
 
 import (
+	"github.com/kyma-project/cli/cmd/kyma/alpha"
+	alphaInstall "github.com/kyma-project/cli/cmd/kyma/alpha/install"
+	alphaUninstall "github.com/kyma-project/cli/cmd/kyma/alpha/uninstall"
 	"github.com/kyma-project/cli/cmd/kyma/apply"
 	"github.com/kyma-project/cli/cmd/kyma/completion"
 	"github.com/kyma-project/cli/cmd/kyma/console"
@@ -51,6 +54,10 @@ Kyma CLI allows you to install, test, and manage Kyma.
 	cmd.PersistentFlags().StringVar(&o.KubeconfigPath, "kubeconfig", "", `Specifies the path to the kubeconfig file. By default, Kyma CLI uses the KUBECONFIG environment variable or "/$HOME/.kube/config" if the variable is not set.`)
 	cmd.PersistentFlags().BoolP("help", "h", false, "Displays help for the command.")
 
+	alphaCmd := alpha.NewCmd()
+	alphaCmd.AddCommand(alphaInstall.NewCmd(alphaInstall.NewOptions(o)))
+	alphaCmd.AddCommand(alphaUninstall.NewCmd(alphaUninstall.NewOptions(o)))
+
 	provisionCmd := provision.NewCmd()
 	provisionCmd.AddCommand(minikube.NewCmd(minikube.NewOptions(o)))
 	provisionCmd.AddCommand(gke.NewCmd(gke.NewOptions(o)))
@@ -62,6 +69,7 @@ Kyma CLI allows you to install, test, and manage Kyma.
 	provisionCmd.AddCommand(gardenerCmd)
 
 	cmd.AddCommand(
+		alphaCmd,
 		version.NewCmd(version.NewOptions(o)),
 		completion.NewCmd(),
 		install.NewCmd(install.NewOptions(o)),
