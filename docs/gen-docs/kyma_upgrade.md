@@ -22,6 +22,7 @@ kyma upgrade [flags]
   -n, --no-wait                Determines if the command should wait for the Kyma upgrade to complete.
   -o, --override stringArray   Path to a YAML file with parameters to override.
   -p, --password string        Predefined cluster password.
+      --profile string         Kyma installation profile (evaluation|production).
   -s, --source string          Upgrade source. 
                                	- To use the specific release, write "kyma upgrade --source=1.3.0".
                                	- To use the latest master, write "kyma upgrade --source=latest".

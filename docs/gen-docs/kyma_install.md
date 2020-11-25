@@ -57,6 +57,7 @@ kyma install [flags]
   -n, --no-wait                Determines if the command should wait for Kyma installation to complete.
   -o, --override stringArray   Path to a YAML file with parameters to override.
   -p, --password string        Predefined cluster password.
+      --profile string         Kyma installation profile (evaluation|production).
   -s, --source string          Installation source. 
                                	- To use the specific release, write "kyma install --source=1.15.1".
                                	- To use the latest master, write "kyma install --source=latest".
