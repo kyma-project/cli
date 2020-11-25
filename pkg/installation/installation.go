@@ -268,6 +268,10 @@ func (i *Installation) validateConfigurations() error {
 		return pkgErrors.New("You specified one of the --domain, --tls-key, or --tls-cert without specifying the others. They must be specified together")
 	}
 
+	if i.Options.Profile != "" && !(i.Options.Profile == "evaluation" || i.Options.Profile == "production") {
+		return pkgErrors.New("You specified an invalid profile. It can take one of the following: 'evaluation' or 'production'")
+	}
+
 	return nil
 }
 
@@ -335,6 +339,13 @@ func (i *Installation) prepareFiles() (map[string]*File, error) {
 			if err != nil {
 				return nil, err
 			}
+		}
+	}
+
+	if i.Options.Profile != "" {
+		err = insertProfile(files[installerCRFile], i.Options.Profile)
+		if err != nil {
+			return nil, err
 		}
 	}
 

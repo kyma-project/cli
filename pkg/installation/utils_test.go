@@ -216,6 +216,53 @@ func Test_ReplaceDockerImageURL(t *testing.T) {
 	}
 }
 
+func Test_InsertProfile(t *testing.T) {
+	t.Parallel()
+	const replacedWithData = "evaluation"
+	testData := []struct {
+		testName       string
+		data           File
+		expectedResult File
+		shouldFail     bool
+	}{
+		{
+			testName: "correct data test",
+			data: File{Content: []map[string]interface{}{{
+				"apiVersion": "installer.kyma-project.io/v1alpha1",
+				"kind":       "Installation",
+				"spec": map[interface{}]interface{}{
+					"version": "__VERSION__",
+					"url":     "_URL_",
+					"profile": "",
+				},
+			},
+			}},
+			expectedResult: File{Content: []map[string]interface{}{
+				{
+					"apiVersion": "installer.kyma-project.io/v1alpha1",
+					"kind":       "Installation",
+					"spec": map[interface{}]interface{}{
+						"version": "__VERSION__",
+						"url":     "_URL_",
+						"profile": replacedWithData,
+					},
+				},
+			}},
+			shouldFail: false,
+		},
+	}
+
+	for _, tt := range testData {
+		err := insertProfile(&tt.data, replacedWithData)
+		if !tt.shouldFail {
+			require.Nil(t, err, tt.testName)
+			require.Equal(t, tt.data, tt.expectedResult, tt.testName)
+		} else {
+			require.NotNil(t, err, tt.testName)
+		}
+	}
+}
+
 func Test_IsDockerImage(t *testing.T) {
 	t.Parallel()
 	ok := isDockerImage("testRegistry/testImage:tag")

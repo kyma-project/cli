@@ -269,6 +269,18 @@ func LoadComponentsConfig(cfgFile string) ([]v1alpha1.KymaComponent, error) {
 	return []v1alpha1.KymaComponent{}, nil
 }
 
+func insertProfile(installationCRFile *File, profile string) error {
+	for _, config := range installationCRFile.Content {
+		if kind, ok := config["kind"]; ok && kind == "Installation" {
+			if spec, ok := config["spec"].(map[interface{}]interface{}); ok {
+				spec["profile"] = profile
+				return nil
+			}
+		}
+	}
+	return errors.New("unable to set 'profile' field for Kyma Installation CR")
+}
+
 func downloadFile(path string) (io.ReadCloser, error) {
 	client := &http.Client{
 		Timeout: 5 * time.Second,
@@ -333,7 +345,7 @@ func replaceInstallerImage(installerFile *File, imageURL string) error {
 			}
 		}
 	}
-	return errors.New("unable to find 'image' field for kyma installer 'Deployment'")
+	return errors.New("unable to find 'image' field for Kyma Installer 'Deployment'")
 }
 
 func isDockerImage(s string) bool {
