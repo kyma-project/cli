@@ -264,10 +264,10 @@ func Test_InsertProfile(t *testing.T) {
 	for _, tt := range testData {
 		err := insertProfile(&tt.data, replacedWithData)
 		if !tt.shouldFail {
-			require.Nil(t, err, tt.testName)
+			require.NoError(t, err, tt.testName)
 			require.Equal(t, tt.data, tt.expectedResult, tt.testName)
 		} else {
-			require.NotNil(t, err, tt.testName)
+			require.Error(t, err, tt.testName)
 		}
 	}
 }
