@@ -26,8 +26,7 @@ const (
 	releaseBucket          = "kyma-prow-artifacts"
 	releaseResourcePattern = "https://storage.googleapis.com/%s/%s/%s"
 	defaultDomain          = "kyma.local"
-	sourceLatest           = "latest"
-	sourceLatestPublished  = "latest-published"
+	sourceMaster           = "master"
 	sourceLocal            = "local"
 
 	installerFile       = "installer"
@@ -212,23 +211,14 @@ func (i *Installation) validateConfigurations() error {
 			return pkgErrors.New("You must specify --custom-image to install Kyma from local sources to a remote cluster.")
 		}
 
-	//Install the latest version (latest master)
-	case strings.EqualFold(i.Options.Source, sourceLatest):
-		latest, err := getMasterHash()
+	//Install the master version
+	case strings.EqualFold(i.Options.Source, sourceMaster):
+		masterHash, err := getLatestAvailableMasterHash(i.currentStep, i.Options.FallbackLevel, i.Options.NonInteractive)
 		if err != nil {
-			return pkgErrors.Wrap(err, "unable to get latest version of kyma")
+			return pkgErrors.Wrap(err, "unable to get master version of kyma")
 		}
-		i.Options.releaseVersion = fmt.Sprintf("master-%s", latest)
-		i.Options.configVersion = fmt.Sprintf("master-%s", latest)
-		i.Options.bucket = developmentBucket
-
-	case strings.EqualFold(i.Options.Source, sourceLatestPublished):
-		latest, err := getLatestAvailableMasterHash(i.currentStep, i.Options.FallbackLevel)
-		if err != nil {
-			return pkgErrors.Wrap(err, "unable to get latest published version of kyma")
-		}
-		i.Options.releaseVersion = fmt.Sprintf("master-%s", latest)
-		i.Options.configVersion = fmt.Sprintf("master-%s", latest)
+		i.Options.releaseVersion = fmt.Sprintf("master-%s", masterHash)
+		i.Options.configVersion = fmt.Sprintf("master-%s", masterHash)
 		i.Options.bucket = developmentBucket
 
 	//Install the specific commit hash (e.g. 34edf09a)
@@ -253,7 +243,7 @@ func (i *Installation) validateConfigurations() error {
 	case isDockerImage(i.Options.Source):
 		latest, err := getMasterHash()
 		if err != nil {
-			return pkgErrors.Wrap(err, "unable to get latest version of kyma")
+			return pkgErrors.Wrap(err, "unable to get master version of kyma")
 		}
 		i.Options.remoteImage = i.Options.Source
 		i.Options.configVersion = fmt.Sprintf("master-%s", latest)

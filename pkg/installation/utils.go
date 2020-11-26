@@ -45,7 +45,7 @@ func getMasterHash() (string, error) {
 	return h.Hash().String()[:8], nil
 }
 
-func getLatestAvailableMasterHash(currentStep step.Step, fallbackLevel int) (string, error) {
+func getLatestAvailableMasterHash(currentStep step.Step, fallbackLevel int, nonInteractive bool) (string, error) {
 	ctx, timeoutF := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer timeoutF()
 	maxCloningDepth := fallbackLevel + 1
@@ -63,8 +63,21 @@ func getLatestAvailableMasterHash(currentStep step.Step, fallbackLevel int) (str
 		return "", errors.Wrap(err, "while getting head of Kyma repository: %w")
 	}
 
+	headHash := h.Hash().String()[:8]
 	if fallbackLevel == 0 {
-		return h.Hash().String()[:8], nil
+		return headHash, nil
+	}
+	artifactsAvailable, err := checkArtifactsAvailability(headHash)
+	if err != nil {
+		return "", errors.Wrap(err, "while checking availability of artifacts")
+	}
+	if artifactsAvailable {
+		return headHash, nil
+	} else if !nonInteractive {
+		promptMsg := fmt.Sprintf("Artifacts for master-%s are not available. Would you like to use artifacts from previous commits?", headHash)
+		if proceed := currentStep.PromptYesNo(promptMsg); !proceed {
+			return "", errors.Errorf("aborting")
+		}
 	}
 
 	iter, err := r.Log(&git.LogOptions{From: h.Hash()})
@@ -82,24 +95,35 @@ func getLatestAvailableMasterHash(currentStep step.Step, fallbackLevel int) (str
 			return "", errors.New("while iterating commit of Kyma repository: commit is nil")
 		}
 
-		abbrevHash := c.Hash.String()[:8]
-		resp, err := http.Head(fmt.Sprintf(releaseResourcePattern, developmentBucket, "master-"+abbrevHash, "kyma-installer-cluster.yaml"))
+		commitHash := c.Hash.String()[:8]
+		artifactsAvailable, err := checkArtifactsAvailability(commitHash)
 		if err != nil {
-			return "", errors.Wrap(err, "while fetching example file from kyma-development-artifacts")
+			return "", errors.Wrap(err, "while checking availability of artifacts")
 		}
-		if err = resp.Body.Close(); err != nil {
-			return "", errors.Wrap(err, "while closing body")
+		if artifactsAvailable {
+			return commitHash, nil
 		}
-		if resp.StatusCode == http.StatusOK {
-			return abbrevHash, nil
-		} else if resp.StatusCode != http.StatusNotFound {
-			return "", fmt.Errorf("got unexpected status code when fetching example file from kyma-development artifacts, got: [%d] ", resp.StatusCode)
-		}
-		currentStep.LogInfof("Skipping version: [%s]: artifacts not yet available", abbrevHash)
+		currentStep.LogInfof("Skipping version: [%s]: artifacts not yet available", commitHash)
 
 	}
 
-	return "", errors.New("not found latest available master hash")
+	return "", errors.New("unable to find a commit with available artifacts")
+}
+
+func checkArtifactsAvailability(abbrevHash string) (bool, error) {
+	resp, err := http.Head(fmt.Sprintf(releaseResourcePattern, developmentBucket, "master-"+abbrevHash, "kyma-installer-cluster.yaml"))
+	if err != nil {
+		return false, errors.Wrap(err, "while fetching example file from kyma-development-artifacts")
+	}
+	if err = resp.Body.Close(); err != nil {
+		return false, errors.Wrap(err, "while closing body")
+	}
+	if resp.StatusCode == http.StatusOK {
+		return true, nil
+	} else if resp.StatusCode != http.StatusNotFound {
+		return false, fmt.Errorf("got unexpected status code when fetching example file from kyma-development artifacts, got: [%d] ", resp.StatusCode)
+	}
+	return false, nil
 }
 
 func (i *Installation) loadInstallationFiles() (map[string]*File, error) {

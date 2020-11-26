@@ -84,9 +84,8 @@ The standard installation uses the minimal configuration. The system performs th
 	cobraCmd.Flags().StringVarP(&o.TLSCert, "tls-cert", "", "", "TLS certificate for the domain used for installation. The certificate must be a base64-encoded value.")
 	cobraCmd.Flags().StringVarP(&o.TLSKey, "tls-key", "", "", "TLS key for the domain used for installation. The key must be a base64-encoded value.")
 	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", DefaultKymaVersion, `Installation source. 
-	- To use the specific release, write "kyma install --source=1.15.1".
-	- To use the latest master, write "kyma install --source=latest".
-	- To use the latest published master, which is the latest commit with released images, write "kyma install --source=latest-published".
+	- To use a specific release, write "kyma install --source=1.15.1".
+	- To use the master branch, write "kyma install --source=master".
 	- To use a commit, write "kyma install --source=34edf09a".
 	- To use a pull request, write "kyma install --source=PR-9486".
 	- To use the local sources, write "kyma install --source=local".
@@ -96,7 +95,7 @@ The standard installation uses the minimal configuration. The system performs th
 	cobraCmd.Flags().StringVarP(&o.Password, "password", "p", "", "Predefined cluster password.")
 	cobraCmd.Flags().StringArrayVarP(&o.OverrideConfigs, "override", "o", nil, "Path to a YAML file with parameters to override.")
 	cobraCmd.Flags().StringVarP(&o.ComponentsConfig, "components", "c", "", "Path to a YAML file with a component list to override.")
-	cobraCmd.Flags().IntVar(&o.FallbackLevel, "fallback-level", 5, `If "source=latest-published", defines the number of commits from master branch taken into account if artifacts for newer commits do not exist yet`)
+	cobraCmd.Flags().IntVar(&o.FallbackLevel, "fallback-level", 5, `If "source=master", defines the number of commits from master branch taken into account if artifacts for newer commits do not exist yet`)
 	cobraCmd.Flags().StringVarP(&o.CustomImage, "custom-image", "", "", "Full image name including the registry and the tag. Required for installation from local sources to a remote cluster.")
 	cobraCmd.Flags().StringVarP(&o.Profile, "profile", "", "", "Kyma installation profile (evaluation|production).")
 	return cobraCmd
