@@ -241,12 +241,12 @@ func (i *Installation) validateConfigurations() error {
 
 	//Install the kyma with the specific installer image (docker image URL)
 	case isDockerImage(i.Options.Source):
-		latest, err := getMasterHash()
+		masterHash, err := getLatestAvailableMasterHash(i.currentStep, i.Options.FallbackLevel, true)
 		if err != nil {
 			return pkgErrors.Wrap(err, "unable to get master version of kyma")
 		}
 		i.Options.remoteImage = i.Options.Source
-		i.Options.configVersion = fmt.Sprintf("master-%s", latest)
+		i.Options.configVersion = fmt.Sprintf("master-%s", masterHash)
 		i.Options.bucket = developmentBucket
 	default:
 		return fmt.Errorf("failed to parse the source flag. It can take one of the following: 'local', 'master', release version (e.g. 1.4.1), commit hash (e.g. 34edf09a) or installer image")

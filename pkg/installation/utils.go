@@ -26,25 +26,6 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func getMasterHash() (string, error) {
-	ctx, timeoutF := context.WithTimeout(context.Background(), 2*time.Minute)
-	defer timeoutF()
-	r, err := git.CloneContext(ctx, memory.NewStorage(), nil,
-		&git.CloneOptions{
-			Depth: 1,
-			URL:   "https://github.com/kyma-project/kyma",
-		})
-	if err != nil {
-		return "", errors.Wrap(err, "while cloning Kyma repository")
-	}
-
-	h, err := r.Head()
-	if err != nil {
-		return "", errors.Wrap(err, "while getting head of Kyma repository: %w")
-	}
-	return h.Hash().String()[:8], nil
-}
-
 func getLatestAvailableMasterHash(currentStep step.Step, fallbackLevel int, nonInteractive bool) (string, error) {
 	ctx, timeoutF := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer timeoutF()
