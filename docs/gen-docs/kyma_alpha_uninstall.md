@@ -2,11 +2,11 @@
 title: kyma alpha uninstall
 ---
 
-Uninstalls Kyma on a running Kubernetes cluster.
+Uninstalls Kyma from a running Kubernetes cluster.
 
 ## Synopsis
 
-Use this command to uninstall Kyma on a running Kubernetes cluster.
+Use this command to uninstall Kyma from a running Kubernetes cluster.
 
 ```bash
 kyma alpha uninstall [flags]

@@ -6,7 +6,7 @@ Executes the commands in alpha testing stage.
 
 ## Synopsis
 
-Executes the commands in alpha testing stage.
+Use this command to utilize the Kyma CLI in alpha testing stage.
 
 ## Options inherited from parent commands
 
@@ -22,5 +22,5 @@ Executes the commands in alpha testing stage.
 
 * [kyma](#kyma-kyma)	 - Controls a Kyma cluster.
 * [kyma alpha install](#kyma-alpha-install-kyma-alpha-install)	 - Installs Kyma on a running Kubernetes cluster.
-* [kyma alpha uninstall](#kyma-alpha-uninstall-kyma-alpha-uninstall)	 - Uninstalls Kyma on a running Kubernetes cluster.
+* [kyma alpha uninstall](#kyma-alpha-uninstall-kyma-alpha-uninstall)	 - Uninstalls Kyma from a running Kubernetes cluster.
 
