@@ -17,7 +17,7 @@ require (
 	github.com/Microsoft/hcsshim v0.8.10 // indirect
 	github.com/avast/retry-go v2.6.1+incompatible
 	github.com/blang/semver/v4 v4.0.0
-	github.com/briandowns/spinner v1.11.1
+	github.com/briandowns/spinner v1.12.0
 	github.com/containerd/cgroups v0.0.0-20201119153540-4cbc285b3327 // indirect
 	github.com/containerd/containerd v1.4.2 // indirect
 	github.com/containerd/continuity v0.0.0-20200710164510-efbc4488d8fe // indirect

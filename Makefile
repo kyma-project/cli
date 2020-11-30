@@ -45,7 +45,7 @@ docs:
 
 .PHONY: test
 test:
-	go test -coverprofile=cover.out ./...
+	go test -race -coverprofile=cover.out ./...
 	@echo "Total test coverage: $$(go tool cover -func=cover.out | grep total | awk '{print $$3}')"
 	@rm cover.out
 
