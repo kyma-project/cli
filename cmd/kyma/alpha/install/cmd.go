@@ -80,6 +80,7 @@ func (cmd *command) Run() error {
 		HelmTimeoutSeconds:            60 * 8,
 		BackoffInitialIntervalSeconds: 3,
 		BackoffMaxElapsedTimeSeconds:  60 * 5,
+		Log:                           log.Printf,
 	}
 
 	installer, err := installation.NewInstallation(prerequisitesContent, componentsContent, overridesContent, cmd.opts.ResourcesPath, installationCfg)
