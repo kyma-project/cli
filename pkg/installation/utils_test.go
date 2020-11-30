@@ -9,16 +9,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_GetMasterHash(t *testing.T) {
-	t.Parallel()
-	h, err := getMasterHash()
-	require.NoError(t, err)
-	require.True(t, isHex(h))
-}
-
 func Test_GetLatestAvailableMasterHash(t *testing.T) {
 	t.Parallel()
-	h, err := getLatestAvailableMasterHash(&stepMocks.Step{}, 5)
+	h, err := getLatestAvailableMasterHash(&stepMocks.Step{}, 5, true)
 	require.NoError(t, err)
 	require.True(t, isHex(h))
 }

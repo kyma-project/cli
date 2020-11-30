@@ -40,7 +40,7 @@ where:
 Example:
 
 ```bash
-kyma install -s latest
+kyma install -s master
 ```
 
 >**TIP:** Read more about the available [commands and flags](https://github.com/kyma-project/cli/blob/master/docs/03-01-use-kyma-cli.md).You can also try out Kyma CLI using [these examples](https://github.com/kyma-project/cli/blob/master/docs/03-02-examples.md).

@@ -193,13 +193,8 @@ func TestValidateConfigurations(t *testing.T) {
 	err = i.validateConfigurations()
 	require.NoError(t, err)
 
-	// Source "latest"
-	i.Options.Source = "latest"
-	err = i.validateConfigurations()
-	require.NoError(t, err)
-
-	// Source "latest-published"
-	i.Options.Source = "latest-published"
+	// Source "master"
+	i.Options.Source = "master"
 	err = i.validateConfigurations()
 	require.NoError(t, err)
 
