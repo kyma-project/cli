@@ -775,6 +775,8 @@ github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90 h
 github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90/go.mod h1:/qouJL+g8Tsllh/VcxK1Li6NCyuqyXSlq1i9InKSZJk=
 github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20201130143656-80de2ec45856 h1:c9fqJkB3M5qDZoxk6SAnLaOqFtIvJRsAJs72p8wMv7c=
 github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20201130143656-80de2ec45856/go.mod h1:RmUmWiUigXqdqoJ1ITOZ6etUhpmqf/fEsq2Dwhi2z1U=
+github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20201202125615-4b732aff5a51 h1:mbA3HrwIYiURjXXhoiR8bzr4mdqRyWe0RQSD7ptpu4Q=
+github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20201202125615-4b732aff5a51/go.mod h1:RmUmWiUigXqdqoJ1ITOZ6etUhpmqf/fEsq2Dwhi2z1U=
 github.com/kyma-incubator/hydroform/provision v0.0.0-20201124135641-ca1a1a00c935 h1:/MyYk4GvWyRj7kSwQJoIq0nP2S4eRp8ff+yZcNuoA1Q=
 github.com/kyma-incubator/hydroform/provision v0.0.0-20201124135641-ca1a1a00c935/go.mod h1:p4McOfzFQnKwJdvGPKSqS0h6yqtwjH3apO/U3LT3xmc=
 github.com/kyma-incubator/octopus v0.0.0-20200922132758-2b721e93b58b h1:xgIzqXn9JolPuSAkQ/u+Myn/S3aLH8rlPc8++O6ogSY=
@@ -1175,6 +1177,7 @@ github.com/vishvananda/netns v0.0.0-20191106174202-0a2b9b5464df/go.mod h1:JP3t17
 github.com/vmihailenco/msgpack v3.3.3+incompatible/go.mod h1:fy3FlTQTDXWkZ7Bh6AcGMlsjHatGryHQYUTf1ShIgkk=
 github.com/vmihailenco/msgpack v4.0.1+incompatible h1:RMF1enSPeKTlXrXdOcqjFUElywVZjjC6pqse21bKbEU=
 github.com/vmihailenco/msgpack v4.0.1+incompatible/go.mod h1:fy3FlTQTDXWkZ7Bh6AcGMlsjHatGryHQYUTf1ShIgkk=
+github.com/vrischmann/envconfig v1.1.0 h1:YT2UwItiYL9mVSYmzVsrU1b3cCjO3hN8/TMJA9XDC3k=
 github.com/vrischmann/envconfig v1.1.0/go.mod h1:c5DuUlkzfsnspy1g7qiqryPCsW+NjsrLsYq4zhwsoHo=
 github.com/xanzy/ssh-agent v0.2.1 h1:TCbipTQL2JiiCprBWx9frJ2eJlCYT00NmctrHxVAr70=
 github.com/xanzy/ssh-agent v0.2.1/go.mod h1:mLlQY/MoOhWBj+gOGMQkOeiEvkx+8pJSI+0Bx9h2kr4=

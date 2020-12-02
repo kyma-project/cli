@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"time"
 
 	"github.com/pkg/errors"
 
@@ -64,8 +65,8 @@ func (cmd *command) Run() error {
 
 	installationCfg := installConfig.Config{
 		WorkersCount:                  4,
-		CancelTimeoutSeconds:          60 * 20,
-		QuitTimeoutSeconds:            60 * 25,
+		CancelTimeout:                 20 * time.Minute,
+		QuitTimeout:                   25 * time.Minute,
 		HelmTimeoutSeconds:            60 * 8,
 		BackoffInitialIntervalSeconds: 3,
 		BackoffMaxElapsedTimeSeconds:  60 * 5,
@@ -77,7 +78,7 @@ func (cmd *command) Run() error {
 		return err
 	}
 
-	err = installer.StartKymaUninstallation(cmd.K8s.RestConfig())
+	err = installer.StartKymaUninstallation(cmd.K8s.Static())
 	if err != nil {
 		return err
 	}
