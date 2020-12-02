@@ -141,7 +141,9 @@ func printTestSuite(testSuite *oct.ClusterTestSuite, wide bool) {
 		fmt.Printf("EndTime:\t%s\r\n", "Not finished yet")
 	}
 
-	fmt.Printf("Condition:\t%s\r\n", testSuite.Status.Conditions[len(testSuite.Status.Conditions)-1].Type)
+	if len(testSuite.Status.Conditions) > 0 {
+		fmt.Printf("Condition:\t%s\r\n", testSuite.Status.Conditions[len(testSuite.Status.Conditions)-1].Type)
+	}
 
 	writer := test.NewTableWriter([]string{}, os.Stdout)
 	for _, t := range testSuite.Status.Results {
