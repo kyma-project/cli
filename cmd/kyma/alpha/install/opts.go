@@ -14,7 +14,7 @@ type Options struct {
 	ResourcesPath  string
 	CancelTimeout  time.Duration
 	QuitTimeout    time.Duration
-	HelmTimeout    int
+	HelmTimeout    time.Duration
 	WorkersCount   int
 }
 

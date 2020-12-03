@@ -12,7 +12,7 @@ type Options struct {
 	ComponentsYaml string
 	CancelTimeout  time.Duration
 	QuitTimeout    time.Duration
-	HelmTimeout    int
+	HelmTimeout    time.Duration
 	WorkersCount   int
 }
 
