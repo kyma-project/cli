@@ -38,6 +38,10 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 
 	cobraCmd.Flags().StringVarP(&o.ComponentsYaml, "components", "c", "", "Path to a YAML file with component list to override.")
+	cobraCmd.Flags().DurationVarP(&o.CancelTimeout, "cancel-timeout", "", 900*time.Second, "Time after which the workers' context is canceled. Pending worker goroutines (if any) may continue if blocked by a Helm client.")
+	cobraCmd.Flags().DurationVarP(&o.QuitTimeout, "quit-timeout", "", 1200*time.Second, "Time after which the uninstallation is aborted. Worker goroutines may still be working in the background. This value must be greater than the value for cancel-timeout.")
+	cobraCmd.Flags().IntVar(&o.HelmTimeout, "helm-timeout", 360, "Timeout for the underlying Helm client (in seconds).")
+	cobraCmd.Flags().IntVar(&o.WorkersCount, "workers-count", 4, "Number of parallel workers used for the uninstallation.")
 	return cobraCmd
 }
 
@@ -64,10 +68,10 @@ func (cmd *command) Run() error {
 	}
 
 	installationCfg := installConfig.Config{
-		WorkersCount:                  4,
-		CancelTimeout:                 20 * time.Minute,
-		QuitTimeout:                   25 * time.Minute,
-		HelmTimeoutSeconds:            60 * 8,
+		WorkersCount:                  cmd.opts.WorkersCount,
+		CancelTimeout:                 cmd.opts.CancelTimeout,
+		QuitTimeout:                   cmd.opts.QuitTimeout,
+		HelmTimeoutSeconds:            cmd.opts.HelmTimeout,
 		BackoffInitialIntervalSeconds: 3,
 		BackoffMaxElapsedTimeSeconds:  60 * 5,
 		Log:                           log.Printf,

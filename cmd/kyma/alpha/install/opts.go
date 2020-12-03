@@ -1,6 +1,8 @@
 package install
 
 import (
+	"time"
+
 	"github.com/kyma-project/cli/internal/cli"
 )
 
@@ -10,6 +12,10 @@ type Options struct {
 	OverridesYaml  string
 	ComponentsYaml string
 	ResourcesPath  string
+	CancelTimeout  time.Duration
+	QuitTimeout    time.Duration
+	HelmTimeout    int
+	WorkersCount   int
 }
 
 //NewOptions creates options with default values

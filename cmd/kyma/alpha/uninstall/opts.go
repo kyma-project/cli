@@ -1,6 +1,8 @@
 package uninstall
 
 import (
+	"time"
+
 	"github.com/kyma-project/cli/internal/cli"
 )
 
@@ -8,6 +10,10 @@ import (
 type Options struct {
 	*cli.Options
 	ComponentsYaml string
+	CancelTimeout  time.Duration
+	QuitTimeout    time.Duration
+	HelmTimeout    int
+	WorkersCount   int
 }
 
 //NewOptions creates options with default values
