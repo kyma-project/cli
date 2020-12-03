@@ -744,8 +744,6 @@ github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0/go.mod h1:1NbS8ALr
 github.com/kevinburke/ssh_config v0.0.0-20190725054713-01f96b0aa0cd h1:Coekwdh0v2wtGp9Gmz1Ze3eVRAWJMLokvN3QjdzCHLY=
 github.com/kevinburke/ssh_config v0.0.0-20190725054713-01f96b0aa0cd/go.mod h1:CT57kijsi8u/K/BOFA39wgDQJ9CxiF4nAY/ojJ6r6mM=
 github.com/keybase/go-crypto v0.0.0-20161004153544-93f5b35093ba/go.mod h1:ghbZscTyKdM07+Fw3KSi0hcJm+AlEUWj8QLlPtijN/M=
-github.com/kfurgol/hydroform/function v0.0.0-20201125121656-f1b81478432b h1:pMUYiMn23Xe57Y8OKinICvt4N7/YGpllBkbL6PC+VgY=
-github.com/kfurgol/hydroform/function v0.0.0-20201125121656-f1b81478432b/go.mod h1:JReEx5WFcFTJXKNR9PfKqNmLGr6pP/3dpK4lr3Rte9Q=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=
 github.com/kisielk/errcheck v1.2.0/go.mod h1:/BMXB+zMLi60iA8Vv6Ksmxu/1UDYcXs4uQLJ+jE2L00=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
@@ -771,6 +769,8 @@ github.com/kubernetes-sigs/service-catalog v0.3.0/go.mod h1:zRfgMd1T9HuXR24Qj4GO
 github.com/kylelemons/godebug v0.0.0-20170820004349-d65d576e9348/go.mod h1:B69LEHPfb2qLo0BaaOLcbitczOKLWTsrBG9LczfCD4k=
 github.com/kylelemons/godebug v1.1.0 h1:RPNrshWIDI6G2gRW9EHilWtl7Z6Sb1BR0xunSBf0SNc=
 github.com/kylelemons/godebug v1.1.0/go.mod h1:9/0rRGxNHcop5bhtWyNeEfOS8JIWk580+fNqagV/RAw=
+github.com/kyma-incubator/hydroform/function v0.0.0-20201118130852-0a81dc80b5ea h1:cNObxVcsZiRV+lQD1VY2k5qf5w7EoDWN2oK1gEFclw8=
+github.com/kyma-incubator/hydroform/function v0.0.0-20201118130852-0a81dc80b5ea/go.mod h1:JReEx5WFcFTJXKNR9PfKqNmLGr6pP/3dpK4lr3Rte9Q=
 github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90 h1:E9rWdmz/CEfO52VJ6P/1M3TysNbET/qyw6611RbKJo8=
 github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90/go.mod h1:/qouJL+g8Tsllh/VcxK1Li6NCyuqyXSlq1i9InKSZJk=
 github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20201130143656-80de2ec45856 h1:c9fqJkB3M5qDZoxk6SAnLaOqFtIvJRsAJs72p8wMv7c=
