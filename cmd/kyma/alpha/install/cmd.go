@@ -38,14 +38,22 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 
 	cobraCmd.Flags().StringVarP(&o.OverridesYaml, "overrides", "o", "", "Path to a YAML file with parameters to override.")
-	cobraCmd.Flags().StringVarP(&o.ComponentsYaml, "components", "c", "", "Path to a YAML file with component list to override.")
-	cobraCmd.Flags().StringVarP(&o.ResourcesPath, "resources", "r", "", "Path to Kyma resources folder.")
+	cobraCmd.Flags().StringVarP(&o.ComponentsYaml, "components", "c", "", "Path to a YAML file with component list to override. (required)")
+	cobraCmd.Flags().StringVarP(&o.ResourcesPath, "resources", "r", "", "Path to Kyma resources folder. (required)")
+	cobraCmd.Flags().DurationVarP(&o.CancelTimeout, "cancel-timeout", "", 900*time.Second, "Time after which the workers' context is canceled. Pending worker goroutines (if any) may continue if blocked by a Helm client.")
+	cobraCmd.Flags().DurationVarP(&o.QuitTimeout, "quit-timeout", "", 1200*time.Second, "Time after which the installation is aborted. Worker goroutines may still be working in the background. This value must be greater than the value for cancel-timeout.")
+	cobraCmd.Flags().DurationVarP(&o.HelmTimeout, "helm-timeout", "", 360*time.Second, "Timeout for the underlying Helm client.")
+	cobraCmd.Flags().IntVar(&o.WorkersCount, "workers-count", 4, "Number of parallel workers used for the installation.")
 	return cobraCmd
 }
 
 //Run runs the command
 func (cmd *command) Run() error {
 	var err error
+	if err = cmd.validateFlags(); err != nil {
+		return err
+	}
+
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
 		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
 	}
@@ -75,10 +83,10 @@ func (cmd *command) Run() error {
 	}
 
 	installationCfg := installConfig.Config{
-		WorkersCount:                  4,
-		CancelTimeout:                 20 * time.Minute,
-		QuitTimeout:                   25 * time.Minute,
-		HelmTimeoutSeconds:            60 * 8,
+		WorkersCount:                  cmd.opts.WorkersCount,
+		CancelTimeout:                 cmd.opts.CancelTimeout,
+		QuitTimeout:                   cmd.opts.QuitTimeout,
+		HelmTimeoutSeconds:            int(cmd.opts.HelmTimeout.Seconds()),
 		BackoffInitialIntervalSeconds: 3,
 		BackoffMaxElapsedTimeSeconds:  60 * 5,
 		Log:                           log.Printf,
@@ -95,6 +103,20 @@ func (cmd *command) Run() error {
 	}
 
 	log.Println("Kyma installed!")
+
+	return nil
+}
+
+func (cmd *command) validateFlags() error {
+	if cmd.opts.ResourcesPath == "" {
+		return fmt.Errorf("Resources path cannot be empty")
+	}
+	if cmd.opts.ComponentsYaml == "" {
+		return fmt.Errorf("Components YAML cannot be empty")
+	}
+	if cmd.opts.QuitTimeout < cmd.opts.CancelTimeout {
+		return fmt.Errorf("Quit timeout (%v) cannot be smaller than cancel timeout (%v)", cmd.opts.QuitTimeout, cmd.opts.CancelTimeout)
+	}
 
 	return nil
 }
