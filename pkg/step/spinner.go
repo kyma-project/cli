@@ -21,6 +21,7 @@ func newStepWithSpinner(msg string) Step {
 		spinner.WithColor("reset"),
 		spinner.WithSuffix(" "+msg),
 	)
+	s.Start()
 	return &stepWithSpinner{s, msg}
 }
 
