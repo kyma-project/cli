@@ -14,7 +14,8 @@ import (
 )
 
 const (
-	k3sVersion string = "1.19.0"
+	k3dMinVersion  string        = "1.19.0"
+	defaultTimeout time.Duration = 10 * time.Second
 )
 
 //RunCmd executes a minikube command with given arguments
@@ -44,10 +45,10 @@ func RunCmd(verbose bool, timeout time.Duration, args ...string) (string, error)
 }
 
 //CheckVersion checks whether minikube version is supported
-func CheckVersion(verbose bool, timeout time.Duration) (string, error) {
-	versionOutput, err := RunCmd(verbose, timeout, "version")
+func CheckVersion(verbose bool) error {
+	versionOutput, err := RunCmd(verbose, defaultTimeout, "version")
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	exp, _ := regexp.Compile("k3s version v([^\\s-]+)")
@@ -57,20 +58,35 @@ func CheckVersion(verbose bool, timeout time.Duration) (string, error) {
 	}
 	version, err := semver.Parse(versionString[1])
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	supportedVersion, _ := semver.Parse(k3sVersion)
-	if version.LT(supportedVersion) {
-		return "", fmt.Errorf("You are using an unsupported k3s version '%s'. "+
-			"This may not work. The recommended k3s version is '%s'", version, supportedVersion)
+	minVersion, _ := semver.Parse(k3dMinVersion)
+	if version.LT(minVersion) {
+		return fmt.Errorf("You are using an unsupported k3s version '%s'. "+
+			"This may not work. The recommended k3s version is '%s'", version, minVersion)
 	}
 
-	return "", nil
+	return nil
+}
+
+// Initialize verifies whether the k3d CLI tool is properly installed
+func Initialize(verbose bool) error {
+	//ensure k3d is in PATH
+	if _, err := exec.LookPath("k3d"); err != nil {
+		return err
+	}
+
+	//verify whether k3d seems to be properly installed
+	if _, err := RunCmd(verbose, defaultTimeout, "cluster", "list"); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 //DockerClient creates a docker client
-func DockerClient(verbose bool, timeout time.Duration) (*docker.Client, error) {
+func DockerClient(verbose bool) (*docker.Client, error) {
 	dockerClient, err := docker.NewClientWithOpts(docker.FromEnv)
 	if err != nil {
 		return nil, err

@@ -18,25 +18,50 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	os.Setenv("PATH", fmt.Sprintf("%s:%s", filepath.Dir(ex), os.Getenv("PATH")))
+	os.Setenv("PATH", fmt.Sprintf("%s:%s", filepath.Dir(ex)+string(os.PathSeparator)+"mock", os.Getenv("PATH")))
 }
+
+// function to verify output of k3d tool
+type testFunc func(output string)
+
 func TestRunCmd(t *testing.T) {
 	t.Parallel()
 
-	output, err := RunCmd(false, 5*time.Second, "help")
-	if err != nil {
-		require.Fail(t, fmt.Sprintf("k3d command failed: %s", output))
+	tests := []struct {
+		cmd      []string
+		verifyer testFunc
+	}{
+		{
+			cmd: []string{"help"},
+			verifyer: testFunc(func(output string) {
+				if !strings.Contains(output, "--help") {
+					require.Fail(t, fmt.Sprintf("Expected string '--help' is missing in k3d output: %s", output))
+				}
+			}),
+		},
+		{
+			cmd: []string{"cluster", "list"},
+			verifyer: testFunc(func(output string) {
+				if !strings.Contains(output, "kyma-cluster") {
+					require.Fail(t, fmt.Sprintf("Expected string 'kyma-cluster' is missing in k3d output: %s", output))
+				}
+			}),
+		},
 	}
 
-	if !strings.Contains(output, "--help") {
-		require.Fail(t, fmt.Sprintf("Expected string '--help' is missing in k3s output: %s", output))
+	for _, testCase := range tests {
+		output, err := RunCmd(false, 5*time.Second, testCase.cmd...)
+		if err != nil {
+			require.Fail(t, fmt.Sprintf("k3d command failed: %s", output))
+		}
+		testCase.verifyer(output)
 	}
+
 }
 
 func TestCheckVersion(t *testing.T) {
-	output, err := CheckVersion(false, 5*time.Second)
+	err := CheckVersion(false)
 	if err != nil {
 		require.Fail(t, fmt.Sprintf("k3d version check failed: %s", err))
 	}
-	require.Empty(t, output, "Output of of version check has to be empty")
 }

@@ -1,9 +1,17 @@
 #!/bin/bash
 
-# Mock for simulating k3d CLI tool
+# Mock for simulating the k3d CLI tool.
+#
+# Provided CLI arguments are converted to function calls.
+# Example:
+# ./k3d version   =>   will trigger the function 'version'
+#
+# Multiple arguments are concatenated by underscore (_).
+# Example:
+# ./k3d cluster list   =>   will trigger the function 'cluster_lister'
 
 #
-# Mock version command
+# Mock for 'version' command
 #
 function version {
     echo  'k3d version v3.4.0
@@ -12,7 +20,7 @@ k3s version v1.19.4-k3s1 (default)'
 }
 
 #
-# Mock help command
+# Mock for 'help' command
 #
 function help {
     echo 'https://k3d.io/
@@ -43,6 +51,14 @@ Use "k3d [command] --help" for more information about a command.'
 }
 
 #
+# Mock for 'cluster list' command
+#
+function cluster_list {
+    echo 'NAME           SERVERS   AGENTS   LOADBALANCER
+kyma-cluster   1/1       0/0      true'
+}
+
+#
 # Verify whether a mock function exists.
 #
 function fct_exists {
@@ -51,7 +67,9 @@ function fct_exists {
     return $?
 }
 
-# Map first CLI argument to local function
-MOCK_FUNCTION=$1
-fct_exists $MOCK_FUNCTION && $MOCK_FUNCTION || (echo "K3d mock command doesn't support argument '${MOCK_FUNCTION}'" 1>&2 && exit 1)
+# Map CLI arguments to local function
+IFS='_'
+MOCK_FUNCTION="$*"
+IFS=' '
+fct_exists $MOCK_FUNCTION && $MOCK_FUNCTION || (echo "K3d mock-script doesn't include function '${MOCK_FUNCTION}'" 1>&2 && exit 1)
 exit 0
