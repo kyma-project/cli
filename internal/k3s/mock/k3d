@@ -71,5 +71,12 @@ function fct_exists {
 IFS='_'
 MOCK_FUNCTION="$*"
 IFS=' '
-fct_exists $MOCK_FUNCTION && $MOCK_FUNCTION || (echo "K3d mock-script doesn't include function '${MOCK_FUNCTION}'" 1>&2 && exit 1)
-exit 0
+
+fct_exists $MOCK_FUNCTION
+if [ $? -eq 0 ]; then
+  $MOCK_FUNCTION
+  exit 0
+else
+  echo "K3d mock-script doesn't include function '${MOCK_FUNCTION}'"
+  exit 1
+fi

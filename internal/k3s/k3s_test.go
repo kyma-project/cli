@@ -22,7 +22,7 @@ func init() {
 }
 
 // function to verify output of k3d tool
-type testFunc func(output string)
+type testFunc func(output string, err error)
 
 func TestRunCmd(t *testing.T) {
 	t.Parallel()
@@ -33,7 +33,7 @@ func TestRunCmd(t *testing.T) {
 	}{
 		{
 			cmd: []string{"help"},
-			verifyer: testFunc(func(output string) {
+			verifyer: testFunc(func(output string, err error) {
 				if !strings.Contains(output, "--help") {
 					require.Fail(t, fmt.Sprintf("Expected string '--help' is missing in k3d output: %s", output))
 				}
@@ -41,20 +41,26 @@ func TestRunCmd(t *testing.T) {
 		},
 		{
 			cmd: []string{"cluster", "list"},
-			verifyer: testFunc(func(output string) {
+			verifyer: testFunc(func(output string, err error) {
 				if !strings.Contains(output, "kyma-cluster") {
 					require.Fail(t, fmt.Sprintf("Expected string 'kyma-cluster' is missing in k3d output: %s", output))
 				}
 			}),
 		},
+		{
+			cmd: []string{"cluster", "xyz"},
+			verifyer: testFunc(func(output string, err error) {
+				require.NotEmpty(t, err, "Error object expected")
+			}),
+		},
 	}
 
-	for _, testCase := range tests {
+	for testID, testCase := range tests {
 		output, err := RunCmd(false, 5*time.Second, testCase.cmd...)
-		if err != nil {
-			require.Fail(t, fmt.Sprintf("k3d command failed: %s", output))
+		if testCase.verifyer == nil {
+			require.Fail(t, fmt.Sprintf("Verifyer function missing for test #'%d'", testID))
 		}
-		testCase.verifyer(output)
+		testCase.verifyer(output, err)
 	}
 
 }
@@ -63,5 +69,12 @@ func TestCheckVersion(t *testing.T) {
 	err := CheckVersion(false)
 	if err != nil {
 		require.Fail(t, fmt.Sprintf("k3d version check failed: %s", err))
+	}
+}
+
+func TestInitialize(t *testing.T) {
+	err := Initialize(false)
+	if err != nil {
+		require.Fail(t, fmt.Sprintf("k3d initialize: %s", err))
 	}
 }

@@ -27,6 +27,9 @@ func RunCmd(verbose bool, timeout time.Duration, args ...string) (string, error)
 
 	outBytes, err := cmd.CombinedOutput()
 	out := string(outBytes)
+	if err != nil {
+		return out, err
+	}
 
 	if ctx.Err() == context.DeadlineExceeded {
 		return out, fmt.Errorf("Executing 'k3d %s' command with output '%s' timed out, try running the command manually or increasing timeout using the 'timeout' flag", strings.Join(args, " "), out)
@@ -74,6 +77,9 @@ func CheckVersion(verbose bool) error {
 func Initialize(verbose bool) error {
 	//ensure k3d is in PATH
 	if _, err := exec.LookPath("k3d"); err != nil {
+		if verbose {
+			fmt.Printf("Command 'k3d' not found in PATH")
+		}
 		return err
 	}
 
