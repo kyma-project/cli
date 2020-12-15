@@ -26,19 +26,16 @@ func RunCmd(verbose bool, timeout time.Duration, args ...string) (string, error)
 	outBytes, err := cmd.CombinedOutput()
 	out := string(outBytes)
 	if err != nil {
-		return out, err
+		if verbose {
+			fmt.Printf("Failing command:\n  k3d %s\nwith output:\n  %s\nand error:\n  %s\n", strings.Join(args, " "), string(out), err)
+		}
+		return out, fmt.Errorf("Executing the 'k3d %s' command with output '%s' and error message '%s' failed", strings.Join(args, " "), out, err)
 	}
 
 	if ctx.Err() == context.DeadlineExceeded {
 		return out, fmt.Errorf("Executing 'k3d %s' command with output '%s' timed out, try running the command manually or increasing timeout using the 'timeout' flag", strings.Join(args, " "), out)
 	}
 
-	if err != nil {
-		if verbose {
-			fmt.Printf("\nExecuted command:\n  k3d %s\nwith output:\n  %s\nand error:\n  %s\n", strings.Join(args, " "), string(out), err)
-		}
-		return out, fmt.Errorf("Executing the 'k3d %s' command with output '%s' and error message '%s' failed", strings.Join(args, " "), out, err)
-	}
 	if verbose {
 		fmt.Printf("\nExecuted command:\n  k3d %s\nwith output:\n  %s\n", strings.Join(args, " "), string(out))
 	}
@@ -122,14 +119,13 @@ func ClusterExists(verbose bool, clusterName string) (bool, error) {
 
 //StartCluster starts a cluster
 func StartCluster(verbose bool, timeout time.Duration, clusterName string) error {
-	output, err := RunCmd(verbose, timeout,
+	_, err := RunCmd(verbose, timeout,
 		"cluster", "create", clusterName,
-		"--timeout", fmt.Sprintf("%d", int(timeout.Seconds())),
+		"--timeout", fmt.Sprintf("%ds", int(timeout.Seconds())),
 		"-p", "80:80@loadbalancer", "-p", "443:443@loadbalancer",
+		"--k3s-server-arg", "--no-deploy", "--k3s-server-arg", "traefik",
+		"--switch-context",
 	)
-	if verbose {
-		fmt.Printf("K3d cluster start output: '%s'", output)
-	}
 	if err != nil {
 		return err
 	}
@@ -138,10 +134,7 @@ func StartCluster(verbose bool, timeout time.Duration, clusterName string) error
 
 //DeleteCluster deletes a cluster
 func DeleteCluster(verbose bool, timeout time.Duration, clusterName string) error {
-	output, err := RunCmd(verbose, timeout, "cluster", "delete", clusterName)
-	if verbose {
-		fmt.Printf("K3d cluster delete output: '%s'", output)
-	}
+	_, err := RunCmd(verbose, timeout, "cluster", "delete", clusterName)
 	if err != nil {
 		return err
 	}

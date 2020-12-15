@@ -47,9 +47,9 @@ function cluster_list_-o_json {
 }
 
 #
-# Mock for 'cluster create kyma --timeout 5 -p 80:80@loadbalancer -p 443:443@loadbalancer' command
+# Mock for 'k3d cluster create kyma --timeout 5s -p 80:80@loadbalancer -p 443:443@loadbalancer --k3s-server-arg --no-deploy --k3s-server-arg traefik --switch-context' command
 #
-function cluster_create_kyma_--timeout_5_-p_80:80@loadbalancer_-p_443:443@loadbalancer {
+function cluster_create_kyma_--timeout_5s_-p_80:80@loadbalancer_-p_443:443@loadbalancer_--k3s-server-arg_--no-deploy_--k3s-server-arg_traefik_--switch-context {
     dump_file cluster_create.txt
 }
 

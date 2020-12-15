@@ -54,7 +54,7 @@ func (c *command) Run() error {
 	if err := c.createK3sCluster(); err != nil {
 		return err
 	}
-	if err := c.createClusterInfoConfigMap(); err != nil {
+	if err := c.createK3sClusterInfo(); err != nil {
 		return err
 	}
 	return nil
@@ -82,7 +82,9 @@ func (c *command) verifyK3sStatus() error {
 //Check if a port is allocated
 func (c *command) portAllocated(port int) bool {
 	con, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
-	defer con.Close()
+	if con != nil {
+		con.Close()
+	}
 	return err != nil
 }
 
@@ -126,6 +128,17 @@ func (c *command) createK3sCluster() error {
 		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
 	}
 
+	return nil
+}
+
+func (c *command) createK3sClusterInfo() error {
+	s := c.NewStep("Prepare Kyma installer configuration")
+	s.Status("Adding configuration")
+	if err := c.createClusterInfoConfigMap(); err != nil {
+		s.Failure()
+		return err
+	}
+	s.Successf("Configuration created")
 	return nil
 }
 
