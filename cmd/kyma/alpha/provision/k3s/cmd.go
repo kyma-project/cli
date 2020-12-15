@@ -69,6 +69,7 @@ func (c *command) verifyK3sStatus() error {
 
 	if c.portAllocated(80) || c.portAllocated(443) {
 		s.Failuref("Port 80 or 443 are already in use. Please stop the allocating service and try again.")
+		return fmt.Errorf("Port 80 or 443 are already in use")
 	}
 
 	if err := c.checkIfK3sInitialized(s); err != nil {
