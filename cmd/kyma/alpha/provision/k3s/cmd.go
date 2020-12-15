@@ -115,7 +115,7 @@ func (c *command) portAllocated(port int) bool {
 func (c *command) createK3sCluster() error {
 	s := c.NewStep("Create K3s instance")
 	s.Status("Start K3s cluster")
-	err := k3s.StartCluster(c.Verbose, c.opts.Timeout, c.opts.Name)
+	err := k3s.StartCluster(c.Verbose, c.opts.Timeout, c.opts.Name, c.opts.Workers)
 	if err != nil {
 		s.Failuref("Could not start k3s cluster")
 		return err

@@ -82,7 +82,7 @@ func TestInitializeFailed(t *testing.T) {
 }
 
 func TestStartCluster(t *testing.T) {
-	err := StartCluster(false, 5*time.Second, "kyma")
+	err := StartCluster(false, 5*time.Second, "kyma", 1)
 	require.NoError(t, err)
 }
 

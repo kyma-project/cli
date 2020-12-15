@@ -118,13 +118,14 @@ func ClusterExists(verbose bool, clusterName string) (bool, error) {
 }
 
 //StartCluster starts a cluster
-func StartCluster(verbose bool, timeout time.Duration, clusterName string) error {
+func StartCluster(verbose bool, timeout time.Duration, clusterName string, workers int) error {
 	_, err := RunCmd(verbose, timeout,
 		"cluster", "create", clusterName,
 		"--timeout", fmt.Sprintf("%ds", int(timeout.Seconds())),
 		"-p", "80:80@loadbalancer", "-p", "443:443@loadbalancer",
 		"--k3s-server-arg", "--no-deploy", "--k3s-server-arg", "traefik",
 		"--switch-context",
+		"--agents", fmt.Sprintf("%d", workers),
 	)
 	if err != nil {
 		return err
