@@ -1,15 +1,15 @@
 ---
-title: kyma alpha install
+title: kyma alpha deploy
 ---
 
-Installs Kyma on a running Kubernetes cluster.
+Deploys Kyma on a running Kubernetes cluster.
 
 ## Synopsis
 
-Use this command to install Kyma on a running Kubernetes cluster.
+Use this command to deploy Kyma on a running Kubernetes cluster.
 
 ```bash
-kyma alpha install [flags]
+kyma alpha deploy [flags]
 ```
 
 ## Options
@@ -19,9 +19,9 @@ kyma alpha install [flags]
   -c, --components string         Path to a YAML file with component list to override. (required)
       --helm-timeout duration     Timeout for the underlying Helm client. (default 6m0s)
   -o, --overrides string          Path to a YAML file with parameters to override.
-      --quit-timeout duration     Time after which the installation is aborted. Worker goroutines may still be working in the background. This value must be greater than the value for cancel-timeout. (default 20m0s)
+      --quit-timeout duration     Time after which the deployment is aborted. Worker goroutines may still be working in the background. This value must be greater than the value for cancel-timeout. (default 20m0s)
   -r, --resources string          Path to Kyma resources folder. (required)
-      --workers-count int         Number of parallel workers used for the installation. (default 4)
+      --workers-count int         Number of parallel workers used for the deployment. (default 4)
 ```
 
 ## Options inherited from parent commands
