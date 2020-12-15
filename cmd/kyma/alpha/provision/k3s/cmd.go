@@ -97,6 +97,7 @@ func (c *command) checkIfK3sInitialized(s step.Step) error {
 		if err != nil {
 			return err
 		}
+		s.Successf("Existing k3s cluster deleted")
 	}
 
 	return nil
@@ -120,7 +121,7 @@ func (c *command) createK3sCluster() error {
 		s.Failuref("Could not start k3s cluster")
 		return err
 	}
-	s.Successf("K3d cluster is created")
+	s.Successf("K3s cluster is created")
 
 	// K8s client needs to be created here because before the kubeconfig is not ready to use
 	c.K8s, err = kube.NewFromConfig("", c.KubeconfigPath)
