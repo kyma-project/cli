@@ -100,15 +100,22 @@ func ClusterExists(verbose bool, clusterName string) (bool, error) {
 		fmt.Printf("K3d cluster list JSON: '%s'", clusterJSON)
 	}
 
-	clusterList := &clusterList{}
+	clusterList := &ClusterList{}
 	if err := clusterList.Unmarshal([]byte(clusterJSON)); err != nil {
 		return false, err
 	}
 
-	for _, cluster := range clusterList.clusters {
-		if cluster.name == clusterName {
+	for _, cluster := range clusterList.Clusters {
+		if cluster.Name == clusterName {
+			if verbose {
+				fmt.Printf("K3d cluster '%s' exists", clusterName)
+			}
 			return true, nil
 		}
+	}
+
+	if verbose {
+		fmt.Printf("K3d cluster '%s' does not exist", clusterName)
 	}
 	return false, nil
 }
@@ -117,11 +124,11 @@ func ClusterExists(verbose bool, clusterName string) (bool, error) {
 func StartCluster(verbose bool, timeout time.Duration, clusterName string) error {
 	output, err := RunCmd(verbose, timeout,
 		"cluster", "create", clusterName,
-		"--timeout", fmt.Sprintf("%d", timeout.Round(time.Second)),
-		"-p", "80:80@loadbalancer", "-p", "443:80@loadbalancer",
+		"--timeout", fmt.Sprintf("%d", int(timeout.Seconds())),
+		"-p", "80:80@loadbalancer", "-p", "443:443@loadbalancer",
 	)
 	if verbose {
-		fmt.Printf("K3d cluster creation output: '%s'", output)
+		fmt.Printf("K3d cluster start output: '%s'", output)
 	}
 	if err != nil {
 		return err
@@ -133,7 +140,7 @@ func StartCluster(verbose bool, timeout time.Duration, clusterName string) error
 func DeleteCluster(verbose bool, timeout time.Duration, clusterName string) error {
 	output, err := RunCmd(verbose, timeout, "cluster", "delete", clusterName)
 	if verbose {
-		fmt.Printf("K3d cluster start output: '%s'", output)
+		fmt.Printf("K3d cluster delete output: '%s'", output)
 	}
 	if err != nil {
 		return err

@@ -2,32 +2,37 @@ package k3s
 
 import "encoding/json"
 
-type clusterList struct {
-	clusters []cluster
+//ClusterList containting cluster entites
+type ClusterList struct {
+	Clusters []Cluster
 }
 
-type cluster struct {
-	name  string
-	nodes []node
+//Cluster including list of nodes
+type Cluster struct {
+	Name  string
+	Nodes []Node
 }
 
-type node struct {
-	name   string
-	role   string
-	labels map[string]string
-	state  state
+//Node in the K3s setup (could be lb, master, agent etc.)
+type Node struct {
+	Name   string
+	Role   string
+	Labels map[string]string
+	State  State
 }
 
-type state struct {
-	running bool
-	status  string
+//State of a node
+type State struct {
+	Running bool
+	Status  string
 }
 
-func (cl *clusterList) Unmarshal(data []byte) error {
-	var clusters []cluster
+//Unmarshal converst a JSON to nested structs
+func (cl *ClusterList) Unmarshal(data []byte) error {
+	var clusters []Cluster
 	if err := json.Unmarshal(data, &clusters); err != nil {
 		return err
 	}
-	cl.clusters = clusters
+	cl.Clusters = clusters
 	return nil
 }

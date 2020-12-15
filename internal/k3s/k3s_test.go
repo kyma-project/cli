@@ -25,8 +25,6 @@ func init() {
 type testFunc func(output string, err error)
 
 func TestRunCmd(t *testing.T) {
-	t.Parallel()
-
 	tests := []struct {
 		cmd      []string
 		verifyer testFunc
@@ -73,13 +71,29 @@ func TestInitialize(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestStartClusterFromScratch(t *testing.T) {
+func TestInitializeFailed(t *testing.T) {
+	pathPrev := os.Getenv("PATH")
+	os.Setenv("PATH", "/usr/bin")
+
+	err := Initialize(false)
+	require.Error(t, err)
+
+	os.Setenv("PATH", pathPrev)
+}
+
+func TestStartCluster(t *testing.T) {
 	err := StartCluster(false, 5*time.Second, "kyma")
 	require.NoError(t, err)
 }
 
-func TestStartClusterWhichExists(t *testing.T) {
-	os.Setenv("K3D_MOCK_DUMPFILE", "cluster_list_exists.json")
-	err := StartCluster(false, 5*time.Second, "kyma")
+func TestDeleteCluster(t *testing.T) {
+	err := DeleteCluster(false, 5*time.Second, "kyma")
 	require.NoError(t, err)
+}
+
+func TestClusterExists(t *testing.T) {
+	os.Setenv("K3D_MOCK_DUMPFILE", "cluster_list_exists.json")
+	exists, err := ClusterExists(false, "kyma")
+	require.NoError(t, err)
+	require.True(t, exists)
 }

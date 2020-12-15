@@ -47,10 +47,17 @@ function cluster_list_-o_json {
 }
 
 #
+# Mock for 'cluster create kyma --timeout 5 -p 80:80@loadbalancer -p 443:443@loadbalancer' command
+#
+function cluster_create_kyma_--timeout_5_-p_80:80@loadbalancer_-p_443:443@loadbalancer {
+    dump_file cluster_create.txt
+}
+
+#
 # Mock for 'cluster create' command
 #
-function cluster_create_kyma {
-    dump_file cluster_create.txt
+function cluster_delete_kyma {
+    dump_file cluster_delete.txt
 }
 
 ###########################
@@ -64,10 +71,10 @@ function dump_file {
   local fileAbs="$(dirname $0)/$file"
   if [ ! -f $fileAbs ]; then
       >&2 echo "File '${file}' not found in k3s mock folder"
-      exit 2
+      return 1
   fi
   cat $fileAbs
-  exit 0
+  return 0
 }
 
 #
@@ -83,10 +90,10 @@ function call_mock_fct {
     declare -f -F $mockFctName > /dev/null
     if [ $? -eq 0 ]; then
         $mockFctName
-        exit 0
+        return 0
     else
         >&2 echo "K3d mock-script doesn't include function '${mockFctName}'" 
-        exit 1
+        return 1
     fi
 }
 
@@ -100,3 +107,4 @@ else
     call_mock_fct $*
 fi
 
+exit $?
