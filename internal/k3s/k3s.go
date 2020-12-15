@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	docker "github.com/docker/docker/client"
-
 	"github.com/blang/semver/v4"
 )
 
@@ -73,7 +71,7 @@ func CheckVersion(verbose bool) error {
 	return nil
 }
 
-// Initialize verifies whether the k3d CLI tool is properly installed
+//Initialize verifies whether the k3d CLI tool is properly installed
 func Initialize(verbose bool) error {
 	//ensure k3d is in PATH
 	if _, err := exec.LookPath("k3d"); err != nil {
@@ -91,12 +89,54 @@ func Initialize(verbose bool) error {
 	return nil
 }
 
-//DockerClient creates a docker client
-func DockerClient(verbose bool) (*docker.Client, error) {
-	dockerClient, err := docker.NewClientWithOpts(docker.FromEnv)
+//ClusterExists checks whether a cluster exists
+func ClusterExists(verbose bool, clusterName string) (bool, error) {
+	args := []string{"cluster", "list", "-o", "json"}
+	clusterJSON, err := RunCmd(verbose, defaultTimeout, args...)
 	if err != nil {
-		return nil, err
+		return false, err
+	}
+	if verbose {
+		fmt.Printf("K3d cluster list JSON: '%s'", clusterJSON)
 	}
 
-	return dockerClient, nil
+	clusterList := &clusterList{}
+	if err := clusterList.Unmarshal([]byte(clusterJSON)); err != nil {
+		return false, err
+	}
+
+	for _, cluster := range clusterList.clusters {
+		if cluster.name == clusterName {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+//StartCluster starts a cluster
+func StartCluster(verbose bool, timeout time.Duration, clusterName string) error {
+	output, err := RunCmd(verbose, timeout,
+		"cluster", "create", clusterName,
+		"--timeout", fmt.Sprintf("%d", timeout.Round(time.Second)),
+		"-p", "80:80@loadbalancer", "-p", "443:80@loadbalancer",
+	)
+	if verbose {
+		fmt.Printf("K3d cluster creation output: '%s'", output)
+	}
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+//DeleteCluster deletes a cluster
+func DeleteCluster(verbose bool, timeout time.Duration, clusterName string) error {
+	output, err := RunCmd(verbose, timeout, "cluster", "delete", clusterName)
+	if verbose {
+		fmt.Printf("K3d cluster start output: '%s'", output)
+	}
+	if err != nil {
+		return err
+	}
+	return nil
 }

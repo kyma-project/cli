@@ -57,9 +57,7 @@ func TestRunCmd(t *testing.T) {
 
 	for testID, testCase := range tests {
 		output, err := RunCmd(false, 5*time.Second, testCase.cmd...)
-		if testCase.verifyer == nil {
-			require.Fail(t, fmt.Sprintf("Verifyer function missing for test #'%d'", testID))
-		}
+		require.NotNilf(t, testCase.verifyer, "Verifyer function missing for test #'%d'", testID)
 		testCase.verifyer(output, err)
 	}
 
@@ -67,14 +65,21 @@ func TestRunCmd(t *testing.T) {
 
 func TestCheckVersion(t *testing.T) {
 	err := CheckVersion(false)
-	if err != nil {
-		require.Fail(t, fmt.Sprintf("k3d version check failed: %s", err))
-	}
+	require.NoError(t, err)
 }
 
 func TestInitialize(t *testing.T) {
 	err := Initialize(false)
-	if err != nil {
-		require.Fail(t, fmt.Sprintf("k3d initialize: %s", err))
-	}
+	require.NoError(t, err)
+}
+
+func TestStartClusterFromScratch(t *testing.T) {
+	err := StartCluster(false, 5*time.Second, "kyma")
+	require.NoError(t, err)
+}
+
+func TestStartClusterWhichExists(t *testing.T) {
+	os.Setenv("K3D_MOCK_DUMPFILE", "cluster_list_exists.json")
+	err := StartCluster(false, 5*time.Second, "kyma")
+	require.NoError(t, err)
 }
