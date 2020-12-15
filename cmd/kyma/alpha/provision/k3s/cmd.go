@@ -67,15 +67,37 @@ func (c *command) verifyK3sStatus() error {
 		return err
 	}
 
-	if c.portAllocated(80) || c.portAllocated(443) {
+	exists, err := k3s.ClusterExists(c.opts.Verbose, c.opts.Name)
+	if err != nil {
+		return err
+	}
+
+	if exists {
+		if err := c.checkIfK3sInitialized(s); err != nil {
+			s.Failure()
+			return err
+		}
+	} else if c.portAllocated(80) || c.portAllocated(443) {
 		s.Failuref("Port 80 or 443 are already in use. Please stop the allocating service and try again.")
 		return fmt.Errorf("Port 80 or 443 are already in use")
 	}
 
-	if err := c.checkIfK3sInitialized(s); err != nil {
-		s.Failure()
-	}
 	s.Successf("K3s status verified")
+	return nil
+}
+
+//Check whether a k3s cluster already exists and ensure that all required ports are available
+func (c *command) checkIfK3sInitialized(s step.Step) error {
+	var answer bool
+	if !c.opts.NonInteractive {
+		answer = s.PromptYesNo("Do you want to remove the existing k3s cluster? ")
+	}
+	if c.opts.NonInteractive || answer {
+		err := k3s.DeleteCluster(c.opts.Verbose, c.opts.Timeout, c.opts.Name)
+		if err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
@@ -87,29 +109,6 @@ func (c *command) portAllocated(port int) bool {
 		con.Close()
 	}
 	return err != nil
-}
-
-//Check whether a k3s cluster already exists
-func (c *command) checkIfK3sInitialized(s step.Step) error {
-	exists, err := k3s.ClusterExists(c.opts.Verbose, c.opts.Name)
-	if err != nil {
-		return err
-	}
-
-	if exists {
-		var answer bool
-		if !c.opts.NonInteractive {
-			answer = s.PromptYesNo("Do you want to remove the existing k3s cluster? ")
-		}
-		if c.opts.NonInteractive || answer {
-			err := k3s.DeleteCluster(c.opts.Verbose, c.opts.Timeout, c.opts.Name)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
 }
 
 //Create a k3s cluster
