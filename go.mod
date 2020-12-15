@@ -40,7 +40,6 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.0.0
 	github.com/stretchr/testify v1.6.1
-	github.com/txn2/txeh v1.3.0
 	go.opencensus.io v0.22.5 // indirect
 	golang.org/x/sys v0.0.0-20201126233918-771906719818 // indirect
 	gopkg.in/src-d/go-git.v4 v4.13.1

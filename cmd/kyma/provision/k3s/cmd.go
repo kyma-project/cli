@@ -13,7 +13,6 @@ import (
 	"github.com/kyma-project/cli/pkg/step"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"github.com/txn2/txeh"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -53,9 +52,6 @@ func (c *command) Run() error {
 		return err
 	}
 	if err := c.createK3sCluster(); err != nil {
-		return err
-	}
-	if err := c.updateHostsFile(); err != nil {
 		return err
 	}
 	if err := c.createClusterInfoConfigMap(); err != nil {
@@ -128,35 +124,6 @@ func (c *command) createK3sCluster() error {
 	c.K8s, err = kube.NewFromConfig("", c.KubeconfigPath)
 	if err != nil {
 		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
-	}
-
-	return nil
-}
-
-//Update local DNS resolution file
-func (c *command) updateHostsFile() error {
-	hosts, err := txeh.NewHostsDefault()
-	if err != nil {
-		return err
-	}
-	hosts.AddHosts("127.0.0.1", []string{
-		"application-operator.kyma.local",
-		"connector-service.kyma.local",
-		"gateway.kyma.local",
-		"apiserver.kyma.local",
-		"console-backend.kyma.local",
-		"console.kyma.local",
-		"core-ui.kyma.local",
-		"docs.kyma.local",
-		"dex.kyma.local",
-		"addons.kyma.local",
-		"configurations-generator.kyma.local",
-		"oauth2.kyma.local",
-		"storage.kyma.local",
-		"registry.kyma.local",
-		"catalog.kyma.local"})
-	if err := hosts.Save(); err != nil {
-		return err
 	}
 
 	return nil
