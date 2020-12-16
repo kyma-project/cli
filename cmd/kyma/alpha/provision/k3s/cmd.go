@@ -63,11 +63,13 @@ func (c *command) Run() error {
 func (c *command) verifyK3sStatus() error {
 	s := c.NewStep("Checking k3s status")
 	if err := k3s.Initialize(c.Verbose); err != nil {
+		s.Failure()
 		return err
 	}
 
 	exists, err := k3s.ClusterExists(c.opts.Verbose, c.opts.Name)
 	if err != nil {
+		s.Failure()
 		return err
 	}
 
