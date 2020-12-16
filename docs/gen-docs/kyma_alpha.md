@@ -21,6 +21,6 @@ Use this command to utilize the Kyma CLI in alpha testing stage.
 ## See also
 
 * [kyma](#kyma-kyma)	 - Controls a Kyma cluster.
-* [kyma alpha install](#kyma-alpha-install-kyma-alpha-install)	 - Installs Kyma on a running Kubernetes cluster.
+* [kyma alpha deploy](#kyma-alpha-deploy-kyma-alpha-deploy)	 - Deploys Kyma on a running Kubernetes cluster.
 * [kyma alpha uninstall](#kyma-alpha-uninstall-kyma-alpha-uninstall)	 - Uninstalls Kyma from a running Kubernetes cluster.
 

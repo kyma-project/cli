@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/cobra"
 
 	installConfig "github.com/kyma-incubator/hydroform/parallel-install/pkg/config"
-	"github.com/kyma-incubator/hydroform/parallel-install/pkg/installation"
+	"github.com/kyma-incubator/hydroform/parallel-install/pkg/deployment"
 )
 
 type command struct {
@@ -81,7 +81,7 @@ func (cmd *command) Run() error {
 		Log:                           log.Printf,
 	}
 
-	installer, err := installation.NewInstallation(prerequisitesContent, componentsContent, nil, "path", installationCfg)
+	installer, err := deployment.NewDeployment(prerequisitesContent, componentsContent, nil, "path", installationCfg)
 	if err != nil {
 		return err
 	}
