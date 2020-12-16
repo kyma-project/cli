@@ -91,6 +91,9 @@ func (c *command) checkIfK3sInitialized(s step.Step) error {
 	var answer bool
 	if !c.opts.NonInteractive {
 		answer = s.PromptYesNo("Do you want to remove the existing k3s cluster? ")
+		if !answer {
+			return fmt.Errorf("User decided not to remove the existing k3s cluster")
+		}
 	}
 	if c.opts.NonInteractive || answer {
 		err := k3s.DeleteCluster(c.opts.Verbose, c.opts.Timeout, c.opts.Name)
