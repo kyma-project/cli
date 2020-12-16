@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/blang/semver/v4"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -29,7 +30,7 @@ func RunCmd(verbose bool, timeout time.Duration, args ...string) (string, error)
 		if verbose {
 			fmt.Printf("Failing command:\n  k3d %s\nwith output:\n  %s\nand error:\n  %s\n", strings.Join(args, " "), string(out), err)
 		}
-		return out, fmt.Errorf("Executing 'k3d %s' failed with output '%v'", strings.Join(args, " "), out)
+		return out, errors.Wrapf(err, "Executing 'k3d %s' failed with output '%s'", strings.Join(args, " "), out)
 	}
 
 	if ctx.Err() == context.DeadlineExceeded {
