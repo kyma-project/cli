@@ -29,7 +29,7 @@ func RunCmd(verbose bool, timeout time.Duration, args ...string) (string, error)
 		if verbose {
 			fmt.Printf("Failing command:\n  k3d %s\nwith output:\n  %s\nand error:\n  %s\n", strings.Join(args, " "), string(out), err)
 		}
-		return out, fmt.Errorf("Executing the 'k3d %s' command with output '%s' and error message '%s' failed", strings.Join(args, " "), out, err)
+		return out, errors.Wrapf(err, "Executing 'k3d %s' failed with output '%s'", strings.Join(args, " "), out)
 	}
 
 	if ctx.Err() == context.DeadlineExceeded {
