@@ -80,11 +80,8 @@ func Initialize(verbose bool) error {
 	}
 
 	//verify whether k3d seems to be properly installed
-	if _, err := RunCmd(verbose, defaultTimeout, "cluster", "list"); err != nil {
-		return err
-	}
-
-	return nil
+	_, err := RunCmd(verbose, defaultTimeout, "cluster", "list")
+	return err
 }
 
 //ClusterExists checks whether a cluster exists
@@ -128,17 +125,11 @@ func StartCluster(verbose bool, timeout time.Duration, clusterName string, worke
 		"--switch-context",
 		"--agents", fmt.Sprintf("%d", workers),
 	)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 //DeleteCluster deletes a cluster
 func DeleteCluster(verbose bool, timeout time.Duration, clusterName string) error {
 	_, err := RunCmd(verbose, timeout, "cluster", "delete", clusterName)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
