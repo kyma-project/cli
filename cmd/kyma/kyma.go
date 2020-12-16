@@ -2,7 +2,7 @@ package kyma
 
 import (
 	"github.com/kyma-project/cli/cmd/kyma/alpha"
-	alphaInstall "github.com/kyma-project/cli/cmd/kyma/alpha/install"
+	alphaInstall "github.com/kyma-project/cli/cmd/kyma/alpha/deploy"
 	alphaProvision "github.com/kyma-project/cli/cmd/kyma/alpha/provision"
 	"github.com/kyma-project/cli/cmd/kyma/alpha/provision/k3s"
 	alphaUninstall "github.com/kyma-project/cli/cmd/kyma/alpha/uninstall"

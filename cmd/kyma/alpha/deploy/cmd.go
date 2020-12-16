@@ -1,4 +1,4 @@
-package install
+package deploy
 
 import (
 	"fmt"
@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/cobra"
 
 	installConfig "github.com/kyma-incubator/hydroform/parallel-install/pkg/config"
-	"github.com/kyma-incubator/hydroform/parallel-install/pkg/installation"
+	"github.com/kyma-incubator/hydroform/parallel-install/pkg/deployment"
 )
 
 type command struct {
@@ -30,20 +30,20 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 
 	cobraCmd := &cobra.Command{
-		Use:     "install",
-		Short:   "Installs Kyma on a running Kubernetes cluster.",
-		Long:    `Use this command to install Kyma on a running Kubernetes cluster.`,
+		Use:     "deploy",
+		Short:   "Deploys Kyma on a running Kubernetes cluster.",
+		Long:    `Use this command to deploy Kyma on a running Kubernetes cluster.`,
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
-		Aliases: []string{"i"},
+		Aliases: []string{"d"},
 	}
 
 	cobraCmd.Flags().StringVarP(&o.OverridesYaml, "overrides", "o", "", "Path to a YAML file with parameters to override.")
 	cobraCmd.Flags().StringVarP(&o.ComponentsYaml, "components", "c", "", "Path to a YAML file with component list to override. (required)")
 	cobraCmd.Flags().StringVarP(&o.ResourcesPath, "resources", "r", "", "Path to Kyma resources folder. (required)")
 	cobraCmd.Flags().DurationVarP(&o.CancelTimeout, "cancel-timeout", "", 900*time.Second, "Time after which the workers' context is canceled. Pending worker goroutines (if any) may continue if blocked by a Helm client.")
-	cobraCmd.Flags().DurationVarP(&o.QuitTimeout, "quit-timeout", "", 1200*time.Second, "Time after which the installation is aborted. Worker goroutines may still be working in the background. This value must be greater than the value for cancel-timeout.")
+	cobraCmd.Flags().DurationVarP(&o.QuitTimeout, "quit-timeout", "", 1200*time.Second, "Time after which the deployment is aborted. Worker goroutines may still be working in the background. This value must be greater than the value for cancel-timeout.")
 	cobraCmd.Flags().DurationVarP(&o.HelmTimeout, "helm-timeout", "", 360*time.Second, "Timeout for the underlying Helm client.")
-	cobraCmd.Flags().IntVar(&o.WorkersCount, "workers-count", 4, "Number of parallel workers used for the installation.")
+	cobraCmd.Flags().IntVar(&o.WorkersCount, "workers-count", 4, "Number of parallel workers used for the deployment.")
 	return cobraCmd
 }
 
@@ -92,17 +92,17 @@ func (cmd *command) Run() error {
 		Log:                           log.Printf,
 	}
 
-	installer, err := installation.NewInstallation(prerequisitesContent, componentsContent, overridesContent, cmd.opts.ResourcesPath, installationCfg)
+	installer, err := deployment.NewDeployment(prerequisitesContent, componentsContent, overridesContent, cmd.opts.ResourcesPath, installationCfg)
 	if err != nil {
 		return err
 	}
 
-	err = installer.StartKymaInstallation(cmd.K8s.Static())
+	err = installer.StartKymaDeployment(cmd.K8s.Static())
 	if err != nil {
 		return err
 	}
 
-	log.Println("Kyma installed!")
+	log.Println("Kyma deployed!")
 
 	return nil
 }
