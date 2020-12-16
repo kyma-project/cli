@@ -26,13 +26,6 @@ function version {
 }
 
 #
-# Mock for 'help' command
-#
-function help {
-    dump_file help.txt
-}
-
-#
 # Mock for 'cluster list' command
 #
 function cluster_list {

@@ -30,14 +30,6 @@ func TestRunCmd(t *testing.T) {
 		verifyer testFunc
 	}{
 		{
-			cmd: []string{"help"},
-			verifyer: testFunc(func(output string, err error) {
-				if !strings.Contains(output, "--help") {
-					require.Fail(t, fmt.Sprintf("Expected string '--help' is missing in k3d output: %s", output))
-				}
-			}),
-		},
-		{
 			cmd: []string{"cluster", "list"},
 			verifyer: testFunc(func(output string, err error) {
 				if !strings.Contains(output, "kyma-cluster") {

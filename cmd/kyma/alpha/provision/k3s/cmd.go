@@ -10,7 +10,6 @@ import (
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/k3s"
 	"github.com/kyma-project/cli/internal/kube"
-	"github.com/kyma-project/cli/pkg/step"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
@@ -73,7 +72,7 @@ func (c *command) verifyK3sStatus() error {
 	}
 
 	if exists {
-		if err := c.checkIfK3sInitialized(s); err != nil {
+		if err := c.deleteExistingK3sCluster(); err != nil {
 			s.Failure()
 			return err
 		}
@@ -87,10 +86,10 @@ func (c *command) verifyK3sStatus() error {
 }
 
 //Check whether a k3s cluster already exists and ensure that all required ports are available
-func (c *command) checkIfK3sInitialized(s step.Step) error {
+func (c *command) deleteExistingK3sCluster() error {
 	var answer bool
 	if !c.opts.NonInteractive {
-		answer = s.PromptYesNo("Do you want to remove the existing k3s cluster? ")
+		answer = c.CurrentStep.PromptYesNo("Do you want to remove the existing k3s cluster? ")
 		if !answer {
 			return fmt.Errorf("User decided not to remove the existing k3s cluster")
 		}
@@ -100,7 +99,7 @@ func (c *command) checkIfK3sInitialized(s step.Step) error {
 		if err != nil {
 			return err
 		}
-		s.Successf("Existing k3s cluster deleted")
+		c.CurrentStep.Successf("Existing k3s cluster deleted")
 	}
 
 	return nil
@@ -126,18 +125,20 @@ func (c *command) createK3sCluster() error {
 	}
 	s.Successf("K3s cluster is created")
 
-	// K8s client needs to be created here because before the kubeconfig is not ready to use
-	c.K8s, err = kube.NewFromConfig("", c.KubeconfigPath)
-	if err != nil {
-		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
-	}
-
 	return nil
 }
 
 func (c *command) createK3sClusterInfo() error {
 	s := c.NewStep("Prepare Kyma installer configuration")
 	s.Status("Adding configuration")
+
+	// K8s client needs to be created here because before the kubeconfig is not ready to use
+	var err error
+	c.K8s, err = kube.NewFromConfig("", c.KubeconfigPath)
+	if err != nil {
+		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
+	}
+
 	if err := c.createClusterInfoConfigMap(); err != nil {
 		s.Failure()
 		return err
