@@ -3,7 +3,6 @@ package k3s
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -11,8 +10,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	mockDir = "src/github.com/kyma-project/cli/internal/k3s/mock"
+)
+
 func TestMain(m *testing.M) {
-	setup()
+	if !setup() {
+		fmt.Println("Setup of k3s test failed: test case for k3s can' be executed")
+		return
+	}
 	code := m.Run()
 	//shutdown()
 	os.Exit(code)
@@ -20,12 +26,13 @@ func TestMain(m *testing.M) {
 
 // Place this folder at the beginning of PATH env-var to ensure this
 // mock-script will be used instead of a locally installed k3d tool.
-func setup() {
-	ex, err := os.Executable()
-	if err != nil {
-		panic(err)
+func setup() bool {
+	if os.Getenv("GOPATH") == "" {
+		fmt.Println("Could not inject k3s mock directory into PATH: env-var GOPATH is undefined")
+		return false
 	}
-	os.Setenv("PATH", fmt.Sprintf("%s:%s", filepath.Dir(ex)+string(os.PathSeparator)+"mock", os.Getenv("PATH")))
+	os.Setenv("PATH", fmt.Sprintf("%s:%s", os.Getenv("GOPATH")+string(os.PathSeparator)+mockDir, os.Getenv("PATH")))
+	return true
 }
 
 // function to verify output of k3d tool
