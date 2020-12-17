@@ -2,7 +2,7 @@ package k3s
 
 import "encoding/json"
 
-//ClusterList containting cluster entites
+//ClusterList containing cluster entities
 type ClusterList struct {
 	Clusters []Cluster
 }
@@ -27,7 +27,7 @@ type State struct {
 	Status  string
 }
 
-//Unmarshal converst a JSON to nested structs
+//Unmarshal converts a JSON to nested structs
 func (cl *ClusterList) Unmarshal(data []byte) error {
 	var clusters []Cluster
 	if err := json.Unmarshal(data, &clusters); err != nil {

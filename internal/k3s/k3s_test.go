@@ -11,9 +11,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestMain(m *testing.M) {
+	setup()
+	code := m.Run()
+	//shutdown()
+	os.Exit(code)
+}
+
 // Place this folder at the beginning of PATH env-var to ensure this
 // mock-script will be used instead of a locally installed k3d tool.
-func init() {
+func setup() {
 	ex, err := os.Executable()
 	if err != nil {
 		panic(err)

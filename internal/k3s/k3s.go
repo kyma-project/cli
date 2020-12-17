@@ -50,7 +50,7 @@ func CheckVersion(verbose bool) error {
 		return err
 	}
 
-	exp, _ := regexp.Compile("k3s version v([^\\s-]+)")
+	exp, _ := regexp.Compile(`k3s version v([^\s-]+)`)
 	versionString := exp.FindStringSubmatch(versionOutput)
 	if verbose {
 		fmt.Printf("Extracted K3s version: '%s'", versionString[1])
