@@ -1,12 +1,12 @@
 ---
-title: kyma alpha
+title: kyma alpha provision
 ---
 
-Executes the commands in alpha testing stage.
+Provisions a cluster for Kyma installation.
 
 ## Synopsis
 
-Use this command to utilize the Kyma CLI in alpha testing stage.
+Provisions a cluster for Kyma installation.
 
 ## Options inherited from parent commands
 
@@ -20,8 +20,6 @@ Use this command to utilize the Kyma CLI in alpha testing stage.
 
 ## See also
 
-* [kyma](#kyma-kyma)	 - Controls a Kyma cluster.
-* [kyma alpha deploy](#kyma-alpha-deploy-kyma-alpha-deploy)	 - Deploys Kyma on a running Kubernetes cluster.
-* [kyma alpha provision](#kyma-alpha-provision-kyma-alpha-provision)	 - Provisions a cluster for Kyma installation.
-* [kyma alpha uninstall](#kyma-alpha-uninstall-kyma-alpha-uninstall)	 - Uninstalls Kyma from a running Kubernetes cluster.
+* [kyma alpha](#kyma-alpha-kyma-alpha)	 - Executes the commands in alpha testing stage.
+* [kyma alpha provision k3s](#kyma-alpha-provision-k3s-kyma-alpha-provision-k3s)	 - Provisions k8s cluster based on k3s.
 
