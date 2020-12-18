@@ -55,15 +55,21 @@ func CheckVersion(verbose bool) error {
 	if verbose {
 		fmt.Printf("Extracted K3s version: '%s'", versionString[1])
 	}
+	if len(versionString) < 2 {
+		return fmt.Errorf("Could not extract k3s version from command output:\n%s", versionOutput)
+	}
 	version, err := semver.Parse(versionString[1])
 	if err != nil {
 		return err
 	}
 
 	minVersion, _ := semver.Parse(k3dMinVersion)
-	if version.LT(minVersion) {
+	if version.Major > minVersion.Major {
+		return fmt.Errorf("You are using an unsupported k3s major version '%d'. "+
+			"This may not work. The recommended k3s major version is '%d'", version.Major, minVersion.Major)
+	} else if version.LT(minVersion) {
 		return fmt.Errorf("You are using an unsupported k3s version '%s'. "+
-			"This may not work. The recommended k3s version is '%s'", version, minVersion)
+			"This may not work. The recommended k3s version is >= '%s'", version, minVersion)
 	}
 
 	return nil

@@ -73,6 +73,18 @@ func TestCheckVersion(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestCheckVersionIncompatibleMinor(t *testing.T) {
+	os.Setenv("K3D_MOCK_DUMPFILE", "version_incompminor.txt")
+	err := CheckVersion(false)
+	require.Error(t, err)
+}
+
+func TestCheckVersionIncompatibleMajor(t *testing.T) {
+	os.Setenv("K3D_MOCK_DUMPFILE", "version_incompmajor.txt")
+	err := CheckVersion(false)
+	require.Error(t, err)
+}
+
 func TestInitialize(t *testing.T) {
 	err := Initialize(false)
 	require.NoError(t, err)
