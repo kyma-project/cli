@@ -17,7 +17,7 @@ const (
 	defaultTimeout time.Duration = 10 * time.Second
 )
 
-//RunCmd executes a minikube command with given arguments
+//RunCmd executes a k3d command with given arguments
 func RunCmd(verbose bool, timeout time.Duration, args ...string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -43,7 +43,7 @@ func RunCmd(verbose bool, timeout time.Duration, args ...string) (string, error)
 	return out, nil
 }
 
-//CheckVersion checks whether minikube version is supported
+//CheckVersion checks whether k3s version is supported
 func CheckVersion(verbose bool) error {
 	versionOutput, err := RunCmd(verbose, defaultTimeout, "version")
 	if err != nil {
