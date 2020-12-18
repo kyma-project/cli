@@ -2,7 +2,7 @@
 title: kyma alpha
 ---
 
-Executes the commands in alpha testing stage.
+Executes the commands in the alpha testing stage.
 
 ## Synopsis
 

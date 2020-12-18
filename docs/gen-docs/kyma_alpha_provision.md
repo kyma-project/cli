@@ -20,6 +20,6 @@ Provisions a cluster for Kyma installation.
 
 ## See also
 
-* [kyma alpha](#kyma-alpha-kyma-alpha)	 - Executes the commands in alpha testing stage.
-* [kyma alpha provision k3s](#kyma-alpha-provision-k3s-kyma-alpha-provision-k3s)	 - Provisions k8s cluster based on k3s.
+* [kyma alpha](#kyma-alpha-kyma-alpha)	 - Executes the commands in the alpha testing stage.
+* [kyma alpha provision k3s](#kyma-alpha-provision-k3s-kyma-alpha-provision-k3s)	 - Provisions a Kubernetes cluster based on k3s.
 

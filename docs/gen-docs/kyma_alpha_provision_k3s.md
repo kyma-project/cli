@@ -2,11 +2,11 @@
 title: kyma alpha provision k3s
 ---
 
-Provisions k8s cluster based on k3s.
+Provisions a Kubernetes cluster based on k3s.
 
 ## Synopsis
 
-Use this command to provision a k3s cluster for Kyma installation.
+Use this command to provision a k3s-based Kubernetes cluster for Kyma installation.
 
 ```bash
 kyma alpha provision k3s [flags]
@@ -16,7 +16,7 @@ kyma alpha provision k3s [flags]
 
 ```bash
       --name string        Name of the Kyma cluster. (default "kyma")
-      --timeout duration   Maximum time in minutes which the provisioning takes place, where "0" means "infinite". (default 5m0s)
+      --timeout duration   Maximum time in minutes during which the provisioning takes place, where "0" means "infinite". (default 5m0s)
       --workers int        Number of worker nodes. (default 1)
 ```
 
