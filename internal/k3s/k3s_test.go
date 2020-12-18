@@ -31,7 +31,7 @@ func setup() bool {
 		fmt.Println("Could not inject k3s mock directory into PATH: env-var GOPATH is undefined")
 		return false
 	}
-	os.Setenv("PATH", fmt.Sprintf("%s:%s", os.Getenv("GOPATH")+string(os.PathSeparator)+mockDir, os.Getenv("PATH")))
+	os.Setenv("PATH", fmt.Sprintf("%s:%s", filepath.Join(os.Getenv("GOPATH"), mockDir), os.Getenv("PATH")))
 	return true
 }
 
