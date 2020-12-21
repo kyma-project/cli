@@ -82,7 +82,8 @@ func Initialize(verbose bool) error {
 		if verbose {
 			fmt.Printf("Command 'k3d' not found in PATH")
 		}
-		return err
+		return fmt.Errorf("Command 'k3d' not found. Please install k3d following the installation " +
+			"instructions provided at https://github.com/rancher/k3d#get")
 	}
 
 	//verify whether k3d seems to be properly installed
