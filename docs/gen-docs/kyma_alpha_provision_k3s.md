@@ -1,12 +1,24 @@
 ---
-title: kyma alpha
+title: kyma alpha provision k3s
 ---
 
-Executes the commands in the alpha testing stage.
+Provisions a Kubernetes cluster based on k3s.
 
 ## Synopsis
 
-Use this command to utilize the Kyma CLI in alpha testing stage.
+Use this command to provision a k3s-based Kubernetes cluster for Kyma installation.
+
+```bash
+kyma alpha provision k3s [flags]
+```
+
+## Options
+
+```bash
+      --name string        Name of the Kyma cluster. (default "kyma")
+      --timeout duration   Maximum time in minutes during which the provisioning takes place, where "0" means "infinite". (default 5m0s)
+      --workers int        Number of worker nodes. (default 1)
+```
 
 ## Options inherited from parent commands
 
@@ -20,8 +32,5 @@ Use this command to utilize the Kyma CLI in alpha testing stage.
 
 ## See also
 
-* [kyma](#kyma-kyma)	 - Controls a Kyma cluster.
-* [kyma alpha deploy](#kyma-alpha-deploy-kyma-alpha-deploy)	 - Deploys Kyma on a running Kubernetes cluster.
 * [kyma alpha provision](#kyma-alpha-provision-kyma-alpha-provision)	 - Provisions a cluster for Kyma installation.
-* [kyma alpha uninstall](#kyma-alpha-uninstall-kyma-alpha-uninstall)	 - Uninstalls Kyma from a running Kubernetes cluster.
 
