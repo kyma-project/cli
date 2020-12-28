@@ -28,7 +28,6 @@ func TestFailedComponent(t *testing.T) {
 		mockStepFactory := &StepFactoryMock{}
 		asyncUI := AsyncUI{StepFactory: mockStepFactory}
 		updCh := asyncUI.Start()
-		defer asyncUI.Stop()
 		updCh <- deployment.ProcessUpdate{
 			Event:     deployment.ProcessStart,
 			Phase:     deployment.InstallComponents,
@@ -40,6 +39,7 @@ func TestFailedComponent(t *testing.T) {
 			Phase:     deployment.InstallComponents,
 			Component: components.KymaComponent{},
 		}
+		asyncUI.Stop() //stop receiving events and wait until processing is finished
 		assert.Len(t, mockStepFactory.Steps, 1)
 		assert.Contains(t, mockStepFactory.Steps[0].Statuses(), "Installing Kyma")
 	})
@@ -48,7 +48,6 @@ func TestFailedComponent(t *testing.T) {
 		mockStepFactory := &StepFactoryMock{}
 		asyncUI := AsyncUI{StepFactory: mockStepFactory}
 		updCh := asyncUI.Start()
-		defer asyncUI.Stop()
 		updCh <- deployment.ProcessUpdate{
 			Event:     deployment.ProcessStart,
 			Phase:     deployment.InstallComponents,
@@ -59,6 +58,7 @@ func TestFailedComponent(t *testing.T) {
 			Phase:     deployment.InstallComponents,
 			Component: components.KymaComponent{},
 		}
+		asyncUI.Stop() //stop receiving events and wait until processing is finished
 		assert.Len(t, mockStepFactory.Steps, 1)
 		assert.True(t, mockStepFactory.Steps[0].IsSuccessful())
 	})
@@ -67,29 +67,93 @@ func TestFailedComponent(t *testing.T) {
 		mockStepFactory := &StepFactoryMock{}
 		asyncUI := AsyncUI{StepFactory: mockStepFactory}
 		updCh := asyncUI.Start()
-		defer asyncUI.Stop()
+		// add step 1 (major installation step)
 		updCh <- deployment.ProcessUpdate{
 			Event:     deployment.ProcessStart,
 			Phase:     deployment.InstallPreRequisites,
 			Component: components.KymaComponent{},
 		}
+		// set status of step 1 to success
 		updCh <- deployment.ProcessUpdate{
 			Event:     deployment.ProcessFinished,
 			Phase:     deployment.InstallPreRequisites,
 			Component: components.KymaComponent{},
 		}
+		// add step 2 (major installation step)
 		updCh <- deployment.ProcessUpdate{
 			Event:     deployment.ProcessStart,
 			Phase:     deployment.InstallComponents,
 			Component: components.KymaComponent{},
 		}
+		// ignore start events related to components
+		updCh <- deployment.ProcessUpdate{
+			Event: deployment.ProcessStart,
+			Phase: deployment.InstallComponents,
+			Component: components.KymaComponent{
+				Name: "comp1",
+			},
+		}
+		// ignore running events related to components
+		updCh <- deployment.ProcessUpdate{
+			Event: deployment.ProcessRunning,
+			Phase: deployment.InstallComponents,
+			Component: components.KymaComponent{
+				Name: "comp1",
+			},
+		}
+		// add step 3 with status success (component installation step)
+		updCh <- deployment.ProcessUpdate{
+			Event: deployment.ProcessFinished,
+			Phase: deployment.InstallComponents,
+			Component: components.KymaComponent{
+				Name:   "comp1",
+				Status: components.StatusInstalled,
+			},
+		}
+		// ignore start events related to components
+		updCh <- deployment.ProcessUpdate{
+			Event: deployment.ProcessStart,
+			Phase: deployment.InstallComponents,
+			Component: components.KymaComponent{
+				Name: "comp2",
+			},
+		}
+		// ignore running events related to components
+		updCh <- deployment.ProcessUpdate{
+			Event: deployment.ProcessRunning,
+			Phase: deployment.InstallComponents,
+			Component: components.KymaComponent{
+				Name: "comp2",
+			},
+		}
+		// ignore running events related to components
+		updCh <- deployment.ProcessUpdate{
+			Event: deployment.ProcessRunning,
+			Phase: deployment.InstallComponents,
+			Component: components.KymaComponent{
+				Name: "comp2",
+			},
+		}
+		// add step 4 with status failure (component installation step)
+		updCh <- deployment.ProcessUpdate{
+			Event: deployment.ProcessExecutionFailure,
+			Phase: deployment.InstallComponents,
+			Component: components.KymaComponent{
+				Name:   "comp2",
+				Status: components.StatusError,
+			},
+		}
+		// set status of step 2 to failure
 		updCh <- deployment.ProcessUpdate{
 			Event:     deployment.ProcessForceQuitFailure,
 			Phase:     deployment.InstallComponents,
 			Component: components.KymaComponent{},
 		}
-		assert.Len(t, mockStepFactory.Steps, 2)
+		asyncUI.Stop() //stop receiving events and wait until processing is finished
+		assert.Len(t, mockStepFactory.Steps, 4)
 		assert.True(t, mockStepFactory.Steps[0].IsSuccessful())
 		assert.False(t, mockStepFactory.Steps[1].IsSuccessful())
+		assert.True(t, mockStepFactory.Steps[2].IsSuccessful())
+		assert.False(t, mockStepFactory.Steps[3].IsSuccessful())
 	})
 }

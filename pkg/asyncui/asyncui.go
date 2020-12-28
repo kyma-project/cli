@@ -1,6 +1,7 @@
 package asyncui
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
@@ -16,19 +17,29 @@ type StepFactory interface {
 
 // AsyncUI renders the CLI ui based on receiving events
 type AsyncUI struct {
+	// used to create UI steps
 	StepFactory StepFactory
-	Errors      chan<- error
-	updates     chan deployment.ProcessUpdate
-	stopped     bool
-	mu          sync.Mutex
+	// channel provided by caller to retrieve errors
+	Errors chan<- error
+	// processing context
+	context context.Context
+	cancel  context.CancelFunc
+	// channel to retreive update events
+	updates chan deployment.ProcessUpdate
+	// used for shutdown
+	stopped bool
+	mu      sync.Mutex
 }
 
 // Start renders the CLI UI and provides the channel for receiving events
 func (ui *AsyncUI) Start() chan deployment.ProcessUpdate {
 	// process async process updates
 	ui.updates = make(chan deployment.ProcessUpdate)
+	// initialize processing context
+	ui.context, ui.cancel = context.WithCancel(context.Background())
 
 	go func() {
+		defer ui.cancel()
 		ongoingSteps := make(map[deployment.InstallationPhase]step.Step)
 		for procUpdateEvent := range ui.updates {
 			switch procUpdateEvent.Event {
@@ -45,7 +56,6 @@ func (ui *AsyncUI) Start() chan deployment.ProcessUpdate {
 				ui.sendError(err)
 			}
 		}
-		ui.Stop()
 	}()
 
 	return ui.updates
@@ -57,7 +67,7 @@ func (ui *AsyncUI) sendError(err error) {
 	}
 }
 
-// Stop finishes the UI rendering and will close the channel
+// Stop will close the update channel and wait until the the UI rendering is finished
 func (ui *AsyncUI) Stop() {
 	ui.mu.Lock()
 	defer ui.mu.Unlock()
@@ -67,6 +77,7 @@ func (ui *AsyncUI) Stop() {
 	}
 	close(ui.updates)
 	ui.stopped = true
+	<-ui.context.Done()
 }
 
 func (ui *AsyncUI) renderStartEvent(procUpdEvent deployment.ProcessUpdate, ongoingSteps *map[deployment.InstallationPhase]step.Step) error {
