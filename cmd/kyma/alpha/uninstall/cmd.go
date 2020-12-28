@@ -10,6 +10,7 @@ import (
 
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
+	"github.com/kyma-project/cli/pkg/asyncui"
 	"github.com/spf13/cobra"
 
 	installConfig "github.com/kyma-incubator/hydroform/parallel-install/pkg/config"
@@ -42,6 +43,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd.Flags().DurationVarP(&o.QuitTimeout, "quit-timeout", "", 1200*time.Second, "Time after which the uninstallation is aborted. Worker goroutines may still be working in the background. This value must be greater than the value for cancel-timeout.")
 	cobraCmd.Flags().DurationVarP(&o.HelmTimeout, "helm-timeout", "", 360*time.Second, "Timeout for the underlying Helm client.")
 	cobraCmd.Flags().IntVar(&o.WorkersCount, "workers-count", 4, "Number of parallel workers used for the uninstallation.")
+	cobraCmd.Flags().BoolVarP(&o.Verbose, "verbose", "v", false, "Enable verbose mode.")
 	return cobraCmd
 }
 
@@ -78,10 +80,15 @@ func (cmd *command) Run() error {
 		HelmTimeoutSeconds:            int(cmd.opts.HelmTimeout.Seconds()),
 		BackoffInitialIntervalSeconds: 3,
 		BackoffMaxElapsedTimeSeconds:  60 * 5,
-		Log:                           log.Printf,
+		Log:                           cmd.getLogFunc(),
 	}
 
-	installer, err := deployment.NewDeployment(prerequisitesContent, componentsContent, nil, "path", installationCfg)
+	// Start rendering async CLI UI
+	asyncUI := asyncui.AsyncUI{StepFactory: &cmd.Factory}
+	updateCh := asyncUI.Start()
+	defer asyncUI.Stop()
+
+	installer, err := deployment.NewDeployment(prerequisitesContent, componentsContent, nil, "path", installationCfg, updateCh)
 	if err != nil {
 		return err
 	}
@@ -90,8 +97,6 @@ func (cmd *command) Run() error {
 	if err != nil {
 		return err
 	}
-
-	log.Println("Kyma uninstalled!")
 
 	return nil
 }
@@ -105,4 +110,13 @@ func (cmd *command) validateFlags() error {
 	}
 
 	return nil
+}
+
+func (cmd *command) getLogFunc() func(format string, v ...interface{}) {
+	if cmd.opts.Verbose {
+		return log.Printf
+	}
+	return func(format string, v ...interface{}) {
+		//do nothing
+	}
 }
