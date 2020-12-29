@@ -104,14 +104,14 @@ func (ui *AsyncUI) renderStartEvent(procUpdEvent deployment.ProcessUpdate, ongoi
 
 func (ui *AsyncUI) renderStopEvent(procUpdEvent deployment.ProcessUpdate, ongoingSteps *map[deployment.InstallationPhase]step.Step) error {
 	if _, exists := (*ongoingSteps)[procUpdEvent.Phase]; !exists {
-		return fmt.Errorf("Illegal state: major step for installation phase '%s' does not exist", procUpdEvent.Phase)
+		return fmt.Errorf("Illegal state: step for installation phase '%s' does not exist", procUpdEvent.Phase)
 	}
 	// improve readability
 	comp := procUpdEvent.Component
 	event := procUpdEvent.Event
 	installPhase := procUpdEvent.Phase
 
-	// for major installation phases (they don't contain a reference to a component) just stop the spinner
+	// for events related to major installation phases (they don't contain a reference to a component) just stop the spinner
 	if comp.Name == "" {
 		if event == deployment.ProcessFinished {
 			//all good
@@ -123,7 +123,7 @@ func (ui *AsyncUI) renderStopEvent(procUpdEvent deployment.ProcessUpdate, ongoin
 		return fmt.Errorf("Installation phase '%s' failed: %s", installPhase, event)
 	}
 
-	// for component specific installation steps show the result
+	// for component specific installation event show the result in a dedicated step
 	step := ui.StepFactory.NewStep(fmt.Sprintf("Installing component '%s'", comp.Name))
 	if comp.Status == components.StatusError {
 		step.Failure()
