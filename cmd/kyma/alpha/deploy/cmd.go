@@ -102,7 +102,7 @@ func (cmd *command) Run() error {
 		// Start rendering async CLI UI
 		asyncUI := asyncui.AsyncUI{StepFactory: &cmd.Factory}
 		updateCh = asyncUI.Start()
-		defer asyncUI.Stop()
+		defer asyncUI.Stop() // stop receiving update-events and wait until UI rendering is finished
 	}
 
 	installer, err := deployment.NewDeployment(prerequisitesContent, componentsContent, overridesContent, cmd.opts.ResourcesPath, installationCfg, updateCh)
