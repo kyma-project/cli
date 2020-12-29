@@ -28,7 +28,7 @@ require (
 	github.com/fatih/color v1.10.0
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/gorilla/mux v1.7.4 // indirect
-	github.com/kyma-incubator/hydroform/function v0.0.0-20201203084137-6d1de8681238
+	github.com/kyma-incubator/hydroform/function v0.0.0-20201229063132-d2abcd251425
 	github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90
 	github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20201221091800-7507fba98a33
 	github.com/kyma-incubator/hydroform/provision v0.0.0-20201124135641-ca1a1a00c935
