@@ -83,10 +83,14 @@ func (cmd *command) Run() error {
 		Log:                           cmd.getLogFunc(),
 	}
 
-	// Start rendering async CLI UI
-	asyncUI := asyncui.AsyncUI{StepFactory: &cmd.Factory}
-	updateCh := asyncUI.Start()
-	defer asyncUI.Stop()
+	if cmd.opts.Verbose {
+		defer log.Println("Kyma uninstalled!")
+	} else {
+		// Start rendering async CLI UI
+		asyncUI := asyncui.AsyncUI{StepFactory: &cmd.Factory}
+		updateCh := asyncUI.Start()
+		defer asyncUI.Stop()
+	}
 
 	installer, err := deployment.NewDeployment(prerequisitesContent, componentsContent, nil, "path", installationCfg, updateCh)
 	if err != nil {
