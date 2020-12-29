@@ -44,9 +44,11 @@ func (ui *AsyncUI) Start() chan deployment.ProcessUpdate {
 		for procUpdateEvent := range ui.updates {
 			switch procUpdateEvent.Event {
 			case deployment.ProcessRunning:
-				//ignore any running events
-				//(would require to show all currently running steps in
-				//parallel which would be too much information for the user)
+				// Component related update event (components have no ProcessStart/ProcessStop event)
+				if procUpdateEvent.Component.Name != "" {
+					err := ui.renderStopEvent(procUpdateEvent, &ongoingSteps)
+					ui.sendError(err)
+				}
 				continue
 			case deployment.ProcessStart:
 				err := ui.renderStartEvent(procUpdateEvent, &ongoingSteps)

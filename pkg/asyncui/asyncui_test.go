@@ -85,56 +85,16 @@ func TestFailedComponent(t *testing.T) {
 			Phase:     deployment.InstallComponents,
 			Component: components.KymaComponent{},
 		}
-		// ignore start events related to components
-		updCh <- deployment.ProcessUpdate{
-			Event: deployment.ProcessStart,
-			Phase: deployment.InstallComponents,
-			Component: components.KymaComponent{
-				Name: "comp1",
-			},
-		}
-		// ignore running events related to components
+		// add step 3 (component successfully installed)
 		updCh <- deployment.ProcessUpdate{
 			Event: deployment.ProcessRunning,
-			Phase: deployment.InstallComponents,
-			Component: components.KymaComponent{
-				Name: "comp1",
-			},
-		}
-		// add step 3 with status success (component installation step)
-		updCh <- deployment.ProcessUpdate{
-			Event: deployment.ProcessFinished,
 			Phase: deployment.InstallComponents,
 			Component: components.KymaComponent{
 				Name:   "comp1",
 				Status: components.StatusInstalled,
 			},
 		}
-		// ignore start events related to components
-		updCh <- deployment.ProcessUpdate{
-			Event: deployment.ProcessStart,
-			Phase: deployment.InstallComponents,
-			Component: components.KymaComponent{
-				Name: "comp2",
-			},
-		}
-		// ignore running events related to components
-		updCh <- deployment.ProcessUpdate{
-			Event: deployment.ProcessRunning,
-			Phase: deployment.InstallComponents,
-			Component: components.KymaComponent{
-				Name: "comp2",
-			},
-		}
-		// ignore running events related to components
-		updCh <- deployment.ProcessUpdate{
-			Event: deployment.ProcessRunning,
-			Phase: deployment.InstallComponents,
-			Component: components.KymaComponent{
-				Name: "comp2",
-			},
-		}
-		// add step 4 with status failure (component installation step)
+		// add step 4 (component not installed)
 		updCh <- deployment.ProcessUpdate{
 			Event: deployment.ProcessExecutionFailure,
 			Phase: deployment.InstallComponents,
@@ -151,9 +111,9 @@ func TestFailedComponent(t *testing.T) {
 		}
 		asyncUI.Stop() //stop receiving events and wait until processing is finished
 		assert.Len(t, mockStepFactory.Steps, 4)
-		assert.True(t, mockStepFactory.Steps[0].IsSuccessful())
-		assert.False(t, mockStepFactory.Steps[1].IsSuccessful())
-		assert.True(t, mockStepFactory.Steps[2].IsSuccessful())
-		assert.False(t, mockStepFactory.Steps[3].IsSuccessful())
+		assert.True(t, mockStepFactory.Steps[0].IsSuccessful())  //pre-req install successful
+		assert.False(t, mockStepFactory.Steps[1].IsSuccessful()) //kyma-install failed
+		assert.True(t, mockStepFactory.Steps[2].IsSuccessful())  //comp1 install successful
+		assert.False(t, mockStepFactory.Steps[3].IsSuccessful()) //comp2 install failed
 	})
 }

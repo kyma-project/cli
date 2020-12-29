@@ -95,12 +95,13 @@ func (cmd *command) Run() error {
 		Log:                           cmd.getLogFunc(),
 	}
 
+	var updateCh chan deployment.ProcessUpdate
 	if cmd.opts.Verbose {
 		defer log.Println("Kyma deployed!")
 	} else {
 		// Start rendering async CLI UI
 		asyncUI := asyncui.AsyncUI{StepFactory: &cmd.Factory}
-		updateCh := asyncUI.Start()
+		updateCh = asyncUI.Start()
 		defer asyncUI.Stop()
 	}
 
