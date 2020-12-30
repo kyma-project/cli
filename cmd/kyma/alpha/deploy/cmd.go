@@ -101,7 +101,10 @@ func (cmd *command) Run() error {
 	} else {
 		// Start rendering async CLI UI
 		asyncUI := asyncui.AsyncUI{StepFactory: &cmd.Factory}
-		updateCh = asyncUI.Start()
+		updateCh, err = asyncUI.Start()
+		if err != nil {
+			return err
+		}
 		defer asyncUI.Stop() // stop receiving update-events and wait until UI rendering is finished
 	}
 

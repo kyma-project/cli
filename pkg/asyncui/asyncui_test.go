@@ -28,7 +28,8 @@ func TestFailedComponent(t *testing.T) {
 	t.Run("Send duplicate start events", func(t *testing.T) {
 		mockStepFactory := &StepFactoryMock{}
 		asyncUI := AsyncUI{StepFactory: mockStepFactory}
-		updCh := asyncUI.Start()
+		updCh, err := asyncUI.Start()
+		assert.NoError(t, err)
 		updCh <- deployment.ProcessUpdate{
 			Event:     deployment.ProcessStart,
 			Phase:     deployment.InstallComponents,
@@ -48,7 +49,8 @@ func TestFailedComponent(t *testing.T) {
 	t.Run("Send start and stop event with success", func(t *testing.T) {
 		mockStepFactory := &StepFactoryMock{}
 		asyncUI := AsyncUI{StepFactory: mockStepFactory}
-		updCh := asyncUI.Start()
+		updCh, err := asyncUI.Start()
+		assert.NoError(t, err)
 		updCh <- deployment.ProcessUpdate{
 			Event:     deployment.ProcessStart,
 			Phase:     deployment.InstallComponents,
@@ -67,7 +69,8 @@ func TestFailedComponent(t *testing.T) {
 	t.Run("Send start and stop events with failure", func(t *testing.T) {
 		mockStepFactory := &StepFactoryMock{}
 		asyncUI := AsyncUI{StepFactory: mockStepFactory}
-		updCh := asyncUI.Start()
+		updCh, err := asyncUI.Start()
+		assert.NoError(t, err)
 		// add step 1 (major installation step)
 		updCh <- deployment.ProcessUpdate{
 			Event:     deployment.ProcessStart,

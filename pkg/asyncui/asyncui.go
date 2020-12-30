@@ -3,7 +3,6 @@ package asyncui
 import (
 	"context"
 	"fmt"
-	"sync"
 
 	"github.com/kyma-incubator/hydroform/parallel-install/pkg/components"
 	"github.com/kyma-incubator/hydroform/parallel-install/pkg/deployment"
@@ -35,13 +34,17 @@ type AsyncUI struct {
 	cancel  context.CancelFunc
 	// channel to retreive update events
 	updates chan deployment.ProcessUpdate
-	// used for shutdown
-	stopped bool
-	mu      sync.Mutex
+	// internal state
+	running bool
 }
 
 // Start renders the CLI UI and provides the channel for receiving events
-func (ui *AsyncUI) Start() chan deployment.ProcessUpdate {
+func (ui *AsyncUI) Start() (chan deployment.ProcessUpdate, error) {
+	if ui.running {
+		return nil, fmt.Errorf("Duplicate call of start method detected")
+	}
+	ui.running = true
+
 	// process async process updates
 	ui.updates = make(chan deployment.ProcessUpdate)
 	// initialize processing context
@@ -69,7 +72,7 @@ func (ui *AsyncUI) Start() chan deployment.ProcessUpdate {
 		}
 	}()
 
-	return ui.updates
+	return ui.updates, nil
 }
 
 func (ui *AsyncUI) sendError(err error) {
@@ -80,15 +83,12 @@ func (ui *AsyncUI) sendError(err error) {
 
 // Stop will close the update channel and wait until the the UI rendering is finished
 func (ui *AsyncUI) Stop() {
-	ui.mu.Lock()
-	defer ui.mu.Unlock()
-
-	if ui.stopped {
+	if !ui.running {
 		return
 	}
 	close(ui.updates)
-	ui.stopped = true
 	<-ui.context.Done()
+	ui.running = false
 }
 
 func (ui *AsyncUI) renderStartEvent(procUpdEvent deployment.ProcessUpdate, ongoingSteps *map[deployment.InstallationPhase]step.Step) error {
