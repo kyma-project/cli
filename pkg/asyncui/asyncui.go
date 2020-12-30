@@ -90,13 +90,13 @@ func (ui *AsyncUI) renderStartEvent(procUpdEvent deployment.ProcessUpdate, ongoi
 	var stepMsg string
 	switch procUpdEvent.Phase {
 	case deployment.InstallPreRequisites:
-		stepMsg = "Installing pre-requisites"
+		stepMsg = "Deploying pre-requisites"
 	case deployment.UninstallPreRequisites:
-		stepMsg = "Uninstalling pre-requisites"
+		stepMsg = "Undeploying pre-requisites"
 	case deployment.InstallComponents:
-		stepMsg = "Installing Kyma"
+		stepMsg = "Deploying Kyma"
 	case deployment.UninstallComponents:
-		stepMsg = "Uninstalling Kyma"
+		stepMsg = "Undeploying Kyma"
 	}
 	(*ongoingSteps)[procUpdEvent.Phase] = ui.StepFactory.NewStep(stepMsg)
 	return nil
@@ -120,14 +120,14 @@ func (ui *AsyncUI) renderStopEvent(procUpdEvent deployment.ProcessUpdate, ongoin
 		}
 		//something went wrong
 		(*ongoingSteps)[installPhase].Failure()
-		return fmt.Errorf("Installation phase '%s' failed: %s", installPhase, event)
+		return fmt.Errorf("Deployment phase '%s' failed: %s", installPhase, event)
 	}
 
 	// for component specific installation event show the result in a dedicated step
-	step := ui.StepFactory.NewStep(fmt.Sprintf("Installing component '%s'", comp.Name))
+	step := ui.StepFactory.NewStep(fmt.Sprintf("Deploying component '%s'", comp.Name))
 	if comp.Status == components.StatusError {
 		step.Failure()
-		return fmt.Errorf("Installation of component '%s' failed", comp.Name)
+		return fmt.Errorf("Deployment of component '%s' failed", comp.Name)
 	}
 	step.Success()
 	return nil
