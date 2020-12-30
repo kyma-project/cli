@@ -15,7 +15,7 @@ type StepFactory interface {
 	NewStep(msg string) step.Step
 }
 
-// Messagews
+// End-user messages
 const (
 	deployPrerequisitesPhaseMsg   string = "Deploying pre-requisites"
 	undeployPrerequisitesPhaseMsg string = "Undeploying pre-requisites"
