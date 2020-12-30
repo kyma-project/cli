@@ -15,6 +15,15 @@ type StepFactory interface {
 	NewStep(msg string) step.Step
 }
 
+// Messagews
+const (
+	deployPrerequisitesPhaseMsg   string = "Deploying pre-requisites"
+	undeployPrerequisitesPhaseMsg string = "Undeploying pre-requisites"
+	deployComponentsPhaseMsg      string = "Deploying Kyma"
+	undeployComponentsPhaseMsg    string = "Undeploying Kyma"
+	deployComponentMsg            string = "Deploying component '%s'"
+)
+
 // AsyncUI renders the CLI ui based on receiving events
 type AsyncUI struct {
 	// used to create UI steps
@@ -90,13 +99,13 @@ func (ui *AsyncUI) renderStartEvent(procUpdEvent deployment.ProcessUpdate, ongoi
 	var stepMsg string
 	switch procUpdEvent.Phase {
 	case deployment.InstallPreRequisites:
-		stepMsg = "Deploying pre-requisites"
+		stepMsg = deployPrerequisitesPhaseMsg
 	case deployment.UninstallPreRequisites:
-		stepMsg = "Undeploying pre-requisites"
+		stepMsg = undeployPrerequisitesPhaseMsg
 	case deployment.InstallComponents:
-		stepMsg = "Deploying Kyma"
+		stepMsg = deployComponentsPhaseMsg
 	case deployment.UninstallComponents:
-		stepMsg = "Undeploying Kyma"
+		stepMsg = undeployComponentsPhaseMsg
 	}
 	(*ongoingSteps)[procUpdEvent.Phase] = ui.StepFactory.NewStep(stepMsg)
 	return nil
@@ -124,7 +133,7 @@ func (ui *AsyncUI) renderStopEvent(procUpdEvent deployment.ProcessUpdate, ongoin
 	}
 
 	// for component specific installation event show the result in a dedicated step
-	step := ui.StepFactory.NewStep(fmt.Sprintf("Deploying component '%s'", comp.Name))
+	step := ui.StepFactory.NewStep(fmt.Sprintf(deployComponentMsg, comp.Name))
 	if comp.Status == components.StatusError {
 		step.Failure()
 		return fmt.Errorf("Deployment of component '%s' failed", comp.Name)

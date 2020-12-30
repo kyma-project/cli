@@ -1,6 +1,7 @@
 package asyncui
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/kyma-incubator/hydroform/parallel-install/pkg/components"
@@ -41,7 +42,7 @@ func TestFailedComponent(t *testing.T) {
 		}
 		asyncUI.Stop() //stop receiving events and wait until processing is finished
 		assert.Len(t, mockStepFactory.Steps, 1)
-		assert.Contains(t, mockStepFactory.Steps[0].Statuses(), "Installing Kyma")
+		assert.Contains(t, mockStepFactory.Steps[0].Statuses(), deployComponentsPhaseMsg)
 	})
 
 	t.Run("Send start and stop event with success", func(t *testing.T) {
@@ -110,10 +111,19 @@ func TestFailedComponent(t *testing.T) {
 			Component: components.KymaComponent{},
 		}
 		asyncUI.Stop() //stop receiving events and wait until processing is finished
+
 		assert.Len(t, mockStepFactory.Steps, 4)
-		assert.True(t, mockStepFactory.Steps[0].IsSuccessful())  //pre-req install successful
+
+		assert.Contains(t, mockStepFactory.Steps[0].Statuses(), deployPrerequisitesPhaseMsg)
+		assert.True(t, mockStepFactory.Steps[0].IsSuccessful()) //pre-req install successful
+
+		assert.Contains(t, mockStepFactory.Steps[1].Statuses(), deployComponentsPhaseMsg)
 		assert.False(t, mockStepFactory.Steps[1].IsSuccessful()) //kyma-install failed
-		assert.True(t, mockStepFactory.Steps[2].IsSuccessful())  //comp1 install successful
+
+		assert.Contains(t, mockStepFactory.Steps[2].Statuses(), fmt.Sprintf(deployComponentMsg, "comp1"))
+		assert.True(t, mockStepFactory.Steps[2].IsSuccessful()) //comp1 install successful
+
+		assert.Contains(t, mockStepFactory.Steps[3].Statuses(), fmt.Sprintf(deployComponentMsg, "comp2"))
 		assert.False(t, mockStepFactory.Steps[3].IsSuccessful()) //comp2 install failed
 	})
 }
