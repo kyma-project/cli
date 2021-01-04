@@ -56,13 +56,13 @@ func (ui *AsyncUI) Start() (chan deployment.ProcessUpdate, error) {
 			case deployment.ProcessRunning:
 				// Component related update event (components have no ProcessStart/ProcessStop event)
 				if procUpdateEvent.Component.Name != "" {
-					ui.renderStopEvent(procUpdateEvent, &ongoingSteps)
+					_ = ui.renderStopEvent(procUpdateEvent, &ongoingSteps)
 				}
 				continue
 			case deployment.ProcessStart:
-				ui.renderStartEvent(procUpdateEvent, &ongoingSteps)
+				_ = ui.renderStartEvent(procUpdateEvent, &ongoingSteps)
 			default:
-				ui.renderStopEvent(procUpdateEvent, &ongoingSteps)
+				_ = ui.renderStopEvent(procUpdateEvent, &ongoingSteps)
 			}
 		}
 	}()
