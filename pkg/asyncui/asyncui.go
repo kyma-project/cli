@@ -95,6 +95,10 @@ func (ui *AsyncUI) renderStartEvent(procUpdEvent deployment.ProcessUpdate, ongoi
 		stepMsg = deployComponentsPhaseMsg
 	case deployment.UninstallComponents:
 		stepMsg = undeployComponentsPhaseMsg
+	default:
+		// non-deployment specific installation phase
+		// e.g. steps triggered by CLI before or after the deployment
+		stepMsg = string(procUpdEvent.Phase)
 	}
 	(*ongoingSteps)[procUpdEvent.Phase] = ui.StepFactory.NewStep(stepMsg)
 	return nil
