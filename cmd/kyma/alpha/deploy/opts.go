@@ -16,7 +16,6 @@ type Options struct {
 	QuitTimeout    time.Duration
 	HelmTimeout    time.Duration
 	WorkersCount   int
-	Verbose        bool
 }
 
 //NewOptions creates options with default values
