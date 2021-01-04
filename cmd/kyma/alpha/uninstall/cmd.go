@@ -43,7 +43,6 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd.Flags().DurationVarP(&o.QuitTimeout, "quit-timeout", "", 1200*time.Second, "Time after which the uninstallation is aborted. Worker goroutines may still be working in the background. This value must be greater than the value for cancel-timeout.")
 	cobraCmd.Flags().DurationVarP(&o.HelmTimeout, "helm-timeout", "", 360*time.Second, "Timeout for the underlying Helm client.")
 	cobraCmd.Flags().IntVar(&o.WorkersCount, "workers-count", 4, "Number of parallel workers used for the uninstallation.")
-	cobraCmd.Flags().BoolVarP(&o.Verbose, "verbose", "v", false, "Enable verbose mode.")
 	return cobraCmd
 }
 
@@ -80,14 +79,13 @@ func (cmd *command) Run() error {
 		HelmTimeoutSeconds:            int(cmd.opts.HelmTimeout.Seconds()),
 		BackoffInitialIntervalSeconds: 3,
 		BackoffMaxElapsedTimeSeconds:  60 * 5,
-		Log:                           cmd.getLogFunc(),
+		Log:                           cli.GetLogFunc(cmd.Verbose),
 	}
 
 	var updateCh chan deployment.ProcessUpdate
-	if cmd.opts.Verbose {
+	if cmd.Verbose {
 		defer log.Println("Kyma uninstalled!")
 	} else {
-		// Start rendering async CLI UI
 		asyncUI := asyncui.AsyncUI{StepFactory: &cmd.Factory}
 		updateCh, err = asyncUI.Start()
 		if err != nil {
@@ -118,13 +116,4 @@ func (cmd *command) validateFlags() error {
 	}
 
 	return nil
-}
-
-func (cmd *command) getLogFunc() func(format string, v ...interface{}) {
-	if cmd.opts.Verbose {
-		return log.Printf
-	}
-	return func(format string, v ...interface{}) {
-		//do nothing
-	}
 }

@@ -27,8 +27,6 @@ const (
 type AsyncUI struct {
 	// used to create UI steps
 	StepFactory StepFactory
-	// channel provided by caller to retrieve errors
-	Errors chan<- error
 	// processing context
 	context context.Context
 	cancel  context.CancelFunc
@@ -58,27 +56,18 @@ func (ui *AsyncUI) Start() (chan deployment.ProcessUpdate, error) {
 			case deployment.ProcessRunning:
 				// Component related update event (components have no ProcessStart/ProcessStop event)
 				if procUpdateEvent.Component.Name != "" {
-					err := ui.renderStopEvent(procUpdateEvent, &ongoingSteps)
-					ui.sendError(err)
+					ui.renderStopEvent(procUpdateEvent, &ongoingSteps)
 				}
 				continue
 			case deployment.ProcessStart:
-				err := ui.renderStartEvent(procUpdateEvent, &ongoingSteps)
-				ui.sendError(err)
+				ui.renderStartEvent(procUpdateEvent, &ongoingSteps)
 			default:
-				err := ui.renderStopEvent(procUpdateEvent, &ongoingSteps)
-				ui.sendError(err)
+				ui.renderStopEvent(procUpdateEvent, &ongoingSteps)
 			}
 		}
 	}()
 
 	return ui.updates, nil
-}
-
-func (ui *AsyncUI) sendError(err error) {
-	if err != nil && ui.Errors != nil {
-		ui.Errors <- err
-	}
 }
 
 // Stop will close the update channel and wait until the the UI rendering is finished
