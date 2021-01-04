@@ -30,7 +30,7 @@ type AsyncUI struct {
 	// processing context
 	context context.Context
 	cancel  context.CancelFunc
-	// channel to retreive update events
+	// channel to retrieve update events
 	updates chan deployment.ProcessUpdate
 	// internal state
 	running bool
