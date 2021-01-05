@@ -10,6 +10,7 @@ import (
 
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
+	"github.com/kyma-project/cli/pkg/asyncui"
 	"github.com/spf13/cobra"
 
 	installConfig "github.com/kyma-incubator/hydroform/parallel-install/pkg/config"
@@ -78,10 +79,22 @@ func (cmd *command) Run() error {
 		HelmTimeoutSeconds:            int(cmd.opts.HelmTimeout.Seconds()),
 		BackoffInitialIntervalSeconds: 3,
 		BackoffMaxElapsedTimeSeconds:  60 * 5,
-		Log:                           log.Printf,
+		Log:                           cli.GetLogFunc(cmd.Verbose),
 	}
 
-	installer, err := deployment.NewDeployment(prerequisitesContent, componentsContent, nil, "path", installationCfg)
+	var updateCh chan deployment.ProcessUpdate
+	if cmd.Verbose {
+		defer log.Println("Kyma uninstalled!")
+	} else {
+		asyncUI := asyncui.AsyncUI{StepFactory: &cmd.Factory}
+		updateCh, err = asyncUI.Start()
+		if err != nil {
+			return err
+		}
+		defer asyncUI.Stop() // stop receiving update-events and wait until UI rendering is finished
+	}
+
+	installer, err := deployment.NewDeployment(prerequisitesContent, componentsContent, nil, "path", installationCfg, updateCh)
 	if err != nil {
 		return err
 	}
@@ -90,8 +103,6 @@ func (cmd *command) Run() error {
 	if err != nil {
 		return err
 	}
-
-	log.Println("Kyma uninstalled!")
 
 	return nil
 }
