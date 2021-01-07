@@ -11,7 +11,6 @@ import (
 
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/clusterinfo"
-	"github.com/kyma-project/cli/internal/hostsfile"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/pkg/asyncui"
 
@@ -92,7 +91,7 @@ func (cmd *command) Run() error {
 	}
 
 	// apply changes required for local setup
-	if err := cmd.finalizeLocalSetup(updateCh); err != nil {
+	if err := cmd.finalizeK3sSetup(updateCh); err != nil {
 		return err
 	}
 
@@ -108,12 +107,15 @@ func (cmd *command) Run() error {
 	return nil
 }
 
-func (cmd *command) finalizeLocalSetup(updateCh chan<- deployment.ProcessUpdate) error {
+func (cmd *command) finalizeK3sSetup(updateCh chan<- deployment.ProcessUpdate) error {
 	phase := cmd.startDeploymentStep(updateCh, "Verify cluster metadata")
 	isK3sCluster, err := cmd.isK3sCluster()
 	cmd.stopDeploymentStep(updateCh, phase, (err == nil))
 	if err != nil {
 		return err
+	}
+	if isK3sCluster {
+		//TBD: add k3s specific steps
 	}
 	return nil
 }
@@ -123,13 +125,11 @@ func (cmd *command) isK3sCluster() (bool, error) {
 	if err := clInfo.Read(); err != nil {
 		return false, err
 	}
-	return (clInfo.GetProvider() == "k3s"), nil
-}
-
-func (cmd *command) updateHostsFile() error {
-	hostsFile := hostsfile.NewHostsfile(cmd.K8s)
-	err := hostsFile.UpdateHostFiles()
-	return err
+	provider, err := clInfo.GetProvider()
+	if err != nil {
+		return false, err
+	}
+	return (provider != "k3s"), nil
 }
 
 func (cmd *command) getInstaller(updateCh chan deployment.ProcessUpdate) (*deployment.Deployment, error) {
