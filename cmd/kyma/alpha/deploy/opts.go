@@ -29,7 +29,7 @@ func NewOptions(o *cli.Options) *Options {
 }
 
 //GetProfiles return the currently supported profiles
-func (o *Options) GetProfiles() []string {
+func (o *Options) getProfiles() []string {
 	return kymaProfiles
 }
 
@@ -43,7 +43,7 @@ func (o *Options) isSupportedProfile(profile string) bool {
 }
 
 // ValidateFlags applies a sanity check on provided options
-func (o *Options) ValidateFlags() error {
+func (o *Options) validateFlags() error {
 	if o.ResourcesPath == "" {
 		return fmt.Errorf("Resources path cannot be empty")
 	}
@@ -54,7 +54,7 @@ func (o *Options) ValidateFlags() error {
 		return fmt.Errorf("Quit timeout (%v) cannot be smaller than cancel timeout (%v)", o.QuitTimeout, o.CancelTimeout)
 	}
 	if o.Profile != "" && !o.isSupportedProfile(o.Profile) {
-		return fmt.Errorf("Profile unknown or not supported. Supported profiles are: %s", strings.Join(o.GetProfiles(), ", "))
+		return fmt.Errorf("Profile unknown or not supported. Supported profiles are: %s", strings.Join(o.getProfiles(), ", "))
 	}
 	return nil
 }
