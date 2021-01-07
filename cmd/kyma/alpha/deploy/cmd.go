@@ -46,13 +46,14 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd.Flags().DurationVarP(&o.QuitTimeout, "quit-timeout", "", 1200*time.Second, "Time after which the deployment is aborted. Worker goroutines may still be working in the background. This value must be greater than the value for cancel-timeout.")
 	cobraCmd.Flags().DurationVarP(&o.HelmTimeout, "helm-timeout", "", 360*time.Second, "Timeout for the underlying Helm client.")
 	cobraCmd.Flags().IntVar(&o.WorkersCount, "workers-count", 4, "Number of parallel workers used for the deployment.")
+	cobraCmd.Flags().StringVarP(&o.Profile, "profile", "p", "evaluation", fmt.Sprintf("Kyma deployment profile Supported profiles are: %s", o.GetProfiles()))
 	return cobraCmd
 }
 
 //Run runs the command
 func (cmd *command) Run() error {
 	var err error
-	if err = cmd.validateFlags(); err != nil {
+	if err = cmd.opts.ValidateFlags(); err != nil {
 		return err
 	}
 
@@ -92,6 +93,7 @@ func (cmd *command) Run() error {
 		BackoffInitialIntervalSeconds: 3,
 		BackoffMaxElapsedTimeSeconds:  60 * 5,
 		Log:                           cli.GetLogFunc(cmd.Verbose),
+		Profile:                       cmd.opts.Profile,
 	}
 
 	var updateCh chan deployment.ProcessUpdate
@@ -114,20 +116,6 @@ func (cmd *command) Run() error {
 	err = installer.StartKymaDeployment(cmd.K8s.Static())
 	if err != nil {
 		return err
-	}
-
-	return nil
-}
-
-func (cmd *command) validateFlags() error {
-	if cmd.opts.ResourcesPath == "" {
-		return fmt.Errorf("Resources path cannot be empty")
-	}
-	if cmd.opts.ComponentsYaml == "" {
-		return fmt.Errorf("Components YAML cannot be empty")
-	}
-	if cmd.opts.QuitTimeout < cmd.opts.CancelTimeout {
-		return fmt.Errorf("Quit timeout (%v) cannot be smaller than cancel timeout (%v)", cmd.opts.QuitTimeout, cmd.opts.CancelTimeout)
 	}
 
 	return nil
