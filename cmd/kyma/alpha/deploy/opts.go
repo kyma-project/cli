@@ -2,6 +2,7 @@ package deploy
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/kyma-project/cli/internal/cli"
@@ -53,7 +54,7 @@ func (o *Options) ValidateFlags() error {
 		return fmt.Errorf("Quit timeout (%v) cannot be smaller than cancel timeout (%v)", o.QuitTimeout, o.CancelTimeout)
 	}
 	if !o.isSupportedProfile(o.Profile) {
-		return fmt.Errorf("Profile unknown or not supported")
+		return fmt.Errorf("Profile unknown or not supported. Supported profiles are: %s", strings.Join(o.GetProfiles(), ", "))
 	}
 	return nil
 }
