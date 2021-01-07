@@ -92,7 +92,7 @@ func (cmd *command) Run() error {
 	}
 
 	// apply changes required for local setup
-	if err := cmd.prepareLocalSetup(updateCh); err != nil {
+	if err := cmd.finalizeLocalSetup(updateCh); err != nil {
 		return err
 	}
 
@@ -108,35 +108,22 @@ func (cmd *command) Run() error {
 	return nil
 }
 
-func (cmd *command) prepareLocalSetup(updateCh chan<- deployment.ProcessUpdate) error {
+func (cmd *command) finalizeLocalSetup(updateCh chan<- deployment.ProcessUpdate) error {
 	phase := cmd.startDeploymentStep(updateCh, "Verify cluster metadata")
-	isLocalCluster, err := cmd.isLocalCluster()
+	isK3sCluster, err := cmd.isK3sCluster()
 	cmd.stopDeploymentStep(updateCh, phase, (err == nil))
 	if err != nil {
 		return err
 	}
-
-	if isLocalCluster {
-		// apply changes on local OS
-		phase := cmd.startDeploymentStep(updateCh, "Configure local DNS resolver")
-		err := cmd.updateHostsFile()
-		cmd.stopDeploymentStep(updateCh, phase, (err == nil))
-		if err != nil {
-			return err
-		}
-
-		//TBD: install TLS certs
-	}
-
 	return nil
 }
 
-func (cmd *command) isLocalCluster() (bool, error) {
+func (cmd *command) isK3sCluster() (bool, error) {
 	clInfo := clusterinfo.NewClusterInfo(cmd.K8s.Static())
 	if err := clInfo.Read(); err != nil {
 		return false, err
 	}
-	return clInfo.IsLocal()
+	return (clInfo.GetProvider() == "k3s"), nil
 }
 
 func (cmd *command) updateHostsFile() error {
@@ -204,7 +191,9 @@ func (cmd *command) getOverrides() ([]string, error) {
 func (cmd *command) startDeploymentStep(updateCh chan<- deployment.ProcessUpdate, step string) deployment.InstallationPhase {
 	comp := components.KymaComponent{}
 	phase := deployment.InstallationPhase(step)
-	if updateCh != nil {
+	if updateCh == nil {
+		cli.GetLogFunc(cmd.opts.Verbose)(step)
+	} else {
 		updateCh <- deployment.ProcessUpdate{
 			Component: comp,
 			Event:     deployment.ProcessStart,
@@ -217,6 +206,7 @@ func (cmd *command) startDeploymentStep(updateCh chan<- deployment.ProcessUpdate
 func (cmd *command) stopDeploymentStep(updateCh chan<- deployment.ProcessUpdate, phase deployment.InstallationPhase, success bool) {
 	comp := components.KymaComponent{}
 	if updateCh == nil {
+		cli.GetLogFunc(cmd.opts.Verbose)("%s finished successfully: %t", string(phase), success)
 		return
 	}
 	if success {
