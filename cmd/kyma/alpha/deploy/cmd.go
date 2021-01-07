@@ -19,7 +19,8 @@ import (
 )
 
 const (
-	defaultDomain = "kyma.local"
+	defaultDomain      = "kyma.local"
+	kymaDefaultVersion = "latest"
 )
 
 type command struct {
@@ -53,13 +54,12 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", defaultDomain, "Domain used for installation.")
 	cobraCmd.Flags().StringVarP(&o.TLSCert, "tls-cert", "", "", "TLS certificate for the domain used for installation. The certificate must be a base64-encoded value.")
 	cobraCmd.Flags().StringVarP(&o.TLSKey, "tls-key", "", "", "TLS key for the domain used for installation. The key must be a base64-encoded value.")
-	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", DefaultKymaVersion, `Installation source. 
+	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", kymaDefaultVersion, `Installation source. 
 	- To use a specific release, write "kyma install --source=1.15.1".
 	- To use the master branch, write "kyma install --source=master".
 	- To use a commit, write "kyma install --source=34edf09a".
 	- To use a pull request, write "kyma install --source=PR-9486".
-	- To use the local sources, write "kyma install --source=local".
-	- To use a custom installer image, write "kyma install --source=user/my-kyma-installer:v1.4.0".`)
+	- To use the local sources, write "kyma install --source=local".`)
 	return cobraCmd
 }
 
@@ -89,22 +89,6 @@ func (cmd *command) Run() error {
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
 		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
 	}
-
-	//TBD: Source evaluation - check for compatiblity
-	//TBC: Required: ??
-	`s := cmd.NewStep("Determining cluster type for installation")
-	clusterConfig, err := installation.GetClusterInfoFromConfigMap(cmd.K8s)
-	if err != nil {
-		s.Failure()
-		return err
-	}
-	s.Successf("Cluster type determined")
-
-		// If one of the --domain, --tls-key, or --tls-cert is specified, the others must be specified as well (XOR logic used below)
-	if ((i.Options.Domain != defaultDomain && i.Options.Domain != "") || i.Options.TLSKey != "" || i.Options.TLSCert != "") &&
-		!((i.Options.Domain != defaultDomain && i.Options.Domain != "") && i.Options.TLSKey != "" && i.Options.TLSCert != "") {
-		return pkgErrors.New("You specified one of the --domain, --tls-key, or --tls-cert without specifying the others. They must be specified together")
-	}`
 
 	// execute deployment
 	installer, err := cmd.getInstaller(updateCh)
