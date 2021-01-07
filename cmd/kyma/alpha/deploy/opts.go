@@ -8,7 +8,7 @@ import (
 	"github.com/kyma-project/cli/internal/cli"
 )
 
-var kymaProfiles = []string{"production", "evaluation"}
+var kymaProfiles = []string{"evaluation", "production"}
 
 //Options defines available options for the command
 type Options struct {
@@ -53,7 +53,7 @@ func (o *Options) ValidateFlags() error {
 	if o.QuitTimeout < o.CancelTimeout {
 		return fmt.Errorf("Quit timeout (%v) cannot be smaller than cancel timeout (%v)", o.QuitTimeout, o.CancelTimeout)
 	}
-	if !o.isSupportedProfile(o.Profile) {
+	if o.Profile != "" && !o.isSupportedProfile(o.Profile) {
 		return fmt.Errorf("Profile unknown or not supported. Supported profiles are: %s", strings.Join(o.GetProfiles(), ", "))
 	}
 	return nil
