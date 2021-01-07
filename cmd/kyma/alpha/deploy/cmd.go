@@ -48,7 +48,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd.Flags().DurationVarP(&o.HelmTimeout, "helm-timeout", "", 360*time.Second, "Timeout for the underlying Helm client.")
 	cobraCmd.Flags().IntVar(&o.WorkersCount, "workers-count", 4, "Number of parallel workers used for the deployment.")
 	cobraCmd.Flags().StringVarP(&o.Profile, "profile", "p", "evaluation",
-		fmt.Sprintf("Kyma deployment profile Supported profiles are: %s", strings.Join(o.GetProfiles(), ", ")))
+		fmt.Sprintf("Kyma deployment profile. Supported profiles are: %s", strings.Join(o.GetProfiles(), ", ")))
 	return cobraCmd
 }
 
