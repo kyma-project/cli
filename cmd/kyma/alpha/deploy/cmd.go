@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -60,6 +61,8 @@ func NewCmd(o *Options) *cobra.Command {
 	- To use a commit, write "kyma install --source=34edf09a".
 	- To use a pull request, write "kyma install --source=PR-9486".
 	- To use the local sources, write "kyma install --source=local".`)
+	cobraCmd.Flags().StringVarP(&o.Profile, "profile", "p", "evaluation",
+		fmt.Sprintf("Kyma deployment profile. Supported profiles are: %s", strings.Join(o.GetProfiles(), ", ")))
 	return cobraCmd
 }
 
@@ -68,7 +71,7 @@ func (cmd *command) Run() error {
 	var err error
 
 	// verify input parameters
-	if err = cmd.validateFlags(); err != nil {
+	if err = cmd.opts.ValidateFlags(); err != nil {
 		return err
 	}
 
@@ -102,20 +105,6 @@ func (cmd *command) Run() error {
 	return nil
 }
 
-func (cmd *command) validateFlags() error {
-	if cmd.opts.ResourcesPath == "" {
-		return fmt.Errorf("Resources path cannot be empty")
-	}
-	if cmd.opts.ComponentsYaml == "" {
-		return fmt.Errorf("Components YAML cannot be empty")
-	}
-	if cmd.opts.QuitTimeout < cmd.opts.CancelTimeout {
-		return fmt.Errorf("Quit timeout (%v) cannot be smaller than cancel timeout (%v)", cmd.opts.QuitTimeout, cmd.opts.CancelTimeout)
-	}
-
-	return nil
-}
-
 func (cmd *command) getInstaller(updateCh chan deployment.ProcessUpdate) (*deployment.Deployment, error) {
 	componentsContent, err := cmd.getComponents()
 	if err != nil {
@@ -141,6 +130,8 @@ func (cmd *command) getInstaller(updateCh chan deployment.ProcessUpdate) (*deplo
 		BackoffInitialIntervalSeconds: 3,
 		BackoffMaxElapsedTimeSeconds:  60 * 5,
 		Log:                           cli.GetLogFunc(cmd.Verbose),
+		Profile:                       cmd.opts.Profile,
+		//Source:                        cmd.opts.Source,
 	}
 
 	return deployment.NewDeployment(prerequisitesContent, componentsContent, overridesContent, cmd.opts.ResourcesPath, installationCfg, updateCh)
