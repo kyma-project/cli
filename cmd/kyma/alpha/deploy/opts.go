@@ -8,7 +8,11 @@ import (
 	"github.com/kyma-project/cli/internal/cli"
 )
 
-var kymaProfiles = []string{"production", "evaluation"}
+var (
+	defaultDomain  = "kyma.local"
+	defaultVersion = "latest"
+	kymaProfiles   = []string{"production", "evaluation"}
+)
 
 //Options defines available options for the command
 type Options struct {
@@ -33,8 +37,18 @@ func NewOptions(o *cli.Options) *Options {
 }
 
 //GetProfiles return the currently supported profiles
-func (o *Options) GetProfiles() []string {
+func (o *Options) getProfiles() []string {
 	return kymaProfiles
+}
+
+//GetDefaultDomain return the default domain
+func (o *Options) getDefaultDomain() string {
+	return defaultDomain
+}
+
+//getDefaultVersion return the default Kyma version
+func (o *Options) getDefaultVersion() string {
+	return defaultVersion
 }
 
 func (o *Options) isSupportedProfile(profile string) bool {
@@ -47,7 +61,7 @@ func (o *Options) isSupportedProfile(profile string) bool {
 }
 
 // ValidateFlags applies a sanity check on provided options
-func (o *Options) ValidateFlags() error {
+func (o *Options) validateFlags() error {
 	if o.ResourcesPath == "" {
 		return fmt.Errorf("Resources path cannot be empty")
 	}
@@ -58,7 +72,17 @@ func (o *Options) ValidateFlags() error {
 		return fmt.Errorf("Quit timeout (%v) cannot be smaller than cancel timeout (%v)", o.QuitTimeout, o.CancelTimeout)
 	}
 	if !o.isSupportedProfile(o.Profile) {
-		return fmt.Errorf("Profile unknown or not supported. Supported profiles are: %s", strings.Join(o.GetProfiles(), ", "))
+		return fmt.Errorf("Profile unknown or not supported. Supported profiles are: %s", strings.Join(o.getProfiles(), ", "))
+	}
+	if o.Domain != defaultDomain && !o.tlsCertAndKeyProvided() {
+		return fmt.Errorf("To use a custom domain name also a custom TLS certificate and TLS key has to be provided")
+	}
+	if (o.TLSKey != "" || o.TLSCert != "") && !o.tlsCertAndKeyProvided() {
+		return fmt.Errorf("To use a custom TLS certificate the TLS certificate and TLS key has to be provided")
 	}
 	return nil
+}
+
+func (o *Options) tlsCertAndKeyProvided() bool {
+	return o.TLSCert != "" && o.TLSKey != ""
 }

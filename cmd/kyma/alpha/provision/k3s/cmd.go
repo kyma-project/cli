@@ -137,13 +137,9 @@ func (c *command) createK3sClusterInfo() error {
 		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
 	}
 
-	clusterInfo := clusterinfo.ClusterInfo{
-		K8sClient: c.K8s.Static(),
-		Provider:  "k3s",
-		IsLocal:   true,
-	}
+	clusterInfo := clusterinfo.NewClusterInfo(c.K8s.Static())
 
-	if err := clusterInfo.Write(); err != nil {
+	if err := clusterInfo.Write("k3s", true); err != nil {
 		s.Failure()
 		return err
 	}

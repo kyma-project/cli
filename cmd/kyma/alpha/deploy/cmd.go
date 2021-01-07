@@ -10,18 +10,16 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/clusterinfo"
+	"github.com/kyma-project/cli/internal/hostsfile"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/pkg/asyncui"
 
 	"github.com/spf13/cobra"
 
+	"github.com/kyma-incubator/hydroform/parallel-install/pkg/components"
 	installConfig "github.com/kyma-incubator/hydroform/parallel-install/pkg/config"
 	"github.com/kyma-incubator/hydroform/parallel-install/pkg/deployment"
-)
-
-const (
-	defaultDomain      = "kyma.local"
-	kymaDefaultVersion = "latest"
 )
 
 type command struct {
@@ -52,17 +50,17 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd.Flags().DurationVarP(&o.QuitTimeout, "quit-timeout", "", 1200*time.Second, "Time after which the deployment is aborted. Worker goroutines may still be working in the background. This value must be greater than the value for cancel-timeout.")
 	cobraCmd.Flags().DurationVarP(&o.HelmTimeout, "helm-timeout", "", 360*time.Second, "Timeout for the underlying Helm client.")
 	cobraCmd.Flags().IntVar(&o.WorkersCount, "workers-count", 4, "Number of parallel workers used for the deployment.")
-	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", defaultDomain, "Domain used for installation.")
+	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", o.getDefaultDomain(), "Domain used for installation.")
 	cobraCmd.Flags().StringVarP(&o.TLSCert, "tls-cert", "", "", "TLS certificate for the domain used for installation. The certificate must be a base64-encoded value.")
 	cobraCmd.Flags().StringVarP(&o.TLSKey, "tls-key", "", "", "TLS key for the domain used for installation. The key must be a base64-encoded value.")
-	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", kymaDefaultVersion, `Installation source. 
-	- To use a specific release, write "kyma install --source=1.15.1".
+	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", o.getDefaultVersion(), `Installation source. 
+	- To use a specific release, write "kyma install --source=1.17.1".
 	- To use the master branch, write "kyma install --source=master".
 	- To use a commit, write "kyma install --source=34edf09a".
 	- To use a pull request, write "kyma install --source=PR-9486".
 	- To use the local sources, write "kyma install --source=local".`)
 	cobraCmd.Flags().StringVarP(&o.Profile, "profile", "p", "evaluation",
-		fmt.Sprintf("Kyma deployment profile. Supported profiles are: %s", strings.Join(o.GetProfiles(), ", ")))
+		fmt.Sprintf("Kyma deployment profile. Supported profiles are: %s", strings.Join(o.getProfiles(), ", ")))
 	return cobraCmd
 }
 
@@ -71,8 +69,13 @@ func (cmd *command) Run() error {
 	var err error
 
 	// verify input parameters
-	if err = cmd.opts.ValidateFlags(); err != nil {
+	if err = cmd.opts.validateFlags(); err != nil {
 		return err
+	}
+
+	// initialize Kubernetes client
+	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
+		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
 	}
 
 	// initialize UI
@@ -88,9 +91,9 @@ func (cmd *command) Run() error {
 		defer asyncUI.Stop() // stop receiving update-events and wait until UI rendering is finished
 	}
 
-	// initialize Kubernetes client
-	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
-		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
+	// apply changes required for local setup
+	if err := cmd.prepareLocalSetup(updateCh); err != nil {
+		return err
 	}
 
 	// execute deployment
@@ -103,6 +106,43 @@ func (cmd *command) Run() error {
 	}
 
 	return nil
+}
+
+func (cmd *command) prepareLocalSetup(updateCh chan<- deployment.ProcessUpdate) error {
+	phase := cmd.startDeploymentStep(updateCh, "Verify cluster metadata")
+	isLocalCluster, err := cmd.isLocalCluster()
+	cmd.stopDeploymentStep(updateCh, phase, (err == nil))
+	if err != nil {
+		return err
+	}
+
+	if isLocalCluster {
+		// apply changes on local OS
+		phase := cmd.startDeploymentStep(updateCh, "Configure local DNS resolver")
+		err := cmd.updateHostsFile()
+		cmd.stopDeploymentStep(updateCh, phase, (err == nil))
+		if err != nil {
+			return err
+		}
+
+		//TBD: install TLS certs
+	}
+
+	return nil
+}
+
+func (cmd *command) isLocalCluster() (bool, error) {
+	clInfo := clusterinfo.NewClusterInfo(cmd.K8s.Static())
+	if err := clInfo.Read(); err != nil {
+		return false, err
+	}
+	return clInfo.IsLocal()
+}
+
+func (cmd *command) updateHostsFile() error {
+	hostsFile := hostsfile.NewHostsfile(cmd.K8s)
+	err := hostsFile.UpdateHostFiles()
+	return err
 }
 
 func (cmd *command) getInstaller(updateCh chan deployment.ProcessUpdate) (*deployment.Deployment, error) {
@@ -159,4 +199,37 @@ func (cmd *command) getOverrides() ([]string, error) {
 		overridesContent = append(overridesContent, string(data))
 	}
 	return overridesContent, nil
+}
+
+func (cmd *command) startDeploymentStep(updateCh chan<- deployment.ProcessUpdate, step string) deployment.InstallationPhase {
+	comp := components.KymaComponent{}
+	phase := deployment.InstallationPhase(step)
+	if updateCh != nil {
+		updateCh <- deployment.ProcessUpdate{
+			Component: comp,
+			Event:     deployment.ProcessStart,
+			Phase:     phase,
+		}
+	}
+	return phase
+}
+
+func (cmd *command) stopDeploymentStep(updateCh chan<- deployment.ProcessUpdate, phase deployment.InstallationPhase, success bool) {
+	comp := components.KymaComponent{}
+	if updateCh == nil {
+		return
+	}
+	if success {
+		updateCh <- deployment.ProcessUpdate{
+			Component: comp,
+			Event:     deployment.ProcessFinished,
+			Phase:     phase,
+		}
+	} else {
+		updateCh <- deployment.ProcessUpdate{
+			Component: comp,
+			Event:     deployment.ProcessExecutionFailure,
+			Phase:     phase,
+		}
+	}
 }
