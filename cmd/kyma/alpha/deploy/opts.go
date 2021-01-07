@@ -10,7 +10,7 @@ import (
 
 var kymaProfiles = []string{"evaluation", "production"}
 
-//Options defines available options for the command
+// Options defines available options for the command
 type Options struct {
 	*cli.Options
 	OverridesYaml  string
@@ -23,16 +23,17 @@ type Options struct {
 	Profile        string
 }
 
-//NewOptions creates options with default values
+// NewOptions creates options with default values
 func NewOptions(o *cli.Options) *Options {
 	return &Options{Options: o}
 }
 
-//GetProfiles return the currently supported profiles
+// getProfiles return the currently supported profiles
 func (o *Options) getProfiles() []string {
 	return kymaProfiles
 }
 
+// isSupportedProfile verifies whether a given profile name is valid
 func (o *Options) isSupportedProfile(profile string) bool {
 	for _, supportedProfile := range kymaProfiles {
 		if supportedProfile == profile {
@@ -42,7 +43,7 @@ func (o *Options) isSupportedProfile(profile string) bool {
 	return false
 }
 
-// ValidateFlags applies a sanity check on provided options
+// validateFlags applies a sanity check on provided options
 func (o *Options) validateFlags() error {
 	if o.ResourcesPath == "" {
 		return fmt.Errorf("Resources path cannot be empty")
