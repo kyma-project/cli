@@ -19,7 +19,7 @@ kyma alpha deploy [flags]
   -c, --components string         Path to a YAML file with component list to override. (required)
       --helm-timeout duration     Timeout for the underlying Helm client. (default 6m0s)
   -o, --overrides string          Path to a YAML file with parameters to override.
-  -p, --profile string            Kyma deployment profile. Supported profiles are: production, evaluation (default "evaluation")
+  -p, --profile string            Kyma deployment profile. Supported profiles are: evaluation, production
       --quit-timeout duration     Time after which the deployment is aborted. Worker goroutines may still be working in the background. This value must be greater than the value for cancel-timeout. (default 20m0s)
   -r, --resources string          Path to Kyma resources folder. (required)
       --workers-count int         Number of parallel workers used for the deployment. (default 4)
