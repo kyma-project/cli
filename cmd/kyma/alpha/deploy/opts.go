@@ -16,6 +16,10 @@ type Options struct {
 	QuitTimeout    time.Duration
 	HelmTimeout    time.Duration
 	WorkersCount   int
+	Domain         string
+	TLSCert        string
+	TLSKey         string
+	Source         string
 }
 
 //NewOptions creates options with default values

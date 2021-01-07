@@ -1,20 +1,16 @@
 package k3s
 
 import (
-	"context"
 	"fmt"
 	"net"
-	"strings"
 	"time"
 
 	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/clusterinfo"
 	"github.com/kyma-project/cli/internal/k3s"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type command struct {
@@ -141,34 +137,16 @@ func (c *command) createK3sClusterInfo() error {
 		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
 	}
 
-	if err := c.createClusterInfoConfigMap(); err != nil {
+	clusterInfo := clusterinfo.ClusterInfo{
+		K8sClient: c.K8s.Static(),
+		Provider:  "k3s",
+		IsLocal:   true,
+	}
+
+	if err := clusterInfo.Write(); err != nil {
 		s.Failure()
 		return err
 	}
 	s.Successf("Configuration created")
 	return nil
-}
-
-//Insert Kyma installer configuration as config-map
-func (c *command) createClusterInfoConfigMap() error {
-	cm, err := c.K8s.Static().CoreV1().ConfigMaps("kube-system").Get(context.Background(), "kyma-cluster-info", metav1.GetOptions{})
-	if err == nil && cm != nil {
-		return nil
-	} else if err != nil && !strings.Contains(err.Error(), "not found") {
-		return err
-	}
-
-	_, err = c.K8s.Static().CoreV1().ConfigMaps("kube-system").Create(context.Background(), &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:   "kyma-cluster-info",
-			Labels: map[string]string{"app": "kyma"},
-		},
-		Data: map[string]string{
-			"provider": "k3d",
-			"isLocal":  "true",
-			"localIP":  "127.0.0.1",
-		},
-	}, metav1.CreateOptions{})
-
-	return err
 }
