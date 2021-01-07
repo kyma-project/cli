@@ -9,9 +9,9 @@ import (
 )
 
 var (
-	defaultDomain  = "kyma.local"
+	defaultDomain  = "local.kyma.dev"
 	defaultVersion = "latest"
-	kymaProfiles   = []string{"production", "evaluation"}
+	kymaProfiles   = []string{"evaluation", "production"}
 )
 
 //Options defines available options for the command
@@ -71,7 +71,7 @@ func (o *Options) validateFlags() error {
 	if o.QuitTimeout < o.CancelTimeout {
 		return fmt.Errorf("Quit timeout (%v) cannot be smaller than cancel timeout (%v)", o.QuitTimeout, o.CancelTimeout)
 	}
-	if !o.isSupportedProfile(o.Profile) {
+	if o.Profile != "" && !o.isSupportedProfile(o.Profile) {
 		return fmt.Errorf("Profile unknown or not supported. Supported profiles are: %s", strings.Join(o.getProfiles(), ", "))
 	}
 	if o.Domain != defaultDomain && !o.tlsCertAndKeyProvided() {

@@ -58,7 +58,7 @@ func NewCmd(o *Options) *cobra.Command {
 	- To use a commit, write "kyma install --source=34edf09a".
 	- To use a pull request, write "kyma install --source=PR-9486".
 	- To use the local sources, write "kyma install --source=local".`)
-	cobraCmd.Flags().StringVarP(&o.Profile, "profile", "p", "evaluation",
+	cobraCmd.Flags().StringVarP(&o.Profile, "profile", "p", "",
 		fmt.Sprintf("Kyma deployment profile. Supported profiles are: %s", strings.Join(o.getProfiles(), ", ")))
 	return cobraCmd
 }
