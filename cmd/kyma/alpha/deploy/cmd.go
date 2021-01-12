@@ -2,8 +2,8 @@ package deploy
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -42,9 +42,10 @@ func NewCmd(o *Options) *cobra.Command {
 		Aliases: []string{"d"},
 	}
 
-	cobraCmd.Flags().StringVarP(&o.OverridesYaml, "overrides", "o", "", "Path to a YAML file with parameters to override.")
-	cobraCmd.Flags().StringVarP(&o.ComponentsYaml, "components", "c", "", "Path to a YAML file with component list to override. (required)")
-	cobraCmd.Flags().StringVarP(&o.ResourcesPath, "resources", "r", "", "Path to Kyma resources folder. (required)")
+	cobraCmd.Flags().StringVarP(&o.WorkspacePath, "workspace", "w", o.getDefaultWorkspacePath(), "Path used to download Kyma sources.")
+	cobraCmd.Flags().StringVarP(&o.ResourcePath, "resources", "r", o.getDefaultResourcePath(), "Path to a KYMA resource directory.")
+	cobraCmd.Flags().StringVarP(&o.ComponentsListFile, "components", "c", o.getDefaultComponentsListFile(), "Path to a KYMA components file")
+	cobraCmd.Flags().StringVarP(&o.OverridesFile, "overrides", "o", "", "Path to a JSON or YAML file with parameters to override.")
 	cobraCmd.Flags().DurationVarP(&o.CancelTimeout, "cancel-timeout", "", 900*time.Second, "Time after which the workers' context is canceled. Pending worker goroutines (if any) may continue if blocked by a Helm client.")
 	cobraCmd.Flags().DurationVarP(&o.QuitTimeout, "quit-timeout", "", 1200*time.Second, "Time after which the deployment is aborted. Worker goroutines may still be working in the background. This value must be greater than the value for cancel-timeout.")
 	cobraCmd.Flags().DurationVarP(&o.HelmTimeout, "helm-timeout", "", 360*time.Second, "Timeout for the underlying Helm client.")
@@ -52,7 +53,8 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", o.getDefaultDomain(), "Domain used for installation.")
 	cobraCmd.Flags().StringVarP(&o.TLSCert, "tls-cert", "", "", "TLS certificate for the domain used for installation. The certificate must be a base64-encoded value.")
 	cobraCmd.Flags().StringVarP(&o.TLSKey, "tls-key", "", "", "TLS key for the domain used for installation. The key must be a base64-encoded value.")
-	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", o.getDefaultVersion(), `Installation source. 
+	cobraCmd.Flags().StringVarP(&o.Version, "source", "s", o.getDefaultVersion(), `Installation source. 
+	- To use a latest release, write "kyma install --source=latest".
 	- To use a specific release, write "kyma install --source=1.17.1".
 	- To use the master branch, write "kyma install --source=master".
 	- To use a commit, write "kyma install --source=34edf09a".
@@ -90,65 +92,14 @@ func (cmd *command) Run() error {
 		defer asyncUI.Stop() // stop receiving update-events and wait until UI rendering is finished
 	}
 
-	// apply changes required for local setup
-	if err := cmd.finalizeK3sSetup(updateCh); err != nil {
-		return err
-	}
+	//to add another stop to the UI, just call:
+	//step := cmd.startDeploymentStep(updateCh, "This is a new step")
+	//cmd.stopDeploymentStep(updateCh, step, bool)
 
-	// execute deployment
-	installer, err := cmd.getInstaller(updateCh)
-	if err != nil {
-		return err
-	}
-	if err = installer.StartKymaDeployment(cmd.K8s.Static()); err != nil {
-		return err
-	}
-
-	return nil
+	return cmd.deployKyma(updateCh)
 }
 
-func (cmd *command) finalizeK3sSetup(updateCh chan<- deployment.ProcessUpdate) error {
-	phase := cmd.startDeploymentStep(updateCh, "Verify cluster metadata")
-	isK3sCluster, err := cmd.isK3sCluster()
-	cmd.stopDeploymentStep(updateCh, phase, (err == nil))
-	if err != nil {
-		return err
-	}
-	if isK3sCluster {
-		//TBD: add k3s specific steps
-	}
-	return nil
-}
-
-func (cmd *command) isK3sCluster() (bool, error) {
-	clInfo := clusterinfo.NewClusterInfo(cmd.K8s.Static())
-	if err := clInfo.Read(); err != nil {
-		return false, err
-	}
-	provider, err := clInfo.GetProvider()
-	if err != nil {
-		return false, err
-	}
-	return (provider != "k3s"), nil
-}
-
-func (cmd *command) getInstaller(updateCh chan deployment.ProcessUpdate) (*deployment.Deployment, error) {
-	componentsContent, err := cmd.getComponents()
-	if err != nil {
-		return nil, err
-	}
-
-	overridesContent, err := cmd.getOverrides()
-	if err != nil {
-		return nil, err
-	}
-
-	prerequisitesContent := [][]string{
-		{"cluster-essentials", "kyma-system"},
-		{"istio", "istio-system"},
-		{"xip-patch", "kyma-installer"},
-	}
-
+func (cmd *command) deployKyma(updateCh chan<- deployment.ProcessUpdate) error {
 	installationCfg := installConfig.Config{
 		WorkersCount:                  cmd.opts.WorkersCount,
 		CancelTimeout:                 cmd.opts.CancelTimeout,
@@ -158,34 +109,36 @@ func (cmd *command) getInstaller(updateCh chan deployment.ProcessUpdate) (*deplo
 		BackoffMaxElapsedTimeSeconds:  60 * 5,
 		Log:                           cli.GetLogFunc(cmd.Verbose),
 		Profile:                       cmd.opts.Profile,
-		//Source:                        cmd.opts.Source,
+		ComponentsListFile:            cmd.opts.ComponentsListFile,
+		CrdPath:                       filepath.Join(cmd.opts.ResourcePath, "cluster-essentials", "files"),
+		ResourcePath:                  cmd.opts.ResourcePath,
+		Version:                       cmd.opts.Version,
+		//TLSCert:                       cmd.opts.TLSCert,
+		//TLSKey:                        cmd.opts.TLSKey,
+		//Domain:                        cmd.ops.Domain,
 	}
 
-	return deployment.NewDeployment(prerequisitesContent, componentsContent, overridesContent, cmd.opts.ResourcesPath, installationCfg, updateCh)
+	overrides, err := cmd.getOverrides()
+	if err != nil {
+		return err
+	}
+
+	installer, err := deployment.NewDeployment(installationCfg, overrides, cmd.K8s.Static(), updateCh)
+	if err != nil {
+		return err
+	}
+
+	return installer.StartKymaDeployment()
 }
 
-func (cmd *command) getComponents() (string, error) {
-	var componentsContent string
-	if cmd.opts.ComponentsYaml != "" {
-		data, err := ioutil.ReadFile(cmd.opts.ComponentsYaml)
-		if err != nil {
-			return "", fmt.Errorf("Failed to read installation CR file: %v", err)
+func (cmd *command) getOverrides() (deployment.Overrides, error) {
+	overrides := deployment.Overrides{}
+	if cmd.opts.OverridesFile != "" {
+		if err := overrides.AddFile(cmd.opts.OverridesFile); err != nil {
+			return overrides, err
 		}
-		componentsContent = string(data)
 	}
-	return componentsContent, nil
-}
-
-func (cmd *command) getOverrides() ([]string, error) {
-	var overridesContent []string
-	if cmd.opts.OverridesYaml != "" {
-		data, err := ioutil.ReadFile(cmd.opts.OverridesYaml)
-		if err != nil {
-			return nil, fmt.Errorf("Failed to read installation CR file: %v", err)
-		}
-		overridesContent = append(overridesContent, string(data))
-	}
-	return overridesContent, nil
+	return overrides, nil
 }
 
 func (cmd *command) startDeploymentStep(updateCh chan<- deployment.ProcessUpdate, step string) deployment.InstallationPhase {
@@ -222,4 +175,17 @@ func (cmd *command) stopDeploymentStep(updateCh chan<- deployment.ProcessUpdate,
 			Phase:     phase,
 		}
 	}
+}
+
+// isK3sCluster is a helper function to figure out whether Kyma should be installed on K3s
+func (cmd *command) isK3sCluster() (bool, error) {
+	clInfo := clusterinfo.NewClusterInfo(cmd.K8s.Static())
+	if err := clInfo.Read(); err != nil {
+		return false, err
+	}
+	provider, err := clInfo.GetProvider()
+	if err != nil {
+		return false, err
+	}
+	return (provider != "k3s"), nil
 }

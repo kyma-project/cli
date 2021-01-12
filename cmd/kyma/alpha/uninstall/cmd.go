@@ -1,9 +1,8 @@
 package uninstall
 
 import (
-	"fmt"
-	"io/ioutil"
 	"log"
+	"path/filepath"
 	"time"
 
 	"github.com/pkg/errors"
@@ -15,6 +14,12 @@ import (
 
 	installConfig "github.com/kyma-incubator/hydroform/parallel-install/pkg/config"
 	"github.com/kyma-incubator/hydroform/parallel-install/pkg/deployment"
+)
+
+var (
+	defaultWorkspacePath  = filepath.Join(".", "workspace")
+	defaultResourcePath   = filepath.Join(defaultWorkspacePath, "kyma", "resources")
+	defaultComponentsFile = filepath.Join(defaultWorkspacePath, "kyma", "installation", "resources", "components.yaml")
 )
 
 type command struct {
@@ -38,7 +43,10 @@ func NewCmd(o *Options) *cobra.Command {
 		Aliases: []string{"i"},
 	}
 
-	cobraCmd.Flags().StringVarP(&o.ComponentsYaml, "components", "c", "", "Path to a YAML file with component list to override. (required)")
+	cobraCmd.Flags().StringVarP(&o.WorkspacePath, "workspace", "w", o.getDefaultWorkspacePath(), "Path used to download Kyma sources.")
+	cobraCmd.Flags().StringVarP(&o.ResourcePath, "resources", "r", o.getDefaultResourcePath(), "Path to a KYMA resource directory.")
+	cobraCmd.Flags().StringVarP(&o.ComponentsListFile, "components", "c", o.getDefaultComponentsListFile(), "Path to a KYMA components file")
+	cobraCmd.Flags().StringVarP(&o.OverridesFile, "overrides", "o", "", "Path to a JSON or YAML file with parameters to override.")
 	cobraCmd.Flags().DurationVarP(&o.CancelTimeout, "cancel-timeout", "", 900*time.Second, "Time after which the workers' context is canceled. Pending worker goroutines (if any) may continue if blocked by a Helm client.")
 	cobraCmd.Flags().DurationVarP(&o.QuitTimeout, "quit-timeout", "", 1200*time.Second, "Time after which the uninstallation is aborted. Worker goroutines may still be working in the background. This value must be greater than the value for cancel-timeout.")
 	cobraCmd.Flags().DurationVarP(&o.HelmTimeout, "helm-timeout", "", 360*time.Second, "Timeout for the underlying Helm client.")
@@ -49,27 +57,12 @@ func NewCmd(o *Options) *cobra.Command {
 //Run runs the command
 func (cmd *command) Run() error {
 	var err error
-	if err = cmd.validateFlags(); err != nil {
+	if err = cmd.opts.validateFlags(); err != nil {
 		return err
 	}
 
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
 		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
-	}
-
-	var componentsContent string
-	if cmd.opts.ComponentsYaml != "" {
-		data, err := ioutil.ReadFile(cmd.opts.ComponentsYaml)
-		if err != nil {
-			return fmt.Errorf("Failed to read installation CR file: %v", err)
-		}
-		componentsContent = string(data)
-	}
-
-	prerequisitesContent := [][]string{
-		{"cluster-essentials", "kyma-system"},
-		{"istio", "istio-system"},
-		{"xip-patch", "kyma-installer"},
 	}
 
 	installationCfg := installConfig.Config{
@@ -80,6 +73,10 @@ func (cmd *command) Run() error {
 		BackoffInitialIntervalSeconds: 3,
 		BackoffMaxElapsedTimeSeconds:  60 * 5,
 		Log:                           cli.GetLogFunc(cmd.Verbose),
+		ComponentsListFile:            cmd.opts.ComponentsListFile,
+		CrdPath:                       filepath.Join(cmd.opts.ResourcePath, "cluster-essentials", "files"),
+		ResourcePath:                  cmd.opts.ResourcePath,
+		Version:                       "-",
 	}
 
 	var updateCh chan deployment.ProcessUpdate
@@ -94,25 +91,14 @@ func (cmd *command) Run() error {
 		defer asyncUI.Stop() // stop receiving update-events and wait until UI rendering is finished
 	}
 
-	installer, err := deployment.NewDeployment(prerequisitesContent, componentsContent, nil, "path", installationCfg, updateCh)
+	installer, err := deployment.NewDeployment(installationCfg, deployment.Overrides{}, cmd.K8s.Static(), updateCh)
 	if err != nil {
 		return err
 	}
 
-	err = installer.StartKymaUninstallation(cmd.K8s.Static())
+	err = installer.StartKymaUninstallation()
 	if err != nil {
 		return err
-	}
-
-	return nil
-}
-
-func (cmd *command) validateFlags() error {
-	if cmd.opts.ComponentsYaml == "" {
-		return fmt.Errorf("Components YAML cannot be empty")
-	}
-	if cmd.opts.QuitTimeout < cmd.opts.CancelTimeout {
-		return fmt.Errorf("Quit timeout (%v) cannot be smaller than cancel timeout (%v)", cmd.opts.QuitTimeout, cmd.opts.CancelTimeout)
 	}
 
 	return nil

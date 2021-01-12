@@ -2,6 +2,8 @@ package deploy
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -9,26 +11,30 @@ import (
 )
 
 var (
-	defaultDomain  = "local.kyma.dev"
-	defaultVersion = "latest"
-	kymaProfiles   = []string{"evaluation", "production"}
+	defaultDomain         = "local.kyma.dev"
+	defaultVersion        = "latest"
+	kymaProfiles          = []string{"evaluation", "production"}
+	defaultWorkspacePath  = filepath.Join(".", "workspace")
+	defaultResourcePath   = filepath.Join(defaultWorkspacePath, "kyma", "resources")
+	defaultComponentsFile = filepath.Join(defaultWorkspacePath, "kyma", "installation", "resources", "components.yaml")
 )
 
 //Options defines available options for the command
 type Options struct {
 	*cli.Options
-	OverridesYaml  string
-	ComponentsYaml string
-	ResourcesPath  string
-	CancelTimeout  time.Duration
-	QuitTimeout    time.Duration
-	HelmTimeout    time.Duration
-	WorkersCount   int
-	Domain         string
-	TLSCert        string
-	TLSKey         string
-	Source         string
-	Profile        string
+	WorkspacePath      string
+	ResourcePath       string
+	OverridesFile      string
+	ComponentsListFile string
+	CancelTimeout      time.Duration
+	QuitTimeout        time.Duration
+	HelmTimeout        time.Duration
+	WorkersCount       int
+	Domain             string
+	TLSCert            string
+	TLSKey             string
+	Version            string
+	Profile            string
 }
 
 //NewOptions creates options with default values
@@ -51,6 +57,21 @@ func (o *Options) getDefaultVersion() string {
 	return defaultVersion
 }
 
+//getDefaultResourcesPath return the default path to the Kyma resources directory
+func (o *Options) getDefaultResourcePath() string {
+	return defaultResourcePath
+}
+
+//getDefaultWorkspacePath return the default path to the CLI workspace directory
+func (o *Options) getDefaultWorkspacePath() string {
+	return defaultWorkspacePath
+}
+
+//getDefaultComponentsFile return the default path to the Kyma components file
+func (o *Options) getDefaultComponentsListFile() string {
+	return defaultWorkspacePath
+}
+
 func (o *Options) isSupportedProfile(profile string) bool {
 	for _, supportedProfile := range kymaProfiles {
 		if supportedProfile == profile {
@@ -62,11 +83,14 @@ func (o *Options) isSupportedProfile(profile string) bool {
 
 // ValidateFlags applies a sanity check on provided options
 func (o *Options) validateFlags() error {
-	if o.ResourcesPath == "" {
-		return fmt.Errorf("Resources path cannot be empty")
+	if err := o.pathExists(o.ResourcePath, "Resource path"); err != nil {
+		return err
 	}
-	if o.ComponentsYaml == "" {
-		return fmt.Errorf("Components YAML cannot be empty")
+	// Overrides file is optional, but if provided it has to exist
+	if o.OverridesFile != "" {
+		if err := o.pathExists(o.OverridesFile, "Overrides file"); err != nil {
+			return err
+		}
 	}
 	if o.QuitTimeout < o.CancelTimeout {
 		return fmt.Errorf("Quit timeout (%v) cannot be smaller than cancel timeout (%v)", o.QuitTimeout, o.CancelTimeout)
@@ -85,4 +109,14 @@ func (o *Options) validateFlags() error {
 
 func (o *Options) tlsCertAndKeyProvided() bool {
 	return o.TLSCert != "" && o.TLSKey != ""
+}
+
+func (o *Options) pathExists(path string, description string) error {
+	if path == "" {
+		return fmt.Errorf("%s is empty", description)
+	}
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return fmt.Errorf("%s '%s' not found", description, path)
+	}
+	return nil
 }
