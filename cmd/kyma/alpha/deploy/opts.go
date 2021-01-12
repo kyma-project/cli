@@ -69,7 +69,7 @@ func (o *Options) getDefaultWorkspacePath() string {
 
 //getDefaultComponentsFile return the default path to the Kyma components file
 func (o *Options) getDefaultComponentsListFile() string {
-	return defaultWorkspacePath
+	return defaultComponentsFile
 }
 
 func (o *Options) isSupportedProfile(profile string) bool {
