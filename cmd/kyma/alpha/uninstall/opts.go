@@ -3,9 +3,16 @@ package uninstall
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/kyma-project/cli/internal/cli"
+)
+
+var (
+	defaultWorkspacePath  = filepath.Join(".", "workspace")
+	defaultResourcePath   = filepath.Join(defaultWorkspacePath, "kyma", "resources")
+	defaultComponentsFile = filepath.Join(defaultWorkspacePath, "kyma", "installation", "resources", "components.yaml")
 )
 
 //Options defines available options for the command
@@ -38,7 +45,7 @@ func (o *Options) getDefaultWorkspacePath() string {
 
 //getDefaultComponentsFile return the default path to the Kyma components file
 func (o *Options) getDefaultComponentsListFile() string {
-	return defaultWorkspacePath
+	return defaultComponentsFile
 }
 
 // validateFlags applies a sanity check on provided options

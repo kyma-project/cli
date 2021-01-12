@@ -16,12 +16,6 @@ import (
 	"github.com/kyma-incubator/hydroform/parallel-install/pkg/deployment"
 )
 
-var (
-	defaultWorkspacePath  = filepath.Join(".", "workspace")
-	defaultResourcePath   = filepath.Join(defaultWorkspacePath, "kyma", "resources")
-	defaultComponentsFile = filepath.Join(defaultWorkspacePath, "kyma", "installation", "resources", "components.yaml")
-)
-
 type command struct {
 	opts *Options
 	cli.Command
