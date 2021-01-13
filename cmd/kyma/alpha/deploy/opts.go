@@ -11,26 +11,28 @@ import (
 )
 
 var (
-	defaultDomain        = "local.kyma.dev"
-	defaultVersion       = "latest"
-	kymaProfiles         = []string{"evaluation", "production"}
-	defaultWorkspacePath = filepath.Join(".", "workspace")
+	defaultDomain         = "local.kyma.dev"
+	defaultVersion        = "latest"
+	kymaProfiles          = []string{"evaluation", "production"}
+	defaultWorkspacePath  = filepath.Join(".", "workspace")
+	defaultComponentsFile = filepath.Join(defaultWorkspacePath, "kyma", "installation", "resources", "components.yaml")
 )
 
 //Options defines available options for the command
 type Options struct {
 	*cli.Options
-	WorkspacePath string
-	OverridesFile string
-	CancelTimeout time.Duration
-	QuitTimeout   time.Duration
-	HelmTimeout   time.Duration
-	WorkersCount  int
-	Domain        string
-	TLSCert       string
-	TLSKey        string
-	Version       string
-	Profile       string
+	WorkspacePath  string
+	ComponentsFile string
+	OverridesFile  string
+	CancelTimeout  time.Duration
+	QuitTimeout    time.Duration
+	HelmTimeout    time.Duration
+	WorkersCount   int
+	Domain         string
+	TLSCert        string
+	TLSKey         string
+	Version        string
+	Profile        string
 }
 
 //NewOptions creates options with default values
@@ -56,6 +58,11 @@ func (o *Options) defaultVersion() string {
 //defaultWorkspacePath returns the default path to the CLI workspace directory
 func (o *Options) defaultWorkspacePath() string {
 	return defaultWorkspacePath
+}
+
+//defaultComponentsFile returns the default path to the components list file
+func (o *Options) defaultComponentsFile() string {
+	return defaultComponentsFile
 }
 
 func (o *Options) supportedProfile(profile string) bool {

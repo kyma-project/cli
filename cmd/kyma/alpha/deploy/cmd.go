@@ -43,6 +43,7 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 
 	cobraCmd.Flags().StringVarP(&o.WorkspacePath, "workspace", "w", o.defaultWorkspacePath(), "Path used to download Kyma sources.")
+	cobraCmd.Flags().StringVarP(&o.ComponentsFile, "components", "c", o.defaultComponentsFile(), "Path to the components file.")
 	cobraCmd.Flags().StringVarP(&o.OverridesFile, "overrides", "o", "", "Path to a JSON or YAML file with parameters to override.")
 	cobraCmd.Flags().DurationVarP(&o.CancelTimeout, "cancel-timeout", "", 900*time.Second, "Time after which the workers' context is canceled. Pending worker goroutines (if any) may continue if blocked by a Helm client.")
 	cobraCmd.Flags().DurationVarP(&o.QuitTimeout, "quit-timeout", "", 1200*time.Second, "Time after which the deployment is aborted. Worker goroutines may still be working in the background. This value must be greater than the value for cancel-timeout.")
@@ -111,7 +112,7 @@ func (cmd *command) deployKyma(updateCh chan<- deployment.ProcessUpdate) error {
 		BackoffMaxElapsedTimeSeconds:  60 * 5,
 		Log:                           cli.LogFunc(cmd.Verbose),
 		Profile:                       cmd.opts.Profile,
-		ComponentsListFile:            filepath.Join(cmd.opts.WorkspacePath, "kyma", "installation", "resources", "components.yaml"),
+		ComponentsListFile:            cmd.opts.ComponentsFile,
 		CrdPath:                       filepath.Join(resourcePath, "cluster-essentials", "files"),
 		ResourcePath:                  resourcePath,
 		Version:                       cmd.opts.Version,
