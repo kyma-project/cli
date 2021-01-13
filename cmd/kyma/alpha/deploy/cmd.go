@@ -94,7 +94,7 @@ func (cmd *command) Run() error {
 
 	//to add another stop to the UI, just call:
 	if result, _ := cmd.isK3sCluster(); result {
-		step := cmd.startDeploymentStep(updateCh, "This is a a k3s specific step")
+		step := cmd.startDeploymentStep(updateCh, "This is a k3s specific step")
 		cmd.stopDeploymentStep(updateCh, step, true)
 	}
 
