@@ -11,21 +11,35 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+//ClusterProvider is a unique identifier for a cluster provider
+type ClusterProvider string
+
 const (
 	k8sConfigMap string = "kyma-cluster-info"
 	k8sNamespace string = "kube-system"
+
+	//ClusterProviderK3s indicates that K3s is used as cluster provider
+	ClusterProviderK3s ClusterProvider = "k3s"
+	//ClusterProviderGardener indicates that Gardener is used as cluster provider
+	ClusterProviderGardener ClusterProvider = "gardener"
+	//ClusterProviderAzure indicates that Azure is used as cluster provider
+	ClusterProviderAzure ClusterProvider = "azure"
+	//ClusterProviderGcp indicates that GCP is used as cluster provider
+	ClusterProviderGcp ClusterProvider = "gcp"
+	//ClusterProviderAws indicates that AWS is used as cluster provider
+	ClusterProviderAws ClusterProvider = "aws"
 )
 
 // ClusterInfo contains data about the current cluster
 type ClusterInfo struct {
 	k8sClient   kubernetes.Interface
 	initialized bool
-	isLocal     bool
-	provider    string
+	local       bool
+	provider    ClusterProvider
 }
 
-// NewClusterInfo creates a new cluster info instance
-func NewClusterInfo(k8sClient kubernetes.Interface) *ClusterInfo {
+// New creates a new cluster info instance
+func New(k8sClient kubernetes.Interface) *ClusterInfo {
 	return &ClusterInfo{k8sClient: k8sClient}
 }
 
@@ -43,7 +57,7 @@ func (c *ClusterInfo) Exists() (bool, error) {
 }
 
 // Write cluster information into cluster
-func (c *ClusterInfo) Write(provider string, isLocal bool) error {
+func (c *ClusterInfo) Write(provider ClusterProvider, local bool) error {
 	if provider == "" {
 		return fmt.Errorf("Cluster provider cannot be empty")
 	}
@@ -55,14 +69,14 @@ func (c *ClusterInfo) Write(provider string, isLocal bool) error {
 			Labels: map[string]string{"app": "kyma"},
 		},
 		Data: map[string]string{
-			"provider": provider,
-			"isLocal":  strconv.FormatBool(isLocal),
+			"provider": string(provider),
+			"local":    strconv.FormatBool(local),
 		},
 	}, metav1.CreateOptions{})
 
 	// remember state
 	c.provider = provider
-	c.isLocal = isLocal
+	c.local = local
 	c.initialized = true
 
 	return err
@@ -84,8 +98,8 @@ func (c *ClusterInfo) Read() error {
 		return err
 	}
 
-	c.provider = cm.Data["provider"]
-	c.isLocal, err = strconv.ParseBool(cm.Data["isLocal"])
+	c.provider = ClusterProvider(cm.Data["provider"])
+	c.local, err = strconv.ParseBool(cm.Data["local"])
 	if err != nil {
 		return err
 	}
@@ -99,15 +113,15 @@ func (c *ClusterInfo) IsLocal() (bool, error) {
 	if err := c.isInitialized(); err != nil {
 		return false, err
 	}
-	return c.isLocal, nil
+	return c.local, nil
 }
 
-//GetProvider returns the cluster provider
-func (c *ClusterInfo) GetProvider() (string, error) {
+//Provider returns the cluster provider
+func (c *ClusterInfo) Provider() (ClusterProvider, error) {
 	if err := c.isInitialized(); err != nil {
 		return "", err
 	}
-	return c.provider, nil
+	return ClusterProvider(c.provider), nil
 }
 
 func (c *ClusterInfo) isInitialized() error {

@@ -42,18 +42,16 @@ func NewCmd(o *Options) *cobra.Command {
 		Aliases: []string{"d"},
 	}
 
-	cobraCmd.Flags().StringVarP(&o.WorkspacePath, "workspace", "w", o.getDefaultWorkspacePath(), "Path used to download Kyma sources.")
-	cobraCmd.Flags().StringVarP(&o.ResourcePath, "resources", "r", o.getDefaultResourcePath(), "Path to a KYMA resource directory.")
-	cobraCmd.Flags().StringVarP(&o.ComponentsListFile, "components", "c", o.getDefaultComponentsListFile(), "Path to a KYMA components file.")
+	cobraCmd.Flags().StringVarP(&o.WorkspacePath, "workspace", "w", o.defaultWorkspacePath(), "Path used to download Kyma sources.")
 	cobraCmd.Flags().StringVarP(&o.OverridesFile, "overrides", "o", "", "Path to a JSON or YAML file with parameters to override.")
 	cobraCmd.Flags().DurationVarP(&o.CancelTimeout, "cancel-timeout", "", 900*time.Second, "Time after which the workers' context is canceled. Pending worker goroutines (if any) may continue if blocked by a Helm client.")
 	cobraCmd.Flags().DurationVarP(&o.QuitTimeout, "quit-timeout", "", 1200*time.Second, "Time after which the deployment is aborted. Worker goroutines may still be working in the background. This value must be greater than the value for cancel-timeout.")
 	cobraCmd.Flags().DurationVarP(&o.HelmTimeout, "helm-timeout", "", 360*time.Second, "Timeout for the underlying Helm client.")
 	cobraCmd.Flags().IntVar(&o.WorkersCount, "workers-count", 4, "Number of parallel workers used for the deployment.")
-	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", o.getDefaultDomain(), "Domain used for installation.")
+	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", o.defaultDomain(), "Domain used for installation.")
 	cobraCmd.Flags().StringVarP(&o.TLSCert, "tls-cert", "", "", "TLS certificate for the domain used for installation. The certificate must be a base64-encoded value.")
 	cobraCmd.Flags().StringVarP(&o.TLSKey, "tls-key", "", "", "TLS key for the domain used for installation. The key must be a base64-encoded value.")
-	cobraCmd.Flags().StringVarP(&o.Version, "source", "s", o.getDefaultVersion(), `Installation source. 
+	cobraCmd.Flags().StringVarP(&o.Version, "source", "s", o.defaultVersion(), `Installation source. 
 	- To use the latest release, write "kyma alpha deploy --source=latest".
 	- To use a specific release, write "kyma alpha deploy --source=1.17.1".
 	- To use the master branch, write "kyma alpha deploy --source=master".
@@ -61,7 +59,7 @@ func NewCmd(o *Options) *cobra.Command {
 	- To use a pull request, write "kyma alpha deploy --source=PR-9486".
 	- To use the local sources, write "kyma alpha deploy --source=local".`)
 	cobraCmd.Flags().StringVarP(&o.Profile, "profile", "p", "",
-		fmt.Sprintf("Kyma deployment profile. Supported profiles are: \"%s\".", strings.Join(o.getProfiles(), "\", \"")))
+		fmt.Sprintf("Kyma deployment profile. Supported profiles are: \"%s\".", strings.Join(o.profiles(), "\", \"")))
 	return cobraCmd
 }
 
@@ -93,7 +91,7 @@ func (cmd *command) Run() error {
 	}
 
 	//to add another stop to the UI, just call:
-	if result, _ := cmd.isK3sCluster(); result {
+	if result, _ := cmd.k3sCluster(); result {
 		step := cmd.startDeploymentStep(updateCh, "This is a k3s specific step")
 		cmd.stopDeploymentStep(updateCh, step, true)
 	}
@@ -102,6 +100,8 @@ func (cmd *command) Run() error {
 }
 
 func (cmd *command) deployKyma(updateCh chan<- deployment.ProcessUpdate) error {
+	var resourcePath = filepath.Join(cmd.opts.WorkspacePath, "kyma", "resources")
+
 	installationCfg := installConfig.Config{
 		WorkersCount:                  cmd.opts.WorkersCount,
 		CancelTimeout:                 cmd.opts.CancelTimeout,
@@ -109,18 +109,18 @@ func (cmd *command) deployKyma(updateCh chan<- deployment.ProcessUpdate) error {
 		HelmTimeoutSeconds:            int(cmd.opts.HelmTimeout.Seconds()),
 		BackoffInitialIntervalSeconds: 3,
 		BackoffMaxElapsedTimeSeconds:  60 * 5,
-		Log:                           cli.GetLogFunc(cmd.Verbose),
+		Log:                           cli.LogFunc(cmd.Verbose),
 		Profile:                       cmd.opts.Profile,
-		ComponentsListFile:            cmd.opts.ComponentsListFile,
-		CrdPath:                       filepath.Join(cmd.opts.ResourcePath, "cluster-essentials", "files"),
-		ResourcePath:                  cmd.opts.ResourcePath,
+		ComponentsListFile:            filepath.Join(cmd.opts.WorkspacePath, "kyma", "installation", "resources", "components.yaml"),
+		CrdPath:                       filepath.Join(resourcePath, "cluster-essentials", "files"),
+		ResourcePath:                  resourcePath,
 		Version:                       cmd.opts.Version,
 		//TLSCert:                       cmd.opts.TLSCert,
 		//TLSKey:                        cmd.opts.TLSKey,
 		//Domain:                        cmd.ops.Domain,
 	}
 
-	overrides, err := cmd.getOverrides()
+	overrides, err := cmd.overrides()
 	if err != nil {
 		return err
 	}
@@ -133,7 +133,7 @@ func (cmd *command) deployKyma(updateCh chan<- deployment.ProcessUpdate) error {
 	return installer.StartKymaDeployment()
 }
 
-func (cmd *command) getOverrides() (deployment.Overrides, error) {
+func (cmd *command) overrides() (deployment.Overrides, error) {
 	overrides := deployment.Overrides{}
 	if cmd.opts.OverridesFile != "" {
 		if err := overrides.AddFile(cmd.opts.OverridesFile); err != nil {
@@ -147,7 +147,7 @@ func (cmd *command) startDeploymentStep(updateCh chan<- deployment.ProcessUpdate
 	comp := components.KymaComponent{}
 	phase := deployment.InstallationPhase(step)
 	if updateCh == nil {
-		cli.GetLogFunc(cmd.opts.Verbose)(step)
+		cli.LogFunc(cmd.opts.Verbose)(step)
 	} else {
 		updateCh <- deployment.ProcessUpdate{
 			Component: comp,
@@ -161,7 +161,7 @@ func (cmd *command) startDeploymentStep(updateCh chan<- deployment.ProcessUpdate
 func (cmd *command) stopDeploymentStep(updateCh chan<- deployment.ProcessUpdate, phase deployment.InstallationPhase, success bool) {
 	comp := components.KymaComponent{}
 	if updateCh == nil {
-		cli.GetLogFunc(cmd.opts.Verbose)("%s finished successfully: %t", string(phase), success)
+		cli.LogFunc(cmd.opts.Verbose)("%s finished successfully: %t", string(phase), success)
 		return
 	}
 	if success {
@@ -179,15 +179,15 @@ func (cmd *command) stopDeploymentStep(updateCh chan<- deployment.ProcessUpdate,
 	}
 }
 
-// isK3sCluster is a helper function to figure out whether Kyma should be installed on K3s
-func (cmd *command) isK3sCluster() (bool, error) {
-	clInfo := clusterinfo.NewClusterInfo(cmd.K8s.Static())
+// k3sCluster is a helper function to figure out whether Kyma should be installed on K3s
+func (cmd *command) k3sCluster() (bool, error) {
+	clInfo := clusterinfo.New(cmd.K8s.Static())
 	if err := clInfo.Read(); err != nil {
 		return false, err
 	}
-	provider, err := clInfo.GetProvider()
+	provider, err := clInfo.Provider()
 	if err != nil {
 		return false, err
 	}
-	return (provider != "k3s"), nil
+	return (provider != clusterinfo.ClusterProviderK3s), nil
 }
