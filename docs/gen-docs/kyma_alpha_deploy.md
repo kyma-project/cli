@@ -16,13 +16,11 @@ kyma alpha deploy [flags]
 
 ```bash
       --cancel-timeout duration   Time after which the workers' context is canceled. Pending worker goroutines (if any) may continue if blocked by a Helm client. (default 15m0s)
-  -c, --components string         Path to a KYMA components file. (default "workspace/kyma/installation/resources/components.yaml")
   -d, --domain string             Domain used for installation. (default "local.kyma.dev")
       --helm-timeout duration     Timeout for the underlying Helm client. (default 6m0s)
   -o, --overrides string          Path to a JSON or YAML file with parameters to override.
   -p, --profile string            Kyma deployment profile. Supported profiles are: "evaluation", "production".
       --quit-timeout duration     Time after which the deployment is aborted. Worker goroutines may still be working in the background. This value must be greater than the value for cancel-timeout. (default 20m0s)
-  -r, --resources string          Path to a KYMA resource directory. (default "workspace/kyma/resources")
   -s, --source string             Installation source. 
                                   	- To use the latest release, write "kyma alpha deploy --source=latest".
                                   	- To use a specific release, write "kyma alpha deploy --source=1.17.1".
