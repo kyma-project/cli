@@ -38,22 +38,22 @@ func NewOptions(o *cli.Options) *Options {
 	return &Options{Options: o}
 }
 
-//GetProfiles return the currently supported profiles
+//profiles return the currently supported profiles
 func (o *Options) profiles() []string {
 	return kymaProfiles
 }
 
-//GetDefaultDomain return the default domain
+//defaultDomain return the default domain
 func (o *Options) defaultDomain() string {
 	return defaultDomain
 }
 
-//getDefaultVersion return the default Kyma version
+//defaultVersion return the default Kyma version
 func (o *Options) defaultVersion() string {
 	return defaultVersion
 }
 
-//getDefaultWorkspacePath return the default path to the CLI workspace directory
+//defaultWorkspacePath return the default path to the CLI workspace directory
 func (o *Options) defaultWorkspacePath() string {
 	return defaultWorkspacePath
 }
@@ -67,7 +67,7 @@ func (o *Options) supportedProfile(profile string) bool {
 	return false
 }
 
-// ValidateFlags applies a sanity check on provided options
+// validateFlags applies a sanity check on provided options
 func (o *Options) validateFlags() error {
 	// Overrides file is optional, but if provided it has to exist
 	if o.OverridesFile != "" {

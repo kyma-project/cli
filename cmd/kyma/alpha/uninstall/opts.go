@@ -28,7 +28,7 @@ func NewOptions(o *cli.Options) *Options {
 	return &Options{Options: o}
 }
 
-//getDefaultWorkspacePath return the default path to the CLI workspace directory
+//defaultWorkspacePath returns the default path to the CLI workspace directory
 func (o *Options) defaultWorkspacePath() string {
 	return defaultWorkspacePath
 }
