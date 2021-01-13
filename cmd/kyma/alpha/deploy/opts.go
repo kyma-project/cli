@@ -38,22 +38,22 @@ func NewOptions(o *cli.Options) *Options {
 	return &Options{Options: o}
 }
 
-//profiles return the currently supported profiles
+//profiles returns the currently supported profiles
 func (o *Options) profiles() []string {
 	return kymaProfiles
 }
 
-//defaultDomain return the default domain
+//defaultDomain returns the default domain
 func (o *Options) defaultDomain() string {
 	return defaultDomain
 }
 
-//defaultVersion return the default Kyma version
+//defaultVersion returns the default Kyma version
 func (o *Options) defaultVersion() string {
 	return defaultVersion
 }
 
-//defaultWorkspacePath return the default path to the CLI workspace directory
+//defaultWorkspacePath returns the default path to the CLI workspace directory
 func (o *Options) defaultWorkspacePath() string {
 	return defaultWorkspacePath
 }
