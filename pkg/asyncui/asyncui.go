@@ -29,9 +29,12 @@ type AsyncUI struct {
 	StepFactory StepFactory
 	// processing context
 	context context.Context
-	cancel  context.CancelFunc
+	// cancel function the caller can execute to interrupt processing
+	Cancel context.CancelFunc
 	// channel to retrieve update events
 	updates chan deployment.ProcessUpdate
+	// channel to pass errors to caller
+	Errors chan error
 	// internal state
 	running bool
 }
@@ -46,28 +49,35 @@ func (ui *AsyncUI) Start() (chan deployment.ProcessUpdate, error) {
 	// process async process updates
 	ui.updates = make(chan deployment.ProcessUpdate)
 	// initialize processing context
-	ui.context, ui.cancel = context.WithCancel(context.Background())
+	ui.context, ui.Cancel = context.WithCancel(context.Background())
 
 	go func() {
-		defer ui.cancel()
+		defer ui.Cancel()
 		ongoingSteps := make(map[deployment.InstallationPhase]step.Step)
 		for procUpdateEvent := range ui.updates {
 			switch procUpdateEvent.Event {
 			case deployment.ProcessRunning:
 				// Component related update event (components have no ProcessStart/ProcessStop event)
 				if procUpdateEvent.Component.Name != "" {
-					_ = ui.renderStopEvent(procUpdateEvent, &ongoingSteps)
+					ui.dispatchError(ui.renderStopEvent(procUpdateEvent, &ongoingSteps))
 				}
 				continue
 			case deployment.ProcessStart:
-				_ = ui.renderStartEvent(procUpdateEvent, &ongoingSteps)
+				ui.dispatchError(ui.renderStartEvent(procUpdateEvent, &ongoingSteps))
 			default:
-				_ = ui.renderStopEvent(procUpdateEvent, &ongoingSteps)
+				ui.dispatchError(ui.renderStopEvent(procUpdateEvent, &ongoingSteps))
 			}
 		}
 	}()
 
 	return ui.updates, nil
+}
+
+// dispatchError will pass an error to the Caller
+func (ui *AsyncUI) dispatchError(err error) {
+	if ui.Errors != nil && err != nil {
+		ui.Errors <- err
+	}
 }
 
 // Stop will close the update channel and wait until the the UI rendering is finished

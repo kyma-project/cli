@@ -2,8 +2,8 @@ package cli
 
 import "log"
 
-// GetLogFunc returns the logger function used for CLI log output (used in Hydroform deployments)
-func GetLogFunc(printLogs bool) func(format string, v ...interface{}) {
+// LogFunc returns the logger function used for CLI log output (used in Hydroform deployments)
+func LogFunc(printLogs bool) func(format string, v ...interface{}) {
 	if printLogs {
 		return log.Printf
 	}
