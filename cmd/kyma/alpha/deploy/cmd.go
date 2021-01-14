@@ -164,7 +164,9 @@ func (cmd *command) overrides() (deployment.Overrides, error) {
 				return overrides, err
 			}
 
-			overrides.AddOverrides(comp, overridesMap)
+			if err := overrides.AddOverrides(comp, overridesMap); err != nil {
+				return overrides, err
+			}
 		}
 	}
 
@@ -198,7 +200,7 @@ func (cmd *command) convertToOverridesMap(key, value string) (string, map[string
 			// the latest override map has to become a sub-map of the current override-map
 			overrideMap[overrideName] = latestOverrideMap
 		}
-		//set the curent override map as latest override map
+		//set the current override map as latest override map
 		latestOverrideMap = overrideMap
 	}
 

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestOverrides(t *testing.T) {
@@ -15,7 +16,8 @@ func TestOverrides(t *testing.T) {
 				Overrides: []string{"this.is.a.pretty.long.happy.path.test=successful"},
 			},
 		}
-		assertValidOverride(t, command, `{"this":{"is":{"a":{"pretty":{"long":{"happy":{"path":{"test":"successful"}}}}}}}}`)
+		err := assertValidOverride(t, command, `{"this":{"is":{"a":{"pretty":{"long":{"happy":{"path":{"test":"successful"}}}}}}}}`)
+		require.NoError(t, err)
 	})
 
 	t.Run("Test override with whitespace separator", func(t *testing.T) {
@@ -24,7 +26,8 @@ func TestOverrides(t *testing.T) {
 				Overrides: []string{"happy.path.test successful"},
 			},
 		}
-		assertValidOverride(t, command, `{"happy":{"path":{"test":"successful"}}}`)
+		err := assertValidOverride(t, command, `{"happy":{"path":{"test":"successful"}}}`)
+		require.NoError(t, err)
 	})
 
 	t.Run("Short override", func(t *testing.T) {
@@ -33,7 +36,8 @@ func TestOverrides(t *testing.T) {
 				Overrides: []string{"happy.path=successful"},
 			},
 		}
-		assertValidOverride(t, command, `{"happy":{"path":"successful"}}`)
+		err := assertValidOverride(t, command, `{"happy":{"path":"successful"}}`)
+		require.NoError(t, err)
 	})
 
 	t.Run("No value - invalid", func(t *testing.T) {
@@ -80,7 +84,7 @@ func TestOverrides(t *testing.T) {
 // assert the generated override map
 // use expectedJSON to define the expected result as JSON string
 // (this is just for convenience as we have to compare a nested map which is painful to generate by hand)
-func assertValidOverride(t *testing.T, command command, expectedJSON string) {
+func assertValidOverride(t *testing.T, command command, expectedJSON string) error {
 	overrides, err := command.overrides()
 	assert.NoError(t, err)
 
@@ -88,7 +92,11 @@ func assertValidOverride(t *testing.T, command command, expectedJSON string) {
 	assert.NoError(t, err)
 
 	var expected interface{}
-	json.Unmarshal([]byte(expectedJSON), &expected)
+	if err := json.Unmarshal([]byte(expectedJSON), &expected); err != nil {
+		return err
+	}
 
 	assert.Equal(t, expected, mergedOverrides)
+
+	return nil
 }
