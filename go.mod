@@ -34,6 +34,7 @@ require (
 	github.com/kyma-incubator/hydroform/provision v0.0.0-20201124135641-ca1a1a00c935
 	github.com/kyma-incubator/octopus v0.0.0-20200922132758-2b721e93b58b
 	github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20201125092745-687c943ac940
+	github.com/magiconair/properties v1.8.0
 	github.com/olekukonko/tablewriter v0.0.4
 	github.com/opencontainers/runc v1.0.0-rc91 // indirect
 	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4

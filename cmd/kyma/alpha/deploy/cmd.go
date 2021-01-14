@@ -13,7 +13,7 @@ import (
 	"github.com/kyma-project/cli/internal/clusterinfo"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/pkg/asyncui"
-
+	"github.com/magiconair/properties"
 	"github.com/spf13/cobra"
 
 	"github.com/kyma-incubator/hydroform/parallel-install/pkg/components"
@@ -44,7 +44,8 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cobraCmd.Flags().StringVarP(&o.WorkspacePath, "workspace", "w", o.defaultWorkspacePath(), "Path used to download Kyma sources.")
 	cobraCmd.Flags().StringVarP(&o.ComponentsFile, "components", "c", o.defaultComponentsFile(), "Path to the components file.")
-	cobraCmd.Flags().StringVarP(&o.OverridesFile, "overrides", "o", "", "Path to a JSON or YAML file with parameters to override.")
+	cobraCmd.Flags().StringVarP(&o.OverridesFile, "overrides-file", "f", "", "Path to a JSON or YAML file with parameters to override.")
+	cobraCmd.Flags().StringSliceVarP(&o.Overrides, "overrides", "o", []string{}, "Set an override (e.g. -o the.key='the value').")
 	cobraCmd.Flags().DurationVarP(&o.CancelTimeout, "cancel-timeout", "", 900*time.Second, "Time after which the workers' context is canceled. Pending worker goroutines (if any) may continue if blocked by a Helm client.")
 	cobraCmd.Flags().DurationVarP(&o.QuitTimeout, "quit-timeout", "", 1200*time.Second, "Time after which the deployment is aborted. Worker goroutines may still be working in the background. This value must be greater than the value for cancel-timeout.")
 	cobraCmd.Flags().DurationVarP(&o.HelmTimeout, "helm-timeout", "", 360*time.Second, "Timeout for the underlying Helm client.")
@@ -136,12 +137,76 @@ func (cmd *command) deployKyma(updateCh chan<- deployment.ProcessUpdate) error {
 
 func (cmd *command) overrides() (deployment.Overrides, error) {
 	overrides := deployment.Overrides{}
+
+	// add override files
 	if cmd.opts.OverridesFile != "" {
 		if err := overrides.AddFile(cmd.opts.OverridesFile); err != nil {
 			return overrides, err
 		}
 	}
+
+	// add overrides provided as CLI params
+	for _, override := range cmd.opts.Overrides {
+		keyValuePairs := properties.MustLoadString(override)
+		if keyValuePairs.Len() < 1 {
+			return overrides, fmt.Errorf("Override has wrong format: please provide overrides in 'key=value' format")
+		}
+
+		// process key-value pair
+		for _, key := range keyValuePairs.Keys() {
+			value, ok := keyValuePairs.Get(key)
+			if !ok || value == "" {
+				return overrides, fmt.Errorf("Could not read value of override '%s'", key)
+			}
+
+			comp, overridesMap, err := cmd.convertToOverridesMap(key, value)
+			if err != nil {
+				return overrides, err
+			}
+
+			overrides.AddOverrides(comp, overridesMap)
+		}
+	}
+
 	return overrides, nil
+}
+
+// convertToOverridesMap parses the override key and converts it into an nested map.
+// First element of the key is returned as component name, all other elements are used as key/sub-key in the nested map.
+func (cmd *command) convertToOverridesMap(key, value string) (string, map[string]interface{}, error) {
+	var comp string
+	var latestOverrideMap map[string]interface{}
+
+	keyTokens := strings.Split(key, ".")
+	if len(keyTokens) < 2 {
+		return comp, latestOverrideMap, fmt.Errorf("Override key has to contain at least the chart name "+
+			"and one override: chart.override[.suboverride]=value (given was '%s=%s')", key, value)
+	}
+
+	// first token in key is the chart name
+	comp = keyTokens[0]
+
+	// use the remaining key-tokens to build the nested overrides map
+	// processing starts from last element to the beginning
+	for idx := range keyTokens[1:] {
+		overrideMap := make(map[string]interface{})     // current override-map
+		overrideName := keyTokens[len(keyTokens)-1-idx] // get last token element
+		if idx == 0 {
+			// this is the last key-token, use it value
+			overrideMap[overrideName] = value
+		} else {
+			// the latest override map has to become a sub-map of the current override-map
+			overrideMap[overrideName] = latestOverrideMap
+		}
+		//set the curent override map as latest override map
+		latestOverrideMap = overrideMap
+	}
+
+	if len(latestOverrideMap) < 1 {
+		return comp, latestOverrideMap, fmt.Errorf("Failed to extracted overrides map from '%s=%s'", key, value)
+	}
+
+	return comp, latestOverrideMap, nil
 }
 
 func (cmd *command) startDeploymentStep(updateCh chan<- deployment.ProcessUpdate, step string) deployment.InstallationPhase {
