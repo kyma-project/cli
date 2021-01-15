@@ -152,12 +152,56 @@ func TestValidateConfigurations(t *testing.T) {
 	}
 
 	err := i.validateConfigurations()
-	require.EqualError(t, err, "You specified one of the --domain, --tls-key, or --tls-cert without specifying the others. They must be specified together")
+	require.EqualError(t, err, errorCustomDomainCertMissing)
 
 	// Domain, certificate, and key are passed
 	i = &Installation{
 		Options: &Options{
 			Domain:  "irrelevant",
+			TLSCert: "fake-cert",
+			TLSKey:  "fake-key",
+			Source:  "1.15.1",
+		},
+	}
+
+	err = i.validateConfigurations()
+	require.NoError(t, err)
+
+	// One certificate is missing
+	i = &Installation{
+		Options: &Options{
+			TLSCert: "fake-cert",
+			Source:  "1.15.1",
+		},
+	}
+
+	err = i.validateConfigurations()
+	require.EqualError(t, err, errorCertIncomplete)
+
+	i = &Installation{
+		Options: &Options{
+			TLSKey: "fake-cert",
+			Source: "1.15.1",
+		},
+	}
+
+	err = i.validateConfigurations()
+	require.EqualError(t, err, errorCertIncomplete)
+
+	// Unsupported profile is used
+	i = &Installation{
+		Options: &Options{
+			Source:  "1.15.1",
+			Profile: "unknown",
+		},
+	}
+
+	err = i.validateConfigurations()
+	require.EqualError(t, err, errorProfileNotSupported)
+
+	// Happy path: allow custom certs without domain
+	i = &Installation{
+		Options: &Options{
 			TLSCert: "fake-cert",
 			TLSKey:  "fake-key",
 			Source:  "1.15.1",

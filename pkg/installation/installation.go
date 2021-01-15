@@ -32,6 +32,10 @@ const (
 	installerFile       = "installer"
 	installerCRFile     = "installerCR"
 	installerConfigFile = "installerConfig"
+
+	errorCustomDomainCertMissing = "You specified --domain, also --tls-key and --tls-cert has to be specified"
+	errorCertIncomplete          = "To use a custom certificate --tls-key and --tls-cert must be specified together"
+	errorProfileNotSupported     = "You specified an invalid profile. It can take one of the following: 'evaluation' or 'production'"
 )
 
 // ComponentsConfig is used to parse component list from the configuration
@@ -252,17 +256,26 @@ func (i *Installation) validateConfigurations() error {
 		return fmt.Errorf("failed to parse the source flag. It can take one of the following: 'local', 'master', release version (e.g. 1.4.1), commit hash (e.g. 34edf09a) or installer image")
 	}
 
-	// If one of the --domain, --tls-key, or --tls-cert is specified, the others must be specified as well (XOR logic used below)
-	if ((i.Options.Domain != defaultDomain && i.Options.Domain != "") || i.Options.TLSKey != "" || i.Options.TLSCert != "") &&
-		!((i.Options.Domain != defaultDomain && i.Options.Domain != "") && i.Options.TLSKey != "" && i.Options.TLSCert != "") {
-		return pkgErrors.New("You specified one of the --domain, --tls-key, or --tls-cert without specifying the others. They must be specified together")
+	//If custom domain name is provided, also certificates have to be provided
+	if i.Options.Domain != defaultDomain && i.Options.Domain != "" && !i.certificateProvided() {
+		return pkgErrors.New(errorCustomDomainCertMissing)
+	}
+
+	//Ensure that tls-key or tls-cert are always specified together
+	if (i.Options.TLSKey != "" || i.Options.TLSCert != "") && !i.certificateProvided() {
+		return pkgErrors.New(errorCertIncomplete)
 	}
 
 	if i.Options.Profile != "" && !(i.Options.Profile == "evaluation" || i.Options.Profile == "production") {
-		return pkgErrors.New("You specified an invalid profile. It can take one of the following: 'evaluation' or 'production'")
+		return pkgErrors.New(errorProfileNotSupported)
 	}
 
 	return nil
+}
+
+// certificateProvided ensures that tls-key and tls-cert is specified
+func (i *Installation) certificateProvided() bool {
+	return i.Options.TLSKey != "" && i.Options.TLSCert != ""
 }
 
 func (i *Installation) checkInstallationSource() {
