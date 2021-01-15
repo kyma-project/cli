@@ -30,10 +30,11 @@ require (
 	github.com/gorilla/mux v1.7.4 // indirect
 	github.com/kyma-incubator/hydroform/function v0.0.0-20201229063132-d2abcd251425
 	github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90
-	github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20210112150315-620bd522c319
+	github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20210114215055-0e56c857fd19
 	github.com/kyma-incubator/hydroform/provision v0.0.0-20201124135641-ca1a1a00c935
 	github.com/kyma-incubator/octopus v0.0.0-20200922132758-2b721e93b58b
 	github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20201125092745-687c943ac940
+	github.com/magiconair/properties v1.8.0
 	github.com/olekukonko/tablewriter v0.0.4
 	github.com/opencontainers/runc v1.0.0-rc91 // indirect
 	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4

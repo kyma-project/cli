@@ -24,6 +24,7 @@ type Options struct {
 	WorkspacePath  string
 	ComponentsFile string
 	OverridesFile  string
+	Overrides      []string
 	CancelTimeout  time.Duration
 	QuitTimeout    time.Duration
 	HelmTimeout    time.Duration
