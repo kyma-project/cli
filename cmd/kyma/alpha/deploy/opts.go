@@ -11,7 +11,6 @@ import (
 )
 
 var (
-	defaultDomain         = "local.kyma.dev"
 	defaultVersion        = "latest"
 	kymaProfiles          = []string{"evaluation", "production"}
 	defaultWorkspacePath  = filepath.Join(".", "workspace")
@@ -44,11 +43,6 @@ func NewOptions(o *cli.Options) *Options {
 //profiles returns the currently supported profiles
 func (o *Options) profiles() []string {
 	return kymaProfiles
-}
-
-//defaultDomain returns the default domain
-func (o *Options) defaultDomain() string {
-	return defaultDomain
 }
 
 //defaultVersion returns the default Kyma version
@@ -89,7 +83,7 @@ func (o *Options) validateFlags() error {
 	if o.Profile != "" && !o.supportedProfile(o.Profile) {
 		return fmt.Errorf("Profile unknown or not supported. Supported profiles are: %s", strings.Join(o.profiles(), ", "))
 	}
-	if o.Domain != defaultDomain && !o.tlsCertAndKeyProvided() {
+	if o.Domain != LocalKymaDevDomain && !o.tlsCertAndKeyProvided() {
 		return fmt.Errorf("To use a custom domain name also a custom TLS certificate and TLS key has to be provided")
 	}
 	if (o.TLSKey != "" || o.TLSCert != "") && !o.tlsCertAndKeyProvided() {

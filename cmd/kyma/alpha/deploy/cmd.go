@@ -10,7 +10,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/kyma-project/cli/internal/cli"
-	"github.com/kyma-project/cli/internal/clusterinfo"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/pkg/asyncui"
 	"github.com/magiconair/properties"
@@ -50,7 +49,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd.Flags().DurationVarP(&o.QuitTimeout, "quit-timeout", "", 1200*time.Second, "Time after which the deployment is aborted. Worker goroutines may still be working in the background. This value must be greater than the value for cancel-timeout.")
 	cobraCmd.Flags().DurationVarP(&o.HelmTimeout, "helm-timeout", "", 360*time.Second, "Timeout for the underlying Helm client.")
 	cobraCmd.Flags().IntVar(&o.WorkersCount, "workers-count", 4, "Number of parallel workers used for the deployment.")
-	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", o.defaultDomain(), "Domain used for installation.")
+	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", LocalKymaDevDomain, "Domain used for installation.")
 	cobraCmd.Flags().StringVarP(&o.TLSCert, "tls-cert", "", "", "TLS certificate for the domain used for installation. The certificate must be a base64-encoded value.")
 	cobraCmd.Flags().StringVarP(&o.TLSKey, "tls-key", "", "", "TLS key for the domain used for installation. The key must be a base64-encoded value.")
 	cobraCmd.Flags().StringVarP(&o.Version, "source", "s", o.defaultVersion(), `Installation source. 
@@ -92,10 +91,14 @@ func (cmd *command) Run() error {
 		defer asyncUI.Stop() // stop receiving update-events and wait until UI rendering is finished
 	}
 
-	//to add another stop to the UI, just call:
-	if result, _ := cmd.k3sCluster(); result {
-		step := cmd.startDeploymentStep(updateCh, "This is a k3s specific step")
-		cmd.stopDeploymentStep(updateCh, step, true)
+	if cmd.opts.Domain == LocalKymaDevDomain { //patch Kubernetes DEV system
+		step := cmd.startDeploymentStep(updateCh, "Configure Kubernetes DNS to support Kyma local dev domain")
+		devDomain := newKymaLocalDomain(cmd.K8s.Static())
+		err = devDomain.ConfigureK8sDNS()
+		cmd.stopDeploymentStep(updateCh, step, (err == nil))
+		if err != nil {
+			return err
+		}
 	}
 
 	return cmd.deployKyma(updateCh)
@@ -245,17 +248,4 @@ func (cmd *command) stopDeploymentStep(updateCh chan<- deployment.ProcessUpdate,
 			Phase:     phase,
 		}
 	}
-}
-
-// k3sCluster is a helper function to figure out whether Kyma should be installed on K3s
-func (cmd *command) k3sCluster() (bool, error) {
-	clInfo := clusterinfo.New(cmd.K8s.Static())
-	if err := clInfo.Read(); err != nil {
-		return false, err
-	}
-	provider, err := clInfo.Provider()
-	if err != nil {
-		return false, err
-	}
-	return (provider != clusterinfo.ClusterProviderK3s), nil
 }
