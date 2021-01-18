@@ -2,7 +2,6 @@ package deploy
 
 import (
 	"fmt"
-	"log"
 	"path/filepath"
 	"strings"
 	"time"
@@ -10,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/clusterinfo"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/pkg/asyncui"
 	"github.com/magiconair/properties"
@@ -50,7 +50,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd.Flags().DurationVarP(&o.HelmTimeout, "helm-timeout", "", 360*time.Second, "Timeout for the underlying Helm client.")
 	cobraCmd.Flags().IntVar(&o.WorkersCount, "workers-count", 4, "Number of parallel workers used for the deployment.")
 	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", LocalKymaDevDomain, "Domain used for installation.")
-	cobraCmd.Flags().StringVarP(&o.TLSCert, "tls-cert", "", "", "TLS certificate for the domain used for installation. The certificate must be a base64-encoded value.")
+	cobraCmd.Flags().StringVarP(&o.TLSCrt, "tls-cert", "", "", "TLS certificate for the domain used for installation. The certificate must be a base64-encoded value.")
 	cobraCmd.Flags().StringVarP(&o.TLSKey, "tls-key", "", "", "TLS key for the domain used for installation. The key must be a base64-encoded value.")
 	cobraCmd.Flags().StringVarP(&o.Version, "source", "s", o.defaultVersion(), `Installation source. 
 	- To use the latest release, write "kyma alpha deploy --source=latest".
@@ -59,7 +59,7 @@ func NewCmd(o *Options) *cobra.Command {
 	- To use a commit, write "kyma alpha deploy --source=34edf09a".
 	- To use a pull request, write "kyma alpha deploy --source=PR-9486".
 	- To use the local sources, write "kyma alpha deploy --source=local".`)
-	cobraCmd.Flags().StringVarP(&o.Profile, "profile", "p", "",
+	cobraCmd.Flags().StringVarP(&o.Profile, "profile", "p", "evaluation",
 		fmt.Sprintf("Kyma deployment profile. Supported profiles are: \"%s\".", strings.Join(o.profiles(), "\", \"")))
 	return cobraCmd
 }
@@ -81,27 +81,56 @@ func (cmd *command) Run() error {
 	// initialize UI
 	var updateCh chan deployment.ProcessUpdate
 	if cmd.Verbose {
-		defer log.Println("Kyma deployed!")
+		//TODO: check for errors instead showing success message blindly
+		defer cmd.showSuccessMessage()
 	} else {
 		asyncUI := asyncui.AsyncUI{StepFactory: &cmd.Factory}
 		updateCh, err = asyncUI.Start()
 		if err != nil {
 			return err
 		}
-		defer asyncUI.Stop() // stop receiving update-events and wait until UI rendering is finished
-	}
-
-	if cmd.opts.Domain == LocalKymaDevDomain { //patch Kubernetes DNS system when using "local.kyma.dev" as domain name
-		step := cmd.startDeploymentStep(updateCh, "Configure Kubernetes DNS to support Kyma local dev domain")
-		devDomain := NewDNSConfigurer(cmd.K8s.Static())
-		err = devDomain.ConfigureCoreDNS()
-		cmd.stopDeploymentStep(updateCh, step, (err == nil))
-		if err != nil {
-			return err
-		}
+		defer func() {
+			asyncUI.Stop() // stop receiving update-events and wait until UI rendering is finished
+			if !asyncUI.Failed {
+				cmd.showSuccessMessage()
+			}
+		}()
 	}
 
 	return cmd.deployKyma(updateCh)
+}
+
+func (cmd *command) showSuccessMessage() {
+	//TODO download cert
+	//TODO admin password
+	//TODO get Console URL
+	log := cli.LogFunc(cmd.Verbose)
+
+	log("Kyma successfully installed.")
+
+	isLocal, err := cmd.isLocalSetup()
+	if err != nil {
+		isLocal = false // don't show cert-data if we cannot be sure to run locally
+	}
+	if isLocal {
+		log(`Generated self signed TLS certificate should be trusted in your system.
+
+  * On Mac Os X execute this command:
+   
+    sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain kyma.crt
+
+  * On Windows please follow the steps described here:
+
+    https://support.globalsign.com/ssl/ssl-certificates-installation/import-and-export-certificate-microsoft-windows
+
+This is a one time operation (you can skip this step if you did it before).`)
+	}
+
+	log(`Kyma Console Url: ${consoleUrl}
+
+User: admin@kyma.cx
+Password: ${adminPassword}
+`)
 }
 
 func (cmd *command) deployKyma(updateCh chan<- deployment.ProcessUpdate) error {
@@ -120,14 +149,22 @@ func (cmd *command) deployKyma(updateCh chan<- deployment.ProcessUpdate) error {
 		CrdPath:                       filepath.Join(resourcePath, "cluster-essentials", "files"),
 		ResourcePath:                  resourcePath,
 		Version:                       cmd.opts.Version,
-		//TLSCert:                       cmd.opts.TLSCert,
-		//TLSKey:                        cmd.opts.TLSKey,
-		//Domain:                        cmd.ops.Domain,
 	}
 
 	overrides, err := cmd.overrides()
 	if err != nil {
 		return err
+	}
+
+	// add global overrides for local cluster setup
+	isLocal, err := cmd.isLocalSetup()
+	if err != nil {
+		return err
+	}
+	if isLocal {
+		if err := cmd.configureLocalSetup(updateCh, &overrides); err != nil {
+			return err
+		}
 	}
 
 	installer, err := deployment.NewDeployment(installationCfg, overrides, cmd.K8s.Static(), updateCh)
@@ -136,6 +173,26 @@ func (cmd *command) deployKyma(updateCh chan<- deployment.ProcessUpdate) error {
 	}
 
 	return installer.StartKymaDeployment()
+}
+
+func (cmd *command) configureLocalSetup(updateCh chan<- deployment.ProcessUpdate, overrides *deployment.Overrides) error {
+	step := cmd.startDeploymentStep(updateCh, "Configure local Kyma installer")
+	if err := cmd.setGlobalOverridesForLocalSetup(overrides); err != nil {
+		return err
+	}
+	cmd.stopDeploymentStep(updateCh, step, true)
+
+	if cmd.opts.Domain == LocalKymaDevDomain { //patch Kubernetes DNS system when using "local.kyma.dev" as domain name
+		step := cmd.startDeploymentStep(updateCh, "Configure Kubernetes DNS to support Kyma local dev domain")
+		devDomain := NewDNSConfigurer(cmd.K8s.Static())
+		err := devDomain.ConfigureCoreDNS()
+		cmd.stopDeploymentStep(updateCh, step, (err == nil))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (cmd *command) overrides() (deployment.Overrides, error) {
@@ -176,6 +233,31 @@ func (cmd *command) overrides() (deployment.Overrides, error) {
 	return overrides, nil
 }
 
+func (cmd *command) setGlobalOverridesForLocalSetup(overrides *deployment.Overrides) error {
+	globalOverrides := make(map[string]interface{})
+	globalOverrides["isLocalEnv"] = false
+	globalOverrides["domainName"] = cmd.opts.Domain
+	if cmd.opts.tlsCertAndKeyProvided() {
+		globalOverrides["tlsKey"] = cmd.opts.TLSKey
+		globalOverrides["tlsCrt"] = cmd.opts.TLSCrt
+	} else {
+		globalOverrides["tlsKey"] = cmd.opts.defaultTLSKey()
+		globalOverrides["tlsCrt"] = cmd.opts.defaultTLSCrt()
+	}
+
+	// ingress settings
+	ingressOverrides := make(map[string]interface{})
+	ingressOverrides["domainName"] = cmd.opts.Domain
+	globalOverrides["ingress"] = ingressOverrides
+
+	// environment overrides
+	envOverrides := make(map[string]interface{})
+	envOverrides["gardener"] = false
+	globalOverrides["environment"] = envOverrides
+
+	return overrides.AddOverrides("global", globalOverrides)
+}
+
 // convertToOverridesMap parses the override key and converts it into an nested map.
 // First element of the key is returned as component name, all other elements are used as key/sub-key in the nested map.
 func (cmd *command) convertToOverridesMap(key, value string) (string, map[string]interface{}, error) {
@@ -212,6 +294,19 @@ func (cmd *command) convertToOverridesMap(key, value string) (string, map[string
 	}
 
 	return comp, latestOverrideMap, nil
+}
+
+// isLocalSetup is a helper function to figure out whether Kyma runs locally
+func (cmd *command) isLocalSetup() (bool, error) {
+	clInfo := clusterinfo.New(cmd.K8s.Static())
+	if err := clInfo.Read(); err != nil {
+		return false, err
+	}
+	provider, err := clInfo.Provider()
+	if err != nil {
+		return false, err
+	}
+	return (provider == clusterinfo.ClusterProviderK3s), nil
 }
 
 func (cmd *command) startDeploymentStep(updateCh chan<- deployment.ProcessUpdate, step string) deployment.InstallationPhase {
