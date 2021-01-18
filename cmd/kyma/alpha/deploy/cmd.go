@@ -93,8 +93,9 @@ func (cmd *command) Run() error {
 
 	if cmd.opts.Domain == LocalKymaDevDomain { //patch Kubernetes DNS system when using "local.kyma.dev" as domain name
 		step := cmd.startDeploymentStep(updateCh, "Configure Kubernetes DNS to support Kyma local dev domain")
-		devDomain := NewDNSConfigurer(cmd.K8s.Static())
-		err = devDomain.ConfigureCoreDNS()
+		if err := ConfigureCoreDNS(cmd.K8s.Static()); err != nil {
+			return err
+		}
 		cmd.stopDeploymentStep(updateCh, step, (err == nil))
 		if err != nil {
 			return err
