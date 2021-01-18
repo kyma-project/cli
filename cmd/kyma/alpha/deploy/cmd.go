@@ -91,7 +91,7 @@ func (cmd *command) Run() error {
 		defer asyncUI.Stop() // stop receiving update-events and wait until UI rendering is finished
 	}
 
-	if cmd.opts.Domain == LocalKymaDevDomain { //patch Kubernetes DEV system
+	if cmd.opts.Domain == LocalKymaDevDomain { //patch Kubernetes DNS system when using "local.kyma.dev" as domain name
 		step := cmd.startDeploymentStep(updateCh, "Configure Kubernetes DNS to support Kyma local dev domain")
 		devDomain := NewDNSConfigurer(cmd.K8s.Static())
 		err = devDomain.ConfigureCoreDNS()
