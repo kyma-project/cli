@@ -2,6 +2,8 @@ package version
 
 import (
 	"fmt"
+	"io"
+	"os"
 
 	"github.com/kyma-incubator/hydroform/parallel-install/pkg/metadata"
 	"github.com/kyma-project/cli/cmd/kyma/version"
@@ -39,39 +41,36 @@ func NewCmd(o *Options) *cobra.Command {
 
 //Run runs the command
 func (cmd *command) Run() error {
-	clientVersion := getCLIVersion()
-	fmt.Printf("Kyma CLI version: %s\n", clientVersion)
+	var clusterMetadata *metadata.KymaMetadata
 
-	if cmd.opts.ClientOnly {
-		return nil
+	if !cmd.opts.ClientOnly {
+		var err error
+		if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
+			return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
+		}
+
+		provider := metadata.New(cmd.K8s.Static())
+		clusterMetadata, err = provider.ReadKymaMetadata()
+		if err != nil {
+			return fmt.Errorf("Unable to get Kyma cluster version due to error: %v. Check if your cluster is available and has Kyma installed", err)
+		}
 	}
 
-	serverVersion, err := cmd.getClusterVersion()
-	if err != nil {
-		return err
-	}
-	fmt.Printf("Kyma cluster version: %s\n", serverVersion)
+	printVersion(os.Stdout, cmd.opts.ClientOnly, clusterMetadata)
 
 	return nil
 }
 
-func getCLIVersion() string {
-	return getVersionOrDefault(version.Version)
-}
+func printVersion(w io.Writer, clientOnly bool, clusterMetadata *metadata.KymaMetadata) {
+	clientVersion := getVersionOrDefault(version.Version)
+	fmt.Fprintf(w, "Kyma CLI version: %s\n", clientVersion)
 
-func (cmd *command) getClusterVersion() (string, error) {
-	var err error
-	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
-		return "", errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
+	if clientOnly {
+		return
 	}
 
-	provider := metadata.New(cmd.K8s.Static())
-	metadata, err := provider.ReadKymaMetadata()
-	if err != nil {
-		return "", fmt.Errorf("Unable to get Kyma cluster version due to error: %v. Check if your cluster is available and has Kyma installed", err)
-	}
-
-	return getVersionOrDefault(metadata.Version), nil
+	serverVersion := getVersionOrDefault(clusterMetadata.Version)
+	fmt.Fprintf(w, "Kyma cluster version: %s\n", serverVersion)
 }
 
 func getVersionOrDefault(version string) string {
