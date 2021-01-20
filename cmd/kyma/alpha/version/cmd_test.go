@@ -31,6 +31,7 @@ func TestPrintVersion(t *testing.T) {
 			clientOnly:    true,
 			clusterMetadata: &metadata.KymaMetadata{
 				Version: "1.19",
+				Profile: "evaluation",
 			},
 			want: "Kyma CLI version: 1.20\n",
 		},
@@ -41,7 +42,7 @@ func TestPrintVersion(t *testing.T) {
 			clusterMetadata: &metadata.KymaMetadata{
 				Version: "",
 			},
-			want: "Kyma CLI version: 1.20\nKyma cluster version: N/A\n",
+			want: "Kyma CLI version: 1.20\nKyma cluster version: N/A\nDeployment profile: default\n",
 		},
 		{
 			name:          "client and server version (cluster metadata contains no version)",
@@ -50,7 +51,17 @@ func TestPrintVersion(t *testing.T) {
 			clusterMetadata: &metadata.KymaMetadata{
 				Version: "1.19",
 			},
-			want: "Kyma CLI version: 1.20\nKyma cluster version: 1.19\n",
+			want: "Kyma CLI version: 1.20\nKyma cluster version: 1.19\nDeployment profile: default\n",
+		},
+		{
+			name:          "client and server version (with non default profile)",
+			clientVersion: "1.20",
+			clientOnly:    false,
+			clusterMetadata: &metadata.KymaMetadata{
+				Version: "1.19",
+				Profile: "evaluation",
+			},
+			want: "Kyma CLI version: 1.20\nKyma cluster version: 1.19\nDeployment profile: evaluation\n",
 		},
 	}
 
