@@ -3,6 +3,7 @@ package deploy
 import (
 	"fmt"
 	"log"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -12,12 +13,18 @@ import (
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/pkg/asyncui"
+	"github.com/kyma-project/cli/pkg/git"
 	"github.com/magiconair/properties"
 	"github.com/spf13/cobra"
 
 	"github.com/kyma-incubator/hydroform/parallel-install/pkg/components"
 	installConfig "github.com/kyma-incubator/hydroform/parallel-install/pkg/config"
 	"github.com/kyma-incubator/hydroform/parallel-install/pkg/deployment"
+)
+
+const (
+	kymaURL      = "https://github.com/kyma-project/kyma"
+	localVersion = "local"
 )
 
 type command struct {
@@ -102,11 +109,32 @@ func (cmd *command) Run() error {
 		}
 	}
 
+	// download sources
+
+	// only download if not from local sources
+	if cmd.opts.Version != localVersion {
+		step := cmd.startDeploymentStep(updateCh, "Downloading Kyma")
+
+		rev, err := git.ResolveRevision(kymaURL, cmd.opts.Version)
+		if err != nil {
+			cmd.stopDeploymentStep(updateCh, step, false)
+			return err
+		}
+
+		if err := git.CloneRevision(kymaURL, cmd.opts.WorkspacePath, rev); err != nil {
+			cmd.stopDeploymentStep(updateCh, step, false)
+			return err
+		}
+		// only delete sources if clone was successful
+		defer os.RemoveAll(cmd.opts.WorkspacePath)
+		cmd.stopDeploymentStep(updateCh, step, true)
+	}
+
 	return cmd.deployKyma(updateCh)
 }
 
 func (cmd *command) deployKyma(updateCh chan<- deployment.ProcessUpdate) error {
-	var resourcePath = filepath.Join(cmd.opts.WorkspacePath, "kyma", "resources")
+	var resourcePath = filepath.Join(cmd.opts.WorkspacePath, "resources")
 
 	installationCfg := installConfig.Config{
 		WorkersCount:                  cmd.opts.WorkersCount,

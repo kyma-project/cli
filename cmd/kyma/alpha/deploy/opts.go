@@ -14,7 +14,7 @@ var (
 	defaultVersion        = "latest"
 	kymaProfiles          = []string{"evaluation", "production"}
 	defaultWorkspacePath  = filepath.Join(".", "workspace")
-	defaultComponentsFile = filepath.Join(defaultWorkspacePath, "kyma", "installation", "resources", "components.yaml")
+	defaultComponentsFile = filepath.Join(defaultWorkspacePath, "installation", "resources", "components.yaml")
 )
 
 //Options defines available options for the command

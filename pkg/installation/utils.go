@@ -32,8 +32,9 @@ func getLatestAvailableMasterHash(currentStep step.Step, fallbackLevel int, nonI
 	maxCloningDepth := fallbackLevel + 1
 	r, err := git.CloneContext(ctx, memory.NewStorage(), nil,
 		&git.CloneOptions{
-			Depth: maxCloningDepth,
-			URL:   "https://github.com/kyma-project/kyma",
+			Depth:      maxCloningDepth,
+			URL:        "https://github.com/kyma-project/kyma",
+			NoCheckout: true,
 		})
 	if err != nil {
 		return "", errors.Wrap(err, "while cloning Kyma repository")
