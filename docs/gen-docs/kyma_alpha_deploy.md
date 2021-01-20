@@ -19,8 +19,6 @@ kyma alpha deploy [flags]
   -c, --components string         Path to the components file. (default "workspace/kyma/installation/resources/components.yaml")
   -d, --domain string             Domain used for installation. (default "local.kyma.dev")
       --helm-timeout duration     Timeout for the underlying Helm client. (default 6m0s)
-  -o, --overrides strings         Set an override (e.g. -o the.key='the value').
-  -f, --overrides-file string     Path to a JSON or YAML file with parameters to override.
   -p, --profile string            Kyma deployment profile. Supported profiles are: "evaluation", "production".
       --quit-timeout duration     Time after which the deployment is aborted. Worker goroutines may still be working in the background. This value must be greater than the value for cancel-timeout. (default 20m0s)
   -s, --source string             Installation source. 
@@ -30,8 +28,10 @@ kyma alpha deploy [flags]
                                   	- To use a commit, write "kyma alpha deploy --source=34edf09a".
                                   	- To use a pull request, write "kyma alpha deploy --source=PR-9486".
                                   	- To use the local sources, write "kyma alpha deploy --source=local". (default "latest")
-      --tls-cert string           TLS certificate for the domain used for installation. The certificate must be a base64-encoded value.
+      --tls-crt string            TLS certificate for the domain used for installation. The certificate must be a base64-encoded value.
       --tls-key string            TLS key for the domain used for installation. The key must be a base64-encoded value.
+      --value strings             Set a configuration value (e.g. --value component.key='the value').
+  -f, --values-file string        Path to a JSON or YAML file with configuration values.
       --workers-count int         Number of parallel workers used for the deployment. (default 4)
   -w, --workspace string          Path used to download Kyma sources. (default "workspace")
 ```
