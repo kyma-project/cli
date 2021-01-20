@@ -104,19 +104,20 @@ func (cmd *command) Run() error {
 	return cmd.deployKyma(updateCh)
 }
 
-func (cmd *command) showSuccessMessage() error {
+func (cmd *command) showSuccessMessage() {
 	var err error
+	logFunc := cli.LogFunc(cmd.Verbose)
 
 	isLocal, err := cmd.isLocalSetup()
 	if err != nil {
-		return err
+		logFunc("%s", err)
 	}
 
 	fmt.Println("Kyma successfully installed.")
 
 	if isLocal {
 		if err = cmd.storeCrtAsFile(); err != nil {
-			return err
+			logFunc("%s", err)
 		}
 		fmt.Println(`
 Generated self signed TLS certificate should be trusted in your system.
@@ -134,7 +135,7 @@ This is a one time operation (you can skip this step if you did it before).`)
 
 	adminPw, err := cmd.getAdminPw()
 	if err != nil {
-		return err
+		logFunc("%s", err)
 	}
 	fmt.Printf(`
 Kyma Console Url: %s
@@ -142,8 +143,6 @@ User: admin@kyma.cx
 Password: %s
 
 `, fmt.Sprintf("https://console.%s", cmd.opts.Domain), adminPw)
-
-	return nil
 }
 
 func (cmd *command) storeCrtAsFile() error {
@@ -188,7 +187,7 @@ func (cmd *command) deployKyma(updateCh chan<- deployment.ProcessUpdate) error {
 		return err
 	}
 
-	if err := cmd.configureCoreDNS(updateCh, &overrides); err != nil {
+	if err := cmd.configureCoreDNS(updateCh); err != nil {
 		return err
 	}
 
@@ -200,7 +199,7 @@ func (cmd *command) deployKyma(updateCh chan<- deployment.ProcessUpdate) error {
 	return installer.StartKymaDeployment()
 }
 
-func (cmd *command) configureCoreDNS(updateCh chan<- deployment.ProcessUpdate, overrides *deployment.Overrides) error {
+func (cmd *command) configureCoreDNS(updateCh chan<- deployment.ProcessUpdate) error {
 	if cmd.opts.Domain == LocalKymaDevDomain { //patch Kubernetes DNS system when using "local.kyma.dev" as domain name
 		step := cmd.startDeploymentStep(updateCh, "Configure Kubernetes DNS to support Kyma local dev domain")
 		devDomain := NewDNSConfigurer(cmd.K8s.Static())
