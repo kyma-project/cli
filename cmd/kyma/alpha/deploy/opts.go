@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	defaultVersion        = "latest"
+	defaultVersion        = "master"
 	kymaProfiles          = []string{"evaluation", "production"}
 	defaultWorkspacePath  = filepath.Join(".", "workspace")
 	defaultComponentsFile = filepath.Join(defaultWorkspacePath, "installation", "resources", "components.yaml")
