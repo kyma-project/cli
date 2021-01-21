@@ -37,6 +37,8 @@ type AsyncUI struct {
 	Errors chan error
 	// internal state
 	running bool
+	// a failure occurred
+	Failed bool
 }
 
 // Start renders the CLI UI and provides the channel for receiving events
@@ -75,8 +77,12 @@ func (ui *AsyncUI) Start() (chan deployment.ProcessUpdate, error) {
 
 // dispatchError will pass an error to the Caller
 func (ui *AsyncUI) dispatchError(err error) {
-	if ui.Errors != nil && err != nil {
-		ui.Errors <- err
+	if err != nil {
+		ui.Failed = true
+		// fire error event to caller's error channel
+		if ui.Errors != nil {
+			ui.Errors <- err
+		}
 	}
 }
 

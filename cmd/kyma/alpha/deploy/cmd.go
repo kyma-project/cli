@@ -1,8 +1,9 @@
 package deploy
 
 import (
+	"context"
 	"fmt"
-	"log"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -10,7 +11,10 @@ import (
 
 	"github.com/pkg/errors"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/clusterinfo"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/pkg/asyncui"
 	"github.com/kyma-project/cli/pkg/git"
@@ -50,14 +54,14 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cobraCmd.Flags().StringVarP(&o.WorkspacePath, "workspace", "w", o.defaultWorkspacePath(), "Path used to download Kyma sources.")
 	cobraCmd.Flags().StringVarP(&o.ComponentsFile, "components", "c", o.defaultComponentsFile(), "Path to the components file.")
-	cobraCmd.Flags().StringVarP(&o.OverridesFile, "overrides-file", "f", "", "Path to a JSON or YAML file with parameters to override.")
-	cobraCmd.Flags().StringSliceVarP(&o.Overrides, "overrides", "o", []string{}, "Set an override (e.g. -o the.key='the value').")
+	cobraCmd.Flags().StringVarP(&o.OverridesFile, "values-file", "f", "", "Path to a JSON or YAML file with configuration values.")
+	cobraCmd.Flags().StringSliceVarP(&o.Overrides, "value", "", []string{}, "Set a configuration value (e.g. --value component.key='the value').")
 	cobraCmd.Flags().DurationVarP(&o.CancelTimeout, "cancel-timeout", "", 900*time.Second, "Time after which the workers' context is canceled. Pending worker goroutines (if any) may continue if blocked by a Helm client.")
 	cobraCmd.Flags().DurationVarP(&o.QuitTimeout, "quit-timeout", "", 1200*time.Second, "Time after which the deployment is aborted. Worker goroutines may still be working in the background. This value must be greater than the value for cancel-timeout.")
 	cobraCmd.Flags().DurationVarP(&o.HelmTimeout, "helm-timeout", "", 360*time.Second, "Timeout for the underlying Helm client.")
 	cobraCmd.Flags().IntVar(&o.WorkersCount, "workers-count", 4, "Number of parallel workers used for the deployment.")
 	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", LocalKymaDevDomain, "Domain used for installation.")
-	cobraCmd.Flags().StringVarP(&o.TLSCert, "tls-cert", "", "", "TLS certificate for the domain used for installation. The certificate must be a base64-encoded value.")
+	cobraCmd.Flags().StringVarP(&o.TLSCrt, "tls-crt", "", "", "TLS certificate for the domain used for installation. The certificate must be a base64-encoded value.")
 	cobraCmd.Flags().StringVarP(&o.TLSKey, "tls-key", "", "", "TLS key for the domain used for installation. The key must be a base64-encoded value.")
 	cobraCmd.Flags().StringVarP(&o.Version, "source", "s", o.defaultVersion(), `Installation source. 
 	- To use the latest release, write "kyma alpha deploy --source=latest".
@@ -88,28 +92,21 @@ func (cmd *command) Run() error {
 	// initialize UI
 	var updateCh chan deployment.ProcessUpdate
 	if cmd.Verbose {
-		defer log.Println("Kyma deployed!")
+		//TODO: check for errors instead showing success message blindly - depends on https://github.com/kyma-incubator/hydroform/issues/170
+		defer cmd.showSuccessMessage()
 	} else {
 		asyncUI := asyncui.AsyncUI{StepFactory: &cmd.Factory}
 		updateCh, err = asyncUI.Start()
 		if err != nil {
 			return err
 		}
-		defer asyncUI.Stop() // stop receiving update-events and wait until UI rendering is finished
+		defer func() {
+			asyncUI.Stop() // stop receiving update-events and wait until UI rendering is finished
+			if !asyncUI.Failed {
+				cmd.showSuccessMessage()
+			}
+		}()
 	}
-
-	if cmd.opts.Domain == LocalKymaDevDomain { //patch Kubernetes DNS system when using "local.kyma.dev" as domain name
-		step := cmd.startDeploymentStep(updateCh, "Configure Kubernetes DNS to support Kyma local dev domain")
-		if err := ConfigureCoreDNS(cmd.K8s.Static()); err != nil {
-			return err
-		}
-		cmd.stopDeploymentStep(updateCh, step, (err == nil))
-		if err != nil {
-			return err
-		}
-	}
-
-	// download sources
 
 	// only download if not from local sources
 	if cmd.opts.Version != localVersion {
@@ -133,6 +130,66 @@ func (cmd *command) Run() error {
 	return cmd.deployKyma(updateCh)
 }
 
+func (cmd *command) showSuccessMessage() {
+	var err error
+	logFunc := cli.LogFunc(cmd.Verbose)
+
+	isLocal, err := cmd.isLocalSetup()
+	if err != nil {
+		logFunc("%s", err)
+	}
+
+	fmt.Println("Kyma successfully installed.")
+
+	if isLocal {
+		if err = cmd.storeCrtAsFile(); err != nil {
+			logFunc("%s", err)
+		}
+		fmt.Println(`
+Generated self signed TLS certificate should be trusted in your system.
+
+  * On Mac Os X execute this command:
+   
+    sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain kyma.crt
+
+  * On Windows please follow the steps described here:
+
+    https://support.globalsign.com/ssl/ssl-certificates-installation/import-and-export-certificate-microsoft-windows
+
+This is a one time operation (you can skip this step if you did it before).`)
+	}
+
+	adminPw, err := cmd.getAdminPw()
+	if err != nil {
+		logFunc("%s", err)
+	}
+	fmt.Printf(`
+Kyma Console Url: %s
+User: admin@kyma.cx
+Password: %s
+
+`, fmt.Sprintf("https://console.%s", cmd.opts.Domain), adminPw)
+}
+
+func (cmd *command) storeCrtAsFile() error {
+	secret, err := cmd.K8s.Static().CoreV1().Secrets("istio-system").Get(context.Background(), "kyma-gateway-certs", metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	if err = ioutil.WriteFile("kyma.crt", secret.Data["cert"], 0600); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (cmd *command) getAdminPw() (string, error) {
+	secret, err := cmd.K8s.Static().CoreV1().Secrets("kyma-system").Get(context.Background(), "admin-user", metav1.GetOptions{})
+	if err != nil {
+		return "", err
+	}
+	return string(secret.Data["password"]), nil
+}
+
 func (cmd *command) deployKyma(updateCh chan<- deployment.ProcessUpdate) error {
 	var resourcePath = filepath.Join(cmd.opts.WorkspacePath, "resources")
 
@@ -149,13 +206,14 @@ func (cmd *command) deployKyma(updateCh chan<- deployment.ProcessUpdate) error {
 		CrdPath:                       filepath.Join(resourcePath, "cluster-essentials", "files"),
 		ResourcePath:                  resourcePath,
 		Version:                       cmd.opts.Version,
-		//TLSCert:                       cmd.opts.TLSCert,
-		//TLSKey:                        cmd.opts.TLSKey,
-		//Domain:                        cmd.ops.Domain,
 	}
 
 	overrides, err := cmd.overrides()
 	if err != nil {
+		return err
+	}
+
+	if err := cmd.configureCoreDNS(updateCh); err != nil {
 		return err
 	}
 
@@ -167,6 +225,19 @@ func (cmd *command) deployKyma(updateCh chan<- deployment.ProcessUpdate) error {
 	return installer.StartKymaDeployment()
 }
 
+func (cmd *command) configureCoreDNS(updateCh chan<- deployment.ProcessUpdate) error {
+	if cmd.opts.Domain == LocalKymaDevDomain { //patch Kubernetes DNS system when using "local.kyma.dev" as domain name
+		step := cmd.startDeploymentStep(updateCh, "Configure Kubernetes DNS to support Kyma local dev domain")
+		err := ConfigureCoreDNS(cmd.K8s.Static())
+		cmd.stopDeploymentStep(updateCh, step, (err == nil))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (cmd *command) overrides() (deployment.Overrides, error) {
 	overrides := deployment.Overrides{}
 
@@ -175,6 +246,10 @@ func (cmd *command) overrides() (deployment.Overrides, error) {
 		if err := overrides.AddFile(cmd.opts.OverridesFile); err != nil {
 			return overrides, err
 		}
+	}
+
+	if err := cmd.setGlobalOverrides(&overrides); err != nil {
+		return overrides, err
 	}
 
 	// add overrides provided as CLI params
@@ -203,6 +278,31 @@ func (cmd *command) overrides() (deployment.Overrides, error) {
 	}
 
 	return overrides, nil
+}
+
+func (cmd *command) setGlobalOverrides(overrides *deployment.Overrides) error {
+	globalOverrides := make(map[string]interface{})
+	globalOverrides["isLocalEnv"] = false //DEPRECATED - 'isLocalEnv' will be removed soon
+	globalOverrides["domainName"] = cmd.opts.Domain
+	if cmd.opts.tlsCertAndKeyProvided() {
+		globalOverrides["tlsKey"] = cmd.opts.TLSKey
+		globalOverrides["tlsCrt"] = cmd.opts.TLSCrt
+	} else {
+		globalOverrides["tlsKey"] = cmd.opts.defaultTLSKey()
+		globalOverrides["tlsCrt"] = cmd.opts.defaultTLSCrt()
+	}
+
+	// ingress settings
+	ingressOverrides := make(map[string]interface{})
+	ingressOverrides["domainName"] = cmd.opts.Domain
+	globalOverrides["ingress"] = ingressOverrides
+
+	// environment overrides
+	envOverrides := make(map[string]interface{})
+	envOverrides["gardener"] = false
+	globalOverrides["environment"] = envOverrides //DEPRECATED - 'environment' will be removed soon
+
+	return overrides.AddOverrides("global", globalOverrides)
 }
 
 // convertToOverridesMap parses the override key and converts it into an nested map.
@@ -241,6 +341,19 @@ func (cmd *command) convertToOverridesMap(key, value string) (string, map[string
 	}
 
 	return comp, latestOverrideMap, nil
+}
+
+// isLocalSetup is a helper function to figure out whether Kyma runs locally
+func (cmd *command) isLocalSetup() (bool, error) {
+	clInfo := clusterinfo.New(cmd.K8s.Static())
+	if err := clInfo.Read(); err != nil {
+		return false, err
+	}
+	provider, err := clInfo.Provider()
+	if err != nil {
+		return false, err
+	}
+	return (provider == clusterinfo.ClusterProviderK3s), nil
 }
 
 func (cmd *command) startDeploymentStep(updateCh chan<- deployment.ProcessUpdate, step string) deployment.InstallationPhase {
