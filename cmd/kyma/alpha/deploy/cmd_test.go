@@ -13,30 +13,30 @@ func TestOverrides(t *testing.T) {
 	t.Run("Test long override with equal separator", func(t *testing.T) {
 		command := command{
 			opts: &Options{
-				Overrides: []string{"this.is.a.pretty.long.happy.path.test=successful"},
+				Overrides: []string{"test.is.a.pretty.long.happy.path.test=successful"},
 			},
 		}
-		err := assertValidOverride(t, command, `{"this":{"is":{"a":{"pretty":{"long":{"happy":{"path":{"test":"successful"}}}}}}}}`)
+		err := assertValidOverride(t, command, `{"is":{"a":{"pretty":{"long":{"happy":{"path":{"test":"successful"}}}}}}}`)
 		require.NoError(t, err)
 	})
 
 	t.Run("Test override with whitespace separator", func(t *testing.T) {
 		command := command{
 			opts: &Options{
-				Overrides: []string{"happy.path.test successful"},
+				Overrides: []string{"test.happypath.test successful"},
 			},
 		}
-		err := assertValidOverride(t, command, `{"happy":{"path":{"test":"successful"}}}`)
+		err := assertValidOverride(t, command, `{"happypath":{"test":"successful"}}`)
 		require.NoError(t, err)
 	})
 
 	t.Run("Short override", func(t *testing.T) {
 		command := command{
 			opts: &Options{
-				Overrides: []string{"happy.path=successful"},
+				Overrides: []string{"test.happypath=successful"},
 			},
 		}
-		err := assertValidOverride(t, command, `{"happy":{"path":"successful"}}`)
+		err := assertValidOverride(t, command, `{"happypath":"successful"}`)
 		require.NoError(t, err)
 	})
 
@@ -96,7 +96,7 @@ func assertValidOverride(t *testing.T, command command, expectedJSON string) err
 		return err
 	}
 
-	assert.Equal(t, expected, mergedOverrides)
+	assert.Equal(t, expected, mergedOverrides["test"])
 
 	return nil
 }
