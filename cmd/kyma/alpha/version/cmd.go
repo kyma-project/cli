@@ -62,25 +62,25 @@ func (cmd *command) Run() error {
 }
 
 func printVersion(w io.Writer, clientOnly bool, clusterMetadata *metadata.KymaMetadata) {
-	fmt.Fprintf(w, "Kyma CLI version: %s\n", getVersionOrDefault(version.Version))
+	fmt.Fprintf(w, "Kyma CLI version: %s\n", versionOrDefault(version.Version))
 
 	if clientOnly {
 		return
 	}
 
-	fmt.Fprintf(w, "Kyma cluster version: %s\n", getVersionOrDefault(clusterMetadata.Version))
-	fmt.Fprintf(w, "Deployment profile: %s\n", getProfileOrDefault(clusterMetadata.Profile))
+	fmt.Fprintf(w, "Kyma cluster version: %s\n", versionOrDefault(clusterMetadata.Version))
+	fmt.Fprintf(w, "Deployment profile: %s\n", profileOrDefault(clusterMetadata.Profile))
 }
 
-func getVersionOrDefault(version string) string {
-	return getStringOrDefault(version, "N/A")
+func versionOrDefault(version string) string {
+	return stringOrDefault(version, "N/A")
 }
 
-func getProfileOrDefault(profile string) string {
-	return getStringOrDefault(profile, "default")
+func profileOrDefault(profile string) string {
+	return stringOrDefault(profile, "default")
 }
 
-func getStringOrDefault(s, def string) string {
+func stringOrDefault(s, def string) string {
 	if len(s) == 0 {
 		return def
 	}
