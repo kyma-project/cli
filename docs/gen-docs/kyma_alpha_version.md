@@ -1,12 +1,23 @@
 ---
-title: kyma alpha
+title: kyma alpha version
 ---
 
-Executes the commands in the alpha testing stage.
+Displays the version of Kyma CLI and of the connected Kyma cluster.
 
 ## Synopsis
 
-Use this command to utilize the Kyma CLI in alpha testing stage.
+Use this command to print the version of Kyma CLI and the version of the Kyma cluster the current kubeconfig points to.
+
+
+```bash
+kyma alpha version [flags]
+```
+
+## Options
+
+```bash
+  -c, --client   Client version only (no server required)
+```
 
 ## Options inherited from parent commands
 
@@ -20,9 +31,5 @@ Use this command to utilize the Kyma CLI in alpha testing stage.
 
 ## See also
 
-* [kyma](#kyma-kyma)	 - Controls a Kyma cluster.
-* [kyma alpha deploy](#kyma-alpha-deploy-kyma-alpha-deploy)	 - Deploys Kyma on a running Kubernetes cluster.
-* [kyma alpha provision](#kyma-alpha-provision-kyma-alpha-provision)	 - Provisions a cluster for Kyma installation.
-* [kyma alpha uninstall](#kyma-alpha-uninstall-kyma-alpha-uninstall)	 - Uninstalls Kyma from a running Kubernetes cluster.
-* [kyma alpha version](#kyma-alpha-version-kyma-alpha-version)	 - Displays the version of Kyma CLI and of the connected Kyma cluster.
+* [kyma alpha](#kyma-alpha-kyma-alpha)	 - Executes the commands in the alpha testing stage.
 
