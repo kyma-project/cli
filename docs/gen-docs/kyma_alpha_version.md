@@ -2,7 +2,7 @@
 title: kyma alpha version
 ---
 
-Displays the version of Kyma CLI and the connected Kyma cluster.
+Displays the version of Kyma CLI and of the connected Kyma cluster.
 
 ## Synopsis
 
