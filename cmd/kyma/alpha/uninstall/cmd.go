@@ -72,16 +72,24 @@ func (cmd *command) Run() error {
 		Version:                       "-",
 	}
 
-	var updateCh chan deployment.ProcessUpdate
+	var ui asyncui.AsyncUI
 	if cmd.Verbose {
 		defer log.Println("Kyma uninstalled!")
 	} else {
 		asyncUI := asyncui.AsyncUI{StepFactory: &cmd.Factory}
-		updateCh, err = asyncUI.Start()
-		if err != nil {
+		if err = asyncUI.Start(); err != nil {
 			return err
 		}
 		defer asyncUI.Stop() // stop receiving update-events and wait until UI rendering is finished
+	}
+
+	// if an AsyncUI is used, get channel for update events
+	var updateCh chan<- deployment.ProcessUpdate
+	if ui.IsRunning() {
+		updateCh, err = ui.UpdateChannel()
+		if err != nil {
+			return err
+		}
 	}
 
 	installer, err := deployment.NewDeployment(installationCfg, deployment.Overrides{}, cmd.K8s.Static(), updateCh)

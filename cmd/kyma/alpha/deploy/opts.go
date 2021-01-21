@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	defaultVersion        = "master"
+	defaultSource         = "master"
 	kymaProfiles          = []string{"evaluation", "production"}
 	defaultWorkspacePath  = filepath.Join(".", "workspace")
 	defaultComponentsFile = filepath.Join(defaultWorkspacePath, "installation", "resources", "components.yaml")
@@ -33,7 +33,7 @@ type Options struct {
 	Domain         string
 	TLSCrt         string
 	TLSKey         string
-	Version        string
+	Source         string
 	Profile        string
 }
 
@@ -47,9 +47,9 @@ func (o *Options) profiles() []string {
 	return kymaProfiles
 }
 
-//defaultVersion returns the default Kyma version
-func (o *Options) defaultVersion() string {
-	return defaultVersion
+//defaultSource returns the default Kyma version
+func (o *Options) defaultSource() string {
+	return defaultSource
 }
 
 //defaultWorkspacePath returns the default path to the CLI workspace directory

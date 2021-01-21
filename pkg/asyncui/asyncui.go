@@ -42,9 +42,9 @@ type AsyncUI struct {
 }
 
 // Start renders the CLI UI and provides the channel for receiving events
-func (ui *AsyncUI) Start() (chan deployment.ProcessUpdate, error) {
+func (ui *AsyncUI) Start() error {
 	if ui.running {
-		return nil, fmt.Errorf("Duplicate call of start method detected")
+		return fmt.Errorf("Duplicate call of start method detected")
 	}
 	ui.running = true
 
@@ -72,7 +72,7 @@ func (ui *AsyncUI) Start() (chan deployment.ProcessUpdate, error) {
 		}
 	}()
 
-	return ui.updates, nil
+	return nil
 }
 
 // dispatchError will pass an error to the Caller
@@ -96,6 +96,7 @@ func (ui *AsyncUI) Stop() {
 	ui.running = false
 }
 
+// renderStartEvent dispatches an start event to an UI step
 func (ui *AsyncUI) renderStartEvent(procUpdEvent deployment.ProcessUpdate, ongoingSteps *map[deployment.InstallationPhase]step.Step) error {
 	if _, exists := (*ongoingSteps)[procUpdEvent.Phase]; exists {
 		return fmt.Errorf("Illegal state: start-step for installation phase '%s' already exists", procUpdEvent.Phase)
@@ -120,6 +121,7 @@ func (ui *AsyncUI) renderStartEvent(procUpdEvent deployment.ProcessUpdate, ongoi
 	return nil
 }
 
+// renderStartEvent dispatches a stop event to an running step
 func (ui *AsyncUI) renderStopEvent(procUpdEvent deployment.ProcessUpdate, ongoingSteps *map[deployment.InstallationPhase]step.Step) error {
 	if _, exists := (*ongoingSteps)[procUpdEvent.Phase]; !exists {
 		return fmt.Errorf("Illegal state: step for installation phase '%s' does not exist", procUpdEvent.Phase)
@@ -149,4 +151,24 @@ func (ui *AsyncUI) renderStopEvent(procUpdEvent deployment.ProcessUpdate, ongoin
 	}
 	step.Success()
 	return nil
+}
+
+//AddStep adds an additional installation step
+func (ui *AsyncUI) AddStep(step string) (step.Step, error) {
+	if !ui.running {
+		return nil, fmt.Errorf("Cannot add an step because AsyncUI is not running")
+	}
+	return ui.StepFactory.NewStep(step), nil
+}
+
+// UpdateChannel returns the update channel which retrieves process update events
+func (ui *AsyncUI) UpdateChannel() (chan<- deployment.ProcessUpdate, error) {
+	if !ui.running {
+		return nil, fmt.Errorf("Update channel cannot be retrieved because AsyncUI is not running")
+	}
+	return ui.updates, nil
+}
+
+func (ui *AsyncUI) IsRunning() bool {
+	return ui.running
 }
