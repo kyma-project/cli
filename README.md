@@ -29,13 +29,14 @@ Alternatively, you can also build the Kyma CLI from the sources:
 1. To clone the Kyma CLI repository, run:
 
 ```bash
-git clone git@github.com:kyma-project/cli.git
+mkdir -p $GOPATH/src/github.com/kyma-project/
+git clone git@github.com:kyma-project/cli.git $GOPATH/src/github.com/kyma-project/cli
 ```
 
 2. Enter the root folder of the cloned repository:
 
 ```bash
-cd cli
+cd $GOPATH/src/github.com/kyma-project/cli
 ```
 
 3. Run `make build` for your target OS:
