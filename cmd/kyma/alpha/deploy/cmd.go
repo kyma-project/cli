@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -16,12 +17,18 @@ import (
 	"github.com/kyma-project/cli/internal/clusterinfo"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/pkg/asyncui"
+	"github.com/kyma-project/cli/pkg/git"
 	"github.com/magiconair/properties"
 	"github.com/spf13/cobra"
 
 	"github.com/kyma-incubator/hydroform/parallel-install/pkg/components"
 	installConfig "github.com/kyma-incubator/hydroform/parallel-install/pkg/config"
 	"github.com/kyma-incubator/hydroform/parallel-install/pkg/deployment"
+)
+
+const (
+	kymaURL      = "https://github.com/kyma-project/kyma"
+	localVersion = "local"
 )
 
 type command struct {
@@ -56,8 +63,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", LocalKymaDevDomain, "Domain used for installation.")
 	cobraCmd.Flags().StringVarP(&o.TLSCrt, "tls-crt", "", "", "TLS certificate for the domain used for installation. The certificate must be a base64-encoded value.")
 	cobraCmd.Flags().StringVarP(&o.TLSKey, "tls-key", "", "", "TLS key for the domain used for installation. The key must be a base64-encoded value.")
-	cobraCmd.Flags().StringVarP(&o.Version, "source", "s", o.defaultVersion(), `Installation source. 
-	- To use the latest release, write "kyma alpha deploy --source=latest".
+	cobraCmd.Flags().StringVarP(&o.Version, "source", "s", o.defaultVersion(), `Installation source.
 	- To use a specific release, write "kyma alpha deploy --source=1.17.1".
 	- To use the master branch, write "kyma alpha deploy --source=master".
 	- To use a commit, write "kyma alpha deploy --source=34edf09a".
@@ -99,6 +105,25 @@ func (cmd *command) Run() error {
 				cmd.showSuccessMessage()
 			}
 		}()
+	}
+
+	// only download if not from local sources
+	if cmd.opts.Version != localVersion {
+		step := cmd.startDeploymentStep(updateCh, "Downloading Kyma")
+
+		rev, err := git.ResolveRevision(kymaURL, cmd.opts.Version)
+		if err != nil {
+			cmd.stopDeploymentStep(updateCh, step, false)
+			return err
+		}
+
+		if err := git.CloneRevision(kymaURL, cmd.opts.WorkspacePath, rev); err != nil {
+			cmd.stopDeploymentStep(updateCh, step, false)
+			return err
+		}
+		// only delete sources if clone was successful
+		defer os.RemoveAll(cmd.opts.WorkspacePath)
+		cmd.stopDeploymentStep(updateCh, step, true)
 	}
 
 	return cmd.deployKyma(updateCh)
@@ -165,7 +190,7 @@ func (cmd *command) getAdminPw() (string, error) {
 }
 
 func (cmd *command) deployKyma(updateCh chan<- deployment.ProcessUpdate) error {
-	var resourcePath = filepath.Join(cmd.opts.WorkspacePath, "kyma", "resources")
+	var resourcePath = filepath.Join(cmd.opts.WorkspacePath, "resources")
 
 	installationCfg := installConfig.Config{
 		WorkersCount:                  cmd.opts.WorkersCount,
