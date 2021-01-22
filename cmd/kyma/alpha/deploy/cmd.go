@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/blang/semver/v4"
 	"github.com/pkg/errors"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -97,89 +96,94 @@ func (cmd *command) Run() error {
 		if err := ui.Start(); err != nil {
 			return err
 		}
-		defer func() {
-			ui.Stop() // stop receiving update-events and wait until UI rendering is finished
-			if !ui.Failed {
-				cmd.showSuccessMessage()
-			}
-		}()
+		defer ui.Stop()
 	}
 
 	if cmd.opts.Source != localSource { // only download if not from local sources
 		if err := cmd.isCompatibleVersion(ui); err != nil {
 			return err
 		}
-
-		downloadStep := cmd.newDeploymentStep(ui, "Downloading Kyma")
-		if err := cmd.cloneSources(); err == nil {
-			// only delete sources if clone was successful
-			defer os.RemoveAll(cmd.opts.WorkspacePath)
-			downloadStep.Success()
-		} else {
-			downloadStep.Failure()
+		if err := cmd.cloneSources(ui); err != nil {
 			return err
 		}
+		// only delete sources if clone was successful
+		defer os.RemoveAll(cmd.opts.WorkspacePath)
 	}
 
 	err = cmd.deployKyma(ui)
-	if err == nil && cmd.opts.Verbose {
-		cmd.showSuccessMessage() //show also in verbose mode success message
+	if err == nil {
+		defer cmd.showSuccessMessage()
 	}
 	return err
 }
 
 func (cmd *command) isCompatibleVersion(ui asyncui.AsyncUI) error {
-	versionCheckStep := cmd.newDeploymentStep(ui, "Verifying Kyma version compatibility")
-	if err := cmd.compareVersions(); err == nil {
-		//version compatible
-		versionCheckStep.Success()
-	} else {
-		//version incompatible
-		versionCheckStep.Failuref("Could not verify Kyma version compatibility:\n\n%s\n\n", err)
-		question := cmd.newDeploymentStep(ui, "Continue Kyma upgrade")
-		if question.PromptYesNo("Do you want to proceed the upgrade?") {
-			question.Success()
-		} else {
-			question.Failure()
-			return fmt.Errorf("Upgrade stopped by user")
-		}
-	}
-	return nil
-}
-
-func (cmd *command) compareVersions() error {
+	compCheckStep := cmd.newDeploymentStep(ui, "Verifying Kyma version compatibility")
 	provider := metadata.New(cmd.K8s.Static())
 	clusterMetadata, err := provider.ReadKymaMetadata()
 	if err != nil {
 		return fmt.Errorf("Unable to get Kyma cluster version due to error: %v", err)
 	}
 
-	curVersion, curVersionErr := semver.Parse(clusterMetadata.Version)
-	nxtVersion, nxtVersionErr := semver.Parse(cmd.opts.Source)
+	if clusterMetadata.Version == "" { //Kyma seems not to be installed
+		compCheckStep.Successf("No previous Kyma version found")
+		return nil
+	}
 
-	if curVersionErr != nil {
-		return fmt.Errorf("Current Kyma version seems not to be an official release: %s", clusterMetadata.Version)
+	var compCheckFailed bool
+	if clusterMetadata.Version == cmd.opts.Source {
+		compCheckStep.Failuref("Current and next Kyma version are equal: %s", clusterMetadata.Version)
+		compCheckFailed = true
 	}
-	if nxtVersionErr != nil {
-		return fmt.Errorf("Next Kyma version seems not to be an official release: %s", cmd.opts.Source)
+	if err := checkCompatibility(clusterMetadata.Version, cmd.opts.Source); err == nil {
+		compCheckStep.Failuref("Compatibility between the current and the next Kyma version cannot be warrantied:\n\n%s\n\n", err)
+		compCheckFailed = true
 	}
-	if nxtVersion.LT(curVersion) {
-		return fmt.Errorf("Next Kyma version (%s) is lower than current Kyma version (%s)", nxtVersion, curVersion)
+	if !compCheckFailed {
+		compCheckStep.Success()
+		return nil
 	}
-	if nxtVersion.Major > curVersion.Major || (uint64(nxtVersion.Minor)-uint64(curVersion.Minor) > 2) {
-		return fmt.Errorf("Next Kyma version (%s) is more than 2 minor versions greater than current Kyma version (%s)",
-			nxtVersion, curVersion)
+
+	//seemless upgrade unnecessary or cannot be warrantied - aks user for approval
+	qUpgradeIncompStep := cmd.newDeploymentStep(ui, "Continue Kyma upgrade")
+	if qUpgradeIncompStep.PromptYesNo("Do you want to proceed the upgrade? ") {
+		qUpgradeIncompStep.Success()
+		return nil
+	} else {
+		qUpgradeIncompStep.Failure()
+		return fmt.Errorf("Upgrade stopped by user")
 	}
-	return nil
 }
 
 // cloneSources from Github
-func (cmd *command) cloneSources() error {
+func (cmd *command) cloneSources(ui asyncui.AsyncUI) error {
+	if _, err := os.Stat(cmd.opts.WorkspacePath); !os.IsNotExist(err) {
+		question := cmd.newDeploymentStep(ui, "Prepare Kyma download")
+		if question.PromptYesNo(fmt.Sprintf("Workspace folder '%s' exists. Can it be deleted? ", cmd.opts.WorkspacePath)) {
+			if err := os.RemoveAll(cmd.opts.WorkspacePath); err != nil {
+				question.Failuref("Could not delete workspace folder")
+				return err
+			}
+			question.Success()
+		} else {
+			question.Failure()
+			return fmt.Errorf("Download stopped by user")
+		}
+	}
+
+	downloadStep := cmd.newDeploymentStep(ui, "Downloading Kyma into workspace folder")
 	rev, err := git.ResolveRevision(kymaURL, cmd.opts.Source)
 	if err != nil {
 		return err
 	}
-	return git.CloneRevision(kymaURL, cmd.opts.WorkspacePath, rev)
+	err = git.CloneRevision(kymaURL, cmd.opts.WorkspacePath, rev)
+	if err == nil {
+		downloadStep.Success()
+	} else {
+		downloadStep.Failure()
+
+	}
+	return err
 }
 
 func (cmd *command) deployKyma(ui asyncui.AsyncUI) error {

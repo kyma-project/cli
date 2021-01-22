@@ -40,7 +40,7 @@ func (s *deploymentStep) Success() {
 
 func (s *deploymentStep) Successf(format string, args ...interface{}) {
 	s.success = true
-	s.logFunc(format, args)
+	s.logFunc(format, args...)
 }
 
 func (s *deploymentStep) Failure() {
@@ -50,7 +50,7 @@ func (s *deploymentStep) Failure() {
 
 func (s *deploymentStep) Failuref(format string, args ...interface{}) {
 	s.success = false
-	s.logFunc(format, args)
+	s.logFunc(format, args...)
 }
 
 func (s *deploymentStep) Stop(success bool) {
@@ -62,7 +62,7 @@ func (s *deploymentStep) Stop(success bool) {
 func (s *deploymentStep) Stopf(success bool, format string, args ...interface{}) {
 	s.success = success
 	s.running = false
-	s.logFunc(format, args)
+	s.logFunc(format, args...)
 }
 
 func (s *deploymentStep) LogInfo(msg string) {
@@ -70,7 +70,7 @@ func (s *deploymentStep) LogInfo(msg string) {
 }
 
 func (s *deploymentStep) LogInfof(format string, args ...interface{}) {
-	s.logFunc(format, args)
+	s.logFunc(format, args...)
 }
 
 func (s *deploymentStep) LogError(msg string) {
@@ -78,7 +78,7 @@ func (s *deploymentStep) LogError(msg string) {
 }
 
 func (s *deploymentStep) LogErrorf(format string, args ...interface{}) {
-	s.logFunc(format, args)
+	s.logFunc(format, args...)
 }
 
 func (s *deploymentStep) Prompt(msg string) (string, error) {
