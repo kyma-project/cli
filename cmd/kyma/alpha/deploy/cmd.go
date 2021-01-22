@@ -149,10 +149,9 @@ func (cmd *command) isCompatibleVersion(ui asyncui.AsyncUI) error {
 	if qUpgradeIncompStep.PromptYesNo("Do you want to proceed the upgrade? ") {
 		qUpgradeIncompStep.Success()
 		return nil
-	} else {
-		qUpgradeIncompStep.Failure()
-		return fmt.Errorf("Upgrade stopped by user")
 	}
+	qUpgradeIncompStep.Failure()
+	return fmt.Errorf("Upgrade stopped by user")
 }
 
 // cloneSources from Github
