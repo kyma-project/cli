@@ -62,8 +62,8 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd.Flags().DurationVarP(&o.HelmTimeout, "helm-timeout", "", 360*time.Second, "Timeout for the underlying Helm client.")
 	cobraCmd.Flags().IntVar(&o.WorkersCount, "workers-count", 4, "Number of parallel workers used for the deployment.")
 	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", LocalKymaDevDomain, "Domain used for installation.")
-	cobraCmd.Flags().StringVarP(&o.TLSCrt, "tls-crt", "", "", "TLS certificate for the domain used for installation. The certificate must be a base64-encoded value.")
-	cobraCmd.Flags().StringVarP(&o.TLSKey, "tls-key", "", "", "TLS key for the domain used for installation. The key must be a base64-encoded value.")
+	cobraCmd.Flags().StringVarP(&o.TLSCrtFile, "tls-crt", "", "", "TLS certificate file for the domain used for installation.")
+	cobraCmd.Flags().StringVarP(&o.TLSKeyFile, "tls-key", "", "", "TLS key file for the domain used for installation.")
 	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", o.defaultSource(), `Installation source.
 	- To use a specific release, write "kyma alpha deploy --source=1.17.1".
 	- To use the master branch, write "kyma alpha deploy --source=master".
@@ -291,11 +291,19 @@ func (cmd *command) setGlobalOverrides(overrides *deployment.Overrides) error {
 	globalOverrides["isLocalEnv"] = false //DEPRECATED - 'isLocalEnv' will be removed soon
 	globalOverrides["domainName"] = cmd.opts.Domain
 	if cmd.opts.tlsCertAndKeyProvided() {
-		globalOverrides["tlsKey"] = cmd.opts.TLSKey
-		globalOverrides["tlsCrt"] = cmd.opts.TLSCrt
+		tlsKeyEnc, err := cmd.opts.tlsKeyEnc()
+		if err != nil {
+			return err
+		}
+		globalOverrides["tlsKey"] = tlsKeyEnc
+		tlsCrtEnc, err := cmd.opts.tlsCrtEnc()
+		if err != nil {
+			return err
+		}
+		globalOverrides["tlsCrt"] = tlsCrtEnc
 	} else {
-		globalOverrides["tlsKey"] = cmd.opts.defaultTLSKey()
-		globalOverrides["tlsCrt"] = cmd.opts.defaultTLSCrt()
+		globalOverrides["tlsKey"] = cmd.opts.defaultTLSKeyEnc()
+		globalOverrides["tlsCrt"] = cmd.opts.defaultTLSCrtEnc()
 	}
 
 	// ingress settings
