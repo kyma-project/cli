@@ -1,10 +1,8 @@
 package function
 
 import (
-	"fmt"
 	"github.com/kyma-incubator/hydroform/function/pkg/workspace"
 	"github.com/kyma-project/cli/internal/cli"
-	"math/rand"
 	"os"
 	"path"
 	"time"
@@ -35,12 +33,6 @@ func (o *Options) setDefaults() (err error) {
 			return err
 		}
 		o.Filename = path.Join(pwd, workspace.CfgFilename)
-	}
-
-	if o.ImageName == "" {
-		name := path.Dir(o.Filename)
-		tag := fmt.Sprint(rand.Int())
-		o.ImageName = fmt.Sprintf(imageNameFormat, name, tag)
 	}
 
 	return

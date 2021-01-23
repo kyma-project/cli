@@ -1,16 +1,22 @@
 package function
 
 import (
+	"bufio"
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/archive"
+	"github.com/docker/go-connections/nat"
 	"github.com/kyma-incubator/hydroform/function/pkg/workspace"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
+	"io"
+	"math/rand"
 	"os"
 	"path"
 )
@@ -47,9 +53,7 @@ func NewCmd(o *Options) *cobra.Command {
 }
 
 func (c *command) Run() error {
-	s := c.NewStep("Build project")
 	if err := c.opts.setDefaults(); err != nil {
-		s.Failure()
 		return err
 	}
 
@@ -63,6 +67,13 @@ func (c *command) Run() error {
 		return errors.Wrap(err, "Could not decode the configuration file")
 	}
 
+	if c.opts.ImageName == "" {
+		name := cfg.Name
+		tag := fmt.Sprint(rand.Int())
+		c.opts.ImageName = fmt.Sprintf("%s:%s", name, tag)
+	}
+
+	s := c.NewStep(fmt.Sprintf("Build project %s", c.opts.ImageName))
 	ctx, cancel := context.WithCancel(context.Background())
 	if c.opts.BuildTimeout > 0 {
 		ctx, cancel = context.WithTimeout(ctx, c.opts.BuildTimeout)
@@ -77,10 +88,13 @@ func (c *command) Run() error {
 
 	buildOpts := &BuildOptions{
 		ImgCtx:     path.Dir(c.opts.Filename),
-		Dockerfile: fmt.Sprintf("%s/Dockerfile", path.Dir(c.opts.Filename)),
+		Dockerfile: "Dockerfile",
 		Tags:       []string{c.opts.ImageName},
 	}
-	BuildImage(client, ctx, buildOpts)
+
+	if err := BuildImage(client, ctx, buildOpts); err != nil {
+		return err
+	}
 
 	s.Success()
 
@@ -89,13 +103,16 @@ func (c *command) Run() error {
 	runOpts := &RunOptions{
 		ImgName: c.opts.ImageName,
 	}
-	if err := RunContainer(client, ctx, runOpts); err != nil {
+
+	id, err := RunContainer(client, ctx, runOpts)
+	if err != nil {
 		s.Failure()
 		return err
 	}
 
 	s.Success()
-	return nil
+
+	return FollowContainer(client, ctx, id)
 }
 
 type BuildOptions struct {
@@ -103,6 +120,8 @@ type BuildOptions struct {
 	Dockerfile string
 	Tags       []string
 }
+
+const dockerfile = `https://raw.githubusercontent.com/kyma-project/kyma/master/components/function-runtimes/nodejs12/Dockerfile`
 
 func BuildImage(c *client.Client, ctx context.Context, opts *BuildOptions) error {
 	reader, err := archive.TarWithOptions(opts.ImgCtx, &archive.TarOptions{})
@@ -115,15 +134,48 @@ func BuildImage(c *client.Client, ctx context.Context, opts *BuildOptions) error
 	defer cancel()
 
 	response, err := c.ImageBuild(ctx, reader, types.ImageBuildOptions{
-		Dockerfile: opts.Dockerfile,
-		Tags:       opts.Tags,
+		//RemoteContext:     dockerfile,
+		Tags:           opts.Tags,
+		SuppressOutput: true,
 	})
 	if err != nil {
 		return err
 	}
 	defer response.Body.Close()
 
-	//why "return log(response.Body)"?
+	return log(response.Body)
+}
+
+type ErrorDetail struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+}
+
+type ResultEntry struct {
+	Stream      string      `json:"stream,omitempty"`
+	ErrorDetail ErrorDetail `json:"errorDetail,omitempty"`
+	Error       string      `json:"error,omitempty"`
+}
+
+func log(readerCloser io.ReadCloser) error {
+	buf := bufio.NewReader(readerCloser)
+	for {
+		line, err := buf.ReadBytes('\n')
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+		var entryResult ResultEntry
+		if err = json.Unmarshal(line, &entryResult); err != nil {
+			return err
+		}
+		if entryResult.Error != "" {
+			return errors.Wrap(errors.New("image build failed"), entryResult.Error)
+		}
+		fmt.Print(entryResult.Stream)
+	}
 	return nil
 }
 
@@ -131,6 +183,64 @@ type RunOptions struct {
 	ImgName string
 }
 
-func RunContainer(c *client.Client, ctx context.Context, opts *RunOptions) error {
-	return c.ContainerStart(ctx, opts.ImgName, types.ContainerStartOptions{})
+func RunContainer(c *client.Client, ctx context.Context, opts *RunOptions) (string, error) {
+	body, err := c.ContainerCreate(ctx, &container.Config{
+		ExposedPorts: nat.PortSet{
+			"8080/tcp": struct{}{},
+		},
+		Image: opts.ImgName,
+	}, &container.HostConfig{
+		PortBindings: nat.PortMap{
+			"8080/tcp": []nat.PortBinding{
+				{
+					HostIP:   "0.0.0.0",
+					HostPort: "8080",
+				},
+			},
+		},
+	}, nil, "")
+	if err != nil {
+		return "", err
+	}
+
+	err = c.ContainerStart(ctx, body.ID, types.ContainerStartOptions{})
+	if err != nil {
+		return "", err
+	}
+
+	return body.ID, nil
+}
+
+func FollowContainer(c *client.Client, ctx context.Context, ID string) error {
+	//defer func(ID string) {
+	//	err := c.ContainerStop(ctx, ID, nil)
+	//	if err != nil {
+	//		fmt.Println(err)
+	//	}
+	//}(ID)
+	resp, err := c.ContainerLogs(ctx, ID, types.ContainerLogsOptions{
+		ShowStdout: false,
+		ShowStderr: false,
+		Follow:     true,
+	})
+	if err != nil {
+		return err
+	}
+	defer resp.Close()
+
+	for {
+		var b []byte
+		_, err := resp.Read(b)
+		if err == io.EOF {
+			fmt.Sprintf("Łooo chuj...")
+			break
+		}
+		if err != nil {
+			return err
+		}
+
+		fmt.Println(string(b))
+	}
+
+	return nil
 }
