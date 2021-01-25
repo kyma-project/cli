@@ -53,8 +53,8 @@ func NewCmd(o *Options) *cobra.Command {
 		Aliases: []string{"d"},
 	}
 
-	cobraCmd.Flags().StringVarP(&o.WorkspacePath, "workspace", "w", o.defaultWorkspacePath(), "Path used to download Kyma sources.")
-	cobraCmd.Flags().StringVarP(&o.ComponentsFile, "components", "c", o.defaultComponentsFile(), "Path to the components file.")
+	cobraCmd.Flags().StringVarP(&o.WorkspacePath, "workspace", "w", defaultWorkspacePath, "Path used to download Kyma sources.")
+	cobraCmd.Flags().StringVarP(&o.ComponentsFile, "components", "c", defaultComponentsFile, "Path to the components file.")
 	cobraCmd.Flags().StringVarP(&o.OverridesFile, "values-file", "f", "", "Path to a JSON or YAML file with configuration values.")
 	cobraCmd.Flags().StringSliceVarP(&o.Overrides, "value", "", []string{}, "Set a configuration value (e.g. --value component.key='the value').")
 	cobraCmd.Flags().DurationVarP(&o.CancelTimeout, "cancel-timeout", "", 900*time.Second, "Time after which the workers' context is canceled. Pending worker goroutines (if any) may continue if blocked by a Helm client.")
@@ -64,14 +64,14 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", LocalKymaDevDomain, "Domain used for installation.")
 	cobraCmd.Flags().StringVarP(&o.TLSCrtFile, "tls-crt", "", "", "TLS certificate file for the domain used for installation.")
 	cobraCmd.Flags().StringVarP(&o.TLSKeyFile, "tls-key", "", "", "TLS key file for the domain used for installation.")
-	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", o.defaultSource(), `Installation source.
+	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", defaultSource, `Installation source.
 	- To use a specific release, write "kyma alpha deploy --source=1.17.1".
 	- To use the master branch, write "kyma alpha deploy --source=master".
 	- To use a commit, write "kyma alpha deploy --source=34edf09a".
 	- To use a pull request, write "kyma alpha deploy --source=PR-9486".
 	- To use the local sources, write "kyma alpha deploy --source=local".`)
 	cobraCmd.Flags().StringVarP(&o.Profile, "profile", "p", "",
-		fmt.Sprintf("Kyma deployment profile. Supported profiles are: \"%s\".", strings.Join(o.profiles(), "\", \"")))
+		fmt.Sprintf("Kyma deployment profile. Supported profiles are: \"%s\".", strings.Join(kymaProfiles, "\", \"")))
 	return cobraCmd
 }
 
@@ -197,7 +197,7 @@ func (cmd *command) deployKyma(ui asyncui.AsyncUI) error {
 		BackoffMaxElapsedTimeSeconds:  60 * 5,
 		Log:                           cli.LogFunc(cmd.Verbose),
 		Profile:                       cmd.opts.Profile,
-		ComponentsListFile:            cmd.opts.ComponentsFile,
+		ComponentsListFile:            cmd.opts.ResolveComponentsFile(),
 		CrdPath:                       filepath.Join(resourcePath, "cluster-essentials", "files"),
 		ResourcePath:                  resourcePath,
 		Version:                       cmd.opts.Source,
@@ -295,19 +295,23 @@ func (cmd *command) setGlobalOverrides(overrides *deployment.Overrides) error {
 		return err
 	}
 	if certProvided {
+		// use encoded TLS key
 		tlsKeyEnc, err := cmd.opts.tlsKeyEnc()
 		if err != nil {
 			return err
 		}
 		globalOverrides["tlsKey"] = tlsKeyEnc
+
+		// use encoded TLS crt
 		tlsCrtEnc, err := cmd.opts.tlsCrtEnc()
 		if err != nil {
 			return err
 		}
 		globalOverrides["tlsCrt"] = tlsCrtEnc
 	} else {
-		globalOverrides["tlsKey"] = cmd.opts.defaultTLSKeyEnc()
-		globalOverrides["tlsCrt"] = cmd.opts.defaultTLSCrtEnc()
+		// use default TLS cert
+		globalOverrides["tlsKey"] = defaultTLSKeyEnc
+		globalOverrides["tlsCrt"] = defaultTLSCrtEnc
 	}
 
 	// ingress settings

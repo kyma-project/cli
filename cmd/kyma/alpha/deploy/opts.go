@@ -44,34 +44,13 @@ func NewOptions(o *cli.Options) *Options {
 	return &Options{Options: o}
 }
 
-//profiles returns the currently supported profiles
-func (o *Options) profiles() []string {
-	return kymaProfiles
-}
-
-//defaultSource returns the default Kyma version
-func (o *Options) defaultSource() string {
-	return defaultSource
-}
-
-//defaultWorkspacePath returns the default path to the CLI workspace directory
-func (o *Options) defaultWorkspacePath() string {
-	return defaultWorkspacePath
-}
-
-//defaultComponentsFile returns the default path to the components list file
-func (o *Options) defaultComponentsFile() string {
-	return defaultComponentsFile
-}
-
-//defaultTLSCrtEnc returns the default path TLS certificate (base64 encoded)
-func (o *Options) defaultTLSCrtEnc() string {
-	return defaultTLSCrtEnc
-}
-
-//defaultTLSKeyEnc returns the default TLS key (base64 encoded)
-func (o *Options) defaultTLSKeyEnc() string {
-	return defaultTLSKeyEnc
+func (o *Options) supportedProfile(profile string) bool {
+	for _, supportedProfile := range kymaProfiles {
+		if supportedProfile == profile {
+			return true
+		}
+	}
+	return false
 }
 
 //tlsCrtEnc returns the base64 encoded TLS certificate
@@ -92,13 +71,12 @@ func (o *Options) readFileAndEncode(file string) (string, error) {
 	return base64.StdEncoding.EncodeToString(content), nil
 }
 
-func (o *Options) supportedProfile(profile string) bool {
-	for _, supportedProfile := range kymaProfiles {
-		if supportedProfile == profile {
-			return true
-		}
+// ResolveComponentsFile resolves the components file path related to the configured workspace path
+func (o *Options) ResolveComponentsFile() string {
+	if (o.ComponentsFile == "") || (o.WorkspacePath != defaultWorkspacePath && o.ComponentsFile == defaultComponentsFile) {
+		return filepath.Join(o.WorkspacePath, "installation", "resources", "components.yaml")
 	}
-	return false
+	return o.ComponentsFile
 }
 
 // validateFlags applies a sanity check on provided options
@@ -113,7 +91,7 @@ func (o *Options) validateFlags() error {
 		return fmt.Errorf("Quit timeout (%v) cannot be smaller than cancel timeout (%v)", o.QuitTimeout, o.CancelTimeout)
 	}
 	if o.Profile != "" && !o.supportedProfile(o.Profile) {
-		return fmt.Errorf("Profile unknown or not supported. Supported profiles are: %s", strings.Join(o.profiles(), ", "))
+		return fmt.Errorf("Profile unknown or not supported. Supported profiles are: %s", strings.Join(kymaProfiles, ", "))
 	}
 	certsProvided, err := o.tlsCertAndKeyProvided()
 	if err != nil {

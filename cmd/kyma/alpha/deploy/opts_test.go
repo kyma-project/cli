@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -121,7 +122,7 @@ func TestOptsValidation(t *testing.T) {
 		}
 		err := opts.validateFlags()
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "key file not specified")
+		require.Contains(t, err.Error(), "key is empty")
 	})
 	t.Run("Cert is missing", func(t *testing.T) {
 		opts := &Options{
@@ -129,7 +130,7 @@ func TestOptsValidation(t *testing.T) {
 		}
 		err := opts.validateFlags()
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "certificate file not specified")
+		require.Contains(t, err.Error(), "certificate is empty")
 	})
 	t.Run("Wrong cert path", func(t *testing.T) {
 		opts := &Options{
@@ -148,5 +149,34 @@ func TestOptsValidation(t *testing.T) {
 		err := opts.validateFlags()
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "not found")
+	})
+}
+
+func TestComponentFile(t *testing.T) {
+	t.Run("Test with non-changed workspace path", func(t *testing.T) {
+		opts := &Options{
+			WorkspacePath: defaultWorkspacePath,
+		}
+		assert.Equal(t, defaultComponentsFile, opts.ResolveComponentsFile())
+	})
+	t.Run("Test with changed component file", func(t *testing.T) {
+		opts := &Options{
+			WorkspacePath:  defaultWorkspacePath,
+			ComponentsFile: "/xyz/comp.yaml",
+		}
+		assert.Equal(t, "/xyz/comp.yaml", opts.ResolveComponentsFile())
+	})
+	t.Run("Test with changed workspace path", func(t *testing.T) {
+		opts := &Options{
+			WorkspacePath: "/xyz/abc",
+		}
+		assert.Equal(t, "/xyz/abc/installation/resources/components.yaml", opts.ResolveComponentsFile())
+	})
+	t.Run("Test with changed workspace path ad componets file path", func(t *testing.T) {
+		opts := &Options{
+			WorkspacePath:  "/xyz/abc",
+			ComponentsFile: "/some/where/components.yaml",
+		}
+		assert.Equal(t, "/some/where/components.yaml", opts.ResolveComponentsFile())
 	})
 }
