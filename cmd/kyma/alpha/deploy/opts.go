@@ -130,12 +130,6 @@ func (o *Options) tlsCertAndKeyProvided() (bool, error) {
 	if o.TLSKeyFile == "" && o.TLSCrtFile == "" {
 		return false, nil
 	}
-	if o.TLSKeyFile == "" {
-		return false, fmt.Errorf("TLS certificate key file not specified")
-	}
-	if o.TLSCrtFile == "" {
-		return false, fmt.Errorf("TLS certificate file not specified")
-	}
 	if err := o.pathExists(o.TLSKeyFile, "TLS key"); err != nil {
 		return false, err
 	}
