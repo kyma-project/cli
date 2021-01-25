@@ -26,10 +26,7 @@ func TestFailedComponent(t *testing.T) {
 	t.Parallel()
 
 	t.Run("Send duplicate start events", func(t *testing.T) {
-		mockStepFactory := &StepFactoryMock{}
-		asyncUI := AsyncUI{StepFactory: mockStepFactory}
-		updCh, err := asyncUI.Start()
-		assert.NoError(t, err)
+		asyncUI, updCh, mockStepFactory := prepareTest(t)
 		updCh <- deployment.ProcessUpdate{
 			Event:     deployment.ProcessStart,
 			Phase:     deployment.InstallComponents,
@@ -47,10 +44,7 @@ func TestFailedComponent(t *testing.T) {
 	})
 
 	t.Run("Use custom installation phases", func(t *testing.T) {
-		mockStepFactory := &StepFactoryMock{}
-		asyncUI := AsyncUI{StepFactory: mockStepFactory}
-		updCh, err := asyncUI.Start()
-		assert.NoError(t, err)
+		asyncUI, updCh, mockStepFactory := prepareTest(t)
 
 		msgPhaseBefore := "I am a custom phase before deployment"
 		msgPhaseAfter := "I am a custom phase after deployment"
@@ -98,10 +92,8 @@ func TestFailedComponent(t *testing.T) {
 	})
 
 	t.Run("Send start and stop event with success", func(t *testing.T) {
-		mockStepFactory := &StepFactoryMock{}
-		asyncUI := AsyncUI{StepFactory: mockStepFactory}
-		updCh, err := asyncUI.Start()
-		assert.NoError(t, err)
+		asyncUI, updCh, mockStepFactory := prepareTest(t)
+
 		updCh <- deployment.ProcessUpdate{
 			Event:     deployment.ProcessStart,
 			Phase:     deployment.InstallComponents,
@@ -118,10 +110,8 @@ func TestFailedComponent(t *testing.T) {
 	})
 
 	t.Run("Send start and stop events with failure", func(t *testing.T) {
-		mockStepFactory := &StepFactoryMock{}
-		asyncUI := AsyncUI{StepFactory: mockStepFactory}
-		updCh, err := asyncUI.Start()
-		assert.NoError(t, err)
+		asyncUI, updCh, mockStepFactory := prepareTest(t)
+
 		// add step 1 (major installation step)
 		updCh <- deployment.ProcessUpdate{
 			Event:     deployment.ProcessStart,
@@ -180,4 +170,14 @@ func TestFailedComponent(t *testing.T) {
 		assert.Contains(t, mockStepFactory.Steps[3].Statuses(), fmt.Sprintf(deployComponentMsg, "comp2"))
 		assert.False(t, mockStepFactory.Steps[3].IsSuccessful()) //comp2 install failed
 	})
+}
+
+func prepareTest(t *testing.T) (AsyncUI, chan<- deployment.ProcessUpdate, *StepFactoryMock) {
+	mockStepFactory := &StepFactoryMock{}
+	asyncUI := AsyncUI{StepFactory: mockStepFactory}
+	err := asyncUI.Start()
+	assert.NoError(t, err)
+	updCh, err := asyncUI.UpdateChannel()
+	assert.NoError(t, err)
+	return asyncUI, updCh, mockStepFactory
 }

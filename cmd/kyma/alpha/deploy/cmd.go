@@ -18,17 +18,18 @@ import (
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/pkg/asyncui"
 	"github.com/kyma-project/cli/pkg/git"
+	"github.com/kyma-project/cli/pkg/step"
 	"github.com/magiconair/properties"
 	"github.com/spf13/cobra"
 
-	"github.com/kyma-incubator/hydroform/parallel-install/pkg/components"
 	installConfig "github.com/kyma-incubator/hydroform/parallel-install/pkg/config"
 	"github.com/kyma-incubator/hydroform/parallel-install/pkg/deployment"
+	"github.com/kyma-incubator/hydroform/parallel-install/pkg/metadata"
 )
 
 const (
-	kymaURL      = "https://github.com/kyma-project/kyma"
-	localVersion = "local"
+	kymaURL     = "https://github.com/kyma-project/kyma"
+	localSource = "local"
 )
 
 type command struct {
@@ -63,7 +64,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", LocalKymaDevDomain, "Domain used for installation.")
 	cobraCmd.Flags().StringVarP(&o.TLSCrt, "tls-crt", "", "", "TLS certificate for the domain used for installation. The certificate must be a base64-encoded value.")
 	cobraCmd.Flags().StringVarP(&o.TLSKey, "tls-key", "", "", "TLS key for the domain used for installation. The key must be a base64-encoded value.")
-	cobraCmd.Flags().StringVarP(&o.Version, "source", "s", o.defaultVersion(), `Installation source.
+	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", o.defaultSource(), `Installation source.
 	- To use a specific release, write "kyma alpha deploy --source=1.17.1".
 	- To use the master branch, write "kyma alpha deploy --source=master".
 	- To use a commit, write "kyma alpha deploy --source=34edf09a".
@@ -89,107 +90,102 @@ func (cmd *command) Run() error {
 	}
 
 	// initialize UI
-	var updateCh chan deployment.ProcessUpdate
-	if cmd.Verbose {
-		//TODO: check for errors instead showing success message blindly - depends on https://github.com/kyma-incubator/hydroform/issues/170
-		defer cmd.showSuccessMessage()
-	} else {
-		asyncUI := asyncui.AsyncUI{StepFactory: &cmd.Factory}
-		updateCh, err = asyncUI.Start()
-		if err != nil {
+	var ui asyncui.AsyncUI
+	if !cmd.Verbose { //use async UI only if not in verbose mode
+		ui = asyncui.AsyncUI{StepFactory: &cmd.Factory}
+		if err := ui.Start(); err != nil {
 			return err
 		}
-		defer func() {
-			asyncUI.Stop() // stop receiving update-events and wait until UI rendering is finished
-			if !asyncUI.Failed {
-				cmd.showSuccessMessage()
-			}
-		}()
+		defer ui.Stop()
 	}
 
-	// only download if not from local sources
-	if cmd.opts.Version != localVersion {
-		step := cmd.startDeploymentStep(updateCh, "Downloading Kyma")
-
-		rev, err := git.ResolveRevision(kymaURL, cmd.opts.Version)
-		if err != nil {
-			cmd.stopDeploymentStep(updateCh, step, false)
+	if cmd.opts.Source != localSource { // only download if not from local sources
+		if err := cmd.isCompatibleVersion(ui); err != nil {
 			return err
 		}
-
-		if err := git.CloneRevision(kymaURL, cmd.opts.WorkspacePath, rev); err != nil {
-			cmd.stopDeploymentStep(updateCh, step, false)
+		if err := cmd.cloneSources(ui); err != nil {
 			return err
 		}
 		// only delete sources if clone was successful
 		defer os.RemoveAll(cmd.opts.WorkspacePath)
-		cmd.stopDeploymentStep(updateCh, step, true)
 	}
 
-	return cmd.deployKyma(updateCh)
+	err = cmd.deployKyma(ui)
+	if err == nil {
+		defer cmd.showSuccessMessage()
+	}
+	return err
 }
 
-func (cmd *command) showSuccessMessage() {
-	var err error
-	logFunc := cli.LogFunc(cmd.Verbose)
-
-	isLocal, err := cmd.isLocalSetup()
+func (cmd *command) isCompatibleVersion(ui asyncui.AsyncUI) error {
+	compCheckStep := cmd.newDeploymentStep(ui, "Verifying Kyma version compatibility")
+	provider := metadata.New(cmd.K8s.Static())
+	clusterMetadata, err := provider.ReadKymaMetadata()
 	if err != nil {
-		logFunc("%s", err)
+		return fmt.Errorf("Unable to get Kyma cluster version due to error: %v", err)
 	}
 
-	fmt.Println("Kyma successfully installed.")
+	if clusterMetadata.Version == "" { //Kyma seems not to be installed
+		compCheckStep.Successf("No previous Kyma version found")
+		return nil
+	}
 
-	if isLocal {
-		if err = cmd.storeCrtAsFile(); err != nil {
-			logFunc("%s", err)
+	var compCheckFailed bool
+	if clusterMetadata.Version == cmd.opts.Source {
+		compCheckStep.Failuref("Current and next Kyma version are equal: %s", clusterMetadata.Version)
+		compCheckFailed = true
+	}
+	if err := checkCompatibility(clusterMetadata.Version, cmd.opts.Source); err == nil {
+		compCheckStep.Failuref("Compatibility between the current and the next Kyma version cannot be warrantied:\n\n%s\n\n", err)
+		compCheckFailed = true
+	}
+	if !compCheckFailed {
+		compCheckStep.Success()
+		return nil
+	}
+
+	//seemless upgrade unnecessary or cannot be warrantied - aks user for approval
+	qUpgradeIncompStep := cmd.newDeploymentStep(ui, "Continue Kyma upgrade")
+	if qUpgradeIncompStep.PromptYesNo("Do you want to proceed the upgrade? ") {
+		qUpgradeIncompStep.Success()
+		return nil
+	}
+	qUpgradeIncompStep.Failure()
+	return fmt.Errorf("Upgrade stopped by user")
+}
+
+// cloneSources from Github
+func (cmd *command) cloneSources(ui asyncui.AsyncUI) error {
+	if _, err := os.Stat(cmd.opts.WorkspacePath); !os.IsNotExist(err) {
+		question := cmd.newDeploymentStep(ui, "Prepare Kyma download")
+		if question.PromptYesNo(fmt.Sprintf("Workspace folder '%s' exists. Can it be deleted? ", cmd.opts.WorkspacePath)) {
+			if err := os.RemoveAll(cmd.opts.WorkspacePath); err != nil {
+				question.Failuref("Could not delete workspace folder")
+				return err
+			}
+			question.Success()
+		} else {
+			question.Failure()
+			return fmt.Errorf("Download stopped by user")
 		}
-		fmt.Println(`
-Generated self signed TLS certificate should be trusted in your system.
-
-  * On Mac Os X execute this command:
-   
-    sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain kyma.crt
-
-  * On Windows please follow the steps described here:
-
-    https://support.globalsign.com/ssl/ssl-certificates-installation/import-and-export-certificate-microsoft-windows
-
-This is a one time operation (you can skip this step if you did it before).`)
 	}
 
-	adminPw, err := cmd.getAdminPw()
-	if err != nil {
-		logFunc("%s", err)
-	}
-	fmt.Printf(`
-Kyma Console Url: %s
-User: admin@kyma.cx
-Password: %s
-
-`, fmt.Sprintf("https://console.%s", cmd.opts.Domain), adminPw)
-}
-
-func (cmd *command) storeCrtAsFile() error {
-	secret, err := cmd.K8s.Static().CoreV1().Secrets("istio-system").Get(context.Background(), "kyma-gateway-certs", metav1.GetOptions{})
+	downloadStep := cmd.newDeploymentStep(ui, "Downloading Kyma into workspace folder")
+	rev, err := git.ResolveRevision(kymaURL, cmd.opts.Source)
 	if err != nil {
 		return err
 	}
-	if err = ioutil.WriteFile("kyma.crt", secret.Data["cert"], 0600); err != nil {
-		return err
+	err = git.CloneRevision(kymaURL, cmd.opts.WorkspacePath, rev)
+	if err == nil {
+		downloadStep.Success()
+	} else {
+		downloadStep.Failure()
+
 	}
-	return nil
+	return err
 }
 
-func (cmd *command) getAdminPw() (string, error) {
-	secret, err := cmd.K8s.Static().CoreV1().Secrets("kyma-system").Get(context.Background(), "admin-user", metav1.GetOptions{})
-	if err != nil {
-		return "", err
-	}
-	return string(secret.Data["password"]), nil
-}
-
-func (cmd *command) deployKyma(updateCh chan<- deployment.ProcessUpdate) error {
+func (cmd *command) deployKyma(ui asyncui.AsyncUI) error {
 	var resourcePath = filepath.Join(cmd.opts.WorkspacePath, "resources")
 
 	installationCfg := installConfig.Config{
@@ -204,7 +200,7 @@ func (cmd *command) deployKyma(updateCh chan<- deployment.ProcessUpdate) error {
 		ComponentsListFile:            cmd.opts.ComponentsFile,
 		CrdPath:                       filepath.Join(resourcePath, "cluster-essentials", "files"),
 		ResourcePath:                  resourcePath,
-		Version:                       cmd.opts.Version,
+		Version:                       cmd.opts.Source,
 	}
 
 	overrides, err := cmd.overrides()
@@ -212,8 +208,17 @@ func (cmd *command) deployKyma(updateCh chan<- deployment.ProcessUpdate) error {
 		return err
 	}
 
-	if err := cmd.configureCoreDNS(updateCh); err != nil {
+	if err := cmd.configureCoreDNS(ui); err != nil {
 		return err
+	}
+
+	// if an AsyncUI is used, get channel for update events
+	var updateCh chan<- deployment.ProcessUpdate
+	if ui.IsRunning() {
+		updateCh, err = ui.UpdateChannel()
+		if err != nil {
+			return err
+		}
 	}
 
 	installer, err := deployment.NewDeployment(installationCfg, overrides, cmd.K8s.Static(), updateCh)
@@ -224,12 +229,14 @@ func (cmd *command) deployKyma(updateCh chan<- deployment.ProcessUpdate) error {
 	return installer.StartKymaDeployment()
 }
 
-func (cmd *command) configureCoreDNS(updateCh chan<- deployment.ProcessUpdate) error {
+func (cmd *command) configureCoreDNS(ui asyncui.AsyncUI) error {
 	if cmd.opts.Domain == LocalKymaDevDomain { //patch Kubernetes DNS system when using "local.kyma.dev" as domain name
-		step := cmd.startDeploymentStep(updateCh, "Configure Kubernetes DNS to support Kyma local dev domain")
+		step := cmd.newDeploymentStep(ui, "Configure Kubernetes DNS to support Kyma local dev domain")
 		err := ConfigureCoreDNS(cmd.K8s.Static())
-		cmd.stopDeploymentStep(updateCh, step, (err == nil))
-		if err != nil {
+		if err == nil {
+			step.Success()
+		} else {
+			step.Failure()
 			return err
 		}
 	}
@@ -355,38 +362,72 @@ func (cmd *command) isLocalSetup() (bool, error) {
 	return (provider == clusterinfo.ClusterProviderK3s), nil
 }
 
-func (cmd *command) startDeploymentStep(updateCh chan<- deployment.ProcessUpdate, step string) deployment.InstallationPhase {
-	comp := components.KymaComponent{}
-	phase := deployment.InstallationPhase(step)
-	if updateCh == nil {
-		cli.LogFunc(cmd.opts.Verbose)(step)
-	} else {
-		updateCh <- deployment.ProcessUpdate{
-			Component: comp,
-			Event:     deployment.ProcessStart,
-			Phase:     phase,
-		}
+func (cmd *command) showSuccessMessage() {
+	var err error
+	logFunc := cli.LogFunc(cmd.Verbose)
+
+	isLocal, err := cmd.isLocalSetup()
+	if err != nil {
+		logFunc("%s", err)
 	}
-	return phase
+
+	fmt.Println("Kyma successfully installed.")
+
+	if isLocal {
+		if err = cmd.storeCrtAsFile(); err != nil {
+			logFunc("%s", err)
+		}
+		fmt.Println(`
+Generated self signed TLS certificate should be trusted in your system.
+
+  * On Mac Os X execute this command:
+   
+    sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain kyma.crt
+
+  * On Windows please follow the steps described here:
+
+    https://support.globalsign.com/ssl/ssl-certificates-installation/import-and-export-certificate-microsoft-windows
+
+This is a one time operation (you can skip this step if you did it before).`)
+	}
+
+	adminPw, err := cmd.getAdminPw()
+	if err != nil {
+		logFunc("%s", err)
+	}
+	fmt.Printf(`
+Kyma Console Url: %s
+User: admin@kyma.cx
+Password: %s
+
+`, fmt.Sprintf("https://console.%s", cmd.opts.Domain), adminPw)
 }
 
-func (cmd *command) stopDeploymentStep(updateCh chan<- deployment.ProcessUpdate, phase deployment.InstallationPhase, success bool) {
-	comp := components.KymaComponent{}
-	if updateCh == nil {
-		cli.LogFunc(cmd.opts.Verbose)("%s finished successfully: %t", string(phase), success)
-		return
+func (cmd *command) storeCrtAsFile() error {
+	secret, err := cmd.K8s.Static().CoreV1().Secrets("istio-system").Get(context.Background(), "kyma-gateway-certs", metav1.GetOptions{})
+	if err != nil {
+		return err
 	}
-	if success {
-		updateCh <- deployment.ProcessUpdate{
-			Component: comp,
-			Event:     deployment.ProcessFinished,
-			Phase:     phase,
-		}
-	} else {
-		updateCh <- deployment.ProcessUpdate{
-			Component: comp,
-			Event:     deployment.ProcessExecutionFailure,
-			Phase:     phase,
-		}
+	if err = ioutil.WriteFile("kyma.crt", secret.Data["cert"], 0600); err != nil {
+		return err
 	}
+	return nil
+}
+
+func (cmd *command) getAdminPw() (string, error) {
+	secret, err := cmd.K8s.Static().CoreV1().Secrets("kyma-system").Get(context.Background(), "admin-user", metav1.GetOptions{})
+	if err != nil {
+		return "", err
+	}
+	return string(secret.Data["password"]), nil
+}
+
+func (cmd *command) newDeploymentStep(ui asyncui.AsyncUI, stepName string) step.Step {
+	step, err := ui.AddStep(stepName)
+	if err == nil {
+		return step
+	}
+	step = newDeploymentStep(stepName, cli.LogFunc(cmd.opts.Verbose)) //use step which logs to console as fallback
+	step.Start()
+	return step
 }
