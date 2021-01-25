@@ -399,7 +399,7 @@ Generated self signed TLS certificate should be trusted in your system.
 This is a one time operation (you can skip this step if you did it before).`)
 	}
 
-	adminPw, err := cmd.getAdminPw()
+	adminPw, err := cmd.adminPw()
 	if err != nil {
 		logFunc("%s", err)
 	}
@@ -422,7 +422,7 @@ func (cmd *command) storeCrtAsFile() error {
 	return nil
 }
 
-func (cmd *command) getAdminPw() (string, error) {
+func (cmd *command) adminPw() (string, error) {
 	secret, err := cmd.K8s.Static().CoreV1().Secrets("kyma-system").Get(context.Background(), "admin-user", metav1.GetOptions{})
 	if err != nil {
 		return "", err

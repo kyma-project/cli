@@ -1,7 +1,6 @@
 package deploy
 
 import (
-	"bufio"
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
@@ -86,11 +85,7 @@ func (o *Options) tlsKeyEnc() (string, error) {
 }
 
 func (o *Options) readFileAndEncode(file string) (string, error) {
-	f, err := os.Open(file)
-	if err != nil {
-		return "", err
-	}
-	content, err := ioutil.ReadAll(bufio.NewReader(f))
+	content, err := ioutil.ReadFile(file)
 	if err != nil {
 		return "", err
 	}
