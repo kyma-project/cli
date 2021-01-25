@@ -31,7 +31,7 @@ func setUp() {
 	if err != nil {
 		panic(errors.Wrap(err, "Failed to decode base64-encoded certificate key string"))
 	}
-	if err := ioutil.WriteFile(crtFile, crt, 0644); err != nil {
+	if err := ioutil.WriteFile(crtFile, crt, 0600); err != nil {
 		panic(errors.Wrap(err, fmt.Sprintf("Failed to write certificate file '%s'", crtFile)))
 	}
 
@@ -39,7 +39,7 @@ func setUp() {
 	if err != nil {
 		panic(errors.Wrap(err, "Failed to decode base64-encoded certificate string"))
 	}
-	if err := ioutil.WriteFile(keyFile, key, 0644); err != nil {
+	if err := ioutil.WriteFile(keyFile, key, 0600); err != nil {
 		panic(errors.Wrap(err, fmt.Sprintf("Failed to write certificate key file '%s'", keyFile)))
 	}
 }
@@ -87,6 +87,7 @@ func TestCertAsFile(t *testing.T) {
 	})
 	t.Run("Ensure proper base64 encoding", func(t *testing.T) {
 		ex, err := os.Executable()
+		require.NoError(t, err)
 
 		fileContent, err := ioutil.ReadFile(ex)
 		require.NoError(t, err)
