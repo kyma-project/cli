@@ -290,7 +290,11 @@ func (cmd *command) setGlobalOverrides(overrides *deployment.Overrides) error {
 	globalOverrides := make(map[string]interface{})
 	globalOverrides["isLocalEnv"] = false //DEPRECATED - 'isLocalEnv' will be removed soon
 	globalOverrides["domainName"] = cmd.opts.Domain
-	if cmd.opts.tlsCertAndKeyProvided() {
+	certProvided, err := cmd.opts.tlsCertAndKeyProvided()
+	if err != nil {
+		return err
+	}
+	if certProvided {
 		tlsKeyEnc, err := cmd.opts.tlsKeyEnc()
 		if err != nil {
 			return err

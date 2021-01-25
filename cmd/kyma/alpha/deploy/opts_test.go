@@ -105,3 +105,48 @@ func TestCertAsFile(t *testing.T) {
 		require.Equal(t, expected, crtEnc)
 	})
 }
+
+func TestOptsValidation(t *testing.T) {
+	t.Run("Happy path", func(t *testing.T) {
+		opts := &Options{
+			TLSCrtFile: crtFile,
+			TLSKeyFile: keyFile,
+		}
+		err := opts.validateFlags()
+		require.NoError(t, err)
+	})
+	t.Run("Key is missing", func(t *testing.T) {
+		opts := &Options{
+			TLSCrtFile: crtFile,
+		}
+		err := opts.validateFlags()
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "key file not specified")
+	})
+	t.Run("Cert is missing", func(t *testing.T) {
+		opts := &Options{
+			TLSKeyFile: keyFile,
+		}
+		err := opts.validateFlags()
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "certificate file not specified")
+	})
+	t.Run("Wrong cert path", func(t *testing.T) {
+		opts := &Options{
+			TLSCrtFile: "/abc/test.yaml",
+			TLSKeyFile: keyFile,
+		}
+		err := opts.validateFlags()
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "not found")
+	})
+	t.Run("Wrong key path", func(t *testing.T) {
+		opts := &Options{
+			TLSCrtFile: crtFile,
+			TLSKeyFile: "/do/not/exist.key",
+		}
+		err := opts.validateFlags()
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "not found")
+	})
+}

@@ -115,27 +115,34 @@ func (o *Options) validateFlags() error {
 	if o.Profile != "" && !o.supportedProfile(o.Profile) {
 		return fmt.Errorf("Profile unknown or not supported. Supported profiles are: %s", strings.Join(o.profiles(), ", "))
 	}
-	if o.Domain != LocalKymaDevDomain && !o.tlsCertAndKeyProvided() {
+	certsProvided, err := o.tlsCertAndKeyProvided()
+	if err != nil {
+		return err
+	}
+	if o.Domain != LocalKymaDevDomain && !certsProvided {
 		return fmt.Errorf("To use a custom domain name also a custom TLS certificate and TLS key has to be provided")
-	}
-	if (o.TLSKeyFile != "" || o.TLSCrtFile != "") && !o.tlsCertAndKeyProvided() {
-		return fmt.Errorf("To use a custom TLS certificate the TLS certificate and TLS key has to be provided")
-	}
-	if o.TLSCrtFile != "" {
-		if err := o.pathExists(o.TLSCrtFile, "TLS certificate"); err != nil {
-			return err
-		}
-	}
-	if o.TLSKeyFile != "" {
-		if err := o.pathExists(o.TLSKeyFile, "TLS key"); err != nil {
-			return err
-		}
 	}
 	return nil
 }
 
-func (o *Options) tlsCertAndKeyProvided() bool {
-	return o.TLSCrtFile != "" && o.TLSKeyFile != ""
+//tlsCertAndKeyProvided verify that always both cert parameters are provided and pointing to files
+func (o *Options) tlsCertAndKeyProvided() (bool, error) {
+	if o.TLSKeyFile == "" && o.TLSCrtFile == "" {
+		return false, nil
+	}
+	if o.TLSKeyFile == "" {
+		return false, fmt.Errorf("TLS certificate key file not specified")
+	}
+	if o.TLSCrtFile == "" {
+		return false, fmt.Errorf("TLS certificate file not specified")
+	}
+	if err := o.pathExists(o.TLSKeyFile, "TLS key"); err != nil {
+		return false, err
+	}
+	if err := o.pathExists(o.TLSCrtFile, "TLS certificate"); err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (o *Options) pathExists(path string, description string) error {
