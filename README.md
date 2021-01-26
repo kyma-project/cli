@@ -22,29 +22,6 @@ choco install kyma-cli
 
 Read more about [installation options](https://github.com/kyma-project/cli/blob/master/docs/04-01-installation.md).
 
-### Build from Sources
-
-Alternatively, you can also build the Kyma CLI from the sources:
-
-1. To clone the Kyma CLI repository, run:
-
-```bash
-git clone git@github.com:kyma-project/cli.git
-```
-
-2. Enter the root folder of the cloned repository:
-
-```bash
-cd cli
-```
-
-3. Run `make build` for your target OS:
-    - Mac OSX: `make build-darwin`
-    - Windows: `make build-windows`
-    - Linux: `make build-linux`
-
-The binary is saved to the `bin` folder in the Kyma CLI repository.
-
 ## Use Kyma CLI
 
 Once you have installed the CLI, you can use its set of commands and flags to provision a cluster and start working with Kyma.
@@ -68,7 +45,34 @@ kyma install -s master
 
 >**TIP:** Read more about the available [commands and flags](https://github.com/kyma-project/cli/blob/master/docs/03-01-use-kyma-cli.md).You can also try out Kyma CLI using [these examples](https://github.com/kyma-project/cli/blob/master/docs/03-02-examples.md).
 
+### Kyma CLI as kubectl plugin
+
+To learn how to use Kyma CLI as a kubectl plugin, follow [this tutorial](https://github.com/kyma-project/cli/blob/master/docs/08-01-kubectl-plugin-tutorial.md).
+
 ## Development
+
+### Build from sources
+
+You can build the Kyma CLI from the sources:
+
+1. To clone the Kyma CLI repository, run:
+
+```bash
+git clone git@github.com:kyma-project/cli.git
+```
+
+2. Enter the root folder of the cloned repository:
+
+```bash
+cd cli
+```
+
+3. Run `make build` for your target OS:
+    - Mac OSX: `make build-darwin`
+    - Windows: `make build-windows`
+    - Linux: `make build-linux`
+
+The binary is saved to the `bin` folder in the Kyma CLI repository.
 
 ### Kyma CLI stable binaries
 
@@ -80,7 +84,3 @@ To download the binaries, run:
 curl -Lo kyma https://storage.googleapis.com/kyma-cli-stable/kyma-darwin # kyma-linux or kyma.exe
 chmod +x kyma
 ```
-
-### Kyma CLI as kubectl plugin
-
-To learn how to use Kyma CLI as a kubectl plugin, follow [this tutorial](https://github.com/kyma-project/cli/blob/master/docs/08-01-kubectl-plugin-tutorial.md).
