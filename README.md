@@ -22,7 +22,6 @@ choco install kyma-cli
 
 Read more about [installation options](https://github.com/kyma-project/cli/blob/master/docs/04-01-installation.md).
 
-
 ## Use Kyma CLI
 
 Once you have installed the CLI, you can use its set of commands and flags to provision a cluster and start working with Kyma.
