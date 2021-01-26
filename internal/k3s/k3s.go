@@ -43,8 +43,8 @@ func RunCmd(verbose bool, timeout time.Duration, args ...string) (string, error)
 	return out, nil
 }
 
-//CheckVersion checks whether k3s version is supported
-func CheckVersion(verbose bool) error {
+//checkVersion checks whether k3s version is supported
+func checkVersion(verbose bool) error {
 	versionOutput, err := RunCmd(verbose, defaultTimeout, "version")
 	if err != nil {
 		return err
@@ -84,6 +84,10 @@ func Initialize(verbose bool) error {
 		}
 		return fmt.Errorf("Command 'k3d' not found. Please install k3d following the installation " +
 			"instructions provided at https://github.com/rancher/k3d#get")
+	}
+
+	if err := checkVersion(verbose); err != nil {
+		return err
 	}
 
 	//verify whether k3d seems to be properly installed
