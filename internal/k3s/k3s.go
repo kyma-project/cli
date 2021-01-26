@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	k3dMinVersion  string        = "1.19.0"
+	k3dMinVersion  string        = "3.4.0"
 	defaultTimeout time.Duration = 10 * time.Second
 )
 
@@ -50,13 +50,13 @@ func checkVersion(verbose bool) error {
 		return err
 	}
 
-	exp, _ := regexp.Compile(`k3s version v([^\s-]+)`)
+	exp, _ := regexp.Compile(`k3d version v([^\s-]+)`)
 	versionString := exp.FindStringSubmatch(versionOutput)
 	if verbose {
-		fmt.Printf("Extracted K3s version: '%s'", versionString[1])
+		fmt.Printf("Extracted K3d version: '%s'", versionString[1])
 	}
 	if len(versionString) < 2 {
-		return fmt.Errorf("Could not extract k3s version from command output:\n%s", versionOutput)
+		return fmt.Errorf("Could not extract k3d version from command output:\n%s", versionOutput)
 	}
 	version, err := semver.Parse(versionString[1])
 	if err != nil {
@@ -65,11 +65,11 @@ func checkVersion(verbose bool) error {
 
 	minVersion, _ := semver.Parse(k3dMinVersion)
 	if version.Major > minVersion.Major {
-		return fmt.Errorf("You are using an unsupported k3s major version '%d'. "+
-			"This may not work. The recommended k3s major version is '%d'", version.Major, minVersion.Major)
+		return fmt.Errorf("You are using an unsupported k3d major version '%d'. "+
+			"This may not work. The recommended k3d major version is '%d'", version.Major, minVersion.Major)
 	} else if version.LT(minVersion) {
-		return fmt.Errorf("You are using an unsupported k3s version '%s'. "+
-			"This may not work. The recommended k3s version is >= '%s'", version, minVersion)
+		return fmt.Errorf("You are using an unsupported k3d version '%s'. "+
+			"This may not work. The recommended k3d version is >= '%s'", version, minVersion)
 	}
 
 	return nil
@@ -139,8 +139,11 @@ func StartCluster(verbose bool, timeout time.Duration, clusterName string, worke
 		"--k3s-server-arg", "traefik",
 	}
 
-	//add futher custom server arg
+	//add further custom server args
 	for _, srvArg := range serverArgs {
+		if srvArg == "" {
+			continue
+		}
 		cmdArgs = append(cmdArgs, "--k3s-server-arg")
 		cmdArgs = append(cmdArgs, srvArg)
 	}
