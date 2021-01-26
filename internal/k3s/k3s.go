@@ -127,15 +127,26 @@ func ClusterExists(verbose bool, clusterName string) (bool, error) {
 }
 
 //StartCluster starts a cluster
-func StartCluster(verbose bool, timeout time.Duration, clusterName string, workers int) error {
-	_, err := RunCmd(verbose, timeout,
+func StartCluster(verbose bool, timeout time.Duration, clusterName string, workers int, serverArgs []string) error {
+	cmdArgs := []string{
 		"cluster", "create", clusterName,
-		"--timeout", fmt.Sprintf("%ds", int(timeout.Seconds())),
-		"-p", "80:80@loadbalancer", "-p", "443:443@loadbalancer",
-		"--k3s-server-arg", "--no-deploy", "--k3s-server-arg", "traefik",
 		"--switch-context",
+		"--timeout", fmt.Sprintf("%ds", int(timeout.Seconds())),
+		"-p", "80:80@loadbalancer",
+		"-p", "443:443@loadbalancer",
 		"--agents", fmt.Sprintf("%d", workers),
-	)
+		"--k3s-server-arg", "--no-deploy",
+		"--k3s-server-arg", "traefik",
+	}
+
+	//add futher custom server arg
+	for _, srvArg := range serverArgs {
+		cmdArgs = append(cmdArgs, "--k3s-server-arg")
+		cmdArgs = append(cmdArgs, srvArg)
+	}
+
+	_, err := RunCmd(verbose, timeout, cmdArgs...)
+
 	return err
 }
 
