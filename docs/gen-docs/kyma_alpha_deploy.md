@@ -27,8 +27,8 @@ kyma alpha deploy [flags]
                                   	- To use a commit, write "kyma alpha deploy --source=34edf09a".
                                   	- To use a pull request, write "kyma alpha deploy --source=PR-9486".
                                   	- To use the local sources, write "kyma alpha deploy --source=local". (default "master")
-      --tls-crt string            TLS certificate for the domain used for installation. The certificate must be a base64-encoded value.
-      --tls-key string            TLS key for the domain used for installation. The key must be a base64-encoded value.
+      --tls-crt string            TLS certificate file for the domain used for installation.
+      --tls-key string            TLS key file for the domain used for installation.
       --value strings             Set a configuration value (e.g. --value component.key='the value').
   -f, --values-file string        Path to a JSON or YAML file with configuration values.
       --workers-count int         Number of parallel workers used for the deployment. (default 4)
