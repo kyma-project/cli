@@ -62,3 +62,7 @@ data:
 
 	return err
 }
+
+func isLocalKymaDomain(domain string) bool {
+	return domain == LocalKymaDevDomain
+}

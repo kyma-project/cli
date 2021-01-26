@@ -14,7 +14,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kyma-project/cli/internal/cli"
-	"github.com/kyma-project/cli/internal/clusterinfo"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/pkg/asyncui"
 	"github.com/kyma-project/cli/pkg/git"
@@ -230,7 +229,7 @@ func (cmd *command) deployKyma(ui asyncui.AsyncUI) error {
 }
 
 func (cmd *command) configureCoreDNS(ui asyncui.AsyncUI) error {
-	if cmd.opts.Domain == LocalKymaDevDomain { //patch Kubernetes DNS system when using "local.kyma.dev" as domain name
+	if isLocalKymaDomain(cmd.opts.Domain) { //patch Kubernetes DNS system when using "local.kyma.dev" as domain name
 		step := cmd.newDeploymentStep(ui, "Configure Kubernetes DNS to support Kyma local dev domain")
 		err := ConfigureCoreDNS(cmd.K8s.Static())
 		if err == nil {
@@ -365,31 +364,19 @@ func (cmd *command) convertToOverridesMap(key, value string) (string, map[string
 	return comp, latestOverrideMap, nil
 }
 
-// isLocalSetup is a helper function to figure out whether Kyma runs locally
-func (cmd *command) isLocalSetup() (bool, error) {
-	clInfo := clusterinfo.New(cmd.K8s.Static())
-	if err := clInfo.Read(); err != nil {
-		return false, err
-	}
-	provider, err := clInfo.Provider()
-	if err != nil {
-		return false, err
-	}
-	return (provider == clusterinfo.ClusterProviderK3s), nil
-}
-
 func (cmd *command) showSuccessMessage() {
 	var err error
 	logFunc := cli.LogFunc(cmd.Verbose)
 
-	isLocal, err := cmd.isLocalSetup()
+	fmt.Println("Kyma successfully installed.")
+
+	tlsProvided, err := cmd.opts.tlsCertAndKeyProvided()
 	if err != nil {
 		logFunc("%s", err)
 	}
 
-	fmt.Println("Kyma successfully installed.")
-
-	if isLocal {
+	// show cert installation hint only for local Kyma domain and if user isn't providing a custom cert
+	if isLocalKymaDomain(cmd.opts.Domain) && !tlsProvided {
 		if err = cmd.storeCrtAsFile(); err != nil {
 			logFunc("%s", err)
 		}
