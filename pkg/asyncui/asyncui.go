@@ -21,6 +21,7 @@ const (
 	deployComponentsPhaseMsg      string = "Deploying Kyma"
 	undeployComponentsPhaseMsg    string = "Undeploying Kyma"
 	deployComponentMsg            string = "Deploying component '%s'"
+	undeployComponentMsg          string = "Removing component '%s'"
 )
 
 // AsyncUI renders the CLI ui based on receiving events
@@ -144,7 +145,13 @@ func (ui *AsyncUI) renderStopEvent(procUpdEvent deployment.ProcessUpdate, ongoin
 	}
 
 	// for component specific installation event show the result in a dedicated step
-	step := ui.StepFactory.NewStep(fmt.Sprintf(deployComponentMsg, comp.Name))
+	var stepName string
+	if installPhase == deployment.InstallComponents {
+		stepName = fmt.Sprintf(deployComponentMsg, comp.Name)
+	} else {
+		stepName = fmt.Sprintf(undeployComponentMsg, comp.Name)
+	}
+	step := ui.StepFactory.NewStep(stepName)
 	if comp.Status == components.StatusError {
 		step.Failure()
 		return fmt.Errorf("Deployment of component '%s' failed", comp.Name)

@@ -25,10 +25,6 @@ import (
 	"github.com/kyma-incubator/hydroform/parallel-install/pkg/metadata"
 )
 
-const (
-	localSource = "local"
-)
-
 var (
 	stepFactory *deploy.UIStepFactory
 )
