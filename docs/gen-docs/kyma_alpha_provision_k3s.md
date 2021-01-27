@@ -15,9 +15,10 @@ kyma alpha provision k3s [flags]
 ## Options
 
 ```bash
-      --name string        Name of the Kyma cluster. (default "kyma")
-      --timeout duration   Maximum time in minutes during which the provisioning takes place, where "0" means "infinite". (default 5m0s)
-      --workers int        Number of worker nodes. (default 1)
+      --name string          Name of the Kyma cluster. (default "kyma")
+  -s, --server-arg strings   Argument passed to the Kubernetes server (e.g. --server-arg='--alsologtostderr').
+      --timeout duration     Maximum time in minutes during which the provisioning takes place, where "0" means "infinite". (default 5m0s)
+      --workers int          Number of worker nodes. (default 1)
 ```
 
 ## Options inherited from parent commands

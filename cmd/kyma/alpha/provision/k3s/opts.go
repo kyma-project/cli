@@ -6,13 +6,14 @@ import (
 	"github.com/kyma-project/cli/internal/cli"
 )
 
-//options defines available options for the k3d provisioning command
+//Options defines available options for the k3d provisioning command
 type Options struct {
 	*cli.Options
 
-	Name    string
-	Workers int
-	Timeout time.Duration
+	Name       string
+	Workers    int
+	Timeout    time.Duration
+	ServerArgs []string
 }
 
 //NewOptions creates options with default values
