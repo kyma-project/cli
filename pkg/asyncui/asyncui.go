@@ -176,6 +176,7 @@ func (ui *AsyncUI) UpdateChannel() (chan<- deployment.ProcessUpdate, error) {
 	return ui.updates, nil
 }
 
+//IsRunning returns true if the AsyncUI is still receiving events
 func (ui *AsyncUI) IsRunning() bool {
 	return ui.running
 }
