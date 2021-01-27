@@ -161,5 +161,5 @@ func (cmd *command) retrieveKymaMetadata() (*metadata.KymaMetadata, error) {
 
 func (cmd *command) showSuccessMessage() {
 	// TODO: show processing summary
-	fmt.Println("Kyma successfully installed.")
+	fmt.Println("Kyma successfully removed.")
 }
