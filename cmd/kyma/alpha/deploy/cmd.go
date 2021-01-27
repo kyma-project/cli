@@ -113,7 +113,7 @@ func (cmd *command) Run() error {
 
 	err = cmd.deployKyma(ui)
 	if err == nil {
-		defer cmd.showSuccessMessage()
+		cmd.showSuccessMessage()
 	}
 	return err
 }
