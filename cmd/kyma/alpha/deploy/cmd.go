@@ -16,8 +16,7 @@ import (
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/pkg/asyncui"
-	"github.com/kyma-project/cli/pkg/git"
-	"github.com/kyma-project/cli/pkg/step"
+	"github.com/kyma-project/cli/pkg/deploy"
 	"github.com/magiconair/properties"
 	"github.com/spf13/cobra"
 
@@ -27,8 +26,11 @@ import (
 )
 
 const (
-	kymaURL     = "https://github.com/kyma-project/kyma"
 	localSource = "local"
+)
+
+var (
+	stepFactory *deploy.UIStepFactory
 )
 
 type command struct {
@@ -98,11 +100,15 @@ func (cmd *command) Run() error {
 		defer ui.Stop()
 	}
 
-	if cmd.opts.Source != localSource { // only download if not from local sources
+	//initialize deploy step factory
+	stepFactory = deploy.NewUIStepFactory(cmd.Verbose, ui)
+
+	// only download if not from local sources
+	if cmd.opts.Source != localSource {
 		if err := cmd.isCompatibleVersion(ui); err != nil {
 			return err
 		}
-		if err := cmd.cloneSources(ui); err != nil {
+		if err := deploy.CloneSources(stepFactory, cmd.opts.WorkspacePath, cmd.opts.Source); err != nil {
 			return err
 		}
 		// only delete sources if clone was successful
@@ -117,7 +123,7 @@ func (cmd *command) Run() error {
 }
 
 func (cmd *command) isCompatibleVersion(ui asyncui.AsyncUI) error {
-	compCheckStep := cmd.newDeploymentStep(ui, "Verifying Kyma version compatibility")
+	compCheckStep := stepFactory.AddStep("Verifying Kyma version compatibility")
 	provider := metadata.New(cmd.K8s.Static())
 	clusterMetadata, err := provider.ReadKymaMetadata()
 	if err != nil {
@@ -144,44 +150,13 @@ func (cmd *command) isCompatibleVersion(ui asyncui.AsyncUI) error {
 	}
 
 	//seemless upgrade unnecessary or cannot be warrantied - aks user for approval
-	qUpgradeIncompStep := cmd.newDeploymentStep(ui, "Continue Kyma upgrade")
+	qUpgradeIncompStep := stepFactory.AddStep("Continue Kyma upgrade")
 	if qUpgradeIncompStep.PromptYesNo("Do you want to proceed the upgrade? ") {
 		qUpgradeIncompStep.Success()
 		return nil
 	}
 	qUpgradeIncompStep.Failure()
 	return fmt.Errorf("Upgrade stopped by user")
-}
-
-// cloneSources from Github
-func (cmd *command) cloneSources(ui asyncui.AsyncUI) error {
-	if _, err := os.Stat(cmd.opts.WorkspacePath); !os.IsNotExist(err) {
-		question := cmd.newDeploymentStep(ui, "Prepare Kyma download")
-		if question.PromptYesNo(fmt.Sprintf("Workspace folder '%s' exists. Can it be deleted? ", cmd.opts.WorkspacePath)) {
-			if err := os.RemoveAll(cmd.opts.WorkspacePath); err != nil {
-				question.Failuref("Could not delete workspace folder")
-				return err
-			}
-			question.Success()
-		} else {
-			question.Failure()
-			return fmt.Errorf("Download stopped by user")
-		}
-	}
-
-	downloadStep := cmd.newDeploymentStep(ui, "Downloading Kyma into workspace folder")
-	rev, err := git.ResolveRevision(kymaURL, cmd.opts.Source)
-	if err != nil {
-		return err
-	}
-	err = git.CloneRevision(kymaURL, cmd.opts.WorkspacePath, rev)
-	if err == nil {
-		downloadStep.Success()
-	} else {
-		downloadStep.Failure()
-
-	}
-	return err
 }
 
 func (cmd *command) deployKyma(ui asyncui.AsyncUI) error {
@@ -230,7 +205,7 @@ func (cmd *command) deployKyma(ui asyncui.AsyncUI) error {
 
 func (cmd *command) configureCoreDNS(ui asyncui.AsyncUI) error {
 	if isLocalKymaDomain(cmd.opts.Domain) { //patch Kubernetes DNS system when using "local.kyma.dev" as domain name
-		step := cmd.newDeploymentStep(ui, "Configure Kubernetes DNS to support Kyma local dev domain")
+		step := stepFactory.AddStep("Configure Kubernetes DNS to support Kyma local dev domain")
 		err := ConfigureCoreDNS(cmd.K8s.Static())
 		if err == nil {
 			step.Success()
@@ -423,14 +398,4 @@ func (cmd *command) adminPw() (string, error) {
 		return "", err
 	}
 	return string(secret.Data["password"]), nil
-}
-
-func (cmd *command) newDeploymentStep(ui asyncui.AsyncUI, stepName string) step.Step {
-	step, err := ui.AddStep(stepName)
-	if err == nil {
-		return step
-	}
-	step = newDeploymentStep(stepName, cli.LogFunc(cmd.opts.Verbose)) //use step which logs to console as fallback
-	step.Start()
-	return step
 }
