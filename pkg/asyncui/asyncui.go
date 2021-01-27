@@ -151,6 +151,7 @@ func (ui *AsyncUI) renderStopEvent(procUpdEvent deployment.ProcessUpdate, ongoin
 	} else {
 		stepName = fmt.Sprintf(undeployComponentMsg, comp.Name)
 	}
+	// create step entry for processed component
 	step := ui.StepFactory.NewStep(stepName)
 	if comp.Status == components.StatusError {
 		step.Failure()
