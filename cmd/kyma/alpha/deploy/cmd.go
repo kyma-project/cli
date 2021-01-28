@@ -201,7 +201,7 @@ func (cmd *command) deployKyma(ui asyncui.AsyncUI) error {
 
 func (cmd *command) configureCoreDNS(ui asyncui.AsyncUI) error {
 	if isLocalKymaDomain(cmd.opts.Domain) { //patch Kubernetes DNS system when using "local.kyma.dev" as domain name
-		step := stepFactory.AddStep("Configure Kubernetes DNS to support Kyma local dev domain")
+		step := stepFactory.AddStep(fmt.Sprintf("Configure Kubernetes DNS to support domain '%s'", cmd.opts.Domain))
 		err := ConfigureCoreDNS(cmd.K8s.Static())
 		if err == nil {
 			step.Success()
