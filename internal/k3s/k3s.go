@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	k3dMinVersion  string        = "3.4.0"
+	k3dMinVersion  string        = "4.0.0"
 	defaultTimeout time.Duration = 10 * time.Second
 )
 
@@ -130,7 +130,7 @@ func ClusterExists(verbose bool, clusterName string) (bool, error) {
 func StartCluster(verbose bool, timeout time.Duration, clusterName string, workers int, serverArgs []string) error {
 	cmdArgs := []string{
 		"cluster", "create", clusterName,
-		"--switch-context",
+		"--kubeconfig-update-default",
 		"--timeout", fmt.Sprintf("%ds", int(timeout.Seconds())),
 		"-p", "80:80@loadbalancer",
 		"-p", "443:443@loadbalancer",
