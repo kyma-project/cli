@@ -125,11 +125,13 @@ func (cmd *command) Run() error {
 		return err
 	}
 
-	err = installer.StartKymaUninstallation()
-	if err == nil {
-		defer cmd.showSuccessMessage()
+	uninstallErr := installer.StartKymaUninstallation()
+
+	if err := cmd.deleteComponentsListFile(installCfg.ComponentsListFile); err != nil {
+		return errors.Wrap(err, uninstallErr.Error())
 	}
-	return err
+
+	return uninstallErr
 }
 
 func (cmd *command) recoverComponentsListFile(file string, data []byte) error {
@@ -141,6 +143,17 @@ func (cmd *command) recoverComponentsListFile(file string, data []byte) error {
 		restoreClStep.Failure()
 	}
 	return err
+}
+
+func (cmd *command) deleteComponentsListFile(file string) error {
+	if _, err := os.Stat(file); os.IsNotExist(err) {
+		// file doesn't exist
+		return nil
+	}
+	if err := os.Remove(file); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (cmd *command) retrieveKymaMetadata() (*metadata.KymaMetadata, error) {
