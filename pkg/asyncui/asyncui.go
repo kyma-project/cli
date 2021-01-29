@@ -97,6 +97,13 @@ func (ui *AsyncUI) renderStartEvent(procUpdEvent deployment.ProcessUpdate, ongoi
 	if _, exists := (*ongoingSteps)[procUpdEvent.Phase]; exists {
 		return fmt.Errorf("Illegal state: start-step for installation phase '%s' already exists", procUpdEvent.Phase)
 	}
+	step := ui.StepFactory.NewStep(ui.majorStepMsg(procUpdEvent))
+	step.Start()
+	(*ongoingSteps)[procUpdEvent.Phase] = step
+	return nil
+}
+
+func (ui *AsyncUI) majorStepMsg(procUpdEvent deployment.ProcessUpdate) string {
 	// create a major step
 	var stepMsg string
 	switch procUpdEvent.Phase {
@@ -113,10 +120,7 @@ func (ui *AsyncUI) renderStartEvent(procUpdEvent deployment.ProcessUpdate, ongoi
 		// e.g. steps triggered by CLI before or after the deployment
 		stepMsg = string(procUpdEvent.Phase)
 	}
-	step := ui.StepFactory.NewStep(stepMsg)
-	step.Start()
-	(*ongoingSteps)[procUpdEvent.Phase] = step
-	return nil
+	return stepMsg
 }
 
 // renderStartEvent dispatches a stop event to an running step
@@ -133,11 +137,11 @@ func (ui *AsyncUI) renderStopEvent(procUpdEvent deployment.ProcessUpdate, ongoin
 	if comp.Name == "" {
 		if event == deployment.ProcessFinished {
 			//all good
-			(*ongoingSteps)[installPhase].Success()
+			(*ongoingSteps)[installPhase].Successf("%s finished successfully", ui.majorStepMsg(procUpdEvent))
 			return nil
 		}
 		//something went wrong
-		(*ongoingSteps)[installPhase].Failure()
+		(*ongoingSteps)[installPhase].Failuref("%s failed", ui.majorStepMsg(procUpdEvent))
 		return fmt.Errorf("Deployment phase '%s' failed: %s", installPhase, event)
 	}
 
