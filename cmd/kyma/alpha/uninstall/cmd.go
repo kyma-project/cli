@@ -99,11 +99,23 @@ func (cmd *command) Run() error {
 
 	// only download if not from local sources
 	if kymaMeta.Version != localSource { //KymaMetadata.Version contains the "source" value which was used during the installation
+		//if workspace already exists ask user for deletion-approval
+		_, err := os.Stat(cmd.opts.WorkspacePath)
+		approvalRequired := !os.IsNotExist(err)
+
 		if err := deploy.CloneSources(stepFactory, cmd.opts.WorkspacePath, kymaMeta.Version); err != nil {
 			return err
 		}
-		// only delete sources if clone was successful
-		defer os.RemoveAll(cmd.opts.WorkspacePath)
+		// delete workspace folder
+		if approvalRequired {
+			userApprovalStep := stepFactory.AddStep("Workspace folder exists")
+			if userApprovalStep.PromptYesNo(fmt.Sprintf("Delete existing workspace folder '%s' after Kyma was removed?", cmd.opts.WorkspacePath)) {
+				defer os.RemoveAll(cmd.opts.WorkspacePath)
+			}
+			userApprovalStep.Success()
+		} else {
+			defer os.RemoveAll(cmd.opts.WorkspacePath)
+		}
 	}
 
 	// recover the component list used for the Kyma installation
