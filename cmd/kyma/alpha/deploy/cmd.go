@@ -101,7 +101,7 @@ func (cmd *command) Run() error {
 
 	// only download if not from local sources
 	if cmd.opts.Source != localSource {
-		if err := cmd.isCompatibleVersion(ui); err != nil {
+		if err := cmd.isCompatibleVersion(); err != nil {
 			return err
 		}
 
@@ -133,7 +133,7 @@ func (cmd *command) Run() error {
 	return err
 }
 
-func (cmd *command) isCompatibleVersion(ui asyncui.AsyncUI) error {
+func (cmd *command) isCompatibleVersion() error {
 	compCheckStep := stepFactory.AddStep("Verifying Kyma version compatibility")
 	provider := metadata.New(cmd.K8s.Static())
 	clusterMetadata, err := provider.ReadKymaMetadata()
@@ -193,7 +193,7 @@ func (cmd *command) deployKyma(ui asyncui.AsyncUI) error {
 		return err
 	}
 
-	if err := cmd.configureCoreDNS(ui); err != nil {
+	if err := cmd.configureCoreDNS(); err != nil {
 		return err
 	}
 
@@ -214,7 +214,7 @@ func (cmd *command) deployKyma(ui asyncui.AsyncUI) error {
 	return installer.StartKymaDeployment()
 }
 
-func (cmd *command) configureCoreDNS(ui asyncui.AsyncUI) error {
+func (cmd *command) configureCoreDNS() error {
 	if isLocalKymaDomain(cmd.opts.Domain) { //patch Kubernetes DNS system when using "local.kyma.dev" as domain name
 		step := stepFactory.AddStep(fmt.Sprintf("Configure Kubernetes DNS to support domain '%s'", cmd.opts.Domain))
 		err := ConfigureCoreDNS(cmd.K8s.Static())

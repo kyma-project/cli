@@ -143,6 +143,9 @@ func (cmd *command) Run() error {
 		return errors.Wrap(err, uninstallErr.Error())
 	}
 
+	if uninstallErr == nil {
+		cmd.showSuccessMessage()
+	}
 	return uninstallErr
 }
 
