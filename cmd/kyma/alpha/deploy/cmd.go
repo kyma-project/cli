@@ -104,11 +104,26 @@ func (cmd *command) Run() error {
 		if err := cmd.isCompatibleVersion(ui); err != nil {
 			return err
 		}
+
+		//if workspace already exists ask user for deletion-approval
+		_, err := os.Stat(cmd.opts.WorkspacePath)
+		approvalRequired := !os.IsNotExist(err)
+
 		if err := deploy.CloneSources(stepFactory, cmd.opts.WorkspacePath, cmd.opts.Source); err != nil {
 			return err
 		}
-		// only delete sources if clone was successful
-		defer os.RemoveAll(cmd.opts.WorkspacePath)
+
+		// delete workspace folder
+		if approvalRequired {
+			userApprovalStep := stepFactory.AddStep("Workspace folder exists")
+			if userApprovalStep.PromptYesNo(fmt.Sprintf("Delete existing workspace folder '%s' after Kyma deployment?", cmd.opts.WorkspacePath)) {
+				defer os.RemoveAll(cmd.opts.WorkspacePath)
+			}
+			userApprovalStep.Success()
+		} else {
+			defer os.RemoveAll(cmd.opts.WorkspacePath)
+		}
+
 	}
 
 	err = cmd.deployKyma(ui)
