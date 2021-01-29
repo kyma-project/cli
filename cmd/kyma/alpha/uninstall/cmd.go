@@ -66,6 +66,9 @@ func (cmd *command) Run() error {
 
 	var ui asyncui.AsyncUI
 	if !cmd.Verbose { //use async UI only if not in verbose mode
+		if cmd.opts.CI {
+			cmd.Factory.NonInteractive = true
+		}
 		ui = asyncui.AsyncUI{StepFactory: &cmd.Factory}
 		if err := ui.Start(); err != nil {
 			return err
