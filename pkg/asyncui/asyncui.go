@@ -9,11 +9,6 @@ import (
 	"github.com/kyma-project/cli/pkg/step"
 )
 
-// StepFactory is a factory used to generate a step in the UI.
-type StepFactory interface {
-	NewStep(msg string) step.Step
-}
-
 // End-user messages
 const (
 	deployPrerequisitesPhaseMsg   string = "Deploying pre-requisites"
@@ -27,7 +22,7 @@ const (
 // AsyncUI renders the CLI ui based on receiving events
 type AsyncUI struct {
 	// used to create UI steps
-	StepFactory StepFactory
+	StepFactory step.FactoryInterface
 	// processing context
 	context context.Context
 	// cancel function the caller can execute to interrupt processing
@@ -118,7 +113,9 @@ func (ui *AsyncUI) renderStartEvent(procUpdEvent deployment.ProcessUpdate, ongoi
 		// e.g. steps triggered by CLI before or after the deployment
 		stepMsg = string(procUpdEvent.Phase)
 	}
-	(*ongoingSteps)[procUpdEvent.Phase] = ui.StepFactory.NewStep(stepMsg)
+	step := ui.StepFactory.NewStep(stepMsg)
+	step.Start()
+	(*ongoingSteps)[procUpdEvent.Phase] = step
 	return nil
 }
 

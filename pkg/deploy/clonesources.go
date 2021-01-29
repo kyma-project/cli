@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/kyma-project/cli/pkg/git"
+	"github.com/kyma-project/cli/pkg/step"
 )
 
 const (
@@ -11,9 +12,9 @@ const (
 )
 
 // CloneSources from Github
-func CloneSources(stepFac StepFactory, workspacePath string, source string) error {
+func CloneSources(stepFac step.FactoryInterface, workspacePath string, source string) error {
 	if _, err := os.Stat(workspacePath); !os.IsNotExist(err) {
-		prepDownloadStep := stepFac.AddStep("Prepare Kyma download")
+		prepDownloadStep := stepFac.NewStep("Prepare Kyma download")
 		if err := os.RemoveAll(workspacePath); err != nil {
 			prepDownloadStep.Failuref("Could not delete workspace folder")
 			return err
@@ -21,7 +22,7 @@ func CloneSources(stepFac StepFactory, workspacePath string, source string) erro
 		prepDownloadStep.Success()
 	}
 
-	downloadStep := stepFac.AddStep("Downloading Kyma into workspace folder")
+	downloadStep := stepFac.NewStep("Downloading Kyma into workspace folder")
 	rev, err := git.ResolveRevision(kymaURL, source)
 	if err != nil {
 		return err

@@ -20,10 +20,6 @@ import (
 	"github.com/kyma-incubator/hydroform/parallel-install/pkg/metadata"
 )
 
-var (
-	stepFactory *deploy.UIStepFactory
-)
-
 type command struct {
 	opts *Options
 	cli.Command
@@ -56,8 +52,12 @@ func NewCmd(o *Options) *cobra.Command {
 //Run runs the command
 func (cmd *command) Run() error {
 	var err error
+
 	if err = cmd.opts.validateFlags(); err != nil {
 		return err
+	}
+	if cmd.opts.CI {
+		cmd.Factory.NonInteractive = true
 	}
 
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
@@ -66,18 +66,12 @@ func (cmd *command) Run() error {
 
 	var ui asyncui.AsyncUI
 	if !cmd.Verbose { //use async UI only if not in verbose mode
-		if cmd.opts.CI {
-			cmd.Factory.NonInteractive = true
-		}
 		ui = asyncui.AsyncUI{StepFactory: &cmd.Factory}
 		if err := ui.Start(); err != nil {
 			return err
 		}
 		defer ui.Stop()
 	}
-
-	//initialize deploy step factory
-	stepFactory = deploy.NewUIStepFactory(cmd.Verbose, ui)
 
 	// retrieve Kyma metadata (provides details about the current Kyma installation)
 	kymaMeta, err := cmd.retrieveKymaMetadata()
@@ -106,12 +100,12 @@ func (cmd *command) Run() error {
 		_, err := os.Stat(cmd.opts.WorkspacePath)
 		approvalRequired := !os.IsNotExist(err)
 
-		if err := deploy.CloneSources(stepFactory, cmd.opts.WorkspacePath, kymaMeta.Version); err != nil {
+		if err := deploy.CloneSources(&cmd.Factory, cmd.opts.WorkspacePath, kymaMeta.Version); err != nil {
 			return err
 		}
 		// delete workspace folder
 		if approvalRequired && !cmd.avoidUserInteraction() {
-			userApprovalStep := stepFactory.AddStep("Workspace folder exists")
+			userApprovalStep := cmd.NewStep("Workspace folder exists")
 			if userApprovalStep.PromptYesNo(fmt.Sprintf("Delete workspace folder '%s' after Kyma was removed?", cmd.opts.WorkspacePath)) {
 				defer os.RemoveAll(cmd.opts.WorkspacePath)
 			}
@@ -153,7 +147,7 @@ func (cmd *command) Run() error {
 }
 
 func (cmd *command) recoverComponentsListFile(file string, data []byte) error {
-	restoreClStep := stepFactory.AddStep("Restore component list used for initial Kyma installation")
+	restoreClStep := cmd.NewStep("Restore component list used for initial Kyma installation")
 	err := ioutil.WriteFile(file, data, 0600)
 	if err == nil {
 		restoreClStep.Success()
@@ -175,7 +169,7 @@ func (cmd *command) deleteComponentsListFile(file string) error {
 }
 
 func (cmd *command) retrieveKymaMetadata() (*metadata.KymaMetadata, error) {
-	getMetaStep := stepFactory.AddStep("Retrieve Kyma metadata")
+	getMetaStep := cmd.NewStep("Retrieve Kyma metadata")
 	provider := metadata.New(cmd.K8s.Static())
 	metadata, err := provider.ReadKymaMetadata()
 	if err == nil {
