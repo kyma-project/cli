@@ -15,8 +15,8 @@ const (
 	undeployPrerequisitesPhaseMsg string = "Undeploying pre-requisites"
 	deployComponentsPhaseMsg      string = "Deploying Kyma"
 	undeployComponentsPhaseMsg    string = "Undeploying Kyma"
-	deployComponentMsg            string = "Deploying component '%s'"
-	undeployComponentMsg          string = "Removing component '%s'"
+	deployComponentMsg            string = "Component '%s' deployed"
+	undeployComponentMsg          string = "Component '%s' removed"
 )
 
 // AsyncUI renders the CLI ui based on receiving events
