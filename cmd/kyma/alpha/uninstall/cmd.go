@@ -109,7 +109,7 @@ func (cmd *command) Run() error {
 		// delete workspace folder
 		if approvalRequired {
 			userApprovalStep := stepFactory.AddStep("Workspace folder exists")
-			if userApprovalStep.PromptYesNo(fmt.Sprintf("Delete existing workspace folder '%s' after Kyma was removed?", cmd.opts.WorkspacePath)) {
+			if userApprovalStep.PromptYesNo(fmt.Sprintf("Delete workspace folder '%s' after Kyma was removed?", cmd.opts.WorkspacePath)) {
 				defer os.RemoveAll(cmd.opts.WorkspacePath)
 			}
 			userApprovalStep.Success()
