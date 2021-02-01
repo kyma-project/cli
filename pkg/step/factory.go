@@ -4,6 +4,11 @@ import (
 	"runtime"
 )
 
+//FactoryInterface is an abstraction for step factory
+type FactoryInterface interface {
+	NewStep(msg string) Step
+}
+
 // Factory contains the option to determine the interactivity of a Step.
 type Factory struct {
 	NonInteractive bool

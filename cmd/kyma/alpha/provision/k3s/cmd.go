@@ -44,6 +44,10 @@ func NewCmd(o *Options) *cobra.Command {
 
 //Run runs the command
 func (c *command) Run() error {
+	if c.opts.CI {
+		c.Factory.NonInteractive = true
+	}
+
 	if err := c.verifyK3sStatus(); err != nil {
 		return err
 	}

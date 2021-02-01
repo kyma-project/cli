@@ -16,19 +16,13 @@ import (
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/pkg/asyncui"
-	"github.com/kyma-project/cli/pkg/git"
-	"github.com/kyma-project/cli/pkg/step"
+	"github.com/kyma-project/cli/pkg/deploy"
 	"github.com/magiconair/properties"
 	"github.com/spf13/cobra"
 
 	installConfig "github.com/kyma-incubator/hydroform/parallel-install/pkg/config"
 	"github.com/kyma-incubator/hydroform/parallel-install/pkg/deployment"
 	"github.com/kyma-incubator/hydroform/parallel-install/pkg/metadata"
-)
-
-const (
-	kymaURL     = "https://github.com/kyma-project/kyma"
-	localSource = "local"
 )
 
 type command struct {
@@ -82,6 +76,9 @@ func (cmd *command) Run() error {
 	if err = cmd.opts.validateFlags(); err != nil {
 		return err
 	}
+	if cmd.opts.CI {
+		cmd.Factory.NonInteractive = true
+	}
 
 	// initialize Kubernetes client
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
@@ -98,26 +95,42 @@ func (cmd *command) Run() error {
 		defer ui.Stop()
 	}
 
-	if cmd.opts.Source != localSource { // only download if not from local sources
-		if err := cmd.isCompatibleVersion(ui); err != nil {
+	// only download if not from local sources
+	if cmd.opts.Source != localSource {
+		if err := cmd.isCompatibleVersion(); err != nil {
 			return err
 		}
-		if err := cmd.cloneSources(ui); err != nil {
+
+		//if workspace already exists ask user for deletion-approval
+		_, err := os.Stat(cmd.opts.WorkspacePath)
+		approvalRequired := !os.IsNotExist(err)
+
+		if err := deploy.CloneSources(&cmd.Factory, cmd.opts.WorkspacePath, cmd.opts.Source); err != nil {
 			return err
 		}
-		// only delete sources if clone was successful
-		defer os.RemoveAll(cmd.opts.WorkspacePath)
+
+		// delete workspace folder
+		if approvalRequired && !cmd.avoidUserInteraction() {
+			userApprovalStep := cmd.NewStep("Workspace folder exists")
+			if userApprovalStep.PromptYesNo(fmt.Sprintf("Delete workspace folder '%s' after Kyma deployment?", cmd.opts.WorkspacePath)) {
+				defer os.RemoveAll(cmd.opts.WorkspacePath)
+			}
+			userApprovalStep.Success()
+		} else {
+			defer os.RemoveAll(cmd.opts.WorkspacePath)
+		}
+
 	}
 
 	err = cmd.deployKyma(ui)
 	if err == nil {
-		defer cmd.showSuccessMessage()
+		cmd.showSuccessMessage()
 	}
 	return err
 }
 
-func (cmd *command) isCompatibleVersion(ui asyncui.AsyncUI) error {
-	compCheckStep := cmd.newDeploymentStep(ui, "Verifying Kyma version compatibility")
+func (cmd *command) isCompatibleVersion() error {
+	compCheckStep := cmd.NewStep("Verifying Kyma version compatibility")
 	provider := metadata.New(cmd.K8s.Static())
 	clusterMetadata, err := provider.ReadKymaMetadata()
 	if err != nil {
@@ -144,44 +157,13 @@ func (cmd *command) isCompatibleVersion(ui asyncui.AsyncUI) error {
 	}
 
 	//seemless upgrade unnecessary or cannot be warrantied - aks user for approval
-	qUpgradeIncompStep := cmd.newDeploymentStep(ui, "Continue Kyma upgrade")
-	if qUpgradeIncompStep.PromptYesNo("Do you want to proceed the upgrade? ") {
+	qUpgradeIncompStep := cmd.NewStep("Continue Kyma upgrade")
+	if cmd.avoidUserInteraction() || qUpgradeIncompStep.PromptYesNo("Do you want to proceed the upgrade? ") {
 		qUpgradeIncompStep.Success()
 		return nil
 	}
 	qUpgradeIncompStep.Failure()
 	return fmt.Errorf("Upgrade stopped by user")
-}
-
-// cloneSources from Github
-func (cmd *command) cloneSources(ui asyncui.AsyncUI) error {
-	if _, err := os.Stat(cmd.opts.WorkspacePath); !os.IsNotExist(err) {
-		question := cmd.newDeploymentStep(ui, "Prepare Kyma download")
-		if question.PromptYesNo(fmt.Sprintf("Workspace folder '%s' exists. Can it be deleted? ", cmd.opts.WorkspacePath)) {
-			if err := os.RemoveAll(cmd.opts.WorkspacePath); err != nil {
-				question.Failuref("Could not delete workspace folder")
-				return err
-			}
-			question.Success()
-		} else {
-			question.Failure()
-			return fmt.Errorf("Download stopped by user")
-		}
-	}
-
-	downloadStep := cmd.newDeploymentStep(ui, "Downloading Kyma into workspace folder")
-	rev, err := git.ResolveRevision(kymaURL, cmd.opts.Source)
-	if err != nil {
-		return err
-	}
-	err = git.CloneRevision(kymaURL, cmd.opts.WorkspacePath, rev)
-	if err == nil {
-		downloadStep.Success()
-	} else {
-		downloadStep.Failure()
-
-	}
-	return err
 }
 
 func (cmd *command) deployKyma(ui asyncui.AsyncUI) error {
@@ -207,7 +189,7 @@ func (cmd *command) deployKyma(ui asyncui.AsyncUI) error {
 		return err
 	}
 
-	if err := cmd.configureCoreDNS(ui); err != nil {
+	if err := cmd.configureCoreDNS(); err != nil {
 		return err
 	}
 
@@ -228,9 +210,9 @@ func (cmd *command) deployKyma(ui asyncui.AsyncUI) error {
 	return installer.StartKymaDeployment()
 }
 
-func (cmd *command) configureCoreDNS(ui asyncui.AsyncUI) error {
+func (cmd *command) configureCoreDNS() error {
 	if isLocalKymaDomain(cmd.opts.Domain) { //patch Kubernetes DNS system when using "local.kyma.dev" as domain name
-		step := cmd.newDeploymentStep(ui, "Configure Kubernetes DNS to support Kyma local dev domain")
+		step := cmd.NewStep(fmt.Sprintf("Configure Kubernetes DNS to support domain '%s'", cmd.opts.Domain))
 		err := ConfigureCoreDNS(cmd.K8s.Static())
 		if err == nil {
 			step.Success()
@@ -425,12 +407,7 @@ func (cmd *command) adminPw() (string, error) {
 	return string(secret.Data["password"]), nil
 }
 
-func (cmd *command) newDeploymentStep(ui asyncui.AsyncUI, stepName string) step.Step {
-	step, err := ui.AddStep(stepName)
-	if err == nil {
-		return step
-	}
-	step = newDeploymentStep(stepName, cli.LogFunc(cmd.opts.Verbose)) //use step which logs to console as fallback
-	step.Start()
-	return step
+//avoidUserInteraction returns true if user won't provide input
+func (cmd *command) avoidUserInteraction() bool {
+	return cmd.NonInteractive || cmd.CI
 }

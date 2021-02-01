@@ -13,6 +13,7 @@ import (
 )
 
 var (
+	localSource           = "local"
 	defaultSource         = "master"
 	kymaProfiles          = []string{"evaluation", "production"}
 	defaultWorkspacePath  = filepath.Join(".", "workspace")
