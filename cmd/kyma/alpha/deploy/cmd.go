@@ -79,6 +79,9 @@ func (cmd *command) Run() error {
 	if cmd.opts.CI {
 		cmd.Factory.NonInteractive = true
 	}
+	if cmd.opts.Verbose {
+		cmd.Factory.UseLogger = true
+	}
 
 	// initialize Kubernetes client
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
