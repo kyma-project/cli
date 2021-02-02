@@ -47,6 +47,9 @@ func (c *command) Run() error {
 	if c.opts.CI {
 		c.Factory.NonInteractive = true
 	}
+	if c.opts.Verbose {
+		c.Factory.UseLogger = true
+	}
 
 	if err := c.verifyK3sStatus(); err != nil {
 		return err

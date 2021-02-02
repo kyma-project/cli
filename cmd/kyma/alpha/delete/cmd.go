@@ -56,6 +56,9 @@ func (cmd *command) Run() error {
 	if cmd.opts.CI {
 		cmd.Factory.NonInteractive = true
 	}
+	if cmd.opts.Verbose {
+		cmd.Factory.UseLogger = true
+	}
 
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
 		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
