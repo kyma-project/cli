@@ -9,24 +9,20 @@ import (
 	"github.com/kyma-project/cli/pkg/step"
 )
 
-// StepFactory is a factory used to generate a step in the UI.
-type StepFactory interface {
-	NewStep(msg string) step.Step
-}
-
 // End-user messages
 const (
 	deployPrerequisitesPhaseMsg   string = "Deploying pre-requisites"
 	undeployPrerequisitesPhaseMsg string = "Undeploying pre-requisites"
 	deployComponentsPhaseMsg      string = "Deploying Kyma"
 	undeployComponentsPhaseMsg    string = "Undeploying Kyma"
-	deployComponentMsg            string = "Deploying component '%s'"
+	deployComponentMsg            string = "Component '%s' deployed"
+	undeployComponentMsg          string = "Component '%s' removed"
 )
 
 // AsyncUI renders the CLI ui based on receiving events
 type AsyncUI struct {
 	// used to create UI steps
-	StepFactory StepFactory
+	StepFactory step.FactoryInterface
 	// processing context
 	context context.Context
 	// cancel function the caller can execute to interrupt processing
@@ -37,12 +33,14 @@ type AsyncUI struct {
 	Errors chan error
 	// internal state
 	running bool
+	// a failure occurred
+	Failed bool
 }
 
 // Start renders the CLI UI and provides the channel for receiving events
-func (ui *AsyncUI) Start() (chan deployment.ProcessUpdate, error) {
+func (ui *AsyncUI) Start() error {
 	if ui.running {
-		return nil, fmt.Errorf("Duplicate call of start method detected")
+		return fmt.Errorf("Duplicate call of start method detected")
 	}
 	ui.running = true
 
@@ -70,13 +68,17 @@ func (ui *AsyncUI) Start() (chan deployment.ProcessUpdate, error) {
 		}
 	}()
 
-	return ui.updates, nil
+	return nil
 }
 
 // dispatchError will pass an error to the Caller
 func (ui *AsyncUI) dispatchError(err error) {
-	if ui.Errors != nil && err != nil {
-		ui.Errors <- err
+	if err != nil {
+		ui.Failed = true
+		// fire error event to caller's error channel
+		if ui.Errors != nil {
+			ui.Errors <- err
+		}
 	}
 }
 
@@ -90,10 +92,18 @@ func (ui *AsyncUI) Stop() {
 	ui.running = false
 }
 
+// renderStartEvent dispatches an start event to an UI step
 func (ui *AsyncUI) renderStartEvent(procUpdEvent deployment.ProcessUpdate, ongoingSteps *map[deployment.InstallationPhase]step.Step) error {
 	if _, exists := (*ongoingSteps)[procUpdEvent.Phase]; exists {
 		return fmt.Errorf("Illegal state: start-step for installation phase '%s' already exists", procUpdEvent.Phase)
 	}
+	step := ui.StepFactory.NewStep(ui.majorStepMsg(procUpdEvent))
+	step.Start()
+	(*ongoingSteps)[procUpdEvent.Phase] = step
+	return nil
+}
+
+func (ui *AsyncUI) majorStepMsg(procUpdEvent deployment.ProcessUpdate) string {
 	// create a major step
 	var stepMsg string
 	switch procUpdEvent.Phase {
@@ -110,10 +120,10 @@ func (ui *AsyncUI) renderStartEvent(procUpdEvent deployment.ProcessUpdate, ongoi
 		// e.g. steps triggered by CLI before or after the deployment
 		stepMsg = string(procUpdEvent.Phase)
 	}
-	(*ongoingSteps)[procUpdEvent.Phase] = ui.StepFactory.NewStep(stepMsg)
-	return nil
+	return stepMsg
 }
 
+// renderStartEvent dispatches a stop event to an running step
 func (ui *AsyncUI) renderStopEvent(procUpdEvent deployment.ProcessUpdate, ongoingSteps *map[deployment.InstallationPhase]step.Step) error {
 	if _, exists := (*ongoingSteps)[procUpdEvent.Phase]; !exists {
 		return fmt.Errorf("Illegal state: step for installation phase '%s' does not exist", procUpdEvent.Phase)
@@ -127,20 +137,48 @@ func (ui *AsyncUI) renderStopEvent(procUpdEvent deployment.ProcessUpdate, ongoin
 	if comp.Name == "" {
 		if event == deployment.ProcessFinished {
 			//all good
-			(*ongoingSteps)[installPhase].Success()
+			(*ongoingSteps)[installPhase].Successf("%s finished successfully", ui.majorStepMsg(procUpdEvent))
 			return nil
 		}
 		//something went wrong
-		(*ongoingSteps)[installPhase].Failure()
+		(*ongoingSteps)[installPhase].Failuref("%s failed", ui.majorStepMsg(procUpdEvent))
 		return fmt.Errorf("Deployment phase '%s' failed: %s", installPhase, event)
 	}
 
 	// for component specific installation event show the result in a dedicated step
-	step := ui.StepFactory.NewStep(fmt.Sprintf(deployComponentMsg, comp.Name))
+	var stepName string
+	if installPhase == deployment.InstallComponents {
+		stepName = fmt.Sprintf(deployComponentMsg, comp.Name)
+	} else {
+		stepName = fmt.Sprintf(undeployComponentMsg, comp.Name)
+	}
+	// create step entry for processed component
+	step := ui.StepFactory.NewStep(stepName)
 	if comp.Status == components.StatusError {
 		step.Failure()
 		return fmt.Errorf("Deployment of component '%s' failed", comp.Name)
 	}
 	step.Success()
 	return nil
+}
+
+//AddStep adds an additional installation step
+func (ui *AsyncUI) AddStep(step string) (step.Step, error) {
+	if !ui.running {
+		return nil, fmt.Errorf("Cannot add an step because AsyncUI is not running")
+	}
+	return ui.StepFactory.NewStep(step), nil
+}
+
+// UpdateChannel returns the update channel which retrieves process update events
+func (ui *AsyncUI) UpdateChannel() (chan<- deployment.ProcessUpdate, error) {
+	if !ui.running {
+		return nil, fmt.Errorf("Update channel cannot be retrieved because AsyncUI is not running")
+	}
+	return ui.updates, nil
+}
+
+//IsRunning returns true if the AsyncUI is still receiving events
+func (ui *AsyncUI) IsRunning() bool {
+	return ui.running
 }

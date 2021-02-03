@@ -69,20 +69,22 @@ func TestRunCmd(t *testing.T) {
 }
 
 func TestCheckVersion(t *testing.T) {
-	err := CheckVersion(false)
+	err := checkVersion(false)
 	require.NoError(t, err)
 }
 
 func TestCheckVersionIncompatibleMinor(t *testing.T) {
 	os.Setenv("K3D_MOCK_DUMPFILE", "version_incompminor.txt")
-	err := CheckVersion(false)
+	err := checkVersion(false)
 	require.Error(t, err)
+	os.Setenv("K3D_MOCK_DUMPFILE", "")
 }
 
 func TestCheckVersionIncompatibleMajor(t *testing.T) {
 	os.Setenv("K3D_MOCK_DUMPFILE", "version_incompmajor.txt")
-	err := CheckVersion(false)
+	err := checkVersion(false)
 	require.Error(t, err)
+	os.Setenv("K3D_MOCK_DUMPFILE", "")
 }
 
 func TestInitialize(t *testing.T) {
@@ -101,7 +103,7 @@ func TestInitializeFailed(t *testing.T) {
 }
 
 func TestStartCluster(t *testing.T) {
-	err := StartCluster(false, 5*time.Second, "kyma", 1)
+	err := StartCluster(false, 5*time.Second, "kyma", 1, []string{})
 	require.NoError(t, err)
 }
 
@@ -115,4 +117,5 @@ func TestClusterExists(t *testing.T) {
 	exists, err := ClusterExists(false, "kyma")
 	require.NoError(t, err)
 	require.True(t, exists)
+	os.Setenv("K3D_MOCK_DUMPFILE", "")
 }

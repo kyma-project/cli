@@ -1,24 +1,22 @@
 ---
-title: kyma alpha provision k3s
+title: kyma alpha version
 ---
 
-Provisions a Kubernetes cluster based on k3s.
+Displays the version of Kyma CLI and of the connected Kyma cluster.
 
 ## Synopsis
 
-Use this command to provision a k3s-based Kubernetes cluster for Kyma installation.
+Use this command to print the version of Kyma CLI and the version of the Kyma cluster the current kubeconfig points to.
+
 
 ```bash
-kyma alpha provision k3s [flags]
+kyma alpha version [flags]
 ```
 
 ## Options
 
 ```bash
-      --name string          Name of the Kyma cluster. (default "kyma")
-  -s, --server-arg strings   Argument passed to the Kubernetes server (e.g. --server-arg='--alsologtostderr').
-      --timeout duration     Maximum time in minutes during which the provisioning takes place, where "0" means "infinite". (default 5m0s)
-      --workers int          Number of worker nodes. (default 1)
+  -c, --client   Client version only (no server required)
 ```
 
 ## Options inherited from parent commands
@@ -33,5 +31,5 @@ kyma alpha provision k3s [flags]
 
 ## See also
 
-* [kyma alpha provision](#kyma-alpha-provision-kyma-alpha-provision)	 - Provisions a cluster for Kyma installation.
+* [kyma alpha](#kyma-alpha-kyma-alpha)	 - Executes the commands in the alpha testing stage.
 

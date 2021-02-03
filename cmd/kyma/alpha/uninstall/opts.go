@@ -9,6 +9,7 @@ import (
 )
 
 var (
+	localSource          = "local"
 	defaultWorkspacePath = filepath.Join(".", "workspace")
 )
 
@@ -16,7 +17,6 @@ var (
 type Options struct {
 	*cli.Options
 	WorkspacePath string
-	OverridesFile string
 	CancelTimeout time.Duration
 	QuitTimeout   time.Duration
 	HelmTimeout   time.Duration
@@ -26,11 +26,6 @@ type Options struct {
 //NewOptions creates options with default values
 func NewOptions(o *cli.Options) *Options {
 	return &Options{Options: o}
-}
-
-//defaultWorkspacePath returns the default path to the CLI workspace directory
-func (o *Options) defaultWorkspacePath() string {
-	return defaultWorkspacePath
 }
 
 // validateFlags applies a sanity check on provided options

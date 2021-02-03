@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	k3dMinVersion  string        = "1.19.0"
+	k3dMinVersion  string        = "4.0.0"
 	defaultTimeout time.Duration = 10 * time.Second
 )
 
@@ -43,20 +43,20 @@ func RunCmd(verbose bool, timeout time.Duration, args ...string) (string, error)
 	return out, nil
 }
 
-//CheckVersion checks whether k3s version is supported
-func CheckVersion(verbose bool) error {
+//checkVersion checks whether k3s version is supported
+func checkVersion(verbose bool) error {
 	versionOutput, err := RunCmd(verbose, defaultTimeout, "version")
 	if err != nil {
 		return err
 	}
 
-	exp, _ := regexp.Compile(`k3s version v([^\s-]+)`)
+	exp, _ := regexp.Compile(`k3d version v([^\s-]+)`)
 	versionString := exp.FindStringSubmatch(versionOutput)
 	if verbose {
-		fmt.Printf("Extracted K3s version: '%s'", versionString[1])
+		fmt.Printf("Extracted K3d version: '%s'", versionString[1])
 	}
 	if len(versionString) < 2 {
-		return fmt.Errorf("Could not extract k3s version from command output:\n%s", versionOutput)
+		return fmt.Errorf("Could not extract k3d version from command output:\n%s", versionOutput)
 	}
 	version, err := semver.Parse(versionString[1])
 	if err != nil {
@@ -65,11 +65,11 @@ func CheckVersion(verbose bool) error {
 
 	minVersion, _ := semver.Parse(k3dMinVersion)
 	if version.Major > minVersion.Major {
-		return fmt.Errorf("You are using an unsupported k3s major version '%d'. "+
-			"This may not work. The recommended k3s major version is '%d'", version.Major, minVersion.Major)
+		return fmt.Errorf("You are using an unsupported k3d major version '%d'. "+
+			"This may not work. The recommended k3d major version is '%d'", version.Major, minVersion.Major)
 	} else if version.LT(minVersion) {
-		return fmt.Errorf("You are using an unsupported k3s version '%s'. "+
-			"This may not work. The recommended k3s version is >= '%s'", version, minVersion)
+		return fmt.Errorf("You are using an unsupported k3d version '%s'. "+
+			"This may not work. The recommended k3d version is >= '%s'", version, minVersion)
 	}
 
 	return nil
@@ -84,6 +84,10 @@ func Initialize(verbose bool) error {
 		}
 		return fmt.Errorf("Command 'k3d' not found. Please install k3d following the installation " +
 			"instructions provided at https://github.com/rancher/k3d#get")
+	}
+
+	if err := checkVersion(verbose); err != nil {
+		return err
 	}
 
 	//verify whether k3d seems to be properly installed
@@ -123,15 +127,29 @@ func ClusterExists(verbose bool, clusterName string) (bool, error) {
 }
 
 //StartCluster starts a cluster
-func StartCluster(verbose bool, timeout time.Duration, clusterName string, workers int) error {
-	_, err := RunCmd(verbose, timeout,
+func StartCluster(verbose bool, timeout time.Duration, clusterName string, workers int, serverArgs []string) error {
+	cmdArgs := []string{
 		"cluster", "create", clusterName,
+		"--kubeconfig-update-default",
 		"--timeout", fmt.Sprintf("%ds", int(timeout.Seconds())),
-		"-p", "80:80@loadbalancer", "-p", "443:443@loadbalancer",
-		"--k3s-server-arg", "--no-deploy", "--k3s-server-arg", "traefik",
-		"--switch-context",
+		"-p", "80:80@loadbalancer",
+		"-p", "443:443@loadbalancer",
 		"--agents", fmt.Sprintf("%d", workers),
-	)
+		"--k3s-server-arg", "--no-deploy",
+		"--k3s-server-arg", "traefik",
+	}
+
+	//add further custom server args
+	for _, srvArg := range serverArgs {
+		if srvArg == "" {
+			continue
+		}
+		cmdArgs = append(cmdArgs, "--k3s-server-arg")
+		cmdArgs = append(cmdArgs, srvArg)
+	}
+
+	_, err := RunCmd(verbose, timeout, cmdArgs...)
+
 	return err
 }
 

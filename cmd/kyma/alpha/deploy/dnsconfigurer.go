@@ -30,7 +30,6 @@ data:
         ready
         kubernetes cluster.local in-addr.arpa ip6.arpa {
           pods insecure
-          upstream
           fallthrough in-addr.arpa ip6.arpa
         }
         hosts /etc/coredns/NodeHosts {
@@ -61,4 +60,8 @@ data:
 	)
 
 	return err
+}
+
+func isLocalKymaDomain(domain string) bool {
+	return domain == LocalKymaDevDomain
 }

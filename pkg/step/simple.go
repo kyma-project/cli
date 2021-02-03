@@ -84,3 +84,7 @@ func (s *simpleStep) PromptYesNo(msg string) bool {
 	answer := root.PromptUser()
 	return answer
 }
+
+func (s *simpleStep) String() string {
+	return s.msg
+}
