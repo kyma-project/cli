@@ -137,7 +137,7 @@ func (cmd *command) isCompatibleVersion() error {
 	provider := metadata.New(cmd.K8s.Static())
 	clusterMetadata, err := provider.ReadKymaMetadata()
 	if err != nil {
-		return fmt.Errorf("Unable to get Kyma cluster version due to error: %v", err)
+		return fmt.Errorf("Cannot get Kyma cluster version due to error: %v", err)
 	}
 
 	if clusterMetadata.Version == "" { //Kyma seems not to be installed
@@ -150,8 +150,8 @@ func (cmd *command) isCompatibleVersion() error {
 		compCheckStep.Failuref("Current and next Kyma version are equal: %s", clusterMetadata.Version)
 		compCheckFailed = true
 	}
-	if err := checkCompatibility(clusterMetadata.Version, cmd.opts.Source); err == nil {
-		compCheckStep.Failuref("Compatibility between the current and the next Kyma version cannot be warrantied:\n\n%s\n\n", err)
+	if err := checkCompatibility(clusterMetadata.Version, cmd.opts.Source); err != nil {
+		compCheckStep.Failuref("Cannot check compatibility between version '%s' and '%s'. This might cause errors - do you want to proceed anyway?", clusterMetadata.Version, cmd.opts.Source)
 		compCheckFailed = true
 	}
 	if !compCheckFailed {
@@ -161,7 +161,7 @@ func (cmd *command) isCompatibleVersion() error {
 
 	//seemless upgrade unnecessary or cannot be warrantied - aks user for approval
 	qUpgradeIncompStep := cmd.NewStep("Continue Kyma upgrade")
-	if cmd.avoidUserInteraction() || qUpgradeIncompStep.PromptYesNo("Do you want to proceed the upgrade? ") {
+	if cmd.avoidUserInteraction() || qUpgradeIncompStep.PromptYesNo("Do you want to proceed with the upgrade? ") {
 		qUpgradeIncompStep.Success()
 		return nil
 	}
@@ -246,14 +246,14 @@ func (cmd *command) overrides() (deployment.Overrides, error) {
 	for _, override := range cmd.opts.Overrides {
 		keyValuePairs := properties.MustLoadString(override)
 		if keyValuePairs.Len() < 1 {
-			return overrides, fmt.Errorf("Override has wrong format: please provide overrides in 'key=value' format")
+			return overrides, fmt.Errorf("Override has wrong format: Provide overrides in 'key=value' format")
 		}
 
 		// process key-value pair
 		for _, key := range keyValuePairs.Keys() {
 			value, ok := keyValuePairs.Get(key)
 			if !ok || value == "" {
-				return overrides, fmt.Errorf("Could not read value of override '%s'", key)
+				return overrides, fmt.Errorf("Cannot read value of override '%s'", key)
 			}
 
 			comp, overridesMap, err := cmd.convertToOverridesMap(key, value)
@@ -319,7 +319,7 @@ func (cmd *command) convertToOverridesMap(key, value string) (string, map[string
 
 	keyTokens := strings.Split(key, ".")
 	if len(keyTokens) < 2 {
-		return comp, latestOverrideMap, fmt.Errorf("Override key has to contain at least the chart name "+
+		return comp, latestOverrideMap, fmt.Errorf("Override key must contain at least the chart name "+
 			"and one override: chart.override[.suboverride]=value (given was '%s=%s')", key, value)
 	}
 
@@ -343,7 +343,7 @@ func (cmd *command) convertToOverridesMap(key, value string) (string, map[string
 	}
 
 	if len(latestOverrideMap) < 1 {
-		return comp, latestOverrideMap, fmt.Errorf("Failed to extracted overrides map from '%s=%s'", key, value)
+		return comp, latestOverrideMap, fmt.Errorf("Failed to extract overrides map from '%s=%s'", key, value)
 	}
 
 	return comp, latestOverrideMap, nil
@@ -368,11 +368,11 @@ func (cmd *command) showSuccessMessage() {
 		fmt.Println(`
 Generated self signed TLS certificate should be trusted in your system.
 
-  * On Mac Os X execute this command:
+  * On Mac Os X, execute this command:
    
     sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain kyma.crt
 
-  * On Windows please follow the steps described here:
+  * On Windows, follow the steps described here:
 
     https://support.globalsign.com/ssl/ssl-certificates-installation/import-and-export-certificate-microsoft-windows
 
