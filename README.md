@@ -22,30 +22,6 @@ choco install kyma-cli
 
 Read more about [installation options](https://github.com/kyma-project/cli/blob/master/docs/04-01-installation.md).
 
-### Build from Sources
-
-Alternatively, you can also build the Kyma CLI from the sources:
-
-1. To clone the Kyma CLI repository, run:
-
-```bash
-mkdir -p $GOPATH/src/github.com/kyma-project/
-git clone git@github.com:kyma-project/cli.git $GOPATH/src/github.com/kyma-project/cli
-```
-
-2. Enter the root folder of the cloned repository:
-
-```bash
-cd $GOPATH/src/github.com/kyma-project/cli
-```
-
-3. Run `make build` for your target OS:
-    - Mac OSX: `make build-darwin`
-    - Windows: `make build-windows`
-    - Linux: `make build-linux`
-
-The binary is saved to the `bin` folder in the Kyma CLI repository.
-
 ## Use Kyma CLI
 
 Once you have installed the CLI, you can use its set of commands and flags to provision a cluster and start working with Kyma.
@@ -75,20 +51,21 @@ To learn how to use Kyma CLI as a kubectl plugin, follow [this tutorial](https:/
 
 ## Development
 
-### Build from sources
+### Build from Sources
 
-You can build the Kyma CLI from the sources:
+Alternatively, you can also build the Kyma CLI from the sources:
 
 1. To clone the Kyma CLI repository, run:
 
 ```bash
-git clone git@github.com:kyma-project/cli.git
+mkdir -p $GOPATH/src/github.com/kyma-project/
+git clone git@github.com:kyma-project/cli.git $GOPATH/src/github.com/kyma-project/cli
 ```
 
 2. Enter the root folder of the cloned repository:
 
 ```bash
-cd cli
+cd $GOPATH/src/github.com/kyma-project/cli
 ```
 
 3. Run `make build` for your target OS:
