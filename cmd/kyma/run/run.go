@@ -9,9 +9,7 @@ import (
 //NewCmd creates a new run command
 func NewCmd(o *cli.Options) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "run",
-		Short: "",
-		Long:  "",
+		Use: "run",
 	}
 
 	cmd.AddCommand(function.NewCmd(function.NewOptions(o)))

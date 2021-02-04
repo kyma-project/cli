@@ -12,10 +12,14 @@ import (
 type Options struct {
 	*cli.Options
 
-	Filename     string
-	ImageName    string
-	BuildTimeout time.Duration
-	BuildOnly    bool
+	Filename      string
+	ImageName     string
+	ContainerName string
+	FuncPort      string
+	Envs          []string
+	Timeout       time.Duration
+	Detach        bool
+	Debug         bool
 }
 
 //NewOptions creates options with default values
@@ -26,7 +30,7 @@ func NewOptions(o *cli.Options) *Options {
 
 const imageNameFormat = "%s:%s"
 
-func (o *Options) setDefaults() (err error) {
+func (o *Options) setDefaults() error {
 	if o.Filename == "" {
 		pwd, err := os.Getwd()
 		if err != nil {
@@ -35,5 +39,5 @@ func (o *Options) setDefaults() (err error) {
 		o.Filename = path.Join(pwd, workspace.CfgFilename)
 	}
 
-	return
+	return nil
 }

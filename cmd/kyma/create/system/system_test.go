@@ -39,7 +39,7 @@ func TestSteps(t *testing.T) {
 	t.Parallel()
 	c := command{
 		Command: cli.Command{
-			Options: cli.NewOptions(),
+			Options: cli.NewOptions(nil),
 		},
 		opts: NewOptions(nil),
 	}
