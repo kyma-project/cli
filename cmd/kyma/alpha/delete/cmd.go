@@ -33,7 +33,7 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cobraCmd := &cobra.Command{
 		Use:     "delete",
-		Short:   "Delete Kyma from a running Kubernetes cluster.",
+		Short:   "Deletes Kyma from a running Kubernetes cluster.",
 		Long:    `Use this command to delete Kyma from a running Kubernetes cluster.`,
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 		Aliases: []string{"d"},
