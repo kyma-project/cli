@@ -46,10 +46,11 @@ func TestFinalizer_Add(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		expectedLen := tt.expectedLen
+		funcs := tt.funcs
+		f := tt.f
+		
 		t.Run(tt.name, func(t *testing.T) {
-			expectedLen := tt.expectedLen
-			funcs := tt.funcs
-			f := tt.f
 			d := &Finalizer{
 				funcs: funcs,
 			}
