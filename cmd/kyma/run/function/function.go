@@ -91,12 +91,12 @@ func (c *command) Run() error {
 		return errors.Wrap(err, "white trying to interact with docker")
 	}
 
-	err = c.build(client, ctx, cfg)
+	err = c.build(ctx, client, cfg)
 	if err != nil {
 		return err
 	}
 
-	return c.runContainer(client, ctx, cfg)
+	return c.runContainer(ctx, client, cfg)
 }
 
 func workspaceConfig(path string) (workspace.Cfg, error) {
@@ -118,7 +118,7 @@ func workspaceConfig(path string) (workspace.Cfg, error) {
 	return cfg, nil
 }
 
-func (c *command) build(client *client.Client, ctx context.Context, cfg workspace.Cfg) error {
+func (c *command) build(ctx context.Context, client *client.Client, cfg workspace.Cfg) error {
 	context, err := docker.InlineContext(docker.ContextOpts{
 		DirPrefix:  c.opts.ContainerName,
 		Dockerfile: runtimes.Dockerfile(cfg.Runtime),
@@ -148,8 +148,8 @@ func (c *command) build(client *client.Client, ctx context.Context, cfg workspac
 	return nil
 }
 
-func (c *command) runContainer(client *client.Client, ctx context.Context, cfg workspace.Cfg) error {
-	c.newStep(fmt.Sprintf("Runing container: %s", c.opts.ContainerName))
+func (c *command) runContainer(ctx context.Context, client *client.Client, cfg workspace.Cfg) error {
+	c.newStep(fmt.Sprintf("Running container: %s", c.opts.ContainerName))
 	id, err := docker.RunContainer(client, ctx, docker.RunOpts{
 		Ports: runtimes.ContainerPorts(cfg.Runtime, c.opts.FuncPort, c.opts.Debug),
 		Envs: append(
@@ -179,12 +179,6 @@ func (c *command) newStep(message string) {
 		logrus.Debug(message)
 	} else {
 		c.NewStep(message)
-	}
-}
-
-func (c *command) successStep() {
-	if c.CurrentStep != nil {
-		c.CurrentStep.Success()
 	}
 }
 
