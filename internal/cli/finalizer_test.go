@@ -76,7 +76,7 @@ func TestFinalizer_SetupCloseHandler(t *testing.T) {
 		{
 			name: "should receive SIGTERM syscall and run function",
 			fields: fields{
-				notify: fixNotify(syscall.SIGTERM, time.Second),
+				notify: fixNotify(syscall.SIGTERM),
 				funcs: []func(chan int) func(){
 					fixFunc,
 				},
@@ -86,7 +86,7 @@ func TestFinalizer_SetupCloseHandler(t *testing.T) {
 		{
 			name: "should receive SIGINT syscall and run all functions",
 			fields: fields{
-				notify: fixNotify(syscall.SIGINT, time.Second),
+				notify: fixNotify(syscall.SIGINT),
 				funcs: []func(chan int) func(){
 					fixFunc, fixFunc,
 				},
@@ -96,7 +96,7 @@ func TestFinalizer_SetupCloseHandler(t *testing.T) {
 		{
 			name: "should end process after timeout will occurred",
 			fields: fields{
-				notify: fixNotify(syscall.SIGINT, time.Second),
+				notify: fixNotify(syscall.SIGINT),
 				funcs: []func(chan int) func(){
 					fixFunc, fixFunc, fixFunc, fixFunc,
 				},
@@ -106,13 +106,13 @@ func TestFinalizer_SetupCloseHandler(t *testing.T) {
 		{
 			name: "should receive SIGINT syscall and run all (non nil) functions",
 			fields: fields{
-				notify: fixNotify(syscall.SIGINT, time.Second),
+				notify: fixNotify(syscall.SIGINT),
 				funcs: []func(chan int) func(){
 					fixNilFunc, fixFunc, fixNilFunc, fixFunc, fixNilFunc,
 				},
 			},
 			funcExecutions: 2,
-			nilFuncs: 3,
+			nilFuncs:       3,
 		},
 	}
 	for _, tt := range tests {
@@ -144,24 +144,14 @@ func TestFinalizer_SetupCloseHandler(t *testing.T) {
 				<-counterChan
 				counter++
 			}
-			require.Equal(t, len(funcs) - nilFuncs, counter)
+			require.Equal(t, len(funcs)-nilFuncs, counter)
 		})
 	}
 }
 
-func countNilFuncs(funcs []func()) int {
-	counter := 0
-	for _, f := range funcs {
-		if f == nil {
-			counter++
-		}
-	}
-	return counter
-}
-
-func fixNotify(signal os.Signal, duration time.Duration) func(c chan<- os.Signal, sig ...os.Signal) {
+func fixNotify(signal os.Signal) func(c chan<- os.Signal, sig ...os.Signal) {
 	return func(c chan<- os.Signal, sig ...os.Signal) {
-		time.Sleep(duration)
+		time.Sleep(time.Second)
 		c <- signal
 	}
 }
