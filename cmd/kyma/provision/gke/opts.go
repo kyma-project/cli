@@ -14,6 +14,7 @@ type Options struct {
 	DiskSizeGB        int
 	NodeCount         int
 	Extra             []string
+	Attempts          uint
 }
 
 //NewOptions creates options with default values
