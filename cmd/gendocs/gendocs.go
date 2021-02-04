@@ -24,7 +24,7 @@ title: %s
 )
 
 func main() {
-	command := kyma.NewCmd(cli.NewOptions())
+	command := kyma.NewCmd(cli.NewOptions(nil))
 
 	err := genMarkdownTree(command, docsTargetDir)
 	if err != nil {
