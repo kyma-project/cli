@@ -47,12 +47,16 @@ func TestFinalizer_Add(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			expectedLen := tt.expectedLen
+			funcs := tt.funcs
+			f := tt.f
 			d := &Finalizer{
-				funcs: tt.funcs,
+				funcs: funcs,
 			}
 
-			d.Add(tt.f)
-			require.Equal(t, tt.expectedLen, len(d.funcs))
+			d.Add(f)
+
+			require.Equal(t, expectedLen, len(d.funcs))
 		})
 	}
 }
@@ -103,13 +107,14 @@ func TestFinalizer_SetupCloseHandler(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			counter := uint64(0)
 			exit := make(chan struct{})
-
 			d := &Finalizer{
 				notify: tt.fields.notify,
 				exit:   fixExit(exit),
 				funcs:  fixFuncs(&counter, tt.fields.funcs),
 			}
+
 			d.SetupCloseHandler()
+
 			<-exit
 			require.Equal(t, tt.funcExecutions, counter)
 		})

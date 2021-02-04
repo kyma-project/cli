@@ -28,8 +28,6 @@ func NewOptions(o *cli.Options) *Options {
 	return options
 }
 
-const imageNameFormat = "%s:%s"
-
 func (o *Options) setDefaults() error {
 	if o.Filename == "" {
 		pwd, err := os.Getwd()
