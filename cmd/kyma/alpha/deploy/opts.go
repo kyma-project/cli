@@ -13,6 +13,7 @@ import (
 )
 
 var (
+	localKymaDevDomain    = "local.kyma.dev"
 	localSource           = "local"
 	defaultSource         = "master"
 	kymaProfiles          = []string{"evaluation", "production"}
@@ -98,7 +99,7 @@ func (o *Options) validateFlags() error {
 	if err != nil {
 		return err
 	}
-	if o.Domain != LocalKymaDevDomain && !certsProvided {
+	if o.Domain != localKymaDevDomain && !certsProvided {
 		return fmt.Errorf("To use a custom domain name also a custom TLS certificate and TLS key has to be provided")
 	}
 	return nil

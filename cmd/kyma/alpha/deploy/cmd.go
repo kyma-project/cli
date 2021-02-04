@@ -54,7 +54,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd.Flags().DurationVarP(&o.QuitTimeout, "quit-timeout", "", 1200*time.Second, "Time after which the deployment is aborted. Worker goroutines may still be working in the background. This value must be greater than the value for cancel-timeout.")
 	cobraCmd.Flags().DurationVarP(&o.HelmTimeout, "helm-timeout", "", 360*time.Second, "Timeout for the underlying Helm client.")
 	cobraCmd.Flags().IntVar(&o.WorkersCount, "workers-count", 4, "Number of parallel workers used for the deployment.")
-	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", LocalKymaDevDomain, "Domain used for installation.")
+	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", localKymaDevDomain, "Domain used for installation.")
 	cobraCmd.Flags().StringVarP(&o.TLSCrtFile, "tls-crt", "", "", "TLS certificate file for the domain used for installation.")
 	cobraCmd.Flags().StringVarP(&o.TLSKeyFile, "tls-key", "", "", "TLS key file for the domain used for installation.")
 	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", defaultSource, `Installation source.
@@ -192,10 +192,6 @@ func (cmd *command) deployKyma(ui asyncui.AsyncUI) error {
 		return err
 	}
 
-	if err := cmd.configureCoreDNS(); err != nil {
-		return err
-	}
-
 	// if an AsyncUI is used, get channel for update events
 	var updateCh chan<- deployment.ProcessUpdate
 	if ui.IsRunning() {
@@ -211,21 +207,6 @@ func (cmd *command) deployKyma(ui asyncui.AsyncUI) error {
 	}
 
 	return installer.StartKymaDeployment()
-}
-
-func (cmd *command) configureCoreDNS() error {
-	if isLocalKymaDomain(cmd.opts.Domain) { //patch Kubernetes DNS system when using "local.kyma.dev" as domain name
-		step := cmd.NewStep(fmt.Sprintf("Configure Kubernetes DNS to support domain '%s'", cmd.opts.Domain))
-		err := ConfigureCoreDNS(cmd.K8s.Static())
-		if err == nil {
-			step.Success()
-		} else {
-			step.Failure()
-			return err
-		}
-	}
-
-	return nil
 }
 
 func (cmd *command) overrides() (deployment.Overrides, error) {
@@ -361,7 +342,7 @@ func (cmd *command) showSuccessMessage() {
 	}
 
 	// show cert installation hint only for local Kyma domain and if user isn't providing a custom cert
-	if isLocalKymaDomain(cmd.opts.Domain) && !tlsProvided {
+	if (cmd.opts.Domain == localKymaDevDomain) && !tlsProvided {
 		if err = cmd.storeCrtAsFile(); err != nil {
 			logFunc("%s", err)
 		}
