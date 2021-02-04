@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/pkg/errors"
@@ -12,7 +11,6 @@ import (
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/pkg/asyncui"
-	"github.com/kyma-project/cli/pkg/deploy"
 	"github.com/spf13/cobra"
 
 	installConfig "github.com/kyma-incubator/hydroform/parallel-install/pkg/config"
@@ -34,18 +32,17 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 
 	cobraCmd := &cobra.Command{
-		Use:     "uninstall",
-		Short:   "Uninstalls Kyma from a running Kubernetes cluster.",
-		Long:    `Use this command to uninstall Kyma from a running Kubernetes cluster.`,
+		Use:     "delete",
+		Short:   "Deletes Kyma from a running Kubernetes cluster.",
+		Long:    `Use this command to delete Kyma from a running Kubernetes cluster.`,
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
-		Aliases: []string{"i"},
+		Aliases: []string{"d"},
 	}
 
-	cobraCmd.Flags().StringVarP(&o.WorkspacePath, "workspace", "w", defaultWorkspacePath, "Path used to download Kyma sources.")
 	cobraCmd.Flags().DurationVarP(&o.CancelTimeout, "cancel-timeout", "", 900*time.Second, "Time after which the workers' context is canceled. Pending worker goroutines (if any) may continue if blocked by a Helm client.")
-	cobraCmd.Flags().DurationVarP(&o.QuitTimeout, "quit-timeout", "", 1200*time.Second, "Time after which the uninstallation is aborted. Worker goroutines may still be working in the background. This value must be greater than the value for cancel-timeout.")
+	cobraCmd.Flags().DurationVarP(&o.QuitTimeout, "quit-timeout", "", 1200*time.Second, "Time after which the deletion is aborted. Worker goroutines may still be working in the background. This value must be greater than the value for cancel-timeout.")
 	cobraCmd.Flags().DurationVarP(&o.HelmTimeout, "helm-timeout", "", 360*time.Second, "Timeout for the underlying Helm client.")
-	cobraCmd.Flags().IntVar(&o.WorkersCount, "workers-count", 4, "Number of parallel workers used for the uninstallation.")
+	cobraCmd.Flags().IntVar(&o.WorkersCount, "workers-count", 4, "Number of parallel workers used for the deletion.")
 	return cobraCmd
 }
 
@@ -82,7 +79,6 @@ func (cmd *command) Run() error {
 		return err
 	}
 
-	var resourcePath = filepath.Join(cmd.opts.WorkspacePath, "resources")
 	installCfg := installConfig.Config{
 		WorkersCount:                  cmd.opts.WorkersCount,
 		CancelTimeout:                 cmd.opts.CancelTimeout,
@@ -91,31 +87,7 @@ func (cmd *command) Run() error {
 		BackoffInitialIntervalSeconds: 3,
 		BackoffMaxElapsedTimeSeconds:  60 * 5,
 		Log:                           cli.LogFunc(cmd.Verbose),
-		ComponentsListFile:            filepath.Join(cmd.opts.WorkspacePath, "installation", "resources", fmt.Sprintf("uninstall-%s", kymaMeta.ComponentListFile)),
-		CrdPath:                       filepath.Join(resourcePath, "cluster-essentials", "files"),
-		ResourcePath:                  resourcePath,
-		Version:                       kymaMeta.Version,
-	}
-
-	// only download if not from local sources
-	if kymaMeta.Version != localSource { //KymaMetadata.Version contains the "source" value which was used during the installation
-		//if workspace already exists ask user for deletion-approval
-		_, err := os.Stat(cmd.opts.WorkspacePath)
-		approvalRequired := !os.IsNotExist(err)
-
-		if err := deploy.CloneSources(&cmd.Factory, cmd.opts.WorkspacePath, kymaMeta.Version); err != nil {
-			return err
-		}
-		// delete workspace folder
-		if approvalRequired && !cmd.avoidUserInteraction() {
-			userApprovalStep := cmd.NewStep("Workspace folder exists")
-			if userApprovalStep.PromptYesNo(fmt.Sprintf("Delete workspace folder '%s' after Kyma was removed?", cmd.opts.WorkspacePath)) {
-				defer os.RemoveAll(cmd.opts.WorkspacePath)
-			}
-			userApprovalStep.Success()
-		} else {
-			defer os.RemoveAll(cmd.opts.WorkspacePath)
-		}
+		ComponentsListFile:            fmt.Sprintf("uninstall-%s", kymaMeta.ComponentListFile),
 	}
 
 	// recover the component list used for the Kyma installation
@@ -132,7 +104,7 @@ func (cmd *command) Run() error {
 		}
 	}
 
-	installer, err := deployment.NewDeployment(installCfg, deployment.Overrides{}, cmd.K8s.Static(), updateCh)
+	installer, err := deployment.NewDeletion(installCfg, deployment.Overrides{}, cmd.K8s.Static(), updateCh)
 	if err != nil {
 		return err
 	}
@@ -190,9 +162,4 @@ func (cmd *command) retrieveKymaMetadata() (*metadata.KymaMetadata, error) {
 func (cmd *command) showSuccessMessage() {
 	// TODO: show processing summary
 	fmt.Println("Kyma successfully removed.")
-}
-
-//avoidUserInteraction returns true if user won't provide input
-func (cmd *command) avoidUserInteraction() bool {
-	return cmd.NonInteractive || cmd.CI
 }

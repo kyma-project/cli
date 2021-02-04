@@ -2,15 +2,9 @@ package uninstall
 
 import (
 	"fmt"
-	"path/filepath"
 	"time"
 
 	"github.com/kyma-project/cli/internal/cli"
-)
-
-var (
-	localSource          = "local"
-	defaultWorkspacePath = filepath.Join(".", "workspace")
 )
 
 //Options defines available options for the command
