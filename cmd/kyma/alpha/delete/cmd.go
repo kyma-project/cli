@@ -163,8 +163,3 @@ func (cmd *command) showSuccessMessage() {
 	// TODO: show processing summary
 	fmt.Println("Kyma successfully removed.")
 }
-
-//avoidUserInteraction returns true if user won't provide input
-func (cmd *command) avoidUserInteraction() bool {
-	return cmd.NonInteractive || cmd.CI
-}
