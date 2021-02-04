@@ -2,7 +2,7 @@
 title: kyma alpha delete
 ---
 
-Delete Kyma from a running Kubernetes cluster.
+Deletes Kyma from a running Kubernetes cluster.
 
 ## Synopsis
 
