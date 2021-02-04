@@ -65,18 +65,19 @@ func TestFinalizer_Add(t *testing.T) {
 func TestFinalizer_SetupCloseHandler(t *testing.T) {
 	type fields struct {
 		notify func(c chan<- os.Signal, sig ...os.Signal)
-		funcs  []func(*uint64) func()
+		funcs  []func(chan int) func()
 	}
 	tests := []struct {
 		name           string
 		fields         fields
-		funcExecutions uint64
+		funcExecutions int
+		nilFuncs       int
 	}{
 		{
-			name: "should receive SIGINT syscall and run function",
+			name: "should receive SIGTERM syscall and run function",
 			fields: fields{
-				notify: fixNotify(syscall.SIGINT, time.Second),
-				funcs: []func(*uint64) func(){
+				notify: fixNotify(syscall.SIGTERM, time.Second),
+				funcs: []func(chan int) func(){
 					fixFunc,
 				},
 			},
@@ -86,7 +87,7 @@ func TestFinalizer_SetupCloseHandler(t *testing.T) {
 			name: "should receive SIGINT syscall and run all functions",
 			fields: fields{
 				notify: fixNotify(syscall.SIGINT, time.Second),
-				funcs: []func(*uint64) func(){
+				funcs: []func(chan int) func(){
 					fixFunc, fixFunc,
 				},
 			},
@@ -96,34 +97,66 @@ func TestFinalizer_SetupCloseHandler(t *testing.T) {
 			name: "should end process after timeout will occurred",
 			fields: fields{
 				notify: fixNotify(syscall.SIGINT, time.Second),
-				funcs: []func(*uint64) func(){
-					fixFunc, fixFunc, fixFunc, fixFunc,
+				funcs: []func(chan int) func(){
 					fixFunc, fixFunc, fixFunc, fixFunc,
 				},
 			},
 			funcExecutions: 2,
 		},
+		{
+			name: "should receive SIGINT syscall and run all (non nil) functions",
+			fields: fields{
+				notify: fixNotify(syscall.SIGINT, time.Second),
+				funcs: []func(chan int) func(){
+					fixNilFunc, fixFunc, fixNilFunc, fixFunc, fixNilFunc,
+				},
+			},
+			funcExecutions: 2,
+			nilFuncs: 3,
+		},
 	}
 	for _, tt := range tests {
 		funcs := tt.fields.funcs
+		nilFuncs := tt.nilFuncs
 		notify := tt.fields.notify
 		funcExecution := tt.funcExecutions
 
+		counter := 0
+		counterChan := make(chan int)
+		exit := make(chan struct{})
+
 		t.Run(tt.name, func(t *testing.T) {
-			counter := uint64(0)
-			exit := make(chan struct{})
-			d := &Finalizer{
-				notify: notify,
-				exit:   fixExit(exit),
-				funcs:  fixFuncs(&counter, funcs),
+			go func() {
+				d := &Finalizer{
+					notify: notify,
+					exit:   fixExit(exit),
+					funcs:  fixFuncs(counterChan, funcs),
+				}
+
+				d.SetupCloseHandler()
+
+				<-exit
+				require.Equal(t, funcExecution, counter)
+			}()
+
+			// wait until all functions end
+			for i := len(funcs) - nilFuncs; i != 0; i-- {
+				<-counterChan
+				counter++
 			}
-
-			d.SetupCloseHandler()
-
-			<-exit
-			require.Equal(t, funcExecution, counter)
+			require.Equal(t, len(funcs) - nilFuncs, counter)
 		})
 	}
+}
+
+func countNilFuncs(funcs []func()) int {
+	counter := 0
+	for _, f := range funcs {
+		if f == nil {
+			counter++
+		}
+	}
+	return counter
 }
 
 func fixNotify(signal os.Signal, duration time.Duration) func(c chan<- os.Signal, sig ...os.Signal) {
@@ -133,7 +166,7 @@ func fixNotify(signal os.Signal, duration time.Duration) func(c chan<- os.Signal
 	}
 }
 
-func fixFuncs(counter *uint64, functions []func(counter *uint64) func()) []func() {
+func fixFuncs(counter chan int, functions []func(counter chan int) func()) []func() {
 	var fixedFuncs []func()
 	for _, f := range functions {
 		fixedFuncs = append(fixedFuncs, f(counter))
@@ -141,11 +174,15 @@ func fixFuncs(counter *uint64, functions []func(counter *uint64) func()) []func(
 	return fixedFuncs
 }
 
-func fixFunc(counter *uint64) func() {
+func fixFunc(counter chan int) func() {
 	return func() {
 		time.Sleep(time.Second * 2)
-		*counter++
+		counter <- 1
 	}
+}
+
+func fixNilFunc(counter chan int) func() {
+	return nil
 }
 
 func fixExit(exit chan struct{}) func(int) {
