@@ -21,8 +21,8 @@ Use this command to utilize the Kyma CLI in alpha testing stage.
 ## See also
 
 * [kyma](#kyma-kyma)	 - Controls a Kyma cluster.
+* [kyma alpha delete](#kyma-alpha-delete-kyma-alpha-delete)	 - Delete Kyma from a running Kubernetes cluster.
 * [kyma alpha deploy](#kyma-alpha-deploy-kyma-alpha-deploy)	 - Deploys Kyma on a running Kubernetes cluster.
 * [kyma alpha provision](#kyma-alpha-provision-kyma-alpha-provision)	 - Provisions a cluster for Kyma installation.
-* [kyma alpha uninstall](#kyma-alpha-uninstall-kyma-alpha-uninstall)	 - Uninstalls Kyma from a running Kubernetes cluster.
 * [kyma alpha version](#kyma-alpha-version-kyma-alpha-version)	 - Displays the version of Kyma CLI and of the connected Kyma cluster.
 
