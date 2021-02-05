@@ -2,6 +2,7 @@ package cli
 
 import (
 	"os"
+	"sync"
 	"syscall"
 	"testing"
 	"time"
@@ -122,6 +123,7 @@ func TestFinalizer_SetupCloseHandler(t *testing.T) {
 		funcExecution := tt.funcExecutions
 
 		counter := 0
+		m := sync.Mutex{}
 		counterChan := make(chan int)
 		exit := make(chan struct{})
 
@@ -136,17 +138,31 @@ func TestFinalizer_SetupCloseHandler(t *testing.T) {
 				d.SetupCloseHandler()
 
 				<-exit
-				require.Equal(t, funcExecution, counter)
+				require.Equal(t, funcExecution, safeVal(&m, &counter))
 			}()
 
 			// wait until all functions end
 			for i := len(funcs) - nilFuncs; i != 0; i-- {
 				<-counterChan
-				counter++
+				safeAdd(&m, &counter)
 			}
-			require.Equal(t, len(funcs)-nilFuncs, counter)
+			require.Equal(t, len(funcs)-nilFuncs, safeVal(&m, &counter))
 		})
 	}
+}
+
+func safeVal(m *sync.Mutex, val *int) int {
+	m.Lock()
+	defer m.Unlock()
+
+	return *val
+}
+
+func safeAdd(m *sync.Mutex, val *int) {
+	m.Lock()
+	defer m.Unlock()
+
+	*val++
 }
 
 func fixNotify(signal os.Signal) func(c chan<- os.Signal, sig ...os.Signal) {
