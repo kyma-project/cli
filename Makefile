@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := local
 
 ifndef KYMA_VERSION
-	KYMA_VERSION = 1.19.0-rc3
+	KYMA_VERSION = 1.19.0
 endif
 
 ifndef VERSION
