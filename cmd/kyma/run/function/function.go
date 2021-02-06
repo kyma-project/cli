@@ -3,12 +3,12 @@ package function
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-incubator/hydroform/function/pkg/docker/runtimes"
 	"os"
 
 	"github.com/docker/docker/client"
 	"github.com/google/uuid"
 	"github.com/kyma-incubator/hydroform/function/pkg/docker"
+	"github.com/kyma-incubator/hydroform/function/pkg/docker/runtimes"
 	"github.com/kyma-incubator/hydroform/function/pkg/workspace"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/pkg/errors"
@@ -130,7 +130,7 @@ func (c *command) build(ctx context.Context, client *client.Client, cfg workspac
 	}
 
 	c.newStep(fmt.Sprintf("Building project: %s", c.opts.ImageName))
-	resp, err := docker.BuildImage(client, ctx, docker.BuildOpts{
+	resp, err := docker.BuildImage(ctx, client, docker.BuildOpts{
 		Context: context,
 		Tags:    []string{c.opts.ImageName},
 	})
@@ -150,8 +150,15 @@ func (c *command) build(ctx context.Context, client *client.Client, cfg workspac
 
 func (c *command) runContainer(ctx context.Context, client *client.Client, cfg workspace.Cfg) error {
 	c.newStep(fmt.Sprintf("Running container: %s", c.opts.ContainerName))
-	id, err := docker.RunContainer(client, ctx, docker.RunOpts{
-		Ports: runtimes.ContainerPorts(cfg.Runtime, c.opts.FuncPort, c.opts.Debug),
+	ports := map[string]string{
+		c.opts.FuncPort: runtimes.ServerPort,
+	}
+	if c.opts.Debug {
+		debugPort := runtimes.RuntimeDebugPort(cfg.Runtime)
+		ports[debugPort] = debugPort
+	}
+	id, err := docker.RunContainer(ctx, client, docker.RunOpts{
+		Ports: ports,
 		Envs: append(
 			runtimes.ContainerEnvs(cfg.Runtime, c.opts.Debug),
 			c.opts.Envs...,
@@ -168,8 +175,8 @@ func (c *command) runContainer(ctx context.Context, client *client.Client, cfg w
 	if !c.opts.Detach {
 		fmt.Println("Logs from the container:")
 		followCtx := context.Background()
-		c.Finalizer.Add(docker.Stop(client, followCtx, id, func(i ...interface{}) { fmt.Print(i...) }))
-		return docker.FollowRun(client, followCtx, id, func(i ...interface{}) { fmt.Print(i...) })
+		c.Finalizer.Add(docker.Stop(followCtx, client, id, func(i ...interface{}) { fmt.Print(i...) }))
+		return docker.FollowRun(followCtx, client, id, func(i ...interface{}) { fmt.Print(i...) })
 	}
 	return nil
 }

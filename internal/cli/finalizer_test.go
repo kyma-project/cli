@@ -99,7 +99,8 @@ func TestFinalizer_SetupCloseHandler(t *testing.T) {
 			fields: fields{
 				notify: fixNotify(syscall.SIGINT),
 				funcs: []func(chan int) func(){
-					fixFunc, fixFunc, fixFunc, fixFunc,
+					fixFuncWithSleep, fixFuncWithSleep,
+					fixFuncWithSleep,
 				},
 			},
 			funcExecutions: 2,
@@ -181,6 +182,12 @@ func fixFuncs(counter chan int, functions []func(counter chan int) func()) []fun
 }
 
 func fixFunc(counter chan int) func() {
+	return func() {
+		counter <- 1
+	}
+}
+
+func fixFuncWithSleep(counter chan int) func() {
 	return func() {
 		time.Sleep(time.Second * 2)
 		counter <- 1
