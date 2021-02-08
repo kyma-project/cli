@@ -48,6 +48,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cmd.Flags().IntVar(&o.NodeCount, "nodes", 3, "Number of cluster nodes.")
 	// Temporary disabled flag. To be enabled when hydroform supports TF modules
 	//cmd.Flags().StringSliceVarP(&o.Extra, "extra", "e", nil, "Provide one or more arguments of the form NAME=VALUE to add extra configurations.")
+	cmd.Flags().UintVar(&o.Attempts, "attempts", 3, "Maximum number of attempts to provision the cluster.")
 
 	return cmd
 }
@@ -79,7 +80,7 @@ func (c *command) Run() error {
 			cluster, err = hf.Provision(cluster, provider, types.WithDataDir(home), types.Persistent())
 			return err
 		},
-		retry.Attempts(3), retry.LastErrorOnly(!c.opts.Verbose))
+		retry.Attempts(c.opts.Attempts), retry.LastErrorOnly(!c.opts.Verbose))
 
 	if err != nil {
 		s.Failure()

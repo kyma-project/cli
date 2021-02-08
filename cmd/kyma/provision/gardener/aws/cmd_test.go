@@ -28,6 +28,7 @@ func TestProvisionGardenerAWSFlags(t *testing.T) {
 	require.Equal(t, 2, o.ScalerMin, "Default value for the scaler-min flag not as expected.")
 	require.Equal(t, 3, o.ScalerMax, "Default value for the scaler-max flag not as expected.")
 	require.Empty(t, o.Extra, "Default value for the extra flag not as expected.")
+	require.Equal(t, uint(3), o.Attempts, "Default value for the attempts flag not as expected.")
 
 	// test passing flags
 	err := c.ParseFlags([]string{
@@ -44,6 +45,7 @@ func TestProvisionGardenerAWSFlags(t *testing.T) {
 		"--scaler-min", "88",
 		"--scaler-max", "99",
 		"--extra", "VAR1=VALUE1,VAR2=VALUE2",
+		"--attempts", "2",
 	})
 
 	require.NoError(t, err, "Parsing flags should not return an error")
@@ -60,6 +62,7 @@ func TestProvisionGardenerAWSFlags(t *testing.T) {
 	require.Equal(t, 88, o.ScalerMin, "The parsed value for the scaler-min flag not as expected.")
 	require.Equal(t, 99, o.ScalerMax, "The parsed value for the scaler-max flag not as expected.")
 	require.Equal(t, []string{"VAR1=VALUE1", "VAR2=VALUE2"}, o.Extra, "The parsed value for the extra flag not as expected.")
+	require.Equal(t, uint(2), o.Attempts, "The parsed value for the attempts flag not as expected.")
 }
 
 func TestProvisionGardenerAWSSubcommands(t *testing.T) {

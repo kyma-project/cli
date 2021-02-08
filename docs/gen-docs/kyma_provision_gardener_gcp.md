@@ -18,6 +18,7 @@ kyma provision gardener gcp [flags]
 ## Options
 
 ```bash
+      --attempts uint         Maximum number of attempts to provision the cluster. (default 3)
   -c, --credentials string    Path to the kubeconfig file of the Gardener service account for GCP. (required)
       --disk-size int         Disk size (in GB) of the cluster. (default 50)
       --disk-type string      Type of disk to use on GCP. (default "pd-standard")
