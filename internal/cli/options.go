@@ -10,12 +10,12 @@ type Options struct {
 	Verbose bool
 	step.Factory
 	KubeconfigPath string
-	Finalizer      *Finalizer
+	Finalizers     Finalizers
 }
 
 //NewOptions creates options with default values
-func NewOptions(finalizer *Finalizer) *Options {
+func NewOptions() *Options {
 	return &Options{
-		Finalizer: finalizer,
+		Finalizers: *NewFinalizer(),
 	}
 }
