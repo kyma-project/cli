@@ -120,13 +120,13 @@ func TestFinalizer_SetupCloseHandler(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		funcs := tt.fields.funcs
+		nilFuncs := tt.nilFuncs
+		notify := tt.fields.notify
+		funcExecution := tt.funcExecutions
+
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-
-			funcs := tt.fields.funcs
-			nilFuncs := tt.nilFuncs
-			notify := tt.fields.notify
-			funcExecution := tt.funcExecutions
 
 			counter := 0
 			m := sync.Mutex{}
