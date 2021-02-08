@@ -140,7 +140,7 @@ func TestFinalizer_SetupCloseHandler(t *testing.T) {
 					funcs:  fixFuncs(counterChan, funcs),
 				}
 
-				d.SetupCloseHandler()
+				d.setupCloseHandler()
 
 				<-exit
 				require.Equal(t, safeVal(&m, &funcExecution), safeVal(&m, &counter))

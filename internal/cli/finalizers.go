@@ -17,17 +17,20 @@ type Finalizers struct {
 }
 
 func NewFinalizer() *Finalizers {
-	return &Finalizers{
+	fin := &Finalizers{
 		notify: signal.Notify,
 		exit:   os.Exit,
 	}
+	fin.setupCloseHandler()
+
+	return fin
 }
 
 func (f *Finalizers) Add(function func()) {
 	f.funcs = append(f.funcs, function)
 }
 
-func (f *Finalizers) SetupCloseHandler() {
+func (f *Finalizers) setupCloseHandler() {
 	c := make(chan os.Signal, 2)
 	f.notify(c, syscall.SIGTERM, syscall.SIGINT)
 	go func() {
