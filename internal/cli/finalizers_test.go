@@ -11,6 +11,8 @@ import (
 )
 
 func TestFinalizer_Add(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name        string
 		funcs       []func()
@@ -52,7 +54,7 @@ func TestFinalizer_Add(t *testing.T) {
 		f := tt.f
 
 		t.Run(tt.name, func(t *testing.T) {
-			d := &Finalizer{
+			d := &Finalizers{
 				funcs: funcs,
 			}
 
@@ -64,6 +66,8 @@ func TestFinalizer_Add(t *testing.T) {
 }
 
 func TestFinalizer_SetupCloseHandler(t *testing.T) {
+	t.Parallel()
+
 	type fields struct {
 		notify func(c chan<- os.Signal, sig ...os.Signal)
 		funcs  []func(chan int) func()
@@ -130,7 +134,7 @@ func TestFinalizer_SetupCloseHandler(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 			go func() {
-				d := &Finalizer{
+				d := &Finalizers{
 					notify: notify,
 					exit:   fixExit(exit),
 					funcs:  fixFuncs(counterChan, funcs),

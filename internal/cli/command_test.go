@@ -13,7 +13,7 @@ func TestNewStep(t *testing.T) {
 	// test uninitialized command
 	require.Panics(t, func() { c.NewStep("Oh noes...") }, "NewStep on uninitialized command should panic.")
 
-	c.Options = NewOptions(nil) // properly initialize command
+	c.Options = NewOptions() // properly initialize command
 
 	// test current step update when creating a new step
 	s := c.NewStep("test-step")

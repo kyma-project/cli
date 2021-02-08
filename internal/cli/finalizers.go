@@ -8,31 +8,33 @@ import (
 	"time"
 )
 
-const timeout = 5
+const timeout = 5 * time.Second
 
-type Finalizer struct {
+type Finalizers struct {
 	notify func(c chan<- os.Signal, sig ...os.Signal)
 	exit   func(int)
 	funcs  []func()
 }
 
-func NewFinalizer() *Finalizer {
-	return &Finalizer{
+func NewFinalizer() *Finalizers {
+	return &Finalizers{
 		notify: signal.Notify,
 		exit:   os.Exit,
 	}
 }
 
-func (f *Finalizer) Add(function func()) {
+func (f *Finalizers) Add(function func()) {
 	f.funcs = append(f.funcs, function)
 }
 
-func (f *Finalizer) SetupCloseHandler() {
+func (f *Finalizers) SetupCloseHandler() {
 	c := make(chan os.Signal, 2)
 	f.notify(c, syscall.SIGTERM, syscall.SIGINT)
 	go func() {
 		sig := <-c
+		fmt.Printf("\r- Signal '%v' received from Terminal. Exiting...\n ", sig)
 		lastChan := make(chan struct{})
+
 		go func() {
 			for _, f := range f.funcs {
 				if f != nil {
@@ -43,12 +45,11 @@ func (f *Finalizer) SetupCloseHandler() {
 		}()
 
 		go func() {
-			time.Sleep(time.Second * timeout)
+			time.Sleep(timeout)
 			lastChan <- struct{}{}
 		}()
 
 		<-lastChan
-		fmt.Printf("\r- Signal '%v' received from Terminal. Exiting...\n ", sig)
 		f.exit(0)
 	}()
 }

@@ -9,9 +9,7 @@ import (
 )
 
 func main() {
-	fin := cli.NewFinalizer()
-	fin.SetupCloseHandler()
-	command := kyma.NewCmd(cli.NewOptions(fin))
+	command := kyma.NewCmd(cli.NewOptions())
 
 	err := command.Execute()
 	if err != nil {
