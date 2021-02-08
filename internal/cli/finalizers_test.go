@@ -49,11 +49,13 @@ func TestFinalizer_Add(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		expectedLen := tt.expectedLen
-		funcs := tt.funcs
-		f := tt.f
-
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			expectedLen := tt.expectedLen
+			funcs := tt.funcs
+			f := tt.f
+
 			d := &Finalizers{
 				funcs: funcs,
 			}
@@ -66,8 +68,6 @@ func TestFinalizer_Add(t *testing.T) {
 }
 
 func TestFinalizer_SetupCloseHandler(t *testing.T) {
-	t.Parallel()
-
 	type fields struct {
 		notify func(c chan<- os.Signal, sig ...os.Signal)
 		funcs  []func(chan int) func()
@@ -122,17 +122,19 @@ func TestFinalizer_SetupCloseHandler(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		funcs := tt.fields.funcs
-		nilFuncs := tt.nilFuncs
-		notify := tt.fields.notify
-		funcExecution := tt.funcExecutions
-
-		counter := 0
-		m := sync.Mutex{}
-		counterChan := make(chan int)
-		exit := make(chan struct{})
-
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			funcs := tt.fields.funcs
+			nilFuncs := tt.nilFuncs
+			notify := tt.fields.notify
+			funcExecution := tt.funcExecutions
+
+			counter := 0
+			m := sync.Mutex{}
+			counterChan := make(chan int)
+			exit := make(chan struct{})
+
 			go func() {
 				d := &Finalizers{
 					notify: notify,
