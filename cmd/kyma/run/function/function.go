@@ -31,7 +31,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "function",
 		Short: "Runs Functions locally.",
-		Long:  `Use this command to run a Function in Docker from local sources`,
+		Long:  `Use this command to run a Function in Docker from local sources.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return c.Run()
 		},
