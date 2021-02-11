@@ -10,7 +10,7 @@ import (
 func NewCmd(o *cli.Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "run",
-		Short: "Run local resources.",
+		Short: "Runs resources locally.",
 		Long:  `Use this command to run resources from the configuration.`,
 	}
 
