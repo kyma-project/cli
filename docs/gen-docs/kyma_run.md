@@ -6,7 +6,7 @@ Runs resources locally.
 
 ## Synopsis
 
-Use this command to run resources from the configuration.
+Use this command to run resources from the local configuration.
 
 ## Options inherited from parent commands
 
