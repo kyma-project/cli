@@ -11,7 +11,7 @@ func NewCmd(o *cli.Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "run",
 		Short: "Runs resources locally.",
-		Long:  `Use this command to run resources from the configuration.`,
+		Long:  `Use this command to run resources from the local configuration.`,
 	}
 
 	cmd.AddCommand(function.NewCmd(function.NewOptions(o)))
