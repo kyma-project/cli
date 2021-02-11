@@ -9,9 +9,9 @@ import (
 //NewCmd creates a new run command
 func NewCmd(o *cli.Options) *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "run",
+		Use:   "run",
 		Short: "Run local resources.",
-		Long: `Use this command to run resources from the configuration.`,
+		Long:  `Use this command to run resources from the configuration.`,
 	}
 
 	cmd.AddCommand(function.NewCmd(function.NewOptions(o)))
