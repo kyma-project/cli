@@ -40,7 +40,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cmd.Flags().StringVarP(&o.Filename, "filename", "f", "", `Full path to the config file.`)
 	cmd.Flags().StringVarP(&o.Dir, "sourceDir", "d", "", `Full path to the folder with the source code.`)
 	cmd.Flags().StringVar(&o.ContainerName, "containerName", "", `The name of the created container.`)
-	cmd.Flags().BoolVarP(&o.Detach, "detach", "d", false, `Change this flag to "true" if you don't want to follow the container logs after running the Function.`)
+	cmd.Flags().BoolVar(&o.Detach, "detach", false, `Change this flag to "true" if you don't want to follow the container logs after running the Function.`)
 	cmd.Flags().StringVarP(&o.FuncPort, "port", "p", "8080", `The port on which the container will be exposed.`)
 
 	//cmd.Flags().BoolVarP(&o.Debug, "debug", "d", false, `Change this flat to true if you want to expose port 9229 for remote debugging.`)

@@ -21,5 +21,5 @@ title: kyma run
 ## See also
 
 * [kyma](#kyma-kyma)	 - Controls a Kyma cluster.
-* [kyma run function](#kyma-run-function-kyma-run-function)	 - Run functions locally.
+* [kyma run function](#kyma-run-function-kyma-run-function)	 - Runs Functions locally.
 

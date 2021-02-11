@@ -2,11 +2,11 @@
 title: kyma run function
 ---
 
-Run functions locally.
+Runs Functions locally.
 
 ## Synopsis
 
-Use this command to run function in docker from local sources.
+Use this command to run a Function in Docker from local sources
 
 ```bash
 kyma run function [flags]
@@ -16,12 +16,10 @@ kyma run function [flags]
 
 ```bash
       --containerName string   The name of the created container.
-  -d, --detach                 Change this flag to true if you don't want to follow the container logs after run'.
-  -e, --env stringArray        The system environments witch which the container will be run.
+      --detach                 Change this flag to "true" if you don't want to follow the container logs after running the Function.
   -f, --filename string        Full path to the config file.
-      --imageName string       Full name with tag of the container.
   -p, --port string            The port on which the container will be exposed. (default "8080")
-  -t, --timeout duration       Maximum time during which the local resources are being built, where "0" means "infinite". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+  -d, --sourceDir string       Full path to the folder with the source code.
 ```
 
 ## Options inherited from parent commands
