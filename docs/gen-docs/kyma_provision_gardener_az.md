@@ -22,7 +22,7 @@ kyma provision gardener az [flags]
       --disk-size int         Disk size (in GB) of the cluster. (default 50)
       --disk-type string      Type of disk to use on Azure. (default "Standard_LRS")
   -e, --extra NAME=VALUE      One or more arguments provided as the NAME=VALUE key-value pairs to configure additional cluster settings. You can use this flag multiple times or enter the key-value pairs as a comma-separated list.
-  -k, --kube-version string   Kubernetes version of the cluster. (default "1.16")
+  -k, --kube-version string   Kubernetes version of the cluster. (default "1.19")
   -n, --name string           Name of the cluster to provision. (required)
   -p, --project string        Name of the Gardener project where you provision the cluster. (required)
   -r, --region string         Region of the cluster. (default "westeurope")

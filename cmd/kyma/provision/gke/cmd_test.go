@@ -18,7 +18,7 @@ func TestProvisionGKEFlags(t *testing.T) {
 	require.Equal(t, "", o.Name, "Default value for the name flag not as expected.")
 	require.Equal(t, "", o.Project, "Default value for the project flag not as expected.")
 	require.Equal(t, "", o.CredentialsFile, "Default value for the credentials flag not as expected.")
-	require.Equal(t, "1.16", o.KubernetesVersion, "Default value for the kube-version flag not as expected.")
+	require.Equal(t, "1.18", o.KubernetesVersion, "Default value for the kube-version flag not as expected.")
 	require.Equal(t, "europe-west3-a", o.Location, "Default value for the location flag not as expected.")
 	require.Equal(t, "n1-standard-4", o.MachineType, "Default value for the type flag not as expected.")
 	require.Equal(t, 50, o.DiskSizeGB, "Default value for the disk-size flag not as expected.")
@@ -32,7 +32,7 @@ func TestProvisionGKEFlags(t *testing.T) {
 		"-n", "my-cluster",
 		"-p", "my-project",
 		"-c", "/my/credentials/file",
-		"-k", "1.17.0",
+		"-k", "1.18.0",
 		"-l", "us-central1-c",
 		"-t", "quantum-computer",
 		"--disk-size", "2000",
@@ -45,7 +45,7 @@ func TestProvisionGKEFlags(t *testing.T) {
 	require.Equal(t, "my-cluster", o.Name, "The parsed value for the name flag not as expected.")
 	require.Equal(t, "my-project", o.Project, "The parsed value for the project flag not as expected.")
 	require.Equal(t, "/my/credentials/file", o.CredentialsFile, "The parsed value for the credentials flag not as expected.")
-	require.Equal(t, "1.17.0", o.KubernetesVersion, "The parsed value for the kube-version flag not as expected.")
+	require.Equal(t, "1.18.0", o.KubernetesVersion, "The parsed value for the kube-version flag not as expected.")
 	require.Equal(t, "us-central1-c", o.Location, "The parsed value for the location flag not as expected.")
 	require.Equal(t, "quantum-computer", o.MachineType, "The parsed value for the type flag not as expected.")
 	require.Equal(t, 2000, o.DiskSizeGB, "The parsed value for the disk-size flag not as expected.")
@@ -69,7 +69,7 @@ func TestNewCluster(t *testing.T) {
 	t.Parallel()
 	o := &Options{
 		Name:              "mega-cluster",
-		KubernetesVersion: "1.16.0",
+		KubernetesVersion: "1.18.0",
 		Location:          "north-pole",
 		MachineType:       "HAL",
 		DiskSizeGB:        9000,

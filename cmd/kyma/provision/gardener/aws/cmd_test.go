@@ -19,7 +19,7 @@ func TestProvisionGardenerAWSFlags(t *testing.T) {
 	require.Equal(t, "", o.Project, "Default value for the project flag not as expected.")
 	require.Equal(t, "", o.CredentialsFile, "Default value for the credentials flag not as expected.")
 	require.Equal(t, "", o.Secret, "The parsed value for the secret flag not as expected.")
-	require.Equal(t, "1.16", o.KubernetesVersion, "Default value for the kube-version flag not as expected.")
+	require.Equal(t, "1.19", o.KubernetesVersion, "Default value for the kube-version flag not as expected.")
 	require.Equal(t, "eu-west-3", o.Region, "Default value for the region flag not as expected.")
 	require.Equal(t, []string{"eu-west-3a"}, o.Zones, "Default value for the zone flag not as expected.")
 	require.Equal(t, "m5.xlarge", o.MachineType, "Default value for the type flag not as expected.")
@@ -37,7 +37,7 @@ func TestProvisionGardenerAWSFlags(t *testing.T) {
 		"-c", "/my/credentials/file",
 		"-s", "my-ali-key",
 		"--disk-type", "a big one",
-		"-k", "1.16.0",
+		"-k", "1.19.0",
 		"-r", "us-central",
 		"-z", "us-central1-b",
 		"-t", "quantum-computer",
@@ -53,7 +53,7 @@ func TestProvisionGardenerAWSFlags(t *testing.T) {
 	require.Equal(t, "my-project", o.Project, "The parsed value for the project flag not as expected.")
 	require.Equal(t, "/my/credentials/file", o.CredentialsFile, "The parsed value for the credentials flag not as expected.")
 	require.Equal(t, "my-ali-key", o.Secret, "The parsed value for the secret flag not as expected.")
-	require.Equal(t, "1.16.0", o.KubernetesVersion, "The parsed value for the kube-version flag not as expected.")
+	require.Equal(t, "1.19.0", o.KubernetesVersion, "The parsed value for the kube-version flag not as expected.")
 	require.Equal(t, "us-central", o.Region, "The parsed value for the region flag not as expected.")
 	require.Equal(t, []string{"us-central1-b"}, o.Zones, "The parsed value for the zone flag not as expected.")
 	require.Equal(t, "quantum-computer", o.MachineType, "The parsed value for the type flag not as expected.")
@@ -79,7 +79,7 @@ func TestNewCluster(t *testing.T) {
 	t.Parallel()
 	o := &Options{
 		Name:              "mega-cluster",
-		KubernetesVersion: "1.16.0",
+		KubernetesVersion: "1.19.0",
 		Region:            "north-pole",
 		MachineType:       "HAL",
 		DiskSizeGB:        9000,
