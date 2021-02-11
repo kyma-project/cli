@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/docker/docker/client"
-	"github.com/google/uuid"
 	"github.com/kyma-incubator/hydroform/function/pkg/docker"
 	"github.com/kyma-incubator/hydroform/function/pkg/docker/runtimes"
 	"github.com/kyma-incubator/hydroform/function/pkg/workspace"
@@ -31,20 +30,18 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 	cmd := &cobra.Command{
 		Use:   "function",
-		Short: "Run functions locally.",
-		Long:  `Use this command to run function in docker from local sources.`,
+		Short: "Runs Functions locally.",
+		Long:  `Use this command to run a Function in Docker from local sources`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return c.Run()
 		},
 	}
 
 	cmd.Flags().StringVarP(&o.Filename, "filename", "f", "", `Full path to the config file.`)
-	cmd.Flags().StringVar(&o.ImageName, "imageName", "", `Full name with tag of the container.`)
+	cmd.Flags().StringVarP(&o.Dir, "sourceDir", "d", "", `Full path to the folder with the source code.`)
 	cmd.Flags().StringVar(&o.ContainerName, "containerName", "", `The name of the created container.`)
-	cmd.Flags().DurationVarP(&o.Timeout, "timeout", "t", 0, `Maximum time during which the local resources are being built, where "0" means "infinite". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".`)
-	cmd.Flags().BoolVarP(&o.Detach, "detach", "d", false, `Change this flag to true if you don't want to follow the container logs after run'.`)
+	cmd.Flags().BoolVarP(&o.Detach, "detach", "d", false, `Change this flag to "true" if you don't want to follow the container logs after running the Function.`)
 	cmd.Flags().StringVarP(&o.FuncPort, "port", "p", "8080", `The port on which the container will be exposed.`)
-	cmd.Flags().StringArrayVarP(&o.Envs, "env", "e", []string{}, `The system environments witch which the container will be run.`)
 
 	//cmd.Flags().BoolVarP(&o.Debug, "debug", "d", false, `Change this flat to true if you want to expose port 9229 for remote debugging.`)
 
@@ -65,15 +62,9 @@ func (c *command) Run() error {
 		return err
 	}
 
-	// git functions are not supported yer
+	// git functions are not supported yet
 	if cfg.Source.Type == workspace.SourceTypeGit {
 		return errors.New("The git source type of functions is not supported yet")
-	}
-
-	if c.opts.ImageName == "" {
-		name := cfg.Name
-		tag := uuid.New()
-		c.opts.ImageName = fmt.Sprintf("%s:%s", name, tag)
 	}
 
 	if c.opts.ContainerName == "" {
@@ -81,19 +72,11 @@ func (c *command) Run() error {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	if c.opts.Timeout > 0 {
-		ctx, cancel = context.WithTimeout(ctx, c.opts.Timeout)
-	}
 	defer cancel()
 
 	client, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return errors.Wrap(err, "white trying to interact with docker")
-	}
-
-	err = c.build(ctx, client, cfg)
-	if err != nil {
-		return err
 	}
 
 	return c.runContainer(ctx, client, cfg)
@@ -118,36 +101,6 @@ func workspaceConfig(path string) (workspace.Cfg, error) {
 	return cfg, nil
 }
 
-func (c *command) build(ctx context.Context, client *client.Client, cfg workspace.Cfg) error {
-	context, err := docker.InlineContext(docker.ContextOpts{
-		DirPrefix:  c.opts.ContainerName,
-		Dockerfile: runtimes.Dockerfile(cfg.Runtime),
-		SrcDir:     cfg.Source.SourcePath,
-		SrcFiles:   sourceFiles(cfg),
-	}, logrus.Debugf)
-	if err != nil {
-		return errors.Wrap(err, "white trying to prepare folder for docker build")
-	}
-
-	c.newStep(fmt.Sprintf("Building project: %s", c.opts.ImageName))
-	resp, err := docker.BuildImage(ctx, client, docker.BuildOpts{
-		Context: context,
-		Tags:    []string{c.opts.ImageName},
-	})
-	if err != nil {
-		return errors.Wrap(err, "white trying to build image")
-	}
-	defer resp.Body.Close()
-
-	err = docker.FollowBuild(resp.Body, logrus.Debug)
-	if err != nil {
-		return errors.Wrap(err, "during the build")
-	}
-
-	c.successStepf(fmt.Sprintf("Built image: %s", c.opts.ImageName))
-	return nil
-}
-
 func (c *command) runContainer(ctx context.Context, client *client.Client, cfg workspace.Cfg) error {
 	c.newStep(fmt.Sprintf("Running container: %s", c.opts.ContainerName))
 	ports := map[string]string{
@@ -161,10 +114,11 @@ func (c *command) runContainer(ctx context.Context, client *client.Client, cfg w
 		Ports: ports,
 		Envs: append(
 			runtimes.ContainerEnvs(cfg.Runtime, c.opts.Debug),
-			c.opts.Envs...,
+			c.parseEnvs(cfg.Env)...,
 		),
 		ContainerName: c.opts.ContainerName,
-		ImageName:     c.opts.ImageName,
+		// TODO: ImageName:     runtimes.ImageName(cfg.Runtime),
+		WorkingDir: c.opts.Dir,
 	})
 	if err != nil {
 		return errors.Wrap(err, "white trying to run container")
@@ -181,6 +135,14 @@ func (c *command) runContainer(ctx context.Context, client *client.Client, cfg w
 	return nil
 }
 
+func (c *command) parseEnvs(envVars []workspace.EnvVar) []string {
+	var envs []string
+	for _, env := range envVars {
+		envs = append(envs, fmt.Sprintf("%s:%s", env.Name, env.Value))
+	}
+	return envs
+}
+
 func (c *command) newStep(message string) {
 	if c.opts.Verbose {
 		logrus.Debug(message)
@@ -195,23 +157,4 @@ func (c *command) successStepf(message string) {
 	} else if c.CurrentStep != nil {
 		c.CurrentStep.Successf(message)
 	}
-}
-
-func sourceFiles(cfg workspace.Cfg) []string {
-	var files []string
-	defaultHandler, defaultDeps, _ := workspace.InlineFileNames(cfg.Runtime)
-
-	handlerFilename := cfg.Source.SourceHandlerName
-	if handlerFilename == "" {
-		handlerFilename = defaultHandler
-	}
-	files = append(files, handlerFilename)
-
-	depsFilename := cfg.Source.DepsHandlerName
-	if depsFilename == "" {
-		depsFilename = defaultDeps
-	}
-	files = append(files, depsFilename)
-
-	return files
 }
