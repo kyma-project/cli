@@ -34,5 +34,5 @@ kyma run function [flags]
 
 ## See also
 
-* [kyma run](#kyma-run-kyma-run)	 - 
+* [kyma run](#kyma-run-kyma-run)	 - Run local resources.
 
