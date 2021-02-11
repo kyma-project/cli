@@ -2,11 +2,11 @@
 title: kyma run
 ---
 
-
+Run local resources.
 
 ## Synopsis
 
-
+Use this command to run resources from the configuration.
 
 ## Options inherited from parent commands
 

@@ -31,7 +31,7 @@ Kyma CLI allows you to install, test, and manage Kyma.
 * [kyma init](#kyma-init-kyma-init)	 - Creates local resources for your project.
 * [kyma install](#kyma-install-kyma-install)	 - Installs Kyma on a running Kubernetes cluster.
 * [kyma provision](#kyma-provision-kyma-provision)	 - Provisions a cluster for Kyma installation.
-* [kyma run](#kyma-run-kyma-run)	 - 
+* [kyma run](#kyma-run-kyma-run)	 - Run local resources.
 * [kyma sync](#kyma-sync-kyma-sync)	 - Synchronizes the local resources for your Function.
 * [kyma test](#kyma-test-kyma-test)	 - Runs tests on a provisioned Kyma cluster.
 * [kyma upgrade](#kyma-upgrade-kyma-upgrade)	 - Upgrades Kyma
