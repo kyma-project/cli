@@ -6,7 +6,7 @@ Runs Functions locally.
 
 ## Synopsis
 
-Use this command to run a Function in Docker from local sources
+Use this command to run a Function in Docker from local sources.
 
 ```bash
 kyma run function [flags]
@@ -34,5 +34,5 @@ kyma run function [flags]
 
 ## See also
 
-* [kyma run](#kyma-run-kyma-run)	 - Run local resources.
+* [kyma run](#kyma-run-kyma-run)	 - Runs resources locally.
 

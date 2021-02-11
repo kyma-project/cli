@@ -2,7 +2,7 @@
 title: kyma run
 ---
 
-Run local resources.
+Runs resources locally.
 
 ## Synopsis
 
