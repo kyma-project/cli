@@ -94,7 +94,7 @@ func (cmd *command) Run(args []string) error {
 		scanner := bufio.NewScanner(strings.NewReader(content))
 		// creating buffer with the initial default size of 4 KB
 		buf := make([]byte, 0, 4*1024)
-		// setting the max size of buffer to be 1 MB
+		// setting the max size of buffer to be 1 MB instead of the default max size of only 64 KB
 		scanner.Buffer(buf, 1024*1024)
 		for scanner.Scan() {
 			logsStep.LogInfo(scanner.Text())
