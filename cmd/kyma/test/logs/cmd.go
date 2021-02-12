@@ -99,6 +99,9 @@ func (cmd *command) Run(args []string) error {
 		for scanner.Scan() {
 			logsStep.LogInfo(scanner.Text())
 		}
+		if err := scanner.Err(); err != nil {
+			return errors.Wrap(err, "while scanning logs")
+		}
 	}
 
 	return nil
