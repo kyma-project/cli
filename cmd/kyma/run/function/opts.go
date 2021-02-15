@@ -1,10 +1,11 @@
 package function
 
 import (
-	"github.com/kyma-incubator/hydroform/function/pkg/workspace"
-	"github.com/kyma-project/cli/internal/cli"
 	"os"
 	"path"
+
+	"github.com/kyma-incubator/hydroform/function/pkg/workspace"
+	"github.com/kyma-project/cli/internal/cli"
 )
 
 //Options defines available options for the command
@@ -26,12 +27,17 @@ func NewOptions(o *cli.Options) *Options {
 }
 
 func (o *Options) setDefaults() error {
+	pwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
 	if o.Filename == "" {
-		pwd, err := os.Getwd()
-		if err != nil {
-			return err
-		}
 		o.Filename = path.Join(pwd, workspace.CfgFilename)
+	}
+
+	if o.Dir == "" {
+		o.Dir = pwd
 	}
 
 	return nil

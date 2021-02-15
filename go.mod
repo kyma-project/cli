@@ -25,7 +25,6 @@ require (
 	github.com/docker/docker v20.10.3+incompatible
 	github.com/fatih/color v1.10.0
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
-	github.com/google/uuid v1.1.1
 	github.com/kyma-incubator/hydroform/function v0.0.0-20201229063132-d2abcd251425
 	github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90
 	github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20210204094002-80e6c7c2c606
@@ -37,7 +36,6 @@ require (
 	github.com/olekukonko/tablewriter v0.0.4
 	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
 	github.com/pkg/errors v0.9.1
-	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/cobra v1.0.0
 	github.com/stretchr/testify v1.6.1
 	go.opencensus.io v0.22.5 // indirect

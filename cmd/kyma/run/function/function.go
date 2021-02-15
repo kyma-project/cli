@@ -11,7 +11,6 @@ import (
 	"github.com/kyma-incubator/hydroform/function/pkg/workspace"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	"gopkg.in/yaml.v2"
@@ -49,10 +48,6 @@ func NewCmd(o *Options) *cobra.Command {
 }
 
 func (c *command) Run() error {
-	if c.opts.Verbose {
-		logrus.SetLevel(logrus.DebugLevel)
-	}
-
 	if err := c.opts.setDefaults(); err != nil {
 		return err
 	}
@@ -87,6 +82,7 @@ func workspaceConfig(path string) (workspace.Cfg, error) {
 	if err != nil {
 		return workspace.Cfg{}, err
 	}
+
 	var cfg workspace.Cfg
 	if err := yaml.NewDecoder(file).Decode(&cfg); err != nil {
 		return workspace.Cfg{}, errors.Wrap(err, "while trying to decode the configuration file")
@@ -102,7 +98,7 @@ func workspaceConfig(path string) (workspace.Cfg, error) {
 }
 
 func (c *command) runContainer(ctx context.Context, client *client.Client, cfg workspace.Cfg) error {
-	c.newStep(fmt.Sprintf("Running container: %s", c.opts.ContainerName))
+	step := c.NewStep(fmt.Sprintf("Running container: %s", c.opts.ContainerName))
 	ports := map[string]string{
 		c.opts.FuncPort: runtimes.ServerPort,
 	}
@@ -117,14 +113,17 @@ func (c *command) runContainer(ctx context.Context, client *client.Client, cfg w
 			c.parseEnvs(cfg.Env)...,
 		),
 		ContainerName: c.opts.ContainerName,
-		// TODO: ImageName:     runtimes.ImageName(cfg.Runtime),
-		WorkingDir: c.opts.Dir,
+		Commands:      runtimes.ContainerCommands(cfg.Runtime),
+		ImageName:     runtimes.ContainerImages(cfg.Runtime),
+		WorkDir:       c.opts.Dir,
+		User:          runtimes.ContainerUser(cfg.Runtime),
 	})
 	if err != nil {
+		step.Failure()
 		return errors.Wrap(err, "white trying to run container")
 	}
 
-	c.successStepf(fmt.Sprintf("Runned container: %s", c.opts.ContainerName))
+	step.Successf(fmt.Sprintf("Runned container: %s", c.opts.ContainerName))
 
 	if !c.opts.Detach {
 		fmt.Println("Logs from the container:")
@@ -141,20 +140,4 @@ func (c *command) parseEnvs(envVars []workspace.EnvVar) []string {
 		envs = append(envs, fmt.Sprintf("%s:%s", env.Name, env.Value))
 	}
 	return envs
-}
-
-func (c *command) newStep(message string) {
-	if c.opts.Verbose {
-		logrus.Debug(message)
-	} else {
-		c.NewStep(message)
-	}
-}
-
-func (c *command) successStepf(message string) {
-	if c.opts.Verbose {
-		logrus.Debug(message)
-	} else if c.CurrentStep != nil {
-		c.CurrentStep.Successf(message)
-	}
 }
