@@ -114,7 +114,7 @@ func (c *command) runContainer(ctx context.Context, client *client.Client, cfg w
 		),
 		ContainerName: c.opts.ContainerName,
 		Commands:      runtimes.ContainerCommands(cfg.Runtime),
-		ImageName:     runtimes.ContainerImages(cfg.Runtime),
+		Image:         runtimes.ContainerImage(cfg.Runtime),
 		WorkDir:       c.opts.Dir,
 		User:          runtimes.ContainerUser(cfg.Runtime),
 	})
