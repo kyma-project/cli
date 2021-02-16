@@ -54,7 +54,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd.Flags().DurationVarP(&o.QuitTimeout, "quit-timeout", "", 1200*time.Second, "Time after which the deployment is aborted. Worker goroutines may still be working in the background. This value must be greater than the value for cancel-timeout.")
 	cobraCmd.Flags().DurationVarP(&o.HelmTimeout, "helm-timeout", "", 360*time.Second, "Timeout for the underlying Helm client.")
 	cobraCmd.Flags().IntVar(&o.WorkersCount, "workers-count", 4, "Number of parallel workers used for the deployment.")
-	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", localKymaDevDomain, "Domain used for installation.")
+	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", "", "Custom domain used for installation.")
 	cobraCmd.Flags().StringVarP(&o.TLSCrtFile, "tls-crt", "", "", "TLS certificate file for the domain used for installation.")
 	cobraCmd.Flags().StringVarP(&o.TLSKeyFile, "tls-key", "", "", "TLS key file for the domain used for installation.")
 	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", defaultSource, `Installation source.
@@ -179,7 +179,7 @@ func (cmd *command) deployKyma(ui asyncui.AsyncUI) error {
 		HelmTimeoutSeconds:            int(cmd.opts.HelmTimeout.Seconds()),
 		BackoffInitialIntervalSeconds: 3,
 		BackoffMaxElapsedTimeSeconds:  60 * 5,
-		Log:                           cli.LogFunc(cmd.Verbose),
+		Log:                           cli.NewLogger(cmd.Verbose),
 		Profile:                       cmd.opts.Profile,
 		ComponentsListFile:            cmd.opts.ResolveComponentsFile(),
 		CrdPath:                       filepath.Join(resourcePath, "cluster-essentials", "files"),
@@ -219,6 +219,7 @@ func (cmd *command) overrides() (deployment.Overrides, error) {
 		}
 	}
 
+	// set global overrides which the CLI allows customer to specify using CLI params (just for UX convenience)
 	if err := cmd.setGlobalOverrides(&overrides); err != nil {
 		return overrides, err
 	}
@@ -252,44 +253,32 @@ func (cmd *command) overrides() (deployment.Overrides, error) {
 }
 
 func (cmd *command) setGlobalOverrides(overrides *deployment.Overrides) error {
+	// add domain provided as CLI params (for UX convenience)
 	globalOverrides := make(map[string]interface{})
-	globalOverrides["isLocalEnv"] = false //DEPRECATED - 'isLocalEnv' will be removed soon
-	globalOverrides["domainName"] = cmd.opts.Domain
+	if cmd.opts.Domain != "" {
+		globalOverrides["domain"] = cmd.opts.Domain
+	}
+	// add certificate provided as CLI params (for UX convenience)
 	certProvided, err := cmd.opts.tlsCertAndKeyProvided()
 	if err != nil {
 		return err
 	}
 	if certProvided {
-		// use encoded TLS key
-		tlsKeyEnc, err := cmd.opts.tlsKeyEnc()
+		tlsKey, err := cmd.opts.tlsKeyEnc()
 		if err != nil {
 			return err
 		}
-		globalOverrides["tlsKey"] = tlsKeyEnc
-
-		// use encoded TLS crt
-		tlsCrtEnc, err := cmd.opts.tlsCrtEnc()
+		tlsCrt, err := cmd.opts.tlsCrtEnc()
 		if err != nil {
 			return err
 		}
-		globalOverrides["tlsCrt"] = tlsCrtEnc
-	} else {
-		// use default TLS cert
-		globalOverrides["tlsKey"] = defaultTLSKeyEnc
-		globalOverrides["tlsCrt"] = defaultTLSCrtEnc
+		globalOverrides["tlsKey"] = tlsKey
+		globalOverrides["tlsCrt"] = tlsCrt
 	}
+	// register global overrides
+	overrides.AddOverrides("global", globalOverrides)
 
-	// ingress settings
-	ingressOverrides := make(map[string]interface{})
-	ingressOverrides["domainName"] = cmd.opts.Domain
-	globalOverrides["ingress"] = ingressOverrides
-
-	// environment overrides
-	envOverrides := make(map[string]interface{})
-	envOverrides["gardener"] = false
-	globalOverrides["environment"] = envOverrides //DEPRECATED - 'environment' will be removed soon
-
-	return overrides.AddOverrides("global", globalOverrides)
+	return nil
 }
 
 // convertToOverridesMap parses the override key and converts it into an nested map.
@@ -332,19 +321,19 @@ func (cmd *command) convertToOverridesMap(key, value string) (string, map[string
 
 func (cmd *command) showSuccessMessage() {
 	var err error
-	logFunc := cli.LogFunc(cmd.Verbose)
+	logger := cli.NewLogger(cmd.Verbose)
 
 	fmt.Println("Kyma successfully installed.")
 
 	tlsProvided, err := cmd.opts.tlsCertAndKeyProvided()
 	if err != nil {
-		logFunc("%s", err)
+		logger.Errorf("%s", err)
 	}
 
-	// show cert installation hint only for local Kyma domain and if user isn't providing a custom cert
-	if (cmd.opts.Domain == localKymaDevDomain) && !tlsProvided {
+	// show cert installation hint only if user isn't providing a custom cert
+	if !tlsProvided {
 		if err = cmd.storeCrtAsFile(); err != nil {
-			logFunc("%s", err)
+			logger.Errorf("%s", err)
 		}
 		fmt.Println(`
 Generated self signed TLS certificate should be trusted in your system.
@@ -362,7 +351,7 @@ This is a one time operation (you can skip this step if you did it before).`)
 
 	adminPw, err := cmd.adminPw()
 	if err != nil {
-		logFunc("%s", err)
+		logger.Errorf("%s", err)
 	}
 	fmt.Printf(`
 Kyma Console Url: %s

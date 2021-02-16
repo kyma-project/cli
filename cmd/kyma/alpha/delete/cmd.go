@@ -86,7 +86,7 @@ func (cmd *command) Run() error {
 		HelmTimeoutSeconds:            int(cmd.opts.HelmTimeout.Seconds()),
 		BackoffInitialIntervalSeconds: 3,
 		BackoffMaxElapsedTimeSeconds:  60 * 5,
-		Log:                           cli.LogFunc(cmd.Verbose),
+		Log:                           cli.NewLogger(cmd.Verbose),
 		ComponentsListFile:            fmt.Sprintf("uninstall-%s", kymaMeta.ComponentListFile),
 	}
 
