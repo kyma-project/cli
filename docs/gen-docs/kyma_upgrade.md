@@ -6,7 +6,7 @@ Upgrades Kyma
 
 ## Synopsis
 
-Use this command to upgrade the Kyma version on a cluster.
+Use this command to upgrade the Kyma version on a cluster. During upgrade, you can set one of the predefined [profiles](https://kyma-project.io/docs/master/root/kyma/#installation-overview-profiles) for your Kyma deployment. If the `--profile` flag is not specified, Kyma is deployed with the default chart values.
 
 ```bash
 kyma upgrade [flags]
@@ -23,7 +23,7 @@ kyma upgrade [flags]
   -o, --override stringArray   Path to a YAML file with parameters to override.
   -p, --password string        Predefined cluster password.
       --profile string         Kyma installation profile (evaluation|production).
-  -s, --source string          Upgrade source. 
+  -s, --source string          Upgrade source.
                                	- To use a specific release, write "kyma upgrade --source=1.3.0".
                                	- To use the master branch, write "kyma install --source=master".
                                	- To use a commit, write "kyma upgrade --source=34edf09a".
@@ -48,4 +48,3 @@ kyma upgrade [flags]
 ## See also
 
 * [kyma](#kyma-kyma)	 - Controls a Kyma cluster.
-
