@@ -47,6 +47,7 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 
 	cobraCmd.Flags().StringVarP(&o.WorkspacePath, "workspace", "w", defaultWorkspacePath, "Path used to download Kyma sources.")
+	cobraCmd.Flags().BoolVarP(&o.Atomic, "atomic", "a", true, "Use atomic deployment (rollback any component which could not be successfully installed).")
 	cobraCmd.Flags().StringVarP(&o.ComponentsFile, "components", "c", defaultComponentsFile, "Path to the components file.")
 	cobraCmd.Flags().StringVarP(&o.OverridesFile, "values-file", "f", "", "Path to a JSON or YAML file with configuration values.")
 	cobraCmd.Flags().StringSliceVarP(&o.Overrides, "value", "", []string{}, "Set a configuration value (e.g. --value component.key='the value').")
@@ -185,6 +186,7 @@ func (cmd *command) deployKyma(ui asyncui.AsyncUI) error {
 		CrdPath:                       filepath.Join(resourcePath, "cluster-essentials", "files"),
 		ResourcePath:                  resourcePath,
 		Version:                       cmd.opts.Source,
+		Atomic:                        cmd.opts.Atomic,
 	}
 
 	overrides, err := cmd.overrides()
