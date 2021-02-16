@@ -39,7 +39,7 @@ The standard installation uses the minimal configuration. The system performs th
    5. Sets the admin password.
    6. Patches the Minikube IP.
 
-2. Runs Kyma installation until the **installed** status confirms the successful installation. You can override the standard installation settings using the `--override` flag. You can also install Kyma with one of the predefined [profiles](https://kyma-project.io/docs/master/root/kyma/#installation-overview-profiles) using the `--profile` flag. 
+2. Runs Kyma installation until the **installed** status confirms the successful installation. You can override the standard installation settings using the `--override` flag. You can also install Kyma with one of the predefined [profiles](https://kyma-project.io/docs/master/root/kyma/#installation-overview-profiles) using the `--profile` flag. If the `--profile` flag is not specified, Kyma is installed with the default chart values.
 
 ```bash
 kyma install [flags]
@@ -55,7 +55,7 @@ kyma install [flags]
   -n, --no-wait                Determines if the command should wait for Kyma installation to complete.
   -o, --override stringArray   Path to a YAML file with parameters to override.
   -p, --password string        Predefined cluster password.
-      --profile string         Kyma installation profile (evaluation|production). If not specified, Kyma is installed with the default chart values.
+      --profile string         Kyma installation profile (evaluation|production).
   -s, --source string          Installation source.
                                	- To use a specific release, write "kyma install --source=1.15.1".
                                	- To use the master branch, write "kyma install --source=master".
