@@ -95,7 +95,7 @@ func workspaceConfig(path string) (workspace.Cfg, error) {
 func (c *command) runContainer(ctx context.Context, client *client.Client, cfg workspace.Cfg) error {
 	step := c.NewStep(fmt.Sprintf("Running container: %s", c.opts.ContainerName))
 	ports := map[string]string{
-		c.opts.FuncPort: runtimes.ServerPort,
+		runtimes.ServerPort: c.opts.FuncPort,
 	}
 
 	if c.opts.Debug {
