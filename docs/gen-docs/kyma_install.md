@@ -39,7 +39,7 @@ The standard installation uses the minimal configuration. The system performs th
    5. Sets the admin password.
    6. Patches the Minikube IP.
 
-2. Runs Kyma installation until the **installed** status confirms the successful installation. You can override the standard installation settings using the `--override` flag. You can also install Kyma with one of the [predefined profiles](https://kyma-project.io/docs/master/root/kyma/#installation-overview-profiles) using the `--profile` flag. 
+2. Runs Kyma installation until the **installed** status confirms the successful installation. You can override the standard installation settings using the `--override` flag. You can also install Kyma with one of the predefined [profiles](https://kyma-project.io/docs/master/root/kyma/#installation-overview-profiles) using the `--profile` flag. 
 
 ```bash
 kyma install [flags]
