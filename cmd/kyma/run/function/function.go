@@ -57,11 +57,6 @@ func (c *command) Run() error {
 		return err
 	}
 
-	// git functions are not supported yet
-	if cfg.Source.Type == workspace.SourceTypeGit {
-		return errors.New("The git source type of functions is not supported yet")
-	}
-
 	if c.opts.ContainerName == "" {
 		c.opts.ContainerName = cfg.Name
 	}
@@ -102,10 +97,12 @@ func (c *command) runContainer(ctx context.Context, client *client.Client, cfg w
 	ports := map[string]string{
 		c.opts.FuncPort: runtimes.ServerPort,
 	}
+
 	if c.opts.Debug {
 		debugPort := runtimes.RuntimeDebugPort(cfg.Runtime)
 		ports[debugPort] = debugPort
 	}
+
 	id, err := docker.RunContainer(ctx, client, docker.RunOpts{
 		Ports: ports,
 		Envs: append(
