@@ -27,7 +27,7 @@ func NewOptions(o *cli.Options) *Options {
 	return options
 }
 
-func (o *Options) setDefaults() error {
+func (o *Options) defaultFilename() error {
 	if o.Filename == "" {
 		pwd, err := os.Getwd()
 		if err != nil {
@@ -42,19 +42,17 @@ func (o *Options) setDefaults() error {
 		o.Filename = filename
 	}
 
-	if o.Dir == "" {
-		pwd, err := os.Getwd()
-		if err != nil {
-			return err
-		}
-		o.Dir = pwd
-	} else if !filepath.IsAbs(o.Dir) {
-		dir, err := filepath.Abs(o.Dir)
-		if err != nil {
-			return err
-		}
-		o.Dir = dir
+	return nil
+}
+
+func (o *Options) defaultValues(cfg workspace.Cfg) {
+	if o.Dir == "" && cfg.Source.Type == workspace.SourceTypeInline {
+		o.Dir = cfg.Source.SourcePath
+	} else if o.Dir == "" {
+		o.Dir = filepath.Dir(o.Filename)
 	}
 
-	return nil
+	if o.ContainerName == "" {
+		o.ContainerName = cfg.Name
+	}
 }
