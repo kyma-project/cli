@@ -36,6 +36,7 @@ type Options struct {
 	TLSKeyFile     string
 	Source         string
 	Profile        string
+	Atomic         bool
 }
 
 //NewOptions creates options with default values
