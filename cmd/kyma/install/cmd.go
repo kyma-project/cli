@@ -55,14 +55,14 @@ The standard installation uses the minimal configuration. The system performs th
 1. Deploys and configures the Kyma Installer. At this point, steps differ depending on the installation type.
 
    When you install Kyma locally ` + "**from release**" + `, the system:
-   
+
    1. Fetches the latest or specified release along with configuration.
    2. Deploys the Kyma Installer on the cluster.
    3. Applies downloaded or defined configuration.
    4. Applies overrides, if applicable.
    5. Sets the admin password.
    6. Patches the Minikube IP.
-	
+
    When you install Kyma locally ` + "**from sources**" + `, the system:
 
    1. Fetches the configuration yaml files from the local sources.
@@ -71,8 +71,8 @@ The standard installation uses the minimal configuration. The system performs th
    4. Applies overrides, if applicable.
    5. Sets the admin password.
    6. Patches the Minikube IP.
-    
-2. Runs Kyma installation until the ` + "**installed**" + ` status confirms the successful installation. You can override the standard installation settings using the ` + "`--override`" + ` flag.
+
+2. Runs Kyma installation until the ` + "**installed**" + ` status confirms the successful installation. You can override the standard installation settings using the ` + "`--override`" + ` flag. You can also install Kyma with one of the predefined [profiles](https://kyma-project.io/docs/master/root/kyma/#installation-overview-profiles) using the ` + "`--profile`" + ` flag. If the ` + "`--profile`" + ` flag is not specified, Kyma is installed with the default chart values.
 
 `,
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
@@ -83,7 +83,7 @@ The standard installation uses the minimal configuration. The system performs th
 	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", defaultDomain, "Domain used for installation.")
 	cobraCmd.Flags().StringVarP(&o.TLSCert, "tls-cert", "", "", "TLS certificate for the domain used for installation. The certificate must be a base64-encoded value.")
 	cobraCmd.Flags().StringVarP(&o.TLSKey, "tls-key", "", "", "TLS key for the domain used for installation. The key must be a base64-encoded value.")
-	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", DefaultKymaVersion, `Installation source. 
+	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", DefaultKymaVersion, `Installation source.
 	- To use a specific release, write "kyma install --source=1.15.1".
 	- To use the master branch, write "kyma install --source=master".
 	- To use a commit, write "kyma install --source=34edf09a".
@@ -97,7 +97,7 @@ The standard installation uses the minimal configuration. The system performs th
 	cobraCmd.Flags().StringVarP(&o.ComponentsConfig, "components", "c", "", "Path to a YAML file with a component list to override.")
 	cobraCmd.Flags().IntVar(&o.FallbackLevel, "fallback-level", 5, `If "source=master", defines the number of commits from master branch taken into account if artifacts for newer commits do not exist yet`)
 	cobraCmd.Flags().StringVarP(&o.CustomImage, "custom-image", "", "", "Full image name including the registry and the tag. Required for installation from local sources to a remote cluster.")
-	cobraCmd.Flags().StringVarP(&o.Profile, "profile", "", "", "Kyma installation profile (evaluation|production).")
+	cobraCmd.Flags().StringVarP(&o.Profile, "profile", "", "", "Kyma installation profile (evaluation|production). If not specified, Kyma is installed with the default chart values.")
 	return cobraCmd
 }
 

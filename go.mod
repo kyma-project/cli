@@ -25,6 +25,7 @@ require (
 	github.com/daviddengcn/go-colortext v1.0.0
 	github.com/docker/cli v0.0.0-20200130152716-5d0cf8839492
 	github.com/docker/docker v1.4.2-0.20200203170920-46ec8731fbce
+	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/fatih/color v1.10.0
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/gorilla/mux v1.7.4 // indirect
@@ -37,6 +38,7 @@ require (
 	github.com/magiconair/properties v1.8.0
 	github.com/olekukonko/tablewriter v0.0.4
 	github.com/opencontainers/runc v1.0.0-rc91 // indirect
+	github.com/pierrec/lz4 v2.0.5+incompatible // indirect
 	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.0.0
