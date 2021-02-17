@@ -8,22 +8,33 @@ import (
 	"strings"
 
 	"github.com/kyma-project/cli/internal/root"
+	"go.uber.org/zap"
 )
 
 func newLogStep(msg string) Step {
-	return &logStep{msg}
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		if err != nil {
+			log.Fatalf("Can't initialize zap logger: %v", err)
+		}
+	}
+	return &logStep{
+		msg:    msg,
+		logger: logger,
+	}
 }
 
 type logStep struct {
-	msg string
+	msg    string
+	logger *zap.Logger
 }
 
 func (s *logStep) Start() {
-	log.Println(s.msg)
+	s.logger.Info(s.msg)
 }
 
 func (s *logStep) Status(msg string) {
-	log.Printf("%s: %s\n", s.msg, msg)
+	s.logger.Info(fmt.Sprintf("%s: %s\n", s.msg, msg))
 }
 
 func (s *logStep) Success() {
@@ -48,11 +59,11 @@ func (s *logStep) Stopf(success bool, format string, args ...interface{}) {
 }
 
 func (s *logStep) Stop(success bool) {
-	log.Println(s.msg)
+	s.logger.Info(s.msg)
 }
 
 func (s *logStep) LogInfo(msg string) {
-	log.Println(msg)
+	s.logger.Info(msg)
 }
 
 func (s *logStep) LogInfof(format string, args ...interface{}) {
@@ -60,7 +71,7 @@ func (s *logStep) LogInfof(format string, args ...interface{}) {
 }
 
 func (s *logStep) LogError(msg string) {
-	log.Println(msg)
+	s.logger.Error(msg)
 }
 
 func (s *logStep) LogErrorf(format string, args ...interface{}) {
@@ -69,13 +80,13 @@ func (s *logStep) LogErrorf(format string, args ...interface{}) {
 
 func (s *logStep) Prompt(msg string) (string, error) {
 	reader := bufio.NewReader(os.Stdin)
-	log.Print(msg)
+	s.logger.Info(msg)
 	answer, err := reader.ReadString('\n')
 	return strings.TrimSpace(answer), err
 }
 
 func (s *logStep) PromptYesNo(msg string) bool {
-	log.Print(msg)
+	s.logger.Info(msg)
 	answer := root.PromptUser()
 	return answer
 }

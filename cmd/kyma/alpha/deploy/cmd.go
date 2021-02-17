@@ -179,7 +179,7 @@ func (cmd *command) deployKyma(ui asyncui.AsyncUI) error {
 		HelmTimeoutSeconds:            int(cmd.opts.HelmTimeout.Seconds()),
 		BackoffInitialIntervalSeconds: 3,
 		BackoffMaxElapsedTimeSeconds:  60 * 5,
-		Log:                           cli.NewLogger(cmd.Verbose),
+		Log:                           cli.NewHydroformLoggerAdapter(cli.NewLogger(cmd.Verbose)),
 		Profile:                       cmd.opts.Profile,
 		ComponentsListFile:            cmd.opts.ResolveComponentsFile(),
 		CrdPath:                       filepath.Join(resourcePath, "cluster-essentials", "files"),
@@ -327,13 +327,13 @@ func (cmd *command) showSuccessMessage() {
 
 	tlsProvided, err := cmd.opts.tlsCertAndKeyProvided()
 	if err != nil {
-		logger.Errorf("%s", err)
+		logger.Error(fmt.Sprintf("%s", err))
 	}
 
 	// show cert installation hint only if user isn't providing a custom cert
 	if !tlsProvided {
 		if err = cmd.storeCrtAsFile(); err != nil {
-			logger.Errorf("%s", err)
+			logger.Error(fmt.Sprintf("%s", err))
 		}
 		fmt.Println(`
 Generated self signed TLS certificate should be trusted in your system.
@@ -351,7 +351,7 @@ This is a one time operation (you can skip this step if you did it before).`)
 
 	adminPw, err := cmd.adminPw()
 	if err != nil {
-		logger.Errorf("%s", err)
+		logger.Error(fmt.Sprintf("%s", err))
 	}
 	fmt.Printf(`
 Kyma Console Url: %s

@@ -1,53 +1,63 @@
 package cli
 
 import (
-	"github.com/kyma-incubator/hydroform/parallel-install/pkg/logger"
+	"fmt"
+	"log"
+
+	"go.uber.org/zap"
 )
 
-//nullLogger does not write any log messages
-type nullLogger struct{}
-
-func (nl *nullLogger) Info(args ...interface{})                    {}
-func (nl *nullLogger) Infof(template string, args ...interface{})  {}
-func (nl *nullLogger) Warn(args ...interface{})                    {}
-func (nl *nullLogger) Warnf(template string, args ...interface{})  {}
-func (nl *nullLogger) Error(args ...interface{})                   {}
-func (nl *nullLogger) Errorf(template string, args ...interface{}) {}
-func (nl *nullLogger) Fatal(args ...interface{})                   {}
-func (nl *nullLogger) Fatalf(template string, args ...interface{}) {}
-
-//zapLogger is using the ZAP logging API
-type zapLogger struct{}
-
-func (l *zapLogger) Info(args ...interface{}) {
-	l.Info(args...)
-}
-func (l *zapLogger) Infof(template string, args ...interface{}) {
-	l.Infof(template, args...)
-}
-func (l *zapLogger) Warn(args ...interface{}) {
-	l.Warn(args...)
-}
-func (l *zapLogger) Warnf(template string, args ...interface{}) {
-	l.Warnf(template, args...)
-}
-func (l *zapLogger) Error(args ...interface{}) {
-	l.Error(args...)
-}
-func (l *zapLogger) Errorf(template string, args ...interface{}) {
-	l.Errorf(template, args...)
-}
-func (l *zapLogger) Fatal(args ...interface{}) {
-	l.Fatal(args...)
-}
-func (l *zapLogger) Fatalf(template string, args ...interface{}) {
-	l.Fatalf(template, args...)
-}
-
 // NewLogger returns the logger used for CLI log output (used in Hydroform deployments)
-func NewLogger(printLogs bool) logger.Interface {
+func NewLogger(printLogs bool) *zap.Logger {
+	var err error
+	var logger *zap.Logger
 	if printLogs {
-		return &zapLogger{}
+		logger, err = zap.NewDevelopment()
+		if err != nil {
+			if err != nil {
+				log.Fatalf("Can't initialize zap logger: %v", err)
+			}
+		}
+	} else {
+		logger = zap.NewNop()
 	}
-	return &nullLogger{}
+	return logger
+}
+
+//NewHydroformLoggerAdapter adapts a ZAP logger to a Hydrofrom compatible logger
+func NewHydroformLoggerAdapter(logger *zap.Logger) *HydroformLoggerAdapter {
+	return &HydroformLoggerAdapter{
+		logger: logger,
+	}
+}
+
+//HydroformLoggerAdapter is implementing the logger interface of Hydroform
+//to make it compatible with the ZAP logger API.
+type HydroformLoggerAdapter struct {
+	logger *zap.Logger
+}
+
+func (l *HydroformLoggerAdapter) Info(args ...interface{}) {
+	l.logger.Info(fmt.Sprintf("%v", args))
+}
+func (l *HydroformLoggerAdapter) Infof(template string, args ...interface{}) {
+	l.logger.Info(fmt.Sprintf(template, args...))
+}
+func (l *HydroformLoggerAdapter) Warn(args ...interface{}) {
+	l.logger.Warn(fmt.Sprintf("%v", args...))
+}
+func (l *HydroformLoggerAdapter) Warnf(template string, args ...interface{}) {
+	l.logger.Warn(fmt.Sprintf(template, args...))
+}
+func (l *HydroformLoggerAdapter) Error(args ...interface{}) {
+	l.logger.Error(fmt.Sprintf("%v", args))
+}
+func (l *HydroformLoggerAdapter) Errorf(template string, args ...interface{}) {
+	l.logger.Error(fmt.Sprintf(template, args...))
+}
+func (l *HydroformLoggerAdapter) Fatal(args ...interface{}) {
+	l.logger.Fatal(fmt.Sprintf("%v", args))
+}
+func (l *HydroformLoggerAdapter) Fatalf(template string, args ...interface{}) {
+	l.logger.Fatal(fmt.Sprintf(template, args...))
 }
