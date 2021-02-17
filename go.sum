@@ -981,8 +981,8 @@ github.com/openzipkin/zipkin-go v0.1.1/go.mod h1:NtoC/o8u3JlF1lSlyPNswIbeQH9bJTm
 github.com/openzipkin/zipkin-go v0.1.6/go.mod h1:QgAqvLzwWbR/WpD4A3cGpPtJrZXNIiJc5AZX7/PBEpw=
 github.com/openzipkin/zipkin-go v0.2.1/go.mod h1:NaW6tEwdmWMaCDZzg8sh+IBNOxHMPnhQw8ySjnjRyN4=
 github.com/openzipkin/zipkin-go v0.2.2/go.mod h1:NaW6tEwdmWMaCDZzg8sh+IBNOxHMPnhQw8ySjnjRyN4=
-github.com/pPrecel/hydroform/function v0.0.0-20210216092427-2bae0404bc9d h1:IC/Ke1ywabCuB59bmFMVsfzTvnTZD99UGIowcI0kfUM=
-github.com/pPrecel/hydroform/function v0.0.0-20210216092427-2bae0404bc9d/go.mod h1:tGNI0je6wXFwOb1oVvqbjM1JEW2fbK7yUlfi9PBqvOI=
+github.com/pPrecel/hydroform/function v0.0.0-20210217174718-d7696e4efe9b h1:Y0ZMmnMjjQWrdYF1FLZcQFYtDQ5tu8JA6J6oO64oP1U=
+github.com/pPrecel/hydroform/function v0.0.0-20210217174718-d7696e4efe9b/go.mod h1:tGNI0je6wXFwOb1oVvqbjM1JEW2fbK7yUlfi9PBqvOI=
 github.com/packer-community/winrmcp v0.0.0-20180102160824-81144009af58/go.mod h1:f6Izs6JvFTdnRbziASagjZ2vmf55NSIkC/weStxCHqk=
 github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db h1:9uViuKtx1jrlXLBW/pMnhOfzn3iSEdLase/But/IZRU=
 github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db/go.mod h1:f6Izs6JvFTdnRbziASagjZ2vmf55NSIkC/weStxCHqk=

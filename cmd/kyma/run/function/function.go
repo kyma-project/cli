@@ -48,7 +48,7 @@ func NewCmd(o *Options) *cobra.Command {
 }
 
 func (c *command) Run() error {
-	if err := c.opts.setDefaults(); err != nil {
+	if err := c.opts.defaultFilename(); err != nil {
 		return err
 	}
 
@@ -57,9 +57,7 @@ func (c *command) Run() error {
 		return err
 	}
 
-	if c.opts.ContainerName == "" {
-		c.opts.ContainerName = cfg.Name
-	}
+	c.opts.defaultValues(cfg)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
