@@ -6,7 +6,7 @@ Upgrades Kyma
 
 ## Synopsis
 
-Use this command to upgrade the Kyma version on a cluster. During upgrade, you can set one of the predefined [profiles](https://kyma-project.io/docs/master/root/kyma/#installation-overview-profiles) for your Kyma deployment. If the `--profile` flag is not specified, Kyma is deployed with the default chart values.
+Use this command to upgrade the Kyma version on a cluster.
 
 ```bash
 kyma upgrade [flags]
