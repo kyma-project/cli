@@ -252,11 +252,12 @@ func (cmd *command) overrides() (deployment.Overrides, error) {
 	return overrides, nil
 }
 
+//setGlobalOverrides is setting global overrides to improve the UX of the CLI
 func (cmd *command) setGlobalOverrides(overrides *deployment.Overrides) error {
 	// add domain provided as CLI params (for UX convenience)
 	globalOverrides := make(map[string]interface{})
 	if cmd.opts.Domain != "" {
-		globalOverrides["domain"] = cmd.opts.Domain
+		globalOverrides["domainName"] = cmd.opts.Domain
 	}
 	// add certificate provided as CLI params (for UX convenience)
 	certProvided, err := cmd.opts.tlsCertAndKeyProvided()
