@@ -41,6 +41,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cmd.Flags().StringVar(&o.ContainerName, "containerName", "", `The name of the created container.`)
 	cmd.Flags().BoolVar(&o.Detach, "detach", false, `Change this flag to "true" if you don't want to follow the container logs after running the Function.`)
 	cmd.Flags().StringVarP(&o.FuncPort, "port", "p", "8080", `The port on which the container will be exposed.`)
+	cmd.Flags().BoolVar(&o.HotDeploy, "hotDeploy", false, `Change this flag to "true" if you want to start function in hot deploy mode.`)
 
 	//cmd.Flags().BoolVarP(&o.Debug, "debug", "d", false, `Change this flat to true if you want to expose port 9229 for remote debugging.`)
 
@@ -106,11 +107,11 @@ func (c *command) runContainer(ctx context.Context, client *client.Client, cfg w
 	id, err := docker.RunContainer(ctx, client, docker.RunOpts{
 		Ports: ports,
 		Envs: append(
-			runtimes.ContainerEnvs(cfg.Runtime, c.opts.Debug),
+			runtimes.ContainerEnvs(cfg.Runtime, c.opts.Debug, c.opts.HotDeploy),
 			c.parseEnvs(cfg.Env)...,
 		),
 		ContainerName: c.opts.ContainerName,
-		Commands:      runtimes.ContainerCommands(cfg.Runtime),
+		Commands:      runtimes.ContainerCommands(cfg.Runtime, c.opts.HotDeploy),
 		Image:         runtimes.ContainerImage(cfg.Runtime),
 		WorkDir:       c.opts.Dir,
 		User:          runtimes.ContainerUser(cfg.Runtime),
