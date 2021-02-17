@@ -114,7 +114,7 @@ func (cmd *command) Run() error {
 
 		// delete workspace folder
 		if approvalRequired && !cmd.avoidUserInteraction() {
-			userApprovalStep := cmd.NewStep("Workspace folder exists")
+			userApprovalStep := cmd.NewStep("Workspace folder already exists")
 			if userApprovalStep.PromptYesNo(fmt.Sprintf("Delete workspace folder '%s' after Kyma deployment?", cmd.opts.WorkspacePath)) {
 				defer os.RemoveAll(cmd.opts.WorkspacePath)
 			}
