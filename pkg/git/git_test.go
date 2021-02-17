@@ -15,6 +15,7 @@ const (
 func TestCloneRevision(t *testing.T) {
 	t.Parallel()
 
+	os.RemoveAll("./clone") //ensure clone folder does not exist
 	err := CloneRevision(repo, "./clone", kyma117Rev)
 	defer os.RemoveAll("./clone")
 
