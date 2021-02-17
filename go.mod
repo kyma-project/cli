@@ -42,6 +42,7 @@ require (
 	github.com/spf13/cobra v1.0.0
 	github.com/stretchr/testify v1.6.1
 	go.opencensus.io v0.22.5 // indirect
+	go.uber.org/zap v1.16.0
 	golang.org/x/sys v0.0.0-20201126233918-771906719818 // indirect
 	gopkg.in/src-d/go-git.v4 v4.13.1
 	gopkg.in/yaml.v2 v2.3.0
