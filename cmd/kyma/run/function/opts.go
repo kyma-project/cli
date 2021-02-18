@@ -47,7 +47,8 @@ func (o *Options) defaultFilename() error {
 
 func (o *Options) defaultValues(cfg workspace.Cfg) error {
 	if o.Dir == "" && cfg.Source.Type == workspace.SourceTypeInline {
-		o.Dir = cfg.Source.SourcePath
+		configPath := filepath.Dir(o.Filename)
+		o.Dir = filepath.Join(configPath, cfg.Source.SourcePath)
 	} else if o.Dir == "" {
 		o.Dir = filepath.Dir(o.Filename)
 	} else if !path.IsAbs(o.Dir) {
