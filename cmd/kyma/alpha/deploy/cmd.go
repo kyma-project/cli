@@ -64,7 +64,7 @@ func NewCmd(o *Options) *cobra.Command {
 	- To use a pull request, write "kyma alpha deploy --source=PR-9486".
 	- To use the local sources, write "kyma alpha deploy --source=local".`)
 	cobraCmd.Flags().StringVarP(&o.Profile, "profile", "p", "",
-		fmt.Sprintf("Kyma deployment profile. Supported profiles are: \"%s\".", strings.Join(kymaProfiles, "\", \"")))
+		fmt.Sprintf("Kyma deployment profile. If not specified, Kyma is installed with the default chart values. The supported profiles are: \"%s\".", strings.Join(kymaProfiles, "\", \"")))
 	return cobraCmd
 }
 
@@ -350,7 +350,7 @@ func (cmd *command) showSuccessMessage() {
 Generated self signed TLS certificate should be trusted in your system.
 
   * On Mac Os X, execute this command:
-   
+
     sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain kyma.crt
 
   * On Windows, follow the steps described here:
