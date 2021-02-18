@@ -278,8 +278,11 @@ func (cmd *command) setGlobalOverrides(overrides *deployment.Overrides) error {
 		globalOverrides["tlsKey"] = tlsKey
 		globalOverrides["tlsCrt"] = tlsCrt
 	}
+
 	// register global overrides
-	overrides.AddOverrides("global", globalOverrides)
+	if err := overrides.AddOverrides("global", globalOverrides); err != nil {
+		return err
+	}
 
 	return nil
 }
