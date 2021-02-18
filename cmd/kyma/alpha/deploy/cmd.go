@@ -280,8 +280,10 @@ func (cmd *command) setGlobalOverrides(overrides *deployment.Overrides) error {
 	}
 
 	// register global overrides
-	if err := overrides.AddOverrides("global", globalOverrides); err != nil {
-		return err
+	if len(globalOverrides) > 0 {
+		if err := overrides.AddOverrides("global", globalOverrides); err != nil {
+			return err
+		}
 	}
 
 	return nil
