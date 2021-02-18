@@ -45,14 +45,22 @@ func (o *Options) defaultFilename() error {
 	return nil
 }
 
-func (o *Options) defaultValues(cfg workspace.Cfg) {
+func (o *Options) defaultValues(cfg workspace.Cfg) error {
 	if o.Dir == "" && cfg.Source.Type == workspace.SourceTypeInline {
 		o.Dir = cfg.Source.SourcePath
 	} else if o.Dir == "" {
 		o.Dir = filepath.Dir(o.Filename)
+	} else if !path.IsAbs(o.Dir) {
+		dir, err := filepath.Abs(o.Dir)
+		if err != nil {
+			return err
+		}
+		o.Dir = dir
 	}
 
 	if o.ContainerName == "" {
 		o.ContainerName = cfg.Name
 	}
+
+	return nil
 }

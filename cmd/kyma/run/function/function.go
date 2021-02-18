@@ -57,7 +57,9 @@ func (c *command) Run() error {
 		return err
 	}
 
-	c.opts.defaultValues(cfg)
+	if err = c.opts.defaultValues(cfg); err != nil {
+		return err
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
