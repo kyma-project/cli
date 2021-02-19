@@ -7,9 +7,11 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
-//GetFile downloads a file
+//GetFile downloads a file. Destination directory will be create if it does not exist.
 func GetFile(file, dstDir string) (string, error) {
 	localFiles, err := GetFiles([]string{file}, dstDir)
 	if err == nil {
@@ -18,7 +20,7 @@ func GetFile(file, dstDir string) (string, error) {
 	return "", err
 }
 
-//GetFiles downloads a list of files
+//GetFiles downloads a list of files. Destination directory will be create if it does not exist.
 func GetFiles(files []string, dstDir string) ([]string, error) {
 	result := []string{}
 	for _, file := range files {
@@ -31,8 +33,10 @@ func GetFiles(files []string, dstDir string) ([]string, error) {
 			result = append(result, urlTokens[0])
 		case 2:
 			if strings.HasPrefix(urlTokens[0], "http") {
-				dstFile := filepath.Join(dstDir, filepath.Base(urlTokens[1]))
-				download(file, dstFile)
+				dstFile, err := download(file, dstDir, filepath.Base(urlTokens[1]))
+				if err != nil {
+					return nil, err
+				}
 				result = append(result, dstFile)
 			} else {
 				return nil, fmt.Errorf("Cannot download '%s' because schema '%s' is not supported", file, urlTokens[0])
@@ -44,22 +48,41 @@ func GetFiles(files []string, dstDir string) ([]string, error) {
 	return result, nil
 }
 
-func download(url, dst string) error {
+func download(url, dstDir, dstFile string) (string, error) {
 	// Get the data
 	resp, err := http.Get(url)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer resp.Body.Close()
 
+	// Create the destination directory
+	if err := createDstDir(dstDir); err != nil {
+		return "", errors.Wrap(err, fmt.Sprintf(
+			"Download of file '%s' failed because destination directory '%s' could not be created",
+			dstFile, dstDir))
+	}
+
 	// Create the file
-	out, err := os.Create(dst)
+	destFilePath := filepath.Join(dstDir, dstFile)
+	out, err := os.Create(destFilePath)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer out.Close()
 
 	// Write the body to file
 	_, err = io.Copy(out, resp.Body)
-	return err
+	if err != nil {
+		return "", err
+	}
+
+	return destFilePath, nil
+}
+
+func createDstDir(dstDir string) error {
+	if _, err := os.Stat(dstDir); os.IsNotExist(err) {
+		return os.MkdirAll(dstDir, 0700)
+	}
+	return nil
 }

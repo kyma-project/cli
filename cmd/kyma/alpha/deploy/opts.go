@@ -77,11 +77,7 @@ func (o *Options) ResolveComponentsFile() (string, error) {
 	if (o.ComponentsFile == "") || (o.WorkspacePath != defaultWorkspacePath && o.ComponentsFile == defaultComponentsFile) {
 		return filepath.Join(o.WorkspacePath, "installation", "resources", "components.yaml"), nil
 	}
-	tmpDir, err := o.workspaceTmpDir()
-	if err != nil {
-		return "", err
-	}
-	file, err := download.GetFile(o.ComponentsFile, tmpDir)
+	file, err := download.GetFile(o.ComponentsFile, o.workspaceTmpDir())
 	logger := cli.NewLogger(o.Verbose)
 	logger.Debug(fmt.Sprintf("Using component list file '%s'", file))
 	return file, err
@@ -89,11 +85,7 @@ func (o *Options) ResolveComponentsFile() (string, error) {
 
 //ResolveOverridesFiles makes overrides files locally available
 func (o *Options) ResolveOverridesFiles() ([]string, error) {
-	tmpDir, err := o.workspaceTmpDir()
-	if err != nil {
-		return nil, err
-	}
-	files, err := download.GetFiles(o.OverridesFiles, tmpDir)
+	files, err := download.GetFiles(o.OverridesFiles, o.workspaceTmpDir())
 	if len(files) > 0 {
 		logger := cli.NewLogger(o.Verbose)
 		logger.Debug(fmt.Sprintf("Using override files '%s'", strings.Join(files, "', '")))
@@ -143,10 +135,6 @@ func (o *Options) pathExists(path string, description string) error {
 	return nil
 }
 
-func (o *Options) workspaceTmpDir() (string, error) {
-	tmpDir := filepath.Join(o.WorkspacePath, "tmp")
-	if err := os.MkdirAll(tmpDir, 0700); err != nil {
-		return "", err
-	}
-	return tmpDir, nil
+func (o *Options) workspaceTmpDir() string {
+	return filepath.Join(o.WorkspacePath, "tmp")
 }
