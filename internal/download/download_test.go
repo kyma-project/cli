@@ -35,7 +35,7 @@ func Test_GetFile(t *testing.T) {
 	t.Run("Retrieve remote file", func(t *testing.T) {
 		file, err := GetFile("https://raw.githubusercontent.com/kyma-project/cli/master/LICENCE", testDir)
 		assert.NoError(t, err)
-		assert.Equal(t, filepath.Join(testDir, "LICENCE"), file, "Remove files should be copied to the dst-folder")
+		assert.Equal(t, filepath.Join(testDir, "LICENCE"), file, "Remote files should be copied to the dst-folder")
 	})
 }
 
