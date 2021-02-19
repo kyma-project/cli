@@ -49,8 +49,8 @@ func GetFiles(files []string, dstDir string) ([]string, error) {
 }
 
 func download(url, dstDir, dstFile string) (string, error) {
-	// Get the data
-	resp, err := http.Get(url)
+	// nolint: gosec
+	resp, err := http.Get(url) //get the data
 	if err != nil {
 		return "", err
 	}
