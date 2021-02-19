@@ -81,7 +81,10 @@ func (o *Options) ResolveComponentsFile() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return download.GetFile(o.ComponentsFile, tmpDir)
+	file, err := download.GetFile(o.ComponentsFile, tmpDir)
+	logger := cli.NewLogger(o.Verbose)
+	logger.Debug(fmt.Sprintf("Using component list file '%s'", file))
+	return file, err
 }
 
 //ResolveOverridesFiles makes overrides files locally available
@@ -90,7 +93,12 @@ func (o *Options) ResolveOverridesFiles() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	return download.GetFiles(o.OverridesFiles, tmpDir)
+	files, err := download.GetFiles(o.OverridesFiles, tmpDir)
+	if len(files) > 0 {
+		logger := cli.NewLogger(o.Verbose)
+		logger.Debug(fmt.Sprintf("Using override files '%s'", strings.Join(files, "', '")))
+	}
+	return files, err
 }
 
 // validateFlags applies a sanity check on provided options
