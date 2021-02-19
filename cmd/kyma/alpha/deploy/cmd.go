@@ -49,7 +49,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd.Flags().StringVarP(&o.WorkspacePath, "workspace", "w", defaultWorkspacePath, "Path used to download Kyma sources.")
 	cobraCmd.Flags().BoolVarP(&o.Atomic, "atomic", "a", true, "Use atomic deployment, which rolls back any component that could not be installed successfully.")
 	cobraCmd.Flags().StringVarP(&o.ComponentsFile, "components", "c", defaultComponentsFile, "Path to the components file.")
-	cobraCmd.Flags().StringVarP(&o.OverridesFile, "values-file", "f", "", "Path to a JSON or YAML file with configuration values.")
+	cobraCmd.Flags().StringSliceVarP(&o.OverridesFiles, "values-file", "f", []string{}, "Path to a JSON or YAML file with configuration values.")
 	cobraCmd.Flags().StringSliceVarP(&o.Overrides, "value", "", []string{}, "Set a configuration value (e.g. --value component.key='the value').")
 	cobraCmd.Flags().DurationVarP(&o.CancelTimeout, "cancel-timeout", "", 900*time.Second, "Time after which the workers' context is canceled. Any pending worker goroutines that are blocked by a Helm client will continue.")
 	cobraCmd.Flags().DurationVarP(&o.QuitTimeout, "quit-timeout", "", 1200*time.Second, "Time after which the deployment is aborted. Worker goroutines may still be working in the background. This value must be greater than the value for cancel-timeout.")
@@ -173,6 +173,11 @@ func (cmd *command) isCompatibleVersion() error {
 func (cmd *command) deployKyma(ui asyncui.AsyncUI) error {
 	var resourcePath = filepath.Join(cmd.opts.WorkspacePath, "resources")
 
+	cmpFile, err := cmd.opts.ResolveComponentsFile()
+	if err != nil {
+		return err
+	}
+
 	installationCfg := installConfig.Config{
 		WorkersCount:                  cmd.opts.WorkersCount,
 		CancelTimeout:                 cmd.opts.CancelTimeout,
@@ -182,7 +187,7 @@ func (cmd *command) deployKyma(ui asyncui.AsyncUI) error {
 		BackoffMaxElapsedTimeSeconds:  60 * 5,
 		Log:                           cli.NewHydroformLoggerAdapter(cli.NewLogger(cmd.Verbose)),
 		Profile:                       cmd.opts.Profile,
-		ComponentsListFile:            cmd.opts.ResolveComponentsFile(),
+		ComponentsListFile:            cmpFile,
 		CrdPath:                       filepath.Join(resourcePath, "cluster-essentials", "files"),
 		ResourcePath:                  resourcePath,
 		Version:                       cmd.opts.Source,
@@ -215,8 +220,12 @@ func (cmd *command) overrides() (deployment.Overrides, error) {
 	overrides := deployment.Overrides{}
 
 	// add override files
-	if cmd.opts.OverridesFile != "" {
-		if err := overrides.AddFile(cmd.opts.OverridesFile); err != nil {
+	overridesFiles, err := cmd.opts.ResolveOverridesFiles()
+	if err != nil {
+		return overrides, err
+	}
+	for _, overridesFile := range overridesFiles {
+		if err := overrides.AddFile(overridesFile); err != nil {
 			return overrides, err
 		}
 	}

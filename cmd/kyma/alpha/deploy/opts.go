@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/download"
 )
 
 var (
@@ -25,7 +26,7 @@ type Options struct {
 	*cli.Options
 	WorkspacePath  string
 	ComponentsFile string
-	OverridesFile  string
+	OverridesFiles []string
 	Overrides      []string
 	CancelTimeout  time.Duration
 	QuitTimeout    time.Duration
@@ -71,22 +72,29 @@ func (o *Options) readFileAndEncode(file string) (string, error) {
 	return base64.StdEncoding.EncodeToString(content), nil
 }
 
-// ResolveComponentsFile resolves the components file path related to the configured workspace path
-func (o *Options) ResolveComponentsFile() string {
+// ResolveComponentsFile resolves the components file path relative to the workspace path or makes a remote file locally available
+func (o *Options) ResolveComponentsFile() (string, error) {
 	if (o.ComponentsFile == "") || (o.WorkspacePath != defaultWorkspacePath && o.ComponentsFile == defaultComponentsFile) {
-		return filepath.Join(o.WorkspacePath, "installation", "resources", "components.yaml")
+		return filepath.Join(o.WorkspacePath, "installation", "resources", "components.yaml"), nil
 	}
-	return o.ComponentsFile
+	tmpDir, err := o.workspaceTmpDir()
+	if err != nil {
+		return "", err
+	}
+	return download.GetFile(o.ComponentsFile, tmpDir)
+}
+
+//ResolveOverridesFiles makes overrides files locally available
+func (o *Options) ResolveOverridesFiles() ([]string, error) {
+	tmpDir, err := o.workspaceTmpDir()
+	if err != nil {
+		return nil, err
+	}
+	return download.GetFiles(o.OverridesFiles, tmpDir)
 }
 
 // validateFlags applies a sanity check on provided options
 func (o *Options) validateFlags() error {
-	// Overrides file is optional, but if provided it has to exist
-	if o.OverridesFile != "" {
-		if err := o.pathExists(o.OverridesFile, "Overrides file"); err != nil {
-			return err
-		}
-	}
 	if o.QuitTimeout < o.CancelTimeout {
 		return fmt.Errorf("Quit timeout (%v) cannot be smaller than cancel timeout (%v)", o.QuitTimeout, o.CancelTimeout)
 	}
@@ -125,4 +133,12 @@ func (o *Options) pathExists(path string, description string) error {
 		return fmt.Errorf("%s '%s' not found", description, path)
 	}
 	return nil
+}
+
+func (o *Options) workspaceTmpDir() (string, error) {
+	tmpDir := filepath.Join(o.WorkspacePath, "tmp")
+	if err := os.MkdirAll(tmpDir, 0700); err != nil {
+		return "", err
+	}
+	return tmpDir, nil
 }
