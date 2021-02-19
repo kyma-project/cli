@@ -978,8 +978,6 @@ github.com/openzipkin/zipkin-go v0.1.1/go.mod h1:NtoC/o8u3JlF1lSlyPNswIbeQH9bJTm
 github.com/openzipkin/zipkin-go v0.1.6/go.mod h1:QgAqvLzwWbR/WpD4A3cGpPtJrZXNIiJc5AZX7/PBEpw=
 github.com/openzipkin/zipkin-go v0.2.1/go.mod h1:NaW6tEwdmWMaCDZzg8sh+IBNOxHMPnhQw8ySjnjRyN4=
 github.com/openzipkin/zipkin-go v0.2.2/go.mod h1:NaW6tEwdmWMaCDZzg8sh+IBNOxHMPnhQw8ySjnjRyN4=
-github.com/pPrecel/hydroform/function v0.0.0-20210219062401-3b63cf237459 h1:lsHqXlhtt25a30y+iWxGYaWpmFunwnZhMXL3VTnE7Yo=
-github.com/pPrecel/hydroform/function v0.0.0-20210219062401-3b63cf237459/go.mod h1:UkGyJJw4UKHUAbgKcJWDYQrMw76k5DJUZDNkOvjawqA=
 github.com/packer-community/winrmcp v0.0.0-20180102160824-81144009af58/go.mod h1:f6Izs6JvFTdnRbziASagjZ2vmf55NSIkC/weStxCHqk=
 github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db h1:9uViuKtx1jrlXLBW/pMnhOfzn3iSEdLase/But/IZRU=
 github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db/go.mod h1:f6Izs6JvFTdnRbziASagjZ2vmf55NSIkC/weStxCHqk=
@@ -1049,8 +1047,8 @@ github.com/prometheus/procfs v0.0.8/go.mod h1:7Qr8sr6344vo1JqZ6HhLceV9o3AJ1Ff+Gx
 github.com/prometheus/procfs v0.0.11 h1:DhHlBtkHWPYi8O2y31JkK0TF+DGM+51OopZjH/Ia5qI=
 github.com/prometheus/procfs v0.0.11/go.mod h1:lV6e/gmhEcM9IjHGsFOCxxuZ+z1YqCvr4OA4YeYWdaU=
 github.com/prometheus/tsdb v0.7.1/go.mod h1:qhTCs0VvXwvX/y3TZrWD7rabWM+ijKTux40TwIPHuXU=
-github.com/rJankowski93/hydroform/function v0.0.0-20210217112113-ebcc4263a675 h1:iLrdQWeEAhW+p0d8V0I0C2LZEij9svG8IT6AtiHg3ME=
-github.com/rJankowski93/hydroform/function v0.0.0-20210217112113-ebcc4263a675/go.mod h1:tGNI0je6wXFwOb1oVvqbjM1JEW2fbK7yUlfi9PBqvOI=
+github.com/rJankowski93/hydroform/function v0.0.0-20210219062415-2a5532d5493c h1:+zSPq93claeyOv8xDg/eL3EB6NHMViDkm+hO1DV2qDo=
+github.com/rJankowski93/hydroform/function v0.0.0-20210219062415-2a5532d5493c/go.mod h1:UkGyJJw4UKHUAbgKcJWDYQrMw76k5DJUZDNkOvjawqA=
 github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
 github.com/rogpeppe/fastuuid v0.0.0-20150106093220-6724a57986af/go.mod h1:XWv6SoW27p1b0cqNHllgS5HIMJraePCO15w5zCzIWYg=
 github.com/rogpeppe/go-internal v1.1.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
