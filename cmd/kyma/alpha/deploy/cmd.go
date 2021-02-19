@@ -368,14 +368,13 @@ This is a one time operation (you can skip this step if you did it before).`)
 
 	adminPw, err := cmd.adminPw()
 	if err != nil {
-		logger.Error(fmt.Sprintf("%s", err))
+		return
 	}
 	fmt.Printf(`
-Kyma Console Url: %s
 User: admin@kyma.cx
 Password: %s
 
-`, fmt.Sprintf("https://console.%s", cmd.opts.Domain), adminPw)
+`, adminPw)
 }
 
 func (cmd *command) storeCrtAsFile() error {
