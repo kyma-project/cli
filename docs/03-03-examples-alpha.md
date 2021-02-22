@@ -20,7 +20,7 @@ There are several ways to install Kyma:
 - To install Kyma on a local cluster, you can simply use the `deploy` command.
 Kyma provides a default domain under the URL `https://console.local.kyma.dev`.
 
-    ```bash
+    ```
     kyma alpha deploy 
     ```
    
