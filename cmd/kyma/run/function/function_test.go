@@ -1,9 +1,10 @@
 package function
 
 import (
+	"testing"
+
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 // TestFunctionFlags ensures that the provided command flags are stored in the options.
@@ -22,8 +23,8 @@ func TestFunctionFlags(t *testing.T) {
 	// test passing flags
 	err := c.ParseFlags([]string{
 		"--filename", "test-name",
-		"--sourceDir", "/test/folder",
-		"--containerName", "test-container",
+		"--source-dir", "/test/folder",
+		"--container-name", "test-container",
 		"--port", "9090",
 		"--detach", "true",
 	})
