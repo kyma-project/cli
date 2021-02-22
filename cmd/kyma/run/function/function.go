@@ -48,7 +48,7 @@ func NewCmd(o *Options) *cobra.Command {
 }
 
 func (c *command) Run() error {
-	if err := c.opts.setDefaults(); err != nil {
+	if err := c.opts.defaultFilename(); err != nil {
 		return err
 	}
 
@@ -57,8 +57,8 @@ func (c *command) Run() error {
 		return err
 	}
 
-	if c.opts.ContainerName == "" {
-		c.opts.ContainerName = cfg.Name
+	if err = c.opts.defaultValues(cfg); err != nil {
+		return err
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -110,7 +110,7 @@ func (c *command) runContainer(ctx context.Context, client *client.Client, cfg w
 			c.parseEnvs(cfg.Env)...,
 		),
 		ContainerName: c.opts.ContainerName,
-		Commands:      runtimes.ContainerCommands(cfg.Runtime, c.opts.HotDeploy),
+		Commands:      runtimes.ContainerCommands(cfg.Runtime, c.opts.Debug,c.opts.HotDeploy),
 		Image:         runtimes.ContainerImage(cfg.Runtime),
 		WorkDir:       c.opts.Dir,
 		User:          runtimes.ContainerUser(cfg.Runtime),
