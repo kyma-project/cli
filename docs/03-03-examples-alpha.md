@@ -81,7 +81,9 @@ For example, to install Kyma from a specific version, such as `1.19.1`, run:
     `{COMPONENTS_FILE_PATH}` is the path to a YAML file containing the desired component list to be installed. In the following example, only these 6 components are deployed on the cluster:
  
     - For `ory`, the values of `hydra.deployment.resources.limits.cpu` and `hydra.deployment.resources.requests.cpu` will be overriden to `153m` and `53m` respectively.
+    
     - For `monitoring`, the values of `alertmanager.alertmanagerSpec.resources.limits.memory` and `alertmanager.alertmanagerSpec.resources.requests.memory` will be overriden to `304Mi` and `204Mi` respectively.
+    
     ```bash
      ory:
       hydra:
