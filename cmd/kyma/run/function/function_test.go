@@ -18,7 +18,7 @@ func TestFunctionFlags(t *testing.T) {
 	require.Equal(t, "", o.ContainerName, "Default value for the --containerName flag not as expected.")
 	require.Equal(t, "8080", o.FuncPort, "Default value for the --port flag not as expected.")
 	require.Equal(t, false, o.Detach, "Default value for the --detach flag not as expected.")
-	require.Equal(t, false, o.HotDeploy, "Default value for the --hotDeploy flag not as expected.")
+	require.Equal(t, false, o.HotDeploy, "Default value for the --hot-deploy flag not as expected.")
 	require.Equal(t, false, o.Debug, "Default value for the --debug flag not as expected.")
 
 	// test passing flags
@@ -28,7 +28,7 @@ func TestFunctionFlags(t *testing.T) {
 		"--containerName", "test-container",
 		"--port", "9090",
 		"--detach", "true",
-		"--hotDeploy", "true",
+		"--hot-deploy", "true",
 		"--debug", "true",
 	})
 
@@ -38,7 +38,7 @@ func TestFunctionFlags(t *testing.T) {
 	require.Equal(t, "test-container", o.ContainerName, "The parsed value for the --containerName flag not as expected.")
 	require.Equal(t, "9090", o.FuncPort, "The parsed value for the --port flag not as expected.")
 	require.Equal(t, true, o.Detach, "The parsed value for the --detach flag not as expected.")
-	require.Equal(t, true, o.HotDeploy, "The parsed value for the --hotDeploy flag not as expected.")
+	require.Equal(t, true, o.HotDeploy, "The parsed value for the --hot-deploy flag not as expected.")
 	require.Equal(t, true, o.Debug, "The parsed value for the --debug flag not as expected.")
 
 	err = c.ParseFlags([]string{
