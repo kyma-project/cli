@@ -13,6 +13,7 @@ import (
 )
 
 //GetFile downloads a file. Destination directory will be create if it does not exist.
+//It returns the path to the downloaded file.
 func GetFile(file, dstDir string) (string, error) {
 	localFiles, err := GetFiles([]string{file}, dstDir)
 	if err == nil {
@@ -22,6 +23,7 @@ func GetFile(file, dstDir string) (string, error) {
 }
 
 //GetFiles downloads a list of files. Destination directory will be create if it does not exist.
+//It returns the pathes to the downloaded files.
 func GetFiles(files []string, dstDir string) ([]string, error) {
 	result := []string{}
 	for _, file := range files {
@@ -49,7 +51,7 @@ func GetFiles(files []string, dstDir string) ([]string, error) {
 	return result, nil
 }
 
-//RemoteReader returns a reader to a remote file
+//RemoteReader returns a reader to a remote file.
 func RemoteReader(path string) (io.ReadCloser, error) {
 	client := &http.Client{
 		Timeout: 5 * time.Second,
