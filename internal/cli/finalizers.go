@@ -31,7 +31,7 @@ func (f *Finalizers) Add(function func()) {
 }
 
 func (f *Finalizers) setupCloseHandler() {
-	c := make(chan os.Signal)
+	c := make(chan os.Signal, 1)
 	f.notify(c, syscall.SIGTERM, syscall.SIGINT)
 	go func() {
 		sig := <-c
