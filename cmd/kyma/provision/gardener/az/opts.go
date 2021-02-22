@@ -18,6 +18,7 @@ type Options struct {
 	ScalerMin         int
 	ScalerMax         int
 	Extra             []string
+	Attempts          uint
 }
 
 //NewOptions creates options with default values

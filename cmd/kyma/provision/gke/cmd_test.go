@@ -25,6 +25,7 @@ func TestProvisionGKEFlags(t *testing.T) {
 	require.Equal(t, 3, o.NodeCount, "Default value for the nodes flag not as expected.")
 	// Temporary disable flag. To be enabled when hydroform supports TF modules
 	//require.Empty(t, o.Extra, "Default value for the extra flag not as expected.")
+	require.Equal(t, uint(3), o.Attempts, "Default value for the attempts flag not as expected.")
 
 	// test passing flags
 	err := c.ParseFlags([]string{
@@ -38,6 +39,7 @@ func TestProvisionGKEFlags(t *testing.T) {
 		"--nodes", "7",
 		// Temporary disable flag. To be enabled when hydroform supports TF modules
 		//"--extra", "VAR1=VALUE1,VAR2=VALUE2",
+		"--attempts", "2",
 	})
 	require.NoError(t, err, "Parsing flags should not return an error")
 	require.Equal(t, "my-cluster", o.Name, "The parsed value for the name flag not as expected.")
@@ -50,6 +52,7 @@ func TestProvisionGKEFlags(t *testing.T) {
 	require.Equal(t, 7, o.NodeCount, "The parsed value for the nodes flag not as expected.")
 	// Temporary disable flag. To be enabled when hydroform supports TF modules
 	//require.Equal(t, []string{"VAR1=VALUE1", "VAR2=VALUE2"}, o.Extra, "The parsed value for the extra flag not as expected.")
+	require.Equal(t, uint(2), o.Attempts, "The parsed value for the attempts flag not as expected.")
 }
 
 func TestProvisionGKESubcommands(t *testing.T) {
