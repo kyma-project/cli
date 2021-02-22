@@ -6,7 +6,7 @@ type: Details
 The following examples show how to provision a cluster, and to deploy and update Kyma with alpha commands.
 
 ## Provision a cluster
-To provision a kubernetes cluster, run:
+To provision a Kubernetes cluster, run:
 
 ```bash
 kyma alpha provision k3s 
