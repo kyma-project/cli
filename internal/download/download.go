@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 )
@@ -48,13 +49,30 @@ func GetFiles(files []string, dstDir string) ([]string, error) {
 	return result, nil
 }
 
-func download(url, dstDir, dstFile string) (string, error) {
+//RemoteReader returns a reader to a remote file
+func RemoteReader(path string) (io.ReadCloser, error) {
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+	}
 	// nolint: gosec
-	resp, err := http.Get(url) //get the data
+	resp, err := client.Get(path)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode == http.StatusOK {
+		return resp.Body, nil
+	}
+
+	return nil, fmt.Errorf("Couldn't not read remote file: %s, response: %v", path, resp.Status)
+}
+
+func download(url, dstDir, dstFile string) (string, error) {
+	remoteReader, err := RemoteReader(url)
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer remoteReader.Close()
 
 	// Create the destination directory
 	if err := createDstDir(dstDir); err != nil {
@@ -72,7 +90,7 @@ func download(url, dstDir, dstFile string) (string, error) {
 	defer out.Close()
 
 	// Write the body to file
-	_, err = io.Copy(out, resp.Body)
+	_, err = io.Copy(out, remoteReader)
 	if err != nil {
 		return "", err
 	}
