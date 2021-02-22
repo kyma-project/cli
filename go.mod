@@ -6,7 +6,7 @@ replace (
 	github.com/hashicorp/consul v0.0.0-20171026175957-610f3c86a089 => github.com/hashicorp/consul/sdk v0.7.0
 	github.com/hashicorp/consul/api v1.3.0 => github.com/hashicorp/consul/api v0.0.0-20191112221531-8742361660b6
 	// Remove this line before merge
-	github.com/kyma-incubator/hydroform/function => github.com/rJankowski93/hydroform/function v0.0.0-20210219062415-2a5532d5493c
+	github.com/kyma-incubator/hydroform/function => github.com/rJankowski93/hydroform/function v0.0.0-20210222094343-1583a323e96f
 	// this is needed for terraform to work with the k8s 0.18 APIs, we should be able to remove it once we have terraform 0.13+
 	github.com/terraform-providers/terraform-provider-openstack => github.com/terraform-providers/terraform-provider-openstack v1.20.0
 	// grpc need to be compatible with direct dependencies in terraform (>=v1.29.1)
