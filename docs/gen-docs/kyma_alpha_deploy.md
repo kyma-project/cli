@@ -31,7 +31,7 @@ kyma alpha deploy [flags]
       --tls-crt string            TLS certificate file for the domain used for installation.
       --tls-key string            TLS key file for the domain used for installation.
       --value strings             Set a configuration value (e.g. --value component.key='the value').
-  -f, --values-file string        Path to a JSON or YAML file with configuration values.
+  -f, --values-file strings       Path to a JSON or YAML file with configuration values.
       --workers-count int         Number of parallel workers used for the deployment. (default 4)
   -w, --workspace string          Path used to download Kyma sources. (default "workspace")
 ```
