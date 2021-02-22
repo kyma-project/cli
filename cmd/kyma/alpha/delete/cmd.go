@@ -79,7 +79,7 @@ func (cmd *command) Run() error {
 		return err
 	}
 
-	installCfg := installConfig.Config{
+	installCfg := &installConfig.Config{
 		WorkersCount:                  cmd.opts.WorkersCount,
 		CancelTimeout:                 cmd.opts.CancelTimeout,
 		QuitTimeout:                   cmd.opts.QuitTimeout,
@@ -104,7 +104,7 @@ func (cmd *command) Run() error {
 		}
 	}
 
-	installer, err := deployment.NewDeletion(installCfg, deployment.Overrides{}, cmd.K8s.Static(), updateCh)
+	installer, err := deployment.NewDeletion(installCfg, &deployment.Overrides{}, cmd.K8s.Static(), updateCh)
 	if err != nil {
 		return err
 	}

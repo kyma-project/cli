@@ -178,7 +178,7 @@ func (cmd *command) deployKyma(ui asyncui.AsyncUI) error {
 		return err
 	}
 
-	installationCfg := installConfig.Config{
+	installationCfg := &installConfig.Config{
 		WorkersCount:                  cmd.opts.WorkersCount,
 		CancelTimeout:                 cmd.opts.CancelTimeout,
 		QuitTimeout:                   cmd.opts.QuitTimeout,
@@ -216,8 +216,8 @@ func (cmd *command) deployKyma(ui asyncui.AsyncUI) error {
 	return installer.StartKymaDeployment()
 }
 
-func (cmd *command) overrides() (deployment.Overrides, error) {
-	overrides := deployment.Overrides{}
+func (cmd *command) overrides() (*deployment.Overrides, error) {
+	overrides := &deployment.Overrides{}
 
 	// add override files
 	overridesFiles, err := cmd.opts.ResolveOverridesFiles()
@@ -231,7 +231,7 @@ func (cmd *command) overrides() (deployment.Overrides, error) {
 	}
 
 	// set global overrides which the CLI allows customer to specify using CLI params (just for UX convenience)
-	if err := cmd.setGlobalOverrides(&overrides); err != nil {
+	if err := cmd.setGlobalOverrides(overrides); err != nil {
 		return overrides, err
 	}
 
