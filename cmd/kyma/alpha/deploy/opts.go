@@ -101,12 +101,8 @@ func (o *Options) validateFlags() error {
 	if o.Profile != "" && !o.supportedProfile(o.Profile) {
 		return fmt.Errorf("Profile unknown or not supported. Supported profiles are: %s", strings.Join(kymaProfiles, ", "))
 	}
-	certsProvided, err := o.tlsCertAndKeyProvided()
-	if err != nil {
+	if _, err := o.tlsCertAndKeyProvided(); err != nil {
 		return err
-	}
-	if o.Domain != "" && !certsProvided {
-		return fmt.Errorf("To use a custom domain name also a custom TLS certificate and TLS key has to be provided")
 	}
 	return nil
 }
