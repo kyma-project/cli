@@ -6,10 +6,11 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
+	"github.com/kyma-project/cli/internal/cli"
 	"github.com/pkg/errors"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -160,29 +161,34 @@ func TestOptsValidation(t *testing.T) {
 
 func TestComponentFile(t *testing.T) {
 	t.Run("Test with non-changed workspace path", func(t *testing.T) {
-		opts := &Options{
-			WorkspacePath: defaultWorkspacePath,
-		}
-		assert.Equal(t, defaultComponentsFile, opts.ResolveComponentsFile())
+		opts := NewOptions(cli.NewOptions())
+		opts.WorkspacePath = defaultWorkspacePath
+		compFile, err := opts.ResolveComponentsFile()
+		require.NoError(t, err)
+		require.Equal(t, defaultComponentsFile, compFile)
 	})
-	t.Run("Test with changed component file", func(t *testing.T) {
-		opts := &Options{
-			WorkspacePath:  defaultWorkspacePath,
-			ComponentsFile: "/xyz/comp.yaml",
-		}
-		assert.Equal(t, "/xyz/comp.yaml", opts.ResolveComponentsFile())
+	t.Run("Test with non-existing component file", func(t *testing.T) {
+		opts := NewOptions(cli.NewOptions())
+		opts.WorkspacePath = defaultWorkspacePath
+		opts.ComponentsFile = "/xyz/comp.yaml"
+		_, err := opts.ResolveComponentsFile()
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "not found")
 	})
-	t.Run("Test with changed workspace path", func(t *testing.T) {
-		opts := &Options{
-			WorkspacePath: "/xyz/abc",
-		}
-		assert.Equal(t, "/xyz/abc/installation/resources/components.yaml", opts.ResolveComponentsFile())
+	t.Run("Test with non-existing workspace path", func(t *testing.T) {
+		opts := NewOptions(cli.NewOptions())
+		opts.WorkspacePath = "/xyz/abc"
+		compFile, err := opts.ResolveComponentsFile()
+		require.NoError(t, err)
+		require.Equal(t, compFile, "/xyz/abc/installation/resources/components.yaml")
 	})
-	t.Run("Test with changed workspace path ad componets file path", func(t *testing.T) {
-		opts := &Options{
-			WorkspacePath:  "/xyz/abc",
-			ComponentsFile: "/some/where/components.yaml",
-		}
-		assert.Equal(t, "/some/where/components.yaml", opts.ResolveComponentsFile())
+	t.Run("Test with changed workspace path and componets file path", func(t *testing.T) {
+		_, currFile, _, _ := runtime.Caller(1)
+		opts := NewOptions(cli.NewOptions())
+		opts.WorkspacePath = filepath.Dir(currFile)
+		opts.ComponentsFile = currFile
+		compFile, err := opts.ResolveComponentsFile()
+		require.NoError(t, err)
+		require.Equal(t, currFile, compFile)
 	})
 }
