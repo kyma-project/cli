@@ -75,16 +75,15 @@ func (o *Options) readFileAndEncode(file string) (string, error) {
 //ResolveWorkspacePath tries to resolve the Kyma source folder if --source=local is defined,
 //otherwise the defined workspace path will be returned
 func (o *Options) ResolveLocalWorkspacePath() string {
-	//use provied workspace path if --source is not "local" or user defined a custom workspace path
-	if o.Source != localSource || o.WorkspacePath != defaultWorkspacePath {
-		return o.WorkspacePath
-	}
-	//use Kyma sources stored in GOPATH (if they exist)
-	goPath := os.Getenv("GOPATH")
-	if goPath != "" {
-		kymaPath := filepath.Join(goPath, "src", "github.com", "kyma-project", "kyma")
-		if o.pathExists(kymaPath, "Local Kyma source directory") == nil {
-			return kymaPath
+	//resolve local Kyma source directory only if user has not defined a custom workspace directory
+	if o.Source == localSource && o.WorkspacePath == defaultWorkspacePath {
+		//use Kyma sources stored in GOPATH (if they exist)
+		goPath := os.Getenv("GOPATH")
+		if goPath != "" {
+			kymaPath := filepath.Join(goPath, "src", "github.com", "kyma-project", "kyma")
+			if o.pathExists(kymaPath, "Local Kyma source directory") == nil {
+				return kymaPath
+			}
 		}
 	}
 	//no Kyma sources found in GOPATH
