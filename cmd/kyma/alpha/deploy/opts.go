@@ -72,10 +72,30 @@ func (o *Options) readFileAndEncode(file string) (string, error) {
 	return base64.StdEncoding.EncodeToString(content), nil
 }
 
-// ResolveComponentsFile resolves the components file path relative to the workspace path or makes a remote file locally available
+//ResolveWorkspacePath tries to resolve the Kyma source folder if --source=local is defined,
+//otherwise the defined workspace path will be returned
+func (o *Options) ResolveLocalWorkspacePath() string {
+	//use provied workspace path if --source is not "local" or user defined a custom workspace path
+	if o.Source != localSource || o.WorkspacePath != defaultWorkspacePath {
+		return o.WorkspacePath
+	}
+	//use Kyma sources stored in GOPATH (if they exist)
+	goPath := os.Getenv("GOPATH")
+	if goPath != "" {
+		kymaPath := filepath.Join(goPath, "src", "github.com", "kyma-project", "kyma")
+		if o.pathExists(kymaPath, "Local Kyma source directory") == nil {
+			return kymaPath
+		}
+	}
+	//no Kyma sources found in GOPATH
+	return o.WorkspacePath
+}
+
+//ResolveComponentsFile resolves the components file path relative to the workspace path or makes a remote file locally available
 func (o *Options) ResolveComponentsFile() (string, error) {
-	if (o.ComponentsFile == "") || (o.WorkspacePath != defaultWorkspacePath && o.ComponentsFile == defaultComponentsFile) {
-		return filepath.Join(o.WorkspacePath, "installation", "resources", "components.yaml"), nil
+	workspacePath := o.ResolveLocalWorkspacePath()
+	if (o.ComponentsFile == "") || (workspacePath != defaultWorkspacePath && o.ComponentsFile == defaultComponentsFile) {
+		return filepath.Join(workspacePath, "installation", "resources", "components.yaml"), nil
 	}
 	file, err := download.GetFile(o.ComponentsFile, o.workspaceTmpDir())
 	logger := cli.NewLogger(o.Verbose)
