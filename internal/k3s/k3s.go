@@ -135,7 +135,7 @@ func StartCluster(verbose bool, timeout time.Duration, clusterName string, worke
 		"-p", "80:80@loadbalancer",
 		"-p", "443:443@loadbalancer",
 		"--agents", fmt.Sprintf("%d", workers),
-		"--k3s-server-arg", "--no-deploy",
+		"--k3s-server-arg", "--disable",
 		"--k3s-server-arg", "traefik",
 	}
 
