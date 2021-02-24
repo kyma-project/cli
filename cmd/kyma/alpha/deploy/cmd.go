@@ -15,10 +15,14 @@ import (
 
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
+	"github.com/kyma-project/cli/internal/nice"
+	"github.com/kyma-project/cli/internal/trust"
 	"github.com/kyma-project/cli/pkg/asyncui"
 	"github.com/kyma-project/cli/pkg/deploy"
 	"github.com/magiconair/properties"
 	"github.com/spf13/cobra"
+
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 
 	installConfig "github.com/kyma-incubator/hydroform/parallel-install/pkg/config"
 	"github.com/kyma-incubator/hydroform/parallel-install/pkg/deployment"
@@ -28,6 +32,7 @@ import (
 type command struct {
 	opts *Options
 	cli.Command
+	duration time.Duration
 }
 
 //NewCmd creates a new kyma command
@@ -73,6 +78,7 @@ func NewCmd(o *Options) *cobra.Command {
 func (cmd *command) Run() error {
 	var err error
 
+	start := time.Now()
 	// verify input parameters
 	if err = cmd.opts.validateFlags(); err != nil {
 		return err
@@ -126,11 +132,28 @@ func (cmd *command) Run() error {
 
 	}
 
-	err = cmd.deployKyma(ui)
-	if err == nil {
-		cmd.showSuccessMessage()
+	overrides, err := cmd.overrides()
+	if err != nil {
+		return err
 	}
-	return err
+
+	err = cmd.deployKyma(ui, overrides)
+	if err != nil {
+		return err
+	}
+	cmd.duration = time.Since(start)
+
+	// import certificate
+	if err := cmd.importCertificate(); err != nil {
+		return err
+	}
+
+	// print summary
+	o, err := overrides.Build()
+	if err != nil {
+		return errors.Wrap(err, "Unable to retrieve overrides to print installation summary")
+	}
+	return cmd.printSummary(o)
 }
 
 func (cmd *command) isCompatibleVersion() error {
@@ -170,8 +193,8 @@ func (cmd *command) isCompatibleVersion() error {
 	return fmt.Errorf("Upgrade stopped by user")
 }
 
-func (cmd *command) deployKyma(ui asyncui.AsyncUI) error {
-	var resourcePath = filepath.Join(cmd.opts.ResolveLocalWorkspacePath(), "resources")
+func (cmd *command) deployKyma(ui asyncui.AsyncUI, overrides *deployment.OverridesBuilder) error {
+	var resourcePath = filepath.Join(cmd.opts.WorkspacePath, "resources")
 
 	cmpFile, err := cmd.opts.ResolveComponentsFile()
 	if err != nil {
@@ -194,11 +217,6 @@ func (cmd *command) deployKyma(ui asyncui.AsyncUI) error {
 		Atomic:                        cmd.opts.Atomic,
 	}
 
-	overrides, err := cmd.overrides()
-	if err != nil {
-		return err
-	}
-
 	// if an AsyncUI is used, get channel for update events
 	var updateCh chan<- deployment.ProcessUpdate
 	if ui.IsRunning() {
@@ -216,55 +234,55 @@ func (cmd *command) deployKyma(ui asyncui.AsyncUI) error {
 	return installer.StartKymaDeployment()
 }
 
-func (cmd *command) overrides() (*deployment.Overrides, error) {
-	overrides := &deployment.Overrides{}
+func (cmd *command) overrides() (*deployment.OverridesBuilder, error) {
+	ob := &deployment.OverridesBuilder{}
 
 	// add override files
 	overridesFiles, err := cmd.opts.ResolveOverridesFiles()
 	if err != nil {
-		return overrides, err
+		return ob, err
 	}
 	for _, overridesFile := range overridesFiles {
-		if err := overrides.AddFile(overridesFile); err != nil {
-			return overrides, err
+		if err := ob.AddFile(overridesFile); err != nil {
+			return ob, err
 		}
 	}
 
 	// set global overrides which the CLI allows customer to specify using CLI params (just for UX convenience)
-	if err := cmd.setGlobalOverrides(overrides); err != nil {
-		return overrides, err
+	if err := cmd.setGlobalOverrides(ob); err != nil {
+		return ob, err
 	}
 
 	// add overrides provided as CLI params
 	for _, override := range cmd.opts.Overrides {
 		keyValuePairs := properties.MustLoadString(override)
 		if keyValuePairs.Len() < 1 {
-			return overrides, fmt.Errorf("Override has wrong format: Provide overrides in 'key=value' format")
+			return ob, fmt.Errorf("Override has wrong format: Provide overrides in 'key=value' format")
 		}
 
 		// process key-value pair
 		for _, key := range keyValuePairs.Keys() {
 			value, ok := keyValuePairs.Get(key)
 			if !ok || value == "" {
-				return overrides, fmt.Errorf("Cannot read value of override '%s'", key)
+				return ob, fmt.Errorf("Cannot read value of override '%s'", key)
 			}
 
 			comp, overridesMap, err := cmd.convertToOverridesMap(key, value)
 			if err != nil {
-				return overrides, err
+				return ob, err
 			}
 
-			if err := overrides.AddOverrides(comp, overridesMap); err != nil {
-				return overrides, err
+			if err := ob.AddOverrides(comp, overridesMap); err != nil {
+				return ob, err
 			}
 		}
 	}
 
-	return overrides, nil
+	return ob, nil
 }
 
 //setGlobalOverrides is setting global overrides to improve the UX of the CLI
-func (cmd *command) setGlobalOverrides(overrides *deployment.Overrides) error {
+func (cmd *command) setGlobalOverrides(overrides *deployment.OverridesBuilder) error {
 	// add domain provided as CLI params (for UX convenience)
 	globalOverrides := make(map[string]interface{})
 	if cmd.opts.Domain != "" {
@@ -336,67 +354,79 @@ func (cmd *command) convertToOverridesMap(key, value string) (string, map[string
 	return comp, latestOverrideMap, nil
 }
 
-func (cmd *command) showSuccessMessage() {
-	var err error
-	logger := cli.NewLogger(cmd.Verbose)
-
-	fmt.Println("Kyma successfully installed.")
-
-	tlsProvided, err := cmd.opts.tlsCertAndKeyProvided()
-	if err != nil {
-		logger.Error(fmt.Sprintf("%s", err))
-	}
-
-	// show cert installation hint only if user isn't providing a custom cert
-	if !tlsProvided {
-		if err = cmd.storeCrtAsFile(); err != nil {
-			logger.Error(fmt.Sprintf("%s", err))
-		}
-		fmt.Println(`
-Generated self signed TLS certificate should be trusted in your system.
-
-  * On Mac Os X, execute this command:
-
-    sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain kyma.crt
-
-  * On Windows, follow the steps described here:
-
-    https://support.globalsign.com/ssl/ssl-certificates-installation/import-and-export-certificate-microsoft-windows
-
-This is a one time operation (you can skip this step if you did it before).`)
-	}
-
-	adminPw, err := cmd.adminPw()
-	if err != nil {
-		return
-	}
-	fmt.Printf(`
-User: admin@kyma.cx
-Password: %s
-
-`, adminPw)
-}
-
-func (cmd *command) storeCrtAsFile() error {
-	secret, err := cmd.K8s.Static().CoreV1().Secrets("istio-system").Get(context.Background(), "kyma-gateway-certs", metav1.GetOptions{})
-	if err != nil {
-		return err
-	}
-	if err = ioutil.WriteFile("kyma.crt", secret.Data["cert"], 0600); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (cmd *command) adminPw() (string, error) {
-	secret, err := cmd.K8s.Static().CoreV1().Secrets("kyma-system").Get(context.Background(), "admin-user", metav1.GetOptions{})
-	if err != nil {
-		return "", err
-	}
-	return string(secret.Data["password"]), nil
-}
-
 //avoidUserInteraction returns true if user won't provide input
 func (cmd *command) avoidUserInteraction() bool {
 	return cmd.NonInteractive || cmd.CI
+}
+
+func (cmd *command) printSummary(o deployment.Overrides) error {
+	provider := metadata.New(cmd.K8s.Static())
+	md, err := provider.ReadKymaMetadata()
+	if err != nil {
+		return err
+	}
+
+	domain, ok := o.Find("global.domainName")
+	if !ok {
+		return errors.New("Domain not found in overrides")
+	}
+
+	var consoleURL string
+	vs, err := cmd.K8s.Istio().NetworkingV1alpha3().VirtualServices("kyma-system").Get(context.Background(), "console-web", metav1.GetOptions{})
+	switch {
+	case k8sErrors.IsNotFound(err):
+		consoleURL = "not installed"
+	case err != nil:
+		return err
+	case vs != nil && len(vs.Spec.Hosts) > 0:
+		consoleURL = fmt.Sprintf("https://%s", vs.Spec.Hosts[0])
+	default:
+		return errors.New("console host could not be obtained")
+	}
+
+	adm, err := cmd.K8s.Static().CoreV1().Secrets("kyma-system").Get(context.Background(), "admin-user", metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	sum := nice.Summary{
+		NonInteractive: cmd.NonInteractive,
+		Version:        md.Version,
+		URL:            domain.(string),
+		Console:        consoleURL,
+		Duration:       cmd.duration,
+		Email:          string(adm.Data["email"]),
+		Password:       string(adm.Data["password"]),
+	}
+
+	return sum.Print()
+}
+
+func (cmd *command) importCertificate() error {
+	ca := trust.NewCertifier(cmd.K8s)
+
+	// get cert from cluster
+	cert, err := ca.Certificate()
+	if err != nil {
+		return err
+	}
+
+	tmpFile, err := ioutil.TempFile(os.TempDir(), "kyma-*.crt")
+	if err != nil {
+		return errors.Wrap(err, "Cannot create temporary file for Kyma certificate")
+	}
+	defer os.Remove(tmpFile.Name())
+
+	if _, err = tmpFile.Write(cert); err != nil {
+		return errors.Wrap(err, "Failed to write the kyma certificate")
+	}
+	if err := tmpFile.Close(); err != nil {
+		return err
+	}
+
+	if err := ca.StoreCertificate(tmpFile.Name(), cmd.CurrentStep); err != nil {
+		return err
+	}
+	cmd.CurrentStep.Successf("Kyma root certificate imported")
+	return nil
 }

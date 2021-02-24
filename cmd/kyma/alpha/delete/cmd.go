@@ -104,7 +104,7 @@ func (cmd *command) Run() error {
 		}
 	}
 
-	installer, err := deployment.NewDeletion(installCfg, &deployment.Overrides{}, cmd.K8s.Static(), updateCh)
+	installer, err := deployment.NewDeletion(installCfg, &deployment.OverridesBuilder{}, cmd.K8s.Static(), updateCh)
 	if err != nil {
 		return err
 	}

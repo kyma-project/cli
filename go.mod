@@ -25,7 +25,7 @@ require (
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/kyma-incubator/hydroform/function v0.0.0-20210222112425-3ad737602bdf
 	github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90
-	github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20210222112425-3ad737602bdf
+	github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20210224123057-043058674544
 	github.com/kyma-incubator/hydroform/provision v0.0.0-20201124135641-ca1a1a00c935
 	github.com/kyma-incubator/octopus v0.0.0-20200922132758-2b721e93b58b
 	github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20201125092745-687c943ac940

@@ -85,10 +85,10 @@ func TestOverrides(t *testing.T) {
 // use expectedJSON to define the expected result as JSON string
 // (this is just for convenience as we have to compare a nested map which is painful to generate by hand)
 func assertValidOverride(t *testing.T, command command, expectedJSON string) error {
-	overrides, err := command.overrides()
+	builder, err := command.overrides()
 	assert.NoError(t, err)
 
-	mergedOverrides, err := overrides.Merge()
+	overrides, err := builder.Build()
 	assert.NoError(t, err)
 
 	var expected interface{}
@@ -96,7 +96,9 @@ func assertValidOverride(t *testing.T, command command, expectedJSON string) err
 		return err
 	}
 
-	assert.Equal(t, expected, mergedOverrides["test"])
+	v, ok := overrides.Find("test")
+	assert.Equal(t, expected, v)
+	assert.True(t, ok)
 
 	return nil
 }
