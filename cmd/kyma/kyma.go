@@ -20,14 +20,15 @@ import (
 	"github.com/kyma-project/cli/cmd/kyma/provision/gardener/gcp"
 	"github.com/kyma-project/cli/cmd/kyma/provision/gke"
 	"github.com/kyma-project/cli/cmd/kyma/provision/minikube"
+	"github.com/kyma-project/cli/cmd/kyma/run"
 	"github.com/kyma-project/cli/cmd/kyma/sync"
 	"github.com/kyma-project/cli/cmd/kyma/test"
-	"github.com/kyma-project/cli/cmd/kyma/test/definitions"
-	del "github.com/kyma-project/cli/cmd/kyma/test/delete"
-	"github.com/kyma-project/cli/cmd/kyma/test/list"
-	"github.com/kyma-project/cli/cmd/kyma/test/logs"
-	"github.com/kyma-project/cli/cmd/kyma/test/run"
-	"github.com/kyma-project/cli/cmd/kyma/test/status"
+	testdefs "github.com/kyma-project/cli/cmd/kyma/test/definitions"
+	testdel "github.com/kyma-project/cli/cmd/kyma/test/delete"
+	testlist "github.com/kyma-project/cli/cmd/kyma/test/list"
+	testlogs "github.com/kyma-project/cli/cmd/kyma/test/logs"
+	testrun "github.com/kyma-project/cli/cmd/kyma/test/run"
+	teststatus "github.com/kyma-project/cli/cmd/kyma/test/status"
 	"github.com/kyma-project/cli/cmd/kyma/version"
 
 	"github.com/kyma-project/cli/cmd/kyma/provision"
@@ -90,12 +91,12 @@ Kyma CLI allows you to install, test, and manage Kyma.
 	)
 
 	testCmd := test.NewCmd()
-	testRunCmd := run.NewCmd(run.NewOptions(o))
-	testStatusCmd := status.NewCmd(status.NewOptions(o))
-	testDeleteCmd := del.NewCmd(del.NewOptions(o))
-	testListCmd := list.NewCmd(list.NewOptions(o))
-	testDefsCmd := definitions.NewCmd(definitions.NewOptions(o))
-	testLogsCmd := logs.NewCmd(logs.NewOptions(o))
+	testRunCmd := testrun.NewCmd(testrun.NewOptions(o))
+	testStatusCmd := teststatus.NewCmd(teststatus.NewOptions(o))
+	testDeleteCmd := testdel.NewCmd(testdel.NewOptions(o))
+	testListCmd := testlist.NewCmd(testlist.NewOptions(o))
+	testDefsCmd := testdefs.NewCmd(testdefs.NewOptions(o))
+	testLogsCmd := testlogs.NewCmd(testlogs.NewOptions(o))
 	testCmd.AddCommand(testRunCmd, testStatusCmd, testDeleteCmd, testListCmd, testDefsCmd, testLogsCmd)
 	cmd.AddCommand(testCmd)
 
@@ -103,6 +104,7 @@ Kyma CLI allows you to install, test, and manage Kyma.
 		initial.NewCmd(o),
 		apply.NewCmd(o),
 		sync.NewCmd(o),
+		run.NewCmd(o),
 	)
 
 	return cmd
