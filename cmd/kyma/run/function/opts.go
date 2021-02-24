@@ -19,7 +19,6 @@ type Options struct {
 	FuncPort      string
 	Detach        bool
 	Debug         bool
-	HotDeploy     bool
 }
 
 //NewOptions creates options with default values

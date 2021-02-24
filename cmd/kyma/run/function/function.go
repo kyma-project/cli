@@ -37,8 +37,8 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.Filename, "filename", "f", "", `Full path to the config file.`)
-	cmd.Flags().StringVarP(&o.Dir, "sourceDir", "d", "", `Full path to the folder with the source code.`)
-	cmd.Flags().StringVar(&o.ContainerName, "containerName", "", `The name of the created container.`)
+	cmd.Flags().StringVarP(&o.Dir, "source-dir", "d", "", `Full path to the folder with the source code.`)
+	cmd.Flags().StringVar(&o.ContainerName, "container-name", "", `The name of the created container.`)
 	cmd.Flags().BoolVar(&o.Detach, "detach", false, `Change this flag to "true" if you don't want to follow the container logs after running the Function.`)
 	cmd.Flags().StringVarP(&o.FuncPort, "port", "p", "8080", `The port on which the container will be exposed.`)
 	cmd.Flags().BoolVar(&o.HotDeploy, "hot-deploy", false, `Change this flag to "true" if you want to start function in hot deploy mode.`)
