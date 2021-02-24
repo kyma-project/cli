@@ -106,7 +106,7 @@ func (c *command) runContainer(ctx context.Context, client *client.Client, cfg w
 	id, err := docker.RunContainer(ctx, client, docker.RunOpts{
 		Ports: ports,
 		Envs: append(
-			runtimes.ContainerEnvs(cfg.Runtime, c.opts.Debug, c.opts.HotDeploy),
+			runtimes.ContainerEnvs(cfg.Runtime, c.opts.HotDeploy),
 			c.parseEnvs(cfg.Env)...,
 		),
 		ContainerName: c.opts.ContainerName,
