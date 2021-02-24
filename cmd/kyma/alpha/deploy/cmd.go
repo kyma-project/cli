@@ -151,7 +151,7 @@ func (cmd *command) Run() error {
 	// print summary
 	o, err := overrides.Build()
 	if err != nil {
-		return errors.Wrap(err, "Unable to retreive overrides to print installation summary")
+		return errors.Wrap(err, "Unable to retrieve overrides to print installation summary")
 	}
 	return cmd.printSummary(o)
 }
