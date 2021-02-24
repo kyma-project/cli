@@ -360,37 +360,16 @@ func (cmd *command) avoidUserInteraction() bool {
 }
 
 func (cmd *command) printSummary(o deployment.Overrides) error {
-	nicePrint := nice.Nice{
-		NonInteractive: cmd.NonInteractive,
-	}
-
 	provider := metadata.New(cmd.K8s.Static())
 	md, err := provider.ReadKymaMetadata()
 	if err != nil {
 		return err
 	}
 
-	// Installation info
-
-	fmt.Println()
-	nicePrint.PrintKyma()
-	fmt.Print(" is installed in version:\t")
-	nicePrint.PrintImportant(md.Version)
-
-	nicePrint.PrintKyma()
-	fmt.Print(" installation took:\t\t")
-	nicePrint.PrintImportantf("%d hours %d minutes", int64(cmd.duration.Hours()), int64(cmd.duration.Minutes()))
-
 	domain, ok := o.Find("global.domainName")
 	if !ok {
 		return errors.New("Domain not found in overrides")
 	}
-
-	nicePrint.PrintKyma()
-	fmt.Print(" is running at:\t\t")
-	nicePrint.PrintImportant(domain.(string))
-
-	// Console
 
 	var consoleURL string
 	vs, err := cmd.K8s.Istio().NetworkingV1alpha3().VirtualServices("kyma-system").Get(context.Background(), "console-web", metav1.GetOptions{})
@@ -405,32 +384,22 @@ func (cmd *command) printSummary(o deployment.Overrides) error {
 		return errors.New("console host could not be obtained")
 	}
 
-	nicePrint.PrintKyma()
-	fmt.Print(" console:\t\t\t")
-	nicePrint.PrintImportantf(consoleURL)
-
-	// Admin credentials
-
 	adm, err := cmd.K8s.Static().CoreV1().Secrets("kyma-system").Get(context.Background(), "admin-user", metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
 
-	nicePrint.PrintKyma()
-	fmt.Print(" admin email:\t\t")
-	nicePrint.PrintImportant(string(adm.Data["email"]))
-
-	if !cmd.NonInteractive {
-		nicePrint.PrintKyma()
-		fmt.Printf(" admin password:\t\t")
-		nicePrint.PrintImportant(string(adm.Data["password"]))
+	sum := nice.Summary{
+		NonInteractive: cmd.NonInteractive,
+		Version:        md.Version,
+		URL:            domain.(string),
+		Console:        consoleURL,
+		Duration:       cmd.duration,
+		Email:          string(adm.Data["email"]),
+		Password:       string(adm.Data["password"]),
 	}
 
-	fmt.Printf("\nHappy ")
-	nicePrint.PrintKyma()
-	fmt.Printf("-ing! :)\n\n")
-
-	return nil
+	return sum.Print()
 }
 
 func (cmd *command) importCertificate() error {
