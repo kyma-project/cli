@@ -1,7 +1,9 @@
 package function
 
 import (
+	"math/rand"
 	"os"
+	"time"
 
 	"github.com/kyma-incubator/hydroform/function/pkg/workspace"
 	"github.com/kyma-project/cli/internal/cli"
@@ -12,7 +14,6 @@ import (
 
 const (
 	defaultRuntime   = "nodejs12"
-	defaultName      = "first-function"
 	defaultReference = "master"
 	defaultBaseDir   = "/"
 )
@@ -38,7 +39,7 @@ Use the flags to specify the initial configuration for your Function or to choos
 		},
 	}
 
-	cmd.Flags().StringVar(&o.Name, "name", defaultName, `Function name.`)
+	cmd.Flags().StringVar(&o.Name, "name", generateRandomFunctionName(), `Function name.`)
 	cmd.Flags().StringVar(&o.Namespace, "namespace", "", `Namespace to which you want to apply your Function.`)
 	cmd.Flags().StringVarP(&o.Dir, "dir", "d", "", `Full path to the directory where you want to save the project.`)
 	cmd.Flags().StringVarP(&o.Runtime, "runtime", "r", defaultRuntime, `Flag used to define the environment for running your Function. Use one of these options:
@@ -89,4 +90,14 @@ func (c *command) Run() error {
 	}
 	s.Successf("Project generated in %s", c.opts.Dir)
 	return nil
+}
+
+func generateRandomFunctionName() string {
+	rand.Seed(time.Now().UnixNano())
+	const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	b := make([]byte, 10)
+	for i := range b {
+		b[i] = letterBytes[rand.Intn(len(letterBytes))]
+	}
+	return "function-" + string(b)
 }
