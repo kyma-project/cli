@@ -42,7 +42,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cmd.Flags().BoolVar(&o.Detach, "detach", false, `Change this flag to "true" if you don't want to follow the container logs after running the Function.`)
 	cmd.Flags().StringVarP(&o.FuncPort, "port", "p", "8080", `The port on which the container will be exposed.`)
 	cmd.Flags().BoolVar(&o.HotDeploy, "hot-deploy", false, `Change this flag to "true" if you want to start function in hot deploy mode.`)
-	cmd.Flags().BoolVar(&o.Debug, "debug", false, `Change this flat to true if you want to expose port 9229 for remote debugging.`)
+	cmd.Flags().BoolVar(&o.Debug, "debug", false, `Change this flag to true if you want to expose port 9229 for remote debugging.`)
 
 	return cmd
 }
