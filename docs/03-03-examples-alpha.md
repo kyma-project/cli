@@ -79,6 +79,22 @@ For example, to install Kyma from a specific version, such as `1.19.1`, run:
     - name: "dex"
   ```
 
+- To install Kyma with different configuration values than the default settings. For details, see [Change Kyma settings](#change-kyma-settings).
+
+## Upgrade Kyma
+
+The `alpha deploy` command not only installs Kyma, you also use it to upgrade the Kyma version on the cluster. You have the same options as described under [Install Kyma](#install-kyma).
+
+> **NOTE:** If you upgrade from one Kyma release to a newer one, an automatic compatibility check compares your current version and the new release.<br>
+The compatibility check only works with release versions. If you installed Kyma from a PR, branch, revision, or local version, the compatibility cannot be checked.
+
+
+## Change Kyma settings
+
+To change your Kyma configuration, use the `alpha deploy` command and deploy the same Kyma version that you're currently using, just with different settings.
+
+You can use the `--values-file` and the `--value` flag.
+
 - To override the standard Kyma configuration, run:
 
   ```
@@ -86,31 +102,31 @@ For example, to install Kyma from a specific version, such as `1.19.1`, run:
   ```
 
   In the following example, `{VALUES_FILE_PATH}` is the path to a YAML file containing the desired configuration:
- 
+
   - For `ory`, the values of `hydra.deployment.resources.limits.cpu` and `hydra.deployment.resources.requests.cpu` will be overriden to `153m` and `53m` respectively.
     
   - For `monitoring`, the values of `alertmanager.alertmanagerSpec.resources.limits.memory` and `alertmanager.alertmanagerSpec.resources.requests.memory` will be overriden to `304Mi` and `204Mi` respectively.
-    
-    ```
-    ory:
-      hydra:
-        deployment:
-          resources:
-            limits:
-              cpu: 153m
-            requests:
-              cpu: 53m
-     monitoring:
-      alertmanager:
-        alertmanagerSpec:
-          resources:
-            limits:
-              memory: 304Mi
-            requests:
-              memory: 204Mi
-    ```
+  
+  ```
+  ory:
+    hydra:
+      deployment:
+        resources:
+          limits:
+            cpu: 153m
+          requests:
+            cpu: 53m
+  monitoring:
+    alertmanager:
+      alertmanagerSpec:
+        resources:
+          limits:
+            memory: 304Mi
+          requests:
+            memory: 204Mi
+  ```
 
-- You can also provide multiple values files at the same time:
+  You can also provide multiple values files at the same time:
 
   ```
   kyma deploy --values-file {VALUES_FILE_1_PATH} --values-file {VALUES_FILE_2_PATH}
@@ -125,25 +141,11 @@ For example, to install Kyma from a specific version, such as `1.19.1`, run:
   --value monitoring.alertmanager.alertmanagerSpec.resources.requests.memory=204Mi
   ```
 
-
-## Upgrade Kyma
-
-The `alpha deploy` command not only installs Kyma, you also use it to upgrade the Kyma version on the cluster. You have the same options as described under [Install Kyma](#install-kyma).
-
-> **NOTE:** If you upgrade from one Kyma release to a newer one, an automatic compatibility check compares your current version and the new release.<br>
-The compatibility check only works with release versions. If you installed Kyma from a PR, branch, revision, or local version, the compatibility cannot be checked.
-
-
-## Change Kyma settings
-
-To change your Kyma configuration, use the `alpha deploy` command and deploy the same Kyma version that you're currently using, just with different settings.
-
-
 ## Debugging
 
 The alpha commands support error handling in several ways, for example:
 
-- To tweak the values on a component level, use the `alpha deploy --components` command to find out the settings that work for your installation.
-- To understand which component failed during deployment, deactivate the `--atomic` flag for the `alpha deploy` command. As long as it's active, any component that wasn't installed successfully is rolled back, which may make it hard to find out what went wrong.
+- To tweak the values on a component level, use `alpha deploy --components` to find out the settings that work for your installation.
+- To understand which component failed during deployment, deactivate the `--atomic` flag for `alpha deploy`. <br>With active atomic deployment, any component that hasn't been installed successfully is rolled back, which may make it hard to find out what went wrong.
 
 <!-- ANY OTHER DEBUGGING USE CASES? -->
