@@ -55,8 +55,9 @@ func (ui *AsyncUI) Start() error {
 		for procUpdateEvent := range ui.updates {
 			switch procUpdateEvent.Event {
 			case deployment.ProcessRunning:
-				//Component related update event (components have no ProcessStart/ProcessStop event)
-				if procUpdateEvent.Component.Name != "" {
+				//dispatch only component related ProcessRunning events
+				//(they provide information about the component installation result)
+				if procUpdateEvent.IsComponentUpdate() {
 					ui.dispatchError(ui.renderStopEvent(procUpdateEvent, &ongoingSteps))
 				}
 				continue
@@ -125,19 +126,15 @@ func (ui *AsyncUI) majorStepMsg(procUpdEvent deployment.ProcessUpdate) string {
 
 //renderStopEvent dispatches a stop event
 func (ui *AsyncUI) renderStopEvent(procUpdEvent deployment.ProcessUpdate, ongoingSteps *map[deployment.InstallationPhase]step.Step) error {
-	//event is related to a major installation phases (these events don't contain a reference to a component)
-	if procUpdEvent.Component.Name == "" {
-		if err := ui.renderStopEventInstallationPhase(procUpdEvent, ongoingSteps); err != nil {
-			return err
-		}
-		return nil
+	var err error
+	if procUpdEvent.IsComponentUpdate() {
+		//event is related to a component
+		err = ui.renderStopEventComponent(procUpdEvent)
+	} else {
+		//event is related to a major installation phases
+		err = ui.renderStopEventInstallationPhase(procUpdEvent, ongoingSteps)
 	}
-
-	//event is related to a component
-	if err := ui.renderStopEventComponent(procUpdEvent); err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 //renderStopEventInstallationPhase stops the existing step of the installation phase
@@ -164,7 +161,7 @@ func (ui *AsyncUI) renderStopEventInstallationPhase(procUpdEvent deployment.Proc
 	}
 	(*ongoingSteps)[installPhase].Failuref(errMsg)
 
-	return fmt.Errorf("Deployment phase '%s' failed: %s\n%s", installPhase, event, err)
+	return fmt.Errorf("Deployment phase '%s' failed: %s\n%v", installPhase, event, err)
 }
 
 //renderStopEventComponent displays a component stop event in a new step
