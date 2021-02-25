@@ -18,7 +18,7 @@ To execute all test defintions, run `kyma test run -n example-test`.
 kyma test run <test-definition-1> <test-definition-2> ... <test-definition-N> [flags]
 ```
 
-## Options
+## Flags
 
 ```bash
       --concurrency int        Number of tests to be executed in parallel. (default 5)
@@ -30,7 +30,7 @@ kyma test run <test-definition-1> <test-definition-2> ... <test-definition-N> [f
   -w, --watch                  Watches the status of the test suite until the tests finish or the defined "--timeout" occurs.
 ```
 
-## Options inherited from parent commands
+## Flags inherited from parent commands
 
 ```bash
       --ci                  Enables the CI mode to run on CI/CD systems. It avoids any user interaction (such as no dialog prompts) and ensures that logs are formatted properly in log files (such as no spinners for CLI steps).
