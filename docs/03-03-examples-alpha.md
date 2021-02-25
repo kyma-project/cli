@@ -11,7 +11,7 @@ To provision a Kubernetes cluster, run:
 ```
 kyma alpha provision k3s 
 ```
-If you want to define the name of your cluster and ???<!-- WHAT EXACTLYX DOES SERVER_ARGS DO? -->, run:
+If you want to define the name of your cluster and pass arguments to the Kubernetes API server (for example, to log to standard errors), run:
 
 ```
 kyma alpha provision k3s --name='custom_name' --server-args='--alsologtostderr'
@@ -22,7 +22,7 @@ kyma alpha provision k3s --name='custom_name' --server-args='--alsologtostderr'
 
 There are several ways to install Kyma:
 
-- To install Kyma on a local cluster, simply use the `deploy` command.
+- To install Kyma on a local cluster, simply use the `deploy` command without any flags.
 Kyma provides a default domain under the URL `https://console.local.kyma.dev`.
 
   ```
@@ -85,7 +85,7 @@ For example, to install Kyma from a specific version, such as `1.19.1`, run:
   kyma alpha deploy --values-file {VALUES_FILE_PATH}
   ```
 
-  `{VALUES_FILE_PATH}` is the path to a YAML file containing the desired configuration, for example:
+  In the following example, `{VALUES_FILE_PATH}` is the path to a YAML file containing the desired configuration:
  
   - For `ory`, the values of `hydra.deployment.resources.limits.cpu` and `hydra.deployment.resources.requests.cpu` will be overriden to `153m` and `53m` respectively.
     
@@ -128,7 +128,7 @@ For example, to install Kyma from a specific version, such as `1.19.1`, run:
 
 ## Upgrade Kyma
 
-The `alpha deploy` command not only installs Kyma, you also use it to upgrade the Kyma version on the cluster. You have the same options as described in section [Install Kyma](#install-kyma).
+The `alpha deploy` command not only installs Kyma, you also use it to upgrade the Kyma version on the cluster. You have the same options as described under [Install Kyma](#install-kyma).
 
 > **NOTE:** If you upgrade from one Kyma release to a newer one, an automatic compatibility check compares your current version and the new release.<br>
 The compatibility check only works with release versions. If you installed Kyma from a PR, branch, revision, or local version, the compatibility cannot be checked.
@@ -144,6 +144,6 @@ To change your Kyma configuration, use the `alpha deploy` command and deploy the
 The alpha commands support error handling in several ways, for example:
 
 - To tweak the values on a component level, use the `alpha deploy --components` command to find out the settings that work for your installation.
-- To understand what might have gone wrong during deployment, you can deactivate the `--atomic` flag for the `alpha deploy` command. As long as it's active, any component that wasn't installed successfully is rolled back, which may make it hard to find the bug.
+- To understand which component failed during deployment, deactivate the `--atomic` flag for the `alpha deploy` command. As long as it's active, any component that wasn't installed successfully is rolled back, which may make it hard to find out what went wrong.
 
-<!-- ANY OTHER DEBUGGIN USE CASES? -->
+<!-- ANY OTHER DEBUGGING USE CASES? -->
