@@ -2,7 +2,7 @@ package function
 
 import (
 	"fmt"
-	"github.com/docker/docker/pkg/namesgenerator"
+	"github.com/goombaio/namegenerator"
 	"github.com/kyma-incubator/hydroform/function/pkg/workspace"
 	"github.com/kyma-project/cli/internal/cli"
 	"math/rand"
@@ -42,7 +42,7 @@ func (o *Options) setDefaults(defaultNamespace string) (err error) {
 
 	if o.Name == "" {
 		rand.Seed(time.Now().UnixNano())
-		o.Name = "function-" + namesgenerator.GetRandomName(10)
+		o.Name = "function-" + namegenerator.NewNameGenerator(time.Now().UTC().UnixNano()).Generate()
 	}
 
 	setIfZero(&o.SourcePath, o.Dir)
