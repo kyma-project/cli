@@ -27,6 +27,7 @@ require (
 	github.com/docker/docker v1.4.2-0.20200203170920-46ec8731fbce
 	github.com/fatih/color v1.10.0
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
+	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e
 	github.com/gorilla/mux v1.7.4 // indirect
 	github.com/kyma-incubator/hydroform/function v0.0.0-20201229063132-d2abcd251425
 	github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90
