@@ -126,7 +126,7 @@ You can use the `--values-file` and the `--value` flag.
             memory: 204Mi
   ```
 
-  You can also provide multiple values files at the same time:
+- You can also provide multiple values files at the same time:
 
   ```
   kyma deploy --values-file {VALUES_FILE_1_PATH} --values-file {VALUES_FILE_2_PATH}
