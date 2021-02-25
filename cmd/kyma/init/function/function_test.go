@@ -14,6 +14,7 @@ func TestFunctionFlags(t *testing.T) {
 	c := NewCmd(o)
 
 	// test default flag values
+	require.Equal(t, "", o.Name, "Default value for the --name flag not as expected.")
 	require.Equal(t, "", o.Namespace, "Default value for the --namespace flag not as expected.")
 	require.Equal(t, "", o.Dir, "Default value for the --dir flag not as expected.")
 	require.Equal(t, "nodejs12", o.Runtime, "Default value for the --runtime flag not as expected.")

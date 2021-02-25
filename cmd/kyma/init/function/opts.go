@@ -2,9 +2,12 @@ package function
 
 import (
 	"fmt"
+	"github.com/docker/docker/pkg/namesgenerator"
 	"github.com/kyma-incubator/hydroform/function/pkg/workspace"
 	"github.com/kyma-project/cli/internal/cli"
+	"math/rand"
 	"os"
+	"time"
 )
 
 //Options defines available options for the command
@@ -35,6 +38,11 @@ func (o *Options) setDefaults(defaultNamespace string) (err error) {
 		if err != nil {
 			return err
 		}
+	}
+
+	if o.Name == "" {
+		rand.Seed(time.Now().UnixNano())
+		o.Name = "function-" + namesgenerator.GetRandomName(10)
 	}
 
 	setIfZero(&o.SourcePath, o.Dir)
