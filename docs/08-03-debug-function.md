@@ -43,7 +43,7 @@ Follows these steps:
 </details>
 <details>
 <summary label="goland">
-Goland
+GoLand
 </summary>
 
 1. Open Goland in location where you have a file with definition Function.
