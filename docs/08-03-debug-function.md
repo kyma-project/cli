@@ -50,7 +50,7 @@ GoLand
 2. Choose the **Add Configuration...** option.
 3. Add new **Attach to Node.js/Chrome** configuration with these options:
 - Host: `localhost`
-- port: `9229`
+- Port: `9229`
 
     </details>
 </div>
