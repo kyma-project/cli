@@ -50,7 +50,7 @@ GoLand
 1. In GoLand, navigate to the location of the file with the Function definition.
 2. Choose the **Add Configuration...** option.
 3. Add new **Attach to Node.js/Chrome** configuration with these options:
-- Host: `localhost`
+    - Host: `localhost`
 - Port: `9229`
 4. Run Function with flag debug
 `kyma run function --debug`
