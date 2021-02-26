@@ -124,6 +124,7 @@ func (c *command) runContainer(ctx context.Context, client *client.Client, cfg w
 
 	if !c.opts.Detach {
 		fmt.Println("Logs from the container:")
+		fmt.Println("Container listen on the port: " + runtimes.ServerPort)
 		followCtx := context.Background()
 		c.Finalizers.Add(docker.Stop(followCtx, client, id, func(i ...interface{}) { fmt.Print(i...) }))
 		return docker.FollowRun(followCtx, client, id, func(i ...interface{}) { fmt.Print(i...) })
