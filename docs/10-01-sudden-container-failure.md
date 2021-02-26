@@ -6,7 +6,7 @@ type: Troubleshooting
 If you use command  `kyma run function` with:
 - runtime=Nodejs12 or runtime=Nodejs10
 - `debug=true`
-- hot-deploy=true
+- `hot-deploy=true`
 
 the container can sudden failure. In container's logs you can see a message:
 `[nodemon] app crashed`
