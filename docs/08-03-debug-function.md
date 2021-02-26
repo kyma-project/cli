@@ -16,7 +16,7 @@ Follows these steps:
   Visual Studio Code
   </summary>
 
-1. Open VSC in location where you have a file with definition Function. 
+1. In VSC, navigate to the location of the file with the Function definition.
 2. Create directory `.vscode`
 3. In the `.vscode` create file `lunch.json` 
   ```json
