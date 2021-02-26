@@ -384,9 +384,18 @@ func (cmd *command) printSummary(o deployment.Overrides) error {
 		return errors.New("console host could not be obtained")
 	}
 
+	var email, pass string
 	adm, err := cmd.K8s.Static().CoreV1().Secrets("kyma-system").Get(context.Background(), "admin-user", metav1.GetOptions{})
-	if err != nil {
+	switch {
+	case k8sErrors.IsNotFound(err):
+		break
+	case err != nil:
 		return err
+	case adm != nil:
+		email = string(adm.Data["email"])
+		pass = string(adm.Data["pass"])
+	default:
+		return errors.New("admin credentials could not be obtained")
 	}
 
 	sum := nice.Summary{
@@ -395,8 +404,8 @@ func (cmd *command) printSummary(o deployment.Overrides) error {
 		URL:            domain.(string),
 		Console:        consoleURL,
 		Duration:       cmd.duration,
-		Email:          string(adm.Data["email"]),
-		Password:       string(adm.Data["password"]),
+		Email:          string(email),
+		Password:       string(pass),
 	}
 
 	return sum.Print()
