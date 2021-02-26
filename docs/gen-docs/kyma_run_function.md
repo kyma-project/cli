@@ -16,10 +16,10 @@ kyma run function [flags]
 
 ```bash
       --container-name string   The name of the created container.
-      --debug                   Change this flag to "true" if you want to expose port 9229 for remote debugging.
+      --debug                   Change this flag to true if you want to expose port 9229 for remote debugging.
       --detach                  Change this flag to "true" if you don't want to follow the container logs after running the Function.
   -f, --filename string         Full path to the config file.
-      --hot-deploy              Change this flag to "true" if you want to start a Function in Hot Deploy mode.
+      --hot-deploy              Change this flag to "true" if you want to start function in hot deploy mode.
   -p, --port string             The port on which the container will be exposed. (default "8080")
   -d, --source-dir string       Full path to the folder with the source code.
 ```
@@ -37,3 +37,4 @@ kyma run function [flags]
 ## See also
 
 * [kyma run](#kyma-run-kyma-run)	 - Runs resources.
+
