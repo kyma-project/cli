@@ -8,7 +8,7 @@ The container can suddenly fail when you use the `kyma run function` command wit
 - `debug=true`
 - `hot-deploy=true`
 
-the container can sudden failure. In container's logs you can see a message:
+In such a case, you can see the `[nodemon] app crashed` message in the container's logs.
 `[nodemon] app crashed`
 
 If you use kyma in Kubernetes, K8S itself should run function in container.
