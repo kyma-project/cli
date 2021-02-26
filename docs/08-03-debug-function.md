@@ -10,7 +10,7 @@ This tutorial shows how to use an external IDE to debug a Function in Kyma CLI.
 
 Follows these steps:
 
-<div tabs name="steps" group="expose-function">
+<div tabs name="steps" group="debug-function">
   <details>
   <summary label="vsc">
   Visual Studio Code
@@ -38,7 +38,8 @@ Follows these steps:
   ]
 }
   ```
-
+4. Run Function with flag debug
+   `kyma run function --debug`
 
 </details>
 <details>
@@ -51,6 +52,8 @@ GoLand
 3. Add new **Attach to Node.js/Chrome** configuration with these options:
 - Host: `localhost`
 - Port: `9229`
+4. Run Function with flag debug
+`kyma run function --debug`
 
     </details>
 </div>
