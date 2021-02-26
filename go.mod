@@ -13,12 +13,10 @@ replace (
 )
 
 require (
-	github.com/Microsoft/hcsshim v0.8.10 // indirect
 	github.com/avast/retry-go v2.6.1+incompatible
 	github.com/blang/semver/v4 v4.0.0
 	github.com/briandowns/spinner v1.12.0
 	github.com/containerd/cgroups v0.0.0-20201119153540-4cbc285b3327 // indirect
-	github.com/containerd/continuity v0.0.0-20200710164510-efbc4488d8fe // indirect
 	github.com/coreos/etcd v3.3.13+incompatible // indirect
 	github.com/daviddengcn/go-colortext v1.0.0
 	github.com/docker/cli v20.10.3+incompatible
@@ -27,14 +25,13 @@ require (
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/kyma-incubator/hydroform/function v0.0.0-20210226073535-e3b21324f15b
 	github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90
-	github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20210222112425-3ad737602bdf
+	github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20210224123057-043058674544
 	github.com/kyma-incubator/hydroform/provision v0.0.0-20201124135641-ca1a1a00c935
 	github.com/kyma-incubator/octopus v0.0.0-20200922132758-2b721e93b58b
 	github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20201125092745-687c943ac940
 	github.com/magiconair/properties v1.8.0
 	github.com/moby/sys/mount v0.2.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.4
-	github.com/opencontainers/runc v1.0.0-rc91 // indirect
 	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.0.0

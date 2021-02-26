@@ -56,7 +56,7 @@ func (c certutil) StoreCertificate(file string, i Informer) error {
 
 func (certutil) Instructions() string {
 	return "1. Open a terminal window with administrator rights.\n" +
-		"2. Download the certificate: kubectl get configmap net-global-overrides -n kyma-installer -o jsonpath='{.data.global\\.ingress\\.tlsCrt}' > tmp.txt\n" +
+		"2. Download the certificate: kubectl get secret kyma-gateway-certs -n istio-system -o jsonpath='{.data.cert}' > tmp.txt\n" +
 		"3. Decode the certificate: certutil -decode tmp.txt kyma.crt ; del tmp.txt\n" +
 		"4. Import the certificate: certutil -addstore -f Root kyma.crt\n"
 }
