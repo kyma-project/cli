@@ -7,7 +7,6 @@ This tutorial shows how to use an external IDE to debug a Function in Kyma CLI.
 
 ## Steps
 
-Follow these steps:
 
 Follows these steps:
 
