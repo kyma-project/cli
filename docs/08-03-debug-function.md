@@ -39,7 +39,9 @@ Follows these steps:
 }
   ```
 4. Run the Function with the `--debug` flag.
-   `kyma run function --debug`
+    ```bash
+    kyma run function --debug
+    ```
 
 </details>
 <details>
