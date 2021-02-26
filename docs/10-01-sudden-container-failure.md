@@ -3,7 +3,7 @@ title: Sudden container failure
 type: Troubleshooting
 ---
 
-If you use command  `kyma run function` with:
+The container can suddenly fail when you use the `kyma run function` command with these flags:
 - runtime=Nodejs12 or runtime=Nodejs10
 - `debug=true`
 - `hot-deploy=true`
