@@ -17,7 +17,7 @@ Follows these steps:
   </summary>
 
 1. In VSC, navigate to the location of the file with the Function definition.
-2. Create directory `.vscode`
+2. Create the `.vscode` directory.
 3. In the `.vscode` create file `lunch.json` 
   ```json
 {
