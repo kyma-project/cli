@@ -1,5 +1,5 @@
 ---
-title: Debug function
+title: Debug a Function
 type: Tutorials
 ---
 
