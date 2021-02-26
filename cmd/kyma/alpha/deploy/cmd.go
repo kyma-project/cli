@@ -194,7 +194,7 @@ func (cmd *command) isCompatibleVersion() error {
 }
 
 func (cmd *command) deployKyma(ui asyncui.AsyncUI, overrides *deployment.OverridesBuilder) error {
-	var resourcePath = filepath.Join(cmd.opts.WorkspacePath, "resources")
+	var resourcePath = filepath.Join(cmd.opts.ResolveLocalWorkspacePath(), "resources")
 
 	cmpFile, err := cmd.opts.ResolveComponentsFile()
 	if err != nil {
