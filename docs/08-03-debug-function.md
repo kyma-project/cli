@@ -46,7 +46,7 @@ Follows these steps:
 GoLand
 </summary>
 
-1. Open Goland in location where you have a file with definition Function.
+1. In GoLand, navigate to the location of the file with the Function definition.
 2. Choose option Add Configuration...
 3. Add new configuration `Attach to Node.js/Chrome` with options:
 - host: `localhost`
