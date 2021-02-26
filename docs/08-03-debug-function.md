@@ -3,7 +3,7 @@ title: Debug a Function
 type: Tutorials
 ---
 
-This tutorial shows how to use external IDE to debug function in Kyma
+This tutorial shows how to use an external IDE to debug a Function in Kyma CLI.
 
 ## Steps
 
