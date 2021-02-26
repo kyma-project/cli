@@ -47,7 +47,7 @@ GoLand
 </summary>
 
 1. In GoLand, navigate to the location of the file with the Function definition.
-2. Choose option Add Configuration...
+2. Choose the **Add Configuration...** option.
 3. Add new configuration `Attach to Node.js/Chrome` with options:
 - host: `localhost`
 - port: `9229`
