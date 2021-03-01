@@ -145,7 +145,7 @@ func newProvider(o *Options) (*types.Provider, error) {
 	p.CustomConfigurations["workercidr"] = "10.250.0.0/16"
 	p.CustomConfigurations["networking_type"] = "calico"
 	p.CustomConfigurations["machine_image_name"] = "gardenlinux"
-	p.CustomConfigurations["machine_image_version"] = "27.1.0"
+	p.CustomConfigurations["machine_image_version"] = "184.0.0"
 	p.CustomConfigurations["zones"] = o.Zones
 
 	for _, e := range o.Extra {
