@@ -13,7 +13,7 @@ Use the flags to specify the initial configuration for your Function or to choos
 kyma init function [flags]
 ```
 
-## Options
+## Flags
 
 ```bash
       --base-dir string          A directory in the repository containing the Function's sources (default "/")
@@ -29,7 +29,7 @@ kyma init function [flags]
       --url string               Git repository URL
 ```
 
-## Options inherited from parent commands
+## Flags inherited from parent commands
 
 ```bash
       --ci                  Enables the CI mode to run on CI/CD systems. It avoids any user interaction (such as no dialog prompts) and ensures that logs are formatted properly in log files (such as no spinners for CLI steps).

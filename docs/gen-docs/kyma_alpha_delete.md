@@ -12,7 +12,7 @@ Use this command to delete Kyma from a running Kubernetes cluster.
 kyma alpha delete [flags]
 ```
 
-## Options
+## Flags
 
 ```bash
       --cancel-timeout duration   Time after which the workers' context is canceled. Any pending worker goroutines that are blocked by a Helm client will continue. (default 15m0s)
@@ -21,7 +21,7 @@ kyma alpha delete [flags]
       --workers-count int         Number of parallel workers used for the deletion. (default 4)
 ```
 
-## Options inherited from parent commands
+## Flags inherited from parent commands
 
 ```bash
       --ci                  Enables the CI mode to run on CI/CD systems. It avoids any user interaction (such as no dialog prompts) and ensures that logs are formatted properly in log files (such as no spinners for CLI steps).

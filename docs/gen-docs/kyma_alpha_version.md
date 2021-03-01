@@ -13,13 +13,13 @@ Use this command to print the version of Kyma CLI and the version of the Kyma cl
 kyma alpha version [flags]
 ```
 
-## Options
+## Flags
 
 ```bash
   -c, --client   Client version only (no server required)
 ```
 
-## Options inherited from parent commands
+## Flags inherited from parent commands
 
 ```bash
       --ci                  Enables the CI mode to run on CI/CD systems. It avoids any user interaction (such as no dialog prompts) and ensures that logs are formatted properly in log files (such as no spinners for CLI steps).
