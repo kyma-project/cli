@@ -79,7 +79,7 @@ For example, to install Kyma from a specific version, such as `1.19.1`, run:
     - name: "dex"
   ```
 
-- To install Kyma with different configuration values than the default settings. For details, see [Change Kyma settings](#change-kyma-settings).
+- You can also install Kyma with different configuration values than the default settings. For details, see [Change Kyma settings](#change-kyma-settings).
 
 ## Upgrade Kyma
 
