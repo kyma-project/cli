@@ -2,7 +2,6 @@ package cli
 
 import (
 	"os"
-	"sync"
 	"syscall"
 	"testing"
 	"time"
@@ -65,7 +64,7 @@ func TestFinalizer_Add(t *testing.T) {
 	}
 }
 
-func TestFinalizer_SetupCloseHandler(t *testing.T) {
+func TestFinalizer_setupCloseHandler(t *testing.T) {
 	type fields struct {
 		notify func(c chan<- os.Signal, sig ...os.Signal)
 		funcs  []func(chan int) func()
@@ -84,7 +83,6 @@ func TestFinalizer_SetupCloseHandler(t *testing.T) {
 					fixFunc,
 				},
 			},
-			funcExecutions: 1,
 		},
 		{
 			name: "should receive SIGINT syscall and run all functions",
@@ -94,7 +92,6 @@ func TestFinalizer_SetupCloseHandler(t *testing.T) {
 					fixFunc, fixFunc,
 				},
 			},
-			funcExecutions: 2,
 		},
 		{
 			name: "should end process after timeout will occurred",
@@ -105,7 +102,6 @@ func TestFinalizer_SetupCloseHandler(t *testing.T) {
 					fixFuncWithSleep,
 				},
 			},
-			funcExecutions: 2,
 		},
 		{
 			name: "should receive SIGINT syscall and run all (non nil) functions",
@@ -115,59 +111,46 @@ func TestFinalizer_SetupCloseHandler(t *testing.T) {
 					fixNilFunc, fixFunc, fixNilFunc, fixFunc, fixNilFunc,
 				},
 			},
-			funcExecutions: 2,
-			nilFuncs:       3,
+			nilFuncs: 3,
+		},
+		{
+			name: "should receive SIGINT syscall and exit because of nil functions",
+			fields: fields{
+				notify: fixNotify(syscall.SIGINT),
+				funcs: []func(chan int) func(){
+					fixNilFunc, fixNilFunc, fixNilFunc,
+				},
+			},
+			nilFuncs: 3,
 		},
 	}
 	for _, tt := range tests {
 		funcs := tt.fields.funcs
 		nilFuncs := tt.nilFuncs
 		notify := tt.fields.notify
-		funcExecution := tt.funcExecutions
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			counter := 0
-			m := sync.Mutex{}
-			counterChan := make(chan int)
+			counterChan := make(chan int, len(funcs)-nilFuncs)
 			exit := make(chan struct{})
 
-			go func() {
-				d := &Finalizers{
-					notify: notify,
-					exit:   fixExit(exit),
-					funcs:  fixFuncs(counterChan, funcs),
-				}
+			d := &Finalizers{
+				notify: notify,
+				exit:   fixExit(exit),
+				funcs:  fixFuncs(counterChan, funcs),
+			}
 
-				d.setupCloseHandler()
-
-				<-exit
-				require.Equal(t, safeVal(&m, &funcExecution), safeVal(&m, &counter))
-			}()
+			d.setupCloseHandler()
 
 			// wait until all functions end
 			for i := len(funcs) - nilFuncs; i != 0; i-- {
 				<-counterChan
-				safeAdd(&m, &counter)
 			}
-			require.Equal(t, len(funcs)-nilFuncs, safeVal(&m, &counter))
+
+			<-exit
 		})
 	}
-}
-
-func safeVal(m *sync.Mutex, val *int) int {
-	m.Lock()
-	defer m.Unlock()
-
-	return *val
-}
-
-func safeAdd(m *sync.Mutex, val *int) {
-	m.Lock()
-	defer m.Unlock()
-
-	*val++
 }
 
 func fixNotify(signal os.Signal) func(c chan<- os.Signal, sig ...os.Signal) {
