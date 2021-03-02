@@ -6,7 +6,7 @@ type: Details
 The following examples show how to use the alpha commands to provision a cluster, install and upgrade Kyma, and handle errors.
 
 ## Provision a cluster
-To provision a Kubernetes cluster, run:
+To provision a k3s cluster, run:
 
 ```
 kyma alpha provision k3s 
@@ -22,15 +22,15 @@ kyma alpha provision k3s --name='custom_name' --server-args='--alsologtostderr'
 
 There are several ways to install Kyma:
 
-- To install Kyma on a local cluster, simply use the `deploy` command without any flags.
-Kyma provides a default domain under the URL `https://console.local.kyma.dev`.
+- To install Kyma, simply use the `deploy` command without any flags, and Kyma provides a default domain. 
+For example, if you install Kyma on a local cluster, the default URL is `https://console.local.kyma.dev`.
 
   ```
   kyma alpha deploy 
   ```
 
-- You can also install Kyma using your own domain name, or on a cluster that does not run locally. <br>
-If you use a custom domain, you must provide the certificate and key as files. If you don't have a certificate yet, you can create a self-signed certificate and key:
+- To install Kyma using your own domain name, you must provide the certificate and key as files. 
+If you don't have a certificate yet, you can create a self-signed certificate and key:
 
   ```
   openssl req -x509 -newkey rsa:4096 -keyout key.pem -out crt.pem -days 365
