@@ -22,7 +22,7 @@ kyma alpha provision k3s --name='custom_name' --server-args='--alsologtostderr'
 
 There are several ways to install Kyma:
 
-- To install Kyma, simply use the `deploy` command without any flags, and Kyma provides a default domain. 
+- You can simply use the `deploy` command without any flags, and Kyma provides a default domain. 
 For example, if you install Kyma on a local cluster, the default URL is `https://console.local.kyma.dev`.
 
   ```
