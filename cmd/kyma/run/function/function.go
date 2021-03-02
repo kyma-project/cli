@@ -123,8 +123,8 @@ func (c *command) runContainer(ctx context.Context, client *client.Client, cfg w
 	step.Successf(fmt.Sprintf("Runned container: %s", c.opts.ContainerName))
 
 	if !c.opts.Detach {
-		fmt.Println("Logs from the container:")
-		fmt.Println("Container listen on the port: " + runtimes.ServerPort)
+		step.LogInfo("Container listening on port: " + runtimes.ServerPort)
+		step.LogInfo("Logs from the container:")
 		followCtx := context.Background()
 		c.Finalizers.Add(docker.Stop(followCtx, client, id, func(i ...interface{}) { fmt.Print(i...) }))
 		return docker.FollowRun(followCtx, client, id, func(i ...interface{}) { fmt.Print(i...) })
