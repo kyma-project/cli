@@ -11,7 +11,7 @@ To provision a Kubernetes cluster, run:
 ```
 kyma alpha provision k3s 
 ```
-If you want to define the name of your cluster and pass arguments to the Kubernetes API server (for example, to log to standard errors), run:
+If you want to define the name of your k3s cluster and pass arguments to the Kubernetes API server (for example, to log to stderr), run:
 
 ```
 kyma alpha provision k3s --name='custom_name' --server-args='--alsologtostderr'
