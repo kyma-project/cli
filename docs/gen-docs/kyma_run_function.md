@@ -12,7 +12,7 @@ Use this command to run a Function in Docker from local sources.
 kyma run function [flags]
 ```
 
-## Options
+## Flags
 
 ```bash
       --container-name string   The name of the created container.
@@ -24,7 +24,7 @@ kyma run function [flags]
   -d, --source-dir string       Full path to the folder with the source code.
 ```
 
-## Options inherited from parent commands
+## Flags inherited from parent commands
 
 ```bash
       --ci                  Enables the CI mode to run on CI/CD systems. It avoids any user interaction (such as no dialog prompts) and ensures that logs are formatted properly in log files (such as no spinners for CLI steps).

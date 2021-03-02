@@ -8,7 +8,7 @@ Synchronizes the local resources for your Function.
 
 Use this command to download the given resource's code and dependencies from the cluster to create or update these resources in your local workspace. Currently, you can only use it for Functions.
 
-## Options inherited from parent commands
+## Flags inherited from parent commands
 
 ```bash
       --ci                  Enables the CI mode to run on CI/CD systems. It avoids any user interaction (such as no dialog prompts) and ensures that logs are formatted properly in log files (such as no spinners for CLI steps).

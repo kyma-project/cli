@@ -12,7 +12,7 @@ Use this command to deploy Kyma on a running Kubernetes cluster.
 kyma alpha deploy [flags]
 ```
 
-## Options
+## Flags
 
 ```bash
   -a, --atomic                    Use atomic deployment, which rolls back any component that could not be installed successfully. (default true)
@@ -36,7 +36,7 @@ kyma alpha deploy [flags]
   -w, --workspace string          Path used to download Kyma sources. (default "workspace")
 ```
 
-## Options inherited from parent commands
+## Flags inherited from parent commands
 
 ```bash
       --ci                  Enables the CI mode to run on CI/CD systems. It avoids any user interaction (such as no dialog prompts) and ensures that logs are formatted properly in log files (such as no spinners for CLI steps).

@@ -8,7 +8,7 @@ Executes the commands in the alpha testing stage.
 
 The Kyma CLI in alpha testing stage uses the following commands:
 
-## Options inherited from parent commands
+## Flags inherited from parent commands
 
 ```bash
       --ci                  Enables the CI mode to run on CI/CD systems. It avoids any user interaction (such as no dialog prompts) and ensures that logs are formatted properly in log files (such as no spinners for CLI steps).

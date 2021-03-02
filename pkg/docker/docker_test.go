@@ -64,7 +64,6 @@ func genConfigFile() *dockerConfigFile.ConfigFile {
 }
 
 func Test_Resolve_happy_path(t *testing.T) {
-	t.Parallel()
 	tmpHome, err := ioutil.TempDir("/tmp", "config-test")
 	assert.NilError(t, err)
 	defer os.RemoveAll(tmpHome)
@@ -124,7 +123,6 @@ func Test_BuildKymaInstaller(t *testing.T) {
 }
 
 func Test_PushKymaInstaller(t *testing.T) {
-	t.Parallel()
 	tmpHome, err := ioutil.TempDir("/tmp", "config-pus-kyma-test")
 	assert.NilError(t, err)
 	defer os.RemoveAll(tmpHome)
