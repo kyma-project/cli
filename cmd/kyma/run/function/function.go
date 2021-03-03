@@ -117,7 +117,7 @@ func (c *command) runContainer(ctx context.Context, client *client.Client, cfg w
 	})
 	if err != nil {
 		step.Failure()
-		return errors.Wrap(err, "white trying to run container")
+		return errors.Wrap(err, "while trying to run container")
 	}
 
 	step.Successf(fmt.Sprintf("Runned container: %s", c.opts.ContainerName))
