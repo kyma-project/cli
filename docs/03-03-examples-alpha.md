@@ -130,7 +130,7 @@ You can use the `--values-file` and the `--value` flag.
   ```
   kyma deploy --values-file {VALUES_FILE_1_PATH} --values-file {VALUES_FILE_2_PATH}
   ```
-
+> **NOTE:** If a value is defined in several files, the value of the last file in the list is used.
 - Alternatively, you can specify single values instead of a file:
 
   ```
