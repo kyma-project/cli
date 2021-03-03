@@ -120,7 +120,7 @@ func (c *command) runContainer(ctx context.Context, client *client.Client, cfg w
 		return errors.Wrap(err, "while trying to run container")
 	}
 
-	step.Successf(fmt.Sprintf("Runned container: %s", c.opts.ContainerName))
+	step.Successf("Ran container: %s", c.opts.ContainerName)
 	step.LogInfo("Container listening on port: " + runtimes.ServerPort)
 	if !c.opts.Detach {
 		fmt.Println("Logs from the container:")
