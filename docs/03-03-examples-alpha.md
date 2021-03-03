@@ -56,7 +56,7 @@ For example, to install Kyma from a specific version, such as `1.19.1`, run:
   ```
   kyma alpha deploy --source=local
   ```
-  > **NOTE:** By default, Kyma expects to find the sources in the `./workspace folder`. To adjust the path, set the `-w ${PATH_TO_KYMA_SOURCES}` parameter.
+  > **NOTE:** By default, Kyma expects to find local sources in the `$GOPATH/src/github.com/kyma-project/kyma` folder. To adjust the path, set the `-w ${PATH_TO_KYMA_SOURCES}` parameter.
 
 - To deploy Kyma with only specific components, run:
 
@@ -64,14 +64,13 @@ For example, to install Kyma from a specific version, such as `1.19.1`, run:
   kyma alpha deploy --components {COMPONENTS_FILE_PATH}
   ```
 
-  `{COMPONENTS_FILE_PATH}` is the path to a YAML file containing the desired component list to be installed. In the following example, only these six components are deployed on the cluster:
+  `{COMPONENTS_FILE_PATH}` is the path to a YAML file containing the desired component list to be installed. In the following example, only six components are deployed on the cluster:
 
   ```
-  defaultNamespace: kyma-system
   prerequisites:
     - name: "cluster-essentials"
     - name: "istio"
-          namespace: "istio-system"
+      namespace: "istio-system"
   components:
     - name: "testing"
     - name: "xip-patch"
@@ -140,12 +139,14 @@ You can use the `--values-file` and the `--value` flag.
   --value monitoring.alertmanager.alertmanagerSpec.resources.limits.memory=304Mi \
   --value monitoring.alertmanager.alertmanagerSpec.resources.requests.memory=204Mi
   ```
-
+> **NOTE:** If a value is defined several times, the last value definition in the list is used. The `--value` flag also overrides any conflicting value that is defined with a `--value-file` flag.
 ## Debugging
 
 The alpha commands support error handling in several ways, for example:
 
-- To tweak the values on a component level, use `alpha deploy --components` to find out the settings that work for your installation.
-- To understand which component failed during deployment, deactivate the `--atomic` flag for `alpha deploy`. <br>With active atomic deployment, any component that hasn't been installed successfully is rolled back, which may make it hard to find out what went wrong.
+- To get a detailed view of the installation process, use the `--verbose` flag.
+- To tweak the values on a component level, use `alpha deploy --components`: Pass a components list that includes only the components you want to test and try out the settings that work for your installation.
+- To understand which component failed during deployment, *deactivate* the default atomic deployment: `--atomic=false`. 
+   With atomic deployment active, any component that hasn't been installed successfully is rolled back, which may make it hard to find out what went wrong. By disabling the flag, the failed components are not rolled back.
 
 <!-- ANY OTHER DEBUGGING USE CASES? -->
