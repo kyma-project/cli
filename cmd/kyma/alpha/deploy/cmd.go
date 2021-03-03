@@ -435,7 +435,7 @@ func (cmd *command) importCertificate() error {
 	}
 
 	// create a simple step to print certificate import steps without a spinner (spinner overwrites sudo prompt)
-	// TODO refacctor how certifier lgs stuff when the old install command is gone
+	// TODO refactor how certifier logs when the old install command is gone
 	f := step.Factory{
 		NonInteractive: true,
 	}
