@@ -196,6 +196,7 @@ func (cmd *command) isCompatibleVersion() error {
 
 func (cmd *command) deployKyma(ui asyncui.AsyncUI, overrides *deployment.OverridesBuilder) error {
 	var resourcePath = filepath.Join(cmd.opts.ResolveLocalWorkspacePath(), "resources")
+	var installResourcePath = filepath.Join(cmd.opts.ResolveLocalWorkspacePath(), "installation", "resources")
 
 	cmpFile, err := cmd.opts.ResolveComponentsFile()
 	if err != nil {
@@ -212,8 +213,8 @@ func (cmd *command) deployKyma(ui asyncui.AsyncUI, overrides *deployment.Overrid
 		Log:                           cli.NewHydroformLoggerAdapter(cli.NewLogger(cmd.Verbose)),
 		Profile:                       cmd.opts.Profile,
 		ComponentsListFile:            cmpFile,
-		CrdPath:                       filepath.Join(resourcePath, "cluster-essentials", "files"),
 		ResourcePath:                  resourcePath,
+		InstallationResourcePath:      installResourcePath,
 		Version:                       cmd.opts.Source,
 		Atomic:                        cmd.opts.Atomic,
 	}
