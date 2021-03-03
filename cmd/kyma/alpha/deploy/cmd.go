@@ -19,6 +19,7 @@ import (
 	"github.com/kyma-project/cli/internal/trust"
 	"github.com/kyma-project/cli/pkg/asyncui"
 	"github.com/kyma-project/cli/pkg/deploy"
+	"github.com/kyma-project/cli/pkg/step"
 	"github.com/magiconair/properties"
 	"github.com/spf13/cobra"
 
@@ -433,9 +434,16 @@ func (cmd *command) importCertificate() error {
 		return err
 	}
 
-	if err := ca.StoreCertificate(tmpFile.Name(), cmd.CurrentStep); err != nil {
+	// create a simple step to print certificate import steps without a spinner (spinner overwrites sudo prompt)
+	// TODO refactor how certifier logs when the old install command is gone
+	f := step.Factory{
+		NonInteractive: true,
+	}
+	s := f.NewStep("Importing Kyma certificate")
+
+	if err := ca.StoreCertificate(tmpFile.Name(), s); err != nil {
 		return err
 	}
-	cmd.CurrentStep.Successf("Kyma root certificate imported")
+	s.Successf("Kyma root certificate imported")
 	return nil
 }
