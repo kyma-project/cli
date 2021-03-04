@@ -396,7 +396,7 @@ func (cmd *command) printSummary(o deployment.Overrides) error {
 		return err
 	case adm != nil:
 		email = string(adm.Data["email"])
-		pass = string(adm.Data["pass"])
+		pass = string(adm.Data["password"])
 	default:
 		return errors.New("admin credentials could not be obtained")
 	}
