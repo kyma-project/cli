@@ -396,6 +396,17 @@ func (c *command) createClusterInfoConfigMap() error {
 }
 
 func (c *command) getMinikubeIP() string {
+	if c.opts.VMDriver == vmDriverDocker { // minikube ip returns 127.0.0.1 in case of docker driver which is not valid inside the cluster as it represents localhost for the container
+		minikubeHostRecord, err := minikube.RunCmd(c.opts.Verbose, c.opts.Profile, c.opts.Timeout, "ssh", "egrep", `"minikube$"`, "/etc/hosts")
+		if err != nil {
+			c.CurrentStep.LogInfo("Unable to perform 'minikube ssh egrep \"minikube$\" /etc/hosts' command. IP won't be passed to Kyma")
+			return ""
+		}
+		fields := strings.Fields(minikubeHostRecord)
+		if len(fields) > 0 {
+			return fields[0]
+		}
+	}
 	minikubeIP, err := minikube.RunCmd(c.opts.Verbose, c.opts.Profile, c.opts.Timeout, "ip")
 	if err != nil {
 		c.CurrentStep.LogInfo("Unable to perform 'minikube ip' command. IP won't be passed to Kyma")

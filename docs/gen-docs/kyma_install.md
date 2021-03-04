@@ -47,7 +47,7 @@ The standard installation uses the minimal configuration. The system performs th
 kyma install [flags]
 ```
 
-## Options
+## Flags
 
 ```bash
   -c, --components string      Path to a YAML file with a component list to override.
@@ -71,7 +71,7 @@ kyma install [flags]
       --tls-key string         TLS key for the domain used for installation. The key must be a base64-encoded value.
 ```
 
-## Options inherited from parent commands
+## Flags inherited from parent commands
 
 ```bash
       --ci                  Enables the CI mode to run on CI/CD systems. It avoids any user interaction (such as no dialog prompts) and ensures that logs are formatted properly in log files (such as no spinners for CLI steps).

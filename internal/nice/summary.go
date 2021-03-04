@@ -43,11 +43,13 @@ func (s *Summary) Print() error {
 
 	// Admin credentials
 
-	nicePrint.PrintKyma()
-	fmt.Print(" admin email:\t\t")
-	nicePrint.PrintImportant(s.Email)
+	if s.Email != "" {
+		nicePrint.PrintKyma()
+		fmt.Print(" admin email:\t\t")
+		nicePrint.PrintImportant(s.Email)
+	}
 
-	if !s.NonInteractive {
+	if !s.NonInteractive && s.Password != "" {
 		nicePrint.PrintKyma()
 		fmt.Printf(" admin password:\t\t")
 		nicePrint.PrintImportant(s.Password)

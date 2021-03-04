@@ -13,7 +13,7 @@ replace (
 )
 
 require (
-	github.com/avast/retry-go v2.6.1+incompatible
+	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/blang/semver/v4 v4.0.0
 	github.com/briandowns/spinner v1.12.0
 	github.com/containerd/cgroups v0.0.0-20201119153540-4cbc285b3327 // indirect
@@ -23,9 +23,9 @@ require (
 	github.com/docker/docker v20.10.3+incompatible
 	github.com/fatih/color v1.10.0
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
-	github.com/kyma-incubator/hydroform/function v0.0.0-20210226073535-e3b21324f15b
+	github.com/kyma-incubator/hydroform/function v0.0.0-20210224123057-043058674544
 	github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90
-	github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20210224123057-043058674544
+	github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20210302140829-006f20637aea
 	github.com/kyma-incubator/hydroform/provision v0.0.0-20201124135641-ca1a1a00c935
 	github.com/kyma-incubator/octopus v0.0.0-20200922132758-2b721e93b58b
 	github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20201125092745-687c943ac940

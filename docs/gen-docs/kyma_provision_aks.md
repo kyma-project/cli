@@ -13,7 +13,7 @@ Use this command to provision an AKS cluster on Azure for Kyma installation. Use
 kyma provision aks [flags]
 ```
 
-## Options
+## Flags
 
 ```bash
       --attempts uint         Maximum number of attempts to provision the cluster. (default 3)
@@ -27,7 +27,7 @@ kyma provision aks [flags]
   -t, --type string           Machine type used for the cluster. (default "Standard_D4_v3")
 ```
 
-## Options inherited from parent commands
+## Flags inherited from parent commands
 
 ```bash
       --ci                  Enables the CI mode to run on CI/CD systems. It avoids any user interaction (such as no dialog prompts) and ensures that logs are formatted properly in log files (such as no spinners for CLI steps).

@@ -12,7 +12,7 @@ Use this command to provision a k3s-based Kubernetes cluster for Kyma installati
 kyma alpha provision k3s [flags]
 ```
 
-## Options
+## Flags
 
 ```bash
       --name string           Name of the Kyma cluster. (default "kyma")
@@ -21,7 +21,7 @@ kyma alpha provision k3s [flags]
       --workers int           Number of worker nodes. (default 1)
 ```
 
-## Options inherited from parent commands
+## Flags inherited from parent commands
 
 ```bash
       --ci                  Enables the CI mode to run on CI/CD systems. It avoids any user interaction (such as no dialog prompts) and ensures that logs are formatted properly in log files (such as no spinners for CLI steps).
