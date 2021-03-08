@@ -38,6 +38,7 @@ type Options struct {
 	Source         string
 	Profile        string
 	Atomic         bool
+	SkipCertImport bool
 }
 
 //NewOptions creates options with default values

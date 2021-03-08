@@ -54,6 +54,7 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cobraCmd.Flags().StringVarP(&o.WorkspacePath, "workspace", "w", defaultWorkspacePath, "Path used to download Kyma sources.")
 	cobraCmd.Flags().BoolVarP(&o.Atomic, "atomic", "a", true, "Use atomic deployment, which rolls back any component that could not be installed successfully.")
+	cobraCmd.Flags().BoolVarP(&o.SkipCertImport, "skip-cert-import", "", false, "Set to true if you want to skip importing kyma cert to the host machine.")
 	cobraCmd.Flags().StringVarP(&o.ComponentsFile, "components", "c", defaultComponentsFile, "Path to the components file.")
 	cobraCmd.Flags().StringSliceVarP(&o.OverridesFiles, "values-file", "f", []string{}, "Path to a JSON or YAML file with configuration values.")
 	cobraCmd.Flags().StringSliceVarP(&o.Overrides, "value", "", []string{}, "Set a configuration value (e.g. --value component.key='the value').")
@@ -145,8 +146,10 @@ func (cmd *command) Run() error {
 	cmd.duration = time.Since(start)
 
 	// import certificate
-	if err := cmd.importCertificate(); err != nil {
-		return err
+	if !cmd.opts.SkipCertImport {
+		if err := cmd.importCertificate(); err != nil {
+			return err
+		}
 	}
 
 	// print summary
