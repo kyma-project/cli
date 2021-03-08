@@ -5,9 +5,7 @@ import (
 	"github.com/kyma-incubator/hydroform/function/pkg/generator"
 	"github.com/kyma-incubator/hydroform/function/pkg/workspace"
 	"github.com/kyma-project/cli/internal/cli"
-	"math/rand"
 	"os"
-	"time"
 )
 
 //Options defines available options for the command
@@ -41,7 +39,6 @@ func (o *Options) setDefaults(defaultNamespace string) (err error) {
 	}
 
 	if o.Name == "" {
-		rand.Seed(time.Now().UnixNano())
 		o.Name = "function-" + generator.GenerateName(true)
 	}
 
