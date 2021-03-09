@@ -551,8 +551,6 @@ github.com/googleapis/gnostic v0.0.0-20170729233727-0c5108395e2d/go.mod h1:sJBsC
 github.com/googleapis/gnostic v0.1.0/go.mod h1:sJBsCZ4ayReDTBIg8b9dl28c5xFWyhBTVRp3pOg5EKY=
 github.com/googleapis/gnostic v0.3.1 h1:WeAefnSUHlBb0iJKwxFDZdbfGwkd7xRNuV+IpXMJhYk=
 github.com/googleapis/gnostic v0.3.1/go.mod h1:on+2t9HRStVgn95RSsFWFz+6Q0Snyqv1awfrALZdbtU=
-github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e h1:XmA6L9IPRdUr28a+SK/oMchGgQy159wvzXA5tJ7l+40=
-github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e/go.mod h1:AFIo+02s+12CEg8Gzz9kzhCbmbq6JcKNrhHffCGA9z4=
 github.com/gophercloud/gophercloud v0.0.0-20190208042652-bc37892e1968/go.mod h1:3WdhXV3rUYy9p6AUW8d94kr+HS62Y4VL9mBnFxsD8q4=
 github.com/gophercloud/gophercloud v0.0.0-20190212181753-892256c46858/go.mod h1:vxM41WHh5uqHVBMZHzuwNOHh8XEoIEcSTewFxm1c5g8=
 github.com/gophercloud/gophercloud v0.1.0/go.mod h1:vxM41WHh5uqHVBMZHzuwNOHh8XEoIEcSTewFxm1c5g8=
@@ -764,11 +762,8 @@ github.com/kubernetes-sigs/service-catalog v0.3.0/go.mod h1:zRfgMd1T9HuXR24Qj4GO
 github.com/kylelemons/godebug v0.0.0-20170820004349-d65d576e9348/go.mod h1:B69LEHPfb2qLo0BaaOLcbitczOKLWTsrBG9LczfCD4k=
 github.com/kylelemons/godebug v1.1.0 h1:RPNrshWIDI6G2gRW9EHilWtl7Z6Sb1BR0xunSBf0SNc=
 github.com/kylelemons/godebug v1.1.0/go.mod h1:9/0rRGxNHcop5bhtWyNeEfOS8JIWk580+fNqagV/RAw=
-github.com/kyma-incubator/hydroform v0.0.0-20210302140829-006f20637aea h1:rETaeh1h0f0K78txMnEtZqicd+q/BR+FpGjBcDYEnPk=
-github.com/kyma-incubator/hydroform/function v0.0.0-20210224123057-043058674544 h1:g6h5cesNHkqy/xBStTk7Q3m6zw34FlRE/r720H00UQU=
-github.com/kyma-incubator/hydroform/function v0.0.0-20210224123057-043058674544/go.mod h1:UkGyJJw4UKHUAbgKcJWDYQrMw76k5DJUZDNkOvjawqA=
-github.com/kyma-incubator/hydroform/function v0.0.0-20210302140829-006f20637aea h1:YJ72svPwQuUPzMqdwxo2bjjgxkepQabc7FLiKQpLysA=
-github.com/kyma-incubator/hydroform/function v0.0.0-20210302140829-006f20637aea/go.mod h1:UkGyJJw4UKHUAbgKcJWDYQrMw76k5DJUZDNkOvjawqA=
+github.com/kyma-incubator/hydroform/function v0.0.0-20210309063107-26724ab15493 h1:AJfF4AHKR7Mj6GMw3N7NMi/AosmbIWV9rFJ1MTyxggs=
+github.com/kyma-incubator/hydroform/function v0.0.0-20210309063107-26724ab15493/go.mod h1:UkGyJJw4UKHUAbgKcJWDYQrMw76k5DJUZDNkOvjawqA=
 github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90 h1:E9rWdmz/CEfO52VJ6P/1M3TysNbET/qyw6611RbKJo8=
 github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90/go.mod h1:/qouJL+g8Tsllh/VcxK1Li6NCyuqyXSlq1i9InKSZJk=
 github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20210302140829-006f20637aea h1:6wvKe5fUztdzMoflRasw1KiXboU53dO9PMEYmS3buu0=
