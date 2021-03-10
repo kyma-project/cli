@@ -150,8 +150,10 @@ func (cmd *command) Run() error {
 		if err := cmd.importCertificate(); err != nil {
 			return err
 		}
+		qImportCertsStep.Success()
+	} else {
+		qImportCertsStep.Failure()
 	}
-	qImportCertsStep.Success()
 
 	// print summary
 	o, err := overrides.Build()
