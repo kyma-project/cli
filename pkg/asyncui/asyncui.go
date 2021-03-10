@@ -173,7 +173,7 @@ func (ui *AsyncUI) renderStopEventComponent(procUpdEvent deployment.ProcessUpdat
 
 	//determine step name
 	var stepName string
-	if installPhase == deployment.InstallComponents {
+	if installPhase == deployment.InstallComponents || installPhase == deployment.InstallPreRequisites {
 		stepName = fmt.Sprintf(deployComponentMsg, comp.Name)
 	} else {
 		stepName = fmt.Sprintf(undeployComponentMsg, comp.Name)
