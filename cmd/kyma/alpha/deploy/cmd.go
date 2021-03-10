@@ -145,8 +145,8 @@ func (cmd *command) Run() error {
 	cmd.duration = time.Since(start)
 
 	// import certificate
-	qImportCertsStep := cmd.NewStep("Import Kyma certificate")
-	if !cmd.avoidUserInteraction() && qImportCertsStep.PromptYesNo("Import Kyma certificate locally? ") {
+	qImportCertsStep := cmd.NewStep("Install Kyma certificate locally")
+	if !cmd.avoidUserInteraction() && qImportCertsStep.PromptYesNo("Should the Kyma certificate be installed locally") {
 		if err := cmd.importCertificate(); err != nil {
 			return err
 		}
