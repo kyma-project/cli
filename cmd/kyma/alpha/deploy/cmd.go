@@ -146,7 +146,7 @@ func (cmd *command) Run() error {
 
 	// import certificate
 	qImportCertsStep := cmd.NewStep("Import Kyma certificate")
-	if cmd.avoidUserInteraction() || qImportCertsStep.PromptYesNo("Import Kyma certificate locally? ") {
+	if !cmd.avoidUserInteraction() && qImportCertsStep.PromptYesNo("Import Kyma certificate locally? ") {
 		if err := cmd.importCertificate(); err != nil {
 			return err
 		}
