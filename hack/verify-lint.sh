@@ -8,7 +8,7 @@ set -E         # needs to be set if we want the ERR trap
 readonly CURRENT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 readonly ROOT_PATH=$( cd "${CURRENT_DIR}/.." && pwd )
 readonly TMP_DIR=$(mktemp -d)
-readonly GOLANGCI_LINT_VERSION="v1.27.0"
+readonly GOLANGCI_LINT_VERSION="v1.38.0"
 
 source "${CURRENT_DIR}/utilities.sh" || { echo 'Cannot load CI utilities.'; exit 1; }
 
@@ -40,7 +40,8 @@ golangci::run_checks() {
   ENABLE=$(sed 's/ /,/g' <<< "${LINTS[@]}")
 
   echo "Checks: ${LINTS[*]}"
-  golangci-lint --disable-all --enable="${ENABLE}" --timeout=10m run ${ROOT_PATH}/...
+  cd ${ROOT_PATH}
+  golangci-lint --disable-all --enable="${ENABLE}" --timeout=10m run --config $CURRENT_DIR/.golangci.yml
 
   echo -e "${GREEN}√ run golangci-lint${NC}"
 }
