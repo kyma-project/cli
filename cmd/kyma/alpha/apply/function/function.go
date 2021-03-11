@@ -84,7 +84,7 @@ func (c *command) Run() error {
 		return err
 	}
 
-	triggers, err := resources.NewTriggers(configuration)
+	subscriptions, err := resources.NewSubscriptions(configuration)
 	if err != nil {
 		return err
 	}
@@ -100,9 +100,8 @@ func (c *command) Run() error {
 	mgr.AddParent(
 		operator.NewGenericOperator(client.Resource(operator.GVKFunction).Namespace(configuration.Namespace), function),
 		[]operator.Operator{
-			// replace triggers with subscriptions
-			operator.NewTriggersOperator(client.Resource(operator.GVKTriggers).Namespace(configuration.Namespace),
-				configuration.Name, configuration.Namespace, triggers...),
+			operator.NewSubscriptionOperator(client.Resource(operator.GVKSubscription).Namespace(configuration.Namespace),
+				configuration.Name, configuration.Namespace, subscriptions...),
 		},
 	)
 
