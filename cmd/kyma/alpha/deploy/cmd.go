@@ -46,25 +46,24 @@ func NewCmd(o *Options) *cobra.Command {
 		Aliases: []string{"d"},
 	}
 
-	cobraCmd.Flags().StringVarP(&o.WorkspacePath, "workspace", "w", defaultWorkspacePath, "Path used to download Kyma sources.")
-	cobraCmd.Flags().StringVarP(&o.ComponentsFile, "components", "c", defaultComponentsFile, "Path to the components file.")
-	cobraCmd.Flags().StringVarP(&o.OverridesFile, "values-file", "f", "", "Path to a JSON or YAML file with configuration values.")
-	cobraCmd.Flags().StringSliceVarP(&o.Overrides, "value", "", []string{}, "Set a configuration value (e.g. --value component.key='the value').")
-	cobraCmd.Flags().DurationVarP(&o.CancelTimeout, "cancel-timeout", "", 900*time.Second, "Time after which the workers' context is canceled. Pending worker goroutines (if any) may continue if blocked by a Helm client.")
-	cobraCmd.Flags().DurationVarP(&o.QuitTimeout, "quit-timeout", "", 1200*time.Second, "Time after which the deployment is aborted. Worker goroutines may still be working in the background. This value must be greater than the value for cancel-timeout.")
-	cobraCmd.Flags().DurationVarP(&o.HelmTimeout, "helm-timeout", "", 360*time.Second, "Timeout for the underlying Helm client.")
-	cobraCmd.Flags().IntVar(&o.WorkersCount, "workers-count", 4, "Number of parallel workers used for the deployment.")
-	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", LocalKymaDevDomain, "Domain used for installation.")
-	cobraCmd.Flags().StringVarP(&o.TLSCrtFile, "tls-crt", "", "", "TLS certificate file for the domain used for installation.")
-	cobraCmd.Flags().StringVarP(&o.TLSKeyFile, "tls-key", "", "", "TLS key file for the domain used for installation.")
-	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", defaultSource, `Installation source.
-	- To use a specific release, write "kyma alpha deploy --source=1.17.1".
-	- To use the master branch, write "kyma alpha deploy --source=master".
-	- To use a commit, write "kyma alpha deploy --source=34edf09a".
-	- To use a pull request, write "kyma alpha deploy --source=PR-9486".
-	- To use the local sources, write "kyma alpha deploy --source=local".`)
+	cobraCmd.Flags().StringVarP(&o.WorkspacePath, "workspace", "w", defaultWorkspacePath, `Path to download Kyma sources (default: "workspace")`)
+	cobraCmd.Flags().StringVarP(&o.ComponentsFile, "components", "c", defaultComponentsFile, `Path to the components file (default: "workspace/installation/resources/components.yaml")`)
+	cobraCmd.Flags().StringVarP(&o.OverridesFile, "values-file", "f", "", "Path(s) to one or more JSON or YAML files with configuration values")
+	cobraCmd.Flags().StringSliceVarP(&o.Overrides, "value", "", []string{}, "Set one or more configuration values (e.g. --value component.key='the value')")
+	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 1200*time.Second, "Maximum time for the deployment (default: 20m0s)")
+	cobraCmd.Flags().DurationVarP(&o.TimeoutComponent, "timeout-component", "", 360*time.Second, "Maximum time to deploy the component (default: 6m0s)")
+	cobraCmd.Flags().IntVar(&o.Concurrency, "concurrency", 4, "Number of parallel processes (default: 4)")
+	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", LocalKymaDevDomain, "Custom domain used for installation")
+	cobraCmd.Flags().StringVarP(&o.TLSCrtFile, "tls-crt", "", "", "TLS certificate file for the domain used for installation")
+	cobraCmd.Flags().StringVarP(&o.TLSKeyFile, "tls-key", "", "", "TLS key file for the domain used for installation")
+	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", defaultSource, `Installation source:
+	- Deploy a specific release, for example: "kyma alpha deploy --source=1.17.1"
+	- Deploy the master branch of the Kyma repository on kyma-project.org: "kyma alpha deploy --source=master"
+	- Deploy a commit, for example: "kyma alpha deploy --source=34edf09a"
+	- Deploy a pull request, for example "kyma alpha deploy --source=PR-9486"
+	- Deploy the local sources: "kyma alpha deploy --source=local" (default: "master")`)
 	cobraCmd.Flags().StringVarP(&o.Profile, "profile", "p", "",
-		fmt.Sprintf("Kyma deployment profile. Supported profiles are: \"%s\".", strings.Join(kymaProfiles, "\", \"")))
+		fmt.Sprintf("Kyma deployment profile. If not specified, Kyma uses its default configuration. The supported profiles are: \"%s\".", strings.Join(kymaProfiles, "\", \"")))
 	return cobraCmd
 }
 

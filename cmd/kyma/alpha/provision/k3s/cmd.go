@@ -35,10 +35,10 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 
 	//cmd.Flags().StringVar(&o.EnableRegistry, "enable-registry", "", "Enables registry for the created k8s cluster.")
-	cmd.Flags().StringVar(&o.Name, "name", "kyma", "Name of the Kyma cluster.")
-	cmd.Flags().IntVar(&o.Workers, "workers", 1, "Number of worker nodes.")
-	cmd.Flags().StringSliceVarP(&o.ServerArgs, "server-arg", "s", []string{}, "Argument passed to the Kubernetes server (e.g. --server-arg='--alsologtostderr').")
-	cmd.Flags().DurationVar(&o.Timeout, "timeout", 5*time.Minute, `Maximum time in minutes during which the provisioning takes place, where "0" means "infinite".`)
+	cmd.Flags().StringVar(&o.Name, "name", "kyma", `Name of the Kyma cluster (default: "kyma")`)
+	cmd.Flags().IntVar(&o.Workers, "workers", 1, "Number of worker nodes (k3s agents), default: 1")
+	cmd.Flags().StringSliceVarP(&o.ServerArgs, "server-arg", "s", []string{}, "One or more arguments passed to the Kubernetes API server (e.g. --server-arg='--alsologtostderr')")
+	cmd.Flags().DurationVar(&o.Timeout, "timeout", 5*time.Minute, `Maximum time for the provisioning (default: 5m0s). If you want no timeout, enter "0".`)
 	return cmd
 }
 

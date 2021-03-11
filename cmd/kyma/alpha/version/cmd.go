@@ -35,7 +35,7 @@ func NewCmd(o *Options) *cobra.Command {
 		Aliases: []string{"v"},
 	}
 
-	cobraCmd.Flags().BoolVarP(&o.ClientOnly, "client", "c", false, "Client version only (no server required)")
+	cobraCmd.Flags().BoolVarP(&o.ClientOnly, "client", "c", false, "Client version only (no server needed)")
 	return cobraCmd
 }
 
