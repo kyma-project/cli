@@ -105,12 +105,6 @@ func (c *command) Run() error {
 		},
 	)
 
-	oprs := map[string][]string{}
-
-	for key, _ := range oprs {
-		fmt.Print(key)
-	}
-
 	options := manager.Options{
 		Callbacks:          callbacks(c),
 		OnError:            chooseOnError(c.opts.OnError),
