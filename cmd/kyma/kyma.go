@@ -7,6 +7,7 @@ import (
 	alphaInstall "github.com/kyma-project/cli/cmd/kyma/alpha/deploy"
 	alphaProvision "github.com/kyma-project/cli/cmd/kyma/alpha/provision"
 	"github.com/kyma-project/cli/cmd/kyma/alpha/provision/k3s"
+	alphaSync "github.com/kyma-project/cli/cmd/kyma/alpha/sync"
 	alphaVersion "github.com/kyma-project/cli/cmd/kyma/alpha/version"
 	"github.com/kyma-project/cli/cmd/kyma/apply"
 	"github.com/kyma-project/cli/cmd/kyma/completion"
@@ -62,6 +63,7 @@ Kyma CLI allows you to install, test, and manage Kyma.
 	//Alpha commands
 	alphaCmd := alpha.NewCmd()
 	alphaCmd.AddCommand(alphaApply.NewCmd(o))
+	alphaCmd.AddCommand(alphaSync.NewCmd(o))
 	alphaCmd.AddCommand(alphaInstall.NewCmd(alphaInstall.NewOptions(o)))
 	alphaCmd.AddCommand(alphaDelete.NewCmd(alphaDelete.NewOptions(o)))
 	alphaCmd.AddCommand(alphaVersion.NewCmd(alphaVersion.NewOptions(o)))
