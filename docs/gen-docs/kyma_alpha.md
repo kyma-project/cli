@@ -21,10 +21,8 @@ The Kyma CLI in alpha testing stage uses the following commands:
 ## See also
 
 * [kyma](#kyma-kyma)	 - Controls a Kyma cluster.
-* [kyma alpha apply](#kyma-alpha-apply-kyma-alpha-apply)	 - Applies local resources to the Kyma cluster.
 * [kyma alpha delete](#kyma-alpha-delete-kyma-alpha-delete)	 - Deletes Kyma from a running Kubernetes cluster.
 * [kyma alpha deploy](#kyma-alpha-deploy-kyma-alpha-deploy)	 - Deploys Kyma on a running Kubernetes cluster.
 * [kyma alpha provision](#kyma-alpha-provision-kyma-alpha-provision)	 - Provisions a cluster for Kyma installation.
-* [kyma alpha sync](#kyma-alpha-sync-kyma-alpha-sync)	 - Synchronizes the local resources for your Function.
 * [kyma alpha version](#kyma-alpha-version-kyma-alpha-version)	 - Displays the version of Kyma CLI and of the connected Kyma cluster.
 
