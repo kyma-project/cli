@@ -1,12 +1,24 @@
 ---
-title: kyma alpha
+title: kyma alpha sync function
 ---
 
-Executes the commands in the alpha testing stage.
+Synchronizes the local resources for your Function.
 
 ## Synopsis
 
-The Kyma CLI in alpha testing stage uses the following commands:
+Use this command to download the Function's code and dependencies from the cluster to create or update these resources in your local workspace.
+Use the flags to specify the name of your Function, the Namespace, or the location for your project.
+
+```bash
+kyma alpha sync function [flags]
+```
+
+## Flags
+
+```bash
+  -d, --dir string         Full path to the directory where you want to save the project.
+  -n, --namespace string   Namespace from which you want to sync the Function.
+```
 
 ## Flags inherited from parent commands
 
@@ -20,11 +32,5 @@ The Kyma CLI in alpha testing stage uses the following commands:
 
 ## See also
 
-* [kyma](#kyma-kyma)	 - Controls a Kyma cluster.
-* [kyma alpha apply](#kyma-alpha-apply-kyma-alpha-apply)	 - Applies local resources to the Kyma cluster.
-* [kyma alpha delete](#kyma-alpha-delete-kyma-alpha-delete)	 - Deletes Kyma from a running Kubernetes cluster.
-* [kyma alpha deploy](#kyma-alpha-deploy-kyma-alpha-deploy)	 - Deploys Kyma on a running Kubernetes cluster.
-* [kyma alpha provision](#kyma-alpha-provision-kyma-alpha-provision)	 - Provisions a cluster for Kyma installation.
 * [kyma alpha sync](#kyma-alpha-sync-kyma-alpha-sync)	 - Synchronizes the local resources for your Function.
-* [kyma alpha version](#kyma-alpha-version-kyma-alpha-version)	 - Displays the version of Kyma CLI and of the connected Kyma cluster.
 
