@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
-	"github.com/kyma-incubator/hydroform/parallel-install/pkg/metadata"
+	"github.com/kyma-incubator/hydroform/parallel-install/pkg/helm"
 	"github.com/kyma-project/cli/cmd/kyma/version"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
@@ -41,35 +42,38 @@ func NewCmd(o *Options) *cobra.Command {
 
 //Run runs the command
 func (cmd *command) Run() error {
-	var clusterMetadata *metadata.KymaMetadata
+	var versions []*helm.KymaVersion
+	var err error
 
 	if !cmd.opts.ClientOnly {
-		var err error
 		if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
 			return errors.Wrap(err, "Cannot initialize the Kubernetes client. Make sure your kubeconfig is valid")
 		}
 
-		provider := metadata.New(cmd.K8s.Static())
-		clusterMetadata, err = provider.ReadKymaMetadata()
+		provider := helm.NewKymaMetadataProvider(cmd.K8s.Static())
+		versions, err = provider.Versions()
 		if err != nil {
-			return fmt.Errorf("Unable to get Kyma cluster version due to error: %v. Check if your cluster is available and has Kyma installed", err)
+			return fmt.Errorf("Unable to get Kyma cluster versions due to error: %v. Check if your cluster is available and has Kyma installed", err)
 		}
 	}
 
-	printVersion(os.Stdout, cmd.opts.ClientOnly, clusterMetadata)
+	printVersion(os.Stdout, cmd.opts.ClientOnly, versions)
 
 	return nil
 }
 
-func printVersion(w io.Writer, clientOnly bool, clusterMetadata *metadata.KymaMetadata) {
+func printVersion(w io.Writer, clientOnly bool, versions []*helm.KymaVersion) {
 	fmt.Fprintf(w, "Kyma CLI version: %s\n", versionOrDefault(version.Version))
 
 	if clientOnly {
 		return
 	}
 
-	fmt.Fprintf(w, "Kyma cluster version: %s\n", versionOrDefault(clusterMetadata.Version))
-	fmt.Fprintf(w, "Deployment profile: %s\n", profileOrDefault(clusterMetadata.Profile))
+	for _, version := range versions {
+		fmt.Fprintf(w, "Kyma cluster version: %s\n", versionOrDefault(version.Version))
+		fmt.Fprintf(w, "Deployment profile: %s\n", profileOrDefault(version.Profile))
+		fmt.Fprintf(w, "Installed components: %s\n", strings.Join(componentNames(version.Components), ", "))
+	}
 }
 
 func versionOrDefault(version string) string {
@@ -86,4 +90,12 @@ func stringOrDefault(s, def string) string {
 	}
 
 	return s
+}
+
+func componentNames(kymaComps []*helm.KymaComponent) []string {
+	result := []string{}
+	for _, kymaComp := range kymaComps {
+		result = append(result, kymaComp.Name)
+	}
+	return result
 }
