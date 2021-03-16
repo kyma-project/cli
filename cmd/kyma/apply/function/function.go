@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+
 	"github.com/kyma-incubator/hydroform/function/pkg/client"
 	"github.com/kyma-incubator/hydroform/function/pkg/manager"
 	"github.com/kyma-incubator/hydroform/function/pkg/operator"
@@ -15,7 +17,6 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"os"
 )
 
 type command struct {

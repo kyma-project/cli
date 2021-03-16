@@ -1,7 +1,7 @@
 package apply
 
 import (
-	"github.com/kyma-project/cli/cmd/kyma/apply/function"
+	"github.com/kyma-project/cli/cmd/kyma/alpha/apply/function"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/spf13/cobra"
 )
