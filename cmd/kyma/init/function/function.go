@@ -12,7 +12,6 @@ import (
 
 const (
 	defaultRuntime   = "nodejs12"
-	defaultName      = "first-function"
 	defaultReference = "master"
 	defaultBaseDir   = "/"
 )
@@ -38,7 +37,7 @@ Use the flags to specify the initial configuration for your Function or to choos
 		},
 	}
 
-	cmd.Flags().StringVar(&o.Name, "name", defaultName, `Function name.`)
+	cmd.Flags().StringVar(&o.Name, "name", "", `Function name.`)
 	cmd.Flags().StringVar(&o.Namespace, "namespace", "", `Namespace to which you want to apply your Function.`)
 	cmd.Flags().StringVarP(&o.Dir, "dir", "d", "", `Full path to the directory where you want to save the project.`)
 	cmd.Flags().StringVarP(&o.Runtime, "runtime", "r", defaultRuntime, `Flag used to define the environment for running your Function. Use one of these options:
@@ -48,7 +47,7 @@ Use the flags to specify the initial configuration for your Function or to choos
 
 	// git function options
 	cmd.Flags().StringVar(&o.URL, "url", "", `Git repository URL`)
-	cmd.Flags().Var(&o.RepositoryName, "repository-name", `The name of the Git repository to be created`)
+	cmd.Flags().StringVar(&o.RepositoryName, "repository-name", "", `The name of the Git repository to be created`)
 	cmd.Flags().StringVar(&o.Reference, "reference", defaultReference, `Commit hash or branch name`)
 	cmd.Flags().StringVar(&o.BaseDir, "base-dir", defaultBaseDir, `A directory in the repository containing the Function's sources`)
 
