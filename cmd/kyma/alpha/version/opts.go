@@ -7,7 +7,8 @@ import (
 //Options defines available options for the command
 type Options struct {
 	*cli.Options
-	ClientOnly bool
+	ClientOnly     bool
+	VersionDetails bool
 }
 
 //NewOptions creates options with default values

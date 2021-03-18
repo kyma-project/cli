@@ -160,34 +160,31 @@ func (cmd *command) Run() error {
 func (cmd *command) isCompatibleVersion() error {
 	compCheckStep := cmd.NewStep("Verifying Kyma version compatibility")
 	provider := helm.NewKymaMetadataProvider(cmd.K8s.Static())
-	versions, err := provider.Versions()
+	versionSet, err := provider.Versions()
 	if err != nil {
 		return fmt.Errorf("Cannot get installed Kyma versions due to error: %v", err)
 	}
 
-	if len(versions) == 0 { //Kyma seems not to be installed
+	if versionSet.Empty() { //Kyma seems not to be installed
 		compCheckStep.Successf("No previous Kyma version found")
 		return nil
 	}
 
 	var compCheckFailed bool
-	if len(versions) > 1 {
-		versionNames := []string{}
-		for _, version := range versions {
-			versionNames = append(versionNames, version.Version)
-		}
+	if versionSet.Count() > 1 {
 		compCheckStep.Failuref("Components from multiple Kyma versions are installed (found Kyma versions '%s'). "+
 			"Cannot check compatibility if components with different Kyma versions are installed.",
-			strings.Join(versionNames, "', '"))
+			strings.Join(versionSet.Names(), "', '"))
 		compCheckFailed = true
 	} else {
-		if versions[0].Version == cmd.opts.Source {
-			compCheckStep.Failuref("Current and next Kyma version are equal: %s", versions[0].Version)
+		kymaVersion := versionSet.Versions[0].Version
+		if kymaVersion == cmd.opts.Source {
+			compCheckStep.Failuref("Current and next Kyma version are equal: %s", kymaVersion)
 			compCheckFailed = true
 		}
-		if err := checkCompatibility(versions[0].Version, cmd.opts.Source); err != nil {
+		if err := checkCompatibility(kymaVersion, cmd.opts.Source); err != nil {
 			compCheckStep.Failuref("Cannot check compatibility between version '%s' and '%s'. This might cause errors - do you want to proceed anyway?",
-				versions[0].Version, cmd.opts.Source)
+				kymaVersion, cmd.opts.Source)
 			compCheckFailed = true
 		}
 	}
@@ -432,16 +429,11 @@ func (cmd *command) printSummary(o deployment.Overrides) error {
 
 func (cmd *command) installedKymaVersions() ([]string, error) {
 	provider := helm.NewKymaMetadataProvider(cmd.K8s.Static())
-	kymaVersions, err := provider.Versions()
+	kymaVersionSet, err := provider.Versions()
 	if err != nil {
 		return nil, err
 	}
-
-	kymaVersionNames := []string{}
-	for _, kymaVersion := range kymaVersions {
-		kymaVersionNames = append(kymaVersionNames, kymaVersion.Version)
-	}
-	return kymaVersionNames, nil
+	return kymaVersionSet.Names(), nil
 }
 
 func (cmd *command) importCertificate() error {

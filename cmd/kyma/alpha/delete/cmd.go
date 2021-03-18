@@ -115,16 +115,14 @@ func (cmd *command) kymaComponentList() (*installConfig.ComponentList, error) {
 	kymaCompStep := cmd.NewStep("Get Kyma components")
 	metaProv := helm.NewKymaMetadataProvider(cmd.K8s.Static())
 
-	var versionNames []string
-	versions, err := metaProv.Versions()
+	versionSet, err := metaProv.Versions()
 	if err != nil {
 		kymaCompStep.Failure()
 		return nil, err
 	}
 
 	compList := &installConfig.ComponentList{}
-	for _, version := range versions {
-		versionNames = append(versionNames, version.Version)
+	for _, version := range versionSet.Versions {
 		for _, comp := range version.Components {
 			compList.Components = append(compList.Components, installConfig.ComponentDefinition{
 				Name:      comp.Name,
@@ -134,7 +132,7 @@ func (cmd *command) kymaComponentList() (*installConfig.ComponentList, error) {
 	}
 
 	kymaCompStep.Successf("Found %d Kyma versions (%s) and %d Kyma components",
-		len(versionNames), strings.Join(versionNames, ", "), len(compList.Components))
+		versionSet.Count(), strings.Join(versionSet.Names(), ", "), len(compList.Components))
 
 	return compList, nil
 }
