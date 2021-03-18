@@ -14,6 +14,7 @@ replace (
 	github.com/terraform-providers/terraform-provider-openstack => github.com/terraform-providers/terraform-provider-openstack v1.20.0
 	// grpc need to be compatible with direct dependencies in terraform (>=v1.29.1)
 	google.golang.org/grpc => google.golang.org/grpc v1.29.1
+	github.com/kyma-incubator/hydroform/function => /Users/rjankowski/Go/src/github.com/kyma-incubator/hydroform/function
 )
 
 require (
