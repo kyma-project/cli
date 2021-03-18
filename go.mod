@@ -10,6 +10,7 @@ replace (
 	// grpc need to be compatible with direct dependencies in terraform (>=v1.29.1)
 	google.golang.org/grpc => google.golang.org/grpc v1.29.1
 	k8s.io/client-go => k8s.io/client-go v0.18.9
+	github.com/kyma-incubator/hydroform/function => /Users/rjankowski/Go/src/github.com/kyma-incubator/hydroform/function
 )
 
 require (

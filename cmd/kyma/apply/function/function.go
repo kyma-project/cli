@@ -88,6 +88,11 @@ func (c *command) Run() error {
 		return err
 	}
 
+	apiRule, err := resources.NewApiRule(configuration)
+	if err != nil {
+		return err
+	}
+
 	if configuration.Source.Type == workspace.SourceTypeGit {
 		gitRepository, err := resources.NewPublicGitRepository(configuration)
 		if err != nil {
@@ -101,6 +106,7 @@ func (c *command) Run() error {
 		[]operator.Operator{
 			operator.NewTriggersOperator(client.Resource(operator.GVKTriggers).Namespace(configuration.Namespace),
 				configuration.Name, configuration.Namespace, triggers...),
+			operator.NewGenericOperator(client.Resource(operator.GVKApiRule).Namespace(configuration.Namespace), apiRule),
 		},
 	)
 
