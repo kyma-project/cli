@@ -123,7 +123,7 @@ func (cmd *command) kymaComponentList() (*installConfig.ComponentList, error) {
 
 	compList := &installConfig.ComponentList{}
 	for _, version := range versionSet.Versions {
-		for _, comp := range version.Components {
+		for _, comp := range version.Components() {
 			compList.Components = append(compList.Components, installConfig.ComponentDefinition{
 				Name:      comp.Name,
 				Namespace: comp.Namespace,
