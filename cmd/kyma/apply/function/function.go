@@ -100,7 +100,7 @@ func (c *command) Run() error {
 	mgr.AddParent(
 		operator.NewGenericOperator(client.Resource(operator.GVKFunction).Namespace(configuration.Namespace), function),
 		[]operator.Operator{
-			operator.NewSubscriptionsOperator(client.Resource(operator.GVRSubscription).Namespace(configuration.Namespace),
+			operator.NewSubscriptionOperator(client.Resource(operator.GVRSubscription).Namespace(configuration.Namespace),
 				configuration.Name, configuration.Namespace, subscriptions...),
 		},
 	)
