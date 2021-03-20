@@ -92,12 +92,12 @@ func TestPrintVersion(t *testing.T) {
 						Version:      "1.19",
 						Profile:      "evaluation",
 						CreationTime: 1616070314, //Thursday, 18-Mar-21 13:25:14 CET
-						Components: []*helm.KymaComponent{
-							&helm.KymaComponent{
+						Components: []*helm.KymaComponentMetadata{
+							&helm.KymaComponentMetadata{
 								Name:      "comp1",
 								Namespace: "ns1",
 							},
-							&helm.KymaComponent{
+							&helm.KymaComponentMetadata{
 								Name:      "comp2",
 								Namespace: "ns1",
 							},
@@ -107,12 +107,12 @@ func TestPrintVersion(t *testing.T) {
 						Version:      "1.20",
 						Profile:      "",
 						CreationTime: 1616070315, //Thursday, 18-Mar-21 13:25:15 CET
-						Components: []*helm.KymaComponent{
-							&helm.KymaComponent{
+						Components: []*helm.KymaComponentMetadata{
+							&helm.KymaComponentMetadata{
 								Name:      "comp1",
 								Namespace: "ns1",
 							},
-							&helm.KymaComponent{
+							&helm.KymaComponentMetadata{
 								Name:      "comp3",
 								Namespace: "ns1",
 							},
