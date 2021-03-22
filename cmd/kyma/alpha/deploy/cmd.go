@@ -144,7 +144,6 @@ func (cmd *command) Run() error {
 	}
 	cmd.duration = time.Since(start)
 
-	// import certificate
 	if err := cmd.importCertificate(); err != nil {
 		return err
 	}
@@ -417,6 +416,12 @@ func (cmd *command) printSummary(o deployment.Overrides) error {
 func (cmd *command) importCertificate() error {
 	ca := trust.NewCertifier(cmd.K8s)
 
+	if !cmd.approveImportCertificate() {
+		//no approval given: stop import
+		ca.Instructions()
+		return nil
+	}
+
 	// get cert from cluster
 	cert, err := ca.Certificate()
 	if err != nil {
@@ -448,4 +453,13 @@ func (cmd *command) importCertificate() error {
 	}
 	s.Successf("Kyma root certificate imported")
 	return nil
+}
+
+func (cmd *command) approveImportCertificate() bool {
+	qImportCertsStep := cmd.NewStep("Install Kyma certificate locally")
+	defer qImportCertsStep.Success()
+	if cmd.avoidUserInteraction() { //do not import if user-interaction has to be avoided (suppress sudo pwd request)
+		return false
+	}
+	return qImportCertsStep.PromptYesNo("Should the Kyma certificate be installed locally?")
 }
