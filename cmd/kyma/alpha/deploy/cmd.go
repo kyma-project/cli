@@ -414,12 +414,13 @@ func (cmd *command) printSummary(o deployment.Overrides) error {
 }
 
 func (cmd *command) importCertificate() error {
+	ca := trust.NewCertifier(cmd.K8s)
+
 	if !cmd.approveImportCertificate() {
 		//no approval given: stop import
+		ca.Instructions()
 		return nil
 	}
-
-	ca := trust.NewCertifier(cmd.K8s)
 
 	// get cert from cluster
 	cert, err := ca.Certificate()
