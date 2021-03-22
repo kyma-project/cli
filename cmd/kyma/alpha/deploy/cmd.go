@@ -414,7 +414,7 @@ func (cmd *command) printSummary(o deployment.Overrides) error {
 }
 
 func (cmd *command) importCertificate() error {
-	if !cmd.isCertImportApproved() {
+	if !cmd.approveImportCertificate() {
 		//no approval given: stop import
 		return nil
 	}
@@ -454,7 +454,7 @@ func (cmd *command) importCertificate() error {
 	return nil
 }
 
-func (cmd *command) isCertImportApproved() bool {
+func (cmd *command) approveImportCertificate() bool {
 	qImportCertsStep := cmd.NewStep("Install Kyma certificate locally")
 	defer qImportCertsStep.Success()
 	if cmd.avoidUserInteraction() { //do not import if user-interaction has to be avoided (suppress sudo pwd request)
