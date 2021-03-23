@@ -26,17 +26,33 @@ validate:
 .PHONY: build
 build: build-windows build-linux build-darwin
 
+.PHONY: build-experimental
+build-experimental: build-windows-arm build-linux-arm build-darwin-arm
+
 .PHONY: build-windows
 build-windows:
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o ./bin/kyma.exe $(FLAGS) ./cmd
+	
+.PHONY: build-windows-arm
+build-windows-arm:
+	CGO_ENABLED=0 GOOS=windows GOARCH=arm64 go build -o ./bin/kyma.exe $(FLAGS) ./cmd
 
 .PHONY: build-linux
 build-linux:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/kyma-linux $(FLAGS) ./cmd
 
+.PHONY: build-linux-arm
+build-linux-arm:
+	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o ./bin/kyma-linux-arm $(FLAGS) ./cmd
+
 .PHONY: build-darwin
 build-darwin:
 	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o ./bin/kyma-darwin $(FLAGS) ./cmd
+
+.PHONY: build-darwin-arm
+build-darwin-arm:
+	go version | grep '1.16'
+	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o ./bin/kyma-darwin-arm $(FLAGS) ./cmd
 
 .PHONY: docs
 docs:
