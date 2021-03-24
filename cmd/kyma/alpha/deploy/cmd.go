@@ -26,7 +26,7 @@ import (
 
 	installConfig "github.com/kyma-incubator/hydroform/parallel-install/pkg/config"
 	"github.com/kyma-incubator/hydroform/parallel-install/pkg/deployment"
-	"github.com/kyma-incubator/hydroform/parallel-install/pkg/downloader"
+	"github.com/kyma-incubator/hydroform/parallel-install/pkg/git"
 	"github.com/kyma-incubator/hydroform/parallel-install/pkg/metadata"
 )
 
@@ -35,6 +35,8 @@ type command struct {
 	cli.Command
 	duration time.Duration
 }
+
+const kymaURL = "https://github.com/kyma-project/kyma"
 
 //NewCmd creates a new kyma command
 func NewCmd(o *Options) *cobra.Command {
@@ -118,7 +120,7 @@ func (cmd *command) Run() error {
 		approvalRequired := !os.IsNotExist(err)
 
 		downloadStep := cmd.NewStep("Downloading Kyma into workspace folder")
-		if err := downloader.CloneKymaRepo(cmd.opts.WorkspacePath, cmd.opts.Source); err != nil {
+		if err := git.CloneRepo(kymaURL, cmd.opts.WorkspacePath, cmd.opts.Source); err != nil {
 			downloadStep.Failure()
 			return err
 		}
