@@ -18,7 +18,7 @@ import (
 	"github.com/kyma-incubator/hydroform/install/config"
 	installationSDK "github.com/kyma-incubator/hydroform/install/installation"
 	"github.com/kyma-incubator/hydroform/install/scheme"
-	"github.com/kyma-project/cli/internal/download"
+	"github.com/kyma-incubator/hydroform/parallel-install/pkg/download"
 	"github.com/kyma-project/cli/pkg/step"
 	"github.com/kyma-project/kyma/components/kyma-operator/pkg/apis/installer/v1alpha1"
 	"github.com/pkg/errors"
