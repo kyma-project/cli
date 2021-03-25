@@ -34,7 +34,7 @@ kyma alpha deploy [flags]
   -f, --values-file strings       Path to a JSON or YAML file with configuration values.
       --workers-count int         Number of parallel workers used for the deployment. (default 4)
   -w, --workspace string          If --source is local, then workspace should be a path already containing Kyma sources.
-                                  If --source is not local, then workspace would be the path used to download Kyma sources. (default "workspace")
+                                  If --source is not local, then workspace must be the path used to download Kyma sources. (default "workspace")
 ```
 
 ## Flags inherited from parent commands
