@@ -15,7 +15,7 @@ kyma alpha deploy [flags]
 ## Flags
 
 ```bash
-  -a, --atomic                    Use atomic deployment, which rolls back any component that could not be installed successfully. (default true)
+  -a, --atomic                    Use atomic deployment, which rolls back any component that could not be installed successfully.
       --cancel-timeout duration   Time after which the workers' context is canceled. Any pending worker goroutines that are blocked by a Helm client will continue. (default 15m0s)
   -c, --components string         Path to the components file. (default "workspace/installation/resources/components.yaml")
   -d, --domain string             Custom domain used for installation.
