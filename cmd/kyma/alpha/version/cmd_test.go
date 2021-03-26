@@ -124,12 +124,12 @@ func TestPrintVersion(t *testing.T) {
 Kyma cluster versions: 1.19, 1.20
 -----------------
 Kyma cluster version: 1.19
-Deployed one: Thursday, 18-Mar-21 13:25:14 CET
+Deployed at: Thursday, 18-Mar-21 13:25:14 CET
 Profile: evaluation
 Components: comp1, comp2
 -----------------
 Kyma cluster version: 1.20
-Deployed one: Thursday, 18-Mar-21 13:25:15 CET
+Deployed at: Thursday, 18-Mar-21 13:25:15 CET
 Profile: default
 Components: comp1, comp3
 `,
