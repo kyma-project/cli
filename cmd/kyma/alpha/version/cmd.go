@@ -85,7 +85,7 @@ func (cmd *command) printKymaVersionDetails(w io.Writer, versionSet *helm.KymaVe
 		fmt.Fprintln(w, "-----------------")
 		fmt.Fprintf(w, "Kyma cluster version: %s\n", versionOrDefault(version.Version))
 		deployTime := time.Unix(version.CreationTime, 0)
-		fmt.Fprintf(w, "Deployed at: %s\n", deployTime.Format(time.RFC850))
+		fmt.Fprintf(w, "Deployed at: %s\n", deployTime.UTC().Format(time.RFC850))
 		fmt.Fprintf(w, "Profile: %s\n", profileOrDefault(version.Profile))
 		fmt.Fprintf(w, "Components: %s\n", strings.Join(version.ComponentNames(), ", "))
 	}
