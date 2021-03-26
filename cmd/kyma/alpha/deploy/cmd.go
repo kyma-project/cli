@@ -56,7 +56,7 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cobraCmd.Flags().StringVarP(&o.WorkspacePath, "workspace", "w", defaultWorkspacePath,
 		"If --source is local, then workspace should be a path already containing Kyma sources.\nIf --source is not local, then workspace must be the path used to download Kyma sources.")
-	cobraCmd.Flags().BoolVarP(&o.Atomic, "atomic", "a", true, "Use atomic deployment, which rolls back any component that could not be installed successfully.")
+  cobraCmd.Flags().BoolVarP(&o.Atomic, "atomic", "a", false, "Set --atomic=true to use atomic deployment, which rolls back any component that could not be installed successfully.")
 	cobraCmd.Flags().StringVarP(&o.ComponentsFile, "components", "c", defaultComponentsFile, "Path to the components file.")
 	cobraCmd.Flags().StringSliceVarP(&o.OverridesFiles, "values-file", "f", []string{}, "Path to a JSON or YAML file with configuration values.")
 	cobraCmd.Flags().StringSliceVarP(&o.Overrides, "value", "", []string{}, "Set a configuration value (e.g. --value component.key='the value').")
