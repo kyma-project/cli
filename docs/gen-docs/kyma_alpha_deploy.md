@@ -15,7 +15,7 @@ kyma alpha deploy [flags]
 ## Flags
 
 ```bash
-  -a, --atomic                    Use atomic deployment, which rolls back any component that could not be installed successfully. (default true)
+  -a, --atomic                    Set --atomic=true to use atomic deployment, which rolls back any component that could not be installed successfully.
       --cancel-timeout duration   Time after which the workers' context is canceled. Any pending worker goroutines that are blocked by a Helm client will continue. (default 15m0s)
   -c, --components string         Path to the components file. (default "workspace/installation/resources/components.yaml")
   -d, --domain string             Custom domain used for installation.
@@ -33,7 +33,8 @@ kyma alpha deploy [flags]
       --value strings             Set a configuration value (e.g. --value component.key='the value').
   -f, --values-file strings       Path to a JSON or YAML file with configuration values.
       --workers-count int         Number of parallel workers used for the deployment. (default 4)
-  -w, --workspace string          Path used to download Kyma sources. (default "workspace")
+  -w, --workspace string          If --source is local, then workspace should be a path already containing Kyma sources.
+                                  If --source is not local, then workspace must be the path used to download Kyma sources. (default "workspace")
 ```
 
 ## Flags inherited from parent commands

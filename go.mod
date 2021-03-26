@@ -23,7 +23,7 @@ require (
 	github.com/docker/docker v20.10.3+incompatible
 	github.com/fatih/color v1.10.0
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
-	github.com/kyma-incubator/hydroform/function v0.0.0-20210309063107-26724ab15493
+	github.com/kyma-incubator/hydroform/function v0.0.0-20210319130226-926c73801013
 	github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90
 	github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20210326124244-0876d145b33c
 	github.com/kyma-incubator/hydroform/provision v0.0.0-20201124135641-ca1a1a00c935
