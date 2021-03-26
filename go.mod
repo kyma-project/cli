@@ -9,7 +9,7 @@ replace (
 	github.com/terraform-providers/terraform-provider-openstack => github.com/terraform-providers/terraform-provider-openstack v1.20.0
 	// grpc need to be compatible with direct dependencies in terraform (>=v1.29.1)
 	google.golang.org/grpc => google.golang.org/grpc v1.29.1
-	k8s.io/client-go => k8s.io/client-go v0.18.9
+	helm.sh/helm/v3 => helm.sh/helm/v3 v3.5.1
 )
 
 require (
@@ -25,16 +25,16 @@ require (
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/kyma-incubator/hydroform/function v0.0.0-20210309063107-26724ab15493
 	github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90
-	github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20210310133737-fb01cc034524
+	github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20210326124244-0876d145b33c
 	github.com/kyma-incubator/hydroform/provision v0.0.0-20201124135641-ca1a1a00c935
 	github.com/kyma-incubator/octopus v0.0.0-20200922132758-2b721e93b58b
 	github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20201125092745-687c943ac940
-	github.com/magiconair/properties v1.8.0
+	github.com/magiconair/properties v1.8.1
 	github.com/moby/sys/mount v0.2.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.4
 	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
 	github.com/pkg/errors v0.9.1
-	github.com/spf13/cobra v1.0.0
+	github.com/spf13/cobra v1.1.1
 	github.com/stretchr/testify v1.6.1
 	go.opencensus.io v0.22.5 // indirect
 	go.uber.org/zap v1.16.0
@@ -43,8 +43,8 @@ require (
 	gotest.tools v2.2.0+incompatible
 	istio.io/api v0.0.0-20200911191701-0dc35ad5c478
 	istio.io/client-go v0.0.0-20200807182027-d287a5abb594
-	k8s.io/api v0.18.9
-	k8s.io/apimachinery v0.18.9
-	k8s.io/client-go v8.0.0+incompatible
+	k8s.io/api v0.20.1
+	k8s.io/apimachinery v0.20.1
+	k8s.io/client-go v0.20.1
 	sigs.k8s.io/yaml v1.2.0
 )
