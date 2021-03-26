@@ -23,7 +23,7 @@ func TestPrintVersion(t *testing.T) {
 			clientOnly: true,
 			kymaVersionSet: &helm.KymaVersionSet{
 				Versions: []*helm.KymaVersion{
-					&helm.KymaVersion{
+					{
 						Version: "1.19",
 					},
 				},
@@ -36,7 +36,7 @@ func TestPrintVersion(t *testing.T) {
 			clientOnly:    true,
 			kymaVersionSet: &helm.KymaVersionSet{
 				Versions: []*helm.KymaVersion{
-					&helm.KymaVersion{
+					{
 						Version: "1.19",
 						Profile: "evaluation",
 					},
@@ -57,7 +57,7 @@ func TestPrintVersion(t *testing.T) {
 			clientOnly:    false,
 			kymaVersionSet: &helm.KymaVersionSet{
 				Versions: []*helm.KymaVersion{
-					&helm.KymaVersion{
+					{
 						Version: "1.19",
 					},
 				},
@@ -70,11 +70,11 @@ func TestPrintVersion(t *testing.T) {
 			clientOnly:    false,
 			kymaVersionSet: &helm.KymaVersionSet{
 				Versions: []*helm.KymaVersion{
-					&helm.KymaVersion{
+					{
 						Version: "1.19",
 						Profile: "evaluation",
 					},
-					&helm.KymaVersion{
+					{
 						Version: "1.23",
 					},
 				},
@@ -88,31 +88,31 @@ func TestPrintVersion(t *testing.T) {
 			versionDetails: true,
 			kymaVersionSet: &helm.KymaVersionSet{
 				Versions: []*helm.KymaVersion{
-					&helm.KymaVersion{
+					{
 						Version:      "1.19",
 						Profile:      "evaluation",
 						CreationTime: 1616070314, //Thursday, 18-Mar-21 13:25:14 CET
 						Components: []*helm.KymaComponentMetadata{
-							&helm.KymaComponentMetadata{
+							{
 								Name:      "comp1",
 								Namespace: "ns1",
 							},
-							&helm.KymaComponentMetadata{
+							{
 								Name:      "comp2",
 								Namespace: "ns1",
 							},
 						},
 					},
-					&helm.KymaVersion{
+					{
 						Version:      "1.20",
 						Profile:      "",
 						CreationTime: 1616070315, //Thursday, 18-Mar-21 13:25:15 CET
 						Components: []*helm.KymaComponentMetadata{
-							&helm.KymaComponentMetadata{
+							{
 								Name:      "comp1",
 								Namespace: "ns1",
 							},
-							&helm.KymaComponentMetadata{
+							{
 								Name:      "comp3",
 								Namespace: "ns1",
 							},
