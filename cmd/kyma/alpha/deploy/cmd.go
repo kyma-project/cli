@@ -188,7 +188,7 @@ func (cmd *command) isCompatibleVersion() error {
 			compCheckFailed = true
 		}
 		if err := checkCompatibility(kymaVersion, cmd.opts.Source); err != nil {
-			compCheckStep.Failuref("Cannot check compatibility between version '%s' and '%s'. This might cause errors - do you want to proceed anyway?",
+			compCheckStep.Failuref("Cannot check compatibility between version '%s' and '%s'. This might cause errors!",
 				kymaVersion, cmd.opts.Source)
 			compCheckFailed = true
 		}
