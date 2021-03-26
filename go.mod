@@ -17,12 +17,10 @@ require (
 	github.com/blang/semver/v4 v4.0.0
 	github.com/briandowns/spinner v1.12.0
 	github.com/containerd/cgroups v0.0.0-20201119153540-4cbc285b3327 // indirect
-	github.com/coreos/etcd v3.3.13+incompatible // indirect
 	github.com/daviddengcn/go-colortext v1.0.0
 	github.com/docker/cli v20.10.3+incompatible
 	github.com/docker/docker v20.10.3+incompatible
 	github.com/fatih/color v1.10.0
-	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/kyma-incubator/hydroform/function v0.0.0-20210319130226-926c73801013
 	github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90
 	github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20210326124244-0876d145b33c
