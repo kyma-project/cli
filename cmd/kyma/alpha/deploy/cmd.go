@@ -18,7 +18,6 @@ import (
 	"github.com/kyma-project/cli/internal/nice"
 	"github.com/kyma-project/cli/internal/trust"
 	"github.com/kyma-project/cli/pkg/asyncui"
-	"github.com/kyma-project/cli/pkg/deploy"
 	"github.com/kyma-project/cli/pkg/step"
 	"github.com/magiconair/properties"
 	"github.com/spf13/cobra"
@@ -27,6 +26,7 @@ import (
 
 	installConfig "github.com/kyma-incubator/hydroform/parallel-install/pkg/config"
 	"github.com/kyma-incubator/hydroform/parallel-install/pkg/deployment"
+	"github.com/kyma-incubator/hydroform/parallel-install/pkg/git"
 	"github.com/kyma-incubator/hydroform/parallel-install/pkg/metadata"
 )
 
@@ -35,6 +35,8 @@ type command struct {
 	cli.Command
 	duration time.Duration
 }
+
+const kymaURL = "https://github.com/kyma-project/kyma"
 
 //NewCmd creates a new kyma command
 func NewCmd(o *Options) *cobra.Command {
@@ -52,7 +54,8 @@ func NewCmd(o *Options) *cobra.Command {
 		Aliases: []string{"d"},
 	}
 
-	cobraCmd.Flags().StringVarP(&o.WorkspacePath, "workspace", "w", defaultWorkspacePath, "Path used to download Kyma sources.")
+	cobraCmd.Flags().StringVarP(&o.WorkspacePath, "workspace", "w", defaultWorkspacePath,
+		"If --source is local, then workspace should be a path already containing Kyma sources.\nIf --source is not local, then workspace must be the path used to download Kyma sources.")
 	cobraCmd.Flags().BoolVarP(&o.Atomic, "atomic", "a", false, "Set --atomic=true to use atomic deployment, which rolls back any component that could not be installed successfully.")
 	cobraCmd.Flags().StringVarP(&o.ComponentsFile, "components", "c", defaultComponentsFile, "Path to the components file.")
 	cobraCmd.Flags().StringSliceVarP(&o.OverridesFiles, "values-file", "f", []string{}, "Path to a JSON or YAML file with configuration values.")
@@ -116,14 +119,17 @@ func (cmd *command) Run() error {
 		_, err := os.Stat(cmd.opts.WorkspacePath)
 		approvalRequired := !os.IsNotExist(err)
 
-		if err := deploy.CloneSources(&cmd.Factory, cmd.opts.WorkspacePath, cmd.opts.Source); err != nil {
+		downloadStep := cmd.NewStep("Downloading Kyma into workspace folder")
+		if err := git.CloneRepo(kymaURL, cmd.opts.WorkspacePath, cmd.opts.Source); err != nil {
+			downloadStep.Failure()
 			return err
 		}
+		downloadStep.Successf("Kyma downloaded into workspace folder")
 
 		// delete workspace folder
 		if approvalRequired && !cmd.avoidUserInteraction() {
 			userApprovalStep := cmd.NewStep("Workspace folder already exists")
-			if userApprovalStep.PromptYesNo(fmt.Sprintf("Delete workspace folder '%s' after Kyma deployment?", cmd.opts.WorkspacePath)) {
+			if userApprovalStep.PromptYesNo(fmt.Sprintf("Delete workspace folder '%s' after Kyma deployment? ", cmd.opts.WorkspacePath)) {
 				defer os.RemoveAll(cmd.opts.WorkspacePath)
 			}
 			userApprovalStep.Success()

@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kyma-incubator/hydroform/parallel-install/pkg/download"
 	"github.com/kyma-project/cli/internal/cli"
-	"github.com/kyma-project/cli/internal/download"
 )
 
 var (
