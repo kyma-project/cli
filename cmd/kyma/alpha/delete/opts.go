@@ -13,7 +13,6 @@ const (
 )
 
 var (
-	localSource          = "local"
 	defaultWorkspacePath = filepath.Join(".", "workspace")
 )
 
