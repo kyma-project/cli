@@ -32,7 +32,7 @@ build-windows:
 	
 .PHONY: build-windows-arm
 build-windows-arm:
-	CGO_ENABLED=0 GOOS=windows GOARCH=arm64 go build -o ./bin/kyma.exe $(FLAGS) ./cmd
+	CGO_ENABLED=0 GOOS=windows GOARCH=arm go build -o ./bin/kyma.exe $(FLAGS) ./cmd
 
 .PHONY: build-linux
 build-linux:
