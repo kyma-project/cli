@@ -24,7 +24,7 @@ validate:
 	./hack/verify-generated-docs.sh
 
 .PHONY: build
-build: build-windows build-linux build-darwin build-windows-arm build-linux-arm build-darwin-arm
+build: build-windows build-linux build-darwin build-windows-arm build-linux-arm
 
 .PHONY: build-windows
 build-windows:
@@ -46,9 +46,9 @@ build-linux-arm:
 build-darwin:
 	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o ./bin/kyma-darwin $(FLAGS) ./cmd
 
-.PHONY: build-darwin-arm
-build-darwin-arm:
-	go version | grep '1.16' && CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o ./bin/kyma-darwin-arm $(FLAGS) ./cmd || true
+# .PHONY: build-darwin-arm
+# build-darwin-arm:
+# 	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o ./bin/kyma-darwin-arm $(FLAGS) ./cmd
 
 .PHONY: docs
 docs:
