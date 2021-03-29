@@ -3,12 +3,13 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"github.com/spf13/cobra"
 	"io"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/spf13/cobra"
 
 	"github.com/kyma-project/cli/cmd/kyma"
 	"github.com/kyma-project/cli/internal/cli"
@@ -111,7 +112,7 @@ func printOptions(buf *bytes.Buffer, cmd *cobra.Command) error {
 	flags := cmd.NonInheritedFlags()
 	flags.SetOutput(buf)
 	if flags.HasAvailableFlags() {
-		buf.WriteString("## Options\n\n```bash\n")
+		buf.WriteString("## Flags\n\n```bash\n")
 		flags.PrintDefaults()
 		buf.WriteString("```\n\n")
 	}
@@ -119,7 +120,7 @@ func printOptions(buf *bytes.Buffer, cmd *cobra.Command) error {
 	parentFlags := cmd.InheritedFlags()
 	parentFlags.SetOutput(buf)
 	if parentFlags.HasAvailableFlags() {
-		buf.WriteString("## Options inherited from parent commands\n\n```bash\n")
+		buf.WriteString("## Flags inherited from parent commands\n\n```bash\n")
 		parentFlags.PrintDefaults()
 		buf.WriteString("```\n\n")
 	}

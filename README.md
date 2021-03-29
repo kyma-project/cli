@@ -22,6 +22,35 @@ choco install kyma-cli
 
 Read more about [installation options](https://github.com/kyma-project/cli/blob/master/docs/04-01-installation.md).
 
+## Use Kyma CLI
+
+Once you have installed the CLI, you can use its set of commands and flags to provision a cluster and start working with Kyma.
+
+In a nutshell, this is the syntax you can use to run the commands from your terminal:
+
+```bash
+kyma {COMMAND} {FLAGS}
+```
+
+where:
+
+- **{COMMAND}** specifies the operation you want to perform.
+- **{FLAGS}** specifies optional flags.
+
+Example:
+
+```bash
+kyma install -s master
+```
+
+>**TIP:** Read more about the available [commands and flags](https://github.com/kyma-project/cli/blob/master/docs/03-01-use-kyma-cli.md).You can also try out Kyma CLI using [these examples](https://github.com/kyma-project/cli/blob/master/docs/03-02-examples.md).
+
+### Kyma CLI as kubectl plugin
+
+To learn how to use Kyma CLI as a kubectl plugin, follow [this tutorial](https://github.com/kyma-project/cli/blob/master/docs/08-01-kubectl-plugin-tutorial.md).
+
+## Development
+
 ### Build from Sources
 
 Alternatively, you can also build the Kyma CLI from the sources:
@@ -46,31 +75,6 @@ cd $GOPATH/src/github.com/kyma-project/cli
 
 The binary is saved to the `bin` folder in the Kyma CLI repository.
 
-## Use Kyma CLI
-
-Once you have installed the CLI, you can use its set of commands and flags to provision a cluster and start working with Kyma.
-
-In a nutshell, this is the syntax you can use to run the commands from your terminal:
-
-```bash
-kyma {COMMAND} {FLAGS}
-```
-
-where:
-
-- **{COMMAND}** specifies the operation you want to perform.
-- **{FLAGS}** specifies optional flags.
-
-Example:
-
-```bash
-kyma install -s master
-```
-
->**TIP:** Read more about the available [commands and flags](https://github.com/kyma-project/cli/blob/master/docs/03-01-use-kyma-cli.md).You can also try out Kyma CLI using [these examples](https://github.com/kyma-project/cli/blob/master/docs/03-02-examples.md).
-
-## Development
-
 ### Kyma CLI stable binaries
 
 Kyma CLI is used in CI jobs that install or test Kyma or provision clusters. To effectively support this process, we publish the stable binaries created from the `stable` tag which corresponds to the latest stable version of Kyma CLI.
@@ -81,7 +85,3 @@ To download the binaries, run:
 curl -Lo kyma https://storage.googleapis.com/kyma-cli-stable/kyma-darwin # kyma-linux or kyma.exe
 chmod +x kyma
 ```
-
-### Kyma CLI as kubectl plugin
-
-To learn how to use Kyma CLI as a kubectl plugin, follow [this tutorial](https://github.com/kyma-project/cli/blob/master/docs/08-01-kubectl-plugin-tutorial.md).

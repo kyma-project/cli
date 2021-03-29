@@ -15,20 +15,28 @@ import (
 
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
+	"github.com/kyma-project/cli/internal/nice"
+	"github.com/kyma-project/cli/internal/trust"
 	"github.com/kyma-project/cli/pkg/asyncui"
-	"github.com/kyma-project/cli/pkg/deploy"
+	"github.com/kyma-project/cli/pkg/step"
 	"github.com/magiconair/properties"
 	"github.com/spf13/cobra"
 
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
+
 	installConfig "github.com/kyma-incubator/hydroform/parallel-install/pkg/config"
 	"github.com/kyma-incubator/hydroform/parallel-install/pkg/deployment"
+	"github.com/kyma-incubator/hydroform/parallel-install/pkg/git"
 	"github.com/kyma-incubator/hydroform/parallel-install/pkg/metadata"
 )
 
 type command struct {
 	opts *Options
 	cli.Command
+	duration time.Duration
 }
+
+const kymaURL = "https://github.com/kyma-project/kyma"
 
 //NewCmd creates a new kyma command
 func NewCmd(o *Options) *cobra.Command {
@@ -47,13 +55,14 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 
 	cobraCmd.Flags().StringVarP(&o.WorkspacePath, "workspace", "w", defaultWorkspacePath, `Path to download Kyma sources (default: "workspace")`)
+	cobraCmd.Flags().BoolVarP(&o.Atomic, "atomic", "a", false, "Set --atomic=true to use atomic deployment, which rolls back any component that could not be installed successfully.")
 	cobraCmd.Flags().StringVarP(&o.ComponentsFile, "components", "c", defaultComponentsFile, `Path to the components file (default: "workspace/installation/resources/components.yaml")`)
-	cobraCmd.Flags().StringVarP(&o.OverridesFile, "values-file", "f", "", "Path(s) to one or more JSON or YAML files with configuration values")
+	cobraCmd.Flags().StringSliceVarP(&o.OverridesFiles, "values-file", "f", []string{}, "Path(s) to one or more JSON or YAML files with configuration values")
 	cobraCmd.Flags().StringSliceVarP(&o.Overrides, "value", "", []string{}, "Set one or more configuration values (e.g. --value component.key='the value')")
 	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 20*time.Minute, "Maximum time for the deployment (default: 20m0s)")
 	cobraCmd.Flags().DurationVarP(&o.TimeoutComponent, "timeout-component", "", 6*time.Minute, "Maximum time to deploy the component (default: 6m0s)")
 	cobraCmd.Flags().IntVar(&o.Concurrency, "concurrency", 4, "Number of parallel processes (default: 4)")
-	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", LocalKymaDevDomain, "Custom domain used for installation")
+	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", "", "Custom domain used for installation")
 	cobraCmd.Flags().StringVarP(&o.TLSCrtFile, "tls-crt", "", "", "TLS certificate file for the domain used for installation")
 	cobraCmd.Flags().StringVarP(&o.TLSKeyFile, "tls-key", "", "", "TLS key file for the domain used for installation")
 	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", defaultSource, `Installation source:
@@ -71,12 +80,16 @@ func NewCmd(o *Options) *cobra.Command {
 func (cmd *command) Run() error {
 	var err error
 
+	start := time.Now()
 	// verify input parameters
 	if err = cmd.opts.validateFlags(); err != nil {
 		return err
 	}
 	if cmd.opts.CI {
 		cmd.Factory.NonInteractive = true
+	}
+	if cmd.opts.Verbose {
+		cmd.Factory.UseLogger = true
 	}
 
 	// initialize Kubernetes client
@@ -104,14 +117,17 @@ func (cmd *command) Run() error {
 		_, err := os.Stat(cmd.opts.WorkspacePath)
 		approvalRequired := !os.IsNotExist(err)
 
-		if err := deploy.CloneSources(&cmd.Factory, cmd.opts.WorkspacePath, cmd.opts.Source); err != nil {
+		downloadStep := cmd.NewStep("Downloading Kyma into workspace folder")
+		if err := git.CloneRepo(kymaURL, cmd.opts.WorkspacePath, cmd.opts.Source); err != nil {
+			downloadStep.Failure()
 			return err
 		}
+		downloadStep.Successf("Kyma downloaded into workspace folder")
 
 		// delete workspace folder
 		if approvalRequired && !cmd.avoidUserInteraction() {
-			userApprovalStep := cmd.NewStep("Workspace folder exists")
-			if userApprovalStep.PromptYesNo(fmt.Sprintf("Delete workspace folder '%s' after Kyma deployment?", cmd.opts.WorkspacePath)) {
+			userApprovalStep := cmd.NewStep("Workspace folder already exists")
+			if userApprovalStep.PromptYesNo(fmt.Sprintf("Delete workspace folder '%s' after Kyma deployment? ", cmd.opts.WorkspacePath)) {
 				defer os.RemoveAll(cmd.opts.WorkspacePath)
 			}
 			userApprovalStep.Success()
@@ -121,11 +137,27 @@ func (cmd *command) Run() error {
 
 	}
 
-	err = cmd.deployKyma(ui)
-	if err == nil {
-		cmd.showSuccessMessage()
+	overrides, err := cmd.overrides()
+	if err != nil {
+		return err
 	}
-	return err
+
+	err = cmd.deployKyma(ui, overrides)
+	if err != nil {
+		return err
+	}
+	cmd.duration = time.Since(start)
+
+	if err := cmd.importCertificate(); err != nil {
+		return err
+	}
+
+	// print summary
+	o, err := overrides.Build()
+	if err != nil {
+		return errors.Wrap(err, "Unable to retrieve overrides to print installation summary")
+	}
+	return cmd.printSummary(o)
 }
 
 func (cmd *command) isCompatibleVersion() error {
@@ -165,31 +197,30 @@ func (cmd *command) isCompatibleVersion() error {
 	return fmt.Errorf("Upgrade stopped by user")
 }
 
-func (cmd *command) deployKyma(ui asyncui.AsyncUI) error {
-	var resourcePath = filepath.Join(cmd.opts.WorkspacePath, "resources")
+func (cmd *command) deployKyma(ui asyncui.AsyncUI, overrides *deployment.OverridesBuilder) error {
+	localWorkspace := cmd.opts.ResolveLocalWorkspacePath()
+	resourcePath := filepath.Join(localWorkspace, "resources")
+	installResourcePath := filepath.Join(localWorkspace, "installation", "resources")
 
-	installationCfg := installConfig.Config{
+	cmpFile, err := cmd.opts.ResolveComponentsFile()
+	if err != nil {
+		return err
+	}
+
+	installationCfg := &installConfig.Config{
 		WorkersCount:                  cmd.opts.Concurrency,
 		CancelTimeout:                 cmd.opts.Timeout,
 		QuitTimeout:                   cmd.opts.QuitTimeout(),
 		HelmTimeoutSeconds:            int(cmd.opts.TimeoutComponent.Seconds()),
 		BackoffInitialIntervalSeconds: 3,
 		BackoffMaxElapsedTimeSeconds:  60 * 5,
-		Log:                           cli.LogFunc(cmd.Verbose),
+		Log:                           cli.NewHydroformLoggerAdapter(cli.NewLogger(cmd.Verbose)),
 		Profile:                       cmd.opts.Profile,
-		ComponentsListFile:            cmd.opts.ResolveComponentsFile(),
-		CrdPath:                       filepath.Join(resourcePath, "cluster-essentials", "files"),
+		ComponentsListFile:            cmpFile,
 		ResourcePath:                  resourcePath,
+		InstallationResourcePath:      installResourcePath,
 		Version:                       cmd.opts.Source,
-	}
-
-	overrides, err := cmd.overrides()
-	if err != nil {
-		return err
-	}
-
-	if err := cmd.configureCoreDNS(); err != nil {
-		return err
+		Atomic:                        cmd.opts.Atomic,
 	}
 
 	// if an AsyncUI is used, get channel for update events
@@ -209,102 +240,86 @@ func (cmd *command) deployKyma(ui asyncui.AsyncUI) error {
 	return installer.StartKymaDeployment()
 }
 
-func (cmd *command) configureCoreDNS() error {
-	if isLocalKymaDomain(cmd.opts.Domain) { //patch Kubernetes DNS system when using "local.kyma.dev" as domain name
-		step := cmd.NewStep(fmt.Sprintf("Configure Kubernetes DNS to support domain '%s'", cmd.opts.Domain))
-		err := ConfigureCoreDNS(cmd.K8s.Static())
-		if err == nil {
-			step.Success()
-		} else {
-			step.Failure()
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (cmd *command) overrides() (deployment.Overrides, error) {
-	overrides := deployment.Overrides{}
+func (cmd *command) overrides() (*deployment.OverridesBuilder, error) {
+	ob := &deployment.OverridesBuilder{}
 
 	// add override files
-	if cmd.opts.OverridesFile != "" {
-		if err := overrides.AddFile(cmd.opts.OverridesFile); err != nil {
-			return overrides, err
+	overridesFiles, err := cmd.opts.ResolveOverridesFiles()
+	if err != nil {
+		return ob, err
+	}
+	for _, overridesFile := range overridesFiles {
+		if err := ob.AddFile(overridesFile); err != nil {
+			return ob, err
 		}
 	}
 
-	if err := cmd.setGlobalOverrides(&overrides); err != nil {
-		return overrides, err
+	// set global overrides which the CLI allows customer to specify using CLI params (just for UX convenience)
+	if err := cmd.setGlobalOverrides(ob); err != nil {
+		return ob, err
 	}
 
 	// add overrides provided as CLI params
 	for _, override := range cmd.opts.Overrides {
 		keyValuePairs := properties.MustLoadString(override)
 		if keyValuePairs.Len() < 1 {
-			return overrides, fmt.Errorf("Override has wrong format: Provide overrides in 'key=value' format")
+			return ob, fmt.Errorf("Override has wrong format: Provide overrides in 'key=value' format")
 		}
 
 		// process key-value pair
 		for _, key := range keyValuePairs.Keys() {
 			value, ok := keyValuePairs.Get(key)
 			if !ok || value == "" {
-				return overrides, fmt.Errorf("Cannot read value of override '%s'", key)
+				return ob, fmt.Errorf("Cannot read value of override '%s'", key)
 			}
 
 			comp, overridesMap, err := cmd.convertToOverridesMap(key, value)
 			if err != nil {
-				return overrides, err
+				return ob, err
 			}
 
-			if err := overrides.AddOverrides(comp, overridesMap); err != nil {
-				return overrides, err
+			if err := ob.AddOverrides(comp, overridesMap); err != nil {
+				return ob, err
 			}
 		}
 	}
 
-	return overrides, nil
+	return ob, nil
 }
 
-func (cmd *command) setGlobalOverrides(overrides *deployment.Overrides) error {
+//setGlobalOverrides is setting global overrides to improve the UX of the CLI
+func (cmd *command) setGlobalOverrides(overrides *deployment.OverridesBuilder) error {
+	// add domain provided as CLI params (for UX convenience)
 	globalOverrides := make(map[string]interface{})
-	globalOverrides["isLocalEnv"] = false //DEPRECATED - 'isLocalEnv' will be removed soon
-	globalOverrides["domainName"] = cmd.opts.Domain
+	if cmd.opts.Domain != "" {
+		globalOverrides["domainName"] = cmd.opts.Domain
+	}
+	// add certificate provided as CLI params (for UX convenience)
 	certProvided, err := cmd.opts.tlsCertAndKeyProvided()
 	if err != nil {
 		return err
 	}
 	if certProvided {
-		// use encoded TLS key
-		tlsKeyEnc, err := cmd.opts.tlsKeyEnc()
+		tlsKey, err := cmd.opts.tlsKeyEnc()
 		if err != nil {
 			return err
 		}
-		globalOverrides["tlsKey"] = tlsKeyEnc
-
-		// use encoded TLS crt
-		tlsCrtEnc, err := cmd.opts.tlsCrtEnc()
+		tlsCrt, err := cmd.opts.tlsCrtEnc()
 		if err != nil {
 			return err
 		}
-		globalOverrides["tlsCrt"] = tlsCrtEnc
-	} else {
-		// use default TLS cert
-		globalOverrides["tlsKey"] = defaultTLSKeyEnc
-		globalOverrides["tlsCrt"] = defaultTLSCrtEnc
+		globalOverrides["tlsKey"] = tlsKey
+		globalOverrides["tlsCrt"] = tlsCrt
 	}
 
-	// ingress settings
-	ingressOverrides := make(map[string]interface{})
-	ingressOverrides["domainName"] = cmd.opts.Domain
-	globalOverrides["ingress"] = ingressOverrides
+	// register global overrides
+	if len(globalOverrides) > 0 {
+		if err := overrides.AddOverrides("global", globalOverrides); err != nil {
+			return err
+		}
+	}
 
-	// environment overrides
-	envOverrides := make(map[string]interface{})
-	envOverrides["gardener"] = false
-	globalOverrides["environment"] = envOverrides //DEPRECATED - 'environment' will be removed soon
-
-	return overrides.AddOverrides("global", globalOverrides)
+	return nil
 }
 
 // convertToOverridesMap parses the override key and converts it into an nested map.
@@ -345,68 +360,110 @@ func (cmd *command) convertToOverridesMap(key, value string) (string, map[string
 	return comp, latestOverrideMap, nil
 }
 
-func (cmd *command) showSuccessMessage() {
-	var err error
-	logFunc := cli.LogFunc(cmd.Verbose)
-
-	fmt.Println("Kyma successfully installed.")
-
-	tlsProvided, err := cmd.opts.tlsCertAndKeyProvided()
-	if err != nil {
-		logFunc("%s", err)
-	}
-
-	// show cert installation hint only for local Kyma domain and if user isn't providing a custom cert
-	if isLocalKymaDomain(cmd.opts.Domain) && !tlsProvided {
-		if err = cmd.storeCrtAsFile(); err != nil {
-			logFunc("%s", err)
-		}
-		fmt.Println(`
-Generated self signed TLS certificate should be trusted in your system.
-
-  * On Mac Os X, execute this command:
-   
-    sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain kyma.crt
-
-  * On Windows, follow the steps described here:
-
-    https://support.globalsign.com/ssl/ssl-certificates-installation/import-and-export-certificate-microsoft-windows
-
-This is a one time operation (you can skip this step if you did it before).`)
-	}
-
-	adminPw, err := cmd.adminPw()
-	if err != nil {
-		logFunc("%s", err)
-	}
-	fmt.Printf(`
-Kyma Console Url: %s
-User: admin@kyma.cx
-Password: %s
-
-`, fmt.Sprintf("https://console.%s", cmd.opts.Domain), adminPw)
-}
-
-func (cmd *command) storeCrtAsFile() error {
-	secret, err := cmd.K8s.Static().CoreV1().Secrets("istio-system").Get(context.Background(), "kyma-gateway-certs", metav1.GetOptions{})
-	if err != nil {
-		return err
-	}
-	if err = ioutil.WriteFile("kyma.crt", secret.Data["cert"], 0600); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (cmd *command) adminPw() (string, error) {
-	secret, err := cmd.K8s.Static().CoreV1().Secrets("kyma-system").Get(context.Background(), "admin-user", metav1.GetOptions{})
-	if err != nil {
-		return "", err
-	}
-	return string(secret.Data["password"]), nil
-}
-
 //avoidUserInteraction returns true if user won't provide input
 func (cmd *command) avoidUserInteraction() bool {
 	return cmd.NonInteractive || cmd.CI
+}
+
+func (cmd *command) printSummary(o deployment.Overrides) error {
+	provider := metadata.New(cmd.K8s.Static())
+	md, err := provider.ReadKymaMetadata()
+	if err != nil {
+		return err
+	}
+
+	domain, ok := o.Find("global.domainName")
+	if !ok {
+		return errors.New("Domain not found in overrides")
+	}
+
+	var consoleURL string
+	vs, err := cmd.K8s.Istio().NetworkingV1alpha3().VirtualServices("kyma-system").Get(context.Background(), "console-web", metav1.GetOptions{})
+	switch {
+	case k8sErrors.IsNotFound(err):
+		consoleURL = "not installed"
+	case err != nil:
+		return err
+	case vs != nil && len(vs.Spec.Hosts) > 0:
+		consoleURL = fmt.Sprintf("https://%s", vs.Spec.Hosts[0])
+	default:
+		return errors.New("console host could not be obtained")
+	}
+
+	var email, pass string
+	adm, err := cmd.K8s.Static().CoreV1().Secrets("kyma-system").Get(context.Background(), "admin-user", metav1.GetOptions{})
+	switch {
+	case k8sErrors.IsNotFound(err):
+		break
+	case err != nil:
+		return err
+	case adm != nil:
+		email = string(adm.Data["email"])
+		pass = string(adm.Data["password"])
+	default:
+		return errors.New("admin credentials could not be obtained")
+	}
+
+	sum := nice.Summary{
+		NonInteractive: cmd.NonInteractive,
+		Version:        md.Version,
+		URL:            domain.(string),
+		Console:        consoleURL,
+		Duration:       cmd.duration,
+		Email:          string(email),
+		Password:       string(pass),
+	}
+
+	return sum.Print()
+}
+
+func (cmd *command) importCertificate() error {
+	ca := trust.NewCertifier(cmd.K8s)
+
+	if !cmd.approveImportCertificate() {
+		//no approval given: stop import
+		ca.Instructions()
+		return nil
+	}
+
+	// get cert from cluster
+	cert, err := ca.Certificate()
+	if err != nil {
+		return err
+	}
+
+	tmpFile, err := ioutil.TempFile(os.TempDir(), "kyma-*.crt")
+	if err != nil {
+		return errors.Wrap(err, "Cannot create temporary file for Kyma certificate")
+	}
+	defer os.Remove(tmpFile.Name())
+
+	if _, err = tmpFile.Write(cert); err != nil {
+		return errors.Wrap(err, "Failed to write the kyma certificate")
+	}
+	if err := tmpFile.Close(); err != nil {
+		return err
+	}
+
+	// create a simple step to print certificate import steps without a spinner (spinner overwrites sudo prompt)
+	// TODO refactor how certifier logs when the old install command is gone
+	f := step.Factory{
+		NonInteractive: true,
+	}
+	s := f.NewStep("Importing Kyma certificate")
+
+	if err := ca.StoreCertificate(tmpFile.Name(), s); err != nil {
+		return err
+	}
+	s.Successf("Kyma root certificate imported")
+	return nil
+}
+
+func (cmd *command) approveImportCertificate() bool {
+	qImportCertsStep := cmd.NewStep("Install Kyma certificate locally")
+	defer qImportCertsStep.Success()
+	if cmd.avoidUserInteraction() { //do not import if user-interaction has to be avoided (suppress sudo pwd request)
+		return false
+	}
+	return qImportCertsStep.PromptYesNo("Should the Kyma certificate be installed locally?")
 }

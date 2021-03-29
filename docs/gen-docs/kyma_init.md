@@ -8,7 +8,7 @@ Creates local resources for your project.
 
 Use this command to initialize the configuration.
 
-## Options inherited from parent commands
+## Flags inherited from parent commands
 
 ```bash
       --ci                  Enables the CI mode to run on CI/CD systems. It avoids any user interaction (such as no dialog prompts) and ensures that logs are formatted properly in log files (such as no spinners for CLI steps).

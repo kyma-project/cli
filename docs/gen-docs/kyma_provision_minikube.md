@@ -12,7 +12,7 @@ Use this command to provision a Minikube cluster for Kyma installation. It requi
 kyma provision minikube [flags]
 ```
 
-## Options
+## Flags
 
 ```bash
       --cpus string                    Specifies the number of CPUs used for installation. (default "4")
@@ -27,7 +27,7 @@ kyma provision minikube [flags]
       --vm-driver string               Specifies the VM driver. Possible values: vmwarefusion,kvm,xhyve,hyperv,hyperkit,virtualbox,kvm2,docker,none (default "hyperkit")
 ```
 
-## Options inherited from parent commands
+## Flags inherited from parent commands
 
 ```bash
       --ci                  Enables the CI mode to run on CI/CD systems. It avoids any user interaction (such as no dialog prompts) and ensures that logs are formatted properly in log files (such as no spinners for CLI steps).

@@ -2,8 +2,9 @@ package run
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
-	"math/rand"
+	"math/big"
 	"strings"
 	"time"
 
@@ -77,9 +78,11 @@ func (cmd *command) Run(args []string) error {
 	if len(cmd.opts.Name) > 0 {
 		testSuiteName = cmd.opts.Name
 	} else {
-		rand.Seed(time.Now().UTC().UnixNano())
-		rnd := rand.Int31()
-		testSuiteName = fmt.Sprintf("test-%d", rnd)
+		n, err := rand.Int(rand.Reader, big.NewInt(1000))
+		if err != nil {
+			return err
+		}
+		testSuiteName = fmt.Sprintf("test-%d", n.Int64())
 	}
 
 	tNotExists, err := verifyIfTestNotExists(testSuiteName, cmd.K8s.Octopus())

@@ -13,14 +13,14 @@ Use the flags to specify the name of your Function, the Namespace, or the locati
 kyma sync function [flags]
 ```
 
-## Options
+## Flags
 
 ```bash
   -d, --dir string         Full path to the directory where you want to save the project.
   -n, --namespace string   Namespace from which you want to sync the Function.
 ```
 
-## Options inherited from parent commands
+## Flags inherited from parent commands
 
 ```bash
       --ci                  Enables the CI mode to run on CI/CD systems. It avoids any user interaction (such as no dialog prompts) and ensures that logs are formatted properly in log files (such as no spinners for CLI steps).

@@ -18,38 +18,41 @@ func TestProvisionAKSFlags(t *testing.T) {
 	require.Equal(t, "", o.Name, "Default value for the name flag not as expected.")
 	require.Equal(t, "", o.Project, "Default value for the project flag not as expected.")
 	require.Equal(t, "", o.CredentialsFile, "Default value for the credentials flag not as expected.")
-	require.Equal(t, "1.16.15", o.KubernetesVersion, "Default value for the kube-version flag not as expected.")
+	require.Equal(t, "1.19.7", o.KubernetesVersion, "Default value for the kube-version flag not as expected.")
 	require.Equal(t, "westeurope", o.Location, "Default value for the location flag not as expected.")
 	require.Equal(t, "Standard_D4_v3", o.MachineType, "Default value for the type flag not as expected.")
 	require.Equal(t, 50, o.DiskSizeGB, "Default value for the disk-size flag not as expected.")
 	require.Equal(t, 3, o.NodeCount, "Default value for the nodes flag not as expected.")
 	// Temporary disable flag. To be enabled when hydroform supports TF modules
 	//require.Empty(t, o.Extra, "Default value for the extra flag not as expected.")
+	require.Equal(t, uint(3), o.Attempts, "Default value for the attempts flag not as expected.")
 
 	// test passing flags
 	err := c.ParseFlags([]string{
 		"-n", "my-cluster",
 		"-p", "my-resource-group",
 		"-c", "/my/credentials/file",
-		"-k", "1.16.0",
+		"-k", "1.19.0",
 		"-l", "us-central1-c",
 		"-t", "quantum-computer",
 		"--disk-size", "2000",
 		"--nodes", "7",
 		// Temporary disable flag. To be enabled when hydroform supports TF modules
 		//"--extra", "VAR1=VALUE1,VAR2=VALUE2",
+		"--attempts", "2",
 	})
 	require.NoError(t, err, "Parsing flags should not return an error")
 	require.Equal(t, "my-cluster", o.Name, "The parsed value for the name flag not as expected.")
 	require.Equal(t, "my-resource-group", o.Project, "The parsed value for the project flag not as expected.")
 	require.Equal(t, "/my/credentials/file", o.CredentialsFile, "The parsed value for the credentials flag not as expected.")
-	require.Equal(t, "1.16.0", o.KubernetesVersion, "The parsed value for the kube-version flag not as expected.")
+	require.Equal(t, "1.19.0", o.KubernetesVersion, "The parsed value for the kube-version flag not as expected.")
 	require.Equal(t, "us-central1-c", o.Location, "The parsed value for the location flag not as expected.")
 	require.Equal(t, "quantum-computer", o.MachineType, "The parsed value for the type flag not as expected.")
 	require.Equal(t, 2000, o.DiskSizeGB, "The parsed value for the disk-size flag not as expected.")
 	require.Equal(t, 7, o.NodeCount, "The parsed value for the nodes flag not as expected.")
 	// Temporary disable flag. To be enabled when hydroform supports TF modules
 	//require.Equal(t, []string{"VAR1=VALUE1", "VAR2=VALUE2"}, o.Extra, "The parsed value for the extra flag not as expected.")
+	require.Equal(t, uint(2), o.Attempts, "The parsed value for the attempts flag not as expected.")
 }
 
 func TestProvisionAKSSubcommands(t *testing.T) {
@@ -66,7 +69,7 @@ func TestNewCluster(t *testing.T) {
 	t.Parallel()
 	o := &Options{
 		Name:              "mega-cluster",
-		KubernetesVersion: "1.16.0",
+		KubernetesVersion: "1.19.0",
 		Location:          "north-pole",
 		MachineType:       "HAL",
 		DiskSizeGB:        9000,

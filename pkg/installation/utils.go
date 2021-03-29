@@ -18,6 +18,7 @@ import (
 	"github.com/kyma-incubator/hydroform/install/config"
 	installationSDK "github.com/kyma-incubator/hydroform/install/installation"
 	"github.com/kyma-incubator/hydroform/install/scheme"
+	"github.com/kyma-incubator/hydroform/parallel-install/pkg/download"
 	"github.com/kyma-project/cli/pkg/step"
 	"github.com/kyma-project/kyma/components/kyma-operator/pkg/apis/installer/v1alpha1"
 	"github.com/pkg/errors"
@@ -151,7 +152,7 @@ func (i *Installation) loadInstallationFiles() (map[string]*File, error) {
 				"resources", file.Path)
 			reader, err = os.Open(path)
 		} else {
-			reader, err = downloadFile(i.releaseFile(file.Path))
+			reader, err = download.RemoteReader(i.releaseFile(file.Path))
 		}
 
 		if err != nil {
@@ -285,22 +286,6 @@ func insertProfile(installationCRFile *File, profile string) error {
 		}
 	}
 	return errors.New("unable to set 'profile' field for Kyma Installation CR")
-}
-
-func downloadFile(path string) (io.ReadCloser, error) {
-	client := &http.Client{
-		Timeout: 5 * time.Second,
-	}
-	resp, err := client.Get(path)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.StatusCode == http.StatusOK {
-		return resp.Body, nil
-	}
-
-	return nil, fmt.Errorf("couldn't download the file: %s, response: %v", path, resp.Status)
 }
 
 func getInstallerImage(installerFile *File) (string, error) {

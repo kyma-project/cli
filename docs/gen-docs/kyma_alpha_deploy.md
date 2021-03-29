@@ -12,14 +12,15 @@ Use this command to deploy Kyma on a running Kubernetes cluster.
 kyma alpha deploy [flags]
 ```
 
-## Options
+## Flags
 
 ```bash
-      --cancel-timeout duration   Time after which the workers' context is canceled. Pending worker goroutines (if any) may continue if blocked by a Helm client. (default 15m0s)
+  -a, --atomic                    Set --atomic=true to use atomic deployment, which rolls back any component that could not be installed successfully.
+      --cancel-timeout duration   Time after which the workers' context is canceled. Any pending worker goroutines that are blocked by a Helm client will continue. (default 15m0s)
   -c, --components string         Path to the components file. (default "workspace/installation/resources/components.yaml")
-  -d, --domain string             Domain used for installation. (default "local.kyma.dev")
+  -d, --domain string             Custom domain used for installation.
       --helm-timeout duration     Timeout for the underlying Helm client. (default 6m0s)
-  -p, --profile string            Kyma deployment profile. Supported profiles are: "evaluation", "production".
+  -p, --profile string            Kyma deployment profile. If not specified, Kyma is installed with the default chart values. The supported profiles are: "evaluation", "production".
       --quit-timeout duration     Time after which the deployment is aborted. Worker goroutines may still be working in the background. This value must be greater than the value for cancel-timeout. (default 20m0s)
   -s, --source string             Installation source.
                                   	- To use a specific release, write "kyma alpha deploy --source=1.17.1".
@@ -30,12 +31,13 @@ kyma alpha deploy [flags]
       --tls-crt string            TLS certificate file for the domain used for installation.
       --tls-key string            TLS key file for the domain used for installation.
       --value strings             Set a configuration value (e.g. --value component.key='the value').
-  -f, --values-file string        Path to a JSON or YAML file with configuration values.
+  -f, --values-file strings       Path to a JSON or YAML file with configuration values.
       --workers-count int         Number of parallel workers used for the deployment. (default 4)
-  -w, --workspace string          Path used to download Kyma sources. (default "workspace")
+  -w, --workspace string          If --source is local, then workspace should be a path already containing Kyma sources.
+                                  If --source is not local, then workspace must be the path used to download Kyma sources. (default "workspace")
 ```
 
-## Options inherited from parent commands
+## Flags inherited from parent commands
 
 ```bash
       --ci                  Enables the CI mode to run on CI/CD systems. It avoids any user interaction (such as no dialog prompts) and ensures that logs are formatted properly in log files (such as no spinners for CLI steps).

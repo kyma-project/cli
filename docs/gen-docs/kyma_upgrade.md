@@ -12,7 +12,7 @@ Use this command to upgrade the Kyma version on a cluster.
 kyma upgrade [flags]
 ```
 
-## Options
+## Flags
 
 ```bash
   -c, --components string      Path to a YAML file with a component list to override.
@@ -22,8 +22,8 @@ kyma upgrade [flags]
   -n, --no-wait                Determines if the command should wait for the Kyma upgrade to complete.
   -o, --override stringArray   Path to a YAML file with parameters to override.
   -p, --password string        Predefined cluster password.
-      --profile string         Kyma installation profile (evaluation|production).
-  -s, --source string          Upgrade source. 
+      --profile string         Kyma installation profile (evaluation|production). If not specified, Kyma is installed with the default chart values.
+  -s, --source string          Upgrade source.
                                	- To use a specific release, write "kyma upgrade --source=1.3.0".
                                	- To use the master branch, write "kyma install --source=master".
                                	- To use a commit, write "kyma upgrade --source=34edf09a".
@@ -35,7 +35,7 @@ kyma upgrade [flags]
       --tls-key string         TLS key for the domain used for the upgrade. The key must be a base64-encoded value.
 ```
 
-## Options inherited from parent commands
+## Flags inherited from parent commands
 
 ```bash
       --ci                  Enables the CI mode to run on CI/CD systems. It avoids any user interaction (such as no dialog prompts) and ensures that logs are formatted properly in log files (such as no spinners for CLI steps).

@@ -19,7 +19,7 @@ func TestProvisionGardenerAzureFlags(t *testing.T) {
 	require.Equal(t, "", o.Project, "Default value for the project flag not as expected.")
 	require.Equal(t, "", o.CredentialsFile, "Default value for the credentials flag not as expected.")
 	require.Equal(t, "", o.Secret, "The parsed value for the secret flag not as expected.")
-	require.Equal(t, "1.16", o.KubernetesVersion, "Default value for the kube-version flag not as expected.")
+	require.Equal(t, "1.19", o.KubernetesVersion, "Default value for the kube-version flag not as expected.")
 	require.Equal(t, "westeurope", o.Region, "Default value for the region flag not as expected.")
 	require.Equal(t, []string{"1"}, o.Zones, "Default value for the zone flag not as expected.")
 	require.Equal(t, "Standard_D4_v3", o.MachineType, "Default value for the type flag not as expected.")
@@ -28,6 +28,7 @@ func TestProvisionGardenerAzureFlags(t *testing.T) {
 	require.Equal(t, 2, o.ScalerMin, "Default value for the scaler-min flag not as expected.")
 	require.Equal(t, 3, o.ScalerMax, "Default value for the scaler-max flag not as expected.")
 	require.Empty(t, o.Extra, "Default value for the extra flag not as expected.")
+	require.Equal(t, uint(3), o.Attempts, "Default value for the attempts flag not as expected.")
 
 	// test passing flags
 	err := c.ParseFlags([]string{
@@ -36,7 +37,7 @@ func TestProvisionGardenerAzureFlags(t *testing.T) {
 		"-c", "/my/credentials/file",
 		"-s", "my-ali-key",
 		"--disk-type", "a big one",
-		"-k", "1.16.0",
+		"-k", "1.19.0",
 		"-r", "us-central",
 		"-z", "us-central1-b",
 		"-t", "quantum-computer",
@@ -44,6 +45,7 @@ func TestProvisionGardenerAzureFlags(t *testing.T) {
 		"--scaler-min", "88",
 		"--scaler-max", "99",
 		"--extra", "VAR1=VALUE1,VAR2=VALUE2",
+		"--attempts", "2",
 	})
 
 	require.NoError(t, err, "Parsing flags should not return an error")
@@ -51,7 +53,7 @@ func TestProvisionGardenerAzureFlags(t *testing.T) {
 	require.Equal(t, "my-project", o.Project, "The parsed value for the project flag not as expected.")
 	require.Equal(t, "/my/credentials/file", o.CredentialsFile, "The parsed value for the credentials flag not as expected.")
 	require.Equal(t, "my-ali-key", o.Secret, "The parsed value for the secret flag not as expected.")
-	require.Equal(t, "1.16.0", o.KubernetesVersion, "The parsed value for the kube-version flag not as expected.")
+	require.Equal(t, "1.19.0", o.KubernetesVersion, "The parsed value for the kube-version flag not as expected.")
 	require.Equal(t, "us-central", o.Region, "The parsed value for the region flag not as expected.")
 	require.Equal(t, []string{"us-central1-b"}, o.Zones, "The parsed value for the zone flag not as expected.")
 	require.Equal(t, "quantum-computer", o.MachineType, "The parsed value for the type flag not as expected.")
@@ -60,6 +62,7 @@ func TestProvisionGardenerAzureFlags(t *testing.T) {
 	require.Equal(t, 88, o.ScalerMin, "The parsed value for the scaler-min flag not as expected.")
 	require.Equal(t, 99, o.ScalerMax, "The parsed value for the scaler-max flag not as expected.")
 	require.Equal(t, []string{"VAR1=VALUE1", "VAR2=VALUE2"}, o.Extra, "The parsed value for the extra flag not as expected.")
+	require.Equal(t, uint(2), o.Attempts, "The parsed value for the attempts flag not as expected.")
 }
 
 func TestProvisionGardenerAzureSubcommands(t *testing.T) {
@@ -76,7 +79,7 @@ func TestNewCluster(t *testing.T) {
 	t.Parallel()
 	o := &Options{
 		Name:              "mega-cluster",
-		KubernetesVersion: "1.16.0",
+		KubernetesVersion: "1.19.0",
 		Region:            "north-pole",
 		MachineType:       "HAL",
 		DiskSizeGB:        9000,
@@ -127,7 +130,7 @@ func TestNewProvider(t *testing.T) {
 	custom["workercidr"] = "10.250.0.0/16"
 	custom["networking_type"] = "calico"
 	custom["machine_image_name"] = "gardenlinux"
-	custom["machine_image_version"] = "27.1.0"
+	custom["machine_image_version"] = "184.0.0"
 
 	require.Equal(t, custom, p.CustomConfigurations, "Provider extra configurations not as expected.")
 }

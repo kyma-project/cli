@@ -13,12 +13,13 @@ NOTE: To access the provisioned cluster, make sure you get authenticated by Goog
 kyma provision gke [flags]
 ```
 
-## Options
+## Flags
 
 ```bash
+      --attempts uint         Maximum number of attempts to provision the cluster. (default 3)
   -c, --credentials string    Path to the GCP service account key file. (required)
       --disk-size int         Disk size (in GB) of the cluster. (default 50)
-  -k, --kube-version string   Kubernetes version of the cluster. (default "1.16")
+  -k, --kube-version string   Kubernetes version of the cluster. (default "1.18")
   -l, --location string       Location of the cluster. (default "europe-west3-a")
   -n, --name string           Name of the GKE cluster to provision. (required)
       --nodes int             Number of cluster nodes. (default 3)
@@ -26,7 +27,7 @@ kyma provision gke [flags]
   -t, --type string           Machine type used for the cluster. (default "n1-standard-4")
 ```
 
-## Options inherited from parent commands
+## Flags inherited from parent commands
 
 ```bash
       --ci                  Enables the CI mode to run on CI/CD systems. It avoids any user interaction (such as no dialog prompts) and ensures that logs are formatted properly in log files (such as no spinners for CLI steps).

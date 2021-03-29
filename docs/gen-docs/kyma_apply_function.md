@@ -13,7 +13,7 @@ Use the flags to specify the desired location for the source files or run the co
 kyma apply function [flags]
 ```
 
-## Options
+## Flags
 
 ```bash
       --dry-run            Validated list of objects to be created from sources.
@@ -30,7 +30,7 @@ kyma apply function [flags]
   -w, --watch              Flag used to watch resources applied to the cluster to make sure that everything is applied in the correct order.
 ```
 
-## Options inherited from parent commands
+## Flags inherited from parent commands
 
 ```bash
       --ci                  Enables the CI mode to run on CI/CD systems. It avoids any user interaction (such as no dialog prompts) and ensures that logs are formatted properly in log files (such as no spinners for CLI steps).

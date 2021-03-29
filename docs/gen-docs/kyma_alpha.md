@@ -8,7 +8,7 @@ Executes the commands in the alpha testing stage.
 
 The Kyma CLI in alpha testing stage uses the following commands:
 
-## Options inherited from parent commands
+## Flags inherited from parent commands
 
 ```bash
       --ci                  Enables the CI mode to run on CI/CD systems. It avoids any user interaction (such as no dialog prompts) and ensures that logs are formatted properly in log files (such as no spinners for CLI steps).
@@ -21,8 +21,8 @@ The Kyma CLI in alpha testing stage uses the following commands:
 ## See also
 
 * [kyma](#kyma-kyma)	 - Controls a Kyma cluster.
+* [kyma alpha delete](#kyma-alpha-delete-kyma-alpha-delete)	 - Deletes Kyma from a running Kubernetes cluster.
 * [kyma alpha deploy](#kyma-alpha-deploy-kyma-alpha-deploy)	 - Deploys Kyma on a running Kubernetes cluster.
 * [kyma alpha provision](#kyma-alpha-provision-kyma-alpha-provision)	 - Provisions a cluster for Kyma installation.
-* [kyma alpha uninstall](#kyma-alpha-uninstall-kyma-alpha-uninstall)	 - Uninstalls Kyma from a running Kubernetes cluster.
 * [kyma alpha version](#kyma-alpha-version-kyma-alpha-version)	 - Displays the version of Kyma CLI and of the connected Kyma cluster.
 

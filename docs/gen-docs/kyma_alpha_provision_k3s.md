@@ -12,16 +12,16 @@ Use this command to provision a k3s-based Kubernetes cluster for Kyma installati
 kyma alpha provision k3s [flags]
 ```
 
-## Options
+## Flags
 
 ```bash
-      --name string          Name of the Kyma cluster. (default "kyma")
-  -s, --server-arg strings   Argument passed to the Kubernetes server (e.g. --server-arg='--alsologtostderr').
-      --timeout duration     Maximum time in minutes during which the provisioning takes place, where "0" means "infinite". (default 5m0s)
-      --workers int          Number of worker nodes. (default 1)
+      --name string           Name of the Kyma cluster. (default "kyma")
+  -s, --server-args strings   Arguments passed to the Kubernetes server (e.g. --server-args='--alsologtostderr').
+      --timeout duration      Maximum time in minutes during which the provisioning takes place, where "0" means "infinite". (default 5m0s)
+      --workers int           Number of worker nodes. (default 1)
 ```
 
-## Options inherited from parent commands
+## Flags inherited from parent commands
 
 ```bash
       --ci                  Enables the CI mode to run on CI/CD systems. It avoids any user interaction (such as no dialog prompts) and ensures that logs are formatted properly in log files (such as no spinners for CLI steps).

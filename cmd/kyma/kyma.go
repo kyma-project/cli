@@ -2,10 +2,10 @@ package kyma
 
 import (
 	"github.com/kyma-project/cli/cmd/kyma/alpha"
+	alphaDelete "github.com/kyma-project/cli/cmd/kyma/alpha/delete"
 	alphaInstall "github.com/kyma-project/cli/cmd/kyma/alpha/deploy"
 	alphaProvision "github.com/kyma-project/cli/cmd/kyma/alpha/provision"
 	"github.com/kyma-project/cli/cmd/kyma/alpha/provision/k3s"
-	alphaUninstall "github.com/kyma-project/cli/cmd/kyma/alpha/uninstall"
 	alphaVersion "github.com/kyma-project/cli/cmd/kyma/alpha/version"
 	"github.com/kyma-project/cli/cmd/kyma/apply"
 	"github.com/kyma-project/cli/cmd/kyma/completion"
@@ -20,14 +20,15 @@ import (
 	"github.com/kyma-project/cli/cmd/kyma/provision/gardener/gcp"
 	"github.com/kyma-project/cli/cmd/kyma/provision/gke"
 	"github.com/kyma-project/cli/cmd/kyma/provision/minikube"
+	"github.com/kyma-project/cli/cmd/kyma/run"
 	"github.com/kyma-project/cli/cmd/kyma/sync"
 	"github.com/kyma-project/cli/cmd/kyma/test"
-	"github.com/kyma-project/cli/cmd/kyma/test/definitions"
-	del "github.com/kyma-project/cli/cmd/kyma/test/delete"
-	"github.com/kyma-project/cli/cmd/kyma/test/list"
-	"github.com/kyma-project/cli/cmd/kyma/test/logs"
-	"github.com/kyma-project/cli/cmd/kyma/test/run"
-	"github.com/kyma-project/cli/cmd/kyma/test/status"
+	testdefs "github.com/kyma-project/cli/cmd/kyma/test/definitions"
+	testdel "github.com/kyma-project/cli/cmd/kyma/test/delete"
+	testlist "github.com/kyma-project/cli/cmd/kyma/test/list"
+	testlogs "github.com/kyma-project/cli/cmd/kyma/test/logs"
+	testrun "github.com/kyma-project/cli/cmd/kyma/test/run"
+	teststatus "github.com/kyma-project/cli/cmd/kyma/test/status"
 	"github.com/kyma-project/cli/cmd/kyma/version"
 
 	"github.com/kyma-project/cli/cmd/kyma/provision"
@@ -50,8 +51,9 @@ Kyma CLI allows you to install, test, and manage Kyma.
 		SilenceUsage:  true,
 	}
 
-	cmd.PersistentFlags().BoolVarP(&o.Verbose, "verbose", "v", false, "See details of the command execution")
+	cmd.PersistentFlags().BoolVarP(&o.Verbose, "verbose", "v", false, "Displays details of actions triggered by the command.")
 	cmd.PersistentFlags().BoolVar(&o.NonInteractive, "non-interactive", false, "Enables the non-interactive shell mode (no colorized output, no spinner)")
+	cmd.PersistentFlags().BoolVar(&o.CI, "ci", false, "Enables the CI mode to run on CI/CD systems. It avoids any user interaction (such as no dialog prompts) and ensures that logs are formatted properly in log files (such as no spinners for CLI steps).")
 	// Kubeconfig env var and default paths are resolved by the kyma k8s client using the k8s defined resolution strategy.
 	cmd.PersistentFlags().StringVar(&o.KubeconfigPath, "kubeconfig", "", `Path to the kubeconfig file. If undefined, Kyma CLI uses the KUBECONFIG environment variable, or falls back "/$HOME/.kube/config".`)
 	cmd.PersistentFlags().BoolP("help", "h", false, "See help for the command")
@@ -59,7 +61,7 @@ Kyma CLI allows you to install, test, and manage Kyma.
 	//Alpha commands
 	alphaCmd := alpha.NewCmd()
 	alphaCmd.AddCommand(alphaInstall.NewCmd(alphaInstall.NewOptions(o)))
-	alphaCmd.AddCommand(alphaUninstall.NewCmd(alphaUninstall.NewOptions(o)))
+	alphaCmd.AddCommand(alphaDelete.NewCmd(alphaDelete.NewOptions(o)))
 	alphaCmd.AddCommand(alphaVersion.NewCmd(alphaVersion.NewOptions(o)))
 
 	alphaProvisionCmd := alphaProvision.NewCmd()
@@ -89,12 +91,12 @@ Kyma CLI allows you to install, test, and manage Kyma.
 	)
 
 	testCmd := test.NewCmd()
-	testRunCmd := run.NewCmd(run.NewOptions(o))
-	testStatusCmd := status.NewCmd(status.NewOptions(o))
-	testDeleteCmd := del.NewCmd(del.NewOptions(o))
-	testListCmd := list.NewCmd(list.NewOptions(o))
-	testDefsCmd := definitions.NewCmd(definitions.NewOptions(o))
-	testLogsCmd := logs.NewCmd(logs.NewOptions(o))
+	testRunCmd := testrun.NewCmd(testrun.NewOptions(o))
+	testStatusCmd := teststatus.NewCmd(teststatus.NewOptions(o))
+	testDeleteCmd := testdel.NewCmd(testdel.NewOptions(o))
+	testListCmd := testlist.NewCmd(testlist.NewOptions(o))
+	testDefsCmd := testdefs.NewCmd(testdefs.NewOptions(o))
+	testLogsCmd := testlogs.NewCmd(testlogs.NewOptions(o))
 	testCmd.AddCommand(testRunCmd, testStatusCmd, testDeleteCmd, testListCmd, testDefsCmd, testLogsCmd)
 	cmd.AddCommand(testCmd)
 
@@ -102,6 +104,7 @@ Kyma CLI allows you to install, test, and manage Kyma.
 		initial.NewCmd(o),
 		apply.NewCmd(o),
 		sync.NewCmd(o),
+		run.NewCmd(o),
 	)
 
 	return cmd

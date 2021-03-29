@@ -44,7 +44,7 @@ Use service account details to create a Secret and store it in Gardener.`,
 	cmd.Flags().StringVarP(&o.Project, "project", "p", "", "Name of the Gardener project where you provision the cluster. (required)")
 	cmd.Flags().StringVarP(&o.CredentialsFile, "credentials", "c", "", "Path to the kubeconfig file of the Gardener service account for AWS. (required)")
 	cmd.Flags().StringVarP(&o.Secret, "secret", "s", "", "Name of the Gardener secret used to access AWS. (required)")
-	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.16", "Kubernetes version of the cluster.")
+	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.19", "Kubernetes version of the cluster.")
 	cmd.Flags().StringVarP(&o.Region, "region", "r", "eu-west-3", "Region of the cluster.")
 	cmd.Flags().StringSliceVarP(&o.Zones, "zones", "z", []string{"eu-west-3a"}, "Zones specify availability zones that are used to evenly distribute the worker pool. eg. --zones=\"europe-west3-a,europe-west3-b\"")
 	cmd.Flags().StringVarP(&o.MachineType, "type", "t", "m5.xlarge", "Machine type used for the cluster.")
@@ -53,6 +53,7 @@ Use service account details to create a Secret and store it in Gardener.`,
 	cmd.Flags().IntVar(&o.ScalerMin, "scaler-min", 2, "Minimum autoscale value of the cluster.")
 	cmd.Flags().IntVar(&o.ScalerMax, "scaler-max", 3, "Maximum autoscale value of the cluster.")
 	cmd.Flags().StringSliceVarP(&o.Extra, "extra", "e", nil, "One or more arguments provided as the `NAME=VALUE` key-value pairs to configure additional cluster settings. You can use this flag multiple times or enter the key-value pairs as a comma-separated list.")
+	cmd.Flags().UintVar(&o.Attempts, "attempts", 3, "Maximum number of attempts to provision the cluster.")
 
 	return cmd
 }
@@ -85,7 +86,7 @@ func (c *command) Run() error {
 			cluster, err = hf.Provision(cluster, provider, types.WithDataDir(home), types.Persistent())
 			return err
 		},
-		retry.Attempts(3), retry.LastErrorOnly(!c.opts.Verbose))
+		retry.Attempts(c.opts.Attempts), retry.LastErrorOnly(!c.opts.Verbose))
 
 	if err != nil {
 		s.Failure()
@@ -143,7 +144,7 @@ func newProvider(o *Options) (*types.Provider, error) {
 	p.CustomConfigurations["workercidr"] = "10.250.0.0/16"
 	p.CustomConfigurations["networking_type"] = "calico"
 	p.CustomConfigurations["machine_image_name"] = "gardenlinux"
-	p.CustomConfigurations["machine_image_version"] = "27.1.0"
+	p.CustomConfigurations["machine_image_version"] = "184.0.0"
 	p.CustomConfigurations["zones"] = o.Zones
 
 	for _, e := range o.Extra {

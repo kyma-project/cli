@@ -41,13 +41,14 @@ func NewCmd(o *Options) *cobra.Command {
 	cmd.Flags().StringVarP(&o.Name, "name", "n", "", "Name of the AKS cluster to provision. (required)")
 	cmd.Flags().StringVarP(&o.Project, "project", "p", "", "Name of the Azure Resource Group where you provision the AKS cluster. (required)")
 	cmd.Flags().StringVarP(&o.CredentialsFile, "credentials", "c", "", "Path to the TOML file containing the Azure Subscription ID (SUBSCRIPTION_ID), Tenant ID (TENANT_ID), Client ID (CLIENT_ID) and Client Secret (CLIENT_SECRET). (required)")
-	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.16.15", "Kubernetes version of the cluster.")
+	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.19.7", "Kubernetes version of the cluster.")
 	cmd.Flags().StringVarP(&o.Location, "location", "l", "westeurope", "Location of the cluster.")
 	cmd.Flags().StringVarP(&o.MachineType, "type", "t", "Standard_D4_v3", "Machine type used for the cluster.")
 	cmd.Flags().IntVar(&o.DiskSizeGB, "disk-size", 50, "Disk size (in GB) of the cluster.")
 	cmd.Flags().IntVar(&o.NodeCount, "nodes", 3, "Number of cluster nodes.")
 	// Temporary disabled flag. To be enabled when hydroform supports TF modules
 	//cmd.Flags().StringSliceVarP(&o.Extra, "extra", "e", nil, "Provide one or more arguments of the form NAME=VALUE to add extra configurations.")
+	cmd.Flags().UintVar(&o.Attempts, "attempts", 3, "Maximum number of attempts to provision the cluster.")
 
 	return cmd
 }
@@ -79,7 +80,7 @@ func (c *command) Run() error {
 			cluster, err = hf.Provision(cluster, provider, types.WithDataDir(home), types.Persistent())
 			return err
 		},
-		retry.Attempts(3), retry.LastErrorOnly(!c.opts.Verbose))
+		retry.Attempts(c.opts.Attempts), retry.LastErrorOnly(!c.opts.Verbose))
 
 	if err != nil {
 		s.Failure()

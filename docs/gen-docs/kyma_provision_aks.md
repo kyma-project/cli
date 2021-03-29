@@ -13,12 +13,13 @@ Use this command to provision an AKS cluster on Azure for Kyma installation. Use
 kyma provision aks [flags]
 ```
 
-## Options
+## Flags
 
 ```bash
+      --attempts uint         Maximum number of attempts to provision the cluster. (default 3)
   -c, --credentials string    Path to the TOML file containing the Azure Subscription ID (SUBSCRIPTION_ID), Tenant ID (TENANT_ID), Client ID (CLIENT_ID) and Client Secret (CLIENT_SECRET). (required)
       --disk-size int         Disk size (in GB) of the cluster. (default 50)
-  -k, --kube-version string   Kubernetes version of the cluster. (default "1.16.15")
+  -k, --kube-version string   Kubernetes version of the cluster. (default "1.19.7")
   -l, --location string       Location of the cluster. (default "westeurope")
   -n, --name string           Name of the AKS cluster to provision. (required)
       --nodes int             Number of cluster nodes. (default 3)
@@ -26,7 +27,7 @@ kyma provision aks [flags]
   -t, --type string           Machine type used for the cluster. (default "Standard_D4_v3")
 ```
 
-## Options inherited from parent commands
+## Flags inherited from parent commands
 
 ```bash
       --ci                  Enables the CI mode to run on CI/CD systems. It avoids any user interaction (such as no dialog prompts) and ensures that logs are formatted properly in log files (such as no spinners for CLI steps).

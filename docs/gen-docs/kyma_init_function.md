@@ -13,15 +13,15 @@ Use the flags to specify the initial configuration for your Function or to choos
 kyma init function [flags]
 ```
 
-## Options
+## Flags
 
 ```bash
       --base-dir string          A directory in the repository containing the Function's sources (default "/")
   -d, --dir string               Full path to the directory where you want to save the project.
-      --name string              Function name. (default "first-function")
+      --name string              Function name.
       --namespace string         Namespace to which you want to apply your Function.
       --reference string         Commit hash or branch name (default "master")
-      --repository-name string   The name of the Git repository to be created (default "first-function")
+      --repository-name string   The name of the Git repository to be created
   -r, --runtime string           Flag used to define the environment for running your Function. Use one of these options:
                                  	- nodejs12
                                  	- nodejs10
@@ -29,7 +29,7 @@ kyma init function [flags]
       --url string               Git repository URL
 ```
 
-## Options inherited from parent commands
+## Flags inherited from parent commands
 
 ```bash
       --ci                  Enables the CI mode to run on CI/CD systems. It avoids any user interaction (such as no dialog prompts) and ensures that logs are formatted properly in log files (such as no spinners for CLI steps).
