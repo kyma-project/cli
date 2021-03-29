@@ -12,6 +12,10 @@ import (
 	"github.com/kyma-project/cli/internal/cli"
 )
 
+const (
+	quitTimeoutFactor = 1.25
+)
+
 var (
 	localSource           = "local"
 	defaultSource         = "master"
@@ -25,24 +29,28 @@ var (
 //Options defines available options for the command
 type Options struct {
 	*cli.Options
-	WorkspacePath  string
-	ComponentsFile string
-	OverridesFile  string
-	Overrides      []string
-	CancelTimeout  time.Duration
-	QuitTimeout    time.Duration
-	HelmTimeout    time.Duration
-	WorkersCount   int
-	Domain         string
-	TLSCrtFile     string
-	TLSKeyFile     string
-	Source         string
-	Profile        string
+	WorkspacePath    string
+	ComponentsFile   string
+	OverridesFile    string
+	Overrides        []string
+	Timeout          time.Duration
+	TimeoutComponent time.Duration
+	Concurrency      int
+	Domain           string
+	TLSCrtFile       string
+	TLSKeyFile       string
+	Source           string
+	Profile          string
 }
 
 //NewOptions creates options with default values
 func NewOptions(o *cli.Options) *Options {
 	return &Options{Options: o}
+}
+
+//QuitTimeout returns the calculated duration of the installation quit timeout
+func (o *Options) QuitTimeout() time.Duration {
+	return time.Duration((o.Timeout.Seconds() * quitTimeoutFactor)) * time.Second
 }
 
 func (o *Options) supportedProfile(profile string) bool {
@@ -88,8 +96,8 @@ func (o *Options) validateFlags() error {
 			return err
 		}
 	}
-	if o.QuitTimeout < o.CancelTimeout {
-		return fmt.Errorf("Quit timeout (%v) cannot be smaller than cancel timeout (%v)", o.QuitTimeout, o.CancelTimeout)
+	if o.Timeout < o.TimeoutComponent {
+		return fmt.Errorf("Timeout (%v) cannot be smaller than component timeout (%v)", o.Timeout, o.TimeoutComponent)
 	}
 	if o.Profile != "" && !o.supportedProfile(o.Profile) {
 		return fmt.Errorf("Profile unknown or not supported. Supported profiles are: %s", strings.Join(kymaProfiles, ", "))

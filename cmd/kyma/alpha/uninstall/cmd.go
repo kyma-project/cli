@@ -80,10 +80,10 @@ func (cmd *command) Run() error {
 
 	var resourcePath = filepath.Join(cmd.opts.WorkspacePath, "resources")
 	installCfg := installConfig.Config{
-		WorkersCount:                  cmd.opts.WorkersCount,
-		CancelTimeout:                 cmd.opts.CancelTimeout,
-		QuitTimeout:                   cmd.opts.QuitTimeout,
-		HelmTimeoutSeconds:            int(cmd.opts.HelmTimeout.Seconds()),
+		WorkersCount:                  cmd.opts.Concurrency,
+		CancelTimeout:                 cmd.opts.Timeout,
+		QuitTimeout:                   cmd.opts.QuitTimeout(),
+		HelmTimeoutSeconds:            int(cmd.opts.TimeoutComponent.Seconds()),
 		BackoffInitialIntervalSeconds: 3,
 		BackoffMaxElapsedTimeSeconds:  60 * 5,
 		Log:                           cli.LogFunc(cmd.Verbose),

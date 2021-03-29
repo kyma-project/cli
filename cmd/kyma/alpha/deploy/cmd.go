@@ -50,8 +50,8 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd.Flags().StringVarP(&o.ComponentsFile, "components", "c", defaultComponentsFile, `Path to the components file (default: "workspace/installation/resources/components.yaml")`)
 	cobraCmd.Flags().StringVarP(&o.OverridesFile, "values-file", "f", "", "Path(s) to one or more JSON or YAML files with configuration values")
 	cobraCmd.Flags().StringSliceVarP(&o.Overrides, "value", "", []string{}, "Set one or more configuration values (e.g. --value component.key='the value')")
-	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 1200*time.Second, "Maximum time for the deployment (default: 20m0s)")
-	cobraCmd.Flags().DurationVarP(&o.TimeoutComponent, "timeout-component", "", 360*time.Second, "Maximum time to deploy the component (default: 6m0s)")
+	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 20*time.Minute, "Maximum time for the deployment (default: 20m0s)")
+	cobraCmd.Flags().DurationVarP(&o.TimeoutComponent, "timeout-component", "", 6*time.Minute, "Maximum time to deploy the component (default: 6m0s)")
 	cobraCmd.Flags().IntVar(&o.Concurrency, "concurrency", 4, "Number of parallel processes (default: 4)")
 	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", LocalKymaDevDomain, "Custom domain used for installation")
 	cobraCmd.Flags().StringVarP(&o.TLSCrtFile, "tls-crt", "", "", "TLS certificate file for the domain used for installation")
@@ -169,10 +169,10 @@ func (cmd *command) deployKyma(ui asyncui.AsyncUI) error {
 	var resourcePath = filepath.Join(cmd.opts.WorkspacePath, "resources")
 
 	installationCfg := installConfig.Config{
-		WorkersCount:                  cmd.opts.WorkersCount,
-		CancelTimeout:                 cmd.opts.CancelTimeout,
-		QuitTimeout:                   cmd.opts.QuitTimeout,
-		HelmTimeoutSeconds:            int(cmd.opts.HelmTimeout.Seconds()),
+		WorkersCount:                  cmd.opts.Concurrency,
+		CancelTimeout:                 cmd.opts.Timeout,
+		QuitTimeout:                   cmd.opts.QuitTimeout(),
+		HelmTimeoutSeconds:            int(cmd.opts.TimeoutComponent.Seconds()),
 		BackoffInitialIntervalSeconds: 3,
 		BackoffMaxElapsedTimeSeconds:  60 * 5,
 		Log:                           cli.LogFunc(cmd.Verbose),
