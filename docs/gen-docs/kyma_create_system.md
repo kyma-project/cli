@@ -35,7 +35,7 @@ kyma create system SYSTEM_NAME [flags]
 ```bash
       --ci                  Enables the CI mode to run on CI/CD systems. It avoids any user interaction (such as no dialog prompts) and ensures that logs are formatted properly in log files (such as no spinners for CLI steps).
   -h, --help                See help for the command
-      --kubeconfig string   Path to the kubeconfig file. If undefined, Kyma CLI uses the KUBECONFIG environment variable, or falls back "/$HOME/.kube/config".
+      --kubeconfig string   Path to the kubeconfig file. If undefined, Kyma CLI uses the KUBECONFIG environment variable, or falls back to "/$HOME/.kube/config".
       --non-interactive     Enables the non-interactive shell mode (no colorized output, no spinner)
   -v, --verbose             Displays details of actions triggered by the command.
 ```
@@ -43,4 +43,3 @@ kyma create system SYSTEM_NAME [flags]
 ## See also
 
 * [kyma create](#kyma-create-kyma-create)	 - Creates resources on the Kyma cluster.
-
