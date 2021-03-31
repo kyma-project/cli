@@ -205,3 +205,6 @@ func (f *fakePodGetter) UpdateEphemeralContainers(ctx context.Context, podName s
 func (f *fakePodGetter) Evict(ctx context.Context, eviction *v1beta1.Eviction) error {
 	panic("not implemented")
 }
+func (f *fakePodGetter) ProxyGet(scheme, name, port, path string, params map[string]string) rest.ResponseWrapper {
+	panic("not implemented")
+}

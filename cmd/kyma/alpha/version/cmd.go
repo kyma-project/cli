@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
+	"time"
 
-	"github.com/kyma-incubator/hydroform/parallel-install/pkg/metadata"
+	"github.com/kyma-incubator/hydroform/parallel-install/pkg/helm"
 	"github.com/kyma-project/cli/cmd/kyma/version"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
@@ -36,40 +38,65 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 
 	cobraCmd.Flags().BoolVarP(&o.ClientOnly, "client", "c", false, "Client version only (no server required)")
+	cobraCmd.Flags().BoolVarP(&o.VersionDetails, "details", "d", false, "Show detailed information for each Kyma version")
 	return cobraCmd
 }
 
 //Run runs the command
 func (cmd *command) Run() error {
-	var clusterMetadata *metadata.KymaMetadata
+	var w io.Writer = os.Stdout
 
-	if !cmd.opts.ClientOnly {
-		var err error
-		if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
-			return errors.Wrap(err, "Cannot initialize the Kubernetes client. Make sure your kubeconfig is valid")
-		}
+	cmd.printCliVersion(w)
 
-		provider := metadata.New(cmd.K8s.Static())
-		clusterMetadata, err = provider.ReadKymaMetadata()
-		if err != nil {
-			return fmt.Errorf("Unable to get Kyma cluster version due to error: %v. Check if your cluster is available and has Kyma installed", err)
-		}
+	if cmd.opts.ClientOnly {
+		//we are done
+		return nil
 	}
 
-	printVersion(os.Stdout, cmd.opts.ClientOnly, clusterMetadata)
+	//print Kyma Version
+	provider, err := cmd.metadataProvider()
+	if err != nil {
+		return err
+	}
+	versionSet, err := provider.Versions()
+	if err != nil {
+		return fmt.Errorf("Unable to get Kyma cluster versions due to error: %v. Check if your cluster is available and has Kyma installed", err)
+	}
+
+	cmd.printKymaVersion(w, versionSet)
+
+	if cmd.opts.VersionDetails {
+		cmd.printKymaVersionDetails(os.Stdout, versionSet)
+	}
 
 	return nil
 }
 
-func printVersion(w io.Writer, clientOnly bool, clusterMetadata *metadata.KymaMetadata) {
+func (cmd *command) printCliVersion(w io.Writer) {
 	fmt.Fprintf(w, "Kyma CLI version: %s\n", versionOrDefault(version.Version))
+}
 
-	if clientOnly {
-		return
+func (cmd *command) printKymaVersion(w io.Writer, versionSet *helm.KymaVersionSet) {
+	fmt.Fprintf(w, "Kyma cluster versions: %s\n", versionOrDefault(strings.Join(versionSet.Names(), ", ")))
+}
+
+func (cmd *command) printKymaVersionDetails(w io.Writer, versionSet *helm.KymaVersionSet) {
+	for _, version := range versionSet.Versions {
+		fmt.Fprintln(w, "-----------------")
+		fmt.Fprintf(w, "Kyma cluster version: %s\n", versionOrDefault(version.Version))
+		deployTime := time.Unix(version.CreationTime, 0)
+		fmt.Fprintf(w, "Deployed at: %s\n", deployTime.UTC().Format(time.RFC850))
+		fmt.Fprintf(w, "Profile: %s\n", profileOrDefault(version.Profile))
+		fmt.Fprintf(w, "Components: %s\n", strings.Join(version.ComponentNames(), ", "))
 	}
+}
 
-	fmt.Fprintf(w, "Kyma cluster version: %s\n", versionOrDefault(clusterMetadata.Version))
-	fmt.Fprintf(w, "Deployment profile: %s\n", profileOrDefault(clusterMetadata.Profile))
+func (cmd *command) metadataProvider() (*helm.KymaMetadataProvider, error) {
+	var err error
+	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
+		return nil, errors.Wrap(err, "Cannot initialize the Kubernetes client. Make sure your kubeconfig is valid")
+	}
+	return helm.NewKymaMetadataProvider(cmd.K8s.Static()), nil
 }
 
 func versionOrDefault(version string) string {
@@ -84,6 +111,5 @@ func stringOrDefault(s, def string) string {
 	if len(s) == 0 {
 		return def
 	}
-
 	return s
 }
