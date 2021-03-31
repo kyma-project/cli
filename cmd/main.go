@@ -10,6 +10,7 @@ import (
 )
 
 func main() {
+	//this is dummy commit
 	command := kyma.NewCmd(cli.NewOptions())
 
 	err := command.Execute()
