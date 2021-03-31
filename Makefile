@@ -94,8 +94,8 @@ local: validate test install
 .PHONY: ci-pr
 ci-pr: resolve validate build test integration-test
 
-.PHONY: ci-master
-ci-master: resolve validate build test integration-test upload-stable
+.PHONY: ci-main
+ci-main: resolve validate build test integration-test upload-stable
 
 .PHONY: ci-release
 ci-release: resolve validate build test integration-test archive release
