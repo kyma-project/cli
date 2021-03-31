@@ -38,7 +38,7 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 
 	cobraCmd.Flags().BoolVarP(&o.ClientOnly, "client", "c", false, "Client version only (no server required)")
-	cobraCmd.Flags().BoolVarP(&o.VersionDetails, "details", "d", false, "Show detailed information for each Kyma version")
+	cobraCmd.Flags().BoolVarP(&o.VersionDetails, "details", "d", false, "Detailed information for each Kyma version")
 	return cobraCmd
 }
 
