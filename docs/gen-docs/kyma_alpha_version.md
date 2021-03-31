@@ -17,7 +17,7 @@ kyma alpha version [flags]
 
 ```bash
   -c, --client    Client version only (no server required)
-  -d, --details   Show detailed information for each Kyma version
+  -d, --details   Detailed information for each Kyma version
 ```
 
 ## Flags inherited from parent commands
@@ -33,4 +33,3 @@ kyma alpha version [flags]
 ## See also
 
 * [kyma alpha](#kyma-alpha-kyma-alpha)	 - Executes the commands in the alpha testing stage.
-
