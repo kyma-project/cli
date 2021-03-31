@@ -17,7 +17,7 @@ kyma alpha deploy [flags]
 ```bash
   -a, --atomic                    Set --atomic=true to use atomic deployment, which rolls back any component that could not be installed successfully.
       --cancel-timeout duration   Time after which the workers' context is canceled. Any pending worker goroutines that are blocked by a Helm client will continue. (default 15m0s)
-  -c, --components string         Path to the components file. (default "workspace/installation/resources/components.yaml")
+  -c, --components string         Path or URL to the components file. (default "workspace/installation/resources/components.yaml")
   -d, --domain string             Custom domain used for installation.
       --helm-timeout duration     Timeout for the underlying Helm client. (default 6m0s)
   -p, --profile string            Kyma deployment profile. If not specified, Kyma is installed with the default chart values. The supported profiles are: "evaluation", "production".
@@ -31,7 +31,7 @@ kyma alpha deploy [flags]
       --tls-crt string            TLS certificate file for the domain used for installation.
       --tls-key string            TLS key file for the domain used for installation.
       --value strings             Set a configuration value (e.g. --value component.key='the value').
-  -f, --values-file strings       Path to a JSON or YAML file with configuration values.
+  -f, --values-file strings       Path or URL to a JSON or YAML file with configuration values.
       --workers-count int         Number of parallel workers used for the deployment. (default 4)
   -w, --workspace string          If --source is local, then workspace should be a path already containing Kyma sources.
                                   If --source is not local, then workspace must be the path used to download Kyma sources. (default "workspace")
