@@ -33,3 +33,4 @@ kyma alpha version [flags]
 ## See also
 
 * [kyma alpha](#kyma-alpha-kyma-alpha)	 - Executes the commands in the alpha testing stage.
+
