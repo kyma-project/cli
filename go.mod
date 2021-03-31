@@ -7,7 +7,6 @@ replace (
 	//see https://github.com/helm/helm/issues/9354 + https://github.com/helm/helm/pull/9492
 	github.com/docker/distribution => github.com/docker/distribution v0.0.0-20191216044856-a8371794149d
 	github.com/docker/docker => github.com/moby/moby v20.10.5+incompatible
-	github.com/kyma-incubator/hydroform/parallel-install => /Users/i539990/Projects/kyma/go/src/github.com/kyma-incubator/hydroform/parallel-install
 
 	github.com/hashicorp/consul v0.0.0-20171026175957-610f3c86a089 => github.com/hashicorp/consul/sdk v0.7.0
 	github.com/hashicorp/consul/api v1.3.0 => github.com/hashicorp/consul/api v0.0.0-20191112221531-8742361660b6
