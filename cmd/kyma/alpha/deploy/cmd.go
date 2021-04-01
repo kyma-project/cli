@@ -27,7 +27,7 @@ import (
 	installConfig "github.com/kyma-incubator/hydroform/parallel-install/pkg/config"
 	"github.com/kyma-incubator/hydroform/parallel-install/pkg/deployment"
 	"github.com/kyma-incubator/hydroform/parallel-install/pkg/git"
-	"github.com/kyma-incubator/hydroform/parallel-install/pkg/metadata"
+	"github.com/kyma-incubator/hydroform/parallel-install/pkg/helm"
 )
 
 type command struct {
@@ -162,25 +162,34 @@ func (cmd *command) Run() error {
 
 func (cmd *command) isCompatibleVersion() error {
 	compCheckStep := cmd.NewStep("Verifying Kyma version compatibility")
-	provider := metadata.New(cmd.K8s.Static())
-	clusterMetadata, err := provider.ReadKymaMetadata()
+	provider := helm.NewKymaMetadataProvider(cmd.K8s.Static())
+	versionSet, err := provider.Versions()
 	if err != nil {
-		return fmt.Errorf("Cannot get Kyma cluster version due to error: %v", err)
+		return fmt.Errorf("Cannot get installed Kyma versions due to error: %v", err)
 	}
 
-	if clusterMetadata.Version == "" { //Kyma seems not to be installed
+	if versionSet.Empty() { //Kyma seems not to be installed
 		compCheckStep.Successf("No previous Kyma version found")
 		return nil
 	}
 
 	var compCheckFailed bool
-	if clusterMetadata.Version == cmd.opts.Source {
-		compCheckStep.Failuref("Current and next Kyma version are equal: %s", clusterMetadata.Version)
+	if versionSet.Count() > 1 {
+		compCheckStep.Failuref("Components from multiple Kyma versions are installed (found Kyma versions '%s'). "+
+			"Cannot check compatibility if components with different Kyma versions are installed.",
+			strings.Join(versionSet.Names(), "', '"))
 		compCheckFailed = true
-	}
-	if err := checkCompatibility(clusterMetadata.Version, cmd.opts.Source); err != nil {
-		compCheckStep.Failuref("Cannot check compatibility between version '%s' and '%s'. This might cause errors - do you want to proceed anyway?", clusterMetadata.Version, cmd.opts.Source)
-		compCheckFailed = true
+	} else {
+		kymaVersion := versionSet.Versions[0].Version
+		if kymaVersion == cmd.opts.Source {
+			compCheckStep.Failuref("Current and next Kyma version are equal: %s", kymaVersion)
+			compCheckFailed = true
+		}
+		if err := checkCompatibility(kymaVersion, cmd.opts.Source); err != nil {
+			compCheckStep.Failuref("Cannot check compatibility between version '%s' and '%s'. This might cause errors!",
+				kymaVersion, cmd.opts.Source)
+			compCheckFailed = true
+		}
 	}
 	if !compCheckFailed {
 		compCheckStep.Success()
@@ -202,7 +211,12 @@ func (cmd *command) deployKyma(ui asyncui.AsyncUI, overrides *deployment.Overrid
 	resourcePath := filepath.Join(localWorkspace, "resources")
 	installResourcePath := filepath.Join(localWorkspace, "installation", "resources")
 
-	cmpFile, err := cmd.opts.ResolveComponentsFile()
+	//read component list file and marshal it to a component list entity
+	compFile, err := cmd.opts.ResolveComponentsFile()
+	if err != nil {
+		return err
+	}
+	compList, err := installConfig.NewComponentList(compFile)
 	if err != nil {
 		return err
 	}
@@ -216,7 +230,7 @@ func (cmd *command) deployKyma(ui asyncui.AsyncUI, overrides *deployment.Overrid
 		BackoffMaxElapsedTimeSeconds:  60 * 5,
 		Log:                           cli.NewHydroformLoggerAdapter(cli.NewLogger(cmd.Verbose)),
 		Profile:                       cmd.opts.Profile,
-		ComponentsListFile:            cmpFile,
+		ComponentList:                 compList,
 		ResourcePath:                  resourcePath,
 		InstallationResourcePath:      installResourcePath,
 		Version:                       cmd.opts.Source,
@@ -366,8 +380,7 @@ func (cmd *command) avoidUserInteraction() bool {
 }
 
 func (cmd *command) printSummary(o deployment.Overrides) error {
-	provider := metadata.New(cmd.K8s.Static())
-	md, err := provider.ReadKymaMetadata()
+	kymaVersionNames, err := cmd.installedKymaVersions()
 	if err != nil {
 		return err
 	}
@@ -406,7 +419,7 @@ func (cmd *command) printSummary(o deployment.Overrides) error {
 
 	sum := nice.Summary{
 		NonInteractive: cmd.NonInteractive,
-		Version:        md.Version,
+		Version:        strings.Join(kymaVersionNames, ", "),
 		URL:            domain.(string),
 		Console:        consoleURL,
 		Duration:       cmd.duration,
@@ -415,6 +428,15 @@ func (cmd *command) printSummary(o deployment.Overrides) error {
 	}
 
 	return sum.Print()
+}
+
+func (cmd *command) installedKymaVersions() ([]string, error) {
+	provider := helm.NewKymaMetadataProvider(cmd.K8s.Static())
+	kymaVersionSet, err := provider.Versions()
+	if err != nil {
+		return nil, err
+	}
+	return kymaVersionSet.Names(), nil
 }
 
 func (cmd *command) importCertificate() error {

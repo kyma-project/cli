@@ -2,8 +2,7 @@ package uninstall
 
 import (
 	"fmt"
-	"io/ioutil"
-	"os"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -15,7 +14,7 @@ import (
 
 	installConfig "github.com/kyma-incubator/hydroform/parallel-install/pkg/config"
 	"github.com/kyma-incubator/hydroform/parallel-install/pkg/deployment"
-	"github.com/kyma-incubator/hydroform/parallel-install/pkg/metadata"
+	"github.com/kyma-incubator/hydroform/parallel-install/pkg/helm"
 )
 
 type command struct {
@@ -73,8 +72,8 @@ func (cmd *command) Run() error {
 		defer ui.Stop()
 	}
 
-	// retrieve Kyma metadata (provides details about the current Kyma installation)
-	kymaMeta, err := cmd.retrieveKymaMetadata()
+	//get list of installed Kyma components
+	compList, err := cmd.kymaComponentList()
 	if err != nil {
 		return err
 	}
@@ -87,12 +86,7 @@ func (cmd *command) Run() error {
 		BackoffInitialIntervalSeconds: 3,
 		BackoffMaxElapsedTimeSeconds:  60 * 5,
 		Log:                           cli.NewHydroformLoggerAdapter(cli.NewLogger(cmd.Verbose)),
-		ComponentsListFile:            fmt.Sprintf("uninstall-%s", kymaMeta.ComponentListFile),
-	}
-
-	// recover the component list used for the Kyma installation
-	if err := cmd.recoverComponentsListFile(installCfg.ComponentsListFile, kymaMeta.ComponentListData); err != nil {
-		return err
+		ComponentList:                 compList,
 	}
 
 	// if an AsyncUI is used, get channel for update events
@@ -111,52 +105,39 @@ func (cmd *command) Run() error {
 
 	uninstallErr := installer.StartKymaUninstallation()
 
-	if err := cmd.deleteComponentsListFile(installCfg.ComponentsListFile); err != nil {
-		return errors.Wrap(err, uninstallErr.Error())
-	}
-
 	if uninstallErr == nil {
 		cmd.showSuccessMessage()
 	}
 	return uninstallErr
 }
 
-func (cmd *command) recoverComponentsListFile(file string, data []byte) error {
-	restoreClStep := cmd.NewStep("Restore component list used for initial Kyma installation")
-	err := ioutil.WriteFile(file, data, 0600)
-	if err == nil {
-		restoreClStep.Success()
-	} else {
-		restoreClStep.Failure()
-	}
-	return err
-}
+func (cmd *command) kymaComponentList() (*installConfig.ComponentList, error) {
+	kymaCompStep := cmd.NewStep("Get Kyma components")
+	metaProv := helm.NewKymaMetadataProvider(cmd.K8s.Static())
 
-func (cmd *command) deleteComponentsListFile(file string) error {
-	if _, err := os.Stat(file); os.IsNotExist(err) {
-		// file doesn't exist
-		return nil
+	versionSet, err := metaProv.Versions()
+	if err != nil {
+		kymaCompStep.Failure()
+		return nil, err
 	}
-	if err := os.Remove(file); err != nil {
-		return err
-	}
-	return nil
-}
 
-func (cmd *command) retrieveKymaMetadata() (*metadata.KymaMetadata, error) {
-	getMetaStep := cmd.NewStep("Retrieve Kyma metadata")
-	provider := metadata.New(cmd.K8s.Static())
-	metadata, err := provider.ReadKymaMetadata()
-	if err == nil {
-		if metadata.Version == "" {
-			getMetaStep.Failure()
-			return metadata, fmt.Errorf("No Kyma installation found")
+	compList := &installConfig.ComponentList{}
+	for _, comp := range versionSet.InstalledComponents() {
+		compDef := installConfig.ComponentDefinition{
+			Name:      comp.Name,
+			Namespace: comp.Namespace,
 		}
-		getMetaStep.Successf("Kyma was installed from source '%s'", metadata.Version)
-	} else {
-		getMetaStep.Failure()
+		if comp.Prerequisite {
+			compList.Prerequisites = append(compList.Prerequisites, compDef)
+		} else {
+			compList.Components = append(compList.Components, compDef)
+		}
 	}
-	return metadata, err
+
+	kymaCompStep.Successf("Found %d Kyma versions (%s) and %d Kyma components",
+		versionSet.Count(), strings.Join(versionSet.Names(), ", "), len(compList.Components))
+
+	return compList, nil
 }
 
 func (cmd *command) showSuccessMessage() {
