@@ -15,35 +15,33 @@ kyma alpha deploy [flags]
 ## Flags
 
 ```bash
-  -a, --atomic                    Set --atomic=true to use atomic deployment, which rolls back any component that could not be installed successfully.
-      --cancel-timeout duration   Time after which the workers' context is canceled. Any pending worker goroutines that are blocked by a Helm client will continue. (default 15m0s)
-  -c, --components string         Path or URL to the components file. (default "workspace/installation/resources/components.yaml")
-  -d, --domain string             Custom domain used for installation.
-      --helm-timeout duration     Timeout for the underlying Helm client. (default 6m0s)
-  -p, --profile string            Kyma deployment profile. If not specified, Kyma is installed with the default chart values. The supported profiles are: "evaluation", "production".
-      --quit-timeout duration     Time after which the deployment is aborted. Worker goroutines may still be working in the background. This value must be greater than the value for cancel-timeout. (default 20m0s)
-  -s, --source string             Installation source.
-                                  	- To use a specific release, write "kyma alpha deploy --source=1.17.1".
-                                  	- To use the master branch, write "kyma alpha deploy --source=master".
-                                  	- To use a commit, write "kyma alpha deploy --source=34edf09a".
-                                  	- To use a pull request, write "kyma alpha deploy --source=PR-9486".
-                                  	- To use the local sources, write "kyma alpha deploy --source=local". (default "master")
-      --tls-crt string            TLS certificate file for the domain used for installation.
-      --tls-key string            TLS key file for the domain used for installation.
-      --value strings             Set a configuration value (e.g. --value component.key='the value').
-  -f, --values-file strings       Path or URL to a JSON or YAML file with configuration values.
-      --workers-count int         Number of parallel workers used for the deployment. (default 4)
-  -w, --workspace string          If --source is local, then workspace should be a path already containing Kyma sources.
-                                  If --source is not local, then workspace must be the path used to download Kyma sources. (default "workspace")
+  -a, --atomic                       Set --atomic=true to use atomic deployment, which rolls back any component that could not be installed successfully.
+  -c, --components string            Path to the components file (default: "workspace/installation/resources/components.yaml") (default "workspace/installation/resources/components.yaml")
+      --concurrency int              Number of parallel processes (default: 4) (default 4)
+  -d, --domain string                Custom domain used for installation
+  -p, --profile string               Kyma deployment profile. If not specified, Kyma uses its default configuration. The supported profiles are: "evaluation", "production".
+  -s, --source string                Installation source:
+                                     	- Deploy a specific release, for example: "kyma alpha deploy --source=1.17.1"
+                                     	- Deploy the master branch of the Kyma repository on kyma-project.org: "kyma alpha deploy --source=master"
+                                     	- Deploy a commit, for example: "kyma alpha deploy --source=34edf09a"
+                                     	- Deploy a pull request, for example "kyma alpha deploy --source=PR-9486"
+                                     	- Deploy the local sources: "kyma alpha deploy --source=local" (default: "master") (default "master")
+      --timeout duration             Maximum time for the deployment (default: 20m0s) (default 20m0s)
+      --timeout-component duration   Maximum time to deploy the component (default: 6m0s) (default 6m0s)
+      --tls-crt string               TLS certificate file for the domain used for installation
+      --tls-key string               TLS key file for the domain used for installation
+      --value strings                Set one or more configuration values (e.g. --value component.key='the value')
+  -f, --values-file strings          Path(s) to one or more JSON or YAML files with configuration values
+  -w, --workspace string             Path to download Kyma sources (default: "workspace") (default "workspace")
 ```
 
 ## Flags inherited from parent commands
 
 ```bash
       --ci                  Enables the CI mode to run on CI/CD systems. It avoids any user interaction (such as no dialog prompts) and ensures that logs are formatted properly in log files (such as no spinners for CLI steps).
-  -h, --help                Displays help for the command.
-      --kubeconfig string   Specifies the path to the kubeconfig file. By default, Kyma CLI uses the KUBECONFIG environment variable or "/$HOME/.kube/config" if the variable is not set.
-      --non-interactive     Enables the non-interactive shell mode.
+  -h, --help                Command help
+      --kubeconfig string   Path to the kubeconfig file. If undefined, Kyma CLI uses the KUBECONFIG environment variable, or falls back "/$HOME/.kube/config".
+      --non-interactive     Enables the non-interactive shell mode (no colorized output, no spinner)
   -v, --verbose             Displays details of actions triggered by the command.
 ```
 

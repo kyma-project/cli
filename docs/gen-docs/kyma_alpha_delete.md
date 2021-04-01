@@ -15,19 +15,19 @@ kyma alpha delete [flags]
 ## Flags
 
 ```bash
-      --cancel-timeout duration   Time after which the workers' context is canceled. Any pending worker goroutines that are blocked by a Helm client will continue. (default 15m0s)
-      --helm-timeout duration     Timeout for the underlying Helm client. (default 6m0s)
-      --quit-timeout duration     Time after which the deletion is aborted. Worker goroutines may still be working in the background. This value must be greater than the value for cancel-timeout. (default 20m0s)
-      --workers-count int         Number of parallel workers used for the deletion. (default 4)
+      --concurrency int              Number of parallel processes (default: 4) (default 4)
+      --timeout duration             Maximum time for the deletion (default: 20m0s) (default 20m0s)
+      --timeout-component duration   Maximum time to delete the component (default: 6m0s) (default 6m0s)
+  -w, --workspace string             Path used to download Kyma sources. (default "workspace")
 ```
 
 ## Flags inherited from parent commands
 
 ```bash
       --ci                  Enables the CI mode to run on CI/CD systems. It avoids any user interaction (such as no dialog prompts) and ensures that logs are formatted properly in log files (such as no spinners for CLI steps).
-  -h, --help                Displays help for the command.
-      --kubeconfig string   Specifies the path to the kubeconfig file. By default, Kyma CLI uses the KUBECONFIG environment variable or "/$HOME/.kube/config" if the variable is not set.
-      --non-interactive     Enables the non-interactive shell mode.
+  -h, --help                Command help
+      --kubeconfig string   Path to the kubeconfig file. If undefined, Kyma CLI uses the KUBECONFIG environment variable, or falls back "/$HOME/.kube/config".
+      --non-interactive     Enables the non-interactive shell mode (no colorized output, no spinner)
   -v, --verbose             Displays details of actions triggered by the command.
 ```
 

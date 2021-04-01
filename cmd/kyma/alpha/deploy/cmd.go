@@ -54,27 +54,25 @@ func NewCmd(o *Options) *cobra.Command {
 		Aliases: []string{"d"},
 	}
 
-	cobraCmd.Flags().StringVarP(&o.WorkspacePath, "workspace", "w", defaultWorkspacePath,
-		"If --source is local, then workspace should be a path already containing Kyma sources.\nIf --source is not local, then workspace must be the path used to download Kyma sources.")
+	cobraCmd.Flags().StringVarP(&o.WorkspacePath, "workspace", "w", defaultWorkspacePath, `Path to download Kyma sources (default: "workspace")`)
 	cobraCmd.Flags().BoolVarP(&o.Atomic, "atomic", "a", false, "Set --atomic=true to use atomic deployment, which rolls back any component that could not be installed successfully.")
-	cobraCmd.Flags().StringVarP(&o.ComponentsFile, "components", "c", defaultComponentsFile, "Path or URL to the components file.")
-	cobraCmd.Flags().StringSliceVarP(&o.OverridesFiles, "values-file", "f", []string{}, "Path or URL to a JSON or YAML file with configuration values.")
-	cobraCmd.Flags().StringSliceVarP(&o.Overrides, "value", "", []string{}, "Set a configuration value (e.g. --value component.key='the value').")
-	cobraCmd.Flags().DurationVarP(&o.CancelTimeout, "cancel-timeout", "", 900*time.Second, "Time after which the workers' context is canceled. Any pending worker goroutines that are blocked by a Helm client will continue.")
-	cobraCmd.Flags().DurationVarP(&o.QuitTimeout, "quit-timeout", "", 1200*time.Second, "Time after which the deployment is aborted. Worker goroutines may still be working in the background. This value must be greater than the value for cancel-timeout.")
-	cobraCmd.Flags().DurationVarP(&o.HelmTimeout, "helm-timeout", "", 360*time.Second, "Timeout for the underlying Helm client.")
-	cobraCmd.Flags().IntVar(&o.WorkersCount, "workers-count", 4, "Number of parallel workers used for the deployment.")
-	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", "", "Custom domain used for installation.")
-	cobraCmd.Flags().StringVarP(&o.TLSCrtFile, "tls-crt", "", "", "TLS certificate file for the domain used for installation.")
-	cobraCmd.Flags().StringVarP(&o.TLSKeyFile, "tls-key", "", "", "TLS key file for the domain used for installation.")
-	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", defaultSource, `Installation source.
-	- To use a specific release, write "kyma alpha deploy --source=1.17.1".
-	- To use the master branch, write "kyma alpha deploy --source=master".
-	- To use a commit, write "kyma alpha deploy --source=34edf09a".
-	- To use a pull request, write "kyma alpha deploy --source=PR-9486".
-	- To use the local sources, write "kyma alpha deploy --source=local".`)
+	cobraCmd.Flags().StringVarP(&o.ComponentsFile, "components", "c", defaultComponentsFile, `Path to the components file (default: "workspace/installation/resources/components.yaml")`)
+	cobraCmd.Flags().StringSliceVarP(&o.OverridesFiles, "values-file", "f", []string{}, "Path(s) to one or more JSON or YAML files with configuration values")
+	cobraCmd.Flags().StringSliceVarP(&o.Overrides, "value", "", []string{}, "Set one or more configuration values (e.g. --value component.key='the value')")
+	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 20*time.Minute, "Maximum time for the deployment (default: 20m0s)")
+	cobraCmd.Flags().DurationVarP(&o.TimeoutComponent, "timeout-component", "", 6*time.Minute, "Maximum time to deploy the component (default: 6m0s)")
+	cobraCmd.Flags().IntVar(&o.Concurrency, "concurrency", 4, "Number of parallel processes (default: 4)")
+	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", "", "Custom domain used for installation")
+	cobraCmd.Flags().StringVarP(&o.TLSCrtFile, "tls-crt", "", "", "TLS certificate file for the domain used for installation")
+	cobraCmd.Flags().StringVarP(&o.TLSKeyFile, "tls-key", "", "", "TLS key file for the domain used for installation")
+	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", defaultSource, `Installation source:
+	- Deploy a specific release, for example: "kyma alpha deploy --source=1.17.1"
+	- Deploy the master branch of the Kyma repository on kyma-project.org: "kyma alpha deploy --source=master"
+	- Deploy a commit, for example: "kyma alpha deploy --source=34edf09a"
+	- Deploy a pull request, for example "kyma alpha deploy --source=PR-9486"
+	- Deploy the local sources: "kyma alpha deploy --source=local" (default: "master")`)
 	cobraCmd.Flags().StringVarP(&o.Profile, "profile", "p", "",
-		fmt.Sprintf("Kyma deployment profile. If not specified, Kyma is installed with the default chart values. The supported profiles are: \"%s\".", strings.Join(kymaProfiles, "\", \"")))
+		fmt.Sprintf("Kyma deployment profile. If not specified, Kyma uses its default configuration. The supported profiles are: \"%s\".", strings.Join(kymaProfiles, "\", \"")))
 	return cobraCmd
 }
 
@@ -224,10 +222,10 @@ func (cmd *command) deployKyma(ui asyncui.AsyncUI, overrides *deployment.Overrid
 	}
 
 	installationCfg := &installConfig.Config{
-		WorkersCount:                  cmd.opts.WorkersCount,
-		CancelTimeout:                 cmd.opts.CancelTimeout,
-		QuitTimeout:                   cmd.opts.QuitTimeout,
-		HelmTimeoutSeconds:            int(cmd.opts.HelmTimeout.Seconds()),
+		WorkersCount:                  cmd.opts.Concurrency,
+		CancelTimeout:                 cmd.opts.Timeout,
+		QuitTimeout:                   cmd.opts.QuitTimeout(),
+		HelmTimeoutSeconds:            int(cmd.opts.TimeoutComponent.Seconds()),
 		BackoffInitialIntervalSeconds: 3,
 		BackoffMaxElapsedTimeSeconds:  60 * 5,
 		Log:                           cli.NewHydroformLoggerAdapter(cli.NewLogger(cmd.Verbose)),

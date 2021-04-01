@@ -38,10 +38,10 @@ func NewCmd(o *Options) *cobra.Command {
 		Aliases: []string{"d"},
 	}
 
-	cobraCmd.Flags().DurationVarP(&o.CancelTimeout, "cancel-timeout", "", 900*time.Second, "Time after which the workers' context is canceled. Any pending worker goroutines that are blocked by a Helm client will continue.")
-	cobraCmd.Flags().DurationVarP(&o.QuitTimeout, "quit-timeout", "", 1200*time.Second, "Time after which the deletion is aborted. Worker goroutines may still be working in the background. This value must be greater than the value for cancel-timeout.")
-	cobraCmd.Flags().DurationVarP(&o.HelmTimeout, "helm-timeout", "", 360*time.Second, "Timeout for the underlying Helm client.")
-	cobraCmd.Flags().IntVar(&o.WorkersCount, "workers-count", 4, "Number of parallel workers used for the deletion.")
+	cobraCmd.Flags().StringVarP(&o.WorkspacePath, "workspace", "w", defaultWorkspacePath, "Path used to download Kyma sources.")
+	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 1200*time.Second, "Maximum time for the deletion (default: 20m0s)")
+	cobraCmd.Flags().DurationVarP(&o.TimeoutComponent, "timeout-component", "", 360*time.Second, "Maximum time to delete the component (default: 6m0s)")
+	cobraCmd.Flags().IntVar(&o.Concurrency, "concurrency", 4, "Number of parallel processes (default: 4)")
 	return cobraCmd
 }
 
@@ -79,10 +79,10 @@ func (cmd *command) Run() error {
 	}
 
 	installCfg := &installConfig.Config{
-		WorkersCount:                  cmd.opts.WorkersCount,
-		CancelTimeout:                 cmd.opts.CancelTimeout,
-		QuitTimeout:                   cmd.opts.QuitTimeout,
-		HelmTimeoutSeconds:            int(cmd.opts.HelmTimeout.Seconds()),
+		WorkersCount:                  cmd.opts.Concurrency,
+		CancelTimeout:                 cmd.opts.Timeout,
+		QuitTimeout:                   cmd.opts.QuitTimeout(),
+		HelmTimeoutSeconds:            int(cmd.opts.TimeoutComponent.Seconds()),
 		BackoffInitialIntervalSeconds: 3,
 		BackoffMaxElapsedTimeSeconds:  60 * 5,
 		Log:                           cli.NewHydroformLoggerAdapter(cli.NewLogger(cmd.Verbose)),
