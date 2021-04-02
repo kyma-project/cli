@@ -16,6 +16,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
@@ -89,7 +90,7 @@ func (c *command) Run() error {
 		return err
 	}
 
-	apiRule, err := resources.NewApiRule(configuration)
+	apiRules, err := resources.NewApiRule(configuration, c.kymaHostAddress())
 	if err != nil {
 		return err
 	}
@@ -107,7 +108,8 @@ func (c *command) Run() error {
 		[]operator.Operator{
 			operator.NewSubscriptionOperator(client.Resource(operator.GVRSubscription).Namespace(configuration.Namespace),
 				configuration.Name, configuration.Namespace, subscriptions...),
-			operator.NewGenericOperator(client.Resource(operator.GVKApiRule).Namespace(configuration.Namespace), apiRule),
+			operator.NewApiRuleOperator(client.Resource(operator.GVKApiRule).Namespace(configuration.Namespace),
+				configuration.Name, apiRules...),
 		},
 	)
 
@@ -126,6 +128,23 @@ func (c *command) Run() error {
 	defer cancel()
 
 	return mgr.Do(ctx, options)
+}
+
+func (c *command) kymaHostAddress() string {
+	var apiserverURL string
+	vs, err := c.K8s.Istio().NetworkingV1alpha3().VirtualServices("kyma-system").Get(context.Background(), "apiserver-proxy", v1.GetOptions{})
+	switch {
+	case err != nil:
+		fmt.Printf("Unable to read the Kyma host URL due to error: %s. \n%s\n%s\r\n", err.Error(),
+			"Check if your cluster is available, has Kyma installed and you have access to the kyma-system namespace.",
+			"If apirules host is provided in the configuration manually, ignore this message.")
+	case vs != nil && len(vs.Spec.Hosts) > 0:
+		apiserverURL = strings.Trim(vs.Spec.Hosts[0], "apiserver.")
+	default:
+		fmt.Println("Kyma host URL could not be obtained.")
+	}
+
+	return apiserverURL
 }
 
 const (
