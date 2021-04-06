@@ -237,8 +237,8 @@ func TestValidateConfigurations(t *testing.T) {
 	err = i.validateConfigurations()
 	require.NoError(t, err)
 
-	// Source "master"
-	i.Options.Source = "master"
+	// Source "main"
+	i.Options.Source = "main"
 	err = i.validateConfigurations()
 	require.NoError(t, err)
 
