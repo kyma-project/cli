@@ -27,7 +27,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func getLatestAvailableMasterHash(currentStep step.Step, fallbackLevel int, nonInteractive bool) (string, error) {
+func getLatestAvailableMainHash(currentStep step.Step, fallbackLevel int, nonInteractive bool) (string, error) {
 	ctx, timeoutF := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer timeoutF()
 	maxCloningDepth := fallbackLevel + 1
