@@ -20,7 +20,7 @@ func TestFunctionFlags(t *testing.T) {
 	require.Equal(t, "nodejs12", o.Runtime, "Default value for the --runtime flag not as expected.")
 	require.Equal(t, "", o.URL, "The parsed value for the --url flag not as expected.")
 	require.Equal(t, "", o.RepositoryName, "The parsed value for the --repository-name flag not as expected.")
-	require.Equal(t, "master", o.Reference, "The parsed value for the --reference flag not as expected.")
+	require.Equal(t, "main", o.Reference, "The parsed value for the --reference flag not as expected.")
 	require.Equal(t, "/", o.BaseDir, "The parsed value for the --base-dir flag not as expected.")
 
 	// test passing flags
