@@ -57,7 +57,7 @@ func getLatestAvailableMainHash(currentStep step.Step, fallbackLevel int, nonInt
 	if artifactsAvailable {
 		return headHash, nil
 	} else if !nonInteractive {
-		promptMsg := fmt.Sprintf("Artifacts for master-%s are not available. Would you like to use artifacts from previous commits?", headHash)
+		promptMsg := fmt.Sprintf("Artifacts for main-%s are not available. Would you like to use artifacts from previous commits?", headHash)
 		if proceed := currentStep.PromptYesNo(promptMsg); !proceed {
 			return "", errors.Errorf("aborting")
 		}
@@ -94,7 +94,7 @@ func getLatestAvailableMainHash(currentStep step.Step, fallbackLevel int, nonInt
 }
 
 func checkArtifactsAvailability(abbrevHash string) (bool, error) {
-	resp, err := http.Head(fmt.Sprintf(releaseResourcePattern, developmentBucket, "master-"+abbrevHash, "kyma-installer-cluster.yaml"))
+	resp, err := http.Head(fmt.Sprintf(releaseResourcePattern, developmentBucket, "main-"+abbrevHash, "kyma-installer-cluster.yaml"))
 	if err != nil {
 		return false, errors.Wrap(err, "while fetching example file from kyma-development-artifacts")
 	}
