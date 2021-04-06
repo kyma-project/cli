@@ -2,7 +2,9 @@ package function
 
 import (
 	"context"
+	"fmt"
 	"os"
+	"strings"
 
 	"github.com/kyma-incubator/hydroform/function/pkg/client"
 	"github.com/kyma-incubator/hydroform/function/pkg/workspace"
@@ -10,6 +12,7 @@ import (
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
@@ -76,7 +79,7 @@ func (c *command) Run(name string) error {
 		Namespace: c.opts.Namespace,
 	}
 
-	err = workspace.Synchronise(ctx, cfg, c.opts.Dir, buildClient)
+	err = workspace.Synchronise(ctx, cfg, c.opts.Dir, buildClient, c.kymaHostAddress())
 	if err != nil {
 		s.Failure()
 		return err
@@ -84,4 +87,21 @@ func (c *command) Run(name string) error {
 
 	s.Successf("Function synchronised in %s", c.opts.Dir)
 	return nil
+}
+
+func (c *command) kymaHostAddress() string {
+	var apiserverURL string
+	vs, err := c.K8s.Istio().NetworkingV1alpha3().VirtualServices("kyma-system").Get(context.Background(), "apiserver-proxy", v1.GetOptions{})
+	switch {
+	case err != nil:
+		fmt.Printf("Unable to read the Kyma host URL due to error: %s. \n%s\n%s\r\n", err.Error(),
+			"Check if your cluster is available and has Kyma installed.",
+			"If apirules host is provided in the configuration manually, ignore this message.")
+	case vs != nil && len(vs.Spec.Hosts) > 0:
+		apiserverURL = strings.Trim(vs.Spec.Hosts[0], "apiserver.")
+	default:
+		fmt.Println("Kyma host URL could not be obtained.")
+	}
+
+	return apiserverURL
 }

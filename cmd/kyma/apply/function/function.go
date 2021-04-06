@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/kyma-incubator/hydroform/function/pkg/client"
 	"github.com/kyma-incubator/hydroform/function/pkg/manager"
@@ -104,11 +105,11 @@ func (c *command) Run() error {
 	}
 
 	mgr.AddParent(
-		operator.NewGenericOperator(client.Resource(operator.GVKFunction).Namespace(configuration.Namespace), function),
+		operator.NewGenericOperator(client.Resource(operator.GVRFunction).Namespace(configuration.Namespace), function),
 		[]operator.Operator{
 			operator.NewSubscriptionOperator(client.Resource(operator.GVRSubscription).Namespace(configuration.Namespace),
 				configuration.Name, configuration.Namespace, subscriptions...),
-			operator.NewApiRuleOperator(client.Resource(operator.GVKApiRule).Namespace(configuration.Namespace),
+			operator.NewApiRuleOperator(client.Resource(operator.GVRApiRule).Namespace(configuration.Namespace),
 				configuration.Name, apiRules...),
 		},
 	)
@@ -135,9 +136,8 @@ func (c *command) kymaHostAddress() string {
 	vs, err := c.K8s.Istio().NetworkingV1alpha3().VirtualServices("kyma-system").Get(context.Background(), "apiserver-proxy", v1.GetOptions{})
 	switch {
 	case err != nil:
-		fmt.Printf("Unable to read the Kyma host URL due to error: %s. \n%s\n%s\r\n", err.Error(),
-			"Check if your cluster is available, has Kyma installed and you have access to the kyma-system namespace.",
-			"If apirules host is provided in the configuration manually, ignore this message.")
+		fmt.Printf("Unable to read the Kyma host URL due to error: %s. \n%s\r\n", err.Error(),
+			"Check if your cluster is available and has Kyma installed.")
 	case vs != nil && len(vs.Spec.Hosts) > 0:
 		apiserverURL = strings.Trim(vs.Spec.Hosts[0], "apiserver.")
 	default:
