@@ -22,10 +22,10 @@ kyma alpha deploy [flags]
   -p, --profile string               Kyma deployment profile. If not specified, Kyma uses its default configuration. The supported profiles are: "evaluation", "production".
   -s, --source string                Installation source:
                                      	- Deploy a specific release, for example: "kyma alpha deploy --source=1.17.1"
-                                     	- Deploy the master branch of the Kyma repository on kyma-project.org: "kyma alpha deploy --source=master"
+                                     	- Deploy the main branch of the Kyma repository on kyma-project.org: "kyma alpha deploy --source=main"
                                      	- Deploy a commit, for example: "kyma alpha deploy --source=34edf09a"
                                      	- Deploy a pull request, for example "kyma alpha deploy --source=PR-9486"
-                                     	- Deploy the local sources: "kyma alpha deploy --source=local" (default: "master") (default "master")
+                                     	- Deploy the local sources: "kyma alpha deploy --source=local" (default: "main") (default "main")
       --timeout duration             Maximum time for the deployment (default: 20m0s) (default 20m0s)
       --timeout-component duration   Maximum time to deploy the component (default: 6m0s) (default 6m0s)
       --tls-crt string               TLS certificate file for the domain used for installation
