@@ -98,7 +98,7 @@ func (c *command) kymaHostAddress() string {
 			"Check if your cluster is available and has Kyma installed.",
 			"If apirules host is provided in the configuration manually, ignore this message.")
 	case vs != nil && len(vs.Spec.Hosts) > 0:
-		apiserverURL = strings.Trim(vs.Spec.Hosts[0], "apiserver.")
+		apiserverURL = strings.TrimPrefix(vs.Spec.Hosts[0], "apiserver.")
 	default:
 		fmt.Println("Kyma host URL could not be obtained.")
 	}

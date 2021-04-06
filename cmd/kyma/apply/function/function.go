@@ -132,19 +132,19 @@ func (c *command) Run() error {
 }
 
 func (c *command) kymaHostAddress() string {
-	var apiserverURL string
+	var url string
 	vs, err := c.K8s.Istio().NetworkingV1alpha3().VirtualServices("kyma-system").Get(context.Background(), "apiserver-proxy", v1.GetOptions{})
 	switch {
 	case err != nil:
 		fmt.Printf("Unable to read the Kyma host URL due to error: %s. \n%s\r\n", err.Error(),
 			"Check if your cluster is available and has Kyma installed.")
 	case vs != nil && len(vs.Spec.Hosts) > 0:
-		apiserverURL = strings.Trim(vs.Spec.Hosts[0], "apiserver.")
+		url = strings.TrimPrefix(vs.Spec.Hosts[0], "apiserver.")
 	default:
 		fmt.Println("Kyma host URL could not be obtained.")
 	}
 
-	return apiserverURL
+	return url
 }
 
 const (
