@@ -30,6 +30,7 @@ type Options struct {
 	*cli.Options
 	WorkspacePath    string
 	ComponentsFile   string
+	Components       []string
 	OverridesFiles   []string
 	Overrides        []string
 	Timeout          time.Duration
@@ -101,7 +102,7 @@ func (o *Options) ResolveLocalWorkspacePath() string {
 //ResolveComponentsFile resolves the components file path relative to the workspace path or makes a remote file locally available
 func (o *Options) ResolveComponentsFile() (string, error) {
 	workspacePath := o.ResolveLocalWorkspacePath()
-	if (o.ComponentsFile == "") || (workspacePath != defaultWorkspacePath && o.ComponentsFile == defaultComponentsFile) {
+	if workspacePath != defaultWorkspacePath && o.ComponentsFile == defaultComponentsFile {
 		return filepath.Join(workspacePath, "installation", "resources", "components.yaml"), nil
 	}
 	file, err := download.GetFile(o.ComponentsFile, o.workspaceTmpDir())
@@ -130,6 +131,9 @@ func (o *Options) validateFlags() error {
 	}
 	if _, err := o.tlsCertAndKeyProvided(); err != nil {
 		return err
+	}
+	if o.ComponentsFile != defaultComponentsFile && len(o.Components) > 0 {
+		return fmt.Errorf(`Only one of "components-file" and "component" flags can be provided`)
 	}
 	return nil
 }
