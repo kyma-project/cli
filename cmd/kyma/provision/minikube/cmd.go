@@ -251,6 +251,7 @@ func (c *command) startMinikube() error {
 	}
 
 	if c.opts.VMDriver == vmDriverDocker && len(c.opts.DockerPorts) > 0 {
+		startCmd = append(startCmd, "--force")
 		for _, port := range c.opts.DockerPorts {
 			startCmd = append(startCmd, "--ports="+port)
 		}
