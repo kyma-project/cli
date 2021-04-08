@@ -67,10 +67,10 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd.Flags().StringVarP(&o.TLSKeyFile, "tls-key", "", "", "TLS key file for the domain used for installation")
 	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", defaultSource, `Installation source:
 	- Deploy a specific release, for example: "kyma alpha deploy --source=1.17.1"
-	- Deploy the master branch of the Kyma repository on kyma-project.org: "kyma alpha deploy --source=master"
+	- Deploy the main branch of the Kyma repository on kyma-project.org: "kyma alpha deploy --source=main"
 	- Deploy a commit, for example: "kyma alpha deploy --source=34edf09a"
 	- Deploy a pull request, for example "kyma alpha deploy --source=PR-9486"
-	- Deploy the local sources: "kyma alpha deploy --source=local" (default: "master")`)
+	- Deploy the local sources: "kyma alpha deploy --source=local" (default: "main")`)
 	cobraCmd.Flags().StringVarP(&o.Profile, "profile", "p", "",
 		fmt.Sprintf("Kyma deployment profile. If not specified, Kyma uses its default configuration. The supported profiles are: \"%s\".", strings.Join(kymaProfiles, "\", \"")))
 	return cobraCmd

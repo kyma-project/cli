@@ -13,7 +13,7 @@ type Cluster struct {
 	Nodes []Node
 }
 
-//Node in the K3s setup (could be lb, master, agent etc.)
+//Node in the K3s setup (could be lb, main, agent etc.)
 type Node struct {
 	Name   string
 	Role   string

@@ -5,7 +5,7 @@ import "time"
 // Options holds the configuration options for the installation.
 type Options struct {
 	// Source specifies the installation source. To use the specific release, pass the release version (e.g. 1.6.0).
-	// To use the master branch, pass "master". To use the local sources, pass "local". To use the remote image, pass the installer image (e.g. user/my-kyma-installer:v1.6.0).
+	// To use the main branch, pass "main". To use the local sources, pass "local". To use the remote image, pass the installer image (e.g. user/my-kyma-installer:v1.6.0).
 	Source string `json:"source"`
 
 	// releaseVersion is set to the version of the release being installed.
@@ -65,7 +65,7 @@ type Options struct {
 	// CustomImage determines the name for a custom Kyma installer image built for installation from local sources.
 	// +optional
 	CustomImage string `json:"customImage,omitempty"`
-	// If source=master, defines how many commits from master branch are taken into account if artifacts for newer commits does not exist yet
+	// If source=main, defines how many commits from main branch are taken into account if artifacts for newer commits does not exist yet
 	// +optional
 	FallbackLevel int `json:"fallback_level,omitempty"`
 	// Profile specifies the Kyma installation profile (evaluation|production).
@@ -90,7 +90,7 @@ func NewOptions() *Options {
 	return &Options{
 		Timeout: 1 * time.Hour,
 		Domain:  defaultDomain,
-		Source:  "master",
+		Source:  "main",
 		IsLocal: true,
 	}
 }

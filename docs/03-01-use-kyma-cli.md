@@ -17,7 +17,7 @@ kyma {COMMAND} {FLAGS}
 See the example:
 
 ```bash
-kyma install -s master
+kyma install -s main
 ```
 
 See [the full list of commands and flags](/cli/commands/).

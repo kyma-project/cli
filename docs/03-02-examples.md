@@ -39,10 +39,10 @@ kyma install --domain {DOMAIN} --tls-cert {TLS_CERT} --tls-key {TLS_KEY}
     kyma install --domain {DOMAIN} --tls-cert $TLS_CERT --tls-key $TLS_KEY
     ```
 
-To install Kyma from the `master` branch, run:
+To install Kyma from the `main` branch, run:
 
 ```bash
-kyma install --source master
+kyma install --source main
 ```
 
 To install Kyma using your own Kyma installer image, run:

@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := local
 
 ifndef KYMA_VERSION
-	KYMA_VERSION = master
+	KYMA_VERSION = main
 endif
 
 ifndef VERSION
