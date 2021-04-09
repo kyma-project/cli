@@ -16,7 +16,8 @@ kyma alpha deploy [flags]
 
 ```bash
   -a, --atomic                       Set --atomic=true to use atomic deployment, which rolls back any component that could not be installed successfully.
-  -c, --components string            Path to the components file (default: "workspace/installation/resources/components.yaml") (default "workspace/installation/resources/components.yaml")
+      --component strings            Provide one or more components to deploy (e.g. --component componentName@namespace
+  -c, --components-file string       Path to the components file (default: "workspace/installation/resources/components.yaml") (default "workspace/installation/resources/components.yaml")
       --concurrency int              Number of parallel processes (default: 4) (default 4)
   -d, --domain string                Custom domain used for installation
   -p, --profile string               Kyma deployment profile. If not specified, Kyma uses its default configuration. The supported profiles are: "evaluation", "production".
