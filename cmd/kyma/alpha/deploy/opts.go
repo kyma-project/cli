@@ -133,7 +133,7 @@ func (o *Options) validateFlags() error {
 		return err
 	}
 	if o.ComponentsFile != defaultComponentsFile && len(o.Components) > 0 {
-		return fmt.Errorf(`Only one of "components-file" and "component" flags can be provided`)
+		return fmt.Errorf(`Provide either "components-file" or "component" flag`)
 	}
 	return nil
 }
