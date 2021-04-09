@@ -102,7 +102,7 @@ func (o *Options) ResolveLocalWorkspacePath() string {
 //ResolveComponentsFile resolves the components file path relative to the workspace path or makes a remote file locally available
 func (o *Options) ResolveComponentsFile() (string, error) {
 	workspacePath := o.ResolveLocalWorkspacePath()
-	if workspacePath != defaultWorkspacePath && o.ComponentsFile == defaultComponentsFile {
+	if (o.ComponentsFile == "") || (workspacePath != defaultWorkspacePath && o.ComponentsFile == defaultComponentsFile) {
 		return filepath.Join(workspacePath, "installation", "resources", "components.yaml"), nil
 	}
 	file, err := download.GetFile(o.ComponentsFile, o.workspaceTmpDir())
