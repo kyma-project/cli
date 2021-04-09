@@ -102,3 +102,21 @@ func assertValidOverride(t *testing.T, command command, expectedJSON string) err
 
 	return nil
 }
+
+func TestCreateCompList(t *testing.T) {
+	t.Run("Create component list using --component flag", func(t *testing.T) {
+		command := command{
+			opts: &Options{
+				Components: []string{"comp1", "comp2@test-namespace"},
+			},
+		}
+		compList, _ := command.createCompList()
+
+		require.Equal(t, "comp1", compList.Components[0].Name)
+		// comp1 will have the default namespace which is specified in parallel-install library
+		require.NotEmpty(t, compList.Components[0].Namespace)
+
+		require.Equal(t, "comp2", compList.Components[1].Name)
+		require.Equal(t, "test-namespace", compList.Components[1].Namespace)
+	})
+}
