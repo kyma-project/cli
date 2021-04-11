@@ -30,6 +30,7 @@ type Options struct {
 	*cli.Options
 	WorkspacePath    string
 	ComponentsFile   string
+	Components       []string
 	OverridesFiles   []string
 	Overrides        []string
 	Timeout          time.Duration
@@ -130,6 +131,9 @@ func (o *Options) validateFlags() error {
 	}
 	if _, err := o.tlsCertAndKeyProvided(); err != nil {
 		return err
+	}
+	if o.ComponentsFile != defaultComponentsFile && len(o.Components) > 0 {
+		return fmt.Errorf(`Provide either "components-file" or "component" flag`)
 	}
 	return nil
 }

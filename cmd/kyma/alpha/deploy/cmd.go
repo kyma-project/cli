@@ -56,7 +56,8 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cobraCmd.Flags().StringVarP(&o.WorkspacePath, "workspace", "w", defaultWorkspacePath, `Path to download Kyma sources (default: "workspace")`)
 	cobraCmd.Flags().BoolVarP(&o.Atomic, "atomic", "a", false, "Set --atomic=true to use atomic deployment, which rolls back any component that could not be installed successfully.")
-	cobraCmd.Flags().StringVarP(&o.ComponentsFile, "components", "c", defaultComponentsFile, `Path to the components file (default: "workspace/installation/resources/components.yaml")`)
+	cobraCmd.Flags().StringVarP(&o.ComponentsFile, "components-file", "c", defaultComponentsFile, `Path to the components file (default: "workspace/installation/resources/components.yaml")`)
+	cobraCmd.Flags().StringSliceVarP(&o.Components, "component", "", []string{}, "Provide one or more components to deploy (e.g. --component componentName@namespace)")
 	cobraCmd.Flags().StringSliceVarP(&o.OverridesFiles, "values-file", "f", []string{}, "Path(s) to one or more JSON or YAML files with configuration values")
 	cobraCmd.Flags().StringSliceVarP(&o.Overrides, "value", "", []string{}, "Set one or more configuration values (e.g. --value component.key='the value')")
 	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 20*time.Minute, "Maximum time for the deployment (default: 20m0s)")
@@ -211,12 +212,7 @@ func (cmd *command) deployKyma(ui asyncui.AsyncUI, overrides *deployment.Overrid
 	resourcePath := filepath.Join(localWorkspace, "resources")
 	installResourcePath := filepath.Join(localWorkspace, "installation", "resources")
 
-	//read component list file and marshal it to a component list entity
-	compFile, err := cmd.opts.ResolveComponentsFile()
-	if err != nil {
-		return err
-	}
-	compList, err := installConfig.NewComponentList(compFile)
+	compList, err := cmd.createCompList()
 	if err != nil {
 		return err
 	}
@@ -252,6 +248,34 @@ func (cmd *command) deployKyma(ui asyncui.AsyncUI, overrides *deployment.Overrid
 	}
 
 	return installer.StartKymaDeployment()
+}
+
+func (cmd *command) createCompList() (*installConfig.ComponentList, error) {
+	var compList *installConfig.ComponentList
+	if len(cmd.opts.Components) > 0 {
+		compList = &installConfig.ComponentList{}
+		for _, comp := range cmd.opts.Components {
+			// component should be provided in the following format: componentName@namespace
+			compDef := strings.Split(comp, "@")
+			compName := compDef[0]
+			namespace := ""
+			if len(compDef) > 1 {
+				namespace = compDef[1]
+			}
+			compList.Add(compName, namespace)
+		}
+	} else {
+		//read component list file and marshal it to a component list entity
+		compFile, err := cmd.opts.ResolveComponentsFile()
+		if err != nil {
+			return nil, err
+		}
+		compList, err = installConfig.NewComponentList(compFile)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return compList, nil
 }
 
 func (cmd *command) overrides() (*deployment.OverridesBuilder, error) {

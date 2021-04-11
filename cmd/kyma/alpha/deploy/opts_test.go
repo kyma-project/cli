@@ -157,6 +157,16 @@ func TestOptsValidation(t *testing.T) {
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "not found")
 	})
+	t.Run(`Only one of "components-file" and "component" flags can be provided`, func(t *testing.T) {
+		opts := &Options{
+			TLSCrtFile:     crtFile,
+			TLSKeyFile:     keyFile,
+			ComponentsFile: "path/to/componentFile",
+			Components:     []string{"comp1", "comp2"},
+		}
+		err := opts.validateFlags()
+		require.Error(t, err)
+	})
 }
 
 func TestComponentFile(t *testing.T) {
