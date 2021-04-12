@@ -84,7 +84,7 @@ For example, to install Kyma from a specific version, such as `1.19.1`, run:
   kyma alpha deploy --component {COMPONENT_NAME@NAMESPACE}
   ```
 
-  If no namespace is provided, then the default namespace is used. For example, to install `testing` component in the default namespace and `application-connector` component in `kyma-integration` namespace, run:
+  If no Namespace is provided, then the default Namespace is used. For example, to install the `testing` component in the default Namespace and the `application-connector` component in the `kyma-integration` Namespace, run:
   
   ```
   kyma alpha deploy --component testing --component application-connector@kyma-integration
