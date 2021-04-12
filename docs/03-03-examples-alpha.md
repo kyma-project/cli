@@ -61,7 +61,7 @@ For example, to install Kyma from a specific version, such as `1.19.1`, run:
 - To deploy Kyma with only specific components, run:
 
   ```
-  kyma alpha deploy --components {COMPONENTS_FILE_PATH}
+  kyma alpha deploy --components-file {COMPONENTS_FILE_PATH}
   ```
 
   `{COMPONENTS_FILE_PATH}` is the path to a YAML file containing the desired component list to be installed. In the following example, only six components are deployed on the cluster:
@@ -76,6 +76,18 @@ For example, to install Kyma from a specific version, such as `1.19.1`, run:
     - name: "xip-patch"
     - name: "istio-kyma-patch"
     - name: "dex"
+  ```
+
+- Alternatively, you can specify single components instead of a file:
+  
+  ```
+  kyma alpha deploy --component {COMPONENT_NAME@NAMESPACE}
+  ```
+
+  If no namespace is provided, then the default namespace is used. For example, to install `testing` component in the default namespace and `application-connector` component in `kyma-integration` namespace, run:
+  
+  ```
+  kyma alpha deploy --component testing --component application-connector@kyma-integration
   ```
 
 - You can also install Kyma with different configuration values than the default settings. For details, see [Change Kyma settings](#change-kyma-settings).
