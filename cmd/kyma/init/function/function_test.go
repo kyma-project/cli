@@ -17,7 +17,7 @@ func TestFunctionFlags(t *testing.T) {
 	require.Equal(t, "", o.Name, "Default value for the --name flag not as expected.")
 	require.Equal(t, "", o.Namespace, "Default value for the --namespace flag not as expected.")
 	require.Equal(t, "", o.Dir, "Default value for the --dir flag not as expected.")
-	require.Equal(t, "nodejs12", o.Runtime, "Default value for the --runtime flag not as expected.")
+	require.Equal(t, "nodejs14", o.Runtime, "Default value for the --runtime flag not as expected.")
 	require.Equal(t, "", o.URL, "The parsed value for the --url flag not as expected.")
 	require.Equal(t, "", o.RepositoryName, "The parsed value for the --repository-name flag not as expected.")
 	require.Equal(t, "main", o.Reference, "The parsed value for the --reference flag not as expected.")
@@ -46,13 +46,13 @@ func TestFunctionFlags(t *testing.T) {
 
 	err = c.ParseFlags([]string{
 		"-d", "/tmpfile",
-		"-r", "nodejs10",
+		"-r", "nodejs14",
 	})
 	require.NoError(t, err, "Parsing flags should not return an error")
 	require.Equal(t, "/tmpfile", o.Dir, "The parsed value for the --dir flag not as expected.")
 	require.Equal(t, "test-name", o.Name, "The parsed value for the --name flag not as expected.")
 	require.Equal(t, "test-namespace", o.Namespace, "The parsed value for the --namespace flag not as expected.")
-	require.Equal(t, "nodejs10", o.Runtime, "The parsed value for the --runtime flag not as expected.")
+	require.Equal(t, "nodejs14", o.Runtime, "The parsed value for the --runtime flag not as expected.")
 	require.Equal(t, "test-url", o.URL, "The parsed value for the --url flag not as expected.")
 	require.Equal(t, "test-repository-name", o.RepositoryName, "The parsed value for the --repository-name flag not as expected.")
 	require.Equal(t, "test-reference", o.Reference, "The parsed value for the --reference flag not as expected.")

@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	defaultRuntime   = "nodejs12"
+	defaultRuntime   = "nodejs14"
 	defaultReference = "main"
 	defaultBaseDir   = "/"
 )
@@ -42,7 +42,7 @@ Use the flags to specify the initial configuration for your Function or to choos
 	cmd.Flags().StringVarP(&o.Dir, "dir", "d", "", `Full path to the directory where you want to save the project.`)
 	cmd.Flags().StringVarP(&o.Runtime, "runtime", "r", defaultRuntime, `Flag used to define the environment for running your Function. Use one of these options:
 	- nodejs12
-	- nodejs10
+	- nodejs14
 	- python38`)
 
 	// git function options
