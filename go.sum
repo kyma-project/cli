@@ -806,6 +806,8 @@ github.com/kubernetes-sigs/service-catalog v0.3.0/go.mod h1:zRfgMd1T9HuXR24Qj4GO
 github.com/kylelemons/godebug v0.0.0-20170820004349-d65d576e9348/go.mod h1:B69LEHPfb2qLo0BaaOLcbitczOKLWTsrBG9LczfCD4k=
 github.com/kylelemons/godebug v1.1.0 h1:RPNrshWIDI6G2gRW9EHilWtl7Z6Sb1BR0xunSBf0SNc=
 github.com/kylelemons/godebug v1.1.0/go.mod h1:9/0rRGxNHcop5bhtWyNeEfOS8JIWk580+fNqagV/RAw=
+github.com/kyma-incubator/hydroform/function v0.0.0-20210412105828-8e9bd1971490 h1:YZoVabHqKr/Hxuvcae5EfD7p7j3Tl4O57jLBk2pJXrU=
+github.com/kyma-incubator/hydroform/function v0.0.0-20210412105828-8e9bd1971490/go.mod h1:UkGyJJw4UKHUAbgKcJWDYQrMw76k5DJUZDNkOvjawqA=
 github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90 h1:E9rWdmz/CEfO52VJ6P/1M3TysNbET/qyw6611RbKJo8=
 github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90/go.mod h1:/qouJL+g8Tsllh/VcxK1Li6NCyuqyXSlq1i9InKSZJk=
 github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20210409084448-8e90ab5f2803 h1:1WLaXk65JTSeegOtZi9nwpUWnL6tbcSufaN5AGOY8ho=
@@ -1012,8 +1014,6 @@ github.com/openzipkin/zipkin-go v0.1.1/go.mod h1:NtoC/o8u3JlF1lSlyPNswIbeQH9bJTm
 github.com/openzipkin/zipkin-go v0.1.6/go.mod h1:QgAqvLzwWbR/WpD4A3cGpPtJrZXNIiJc5AZX7/PBEpw=
 github.com/openzipkin/zipkin-go v0.2.1/go.mod h1:NaW6tEwdmWMaCDZzg8sh+IBNOxHMPnhQw8ySjnjRyN4=
 github.com/openzipkin/zipkin-go v0.2.2/go.mod h1:NaW6tEwdmWMaCDZzg8sh+IBNOxHMPnhQw8ySjnjRyN4=
-github.com/pPrecel/hydroform/function v0.0.0-20210402165510-fa6c913faeee h1:lvbwSJvsbD5CQdh6C3o9nhbmIHf1YVtGxrxATDZDg1c=
-github.com/pPrecel/hydroform/function v0.0.0-20210402165510-fa6c913faeee/go.mod h1:UkGyJJw4UKHUAbgKcJWDYQrMw76k5DJUZDNkOvjawqA=
 github.com/packer-community/winrmcp v0.0.0-20180102160824-81144009af58/go.mod h1:f6Izs6JvFTdnRbziASagjZ2vmf55NSIkC/weStxCHqk=
 github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db h1:9uViuKtx1jrlXLBW/pMnhOfzn3iSEdLase/But/IZRU=
 github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db/go.mod h1:f6Izs6JvFTdnRbziASagjZ2vmf55NSIkC/weStxCHqk=

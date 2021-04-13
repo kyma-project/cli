@@ -10,8 +10,6 @@ replace (
 
 	github.com/hashicorp/consul v0.0.0-20171026175957-610f3c86a089 => github.com/hashicorp/consul/sdk v0.7.0
 	github.com/hashicorp/consul/api v1.3.0 => github.com/hashicorp/consul/api v0.0.0-20191112221531-8742361660b6
-	// remove this replace before merge
-	github.com/kyma-incubator/hydroform/function => github.com/pPrecel/hydroform/function v0.0.0-20210402165510-fa6c913faeee
 	// this is needed for terraform to work with the k8s 0.18 APIs, we should be able to remove it once we have terraform 0.13+
 	github.com/terraform-providers/terraform-provider-openstack => github.com/terraform-providers/terraform-provider-openstack v1.20.0
 	// grpc need to be compatible with direct dependencies in terraform (>=v1.29.1)
@@ -27,7 +25,7 @@ require (
 	github.com/docker/cli v20.10.3+incompatible
 	github.com/docker/docker v20.10.3+incompatible
 	github.com/fatih/color v1.10.0
-	github.com/kyma-incubator/hydroform/function v0.0.0-20210319130226-926c73801013
+	github.com/kyma-incubator/hydroform/function v0.0.0-20210412105828-8e9bd1971490
 	github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90
 	github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20210409084448-8e90ab5f2803
 	github.com/kyma-incubator/hydroform/provision v0.0.0-20201124135641-ca1a1a00c935

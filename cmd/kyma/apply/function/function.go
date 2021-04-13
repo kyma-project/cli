@@ -91,7 +91,7 @@ func (c *command) Run() error {
 		return err
 	}
 
-	apiRules, err := resources.NewApiRule(configuration, c.kymaHostAddress())
+	apiRules, err := resources.NewAPIRule(configuration, c.kymaHostAddress())
 	if err != nil {
 		return err
 	}
@@ -109,7 +109,7 @@ func (c *command) Run() error {
 		[]operator.Operator{
 			operator.NewSubscriptionOperator(client.Resource(operator.GVRSubscription).Namespace(configuration.Namespace),
 				configuration.Name, configuration.Namespace, subscriptions...),
-			operator.NewApiRuleOperator(client.Resource(operator.GVRApiRule).Namespace(configuration.Namespace),
+			operator.NewAPIRuleOperator(client.Resource(operator.GVRApiRule).Namespace(configuration.Namespace),
 				configuration.Name, apiRules...),
 		},
 	)
