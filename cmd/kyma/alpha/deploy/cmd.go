@@ -468,12 +468,12 @@ func (cmd *command) importCertificate() error {
 
 	if !cmd.approveImportCertificate() {
 		//no approval given: stop import
-		ca.Instructions()
+		ca.InstructionsAlpha()
 		return nil
 	}
 
 	// get cert from cluster
-	cert, err := ca.Certificate()
+	cert, err := ca.CertificateAlpha()
 	if err != nil {
 		return err
 	}
