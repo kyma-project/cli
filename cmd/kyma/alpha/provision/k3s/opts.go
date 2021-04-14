@@ -14,6 +14,7 @@ type Options struct {
 	Workers    int
 	Timeout    time.Duration
 	ServerArgs []string
+	K3dArgs    []string
 }
 
 //NewOptions creates options with default values
