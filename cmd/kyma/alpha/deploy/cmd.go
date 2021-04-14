@@ -418,7 +418,7 @@ func (cmd *command) importCertificate() error {
 	ca := trust.NewCertifier(cmd.K8s)
 
 	// get cert from cluster
-	cert, err := ca.Certificate()
+	cert, err := ca.CertificateAlpha()
 	if err != nil {
 		return err
 	}

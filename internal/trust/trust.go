@@ -7,12 +7,19 @@ type Certifier interface {
 	// Certificate provides the decoded Kyma root certificate.
 	Certificate() ([]byte, error)
 
+	// Certificate provides the decoded Kyma root certificate for alpha commands.
+	CertificateAlpha() ([]byte, error)
+
 	// StoreCertificate imports the given certificate file into the trusted root certificates manager of the OS.
 	StoreCertificate(file string, info Informer) error
 
 	// Instructions provides instructions on how to manually store a certificate.
 	// Use in case it can not be stored by calling StoreCertificate.
 	Instructions() string
+
+	// Instructions provides instructions on how to manually store a certificate for alpha commands.
+	// Use in case it can not be stored by calling StoreCertificate.
+	InstructionsAlpha() string
 }
 
 // informer defines the way certification management informs about its progress.
