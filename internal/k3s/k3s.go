@@ -141,18 +141,12 @@ func StartCluster(verbose bool, timeout time.Duration, clusterName string, worke
 
 	//add further custom server args
 	for _, srvArg := range serverArgs {
-		if srvArg == "" {
-			continue
-		}
 		cmdArgs = append(cmdArgs, "--k3s-server-arg")
 		cmdArgs = append(cmdArgs, srvArg)
 	}
 
 	//add further k3d args which are not offered by the Kyma CLI flags
 	for _, k3dArg := range k3dArgs {
-		if k3dArg == "" {
-			continue
-		}
 		cmdArgs = append(cmdArgs, k3dArg)
 	}
 
