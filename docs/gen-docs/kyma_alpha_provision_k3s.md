@@ -15,6 +15,7 @@ kyma alpha provision k3s [flags]
 ## Flags
 
 ```bash
+  -a, --agent-arg strings    One or more arguments passed to the k3s agent command on agent nodes (e.g. --agent-arg='--alsologtostderr')
       --k3d-arg strings      One or more arguments passed to the k3d provisioning command (e.g. --k3d-arg='--no-rollback')
       --name string          Name of the Kyma cluster (default: "kyma") (default "kyma")
   -s, --server-arg strings   One or more arguments passed to the Kubernetes API server (e.g. --server-arg='--alsologtostderr')
