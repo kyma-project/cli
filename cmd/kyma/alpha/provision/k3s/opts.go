@@ -14,6 +14,7 @@ type Options struct {
 	Workers    int
 	Timeout    time.Duration
 	ServerArgs []string
+	AgentArgs  []string
 	K3dArgs    []string
 }
 

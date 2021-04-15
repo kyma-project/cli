@@ -42,7 +42,7 @@ function cluster_list_-o_json {
 #
 # Mock for 'k3d cluster create kyma --kubeconfig-update-default --timeout 5s -p 80:80@loadbalancer -p 443:443@loadbalancer --agents 1 --k3s-server-arg --disable --k3s-server-arg traefik' command
 #
-function cluster_create_kyma_--kubeconfig-update-default_--timeout_5s_-p_80:80@loadbalancer_-p_443:443@loadbalancer_--agents_1_--k3s-server-arg_--disable_--k3s-server-arg_traefik_--no-rollback {
+function cluster_create_kyma_--kubeconfig-update-default_--timeout_5s_-p_80:80@loadbalancer_-p_443:443@loadbalancer_--agents_1_--k3s-server-arg_--disable_--k3s-server-arg_traefik_--k3s-server-arg_--alsologtostderr_--k3s-agent-arg_--alsologtostderr_--no-rollback {
     dump_file cluster_create.txt
 }
 
