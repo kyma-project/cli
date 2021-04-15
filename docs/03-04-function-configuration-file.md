@@ -86,6 +86,8 @@ env:
 
 ## Parameters
 
+See all parameter descriptions:
+
 | Parameter         | Required | Related custom resource | Description                                   |
 | ---------------------------------------- | :------------: | ---------| ---------|
 | **name**              | Yes | Function | Specifies the name of your Function.         |
