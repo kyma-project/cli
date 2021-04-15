@@ -68,7 +68,7 @@ func (k keychain) StoreCertificate(file string, i Informer) error {
 }
 
 func (keychain) Instructions() string {
-	return "1. Download the certificate: kubectl get secret kyma-gateway-certs -n istio-system -o jsonpath='{.data.cert}' > kyma.crt\n" +
+	return "1. Download the certificate: kubectl get configmap net-global-overrides -n kyma-installer -o jsonpath='{.data.global\\.ingress\\.tlsCrt}' | base64 --decode > kyma.crt\n" +
 		"2. Import the certificate: sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain kyma.crt\n"
 }
 
