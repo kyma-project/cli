@@ -152,9 +152,7 @@ func StartCluster(verbose bool, timeout time.Duration, clusterName string, worke
 	}
 
 	//add further k3d args which are not offered by the Kyma CLI flags
-	for _, k3dArg := range k3dArgs {
-		cmdArgs = append(cmdArgs, k3dArg)
-	}
+	cmdArgs = append(cmdArgs, k3dArgs...)
 
 	_, err := RunCmd(verbose, timeout, cmdArgs...)
 
