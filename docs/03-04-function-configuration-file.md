@@ -5,9 +5,9 @@ type: Details
 
 When you initialize a Function (`init`), CLI creates the `config.yaml` file in your workspace folder. This file contains the whole Function's configuration and specification not only for the Function custom resource but also any other related resources you create for it, such as Subscriptions and API Rules.
 
-## Definition
+## Specification
 
-The specification of the `config.yaml` looks as follows:
+See the sample `config.yaml`:
 
 ```yaml
 name: function-practical-filip5
