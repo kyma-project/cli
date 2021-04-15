@@ -4,6 +4,7 @@ package trust
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,6 +27,20 @@ func NewCertifier(k kube.KymaKube) Certifier {
 }
 
 func (k keychain) Certificate() ([]byte, error) {
+	cm, err := k.k8s.Static().CoreV1().ConfigMaps("kyma-installer").Get(context.Background(), "net-global-overrides", metav1.GetOptions{})
+	if err != nil {
+		return nil, errors.Wrap(err, fmt.Sprintf("\nCould not retrieve the Kyma root certificate. Follow the instructions to import it manually:\n-----\n%s-----\n", k.Instructions()))
+	}
+
+	decodedCert, err := base64.StdEncoding.DecodeString(cm.Data["global.ingress.tlsCrt"])
+	if err != nil {
+		return nil, errors.Wrap(err, fmt.Sprintf("\nCould not retrieve the Kyma root certificate. Follow the instructions to import it manually:\n-----\n%s-----\n", k.Instructions()))
+	}
+
+	return decodedCert, nil
+}
+
+func (k keychain) CertificateAlpha() ([]byte, error) {
 	s, err := k.k8s.Static().CoreV1().Secrets("istio-system").Get(context.Background(), "kyma-gateway-certs", metav1.GetOptions{})
 	if err != nil {
 		return nil, errors.Wrap(err, fmt.Sprintf("\nCould not retrieve the Kyma root certificate. Follow the instructions to import it manually:\n-----\n%s-----\n", k.Instructions()))
@@ -53,6 +68,11 @@ func (k keychain) StoreCertificate(file string, i Informer) error {
 }
 
 func (keychain) Instructions() string {
+	return "1. Download the certificate: kubectl get configmap net-global-overrides -n kyma-installer -o jsonpath='{.data.global\\.ingress\\.tlsCrt}' | base64 --decode > kyma.crt\n" +
+		"2. Import the certificate: sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain kyma.crt\n"
+}
+
+func (keychain) InstructionsAlpha() string {
 	return "1. Download the certificate: kubectl get secret kyma-gateway-certs -n istio-system -o jsonpath='{.data.tls\\.crt}' > kyma.crt\n" +
 		"2. Import the certificate: sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain kyma.crt\n"
 }
