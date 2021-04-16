@@ -154,7 +154,7 @@ func (c *command) kymaHostAddress() (string, error) {
 	case vs != nil && len(vs.Spec.Hosts) > 0:
 		url = strings.TrimPrefix(vs.Spec.Hosts[0], "apiserver.")
 	default:
-		err = errors.New("Kyma host URL could not be obtained.")
+		err = errors.New("kyma host URL could not be obtained.")
 	}
 
 	return url, err
