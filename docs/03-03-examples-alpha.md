@@ -44,7 +44,7 @@ If you don't have a certificate yet, you can create a self-signed certificate an
   kyma alpha deploy --domain {DOMAIN} --tls-cert crt.pem --tls-key key.pem
   ```
 
-- Optionally, you can specify from which source you want to deploy Kyma, such as the `master` branch, a specific PR, or a release version. For more details, see the documentation for the `alpha deploy` command.<br>
+- Optionally, you can specify from which source you want to deploy Kyma, such as the `main` branch, a specific PR, or a release version. For more details, see the documentation for the `alpha deploy` command.<br>
 For example, to install Kyma from a specific version, such as `1.19.1`, run:
 
   ```

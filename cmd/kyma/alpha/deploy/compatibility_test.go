@@ -26,9 +26,9 @@ func TestVersionCompare(t *testing.T) {
 	})
 
 	t.Run("Next version is not a release", func(t *testing.T) {
-		err := checkCompatibility("1.18.0", "master")
+		err := checkCompatibility("1.18.0", "main")
 		assert.Error(t, err)
-		assert.Equal(t, err.Error(), nextVersionNoReleaseError.with("1.18", "master").Error())
+		assert.Equal(t, err.Error(), nextVersionNoReleaseError.with("1.18", "main").Error())
 	})
 
 	t.Run("Next version is lower as current version", func(t *testing.T) {

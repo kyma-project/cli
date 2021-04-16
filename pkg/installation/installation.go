@@ -26,7 +26,7 @@ const (
 	releaseBucket          = "kyma-prow-artifacts"
 	releaseResourcePattern = "https://storage.googleapis.com/%s/%s/%s"
 	defaultDomain          = "kyma.local"
-	sourceMaster           = "master"
+	sourceMain             = "main"
 	sourceLocal            = "local"
 
 	installerFile       = "installer"
@@ -215,20 +215,20 @@ func (i *Installation) validateConfigurations() error {
 			return pkgErrors.New("You must specify --custom-image to install Kyma from local sources to a remote cluster.")
 		}
 
-	//Install the master version
-	case strings.EqualFold(i.Options.Source, sourceMaster):
-		masterHash, err := getLatestAvailableMasterHash(i.currentStep, i.Options.FallbackLevel, i.Options.NonInteractive)
+	//Install the main version
+	case strings.EqualFold(i.Options.Source, sourceMain):
+		mainHash, err := getLatestAvailableMainHash(i.currentStep, i.Options.FallbackLevel, i.Options.NonInteractive)
 		if err != nil {
-			return pkgErrors.Wrap(err, "unable to get master version of kyma")
+			return pkgErrors.Wrap(err, "unable to get main version of kyma")
 		}
-		i.Options.releaseVersion = fmt.Sprintf("master-%s", masterHash)
-		i.Options.configVersion = fmt.Sprintf("master-%s", masterHash)
+		i.Options.releaseVersion = fmt.Sprintf("main-%s", mainHash)
+		i.Options.configVersion = fmt.Sprintf("main-%s", mainHash)
 		i.Options.bucket = developmentBucket
 
 	//Install the specific commit hash (e.g. 34edf09a)
 	case isHex(i.Options.Source):
-		i.Options.releaseVersion = fmt.Sprintf("master-%s", i.Options.Source[:8])
-		i.Options.configVersion = fmt.Sprintf("master-%s", i.Options.Source[:8])
+		i.Options.releaseVersion = fmt.Sprintf("main-%s", i.Options.Source[:8])
+		i.Options.configVersion = fmt.Sprintf("main-%s", i.Options.Source[:8])
 		i.Options.bucket = developmentBucket
 
 	//Install the specific version from release (ex: 1.15.1)
@@ -245,15 +245,15 @@ func (i *Installation) validateConfigurations() error {
 
 	//Install the kyma with the specific installer image (docker image URL)
 	case isDockerImage(i.Options.Source):
-		masterHash, err := getLatestAvailableMasterHash(i.currentStep, i.Options.FallbackLevel, true)
+		mainHash, err := getLatestAvailableMainHash(i.currentStep, i.Options.FallbackLevel, true)
 		if err != nil {
-			return pkgErrors.Wrap(err, "unable to get master version of kyma")
+			return pkgErrors.Wrap(err, "unable to get main version of kyma")
 		}
 		i.Options.remoteImage = i.Options.Source
-		i.Options.configVersion = fmt.Sprintf("master-%s", masterHash)
+		i.Options.configVersion = fmt.Sprintf("main-%s", mainHash)
 		i.Options.bucket = developmentBucket
 	default:
-		return fmt.Errorf("failed to parse the source flag. It can take one of the following: 'local', 'master', release version (e.g. 1.4.1), commit hash (e.g. 34edf09a) or installer image")
+		return fmt.Errorf("failed to parse the source flag. It can take one of the following: 'local', 'main', release version (e.g. 1.4.1), commit hash (e.g. 34edf09a) or installer image")
 	}
 
 	//If custom domain name is provided, also certificates have to be provided

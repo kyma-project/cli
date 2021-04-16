@@ -12,7 +12,7 @@ import (
 
 const (
 	defaultRuntime   = "nodejs12"
-	defaultReference = "master"
+	defaultReference = "main"
 	defaultBaseDir   = "/"
 )
 

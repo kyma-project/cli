@@ -66,7 +66,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd.Flags().StringVarP(&o.TLSKeyFile, "tls-key", "", "", "TLS key file for the domain used for installation.")
 	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", defaultSource, `Installation source.
 	- To use a specific release, write "kyma alpha deploy --source=1.17.1".
-	- To use the master branch, write "kyma alpha deploy --source=master".
+	- To use the main branch, write "kyma alpha deploy --source=main".
 	- To use a commit, write "kyma alpha deploy --source=34edf09a".
 	- To use a pull request, write "kyma alpha deploy --source=PR-9486".
 	- To use the local sources, write "kyma alpha deploy --source=local".`)

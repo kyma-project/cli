@@ -33,7 +33,7 @@ func Test_GetFile(t *testing.T) {
 		assert.Equal(t, currFile, file, "Local files should not be copied to the dst-folder")
 	})
 	t.Run("Retrieve remote file", func(t *testing.T) {
-		file, err := GetFile("https://raw.githubusercontent.com/kyma-project/cli/master/LICENCE", testDir)
+		file, err := GetFile("https://raw.githubusercontent.com/kyma-project/cli/main/LICENCE", testDir)
 		assert.NoError(t, err)
 		assert.Equal(t, filepath.Join(testDir, "LICENCE"), file, "Remote files should be copied to the dst-folder")
 	})
@@ -41,7 +41,7 @@ func Test_GetFile(t *testing.T) {
 
 func Test_GetFiles(t *testing.T) {
 	_, currFile, _, _ := runtime.Caller(1)
-	files, err := GetFiles([]string{currFile, "https://raw.githubusercontent.com/kyma-project/kyma/master/LICENSE"}, testDir)
+	files, err := GetFiles([]string{currFile, "https://raw.githubusercontent.com/kyma-project/kyma/main/LICENSE"}, testDir)
 	assert.NoError(t, err)
 	assert.Equal(t, []string{currFile, filepath.Join(testDir, "LICENSE")}, files, "Retrieved files differ in names")
 
