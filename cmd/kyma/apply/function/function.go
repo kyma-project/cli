@@ -69,12 +69,15 @@ func (c *command) Run() error {
 	}
 
 	// Load project configuration
+	step := c.NewStep("Loading configuration...")
 	var configuration workspace.Cfg
 	if err := yaml.NewDecoder(file).Decode(&configuration); err != nil {
+		step.Failure()
 		return errors.Wrap(err, "Could not decode the configuration file")
 	}
 
 	if c.K8s, err = kube.NewFromConfig("", c.KubeconfigPath); err != nil {
+		step.Failure()
 		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
 	}
 	client := c.K8s.Dynamic()
@@ -83,22 +86,31 @@ func (c *command) Run() error {
 
 	function, err := resources.NewFunction(configuration)
 	if err != nil {
+		step.Failure()
 		return err
 	}
 
 	subscriptions, err := resources.NewSubscriptions(configuration)
 	if err != nil {
+		step.Failure()
 		return err
 	}
 
-	apiRules, err := resources.NewAPIRule(configuration, c.kymaHostAddress())
+	kymaAddress, err := c.kymaHostAddress()
 	if err != nil {
+		step.LogErrorf("%s\n%s", err, "Check if your cluster is available and has Kyma installed.")
+	}
+
+	apiRules, err := resources.NewAPIRule(configuration, kymaAddress)
+	if err != nil {
+		step.Failure()
 		return err
 	}
 
 	if configuration.Source.Type == workspace.SourceTypeGit {
 		gitRepository, err := resources.NewPublicGitRepository(configuration)
 		if err != nil {
+			step.Failure()
 			return errors.Wrap(err, "Unable to read the Git repository from the provided configuration")
 		}
 		mgr.AddParent(operator.NewGenericOperator(client.Resource(operator.GVRGitRepository).Namespace(configuration.Namespace), gitRepository), nil)
@@ -128,23 +140,24 @@ func (c *command) Run() error {
 	}
 	defer cancel()
 
+	step.Successf("Configuration loaded")
+
 	return mgr.Do(ctx, options)
 }
 
-func (c *command) kymaHostAddress() string {
+func (c *command) kymaHostAddress() (string, error) {
 	var url string
 	vs, err := c.K8s.Istio().NetworkingV1alpha3().VirtualServices("kyma-system").Get(context.Background(), "apiserver-proxy", v1.GetOptions{})
 	switch {
 	case err != nil:
-		fmt.Printf("Unable to read the Kyma host URL due to error: %s. \n%s\r\n", err.Error(),
-			"Check if your cluster is available and has Kyma installed.")
+		err = errors.Wrapf(err, "Unable to read the Kyma host URL due to error")
 	case vs != nil && len(vs.Spec.Hosts) > 0:
 		url = strings.TrimPrefix(vs.Spec.Hosts[0], "apiserver.")
 	default:
-		fmt.Println("Kyma host URL could not be obtained.")
+		err = errors.New("Kyma host URL could not be obtained.")
 	}
 
-	return url
+	return url, err
 }
 
 const (
