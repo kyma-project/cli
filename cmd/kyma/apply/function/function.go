@@ -147,12 +147,12 @@ func (c *command) Run() error {
 
 func (c *command) kymaHostAddress() (string, error) {
 	var url string
-	vs, err := c.K8s.Istio().NetworkingV1alpha3().VirtualServices("kyma-system").Get(context.Background(), "apiserver-proxy", v1.GetOptions{})
+	vs, err := c.K8s.Istio().NetworkingV1alpha3().Gateways("kyma-system").Get(context.Background(), "kyma-gateway", v1.GetOptions{})
 	switch {
 	case err != nil:
 		err = errors.Wrapf(err, "Unable to read the Kyma host URL due to error")
-	case vs != nil && len(vs.Spec.Hosts) > 0:
-		url = strings.TrimPrefix(vs.Spec.Hosts[0], "apiserver.")
+	case vs != nil && len(vs.Spec.GetServers()) > 0 && len(vs.Spec.Servers[0].Hosts) > 0:
+		url = strings.TrimPrefix(vs.Spec.Servers[0].Hosts[0], "*.")
 	default:
 		err = errors.New("kyma host URL could not be obtained")
 	}
