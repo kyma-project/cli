@@ -12,7 +12,6 @@ import (
 	"github.com/kyma-project/cli/internal/trust"
 
 	"github.com/kyma-project/cli/internal/cli"
-
 	"github.com/kyma-project/cli/pkg/installation"
 	"github.com/pkg/errors"
 
@@ -30,7 +29,6 @@ type command struct {
 
 //NewCmd creates a new kyma command
 func NewCmd(o *Options) *cobra.Command {
-
 	cmd := command{
 		Command: cli.Command{Options: o.Options},
 		opts:    o,
@@ -40,7 +38,7 @@ func NewCmd(o *Options) *cobra.Command {
 		Use:   "install",
 		Short: "Installs Kyma on a running Kubernetes cluster.",
 		Long: `Use this command to install Kyma on a running Kubernetes cluster.
-
+		
 ### Detailed description
 
 Before you use the command, make sure your setup meets the following prerequisites:
@@ -54,15 +52,15 @@ The standard installation uses the minimal configuration. The system performs th
 
 1. Deploys and configures the Kyma Installer. At this point, steps differ depending on the installation type.
 
-   When you install Kyma locally ` + "**from release**" + `, the system:
+When you install Kyma locally ` + "**from release**" + `, the system:
 
-   1. Fetches the latest or specified release along with configuration.
+1. Fetches the latest or specified release along with configuration.
    2. Deploys the Kyma Installer on the cluster.
    3. Applies downloaded or defined configuration.
    4. Applies overrides, if applicable.
    5. Sets the admin password.
    6. Patches the Minikube IP.
-
+   
    When you install Kyma locally ` + "**from sources**" + `, the system:
 
    1. Fetches the configuration yaml files from the local sources.
@@ -71,10 +69,10 @@ The standard installation uses the minimal configuration. The system performs th
    4. Applies overrides, if applicable.
    5. Sets the admin password.
    6. Patches the Minikube IP.
-
-2. Runs Kyma installation until the ` + "**installed**" + ` status confirms the successful installation. You can override the standard installation settings using the ` + "`--override`" + ` flag. 
-
-`,
+   
+   2. Runs Kyma installation until the ` + "**installed**" + ` status confirms the successful installation. You can override the standard installation settings using the ` + "`--override`" + ` flag. 
+   
+   `,
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 		Aliases: []string{"i"},
 	}
@@ -90,6 +88,7 @@ The standard installation uses the minimal configuration. The system performs th
 	- To use a pull request, write "kyma install --source=PR-9486".
 	- To use the local sources, write "kyma install --source=local".
 	- To use a custom installer image, write "kyma install --source=user/my-kyma-installer:v1.4.0".`)
+	setSource(cobraCmd.Flags().Changed("source"), &o.Source)
 	cobraCmd.Flags().StringVarP(&o.LocalSrcPath, "src-path", "", "", "Absolute path to local sources.")
 	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 1*time.Hour, "Timeout after which CLI stops watching the installation progress.")
 	cobraCmd.Flags().StringVarP(&o.Password, "password", "p", "", "Predefined cluster password.")
@@ -99,6 +98,12 @@ The standard installation uses the minimal configuration. The system performs th
 	cobraCmd.Flags().StringVarP(&o.CustomImage, "custom-image", "", "", "Full image name including the registry and the tag. Required for installation from local sources to a remote cluster.")
 	cobraCmd.Flags().StringVarP(&o.Profile, "profile", "", "", "Kyma installation profile (evaluation|production). If not specified, Kyma is installed with the default chart values.")
 	return cobraCmd
+}
+
+func setSource(isUserDefined bool, source *string) {
+	if !isUserDefined {
+		*source = installation.SetKymaSemVersion(*source)
+	}
 }
 
 //Run runs the command

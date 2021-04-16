@@ -20,6 +20,7 @@ import (
 	"github.com/kyma-project/cli/internal/nice"
 	"github.com/kyma-project/cli/internal/trust"
 	"github.com/kyma-project/cli/pkg/asyncui"
+	"github.com/kyma-project/cli/pkg/installation"
 	"github.com/kyma-project/cli/pkg/step"
 	"github.com/magiconair/properties"
 	"github.com/spf13/cobra"
@@ -75,9 +76,16 @@ func NewCmd(o *Options) *cobra.Command {
 	- Deploy a commit, for example: "kyma alpha deploy --source=34edf09a"
 	- Deploy a pull request, for example "kyma alpha deploy --source=PR-9486"
 	- Deploy the local sources: "kyma alpha deploy --source=local" (default: "main")`)
+	setSource(cobraCmd.Flags().Changed("source"), &o.Source)
 	cobraCmd.Flags().StringVarP(&o.Profile, "profile", "p", "",
 		fmt.Sprintf("Kyma deployment profile. If not specified, Kyma uses its default configuration. The supported profiles are: \"%s\".", strings.Join(kymaProfiles, "\", \"")))
 	return cobraCmd
+}
+
+func setSource(isUserDefined bool, source *string) {
+	if !isUserDefined {
+		*source = installation.SetKymaSemVersion(*source)
+	}
 }
 
 //Run runs the command
@@ -111,7 +119,7 @@ func (cmd *command) Run() error {
 		_, err := os.Stat(cmd.opts.WorkspacePath)
 		approvalRequired := !os.IsNotExist(err)
 
-		downloadStep := cmd.NewStep("Downloading Kyma into workspace folder")
+		downloadStep := cmd.NewStep(fmt.Sprintf("Downloading Kyma (%s) into workspace folder ", cmd.opts.Source))
 		if err := git.CloneRepo(kymaURL, cmd.opts.WorkspacePath, cmd.opts.Source); err != nil {
 			downloadStep.Failure()
 			return err
