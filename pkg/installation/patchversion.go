@@ -57,7 +57,7 @@ func increasePatchVersion(version string) string {
 	return fmt.Sprintf("%s.%s.%d", verArray[0], verArray[1], patchVer+1)
 }
 
-func setToLatestPatchVersion(version string, versions []string) string {
+func findLatestPatchVersion(version string, versions []string) string {
 	newVer := increasePatchVersion(version)
 	for _, ver := range versions {
 		if strings.Contains(ver, newVer) {
@@ -68,11 +68,8 @@ func setToLatestPatchVersion(version string, versions []string) string {
 	return version
 }
 
-func main() {
-	version := "1.7.0"
+func setToLatestPatchVersion(version string) string {
 	release := NewReleaseInfo()
 	versions := release.GetVersions()
-	fmt.Println(versions)
-	version = setToLatestPatchVersion(version, versions)
-	fmt.Print(version)
+	return findLatestPatchVersion(version, versions)
 }
