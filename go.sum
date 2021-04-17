@@ -806,8 +806,8 @@ github.com/kubernetes-sigs/service-catalog v0.3.0/go.mod h1:zRfgMd1T9HuXR24Qj4GO
 github.com/kylelemons/godebug v0.0.0-20170820004349-d65d576e9348/go.mod h1:B69LEHPfb2qLo0BaaOLcbitczOKLWTsrBG9LczfCD4k=
 github.com/kylelemons/godebug v1.1.0 h1:RPNrshWIDI6G2gRW9EHilWtl7Z6Sb1BR0xunSBf0SNc=
 github.com/kylelemons/godebug v1.1.0/go.mod h1:9/0rRGxNHcop5bhtWyNeEfOS8JIWk580+fNqagV/RAw=
-github.com/kyma-incubator/hydroform/function v0.0.0-20210319130226-926c73801013 h1:tWDA411I0kzyOHfMqKX988pSApaJcmk8DuAHD6cBiGs=
-github.com/kyma-incubator/hydroform/function v0.0.0-20210319130226-926c73801013/go.mod h1:UkGyJJw4UKHUAbgKcJWDYQrMw76k5DJUZDNkOvjawqA=
+github.com/kyma-incubator/hydroform/function v0.0.0-20210412105828-8e9bd1971490 h1:YZoVabHqKr/Hxuvcae5EfD7p7j3Tl4O57jLBk2pJXrU=
+github.com/kyma-incubator/hydroform/function v0.0.0-20210412105828-8e9bd1971490/go.mod h1:UkGyJJw4UKHUAbgKcJWDYQrMw76k5DJUZDNkOvjawqA=
 github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90 h1:E9rWdmz/CEfO52VJ6P/1M3TysNbET/qyw6611RbKJo8=
 github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90/go.mod h1:/qouJL+g8Tsllh/VcxK1Li6NCyuqyXSlq1i9InKSZJk=
 github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20210409084448-8e90ab5f2803 h1:1WLaXk65JTSeegOtZi9nwpUWnL6tbcSufaN5AGOY8ho=
