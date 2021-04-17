@@ -1,4 +1,4 @@
-package main
+package installation
 
 import (
 	"encoding/xml"
@@ -10,10 +10,27 @@ import (
 	"strings"
 )
 
-const prowUrl = "https://storage.googleapis.com/kyma-prow-artifacts/"
+type ReleaseInfo struct {
+	ProwXMLFile string
+}
 
-type ArtifactMeta struct {
-	Versions []string `xml:"Contents>Key"`
+func NewReleaseInfo() ReleaseInfo {
+	release := ReleaseInfo{}
+	release.ProwXMLFile = "https://storage.googleapis.com/kyma-prow-artifacts/"
+	return release
+}
+
+func (r ReleaseInfo) GetVersions() []string {
+	if xmlBytes, err := getDataBytes(r.ProwXMLFile); err != nil {
+		log.Printf("Failed to get XML: %v", err)
+	} else {
+		v := struct {
+			Versions []string `xml:"Contents>Key"`
+		}{}
+		xml.Unmarshal(xmlBytes, &v)
+		return v.Versions
+	}
+	return make([]string, 0) // skip patch update
 }
 
 func getDataBytes(url string) ([]byte, error) {
@@ -40,19 +57,7 @@ func increasePatchVersion(version string) string {
 	return fmt.Sprintf("%s.%s.%d", verArray[0], verArray[1], patchVer+1)
 }
 
-func getReleaseVersions() []string {
-	if xmlBytes, err := getDataBytes(prowUrl); err != nil {
-		log.Printf("Failed to get XML: %v", err)
-	} else {
-		v := ArtifactMeta{}
-		xml.Unmarshal(xmlBytes, &v)
-		return v.Versions
-	}
-	return make([]string, 0) // skip patch update
-}
-
-func setToLatestPatchVersion(version string) string {
-	versions := getReleaseVersions()
+func setToLatestPatchVersion(version string, versions []string) string {
 	newVer := increasePatchVersion(version)
 	for _, ver := range versions {
 		if strings.Contains(ver, newVer) {
@@ -65,6 +70,9 @@ func setToLatestPatchVersion(version string) string {
 
 func main() {
 	version := "1.7.0"
-	version = setToLatestPatchVersion(version)
+	release := NewReleaseInfo()
+	versions := release.GetVersions()
+	fmt.Println(versions)
+	version = setToLatestPatchVersion(version, versions)
 	fmt.Print(version)
 }
