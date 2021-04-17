@@ -10,6 +10,8 @@ import (
 	"strings"
 )
 
+const prowUrl = "https://storage.googleapis.com/kyma-prow-artifacts/"
+
 type ArtifactMeta struct {
 	Versions []string `xml:"Contents>Key"`
 }
@@ -38,18 +40,24 @@ func increasePatchVersion(version string) string {
 	return fmt.Sprintf("%s.%s.%d", verArray[0], verArray[1], patchVer+1)
 }
 
-func setToLatestPatchVersion(version string) string {
-	if xmlBytes, err := getDataBytes("https://storage.googleapis.com/kyma-prow-artifacts/"); err != nil {
+func getReleaseVersions() []string {
+	if xmlBytes, err := getDataBytes(prowUrl); err != nil {
 		log.Printf("Failed to get XML: %v", err)
 	} else {
 		v := ArtifactMeta{}
 		xml.Unmarshal(xmlBytes, &v)
-		newVer := increasePatchVersion(version)
-		for _, ver := range v.Versions {
-			if strings.Contains(ver, newVer) {
-				version = newVer
-				newVer = increasePatchVersion(newVer)
-			}
+		return v.Versions
+	}
+	return make([]string, 0) // skip patch update
+}
+
+func setToLatestPatchVersion(version string) string {
+	versions := getReleaseVersions()
+	newVer := increasePatchVersion(version)
+	for _, ver := range versions {
+		if strings.Contains(ver, newVer) {
+			version = newVer
+			newVer = increasePatchVersion(newVer)
 		}
 	}
 	return version
