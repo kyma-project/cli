@@ -25,7 +25,7 @@ kyma upgrade [flags]
       --profile string         Kyma installation profile (evaluation|production). If not specified, Kyma is installed with the default chart values.
   -s, --source string          Upgrade source.
                                	- To use a specific release, write "kyma upgrade --source=1.3.0".
-                               	- To use a specific branch (e.g. main branch), write "kyma install --source=my-branch-name".
+                               	- To use a specific branch (e.g. main branch), write "kyma install --source=<my-branch-name>".
                                	- To use a commit, write "kyma upgrade --source=34edf09a".
                                	- To use the local sources, write "kyma upgrade --source=local".
                                	- To use a custom installer image, write "kyma upgrade --source=user/my-kyma-installer:v1.4.0".
