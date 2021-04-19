@@ -38,7 +38,6 @@ func NewCmd(o *Options) *cobra.Command {
 		Aliases: []string{"d"},
 	}
 
-	cobraCmd.Flags().StringVarP(&o.WorkspacePath, "workspace", "w", defaultWorkspacePath, "Path used to download Kyma sources.")
 	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 1200*time.Second, "Maximum time for the deletion (default: 20m0s)")
 	cobraCmd.Flags().DurationVarP(&o.TimeoutComponent, "timeout-component", "", 360*time.Second, "Maximum time to delete the component (default: 6m0s)")
 	cobraCmd.Flags().IntVar(&o.Concurrency, "concurrency", 4, "Number of parallel processes (default: 4)")
@@ -98,7 +97,7 @@ func (cmd *command) Run() error {
 		}
 	}
 
-	installer, err := deployment.NewDeletion(installCfg, &deployment.OverridesBuilder{}, cmd.K8s.Static(), updateCh)
+	installer, err := deployment.NewDeletion(installCfg, &deployment.OverridesBuilder{}, updateCh)
 	if err != nil {
 		return err
 	}
@@ -113,7 +112,12 @@ func (cmd *command) Run() error {
 
 func (cmd *command) kymaComponentList() (*installConfig.ComponentList, error) {
 	kymaCompStep := cmd.NewStep("Get Kyma components")
-	metaProv := helm.NewKymaMetadataProvider(cmd.K8s.Static())
+	metaProv, err := helm.NewKymaMetadataProvider(installConfig.KubeconfigSource{
+		Path: cmd.KubeconfigPath,
+	})
+	if err != nil {
+		return nil, err
+	}
 
 	versionSet, err := metaProv.Versions()
 	if err != nil {

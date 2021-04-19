@@ -163,10 +163,16 @@ func (cmd *command) Run() error {
 
 func (cmd *command) isCompatibleVersion() error {
 	compCheckStep := cmd.NewStep("Verifying Kyma version compatibility")
-	provider := helm.NewKymaMetadataProvider(cmd.K8s.Static())
+	provider, err := helm.NewKymaMetadataProvider(installConfig.KubeconfigSource{
+		Path: cmd.KubeconfigPath,
+	})
+	if err != nil {
+		return err
+	}
+
 	versionSet, err := provider.Versions()
 	if err != nil {
-		return fmt.Errorf("Cannot get installed Kyma versions due to error: %v", err)
+		return errors.Wrap(err, "Cannot get installed Kyma versions due to error")
 	}
 
 	if versionSet.Empty() { //Kyma seems not to be installed
@@ -242,7 +248,7 @@ func (cmd *command) deployKyma(ui asyncui.AsyncUI, overrides *deployment.Overrid
 		}
 	}
 
-	installer, err := deployment.NewDeployment(installationCfg, overrides, cmd.K8s.Static(), updateCh)
+	installer, err := deployment.NewDeployment(installationCfg, overrides, updateCh)
 	if err != nil {
 		return err
 	}
@@ -455,7 +461,13 @@ func (cmd *command) printSummary(o deployment.Overrides) error {
 }
 
 func (cmd *command) installedKymaVersions() ([]string, error) {
-	provider := helm.NewKymaMetadataProvider(cmd.K8s.Static())
+	provider, err := helm.NewKymaMetadataProvider(installConfig.KubeconfigSource{
+		Path: cmd.KubeconfigPath,
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	kymaVersionSet, err := provider.Versions()
 	if err != nil {
 		return nil, err

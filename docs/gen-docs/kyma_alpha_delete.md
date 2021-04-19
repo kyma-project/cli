@@ -18,7 +18,6 @@ kyma alpha delete [flags]
       --concurrency int              Number of parallel processes (default: 4) (default 4)
       --timeout duration             Maximum time for the deletion (default: 20m0s) (default 20m0s)
       --timeout-component duration   Maximum time to delete the component (default: 6m0s) (default 6m0s)
-  -w, --workspace string             Path used to download Kyma sources. (default "workspace")
 ```
 
 ## Flags inherited from parent commands
