@@ -7,8 +7,6 @@ replace (
 	github.com/hashicorp/consul/api v1.3.0 => github.com/hashicorp/consul/api v0.0.0-20191112221531-8742361660b6
 	// this is needed for terraform to work with the k8s 0.18 APIs, we should be able to remove it once we have terraform 0.13+
 	github.com/terraform-providers/terraform-provider-openstack => github.com/terraform-providers/terraform-provider-openstack v1.20.0
-	// grpc need to be compatible with direct dependencies in terraform (>=v1.29.1)
-	google.golang.org/grpc => google.golang.org/grpc v1.29.1
 	k8s.io/client-go => k8s.io/client-go v0.18.9
 )
 
@@ -25,7 +23,7 @@ require (
 	github.com/kyma-incubator/hydroform/function v0.0.0-20210309063107-26724ab15493
 	github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90
 	github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20210310133737-fb01cc034524
-	github.com/kyma-incubator/hydroform/provision v0.0.0-20201124135641-ca1a1a00c935
+	github.com/kyma-incubator/hydroform/provision v0.0.0-20210419082109-fa955e694299
 	github.com/kyma-incubator/octopus v0.0.0-20200922132758-2b721e93b58b
 	github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20201125092745-687c943ac940
 	github.com/magiconair/properties v1.8.1
