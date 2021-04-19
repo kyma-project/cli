@@ -60,7 +60,7 @@ kyma install [flags]
       --profile string         Kyma installation profile (evaluation|production). If not specified, Kyma is installed with the default chart values.
   -s, --source string          Installation source.
                                	- To use a specific release, write "kyma install --source=1.15.1".
-                               	- To use a specific branch (e.g. main-branch), write "kyma install --source=main".
+                               	- To use a specific branch (e.g. main branch), write "kyma install --source=my-branch-name".
                                	- To use a commit, write "kyma install --source=34edf09a".
                                	- To use a pull request, write "kyma install --source=PR-9486".
                                	- To use the local sources, write "kyma install --source=local".
@@ -84,4 +84,3 @@ kyma install [flags]
 ## See also
 
 * [kyma](#kyma-kyma)	 - Controls a Kyma cluster.
-
