@@ -49,12 +49,12 @@ func CloneRevision(url, path, rev string) error {
 	return nil
 }
 
-// ResolveRevision tries to convert a pseudo-revision reference (e.g. semVer, tag, PR, master, etc...) into a revision that can be checked out.
+// ResolveRevision tries to convert a pseudo-revision reference (e.g. semVer, tag, PR, main, etc...) into a revision that can be checked out.
 // If source is "local", no conversion is attempted to signal that no sources need to be checked out.
 func ResolveRevision(repo, rev string) (string, error) {
 	switch {
-	//Install the master version
-	case strings.EqualFold(rev, "master"):
+	//Install the main version
+	case strings.EqualFold(rev, "main"):
 		return BranchHead(repo, rev)
 
 	//Install the specific commit hash (e.g. 34edf09a)
@@ -73,7 +73,7 @@ func ResolveRevision(repo, rev string) (string, error) {
 		return PRHead(repo, rev)
 
 	default:
-		return "", fmt.Errorf("failed to parse the source flag. It can take one of the following: 'local', 'master', release version (e.g. 1.4.1), commit hash (e.g. 34edf09a) or installer image")
+		return "", fmt.Errorf("failed to parse the source flag. It can take one of the following: 'local', 'main', release version (e.g. 1.4.1), commit hash (e.g. 34edf09a) or installer image")
 	}
 }
 

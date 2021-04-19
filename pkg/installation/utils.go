@@ -27,7 +27,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func getLatestAvailableMasterHash(currentStep step.Step, fallbackLevel int, nonInteractive bool) (string, error) {
+func getLatestAvailableMainHash(currentStep step.Step, fallbackLevel int, nonInteractive bool) (string, error) {
 	ctx, timeoutF := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer timeoutF()
 	maxCloningDepth := fallbackLevel + 1
@@ -57,7 +57,7 @@ func getLatestAvailableMasterHash(currentStep step.Step, fallbackLevel int, nonI
 	if artifactsAvailable {
 		return headHash, nil
 	} else if !nonInteractive {
-		promptMsg := fmt.Sprintf("Artifacts for master-%s are not available. Would you like to use artifacts from previous commits?", headHash)
+		promptMsg := fmt.Sprintf("Artifacts for main-%s are not available. Would you like to use artifacts from previous commits?", headHash)
 		if proceed := currentStep.PromptYesNo(promptMsg); !proceed {
 			return "", errors.Errorf("aborting")
 		}
@@ -94,7 +94,7 @@ func getLatestAvailableMasterHash(currentStep step.Step, fallbackLevel int, nonI
 }
 
 func checkArtifactsAvailability(abbrevHash string) (bool, error) {
-	resp, err := http.Head(fmt.Sprintf(releaseResourcePattern, developmentBucket, "master-"+abbrevHash, "kyma-installer-cluster.yaml"))
+	resp, err := http.Head(fmt.Sprintf(releaseResourcePattern, developmentBucket, "main-"+abbrevHash, "kyma-installer-cluster.yaml"))
 	if err != nil {
 		return false, errors.Wrap(err, "while fetching example file from kyma-development-artifacts")
 	}

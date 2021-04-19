@@ -20,7 +20,7 @@ To install the latest release of Kyma CLI on Windows using [Chocolatey](https://
 choco install kyma-cli
 ```
 
-Read more about [installation options](https://github.com/kyma-project/cli/blob/master/docs/04-01-installation.md).
+Read more about [installation options](https://github.com/kyma-project/cli/blob/main/docs/04-01-installation.md).
 
 ## Use Kyma CLI
 
@@ -40,14 +40,14 @@ where:
 Example:
 
 ```bash
-kyma install -s master
+kyma install -s main
 ```
 
->**TIP:** Read more about the available [commands and flags](https://github.com/kyma-project/cli/blob/master/docs/03-01-use-kyma-cli.md).You can also try out Kyma CLI using [these examples](https://github.com/kyma-project/cli/blob/master/docs/03-02-examples.md).
+>**TIP:** Read more about the available [commands and flags](https://github.com/kyma-project/cli/blob/main/docs/03-01-use-kyma-cli.md).You can also try out Kyma CLI using [these examples](https://github.com/kyma-project/cli/blob/main/docs/03-02-examples.md).
 
 ### Kyma CLI as kubectl plugin
 
-To learn how to use Kyma CLI as a kubectl plugin, follow [this tutorial](https://github.com/kyma-project/cli/blob/master/docs/08-01-kubectl-plugin-tutorial.md).
+To learn how to use Kyma CLI as a kubectl plugin, follow [this tutorial](https://github.com/kyma-project/cli/blob/main/docs/08-01-kubectl-plugin-tutorial.md).
 
 ## Development
 

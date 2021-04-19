@@ -30,10 +30,10 @@ func TestCloneRevision(t *testing.T) {
 func TestResolveRevision(t *testing.T) {
 	t.Parallel()
 
-	// master branch head
-	r, err := ResolveRevision(repo, "master")
-	require.NoError(t, err, "Resolving Kyma's master revision should not error")
-	require.True(t, isHex(r), "The resolved master revision should be a hex string")
+	// main branch head
+	r, err := ResolveRevision(repo, "main")
+	require.NoError(t, err, "Resolving Kyma's main revision should not error")
+	require.True(t, isHex(r), "The resolved main revision should be a hex string")
 	// version tag
 	r, err = ResolveRevision(repo, "1.15.0")
 	require.NoError(t, err, "Resolving Kyma's 1.15.0 version tag should not error")

@@ -24,10 +24,10 @@ kyma alpha deploy [flags]
       --quit-timeout duration     Time after which the deployment is aborted. Worker goroutines may still be working in the background. This value must be greater than the value for cancel-timeout. (default 20m0s)
   -s, --source string             Installation source.
                                   	- To use a specific release, write "kyma alpha deploy --source=1.17.1".
-                                  	- To use the master branch, write "kyma alpha deploy --source=master".
+                                  	- To use the main branch, write "kyma alpha deploy --source=main".
                                   	- To use a commit, write "kyma alpha deploy --source=34edf09a".
                                   	- To use a pull request, write "kyma alpha deploy --source=PR-9486".
-                                  	- To use the local sources, write "kyma alpha deploy --source=local". (default "master")
+                                  	- To use the local sources, write "kyma alpha deploy --source=local". (default "main")
       --tls-crt string            TLS certificate file for the domain used for installation.
       --tls-key string            TLS key file for the domain used for installation.
       --value strings             Set a configuration value (e.g. --value component.key='the value').

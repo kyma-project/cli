@@ -17,7 +17,6 @@ require (
 	github.com/blang/semver/v4 v4.0.0
 	github.com/briandowns/spinner v1.12.0
 	github.com/containerd/cgroups v0.0.0-20201119153540-4cbc285b3327 // indirect
-	github.com/coreos/etcd v3.3.13+incompatible // indirect
 	github.com/daviddengcn/go-colortext v1.0.0
 	github.com/docker/cli v20.10.3+incompatible
 	github.com/docker/docker v20.10.3+incompatible
@@ -29,13 +28,13 @@ require (
 	github.com/kyma-incubator/hydroform/provision v0.0.0-20201124135641-ca1a1a00c935
 	github.com/kyma-incubator/octopus v0.0.0-20200922132758-2b721e93b58b
 	github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20201125092745-687c943ac940
-	github.com/magiconair/properties v1.8.0
+	github.com/magiconair/properties v1.8.1
 	github.com/moby/sys/mount v0.2.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.4
 	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
 	github.com/pkg/errors v0.9.1
-	github.com/spf13/cobra v1.0.0
-	github.com/stretchr/testify v1.6.1
+	github.com/spf13/cobra v1.1.1
+	github.com/stretchr/testify v1.7.0
 	go.opencensus.io v0.22.5 // indirect
 	go.uber.org/zap v1.16.0
 	gopkg.in/src-d/go-git.v4 v4.13.1
