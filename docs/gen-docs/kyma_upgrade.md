@@ -48,3 +48,4 @@ kyma upgrade [flags]
 ## See also
 
 * [kyma](#kyma-kyma)	 - Controls a Kyma cluster.
+
