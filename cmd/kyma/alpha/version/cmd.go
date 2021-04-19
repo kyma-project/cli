@@ -13,6 +13,8 @@ import (
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+
+	installConfig "github.com/kyma-incubator/hydroform/parallel-install/pkg/config"
 )
 
 type command struct {
@@ -96,7 +98,9 @@ func (cmd *command) metadataProvider() (*helm.KymaMetadataProvider, error) {
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
 		return nil, errors.Wrap(err, "Cannot initialize the Kubernetes client. Make sure your kubeconfig is valid")
 	}
-	return helm.NewKymaMetadataProvider(cmd.K8s.Static()), nil
+	return helm.NewKymaMetadataProvider(installConfig.KubeconfigSource{
+		Path: cmd.KubeconfigPath,
+	})
 }
 
 func versionOrDefault(version string) string {
