@@ -85,7 +85,7 @@ The standard installation uses the minimal configuration. The system performs th
 	cobraCmd.Flags().StringVarP(&o.TLSKey, "tls-key", "", "", "TLS key for the domain used for installation. The key must be a base64-encoded value.")
 	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", DefaultKymaVersion, `Installation source.
 	- To use a specific release, write "kyma install --source=1.15.1".
-	- To use a specific branch (e.g. main-branch), write "kyma install --source=main".
+	- To use a specific branch (e.g. main branch), write "kyma install --source=my-branch-name".
 	- To use a commit, write "kyma install --source=34edf09a".
 	- To use a pull request, write "kyma install --source=PR-9486".
 	- To use the local sources, write "kyma install --source=local".
