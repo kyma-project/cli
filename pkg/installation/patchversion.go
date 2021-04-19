@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -51,25 +52,41 @@ func getDataBytes(url string) ([]byte, error) {
 
 	return data, nil
 }
-func increasePatchVersion(version string) string {
+
+func updatePatchVersion(version string, patchVer int) string {
 	verArray := strings.Split(version, ".")
-	patchVer, _ := strconv.Atoi(verArray[len(verArray)-1])
-	return fmt.Sprintf("%s.%s.%d", verArray[0], verArray[1], patchVer+1)
+	return fmt.Sprintf("%s.%s.%d", verArray[0], verArray[1], patchVer)
 }
 
-func findLatestPatchVersion(version string, versions []string) string {
-	newVer := increasePatchVersion(version)
+func getPatchVersion(version string) int {
+	verArray := strings.Split(version, ".")
+	re := regexp.MustCompile(`[-]?\d[\d,]*[\.]?[\d{2}]*`)
+	patchString := re.FindAllString(verArray[2], 1)[0]
+	patchVer, _ := strconv.Atoi(patchString)
+	return patchVer
+}
+
+func getMajorVersion(version string) string {
+	verArray := strings.Split(version, ".")
+	return fmt.Sprintf("%s.%s", verArray[0], verArray[1])
+}
+
+func FindLatestPatchVersion(version string, versions []string) string {
+	currPatchVer := getPatchVersion(version)
+	majorVer := getMajorVersion(version)
 	for _, ver := range versions {
-		if strings.Contains(ver, newVer) {
-			version = newVer
-			newVer = increasePatchVersion(newVer)
+		if strings.Contains(ver, majorVer) {
+			loopPatchVer := getPatchVersion(ver)
+			if loopPatchVer > currPatchVer {
+				currPatchVer = loopPatchVer
+			}
 		}
 	}
-	return version
+	return updatePatchVersion(version, currPatchVer)
 }
 
-func setToLatestPatchVersion(version string) string {
+func SetToLatestPatchVersion(version string) string {
 	release := NewReleaseInfo()
 	versions := release.GetVersions()
-	return findLatestPatchVersion(version, versions)
+	return FindLatestPatchVersion(version, versions)
 }
