@@ -99,7 +99,7 @@ func (cmd *command) metadataProvider() (*helm.KymaMetadataProvider, error) {
 		return nil, errors.Wrap(err, "Cannot initialize the Kubernetes client. Make sure your kubeconfig is valid")
 	}
 	return helm.NewKymaMetadataProvider(installConfig.KubeconfigSource{
-		Path: cmd.KubeconfigPath,
+		Path: kube.KubeconfigPath(cmd.KubeconfigPath),
 	})
 }
 
