@@ -23,65 +23,65 @@ func (mock *StepFactoryMock) NewStep(msg string) step.Step {
 }
 
 func TestFailedComponent(t *testing.T) {
-	t.Parallel()
-
 	t.Run("Send duplicate start events", func(t *testing.T) {
-		asyncUI, updCh, mockStepFactory := prepareTest(t)
-		updCh <- deployment.ProcessUpdate{
+		t.Parallel()
+		callback, mockStepFactory := prepareTest()
+
+		callback(deployment.ProcessUpdate{
 			Event:     deployment.ProcessStart,
 			Phase:     deployment.InstallComponents,
 			Component: components.KymaComponent{},
-		}
+		})
 		// duplicate start events have to be ignored
-		updCh <- deployment.ProcessUpdate{
+		callback(deployment.ProcessUpdate{
 			Event:     deployment.ProcessStart,
 			Phase:     deployment.InstallComponents,
 			Component: components.KymaComponent{},
-		}
-		asyncUI.Stop() //stop receiving events and wait until processing is finished
+		})
 		assert.Len(t, mockStepFactory.Steps, 1)
 		assert.Contains(t, mockStepFactory.Steps[0].Statuses(), deployComponentsPhaseMsg)
 	})
 
 	t.Run("Use custom installation phases", func(t *testing.T) {
-		asyncUI, updCh, mockStepFactory := prepareTest(t)
+		t.Parallel()
+		callback, mockStepFactory := prepareTest()
 
 		msgPhaseBefore := "I am a custom phase before deployment"
 		msgPhaseAfter := "I am a custom phase after deployment"
 		var customPhaseBefore deployment.InstallationPhase = deployment.InstallationPhase(msgPhaseBefore)
 		var customPhaseAfter deployment.InstallationPhase = deployment.InstallationPhase(msgPhaseAfter)
 
-		updCh <- deployment.ProcessUpdate{
+		callback(deployment.ProcessUpdate{
 			Event:     deployment.ProcessStart,
 			Phase:     customPhaseBefore,
 			Component: components.KymaComponent{},
-		}
-		updCh <- deployment.ProcessUpdate{
+		})
+		callback(deployment.ProcessUpdate{
 			Event:     deployment.ProcessFinished,
 			Phase:     customPhaseBefore,
 			Component: components.KymaComponent{},
-		}
-		updCh <- deployment.ProcessUpdate{
+		})
+		callback(deployment.ProcessUpdate{
 			Event:     deployment.ProcessStart,
 			Phase:     deployment.InstallComponents,
 			Component: components.KymaComponent{},
-		}
-		updCh <- deployment.ProcessUpdate{
+		})
+		callback(deployment.ProcessUpdate{
 			Event:     deployment.ProcessExecutionFailure,
 			Phase:     deployment.InstallComponents,
 			Component: components.KymaComponent{},
-		}
-		updCh <- deployment.ProcessUpdate{
+		})
+		callback(deployment.ProcessUpdate{
 			Event:     deployment.ProcessStart,
 			Phase:     customPhaseAfter,
 			Component: components.KymaComponent{},
-		}
-		updCh <- deployment.ProcessUpdate{
+		})
+		callback(deployment.ProcessUpdate{
 			Event:     deployment.ProcessFinished,
 			Phase:     customPhaseAfter,
 			Component: components.KymaComponent{},
-		}
-		asyncUI.Stop() //stop receiving events and wait until processing is finished
+		})
+
 		assert.Len(t, mockStepFactory.Steps, 3)
 		assert.Contains(t, mockStepFactory.Steps[0].Statuses(), msgPhaseBefore)
 		assert.True(t, mockStepFactory.Steps[0].IsSuccessful())
@@ -92,69 +92,70 @@ func TestFailedComponent(t *testing.T) {
 	})
 
 	t.Run("Send start and stop event with success", func(t *testing.T) {
-		asyncUI, updCh, mockStepFactory := prepareTest(t)
+		t.Parallel()
+		callback, mockStepFactory := prepareTest()
 
-		updCh <- deployment.ProcessUpdate{
+		callback(deployment.ProcessUpdate{
 			Event:     deployment.ProcessStart,
 			Phase:     deployment.InstallComponents,
 			Component: components.KymaComponent{},
-		}
-		updCh <- deployment.ProcessUpdate{
+		})
+		callback(deployment.ProcessUpdate{
 			Event:     deployment.ProcessFinished,
 			Phase:     deployment.InstallComponents,
 			Component: components.KymaComponent{},
-		}
-		asyncUI.Stop() //stop receiving events and wait until processing is finished
+		})
+
 		assert.Len(t, mockStepFactory.Steps, 1)
 		assert.True(t, mockStepFactory.Steps[0].IsSuccessful())
 	})
 
 	t.Run("Send start and stop events with failure", func(t *testing.T) {
-		asyncUI, updCh, mockStepFactory := prepareTest(t)
+		t.Parallel()
+		callback, mockStepFactory := prepareTest()
 
 		// add step 1 (major installation step)
-		updCh <- deployment.ProcessUpdate{
+		callback(deployment.ProcessUpdate{
 			Event:     deployment.ProcessStart,
 			Phase:     deployment.InstallPreRequisites,
 			Component: components.KymaComponent{},
-		}
+		})
 		// set status of step 1 to success
-		updCh <- deployment.ProcessUpdate{
+		callback(deployment.ProcessUpdate{
 			Event:     deployment.ProcessFinished,
 			Phase:     deployment.InstallPreRequisites,
 			Component: components.KymaComponent{},
-		}
+		})
 		// add step 2 (major installation step)
-		updCh <- deployment.ProcessUpdate{
+		callback(deployment.ProcessUpdate{
 			Event:     deployment.ProcessStart,
 			Phase:     deployment.InstallComponents,
 			Component: components.KymaComponent{},
-		}
+		})
 		// add step 3 (component successfully installed)
-		updCh <- deployment.ProcessUpdate{
+		callback(deployment.ProcessUpdate{
 			Event: deployment.ProcessRunning,
 			Phase: deployment.InstallComponents,
 			Component: components.KymaComponent{
 				Name:   "comp1",
 				Status: components.StatusInstalled,
 			},
-		}
+		})
 		// add step 4 (component not installed)
-		updCh <- deployment.ProcessUpdate{
+		callback(deployment.ProcessUpdate{
 			Event: deployment.ProcessExecutionFailure,
 			Phase: deployment.InstallComponents,
 			Component: components.KymaComponent{
 				Name:   "comp2",
 				Status: components.StatusError,
 			},
-		}
+		})
 		// set status of step 2 to failure
-		updCh <- deployment.ProcessUpdate{
+		callback(deployment.ProcessUpdate{
 			Event:     deployment.ProcessForceQuitFailure,
 			Phase:     deployment.InstallComponents,
 			Component: components.KymaComponent{},
-		}
-		asyncUI.Stop() //stop receiving events and wait until processing is finished
+		})
 
 		assert.Len(t, mockStepFactory.Steps, 4)
 
@@ -172,12 +173,8 @@ func TestFailedComponent(t *testing.T) {
 	})
 }
 
-func prepareTest(t *testing.T) (AsyncUI, chan<- deployment.ProcessUpdate, *StepFactoryMock) {
+func prepareTest() (func(deployment.ProcessUpdate), *StepFactoryMock) {
 	mockStepFactory := &StepFactoryMock{}
 	asyncUI := AsyncUI{StepFactory: mockStepFactory}
-	err := asyncUI.Start()
-	assert.NoError(t, err)
-	updCh, err := asyncUI.UpdateChannel()
-	assert.NoError(t, err)
-	return asyncUI, updCh, mockStepFactory
+	return asyncUI.Callback(), mockStepFactory
 }

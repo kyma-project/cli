@@ -98,16 +98,6 @@ func (cmd *command) Run() error {
 		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
 	}
 
-	// initialize UI
-	var ui asyncui.AsyncUI
-	if !cmd.Verbose { //use async UI only if not in verbose mode
-		ui = asyncui.AsyncUI{StepFactory: &cmd.Factory}
-		if err := ui.Start(); err != nil {
-			return err
-		}
-		defer ui.Stop()
-	}
-
 	// only download if not from local sources
 	if cmd.opts.Source != localSource {
 		if err := cmd.isCompatibleVersion(); err != nil {
@@ -143,7 +133,7 @@ func (cmd *command) Run() error {
 		return err
 	}
 
-	err = cmd.deployKyma(ui, overrides)
+	err = cmd.deployKyma(overrides)
 	if err != nil {
 		return err
 	}
@@ -164,7 +154,7 @@ func (cmd *command) Run() error {
 func (cmd *command) isCompatibleVersion() error {
 	compCheckStep := cmd.NewStep("Verifying Kyma version compatibility")
 	provider, err := helm.NewKymaMetadataProvider(installConfig.KubeconfigSource{
-		Path: cmd.KubeconfigPath,
+		Path: kube.KubeconfigPath(cmd.KubeconfigPath),
 	})
 	if err != nil {
 		return err
@@ -213,7 +203,7 @@ func (cmd *command) isCompatibleVersion() error {
 	return fmt.Errorf("Upgrade stopped by user")
 }
 
-func (cmd *command) deployKyma(ui asyncui.AsyncUI, overrides *deployment.OverridesBuilder) error {
+func (cmd *command) deployKyma(overrides *deployment.OverridesBuilder) error {
 	localWorkspace := cmd.opts.ResolveLocalWorkspacePath()
 	resourcePath := filepath.Join(localWorkspace, "resources")
 	installResourcePath := filepath.Join(localWorkspace, "installation", "resources")
@@ -237,18 +227,22 @@ func (cmd *command) deployKyma(ui asyncui.AsyncUI, overrides *deployment.Overrid
 		InstallationResourcePath:      installResourcePath,
 		Version:                       cmd.opts.Source,
 		Atomic:                        cmd.opts.Atomic,
+		KubeconfigSource: installConfig.KubeconfigSource{
+			Path: kube.KubeconfigPath(cmd.KubeconfigPath),
+		},
 	}
 
-	// if an AsyncUI is used, get channel for update events
-	var updateCh chan<- deployment.ProcessUpdate
-	if ui.IsRunning() {
-		updateCh, err = ui.UpdateChannel()
+	// if not verbose, use asyncui for clean output
+	var callback func(deployment.ProcessUpdate)
+	if !cmd.Verbose {
+		ui := asyncui.AsyncUI{StepFactory: &cmd.Factory}
+		callback = ui.Callback()
 		if err != nil {
 			return err
 		}
 	}
 
-	installer, err := deployment.NewDeployment(installationCfg, overrides, updateCh)
+	installer, err := deployment.NewDeployment(installationCfg, overrides, callback)
 	if err != nil {
 		return err
 	}
@@ -462,7 +456,7 @@ func (cmd *command) printSummary(o deployment.Overrides) error {
 
 func (cmd *command) installedKymaVersions() ([]string, error) {
 	provider, err := helm.NewKymaMetadataProvider(installConfig.KubeconfigSource{
-		Path: cmd.KubeconfigPath,
+		Path: kube.KubeconfigPath(cmd.KubeconfigPath),
 	})
 	if err != nil {
 		return nil, err
