@@ -7,7 +7,7 @@ When you initialize a Function (`init`), CLI creates the `config.yaml` file in y
 
 ## Specification for an inline Function
 
-See the sample `config.yaml` for an inline Function for which code and dependencies are stored in the Function custom resource (CR) under the **spec.source** and **spec.deps** fields. This specification also contains the definition of a sample Subscription and API Rules:
+See the sample `config.yaml` for an inline Function for which code and dependencies are stored in the Function custom resource (CR) under the **spec.source** and **spec.deps** fields. This specification also contains the definition of a sample Subscription and API Rules for the Function:
 
 ```yaml
 name: function-practical-filip5
@@ -66,13 +66,9 @@ apiRules:
         - path: /path1/something2
           methods:
             - GET
-            - HEAD
           accessStrategies:
             - config:
-                requiredScope:
-                    - asd1.asd2.asd3
-                    - scope1
-                    - scope2
+                required_scope: ["read"]
               handler: oauth2_introspection
         - path: /path2
           methods:
@@ -128,58 +124,58 @@ See all parameter descriptions:
 | Parameter         | Required | Related custom resource | Default value  | Description|
 | ---------------------------------------- | :------------: | ---------| ---------| ------- |
 | **name**              | Yes | Function | | Specifies the name of your Function.         |
-| **namespace**             | No | Function | | Defines the Namespace in which the Function is created. It is set to `default` unless you specify otherwise.         |
+| **namespace**             | No | Function | `default` | Defines the Namespace in which the Function is created.        |
 | **runtime**             | No | Function | `nodejs12` | Specifies the execution environment for your Function. The available values are `nodejs12`, `nodejs14`, and `python38`.      |
 | **labels**             | No | Function | | Specifies the Function's Pod labels. |
 | **source**            | Yes | Function | | Provides details on the type and location of your Function's source code and dependencies.         |
-| **source.sourceType**            | Yes | Function | | Defines that you use inline code or Git repository as the source of the Function's code and dependencies. It must be set either to `inline` or `git`.         |
+| **source.sourceType**            | Yes | Function | | Defines that you use either inline code or Git repository as the source of the Function's code and dependencies. It must be set either to `inline` or `git`.         |
 | **source.sourcePath**             | Yes | Function | | Specifies the absolute path to the directory with the Function's source code.         |
-| **source.sourceHandlerName**             | No | Function | | Defines the path to the `handler.js` (Node.js) or `handler.py` (Python) file with your Function's code. You can specify it to store source code separately from the `config.yaml`.  This path is a relative path to the one provided in **source.sourcePath**. |
-| **source.depsHandlerName**             | No | Function | | Defines the path to the `package.json` (Node.js) or `requirements.txt` (Python) file with your Function's dependencies. You can specify it to store dependencies separately from the `config.yaml`.  This path is a relative path to the one provided in **source.sourcePath**. |
+| **source.sourceHandlerName**             | No | Function | | Defines the path to the `handler.js` (Node.js) or `handler.py` (Python) file with your Function's code. Specify it if you want to store source code separately from the `config.yaml`.  This path is a relative path to the one provided in **source.sourcePath**. |
+| **source.depsHandlerName**             | No | Function | | Defines the path to the `package.json` (Node.js) or `requirements.txt` (Python) file with your Function's dependencies. Specify it if you want to store dependencies separately from the `config.yaml`. This path is a relative path to the one provided in **source.sourcePath**. |
 | **source.url**             | No | Function | | Provides the address to the Git repository with the Function's code and dependencies. Depending on whether the repository is public or private and what authentication method is used to access it, the URL must start with the `http(s)`, `git`, or `ssh` prefix, and end with the `.git` suffix.  |
-| **source.repository**             | No | Function | | Specifies the name the Git repository  |
+| **source.repository**             | No | Function | | Specifies the name of the Git repository.  |
 | **source.reference**             | No | Function | | Specifies either the branch name or the commit revision from which the Function Controller automatically fetches the changes in Function's code and dependencies.  |
 | **source.baseDir**             | No | Function | | Specifies the location of your code dependencies in the repository. It is recommended to keep the source files at the root of your repository (`/`).  |
-| **source.credentialsSecretName**             | No | Function | | Specifies the name of the Secret custom resource (CR) with credentials to the Git repository. This Secret must be stored in the same Namespace as the GitRepository CR. It is used by the  Function Controller to authenticate to the Git repository to fetch the Function's source code and dependencies. |
+| **source.credentialsSecretName**             | No | Function | | Specifies the name of the Secret with credentials to the Git repository. It is used by the Function Controller to authenticate to the Git repository to fetch the Function's source code and dependencies. This Secret must be stored in the same Namespace as the [GitRepository CR](https://kyma-project.io/docs/main/components/serverless/#custom-resource-git-repository). |
 | **resources**             | No | Function | | Defines CPU and memory available for the Function's Pod to use.  |
-| **resources.limits**             | No | Function | | Defines the maximum available values for CPU and memory for the Function.  |
+| **resources.limits**             | No | Function | | Defines the maximum available CPU and memory values for the Function.  |
 | **resources.limits.cpu**             | No | Function | `100m` | Defines the maximum available CPU value for the Function.  |
-| **resources.limits.memory**             | No | Function | `128Mi` | Defines the maximum available available CPU value for the Function.  |
-| **resources.requests**              | No | Function | | Defines the minimum requested values for CPU and memory for a Function.  |
-| **resources.requests.cpu**              | No | Function | `50m` | Defines the minimum requested values CPU value for the Function.  |
+| **resources.limits.memory**             | No | Function | `128Mi` | Defines the maximum available memory value for the Function.  |
+| **resources.requests**              | No | Function | | Defines the minimum requested CPU and memory values for a Function.  |
+| **resources.requests.cpu**              | No | Function | `50m` | Defines the minimum requested CPU value for the Function.  |
 | **resources.requests.memory**              | No | Function | `64Mi` | Defines the minimum requested memory value for the Function.  |
-| **subscriptions**   | No | Subscription | | Defines a Subscriptions by which the Function gets triggered to perform a business logic defined in its source code.  |
+| **subscriptions**   | No | Subscription | | Defines a Subscriptions by which the Function gets triggered to perform a business logic defined in the Function's source code.  |
 | **subscriptions.name**           |  Yes | Subscription | | Specifies the name of the Subscription custom resource. It takes the name from the Function unless you specify otherwise.    |
 | **subscriptions.protocol**           | Yes  | Subscription | | Defines the rules and formats applied for exchanging messages between the components of a given messaging system. Subscriptions in Kyma CLI use the [NATS](https://docs.nats.io/) messaging protocol by default. Must be set to `""`.         |
 | **subscriptions.filter** | No | Subscription | | xxx |
 | **subscriptions.filter.dialect**            | No | Subscription | | Indicates the filter expression language supported by an event producer. Subscriptions specifying the **filter** property must specify the dialect as well. All other properties are dependent on the dialect being used. In the current implementation, this field is treated as a constant which is blank.    |
-| **subscriptions.filter.filters**            | Yes | Subscription | | Specifies the filtering parameters for the given event.        |
-| **subscriptions.filter.filters.eventSource**            | Yes | Subscription | | The origin from which events are published.         |
-| **subscriptions.filter.filters.eventSource.property**            | Yes | Subscription | | Must be set to `source`.         |
-| **subscriptions.filter.filters.eventSource.type**           | No  | Subscription | | Must be set to `exact`.         |
-| **subscriptions.filter.filters.eventSource.value**            | Yes | Subscription | | Must be set to `""` for the NATS backend.         |
-| **subscriptions.filter.filters.eventType**           | Yes  | Subscription | | The type of events used to trigger workloads.         |
-| **subscriptions.filter.filters.eventType.property**           | Yes  | Subscription | | Must be set to `type`.         |
-| **subscriptions.filter.filters.eventType.type**          |  No  | Subscription | | Must be set to `exact`.         |
-| **subscriptions.filter.filters.eventType.value**           | Yes  | Subscription | | Name of the event the Function is subscribed to, for example `sap.kyma.custom.demo-app.order.created.v1`.         |
-| **apiRules**    | No | API Rule | | Provides the rules defining how your Function's service API can be accessed. |
-| **apiRules.name**            | Yes | API Rule | | Specifies the name of the exposed service. It takes the name from the Function unless you specify otherwise.        |
+| **subscriptions.filter.filters**            | Yes | Subscription | | Specifies the filtering parameters for the given event.   |
+| **subscriptions.filter.filters.eventSource**            | Yes | Subscription | | Defines the origin from which events are published.   |
+| **subscriptions.filter.filters.eventSource.property**            | Yes | Subscription | | Must be set to `source`.   |
+| **subscriptions.filter.filters.eventSource.type**           | No  | Subscription | | Must be set to `exact`.    |
+| **subscriptions.filter.filters.eventSource.value**            | Yes | Subscription | | Must be set to `""` for the NATS backend.  |
+| **subscriptions.filter.filters.eventType**           | Yes  | Subscription | | Defines the type of events used to trigger workloads.     |
+| **subscriptions.filter.filters.eventType.property**           | Yes  | Subscription | | Must be set to `type`.    |
+| **subscriptions.filter.filters.eventType.type**          |  No  | Subscription | | Must be set to `exact`.    |
+| **subscriptions.filter.filters.eventType.value**           | Yes  | Subscription | | Defines the name of the event the Function is subscribed to, for example `sap.kyma.custom.demo-app.order.created.v1`.         |
+| **apiRules**    | No | API Rule | | Provides the rules defining how your Function's Service API can be accessed. |
+| **apiRules.name**            | Yes | API Rule | | Specifies the name of the exposed Service. It takes the name from the Function unless you specify otherwise.        |
 | **apiRules.gateway**            | Yes | API Rule | `kyma-gateway.kyma-system.svc.cluster.local` | Specifies the [Istio Gateway](https://istio.io/latest/docs/reference/config/networking/gateway/).   |
 | **apiRules.service**            | Yes | API Rule | | Specifies the name of the exposed Service.     |
-| **apiRules.service.host**            | Yes | API Rule | | Specifies the service's communication address for inbound external traffic.         |
+| **apiRules.service.host**            | Yes | API Rule | | Specifies the Service's communication address for inbound external traffic.         |
 | **apiRules.rules**            | Yes | API Rule | | Specifies the array of [Oathkeeper](https://www.ory.sh/oathkeeper/) access rules.         |
 | **apiRules.rules.methods**            | No | API Rule | | Specifies the list of HTTP request methods available for **apiRules.rules.path** .        |
 | **apiRules.rules.accessStrategies**            | Yes | API Rule | | Specifies the array of [Oathkeeper authenticators](https://www.ory.sh/oathkeeper/docs/pipeline/authn/). The supported authenticators are `oauth2_introspection`, `jwt`, `noop`, and `allow`.         |
-| **apiRules.rules.port**            | No | API Rule | Must be set to `80`. | Defines the port on which the Function's Service is exposed.  |
-| **apiRules.rules.path**            | Yes | API Rule | `/.*` | Specifies the path of the exposed Service.         |
-| **apiRules.rules.path.accessStrategies.handler**            | Yes | API Rule | `allow` | Specifies one of authenticators used: `oauth2_introspection`, `jwt`, `noop`, or `allow`.       |
+| **apiRules.rules.port**            | Yes | API Rule | `80`. | Defines the port on which the Function's Service is exposed. This value cannot be modified. |
+| **apiRules.rules.path**            | Yes | API Rule | `/.*` | Specifies the path to the exposed Service.         |
+| **apiRules.rules.path.accessStrategies.handler**            | Yes | API Rule | `allow` | Specifies one of the authenticators used: `oauth2_introspection`, `jwt`, `noop`, or `allow`.       |
 | **apiRules.rules.path.accessStrategies.config.** | No | API Rule |  | Defines the handler used. It can be specified globally or per access rule.         |
-| **apiRules.rules.path.accessStrategies.config.requiredScope** | No | API Rule | |  xxx |
-| **apiRules.rules.path.accessStrategies.config.jwksUrls** | No | API Rule | |  xxx |
-| **apiRules.rules.path.accessStrategies.config.trustedIssuers** | No | API Rule | |  xxx |
+| **apiRules.rules.path.accessStrategies.config.required_scope** | No | API Rule | | Defines the [limits](https://oauth.net/2/scope/) that the client specifies for an access request. In turn, the authorization server issues the access token in the defined scope. |
+| **apiRules.rules.path.accessStrategies.config.jwks_urls** | No | API Rule | |  The URLs where ORY Oathkeeper can retrieve [JSON Web Keys](https://www.ory.sh/oathkeeper/docs/pipeline/authn/#jwt) from to validate the JSON Web Token.  |
+| **apiRules.rules.path.accessStrategies.config.trustedIssuers** | No | API Rule | |  Sets a list of trusted token issuers. |
 | **env.name**            | No | Function |  |  Specifies the name of the environment variable to export for the Function.  |
 | **env.value**            | No | Function | |  Specifies the value of the environment variable to export for the Function.          |
-| **env.valueFrom**            | No | Function | |  Specifies that you want the Function to use values either from a Secret or a ConfigMap. They must be stored in the same Namespace as the Function.     |
+| **env.valueFrom**            | No | Function | |  Specifies that you want the Function to use values either from a Secret or a ConfigMap. These objects must be stored in the same Namespace as the Function.     |
 | **env.valueFrom.configMapKeyRef**            | No | Function | | Refers to the values from a ConfigMap that you want to use in the Function.         |
 | **env.valueFrom.configMapKeyRef.Name**            | No | Function | | Specifies the name of the referred ConfigMap.        |
 | **env.valueFrom.configMapKeyRef.Key**            | No | Function | | Specifies the key containing the referred value from the ConfigMap.       |
