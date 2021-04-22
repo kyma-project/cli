@@ -12,8 +12,7 @@ import (
 )
 
 func GetReleaseVersions() ([]string, error) {
-	const url = "https://storage.googleapis.com/kyma-prow-artifacts/"
-	xmlBytes, err := getDataBytes(url)
+	xmlBytes, err := getDataBytes()
 	if err != nil {
 		log.Printf("Failed to get XML: %v", err)
 		return make([]string, 0), err // skip patch update
@@ -25,7 +24,8 @@ func GetReleaseVersions() ([]string, error) {
 	return v.Versions, err
 }
 
-func getDataBytes(url string) ([]byte, error) {
+func getDataBytes() ([]byte, error) {
+	const url = "https://storage.googleapis.com/kyma-prow-artifacts/"
 	resp, err := http.Get(url)
 	if err != nil {
 		return []byte{}, fmt.Errorf("GET error: %v", err)
