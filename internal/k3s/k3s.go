@@ -127,7 +127,7 @@ func ClusterExists(verbose bool, clusterName string) (bool, error) {
 }
 
 //StartCluster starts a cluster
-func StartCluster(verbose bool, timeout time.Duration, clusterName string, workers int, serverArgs []string) error {
+func StartCluster(verbose bool, timeout time.Duration, clusterName string, workers int, serverArgs []string, agentArgs []string, k3dArgs []string) error {
 	cmdArgs := []string{
 		"cluster", "create", clusterName,
 		"--kubeconfig-update-default",
@@ -141,12 +141,16 @@ func StartCluster(verbose bool, timeout time.Duration, clusterName string, worke
 
 	//add further custom server args
 	for _, srvArg := range serverArgs {
-		if srvArg == "" {
-			continue
-		}
-		cmdArgs = append(cmdArgs, "--k3s-server-arg")
-		cmdArgs = append(cmdArgs, srvArg)
+		cmdArgs = append(cmdArgs, "--k3s-server-arg", srvArg)
 	}
+
+	//add agent args
+	for _, agentArg := range agentArgs {
+		cmdArgs = append(cmdArgs, "--k3s-agent-arg", agentArg)
+	}
+
+	//add further k3d args which are not offered by the Kyma CLI flags
+	cmdArgs = append(cmdArgs, k3dArgs...)
 
 	_, err := RunCmd(verbose, timeout, cmdArgs...)
 

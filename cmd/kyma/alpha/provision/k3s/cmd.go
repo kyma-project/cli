@@ -38,7 +38,9 @@ func NewCmd(o *Options) *cobra.Command {
 	cmd.Flags().StringVar(&o.Name, "name", "kyma", `Name of the Kyma cluster (default: "kyma")`)
 	cmd.Flags().IntVar(&o.Workers, "workers", 1, "Number of worker nodes (k3s agents), default: 1")
 	cmd.Flags().StringSliceVarP(&o.ServerArgs, "server-arg", "s", []string{}, "One or more arguments passed to the Kubernetes API server (e.g. --server-arg='--alsologtostderr')")
+	cmd.Flags().StringSliceVarP(&o.AgentArgs, "agent-arg", "a", []string{}, "One or more arguments passed to the k3s agent command on agent nodes (e.g. --agent-arg='--alsologtostderr')")
 	cmd.Flags().DurationVar(&o.Timeout, "timeout", 5*time.Minute, `Maximum time for the provisioning (default: 5m0s). If you want no timeout, enter "0".`)
+	cmd.Flags().StringSliceVarP(&o.K3dArgs, "k3d-arg", "", []string{}, "One or more arguments passed to the k3d provisioning command (e.g. --k3d-arg='--no-rollback')")
 	return cmd
 }
 
@@ -124,7 +126,7 @@ func (c *command) portAllocated(port int) bool {
 func (c *command) createK3sCluster() error {
 	s := c.NewStep("Create K3s instance")
 	s.Status("Start K3s cluster")
-	err := k3s.StartCluster(c.Verbose, c.opts.Timeout, c.opts.Name, c.opts.Workers, c.opts.ServerArgs)
+	err := k3s.StartCluster(c.Verbose, c.opts.Timeout, c.opts.Name, c.opts.Workers, c.opts.ServerArgs, c.opts.AgentArgs, c.opts.K3dArgs)
 	if err != nil {
 		s.Failuref("Could not start k3s cluster")
 		return err

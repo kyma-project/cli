@@ -2,7 +2,6 @@ package uninstall
 
 import (
 	"fmt"
-	"path/filepath"
 	"time"
 
 	"github.com/kyma-project/cli/internal/cli"
@@ -10,10 +9,6 @@ import (
 
 const (
 	quitTimeoutFactor = 1.25
-)
-
-var (
-	defaultWorkspacePath = filepath.Join(".", "workspace")
 )
 
 //Options defines available options for the command

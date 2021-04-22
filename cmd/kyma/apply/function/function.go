@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/kyma-incubator/hydroform/function/pkg/client"
 	"github.com/kyma-incubator/hydroform/function/pkg/manager"
@@ -16,6 +17,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
@@ -67,12 +69,15 @@ func (c *command) Run() error {
 	}
 
 	// Load project configuration
+	step := c.NewStep("Loading configuration...")
 	var configuration workspace.Cfg
 	if err := yaml.NewDecoder(file).Decode(&configuration); err != nil {
+		step.Failure()
 		return errors.Wrap(err, "Could not decode the configuration file")
 	}
 
 	if c.K8s, err = kube.NewFromConfig("", c.KubeconfigPath); err != nil {
+		step.Failure()
 		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
 	}
 	client := c.K8s.Dynamic()
@@ -81,17 +86,31 @@ func (c *command) Run() error {
 
 	function, err := resources.NewFunction(configuration)
 	if err != nil {
+		step.Failure()
 		return err
 	}
 
 	subscriptions, err := resources.NewSubscriptions(configuration)
 	if err != nil {
+		step.Failure()
+		return err
+	}
+
+	kymaAddress, err := c.kymaHostAddress()
+	if err != nil {
+		step.LogErrorf("%s\n%s", err, "Check if your cluster is available and has Kyma installed.")
+	}
+
+	apiRules, err := resources.NewAPIRule(configuration, kymaAddress)
+	if err != nil {
+		step.Failure()
 		return err
 	}
 
 	if configuration.Source.Type == workspace.SourceTypeGit {
 		gitRepository, err := resources.NewPublicGitRepository(configuration)
 		if err != nil {
+			step.Failure()
 			return errors.Wrap(err, "Unable to read the Git repository from the provided configuration")
 		}
 		mgr.AddParent(operator.NewGenericOperator(client.Resource(operator.GVRGitRepository).Namespace(configuration.Namespace), gitRepository), nil)
@@ -102,6 +121,8 @@ func (c *command) Run() error {
 		[]operator.Operator{
 			operator.NewSubscriptionOperator(client.Resource(operator.GVRSubscription).Namespace(configuration.Namespace),
 				configuration.Name, configuration.Namespace, subscriptions...),
+			operator.NewAPIRuleOperator(client.Resource(operator.GVRApiRule).Namespace(configuration.Namespace),
+				configuration.Name, apiRules...),
 		},
 	)
 
@@ -119,7 +140,24 @@ func (c *command) Run() error {
 	}
 	defer cancel()
 
+	step.Successf("Configuration loaded")
+
 	return mgr.Do(ctx, options)
+}
+
+func (c *command) kymaHostAddress() (string, error) {
+	var url string
+	vs, err := c.K8s.Istio().NetworkingV1alpha3().Gateways("kyma-system").Get(context.Background(), "kyma-gateway", v1.GetOptions{})
+	switch {
+	case err != nil:
+		err = errors.Wrapf(err, "Unable to read the Kyma host URL due to error")
+	case vs != nil && len(vs.Spec.GetServers()) > 0 && len(vs.Spec.Servers[0].Hosts) > 0:
+		url = strings.TrimPrefix(vs.Spec.Servers[0].Hosts[0], "*.")
+	default:
+		err = errors.New("kyma host URL could not be obtained")
+	}
+
+	return url, err
 }
 
 const (

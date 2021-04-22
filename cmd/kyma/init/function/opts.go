@@ -37,11 +37,13 @@ func (o *Options) setDefaults(defaultNamespace string) (err error) {
 		}
 	}
 
-	generated, err := generator.GenerateName(true)
-	if err != nil {
-		return err
+	if o.Name == "" {
+		generated, err := generator.GenerateName(true)
+		if err != nil {
+			return err
+		}
+		o.Name = "function-" + generated
 	}
-	o.Name = "function-" + generated
 
 	if o.RepositoryName == "" {
 		o.RepositoryName = o.Name
