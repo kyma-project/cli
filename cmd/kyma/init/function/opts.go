@@ -49,7 +49,6 @@ func (o *Options) setDefaults(defaultNamespace string) (err error) {
 		o.RepositoryName = o.Name
 	}
 
-	setIfZero(&o.SourcePath, o.Dir)
 	setIfZero(&o.Namespace, defaultNamespace)
 	return
 }
