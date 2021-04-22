@@ -1,7 +1,7 @@
 package installation
 
 import (
-	"encoding/xml"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -11,21 +11,13 @@ import (
 	"strings"
 )
 
-func GetReleaseVersions() ([]string, error) {
-	xmlBytes, err := getDataBytes()
-	if err != nil {
-		log.Printf("Failed to get XML: %v", err)
-		return make([]string, 0), err // skip patch update
-	}
-	v := struct {
-		Versions []string `xml:"Contents>Key"`
-	}{}
-	err = xml.Unmarshal(xmlBytes, &v)
-	return v.Versions, err
+type tagStruct struct {
+	Tag        string `json:"tag_name"`
+	IsPrelease bool   `json:"prerelease"`
 }
 
 func getDataBytes() ([]byte, error) {
-	const url = "https://storage.googleapis.com/kyma-prow-artifacts/"
+	const url = "https://api.github.com/repos/kyma-project/kyma/releases"
 	resp, err := http.Get(url)
 	if err != nil {
 		return []byte{}, fmt.Errorf("GET error: %v", err)
@@ -33,12 +25,12 @@ func getDataBytes() ([]byte, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return []byte{}, fmt.Errorf("Status error: %v", resp.StatusCode)
+		return []byte{}, fmt.Errorf("status error: %v", resp.StatusCode)
 	}
 
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return []byte{}, fmt.Errorf("Read body: %v", err)
+		return []byte{}, fmt.Errorf("read body: %v", err)
 	}
 
 	return data, nil
@@ -62,12 +54,12 @@ func getMajorVersion(version string) string {
 	return fmt.Sprintf("%s.%s", verArray[0], verArray[1])
 }
 
-func FindLatestPatchVersion(version string, versions []string) string {
+func findLatestPatchVersion(version string, versions []tagStruct) string {
 	currPatchVer := getPatchVersion(version)
 	majorVer := getMajorVersion(version)
 	for _, ver := range versions {
-		if strings.Contains(ver, majorVer) {
-			loopPatchVer := getPatchVersion(ver)
+		if strings.Contains(ver.Tag, majorVer) && !ver.IsPrelease {
+			loopPatchVer := getPatchVersion(ver.Tag)
 			if loopPatchVer > currPatchVer {
 				currPatchVer = loopPatchVer
 			}
@@ -76,7 +68,18 @@ func FindLatestPatchVersion(version string, versions []string) string {
 	return updatePatchVersion(version, currPatchVer)
 }
 
+func getReleaseTags() ([]tagStruct, error) {
+	xmlBytes, err := getDataBytes()
+	if err != nil {
+		log.Printf("Failed to get XML: %v", err)
+		return make([]tagStruct, 0), err // skip patch update
+	}
+	v := []tagStruct{}
+	err = json.Unmarshal(xmlBytes, &v)
+	return v, err
+}
+
 func SetToLatestPatchVersion(version string) string {
-	versions, _ := GetReleaseVersions()
-	return FindLatestPatchVersion(version, versions)
+	versions, _ := getReleaseTags()
+	return findLatestPatchVersion(version, versions)
 }
