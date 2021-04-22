@@ -11,27 +11,18 @@ import (
 	"strings"
 )
 
-type ReleaseInfo struct {
-	ProwXMLFile string
-}
-
-func NewReleaseInfo() ReleaseInfo {
-	release := ReleaseInfo{}
-	release.ProwXMLFile = "https://storage.googleapis.com/kyma-prow-artifacts/"
-	return release
-}
-
-func (r ReleaseInfo) GetVersions() ([]string, error) {
-	if xmlBytes, err := getDataBytes(r.ProwXMLFile); err != nil {
+func GetReleaseVersions() ([]string, error) {
+	const url = "https://storage.googleapis.com/kyma-prow-artifacts/"
+	xmlBytes, err := getDataBytes(url)
+	if err != nil {
 		log.Printf("Failed to get XML: %v", err)
 		return make([]string, 0), err // skip patch update
-	} else {
-		v := struct {
-			Versions []string `xml:"Contents>Key"`
-		}{}
-		err := xml.Unmarshal(xmlBytes, &v)
-		return v.Versions, err
 	}
+	v := struct {
+		Versions []string `xml:"Contents>Key"`
+	}{}
+	err = xml.Unmarshal(xmlBytes, &v)
+	return v.Versions, err
 }
 
 func getDataBytes(url string) ([]byte, error) {
@@ -86,7 +77,6 @@ func FindLatestPatchVersion(version string, versions []string) string {
 }
 
 func SetToLatestPatchVersion(version string) string {
-	release := NewReleaseInfo()
-	versions, _ := release.GetVersions()
+	versions, _ := GetReleaseVersions()
 	return FindLatestPatchVersion(version, versions)
 }
