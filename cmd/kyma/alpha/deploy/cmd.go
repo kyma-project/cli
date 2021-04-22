@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/avast/retry-go"
 	"github.com/pkg/errors"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,6 +30,7 @@ import (
 	"github.com/kyma-incubator/hydroform/parallel-install/pkg/deployment"
 	"github.com/kyma-incubator/hydroform/parallel-install/pkg/git"
 	"github.com/kyma-incubator/hydroform/parallel-install/pkg/helm"
+	"github.com/kyma-incubator/hydroform/parallel-install/pkg/preinstaller"
 )
 
 type command struct {
@@ -231,6 +234,8 @@ func (cmd *command) deployKyma(overrides *deployment.OverridesBuilder) error {
 			Path: kube.KubeconfigPath(cmd.KubeconfigPath),
 		},
 	}
+
+	preinstallation(installationCfg)
 
 	// if not verbose, use asyncui for clean output
 	var callback func(deployment.ProcessUpdate)
@@ -518,4 +523,42 @@ func (cmd *command) approveImportCertificate() bool {
 		return false
 	}
 	return qImportCertsStep.PromptYesNo("Should the Kyma certificate be installed locally?")
+}
+
+// TODO: remove this when preinstallation API is improved: https://github.com/kyma-project/hydroform/issues/265
+func preinstallation(installationCfg *installConfig.Config) {
+	//Prepare cluster before Kyma installation
+	preInstallerCfg := preinstaller.Config{
+		InstallationResourcePath: installationCfg.InstallationResourcePath,
+		Log:                      installationCfg.Log,
+		KubeconfigSource:         installationCfg.KubeconfigSource,
+	}
+
+	commonRetryOpts := []retry.Option{
+		retry.Delay(time.Duration(installationCfg.BackoffInitialIntervalSeconds) * time.Second),
+		retry.Attempts(uint(installationCfg.BackoffMaxElapsedTimeSeconds / installationCfg.BackoffInitialIntervalSeconds)),
+		retry.DelayType(retry.FixedDelay),
+	}
+
+	resourceParser := &preinstaller.GenericResourceParser{}
+	resourceManager, err := preinstaller.NewDefaultResourceManager(installationCfg.KubeconfigSource, preInstallerCfg.Log, commonRetryOpts)
+	if err != nil {
+		log.Fatalf("Failed to create Kyma default resource manager: %v", err)
+	}
+
+	resourceApplier := preinstaller.NewGenericResourceApplier(installationCfg.Log, resourceManager)
+	preInstaller, err := preinstaller.NewPreInstaller(resourceApplier, resourceParser, preInstallerCfg, commonRetryOpts)
+	if err != nil {
+		log.Fatalf("Failed to create Kyma pre-installer: %v", err)
+	}
+
+	result, err := preInstaller.InstallCRDs()
+	if err != nil || len(result.NotInstalled) > 0 {
+		log.Fatalf("Failed to install CRDs: %s", err)
+	}
+
+	result, err = preInstaller.CreateNamespaces()
+	if err != nil || len(result.NotInstalled) > 0 {
+		log.Fatalf("Failed to create namespaces: %s", err)
+	}
 }
