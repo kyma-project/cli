@@ -38,7 +38,6 @@ func NewCmd(o *Options) *cobra.Command {
 		Aliases: []string{"d"},
 	}
 
-	cobraCmd.Flags().StringVarP(&o.WorkspacePath, "workspace", "w", defaultWorkspacePath, "Path used to download Kyma sources.")
 	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 1200*time.Second, "Maximum time for the deletion (default: 20m0s)")
 	cobraCmd.Flags().DurationVarP(&o.TimeoutComponent, "timeout-component", "", 360*time.Second, "Maximum time to delete the component (default: 6m0s)")
 	cobraCmd.Flags().IntVar(&o.Concurrency, "concurrency", 4, "Number of parallel processes (default: 4)")
@@ -63,15 +62,6 @@ func (cmd *command) Run() error {
 		return errors.Wrap(err, "Cannot initialize the Kubernetes client. Make sure your kubeconfig is valid")
 	}
 
-	var ui asyncui.AsyncUI
-	if !cmd.Verbose { //use async UI only if not in verbose mode
-		ui = asyncui.AsyncUI{StepFactory: &cmd.Factory}
-		if err := ui.Start(); err != nil {
-			return err
-		}
-		defer ui.Stop()
-	}
-
 	//get list of installed Kyma components
 	compList, err := cmd.kymaComponentList()
 	if err != nil {
@@ -89,16 +79,17 @@ func (cmd *command) Run() error {
 		ComponentList:                 compList,
 	}
 
-	// if an AsyncUI is used, get channel for update events
-	var updateCh chan<- deployment.ProcessUpdate
-	if ui.IsRunning() {
-		updateCh, err = ui.UpdateChannel()
+	// if not verbose, use asyncui for clean output
+	var callback func(deployment.ProcessUpdate)
+	if !cmd.Verbose {
+		ui := asyncui.AsyncUI{StepFactory: &cmd.Factory}
+		callback = ui.Callback()
 		if err != nil {
 			return err
 		}
 	}
 
-	installer, err := deployment.NewDeletion(installCfg, &deployment.OverridesBuilder{}, cmd.K8s.Static(), updateCh)
+	installer, err := deployment.NewDeletion(installCfg, &deployment.OverridesBuilder{}, callback)
 	if err != nil {
 		return err
 	}
@@ -113,7 +104,12 @@ func (cmd *command) Run() error {
 
 func (cmd *command) kymaComponentList() (*installConfig.ComponentList, error) {
 	kymaCompStep := cmd.NewStep("Get Kyma components")
-	metaProv := helm.NewKymaMetadataProvider(cmd.K8s.Static())
+	metaProv, err := helm.NewKymaMetadataProvider(installConfig.KubeconfigSource{
+		Path: kube.KubeconfigPath(cmd.KubeconfigPath),
+	})
+	if err != nil {
+		return nil, err
+	}
 
 	versionSet, err := metaProv.Versions()
 	if err != nil {

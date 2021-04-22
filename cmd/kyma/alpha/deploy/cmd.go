@@ -68,7 +68,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd.Flags().StringVarP(&o.TLSKeyFile, "tls-key", "", "", "TLS key file for the domain used for installation")
 	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", defaultSource, `Installation source:
 	- Deploy a specific release, for example: "kyma alpha deploy --source=1.17.1"
-	- Deploy the main branch of the Kyma repository on kyma-project.org: "kyma alpha deploy --source=main"
+	- Deploy a specific branch of the Kyma repository on kyma-project.org: "kyma alpha deploy --source=<my-branch-name>"
 	- Deploy a commit, for example: "kyma alpha deploy --source=34edf09a"
 	- Deploy a pull request, for example "kyma alpha deploy --source=PR-9486"
 	- Deploy the local sources: "kyma alpha deploy --source=local" (default: "main")`)
@@ -96,16 +96,6 @@ func (cmd *command) Run() error {
 	// initialize Kubernetes client
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
 		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
-	}
-
-	// initialize UI
-	var ui asyncui.AsyncUI
-	if !cmd.Verbose { //use async UI only if not in verbose mode
-		ui = asyncui.AsyncUI{StepFactory: &cmd.Factory}
-		if err := ui.Start(); err != nil {
-			return err
-		}
-		defer ui.Stop()
 	}
 
 	// only download if not from local sources
@@ -143,7 +133,7 @@ func (cmd *command) Run() error {
 		return err
 	}
 
-	err = cmd.deployKyma(ui, overrides)
+	err = cmd.deployKyma(overrides)
 	if err != nil {
 		return err
 	}
@@ -163,10 +153,16 @@ func (cmd *command) Run() error {
 
 func (cmd *command) isCompatibleVersion() error {
 	compCheckStep := cmd.NewStep("Verifying Kyma version compatibility")
-	provider := helm.NewKymaMetadataProvider(cmd.K8s.Static())
+	provider, err := helm.NewKymaMetadataProvider(installConfig.KubeconfigSource{
+		Path: kube.KubeconfigPath(cmd.KubeconfigPath),
+	})
+	if err != nil {
+		return err
+	}
+
 	versionSet, err := provider.Versions()
 	if err != nil {
-		return fmt.Errorf("Cannot get installed Kyma versions due to error: %v", err)
+		return errors.Wrap(err, "Cannot get installed Kyma versions due to error")
 	}
 
 	if versionSet.Empty() { //Kyma seems not to be installed
@@ -207,7 +203,7 @@ func (cmd *command) isCompatibleVersion() error {
 	return fmt.Errorf("Upgrade stopped by user")
 }
 
-func (cmd *command) deployKyma(ui asyncui.AsyncUI, overrides *deployment.OverridesBuilder) error {
+func (cmd *command) deployKyma(overrides *deployment.OverridesBuilder) error {
 	localWorkspace := cmd.opts.ResolveLocalWorkspacePath()
 	resourcePath := filepath.Join(localWorkspace, "resources")
 	installResourcePath := filepath.Join(localWorkspace, "installation", "resources")
@@ -231,18 +227,22 @@ func (cmd *command) deployKyma(ui asyncui.AsyncUI, overrides *deployment.Overrid
 		InstallationResourcePath:      installResourcePath,
 		Version:                       cmd.opts.Source,
 		Atomic:                        cmd.opts.Atomic,
+		KubeconfigSource: installConfig.KubeconfigSource{
+			Path: kube.KubeconfigPath(cmd.KubeconfigPath),
+		},
 	}
 
-	// if an AsyncUI is used, get channel for update events
-	var updateCh chan<- deployment.ProcessUpdate
-	if ui.IsRunning() {
-		updateCh, err = ui.UpdateChannel()
+	// if not verbose, use asyncui for clean output
+	var callback func(deployment.ProcessUpdate)
+	if !cmd.Verbose {
+		ui := asyncui.AsyncUI{StepFactory: &cmd.Factory}
+		callback = ui.Callback()
 		if err != nil {
 			return err
 		}
 	}
 
-	installer, err := deployment.NewDeployment(installationCfg, overrides, cmd.K8s.Static(), updateCh)
+	installer, err := deployment.NewDeployment(installationCfg, overrides, callback)
 	if err != nil {
 		return err
 	}
@@ -455,7 +455,13 @@ func (cmd *command) printSummary(o deployment.Overrides) error {
 }
 
 func (cmd *command) installedKymaVersions() ([]string, error) {
-	provider := helm.NewKymaMetadataProvider(cmd.K8s.Static())
+	provider, err := helm.NewKymaMetadataProvider(installConfig.KubeconfigSource{
+		Path: kube.KubeconfigPath(cmd.KubeconfigPath),
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	kymaVersionSet, err := provider.Versions()
 	if err != nil {
 		return nil, err
