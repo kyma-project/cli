@@ -21,17 +21,17 @@ func NewReleaseInfo() ReleaseInfo {
 	return release
 }
 
-func (r ReleaseInfo) GetVersions() []string {
+func (r ReleaseInfo) GetVersions() ([]string, error) {
 	if xmlBytes, err := getDataBytes(r.ProwXMLFile); err != nil {
 		log.Printf("Failed to get XML: %v", err)
+		return make([]string, 0), err // skip patch update
 	} else {
 		v := struct {
 			Versions []string `xml:"Contents>Key"`
 		}{}
-		xml.Unmarshal(xmlBytes, &v)
-		return v.Versions
+		err := xml.Unmarshal(xmlBytes, &v)
+		return v.Versions, err
 	}
-	return make([]string, 0) // skip patch update
 }
 
 func getDataBytes(url string) ([]byte, error) {
@@ -87,6 +87,6 @@ func FindLatestPatchVersion(version string, versions []string) string {
 
 func SetToLatestPatchVersion(version string) string {
 	release := NewReleaseInfo()
-	versions := release.GetVersions()
+	versions, _ := release.GetVersions()
 	return FindLatestPatchVersion(version, versions)
 }
