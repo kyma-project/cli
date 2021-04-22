@@ -77,6 +77,6 @@ func FindLatestPatchVersion(version string, versions []string) string {
 }
 
 func SetToLatestPatchVersion(version string) string {
-	versions, _ := GetReleaseVersions()
-	return FindLatestPatchVersion(version, versions)
+	patchVersions, _ := GetReleaseVersions()
+	return FindLatestPatchVersion(version, patchVersions)
 }
