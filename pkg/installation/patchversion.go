@@ -69,13 +69,13 @@ func findLatestPatchVersion(version string, versions []tagStruct) string {
 }
 
 func getReleaseTags() ([]tagStruct, error) {
-	xmlBytes, err := getDataBytes()
+	jsonBytes, err := getDataBytes()
 	if err != nil {
-		log.Printf("Failed to get XML: %v", err)
+		log.Printf("Failed to get JSON: %v", err)
 		return make([]tagStruct, 0), err // skip patch update
 	}
 	v := []tagStruct{}
-	err = json.Unmarshal(xmlBytes, &v)
+	err = json.Unmarshal(jsonBytes, &v)
 	return v, err
 }
 
