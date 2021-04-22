@@ -11,6 +11,7 @@ import (
 
 	"github.com/kyma-incubator/hydroform/parallel-install/pkg/download"
 	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/files"
 )
 
 const (
@@ -21,7 +22,7 @@ var (
 	localSource           = "local"
 	defaultSource         = "main"
 	kymaProfiles          = []string{"evaluation", "production"}
-	defaultWorkspacePath  = filepath.Join(".", "workspace")
+	defaultWorkspacePath  = getDefaultWorkspacePath()
 	defaultComponentsFile = filepath.Join(defaultWorkspacePath, "installation", "resources", "components.yaml")
 )
 
@@ -164,4 +165,12 @@ func (o *Options) pathExists(path string, description string) error {
 
 func (o *Options) workspaceTmpDir() string {
 	return filepath.Join(o.WorkspacePath, "tmp")
+}
+
+func getDefaultWorkspacePath() string {
+	kymaHome, err := files.KymaHome()
+	if err != nil {
+		return filepath.Join(".kyma-sources")
+	}
+	return filepath.Join(kymaHome, "sources")
 }
