@@ -15,4 +15,8 @@ func TestFindLatestPatch(t *testing.T) {
 	version = "1.7.9"
 	latestPatch = findLatestPatchVersion(version, versions)
 	require.Equal(t, "1.7.10", latestPatch)
+
+	version = "1.7.10"
+	latestPatch = findLatestPatchVersion(version, versions)
+	require.Equal(t, "1.7.10", latestPatch)
 }
