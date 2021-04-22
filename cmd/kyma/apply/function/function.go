@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/kyma-incubator/hydroform/function/pkg/client"
@@ -74,6 +75,10 @@ func (c *command) Run() error {
 	if err := yaml.NewDecoder(file).Decode(&configuration); err != nil {
 		step.Failure()
 		return errors.Wrap(err, "Could not decode the configuration file")
+	}
+
+	if configuration.Source.SourcePath == "" {
+		configuration.Source.SourcePath = filepath.Dir(c.opts.Filename)
 	}
 
 	if c.K8s, err = kube.NewFromConfig("", c.KubeconfigPath); err != nil {
