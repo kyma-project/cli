@@ -84,7 +84,7 @@ func workspaceConfig(path string) (workspace.Cfg, error) {
 	}
 
 	if cfg.Runtime != "nodejs12" &&
-		cfg.Runtime != "nodejs10" &&
+		cfg.Runtime != "nodejs14" &&
 		cfg.Runtime != "python38" {
 		return workspace.Cfg{}, fmt.Errorf("unsupported runtime: %s", cfg.Runtime)
 	}

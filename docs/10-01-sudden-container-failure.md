@@ -4,7 +4,7 @@ type: Troubleshooting
 ---
 
 The container can suddenly fail when you use the `kyma run function` command with these flags:
-    - `runtime=Nodejs12` or `runtime=Nodejs10`
+    - `runtime=Nodejs12` or `runtime=Nodejs14`
     - `debug=true`
     - `hot-deploy=true`
 
