@@ -77,6 +77,9 @@ func (cmd *command) Run() error {
 		BackoffMaxElapsedTimeSeconds:  60 * 5,
 		Log:                           cli.NewHydroformLoggerAdapter(cli.NewLogger(cmd.Verbose)),
 		ComponentList:                 compList,
+		KubeconfigSource: installConfig.KubeconfigSource{
+			Path: kube.KubeconfigPath(cmd.KubeconfigPath),
+		},
 	}
 
 	// if not verbose, use asyncui for clean output
