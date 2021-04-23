@@ -16,7 +16,7 @@ Follows these steps:
 
 1. In VSC, navigate to the location of the file with the Function definition.
 2. Create the `.vscode` directory.
-3. In the `.vscode` directory, create the `lunch.json` file with this content:
+3. In the `.vscode` directory, create the `launch.json` file with this content:
    ```json
    {
      "version": "0.2.0",
