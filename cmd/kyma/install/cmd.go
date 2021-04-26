@@ -12,7 +12,6 @@ import (
 	"github.com/kyma-project/cli/internal/trust"
 
 	"github.com/kyma-project/cli/internal/cli"
-
 	"github.com/kyma-project/cli/pkg/installation"
 	"github.com/pkg/errors"
 
@@ -28,9 +27,14 @@ type command struct {
 	cli.Command
 }
 
+func setSource(isUserDefined bool, source *string) {
+	if !isUserDefined && installation.IsSemVer(*source) {
+		*source = installation.SetToLatestPatchVersion(*source)
+	}
+}
+
 //NewCmd creates a new kyma command
 func NewCmd(o *Options) *cobra.Command {
-
 	cmd := command{
 		Command: cli.Command{Options: o.Options},
 		opts:    o,
@@ -90,6 +94,7 @@ The standard installation uses the minimal configuration. The system performs th
 	- To use a pull request, write "kyma install --source=PR-9486".
 	- To use the local sources, write "kyma install --source=local".
 	- To use a custom installer image, write "kyma install --source=user/my-kyma-installer:v1.4.0".`)
+	setSource(cobraCmd.Flags().Changed("source"), &o.Source)
 	cobraCmd.Flags().StringVarP(&o.LocalSrcPath, "src-path", "", "", "Absolute path to local sources.")
 	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 1*time.Hour, "Timeout after which CLI stops watching the installation progress.")
 	cobraCmd.Flags().StringVarP(&o.Password, "password", "p", "", "Predefined cluster password.")

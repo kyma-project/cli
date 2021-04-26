@@ -276,12 +276,12 @@ func Test_IsDockerImage(t *testing.T) {
 
 func Test_IsSemVer(t *testing.T) {
 	t.Parallel()
-	ok := isSemVer("1.2.3")
+	ok := IsSemVer("1.2.3")
 	require.True(t, ok)
 
-	ok = isSemVer("testVersion")
+	ok = IsSemVer("testVersion")
 	require.False(t, ok)
 
-	ok = isSemVer("12345")
+	ok = IsSemVer("12345")
 	require.False(t, ok)
 }

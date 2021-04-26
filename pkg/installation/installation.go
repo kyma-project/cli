@@ -232,8 +232,7 @@ func (i *Installation) validateConfigurations() error {
 		i.Options.bucket = developmentBucket
 
 	//Install the specific version from release (ex: 1.15.1)
-	case isSemVer(i.Options.Source):
-		i.Options.Source = SetToLatestPatchVersion(i.Options.Source)
+	case IsSemVer(i.Options.Source):
 		i.Options.releaseVersion = i.Options.Source
 		i.Options.configVersion = i.Options.Source
 		i.Options.bucket = releaseBucket

@@ -55,12 +55,13 @@ func getMajorVersion(version string) string {
 }
 
 func findLatestPatchVersion(version string, versions []tagStruct) string {
-	currPatchVer := getPatchVersion(version)
+	currPatchVer := 0
+	cliPatchVer := getPatchVersion(version)
 	majorVer := getMajorVersion(version)
 	for _, ver := range versions {
 		if strings.Contains(ver.Tag, majorVer) && !ver.IsPrelease {
 			loopPatchVer := getPatchVersion(ver.Tag)
-			if loopPatchVer > currPatchVer {
+			if (loopPatchVer <= cliPatchVer) && (loopPatchVer > currPatchVer) {
 				currPatchVer = loopPatchVer
 			}
 		}
@@ -79,7 +80,7 @@ func getReleaseTags() ([]tagStruct, error) {
 	return v, err
 }
 
-func SetToLatestPatchVersion(version string) string {
+func SetToLatestPatchVersion(cliVersion string) string {
 	versions, _ := getReleaseTags()
-	return findLatestPatchVersion(version, versions)
+	return findLatestPatchVersion(cliVersion, versions)
 }
