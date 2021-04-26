@@ -37,6 +37,9 @@ Follow these steps:
   The `init` command creates the following files in your workspace folder:
 
   - `config.yaml`	with the Function's configuration
+
+> **NOTE:** See the [detailed description](#details-function-configuration-file) of all fields available in the Function's configuration file.
+
   - `handler.py` with the Function's code and the simple "Hello World" logic
   - `requirements.txt` with an empty file for your Function's custom dependencies
 
