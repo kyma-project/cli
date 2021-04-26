@@ -111,7 +111,7 @@ source:
     sourceType: git
     url: https://github.com/username/public-gitops.git
     repository: my-repo
-    reference: master
+    reference: main
     baseDir: /
     credentialsSecretName: secret2
 ```
