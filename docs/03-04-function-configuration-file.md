@@ -1,9 +1,9 @@
 ---
-title: Function's configuration file
+title: Function configuration file
 type: Details
 ---
 
-When you initialize a Function (`init`), CLI creates the `config.yaml` file in your workspace folder. This file contains the whole Function's configuration and specification not only for the Function custom resource but also any other related resources you create for it, such as Subscriptions and API Rules.
+When you initialize a Function (with the `init` command), CLI creates the `config.yaml` file in your workspace folder. This file contains the whole Function's configuration and specification not only for the Function custom resource but also any other related resources you create for it, such as Subscriptions and API Rules.
 
 ## Specification for an inline Function
 
@@ -101,7 +101,7 @@ env:
 
 ## Specification for a Git Function
 
-See the sample `config.yaml` for a [Git Function](https://kyma-project.io/docs/main/components/serverless/#details-git-source-type) for which code and dependencies are stored in a selected Git repository.
+See the sample `config.yaml` for a [Git Function](https://kyma-project.io/docs/main/components/serverless/#details-git-source-type) for which code and dependencies are stored in a selected Git repository:
 
 ```yaml
 name: function-practical-marcin
@@ -129,13 +129,13 @@ See all parameter descriptions.
 | **runtime**             | Yes | Function | | Specifies the execution environment for your Function. The available values are `nodejs12`, `nodejs14`, and `python38`.      |
 | **labels**             | No | Function | | Specifies the Function's Pod labels. |
 | **source**            | Yes | Function | | Provides details on the type and location of your Function's source code and dependencies.         |
-| **source.sourceType**            | Yes | Function | | Defines that you use either inline code or Git repository as the source of the Function's code and dependencies. It must be set either to `inline` or `git`.         |
+| **source.sourceType**            | Yes | Function | | Defines whether you use either inline code or a Git repository as the source of the Function's code and dependencies. It must be set either to `inline` or `git`.         |
 | **source.sourcePath**             | No | Function | Location of the `config.yaml` file | Specifies the absolute path to the directory with the Function's source code.         |
 | **source.sourceHandlerName**             | No | Function | `handler.js` (Node.js) or `handler.py` (Python) | Defines the path to the file with your Function's code. Specify it if you want to store source code separately from the `config.yaml`.  This path is a relative path to the one provided in **source.sourcePath**. |
 | **source.depsHandlerName**             | No | Function | `package.json` (Node.js) or `requirements.txt` (Python) | Defines the path to the file with your Function's dependencies. Specify it if you want to store dependencies separately from the `config.yaml`. This path is a relative path to the one provided in **source.sourcePath**. |
 | **source.url**             | No | Function | | Provides the address to the Git repository with the Function's code and dependencies. Depending on whether the repository is public or private and what authentication method is used to access it, the URL must start with the `http(s)`, `git`, or `ssh` prefix, and end with the `.git` suffix.  |
 | **source.repository**             | No | Function | Function name | Specifies the name of the Git repository.  |
-| **source.reference**             | No | Function | | Specifies either the branch name or the commit revision from which the Function Controller automatically fetches the changes in Function's code and dependencies.  |
+| **source.reference**             | No | Function | | Specifies either the branch name or the commit revision from which the Function Controller automatically fetches the changes in the Function's code and dependencies.  |
 | **source.baseDir**             | No | Function | | Specifies the location of your code dependencies in the repository. It is recommended to keep the source files at the root of your repository (`/`).  |
 | **source.credentialsSecretName**             | No | Function | | Specifies the name of the Secret with credentials to the Git repository. It is used by the Function Controller to authenticate to the Git repository to fetch the Function's source code and dependencies. This Secret must be stored in the same Namespace as the [GitRepository CR](https://kyma-project.io/docs/main/components/serverless/#custom-resource-git-repository). |
 | **resources**             | No | Function | | Defines CPU and memory available for the Function's Pod to use.  |
@@ -145,10 +145,10 @@ See all parameter descriptions.
 | **resources.requests**              | No | Function | | Defines the minimum requested CPU and memory values for a Function.  |
 | **resources.requests.cpu**              | No | Function | `50m` | Defines the minimum requested CPU value for the Function.  |
 | **resources.requests.memory**              | No | Function | `64Mi` | Defines the minimum requested memory value for the Function.  |
-| **subscriptions**   | No | Subscription | | Defines a Subscriptions by which the Function gets triggered to perform a business logic defined in the Function's source code.  |
+| **subscriptions**   | No | Subscription | | Defines a Subscription by which the Function gets triggered to perform a business logic defined in the Function's source code.  |
 | **subscriptions.name**           |  Yes | Subscription | Function name | Specifies the name of the Subscription custom resource. It takes the name from the Function unless you specify otherwise.    |
 | **subscriptions.protocol**           | Yes  | Subscription | | Defines the rules and formats applied for exchanging messages between the components of a given messaging system. Subscriptions in Kyma CLI use the [NATS](https://docs.nats.io/) messaging protocol by default. Must be set to `""`.         |
-| **subscriptions.filter** | No | Subscription | | xxx |
+| **subscriptions.filter** | No | Subscription | | Defines the filter for the Subscriptions. |
 | **subscriptions.filter.dialect**            | No | Subscription | | Indicates the filter expression language supported by an event producer. Subscriptions specifying the **filter** property must specify the dialect as well. All other properties are dependent on the dialect being used. In the current implementation, this field is treated as a constant which is blank.    |
 | **subscriptions.filter.filters**            | Yes | Subscription | | Specifies the filtering parameters for the given event.   |
 | **subscriptions.filter.filters.eventSource**            | Yes | Subscription | | Defines the origin from which events are published.   |
