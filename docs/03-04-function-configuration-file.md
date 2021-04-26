@@ -12,7 +12,7 @@ See the sample `config.yaml` for an inline Function for which code and dependenc
 ```yaml
 name: function-practical-filip5
 namespace: testme
-runtime: nodejs12
+runtime: nodejs14
 labels:
     app: serverless-test
 source:
@@ -103,11 +103,10 @@ env:
 
 See the sample `config.yaml` for a [Git Function](https://kyma-project.io/docs/main/components/serverless/#details-git-source-type) for which code and dependencies are stored in a selected Git repository.
 
-
 ```yaml
 name: function-practical-marcin
 namespace: iteration-review
-runtime: nodejs12
+runtime: nodejs14
 source:
     sourceType: git
     url: https://github.com/username/public-gitops.git
@@ -119,7 +118,9 @@ source:
 
 ## Parameters
 
-See all parameter descriptions:
+See all parameter descriptions.
+
+> **NOTE:** The **Default value** column specifies the values that Kyma CLI sets when applying resources on a cluster, if no other values are provided.
 
 | Parameter         | Required | Related custom resource | Default value  | Description|
 | ---------------------------------------- | :------------: | ---------| ---------| ------- |
@@ -129,7 +130,7 @@ See all parameter descriptions:
 | **labels**             | No | Function | | Specifies the Function's Pod labels. |
 | **source**            | Yes | Function | | Provides details on the type and location of your Function's source code and dependencies.         |
 | **source.sourceType**            | Yes | Function | | Defines that you use either inline code or Git repository as the source of the Function's code and dependencies. It must be set either to `inline` or `git`.         |
-| **source.sourcePath**             | No | Function | Current working directory | Specifies the absolute path to the directory with the Function's source code.         |
+| **source.sourcePath**             | No | Function | Location of the `config.yaml` file | Specifies the absolute path to the directory with the Function's source code.         |
 | **source.sourceHandlerName**             | No | Function | `handler.js` (Node.js) or `handler.py` (Python) | Defines the path to the file with your Function's code. Specify it if you want to store source code separately from the `config.yaml`.  This path is a relative path to the one provided in **source.sourcePath**. |
 | **source.depsHandlerName**             | No | Function | `package.json` (Node.js) or `requirements.txt` (Python) | Defines the path to the file with your Function's dependencies. Specify it if you want to store dependencies separately from the `config.yaml`. This path is a relative path to the one provided in **source.sourcePath**. |
 | **source.url**             | No | Function | | Provides the address to the Git repository with the Function's code and dependencies. Depending on whether the repository is public or private and what authentication method is used to access it, the URL must start with the `http(s)`, `git`, or `ssh` prefix, and end with the `.git` suffix.  |
