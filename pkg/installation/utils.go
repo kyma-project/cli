@@ -343,7 +343,7 @@ func isDockerImage(s string) bool {
 	return len(strings.Split(s, "/")) > 1
 }
 
-func IsSemVer(s string) bool {
+func isSemVer(s string) bool {
 	_, err := semver.Parse(s)
 	return err == nil
 }

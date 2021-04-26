@@ -28,7 +28,7 @@ type command struct {
 }
 
 func setSource(isUserDefined bool, source *string) {
-	if !isUserDefined && installation.IsSemVer(*source) {
+	if !isUserDefined {
 		*source = installation.SetToLatestPatchVersion(*source)
 	}
 }

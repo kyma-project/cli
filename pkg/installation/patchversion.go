@@ -81,6 +81,9 @@ func getReleaseTags() ([]tagStruct, error) {
 }
 
 func SetToLatestPatchVersion(cliVersion string) string {
-	versions, _ := getReleaseTags()
-	return findLatestPatchVersion(cliVersion, versions)
+	if isSemVer(cliVersion) {
+		versions, _ := getReleaseTags()
+		return findLatestPatchVersion(cliVersion, versions)
+	}
+	return cliVersion
 }
