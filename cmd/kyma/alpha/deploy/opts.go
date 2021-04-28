@@ -133,6 +133,12 @@ func (o *Options) validateFlags() error {
 	if _, err := o.tlsCertAndKeyProvided(); err != nil {
 		return err
 	}
+	if o.WorkspacePath == "" {
+		o.WorkspacePath = defaultWorkspacePath
+	}
+	if o.ComponentsFile == "" {
+		o.ComponentsFile = defaultComponentsFile
+	}
 	if o.ComponentsFile != defaultComponentsFile && len(o.Components) > 0 {
 		return fmt.Errorf(`Provide either "components-file" or "component" flag`)
 	}
