@@ -176,7 +176,7 @@ func (o *Options) workspaceTmpDir() string {
 func getDefaultWorkspacePath() string {
 	kymaHome, err := files.KymaHome()
 	if err != nil {
-		return filepath.Join(".kyma-sources")
+		return ".kyma-sources"
 	}
 	return filepath.Join(kymaHome, "sources")
 }
