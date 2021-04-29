@@ -17,10 +17,10 @@ kyma alpha provision k3s [flags]
 ```bash
   -a, --agent-arg strings    One or more arguments passed to the k3s agent command on agent nodes (e.g. --agent-arg='--alsologtostderr')
       --k3d-arg strings      One or more arguments passed to the k3d provisioning command (e.g. --k3d-arg='--no-rollback')
-      --name string          Name of the Kyma cluster (default: "kyma") (default "kyma")
+      --name string          Name of the Kyma cluster (default "kyma")
   -s, --server-arg strings   One or more arguments passed to the Kubernetes API server (e.g. --server-arg='--alsologtostderr')
-      --timeout duration     Maximum time for the provisioning (default: 5m0s). If you want no timeout, enter "0". (default 5m0s)
-      --workers int          Number of worker nodes (k3s agents), default: 1 (default 1)
+      --timeout duration     Maximum time for the provisioning. If you want no timeout, enter "0". (default 5m0s)
+      --workers int          Number of worker nodes (k3s agents) (default 1)
 ```
 
 ## Flags inherited from parent commands
