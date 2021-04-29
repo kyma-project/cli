@@ -15,9 +15,9 @@ kyma alpha delete [flags]
 ## Flags
 
 ```bash
-      --concurrency int              Number of parallel processes (default: 4) (default 4)
-      --timeout duration             Maximum time for the deletion (default: 20m0s) (default 20m0s)
-      --timeout-component duration   Maximum time to delete the component (default: 6m0s) (default 6m0s)
+      --concurrency int              Number of parallel processes (default 4)
+      --timeout duration             Maximum time for the deletion (default 20m0s)
+      --timeout-component duration   Maximum time to delete the component (default 6m0s)
 ```
 
 ## Flags inherited from parent commands

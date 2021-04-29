@@ -67,9 +67,9 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd.Flags().StringSliceVarP(&o.Components, "component", "", []string{}, "Provide one or more components to deploy (e.g. --component componentName@namespace)")
 	cobraCmd.Flags().StringSliceVarP(&o.OverridesFiles, "values-file", "f", []string{}, "Path(s) to one or more JSON or YAML files with configuration values")
 	cobraCmd.Flags().StringSliceVarP(&o.Overrides, "value", "", []string{}, "Set one or more configuration values (e.g. --value component.key='the value')")
-	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 20*time.Minute, "Maximum time for the deployment (default: 20m0s)")
-	cobraCmd.Flags().DurationVarP(&o.TimeoutComponent, "timeout-component", "", 6*time.Minute, "Maximum time to deploy the component (default: 6m0s)")
-	cobraCmd.Flags().IntVar(&o.Concurrency, "concurrency", 4, "Number of parallel processes (default: 4)")
+	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 20*time.Minute, "Maximum time for the deployment")
+	cobraCmd.Flags().DurationVarP(&o.TimeoutComponent, "timeout-component", "", 6*time.Minute, "Maximum time to deploy the component")
+	cobraCmd.Flags().IntVar(&o.Concurrency, "concurrency", 4, "Number of parallel processes")
 	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", "", "Custom domain used for installation")
 	cobraCmd.Flags().StringVarP(&o.TLSCrtFile, "tls-crt", "", "", "TLS certificate file for the domain used for installation")
 	cobraCmd.Flags().StringVarP(&o.TLSKeyFile, "tls-key", "", "", "TLS key file for the domain used for installation")
@@ -78,7 +78,7 @@ func NewCmd(o *Options) *cobra.Command {
 	- Deploy a specific branch of the Kyma repository on kyma-project.org: "kyma alpha deploy --source=<my-branch-name>"
 	- Deploy a commit, for example: "kyma alpha deploy --source=34edf09a"
 	- Deploy a pull request, for example "kyma alpha deploy --source=PR-9486"
-	- Deploy the local sources: "kyma alpha deploy --source=local" (default: "main")`)
+	- Deploy the local sources: "kyma alpha deploy --source=local"`)
 	cobraCmd.Flags().StringVarP(&o.Profile, "profile", "p", "",
 		fmt.Sprintf("Kyma deployment profile. If not specified, Kyma uses its default configuration. The supported profiles are: \"%s\".", strings.Join(kymaProfiles, "\", \"")))
 	return cobraCmd

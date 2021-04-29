@@ -35,11 +35,11 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 
 	//cmd.Flags().StringVar(&o.EnableRegistry, "enable-registry", "", "Enables registry for the created k8s cluster.")
-	cmd.Flags().StringVar(&o.Name, "name", "kyma", `Name of the Kyma cluster (default: "kyma")`)
-	cmd.Flags().IntVar(&o.Workers, "workers", 1, "Number of worker nodes (k3s agents), default: 1")
+	cmd.Flags().StringVar(&o.Name, "name", "kyma", `Name of the Kyma cluster`)
+	cmd.Flags().IntVar(&o.Workers, "workers", 1, "Number of worker nodes (k3s agents)")
 	cmd.Flags().StringSliceVarP(&o.ServerArgs, "server-arg", "s", []string{}, "One or more arguments passed to the Kubernetes API server (e.g. --server-arg='--alsologtostderr')")
 	cmd.Flags().StringSliceVarP(&o.AgentArgs, "agent-arg", "a", []string{}, "One or more arguments passed to the k3s agent command on agent nodes (e.g. --agent-arg='--alsologtostderr')")
-	cmd.Flags().DurationVar(&o.Timeout, "timeout", 5*time.Minute, `Maximum time for the provisioning (default: 5m0s). If you want no timeout, enter "0".`)
+	cmd.Flags().DurationVar(&o.Timeout, "timeout", 5*time.Minute, `Maximum time for the provisioning. If you want no timeout, enter "0".`)
 	cmd.Flags().StringSliceVarP(&o.K3dArgs, "k3d-arg", "", []string{}, "One or more arguments passed to the k3d provisioning command (e.g. --k3d-arg='--no-rollback')")
 	return cmd
 }
