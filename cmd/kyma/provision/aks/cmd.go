@@ -77,7 +77,7 @@ func (c *command) Run() error {
 
 	err = retry.Do(
 		func() error {
-			cluster, err = hf.Provision(cluster, provider, types.WithDataDir(home), types.Persistent())
+			cluster, err = hf.Provision(cluster, provider, types.WithDataDir(home), types.Persistent(), types.Verbose(c.opts.Verbose))
 			return err
 		},
 		retry.Attempts(c.opts.Attempts), retry.LastErrorOnly(!c.opts.Verbose))
