@@ -9,15 +9,15 @@ Deploys Kyma on a running Kubernetes cluster.
 Use this command to deploy, upgrade, or adapt Kyma on a running Kubernetes cluster.
 		
 Usage Examples:
-  Install Kyma using your own domain name
+  Deploy Kyma using your own domain name
     You must provide the certificate and key as files.
     If you don't have a certificate yet, you can create a self-signed certificate and key:
 		openssl req -x509 -newkey rsa:4096 -keyout key.pem -out crt.pem -days 365
     Then, pass the certificate files to the deploy command:
 		kyma alpha deploy --domain {DOMAIN} --tls-cert crt.pem --tls-key key.pem
 
-  Install Kyma from specific source:
-    - Install from a specific version, such as 1.19.1:
+  Deploy Kyma from specific source:
+    - Deploy from a specific version, such as 1.19.1:
 		kyma alpha deploy --source=1.19.1
     - Build Kyma from local sources and deploy on remote cluster:
 		kyma alpha deploy --source=local
