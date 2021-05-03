@@ -6,7 +6,56 @@ Deploys Kyma on a running Kubernetes cluster.
 
 ## Synopsis
 
-Use this command to deploy Kyma on a running Kubernetes cluster.
+Use this command to deploy, upgrade, or adapt Kyma on a running Kubernetes cluster.
+		
+Usage Examples:
+  Install Kyma using your own domain name
+    You must provide the certificate and key as files.
+    If you don't have a certificate yet, you can create a self-signed certificate and key:
+		openssl req -x509 -newkey rsa:4096 -keyout key.pem -out crt.pem -days 365
+    Then, pass the certificate files to the deploy command:
+		kyma alpha deploy --domain {DOMAIN} --tls-cert crt.pem --tls-key key.pem
+
+  Install Kyma from specific source:
+    - Install from a specific version, such as 1.19.1:
+		kyma alpha deploy --source=1.19.1
+    - Build Kyma from local sources and deploy on remote cluster:
+		kyma alpha deploy --source=local
+
+  Deploy Kyma with only specific components:
+    You need to pass a path to a YAML file containing desired components. An example YAML file would contain:
+		prerequisites:
+		- name: "cluster-essentials"
+		- name: "istio"
+		  namespace: "istio-system"
+		components:
+		- name: "testing"
+		- name: "xip-patch"
+		- name: "istio-kyma-patch"
+		- name: "dex"
+    Then run:
+		kyma alpha deploy --components {COMPONENTS_FILE_PATH}
+
+  Change Kyma settings:
+    To change your Kyma configuration, use alpha deploy command and deploy the same Kyma version that you're currently using,
+    just with different settings.
+    - Using a settings-file:
+		kyma alpha deploy --values-file {VALUES_FILE_PATH}
+    - Using specific values instead of file:
+		kyma deploy --value ory.hydra.deployment.resources.limits.cpu=153m \
+		--value ory.hydra.deployment.resources.requests.cpu=53m
+
+Debugging:
+  The alpha commands support error handling in several ways, for example:
+  - To get a detailed view of the installation process, use the --verbose flag.
+  - To tweak the values on a component level, use alpha deploy --components:
+    Pass a components list that includes only the components you want to test
+    and try out the settings that work for your installation.
+  - To understand which component failed during deployment, deactivate the default atomic deployment:
+		--atomic=false
+    With atomic deployment active, any component that hasn't been installed successfully is rolled back,
+    which may make it hard to find out what went wrong. By disabling the flag, the failed components are not rolled back.
+	
 
 ```bash
 kyma alpha deploy [flags]
