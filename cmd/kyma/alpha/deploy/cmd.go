@@ -69,7 +69,7 @@ Usage Examples:
 		kyma alpha deploy --source=local
 
   Deploy Kyma with only specific components:
-    You need to pass a path to a YAML file containing desired components. An exmaple YAML file would contain:
+    You need to pass a path to a YAML file containing desired components. An example YAML file would contain:
 		prerequisites:
 		- name: "cluster-essentials"
 		- name: "istio"
