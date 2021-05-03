@@ -83,7 +83,7 @@ Usage Examples:
 		kyma alpha deploy --components {COMPONENTS_FILE_PATH}
 
   Change Kyma settings:
-    To change your Kyma configuration, use alpha deploy command and deploy the same Kyma version that you're currently using,
+    To change your Kyma configuration, use the alpha deploy command and deploy the same Kyma version that you're currently using,
     just with different settings.
     - Using a settings-file:
 		kyma alpha deploy --values-file {VALUES_FILE_PATH}
