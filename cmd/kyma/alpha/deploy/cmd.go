@@ -63,7 +63,7 @@ Usage Examples:
 		kyma alpha deploy --domain {DOMAIN} --tls-cert crt.pem --tls-key key.pem
 
   Deploy Kyma from specific source:
-    - Install from a specific version, such as 1.19.1:
+    - Deploy from a specific version, such as 1.19.1:
 		kyma alpha deploy --source=1.19.1
     - Build Kyma from local sources and deploy on remote cluster:
 		kyma alpha deploy --source=local
