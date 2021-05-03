@@ -46,7 +46,7 @@ Usage Examples:
 		--value ory.hydra.deployment.resources.requests.cpu=53m
 
 Debugging:
-  The alpha commands support error handling in several ways, for example:
+  The alpha commands support troubleshooting in several ways, for example:
   - To get a detailed view of the installation process, use the --verbose flag.
   - To tweak the values on a component level, use alpha deploy --components:
     Pass a components list that includes only the components you want to test
