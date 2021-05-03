@@ -55,7 +55,7 @@ func NewCmd(o *Options) *cobra.Command {
 		Long: `Use this command to deploy, upgrade, or adapt Kyma on a running Kubernetes cluster.
 		
 Usage Examples:
-  Install Kyma using your own domain name
+  Deploy Kyma using your own domain name
     You must provide the certificate and key as files.
     If you don't have a certificate yet, you can create a self-signed certificate and key:
 		openssl req -x509 -newkey rsa:4096 -keyout key.pem -out crt.pem -days 365
