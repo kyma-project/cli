@@ -62,7 +62,7 @@ Usage Examples:
     Then, pass the certificate files to the deploy command:
 		kyma alpha deploy --domain {DOMAIN} --tls-cert crt.pem --tls-key key.pem
 
-  Install Kyma from specific source:
+  Deploy Kyma from specific source:
     - Install from a specific version, such as 1.19.1:
 		kyma alpha deploy --source=1.19.1
     - Build Kyma from local sources and deploy on remote cluster:
