@@ -17,8 +17,8 @@ kyma alpha deploy [flags]
 ```bash
   -a, --atomic                       Set --atomic=true to use atomic deployment, which rolls back any component that could not be installed successfully.
       --component strings            Provide one or more components to deploy (e.g. --component componentName@namespace)
-  -c, --components-file string       Path to the components file (default: "workspace/installation/resources/components.yaml") (default "workspace/installation/resources/components.yaml")
-      --concurrency int              Number of parallel processes (default: 4) (default 4)
+  -c, --components-file string       Path to the components file (default "$HOME/.kyma/sources/installation/resources/components.yaml" or ".kyma-sources/installation/resources/components.yaml")
+      --concurrency int              Number of parallel processes (default 4)
   -d, --domain string                Custom domain used for installation
   -p, --profile string               Kyma deployment profile. If not specified, Kyma uses its default configuration. The supported profiles are: "evaluation", "production".
   -s, --source string                Installation source:
@@ -26,14 +26,14 @@ kyma alpha deploy [flags]
                                      	- Deploy a specific branch of the Kyma repository on kyma-project.org: "kyma alpha deploy --source=<my-branch-name>"
                                      	- Deploy a commit, for example: "kyma alpha deploy --source=34edf09a"
                                      	- Deploy a pull request, for example "kyma alpha deploy --source=PR-9486"
-                                     	- Deploy the local sources: "kyma alpha deploy --source=local" (default: "main") (default "main")
-      --timeout duration             Maximum time for the deployment (default: 20m0s) (default 20m0s)
-      --timeout-component duration   Maximum time to deploy the component (default: 6m0s) (default 6m0s)
+                                     	- Deploy the local sources: "kyma alpha deploy --source=local" (default "main")
+      --timeout duration             Maximum time for the deployment (default 20m0s)
+      --timeout-component duration   Maximum time to deploy the component (default 6m0s)
       --tls-crt string               TLS certificate file for the domain used for installation
       --tls-key string               TLS key file for the domain used for installation
       --value strings                Set one or more configuration values (e.g. --value component.key='the value')
   -f, --values-file strings          Path(s) to one or more JSON or YAML files with configuration values
-  -w, --workspace string             Path to download Kyma sources (default: "workspace") (default "workspace")
+  -w, --workspace string             Path to download Kyma sources (default "$HOME/.kyma/sources" or ".kyma-sources")
 ```
 
 ## Flags inherited from parent commands
