@@ -6,11 +6,10 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
-
 	"github.com/spf13/cobra"
 )
 
-//NewCmd creates a new completion command
+// NewCmd creates a new completion command
 func NewCmd() *cobra.Command {
 	var completionCmd = &cobra.Command{
 		Use:   "completion bash|zsh",
@@ -33,7 +32,7 @@ func completion(cmd *cobra.Command, args []string) error {
 
 	switch shell := args[0]; shell {
 	case "bash":
-		err := cmd.GenBashCompletion(os.Stdout)
+		err := cmd.Root().GenBashCompletion(os.Stdout)
 		return errors.Wrap(err, "Error generating bash completion")
 	case "zsh":
 		err := genZshCompletion(cmd, os.Stdout)
@@ -46,7 +45,7 @@ func completion(cmd *cobra.Command, args []string) error {
 }
 
 func genZshCompletion(cmd *cobra.Command, out io.Writer) error {
-	err := cmd.GenZshCompletion(out)
+	err := cmd.Root().GenZshCompletion(out)
 	if err != nil {
 		return err
 	}
