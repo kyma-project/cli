@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/avast/retry-go"
 	"github.com/pkg/errors"
 
 	"github.com/kyma-project/cli/internal/cli"
@@ -92,7 +93,13 @@ func (cmd *command) Run() error {
 		}
 	}
 
-	installer, err := deployment.NewDeletion(installCfg, &deployment.OverridesBuilder{}, callback)
+	commonRetryOpts := []retry.Option{
+		retry.Delay(time.Duration(installCfg.BackoffInitialIntervalSeconds) * time.Second),
+		retry.Attempts(uint(installCfg.BackoffMaxElapsedTimeSeconds / installCfg.BackoffInitialIntervalSeconds)),
+		retry.DelayType(retry.FixedDelay),
+	}
+
+	installer, err := deployment.NewDeletion(installCfg, &deployment.OverridesBuilder{}, callback, commonRetryOpts)
 	if err != nil {
 		return err
 	}
