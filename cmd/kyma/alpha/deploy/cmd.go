@@ -80,6 +80,7 @@ func NewCmd(o *Options) *cobra.Command {
 	- Deploy a commit, for example: "kyma alpha deploy --source=34edf09a"
 	- Deploy a pull request, for example "kyma alpha deploy --source=PR-9486"
 	- Deploy the local sources: "kyma alpha deploy --source=local"`)
+	setSource(cobraCmd.Flags().Changed("source"), &o.Source)
 	cobraCmd.Flags().StringVarP(&o.Profile, "profile", "p", "",
 		fmt.Sprintf("Kyma deployment profile. If not specified, Kyma uses its default configuration. The supported profiles are: \"%s\".", strings.Join(kymaProfiles, "\", \"")))
 	return cobraCmd

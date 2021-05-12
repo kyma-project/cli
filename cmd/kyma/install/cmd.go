@@ -39,7 +39,7 @@ func NewCmd(o *Options) *cobra.Command {
 		Short: "Installs Kyma on a running Kubernetes cluster.",
 		Long: `Use this command to install Kyma on a running Kubernetes cluster.
 		
-### Detailed description
+### Description
 
 Before you use the command, make sure your setup meets the following prerequisites:
 
@@ -50,22 +50,23 @@ Here are the installation steps:
 
 The standard installation uses the minimal configuration. The system performs the following steps:
 
-1. Deploys and configures the Kyma Installer. At this point, steps differ depending on the installation type.
+1. Deploys and configures the Kyma Installer. At this point, the first steps differ depending on the installation type.
 
-When you install Kyma locally ` + "**from release**" + `, the system:
+If you install Kyma locally ` + "**from release**" + `, the system does the following:
 
-1. Fetches the latest or specified release along with configuration.
+   1. Fetches the latest or specified release along with configuration.
    2. Deploys the Kyma Installer on the cluster.
-   3. Applies downloaded or defined configuration.
-   4. Applies overrides, if applicable.
-   5. Sets the admin password.
-   6. Patches the Minikube IP.
+   3. Applies the downloaded or defined configuration.
+
    
-   When you install Kyma locally ` + "**from sources**" + `, the system:
+   If you install Kyma locally ` + "**from sources**" + `, the system does the following:
 
    1. Fetches the configuration yaml files from the local sources.
    2. Builds the Kyma Installer image.
    3. Deploys the Kyma Installer and applies the fetched configuration.
+   
+   The installation then universally continues with:
+   
    4. Applies overrides, if applicable.
    5. Sets the admin password.
    6. Patches the Minikube IP.

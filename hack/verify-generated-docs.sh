@@ -37,7 +37,7 @@ check_generated_docs() {
     if [[ "${result}" != "" ]]; then
         echo "ERROR: detected documents that need to be updated" 
         echo "
-        Run:
+        To update the docs run:
             make docs
         in the root of the repository and commit changes.
         "
