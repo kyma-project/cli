@@ -84,8 +84,8 @@ func TestNewCluster(t *testing.T) {
 		DiskSizeGB:        9000,
 		ScalerMax:         3,
 	}
-
-	c := newCluster(o)
+	cmd := newGcpCmd(o)
+	c := cmd.NewCluster()
 	require.Equal(t, o.Name, c.Name, "Cluster name not as expected.")
 	require.Equal(t, o.KubernetesVersion, c.KubernetesVersion, "Cluster Kubernetes version not as expected.")
 	require.Equal(t, o.Region, c.Location, "Cluster location not as expected.")
@@ -106,8 +106,8 @@ func TestNewProvider(t *testing.T) {
 		ScalerMax:       26,
 		Extra:           []string{"VAR1=VALUE1", "VAR2=VALUE2"},
 	}
-
-	p, err := newProvider(o)
+	cmd := newGcpCmd(o)
+	p, err := cmd.NewProvider()
 	require.NoError(t, err)
 
 	require.Equal(t, types.Gardener, p.Type, "Provider type not as expected.")
