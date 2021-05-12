@@ -27,7 +27,7 @@ require (
 	github.com/fatih/color v1.10.0
 	github.com/kyma-incubator/hydroform/function v0.0.0-20210422081826-5cd78b98a7f1
 	github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90
-	github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20210511151547-a34e4b288505
+	github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20210512111348-c6f90e1c1c48
 	github.com/kyma-incubator/hydroform/provision v0.0.0-20210419082109-fa955e694299
 	github.com/kyma-incubator/octopus v0.0.0-20200922132758-2b721e93b58b
 	github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20201125092745-687c943ac940
