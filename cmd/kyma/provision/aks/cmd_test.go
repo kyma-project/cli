@@ -75,8 +75,8 @@ func TestNewCluster(t *testing.T) {
 		DiskSizeGB:        9000,
 		NodeCount:         3,
 	}
-
-	c := newCluster(o)
+	cmd := newAksCmd(o)
+	c := cmd.NewCluster()
 	require.Equal(t, o.Name, c.Name, "Cluster name not as expected.")
 	require.Equal(t, o.KubernetesVersion, c.KubernetesVersion, "Cluster Kubernetes version not as expected.")
 	require.Equal(t, o.Location, c.Location, "Cluster location not as expected.")
@@ -91,8 +91,8 @@ func TestNewProvider(t *testing.T) {
 		CredentialsFile: "/path/to/credentials",
 		Extra:           []string{"VAR1=VALUE1", "VAR2=VALUE2"},
 	}
-
-	p, err := newProvider(o)
+	c := newAksCmd(o)
+	p, err := c.NewProvider()
 	require.NoError(t, err)
 
 	require.Equal(t, types.Azure, p.Type, "Provider type not as expected.")
