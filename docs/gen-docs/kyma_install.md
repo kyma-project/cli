@@ -62,7 +62,7 @@ kyma install [flags]
                                	- To use a specific release, write "kyma install --source=1.15.1".
                                	- To use the main branch, write "kyma install --source=main".
                                	- To use a commit, write "kyma install --source=34edf09a".
-                               	- To use a pull request, write "kyma install --source=PR-9486" (only works if '/resources' is modified, otherwise use 'alpha deploy').
+                               	- To use a pull request, write "kyma install --source=PR-9486" (only works if '/resources' is modified).
                                	- To use the local sources, write "kyma install --source=local".
                                	- To use a custom installer image, write "kyma install --source=user/my-kyma-installer:v1.4.0".
       --src-path string        Absolute path to local sources.
