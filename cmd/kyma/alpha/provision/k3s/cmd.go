@@ -84,9 +84,10 @@ func (c *command) verifyK3sStatus() error {
 			s.Failure()
 			return err
 		}
-	} else if c.portAllocated(80) || c.portAllocated(443) {
-		s.Failuref("Port 80 or 443 are already in use. Please stop the allocating service and try again.")
-		return fmt.Errorf("Port 80 or 443 are already in use")
+	} else if err := c.portAllocated(80, 443); err != nil {
+		errorMsg := fmt.Sprintf("Port 80 or 443 cannot be allocated:%s", err)
+		s.Failure()
+		return fmt.Errorf(errorMsg)
 	}
 
 	s.Successf("K3s status verified")
@@ -114,12 +115,17 @@ func (c *command) deleteExistingK3sCluster() error {
 }
 
 //Check if a port is allocated
-func (c *command) portAllocated(port int) bool {
-	con, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
-	if con != nil {
-		con.Close()
+func (c *command) portAllocated(ports ...int) error {
+	for _, port := range ports {
+		con, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+		if err != nil {
+			return err
+		}
+		if con != nil {
+			con.Close()
+		}
 	}
-	return err != nil
+	return nil
 }
 
 //Create a k3s cluster
