@@ -13,14 +13,14 @@ Use this command to install Kyma on a running Kubernetes cluster.
 Before you use the command, make sure your setup meets the following prerequisites:
 
 * Kyma is not installed.
-* A Kubernetes cluster is available with your kubeconfig file already pointing to it.
+* Kubernetes cluster is available with your kubeconfig file already pointing to it.
 
 Here are the installation steps:
 
 The standard installation uses the minimal configuration. 
 Depending on your installation type, the ways to deploy and configure the Kyma Installer are different:
 
-If you install Kyma locally **from a release**, the system does the following:
+If you install Kyma locally **from release**, the system does the following:
 
    1. Fetch the latest or specified release, along with configuration.
    2. Deploy the Kyma Installer on the cluster.
@@ -36,7 +36,7 @@ Both installation types continue with the following steps:
    
    4. If overrides have been defined, apply them.
    5. Set the admin password.
-   6. Patche the Minikube IP.
+   6. Patch the Minikube IP.
    
 
 ```bash

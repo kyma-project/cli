@@ -48,28 +48,26 @@ Before you use the command, make sure your setup meets the following prerequisit
 
 Here are the installation steps:
 
-The standard installation uses the minimal configuration. The system performs the following steps:
-
-Deploys and configures the Kyma Installer. At this point, the first steps differ depending on the installation type.
+The standard installation uses the minimal configuration. 
+Depending on your installation type, the ways to deploy and configure the Kyma Installer are different:
 
 If you install Kyma locally ` + "**from release**" + `, the system does the following:
 
-   1. Fetches the latest or specified release along with configuration.
-   2. Deploys the Kyma Installer on the cluster.
-   3. Applies the downloaded or defined configuration.
+   1. Fetch the latest or specified release, along with configuration.
+   2. Deploy the Kyma Installer on the cluster.
+   3. Apply the downloaded or defined configuration.
+   
+If you install Kyma locally ` + "**from sources**" + `, the system does the following:
 
+   1. Fetch the configuration yaml files from the local sources.
+   2. Build the Kyma Installer image.
+   3. Deploy the Kyma Installer and apply the fetched configuration.
    
-   If you install Kyma locally ` + "**from sources**" + `, the system does the following:
-
-   1. Fetches the configuration yaml files from the local sources.
-   2. Builds the Kyma Installer image.
-   3. Deploys the Kyma Installer and applies the fetched configuration.
+Both installation types continue with the following steps:
    
-   The installation then universally continues with:
-   
-   4. Applies overrides, if applicable.
-   5. Sets the admin password.
-   6. Patches the Minikube IP.
+   4. If overrides have been defined, apply them.
+   5. Set the admin password.
+   6. Patch the Minikube IP.
    `,
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 		Aliases: []string{"i"},
