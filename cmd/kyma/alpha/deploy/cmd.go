@@ -20,6 +20,7 @@ import (
 	"github.com/kyma-project/cli/internal/nice"
 	"github.com/kyma-project/cli/internal/trust"
 	"github.com/kyma-project/cli/pkg/asyncui"
+	"github.com/kyma-project/cli/pkg/installation"
 	"github.com/kyma-project/cli/pkg/step"
 	"github.com/magiconair/properties"
 	"github.com/spf13/cobra"
@@ -54,7 +55,7 @@ func NewCmd(o *Options) *cobra.Command {
 		Use:   "deploy",
 		Short: "Deploys Kyma on a running Kubernetes cluster.",
 		Long: `Use this command to deploy, upgrade, or adapt Kyma on a running Kubernetes cluster.
-		
+
 Usage Examples:
   Deploy Kyma using your own domain name
     You must provide the certificate and key as files.
@@ -116,7 +117,7 @@ Debugging:
 	cobraCmd.Flags().StringVarP(&o.ComponentsFile, "components-file", "c", "", `Path to the components file (default "$HOME/.kyma/sources/installation/resources/components.yaml" or ".kyma-sources/installation/resources/components.yaml")`)
 	cobraCmd.Flags().StringSliceVarP(&o.Components, "component", "", []string{}, "Provide one or more components to deploy (e.g. --component componentName@namespace)")
 	cobraCmd.Flags().StringSliceVarP(&o.OverridesFiles, "values-file", "f", []string{}, "Path(s) to one or more JSON or YAML files with configuration values")
-	cobraCmd.Flags().StringSliceVarP(&o.Overrides, "value", "", []string{}, "Set one or more configuration values (e.g. --value component.key='the value')")
+	cobraCmd.Flags().StringSliceVarP(&o.Overrides, "value", "", []string{}, "Set configuration values. Can specify one or more values, also as a comma-separated list (e.g. --value component.a='1' --value component.b='2' or --value component.a='1',component.b='2').")
 	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 20*time.Minute, "Maximum time for the deployment")
 	cobraCmd.Flags().DurationVarP(&o.TimeoutComponent, "timeout-component", "", 6*time.Minute, "Maximum time to deploy the component")
 	cobraCmd.Flags().IntVar(&o.Concurrency, "concurrency", 4, "Number of parallel processes")
@@ -129,9 +130,16 @@ Debugging:
 	- Deploy a commit, for example: "kyma alpha deploy --source=34edf09a"
 	- Deploy a pull request, for example "kyma alpha deploy --source=PR-9486"
 	- Deploy the local sources: "kyma alpha deploy --source=local"`)
+	setSource(cobraCmd.Flags().Changed("source"), &o.Source)
 	cobraCmd.Flags().StringVarP(&o.Profile, "profile", "p", "",
 		fmt.Sprintf("Kyma deployment profile. If not specified, Kyma uses its default configuration. The supported profiles are: \"%s\".", strings.Join(kymaProfiles, "\", \"")))
 	return cobraCmd
+}
+
+func setSource(isUserDefined bool, source *string) {
+	if !isUserDefined {
+		*source = installation.SetKymaSemVersion(*source)
+	}
 }
 
 //Run runs the command
@@ -165,7 +173,7 @@ func (cmd *command) Run() error {
 		_, err := os.Stat(cmd.opts.WorkspacePath)
 		approvalRequired := !os.IsNotExist(err)
 
-		downloadStep := cmd.NewStep("Downloading Kyma into workspace folder")
+		downloadStep := cmd.NewStep(fmt.Sprintf("Downloading Kyma (%s) into workspace folder ", cmd.opts.Source))
 		if err := git.CloneRepo(kymaURL, cmd.opts.WorkspacePath, cmd.opts.Source); err != nil {
 			downloadStep.Failure()
 			return err
@@ -359,26 +367,29 @@ func (cmd *command) overrides() (*deployment.OverridesBuilder, error) {
 	}
 
 	// add overrides provided as CLI params
-	for _, override := range cmd.opts.Overrides {
-		keyValuePairs := properties.MustLoadString(override)
-		if keyValuePairs.Len() < 1 {
-			return ob, fmt.Errorf("Override has wrong format: Provide overrides in 'key=value' format")
-		}
-
-		// process key-value pair
-		for _, key := range keyValuePairs.Keys() {
-			value, ok := keyValuePairs.Get(key)
-			if !ok || value == "" {
-				return ob, fmt.Errorf("Cannot read value of override '%s'", key)
+	for _, overrideList := range cmd.opts.Overrides {
+		overrideList := strings.Split(overrideList, ",")
+		for _, override := range overrideList {
+			keyValuePairs := properties.MustLoadString(override)
+			if keyValuePairs.Len() < 1 {
+				return ob, fmt.Errorf("Override has wrong format: Provide overrides in 'key=value' format")
 			}
 
-			comp, overridesMap, err := cmd.convertToOverridesMap(key, value)
-			if err != nil {
-				return ob, err
-			}
+			// process key-value pair
+			for _, key := range keyValuePairs.Keys() {
+				value, ok := keyValuePairs.Get(key)
+				if !ok || value == "" {
+					return ob, fmt.Errorf("Cannot read value of override '%s'", key)
+				}
 
-			if err := ob.AddOverrides(comp, overridesMap); err != nil {
-				return ob, err
+				comp, overridesMap, err := cmd.convertToOverridesMap(key, value)
+				if err != nil {
+					return ob, err
+				}
+
+				if err := ob.AddOverrides(comp, overridesMap); err != nil {
+					return ob, err
+				}
 			}
 		}
 	}

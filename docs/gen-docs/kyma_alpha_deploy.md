@@ -7,7 +7,7 @@ Deploys Kyma on a running Kubernetes cluster.
 ## Synopsis
 
 Use this command to deploy, upgrade, or adapt Kyma on a running Kubernetes cluster.
-		
+
 Usage Examples:
   Deploy Kyma using your own domain name
     You must provide the certificate and key as files.
@@ -80,7 +80,7 @@ kyma alpha deploy [flags]
       --timeout-component duration   Maximum time to deploy the component (default 6m0s)
       --tls-crt string               TLS certificate file for the domain used for installation
       --tls-key string               TLS key file for the domain used for installation
-      --value strings                Set one or more configuration values (e.g. --value component.key='the value')
+      --value strings                Set configuration values. Can specify one or more values, also as a comma-separated list (e.g. --value component.a='1' --value component.b='2' or --value component.a='1',component.b='2').
   -f, --values-file strings          Path(s) to one or more JSON or YAML files with configuration values
   -w, --workspace string             Path to download Kyma sources (default "$HOME/.kyma/sources" or ".kyma-sources")
 ```
