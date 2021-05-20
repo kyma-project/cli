@@ -85,9 +85,8 @@ func (c *command) verifyK3sStatus() error {
 			return err
 		}
 	} else if err := c.portAllocated(80, 443); err != nil {
-		errorMsg := fmt.Sprintf("Port 80 or 443 cannot be allocated:%s", err)
 		s.Failure()
-		return fmt.Errorf(errorMsg)
+		return errors.Wrap(err, "Port 80 or 443 cannot be allocated")
 	}
 
 	s.Successf("K3s status verified")
