@@ -19,7 +19,7 @@ Here are the installation steps:
 
 The standard installation uses the minimal configuration. The system performs the following steps:
 
-1. Deploys and configures the Kyma Installer. At this point, the first steps differ depending on the installation type.
+Deploys and configures the Kyma Installer. At this point, the first steps differ depending on the installation type.
 
 If you install Kyma locally **from release**, the system does the following:
 
@@ -39,9 +39,6 @@ If you install Kyma locally **from release**, the system does the following:
    4. Applies overrides, if applicable.
    5. Sets the admin password.
    6. Patches the Minikube IP.
-   
-   2. Runs Kyma installation until the **installed** status confirms the successful installation. You can override the standard installation settings using the `--override` flag. 
-   
    
 
 ```bash
