@@ -4,7 +4,7 @@ ifndef KYMA_VERSION
 	ifdef VERSION
 		KYMA_VERSION = $(VERSION)
 	else
-		KYMA_VERSION = main
+		KYMA_VERSION = 1.23.0-rc1
 	endif
 endif
 
