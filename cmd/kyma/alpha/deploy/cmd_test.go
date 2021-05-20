@@ -40,6 +40,26 @@ func TestOverrides(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("Comma separated overrides", func(t *testing.T) {
+		command := command{
+			opts: &Options{
+				Overrides: []string{"test.happypath=successful,test.secondpath=also_successful"},
+			},
+		}
+		err := assertValidOverride(t, command, `{"happypath":"successful", "secondpath":"also_successful"}`)
+		require.NoError(t, err)
+	})
+
+	t.Run("Comma separated overrides with space", func(t *testing.T) {
+		command := command{
+			opts: &Options{
+				Overrides: []string{"test.happypath=successful, test.secondpath=also_successful"},
+			},
+		}
+		err := assertValidOverride(t, command, `{"happypath":"successful", "secondpath":"also_successful"}`)
+		require.NoError(t, err)
+	})
+
 	t.Run("No value - invalid", func(t *testing.T) {
 		command := command{
 			opts: &Options{
