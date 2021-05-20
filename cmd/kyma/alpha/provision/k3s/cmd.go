@@ -84,7 +84,7 @@ func (c *command) verifyK3sStatus() error {
 			s.Failure()
 			return err
 		}
-	} else if err := c.portAllocated(80, 443); err != nil {
+	} else if err := c.allocatePorts(80, 443); err != nil {
 		s.Failure()
 		return errors.Wrap(err, "Port 80 or 443 cannot be allocated")
 	}
@@ -114,7 +114,7 @@ func (c *command) deleteExistingK3sCluster() error {
 }
 
 //Check if a port is allocated
-func (c *command) portAllocated(ports ...int) error {
+func (c *command) allocatePorts(ports ...int) error {
 	for _, port := range ports {
 		con, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 		if err != nil {
