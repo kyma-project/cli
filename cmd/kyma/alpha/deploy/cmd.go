@@ -198,6 +198,10 @@ func (cmd *command) Run() error {
 		return err
 	}
 
+	if err := overrides.AddFile(filepath.Join(cmd.opts.WorkspacePath, kyma2OverridesPath)); err != nil {
+		return nil, errors.Wrap(err, "Could not add overrides yaml of new installer")
+	}
+
 	err = cmd.deployKyma(overrides)
 	if err != nil {
 		return err
@@ -347,9 +351,6 @@ func (cmd *command) createCompList() (*installConfig.ComponentList, error) {
 
 func (cmd *command) overrides() (*deployment.OverridesBuilder, error) {
 	ob := &deployment.OverridesBuilder{}
-	if err := ob.AddFile(filepath.Join(cmd.opts.WorkspacePath, kyma2OverridesPath)); err != nil {
-		return nil, errors.Wrap(err, "Could not add overrides yaml of new installer")
-	}
 
 	// add override files
 	overridesFiles, err := cmd.opts.ResolveOverridesFiles()
