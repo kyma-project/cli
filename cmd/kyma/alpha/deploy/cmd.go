@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -17,6 +18,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/hosts"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/nice"
 	"github.com/kyma-project/cli/internal/trust"
@@ -225,6 +227,11 @@ func (cmd *command) Run() error {
 	if err != nil {
 		return errors.Wrap(err, "Unable to retrieve overrides to print installation summary")
 	}
+
+	if err := cmd.checkDevDomain(o); err != nil {
+		return err
+	}
+
 	return cmd.printSummary(o)
 }
 
@@ -549,6 +556,43 @@ func (cmd *command) installedKymaVersions() ([]string, error) {
 		return nil, err
 	}
 	return kymaVersionSet.Names(), nil
+}
+
+func (cmd *command) checkDevDomain(o deployment.Overrides) error {
+	domainOverride, ok := o.Find("global.domainName")
+	if !ok {
+		return errors.New("Domain not found in overrides")
+	}
+	domain := fmt.Sprintf("%v", domainOverride)
+
+	if domain != "local.kyma.dev" {
+		// No dev domain, nothing to check
+		return nil
+	}
+
+	requireEtcHostsHint := !checkDNS(domain)
+	if requireEtcHostsHint {
+		hosts, err := hosts.GetVirtualServiceHostnames(cmd.K8s)
+		if err != nil {
+			return err
+		}
+		hosts = append(hosts, "local.kyma.dev")
+
+		fmt.Println()
+		fmt.Printf("The configured Kyma domain %s is not resolvable. This could be due to activated rebind protection of your DNS resolver. Please add virtual service domains to your hosts file.\n", domain)
+		fmt.Printf("E.g., execute\n\nsudo  /bin/sh -c 'echo \"127.0.0.1 %s\" >> /etc/hosts'\n\non Linux or macOS.\n", strings.Join(hosts, " "))
+		fmt.Println()
+	}
+
+	return nil
+}
+
+func checkDNS(domain string) bool {
+	records, err := net.LookupHost(domain)
+	if err != nil || len(records) == 0 {
+		return false
+	}
+	return true
 }
 
 func (cmd *command) importCertificate() error {
