@@ -82,10 +82,10 @@ func getReleaseTags() ([]tagStruct, error) {
 }
 
 // Find latest compatible Kyma version to allow CLI patch updates without Kyma release
-func SetKymaSemVersion(cliVersion string) string {
-	if isSemVer(cliVersion) {
+func SetKymaSemVersion(kymaVersion string) string {
+	if isSemVer(kymaVersion) {
 		versions, _ := getReleaseTags()
-		return findKymaPatchVersion(cliVersion, versions)
+		return findKymaPatchVersion(kymaVersion, versions)
 	}
-	return cliVersion
+	return kymaVersion
 }
