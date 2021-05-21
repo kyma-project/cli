@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := local
 
 ifndef IS_RELEASE
-	IS_RELEASE = true
+	IS_RELEASE = false
 endif
 
 ifndef KYMA_VERSION
