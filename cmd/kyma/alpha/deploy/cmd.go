@@ -199,7 +199,7 @@ func (cmd *command) Run() error {
 	}
 
 	if err := overrides.AddFile(filepath.Join(cmd.opts.WorkspacePath, kyma2OverridesPath)); err != nil {
-		return nil, errors.Wrap(err, "Could not add overrides yaml of new installer")
+		return errors.Wrap(err, "Could not add overrides yaml of new installer")
 	}
 
 	err = cmd.deployKyma(overrides)
