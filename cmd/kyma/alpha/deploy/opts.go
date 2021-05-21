@@ -21,6 +21,7 @@ const (
 var (
 	localSource           = "local"
 	defaultSource         = "main"
+	isRelease             = "false"
 	kymaProfiles          = []string{"evaluation", "production"}
 	defaultWorkspacePath  = getDefaultWorkspacePath()
 	defaultComponentsFile = filepath.Join(defaultWorkspacePath, "installation", "resources", "components.yaml")

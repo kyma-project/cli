@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -136,7 +137,12 @@ Debugging:
 }
 
 func setSource(isUserDefined bool, source *string) {
-	if !isUserDefined {
+	IsRelease, err := strconv.ParseBool(isRelease)
+	if err != nil {
+		IsRelease = false
+		fmt.Println("WARNING: isRelease could not be parsed, continue assuming false value")
+	}
+	if !isUserDefined && !IsRelease {
 		*source = installation.SetKymaSemVersion(*source)
 	}
 }
