@@ -1,6 +1,8 @@
 .DEFAULT_GOAL := local
 
-IS_RELEASE = false
+ifndef IS_RELEASE
+	IS_RELEASE = true
+endif
 
 ifndef KYMA_VERSION
 	KYMA_VERSION = main
