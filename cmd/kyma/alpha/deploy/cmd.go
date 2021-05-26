@@ -41,7 +41,10 @@ type command struct {
 	duration time.Duration
 }
 
-const kymaURL = "https://github.com/kyma-project/kyma"
+const (
+	kymaURL            = "https://github.com/kyma-project/kyma"
+	kyma2OverridesPath = "/installation/resources/values.yaml"
+)
 
 //NewCmd creates a new kyma command
 func NewCmd(o *Options) *cobra.Command {
@@ -201,6 +204,10 @@ func (cmd *command) Run() error {
 	overrides, err := cmd.overrides()
 	if err != nil {
 		return err
+	}
+
+	if err := overrides.AddFile(filepath.Join(cmd.opts.WorkspacePath, kyma2OverridesPath)); err != nil {
+		return errors.Wrap(err, "Could not add overrides yaml of new installer")
 	}
 
 	err = cmd.deployKyma(overrides)
