@@ -41,8 +41,8 @@ type command struct {
 }
 
 const (
-    kymaURL = "https://github.com/kyma-project/kyma"
-    kyma2OverridesPath = "/installation/resources/values.yaml"
+	kymaURL            = "https://github.com/kyma-project/kyma"
+	kyma2OverridesPath = "/installation/resources/values.yaml"
 )
 
 //NewCmd creates a new kyma command
