@@ -40,8 +40,10 @@ type command struct {
 	duration time.Duration
 }
 
-const kymaURL = "https://github.com/kyma-project/kyma"
-const kyma2OverridesPath = "/installation/resources/values.yaml"
+const (
+    kymaURL = "https://github.com/kyma-project/kyma"
+    kyma2OverridesPath = "/installation/resources/values.yaml"
+)
 
 //NewCmd creates a new kyma command
 func NewCmd(o *Options) *cobra.Command {
