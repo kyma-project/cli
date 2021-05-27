@@ -25,7 +25,7 @@ require (
 	github.com/docker/cli v20.10.6+incompatible
 	github.com/docker/docker v20.10.6+incompatible
 	github.com/fatih/color v1.10.0
-	github.com/kyma-incubator/hydroform/function v0.0.0-20210422081826-5cd78b98a7f1
+	github.com/kyma-incubator/hydroform/function v0.0.0-20210524070553-1959bffa1551
 	github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90
 	github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20210518125044-3f2e7362bef8
 	github.com/kyma-incubator/hydroform/provision v0.0.0-20210514061348-c71b69cb362e
