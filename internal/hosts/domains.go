@@ -12,6 +12,20 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+func GetVirtualServiceHostnames(kymaKube kube.KymaKube) ([]string, error) {
+	vsList, err := kymaKube.Istio().NetworkingV1alpha3().VirtualServices("").List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	hostnames := []string{}
+	for _, v := range vsList.Items {
+		hostnames = append(hostnames, v.Spec.Hosts...)
+	}
+
+	return hostnames, nil
+}
+
 func AddDevDomainsToEtcHosts(
 	s step.Step, clusterInfo installation.ClusterInfo, kymaKube kube.KymaKube, verbose bool, timeout time.Duration, domain string) error {
 	hostnames := ""
