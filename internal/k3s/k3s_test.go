@@ -103,7 +103,7 @@ func TestInitializeFailed(t *testing.T) {
 }
 
 func TestStartCluster(t *testing.T) {
-	err := StartCluster(false, 5*time.Second, "kyma", 1, []string{"--alsologtostderr"}, []string{"--alsologtostderr"}, []string{"--no-rollback"})
+	err := StartCluster(false, 5*time.Second, "kyma", 1, []string{"--alsologtostderr"}, []string{"--alsologtostderr"}, []string{"--no-rollback"}, "1.20.6")
 	require.NoError(t, err)
 }
 
