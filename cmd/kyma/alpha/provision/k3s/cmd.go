@@ -41,6 +41,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cmd.Flags().StringSliceVarP(&o.AgentArgs, "agent-arg", "a", []string{}, "One or more arguments passed to the k3s agent command on agent nodes (e.g. --agent-arg='--alsologtostderr')")
 	cmd.Flags().DurationVar(&o.Timeout, "timeout", 5*time.Minute, `Maximum time for the provisioning. If you want no timeout, enter "0".`)
 	cmd.Flags().StringSliceVarP(&o.K3dArgs, "k3d-arg", "", []string{}, "One or more arguments passed to the k3d provisioning command (e.g. --k3d-arg='--no-rollback')")
+	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.20.6", "Kubernetes version of the cluster.")
 	return cmd
 }
 
@@ -131,7 +132,7 @@ func (c *command) allocatePorts(ports ...int) error {
 func (c *command) createK3sCluster() error {
 	s := c.NewStep("Create K3s instance")
 	s.Status("Start K3s cluster")
-	err := k3s.StartCluster(c.Verbose, c.opts.Timeout, c.opts.Name, c.opts.Workers, c.opts.ServerArgs, c.opts.AgentArgs, c.opts.K3dArgs)
+	err := k3s.StartCluster(c.Verbose, c.opts.Timeout, c.opts.Name, c.opts.Workers, c.opts.ServerArgs, c.opts.AgentArgs, c.opts.K3dArgs, c.opts.KubernetesVersion)
 	if err != nil {
 		s.Failuref("Could not start k3s cluster")
 		return err

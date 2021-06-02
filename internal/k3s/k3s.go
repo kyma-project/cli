@@ -75,6 +75,15 @@ func checkVersion(verbose bool) error {
 	return nil
 }
 
+func getK3sImage(version string) (string, error) {
+	_, err := semver.Parse(version)
+	if err != nil {
+		return "", fmt.Errorf("Invalid Kubernetes version %v: %v", version, err)
+	}
+
+	return fmt.Sprintf("rancher/k3s:v%s-k3s1", version), nil
+}
+
 //Initialize verifies whether the k3d CLI tool is properly installed
 func Initialize(verbose bool) error {
 	//ensure k3d is in PATH
@@ -127,7 +136,12 @@ func ClusterExists(verbose bool, clusterName string) (bool, error) {
 }
 
 //StartCluster starts a cluster
-func StartCluster(verbose bool, timeout time.Duration, clusterName string, workers int, serverArgs []string, agentArgs []string, k3dArgs []string) error {
+func StartCluster(verbose bool, timeout time.Duration, clusterName string, workers int, serverArgs []string, agentArgs []string, k3dArgs []string, k3sVersion string) error {
+	k3sImage, err := getK3sImage(k3sVersion)
+	if err != nil {
+		return err
+	}
+
 	cmdArgs := []string{
 		"cluster", "create", clusterName,
 		"--kubeconfig-update-default",
@@ -136,6 +150,7 @@ func StartCluster(verbose bool, timeout time.Duration, clusterName string, worke
 		"-p", "443:443@loadbalancer",
 		"--agents", fmt.Sprintf("%d", workers),
 		"--registry-create",
+		"--image", k3sImage,
 		"--k3s-server-arg", "--disable",
 		"--k3s-server-arg", "traefik",
 	}
@@ -153,7 +168,7 @@ func StartCluster(verbose bool, timeout time.Duration, clusterName string, worke
 	//add further k3d args which are not offered by the Kyma CLI flags
 	cmdArgs = append(cmdArgs, k3dArgs...)
 
-	_, err := RunCmd(verbose, timeout, cmdArgs...)
+	_, err = RunCmd(verbose, timeout, cmdArgs...)
 
 	return err
 }
