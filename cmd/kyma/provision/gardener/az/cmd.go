@@ -22,7 +22,7 @@ Create a service account with the ` + "`contributor`" + ` role. Use service acco
 	cmd.Flags().StringVarP(&o.Project, "project", "p", "", "Name of the Gardener project where you provision the cluster. (required)")
 	cmd.Flags().StringVarP(&o.CredentialsFile, "credentials", "c", "", "Path to the kubeconfig file of the Gardener service account for Azure. (required)")
 	cmd.Flags().StringVarP(&o.Secret, "secret", "s", "", "Name of the Gardener secret used to access Azure. (required)")
-	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.19", "Kubernetes version of the cluster.")
+	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.20", "Kubernetes version of the cluster.")
 	cmd.Flags().StringVarP(&o.Region, "region", "r", "westeurope", "Region of the cluster.")
 	cmd.Flags().StringSliceVarP(&o.Zones, "zones", "z", []string{"1"}, "Zones specify availability zones that are used to evenly distribute the worker pool. eg. --zones=\"europe-west3-a,europe-west3-b\"")
 	cmd.Flags().StringVarP(&o.MachineType, "type", "t", "Standard_D4_v3", "Machine type used for the cluster.")
