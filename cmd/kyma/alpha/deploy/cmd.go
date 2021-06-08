@@ -30,6 +30,7 @@ import (
 
 	installConfig "github.com/kyma-incubator/hydroform/parallel-install/pkg/config"
 	"github.com/kyma-incubator/hydroform/parallel-install/pkg/deployment"
+	"github.com/kyma-incubator/hydroform/parallel-install/pkg/overrides"
 	"github.com/kyma-incubator/hydroform/parallel-install/pkg/git"
 	"github.com/kyma-incubator/hydroform/parallel-install/pkg/helm"
 )
@@ -285,7 +286,7 @@ func (cmd *command) isCompatibleVersion() error {
 	return fmt.Errorf("Upgrade stopped by user")
 }
 
-func (cmd *command) deployKyma(overrides *deployment.OverridesBuilder) error {
+func (cmd *command) deployKyma(overrides *overrides.Builder) error {
 	resourcePath := filepath.Join(cmd.opts.WorkspacePath, "resources")
 	installResourcePath := filepath.Join(cmd.opts.WorkspacePath, "installation", "resources")
 
@@ -359,8 +360,8 @@ func (cmd *command) createCompList() (*installConfig.ComponentList, error) {
 	return compList, nil
 }
 
-func (cmd *command) overrides() (*deployment.OverridesBuilder, error) {
-	ob := &deployment.OverridesBuilder{}
+func (cmd *command) overrides() (*overrides.Builder, error) {
+	ob := &overrides.Builder{}
 
 	// add override files
 	overridesFiles, err := cmd.opts.ResolveOverridesFiles()
@@ -410,7 +411,7 @@ func (cmd *command) overrides() (*deployment.OverridesBuilder, error) {
 }
 
 //setGlobalOverrides is setting global overrides to improve the UX of the CLI
-func (cmd *command) setGlobalOverrides(overrides *deployment.OverridesBuilder) error {
+func (cmd *command) setGlobalOverrides(overrides *overrides.Builder) error {
 	// add domain provided as CLI params (for UX convenience)
 	globalOverrides := make(map[string]interface{})
 	if cmd.opts.Domain != "" {
@@ -487,7 +488,7 @@ func (cmd *command) avoidUserInteraction() bool {
 	return cmd.NonInteractive || cmd.CI
 }
 
-func (cmd *command) printSummary(o deployment.Overrides) error {
+func (cmd *command) printSummary(o overrides.Overrides) error {
 	kymaVersionNames, err := cmd.installedKymaVersions()
 	if err != nil {
 		return err
@@ -553,7 +554,7 @@ func (cmd *command) installedKymaVersions() ([]string, error) {
 	return kymaVersionSet.Names(), nil
 }
 
-func (cmd *command) checkDevDomain(o deployment.Overrides) error {
+func (cmd *command) checkDevDomain(o overrides.Overrides) error {
 	domainOverride, ok := o.Find("global.domainName")
 	if !ok {
 		return errors.New("Domain not found in overrides")
