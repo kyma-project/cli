@@ -16,6 +16,7 @@ import (
 	installConfig "github.com/kyma-incubator/hydroform/parallel-install/pkg/config"
 	"github.com/kyma-incubator/hydroform/parallel-install/pkg/deployment"
 	"github.com/kyma-incubator/hydroform/parallel-install/pkg/helm"
+	"github.com/kyma-incubator/hydroform/parallel-install/pkg/overrides"
 )
 
 type command struct {
@@ -99,7 +100,7 @@ func (cmd *command) Run() error {
 		retry.DelayType(retry.FixedDelay),
 	}
 
-	installer, err := deployment.NewDeletion(installCfg, &deployment.OverridesBuilder{}, callback, commonRetryOpts)
+	installer, err := deployment.NewDeletion(installCfg, &overrides.Builder{}, callback, commonRetryOpts)
 	if err != nil {
 		return err
 	}
