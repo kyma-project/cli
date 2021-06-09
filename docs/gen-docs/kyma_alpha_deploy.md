@@ -70,6 +70,7 @@ kyma alpha deploy [flags]
       --concurrency int              Number of parallel processes (default 4)
   -d, --domain string                Custom domain used for installation
   -p, --profile string               Kyma deployment profile. If not specified, Kyma uses its default configuration. The supported profiles are: "evaluation", "production".
+  -r, --reuse-values                 Set --reuse-values=false to prevent the reusage during component upgrade (default true)
   -s, --source string                Installation source:
                                      	- Deploy a specific release, for example: "kyma alpha deploy --source=1.17.1"
                                      	- Deploy a specific branch of the Kyma repository on kyma-project.org: "kyma alpha deploy --source=<my-branch-name>"

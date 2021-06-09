@@ -136,6 +136,7 @@ Debugging:
 	setSource(cobraCmd.Flags().Changed("source"), &o.Source)
 	cobraCmd.Flags().StringVarP(&o.Profile, "profile", "p", "",
 		fmt.Sprintf("Kyma deployment profile. If not specified, Kyma uses its default configuration. The supported profiles are: \"%s\".", strings.Join(kymaProfiles, "\", \"")))
+	cobraCmd.Flags().BoolVarP(&o.ReuseHelmValues, "reuse-values", "r", true, "Set --reuse-values=false to prevent the reusage during component upgrade")
 	return cobraCmd
 }
 
@@ -312,8 +313,8 @@ func (cmd *command) deployKyma(overrides *overrides.Builder) error {
 		KubeconfigSource: installConfig.KubeconfigSource{
 			Path: kube.KubeconfigPath(cmd.KubeconfigPath),
 		},
+		ReuseHelmValues: cmd.opts.ReuseHelmValues,
 	}
-
 	// if not verbose, use asyncui for clean output
 	var callback func(deployment.ProcessUpdate)
 	if !cmd.Verbose {

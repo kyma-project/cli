@@ -3,6 +3,7 @@ module github.com/kyma-project/cli
 go 1.14
 
 replace (
+	// github.com/kyma-incubator/hydroform/parallel-install => ../hydroform/parallel-install
 	//TODO: remove this part as Helm 3.5.4 got released (see dep in Hydroform API)
 	//see https://github.com/helm/helm/issues/9354 + https://github.com/helm/helm/pull/9492
 	github.com/docker/distribution => github.com/docker/distribution v0.0.0-20191216044856-a8371794149d

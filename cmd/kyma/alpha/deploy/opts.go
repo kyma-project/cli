@@ -44,6 +44,7 @@ type Options struct {
 	Source           string
 	Profile          string
 	Atomic           bool
+	ReuseHelmValues  bool
 }
 
 //NewOptions creates options with default values
