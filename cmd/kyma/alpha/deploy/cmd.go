@@ -136,7 +136,7 @@ Debugging:
 	setSource(cobraCmd.Flags().Changed("source"), &o.Source)
 	cobraCmd.Flags().StringVarP(&o.Profile, "profile", "p", "",
 		fmt.Sprintf("Kyma deployment profile. If not specified, Kyma uses its default configuration. The supported profiles are: \"%s\".", strings.Join(kymaProfiles, "\", \"")))
-	cobraCmd.Flags().BoolVarP(&o.ReuseHelmValues, "reuse-helm-values", "r", true, "Set --reuse-helm-values=false to prevent the reusage during component upgrade")
+	cobraCmd.Flags().BoolVarP(&o.ReuseHelmValues, "reuse-values", "r", true, "Set --reuse-values=false to prevent the reusage during component upgrade")
 	return cobraCmd
 }
 
