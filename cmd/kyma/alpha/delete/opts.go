@@ -18,6 +18,7 @@ type Options struct {
 	Timeout          time.Duration
 	TimeoutComponent time.Duration
 	Concurrency      int
+	KeepCRDs         bool
 }
 
 //NewOptions creates options with default values
