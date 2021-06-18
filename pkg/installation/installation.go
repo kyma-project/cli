@@ -88,6 +88,19 @@ func (i *Installation) newStep(msg string) step.Step {
 	return s
 }
 
+type funcReturnErr func() error
+
+func silenceStderr(isVerbose bool, f funcReturnErr) error {
+	stderr := os.Stderr
+	if !isVerbose {
+		os.Stderr = nil
+	}
+	defer func() {
+		os.Stderr = stderr
+	}()
+	return f()
+}
+
 // InstallKyma triggers the installation of a Kyma cluster.
 func (i *Installation) InstallKyma() (*Result, error) {
 	// Start timer for the installation
@@ -124,7 +137,7 @@ func (i *Installation) InstallKyma() (*Result, error) {
 		}
 
 		// Requesting Kyma Installer to install Kyma
-		if err := i.triggerInstallation(files); err != nil {
+		if err := silenceStderr(i.Options.Verbose, func() error { return i.triggerInstallation(files) }); err != nil {
 			s.Failure()
 			return nil, err
 		}
