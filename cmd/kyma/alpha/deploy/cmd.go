@@ -256,7 +256,6 @@ func (cmd *command) isCompatibleVersion() error {
 		if err != nil {
 			return err
 		}
-		fmt.Println("KymaVersion", kymaVersion1)
 		if kymaVersion1 != "N/A" {
 			if cmd.avoidUserInteraction() {
 				compCheckStep.Failuref("A kyma v1 installation (%s) was found. Please use interactive mode to confirm the upgrade", kymaVersion1)
