@@ -15,6 +15,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/kyma-project/cli/cmd/kyma/version"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/hosts"
 	"github.com/kyma-project/cli/internal/kube"
@@ -237,6 +238,7 @@ func (cmd *command) Run() error {
 
 func (cmd *command) isCompatibleVersion() error {
 	compCheckStep := cmd.NewStep("Verifying Kyma version compatibility")
+
 	provider, err := helm.NewKymaMetadataProvider(installConfig.KubeconfigSource{
 		Path: kube.KubeconfigPath(cmd.KubeconfigPath),
 	})
@@ -250,6 +252,16 @@ func (cmd *command) isCompatibleVersion() error {
 	}
 
 	if versionSet.Empty() { //Kyma seems not to be installed
+		kymaVersion1, err := version.KymaVersion(cmd.K8s) // check kymav1 installation
+		if err != nil {
+			return err
+		}
+		if kymaVersion1 != "N/A" {
+			if cmd.avoidUserInteraction() {
+				compCheckStep.Failuref("A kyma v1 installation (%s) was found. Please use interactive mode to confirm the upgrade", kymaVersion1)
+			}
+			compCheckStep.PromptYesNo(fmt.Sprintf("A kyma v1 installation (%s) was found. Do you want to proceed with the upgrade? ", kymaVersion1))
+		}
 		compCheckStep.Successf("No previous Kyma version found")
 		return nil
 	}
