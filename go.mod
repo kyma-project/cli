@@ -15,6 +15,7 @@ replace (
 
 	// this is needed for terraform to work with the k8s 0.18+ APIs, we should be able to remove it once we have terraform 0.13+
 	github.com/terraform-providers/terraform-provider-openstack => github.com/terraform-providers/terraform-provider-openstack v1.20.0
+	google.golang.org/grpc => google.golang.org/grpc v1.28.1
 )
 
 require (
