@@ -299,6 +299,19 @@ func (cmd *command) isCompatibleVersion() error {
 	return fmt.Errorf("Upgrade stopped by user")
 }
 
+type funcReturnErr func() error
+
+func silenceStderr(isVerbose bool, f funcReturnErr) error {
+	stderr := os.Stderr
+	if !isVerbose {
+		os.Stderr = nil
+	}
+	defer func() {
+		os.Stderr = stderr
+	}()
+	return f()
+}
+
 func (cmd *command) deployKyma(overrides *overrides.Builder) error {
 	resourcePath := filepath.Join(cmd.opts.WorkspacePath, "resources")
 	installResourcePath := filepath.Join(cmd.opts.WorkspacePath, "installation", "resources")
@@ -343,7 +356,7 @@ func (cmd *command) deployKyma(overrides *overrides.Builder) error {
 		return err
 	}
 
-	return installer.StartKymaDeployment()
+	return silenceStderr(cmd.Options.Verbose, installer.StartKymaDeployment)
 }
 
 func (cmd *command) createCompList() (*installConfig.ComponentList, error) {
