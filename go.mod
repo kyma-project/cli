@@ -15,6 +15,7 @@ replace (
 
 	// this is needed for terraform to work with the k8s 0.18+ APIs, we should be able to remove it once we have terraform 0.13+
 	github.com/terraform-providers/terraform-provider-openstack => github.com/terraform-providers/terraform-provider-openstack v1.20.0
+	google.golang.org/grpc => google.golang.org/grpc v1.28.1
 )
 
 require (
@@ -28,7 +29,7 @@ require (
 	github.com/fatih/color v1.10.0
 	github.com/kyma-incubator/hydroform/function v0.0.0-20210524070553-1959bffa1551
 	github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90
-	github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20210625110644-94042b8fdbf7
+	github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20210629104532-e8a55f4dea3d
 	github.com/kyma-incubator/hydroform/provision v0.0.0-20210514061348-c71b69cb362e
 	github.com/kyma-incubator/octopus v0.0.0-20200922132758-2b721e93b58b
 	github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20201125092745-687c943ac940
@@ -44,8 +45,8 @@ require (
 	gopkg.in/src-d/go-git.v4 v4.13.1
 	gopkg.in/yaml.v2 v2.4.0
 	gotest.tools v2.2.0+incompatible
-	istio.io/api v0.0.0-20200911191701-0dc35ad5c478
-	istio.io/client-go v0.0.0-20200807182027-d287a5abb594
+	istio.io/api v0.0.0-20210520012029-891c0c12abfd
+	istio.io/client-go v1.10.1
 	k8s.io/api v0.20.2
 	k8s.io/apimachinery v0.20.2
 	k8s.io/client-go v0.20.2
