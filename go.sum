@@ -825,8 +825,8 @@ github.com/kyma-incubator/hydroform/function v0.0.0-20210524070553-1959bffa1551 
 github.com/kyma-incubator/hydroform/function v0.0.0-20210524070553-1959bffa1551/go.mod h1:UkGyJJw4UKHUAbgKcJWDYQrMw76k5DJUZDNkOvjawqA=
 github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90 h1:E9rWdmz/CEfO52VJ6P/1M3TysNbET/qyw6611RbKJo8=
 github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90/go.mod h1:/qouJL+g8Tsllh/VcxK1Li6NCyuqyXSlq1i9InKSZJk=
-github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20210629104532-e8a55f4dea3d h1:lCxkwxKfZ3l+nnwDiHgvbwd5+JEDEKFNgzDASUV3ViI=
-github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20210629104532-e8a55f4dea3d/go.mod h1:h0VuRNgyNhg1sb4MjGYCRkXWgIvRCwPOrN0fXHd8uyY=
+github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20210702063534-9bdb5ef1e0e5 h1:fDft8tEPyzjs5wE5IpYfHmRg9jxDXGVOMK4UvecpPCw=
+github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20210702063534-9bdb5ef1e0e5/go.mod h1:h0VuRNgyNhg1sb4MjGYCRkXWgIvRCwPOrN0fXHd8uyY=
 github.com/kyma-incubator/hydroform/provision v0.0.0-20210514061348-c71b69cb362e h1:NmCX2tiETOsSupBJ0nIHsKHhevl4T3TMTu2c1LlgE/k=
 github.com/kyma-incubator/hydroform/provision v0.0.0-20210514061348-c71b69cb362e/go.mod h1:x4YfWgupo4fc7vgGFb0aJfSWCh9W72ipmNekfY1oYeo=
 github.com/kyma-incubator/octopus v0.0.0-20200922132758-2b721e93b58b h1:xgIzqXn9JolPuSAkQ/u+Myn/S3aLH8rlPc8++O6ogSY=

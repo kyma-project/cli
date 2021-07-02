@@ -339,7 +339,6 @@ func (cmd *command) deployKyma(overrides *overrides.Builder) error {
 			Path: kube.KubeconfigPath(cmd.KubeconfigPath),
 		},
 		ReuseHelmValues: cmd.opts.ReuseHelmValues,
-		Verbose:         cmd.opts.Verbose,
 	}
 	// if not verbose, use asyncui for clean output
 	var callback func(deployment.ProcessUpdate)
