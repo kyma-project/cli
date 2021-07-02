@@ -5,7 +5,7 @@ ifndef IS_RELEASE
 endif
 
 ifndef KYMA_VERSION
-	KYMA_VERSION = 1.24.0-rc2
+	KYMA_VERSION = 1.24.0
 endif
 
 ifndef VERSION
