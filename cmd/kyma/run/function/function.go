@@ -83,9 +83,13 @@ func workspaceConfig(path string) (workspace.Cfg, error) {
 		return workspace.Cfg{}, errors.Wrap(err, "while trying to decode the configuration file")
 	}
 
-	if cfg.Runtime != "nodejs12" &&
-		cfg.Runtime != "nodejs14" &&
-		cfg.Runtime != "python38" {
+	supportedRuntimes := map[string]struct{}{
+		"nodejs12": {},
+		"nodejs14": {},
+		"python38": {},
+		"python39": {},
+	}
+	if _, ok := supportedRuntimes[cfg.Runtime]; !ok {
 		return workspace.Cfg{}, fmt.Errorf("unsupported runtime: %s", cfg.Runtime)
 	}
 
