@@ -135,25 +135,33 @@ func ClusterExists(verbose bool, clusterName string) (bool, error) {
 	return false, nil
 }
 
+type Settings struct {
+	ClusterName string
+	Args        []string
+	Version     string
+	PortMap     map[string]int
+}
+
 //StartCluster starts a cluster
-func StartCluster(verbose bool, timeout time.Duration, clusterName string, workers int, serverArgs []string, agentArgs []string, k3dArgs []string, k3sVersion string) error {
-	k3sImage, err := getK3sImage(k3sVersion)
+func StartCluster(verbose bool, timeout time.Duration, workers int, serverArgs []string, agentArgs []string, k3d Settings) error {
+	k3sImage, err := getK3sImage(k3d.Version)
 	if err != nil {
 		return err
 	}
 
 	cmdArgs := []string{
-		"cluster", "create", clusterName,
+		"cluster", "create", k3d.ClusterName,
 		"--kubeconfig-update-default",
 		"--timeout", fmt.Sprintf("%ds", int(timeout.Seconds())),
-		"-p", "80:80@loadbalancer",
-		"-p", "443:443@loadbalancer",
+		"-p", fmt.Sprintf("%d:80@loadbalancer", k3d.PortMap["80"]),
+		"-p", fmt.Sprintf("%d:443@loadbalancer", k3d.PortMap["443"]),
 		"--agents", fmt.Sprintf("%d", workers),
 		"--registry-create",
 		"--image", k3sImage,
 		"--k3s-server-arg", "--disable",
 		"--k3s-server-arg", "traefik",
 	}
+	fmt.Println(cmdArgs)
 
 	//add further custom server args
 	for _, srvArg := range serverArgs {
@@ -166,7 +174,7 @@ func StartCluster(verbose bool, timeout time.Duration, clusterName string, worke
 	}
 
 	//add further k3d args which are not offered by the Kyma CLI flags
-	cmdArgs = append(cmdArgs, k3dArgs...)
+	cmdArgs = append(cmdArgs, k3d.Args...)
 
 	_, err = RunCmd(verbose, timeout, cmdArgs...)
 

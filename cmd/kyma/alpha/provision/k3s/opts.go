@@ -17,6 +17,7 @@ type Options struct {
 	AgentArgs         []string
 	K3dArgs           []string
 	KubernetesVersion string
+	PortMapLb         map[string]int
 }
 
 //NewOptions creates options with default values
