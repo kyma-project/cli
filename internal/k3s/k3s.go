@@ -161,7 +161,6 @@ func StartCluster(verbose bool, timeout time.Duration, workers int, serverArgs [
 		"--k3s-server-arg", "--disable",
 		"--k3s-server-arg", "traefik",
 	}
-	fmt.Println(cmdArgs)
 
 	//add further custom server args
 	for _, srvArg := range serverArgs {
