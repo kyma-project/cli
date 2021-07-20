@@ -128,6 +128,6 @@ func TestClusterExists(t *testing.T) {
 
 func TestPortArgs(t *testing.T) {
 	rawPorts := []string{"8000:80@loadbalancer", "8443:443@loadbalancer"}
-	res := constructPortArguments(rawPorts)
+	res := constructArgs("-p", rawPorts)
 	require.Equal(t, []string{"-p", "8000:80@loadbalancer", "-p", "8443:443@loadbalancer"}, res)
 }

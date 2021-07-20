@@ -143,10 +143,10 @@ type Settings struct {
 	PortMapping []string
 }
 
-func constructPortArguments(rawPorts []string) []string {
+func constructArgs(argname string, rawPorts []string) []string {
 	portMap := []string{}
 	for _, port := range rawPorts {
-		portMap = append(portMap, []string{"-p", port}...)
+		portMap = append(portMap, argname, port)
 	}
 	return portMap
 }
@@ -157,7 +157,6 @@ func StartCluster(verbose bool, timeout time.Duration, workers int, serverArgs [
 	if err != nil {
 		return err
 	}
-	portArgs := constructPortArguments(k3d.PortMapping)
 	cmdArgs := []string{
 		"cluster", "create", k3d.ClusterName,
 		"--kubeconfig-update-default",
@@ -168,17 +167,10 @@ func StartCluster(verbose bool, timeout time.Duration, workers int, serverArgs [
 		"--k3s-server-arg", "--disable",
 		"--k3s-server-arg", "traefik",
 	}
-	cmdArgs = append(cmdArgs, portArgs...)
 
-	//add further custom server args
-	for _, srvArg := range serverArgs {
-		cmdArgs = append(cmdArgs, "--k3s-server-arg", srvArg)
-	}
-
-	//add agent args
-	for _, agentArg := range agentArgs {
-		cmdArgs = append(cmdArgs, "--k3s-agent-arg", agentArg)
-	}
+	cmdArgs = append(cmdArgs, constructArgs("-p", k3d.PortMapping)...)
+	cmdArgs = append(cmdArgs, constructArgs("--k3s-server-arg", serverArgs)...)
+	cmdArgs = append(cmdArgs, constructArgs("--k3s-agent-arg", agentArgs)...)
 
 	//add further k3d args which are not offered by the Kyma CLI flags
 	cmdArgs = append(cmdArgs, k3d.Args...)
