@@ -135,20 +135,20 @@ func ClusterExists(verbose bool, clusterName string) (bool, error) {
 	return false, nil
 }
 
-type Settings struct {
-	ClusterName string
-	Args        []string
-	Version     string
-	PortMap     map[string]int
-	PortMapping []string
-}
-
 func constructArgs(argname string, rawPorts []string) []string {
 	portMap := []string{}
 	for _, port := range rawPorts {
 		portMap = append(portMap, argname, port)
 	}
 	return portMap
+}
+
+type Settings struct {
+	ClusterName string
+	Args        []string
+	Version     string
+	PortMap     map[string]int
+	PortMapping []string
 }
 
 //StartCluster starts a cluster

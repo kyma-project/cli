@@ -3,6 +3,8 @@ package k3s
 import (
 	"fmt"
 	"net"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/kyma-project/cli/internal/cli"
@@ -41,8 +43,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cmd.Flags().DurationVar(&o.Timeout, "timeout", 5*time.Minute, `Maximum time for the provisioning. If you want no timeout, enter "0".`)
 	cmd.Flags().StringSliceVarP(&o.K3dArgs, "k3d-arg", "", []string{}, "One or more arguments passed to the k3d provisioning command (e.g. --k3d-arg='--no-rollback')")
 	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.20.7", "Kubernetes version of the cluster")
-	cmd.Flags().StringToIntVar(&o.PortMapLb, "map-lbports", map[string]int{"80": 8080, "443": 8443}, "Map ports 80 and 443 of K3D loadbalancer (e.g. --map-lb-ports=80=8080,443=8443)")
-	cmd.Flags().StringSliceVarP(&o.PortMapping, "port", "p", []string{"8000:80@loadbalancer", "8443:443@loadbalancer"}, "Map ports 80 and 443 of K3D loadbalancer (e.g. -p 8000:80@loadbalancer --port 8443:443@loadbalancer)")
+	cmd.Flags().StringSliceVarP(&o.PortMapping, "port", "p", []string{"8000:80@loadbalancer", "8443:443@loadbalancer"}, "Map ports 80 and 443 of K3D loadbalancer (e.g. -p 8000:80@loadbalancer -p 8443:443@loadbalancer)")
 	return cmd
 }
 
@@ -67,6 +68,19 @@ func (c *command) Run() error {
 	return nil
 }
 
+func extractPortsFromFlag(portFlag []string) ([]int, error) {
+	ports := []int{}
+	for _, rawport := range portFlag {
+		portStr := rawport[:strings.IndexByte(rawport, ':')]
+		portInt, err := strconv.Atoi(portStr)
+		if err != nil {
+			return nil, err
+		}
+		ports = append(ports, portInt)
+	}
+	return ports, nil
+}
+
 //Ensure k3s is installed and pre-conditions are fulfilled
 func (c *command) verifyK3sStatus() error {
 	s := c.NewStep("Checking k3s status")
@@ -80,13 +94,17 @@ func (c *command) verifyK3sStatus() error {
 		s.Failure()
 		return err
 	}
+	ports, err := extractPortsFromFlag(c.opts.PortMapping)
+	if err != nil {
+		errors.Wrap(err, fmt.Sprintf("Could not extract host ports from %s", c.opts.PortMapping))
+	}
 
 	if exists {
 		if err := c.deleteExistingK3sCluster(); err != nil {
 			s.Failure()
 			return err
 		}
-	} else if err := c.allocatePorts(c.opts.PortMapLb["80"], c.opts.PortMapLb["443"]); err != nil {
+	} else if err := c.allocatePorts(ports...); err != nil {
 		s.Failure()
 		return errors.Wrap(err, "Port cannot be allocated")
 	}
@@ -137,7 +155,6 @@ func (c *command) createK3sCluster() error {
 		ClusterName: c.opts.Name,
 		Args:        c.opts.K3dArgs,
 		Version:     c.opts.KubernetesVersion,
-		PortMap:     c.opts.PortMapLb,
 		PortMapping: c.opts.PortMapping,
 	}
 	err := k3s.StartCluster(c.Verbose, c.opts.Timeout, c.opts.Workers, c.opts.ServerArgs, c.opts.AgentArgs, k3sSettings)
