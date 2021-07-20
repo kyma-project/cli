@@ -18,6 +18,7 @@ type Options struct {
 	K3dArgs           []string
 	KubernetesVersion string
 	PortMapLb         map[string]int
+	PortMapping       []string
 }
 
 //NewOptions creates options with default values

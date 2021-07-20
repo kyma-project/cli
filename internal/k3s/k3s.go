@@ -140,6 +140,15 @@ type Settings struct {
 	Args        []string
 	Version     string
 	PortMap     map[string]int
+	PortMapping []string
+}
+
+func constructPortArguments(rawPorts []string) []string {
+	portMap := []string{}
+	for _, port := range rawPorts {
+		portMap = append(portMap, []string{"-p", port}...)
+	}
+	return portMap
 }
 
 //StartCluster starts a cluster
@@ -148,19 +157,18 @@ func StartCluster(verbose bool, timeout time.Duration, workers int, serverArgs [
 	if err != nil {
 		return err
 	}
-
+	portArgs := constructPortArguments(k3d.PortMapping)
 	cmdArgs := []string{
 		"cluster", "create", k3d.ClusterName,
 		"--kubeconfig-update-default",
 		"--timeout", fmt.Sprintf("%ds", int(timeout.Seconds())),
-		"-p", fmt.Sprintf("%d:80@loadbalancer", k3d.PortMap["80"]),
-		"-p", fmt.Sprintf("%d:443@loadbalancer", k3d.PortMap["443"]),
 		"--agents", fmt.Sprintf("%d", workers),
 		"--registry-create",
 		"--image", k3sImage,
 		"--k3s-server-arg", "--disable",
 		"--k3s-server-arg", "traefik",
 	}
+	cmdArgs = append(cmdArgs, portArgs...)
 
 	//add further custom server args
 	for _, srvArg := range serverArgs {
