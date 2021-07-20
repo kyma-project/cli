@@ -20,7 +20,7 @@ kyma provision aks [flags]
   -c, --credentials string    Path to the TOML file containing the Azure Subscription ID (SUBSCRIPTION_ID), Tenant ID (TENANT_ID), Client ID (CLIENT_ID) and Client Secret (CLIENT_SECRET). (required)
       --disk-size int         Disk size (in GB) of the cluster. (default 50)
   -k, --kube-version string   Kubernetes version of the cluster. (default "1.19.7")
-  -l, --location string       Location of the cluster. (default "westeurope")
+  -l, --location string       Region (e.g. europe-west3) or zone (e.g. europe-west3-a) of the cluster. (default "westeurope")
   -n, --name string           Name of the AKS cluster to provision. (required)
       --nodes int             Number of cluster nodes. (default 3)
   -p, --project string        Name of the Azure Resource Group where you provision the AKS cluster. (required)
