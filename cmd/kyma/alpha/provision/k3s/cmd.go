@@ -96,7 +96,7 @@ func (c *command) verifyK3sStatus() error {
 	}
 	ports, err := extractPortsFromFlag(c.opts.PortMapping)
 	if err != nil {
-		errors.Wrap(err, fmt.Sprintf("Could not extract host ports from %s", c.opts.PortMapping))
+		return errors.Wrap(err, fmt.Sprintf("Could not extract host ports from %s", c.opts.PortMapping))
 	}
 
 	if exists {
