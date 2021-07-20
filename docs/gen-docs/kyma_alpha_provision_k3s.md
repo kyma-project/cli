@@ -17,7 +17,7 @@ kyma alpha provision k3s [flags]
 ```bash
   -a, --agent-arg strings          One or more arguments passed to the k3s agent command on agent nodes (e.g. --agent-arg='--alsologtostderr')
       --k3d-arg strings            One or more arguments passed to the k3d provisioning command (e.g. --k3d-arg='--no-rollback')
-  -k, --kube-version string        Kubernetes version of the cluster. (default "1.20.7")
+  -k, --kube-version string        Kubernetes version of the cluster (default "1.20.7")
       --map-lb-ports stringToInt   Map ports 80 and 443 of K3D loadbalancer (e.g. --map-lb-ports=80=8080,443=8443) (default [80=8080,443=8443])
       --name string                Name of the Kyma cluster (default "kyma")
   -s, --server-arg strings         One or more arguments passed to the Kubernetes API server (e.g. --server-arg='--alsologtostderr')
