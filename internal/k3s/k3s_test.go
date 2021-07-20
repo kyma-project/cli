@@ -107,7 +107,7 @@ func TestStartCluster(t *testing.T) {
 		ClusterName: "kyma",
 		Args:        []string{"--alsologtostderr"},
 		Version:     "1.20.7",
-		PortMap:     map[string]int{"80": 80, "443": 443},
+		PortMapping: []string{"80:80@loadbalancer", "443:443@loadbalancer"},
 	}
 	err := StartCluster(false, 5*time.Second, 1, []string{"--alsologtostderr"}, []string{"--no-rollback"}, k3sSettings)
 	require.NoError(t, err)

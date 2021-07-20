@@ -168,9 +168,9 @@ func StartCluster(verbose bool, timeout time.Duration, workers int, serverArgs [
 		"--k3s-server-arg", "traefik",
 	}
 
-	cmdArgs = append(cmdArgs, constructArgs("-p", k3d.PortMapping)...)
 	cmdArgs = append(cmdArgs, constructArgs("--k3s-server-arg", serverArgs)...)
 	cmdArgs = append(cmdArgs, constructArgs("--k3s-agent-arg", agentArgs)...)
+	cmdArgs = append(cmdArgs, constructArgs("-p", k3d.PortMapping)...)
 
 	//add further k3d args which are not offered by the Kyma CLI flags
 	cmdArgs = append(cmdArgs, k3d.Args...)
