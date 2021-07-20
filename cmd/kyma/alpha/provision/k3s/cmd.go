@@ -3,6 +3,8 @@ package k3s
 import (
 	"fmt"
 	"net"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/kyma-project/cli/internal/cli"
@@ -34,14 +36,14 @@ func NewCmd(o *Options) *cobra.Command {
 		Aliases: []string{"k"},
 	}
 
-	//cmd.Flags().StringVar(&o.EnableRegistry, "enable-registry", "", "Enables registry for the created k8s cluster.")
 	cmd.Flags().StringVar(&o.Name, "name", "kyma", `Name of the Kyma cluster`)
 	cmd.Flags().IntVar(&o.Workers, "workers", 1, "Number of worker nodes (k3s agents)")
 	cmd.Flags().StringSliceVarP(&o.ServerArgs, "server-arg", "s", []string{}, "One or more arguments passed to the Kubernetes API server (e.g. --server-arg='--alsologtostderr')")
 	cmd.Flags().StringSliceVarP(&o.AgentArgs, "agent-arg", "a", []string{}, "One or more arguments passed to the k3s agent command on agent nodes (e.g. --agent-arg='--alsologtostderr')")
 	cmd.Flags().DurationVar(&o.Timeout, "timeout", 5*time.Minute, `Maximum time for the provisioning. If you want no timeout, enter "0".`)
 	cmd.Flags().StringSliceVarP(&o.K3dArgs, "k3d-arg", "", []string{}, "One or more arguments passed to the k3d provisioning command (e.g. --k3d-arg='--no-rollback')")
-	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.20.7", "Kubernetes version of the cluster.")
+	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.20.7", "Kubernetes version of the cluster")
+	cmd.Flags().StringSliceVarP(&o.PortMapping, "port", "p", []string{"8000:80@loadbalancer", "8443:443@loadbalancer"}, "Map ports 80 and 443 of K3D loadbalancer (e.g. -p 8000:80@loadbalancer -p 8443:443@loadbalancer)")
 	return cmd
 }
 
@@ -66,6 +68,19 @@ func (c *command) Run() error {
 	return nil
 }
 
+func extractPortsFromFlag(portFlag []string) ([]int, error) {
+	ports := []int{}
+	for _, rawport := range portFlag {
+		portStr := rawport[:strings.IndexByte(rawport, ':')]
+		portInt, err := strconv.Atoi(portStr)
+		if err != nil {
+			return nil, err
+		}
+		ports = append(ports, portInt)
+	}
+	return ports, nil
+}
+
 //Ensure k3s is installed and pre-conditions are fulfilled
 func (c *command) verifyK3sStatus() error {
 	s := c.NewStep("Checking k3s status")
@@ -79,15 +94,19 @@ func (c *command) verifyK3sStatus() error {
 		s.Failure()
 		return err
 	}
+	ports, err := extractPortsFromFlag(c.opts.PortMapping)
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("Could not extract host ports from %s", c.opts.PortMapping))
+	}
 
 	if exists {
 		if err := c.deleteExistingK3sCluster(); err != nil {
 			s.Failure()
 			return err
 		}
-	} else if err := c.allocatePorts(80, 443); err != nil {
+	} else if err := c.allocatePorts(ports...); err != nil {
 		s.Failure()
-		return errors.Wrap(err, "Port 80 or 443 cannot be allocated")
+		return errors.Wrap(err, "Port cannot be allocated")
 	}
 
 	s.Successf("K3s status verified")
@@ -132,7 +151,13 @@ func (c *command) allocatePorts(ports ...int) error {
 func (c *command) createK3sCluster() error {
 	s := c.NewStep("Create K3s instance")
 	s.Status("Start K3s cluster")
-	err := k3s.StartCluster(c.Verbose, c.opts.Timeout, c.opts.Name, c.opts.Workers, c.opts.ServerArgs, c.opts.AgentArgs, c.opts.K3dArgs, c.opts.KubernetesVersion)
+	k3sSettings := k3s.Settings{
+		ClusterName: c.opts.Name,
+		Args:        c.opts.K3dArgs,
+		Version:     c.opts.KubernetesVersion,
+		PortMapping: c.opts.PortMapping,
+	}
+	err := k3s.StartCluster(c.Verbose, c.opts.Timeout, c.opts.Workers, c.opts.ServerArgs, c.opts.AgentArgs, k3sSettings)
 	if err != nil {
 		s.Failuref("Could not start k3s cluster")
 		return err

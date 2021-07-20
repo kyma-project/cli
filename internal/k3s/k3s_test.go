@@ -103,7 +103,13 @@ func TestInitializeFailed(t *testing.T) {
 }
 
 func TestStartCluster(t *testing.T) {
-	err := StartCluster(false, 5*time.Second, "kyma", 1, []string{"--alsologtostderr"}, []string{"--alsologtostderr"}, []string{"--no-rollback"}, "1.20.7")
+	k3sSettings := Settings{
+		ClusterName: "kyma",
+		Args:        []string{"--alsologtostderr"},
+		Version:     "1.20.7",
+		PortMapping: []string{"80:80@loadbalancer", "443:443@loadbalancer"},
+	}
+	err := StartCluster(false, 5*time.Second, 1, []string{"--alsologtostderr"}, []string{"--no-rollback"}, k3sSettings)
 	require.NoError(t, err)
 }
 
@@ -118,4 +124,10 @@ func TestClusterExists(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, exists)
 	os.Setenv("K3D_MOCK_DUMPFILE", "")
+}
+
+func TestArgConstruction(t *testing.T) {
+	rawPorts := []string{"8000:80@loadbalancer", "8443:443@loadbalancer"}
+	res := constructArgs("-p", rawPorts)
+	require.Equal(t, []string{"-p", "8000:80@loadbalancer", "-p", "8443:443@loadbalancer"}, res)
 }
