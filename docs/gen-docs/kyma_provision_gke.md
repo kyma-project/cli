@@ -20,7 +20,7 @@ kyma provision gke [flags]
   -c, --credentials string    Path to the GCP service account key file. (required)
       --disk-size int         Disk size (in GB) of the cluster. (default 50)
   -k, --kube-version string   Kubernetes version of the cluster. (default "1.19")
-  -l, --location string       Location of the cluster. (default "europe-west3-a")
+  -l, --location string       Region (e.g. europe-west3) or zone (e.g. europe-west3-a) of the cluster. (default "europe-west3-a")
   -n, --name string           Name of the GKE cluster to provision. (required)
       --nodes int             Number of cluster nodes. (default 3)
   -p, --project string        Name of the GCP Project where you provision the GKE cluster. (required)

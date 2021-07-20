@@ -21,7 +21,7 @@ NOTE: To access the provisioned cluster, make sure you get authenticated by Goog
 	cmd.Flags().StringVarP(&o.Project, "project", "p", "", "Name of the GCP Project where you provision the GKE cluster. (required)")
 	cmd.Flags().StringVarP(&o.CredentialsFile, "credentials", "c", "", "Path to the GCP service account key file. (required)")
 	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.19", "Kubernetes version of the cluster.")
-	cmd.Flags().StringVarP(&o.Location, "location", "l", "europe-west3-a", "Location of the cluster.")
+	cmd.Flags().StringVarP(&o.Location, "location", "l", "europe-west3-a", "Region (e.g. europe-west3) or zone (e.g. europe-west3-a) of the cluster.")
 	cmd.Flags().StringVarP(&o.MachineType, "type", "t", "n1-standard-4", "Machine type used for the cluster.")
 	cmd.Flags().IntVar(&o.DiskSizeGB, "disk-size", 50, "Disk size (in GB) of the cluster.")
 	cmd.Flags().IntVar(&o.NodeCount, "nodes", 3, "Number of cluster nodes.")
