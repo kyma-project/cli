@@ -821,8 +821,6 @@ github.com/kubernetes-sigs/service-catalog v0.3.0/go.mod h1:zRfgMd1T9HuXR24Qj4GO
 github.com/kylelemons/godebug v0.0.0-20170820004349-d65d576e9348/go.mod h1:B69LEHPfb2qLo0BaaOLcbitczOKLWTsrBG9LczfCD4k=
 github.com/kylelemons/godebug v1.1.0 h1:RPNrshWIDI6G2gRW9EHilWtl7Z6Sb1BR0xunSBf0SNc=
 github.com/kylelemons/godebug v1.1.0/go.mod h1:9/0rRGxNHcop5bhtWyNeEfOS8JIWk580+fNqagV/RAw=
-github.com/kyma-incubator/hydroform/function v0.0.0-20210709100937-8e2bc62961ec h1:aXXAyWyubun5WDDvV1T+6xVJ1X383gnSZD57kEFKSFQ=
-github.com/kyma-incubator/hydroform/function v0.0.0-20210709100937-8e2bc62961ec/go.mod h1:UkGyJJw4UKHUAbgKcJWDYQrMw76k5DJUZDNkOvjawqA=
 github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90 h1:E9rWdmz/CEfO52VJ6P/1M3TysNbET/qyw6611RbKJo8=
 github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90/go.mod h1:/qouJL+g8Tsllh/VcxK1Li6NCyuqyXSlq1i9InKSZJk=
 github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20210702063534-9bdb5ef1e0e5 h1:fDft8tEPyzjs5wE5IpYfHmRg9jxDXGVOMK4UvecpPCw=
@@ -1222,6 +1220,12 @@ github.com/tencentyun/cos-go-sdk-v5 v0.0.0-20190808065407-f07404cefc8c h1:iRD1Cq
 github.com/tencentyun/cos-go-sdk-v5 v0.0.0-20190808065407-f07404cefc8c/go.mod h1:wk2XFUg6egk4tSDNZtXeKfe2G6690UVyt163PuUxBZk=
 github.com/terraform-providers/terraform-provider-openstack v1.20.0 h1:O3iWQfL5+WiX+25PjfESI/ikM5ufTOONuwIw8U+Hs1g=
 github.com/terraform-providers/terraform-provider-openstack v1.20.0/go.mod h1:i4VK9EXs8BUNeQwPAu4NOjKRD/ocMOXm7G61zwkUDe4=
+github.com/tgorgol/hydroform/function v0.0.0-20210726100141-92b87b109e71 h1:MJhIkHG7IVqbLzi6804JWEt3zvAd7cJ1/qbJMcOKYI8=
+github.com/tgorgol/hydroform/function v0.0.0-20210726100141-92b87b109e71/go.mod h1:UkGyJJw4UKHUAbgKcJWDYQrMw76k5DJUZDNkOvjawqA=
+github.com/tgorgol/hydroform/function v0.0.0-20210726102729-e960480d5fea h1:MgimSm+EecpbfIMwwRUMaju5oErwD1x7wQ+qG9u4fI0=
+github.com/tgorgol/hydroform/function v0.0.0-20210726102729-e960480d5fea/go.mod h1:UkGyJJw4UKHUAbgKcJWDYQrMw76k5DJUZDNkOvjawqA=
+github.com/tgorgol/hydroform/function v0.0.0-20210727103449-be68db2ee497 h1:NCtEwsO4zPSkcqoW+L61/I77sGq8+/WrJqW2O6BbVe0=
+github.com/tgorgol/hydroform/function v0.0.0-20210727103449-be68db2ee497/go.mod h1:UkGyJJw4UKHUAbgKcJWDYQrMw76k5DJUZDNkOvjawqA=
 github.com/tidwall/pretty v1.0.0/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20171017195756-830351dc03c6/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
