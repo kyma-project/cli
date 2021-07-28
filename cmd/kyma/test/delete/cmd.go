@@ -32,6 +32,7 @@ func NewCmd(o *Options) *cobra.Command {
 Provide at least one test suite name.`,
 		RunE:    func(_ *cobra.Command, args []string) error { return cmd.Run(args) },
 		Aliases: []string{"d"},
+		Deprecated: "`test delete` is deprecated!",
 	}
 	return cobraCmd
 }

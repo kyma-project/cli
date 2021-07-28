@@ -63,6 +63,7 @@ func NewCmd(o *Options) *cobra.Command {
 		Long:    `Use this command to provision a Minikube cluster for Kyma installation. It requires to have Minikube installed upfront, see also https://github.com/kubernetes/minikube`,
 		RunE:    func(_ *cobra.Command, _ []string) error { return c.Run() },
 		Aliases: []string{"m"},
+		Deprecated: "`provision minikube` is deprecated!",
 	}
 
 	cmd.Flags().StringVar(&o.VMDriver, "vm-driver", defaultVMDriver, "Specifies the VM driver. Possible values: "+strings.Join(drivers, ","))

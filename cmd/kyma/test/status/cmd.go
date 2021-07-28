@@ -41,6 +41,7 @@ To print the status of specific test cases, run ` + "`kyma test status testSuite
 
 		RunE:    func(_ *cobra.Command, args []string) error { return cmd.Run(args) },
 		Aliases: []string{"s"},
+		Deprecated: "`test status` is deprecated!",
 	}
 
 	cobraCmd.Flags().StringVarP(&o.OutputFormat, "output", "o", "",

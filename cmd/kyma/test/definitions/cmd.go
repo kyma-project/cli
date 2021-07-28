@@ -28,6 +28,8 @@ func NewCmd(o *Options) *cobra.Command {
 		Long:    `Use this command to list test definitions available for a provisioned Kyma cluster.`,
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 		Aliases: []string{"def"},
+		Deprecated: "`test definitions` is deprecated!",
+
 	}
 	return cobraCmd
 }
