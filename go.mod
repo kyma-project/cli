@@ -13,11 +13,11 @@ replace (
 	github.com/hashicorp/consul v0.0.0-20171026175957-610f3c86a089 => github.com/hashicorp/consul/sdk v0.7.0
 	github.com/hashicorp/consul/api v1.3.0 => github.com/hashicorp/consul/api v0.0.0-20191112221531-8742361660b6
 
+	github.com/kyma-incubator/hydroform/function => github.com/kyma-project/hydroform/function v0.0.0-20210709100937-8e2bc62961ec
+
 	// this is needed for terraform to work with the k8s 0.18+ APIs, we should be able to remove it once we have terraform 0.13+
 	github.com/terraform-providers/terraform-provider-openstack => github.com/terraform-providers/terraform-provider-openstack v1.20.0
 	google.golang.org/grpc => google.golang.org/grpc v1.28.1
-
-	github.com/kyma-incubator/hydroform/function => github.com/tgorgol/hydroform/function v0.0.0-20210727103449-be68db2ee497
 )
 
 require (
