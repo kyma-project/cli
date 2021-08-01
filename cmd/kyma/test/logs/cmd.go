@@ -40,7 +40,7 @@ To print the status of specific test cases, run ` + "`kyma test logs testSuiteOn
 Provide at least one test suite name.
 `,
 
-		RunE: func(_ *cobra.Command, args []string) error { return cmd.Run(args) },
+		RunE:       func(_ *cobra.Command, args []string) error { return cmd.Run(args) },
 		Deprecated: "`test logs` is deprecated!",
 	}
 

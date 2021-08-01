@@ -22,7 +22,10 @@ type command struct {
 	opts *Options
 	cli.Command
 }
+
+//Version contains the cli binary version injected by the build system
 var Version string
+
 //NewCmd creates a new kyma command
 func NewCmd(o *Options) *cobra.Command {
 

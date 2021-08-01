@@ -39,8 +39,8 @@ To print the status of all test suites, run ` + "`kyma test status`" + `.
 To print the status of specific test cases, run ` + "`kyma test status testSuiteOne testSuiteTwo`" + `.
 `,
 
-		RunE:    func(_ *cobra.Command, args []string) error { return cmd.Run(args) },
-		Aliases: []string{"s"},
+		RunE:       func(_ *cobra.Command, args []string) error { return cmd.Run(args) },
+		Aliases:    []string{"s"},
 		Deprecated: "`test status` is deprecated!",
 	}
 

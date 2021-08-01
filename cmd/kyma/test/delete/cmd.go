@@ -30,8 +30,8 @@ func NewCmd(o *Options) *cobra.Command {
 		Long: `Use this command to delete test suites available for a provisioned Kyma cluster.
 
 Provide at least one test suite name.`,
-		RunE:    func(_ *cobra.Command, args []string) error { return cmd.Run(args) },
-		Aliases: []string{"d"},
+		RunE:       func(_ *cobra.Command, args []string) error { return cmd.Run(args) },
+		Aliases:    []string{"d"},
 		Deprecated: "`test delete` is deprecated!",
 	}
 	return cobraCmd

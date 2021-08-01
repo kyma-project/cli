@@ -48,8 +48,8 @@ If you don't provide any specific test definitions, all available test definitio
 To execute all test defintions, run ` + "`kyma test run -n example-test`" + `.
 
 `,
-		RunE:    func(_ *cobra.Command, args []string) error { return cmd.Run(args) },
-		Aliases: []string{"r"},
+		RunE:       func(_ *cobra.Command, args []string) error { return cmd.Run(args) },
+		Aliases:    []string{"r"},
 		Deprecated: "`test run` is deprecated!",
 	}
 

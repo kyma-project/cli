@@ -187,4 +187,3 @@ func (c *command) createK3dClusterInfo() error {
 	s.Successf("Configuration created")
 	return nil
 }
-
