@@ -49,6 +49,15 @@ func (k keychain) CertificateAlpha() ([]byte, error) {
 	return s.Data["tls.crt"], nil
 }
 
+func (k keychain) CertificateKyma2() ([]byte, error) {
+	s, err := k.k8s.Static().CoreV1().Secrets("istio-system").Get(context.Background(), "kyma-gateway-certs", metav1.GetOptions{})
+	if err != nil {
+		return nil, errors.Wrap(err, fmt.Sprintf("\nCould not retrieve the Kyma root certificate. Follow the instructions to import it manually:\n-----\n%s-----\n", k.Instructions()))
+	}
+
+	return s.Data["tls.crt"], nil
+}
+
 func (k keychain) StoreCertificate(file string, i Informer) error {
 	i.LogInfo("Kyma wants to add its root certificate to the keychain.")
 	if root.IsWithSudo() {
@@ -73,6 +82,11 @@ func (keychain) Instructions() string {
 }
 
 func (keychain) InstructionsAlpha() string {
+	return "1. Download the certificate: kubectl get secret kyma-gateway-certs -n istio-system -o jsonpath='{.data.tls\\.crt}' > kyma.crt\n" +
+		"2. Import the certificate: sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain kyma.crt\n"
+}
+
+func (keychain) InstructionsKyma2() string {
 	return "1. Download the certificate: kubectl get secret kyma-gateway-certs -n istio-system -o jsonpath='{.data.tls\\.crt}' > kyma.crt\n" +
 		"2. Import the certificate: sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain kyma.crt\n"
 }
