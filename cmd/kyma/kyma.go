@@ -19,6 +19,7 @@ import (
 	"github.com/kyma-project/cli/cmd/kyma/provision/gardener/az"
 	"github.com/kyma-project/cli/cmd/kyma/provision/gardener/gcp"
 	"github.com/kyma-project/cli/cmd/kyma/provision/gke"
+	"github.com/kyma-project/cli/cmd/kyma/provision/k3d"
 	"github.com/kyma-project/cli/cmd/kyma/provision/minikube"
 	"github.com/kyma-project/cli/cmd/kyma/run"
 	"github.com/kyma-project/cli/cmd/kyma/sync"
@@ -71,6 +72,7 @@ Kyma CLI allows you to install, test, and manage Kyma.
 	//Stable commands
 	provisionCmd := provision.NewCmd()
 	provisionCmd.AddCommand(minikube.NewCmd(minikube.NewOptions(o)))
+	provisionCmd.AddCommand(k3d.NewCmd(k3d.NewOptions(o)))
 	provisionCmd.AddCommand(gke.NewCmd(gke.NewOptions(o)))
 	provisionCmd.AddCommand(aks.NewCmd(aks.NewOptions(o)))
 	gardenerCmd := gardener.NewCmd()

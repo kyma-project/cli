@@ -1,0 +1,103 @@
+#!/bin/bash
+
+# Mock for simulating the k3d CLI tool.
+#
+# Two mechanism are supported:
+#
+# 1. Env-variable 'K3D_MOCK_DUMPFILE'
+#    Set the env-variable K3D_MOCK_DUMPFILE with a file name. File is expected in/under this mock-script directory.
+#    and the mock will simply dump the content of this file to STDOUT.
+#
+# 2. Call mock function
+#    This mechanism is only used if no env-var K3D_MOCK_DUMPFILE is defined.
+#    It maps the provided CLI arguments to a function call. Multiple arguments are concatenated by underscore (_).
+#
+#    Example:
+#    ./k3d version        =>   will trigger the function 'version'
+#    ./k3d cluster list   =>   will trigger the function 'cluster_list'
+#
+
+
+#
+# Mock for 'version' command
+#
+function version {
+    dump_file version.txt
+}
+
+#
+# Mock for 'cluster list' command
+#
+function cluster_list {
+    dump_file cluster_list.txt
+}
+
+#
+# Mock for 'cluster list -o json' command
+#
+function cluster_list_-o_json {
+    dump_file cluster_list_empty.json
+}
+
+#
+# Mock for 'k3d cluster create kyma' command
+#
+function cluster_create_kyma_--kubeconfig-update-default_--timeout_5s_--agents_1_--registry-create_--image_rancher/k3s:v1.20.7-k3s1_--k3s-server-arg_--disable_--k3s-server-arg_traefik_--k3s-server-arg_--alsologtostderr_--k3s-agent-arg_--no-rollback_-p_80:80@loadbalancer_-p_443:443@loadbalancer_--alsologtostderr {
+    dump_file cluster_create.txt
+}
+
+#
+# Mock for 'cluster create' command
+#
+function cluster_delete_kyma {
+    dump_file cluster_delete.txt
+}
+
+###########################
+
+#
+# Print file to stdout.
+#
+function dump_file {
+  local file=$1
+
+  local fileAbs="$(dirname $0)/$file"
+  if [ ! -f $fileAbs ]; then
+      >&2 echo "File '${file}' not found in k3s mock folder"
+      return 1
+  fi
+  cat $fileAbs
+  return 0
+}
+
+#
+# Map CLI args to a mock function and call this function.
+#
+function call_mock_fct {
+    # Map CLI arguments to local function
+    IFS='_'
+    local mockFctName="$*"
+    IFS=' '
+
+    # Use 'declare' to verify whether a mock function exists
+    declare -f -F $mockFctName > /dev/null
+    if [ $? -eq 0 ]; then
+        $mockFctName
+        return 0
+    else
+        >&2 echo "K3d mock-script doesn't include function '${mockFctName}'"
+        return 1
+    fi
+}
+
+# Do the job...
+
+if [ -n "$K3D_MOCK_DUMPFILE" ]; then
+    # If K3D_MOCK_DUMPFILE is defined, we simply dump the file (CLI args are ignored)
+    dump_file "$K3D_MOCK_DUMPFILE"
+else
+    # Call a mock function matching the CLI args
+    call_mock_fct $*
+fi
+
+exit $?

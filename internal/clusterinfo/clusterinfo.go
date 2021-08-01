@@ -20,6 +20,8 @@ const (
 
 	//ClusterProviderK3s indicates that K3s is used as cluster provider
 	ClusterProviderK3s ClusterProvider = "k3s"
+	//ClusterProviderK3d indicates that K3d is used as cluster provider
+	ClusterProviderK3d ClusterProvider = "k3d"
 	//ClusterProviderGardener indicates that Gardener is used as cluster provider
 	ClusterProviderGardener ClusterProvider = "gardener"
 	//ClusterProviderAzure indicates that Azure is used as cluster provider

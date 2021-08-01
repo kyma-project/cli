@@ -1,0 +1,8 @@
+INFO[0000] Deleting cluster 'kyma'
+INFO[0000] Deleted k3d-kyma-serverlb
+INFO[0001] Deleted k3d-kyma-server-0
+INFO[0001] Deleting cluster network 'e34211a8e6dff395819132ec1d2d878b79587a721f1771ddccf85d5ef5c7b681'
+INFO[0001] Deleting image volume 'k3d-kyma-images'
+INFO[0002] Removing cluster details from default kubeconfig...
+INFO[0002] Removing standalone kubeconfig file (if there is one)...
+INFO[0002] Successfully deleted cluster kyma!
