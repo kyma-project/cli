@@ -1,17 +1,24 @@
 ---
-title: kyma test delete
+title: kyma delete
 ---
 
-Deletes test suites available for a provisioned Kyma cluster.
+Deletes Kyma from a running Kubernetes cluster.
 
 ## Synopsis
 
-Use this command to delete test suites available for a provisioned Kyma cluster.
-
-Provide at least one test suite name.
+Use this command to delete Kyma from a running Kubernetes cluster.
 
 ```bash
-kyma test delete <test-suite-1> <test-suite-2> ... <test-suite-N> [flags]
+kyma delete [flags]
+```
+
+## Flags
+
+```bash
+      --concurrency int              Number of parallel processes (default 4)
+      --keep-crds                    Flag specifying whether to keep CRDs on deletion
+      --timeout duration             Maximum time for the deletion (default 20m0s)
+      --timeout-component duration   Maximum time to delete the component (default 6m0s)
 ```
 
 ## Flags inherited from parent commands
@@ -26,5 +33,5 @@ kyma test delete <test-suite-1> <test-suite-2> ... <test-suite-N> [flags]
 
 ## See also
 
-* [kyma test](#kyma-test-kyma-test)	 - Runs tests on a provisioned Kyma cluster.
+* [kyma](#kyma-kyma)	 - Controls a Kyma cluster.
 

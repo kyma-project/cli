@@ -2,7 +2,7 @@
 title: kyma version
 ---
 
-Displays the version of Kyma CLI and the connected Kyma cluster.
+Displays the version of Kyma CLI and of the connected Kyma cluster.
 
 ## Synopsis
 
@@ -16,7 +16,8 @@ kyma version [flags]
 ## Flags
 
 ```bash
-  -c, --client   Client version only (no server required)
+  -c, --client    Client version only (no server required)
+  -d, --details   Detailed information for each Kyma version
 ```
 
 ## Flags inherited from parent commands
