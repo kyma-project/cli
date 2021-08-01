@@ -37,8 +37,17 @@ func (c certutil) Certificate() ([]byte, error) {
 
 	return decodedCert, nil
 }
-
+//TODO: Delete
 func (c certutil) CertificateAlpha() ([]byte, error) {
+	s, err := c.k8s.Static().CoreV1().Secrets("istio-system").Get(context.Background(), "kyma-gateway-certs", metav1.GetOptions{})
+	if err != nil {
+		return nil, errors.Wrap(err, fmt.Sprintf("\nCould not retrieve the Kyma root certificate. Follow the instructions to import it manually:\n-----\n%s-----\n", c.Instructions()))
+	}
+
+	return s.Data["tls.crt"], nil
+}
+
+func (c certutil) CertificateKyma2() ([]byte, error) {
 	s, err := c.k8s.Static().CoreV1().Secrets("istio-system").Get(context.Background(), "kyma-gateway-certs", metav1.GetOptions{})
 	if err != nil {
 		return nil, errors.Wrap(err, fmt.Sprintf("\nCould not retrieve the Kyma root certificate. Follow the instructions to import it manually:\n-----\n%s-----\n", c.Instructions()))
@@ -69,8 +78,15 @@ func (certutil) Instructions() string {
 		"3. Decode the certificate: certutil -decode tmp.txt kyma.crt ; del tmp.txt\n" +
 		"4. Import the certificate: certutil -addstore -f Root kyma.crt\n"
 }
-
+//TODO: Delete
 func (certutil) InstructionsAlpha() string {
+	return "1. Open a terminal window with administrator rights.\n" +
+		"2. Download the certificate: kubectl get secret kyma-gateway-certs -n istio-system -o jsonpath='{.data.tls\\.crt}' > tmp.txt\n" +
+		"3. Decode the certificate: certutil -decode tmp.txt kyma.crt ; del tmp.txt\n" +
+		"4. Import the certificate: certutil -addstore -f Root kyma.crt\n"
+}
+
+func (certutil) InstructionsKyma2() string {
 	return "1. Open a terminal window with administrator rights.\n" +
 		"2. Download the certificate: kubectl get secret kyma-gateway-certs -n istio-system -o jsonpath='{.data.tls\\.crt}' > tmp.txt\n" +
 		"3. Decode the certificate: certutil -decode tmp.txt kyma.crt ; del tmp.txt\n" +

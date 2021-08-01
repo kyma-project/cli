@@ -1,11 +1,14 @@
 package version
 
-import "github.com/kyma-project/cli/internal/cli"
+import (
+	"github.com/kyma-project/cli/internal/cli"
+)
 
-//Options defines available options for the version command
+//Options defines available options for the command
 type Options struct {
 	*cli.Options
-	Client bool
+	ClientOnly     bool
+	VersionDetails bool
 }
 
 //NewOptions creates options with default values
