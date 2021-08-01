@@ -40,6 +40,7 @@ func (c certauth) Certificate() ([]byte, error) {
 
 	return decodedCert, nil
 }
+
 //TODO: Delete
 func (c certauth) CertificateAlpha() ([]byte, error) {
 	s, err := c.k8s.Static().CoreV1().Secrets("istio-system").Get(context.Background(), "kyma-gateway-certs", metav1.GetOptions{})
@@ -94,6 +95,7 @@ func (certauth) Instructions() string {
 		"3. Copy the certificate to the CA folder: sudo cp {NEW_CERT_NAME} /usr/local/share/ca-certificates/\n" +
 		"4. Update the certificate registry: sudo update-ca-certificates\n"
 }
+
 //TODO: Delete
 func (certauth) InstructionsAlpha() string {
 	return "1. Download the certificate: kubectl get secret kyma-gateway-certs -n istio-system -o jsonpath='{.data.tls\\.crt}' > kyma.crt\n" +

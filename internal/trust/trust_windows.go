@@ -37,6 +37,7 @@ func (c certutil) Certificate() ([]byte, error) {
 
 	return decodedCert, nil
 }
+
 //TODO: Delete
 func (c certutil) CertificateAlpha() ([]byte, error) {
 	s, err := c.k8s.Static().CoreV1().Secrets("istio-system").Get(context.Background(), "kyma-gateway-certs", metav1.GetOptions{})
@@ -78,6 +79,7 @@ func (certutil) Instructions() string {
 		"3. Decode the certificate: certutil -decode tmp.txt kyma.crt ; del tmp.txt\n" +
 		"4. Import the certificate: certutil -addstore -f Root kyma.crt\n"
 }
+
 //TODO: Delete
 func (certutil) InstructionsAlpha() string {
 	return "1. Open a terminal window with administrator rights.\n" +
