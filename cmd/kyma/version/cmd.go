@@ -1,9 +1,9 @@
 package version
 
 import (
+	"context"
 	"fmt"
 	"io"
-	"context"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
 	"strings"
