@@ -72,7 +72,7 @@ kyma deploy [flags]
   -p, --profile string               Kyma deployment profile. If not specified, Kyma uses its default configuration. The supported profiles are: "evaluation", "production".
   -r, --reuse-values                 Set --reuse-values=true to reuse the helm values during component installation
   -s, --source string                Installation source:
-                                     	- Deploy a specific release, for example: "kyma deploy --source=1.17.1"
+                                     	- Deploy a specific release, for example: "kyma deploy --source=2.0.0"
                                      	- Deploy a specific branch of the Kyma repository on kyma-project.org: "kyma deploy --source=<my-branch-name>"
                                      	- Deploy a commit, for example: "kyma deploy --source=34edf09a"
                                      	- Deploy a pull request, for example "kyma deploy --source=PR-9486"

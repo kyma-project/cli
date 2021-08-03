@@ -16,7 +16,7 @@ kyma delete [flags]
 
 ```bash
       --concurrency int              Number of parallel processes (default 4)
-      --keep-crds                    Flag specifying whether to keep CRDs on deletion
+      --keep-crds                    Set --keep-crds=true to keep CRDs on deletion
       --timeout duration             Maximum time for the deletion (default 20m0s)
       --timeout-component duration   Maximum time to delete the component (default 6m0s)
 ```
