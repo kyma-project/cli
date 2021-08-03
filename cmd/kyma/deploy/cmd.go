@@ -129,7 +129,7 @@ Debugging:
 	cobraCmd.Flags().StringVarP(&o.TLSCrtFile, "tls-crt", "", "", "TLS certificate file for the domain used for installation")
 	cobraCmd.Flags().StringVarP(&o.TLSKeyFile, "tls-key", "", "", "TLS key file for the domain used for installation")
 	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", defaultSource, `Installation source:
-	- Deploy a specific release, for example: "kyma deploy --source=1.17.1"
+	- Deploy a specific release, for example: "kyma deploy --source=2.0.0"
 	- Deploy a specific branch of the Kyma repository on kyma-project.org: "kyma deploy --source=<my-branch-name>"
 	- Deploy a commit, for example: "kyma deploy --source=34edf09a"
 	- Deploy a pull request, for example "kyma deploy --source=PR-9486"

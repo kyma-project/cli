@@ -147,7 +147,7 @@ func (c *command) allocatePorts(ports ...int) error {
 	return nil
 }
 
-//Create a k3s cluster
+//Create a k3d cluster
 func (c *command) createK3dCluster() error {
 	s := c.NewStep("Create K3d instance")
 	s.Status("Start K3d cluster")

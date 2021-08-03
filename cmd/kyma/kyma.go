@@ -1,7 +1,6 @@
 package kyma
 
 import (
-	delete "github.com/kyma-project/cli/cmd/delete"
 	"github.com/kyma-project/cli/cmd/kyma/alpha"
 	alphaDelete "github.com/kyma-project/cli/cmd/kyma/alpha/delete"
 	alphaInstall "github.com/kyma-project/cli/cmd/kyma/alpha/deploy"
@@ -12,6 +11,7 @@ import (
 	"github.com/kyma-project/cli/cmd/kyma/completion"
 	"github.com/kyma-project/cli/cmd/kyma/console"
 	"github.com/kyma-project/cli/cmd/kyma/create"
+	"github.com/kyma-project/cli/cmd/kyma/delete"
 	"github.com/kyma-project/cli/cmd/kyma/deploy"
 	initial "github.com/kyma-project/cli/cmd/kyma/init"
 	"github.com/kyma-project/cli/cmd/kyma/install"
@@ -93,7 +93,7 @@ Kyma CLI allows you to install, test, and manage Kyma.
 		upgrade.NewCmd(upgrade.NewOptions(o)),
 		create.NewCmd(o),
 		deploy.NewCmd(deploy.NewOptions(o)),
-		delete.NewCmd(delete.NewOptions(o)),
+		uninstall.NewCmd(uninstall.NewOptions(o)),
 	)
 
 	testCmd := test.NewCmd()
