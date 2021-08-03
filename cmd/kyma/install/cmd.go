@@ -70,8 +70,9 @@ Both installation types continue with the following steps:
    5. Set the admin password.
    6. Patch the Minikube IP.
    `,
-		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
-		Aliases: []string{"i"},
+		RunE:       func(_ *cobra.Command, _ []string) error { return cmd.Run() },
+		Aliases:    []string{"i"},
+		Deprecated: "install is deprecated! Use `kyma deploy instead`",
 	}
 
 	cobraCmd.Flags().BoolVarP(&o.NoWait, "no-wait", "n", false, "Determines if the command should wait for Kyma installation to complete.")

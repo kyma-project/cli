@@ -41,7 +41,17 @@ func (c certauth) Certificate() ([]byte, error) {
 	return decodedCert, nil
 }
 
+//TODO: Delete
 func (c certauth) CertificateAlpha() ([]byte, error) {
+	s, err := c.k8s.Static().CoreV1().Secrets("istio-system").Get(context.Background(), "kyma-gateway-certs", metav1.GetOptions{})
+	if err != nil {
+		return nil, errors.Wrap(err, fmt.Sprintf("\nCould not retrieve the Kyma root certificate. Follow the instructions to import it manually:\n-----\n%s-----\n", c.Instructions()))
+	}
+
+	return s.Data["tls.crt"], nil
+}
+
+func (c certauth) CertificateKyma2() ([]byte, error) {
 	s, err := c.k8s.Static().CoreV1().Secrets("istio-system").Get(context.Background(), "kyma-gateway-certs", metav1.GetOptions{})
 	if err != nil {
 		return nil, errors.Wrap(err, fmt.Sprintf("\nCould not retrieve the Kyma root certificate. Follow the instructions to import it manually:\n-----\n%s-----\n", c.Instructions()))
@@ -86,7 +96,15 @@ func (certauth) Instructions() string {
 		"4. Update the certificate registry: sudo update-ca-certificates\n"
 }
 
+//TODO: Delete
 func (certauth) InstructionsAlpha() string {
+	return "1. Download the certificate: kubectl get secret kyma-gateway-certs -n istio-system -o jsonpath='{.data.tls\\.crt}' > kyma.crt\n" +
+		"2. Rename the certificate file: mv kyma.crt {NEW_CERT_NAME}\n" +
+		"3. Copy the certificate to the CA folder: sudo cp {NEW_CERT_NAME} /usr/local/share/ca-certificates/\n" +
+		"4. Update the certificate registry: sudo update-ca-certificates\n"
+}
+
+func (certauth) InstructionsKyma2() string {
 	return "1. Download the certificate: kubectl get secret kyma-gateway-certs -n istio-system -o jsonpath='{.data.tls\\.crt}' > kyma.crt\n" +
 		"2. Rename the certificate file: mv kyma.crt {NEW_CERT_NAME}\n" +
 		"3. Copy the certificate to the CA folder: sudo cp {NEW_CERT_NAME} /usr/local/share/ca-certificates/\n" +

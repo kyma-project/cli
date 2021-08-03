@@ -26,14 +26,12 @@ Kyma CLI allows you to install, test, and manage Kyma.
 * [kyma alpha](#kyma-alpha-kyma-alpha)	 - Executes the commands in the alpha testing stage.
 * [kyma apply](#kyma-apply-kyma-apply)	 - Applies local resources to the Kyma cluster.
 * [kyma completion](#kyma-completion-kyma-completion)	 - Generates bash or zsh completion scripts.
-* [kyma console](#kyma-console-kyma-console)	 - Opens the Kyma Console in a web browser.
 * [kyma create](#kyma-create-kyma-create)	 - Creates resources on the Kyma cluster.
+* [kyma delete](#kyma-delete-kyma-delete)	 - Deletes Kyma from a running Kubernetes cluster.
+* [kyma deploy](#kyma-deploy-kyma-deploy)	 - Deploys Kyma on a running Kubernetes cluster.
 * [kyma init](#kyma-init-kyma-init)	 - Creates local resources for your project.
-* [kyma install](#kyma-install-kyma-install)	 - Installs Kyma on a running Kubernetes cluster.
 * [kyma provision](#kyma-provision-kyma-provision)	 - Provisions a cluster for Kyma installation.
 * [kyma run](#kyma-run-kyma-run)	 - Runs resources.
 * [kyma sync](#kyma-sync-kyma-sync)	 - Synchronizes the local resources for your Function.
-* [kyma test](#kyma-test-kyma-test)	 - Runs tests on a provisioned Kyma cluster.
-* [kyma upgrade](#kyma-upgrade-kyma-upgrade)	 - Upgrades Kyma
-* [kyma version](#kyma-version-kyma-version)	 - Displays the version of Kyma CLI and the connected Kyma cluster.
+* [kyma version](#kyma-version-kyma-version)	 - Displays the version of Kyma CLI and of the connected Kyma cluster.
 

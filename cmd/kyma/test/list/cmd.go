@@ -24,11 +24,12 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 
 	cobraCmd := &cobra.Command{
-		Use:     "list",
-		Short:   "Lists test suites available for a provisioned Kyma cluster.",
-		Long:    `Use this command to list test suites available for a provisioned Kyma cluster.`,
-		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
-		Aliases: []string{"l"},
+		Use:        "list",
+		Short:      "Lists test suites available for a provisioned Kyma cluster.",
+		Long:       `Use this command to list test suites available for a provisioned Kyma cluster.`,
+		RunE:       func(_ *cobra.Command, _ []string) error { return cmd.Run() },
+		Aliases:    []string{"l"},
+		Deprecated: "`test list` is deprecated!",
 	}
 	return cobraCmd
 }
