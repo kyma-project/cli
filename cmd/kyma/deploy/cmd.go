@@ -66,7 +66,7 @@ Usage Examples:
     If you don't have a certificate yet, you can create a self-signed certificate and key:
 		openssl req -x509 -newkey rsa:4096 -keyout key.pem -out crt.pem -days 365
     Then, pass the certificate files to the deploy command:
-		kyma deploy --domain {DOMAIN} --tls-cert crt.pem --tls-key key.pem
+		kyma deploy --domain {DOMAIN} --tls-crt crt.pem --tls-key key.pem
 
   Deploy Kyma from specific source:
     - Deploy from a specific version, such as 1.19.1:
