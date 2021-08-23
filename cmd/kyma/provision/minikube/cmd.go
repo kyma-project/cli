@@ -3,6 +3,7 @@ package minikube
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -235,16 +236,31 @@ func (c *command) startMinikube() error {
 	startCmd := []string{"start",
 		"--memory", c.opts.Memory,
 		"--cpus", c.opts.CPUS,
-		"--extra-config=apiserver.authorization-mode=RBAC",
+		"--extra-config=apiserver.authorization-mode=RBAC,Node",
 		"--extra-config=apiserver.cors-allowed-origins='http://*'",
 		"--extra-config=apiserver.enable-admission-plugins=DefaultStorageClass,LimitRanger,MutatingAdmissionWebhook,NamespaceExists,NamespaceLifecycle,ResourceQuota,ServiceAccount,ValidatingAdmissionWebhook",
 		"--extra-config=apiserver.service-account-signing-key-file=/var/lib/minikube/certs/sa.key",
-		"--extra-config=apiserver.service-account-issuer=kubernetes/serviceaccount",
+		"--extra-config=apiserver.service-account-issuer=https://kubernetes.default.svc.cluster.local",
 		"--extra-config=apiserver.service-account-api-audiences=api",
 		"--kubernetes-version=v" + c.opts.KubernetesVersion,
 		"--vm-driver", c.opts.VMDriver,
 		"--disk-size", c.opts.DiskSize,
 		"-b", bootstrapper,
+	}
+
+	versionComponents := strings.Split(c.opts.KubernetesVersion, ".")
+	if len(versionComponents) > 1 {
+		major, err := strconv.Atoi(versionComponents[0])
+		if err != nil {
+			return err
+		}
+		minor, err := strconv.Atoi(versionComponents[1])
+		if err != nil {
+			return err
+		}
+		if major == 1 && minor >= 18 && minor <= 19 { // ServiceAccountIssuerDiscovery is available from 1.18 as a feature gate and from 1.20 by default
+			startCmd = append(startCmd, "--feature-gates=ServiceAccountIssuerDiscovery=true")
+		}
 	}
 
 	if c.opts.VMDriver == vmDriverHyperv {
