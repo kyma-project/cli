@@ -1,15 +1,33 @@
-package alpha
+package deploy
 
 import (
+	"github.com/kyma-project/cli/internal/cli"
 	"github.com/spf13/cobra"
 )
 
-//NewCmd creates a new alpha command
-func NewCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "deploy",
-		Short: "Executes the commands in the alpha testing stage.",
-		Long:  "The Kyma CLI in alpha testing stage uses the following commands:",
+type command struct {
+	cli.Command
+	opts *Options
+}
+
+//NewCmd creates a new deploy command
+func NewCmd(o *Options) *cobra.Command {
+
+	cmd := command{
+		Command: cli.Command{Options: o.Options},
+		opts:    o,
 	}
-	return cmd
+
+	cobraCmd := &cobra.Command{
+		Use:     "deploy",
+		Short:   "Deploys Kyma on a running Kubernetes cluster.",
+		Long:    "Use this command to deploy, upgrade, or adapt Kyma on a running Kubernetes cluster.",
+		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
+		Aliases: []string{"d"},
+	}
+	return cobraCmd
+}
+
+func (cmd *command) Run() error {
+	return nil
 }
