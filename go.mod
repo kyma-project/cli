@@ -32,6 +32,7 @@ require (
 	github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20210830114732-6a1c4ee2e1f4
 	github.com/kyma-incubator/hydroform/provision v0.0.0-20210514061348-c71b69cb362e
 	github.com/kyma-incubator/octopus v0.0.0-20200922132758-2b721e93b58b
+	github.com/kyma-incubator/reconciler v0.0.0-20210826102531-d91d30b46692
 	github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20201125092745-687c943ac940
 	github.com/magiconair/properties v1.8.5
 	github.com/moby/sys/mount v0.2.0 // indirect
@@ -47,8 +48,8 @@ require (
 	gotest.tools v2.2.0+incompatible
 	istio.io/api v0.0.0-20210520012029-891c0c12abfd
 	istio.io/client-go v1.10.1
-	k8s.io/api v0.20.2
-	k8s.io/apimachinery v0.20.2
-	k8s.io/client-go v0.20.2
+	k8s.io/api v0.20.6
+	k8s.io/apimachinery v0.20.6
+	k8s.io/client-go v0.20.6
 	sigs.k8s.io/yaml v1.2.0
 )

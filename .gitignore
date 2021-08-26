@@ -23,3 +23,4 @@ bin
 # Kyma workspace and crt-file (created by deploy cmd)
 workspace
 kyma.crt
+main
