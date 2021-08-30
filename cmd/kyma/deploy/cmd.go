@@ -3,6 +3,7 @@ package deploy
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"io/ioutil"
 	"net"
 	"os"
@@ -209,9 +210,15 @@ func (cmd *command) Run() error {
 	}
 
 	// TODO remove this block when default component values are migrated to kyma 2.0
+	overridesStep := cmd.NewStep("Applying Kyma2 overrides")
 	if err := overrides.AddFile(filepath.Join(cmd.opts.WorkspacePath, kyma2OverridesPath)); err != nil {
-		return errors.Wrap(err, "Could not add overrides for Kyma 2.0")
+		if errors.Is(err, fs.ErrNotExist) {
+			overridesStep.LogInfof("Kyma2 override path not found but continuing: %s", err)
+		} else {
+			return errors.Wrap(err, "Could not add overrides for Kyma 2.0")
+		}
 	}
+	overridesStep.Success()
 
 	err = cmd.deployKyma(overrides)
 	if err != nil {
