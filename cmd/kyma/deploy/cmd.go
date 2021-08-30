@@ -213,7 +213,7 @@ func (cmd *command) Run() error {
 	overridesStep := cmd.NewStep("Applying Kyma2 overrides")
 	if err := overrides.AddFile(filepath.Join(cmd.opts.WorkspacePath, kyma2OverridesPath)); err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
-			overridesStep.LogErrorf("Kyma2 override path not found but continuing: %s", err)
+			overridesStep.LogInfof("Kyma2 override path not found but continuing: %s", err)
 		} else {
 			return errors.Wrap(err, "Could not add overrides for Kyma 2.0")
 		}
