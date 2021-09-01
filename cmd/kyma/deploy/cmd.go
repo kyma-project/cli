@@ -18,6 +18,7 @@ import (
 
 	"github.com/kyma-project/cli/cmd/kyma/version"
 	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/files"
 	"github.com/kyma-project/cli/internal/hosts"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/nice"
@@ -176,32 +177,10 @@ func (cmd *command) Run() error {
 
 	// only download if not from local sources
 	if cmd.opts.Source != localSource {
-		if err := cmd.isCompatibleVersion(); err != nil {
+		if err := cmd.downloadKyma(); err != nil {
 			return err
 		}
-
-		//if workspace already exists ask user for deletion-approval
-		_, err := os.Stat(cmd.opts.WorkspacePath)
-		approvalRequired := !os.IsNotExist(err)
-
-		downloadStep := cmd.NewStep(fmt.Sprintf("Downloading Kyma (%s) into workspace folder ", cmd.opts.Source))
-		if err := git.CloneRepo(kymaURL, cmd.opts.WorkspacePath, cmd.opts.Source); err != nil {
-			downloadStep.Failure()
-			return err
-		}
-		downloadStep.Successf("Kyma downloaded into workspace folder")
-
-		// delete workspace folder
-		if approvalRequired && !cmd.avoidUserInteraction() {
-			userApprovalStep := cmd.NewStep("Workspace folder already exists")
-			if userApprovalStep.PromptYesNo(fmt.Sprintf("Delete workspace folder '%s' after Kyma deployment? ", cmd.opts.WorkspacePath)) {
-				defer os.RemoveAll(cmd.opts.WorkspacePath)
-			}
-			userApprovalStep.Success()
-		} else {
-			defer os.RemoveAll(cmd.opts.WorkspacePath)
-		}
-
+		defer os.RemoveAll(cmd.opts.WorkspacePath)
 	}
 
 	overrides, err := cmd.overrides()
@@ -241,6 +220,39 @@ func (cmd *command) Run() error {
 	}
 
 	return cmd.printSummary(o)
+}
+
+func (cmd *command) downloadKyma() error {
+	if err := cmd.isCompatibleVersion(); err != nil {
+		return err
+	}
+
+	downloadStep := cmd.NewStep(fmt.Sprintf("Downloading Kyma (%s) into workspace folder ", cmd.opts.Source))
+
+	_, err := os.Stat(cmd.opts.WorkspacePath)
+	// workspace already exists
+	if !os.IsNotExist(err) && !cmd.avoidUserInteraction() {
+		isWorkspaceEmpty, err := files.IsDirEmpty(cmd.opts.WorkspacePath)
+		if err != nil {
+			return err
+		}
+		// if workspace used is not the default one and it is not empty,
+		// then ask for permission to delete its existing files
+		if !isWorkspaceEmpty && cmd.opts.WorkspacePath != getDefaultWorkspacePath() {
+			if !downloadStep.PromptYesNo(fmt.Sprintf("Existing files in workspace folder '%s' will be deleted. Are you sure you want to continue? ", cmd.opts.WorkspacePath)) {
+				downloadStep.Failure()
+				return fmt.Errorf("Aborting deployment")
+			}
+		}
+	}
+
+	if err := git.CloneRepo(kymaURL, cmd.opts.WorkspacePath, cmd.opts.Source); err != nil {
+		downloadStep.Failure()
+		return err
+	}
+
+	downloadStep.Successf("Kyma downloaded into workspace folder")
+	return nil
 }
 
 func (cmd *command) isCompatibleVersion() error {
