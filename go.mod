@@ -27,6 +27,7 @@ require (
 	github.com/docker/cli v20.10.6+incompatible
 	github.com/docker/docker v20.10.6+incompatible
 	github.com/fatih/color v1.10.0
+	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/kyma-incubator/hydroform/function v0.0.0-20210826095131-4e9bc77fbef2
 	github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90
 	github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20210830114732-6a1c4ee2e1f4
@@ -45,6 +46,7 @@ require (
 	go.uber.org/zap v1.16.0
 	gopkg.in/src-d/go-git.v4 v4.13.1
 	gopkg.in/yaml.v2 v2.4.0
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	gotest.tools v2.2.0+incompatible
 	istio.io/api v0.0.0-20210520012029-891c0c12abfd
 	istio.io/client-go v1.10.1
