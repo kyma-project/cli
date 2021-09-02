@@ -46,21 +46,30 @@ func NewCmd(o *Options) *cobra.Command {
 	return cobraCmd
 }
 
-func componentsFromStrings(list []string) []keb.Components {
+func componentsFromStrings(list []string, overrides map[string]string) []keb.Components {
 	var components []keb.Components
 	for _, item := range list {
 		s := strings.Split(item, "@")
-		components = append(components, keb.Components{Component: s[0], Namespace: s[1]})
+
+		component := keb.Components{Component: s[0], Namespace: s[1]}
+
+		for k, v := range overrides {
+			overrideComponent := strings.Split(k, ".")[0]
+			if s[0] == overrideComponent {
+				component.Configuration = append(component.Configuration, keb.Configuration{Key: k, Value: v})
+			}
+		}
+		components = append(components, component)
 	}
 	return components
 }
 
-func defaultComponentList() []keb.Components {
+func defaultComponentList(overrides map[string]string) []keb.Components {
 	defaultComponents := []string{
-		"cluster-essentials",
+		"cluster-essentials@kyma-system",
 		"istio-configuration@istio-system",
 		"certificates@istio-system",
-		"loggin@kyma-system",
+		"logging@kyma-system",
 		"tracing@kyma-system",
 		"kiali@kyma-system",
 		"monitoring@kyma-system",
@@ -74,7 +83,7 @@ func defaultComponentList() []keb.Components {
 		"cluster-users@kyma-system",
 		"serverless@kyma-system",
 		"application-connector@kyma-integration"}
-	return componentsFromStrings(defaultComponents)
+	return componentsFromStrings(defaultComponents, overrides)
 }
 
 func (cmd *command) Run(o *Options) error {
@@ -141,11 +150,12 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-
 	overrides, err := overridesBuilder.Build()
 
-	for k, v := range overrides.Map() {
-		fmt.Printf("Key: %s Value: %v \n", k, v)
+	result := flattenOverrides(overrides.Map())
+
+	for k, v := range result {
+		fmt.Printf("Key: %s Value: %s \n", k, v)
 	}
 
 	kubecfg, _ := ioutil.ReadFile(kubecfgFile)
@@ -154,7 +164,7 @@ func (cmd *command) Run(o *Options) error {
 		KymaConfig: keb.KymaConfig{
 			Version: "main",
 			Profile: "evaluation",
-			Components:defaultComponentList(),
+			Components:defaultComponentList(result),
 		},
 	}
 
@@ -175,4 +185,22 @@ func (cmd *command) Run(o *Options) error {
 	//cmd.duration = time.Since(start)
 
 	return nil
+}
+
+func flattenOverrides(overrides map[string]interface{} ) map[string]string {
+
+	result := make(map[string]string)
+
+	for key, v := range overrides {
+		if valueAsMap, ok := v.(map[string]interface{}); ok {
+			mapWithIncompleteKeys := flattenOverrides(valueAsMap)
+			for k1, v1 := range mapWithIncompleteKeys {
+				result[key + "." + k1] = v1
+			}
+		} else {
+			result[key] = fmt.Sprintf("%v", v)
+		}
+	}
+
+	return result
 }
