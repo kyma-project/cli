@@ -147,13 +147,22 @@ func (c *command) allocatePorts(ports ...int) error {
 	return nil
 }
 
+func parseK3dargs(args []string) []string {
+	var res []string
+	for _, arg := range args {
+		res = append(res, strings.Split(arg, " ")...)
+	}
+	return res
+}
+
 //Create a k3d cluster
 func (c *command) createK3dCluster() error {
 	s := c.NewStep("Create K3d instance")
 	s.Status("Start K3d cluster")
+
 	k3dSettings := k3d.Settings{
 		ClusterName: c.opts.Name,
-		Args:        c.opts.K3dArgs,
+		Args:        parseK3dargs(c.opts.K3dArgs),
 		Version:     c.opts.KubernetesVersion,
 		PortMapping: c.opts.PortMapping,
 	}
