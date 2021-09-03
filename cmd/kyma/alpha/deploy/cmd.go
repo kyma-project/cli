@@ -140,7 +140,7 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	if _, err := coredns.PatchCoreDNS(cmd.K8s.Static(), overridesBuilder, isK3d); err != nil {
+	if _, err := coredns.Patch(cmd.K8s.Static(), overridesBuilder, isK3d); err != nil {
 		return err
 	}
 

@@ -54,8 +54,8 @@ const (
 	coreDNSRemoteDomainName = `(.*)\.kyma\.example\.com`
 )
 
-// PatchCoreDNS patches the CoreDNS cnfiguration based on the overrides and the cloud provider.
-func PatchCoreDNS(kubeClient kubernetes.Interface, overrides *overrides.Builder, isK3d bool) (cm *v1.ConfigMap, err error) {
+// Patch patches the CoreDNS cnfiguration based on the overrides and the cloud provider.
+func Patch(kubeClient kubernetes.Interface, overrides *overrides.Builder, isK3d bool) (cm *v1.ConfigMap, err error) {
 	err = retry.Do(func() error {
 		_, err := kubeClient.AppsV1().Deployments("kube-system").Get(context.TODO(), "coredns", metav1.GetOptions{})
 		if err != nil {
