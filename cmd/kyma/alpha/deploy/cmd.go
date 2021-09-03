@@ -162,9 +162,9 @@ func (cmd *command) Run(o *Options) error {
 	kebCluster := keb.Cluster{
 		Kubeconfig: string(kubecfg),
 		KymaConfig: keb.KymaConfig{
-			Version: "main",
-			Profile: "evaluation",
-			Components:defaultComponentList(result),
+			Version:    "main",
+			Profile:    "evaluation",
+			Components: defaultComponentList(result),
 		},
 	}
 
@@ -176,8 +176,10 @@ func (cmd *command) Run(o *Options) error {
 		},
 		true)
 
-	localScheduler, _ := scheduler.NewLocalScheduler(kebCluster, workerFactory, true)
-	err = localScheduler.Run(context.TODO())
+	localScheduler := scheduler.NewLocalScheduler(workerFactory,
+		scheduler.WithPrerequisites("istio-configuration"),
+		scheduler.WithCRDComponents("cluster-essentials", "istio-configuration"))
+	err = localScheduler.Run(context.TODO(), &kebCluster)
 	if err != nil {
 		return err
 	}
@@ -187,7 +189,7 @@ func (cmd *command) Run(o *Options) error {
 	return nil
 }
 
-func flattenOverrides(overrides map[string]interface{} ) map[string]string {
+func flattenOverrides(overrides map[string]interface{}) map[string]string {
 
 	result := make(map[string]string)
 
@@ -195,7 +197,7 @@ func flattenOverrides(overrides map[string]interface{} ) map[string]string {
 		if valueAsMap, ok := v.(map[string]interface{}); ok {
 			mapWithIncompleteKeys := flattenOverrides(valueAsMap)
 			for k1, v1 := range mapWithIncompleteKeys {
-				result[key + "." + k1] = v1
+				result[key+"."+k1] = v1
 			}
 		} else {
 			result[key] = fmt.Sprintf("%v", v)
