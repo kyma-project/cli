@@ -1,4 +1,4 @@
-package overrides
+package coredns
 
 import (
 	"bytes"
@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/kyma-project/cli/internal/gardener"
+	"github.com/kyma-project/cli/internal/overrides"
 	"html/template"
 	"time"
 
@@ -53,7 +55,7 @@ const (
 )
 
 // PatchCoreDNS patches the CoreDNS cnfiguration based on the overrides and the cloud provider.
-func PatchCoreDNS(kubeClient kubernetes.Interface, overrides *Builder, isK3d bool) (cm *v1.ConfigMap, err error) {
+func PatchCoreDNS(kubeClient kubernetes.Interface, overrides *overrides.Builder, isK3d bool) (cm *v1.ConfigMap, err error) {
 	err = retry.Do(func() error {
 		_, err := kubeClient.AppsV1().Deployments("kube-system").Get(context.TODO(), "coredns", metav1.GetOptions{})
 		if err != nil {
@@ -131,10 +133,10 @@ func newCoreDNSConfigMap(data map[string]string) *v1.ConfigMap {
 	}
 }
 
-func generatePatches(kubeClient kubernetes.Interface, overrides *Builder, isK3s bool) (map[string]string, error) {
+func generatePatches(kubeClient kubernetes.Interface, overrides *overrides.Builder, isK3s bool) (map[string]string, error) {
 	patches := make(map[string]string)
 	// patch the CoreFile only if not on gardener and no custom domain is provided
-	gardenerDomain, err := Domain(kubeClient)
+	gardenerDomain, err := gardener.Domain(kubeClient)
 	if err != nil {
 		return nil, err
 	}
@@ -183,7 +185,7 @@ func generateCorefile(domainName string) (coreFile string, err error) {
 }
 
 func generateHosts(kubeClient kubernetes.Interface) (string, error) {
-	clusterName, err := K3dClusterName(kubeClient)
+	clusterName, err := overrides.K3dClusterName(kubeClient)
 	if err != nil {
 		return "", err
 	}

@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"fmt"
+	"github.com/kyma-project/cli/internal/gardener"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -53,7 +54,7 @@ func (i *DomainNameOverrideInterceptor) String(value interface{}, key string) st
 
 func (i *DomainNameOverrideInterceptor) Intercept(value interface{}, key string) (interface{}, error) {
 	// On gardener, domain provided by user should be ignored
-	domainName, err := Domain(i.kubeClient)
+	domainName, err := gardener.Domain(i.kubeClient)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +79,7 @@ func (i *DomainNameOverrideInterceptor) Undefined(overrides map[string]interface
 func (i *DomainNameOverrideInterceptor) getDomainName() (domainName string, err error) {
 
 	// On gardener always return gardener domain
-	domainName, err = Domain(i.kubeClient)
+	domainName, err = gardener.Domain(i.kubeClient)
 	if err != nil {
 		return "", err
 	}
@@ -132,7 +133,7 @@ func NewCertificateOverrideInterceptor(tlsCrtOverrideKey, tlsKeyOverrideKey stri
 	}
 
 	res.isGardenerCluster = func() (bool, error) {
-		gardenerDomain, err := Domain(kubeClient)
+		gardenerDomain, err := gardener.Domain(kubeClient)
 		if err != nil {
 			return false, err
 		}

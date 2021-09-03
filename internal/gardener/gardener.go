@@ -1,5 +1,5 @@
 // Package Gardener contains special logic to manage installation in Gardener clusters
-package overrides
+package gardener
 
 import (
 	"context"
