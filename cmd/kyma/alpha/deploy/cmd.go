@@ -3,6 +3,10 @@ package deploy
 import (
 	"context"
 	"fmt"
+	"io/fs"
+	"io/ioutil"
+	"strings"
+
 	"github.com/kyma-incubator/reconciler/pkg/cluster"
 	"github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler"
@@ -15,9 +19,6 @@ import (
 	"github.com/kyma-project/cli/internal/overrides"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"io/fs"
-	"io/ioutil"
-	"strings"
 
 	_ "github.com/kyma-incubator/reconciler/pkg/reconciler/instances"
 )
@@ -168,7 +169,7 @@ func (cmd *command) Run(o *Options) error {
 		true)
 
 	localScheduler := scheduler.NewLocalScheduler(workerFactory,
-		scheduler.WithPrerequisites("istio-configuration"),
+		scheduler.WithPrerequisites("cluster-essentials", "istio-configuration", "certificates"),
 		scheduler.WithCRDComponents("cluster-essentials", "istio-configuration"))
 	err = localScheduler.Run(context.TODO(), &kebCluster)
 	if err != nil {
