@@ -3,22 +3,21 @@ package deploy
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-incubator/hydroform/parallel-install/pkg/download"
-	"github.com/kyma-project/cli/internal/files"
-	"github.com/kyma-project/cli/internal/overrides"
-	"github.com/pkg/errors"
-	"io/fs"
-	"io/ioutil"
-	"strings"
-
 	"github.com/kyma-incubator/reconciler/pkg/cluster"
 	"github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/service"
 	"github.com/kyma-incubator/reconciler/pkg/scheduler"
 	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/download"
+	"github.com/kyma-project/cli/internal/files"
 	"github.com/kyma-project/cli/internal/kube"
+	"github.com/kyma-project/cli/internal/overrides"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"io/fs"
+	"io/ioutil"
+	"strings"
 
 	_ "github.com/kyma-incubator/reconciler/pkg/reconciler/instances"
 )
@@ -121,27 +120,6 @@ func (cmd *command) Run(o *Options) error {
 		}
 	}
 	overridesStep.Success()
-	//
-	//var callback func(deployment.ProcessUpdate)
-	//if !cmd.Verbose {
-	//	ui := asyncui.AsyncUI{StepFactory: &cmd.Factory}
-	//	callback = ui.Callback()
-	//	if err != nil {
-	//		return err
-	//	}
-	//}
-	//
-	//restConfig, err := config.RestConfig(cfg.KubeconfigSource)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//
-	//kubeClient, err := kubernetes.NewForConfig(restConfig)
-	//if err != nil {
-	//	return nil, err
-	//}
-
-	//registerOverridesInterceptors(ob, kubeClient, cfg.Log)
 
 	kubecfgFile := kube.KubeconfigPath(cmd.KubeconfigPath)
 
@@ -150,13 +128,26 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	overrides, err := overridesBuilder.Build()
+	overridesBuilder.AddInterceptor([]string{"global.domainName", "global.ingress.domainName"}, overrides.NewDomainNameOverrideInterceptor(cmd.K8s.Static()))
+	overridesBuilder.AddInterceptor([]string{"global.tlsCrt", "global.tlsKey"}, overrides.NewCertificateOverrideInterceptor("global.tlsCrt", "global.tlsKey", cmd.K8s.Static()))
+	overridesBuilder.AddInterceptor([]string{"serverless.dockerRegistry.internalServerAddress", "serverless.dockerRegistry.serverAddress", "serverless.dockerRegistry.registryAddress"}, overrides.NewRegistryInterceptor(cmd.K8s.Static()))
+	overridesBuilder.AddInterceptor([]string{"serverless.dockerRegistry.enableInternal"}, overrides.NewRegistryDisableInterceptor(cmd.K8s.Static()))
 
-	result := flattenOverrides(overrides.Map())
-
-	for k, v := range result {
-		fmt.Printf("Key: %s Value: %s \n", k, v)
+	isK3d, err := overrides.IsK3dCluster(cmd.K8s.Static())
+	if err != nil {
+		return err
 	}
+
+	if _, err := overrides.PatchCoreDNS(cmd.K8s.Static(), overridesBuilder, isK3d); err != nil {
+		return err
+	}
+
+	nestedOverrides, err := overridesBuilder.Build()
+	if err != nil {
+		return err
+	}
+
+	flattenedOverrides := flattenOverrides(nestedOverrides.Map())
 
 	kubecfg, _ := ioutil.ReadFile(kubecfgFile)
 	kebCluster := keb.Cluster{
@@ -164,7 +155,7 @@ func (cmd *command) Run(o *Options) error {
 		KymaConfig: keb.KymaConfig{
 			Version:    "main",
 			Profile:    "evaluation",
-			Components: defaultComponentList(result),
+			Components: defaultComponentList(flattenedOverrides),
 		},
 	}
 
@@ -183,6 +174,10 @@ func (cmd *command) Run(o *Options) error {
 	if err != nil {
 		return err
 	}
+
+	// TODO see stable deploy command
+	// certificates
+	// printsummary
 
 	//cmd.duration = time.Since(start)
 
