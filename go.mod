@@ -34,7 +34,7 @@ require (
 	github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20210830114732-6a1c4ee2e1f4
 	github.com/kyma-incubator/hydroform/provision v0.0.0-20210514061348-c71b69cb362e
 	github.com/kyma-incubator/octopus v0.0.0-20200922132758-2b721e93b58b
-	github.com/kyma-incubator/reconciler v0.0.0-20210902110334-e1bfce4cc1e0
+	github.com/kyma-incubator/reconciler v0.0.0-20210903133948-88919234f0d0
 	github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20201125092745-687c943ac940
 	github.com/magiconair/properties v1.8.5
 	github.com/moby/sys/mount v0.2.0 // indirect

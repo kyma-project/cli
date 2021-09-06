@@ -21,6 +21,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
+	//Register all reconcilers
 	_ "github.com/kyma-incubator/reconciler/pkg/reconciler/instances"
 )
 
@@ -56,7 +57,7 @@ func componentsFromStrings(list []string, overrides map[string]string) []keb.Com
 
 		for k, v := range overrides {
 			overrideComponent := strings.Split(k, ".")[0]
-			if s[0] == overrideComponent {
+			if overrideComponent == s[0] || overrideComponent == "global" {
 				component.Configuration = append(component.Configuration, keb.Configuration{Key: k, Value: v})
 			}
 		}
@@ -68,7 +69,7 @@ func componentsFromStrings(list []string, overrides map[string]string) []keb.Com
 func defaultComponentList(overrides map[string]string) []keb.Components {
 	defaultComponents := []string{
 		"cluster-essentials@kyma-system",
-		"istio-configuration@istio-system",
+		"istio@istio-system",
 		"certificates@istio-system",
 		"logging@kyma-system",
 		"tracing@kyma-system",
@@ -151,6 +152,10 @@ func (cmd *command) Run(o *Options) error {
 
 	flattenedOverrides := flattenOverrides(nestedOverrides.Map())
 
+	for k, v := range flattenedOverrides {
+		fmt.Println(k, ":", v)
+	}
+
 	kubecfg, _ := ioutil.ReadFile(kubecfgFile)
 	kebCluster := keb.Cluster{
 		Kubeconfig: string(kubecfg),
@@ -170,8 +175,8 @@ func (cmd *command) Run(o *Options) error {
 		true)
 
 	localScheduler := scheduler.NewLocalScheduler(workerFactory,
-		scheduler.WithPrerequisites("cluster-essentials", "istio-configuration", "certificates"),
-		scheduler.WithCRDComponents("cluster-essentials", "istio-configuration"))
+		scheduler.WithPrerequisites("cluster-essentials", "istio", "certificates"),
+		scheduler.WithCRDComponents("cluster-essentials", "istio"))
 	err = localScheduler.Run(context.TODO(), &kebCluster)
 	if err != nil {
 		return err
