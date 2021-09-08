@@ -174,7 +174,6 @@ func (cmd *command) Run() error {
 		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
 	}
 
-
 	// only download if not from local sources
 	if cmd.opts.Source != localSource {
 		if err := cmd.isCompatibleVersion(); err != nil {

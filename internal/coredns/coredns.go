@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/kyma-project/cli/internal/gardener"
+	"github.com/kyma-project/cli/internal/k3d"
 	"github.com/kyma-project/cli/internal/overrides"
 	"html/template"
 	"time"
@@ -55,7 +56,12 @@ const (
 )
 
 // Patch patches the CoreDNS configuration based on the overrides and the cloud provider.
-func Patch(kubeClient kubernetes.Interface, overrides overrides.Overrides, isK3d bool) (cm *v1.ConfigMap, err error) {
+func Patch(kubeClient kubernetes.Interface, overrides overrides.Overrides) (cm *v1.ConfigMap, err error) {
+	isK3d, err := k3d.IsK3dCluster(kubeClient)
+	if err != nil {
+		return nil, err
+	}
+
 	err = retry.Do(func() error {
 		_, err := kubeClient.AppsV1().Deployments("kube-system").Get(context.TODO(), "coredns", metav1.GetOptions{})
 		if err != nil {
@@ -184,7 +190,7 @@ func generateCorefile(domainName string) (coreFile string, err error) {
 }
 
 func generateHosts(kubeClient kubernetes.Interface) (string, error) {
-	clusterName, err := overrides.K3dClusterName(kubeClient)
+	clusterName, err := k3d.K3dClusterName(kubeClient)
 	if err != nil {
 		return "", err
 	}

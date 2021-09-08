@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/kyma-project/cli/internal/gardener"
+	"github.com/kyma-project/cli/internal/k3d"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -43,7 +44,7 @@ func NewDomainNameOverrideInterceptor(kubeClient kubernetes.Interface) *DomainNa
 	return &DomainNameOverrideInterceptor{
 		kubeClient: kubeClient,
 		isLocalCluster: func() (bool, error) {
-			return IsK3dCluster(kubeClient)
+			return k3d.IsK3dCluster(kubeClient)
 		},
 	}
 }
@@ -129,7 +130,7 @@ func NewCertificateOverrideInterceptor(tlsCrtOverrideKey, tlsKeyOverrideKey stri
 	}
 
 	res.isLocalCluster = func() (bool, error) {
-		return IsK3dCluster(kubeClient)
+		return k3d.IsK3dCluster(kubeClient)
 	}
 
 	res.isGardenerCluster = func() (bool, error) {
@@ -301,7 +302,7 @@ func (i *RegistryDisableInterceptor) String(value interface{}, key string) strin
 }
 
 func (i *RegistryDisableInterceptor) Intercept(value interface{}, key string) (interface{}, error) {
-	k3dCluster, err := IsK3dCluster(i.kubeClient)
+	k3dCluster, err := k3d.IsK3dCluster(i.kubeClient)
 	if err != nil {
 		return nil, err
 	}
@@ -312,7 +313,7 @@ func (i *RegistryDisableInterceptor) Intercept(value interface{}, key string) (i
 }
 
 func (i *RegistryDisableInterceptor) Undefined(overrides map[string]interface{}, key string) error {
-	k3dCluster, err := IsK3dCluster(i.kubeClient)
+	k3dCluster, err := k3d.IsK3dCluster(i.kubeClient)
 	if err != nil {
 		return err
 	}
@@ -345,12 +346,12 @@ func (i *RegistryInterceptor) Intercept(value interface{}, key string) (interfac
 }
 
 func (i *RegistryInterceptor) Undefined(overrides map[string]interface{}, key string) error {
-	k3dCluster, err := IsK3dCluster(i.kubeClient)
+	k3dCluster, err := k3d.IsK3dCluster(i.kubeClient)
 	if err != nil {
 		return err
 	}
 	if k3dCluster {
-		k3dClusterName, err := K3dClusterName(i.kubeClient)
+		k3dClusterName, err := k3d.K3dClusterName(i.kubeClient)
 		if err != nil {
 			return err
 		}

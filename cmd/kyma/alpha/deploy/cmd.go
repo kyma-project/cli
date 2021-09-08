@@ -102,12 +102,7 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	isK3d, err := overrides.IsK3dCluster(cmd.K8s.Static())
-	if err != nil {
-		return err
-	}
-
-	if _, err := coredns.Patch(cmd.K8s.Static(), ovs, isK3d); err != nil {
+	if _, err := coredns.Patch(cmd.K8s.Static(), ovs); err != nil {
 		return err
 	}
 

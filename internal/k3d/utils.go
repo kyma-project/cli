@@ -1,5 +1,5 @@
 // Package k3d contains special logic to manage installation in k3d clusters
-package overrides
+package k3d
 
 import (
 	"context"
@@ -9,7 +9,6 @@ import (
 	"unicode"
 
 	"github.com/avast/retry-go"
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
@@ -87,16 +86,4 @@ func K3dClusterName(kubeClient kubernetes.Interface) (k3dName string, err error)
 	}
 
 	return k3dName, nil
-}
-
-// FakeK3dNode provides an empty kubernetes node simulating a k3d master node fr testing purposes.
-func FakeK3dNode() *v1.Node {
-	k3dNode := &v1.Node{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:   "k3d-kyma-server-0",
-			Labels: map[string]string{"node-role.kubernetes.io/master": "true"},
-		},
-	}
-
-	return k3dNode
 }
