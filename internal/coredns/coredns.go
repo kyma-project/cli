@@ -74,7 +74,7 @@ func Patch(logger *zap.Logger, kubeClient kubernetes.Interface, overrides overri
 		}
 
 		// patches contain each key and value that needs to be patched in the coredns configmap data field.
-		patches, err := generatePatches(logger, kubeClient, overrides, isK3d)
+		patches, err := generatePatches(kubeClient, overrides, isK3d)
 		if err != nil {
 			return err
 		}
@@ -140,7 +140,7 @@ func newCoreDNSConfigMap(data map[string]string) *v1.ConfigMap {
 	}
 }
 
-func generatePatches(logger *zap.Logger, kubeClient kubernetes.Interface, overrides overrides.Overrides, isK3s bool) (map[string]string, error) {
+func generatePatches(kubeClient kubernetes.Interface, overrides overrides.Overrides, isK3s bool) (map[string]string, error) {
 	patches := make(map[string]string)
 	// patch the CoreFile only if not on gardener and no custom domain is provided
 	gardenerDomain, err := gardener.Domain(kubeClient)
