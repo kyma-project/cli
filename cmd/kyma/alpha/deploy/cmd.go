@@ -5,9 +5,12 @@ import (
 	"fmt"
 	"io/fs"
 	"io/ioutil"
+	"os"
 	"strings"
+	"time"
 
 	"github.com/kyma-project/cli/internal/coredns"
+	"github.com/kyma-project/cli/pkg/step"
 
 	"github.com/kyma-incubator/reconciler/pkg/cluster"
 	"github.com/kyma-incubator/reconciler/pkg/keb"
@@ -19,6 +22,7 @@ import (
 	"github.com/kyma-project/cli/internal/files"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/overrides"
+	"github.com/kyma-project/cli/internal/trust"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
@@ -28,7 +32,8 @@ import (
 
 type command struct {
 	cli.Command
-	opts *Options
+	opts     *Options
+	duration time.Duration
 }
 
 //NewCmd creates a new deploy command
@@ -93,7 +98,7 @@ func (cmd *command) Run(o *Options) error {
 
 	var err error
 
-	//start := time.Now()
+	start := time.Now()
 
 	if cmd.opts.CI {
 		cmd.Factory.NonInteractive = true
@@ -127,7 +132,7 @@ func (cmd *command) Run(o *Options) error {
 
 	kubecfgFile := kube.KubeconfigPath(cmd.KubeconfigPath)
 
-	_, err = service.NewComponentReconciler("base")
+	_, err = service.NewComponentReconciler("base") // Why? -Maybe not needed
 	if err != nil {
 		return err
 	}
@@ -150,12 +155,7 @@ func (cmd *command) Run(o *Options) error {
 	if err != nil {
 		return err
 	}
-
-	flattenedOverrides := flattenOverrides(nestedOverrides.Map())
-
-	for k, v := range flattenedOverrides {
-		fmt.Println(k, ":", v)
-	}
+	fmt.Printf("\nNestedOverrides: %#v", nestedOverrides)
 
 	kubecfg, _ := ioutil.ReadFile(kubecfgFile)
 	kebCluster := keb.Cluster{
@@ -163,7 +163,7 @@ func (cmd *command) Run(o *Options) error {
 		KymaConfig: keb.KymaConfig{
 			Version:    "main",
 			Profile:    "evaluation",
-			Components: defaultComponentList(flattenedOverrides),
+			Components: defaultComponentList(nestedOverrides.FlattenOverrides()),
 		},
 	}
 
@@ -183,29 +183,70 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	// TODO see stable deploy command
-	// certificates
-	// printsummary
+	// import certificates
+	if err := cmd.importCertificate(); err != nil {
+		return err
+	}
 
-	//cmd.duration = time.Since(start)
+	// TODO: print summary after deploy
+
+	cmd.duration = time.Since(start)
 
 	return nil
 }
 
-func flattenOverrides(overrides map[string]interface{}) map[string]string {
+// avoidUserInteraction returns true if user won't provide input
+func (cmd *command) avoidUserInteraction() bool {
+	return cmd.NonInteractive || cmd.CI
+}
 
-	result := make(map[string]string)
+func (cmd *command) importCertificate() error {
+	ca := trust.NewCertifier(cmd.K8s)
 
-	for key, v := range overrides {
-		if valueAsMap, ok := v.(map[string]interface{}); ok {
-			mapWithIncompleteKeys := flattenOverrides(valueAsMap)
-			for k1, v1 := range mapWithIncompleteKeys {
-				result[key+"."+k1] = v1
-			}
-		} else {
-			result[key] = fmt.Sprintf("%v", v)
-		}
+	if !cmd.approveImportCertificate() {
+		//no approval given: stop import
+		ca.InstructionsKyma2()
+		return nil
 	}
 
-	return result
+	// get cert from cluster
+	cert, err := ca.CertificateKyma2()
+	if err != nil {
+		return err
+	}
+
+	tmpFile, err := ioutil.TempFile(os.TempDir(), "kyma-*.crt")
+	if err != nil {
+		return errors.Wrap(err, "Cannot create temporary file for Kyma certificate")
+	}
+	defer os.Remove(tmpFile.Name())
+
+	if _, err = tmpFile.Write(cert); err != nil {
+		return errors.Wrap(err, "Failed to write the kyma certificate")
+	}
+	if err := tmpFile.Close(); err != nil {
+		return err
+	}
+
+	// create a simple step to print certificate import steps without a spinner (spinner overwrites sudo prompt)
+	// TODO refactor how certifier logs when the old install command is gone
+	f := step.Factory{
+		NonInteractive: true,
+	}
+	s := f.NewStep("Importing Kyma certificate")
+
+	if err := ca.StoreCertificate(tmpFile.Name(), s); err != nil {
+		return err
+	}
+	s.Successf("Kyma root certificate imported")
+	return nil
+}
+
+func (cmd *command) approveImportCertificate() bool {
+	qImportCertsStep := cmd.NewStep("Install Kyma certificate locally")
+	defer qImportCertsStep.Success()
+	if cmd.avoidUserInteraction() { //do not import if user-interaction has to be avoided (suppress sudo pwd request)
+		return false
+	}
+	return qImportCertsStep.PromptYesNo("Should the Kyma certificate be installed locally?")
 }

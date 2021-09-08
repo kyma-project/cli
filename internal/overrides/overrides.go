@@ -138,6 +138,27 @@ func (o Overrides) Map() map[string]interface{} {
 	return copyMap(o.overrides)
 }
 
+func (o Overrides) FlattenOverrides() map[string]string {
+	return flattenOverrides(o.Map())
+}
+
+func flattenOverrides(overrides map[string]interface{}) map[string]string {
+	result := make(map[string]string)
+
+	for key, v := range overrides {
+		if valueAsMap, ok := v.(map[string]interface{}); ok {
+			mapWithIncompleteKeys := flattenOverrides(valueAsMap)
+			for k1, v1 := range mapWithIncompleteKeys {
+				result[key+"."+k1] = v1
+			}
+		} else {
+			result[key] = fmt.Sprintf("%v", v)
+		}
+	}
+
+	return result
+}
+
 // String all provided overrides
 func (o Overrides) String() string {
 	in, err := o.intercept(interceptorOpsString)
