@@ -163,7 +163,7 @@ func (cmd *command) Run(o *Options) error {
 		KymaConfig: keb.KymaConfig{
 			Version:    "main",
 			Profile:    "evaluation",
-			Components: defaultComponentList(nestedOverrides.FlattenOverrides()),
+			Components: defaultComponentList(nestedOverrides.FlattenedMap()),
 		},
 	}
 

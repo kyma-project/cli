@@ -65,3 +65,74 @@ func Test_AddOverrides(t *testing.T) {
 	err = builder.AddOverrides("xyz", data)
 	require.NoError(t, err)
 }
+
+func Test_FlattenedMap(t *testing.T) {
+	testCases := []struct {
+		summary        string
+		givenChart string
+		givenOverrides map[string]interface{}
+		expected       map[string]string
+	}{
+		{
+			summary: "leave key",
+			givenChart: "xyz",
+			givenOverrides: map[string]interface{}{
+				"key": "value",
+			},
+			expected: map[string]string{
+				"xyz.key": "value",
+			},
+		},
+		{
+			summary: "single nested key",
+			givenChart: "xyz",
+			givenOverrides: map[string]interface{}{
+				"key": map[string]interface{}{
+					"nested": "value",
+				},
+			},
+			expected: map[string]string{
+				"xyz.key.nested": "value",
+			},
+		},
+		{
+			summary: "multiple nested keys",
+			givenChart: "xyz",
+			givenOverrides: map[string]interface{}{
+				"global": map[string]interface{}{
+					"domainName": "local.kyma.dev",
+					"ingress": map[string]interface{}{
+						"domainName": "local.kyma.dev",
+					},
+					"installCRDs": false,
+				},
+				"cluster-users": map[string]interface{}{"users": map[string]interface{}{"bindStaticUsers": false}},
+			},
+			expected: map[string]string{
+				"xyz.global.domainName": "local.kyma.dev",
+				"xyz.global.ingress.domainName": "local.kyma.dev",
+				"xyz.global.installCRDs": "false",
+				"xyz.cluster-users.users.bindStaticUsers": "false",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.summary, func(t *testing.T) {
+			builder := Builder{}
+			err := builder.AddOverrides(tc.givenChart, tc.givenOverrides)
+			require.NoError(t, err)
+
+			ovs, err := builder.Build()
+			require.NoError(t, err)
+			flat := ovs.FlattenedMap()
+
+			require.Len(t, flat, len(tc.expected))
+			for key, expected := range tc.expected {
+				actual, exists := flat[key]
+				require.Truef(t, exists, "not found %s", key)
+				require.Equal(t, expected, actual)
+			}
+		})
+	}
+}

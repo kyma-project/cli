@@ -231,7 +231,7 @@ func Test_DomainNameOverrideInterceptor(t *testing.T) {
 	}
 
 	t.Run("test default domain for local cluster", func(t *testing.T) {
-		// given
+		// givenOverrides
 		kubeClient := fake.NewSimpleClientset()
 		ob.AddInterceptor([]string{"global.domainName"}, mockNewDomainNameOverrideInterceptor(kubeClient, true))
 
@@ -246,7 +246,7 @@ func Test_DomainNameOverrideInterceptor(t *testing.T) {
 	})
 
 	t.Run("test default domain for remote non-gardener cluster", func(t *testing.T) {
-		// given
+		// givenOverrides
 		kubeClient := fake.NewSimpleClientset()
 		ob.AddInterceptor([]string{"global.domainName"}, mockNewDomainNameOverrideInterceptor(kubeClient, false))
 
@@ -261,7 +261,7 @@ func Test_DomainNameOverrideInterceptor(t *testing.T) {
 	})
 
 	t.Run("test valid domain for a gardener cluster", func(t *testing.T) {
-		//given
+		//givenOverrides
 		kubeClient := fake.NewSimpleClientset(gardenerCM)
 		ob.AddInterceptor([]string{"global.domainName"}, NewDomainNameOverrideInterceptor(kubeClient))
 
@@ -276,7 +276,7 @@ func Test_DomainNameOverrideInterceptor(t *testing.T) {
 	})
 
 	t.Run("test user-provided domain is overridden on gardener cluster", func(t *testing.T) {
-		// given
+		// givenOverrides
 		kubeClient := fake.NewSimpleClientset(gardenerCM)
 
 		ob := Builder{}
@@ -298,7 +298,7 @@ func Test_DomainNameOverrideInterceptor(t *testing.T) {
 	})
 
 	t.Run("test user-provided domain is not overridden on local cluster", func(t *testing.T) {
-		// given
+		// givenOverrides
 		kubeClient := fake.NewSimpleClientset()
 
 		ob := Builder{}
@@ -320,7 +320,7 @@ func Test_DomainNameOverrideInterceptor(t *testing.T) {
 	})
 
 	t.Run("test user-provided domain is not overridden on remote cluster", func(t *testing.T) {
-		// given
+		// givenOverrides
 		kubeClient := fake.NewSimpleClientset()
 
 		ob := Builder{}
@@ -350,7 +350,7 @@ func Test_CertificateOverridesInterception(t *testing.T) {
 	gardenerCM := fakeGardenerCM()
 
 	t.Run("test default cert for local cluster", func(t *testing.T) {
-		// given
+		// givenOverrides
 		kubeClient := fake.NewSimpleClientset()
 		interceptor := NewCertificateOverrideInterceptor("global.tlsCrt", "global.tlsKey", kubeClient)
 		interceptor.isLocalCluster = isLocalClusterFunc(true)
@@ -371,7 +371,7 @@ func Test_CertificateOverridesInterception(t *testing.T) {
 	})
 
 	t.Run("test default cert for remote non-gardener cluster", func(t *testing.T) {
-		// given
+		// givenOverrides
 		kubeClient := fake.NewSimpleClientset()
 		interceptor := NewCertificateOverrideInterceptor("global.tlsCrt", "global.tlsKey", kubeClient)
 		interceptor.isLocalCluster = isLocalClusterFunc(false)
@@ -394,7 +394,7 @@ func Test_CertificateOverridesInterception(t *testing.T) {
 	t.Run("test default cert is not set for a gardener cluster even if isLocalCluster returns true", func(t *testing.T) {
 		kubeClient := fake.NewSimpleClientset(gardenerCM)
 
-		// given
+		// givenOverrides
 		interceptor := NewCertificateOverrideInterceptor("global.tlsCrt", "global.tlsKey", kubeClient)
 		interceptor.isLocalCluster = isLocalClusterFunc(true)
 
@@ -411,7 +411,7 @@ func Test_CertificateOverridesInterception(t *testing.T) {
 	})
 
 	t.Run("test user-provided cert is reset to an empty string for a gardener cluster", func(t *testing.T) {
-		// given
+		// givenOverrides
 		kubeClient := fake.NewSimpleClientset(gardenerCM)
 		interceptor := NewCertificateOverrideInterceptor("global.tlsCrt", "global.tlsKey", kubeClient)
 		interceptor.isLocalCluster = isLocalClusterFunc(true)
@@ -439,7 +439,7 @@ func Test_CertificateOverridesInterception(t *testing.T) {
 
 	t.Run("test user-provided cert is preserved for a local cluster", func(t *testing.T) {
 
-		// given
+		// givenOverrides
 		kubeClient := fake.NewSimpleClientset()
 		interceptor := NewCertificateOverrideInterceptor("global.tlsCrt", "global.tlsKey", kubeClient)
 		interceptor.isLocalCluster = isLocalClusterFunc(true)
@@ -469,7 +469,7 @@ func Test_CertificateOverridesInterception(t *testing.T) {
 	})
 
 	t.Run("test user-provided cert is preserved for a remote non-gardener cluster", func(t *testing.T) {
-		// given
+		// givenOverrides
 		kubeClient := fake.NewSimpleClientset()
 		interceptor := NewCertificateOverrideInterceptor("global.tlsCrt", "global.tlsKey", kubeClient)
 		interceptor.isLocalCluster = isLocalClusterFunc(false)
@@ -498,7 +498,7 @@ func Test_CertificateOverridesInterception(t *testing.T) {
 	})
 
 	t.Run("test invalid crt key pair", func(t *testing.T) {
-		// given
+		// givenOverrides
 		kubeClient := fake.NewSimpleClientset()
 		interceptor := NewCertificateOverrideInterceptor("global.tlsCrt", "global.tlsKey", kubeClient)
 		interceptor.isLocalCluster = isLocalClusterFunc(true)
@@ -521,7 +521,7 @@ func Test_CertificateOverridesInterception(t *testing.T) {
 	})
 
 	t.Run("test invalid key format", func(t *testing.T) {
-		// given
+		// givenOverrides
 		kubeClient := fake.NewSimpleClientset()
 		interceptor := NewCertificateOverrideInterceptor("global.tlsCrt", "global.tlsKey", kubeClient)
 		interceptor.isLocalCluster = isLocalClusterFunc(true)
@@ -549,7 +549,7 @@ func Test_RegistryEnableOverrideInterception(t *testing.T) {
 	generalNode := fakeNode()
 
 	t.Run("test disable internal registry for k3d cluster", func(t *testing.T) {
-		// given
+		// givenOverrides
 		dockerRegistryOverrides := make(map[string]interface{})
 		dockerRegistryOverrides["enableInternal"] = "true"
 		serverlessOverrides := make(map[string]interface{})
@@ -570,7 +570,7 @@ func Test_RegistryEnableOverrideInterception(t *testing.T) {
 	})
 
 	t.Run("test preserve internal registry for non k3d cluster", func(t *testing.T) {
-		// given
+		// givenOverrides
 		dockerRegistryOverrides := make(map[string]interface{})
 		dockerRegistryOverrides["enableInternal"] = "true"
 		serverlessOverrides := make(map[string]interface{})
@@ -597,7 +597,7 @@ func Test_RegistryOverridesInterception(t *testing.T) {
 	generalNode := fakeNode()
 
 	t.Run("test getting k3d cluster name", func(t *testing.T) {
-		// given
+		// givenOverrides
 		kubeClient := fake.NewSimpleClientset(k3dNode)
 
 		// when
@@ -609,7 +609,7 @@ func Test_RegistryOverridesInterception(t *testing.T) {
 	})
 
 	t.Run("test registry address for k3d cluster if undefined", func(t *testing.T) {
-		// given
+		// givenOverrides
 		dockerRegistryOverrides := make(map[string]interface{})
 		dockerRegistryOverrides["enableInternal"] = "true"
 		serverlessOverrides := make(map[string]interface{})
@@ -633,7 +633,7 @@ func Test_RegistryOverridesInterception(t *testing.T) {
 	})
 
 	t.Run("test registry address for k3d cluster if overriden", func(t *testing.T) {
-		// given
+		// givenOverrides
 		dockerRegistryOverrides := make(map[string]interface{})
 		dockerRegistryOverrides["enableInternal"] = "true"
 		dockerRegistryOverrides["serverAddress"] = "serverAddress"
@@ -660,7 +660,7 @@ func Test_RegistryOverridesInterception(t *testing.T) {
 	})
 
 	t.Run("test preserve registry address for non k3d cluster", func(t *testing.T) {
-		// given
+		// givenOverrides
 		dockerRegistryOverrides := make(map[string]interface{})
 		dockerRegistryOverrides["enableInternal"] = "false"
 		dockerRegistryOverrides["serverAddress"] = "serverAddress"

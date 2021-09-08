@@ -138,21 +138,22 @@ func (o Overrides) Map() map[string]interface{} {
 	return copyMap(o.overrides)
 }
 
-func (o Overrides) FlattenOverrides() map[string]string {
+// FlattenedMap returns a copy of the overrides in flattened map form (nested keys are merged separated by dots)
+func (o Overrides) FlattenedMap() map[string]string {
 	return flattenOverrides(o.Map())
 }
 
 func flattenOverrides(overrides map[string]interface{}) map[string]string {
 	result := make(map[string]string)
 
-	for key, v := range overrides {
-		if valueAsMap, ok := v.(map[string]interface{}); ok {
+	for outerKey, outerValue := range overrides {
+		if valueAsMap, ok := outerValue.(map[string]interface{}); ok {
 			mapWithIncompleteKeys := flattenOverrides(valueAsMap)
-			for k1, v1 := range mapWithIncompleteKeys {
-				result[key+"."+k1] = v1
+			for innerKey, innerValue := range mapWithIncompleteKeys {
+				result[outerKey+"."+innerKey] = innerValue
 			}
 		} else {
-			result[key] = fmt.Sprintf("%v", v)
+			result[outerKey] = fmt.Sprint(outerValue)
 		}
 	}
 
@@ -187,12 +188,12 @@ func deepFind(m map[string]interface{}, path []string) (interface{}, bool) {
 	return v, ok
 }
 
-// setValue recursively traverses a map of maps and sets the given value in the given path separated by ".".
+// setValue recursively traverses a map of maps and sets the givenOverrides value in the givenOverrides path separated by ".".
 // Should the value type not be assignable to the path an error will be returned
 func setValue(m map[string]interface{}, path []string, value interface{}) error {
 	// if reached the end of the path it means the user is setting a map or path is wrong
 	if len(path) == 0 {
-		return errors.New("Error setting value, given key is a map")
+		return errors.New("Error setting value, givenOverrides key is a map")
 	}
 
 	if v, ok := m[path[0]].(map[string]interface{}); ok {

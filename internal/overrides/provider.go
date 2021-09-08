@@ -28,7 +28,7 @@ type defaultProvider struct {
 	log                          logger.Interface
 }
 
-//Provider defines the contract for reading overrides for a given Helm release.
+//Provider defines the contract for reading overrides for a givenOverrides Helm release.
 type Provider interface {
 	//OverridesGetterFunctionFor returns a function returning overrides for a Helm release with the provided name.
 	//Before using this function, ensure that the overrides cache is populated by calling the ReadOverridesFromCluster function.
