@@ -3,10 +3,11 @@ package deploy
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-project/cli/internal/coredns"
 	"io/fs"
 	"io/ioutil"
 	"strings"
+
+	"github.com/kyma-project/cli/internal/coredns"
 
 	"github.com/kyma-incubator/reconciler/pkg/cluster"
 	"github.com/kyma-incubator/reconciler/pkg/keb"
@@ -168,7 +169,7 @@ func (cmd *command) Run(o *Options) error {
 
 	workerFactory, _ := scheduler.NewLocalWorkerFactory(
 		&cluster.MockInventory{},
-		scheduler.NewDefaultOperationsRegistry(),
+		scheduler.NewInMemoryOperationsRegistry(),
 		func(component string, status reconciler.Status) {
 			fmt.Printf("Component %s has status %s\n", component, status)
 		},

@@ -26,7 +26,7 @@ require (
 	github.com/containerd/cgroups v0.0.0-20201119153540-4cbc285b3327 // indirect
 	github.com/daviddengcn/go-colortext v1.0.0
 	github.com/docker/cli v20.10.6+incompatible
-	github.com/docker/docker v20.10.6+incompatible
+	github.com/docker/docker v20.10.8+incompatible
 	github.com/fatih/color v1.10.0
 	github.com/imdario/mergo v0.3.12
 	github.com/kyma-incubator/hydroform/function v0.0.0-20210826095131-4e9bc77fbef2
@@ -34,7 +34,7 @@ require (
 	github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20210830114732-6a1c4ee2e1f4
 	github.com/kyma-incubator/hydroform/provision v0.0.0-20210514061348-c71b69cb362e
 	github.com/kyma-incubator/octopus v0.0.0-20200922132758-2b721e93b58b
-	github.com/kyma-incubator/reconciler v0.0.0-20210903133948-88919234f0d0
+	github.com/kyma-incubator/reconciler v0.0.0-20210907104149-d9706508601a
 	github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20201125092745-687c943ac940
 	github.com/magiconair/properties v1.8.5
 	github.com/moby/sys/mount v0.2.0 // indirect
