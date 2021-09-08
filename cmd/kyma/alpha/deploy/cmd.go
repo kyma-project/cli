@@ -78,23 +78,6 @@ func NewCmd(o *Options) *cobra.Command {
 	return cobraCmd
 }
 
-func componentsFromStrings(components []string, overrides map[string]string) []keb.Components {
-	var results []keb.Components
-	for _, componentWithNs := range components {
-		tokens := strings.Split(componentWithNs, "@")
-		component := keb.Components{Component: tokens[0], Namespace: tokens[1]}
-
-		for k, v := range overrides {
-			overrideComponent := strings.Split(k, ".")[0]
-			if overrideComponent == component.Component || overrideComponent == "global" {
-				component.Configuration = append(component.Configuration, keb.Configuration{Key: k, Value: v})
-			}
-		}
-		results = append(results, component)
-	}
-	return results
-}
-
 func (cmd *command) Run(o *Options) error {
 	var err error
 
@@ -235,6 +218,24 @@ func (cmd *command) deployKyma(ovs overrides.Overrides) error {
 		return errors.Wrap(err, "Failed to deploy Kyma")
 	}
 	return nil
+}
+
+
+func componentsFromStrings(components []string, overrides map[string]string) []keb.Components {
+	var results []keb.Components
+	for _, componentWithNs := range components {
+		tokens := strings.Split(componentWithNs, "@")
+		component := keb.Components{Component: tokens[0], Namespace: tokens[1]}
+
+		for k, v := range overrides {
+			overrideComponent := strings.Split(k, ".")[0]
+			if overrideComponent == component.Component || overrideComponent == "global" {
+				component.Configuration = append(component.Configuration, keb.Configuration{Key: k, Value: v})
+			}
+		}
+		results = append(results, component)
+	}
+	return results
 }
 
 // avoidUserInteraction returns true if user won't provide input
