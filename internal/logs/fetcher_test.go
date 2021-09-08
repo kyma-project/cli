@@ -16,6 +16,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
+	coreapplyv1 "k8s.io/client-go/applyconfigurations/core/v1"
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/util/flowcontrol"
@@ -150,6 +151,14 @@ func newFakePodsGetter(t *testing.T, pod v1.Pod, podlogs string) (*fakePodGetter
 func (f *fakePodGetter) Pods(namespace string) corev1.PodInterface {
 	f.podNamespace = namespace
 	return f
+}
+
+func (f *fakePodGetter) Apply(ctx context.Context, pod *coreapplyv1.PodApplyConfiguration, opts metav1.ApplyOptions) (result *v1.Pod, err error) {
+	panic("implement me")
+}
+
+func (f *fakePodGetter) ApplyStatus(ctx context.Context, pod *coreapplyv1.PodApplyConfiguration, opts metav1.ApplyOptions) (result *v1.Pod, err error) {
+	panic("implement me")
 }
 
 func (f *fakePodGetter) Get(ctx context.Context, name string, opts metav1.GetOptions) (*v1.Pod, error) {
