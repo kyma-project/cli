@@ -55,7 +55,7 @@ var defaultComponents = []string{
 
 type command struct {
 	cli.Command
-	opts     *Options
+	opts *Options
 }
 
 //NewCmd creates a new deploy command
