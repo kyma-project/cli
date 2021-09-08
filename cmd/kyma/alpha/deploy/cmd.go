@@ -3,9 +3,12 @@ package deploy
 import (
 	"context"
 	"fmt"
+	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
+	"go.uber.org/zap"
 	"io/fs"
 	"io/ioutil"
 	"os"
+	"path"
 	"strings"
 	"time"
 
@@ -18,7 +21,6 @@ import (
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/service"
 	"github.com/kyma-incubator/reconciler/pkg/scheduler"
 	"github.com/kyma-project/cli/internal/cli"
-	"github.com/kyma-project/cli/internal/download"
 	"github.com/kyma-project/cli/internal/files"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/overrides"
@@ -29,6 +31,28 @@ import (
 	//Register all reconcilers
 	_ "github.com/kyma-incubator/reconciler/pkg/reconciler/instances"
 )
+
+const defaultVersion = "main"
+const defaultProfile = "evaluation"
+var defaultComponents = []string{
+	"cluster-essentials@kyma-system",
+	"istio@istio-system",
+	"certificates@istio-system",
+	"logging@kyma-system",
+	"tracing@kyma-system",
+	"kiali@kyma-system",
+	"monitoring@kyma-system",
+	"eventing@kyma-system",
+	"ory@kyma-system",
+	"api-gateway@kyma-system",
+	"service-catalog@kyma-system",
+	"service-catalog-addons@kyma-system",
+	"rafter@kyma-system",
+	"helm-broker@kyma-system",
+	"cluster-users@kyma-system",
+	"serverless@kyma-system",
+	"application-connector@kyma-integration",
+}
 
 type command struct {
 	cli.Command
@@ -54,51 +78,25 @@ func NewCmd(o *Options) *cobra.Command {
 	return cobraCmd
 }
 
-func componentsFromStrings(list []string, overrides map[string]string) []keb.Components {
-	var components []keb.Components
-	for _, item := range list {
-		s := strings.Split(item, "@")
-
-		component := keb.Components{Component: s[0], Namespace: s[1]}
+func componentsFromStrings(components []string, overrides map[string]string) []keb.Components {
+	var results []keb.Components
+	for _, componentWithNs := range components {
+		tokens := strings.Split(componentWithNs, "@")
+		component := keb.Components{Component: tokens[0], Namespace: tokens[1]}
 
 		for k, v := range overrides {
 			overrideComponent := strings.Split(k, ".")[0]
-			if overrideComponent == s[0] || overrideComponent == "global" {
+			if overrideComponent == component.Component || overrideComponent == "global" {
 				component.Configuration = append(component.Configuration, keb.Configuration{Key: k, Value: v})
 			}
 		}
-		components = append(components, component)
+		results = append(results, component)
 	}
-	return components
-}
-
-func defaultComponentList(overrides map[string]string) []keb.Components {
-	defaultComponents := []string{
-		"cluster-essentials@kyma-system",
-		"istio@istio-system",
-		"certificates@istio-system",
-		"logging@kyma-system",
-		"tracing@kyma-system",
-		"kiali@kyma-system",
-		"monitoring@kyma-system",
-		"eventing@kyma-system",
-		"ory@kyma-system",
-		"api-gateway@kyma-system",
-		"service-catalog@kyma-system",
-		"service-catalog-addons@kyma-system",
-		"rafter@kyma-system",
-		"helm-broker@kyma-system",
-		"cluster-users@kyma-system",
-		"serverless@kyma-system",
-		"application-connector@kyma-integration"}
-	return componentsFromStrings(defaultComponents, overrides)
+	return results
 }
 
 func (cmd *command) Run(o *Options) error {
-
 	var err error
-
-	start := time.Now()
 
 	if cmd.opts.CI {
 		cmd.Factory.NonInteractive = true
@@ -111,30 +109,83 @@ func (cmd *command) Run(o *Options) error {
 		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
 	}
 
-	overridesBuilder := &overrides.Builder{}
-
-	kymaHome, err := files.KymaHome()
+	ws, err := cmd.loadWorkspace()
 	if err != nil {
-		return errors.Wrap(err, "Could not find or create Kyma home directory")
+		return err
 	}
 
-	valuesPath, err := download.GetFile("https://raw.githubusercontent.com/kyma-project/kyma/main/installation/resources/values.yaml", kymaHome)
+	ovs, err := cmd.buildOverrides(ws)
+	if err != nil {
+		return err
+	}
 
+	isK3d, err := overrides.IsK3dCluster(cmd.K8s.Static())
+	if err != nil {
+		return err
+	}
+
+	if _, err := coredns.Patch(cmd.K8s.Static(), ovs, isK3d); err != nil {
+		return err
+	}
+
+	err = cmd.deployKyma(ovs)
+	if err != nil {
+		return err
+	}
+
+	if err := cmd.importCertificate(); err != nil {
+		return err
+	}
+
+	// TODO: print summary after deploy
+
+	return nil
+}
+
+func (cmd *command) loadWorkspace() (*workspace.Workspace, error) {
+	downloadStep := cmd.NewStep(fmt.Sprintf("Downloading Kyma (%s) into workspace folder ", defaultVersion))
+
+	workspaceDir, err := files.KymaHome()
+	if err != nil {
+		return nil, errors.Wrap(err, "Could not create Kyma home directory")
+	}
+
+	//use a global workspace factory to ensure all component-reconcilers are using the same workspace-directory
+	//(otherwise each component-reconciler would handle the download of Kyma resources individually which will cause
+	//collisions when sharing the same directory)
+	factory, err := workspace.NewFactory(workspaceDir, zap.NewNop().Sugar())
+	if err != nil {
+		return nil, err
+	}
+
+	err = service.UseGlobalWorkspaceFactory(factory)
+	if err != nil {
+		return nil, err
+	}
+
+	ws, err := factory.Get(defaultVersion)
+	if err != nil{
+		return nil, err
+	}
+
+	downloadStep.Successf("Kyma downloaded into workspace folder")
+
+	return ws, nil
+}
+
+func (cmd *command) buildOverrides(workspace *workspace.Workspace) (overrides.Overrides, error) {
 	overridesStep := cmd.NewStep("Applying Kyma2 overrides")
-	if err = overridesBuilder.AddFile(valuesPath); err != nil {
+
+	overridesBuilder := &overrides.Builder{}
+
+	kyma2OverridesPath := path.Join(workspace.InstallationResourceDir, "values.yaml")
+
+	if err := overridesBuilder.AddFile(kyma2OverridesPath); err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			overridesStep.LogInfof("Kyma2 override path not found but continuing: %s", err)
 		} else {
-			return errors.Wrap(err, "Could not add overrides for Kyma 2.0")
+			return overrides.Overrides{}, errors.Wrap(err, "Could not add overrides for Kyma 2.0")
 		}
-	}
-	overridesStep.Success()
-
-	kubecfgFile := kube.KubeconfigPath(cmd.KubeconfigPath)
-
-	_, err = service.NewComponentReconciler("base") // Why? -Maybe not needed
-	if err != nil {
-		return err
 	}
 
 	overridesBuilder.AddInterceptor([]string{"global.domainName", "global.ingress.domainName"}, overrides.NewDomainNameOverrideInterceptor(cmd.K8s.Static()))
@@ -142,56 +193,47 @@ func (cmd *command) Run(o *Options) error {
 	overridesBuilder.AddInterceptor([]string{"serverless.dockerRegistry.internalServerAddress", "serverless.dockerRegistry.serverAddress", "serverless.dockerRegistry.registryAddress"}, overrides.NewRegistryInterceptor(cmd.K8s.Static()))
 	overridesBuilder.AddInterceptor([]string{"serverless.dockerRegistry.enableInternal"}, overrides.NewRegistryDisableInterceptor(cmd.K8s.Static()))
 
-	isK3d, err := overrides.IsK3dCluster(cmd.K8s.Static())
+	ovs, err := overridesBuilder.Build()
 	if err != nil {
-		return err
+		return overrides.Overrides{}, err
 	}
 
-	if _, err := coredns.Patch(cmd.K8s.Static(), overridesBuilder, isK3d); err != nil {
-		return err
-	}
+	overridesStep.Success()
+	return ovs, err
+}
 
-	nestedOverrides, err := overridesBuilder.Build()
+func (cmd *command) deployKyma(ovs overrides.Overrides) error {
+	kubeconfigPath := kube.KubeconfigPath(cmd.KubeconfigPath)
+	kubeconfig, err := ioutil.ReadFile(kubeconfigPath)
 	if err != nil {
-		return err
-	}
-	fmt.Printf("\nNestedOverrides: %#v", nestedOverrides)
-
-	kubecfg, _ := ioutil.ReadFile(kubecfgFile)
-	kebCluster := keb.Cluster{
-		Kubeconfig: string(kubecfg),
-		KymaConfig: keb.KymaConfig{
-			Version:    "main",
-			Profile:    "evaluation",
-			Components: defaultComponentList(nestedOverrides.FlattenedMap()),
-		},
+		return errors.Wrap(err, "Could not read kubeconfig")
 	}
 
-	workerFactory, _ := scheduler.NewLocalWorkerFactory(
+	workerFactory, err := scheduler.NewLocalWorkerFactory(
 		&cluster.MockInventory{},
 		scheduler.NewInMemoryOperationsRegistry(),
 		func(component string, status reconciler.Status) {
 			fmt.Printf("Component %s has status %s\n", component, status)
 		},
 		true)
+	if err != nil {
+		return errors.Wrap(err, "Could instantiate worker factory")
+	}
 
 	localScheduler := scheduler.NewLocalScheduler(workerFactory,
 		scheduler.WithPrerequisites("cluster-essentials", "istio", "certificates"),
 		scheduler.WithCRDComponents("cluster-essentials", "istio"))
-	err = localScheduler.Run(context.TODO(), &kebCluster)
+	err = localScheduler.Run(context.TODO(), &keb.Cluster{
+		Kubeconfig: string(kubeconfig),
+		KymaConfig: keb.KymaConfig{
+			Version:    defaultVersion,
+			Profile:    defaultProfile,
+			Components: componentsFromStrings(defaultComponents, ovs.FlattenedMap()),
+		},
+	})
 	if err != nil {
-		return err
+		return errors.Wrap(err, "Failed to deploy Kyma")
 	}
-
-	// import certificates
-	if err := cmd.importCertificate(); err != nil {
-		return err
-	}
-
-	// TODO: print summary after deploy
-
-	cmd.duration = time.Since(start)
-
 	return nil
 }
 

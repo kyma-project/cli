@@ -54,8 +54,8 @@ const (
 	coreDNSRemoteDomainName = `(.*)\.kyma\.example\.com`
 )
 
-// Patch patches the CoreDNS cnfiguration based on the overrides and the cloud provider.
-func Patch(kubeClient kubernetes.Interface, overrides *overrides.Builder, isK3d bool) (cm *v1.ConfigMap, err error) {
+// Patch patches the CoreDNS configuration based on the overrides and the cloud provider.
+func Patch(kubeClient kubernetes.Interface, overrides overrides.Overrides, isK3d bool) (cm *v1.ConfigMap, err error) {
 	err = retry.Do(func() error {
 		_, err := kubeClient.AppsV1().Deployments("kube-system").Get(context.TODO(), "coredns", metav1.GetOptions{})
 		if err != nil {
@@ -133,18 +133,17 @@ func newCoreDNSConfigMap(data map[string]string) *v1.ConfigMap {
 	}
 }
 
-func generatePatches(kubeClient kubernetes.Interface, overrides *overrides.Builder, isK3s bool) (map[string]string, error) {
+func generatePatches(kubeClient kubernetes.Interface, overrides overrides.Overrides, isK3s bool) (map[string]string, error) {
 	patches := make(map[string]string)
 	// patch the CoreFile only if not on gardener and no custom domain is provided
 	gardenerDomain, err := gardener.Domain(kubeClient)
 	if err != nil {
 		return nil, err
 	}
-	o, err := overrides.Raw()
 	if err != nil {
 		return nil, err
 	}
-	_, hasCustomDomain := o.Find("global.domainName")
+	_, hasCustomDomain := overrides.Find("global.domainName")
 	if gardenerDomain == "" && !hasCustomDomain {
 		var domainName string
 		if isK3s {
