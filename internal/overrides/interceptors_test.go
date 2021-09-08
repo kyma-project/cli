@@ -632,7 +632,7 @@ func Test_RegistryOverridesInterception(t *testing.T) {
 		require.Equal(t, "k3d-kyma-registry:5000", getOverride(overrides.Map(), "serverless.dockerRegistry.registryAddress"))
 	})
 
-	t.Run("test registry address for k3d cluster if overriden", func(t *testing.T) {
+	t.Run("test registry address for k3d cluster if overridden", func(t *testing.T) {
 		// givenOverrides
 		dockerRegistryOverrides := make(map[string]interface{})
 		dockerRegistryOverrides["enableInternal"] = "true"

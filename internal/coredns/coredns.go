@@ -102,10 +102,10 @@ func doPatch(kubeClient kubernetes.Interface, patches map[string]string) (cm *v1
 	if exists {
 		//log.Info("Patching CoreDNS config")
 		return patchCoreDNSConfigMap(configMaps, coreDNSConfigMap, patches)
-	} else {
-		//log.Info("Corefile not found, creating new CoreDNS config")
-		return createCoreDNSConfigMap(configMaps, patches)
 	}
+
+	//log.Info("Corefile not found, creating new CoreDNS config")
+	return createCoreDNSConfigMap(configMaps, patches)
 }
 
 func patchCoreDNSConfigMap(configMaps corev1.ConfigMapInterface, coreDNSConfigMap *v1.ConfigMap, patch map[string]string) (cm *v1.ConfigMap, err error) {
@@ -190,7 +190,7 @@ func generateCorefile(domainName string) (coreFile string, err error) {
 }
 
 func generateHosts(kubeClient kubernetes.Interface) (string, error) {
-	clusterName, err := k3d.K3dClusterName(kubeClient)
+	clusterName, err := k3d.ClusterName(kubeClient)
 	if err != nil {
 		return "", err
 	}
@@ -216,9 +216,6 @@ func generateHosts(kubeClient kubernetes.Interface) (string, error) {
 
 }
 
-// Abstract the docker container inspect to be able to test the k3s coreDNS patching
-type containerInspector func(ctx context.Context, containerID string) (dockerTypes.ContainerJSON, error)
-
 // the defaultInspector uses the standard docker client to get container information from the daemon in the local ENV
 var defaultInspector = func(ctx context.Context, containerID string) (dockerTypes.ContainerJSON, error) {
 	client, err := docker.NewClientWithOpts(docker.FromEnv)
@@ -238,7 +235,7 @@ func k3sRegistryIP(cluster string) (string, error) {
 
 	net, exists := c.NetworkSettings.Networks[fmt.Sprintf("k3d-%s", cluster)]
 	if !exists {
-		return "", errors.New("Could not find network settings in k3s registry.")
+		return "", errors.New("could not find network settings in k3s registry")
 	}
 
 	if net.IPAddress == "" {

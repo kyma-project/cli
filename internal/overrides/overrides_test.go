@@ -69,12 +69,12 @@ func Test_AddOverrides(t *testing.T) {
 func Test_FlattenedMap(t *testing.T) {
 	testCases := []struct {
 		summary        string
-		givenChart string
+		givenChart     string
 		givenOverrides map[string]interface{}
 		expected       map[string]string
 	}{
 		{
-			summary: "leave key",
+			summary:    "leave key",
 			givenChart: "xyz",
 			givenOverrides: map[string]interface{}{
 				"key": "value",
@@ -84,7 +84,7 @@ func Test_FlattenedMap(t *testing.T) {
 			},
 		},
 		{
-			summary: "single nested key",
+			summary:    "single nested key",
 			givenChart: "xyz",
 			givenOverrides: map[string]interface{}{
 				"key": map[string]interface{}{
@@ -96,7 +96,7 @@ func Test_FlattenedMap(t *testing.T) {
 			},
 		},
 		{
-			summary: "multiple nested keys",
+			summary:    "multiple nested keys",
 			givenChart: "xyz",
 			givenOverrides: map[string]interface{}{
 				"global": map[string]interface{}{
@@ -109,9 +109,9 @@ func Test_FlattenedMap(t *testing.T) {
 				"cluster-users": map[string]interface{}{"users": map[string]interface{}{"bindStaticUsers": false}},
 			},
 			expected: map[string]string{
-				"xyz.global.domainName": "local.kyma.dev",
-				"xyz.global.ingress.domainName": "local.kyma.dev",
-				"xyz.global.installCRDs": "false",
+				"xyz.global.domainName":                   "local.kyma.dev",
+				"xyz.global.ingress.domainName":           "local.kyma.dev",
+				"xyz.global.installCRDs":                  "false",
 				"xyz.cluster-users.users.bindStaticUsers": "false",
 			},
 		},

@@ -34,6 +34,7 @@ import (
 
 const defaultVersion = "main"
 const defaultProfile = "evaluation"
+
 var defaultComponents = []string{
 	"cluster-essentials@kyma-system",
 	"istio@istio-system",
@@ -57,7 +58,6 @@ var defaultComponents = []string{
 type command struct {
 	cli.Command
 	opts     *Options
-	duration time.Duration
 }
 
 //NewCmd creates a new deploy command
@@ -142,7 +142,7 @@ func (cmd *command) loadWorkspace() (*workspace.Workspace, error) {
 	}
 
 	ws, err := factory.Get(defaultVersion)
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 
@@ -214,7 +214,6 @@ func (cmd *command) deployKyma(ovs overrides.Overrides) error {
 	}
 	return nil
 }
-
 
 func componentsFromStrings(components []string, overrides map[string]string) []keb.Components {
 	var results []keb.Components

@@ -351,7 +351,7 @@ func (i *RegistryInterceptor) Undefined(overrides map[string]interface{}, key st
 		return err
 	}
 	if k3dCluster {
-		k3dClusterName, err := k3d.K3dClusterName(i.kubeClient)
+		k3dClusterName, err := k3d.ClusterName(i.kubeClient)
 		if err != nil {
 			return err
 		}

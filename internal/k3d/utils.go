@@ -46,8 +46,8 @@ func IsK3dCluster(kubeClient kubernetes.Interface) (isK3d bool, err error) {
 	return isK3d, nil
 }
 
-// K3dClusterName finds out the name of the cluster accessible via the kubeclient if it is a k3d cluster.
-func K3dClusterName(kubeClient kubernetes.Interface) (k3dName string, err error) {
+// ClusterName finds out the name of the cluster accessible via the kubeclient if it is a k3d cluster.
+func ClusterName(kubeClient kubernetes.Interface) (k3dName string, err error) {
 	retryOptions := []retry.Option{
 		retry.Delay(2 * time.Second),
 		retry.Attempts(3),

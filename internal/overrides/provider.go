@@ -8,14 +8,8 @@ import (
 	"fmt"
 
 	"github.com/kyma-incubator/hydroform/parallel-install/pkg/logger"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
-
-const logPrefix = "[overrides/overrides.go]"
-
-var commonListOpts = metav1.ListOptions{LabelSelector: "installer=overrides, !component"}
-var componentListOpts = metav1.ListOptions{LabelSelector: "installer=overrides, component"}
 
 //Provider type caches overrides for further use.
 //It contains overrides from the cluster and the manually-provided ones.
