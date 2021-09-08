@@ -4,16 +4,14 @@ import (
 	"context"
 	"fmt"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
+	"github.com/kyma-project/cli/internal/coredns"
+	"github.com/kyma-project/cli/pkg/step"
 	"go.uber.org/zap"
 	"io/fs"
 	"io/ioutil"
 	"os"
 	"path"
 	"strings"
-	"time"
-
-	"github.com/kyma-project/cli/internal/coredns"
-	"github.com/kyma-project/cli/pkg/step"
 
 	"github.com/kyma-incubator/reconciler/pkg/cluster"
 	"github.com/kyma-incubator/reconciler/pkg/keb"
@@ -102,7 +100,7 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	if _, err := coredns.Patch(cmd.K8s.Static(), ovs); err != nil {
+	if _, err := coredns.Patch(zap.NewNop(), cmd.K8s.Static(), ovs); err != nil {
 		return err
 	}
 

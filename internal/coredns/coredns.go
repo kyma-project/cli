@@ -9,6 +9,7 @@ import (
 	"github.com/kyma-project/cli/internal/gardener"
 	"github.com/kyma-project/cli/internal/k3d"
 	"github.com/kyma-project/cli/internal/overrides"
+	"go.uber.org/zap"
 	"html/template"
 	"time"
 
@@ -56,7 +57,7 @@ const (
 )
 
 // Patch patches the CoreDNS configuration based on the overrides and the cloud provider.
-func Patch(kubeClient kubernetes.Interface, overrides overrides.Overrides) (cm *v1.ConfigMap, err error) {
+func Patch(logger *zap.Logger, kubeClient kubernetes.Interface, overrides overrides.Overrides) (cm *v1.ConfigMap, err error) {
 	isK3d, err := k3d.IsK3dCluster(kubeClient)
 	if err != nil {
 		return nil, err
@@ -66,19 +67,19 @@ func Patch(kubeClient kubernetes.Interface, overrides overrides.Overrides) (cm *
 		_, err := kubeClient.AppsV1().Deployments("kube-system").Get(context.TODO(), "coredns", metav1.GetOptions{})
 		if err != nil {
 			if apierr.IsNotFound(err) {
-				//log.Info("CoreDNS not found, skipping CoreDNS config patch")
+				logger.Info("CoreDNS not found, skipping CoreDNS config patch")
 				return nil
 			}
 			return err
 		}
 
-		// patches contains each key and value that needs to be patched in the coredns configmap data field.
-		patches, err := generatePatches(kubeClient, overrides, isK3d)
+		// patches contain each key and value that needs to be patched in the coredns configmap data field.
+		patches, err := generatePatches(logger, kubeClient, overrides, isK3d)
 		if err != nil {
 			return err
 		}
 		if len(patches) != 0 {
-			cm, err = doPatch(kubeClient, patches)
+			cm, err = doPatch(logger, kubeClient, patches)
 			return err
 		}
 		return nil
@@ -87,7 +88,7 @@ func Patch(kubeClient kubernetes.Interface, overrides overrides.Overrides) (cm *
 	return
 }
 
-func doPatch(kubeClient kubernetes.Interface, patches map[string]string) (cm *v1.ConfigMap, err error) {
+func doPatch(logger *zap.Logger, kubeClient kubernetes.Interface, patches map[string]string) (cm *v1.ConfigMap, err error) {
 	configMaps := kubeClient.CoreV1().ConfigMaps("kube-system")
 	coreDNSConfigMap, err := configMaps.Get(context.TODO(), "coredns", metav1.GetOptions{})
 	exists := true
@@ -100,15 +101,15 @@ func doPatch(kubeClient kubernetes.Interface, patches map[string]string) (cm *v1
 	}
 
 	if exists {
-		//log.Info("Patching CoreDNS config")
-		return patchCoreDNSConfigMap(configMaps, coreDNSConfigMap, patches)
+		logger.Info("Patching CoreDNS config")
+		return patchCoreDNSConfigMap(logger, configMaps, coreDNSConfigMap, patches)
 	}
 
-	//log.Info("Corefile not found, creating new CoreDNS config")
-	return createCoreDNSConfigMap(configMaps, patches)
+	logger.Info("Corefile not found, creating new CoreDNS config")
+	return createCoreDNSConfigMap(logger, configMaps, patches)
 }
 
-func patchCoreDNSConfigMap(configMaps corev1.ConfigMapInterface, coreDNSConfigMap *v1.ConfigMap, patch map[string]string) (cm *v1.ConfigMap, err error) {
+func patchCoreDNSConfigMap(logger *zap.Logger, configMaps corev1.ConfigMapInterface, coreDNSConfigMap *v1.ConfigMap, patch map[string]string) (cm *v1.ConfigMap, err error) {
 	for k, v := range patch {
 		coreDNSConfigMap.Data[k] = v
 	}
@@ -119,15 +120,15 @@ func patchCoreDNSConfigMap(configMaps corev1.ConfigMapInterface, coreDNSConfigMa
 
 	cm, err = configMaps.Patch(context.TODO(), "coredns", types.StrategicMergePatchType, jsontext, metav1.PatchOptions{})
 	if err != nil {
-		//log.Error("Could not patch CoreDNS config")
+		logger.Error("Could not patch CoreDNS config")
 	}
 	return
 }
 
-func createCoreDNSConfigMap(configMaps corev1.ConfigMapInterface, patch map[string]string) (cm *v1.ConfigMap, err error) {
+func createCoreDNSConfigMap(logger *zap.Logger, configMaps corev1.ConfigMapInterface, patch map[string]string) (cm *v1.ConfigMap, err error) {
 	cm, err = configMaps.Create(context.TODO(), newCoreDNSConfigMap(patch), metav1.CreateOptions{})
 	if err != nil {
-		//log.Error("Could not create new CoreDNS config")
+		logger.Error("Could not create new CoreDNS config")
 	}
 	return
 }
@@ -139,7 +140,7 @@ func newCoreDNSConfigMap(data map[string]string) *v1.ConfigMap {
 	}
 }
 
-func generatePatches(kubeClient kubernetes.Interface, overrides overrides.Overrides, isK3s bool) (map[string]string, error) {
+func generatePatches(logger *zap.Logger, kubeClient kubernetes.Interface, overrides overrides.Overrides, isK3s bool) (map[string]string, error) {
 	patches := make(map[string]string)
 	// patch the CoreFile only if not on gardener and no custom domain is provided
 	gardenerDomain, err := gardener.Domain(kubeClient)
