@@ -213,7 +213,7 @@ func (cmd *command) printDeployStatus(component string, msg *reconciler.Callback
 	fmt.Printf("Component %s has status %s\n", component, msg.Status)
 }
 
-func componentsFromStrings(components []string, overrides map[string]string) []keb.Components {
+func componentsFromStrings(components []string, overrides map[string]interface{}) []keb.Components {
 	var results []keb.Components
 	for _, componentWithNs := range components {
 		tokens := strings.Split(componentWithNs, "@")
