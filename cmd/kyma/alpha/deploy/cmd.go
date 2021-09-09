@@ -194,8 +194,8 @@ func (cmd *command) deployKyma(ovs overrides.Overrides) error {
 	workerFactory, err := scheduler.NewLocalWorkerFactory(
 		&cluster.MockInventory{},
 		scheduler.NewInMemoryOperationsRegistry(),
-		func(component string, status reconciler.Status) {
-			fmt.Printf("Component %s has status %s\n", component, status)
+		func(component string, msg *reconciler.CallbackMessage) {
+			fmt.Printf("Component %s has status %s\n", component, msg.Status)
 		},
 		true)
 	if err != nil {
