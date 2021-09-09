@@ -10,9 +10,6 @@ import (
 	"go.uber.org/zap"
 	"io/fs"
 	"io/ioutil"
-	"os"
-	"path"
-	"strings"
 
 	"github.com/kyma-incubator/reconciler/pkg/cluster"
 	"github.com/kyma-incubator/reconciler/pkg/keb"
@@ -20,12 +17,11 @@ import (
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/service"
 	"github.com/kyma-incubator/reconciler/pkg/scheduler"
 	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/components"
+	"github.com/kyma-project/cli/internal/download"
 	"github.com/kyma-project/cli/internal/files"
-	"github.com/kyma-project/cli/internal/kube"
-	"github.com/kyma-project/cli/internal/overrides"
 	"github.com/kyma-project/cli/internal/trust"
 	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
 
 	//Register all reconcilers
 	_ "github.com/kyma-incubator/reconciler/pkg/reconciler/instances"
@@ -74,7 +70,21 @@ func NewCmd(o *Options) *cobra.Command {
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run(cmd.opts) },
 		Aliases: []string{"d"},
 	}
+	cobraCmd.Flags().StringSliceVarP(&o.Components, "component", "", []string{}, "Provide one or more components to deploy (e.g. --component componentName@namespace)")
+	cobraCmd.Flags().StringVarP(&o.ComponentsFile, "components-file", "c", "", `Path to the components file (default "$HOME/.kyma/sources/installation/resources/components.yaml" or ".kyma-sources/installation/resources/components.yaml")`)
 	return cobraCmd
+}
+
+
+
+func (cmd *command) createComplist(overrides map[string]string) ([]keb.Components) {
+	if len(cmd.opts.Components) > 0 {
+		return components.ComponentsFromStrings(cmd.opts.Components, overrides)
+	}
+	compFile, _ := cmd.opts.ResolveComponentsFile()
+	compList, _ := components.NewComponentList(compFile, overrides)
+
+	return  compList
 }
 
 func (cmd *command) Run(o *Options) error {
@@ -148,6 +158,14 @@ func (cmd *command) loadWorkspace() (*workspace.Workspace, error) {
 	ws, err := factory.Get(defaultVersion)
 	if err != nil {
 		return nil, err
+	kubecfg, _ := ioutil.ReadFile(kubecfgFile)
+	kebCluster := keb.Cluster{
+		Kubeconfig: string(kubecfg),
+		KymaConfig: keb.KymaConfig{
+			Version:    "main",
+			Profile:    "evaluation",
+			Components: cmd.createComplist(flattenedOverrides),
+		},
 	}
 
 	downloadStep.Successf("Kyma downloaded into workspace folder")
