@@ -203,8 +203,8 @@ func (cmd *command) deployKyma(ovs overrides.Overrides) error {
 	}
 
 	localScheduler := scheduler.NewLocalScheduler(workerFactory,
-		scheduler.WithPrerequisites("cluster-essentials", "istio", "certificates"),
-		scheduler.WithCRDComponents("cluster-essentials", "istio"))
+		scheduler.WithCRDComponents("cluster-essentials"),
+		scheduler.WithPrerequisites("istio", "certificates"))
 	err = localScheduler.Run(context.TODO(), &keb.Cluster{
 		Kubeconfig: string(kubeconfig),
 		KymaConfig: keb.KymaConfig{
