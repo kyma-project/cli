@@ -3,25 +3,30 @@ package deploy
 import (
 	"context"
 	"fmt"
+	"github.com/kyma-incubator/reconciler/pkg/cluster"
+	"github.com/kyma-incubator/reconciler/pkg/reconciler"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
+	"github.com/kyma-incubator/reconciler/pkg/scheduler"
 	"github.com/kyma-project/cli/internal/coredns"
 	"github.com/kyma-project/cli/internal/k3d"
+	"github.com/kyma-project/cli/internal/trust"
 	"github.com/kyma-project/cli/pkg/step"
 	"go.uber.org/zap"
 	"io/fs"
 	"io/ioutil"
+	"os"
+	"path"
+	"strings"
 
-	"github.com/kyma-incubator/reconciler/pkg/cluster"
 	"github.com/kyma-incubator/reconciler/pkg/keb"
-	"github.com/kyma-incubator/reconciler/pkg/reconciler"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/service"
-	"github.com/kyma-incubator/reconciler/pkg/scheduler"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/components"
-	"github.com/kyma-project/cli/internal/download"
 	"github.com/kyma-project/cli/internal/files"
-	"github.com/kyma-project/cli/internal/trust"
+	"github.com/kyma-project/cli/internal/kube"
+	"github.com/kyma-project/cli/internal/overrides"
 	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
 
 	//Register all reconcilers
 	_ "github.com/kyma-incubator/reconciler/pkg/reconciler/instances"
@@ -77,14 +82,18 @@ func NewCmd(o *Options) *cobra.Command {
 
 
 
-func (cmd *command) createComplist(overrides map[string]string) ([]keb.Components) {
+func (cmd *command) createComplist(ws *workspace.Workspace,  overrides map[string]string) ([]keb.Components, error) {
+	var compList []keb.Components
 	if len(cmd.opts.Components) > 0 {
-		return components.ComponentsFromStrings(cmd.opts.Components, overrides)
+		compList = components.ComponentsFromStrings(cmd.opts.Components, overrides)
+		return compList , nil
 	}
-	compFile, _ := cmd.opts.ResolveComponentsFile()
-	compList, _ := components.NewComponentList(compFile, overrides)
-
-	return  compList
+	compFile := cmd.opts.ResolveComponentsFile(ws)
+	compList, err := components.NewComponentList(compFile, overrides)
+	if err != nil {
+			return compList, err
+	}
+	return  compList, nil
 }
 
 func (cmd *command) Run(o *Options) error {
@@ -120,7 +129,12 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	err = cmd.deployKyma(ovs)
+	comps, err := cmd.createComplist(ws, ovs.FlattenedMap())
+	if err != nil {
+		return err
+	}
+
+	err = cmd.deployKyma(comps)
 	if err != nil {
 		return err
 	}
@@ -158,14 +172,6 @@ func (cmd *command) loadWorkspace() (*workspace.Workspace, error) {
 	ws, err := factory.Get(defaultVersion)
 	if err != nil {
 		return nil, err
-	kubecfg, _ := ioutil.ReadFile(kubecfgFile)
-	kebCluster := keb.Cluster{
-		Kubeconfig: string(kubecfg),
-		KymaConfig: keb.KymaConfig{
-			Version:    "main",
-			Profile:    "evaluation",
-			Components: cmd.createComplist(flattenedOverrides),
-		},
 	}
 
 	downloadStep.Successf("Kyma downloaded into workspace folder")
@@ -202,7 +208,7 @@ func (cmd *command) buildOverrides(workspace *workspace.Workspace) (overrides.Ov
 	return ovs, err
 }
 
-func (cmd *command) deployKyma(ovs overrides.Overrides) error {
+func (cmd *command) deployKyma(comps []keb.Components) error {
 	kubeconfigPath := kube.KubeconfigPath(cmd.KubeconfigPath)
 	kubeconfig, err := ioutil.ReadFile(kubeconfigPath)
 	if err != nil {
@@ -228,7 +234,8 @@ func (cmd *command) deployKyma(ovs overrides.Overrides) error {
 		KymaConfig: keb.KymaConfig{
 			Version:    defaultVersion,
 			Profile:    defaultProfile,
-			Components: componentsFromStrings(defaultComponents, ovs.FlattenedMap()),
+			//Components: componentsFromStrings(defaultComponents, ovs.FlattenedMap()),
+			Components: comps,
 		},
 	})
 	if err != nil {
