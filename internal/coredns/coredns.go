@@ -49,7 +49,7 @@ const (
 }
 `
 	hostsTemplate = `
-    {{ .K3sRegistryIP}} {{ .K3sRegistryHost}}
+    {{ .K3dRegistryIP}} {{ .K3dRegistryHost}}
 `
 	// Default domain names for coreDNS patch
 	coreDNSLocalDomainName  = `(.*)\.local\.kyma\.dev`
@@ -57,12 +57,7 @@ const (
 )
 
 // Patch patches the CoreDNS configuration based on the overrides and the cloud provider.
-func Patch(logger *zap.Logger, kubeClient kubernetes.Interface, overrides overrides.Overrides) (cm *v1.ConfigMap, err error) {
-	isK3d, err := k3d.IsK3dCluster(kubeClient)
-	if err != nil {
-		return nil, err
-	}
-
+func Patch(logger *zap.Logger, kubeClient kubernetes.Interface, overrides overrides.Overrides, isK3d bool) (cm *v1.ConfigMap, err error) {
 	err = retry.Do(func() error {
 		_, err := kubeClient.AppsV1().Deployments("kube-system").Get(context.TODO(), "coredns", metav1.GetOptions{})
 		if err != nil {
@@ -140,7 +135,7 @@ func newCoreDNSConfigMap(data map[string]string) *v1.ConfigMap {
 	}
 }
 
-func generatePatches(kubeClient kubernetes.Interface, overrides overrides.Overrides, isK3s bool) (map[string]string, error) {
+func generatePatches(kubeClient kubernetes.Interface, overrides overrides.Overrides, isK3d bool) (map[string]string, error) {
 	patches := make(map[string]string)
 	// patch the CoreFile only if not on gardener and no custom domain is provided
 	gardenerDomain, err := gardener.Domain(kubeClient)
@@ -153,7 +148,7 @@ func generatePatches(kubeClient kubernetes.Interface, overrides overrides.Overri
 	_, hasCustomDomain := overrides.Find("global.domainName")
 	if gardenerDomain == "" && !hasCustomDomain {
 		var domainName string
-		if isK3s {
+		if isK3d {
 			domainName = coreDNSLocalDomainName
 		} else {
 			domainName = coreDNSRemoteDomainName
@@ -164,8 +159,8 @@ func generatePatches(kubeClient kubernetes.Interface, overrides overrides.Overri
 		}
 	}
 
-	// Patch NodeHosts only on K3s
-	if isK3s {
+	// Patch NodeHosts only on K3d
+	if isK3d {
 		patches["NodeHosts"], err = generateHosts(kubeClient)
 		if err != nil {
 			return nil, err
@@ -195,17 +190,17 @@ func generateHosts(kubeClient kubernetes.Interface) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	registryIP, err := k3sRegistryIP(clusterName)
+	registryIP, err := k3dRegistryIP(clusterName)
 	if err != nil {
 		return "", err
 	}
 
 	patchVars := struct {
-		K3sRegistryHost string
-		K3sRegistryIP   string
+		K3dRegistryHost string
+		K3dRegistryIP   string
 	}{
-		K3sRegistryHost: fmt.Sprintf("k3d-%s-registry", clusterName),
-		K3sRegistryIP:   registryIP,
+		K3dRegistryHost: fmt.Sprintf("k3d-%s-registry", clusterName),
+		K3dRegistryIP:   registryIP,
 	}
 	t := template.Must(template.New("").Parse(hostsTemplate))
 	b := new(bytes.Buffer)
@@ -227,8 +222,8 @@ var defaultInspector = func(ctx context.Context, containerID string) (dockerType
 	return client.ContainerInspect(context.Background(), containerID)
 }
 
-// registryIP uses docker inspect to find out the registry IP address in k3s
-func k3sRegistryIP(cluster string) (string, error) {
+// registryIP uses docker inspect to find out the registry IP address in k3d
+func k3dRegistryIP(cluster string) (string, error) {
 	c, err := defaultInspector(context.Background(), fmt.Sprintf("k3d-%s-registry", cluster))
 	if err != nil {
 		return "", err
@@ -236,11 +231,11 @@ func k3sRegistryIP(cluster string) (string, error) {
 
 	net, exists := c.NetworkSettings.Networks[fmt.Sprintf("k3d-%s", cluster)]
 	if !exists {
-		return "", errors.New("could not find network settings in k3s registry")
+		return "", errors.New("could not find network settings in k3d registry")
 	}
 
 	if net.IPAddress == "" {
-		return "", errors.New("K3s registry IP is empty")
+		return "", errors.New("k3d registry IP is empty")
 	}
 
 	return net.IPAddress, nil

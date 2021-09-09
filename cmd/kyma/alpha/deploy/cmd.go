@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
 	"github.com/kyma-project/cli/internal/coredns"
+	"github.com/kyma-project/cli/internal/k3d"
 	"github.com/kyma-project/cli/pkg/step"
 	"go.uber.org/zap"
 	"io/fs"
@@ -100,7 +101,12 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	if _, err := coredns.Patch(zap.NewNop(), cmd.K8s.Static(), ovs); err != nil {
+	isK3d, err := k3d.IsK3dCluster(cmd.K8s.Static())
+	if err != nil {
+		return err
+	}
+
+	if _, err := coredns.Patch(zap.NewNop(), cmd.K8s.Static(), ovs, isK3d); err != nil {
 		return err
 	}
 
