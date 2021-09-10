@@ -14,7 +14,6 @@ import (
 	"path"
 	"strings"
 
-	"github.com/kyma-incubator/reconciler/pkg/cluster"
 	"github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/service"
@@ -191,20 +190,11 @@ func (cmd *command) deployKyma(ovs overrides.Overrides) error {
 		return errors.Wrap(err, "Could not read kubeconfig")
 	}
 
-	workerFactory, err := scheduler.NewLocalWorkerFactory(
-		&cluster.MockInventory{},
-		scheduler.NewInMemoryOperationsRegistry(),
-		func(component string, msg *reconciler.CallbackMessage) {
-			fmt.Printf("Component %s has status %s\n", component, msg.Status)
-		},
-		true)
-	if err != nil {
-		return errors.Wrap(err, "Could instantiate worker factory")
-	}
-
-	localScheduler := scheduler.NewLocalScheduler(workerFactory,
+	localScheduler := scheduler.NewLocalScheduler(
 		scheduler.WithCRDComponents("cluster-essentials"),
-		scheduler.WithPrerequisites("istio", "certificates"))
+		scheduler.WithPrerequisites("istio", "certificates"),
+		scheduler.WithStatusFunc(cmd.printDeployStatus))
+
 	err = localScheduler.Run(context.TODO(), &keb.Cluster{
 		Kubeconfig: string(kubeconfig),
 		KymaConfig: keb.KymaConfig{
@@ -219,7 +209,11 @@ func (cmd *command) deployKyma(ovs overrides.Overrides) error {
 	return nil
 }
 
-func componentsFromStrings(components []string, overrides map[string]string) []keb.Components {
+func (cmd *command) printDeployStatus(component string, msg *reconciler.CallbackMessage) {
+	fmt.Printf("Component %s has status %s\n", component, msg.Status)
+}
+
+func componentsFromStrings(components []string, overrides map[string]interface{}) []keb.Components {
 	var results []keb.Components
 	for _, componentWithNs := range components {
 		tokens := strings.Split(componentWithNs, "@")
