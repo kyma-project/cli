@@ -62,7 +62,7 @@ func NewCmd(o *Options) *cobra.Command {
 func (cmd *command) createComplistWithOverrides(ws *workspace.Workspace,  overrides map[string]interface{}) (components.ComponentList, error) {
 	var compList components.ComponentList
 	if len(cmd.opts.Components) > 0 {
-		compList = components.ComponentsFromStrings(cmd.opts.Components, overrides)
+		compList = components.FromStrings(cmd.opts.Components, overrides)
 		return compList , nil
 	}
 	compFile := cmd.opts.ResolveComponentsFile(ws)
@@ -191,14 +191,12 @@ func (cmd *command) deployKyma(comps components.ComponentList) error {
 	if err != nil {
 		return errors.Wrap(err, "Could not read kubeconfig")
 	}
-	fmt.Printf("PRREQ: %v \n", components.BuildCompList(comps.Prerequisites))
 	localScheduler := scheduler.NewLocalScheduler(
 		scheduler.WithCRDComponents("cluster-essentials"),
 		scheduler.WithPrerequisites(components.BuildCompList(comps.Prerequisites)...),
 		scheduler.WithStatusFunc(cmd.printDeployStatus))
 
 	componentsToInstall := append(comps.Prerequisites, comps.Components...)
-	fmt.Printf("COMPS TO INSTALL: %v \n", componentsToInstall)
 	err = localScheduler.Run(context.TODO(), &keb.Cluster{
 		Kubeconfig: string(kubeconfig),
 		KymaConfig: keb.KymaConfig{

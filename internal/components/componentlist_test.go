@@ -20,14 +20,14 @@ func Test_ComponentList_ComponentsFromStrings(t *testing.T) {
 	override["foo1"] = "bar1"
 	t.Run("Add Component in default namespace", func(t *testing.T) {
 		//compList := newCompList(t, "./test/data/componentlist.yaml")
-		compList := ComponentsFromStrings([]string{"comp4@kyma-system"}, override)
+		compList := FromStrings([]string{"comp4@kyma-system"}, override)
 		require.Equal(t, "comp4", compList.Components[0].Component)
 		require.Equal(t, "kyma-system", compList.Components[0].Namespace)
 	})
 	t.Run("Add Component in custom namespace", func(t *testing.T) {
 		//compList := newCompList(t, "./test/data/componentlist.yaml")
 		namespace := "test-namespace"
-		compList := ComponentsFromStrings([]string{"comp4@test-namespace"}, override)
+		compList := FromStrings([]string{"comp4@test-namespace"}, override)
 		//compList.Add("comp4", namespace)
 		require.Equal(t, "comp4", compList.Components[0].Component)
 		require.Equal(t, namespace, compList.Components[0].Namespace)
@@ -58,11 +58,10 @@ func verifyComponentList(t *testing.T, compList ComponentList) {
 	require.Equal(t, "testns", comps[2].Namespace, "Wrong namespace")
 }
 
-func newCompList(t *testing.T, compFile string) ComponentList {
+func newCompList(t *testing.T, compFile string)  {
 	override := make(map[string]interface{})
 	override["foo"] = "bar"
 	compList, err := NewComponentList(compFile, override)
 	require.NoError(t, err)
 	verifyComponentList(t, compList)
-	return compList
 }

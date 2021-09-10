@@ -1,16 +1,16 @@
 package components
 
 import (
-"encoding/json"
-"fmt"
+	"encoding/json"
+	"fmt"
 	"github.com/kyma-incubator/reconciler/pkg/keb"
 	"io/ioutil"
-"os"
-"path/filepath"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/pkg/errors"
-"gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v3"
 )
 
 const defaultNamespace = "kyma-system"
@@ -34,7 +34,7 @@ type ComponentListData struct {
 	Components       []ComponentDefinition
 }
 
-func (cld *ComponentListData) createKebComp(compDef ComponentDefinition) keb.Components{
+func (cld *ComponentListData) createKebComp(compDef ComponentDefinition) keb.Components {
 	var c keb.Components
 	if compDef.Namespace == "" {
 		c.Namespace = cld.DefaultNamespace
@@ -42,12 +42,12 @@ func (cld *ComponentListData) createKebComp(compDef ComponentDefinition) keb.Com
 		c.Namespace = compDef.Namespace
 	}
 	c.Component = compDef.Name
-	return  c
+	return c
 }
 
 func applyOverrides(compList []keb.Components, overrides map[string]interface{}) []keb.Components {
 	for i, c := range compList {
-		for k,v := range overrides {
+		for k, v := range overrides {
 			overrideComponent := strings.Split(k, ".")[0]
 			if overrideComponent == c.Component || overrideComponent == "global" {
 				c.Configuration = append(c.Configuration, keb.Configuration{Key: k, Value: v})
@@ -55,7 +55,7 @@ func applyOverrides(compList []keb.Components, overrides map[string]interface{})
 		}
 		compList[i] = c
 	}
-	return  compList
+	return compList
 }
 
 func (cld *ComponentListData) process(overrides map[string]interface{}) ComponentList {
@@ -78,7 +78,7 @@ func (cld *ComponentListData) process(overrides map[string]interface{}) Componen
 	return compList
 }
 
-func ComponentsFromStrings(list []string, overrides map[string]interface{}) ComponentList {
+func FromStrings(list []string, overrides map[string]interface{}) ComponentList {
 	var c ComponentList
 	for _, item := range list {
 		s := strings.Split(item, "@")
@@ -130,4 +130,3 @@ func BuildCompList(comps []keb.Components) []string {
 	}
 	return compSlice
 }
-
