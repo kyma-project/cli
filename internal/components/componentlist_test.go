@@ -58,7 +58,7 @@ func verifyComponentList(t *testing.T, compList ComponentList) {
 	require.Equal(t, "testns", comps[2].Namespace, "Wrong namespace")
 }
 
-func newCompList(t *testing.T, compFile string)  {
+func newCompList(t *testing.T, compFile string) {
 	override := make(map[string]interface{})
 	override["foo"] = "bar"
 	compList, err := NewComponentList(compFile, override)
