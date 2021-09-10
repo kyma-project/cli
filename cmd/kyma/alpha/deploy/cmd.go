@@ -57,20 +57,18 @@ func NewCmd(o *Options) *cobra.Command {
 	return cobraCmd
 }
 
-
-
-func (cmd *command) createComplistWithOverrides(ws *workspace.Workspace,  overrides map[string]interface{}) (components.ComponentList, error) {
+func (cmd *command) createComplistWithOverrides(ws *workspace.Workspace, overrides map[string]interface{}) (components.ComponentList, error) {
 	var compList components.ComponentList
 	if len(cmd.opts.Components) > 0 {
 		compList = components.FromStrings(cmd.opts.Components, overrides)
-		return compList , nil
+		return compList, nil
 	}
 	compFile := cmd.opts.ResolveComponentsFile(ws)
 	compList, err := components.NewComponentList(compFile, overrides)
 	if err != nil {
-			return compList, err
+		return compList, err
 	}
-	return  compList, nil
+	return compList, nil
 }
 
 func (cmd *command) Run(o *Options) error {
