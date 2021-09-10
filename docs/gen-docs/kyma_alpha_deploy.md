@@ -12,6 +12,13 @@ Use this command to deploy, upgrade, or adapt Kyma on a running Kubernetes clust
 kyma alpha deploy [flags]
 ```
 
+## Flags
+
+```bash
+      --component strings        Provide one or more components to deploy (e.g. --component componentName@namespace)
+  -c, --components-file string   Path to the components file (default "$HOME/.kyma/sources/installation/resources/components.yaml" or ".kyma-sources/installation/resources/components.yaml")
+```
+
 ## Flags inherited from parent commands
 
 ```bash
