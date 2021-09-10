@@ -139,12 +139,12 @@ func (o Overrides) Map() map[string]interface{} {
 }
 
 // FlattenedMap returns a copy of the overrides in flattened map form (nested keys are merged separated by dots)
-func (o Overrides) FlattenedMap() map[string]string {
+func (o Overrides) FlattenedMap() map[string]interface{} {
 	return flattenOverrides(o.Map())
 }
 
-func flattenOverrides(overrides map[string]interface{}) map[string]string {
-	result := make(map[string]string)
+func flattenOverrides(overrides map[string]interface{}) map[string]interface{} {
+	result := make(map[string]interface{})
 
 	for outerKey, outerValue := range overrides {
 		if valueAsMap, ok := outerValue.(map[string]interface{}); ok {
@@ -153,7 +153,7 @@ func flattenOverrides(overrides map[string]interface{}) map[string]string {
 				result[outerKey+"."+innerKey] = innerValue
 			}
 		} else {
-			result[outerKey] = fmt.Sprint(outerValue)
+			result[outerKey] = outerValue
 		}
 	}
 

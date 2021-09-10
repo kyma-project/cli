@@ -3,7 +3,6 @@ package deploy
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-incubator/reconciler/pkg/cluster"
 	"github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/service"
@@ -60,8 +59,8 @@ func NewCmd(o *Options) *cobra.Command {
 
 
 
-func (cmd *command) createComplistWithOverrides(ws *workspace.Workspace,  overrides map[string]string) ([]keb.Components, error) {
-	var compList []keb.Components
+func (cmd *command) createComplistWithOverrides(ws *workspace.Workspace,  overrides map[string]interface{}) (components.ComponentList, error) {
+	var compList components.ComponentList
 	if len(cmd.opts.Components) > 0 {
 		compList = components.ComponentsFromStrings(cmd.opts.Components, overrides)
 		return compList , nil
@@ -186,39 +185,36 @@ func (cmd *command) buildOverrides(workspace *workspace.Workspace) (overrides.Ov
 	return ovs, err
 }
 
-func (cmd *command) deployKyma(comps []keb.Components) error {
+func (cmd *command) deployKyma(comps components.ComponentList) error {
 	kubeconfigPath := kube.KubeconfigPath(cmd.KubeconfigPath)
 	kubeconfig, err := ioutil.ReadFile(kubeconfigPath)
 	if err != nil {
 		return errors.Wrap(err, "Could not read kubeconfig")
 	}
-
-	workerFactory, err := scheduler.NewLocalWorkerFactory(
-		&cluster.MockInventory{},
-		scheduler.NewInMemoryOperationsRegistry(),
-		func(component string, msg *reconciler.CallbackMessage) {
-			fmt.Printf("Component %s has status %s\n", component, msg.Status)
-		},
-		true)
-	if err != nil {
-		return errors.Wrap(err, "Could instantiate worker factory")
-	}
-
-	localScheduler := scheduler.NewLocalScheduler(workerFactory,
+	fmt.Printf("PRREQ: %v \n", components.BuildCompList(comps.Prerequisites))
+	localScheduler := scheduler.NewLocalScheduler(
 		scheduler.WithCRDComponents("cluster-essentials"),
-		scheduler.WithPrerequisites("istio", "certificates"))
+		scheduler.WithPrerequisites(components.BuildCompList(comps.Prerequisites)...),
+		scheduler.WithStatusFunc(cmd.printDeployStatus))
+
+	componentsToInstall := append(comps.Prerequisites, comps.Components...)
+	fmt.Printf("COMPS TO INSTALL: %v \n", componentsToInstall)
 	err = localScheduler.Run(context.TODO(), &keb.Cluster{
 		Kubeconfig: string(kubeconfig),
 		KymaConfig: keb.KymaConfig{
 			Version:    defaultVersion,
 			Profile:    defaultProfile,
-			Components: comps,
+			Components: componentsToInstall,
 		},
 	})
 	if err != nil {
 		return errors.Wrap(err, "Failed to deploy Kyma")
 	}
 	return nil
+}
+
+func (cmd *command) printDeployStatus(component string, msg *reconciler.CallbackMessage) {
+	fmt.Printf("Component %s has status %s\n", component, msg.Status)
 }
 
 // avoidUserInteraction returns true if user won't provide input

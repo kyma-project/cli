@@ -45,7 +45,7 @@ func (cld *ComponentListData) createKebComp(compDef ComponentDefinition) keb.Com
 	return  c
 }
 
-func applyOverrides(compList []keb.Components, overrides map[string]string) []keb.Components {
+func applyOverrides(compList []keb.Components, overrides map[string]interface{}) []keb.Components {
 	for i, c := range compList {
 		for k,v := range overrides {
 			overrideComponent := strings.Split(k, ".")[0]
@@ -58,8 +58,8 @@ func applyOverrides(compList []keb.Components, overrides map[string]string) []ke
 	return  compList
 }
 
-func (cld *ComponentListData) process(overrides map[string]string) []keb.Components {
-	var compList []keb.Components
+func (cld *ComponentListData) process(overrides map[string]interface{}) ComponentList {
+	var compList ComponentList
 	var preReqs []keb.Components
 	var comps []keb.Components
 
@@ -72,35 +72,36 @@ func (cld *ComponentListData) process(overrides map[string]string) []keb.Compone
 	for _, compDef := range cld.Components {
 		comps = append(comps, cld.createKebComp(compDef))
 	}
-	compList = append(compList, preReqs...)
-	compList = append(compList, comps...)
+	compList.Prerequisites = append(compList.Prerequisites, applyOverrides(preReqs, overrides)...)
+	compList.Components = append(compList.Components, applyOverrides(comps, overrides)...)
 
-	return applyOverrides(compList, overrides)
+	return compList
 }
 
-func ComponentsFromStrings(list []string, overrides map[string]string) []keb.Components {
-	var components []keb.Components
+func ComponentsFromStrings(list []string, overrides map[string]interface{}) ComponentList {
+	var c ComponentList
 	for _, item := range list {
 		s := strings.Split(item, "@")
 
 		component := keb.Components{Component: s[0], Namespace: s[1]}
-		components = append(components, component)
+		c.Components = append(c.Components, component)
 	}
-	return applyOverrides(components, overrides)
+	c.Components = applyOverrides(c.Components, overrides)
+	return c
 }
 
 // NewComponentList creates a new component list
-func NewComponentList(componentsListPath string, overrides map[string]string) ([]keb.Components, error) {
+func NewComponentList(componentsListPath string, overrides map[string]interface{}) (ComponentList, error) {
 	if componentsListPath == "" {
-		return nil, fmt.Errorf("Path to components list file is required")
+		return ComponentList{}, fmt.Errorf("Path to components list file is required")
 	}
 	if _, err := os.Stat(componentsListPath); os.IsNotExist(err) {
-		return nil, fmt.Errorf("Components list file '%s' not found", componentsListPath)
+		return ComponentList{}, fmt.Errorf("Components list file '%s' not found", componentsListPath)
 	}
 
 	data, err := ioutil.ReadFile(componentsListPath)
 	if err != nil {
-		return nil, err
+		return ComponentList{}, err
 	}
 
 	var compListData *ComponentListData = &ComponentListData{
@@ -109,16 +110,24 @@ func NewComponentList(componentsListPath string, overrides map[string]string) ([
 	fileExt := filepath.Ext(componentsListPath)
 	if fileExt == ".json" {
 		if err := json.Unmarshal(data, &compListData); err != nil {
-			return nil, errors.Wrap(err, fmt.Sprintf("Failed to process components file '%s'", componentsListPath))
+			return ComponentList{}, errors.Wrap(err, fmt.Sprintf("Failed to process components file '%s'", componentsListPath))
 		}
 	} else if fileExt == ".yaml" || fileExt == ".yml" {
 		if err := yaml.Unmarshal(data, &compListData); err != nil {
-			return nil, errors.Wrap(err, fmt.Sprintf("Failed to process components file '%s'", componentsListPath))
+			return ComponentList{}, errors.Wrap(err, fmt.Sprintf("Failed to process components file '%s'", componentsListPath))
 		}
 	} else {
-		return nil, fmt.Errorf("File extension '%s' is not supported for component list files", fileExt)
+		return ComponentList{}, fmt.Errorf("File extension '%s' is not supported for component list files", fileExt)
 	}
 
 	return compListData.process(overrides), nil
+}
+
+func BuildCompList(comps []keb.Components) []string {
+	var compSlice []string
+	for _, c := range comps {
+		compSlice = append(compSlice, c.Component)
+	}
+	return compSlice
 }
 

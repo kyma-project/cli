@@ -71,7 +71,7 @@ func Test_FlattenedMap(t *testing.T) {
 		summary        string
 		givenChart     string
 		givenOverrides map[string]interface{}
-		expected       map[string]string
+		expected       map[string]interface{}
 	}{
 		{
 			summary:    "leave key",
@@ -79,7 +79,7 @@ func Test_FlattenedMap(t *testing.T) {
 			givenOverrides: map[string]interface{}{
 				"key": "value",
 			},
-			expected: map[string]string{
+			expected: map[string]interface{}{
 				"xyz.key": "value",
 			},
 		},
@@ -91,7 +91,7 @@ func Test_FlattenedMap(t *testing.T) {
 					"nested": "value",
 				},
 			},
-			expected: map[string]string{
+			expected: map[string]interface{}{
 				"xyz.key.nested": "value",
 			},
 		},
@@ -106,12 +106,12 @@ func Test_FlattenedMap(t *testing.T) {
 					},
 					"installCRDs": false,
 				},
-				"cluster-users": map[string]interface{}{"users": map[string]interface{}{"bindStaticUsers": false}},
+				"cluster-users": map[string]interface{}{"users": map[string]interface{}{"bindStaticUsers": "false"}},
 			},
-			expected: map[string]string{
+			expected: map[string]interface{}{
 				"xyz.global.domainName":                   "local.kyma.dev",
 				"xyz.global.ingress.domainName":           "local.kyma.dev",
-				"xyz.global.installCRDs":                  "false",
+				"xyz.global.installCRDs":                  false,
 				"xyz.cluster-users.users.bindStaticUsers": "false",
 			},
 		},
