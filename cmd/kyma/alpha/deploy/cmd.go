@@ -4,29 +4,27 @@ import (
 	"context"
 	"fmt"
 	"github.com/kyma-incubator/reconciler/pkg/cluster"
+	"github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler"
+	"github.com/kyma-incubator/reconciler/pkg/reconciler/service"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
 	"github.com/kyma-incubator/reconciler/pkg/scheduler"
+	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/components"
 	"github.com/kyma-project/cli/internal/coredns"
+	"github.com/kyma-project/cli/internal/files"
 	"github.com/kyma-project/cli/internal/k3d"
+	"github.com/kyma-project/cli/internal/kube"
+	"github.com/kyma-project/cli/internal/overrides"
 	"github.com/kyma-project/cli/internal/trust"
 	"github.com/kyma-project/cli/pkg/step"
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"io/fs"
 	"io/ioutil"
 	"os"
 	"path"
-	"strings"
-
-	"github.com/kyma-incubator/reconciler/pkg/keb"
-	"github.com/kyma-incubator/reconciler/pkg/reconciler/service"
-	"github.com/kyma-project/cli/internal/cli"
-	"github.com/kyma-project/cli/internal/components"
-	"github.com/kyma-project/cli/internal/files"
-	"github.com/kyma-project/cli/internal/kube"
-	"github.com/kyma-project/cli/internal/overrides"
-	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
 
 	//Register all reconcilers
 	_ "github.com/kyma-incubator/reconciler/pkg/reconciler/instances"
@@ -34,26 +32,6 @@ import (
 
 const defaultVersion = "main"
 const defaultProfile = "evaluation"
-
-var defaultComponents = []string{
-	"cluster-essentials@kyma-system",
-	"istio@istio-system",
-	"certificates@istio-system",
-	"logging@kyma-system",
-	"tracing@kyma-system",
-	"kiali@kyma-system",
-	"monitoring@kyma-system",
-	"eventing@kyma-system",
-	"ory@kyma-system",
-	"api-gateway@kyma-system",
-	"service-catalog@kyma-system",
-	"service-catalog-addons@kyma-system",
-	"rafter@kyma-system",
-	"helm-broker@kyma-system",
-	"cluster-users@kyma-system",
-	"serverless@kyma-system",
-	"application-connector@kyma-integration",
-}
 
 type command struct {
 	cli.Command
@@ -82,7 +60,7 @@ func NewCmd(o *Options) *cobra.Command {
 
 
 
-func (cmd *command) createComplist(ws *workspace.Workspace,  overrides map[string]string) ([]keb.Components, error) {
+func (cmd *command) createComplistWithOverrides(ws *workspace.Workspace,  overrides map[string]string) ([]keb.Components, error) {
 	var compList []keb.Components
 	if len(cmd.opts.Components) > 0 {
 		compList = components.ComponentsFromStrings(cmd.opts.Components, overrides)
@@ -129,7 +107,7 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	comps, err := cmd.createComplist(ws, ovs.FlattenedMap())
+	comps, err := cmd.createComplistWithOverrides(ws, ovs.FlattenedMap())
 	if err != nil {
 		return err
 	}
@@ -180,7 +158,7 @@ func (cmd *command) loadWorkspace() (*workspace.Workspace, error) {
 }
 
 func (cmd *command) buildOverrides(workspace *workspace.Workspace) (overrides.Overrides, error) {
-	overridesStep := cmd.NewStep("Applying Kyma2 overrides")
+	overridesStep := cmd.NewStep("Building Kyma2 overrides")
 
 	overridesBuilder := &overrides.Builder{}
 
@@ -234,7 +212,6 @@ func (cmd *command) deployKyma(comps []keb.Components) error {
 		KymaConfig: keb.KymaConfig{
 			Version:    defaultVersion,
 			Profile:    defaultProfile,
-			//Components: componentsFromStrings(defaultComponents, ovs.FlattenedMap()),
 			Components: comps,
 		},
 	})
@@ -242,23 +219,6 @@ func (cmd *command) deployKyma(comps []keb.Components) error {
 		return errors.Wrap(err, "Failed to deploy Kyma")
 	}
 	return nil
-}
-
-func componentsFromStrings(components []string, overrides map[string]string) []keb.Components {
-	var results []keb.Components
-	for _, componentWithNs := range components {
-		tokens := strings.Split(componentWithNs, "@")
-		component := keb.Components{Component: tokens[0], Namespace: tokens[1]}
-
-		for k, v := range overrides {
-			overrideComponent := strings.Split(k, ".")[0]
-			if overrideComponent == component.Component || overrideComponent == "global" {
-				component.Configuration = append(component.Configuration, keb.Configuration{Key: k, Value: v})
-			}
-		}
-		results = append(results, component)
-	}
-	return results
 }
 
 // avoidUserInteraction returns true if user won't provide input
