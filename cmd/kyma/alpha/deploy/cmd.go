@@ -63,12 +63,11 @@ func (cmd *command) createComplistWithOverrides(ws *workspace.Workspace, overrid
 		compList = components.FromStrings(cmd.opts.Components, overrides)
 		return compList, nil
 	}
-	compFile := cmd.opts.ResolveComponentsFile(ws)
-	compList, err := components.NewComponentList(compFile, overrides)
-	if err != nil {
-		return compList, err
+	if cmd.opts.ComponentsFile != "" {
+		return  components.NewComponentList(cmd.opts.ComponentsFile, overrides)
 	}
-	return compList, nil
+	compFile := cmd.opts.ResolveComponentsFile(ws)
+	return components.NewComponentList(compFile, overrides)
 }
 
 func (cmd *command) Run(o *Options) error {
