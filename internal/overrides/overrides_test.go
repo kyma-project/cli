@@ -15,13 +15,19 @@ func Test_MergeOverrides(t *testing.T) {
 	err = builder.AddFile("testdata/deployment-overrides2.json")
 	require.NoError(t, err)
 
-	override1 := make(map[string]interface{})
-	override1["key4"] = "value4override1"
+	override1 := map[string]interface{}{
+		"chart": map[string]interface{}{
+			"key4": "value4override1",
+		},
+	}
 	err = builder.AddOverrides(override1)
 	require.NoError(t, err)
 
-	override2 := make(map[string]interface{})
-	override2["key5"] = "value5override2"
+	override2 := map[string]interface{}{
+		"chart": map[string]interface{}{
+			"key5": "value5override2",
+		},
+	}
 	err = builder.AddOverrides(override2)
 	require.NoError(t, err)
 
@@ -71,6 +77,7 @@ func Test_FlattenedMap(t *testing.T) {
 	}{
 		{
 			summary:    "leaf key",
+			givenChart: "xyz",
 			givenOverrides: map[string]interface{}{
 				"key": "value",
 			},
@@ -115,7 +122,9 @@ func Test_FlattenedMap(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.summary, func(t *testing.T) {
 			builder := Builder{}
-			err := builder.AddOverrides(tc.givenOverrides)
+			err := builder.AddOverrides(map[string]interface{}{
+				tc.givenChart: tc.givenOverrides,
+			})
 			require.NoError(t, err)
 
 			ovs, err := builder.Build()
