@@ -11,11 +11,12 @@ const profileProduction = "production"
 //Options defines available options for the command
 type Options struct {
 	*cli.Options
+
 	Components     []string
 	ComponentsFile string
 	Domain         string
 	Values         []string
-	OverridesFiles []string
+	ValueFiles []string
 	Profile        string
 	TLSCrtFile     string
 	TLSKeyFile     string

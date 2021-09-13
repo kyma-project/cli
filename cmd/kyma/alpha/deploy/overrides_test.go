@@ -13,6 +13,7 @@ func TestMergeOverrides(t *testing.T) {
 	testCases := []struct {
 		summary     string
 		values      []string
+		valueFiles  []string
 		expected    map[string]interface{}
 		expectedErr bool
 	}{
@@ -51,13 +52,56 @@ func TestMergeOverrides(t *testing.T) {
 				"component.inner.key":       "bar",
 			},
 		},
+		{
+			summary: "multiple values with single file",
+			values:  []string{"component.key=foo", "component.inner.key=bar"},
+			valueFiles: []string{"testdata/valid-overrides-1.yaml"},
+			expected: map[string]interface{}{
+				"global.domainName":         any,
+				"global.tlsCrt":             any,
+				"global.tlsKey":             any,
+				"global.ingress.domainName": any,
+				"component.key":             "foo",
+				"component.inner.key":       "bar",
+				"component.outer.inner.key": "baz",
+			},
+		},
+		{
+			summary: "multiple values with multiple files",
+			values:  []string{"component.key=foo", "component.inner.key=bar"},
+			valueFiles: []string{"testdata/valid-overrides-1.yaml"},
+			expected: map[string]interface{}{
+				"global.domainName":         any,
+				"global.tlsCrt":             any,
+				"global.tlsKey":             any,
+				"global.ingress.domainName": any,
+				"component.key":             "foo",
+				"component.inner.key":       "bar",
+				"component.outer.inner.key": "baz", //value file testdata/valid-overrides-1.yaml wins
+			},
+		},
+		{
+			summary: "multiple values with multiple files",
+			values:  []string{"component.key=foo", "component.inner.key=bar"},
+			valueFiles: []string{"testdata/valid-overrides-1.yaml", "testdata/valid-overrides-2.yaml"},
+			expected: map[string]interface{}{
+				"global.domainName":         any,
+				"global.tlsCrt":             any,
+				"global.tlsKey":             any,
+				"global.ingress.domainName": any,
+				"component.key":             "foo", //value wins
+				"component.inner.key":       "bar",
+				"component.outer.inner.key": "bzz", //value file testdata/valid-overrides-2.yaml wins
+			},
+		},
 	}
 
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.summary, func(t *testing.T) {
 			opts := &Options{
-				Values: tc.values,
+				Values:     tc.values,
+				ValueFiles: tc.valueFiles,
 			}
 			ovs, err := mergeOverrides(opts, &workspace.Workspace{
 				InstallationResourceDir: "testdata",
