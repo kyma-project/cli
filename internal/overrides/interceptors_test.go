@@ -282,7 +282,9 @@ func Test_DomainNameOverrideInterceptor(t *testing.T) {
 		ob := Builder{}
 		domainNameOverrides := make(map[string]interface{})
 		domainNameOverrides["domainName"] = "user.domain"
-		err := ob.AddOverrides(domainNameOverrides)
+		err := ob.AddOverrides(map[string]interface{}{
+			"global": domainNameOverrides,
+		})
 		require.NoError(t, err)
 
 		ob.AddInterceptor([]string{"global.domainName"}, NewDomainNameOverrideInterceptor(kubeClient))
@@ -304,7 +306,9 @@ func Test_DomainNameOverrideInterceptor(t *testing.T) {
 		ob := Builder{}
 		domainNameOverrides := make(map[string]interface{})
 		domainNameOverrides["domainName"] = "user.domain"
-		err := ob.AddOverrides(domainNameOverrides)
+		err := ob.AddOverrides(map[string]interface{}{
+			"global": domainNameOverrides,
+		})
 		require.NoError(t, err)
 
 		ob.AddInterceptor([]string{"global.domainName"}, mockNewDomainNameOverrideInterceptor(kubeClient, true))
@@ -326,7 +330,9 @@ func Test_DomainNameOverrideInterceptor(t *testing.T) {
 		ob := Builder{}
 		domainNameOverrides := make(map[string]interface{})
 		domainNameOverrides["domainName"] = "user.domain"
-		err := ob.AddOverrides(domainNameOverrides)
+		err := ob.AddOverrides(map[string]interface{}{
+			"global": domainNameOverrides,
+		})
 		require.NoError(t, err)
 
 		ob.AddInterceptor([]string{"global.domainName"}, mockNewDomainNameOverrideInterceptor(kubeClient, false))
@@ -421,7 +427,9 @@ func Test_CertificateOverridesInterception(t *testing.T) {
 		tlsOverrides := make(map[string]interface{})
 		tlsOverrides["tlsCrt"] = defaultLocalTLSCrtEnc
 		tlsOverrides["tlsKey"] = defaultLocalTLSKeyEnc
-		err := ob.AddOverrides(tlsOverrides)
+		err := ob.AddOverrides(map[string]interface{}{
+			"global": tlsOverrides,
+		})
 		require.NoError(t, err)
 
 		ob.AddInterceptor([]string{"global.tlsCrt", "global.tlsKey"}, interceptor)
@@ -449,7 +457,9 @@ func Test_CertificateOverridesInterception(t *testing.T) {
 		tlsOverrides := make(map[string]interface{})
 		tlsOverrides["tlsCrt"] = testFakeCrt
 		tlsOverrides["tlsKey"] = testFakeKey
-		err := ob.AddOverrides(tlsOverrides)
+		err := ob.AddOverrides(map[string]interface{}{
+			"global": tlsOverrides,
+		})
 		require.NoError(t, err)
 
 		// Ensure user provides values different than defaults for local domain
@@ -478,7 +488,9 @@ func Test_CertificateOverridesInterception(t *testing.T) {
 		tlsOverrides["tlsCrt"] = testFakeCrt
 		tlsOverrides["tlsKey"] = testFakeKey
 		ob := Builder{}
-		err := ob.AddOverrides(tlsOverrides)
+		err := ob.AddOverrides(map[string]interface{}{
+			"global": tlsOverrides,
+		})
 		require.NoError(t, err)
 
 		// Ensure user provides values different than defaults for remote domain
@@ -507,7 +519,9 @@ func Test_CertificateOverridesInterception(t *testing.T) {
 		tlsOverrides["tlsCrt"] = testFakeCrt
 		tlsOverrides["tlsKey"] = defaultLocalTLSKeyEnc
 		ob := Builder{}
-		err := ob.AddOverrides(tlsOverrides)
+		err := ob.AddOverrides(map[string]interface{}{
+			"global": tlsOverrides,
+		})
 		require.NoError(t, err)
 
 		ob.AddInterceptor([]string{"global.tlsCrt", "global.tlsKey"}, interceptor)
@@ -530,7 +544,9 @@ func Test_CertificateOverridesInterception(t *testing.T) {
 		tlsOverrides["tlsCrt"] = testFakeCrt
 		tlsOverrides["tlsKey"] = "V2VkIEFwciAyMSAxNzoyNTowOCBDRVNUIDIwMjEK"
 		ob := Builder{}
-		err := ob.AddOverrides(tlsOverrides)
+		err := ob.AddOverrides(map[string]interface{}{
+			"global": tlsOverrides,
+		})
 		require.NoError(t, err)
 
 		ob.AddInterceptor([]string{"global.tlsCrt", "global.tlsKey"}, interceptor)
@@ -555,7 +571,9 @@ func Test_RegistryEnableOverrideInterception(t *testing.T) {
 		serverlessOverrides := make(map[string]interface{})
 		serverlessOverrides["dockerRegistry"] = dockerRegistryOverrides
 		ob := Builder{}
-		err := ob.AddOverrides(serverlessOverrides)
+		err := ob.AddOverrides(map[string]interface{}{
+			"serverless": serverlessOverrides,
+		})
 		require.NoError(t, err)
 
 		kubeClient := fake.NewSimpleClientset(k3dNode)
@@ -576,7 +594,9 @@ func Test_RegistryEnableOverrideInterception(t *testing.T) {
 		serverlessOverrides := make(map[string]interface{})
 		serverlessOverrides["dockerRegistry"] = dockerRegistryOverrides
 		ob := Builder{}
-		err := ob.AddOverrides(serverlessOverrides)
+		err := ob.AddOverrides(map[string]interface{}{
+			"serverless": serverlessOverrides,
+		})
 		require.NoError(t, err)
 
 		kubeClient := fake.NewSimpleClientset(generalNode)
@@ -615,7 +635,9 @@ func Test_RegistryOverridesInterception(t *testing.T) {
 		serverlessOverrides := make(map[string]interface{})
 		serverlessOverrides["dockerRegistry"] = dockerRegistryOverrides
 		ob := Builder{}
-		err := ob.AddOverrides(serverlessOverrides)
+		err := ob.AddOverrides(map[string]interface{}{
+			"serverless": serverlessOverrides,
+		})
 		require.NoError(t, err)
 
 		kubeClient := fake.NewSimpleClientset(k3dNode)
@@ -642,7 +664,9 @@ func Test_RegistryOverridesInterception(t *testing.T) {
 		serverlessOverrides := make(map[string]interface{})
 		serverlessOverrides["dockerRegistry"] = dockerRegistryOverrides
 		ob := Builder{}
-		err := ob.AddOverrides(serverlessOverrides)
+		err := ob.AddOverrides(map[string]interface{}{
+			"serverless": serverlessOverrides,
+		})
 		require.NoError(t, err)
 
 		kubeClient := fake.NewSimpleClientset(k3dNode)
@@ -669,7 +693,9 @@ func Test_RegistryOverridesInterception(t *testing.T) {
 		serverlessOverrides := make(map[string]interface{})
 		serverlessOverrides["dockerRegistry"] = dockerRegistryOverrides
 		ob := Builder{}
-		err := ob.AddOverrides(serverlessOverrides)
+		err := ob.AddOverrides(map[string]interface{}{
+			"serverless": serverlessOverrides,
+		})
 		require.NoError(t, err)
 
 		kubeClient := fake.NewSimpleClientset(generalNode)
