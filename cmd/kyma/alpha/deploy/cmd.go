@@ -3,6 +3,7 @@ package deploy
 import (
 	"context"
 	"fmt"
+	"github.com/kyma-incubator/reconciler/pkg/logger"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
 	"github.com/kyma-project/cli/internal/coredns"
 	"github.com/kyma-project/cli/internal/k3d"
@@ -12,6 +13,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/kyma-incubator/reconciler/pkg/keb"
@@ -32,6 +34,7 @@ import (
 
 const defaultVersion = "main"
 const defaultProfile = "evaluation"
+
 
 var defaultComponents = []string{
 	"cluster-essentials@kyma-system",
@@ -73,7 +76,36 @@ func NewCmd(o *Options) *cobra.Command {
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run(cmd.opts) },
 		Aliases: []string{"d"},
 	}
+	cobraCmd.Flags().StringVarP(&o.WorkspacePath, "workspace", "w", "", `Path to download Kyma sources (default "$HOME/.kyma/sources" or ".kyma-sources")`)
+
+	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", defaultVersion, `Installation source:
+	- Deploy a specific release, for example: "kyma deploy --source=2.0.0"
+	- Deploy a specific branch of the Kyma repository on kyma-project.org: "kyma deploy --source=<my-branch-name>"
+	- Deploy a commit, for example: "kyma deploy --source=34edf09a"
+	- Deploy a pull request, for example "kyma deploy --source=PR-9486"
+	- Deploy the local sources: "kyma deploy --source=local"`)
+	//setSource(cobraCmd.Flags().Changed("source"), &o.Source)
 	return cobraCmd
+}
+
+func (cmd *command) workspaceBuilder(l *zap.SugaredLogger) (*workspace.Workspace, error) {
+	wsp := cmd.opts.ResolveLocalWorkspacePath()
+	fmt.Printf("WS: %v: \n", wsp)
+	wsFact, err := workspace.NewFactory(wsp, l)
+	if err != nil {
+		return &workspace.Workspace{}, err
+	}
+	//err = service.UseGlobalWorkspaceFactory(wsFact)
+	//if err != nil {
+	//	return &workspace.Workspace{}, err
+	//}
+	//ToDO: Check if workspace is empty or not
+	ws, err := wsFact.Get(cmd.opts.Source)
+	if err != nil {
+		return &workspace.Workspace{}, err
+	}
+	return  ws, nil
+
 }
 
 func (cmd *command) Run(o *Options) error {
@@ -189,6 +221,14 @@ func (cmd *command) deployKyma(ovs overrides.Overrides) error {
 	if err != nil {
 		return errors.Wrap(err, "Could not read kubeconfig")
 	}
+	l := logger.NewOptionalLogger(true)
+	ws ,err  := cmd.workspaceBuilder(l)
+
+	if err != nil {
+		return err
+	}
+	defaultComponentsYaml := filepath.Join(ws.InstallationResourceDir, "components.yaml")
+	fmt.Printf("dsy: %v", defaultComponentsYaml)
 
 	localScheduler := scheduler.NewLocalScheduler(
 		scheduler.WithCRDComponents("cluster-essentials"),
@@ -198,7 +238,7 @@ func (cmd *command) deployKyma(ovs overrides.Overrides) error {
 	err = localScheduler.Run(context.TODO(), &keb.Cluster{
 		Kubeconfig: string(kubeconfig),
 		KymaConfig: keb.KymaConfig{
-			Version:    defaultVersion,
+			Version:    cmd.opts.Source,
 			Profile:    defaultProfile,
 			Components: componentsFromStrings(defaultComponents, ovs.FlattenedMap()),
 		},
