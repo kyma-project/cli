@@ -64,7 +64,7 @@ func (cmd *command) createComplistWithOverrides(ws *workspace.Workspace, overrid
 		return compList, nil
 	}
 	if cmd.opts.ComponentsFile != "" {
-		return  components.NewComponentList(cmd.opts.ComponentsFile, overrides)
+		return components.NewComponentList(cmd.opts.ComponentsFile, overrides)
 	}
 	compFile := cmd.opts.ResolveComponentsFile(ws)
 	return components.NewComponentList(compFile, overrides)
