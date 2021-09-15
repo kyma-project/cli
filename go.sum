@@ -853,8 +853,8 @@ github.com/kyma-incubator/hydroform/provision v0.0.0-20210514061348-c71b69cb362e
 github.com/kyma-incubator/hydroform/provision v0.0.0-20210514061348-c71b69cb362e/go.mod h1:x4YfWgupo4fc7vgGFb0aJfSWCh9W72ipmNekfY1oYeo=
 github.com/kyma-incubator/octopus v0.0.0-20200922132758-2b721e93b58b h1:xgIzqXn9JolPuSAkQ/u+Myn/S3aLH8rlPc8++O6ogSY=
 github.com/kyma-incubator/octopus v0.0.0-20200922132758-2b721e93b58b/go.mod h1:qliPSTjCHo+PHStTPaLnulVviDBhJWb9wFk71Ht9qsc=
-github.com/kyma-incubator/reconciler v0.0.0-20210909141350-0f3a1a61e1f7 h1:9MvEZ7zKbF+SiSi2x9fvBF26wby7aOige5VYkaiGMQ0=
-github.com/kyma-incubator/reconciler v0.0.0-20210909141350-0f3a1a61e1f7/go.mod h1:vNsOi5i4zFa2DbGUchtNRpP8tyMz8iADpHY0H/WLiGk=
+github.com/kyma-incubator/reconciler v0.0.0-20210914142045-66f03d890abd h1:/Y6bVO+4hRVJiJdB1MJUcXb69FLObMSV96AA/rF4xnw=
+github.com/kyma-incubator/reconciler v0.0.0-20210914142045-66f03d890abd/go.mod h1:dsgTuB8/7+IajUYQSK5scGMVOyRWb+jtApYpja/HMtE=
 github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20200817094157-8392259f5be1/go.mod h1:Svisep1qUjML69qtRee5OcDOpWVjxID2Nb6E/xyhQ5k=
 github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20201125092745-687c943ac940 h1:TEquDCgUClhTnSIOc3oZn1YZ53/aK4mu3AwXu6kih+4=
 github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20201125092745-687c943ac940/go.mod h1:jDvGQt3ccmrDW/9dZufC8e4xwr+PUTR74IJ0yQ81Jhk=

@@ -17,8 +17,8 @@ const defaultNamespace = "kyma-system"
 
 // ComponentList collects component definitions
 type ComponentList struct {
-	Prerequisites []keb.Components
-	Components    []keb.Components
+	Prerequisites []keb.Component
+	Components    []keb.Component
 }
 
 // ComponentDefinition defines a component in components list
@@ -34,8 +34,8 @@ type ComponentListData struct {
 	Components       []ComponentDefinition
 }
 
-func (cld *ComponentListData) createKebComp(compDef ComponentDefinition) keb.Components {
-	var c keb.Components
+func (cld *ComponentListData) createKebComp(compDef ComponentDefinition) keb.Component {
+	var c keb.Component
 	if compDef.Namespace == "" {
 		c.Namespace = cld.DefaultNamespace
 	} else {
@@ -45,7 +45,7 @@ func (cld *ComponentListData) createKebComp(compDef ComponentDefinition) keb.Com
 	return c
 }
 
-func applyOverrides(compList []keb.Components, overrides map[string]interface{}) []keb.Components {
+func applyOverrides(compList []keb.Component, overrides map[string]interface{}) []keb.Component {
 	for i, c := range compList {
 		for k, v := range overrides {
 			overrideComponent := strings.Split(k, ".")[0]
@@ -60,8 +60,8 @@ func applyOverrides(compList []keb.Components, overrides map[string]interface{})
 
 func (cld *ComponentListData) process(overrides map[string]interface{}) ComponentList {
 	var compList ComponentList
-	var preReqs []keb.Components
-	var comps []keb.Components
+	var preReqs []keb.Component
+	var comps []keb.Component
 
 	// read prerequisites
 	for _, compDef := range cld.Prerequisites {
@@ -83,7 +83,7 @@ func FromStrings(list []string, overrides map[string]interface{}) ComponentList 
 	for _, item := range list {
 		s := strings.Split(item, "@")
 
-		component := keb.Components{Component: s[0], Namespace: s[1]}
+		component := keb.Component{Component: s[0], Namespace: s[1]}
 		c.Components = append(c.Components, component)
 	}
 	c.Components = applyOverrides(c.Components, overrides)
@@ -123,7 +123,7 @@ func NewComponentList(componentsListPath string, overrides map[string]interface{
 	return compListData.process(overrides), nil
 }
 
-func BuildCompList(comps []keb.Components) []string {
+func BuildCompList(comps []keb.Component) []string {
 	var compSlice []string
 	for _, c := range comps {
 		compSlice = append(compSlice, c.Component)

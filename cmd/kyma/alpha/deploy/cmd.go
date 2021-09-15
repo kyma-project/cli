@@ -66,7 +66,7 @@ func (cmd *command) createComplistWithOverrides(ws *workspace.Workspace, overrid
 	if cmd.opts.ComponentsFile != "" {
 		return components.NewComponentList(cmd.opts.ComponentsFile, overrides)
 	}
-	compFile := cmd.opts.ResolveComponentsFile(ws)
+	compFile := path.Join(ws.InstallationResourceDir, "components.yaml")
 	return components.NewComponentList(compFile, overrides)
 }
 
@@ -189,7 +189,6 @@ func (cmd *command) deployKyma(comps components.ComponentList) error {
 		return errors.Wrap(err, "Could not read kubeconfig")
 	}
 	localScheduler := scheduler.NewLocalScheduler(
-		scheduler.WithCRDComponents("cluster-essentials"),
 		scheduler.WithPrerequisites(components.BuildCompList(comps.Prerequisites)...),
 		scheduler.WithStatusFunc(cmd.printDeployStatus))
 
