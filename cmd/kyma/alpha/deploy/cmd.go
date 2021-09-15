@@ -89,21 +89,40 @@ func NewCmd(o *Options) *cobra.Command {
 }
 
 func (cmd *command) workspaceBuilder(l *zap.SugaredLogger) (*workspace.Workspace, error) {
+	wsStep := cmd.NewStep(fmt.Sprintf("Downloading Kyma (%s) into workspace folder ", cmd.opts.Source))
+
 	wsp := cmd.opts.ResolveLocalWorkspacePath()
 	fmt.Printf("WS: %v: \n", wsp)
 	wsFact, err := workspace.NewFactory(wsp, l)
 	if err != nil {
 		return &workspace.Workspace{}, err
 	}
-	//err = service.UseGlobalWorkspaceFactory(wsFact)
-	//if err != nil {
-	//	return &workspace.Workspace{}, err
-	//}
-	//ToDO: Check if workspace is empty or not
+
+	//Check if workspace is empty or not
+	if cmd.opts.Source != VersionLocal {
+		_, err = os.Stat(cmd.opts.WorkspacePath)
+		// workspace already exists
+		if !os.IsNotExist(err) && !cmd.avoidUserInteraction() {
+			isWorkspaceEmpty, err := files.IsDirEmpty(cmd.opts.WorkspacePath)
+			if err != nil {
+				return &workspace.Workspace{}, err
+			}
+			// if workspace used is not the default one and it is not empty,
+			// then ask for permission to delete its existing files
+			if !isWorkspaceEmpty && cmd.opts.WorkspacePath != getDefaultWorkspacePath() {
+				if !wsStep.PromptYesNo(fmt.Sprintf("Existing files in workspace folder '%s' will be deleted. Are you sure you want to continue? ", cmd.opts.WorkspacePath)) {
+					wsStep.Failure()
+					return &workspace.Workspace{}, fmt.Errorf("Aborting deployment")
+				}
+			}
+		}
+	}
+
 	ws, err := wsFact.Get(cmd.opts.Source)
 	if err != nil {
 		return &workspace.Workspace{}, err
 	}
+
 	return  ws, nil
 
 }
@@ -227,6 +246,8 @@ func (cmd *command) deployKyma(ovs overrides.Overrides) error {
 	if err != nil {
 		return err
 	}
+
+
 	defaultComponentsYaml := filepath.Join(ws.InstallationResourceDir, "components.yaml")
 	fmt.Printf("dsy: %v", defaultComponentsYaml)
 
