@@ -9,7 +9,7 @@ import (
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
 	"github.com/kyma-incubator/reconciler/pkg/scheduler"
 	"github.com/kyma-project/cli/internal/cli"
-	"github.com/kyma-project/cli/internal/components"
+	"github.com/kyma-project/cli/internal/component"
 	"github.com/kyma-project/cli/internal/coredns"
 	"github.com/kyma-project/cli/internal/files"
 	"github.com/kyma-project/cli/internal/k3d"
@@ -57,17 +57,25 @@ func NewCmd(o *Options) *cobra.Command {
 	return cobraCmd
 }
 
-func (cmd *command) createComplistWithOverrides(ws *workspace.Workspace, overrides map[string]interface{}) (components.ComponentList, error) {
-	var compList components.ComponentList
+func (cmd *command) buildCompList(comps []keb.Component) []string {
+	var compSlice []string
+	for _, c := range comps {
+		compSlice = append(compSlice, c.Component)
+	}
+	return compSlice
+}
+
+func (cmd *command) createCompListWithOverrides(ws *workspace.Workspace, overrides map[string]interface{}) (component.List, error) {
+	var compList component.List
 	if len(cmd.opts.Components) > 0 {
-		compList = components.FromStrings(cmd.opts.Components, overrides)
+		compList = component.FromStrings(cmd.opts.Components, overrides)
 		return compList, nil
 	}
 	if cmd.opts.ComponentsFile != "" {
-		return components.NewComponentList(cmd.opts.ComponentsFile, overrides)
+		return component.FromFile(cmd.opts.ComponentsFile, overrides)
 	}
 	compFile := path.Join(ws.InstallationResourceDir, "components.yaml")
-	return components.NewComponentList(compFile, overrides)
+	return component.FromFile(compFile, overrides)
 }
 
 func (cmd *command) Run(o *Options) error {
@@ -103,7 +111,7 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	comps, err := cmd.createComplistWithOverrides(ws, ovs.FlattenedMap())
+	comps, err := cmd.createCompListWithOverrides(ws, ovs.FlattenedMap())
 	if err != nil {
 		return err
 	}
@@ -182,14 +190,14 @@ func (cmd *command) buildOverrides(workspace *workspace.Workspace) (overrides.Ov
 	return ovs, err
 }
 
-func (cmd *command) deployKyma(comps components.ComponentList) error {
+func (cmd *command) deployKyma(comps component.List) error {
 	kubeconfigPath := kube.KubeconfigPath(cmd.KubeconfigPath)
 	kubeconfig, err := ioutil.ReadFile(kubeconfigPath)
 	if err != nil {
 		return errors.Wrap(err, "Could not read kubeconfig")
 	}
 	localScheduler := scheduler.NewLocalScheduler(
-		scheduler.WithPrerequisites(components.BuildCompList(comps.Prerequisites)...),
+		scheduler.WithPrerequisites(cmd.buildCompList(comps.Prerequisites)...),
 		scheduler.WithStatusFunc(cmd.printDeployStatus))
 
 	componentsToInstall := append(comps.Prerequisites, comps.Components...)

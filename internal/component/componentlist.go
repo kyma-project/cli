@@ -1,4 +1,4 @@
-package components
+package component
 
 import (
 	"encoding/json"
@@ -15,26 +15,26 @@ import (
 
 const defaultNamespace = "kyma-system"
 
-// ComponentList collects component definitions
-type ComponentList struct {
+// List collects component definitions
+type List struct {
 	Prerequisites []keb.Component
 	Components    []keb.Component
 }
 
-// ComponentDefinition defines a component in components list
-type ComponentDefinition struct {
+// Definition defines a component in component list
+type CompDefinition struct {
 	Name      string
 	Namespace string
 }
 
-// ComponentListData is the raw component list
-type ComponentListData struct {
+// listData is the raw component list
+type listData struct {
 	DefaultNamespace string `yaml:"defaultNamespace" json:"defaultNamespace"`
-	Prerequisites    []ComponentDefinition
-	Components       []ComponentDefinition
+	Prerequisites    []CompDefinition
+	Components       []CompDefinition
 }
 
-func (cld *ComponentListData) createKebComp(compDef ComponentDefinition) keb.Component {
+func (cld *listData) createKebComp(compDef CompDefinition) keb.Component {
 	var c keb.Component
 	if compDef.Namespace == "" {
 		c.Namespace = cld.DefaultNamespace
@@ -58,8 +58,8 @@ func applyOverrides(compList []keb.Component, overrides map[string]interface{}) 
 	return compList
 }
 
-func (cld *ComponentListData) process(overrides map[string]interface{}) ComponentList {
-	var compList ComponentList
+func (cld *listData) process(overrides map[string]interface{}) List {
+	var compList List
 	var preReqs []keb.Component
 	var comps []keb.Component
 
@@ -68,7 +68,7 @@ func (cld *ComponentListData) process(overrides map[string]interface{}) Componen
 		preReqs = append(preReqs, cld.createKebComp(compDef))
 	}
 
-	// read components
+	// read component
 	for _, compDef := range cld.Components {
 		comps = append(comps, cld.createKebComp(compDef))
 	}
@@ -78,8 +78,8 @@ func (cld *ComponentListData) process(overrides map[string]interface{}) Componen
 	return compList
 }
 
-func FromStrings(list []string, overrides map[string]interface{}) ComponentList {
-	var c ComponentList
+func FromStrings(list []string, overrides map[string]interface{}) List {
+	var c List
 	for _, item := range list {
 		s := strings.Split(item, "@")
 
@@ -90,43 +90,35 @@ func FromStrings(list []string, overrides map[string]interface{}) ComponentList 
 	return c
 }
 
-// NewComponentList creates a new component list
-func NewComponentList(componentsListPath string, overrides map[string]interface{}) (ComponentList, error) {
+// FromFile creates a new component list
+func FromFile(componentsListPath string, overrides map[string]interface{}) (List, error) {
 	if componentsListPath == "" {
-		return ComponentList{}, fmt.Errorf("Path to components list file is required")
+		return List{}, fmt.Errorf("Path to component list file is required")
 	}
 	if _, err := os.Stat(componentsListPath); os.IsNotExist(err) {
-		return ComponentList{}, fmt.Errorf("Components list file '%s' not found", componentsListPath)
+		return List{}, fmt.Errorf("Components list file '%s' not found", componentsListPath)
 	}
 
 	data, err := ioutil.ReadFile(componentsListPath)
 	if err != nil {
-		return ComponentList{}, err
+		return List{}, err
 	}
 
-	var compListData *ComponentListData = &ComponentListData{
+	var compListData *listData = &listData{
 		DefaultNamespace: defaultNamespace,
 	}
 	fileExt := filepath.Ext(componentsListPath)
 	if fileExt == ".json" {
 		if err := json.Unmarshal(data, &compListData); err != nil {
-			return ComponentList{}, errors.Wrap(err, fmt.Sprintf("Failed to process components file '%s'", componentsListPath))
+			return List{}, errors.Wrap(err, fmt.Sprintf("Failed to process component file '%s'", componentsListPath))
 		}
 	} else if fileExt == ".yaml" || fileExt == ".yml" {
 		if err := yaml.Unmarshal(data, &compListData); err != nil {
-			return ComponentList{}, errors.Wrap(err, fmt.Sprintf("Failed to process components file '%s'", componentsListPath))
+			return List{}, errors.Wrap(err, fmt.Sprintf("Failed to process component file '%s'", componentsListPath))
 		}
 	} else {
-		return ComponentList{}, fmt.Errorf("File extension '%s' is not supported for component list files", fileExt)
+		return List{}, fmt.Errorf("File extension '%s' is not supported for component list files", fileExt)
 	}
 
 	return compListData.process(overrides), nil
-}
-
-func BuildCompList(comps []keb.Component) []string {
-	var compSlice []string
-	for _, c := range comps {
-		compSlice = append(compSlice, c.Component)
-	}
-	return compSlice
 }

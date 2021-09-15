@@ -1,4 +1,4 @@
-package components
+package component
 
 import (
 	"testing"
@@ -34,14 +34,14 @@ func Test_ComponentList_ComponentsFromStrings(t *testing.T) {
 	})
 }
 
-func verifyComponentList(t *testing.T, compList ComponentList) {
+func verifyComponentList(t *testing.T, compList List) {
 
 	prereqs := compList.Prerequisites
 	comps := compList.Components
-	// verify amount of components
+	// verify amount of component
 
-	require.Equal(t, 2, len(prereqs), "Different amount of prerequisite components")
-	require.Equal(t, 3, len(comps), "Different amount of components")
+	require.Equal(t, 2, len(prereqs), "Different amount of prerequisite component")
+	require.Equal(t, 3, len(comps), "Different amount of component")
 
 	// verify names + namespaces of prerequisites
 	require.Equal(t, "prereqcomp1", prereqs[0].Component, "Wrong component name")
@@ -49,7 +49,7 @@ func verifyComponentList(t *testing.T, compList ComponentList) {
 	require.Equal(t, "prereqcomp2", prereqs[1].Component, "Wrong component name")
 	require.Equal(t, "testns", prereqs[1].Namespace, "Wrong namespace")
 
-	// verify names + namespaces of components
+	// verify names + namespaces of component
 	require.Equal(t, "comp1", comps[0].Component, "Wrong component name")
 	require.Equal(t, "testns", comps[0].Namespace, "Wrong namespace")
 	require.Equal(t, "comp2", comps[1].Component, "Wrong component name")
@@ -61,7 +61,7 @@ func verifyComponentList(t *testing.T, compList ComponentList) {
 func newCompList(t *testing.T, compFile string) {
 	override := make(map[string]interface{})
 	override["foo"] = "bar"
-	compList, err := NewComponentList(compFile, override)
+	compList, err := FromFile(compFile, override)
 	require.NoError(t, err)
 	verifyComponentList(t, compList)
 }
