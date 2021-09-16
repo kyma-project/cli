@@ -54,6 +54,10 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 	cobraCmd.Flags().StringSliceVarP(&o.Components, "component", "", []string{}, "Provide one or more components to deploy (e.g. --component componentName@namespace)")
 	cobraCmd.Flags().StringVarP(&o.ComponentsFile, "components-file", "c", "", `Path to the components file (default "$HOME/.kyma/sources/installation/resources/components.yaml" or ".kyma-sources/installation/resources/components.yaml")`)
+
+	cobraCmd.Flags().StringVarP(&o.Profile, "profile", "p", "",
+		fmt.Sprintf("Kyma deployment profile. If not specified, Kyma uses its default configuration. The supported profiles are: %s, %s", profileEvaluation, profileProduction))
+
 	return cobraCmd
 }
 
@@ -205,7 +209,7 @@ func (cmd *command) deployKyma(comps component.List) error {
 		Kubeconfig: string(kubeconfig),
 		KymaConfig: keb.KymaConfig{
 			Version:    defaultVersion,
-			Profile:    defaultProfile,
+			Profile:    cmd.opts.Profile,
 			Components: componentsToInstall,
 		},
 	})
