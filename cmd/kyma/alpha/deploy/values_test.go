@@ -169,7 +169,7 @@ func TestMergeOverrides(t *testing.T) {
 				TLSCrtFile: tc.tlsCrt,
 				TLSKeyFile: tc.tlsKey,
 			}
-			ovs, err := mergeOverrides(opts, &workspace.Workspace{
+			ovs, err := mergeValues(opts, &workspace.Workspace{
 				InstallationResourceDir: tc.installationResourceDir,
 			}, fake.NewSimpleClientset())
 

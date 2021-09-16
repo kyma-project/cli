@@ -103,7 +103,7 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	ovs, err := mergeOverrides(cmd.opts, ws, cmd.K8s.Static())
+	values, err := mergeValues(cmd.opts, ws, cmd.K8s.Static())
 	if err != nil {
 		return err
 	}
@@ -113,17 +113,17 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	hasCustomDomain := len(cmd.opts.Domain) > 0
+	hasCustomDomain := cmd.opts.Domain != ""
 	if _, err := coredns.Patch(zap.NewNop(), cmd.K8s.Static(), hasCustomDomain, isK3d); err != nil {
 		return err
 	}
 
-	comps, err := cmd.createCompListWithOverrides(ws, ovs)
+	components, err := cmd.createCompListWithOverrides(ws, values)
 	if err != nil {
 		return err
 	}
 
-	err = cmd.deployKyma(comps)
+	err = cmd.deployKyma(components)
 	if err != nil {
 		return err
 	}

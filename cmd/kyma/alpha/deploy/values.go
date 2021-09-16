@@ -14,22 +14,22 @@ import (
 	"path/filepath"
 )
 
-func mergeOverrides(opts *Options, workspace *workspace.Workspace, kubeClient kubernetes.Interface) (map[string]interface{}, error) {
+func mergeValues(opts *Options, workspace *workspace.Workspace, kubeClient kubernetes.Interface) (map[string]interface{}, error) {
 	builder := &overrides.Builder{}
 
-	if err := setDefaultOverrides(builder, workspace); err != nil {
+	if err := addDefaultValues(builder, workspace); err != nil {
 		return nil, err
 	}
 
-	if err := setOverrideFiles(builder, opts, workspace); err != nil {
+	if err := addValueFiles(builder, opts, workspace); err != nil {
 		return nil, err
 	}
 
-	if err := setOverrides(builder, opts); err != nil {
+	if err := addValues(builder, opts); err != nil {
 		return nil, err
 	}
 
-	if err := setDomainOverrides(builder, opts); err != nil {
+	if err := addDomainValues(builder, opts); err != nil {
 		return nil, err
 	}
 
@@ -37,13 +37,13 @@ func mergeOverrides(opts *Options, workspace *workspace.Workspace, kubeClient ku
 
 	ovs, err := builder.Build()
 	if err != nil {
-		return nil, errors.Wrap(err,"failed to build")
+		return nil, errors.Wrap(err, "failed to build")
 	}
 
 	return ovs.FlattenedMap(), nil
 }
 
-func setDefaultOverrides(builder *overrides.Builder, workspace *workspace.Workspace) error {
+func addDefaultValues(builder *overrides.Builder, workspace *workspace.Workspace) error {
 	kyma2OverridesPath := path.Join(workspace.InstallationResourceDir, "values.yaml")
 	if err := builder.AddFile(kyma2OverridesPath); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
@@ -55,7 +55,7 @@ func setDefaultOverrides(builder *overrides.Builder, workspace *workspace.Worksp
 	return nil
 }
 
-func setOverrideFiles(builder *overrides.Builder, opts *Options, workspace *workspace.Workspace) error {
+func addValueFiles(builder *overrides.Builder, opts *Options, workspace *workspace.Workspace) error {
 	valueFiles, err := resolve.Files(opts.ValueFiles, filepath.Join(workspace.WorkspaceDir, "tmp"))
 	if err != nil {
 		return errors.Wrap(err, "failed to resolve value files")
@@ -69,7 +69,7 @@ func setOverrideFiles(builder *overrides.Builder, opts *Options, workspace *work
 	return nil
 }
 
-func setOverrides(builder *overrides.Builder, opts *Options) error {
+func addValues(builder *overrides.Builder, opts *Options) error {
 	for _, value := range opts.Values {
 		ovs, err := strvals.Parse(value)
 		if err != nil {
@@ -82,7 +82,7 @@ func setOverrides(builder *overrides.Builder, opts *Options) error {
 	return nil
 }
 
-func setDomainOverrides(builder *overrides.Builder, opts *Options) error {
+func addDomainValues(builder *overrides.Builder, opts *Options) error {
 	domainOverrides := make(map[string]interface{})
 	if opts.Domain != "" {
 		domainOverrides["domainName"] = opts.Domain
