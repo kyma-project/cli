@@ -42,16 +42,12 @@ func (ob *Builder) AddFile(file string) error {
 }
 
 // AddOverrides adds overrides for a chart to the builder
-func (ob *Builder) AddOverrides(chart string, overrides map[string]interface{}) error {
-	if chart == "" {
-		return fmt.Errorf("Chart name cannot be empty when adding overrides")
-	}
+func (ob *Builder) AddOverrides(overrides map[string]interface{}) error {
 	if len(overrides) < 1 {
-		return fmt.Errorf("Empty overrides map provided for chart '%s'", chart)
+		return fmt.Errorf("invalid overrides: empty")
 	}
-	overridesMap := make(map[string]interface{})
-	overridesMap[chart] = overrides
-	ob.overrides = append(ob.overrides, overridesMap)
+
+	ob.overrides = append(ob.overrides, overrides)
 	return nil
 }
 

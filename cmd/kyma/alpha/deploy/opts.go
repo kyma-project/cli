@@ -14,7 +14,7 @@ type Options struct {
 	Components     []string
 	ComponentsFile string
 	Domain         string
-	Overrides      []string
+	Values         []string
 	OverridesFiles []string
 	Profile        string
 	TLSCrtFile     string

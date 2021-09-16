@@ -14,13 +14,11 @@ import (
 	"github.com/kyma-project/cli/internal/files"
 	"github.com/kyma-project/cli/internal/k3d"
 	"github.com/kyma-project/cli/internal/kube"
-	"github.com/kyma-project/cli/internal/overrides"
 	"github.com/kyma-project/cli/internal/trust"
 	"github.com/kyma-project/cli/pkg/step"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
-	"io/fs"
 	"io/ioutil"
 	"os"
 	"path"
@@ -30,7 +28,6 @@ import (
 )
 
 const defaultVersion = "main"
-const defaultProfile = "evaluation"
 
 type command struct {
 	cli.Command
@@ -55,6 +52,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd.Flags().StringSliceVarP(&o.Components, "component", "", []string{}, "Provide one or more components to deploy (e.g. --component componentName@namespace)")
 	cobraCmd.Flags().StringVarP(&o.ComponentsFile, "components-file", "c", "", `Path to the components file (default "$HOME/.kyma/sources/installation/resources/components.yaml" or ".kyma-sources/installation/resources/components.yaml")`)
 
+	cobraCmd.Flags().StringSliceVarP(&o.Values, "value", "", []string{}, "Set configuration values. Can specify one or more values, also as a comma-separated list (e.g. --value component.a='1' --value component.b='2' or --value component.a='1',component.b='2').")
 	cobraCmd.Flags().StringVarP(&o.Profile, "profile", "p", "",
 		fmt.Sprintf("Kyma deployment profile. If not specified, Kyma uses its default configuration. The supported profiles are: %s, %s", profileEvaluation, profileProduction))
 
@@ -101,7 +99,7 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	ovs, err := cmd.buildOverrides(ws)
+	ovs, err := mergeOverrides(cmd.opts, ws, cmd.K8s.Static())
 	if err != nil {
 		return err
 	}
@@ -111,11 +109,13 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	if _, err := coredns.Patch(zap.NewNop(), cmd.K8s.Static(), ovs, isK3d); err != nil {
+	_, hasCustomDomain := ovs["global.domainName"]
+
+	if _, err := coredns.Patch(zap.NewNop(), cmd.K8s.Static(), hasCustomDomain, isK3d); err != nil {
 		return err
 	}
 
-	comps, err := cmd.createCompListWithOverrides(ws, ovs.FlattenedMap())
+	comps, err := cmd.createCompListWithOverrides(ws, ovs)
 	if err != nil {
 		return err
 	}
@@ -163,35 +163,6 @@ func (cmd *command) loadWorkspace() (*workspace.Workspace, error) {
 	downloadStep.Successf("Kyma downloaded into workspace folder")
 
 	return ws, nil
-}
-
-func (cmd *command) buildOverrides(workspace *workspace.Workspace) (overrides.Overrides, error) {
-	overridesStep := cmd.NewStep("Building Kyma2 overrides")
-
-	overridesBuilder := &overrides.Builder{}
-
-	kyma2OverridesPath := path.Join(workspace.InstallationResourceDir, "values.yaml")
-
-	if err := overridesBuilder.AddFile(kyma2OverridesPath); err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			overridesStep.LogInfof("Kyma2 override path not found but continuing: %s", err)
-		} else {
-			return overrides.Overrides{}, errors.Wrap(err, "Could not add overrides for Kyma 2.0")
-		}
-	}
-
-	overridesBuilder.AddInterceptor([]string{"global.domainName", "global.ingress.domainName"}, overrides.NewDomainNameOverrideInterceptor(cmd.K8s.Static()))
-	overridesBuilder.AddInterceptor([]string{"global.tlsCrt", "global.tlsKey"}, overrides.NewCertificateOverrideInterceptor("global.tlsCrt", "global.tlsKey", cmd.K8s.Static()))
-	overridesBuilder.AddInterceptor([]string{"serverless.dockerRegistry.internalServerAddress", "serverless.dockerRegistry.serverAddress", "serverless.dockerRegistry.registryAddress"}, overrides.NewRegistryInterceptor(cmd.K8s.Static()))
-	overridesBuilder.AddInterceptor([]string{"serverless.dockerRegistry.enableInternal"}, overrides.NewRegistryDisableInterceptor(cmd.K8s.Static()))
-
-	ovs, err := overridesBuilder.Build()
-	if err != nil {
-		return overrides.Overrides{}, err
-	}
-
-	overridesStep.Success()
-	return ovs, err
 }
 
 func (cmd *command) deployKyma(comps component.List) error {
