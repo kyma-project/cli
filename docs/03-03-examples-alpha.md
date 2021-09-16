@@ -3,7 +3,7 @@ title: Kyma CLI alpha command usage examples
 type: Details
 ---
 
-> **CAUTION:** The following information is deprecated. To download the stable binaries, follow the instructions in the [CLI README file](https://github.com/kyma-project/cli#readme).
+> **CAUTION:** The following information is outdated. If you'd like to try out the commands, install the stable Kyma CLI from the Kyma main branch. To download the stable binaries, follow the instructions in the [CLI README file](https://github.com/kyma-project/cli#readme).
 
 The following examples show how to use the alpha commands to provision a cluster, install and upgrade Kyma, and handle errors.
 
