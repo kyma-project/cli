@@ -1,8 +1,10 @@
 package deploy
 
 import (
+	"errors"
 	"fmt"
 	"github.com/kyma-project/cli/internal/cli"
+	"os"
 )
 
 const profileEvaluation = "evaluation"
@@ -16,7 +18,7 @@ type Options struct {
 	ComponentsFile string
 	Domain         string
 	Values         []string
-	ValueFiles []string
+	ValueFiles     []string
 	Profile        string
 	TLSCrtFile     string
 	TLSKeyFile     string
@@ -29,16 +31,34 @@ func NewOptions(o *cli.Options) *Options {
 
 // validateFlags performs a sanity check of provided options
 func (o *Options) validateFlags() error {
-	return o.validateProfile()
+	if err := o.validateProfile(); err != nil {
+		return err
+	}
+	if err := o.validateTLSCertAndKey(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (o *Options) validateProfile() error {
-	switch o.Profile {
-	case "":
-	case profileEvaluation:
-	case profileProduction:
+	if o.Profile == "" || o.Profile == profileEvaluation || o.Profile == profileProduction {
 		return nil
 	}
 
 	return fmt.Errorf("unknown profile: %s", o.Profile)
+}
+
+func (o *Options) validateTLSCertAndKey() error {
+	if o.TLSKeyFile == "" && o.TLSCrtFile == "" {
+		return nil
+	}
+	if _, err := os.Stat(o.TLSKeyFile); os.IsNotExist(err) {
+		return errors.New("tls key not found")
+	}
+	if _, err := os.Stat(o.TLSCrtFile); os.IsNotExist(err) {
+		return errors.New("tls cert not found")
+	}
+
+	return nil
 }
