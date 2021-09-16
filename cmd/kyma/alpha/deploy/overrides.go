@@ -2,7 +2,6 @@ package deploy
 
 import (
 	"encoding/base64"
-	"fmt"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
 	"github.com/kyma-project/cli/internal/overrides"
 	"github.com/kyma-project/cli/internal/resolve"
@@ -10,12 +9,17 @@ import (
 	"helm.sh/helm/v3/pkg/strvals"
 	"io/ioutil"
 	"k8s.io/client-go/kubernetes"
+	"os"
 	"path"
 	"path/filepath"
 )
 
 func mergeOverrides(opts *Options, workspace *workspace.Workspace, kubeClient kubernetes.Interface) (map[string]interface{}, error) {
 	builder := &overrides.Builder{}
+
+	if err := setDefaultOverrides(builder, workspace); err != nil {
+		return nil, err
+	}
 
 	if err := setOverrideFiles(builder, opts, workspace); err != nil {
 		return nil, err
@@ -25,29 +29,40 @@ func mergeOverrides(opts *Options, workspace *workspace.Workspace, kubeClient ku
 		return nil, err
 	}
 
+	if err := setDomainOverrides(builder, opts); err != nil {
+		return nil, err
+	}
+
 	registerInterceptors(builder, kubeClient)
 
 	ovs, err := builder.Build()
 	if err != nil {
-		return nil, fmt.Errorf("failed to build: %v", err)
+		return nil, errors.Wrap(err,"failed to build")
 	}
 
 	return ovs.FlattenedMap(), nil
 }
 
-func setOverrideFiles(builder *overrides.Builder, opts *Options, workspace *workspace.Workspace) error {
+func setDefaultOverrides(builder *overrides.Builder, workspace *workspace.Workspace) error {
 	kyma2OverridesPath := path.Join(workspace.InstallationResourceDir, "values.yaml")
 	if err := builder.AddFile(kyma2OverridesPath); err != nil {
-		return errors.Wrap(err, "failed to add default values file: %s")
+		if errors.Is(err, os.ErrNotExist) {
+			return nil
+		}
+		return errors.Wrap(err, "failed to add default values file")
 	}
 
+	return nil
+}
+
+func setOverrideFiles(builder *overrides.Builder, opts *Options, workspace *workspace.Workspace) error {
 	valueFiles, err := resolve.Files(opts.ValueFiles, filepath.Join(workspace.WorkspaceDir, "tmp"))
 	if err != nil {
-		return errors.Wrap(err, "failed to resolve value files: %v")
+		return errors.Wrap(err, "failed to resolve value files")
 	}
 	for _, file := range valueFiles {
 		if err := builder.AddFile(file); err != nil {
-			return errors.Wrap(err, "failed to add a values file: %s")
+			return errors.Wrap(err, "failed to add a values file")
 		}
 	}
 
@@ -55,39 +70,44 @@ func setOverrideFiles(builder *overrides.Builder, opts *Options, workspace *work
 }
 
 func setOverrides(builder *overrides.Builder, opts *Options) error {
-	globalOverrides := make(map[string]interface{})
+	for _, value := range opts.Values {
+		ovs, err := strvals.Parse(value)
+		if err != nil {
+			return errors.Wrapf(err, "failed to parse %s", value)
+		}
+
+		builder.AddOverrides(ovs)
+	}
+
+	return nil
+}
+
+func setDomainOverrides(builder *overrides.Builder, opts *Options) error {
+	domainOverrides := make(map[string]interface{})
 	if opts.Domain != "" {
-		globalOverrides["domainName"] = opts.Domain
+		domainOverrides["domainName"] = opts.Domain
+		domainOverrides["ingress.domainName"] = opts.Domain
 	}
 
 	if opts.TLSCrtFile != "" && opts.TLSKeyFile != "" {
 		tlsCrt, err := readFileAndEncode(opts.TLSCrtFile)
 		if err != nil {
-			return fmt.Errorf("failed to read ")
+			return errors.Wrap(err, "failed to read")
 		}
 		tlsKey, err := readFileAndEncode(opts.TLSKeyFile)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "failed to read")
 		}
-		globalOverrides["tlsKey"] = tlsKey
-		globalOverrides["tlsCrt"] = tlsCrt
+		domainOverrides["tlsKey"] = tlsKey
+		domainOverrides["tlsCrt"] = tlsCrt
 	}
 
-	if len(globalOverrides) > 0 {
+	if len(domainOverrides) > 0 {
 		if err := builder.AddOverrides(map[string]interface{}{
-			"global": globalOverrides,
+			"global": domainOverrides,
 		}); err != nil {
 			return err
 		}
-	}
-
-	for _, value := range opts.Values {
-		ovs, err := strvals.Parse(value)
-		if err != nil {
-			return fmt.Errorf("failed to parse: %s", value)
-		}
-
-		builder.AddOverrides(ovs)
 	}
 
 	return nil

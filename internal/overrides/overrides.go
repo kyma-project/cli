@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -32,6 +33,10 @@ type Builder struct {
 
 // AddFile adds overrides defined in a file to the builder
 func (ob *Builder) AddFile(file string) error {
+	if _, err := os.Stat(file); os.IsNotExist(err) {
+		return errors.Wrap(err, "invalid override file: not exists")
+	}
+
 	for _, ext := range supportedFileExt {
 		if strings.HasSuffix(file, fmt.Sprintf(".%s", ext)) {
 			ob.files = append(ob.files, file)
