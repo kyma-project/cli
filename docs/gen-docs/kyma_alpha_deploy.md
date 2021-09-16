@@ -17,6 +17,12 @@ kyma alpha deploy [flags]
 ```bash
       --component strings        Provide one or more components to deploy (e.g. --component componentName@namespace)
   -c, --components-file string   Path to the components file (default "$HOME/.kyma/sources/installation/resources/components.yaml" or ".kyma-sources/installation/resources/components.yaml")
+  -d, --domain string            Custom domain used for installation
+  -p, --profile string           Kyma deployment profile. If not specified, Kyma uses its default configuration. The supported profiles are: evaluation, production
+      --tls-crt string           TLS certificate file for the domain used for installation
+      --tls-key string           TLS key file for the domain used for installation
+      --value strings            Set configuration values. Can specify one or more values, also as a comma-separated list (e.g. --value component.a='1' --value component.b='2' or --value component.a='1',component.b='2').
+  -f, --values-file strings      Path(s) to one or more JSON or YAML files with configuration values
 ```
 
 ## Flags inherited from parent commands
