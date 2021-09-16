@@ -113,8 +113,7 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	_, hasCustomDomain := ovs["global.domainName"]
-
+	hasCustomDomain := len(cmd.opts.Domain) > 0
 	if _, err := coredns.Patch(zap.NewNop(), cmd.K8s.Static(), hasCustomDomain, isK3d); err != nil {
 		return err
 	}
