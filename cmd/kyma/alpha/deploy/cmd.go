@@ -3,58 +3,34 @@ package deploy
 import (
 	"context"
 	"fmt"
+	"github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-incubator/reconciler/pkg/logger"
+	"github.com/kyma-incubator/reconciler/pkg/reconciler"
+	"github.com/kyma-incubator/reconciler/pkg/reconciler/service"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
+	"github.com/kyma-incubator/reconciler/pkg/scheduler"
+	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/coredns"
+	"github.com/kyma-project/cli/internal/files"
 	"github.com/kyma-project/cli/internal/k3d"
+	"github.com/kyma-project/cli/internal/kube"
+	"github.com/kyma-project/cli/internal/overrides"
+	"github.com/kyma-project/cli/internal/trust"
 	"github.com/kyma-project/cli/pkg/step"
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"io/fs"
 	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
-	"strings"
-
-	"github.com/kyma-incubator/reconciler/pkg/keb"
-	"github.com/kyma-incubator/reconciler/pkg/reconciler"
-	"github.com/kyma-incubator/reconciler/pkg/reconciler/service"
-	"github.com/kyma-incubator/reconciler/pkg/scheduler"
-	"github.com/kyma-project/cli/internal/cli"
-	"github.com/kyma-project/cli/internal/files"
-	"github.com/kyma-project/cli/internal/kube"
-	"github.com/kyma-project/cli/internal/overrides"
-	"github.com/kyma-project/cli/internal/trust"
-	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
-
 	//Register all reconcilers
 	_ "github.com/kyma-incubator/reconciler/pkg/reconciler/instances"
 )
 
 const defaultVersion = "main"
 const defaultProfile = "evaluation"
-
-
-var defaultComponents = []string{
-	"cluster-essentials@kyma-system",
-	"istio@istio-system",
-	"certificates@istio-system",
-	"logging@kyma-system",
-	"tracing@kyma-system",
-	"kiali@kyma-system",
-	"monitoring@kyma-system",
-	"eventing@kyma-system",
-	"ory@kyma-system",
-	"api-gateway@kyma-system",
-	"service-catalog@kyma-system",
-	"service-catalog-addons@kyma-system",
-	"rafter@kyma-system",
-	"helm-broker@kyma-system",
-	"cluster-users@kyma-system",
-	"serverless@kyma-system",
-	"application-connector@kyma-integration",
-}
 
 type command struct {
 	cli.Command
@@ -76,8 +52,9 @@ func NewCmd(o *Options) *cobra.Command {
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run(cmd.opts) },
 		Aliases: []string{"d"},
 	}
+	cobraCmd.Flags().StringSliceVarP(&o.Components, "component", "", []string{}, "Provide one or more components to deploy (e.g. --component componentName@namespace)")
+	cobraCmd.Flags().StringVarP(&o.ComponentsFile, "components-file", "c", "", `Path to the components file (default "$HOME/.kyma/sources/installation/resources/components.yaml" or ".kyma-sources/installation/resources/components.yaml")`)
 	cobraCmd.Flags().StringVarP(&o.WorkspacePath, "workspace", "w", "", `Path to download Kyma sources (default "$HOME/.kyma/sources" or ".kyma-sources")`)
-
 	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", defaultVersion, `Installation source:
 	- Deploy a specific release, for example: "kyma deploy --source=2.0.0"
 	- Deploy a specific branch of the Kyma repository on kyma-project.org: "kyma deploy --source=<my-branch-name>"
@@ -169,6 +146,11 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
+	comps, err := cmd.createCompListWithOverrides(ws, ovs.FlattenedMap())
+	if err != nil {
+		return err
+	}
+
 	err = cmd.deployKyma(ws, ovs)
 	if err != nil {
 		return err
@@ -215,7 +197,7 @@ func (cmd *command) loadWorkspace() (*workspace.Workspace, error) {
 }
 
 func (cmd *command) buildOverrides(workspace *workspace.Workspace) (overrides.Overrides, error) {
-	overridesStep := cmd.NewStep("Applying Kyma2 overrides")
+	overridesStep := cmd.NewStep("Building Kyma2 overrides")
 
 	overridesBuilder := &overrides.Builder{}
 
@@ -249,27 +231,22 @@ func (cmd *command) deployKyma(ws *workspace.Workspace, ovs overrides.Overrides)
 	if err != nil {
 		return errors.Wrap(err, "Could not read kubeconfig")
 	}
-	//l := logger.NewOptionalLogger(true)
-	//ws ,err  := cmd.workspaceBuilder(l)
-	//if err != nil {
-	//	return err
-	//}
 
 
 	defaultComponentsYaml := filepath.Join(ws.InstallationResourceDir, "components.yaml")
 	fmt.Printf("dsy: %v", defaultComponentsYaml)
 
 	localScheduler := scheduler.NewLocalScheduler(
-		//scheduler.WithCRDComponents("cluster-essentials"),
-		scheduler.WithPrerequisites("istio", "certificates"),
+		scheduler.WithPrerequisites(cmd.buildCompList(comps.Prerequisites)...),
 		scheduler.WithStatusFunc(cmd.printDeployStatus))
 
+	componentsToInstall := append(comps.Prerequisites, comps.Components...)
 	err = localScheduler.Run(context.TODO(), &keb.Cluster{
 		Kubeconfig: string(kubeconfig),
 		KymaConfig: keb.KymaConfig{
 			Version:    cmd.opts.Source,
 			Profile:    defaultProfile,
-			Components: componentsFromStrings(defaultComponents, ovs.FlattenedMap()),
+			Components: componentsToInstall,
 		},
 	})
 	if err != nil {
@@ -280,23 +257,6 @@ func (cmd *command) deployKyma(ws *workspace.Workspace, ovs overrides.Overrides)
 
 func (cmd *command) printDeployStatus(component string, msg *reconciler.CallbackMessage) {
 	fmt.Printf("Component %s has status %s\n", component, msg.Status)
-}
-
-func componentsFromStrings(components []string, overrides map[string]interface{}) []keb.Component {
-	var results []keb.Component
-	for _, componentWithNs := range components {
-		tokens := strings.Split(componentWithNs, "@")
-		component := keb.Component{Component: tokens[0], Namespace: tokens[1]}
-
-		for k, v := range overrides {
-			overrideComponent := strings.Split(k, ".")[0]
-			if overrideComponent == component.Component || overrideComponent == "global" {
-				component.Configuration = append(component.Configuration, keb.Configuration{Key: k, Value: v})
-			}
-		}
-		results = append(results, component)
-	}
-	return results
 }
 
 // avoidUserInteraction returns true if user won't provide input

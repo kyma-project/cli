@@ -19,7 +19,8 @@ type Options struct {
 	*cli.Options
 	WorkspacePath    string
 	Source           string
-
+	Components     []string
+	ComponentsFile string
 }
 
 //NewOptions creates options with default values
