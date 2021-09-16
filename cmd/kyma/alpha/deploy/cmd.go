@@ -10,6 +10,7 @@ import (
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
 	"github.com/kyma-incubator/reconciler/pkg/scheduler"
 	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/component"
 	"github.com/kyma-project/cli/internal/coredns"
 	"github.com/kyma-project/cli/internal/files"
 	"github.com/kyma-project/cli/internal/k3d"
@@ -111,6 +112,27 @@ func (cmd *command) workspaceBuilder(l *zap.SugaredLogger) (*workspace.Workspace
 
 }
 
+func (cmd *command) buildCompList(comps []keb.Component) []string {
+	var compSlice []string
+	for _, c := range comps {
+		compSlice = append(compSlice, c.Component)
+	}
+	return compSlice
+}
+
+func (cmd *command) createCompListWithOverrides(ws *workspace.Workspace, overrides map[string]interface{}) (component.List, error) {
+	var compList component.List
+	if len(cmd.opts.Components) > 0 {
+		compList = component.FromStrings(cmd.opts.Components, overrides)
+		return compList, nil
+	}
+	if cmd.opts.ComponentsFile != "" {
+		return component.FromFile(cmd.opts.ComponentsFile, overrides)
+	}
+	compFile := path.Join(ws.InstallationResourceDir, "components.yaml")
+	return component.FromFile(compFile, overrides)
+}
+
 func (cmd *command) Run(o *Options) error {
 	var err error
 
@@ -125,10 +147,6 @@ func (cmd *command) Run(o *Options) error {
 		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
 	}
 
-	//ws, err := cmd.loadWorkspace()
-	//if err != nil {
-	//	return err
-	//}
 	l := logger.NewOptionalLogger(true)
 	ws , err := cmd.workspaceBuilder(l)
 
@@ -151,7 +169,7 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	err = cmd.deployKyma(ws, ovs)
+	err = cmd.deployKyma(ws, comps)
 	if err != nil {
 		return err
 	}
@@ -163,37 +181,6 @@ func (cmd *command) Run(o *Options) error {
 	// TODO: print summary after deploy
 
 	return nil
-}
-
-func (cmd *command) loadWorkspace() (*workspace.Workspace, error) {
-	downloadStep := cmd.NewStep(fmt.Sprintf("Downloading Kyma (%s) into workspace folder ", defaultVersion))
-
-	workspaceDir, err := files.KymaHome()
-	if err != nil {
-		return nil, errors.Wrap(err, "Could not create Kyma home directory")
-	}
-
-	//use a global workspace factory to ensure all component-reconcilers are using the same workspace-directory
-	//(otherwise each component-reconciler would handle the download of Kyma resources individually which will cause
-	//collisions when sharing the same directory)
-	factory, err := workspace.NewFactory(workspaceDir, zap.NewNop().Sugar())
-	if err != nil {
-		return nil, err
-	}
-
-	err = service.UseGlobalWorkspaceFactory(factory)
-	if err != nil {
-		return nil, err
-	}
-
-	ws, err := factory.Get(defaultVersion)
-	if err != nil {
-		return nil, err
-	}
-
-	downloadStep.Successf("Kyma downloaded into workspace folder")
-
-	return ws, nil
 }
 
 func (cmd *command) buildOverrides(workspace *workspace.Workspace) (overrides.Overrides, error) {
@@ -225,7 +212,7 @@ func (cmd *command) buildOverrides(workspace *workspace.Workspace) (overrides.Ov
 	return ovs, err
 }
 
-func (cmd *command) deployKyma(ws *workspace.Workspace, ovs overrides.Overrides) error {
+func (cmd *command) deployKyma(ws *workspace.Workspace, comps component.List) error {
 	kubeconfigPath := kube.KubeconfigPath(cmd.KubeconfigPath)
 	kubeconfig, err := ioutil.ReadFile(kubeconfigPath)
 	if err != nil {
