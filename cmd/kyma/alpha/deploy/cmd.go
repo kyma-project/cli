@@ -89,13 +89,20 @@ func NewCmd(o *Options) *cobra.Command {
 }
 
 func (cmd *command) workspaceBuilder(l *zap.SugaredLogger) (*workspace.Workspace, error) {
-	wsStep := cmd.NewStep(fmt.Sprintf("Downloading Kyma (%s) into workspace folder ", cmd.opts.Source))
+	wsStep := cmd.NewStep(fmt.Sprintf("Fetching Kyma (%s) from workspace folder (%s) ", cmd.opts.Source, cmd.opts.WorkspacePath))
 
-	wsp := cmd.opts.ResolveLocalWorkspacePath()
-	fmt.Printf("WS: %v: \n", wsp)
+	wsp, err := cmd.opts.ResolveLocalWorkspacePath()
+	if err != nil {
+		return  &workspace.Workspace{}, err
+	}
+
 	wsFact, err := workspace.NewFactory(wsp, l)
 	if err != nil {
 		return &workspace.Workspace{}, err
+	}
+	err = service.UseGlobalWorkspaceFactory(wsFact)
+	if err != nil {
+		return nil, err
 	}
 
 	//Check if workspace is empty or not
@@ -112,7 +119,7 @@ func (cmd *command) workspaceBuilder(l *zap.SugaredLogger) (*workspace.Workspace
 			if !isWorkspaceEmpty && cmd.opts.WorkspacePath != getDefaultWorkspacePath() {
 				if !wsStep.PromptYesNo(fmt.Sprintf("Existing files in workspace folder '%s' will be deleted. Are you sure you want to continue? ", cmd.opts.WorkspacePath)) {
 					wsStep.Failure()
-					return &workspace.Workspace{}, fmt.Errorf("Aborting deployment")
+					return &workspace.Workspace{}, fmt.Errorf("aborting deployment")
 				}
 			}
 		}
@@ -141,10 +148,12 @@ func (cmd *command) Run(o *Options) error {
 		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
 	}
 
-	ws, err := cmd.loadWorkspace()
-	if err != nil {
-		return err
-	}
+	//ws, err := cmd.loadWorkspace()
+	//if err != nil {
+	//	return err
+	//}
+	l := logger.NewOptionalLogger(true)
+	ws , err := cmd.workspaceBuilder(l)
 
 	ovs, err := cmd.buildOverrides(ws)
 	if err != nil {
@@ -160,7 +169,7 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	err = cmd.deployKyma(ovs)
+	err = cmd.deployKyma(ws, ovs)
 	if err != nil {
 		return err
 	}
@@ -234,25 +243,24 @@ func (cmd *command) buildOverrides(workspace *workspace.Workspace) (overrides.Ov
 	return ovs, err
 }
 
-func (cmd *command) deployKyma(ovs overrides.Overrides) error {
+func (cmd *command) deployKyma(ws *workspace.Workspace, ovs overrides.Overrides) error {
 	kubeconfigPath := kube.KubeconfigPath(cmd.KubeconfigPath)
 	kubeconfig, err := ioutil.ReadFile(kubeconfigPath)
 	if err != nil {
 		return errors.Wrap(err, "Could not read kubeconfig")
 	}
-	l := logger.NewOptionalLogger(true)
-	ws ,err  := cmd.workspaceBuilder(l)
-
-	if err != nil {
-		return err
-	}
+	//l := logger.NewOptionalLogger(true)
+	//ws ,err  := cmd.workspaceBuilder(l)
+	//if err != nil {
+	//	return err
+	//}
 
 
 	defaultComponentsYaml := filepath.Join(ws.InstallationResourceDir, "components.yaml")
 	fmt.Printf("dsy: %v", defaultComponentsYaml)
 
 	localScheduler := scheduler.NewLocalScheduler(
-		scheduler.WithCRDComponents("cluster-essentials"),
+		//scheduler.WithCRDComponents("cluster-essentials"),
 		scheduler.WithPrerequisites("istio", "certificates"),
 		scheduler.WithStatusFunc(cmd.printDeployStatus))
 
@@ -274,11 +282,11 @@ func (cmd *command) printDeployStatus(component string, msg *reconciler.Callback
 	fmt.Printf("Component %s has status %s\n", component, msg.Status)
 }
 
-func componentsFromStrings(components []string, overrides map[string]interface{}) []keb.Components {
-	var results []keb.Components
+func componentsFromStrings(components []string, overrides map[string]interface{}) []keb.Component {
+	var results []keb.Component
 	for _, componentWithNs := range components {
 		tokens := strings.Split(componentWithNs, "@")
-		component := keb.Components{Component: tokens[0], Namespace: tokens[1]}
+		component := keb.Component{Component: tokens[0], Namespace: tokens[1]}
 
 		for k, v := range overrides {
 			overrideComponent := strings.Split(k, ".")[0]

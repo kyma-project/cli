@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/files"
+	"github.com/pkg/errors"
 	"os"
 	"path/filepath"
 )
@@ -26,7 +27,10 @@ func NewOptions(o *cli.Options) *Options {
 	return &Options{Options: o}
 }
 
-func (o *Options) ResolveLocalWorkspacePath() string {
+func (o *Options) ResolveLocalWorkspacePath() (string, error) {
+	if o.Source == VersionLocal && o.WorkspacePath == "" {
+		return "", errors.New("Please provide a path to the workspace when used with `--source=local`")
+	}
 	if o.WorkspacePath == "" {
 		o.WorkspacePath = defaultWorkspacePath
 	}
@@ -37,12 +41,14 @@ func (o *Options) ResolveLocalWorkspacePath() string {
 		if goPath != "" {
 			kymaPath := filepath.Join(goPath, "src", "github.com", "kyma-project", "kyma")
 			if o.pathExists(kymaPath, "Local Kyma source directory") == nil {
-				return kymaPath
+				return kymaPath, nil
 			}
 		}
 	}
+	// If VersionLocal and no workspace defined then throw an error
+
 	//no Kyma sources found in GOPATH
-	return o.WorkspacePath
+	return o.WorkspacePath, nil
 }
 
 func (o *Options) pathExists(path string, description string) error {
