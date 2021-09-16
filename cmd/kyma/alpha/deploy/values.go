@@ -37,7 +37,7 @@ func mergeValues(opts *Options, workspace *workspace.Workspace, kubeClient kuber
 
 	ovs, err := builder.Build()
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to build")
+		return nil, errors.Wrap(err, "failed to build values")
 	}
 
 	return ovs.FlattenedMap(), nil
@@ -71,12 +71,14 @@ func addValueFiles(builder *overrides.Builder, opts *Options, workspace *workspa
 
 func addValues(builder *overrides.Builder, opts *Options) error {
 	for _, value := range opts.Values {
-		ovs, err := strvals.Parse(value)
+		nested, err := strvals.Parse(value)
 		if err != nil {
 			return errors.Wrapf(err, "failed to parse %s", value)
 		}
 
-		builder.AddOverrides(ovs)
+		if err := builder.AddOverrides(nested); err != nil {
+			return errors.Wrapf(err, "failed to add overrides %s", value)
+		}
 	}
 
 	return nil
