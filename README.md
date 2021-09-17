@@ -6,6 +6,7 @@ Kyma CLI is a command line tool which supports [Kyma](https://github.com/kyma-pr
 
 >**TIP:** This document briefly describes the concept of Kyma CLI. Read the [complete documentation](https://kyma-project.io/docs/cli/) to learn more.
 
+test
 ## Installation
 
 To install the latest release of Kyma CLI on MacOS using Homebrew, run:
