@@ -1,6 +1,10 @@
 package component
 
 import (
+	"fmt"
+	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -8,20 +12,28 @@ import (
 
 func Test_ComponentList_New(t *testing.T) {
 	t.Run("From YAML", func(t *testing.T) {
-		newCompList(t, "./test/data/componentlist.yaml")
+		newCompList(t, "./testdata/componentlist.yaml")
 	})
 	t.Run("From JSON", func(t *testing.T) {
-		newCompList(t, "./test/data/componentlist.json")
+		newCompList(t, "./testdata/componentlist.json")
+	})
+	t.Run("Component list from URL", func(t *testing.T){
+		fakeServer := httptest.NewServer(http.FileServer(http.Dir("testdata")))
+		defer fakeServer.Close()
+		compFile := fmt.Sprintf("%s:/%s", fakeServer.URL, "componentlist.yaml")
+		newCompList(t, compFile)
 	})
 }
 
 func Test_ComponentList_ComponentsFromStrings(t *testing.T) {
-	t.Run("Add component in default namespace", func(t *testing.T) {
-		compList := FromStrings([]string{"comp4@kyma-system"}, make(map[string]interface{}))
+	override := make(map[string]interface{})
+	override["foo1"] = "bar1"
+	t.Run("Add Component in default namespace", func(t *testing.T) {
+		compList := FromStrings([]string{"comp4"}, override)
 		require.Equal(t, "comp4", compList.Components[0].Component)
 		require.Equal(t, "kyma-system", compList.Components[0].Namespace)
 	})
-	t.Run("Add component in custom namespace", func(t *testing.T) {
+	t.Run("Add Component in custom namespace", func(t *testing.T) {
 		namespace := "test-namespace"
 		compList := FromStrings([]string{"comp4@test-namespace"}, make(map[string]interface{}))
 		require.Equal(t, "comp4", compList.Components[0].Component)
@@ -77,7 +89,7 @@ func verifyComponentList(t *testing.T, compList List) {
 func newCompList(t *testing.T, compFile string) {
 	override := make(map[string]interface{})
 	override["foo"] = "bar"
-	compList, err := FromFile(compFile, override)
+	compList, err := FromFile(&workspace.Workspace{},compFile, override)
 	require.NoError(t, err)
 	verifyComponentList(t, compList)
 }

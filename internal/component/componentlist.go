@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/kyma-incubator/reconciler/pkg/keb"
+	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
+	"github.com/kyma-project/cli/internal/resolve"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -90,8 +91,11 @@ func FromStrings(list []string, overrides map[string]interface{}) List {
 	var c List
 	for _, item := range list {
 		s := strings.Split(item, "@")
-
-		component := keb.Component{Component: s[0], Namespace: s[1]}
+		namespace := defaultNamespace
+		if len (s) == 2 {
+			namespace = s[1]
+		}
+		component := keb.Component{Component: s[0], Namespace: namespace}
 		c.Components = append(c.Components, component)
 	}
 	c.Components = applyOverrides(c.Components, overrides)
@@ -99,15 +103,17 @@ func FromStrings(list []string, overrides map[string]interface{}) List {
 }
 
 // FromFile creates a new component list
-func FromFile(componentsListPath string, overrides map[string]interface{}) (List, error) {
+func FromFile(ws *workspace.Workspace, componentsListPath string, overrides map[string]interface{}) (List, error) {
 	if componentsListPath == "" {
 		return List{}, fmt.Errorf("Path to component list file is required")
 	}
-	if _, err := os.Stat(componentsListPath); os.IsNotExist(err) {
-		return List{}, fmt.Errorf("Components list file '%s' not found", componentsListPath)
+
+	compFile, err := resolve.File(componentsListPath, filepath.Join(ws.WorkspaceDir,"tmp"))
+	if err != nil {
+		return  List{}, err
 	}
 
-	data, err := ioutil.ReadFile(componentsListPath)
+	data, err := ioutil.ReadFile(compFile)
 	if err != nil {
 		return List{}, err
 	}
