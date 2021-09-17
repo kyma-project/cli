@@ -1,9 +1,12 @@
 package deploy
 
 import (
+	"fmt"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
 	"github.com/stretchr/testify/require"
 	"k8s.io/client-go/kubernetes/fake"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 )
 
@@ -100,13 +103,13 @@ func TestMergeOverrides(t *testing.T) {
 				"global.tlsCrt":             any,
 				"global.tlsKey":             any,
 				"global.ingress.domainName": any,
-				"component.key":             "foo",
+				"component.key":             "foo", //value wins
 				"component.inner.key":       "bar",
 				"component.outer.inner.key": "baz",
 			},
 		},
 		{
-			summary:    "multiple values with single files",
+			summary:    "multiple values with single value files",
 			values:     []string{"component.key=foo", "component.inner.key=bar"},
 			valueFiles: []string{"testdata/valid-overrides-1.yaml"},
 			expected: map[string]interface{}{
@@ -120,7 +123,7 @@ func TestMergeOverrides(t *testing.T) {
 			},
 		},
 		{
-			summary:    "multiple values with multiple files",
+			summary:    "multiple values with multiple value files",
 			values:     []string{"component.key=foo", "component.inner.key=bar"},
 			valueFiles: []string{"testdata/valid-overrides-1.yaml", "testdata/valid-overrides-2.yaml"},
 			expected: map[string]interface{}{
@@ -169,7 +172,7 @@ func TestMergeOverrides(t *testing.T) {
 				TLSCrtFile: tc.tlsCrt,
 				TLSKeyFile: tc.tlsKey,
 			}
-			ovs, err := mergeValues(opts, &workspace.Workspace{
+			actual, err := mergeValues(opts, &workspace.Workspace{
 				InstallationResourceDir: tc.installationResourceDir,
 			}, fake.NewSimpleClientset())
 
@@ -177,10 +180,32 @@ func TestMergeOverrides(t *testing.T) {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
-				requireEqualOverrides(t, tc.expected, ovs)
+				requireEqualOverrides(t, tc.expected, actual)
 			}
 		})
 	}
+
+	t.Run("value file URL", func(t *testing.T) {
+		fakeServer := httptest.NewServer(http.FileServer(http.Dir("testdata")))
+		defer fakeServer.Close()
+
+		opts := &Options{
+			ValueFiles: []string{fmt.Sprintf("%s:/%s", fakeServer.URL, "valid-overrides-1.yaml")},
+		}
+		actual, err := mergeValues(opts, &workspace.Workspace{}, fake.NewSimpleClientset())
+
+		expected := map[string]interface{}{
+			"global.domainName":         any,
+			"global.tlsCrt":             any,
+			"global.tlsKey":             any,
+			"global.ingress.domainName": any,
+			"component.key":             "baz",
+			"component.outer.inner.key": "baz",
+		}
+
+		require.NoError(t, err)
+		requireEqualOverrides(t, expected, actual)
+	})
 }
 
 func requireEqualOverrides(t *testing.T, expected, actual map[string]interface{}) {

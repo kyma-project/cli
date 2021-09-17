@@ -27,7 +27,7 @@ func File(file, dstDir string) (string, error) {
 // It returns the paths to the downloaded files.
 // If the provided file is not a URL, it checks if it exists locally
 func Files(files []string, dstDir string) ([]string, error) {
-	result := []string{}
+	var result []string
 	for _, file := range files {
 		urlTokens := strings.Split(file, "://")
 		switch len(urlTokens) {
@@ -45,10 +45,10 @@ func Files(files []string, dstDir string) ([]string, error) {
 				}
 				result = append(result, dstFile)
 			} else {
-				return nil, fmt.Errorf("Cannot download '%s' because schema '%s' is not supported", file, urlTokens[0])
+				return nil, fmt.Errorf("cannot download '%s' because schema '%s' is not supported", file, urlTokens[0])
 			}
 		default:
-			return nil, fmt.Errorf("File path '%s' is not valid", file)
+			return nil, fmt.Errorf("file path '%s' is not valid", file)
 		}
 	}
 	return result, nil
@@ -69,7 +69,7 @@ func RemoteReader(path string) (io.ReadCloser, error) {
 		return resp.Body, nil
 	}
 
-	return nil, fmt.Errorf("Couldn't not read remote file: %s, response: %v", path, resp.Status)
+	return nil, fmt.Errorf("couldn't not read remote file: %s, response: %v", path, resp.Status)
 }
 
 func download(url, dstDir, dstFile string) (string, error) {
@@ -82,7 +82,7 @@ func download(url, dstDir, dstFile string) (string, error) {
 	// Create the destination directory
 	if err := createDstDir(dstDir); err != nil {
 		return "", errors.Wrap(err, fmt.Sprintf(
-			"Download of file '%s' failed because destination directory '%s' could not be created",
+			"download of file '%s' failed because destination directory '%s' could not be created",
 			dstFile, dstDir))
 	}
 
