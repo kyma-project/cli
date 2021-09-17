@@ -69,23 +69,9 @@ func NewCmd(o *Options) *cobra.Command {
 func (cmd *command) workspaceBuilder(l *zap.SugaredLogger) (*workspace.Workspace, error) {
 	wsStep := cmd.NewStep(fmt.Sprintf("Fetching Kyma (%s) from workspace folder (%s) ", cmd.opts.Source, cmd.opts.WorkspacePath))
 
-	wsp, err := cmd.opts.ResolveLocalWorkspacePath()
-	if err != nil {
-		return  &workspace.Workspace{}, err
-	}
-
-	wsFact, err := workspace.NewFactory(wsp, l)
-	if err != nil {
-		return &workspace.Workspace{}, err
-	}
-	err = service.UseGlobalWorkspaceFactory(wsFact)
-	if err != nil {
-		return nil, err
-	}
-
 	//Check if workspace is empty or not
 	if cmd.opts.Source != VersionLocal {
-		_, err = os.Stat(cmd.opts.WorkspacePath)
+		_, err := os.Stat(cmd.opts.WorkspacePath)
 		// workspace already exists
 		if !os.IsNotExist(err) && !cmd.avoidUserInteraction() {
 			isWorkspaceEmpty, err := files.IsDirEmpty(cmd.opts.WorkspacePath)
@@ -103,13 +89,26 @@ func (cmd *command) workspaceBuilder(l *zap.SugaredLogger) (*workspace.Workspace
 		}
 	}
 
+	wsp, err := cmd.opts.ResolveLocalWorkspacePath()
+	if err != nil {
+		return  &workspace.Workspace{}, err
+	}
+
+	wsFact, err := workspace.NewFactory(wsp, l)
+	if err != nil {
+		return &workspace.Workspace{}, err
+	}
+	err = service.UseGlobalWorkspaceFactory(wsFact)
+	if err != nil {
+		return nil, err
+	}
+
 	ws, err := wsFact.Get(cmd.opts.Source)
 	if err != nil {
 		return &workspace.Workspace{}, err
 	}
 
 	return  ws, nil
-
 }
 
 func (cmd *command) buildCompList(comps []keb.Component) []string {
@@ -149,6 +148,9 @@ func (cmd *command) Run(o *Options) error {
 
 	l := logger.NewOptionalLogger(true)
 	ws , err := cmd.workspaceBuilder(l)
+	if err != nil {
+		return  err
+	}
 
 	ovs, err := cmd.buildOverrides(ws)
 	if err != nil {
