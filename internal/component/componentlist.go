@@ -48,8 +48,16 @@ func (cld *listData) createKebComp(compDef CompDefinition) keb.Component {
 func applyOverrides(compList []keb.Component, overrides map[string]interface{}) []keb.Component {
 	for i, c := range compList {
 		for k, v := range overrides {
-			overrideComponent := strings.Split(k, ".")[0]
-			if overrideComponent == c.Component || overrideComponent == "global" {
+			dotIndex := strings.IndexAny(k, ".")
+			//TODO: propagate the error if overrides are invalid
+			if dotIndex <= 0 {
+				continue
+			}
+
+			overrideComponent := k[:dotIndex]
+			if overrideComponent == c.Component {
+				c.Configuration = append(c.Configuration, keb.Configuration{Key: k[dotIndex+1:], Value: v})
+			} else if overrideComponent == "global" {
 				c.Configuration = append(c.Configuration, keb.Configuration{Key: k, Value: v})
 			}
 		}
