@@ -97,7 +97,7 @@ func (cmd *command) Run(o *Options) error {
 	if err = cmd.opts.validateFlags(); err != nil {
 		return err
 	}
-	
+
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
 		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
 	}
