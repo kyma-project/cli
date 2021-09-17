@@ -92,7 +92,7 @@ func FromStrings(list []string, overrides map[string]interface{}) List {
 	for _, item := range list {
 		s := strings.Split(item, "@")
 		namespace := defaultNamespace
-		if len (s) == 2 {
+		if len(s) == 2 {
 			namespace = s[1]
 		}
 		component := keb.Component{Component: s[0], Namespace: namespace}
@@ -108,9 +108,9 @@ func FromFile(ws *workspace.Workspace, componentsListPath string, overrides map[
 		return List{}, fmt.Errorf("Path to component list file is required")
 	}
 
-	compFile, err := resolve.File(componentsListPath, filepath.Join(ws.WorkspaceDir,"tmp"))
+	compFile, err := resolve.File(componentsListPath, filepath.Join(ws.WorkspaceDir, "tmp"))
 	if err != nil {
-		return  List{}, err
+		return List{}, err
 	}
 
 	data, err := ioutil.ReadFile(compFile)

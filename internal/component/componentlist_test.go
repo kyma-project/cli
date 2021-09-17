@@ -17,7 +17,7 @@ func Test_ComponentList_New(t *testing.T) {
 	t.Run("From JSON", func(t *testing.T) {
 		newCompList(t, "./testdata/componentlist.json")
 	})
-	t.Run("Component list from URL", func(t *testing.T){
+	t.Run("Component list from URL", func(t *testing.T) {
 		fakeServer := httptest.NewServer(http.FileServer(http.Dir("testdata")))
 		defer fakeServer.Close()
 		compFile := fmt.Sprintf("%s:/%s", fakeServer.URL, "componentlist.yaml")
@@ -89,7 +89,7 @@ func verifyComponentList(t *testing.T, compList List) {
 func newCompList(t *testing.T, compFile string) {
 	override := make(map[string]interface{})
 	override["foo"] = "bar"
-	compList, err := FromFile(&workspace.Workspace{},compFile, override)
+	compList, err := FromFile(&workspace.Workspace{}, compFile, override)
 	require.NoError(t, err)
 	verifyComponentList(t, compList)
 }
