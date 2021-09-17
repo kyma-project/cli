@@ -83,6 +83,11 @@ func TestMergeOverrides(t *testing.T) {
 			},
 		},
 		{
+			summary:     "invalid value",
+			values:      []string{"component.key^foo"},
+			expectedErr: true,
+		},
+		{
 			summary: "multiple values",
 			values:  []string{"component.key=foo", "component.inner.key=bar"},
 			expected: map[string]interface{}{
@@ -135,6 +140,21 @@ func TestMergeOverrides(t *testing.T) {
 				"component.inner.key":       "bar",
 				"component.outer.inner.key": "bzz", //value file testdata/valid-overrides-2.yaml wins
 			},
+		},
+		{
+			summary:     "non existing value file",
+			valueFiles:  []string{"testdata/non-existing.yaml"},
+			expectedErr: true,
+		},
+		{
+			summary:     "not supported value file",
+			valueFiles:  []string{"testdata/dummy.txt"},
+			expectedErr: true,
+		},
+		{
+			summary:     "corrupted value file",
+			valueFiles:  []string{"testdata/corrupted-overrides.yaml"},
+			expectedErr: true,
 		},
 		{
 			summary: "custom tls key and cert",
