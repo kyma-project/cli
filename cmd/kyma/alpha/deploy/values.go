@@ -88,7 +88,7 @@ func addDomainValues(builder *overrides.Builder, opts *Options) error {
 	domainOverrides := make(map[string]interface{})
 	if opts.Domain != "" {
 		domainOverrides["domainName"] = opts.Domain
-		domainOverrides["ingress.domainName"] = opts.Domain
+		domainOverrides["ingress"] = map[string]interface{}{"domainName": opts.Domain}
 	}
 
 	if opts.TLSCrtFile != "" && opts.TLSKeyFile != "" {
