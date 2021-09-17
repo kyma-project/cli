@@ -165,6 +165,8 @@ func TestMergeOverrides(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.summary, func(t *testing.T) {
+			t.Parallel()
+
 			opts := &Options{
 				Values:     tc.values,
 				ValueFiles: tc.valueFiles,
@@ -222,7 +224,7 @@ func requireEqualOverrides(t *testing.T, expected, actual map[string]interface{}
 		value, exists := actual[key]
 		require.Truef(t, exists, "not found %s", key)
 		if expected != any {
-			require.Equal(t, expected, value)
+			require.Equal(t, expected, value, "unexpected value of %s", key)
 		}
 	}
 }
