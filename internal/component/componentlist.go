@@ -15,14 +15,14 @@ import (
 
 const defaultNamespace = "kyma-system"
 
-// List collects component definitions
+//List collects component definitions
 type List struct {
 	Prerequisites []keb.Component
 	Components    []keb.Component
 }
 
-// Definition defines a component in component list
-type CompDefinition struct {
+//Definition defines a component in component list
+type Definition struct {
 	Name      string
 	Namespace string
 }
@@ -30,14 +30,14 @@ type CompDefinition struct {
 // listData is the raw component list
 type listData struct {
 	DefaultNamespace string `yaml:"defaultNamespace" json:"defaultNamespace"`
-	Prerequisites    []CompDefinition
-	Components       []CompDefinition
+	Prerequisites    []Definition
+	Components       []Definition
 }
 
-func (cld *listData) createKebComp(compDef CompDefinition) keb.Component {
+func (ld *listData) createKebComp(compDef Definition) keb.Component {
 	var c keb.Component
 	if compDef.Namespace == "" {
-		c.Namespace = cld.DefaultNamespace
+		c.Namespace = ld.DefaultNamespace
 	} else {
 		c.Namespace = compDef.Namespace
 	}
@@ -66,19 +66,19 @@ func applyOverrides(compList []keb.Component, overrides map[string]interface{}) 
 	return compList
 }
 
-func (cld *listData) process(overrides map[string]interface{}) List {
+func (ld *listData) process(overrides map[string]interface{}) List {
 	var compList List
 	var preReqs []keb.Component
 	var comps []keb.Component
 
 	// read prerequisites
-	for _, compDef := range cld.Prerequisites {
-		preReqs = append(preReqs, cld.createKebComp(compDef))
+	for _, compDef := range ld.Prerequisites {
+		preReqs = append(preReqs, ld.createKebComp(compDef))
 	}
 
 	// read component
-	for _, compDef := range cld.Components {
-		comps = append(comps, cld.createKebComp(compDef))
+	for _, compDef := range ld.Components {
+		comps = append(comps, ld.createKebComp(compDef))
 	}
 	compList.Prerequisites = append(compList.Prerequisites, applyOverrides(preReqs, overrides)...)
 	compList.Components = append(compList.Components, applyOverrides(comps, overrides)...)
@@ -118,14 +118,14 @@ func FromFile(componentsListPath string, overrides map[string]interface{}) (List
 	fileExt := filepath.Ext(componentsListPath)
 	if fileExt == ".json" {
 		if err := json.Unmarshal(data, &compListData); err != nil {
-			return List{}, errors.Wrap(err, fmt.Sprintf("Failed to process component file '%s'", componentsListPath))
+			return List{}, errors.Wrapf(err, "failed to process component file '%s'", componentsListPath)
 		}
 	} else if fileExt == ".yaml" || fileExt == ".yml" {
 		if err := yaml.Unmarshal(data, &compListData); err != nil {
-			return List{}, errors.Wrap(err, fmt.Sprintf("Failed to process component file '%s'", componentsListPath))
+			return List{}, errors.Wrapf(err, "failed to process component file '%s'", componentsListPath)
 		}
 	} else {
-		return List{}, fmt.Errorf("File extension '%s' is not supported for component list files", fileExt)
+		return List{}, fmt.Errorf("file extension '%s' is not supported for component list files", fileExt)
 	}
 
 	return compListData.process(overrides), nil
