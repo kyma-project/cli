@@ -1,0 +1,4 @@
+# This file contains default overrides that are applied during Kyma 2 deployment
+
+global:
+  key: foo

@@ -16,21 +16,37 @@ func Test_ComponentList_New(t *testing.T) {
 }
 
 func Test_ComponentList_ComponentsFromStrings(t *testing.T) {
-	override := make(map[string]interface{})
-	override["foo1"] = "bar1"
-	t.Run("Add Component in default namespace", func(t *testing.T) {
-		//compList := newCompList(t, "./test/data/componentlist.yaml")
-		compList := FromStrings([]string{"comp4@kyma-system"}, override)
+	t.Run("Add component in default namespace", func(t *testing.T) {
+		compList := FromStrings([]string{"comp4@kyma-system"}, make(map[string]interface{}))
 		require.Equal(t, "comp4", compList.Components[0].Component)
 		require.Equal(t, "kyma-system", compList.Components[0].Namespace)
 	})
-	t.Run("Add Component in custom namespace", func(t *testing.T) {
-		//compList := newCompList(t, "./test/data/componentlist.yaml")
+	t.Run("Add component in custom namespace", func(t *testing.T) {
 		namespace := "test-namespace"
-		compList := FromStrings([]string{"comp4@test-namespace"}, override)
-		//compList.Add("comp4", namespace)
+		compList := FromStrings([]string{"comp4@test-namespace"}, make(map[string]interface{}))
 		require.Equal(t, "comp4", compList.Components[0].Component)
 		require.Equal(t, namespace, compList.Components[0].Namespace)
+	})
+	t.Run("Add component with component overrides", func(t *testing.T) {
+		overrides := map[string]interface{}{
+			"comp4.enabled": true,
+		}
+		compList := FromStrings([]string{"comp4@test-namespace"}, overrides)
+		require.Equal(t, "enabled", compList.Components[0].Configuration[0].Key)
+		require.Equal(t, true, compList.Components[0].Configuration[0].Value)
+	})
+	t.Run("Add component with global overrides", func(t *testing.T) {
+		overrides := map[string]interface{}{
+			"global.enabled": true,
+		}
+		compList := FromStrings([]string{"comp1@test-namespace", "comp2@test-namespace"}, overrides)
+		require.Equal(t, "comp1", compList.Components[0].Component)
+		require.Equal(t, "global.enabled", compList.Components[0].Configuration[0].Key)
+		require.Equal(t, true, compList.Components[0].Configuration[0].Value)
+
+		require.Equal(t, "comp2", compList.Components[1].Component)
+		require.Equal(t, "global.enabled", compList.Components[1].Configuration[0].Key)
+		require.Equal(t, true, compList.Components[1].Configuration[0].Value)
 	})
 }
 

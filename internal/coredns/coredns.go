@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"github.com/kyma-project/cli/internal/gardener"
 	"github.com/kyma-project/cli/internal/k3d"
-	"github.com/kyma-project/cli/internal/overrides"
 	"go.uber.org/zap"
 	"html/template"
 	"time"
@@ -57,7 +56,7 @@ const (
 )
 
 // Patch patches the CoreDNS configuration based on the overrides and the cloud provider.
-func Patch(logger *zap.Logger, kubeClient kubernetes.Interface, overrides overrides.Overrides, isK3d bool) (cm *v1.ConfigMap, err error) {
+func Patch(logger *zap.Logger, kubeClient kubernetes.Interface, hasCustomDomain, isK3d bool) (cm *v1.ConfigMap, err error) {
 	err = retry.Do(func() error {
 		_, err := kubeClient.AppsV1().Deployments("kube-system").Get(context.TODO(), "coredns", metav1.GetOptions{})
 		if err != nil {
@@ -69,7 +68,7 @@ func Patch(logger *zap.Logger, kubeClient kubernetes.Interface, overrides overri
 		}
 
 		// patches contain each key and value that needs to be patched in the coredns configmap data field.
-		patches, err := generatePatches(kubeClient, overrides, isK3d)
+		patches, err := generatePatches(kubeClient, hasCustomDomain, isK3d)
 		if err != nil {
 			return err
 		}
@@ -135,7 +134,7 @@ func newCoreDNSConfigMap(data map[string]string) *v1.ConfigMap {
 	}
 }
 
-func generatePatches(kubeClient kubernetes.Interface, overrides overrides.Overrides, isK3d bool) (map[string]string, error) {
+func generatePatches(kubeClient kubernetes.Interface, hasCustomDomain, isK3d bool) (map[string]string, error) {
 	patches := make(map[string]string)
 	// patch the CoreFile only if not on gardener and no custom domain is provided
 	gardenerDomain, err := gardener.Domain(kubeClient)
@@ -145,7 +144,7 @@ func generatePatches(kubeClient kubernetes.Interface, overrides overrides.Overri
 	if err != nil {
 		return nil, err
 	}
-	_, hasCustomDomain := overrides.Find("global.domainName")
+
 	if gardenerDomain == "" && !hasCustomDomain {
 		var domainName string
 		if isK3d {
