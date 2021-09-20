@@ -78,10 +78,10 @@ func (cmd *command) createCompListWithOverrides(ws *workspace.Workspace, overrid
 		return compList, nil
 	}
 	if cmd.opts.ComponentsFile != "" {
-		return component.FromFile(cmd.opts.ComponentsFile, overrides)
+		return component.FromFile(ws, cmd.opts.ComponentsFile, overrides)
 	}
 	compFile := path.Join(ws.InstallationResourceDir, "components.yaml")
-	return component.FromFile(compFile, overrides)
+	return component.FromFile(ws, compFile, overrides)
 }
 
 func (cmd *command) Run(o *Options) error {
