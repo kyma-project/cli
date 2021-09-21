@@ -3,6 +3,10 @@ package deploy
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path"
+
 	"github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/service"
@@ -19,9 +23,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
-	"io/ioutil"
-	"os"
-	"path"
 
 	//Register all reconcilers
 	_ "github.com/kyma-incubator/reconciler/pkg/reconciler/instances"
@@ -152,7 +153,7 @@ func (cmd *command) loadWorkspace() (*workspace.Workspace, error) {
 	//use a global workspace factory to ensure all component-reconcilers are using the same workspace-directory
 	//(otherwise each component-reconciler would handle the download of Kyma resources individually which will cause
 	//collisions when sharing the same directory)
-	factory, err := workspace.NewFactory(workspaceDir, zap.NewNop().Sugar())
+	factory, err := workspace.NewFactory(nil, workspaceDir, zap.NewNop().Sugar())
 	if err != nil {
 		return nil, err
 	}
