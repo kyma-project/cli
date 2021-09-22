@@ -9,19 +9,21 @@ import (
 
 // NewLogger returns the logger used for CLI log output (used in Hydroform deployments)
 func NewLogger(printLogs bool) *zap.Logger {
-	var err error
-	var logger *zap.Logger
 	if printLogs {
-		logger, err = zap.NewDevelopment()
+		logger, err := createVerboseLogger()
 		if err != nil {
-			if err != nil {
-				log.Fatalf("Can't initialize zap logger: %v", err)
-			}
+			log.Fatalf("Can't initialize zap logger: %v", err)
 		}
+		return logger
 	} else {
-		logger = zap.NewNop()
+		return zap.NewNop()
 	}
-	return logger
+}
+
+func createVerboseLogger() (*zap.Logger, error) {
+	config := zap.NewDevelopmentConfig()
+	config.DisableStacktrace = true
+	return config.Build()
 }
 
 //NewHydroformLoggerAdapter adapts a ZAP logger to a Hydrofrom compatible logger

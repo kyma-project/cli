@@ -180,6 +180,7 @@ func (cmd *command) deployKyma(comps component.List) error {
 		return errors.Wrap(err, "Could not read kubeconfig")
 	}
 	localScheduler := scheduler.NewLocalScheduler(
+		scheduler.WithLogger(cli.NewLogger(cmd.Verbose).Sugar()),
 		scheduler.WithPrerequisites(cmd.buildCompList(comps.Prerequisites)...),
 		scheduler.WithStatusFunc(cmd.printDeployStatus))
 
