@@ -8,6 +8,11 @@ ifndef KYMA_VERSION
 	KYMA_VERSION = main
 endif
 
+ifndef KYMA_1_VERSION
+# use the latest Kyma 1 version for the legacy commands "kyma install" and "kyma upgrade"
+	KYMA_1_VERSION = 1.24.6
+endif
+
 ifndef VERSION
 	VERSION = ${shell git describe --tags --always}
 endif
@@ -16,7 +21,7 @@ ifeq ($(VERSION),stable)
 	VERSION = stable-${shell git rev-parse --short HEAD}
 endif
 
-FLAGS = -ldflags '-s -w -X github.com/kyma-project/cli/cmd/kyma/version.Version=$(VERSION) -X github.com/kyma-project/cli/cmd/kyma/alpha/deploy.defaultSource=$(KYMA_VERSION) -X github.com/kyma-project/cli/cmd/kyma/install.DefaultKymaVersion=$(KYMA_VERSION) -X github.com/kyma-project/cli/cmd/kyma/install.isRelease=$(IS_RELEASE) -X github.com/kyma-project/cli/cmd/kyma/alpha/deploy.isRelease=$(IS_RELEASE) -X github.com/kyma-project/cli/cmd/kyma/upgrade.DefaultKymaVersion=$(KYMA_VERSION)'
+FLAGS = -ldflags '-s -w -X github.com/kyma-project/cli/cmd/kyma/version.Version=$(VERSION) -X github.com/kyma-project/cli/cmd/kyma/alpha/deploy.defaultSource=$(KYMA_VERSION) -X github.com/kyma-project/cli/cmd/kyma/install.DefaultKymaVersion=$(KYMA_1_VERSION) -X github.com/kyma-project/cli/cmd/kyma/install.isRelease=$(IS_RELEASE) -X github.com/kyma-project/cli/cmd/kyma/alpha/deploy.isRelease=$(IS_RELEASE) -X github.com/kyma-project/cli/cmd/kyma/upgrade.DefaultKymaVersion=$(KYMA_1_VERSION)'
 
 .PHONY: resolve
 resolve:
