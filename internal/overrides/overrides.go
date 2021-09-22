@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -32,6 +33,10 @@ type Builder struct {
 
 // AddFile adds overrides defined in a file to the builder
 func (ob *Builder) AddFile(file string) error {
+	if _, err := os.Stat(file); os.IsNotExist(err) {
+		return errors.Wrap(err, "invalid override file: not exists")
+	}
+
 	for _, ext := range supportedFileExt {
 		if strings.HasSuffix(file, fmt.Sprintf(".%s", ext)) {
 			ob.files = append(ob.files, file)
@@ -42,16 +47,12 @@ func (ob *Builder) AddFile(file string) error {
 }
 
 // AddOverrides adds overrides for a chart to the builder
-func (ob *Builder) AddOverrides(chart string, overrides map[string]interface{}) error {
-	if chart == "" {
-		return fmt.Errorf("Chart name cannot be empty when adding overrides")
-	}
+func (ob *Builder) AddOverrides(overrides map[string]interface{}) error {
 	if len(overrides) < 1 {
-		return fmt.Errorf("Empty overrides map provided for chart '%s'", chart)
+		return fmt.Errorf("invalid overrides: empty")
 	}
-	overridesMap := make(map[string]interface{})
-	overridesMap[chart] = overrides
-	ob.overrides = append(ob.overrides, overridesMap)
+
+	ob.overrides = append(ob.overrides, overrides)
 	return nil
 }
 

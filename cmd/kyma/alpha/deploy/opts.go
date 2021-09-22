@@ -9,11 +9,15 @@ import (
 	"path/filepath"
 )
 
-const VersionLocal = "local"
 var (
 defaultWorkspacePath  = getDefaultWorkspacePath()
 defaultComponentsFile = filepath.Join(defaultWorkspacePath, "installation", "resources", "components.yaml")
 )
+
+const VersionLocal = "local"
+const profileEvaluation = "evaluation"
+const profileProduction = "production"
+
 //Options defines available options for the command
 type Options struct {
 	*cli.Options
@@ -21,6 +25,12 @@ type Options struct {
 	Source           string
 	Components     []string
 	ComponentsFile string
+	Domain         string
+	Values         []string
+	ValueFiles     []string
+	Profile        string
+	TLSCrtFile     string
+	TLSKeyFile     string
 }
 
 //NewOptions creates options with default values
@@ -29,9 +39,7 @@ func NewOptions(o *cli.Options) *Options {
 }
 
 func (o *Options) ResolveLocalWorkspacePath() (string, error) {
-	if o.Source == VersionLocal && o.WorkspacePath == "" {
-		return "", errors.New("Please provide a path to the workspace when used with `--source=local`")
-	}
+
 	if o.WorkspacePath == "" {
 		o.WorkspacePath = defaultWorkspacePath
 	}
@@ -46,7 +54,12 @@ func (o *Options) ResolveLocalWorkspacePath() (string, error) {
 			}
 		}
 	}
-	// If VersionLocal and no workspace defined then throw an error
+
+	if o.Source !=VersionLocal &&  o.WorkspacePath == defaultWorkspacePath{
+		if err := os.RemoveAll(o.WorkspacePath); err != nil {
+			return "", errors.Wrapf(err, "Could not delete old kyma source files in (%s)", o.WorkspacePath)
+		}
+	}
 
 	//no Kyma sources found in GOPATH
 	return o.WorkspacePath, nil
@@ -68,4 +81,37 @@ func getDefaultWorkspacePath() string {
 		return ".kyma-sources"
 	}
 	return filepath.Join(kymaHome, "sources")
+}
+// validateFlags performs a sanity check of provided options
+func (o *Options) validateFlags() error {
+	if err := o.validateProfile(); err != nil {
+		return err
+	}
+	if err := o.validateTLSCertAndKey(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (o *Options) validateProfile() error {
+	if o.Profile == "" || o.Profile == profileEvaluation || o.Profile == profileProduction {
+		return nil
+	}
+
+	return fmt.Errorf("unknown profile: %s", o.Profile)
+}
+
+func (o *Options) validateTLSCertAndKey() error {
+	if o.TLSKeyFile == "" && o.TLSCrtFile == "" {
+		return nil
+	}
+	if _, err := os.Stat(o.TLSKeyFile); os.IsNotExist(err) {
+		return errors.New("tls key not found")
+	}
+	if _, err := os.Stat(o.TLSCrtFile); os.IsNotExist(err) {
+		return errors.New("tls cert not found")
+	}
+
+	return nil
 }

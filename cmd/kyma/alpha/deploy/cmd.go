@@ -3,6 +3,10 @@ package deploy
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path"
+
 	"github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-incubator/reconciler/pkg/logger"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler"
@@ -15,23 +19,16 @@ import (
 	"github.com/kyma-project/cli/internal/files"
 	"github.com/kyma-project/cli/internal/k3d"
 	"github.com/kyma-project/cli/internal/kube"
-	"github.com/kyma-project/cli/internal/overrides"
 	"github.com/kyma-project/cli/internal/trust"
 	"github.com/kyma-project/cli/pkg/step"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
-	"io/fs"
-	"io/ioutil"
-	"os"
-	"path"
-	"path/filepath"
 	//Register all reconcilers
 	_ "github.com/kyma-incubator/reconciler/pkg/reconciler/instances"
 )
 
 const defaultVersion = "main"
-const defaultProfile = "evaluation"
 
 type command struct {
 	cli.Command
@@ -62,12 +59,104 @@ func NewCmd(o *Options) *cobra.Command {
 	- Deploy a commit, for example: "kyma deploy --source=34edf09a"
 	- Deploy a pull request, for example "kyma deploy --source=PR-9486"
 	- Deploy the local sources: "kyma deploy --source=local"`)
-	//setSource(cobraCmd.Flags().Changed("source"), &o.Source)
+
+	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", "", "Custom domain used for installation.")
+	cobraCmd.Flags().StringVarP(&o.Profile, "profile", "p", "",
+		fmt.Sprintf("Kyma deployment profile. If not specified, Kyma uses its default configuration. The supported profiles are: %s, %s.", profileEvaluation, profileProduction))
+	cobraCmd.Flags().StringVarP(&o.TLSCrtFile, "tls-crt", "", "", "TLS certificate file for the domain used for installation.")
+	cobraCmd.Flags().StringVarP(&o.TLSKeyFile, "tls-key", "", "", "TLS key file for the domain used for installation.")
+	cobraCmd.Flags().StringSliceVarP(&o.Values, "value", "", []string{}, "Set configuration values. Can specify one or more values, also as a comma-separated list (e.g. --value component.a='1' --value component.b='2' or --value component.a='1',component.b='2').")
+	cobraCmd.Flags().StringSliceVarP(&o.ValueFiles, "values-file", "f", []string{}, "Path(s) to one or more JSON or YAML files with configuration values.")
+
 	return cobraCmd
 }
 
+func (cmd *command) Run(o *Options) error {
+	var err error
+
+	if cmd.opts.CI {
+		cmd.Factory.NonInteractive = true
+	}
+	if cmd.opts.Verbose {
+		cmd.Factory.UseLogger = true
+	}
+
+	if err = cmd.opts.validateFlags(); err != nil {
+		return err
+	}
+
+	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
+		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
+	}
+
+	l := logger.NewLogger(o.Verbose)
+	ws , err := cmd.workspaceBuilder(l)
+	if err != nil {
+		return  err
+	}
+
+	values, err := mergeValues(cmd.opts, ws, cmd.K8s.Static())
+	if err != nil {
+		return err
+	}
+
+	isK3d, err := k3d.IsK3dCluster(cmd.K8s.Static())
+	if err != nil {
+		return err
+	}
+
+	hasCustomDomain := cmd.opts.Domain != ""
+	if _, err := coredns.Patch(zap.NewNop(), cmd.K8s.Static(), hasCustomDomain, isK3d); err != nil {
+		return err
+	}
+
+	components, err := cmd.createCompListWithOverrides(ws, values)
+	if err != nil {
+		return err
+	}
+
+	err = cmd.deployKyma(ws, components)
+	if err != nil {
+		return err
+	}
+
+	if err := cmd.importCertificate(); err != nil {
+		return err
+	}
+
+	// TODO: print summary after deploy
+
+	return nil
+}
+
+func (cmd *command) deployKyma(ws *workspace.Workspace, comps component.List) error {
+	kubeconfigPath := kube.KubeconfigPath(cmd.KubeconfigPath)
+	kubeconfig, err := ioutil.ReadFile(kubeconfigPath)
+	if err != nil {
+		return errors.Wrap(err, "Could not read kubeconfig")
+	}
+
+	localScheduler := scheduler.NewLocalScheduler(
+		scheduler.WithPrerequisites(cmd.buildCompList(comps.Prerequisites)...),
+		scheduler.WithStatusFunc(cmd.printDeployStatus))
+
+	componentsToInstall := append(comps.Prerequisites, comps.Components...)
+	err = localScheduler.Run(context.TODO(), &keb.Cluster{
+		Kubeconfig: string(kubeconfig),
+		KymaConfig: keb.KymaConfig{
+			Version:    cmd.opts.Source,
+			Profile:    cmd.opts.Profile,
+			Components: componentsToInstall,
+		},
+	})
+	if err != nil {
+		return errors.Wrap(err, "Failed to deploy Kyma")
+	}
+	return nil
+}
+
 func (cmd *command) workspaceBuilder(l *zap.SugaredLogger) (*workspace.Workspace, error) {
-	wsStep := cmd.NewStep(fmt.Sprintf("Fetching Kyma (%s) from workspace folder (%s) ", cmd.opts.Source, cmd.opts.WorkspacePath))
+	wsStep := cmd.NewStep(fmt.Sprintf("Fetching Kyma (%s)", cmd.opts.Source))
 
 	//Check if workspace is empty or not
 	if cmd.opts.Source != VersionLocal {
@@ -94,7 +183,7 @@ func (cmd *command) workspaceBuilder(l *zap.SugaredLogger) (*workspace.Workspace
 		return  &workspace.Workspace{}, err
 	}
 
-	wsFact, err := workspace.NewFactory(wsp, l)
+	wsFact, err := workspace.NewFactory(nil, wsp, l)
 	if err != nil {
 		return &workspace.Workspace{}, err
 	}
@@ -107,6 +196,8 @@ func (cmd *command) workspaceBuilder(l *zap.SugaredLogger) (*workspace.Workspace
 	if err != nil {
 		return &workspace.Workspace{}, err
 	}
+
+	wsStep.Successf("Fetching kyma from workspace folder: %s", wsp)
 
 	return  ws, nil
 }
@@ -126,122 +217,10 @@ func (cmd *command) createCompListWithOverrides(ws *workspace.Workspace, overrid
 		return compList, nil
 	}
 	if cmd.opts.ComponentsFile != "" {
-		return component.FromFile(cmd.opts.ComponentsFile, overrides)
+		return component.FromFile(ws, cmd.opts.ComponentsFile, overrides)
 	}
 	compFile := path.Join(ws.InstallationResourceDir, "components.yaml")
-	return component.FromFile(compFile, overrides)
-}
-
-func (cmd *command) Run(o *Options) error {
-	var err error
-
-	if cmd.opts.CI {
-		cmd.Factory.NonInteractive = true
-	}
-	if cmd.opts.Verbose {
-		cmd.Factory.UseLogger = true
-	}
-
-	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
-		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
-	}
-
-	l := logger.NewOptionalLogger(true)
-	ws , err := cmd.workspaceBuilder(l)
-	if err != nil {
-		return  err
-	}
-
-	ovs, err := cmd.buildOverrides(ws)
-	if err != nil {
-		return err
-	}
-
-	isK3d, err := k3d.IsK3dCluster(cmd.K8s.Static())
-	if err != nil {
-		return err
-	}
-
-	if _, err := coredns.Patch(zap.NewNop(), cmd.K8s.Static(), ovs, isK3d); err != nil {
-		return err
-	}
-
-	comps, err := cmd.createCompListWithOverrides(ws, ovs.FlattenedMap())
-	if err != nil {
-		return err
-	}
-
-	err = cmd.deployKyma(ws, comps)
-	if err != nil {
-		return err
-	}
-
-	if err := cmd.importCertificate(); err != nil {
-		return err
-	}
-
-	// TODO: print summary after deploy
-
-	return nil
-}
-
-func (cmd *command) buildOverrides(workspace *workspace.Workspace) (overrides.Overrides, error) {
-	overridesStep := cmd.NewStep("Building Kyma2 overrides")
-
-	overridesBuilder := &overrides.Builder{}
-
-	kyma2OverridesPath := path.Join(workspace.InstallationResourceDir, "values.yaml")
-
-	if err := overridesBuilder.AddFile(kyma2OverridesPath); err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			overridesStep.LogInfof("Kyma2 override path not found but continuing: %s", err)
-		} else {
-			return overrides.Overrides{}, errors.Wrap(err, "Could not add overrides for Kyma 2.0")
-		}
-	}
-
-	overridesBuilder.AddInterceptor([]string{"global.domainName", "global.ingress.domainName"}, overrides.NewDomainNameOverrideInterceptor(cmd.K8s.Static()))
-	overridesBuilder.AddInterceptor([]string{"global.tlsCrt", "global.tlsKey"}, overrides.NewCertificateOverrideInterceptor("global.tlsCrt", "global.tlsKey", cmd.K8s.Static()))
-	overridesBuilder.AddInterceptor([]string{"serverless.dockerRegistry.internalServerAddress", "serverless.dockerRegistry.serverAddress", "serverless.dockerRegistry.registryAddress"}, overrides.NewRegistryInterceptor(cmd.K8s.Static()))
-	overridesBuilder.AddInterceptor([]string{"serverless.dockerRegistry.enableInternal"}, overrides.NewRegistryDisableInterceptor(cmd.K8s.Static()))
-
-	ovs, err := overridesBuilder.Build()
-	if err != nil {
-		return overrides.Overrides{}, err
-	}
-
-	overridesStep.Success()
-	return ovs, err
-}
-
-func (cmd *command) deployKyma(ws *workspace.Workspace, comps component.List) error {
-	kubeconfigPath := kube.KubeconfigPath(cmd.KubeconfigPath)
-	kubeconfig, err := ioutil.ReadFile(kubeconfigPath)
-	if err != nil {
-		return errors.Wrap(err, "Could not read kubeconfig")
-	}
-
-
-	defaultComponentsYaml := filepath.Join(ws.InstallationResourceDir, "components.yaml")
-	fmt.Printf("dsy: %v", defaultComponentsYaml)
-
-	localScheduler := scheduler.NewLocalScheduler(
-		scheduler.WithPrerequisites(cmd.buildCompList(comps.Prerequisites)...),
-		scheduler.WithStatusFunc(cmd.printDeployStatus))
-
-	componentsToInstall := append(comps.Prerequisites, comps.Components...)
-	err = localScheduler.Run(context.TODO(), &keb.Cluster{
-		Kubeconfig: string(kubeconfig),
-		KymaConfig: keb.KymaConfig{
-			Version:    cmd.opts.Source,
-			Profile:    defaultProfile,
-			Components: componentsToInstall,
-		},
-	})
-	if err != nil {
-		return errors.Wrap(err, "Failed to deploy Kyma")
-	}
-	return nil
+	return component.FromFile(ws, compFile, overrides)
 }
 
 func (cmd *command) printDeployStatus(component string, msg *reconciler.CallbackMessage) {
