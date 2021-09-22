@@ -52,7 +52,7 @@ func (o *Options) ResolveLocalWorkspacePath() (string, error) {
 		}
 	}
 
-	if o.Source != VersionLocal && o.WorkspacePath == defaultWorkspacePath {
+	if o.Source != VersionLocal {
 		if err := os.RemoveAll(o.WorkspacePath); err != nil {
 			return "", errors.Wrapf(err, "Could not delete old kyma source files in (%s)", o.WorkspacePath)
 		}

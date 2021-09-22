@@ -86,7 +86,6 @@ func TestOptsValidation(t *testing.T) {
 	})
 	t.Run("Check kyma workspace is being deleted", func(t *testing.T) {
 		ws := path.Join("testdata", "checkDeleteWS")
-		defaultWorkspacePath = ws
 		opts := Options{Source: "main", WorkspacePath: ws}
 		err := os.Mkdir(ws, 0700)
 		require.NoError(t, err)
