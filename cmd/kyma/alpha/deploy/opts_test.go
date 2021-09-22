@@ -84,4 +84,17 @@ func TestOptsValidation(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, defaultWorkspacePath, wsp)
 	})
+	t.Run("Check kyma workspace is being deleted", func(t *testing.T) {
+		ws := path.Join("testdata", "checkDeleteWS")
+		defaultWorkspacePath = ws
+		opts := Options{Source: "main", WorkspacePath: ws}
+		err := os.Mkdir(ws,0700)
+		require.NoError(t, err)
+		wsp, err := opts.ResolveLocalWorkspacePath()
+		require.NoError(t, err)
+		require.Equal(t, ws, wsp)
+		_, err = os.Stat(ws)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "no such file or directory")
+	})
 }
