@@ -9,10 +9,7 @@ import (
 	"path/filepath"
 )
 
-var (
-defaultWorkspacePath  = getDefaultWorkspacePath()
-defaultComponentsFile = filepath.Join(defaultWorkspacePath, "installation", "resources", "components.yaml")
-)
+var defaultWorkspacePath = getDefaultWorkspacePath()
 
 const VersionLocal = "local"
 const profileEvaluation = "evaluation"
@@ -21,8 +18,8 @@ const profileProduction = "production"
 //Options defines available options for the command
 type Options struct {
 	*cli.Options
-	WorkspacePath    string
-	Source           string
+	WorkspacePath  string
+	Source         string
 	Components     []string
 	ComponentsFile string
 	Domain         string
@@ -55,7 +52,7 @@ func (o *Options) ResolveLocalWorkspacePath() (string, error) {
 		}
 	}
 
-	if o.Source !=VersionLocal &&  o.WorkspacePath == defaultWorkspacePath{
+	if o.Source != VersionLocal && o.WorkspacePath == defaultWorkspacePath {
 		if err := os.RemoveAll(o.WorkspacePath); err != nil {
 			return "", errors.Wrapf(err, "Could not delete old kyma source files in (%s)", o.WorkspacePath)
 		}
@@ -82,6 +79,7 @@ func getDefaultWorkspacePath() string {
 	}
 	return filepath.Join(kymaHome, "sources")
 }
+
 // validateFlags performs a sanity check of provided options
 func (o *Options) validateFlags() error {
 	if err := o.validateProfile(); err != nil {

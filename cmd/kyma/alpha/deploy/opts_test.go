@@ -65,10 +65,10 @@ func TestOptsValidation(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, kymaPath, wsp)
 	})
-	t.Run ("Check workspace folder is not deleted when it is set", func(t *testing.T) {
+	t.Run("Check workspace folder is not deleted when it is set", func(t *testing.T) {
 		ws := path.Join("testdata", "dummyWS")
 		Opts := Options{Source: "main", WorkspacePath: ws}
-		err := os.Mkdir(ws,0700)
+		err := os.Mkdir(ws, 0700)
 		require.NoError(t, err)
 		wsp, err := Opts.ResolveLocalWorkspacePath()
 		require.NoError(t, err)
@@ -88,7 +88,7 @@ func TestOptsValidation(t *testing.T) {
 		ws := path.Join("testdata", "checkDeleteWS")
 		defaultWorkspacePath = ws
 		opts := Options{Source: "main", WorkspacePath: ws}
-		err := os.Mkdir(ws,0700)
+		err := os.Mkdir(ws, 0700)
 		require.NoError(t, err)
 		wsp, err := opts.ResolveLocalWorkspacePath()
 		require.NoError(t, err)

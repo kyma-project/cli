@@ -90,9 +90,9 @@ func (cmd *command) Run(o *Options) error {
 	}
 
 	l := logger.NewLogger(o.Verbose)
-	ws , err := cmd.workspaceBuilder(l)
+	ws, err := cmd.workspaceBuilder(l)
 	if err != nil {
-		return  err
+		return err
 	}
 
 	values, err := mergeValues(cmd.opts, ws, cmd.K8s.Static())
@@ -115,7 +115,7 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	err = cmd.deployKyma(ws, components)
+	err = cmd.deployKyma(components)
 	if err != nil {
 		return err
 	}
@@ -129,7 +129,7 @@ func (cmd *command) Run(o *Options) error {
 	return nil
 }
 
-func (cmd *command) deployKyma(ws *workspace.Workspace, comps component.List) error {
+func (cmd *command) deployKyma(comps component.List) error {
 	kubeconfigPath := kube.KubeconfigPath(cmd.KubeconfigPath)
 	kubeconfig, err := ioutil.ReadFile(kubeconfigPath)
 	if err != nil {
@@ -180,7 +180,7 @@ func (cmd *command) workspaceBuilder(l *zap.SugaredLogger) (*workspace.Workspace
 
 	wsp, err := cmd.opts.ResolveLocalWorkspacePath()
 	if err != nil {
-		return  &workspace.Workspace{}, err
+		return &workspace.Workspace{}, err
 	}
 
 	wsFact, err := workspace.NewFactory(nil, wsp, l)
@@ -199,7 +199,7 @@ func (cmd *command) workspaceBuilder(l *zap.SugaredLogger) (*workspace.Workspace
 
 	wsStep.Successf("Fetching kyma from workspace folder: %s", wsp)
 
-	return  ws, nil
+	return ws, nil
 }
 
 func (cmd *command) buildCompList(comps []keb.Component) []string {
