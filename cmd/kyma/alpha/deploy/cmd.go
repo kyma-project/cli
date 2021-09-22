@@ -179,12 +179,16 @@ func (cmd *command) deployKyma(comps component.List) error {
 	if err != nil {
 		return errors.Wrap(err, "Could not read kubeconfig")
 	}
+
 	localScheduler := scheduler.NewLocalScheduler(
 		scheduler.WithLogger(cli.NewLogger(cmd.Verbose).Sugar()),
 		scheduler.WithPrerequisites(cmd.buildCompList(comps.Prerequisites)...),
 		scheduler.WithStatusFunc(cmd.printDeployStatus))
 
 	componentsToInstall := append(comps.Prerequisites, comps.Components...)
+	step := cmd.NewStep("Deploying Kyma")
+	step.Start()
+
 	err = localScheduler.Run(context.TODO(), &keb.Cluster{
 		Kubeconfig: string(kubeconfig),
 		KymaConfig: keb.KymaConfig{
@@ -193,6 +197,7 @@ func (cmd *command) deployKyma(comps component.List) error {
 			Components: componentsToInstall,
 		},
 	})
+
 	if err != nil {
 		return errors.Wrap(err, "Failed to deploy Kyma")
 	}
@@ -200,7 +205,14 @@ func (cmd *command) deployKyma(comps component.List) error {
 }
 
 func (cmd *command) printDeployStatus(component string, msg *reconciler.CallbackMessage) {
-	fmt.Printf("Component %s has status %s\n", component, msg.Status)
+	if cmd.Verbose {
+		return
+	}
+
+	if msg.Status == reconciler.Success {
+		step := cmd.NewStep(fmt.Sprintf("Component '%s' deployed", component))
+		step.Success()
+	}
 }
 
 // avoidUserInteraction returns true if user won't provide input
