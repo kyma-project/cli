@@ -8,6 +8,7 @@ import (
 	"path"
 
 	"github.com/kyma-incubator/reconciler/pkg/keb"
+	"github.com/kyma-incubator/reconciler/pkg/logger"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/service"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
@@ -23,7 +24,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
-
 	//Register all reconcilers
 	_ "github.com/kyma-incubator/reconciler/pkg/reconciler/instances"
 )
@@ -52,6 +52,13 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 	cobraCmd.Flags().StringSliceVarP(&o.Components, "component", "", []string{}, "Provide one or more components to deploy (e.g. --component componentName@namespace)")
 	cobraCmd.Flags().StringVarP(&o.ComponentsFile, "components-file", "c", "", `Path to the components file (default "$HOME/.kyma/sources/installation/resources/components.yaml" or ".kyma-sources/installation/resources/components.yaml")`)
+	cobraCmd.Flags().StringVarP(&o.WorkspacePath, "workspace", "w", "", `Path to download Kyma sources (default "$HOME/.kyma/sources" or ".kyma-sources")`)
+	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", defaultVersion, `Installation source:
+	- Deploy a specific release, for example: "kyma deploy --source=2.0.0"
+	- Deploy a specific branch of the Kyma repository on kyma-project.org: "kyma deploy --source=<my-branch-name>"
+	- Deploy a commit (8 characters or more), for example: "kyma deploy --source=34edf09a"
+	- Deploy a pull request, for example "kyma deploy --source=PR-9486"
+	- Deploy the local sources: "kyma deploy --source=local"`)
 
 	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", "", "Custom domain used for installation.")
 	cobraCmd.Flags().StringVarP(&o.Profile, "profile", "p", "",
@@ -62,27 +69,6 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd.Flags().StringSliceVarP(&o.ValueFiles, "values-file", "f", []string{}, "Path(s) to one or more JSON or YAML files with configuration values.")
 
 	return cobraCmd
-}
-
-func (cmd *command) buildCompList(comps []keb.Component) []string {
-	var compSlice []string
-	for _, c := range comps {
-		compSlice = append(compSlice, c.Component)
-	}
-	return compSlice
-}
-
-func (cmd *command) createCompListWithOverrides(ws *workspace.Workspace, overrides map[string]interface{}) (component.List, error) {
-	var compList component.List
-	if len(cmd.opts.Components) > 0 {
-		compList = component.FromStrings(cmd.opts.Components, overrides)
-		return compList, nil
-	}
-	if cmd.opts.ComponentsFile != "" {
-		return component.FromFile(ws, cmd.opts.ComponentsFile, overrides)
-	}
-	compFile := path.Join(ws.InstallationResourceDir, "components.yaml")
-	return component.FromFile(ws, compFile, overrides)
 }
 
 func (cmd *command) Run(o *Options) error {
@@ -103,7 +89,8 @@ func (cmd *command) Run(o *Options) error {
 		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
 	}
 
-	ws, err := cmd.loadWorkspace()
+	l := logger.NewLogger(o.Verbose)
+	ws, err := cmd.workspaceBuilder(l)
 	if err != nil {
 		return err
 	}
@@ -142,43 +129,13 @@ func (cmd *command) Run(o *Options) error {
 	return nil
 }
 
-func (cmd *command) loadWorkspace() (*workspace.Workspace, error) {
-	downloadStep := cmd.NewStep(fmt.Sprintf("Downloading Kyma (%s) into workspace folder ", defaultVersion))
-
-	workspaceDir, err := files.KymaHome()
-	if err != nil {
-		return nil, errors.Wrap(err, "Could not create Kyma home directory")
-	}
-
-	//use a global workspace factory to ensure all component-reconcilers are using the same workspace-directory
-	//(otherwise each component-reconciler would handle the download of Kyma resources individually which will cause
-	//collisions when sharing the same directory)
-	factory, err := workspace.NewFactory(nil, workspaceDir, zap.NewNop().Sugar())
-	if err != nil {
-		return nil, err
-	}
-
-	err = service.UseGlobalWorkspaceFactory(factory)
-	if err != nil {
-		return nil, err
-	}
-
-	ws, err := factory.Get(defaultVersion)
-	if err != nil {
-		return nil, err
-	}
-
-	downloadStep.Successf("Kyma downloaded into workspace folder")
-
-	return ws, nil
-}
-
 func (cmd *command) deployKyma(comps component.List) error {
 	kubeconfigPath := kube.KubeconfigPath(cmd.KubeconfigPath)
 	kubeconfig, err := ioutil.ReadFile(kubeconfigPath)
 	if err != nil {
 		return errors.Wrap(err, "Could not read kubeconfig")
 	}
+
 	localScheduler := scheduler.NewLocalScheduler(
 		scheduler.WithPrerequisites(cmd.buildCompList(comps.Prerequisites)...),
 		scheduler.WithStatusFunc(cmd.printDeployStatus))
@@ -187,7 +144,7 @@ func (cmd *command) deployKyma(comps component.List) error {
 	err = localScheduler.Run(context.TODO(), &keb.Cluster{
 		Kubeconfig: string(kubeconfig),
 		KymaConfig: keb.KymaConfig{
-			Version:    defaultVersion,
+			Version:    cmd.opts.Source,
 			Profile:    cmd.opts.Profile,
 			Components: componentsToInstall,
 		},
@@ -196,6 +153,74 @@ func (cmd *command) deployKyma(comps component.List) error {
 		return errors.Wrap(err, "Failed to deploy Kyma")
 	}
 	return nil
+}
+
+func (cmd *command) workspaceBuilder(l *zap.SugaredLogger) (*workspace.Workspace, error) {
+	wsStep := cmd.NewStep(fmt.Sprintf("Fetching Kyma (%s)", cmd.opts.Source))
+
+	//Check if workspace is empty or not
+	if cmd.opts.Source != VersionLocal {
+		_, err := os.Stat(cmd.opts.WorkspacePath)
+		// workspace already exists
+		if !os.IsNotExist(err) && !cmd.avoidUserInteraction() {
+			isWorkspaceEmpty, err := files.IsDirEmpty(cmd.opts.WorkspacePath)
+			if err != nil {
+				return nil, err
+			}
+			// if workspace used is not the default one and it is not empty,
+			// then ask for permission to delete its existing files
+			if !isWorkspaceEmpty && cmd.opts.WorkspacePath != getDefaultWorkspacePath() {
+				if !wsStep.PromptYesNo(fmt.Sprintf("Existing files in workspace folder '%s' will be deleted. Are you sure you want to continue? ", cmd.opts.WorkspacePath)) {
+					wsStep.Failure()
+					return nil, fmt.Errorf("aborting deployment")
+				}
+			}
+		}
+	}
+
+	wsp, err := cmd.opts.ResolveLocalWorkspacePath()
+	if err != nil {
+		return &workspace.Workspace{}, err
+	}
+
+	wsFact, err := workspace.NewFactory(nil, wsp, l)
+	if err != nil {
+		return &workspace.Workspace{}, err
+	}
+	err = service.UseGlobalWorkspaceFactory(wsFact)
+	if err != nil {
+		return nil, err
+	}
+
+	ws, err := wsFact.Get(cmd.opts.Source)
+	if err != nil {
+		return &workspace.Workspace{}, err
+	}
+
+	wsStep.Successf("Fetching kyma from workspace folder: %s", wsp)
+
+	return ws, nil
+}
+
+func (cmd *command) buildCompList(comps []keb.Component) []string {
+	var compSlice []string
+	for _, c := range comps {
+		compSlice = append(compSlice, c.Component)
+	}
+	return compSlice
+}
+
+func (cmd *command) createCompListWithOverrides(ws *workspace.Workspace, overrides map[string]interface{}) (component.List, error) {
+	var compList component.List
+	if len(cmd.opts.Components) > 0 {
+		compList = component.FromStrings(cmd.opts.Components, overrides)
+		return compList, nil
+	}
+	if cmd.opts.ComponentsFile != "" {
+		return component.FromFile(ws, cmd.opts.ComponentsFile, overrides)
+	}
+	compFile := path.Join(ws.InstallationResourceDir, "components.yaml")
+	return component.FromFile(ws, compFile, overrides)
 }
 
 func (cmd *command) printDeployStatus(component string, msg *reconciler.CallbackMessage) {
