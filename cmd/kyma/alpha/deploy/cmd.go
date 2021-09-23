@@ -165,14 +165,14 @@ func (cmd *command) workspaceBuilder(l *zap.SugaredLogger) (*workspace.Workspace
 		if !os.IsNotExist(err) && !cmd.avoidUserInteraction() {
 			isWorkspaceEmpty, err := files.IsDirEmpty(cmd.opts.WorkspacePath)
 			if err != nil {
-				return &workspace.Workspace{}, err
+				return nil, err
 			}
 			// if workspace used is not the default one and it is not empty,
 			// then ask for permission to delete its existing files
 			if !isWorkspaceEmpty && cmd.opts.WorkspacePath != getDefaultWorkspacePath() {
 				if !wsStep.PromptYesNo(fmt.Sprintf("Existing files in workspace folder '%s' will be deleted. Are you sure you want to continue? ", cmd.opts.WorkspacePath)) {
 					wsStep.Failure()
-					return &workspace.Workspace{}, fmt.Errorf("aborting deployment")
+					return nil, fmt.Errorf("aborting deployment")
 				}
 			}
 		}

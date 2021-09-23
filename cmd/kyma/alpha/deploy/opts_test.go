@@ -55,7 +55,7 @@ func TestOptsValidation(t *testing.T) {
 	})
 	t.Run("Check workspace folder is not deleted when it is set", func(t *testing.T) {
 		ws := path.Join("testdata", "dummyWS")
-		Opts := Options{Source: "main", WorkspacePath: ws}
+		Opts := Options{Source: "local", WorkspacePath: ws}
 		err := os.Mkdir(ws, 0700)
 		require.NoError(t, err)
 		wsp, err := Opts.ResolveLocalWorkspacePath()
