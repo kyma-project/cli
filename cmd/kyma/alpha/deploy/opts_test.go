@@ -4,7 +4,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"os"
 	"path"
-	"path/filepath"
 	"testing"
 )
 
@@ -53,17 +52,6 @@ func TestOptsValidation(t *testing.T) {
 		opts := Options{TLSKeyFile: dummyFilePath, TLSCrtFile: dummyFilePath}
 		err := opts.validateFlags()
 		require.NoError(t, err)
-	})
-	t.Run("local version and workspace path empty", func(t *testing.T) {
-		opts := Options{Source: "local"}
-		goPath := os.Getenv("GOPATH")
-		kymaPath := ""
-		if goPath != "" {
-			kymaPath = filepath.Join(goPath, "src", "github.com", "kyma-project", "kyma")
-		}
-		wsp, err := opts.ResolveLocalWorkspacePath()
-		require.NoError(t, err)
-		require.Equal(t, kymaPath, wsp)
 	})
 	t.Run("Check workspace folder is not deleted when it is set", func(t *testing.T) {
 		ws := path.Join("testdata", "dummyWS")

@@ -56,7 +56,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", defaultVersion, `Installation source:
 	- Deploy a specific release, for example: "kyma deploy --source=2.0.0"
 	- Deploy a specific branch of the Kyma repository on kyma-project.org: "kyma deploy --source=<my-branch-name>"
-	- Deploy a commit, for example: "kyma deploy --source=34edf09a"
+	- Deploy a commit (should be 8 characters long), for example: "kyma deploy --source=34edf09a"
 	- Deploy a pull request, for example "kyma deploy --source=PR-9486"
 	- Deploy the local sources: "kyma deploy --source=local"`)
 
