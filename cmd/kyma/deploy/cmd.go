@@ -46,6 +46,7 @@ type command struct {
 
 const (
 	kymaURL            = "https://github.com/kyma-project/kyma"
+	dashboardURL       = "https://dashboard.kyma.cloud.sap"
 	kyma2OverridesPath = "/installation/resources/values.yaml"
 )
 
@@ -544,19 +545,6 @@ func (cmd *command) printSummary(o overrides.Overrides) error {
 		return errors.New("Domain not found in overrides")
 	}
 
-	var consoleURL string
-	vs, err := cmd.K8s.Istio().NetworkingV1alpha3().VirtualServices("kyma-system").Get(context.Background(), "console-web", metav1.GetOptions{})
-	switch {
-	case k8sErrors.IsNotFound(err):
-		consoleURL = "not installed"
-	case err != nil:
-		return err
-	case vs != nil && len(vs.Spec.Hosts) > 0:
-		consoleURL = fmt.Sprintf("https://%s", vs.Spec.Hosts[0])
-	default:
-		return errors.New("console host could not be obtained")
-	}
-
 	var email, pass string
 	adm, err := cmd.K8s.Static().CoreV1().Secrets("kyma-system").Get(context.Background(), "admin-user", metav1.GetOptions{})
 	switch {
@@ -575,7 +563,7 @@ func (cmd *command) printSummary(o overrides.Overrides) error {
 		NonInteractive: cmd.NonInteractive,
 		Version:        strings.Join(kymaVersionNames, ", "),
 		URL:            domain.(string),
-		Console:        consoleURL,
+		Dashboard:      dashboardURL,
 		Duration:       cmd.duration,
 		Email:          string(email),
 		Password:       string(pass),

@@ -11,6 +11,7 @@ type Summary struct {
 	Version        string
 	URL            string
 	Console        string
+	Dashboard      string
 	Email          string
 	Password       string
 }
@@ -37,9 +38,17 @@ func (s *Summary) Print() error {
 
 	// Console
 
-	nicePrint.PrintKyma()
-	fmt.Print(" console:\t\t\t")
-	nicePrint.PrintImportantf(s.Console)
+	if s.Console != "" {
+		nicePrint.PrintKyma()
+		fmt.Print(" console:\t\t\t")
+		nicePrint.PrintImportantf(s.Console)
+	}
+
+	if s.Dashboard != "" {
+		nicePrint.PrintKyma()
+		fmt.Print(" dashboard:\t\t\t")
+		nicePrint.PrintImportantf(s.Dashboard)
+	}
 
 	// Admin credentials
 
