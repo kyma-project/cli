@@ -8,7 +8,6 @@ import (
 	"path"
 
 	"github.com/kyma-incubator/reconciler/pkg/keb"
-	"github.com/kyma-incubator/reconciler/pkg/logger"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/service"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
@@ -89,8 +88,8 @@ func (cmd *command) Run(o *Options) error {
 		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
 	}
 
-	l := logger.NewLogger(o.Verbose)
-	ws, err := cmd.workspaceBuilder(l)
+	l := cli.NewLogger(o.Verbose).Sugar()
+	ws, err := cmd.prepareWorkspace(l)
 	if err != nil {
 		return err
 	}
@@ -115,7 +114,7 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	err = cmd.deployKyma(components)
+	err = cmd.deployKyma(l, components)
 	if err != nil {
 		return err
 	}
@@ -129,23 +128,22 @@ func (cmd *command) Run(o *Options) error {
 	return nil
 }
 
-func (cmd *command) deployKyma(comps component.List) error {
+func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List) error {
 	kubeconfigPath := kube.KubeconfigPath(cmd.KubeconfigPath)
 	kubeconfig, err := ioutil.ReadFile(kubeconfigPath)
 	if err != nil {
 		return errors.Wrap(err, "Could not read kubeconfig")
 	}
 
-	logger := cli.NewLogger(cmd.Verbose)
-	undo := zap.RedirectStdLog(logger)
+	undo := zap.RedirectStdLog(l.Desugar())
 	defer undo()
 
 	localScheduler := scheduler.NewLocalScheduler(
-		scheduler.WithLogger(logger.Sugar()),
-		scheduler.WithPrerequisites(cmd.buildCompList(comps.Prerequisites)...),
+		scheduler.WithLogger(l),
+		scheduler.WithPrerequisites(cmd.buildCompList(components.Prerequisites)...),
 		scheduler.WithStatusFunc(cmd.printDeployStatus))
 
-	componentsToInstall := append(comps.Prerequisites, comps.Components...)
+	componentsToInstall := append(components.Prerequisites, components.Components...)
 	step := cmd.NewStep("Deploying Kyma")
 	step.Start()
 
@@ -166,20 +164,16 @@ func (cmd *command) deployKyma(comps component.List) error {
 	return nil
 }
 
-func (cmd *command) workspaceBuilder(l *zap.SugaredLogger) (*workspace.Workspace, error) {
-	wsStep := cmd.NewStep(fmt.Sprintf("Fetching Kyma (%s)", cmd.opts.Source))
+func (cmd *command) prepareWorkspace(l *zap.SugaredLogger) (*workspace.Workspace, error) {
+	wsStep := cmd.NewStep(fmt.Sprintf("Fetching Kyma sources(%s)", cmd.opts.Source))
 
-	//Check if workspace is empty or not
 	if cmd.opts.Source != VersionLocal {
 		_, err := os.Stat(cmd.opts.WorkspacePath)
-		// workspace already exists
 		if !os.IsNotExist(err) && !cmd.avoidUserInteraction() {
 			isWorkspaceEmpty, err := files.IsDirEmpty(cmd.opts.WorkspacePath)
 			if err != nil {
 				return nil, err
 			}
-			// if workspace used is not the default one and it is not empty,
-			// then ask for permission to delete its existing files
 			if !isWorkspaceEmpty && cmd.opts.WorkspacePath != getDefaultWorkspacePath() {
 				if !wsStep.PromptYesNo(fmt.Sprintf("Existing files in workspace folder '%s' will be deleted. Are you sure you want to continue? ", cmd.opts.WorkspacePath)) {
 					wsStep.Failure()
@@ -198,6 +192,7 @@ func (cmd *command) workspaceBuilder(l *zap.SugaredLogger) (*workspace.Workspace
 	if err != nil {
 		return &workspace.Workspace{}, err
 	}
+
 	err = service.UseGlobalWorkspaceFactory(wsFact)
 	if err != nil {
 		return nil, err
@@ -208,7 +203,7 @@ func (cmd *command) workspaceBuilder(l *zap.SugaredLogger) (*workspace.Workspace
 		return &workspace.Workspace{}, err
 	}
 
-	wsStep.Successf("Fetching kyma from workspace folder: %s", wsp)
+	wsStep.Successf("Using Kyma from the workspace directory: %s", wsp)
 
 	return ws, nil
 }
