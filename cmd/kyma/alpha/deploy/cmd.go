@@ -105,11 +105,11 @@ func (cmd *command) Run(o *Options) error {
 	}
 
 	hasCustomDomain := cmd.opts.Domain != ""
-	if _, err := coredns.Patch(zap.NewNop(), cmd.K8s.Static(), hasCustomDomain, isK3d); err != nil {
+	if _, err := coredns.Patch(l.Desugar(), cmd.K8s.Static(), hasCustomDomain, isK3d); err != nil {
 		return err
 	}
 
-	components, err := cmd.createCompListWithOverrides(ws, values)
+	components, err := cmd.createComponentsWithOverrides(ws, values)
 	if err != nil {
 		return err
 	}
@@ -138,9 +138,15 @@ func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List) 
 	undo := zap.RedirectStdLog(l.Desugar())
 	defer undo()
 
+	if !cmd.opts.Verbose {
+		stderr := os.Stderr
+		os.Stderr = nil
+		defer func() { os.Stderr = stderr }()
+	}
+
 	localScheduler := scheduler.NewLocalScheduler(
 		scheduler.WithLogger(l),
-		scheduler.WithPrerequisites(cmd.buildCompList(components.Prerequisites)...),
+		scheduler.WithPrerequisites(cmd.componentNames(components.Prerequisites)...),
 		scheduler.WithStatusFunc(cmd.printDeployStatus))
 
 	componentsToInstall := append(components.Prerequisites, components.Components...)
@@ -162,6 +168,24 @@ func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List) 
 
 	step.Stop(true)
 	return nil
+}
+
+func (cmd *command) printDeployStatus(component string, msg *reconciler.CallbackMessage) {
+	if cmd.Verbose {
+		return
+	}
+
+	switch msg.Status {
+	case reconciler.StatusSuccess:
+		step := cmd.NewStep(fmt.Sprintf("Component '%s' deployed", component))
+		step.Success()
+	case reconciler.StatusFailed:
+		step := cmd.NewStep(fmt.Sprintf("Component '%s' failed. Retrying...", component))
+		step.Failure()
+	case reconciler.StatusError:
+		step := cmd.NewStep(fmt.Sprintf("Component '%s' failed", component))
+		step.Failure()
+	}
 }
 
 func (cmd *command) prepareWorkspace(l *zap.SugaredLogger) (*workspace.Workspace, error) {
@@ -208,15 +232,15 @@ func (cmd *command) prepareWorkspace(l *zap.SugaredLogger) (*workspace.Workspace
 	return ws, nil
 }
 
-func (cmd *command) buildCompList(comps []keb.Component) []string {
-	var compSlice []string
+func (cmd *command) componentNames(comps []keb.Component) []string {
+	var names []string
 	for _, c := range comps {
-		compSlice = append(compSlice, c.Component)
+		names = append(names, c.Component)
 	}
-	return compSlice
+	return names
 }
 
-func (cmd *command) createCompListWithOverrides(ws *workspace.Workspace, overrides map[string]interface{}) (component.List, error) {
+func (cmd *command) createComponentsWithOverrides(ws *workspace.Workspace, overrides map[string]interface{}) (component.List, error) {
 	var compList component.List
 	if len(cmd.opts.Components) > 0 {
 		compList = component.FromStrings(cmd.opts.Components, overrides)
@@ -227,17 +251,6 @@ func (cmd *command) createCompListWithOverrides(ws *workspace.Workspace, overrid
 	}
 	compFile := path.Join(ws.InstallationResourceDir, "components.yaml")
 	return component.FromFile(ws, compFile, overrides)
-}
-
-func (cmd *command) printDeployStatus(component string, msg *reconciler.CallbackMessage) {
-	if cmd.Verbose {
-		return
-	}
-
-	if msg.Status == reconciler.StatusSuccess {
-		step := cmd.NewStep(fmt.Sprintf("Component '%s' deployed", component))
-		step.Success()
-	}
 }
 
 // avoidUserInteraction returns true if user won't provide input
