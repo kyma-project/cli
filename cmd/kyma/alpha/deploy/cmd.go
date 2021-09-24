@@ -180,8 +180,12 @@ func (cmd *command) deployKyma(comps component.List) error {
 		return errors.Wrap(err, "Could not read kubeconfig")
 	}
 
+	logger := cli.NewLogger(cmd.Verbose)
+	undo := zap.RedirectStdLog(logger)
+	defer undo()
+
 	localScheduler := scheduler.NewLocalScheduler(
-		scheduler.WithLogger(cli.NewLogger(cmd.Verbose).Sugar()),
+		scheduler.WithLogger(logger.Sugar()),
 		scheduler.WithPrerequisites(cmd.buildCompList(comps.Prerequisites)...),
 		scheduler.WithStatusFunc(cmd.printDeployStatus))
 
@@ -197,10 +201,12 @@ func (cmd *command) deployKyma(comps component.List) error {
 			Components: componentsToInstall,
 		},
 	})
-
 	if err != nil {
+		step.Stop(false)
 		return errors.Wrap(err, "Failed to deploy Kyma")
 	}
+
+	step.Stop(true)
 	return nil
 }
 
@@ -209,7 +215,7 @@ func (cmd *command) printDeployStatus(component string, msg *reconciler.Callback
 		return
 	}
 
-	if msg.Status == reconciler.Success {
+	if msg.Status == reconciler.StatusSuccess {
 		step := cmd.NewStep(fmt.Sprintf("Component '%s' deployed", component))
 		step.Success()
 	}

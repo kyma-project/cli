@@ -488,8 +488,9 @@ github.com/go-openapi/jsonpointer v0.0.0-20160704185906-46af16f9f7b1/go.mod h1:+
 github.com/go-openapi/jsonpointer v0.17.0/go.mod h1:cOnomiV+CVVwFLk0A/MExoFMjwdsUdVpsRhURCKh+3M=
 github.com/go-openapi/jsonpointer v0.18.0/go.mod h1:cOnomiV+CVVwFLk0A/MExoFMjwdsUdVpsRhURCKh+3M=
 github.com/go-openapi/jsonpointer v0.19.2/go.mod h1:3akKfEdA7DF1sugOqz1dVQHBcuDBPKZGEoHC/NkiQRg=
-github.com/go-openapi/jsonpointer v0.19.3 h1:gihV7YNZK1iK6Tgwwsxo2rJbD1GTbdm72325Bq8FI3w=
 github.com/go-openapi/jsonpointer v0.19.3/go.mod h1:Pl9vOtqEWErmShwVjC8pYs9cog34VGT37dQOVbmoatg=
+github.com/go-openapi/jsonpointer v0.19.5 h1:gZr+CIYByUqjcgeLXnQu2gHYQC9o73G2XUeOFYEICuY=
+github.com/go-openapi/jsonpointer v0.19.5/go.mod h1:Pl9vOtqEWErmShwVjC8pYs9cog34VGT37dQOVbmoatg=
 github.com/go-openapi/jsonreference v0.0.0-20160704190145-13c6e3589ad9/go.mod h1:W3Z9FmVs9qj+KR4zFKmDPGiLdk1D9Rlm7cyMvf57TTg=
 github.com/go-openapi/jsonreference v0.17.0/go.mod h1:g4xxGn04lDIRh0GJb5QlpE3HfopLOL6uZrK/VgnsK9I=
 github.com/go-openapi/jsonreference v0.18.0/go.mod h1:g4xxGn04lDIRh0GJb5QlpE3HfopLOL6uZrK/VgnsK9I=
@@ -925,8 +926,6 @@ github.com/kyma-incubator/hydroform/provision v0.0.0-20210514061348-c71b69cb362e
 github.com/kyma-incubator/hydroform/provision v0.0.0-20210514061348-c71b69cb362e/go.mod h1:x4YfWgupo4fc7vgGFb0aJfSWCh9W72ipmNekfY1oYeo=
 github.com/kyma-incubator/octopus v0.0.0-20200922132758-2b721e93b58b h1:xgIzqXn9JolPuSAkQ/u+Myn/S3aLH8rlPc8++O6ogSY=
 github.com/kyma-incubator/octopus v0.0.0-20200922132758-2b721e93b58b/go.mod h1:qliPSTjCHo+PHStTPaLnulVviDBhJWb9wFk71Ht9qsc=
-github.com/kyma-incubator/reconciler v0.0.0-20210921145449-8faaee5219d6 h1:lGS4qtPnNHCyt0AGqXlG15E09KzcVDqQKzeqpqlhijU=
-github.com/kyma-incubator/reconciler v0.0.0-20210921145449-8faaee5219d6/go.mod h1:cH0ntwhp8rRqvB+qIMT1PmwT/cXizetAH6abSETpdyQ=
 github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20200817094157-8392259f5be1/go.mod h1:Svisep1qUjML69qtRee5OcDOpWVjxID2Nb6E/xyhQ5k=
 github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20201125092745-687c943ac940 h1:TEquDCgUClhTnSIOc3oZn1YZ53/aK4mu3AwXu6kih+4=
 github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20201125092745-687c943ac940/go.mod h1:jDvGQt3ccmrDW/9dZufC8e4xwr+PUTR74IJ0yQ81Jhk=
@@ -1287,6 +1286,8 @@ github.com/sirupsen/logrus v1.6.0/go.mod h1:7uNnSEd1DgxDLC74fIahvMZmmYsHGZGEOFrf
 github.com/sirupsen/logrus v1.7.0/go.mod h1:yWOB1SBYBC5VeMP7gHvWumXLIWorT60ONWic61uBYv0=
 github.com/sirupsen/logrus v1.8.1 h1:dJKuHgqk1NNQlqoA6BTlM1Wf9DOH3NBjQyu0h9+AZZE=
 github.com/sirupsen/logrus v1.8.1/go.mod h1:yWOB1SBYBC5VeMP7gHvWumXLIWorT60ONWic61uBYv0=
+github.com/skhalash/reconciler v0.0.0-20210924081930-8be26afd7f3e h1:hTtLMQ8ILM/QlnUm9FW5+W4cL7ix29e02m9NtVvnmCw=
+github.com/skhalash/reconciler v0.0.0-20210924081930-8be26afd7f3e/go.mod h1:nt23LlTl6ruJJNjvB1Clw2cyvs8rOnJNrr78/4VP+zY=
 github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d/go.mod h1:OnSkiWE9lh6wB0YB77sQom3nweQdgAjqCqsofrRNTgc=
 github.com/smartystreets/assertions v0.0.0-20190116191733-b6c0e53d7304 h1:Jpy1PXuP99tXNrhbq2BaPz9B+jNAvH1JPQQpG/9GCXY=
 github.com/smartystreets/assertions v0.0.0-20190116191733-b6c0e53d7304/go.mod h1:OnSkiWE9lh6wB0YB77sQom3nweQdgAjqCqsofrRNTgc=
