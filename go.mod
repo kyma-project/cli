@@ -13,7 +13,6 @@ replace (
 	github.com/hashicorp/consul v0.0.0-20171026175957-610f3c86a089 => github.com/hashicorp/consul/sdk v0.7.0
 	github.com/hashicorp/consul/api v1.3.0 => github.com/hashicorp/consul/api v0.0.0-20191112221531-8742361660b6
 
-	github.com/kyma-incubator/reconciler => github.com/skhalash/reconciler v0.0.0-20210924081930-8be26afd7f3e
 	github.com/spf13/viper => github.com/spf13/viper v1.7.0
 
 	// this is needed for terraform to work with the k8s 0.18+ APIs, we should be able to remove it once we have terraform 0.13+
@@ -36,7 +35,7 @@ require (
 	github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20210830114732-6a1c4ee2e1f4
 	github.com/kyma-incubator/hydroform/provision v0.0.0-20210514061348-c71b69cb362e
 	github.com/kyma-incubator/octopus v0.0.0-20200922132758-2b721e93b58b
-	github.com/kyma-incubator/reconciler v0.0.0-20210921145449-8faaee5219d6
+	github.com/kyma-incubator/reconciler v0.0.0-20210924122650-4e4d26f25018
 	github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20201125092745-687c943ac940
 	github.com/magiconair/properties v1.8.5
 	github.com/moby/sys/mount v0.2.0 // indirect
