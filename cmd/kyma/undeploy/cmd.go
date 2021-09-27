@@ -17,6 +17,7 @@ import (
 
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
+
 	"github.com/spf13/cobra"
 	k8sRetry "k8s.io/client-go/util/retry"
 )
@@ -61,6 +62,12 @@ func (cmd *command) Run() error {
 		return errors.Wrap(err, "Cannot initialize the Kubernetes client. Make sure your kubeconfig is valid")
 	}
 
+	//restConfig, _ := clientcmd.BuildConfigFromFlags("", cmd.K8s.RestConfig(). KubeconfigPath)
+	cmd.apixClient, _ = apixv1beta1client.NewForConfig(cmd.K8s.RestConfig())
+	if err != nil {
+		return err
+	}
+
 	err = cmd.undeployKyma()
 	if err != nil {
 		return err
@@ -97,30 +104,6 @@ func (cmd *command) deleteKymaNamespaces() error {
 	errorCh := make(chan error)
 	// start deletion in goroutines
 	for _, namespace := range namespaces {
-		ns2 := namespace
-		err := retry.Do(func() error {
-			// Check if there are any running Pods left on the namespace
-			pods, err := cmd.K8s.Static().CoreV1().Pods(ns2).List(context.Background(), metav1.ListOptions{})
-			if err != nil {
-				errorCh <- err
-			}
-
-			if len(pods.Items) > 0 {
-				for _, pod := range pods.Items {
-					if pod.Status.Phase == v1.PodRunning {
-						return errors.New(fmt.Sprintf("\"%s\" Namespace could not be deleted because of the running \"%s\" Pod. Trying again..", ns2, pod.Name))
-					}
-				}
-			}
-			return nil
-		})
-
-		if err != nil {
-			fmt.Printf("\"%s\" Namespace could not be deleted because of running Pod(s)", ns2)
-			wg.Done()
-			continue
-		}
-
 		go func(ns string) {
 			defer wg.Done()
 			err = retry.Do(func() error {
@@ -135,13 +118,13 @@ func (cmd *command) deleteKymaNamespaces() error {
 				} else if apierr.IsNotFound(err) {
 					return nil
 				}
-				fmt.Printf("\"%s\" Namespace still exists in \"%s\" Phase", nsT.Name, nsT.Status.Phase)
-				return fmt.Errorf("\"%s\" Namespace still exists in \"%s\" Phase", nsT.Name, nsT.Status.Phase)
+
+				return errors.Wrapf(err,"\"%s\" Namespace still exists in \"%s\" Phase", nsT.Name, nsT.Status.Phase)
 			})
 			if err != nil {
 				errorCh <- err
 			}
-			fmt.Printf("\"%s\" Namespace is removed", ns)
+			fmt.Printf("\"%s\" Namespace is removed\n", ns)
 		}(namespace)
 	}
 
@@ -200,51 +183,56 @@ func (cmd *command) cleanupFinalizers() error {
 		return err
 	}
 
-	if crds != nil {
-		for _, crd := range crds.Items {
-			customResource := schema.GroupVersionResource{
-				Group:    crd.Spec.Group,
-				Version:  crd.Spec.Version,
-				Resource: crd.Spec.Names.Plural,
-			}
+	if crds == nil {
+		return nil
+	}
 
-			customResourceList, err := cmd.K8s.Dynamic().Resource(customResource).Namespace(v1.NamespaceAll).List(context.Background(), metav1.ListOptions{})
-			if err != nil && !apierr.IsNotFound(err) {
-				return err
-			}
-			if customResourceList != nil {
-				for _, cr := range customResourceList.Items {
-					cr2 := cr
-					retryErr := k8sRetry.RetryOnConflict(k8sRetry.DefaultRetry, func() error {
-						// Retrieve the latest version of Custom Resource before attempting update
-						// RetryOnConflict uses exponential backoff to avoid exhausting the apiserver
-						res, err := cmd.K8s.Dynamic().Resource(customResource).Namespace(cr2.GetNamespace()).Get(context.Background(), cr2.GetName(), metav1.GetOptions{})
+	for _, crd := range crds.Items {
+		customResource := schema.GroupVersionResource{
+			Group:    crd.Spec.Group,
+			Version:  crd.Spec.Version,
+			Resource: crd.Spec.Names.Plural,
+		}
+
+		customResourceList, err := cmd.K8s.Dynamic().Resource(customResource).Namespace(v1.NamespaceAll).List(context.Background(), metav1.ListOptions{})
+		if err != nil && !apierr.IsNotFound(err) {
+			return err
+		}
+
+		if customResourceList == nil {
+			continue
+		}
+
+		for _, cr := range customResourceList.Items {
+			cr2 := cr
+			retryErr := k8sRetry.RetryOnConflict(k8sRetry.DefaultRetry, func() error {
+				// Retrieve the latest version of Custom Resource before attempting update
+				// RetryOnConflict uses exponential backoff to avoid exhausting the apiserver
+				res, err := cmd.K8s.Dynamic().Resource(customResource).Namespace(cr2.GetNamespace()).Get(context.Background(), cr2.GetName(), metav1.GetOptions{})
+				if err != nil && !apierr.IsNotFound(err) {
+					return err
+				}
+				if res != nil {
+					if len(res.GetFinalizers()) > 0 {
+						fmt.Printf("Deleting finalizer for \"%s\" %s\n", res.GetName(), cr2.GetKind())
+						res.SetFinalizers(nil)
+						_, err := cmd.K8s.Dynamic().Resource(customResource).Namespace(res.GetNamespace()).Update(context.Background(), res, metav1.UpdateOptions{})
+						if err != nil {
+							return err
+						}
+						fmt.Printf("Deleted finalizer for \"%s\" %s\n", res.GetName(), res.GetKind())
+					}
+					if !cmd.opts.KeepCRDs {
+						err = cmd.K8s.Dynamic().Resource(customResource).Namespace(res.GetNamespace()).Delete(context.Background(), res.GetName(), metav1.DeleteOptions{})
 						if err != nil && !apierr.IsNotFound(err) {
 							return err
 						}
-						if res != nil {
-							if len(res.GetFinalizers()) > 0 {
-								fmt.Printf("Deleting finalizer for \"%s\" %s", res.GetName(), cr2.GetKind())
-								res.SetFinalizers(nil)
-								_, err := cmd.K8s.Dynamic().Resource(customResource).Namespace(res.GetNamespace()).Update(context.Background(), res, metav1.UpdateOptions{})
-								if err != nil {
-									return err
-								}
-								fmt.Printf("Deleted finalizer for \"%s\" %s", res.GetName(), res.GetKind())
-							}
-							if !cmd.opts.KeepCRDs {
-								err = cmd.K8s.Dynamic().Resource(customResource).Namespace(res.GetNamespace()).Delete(context.Background(), res.GetName(), metav1.DeleteOptions{})
-								if err != nil && !apierr.IsNotFound(err) {
-									return err
-								}
-							}
-						}
-						return nil
-					})
-					if retryErr != nil {
-						return fmt.Errorf("deleting finalizer failed: %v", retryErr)
 					}
 				}
+				return nil
+			})
+			if retryErr != nil {
+				return fmt.Errorf("deleting finalizer failed: %v", retryErr)
 			}
 		}
 	}
@@ -252,7 +240,7 @@ func (cmd *command) cleanupFinalizers() error {
 }
 
 func (cmd *command) deleteKymaCrds() error {
-	fmt.Printf("Uninstalling CRDs labeled with: %s=%s", "origin", "kyma")
+	fmt.Printf("Uninstalling CRDs labeled with: %s=%s\n", "reconciler.kyma-project.io/managed-by", "reconciler")
 
 	selector, err := cmd.prepareKymaCrdLabelSelector()
 	if err != nil {
@@ -261,7 +249,7 @@ func (cmd *command) deleteKymaCrds() error {
 
 	gvks := cmd.retrieveKymaCrdGvks()
 	for _, gvk := range gvks {
-		fmt.Printf("Uninstalling CRDs that belong to apiVersion: %s/%s", gvk.Group, gvk.Version)
+		fmt.Printf("Uninstalling CRDs that belong to apiVersion: %s/%s\n", gvk.Group, gvk.Version)
 		err = cmd.deleteCollectionOfResources(gvk, metav1.DeleteOptions{}, metav1.ListOptions{LabelSelector: selector.String()})
 		if err != nil {
 			return errors.Wrapf(err, "Failed to delete resource")
@@ -273,14 +261,21 @@ func (cmd *command) deleteKymaCrds() error {
 	return nil
 }
 
-func (cmd *command) prepareKymaCrdLabelSelector() (selector labels.Selector, err error) {
-	kymaCrdReq, err := labels.NewRequirement("origin", selection.Equals, []string{"kyma"})
+func (cmd *command) prepareKymaCrdLabelSelector() (labels.Selector, error) {
+	selector := labels.NewSelector()
+
+	kymaCrdReq, err := labels.NewRequirement("reconciler.kyma-project.io/managed-by", selection.Equals, []string{"reconciler"})
 	if err != nil {
 		return nil, errors.Wrap(err, "Error occurred when preparing Kyma CRD label selector")
 	}
-
-	selector = labels.NewSelector()
 	selector = selector.Add(*kymaCrdReq)
+
+	istioCrdReq, err := labels.NewRequirement("install.operator.istio.io/owning-resource-namespace", selection.Equals, []string{"istio-system"})
+	if err != nil {
+		return nil, errors.Wrap(err, "Error occurred when preparing Istio CRD label selector")
+	}
+	selector = selector.Add(*istioCrdReq)
+
 	return selector, nil
 }
 
