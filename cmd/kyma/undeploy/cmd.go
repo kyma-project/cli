@@ -8,7 +8,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	apixv1beta1client "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
 	apierr "k8s.io/apimachinery/pkg/api/errors"
-	_ "k8s.io/apimachinery/pkg/apis/meta/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -25,7 +24,7 @@ import (
 type command struct {
 	opts *Options
 	cli.Command
-	apixClient      apixv1beta1client.ApiextensionsV1beta1Interface
+	apixClient apixv1beta1client.ApiextensionsV1beta1Interface
 }
 
 //NewCmd creates a new kyma command
@@ -37,10 +36,10 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 
 	cobraCmd := &cobra.Command{
-		Use:     "undeploy",
-		Short:   "Removes Kyma from a running Kubernetes cluster.",
-		Long:    `Use this command to clean up Kyma from a running Kubernetes cluster.`,
-		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
+		Use:   "undeploy",
+		Short: "Removes Kyma from a running Kubernetes cluster.",
+		Long:  `Use this command to clean up Kyma from a running Kubernetes cluster.`,
+		RunE:  func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 	}
 
 	cobraCmd.Flags().BoolVarP(&o.KeepCRDs, "keep-crds", "", false, "Set --keep-crds=true to keep CRDs on clean-up")
@@ -216,13 +215,14 @@ func (cmd *command) cleanupFinalizers() error {
 					retryErr := k8sRetry.RetryOnConflict(k8sRetry.DefaultRetry, func() error {
 						// Retrieve the latest version of Custom Resource before attempting update
 						// RetryOnConflict uses exponential backoff to avoid exhausting the apiserver
-						res, err := cmd.K8s.Dynamic().Resource(customResource).Namespace(cr.GetNamespace()).Get(context.Background(), cr.GetName(), metav1.GetOptions{})
+						cr2 := cr
+						res, err := cmd.K8s.Dynamic().Resource(customResource).Namespace(cr2.GetNamespace()).Get(context.Background(), cr2.GetName(), metav1.GetOptions{})
 						if err != nil && !apierr.IsNotFound(err) {
 							return err
 						}
 						if res != nil {
 							if len(res.GetFinalizers()) > 0 {
-								fmt.Printf("Deleting finalizer for \"%s\" %s", res.GetName(), cr.GetKind())
+								fmt.Printf("Deleting finalizer for \"%s\" %s", res.GetName(), cr2.GetKind())
 								res.SetFinalizers(nil)
 								_, err := cmd.K8s.Dynamic().Resource(customResource).Namespace(res.GetNamespace()).Update(context.Background(), res, metav1.UpdateOptions{})
 								if err != nil {
@@ -292,7 +292,7 @@ func (cmd *command) deleteCollectionOfResources(gvk schema.GroupVersionKind, opt
 	var err error
 	err = retry.Do(func() error {
 		if err = cmd.K8s.Dynamic().Resource(retrieveGvrFrom(gvk)).DeleteCollection(context.TODO(), opts, listOpts); err != nil {
-			return errors.Wrapf(err,"Error occurred during resources delete: %s", err.Error())
+			return errors.Wrapf(err, "Error occurred during resources delete: %s", err.Error())
 		}
 
 		return nil

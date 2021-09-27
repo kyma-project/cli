@@ -7,7 +7,7 @@ import (
 //Options defines available options for the command
 type Options struct {
 	*cli.Options
-	KeepCRDs         bool
+	KeepCRDs bool
 }
 
 //NewOptions creates options with default values
