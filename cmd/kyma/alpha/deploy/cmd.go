@@ -3,9 +3,13 @@ package deploy
 import (
 	"context"
 	"fmt"
+	"github.com/kyma-project/cli/internal/nice"
 	"io/ioutil"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
 	"path"
+	"time"
 
 	"github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler"
@@ -27,7 +31,9 @@ import (
 	_ "github.com/kyma-incubator/reconciler/pkg/reconciler/instances"
 )
 
-const defaultVersion = "main"
+const (
+	dashboardURL = "https://dashboard.kyma.cloud.sap"
+)
 
 type command struct {
 	cli.Command
@@ -52,7 +58,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd.Flags().StringSliceVarP(&o.Components, "component", "", []string{}, "Provide one or more components to deploy (e.g. --component componentName@namespace)")
 	cobraCmd.Flags().StringVarP(&o.ComponentsFile, "components-file", "c", "", `Path to the components file (default "$HOME/.kyma/sources/installation/resources/components.yaml" or ".kyma-sources/installation/resources/components.yaml")`)
 	cobraCmd.Flags().StringVarP(&o.WorkspacePath, "workspace", "w", "", `Path to download Kyma sources (default "$HOME/.kyma/sources" or ".kyma-sources")`)
-	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", defaultVersion, `Installation source:
+	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", "main", `Installation source:
 	- Deploy a specific release, for example: "kyma deploy --source=2.0.0"
 	- Deploy a specific branch of the Kyma repository on kyma-project.org: "kyma deploy --source=<my-branch-name>"
 	- Deploy a commit (8 characters or more), for example: "kyma deploy --source=34edf09a"
@@ -71,6 +77,8 @@ func NewCmd(o *Options) *cobra.Command {
 }
 
 func (cmd *command) Run(o *Options) error {
+	start := time.Now()
+
 	var err error
 
 	if cmd.opts.CI {
@@ -123,9 +131,7 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	// TODO: print summary after deploy
-
-	return nil
+	return cmd.printSummary(values, time.Since(start))
 }
 
 func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List) error {
@@ -162,11 +168,11 @@ func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List) 
 		},
 	})
 	if err != nil {
-		step.Stop(false)
-		return errors.Wrap(err, "Failed to deploy Kyma")
+		step.Failuref("Failed to deploy Kyma.")
+		return err
 	}
 
-	step.Stop(true)
+	step.Successf("Kyma deployed successfully!")
 	return nil
 }
 
@@ -183,7 +189,7 @@ func (cmd *command) printDeployStatus(component string, msg *reconciler.Callback
 		step := cmd.NewStep(fmt.Sprintf("Component '%s' failed. Retrying...", component))
 		step.Failure()
 	case reconciler.StatusError:
-		step := cmd.NewStep(fmt.Sprintf("Component '%s' failed", component))
+		step := cmd.NewStep(fmt.Sprintf("Component '%s' failed and terminated", component))
 		step.Failure()
 	}
 }
@@ -306,5 +312,38 @@ func (cmd *command) approveImportCertificate() bool {
 	if cmd.avoidUserInteraction() { //do not import if user-interaction has to be avoided (suppress sudo pwd request)
 		return false
 	}
-	return qImportCertsStep.PromptYesNo("Should the Kyma certificate be installed locally?")
+	return qImportCertsStep.PromptYesNo("Do you want to install the Kyma certificate locally?")
+}
+
+func (cmd *command) printSummary(overrides map[string]interface{}, duration time.Duration) error {
+	domain, ok := overrides["global.domainName"]
+	if !ok {
+		return errors.New("domain not found in overrides")
+	}
+
+	var email, pass string
+	adm, err := cmd.K8s.Static().CoreV1().Secrets("kyma-system").Get(context.Background(), "admin-user", metav1.GetOptions{})
+	switch {
+	case k8sErrors.IsNotFound(err):
+		break
+	case err != nil:
+		return err
+	case adm != nil:
+		email = string(adm.Data["email"])
+		pass = string(adm.Data["password"])
+	default:
+		return errors.New("admin credentials could not be obtained")
+	}
+
+	sum := nice.Summary{
+		NonInteractive: cmd.NonInteractive,
+		Version:        cmd.opts.Source,
+		URL:            domain.(string),
+		Dashboard:      dashboardURL,
+		Duration:       duration,
+		Email:          email,
+		Password:       pass,
+	}
+
+	return sum.Print()
 }
