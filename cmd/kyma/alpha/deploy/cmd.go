@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"github.com/kyma-project/cli/internal/nice"
 	"io/ioutil"
-	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
 	"path"
 	"time"
@@ -321,28 +319,12 @@ func (cmd *command) printSummary(overrides map[string]interface{}, duration time
 		return errors.New("domain not found in overrides")
 	}
 
-	var email, pass string
-	adm, err := cmd.K8s.Static().CoreV1().Secrets("kyma-system").Get(context.Background(), "admin-user", metav1.GetOptions{})
-	switch {
-	case k8sErrors.IsNotFound(err):
-		break
-	case err != nil:
-		return err
-	case adm != nil:
-		email = string(adm.Data["email"])
-		pass = string(adm.Data["password"])
-	default:
-		return errors.New("admin credentials could not be obtained")
-	}
-
 	sum := nice.Summary{
 		NonInteractive: cmd.NonInteractive,
 		Version:        cmd.opts.Source,
 		URL:            domain.(string),
 		Dashboard:      dashboardURL,
 		Duration:       duration,
-		Email:          email,
-		Password:       pass,
 	}
 
 	return sum.Print()
