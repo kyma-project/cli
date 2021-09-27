@@ -97,9 +97,10 @@ func (cmd *command) deleteKymaNamespaces() error {
 	errorCh := make(chan error)
 	// start deletion in goroutines
 	for _, namespace := range namespaces {
+		ns2 := namespace
 		err := retry.Do(func() error {
 			// Check if there are any running Pods left on the namespace
-			pods, err := cmd.K8s.Static().CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{})
+			pods, err := cmd.K8s.Static().CoreV1().Pods(ns2).List(context.Background(), metav1.ListOptions{})
 			if err != nil {
 				errorCh <- err
 			}
@@ -107,7 +108,7 @@ func (cmd *command) deleteKymaNamespaces() error {
 			if len(pods.Items) > 0 {
 				for _, pod := range pods.Items {
 					if pod.Status.Phase == v1.PodRunning {
-						return errors.New(fmt.Sprintf("\"%s\" Namespace could not be deleted because of the running \"%s\" Pod. Trying again..", namespace, pod.Name))
+						return errors.New(fmt.Sprintf("\"%s\" Namespace could not be deleted because of the running \"%s\" Pod. Trying again..", ns2, pod.Name))
 					}
 				}
 			}
@@ -115,7 +116,7 @@ func (cmd *command) deleteKymaNamespaces() error {
 		})
 
 		if err != nil {
-			fmt.Printf("\"%s\" Namespace could not be deleted because of running Pod(s)", namespace)
+			fmt.Printf("\"%s\" Namespace could not be deleted because of running Pod(s)", ns2)
 			wg.Done()
 			continue
 		}
@@ -178,6 +179,7 @@ func (cmd *command) cleanupFinalizers() error {
 	}
 	if secrets != nil {
 		for _, secret := range secrets.Items {
+			secret := secret
 			if len(secret.GetFinalizers()) > 0 {
 				secret.SetFinalizers(nil)
 				if _, err := cmd.K8s.Static().CoreV1().Secrets(secret.GetNamespace()).Update(context.Background(), &secret, metav1.UpdateOptions{}); err != nil {
@@ -212,10 +214,10 @@ func (cmd *command) cleanupFinalizers() error {
 			}
 			if customResourceList != nil {
 				for _, cr := range customResourceList.Items {
+					cr2 := cr
 					retryErr := k8sRetry.RetryOnConflict(k8sRetry.DefaultRetry, func() error {
 						// Retrieve the latest version of Custom Resource before attempting update
 						// RetryOnConflict uses exponential backoff to avoid exhausting the apiserver
-						cr2 := cr
 						res, err := cmd.K8s.Dynamic().Resource(customResource).Namespace(cr2.GetNamespace()).Get(context.Background(), cr2.GetName(), metav1.GetOptions{})
 						if err != nil && !apierr.IsNotFound(err) {
 							return err
