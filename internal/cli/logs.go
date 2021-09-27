@@ -15,9 +15,8 @@ func NewLogger(printLogs bool) *zap.Logger {
 			log.Fatalf("Can't initialize zap logger: %v", err)
 		}
 		return logger
-	} else {
-		return zap.NewNop()
 	}
+	return zap.NewNop()
 }
 
 func createVerboseLogger() (*zap.Logger, error) {
