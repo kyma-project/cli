@@ -73,7 +73,6 @@ func (cmd *command) Run() error {
 }
 
 func (cmd *command) undeployKyma() error {
-
 	err := cmd.deleteKymaNamespaces()
 	if err != nil {
 		return err
@@ -250,6 +249,28 @@ func (cmd *command) cleanupFinalizers() error {
 	return nil
 }
 
+func (cmd *command) deleteKymaCrds() error {
+	fmt.Printf("Uninstalling CRDs labeled with: %s=%s", "origin", "kyma")
+
+	selector, err := cmd.prepareKymaCrdLabelSelector()
+	if err != nil {
+		return err
+	}
+
+	gvks := cmd.retrieveKymaCrdGvks()
+	for _, gvk := range gvks {
+		fmt.Printf("Uninstalling CRDs that belong to apiVersion: %s/%s", gvk.Group, gvk.Version)
+		err = cmd.deleteCollectionOfResources(gvk, metav1.DeleteOptions{}, metav1.ListOptions{LabelSelector: selector.String()})
+		if err != nil {
+			return errors.Wrapf(err, "Failed to delete resource")
+		}
+	}
+
+	fmt.Printf("Kyma CRDs successfully uninstalled")
+
+	return nil
+}
+
 func (cmd *command) prepareKymaCrdLabelSelector() (selector labels.Selector, err error) {
 	kymaCrdReq, err := labels.NewRequirement("origin", selection.Equals, []string{"kyma"})
 	if err != nil {
@@ -261,33 +282,13 @@ func (cmd *command) prepareKymaCrdLabelSelector() (selector labels.Selector, err
 	return selector, nil
 }
 
-func (cmd *command) crdGvkWith(version string) schema.GroupVersionKind {
-	return schema.GroupVersionKind{
-		Group:   "apiextensions.k8s.io",
-		Version: version,
-		Kind:    "customresourcedefinition",
-	}
-}
-
 func (cmd *command) retrieveKymaCrdGvks() []schema.GroupVersionKind {
 	crdGvkV1Beta1 := cmd.crdGvkWith("v1beta1")
 	crdGvkV1 := cmd.crdGvkWith("v1")
 	return []schema.GroupVersionKind{crdGvkV1Beta1, crdGvkV1}
 }
 
-func retrieveGvrFrom(gvk schema.GroupVersionKind) schema.GroupVersionResource {
-	return schema.GroupVersionResource{
-		Group:    gvk.Group,
-		Version:  gvk.Version,
-		Resource: pluralForm(gvk.Kind),
-	}
-}
-
-func pluralForm(singular string) string {
-	return fmt.Sprintf("%ss", strings.ToLower(singular))
-}
-
-func (cmd *command) DeleteCollectionOfResources(gvk schema.GroupVersionKind, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
+func (cmd *command) deleteCollectionOfResources(gvk schema.GroupVersionKind, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
 	var err error
 	err = retry.Do(func() error {
 		if err = cmd.K8s.Dynamic().Resource(retrieveGvrFrom(gvk)).DeleteCollection(context.TODO(), opts, listOpts); err != nil {
@@ -304,24 +305,22 @@ func (cmd *command) DeleteCollectionOfResources(gvk schema.GroupVersionKind, opt
 	return nil
 }
 
-func (cmd *command) deleteKymaCrds() error {
-	fmt.Printf("Uninstalling CRDs labeled with: %s=%s", "origin", "kyma")
-
-	selector, err := cmd.prepareKymaCrdLabelSelector()
-	if err != nil {
-		return err
+func (cmd *command) crdGvkWith(version string) schema.GroupVersionKind {
+	return schema.GroupVersionKind{
+		Group:   "apiextensions.k8s.io",
+		Version: version,
+		Kind:    "customresourcedefinition",
 	}
+}
 
-	gvks := cmd.retrieveKymaCrdGvks()
-	for _, gvk := range gvks {
-		fmt.Printf("Uninstalling CRDs that belong to apiVersion: %s/%s", gvk.Group, gvk.Version)
-		err = cmd.DeleteCollectionOfResources(gvk, metav1.DeleteOptions{}, metav1.ListOptions{LabelSelector: selector.String()})
-		if err != nil {
-			return errors.Wrapf(err, "Failed to delete resource")
-		}
+func retrieveGvrFrom(gvk schema.GroupVersionKind) schema.GroupVersionResource {
+	return schema.GroupVersionResource{
+		Group:    gvk.Group,
+		Version:  gvk.Version,
+		Resource: pluralForm(gvk.Kind),
 	}
+}
 
-	fmt.Printf("Kyma CRDs successfully uninstalled")
-
-	return nil
+func pluralForm(singular string) string {
+	return fmt.Sprintf("%ss", strings.ToLower(singular))
 }
