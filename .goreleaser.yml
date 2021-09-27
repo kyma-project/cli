@@ -12,10 +12,9 @@ builds:
 - env:
   - CGO_ENABLED=0
   - IS_RELEASE=true
-  - KYMA_VERSION=main
-  # use the latest Kyma 1 version for the legacy commands "kyma install" and "kyma upgrade"
   - KYMA_1_VERSION=1.24.6
-  ldflags: -s -w -X github.com/kyma-project/cli/cmd/kyma/version.Version={{.Version}} -X github.com/kyma-project/cli/cmd/kyma/alpha/deploy.defaultSource={{.Env.KYMA_VERSION}} -X github.com/kyma-project/cli/cmd/kyma/install.DefaultKymaVersion={{.Env.KYMA_1_VERSION}} -X github.com/kyma-project/cli/cmd/kyma/install.isRelease={{.Env.IS_RELEASE}} -X github.com/kyma-project/cli/cmd/kyma/alpha/deploy.isRelease={{.Env.IS_RELEASE}} -X github.com/kyma-project/cli/cmd/kyma/upgrade.DefaultKymaVersion={{.Env.KYMA_1_VERSION}}
+  - KYMA_2_VERSION=main
+  ldflags: -s -w -X github.com/kyma-project/cli/cmd/kyma/version.Version={{.Version}} -X github.com/kyma-project/cli/cmd/kyma/alpha/deploy.defaultSource={{.Env.KYMA_2_VERSION}} -X github.com/kyma-project/cli/cmd/kyma/install.DefaultKymaVersion={{.Env.KYMA_1_VERSION}} -X github.com/kyma-project/cli/cmd/kyma/install.isRelease={{.Env.IS_RELEASE}} -X github.com/kyma-project/cli/cmd/kyma/alpha/deploy.isRelease={{.Env.IS_RELEASE}} -X github.com/kyma-project/cli/cmd/kyma/upgrade.DefaultKymaVersion={{.Env.KYMA_1_VERSION}}
   main: ./cmd/
   goos:
     - darwin
