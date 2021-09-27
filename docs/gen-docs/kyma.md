@@ -33,5 +33,6 @@ Kyma CLI allows you to install, test, and manage Kyma.
 * [kyma provision](#kyma-provision-kyma-provision)	 - Provisions a cluster for Kyma installation.
 * [kyma run](#kyma-run-kyma-run)	 - Runs resources.
 * [kyma sync](#kyma-sync-kyma-sync)	 - Synchronizes the local resources for your Function.
+* [kyma undeploy](#kyma-undeploy-kyma-undeploy)	 - Removes Kyma from a running Kubernetes cluster.
 * [kyma version](#kyma-version-kyma-version)	 - Displays the version of Kyma CLI and of the connected Kyma cluster.
 
