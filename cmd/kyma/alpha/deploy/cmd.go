@@ -3,9 +3,15 @@ package deploy
 import (
 	"context"
 	"fmt"
+	"gopkg.in/yaml.v2"
+	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path"
+	"path/filepath"
+	"runtime"
+	"strings"
 
 	"github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-incubator/reconciler/pkg/logger"
@@ -29,6 +35,7 @@ import (
 )
 
 const defaultVersion = "main"
+const istioChartPath = "/resources/istio-configuration/Chart.yaml"
 
 type command struct {
 	cli.Command
@@ -115,6 +122,8 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
+	fmt.Printf("Workspace: %#v\n", ws)
+	cmd.installPrerequisites(ws.WorkspaceDir)
 	err = cmd.deployKyma(components)
 	if err != nil {
 		return err
@@ -281,4 +290,114 @@ func (cmd *command) approveImportCertificate() bool {
 		return false
 	}
 	return qImportCertsStep.PromptYesNo("Should the Kyma certificate be installed locally?")
+}
+
+
+type IstioConfig struct {
+	APIVersion    string   `yaml:"apiVersion"`
+	Name          string   `yaml:"name"`
+	Version       string   `yaml:"version"`
+	AppVersion    string   `yaml:"appVersion"`
+	TillerVersion string   `yaml:"tillerVersion"`
+	Description   string   `yaml:"description"`
+	Keywords      []string `yaml:"keywords"`
+	Sources       []string `yaml:"sources"`
+	Engine        string   `yaml:"engine"`
+	Home          string   `yaml:"home"`
+	Icon          string   `yaml:"icon"`
+}
+
+func (cmd *command) installPrerequisites(wsp string) {
+	istioStep := cmd.NewStep("Installing Prerequisites")
+
+	// Get wanted Istio Version
+	var chart IstioConfig
+	istioConfig, err := ioutil.ReadFile(filepath.Join(wsp, istioChartPath))
+	if err != nil {
+		fmt.Printf("ERROR: %s", err)
+		//TODO
+	}
+	err = yaml.Unmarshal(istioConfig, &chart)
+	if err != nil {
+		fmt.Printf("ERROR: %s", err)
+		//TODO
+	}
+	istioVersion := chart.AppVersion
+	fmt.Printf("Istio Version: %v\n", istioVersion)
+	// Get OS Version
+	osext := runtime.GOOS
+	switch osext {
+	case "windows":
+		osext = "win"
+	case "darwin":
+		osext = "osx"
+	default:
+		osext = "linux"
+	}
+
+	istioArch := runtime.GOARCH
+	//if osext == "osx" && istioArch == "amd64"{
+	//	istioArch = "arm64"
+	//}
+
+	nonArchUrl := fmt.Sprintf("https://github.com/istio/istio/releases/download/%s/istio-%s-%s.tar.gz", istioVersion, istioVersion, osext)
+	archUrl := fmt.Sprintf("https://github.com/istio/istio/releases/download/%s/istio-%s-%s-%s.tar.gz", istioVersion, istioVersion, osext, istioArch)
+
+	archSupport := "1.6"
+
+	if osext == "linux" {
+		if strings.Split(archSupport, ".")[1] >= strings.Split(istioVersion, ".")[1] {
+			err := DownloadFile(path.Join(wsp,"istioctl"), "istio.tar.gz", archUrl)
+			if err != nil {
+				fmt.Printf("Error: %s", err)
+			}
+		} else {
+			err := DownloadFile(path.Join(wsp,"istioctl"), "istio.tar.gz", nonArchUrl)
+			if err != nil {
+				fmt.Printf("Error: %s", err)
+			}
+		}
+	} else if osext == "osx" {
+		err := DownloadFile(path.Join(wsp,"istioctl"), "istio.tar.gz", nonArchUrl)
+		if err != nil {
+			fmt.Printf("Error: %s", err)
+		}
+	} else if osext == "win" {
+		// TODO
+	} else {
+
+	}
+	istioStep.Success()
+}
+/*
+func buildUrl(arch bool) string {
+	if arch {
+		return fmt.Sprintf("https://github.com/istio/istio/releases/download/%s/istio-%s-%s-%s.tar.gz", istioVersion, istioVersion, osext, istioArch)
+	} else {
+		return fmt.Sprintf("https://github.com/istio/istio/releases/download/%s/istio-%s-%s.tar.gz", istioVersion, istioVersion, osext)
+	}
+}
+ */
+
+
+func DownloadFile(filepath string, filename string, url string) error {
+	// Get data
+	resp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	// Create path and file
+	os.MkdirAll(filepath, 0700)
+	out, err := os.Create(path.Join(filepath, filename))
+	fmt.Printf("Out: %#v\n", out)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	// Write body to file
+	_, err = io.Copy(out, resp.Body)
+	return err
 }
