@@ -171,7 +171,10 @@ func downloadFile(filepath string, filename string, url string) error {
 	defer resp.Body.Close()
 
 	// Create path and file
-	os.MkdirAll(filepath, 0700)
+	err = os.MkdirAll(filepath, 0700)
+	if err != nil {
+		return err
+	}
 	out, err := os.Create(path.Join(filepath, filename))
 	if err != nil {
 		return err
@@ -182,7 +185,6 @@ func downloadFile(filepath string, filename string, url string) error {
 	_, err = io.Copy(out, resp.Body)
 	return err
 }
-
 
 func unGzip(source, target string) error {
 	reader, err := os.Open(source)
@@ -224,16 +226,16 @@ func unTar(tarball, target string) error {
 			return err
 		}
 
-		path := filepath.Join(target, header.Name)
+		headerPath := filepath.Join(target, header.Name)
 		info := header.FileInfo()
 		if info.IsDir() {
-			if err = os.MkdirAll(path, info.Mode()); err != nil {
+			if err = os.MkdirAll(headerPath, info.Mode()); err != nil {
 				return err
 			}
 			continue
 		}
 
-		file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
+		file, err := os.OpenFile(headerPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
 		if err != nil {
 			return err
 		}
@@ -245,4 +247,3 @@ func unTar(tarball, target string) error {
 	}
 	return nil
 }
-

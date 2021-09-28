@@ -115,8 +115,10 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	fmt.Printf("Workspace: %#v\n", ws)
-	cmd.installPrerequisites(ws.WorkspaceDir)
+	err = cmd.installPrerequisites(ws.WorkspaceDir)
+	if err != nil {
+		return err
+	}
 	err = cmd.deployKyma(components)
 	if err != nil {
 		return err
@@ -288,10 +290,10 @@ func (cmd *command) approveImportCertificate() bool {
 func (cmd *command) installPrerequisites(wsp string) error {
 	preReqStep := cmd.NewStep("Installing Prerequisites")
 
-	istio := istio.New(wsp)
-	err := istio.Install()
+	istioctl := istio.New(wsp)
+	err := istioctl.Install()
 	if err != nil {
-		// TODO
+		return err
 	}
 
 	preReqStep.Success()
