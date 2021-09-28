@@ -6,9 +6,6 @@ import (
 	"github.com/kyma-project/cli/internal/cli"
 )
 
-//DefaultKymaVersion contains the default Kyma version to be installed in case another version is not specified
-var DefaultKymaVersion string
-
 // isRelease circumvents backtracking for Kyma version
 var isRelease string = "false"
 

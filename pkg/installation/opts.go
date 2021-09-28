@@ -2,6 +2,8 @@ package installation
 
 import "time"
 
+const DefaultKymaVersion = "1.24.6"
+
 // Options holds the configuration options for the installation.
 type Options struct {
 	// Source specifies the installation source. To use the specific release, pass the release version (e.g. 1.6.0).

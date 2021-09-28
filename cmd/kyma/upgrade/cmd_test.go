@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/pkg/installation"
 	"github.com/stretchr/testify/require"
 )
 
@@ -19,7 +20,7 @@ func TestUpgradeFlags(t *testing.T) {
 	require.Equal(t, defaultDomain, o.Domain, "Default value for the domain flag not as expected.")
 	require.Equal(t, "", o.TLSCert, "Default value for the tlsCert flag not as expected.")
 	require.Equal(t, "", o.TLSKey, "Default value for the tlsKey flag not as expected.")
-	require.Equal(t, DefaultKymaVersion, o.Source, "Default value for the source flag not as expected.")
+	require.Equal(t, installation.DefaultKymaVersion, o.Source, "Default value for the source flag not as expected.")
 	require.Equal(t, "", o.LocalSrcPath, "Default value for the src-path flag not as expected.")
 	require.Equal(t, 1*time.Hour, o.Timeout, "Default value for the timeout flag not as expected.")
 	require.Equal(t, "", o.Password, "Default value for the password flag not as expected.")
