@@ -370,7 +370,7 @@ func (cmd *command) installPrerequisites(wsp string) {
 		// TODO
 	}
 
-	// TODO unzip tar.gz
+	// Unzip tar.gz
 	istioPath := path.Join(wsp, "istioctl", "istio.tar.gz")
 	targetPath := path.Join(wsp, "istioctl", "istio.tar")
 	fmt.Printf("IstioPath %s\n", istioPath)
@@ -379,19 +379,12 @@ func (cmd *command) installPrerequisites(wsp string) {
 	targetPath = path.Join(wsp, "istioctl")
 	Untar(istioPath, targetPath)
 
-
-	// TODO export env variable
+	// Export env variable
+	binPath := path.Join(wsp, "istioctl", fmt.Sprintf("istio-%s", istioVersion), "bin", "istioctl")
+	os.Setenv("ISTIOCTL_PATH", binPath)
+	fmt.Printf("Env: %s\n", os.Getenv("ISTIOCTL_PATH"))
 	istioStep.Success()
 }
-/*
-func buildUrl(arch bool) string {
-	if arch {
-		return fmt.Sprintf("https://github.com/istio/istio/releases/download/%s/istio-%s-%s-%s.tar.gz", istioVersion, istioVersion, osext, istioArch)
-	} else {
-		return fmt.Sprintf("https://github.com/istio/istio/releases/download/%s/istio-%s-%s.tar.gz", istioVersion, istioVersion, osext)
-	}
-}
- */
 
 
 func DownloadFile(filepath string, filename string, url string) error {
