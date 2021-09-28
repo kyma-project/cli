@@ -21,7 +21,7 @@ import (
 
 var (
 	crdGvr = schema.GroupVersionResource{
-		Group:    "extensions.k8s.io",
+		Group:    "apiextensions.k8s.io",
 		Version:  "v1",
 		Resource: "customresourcedefinitions",
 	}
@@ -243,7 +243,6 @@ func (cmd *command) cleanupFinalizers() error {
 }
 
 func (cmd *command) deleteKymaCRDs() error {
-
 	err := cmd.deleteCRDsByLabelWithRetry("reconciler.kyma-project.io/managed-by=reconciler")
 	if err != nil {
 		return errors.Wrapf(err, "Failed to delete resource")
