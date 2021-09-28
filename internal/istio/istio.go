@@ -57,7 +57,7 @@ func New(workspacePath string) Installation {
 func (i *Installation) Install() error {
 	// Get wanted Istio Version
 	if err := i.getIstioVersion(); err != nil {
-		return err
+		return fmt.Errorf("error checking wanted istio version: %s", err)
 	}
 	// Check if Istioctl binary is already in workspace
 	exist, err := i.checkIfExists()
@@ -71,16 +71,16 @@ func (i *Installation) Install() error {
 		i.setArch()
 		// Download Istioctl
 		if err := i.downloadIstio(); err != nil {
-			return err
+			return fmt.Errorf("error downloading istio: %s", err)
 		}
 		// Extract tar.gz
 		if err := i.extractIstio(); err != nil {
-			return err
+			return fmt.Errorf("error extracting istio.tar.gz: %s", err)
 		}
 	}
 	// Export env variable
 	if err := i.exportEnvVar(); err != nil {
-		return err
+		return fmt.Errorf("error exporting environment variable: %s", err)
 	}
 	return nil
 }
@@ -255,13 +255,19 @@ func unTar(tarball, target string) error {
 			continue
 		}
 
-		file, err := os.OpenFile(headerPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
-		if err != nil {
-			return err
-		}
-		defer file.Close()
-		_, err = io.Copy(file, tarReader)
-		if err != nil {
+		err = func() error {
+			file, err := os.OpenFile(headerPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
+			if err != nil {
+				return err
+			}
+			defer file.Close()
+			_, err = io.Copy(file, tarReader)
+			if err != nil {
+				return err
+			}
+			return nil
+		}()
+		if err != nil{
 			return err
 		}
 	}
