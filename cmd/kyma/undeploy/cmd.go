@@ -9,14 +9,15 @@ import (
 	apixv1beta1client "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
 	apierr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	k8sRetry "k8s.io/client-go/util/retry"
 	"sync"
 
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
 
 	"github.com/spf13/cobra"
-	k8sRetry "k8s.io/client-go/util/retry"
 )
 
 var (
@@ -59,6 +60,7 @@ func (cmd *command) Run() error {
 	if cmd.opts.CI {
 		cmd.Factory.NonInteractive = true
 	}
+
 	if cmd.opts.Verbose {
 		cmd.Factory.UseLogger = true
 	}
@@ -83,7 +85,7 @@ func (cmd *command) Run() error {
 }
 
 func (cmd *command) undeployKyma() error {
-	err := cmd.cleanupFinalizers()
+	err := cmd.removeFinalizers()
 	if err != nil {
 		return err
 	}
@@ -96,9 +98,117 @@ func (cmd *command) undeployKyma() error {
 	if !cmd.opts.KeepCRDs {
 		return cmd.deleteKymaCRDs()
 	}
+
 	return nil
 }
 
+func (cmd *command) removeFinalizers() error {
+	if err := cmd.removeServerlessCredentialsFinalizers(); err != nil {
+		return err
+	}
+
+	if err := cmd.removeCustomResourcesFinalizers(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (cmd *command) removeServerlessCredentialsFinalizers() error {
+	secrets, err := cmd.K8s.Static().CoreV1().Secrets(v1.NamespaceAll).List(context.Background(), metav1.ListOptions{LabelSelector: "serverless.kyma-project.io/config=credentials"})
+	if err != nil && !apierr.IsNotFound(err) {
+		return err
+	}
+
+	if secrets == nil {
+		return nil
+	}
+
+	for i := range secrets.Items {
+		secret := secrets.Items[i]
+
+		if len(secret.GetFinalizers()) <= 0 {
+			continue
+		}
+
+		secret.SetFinalizers(nil)
+		if _, err := cmd.K8s.Static().CoreV1().Secrets(secret.GetNamespace()).Update(context.Background(), &secret, metav1.UpdateOptions{}); err != nil {
+			return err
+		}
+		fmt.Printf("Deleted finalizer from \"%s\" Secret", secret.GetName())
+	}
+
+	return nil
+}
+
+func (cmd *command) removeCustomResourcesFinalizers() error {
+	crds, err := cmd.apixClient.CustomResourceDefinitions().List(context.Background(), metav1.ListOptions{LabelSelector: "reconciler.kyma-project.io/managed-by=reconciler"})
+	if err != nil && !apierr.IsNotFound(err) {
+		return err
+	}
+
+	if crds == nil {
+		return nil
+	}
+
+	for _, crd := range crds.Items {
+		gvr := schema.GroupVersionResource{
+			Group:    crd.Spec.Group,
+			Version:  crd.Spec.Version,
+			Resource: crd.Spec.Names.Plural,
+		}
+
+		customResourceList, err := cmd.K8s.Dynamic().Resource(gvr).Namespace(v1.NamespaceAll).List(context.Background(), metav1.ListOptions{})
+		if err != nil && !apierr.IsNotFound(err) {
+			return err
+		}
+
+		if customResourceList == nil {
+			continue
+		}
+
+		for i := range customResourceList.Items {
+			cr := customResourceList.Items[i]
+			retryErr := k8sRetry.RetryOnConflict(k8sRetry.DefaultRetry, func() error { return cmd.removeCustomResourceFinalizers(gvr, cr) })
+			if retryErr != nil {
+				return fmt.Errorf("deleting finalizer failed: %v", retryErr)
+			}
+		}
+	}
+
+	return nil
+}
+
+func (cmd *command) removeCustomResourceFinalizers(customResource schema.GroupVersionResource, cr2 unstructured.Unstructured) error {
+	// Retrieve the latest version of Custom Resource before attempting update
+	// RetryOnConflict uses exponential backoff to avoid exhausting the apiserver
+	res, err := cmd.K8s.Dynamic().Resource(customResource).Namespace(cr2.GetNamespace()).Get(context.Background(), cr2.GetName(), metav1.GetOptions{})
+	if err != nil && !apierr.IsNotFound(err) {
+		return err
+	}
+
+	if res == nil {
+		return nil
+	}
+
+	if len(res.GetFinalizers()) > 0 {
+		fmt.Printf("Deleting finalizer for \"%s\" %s\n", res.GetName(), cr2.GetKind())
+		res.SetFinalizers(nil)
+		_, err := cmd.K8s.Dynamic().Resource(customResource).Namespace(res.GetNamespace()).Update(context.Background(), res, metav1.UpdateOptions{})
+		if err != nil {
+			return err
+		}
+		fmt.Printf("Deleted finalizer for \"%s\" %s\n", res.GetName(), res.GetKind())
+	}
+
+	if !cmd.opts.KeepCRDs {
+		err = cmd.K8s.Dynamic().Resource(customResource).Namespace(res.GetNamespace()).Delete(context.Background(), res.GetName(), metav1.DeleteOptions{})
+		if err != nil && !apierr.IsNotFound(err) {
+			return err
+		}
+	}
+	return nil
+}
 func (cmd *command) deleteKymaNamespaces() error {
 
 	namespaces := [3]string{"istio-system", "kyma-system", "kyma-integration"}
@@ -156,90 +266,6 @@ func (cmd *command) deleteKymaNamespaces() error {
 			}
 		}
 	}
-}
-
-func (cmd *command) cleanupFinalizers() error {
-	// Remove finalizers from serverless Secret
-	secrets, err := cmd.K8s.Static().CoreV1().Secrets(v1.NamespaceAll).List(context.Background(), metav1.ListOptions{LabelSelector: "serverless.kyma-project.io/config=credentials"})
-	if err != nil && !apierr.IsNotFound(err) {
-		return err
-	}
-	if secrets != nil {
-		for _, secret := range secrets.Items {
-			if len(secret.GetFinalizers()) <= 0 {
-				continue
-			}
-
-			secret.SetFinalizers(nil)
-			if _, err := cmd.K8s.Static().CoreV1().Secrets(secret.GetNamespace()).Update(context.Background(), &secret, metav1.UpdateOptions{}); err != nil {
-				return err
-			}
-			fmt.Printf("Deleted finalizer from \"%s\" Secret", secret.GetName())
-		}
-	}
-
-	// Remove finalizers from Custom Resources
-	crds, err := cmd.apixClient.CustomResourceDefinitions().List(context.Background(), metav1.ListOptions{LabelSelector: "reconciler.kyma-project.io/managed-by=reconciler"})
-	if err != nil && !apierr.IsNotFound(err) {
-		return err
-	}
-
-	if crds == nil {
-		return nil
-	}
-
-	for _, crd := range crds.Items {
-		customResource := schema.GroupVersionResource{
-			Group:    crd.Spec.Group,
-			Version:  crd.Spec.Version,
-			Resource: crd.Spec.Names.Plural,
-		}
-
-		customResourceList, err := cmd.K8s.Dynamic().Resource(customResource).Namespace(v1.NamespaceAll).List(context.Background(), metav1.ListOptions{})
-		if err != nil && !apierr.IsNotFound(err) {
-			return err
-		}
-
-		if customResourceList == nil {
-			continue
-		}
-
-		for _, cr := range customResourceList.Items {
-			cr2 := cr
-			retryErr := k8sRetry.RetryOnConflict(k8sRetry.DefaultRetry, func() error {
-				// Retrieve the latest version of Custom Resource before attempting update
-				// RetryOnConflict uses exponential backoff to avoid exhausting the apiserver
-				res, err := cmd.K8s.Dynamic().Resource(customResource).Namespace(cr2.GetNamespace()).Get(context.Background(), cr2.GetName(), metav1.GetOptions{})
-				if err != nil && !apierr.IsNotFound(err) {
-					return err
-				}
-				if res != nil {
-					if len(res.GetFinalizers()) > 0 {
-						fmt.Printf("Deleting finalizer for \"%s\" %s\n", res.GetName(), cr2.GetKind())
-						res.SetFinalizers(nil)
-						_, err := cmd.K8s.Dynamic().Resource(customResource).Namespace(res.GetNamespace()).Update(context.Background(), res, metav1.UpdateOptions{})
-						if err != nil {
-							return err
-						}
-						fmt.Printf("Deleted finalizer for \"%s\" %s\n", res.GetName(), res.GetKind())
-					}
-
-					// TODO check if needed?
-					if !cmd.opts.KeepCRDs {
-						err = cmd.K8s.Dynamic().Resource(customResource).Namespace(res.GetNamespace()).Delete(context.Background(), res.GetName(), metav1.DeleteOptions{})
-						if err != nil && !apierr.IsNotFound(err) {
-							return err
-						}
-					}
-				}
-				return nil
-			})
-			if retryErr != nil {
-				return fmt.Errorf("deleting finalizer failed: %v", retryErr)
-			}
-		}
-	}
-	return nil
 }
 
 func (cmd *command) deleteKymaCRDs() error {
