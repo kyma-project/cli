@@ -296,6 +296,6 @@ func (cmd *command) installPrerequisites(wsp string) error {
 		return err
 	}
 
-	preReqStep.Success()
+	preReqStep.Successf("Installed Prerequisites")
 	return nil
 }

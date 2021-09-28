@@ -3,6 +3,7 @@ package istio
 import (
 	"archive/tar"
 	"compress/gzip"
+	"errors"
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"io"
@@ -41,6 +42,7 @@ type Installation struct {
 	osext          string
 	istioArch      string
 	archSupport    string
+	binPath string
 }
 
 func New(workspacePath string) Installation {
@@ -57,17 +59,24 @@ func (i *Installation) Install() error {
 	if err := i.getIstioVersion(); err != nil {
 		return err
 	}
-	// Set OS Version
-	i.setOS()
-	// Set OS Architecture
-	i.setArch()
-	// Download Istioctl
-	if err := i.downloadIstio(); err != nil {
+	// Check if Istioctl binary is already in workspace
+	exist, err := i.checkIfExists()
+	if err != nil {
 		return err
 	}
-	// Extract tar.gz
-	if err := i.extractIstio(); err != nil {
-		return err
+	if !exist {
+		// Set OS Version
+		i.setOS()
+		// Set OS Architecture
+		i.setArch()
+		// Download Istioctl
+		if err := i.downloadIstio(); err != nil {
+			return err
+		}
+		// Extract tar.gz
+		if err := i.extractIstio(); err != nil {
+			return err
+		}
 	}
 	// Export env variable
 	if err := i.exportEnvVar(); err != nil {
@@ -87,7 +96,19 @@ func (i *Installation) getIstioVersion() error{
 		return err
 	}
 	i.istioVersion = chart.AppVersion
+	i.binPath = path.Join(i.WorkspacePath, "istioctl", fmt.Sprintf("istio-%s", i.istioVersion), "bin", "istioctl")
 	return nil
+}
+
+func (i *Installation) checkIfExists() (bool, error) {
+	_, err := os.Stat(i.binPath)
+	if err == nil {
+		return true, nil
+	}
+	if errors.Is(err, os.ErrNotExist) {
+		return false, nil
+	}
+	return false, err
 }
 
 func (i *Installation) setOS() {
@@ -155,8 +176,7 @@ func (i *Installation) extractIstio() error {
 }
 
 func (i *Installation) exportEnvVar() error {
-	binPath := path.Join(i.WorkspacePath, "istioctl", fmt.Sprintf("istio-%s", i.istioVersion), "bin", "istioctl")
-	if err := os.Setenv(i.environmentVar, binPath); err != nil {
+	if err := os.Setenv(i.environmentVar, i.binPath); err != nil {
 		return err
 	}
 	return nil
