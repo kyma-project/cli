@@ -1,6 +1,8 @@
 package deploy
 
 import (
+	"archive/tar"
+	"compress/gzip"
 	"context"
 	"fmt"
 	"gopkg.in/yaml.v2"
@@ -347,26 +349,38 @@ func (cmd *command) installPrerequisites(wsp string) {
 
 	if osext == "linux" {
 		if strings.Split(archSupport, ".")[1] >= strings.Split(istioVersion, ".")[1] {
-			err := DownloadFile(path.Join(wsp,"istioctl"), "istio.tar.gz", archUrl)
+			err := DownloadFile(path.Join(wsp, "istioctl"), "istio.tar.gz", archUrl)
 			if err != nil {
 				fmt.Printf("Error: %s", err)
 			}
 		} else {
-			err := DownloadFile(path.Join(wsp,"istioctl"), "istio.tar.gz", nonArchUrl)
+			err := DownloadFile(path.Join(wsp, "istioctl"), "istio.tar.gz", nonArchUrl)
 			if err != nil {
 				fmt.Printf("Error: %s", err)
 			}
 		}
 	} else if osext == "osx" {
-		err := DownloadFile(path.Join(wsp,"istioctl"), "istio.tar.gz", nonArchUrl)
+		err := DownloadFile(path.Join(wsp, "istioctl"), "istio.tar.gz", nonArchUrl)
 		if err != nil {
 			fmt.Printf("Error: %s", err)
 		}
 	} else if osext == "win" {
 		// TODO
 	} else {
-
+		// TODO
 	}
+
+	// TODO unzip tar.gz
+	istioPath := path.Join(wsp, "istioctl", "istio.tar.gz")
+	targetPath := path.Join(wsp, "istioctl", "istio.tar")
+	fmt.Printf("IstioPath %s\n", istioPath)
+	UnGzip(istioPath, targetPath)
+	istioPath = path.Join(wsp, "istioctl", "istio.tar")
+	targetPath = path.Join(wsp, "istioctl")
+	Untar(istioPath, targetPath)
+
+
+	// TODO export env variable
 	istioStep.Success()
 }
 /*
@@ -391,7 +405,6 @@ func DownloadFile(filepath string, filename string, url string) error {
 	// Create path and file
 	os.MkdirAll(filepath, 0700)
 	out, err := os.Create(path.Join(filepath, filename))
-	fmt.Printf("Out: %#v\n", out)
 	if err != nil {
 		return err
 	}
@@ -400,4 +413,67 @@ func DownloadFile(filepath string, filename string, url string) error {
 	// Write body to file
 	_, err = io.Copy(out, resp.Body)
 	return err
+}
+
+
+func UnGzip(source, target string) error {
+	reader, err := os.Open(source)
+	if err != nil {
+		return err
+	}
+	defer reader.Close()
+
+	archive, err := gzip.NewReader(reader)
+	if err != nil {
+		return err
+	}
+	defer archive.Close()
+
+	target = filepath.Join(target, archive.Name)
+	writer, err := os.Create(target)
+	if err != nil {
+		return err
+	}
+	defer writer.Close()
+
+	_, err = io.Copy(writer, archive)
+	return err
+}
+
+func Untar(tarball, target string) error {
+	reader, err := os.Open(tarball)
+	if err != nil {
+		return err
+	}
+	defer reader.Close()
+	tarReader := tar.NewReader(reader)
+
+	for {
+		header, err := tarReader.Next()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return err
+		}
+
+		path := filepath.Join(target, header.Name)
+		info := header.FileInfo()
+		if info.IsDir() {
+			if err = os.MkdirAll(path, info.Mode()); err != nil {
+				return err
+			}
+			continue
+		}
+
+		file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+		_, err = io.Copy(file, tarReader)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
