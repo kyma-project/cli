@@ -9,9 +9,7 @@ import (
 	apixv1beta1client "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
 	apierr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/selection"
 	"strings"
 	"sync"
 
@@ -85,7 +83,7 @@ func (cmd *command) undeployKyma() error {
 	}
 
 	if !cmd.opts.KeepCRDs {
-		return cmd.deleteKymaCrds()
+		return cmd.deleteKymaCRDs()
 	}
 	return nil
 }
@@ -119,7 +117,7 @@ func (cmd *command) deleteKymaNamespaces() error {
 					return nil
 				}
 
-				return errors.Wrapf(err,"\"%s\" Namespace still exists in \"%s\" Phase", nsT.Name, nsT.Status.Phase)
+				return errors.Wrapf(err, "\"%s\" Namespace still exists in \"%s\" Phase", nsT.Name, nsT.Status.Phase)
 			})
 			if err != nil {
 				errorCh <- err
@@ -173,15 +171,17 @@ func (cmd *command) cleanupFinalizers() error {
 		}
 	}
 	//HACK: Delete finalizers of leftover Custom Resources
-	selector, err := cmd.prepareKymaCrdLabelSelector()
-	if err != nil {
-		return err
-	}
+	//selector, err := cmd.prepareKymaCrdLabelSelector()
+	//if err != nil {
+	//	return err
+	//}
 
-	crds, err := cmd.apixClient.CustomResourceDefinitions().List(context.Background(), metav1.ListOptions{LabelSelector: selector.String()})
+	crds, err := cmd.apixClient.CustomResourceDefinitions().List(context.Background(), metav1.ListOptions{LabelSelector: "reconciler.kyma-project.io/managed-by=reconciler"})
 	if err != nil && !apierr.IsNotFound(err) {
 		return err
 	}
+	
+
 
 	if crds == nil {
 		return nil
@@ -239,18 +239,15 @@ func (cmd *command) cleanupFinalizers() error {
 	return nil
 }
 
-func (cmd *command) deleteKymaCrds() error {
-	fmt.Printf("Uninstalling CRDs labeled with: %s=%s\n", "reconciler.kyma-project.io/managed-by", "reconciler")
-
-	selector, err := cmd.prepareKymaCrdLabelSelector()
-	if err != nil {
-		return err
-	}
-
-	gvks := cmd.retrieveKymaCrdGvks()
+func (cmd *command) deleteKymaCRDs() error {
+	gvks := []schema.GroupVersionKind{crdGvkWith("v1beta1"), crdGvkWith("v1")}
 	for _, gvk := range gvks {
-		fmt.Printf("Uninstalling CRDs that belong to apiVersion: %s/%s\n", gvk.Group, gvk.Version)
-		err = cmd.deleteCollectionOfResources(gvk, metav1.DeleteOptions{}, metav1.ListOptions{LabelSelector: selector.String()})
+		err := cmd.deleteCollectionWithRetry(gvk, metav1.ListOptions{LabelSelector: "reconciler.kyma-project.io/managed-by=reconciler"})
+		if err != nil {
+			return errors.Wrapf(err, "Failed to delete resource")
+		}
+
+		err = cmd.deleteCollectionWithRetry(gvk, metav1.ListOptions{LabelSelector: "install.operator.istio.io/owning-resource-namespace=istio-system"})
 		if err != nil {
 			return errors.Wrapf(err, "Failed to delete resource")
 		}
@@ -261,50 +258,22 @@ func (cmd *command) deleteKymaCrds() error {
 	return nil
 }
 
-func (cmd *command) prepareKymaCrdLabelSelector() (labels.Selector, error) {
-	selector := labels.NewSelector()
-
-	kymaCrdReq, err := labels.NewRequirement("reconciler.kyma-project.io/managed-by", selection.Equals, []string{"reconciler"})
-	if err != nil {
-		return nil, errors.Wrap(err, "Error occurred when preparing Kyma CRD label selector")
-	}
-	selector = selector.Add(*kymaCrdReq)
-
-	istioCrdReq, err := labels.NewRequirement("install.operator.istio.io/owning-resource-namespace", selection.Equals, []string{"istio-system"})
-	if err != nil {
-		return nil, errors.Wrap(err, "Error occurred when preparing Istio CRD label selector")
-	}
-	selector = selector.Add(*istioCrdReq)
-
-	return selector, nil
-}
-
-func (cmd *command) retrieveKymaCrdGvks() []schema.GroupVersionKind {
-	crdGvkV1Beta1 := cmd.crdGvkWith("v1beta1")
-	crdGvkV1 := cmd.crdGvkWith("v1")
-	return []schema.GroupVersionKind{crdGvkV1Beta1, crdGvkV1}
-}
-
-func (cmd *command) deleteCollectionOfResources(gvk schema.GroupVersionKind, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
+func (cmd *command) deleteCollectionWithRetry(gvk schema.GroupVersionKind, listOpts metav1.ListOptions) error {
 	var err error
 	err = retry.Do(func() error {
-		if err = cmd.K8s.Dynamic().Resource(retrieveGvrFrom(gvk)).DeleteCollection(context.TODO(), opts, listOpts); err != nil {
+		if err = cmd.K8s.Dynamic().Resource(retrieveGvrFrom(gvk)).DeleteCollection(context.TODO(), metav1.DeleteOptions{}, listOpts); err != nil {
 			return errors.Wrapf(err, "Error occurred during resources delete: %s", err.Error())
 		}
 
 		return nil
 	})
 
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
-func (cmd *command) crdGvkWith(version string) schema.GroupVersionKind {
+func crdGvkWith(version string) schema.GroupVersionKind {
 	return schema.GroupVersionKind{
-		Group:   "apiextensions.k8s.io",
+		Group:   "extensions.k8s.io",
 		Version: version,
 		Kind:    "customresourcedefinition",
 	}
