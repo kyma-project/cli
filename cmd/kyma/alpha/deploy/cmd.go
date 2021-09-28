@@ -1,20 +1,8 @@
 package deploy
 
 import (
-	"archive/tar"
-	"compress/gzip"
 	"context"
 	"fmt"
-	"gopkg.in/yaml.v2"
-	"io"
-	"io/ioutil"
-	"net/http"
-	"os"
-	"path"
-	"path/filepath"
-	"runtime"
-	"strings"
-
 	"github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-incubator/reconciler/pkg/logger"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler"
@@ -25,6 +13,7 @@ import (
 	"github.com/kyma-project/cli/internal/component"
 	"github.com/kyma-project/cli/internal/coredns"
 	"github.com/kyma-project/cli/internal/files"
+	"github.com/kyma-project/cli/internal/istio"
 	"github.com/kyma-project/cli/internal/k3d"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/trust"
@@ -32,12 +21,14 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
+	"io/ioutil"
+	"os"
+	"path"
 	//Register all reconcilers
 	_ "github.com/kyma-incubator/reconciler/pkg/reconciler/instances"
 )
 
 const defaultVersion = "main"
-const istioChartPath = "/resources/istio-configuration/Chart.yaml"
 
 type command struct {
 	cli.Command
@@ -294,179 +285,15 @@ func (cmd *command) approveImportCertificate() bool {
 	return qImportCertsStep.PromptYesNo("Should the Kyma certificate be installed locally?")
 }
 
+func (cmd *command) installPrerequisites(wsp string) error {
+	preReqStep := cmd.NewStep("Installing Prerequisites")
 
-type IstioConfig struct {
-	APIVersion    string   `yaml:"apiVersion"`
-	Name          string   `yaml:"name"`
-	Version       string   `yaml:"version"`
-	AppVersion    string   `yaml:"appVersion"`
-	TillerVersion string   `yaml:"tillerVersion"`
-	Description   string   `yaml:"description"`
-	Keywords      []string `yaml:"keywords"`
-	Sources       []string `yaml:"sources"`
-	Engine        string   `yaml:"engine"`
-	Home          string   `yaml:"home"`
-	Icon          string   `yaml:"icon"`
-}
-
-func (cmd *command) installPrerequisites(wsp string) {
-	istioStep := cmd.NewStep("Installing Prerequisites")
-
-	// Get wanted Istio Version
-	var chart IstioConfig
-	istioConfig, err := ioutil.ReadFile(filepath.Join(wsp, istioChartPath))
+	istio := istio.New(wsp)
+	err := istio.Install()
 	if err != nil {
-		fmt.Printf("ERROR: %s", err)
-		//TODO
-	}
-	err = yaml.Unmarshal(istioConfig, &chart)
-	if err != nil {
-		fmt.Printf("ERROR: %s", err)
-		//TODO
-	}
-	istioVersion := chart.AppVersion
-	fmt.Printf("Istio Version: %v\n", istioVersion)
-	// Get OS Version
-	osext := runtime.GOOS
-	switch osext {
-	case "windows":
-		osext = "win"
-	case "darwin":
-		osext = "osx"
-	default:
-		osext = "linux"
-	}
-
-	istioArch := runtime.GOARCH
-	//if osext == "osx" && istioArch == "amd64"{
-	//	istioArch = "arm64"
-	//}
-
-	nonArchUrl := fmt.Sprintf("https://github.com/istio/istio/releases/download/%s/istio-%s-%s.tar.gz", istioVersion, istioVersion, osext)
-	archUrl := fmt.Sprintf("https://github.com/istio/istio/releases/download/%s/istio-%s-%s-%s.tar.gz", istioVersion, istioVersion, osext, istioArch)
-
-	archSupport := "1.6"
-
-	if osext == "linux" {
-		if strings.Split(archSupport, ".")[1] >= strings.Split(istioVersion, ".")[1] {
-			err := DownloadFile(path.Join(wsp, "istioctl"), "istio.tar.gz", archUrl)
-			if err != nil {
-				fmt.Printf("Error: %s", err)
-			}
-		} else {
-			err := DownloadFile(path.Join(wsp, "istioctl"), "istio.tar.gz", nonArchUrl)
-			if err != nil {
-				fmt.Printf("Error: %s", err)
-			}
-		}
-	} else if osext == "osx" {
-		err := DownloadFile(path.Join(wsp, "istioctl"), "istio.tar.gz", nonArchUrl)
-		if err != nil {
-			fmt.Printf("Error: %s", err)
-		}
-	} else if osext == "win" {
-		// TODO
-	} else {
 		// TODO
 	}
 
-	// Unzip tar.gz
-	istioPath := path.Join(wsp, "istioctl", "istio.tar.gz")
-	targetPath := path.Join(wsp, "istioctl", "istio.tar")
-	fmt.Printf("IstioPath %s\n", istioPath)
-	UnGzip(istioPath, targetPath)
-	istioPath = path.Join(wsp, "istioctl", "istio.tar")
-	targetPath = path.Join(wsp, "istioctl")
-	Untar(istioPath, targetPath)
-
-	// Export env variable
-	binPath := path.Join(wsp, "istioctl", fmt.Sprintf("istio-%s", istioVersion), "bin", "istioctl")
-	os.Setenv("ISTIOCTL_PATH", binPath)
-	fmt.Printf("Env: %s\n", os.Getenv("ISTIOCTL_PATH"))
-	istioStep.Success()
-}
-
-
-func DownloadFile(filepath string, filename string, url string) error {
-	// Get data
-	resp, err := http.Get(url)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	// Create path and file
-	os.MkdirAll(filepath, 0700)
-	out, err := os.Create(path.Join(filepath, filename))
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	// Write body to file
-	_, err = io.Copy(out, resp.Body)
-	return err
-}
-
-
-func UnGzip(source, target string) error {
-	reader, err := os.Open(source)
-	if err != nil {
-		return err
-	}
-	defer reader.Close()
-
-	archive, err := gzip.NewReader(reader)
-	if err != nil {
-		return err
-	}
-	defer archive.Close()
-
-	target = filepath.Join(target, archive.Name)
-	writer, err := os.Create(target)
-	if err != nil {
-		return err
-	}
-	defer writer.Close()
-
-	_, err = io.Copy(writer, archive)
-	return err
-}
-
-func Untar(tarball, target string) error {
-	reader, err := os.Open(tarball)
-	if err != nil {
-		return err
-	}
-	defer reader.Close()
-	tarReader := tar.NewReader(reader)
-
-	for {
-		header, err := tarReader.Next()
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			return err
-		}
-
-		path := filepath.Join(target, header.Name)
-		info := header.FileInfo()
-		if info.IsDir() {
-			if err = os.MkdirAll(path, info.Mode()); err != nil {
-				return err
-			}
-			continue
-		}
-
-		file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
-		if err != nil {
-			return err
-		}
-		defer file.Close()
-		_, err = io.Copy(file, tarReader)
-		if err != nil {
-			return err
-		}
-	}
+	preReqStep.Success()
 	return nil
 }
