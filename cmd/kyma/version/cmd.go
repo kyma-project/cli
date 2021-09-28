@@ -3,19 +3,15 @@ package version
 import (
 	"context"
 	"fmt"
-	"io"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"os"
-	"strings"
-	"time"
-
-	"github.com/kyma-incubator/hydroform/parallel-install/pkg/helm"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-
-	installConfig "github.com/kyma-incubator/hydroform/parallel-install/pkg/config"
+	"io"
+	v1 "k8s.io/api/apps/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"os"
+	"strings"
 )
 
 type command struct {
@@ -52,7 +48,7 @@ func NewCmd(o *Options) *cobra.Command {
 func (cmd *command) Run() error {
 	var w io.Writer = os.Stdout
 
-	cmd.printCliVersion(w)
+	fmt.Fprintf(w, "Kyma CLI version: %s\n", versionOrDefault(Version))
 
 	if cmd.opts.ClientOnly {
 		//we are done
@@ -60,59 +56,45 @@ func (cmd *command) Run() error {
 	}
 
 	//print Kyma Version
-	provider, err := cmd.metadataProvider()
+	err := cmd.setKubeClient()
 	if err != nil {
 		return err
 	}
-	versionSet, err := provider.Versions()
+
+	isKyma2, err := checkKyma2(cmd.K8s)
 	if err != nil {
-		return fmt.Errorf("Unable to get Kyma cluster versions due to error: %v. Check if your cluster is available and has Kyma installed", err)
+		return err
 	}
+	if isKyma2 {
+		//Check for kyma 2
+		version, err := getKyma2Version(cmd.K8s)
+		if err != nil {
+			return err
+		}
+		fmt.Fprintf(w, "Kyma 2 cluster versions: %s\n", versionOrDefault(version))
 
-	cmd.printKymaVersion(w, versionSet)
-
-	if cmd.opts.VersionDetails {
-		cmd.printKymaVersionDetails(os.Stdout, versionSet)
+	} else {
+		// Print kyma 1 version
+		version, err := getKyma1Version(cmd.K8s)
+		if err != nil {
+			return err
+		}
+		fmt.Fprintf(w, "Kyma 1 cluster versions: %s\n", versionOrDefault(version))
 	}
 
 	return nil
 }
 
-func (cmd *command) printCliVersion(w io.Writer) {
-	fmt.Fprintf(w, "Kyma CLI version: %s\n", versionOrDefault(Version))
-}
-
-func (cmd *command) printKymaVersion(w io.Writer, versionSet *helm.KymaVersionSet) {
-	fmt.Fprintf(w, "Kyma cluster versions: %s\n", versionOrDefault(strings.Join(versionSet.Names(), ", ")))
-}
-
-func (cmd *command) printKymaVersionDetails(w io.Writer, versionSet *helm.KymaVersionSet) {
-	for _, version := range versionSet.Versions {
-		fmt.Fprintln(w, "-----------------")
-		fmt.Fprintf(w, "Kyma cluster version: %s\n", versionOrDefault(version.Version))
-		deployTime := time.Unix(version.CreationTime, 0)
-		fmt.Fprintf(w, "Deployed at: %s\n", deployTime.UTC().Format(time.RFC850))
-		fmt.Fprintf(w, "Profile: %s\n", profileOrDefault(version.Profile))
-		fmt.Fprintf(w, "Components: %s\n", strings.Join(version.ComponentNames(), ", "))
-	}
-}
-
-func (cmd *command) metadataProvider() (*helm.KymaMetadataProvider, error) {
+func (cmd *command) setKubeClient() error {
 	var err error
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
-		return nil, errors.Wrap(err, "Cannot initialize the Kubernetes client. Make sure your kubeconfig is valid")
+		return  errors.Wrap(err, "Cannot initialize the Kubernetes client. Make sure your kubeconfig is valid")
 	}
-	return helm.NewKymaMetadataProvider(installConfig.KubeconfigSource{
-		Path: kube.KubeconfigPath(cmd.KubeconfigPath),
-	})
+	return nil
 }
 
 func versionOrDefault(version string) string {
 	return stringOrDefault(version, "N/A")
-}
-
-func profileOrDefault(profile string) string {
-	return stringOrDefault(profile, "default")
 }
 
 func stringOrDefault(s, def string) string {
@@ -122,8 +104,22 @@ func stringOrDefault(s, def string) string {
 	return s
 }
 
-//KymaVersion determines the version of kyma installed in the cluster sccessible via the provided kubernetes client
-func KymaVersion(k8s kube.KymaKube) (string, error) {
+func getDeployments(k8s kube.KymaKube) (*v1.DeploymentList , error) {
+	return  k8s.Static().AppsV1().Deployments("kyma-system").List(context.Background(), metav1.ListOptions{LabelSelector: "reconciler.kyma-project.io/managed-by=reconciler"})
+}
+
+func getKyma2Version(k8s kube.KymaKube) (string, error) {
+	deps, err := getDeployments(k8s)
+	if err != nil{
+		return "N/A", err
+	}
+	if len(deps.Items) == 0 {
+		return "N/A", nil
+	}
+	return deps.Items[0].Labels["reconciler.kyma-project.io/origin-version"], nil
+}
+
+func getKyma1Version(k8s kube.KymaKube) (string, error) {
 	pods, err := k8s.Static().CoreV1().Pods("kyma-installer").List(context.Background(), metav1.ListOptions{LabelSelector: "name=kyma-installer"})
 	if err != nil {
 		return "", err
@@ -139,4 +135,29 @@ func KymaVersion(k8s kube.KymaKube) (string, error) {
 	}
 
 	return imageParts[1], nil
+}
+
+func checkKyma2(k8s kube.KymaKube) (bool, error) {
+	deps, err := getDeployments(k8s)
+	if err != nil{
+		return false, err
+	}
+	if len(deps.Items) == 0 {
+		return false, nil
+	}
+	return true, nil
+}
+
+//KymaVersion determines the version of kyma installed in the cluster succesible via the provided kubernetes client
+func KymaVersion(k8s kube.KymaKube) (string, error) {
+	isKyma2, err := checkKyma2(k8s)
+	if err != nil {
+		return "", err
+	}
+	if isKyma2 {
+		//Check for kyma 2
+		return getKyma2Version(k8s)
+	} else {
+		return getKyma1Version(k8s)
+	}
 }

@@ -3,16 +3,14 @@ package deploy
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
-	"os"
-	"path"
-
+	"github.com/Masterminds/semver/v3"
 	"github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-incubator/reconciler/pkg/logger"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/service"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
 	"github.com/kyma-incubator/reconciler/pkg/scheduler"
+	"github.com/kyma-project/cli/cmd/kyma/version"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/component"
 	"github.com/kyma-project/cli/internal/coredns"
@@ -24,6 +22,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
+	"io/ioutil"
+	"os"
+	"path"
+	"regexp"
 	//Register all reconcilers
 	_ "github.com/kyma-incubator/reconciler/pkg/reconciler/instances"
 )
@@ -79,6 +81,10 @@ func (cmd *command) Run(o *Options) error {
 	}
 	if cmd.opts.Verbose {
 		cmd.Factory.UseLogger = true
+	}
+
+	if err = cmd.setKubeClient(); err != nil {
+		return err
 	}
 
 	if err = cmd.opts.validateFlags(); err != nil {
@@ -156,6 +162,9 @@ func (cmd *command) deployKyma(comps component.List) error {
 }
 
 func (cmd *command) workspaceBuilder(l *zap.SugaredLogger) (*workspace.Workspace, error) {
+	if err := cmd.isCompatibleVersion(); err !=nil {
+		return nil, err
+	}
 	wsStep := cmd.NewStep(fmt.Sprintf("Fetching Kyma (%s)", cmd.opts.Source))
 
 	//Check if workspace is empty or not
@@ -281,4 +290,77 @@ func (cmd *command) approveImportCertificate() bool {
 		return false
 	}
 	return qImportCertsStep.PromptYesNo("Should the Kyma certificate be installed locally?")
+}
+
+func (cmd *command) setKubeClient() error {
+	var err error
+	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
+		return  errors.Wrap(err, "Cannot initialize the Kubernetes client. Make sure your kubeconfig is valid")
+	}
+	return nil
+}
+
+func (cmd *command) isCompatibleVersion() error {
+	compCheckStep := cmd.NewStep("Verifying Kyma version compatibility")
+
+	kymaVersion, err := version.KymaVersion(cmd.K8s)
+	if err != nil {
+		return errors.Wrap(err, "Cannot fetch kyma version")
+	}
+
+	// Check if there is no existing Kyma version
+	if kymaVersion == "N/A" {
+		compCheckStep.Successf("No previous Kyma version found")
+		return nil
+	}
+
+	re := regexp.MustCompile(`^[1-9]`)
+	res := re.FindString(kymaVersion)
+
+	if res  != "" {
+		v, err := semver.NewVersion(kymaVersion)
+		if err != nil {
+			return errors.Wrapf(err, "Version is not a semver: %s", kymaVersion)
+		}
+		if v.Major() == 1 {
+			if !compCheckStep.PromptYesNo(fmt.Sprintf("A kyma v1 installation (%s) was found. Do you want to proceed with the upgrade (%s)? ", kymaVersion, cmd.opts.Source)) {
+				return errors.New("Aborting deployment")
+			}
+		}
+		if v.Major() == 2 {
+			if !compCheckStep.PromptYesNo(fmt.Sprintf("A kyma v1 installation (%s) was found. Do you want to proceed with the upgrade? ", kymaVersion)) {
+				return errors.New("Aborting deployment")
+			}
+		}
+	} else {
+		// Assume we are upgrading from PR-XXX or main or branch
+		if !compCheckStep.PromptYesNo(fmt.Sprintf("A kyma installation with version (%s) was found. Do you want to proceed with the upgrade? ", kymaVersion)) {
+			return errors.New("Aborting deployment")
+		}
+	}
+	
+	var compCheckFailed bool
+	if kymaVersion == cmd.opts.Source {
+		compCheckStep.Failuref("Current and next Kyma version are equal: %s", kymaVersion)
+		compCheckFailed = true
+	}
+	if err := checkCompatibility(kymaVersion, cmd.opts.Source); err != nil {
+		compCheckStep.Failuref("Cannot check compatibility between version '%s' and '%s'. This might cause errors!",
+			kymaVersion, cmd.opts.Source)
+		compCheckFailed = true
+	}
+
+	if !compCheckFailed {
+		compCheckStep.Success()
+		return nil
+	}
+
+	//seemless upgrade unnecessary or cannot be warrantied - aks user for approval
+	qUpgradeIncompStep := cmd.NewStep("Continue Kyma upgrade")
+	if cmd.avoidUserInteraction() || qUpgradeIncompStep.PromptYesNo("Do you want to proceed with the upgrade? ") {
+		qUpgradeIncompStep.Success()
+		return nil
+	}
+	qUpgradeIncompStep.Failure()
+	return fmt.Errorf("Upgrade stopped by user")
 }
