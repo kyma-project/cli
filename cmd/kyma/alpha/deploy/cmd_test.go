@@ -18,10 +18,10 @@ func Test_upgkyma2tokyma2(t *testing.T) {
 	cmd := command{
 		Command: cli.Command{
 			Options: cli.NewOptions(),
-			K8s:         kymaMock,
+			K8s:     kymaMock,
 		},
 		opts: &Options{
-			Source:         "main",
+			Source: "main",
 		},
 	}
 	cmd.Factory.NonInteractive = true
@@ -33,9 +33,9 @@ func Test_upgkyma2tokyma2(t *testing.T) {
 	mockDep := fake.NewSimpleClientset(
 		&v1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:                       "foo",
-				Namespace:                  "kyma-system",
-				Labels:                     l,
+				Name:      "foo",
+				Namespace: "kyma-system",
+				Labels:    l,
 			},
 		},
 	)
@@ -50,7 +50,7 @@ func Test_upgkyma2tokyma2(t *testing.T) {
 
 	w.Close()
 	out, _ := ioutil.ReadAll(r)
-	os.Stdout =captureStdout
+	os.Stdout = captureStdout
 	expectedOutput := "? A kyma v2 installation (2.0.0) was found. Do you want to proceed with the upgrade? Type [y/N]:"
 	require.Contains(t, string(out), expectedOutput)
 	require.Error(t, err)
@@ -62,10 +62,10 @@ func Test_upgkyma1tokyma2(t *testing.T) {
 	cmd := command{
 		Command: cli.Command{
 			Options: cli.NewOptions(),
-			K8s:         kymaMock,
+			K8s:     kymaMock,
 		},
 		opts: &Options{
-			Source:         "2.0.0",
+			Source: "2.0.0",
 		},
 	}
 	cmd.Factory.NonInteractive = false
@@ -78,12 +78,11 @@ func Test_upgkyma1tokyma2(t *testing.T) {
 	mockPod := fake.NewSimpleClientset(
 		&coreV1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:                       "kyma-installer",
-				Namespace:                  "kyma-installer",
-				Labels: l,
-			},Spec: coreV1.PodSpec{
-				Containers:                    []coreV1.Container{con},
-
+				Name:      "kyma-installer",
+				Namespace: "kyma-installer",
+				Labels:    l,
+			}, Spec: coreV1.PodSpec{
+				Containers: []coreV1.Container{con},
 			},
 		},
 	)

@@ -162,7 +162,7 @@ func (cmd *command) deployKyma(comps component.List) error {
 }
 
 func (cmd *command) workspaceBuilder(l *zap.SugaredLogger) (*workspace.Workspace, error) {
-	if err := cmd.isCompatibleVersion(); err !=nil {
+	if err := cmd.isCompatibleVersion(); err != nil {
 		return nil, err
 	}
 	wsStep := cmd.NewStep(fmt.Sprintf("Fetching Kyma (%s)", cmd.opts.Source))
@@ -295,7 +295,7 @@ func (cmd *command) approveImportCertificate() bool {
 func (cmd *command) setKubeClient() error {
 	var err error
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
-		return  errors.Wrap(err, "Cannot initialize the Kubernetes client. Make sure your kubeconfig is valid")
+		return errors.Wrap(err, "Cannot initialize the Kubernetes client. Make sure your kubeconfig is valid")
 	}
 	return nil
 }
@@ -317,7 +317,7 @@ func (cmd *command) isCompatibleVersion() error {
 	re := regexp.MustCompile(`^[1-9]`)
 	res := re.FindString(kymaVersion)
 
-	if res  != "" {
+	if res != "" {
 		v, err := semver.NewVersion(kymaVersion)
 		if err != nil {
 			return errors.Wrapf(err, "Version is not a semver: %s", kymaVersion)
@@ -343,7 +343,7 @@ func (cmd *command) isCompatibleVersion() error {
 			return errors.New("Upgrade stopped by user")
 		}
 	}
-	
+
 	var compCheckFailed bool
 	if kymaVersion == cmd.opts.Source {
 		compCheckStep.Failuref("Current and next Kyma version are equal: %s", kymaVersion)

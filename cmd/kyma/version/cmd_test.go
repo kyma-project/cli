@@ -28,9 +28,9 @@ func TestKyma2Version(t *testing.T) {
 	mockDep := fake.NewSimpleClientset(
 		&v1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:                       "foo",
-				Namespace:                  "kyma-system",
-				Labels:                     l,
+				Name:      "foo",
+				Namespace: "kyma-system",
+				Labels:    l,
 			},
 		},
 	)
@@ -48,7 +48,7 @@ func TestKyma1Version(t *testing.T) {
 	cmd := command{
 		Command: cli.Command{
 			Options: cli.NewOptions(),
-			K8s:         kymaMock,
+			K8s:     kymaMock,
 		},
 	}
 	cmd.Factory.NonInteractive = false
@@ -61,12 +61,11 @@ func TestKyma1Version(t *testing.T) {
 	mockPod := fake.NewSimpleClientset(
 		&coreV1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:                       "kyma-installer",
-				Namespace:                  "kyma-installer",
-				Labels: l,
-			},Spec: coreV1.PodSpec{
-				Containers:                    []coreV1.Container{con},
-
+				Name:      "kyma-installer",
+				Namespace: "kyma-installer",
+				Labels:    l,
+			}, Spec: coreV1.PodSpec{
+				Containers: []coreV1.Container{con},
 			},
 		},
 	)

@@ -88,7 +88,7 @@ func (cmd *command) Run() error {
 func (cmd *command) setKubeClient() error {
 	var err error
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
-		return  errors.Wrap(err, "Cannot initialize the Kubernetes client. Make sure your kubeconfig is valid")
+		return errors.Wrap(err, "Cannot initialize the Kubernetes client. Make sure your kubeconfig is valid")
 	}
 	return nil
 }
@@ -104,13 +104,13 @@ func stringOrDefault(s, def string) string {
 	return s
 }
 
-func getDeployments(k8s kube.KymaKube) (*v1.DeploymentList , error) {
-	return  k8s.Static().AppsV1().Deployments("kyma-system").List(context.Background(), metav1.ListOptions{LabelSelector: "reconciler.kyma-project.io/managed-by=reconciler"})
+func getDeployments(k8s kube.KymaKube) (*v1.DeploymentList, error) {
+	return k8s.Static().AppsV1().Deployments("kyma-system").List(context.Background(), metav1.ListOptions{LabelSelector: "reconciler.kyma-project.io/managed-by=reconciler"})
 }
 
 func getKyma2Version(k8s kube.KymaKube) (string, error) {
 	deps, err := getDeployments(k8s)
-	if err != nil{
+	if err != nil {
 		return "N/A", err
 	}
 	if len(deps.Items) == 0 {
@@ -139,7 +139,7 @@ func getKyma1Version(k8s kube.KymaKube) (string, error) {
 
 func checkKyma2(k8s kube.KymaKube) (bool, error) {
 	deps, err := getDeployments(k8s)
-	if err != nil{
+	if err != nil {
 		return false, err
 	}
 	if len(deps.Items) == 0 {
@@ -157,7 +157,7 @@ func KymaVersion(k8s kube.KymaKube) (string, error) {
 	if isKyma2 {
 		//Check for kyma 2
 		return getKyma2Version(k8s)
-	} else {
-		return getKyma1Version(k8s)
 	}
+
+	return getKyma1Version(k8s)
 }
