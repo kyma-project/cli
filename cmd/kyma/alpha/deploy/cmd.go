@@ -323,19 +323,24 @@ func (cmd *command) isCompatibleVersion() error {
 			return errors.Wrapf(err, "Version is not a semver: %s", kymaVersion)
 		}
 		if v.Major() == 1 {
+			if cmd.avoidUserInteraction() {
+				compCheckStep.Failuref("A kyma v1 installation (%s) was found. Please use interactive mode to confirm the upgrade", kymaVersion)
+				return fmt.Errorf("perform upgrade in interactive mode")
+
+			}
 			if !compCheckStep.PromptYesNo(fmt.Sprintf("A kyma v1 installation (%s) was found. Do you want to proceed with the upgrade (%s)? ", kymaVersion, cmd.opts.Source)) {
-				return errors.New("Aborting deployment")
+				return errors.New("Upgrade stopped by user")
 			}
 		}
 		if v.Major() == 2 {
-			if !compCheckStep.PromptYesNo(fmt.Sprintf("A kyma v1 installation (%s) was found. Do you want to proceed with the upgrade? ", kymaVersion)) {
-				return errors.New("Aborting deployment")
+			if !compCheckStep.PromptYesNo(fmt.Sprintf("A kyma v2 installation (%s) was found. Do you want to proceed with the upgrade? ", kymaVersion)) {
+				return errors.New("Upgrade stopped by user")
 			}
 		}
 	} else {
 		// Assume we are upgrading from PR-XXX or main or branch
 		if !compCheckStep.PromptYesNo(fmt.Sprintf("A kyma installation with version (%s) was found. Do you want to proceed with the upgrade? ", kymaVersion)) {
-			return errors.New("Aborting deployment")
+			return errors.New("Upgrade stopped by user")
 		}
 	}
 	
