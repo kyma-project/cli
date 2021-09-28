@@ -2,6 +2,7 @@ package istio
 
 import (
 	"archive/tar"
+	"archive/zip"
 	"compress/gzip"
 	"errors"
 	"fmt"
@@ -19,6 +20,13 @@ import (
 const defaultIstioChartPath = "/resources/istio-configuration/Chart.yaml"
 const archSupport = "1.6"
 const environmentVariable = "ISTIOCTL_PATH"
+const dirName = "istio"
+const binName = "istioctl"
+const winBinName = "istioctl.exe"
+const downloadUrl = "https://github.com/istio/istio/releases/download/"
+const tarGzName = "istio.tar.gz"
+const tarName = "istio.tar"
+const zipName = "istio.zip"
 
 type Config struct {
 	APIVersion    string   `yaml:"apiVersion"`
@@ -39,10 +47,10 @@ type Installation struct {
 	IstioChartPath string
 	environmentVar string
 	istioVersion   string
-	osext          string
+	osExt          string
 	istioArch      string
 	archSupport    string
-	binPath string
+	binPath        string
 }
 
 func New(workspacePath string) Installation {
@@ -55,6 +63,10 @@ func New(workspacePath string) Installation {
 }
 
 func (i *Installation) Install() error {
+	// Set OS Version
+	i.setOS()
+	// Set OS Architecture
+	i.setArch()
 	// Get wanted Istio Version
 	if err := i.getIstioVersion(); err != nil {
 		return fmt.Errorf("error checking wanted istio version: %s", err)
@@ -65,15 +77,11 @@ func (i *Installation) Install() error {
 		return err
 	}
 	if !exist {
-		// Set OS Version
-		i.setOS()
-		// Set OS Architecture
-		i.setArch()
 		// Download Istioctl
 		if err := i.downloadIstio(); err != nil {
 			return fmt.Errorf("error downloading istio: %s", err)
 		}
-		// Extract tar.gz
+		// Extract tar.gz or zip
 		if err := i.extractIstio(); err != nil {
 			return fmt.Errorf("error extracting istio.tar.gz: %s", err)
 		}
@@ -96,7 +104,12 @@ func (i *Installation) getIstioVersion() error{
 		return err
 	}
 	i.istioVersion = chart.AppVersion
-	i.binPath = path.Join(i.WorkspacePath, "istioctl", fmt.Sprintf("istio-%s", i.istioVersion), "bin", "istioctl")
+	if i.osExt == "win"{
+		// TODO Windows: Test if this is correct path
+		i.binPath = path.Join(i.WorkspacePath, dirName, fmt.Sprintf("istio-%s", i.istioVersion), winBinName)
+	} else {
+		i.binPath = path.Join(i.WorkspacePath, dirName, fmt.Sprintf("istio-%s", i.istioVersion), "bin", binName)
+	}
 	return nil
 }
 
@@ -113,64 +126,81 @@ func (i *Installation) checkIfExists() (bool, error) {
 
 func (i *Installation) setOS() {
 	// Get OS Version
-	i.osext = runtime.GOOS
-	switch i.osext {
+	i.osExt = runtime.GOOS
+	switch i.osExt {
 	case "windows":
-		i.osext = "win"
+		i.osExt = "win"
 	case "darwin":
-		i.osext = "osx"
+		i.osExt = "osx"
 	default:
-		i.osext = "linux"
+		i.osExt = "linux"
 	}
 }
 
 func (i *Installation) setArch() {
 	i.istioArch = runtime.GOARCH
-	if i.osext == "osx" && i.istioArch == "amd64"{
+	if i.osExt == "osx" && i.istioArch == "amd64"{
 		i.istioArch = "arm64"
 	}
 }
 
 func (i *Installation) downloadIstio() error {
 	// Istioctl download links
-	nonArchUrl := fmt.Sprintf("https://github.com/istio/istio/releases/download/%s/istio-%s-%s.tar.gz", i.istioVersion, i.istioVersion, i.osext)
-	archUrl := fmt.Sprintf("https://github.com/istio/istio/releases/download/%s/istio-%s-%s-%s.tar.gz", i.istioVersion, i.istioVersion, i.osext, i.istioArch)
+	nonArchUrl := fmt.Sprintf("%s%s/istio-%s-%s.tar.gz", downloadUrl, i.istioVersion, i.istioVersion, i.osExt)
+	archUrl := fmt.Sprintf("%s%s/istio-%s-%s-%s.tar.gz", downloadUrl, i.istioVersion, i.istioVersion, i.osExt, i.istioArch)
 
-	if i.osext == "linux" {
+	if i.osExt == "linux" {
 		if strings.Split(i.archSupport, ".")[1] >= strings.Split(i.istioVersion, ".")[1] {
-			err := downloadFile(path.Join(i.WorkspacePath, "istioctl"), "istio.tar.gz", archUrl)
+			err := downloadFile(path.Join(i.WorkspacePath, dirName), tarGzName, archUrl)
 			if err != nil {
 				return err
 			}
 		} else {
-			err := downloadFile(path.Join(i.WorkspacePath, "istioctl"), "istio.tar.gz", nonArchUrl)
+			err := downloadFile(path.Join(i.WorkspacePath, dirName), tarGzName, nonArchUrl)
 			if err != nil {
 				return err
 			}
 		}
-	} else if i.osext == "osx" {
-		err := downloadFile(path.Join(i.WorkspacePath, "istioctl"), "istio.tar.gz", nonArchUrl)
+	} else if i.osExt == "osx" {
+		err := downloadFile(path.Join(i.WorkspacePath, dirName), tarGzName, nonArchUrl)
 		if err != nil {
 			return err
 		}
-	} else if i.osext == "win" {
-		// TODO
+	} else if i.osExt == "win" {
+		err := downloadFile(path.Join(i.WorkspacePath, dirName), zipName, nonArchUrl)
+		if err != nil {
+			return err
+		}
 	} else {
-		// TODO
+		return errors.New("unsupported operating system")
 	}
 	return nil
 }
 
 func (i *Installation) extractIstio() error {
-	istioPath := path.Join(i.WorkspacePath, "istioctl", "istio.tar.gz")
-	targetPath := path.Join(i.WorkspacePath, "istioctl", "istio.tar")
-	if err := unGzip(istioPath, targetPath); err != nil {
-		return err
-	}
-	istioPath = path.Join(i.WorkspacePath, "istioctl", "istio.tar")
-	targetPath = path.Join(i.WorkspacePath, "istioctl")
-	if err := unTar(istioPath, targetPath); err != nil {
-		return err
+	if i.osExt == "linux" || i.osExt == "osx"{
+		istioPath := path.Join(i.WorkspacePath, dirName, tarGzName)
+		targetPath := path.Join(i.WorkspacePath, dirName, tarName)
+		if err := unGzip(istioPath, targetPath); err != nil {
+			return err
+		}
+		if err := os.Remove(istioPath); err != nil {
+			return err
+		}
+		istioPath = path.Join(i.WorkspacePath, dirName, tarName)
+		targetPath = path.Join(i.WorkspacePath, dirName)
+		if err := unTar(istioPath, targetPath); err != nil {
+			return err
+		}
+		if err := os.Remove(istioPath); err != nil {
+			return err
+		}
+	} else {
+		istioPath := path.Join(i.WorkspacePath, dirName, zipName)
+		targetPath := path.Join(i.WorkspacePath, dirName)
+		if err := unZip(istioPath, targetPath); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -230,8 +260,8 @@ func unGzip(source, target string) error {
 	return err
 }
 
-func unTar(tarball, target string) error {
-	reader, err := os.Open(tarball)
+func unTar(source, target string) error {
+	reader, err := os.Open(source)
 	if err != nil {
 		return err
 	}
@@ -270,6 +300,52 @@ func unTar(tarball, target string) error {
 		if err != nil{
 			return err
 		}
+	}
+	return nil
+}
+
+func unZip(source, target string) error {
+	// TODO Windows: Test
+	archive, err := zip.OpenReader(source)
+	if err != nil {
+		return err
+	}
+	defer archive.Close()
+
+	for _, f := range archive.File {
+		filePath := filepath.Join(target, f.Name)
+		fmt.Println("unzipping file ", filePath)
+
+		if !strings.HasPrefix(filePath, filepath.Clean(target)+string(os.PathSeparator)) {
+
+			return errors.New("invalid file path")
+		}
+		if f.FileInfo().IsDir() {
+			fmt.Println("creating directory...")
+			os.MkdirAll(filePath, os.ModePerm)
+			continue
+		}
+
+		if err := os.MkdirAll(filepath.Dir(filePath), os.ModePerm); err != nil {
+			return err
+		}
+
+		dstFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+		if err != nil {
+			return err
+		}
+
+		fileInArchive, err := f.Open()
+		if err != nil {
+			return err
+		}
+
+		if _, err := io.Copy(dstFile, fileInArchive); err != nil {
+			return err
+		}
+
+		dstFile.Close()
+		fileInArchive.Close()
 	}
 	return nil
 }
