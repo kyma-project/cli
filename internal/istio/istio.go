@@ -29,6 +29,16 @@ const tarGzName = "istio.tar.gz"
 const tarName = "istio.tar"
 const zipName = "istio.zip"
 
+type operatingSystem struct {
+	name string
+	ext string
+}
+
+
+var windows = operatingSystem{"windows", "win"}
+var darwin = operatingSystem{"darwin", "osx"}
+var linux = operatingSystem{"linux", "linux"}
+
 type HTTPClient interface {
 	Get(url string) (*http.Response, error)
 }
@@ -90,30 +100,25 @@ func New(workspacePath string) (Installation, error) {
 }
 
 func (i *Installation) Install() error {
-	// Set OS Version
-	i.setOS()
-	// Set OS Architecture
+	if err := i.setOS(); err != nil {
+		return err
+	}
 	i.setArch()
-	// Get wanted Istio Version
 	if err := i.getIstioVersion(); err != nil {
 		return fmt.Errorf("error checking wanted istio version: %s", err)
 	}
-	// Check if Istioctl binary is already in kymaHome
-	exist, err := i.checkIfExists()
+	exist, err := i.checkIfBinaryExists()
 	if err != nil {
 		return err
 	}
 	if !exist {
-		// Download Istioctl
 		if err := i.downloadIstio(); err != nil {
 			return fmt.Errorf("error downloading istio: %s", err)
 		}
-		// Extract tar.gz or zip
 		if err := i.extractIstio(); err != nil {
 			return fmt.Errorf("error extracting istio.tar.gz: %s", err)
 		}
 	}
-	// Export env variable
 	if err := i.exportEnvVar(); err != nil {
 		return fmt.Errorf("error exporting environment variable: %s", err)
 	}
@@ -135,7 +140,7 @@ func (i *Installation) getIstioVersion() error {
 	if i.istioVersion == "" {
 		return errors.New("istio version is empty")
 	}
-	if i.osExt == "win" {
+	if i.osExt == windows.ext {
 		// TODO Windows: Test if this is correct path
 		i.binPath = path.Join(i.kymaHome, i.dirName, fmt.Sprintf("istio-%s", i.istioVersion), i.winBinName)
 	} else {
@@ -144,7 +149,7 @@ func (i *Installation) getIstioVersion() error {
 	return nil
 }
 
-func (i *Installation) checkIfExists() (bool, error) {
+func (i *Installation) checkIfBinaryExists() (bool, error) {
 	_, err := os.Stat(i.binPath)
 	if err == nil {
 		return true, nil
@@ -155,22 +160,24 @@ func (i *Installation) checkIfExists() (bool, error) {
 	return false, err
 }
 
-func (i *Installation) setOS() {
-	// Get OS Version
+func (i *Installation) setOS() error {
 	i.osExt = runtime.GOOS
 	switch i.osExt {
-	case "windows":
-		i.osExt = "win"
-	case "darwin":
-		i.osExt = "osx"
+	case windows.name:
+		i.osExt = windows.ext
+	case darwin.name:
+		i.osExt = darwin.ext
+	case linux.name:
+		i.osExt = linux.ext
 	default:
-		i.osExt = "linux"
+		return errors.New(fmt.Sprintf("Unknown OS: %s", i.osExt))
 	}
+	return nil
 }
 
 func (i *Installation) setArch() {
 	i.istioArch = runtime.GOARCH
-	if i.osExt == "osx" && i.istioArch == "amd64" {
+	if i.osExt == darwin.ext && i.istioArch == "amd64" {
 		i.istioArch = "arm64"
 	}
 }
@@ -180,7 +187,8 @@ func (i *Installation) downloadIstio() error {
 	nonArchUrl := fmt.Sprintf("%s%s/istio-%s-%s.tar.gz", downloadUrl, i.istioVersion, i.istioVersion, i.osExt)
 	archUrl := fmt.Sprintf("%s%s/istio-%s-%s-%s.tar.gz", downloadUrl, i.istioVersion, i.istioVersion, i.osExt, i.istioArch)
 
-	if i.osExt == "linux" {
+	switch i.osExt{
+	case linux.ext:
 		if strings.Split(i.archSupport, ".")[1] >= strings.Split(i.istioVersion, ".")[1] {
 			err := i.downloadFile(path.Join(i.kymaHome, dirName), tarGzName, archUrl)
 			if err != nil {
@@ -192,24 +200,24 @@ func (i *Installation) downloadIstio() error {
 				return err
 			}
 		}
-	} else if i.osExt == "osx" {
+	case darwin.ext:
 		err := i.downloadFile(path.Join(i.kymaHome, dirName), tarGzName, nonArchUrl)
 		if err != nil {
 			return err
 		}
-	} else if i.osExt == "win" {
+	case windows.ext:
 		err := i.downloadFile(path.Join(i.kymaHome, dirName), zipName, nonArchUrl)
 		if err != nil {
 			return err
 		}
-	} else {
+	default:
 		return errors.New("unsupported operating system")
 	}
 	return nil
 }
 
 func (i *Installation) extractIstio() error {
-	if i.osExt == "linux" || i.osExt == "osx" {
+	if i.osExt == linux.ext || i.osExt == darwin.ext {
 		istioPath := path.Join(i.kymaHome, i.dirName, i.tarGzName)
 		targetPath := path.Join(i.kymaHome, i.dirName, i.tarName)
 		if err := unGzip(istioPath, targetPath, true); err != nil {

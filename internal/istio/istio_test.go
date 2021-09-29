@@ -51,7 +51,7 @@ func TestInstallation_getIstioVersion(t *testing.T) {
 	}
 }
 
-func TestInstallation_checkIfExists(t *testing.T) {
+func TestInstallation_checkIfBinaryExists(t *testing.T) {
 	type fields struct {
 		binPath string
 	}
@@ -69,7 +69,7 @@ func TestInstallation_checkIfExists(t *testing.T) {
 			i := &Installation{
 				binPath: tt.fields.binPath,
 			}
-			got, err := i.checkIfExists()
+			got, err := i.checkIfBinaryExists()
 			if tt.wantErr {
 				require.Error(t, err)
 			} else {
