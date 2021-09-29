@@ -1,8 +1,13 @@
 package istio
 
 import (
+	"bytes"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
+	"io/ioutil"
+	"net/http"
 	"os"
+	"path"
 	"testing"
 )
 
@@ -16,10 +21,10 @@ func TestInstallation_getIstioVersion(t *testing.T) {
 		winBinName     string
 	}
 	tests := []struct {
-		name    string
-		fields  fields
+		name            string
+		fields          fields
 		expectedVersion string
-		wantErr bool
+		wantErr         bool
 	}{
 		{name: "Fetch Istio Version", fields: fields{IstioChartPath: "mock/Chart.yaml"}, expectedVersion: "1.11.2", wantErr: false},
 		{name: "Istio Chart not existing", fields: fields{IstioChartPath: "mock/nonExisting.yaml"}, expectedVersion: "", wantErr: true},
@@ -36,7 +41,7 @@ func TestInstallation_getIstioVersion(t *testing.T) {
 				winBinName:     tt.fields.winBinName,
 			}
 			err := i.getIstioVersion()
-			if tt.wantErr  {
+			if tt.wantErr {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
@@ -48,7 +53,7 @@ func TestInstallation_getIstioVersion(t *testing.T) {
 
 func TestInstallation_checkIfExists(t *testing.T) {
 	type fields struct {
-		binPath        string
+		binPath string
 	}
 	tests := []struct {
 		name    string
@@ -62,10 +67,10 @@ func TestInstallation_checkIfExists(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			i := &Installation{
-				binPath:        tt.fields.binPath,
+				binPath: tt.fields.binPath,
 			}
 			got, err := i.checkIfExists()
-			if tt.wantErr  {
+			if tt.wantErr {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
@@ -115,12 +120,11 @@ func Test_unTar(t *testing.T) {
 		deleteSource bool
 	}
 	tests := []struct {
-		name    string
-		args    args
+		name         string
+		args         args
 		expectedFile string
-		wantErr bool
+		wantErr      bool
 	}{
-		// TODO: Add test cases.
 		{name: "unTar File", args: args{source: "mock/istio_mock.tar", target: "mock", deleteSource: false}, expectedFile: "mock/istio.txt", wantErr: false},
 		{name: "File does not exist", args: args{source: "mock/nonexistent.tar", target: "mock", deleteSource: false}, expectedFile: "mock/istio.txt", wantErr: true},
 	}
@@ -136,6 +140,77 @@ func Test_unTar(t *testing.T) {
 			} else {
 				require.Error(t, err)
 				_, err := os.Stat(tt.expectedFile)
+				require.Error(t, err)
+			}
+		})
+	}
+}
+
+// MockClient is the mock client
+type mockClient struct {
+	getFunc func(url string) (*http.Response, error)
+}
+
+// getGetFunc fetches the mock client's `Do` func
+var getGetFunc func(url string) (*http.Response, error)
+
+// Get is the mock client's `Get` func
+func (m *mockClient) Get(url string) (*http.Response, error) {
+	return getGetFunc(url)
+}
+
+func TestInstallation_downloadFile(t *testing.T) {
+	type fields struct {
+		Client HTTPClient
+	}
+	type args struct {
+		filepath string
+		filename string
+		url      string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		getFunc func(url string) (*http.Response, error)
+		wantErr bool
+	}{
+		{name: "Download Istioctl", fields: fields{Client: &mockClient{}}, args: args{filepath: "tmp", filename: "mock_download.txt", url: "someUrl"},
+			getFunc: func(url string) (*http.Response, error) {
+				jsonBody := `{"name":"Istioctl","full_name":"Istioctl binary mock download","bin":{"data": "some binary"}}`
+				r := ioutil.NopCloser(bytes.NewReader([]byte(jsonBody)))
+				return &http.Response{
+					StatusCode: 200,
+					Body:       r,
+				}, nil
+			}, wantErr: false},
+		{name: "404 - Not found", fields: fields{Client: &mockClient{}}, args: args{filepath: "tmp", filename: "mock_download.txt", url: "someUrl"},
+			getFunc: func(url string) (*http.Response, error) {
+				return &http.Response{
+					StatusCode: 404,
+				}, errors.New("404 - Not Found")
+			}, wantErr: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			i := &Installation{
+				Client: tt.fields.Client,
+			}
+			getGetFunc = tt.getFunc
+			err := i.downloadFile(tt.args.filepath, tt.args.filename, tt.args.url)
+			if !tt.wantErr{
+				require.NoError(t, err)
+				tmpFile := path.Join(tt.args.filepath, tt.args.filename)
+				_, err := os.Stat(tmpFile)
+				require.NoError(t, err)
+				err = os.Remove(tmpFile)
+				require.NoError(t, err)
+				err = os.Remove(tt.args.filepath)
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				tmpFile := path.Join(tt.args.filepath, tt.args.filename)
+				_, err := os.Stat(tmpFile)
 				require.Error(t, err)
 			}
 		})

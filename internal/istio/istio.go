@@ -28,6 +28,10 @@ const tarGzName = "istio.tar.gz"
 const tarName = "istio.tar"
 const zipName = "istio.zip"
 
+type HTTPClient interface {
+	Get(url string) (*http.Response, error)
+}
+
 type Config struct {
 	APIVersion    string   `yaml:"apiVersion"`
 	Name          string   `yaml:"name"`
@@ -45,6 +49,7 @@ type Config struct {
 type Installation struct {
 	WorkspacePath  string
 	IstioChartPath string
+	Client HTTPClient
 	environmentVar string
 	istioVersion   string
 	osExt          string
@@ -64,6 +69,7 @@ func New(workspacePath string) Installation {
 	return Installation{
 		WorkspacePath:  workspacePath,
 		IstioChartPath: defaultIstioChartPath,
+		Client: &http.Client{},
 		environmentVar: environmentVariable,
 		archSupport:    archSupport,
 		dirName:        dirName,
@@ -169,23 +175,23 @@ func (i *Installation) downloadIstio() error {
 
 	if i.osExt == "linux" {
 		if strings.Split(i.archSupport, ".")[1] >= strings.Split(i.istioVersion, ".")[1] {
-			err := downloadFile(path.Join(i.WorkspacePath, dirName), tarGzName, archUrl)
+			err := i.downloadFile(path.Join(i.WorkspacePath, dirName), tarGzName, archUrl)
 			if err != nil {
 				return err
 			}
 		} else {
-			err := downloadFile(path.Join(i.WorkspacePath, dirName), tarGzName, nonArchUrl)
+			err := i.downloadFile(path.Join(i.WorkspacePath, dirName), tarGzName, nonArchUrl)
 			if err != nil {
 				return err
 			}
 		}
 	} else if i.osExt == "osx" {
-		err := downloadFile(path.Join(i.WorkspacePath, dirName), tarGzName, nonArchUrl)
+		err := i.downloadFile(path.Join(i.WorkspacePath, dirName), tarGzName, nonArchUrl)
 		if err != nil {
 			return err
 		}
 	} else if i.osExt == "win" {
-		err := downloadFile(path.Join(i.WorkspacePath, dirName), zipName, nonArchUrl)
+		err := i.downloadFile(path.Join(i.WorkspacePath, dirName), zipName, nonArchUrl)
 		if err != nil {
 			return err
 		}
@@ -224,9 +230,9 @@ func (i *Installation) exportEnvVar() error {
 	return nil
 }
 
-func downloadFile(filepath string, filename string, url string) error {
+func (i *Installation) downloadFile(filepath string, filename string, url string) error {
 	// Get data
-	resp, err := http.Get(url)
+	resp, err := i.Client.Get(url)
 	if err != nil {
 		return err
 	}
