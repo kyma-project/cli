@@ -28,6 +28,9 @@ var (
 	}
 )
 
+const crLabelReconciler string = "reconciler.kyma-project.io/managed-by=reconciler"
+const crLabelIstio string = "install.operator.istio.io/owning-resource-namespace=istio-system"
+
 type command struct {
 	opts *Options
 	cli.Command
@@ -136,7 +139,7 @@ func (cmd *command) removeServerlessCredentialsFinalizers() error {
 }
 
 func (cmd *command) removeCustomResourcesFinalizers() error {
-	crds, err := cmd.apixClient.CustomResourceDefinitions().List(context.Background(), metav1.ListOptions{LabelSelector: "reconciler.kyma-project.io/managed-by=reconciler"})
+	crds, err := cmd.apixClient.CustomResourceDefinitions().List(context.Background(), metav1.ListOptions{LabelSelector: crLabelReconciler})
 	if err != nil && !apierr.IsNotFound(err) {
 		return err
 	}
@@ -284,13 +287,13 @@ func (cmd *command) deleteKymaNamespaces() error {
 func (cmd *command) deleteKymaCRDs() error {
 	step := cmd.NewStep("Deleting CRDs")
 
-	err := cmd.deleteCRDsByLabelWithRetry("reconciler.kyma-project.io/managed-by=reconciler")
+	err := cmd.deleteCRDsByLabelWithRetry(crLabelReconciler)
 	if err != nil {
 		step.Failure()
 		return errors.Wrapf(err, "Failed to delete resource")
 	}
 
-	err = cmd.deleteCRDsByLabelWithRetry("install.operator.istio.io/owning-resource-namespace=istio-system")
+	err = cmd.deleteCRDsByLabelWithRetry(crLabelIstio)
 	if err != nil {
 		step.Failure()
 		return errors.Wrapf(err, "Failed to delete resource")
