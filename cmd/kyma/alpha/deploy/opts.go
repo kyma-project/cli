@@ -2,18 +2,25 @@ package deploy
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/files"
 	"github.com/pkg/errors"
-	"os"
-	"path/filepath"
 )
 
-var defaultWorkspacePath = getDefaultWorkspacePath()
+var (
+	defaultWorkspacePath = getDefaultWorkspacePath()
+	// the value of defaultKymaVersion is injected when building the binaries
+	defaultKymaVersion string
+)
 
-const VersionLocal = "local"
-const profileEvaluation = "evaluation"
-const profileProduction = "production"
+const (
+	VersionLocal      = "local"
+	profileEvaluation = "evaluation"
+	profileProduction = "production"
+)
 
 //Options defines available options for the command
 type Options struct {
