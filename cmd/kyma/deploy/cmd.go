@@ -8,7 +8,6 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
@@ -24,7 +23,6 @@ import (
 	"github.com/kyma-project/cli/internal/nice"
 	"github.com/kyma-project/cli/internal/trust"
 	"github.com/kyma-project/cli/pkg/asyncui"
-	"github.com/kyma-project/cli/pkg/installation"
 	"github.com/kyma-project/cli/pkg/step"
 	"github.com/magiconair/properties"
 	"github.com/spf13/cobra"
@@ -137,22 +135,10 @@ Debugging:
 	- Deploy a commit, for example: "kyma deploy --source=34edf09a"
 	- Deploy a pull request, for example "kyma deploy --source=PR-9486"
 	- Deploy the local sources: "kyma deploy --source=local"`)
-	setSource(cobraCmd.Flags().Changed("source"), &o.Source)
 	cobraCmd.Flags().StringVarP(&o.Profile, "profile", "p", "",
 		fmt.Sprintf("Kyma deployment profile. If not specified, Kyma uses its default configuration. The supported profiles are: \"%s\".", strings.Join(kymaProfiles, "\", \"")))
 	cobraCmd.Flags().BoolVarP(&o.ReuseHelmValues, "reuse-values", "r", false, "Set --reuse-values=true to reuse the helm values during component installation")
 	return cobraCmd
-}
-
-func setSource(isUserDefined bool, source *string) {
-	IsRelease, err := strconv.ParseBool(isRelease)
-	if err != nil {
-		IsRelease = false
-		fmt.Println("WARNING: isRelease could not be parsed, continue assuming false value")
-	}
-	if !isUserDefined && !IsRelease {
-		*source = installation.SetKymaSemVersion(*source)
-	}
 }
 
 //Run runs the command
