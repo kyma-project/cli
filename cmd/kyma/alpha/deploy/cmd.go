@@ -24,11 +24,10 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+
 	//Register all reconcilers
 	_ "github.com/kyma-incubator/reconciler/pkg/reconciler/instances"
 )
-
-const defaultVersion = "main"
 
 type command struct {
 	cli.Command
@@ -53,7 +52,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd.Flags().StringSliceVarP(&o.Components, "component", "", []string{}, "Provide one or more components to deploy (e.g. --component componentName@namespace)")
 	cobraCmd.Flags().StringVarP(&o.ComponentsFile, "components-file", "c", "", `Path to the components file (default "$HOME/.kyma/sources/installation/resources/components.yaml" or ".kyma-sources/installation/resources/components.yaml")`)
 	cobraCmd.Flags().StringVarP(&o.WorkspacePath, "workspace", "w", "", `Path to download Kyma sources (default "$HOME/.kyma/sources" or ".kyma-sources")`)
-	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", defaultVersion, `Installation source:
+	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", defaultKymaVersion, `Installation source:
 	- Deploy a specific release, for example: "kyma deploy --source=2.0.0"
 	- Deploy a specific branch of the Kyma repository on kyma-project.org: "kyma deploy --source=<my-branch-name>"
 	- Deploy a commit (8 characters or more), for example: "kyma deploy --source=34edf09a"
