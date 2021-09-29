@@ -37,7 +37,7 @@ func NewCmd(o *Options) *cobra.Command {
 		Short:      "Upgrades Kyma",
 		Long:       `Use this command to upgrade the Kyma version on a cluster.`,
 		RunE:       func(_ *cobra.Command, _ []string) error { return cmd.Run() },
-		Deprecated: "Upgrade is deprecated! Use `kyma deploy instead`",
+		Deprecated: `use "kyma deploy" instead`,
 	}
 
 	cobraCmd.Flags().BoolVarP(&o.NoWait, "no-wait", "n", false, "Determines if the command should wait for the Kyma upgrade to complete.")
