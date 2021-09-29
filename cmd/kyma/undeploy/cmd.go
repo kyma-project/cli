@@ -165,7 +165,7 @@ func (cmd *command) removeCustomResourcesFinalizers() error {
 			cr := customResourceList.Items[i]
 			retryErr := k8sRetry.RetryOnConflict(k8sRetry.DefaultRetry, func() error { return cmd.removeCustomResourceFinalizers(gvr, cr) })
 			if retryErr != nil {
-				return errors.Wrap(retryErr,"deleting finalizer failed:")
+				return errors.Wrap(retryErr, "deleting finalizer failed:")
 			}
 		}
 	}
