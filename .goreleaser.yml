@@ -11,8 +11,7 @@ before:
 builds:
 - env:
   - CGO_ENABLED=0
-  - KYMA_VERSION=main
-  ldflags: -s -w -X github.com/kyma-project/cli/cmd/kyma/version.Version={{.Version}} -X github.com/kyma-project/cli/cmd/kyma/alpha/deploy.defaultKymaVersion={{.Env.KYMA_VERSION}}
+  ldflags: -s -w -X github.com/kyma-project/cli/cmd/kyma/version.Version={{.Version}}
   main: ./cmd/
   goos:
     - darwin

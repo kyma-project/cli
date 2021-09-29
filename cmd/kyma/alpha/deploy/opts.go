@@ -12,8 +12,6 @@ import (
 
 var (
 	defaultWorkspacePath = getDefaultWorkspacePath()
-	// the value of defaultKymaVersion is injected when building the binaries
-	defaultKymaVersion string
 )
 
 const (
