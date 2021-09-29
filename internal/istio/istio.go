@@ -135,7 +135,6 @@ func (i *Installation) getIstioVersion() error {
 		return err
 	}
 	i.istioVersion = chart.AppVersion
-	fmt.Printf("IstioVersion: %s\n", i.istioVersion)
 	if i.istioVersion == "" {
 		return errors.New("istio version is empty")
 	}
@@ -316,7 +315,7 @@ func unTar(source, target string, deleteSource bool) error {
 			return err
 		}
 
-		headerPath := filepath.Join(target, header.Name)
+		headerPath := fmt.Sprintf("%s/%s",target, header.Name)
 		info := header.FileInfo()
 		if info.IsDir() {
 			if err = os.MkdirAll(headerPath, info.Mode()); err != nil {
@@ -358,15 +357,13 @@ func unZip(source, target string, deleteSource bool) error {
 	defer archive.Close()
 
 	for _, f := range archive.File {
-		filePath := filepath.Join(target, f.Name)
-		fmt.Println("unzipping file ", filePath)
+		filePath := fmt.Sprintf("%s/%s",target, f.Name)
 
 		if !strings.HasPrefix(filePath, filepath.Clean(target)+string(os.PathSeparator)) {
 
 			return errors.New("invalid file path")
 		}
 		if f.FileInfo().IsDir() {
-			fmt.Println("creating directory...")
 			err := os.MkdirAll(filePath, os.ModePerm)
 			if err != nil {
 				return err
