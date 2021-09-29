@@ -198,7 +198,7 @@ func TestInstallation_downloadFile(t *testing.T) {
 			}
 			getGetFunc = tt.getFunc
 			err := i.downloadFile(tt.args.filepath, tt.args.filename, tt.args.url)
-			if !tt.wantErr{
+			if !tt.wantErr {
 				require.NoError(t, err)
 				tmpFile := path.Join(tt.args.filepath, tt.args.filename)
 				_, err := os.Stat(tmpFile)

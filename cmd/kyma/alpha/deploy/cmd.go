@@ -15,7 +15,7 @@ import (
 	"github.com/kyma-project/cli/internal/istio"
 	"github.com/kyma-project/cli/internal/k3d"
 	"github.com/kyma-project/cli/internal/kube"
-        "github.com/kyma-project/cli/internal/nice"
+	"github.com/kyma-project/cli/internal/nice"
 	"github.com/kyma-project/cli/internal/trust"
 	"github.com/kyma-project/cli/pkg/step"
 	"github.com/pkg/errors"
@@ -24,7 +24,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-        "time"
+	"time"
 
 	//Register all reconcilers
 	_ "github.com/kyma-incubator/reconciler/pkg/reconciler/instances"
@@ -125,7 +125,7 @@ func (cmd *command) Run(o *Options) error {
 	if err != nil {
 		return err
 	}
-  
+
 	err = cmd.deployKyma(l, components)
 	if err != nil {
 		return err

@@ -31,9 +31,8 @@ const zipName = "istio.zip"
 
 type operatingSystem struct {
 	name string
-	ext string
+	ext  string
 }
-
 
 var windows = operatingSystem{"windows", "win"}
 var darwin = operatingSystem{"darwin", "osx"}
@@ -60,8 +59,8 @@ type Config struct {
 type Installation struct {
 	WorkspacePath  string
 	IstioChartPath string
-	Client HTTPClient
-	kymaHome string
+	Client         HTTPClient
+	kymaHome       string
 	environmentVar string
 	istioVersion   string
 	osExt          string
@@ -85,8 +84,8 @@ func New(workspacePath string) (Installation, error) {
 	return Installation{
 		WorkspacePath:  workspacePath,
 		IstioChartPath: defaultIstioChartPath,
-		Client: &http.Client{},
-		kymaHome: kymaHome,
+		Client:         &http.Client{},
+		kymaHome:       kymaHome,
 		environmentVar: environmentVariable,
 		archSupport:    archSupport,
 		dirName:        dirName,
@@ -187,7 +186,7 @@ func (i *Installation) downloadIstio() error {
 	nonArchUrl := fmt.Sprintf("%s%s/istio-%s-%s.tar.gz", downloadUrl, i.istioVersion, i.istioVersion, i.osExt)
 	archUrl := fmt.Sprintf("%s%s/istio-%s-%s-%s.tar.gz", downloadUrl, i.istioVersion, i.istioVersion, i.osExt, i.istioArch)
 
-	switch i.osExt{
+	switch i.osExt {
 	case linux.ext:
 		if strings.Split(i.archSupport, ".")[1] >= strings.Split(i.istioVersion, ".")[1] {
 			err := i.downloadFile(path.Join(i.kymaHome, dirName), tarGzName, archUrl)
