@@ -336,7 +336,7 @@ func unTar(source, target string, deleteSource bool) error {
 }
 
 func unZip(source, target string, deleteSource bool) error {
-	// TODO Windows: Test
+	// TODO Windows: Test + Unit Tests
 	archive, err := zip.OpenReader(source)
 	if err != nil {
 		return err
