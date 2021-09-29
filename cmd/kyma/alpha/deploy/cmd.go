@@ -325,8 +325,6 @@ func (cmd *command) isCompatibleVersion() error {
 		if v.Major() == 1 {
 			if cmd.avoidUserInteraction() {
 				compCheckStep.Failuref("A kyma v1 installation (%s) was found. Please use interactive mode to confirm the upgrade", kymaVersion)
-				return fmt.Errorf("perform upgrade in interactive mode")
-
 			}
 			if !compCheckStep.PromptYesNo(fmt.Sprintf("A kyma v1 installation (%s) was found. Do you want to proceed with the upgrade (%s)? ", kymaVersion, cmd.opts.Source)) {
 				return errors.New("Upgrade stopped by user")
