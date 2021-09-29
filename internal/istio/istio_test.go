@@ -26,9 +26,9 @@ func TestInstallation_getIstioVersion(t *testing.T) {
 		expectedVersion string
 		wantErr         bool
 	}{
-		{name: "Fetch Istio Version", fields: fields{IstioChartPath: "mock/Chart.yaml"}, expectedVersion: "1.11.2", wantErr: false},
-		{name: "Istio Chart not existing", fields: fields{IstioChartPath: "mock/nonExisting.yaml"}, expectedVersion: "", wantErr: true},
-		{name: "Corrupted Istio Chart", fields: fields{IstioChartPath: "mock/corruptedChart.yaml"}, expectedVersion: "", wantErr: true},
+		{name: "Fetch Istio Version", fields: fields{IstioChartPath: "testdata/Chart.yaml"}, expectedVersion: "1.11.2", wantErr: false},
+		{name: "Istio Chart not existing", fields: fields{IstioChartPath: "testdata/nonExisting.yaml"}, expectedVersion: "", wantErr: true},
+		{name: "Corrupted Istio Chart", fields: fields{IstioChartPath: "testdata/corruptedChart.yaml"}, expectedVersion: "", wantErr: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -61,8 +61,8 @@ func TestInstallation_checkIfBinaryExists(t *testing.T) {
 		want    bool
 		wantErr bool
 	}{
-		{name: "File exists", fields: fields{binPath: "mock/Chart.yaml"}, want: true, wantErr: false},
-		{name: "File does not exist", fields: fields{binPath: "mock/nonexistent"}, want: false, wantErr: false},
+		{name: "File exists", fields: fields{binPath: "testdata/Chart.yaml"}, want: true, wantErr: false},
+		{name: "File does not exist", fields: fields{binPath: "testdata/nonexistent"}, want: false, wantErr: false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -91,8 +91,8 @@ func Test_unGzip(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{name: "unGzip File", args: args{source: "mock/istio_mock.tar.gz", target: "mock/istio.tar", deleteSource: false}, wantErr: false},
-		{name: "File does not exist", args: args{source: "mock/nonexistent.tar.gz", target: "mock/istio.tar", deleteSource: false}, wantErr: true},
+		{name: "unGzip File", args: args{source: "testdata/istio_mock.tar.gz", target: "testdata/istio.tar", deleteSource: false}, wantErr: false},
+		{name: "File does not exist", args: args{source: "testdata/nonexistent.tar.gz", target: "testdata/istio.tar", deleteSource: false}, wantErr: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -125,8 +125,8 @@ func Test_unTar(t *testing.T) {
 		expectedFile string
 		wantErr      bool
 	}{
-		{name: "unTar File", args: args{source: "mock/istio_mock.tar", target: "mock", deleteSource: false}, expectedFile: "mock/istio.txt", wantErr: false},
-		{name: "File does not exist", args: args{source: "mock/nonexistent.tar", target: "mock", deleteSource: false}, expectedFile: "mock/istio.txt", wantErr: true},
+		{name: "unTar File", args: args{source: "testdata/istio_mock.tar", target: "testdata", deleteSource: false}, expectedFile: "testdata/istio.txt", wantErr: false},
+		{name: "File does not exist", args: args{source: "testdata/nonexistent.tar", target: "testdata", deleteSource: false}, expectedFile: "testdata/istio.txt", wantErr: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
