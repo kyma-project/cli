@@ -70,7 +70,7 @@ type Installation struct {
 	dirName        string
 	binName        string
 	winBinName     string
-	downloadUrl    string
+	downloadURL    string
 	tarGzName      string
 	tarName        string
 	zipName        string
@@ -91,7 +91,7 @@ func New(workspacePath string) (Installation, error) {
 		dirName:        dirName,
 		binName:        binName,
 		winBinName:     winBinName,
-		downloadUrl:    downloadURL,
+		downloadURL:    downloadURL,
 		tarGzName:      tarGzName,
 		tarName:        tarName,
 		zipName:        zipName,
@@ -182,8 +182,8 @@ func (i *Installation) setArch() {
 
 func (i *Installation) downloadIstio() error {
 	// Istioctl download links
-	nonArchURL := fmt.Sprintf("%s%s/istio-%s-%s.tar.gz", downloadURL, i.istioVersion, i.istioVersion, i.osExt)
-	archURL := fmt.Sprintf("%s%s/istio-%s-%s-%s.tar.gz", downloadURL, i.istioVersion, i.istioVersion, i.osExt, i.istioArch)
+	nonArchURL := fmt.Sprintf("%s%s/istio-%s-%s.tar.gz", i.downloadURL, i.istioVersion, i.istioVersion, i.osExt)
+	archURL := fmt.Sprintf("%s%s/istio-%s-%s-%s.tar.gz", i.downloadURL, i.istioVersion, i.istioVersion, i.osExt, i.istioArch)
 
 	switch i.osExt {
 	case linux.ext:
