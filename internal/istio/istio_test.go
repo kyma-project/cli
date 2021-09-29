@@ -31,6 +31,7 @@ func TestInstallation_getIstioVersion(t *testing.T) {
 		{name: "Corrupted Istio Chart", fields: fields{IstioChartPath: "testdata/corruptedChart.yaml"}, expectedVersion: "", wantErr: true},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			i := &Installation{
 				WorkspacePath:  tt.fields.WorkspacePath,
@@ -65,6 +66,7 @@ func TestInstallation_checkIfBinaryExists(t *testing.T) {
 		{name: "File does not exist", fields: fields{binPath: "testdata/nonexistent"}, want: false, wantErr: false},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			i := &Installation{
 				binPath: tt.fields.binPath,
@@ -95,6 +97,7 @@ func Test_unGzip(t *testing.T) {
 		{name: "File does not exist", args: args{source: "testdata/nonexistent.tar.gz", target: "testdata/istio.tar", deleteSource: false}, wantErr: true},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			err := unGzip(tt.args.source, tt.args.target, tt.args.deleteSource)
 			if !tt.wantErr {
@@ -129,6 +132,7 @@ func Test_unTar(t *testing.T) {
 		{name: "File does not exist", args: args{source: "testdata/nonexistent.tar", target: "testdata", deleteSource: false}, expectedFile: "testdata/istio.txt", wantErr: true},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			err := unTar(tt.args.source, tt.args.target, tt.args.deleteSource)
 			if !tt.wantErr {
@@ -190,6 +194,7 @@ func TestInstallation_downloadFile(t *testing.T) {
 			}, wantErr: true},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			i := &Installation{
 				Client: tt.fields.Client,
