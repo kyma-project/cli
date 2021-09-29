@@ -28,8 +28,10 @@ var (
 	}
 )
 
-const crLabelReconciler string = "reconciler.kyma-project.io/managed-by=reconciler"
-const crLabelIstio string = "install.operator.istio.io/owning-resource-namespace=istio-system"
+const (
+	crLabelReconciler = "reconciler.kyma-project.io/managed-by=reconciler"
+	crLabelIstio      = "install.operator.istio.io/owning-resource-namespace=istio-system"
+)
 
 type command struct {
 	opts *Options
@@ -139,11 +141,21 @@ func (cmd *command) removeServerlessCredentialsFinalizers() error {
 }
 
 func (cmd *command) removeCustomResourcesFinalizers() error {
-	crds, err := cmd.apixClient.CustomResourceDefinitions().List(context.Background(), metav1.ListOptions{LabelSelector: crLabelReconciler})
-	if err != nil && !apierr.IsNotFound(err) {
+	if err := cmd.removeCustomResourceFinalizersByLabel(crLabelReconciler); err != nil {
+		return err
+	}
+	if err := cmd.removeCustomResourceFinalizersByLabel(crLabelIstio); err != nil {
 		return err
 	}
 
+	return nil
+}
+
+func (cmd *command) removeCustomResourceFinalizersByLabel(label string) error {
+	crds, err := cmd.apixClient.CustomResourceDefinitions().List(context.Background(), metav1.ListOptions{LabelSelector: label})
+	if err != nil && !apierr.IsNotFound(err) {
+		return err
+	}
 	if crds == nil {
 		return nil
 	}
@@ -159,7 +171,6 @@ func (cmd *command) removeCustomResourcesFinalizers() error {
 		if err != nil && !apierr.IsNotFound(err) {
 			return err
 		}
-
 		if customResourceList == nil {
 			continue
 		}
@@ -183,7 +194,6 @@ func (cmd *command) removeCustomResourceFinalizers(gvr schema.GroupVersionResour
 	if err != nil && !apierr.IsNotFound(err) {
 		return err
 	}
-
 	if res == nil {
 		return nil
 	}
