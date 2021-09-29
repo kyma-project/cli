@@ -289,8 +289,11 @@ func (cmd *command) approveImportCertificate() bool {
 func (cmd *command) installPrerequisites(wsp string) error {
 	preReqStep := cmd.NewStep("Installing Prerequisites")
 
-	istioctl := istio.New(wsp)
-	err := istioctl.Install()
+	istioctl, err := istio.New(wsp)
+	if err != nil {
+		return err
+	}
+	err = istioctl.Install()
 	if err != nil {
 		return err
 	}

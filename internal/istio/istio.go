@@ -6,6 +6,7 @@ import (
 	"compress/gzip"
 	"errors"
 	"fmt"
+	"github.com/kyma-project/cli/internal/files"
 	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
@@ -50,6 +51,7 @@ type Installation struct {
 	WorkspacePath  string
 	IstioChartPath string
 	Client HTTPClient
+	kymaHome string
 	environmentVar string
 	istioVersion   string
 	osExt          string
@@ -65,11 +67,16 @@ type Installation struct {
 	zipName        string
 }
 
-func New(workspacePath string) Installation {
+func New(workspacePath string) (Installation, error) {
+	kymaHome, err := files.KymaHome()
+	if err != nil {
+		return Installation{}, err
+	}
 	return Installation{
 		WorkspacePath:  workspacePath,
 		IstioChartPath: defaultIstioChartPath,
 		Client: &http.Client{},
+		kymaHome: kymaHome,
 		environmentVar: environmentVariable,
 		archSupport:    archSupport,
 		dirName:        dirName,
@@ -79,7 +86,7 @@ func New(workspacePath string) Installation {
 		tarGzName:      tarGzName,
 		tarName:        tarName,
 		zipName:        zipName,
-	}
+	}, nil
 }
 
 func (i *Installation) Install() error {
@@ -91,7 +98,7 @@ func (i *Installation) Install() error {
 	if err := i.getIstioVersion(); err != nil {
 		return fmt.Errorf("error checking wanted istio version: %s", err)
 	}
-	// Check if Istioctl binary is already in workspace
+	// Check if Istioctl binary is already in kymaHome
 	exist, err := i.checkIfExists()
 	if err != nil {
 		return err
@@ -130,9 +137,9 @@ func (i *Installation) getIstioVersion() error {
 	}
 	if i.osExt == "win" {
 		// TODO Windows: Test if this is correct path
-		i.binPath = path.Join(i.WorkspacePath, i.dirName, fmt.Sprintf("istio-%s", i.istioVersion), i.winBinName)
+		i.binPath = path.Join(i.kymaHome, i.dirName, fmt.Sprintf("istio-%s", i.istioVersion), i.winBinName)
 	} else {
-		i.binPath = path.Join(i.WorkspacePath, i.dirName, fmt.Sprintf("istio-%s", i.istioVersion), "bin", i.binName)
+		i.binPath = path.Join(i.kymaHome, i.dirName, fmt.Sprintf("istio-%s", i.istioVersion), "bin", i.binName)
 	}
 	return nil
 }
@@ -175,23 +182,23 @@ func (i *Installation) downloadIstio() error {
 
 	if i.osExt == "linux" {
 		if strings.Split(i.archSupport, ".")[1] >= strings.Split(i.istioVersion, ".")[1] {
-			err := i.downloadFile(path.Join(i.WorkspacePath, dirName), tarGzName, archUrl)
+			err := i.downloadFile(path.Join(i.kymaHome, dirName), tarGzName, archUrl)
 			if err != nil {
 				return err
 			}
 		} else {
-			err := i.downloadFile(path.Join(i.WorkspacePath, dirName), tarGzName, nonArchUrl)
+			err := i.downloadFile(path.Join(i.kymaHome, dirName), tarGzName, nonArchUrl)
 			if err != nil {
 				return err
 			}
 		}
 	} else if i.osExt == "osx" {
-		err := i.downloadFile(path.Join(i.WorkspacePath, dirName), tarGzName, nonArchUrl)
+		err := i.downloadFile(path.Join(i.kymaHome, dirName), tarGzName, nonArchUrl)
 		if err != nil {
 			return err
 		}
 	} else if i.osExt == "win" {
-		err := i.downloadFile(path.Join(i.WorkspacePath, dirName), zipName, nonArchUrl)
+		err := i.downloadFile(path.Join(i.kymaHome, dirName), zipName, nonArchUrl)
 		if err != nil {
 			return err
 		}
@@ -203,19 +210,19 @@ func (i *Installation) downloadIstio() error {
 
 func (i *Installation) extractIstio() error {
 	if i.osExt == "linux" || i.osExt == "osx" {
-		istioPath := path.Join(i.WorkspacePath, i.dirName, i.tarGzName)
-		targetPath := path.Join(i.WorkspacePath, i.dirName, i.tarName)
+		istioPath := path.Join(i.kymaHome, i.dirName, i.tarGzName)
+		targetPath := path.Join(i.kymaHome, i.dirName, i.tarName)
 		if err := unGzip(istioPath, targetPath, true); err != nil {
 			return err
 		}
-		istioPath = path.Join(i.WorkspacePath, i.dirName, i.tarName)
-		targetPath = path.Join(i.WorkspacePath, i.dirName)
+		istioPath = path.Join(i.kymaHome, i.dirName, i.tarName)
+		targetPath = path.Join(i.kymaHome, i.dirName)
 		if err := unTar(istioPath, targetPath, true); err != nil {
 			return err
 		}
 	} else {
-		istioPath := path.Join(i.WorkspacePath, i.dirName, i.zipName)
-		targetPath := path.Join(i.WorkspacePath, i.dirName)
+		istioPath := path.Join(i.kymaHome, i.dirName, i.zipName)
+		targetPath := path.Join(i.kymaHome, i.dirName)
 		if err := unZip(istioPath, targetPath, true); err != nil {
 			return err
 		}
