@@ -24,7 +24,7 @@ kyma alpha deploy [flags]
                                  	- Deploy a specific branch of the Kyma repository on kyma-project.org: "kyma deploy --source=<my-branch-name>"
                                  	- Deploy a commit (8 characters or more), for example: "kyma deploy --source=34edf09a"
                                  	- Deploy a pull request, for example "kyma deploy --source=PR-9486"
-                                 	- Deploy the local sources: "kyma deploy --source=local"
+                                 	- Deploy the local sources: "kyma deploy --source=local" (default "main")
       --tls-crt string           TLS certificate file for the domain used for installation.
       --tls-key string           TLS key file for the domain used for installation.
       --value strings            Set configuration values. Can specify one or more values, also as a comma-separated list (e.g. --value component.a='1' --value component.b='2' or --value component.a='1',component.b='2').
