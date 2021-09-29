@@ -6,9 +6,6 @@ import (
 	"github.com/kyma-project/cli/internal/cli"
 )
 
-// isRelease circumvents backtracking for Kyma version
-var isRelease string = "false"
-
 //Options defines available options for the command
 type Options struct {
 	*cli.Options

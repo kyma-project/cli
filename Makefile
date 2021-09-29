@@ -1,9 +1,5 @@
 .DEFAULT_GOAL := local
 
-ifndef IS_RELEASE
-	IS_RELEASE = false
-endif
-
 ifndef KYMA_VERSION
 	KYMA_VERSION = main
 endif
@@ -16,7 +12,7 @@ ifeq ($(VERSION),stable)
 	VERSION = stable-${shell git rev-parse --short HEAD}
 endif
 
-FLAGS = -ldflags '-s -w -X github.com/kyma-project/cli/cmd/kyma/version.Version=$(VERSION) -X github.com/kyma-project/cli/cmd/kyma/alpha/deploy.defaultKymaVersion=$(KYMA_VERSION) -X github.com/kyma-project/cli/cmd/kyma/install.isRelease=$(IS_RELEASE) -X github.com/kyma-project/cli/cmd/kyma/alpha/deploy.isRelease=$(IS_RELEASE)'
+FLAGS = -ldflags '-s -w -X github.com/kyma-project/cli/cmd/kyma/version.Version=$(VERSION) -X github.com/kyma-project/cli/cmd/kyma/alpha/deploy.defaultKymaVersion=$(KYMA_VERSION)'
 
 .PHONY: resolve
 resolve:
