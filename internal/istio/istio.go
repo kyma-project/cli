@@ -24,7 +24,7 @@ const environmentVariable = "ISTIOCTL_PATH"
 const dirName = "istio"
 const binName = "istioctl"
 const winBinName = "istioctl.exe"
-const downloadUrl = "https://github.com/istio/istio/releases/download/"
+const downloadURL = "https://github.com/istio/istio/releases/download/"
 const tarGzName = "istio.tar.gz"
 const tarName = "istio.tar"
 const zipName = "istio.zip"
@@ -91,7 +91,7 @@ func New(workspacePath string) (Installation, error) {
 		dirName:        dirName,
 		binName:        binName,
 		winBinName:     winBinName,
-		downloadUrl:    downloadUrl,
+		downloadUrl:    downloadURL,
 		tarGzName:      tarGzName,
 		tarName:        tarName,
 		zipName:        zipName,
@@ -169,7 +169,7 @@ func (i *Installation) setOS() error {
 	case linux.name:
 		i.osExt = linux.ext
 	default:
-		return errors.New(fmt.Sprintf("Unknown OS: %s", i.osExt))
+		return fmt.Errorf("unknown OS: %s", i.osExt)
 	}
 	return nil
 }
@@ -183,29 +183,29 @@ func (i *Installation) setArch() {
 
 func (i *Installation) downloadIstio() error {
 	// Istioctl download links
-	nonArchUrl := fmt.Sprintf("%s%s/istio-%s-%s.tar.gz", downloadUrl, i.istioVersion, i.istioVersion, i.osExt)
-	archUrl := fmt.Sprintf("%s%s/istio-%s-%s-%s.tar.gz", downloadUrl, i.istioVersion, i.istioVersion, i.osExt, i.istioArch)
+	nonArchURL := fmt.Sprintf("%s%s/istio-%s-%s.tar.gz", downloadURL, i.istioVersion, i.istioVersion, i.osExt)
+	archURL := fmt.Sprintf("%s%s/istio-%s-%s-%s.tar.gz", downloadURL, i.istioVersion, i.istioVersion, i.osExt, i.istioArch)
 
 	switch i.osExt {
 	case linux.ext:
 		if strings.Split(i.archSupport, ".")[1] >= strings.Split(i.istioVersion, ".")[1] {
-			err := i.downloadFile(path.Join(i.kymaHome, dirName), tarGzName, archUrl)
+			err := i.downloadFile(path.Join(i.kymaHome, dirName), tarGzName, archURL)
 			if err != nil {
 				return err
 			}
 		} else {
-			err := i.downloadFile(path.Join(i.kymaHome, dirName), tarGzName, nonArchUrl)
+			err := i.downloadFile(path.Join(i.kymaHome, dirName), tarGzName, nonArchURL)
 			if err != nil {
 				return err
 			}
 		}
 	case darwin.ext:
-		err := i.downloadFile(path.Join(i.kymaHome, dirName), tarGzName, nonArchUrl)
+		err := i.downloadFile(path.Join(i.kymaHome, dirName), tarGzName, nonArchURL)
 		if err != nil {
 			return err
 		}
 	case windows.ext:
-		err := i.downloadFile(path.Join(i.kymaHome, dirName), zipName, nonArchUrl)
+		err := i.downloadFile(path.Join(i.kymaHome, dirName), zipName, nonArchURL)
 		if err != nil {
 			return err
 		}
@@ -264,7 +264,7 @@ func (i *Installation) downloadFile(filepath string, filename string, url string
 	defer out.Close()
 
 	// Write body to file
-	_, err = io.Copy(out, resp.Body)
+	err = copyInChunks(out, resp.Body)
 	return err
 }
 
@@ -288,7 +288,7 @@ func unGzip(source, target string, deleteSource bool) error {
 	}
 	defer writer.Close()
 
-	_, err = io.Copy(writer, archive)
+	err = copyInChunks(writer, archive)
 	if err != nil {
 		return err
 	}
@@ -331,7 +331,7 @@ func unTar(source, target string, deleteSource bool) error {
 				return err
 			}
 			defer file.Close()
-			_, err = io.Copy(file, tarReader)
+			err = copyInChunks(file, tarReader)
 			if err != nil {
 				return err
 			}
@@ -367,7 +367,10 @@ func unZip(source, target string, deleteSource bool) error {
 		}
 		if f.FileInfo().IsDir() {
 			fmt.Println("creating directory...")
-			os.MkdirAll(filePath, os.ModePerm)
+			err := os.MkdirAll(filePath, os.ModePerm)
+			if err != nil {
+				return err
+			}
 			continue
 		}
 
@@ -385,7 +388,7 @@ func unZip(source, target string, deleteSource bool) error {
 			return err
 		}
 
-		if _, err := io.Copy(dstFile, fileInArchive); err != nil {
+		if err := copyInChunks(dstFile, fileInArchive); err != nil {
 			return err
 		}
 
@@ -395,6 +398,20 @@ func unZip(source, target string, deleteSource bool) error {
 	if deleteSource {
 		if err := os.Remove(source); err != nil {
 			return err
+		}
+	}
+	return nil
+}
+
+func copyInChunks(dstFile *os.File , srcFile io.Reader) error{
+	for {
+		_, err := io.CopyN(dstFile, srcFile, 1024)
+		if err != nil {
+			if err == io.EOF {
+				break
+			} else {
+				return err
+			}
 		}
 	}
 	return nil

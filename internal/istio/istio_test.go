@@ -147,9 +147,7 @@ func Test_unTar(t *testing.T) {
 }
 
 // MockClient is the mock client
-type mockClient struct {
-	getFunc func(url string) (*http.Response, error)
-}
+type mockClient struct {}
 
 // getGetFunc fetches the mock client's `Do` func
 var getGetFunc func(url string) (*http.Response, error)
