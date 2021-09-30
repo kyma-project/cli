@@ -23,6 +23,7 @@ import (
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/nice"
 	"github.com/kyma-project/cli/internal/trust"
+	"github.com/kyma-project/cli/internal/version"
 	"github.com/kyma-project/cli/pkg/step"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -87,6 +88,10 @@ func (cmd *command) Run(o *Options) error {
 	}
 	if cmd.opts.Verbose {
 		cmd.Factory.UseLogger = true
+	}
+
+	if err = cmd.setKubeClient(); err != nil {
+		return err
 	}
 
 	if err = cmd.opts.validateFlags(); err != nil {
@@ -201,6 +206,9 @@ func (cmd *command) printDeployStatus(component string, msg *reconciler.Callback
 }
 
 func (cmd *command) prepareWorkspace(l *zap.SugaredLogger) (*workspace.Workspace, error) {
+	if err := cmd.decideVersionUpgrade(); err != nil {
+		return nil, err
+	}
 	wsStep := cmd.NewStep(fmt.Sprintf("Fetching Kyma sources(%s)", cmd.opts.Source))
 
 	if cmd.opts.Source != VersionLocal {
@@ -336,6 +344,76 @@ func (cmd *command) printSummary(overrides map[string]interface{}, duration time
 	}
 
 	return sum.Print()
+}
+
+func (cmd *command) setKubeClient() error {
+	var err error
+	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
+		return errors.Wrap(err, "Cannot initialize the Kubernetes client. Make sure your kubeconfig is valid")
+	}
+	return nil
+}
+
+func (cmd *command) decideVersionUpgrade() error {
+	verifyStep := cmd.NewStep("Verifying Kyma version compatibility")
+
+	currentVersion, err := version.GetCurrentKymaVersion(cmd.K8s)
+	if err != nil {
+		return errors.Wrap(err, "Cannot fetch kyma version")
+	}
+
+	if currentVersion.None() {
+		verifyStep.Successf("No previous Kyma version found")
+		return nil
+	}
+
+	if !currentVersion.IsReleasedVersion() {
+		// Assume we are upgrading from PR-XXX or main or branch
+		if !verifyStep.PromptYesNo(fmt.Sprintf("A kyma installation with version (%s) was found. Do you want to proceed with the upgrade (%s)? ", currentVersion.String(), cmd.opts.Source)) {
+			return errors.New("Upgrade stopped by user")
+		}
+	} else if currentVersion.IsKyma1() {
+		if cmd.avoidUserInteraction() {
+			verifyStep.Failuref("A kyma v1 installation (%s) was found. Please use interactive mode to confirm the upgrade", currentVersion.String())
+		}
+		if !verifyStep.PromptYesNo(fmt.Sprintf("A kyma v1 installation (%s) was found. Do you want to proceed with the upgrade (%s)? ", currentVersion.String(), cmd.opts.Source)) {
+			return errors.New("Upgrade stopped by user")
+		}
+	} else if currentVersion.IsKyma2() {
+		if !verifyStep.PromptYesNo(fmt.Sprintf("A kyma v2 installation (%s) was found. Do you want to proceed with the upgrade? ", currentVersion.String())) {
+			return errors.New("Upgrade stopped by user")
+		}
+	}
+
+	upgradeVersion, err := version.NewKymaVersion(cmd.opts.Source)
+	if err != nil {
+		return errors.Errorf("Version is non parsable: %s", cmd.opts.Source)
+	}
+
+	upgradeDecision := currentVersion.IsCompatibleWith(upgradeVersion)
+	switch upgradeDecision {
+	case version.UpgradeEqualVersion:
+		{
+			verifyStep.Failuref("Current and next Kyma version are equal: %s", currentVersion.String())
+		}
+	case version.UpgradeUndetermined:
+		{
+			verifyStep.Failuref("Cannot check compatibility between version '%s' and '%s'. This might cause errors!",
+				currentVersion.String(), upgradeVersion.String())
+		}
+	case version.UpgradePossible:
+		{
+			verifyStep.Success()
+		}
+	}
+	//seemless upgrade unnecessary or cannot be warrantied, asking user for approval
+	incompatibleStep := cmd.NewStep("Continue Kyma upgrade")
+	if cmd.avoidUserInteraction() || incompatibleStep.PromptYesNo("Do you want to proceed with the upgrade? ") {
+		incompatibleStep.Success()
+		return nil
+	}
+	incompatibleStep.Failure()
+	return fmt.Errorf("upgrade stopped by user")
 }
 
 func (cmd *command) installPrerequisites(wsp string) error {

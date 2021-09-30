@@ -10,8 +10,8 @@ import (
 	"time"
 
 	installationSDK "github.com/kyma-incubator/hydroform/install/installation"
-	"github.com/kyma-project/cli/cmd/kyma/version"
 	"github.com/kyma-project/cli/internal/kube"
+	"github.com/kyma-project/cli/internal/version"
 	"github.com/kyma-project/cli/pkg/docker"
 	"github.com/kyma-project/cli/pkg/step"
 	"github.com/kyma-project/kyma/components/kyma-operator/pkg/apis/installer/v1alpha1"
@@ -179,15 +179,15 @@ func (i *Installation) checkPrevInstallation() (string, string, error) {
 		}
 	}
 
-	var kymaVersion string
+	var kymaVersion version.KymaVersion
 	if prevInstallationState.State != installationSDK.NoInstallationState && prevInstallationState.State != "" {
-		kymaVersion, err = version.KymaVersion(i.K8s)
+		kymaVersion, err = version.GetCurrentKymaVersion(i.K8s)
 		if err != nil {
 			return "", "", err
 		}
 	}
 
-	return prevInstallationState.State, kymaVersion, nil
+	return prevInstallationState.State, kymaVersion.String(), nil
 }
 
 func (i *Installation) getInstallationLogInfo(prevInstallationState string, kymaVersion string) string {
@@ -465,7 +465,7 @@ func (i *Installation) buildResult(duration time.Duration) (*Result, error) {
 		}
 	}
 
-	v, err := version.KymaVersion(i.K8s)
+	v, err := version.GetCurrentKymaVersion(i.K8s)
 	if err != nil {
 		return nil, err
 	}
@@ -494,7 +494,7 @@ func (i *Installation) buildResult(duration time.Duration) (*Result, error) {
 	}
 
 	return &Result{
-		KymaVersion:   v,
+		KymaVersion:   v.String(),
 		Host:          i.K8s.RestConfig().Host,
 		Console:       consoleURL,
 		AdminEmail:    string(adm.Data["email"]),
