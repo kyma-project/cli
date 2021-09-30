@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestVersionCompare(t *testing.T) {
+func TestCheckCompatibility(t *testing.T) {
 	t.Parallel()
 
 	t.Run("Happy path - two equal versions", func(t *testing.T) {
@@ -42,5 +42,4 @@ func TestVersionCompare(t *testing.T) {
 		assert.Error(t, err)
 		assert.Equal(t, err.Error(), nextVersionTooGreatError.with("1.15.6", "1.18.5").Error())
 	})
-
 }
