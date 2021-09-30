@@ -3,12 +3,6 @@ package deploy
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-project/cli/internal/nice"
-	"io/ioutil"
-	"os"
-	"path"
-	"time"
-
 	"github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/service"
@@ -18,14 +12,21 @@ import (
 	"github.com/kyma-project/cli/internal/component"
 	"github.com/kyma-project/cli/internal/coredns"
 	"github.com/kyma-project/cli/internal/files"
+	"github.com/kyma-project/cli/internal/istio"
 	"github.com/kyma-project/cli/internal/k3d"
 	"github.com/kyma-project/cli/internal/kube"
+	"github.com/kyma-project/cli/internal/nice"
 	"github.com/kyma-project/cli/internal/trust"
 	"github.com/kyma-project/cli/internal/version"
 	"github.com/kyma-project/cli/pkg/step"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
+	"io/ioutil"
+	"os"
+	"path"
+	"time"
+
 	//Register all reconcilers
 	_ "github.com/kyma-incubator/reconciler/pkg/reconciler/instances"
 )
@@ -121,6 +122,11 @@ func (cmd *command) Run(o *Options) error {
 	}
 
 	components, err := cmd.createComponentsWithOverrides(ws, values)
+	if err != nil {
+		return err
+	}
+
+	err = cmd.installPrerequisites(ws.WorkspaceDir)
 	if err != nil {
 		return err
 	}
@@ -406,4 +412,20 @@ func (cmd *command) decideVersionUpgrade() error {
 	}
 	incompatibleStep.Failure()
 	return fmt.Errorf("upgrade stopped by user")
+}
+
+func (cmd *command) installPrerequisites(wsp string) error {
+	preReqStep := cmd.NewStep("Installing Prerequisites")
+
+	istioctl, err := istio.New(wsp)
+	if err != nil {
+		return err
+	}
+	err = istioctl.Install()
+	if err != nil {
+		return err
+	}
+
+	preReqStep.Successf("Installed Prerequisites")
+	return nil
 }
