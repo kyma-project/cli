@@ -99,7 +99,7 @@ func (cmd *command) Run() error {
 
 func (cmd *command) removeFinalizers() error {
 	step := cmd.NewStep("Removing finalizers")
-	if err := cmd.removeServerlessCredentialsFinalizers(); err != nil {
+	if err := cmd.removeServerlessCredentialFinalizers(); err != nil {
 		step.Failure()
 		return err
 	}
@@ -113,7 +113,7 @@ func (cmd *command) removeFinalizers() error {
 	return nil
 }
 
-func (cmd *command) removeServerlessCredentialsFinalizers() error {
+func (cmd *command) removeServerlessCredentialFinalizers() error {
 	secrets, err := cmd.K8s.Static().CoreV1().Secrets(v1.NamespaceAll).List(context.Background(), metav1.ListOptions{LabelSelector: "serverless.kyma-project.io/config=credentials"})
 	if err != nil && !apierr.IsNotFound(err) {
 		return err
