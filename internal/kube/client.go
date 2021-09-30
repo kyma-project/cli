@@ -86,7 +86,6 @@ func NewFromConfigWithTimeout(url, file string, t time.Duration) (KymaKube, erro
 			kubeCfg: kubeConfig,
 		},
 		nil
-
 }
 
 func (c *client) Static() kubernetes.Interface {
