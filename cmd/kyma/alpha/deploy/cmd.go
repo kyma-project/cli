@@ -198,6 +198,9 @@ func (cmd *command) printDeployStatus(component string, msg *reconciler.Callback
 }
 
 func (cmd *command) prepareWorkspace(l *zap.SugaredLogger) (*workspace.Workspace, error) {
+	if err := cmd.decideVersionUpgrade(); err != nil {
+		return nil, err
+	}
 	wsStep := cmd.NewStep(fmt.Sprintf("Fetching Kyma sources(%s)", cmd.opts.Source))
 
 	if cmd.opts.Source != VersionLocal {
@@ -351,29 +354,25 @@ func (cmd *command) decideVersionUpgrade() error {
 		return errors.Wrap(err, "Cannot fetch kyma version")
 	}
 
-	if currentVersion.HasNoVersion() {
+	if currentVersion.None() {
 		verifyStep.Successf("No previous Kyma version found")
 		return nil
 	}
 
-	if currentVersion.IsKyma1() {
+	if !currentVersion.IsReleasedVersion() {
+		// Assume we are upgrading from PR-XXX or main or branch
+		if !verifyStep.PromptYesNo(fmt.Sprintf("A kyma installation with version (%s) was found. Do you want to proceed with the upgrade (%s)? ", currentVersion.String(), cmd.opts.Source)) {
+			return errors.New("Upgrade stopped by user")
+		}
+	} else 	if currentVersion.IsKyma1() {
 		if cmd.avoidUserInteraction() {
 			verifyStep.Failuref("A kyma v1 installation (%s) was found. Please use interactive mode to confirm the upgrade", currentVersion.String())
 		}
 		if !verifyStep.PromptYesNo(fmt.Sprintf("A kyma v1 installation (%s) was found. Do you want to proceed with the upgrade (%s)? ", currentVersion.String(), cmd.opts.Source)) {
 			return errors.New("Upgrade stopped by user")
 		}
-	}
-
-	if currentVersion.IsKyma2() {
+	} else if currentVersion.IsKyma2() {
 		if !verifyStep.PromptYesNo(fmt.Sprintf("A kyma v2 installation (%s) was found. Do you want to proceed with the upgrade? ", currentVersion.String())) {
-			return errors.New("Upgrade stopped by user")
-		}
-	}
-
-	if !currentVersion.IsReleasedVersion() {
-		// Assume we are upgrading from PR-XXX or main or branch
-		if !verifyStep.PromptYesNo(fmt.Sprintf("A kyma installation with version (%s) was found. Do you want to proceed with the upgrade? ", currentVersion.String())) {
 			return errors.New("Upgrade stopped by user")
 		}
 	}

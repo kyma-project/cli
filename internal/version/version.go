@@ -26,7 +26,7 @@ const (
 )
 
 func NewKymaVersion(kymaVersion string) (KymaVersion, error) {
-	re := regexp.MustCompile(`^[1-9]`)
+	re := regexp.MustCompile(`^[1-9]\.`)
 	res := re.FindString(kymaVersion)
 	if res != "" {
 		v, err := semver.NewVersion(kymaVersion)
@@ -65,7 +65,7 @@ func (kv *KymaVersion) IsKyma2() bool {
 	return kv.semanticVersion.Major() == 2
 }
 
-func (kv *KymaVersion) HasNoVersion() bool {
+func (kv *KymaVersion) None() bool {
 	return kv.stringVersion == "N/A"
 }
 

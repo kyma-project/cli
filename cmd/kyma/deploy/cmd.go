@@ -262,7 +262,7 @@ func (cmd *command) isCompatibleVersion() error {
 		if err != nil {
 			return err
 		}
-		if !kymaVersion1.HasNoVersion() {
+		if !kymaVersion1.None() {
 			if cmd.avoidUserInteraction() {
 				compCheckStep.Failuref("A kyma v1 installation (%s) was found. Please use interactive mode to confirm the upgrade", kymaVersion1.String())
 			}
