@@ -120,7 +120,7 @@ func TestGetCurrentVersion(t *testing.T) {
 		assert.Equal(t, "1.24.6", res.String())
 	})
 	t.Run("No Kyma installed", func(t *testing.T) {
-		mockClientSet := fake.NewSimpleClientset(		)
+		mockClientSet := fake.NewSimpleClientset()
 		kymaMock.On("Static").Return(mockClientSet).Once()
 		kymaMock.On("Static").Return(mockClientSet).Once()
 		res, err := GetCurrentKymaVersion(kymaMock)
@@ -145,7 +145,7 @@ func TestGetCurrentVersion(t *testing.T) {
 		kymaMock.On("Static").Return(mockDep).Once()
 		_, err := GetCurrentKymaVersion(kymaMock)
 		t.Logf("err :%v", err)
-		assert.Error(t, err,"Version is not a semver")
+		assert.Error(t, err, "Version is not a semver")
 	})
 
 }

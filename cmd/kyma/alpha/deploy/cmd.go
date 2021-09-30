@@ -370,7 +370,7 @@ func (cmd *command) decideVersionUpgrade() error {
 		if !verifyStep.PromptYesNo(fmt.Sprintf("A kyma installation with version (%s) was found. Do you want to proceed with the upgrade (%s)? ", currentVersion.String(), cmd.opts.Source)) {
 			return errors.New("Upgrade stopped by user")
 		}
-	} else 	if currentVersion.IsKyma1() {
+	} else if currentVersion.IsKyma1() {
 		if cmd.avoidUserInteraction() {
 			verifyStep.Failuref("A kyma v1 installation (%s) was found. Please use interactive mode to confirm the upgrade", currentVersion.String())
 		}
