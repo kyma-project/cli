@@ -46,8 +46,6 @@ func TestVersion(t *testing.T) {
 }
 
 func TestCompatibility(t *testing.T) {
-	t.Parallel()
-
 	t.Run("Check same version", func(t *testing.T) {
 		kymaVersion, err := NewKymaVersion("2.0.0")
 		assert.NoError(t, err)
