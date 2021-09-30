@@ -315,7 +315,7 @@ func unTar(source, target string, deleteSource bool) error {
 			return err
 		}
 
-		headerPath := fmt.Sprintf("%s/%s",target, header.Name)
+		headerPath := fmt.Sprintf("%s/%s", target, header.Name)
 		info := header.FileInfo()
 		if info.IsDir() {
 			if err = os.MkdirAll(headerPath, info.Mode()); err != nil {
@@ -357,7 +357,7 @@ func unZip(source, target string, deleteSource bool) error {
 	defer archive.Close()
 
 	for _, f := range archive.File {
-		filePath := fmt.Sprintf("%s/%s",target, f.Name)
+		filePath := fmt.Sprintf("%s/%s", target, f.Name)
 
 		if !strings.HasPrefix(filePath, filepath.Clean(target)+string(os.PathSeparator)) {
 
@@ -400,7 +400,7 @@ func unZip(source, target string, deleteSource bool) error {
 	return nil
 }
 
-func copyInChunks(dstFile *os.File , srcFile io.Reader) error{
+func copyInChunks(dstFile *os.File, srcFile io.Reader) error {
 	for {
 		_, err := io.CopyN(dstFile, srcFile, 1024)
 		if err != nil {
