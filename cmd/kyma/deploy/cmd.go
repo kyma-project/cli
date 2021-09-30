@@ -264,9 +264,9 @@ func (cmd *command) isCompatibleVersion() error {
 		}
 		if !kymaVersion1.HasNoVersion() {
 			if cmd.avoidUserInteraction() {
-				compCheckStep.Failuref("A kyma v1 installation (%s) was found. Please use interactive mode to confirm the upgrade", kymaVersion1)
+				compCheckStep.Failuref("A kyma v1 installation (%s) was found. Please use interactive mode to confirm the upgrade", kymaVersion1.String())
 			}
-			compCheckStep.PromptYesNo(fmt.Sprintf("A kyma v1 installation (%s) was found. Do you want to proceed with the upgrade? ", kymaVersion1))
+			compCheckStep.PromptYesNo(fmt.Sprintf("A kyma v1 installation (%s) was found. Do you want to proceed with the upgrade? ", kymaVersion1.String()))
 		}
 		compCheckStep.Successf("No previous Kyma version found")
 		return nil

@@ -109,7 +109,7 @@ func getKyma2Version(k8s kube.KymaKube) (KymaVersion, error) {
 	if len(deployments.Items) == 0 {
 		return NewNoVersion(), nil
 	}
-	version, err := NewKymaVersion(deployments.Items[0].Labels["reconciler.kyma-project.io/origin-semanticVersion"])
+	version, err := NewKymaVersion(deployments.Items[0].Labels["reconciler.kyma-project.io/origin-version"])
 	if err != nil {
 		return version, err
 	}

@@ -3,6 +3,7 @@ package version
 import (
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube/mocks"
+	"github.com/kyma-project/cli/internal/version"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/apps/v1"
 	coreV1 "k8s.io/api/core/v1"
@@ -38,9 +39,9 @@ func TestKyma2Version(t *testing.T) {
 	kymaMock.On("Static").Return(mockDep).Once()
 	kymaMock.On("Static").Return(mockDep).Once()
 
-	ver, err := KymaVersion(cmd.K8s)
+	ver, err := version.GetCurrentKymaVersion(cmd.K8s)
 	require.NoError(t, err)
-	require.Equal(t, "2.0.0", ver)
+	require.Equal(t, "2.0.0", ver.String())
 }
 
 func TestKyma1Version(t *testing.T) {
@@ -72,7 +73,7 @@ func TestKyma1Version(t *testing.T) {
 	kymaMock.On("Static").Return(mockPod).Once()
 	kymaMock.On("Static").Return(mockPod).Once()
 
-	ver, err := KymaVersion(cmd.K8s)
+	ver, err := version.GetCurrentKymaVersion(cmd.K8s)
 	require.NoError(t, err)
-	require.Equal(t, "1.24.6", ver)
+	require.Equal(t, "1.24.6", ver.String())
 }
