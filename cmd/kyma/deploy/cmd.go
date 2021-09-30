@@ -16,6 +16,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/kyma-project/cli/cmd/kyma/dashboard"
 	"github.com/kyma-project/cli/cmd/kyma/version"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/files"
@@ -46,7 +47,6 @@ type command struct {
 
 const (
 	kymaURL            = "https://github.com/kyma-project/kyma"
-	dashboardURL       = "https://dashboard.kyma.cloud.sap"
 	kyma2OverridesPath = "/installation/resources/values.yaml"
 )
 
@@ -563,7 +563,7 @@ func (cmd *command) printSummary(o overrides.Overrides) error {
 		NonInteractive: cmd.NonInteractive,
 		Version:        strings.Join(kymaVersionNames, ", "),
 		URL:            domain.(string),
-		Dashboard:      dashboardURL,
+		Dashboard:      dashboard.KymaDashboardURL,
 		Duration:       cmd.duration,
 		Email:          string(email),
 		Password:       string(pass),

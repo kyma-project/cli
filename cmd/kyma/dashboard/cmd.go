@@ -13,6 +13,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	KymaDashboardURL = "https://dashboard.kyma.cloud.sap"
+)
+
 type command struct {
 	opts *Options
 	cli.Command
@@ -63,8 +67,8 @@ func (cmd *command) Run() error {
 		return cmd.runDashboardContainer(localDashboardURL)
 	}
 
-	skrDashboardURL := "https://dashboard.kyma.cloud.sap"
-	cmd.openDashboard(skrDashboardURL)
+
+	cmd.openDashboard(KymaDashboardURL)
 
 	return nil
 }
