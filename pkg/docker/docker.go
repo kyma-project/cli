@@ -237,7 +237,8 @@ func (w *dockerWrapper) ContainerCreateAndStart(ctx context.Context, opts Contai
 		}
 
 		body, err = w.Docker.ContainerCreate(ctx, config, hostConfig, nil, nil, opts.ContainerName)
-	} else if err != nil {
+	}
+	if err != nil {
 		return "", err
 	}
 
