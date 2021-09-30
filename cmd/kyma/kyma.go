@@ -25,6 +25,7 @@ import (
 	testlogs "github.com/kyma-project/cli/cmd/kyma/test/logs"
 	testrun "github.com/kyma-project/cli/cmd/kyma/test/run"
 	teststatus "github.com/kyma-project/cli/cmd/kyma/test/status"
+	"github.com/kyma-project/cli/cmd/kyma/undeploy"
 	"github.com/kyma-project/cli/cmd/kyma/version"
 
 	"github.com/kyma-project/cli/cmd/kyma/provision"
@@ -75,6 +76,7 @@ Kyma CLI allows you to install, test, and manage Kyma.
 		upgrade.NewCmd(upgrade.NewOptions(o)),
 		create.NewCmd(o),
 		deploy.NewCmd(deploy.NewOptions(o)),
+		undeploy.NewCmd(undeploy.NewOptions(o)),
 	)
 
 	testCmd := test.NewCmd()
