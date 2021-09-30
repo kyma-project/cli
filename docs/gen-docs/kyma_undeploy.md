@@ -2,11 +2,11 @@
 title: kyma undeploy
 ---
 
-Removes Kyma from a running Kubernetes cluster.
+Undeploys Kyma from a running Kubernetes cluster.
 
 ## Synopsis
 
-Use this command to clean up Kyma from a running Kubernetes cluster.
+Use this command to undeploy Kyma from a running Kubernetes cluster.
 
 ```bash
 kyma undeploy [flags]
