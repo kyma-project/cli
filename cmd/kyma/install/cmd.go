@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/kyma-project/cli/internal/config"
 	"github.com/kyma-project/cli/internal/hosts"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/nice"
@@ -71,14 +72,14 @@ Both installation types continue with the following steps:
    `,
 		RunE:       func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 		Aliases:    []string{"i"},
-		Deprecated: "install is deprecated! Use `kyma deploy instead`",
+		Deprecated: `use "kyma deploy" instead`,
 	}
 
 	cobraCmd.Flags().BoolVarP(&o.NoWait, "no-wait", "n", false, "Determines if the command should wait for Kyma installation to complete.")
 	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", defaultDomain, "Domain used for installation.")
 	cobraCmd.Flags().StringVarP(&o.TLSCert, "tls-cert", "", "", "TLS certificate for the domain used for installation. The certificate must be a base64-encoded value.")
 	cobraCmd.Flags().StringVarP(&o.TLSKey, "tls-key", "", "", "TLS key for the domain used for installation. The key must be a base64-encoded value.")
-	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", installation.DefaultKymaVersion, `Installation source.
+	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", config.DefaultKyma1Version, `Installation source.
 	- To use a specific release, write "kyma install --source=1.15.1".
 	- To use the main branch, write "kyma install --source=main".
 	- To use a commit, write "kyma install --source=34edf09a".

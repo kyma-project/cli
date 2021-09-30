@@ -1,9 +1,5 @@
 .DEFAULT_GOAL := local
 
-ifndef KYMA_VERSION
-	KYMA_VERSION = main
-endif
-
 ifndef VERSION
 	VERSION = ${shell git describe --tags --always}
 endif
@@ -12,7 +8,7 @@ ifeq ($(VERSION),stable)
 	VERSION = stable-${shell git rev-parse --short HEAD}
 endif
 
-FLAGS = -ldflags '-s -w -X github.com/kyma-project/cli/cmd/kyma/version.Version=$(VERSION) -X github.com/kyma-project/cli/cmd/kyma/alpha/deploy.defaultKymaVersion=$(KYMA_VERSION)'
+FLAGS = -ldflags '-s -w -X github.com/kyma-project/cli/cmd/kyma/version.Version=$(VERSION)'
 
 .PHONY: resolve
 resolve:
