@@ -4,10 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/docker/docker/client"
 	"github.com/kyma-project/cli/internal/cli"
-	"github.com/kyma-project/cli/internal/docker"
 	"github.com/kyma-project/cli/internal/kube"
+	"github.com/kyma-project/cli/pkg/docker"
 	"github.com/pkg/browser"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -67,7 +66,6 @@ func (cmd *command) Run() error {
 		return cmd.runDashboardContainer(localDashboardURL)
 	}
 
-
 	cmd.openDashboard(KymaDashboardURL)
 
 	return nil
@@ -76,7 +74,7 @@ func (cmd *command) Run() error {
 func (cmd *command) runDashboardContainer(dashboardURL string) error {
 	step := cmd.NewStep(fmt.Sprintf("Starting container: %s", cmd.opts.ContainerName))
 
-	dockerClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	dockerWrapper, err := docker.NewWrapper()
 	if err != nil {
 		return errors.Wrap(err, "Error while trying to interact with docker")
 	}
@@ -84,14 +82,14 @@ func (cmd *command) runDashboardContainer(dashboardURL string) error {
 	ctx := context.Background()
 
 	var envs []string
-	if dockerDesktop, err := docker.IsDockerDesktopOS(ctx, dockerClient); err != nil {
+	if dockerDesktop, err := dockerWrapper.IsDockerDesktopOS(ctx); err != nil {
 		step.Failure()
 		return errors.Wrap(err, "Error while trying to interact with docker")
 	} else if dockerDesktop {
 		envs = append(envs, "DOCKER_DESKTOP_CLUSTER=true")
 	}
 
-	id, err := docker.RunContainer(ctx, dockerClient, docker.RunOpts{
+	id, err := dockerWrapper.ContainerCreateAndStart(ctx, docker.ContainerRunOpts{
 		Ports: map[string]string{
 			"3001": cmd.opts.LocalPort,
 		},
@@ -111,8 +109,8 @@ func (cmd *command) runDashboardContainer(dashboardURL string) error {
 	if !cmd.opts.Detach {
 		step.LogInfo("Logs from the container:")
 		followCtx := context.Background()
-		cmd.Finalizers.Add(docker.Stop(followCtx, dockerClient, id, func(i ...interface{}) { fmt.Print(i...) }))
-		return docker.FollowRun(followCtx, dockerClient, id, func(i ...interface{}) { fmt.Print(i...) })
+		cmd.Finalizers.Add(dockerWrapper.Stop(followCtx, id, func(i ...interface{}) { fmt.Print(i...) }))
+		return dockerWrapper.ContainerFollowRun(followCtx, id, func(i ...interface{}) { fmt.Print(i...) })
 	}
 	return nil
 }

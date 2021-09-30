@@ -1,8 +1,11 @@
 package docker
 
 import (
+	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -13,10 +16,12 @@ import (
 	dockerConfigFile "github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/cli/cli/config/types"
 	imageTypes "github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/errdefs"
 	"github.com/docker/docker/pkg/archive"
+	"github.com/docker/go-connections/nat"
 	"github.com/kyma-project/cli/pkg/docker/mocks"
 	"github.com/kyma-project/cli/pkg/step"
-
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"gotest.tools/assert"
@@ -166,4 +171,147 @@ func Test_PushKymaInstaller(t *testing.T) {
 	err = k.PushKymaInstaller(image, currentStep)
 	assert.NilError(t, err)
 
+}
+
+func Test_portSet(t *testing.T) {
+	actual := portSet(map[string]string{"3000": "3001"})
+	expected := nat.PortSet{"3000": struct{}{}}
+	require.Equal(t, expected, actual)
+}
+
+func Test_mapMap(t *testing.T) {
+	actual := portMap(map[string]string{"3000": "3001"})
+	expected := nat.PortMap{"3000": []nat.PortBinding{
+		{
+			HostPort: "3001",
+		},
+	}}
+	require.Equal(t, expected, actual)
+}
+
+func Test_ContainerCreateAndStart(t *testing.T) {
+	mockDocker := &mocks.Client{}
+	mockWrapper := dockerWrapper{Docker: mockDocker}
+
+	testOpts := ContainerRunOpts{
+		ContainerName: "container-name",
+		Envs:          nil,
+		Image:         "valid-image",
+		Ports:         map[string]string{"3000": "3001"},
+	}
+	testContainerID := "container-id-123"
+	testErr := errors.New("container create and start error")
+	notFoundError := errdefs.NotFound(errors.New("image not present"))
+	ctx := context.Background()
+
+	t.Run("happy path", func(t *testing.T) {
+		mockDocker.On("ContainerCreate", ctx, mock.AnythingOfType("*container.Config"),
+			mock.AnythingOfType("*container.HostConfig"), mock.Anything, mock.Anything, testOpts.ContainerName).Return(
+			container.ContainerCreateCreatedBody{ID: testContainerID}, nil).Times(1)
+
+		mockDocker.On("ContainerStart", ctx, testContainerID, mock.AnythingOfType("types.ContainerStartOptions")).Return(nil).Times(1)
+
+		id, err := mockWrapper.ContainerCreateAndStart(ctx, testOpts)
+
+		require.Nil(t, err)
+		require.Equal(t, testContainerID, id)
+	})
+
+	t.Run("container create error", func(t *testing.T) {
+		mockDocker.On("ContainerCreate", ctx, mock.AnythingOfType("*container.Config"),
+			mock.AnythingOfType("*container.HostConfig"), mock.Anything, mock.Anything, testOpts.ContainerName).Return(
+			container.ContainerCreateCreatedBody{}, testErr).Times(1)
+
+		id, err := mockWrapper.ContainerCreateAndStart(ctx, testOpts)
+
+		require.Equal(t, "", id)
+		require.NotNil(t, err)
+		require.Equal(t, err, testErr)
+	})
+
+	t.Run("image not present", func(t *testing.T) {
+		mockDocker.On("ContainerCreate", ctx, mock.AnythingOfType("*container.Config"),
+			mock.AnythingOfType("*container.HostConfig"), mock.Anything, mock.Anything, testOpts.ContainerName).Return(
+			container.ContainerCreateCreatedBody{}, notFoundError).Times(1)
+
+		mockDocker.On("ImagePull", ctx, testOpts.Image, mock.AnythingOfType("types.ImagePullOptions")).Return(
+			ioutil.NopCloser(bytes.NewReader(nil)), nil).Times(1)
+
+		mockDocker.On("ContainerCreate", ctx, mock.AnythingOfType("*container.Config"),
+			mock.AnythingOfType("*container.HostConfig"), mock.Anything, mock.Anything, testOpts.ContainerName).Return(
+			container.ContainerCreateCreatedBody{ID: testContainerID}, nil).Times(1)
+
+		mockDocker.On("ContainerStart", ctx, testContainerID, mock.AnythingOfType("types.ContainerStartOptions")).Return(nil).Times(1)
+
+		id, err := mockWrapper.ContainerCreateAndStart(ctx, testOpts)
+
+		require.Nil(t, err)
+		require.Equal(t, testContainerID, id)
+	})
+
+	t.Run("image pull error", func(t *testing.T) {
+		mockDocker.On("ContainerCreate", ctx, mock.AnythingOfType("*container.Config"),
+			mock.AnythingOfType("*container.HostConfig"), mock.Anything, mock.Anything, testOpts.ContainerName).Return(
+			container.ContainerCreateCreatedBody{}, notFoundError).Times(1)
+
+		mockDocker.On("ImagePull", ctx, testOpts.Image, mock.AnythingOfType("types.ImagePullOptions")).Return(
+			ioutil.NopCloser(bytes.NewReader(nil)), testErr).Times(1)
+
+		id, err := mockWrapper.ContainerCreateAndStart(ctx, testOpts)
+
+		require.Equal(t, "", id)
+		require.NotNil(t, err)
+		require.Equal(t, err, testErr)
+	})
+
+	t.Run("container start error", func(t *testing.T) {
+		mockDocker.On("ContainerCreate", ctx, mock.AnythingOfType("*container.Config"),
+			mock.AnythingOfType("*container.HostConfig"), mock.Anything, mock.Anything, testOpts.ContainerName).Return(
+			container.ContainerCreateCreatedBody{ID: testContainerID}, nil).Times(1)
+
+		mockDocker.On("ContainerStart", ctx, testContainerID, mock.AnythingOfType("types.ContainerStartOptions")).Return(testErr).Times(1)
+
+		id, err := mockWrapper.ContainerCreateAndStart(ctx, testOpts)
+
+		require.Equal(t, "", id)
+		require.NotNil(t, err)
+		require.Equal(t, err, testErr)
+	})
+}
+
+func Test_IsDockerDesktopOS(t *testing.T) {
+	mockDocker := &mocks.Client{}
+	mockWrapper := dockerWrapper{Docker: mockDocker}
+
+	ctx := context.Background()
+	dockerDesktopOSInfo := "Docker Desktop"
+	testErr := errors.New("docker info error")
+
+	t.Run("is docker desktop os", func(t *testing.T) {
+		mockDocker.On("Info", ctx).Return(imageTypes.Info{OperatingSystem: dockerDesktopOSInfo}, nil).Times(1)
+
+		dockerDesktop, err := mockWrapper.IsDockerDesktopOS(ctx)
+
+		require.Nil(t, err)
+		require.True(t, dockerDesktop)
+	})
+
+	t.Run("is not docker desktop os", func(t *testing.T) {
+		mockDocker.On("Info", ctx).Return(imageTypes.Info{OperatingSystem: "not Docker Desktop"}, nil).Times(1)
+
+		dockerDesktop, err := mockWrapper.IsDockerDesktopOS(ctx)
+
+		require.Nil(t, err)
+		require.False(t, dockerDesktop)
+	})
+
+	t.Run("info error", func(t *testing.T) {
+		mockDocker.On("Info", ctx).Return(imageTypes.Info{OperatingSystem: "not Docker Desktop"}, testErr).Times(1)
+
+		dockerDesktop, err := mockWrapper.IsDockerDesktopOS(ctx)
+
+		require.NotNil(t, err)
+		require.Equal(t, testErr, err)
+		require.False(t, dockerDesktop)
+	})
 }
