@@ -49,8 +49,8 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cobraCmd := &cobra.Command{
 		Use:   "undeploy",
-		Short: "Removes Kyma from a running Kubernetes cluster.",
-		Long:  `Use this command to clean up Kyma from a running Kubernetes cluster.`,
+		Short: "Undeploys Kyma from a running Kubernetes cluster.",
+		Long:  `Use this command to undeploy Kyma from a running Kubernetes cluster.`,
 		RunE:  func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 	}
 
@@ -84,6 +84,9 @@ func (cmd *command) Run() error {
 	if err := cmd.deleteKymaNamespaces(); err != nil {
 		return err
 	}
+	if err := cmd.removeFinalizers(); err != nil {
+		return err
+	}
 	if cmd.opts.KeepCRDs {
 		return nil
 	}
@@ -106,7 +109,7 @@ func (cmd *command) removeFinalizers() error {
 		return err
 	}
 
-	step.Successf("Finalizers successfully removed")
+	step.Successf("Successfully removed finalizers")
 	return nil
 }
 
@@ -309,7 +312,7 @@ func (cmd *command) deleteKymaCRDs() error {
 		return errors.Wrapf(err, "Failed to delete resource")
 	}
 
-	step.Successf("Kyma CRDs successfully uninstalled")
+	step.Successf("Successfully removed Kyma CRDs")
 
 	return nil
 }
