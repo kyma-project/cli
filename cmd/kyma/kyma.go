@@ -6,6 +6,7 @@ import (
 	"github.com/kyma-project/cli/cmd/kyma/completion"
 	"github.com/kyma-project/cli/cmd/kyma/console"
 	"github.com/kyma-project/cli/cmd/kyma/create"
+	"github.com/kyma-project/cli/cmd/kyma/dashboard"
 	uninstall "github.com/kyma-project/cli/cmd/kyma/delete"
 	"github.com/kyma-project/cli/cmd/kyma/deploy"
 	initial "github.com/kyma-project/cli/cmd/kyma/init"
@@ -83,6 +84,7 @@ Kyma CLI allows you to install, test, and manage Kyma.
 		upgrade.NewCmd(upgrade.NewOptions(o)),
 		create.NewCmd(o),
 		deploy.NewCmd(deploy.NewOptions(o)),
+		dashboard.NewCmd(dashboard.NewOptions(o)),
 		uninstall.NewCmd(uninstall.NewOptions(o)),
 	)
 

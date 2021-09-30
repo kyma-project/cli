@@ -1,0 +1,128 @@
+package dashboard
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/docker/docker/client"
+	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/docker"
+	"github.com/kyma-project/cli/internal/kube"
+	"github.com/pkg/browser"
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
+)
+
+type command struct {
+	opts *Options
+	cli.Command
+}
+
+//NewCmd creates a new dashboard command
+func NewCmd(o *Options) *cobra.Command {
+	c := command{
+		Command: cli.Command{Options: o.Options},
+		opts:    o,
+	}
+
+	cmd := &cobra.Command{
+		Use:   "dashboard",
+		Short: "Opens the Kyma dashboard in a web browser.",
+		Long:  `Use this command to open the Kyma dashboard in a web browser.`,
+		RunE:  func(_ *cobra.Command, _ []string) error { return c.Run() },
+	}
+
+	cmd.Flags().BoolVarP(&o.Local, "local", "l", false, `Change this flag to "true" if you want to run the dashboard locally via Docker.`)
+	cmd.Flags().StringVarP(&o.LocalPort, "port", "p", "3001", `Specify the port on which the local dashboard will be exposed. Only works in combination with "--local".`)
+	cmd.Flags().StringVar(&o.ContainerName, "container-name", "busola", `Specify the name of the local container. Only works in combination with "--local".`)
+	cmd.Flags().BoolVarP(&o.Detach, "detach", "d", false, `Change this flag to "true" if you don't want to follow the logs of the local container. Only works in combination with "--local".`)
+
+	return cmd
+}
+
+//Run runs the command
+func (cmd *command) Run() error {
+	var err error
+
+	if err = cmd.opts.validateFlags(); err != nil {
+		return err
+	}
+	if cmd.opts.CI {
+		cmd.Factory.NonInteractive = true
+	}
+	if cmd.opts.Verbose {
+		cmd.Factory.UseLogger = true
+	}
+
+	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
+		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid.")
+	}
+
+	if cmd.opts.Local {
+		localDashboardURL := fmt.Sprintf("http://localhost:%s/", cmd.opts.LocalPort)
+		return cmd.runDashboardContainer(localDashboardURL)
+	}
+
+	skrDashboardURL := "https://dashboard.kyma.cloud.sap"
+	cmd.openDashboard(skrDashboardURL)
+
+	return nil
+}
+
+func (cmd *command) runDashboardContainer(dashboardURL string) error {
+	step := cmd.NewStep(fmt.Sprintf("Starting container: %s", cmd.opts.ContainerName))
+
+	dockerClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		return errors.Wrap(err, "Error while trying to interact with docker")
+	}
+
+	ctx := context.Background()
+
+	var envs []string
+	if dockerDesktop, err := docker.IsDockerDesktopOS(ctx, dockerClient); err != nil {
+		step.Failure()
+		return errors.Wrap(err, "Error while trying to interact with docker")
+	} else if dockerDesktop {
+		envs = append(envs, "DOCKER_DESKTOP_CLUSTER=true")
+	}
+
+	id, err := docker.RunContainer(ctx, dockerClient, docker.RunOpts{
+		Ports: map[string]string{
+			"3001": cmd.opts.LocalPort,
+		},
+		Envs:          envs,
+		ContainerName: cmd.opts.ContainerName,
+		Image:         "eu.gcr.io/kyma-project/busola:latest",
+	})
+
+	if err != nil {
+		step.Failure()
+		return errors.Wrap(err, "Could not start container")
+	}
+	step.Successf("Started container: %s", cmd.opts.ContainerName)
+
+	cmd.openDashboard(dashboardURL)
+
+	if !cmd.opts.Detach {
+		step.LogInfo("Logs from the container:")
+		followCtx := context.Background()
+		cmd.Finalizers.Add(docker.Stop(followCtx, dockerClient, id, func(i ...interface{}) { fmt.Print(i...) }))
+		return docker.FollowRun(followCtx, dockerClient, id, func(i ...interface{}) { fmt.Print(i...) })
+	}
+	return nil
+}
+
+func (cmd *command) openDashboard(url string) {
+	step := cmd.NewStep("Opening the Kyma dashboard in the default browser using the following url: " + url)
+
+	err := browser.OpenURL(url)
+	if err != nil {
+		step.Failuref("Failed to open the Kyma dashboard. Try to open the url manually")
+		if cmd.opts.Verbose {
+			step.LogErrorf("error: %v\n", err)
+		}
+		return
+	}
+	step.Success()
+}

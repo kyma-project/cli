@@ -27,6 +27,7 @@ require (
 	github.com/daviddengcn/go-colortext v1.0.0
 	github.com/docker/cli v20.10.6+incompatible
 	github.com/docker/docker v20.10.8+incompatible
+	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/fatih/color v1.10.0
 	github.com/imdario/mergo v0.3.12
 	github.com/kyma-incubator/hydroform/function v0.0.0-20210910072351-61ef321fd793
