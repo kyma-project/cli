@@ -13,7 +13,12 @@ func restConfig(url, file string) (*rest.Config, error) {
 	po := clientcmd.NewDefaultPathOptions()
 	po.LoadingRules.ExplicitPath = file
 
-	return clientcmd.BuildConfigFromKubeconfigGetter(url, po.GetStartingConfig)
+	cfg, err := clientcmd.BuildConfigFromKubeconfigGetter(url, po.GetStartingConfig)
+	if err != nil {
+		return nil, err
+	}
+	cfg.WarningHandler = rest.NoWarnings{}
+	return cfg, nil
 }
 
 // kubeConfig loads a structured representation of the Kubeconfig.
@@ -26,7 +31,7 @@ func kubeConfig(file string) (*api.Config, error) {
 	return po.GetStartingConfig()
 }
 
-// kubeConfigPath provides the path used to load the kubeconfig based on the standard defined precedence
+// KubeconfigPath provides the path used to load the kubeconfig based on the standard defined precedence
 // if file is a valid path it will be returned, otherwise KUBECONFIG env var or the default location will be used
 func KubeconfigPath(file string) string {
 	po := clientcmd.NewDefaultPathOptions()
@@ -35,7 +40,7 @@ func KubeconfigPath(file string) string {
 	return po.GetLoadingPrecedence()[0]
 }
 
-// Append adds the provided kubeconfig in the []byte to the Kubeconfig in the target path without altering other existing conifgs.
+// AppendConfig adds the provided kubeconfig in the []byte to the Kubeconfig in the target path without altering other existing conifgs.
 // If the target path is empty, standard kubeconfig loading rules apply.
 func AppendConfig(cfg []byte, target string) error {
 	s, err := clientcmd.Load(cfg)
