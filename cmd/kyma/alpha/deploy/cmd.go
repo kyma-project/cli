@@ -158,7 +158,7 @@ func (cmd *command) deployKyma(comps component.List) error {
 }
 
 func (cmd *command) workspaceBuilder(l *zap.SugaredLogger) (*workspace.Workspace, error) {
-	if err := cmd.isCompatibleVersion(); err != nil {
+	if err := cmd.decideVersionUpgrade(); err != nil {
 		return nil, err
 	}
 	wsStep := cmd.NewStep(fmt.Sprintf("Fetching Kyma (%s)", cmd.opts.Source))
@@ -296,37 +296,37 @@ func (cmd *command) setKubeClient() error {
 	return nil
 }
 
-func (cmd *command) isCompatibleVersion() error {
-	compCheckStep := cmd.NewStep("Verifying Kyma version compatibility")
+func (cmd *command) decideVersionUpgrade() error {
+	verifyStep := cmd.NewStep("Verifying Kyma version compatibility")
 
-	kymaVersion, err := version.GetCurrentKymaVersion(cmd.K8s)
+	currentVersion, err := version.GetCurrentKymaVersion(cmd.K8s)
 	if err != nil {
 		return errors.Wrap(err, "Cannot fetch kyma version")
 	}
 
-	if kymaVersion.HasNoVersion() {
-		compCheckStep.Successf("No previous Kyma version found")
+	if currentVersion.HasNoVersion() {
+		verifyStep.Successf("No previous Kyma version found")
 		return nil
 	}
 
-	if kymaVersion.IsKyma1(){
+	if currentVersion.IsKyma1() {
 		if cmd.avoidUserInteraction() {
-			compCheckStep.Failuref("A kyma v1 installation (%s) was found. Please use interactive mode to confirm the upgrade", kymaVersion.String())
+			verifyStep.Failuref("A kyma v1 installation (%s) was found. Please use interactive mode to confirm the upgrade", currentVersion.String())
 		}
-		if !compCheckStep.PromptYesNo(fmt.Sprintf("A kyma v1 installation (%s) was found. Do you want to proceed with the upgrade (%s)? ", kymaVersion.String(), cmd.opts.Source)) {
+		if !verifyStep.PromptYesNo(fmt.Sprintf("A kyma v1 installation (%s) was found. Do you want to proceed with the upgrade (%s)? ", currentVersion.String(), cmd.opts.Source)) {
 			return errors.New("Upgrade stopped by user")
 		}
 	}
 
-	if kymaVersion.IsKyma2() {
-		if !compCheckStep.PromptYesNo(fmt.Sprintf("A kyma v2 installation (%s) was found. Do you want to proceed with the upgrade? ", kymaVersion.String())) {
+	if currentVersion.IsKyma2() {
+		if !verifyStep.PromptYesNo(fmt.Sprintf("A kyma v2 installation (%s) was found. Do you want to proceed with the upgrade? ", currentVersion.String())) {
 			return errors.New("Upgrade stopped by user")
 		}
 	}
 
-	if !kymaVersion.IsReleasedVersion() {
+	if !currentVersion.IsReleasedVersion() {
 		// Assume we are upgrading from PR-XXX or main or branch
-		if !compCheckStep.PromptYesNo(fmt.Sprintf("A kyma installation with version (%s) was found. Do you want to proceed with the upgrade? ", kymaVersion.String())) {
+		if !verifyStep.PromptYesNo(fmt.Sprintf("A kyma installation with version (%s) was found. Do you want to proceed with the upgrade? ", currentVersion.String())) {
 			return errors.New("Upgrade stopped by user")
 		}
 	}
@@ -336,25 +336,28 @@ func (cmd *command) isCompatibleVersion() error {
 		return errors.Errorf("Version is non parsable: %s", cmd.opts.Source)
 	}
 
-	upgradeDecision := kymaVersion.IsCompatibleVersion(upgradeVersion)
+	upgradeDecision := currentVersion.IsCompatibleWith(upgradeVersion)
 	switch upgradeDecision {
-		case version.UpgradeEqualVersion: {
-			compCheckStep.Failuref("Current and next Kyma version are equal: %s", kymaVersion.String())
+	case version.UpgradeEqualVersion:
+		{
+			verifyStep.Failuref("Current and next Kyma version are equal: %s", currentVersion.String())
 		}
-		case version.UpgradeUndetermined: {
-			compCheckStep.Failuref("Cannot check compatibility between version '%s' and '%s'. This might cause errors!",
-				kymaVersion.String(), upgradeVersion.String())
+	case version.UpgradeUndetermined:
+		{
+			verifyStep.Failuref("Cannot check compatibility between version '%s' and '%s'. This might cause errors!",
+				currentVersion.String(), upgradeVersion.String())
 		}
-		case version.UpgradablePossible: {
-			compCheckStep.Success()
+	case version.UpgradePossible:
+		{
+			verifyStep.Success()
 		}
 	}
-	//seemless upgrade unnecessary or cannot be warrantied - aks user for approval
-	qUpgradeIncompStep := cmd.NewStep("Continue Kyma upgrade")
-	if cmd.avoidUserInteraction() || qUpgradeIncompStep.PromptYesNo("Do you want to proceed with the upgrade? ") {
-		qUpgradeIncompStep.Success()
+	//seemless upgrade unnecessary or cannot be warrantied, asking user for approval
+	incompatibleStep := cmd.NewStep("Continue Kyma upgrade")
+	if cmd.avoidUserInteraction() || incompatibleStep.PromptYesNo("Do you want to proceed with the upgrade? ") {
+		incompatibleStep.Success()
 		return nil
 	}
-	qUpgradeIncompStep.Failure()
-	return fmt.Errorf("Upgrade stopped by user")
+	incompatibleStep.Failure()
+	return fmt.Errorf("upgrade stopped by user")
 }

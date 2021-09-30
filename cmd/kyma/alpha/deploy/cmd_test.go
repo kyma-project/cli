@@ -46,7 +46,7 @@ func Test_upgkyma2tokyma2(t *testing.T) {
 	captureStdout := os.Stdout
 	r, w, _ := os.Pipe()
 	os.Stdout = w
-	err := cmd.isCompatibleVersion()
+	err := cmd.decideVersionUpgrade()
 
 	w.Close()
 	out, _ := ioutil.ReadAll(r)
@@ -92,7 +92,7 @@ func Test_upgkyma1tokyma2(t *testing.T) {
 	captureStdout := os.Stdout
 	r, w, _ := os.Pipe()
 	os.Stdout = w
-	err := cmd.isCompatibleVersion()
+	err := cmd.decideVersionUpgrade()
 
 	w.Close()
 	out, _ := ioutil.ReadAll(r)

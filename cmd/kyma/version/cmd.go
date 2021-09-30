@@ -45,14 +45,12 @@ func NewCmd(o *Options) *cobra.Command {
 func (cmd *command) Run() error {
 	var w io.Writer = os.Stdout
 
-	fmt.Fprintf(w, "Kyma CLI version: %s\n", versionOrDefault(Version))
+	fmt.Fprintf(w, "Kyma CLI version: %s\n", getCLIVersion())
 
 	if cmd.opts.ClientOnly {
-		//we are done
 		return nil
 	}
 
-	//print Kyma Version
 	err := cmd.setKubeClient()
 	if err != nil {
 		return err
@@ -62,28 +60,8 @@ func (cmd *command) Run() error {
 	if err != nil {
 		return err
 	}
-	fmt.Fprintf(w, "Kyma cluster versions: %s\n", versionOrDefault(ver))
 
-	//isKyma2, err := checkKyma2(cmd.K8s)
-	//if err != nil {
-	//	return err
-	//}
-	//if isKyma2 {
-	//	//Check for kyma 2
-	//	version, err := getKyma2Version(cmd.K8s)
-	//	if err != nil {
-	//		return err
-	//	}
-	//	fmt.Fprintf(w, "Kyma 2 cluster versions: %s\n", versionOrDefault(version))
-	//
-	//} else {
-	//	// Print kyma 1 version
-	//	version, err := getKyma1Version(cmd.K8s)
-	//	if err != nil {
-	//		return err
-	//	}
-	//	fmt.Fprintf(w, "Kyma 1 cluster versions: %s\n", versionOrDefault(version))
-	//}
+	fmt.Fprintf(w, "Kyma 2 cluster version: %s\n", ver.String())
 
 	return nil
 }
@@ -96,13 +74,9 @@ func (cmd *command) setKubeClient() error {
 	return nil
 }
 
-func versionOrDefault(version string) string {
-	return stringOrDefault(version, "N/A")
-}
-
-func stringOrDefault(s, def string) string {
-	if len(s) == 0 {
-		return def
+func getCLIVersion() string {
+	if len(Version) == 0 {
+		return "N/A"
 	}
-	return s
+	return Version
 }

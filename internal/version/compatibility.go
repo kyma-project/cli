@@ -9,22 +9,22 @@ import (
 var (
 	currentVersionNoReleaseError = versionCompareError{
 		msg: func(e *versionCompareError) string {
-			return fmt.Sprintf("Current version seems not to be an official Kyma release: %s", e.currentVersion)
+			return fmt.Sprintf("Current semanticVersion seems not to be an official Kyma release: %s", e.currentVersion)
 		},
 	}
 	nextVersionNoReleaseError = versionCompareError{
 		msg: func(e *versionCompareError) string {
-			return fmt.Sprintf("Next version seems not to be an official Kyma release: %s", e.nextVersion)
+			return fmt.Sprintf("Next semanticVersion seems not to be an official Kyma release: %s", e.nextVersion)
 		},
 	}
 	nextVersionLowerError = versionCompareError{
 		msg: func(e *versionCompareError) string {
-			return fmt.Sprintf("Next version (%s) is lower than current version (%s)", e.nextVersion, e.currentVersion)
+			return fmt.Sprintf("Next semanticVersion (%s) is lower than current semanticVersion (%s)", e.nextVersion, e.currentVersion)
 		},
 	}
 	nextVersionTooGreatError = versionCompareError{
 		msg: func(e *versionCompareError) string {
-			return fmt.Sprintf("Next version (%s) is more than 2 minor versions greater than current version (%s)",
+			return fmt.Sprintf("Next semanticVersion (%s) is more than 2 minor versions greater than current semanticVersion (%s)",
 				e.nextVersion, e.currentVersion)
 		},
 	}

@@ -19,25 +19,25 @@ func TestVersionCompare(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("Current version is not a release", func(t *testing.T) {
+	t.Run("Current semanticVersion is not a release", func(t *testing.T) {
 		err := checkCompatibility("aa6asdf32", "1.18.1")
 		assert.Error(t, err)
 		assert.Equal(t, err.Error(), currentVersionNoReleaseError.with("aa6asdf32", "1.18.1").Error())
 	})
 
-	t.Run("Next version is not a release", func(t *testing.T) {
+	t.Run("Next semanticVersion is not a release", func(t *testing.T) {
 		err := checkCompatibility("1.18.0", "main")
 		assert.Error(t, err)
 		assert.Equal(t, err.Error(), nextVersionNoReleaseError.with("1.18", "main").Error())
 	})
 
-	t.Run("Next version is lower as current version", func(t *testing.T) {
+	t.Run("Next semanticVersion is lower as current semanticVersion", func(t *testing.T) {
 		err := checkCompatibility("1.18.6", "1.17.5-rc2")
 		assert.Error(t, err)
 		assert.Equal(t, err.Error(), nextVersionLowerError.with("1.18.6", "1.17.5-rc2").Error())
 	})
 
-	t.Run("Next version is too far away from current version", func(t *testing.T) {
+	t.Run("Next semanticVersion is too far away from current semanticVersion", func(t *testing.T) {
 		err := checkCompatibility("1.15.6", "1.18.5")
 		assert.Error(t, err)
 		assert.Equal(t, err.Error(), nextVersionTooGreatError.with("1.15.6", "1.18.5").Error())

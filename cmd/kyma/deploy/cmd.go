@@ -15,13 +15,13 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/kyma-project/cli/cmd/kyma/version"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/files"
 	"github.com/kyma-project/cli/internal/hosts"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/nice"
 	"github.com/kyma-project/cli/internal/trust"
+	"github.com/kyma-project/cli/internal/version"
 	"github.com/kyma-project/cli/pkg/asyncui"
 	"github.com/kyma-project/cli/pkg/step"
 	"github.com/magiconair/properties"
@@ -258,11 +258,11 @@ func (cmd *command) isCompatibleVersion() error {
 	}
 
 	if versionSet.Empty() { //Kyma seems not to be installed
-		kymaVersion1, err := version.KymaVersion(cmd.K8s) // check kymav1 installation
+		kymaVersion1, err := version.GetCurrentKymaVersion(cmd.K8s) // check kymav1 installation
 		if err != nil {
 			return err
 		}
-		if kymaVersion1 != "N/A" {
+		if !kymaVersion1.HasNoVersion() {
 			if cmd.avoidUserInteraction() {
 				compCheckStep.Failuref("A kyma v1 installation (%s) was found. Please use interactive mode to confirm the upgrade", kymaVersion1)
 			}
