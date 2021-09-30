@@ -8,16 +8,15 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
+	"github.com/kyma-project/cli/internal/version"
 	"github.com/pkg/errors"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kyma-project/cli/cmd/kyma/dashboard"
-	"github.com/kyma-project/cli/cmd/kyma/version"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/files"
 	"github.com/kyma-project/cli/internal/hosts"
@@ -25,7 +24,6 @@ import (
 	"github.com/kyma-project/cli/internal/nice"
 	"github.com/kyma-project/cli/internal/trust"
 	"github.com/kyma-project/cli/pkg/asyncui"
-	"github.com/kyma-project/cli/pkg/installation"
 	"github.com/kyma-project/cli/pkg/step"
 	"github.com/magiconair/properties"
 	"github.com/spf13/cobra"
@@ -137,22 +135,10 @@ Debugging:
 	- Deploy a commit, for example: "kyma deploy --source=34edf09a"
 	- Deploy a pull request, for example "kyma deploy --source=PR-9486"
 	- Deploy the local sources: "kyma deploy --source=local"`)
-	setSource(cobraCmd.Flags().Changed("source"), &o.Source)
 	cobraCmd.Flags().StringVarP(&o.Profile, "profile", "p", "",
 		fmt.Sprintf("Kyma deployment profile. If not specified, Kyma uses its default configuration. The supported profiles are: \"%s\".", strings.Join(kymaProfiles, "\", \"")))
 	cobraCmd.Flags().BoolVarP(&o.ReuseHelmValues, "reuse-values", "r", false, "Set --reuse-values=true to reuse the helm values during component installation")
 	return cobraCmd
-}
-
-func setSource(isUserDefined bool, source *string) {
-	IsRelease, err := strconv.ParseBool(isRelease)
-	if err != nil {
-		IsRelease = false
-		fmt.Println("WARNING: isRelease could not be parsed, continue assuming false value")
-	}
-	if !isUserDefined && !IsRelease {
-		*source = installation.SetKymaSemVersion(*source)
-	}
 }
 
 //Run runs the command
@@ -272,15 +258,15 @@ func (cmd *command) isCompatibleVersion() error {
 	}
 
 	if versionSet.Empty() { //Kyma seems not to be installed
-		kymaVersion1, err := version.KymaVersion(cmd.K8s) // check kymav1 installation
+		kymaVersion1, err := version.GetCurrentKymaVersion(cmd.K8s) // check kymav1 installation
 		if err != nil {
 			return err
 		}
-		if kymaVersion1 != "N/A" {
+		if !kymaVersion1.None() {
 			if cmd.avoidUserInteraction() {
-				compCheckStep.Failuref("A kyma v1 installation (%s) was found. Please use interactive mode to confirm the upgrade", kymaVersion1)
+				compCheckStep.Failuref("A kyma v1 installation (%s) was found. Please use interactive mode to confirm the upgrade", kymaVersion1.String())
 			}
-			compCheckStep.PromptYesNo(fmt.Sprintf("A kyma v1 installation (%s) was found. Do you want to proceed with the upgrade? ", kymaVersion1))
+			compCheckStep.PromptYesNo(fmt.Sprintf("A kyma v1 installation (%s) was found. Do you want to proceed with the upgrade? ", kymaVersion1.String()))
 		}
 		compCheckStep.Successf("No previous Kyma version found")
 		return nil

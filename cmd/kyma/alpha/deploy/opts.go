@@ -7,13 +7,18 @@ import (
 	"github.com/pkg/errors"
 	"os"
 	"path/filepath"
+	"regexp"
 )
 
-var defaultWorkspacePath = getDefaultWorkspacePath()
+var (
+	defaultWorkspacePath = getDefaultWorkspacePath()
+)
 
-const VersionLocal = "local"
-const profileEvaluation = "evaluation"
-const profileProduction = "production"
+const (
+	VersionLocal      = "local"
+	profileEvaluation = "evaluation"
+	profileProduction = "production"
+)
 
 //Options defines available options for the command
 type Options struct {
@@ -85,10 +90,27 @@ func (o *Options) validateFlags() error {
 	if err := o.validateProfile(); err != nil {
 		return err
 	}
+	if err := o.validateSource(); err != nil {
+		return err
+	}
 	if err := o.validateTLSCertAndKey(); err != nil {
 		return err
 	}
 
+	return nil
+}
+
+func (o *Options) validateSource() error {
+	checkFirstDigit := regexp.MustCompile(`^[1-9]\.`)
+	startsWithNo := checkFirstDigit.MatchString(o.Source)
+	if startsWithNo {
+		checkCompleteSource := regexp.MustCompile(`[1-9]\.[0-9]+\.[0-9]+`)
+		isSemVer := checkCompleteSource.MatchString(o.Source)
+		if isSemVer {
+			return nil
+		}
+		return fmt.Errorf("provided version (%s) is not semver should be of format X.Y.Z", o.Source)
+	}
 	return nil
 }
 

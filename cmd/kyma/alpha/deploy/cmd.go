@@ -6,29 +6,36 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"time"
 
 	"github.com/kyma-incubator/reconciler/pkg/keb"
-	"github.com/kyma-incubator/reconciler/pkg/logger"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/service"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
 	"github.com/kyma-incubator/reconciler/pkg/scheduler"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/component"
+	"github.com/kyma-project/cli/internal/config"
 	"github.com/kyma-project/cli/internal/coredns"
 	"github.com/kyma-project/cli/internal/files"
+	"github.com/kyma-project/cli/internal/istio"
 	"github.com/kyma-project/cli/internal/k3d"
 	"github.com/kyma-project/cli/internal/kube"
+	"github.com/kyma-project/cli/internal/nice"
 	"github.com/kyma-project/cli/internal/trust"
+	"github.com/kyma-project/cli/internal/version"
 	"github.com/kyma-project/cli/pkg/step"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
+
 	//Register all reconcilers
 	_ "github.com/kyma-incubator/reconciler/pkg/reconciler/instances"
 )
 
-const defaultVersion = "main"
+const (
+	dashboardURL = "https://dashboard.kyma.cloud.sap"
+)
 
 type command struct {
 	cli.Command
@@ -53,7 +60,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd.Flags().StringSliceVarP(&o.Components, "component", "", []string{}, "Provide one or more components to deploy (e.g. --component componentName@namespace)")
 	cobraCmd.Flags().StringVarP(&o.ComponentsFile, "components-file", "c", "", `Path to the components file (default "$HOME/.kyma/sources/installation/resources/components.yaml" or ".kyma-sources/installation/resources/components.yaml")`)
 	cobraCmd.Flags().StringVarP(&o.WorkspacePath, "workspace", "w", "", `Path to download Kyma sources (default "$HOME/.kyma/sources" or ".kyma-sources")`)
-	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", defaultVersion, `Installation source:
+	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", config.DefaultKyma2Version, `Installation source:
 	- Deploy a specific release, for example: "kyma deploy --source=2.0.0"
 	- Deploy a specific branch of the Kyma repository on kyma-project.org: "kyma deploy --source=<my-branch-name>"
 	- Deploy a commit (8 characters or more), for example: "kyma deploy --source=34edf09a"
@@ -72,6 +79,8 @@ func NewCmd(o *Options) *cobra.Command {
 }
 
 func (cmd *command) Run(o *Options) error {
+	start := time.Now()
+
 	var err error
 
 	if cmd.opts.CI {
@@ -79,6 +88,10 @@ func (cmd *command) Run(o *Options) error {
 	}
 	if cmd.opts.Verbose {
 		cmd.Factory.UseLogger = true
+	}
+
+	if err = cmd.setKubeClient(); err != nil {
+		return err
 	}
 
 	if err = cmd.opts.validateFlags(); err != nil {
@@ -89,8 +102,8 @@ func (cmd *command) Run(o *Options) error {
 		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
 	}
 
-	l := logger.NewLogger(o.Verbose)
-	ws, err := cmd.workspaceBuilder(l)
+	l := cli.NewLogger(o.Verbose).Sugar()
+	ws, err := cmd.prepareWorkspace(l)
 	if err != nil {
 		return err
 	}
@@ -106,16 +119,21 @@ func (cmd *command) Run(o *Options) error {
 	}
 
 	hasCustomDomain := cmd.opts.Domain != ""
-	if _, err := coredns.Patch(zap.NewNop(), cmd.K8s.Static(), hasCustomDomain, isK3d); err != nil {
+	if _, err := coredns.Patch(l.Desugar(), cmd.K8s.Static(), hasCustomDomain, isK3d); err != nil {
 		return err
 	}
 
-	components, err := cmd.createCompListWithOverrides(ws, values)
+	components, err := cmd.createComponentsWithOverrides(ws, values)
 	if err != nil {
 		return err
 	}
 
-	err = cmd.deployKyma(components)
+	err = cmd.installPrerequisites(ws.WorkspaceDir)
+	if err != nil {
+		return err
+	}
+
+	err = cmd.deployKyma(l, components)
 	if err != nil {
 		return err
 	}
@@ -124,23 +142,34 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	// TODO: print summary after deploy
-
-	return nil
+	return cmd.printSummary(values, time.Since(start))
 }
 
-func (cmd *command) deployKyma(comps component.List) error {
+func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List) error {
 	kubeconfigPath := kube.KubeconfigPath(cmd.KubeconfigPath)
 	kubeconfig, err := ioutil.ReadFile(kubeconfigPath)
 	if err != nil {
 		return errors.Wrap(err, "Could not read kubeconfig")
 	}
 
+	undo := zap.RedirectStdLog(l.Desugar())
+	defer undo()
+
+	if !cmd.opts.Verbose {
+		stderr := os.Stderr
+		os.Stderr = nil
+		defer func() { os.Stderr = stderr }()
+	}
+
 	localScheduler := scheduler.NewLocalScheduler(
-		scheduler.WithPrerequisites(cmd.buildCompList(comps.Prerequisites)...),
+		scheduler.WithLogger(l),
+		scheduler.WithPrerequisites(cmd.componentNames(components.Prerequisites)...),
 		scheduler.WithStatusFunc(cmd.printDeployStatus))
 
-	componentsToInstall := append(comps.Prerequisites, comps.Components...)
+	componentsToInstall := append(components.Prerequisites, components.Components...)
+	step := cmd.NewStep("Deploying Kyma")
+	step.Start()
+
 	err = localScheduler.Run(context.TODO(), &keb.Cluster{
 		Kubeconfig: string(kubeconfig),
 		KymaConfig: keb.KymaConfig{
@@ -150,25 +179,45 @@ func (cmd *command) deployKyma(comps component.List) error {
 		},
 	})
 	if err != nil {
-		return errors.Wrap(err, "Failed to deploy Kyma")
+		step.Failuref("Failed to deploy Kyma.")
+		return err
 	}
+
+	step.Successf("Kyma deployed successfully!")
 	return nil
 }
 
-func (cmd *command) workspaceBuilder(l *zap.SugaredLogger) (*workspace.Workspace, error) {
-	wsStep := cmd.NewStep(fmt.Sprintf("Fetching Kyma (%s)", cmd.opts.Source))
+func (cmd *command) printDeployStatus(component string, msg *reconciler.CallbackMessage) {
+	if cmd.Verbose {
+		return
+	}
 
-	//Check if workspace is empty or not
+	switch msg.Status {
+	case reconciler.StatusSuccess:
+		step := cmd.NewStep(fmt.Sprintf("Component '%s' deployed", component))
+		step.Success()
+	case reconciler.StatusFailed:
+		step := cmd.NewStep(fmt.Sprintf("Component '%s' failed. Retrying...", component))
+		step.Failure()
+	case reconciler.StatusError:
+		step := cmd.NewStep(fmt.Sprintf("Component '%s' failed and terminated", component))
+		step.Failure()
+	}
+}
+
+func (cmd *command) prepareWorkspace(l *zap.SugaredLogger) (*workspace.Workspace, error) {
+	if err := cmd.decideVersionUpgrade(); err != nil {
+		return nil, err
+	}
+	wsStep := cmd.NewStep(fmt.Sprintf("Fetching Kyma sources(%s)", cmd.opts.Source))
+
 	if cmd.opts.Source != VersionLocal {
 		_, err := os.Stat(cmd.opts.WorkspacePath)
-		// workspace already exists
 		if !os.IsNotExist(err) && !cmd.avoidUserInteraction() {
 			isWorkspaceEmpty, err := files.IsDirEmpty(cmd.opts.WorkspacePath)
 			if err != nil {
 				return nil, err
 			}
-			// if workspace used is not the default one and it is not empty,
-			// then ask for permission to delete its existing files
 			if !isWorkspaceEmpty && cmd.opts.WorkspacePath != getDefaultWorkspacePath() {
 				if !wsStep.PromptYesNo(fmt.Sprintf("Existing files in workspace folder '%s' will be deleted. Are you sure you want to continue? ", cmd.opts.WorkspacePath)) {
 					wsStep.Failure()
@@ -187,6 +236,7 @@ func (cmd *command) workspaceBuilder(l *zap.SugaredLogger) (*workspace.Workspace
 	if err != nil {
 		return &workspace.Workspace{}, err
 	}
+
 	err = service.UseGlobalWorkspaceFactory(wsFact)
 	if err != nil {
 		return nil, err
@@ -197,20 +247,20 @@ func (cmd *command) workspaceBuilder(l *zap.SugaredLogger) (*workspace.Workspace
 		return &workspace.Workspace{}, err
 	}
 
-	wsStep.Successf("Fetching kyma from workspace folder: %s", wsp)
+	wsStep.Successf("Using Kyma from the workspace directory: %s", wsp)
 
 	return ws, nil
 }
 
-func (cmd *command) buildCompList(comps []keb.Component) []string {
-	var compSlice []string
+func (cmd *command) componentNames(comps []keb.Component) []string {
+	var names []string
 	for _, c := range comps {
-		compSlice = append(compSlice, c.Component)
+		names = append(names, c.Component)
 	}
-	return compSlice
+	return names
 }
 
-func (cmd *command) createCompListWithOverrides(ws *workspace.Workspace, overrides map[string]interface{}) (component.List, error) {
+func (cmd *command) createComponentsWithOverrides(ws *workspace.Workspace, overrides map[string]interface{}) (component.List, error) {
 	var compList component.List
 	if len(cmd.opts.Components) > 0 {
 		compList = component.FromStrings(cmd.opts.Components, overrides)
@@ -221,10 +271,6 @@ func (cmd *command) createCompListWithOverrides(ws *workspace.Workspace, overrid
 	}
 	compFile := path.Join(ws.InstallationResourceDir, "components.yaml")
 	return component.FromFile(ws, compFile, overrides)
-}
-
-func (cmd *command) printDeployStatus(component string, msg *reconciler.CallbackMessage) {
-	fmt.Printf("Component %s has status %s\n", component, msg.Status)
 }
 
 // avoidUserInteraction returns true if user won't provide input
@@ -280,5 +326,108 @@ func (cmd *command) approveImportCertificate() bool {
 	if cmd.avoidUserInteraction() { //do not import if user-interaction has to be avoided (suppress sudo pwd request)
 		return false
 	}
-	return qImportCertsStep.PromptYesNo("Should the Kyma certificate be installed locally?")
+	return qImportCertsStep.PromptYesNo("Do you want to install the Kyma certificate locally?")
+}
+
+func (cmd *command) printSummary(overrides map[string]interface{}, duration time.Duration) error {
+	domain, ok := overrides["global.domainName"]
+	if !ok {
+		return errors.New("domain not found in overrides")
+	}
+
+	sum := nice.Summary{
+		NonInteractive: cmd.NonInteractive,
+		Version:        cmd.opts.Source,
+		URL:            domain.(string),
+		Dashboard:      dashboardURL,
+		Duration:       duration,
+	}
+
+	return sum.Print()
+}
+
+func (cmd *command) setKubeClient() error {
+	var err error
+	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
+		return errors.Wrap(err, "Cannot initialize the Kubernetes client. Make sure your kubeconfig is valid")
+	}
+	return nil
+}
+
+func (cmd *command) decideVersionUpgrade() error {
+	verifyStep := cmd.NewStep("Verifying Kyma version compatibility")
+
+	currentVersion, err := version.GetCurrentKymaVersion(cmd.K8s)
+	if err != nil {
+		return errors.Wrap(err, "Cannot fetch kyma version")
+	}
+
+	if currentVersion.None() {
+		verifyStep.Successf("No previous Kyma version found")
+		return nil
+	}
+
+	if !currentVersion.IsReleasedVersion() {
+		// Assume we are upgrading from PR-XXX or main or branch
+		if !verifyStep.PromptYesNo(fmt.Sprintf("A kyma installation with version (%s) was found. Do you want to proceed with the upgrade (%s)? ", currentVersion.String(), cmd.opts.Source)) {
+			return errors.New("Upgrade stopped by user")
+		}
+	} else if currentVersion.IsKyma1() {
+		if cmd.avoidUserInteraction() {
+			verifyStep.Failuref("A kyma v1 installation (%s) was found. Please use interactive mode to confirm the upgrade", currentVersion.String())
+		}
+		if !verifyStep.PromptYesNo(fmt.Sprintf("A kyma v1 installation (%s) was found. Do you want to proceed with the upgrade (%s)? ", currentVersion.String(), cmd.opts.Source)) {
+			return errors.New("Upgrade stopped by user")
+		}
+	} else if currentVersion.IsKyma2() {
+		if !verifyStep.PromptYesNo(fmt.Sprintf("A kyma v2 installation (%s) was found. Do you want to proceed with the upgrade? ", currentVersion.String())) {
+			return errors.New("Upgrade stopped by user")
+		}
+	}
+
+	upgradeVersion, err := version.NewKymaVersion(cmd.opts.Source)
+	if err != nil {
+		return errors.Errorf("Version is non parsable: %s", cmd.opts.Source)
+	}
+
+	upgradeDecision := currentVersion.IsCompatibleWith(upgradeVersion)
+	switch upgradeDecision {
+	case version.UpgradeEqualVersion:
+		{
+			verifyStep.Failuref("Current and next Kyma version are equal: %s", currentVersion.String())
+		}
+	case version.UpgradeUndetermined:
+		{
+			verifyStep.Failuref("Cannot check compatibility between version '%s' and '%s'. This might cause errors!",
+				currentVersion.String(), upgradeVersion.String())
+		}
+	case version.UpgradePossible:
+		{
+			verifyStep.Success()
+		}
+	}
+	//seemless upgrade unnecessary or cannot be warrantied, asking user for approval
+	incompatibleStep := cmd.NewStep("Continue Kyma upgrade")
+	if cmd.avoidUserInteraction() || incompatibleStep.PromptYesNo("Do you want to proceed with the upgrade? ") {
+		incompatibleStep.Success()
+		return nil
+	}
+	incompatibleStep.Failure()
+	return fmt.Errorf("upgrade stopped by user")
+}
+
+func (cmd *command) installPrerequisites(wsp string) error {
+	preReqStep := cmd.NewStep("Installing Prerequisites")
+
+	istioctl, err := istio.New(wsp)
+	if err != nil {
+		return err
+	}
+	err = istioctl.Install()
+	if err != nil {
+		return err
+	}
+
+	preReqStep.Successf("Installed Prerequisites")
+	return nil
 }

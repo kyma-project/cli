@@ -1,159 +1,195 @@
 package version
 
 import (
-	"bytes"
+	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/kube/mocks"
+	"github.com/kyma-project/cli/internal/version"
+	"github.com/stretchr/testify/require"
+	v1 "k8s.io/api/apps/v1"
+	coreV1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes/fake"
 	"testing"
-
-	"github.com/kyma-incubator/hydroform/parallel-install/pkg/helm"
-	"github.com/stretchr/testify/assert"
 )
 
-func TestPrintVersion(t *testing.T) {
-	tests := []struct {
-		name           string
-		clientOnly     bool
-		versionDetails bool
-		clientVersion  string
-		kymaVersionSet *helm.KymaVersionSet
-		want           string
-	}{
-		{
-			name:       "client version only (empty)",
-			clientOnly: true,
-			kymaVersionSet: &helm.KymaVersionSet{
-				Versions: []*helm.KymaVersion{
-					{
-						Version: "1.19",
-					},
-				},
-			},
-			want: "Kyma CLI version: N/A\n",
-		},
-		{
-			name:          "client version only (non empty)",
-			clientVersion: "1.20",
-			clientOnly:    true,
-			kymaVersionSet: &helm.KymaVersionSet{
-				Versions: []*helm.KymaVersion{
-					{
-						Version: "1.19",
-						Profile: "evaluation",
-					},
-				},
-			},
-			want: "Kyma CLI version: 1.20\n",
-		},
-		{
-			name:           "client and server version (no Kyma installed)",
-			clientVersion:  "1.20",
-			clientOnly:     false,
-			kymaVersionSet: &helm.KymaVersionSet{},
-			want:           "Kyma CLI version: 1.20\nKyma cluster versions: N/A\n",
-		},
-		{
-			name:          "client and server version (1 Kyma version installed)",
-			clientVersion: "1.20",
-			clientOnly:    false,
-			kymaVersionSet: &helm.KymaVersionSet{
-				Versions: []*helm.KymaVersion{
-					{
-						Version: "1.19",
-					},
-				},
-			},
-			want: "Kyma CLI version: 1.20\nKyma cluster versions: 1.19\n",
-		},
-		{
-			name:          "client and server version (2 Kyma versions installed)",
-			clientVersion: "1.20",
-			clientOnly:    false,
-			kymaVersionSet: &helm.KymaVersionSet{
-				Versions: []*helm.KymaVersion{
-					{
-						Version: "1.19",
-						Profile: "evaluation",
-					},
-					{
-						Version: "1.23",
-					},
-				},
-			},
-			want: "Kyma CLI version: 1.20\nKyma cluster versions: 1.19, 1.23\n",
-		},
-		{
-			name:           "client and server version with details (2 Kyma versions installed)",
-			clientVersion:  "1.20",
-			clientOnly:     false,
-			versionDetails: true,
-			kymaVersionSet: &helm.KymaVersionSet{
-				Versions: []*helm.KymaVersion{
-					{
-						Version:      "1.19",
-						Profile:      "evaluation",
-						CreationTime: 1616070314, //Thursday, 18-Mar-21 13:25:14 CET
-						Components: []*helm.KymaComponentMetadata{
-							{
-								Name:      "comp1",
-								Namespace: "ns1",
-							},
-							{
-								Name:      "comp2",
-								Namespace: "ns1",
-							},
-						},
-					},
-					{
-						Version:      "1.20",
-						Profile:      "",
-						CreationTime: 1616070315, //Thursday, 18-Mar-21 13:25:15 CET
-						Components: []*helm.KymaComponentMetadata{
-							{
-								Name:      "comp1",
-								Namespace: "ns1",
-							},
-							{
-								Name:      "comp3",
-								Namespace: "ns1",
-							},
-						},
-					},
-				},
-			},
-			want: `Kyma CLI version: 1.20
-Kyma cluster versions: 1.19, 1.20
------------------
-Kyma cluster version: 1.19
-Deployed at: Thursday, 18-Mar-21 12:25:14 UTC
-Profile: evaluation
-Components: comp1, comp2
------------------
-Kyma cluster version: 1.20
-Deployed at: Thursday, 18-Mar-21 12:25:15 UTC
-Profile: default
-Components: comp1, comp3
-`,
+func TestKyma2Version(t *testing.T) {
+	kymaMock := &mocks.KymaKube{}
+	cmd := command{
+		Command: cli.Command{
+			Options: cli.NewOptions(),
+			K8s:     kymaMock,
 		},
 	}
+	cmd.Factory.NonInteractive = true
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			command := command{
-				opts: &Options{
-					ClientOnly: tc.clientOnly,
-				},
-			}
+	var l = make(map[string]string)
+	l["reconciler.kyma-project.io/managed-by"] = "reconciler"
+	l["reconciler.kyma-project.io/origin-version"] = "2.0.0"
 
-			buf := new(bytes.Buffer)
-			Version = tc.clientVersion
-			command.printCliVersion(buf)
-			if !tc.clientOnly {
-				command.printKymaVersion(buf, tc.kymaVersionSet)
-			}
-			if tc.versionDetails {
-				command.printKymaVersionDetails(buf, tc.kymaVersionSet)
-			}
-			assert.Equal(t, tc.want, buf.String())
-		})
+	mockDep := fake.NewSimpleClientset(
+		&v1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "foo",
+				Namespace: "kyma-system",
+				Labels:    l,
+			},
+		},
+	)
+	// the kubeclient needs to be faked twice since 1. it checks the kymaVersion and 2. it checks the version
+	kymaMock.On("Static").Return(mockDep).Once()
+	kymaMock.On("Static").Return(mockDep).Once()
+
+	ver, err := version.GetCurrentKymaVersion(cmd.K8s)
+	require.NoError(t, err)
+	require.Equal(t, "2.0.0", ver.String())
+}
+
+func TestKyma1Version(t *testing.T) {
+	kymaMock := &mocks.KymaKube{}
+	cmd := command{
+		Command: cli.Command{
+			Options: cli.NewOptions(),
+			K8s:     kymaMock,
+		},
 	}
+	cmd.Factory.NonInteractive = false
+	var l = make(map[string]string)
+	l["name"] = "kyma-installer"
 
+	con := coreV1.Container{}
+	con.Image = "foo:1.24.6"
+
+	mockPod := fake.NewSimpleClientset(
+		&coreV1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "kyma-installer",
+				Namespace: "kyma-installer",
+				Labels:    l,
+			}, Spec: coreV1.PodSpec{
+				Containers: []coreV1.Container{con},
+			},
+		},
+	)
+	kymaMock.On("Static").Return(mockPod).Once()
+	kymaMock.On("Static").Return(mockPod).Once()
+
+	ver, err := version.GetCurrentKymaVersion(cmd.K8s)
+	require.NoError(t, err)
+	require.Equal(t, "1.24.6", ver.String())
+}
+
+func TestPRVersion(t *testing.T) {
+	kymaMock := &mocks.KymaKube{}
+	cmd := command{
+		Command: cli.Command{
+			Options: cli.NewOptions(),
+			K8s:     kymaMock,
+		},
+	}
+	cmd.Factory.NonInteractive = true
+
+	var l = make(map[string]string)
+	l["reconciler.kyma-project.io/managed-by"] = "reconciler"
+	l["reconciler.kyma-project.io/origin-version"] = "PR-12345"
+
+	mockDep := fake.NewSimpleClientset(
+		&v1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "foo",
+				Namespace: "kyma-system",
+				Labels:    l,
+			},
+		},
+	)
+	// the kubeclient needs to be faked twice since 1. it checks the kymaVersion and 2. it checks the version
+	kymaMock.On("Static").Return(mockDep).Once()
+	kymaMock.On("Static").Return(mockDep).Once()
+
+	ver, err := version.GetCurrentKymaVersion(cmd.K8s)
+	require.NoError(t, err)
+	require.Equal(t, "PR-12345", ver.String())
+}
+
+func TestSHAVersion(t *testing.T) {
+	kymaMock := &mocks.KymaKube{}
+	cmd := command{
+		Command: cli.Command{
+			Options: cli.NewOptions(),
+			K8s:     kymaMock,
+		},
+	}
+	cmd.Factory.NonInteractive = true
+
+	var l = make(map[string]string)
+	l["reconciler.kyma-project.io/managed-by"] = "reconciler"
+	l["reconciler.kyma-project.io/origin-version"] = "main-abcde"
+
+	mockDep := fake.NewSimpleClientset(
+		&v1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "foo",
+				Namespace: "kyma-system",
+				Labels:    l,
+			},
+		},
+	)
+	// the kubeclient needs to be faked twice since 1. it checks the kymaVersion and 2. it checks the version
+	kymaMock.On("Static").Return(mockDep).Once()
+	kymaMock.On("Static").Return(mockDep).Once()
+
+	ver, err := version.GetCurrentKymaVersion(cmd.K8s)
+	require.NoError(t, err)
+	require.Equal(t, "main-abcde", ver.String())
+}
+
+func TestBranchVersion(t *testing.T) {
+	kymaMock := &mocks.KymaKube{}
+	cmd := command{
+		Command: cli.Command{
+			Options: cli.NewOptions(),
+			K8s:     kymaMock,
+		},
+	}
+	cmd.Factory.NonInteractive = true
+
+	var l = make(map[string]string)
+	l["reconciler.kyma-project.io/managed-by"] = "reconciler"
+	l["reconciler.kyma-project.io/origin-version"] = "my-branch"
+
+	mockDep := fake.NewSimpleClientset(
+		&v1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "foo",
+				Namespace: "kyma-system",
+				Labels:    l,
+			},
+		},
+	)
+	// the kubeclient needs to be faked twice since 1. it checks the kymaVersion and 2. it checks the version
+	kymaMock.On("Static").Return(mockDep).Once()
+	kymaMock.On("Static").Return(mockDep).Once()
+
+	ver, err := version.GetCurrentKymaVersion(cmd.K8s)
+	require.NoError(t, err)
+	require.Equal(t, "my-branch", ver.String())
+}
+
+func TestNoKymaVersion(t *testing.T) {
+	kymaMock := &mocks.KymaKube{}
+	cmd := command{
+		Command: cli.Command{
+			Options: cli.NewOptions(),
+			K8s:     kymaMock,
+		},
+	}
+	cmd.Factory.NonInteractive = true
+
+	mockClientset := fake.NewSimpleClientset()
+	// the kubeclient needs to be faked twice since 1. it checks the kymaVersion and 2. it checks the version
+	kymaMock.On("Static").Return(mockClientset).Once()
+	kymaMock.On("Static").Return(mockClientset).Once()
+
+	ver, err := version.GetCurrentKymaVersion(cmd.K8s)
+	require.NoError(t, err)
+	require.Equal(t, "N/A", ver.String())
 }
