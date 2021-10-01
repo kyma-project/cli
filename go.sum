@@ -265,10 +265,8 @@ github.com/bugsnag/osext v0.0.0-20130617224835-0dd3f918b21b/go.mod h1:obH5gd0Bsq
 github.com/bugsnag/panicwrap v0.0.0-20151223152923-e2c28503fcd0 h1:nvj0OLI3YqYXer/kZD8Ri1aaunCxIEsOst1BVJswV0o=
 github.com/bugsnag/panicwrap v0.0.0-20151223152923-e2c28503fcd0/go.mod h1:D/8v3kj0zr8ZAKg1AQ6crr+5VwKN5eIywRkfhyM/+dE=
 github.com/casbin/casbin/v2 v2.1.2/go.mod h1:YcPU1XXisHhLzuxH9coDNf2FbKpjGlbCg3n9yuLkIJQ=
-github.com/cenkalti/backoff v2.2.1+incompatible h1:tNowT99t7UNflLxfYYSlKYsBpXdEet03Pg2g16Swow4=
 github.com/cenkalti/backoff v2.2.1+incompatible/go.mod h1:90ReRw6GdpyfrHakVjL/QHaoyV4aDUVVkXQJJJ3NXXM=
 github.com/cenkalti/backoff/v4 v4.0.2/go.mod h1:eEew/i+1Q6OrCDZh3WiXYv3+nJwBASZ8Bog/87DQnVg=
-github.com/cenkalti/backoff/v4 v4.1.0 h1:c8LkOFQTzuO0WBM/ae5HdGQuZPfPxp7lqBRwQRm4fSc=
 github.com/cenkalti/backoff/v4 v4.1.0/go.mod h1:scbssz8iZGpm3xbr14ovlUdkxfGXNInqkPWOWmG2CLw=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/cespare/xxhash v1.1.0 h1:a6HrQnmkObjyL+Gs60czilIUGqrzKutQD6XZog3p+ko=
@@ -926,8 +924,8 @@ github.com/kyma-incubator/hydroform/provision v0.0.0-20210514061348-c71b69cb362e
 github.com/kyma-incubator/hydroform/provision v0.0.0-20210514061348-c71b69cb362e/go.mod h1:x4YfWgupo4fc7vgGFb0aJfSWCh9W72ipmNekfY1oYeo=
 github.com/kyma-incubator/octopus v0.0.0-20200922132758-2b721e93b58b h1:xgIzqXn9JolPuSAkQ/u+Myn/S3aLH8rlPc8++O6ogSY=
 github.com/kyma-incubator/octopus v0.0.0-20200922132758-2b721e93b58b/go.mod h1:qliPSTjCHo+PHStTPaLnulVviDBhJWb9wFk71Ht9qsc=
-github.com/kyma-incubator/reconciler v0.0.0-20210924122650-4e4d26f25018 h1:1AUBawK8t0FQEu0mgW+us4jH7yMCgaTuVEFrSgeT5CQ=
-github.com/kyma-incubator/reconciler v0.0.0-20210924122650-4e4d26f25018/go.mod h1:nt23LlTl6ruJJNjvB1Clw2cyvs8rOnJNrr78/4VP+zY=
+github.com/kyma-incubator/reconciler v0.0.0-20210930093626-7b9300ccd4ed h1:OR2yu5YKt/JRGWQ2PknYJshHmMflzPJJ5rQDl3HLBSg=
+github.com/kyma-incubator/reconciler v0.0.0-20210930093626-7b9300ccd4ed/go.mod h1:nt23LlTl6ruJJNjvB1Clw2cyvs8rOnJNrr78/4VP+zY=
 github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20200817094157-8392259f5be1/go.mod h1:Svisep1qUjML69qtRee5OcDOpWVjxID2Nb6E/xyhQ5k=
 github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20201125092745-687c943ac940 h1:TEquDCgUClhTnSIOc3oZn1YZ53/aK4mu3AwXu6kih+4=
 github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20201125092745-687c943ac940/go.mod h1:jDvGQt3ccmrDW/9dZufC8e4xwr+PUTR74IJ0yQ81Jhk=

@@ -1,142 +1,148 @@
 package deploy
 
 import (
-	"encoding/json"
-	"testing"
-
-	"github.com/stretchr/testify/assert"
+	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/kube/mocks"
 	"github.com/stretchr/testify/require"
+	"io/ioutil"
+	v1 "k8s.io/api/apps/v1"
+	coreV1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes/fake"
+	"os"
+	"testing"
 )
 
-func TestOverrides(t *testing.T) {
-
-	t.Run("Test long override with equal separator", func(t *testing.T) {
-		command := command{
-			opts: &Options{
-				Overrides: []string{"test.is.a.pretty.long.happy.path.test=successful"},
-			},
-		}
-		err := assertValidOverride(t, command, `{"is":{"a":{"pretty":{"long":{"happy":{"path":{"test":"successful"}}}}}}}`)
-		require.NoError(t, err)
-	})
-
-	t.Run("Test override with whitespace separator", func(t *testing.T) {
-		command := command{
-			opts: &Options{
-				Overrides: []string{"test.happypath.test successful"},
-			},
-		}
-		err := assertValidOverride(t, command, `{"happypath":{"test":"successful"}}`)
-		require.NoError(t, err)
-	})
-
-	t.Run("Short override", func(t *testing.T) {
-		command := command{
-			opts: &Options{
-				Overrides: []string{"test.happypath=successful"},
-			},
-		}
-		err := assertValidOverride(t, command, `{"happypath":"successful"}`)
-		require.NoError(t, err)
-	})
-
-	t.Run("Comma separated overrides", func(t *testing.T) {
-		command := command{
-			opts: &Options{
-				Overrides: []string{"test.happypath=successful,test.secondpath=also_successful"},
-			},
-		}
-		err := assertValidOverride(t, command, `{"happypath":"successful", "secondpath":"also_successful"}`)
-		require.NoError(t, err)
-	})
-
-	t.Run("Comma separated overrides with space", func(t *testing.T) {
-		command := command{
-			opts: &Options{
-				Overrides: []string{"test.happypath=successful, test.secondpath=also_successful"},
-			},
-		}
-		err := assertValidOverride(t, command, `{"happypath":"successful", "secondpath":"also_successful"}`)
-		require.NoError(t, err)
-	})
-
-	t.Run("No value - invalid", func(t *testing.T) {
-		command := command{
-			opts: &Options{
-				Overrides: []string{""},
-			},
-		}
-		_, err := command.overrides()
-		assert.Error(t, err)
-	})
-
-	t.Run("One value - invalid", func(t *testing.T) {
-		command := command{
-			opts: &Options{
-				Overrides: []string{"one"},
-			},
-		}
-		_, err := command.overrides()
-		assert.Error(t, err)
-	})
-
-	t.Run("Two values - invalid", func(t *testing.T) {
-		command := command{
-			opts: &Options{
-				Overrides: []string{"one two"},
-			},
-		}
-		_, err := command.overrides()
-		assert.Error(t, err)
-	})
-
-	t.Run("Key without value - invalide", func(t *testing.T) {
-		command := command{
-			opts: &Options{
-				Overrides: []string{"chart.key1="},
-			},
-		}
-		_, err := command.overrides()
-		assert.Error(t, err)
-	})
-}
-
-// assert the generated override map
-// use expectedJSON to define the expected result as JSON string
-// (this is just for convenience as we have to compare a nested map which is painful to generate by hand)
-func assertValidOverride(t *testing.T, command command, expectedJSON string) error {
-	builder, err := command.overrides()
-	assert.NoError(t, err)
-
-	overrides, err := builder.Build()
-	assert.NoError(t, err)
-
-	var expected interface{}
-	if err := json.Unmarshal([]byte(expectedJSON), &expected); err != nil {
-		return err
+func Test_upgkyma2tokyma2(t *testing.T) {
+	kymaMock := &mocks.KymaKube{}
+	cmd := command{
+		Command: cli.Command{
+			Options: cli.NewOptions(),
+			K8s:     kymaMock,
+		},
+		opts: &Options{
+			Source: "main",
+		},
 	}
+	cmd.Factory.NonInteractive = true
 
-	v, ok := overrides.Find("test")
-	assert.Equal(t, expected, v)
-	assert.True(t, ok)
+	var l = make(map[string]string)
+	l["reconciler.kyma-project.io/managed-by"] = "reconciler"
+	l["reconciler.kyma-project.io/origin-version"] = "2.0.0"
 
-	return nil
+	mockDep := fake.NewSimpleClientset(
+		&v1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "foo",
+				Namespace: "kyma-system",
+				Labels:    l,
+			},
+		},
+	)
+	// the kubeclient needs to be faked twice since 1. it checks the kymaVersion and 2. it checks the versiob
+	kymaMock.On("Static").Return(mockDep).Once()
+	kymaMock.On("Static").Return(mockDep).Once()
+
+	captureStdout := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+	err := cmd.decideVersionUpgrade()
+
+	w.Close()
+	out, _ := ioutil.ReadAll(r)
+	os.Stdout = captureStdout
+	expectedOutput := "? A kyma v2 installation (2.0.0) was found. Do you want to proceed with the upgrade? Type [y/N]:"
+	require.Contains(t, string(out), expectedOutput)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "Upgrade stopped by user")
 }
 
-func TestCreateCompList(t *testing.T) {
-	t.Run("Create component list using --component flag", func(t *testing.T) {
-		command := command{
-			opts: &Options{
-				Components: []string{"comp1", "comp2@test-namespace"},
+func Test_upgkyma1tokyma2(t *testing.T) {
+	kymaMock := &mocks.KymaKube{}
+	cmd := command{
+		Command: cli.Command{
+			Options: cli.NewOptions(),
+			K8s:     kymaMock,
+		},
+		opts: &Options{
+			Source: "2.0.0",
+		},
+	}
+	cmd.Factory.NonInteractive = false
+	var l = make(map[string]string)
+	l["name"] = "kyma-installer"
+
+	con := coreV1.Container{}
+	con.Image = "foo:1.24.6"
+
+	mockPod := fake.NewSimpleClientset(
+		&coreV1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "kyma-installer",
+				Namespace: "kyma-installer",
+				Labels:    l,
+			}, Spec: coreV1.PodSpec{
+				Containers: []coreV1.Container{con},
 			},
-		}
-		compList, _ := command.createCompList()
+		},
+	)
+	kymaMock.On("Static").Return(mockPod).Once()
+	kymaMock.On("Static").Return(mockPod).Once()
 
-		require.Equal(t, "comp1", compList.Components[0].Name)
-		// comp1 will have the default namespace which is specified in parallel-install library
-		require.NotEmpty(t, compList.Components[0].Namespace)
+	captureStdout := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+	err := cmd.decideVersionUpgrade()
 
-		require.Equal(t, "comp2", compList.Components[1].Name)
-		require.Equal(t, "test-namespace", compList.Components[1].Namespace)
-	})
+	w.Close()
+	out, _ := ioutil.ReadAll(r)
+	os.Stdout = captureStdout
+	expectedOutput := "? A kyma v1 installation (1.24.6) was found. Do you want to proceed with the upgrade (2.0.0)? Type [y/N]:"
+	require.Contains(t, string(out), expectedOutput)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "Upgrade stopped by user")
+}
+
+func Test_upgkymaFootokyma2(t *testing.T) {
+	kymaMock := &mocks.KymaKube{}
+	cmd := command{
+		Command: cli.Command{
+			Options: cli.NewOptions(),
+			K8s:     kymaMock,
+		},
+		opts: &Options{
+			Source: "2.0.0",
+		},
+	}
+	cmd.Factory.NonInteractive = true
+
+	var l = make(map[string]string)
+	l["reconciler.kyma-project.io/managed-by"] = "reconciler"
+	l["reconciler.kyma-project.io/origin-version"] = "12e41ab5"
+
+	mockDep := fake.NewSimpleClientset(
+		&v1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "foo",
+				Namespace: "kyma-system",
+				Labels:    l,
+			},
+		},
+	)
+	// the kubeclient needs to be faked twice since 1. it checks the kymaVersion and 2. it checks the version
+	kymaMock.On("Static").Return(mockDep).Once()
+	kymaMock.On("Static").Return(mockDep).Once()
+
+	captureStdout := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+	err := cmd.decideVersionUpgrade()
+
+	w.Close()
+	out, _ := ioutil.ReadAll(r)
+	os.Stdout = captureStdout
+	expectedOutput := "? A kyma installation with version (12e41ab5) was found. Do you want to proceed with the upgrade (2.0.0)? Type [y/N]:"
+	require.Contains(t, string(out), expectedOutput)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "Upgrade stopped by user")
 }
