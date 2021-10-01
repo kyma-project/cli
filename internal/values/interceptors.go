@@ -123,6 +123,7 @@ type certificateOverrideInterceptor struct {
 	isGardenerCluster func() (bool, error)
 }
 
+//nolint:unparam
 func newCertificateOverrideInterceptor(tlsCrtOverrideKey, tlsKeyOverrideKey string, kubeClient kubernetes.Interface) *certificateOverrideInterceptor {
 	res := &certificateOverrideInterceptor{
 		tlsCrtOverrideKey: tlsCrtOverrideKey,
