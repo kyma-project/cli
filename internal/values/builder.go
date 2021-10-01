@@ -24,63 +24,56 @@ const (
 	interceptorOpsIntercept = "Intercept"
 )
 
-// Overrides manages override merges
-type Builder struct {
+type builder struct {
 	files        []string
-	overrides    []map[string]interface{}
-	interceptors map[string]OverrideInterceptor
+	values       []map[string]interface{}
+	interceptors map[string]valueInterceptor
 }
 
-// AddFile adds overrides defined in a file to the builder
-func (ob *Builder) AddFile(file string) error {
-	if _, err := os.Stat(file); os.IsNotExist(err) {
+func (ob *builder) addValuesFile(filePath string) error {
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		return errors.Wrap(err, "invalid override file: not exists")
 	}
 
 	for _, ext := range supportedFileExt {
-		if strings.HasSuffix(file, fmt.Sprintf(".%s", ext)) {
-			ob.files = append(ob.files, file)
+		if strings.HasSuffix(filePath, fmt.Sprintf(".%s", ext)) {
+			ob.files = append(ob.files, filePath)
 			return nil
 		}
 	}
 	return fmt.Errorf("Unsupported override file extension. Supported extensions are: %s", strings.Join(supportedFileExt, ", "))
 }
 
-// AddOverrides adds overrides for a chart to the builder
-func (ob *Builder) AddOverrides(overrides map[string]interface{}) error {
-	if len(overrides) < 1 {
-		return fmt.Errorf("invalid overrides: empty")
+func (ob *builder) addValues(values map[string]interface{}) error {
+	if len(values) < 1 {
+		return fmt.Errorf("invalid values: empty")
 	}
 
-	ob.overrides = append(ob.overrides, overrides)
+	ob.values = append(ob.values, values)
 	return nil
 }
 
-// AddInterceptor registers an interceptor for particular override keys
-func (ob *Builder) AddInterceptor(overrideKeys []string, interceptor OverrideInterceptor) {
+func (ob *builder) addInterceptor(overrideKeys []string, interceptor valueInterceptor) {
 	if ob.interceptors == nil {
-		ob.interceptors = make(map[string]OverrideInterceptor)
+		ob.interceptors = make(map[string]valueInterceptor)
 	}
 	for _, overrideKey := range overrideKeys {
 		ob.interceptors[overrideKey] = interceptor
 	}
 }
 
-// Build an overrides object merging all provided sources and applying interceptors
-// WARNING: call this function sparingly, it runs all interceptors, potentially incurring heavy computations.
-func (ob *Builder) Build() (Overrides, error) {
-	o, err := ob.Raw()
+func (ob *builder) build() (Overrides, error) {
+	o, err := ob.raw()
 	if err != nil {
 		return Overrides{}, err
 	}
 
-	// assign intercepted overrides back to the original object to not loose the values
+	// assign intercepted values back to the original object to not loose the values
 	o.overrides, err = o.intercept(interceptorOpsIntercept)
 	return o, err
 }
 
-// Raw builds an overrides object contining only the raw values in the sources, without applying interceptors.
-func (ob *Builder) Raw() (Overrides, error) {
+func (ob *builder) raw() (Overrides, error) {
 	merged, err := ob.mergeSources()
 	if err != nil {
 		return Overrides{}, err
@@ -92,8 +85,7 @@ func (ob *Builder) Raw() (Overrides, error) {
 	}, nil
 }
 
-// mergeSources merges together all overrides sources into a single map
-func (ob *Builder) mergeSources() (map[string]interface{}, error) {
+func (ob *builder) mergeSources() (map[string]interface{}, error) {
 	result := make(map[string]interface{})
 
 	// merge files
@@ -119,8 +111,8 @@ func (ob *Builder) mergeSources() (map[string]interface{}, error) {
 		}
 	}
 
-	//merge overrides
-	for _, override := range ob.overrides {
+	//merge values
+	for _, override := range ob.values {
 		if err := mergo.Map(&result, override, mergo.WithOverride); err != nil {
 			return nil, err
 		}
@@ -131,15 +123,15 @@ func (ob *Builder) mergeSources() (map[string]interface{}, error) {
 
 type Overrides struct {
 	overrides    map[string]interface{}
-	interceptors map[string]OverrideInterceptor
+	interceptors map[string]valueInterceptor
 }
 
-// Map returns a copy of the overrides in map form
+// Map returns a copy of the values in map form
 func (o Overrides) Map() map[string]interface{} {
 	return copyMap(o.overrides)
 }
 
-// FlattenedMap returns a copy of the overrides in flattened map form (nested keys are merged separated by dots)
+// FlattenedMap returns a copy of the values in flattened map form (nested keys are merged separated by dots)
 func (o Overrides) FlattenedMap() map[string]interface{} {
 	return flattenOverrides(o.Map())
 }
@@ -161,7 +153,7 @@ func flattenOverrides(overrides map[string]interface{}) map[string]interface{} {
 	return result
 }
 
-// String all provided overrides
+// String all provided values
 func (o Overrides) String() string {
 	in, err := o.intercept(interceptorOpsString)
 	if err != nil {
@@ -170,7 +162,6 @@ func (o Overrides) String() string {
 	return fmt.Sprintf("%v", in)
 }
 
-// Find returns a value on the overrides following a path separated by "." and if it exists.
 func (o Overrides) Find(key string) (interface{}, bool) {
 	return deepFind(o.overrides, strings.Split(key, "."))
 }
@@ -189,8 +180,6 @@ func deepFind(m map[string]interface{}, path []string) (interface{}, bool) {
 	return v, ok
 }
 
-// setValue recursively traverses a map of maps and sets the givenOverrides value in the givenOverrides path separated by ".".
-// Should the value type not be assignable to the path an error will be returned
 func setValue(m map[string]interface{}, path []string, value interface{}) error {
 	// if reached the end of the path it means the user is setting a map or path is wrong
 	if len(path) == 0 {
@@ -207,8 +196,6 @@ func setValue(m map[string]interface{}, path []string, value interface{}) error 
 	return nil
 }
 
-// intercept runs all interceptors on the overrides and returns a copy of the overrides map with updated values
-// The updated map can either be assigned back to the overrides to update the object optionally.
 func (o Overrides) intercept(ops interceptorOps) (map[string]interface{}, error) {
 	result := copyMap(o.overrides)
 

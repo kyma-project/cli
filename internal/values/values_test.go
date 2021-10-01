@@ -102,7 +102,7 @@ func TestMerge(t *testing.T) {
 		{
 			summary:    "multiple values with single value file",
 			values:     []string{"component.key=foo", "component.inner.key=bar"},
-			valueFiles: []string{"testdata/valid-overrides-1.yaml"},
+			valueFiles: []string{"testdata/valid-values-1.yaml"},
 			expected: map[string]interface{}{
 				"global.domainName":         any,
 				"global.tlsCrt":             any,
@@ -116,7 +116,7 @@ func TestMerge(t *testing.T) {
 		{
 			summary:    "multiple values with single value files",
 			values:     []string{"component.key=foo", "component.inner.key=bar"},
-			valueFiles: []string{"testdata/valid-overrides-1.yaml"},
+			valueFiles: []string{"testdata/valid-values-1.yaml"},
 			expected: map[string]interface{}{
 				"global.domainName":         any,
 				"global.tlsCrt":             any,
@@ -130,7 +130,7 @@ func TestMerge(t *testing.T) {
 		{
 			summary:    "multiple values with multiple value files",
 			values:     []string{"component.key=foo", "component.inner.key=bar"},
-			valueFiles: []string{"testdata/valid-overrides-1.yaml", "testdata/valid-overrides-2.yaml"},
+			valueFiles: []string{"testdata/valid-values-1.yaml", "testdata/valid-values-2.yaml"},
 			expected: map[string]interface{}{
 				"global.domainName":         any,
 				"global.tlsCrt":             any,
@@ -138,7 +138,7 @@ func TestMerge(t *testing.T) {
 				"global.ingress.domainName": any,
 				"component.key":             "foo", //value wins
 				"component.inner.key":       "bar",
-				"component.outer.inner.key": "bzz", //value file testdata/valid-overrides-2.yaml wins
+				"component.outer.inner.key": "bzz", //value file testdata/valid-values-2.yaml wins
 			},
 		},
 		{
@@ -153,7 +153,7 @@ func TestMerge(t *testing.T) {
 		},
 		{
 			summary:     "corrupted value file",
-			valueFiles:  []string{"testdata/corrupted-overrides.yaml"},
+			valueFiles:  []string{"testdata/corrupted-values.yaml"},
 			expectedErr: true,
 		},
 		{
@@ -212,7 +212,7 @@ func TestMerge(t *testing.T) {
 		defer fakeServer.Close()
 
 		opts := Settings{
-			ValueFiles: []string{fmt.Sprintf("%s:/%s", fakeServer.URL, "valid-overrides-1.yaml")},
+			ValueFiles: []string{fmt.Sprintf("%s:/%s", fakeServer.URL, "valid-values-1.yaml")},
 		}
 		actual, err := Merge(opts, &workspace.Workspace{}, fake.NewSimpleClientset())
 

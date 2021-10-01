@@ -81,41 +81,41 @@ func (roi *undefinedOverrideInterceptor) Undefined(overrides map[string]interfac
 
 func Test_InterceptValue(t *testing.T) {
 	t.Run("Test interceptor without failures", func(t *testing.T) {
-		builder := Builder{}
-		err := builder.AddFile("testdata/deployment-overrides-intercepted.yaml")
+		builder := builder{}
+		err := builder.addValuesFile("testdata/deployment-values-intercepted.yaml")
 		require.NoError(t, err)
-		builder.AddInterceptor([]string{"chart.key2.key2-1", "chart.key4"}, &replaceOverrideInterceptor{})
+		builder.addInterceptor([]string{"chart.key2.key2-1", "chart.key4"}, &replaceOverrideInterceptor{})
 
 		// read expected result
-		data, err := ioutil.ReadFile("testdata/deployment-overrides-intercepted-result.yaml")
+		data, err := ioutil.ReadFile("testdata/deployment-values-intercepted-result.yaml")
 		require.NoError(t, err)
 		var expected map[string]interface{}
 		err = yaml.Unmarshal(data, &expected)
 		require.NoError(t, err)
 
 		// verify merge result with expected data
-		overrides, err := builder.Build()
+		overrides, err := builder.build()
 		require.NoError(t, err)
 		require.Equal(t, expected, overrides.Map())
 	})
 
 	t.Run("Test interceptor with failure", func(t *testing.T) {
-		builder := Builder{}
-		err := builder.AddFile("testdata/deployment-overrides-intercepted.yaml")
+		builder := builder{}
+		err := builder.addValuesFile("testdata/deployment-values-intercepted.yaml")
 		require.NoError(t, err)
-		builder.AddInterceptor([]string{"chart.key1"}, &failingOverrideInterceptor{})
-		overrides, err := builder.Build()
+		builder.addInterceptor([]string{"chart.key1"}, &failingOverrideInterceptor{})
+		overrides, err := builder.build()
 		require.Empty(t, overrides.Map())
 		require.Error(t, err)
 	})
 }
 
 func Test_InterceptStringer(t *testing.T) {
-	builder := Builder{}
-	err := builder.AddFile("testdata/deployment-overrides-intercepted.yaml")
+	builder := builder{}
+	err := builder.addValuesFile("testdata/deployment-values-intercepted.yaml")
 	require.NoError(t, err)
-	builder.AddInterceptor([]string{"chart.key1", "chart.key3"}, &stringerOverrideInterceptor{})
-	overrides, err := builder.Build()
+	builder.addInterceptor([]string{"chart.key1", "chart.key3"}, &stringerOverrideInterceptor{})
+	overrides, err := builder.build()
 	require.NoError(t, err)
 	require.Equal(t,
 		"map[chart:map[key1:string-value1yaml key2:map[key2-1:value2.1yaml key2-2:value2.2yaml] key3:string-value3yaml key4:value4yaml]]",
@@ -123,81 +123,81 @@ func Test_InterceptStringer(t *testing.T) {
 }
 
 func Test_InterceptUndefined(t *testing.T) {
-	builder := Builder{}
-	err := builder.AddFile("testdata/deployment-overrides-intercepted.yaml")
+	builder := builder{}
+	err := builder.addValuesFile("testdata/deployment-values-intercepted.yaml")
 	require.NoError(t, err)
-	builder.AddInterceptor([]string{"I.dont.exist"}, &undefinedOverrideInterceptor{})
-	overrides, err := builder.Build()
+	builder.addInterceptor([]string{"I.dont.exist"}, &undefinedOverrideInterceptor{})
+	overrides, err := builder.build()
 	require.Empty(t, overrides.Map())
 	require.Error(t, err)
 	require.Equal(t, "This value was missing", err.Error())
 }
 
 func Test_FallbackInterceptor(t *testing.T) {
-	builder := Builder{}
-	err := builder.AddFile("testdata/deployment-overrides-intercepted.yaml")
+	builder := builder{}
+	err := builder.addValuesFile("testdata/deployment-values-intercepted.yaml")
 	require.NoError(t, err)
 
 	t.Run("Test FallbackInterceptor happy path", func(t *testing.T) {
-		builder.AddInterceptor([]string{"I.dont.exist"}, NewFallbackOverrideInterceptor("I am the fallback"))
-		overrides, err := builder.Build()
+		builder.addInterceptor([]string{"I.dont.exist"}, newFallbackOverrideInterceptor("I am the fallback"))
+		overrides, err := builder.build()
 		require.NotEmpty(t, overrides)
 		require.NoError(t, err)
 		require.Equal(t, "I am the fallback", overrides.Map()["I"].(map[string]interface{})["dont"].(map[string]interface{})["exist"])
 	})
 
 	t.Run("Test FallbackInterceptor with sub-key which is not a map", func(t *testing.T) {
-		builder.AddInterceptor([]string{"chart.key3.xyz"}, NewFallbackOverrideInterceptor("Use me as fallback"))
-		overrides, err := builder.Build()
+		builder.addInterceptor([]string{"chart.key3.xyz"}, newFallbackOverrideInterceptor("Use me as fallback"))
+		overrides, err := builder.build()
 		require.Empty(t, overrides.Map())
 		require.Error(t, err)
 	})
 }
 
 func Test_GlobalOverridesInterceptionForLocalCluster(t *testing.T) {
-	ob := Builder{}
+	ob := builder{}
 	kubeClient := fake.NewSimpleClientset()
 
-	newDomainNameOverrideInterceptor := NewDomainNameOverrideInterceptor(kubeClient)
+	newDomainNameOverrideInterceptor := newDomainNameOverrideInterceptor(kubeClient)
 	newDomainNameOverrideInterceptor.isLocalCluster = isLocalClusterFunc(true)
 
-	newCertificateOverrideInterceptor := NewCertificateOverrideInterceptor("global.tlsCrt", "global.tlsKey", kubeClient)
+	newCertificateOverrideInterceptor := newCertificateOverrideInterceptor("global.tlsCrt", "global.tlsKey", kubeClient)
 	newCertificateOverrideInterceptor.isLocalCluster = isLocalClusterFunc(true)
 
-	ob.AddInterceptor([]string{"global.isLocalEnv", "global.environment.gardener"}, NewFallbackOverrideInterceptor(false))
-	ob.AddInterceptor([]string{"global.domainName", "global.ingress.domainName"}, newDomainNameOverrideInterceptor)
-	ob.AddInterceptor([]string{"global.tlsCrt", "global.tlsKey"}, newCertificateOverrideInterceptor)
+	ob.addInterceptor([]string{"global.isLocalEnv", "global.environment.gardener"}, newFallbackOverrideInterceptor(false))
+	ob.addInterceptor([]string{"global.domainName", "global.ingress.domainName"}, newDomainNameOverrideInterceptor)
+	ob.addInterceptor([]string{"global.tlsCrt", "global.tlsKey"}, newCertificateOverrideInterceptor)
 
 	// read expected result
-	data, err := ioutil.ReadFile("testdata/deployment-global-overrides.yaml")
+	data, err := ioutil.ReadFile("testdata/deployment-global-values.yaml")
 	require.NoError(t, err)
 	var expected map[string]interface{}
 	err = yaml.Unmarshal(data, &expected)
 	require.NoError(t, err)
 
-	// verify global overrides
-	overrides, err := ob.Build()
+	// verify global values
+	overrides, err := ob.build()
 	require.NotEmpty(t, overrides)
 	require.NoError(t, err)
 	require.Equal(t, expected, overrides.Map())
 }
 
 func Test_GlobalOverridesInterceptionForNonGardenerCluster(t *testing.T) {
-	ob := Builder{}
+	ob := builder{}
 	kubeClient := fake.NewSimpleClientset()
 
-	newDomainNameOverrideInterceptor := NewDomainNameOverrideInterceptor(kubeClient)
+	newDomainNameOverrideInterceptor := newDomainNameOverrideInterceptor(kubeClient)
 	newDomainNameOverrideInterceptor.isLocalCluster = isLocalClusterFunc(false)
 
-	newCertificateOverrideInterceptor := NewCertificateOverrideInterceptor("global.tlsCrt", "global.tlsKey", kubeClient)
+	newCertificateOverrideInterceptor := newCertificateOverrideInterceptor("global.tlsCrt", "global.tlsKey", kubeClient)
 	newCertificateOverrideInterceptor.isLocalCluster = isLocalClusterFunc(false)
 
-	ob.AddInterceptor([]string{"global.isLocalEnv", "global.environment.gardener"}, NewFallbackOverrideInterceptor(false))
-	ob.AddInterceptor([]string{"global.domainName", "global.ingress.domainName"}, newDomainNameOverrideInterceptor)
-	ob.AddInterceptor([]string{"global.tlsCrt", "global.tlsKey"}, newCertificateOverrideInterceptor)
+	ob.addInterceptor([]string{"global.isLocalEnv", "global.environment.gardener"}, newFallbackOverrideInterceptor(false))
+	ob.addInterceptor([]string{"global.domainName", "global.ingress.domainName"}, newDomainNameOverrideInterceptor)
+	ob.addInterceptor([]string{"global.tlsCrt", "global.tlsKey"}, newCertificateOverrideInterceptor)
 
 	// read expected result
-	data, err := ioutil.ReadFile("testdata/deployment-global-overrides-for-remote-cluster.yaml")
+	data, err := ioutil.ReadFile("testdata/deployment-global-values-for-remote-cluster.yaml")
 	require.NoError(t, err)
 	var expected map[string]interface{}
 	err = yaml.Unmarshal(data, &expected)
@@ -212,20 +212,20 @@ func Test_GlobalOverridesInterceptionForNonGardenerCluster(t *testing.T) {
 	require.Contains(t, expectedKeys, "global.environment.gardener")
 	require.Contains(t, expectedKeys, "global.ingress.domainName")
 
-	// verify global overrides
-	overrides, err := ob.Build()
+	// verify global values
+	overrides, err := ob.build()
 	require.NotEmpty(t, overrides)
 	require.NoError(t, err)
 	require.Equal(t, expected, overrides.Map())
 }
 
 func Test_DomainNameOverrideInterceptor(t *testing.T) {
-	ob := Builder{}
+	ob := builder{}
 
 	gardenerCM := fakeGardenerCM()
 
-	mockNewDomainNameOverrideInterceptor := func(kubeClient kubernetes.Interface, isLocal bool) *DomainNameOverrideInterceptor {
-		newDomainNameOverrideInterceptor := NewDomainNameOverrideInterceptor(kubeClient)
+	mockNewDomainNameOverrideInterceptor := func(kubeClient kubernetes.Interface, isLocal bool) *domainNameOverrideInterceptor {
+		newDomainNameOverrideInterceptor := newDomainNameOverrideInterceptor(kubeClient)
 		newDomainNameOverrideInterceptor.isLocalCluster = isLocalClusterFunc(isLocal)
 		return newDomainNameOverrideInterceptor
 	}
@@ -233,10 +233,10 @@ func Test_DomainNameOverrideInterceptor(t *testing.T) {
 	t.Run("test default domain for local cluster", func(t *testing.T) {
 		// givenOverrides
 		kubeClient := fake.NewSimpleClientset()
-		ob.AddInterceptor([]string{"global.domainName"}, mockNewDomainNameOverrideInterceptor(kubeClient, true))
+		ob.addInterceptor([]string{"global.domainName"}, mockNewDomainNameOverrideInterceptor(kubeClient, true))
 
 		// when
-		overrides, err := ob.Build()
+		overrides, err := ob.build()
 
 		// then
 		require.NoError(t, err)
@@ -248,10 +248,10 @@ func Test_DomainNameOverrideInterceptor(t *testing.T) {
 	t.Run("test default domain for remote non-gardener cluster", func(t *testing.T) {
 		// givenOverrides
 		kubeClient := fake.NewSimpleClientset()
-		ob.AddInterceptor([]string{"global.domainName"}, mockNewDomainNameOverrideInterceptor(kubeClient, false))
+		ob.addInterceptor([]string{"global.domainName"}, mockNewDomainNameOverrideInterceptor(kubeClient, false))
 
 		// when
-		overrides, err := ob.Build()
+		overrides, err := ob.build()
 
 		// then
 		require.NoError(t, err)
@@ -263,10 +263,10 @@ func Test_DomainNameOverrideInterceptor(t *testing.T) {
 	t.Run("test valid domain for a gardener cluster", func(t *testing.T) {
 		//givenOverrides
 		kubeClient := fake.NewSimpleClientset(gardenerCM)
-		ob.AddInterceptor([]string{"global.domainName"}, NewDomainNameOverrideInterceptor(kubeClient))
+		ob.addInterceptor([]string{"global.domainName"}, newDomainNameOverrideInterceptor(kubeClient))
 
 		// when
-		overrides, err := ob.Build()
+		overrides, err := ob.build()
 
 		// then
 		require.NoError(t, err)
@@ -279,18 +279,18 @@ func Test_DomainNameOverrideInterceptor(t *testing.T) {
 		// givenOverrides
 		kubeClient := fake.NewSimpleClientset(gardenerCM)
 
-		ob := Builder{}
+		ob := builder{}
 		domainNameOverrides := make(map[string]interface{})
 		domainNameOverrides["domainName"] = "user.domain"
-		err := ob.AddOverrides(map[string]interface{}{
+		err := ob.addValues(map[string]interface{}{
 			"global": domainNameOverrides,
 		})
 		require.NoError(t, err)
 
-		ob.AddInterceptor([]string{"global.domainName"}, NewDomainNameOverrideInterceptor(kubeClient))
+		ob.addInterceptor([]string{"global.domainName"}, newDomainNameOverrideInterceptor(kubeClient))
 
 		// when
-		overrides, err := ob.Build()
+		overrides, err := ob.build()
 
 		// then
 		require.NoError(t, err)
@@ -303,18 +303,18 @@ func Test_DomainNameOverrideInterceptor(t *testing.T) {
 		// givenOverrides
 		kubeClient := fake.NewSimpleClientset()
 
-		ob := Builder{}
+		ob := builder{}
 		domainNameOverrides := make(map[string]interface{})
 		domainNameOverrides["domainName"] = "user.domain"
-		err := ob.AddOverrides(map[string]interface{}{
+		err := ob.addValues(map[string]interface{}{
 			"global": domainNameOverrides,
 		})
 		require.NoError(t, err)
 
-		ob.AddInterceptor([]string{"global.domainName"}, mockNewDomainNameOverrideInterceptor(kubeClient, true))
+		ob.addInterceptor([]string{"global.domainName"}, mockNewDomainNameOverrideInterceptor(kubeClient, true))
 
 		// when
-		overrides, err := ob.Build()
+		overrides, err := ob.build()
 
 		// then
 		require.NoError(t, err)
@@ -327,18 +327,18 @@ func Test_DomainNameOverrideInterceptor(t *testing.T) {
 		// givenOverrides
 		kubeClient := fake.NewSimpleClientset()
 
-		ob := Builder{}
+		ob := builder{}
 		domainNameOverrides := make(map[string]interface{})
 		domainNameOverrides["domainName"] = "user.domain"
-		err := ob.AddOverrides(map[string]interface{}{
+		err := ob.addValues(map[string]interface{}{
 			"global": domainNameOverrides,
 		})
 		require.NoError(t, err)
 
-		ob.AddInterceptor([]string{"global.domainName"}, mockNewDomainNameOverrideInterceptor(kubeClient, false))
+		ob.addInterceptor([]string{"global.domainName"}, mockNewDomainNameOverrideInterceptor(kubeClient, false))
 
 		// when
-		overrides, err := ob.Build()
+		overrides, err := ob.build()
 
 		// then
 		require.NoError(t, err)
@@ -358,15 +358,15 @@ func Test_CertificateOverridesInterception(t *testing.T) {
 	t.Run("test default cert for local cluster", func(t *testing.T) {
 		// givenOverrides
 		kubeClient := fake.NewSimpleClientset()
-		interceptor := NewCertificateOverrideInterceptor("global.tlsCrt", "global.tlsKey", kubeClient)
+		interceptor := newCertificateOverrideInterceptor("global.tlsCrt", "global.tlsKey", kubeClient)
 		interceptor.isLocalCluster = isLocalClusterFunc(true)
 
-		ob := Builder{}
+		ob := builder{}
 
-		ob.AddInterceptor([]string{"global.tlsCrt", "global.tlsKey"}, interceptor)
+		ob.addInterceptor([]string{"global.tlsCrt", "global.tlsKey"}, interceptor)
 
 		// when
-		overrides, err := ob.Build()
+		overrides, err := ob.build()
 
 		// then
 		require.NoError(t, err)
@@ -379,15 +379,15 @@ func Test_CertificateOverridesInterception(t *testing.T) {
 	t.Run("test default cert for remote non-gardener cluster", func(t *testing.T) {
 		// givenOverrides
 		kubeClient := fake.NewSimpleClientset()
-		interceptor := NewCertificateOverrideInterceptor("global.tlsCrt", "global.tlsKey", kubeClient)
+		interceptor := newCertificateOverrideInterceptor("global.tlsCrt", "global.tlsKey", kubeClient)
 		interceptor.isLocalCluster = isLocalClusterFunc(false)
 
-		ob := Builder{}
+		ob := builder{}
 
-		ob.AddInterceptor([]string{"global.tlsCrt", "global.tlsKey"}, interceptor)
+		ob.addInterceptor([]string{"global.tlsCrt", "global.tlsKey"}, interceptor)
 
 		// when
-		overrides, err := ob.Build()
+		overrides, err := ob.build()
 
 		// then
 		require.NoError(t, err)
@@ -401,15 +401,15 @@ func Test_CertificateOverridesInterception(t *testing.T) {
 		kubeClient := fake.NewSimpleClientset(gardenerCM)
 
 		// givenOverrides
-		interceptor := NewCertificateOverrideInterceptor("global.tlsCrt", "global.tlsKey", kubeClient)
+		interceptor := newCertificateOverrideInterceptor("global.tlsCrt", "global.tlsKey", kubeClient)
 		interceptor.isLocalCluster = isLocalClusterFunc(true)
 
-		ob := Builder{}
+		ob := builder{}
 
-		ob.AddInterceptor([]string{"global.tlsCrt", "global.tlsKey"}, interceptor)
+		ob.addInterceptor([]string{"global.tlsCrt", "global.tlsKey"}, interceptor)
 
 		// when
-		overrides, err := ob.Build()
+		overrides, err := ob.build()
 
 		// then
 		require.NoError(t, err)
@@ -419,27 +419,27 @@ func Test_CertificateOverridesInterception(t *testing.T) {
 	t.Run("test user-provided cert is reset to an empty string for a gardener cluster", func(t *testing.T) {
 		// givenOverrides
 		kubeClient := fake.NewSimpleClientset(gardenerCM)
-		interceptor := NewCertificateOverrideInterceptor("global.tlsCrt", "global.tlsKey", kubeClient)
+		interceptor := newCertificateOverrideInterceptor("global.tlsCrt", "global.tlsKey", kubeClient)
 		interceptor.isLocalCluster = isLocalClusterFunc(true)
 
-		ob := Builder{}
+		ob := builder{}
 
 		tlsOverrides := make(map[string]interface{})
 		tlsOverrides["tlsCrt"] = defaultLocalTLSCrtEnc
 		tlsOverrides["tlsKey"] = defaultLocalTLSKeyEnc
-		err := ob.AddOverrides(map[string]interface{}{
+		err := ob.addValues(map[string]interface{}{
 			"global": tlsOverrides,
 		})
 		require.NoError(t, err)
 
-		ob.AddInterceptor([]string{"global.tlsCrt", "global.tlsKey"}, interceptor)
+		ob.addInterceptor([]string{"global.tlsCrt", "global.tlsKey"}, interceptor)
 
 		// when
-		overrides, err := ob.Build()
+		overrides, err := ob.build()
 
 		// then
 		require.NoError(t, err)
-		// then user-provided overrides are replaced by empty strings
+		// then user-provided values are replaced by empty strings
 		require.Equal(t, 2, len(extractKeys(overrides.Map())))
 		require.Equal(t, getOverride(overrides.Map(), "global.tlsCrt"), "")
 		require.Equal(t, getOverride(overrides.Map(), "global.tlsKey"), "")
@@ -449,15 +449,15 @@ func Test_CertificateOverridesInterception(t *testing.T) {
 
 		// givenOverrides
 		kubeClient := fake.NewSimpleClientset()
-		interceptor := NewCertificateOverrideInterceptor("global.tlsCrt", "global.tlsKey", kubeClient)
+		interceptor := newCertificateOverrideInterceptor("global.tlsCrt", "global.tlsKey", kubeClient)
 		interceptor.isLocalCluster = isLocalClusterFunc(true)
 
-		ob := Builder{}
+		ob := builder{}
 
 		tlsOverrides := make(map[string]interface{})
 		tlsOverrides["tlsCrt"] = testFakeCrt
 		tlsOverrides["tlsKey"] = testFakeKey
-		err := ob.AddOverrides(map[string]interface{}{
+		err := ob.addValues(map[string]interface{}{
 			"global": tlsOverrides,
 		})
 		require.NoError(t, err)
@@ -466,10 +466,10 @@ func Test_CertificateOverridesInterception(t *testing.T) {
 		require.NotEqual(t, tlsOverrides["tlsCrt"], defaultLocalTLSCrtEnc)
 		require.NotEqual(t, tlsOverrides["tlsKey"], defaultLocalTLSKeyEnc)
 
-		ob.AddInterceptor([]string{"global.tlsCrt", "global.tlsKey"}, interceptor)
+		ob.addInterceptor([]string{"global.tlsCrt", "global.tlsKey"}, interceptor)
 
 		// when
-		overrides, err := ob.Build()
+		overrides, err := ob.build()
 
 		// then
 		require.NoError(t, err)
@@ -481,14 +481,14 @@ func Test_CertificateOverridesInterception(t *testing.T) {
 	t.Run("test user-provided cert is preserved for a remote non-gardener cluster", func(t *testing.T) {
 		// givenOverrides
 		kubeClient := fake.NewSimpleClientset()
-		interceptor := NewCertificateOverrideInterceptor("global.tlsCrt", "global.tlsKey", kubeClient)
+		interceptor := newCertificateOverrideInterceptor("global.tlsCrt", "global.tlsKey", kubeClient)
 		interceptor.isLocalCluster = isLocalClusterFunc(false)
 
 		tlsOverrides := make(map[string]interface{})
 		tlsOverrides["tlsCrt"] = testFakeCrt
 		tlsOverrides["tlsKey"] = testFakeKey
-		ob := Builder{}
-		err := ob.AddOverrides(map[string]interface{}{
+		ob := builder{}
+		err := ob.addValues(map[string]interface{}{
 			"global": tlsOverrides,
 		})
 		require.NoError(t, err)
@@ -497,10 +497,10 @@ func Test_CertificateOverridesInterception(t *testing.T) {
 		require.NotEqual(t, tlsOverrides["tlsCrt"], defaultRemoteTLSCrtEnc)
 		require.NotEqual(t, tlsOverrides["tlsKey"], defaultRemoteTLSKeyEnc)
 
-		ob.AddInterceptor([]string{"global.tlsCrt", "global.tlsKey"}, interceptor)
+		ob.addInterceptor([]string{"global.tlsCrt", "global.tlsKey"}, interceptor)
 
 		// when
-		overrides, err := ob.Build()
+		overrides, err := ob.build()
 
 		// then
 		require.NoError(t, err)
@@ -512,21 +512,21 @@ func Test_CertificateOverridesInterception(t *testing.T) {
 	t.Run("test invalid crt key pair", func(t *testing.T) {
 		// givenOverrides
 		kubeClient := fake.NewSimpleClientset()
-		interceptor := NewCertificateOverrideInterceptor("global.tlsCrt", "global.tlsKey", kubeClient)
+		interceptor := newCertificateOverrideInterceptor("global.tlsCrt", "global.tlsKey", kubeClient)
 		interceptor.isLocalCluster = isLocalClusterFunc(true)
 
 		tlsOverrides := make(map[string]interface{})
 		tlsOverrides["tlsCrt"] = testFakeCrt
 		tlsOverrides["tlsKey"] = defaultLocalTLSKeyEnc
-		ob := Builder{}
-		err := ob.AddOverrides(map[string]interface{}{
+		ob := builder{}
+		err := ob.addValues(map[string]interface{}{
 			"global": tlsOverrides,
 		})
 		require.NoError(t, err)
 
-		ob.AddInterceptor([]string{"global.tlsCrt", "global.tlsKey"}, interceptor)
+		ob.addInterceptor([]string{"global.tlsCrt", "global.tlsKey"}, interceptor)
 		// when
-		overrides, err := ob.Build()
+		overrides, err := ob.build()
 
 		// then
 		require.Error(t, err)
@@ -537,21 +537,21 @@ func Test_CertificateOverridesInterception(t *testing.T) {
 	t.Run("test invalid key format", func(t *testing.T) {
 		// givenOverrides
 		kubeClient := fake.NewSimpleClientset()
-		interceptor := NewCertificateOverrideInterceptor("global.tlsCrt", "global.tlsKey", kubeClient)
+		interceptor := newCertificateOverrideInterceptor("global.tlsCrt", "global.tlsKey", kubeClient)
 		interceptor.isLocalCluster = isLocalClusterFunc(true)
 
 		tlsOverrides := make(map[string]interface{})
 		tlsOverrides["tlsCrt"] = testFakeCrt
 		tlsOverrides["tlsKey"] = "V2VkIEFwciAyMSAxNzoyNTowOCBDRVNUIDIwMjEK"
-		ob := Builder{}
-		err := ob.AddOverrides(map[string]interface{}{
+		ob := builder{}
+		err := ob.addValues(map[string]interface{}{
 			"global": tlsOverrides,
 		})
 		require.NoError(t, err)
 
-		ob.AddInterceptor([]string{"global.tlsCrt", "global.tlsKey"}, interceptor)
+		ob.addInterceptor([]string{"global.tlsCrt", "global.tlsKey"}, interceptor)
 		// when
-		overrides, err := ob.Build()
+		overrides, err := ob.build()
 
 		// then
 		require.Error(t, err)
@@ -570,16 +570,16 @@ func Test_RegistryEnableOverrideInterception(t *testing.T) {
 		dockerRegistryOverrides["enableInternal"] = "true"
 		serverlessOverrides := make(map[string]interface{})
 		serverlessOverrides["dockerRegistry"] = dockerRegistryOverrides
-		ob := Builder{}
-		err := ob.AddOverrides(map[string]interface{}{
+		ob := builder{}
+		err := ob.addValues(map[string]interface{}{
 			"serverless": serverlessOverrides,
 		})
 		require.NoError(t, err)
 
 		kubeClient := fake.NewSimpleClientset(k3dNode)
-		ob.AddInterceptor([]string{"serverless.dockerRegistry.enableInternal"}, NewRegistryDisableInterceptor(kubeClient))
+		ob.addInterceptor([]string{"serverless.dockerRegistry.enableInternal"}, newRegistryDisableInterceptor(kubeClient))
 		// when
-		overrides, err := ob.Build()
+		overrides, err := ob.build()
 
 		// then
 		require.NoError(t, err)
@@ -593,16 +593,16 @@ func Test_RegistryEnableOverrideInterception(t *testing.T) {
 		dockerRegistryOverrides["enableInternal"] = "true"
 		serverlessOverrides := make(map[string]interface{})
 		serverlessOverrides["dockerRegistry"] = dockerRegistryOverrides
-		ob := Builder{}
-		err := ob.AddOverrides(map[string]interface{}{
+		ob := builder{}
+		err := ob.addValues(map[string]interface{}{
 			"serverless": serverlessOverrides,
 		})
 		require.NoError(t, err)
 
 		kubeClient := fake.NewSimpleClientset(generalNode)
-		ob.AddInterceptor([]string{"serverless.dockerRegistry.enableInternal"}, NewRegistryDisableInterceptor(kubeClient))
+		ob.addInterceptor([]string{"serverless.dockerRegistry.enableInternal"}, newRegistryDisableInterceptor(kubeClient))
 		// when
-		overrides, err := ob.Build()
+		overrides, err := ob.build()
 
 		// then
 		require.NoError(t, err)
@@ -634,16 +634,16 @@ func Test_RegistryOverridesInterception(t *testing.T) {
 		dockerRegistryOverrides["enableInternal"] = "true"
 		serverlessOverrides := make(map[string]interface{})
 		serverlessOverrides["dockerRegistry"] = dockerRegistryOverrides
-		ob := Builder{}
-		err := ob.AddOverrides(map[string]interface{}{
+		ob := builder{}
+		err := ob.addValues(map[string]interface{}{
 			"serverless": serverlessOverrides,
 		})
 		require.NoError(t, err)
 
 		kubeClient := fake.NewSimpleClientset(k3dNode)
-		ob.AddInterceptor([]string{"serverless.dockerRegistry.internalServerAddress", "serverless.dockerRegistry.serverAddress", "serverless.dockerRegistry.registryAddress"}, NewRegistryInterceptor(kubeClient))
+		ob.addInterceptor([]string{"serverless.dockerRegistry.internalServerAddress", "serverless.dockerRegistry.serverAddress", "serverless.dockerRegistry.registryAddress"}, newRegistryInterceptor(kubeClient))
 		// when
-		overrides, err := ob.Build()
+		overrides, err := ob.build()
 		require.NoError(t, err)
 
 		// then
@@ -663,16 +663,16 @@ func Test_RegistryOverridesInterception(t *testing.T) {
 		dockerRegistryOverrides["registryAddress"] = "registryAddress"
 		serverlessOverrides := make(map[string]interface{})
 		serverlessOverrides["dockerRegistry"] = dockerRegistryOverrides
-		ob := Builder{}
-		err := ob.AddOverrides(map[string]interface{}{
+		ob := builder{}
+		err := ob.addValues(map[string]interface{}{
 			"serverless": serverlessOverrides,
 		})
 		require.NoError(t, err)
 
 		kubeClient := fake.NewSimpleClientset(k3dNode)
-		ob.AddInterceptor([]string{"serverless.dockerRegistry.internalServerAddress", "serverless.dockerRegistry.serverAddress", "serverless.dockerRegistry.registryAddress"}, NewRegistryInterceptor(kubeClient))
+		ob.addInterceptor([]string{"serverless.dockerRegistry.internalServerAddress", "serverless.dockerRegistry.serverAddress", "serverless.dockerRegistry.registryAddress"}, newRegistryInterceptor(kubeClient))
 		// when
-		overrides, err := ob.Build()
+		overrides, err := ob.build()
 		require.NoError(t, err)
 
 		// then
@@ -692,16 +692,16 @@ func Test_RegistryOverridesInterception(t *testing.T) {
 		dockerRegistryOverrides["registryAddress"] = "registryAddress"
 		serverlessOverrides := make(map[string]interface{})
 		serverlessOverrides["dockerRegistry"] = dockerRegistryOverrides
-		ob := Builder{}
-		err := ob.AddOverrides(map[string]interface{}{
+		ob := builder{}
+		err := ob.addValues(map[string]interface{}{
 			"serverless": serverlessOverrides,
 		})
 		require.NoError(t, err)
 
 		kubeClient := fake.NewSimpleClientset(generalNode)
-		ob.AddInterceptor([]string{"serverless.dockerRegistry.internalServerAddress", "serverless.dockerRegistry.serverAddress", "serverless.dockerRegistry.registryAddress"}, NewRegistryInterceptor(kubeClient))
+		ob.addInterceptor([]string{"serverless.dockerRegistry.internalServerAddress", "serverless.dockerRegistry.serverAddress", "serverless.dockerRegistry.registryAddress"}, newRegistryInterceptor(kubeClient))
 		// when
-		overrides, err := ob.Build()
+		overrides, err := ob.build()
 
 		// then
 		require.NoError(t, err)
