@@ -1,4 +1,4 @@
-package deploy
+package values
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ import (
 
 const any = "DO_NOT_CHECK_OVERRIDE_VALUE"
 
-func TestMergeOverrides(t *testing.T) {
+func TestMerge(t *testing.T) {
 	testCases := []struct {
 		summary                 string
 		installationResourceDir string
@@ -187,14 +187,14 @@ func TestMergeOverrides(t *testing.T) {
 		t.Run(tc.summary, func(t *testing.T) {
 			t.Parallel()
 
-			opts := &Options{
+			opts := Settings{
 				Values:     tc.values,
 				ValueFiles: tc.valueFiles,
 				Domain:     tc.domain,
 				TLSCrtFile: tc.tlsCrt,
 				TLSKeyFile: tc.tlsKey,
 			}
-			actual, err := mergeValues(opts, &workspace.Workspace{
+			actual, err := Merge(opts, &workspace.Workspace{
 				InstallationResourceDir: tc.installationResourceDir,
 			}, fake.NewSimpleClientset())
 
@@ -211,10 +211,10 @@ func TestMergeOverrides(t *testing.T) {
 		fakeServer := httptest.NewServer(http.FileServer(http.Dir("testdata")))
 		defer fakeServer.Close()
 
-		opts := &Options{
+		opts := Settings{
 			ValueFiles: []string{fmt.Sprintf("%s:/%s", fakeServer.URL, "valid-overrides-1.yaml")},
 		}
-		actual, err := mergeValues(opts, &workspace.Workspace{}, fake.NewSimpleClientset())
+		actual, err := Merge(opts, &workspace.Workspace{}, fake.NewSimpleClientset())
 
 		expected := map[string]interface{}{
 			"global.domainName":         any,

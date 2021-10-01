@@ -1,6 +1,7 @@
 package deploy
 
 import (
+	"github.com/kyma-project/cli/internal/values"
 	"github.com/stretchr/testify/require"
 	"os"
 	"path"
@@ -25,7 +26,11 @@ func TestOptsValidation(t *testing.T) {
 	})
 
 	t.Run("tls key not found", func(t *testing.T) {
-		opts := Options{TLSKeyFile: "not-existing.key"}
+		opts := Options{
+			Settings: values.Settings{
+				TLSKeyFile: "not-existing.key",
+			},
+		}
 		err := opts.validateFlags()
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "tls key not found")
@@ -33,7 +38,12 @@ func TestOptsValidation(t *testing.T) {
 
 	t.Run("tls key exists but crt not found", func(t *testing.T) {
 		dummyFilePath := path.Join("testdata", "dummy.txt")
-		opts := Options{TLSKeyFile: dummyFilePath, TLSCrtFile: "not-existing.crt"}
+		opts := Options{
+			Settings: values.Settings{
+				TLSKeyFile: dummyFilePath,
+				TLSCrtFile: "not-existing.crt",
+			},
+		}
 		err := opts.validateFlags()
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "tls cert not found")
@@ -41,7 +51,12 @@ func TestOptsValidation(t *testing.T) {
 
 	t.Run("tls crt exists but key not found", func(t *testing.T) {
 		dummyFilePath := path.Join("testdata", "dummy.txt")
-		opts := Options{TLSKeyFile: "not-existing.crt", TLSCrtFile: dummyFilePath}
+		opts := Options{
+			Settings: values.Settings{
+				TLSKeyFile: "not-existing.crt",
+				TLSCrtFile: dummyFilePath,
+			},
+		}
 		err := opts.validateFlags()
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "tls key not found")
@@ -49,7 +64,12 @@ func TestOptsValidation(t *testing.T) {
 
 	t.Run("tls key and crt found", func(t *testing.T) {
 		dummyFilePath := path.Join("testdata", "dummy.txt")
-		opts := Options{TLSKeyFile: dummyFilePath, TLSCrtFile: dummyFilePath}
+		opts := Options{
+			Settings: values.Settings{
+				TLSKeyFile: dummyFilePath,
+				TLSCrtFile: dummyFilePath,
+			},
+		}
 		err := opts.validateFlags()
 		require.NoError(t, err)
 	})

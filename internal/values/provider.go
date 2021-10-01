@@ -2,7 +2,7 @@
 //The manually-provided overrides have precedence over standard Kyma overrides defined in the cluster.
 //
 //The code in the package uses the user-provided function for logging.
-package overrides
+package values
 
 import (
 	"fmt"

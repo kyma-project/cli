@@ -4,6 +4,9 @@
 *.so
 *.dylib
 
+# Tmp directory
+tmp/
+
 # Test binary, build with `go test -c`
 *.test
 
