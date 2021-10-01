@@ -38,7 +38,7 @@ require (
 	github.com/kyma-incubator/octopus v0.0.0-20200922132758-2b721e93b58b
 	github.com/kyma-incubator/reconciler v0.0.0-20210924122650-4e4d26f25018
 	github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20201125092745-687c943ac940
-	github.com/magiconair/properties v1.8.5
+	github.com/magiconair/properties v1.8.5 // indirect
 	github.com/moby/sys/mount v0.2.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/pkg/browser v0.0.0-20210115035449-ce105d075bb4

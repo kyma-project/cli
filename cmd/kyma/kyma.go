@@ -1,12 +1,10 @@
 package kyma
 
 import (
-	"github.com/kyma-project/cli/cmd/kyma/alpha"
 	"github.com/kyma-project/cli/cmd/kyma/apply"
 	"github.com/kyma-project/cli/cmd/kyma/completion"
 	"github.com/kyma-project/cli/cmd/kyma/console"
 	"github.com/kyma-project/cli/cmd/kyma/create"
-	uninstall "github.com/kyma-project/cli/cmd/kyma/delete"
 	"github.com/kyma-project/cli/cmd/kyma/deploy"
 	initial "github.com/kyma-project/cli/cmd/kyma/init"
 	"github.com/kyma-project/cli/cmd/kyma/install"
@@ -30,7 +28,6 @@ import (
 	"github.com/kyma-project/cli/cmd/kyma/undeploy"
 	"github.com/kyma-project/cli/cmd/kyma/version"
 
-	alphadeploy "github.com/kyma-project/cli/cmd/kyma/alpha/deploy"
 	"github.com/kyma-project/cli/cmd/kyma/provision"
 	"github.com/kyma-project/cli/cmd/kyma/upgrade"
 	"github.com/kyma-project/cli/internal/cli"
@@ -58,10 +55,6 @@ Kyma CLI allows you to install, test, and manage Kyma.
 	cmd.PersistentFlags().StringVar(&o.KubeconfigPath, "kubeconfig", "", `Path to the kubeconfig file. If undefined, Kyma CLI uses the KUBECONFIG environment variable, or falls back "/$HOME/.kube/config".`)
 	cmd.PersistentFlags().BoolP("help", "h", false, "Command help")
 
-	//Temporary commands
-	alphaCmd := alpha.NewCmd()
-	alphaCmd.AddCommand(alphadeploy.NewCmd(alphadeploy.NewOptions(o)))
-
 	//Stable commands
 	provisionCmd := provision.NewCmd()
 	provisionCmd.AddCommand(minikube.NewCmd(minikube.NewOptions(o)))
@@ -75,7 +68,6 @@ Kyma CLI allows you to install, test, and manage Kyma.
 	provisionCmd.AddCommand(gardenerCmd)
 
 	cmd.AddCommand(
-		alphaCmd,
 		version.NewCmd(version.NewOptions(o)),
 		completion.NewCmd(),
 		install.NewCmd(install.NewOptions(o)),
@@ -85,7 +77,6 @@ Kyma CLI allows you to install, test, and manage Kyma.
 		create.NewCmd(o),
 		deploy.NewCmd(deploy.NewOptions(o)),
 		undeploy.NewCmd(undeploy.NewOptions(o)),
-		uninstall.NewCmd(uninstall.NewOptions(o)),
 	)
 
 	testCmd := test.NewCmd()
