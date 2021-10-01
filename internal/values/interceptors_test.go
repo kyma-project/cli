@@ -96,7 +96,7 @@ func Test_InterceptValue(t *testing.T) {
 		// verify merge result with expected data
 		overrides, err := builder.build()
 		require.NoError(t, err)
-		require.Equal(t, expected, overrides.Map())
+		require.Equal(t, expected, overrides.toMap())
 	})
 
 	t.Run("Test interceptor with failure", func(t *testing.T) {
@@ -105,7 +105,7 @@ func Test_InterceptValue(t *testing.T) {
 		require.NoError(t, err)
 		builder.addInterceptor([]string{"chart.key1"}, &failingOverrideInterceptor{})
 		overrides, err := builder.build()
-		require.Empty(t, overrides.Map())
+		require.Empty(t, overrides.toMap())
 		require.Error(t, err)
 	})
 }
@@ -128,7 +128,7 @@ func Test_InterceptUndefined(t *testing.T) {
 	require.NoError(t, err)
 	builder.addInterceptor([]string{"I.dont.exist"}, &undefinedOverrideInterceptor{})
 	overrides, err := builder.build()
-	require.Empty(t, overrides.Map())
+	require.Empty(t, overrides.toMap())
 	require.Error(t, err)
 	require.Equal(t, "This value was missing", err.Error())
 }
@@ -143,13 +143,13 @@ func Test_FallbackInterceptor(t *testing.T) {
 		overrides, err := builder.build()
 		require.NotEmpty(t, overrides)
 		require.NoError(t, err)
-		require.Equal(t, "I am the fallback", overrides.Map()["I"].(map[string]interface{})["dont"].(map[string]interface{})["exist"])
+		require.Equal(t, "I am the fallback", overrides.toMap()["I"].(map[string]interface{})["dont"].(map[string]interface{})["exist"])
 	})
 
 	t.Run("Test FallbackInterceptor with sub-key which is not a map", func(t *testing.T) {
 		builder.addInterceptor([]string{"chart.key3.xyz"}, newFallbackOverrideInterceptor("Use me as fallback"))
 		overrides, err := builder.build()
-		require.Empty(t, overrides.Map())
+		require.Empty(t, overrides.toMap())
 		require.Error(t, err)
 	})
 }
@@ -179,7 +179,7 @@ func Test_GlobalOverridesInterceptionForLocalCluster(t *testing.T) {
 	overrides, err := ob.build()
 	require.NotEmpty(t, overrides)
 	require.NoError(t, err)
-	require.Equal(t, expected, overrides.Map())
+	require.Equal(t, expected, overrides.toMap())
 }
 
 func Test_GlobalOverridesInterceptionForNonGardenerCluster(t *testing.T) {
@@ -216,7 +216,7 @@ func Test_GlobalOverridesInterceptionForNonGardenerCluster(t *testing.T) {
 	overrides, err := ob.build()
 	require.NotEmpty(t, overrides)
 	require.NoError(t, err)
-	require.Equal(t, expected, overrides.Map())
+	require.Equal(t, expected, overrides.toMap())
 }
 
 func Test_DomainNameOverrideInterceptor(t *testing.T) {
@@ -241,8 +241,8 @@ func Test_DomainNameOverrideInterceptor(t *testing.T) {
 		// then
 		require.NoError(t, err)
 		require.NotEmpty(t, overrides)
-		require.Equal(t, 1, len(extractKeys(overrides.Map())))
-		require.Equal(t, localKymaDevDomain, getOverride(overrides.Map(), "global.domainName"))
+		require.Equal(t, 1, len(extractKeys(overrides.toMap())))
+		require.Equal(t, localKymaDevDomain, getOverride(overrides.toMap(), "global.domainName"))
 	})
 
 	t.Run("test default domain for remote non-gardener cluster", func(t *testing.T) {
@@ -256,8 +256,8 @@ func Test_DomainNameOverrideInterceptor(t *testing.T) {
 		// then
 		require.NoError(t, err)
 		require.NotEmpty(t, overrides)
-		require.Equal(t, 1, len(extractKeys(overrides.Map())))
-		require.Equal(t, defaultRemoteKymaDomain, getOverride(overrides.Map(), "global.domainName"))
+		require.Equal(t, 1, len(extractKeys(overrides.toMap())))
+		require.Equal(t, defaultRemoteKymaDomain, getOverride(overrides.toMap(), "global.domainName"))
 	})
 
 	t.Run("test valid domain for a gardener cluster", func(t *testing.T) {
@@ -271,8 +271,8 @@ func Test_DomainNameOverrideInterceptor(t *testing.T) {
 		// then
 		require.NoError(t, err)
 		require.NotEmpty(t, overrides)
-		require.Equal(t, 1, len(extractKeys(overrides.Map())))
-		require.Equal(t, "gardener.domain", getOverride(overrides.Map(), "global.domainName"))
+		require.Equal(t, 1, len(extractKeys(overrides.toMap())))
+		require.Equal(t, "gardener.domain", getOverride(overrides.toMap(), "global.domainName"))
 	})
 
 	t.Run("test user-provided domain is overridden on gardener cluster", func(t *testing.T) {
@@ -295,8 +295,8 @@ func Test_DomainNameOverrideInterceptor(t *testing.T) {
 		// then
 		require.NoError(t, err)
 		require.NotEmpty(t, overrides)
-		require.Equal(t, 1, len(extractKeys(overrides.Map())))
-		require.Equal(t, "gardener.domain", getOverride(overrides.Map(), "global.domainName"))
+		require.Equal(t, 1, len(extractKeys(overrides.toMap())))
+		require.Equal(t, "gardener.domain", getOverride(overrides.toMap(), "global.domainName"))
 	})
 
 	t.Run("test user-provided domain is not overridden on local cluster", func(t *testing.T) {
@@ -319,8 +319,8 @@ func Test_DomainNameOverrideInterceptor(t *testing.T) {
 		// then
 		require.NoError(t, err)
 		require.NotEmpty(t, overrides)
-		require.Equal(t, 1, len(extractKeys(overrides.Map())))
-		require.Equal(t, "user.domain", getOverride(overrides.Map(), "global.domainName"))
+		require.Equal(t, 1, len(extractKeys(overrides.toMap())))
+		require.Equal(t, "user.domain", getOverride(overrides.toMap(), "global.domainName"))
 	})
 
 	t.Run("test user-provided domain is not overridden on remote cluster", func(t *testing.T) {
@@ -343,8 +343,8 @@ func Test_DomainNameOverrideInterceptor(t *testing.T) {
 		// then
 		require.NoError(t, err)
 		require.NotEmpty(t, overrides)
-		require.Equal(t, 1, len(extractKeys(overrides.Map())))
-		require.Equal(t, "user.domain", getOverride(overrides.Map(), "global.domainName"))
+		require.Equal(t, 1, len(extractKeys(overrides.toMap())))
+		require.Equal(t, "user.domain", getOverride(overrides.toMap(), "global.domainName"))
 	})
 }
 
@@ -370,10 +370,10 @@ func Test_CertificateOverridesInterception(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		require.NotEmpty(t, overrides.Map())
-		require.Equal(t, 2, len(extractKeys(overrides.Map())))
-		require.Equal(t, getOverride(overrides.Map(), "global.tlsCrt"), defaultLocalTLSCrtEnc)
-		require.Equal(t, getOverride(overrides.Map(), "global.tlsKey"), defaultLocalTLSKeyEnc)
+		require.NotEmpty(t, overrides.toMap())
+		require.Equal(t, 2, len(extractKeys(overrides.toMap())))
+		require.Equal(t, getOverride(overrides.toMap(), "global.tlsCrt"), defaultLocalTLSCrtEnc)
+		require.Equal(t, getOverride(overrides.toMap(), "global.tlsKey"), defaultLocalTLSKeyEnc)
 	})
 
 	t.Run("test default cert for remote non-gardener cluster", func(t *testing.T) {
@@ -391,10 +391,10 @@ func Test_CertificateOverridesInterception(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		require.NotEmpty(t, overrides.Map())
-		require.Equal(t, 2, len(extractKeys(overrides.Map())))
-		require.Equal(t, getOverride(overrides.Map(), "global.tlsCrt"), defaultRemoteTLSCrtEnc)
-		require.Equal(t, getOverride(overrides.Map(), "global.tlsKey"), defaultRemoteTLSKeyEnc)
+		require.NotEmpty(t, overrides.toMap())
+		require.Equal(t, 2, len(extractKeys(overrides.toMap())))
+		require.Equal(t, getOverride(overrides.toMap(), "global.tlsCrt"), defaultRemoteTLSCrtEnc)
+		require.Equal(t, getOverride(overrides.toMap(), "global.tlsKey"), defaultRemoteTLSKeyEnc)
 	})
 
 	t.Run("test default cert is not set for a gardener cluster even if isLocalCluster returns true", func(t *testing.T) {
@@ -413,7 +413,7 @@ func Test_CertificateOverridesInterception(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		require.Empty(t, overrides.Map())
+		require.Empty(t, overrides.toMap())
 	})
 
 	t.Run("test user-provided cert is reset to an empty string for a gardener cluster", func(t *testing.T) {
@@ -440,9 +440,9 @@ func Test_CertificateOverridesInterception(t *testing.T) {
 		// then
 		require.NoError(t, err)
 		// then user-provided values are replaced by empty strings
-		require.Equal(t, 2, len(extractKeys(overrides.Map())))
-		require.Equal(t, getOverride(overrides.Map(), "global.tlsCrt"), "")
-		require.Equal(t, getOverride(overrides.Map(), "global.tlsKey"), "")
+		require.Equal(t, 2, len(extractKeys(overrides.toMap())))
+		require.Equal(t, getOverride(overrides.toMap(), "global.tlsCrt"), "")
+		require.Equal(t, getOverride(overrides.toMap(), "global.tlsKey"), "")
 	})
 
 	t.Run("test user-provided cert is preserved for a local cluster", func(t *testing.T) {
@@ -473,9 +473,9 @@ func Test_CertificateOverridesInterception(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		require.Equal(t, 2, len(extractKeys(overrides.Map())))
-		require.Equal(t, getOverride(overrides.Map(), "global.tlsCrt"), testFakeCrt)
-		require.Equal(t, getOverride(overrides.Map(), "global.tlsKey"), testFakeKey)
+		require.Equal(t, 2, len(extractKeys(overrides.toMap())))
+		require.Equal(t, getOverride(overrides.toMap(), "global.tlsCrt"), testFakeCrt)
+		require.Equal(t, getOverride(overrides.toMap(), "global.tlsKey"), testFakeKey)
 	})
 
 	t.Run("test user-provided cert is preserved for a remote non-gardener cluster", func(t *testing.T) {
@@ -504,9 +504,9 @@ func Test_CertificateOverridesInterception(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		require.Equal(t, 2, len(extractKeys(overrides.Map())))
-		require.Equal(t, getOverride(overrides.Map(), "global.tlsCrt"), testFakeCrt)
-		require.Equal(t, getOverride(overrides.Map(), "global.tlsKey"), testFakeKey)
+		require.Equal(t, 2, len(extractKeys(overrides.toMap())))
+		require.Equal(t, getOverride(overrides.toMap(), "global.tlsCrt"), testFakeCrt)
+		require.Equal(t, getOverride(overrides.toMap(), "global.tlsKey"), testFakeKey)
 	})
 
 	t.Run("test invalid crt key pair", func(t *testing.T) {
@@ -531,7 +531,7 @@ func Test_CertificateOverridesInterception(t *testing.T) {
 		// then
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "private key does not match public key")
-		require.Empty(t, overrides.Map())
+		require.Empty(t, overrides.toMap())
 	})
 
 	t.Run("test invalid key format", func(t *testing.T) {
@@ -556,7 +556,7 @@ func Test_CertificateOverridesInterception(t *testing.T) {
 		// then
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "failed to find any PEM data in key")
-		require.Empty(t, overrides.Map())
+		require.Empty(t, overrides.toMap())
 	})
 }
 
@@ -583,8 +583,8 @@ func Test_RegistryEnableOverrideInterception(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		require.NotEmpty(t, overrides.Map())
-		require.Equal(t, "false", getOverride(overrides.Map(), "serverless.dockerRegistry.enableInternal"))
+		require.NotEmpty(t, overrides.toMap())
+		require.Equal(t, "false", getOverride(overrides.toMap(), "serverless.dockerRegistry.enableInternal"))
 	})
 
 	t.Run("test preserve internal registry for non k3d cluster", func(t *testing.T) {
@@ -606,8 +606,8 @@ func Test_RegistryEnableOverrideInterception(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		require.NotEmpty(t, overrides.Map())
-		require.Equal(t, "true", getOverride(overrides.Map(), "serverless.dockerRegistry.enableInternal"))
+		require.NotEmpty(t, overrides.toMap())
+		require.Equal(t, "true", getOverride(overrides.toMap(), "serverless.dockerRegistry.enableInternal"))
 	})
 
 }
@@ -648,10 +648,10 @@ func Test_RegistryOverridesInterception(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		require.NotEmpty(t, overrides.Map())
-		require.Equal(t, "k3d-kyma-registry:5000", getOverride(overrides.Map(), "serverless.dockerRegistry.serverAddress"))
-		require.Equal(t, "k3d-kyma-registry:5000", getOverride(overrides.Map(), "serverless.dockerRegistry.internalServerAddress"))
-		require.Equal(t, "k3d-kyma-registry:5000", getOverride(overrides.Map(), "serverless.dockerRegistry.registryAddress"))
+		require.NotEmpty(t, overrides.toMap())
+		require.Equal(t, "k3d-kyma-registry:5000", getOverride(overrides.toMap(), "serverless.dockerRegistry.serverAddress"))
+		require.Equal(t, "k3d-kyma-registry:5000", getOverride(overrides.toMap(), "serverless.dockerRegistry.internalServerAddress"))
+		require.Equal(t, "k3d-kyma-registry:5000", getOverride(overrides.toMap(), "serverless.dockerRegistry.registryAddress"))
 	})
 
 	t.Run("test registry address for k3d cluster if overridden", func(t *testing.T) {
@@ -677,10 +677,10 @@ func Test_RegistryOverridesInterception(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		require.NotEmpty(t, overrides.Map())
-		require.Equal(t, "serverAddress", getOverride(overrides.Map(), "serverless.dockerRegistry.serverAddress"))
-		require.Equal(t, "internalServerAddress", getOverride(overrides.Map(), "serverless.dockerRegistry.internalServerAddress"))
-		require.Equal(t, "registryAddress", getOverride(overrides.Map(), "serverless.dockerRegistry.registryAddress"))
+		require.NotEmpty(t, overrides.toMap())
+		require.Equal(t, "serverAddress", getOverride(overrides.toMap(), "serverless.dockerRegistry.serverAddress"))
+		require.Equal(t, "internalServerAddress", getOverride(overrides.toMap(), "serverless.dockerRegistry.internalServerAddress"))
+		require.Equal(t, "registryAddress", getOverride(overrides.toMap(), "serverless.dockerRegistry.registryAddress"))
 	})
 
 	t.Run("test preserve registry address for non k3d cluster", func(t *testing.T) {
@@ -705,10 +705,10 @@ func Test_RegistryOverridesInterception(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		require.NotEmpty(t, overrides.Map())
-		require.Equal(t, getOverride(overrides.Map(), "serverless.dockerRegistry.serverAddress"), "serverAddress")
-		require.Equal(t, getOverride(overrides.Map(), "serverless.dockerRegistry.internalServerAddress"), "internalServerAddress")
-		require.Equal(t, getOverride(overrides.Map(), "serverless.dockerRegistry.registryAddress"), "registryAddress")
+		require.NotEmpty(t, overrides.toMap())
+		require.Equal(t, getOverride(overrides.toMap(), "serverless.dockerRegistry.serverAddress"), "serverAddress")
+		require.Equal(t, getOverride(overrides.toMap(), "serverless.dockerRegistry.internalServerAddress"), "internalServerAddress")
+		require.Equal(t, getOverride(overrides.toMap(), "serverless.dockerRegistry.registryAddress"), "registryAddress")
 	})
 }
 

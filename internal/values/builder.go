@@ -27,7 +27,7 @@ const (
 type builder struct {
 	files        []string
 	values       []map[string]interface{}
-	interceptors map[string]valueInterceptor
+	interceptors map[string]interceptor
 }
 
 func (ob *builder) addValuesFile(filePath string) error {
@@ -53,34 +53,34 @@ func (ob *builder) addValues(values map[string]interface{}) error {
 	return nil
 }
 
-func (ob *builder) addInterceptor(overrideKeys []string, interceptor valueInterceptor) {
+func (ob *builder) addInterceptor(overrideKeys []string, i interceptor) {
 	if ob.interceptors == nil {
-		ob.interceptors = make(map[string]valueInterceptor)
+		ob.interceptors = make(map[string]interceptor)
 	}
 	for _, overrideKey := range overrideKeys {
-		ob.interceptors[overrideKey] = interceptor
+		ob.interceptors[overrideKey] = i
 	}
 }
 
-func (ob *builder) build() (Overrides, error) {
+func (ob *builder) build() (buildResult, error) {
 	o, err := ob.raw()
 	if err != nil {
-		return Overrides{}, err
+		return buildResult{}, err
 	}
 
-	// assign intercepted values back to the original object to not loose the values
-	o.overrides, err = o.intercept(interceptorOpsIntercept)
+	// assign intercepted values back to the original object to not lose the values
+	o.values, err = o.intercept(interceptorOpsIntercept)
 	return o, err
 }
 
-func (ob *builder) raw() (Overrides, error) {
+func (ob *builder) raw() (buildResult, error) {
 	merged, err := ob.mergeSources()
 	if err != nil {
-		return Overrides{}, err
+		return buildResult{}, err
 	}
 
-	return Overrides{
-		overrides:    merged,
+	return buildResult{
+		values:       merged,
 		interceptors: ob.interceptors,
 	}, nil
 }
@@ -121,27 +121,26 @@ func (ob *builder) mergeSources() (map[string]interface{}, error) {
 	return result, nil
 }
 
-type Overrides struct {
-	overrides    map[string]interface{}
-	interceptors map[string]valueInterceptor
+type buildResult struct {
+	values       map[string]interface{}
+	interceptors map[string]interceptor
 }
 
-// Map returns a copy of the values in map form
-func (o Overrides) Map() map[string]interface{} {
-	return copyMap(o.overrides)
+func (o buildResult) toMap() map[string]interface{} {
+	return copyMap(o.values)
 }
 
-// FlattenedMap returns a copy of the values in flattened map form (nested keys are merged separated by dots)
-func (o Overrides) FlattenedMap() map[string]interface{} {
-	return flattenOverrides(o.Map())
+// toFlattenedMap returns a copy of the values in flattened map form (nested keys are merged separated by dots)
+func (o buildResult) toFlattenedMap() map[string]interface{} {
+	return flattenValues(o.toMap())
 }
 
-func flattenOverrides(overrides map[string]interface{}) map[string]interface{} {
+func flattenValues(overrides map[string]interface{}) map[string]interface{} {
 	result := make(map[string]interface{})
 
 	for outerKey, outerValue := range overrides {
 		if valueAsMap, ok := outerValue.(map[string]interface{}); ok {
-			mapWithIncompleteKeys := flattenOverrides(valueAsMap)
+			mapWithIncompleteKeys := flattenValues(valueAsMap)
 			for innerKey, innerValue := range mapWithIncompleteKeys {
 				result[outerKey+"."+innerKey] = innerValue
 			}
@@ -153,17 +152,8 @@ func flattenOverrides(overrides map[string]interface{}) map[string]interface{} {
 	return result
 }
 
-// String all provided values
-func (o Overrides) String() string {
-	in, err := o.intercept(interceptorOpsString)
-	if err != nil {
-		return fmt.Sprint(err)
-	}
-	return fmt.Sprintf("%v", in)
-}
-
-func (o Overrides) Find(key string) (interface{}, bool) {
-	return deepFind(o.overrides, strings.Split(key, "."))
+func (o buildResult) find(key string) (interface{}, bool) {
+	return deepFind(o.values, strings.Split(key, "."))
 }
 
 func deepFind(m map[string]interface{}, path []string) (interface{}, bool) {
@@ -196,11 +186,11 @@ func setValue(m map[string]interface{}, path []string, value interface{}) error 
 	return nil
 }
 
-func (o Overrides) intercept(ops interceptorOps) (map[string]interface{}, error) {
-	result := copyMap(o.overrides)
+func (o buildResult) intercept(ops interceptorOps) (map[string]interface{}, error) {
+	result := copyMap(o.values)
 
 	for k, interceptor := range o.interceptors {
-		if v, exists := o.Find(k); exists {
+		if v, exists := o.find(k); exists {
 			if ops == interceptorOpsString {
 				newVal := interceptor.String(v, k)
 				if err := setValue(result, strings.Split(k, "."), newVal); err != nil {

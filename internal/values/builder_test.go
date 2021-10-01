@@ -43,7 +43,7 @@ func Test_MergeOverrides(t *testing.T) {
 	// verify merge result with expected data
 	result, err := builder.build()
 	require.NoError(t, err)
-	require.Equal(t, expected, result.Map())
+	require.Equal(t, expected, result.toMap())
 }
 
 func Test_AddFile(t *testing.T) {
@@ -137,7 +137,7 @@ func Test_FlattenedMap(t *testing.T) {
 
 			ovs, err := builder.build()
 			require.NoError(t, err)
-			flat := ovs.FlattenedMap()
+			flat := ovs.toFlattenedMap()
 
 			require.Len(t, flat, len(tc.expected))
 			for key, expected := range tc.expected {

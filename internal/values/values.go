@@ -39,7 +39,7 @@ func Merge(opts Settings, workspace *workspace.Workspace, kubeClient kubernetes.
 		return nil, errors.Wrap(err, "failed to build values")
 	}
 
-	return vs.FlattenedMap(), nil
+	return vs.toFlattenedMap(), nil
 }
 
 func addDefaultValues(builder *builder, workspace *workspace.Workspace) error {
