@@ -1,9 +1,8 @@
-package deploy
+package values
 
 import (
 	"encoding/base64"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
-	"github.com/kyma-project/cli/internal/overrides"
 	"github.com/kyma-project/cli/internal/resolve"
 	"github.com/pkg/errors"
 	"helm.sh/helm/v3/pkg/strvals"
@@ -14,8 +13,8 @@ import (
 	"path/filepath"
 )
 
-func mergeValues(opts *Options, workspace *workspace.Workspace, kubeClient kubernetes.Interface) (map[string]interface{}, error) {
-	builder := &overrides.Builder{}
+func Merge(opts Sources, workspace *workspace.Workspace, kubeClient kubernetes.Interface) (map[string]interface{}, error) {
+	builder := &builder{}
 
 	if err := addDefaultValues(builder, workspace); err != nil {
 		return nil, err
@@ -35,17 +34,17 @@ func mergeValues(opts *Options, workspace *workspace.Workspace, kubeClient kuber
 
 	registerInterceptors(builder, kubeClient)
 
-	ovs, err := builder.Build()
+	vs, err := builder.build()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to build values")
 	}
 
-	return ovs.FlattenedMap(), nil
+	return vs.toFlattenedMap(), nil
 }
 
-func addDefaultValues(builder *overrides.Builder, workspace *workspace.Workspace) error {
+func addDefaultValues(builder *builder, workspace *workspace.Workspace) error {
 	kyma2OverridesPath := path.Join(workspace.InstallationResourceDir, "values.yaml")
-	if err := builder.AddFile(kyma2OverridesPath); err != nil {
+	if err := builder.addValuesFile(kyma2OverridesPath); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return nil
 		}
@@ -55,13 +54,13 @@ func addDefaultValues(builder *overrides.Builder, workspace *workspace.Workspace
 	return nil
 }
 
-func addValueFiles(builder *overrides.Builder, opts *Options, workspace *workspace.Workspace) error {
+func addValueFiles(builder *builder, opts Sources, workspace *workspace.Workspace) error {
 	valueFiles, err := resolve.Files(opts.ValueFiles, filepath.Join(workspace.WorkspaceDir, "tmp"))
 	if err != nil {
 		return errors.Wrap(err, "failed to resolve value files")
 	}
 	for _, file := range valueFiles {
-		if err := builder.AddFile(file); err != nil {
+		if err := builder.addValuesFile(file); err != nil {
 			return errors.Wrap(err, "failed to add a values file")
 		}
 	}
@@ -69,22 +68,22 @@ func addValueFiles(builder *overrides.Builder, opts *Options, workspace *workspa
 	return nil
 }
 
-func addValues(builder *overrides.Builder, opts *Options) error {
+func addValues(builder *builder, opts Sources) error {
 	for _, value := range opts.Values {
 		nested, err := strvals.Parse(value)
 		if err != nil {
 			return errors.Wrapf(err, "failed to parse %s", value)
 		}
 
-		if err := builder.AddOverrides(nested); err != nil {
-			return errors.Wrapf(err, "failed to add overrides %s", value)
+		if err := builder.addValues(nested); err != nil {
+			return errors.Wrapf(err, "failed to add values %s", value)
 		}
 	}
 
 	return nil
 }
 
-func addDomainValues(builder *overrides.Builder, opts *Options) error {
+func addDomainValues(builder *builder, opts Sources) error {
 	domainOverrides := make(map[string]interface{})
 	if opts.Domain != "" {
 		domainOverrides["domainName"] = opts.Domain
@@ -105,7 +104,7 @@ func addDomainValues(builder *overrides.Builder, opts *Options) error {
 	}
 
 	if len(domainOverrides) > 0 {
-		if err := builder.AddOverrides(map[string]interface{}{
+		if err := builder.addValues(map[string]interface{}{
 			"global": domainOverrides,
 		}); err != nil {
 			return err
@@ -123,9 +122,9 @@ func readFileAndEncode(filename string) (string, error) {
 	return base64.StdEncoding.EncodeToString(content), nil
 }
 
-func registerInterceptors(builder *overrides.Builder, kubeClient kubernetes.Interface) {
-	builder.AddInterceptor([]string{"global.domainName", "global.ingress.domainName"}, overrides.NewDomainNameOverrideInterceptor(kubeClient))
-	builder.AddInterceptor([]string{"global.tlsCrt", "global.tlsKey"}, overrides.NewCertificateOverrideInterceptor("global.tlsCrt", "global.tlsKey", kubeClient))
-	builder.AddInterceptor([]string{"serverless.dockerRegistry.internalServerAddress", "serverless.dockerRegistry.serverAddress", "serverless.dockerRegistry.registryAddress"}, overrides.NewRegistryInterceptor(kubeClient))
-	builder.AddInterceptor([]string{"serverless.dockerRegistry.enableInternal"}, overrides.NewRegistryDisableInterceptor(kubeClient))
+func registerInterceptors(builder *builder, kubeClient kubernetes.Interface) {
+	builder.addInterceptor([]string{"global.domainName", "global.ingress.domainName"}, newDomainNameInterceptor(kubeClient))
+	builder.addInterceptor([]string{"global.tlsCrt", "global.tlsKey"}, newCertificateInterceptor("global.tlsCrt", "global.tlsKey", kubeClient))
+	builder.addInterceptor([]string{"serverless.dockerRegistry.internalServerAddress", "serverless.dockerRegistry.serverAddress", "serverless.dockerRegistry.registryAddress"}, newRegistryInterceptor(kubeClient))
+	builder.addInterceptor([]string{"serverless.dockerRegistry.enableInternal"}, newRegistryDisableInterceptor(kubeClient))
 }

@@ -23,6 +23,7 @@ import (
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/nice"
 	"github.com/kyma-project/cli/internal/trust"
+	"github.com/kyma-project/cli/internal/values"
 	"github.com/kyma-project/cli/internal/version"
 	"github.com/kyma-project/cli/pkg/step"
 	"github.com/pkg/errors"
@@ -108,7 +109,7 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	values, err := mergeValues(cmd.opts, ws, cmd.K8s.Static())
+	vs, err := values.Merge(cmd.opts.Sources, ws, cmd.K8s.Static())
 	if err != nil {
 		return err
 	}
@@ -123,7 +124,7 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	components, err := cmd.createComponentsWithOverrides(ws, values)
+	components, err := cmd.createComponentsWithOverrides(ws, vs)
 	if err != nil {
 		return err
 	}
@@ -142,7 +143,7 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	return cmd.printSummary(values, time.Since(start))
+	return cmd.printSummary(vs, time.Since(start))
 }
 
 func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List) error {

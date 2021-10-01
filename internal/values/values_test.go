@@ -1,4 +1,4 @@
-package deploy
+package values
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ import (
 
 const any = "DO_NOT_CHECK_OVERRIDE_VALUE"
 
-func TestMergeOverrides(t *testing.T) {
+func TestMerge(t *testing.T) {
 	testCases := []struct {
 		summary                 string
 		installationResourceDir string
@@ -102,7 +102,7 @@ func TestMergeOverrides(t *testing.T) {
 		{
 			summary:    "multiple values with single value file",
 			values:     []string{"component.key=foo", "component.inner.key=bar"},
-			valueFiles: []string{"testdata/valid-overrides-1.yaml"},
+			valueFiles: []string{"testdata/valid-values-1.yaml"},
 			expected: map[string]interface{}{
 				"global.domainName":         any,
 				"global.tlsCrt":             any,
@@ -116,7 +116,7 @@ func TestMergeOverrides(t *testing.T) {
 		{
 			summary:    "multiple values with single value files",
 			values:     []string{"component.key=foo", "component.inner.key=bar"},
-			valueFiles: []string{"testdata/valid-overrides-1.yaml"},
+			valueFiles: []string{"testdata/valid-values-1.yaml"},
 			expected: map[string]interface{}{
 				"global.domainName":         any,
 				"global.tlsCrt":             any,
@@ -130,7 +130,7 @@ func TestMergeOverrides(t *testing.T) {
 		{
 			summary:    "multiple values with multiple value files",
 			values:     []string{"component.key=foo", "component.inner.key=bar"},
-			valueFiles: []string{"testdata/valid-overrides-1.yaml", "testdata/valid-overrides-2.yaml"},
+			valueFiles: []string{"testdata/valid-values-1.yaml", "testdata/valid-values-2.yaml"},
 			expected: map[string]interface{}{
 				"global.domainName":         any,
 				"global.tlsCrt":             any,
@@ -138,7 +138,7 @@ func TestMergeOverrides(t *testing.T) {
 				"global.ingress.domainName": any,
 				"component.key":             "foo", //value wins
 				"component.inner.key":       "bar",
-				"component.outer.inner.key": "bzz", //value file testdata/valid-overrides-2.yaml wins
+				"component.outer.inner.key": "bzz", //value file testdata/valid-values-2.yaml wins
 			},
 		},
 		{
@@ -153,7 +153,7 @@ func TestMergeOverrides(t *testing.T) {
 		},
 		{
 			summary:     "corrupted value file",
-			valueFiles:  []string{"testdata/corrupted-overrides.yaml"},
+			valueFiles:  []string{"testdata/corrupted-values.yaml"},
 			expectedErr: true,
 		},
 		{
@@ -187,14 +187,14 @@ func TestMergeOverrides(t *testing.T) {
 		t.Run(tc.summary, func(t *testing.T) {
 			t.Parallel()
 
-			opts := &Options{
+			opts := Sources{
 				Values:     tc.values,
 				ValueFiles: tc.valueFiles,
 				Domain:     tc.domain,
 				TLSCrtFile: tc.tlsCrt,
 				TLSKeyFile: tc.tlsKey,
 			}
-			actual, err := mergeValues(opts, &workspace.Workspace{
+			actual, err := Merge(opts, &workspace.Workspace{
 				InstallationResourceDir: tc.installationResourceDir,
 			}, fake.NewSimpleClientset())
 
@@ -211,10 +211,10 @@ func TestMergeOverrides(t *testing.T) {
 		fakeServer := httptest.NewServer(http.FileServer(http.Dir("testdata")))
 		defer fakeServer.Close()
 
-		opts := &Options{
-			ValueFiles: []string{fmt.Sprintf("%s:/%s", fakeServer.URL, "valid-overrides-1.yaml")},
+		opts := Sources{
+			ValueFiles: []string{fmt.Sprintf("%s:/%s", fakeServer.URL, "valid-values-1.yaml")},
 		}
-		actual, err := mergeValues(opts, &workspace.Workspace{}, fake.NewSimpleClientset())
+		actual, err := Merge(opts, &workspace.Workspace{}, fake.NewSimpleClientset())
 
 		expected := map[string]interface{}{
 			"global.domainName":         any,

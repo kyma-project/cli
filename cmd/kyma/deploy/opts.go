@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/files"
+	"github.com/kyma-project/cli/internal/values"
 	"github.com/pkg/errors"
 	"os"
 	"path/filepath"
@@ -23,16 +24,13 @@ const (
 //Options defines available options for the command
 type Options struct {
 	*cli.Options
+	values.Sources
 	WorkspacePath  string
 	Source         string
 	Components     []string
 	ComponentsFile string
 	Domain         string
-	Values         []string
-	ValueFiles     []string
 	Profile        string
-	TLSCrtFile     string
-	TLSKeyFile     string
 }
 
 //NewOptions creates options with default values
