@@ -13,7 +13,6 @@ import (
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/service"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
 	"github.com/kyma-incubator/reconciler/pkg/scheduler"
-	"github.com/kyma-project/cli/cmd/kyma/dashboard"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/component"
 	"github.com/kyma-project/cli/internal/config"
@@ -336,7 +335,6 @@ func (cmd *command) printSummary(overrides map[string]interface{}, duration time
 		NonInteractive: cmd.NonInteractive,
 		Version:        cmd.opts.Source,
 		URL:            domain.(string),
-		Dashboard:      dashboard.KymaDashboardURL,
 		Duration:       duration,
 	}
 

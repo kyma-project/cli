@@ -12,10 +12,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	KymaDashboardURL = "https://dashboard.kyma.cloud.sap"
-)
-
 type command struct {
 	opts *Options
 	cli.Command
@@ -35,10 +31,9 @@ func NewCmd(o *Options) *cobra.Command {
 		RunE:  func(_ *cobra.Command, _ []string) error { return c.Run() },
 	}
 
-	cmd.Flags().BoolVarP(&o.Local, "local", "l", false, `Change this flag to "true" if you want to run the dashboard locally via Docker.`)
-	cmd.Flags().StringVarP(&o.LocalPort, "port", "p", "3001", `Specify the port on which the local dashboard will be exposed. Only works in combination with "--local".`)
-	cmd.Flags().StringVar(&o.ContainerName, "container-name", "busola", `Specify the name of the local container. Only works in combination with "--local".`)
-	cmd.Flags().BoolVarP(&o.Detach, "detach", "d", false, `Change this flag to "true" if you don't want to follow the logs of the local container. Only works in combination with "--local".`)
+	cmd.Flags().StringVarP(&o.Port, "port", "p", "3001", `Specify the port on which the local dashboard will be exposed.`)
+	cmd.Flags().StringVar(&o.ContainerName, "container-name", "busola", `Specify the name of the local container.`)
+	cmd.Flags().BoolVarP(&o.Detach, "detach", "d", false, `Change this flag to "true" if you don't want to follow the logs of the local container.`)
 
 	return cmd
 }
@@ -61,14 +56,8 @@ func (cmd *command) Run() error {
 		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid.")
 	}
 
-	if cmd.opts.Local {
-		localDashboardURL := fmt.Sprintf("http://localhost:%s/", cmd.opts.LocalPort)
-		return cmd.runDashboardContainer(localDashboardURL)
-	}
-
-	cmd.openDashboard(KymaDashboardURL)
-
-	return nil
+	localDashboardURL := fmt.Sprintf("http://localhost:%s/", cmd.opts.Port)
+	return cmd.runDashboardContainer(localDashboardURL)
 }
 
 func (cmd *command) runDashboardContainer(dashboardURL string) error {
@@ -91,7 +80,7 @@ func (cmd *command) runDashboardContainer(dashboardURL string) error {
 
 	id, err := dockerWrapper.ContainerCreateAndStart(ctx, docker.ContainerRunOpts{
 		Ports: map[string]string{
-			"3001": cmd.opts.LocalPort,
+			"3001": cmd.opts.Port,
 		},
 		Envs:          envs,
 		ContainerName: cmd.opts.ContainerName,

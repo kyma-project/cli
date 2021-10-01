@@ -15,10 +15,9 @@ kyma dashboard [flags]
 ## Flags
 
 ```bash
-      --container-name string   Specify the name of the local container. Only works in combination with "--local". (default "busola")
-  -d, --detach                  Change this flag to "true" if you don't want to follow the logs of the local container. Only works in combination with "--local".
-  -l, --local                   Change this flag to "true" if you want to run the dashboard locally via Docker.
-  -p, --port string             Specify the port on which the local dashboard will be exposed. Only works in combination with "--local". (default "3001")
+      --container-name string   Specify the name of the local container. (default "busola")
+  -d, --detach                  Change this flag to "true" if you don't want to follow the logs of the local container.
+  -p, --port string             Specify the port on which the local dashboard will be exposed. (default "3001")
 ```
 
 ## Flags inherited from parent commands

@@ -11,8 +11,7 @@ type Options struct {
 	*cli.Options
 	ContainerName string
 	Detach        bool
-	Local         bool
-	LocalPort     string
+	Port          string
 }
 
 //NewOptions creates options with default values
