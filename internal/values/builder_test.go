@@ -12,9 +12,9 @@ import (
 
 func Test_MergeOverrides(t *testing.T) {
 	builder := builder{}
-	err := builder.addValuesFile("testdata/deployment-overrides1.yaml")
+	err := builder.addValuesFile("testdata/deployment-values1.yaml")
 	require.NoError(t, err)
-	err = builder.addValuesFile("testdata/deployment-overrides2.json")
+	err = builder.addValuesFile("testdata/deployment-values2.json")
 	require.NoError(t, err)
 
 	override1 := map[string]interface{}{
@@ -48,9 +48,9 @@ func Test_MergeOverrides(t *testing.T) {
 
 func Test_AddFile(t *testing.T) {
 	builder := builder{}
-	err := builder.addValuesFile("testdata/deployment-overrides1.yaml")
+	err := builder.addValuesFile("testdata/deployment-values1.yaml")
 	require.NoError(t, err)
-	err = builder.addValuesFile("testdata/deployment-overrides2.json")
+	err = builder.addValuesFile("testdata/deployment-values2.json")
 	require.NoError(t, err)
 	err = builder.addValuesFile("testdata/values.xml") // unsupported format
 	require.Error(t, err)

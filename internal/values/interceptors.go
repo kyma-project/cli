@@ -26,22 +26,19 @@ const (
 
 // interceptor is controlling access to override values
 type interceptor interface {
-	//String shows the value of the override
-	String(value interface{}, key string) string
-	//Intercept is executed when the override is retrieved
-	Intercept(value interface{}, key string) (interface{}, error)
-	//Undefined is executed when the override is not defined
-	Undefined(overrides map[string]interface{}, key string) error
+	String(v interface{}, key string) string
+	Intercept(v interface{}, key string) (interface{}, error)
+	Undefined(vs map[string]interface{}, key string) error
 }
 
-// domainNameOverrideInterceptor resolves the domain name for the cluster
-type domainNameOverrideInterceptor struct {
+// domainNameInterceptor resolves the domain name for the cluster
+type domainNameInterceptor struct {
 	kubeClient     kubernetes.Interface
 	isLocalCluster func() (bool, error) // Returns true if we're on a local cluster like k3s
 }
 
-func newDomainNameOverrideInterceptor(kubeClient kubernetes.Interface) *domainNameOverrideInterceptor {
-	return &domainNameOverrideInterceptor{
+func newDomainNameInterceptor(kubeClient kubernetes.Interface) *domainNameInterceptor {
+	return &domainNameInterceptor{
 		kubeClient: kubeClient,
 		isLocalCluster: func() (bool, error) {
 			return k3d.IsK3dCluster(kubeClient)
@@ -49,11 +46,11 @@ func newDomainNameOverrideInterceptor(kubeClient kubernetes.Interface) *domainNa
 	}
 }
 
-func (i *domainNameOverrideInterceptor) String(value interface{}, key string) string {
-	return fmt.Sprintf("%v", value)
+func (i *domainNameInterceptor) String(v interface{}, key string) string {
+	return fmt.Sprintf("%v", v)
 }
 
-func (i *domainNameOverrideInterceptor) Intercept(value interface{}, key string) (interface{}, error) {
+func (i *domainNameInterceptor) Intercept(v interface{}, key string) (interface{}, error) {
 	// On gardener, domain provided by user should be ignored
 	domainName, err := gardener.Domain(i.kubeClient)
 	if err != nil {
@@ -65,19 +62,19 @@ func (i *domainNameOverrideInterceptor) Intercept(value interface{}, key string)
 	}
 
 	// In every other environment, proceed with what was provided by the user.
-	return value, nil
+	return v, nil
 }
 
-func (i *domainNameOverrideInterceptor) Undefined(overrides map[string]interface{}, key string) error {
+func (i *domainNameInterceptor) Undefined(vs map[string]interface{}, key string) error {
 	domain, err := i.getDomainName()
 	if err != nil {
 		return err
 	}
 
-	return newFallbackOverrideInterceptor(domain).Undefined(overrides, key)
+	return newFallbackInterceptor(domain).Undefined(vs, key)
 }
 
-func (i *domainNameOverrideInterceptor) getDomainName() (domainName string, err error) {
+func (i *domainNameInterceptor) getDomainName() (domainName string, err error) {
 
 	// On gardener always return gardener domain
 	domainName, err = gardener.Domain(i.kubeClient)
@@ -99,7 +96,7 @@ func (i *domainNameOverrideInterceptor) getDomainName() (domainName string, err 
 	return defaultRemoteKymaDomain, nil
 }
 
-func (i *domainNameOverrideInterceptor) findLocalDomain() (domainName string, err error) {
+func (i *domainNameInterceptor) findLocalDomain() (domainName string, err error) {
 
 	isLocalCluster, err := i.isLocalCluster()
 	if err != nil {
@@ -113,8 +110,8 @@ func (i *domainNameOverrideInterceptor) findLocalDomain() (domainName string, er
 	return "", nil
 }
 
-// certificateOverrideInterceptor handles certificates
-type certificateOverrideInterceptor struct {
+// certificateInterceptor handles certificates
+type certificateInterceptor struct {
 	tlsCrtOverrideKey string
 	tlsKeyOverrideKey string
 	tlsCrtEnc         string
@@ -124,8 +121,8 @@ type certificateOverrideInterceptor struct {
 }
 
 //nolint:unparam
-func newCertificateOverrideInterceptor(tlsCrtOverrideKey, tlsKeyOverrideKey string, kubeClient kubernetes.Interface) *certificateOverrideInterceptor {
-	res := &certificateOverrideInterceptor{
+func newCertificateInterceptor(tlsCrtOverrideKey, tlsKeyOverrideKey string, kubeClient kubernetes.Interface) *certificateInterceptor {
+	res := &certificateInterceptor{
 		tlsCrtOverrideKey: tlsCrtOverrideKey,
 		tlsKeyOverrideKey: tlsKeyOverrideKey,
 	}
@@ -145,11 +142,11 @@ func newCertificateOverrideInterceptor(tlsCrtOverrideKey, tlsKeyOverrideKey stri
 	return res
 }
 
-func (i *certificateOverrideInterceptor) String(value interface{}, key string) string {
+func (i *certificateInterceptor) String(value interface{}, key string) string {
 	return "<masked>"
 }
 
-func (i *certificateOverrideInterceptor) Intercept(value interface{}, key string) (interface{}, error) {
+func (i *certificateInterceptor) Intercept(v interface{}, key string) (interface{}, error) {
 	isGardener, err := i.isGardenerCluster()
 	if err != nil {
 		return "", err
@@ -160,17 +157,17 @@ func (i *certificateOverrideInterceptor) Intercept(value interface{}, key string
 
 	switch key {
 	case i.tlsCrtOverrideKey:
-		i.tlsCrtEnc = value.(string)
+		i.tlsCrtEnc = v.(string)
 	case i.tlsKeyOverrideKey:
-		i.tlsKeyEnc = value.(string)
+		i.tlsKeyEnc = v.(string)
 	}
 	if err := i.validate(); err != nil {
 		return nil, err
 	}
-	return value, nil
+	return v, nil
 }
 
-func (i *certificateOverrideInterceptor) Undefined(overrides map[string]interface{}, key string) error {
+func (i *certificateInterceptor) Undefined(vs map[string]interface{}, key string) error {
 	isGardener, err := i.isGardenerCluster()
 	if err != nil {
 		return err
@@ -184,7 +181,7 @@ func (i *certificateOverrideInterceptor) Undefined(overrides map[string]interfac
 		return err
 	}
 
-	var fbInterc *fallbackOverrideInterceptor
+	var fbInterc *fallbackInterceptor
 	switch key {
 	case i.tlsCrtOverrideKey:
 		var val string
@@ -193,7 +190,7 @@ func (i *certificateOverrideInterceptor) Undefined(overrides map[string]interfac
 		} else {
 			val = defaultRemoteTLSCrtEnc
 		}
-		fbInterc = newFallbackOverrideInterceptor(val)
+		fbInterc = newFallbackInterceptor(val)
 		i.tlsCrtEnc = val
 	case i.tlsKeyOverrideKey:
 		var val string
@@ -202,19 +199,19 @@ func (i *certificateOverrideInterceptor) Undefined(overrides map[string]interfac
 		} else {
 			val = defaultRemoteTLSKeyEnc
 		}
-		fbInterc = newFallbackOverrideInterceptor(val)
+		fbInterc = newFallbackInterceptor(val)
 		i.tlsKeyEnc = val
 	default:
 		return fmt.Errorf("certificate interceptor can not handle values-key '%s'", key)
 	}
 
-	if err := fbInterc.Undefined(overrides, key); err != nil {
+	if err := fbInterc.Undefined(vs, key); err != nil {
 		return err
 	}
 	return i.validate()
 }
 
-func (i *certificateOverrideInterceptor) validate() error {
+func (i *certificateInterceptor) validate() error {
 	if i.tlsCrtEnc != "" && i.tlsKeyEnc != "" {
 		// Decode tls crt and key
 		crt, err := base64.StdEncoding.DecodeString(i.tlsCrtEnc)
@@ -235,23 +232,23 @@ func (i *certificateOverrideInterceptor) validate() error {
 	return nil
 }
 
-// fallbackOverrideInterceptor sets a default value for an undefined overwrite
-type fallbackOverrideInterceptor struct {
+// fallbackInterceptor sets a default value for an undefined overwrite
+type fallbackInterceptor struct {
 	fallback interface{}
 }
 
-func (i *fallbackOverrideInterceptor) String(value interface{}, key string) string {
-	return fmt.Sprintf("%v", value)
+func (i *fallbackInterceptor) String(v interface{}, key string) string {
+	return fmt.Sprintf("%v", v)
 }
 
-func (i *fallbackOverrideInterceptor) Intercept(value interface{}, key string) (interface{}, error) {
-	return value, nil
+func (i *fallbackInterceptor) Intercept(v interface{}, key string) (interface{}, error) {
+	return v, nil
 }
 
-func (i *fallbackOverrideInterceptor) Undefined(overrides map[string]interface{}, key string) error {
+func (i *fallbackInterceptor) Undefined(vs map[string]interface{}, key string) error {
 	subKeys := strings.Split(key, ".")
 	maxDepth := len(subKeys)
-	lastProcessedEntry := overrides
+	lastProcessedEntry := vs
 
 	for depth, subKey := range subKeys {
 		if _, ok := lastProcessedEntry[subKey]; !ok {
@@ -275,12 +272,12 @@ func (i *fallbackOverrideInterceptor) Undefined(overrides map[string]interface{}
 	return nil
 }
 
-func (i *fallbackOverrideInterceptor) Fallback() interface{} {
+func (i *fallbackInterceptor) Fallback() interface{} {
 	return i.fallback
 }
 
-func newFallbackOverrideInterceptor(fallback interface{}) *fallbackOverrideInterceptor {
-	return &fallbackOverrideInterceptor{
+func newFallbackInterceptor(fallback interface{}) *fallbackInterceptor {
+	return &fallbackInterceptor{
 		fallback: fallback,
 	}
 }
@@ -294,15 +291,15 @@ func newRegistryDisableInterceptor(kubeClient kubernetes.Interface) *registryDis
 		kubeClient: kubeClient,
 	}
 }
-func (i *registryDisableInterceptor) String(value interface{}, key string) string {
-	newVal, err := i.Intercept(value, key)
+func (i *registryDisableInterceptor) String(v interface{}, key string) string {
+	newVal, err := i.Intercept(v, key)
 	if err != nil {
 		return fmt.Sprintf("error during interception: %s", err.Error())
 	}
 	return fmt.Sprintf("%v", newVal)
 }
 
-func (i *registryDisableInterceptor) Intercept(value interface{}, key string) (interface{}, error) {
+func (i *registryDisableInterceptor) Intercept(v interface{}, key string) (interface{}, error) {
 	k3dCluster, err := k3d.IsK3dCluster(i.kubeClient)
 	if err != nil {
 		return nil, err
@@ -310,16 +307,16 @@ func (i *registryDisableInterceptor) Intercept(value interface{}, key string) (i
 	if k3dCluster {
 		return "false", nil
 	}
-	return value, nil
+	return v, nil
 }
 
-func (i *registryDisableInterceptor) Undefined(overrides map[string]interface{}, key string) error {
+func (i *registryDisableInterceptor) Undefined(vs map[string]interface{}, key string) error {
 	k3dCluster, err := k3d.IsK3dCluster(i.kubeClient)
 	if err != nil {
 		return err
 	}
 	if k3dCluster {
-		return newFallbackOverrideInterceptor(false).Undefined(overrides, key)
+		return newFallbackInterceptor(false).Undefined(vs, key)
 	}
 	return nil
 }
@@ -334,19 +331,19 @@ func newRegistryInterceptor(kubeClient kubernetes.Interface) *registryIntercepto
 	}
 }
 
-func (i *registryInterceptor) String(value interface{}, key string) string {
-	newVal, err := i.Intercept(value, key)
+func (i *registryInterceptor) String(v interface{}, key string) string {
+	newVal, err := i.Intercept(v, key)
 	if err != nil {
 		return fmt.Sprintf("error during interception: %s", err.Error())
 	}
 	return fmt.Sprintf("%v", newVal)
 }
 
-func (i *registryInterceptor) Intercept(value interface{}, key string) (interface{}, error) {
-	return value, nil
+func (i *registryInterceptor) Intercept(v interface{}, key string) (interface{}, error) {
+	return v, nil
 }
 
-func (i *registryInterceptor) Undefined(overrides map[string]interface{}, key string) error {
+func (i *registryInterceptor) Undefined(vals map[string]interface{}, key string) error {
 	k3dCluster, err := k3d.IsK3dCluster(i.kubeClient)
 	if err != nil {
 		return err
@@ -356,7 +353,7 @@ func (i *registryInterceptor) Undefined(overrides map[string]interface{}, key st
 		if err != nil {
 			return err
 		}
-		return newFallbackOverrideInterceptor(fmt.Sprintf("k3d-%s-registry:5000", k3dClusterName)).Undefined(overrides, key)
+		return newFallbackInterceptor(fmt.Sprintf("k3d-%s-registry:5000", k3dClusterName)).Undefined(vals, key)
 	}
 	return nil
 }

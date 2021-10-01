@@ -123,8 +123,8 @@ func readFileAndEncode(filename string) (string, error) {
 }
 
 func registerInterceptors(builder *builder, kubeClient kubernetes.Interface) {
-	builder.addInterceptor([]string{"global.domainName", "global.ingress.domainName"}, newDomainNameOverrideInterceptor(kubeClient))
-	builder.addInterceptor([]string{"global.tlsCrt", "global.tlsKey"}, newCertificateOverrideInterceptor("global.tlsCrt", "global.tlsKey", kubeClient))
+	builder.addInterceptor([]string{"global.domainName", "global.ingress.domainName"}, newDomainNameInterceptor(kubeClient))
+	builder.addInterceptor([]string{"global.tlsCrt", "global.tlsKey"}, newCertificateInterceptor("global.tlsCrt", "global.tlsKey", kubeClient))
 	builder.addInterceptor([]string{"serverless.dockerRegistry.internalServerAddress", "serverless.dockerRegistry.serverAddress", "serverless.dockerRegistry.registryAddress"}, newRegistryInterceptor(kubeClient))
 	builder.addInterceptor([]string{"serverless.dockerRegistry.enableInternal"}, newRegistryDisableInterceptor(kubeClient))
 }
