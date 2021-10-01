@@ -126,6 +126,14 @@ type buildResult struct {
 	interceptors map[string]interceptor
 }
 
+func (r buildResult) String() string {
+	in, err := r.intercept(interceptorOpsString)
+	if err != nil {
+		return fmt.Sprint(err)
+	}
+	return fmt.Sprintf("%v", in)
+}
+
 func (r buildResult) toMap() map[string]interface{} {
 	return copyMap(r.values)
 }
