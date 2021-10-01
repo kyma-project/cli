@@ -24,7 +24,7 @@ const (
 //Options defines available options for the command
 type Options struct {
 	*cli.Options
-	values.Settings
+	values.Sources
 	WorkspacePath  string
 	Source         string
 	Components     []string

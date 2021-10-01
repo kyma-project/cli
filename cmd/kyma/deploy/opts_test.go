@@ -27,7 +27,7 @@ func TestOptsValidation(t *testing.T) {
 
 	t.Run("tls key not found", func(t *testing.T) {
 		opts := Options{
-			Settings: values.Settings{
+			Sources: values.Sources{
 				TLSKeyFile: "not-existing.key",
 			},
 		}
@@ -39,7 +39,7 @@ func TestOptsValidation(t *testing.T) {
 	t.Run("tls key exists but crt not found", func(t *testing.T) {
 		dummyFilePath := path.Join("testdata", "dummy.txt")
 		opts := Options{
-			Settings: values.Settings{
+			Sources: values.Sources{
 				TLSKeyFile: dummyFilePath,
 				TLSCrtFile: "not-existing.crt",
 			},
@@ -52,7 +52,7 @@ func TestOptsValidation(t *testing.T) {
 	t.Run("tls crt exists but key not found", func(t *testing.T) {
 		dummyFilePath := path.Join("testdata", "dummy.txt")
 		opts := Options{
-			Settings: values.Settings{
+			Sources: values.Sources{
 				TLSKeyFile: "not-existing.crt",
 				TLSCrtFile: dummyFilePath,
 			},
@@ -65,7 +65,7 @@ func TestOptsValidation(t *testing.T) {
 	t.Run("tls key and crt found", func(t *testing.T) {
 		dummyFilePath := path.Join("testdata", "dummy.txt")
 		opts := Options{
-			Settings: values.Settings{
+			Sources: values.Sources{
 				TLSKeyFile: dummyFilePath,
 				TLSCrtFile: dummyFilePath,
 			},

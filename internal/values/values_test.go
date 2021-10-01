@@ -187,7 +187,7 @@ func TestMerge(t *testing.T) {
 		t.Run(tc.summary, func(t *testing.T) {
 			t.Parallel()
 
-			opts := Settings{
+			opts := Sources{
 				Values:     tc.values,
 				ValueFiles: tc.valueFiles,
 				Domain:     tc.domain,
@@ -211,7 +211,7 @@ func TestMerge(t *testing.T) {
 		fakeServer := httptest.NewServer(http.FileServer(http.Dir("testdata")))
 		defer fakeServer.Close()
 
-		opts := Settings{
+		opts := Sources{
 			ValueFiles: []string{fmt.Sprintf("%s:/%s", fakeServer.URL, "valid-values-1.yaml")},
 		}
 		actual, err := Merge(opts, &workspace.Workspace{}, fake.NewSimpleClientset())

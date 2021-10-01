@@ -109,7 +109,7 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	vs, err := values.Merge(cmd.opts.Settings, ws, cmd.K8s.Static())
+	vs, err := values.Merge(cmd.opts.Sources, ws, cmd.K8s.Static())
 	if err != nil {
 		return err
 	}

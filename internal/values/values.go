@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 )
 
-func Merge(opts Settings, workspace *workspace.Workspace, kubeClient kubernetes.Interface) (map[string]interface{}, error) {
+func Merge(opts Sources, workspace *workspace.Workspace, kubeClient kubernetes.Interface) (map[string]interface{}, error) {
 	builder := &builder{}
 
 	if err := addDefaultValues(builder, workspace); err != nil {
@@ -54,7 +54,7 @@ func addDefaultValues(builder *builder, workspace *workspace.Workspace) error {
 	return nil
 }
 
-func addValueFiles(builder *builder, opts Settings, workspace *workspace.Workspace) error {
+func addValueFiles(builder *builder, opts Sources, workspace *workspace.Workspace) error {
 	valueFiles, err := resolve.Files(opts.ValueFiles, filepath.Join(workspace.WorkspaceDir, "tmp"))
 	if err != nil {
 		return errors.Wrap(err, "failed to resolve value files")
@@ -68,7 +68,7 @@ func addValueFiles(builder *builder, opts Settings, workspace *workspace.Workspa
 	return nil
 }
 
-func addValues(builder *builder, opts Settings) error {
+func addValues(builder *builder, opts Sources) error {
 	for _, value := range opts.Values {
 		nested, err := strvals.Parse(value)
 		if err != nil {
@@ -83,7 +83,7 @@ func addValues(builder *builder, opts Settings) error {
 	return nil
 }
 
-func addDomainValues(builder *builder, opts Settings) error {
+func addDomainValues(builder *builder, opts Sources) error {
 	domainOverrides := make(map[string]interface{})
 	if opts.Domain != "" {
 		domainOverrides["domainName"] = opts.Domain

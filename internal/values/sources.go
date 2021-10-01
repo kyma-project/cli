@@ -1,6 +1,6 @@
 package values
 
-type Settings struct {
+type Sources struct {
 	Domain     string
 	Values     []string
 	ValueFiles []string
