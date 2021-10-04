@@ -34,10 +34,6 @@ import (
 	_ "github.com/kyma-incubator/reconciler/pkg/reconciler/instances"
 )
 
-const (
-	dashboardURL = "https://dashboard.kyma.cloud.sap"
-)
-
 type command struct {
 	cli.Command
 	opts *Options
@@ -340,7 +336,6 @@ func (cmd *command) printSummary(overrides map[string]interface{}, duration time
 		NonInteractive: cmd.NonInteractive,
 		Version:        cmd.opts.Source,
 		URL:            domain.(string),
-		Dashboard:      dashboardURL,
 		Duration:       duration,
 	}
 

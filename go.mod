@@ -29,6 +29,7 @@ require (
 	github.com/daviddengcn/go-colortext v1.0.0
 	github.com/docker/cli v20.10.6+incompatible
 	github.com/docker/docker v20.10.8+incompatible
+	github.com/docker/go-connections v0.4.0
 	github.com/fatih/color v1.10.0
 	github.com/imdario/mergo v0.3.12
 	github.com/kyma-incubator/hydroform/function v0.0.0-20210910072351-61ef321fd793
@@ -41,6 +42,7 @@ require (
 	github.com/magiconair/properties v1.8.5 // indirect
 	github.com/moby/sys/mount v0.2.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.5
+	github.com/opencontainers/image-spec v1.0.1
 	github.com/pkg/browser v0.0.0-20210115035449-ce105d075bb4
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.2.1
