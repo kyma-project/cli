@@ -61,7 +61,7 @@ func (cmd *command) Run() error {
 		return err
 	}
 
-	fmt.Fprintf(w, "Kyma 2 cluster version: %s\n", ver.String())
+	fmt.Fprintf(w, "Kyma cluster version: %s\n", ver.String())
 
 	return nil
 }
