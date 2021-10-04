@@ -381,7 +381,7 @@ func (cmd *command) decideVersionUpgrade() error {
 	switch upgradeScenario {
 	case version.UpgradeEqualVersion:
 		{
-			verifyStep.Failuref("A kyma installation with version '%s' was found. Current and next Kyma version are equal: %s ", currentVersion.String())
+			verifyStep.Failuref("A kyma installation was found. Current and target version are equal: %s ", currentVersion.String())
 		}
 	case version.UpgradeUndetermined:
 		{
