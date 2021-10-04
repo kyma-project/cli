@@ -368,53 +368,38 @@ func (cmd *command) decideVersionUpgrade() error {
 		return nil
 	}
 
-	if !currentVersion.IsReleasedVersion() {
-		// Assume we are upgrading from PR-XXX or main or branch
-		if !verifyStep.PromptYesNo(fmt.Sprintf("A kyma installation with version (%s) was found. Do you want to proceed with the upgrade (%s)? ", currentVersion.String(), cmd.opts.Source)) {
-			return errors.New("Upgrade stopped by user")
-		}
-	} else if currentVersion.IsKyma1() {
-		if cmd.avoidUserInteraction() {
-			verifyStep.Failuref("A kyma v1 installation (%s) was found. Please use interactive mode to confirm the upgrade", currentVersion.String())
-		}
-		if !verifyStep.PromptYesNo(fmt.Sprintf("A kyma v1 installation (%s) was found. Do you want to proceed with the upgrade (%s)? ", currentVersion.String(), cmd.opts.Source)) {
-			return errors.New("Upgrade stopped by user")
-		}
-	} else if currentVersion.IsKyma2() {
-		if !verifyStep.PromptYesNo(fmt.Sprintf("A kyma v2 installation (%s) was found. Do you want to proceed with the upgrade? ", currentVersion.String())) {
-			return errors.New("Upgrade stopped by user")
-		}
-	}
-
 	upgradeVersion, err := version.NewKymaVersion(cmd.opts.Source)
 	if err != nil {
 		return errors.Errorf("Version is non parsable: %s", cmd.opts.Source)
 	}
 
-	upgradeDecision := currentVersion.IsCompatibleWith(upgradeVersion)
-	switch upgradeDecision {
+	if cmd.avoidUserInteraction() {
+		verifyStep.Successf("A kyma installation with version '%s' was found. Proceeding with upgrade to '%s' in non-interactive mode. ", currentVersion.String(), upgradeVersion.String())
+		return nil
+	}
+
+	upgradeScenario := currentVersion.IsCompatibleWith(upgradeVersion)
+	switch upgradeScenario {
 	case version.UpgradeEqualVersion:
 		{
-			verifyStep.Failuref("Current and next Kyma version are equal: %s", currentVersion.String())
+			verifyStep.Failuref("A kyma installation was found. Current and target version are equal: %s ", currentVersion.String())
 		}
 	case version.UpgradeUndetermined:
 		{
-			verifyStep.Failuref("Cannot check compatibility between version '%s' and '%s'. This might cause errors!",
+			verifyStep.Failuref("A kyma installation was found, but compatibility between version '%s' and '%s' is not guaranteed. This might cause errors! ",
 				currentVersion.String(), upgradeVersion.String())
 		}
 	case version.UpgradePossible:
 		{
-			verifyStep.Success()
+			verifyStep.Successf("A kyma installation with version '%s' was found. ", currentVersion.String())
 		}
 	}
-	//seemless upgrade unnecessary or cannot be warrantied, asking user for approval
-	incompatibleStep := cmd.NewStep("Continue Kyma upgrade")
-	if cmd.avoidUserInteraction() || incompatibleStep.PromptYesNo("Do you want to proceed with the upgrade? ") {
-		incompatibleStep.Success()
-		return nil
+
+	if !verifyStep.PromptYesNo(fmt.Sprintf("Do you want to proceed with the upgrade to '%s'? ", upgradeVersion.String())) {
+		return errors.New("Upgrade stopped by user")
 	}
-	incompatibleStep.Failure()
-	return fmt.Errorf("upgrade stopped by user")
+
+	return nil
 }
 
 func (cmd *command) installPrerequisites(wsp string) error {
