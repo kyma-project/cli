@@ -103,6 +103,10 @@ func (cmd *command) Run() error {
 		cmd.Factory.NonInteractive = true
 	}
 
+	if err := cmd.opts.validateFlags(); err != nil {
+		return err
+	}
+
 	var err error
 	if cmd.K8s, err = kube.NewFromConfigWithTimeout("", cmd.KubeconfigPath, cmd.opts.Timeout); err != nil {
 		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")

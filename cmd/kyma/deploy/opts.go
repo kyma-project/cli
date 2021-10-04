@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 )
 
 var (
@@ -100,16 +101,21 @@ func (o *Options) validateFlags() error {
 
 func (o *Options) validateSource() error {
 	checkFirstDigit := regexp.MustCompile(`^[1-9]\.`)
-	startsWithNo := checkFirstDigit.MatchString(o.Source)
-	if startsWithNo {
-		checkCompleteSource := regexp.MustCompile(`[1-9]\.[0-9]+\.[0-9]+`)
-		isSemVer := checkCompleteSource.MatchString(o.Source)
-		if isSemVer {
-			return nil
-		}
-		return fmt.Errorf("provided version (%s) is not semver should be of format X.Y.Z", o.Source)
+	startsWithDigit := checkFirstDigit.MatchString(o.Source)
+
+	if !startsWithDigit {
+		return nil
 	}
-	return nil
+
+	checkSemanticVersion := regexp.MustCompile(`[1-9]\.[0-9]+\.[0-9]+`)
+	isSemVer := checkSemanticVersion.MatchString(o.Source)
+	if isSemVer {
+		if  strings.HasPrefix(o.Source, "1") {
+			return fmt.Errorf("Kyma version 1.x can not be installed via 'deploy'. Please use the 'install' command, which supports Kyma 1 versions")
+		}
+		return nil
+	}
+	return fmt.Errorf("Provided version (%s) is not a valid semantic version. It should be of format X.Y.Z", o.Source)
 }
 
 func (o *Options) validateProfile() error {
