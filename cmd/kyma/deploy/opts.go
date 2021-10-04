@@ -110,7 +110,7 @@ func (o *Options) validateSource() error {
 	checkSemanticVersion := regexp.MustCompile(`[1-9]\.[0-9]+\.[0-9]+`)
 	isSemVer := checkSemanticVersion.MatchString(o.Source)
 	if isSemVer {
-		if  strings.HasPrefix(o.Source, "1") {
+		if strings.HasPrefix(o.Source, "1") {
 			return fmt.Errorf("Kyma version 1.x can not be installed via 'deploy'. Please use the 'install' command, which supports Kyma 1 versions")
 		}
 		return nil

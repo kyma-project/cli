@@ -42,10 +42,10 @@ func (o *Options) validateFlags() error {
 		return nil
 	}
 
-	checkSemanticVersion:= regexp.MustCompile(`[1-9]\.[0-9]+\.[0-9]+`)
+	checkSemanticVersion := regexp.MustCompile(`[1-9]\.[0-9]+\.[0-9]+`)
 	isSemVer := checkSemanticVersion.MatchString(o.Source)
 	if isSemVer {
-		if  strings.HasPrefix(o.Source, "2") {
+		if strings.HasPrefix(o.Source, "2") {
 			return fmt.Errorf("Kyma version 2.x can not be installed via 'install'. Please use the 'deploy' command, which supports Kyma 2 versions")
 		}
 		return nil
