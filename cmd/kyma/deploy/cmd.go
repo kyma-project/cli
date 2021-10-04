@@ -226,22 +226,22 @@ func (cmd *command) prepareWorkspace(l *zap.SugaredLogger) (*workspace.Workspace
 
 	wsp, err := cmd.opts.ResolveLocalWorkspacePath()
 	if err != nil {
-		return &workspace.Workspace{}, err
+		return nil, errors.Wrap(err, "Could not resolve workspace path")
 	}
 
 	wsFact, err := workspace.NewFactory(nil, wsp, l)
 	if err != nil {
-		return &workspace.Workspace{}, err
+		return nil, errors.Wrap(err, "Could not instantiate workspace factory")
 	}
 
 	err = service.UseGlobalWorkspaceFactory(wsFact)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "Could not set global workspace factory")
 	}
 
 	ws, err := wsFact.Get(cmd.opts.Source)
 	if err != nil {
-		return &workspace.Workspace{}, err
+		return nil, errors.Wrap(err, "Could not fetch workspace")
 	}
 
 	wsStep.Successf("Using Kyma from the workspace directory: %s", wsp)
