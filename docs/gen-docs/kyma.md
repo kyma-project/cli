@@ -26,7 +26,7 @@ Kyma CLI allows you to install, test, and manage Kyma.
 * [kyma apply](#kyma-apply-kyma-apply)	 - Applies local resources to the Kyma cluster.
 * [kyma completion](#kyma-completion-kyma-completion)	 - Generates bash or zsh completion scripts.
 * [kyma create](#kyma-create-kyma-create)	 - Creates resources on the Kyma cluster.
-* [kyma dashboard](#kyma-dashboard-kyma-dashboard)	 - Opens the Kyma dashboard in a web browser.
+* [kyma dashboard](#kyma-dashboard-kyma-dashboard)	 - Runs the Kyma dashboard locally and opens it directly in a web browser.
 * [kyma deploy](#kyma-deploy-kyma-deploy)	 - Deploys Kyma on a running Kubernetes cluster.
 * [kyma init](#kyma-init-kyma-init)	 - Creates local resources for your project.
 * [kyma provision](#kyma-provision-kyma-provision)	 - Provisions a cluster for Kyma installation.

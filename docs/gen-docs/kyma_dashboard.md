@@ -2,11 +2,11 @@
 title: kyma dashboard
 ---
 
-Opens the Kyma dashboard in a web browser.
+Runs the Kyma dashboard locally and opens it directly in a web browser.
 
 ## Synopsis
 
-Use this command to open the Kyma dashboard in a web browser.
+Use this command to run the Kyma dashboard locally in a docker container and open it directly in a web browser. This command only works with a local installation of Kyma.
 
 ```bash
 kyma dashboard [flags]

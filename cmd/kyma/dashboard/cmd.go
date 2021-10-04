@@ -26,8 +26,8 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "dashboard",
-		Short: "Opens the Kyma dashboard in a web browser.",
-		Long:  `Use this command to open the Kyma dashboard in a web browser.`,
+		Short: "Runs the Kyma dashboard locally and opens it directly in a web browser.",
+		Long:  `Use this command to run the Kyma dashboard locally in a docker container and open it directly in a web browser. This command only works with a local installation of Kyma.`,
 		RunE:  func(_ *cobra.Command, _ []string) error { return c.Run() },
 	}
 
