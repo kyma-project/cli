@@ -26,12 +26,12 @@ const (
 )
 
 func NewKymaVersion(kymaVersion string) (KymaVersion, error) {
-	re := regexp.MustCompile(`^[1-9]\.`)
-	res := re.FindString(kymaVersion)
-	if res != "" {
+	regex := regexp.MustCompile(`^[1-9]\.`)
+	startsWithDigit := regex.MatchString(kymaVersion)
+	if startsWithDigit {
 		v, err := semver.NewVersion(kymaVersion)
 		if err != nil {
-			return KymaVersion{semanticVersion: v}, errors.Wrapf(err, "Version is not a semver: %s", kymaVersion)
+			return KymaVersion{stringVersion: kymaVersion}, errors.Wrapf(err, "Version is not a semver: %s", kymaVersion)
 		}
 		return KymaVersion{semanticVersion: v, stringVersion: kymaVersion}, nil
 	}
@@ -58,11 +58,11 @@ func (kv *KymaVersion) IsCompatibleWith(upgradeVersion KymaVersion) UpgradeScena
 }
 
 func (kv *KymaVersion) IsKyma1() bool {
-	return kv.semanticVersion.Major() == 1
+	return kv.semanticVersion != nil && kv.semanticVersion.Major() == 1
 }
 
 func (kv *KymaVersion) IsKyma2() bool {
-	return kv.semanticVersion.Major() == 2
+	return kv.semanticVersion != nil && kv.semanticVersion.Major() == 2
 }
 
 func (kv *KymaVersion) None() bool {

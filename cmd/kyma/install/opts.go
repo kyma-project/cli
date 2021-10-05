@@ -1,9 +1,8 @@
 package install
 
 import (
-	"fmt"
-	"regexp"
-	"strings"
+	"github.com/kyma-project/cli/internal/version"
+	"github.com/pkg/errors"
 	"time"
 
 	"github.com/kyma-project/cli/internal/cli"
@@ -34,22 +33,15 @@ func NewOptions(o *cli.Options) *Options {
 
 // validateFlags performs a sanity check of provided options
 func (o *Options) validateFlags() error {
-	// validate --source
-	checkFirstDigit := regexp.MustCompile(`^[1-9]\.`)
-	startsWithDigit := checkFirstDigit.MatchString(o.Source)
-
-	if !startsWithDigit {
-		return nil
+	// validate source flag
+	kymaVersion, err := version.NewKymaVersion(o.Source)
+	if err != nil {
+		return errors.Errorf("Provided version (%s) is not a valid semantic version. It should be of format X.Y.Z", o.Source)
 	}
 
-	checkSemanticVersion := regexp.MustCompile(`[1-9]\.[0-9]+\.[0-9]+`)
-	isSemVer := checkSemanticVersion.MatchString(o.Source)
-	if isSemVer {
-		if strings.HasPrefix(o.Source, "2") {
-			return fmt.Errorf("Kyma version 2.x can not be installed via 'install'. Please use the 'deploy' command, which supports Kyma 2 versions")
-		}
-		return nil
+	if kymaVersion.IsKyma2() {
+		return errors.New("Kyma version 2.x can not be installed via 'install'. Please use the 'deploy' command, which supports Kyma 2 versions")
 	}
-	return fmt.Errorf("Provided version (%s) is not a valid semantic version. It should be of format X.Y.Z", o.Source)
 
+	return nil
 }
