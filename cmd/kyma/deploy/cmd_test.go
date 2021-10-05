@@ -51,7 +51,7 @@ func Test_upgkyma2tokyma2_noninteractive(t *testing.T) {
 	w.Close()
 	out, _ := ioutil.ReadAll(r)
 	os.Stdout = captureStdout
-	expectedOutput := "A kyma installation with version '2.0.0' was found. Proceeding with upgrade to 'main' in non-interactive mode."
+	expectedOutput := "A Kyma installation with version '2.0.0' was found. Proceeding with upgrade to 'main' in non-interactive mode."
 	require.Contains(t, string(out), expectedOutput)
 	require.NoError(t, err)
 }
@@ -184,7 +184,7 @@ func Test_upgkymaFootokyma2_noninteractive(t *testing.T) {
 	w.Close()
 	out, _ := ioutil.ReadAll(r)
 	os.Stdout = captureStdout
-	expectedOutput := "A kyma installation with version '12e41ab5' was found. Proceeding with upgrade to '2.0.0' in non-interactive mode."
+	expectedOutput := "A Kyma installation with version '12e41ab5' was found. Proceeding with upgrade to '2.0.0' in non-interactive mode."
 	require.Contains(t, string(out), expectedOutput)
 	require.NoError(t, err)
 }

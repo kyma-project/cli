@@ -297,7 +297,7 @@ func (cmd *command) importCertificate() error {
 	defer os.Remove(tmpFile.Name())
 
 	if _, err = tmpFile.Write(cert); err != nil {
-		return errors.Wrap(err, "Failed to write the kyma certificate")
+		return errors.Wrap(err, "Failed to write the Kyma certificate")
 	}
 	if err := tmpFile.Close(); err != nil {
 		return err
@@ -355,7 +355,7 @@ func (cmd *command) decideVersionUpgrade() error {
 
 	currentVersion, err := version.GetCurrentKymaVersion(cmd.K8s)
 	if err != nil {
-		return errors.Wrap(err, "Cannot fetch kyma version")
+		return errors.Wrap(err, "Cannot fetch Kyma version")
 	}
 
 	if currentVersion.None() {
@@ -369,7 +369,7 @@ func (cmd *command) decideVersionUpgrade() error {
 	}
 
 	if cmd.avoidUserInteraction() {
-		verifyStep.Successf("A kyma installation with version '%s' was found. Proceeding with upgrade to '%s' in non-interactive mode. ", currentVersion.String(), upgradeVersion.String())
+		verifyStep.Successf("A Kyma installation with version '%s' was found. Proceeding with upgrade to '%s' in non-interactive mode. ", currentVersion.String(), upgradeVersion.String())
 		return nil
 	}
 
@@ -377,16 +377,16 @@ func (cmd *command) decideVersionUpgrade() error {
 	switch upgradeScenario {
 	case version.UpgradeEqualVersion:
 		{
-			verifyStep.Failuref("A kyma installation was found. Current and target version are equal: %s ", currentVersion.String())
+			verifyStep.Failuref("A Kyma installation was found. Current and target version are equal: %s ", currentVersion.String())
 		}
 	case version.UpgradeUndetermined:
 		{
-			verifyStep.Failuref("A kyma installation was found, but compatibility between version '%s' and '%s' is not guaranteed. This might cause errors! ",
+			verifyStep.Failuref("A Kyma installation was found, but compatibility between version '%s' and '%s' is not guaranteed. This might cause errors! ",
 				currentVersion.String(), upgradeVersion.String())
 		}
 	case version.UpgradePossible:
 		{
-			verifyStep.Successf("A kyma installation with version '%s' was found. ", currentVersion.String())
+			verifyStep.Successf("A Kyma installation with version '%s' was found. ", currentVersion.String())
 		}
 	}
 
