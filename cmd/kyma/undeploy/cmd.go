@@ -210,10 +210,10 @@ func (cmd *command) removeCustomResourceFinalizers(gvr schema.GroupVersionResour
 }
 
 func (cmd *command) deleteKymaNamespaces() error {
-	step := cmd.NewStep("Deleting Kyma namespaces")
+	step := cmd.NewStep("Deleting Kyma Namespaces")
 
 	if !cmd.NonInteractive && !cmd.CI {
-		if !step.PromptYesNo("This will delete all Kyma namespace resources. Do you want to continue? ") {
+		if !step.PromptYesNo("This will delete all Kyma Namespace resources. Do you want to continue? ") {
 			return errors.New("Undeploy cancelled by user")
 		}
 	}
@@ -228,7 +228,7 @@ func (cmd *command) deleteKymaNamespaces() error {
 			defer wg.Done()
 			err := retry.Do(func() error {
 				if cmd.Verbose {
-					cmd.CurrentStep.Status(fmt.Sprintf("Deleting namespace \"%s\"", ns))
+					cmd.CurrentStep.Status(fmt.Sprintf("Deleting Namespace \"%s\"", ns))
 				}
 
 				if err := cmd.K8s.Static().CoreV1().Namespaces().Delete(context.Background(), ns, metav1.DeleteOptions{}); err != nil && !apierr.IsNotFound(err) {
@@ -242,7 +242,7 @@ func (cmd *command) deleteKymaNamespaces() error {
 					return nil
 				}
 
-				return errors.Wrapf(err, "\"%s\" namespace still exists in \"%s\" Phase", nsT.Name, nsT.Status.Phase)
+				return errors.Wrapf(err, "\"%s\" Namespace still exists in \"%s\" Phase", nsT.Name, nsT.Status.Phase)
 			})
 			if err != nil {
 				errorCh <- err
@@ -250,7 +250,7 @@ func (cmd *command) deleteKymaNamespaces() error {
 			}
 
 			if cmd.Verbose {
-				cmd.CurrentStep.Status(fmt.Sprintf("\"%s\" namespace is removed", ns))
+				cmd.CurrentStep.Status(fmt.Sprintf("\"%s\" Namespace is removed", ns))
 			}
 		}(namespace)
 	}
@@ -269,7 +269,7 @@ func (cmd *command) deleteKymaNamespaces() error {
 			if errWrapped != nil {
 				step.Failure()
 			} else {
-				step.Successf("All Kyma namespaces marked for deletion")
+				step.Successf("All Kyma Namespaces marked for deletion")
 			}
 			return errWrapped
 		case err := <-errorCh:
@@ -286,14 +286,14 @@ func (cmd *command) deleteKymaNamespaces() error {
 
 func (cmd *command) waitForNamespaces() error {
 
-	cmd.NewStep("Waiting for namespace deletion")
+	cmd.NewStep("Waiting for Namespace deletion")
 
 	timeout := time.After(4 * time.Minute)
 	poll := time.Tick(5 * time.Second)
 	for {
 		select {
 		case <-timeout:
-			cmd.CurrentStep.Failuref("Timed out while waiting for deletion of kyma-system namespace")
+			cmd.CurrentStep.Failuref("Timed out while waiting for deletion of Namespace")
 			return errors.New("Timed out")
 		case <-poll:
 			if err := cmd.removeFinalizers(); err != nil {
@@ -328,7 +328,7 @@ func (cmd *command) checkKymaNamespaces() (bool, error) {
 	}
 
 	if namespaceList.Size() == 0 {
-		cmd.CurrentStep.Successf("No remaining Kyma namespaces found")
+		cmd.CurrentStep.Successf("No remaining Kyma Namespaces found")
 		return true, nil
 	}
 
@@ -339,7 +339,7 @@ func (cmd *command) checkKymaNamespaces() (bool, error) {
 		}
 	}
 
-	cmd.CurrentStep.Successf("No remaining Kyma namespaces found")
+	cmd.CurrentStep.Successf("No remaining Kyma Namespaces found")
 
 	return true, nil
 }
