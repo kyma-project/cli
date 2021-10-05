@@ -192,15 +192,9 @@ func Test_GlobalOverridesInterceptionForNonGardenerCluster(t *testing.T) {
 	newCertificateOverrideInterceptor := newCertificateInterceptor("global.tlsCrt", "global.tlsKey", kubeClient)
 	newCertificateOverrideInterceptor.isLocalCluster = isLocalClusterFunc(false)
 
-<<<<<<< HEAD:internal/overrides/interceptors_test.go
-	ob.AddInterceptor([]string{"global.isLocalEnv", "global.environment.gardener"}, NewFallbackOverrideInterceptor(false))
-	ob.AddInterceptor([]string{"global.domainName"}, newDomainNameOverrideInterceptor)
-	ob.AddInterceptor([]string{"global.tlsCrt", "global.tlsKey"}, newCertificateOverrideInterceptor)
-=======
 	ob.addInterceptor([]string{"global.isLocalEnv", "global.environment.gardener"}, newFallbackInterceptor(false))
-	ob.addInterceptor([]string{"global.domainName", "global.ingress.domainName"}, newDomainNameOverrideInterceptor)
+	ob.addInterceptor([]string{"global.domainName"}, newDomainNameOverrideInterceptor)
 	ob.addInterceptor([]string{"global.tlsCrt", "global.tlsKey"}, newCertificateOverrideInterceptor)
->>>>>>> main:internal/values/interceptors_test.go
 
 	// read expected result
 	data, err := ioutil.ReadFile("testdata/deployment-global-values-for-remote-cluster.yaml")
