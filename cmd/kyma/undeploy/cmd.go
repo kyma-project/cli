@@ -286,7 +286,7 @@ func (cmd *command) deleteKymaNamespaces() error {
 
 func (cmd *command) waitForNamespaces() error {
 
-	cmd.NewStep("Waiting for namespace termination")
+	cmd.NewStep("Waiting for namespace deletion")
 
 	timeout := time.After(4 * time.Minute)
 	poll := time.Tick(5 * time.Second)
