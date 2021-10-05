@@ -17,7 +17,6 @@ import (
 	"github.com/docker/cli/cli/config/types"
 	imageTypes "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/errdefs"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/go-connections/nat"
 	"github.com/kyma-project/cli/pkg/docker/mocks"
@@ -189,7 +188,7 @@ func Test_mapMap(t *testing.T) {
 	require.Equal(t, expected, actual)
 }
 
-func Test_ContainerCreateAndStart(t *testing.T) {
+func Test_PullImageAndStartContainergst(t *testing.T) {
 	mockDocker := &mocks.Client{}
 	mockWrapper := dockerWrapper{Docker: mockDocker}
 
@@ -201,39 +200,9 @@ func Test_ContainerCreateAndStart(t *testing.T) {
 	}
 	testContainerID := "container-id-123"
 	testErr := errors.New("container create and start error")
-	notFoundError := errdefs.NotFound(errors.New("image not present"))
 	ctx := context.Background()
 
 	t.Run("happy path", func(t *testing.T) {
-		mockDocker.On("ContainerCreate", ctx, mock.AnythingOfType("*container.Config"),
-			mock.AnythingOfType("*container.HostConfig"), mock.Anything, mock.Anything, testOpts.ContainerName).Return(
-			container.ContainerCreateCreatedBody{ID: testContainerID}, nil).Times(1)
-
-		mockDocker.On("ContainerStart", ctx, testContainerID, mock.AnythingOfType("types.ContainerStartOptions")).Return(nil).Times(1)
-
-		id, err := mockWrapper.ContainerCreateAndStart(ctx, testOpts)
-
-		require.Nil(t, err)
-		require.Equal(t, testContainerID, id)
-	})
-
-	t.Run("container create error", func(t *testing.T) {
-		mockDocker.On("ContainerCreate", ctx, mock.AnythingOfType("*container.Config"),
-			mock.AnythingOfType("*container.HostConfig"), mock.Anything, mock.Anything, testOpts.ContainerName).Return(
-			container.ContainerCreateCreatedBody{}, testErr).Times(1)
-
-		id, err := mockWrapper.ContainerCreateAndStart(ctx, testOpts)
-
-		require.Equal(t, "", id)
-		require.NotNil(t, err)
-		require.Equal(t, err, testErr)
-	})
-
-	t.Run("image not present", func(t *testing.T) {
-		mockDocker.On("ContainerCreate", ctx, mock.AnythingOfType("*container.Config"),
-			mock.AnythingOfType("*container.HostConfig"), mock.Anything, mock.Anything, testOpts.ContainerName).Return(
-			container.ContainerCreateCreatedBody{}, notFoundError).Times(1)
-
 		mockDocker.On("ImagePull", ctx, testOpts.Image, mock.AnythingOfType("types.ImagePullOptions")).Return(
 			ioutil.NopCloser(bytes.NewReader(nil)), nil).Times(1)
 
@@ -243,21 +212,32 @@ func Test_ContainerCreateAndStart(t *testing.T) {
 
 		mockDocker.On("ContainerStart", ctx, testContainerID, mock.AnythingOfType("types.ContainerStartOptions")).Return(nil).Times(1)
 
-		id, err := mockWrapper.ContainerCreateAndStart(ctx, testOpts)
+		id, err := mockWrapper.PullImageAndStartContainer(ctx, testOpts)
 
 		require.Nil(t, err)
 		require.Equal(t, testContainerID, id)
 	})
 
 	t.Run("image pull error", func(t *testing.T) {
-		mockDocker.On("ContainerCreate", ctx, mock.AnythingOfType("*container.Config"),
-			mock.AnythingOfType("*container.HostConfig"), mock.Anything, mock.Anything, testOpts.ContainerName).Return(
-			container.ContainerCreateCreatedBody{}, notFoundError).Times(1)
-
 		mockDocker.On("ImagePull", ctx, testOpts.Image, mock.AnythingOfType("types.ImagePullOptions")).Return(
 			ioutil.NopCloser(bytes.NewReader(nil)), testErr).Times(1)
 
-		id, err := mockWrapper.ContainerCreateAndStart(ctx, testOpts)
+		id, err := mockWrapper.PullImageAndStartContainer(ctx, testOpts)
+
+		require.Equal(t, "", id)
+		require.NotNil(t, err)
+		require.Equal(t, err, testErr)
+	})
+
+	t.Run("container create error", func(t *testing.T) {
+		mockDocker.On("ImagePull", ctx, testOpts.Image, mock.AnythingOfType("types.ImagePullOptions")).Return(
+			ioutil.NopCloser(bytes.NewReader(nil)), nil).Times(1)
+
+		mockDocker.On("ContainerCreate", ctx, mock.AnythingOfType("*container.Config"),
+			mock.AnythingOfType("*container.HostConfig"), mock.Anything, mock.Anything, testOpts.ContainerName).Return(
+			container.ContainerCreateCreatedBody{}, testErr).Times(1)
+
+		id, err := mockWrapper.PullImageAndStartContainer(ctx, testOpts)
 
 		require.Equal(t, "", id)
 		require.NotNil(t, err)
@@ -265,13 +245,16 @@ func Test_ContainerCreateAndStart(t *testing.T) {
 	})
 
 	t.Run("container start error", func(t *testing.T) {
+		mockDocker.On("ImagePull", ctx, testOpts.Image, mock.AnythingOfType("types.ImagePullOptions")).Return(
+			ioutil.NopCloser(bytes.NewReader(nil)), nil).Times(1)
+
 		mockDocker.On("ContainerCreate", ctx, mock.AnythingOfType("*container.Config"),
 			mock.AnythingOfType("*container.HostConfig"), mock.Anything, mock.Anything, testOpts.ContainerName).Return(
 			container.ContainerCreateCreatedBody{ID: testContainerID}, nil).Times(1)
 
 		mockDocker.On("ContainerStart", ctx, testContainerID, mock.AnythingOfType("types.ContainerStartOptions")).Return(testErr).Times(1)
 
-		id, err := mockWrapper.ContainerCreateAndStart(ctx, testOpts)
+		id, err := mockWrapper.PullImageAndStartContainer(ctx, testOpts)
 
 		require.Equal(t, "", id)
 		require.NotNil(t, err)
