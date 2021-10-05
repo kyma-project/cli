@@ -166,7 +166,7 @@ func Test_GlobalOverridesInterceptionForLocalCluster(t *testing.T) {
 	newCertificateOverrideInterceptor.isLocalCluster = isLocalClusterFunc(true)
 
 	ob.addInterceptor([]string{"global.isLocalEnv", "global.environment.gardener"}, newFallbackInterceptor(false))
-	ob.addInterceptor([]string{"global.domainName", "global.ingress.domainName"}, newDomainNameOverrideInterceptor)
+	ob.addInterceptor([]string{"global.domainName"}, newDomainNameOverrideInterceptor)
 	ob.addInterceptor([]string{"global.tlsCrt", "global.tlsKey"}, newCertificateOverrideInterceptor)
 
 	// read expected result
@@ -194,7 +194,7 @@ func Test_GlobalOverridesInterceptionForNonGardenerCluster(t *testing.T) {
 	newCertificateOverrideInterceptor.isLocalCluster = isLocalClusterFunc(false)
 
 	ob.addInterceptor([]string{"global.isLocalEnv", "global.environment.gardener"}, newFallbackInterceptor(false))
-	ob.addInterceptor([]string{"global.domainName", "global.ingress.domainName"}, newDomainNameOverrideInterceptor)
+	ob.addInterceptor([]string{"global.domainName"}, newDomainNameOverrideInterceptor)
 	ob.addInterceptor([]string{"global.tlsCrt", "global.tlsKey"}, newCertificateOverrideInterceptor)
 
 	// read expected result
@@ -205,13 +205,12 @@ func Test_GlobalOverridesInterceptionForNonGardenerCluster(t *testing.T) {
 	require.NoError(t, err)
 
 	expectedKeys := extractKeys(expected)
-	require.Equal(t, 6, len(expectedKeys))
+	require.Equal(t, 5, len(expectedKeys))
 	require.Contains(t, expectedKeys, "global.isLocalEnv")
 	require.Contains(t, expectedKeys, "global.domainName")
 	require.Contains(t, expectedKeys, "global.tlsCrt")
 	require.Contains(t, expectedKeys, "global.tlsKey")
 	require.Contains(t, expectedKeys, "global.environment.gardener")
-	require.Contains(t, expectedKeys, "global.ingress.domainName")
 
 	// verify global values
 	overrides, err := ob.build()
