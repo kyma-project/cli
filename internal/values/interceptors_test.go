@@ -204,7 +204,7 @@ func Test_GlobalOverridesInterceptionForNonGardenerCluster(t *testing.T) {
 	require.NoError(t, err)
 
 	expectedKeys := extractKeys(expected)
-	require.Equal(t, 6, len(expectedKeys))
+	require.Equal(t, 5, len(expectedKeys))
 	require.Contains(t, expectedKeys, "global.isLocalEnv")
 	require.Contains(t, expectedKeys, "global.domainName")
 	require.Contains(t, expectedKeys, "global.tlsCrt")
