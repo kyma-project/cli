@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	k8sRetry "k8s.io/client-go/util/retry"
 	"sync"
+	"time"
 
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
@@ -87,6 +88,9 @@ func (cmd *command) Run() error {
 	if err := cmd.removeFinalizers(); err != nil {
 		return err
 	}
+	if err := cmd.waitForNamespaces(); err != nil {
+		return err
+	}
 	if cmd.opts.KeepCRDs {
 		return nil
 	}
@@ -109,7 +113,7 @@ func (cmd *command) removeFinalizers() error {
 		return err
 	}
 
-	step.Successf("Successfully removed finalizers")
+	step.Successf("Removed finalizers")
 	return nil
 }
 
@@ -282,7 +286,7 @@ func (cmd *command) deleteKymaNamespaces() error {
 			if errWrapped != nil {
 				step.Failure()
 			} else {
-				step.Successf("Successfully removed Kyma namespaces")
+				step.Successf("All Kyma namespaces marked for deletion")
 			}
 			return errWrapped
 		case err := <-errorCh:
@@ -295,6 +299,51 @@ func (cmd *command) deleteKymaNamespaces() error {
 			}
 		}
 	}
+}
+
+func (cmd *command) waitForNamespaces() error {
+
+	cmd.NewStep("Waiting for namespace termination")
+
+	timeout := time.After(180 * time.Second)
+	poll := time.Tick(2 * time.Second)
+	for {
+		select {
+		case <-timeout:
+			cmd.CurrentStep.Failuref("Timed out when waiting for deletion of kyma-system namespace")
+			return errors.New("Timed out")
+		case <-poll:
+			ok, err := cmd.checkKymaNamespace()
+			if err != nil {
+				return err
+			} else if ok {
+				return nil
+			}
+		}
+	}
+}
+
+func (cmd *command) checkKymaNamespace() (bool, error) {
+	namespaceList, err := cmd.K8s.Static().CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		return false, err
+	}
+
+	if namespaceList.Size() == 0 {
+		cmd.CurrentStep.Successf("No remaining Kyma namespaces found")
+		return true, nil
+	}
+
+	for i := range namespaceList.Items {
+		if namespaceList.Items[i].Name == "kyma-system" {
+			cmd.CurrentStep.Status(fmt.Sprintf("Namespace kyma-system still in state '%s'", namespaceList.Items[i].Status.Phase))
+			return false, nil
+		}
+	}
+
+	cmd.CurrentStep.Successf("No remaining Kyma namespaces found")
+
+	return true, nil
 }
 
 func (cmd *command) deleteKymaCRDs() error {
@@ -312,7 +361,7 @@ func (cmd *command) deleteKymaCRDs() error {
 		return errors.Wrapf(err, "Failed to delete resource")
 	}
 
-	step.Successf("Successfully removed Kyma CRDs")
+	step.Successf("Removed Kyma CRDs")
 
 	return nil
 }
