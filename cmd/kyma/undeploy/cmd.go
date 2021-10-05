@@ -27,6 +27,7 @@ var (
 		Version:  "v1",
 		Resource: "customresourcedefinitions",
 	}
+	namespaces = []string{"istio-system", "kyma-system", "kyma-integration"}
 )
 
 const (
@@ -233,8 +234,6 @@ func (cmd *command) removeCustomResourceFinalizers(gvr schema.GroupVersionResour
 func (cmd *command) deleteKymaNamespaces() error {
 	step := cmd.NewStep("Deleting Kyma namespaces")
 
-	namespaces := [3]string{"istio-system", "kyma-system", "kyma-integration"}
-
 	var wg sync.WaitGroup
 	wg.Add(len(namespaces))
 	finishedCh := make(chan bool)
@@ -313,7 +312,7 @@ func (cmd *command) waitForNamespaces() error {
 			cmd.CurrentStep.Failuref("Timed out when waiting for deletion of kyma-system namespace")
 			return errors.New("Timed out")
 		case <-poll:
-			ok, err := cmd.checkKymaNamespace()
+			ok, err := cmd.checkKymaNamespaces()
 			if err != nil {
 				return err
 			} else if ok {
@@ -323,7 +322,7 @@ func (cmd *command) waitForNamespaces() error {
 	}
 }
 
-func (cmd *command) checkKymaNamespace() (bool, error) {
+func (cmd *command) checkKymaNamespaces() (bool, error) {
 	namespaceList, err := cmd.K8s.Static().CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return false, err
@@ -335,8 +334,8 @@ func (cmd *command) checkKymaNamespace() (bool, error) {
 	}
 
 	for i := range namespaceList.Items {
-		if namespaceList.Items[i].Name == "kyma-system" {
-			cmd.CurrentStep.Status(fmt.Sprintf("Namespace kyma-system still in state '%s'", namespaceList.Items[i].Status.Phase))
+		if contains(namespaces, namespaceList.Items[i].Name) {
+			cmd.CurrentStep.Status(fmt.Sprintf("Namespace %s still in state '%s'", namespaceList.Items[i].Name, namespaceList.Items[i].Status.Phase))
 			return false, nil
 		}
 	}
@@ -378,4 +377,13 @@ func (cmd *command) deleteCRDsByLabelWithRetry(labelSelector string) error {
 		}
 		return nil
 	})
+}
+
+func contains(items []string, item string) bool {
+	for _, i := range items {
+		if i == item {
+			return true
+		}
+	}
+	return false
 }
