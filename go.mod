@@ -34,7 +34,6 @@ require (
 	github.com/imdario/mergo v0.3.12
 	github.com/kyma-incubator/hydroform/function v0.0.0-20210910072351-61ef321fd793
 	github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90
-	github.com/kyma-incubator/hydroform/parallel-install v0.0.0-20210830114732-6a1c4ee2e1f4
 	github.com/kyma-incubator/hydroform/provision v0.0.0-20210514061348-c71b69cb362e
 	github.com/kyma-incubator/octopus v0.0.0-20200922132758-2b721e93b58b
 	github.com/kyma-incubator/reconciler v0.0.0-20210930093626-7b9300ccd4ed
