@@ -87,11 +87,11 @@ func (cmd *command) Run(o *Options) error {
 		cmd.Factory.UseLogger = true
 	}
 
-	if err = cmd.setKubeClient(); err != nil {
+	if err = cmd.opts.validateFlags(); err != nil {
 		return err
 	}
 
-	if err = cmd.opts.validateFlags(); err != nil {
+	if err = cmd.setKubeClient(); err != nil {
 		return err
 	}
 
