@@ -293,7 +293,7 @@ func (cmd *command) waitForNamespaces() error {
 	for {
 		select {
 		case <-timeout:
-			cmd.CurrentStep.Failuref("Timed out while waiting for deletion of Namespace")
+			cmd.CurrentStep.Failuref("Timed out while waiting for Namespace deletion")
 			return errors.New("Timed out")
 		case <-poll:
 			if err := cmd.removeFinalizers(); err != nil {
