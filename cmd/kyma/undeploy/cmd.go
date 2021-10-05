@@ -293,7 +293,7 @@ func (cmd *command) waitForNamespaces() error {
 	for {
 		select {
 		case <-timeout:
-			cmd.CurrentStep.Failuref("Timed out when waiting for deletion of kyma-system namespace")
+			cmd.CurrentStep.Failuref("Timed out while waiting for deletion of kyma-system namespace")
 			return errors.New("Timed out")
 		case <-poll:
 			if err := cmd.removeFinalizers(); err != nil {
