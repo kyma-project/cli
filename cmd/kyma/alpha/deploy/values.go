@@ -88,7 +88,6 @@ func addDomainValues(builder *overrides.Builder, opts *Options) error {
 	domainOverrides := make(map[string]interface{})
 	if opts.Domain != "" {
 		domainOverrides["domainName"] = opts.Domain
-		domainOverrides["ingress"] = map[string]interface{}{"domainName": opts.Domain}
 	}
 
 	if opts.TLSCrtFile != "" && opts.TLSKeyFile != "" {
@@ -124,7 +123,7 @@ func readFileAndEncode(filename string) (string, error) {
 }
 
 func registerInterceptors(builder *overrides.Builder, kubeClient kubernetes.Interface) {
-	builder.AddInterceptor([]string{"global.domainName", "global.ingress.domainName"}, overrides.NewDomainNameOverrideInterceptor(kubeClient))
+	builder.AddInterceptor([]string{"global.domainName"}, overrides.NewDomainNameOverrideInterceptor(kubeClient))
 	builder.AddInterceptor([]string{"global.tlsCrt", "global.tlsKey"}, overrides.NewCertificateOverrideInterceptor("global.tlsCrt", "global.tlsKey", kubeClient))
 	builder.AddInterceptor([]string{"serverless.dockerRegistry.internalServerAddress", "serverless.dockerRegistry.serverAddress", "serverless.dockerRegistry.registryAddress"}, overrides.NewRegistryInterceptor(kubeClient))
 	builder.AddInterceptor([]string{"serverless.dockerRegistry.enableInternal"}, overrides.NewRegistryDisableInterceptor(kubeClient))
