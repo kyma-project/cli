@@ -304,8 +304,8 @@ func (cmd *command) waitForNamespaces() error {
 
 	cmd.NewStep("Waiting for namespace termination")
 
-	timeout := time.After(180 * time.Second)
-	poll := time.Tick(2 * time.Second)
+	timeout := time.After(3 * time.Minute)
+	poll := time.Tick(3 * time.Second)
 	for {
 		select {
 		case <-timeout:
