@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	k8sRetry "k8s.io/client-go/util/retry"
 	"sync"
+	"time"
 
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
@@ -26,6 +27,7 @@ var (
 		Version:  "v1",
 		Resource: "customresourcedefinitions",
 	}
+	namespaces = []string{"istio-system", "kyma-system", "kyma-integration"}
 )
 
 const (
@@ -78,38 +80,19 @@ func (cmd *command) Run() error {
 		return err
 	}
 
-	if err := cmd.removeFinalizers(); err != nil {
-		return err
-	}
 	if err := cmd.deleteKymaNamespaces(); err != nil {
 		return err
 	}
-	if err := cmd.removeFinalizers(); err != nil {
-		return err
-	}
-	if cmd.opts.KeepCRDs {
-		return nil
-	}
-	if err := cmd.deleteKymaCRDs(); err != nil {
-		return err
-	}
+	if !cmd.opts.KeepCRDs {
+		if err := cmd.deleteKymaCRDs(); err != nil {
+			return err
 
-	return nil
-}
-
-func (cmd *command) removeFinalizers() error {
-	step := cmd.NewStep("Removing finalizers")
-	if err := cmd.removeServerlessCredentialFinalizers(); err != nil {
-		step.Failure()
+		}
+	}
+	if err := cmd.waitForNamespaces(); err != nil {
 		return err
 	}
 
-	if err := cmd.removeCustomResourcesFinalizers(); err != nil {
-		step.Failure()
-		return err
-	}
-
-	step.Successf("Successfully removed finalizers")
 	return nil
 }
 
@@ -227,9 +210,13 @@ func (cmd *command) removeCustomResourceFinalizers(gvr schema.GroupVersionResour
 }
 
 func (cmd *command) deleteKymaNamespaces() error {
-	step := cmd.NewStep("Deleting Kyma namespaces")
+	step := cmd.NewStep("Deleting Kyma Namespaces")
 
-	namespaces := [3]string{"istio-system", "kyma-system", "kyma-integration"}
+	if !cmd.NonInteractive && !cmd.CI {
+		if !step.PromptYesNo("This will delete all Kyma Namespace resources. Do you want to continue? ") {
+			return errors.New("Undeploy cancelled by user")
+		}
+	}
 
 	var wg sync.WaitGroup
 	wg.Add(len(namespaces))
@@ -241,7 +228,7 @@ func (cmd *command) deleteKymaNamespaces() error {
 			defer wg.Done()
 			err := retry.Do(func() error {
 				if cmd.Verbose {
-					cmd.CurrentStep.Status(fmt.Sprintf("Deleting namespace \"%s\"", ns))
+					cmd.CurrentStep.Status(fmt.Sprintf("Deleting Namespace \"%s\"", ns))
 				}
 
 				if err := cmd.K8s.Static().CoreV1().Namespaces().Delete(context.Background(), ns, metav1.DeleteOptions{}); err != nil && !apierr.IsNotFound(err) {
@@ -255,7 +242,7 @@ func (cmd *command) deleteKymaNamespaces() error {
 					return nil
 				}
 
-				return errors.Wrapf(err, "\"%s\" namespace still exists in \"%s\" Phase", nsT.Name, nsT.Status.Phase)
+				return errors.Wrapf(err, "\"%s\" Namespace still exists in \"%s\" Phase", nsT.Name, nsT.Status.Phase)
 			})
 			if err != nil {
 				errorCh <- err
@@ -263,7 +250,7 @@ func (cmd *command) deleteKymaNamespaces() error {
 			}
 
 			if cmd.Verbose {
-				cmd.CurrentStep.Status(fmt.Sprintf("\"%s\" namespace is removed", ns))
+				cmd.CurrentStep.Status(fmt.Sprintf("\"%s\" Namespace is removed", ns))
 			}
 		}(namespace)
 	}
@@ -282,7 +269,7 @@ func (cmd *command) deleteKymaNamespaces() error {
 			if errWrapped != nil {
 				step.Failure()
 			} else {
-				step.Successf("Successfully removed Kyma namespaces")
+				step.Successf("All Kyma Namespaces marked for deletion")
 			}
 			return errWrapped
 		case err := <-errorCh:
@@ -295,6 +282,66 @@ func (cmd *command) deleteKymaNamespaces() error {
 			}
 		}
 	}
+}
+
+func (cmd *command) waitForNamespaces() error {
+
+	cmd.NewStep("Waiting for Namespace deletion")
+
+	timeout := time.After(4 * time.Minute)
+	poll := time.Tick(5 * time.Second)
+	for {
+		select {
+		case <-timeout:
+			cmd.CurrentStep.Failuref("Timed out while waiting for Namespace deletion")
+			return errors.New("Timed out")
+		case <-poll:
+			if err := cmd.removeFinalizers(); err != nil {
+				return err
+			}
+			ok, err := cmd.checkKymaNamespaces()
+			if err != nil {
+				return err
+			} else if ok {
+				return nil
+			}
+		}
+	}
+}
+
+func (cmd *command) removeFinalizers() error {
+	if err := cmd.removeServerlessCredentialFinalizers(); err != nil {
+		return err
+	}
+
+	if err := cmd.removeCustomResourcesFinalizers(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (cmd *command) checkKymaNamespaces() (bool, error) {
+	namespaceList, err := cmd.K8s.Static().CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		return false, err
+	}
+
+	if namespaceList.Size() == 0 {
+		cmd.CurrentStep.Successf("No remaining Kyma Namespaces found")
+		return true, nil
+	}
+
+	for i := range namespaceList.Items {
+		if contains(namespaces, namespaceList.Items[i].Name) {
+			cmd.CurrentStep.Status(fmt.Sprintf("Namespace %s still in state '%s'", namespaceList.Items[i].Name, namespaceList.Items[i].Status.Phase))
+			return false, nil
+		}
+	}
+
+	cmd.CurrentStep.Successf("No remaining Kyma Namespaces found")
+
+	return true, nil
 }
 
 func (cmd *command) deleteKymaCRDs() error {
@@ -312,7 +359,7 @@ func (cmd *command) deleteKymaCRDs() error {
 		return errors.Wrapf(err, "Failed to delete resource")
 	}
 
-	step.Successf("Successfully removed Kyma CRDs")
+	step.Successf("Removed Kyma CRDs")
 
 	return nil
 }
@@ -329,4 +376,13 @@ func (cmd *command) deleteCRDsByLabelWithRetry(labelSelector string) error {
 		}
 		return nil
 	})
+}
+
+func contains(items []string, item string) bool {
+	for _, i := range items {
+		if i == item {
+			return true
+		}
+	}
+	return false
 }

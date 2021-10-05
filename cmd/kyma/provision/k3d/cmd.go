@@ -129,7 +129,7 @@ func (c *command) deleteExistingK3dCluster() error {
 		if err != nil {
 			return err
 		}
-		c.CurrentStep.Successf("Existing k3s cluster deleted")
+		c.CurrentStep.Successf("Existing k3d cluster deleted")
 	}
 
 	return nil

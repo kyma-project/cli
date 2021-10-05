@@ -110,17 +110,13 @@ func Test_FlattenedMap(t *testing.T) {
 			givenChart: "xyz",
 			givenOverrides: map[string]interface{}{
 				"global": map[string]interface{}{
-					"domainName": "local.kyma.dev",
-					"ingress": map[string]interface{}{
-						"domainName": "local.kyma.dev",
-					},
+					"domainName":  "local.kyma.dev",
 					"installCRDs": false,
 				},
 				"cluster-users": map[string]interface{}{"users": map[string]interface{}{"bindStaticUsers": "false"}},
 			},
 			expected: map[string]interface{}{
 				"xyz.global.domainName":                   "local.kyma.dev",
-				"xyz.global.ingress.domainName":           "local.kyma.dev",
 				"xyz.global.installCRDs":                  false,
 				"xyz.cluster-users.users.bindStaticUsers": "false",
 			},
