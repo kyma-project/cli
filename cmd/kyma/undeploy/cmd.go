@@ -86,6 +86,7 @@ func (cmd *command) Run() error {
 	if !cmd.opts.KeepCRDs {
 		if err := cmd.deleteKymaCRDs(); err != nil {
 			return err
+
 		}
 	}
 	if err := cmd.waitForNamespaces(); err != nil {
@@ -211,6 +212,12 @@ func (cmd *command) removeCustomResourceFinalizers(gvr schema.GroupVersionResour
 func (cmd *command) deleteKymaNamespaces() error {
 	step := cmd.NewStep("Deleting Kyma namespaces")
 
+	if !cmd.NonInteractive && !cmd.CI {
+		if !step.PromptYesNo("This will delete all Kyma namespace resources. Do you want to continue? ") {
+			return errors.New("Undeploy cancelled by user")
+		}
+	}
+
 	var wg sync.WaitGroup
 	wg.Add(len(namespaces))
 	finishedCh := make(chan bool)
@@ -282,7 +289,7 @@ func (cmd *command) waitForNamespaces() error {
 	cmd.NewStep("Waiting for namespace termination")
 
 	timeout := time.After(4 * time.Minute)
-	poll := time.Tick(3 * time.Second)
+	poll := time.Tick(5 * time.Second)
 	for {
 		select {
 		case <-timeout:
@@ -313,7 +320,6 @@ func (cmd *command) removeFinalizers() error {
 
 	return nil
 }
-
 
 func (cmd *command) checkKymaNamespaces() (bool, error) {
 	namespaceList, err := cmd.K8s.Static().CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{})
