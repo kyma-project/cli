@@ -80,41 +80,18 @@ func (cmd *command) Run() error {
 		return err
 	}
 
-	if err := cmd.removeFinalizers(); err != nil {
-		return err
-	}
 	if err := cmd.deleteKymaNamespaces(); err != nil {
 		return err
 	}
-	if err := cmd.removeFinalizers(); err != nil {
-		return err
+	if !cmd.opts.KeepCRDs {
+		if err := cmd.deleteKymaCRDs(); err != nil {
+			return err
+		}
 	}
 	if err := cmd.waitForNamespaces(); err != nil {
 		return err
 	}
-	if cmd.opts.KeepCRDs {
-		return nil
-	}
-	if err := cmd.deleteKymaCRDs(); err != nil {
-		return err
-	}
 
-	return nil
-}
-
-func (cmd *command) removeFinalizers() error {
-	step := cmd.NewStep("Removing finalizers")
-	if err := cmd.removeServerlessCredentialFinalizers(); err != nil {
-		step.Failure()
-		return err
-	}
-
-	if err := cmd.removeCustomResourcesFinalizers(); err != nil {
-		step.Failure()
-		return err
-	}
-
-	step.Successf("Removed finalizers")
 	return nil
 }
 
@@ -304,7 +281,7 @@ func (cmd *command) waitForNamespaces() error {
 
 	cmd.NewStep("Waiting for namespace termination")
 
-	timeout := time.After(3 * time.Minute)
+	timeout := time.After(4 * time.Minute)
 	poll := time.Tick(3 * time.Second)
 	for {
 		select {
@@ -312,6 +289,9 @@ func (cmd *command) waitForNamespaces() error {
 			cmd.CurrentStep.Failuref("Timed out when waiting for deletion of kyma-system namespace")
 			return errors.New("Timed out")
 		case <-poll:
+			if err := cmd.removeFinalizers(); err != nil {
+				return err
+			}
 			ok, err := cmd.checkKymaNamespaces()
 			if err != nil {
 				return err
@@ -321,6 +301,19 @@ func (cmd *command) waitForNamespaces() error {
 		}
 	}
 }
+
+func (cmd *command) removeFinalizers() error {
+	if err := cmd.removeServerlessCredentialFinalizers(); err != nil {
+		return err
+	}
+
+	if err := cmd.removeCustomResourcesFinalizers(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 
 func (cmd *command) checkKymaNamespaces() (bool, error) {
 	namespaceList, err := cmd.K8s.Static().CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{})
