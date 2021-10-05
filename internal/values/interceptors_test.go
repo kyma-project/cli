@@ -2,10 +2,11 @@ package values
 
 import (
 	"fmt"
-	"github.com/kyma-incubator/hydroform/parallel-install/pkg/deployment/k3d"
 	"io/ioutil"
 	"strings"
 	"testing"
+
+	"github.com/kyma-project/cli/internal/k3d"
 
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
@@ -561,7 +562,7 @@ func Test_CertificateOverridesInterception(t *testing.T) {
 }
 
 func Test_RegistryEnableOverrideInterception(t *testing.T) {
-	k3dNode := k3d.FakeK3dNode()
+	k3dNode := fakeK3dNode()
 	generalNode := fakeNode()
 
 	t.Run("test disable internal registry for k3d cluster", func(t *testing.T) {
@@ -613,7 +614,7 @@ func Test_RegistryEnableOverrideInterception(t *testing.T) {
 }
 
 func Test_RegistryOverridesInterception(t *testing.T) {
-	k3dNode := k3d.FakeK3dNode()
+	k3dNode := fakeK3dNode()
 	generalNode := fakeNode()
 
 	t.Run("test getting k3d cluster name", func(t *testing.T) {
@@ -621,7 +622,7 @@ func Test_RegistryOverridesInterception(t *testing.T) {
 		kubeClient := fake.NewSimpleClientset(k3dNode)
 
 		// when
-		clusterName, err := k3d.K3dClusterName(kubeClient)
+		clusterName, err := k3d.ClusterName(kubeClient)
 
 		// then
 		require.NoError(t, err)
@@ -720,6 +721,17 @@ func fakeNode() *v1.Node {
 	}
 
 	return node
+}
+
+func fakeK3dNode() *v1.Node {
+	k3dNode := &v1.Node{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   "k3d-kyma-server-0",
+			Labels: map[string]string{"node-role.kubernetes.io/master": "true"},
+		},
+	}
+
+	return k3dNode
 }
 
 func fakeGardenerCM() *v1.ConfigMap {

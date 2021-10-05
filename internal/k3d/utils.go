@@ -70,7 +70,7 @@ func ClusterName(kubeClient kubernetes.Interface) (k3dName string, err error) {
 			nodeName := node.GetName()
 			if !strings.HasPrefix(nodeName, "k3d-") {
 				k3dName = ""
-				return errors.New("Cluster is not a k3d cluster")
+				return errors.New("cluster is not a k3d cluster")
 			}
 			// K3d cluster name can be derived from master node names, which has the form k3d-<cluster-name>-server-<id>.
 			// E.g., with the Kyma CLI default flags k3d-kyma-server-0

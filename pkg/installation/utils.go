@@ -18,7 +18,7 @@ import (
 	"github.com/kyma-incubator/hydroform/install/config"
 	installationSDK "github.com/kyma-incubator/hydroform/install/installation"
 	"github.com/kyma-incubator/hydroform/install/scheme"
-	"github.com/kyma-incubator/hydroform/parallel-install/pkg/download"
+	"github.com/kyma-project/cli/internal/resolve"
 	"github.com/kyma-project/cli/pkg/step"
 	"github.com/kyma-project/kyma/components/kyma-operator/pkg/apis/installer/v1alpha1"
 	"github.com/pkg/errors"
@@ -152,7 +152,7 @@ func (i *Installation) loadInstallationFiles() (map[string]*File, error) {
 				"resources", file.Path)
 			reader, err = os.Open(path)
 		} else {
-			reader, err = download.RemoteReader(i.releaseFile(file.Path))
+			reader, err = resolve.RemoteReader(i.releaseFile(file.Path))
 		}
 
 		if err != nil {
