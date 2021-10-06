@@ -6,7 +6,7 @@ title: kyma install
 
 ## Synopsis
 
-[DEPRECATED: the "install" command works only when installing Kyma 1.x.x. Please use the "deploy" command to deploy Kyma 2.x.x]
+[DEPRECATED: The "install" command works only when installing Kyma 1.x.x. To install Kyma 2.x.x, use the "deploy" command instead.]
 
 Use this command to install Kyma on a running Kubernetes cluster.
 		

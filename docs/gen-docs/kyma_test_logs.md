@@ -6,7 +6,7 @@ title: kyma test logs
 
 ## Synopsis
 
-[DEPRECATED: the "test logs" command works only with Kyma 1.x.x]
+[DEPRECATED: The "test logs" command works only with Kyma 1.x.x.]
 
 Use this command to display logs of a test executed for a given test suite. By default, the command displays logs for failed tests, but you can change this behavior using the "test-status" flag. 
 

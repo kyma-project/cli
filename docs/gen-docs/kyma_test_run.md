@@ -6,7 +6,7 @@ title: kyma test run
 
 ## Synopsis
 
-[DEPRECATED: the "test run" command works only with Kyma 1.x.x]
+[DEPRECATED: The "test run" command works only with Kyma 1.x.x.]
 
 Use this command to run tests on a Kyma cluster.
 

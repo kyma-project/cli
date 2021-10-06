@@ -6,7 +6,7 @@ title: kyma provision minikube
 
 ## Synopsis
 
-[DEPRECATED: the "provision minikube" command is deprecated. Please use the "provision k3d" command instead.]
+[DEPRECATED: The "provision minikube" command is deprecated. Use the "provision k3d" command instead.]
 
 Use this command to provision a Minikube cluster for Kyma installation. It requires to have Minikube installed upfront, see also https://github.com/kubernetes/minikube
 

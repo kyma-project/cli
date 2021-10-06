@@ -6,7 +6,7 @@ title: kyma test definitions
 
 ## Synopsis
 
-[DEPRECATED: the "test definitions" command works only with Kyma 1.x.x]
+[DEPRECATED: The "test definitions" command works only with Kyma 1.x.x.]
 
 Use this command to list test definitions available for a provisioned Kyma cluster.
 

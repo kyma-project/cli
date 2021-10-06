@@ -6,7 +6,7 @@ title: kyma test list
 
 ## Synopsis
 
-[DEPRECATED: the "test list" command works only with Kyma 1.x.x]
+[DEPRECATED: The "test list" command works only with Kyma 1.x.x.]
 
 Use this command to list test suites available for a provisioned Kyma cluster.
 

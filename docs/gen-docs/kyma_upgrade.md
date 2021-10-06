@@ -6,7 +6,7 @@ title: kyma upgrade
 
 ## Synopsis
 
-[DEPRECATED: the "upgrade" command works only when upgrading to Kyma 1.x.x. Please use the "deploy" command to upgrade to Kyma 2.x.x]
+[DEPRECATED: The "upgrade" command works only when upgrading to Kyma 1.x.x. To upgrade to Kyma 2.x.x, use the "deploy" command.]
 
 Use this command to upgrade the Kyma version on a cluster.
 

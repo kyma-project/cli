@@ -6,7 +6,7 @@ title: kyma test status
 
 ## Synopsis
 
-[DEPRECATED: the "test status" command works only with Kyma 1.x.x]
+[DEPRECATED: The "test status" command works only with Kyma 1.x.x.]
 		
 Use this command to display the status of a test suite and related test executions.
 

@@ -6,7 +6,7 @@ title: kyma test delete
 
 ## Synopsis
 
-[DEPRECATED: the "test delete" command works only with Kyma 1.x.x]
+[DEPRECATED: The "test delete" command works only with Kyma 1.x.x.]
 
 Use this command to delete test suites available for a provisioned Kyma cluster.
 
