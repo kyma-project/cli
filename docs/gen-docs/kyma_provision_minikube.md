@@ -2,7 +2,7 @@
 title: kyma provision minikube
 ---
 
-[Deprecated] Provisions Minikube.
+[DEPRECATED] Provisions Minikube.
 
 ## Synopsis
 

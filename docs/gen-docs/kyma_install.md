@@ -2,7 +2,7 @@
 title: kyma install
 ---
 
-[Deprecated] Installs Kyma on a running Kubernetes cluster.
+[DEPRECATED] Installs Kyma on a running Kubernetes cluster.
 
 ## Synopsis
 

@@ -2,7 +2,7 @@
 title: kyma test delete
 ---
 
-[Deprecated] Deletes test suites available for a provisioned Kyma cluster.
+[DEPRECATED] Deletes test suites available for a provisioned Kyma cluster.
 
 ## Synopsis
 
@@ -28,5 +28,5 @@ kyma test delete <test-suite-1> <test-suite-2> ... <test-suite-N> [flags]
 
 ## See also
 
-* [kyma test](#kyma-test-kyma-test)	 - [Deprecated] Runs tests on a provisioned Kyma cluster.
+* [kyma test](#kyma-test-kyma-test)	 - [DEPRECATED] Runs tests on a provisioned Kyma cluster.
 

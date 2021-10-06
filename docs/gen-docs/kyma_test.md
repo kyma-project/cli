@@ -2,7 +2,7 @@
 title: kyma test
 ---
 
-[Deprecated] Runs tests on a provisioned Kyma cluster.
+[DEPRECATED] Runs tests on a provisioned Kyma cluster.
 
 ## Synopsis
 
@@ -23,10 +23,10 @@ Use this command to run tests on a provisioned Kyma cluster.
 ## See also
 
 * [kyma](#kyma-kyma)	 - Controls a Kyma cluster.
-* [kyma test definitions](#kyma-test-definitions-kyma-test-definitions)	 - [Deprecated] Shows test definitions available for a provisioned Kyma cluster.
-* [kyma test delete](#kyma-test-delete-kyma-test-delete)	 - [Deprecated] Deletes test suites available for a provisioned Kyma cluster.
-* [kyma test list](#kyma-test-list-kyma-test-list)	 - [Deprecated] Lists test suites available for a provisioned Kyma cluster.
-* [kyma test logs](#kyma-test-logs-kyma-test-logs)	 - [Deprecated] Shows the logs of tests Pods for a given test suite.
-* [kyma test run](#kyma-test-run-kyma-test-run)	 - [Deprecated] Runs tests on a Kyma cluster.
-* [kyma test status](#kyma-test-status-kyma-test-status)	 - [Deprecated] Shows the status of a test suite and related test executions.
+* [kyma test definitions](#kyma-test-definitions-kyma-test-definitions)	 - [DEPRECATED] Shows test definitions available for a provisioned Kyma cluster.
+* [kyma test delete](#kyma-test-delete-kyma-test-delete)	 - [DEPRECATED] Deletes test suites available for a provisioned Kyma cluster.
+* [kyma test list](#kyma-test-list-kyma-test-list)	 - [DEPRECATED] Lists test suites available for a provisioned Kyma cluster.
+* [kyma test logs](#kyma-test-logs-kyma-test-logs)	 - [DEPRECATED] Shows the logs of tests Pods for a given test suite.
+* [kyma test run](#kyma-test-run-kyma-test-run)	 - [DEPRECATED] Runs tests on a Kyma cluster.
+* [kyma test status](#kyma-test-status-kyma-test-status)	 - [DEPRECATED] Shows the status of a test suite and related test executions.
 

@@ -2,7 +2,7 @@
 title: kyma console
 ---
 
-[Deprecated] Opens the Kyma Console in a web browser.
+[DEPRECATED] Opens the Kyma Console in a web browser.
 
 ## Synopsis
 

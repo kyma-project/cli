@@ -2,7 +2,7 @@
 title: kyma test status
 ---
 
-[Deprecated] Shows the status of a test suite and related test executions.
+[DEPRECATED] Shows the status of a test suite and related test executions.
 
 ## Synopsis
 
@@ -36,5 +36,5 @@ kyma test status <test-suite-1> <test-suite-2> ... <test-suite-N> [flags]
 
 ## See also
 
-* [kyma test](#kyma-test-kyma-test)	 - [Deprecated] Runs tests on a provisioned Kyma cluster.
+* [kyma test](#kyma-test-kyma-test)	 - [DEPRECATED] Runs tests on a provisioned Kyma cluster.
 

@@ -2,7 +2,7 @@
 title: kyma test list
 ---
 
-[Deprecated] Lists test suites available for a provisioned Kyma cluster.
+[DEPRECATED] Lists test suites available for a provisioned Kyma cluster.
 
 ## Synopsis
 
@@ -26,5 +26,5 @@ kyma test list [flags]
 
 ## See also
 
-* [kyma test](#kyma-test-kyma-test)	 - [Deprecated] Runs tests on a provisioned Kyma cluster.
+* [kyma test](#kyma-test-kyma-test)	 - [DEPRECATED] Runs tests on a provisioned Kyma cluster.
 

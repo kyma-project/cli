@@ -2,7 +2,7 @@
 title: kyma upgrade
 ---
 
-[Deprecated] Upgrades Kyma
+[DEPRECATED] Upgrades Kyma
 
 ## Synopsis
 

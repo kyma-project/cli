@@ -2,7 +2,7 @@
 title: kyma test run
 ---
 
-[Deprecated] Runs tests on a Kyma cluster.
+[DEPRECATED] Runs tests on a Kyma cluster.
 
 ## Synopsis
 
@@ -42,5 +42,5 @@ kyma test run <test-definition-1> <test-definition-2> ... <test-definition-N> [f
 
 ## See also
 
-* [kyma test](#kyma-test-kyma-test)	 - [Deprecated] Runs tests on a provisioned Kyma cluster.
+* [kyma test](#kyma-test-kyma-test)	 - [DEPRECATED] Runs tests on a provisioned Kyma cluster.
 
