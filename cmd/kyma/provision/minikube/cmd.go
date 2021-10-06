@@ -28,7 +28,7 @@ const (
 	vmDriverNone       string = "none"
 	vmDriverVirtualBox string = "virtualbox"
 	sleep                     = 10 * time.Second
-	deprecationNote           = `DEPRECATED: the "provision minikube" command is deprecated. Please use the "provision k3d" command instead.`
+	deprecationNote           = `DEPRECATED: The "provision minikube" command is deprecated. Use the "provision k3d" command instead.`
 )
 
 var (

@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	deprecationNote = `DEPRECATED: the "test delete" command works only with Kyma 1.x.x`
+	deprecationNote = `DEPRECATED: The "test delete" command works only with Kyma 1.x.x.`
 )
 
 type command struct {

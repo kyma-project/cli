@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	deprecationNote = `DEPRECATED: the "console" command works only with Kyma 1.x.x. Please use the "dashboard" command with Kyma 2.x.x`
+	deprecationNote = `DEPRECATED: The "console" command works only with Kyma 1.x.x. For Kyma 2.x.x, use the "dashboard" command instead.`
 )
 
 type command struct {

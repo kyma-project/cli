@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	deprecationNote = `DEPRECATED: the "test logs" command works only with Kyma 1.x.x`
+	deprecationNote = `DEPRECATED: The "test logs" command works only with Kyma 1.x.x.`
 )
 
 var (

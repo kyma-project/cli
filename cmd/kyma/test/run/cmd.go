@@ -28,7 +28,7 @@ import (
 )
 
 const (
-	deprecationNote = `DEPRECATED: the "test run" command works only with Kyma 1.x.x`
+	deprecationNote = `DEPRECATED: The "test run" command works only with Kyma 1.x.x.`
 )
 
 type command struct {

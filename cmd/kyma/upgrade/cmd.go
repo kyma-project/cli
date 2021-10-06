@@ -18,7 +18,7 @@ import (
 
 const (
 	defaultDomain   = "kyma.local"
-	deprecationNote = `DEPRECATED: the "upgrade" command works only when upgrading to Kyma 1.x.x. Please use the "deploy" command to upgrade to Kyma 2.x.x`
+	deprecationNote = `DEPRECATED: The "upgrade" command works only when upgrading to Kyma 1.x.x. To upgrade to Kyma 2.x.x, use the "deploy" command.`
 )
 
 type command struct {

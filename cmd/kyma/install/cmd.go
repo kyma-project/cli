@@ -21,7 +21,7 @@ import (
 
 const (
 	defaultDomain   = "kyma.local"
-	deprecationNote = `DEPRECATED: the "install" command works only when installing Kyma 1.x.x. Please use the "deploy" command to deploy Kyma 2.x.x`
+	deprecationNote = `DEPRECATED: The "install" command works only when installing Kyma 1.x.x. To install Kyma 2.x.x, use the "deploy" command instead.`
 )
 
 type command struct {
