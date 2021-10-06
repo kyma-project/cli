@@ -11,6 +11,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	deprecationNote = `DEPRECATED: the "test definitions" command works only with Kyma 1.x.x`
+)
+
 type command struct {
 	opts *Options
 	cli.Command
@@ -23,17 +27,20 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 
 	cobraCmd := &cobra.Command{
-		Use:        "definitions",
-		Short:      "Shows test definitions available for a provisioned Kyma cluster.",
-		Long:       `Use this command to list test definitions available for a provisioned Kyma cluster.`,
-		RunE:       func(_ *cobra.Command, _ []string) error { return cmd.Run() },
-		Aliases:    []string{"def"},
-		Deprecated: "`test definitions` is deprecated!",
+		Use:   "definitions",
+		Short: "[Deprecated] Shows test definitions available for a provisioned Kyma cluster.",
+		Long: fmt.Sprintf(`[%s]
+
+Use this command to list test definitions available for a provisioned Kyma cluster.`, deprecationNote),
+		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
+		Aliases: []string{"def"},
 	}
 	return cobraCmd
 }
 
 func (cmd *command) Run() error {
+	fmt.Println(deprecationNote)
+
 	var err error
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
 		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid.")

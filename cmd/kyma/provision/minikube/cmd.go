@@ -28,6 +28,7 @@ const (
 	vmDriverNone       string = "none"
 	vmDriverVirtualBox string = "virtualbox"
 	sleep                     = 10 * time.Second
+	deprecationNote           = `DEPRECATED: the "provision minikube" command is deprecated. Please use the "provision k3d" command instead.`
 )
 
 var (
@@ -59,12 +60,14 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:        "minikube",
-		Short:      "Provisions Minikube.",
-		Long:       `Use this command to provision a Minikube cluster for Kyma installation. It requires to have Minikube installed upfront, see also https://github.com/kubernetes/minikube`,
-		RunE:       func(_ *cobra.Command, _ []string) error { return c.Run() },
-		Aliases:    []string{"m"},
-		Deprecated: "`provision minikube` is deprecated! Use `kyma provision k3d` instead",
+		Use:   "minikube",
+		Short: "[Deprecated] Provisions Minikube.",
+		Long: fmt.Sprintf(`[%s]
+
+Use this command to provision a Minikube cluster for Kyma installation. It requires to have Minikube installed upfront, see also https://github.com/kubernetes/minikube`, deprecationNote),
+
+		RunE:    func(_ *cobra.Command, _ []string) error { return c.Run() },
+		Aliases: []string{"m"},
 	}
 
 	cmd.Flags().StringVar(&o.VMDriver, "vm-driver", defaultVMDriver, "Specifies the VM driver. Possible values: "+strings.Join(drivers, ","))
@@ -82,6 +85,8 @@ func NewCmd(o *Options) *cobra.Command {
 
 //Run runs the command
 func (c *command) Run() error {
+	fmt.Println(deprecationNote)
+
 	s := c.NewStep("Checking requirements")
 	if err := c.checkRequirements(s); err != nil {
 		s.Failure()

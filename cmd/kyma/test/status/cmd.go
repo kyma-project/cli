@@ -18,6 +18,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	deprecationNote = `DEPRECATED: the "test status" command works only with Kyma 1.x.x`
+)
+
 type command struct {
 	opts *Options
 	cli.Command
@@ -31,17 +35,17 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cobraCmd := &cobra.Command{
 		Use:   "status <test-suite-1> <test-suite-2> ... <test-suite-N>",
-		Short: "Shows the status of a test suite and related test executions.",
-		Long: `Use this command to display the status of a test suite and related test executions.
+		Short: "[Deprecated] Shows the status of a test suite and related test executions.",
+		Long: fmt.Sprintf(`[%s]
+		
+Use this command to display the status of a test suite and related test executions.
 
 If you don't provide any arguments, the status of all test suites will be printed.
-To print the status of all test suites, run ` + "`kyma test status`" + `.
-To print the status of specific test cases, run ` + "`kyma test status testSuiteOne testSuiteTwo`" + `.
-`,
+To print the status of all test suites, run `+"`kyma test status`"+`.
+To print the status of specific test cases, run `+"`kyma test status testSuiteOne testSuiteTwo`"+`.`, deprecationNote),
 
-		RunE:       func(_ *cobra.Command, args []string) error { return cmd.Run(args) },
-		Aliases:    []string{"s"},
-		Deprecated: "`test status` is deprecated!",
+		RunE:    func(_ *cobra.Command, args []string) error { return cmd.Run(args) },
+		Aliases: []string{"s"},
 	}
 
 	cobraCmd.Flags().StringVarP(&o.OutputFormat, "output", "o", "",
@@ -50,6 +54,8 @@ To print the status of specific test cases, run ` + "`kyma test status testSuite
 }
 
 func (cmd *command) Run(args []string) error {
+	fmt.Println(deprecationNote)
+
 	var err error
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
 		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure that your kubeconfig is valid.")

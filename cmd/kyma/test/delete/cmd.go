@@ -13,6 +13,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	deprecationNote = `DEPRECATED: the "test delete" command works only with Kyma 1.x.x`
+)
+
 type command struct {
 	opts *Options
 	cli.Command
@@ -26,18 +30,21 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cobraCmd := &cobra.Command{
 		Use:   "delete <test-suite-1> <test-suite-2> ... <test-suite-N>",
-		Short: "Deletes test suites available for a provisioned Kyma cluster.",
-		Long: `Use this command to delete test suites available for a provisioned Kyma cluster.
+		Short: "[Deprecated] Deletes test suites available for a provisioned Kyma cluster.",
+		Long: fmt.Sprintf(`[%s]
 
-Provide at least one test suite name.`,
-		RunE:       func(_ *cobra.Command, args []string) error { return cmd.Run(args) },
-		Aliases:    []string{"d"},
-		Deprecated: "`test delete` is deprecated!",
+Use this command to delete test suites available for a provisioned Kyma cluster.
+
+Provide at least one test suite name.`, deprecationNote),
+		RunE:    func(_ *cobra.Command, args []string) error { return cmd.Run(args) },
+		Aliases: []string{"d"},
 	}
 	return cobraCmd
 }
 
 func (cmd *command) Run(args []string) error {
+	fmt.Println(deprecationNote)
+
 	if len(args) < 1 {
 		return fmt.Errorf("Test suite name required")
 	}

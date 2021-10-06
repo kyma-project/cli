@@ -17,7 +17,8 @@ import (
 )
 
 const (
-	defaultDomain = "kyma.local"
+	defaultDomain   = "kyma.local"
+	deprecationNote = `DEPRECATED: the "upgrade" command works only when upgrading to Kyma 1.x.x. Please use the "deploy" command to upgrade to Kyma 2.x.x`
 )
 
 type command struct {
@@ -33,11 +34,13 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 
 	cobraCmd := &cobra.Command{
-		Use:        "upgrade",
-		Short:      "Upgrades Kyma",
-		Long:       `Use this command to upgrade the Kyma version on a cluster.`,
-		RunE:       func(_ *cobra.Command, _ []string) error { return cmd.Run() },
-		Deprecated: `use "kyma deploy" instead`,
+		Use:   "upgrade",
+		Short: "[Deprecated] Upgrades Kyma",
+		Long: fmt.Sprintf(`[%s]
+
+Use this command to upgrade the Kyma version on a cluster.`, deprecationNote),
+
+		RunE: func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 	}
 
 	cobraCmd.Flags().BoolVarP(&o.NoWait, "no-wait", "n", false, "Determines if the command should wait for the Kyma upgrade to complete.")
@@ -63,6 +66,8 @@ func NewCmd(o *Options) *cobra.Command {
 
 //Run runs the command
 func (cmd *command) Run() error {
+	fmt.Println(deprecationNote)
+
 	if cmd.opts.CI {
 		cmd.Factory.NonInteractive = true
 	}
