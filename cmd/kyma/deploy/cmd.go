@@ -173,7 +173,7 @@ func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List) 
 	}
 
 	runtimeBuilder := scheduleService.NewRuntimeBuilder(reconciliation.NewInMemoryReconciliationRepository(), l)
-	err = runtimeBuilder.RunLocal(cmd.componentNames(components.Prerequisites),cmd.printDeployStatus).Run(context.TODO(),
+	err = runtimeBuilder.RunLocal(cmd.componentNames(components.Prerequisites), cmd.printDeployStatus).Run(context.TODO(),
 		&cluster.State{
 			Cluster: &model.ClusterEntity{
 				Version:    1,
