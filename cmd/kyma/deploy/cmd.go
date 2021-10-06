@@ -2,17 +2,21 @@ package deploy
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"github.com/kyma-incubator/reconciler/pkg/model"
+	"github.com/kyma-incubator/reconciler/pkg/scheduler/reconciliation"
 	"io/ioutil"
 	"os"
 	"path"
 	"time"
 
+	"github.com/kyma-incubator/reconciler/pkg/cluster"
 	"github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/service"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
-	"github.com/kyma-incubator/reconciler/pkg/scheduler"
+	scheduleService "github.com/kyma-incubator/reconciler/pkg/scheduler/service"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/component"
 	"github.com/kyma-project/cli/internal/config"
@@ -158,23 +162,42 @@ func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List) 
 		defer func() { os.Stderr = stderr }()
 	}
 
-	localScheduler := scheduler.NewLocalScheduler(
-		scheduler.WithLogger(l),
-		scheduler.WithPrerequisites(cmd.componentNames(components.Prerequisites)...),
-		scheduler.WithStatusFunc(cmd.printDeployStatus))
-
-	componentsToInstall := append(components.Prerequisites, components.Components...)
 	step := cmd.NewStep("Deploying Kyma")
 	step.Start()
 
-	err = localScheduler.Run(context.TODO(), &keb.Cluster{
-		Kubeconfig: string(kubeconfig),
-		KymaConfig: keb.KymaConfig{
-			Version:    cmd.opts.Source,
-			Profile:    cmd.opts.Profile,
-			Components: componentsToInstall,
-		},
-	})
+	componentsToInstall := append(components.Prerequisites, components.Components...) //unmarshall tostring
+
+	componentsToInstallJSON, err := json.Marshal(componentsToInstall)
+	if err != nil {
+		return err
+	}
+
+	runtimeBuilder := scheduleService.NewRuntimeBuilder(reconciliation.NewInMemoryReconciliationRepository(), l)
+	err = runtimeBuilder.RunLocal(cmd.componentNames(components.Prerequisites), cmd.printDeployStatus).Run(context.TODO(),
+		&cluster.State{
+			Cluster: &model.ClusterEntity{
+				Version:    1,
+				Cluster:    "local",
+				Kubeconfig: string(kubeconfig),
+				Contract:   1,
+			},
+			Configuration: &model.ClusterConfigurationEntity{
+				Version:        1,
+				Cluster:        "local",
+				ClusterVersion: 1,
+				KymaVersion:    cmd.opts.Source,
+				KymaProfile:    cmd.opts.Profile,
+				Components:     string(componentsToInstallJSON),
+				Contract:       1,
+			},
+			Status: &model.ClusterStatusEntity{
+				ID:             1,
+				Cluster:        "local",
+				ClusterVersion: 1,
+				ConfigVersion:  1,
+				Status:         model.ClusterStatusReconcilePending,
+			},
+		})
 	if err != nil {
 		step.Failuref("Failed to deploy Kyma.")
 		return err
