@@ -30,7 +30,7 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cobraCmd := &cobra.Command{
 		Use:   "delete <test-suite-1> <test-suite-2> ... <test-suite-N>",
-		Short: "[Deprecated] Deletes test suites available for a provisioned Kyma cluster.",
+		Short: "[DEPRECATED] Deletes test suites available for a provisioned Kyma cluster.",
 		Long: fmt.Sprintf(`[%s]
 
 Use this command to delete test suites available for a provisioned Kyma cluster.

@@ -44,7 +44,7 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cobraCmd := &cobra.Command{
 		Use:   "run <test-definition-1> <test-definition-2> ... <test-definition-N>",
-		Short: "[Deprecated] Runs tests on a Kyma cluster.",
+		Short: "[DEPRECATED] Runs tests on a Kyma cluster.",
 		Long: fmt.Sprintf(`[%s]
 
 Use this command to run tests on a Kyma cluster.

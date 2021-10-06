@@ -61,7 +61,7 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "minikube",
-		Short: "[Deprecated] Provisions Minikube.",
+		Short: "[DEPRECATED] Provisions Minikube.",
 		Long: fmt.Sprintf(`[%s]
 
 Use this command to provision a Minikube cluster for Kyma installation. It requires to have Minikube installed upfront, see also https://github.com/kubernetes/minikube`, deprecationNote),

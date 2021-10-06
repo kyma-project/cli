@@ -29,7 +29,7 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cobraCmd := &cobra.Command{
 		Use:   "list",
-		Short: "[Deprecated] Lists test suites available for a provisioned Kyma cluster.",
+		Short: "[DEPRECATED] Lists test suites available for a provisioned Kyma cluster.",
 		Long: fmt.Sprintf(`[%s]
 
 Use this command to list test suites available for a provisioned Kyma cluster.`, deprecationNote),

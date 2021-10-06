@@ -37,7 +37,7 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cobraCmd := &cobra.Command{
 		Use:   "logs <test-suite-1> <test-suite-2> ... <test-suite-N>",
-		Short: "[Deprecated] Shows the logs of tests Pods for a given test suite.",
+		Short: "[DEPRECATED] Shows the logs of tests Pods for a given test suite.",
 		Long: fmt.Sprintf(`[%s]
 
 Use this command to display logs of a test executed for a given test suite. By default, the command displays logs for failed tests, but you can change this behavior using the "test-status" flag. 

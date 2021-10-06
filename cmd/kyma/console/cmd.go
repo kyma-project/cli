@@ -32,7 +32,7 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "console",
-		Short: "[Deprecated] Opens the Kyma Console in a web browser.",
+		Short: "[DEPRECATED] Opens the Kyma Console in a web browser.",
 		Long: fmt.Sprintf(`[%s]
 		
 Use this command to open the Kyma Console in a web browser.`, deprecationNote),

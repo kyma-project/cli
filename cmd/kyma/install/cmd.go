@@ -38,7 +38,7 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cobraCmd := &cobra.Command{
 		Use:   "install",
-		Short: "[Deprecated] Installs Kyma on a running Kubernetes cluster.",
+		Short: "[DEPRECATED] Installs Kyma on a running Kubernetes cluster.",
 		Long: fmt.Sprintf(`[%s]
 
 Use this command to install Kyma on a running Kubernetes cluster.

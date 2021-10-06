@@ -35,7 +35,7 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cobraCmd := &cobra.Command{
 		Use:   "upgrade",
-		Short: "[Deprecated] Upgrades Kyma",
+		Short: "[DEPRECATED] Upgrades Kyma",
 		Long: fmt.Sprintf(`[%s]
 
 Use this command to upgrade the Kyma version on a cluster.`, deprecationNote),

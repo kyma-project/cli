@@ -35,7 +35,7 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cobraCmd := &cobra.Command{
 		Use:   "status <test-suite-1> <test-suite-2> ... <test-suite-N>",
-		Short: "[Deprecated] Shows the status of a test suite and related test executions.",
+		Short: "[DEPRECATED] Shows the status of a test suite and related test executions.",
 		Long: fmt.Sprintf(`[%s]
 		
 Use this command to display the status of a test suite and related test executions.
