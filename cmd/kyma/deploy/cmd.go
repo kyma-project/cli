@@ -139,11 +139,13 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
+	deployTime := time.Since(start)
+
 	if err := cmd.importCertificate(); err != nil {
 		return err
 	}
 
-	return cmd.printSummary(vs, time.Since(start))
+	return cmd.printSummary(vs, deployTime)
 }
 
 func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List) error {
