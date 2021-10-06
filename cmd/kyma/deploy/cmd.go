@@ -187,7 +187,7 @@ func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List) 
 				ClusterVersion: 1,
 				KymaVersion:    cmd.opts.Source,
 				KymaProfile:    cmd.opts.Profile,
-				Components:     string(componentsToInstallString),
+				Components:     string(componentsToInstallJSON),
 				Contract:       1,
 			},
 			Status: &model.ClusterStatusEntity{
