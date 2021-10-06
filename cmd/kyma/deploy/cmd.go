@@ -167,7 +167,7 @@ func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List) 
 
 	componentsToInstall := append(components.Prerequisites, components.Components...) //unmarshall tostring
 
-	componentsToInstallString, err := json.Marshal(componentsToInstall)
+	componentsToInstallJSON, err := json.Marshal(componentsToInstall)
 	if err != nil {
 		return err
 	}
