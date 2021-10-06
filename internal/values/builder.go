@@ -138,28 +138,6 @@ func (r buildResult) toMap() map[string]interface{} {
 	return copyMap(r.values)
 }
 
-// toFlattenedMap returns a copy of the values in flattened map form (nested keys are merged separated by dots)
-func (r buildResult) toFlattenedMap() map[string]interface{} {
-	return flattenValues(r.toMap())
-}
-
-func flattenValues(overrides map[string]interface{}) map[string]interface{} {
-	result := make(map[string]interface{})
-
-	for outerKey, outerValue := range overrides {
-		if valueAsMap, ok := outerValue.(map[string]interface{}); ok {
-			mapWithIncompleteKeys := flattenValues(valueAsMap)
-			for innerKey, innerValue := range mapWithIncompleteKeys {
-				result[outerKey+"."+innerKey] = innerValue
-			}
-		} else {
-			result[outerKey] = outerValue
-		}
-	}
-
-	return result
-}
-
 func (r buildResult) find(key string) (interface{}, bool) {
 	return deepFind(r.values, strings.Split(key, "."))
 }
