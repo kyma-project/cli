@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"github.com/kyma-incubator/reconciler/pkg/model"
 	"github.com/kyma-incubator/reconciler/pkg/scheduler/reconciliation"
+	"github.com/kyma-project/cli/internal/resolve"
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 	"time"
 
 	"github.com/kyma-incubator/reconciler/pkg/cluster"
@@ -283,14 +285,21 @@ func (cmd *command) componentNames(comps []keb.Component) []string {
 func (cmd *command) createComponentsWithOverrides(ws *workspace.Workspace, overrides map[string]interface{}) (component.List, error) {
 	var compList component.List
 	if len(cmd.opts.Components) > 0 {
-		compList = component.FromStrings(cmd.opts.Components, overrides)
+		compList = component.FromStrings(cmd.opts.Components)
 		return compList, nil
 	}
 	if cmd.opts.ComponentsFile != "" {
-		return component.FromFile(ws, cmd.opts.ComponentsFile, overrides)
+		filePath, err := resolve.File(cmd.opts.ComponentsFile, filepath.Join(ws.WorkspaceDir, "tmp"))
+		if err != nil {
+			return component.List{}, err
+		}
+		return component.FromFile(filePath)
 	}
-	compFile := path.Join(ws.InstallationResourceDir, "components.yaml")
-	return component.FromFile(ws, compFile, overrides)
+	filePath, err := resolve.File(path.Join(ws.InstallationResourceDir, "components.yaml"), filepath.Join(ws.WorkspaceDir, "tmp"))
+	if err != nil {
+		return component.List{}, err
+	}
+	return component.FromFile(filePath)
 }
 
 // avoidUserInteraction returns true if user won't provide input
