@@ -167,8 +167,8 @@ func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, 
 		defer func() { os.Stderr = stderr }()
 	}
 
-	step := cmd.NewStep("Deploying Kyma")
-	step.Start()
+	deployStep := cmd.NewStep("Deploying Kyma")
+	deployStep.Start()
 
 	kebComponentsJSON, err := prepareKebComponents(components, vals)
 	if err != nil {
@@ -203,11 +203,11 @@ func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, 
 			},
 		})
 	if err != nil {
-		step.Failuref("Failed to deploy Kyma.")
+		deployStep.Failuref("Failed to deploy Kyma.")
 		return err
 	}
 
-	step.Successf("Kyma deployed successfully!")
+	deployStep.Successf("Kyma deployed successfully!")
 	return nil
 }
 
@@ -247,14 +247,14 @@ func (cmd *command) printDeployStatus(component string, msg *reconciler.Callback
 
 	switch msg.Status {
 	case reconciler.StatusSuccess:
-		step := cmd.NewStep(fmt.Sprintf("Component '%s' deployed", component))
-		step.Success()
+		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' deployed", component))
+		statusStep.Success()
 	case reconciler.StatusFailed:
-		step := cmd.NewStep(fmt.Sprintf("Component '%s' failed. Retrying...", component))
-		step.Failure()
+		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' failed. Retrying...", component))
+		statusStep.Failure()
 	case reconciler.StatusError:
-		step := cmd.NewStep(fmt.Sprintf("Component '%s' failed and terminated", component))
-		step.Failure()
+		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' failed and terminated", component))
+		statusStep.Failure()
 	}
 }
 
