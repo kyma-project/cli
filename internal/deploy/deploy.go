@@ -41,12 +41,12 @@ type Options struct {
 func Deploy(opts Options) error {
 	kebComponents, err := prepareKebComponents(opts.Components, opts.Values)
 	if err != nil {
-		return errors.Wrap(err, "Failed to prepare components to install")
+		return nil
 	}
 
 	kebCluster, err := prepareKebCluster(opts, kebComponents)
 	if err != nil {
-		return err
+		return nil
 	}
 
 	runtimeBuilder := service.NewRuntimeBuilder(reconciliation.NewInMemoryReconciliationRepository(), opts.Logger)
@@ -74,20 +74,20 @@ func prepareKebComponents(components component.List, vals values.Values) ([]keb.
 			Namespace: c.Namespace,
 		}
 		if componentVals, exists := vals[c.Name]; exists {
-			compMap, ok := componentVals.(map[string]interface{})
+			valsMap, ok := componentVals.(values.Values)
 			if !ok {
 				return nil, errors.New("Component value must be a map")
 			}
-			for k, v := range compMap {
+			for k, v := range valsMap {
 				kebComponent.Configuration = append(kebComponent.Configuration, keb.Configuration{Key: k, Value: v})
 			}
 		}
 		if globalVals, exists := vals["global"]; exists {
-			compMap, ok := globalVals.(map[string]interface{})
+			valsMap, ok := globalVals.(values.Values)
 			if !ok {
 				return nil, errors.New("Global value must be a map")
 			}
-			for k, v := range compMap {
+			for k, v := range valsMap {
 				kebComponent.Configuration = append(kebComponent.Configuration, keb.Configuration{Key: "global." + k, Value: v})
 			}
 		}
