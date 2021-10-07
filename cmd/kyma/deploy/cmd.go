@@ -322,7 +322,7 @@ func (cmd *command) approveImportCertificate() bool {
 func (cmd *command) printSummary(vals values.Values, duration time.Duration) error {
 	globals := vals["global"]
 	var domainName string
-	if globalsMap, ok := globals.(values.Values); ok {
+	if globalsMap, ok := globals.(map[string]interface{}); ok {
 		domainName = globalsMap["domainName"].(string)
 	} else {
 		return errors.New("domain not found in overrides")
