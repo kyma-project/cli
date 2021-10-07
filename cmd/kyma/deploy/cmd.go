@@ -4,14 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/kyma-incubator/reconciler/pkg/model"
-	"github.com/kyma-incubator/reconciler/pkg/scheduler/reconciliation"
-	"github.com/kyma-project/cli/internal/resolve"
 	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
 	"time"
+
+	"github.com/kyma-incubator/reconciler/pkg/model"
+	"github.com/kyma-incubator/reconciler/pkg/scheduler/reconciliation"
+	"github.com/kyma-project/cli/internal/resolve"
 
 	"github.com/kyma-incubator/reconciler/pkg/cluster"
 	"github.com/kyma-incubator/reconciler/pkg/keb"
@@ -111,7 +112,7 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	vs, err := values.Merge(cmd.opts.Sources, ws, cmd.K8s.Static())
+	vals, err := values.Merge(cmd.opts.Sources, ws, cmd.K8s.Static())
 	if err != nil {
 		return err
 	}
@@ -126,7 +127,7 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	components, err := cmd.createComponentsWithOverrides(ws, vs)
+	components, err := cmd.resolveComponents(ws)
 	if err != nil {
 		return err
 	}
@@ -136,19 +137,21 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	err = cmd.deployKyma(l, components)
+	err = cmd.deployKyma(l, components, vals)
 	if err != nil {
 		return err
 	}
+
+	deployTime := time.Since(start)
 
 	if err := cmd.importCertificate(); err != nil {
 		return err
 	}
 
-	return cmd.printSummary(vs, time.Since(start))
+	return cmd.printSummary(vals, deployTime)
 }
 
-func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List) error {
+func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, vals map[string]interface{}) error {
 	kubeconfigPath := kube.KubeconfigPath(cmd.KubeconfigPath)
 	kubeconfig, err := ioutil.ReadFile(kubeconfigPath)
 	if err != nil {
@@ -167,15 +170,14 @@ func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List) 
 	step := cmd.NewStep("Deploying Kyma")
 	step.Start()
 
-	componentsToInstall := append(components.Prerequisites, components.Components...) //unmarshall tostring
-
-	componentsToInstallJSON, err := json.Marshal(componentsToInstall)
+	kebComponentsJSON, err := prepareKebComponents(components, vals)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "Failed to prepare components to install")
 	}
+	fmt.Println(kebComponentsJSON)
 
 	runtimeBuilder := scheduleService.NewRuntimeBuilder(reconciliation.NewInMemoryReconciliationRepository(), l)
-	err = runtimeBuilder.RunLocal(cmd.componentNames(components.Prerequisites), cmd.printDeployStatus).Run(context.TODO(),
+	err = runtimeBuilder.RunLocal(components.PrerequisiteNames(), cmd.printDeployStatus).Run(context.TODO(),
 		&cluster.State{
 			Cluster: &model.ClusterEntity{
 				Version:    1,
@@ -189,7 +191,7 @@ func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List) 
 				ClusterVersion: 1,
 				KymaVersion:    cmd.opts.Source,
 				KymaProfile:    cmd.opts.Profile,
-				Components:     string(componentsToInstallJSON),
+				Components:     kebComponentsJSON,
 				Contract:       1,
 			},
 			Status: &model.ClusterStatusEntity{
@@ -207,6 +209,35 @@ func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List) 
 
 	step.Successf("Kyma deployed successfully!")
 	return nil
+}
+
+func prepareKebComponents(components component.List, vals values.Values) (string, error) {
+	var kebComponents []keb.Component
+	all := append(components.Prerequisites, components.Components...)
+	for _, c := range all {
+		kebComponent := keb.Component{
+			Component: c.Name,
+			Namespace: c.Namespace,
+		}
+		if componentVals, exists := vals[c.Name]; exists {
+			for k, v := range componentVals.(map[string]interface{}) {
+				kebComponent.Configuration = append(kebComponent.Configuration, keb.Configuration{Key: k, Value: v})
+			}
+		}
+		if globalVals, exists := vals["global"]; exists {
+			for k, v := range globalVals.(map[string]interface{}) {
+				kebComponent.Configuration = append(kebComponent.Configuration, keb.Configuration{Key: "global." + k, Value: v})
+			}
+		}
+
+		kebComponents = append(kebComponents, kebComponent)
+	}
+
+	kebComponentsJSON, err := json.Marshal(kebComponents)
+	if err != nil {
+		return "", err
+	}
+	return string(kebComponentsJSON), nil
 }
 
 func (cmd *command) printDeployStatus(component string, msg *reconciler.CallbackMessage) {
@@ -274,19 +305,10 @@ func (cmd *command) prepareWorkspace(l *zap.SugaredLogger) (*workspace.Workspace
 	return ws, nil
 }
 
-func (cmd *command) componentNames(comps []keb.Component) []string {
-	var names []string
-	for _, c := range comps {
-		names = append(names, c.Component)
-	}
-	return names
-}
-
-func (cmd *command) createComponentsWithOverrides(ws *workspace.Workspace, overrides map[string]interface{}) (component.List, error) {
-	var compList component.List
+func (cmd *command) resolveComponents(ws *workspace.Workspace) (component.List, error) {
 	if len(cmd.opts.Components) > 0 {
-		compList = component.FromStrings(cmd.opts.Components)
-		return compList, nil
+		components := component.FromStrings(cmd.opts.Components)
+		return components, nil
 	}
 	if cmd.opts.ComponentsFile != "" {
 		filePath, err := resolve.File(cmd.opts.ComponentsFile, filepath.Join(ws.WorkspaceDir, "tmp"))
@@ -295,11 +317,8 @@ func (cmd *command) createComponentsWithOverrides(ws *workspace.Workspace, overr
 		}
 		return component.FromFile(filePath)
 	}
-	filePath, err := resolve.File(path.Join(ws.InstallationResourceDir, "components.yaml"), filepath.Join(ws.WorkspaceDir, "tmp"))
-	if err != nil {
-		return component.List{}, err
-	}
-	return component.FromFile(filePath)
+
+	return component.FromFile(path.Join(ws.InstallationResourceDir, "components.yaml"))
 }
 
 // avoidUserInteraction returns true if user won't provide input

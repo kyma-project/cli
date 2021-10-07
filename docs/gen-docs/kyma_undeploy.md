@@ -15,7 +15,8 @@ kyma undeploy [flags]
 ## Flags
 
 ```bash
-      --keep-crds   Set --keep-crds=true to keep CRDs on clean-up
+      --keep-crds          Set --keep-crds=true to keep CRDs on clean-up
+      --timeout duration   Maximum time for the deletion (default 6m0s)
 ```
 
 ## Flags inherited from parent commands
