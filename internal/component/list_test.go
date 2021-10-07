@@ -1,9 +1,6 @@
 package component
 
 import (
-	"fmt"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -23,6 +20,14 @@ var expectedList = List{
 }
 
 func TestFromFile(t *testing.T) {
+	t.Run("From JSON", func(t *testing.T) {
+		list, err := FromFile("testdata/components.json")
+		require.NoError(t, err)
+		require.Equal(t, expectedList.DefaultNamespace, list.DefaultNamespace)
+		require.ElementsMatch(t, expectedList.Prerequisites, list.Prerequisites)
+		require.ElementsMatch(t, expectedList.Components, list.Components)
+	})
+
 	t.Run("From YAML", func(t *testing.T) {
 		list, err := FromFile("testdata/components.yaml")
 		require.NoError(t, err)
@@ -30,21 +35,9 @@ func TestFromFile(t *testing.T) {
 		require.ElementsMatch(t, expectedList.Prerequisites, list.Prerequisites)
 		require.ElementsMatch(t, expectedList.Components, list.Components)
 	})
-	t.Run("From JSON", func(t *testing.T) {
-		list, err := FromFile("testdata/components.json")
-		require.NoError(t, err)
-		require.NoError(t, err)
-		require.Equal(t, expectedList.DefaultNamespace, list.DefaultNamespace)
-		require.ElementsMatch(t, expectedList.Prerequisites, list.Prerequisites)
-		require.ElementsMatch(t, expectedList.Components, list.Components)
-	})
-	t.Run("Component list from URL", func(t *testing.T) {
-		fakeServer := httptest.NewServer(http.FileServer(http.Dir("testdata")))
-		defer fakeServer.Close()
 
-		url := fmt.Sprintf("%s/%s", fakeServer.URL, "components.yaml")
-		list, err := FromFile(url)
-		require.NoError(t, err)
+	t.Run("From YML", func(t *testing.T) {
+		list, err := FromFile("testdata/components.yml")
 		require.NoError(t, err)
 		require.Equal(t, expectedList.DefaultNamespace, list.DefaultNamespace)
 		require.ElementsMatch(t, expectedList.Prerequisites, list.Prerequisites)
@@ -52,40 +45,31 @@ func TestFromFile(t *testing.T) {
 	})
 }
 
-//
-//func TestFromStrings(t *testing.T) {
-//	override := make(map[string]interface{})
-//	override["foo1"] = "bar1"
-//	t.Run("Add Component in default namespace", func(t *testing.T) {
-//		compList := FromStrings([]string{"comp4"})
-//		require.Equal(t, "comp4", compList.Components[0].Component)
-//		require.Equal(t, "kyma-system", compList.Components[0].Namespace)
-//	})
-//	t.Run("Add Component in custom namespace", func(t *testing.T) {
-//		namespace := "test-namespace"
-//		compList := FromStrings([]string{"comp4@test-namespace"})
-//		require.Equal(t, "comp4", compList.Components[0].Component)
-//		require.Equal(t, namespace, compList.Components[0].Namespace)
-//	})
-//	t.Run("Add component with component overrides", func(t *testing.T) {
-//		overrides := map[string]interface{}{
-//			"comp4.enabled": true,
-//		}
-//		compList := FromStrings([]string{"comp4@test-namespace"})
-//		require.Equal(t, "enabled", compList.Components[0].Configuration[0].Key)
-//		require.Equal(t, true, compList.Components[0].Configuration[0].Value)
-//	})
-//	t.Run("Add component with global overrides", func(t *testing.T) {
-//		overrides := map[string]interface{}{
-//			"global.enabled": true,
-//		}
-//		compList := FromStrings([]string{"comp1@test-namespace", "comp2@test-namespace"})
-//		require.Equal(t, "comp1", compList.Components[0].Component)
-//		require.Equal(t, "global.enabled", compList.Components[0].Configuration[0].Key)
-//		require.Equal(t, true, compList.Components[0].Configuration[0].Value)
-//
-//		require.Equal(t, "comp2", compList.Components[1].Component)
-//		require.Equal(t, "global.enabled", compList.Components[1].Configuration[0].Key)
-//		require.Equal(t, true, compList.Components[1].Configuration[0].Value)
-//	})
-//}
+func TestFromStrings(t *testing.T) {
+	t.Run("Add Component in default namespace", func(t *testing.T) {
+		list := FromStrings([]string{"comp-1"})
+		require.Equal(t, "kyma-system", list.DefaultNamespace)
+		require.Equal(t, "comp-1", list.Components[0].Name)
+		require.Equal(t, "kyma-system", list.Components[0].Namespace)
+	})
+
+	t.Run("Add Component in custom namespace", func(t *testing.T) {
+		list := FromStrings([]string{"comp-1@ns-1"})
+		require.Equal(t, "kyma-system", list.DefaultNamespace)
+		require.Equal(t, "comp-1", list.Components[0].Name)
+		require.Equal(t, "ns-1", list.Components[0].Namespace)
+	})
+
+	t.Run("Add multiple Components", func(t *testing.T) {
+		list := FromStrings([]string{"comp-1@ns-1", "comp-2", "comp-3", "comp-4@ns-2"})
+		require.Equal(t, "kyma-system", list.DefaultNamespace)
+		require.Equal(t, "comp-1", list.Components[0].Name)
+		require.Equal(t, "ns-1", list.Components[0].Namespace)
+		require.Equal(t, "comp-2", list.Components[1].Name)
+		require.Equal(t, "kyma-system", list.Components[1].Namespace)
+		require.Equal(t, "comp-3", list.Components[2].Name)
+		require.Equal(t, "kyma-system", list.Components[2].Namespace)
+		require.Equal(t, "comp-4", list.Components[3].Name)
+		require.Equal(t, "ns-2", list.Components[3].Namespace)
+	})
+}
