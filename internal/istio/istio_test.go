@@ -2,8 +2,6 @@ package istio
 
 import (
 	"bytes"
-	"fmt"
-	"github.com/kyma-project/cli/internal/files"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
@@ -254,37 +252,4 @@ func TestInstallation_downloadFile(t *testing.T) {
 			}
 		})
 	}
-}
-
-func Test_install(t *testing.T) {
-	kymaHome, err := files.KymaHome()
-	require.NoError(t, err)
-
-	i := &Installation{
-		osExt:          "win",
-		IstioChartPath: "testdata/Chart.yaml",
-		downloadURL:    downloadURL,
-		winBinName:     winBinName,
-		Client:         &http.Client{},
-		kymaHome:       kymaHome,
-		dirName:        dirName,
-		zipName:        zipName,
-	}
-	err = i.getIstioVersion()
-	require.NoError(t, err)
-	fmt.Println("After SItio Version")
-	require.NoError(t, err)
-	exist, err := i.checkIfBinaryExists()
-	fmt.Println("After Check Bin")
-	require.NoError(t, err)
-	if !exist {
-		err := i.downloadIstio()
-		fmt.Println("After download")
-		require.NoError(t, err)
-		err = i.extractIstio()
-		fmt.Println("After extract")
-		require.NoError(t, err)
-	}
-	err = i.exportEnvVar()
-	require.NoError(t, err)
 }
