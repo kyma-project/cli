@@ -24,18 +24,8 @@ type Definition struct {
 	Namespace string `yaml:"namespace" json:"namespace"`
 }
 
-// AsJsonString returns all components as a stringyfied JSON representation
-func (l *List) AsJsonString() (string, error){
-	componentsToInstallJSON, err := json.Marshal(append(l.Prerequisites, l.Components...))
-	if err != nil {
-		return "", err
-	}
-
-	return string(componentsToInstallJSON), nil
-}
-
-// PrerequisitesNames returns all names of prerequisists from the current component list
-func (l *List) PrerequisitesNames() []string {
+// PrerequisiteNames returns all names of prerequisites from the current component list
+func (l *List) PrerequisiteNames() []string {
 	var names []string
 	for _, c := range l.Prerequisites {
 		names = append(names, c.Name)
