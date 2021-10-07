@@ -115,7 +115,7 @@ func (i *Installation) Install() error {
 			return fmt.Errorf("error downloading istio: %s", err)
 		}
 		if err := i.extractIstio(); err != nil {
-			return fmt.Errorf("error extracting istio.tar.gz: %s", err)
+			return fmt.Errorf("error extracting istio: %s", err)
 		}
 	}
 	if err := i.exportEnvVar(); err != nil {
@@ -139,8 +139,7 @@ func (i *Installation) getIstioVersion() error {
 		return errors.New("istio version is empty")
 	}
 	if i.osExt == windows.ext {
-		// TODO Windows: Test if this is correct path
-		i.binPath = path.Join(i.kymaHome, i.dirName, fmt.Sprintf("istio-%s", i.istioVersion), i.winBinName)
+		i.binPath = path.Join(i.kymaHome, i.dirName, fmt.Sprintf("istio-%s", i.istioVersion), "bin", i.winBinName)
 	} else {
 		i.binPath = path.Join(i.kymaHome, i.dirName, fmt.Sprintf("istio-%s", i.istioVersion), "bin", i.binName)
 	}
@@ -181,9 +180,15 @@ func (i *Installation) setArch() {
 }
 
 func (i *Installation) downloadIstio() error {
+	nonArchURL := ""
+	archURL := ""
 	// Istioctl download links
-	nonArchURL := fmt.Sprintf("%s%s/istio-%s-%s.tar.gz", i.downloadURL, i.istioVersion, i.istioVersion, i.osExt)
-	archURL := fmt.Sprintf("%s%s/istio-%s-%s-%s.tar.gz", i.downloadURL, i.istioVersion, i.istioVersion, i.osExt, i.istioArch)
+	if i.osExt == darwin.ext || i.osExt == linux.ext {
+		nonArchURL = fmt.Sprintf("%s%s/istio-%s-%s.tar.gz", i.downloadURL, i.istioVersion, i.istioVersion, i.osExt)
+		archURL = fmt.Sprintf("%s%s/istio-%s-%s-%s.tar.gz", i.downloadURL, i.istioVersion, i.istioVersion, i.osExt, i.istioArch)
+	} else {
+		nonArchURL = fmt.Sprintf("%s%s/istio-%s-%s.zip", i.downloadURL, i.istioVersion, i.istioVersion, i.osExt)
+	}
 
 	switch i.osExt {
 	case linux.ext:
@@ -237,6 +242,9 @@ func (i *Installation) extractIstio() error {
 }
 
 func (i *Installation) exportEnvVar() error {
+	if i.environmentVar == "" || i.binPath =="" {
+		return errors.New("envVar or binPath empty")
+	}
 	if err := os.Setenv(i.environmentVar, i.binPath); err != nil {
 		return err
 	}
@@ -349,7 +357,6 @@ func unTar(source, target string, deleteSource bool) error {
 }
 
 func unZip(source, target string, deleteSource bool) error {
-	// TODO Windows: Test + Unit Tests
 	archive, err := zip.OpenReader(source)
 	if err != nil {
 		return err

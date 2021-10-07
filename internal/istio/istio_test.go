@@ -2,6 +2,8 @@ package istio
 
 import (
 	"bytes"
+	"fmt"
+	"github.com/kyma-project/cli/internal/files"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
@@ -150,6 +152,40 @@ func Test_unTar(t *testing.T) {
 	}
 }
 
+func Test_unZip(t *testing.T) {
+	type args struct {
+		source       string
+		target       string
+		deleteSource bool
+	}
+	tests := []struct {
+		name         string
+		args         args
+		expectedFile string
+		wantErr      bool
+	}{
+		{name: "unZip File", args: args{source: "testdata/istio_mock.zip", target: "testdata", deleteSource: false}, expectedFile: "testdata/istio.txt", wantErr: false},
+		{name: "File does not exist", args: args{source: "testdata/nonexistent.zip", target: "testdata", deleteSource: false}, expectedFile: "testdata/istio.txt", wantErr: true},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			err := unZip(tt.args.source, tt.args.target, tt.args.deleteSource)
+			if !tt.wantErr {
+				require.NoError(t, err)
+				_, err := os.Stat(tt.expectedFile)
+				require.NoError(t, err)
+				err = os.Remove(tt.expectedFile)
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				_, err := os.Stat(tt.expectedFile)
+				require.Error(t, err)
+			}
+		})
+	}
+}
+
 // MockClient is the mock client
 type mockClient struct{}
 
@@ -218,4 +254,37 @@ func TestInstallation_downloadFile(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_install(t *testing.T) {
+	kymaHome, err := files.KymaHome()
+	require.NoError(t, err)
+
+	i := &Installation{
+		osExt:          "win",
+		IstioChartPath: "testdata/Chart.yaml",
+		downloadURL:    downloadURL,
+		winBinName:     winBinName,
+		Client:         &http.Client{},
+		kymaHome:       kymaHome,
+		dirName:        dirName,
+		zipName:        zipName,
+	}
+	err = i.getIstioVersion()
+	require.NoError(t, err)
+	fmt.Println("After SItio Version")
+	require.NoError(t, err)
+	exist, err := i.checkIfBinaryExists()
+	fmt.Println("After Check Bin")
+	require.NoError(t, err)
+	if !exist {
+		err := i.downloadIstio()
+		fmt.Println("After download")
+		require.NoError(t, err)
+		err = i.extractIstio()
+		fmt.Println("After extract")
+		require.NoError(t, err)
+	}
+	err = i.exportEnvVar()
+	require.NoError(t, err)
 }
