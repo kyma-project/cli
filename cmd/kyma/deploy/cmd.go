@@ -145,7 +145,7 @@ func (cmd *command) Run(o *Options) error {
 	return cmd.printSummary(vals, deployTime)
 }
 
-func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, vals map[string]interface{}) error {
+func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, vals values.Values) error {
 	kubeconfigPath := kube.KubeconfigPath(cmd.KubeconfigPath)
 	kubeconfig, err := ioutil.ReadFile(kubeconfigPath)
 	if err != nil {
@@ -173,7 +173,6 @@ func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, 
 		KymaProfile: cmd.opts.Profile,
 		Logger:      l,
 	})
-
 	if err != nil {
 		deployStep.Failuref("Failed to deploy Kyma.")
 		return err
@@ -320,16 +319,19 @@ func (cmd *command) approveImportCertificate() bool {
 	return qImportCertsStep.PromptYesNo("Do you want to install the Kyma certificate locally?")
 }
 
-func (cmd *command) printSummary(overrides map[string]interface{}, duration time.Duration) error {
-	domain, ok := overrides["global.domainName"]
-	if !ok {
+func (cmd *command) printSummary(vals values.Values, duration time.Duration) error {
+	globals := vals["global"]
+	var domainName string
+	if globalsMap, ok := globals.(values.Values); ok {
+		domainName = globalsMap["domainName"].(string)
+	} else {
 		return errors.New("domain not found in overrides")
 	}
 
 	sum := nice.Summary{
 		NonInteractive: cmd.NonInteractive,
 		Version:        cmd.opts.Source,
-		URL:            domain.(string),
+		URL:            domainName,
 		Duration:       duration,
 	}
 
