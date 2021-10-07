@@ -66,7 +66,7 @@ type KymaClient interface {
 
 // Wrapper provides helper functions
 type Wrapper interface {
-	ContainerCreateAndStart(ctx context.Context, opts ContainerRunOpts) (string, error)
+	PullImageAndStartContainer(ctx context.Context, opts ContainerRunOpts) (string, error)
 	ContainerFollowRun(ctx context.Context, containerID string, log func(...interface{})) error
 	Stop(ctx context.Context, containerID string, log func(...interface{})) func()
 	IsDockerDesktopOS(ctx context.Context) (bool, error)
@@ -210,8 +210,8 @@ func (k *kymaDockerClient) PushKymaInstaller(image string, currentStep step.Step
 	return nil
 }
 
-// ContainerCreateAndStart creates, pulls (if necessary) and starts a container
-func (w *dockerWrapper) ContainerCreateAndStart(ctx context.Context, opts ContainerRunOpts) (string, error) {
+// PullImageAndStartContainer creates, pulls and starts a container
+func (w *dockerWrapper) PullImageAndStartContainer(ctx context.Context, opts ContainerRunOpts) (string, error) {
 	config := &container.Config{
 		Env:          opts.Envs,
 		ExposedPorts: portSet(opts.Ports),
@@ -222,22 +222,19 @@ func (w *dockerWrapper) ContainerCreateAndStart(ctx context.Context, opts Contai
 		AutoRemove:   true,
 	}
 
-	body, err := w.Docker.ContainerCreate(ctx, config, hostConfig, nil, nil, opts.ContainerName)
-	if docker.IsErrNotFound(err) {
-		var r io.ReadCloser
-		r, err = w.Docker.ImagePull(ctx, config.Image, types.ImagePullOptions{})
-		if err != nil {
-			return "", err
-		}
-		defer r.Close()
-
-		streamer := streams.NewOut(os.Stdout)
-		if err = jsonmessage.DisplayJSONMessagesToStream(r, streamer, nil); err != nil {
-			return "", err
-		}
-
-		body, err = w.Docker.ContainerCreate(ctx, config, hostConfig, nil, nil, opts.ContainerName)
+	var r io.ReadCloser
+	r, err := w.Docker.ImagePull(ctx, config.Image, types.ImagePullOptions{})
+	if err != nil {
+		return "", err
 	}
+	defer r.Close()
+
+	streamer := streams.NewOut(os.Stdout)
+	if err = jsonmessage.DisplayJSONMessagesToStream(r, streamer, nil); err != nil {
+		return "", err
+	}
+
+	body, err := w.Docker.ContainerCreate(ctx, config, hostConfig, nil, nil, opts.ContainerName)
 	if err != nil {
 		return "", err
 	}
