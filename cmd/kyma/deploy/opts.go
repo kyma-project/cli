@@ -3,8 +3,8 @@ package deploy
 import (
 	"fmt"
 	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/deploy/values"
 	"github.com/kyma-project/cli/internal/files"
-	"github.com/kyma-project/cli/internal/values"
 	"github.com/kyma-project/cli/internal/version"
 	"github.com/pkg/errors"
 	"os"

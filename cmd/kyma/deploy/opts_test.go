@@ -1,7 +1,7 @@
 package deploy
 
 import (
-	"github.com/kyma-project/cli/internal/values"
+	"github.com/kyma-project/cli/internal/deploy/values"
 	"github.com/stretchr/testify/require"
 	"os"
 	"path"

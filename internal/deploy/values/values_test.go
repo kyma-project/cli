@@ -22,7 +22,7 @@ func TestMerge(t *testing.T) {
 		domain                  string
 		tlsCrt                  string
 		tlsKey                  string
-		expected                map[string]interface{}
+		expected                Values
 		expectedErr             bool
 	}{
 		{
@@ -241,7 +241,7 @@ func TestMerge(t *testing.T) {
 		}
 		actual, err := Merge(opts, &workspace.Workspace{}, fake.NewSimpleClientset())
 
-		expected := map[string]interface{}{
+		expected := Values{
 			"global": map[string]interface{}{
 				"domainName": defaultRemoteKymaDomain,
 				"tlsCrt":     defaultRemoteTLSCrtEnc,
