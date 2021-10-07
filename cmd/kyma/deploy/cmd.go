@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/service"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
+	"github.com/kyma-project/cli/internal/deploy"
 
 	"github.com/kyma-project/cli/internal/deploy/component"
-	"github.com/kyma-project/cli/internal/deploy/reconciler"
 	"github.com/kyma-project/cli/internal/deploy/values"
 	"io/ioutil"
 	"os"
@@ -164,16 +164,14 @@ func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, 
 	deployStep := cmd.NewStep("Deploying Kyma")
 	deployStep.Start()
 
-	err = reconciler.Deploy(reconciler.DeploymentArgs{
-		Components: components,
-		Values: vals,
-		PrintStatus: func() {
-
-		},
-		KubeConfig: kubeconfig,
+	err = deploy.Deploy(deploy.Options{
+		Components:  components,
+		Values:      vals,
+		StatusFunc:  cmd.printDeployStatus,
+		KubeConfig:  kubeconfig,
 		KymaVersion: cmd.opts.Source,
 		KymaProfile: cmd.opts.Profile,
-		Logger: l,
+		Logger:      l,
 	})
 
 	if err != nil {
@@ -185,20 +183,20 @@ func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, 
 	return nil
 }
 
-func (cmd *command) printDeployStatus(component string, msg *reconciler.CallbackMessage) {
+func (cmd *command) printDeployStatus(status deploy.ComponentStatus) {
 	if cmd.Verbose {
 		return
 	}
 
-	switch msg.Status {
-	case reconciler.StatusSuccess:
-		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' deployed", component))
+	switch status.State {
+	case deploy.Success:
+		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' deployed", status.Component))
 		statusStep.Success()
-	case reconciler.StatusFailed:
-		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' failed. Retrying...", component))
+	case deploy.RecoverableError:
+		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' failed. Retrying...", status.Component))
 		statusStep.Failure()
-	case reconciler.StatusError:
-		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' failed and terminated", component))
+	case deploy.UnrecoverableError:
+		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' failed and terminated", status.Component))
 		statusStep.Failure()
 	}
 }
