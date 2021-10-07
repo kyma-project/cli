@@ -242,7 +242,7 @@ func (i *Installation) extractIstio() error {
 }
 
 func (i *Installation) exportEnvVar() error {
-	if i.environmentVar == "" || i.binPath =="" {
+	if i.environmentVar == "" || i.binPath == "" {
 		return errors.New("envVar or binPath empty")
 	}
 	if err := os.Setenv(i.environmentVar, i.binPath); err != nil {
