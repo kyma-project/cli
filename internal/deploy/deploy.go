@@ -74,12 +74,20 @@ func prepareKebComponents(components component.List, vals values.Values) ([]keb.
 			Namespace: c.Namespace,
 		}
 		if componentVals, exists := vals[c.Name]; exists {
-			for k, v := range componentVals.(map[string]interface{}) {
+			compMap, ok := componentVals.(map[string]interface{})
+			if !ok {
+				return nil, errors.New("Component value must be a map")
+			}
+			for k, v := range compMap {
 				kebComponent.Configuration = append(kebComponent.Configuration, keb.Configuration{Key: k, Value: v})
 			}
 		}
 		if globalVals, exists := vals["global"]; exists {
-			for k, v := range globalVals.(map[string]interface{}) {
+			compMap, ok := globalVals.(map[string]interface{})
+			if !ok {
+				return nil, errors.New("Global value must be a map")
+			}
+			for k, v := range compMap {
 				kebComponent.Configuration = append(kebComponent.Configuration, keb.Configuration{Key: "global." + k, Value: v})
 			}
 		}
