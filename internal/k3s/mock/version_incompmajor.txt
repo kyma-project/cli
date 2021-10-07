@@ -1,2 +1,0 @@
-k3d version v5.1.0
-k3s version latest (default)
