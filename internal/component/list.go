@@ -2,12 +2,11 @@ package component
 
 import (
 	"encoding/json"
+	"github.com/pkg/errors"
+	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
-
-	"github.com/pkg/errors"
-	"gopkg.in/yaml.v3"
 )
 
 const defaultNamespace = "kyma-system"
@@ -25,29 +24,29 @@ type Definition struct {
 	Namespace string `yaml:"namespace" json:"namespace"`
 }
 
-func FromStrings(components []string) List {
-	list := List{
-		DefaultNamespace: defaultNamespace,
+// AsJsonString returns all components as a stringyfied JSON representation
+func (l *List) AsJsonString() (string, error){
+	componentsToInstallJSON, err := json.Marshal(append(l.Prerequisites, l.Components...))
+	if err != nil {
+		return "", err
 	}
 
-	for _, item := range components {
-		namespace := defaultNamespace
-
-		tokens := strings.Split(item, "@")
-		if len(tokens) == 2 {
-			namespace = tokens[1]
-		}
-
-		definition := Definition{Name: tokens[0], Namespace: namespace}
-		list.Components = append(list.Components, definition)
-	}
-	return list
+	return string(componentsToInstallJSON), nil
 }
 
-// FromFile creates a new component list
+// PrerequisitesNames returns all names of prerequisists from the current component list
+func (l *List) PrerequisitesNames() []string {
+	var names []string
+	for _, c := range l.Prerequisites {
+		names = append(names, c.Name)
+	}
+	return names
+}
+
+// FromFile creates a new list of components from a file
 func FromFile(filePath string) (List, error) {
 	if filePath == "" {
-		return List{}, errors.New("Path to component list file is required")
+		return List{}, errors.New("Path to a components file is required")
 	}
 
 	data, err := ioutil.ReadFile(filePath)
@@ -73,6 +72,26 @@ func FromFile(filePath string) (List, error) {
 
 	ensureNamespaces(&list)
 	return list, nil
+}
+
+// FromStrings creates a new list of components from strings
+func FromStrings(components []string) List {
+	list := List{
+		DefaultNamespace: defaultNamespace,
+	}
+
+	for _, item := range components {
+		namespace := defaultNamespace
+
+		tokens := strings.Split(item, "@")
+		if len(tokens) == 2 {
+			namespace = tokens[1]
+		}
+
+		definition := Definition{Name: tokens[0], Namespace: namespace}
+		list.Components = append(list.Components, definition)
+	}
+	return list
 }
 
 func isJSON(filePath string) bool {
