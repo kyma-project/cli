@@ -13,8 +13,8 @@ import (
 func TestPrepareKebComponents(t *testing.T) {
 	var components = component.List{
 		DefaultNamespace: "ns-1",
-		Prerequisites:    []component.Definition{{"pre-1", "ns-1"}},
-		Components:       []component.Definition{{"comp-1", "ns-2"}, {"comp-2", "ns-1"}},
+		Prerequisites:    []component.Definition{{Name: "pre-1", Namespace: "ns-1"}},
+		Components:       []component.Definition{{Name: "comp-1", Namespace: "ns-2"}, {Name: "comp-2", Namespace: "ns-1"}},
 	}
 
 	var vals = values.Values{

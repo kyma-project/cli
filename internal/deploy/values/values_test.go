@@ -11,8 +11,6 @@ import (
 	"testing"
 )
 
-const any = "DO_NOT_CHECK_OVERRIDE_VALUE"
-
 func TestMerge(t *testing.T) {
 	testCases := []struct {
 		summary                 string
