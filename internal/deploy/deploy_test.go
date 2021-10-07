@@ -1,6 +1,8 @@
 package deploy
 
 import (
+	"github.com/kyma-incubator/reconciler/pkg/cluster"
+	"github.com/kyma-incubator/reconciler/pkg/model"
 	"github.com/kyma-project/cli/internal/deploy/component"
 	"github.com/kyma-project/cli/internal/deploy/values"
 	"github.com/stretchr/testify/require"
@@ -44,14 +46,47 @@ func TestPrepareKebComponents(t *testing.T) {
 		result, err := prepareKebComponents(components, vals)
 		require.NoError(t, err)
 		require.Equal(t, expected, result)
-
 	})
 }
 
 func TestPrepareKebCluster(t *testing.T) {
 	t.Run("prepareKebCluster", func(t *testing.T) {
-		result:= prepareKebCluster(Options{}, "")
-		require.Equal(t, expected, result)
+		options := Options{
+			Components:  component.List{},
+			Values: nil,
+			StatusFunc:  nil,
+			KubeConfig:  []byte("kubeconfig-1"),
+			KymaVersion: "version-1",
+			KymaProfile: "profile-1",
+			Logger:      nil,
+		}
 
+		expectedState :=  &cluster.State{
+			Cluster: &model.ClusterEntity{
+				Version:    1,
+				Cluster:    "local",
+				Kubeconfig: "kubeconfig-1",
+				Contract:   1,
+			},
+			Configuration: &model.ClusterConfigurationEntity{
+				Version:        1,
+				Cluster:        "local",
+				ClusterVersion: 1,
+				KymaVersion:    "version-1",
+				KymaProfile:    "profile-1",
+				Components:     "components-json-1",
+				Contract:       1,
+			},
+			Status: &model.ClusterStatusEntity{
+				ID:             1,
+				Cluster:        "local",
+				ClusterVersion: 1,
+				ConfigVersion:  1,
+				Status:         model.ClusterStatusReconcilePending,
+			},
+		}
+
+		result := prepareKebCluster(options, "components-json-1")
+		require.Equal(t, expectedState, result)
 	})
 }
