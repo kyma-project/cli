@@ -39,12 +39,15 @@ type Options struct {
 }
 
 func Deploy(opts Options) error {
-	kebComponentsJSON, err := prepareKebComponents(opts.Components, opts.Values)
+	kebComponents, err := prepareKebComponents(opts.Components, opts.Values)
 	if err != nil {
 		return errors.Wrap(err, "Failed to prepare components to install")
 	}
 
-	kebCluster := prepareKebCluster(opts, kebComponentsJSON)
+	kebCluster, err := prepareKebCluster(opts, kebComponents)
+	if err != nil {
+		return err
+	}
 
 	runtimeBuilder := service.NewRuntimeBuilder(reconciliation.NewInMemoryReconciliationRepository(), opts.Logger)
 	return runtimeBuilder.RunLocal(opts.Components.PrerequisiteNames(), func(component string, msg *reconciler.CallbackMessage) {
@@ -62,7 +65,7 @@ func Deploy(opts Options) error {
 	}).Run(context.TODO(), kebCluster)
 }
 
-func prepareKebComponents(components component.List, vals values.Values) (string, error) {
+func prepareKebComponents(components component.List, vals values.Values) ([]keb.Component, error) {
 	var kebComponents []keb.Component
 	all := append(components.Prerequisites, components.Components...)
 	for _, c := range all {
@@ -84,14 +87,15 @@ func prepareKebComponents(components component.List, vals values.Values) (string
 		kebComponents = append(kebComponents, kebComponent)
 	}
 
-	kebComponentsJSON, err := json.Marshal(kebComponents)
-	if err != nil {
-		return "", err
-	}
-	return string(kebComponentsJSON), nil
+	return kebComponents, nil
 }
 
-func prepareKebCluster(opts Options, kebComponentsJSON string) *cluster.State {
+func prepareKebCluster(opts Options, kebComponents []keb.Component) (*cluster.State, error) {
+	kebComponentsJSON, err := json.Marshal(kebComponents)
+	if err != nil {
+		return nil, err
+	}
+
 	return &cluster.State{
 		Cluster: &model.ClusterEntity{
 			Version:    1,
@@ -105,7 +109,7 @@ func prepareKebCluster(opts Options, kebComponentsJSON string) *cluster.State {
 			ClusterVersion: 1,
 			KymaVersion:    opts.KymaVersion,
 			KymaProfile:    opts.KymaProfile,
-			Components:     kebComponentsJSON,
+			Components:     string(kebComponentsJSON),
 			Contract:       1,
 		},
 		Status: &model.ClusterStatusEntity{
@@ -115,5 +119,5 @@ func prepareKebCluster(opts Options, kebComponentsJSON string) *cluster.State {
 			ConfigVersion:  1,
 			Status:         model.ClusterStatusReconcilePending,
 		},
-	}
+	}, nil
 }
