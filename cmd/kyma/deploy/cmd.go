@@ -211,7 +211,7 @@ func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, 
 	return nil
 }
 
-func prepareKebComponents(components component.List, vals map[string]interface{}) (string, error) {
+func prepareKebComponents(components component.List, vals values.Values) (string, error) {
 	var kebComponents []keb.Component
 	all := append(components.Prerequisites, components.Components...)
 	for _, c := range all {
@@ -226,7 +226,7 @@ func prepareKebComponents(components component.List, vals map[string]interface{}
 		}
 		if globalVals, exists := vals["global"]; exists {
 			for k, v := range globalVals.(map[string]interface{}) {
-				kebComponent.Configuration = append(kebComponent.Configuration, keb.Configuration{Key: k, Value: v})
+				kebComponent.Configuration = append(kebComponent.Configuration, keb.Configuration{Key: "global." + k, Value: v})
 			}
 		}
 
