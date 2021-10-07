@@ -78,7 +78,7 @@ func (cmd *command) runDashboardContainer(dashboardURL string) error {
 		envs = append(envs, "DOCKER_DESKTOP_CLUSTER=true")
 	}
 
-	id, err := dockerWrapper.ContainerCreateAndStart(ctx, docker.ContainerRunOpts{
+	id, err := dockerWrapper.PullImageAndStartContainer(ctx, docker.ContainerRunOpts{
 		Ports: map[string]string{
 			"3001": cmd.opts.Port,
 		},

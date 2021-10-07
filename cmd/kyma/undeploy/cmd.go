@@ -57,6 +57,7 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 
 	cobraCmd.Flags().BoolVarP(&o.KeepCRDs, "keep-crds", "", false, "Set --keep-crds=true to keep CRDs on clean-up")
+	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 6*time.Minute, "Maximum time for the deletion")
 	return cobraCmd
 }
 
@@ -288,8 +289,8 @@ func (cmd *command) waitForNamespaces() error {
 
 	cmd.NewStep("Waiting for Namespace deletion")
 
-	timeout := time.After(4 * time.Minute)
-	poll := time.Tick(5 * time.Second)
+	timeout := time.After(cmd.opts.Timeout)
+	poll := time.Tick(6 * time.Second)
 	for {
 		select {
 		case <-timeout:
