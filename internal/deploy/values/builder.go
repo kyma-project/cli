@@ -45,6 +45,14 @@ func (b *builder) addValues(values map[string]interface{}) error {
 	return nil
 }
 
+func (b *builder) addGlobalDomainName(domainName string) error {
+	return b.addValues(map[string]interface{}{
+		"global": map[string]interface{}{
+			"domainName": domainName,
+		},
+	})
+}
+
 func (b *builder) build() (map[string]interface{}, error) {
 	merged, err := b.mergeSources()
 	if err != nil {

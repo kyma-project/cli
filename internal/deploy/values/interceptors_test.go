@@ -242,7 +242,7 @@ package values
 //		require.NoError(t, err)
 //		require.NotEmpty(t, overrides)
 //		require.Equal(t, 1, len(extractKeys(overrides.toMap())))
-//		require.Equal(t, localKymaDevDomain, getOverride(overrides.toMap(), "global.domainName"))
+//		require.Equal(t, defaultLocalKymaDomain, getOverride(overrides.toMap(), "global.domainName"))
 //	})
 //
 //	t.Run("test default domain for remote non-gardener cluster", func(t *testing.T) {

@@ -191,7 +191,7 @@ func (c *command) createK3dClusterInfo() error {
 
 	clusterInfo := clusterinfo.New(c.K8s.Static())
 
-	if err := clusterInfo.Write(clusterinfo.ClusterProviderK3d, true); err != nil {
+	if err := clusterInfo.Write(clusterinfo.K3d, true); err != nil {
 		s.Failure()
 		return err
 	}

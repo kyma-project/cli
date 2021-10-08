@@ -137,9 +137,9 @@ func generatePatches(hasCustomDomain bool, clusterInfo clusterinfo.Info) (map[st
 	var err error
 	patches := make(map[string]string)
 	// patch the CoreFile only if not on gardener and no custom domain is provided
-	if clusterInfo.Provider == clusterinfo.ClusterProviderGardener && clusterInfo.Domain == "" && !hasCustomDomain {
+	if clusterInfo.Provider == clusterinfo.Gardener && clusterInfo.Domain == "" && !hasCustomDomain {
 		var domainName string
-		if clusterInfo.Provider == clusterinfo.ClusterProviderK3d {
+		if clusterInfo.Provider == clusterinfo.K3d {
 			domainName = coreDNSLocalDomainName
 		} else {
 			domainName = coreDNSRemoteDomainName
@@ -151,7 +151,7 @@ func generatePatches(hasCustomDomain bool, clusterInfo clusterinfo.Info) (map[st
 	}
 
 	// Patch NodeHosts only on K3d
-	if clusterInfo.Provider == clusterinfo.ClusterProviderK3d {
+	if clusterInfo.Provider == clusterinfo.K3d {
 		patches["NodeHosts"], err = generateHosts(clusterInfo)
 		if err != nil {
 			return nil, err

@@ -17,11 +17,8 @@ const (
 	k8sConfigMap string = "kyma-cluster-info"
 	k8sNamespace string = "kube-system"
 
-	ClusterProviderK3d      ClusterProvider = "k3d"
-	ClusterProviderGardener ClusterProvider = "gardener"
-	ClusterProviderAzure    ClusterProvider = "azure"
-	ClusterProviderGcp      ClusterProvider = "gcp"
-	ClusterProviderAws      ClusterProvider = "aws"
+	K3d      ClusterProvider = "k3d"
+	Gardener ClusterProvider = "gardener"
 )
 
 // ClusterInfo contains data about the current cluster

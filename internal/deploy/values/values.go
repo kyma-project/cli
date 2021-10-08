@@ -2,6 +2,7 @@ package values
 
 import (
 	"encoding/base64"
+	"github.com/kyma-project/cli/internal/clusterinfo"
 	"io/ioutil"
 	"os"
 	"path"
@@ -22,6 +23,10 @@ func Merge(opts Sources, workspace *workspace.Workspace) (Values, error) {
 		return nil, err
 	}
 
+	if err := addClusterSpecificDefaults(builder); err != nil {
+		return nil, err
+	}
+
 	if err := addValueFiles(builder, opts, workspace); err != nil {
 		return nil, err
 	}
@@ -33,8 +38,6 @@ func Merge(opts Sources, workspace *workspace.Workspace) (Values, error) {
 	if err := addDomainValues(builder, opts); err != nil {
 		return nil, err
 	}
-
-	registerInterceptors(builder)
 
 	vals, err := builder.build()
 	if err != nil {
@@ -54,6 +57,22 @@ func addDefaultValues(builder *builder, workspace *workspace.Workspace) error {
 	}
 
 	return nil
+}
+
+func addClusterSpecificDefaults(builder *builder) error {
+	var info clusterinfo.Info
+	switch info.Provider {
+	case clusterinfo.K3d:
+		builder.addGlobalDomainName(defaultLocalKymaDomain)
+	case clusterinfo.Gardener:
+		builder.addGlobalDomainName(info.Domain)
+	default:
+		builder.addGlobalDomainName(defaultRemoteKymaDomain)
+	}
+
+	//builder.addInterceptor([]string{"global.tlsCrt", "global.tlsKey"}, newCertificateInterceptor("global.tlsCrt", "global.tlsKey", info))
+	//builder.addInterceptor([]string{"serverless.dockerRegistry.internalServerAddress", "serverless.dockerRegistry.serverAddress", "serverless.dockerRegistry.registryAddress"}, newRegistryInterceptor(info))
+	//builder.addInterceptor([]string{"serverless.dockerRegistry.enableInternal"}, newRegistryDisableInterceptor(info))
 }
 
 func addValueFiles(builder *builder, opts Sources, workspace *workspace.Workspace) error {
@@ -121,12 +140,4 @@ func readFileAndEncode(filename string) (string, error) {
 		return "", err
 	}
 	return base64.StdEncoding.EncodeToString(content), nil
-}
-
-func registerInterceptors(builder *builder) {
-	//var ci clusterinfo.Info
-	//builder.addInterceptor([]string{"global.domainName"}, newDomainNameInterceptor(ci))
-	//builder.addInterceptor([]string{"global.tlsCrt", "global.tlsKey"}, newCertificateInterceptor("global.tlsCrt", "global.tlsKey", ci))
-	//builder.addInterceptor([]string{"serverless.dockerRegistry.internalServerAddress", "serverless.dockerRegistry.serverAddress", "serverless.dockerRegistry.registryAddress"}, newRegistryInterceptor(ci))
-	//builder.addInterceptor([]string{"serverless.dockerRegistry.enableInternal"}, newRegistryDisableInterceptor(ci))
 }
