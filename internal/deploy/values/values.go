@@ -2,17 +2,20 @@ package values
 
 import (
 	"encoding/base64"
-	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
-	"github.com/kyma-project/cli/internal/resolve"
-	"github.com/pkg/errors"
-	"helm.sh/helm/v3/pkg/strvals"
 	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
+
+	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
+	"github.com/kyma-project/cli/internal/resolve"
+	"github.com/pkg/errors"
+	"helm.sh/helm/v3/pkg/strvals"
 )
 
-func Merge(opts Sources, workspace *workspace.Workspace) (map[string]interface{}, error) {
+type Values map[string]interface{}
+
+func Merge(opts Sources, workspace *workspace.Workspace) (Values, error) {
 	builder := &builder{}
 
 	if err := addDefaultValues(builder, workspace); err != nil {

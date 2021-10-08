@@ -1,25 +1,25 @@
 package deploy
 
 import (
-	"context"
-	"encoding/json"
 	"fmt"
-	"github.com/kyma-incubator/reconciler/pkg/model"
-	"github.com/kyma-incubator/reconciler/pkg/scheduler/reconciliation"
+
+	"github.com/kyma-incubator/reconciler/pkg/reconciler/service"
+	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
 	"github.com/kyma-project/cli/internal/clusterinfo"
+	"github.com/kyma-project/cli/internal/deploy"
+
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 	"time"
 
-	"github.com/kyma-incubator/reconciler/pkg/cluster"
-	"github.com/kyma-incubator/reconciler/pkg/keb"
-	"github.com/kyma-incubator/reconciler/pkg/reconciler"
-	"github.com/kyma-incubator/reconciler/pkg/reconciler/service"
-	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
-	scheduleService "github.com/kyma-incubator/reconciler/pkg/scheduler/service"
+	"github.com/kyma-project/cli/internal/deploy/component"
+	"github.com/kyma-project/cli/internal/deploy/values"
+
+	"github.com/kyma-project/cli/internal/resolve"
+
 	"github.com/kyma-project/cli/internal/cli"
-	"github.com/kyma-project/cli/internal/component"
 	"github.com/kyma-project/cli/internal/config"
 	"github.com/kyma-project/cli/internal/coredns"
 	"github.com/kyma-project/cli/internal/files"
@@ -27,7 +27,6 @@ import (
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/nice"
 	"github.com/kyma-project/cli/internal/trust"
-	"github.com/kyma-project/cli/internal/values"
 	"github.com/kyma-project/cli/internal/version"
 	"github.com/kyma-project/cli/pkg/step"
 	"github.com/pkg/errors"
@@ -109,7 +108,7 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	vs, err := values.Merge(cmd.opts.Sources, ws)
+	vals, err := values.Merge(cmd.opts.Sources, ws)
 	if err != nil {
 		return err
 	}
@@ -119,7 +118,7 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	components, err := cmd.createComponentsWithOverrides(ws, vs)
+	components, err := cmd.resolveComponents(ws)
 	if err != nil {
 		return err
 	}
@@ -129,7 +128,7 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	err = cmd.deployKyma(l, components)
+	err = cmd.deployKyma(l, components, vals)
 	if err != nil {
 		return err
 	}
@@ -140,10 +139,10 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	return cmd.printSummary(vs, deployTime)
+	return cmd.printSummary(vals, deployTime)
 }
 
-func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List) error {
+func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, vals values.Values) error {
 	kubeconfigPath := kube.KubeconfigPath(cmd.KubeconfigPath)
 	kubeconfig, err := ioutil.ReadFile(kubeconfigPath)
 	if err != nil {
@@ -159,66 +158,42 @@ func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List) 
 		defer func() { os.Stderr = stderr }()
 	}
 
-	step := cmd.NewStep("Deploying Kyma")
-	step.Start()
+	deployStep := cmd.NewStep("Deploying Kyma")
+	deployStep.Start()
 
-	componentsToInstall := append(components.Prerequisites, components.Components...) //unmarshall tostring
-
-	componentsToInstallJSON, err := json.Marshal(componentsToInstall)
+	err = deploy.Deploy(deploy.Options{
+		Components:  components,
+		Values:      vals,
+		StatusFunc:  cmd.printDeployStatus,
+		KubeConfig:  kubeconfig,
+		KymaVersion: cmd.opts.Source,
+		KymaProfile: cmd.opts.Profile,
+		Logger:      l,
+	})
 	if err != nil {
+		deployStep.Failuref("Failed to deploy Kyma.")
 		return err
 	}
 
-	runtimeBuilder := scheduleService.NewRuntimeBuilder(reconciliation.NewInMemoryReconciliationRepository(), l)
-	err = runtimeBuilder.RunLocal(cmd.componentNames(components.Prerequisites), cmd.printDeployStatus).Run(context.TODO(),
-		&cluster.State{
-			Cluster: &model.ClusterEntity{
-				Version:    1,
-				Cluster:    "local",
-				Kubeconfig: string(kubeconfig),
-				Contract:   1,
-			},
-			Configuration: &model.ClusterConfigurationEntity{
-				Version:        1,
-				Cluster:        "local",
-				ClusterVersion: 1,
-				KymaVersion:    cmd.opts.Source,
-				KymaProfile:    cmd.opts.Profile,
-				Components:     string(componentsToInstallJSON),
-				Contract:       1,
-			},
-			Status: &model.ClusterStatusEntity{
-				ID:             1,
-				Cluster:        "local",
-				ClusterVersion: 1,
-				ConfigVersion:  1,
-				Status:         model.ClusterStatusReconcilePending,
-			},
-		})
-	if err != nil {
-		step.Failuref("Failed to deploy Kyma.")
-		return err
-	}
-
-	step.Successf("Kyma deployed successfully!")
+	deployStep.Successf("Kyma deployed successfully!")
 	return nil
 }
 
-func (cmd *command) printDeployStatus(component string, msg *reconciler.CallbackMessage) {
+func (cmd *command) printDeployStatus(status deploy.ComponentStatus) {
 	if cmd.Verbose {
 		return
 	}
 
-	switch msg.Status {
-	case reconciler.StatusSuccess:
-		step := cmd.NewStep(fmt.Sprintf("Component '%s' deployed", component))
-		step.Success()
-	case reconciler.StatusFailed:
-		step := cmd.NewStep(fmt.Sprintf("Component '%s' failed. Retrying...", component))
-		step.Failure()
-	case reconciler.StatusError:
-		step := cmd.NewStep(fmt.Sprintf("Component '%s' failed and terminated", component))
-		step.Failure()
+	switch status.State {
+	case deploy.Success:
+		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' deployed", status.Component))
+		statusStep.Success()
+	case deploy.RecoverableError:
+		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' failed. Retrying...", status.Component))
+		statusStep.Failure()
+	case deploy.UnrecoverableError:
+		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' failed and terminated", status.Component))
+		statusStep.Failure()
 	}
 }
 
@@ -269,25 +244,20 @@ func (cmd *command) prepareWorkspace(l *zap.SugaredLogger) (*workspace.Workspace
 	return ws, nil
 }
 
-func (cmd *command) componentNames(comps []keb.Component) []string {
-	var names []string
-	for _, c := range comps {
-		names = append(names, c.Component)
-	}
-	return names
-}
-
-func (cmd *command) createComponentsWithOverrides(ws *workspace.Workspace, overrides map[string]interface{}) (component.List, error) {
-	var compList component.List
+func (cmd *command) resolveComponents(ws *workspace.Workspace) (component.List, error) {
 	if len(cmd.opts.Components) > 0 {
-		compList = component.FromStrings(cmd.opts.Components, overrides)
-		return compList, nil
+		components := component.FromStrings(cmd.opts.Components)
+		return components, nil
 	}
 	if cmd.opts.ComponentsFile != "" {
-		return component.FromFile(ws, cmd.opts.ComponentsFile, overrides)
+		filePath, err := resolve.File(cmd.opts.ComponentsFile, filepath.Join(ws.WorkspaceDir, "tmp"))
+		if err != nil {
+			return component.List{}, err
+		}
+		return component.FromFile(filePath)
 	}
-	compFile := path.Join(ws.InstallationResourceDir, "components.yaml")
-	return component.FromFile(ws, compFile, overrides)
+
+	return component.FromFile(path.Join(ws.InstallationResourceDir, "components.yaml"))
 }
 
 // avoidUserInteraction returns true if user won't provide input
@@ -346,16 +316,19 @@ func (cmd *command) approveImportCertificate() bool {
 	return qImportCertsStep.PromptYesNo("Do you want to install the Kyma certificate locally?")
 }
 
-func (cmd *command) printSummary(overrides map[string]interface{}, duration time.Duration) error {
-	domain, ok := overrides["global.domainName"]
-	if !ok {
+func (cmd *command) printSummary(vals values.Values, duration time.Duration) error {
+	globals := vals["global"]
+	var domainName string
+	if globalsMap, ok := globals.(map[string]interface{}); ok {
+		domainName = globalsMap["domainName"].(string)
+	} else {
 		return errors.New("domain not found in overrides")
 	}
 
 	sum := nice.Summary{
 		NonInteractive: cmd.NonInteractive,
 		Version:        cmd.opts.Source,
-		URL:            domain.(string),
+		URL:            domainName,
 		Duration:       duration,
 	}
 
