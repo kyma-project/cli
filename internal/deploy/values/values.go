@@ -13,7 +13,9 @@ import (
 	"path/filepath"
 )
 
-func Merge(opts Sources, workspace *workspace.Workspace, kubeClient kubernetes.Interface) (map[string]interface{}, error) {
+type Values map[string]interface{}
+
+func Merge(opts Sources, workspace *workspace.Workspace, kubeClient kubernetes.Interface) (Values, error) {
 	builder := &builder{}
 
 	if err := addDefaultValues(builder, workspace); err != nil {
@@ -39,7 +41,7 @@ func Merge(opts Sources, workspace *workspace.Workspace, kubeClient kubernetes.I
 		return nil, errors.Wrap(err, "failed to build values")
 	}
 
-	return vs.toFlattenedMap(), nil
+	return vs.toMap(), nil
 }
 
 func addDefaultValues(builder *builder, workspace *workspace.Workspace) error {
