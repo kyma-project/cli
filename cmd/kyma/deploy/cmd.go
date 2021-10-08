@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/kyma-incubator/reconciler/pkg/model"
 	"github.com/kyma-incubator/reconciler/pkg/scheduler/reconciliation"
+	"github.com/kyma-project/cli/internal/clusterinfo"
 	"io/ioutil"
 	"os"
 	"path"
@@ -23,7 +24,6 @@ import (
 	"github.com/kyma-project/cli/internal/coredns"
 	"github.com/kyma-project/cli/internal/files"
 	"github.com/kyma-project/cli/internal/istio"
-	"github.com/kyma-project/cli/internal/k3d"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/nice"
 	"github.com/kyma-project/cli/internal/trust"
@@ -109,18 +109,13 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	vs, err := values.Merge(cmd.opts.Sources, ws, cmd.K8s.Static())
-	if err != nil {
-		return err
-	}
-
-	isK3d, err := k3d.IsK3dCluster(cmd.K8s.Static())
+	vs, err := values.Merge(cmd.opts.Sources, ws)
 	if err != nil {
 		return err
 	}
 
 	hasCustomDomain := cmd.opts.Domain != ""
-	if _, err := coredns.Patch(l.Desugar(), cmd.K8s.Static(), hasCustomDomain, isK3d); err != nil {
+	if _, err := coredns.Patch(l.Desugar(), cmd.K8s.Static(), hasCustomDomain, clusterinfo.Info{}); err != nil {
 		return err
 	}
 

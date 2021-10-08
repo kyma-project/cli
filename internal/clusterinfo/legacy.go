@@ -1,0 +1,64 @@
+package clusterinfo
+
+import (
+	"context"
+	"fmt"
+	"strconv"
+
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+)
+
+//ClusterProvider is a unique identifier for a cluster provider
+type ClusterProvider string
+
+const (
+	k8sConfigMap string = "kyma-cluster-info"
+	k8sNamespace string = "kube-system"
+
+	ClusterProviderK3d      ClusterProvider = "k3d"
+	ClusterProviderGardener ClusterProvider = "gardener"
+	ClusterProviderAzure    ClusterProvider = "azure"
+	ClusterProviderGcp      ClusterProvider = "gcp"
+	ClusterProviderAws      ClusterProvider = "aws"
+)
+
+// ClusterInfo contains data about the current cluster
+type ClusterInfo struct {
+	k8sClient   kubernetes.Interface
+	initialized bool
+	local       bool
+	provider    ClusterProvider
+}
+
+// New creates a new cluster info instance
+func New(k8sClient kubernetes.Interface) *ClusterInfo {
+	return &ClusterInfo{k8sClient: k8sClient}
+}
+
+// Write cluster information into cluster
+func (c *ClusterInfo) Write(provider ClusterProvider, local bool) error {
+	if provider == "" {
+		return fmt.Errorf("Cluster provider cannot be empty")
+	}
+
+	// write config-map
+	_, err := c.k8sClient.CoreV1().ConfigMaps(k8sNamespace).Create(context.Background(), &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   k8sConfigMap,
+			Labels: map[string]string{"app": "kyma"},
+		},
+		Data: map[string]string{
+			"provider": string(provider),
+			"local":    strconv.FormatBool(local),
+		},
+	}, metav1.CreateOptions{})
+
+	// remember state
+	c.provider = provider
+	c.local = local
+	c.initialized = true
+
+	return err
+}

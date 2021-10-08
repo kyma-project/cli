@@ -6,8 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/kyma-project/cli/internal/gardener"
-	"github.com/kyma-project/cli/internal/k3d"
+	"github.com/kyma-project/cli/internal/clusterinfo"
 	"go.uber.org/zap"
 	"html/template"
 	"time"
@@ -56,7 +55,7 @@ const (
 )
 
 // Patch patches the CoreDNS configuration based on the overrides and the cloud provider.
-func Patch(logger *zap.Logger, kubeClient kubernetes.Interface, hasCustomDomain, isK3d bool) (cm *v1.ConfigMap, err error) {
+func Patch(logger *zap.Logger, kubeClient kubernetes.Interface, hasCustomDomain bool, clusterInfo clusterinfo.Info) (cm *v1.ConfigMap, err error) {
 	err = retry.Do(func() error {
 		_, err := kubeClient.AppsV1().Deployments("kube-system").Get(context.TODO(), "coredns", metav1.GetOptions{})
 		if err != nil {
@@ -68,7 +67,7 @@ func Patch(logger *zap.Logger, kubeClient kubernetes.Interface, hasCustomDomain,
 		}
 
 		// patches contain each key and value that needs to be patched in the coredns configmap data field.
-		patches, err := generatePatches(kubeClient, hasCustomDomain, isK3d)
+		patches, err := generatePatches(hasCustomDomain, clusterInfo)
 		if err != nil {
 			return err
 		}
@@ -134,20 +133,13 @@ func newCoreDNSConfigMap(data map[string]string) *v1.ConfigMap {
 	}
 }
 
-func generatePatches(kubeClient kubernetes.Interface, hasCustomDomain, isK3d bool) (map[string]string, error) {
+func generatePatches(hasCustomDomain bool, clusterInfo clusterinfo.Info) (map[string]string, error) {
+	var err error
 	patches := make(map[string]string)
 	// patch the CoreFile only if not on gardener and no custom domain is provided
-	gardenerDomain, err := gardener.Domain(kubeClient)
-	if err != nil {
-		return nil, err
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	if gardenerDomain == "" && !hasCustomDomain {
+	if clusterInfo.Provider == clusterinfo.ClusterProviderGardener && clusterInfo.Domain == "" && !hasCustomDomain {
 		var domainName string
-		if isK3d {
+		if clusterInfo.Provider == clusterinfo.ClusterProviderK3d {
 			domainName = coreDNSLocalDomainName
 		} else {
 			domainName = coreDNSRemoteDomainName
@@ -159,8 +151,8 @@ func generatePatches(kubeClient kubernetes.Interface, hasCustomDomain, isK3d boo
 	}
 
 	// Patch NodeHosts only on K3d
-	if isK3d {
-		patches["NodeHosts"], err = generateHosts(kubeClient)
+	if clusterInfo.Provider == clusterinfo.ClusterProviderK3d {
+		patches["NodeHosts"], err = generateHosts(clusterInfo)
 		if err != nil {
 			return nil, err
 		}
@@ -184,11 +176,8 @@ func generateCorefile(domainName string) (coreFile string, err error) {
 	return
 }
 
-func generateHosts(kubeClient kubernetes.Interface) (string, error) {
-	clusterName, err := k3d.ClusterName(kubeClient)
-	if err != nil {
-		return "", err
-	}
+func generateHosts(clusterInfo clusterinfo.Info) (string, error) {
+	clusterName := clusterInfo.ClusterName
 	registryIP, err := k3dRegistryIP(clusterName)
 	if err != nil {
 		return "", err

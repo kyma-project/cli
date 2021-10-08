@@ -1,5 +1,5 @@
 // Package k3d contains special logic to manage installation in k3d clusters
-package k3d
+package clusterinfo
 
 import (
 	"context"
@@ -14,9 +14,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-// IsK3dCluster checks if the cluster accessible via the kubeclient is a k3d cluster.
-// Should this not be possible to determine, an error will be returned.
-func IsK3dCluster(kubeClient kubernetes.Interface) (isK3d bool, err error) {
+func isK3dCluster(kubeClient kubernetes.Interface) (isK3d bool, err error) {
 
 	retryOptions := []retry.Option{
 		retry.Delay(2 * time.Second),
@@ -46,8 +44,7 @@ func IsK3dCluster(kubeClient kubernetes.Interface) (isK3d bool, err error) {
 	return isK3d, nil
 }
 
-// ClusterName finds out the name of the cluster accessible via the kubeclient if it is a k3d cluster.
-func ClusterName(kubeClient kubernetes.Interface) (k3dName string, err error) {
+func k3dClusterName(kubeClient kubernetes.Interface) (k3dName string, err error) {
 	retryOptions := []retry.Option{
 		retry.Delay(2 * time.Second),
 		retry.Attempts(3),

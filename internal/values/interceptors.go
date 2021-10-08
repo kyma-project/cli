@@ -4,12 +4,10 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"fmt"
-	"github.com/kyma-project/cli/internal/gardener"
-	"github.com/kyma-project/cli/internal/k3d"
+	"github.com/kyma-project/cli/internal/clusterinfo"
 	"strings"
 
 	"github.com/pkg/errors"
-	"k8s.io/client-go/kubernetes"
 )
 
 const (
@@ -33,16 +31,12 @@ type interceptor interface {
 
 // domainNameInterceptor resolves the domain name for the cluster
 type domainNameInterceptor struct {
-	kubeClient     kubernetes.Interface
-	isLocalCluster func() (bool, error) // Returns true if we're on a local cluster like k3s
+	clusterInfo clusterinfo.Info
 }
 
-func newDomainNameInterceptor(kubeClient kubernetes.Interface) *domainNameInterceptor {
+func newDomainNameInterceptor(clusterInfo clusterinfo.Info) *domainNameInterceptor {
 	return &domainNameInterceptor{
-		kubeClient: kubeClient,
-		isLocalCluster: func() (bool, error) {
-			return k3d.IsK3dCluster(kubeClient)
-		},
+		clusterInfo: clusterInfo,
 	}
 }
 
@@ -51,17 +45,6 @@ func (i *domainNameInterceptor) String(v interface{}, key string) string {
 }
 
 func (i *domainNameInterceptor) Intercept(v interface{}, key string) (interface{}, error) {
-	// On gardener, domain provided by user should be ignored
-	domainName, err := gardener.Domain(i.kubeClient)
-	if err != nil {
-		return nil, err
-	}
-
-	if domainName != "" {
-		return domainName, nil
-	}
-
-	// In every other environment, proceed with what was provided by the user.
 	return v, nil
 }
 
@@ -77,12 +60,8 @@ func (i *domainNameInterceptor) Undefined(vs map[string]interface{}, key string)
 func (i *domainNameInterceptor) getDomainName() (domainName string, err error) {
 
 	// On gardener always return gardener domain
-	domainName, err = gardener.Domain(i.kubeClient)
-	if err != nil {
-		return "", err
-	}
-	if domainName != "" {
-		return domainName, nil
+	if i.clusterInfo.Provider == clusterinfo.ClusterProviderGardener {
+		return i.clusterInfo.Domain, nil
 	}
 
 	// On local k3s cluster return local development domain
@@ -97,13 +76,7 @@ func (i *domainNameInterceptor) getDomainName() (domainName string, err error) {
 }
 
 func (i *domainNameInterceptor) findLocalDomain() (domainName string, err error) {
-
-	isLocalCluster, err := i.isLocalCluster()
-	if err != nil {
-		return "", err
-	}
-
-	if isLocalCluster {
+	if i.clusterInfo.Provider == clusterinfo.ClusterProviderK3d {
 		return localKymaDevDomain, nil
 	}
 
@@ -116,27 +89,15 @@ type certificateInterceptor struct {
 	tlsKeyOverrideKey string
 	tlsCrtEnc         string
 	tlsKeyEnc         string
-	isLocalCluster    func() (bool, error)
-	isGardenerCluster func() (bool, error)
+	clusterInfo       clusterinfo.Info
 }
 
 //nolint:unparam
-func newCertificateInterceptor(tlsCrtOverrideKey, tlsKeyOverrideKey string, kubeClient kubernetes.Interface) *certificateInterceptor {
+func newCertificateInterceptor(tlsCrtOverrideKey, tlsKeyOverrideKey string, clusterInfo clusterinfo.Info) *certificateInterceptor {
 	res := &certificateInterceptor{
 		tlsCrtOverrideKey: tlsCrtOverrideKey,
 		tlsKeyOverrideKey: tlsKeyOverrideKey,
-	}
-
-	res.isLocalCluster = func() (bool, error) {
-		return k3d.IsK3dCluster(kubeClient)
-	}
-
-	res.isGardenerCluster = func() (bool, error) {
-		gardenerDomain, err := gardener.Domain(kubeClient)
-		if err != nil {
-			return false, err
-		}
-		return gardenerDomain != "", nil
+		clusterInfo:       clusterInfo,
 	}
 
 	return res
@@ -147,10 +108,7 @@ func (i *certificateInterceptor) String(value interface{}, key string) string {
 }
 
 func (i *certificateInterceptor) Intercept(v interface{}, key string) (interface{}, error) {
-	isGardener, err := i.isGardenerCluster()
-	if err != nil {
-		return "", err
-	}
+	isGardener := i.clusterInfo.Provider == clusterinfo.ClusterProviderGardener
 	if isGardener {
 		return "", nil
 	}
@@ -168,18 +126,12 @@ func (i *certificateInterceptor) Intercept(v interface{}, key string) (interface
 }
 
 func (i *certificateInterceptor) Undefined(vs map[string]interface{}, key string) error {
-	isGardener, err := i.isGardenerCluster()
-	if err != nil {
-		return err
-	}
+	isGardener := i.clusterInfo.Provider == clusterinfo.ClusterProviderGardener
 	if isGardener {
 		return nil
 	}
 
-	isLocalCluster, err := i.isLocalCluster()
-	if err != nil {
-		return err
-	}
+	isLocalCluster := i.clusterInfo.Provider == clusterinfo.ClusterProviderK3d
 
 	var fbInterc *fallbackInterceptor
 	switch key {
@@ -283,12 +235,12 @@ func newFallbackInterceptor(fallback interface{}) *fallbackInterceptor {
 }
 
 type registryDisableInterceptor struct {
-	kubeClient kubernetes.Interface
+	clusterInfo clusterinfo.Info
 }
 
-func newRegistryDisableInterceptor(kubeClient kubernetes.Interface) *registryDisableInterceptor {
+func newRegistryDisableInterceptor(clusterInfo clusterinfo.Info) *registryDisableInterceptor {
 	return &registryDisableInterceptor{
-		kubeClient: kubeClient,
+		clusterInfo: clusterInfo,
 	}
 }
 func (i *registryDisableInterceptor) String(v interface{}, key string) string {
@@ -300,10 +252,7 @@ func (i *registryDisableInterceptor) String(v interface{}, key string) string {
 }
 
 func (i *registryDisableInterceptor) Intercept(v interface{}, key string) (interface{}, error) {
-	k3dCluster, err := k3d.IsK3dCluster(i.kubeClient)
-	if err != nil {
-		return nil, err
-	}
+	k3dCluster := i.clusterInfo.Provider == clusterinfo.ClusterProviderK3d
 	if k3dCluster {
 		return "false", nil
 	}
@@ -311,10 +260,7 @@ func (i *registryDisableInterceptor) Intercept(v interface{}, key string) (inter
 }
 
 func (i *registryDisableInterceptor) Undefined(vs map[string]interface{}, key string) error {
-	k3dCluster, err := k3d.IsK3dCluster(i.kubeClient)
-	if err != nil {
-		return err
-	}
+	k3dCluster := i.clusterInfo.Provider == clusterinfo.ClusterProviderK3d
 	if k3dCluster {
 		return newFallbackInterceptor(false).Undefined(vs, key)
 	}
@@ -322,12 +268,12 @@ func (i *registryDisableInterceptor) Undefined(vs map[string]interface{}, key st
 }
 
 type registryInterceptor struct {
-	kubeClient kubernetes.Interface
+	clusterInfo clusterinfo.Info
 }
 
-func newRegistryInterceptor(kubeClient kubernetes.Interface) *registryInterceptor {
+func newRegistryInterceptor(clusterInfo clusterinfo.Info) *registryInterceptor {
 	return &registryInterceptor{
-		kubeClient: kubeClient,
+		clusterInfo: clusterInfo,
 	}
 }
 
@@ -344,15 +290,9 @@ func (i *registryInterceptor) Intercept(v interface{}, key string) (interface{},
 }
 
 func (i *registryInterceptor) Undefined(vals map[string]interface{}, key string) error {
-	k3dCluster, err := k3d.IsK3dCluster(i.kubeClient)
-	if err != nil {
-		return err
-	}
+	k3dCluster := i.clusterInfo.Provider == clusterinfo.ClusterProviderK3d
 	if k3dCluster {
-		k3dClusterName, err := k3d.ClusterName(i.kubeClient)
-		if err != nil {
-			return err
-		}
+		k3dClusterName := i.clusterInfo.ClusterName
 		return newFallbackInterceptor(fmt.Sprintf("k3d-%s-registry:5000", k3dClusterName)).Undefined(vals, key)
 	}
 	return nil
