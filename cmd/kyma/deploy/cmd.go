@@ -2,17 +2,19 @@ package deploy
 
 import (
 	"fmt"
+
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/service"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
 	"github.com/kyma-project/cli/internal/deploy"
 
-	"github.com/kyma-project/cli/internal/deploy/component"
-	"github.com/kyma-project/cli/internal/deploy/values"
 	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
 	"time"
+
+	"github.com/kyma-project/cli/internal/deploy/component"
+	"github.com/kyma-project/cli/internal/deploy/values"
 
 	"github.com/kyma-project/cli/internal/resolve"
 
@@ -24,9 +26,7 @@ import (
 	"github.com/kyma-project/cli/internal/k3d"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/nice"
-	"github.com/kyma-project/cli/internal/trust"
 	"github.com/kyma-project/cli/internal/version"
-	"github.com/kyma-project/cli/pkg/step"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
@@ -137,10 +137,6 @@ func (cmd *command) Run(o *Options) error {
 	}
 
 	deployTime := time.Since(start)
-
-	if err := cmd.importCertificate(); err != nil {
-		return err
-	}
 
 	return cmd.printSummary(vals, deployTime)
 }
@@ -266,57 +262,6 @@ func (cmd *command) resolveComponents(ws *workspace.Workspace) (component.List, 
 // avoidUserInteraction returns true if user won't provide input
 func (cmd *command) avoidUserInteraction() bool {
 	return cmd.NonInteractive || cmd.CI
-}
-
-func (cmd *command) importCertificate() error {
-	ca := trust.NewCertifier(cmd.K8s)
-
-	if !cmd.approveImportCertificate() {
-		//no approval given: stop import
-		ca.InstructionsKyma2()
-		return nil
-	}
-
-	// get cert from cluster
-	cert, err := ca.CertificateKyma2()
-	if err != nil {
-		return err
-	}
-
-	tmpFile, err := ioutil.TempFile(os.TempDir(), "kyma-*.crt")
-	if err != nil {
-		return errors.Wrap(err, "Cannot create temporary file for Kyma certificate")
-	}
-	defer os.Remove(tmpFile.Name())
-
-	if _, err = tmpFile.Write(cert); err != nil {
-		return errors.Wrap(err, "Failed to write the Kyma certificate")
-	}
-	if err := tmpFile.Close(); err != nil {
-		return err
-	}
-
-	// create a simple step to print certificate import steps without a spinner (spinner overwrites sudo prompt)
-	// TODO refactor how certifier logs when the old install command is gone
-	f := step.Factory{
-		NonInteractive: true,
-	}
-	s := f.NewStep("Importing Kyma certificate")
-
-	if err := ca.StoreCertificate(tmpFile.Name(), s); err != nil {
-		return err
-	}
-	s.Successf("Kyma root certificate imported")
-	return nil
-}
-
-func (cmd *command) approveImportCertificate() bool {
-	qImportCertsStep := cmd.NewStep("Install Kyma certificate locally")
-	defer qImportCertsStep.Success()
-	if cmd.avoidUserInteraction() { //do not import if user-interaction has to be avoided (suppress sudo pwd request)
-		return false
-	}
-	return qImportCertsStep.PromptYesNo("Do you want to install the Kyma certificate locally?")
 }
 
 func (cmd *command) printSummary(vals values.Values, duration time.Duration) error {
