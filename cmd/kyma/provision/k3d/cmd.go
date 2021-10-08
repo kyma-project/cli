@@ -40,11 +40,11 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cmd.Flags().StringVar(&o.Name, "name", "kyma", `Name of the Kyma cluster`)
 	cmd.Flags().IntVar(&o.Workers, "workers", 1, "Number of worker nodes (k3d agents)")
-	cmd.Flags().StringSliceVarP(&o.ServerArgs, "server-arg", "s", []string{}, "One or more arguments passed to the Kubernetes API server (e.g. --server-arg='--alsologtostderr')")
-	cmd.Flags().StringSliceVarP(&o.AgentArgs, "agent-arg", "a", []string{}, "One or more arguments passed to the k3d agent command on agent nodes (e.g. --agent-arg='--alsologtostderr')")
+	cmd.Flags().StringSliceVarP(&o.K3sArgs, "k3s-arg", "s", []string{}, "One or more arguments passed to the k3s command (Format: ARG@NODEFILTER[;@NODEFILTER])")
 	cmd.Flags().DurationVar(&o.Timeout, "timeout", 5*time.Minute, `Maximum time for the provisioning. If you want no timeout, enter "0".`)
 	cmd.Flags().StringSliceVarP(&o.K3dArgs, "k3d-arg", "", []string{}, "One or more arguments passed to the k3d provisioning command (e.g. --k3d-arg='--no-rollback')")
-	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.20.7", "Kubernetes version of the cluster")
+	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.20.11", "Kubernetes version of the cluster")
+	cmd.Flags().StringSliceVar(&o.UseRegistry, "registry-use", []string{}, "Connect to one or more k3d-managed registries. Kyma automatically creates a registry for serverless images.")
 	cmd.Flags().StringSliceVarP(&o.PortMapping, "port", "p", []string{"80:80@loadbalancer", "443:443@loadbalancer"}, "Map ports 80 and 443 of K3D loadbalancer (e.g. -p 80:80@loadbalancer -p 443:443@loadbalancer)")
 	return cmd
 }
@@ -58,13 +58,19 @@ func (c *command) Run() error {
 		c.Factory.UseLogger = true
 	}
 
-	if err := c.verifyK3dStatus(); err != nil {
+	var err error
+	var registryURL string
+
+	if err = c.verifyK3dStatus(); err != nil {
 		return err
 	}
-	if err := c.createK3dCluster(); err != nil {
+	if registryURL, err = c.createK3dRegistry(); err != nil {
 		return err
 	}
-	if err := c.createK3dClusterInfo(); err != nil {
+	if err = c.createK3dCluster(registryURL); err != nil {
+		return err
+	}
+	if err = c.createK3dClusterInfo(); err != nil {
 		return err
 	}
 	return nil
@@ -91,7 +97,12 @@ func (c *command) verifyK3dStatus() error {
 		return err
 	}
 
-	exists, err := k3d.ClusterExists(c.opts.Verbose, c.opts.Name)
+	registryExists, err := k3d.RegistryExists(c.opts.Verbose, c.opts.Name)
+	if err != nil {
+		return err
+	}
+
+	clusterExists, err := k3d.ClusterExists(c.opts.Verbose, c.opts.Name)
 	if err != nil {
 		s.Failure()
 		return err
@@ -101,32 +112,44 @@ func (c *command) verifyK3dStatus() error {
 		return errors.Wrap(err, fmt.Sprintf("Could not extract host ports from %s", c.opts.PortMapping))
 	}
 
-	if exists {
-		if err := c.deleteExistingK3dCluster(); err != nil {
+	if clusterExists {
+		if err := c.deleteExistingK3dCluster(registryExists); err != nil {
 			s.Failure()
 			return err
 		}
 	} else if err := c.allocatePorts(ports...); err != nil {
 		s.Failure()
 		return errors.Wrap(err, "Port cannot be allocated")
+	} else if registryExists {
+		// only registry exists
+		if err := k3d.DeleteRegistry(c.opts.Verbose, c.opts.Timeout, c.opts.Name); err != nil {
+			s.Failure()
+			return err
+		}
 	}
 
 	s.Successf("K3d status verified")
 	return nil
 }
 
-//Check whether a k3d cluster already exists and ensure that all required ports are available
-func (c *command) deleteExistingK3dCluster() error {
+//Deletes the existing k3d cluster and deletes the k3d registry (if one exists)
+func (c *command) deleteExistingK3dCluster(registryExists bool) error {
 	var answer bool
 	if !c.opts.NonInteractive {
 		answer = c.CurrentStep.PromptYesNo("Do you want to remove the existing k3d cluster? ")
 		if !answer {
-			return fmt.Errorf("User decided not to remove the existing k3d cluster")
+			return fmt.Errorf("user decided not to remove the existing k3d cluster")
 		}
 	}
 	if c.opts.NonInteractive || answer {
-		err := k3d.DeleteCluster(c.opts.Verbose, c.opts.Timeout, c.opts.Name)
-		if err != nil {
+		// if the default registry exists, delete it also
+		if registryExists {
+			if err := k3d.DeleteRegistry(c.opts.Verbose, c.opts.Timeout, c.opts.Name); err != nil {
+				return err
+			}
+		}
+
+		if err := k3d.DeleteCluster(c.opts.Verbose, c.opts.Timeout, c.opts.Name); err != nil {
 			return err
 		}
 		c.CurrentStep.Successf("Existing k3d cluster deleted")
@@ -157,8 +180,20 @@ func parseK3dargs(args []string) []string {
 	return res
 }
 
+func (c *command) createK3dRegistry() (string, error) {
+	s := c.NewStep("Create K3d registry")
+
+	registryURL, err := k3d.CreateRegistry(c.Verbose, c.opts.Timeout, c.opts.Name)
+	if err != nil {
+		s.Failuref("Could not create k3d registry")
+		return "", err
+	}
+	s.Successf("K3d registry is created")
+	return registryURL, nil
+}
+
 //Create a k3d cluster
-func (c *command) createK3dCluster() error {
+func (c *command) createK3dCluster(registryURL string) error {
 	s := c.NewStep("Create K3d instance")
 	s.Status("Start K3d cluster")
 
@@ -168,7 +203,9 @@ func (c *command) createK3dCluster() error {
 		Version:     c.opts.KubernetesVersion,
 		PortMapping: c.opts.PortMapping,
 	}
-	err := k3d.StartCluster(c.Verbose, c.opts.Timeout, c.opts.Workers, c.opts.ServerArgs, c.opts.AgentArgs, k3dSettings)
+	c.opts.UseRegistry = append(c.opts.UseRegistry, registryURL)
+
+	err := k3d.StartCluster(c.Verbose, c.opts.Timeout, c.opts.Workers, c.opts.K3sArgs, c.opts.UseRegistry, k3dSettings)
 	if err != nil {
 		s.Failuref("Could not start k3d cluster")
 		return err
