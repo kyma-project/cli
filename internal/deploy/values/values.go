@@ -63,11 +63,11 @@ func addClusterSpecificDefaults(builder *builder) error {
 	var info clusterinfo.Info
 	switch info.Provider {
 	case clusterinfo.K3d:
-		builder.addGlobalDomainName(defaultLocalKymaDomain)
+		return builder.addGlobalDomainName(defaultLocalKymaDomain)
 	case clusterinfo.Gardener:
-		builder.addGlobalDomainName(info.Domain)
+		return builder.addGlobalDomainName(info.Domain)
 	default:
-		builder.addGlobalDomainName(defaultRemoteKymaDomain)
+		return builder.addGlobalDomainName(defaultRemoteKymaDomain)
 	}
 
 	//builder.addInterceptor([]string{"global.tlsCrt", "global.tlsKey"}, newCertificateInterceptor("global.tlsCrt", "global.tlsKey", info))
