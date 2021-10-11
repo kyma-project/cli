@@ -14,14 +14,14 @@ import (
 )
 
 type command struct {
-	opts *Options
+	opts *cli.Options
 	cli.Command
 }
 
 //NewCmd creates a new dashboard command
-func NewCmd(o *Options) *cobra.Command {
+func NewCmd(o *cli.Options) *cobra.Command {
 	c := command{
-		Command: cli.Command{Options: o.Options},
+		Command: cli.Command{Options: o},
 		opts:    o,
 	}
 

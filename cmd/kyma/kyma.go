@@ -80,7 +80,7 @@ Kyma CLI allows you to install, test, and manage Kyma.
 		dashboard.NewCmd(dashboard.NewOptions(o)),
 		deploy.NewCmd(deploy.NewOptions(o)),
 		undeploy.NewCmd(undeploy.NewOptions(o)),
-		certificates.NewCmd(certificates.NewOptions(o)),
+		certificates.NewCmd(o),
 	)
 
 	testCmd := test.NewCmd()
