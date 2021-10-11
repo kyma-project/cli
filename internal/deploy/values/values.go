@@ -28,9 +28,7 @@ type Values map[string]interface{}
 func Merge(sources Sources, workspace *workspace.Workspace, clusterInfo clusterinfo.Info) (Values, error) {
 	builder := &builder{}
 
-	if err := addClusterSpecificDefaults(builder, clusterInfo); err != nil {
-		return nil, err
-	}
+	addClusterSpecificDefaults(builder, clusterInfo)
 
 	if err := addValueFiles(builder, sources, workspace); err != nil {
 		return nil, err
@@ -52,48 +50,34 @@ func Merge(sources Sources, workspace *workspace.Workspace, clusterInfo clusteri
 	return vals, nil
 }
 
-func addClusterSpecificDefaults(builder *builder, clusterInfo clusterinfo.Info) error {
+func addClusterSpecificDefaults(builder *builder, clusterInfo clusterinfo.Info) {
 	switch clusterInfo.Provider {
 	case clusterinfo.K3d:
-		if err := builder.addGlobalDomainName(defaultLocalKymaDomain); err != nil {
-			return err
-		}
-
-		if err := builder.addGlobalTLSCrtAndKey(defaultLocalTLSCrtEnc, defaultLocalTLSKeyEnc); err != nil {
-			return err
-		}
-
 		k3dRegistry := fmt.Sprintf("k3d-%s-registry:5000", clusterInfo.ClusterName)
-		if err := builder.addServerlessRegistryConfig(serverlessRegistryConfig{
+		registryConfig := serverlessRegistryConfig{
 			enable:                false,
 			registryAddress:       k3dRegistry,
 			serverAddress:         k3dRegistry,
 			internalServerAddress: k3dRegistry,
-		}); err != nil {
-			return err
 		}
+		builder.
+			addServerlessRegistryConfig(registryConfig).
+			addGlobalDomainName(defaultLocalKymaDomain).
+			addGlobalTLSCrtAndKey(defaultLocalTLSCrtEnc, defaultLocalTLSKeyEnc)
 	case clusterinfo.Gardener:
-		if err := builder.addGlobalDomainName(clusterInfo.Domain); err != nil {
-			return err
-		}
+		builder.addGlobalDomainName(clusterInfo.Domain)
 	default:
-		if err := builder.addGlobalDomainName(defaultRemoteKymaDomain); err != nil {
-			return err
-		}
+		builder.addGlobalDomainName(defaultRemoteKymaDomain)
 	}
-
-	return nil
 }
 
 func addValueFiles(builder *builder, opts Sources, workspace *workspace.Workspace) error {
 	valueFiles, err := resolve.Files(opts.ValueFiles, filepath.Join(workspace.WorkspaceDir, "tmp"))
 	if err != nil {
-		return errors.Wrap(err, "failed to resolve value files")
+		return errors.Wrap(err, "Failed to resolve value files")
 	}
 	for _, file := range valueFiles {
-		if err := builder.addValuesFile(file); err != nil {
-			return errors.Wrap(err, "failed to add a values file")
-		}
+		builder.addValuesFile(file)
 	}
 
 	return nil
@@ -106,9 +90,7 @@ func addValues(builder *builder, opts Sources) error {
 			return errors.Wrapf(err, "failed to parse %s", value)
 		}
 
-		if err := builder.addValues(nested); err != nil {
-			return errors.Wrapf(err, "failed to add values %s", value)
-		}
+		builder.addValues(nested)
 	}
 
 	return nil
@@ -134,11 +116,9 @@ func addDomainValues(builder *builder, opts Sources) error {
 	}
 
 	if len(domainOverrides) > 0 {
-		if err := builder.addValues(map[string]interface{}{
+		builder.addValues(map[string]interface{}{
 			"global": domainOverrides,
-		}); err != nil {
-			return err
-		}
+		})
 	}
 
 	return nil

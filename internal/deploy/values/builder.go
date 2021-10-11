@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -13,39 +12,22 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var (
-	supportedFileExt = []string{"yaml", "yml", "json"}
-)
-
 type builder struct {
 	files  []string
 	values []map[string]interface{}
 }
 
-func (b *builder) addValuesFile(filePath string) error {
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		return errors.Wrap(err, "invalid override file: not exists")
-	}
-
-	for _, ext := range supportedFileExt {
-		if strings.HasSuffix(filePath, fmt.Sprintf(".%s", ext)) {
-			b.files = append(b.files, filePath)
-			return nil
-		}
-	}
-	return fmt.Errorf("Unsupported override file extension. Supported extensions are: %s", strings.Join(supportedFileExt, ", "))
+func (b *builder) addValuesFile(filePath string) *builder {
+	b.files = append(b.files, filePath)
+	return b
 }
 
-func (b *builder) addValues(values map[string]interface{}) error {
-	if len(values) < 1 {
-		return fmt.Errorf("invalid values: empty")
-	}
-
+func (b *builder) addValues(values map[string]interface{}) *builder {
 	b.values = append(b.values, values)
-	return nil
+	return b
 }
 
-func (b *builder) addGlobalDomainName(domainName string) error {
+func (b *builder) addGlobalDomainName(domainName string) *builder {
 	return b.addValues(map[string]interface{}{
 		"global": map[string]interface{}{
 			"domainName": domainName,
@@ -53,7 +35,7 @@ func (b *builder) addGlobalDomainName(domainName string) error {
 	})
 }
 
-func (b *builder) addGlobalTLSCrtAndKey(tlsCrt, tlsKey string) error {
+func (b *builder) addGlobalTLSCrtAndKey(tlsCrt, tlsKey string) *builder {
 	return b.addValues(map[string]interface{}{
 		"global": map[string]interface{}{
 			"tlsCrt": tlsCrt,
@@ -69,7 +51,7 @@ type serverlessRegistryConfig struct {
 	registryAddress       string
 }
 
-func (b *builder) addServerlessRegistryConfig(config serverlessRegistryConfig) error {
+func (b *builder) addServerlessRegistryConfig(config serverlessRegistryConfig) *builder {
 	return b.addValues(map[string]interface{}{
 		"serverless": map[string]interface{}{
 			"dockerRegistry": map[string]interface{}{
@@ -94,21 +76,13 @@ func (b *builder) build() (map[string]interface{}, error) {
 func (b *builder) mergeSources() (map[string]interface{}, error) {
 	result := make(map[string]interface{})
 
-	var fileOverrides map[string]interface{}
 	for _, file := range b.files {
-		data, err := ioutil.ReadFile(file)
+		vals, err := loadValuesFile(file)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, fmt.Sprintf("Failed to process values defined in file '%s'", file))
 		}
-		if strings.HasSuffix(file, ".json") {
-			err = json.Unmarshal(data, &fileOverrides)
-		} else {
-			err = yaml.Unmarshal(data, &fileOverrides)
-		}
-		if err != nil {
-			return nil, errors.Wrap(err, fmt.Sprintf("Failed to process configuration values defined in file '%s'", file))
-		}
-		if err := mergo.Map(&result, fileOverrides, mergo.WithOverride); err != nil {
+
+		if err := mergo.Map(&result, vals, mergo.WithOverride); err != nil {
 			return nil, err
 		}
 	}
@@ -120,4 +94,26 @@ func (b *builder) mergeSources() (map[string]interface{}, error) {
 	}
 
 	return result, nil
+}
+
+func loadValuesFile(filePath string) (map[string]interface{}, error) {
+	var vals map[string]interface{}
+
+	data, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		return nil, err
+	}
+	if strings.HasSuffix(filePath, ".json") {
+		if err := json.Unmarshal(data, &vals); err != nil {
+			return nil, err
+		}
+		return vals, nil
+	} else if strings.HasSuffix(filePath, "yaml") || strings.HasSuffix(filePath, "yml") {
+		if err := yaml.Unmarshal(data, &vals); err != nil {
+			return nil, err
+		}
+		return vals, nil
+	}
+
+	return nil, errors.New("Only JSON and YAML files are supported")
 }
