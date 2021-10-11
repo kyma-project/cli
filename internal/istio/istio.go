@@ -366,8 +366,9 @@ func unZip(source, target string, deleteSource bool) error {
 	for _, f := range archive.File {
 		filePath := fmt.Sprintf("%s/%s", target, f.Name)
 
-		if !strings.HasPrefix(filePath, filepath.Clean(target)+string(os.PathSeparator)) {
-
+		filePath = strings.ReplaceAll(filePath, "/", "\\")
+		preFix := strings.ReplaceAll(filepath.Clean(target)+string(os.PathSeparator), "/", "\\")
+		if !strings.HasPrefix(filePath, preFix) {
 			return errors.New("invalid file path")
 		}
 		if f.FileInfo().IsDir() {
