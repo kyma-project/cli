@@ -108,7 +108,7 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	vals, err := values.Merge(cmd.opts.Sources, ws, clusterinfo.Info{})
+	vals, err := values.Merge(cmd.opts.Sources, ws.WorkspaceDir, clusterinfo.Info{})
 	if err != nil {
 		return err
 	}

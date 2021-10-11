@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
 	"github.com/kyma-project/cli/internal/resolve"
 	"github.com/pkg/errors"
 	"helm.sh/helm/v3/pkg/strvals"
@@ -25,12 +24,12 @@ const (
 
 type Values map[string]interface{}
 
-func Merge(sources Sources, workspace *workspace.Workspace, clusterInfo clusterinfo.Info) (Values, error) {
+func Merge(sources Sources, workspaceDir string, clusterInfo clusterinfo.Info) (Values, error) {
 	builder := &builder{}
 
 	addClusterSpecificDefaults(builder, clusterInfo)
 
-	if err := addValueFiles(builder, sources, workspace); err != nil {
+	if err := addValueFiles(builder, sources, workspaceDir); err != nil {
 		return nil, err
 	}
 
@@ -71,8 +70,8 @@ func addClusterSpecificDefaults(builder *builder, clusterInfo clusterinfo.Info) 
 	}
 }
 
-func addValueFiles(builder *builder, opts Sources, workspace *workspace.Workspace) error {
-	valueFiles, err := resolve.Files(opts.ValueFiles, filepath.Join(workspace.WorkspaceDir, "tmp"))
+func addValueFiles(builder *builder, opts Sources, workspaceDir string) error {
+	valueFiles, err := resolve.Files(opts.ValueFiles, filepath.Join(workspaceDir, "tmp"))
 	if err != nil {
 		return errors.Wrap(err, "Failed to resolve value files")
 	}

@@ -2,7 +2,6 @@ package values
 
 import (
 	"fmt"
-	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
 	"github.com/kyma-project/cli/internal/clusterinfo"
 	"github.com/stretchr/testify/require"
 	"net/http"
@@ -13,15 +12,14 @@ import (
 
 func TestMerge(t *testing.T) {
 	testCases := []struct {
-		summary                 string
-		installationResourceDir string
-		values                  []string
-		valueFiles              []string
-		domain                  string
-		tlsCrt                  string
-		tlsKey                  string
-		expected                Values
-		expectedErr             bool
+		summary     string
+		values      []string
+		valueFiles  []string
+		domain      string
+		tlsCrt      string
+		tlsKey      string
+		expected    Values
+		expectedErr bool
 	}{
 		{
 			summary: "single value",
@@ -165,9 +163,7 @@ func TestMerge(t *testing.T) {
 				TLSCrtFile: tc.tlsCrt,
 				TLSKeyFile: tc.tlsKey,
 			}
-			actual, err := Merge(opts, &workspace.Workspace{
-				InstallationResourceDir: tc.installationResourceDir,
-			}, clusterinfo.Info{})
+			actual, err := Merge(opts, "testdata", clusterinfo.Info{})
 
 			if tc.expectedErr {
 				require.Error(t, err)
@@ -185,7 +181,7 @@ func TestMerge(t *testing.T) {
 		opts := Sources{
 			ValueFiles: []string{fmt.Sprintf("%s:/%s", fakeServer.URL, "valid-values-1.yaml")},
 		}
-		actual, err := Merge(opts, &workspace.Workspace{}, clusterinfo.Info{})
+		actual, err := Merge(opts, "testdata", clusterinfo.Info{})
 
 		expected := Values{
 			"global": map[string]interface{}{
