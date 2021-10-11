@@ -166,13 +166,13 @@ func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, 
 	deployStep.Start()
 
 	err = deploy.Deploy(deploy.Options{
-		Components:  components,
-		Values:      vals,
-		StatusFunc:  cmd.printDeployStatus,
-		KubeConfig:  kubeconfig,
-		KymaVersion: cmd.opts.Source,
-		KymaProfile: cmd.opts.Profile,
-		Logger:      l,
+		Components:     components,
+		Values:         vals,
+		StatusFunc:     cmd.printDeployStatus,
+		KubeConfig:     kubeconfig,
+		KymaVersion:    cmd.opts.Source,
+		KymaProfile:    cmd.opts.Profile,
+		Logger:         l,
 		WorkerPoolSize: cmd.opts.WorkerPoolSize,
 	})
 	if err != nil {

@@ -29,13 +29,13 @@ type ComponentStatus struct {
 }
 
 type Options struct {
-	Components  component.List
-	Values      values.Values
-	StatusFunc  func(status ComponentStatus)
-	KubeConfig  []byte
-	KymaVersion string
-	KymaProfile string
-	Logger      *zap.SugaredLogger
+	Components     component.List
+	Values         values.Values
+	StatusFunc     func(status ComponentStatus)
+	KubeConfig     []byte
+	KymaVersion    string
+	KymaProfile    string
+	Logger         *zap.SugaredLogger
 	WorkerPoolSize int
 }
 
