@@ -10,15 +10,14 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-//ClusterProvider is a unique identifier for a cluster provider
-type ClusterProvider string
+type ClusterType string
 
 const (
 	k8sConfigMap string = "kyma-cluster-info"
 	k8sNamespace string = "kube-system"
 
-	K3d      ClusterProvider = "k3d"
-	Gardener ClusterProvider = "gardener"
+	K3d      ClusterType = "k3d"
+	Gardener ClusterType = "gardener"
 )
 
 // ClusterInfo contains data about the current cluster
@@ -26,7 +25,7 @@ type ClusterInfo struct {
 	k8sClient   kubernetes.Interface
 	initialized bool
 	local       bool
-	provider    ClusterProvider
+	provider    ClusterType
 }
 
 // New creates a new cluster info instance
@@ -35,7 +34,7 @@ func New(k8sClient kubernetes.Interface) *ClusterInfo {
 }
 
 // Write cluster information into cluster
-func (c *ClusterInfo) Write(provider ClusterProvider, local bool) error {
+func (c *ClusterInfo) Write(provider ClusterType, local bool) error {
 	if provider == "" {
 		return fmt.Errorf("Cluster provider cannot be empty")
 	}

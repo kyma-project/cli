@@ -12,9 +12,9 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func domain(kubeClient kubernetes.Interface) (domainName string, err error) {
+func getGardenerDomain(ctx context.Context, kubeClient kubernetes.Interface) (domainName string, err error) {
 	err = retry.Do(func() error {
-		configMap, err := kubeClient.CoreV1().ConfigMaps("kube-system").Get(context.TODO(), "shoot-info", metav1.GetOptions{})
+		configMap, err := kubeClient.CoreV1().ConfigMaps("kube-system").Get(ctx, "shoot-info", metav1.GetOptions{})
 
 		if err != nil {
 			if apierr.IsNotFound(err) {
@@ -29,8 +29,7 @@ func domain(kubeClient kubernetes.Interface) (domainName string, err error) {
 		}
 
 		return nil
-	}, retry.Delay(2*time.Second), retry.Attempts(3), retry.DelayType(retry.FixedDelay))
-
+	}, retry.Delay(2*time.Second), retry.Attempts(3), retry.DelayType(retry.FixedDelay), retry.Context(ctx))
 	if err != nil {
 		return "", err
 	}

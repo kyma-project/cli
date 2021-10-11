@@ -50,7 +50,7 @@ func Merge(sources Sources, workspaceDir string, clusterInfo clusterinfo.Info) (
 }
 
 func addClusterSpecificDefaults(builder *builder, clusterInfo clusterinfo.Info) {
-	switch clusterInfo.Provider {
+	switch clusterInfo.ClusterType {
 	case clusterinfo.K3d:
 		k3dRegistry := fmt.Sprintf("k3d-%s-registry:5000", clusterInfo.ClusterName)
 		registryConfig := serverlessRegistryConfig{
