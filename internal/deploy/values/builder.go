@@ -53,6 +53,35 @@ func (b *builder) addGlobalDomainName(domainName string) error {
 	})
 }
 
+func (b *builder) addGlobalTLSCrtAndKey(tlsCrt, tlsKey string) error {
+	return b.addValues(map[string]interface{}{
+		"global": map[string]interface{}{
+			"tlsCrt": tlsCrt,
+			"tlsKey": tlsKey,
+		},
+	})
+}
+
+type serverlessRegistryConfig struct {
+	enable                bool
+	serverAddress         string
+	internalServerAddress string
+	registryAddress       string
+}
+
+func (b *builder) addServerlessRegistryConfig(config serverlessRegistryConfig) error {
+	return b.addValues(map[string]interface{}{
+		"serverless": map[string]interface{}{
+			"dockerRegistry": map[string]interface{}{
+				"enableInternal":        config.enable,
+				"internalServerAddress": config.internalServerAddress,
+				"serverAddress":         config.serverAddress,
+				"registryAddress":       config.registryAddress,
+			},
+		},
+	})
+}
+
 func (b *builder) build() (map[string]interface{}, error) {
 	merged, err := b.mergeSources()
 	if err != nil {

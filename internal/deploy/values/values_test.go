@@ -3,8 +3,8 @@ package values
 import (
 	"fmt"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
+	"github.com/kyma-project/cli/internal/clusterinfo"
 	"github.com/stretchr/testify/require"
-	"k8s.io/client-go/kubernetes/fake"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -219,7 +219,7 @@ func TestMerge(t *testing.T) {
 			}
 			actual, err := Merge(opts, &workspace.Workspace{
 				InstallationResourceDir: tc.installationResourceDir,
-			}, fake.NewSimpleClientset())
+			}, clusterinfo.Info{})
 
 			if tc.expectedErr {
 				require.Error(t, err)
@@ -237,7 +237,7 @@ func TestMerge(t *testing.T) {
 		opts := Sources{
 			ValueFiles: []string{fmt.Sprintf("%s:/%s", fakeServer.URL, "valid-values-1.yaml")},
 		}
-		actual, err := Merge(opts, &workspace.Workspace{}, fake.NewSimpleClientset())
+		actual, err := Merge(opts, &workspace.Workspace{}, clusterinfo.Info{})
 
 		expected := Values{
 			"global": map[string]interface{}{
