@@ -3,6 +3,7 @@ package logs
 import (
 	"bufio"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/kyma-project/cli/internal/logs"
@@ -13,6 +14,10 @@ import (
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+)
+
+const (
+	deprecationNote = `DEPRECATED: The "test logs" command works only with Kyma 1.x.x.`
 )
 
 var (
@@ -33,15 +38,15 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cobraCmd := &cobra.Command{
 		Use:   "logs <test-suite-1> <test-suite-2> ... <test-suite-N>",
-		Short: "Shows the logs of tests Pods for a given test suite.",
-		Long: `Use this command to display logs of a test executed for a given test suite. By default, the command displays logs for failed tests, but you can change this behavior using the "test-status" flag. 
+		Short: "[DEPRECATED] Shows the logs of tests Pods for a given test suite.",
+		Long: fmt.Sprintf(`[%s]
 
-To print the status of specific test cases, run ` + "`kyma test logs testSuiteOne testSuiteTwo`" + `.
-Provide at least one test suite name.
-`,
+Use this command to display logs of a test executed for a given test suite. By default, the command displays logs for failed tests, but you can change this behavior using the "test-status" flag. 
 
-		RunE:       func(_ *cobra.Command, args []string) error { return cmd.Run(args) },
-		Deprecated: "`test logs` is deprecated!",
+To print the status of specific test cases, run `+"`kyma test logs testSuiteOne testSuiteTwo`"+`.
+Provide at least one test suite name.`, deprecationNote),
+
+		RunE: func(_ *cobra.Command, args []string) error { return cmd.Run(args) },
 	}
 
 	cobraCmd.Flags().StringVar(&o.InStatus, "test-status", defaultLogsInStatus, "Displays logs coming only from testing Pods with a given status.")
@@ -51,6 +56,8 @@ Provide at least one test suite name.
 }
 
 func (cmd *command) Run(args []string) error {
+	fmt.Fprintln(os.Stderr, deprecationNote)
+
 	if err := cmd.validateFlags(); err != nil {
 		return err
 	}

@@ -3,6 +3,7 @@ package console
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
@@ -11,6 +12,10 @@ import (
 
 	"github.com/pkg/browser"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+const (
+	deprecationNote = `DEPRECATED: The "console" command works only with Kyma 1.x.x. For Kyma 2.x.x, use the "dashboard" command instead.`
 )
 
 type command struct {
@@ -27,10 +32,11 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:        "console",
-		Short:      "Opens the Kyma Console in a web browser.",
-		Long:       `Use this command to open the Kyma Console in a web browser.`,
-		Deprecated: "`console` is deprecated!",
+		Use:   "console",
+		Short: "[DEPRECATED] Opens the Kyma Console in a web browser.",
+		Long: fmt.Sprintf(`[%s]
+		
+Use this command to open the Kyma Console in a web browser.`, deprecationNote),
 
 		RunE:    func(_ *cobra.Command, _ []string) error { return c.Run() },
 		Aliases: []string{"c"},
@@ -40,6 +46,8 @@ func NewCmd(o *Options) *cobra.Command {
 
 //Run runs the command
 func (c *command) Run() error {
+	fmt.Fprintln(os.Stderr, deprecationNote)
+
 	var err error
 	if c.K8s, err = kube.NewFromConfig("", c.KubeconfigPath); err != nil {
 		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
