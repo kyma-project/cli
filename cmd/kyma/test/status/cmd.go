@@ -54,7 +54,7 @@ To print the status of specific test cases, run `+"`kyma test status testSuiteOn
 }
 
 func (cmd *command) Run(args []string) error {
-	fmt.Println(deprecationNote)
+	fmt.Fprintln(os.Stderr, deprecationNote)
 
 	var err error
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {

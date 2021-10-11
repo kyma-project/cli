@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"math/big"
+	"os"
 	"strings"
 	"time"
 
@@ -67,7 +68,7 @@ To execute all test defintions, run `+"`kyma test run -n example-test`"+`.`, dep
 }
 
 func (cmd *command) Run(args []string) error {
-	fmt.Println(deprecationNote)
+	fmt.Fprintln(os.Stderr, deprecationNote)
 
 	var err error
 	if cmd.opts.Watch {

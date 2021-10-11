@@ -2,6 +2,7 @@ package upgrade
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/kyma-project/cli/internal/cli"
@@ -66,7 +67,7 @@ Use this command to upgrade the Kyma version on a cluster.`, deprecationNote),
 
 //Run runs the command
 func (cmd *command) Run() error {
-	fmt.Println(deprecationNote)
+	fmt.Fprintln(os.Stderr, deprecationNote)
 
 	if cmd.opts.CI {
 		cmd.Factory.NonInteractive = true

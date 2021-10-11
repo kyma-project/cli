@@ -3,6 +3,7 @@ package minikube
 import (
 	"context"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -85,7 +86,7 @@ Use this command to provision a Minikube cluster for Kyma installation. It requi
 
 //Run runs the command
 func (c *command) Run() error {
-	fmt.Println(deprecationNote)
+	fmt.Fprintln(os.Stderr, deprecationNote)
 
 	s := c.NewStep("Checking requirements")
 	if err := c.checkRequirements(s); err != nil {

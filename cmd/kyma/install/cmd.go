@@ -100,7 +100,7 @@ Both installation types continue with the following steps:
 
 //Run runs the command
 func (cmd *command) Run() error {
-	fmt.Println(deprecationNote)
+	fmt.Fprintln(os.Stderr, deprecationNote)
 
 	if cmd.opts.CI {
 		cmd.Factory.NonInteractive = true

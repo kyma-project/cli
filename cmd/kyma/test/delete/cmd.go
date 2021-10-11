@@ -2,6 +2,7 @@ package del
 
 import (
 	"fmt"
+	"os"
 
 	oct "github.com/kyma-incubator/octopus/pkg/apis/testing/v1alpha1"
 	"github.com/kyma-project/cli/cmd/kyma/test"
@@ -43,7 +44,7 @@ Provide at least one test suite name.`, deprecationNote),
 }
 
 func (cmd *command) Run(args []string) error {
-	fmt.Println(deprecationNote)
+	fmt.Fprintln(os.Stderr, deprecationNote)
 
 	if len(args) < 1 {
 		return fmt.Errorf("Test suite name required")

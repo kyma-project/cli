@@ -40,7 +40,7 @@ Use this command to list test suites available for a provisioned Kyma cluster.`,
 }
 
 func (cmd *command) Run() error {
-	fmt.Println(deprecationNote)
+	fmt.Fprintln(os.Stderr, deprecationNote)
 
 	var err error
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {

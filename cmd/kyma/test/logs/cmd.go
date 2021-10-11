@@ -3,6 +3,7 @@ package logs
 import (
 	"bufio"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/kyma-project/cli/internal/logs"
@@ -55,7 +56,7 @@ Provide at least one test suite name.`, deprecationNote),
 }
 
 func (cmd *command) Run(args []string) error {
-	fmt.Println(deprecationNote)
+	fmt.Fprintln(os.Stderr, deprecationNote)
 
 	if err := cmd.validateFlags(); err != nil {
 		return err

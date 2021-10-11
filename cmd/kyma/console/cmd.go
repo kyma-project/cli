@@ -3,6 +3,7 @@ package console
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
@@ -45,7 +46,7 @@ Use this command to open the Kyma Console in a web browser.`, deprecationNote),
 
 //Run runs the command
 func (c *command) Run() error {
-	fmt.Println(deprecationNote)
+	fmt.Fprintln(os.Stderr, deprecationNote)
 
 	var err error
 	if c.K8s, err = kube.NewFromConfig("", c.KubeconfigPath); err != nil {

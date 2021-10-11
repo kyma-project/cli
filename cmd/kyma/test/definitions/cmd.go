@@ -2,6 +2,7 @@ package definitions
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
@@ -39,7 +40,7 @@ Use this command to list test definitions available for a provisioned Kyma clust
 }
 
 func (cmd *command) Run() error {
-	fmt.Println(deprecationNote)
+	fmt.Fprintln(os.Stderr, deprecationNote)
 
 	var err error
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
