@@ -1,5 +1,5 @@
 ---
-title: kyma certificates
+title: kyma add-certificates
 ---
 
 Adds certtificates to local storage
@@ -9,7 +9,7 @@ Adds certtificates to local storage
 Use this command to add the certificates to the local storage of machine after the installation
 
 ```bash
-kyma certificates [flags]
+kyma add-certificates [flags]
 ```
 
 ## Flags inherited from parent commands
