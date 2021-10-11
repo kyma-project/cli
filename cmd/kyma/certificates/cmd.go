@@ -6,6 +6,7 @@ import (
 
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
+	"github.com/kyma-project/cli/internal/root"
 	"github.com/kyma-project/cli/internal/trust"
 	"github.com/kyma-project/cli/pkg/step"
 	"github.com/pkg/errors"
@@ -25,7 +26,7 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "certificates",
+		Use:   "add-certificates",
 		Short: "Adds certtificates to local storage",
 		Long:  `Use this command to add the certificates to the local storage of machine after the installation`,
 		RunE:  func(_ *cobra.Command, _ []string) error { return c.Run() },
@@ -55,6 +56,16 @@ func (cmd *command) Run() error {
 }
 
 func (cmd *command) importCertificate() error {
+	f := step.Factory{
+		NonInteractive: true,
+	}
+	s := f.NewStep("Importing Kyma certificate")
+
+	if !root.IsWithSudo() {
+		s.LogError("Could not store certificates locally. Make sure you are using sudo")
+		return nil
+	}
+
 	ca := trust.NewCertifier(cmd.K8s)
 
 	if !cmd.approveImportCertificate() {
@@ -84,11 +95,6 @@ func (cmd *command) importCertificate() error {
 
 	// create a simple step to print certificate import steps without a spinner (spinner overwrites sudo prompt)
 	// TODO refactor how certifier logs when the old install command is gone
-	f := step.Factory{
-		NonInteractive: true,
-	}
-	s := f.NewStep("Importing Kyma certificate")
-
 	if err := ca.StoreCertificate(tmpFile.Name(), s); err != nil {
 		return err
 	}
