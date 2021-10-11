@@ -5,6 +5,7 @@ import (
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/service"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
 	"github.com/kyma-project/cli/internal/deploy"
+	"github.com/kyma-project/cli/internal/deploy/istioctl"
 
 	"github.com/kyma-project/cli/internal/deploy/component"
 	"github.com/kyma-project/cli/internal/deploy/values"
@@ -20,7 +21,6 @@ import (
 	"github.com/kyma-project/cli/internal/config"
 	"github.com/kyma-project/cli/internal/coredns"
 	"github.com/kyma-project/cli/internal/files"
-	"github.com/kyma-project/cli/internal/istioctl"
 	"github.com/kyma-project/cli/internal/k3d"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/nice"
@@ -396,11 +396,11 @@ func (cmd *command) decideVersionUpgrade() error {
 func (cmd *command) installPrerequisites(wsp string) error {
 	preReqStep := cmd.NewStep("Installing Prerequisites")
 
-	istioctl, err := istioctl.New(wsp)
+	istio, err := istioctl.New(wsp)
 	if err != nil {
 		return err
 	}
-	err = istioctl.Install()
+	err = istio.Install()
 	if err != nil {
 		return err
 	}
