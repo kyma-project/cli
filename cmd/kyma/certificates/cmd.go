@@ -27,8 +27,8 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "add-certificates",
-		Short: "Adds certtificates to local storage",
-		Long:  `Use this command to add the certificates to the local storage of machine after the installation`,
+		Short: "Adds certtificates to local storage.",
+		Long:  `Use this command to add the certificates to the local storage of machine after the installation.`,
 		RunE:  func(_ *cobra.Command, _ []string) error { return c.Run() },
 	}
 	return cmd
@@ -62,7 +62,7 @@ func (cmd *command) importCertificate() error {
 	s := f.NewStep("Importing Kyma certificate")
 
 	if !root.IsWithSudo() {
-		s.LogError("Could not store certificates locally. Make sure you are using sudo")
+		s.LogError("Could not store certificates locally. Make sure you are using sudo.")
 		return nil
 	}
 
@@ -82,12 +82,12 @@ func (cmd *command) importCertificate() error {
 
 	tmpFile, err := ioutil.TempFile(os.TempDir(), "kyma-*.crt")
 	if err != nil {
-		return errors.Wrap(err, "Cannot create temporary file for Kyma certificate")
+		return errors.Wrap(err, "Cannot create temporary file for Kyma certificate.")
 	}
 	defer os.Remove(tmpFile.Name())
 
 	if _, err = tmpFile.Write(cert); err != nil {
-		return errors.Wrap(err, "Failed to write the Kyma certificate")
+		return errors.Wrap(err, "Failed to write the Kyma certificate.")
 	}
 	if err := tmpFile.Close(); err != nil {
 		return err
