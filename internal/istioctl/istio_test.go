@@ -1,4 +1,4 @@
-package istio
+package istioctl
 
 import (
 	"bytes"

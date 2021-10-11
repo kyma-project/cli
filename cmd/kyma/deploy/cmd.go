@@ -22,7 +22,7 @@ import (
 	"github.com/kyma-project/cli/internal/config"
 	"github.com/kyma-project/cli/internal/coredns"
 	"github.com/kyma-project/cli/internal/files"
-	"github.com/kyma-project/cli/internal/istio"
+	"github.com/kyma-project/cli/internal/istioctl"
 	"github.com/kyma-project/cli/internal/k3d"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/nice"
@@ -425,7 +425,7 @@ func (cmd *command) decideVersionUpgrade() error {
 func (cmd *command) installPrerequisites(wsp string) error {
 	preReqStep := cmd.NewStep("Installing Prerequisites")
 
-	istioctl, err := istio.New(wsp)
+	istioctl, err := istioctl.New(wsp)
 	if err != nil {
 		return err
 	}

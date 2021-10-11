@@ -1,4 +1,4 @@
-package istio
+package istioctl
 
 import (
 	"archive/tar"
@@ -112,10 +112,10 @@ func (i *Installation) Install() error {
 	}
 	if !exist {
 		if err := i.downloadIstio(); err != nil {
-			return fmt.Errorf("error downloading istio: %s", err)
+			return fmt.Errorf("error downloading istioctl: %s", err)
 		}
 		if err := i.extractIstio(); err != nil {
-			return fmt.Errorf("error extracting istio: %s", err)
+			return fmt.Errorf("error extracting istioctl: %s", err)
 		}
 	}
 	if err := i.exportEnvVar(); err != nil {
@@ -364,11 +364,9 @@ func unZip(source, target string, deleteSource bool) error {
 	defer archive.Close()
 
 	for _, f := range archive.File {
-		filePath := fmt.Sprintf("%s/%s", target, f.Name)
+		filePath := filepath.Join(target, f.Name)
 
-		filePath = strings.ReplaceAll(filePath, "/", "\\")
-		preFix := strings.ReplaceAll(filepath.Clean(target)+string(os.PathSeparator), "/", "\\")
-		if !strings.HasPrefix(filePath, preFix) {
+		if !strings.HasPrefix(filePath, filepath.Clean(target)+string(os.PathSeparator)) {
 			return errors.New("invalid file path")
 		}
 		if f.FileInfo().IsDir() {
