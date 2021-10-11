@@ -24,53 +24,11 @@ func TestMerge(t *testing.T) {
 		expectedErr             bool
 	}{
 		{
-			summary:                 "no default kyma2 value file",
-			installationResourceDir: "non-existing",
-			values:                  []string{"component.key=foo"},
-			expected: map[string]interface{}{
-				"global": map[string]interface{}{
-					"domainName": defaultRemoteKymaDomain,
-					"tlsCrt":     defaultRemoteTLSCrtEnc,
-					"tlsKey":     defaultRemoteTLSKeyEnc,
-				},
-				"component": map[string]interface{}{
-					"key": "foo",
-				},
-			},
-		},
-		{
-			summary:                 "default kyma2 value file",
-			installationResourceDir: "testdata",
-			expected: map[string]interface{}{
-				"global": map[string]interface{}{
-					"domainName": defaultRemoteKymaDomain,
-					"tlsCrt":     defaultRemoteTLSCrtEnc,
-					"tlsKey":     defaultRemoteTLSKeyEnc,
-					"key":        "foo",
-				},
-			},
-		},
-		{
-			summary:                 "default kyma2 value file with value",
-			installationResourceDir: "testdata",
-			values:                  []string{"global.key=bar"},
-			expected: map[string]interface{}{
-				"global": map[string]interface{}{
-					"domainName": defaultRemoteKymaDomain,
-					"tlsCrt":     defaultRemoteTLSCrtEnc,
-					"tlsKey":     defaultRemoteTLSKeyEnc,
-					"key":        "bar", //value wins
-				},
-			},
-		},
-		{
 			summary: "single value",
 			values:  []string{"component.key=foo"},
 			expected: map[string]interface{}{
 				"global": map[string]interface{}{
 					"domainName": defaultRemoteKymaDomain,
-					"tlsCrt":     defaultRemoteTLSCrtEnc,
-					"tlsKey":     defaultRemoteTLSKeyEnc,
 				},
 				"component": map[string]interface{}{
 					"key": "foo",
@@ -83,8 +41,6 @@ func TestMerge(t *testing.T) {
 			expected: map[string]interface{}{
 				"global": map[string]interface{}{
 					"domainName": defaultRemoteKymaDomain,
-					"tlsCrt":     defaultRemoteTLSCrtEnc,
-					"tlsKey":     defaultRemoteTLSKeyEnc,
 				},
 				"component": map[string]interface{}{
 					"key": "foo",
@@ -105,8 +61,6 @@ func TestMerge(t *testing.T) {
 			expected: map[string]interface{}{
 				"global": map[string]interface{}{
 					"domainName": defaultRemoteKymaDomain,
-					"tlsCrt":     defaultRemoteTLSCrtEnc,
-					"tlsKey":     defaultRemoteTLSKeyEnc,
 				},
 				"component": map[string]interface{}{
 					"key": "foo",
@@ -123,8 +77,6 @@ func TestMerge(t *testing.T) {
 			expected: map[string]interface{}{
 				"global": map[string]interface{}{
 					"domainName": defaultRemoteKymaDomain,
-					"tlsCrt":     defaultRemoteTLSCrtEnc,
-					"tlsKey":     defaultRemoteTLSKeyEnc,
 				},
 				"component": map[string]interface{}{
 					"key": "foo", //value wins
@@ -146,8 +98,6 @@ func TestMerge(t *testing.T) {
 			expected: map[string]interface{}{
 				"global": map[string]interface{}{
 					"domainName": defaultRemoteKymaDomain,
-					"tlsCrt":     defaultRemoteTLSCrtEnc,
-					"tlsKey":     defaultRemoteTLSKeyEnc,
 				},
 				"component": map[string]interface{}{
 					"key": "foo", //value wins
@@ -198,8 +148,6 @@ func TestMerge(t *testing.T) {
 			expected: map[string]interface{}{
 				"global": map[string]interface{}{
 					"domainName": "github.com",
-					"tlsCrt":     defaultRemoteTLSCrtEnc,
-					"tlsKey":     defaultRemoteTLSKeyEnc,
 				},
 			},
 		},
@@ -242,8 +190,6 @@ func TestMerge(t *testing.T) {
 		expected := Values{
 			"global": map[string]interface{}{
 				"domainName": defaultRemoteKymaDomain,
-				"tlsCrt":     defaultRemoteTLSCrtEnc,
-				"tlsKey":     defaultRemoteTLSKeyEnc,
 			},
 			"component": map[string]interface{}{
 				"key": "baz",

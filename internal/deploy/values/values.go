@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"github.com/kyma-project/cli/internal/clusterinfo"
 	"io/ioutil"
-	"os"
-	"path"
 	"path/filepath"
 
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
@@ -27,26 +25,22 @@ const (
 
 type Values map[string]interface{}
 
-func Merge(opts Sources, workspace *workspace.Workspace, clusterInfo clusterinfo.Info) (Values, error) {
+func Merge(sources Sources, workspace *workspace.Workspace, clusterInfo clusterinfo.Info) (Values, error) {
 	builder := &builder{}
-
-	if err := addDefaultValues(builder, workspace); err != nil {
-		return nil, err
-	}
 
 	if err := addClusterSpecificDefaults(builder, clusterInfo); err != nil {
 		return nil, err
 	}
 
-	if err := addValueFiles(builder, opts, workspace); err != nil {
+	if err := addValueFiles(builder, sources, workspace); err != nil {
 		return nil, err
 	}
 
-	if err := addValues(builder, opts); err != nil {
+	if err := addValues(builder, sources); err != nil {
 		return nil, err
 	}
 
-	if err := addDomainValues(builder, opts); err != nil {
+	if err := addDomainValues(builder, sources); err != nil {
 		return nil, err
 	}
 
@@ -56,18 +50,6 @@ func Merge(opts Sources, workspace *workspace.Workspace, clusterInfo clusterinfo
 	}
 
 	return vals, nil
-}
-
-func addDefaultValues(builder *builder, workspace *workspace.Workspace) error {
-	kyma2OverridesPath := path.Join(workspace.InstallationResourceDir, "values.yaml")
-	if err := builder.addValuesFile(kyma2OverridesPath); err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return nil
-		}
-		return errors.Wrap(err, "failed to add default values file")
-	}
-
-	return nil
 }
 
 func addClusterSpecificDefaults(builder *builder, clusterInfo clusterinfo.Info) error {
