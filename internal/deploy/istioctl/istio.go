@@ -421,7 +421,7 @@ func copyInChunks(dstFile *os.File, srcFile io.Reader) error {
 
 func sanitizeExtractPath(destination, filePath string) (string, error) {
 	destpath := filepath.Join(destination, filePath)
-	if strings.HasPrefix(destpath, filepath.Clean(destination) + string(os.PathSeparator)) {
+	if strings.HasPrefix(destpath, filepath.Clean(destination)+string(os.PathSeparator)) {
 		return destpath, nil
 	}
 	return "", fmt.Errorf("%s: illegal destination path", destpath)
