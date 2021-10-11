@@ -368,7 +368,6 @@ func unZip(source, target string, deleteSource bool) error {
 		if err != nil {
 			return err
 		}
-		fmt.Printf("Filepath: %s\n", filePath)
 		if f.FileInfo().IsDir() {
 			err := os.MkdirAll(filePath, os.ModePerm)
 			if err != nil {
