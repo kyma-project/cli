@@ -36,6 +36,7 @@ type Options struct {
 	KymaVersion string
 	KymaProfile string
 	Logger      *zap.SugaredLogger
+	WorkerPoolSize int
 }
 
 func Deploy(opts Options) error {
@@ -62,7 +63,7 @@ func Deploy(opts Options) error {
 		}
 
 		opts.StatusFunc(ComponentStatus{component, state})
-	}).Run(context.TODO(), kebCluster)
+	}).WithWorkerPoolSize(opts.WorkerPoolSize).Run(context.TODO(), kebCluster)
 }
 
 func prepareKebComponents(components component.List, vals values.Values) ([]keb.Component, error) {
