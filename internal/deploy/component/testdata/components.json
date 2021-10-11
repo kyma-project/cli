@@ -1,0 +1,24 @@
+{
+  "defaultNamespace": "ns",
+  "prerequisites": [
+    {
+      "name": "pre-1",
+      "namespace": "ns-1"
+    },
+    {
+      "name": "pre-2"
+    }
+  ],
+  "components": [
+    {
+      "name": "comp-1"
+    },
+    {
+      "name": "comp-2",
+      "namespace": "ns-2"
+    },
+    {
+      "name": "comp-3"
+    }
+  ]
+}
