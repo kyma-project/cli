@@ -139,9 +139,9 @@ func (i *Installation) getIstioVersion() error {
 		return errors.New("istio version is empty")
 	}
 	if i.osExt == windows.ext {
-		i.binPath = path.Join(i.kymaHome, i.dirName, fmt.Sprintf("istio-%s", i.istioVersion), "bin", i.winBinName)
+		i.binPath = filepath.Join(i.kymaHome, i.dirName, fmt.Sprintf("istio-%s", i.istioVersion), "bin", i.winBinName)
 	} else {
-		i.binPath = path.Join(i.kymaHome, i.dirName, fmt.Sprintf("istio-%s", i.istioVersion), "bin", i.binName)
+		i.binPath = filepath.Join(i.kymaHome, i.dirName, fmt.Sprintf("istio-%s", i.istioVersion), "bin", i.binName)
 	}
 	return nil
 }
@@ -221,19 +221,19 @@ func (i *Installation) downloadIstio() error {
 
 func (i *Installation) extractIstio() error {
 	if i.osExt == linux.ext || i.osExt == darwin.ext {
-		istioPath := path.Join(i.kymaHome, i.dirName, i.tarGzName)
-		targetPath := path.Join(i.kymaHome, i.dirName, i.tarName)
+		istioPath := filepath.Join(i.kymaHome, i.dirName, i.tarGzName)
+		targetPath := filepath.Join(i.kymaHome, i.dirName, i.tarName)
 		if err := unGzip(istioPath, targetPath, true); err != nil {
 			return err
 		}
-		istioPath = path.Join(i.kymaHome, i.dirName, i.tarName)
-		targetPath = path.Join(i.kymaHome, i.dirName)
+		istioPath = filepath.Join(i.kymaHome, i.dirName, i.tarName)
+		targetPath = filepath.Join(i.kymaHome, i.dirName)
 		if err := unTar(istioPath, targetPath, true); err != nil {
 			return err
 		}
 	} else {
-		istioPath := path.Join(i.kymaHome, i.dirName, i.zipName)
-		targetPath := path.Join(i.kymaHome, i.dirName)
+		istioPath := filepath.Join(i.kymaHome, i.dirName, i.zipName)
+		targetPath := filepath.Join(i.kymaHome, i.dirName)
 		if err := unZip(istioPath, targetPath, true); err != nil {
 			return err
 		}
@@ -364,11 +364,11 @@ func unZip(source, target string, deleteSource bool) error {
 	defer archive.Close()
 
 	for _, f := range archive.File {
-		filePath := filepath.Join(target, f.Name)
-
-		if !strings.HasPrefix(filePath, filepath.Clean(target)+string(os.PathSeparator)) {
-			return errors.New("invalid file path")
+		filePath, err := sanitizeExtractPath(target, f.Name)
+		if err != nil {
+			return err
 		}
+		fmt.Printf("Filepath: %s\n", filePath)
 		if f.FileInfo().IsDir() {
 			err := os.MkdirAll(filePath, os.ModePerm)
 			if err != nil {
@@ -418,4 +418,12 @@ func copyInChunks(dstFile *os.File, srcFile io.Reader) error {
 		}
 	}
 	return nil
+}
+
+func sanitizeExtractPath(destination, filePath string) (string, error) {
+	destpath := filepath.Join(destination, filePath)
+	if strings.HasPrefix(destpath, filepath.Clean(destination) + string(os.PathSeparator)) {
+		return destpath, nil
+	}
+	return "", fmt.Errorf("%s: illegal destination path", destpath)
 }
