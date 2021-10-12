@@ -4,10 +4,7 @@ import (
 	"fmt"
 
 	"github.com/kyma-project/cli/internal/cli"
-	"github.com/kyma-project/cli/internal/clusterinfo"
 	"github.com/kyma-project/cli/internal/k3d"
-	"github.com/kyma-project/cli/internal/kube"
-
 	"net"
 	"strconv"
 	"strings"
@@ -62,9 +59,6 @@ func (c *command) Run() error {
 		return err
 	}
 	if err := c.createK3dCluster(); err != nil {
-		return err
-	}
-	if err := c.createK3dClusterInfo(); err != nil {
 		return err
 	}
 	return nil
@@ -175,26 +169,5 @@ func (c *command) createK3dCluster() error {
 	}
 	s.Successf("K3d cluster is created")
 
-	return nil
-}
-
-func (c *command) createK3dClusterInfo() error {
-	s := c.NewStep("Prepare Kyma installer configuration")
-	s.Status("Adding configuration")
-
-	// K8s client needs to be created here because before the kubeconfig is not ready to use
-	var err error
-	c.K8s, err = kube.NewFromConfig("", c.KubeconfigPath)
-	if err != nil {
-		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
-	}
-
-	clusterInfo := clusterinfo.New(c.K8s.Static())
-
-	if err := clusterInfo.Write(clusterinfo.K3d, true); err != nil {
-		s.Failure()
-		return err
-	}
-	s.Successf("Configuration created")
 	return nil
 }
