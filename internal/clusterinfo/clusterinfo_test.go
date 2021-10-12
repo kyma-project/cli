@@ -50,4 +50,22 @@ func TestDiscover(t *testing.T) {
 		require.True(t, isK3d)
 		require.Equal(t, "cool-cluster", k3d.ClusterName)
 	})
+
+	t.Run("unrecognized cluster", func(t *testing.T) {
+		clientset := fake.NewSimpleClientset(&corev1.NodeList{
+			Items: []corev1.Node{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "gke-cluster-server-0",
+					},
+				},
+			},
+		})
+
+		info, err := Discover(context.Background(), clientset)
+		require.NoError(t, err)
+
+		_, isUnrecognized := info.(Unrecognized)
+		require.True(t, isUnrecognized)
+	})
 }
