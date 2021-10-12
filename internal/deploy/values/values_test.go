@@ -163,7 +163,7 @@ func TestMerge(t *testing.T) {
 				TLSCrtFile: tc.tlsCrt,
 				TLSKeyFile: tc.tlsKey,
 			}
-			actual, err := Merge(opts, "testdata", clusterinfo.Info{})
+			actual, err := Merge(opts, "testdata", clusterinfo.Unrecognized{})
 
 			if tc.expectedErr {
 				require.Error(t, err)
@@ -181,7 +181,7 @@ func TestMerge(t *testing.T) {
 		opts := Sources{
 			ValueFiles: []string{fmt.Sprintf("%s:/%s", fakeServer.URL, "valid-values-1.yaml")},
 		}
-		actual, err := Merge(opts, "testdata", clusterinfo.Info{})
+		actual, err := Merge(opts, "testdata", clusterinfo.Unrecognized{})
 
 		expected := Values{
 			"global": map[string]interface{}{
