@@ -17,6 +17,7 @@ kyma deploy [flags]
 ```bash
       --component strings        Provide one or more components to deploy (e.g. --component componentName@namespace)
   -c, --components-file string   Path to the components file (default "$HOME/.kyma/sources/installation/resources/components.yaml" or ".kyma-sources/installation/resources/components.yaml")
+      --concurrency int          Set maximum number of workers to run simultaneously to deploy Kyma. (default 4)
   -d, --domain string            Custom domain used for installation.
   -p, --profile string           Kyma deployment profile. If not specified, Kyma uses its default configuration. The supported profiles are: evaluation, production.
   -s, --source string            Installation source:

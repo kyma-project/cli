@@ -30,13 +30,14 @@ type ComponentStatus struct {
 }
 
 type Options struct {
-	Components  component.List
-	Values      values.Values
-	StatusFunc  func(status ComponentStatus)
-	KubeConfig  []byte
-	KymaVersion string
-	KymaProfile string
-	Logger      *zap.SugaredLogger
+	Components     component.List
+	Values         values.Values
+	StatusFunc     func(status ComponentStatus)
+	KubeConfig     []byte
+	KymaVersion    string
+	KymaProfile    string
+	Logger         *zap.SugaredLogger
+	WorkerPoolSize int
 }
 
 func Deploy(opts Options) error {
@@ -66,7 +67,7 @@ func Deploy(opts Options) error {
 			state = UnrecoverableError
 		}
 		opts.StatusFunc(ComponentStatus{component, state, errorRecieved})
-	}).Run(context.TODO(), kebCluster)
+	}).WithWorkerPoolSize(opts.WorkerPoolSize).Run(context.TODO(), kebCluster)
 }
 
 func prepareKebComponents(components component.List, vals values.Values) ([]keb.Component, error) {
