@@ -2,7 +2,6 @@ package deploy
 
 import (
 	"context"
-	"encoding/json"
 	"github.com/kyma-incubator/reconciler/pkg/cluster"
 	"github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-incubator/reconciler/pkg/model"
@@ -65,7 +64,7 @@ func Deploy(opts Options) error {
 	}).Run(context.TODO(), kebCluster)
 }
 
-func prepareKebComponents(components component.List, vals values.Values) ([]keb.Component, error) {
+func prepareKebComponents(components component.List, vals values.Values) (*[]keb.Component, error) {
 	var kebComponents []keb.Component
 	all := append(components.Prerequisites, components.Components...)
 	for _, c := range all {
@@ -95,34 +94,29 @@ func prepareKebComponents(components component.List, vals values.Values) ([]keb.
 		kebComponents = append(kebComponents, kebComponent)
 	}
 
-	return kebComponents, nil
+	return &kebComponents, nil
 }
 
-func prepareKebCluster(opts Options, kebComponents []keb.Component) (*cluster.State, error) {
-	kebComponentsJSON, err := json.Marshal(kebComponents)
-	if err != nil {
-		return nil, err
-	}
-
+func prepareKebCluster(opts Options, kebComponents *[]keb.Component) (*cluster.State, error) {
 	return &cluster.State{
 		Cluster: &model.ClusterEntity{
 			Version:    1,
-			Cluster:    "local",
+			RuntimeID:    "local",
 			Kubeconfig: string(opts.KubeConfig),
 			Contract:   1,
 		},
 		Configuration: &model.ClusterConfigurationEntity{
 			Version:        1,
-			Cluster:        "local",
+			RuntimeID:        "local",
 			ClusterVersion: 1,
 			KymaVersion:    opts.KymaVersion,
 			KymaProfile:    opts.KymaProfile,
-			Components:     string(kebComponentsJSON),
+			Components:     kebComponents,
 			Contract:       1,
 		},
 		Status: &model.ClusterStatusEntity{
 			ID:             1,
-			Cluster:        "local",
+			RuntimeID:        "local",
 			ClusterVersion: 1,
 			ConfigVersion:  1,
 			Status:         model.ClusterStatusReconcilePending,
