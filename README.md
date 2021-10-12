@@ -45,10 +45,6 @@ kyma install -s main
 
 >**TIP:** Read more about the available [commands and flags](https://github.com/kyma-project/cli/blob/main/docs/03-01-use-kyma-cli.md).You can also try out Kyma CLI using [these examples](https://github.com/kyma-project/cli/blob/main/docs/03-02-examples.md).
 
-### Kyma CLI as kubectl plugin
-
-To learn how to use Kyma CLI as a kubectl plugin, follow [this tutorial](https://github.com/kyma-project/cli/blob/main/docs/08-01-kubectl-plugin-tutorial.md).
-
 ## Development
 
 ### Build from Sources
