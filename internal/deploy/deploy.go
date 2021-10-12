@@ -43,10 +43,7 @@ func Deploy(opts Options) error {
 		return nil
 	}
 
-	kebCluster, err := prepareKebCluster(opts, kebComponents)
-	if err != nil {
-		return nil
-	}
+	kebCluster := prepareKebCluster(opts, kebComponents)
 
 	runtimeBuilder := service.NewRuntimeBuilder(reconciliation.NewInMemoryReconciliationRepository(), opts.Logger)
 	return runtimeBuilder.RunLocal(opts.Components.PrerequisiteNames(), func(component string, msg *reconciler.CallbackMessage) {
@@ -97,17 +94,17 @@ func prepareKebComponents(components component.List, vals values.Values) (*[]keb
 	return &kebComponents, nil
 }
 
-func prepareKebCluster(opts Options, kebComponents *[]keb.Component) (*cluster.State, error) {
+func prepareKebCluster(opts Options, kebComponents *[]keb.Component) *cluster.State {
 	return &cluster.State{
 		Cluster: &model.ClusterEntity{
 			Version:    1,
-			RuntimeID:    "local",
+			RuntimeID:  "local",
 			Kubeconfig: string(opts.KubeConfig),
 			Contract:   1,
 		},
 		Configuration: &model.ClusterConfigurationEntity{
 			Version:        1,
-			RuntimeID:        "local",
+			RuntimeID:      "local",
 			ClusterVersion: 1,
 			KymaVersion:    opts.KymaVersion,
 			KymaProfile:    opts.KymaProfile,
@@ -116,10 +113,10 @@ func prepareKebCluster(opts Options, kebComponents *[]keb.Component) (*cluster.S
 		},
 		Status: &model.ClusterStatusEntity{
 			ID:             1,
-			RuntimeID:        "local",
+			RuntimeID:      "local",
 			ClusterVersion: 1,
 			ConfigVersion:  1,
 			Status:         model.ClusterStatusReconcilePending,
 		},
-	}, nil
+	}
 }

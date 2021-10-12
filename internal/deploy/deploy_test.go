@@ -94,8 +94,8 @@ func TestPrepareKebCluster(t *testing.T) {
 
 	var expCompWithConf = []keb.Component{
 		{
-			URL: "",
-			Version:"",
+			URL:       "",
+			Version:   "",
 			Component: "comp-1",
 			Configuration: []keb.Configuration{
 				{Key: "global.domainName", Secret: false, Value: "domain-1"},
@@ -117,13 +117,13 @@ func TestPrepareKebCluster(t *testing.T) {
 	expectedState := &cluster.State{
 		Cluster: &model.ClusterEntity{
 			Version:    1,
-			RuntimeID:    "local",
+			RuntimeID:  "local",
 			Kubeconfig: "kubeconfig-1",
 			Contract:   1,
 		},
 		Configuration: &model.ClusterConfigurationEntity{
 			Version:        1,
-			RuntimeID:        "local",
+			RuntimeID:      "local",
 			ClusterVersion: 1,
 			KymaVersion:    "version-1",
 			KymaProfile:    "profile-1",
@@ -132,14 +132,13 @@ func TestPrepareKebCluster(t *testing.T) {
 		},
 		Status: &model.ClusterStatusEntity{
 			ID:             1,
-			RuntimeID:        "local",
+			RuntimeID:      "local",
 			ClusterVersion: 1,
 			ConfigVersion:  1,
 			Status:         model.ClusterStatusReconcilePending,
 		},
 	}
 
-	result, err := prepareKebCluster(options, &expected)
-	require.NoError(t, err)
+	result := prepareKebCluster(options, &expected)
 	require.Equal(t, expectedState, result)
 }
