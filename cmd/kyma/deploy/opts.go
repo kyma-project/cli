@@ -132,24 +132,3 @@ func (o *Options) validateTLSCertAndKey() error {
 
 	return nil
 }
-
-//func (i *certificateInterceptor) validate() error {
-//	if i.tlsCrtEnc != "" && i.tlsKeyEnc != "" {
-//		// Decode tls crt and key
-//		crt, err := base64.StdEncoding.DecodeString(i.tlsCrtEnc)
-//		if err != nil {
-//			return err
-//		}
-//		key, err := base64.StdEncoding.DecodeString(i.tlsKeyEnc)
-//		if err != nil {
-//			return err
-//		}
-//		// Ensure that crt and key are fitting together
-//		_, err = tls.X509KeyPair(crt, key)
-//		if err != nil {
-//			return errors.Wrap(err,
-//				fmt.Sprintf("Provided TLS certificate (passed in keys '%s' and '%s') is invalid", i.tlsCrtOverrideKey, i.tlsKeyOverrideKey))
-//		}
-//	}
-//	return nil
-//}
