@@ -14,7 +14,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func isK3dCluster(kubeClient kubernetes.Interface) (isK3d bool, err error) {
+func isK3dCluster(ctx context.Context, kubeClient kubernetes.Interface) (isK3d bool, err error) {
 
 	retryOptions := []retry.Option{
 		retry.Delay(2 * time.Second),
@@ -23,7 +23,7 @@ func isK3dCluster(kubeClient kubernetes.Interface) (isK3d bool, err error) {
 	}
 
 	err = retry.Do(func() error {
-		nodeList, err := kubeClient.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
+		nodeList, err := kubeClient.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 		if err != nil {
 			return err
 		}
