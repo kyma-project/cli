@@ -1,6 +1,7 @@
 package deploy
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/service"
@@ -108,13 +109,18 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	vals, err := values.Merge(cmd.opts.Sources, ws.WorkspaceDir, clusterinfo.Info{})
+	clusterinfo, err := clusterinfo.Discover(context.Background(), cmd.K8s.Static())
+	if err != nil {
+		return errors.Wrap(err, "Failed to discover underlying cluster type")
+	}
+
+	vals, err := values.Merge(cmd.opts.Sources, ws.WorkspaceDir, clusterinfo)
 	if err != nil {
 		return err
 	}
 
 	hasCustomDomain := cmd.opts.Domain != ""
-	if _, err := coredns.Patch(l.Desugar(), cmd.K8s.Static(), hasCustomDomain, clusterinfo.Info{}); err != nil {
+	if _, err := coredns.Patch(l.Desugar(), cmd.K8s.Static(), hasCustomDomain, clusterinfo); err != nil {
 		return err
 	}
 

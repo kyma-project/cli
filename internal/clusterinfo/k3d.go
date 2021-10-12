@@ -44,7 +44,7 @@ func isK3dCluster(ctx context.Context, kubeClient kubernetes.Interface) (isK3d b
 	return isK3d, nil
 }
 
-func k3dClusterName(kubeClient kubernetes.Interface) (k3dName string, err error) {
+func k3dClusterName(ctx context.Context, kubeClient kubernetes.Interface) (k3dName string, err error) {
 	retryOptions := []retry.Option{
 		retry.Delay(2 * time.Second),
 		retry.Attempts(3),
@@ -58,7 +58,7 @@ func k3dClusterName(kubeClient kubernetes.Interface) (k3dName string, err error)
 		listOptions := metav1.ListOptions{
 			LabelSelector: labels.Set(labelSelector.MatchLabels).String(),
 		}
-		nodeList, err := kubeClient.CoreV1().Nodes().List(context.Background(), listOptions)
+		nodeList, err := kubeClient.CoreV1().Nodes().List(ctx, listOptions)
 		if err != nil {
 			return err
 		}

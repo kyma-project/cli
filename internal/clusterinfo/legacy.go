@@ -15,9 +15,6 @@ type ClusterType string
 const (
 	k8sConfigMap string = "kyma-cluster-info"
 	k8sNamespace string = "kube-system"
-
-	K3d      ClusterType = "k3d"
-	Gardener ClusterType = "gardener"
 )
 
 // ClusterInfo contains data about the current cluster

@@ -50,9 +50,8 @@ func Merge(sources Sources, workspaceDir string, clusterInfo clusterinfo.Info) (
 }
 
 func addClusterSpecificDefaults(builder *builder, clusterInfo clusterinfo.Info) {
-	switch clusterInfo.ClusterType {
-	case clusterinfo.K3d:
-		k3dRegistry := fmt.Sprintf("k3d-%s-registry:5000", clusterInfo.ClusterName)
+	if k3d, isK3d := clusterInfo.(clusterinfo.K3d); isK3d {
+		k3dRegistry := fmt.Sprintf("k3d-%s-registry:5000", k3d.ClusterName)
 		registryConfig := serverlessRegistryConfig{
 			enable:                false,
 			registryAddress:       k3dRegistry,
@@ -63,9 +62,9 @@ func addClusterSpecificDefaults(builder *builder, clusterInfo clusterinfo.Info) 
 			addServerlessRegistryConfig(registryConfig).
 			addGlobalDomainName(defaultLocalKymaDomain).
 			addGlobalTLSCrtAndKey(defaultLocalTLSCrtEnc, defaultLocalTLSKeyEnc)
-	case clusterinfo.Gardener:
-		builder.addGlobalDomainName(clusterInfo.Domain)
-	default:
+	} else if gardener, isGardener := clusterInfo.(clusterinfo.Gardener); isGardener {
+		builder.addGlobalDomainName(gardener.Domain)
+	} else {
 		builder.addGlobalDomainName(defaultRemoteKymaDomain)
 	}
 }

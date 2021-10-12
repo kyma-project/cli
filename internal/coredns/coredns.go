@@ -136,10 +136,12 @@ func newCoreDNSConfigMap(data map[string]string) *v1.ConfigMap {
 func generatePatches(hasCustomDomain bool, clusterInfo clusterinfo.Info) (map[string]string, error) {
 	var err error
 	patches := make(map[string]string)
+
 	// patch the CoreFile only if not on gardener and no custom domain is provided
-	if clusterInfo.ClusterType == clusterinfo.Gardener && clusterInfo.Domain == "" && !hasCustomDomain {
+	if _, isGardener := clusterInfo.(clusterinfo.Gardener); !isGardener && !hasCustomDomain {
 		var domainName string
-		if clusterInfo.ClusterType == clusterinfo.K3d {
+
+		if _, isK3d := clusterInfo.(clusterinfo.K3d); isK3d {
 			domainName = coreDNSLocalDomainName
 		} else {
 			domainName = coreDNSRemoteDomainName
@@ -151,8 +153,8 @@ func generatePatches(hasCustomDomain bool, clusterInfo clusterinfo.Info) (map[st
 	}
 
 	// Patch NodeHosts only on K3d
-	if clusterInfo.ClusterType == clusterinfo.K3d {
-		patches["NodeHosts"], err = generateHosts(clusterInfo)
+	if k3d, isK3d := clusterInfo.(clusterinfo.K3d); isK3d {
+		patches["NodeHosts"], err = generateHosts(k3d.ClusterName)
 		if err != nil {
 			return nil, err
 		}
@@ -176,8 +178,7 @@ func generateCorefile(domainName string) (coreFile string, err error) {
 	return
 }
 
-func generateHosts(clusterInfo clusterinfo.Info) (string, error) {
-	clusterName := clusterInfo.ClusterName
+func generateHosts(clusterName string) (string, error) {
 	registryIP, err := k3dRegistryIP(clusterName)
 	if err != nil {
 		return "", err
@@ -197,7 +198,6 @@ func generateHosts(clusterInfo clusterinfo.Info) (string, error) {
 	}
 
 	return b.String(), nil
-
 }
 
 // the defaultInspector uses the standard docker client to get container information from the daemon in the local ENV
