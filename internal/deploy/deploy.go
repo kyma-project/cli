@@ -26,6 +26,7 @@ const (
 type ComponentStatus struct {
 	Component string
 	State     ComponentState
+	Error	error
 }
 
 type Options struct {
@@ -52,16 +53,19 @@ func Deploy(opts Options) error {
 	runtimeBuilder := service.NewRuntimeBuilder(reconciliation.NewInMemoryReconciliationRepository(), opts.Logger)
 	return runtimeBuilder.RunLocal(opts.Components.PrerequisiteNames(), func(component string, msg *reconciler.CallbackMessage) {
 		var state ComponentState
+		var errorRecieved error
 		switch msg.Status {
 		case reconciler.StatusSuccess:
 			state = Success
+			errorRecieved = nil
 		case reconciler.StatusFailed:
+			errorRecieved = errors.Errorf("Error encountered: %s", msg.Error)
 			state = RecoverableError
 		case reconciler.StatusError:
+			errorRecieved = errors.Errorf("Aborting! Unrecoverable error encountered: %s", msg.Error)
 			state = UnrecoverableError
 		}
-
-		opts.StatusFunc(ComponentStatus{component, state})
+		opts.StatusFunc(ComponentStatus{component, state, errorRecieved})
 	}).Run(context.TODO(), kebCluster)
 }
 
