@@ -26,7 +26,7 @@ const (
 type ComponentStatus struct {
 	Component string
 	State     ComponentState
-	Error	error
+	Error     error
 }
 
 type Options struct {
