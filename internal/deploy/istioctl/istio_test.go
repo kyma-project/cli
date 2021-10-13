@@ -1,4 +1,4 @@
-package istio
+package istioctl
 
 import (
 	"bytes"
@@ -135,6 +135,40 @@ func Test_unTar(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			err := unTar(tt.args.source, tt.args.target, tt.args.deleteSource)
+			if !tt.wantErr {
+				require.NoError(t, err)
+				_, err := os.Stat(tt.expectedFile)
+				require.NoError(t, err)
+				err = os.Remove(tt.expectedFile)
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				_, err := os.Stat(tt.expectedFile)
+				require.Error(t, err)
+			}
+		})
+	}
+}
+
+func Test_unZip(t *testing.T) {
+	type args struct {
+		source       string
+		target       string
+		deleteSource bool
+	}
+	tests := []struct {
+		name         string
+		args         args
+		expectedFile string
+		wantErr      bool
+	}{
+		{name: "unZip File", args: args{source: "testdata/istio_mock.zip", target: "testdata", deleteSource: false}, expectedFile: "testdata/istio.txt", wantErr: false},
+		{name: "File does not exist", args: args{source: "testdata/nonexistent.zip", target: "testdata", deleteSource: false}, expectedFile: "testdata/istio.txt", wantErr: true},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			err := unZip(tt.args.source, tt.args.target, tt.args.deleteSource)
 			if !tt.wantErr {
 				require.NoError(t, err)
 				_, err := os.Stat(tt.expectedFile)

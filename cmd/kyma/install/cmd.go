@@ -20,7 +20,8 @@ import (
 )
 
 const (
-	defaultDomain = "kyma.local"
+	defaultDomain   = "kyma.local"
+	deprecationNote = `DEPRECATED: The "install" command works only when installing Kyma 1.x.x. To install Kyma 2.x.x, use the "deploy" command instead.`
 )
 
 type command struct {
@@ -37,8 +38,10 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cobraCmd := &cobra.Command{
 		Use:   "install",
-		Short: "Installs Kyma on a running Kubernetes cluster.",
-		Long: `Use this command to install Kyma on a running Kubernetes cluster.
+		Short: "[DEPRECATED] Installs Kyma on a running Kubernetes cluster.",
+		Long: fmt.Sprintf(`[%s]
+
+Use this command to install Kyma on a running Kubernetes cluster.
 		
 ### Description
 
@@ -52,13 +55,13 @@ Here are the installation steps:
 The standard installation uses the minimal configuration. 
 Depending on your installation type, the ways to deploy and configure the Kyma Installer are different:
 
-If you install Kyma locally ` + "**from release**" + `, the system does the following:
+If you install Kyma locally `+"**from release**"+`, the system does the following:
 
    1. Fetch the latest or specified release, along with configuration.
    2. Deploy the Kyma Installer on the cluster.
    3. Apply the downloaded or defined configuration.
    
-If you install Kyma locally ` + "**from sources**" + `, the system does the following:
+If you install Kyma locally `+"**from sources**"+`, the system does the following:
 
    1. Fetch the configuration yaml files from the local sources.
    2. Build the Kyma Installer image.
@@ -68,11 +71,9 @@ Both installation types continue with the following steps:
    
    4. If overrides have been defined, apply them.
    5. Set the admin password.
-   6. Patch the Minikube IP.
-   `,
-		RunE:       func(_ *cobra.Command, _ []string) error { return cmd.Run() },
-		Aliases:    []string{"i"},
-		Deprecated: `use "kyma deploy" instead`,
+   6. Patch the Minikube IP.`, deprecationNote),
+		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
+		Aliases: []string{"i"},
 	}
 
 	cobraCmd.Flags().BoolVarP(&o.NoWait, "no-wait", "n", false, "Determines if the command should wait for Kyma installation to complete.")
@@ -99,6 +100,8 @@ Both installation types continue with the following steps:
 
 //Run runs the command
 func (cmd *command) Run() error {
+	fmt.Fprintln(os.Stderr, deprecationNote)
+
 	if cmd.opts.CI {
 		cmd.Factory.NonInteractive = true
 	}
