@@ -6,11 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"html/template"
+	"time"
+
 	"github.com/kyma-project/cli/internal/gardener"
 	"github.com/kyma-project/cli/internal/k3d"
 	"go.uber.org/zap"
-	"html/template"
-	"time"
 
 	"github.com/avast/retry-go"
 	v1 "k8s.io/api/core/v1"
