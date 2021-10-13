@@ -4,10 +4,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"html/template"
 	"time"
 
 	"github.com/kyma-project/cli/internal/gardener"
+	"github.com/kyma-project/cli/internal/k3d"
 	"go.uber.org/zap"
 
 	"github.com/avast/retry-go"
@@ -17,6 +20,9 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
+
+	dockerTypes "github.com/docker/docker/api/types"
+	docker "github.com/docker/docker/client"
 )
 
 const (
@@ -41,6 +47,9 @@ const (
     reload
     loadbalance
 }
+`
+	hostsTemplate = `
+    {{ .K3dRegistryIP}} {{ .K3dRegistryHost}}
 `
 	// Default domain names for coreDNS patch
 	coreDNSLocalDomainName  = `(.*)\.local\.kyma\.dev`
@@ -150,6 +159,13 @@ func generatePatches(kubeClient kubernetes.Interface, hasCustomDomain, isK3d boo
 		}
 	}
 
+	// Patch NodeHosts only on K3d
+	if isK3d {
+		patches["NodeHosts"], err = generateHosts(kubeClient)
+		if err != nil {
+			return nil, err
+		}
+	}
 	return patches, nil
 }
 
@@ -167,4 +183,60 @@ func generateCorefile(domainName string) (coreFile string, err error) {
 
 	coreFile = patchBuffer.String()
 	return
+}
+
+func generateHosts(kubeClient kubernetes.Interface) (string, error) {
+	clusterName, err := k3d.ClusterName(kubeClient)
+	if err != nil {
+		return "", err
+	}
+	registryIP, err := k3dRegistryIP(clusterName)
+	if err != nil {
+		return "", err
+	}
+
+	patchVars := struct {
+		K3dRegistryHost string
+		K3dRegistryIP   string
+	}{
+		K3dRegistryHost: fmt.Sprintf("k3d-%s-registry", clusterName),
+		K3dRegistryIP:   registryIP,
+	}
+	t := template.Must(template.New("").Parse(hostsTemplate))
+	b := new(bytes.Buffer)
+	if err := t.Execute(b, patchVars); err != nil {
+		return "", err
+	}
+
+	return b.String(), nil
+
+}
+
+// the defaultInspector uses the standard docker client to get container information from the daemon in the local ENV
+var defaultInspector = func(ctx context.Context, containerID string) (dockerTypes.ContainerJSON, error) {
+	client, err := docker.NewClientWithOpts(docker.FromEnv)
+	if err != nil {
+		return dockerTypes.ContainerJSON{}, err
+	}
+
+	return client.ContainerInspect(context.Background(), containerID)
+}
+
+// registryIP uses docker inspect to find out the registry IP address in k3d
+func k3dRegistryIP(cluster string) (string, error) {
+	c, err := defaultInspector(context.Background(), fmt.Sprintf("k3d-%s-registry", cluster))
+	if err != nil {
+		return "", err
+	}
+
+	net, exists := c.NetworkSettings.Networks[fmt.Sprintf("k3d-%s", cluster)]
+	if !exists {
+		return "", errors.New("could not find network settings in k3d registry")
+	}
+
+	if net.IPAddress == "" {
+		return "", errors.New("k3d registry IP is empty")
+	}
+
+	return net.IPAddress, nil
 }
