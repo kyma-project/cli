@@ -7,8 +7,10 @@ import (
 	"github.com/kyma-project/cli/cmd/kyma/create"
 	"github.com/kyma-project/cli/cmd/kyma/dashboard"
 	"github.com/kyma-project/cli/cmd/kyma/deploy"
+	"github.com/kyma-project/cli/cmd/kyma/hostfiles"
 	initial "github.com/kyma-project/cli/cmd/kyma/init"
 	"github.com/kyma-project/cli/cmd/kyma/install"
+	"github.com/kyma-project/cli/cmd/kyma/provision"
 	"github.com/kyma-project/cli/cmd/kyma/provision/aks"
 	"github.com/kyma-project/cli/cmd/kyma/provision/gardener"
 	"github.com/kyma-project/cli/cmd/kyma/provision/gardener/aws"
@@ -27,10 +29,8 @@ import (
 	testrun "github.com/kyma-project/cli/cmd/kyma/test/run"
 	teststatus "github.com/kyma-project/cli/cmd/kyma/test/status"
 	"github.com/kyma-project/cli/cmd/kyma/undeploy"
-	"github.com/kyma-project/cli/cmd/kyma/version"
-
-	"github.com/kyma-project/cli/cmd/kyma/provision"
 	"github.com/kyma-project/cli/cmd/kyma/upgrade"
+	"github.com/kyma-project/cli/cmd/kyma/version"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/spf13/cobra"
 )
@@ -79,6 +79,7 @@ Kyma CLI allows you to install, test, and manage Kyma.
 		dashboard.NewCmd(dashboard.NewOptions(o)),
 		deploy.NewCmd(deploy.NewOptions(o)),
 		undeploy.NewCmd(undeploy.NewOptions(o)),
+		hostfiles.NewCmd(hostfiles.NewOptions(o)),
 	)
 
 	testCmd := test.NewCmd()
