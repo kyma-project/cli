@@ -6,10 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/kyma-project/cli/internal/clusterinfo"
-	"go.uber.org/zap"
 	"html/template"
 	"time"
+
+	"github.com/kyma-project/cli/internal/clusterinfo"
+
+	"go.uber.org/zap"
 
 	"github.com/avast/retry-go"
 	v1 "k8s.io/api/core/v1"

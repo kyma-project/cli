@@ -1,2 +1,2 @@
-k3d version v3.3.4
-k3s version v1.17.4-k3s1 (default)
+k3d version v4.4.8
+k3s version v1.21.3-k3s1 (default)

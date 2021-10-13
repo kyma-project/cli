@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	k3dMinVersion  string        = "4.0.0"
+	k3dMinVersion  string        = "5.0.0"
 	defaultTimeout time.Duration = 10 * time.Second
 )
 
@@ -75,7 +75,7 @@ func checkVersion(verbose bool) error {
 	return nil
 }
 
-func getK3dImage(version string) (string, error) {
+func getK3sImage(version string) (string, error) {
 	_, err := semver.Parse(version)
 	if err != nil {
 		return "", fmt.Errorf("Invalid Kubernetes version %v: %v", version, err)
@@ -91,7 +91,7 @@ func Initialize(verbose bool) error {
 		if verbose {
 			fmt.Printf("Command 'k3d' not found in PATH")
 		}
-		return fmt.Errorf("Command 'k3d' not found. Please install k3d following the installation " +
+		return fmt.Errorf("command 'k3d' not found. Please install k3d following the installation " +
 			"instructions provided at https://github.com/rancher/k3d#get")
 	}
 
@@ -104,15 +104,62 @@ func Initialize(verbose bool) error {
 	return err
 }
 
+//RegistryExists checks whether a registry exists
+func RegistryExists(verbose bool, clusterName string) (bool, error) {
+	args := []string{"registry", "list", "-o", "json"}
+	registryJSON, err := RunCmd(verbose, defaultTimeout, args...)
+	if err != nil {
+		return false, err
+	}
+
+	registryName := fmt.Sprintf("k3d-%s-registry", clusterName)
+	registryList := &RegistryList{}
+	if err := registryList.Unmarshal([]byte(registryJSON)); err != nil {
+		return false, err
+	}
+
+	for _, registry := range registryList.Registries {
+		if registry.Name == registryName {
+			if verbose {
+				fmt.Printf("K3d registry '%s' exists", registryName)
+			}
+			return true, nil
+		}
+	}
+
+	if verbose {
+		fmt.Printf("K3d registry '%s' does not exist", registryName)
+	}
+	return false, nil
+}
+
+// CreateRegistry creates a k3d registry
+func CreateRegistry(verbose bool, timeout time.Duration, clusterName string) (string, error) {
+	// k3d automatically adds a 'k3d' prefix
+	registryName := fmt.Sprintf("%s-registry", clusterName)
+	registryPort := "5000"
+	cmdArgs := []string{
+		"registry", "create", registryName,
+		"--port", registryPort,
+	}
+
+	_, err := RunCmd(verbose, timeout, cmdArgs...)
+	return fmt.Sprintf("%s:%s", registryName, registryPort), err
+}
+
+// DeleteRegistry deletes a k3d registry
+func DeleteRegistry(verbose bool, timeout time.Duration, clusterName string) error {
+	registryName := fmt.Sprintf("k3d-%s-registry", clusterName)
+	_, err := RunCmd(verbose, timeout, "registry", "delete", registryName)
+	return err
+}
+
 //ClusterExists checks whether a cluster exists
 func ClusterExists(verbose bool, clusterName string) (bool, error) {
 	args := []string{"cluster", "list", "-o", "json"}
 	clusterJSON, err := RunCmd(verbose, defaultTimeout, args...)
 	if err != nil {
 		return false, err
-	}
-	if verbose {
-		fmt.Printf("K3d cluster list JSON: '%s'", clusterJSON)
 	}
 
 	clusterList := &ClusterList{}
@@ -152,31 +199,29 @@ type Settings struct {
 }
 
 //StartCluster starts a cluster
-func StartCluster(verbose bool, timeout time.Duration, workers int, serverArgs []string, agentArgs []string, k3d Settings) error {
-	k3dImage, err := getK3dImage(k3d.Version)
+func StartCluster(verbose bool, timeout time.Duration, workers int, k3sArgs []string, k3sRegistry []string, k3d Settings) error {
+	k3sImage, err := getK3sImage(k3d.Version)
 	if err != nil {
 		return err
 	}
+
 	cmdArgs := []string{
 		"cluster", "create", k3d.ClusterName,
 		"--kubeconfig-update-default",
 		"--timeout", fmt.Sprintf("%ds", int(timeout.Seconds())),
 		"--agents", fmt.Sprintf("%d", workers),
-		"--registry-create",
-		"--image", k3dImage,
-		"--k3s-server-arg", "--disable",
-		"--k3s-server-arg", "traefik",
+		"--k3s-arg", "--disable=traefik@server:0",
+		"--image", k3sImage,
 	}
 
-	cmdArgs = append(cmdArgs, constructArgs("--k3s-server-arg", serverArgs)...)
-	cmdArgs = append(cmdArgs, constructArgs("--k3s-agent-arg", agentArgs)...)
-	cmdArgs = append(cmdArgs, constructArgs("-p", k3d.PortMapping)...)
+	cmdArgs = append(cmdArgs, constructArgs("--registry-use", k3sRegistry)...)
+	cmdArgs = append(cmdArgs, constructArgs("--k3s-arg", k3sArgs)...)
+	cmdArgs = append(cmdArgs, constructArgs("--port", k3d.PortMapping)...)
 
 	//add further k3d args which are not offered by the Kyma CLI flags
 	cmdArgs = append(cmdArgs, k3d.Args...)
 
 	_, err = RunCmd(verbose, timeout, cmdArgs...)
-
 	return err
 }
 

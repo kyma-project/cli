@@ -73,6 +73,7 @@ func NewCmd(o *Options) *cobra.Command {
 		fmt.Sprintf("Kyma deployment profile. If not specified, Kyma uses its default configuration. The supported profiles are: %s, %s.", profileEvaluation, profileProduction))
 	cobraCmd.Flags().StringVarP(&o.TLSCrtFile, "tls-crt", "", "", "TLS certificate file for the domain used for installation.")
 	cobraCmd.Flags().StringVarP(&o.TLSKeyFile, "tls-key", "", "", "TLS key file for the domain used for installation.")
+	cobraCmd.Flags().IntVarP(&o.WorkerPoolSize, "concurrency", "", 4, "Set maximum number of workers to run simultaneously to deploy Kyma.")
 	cobraCmd.Flags().StringSliceVarP(&o.Values, "value", "", []string{}, "Set configuration values. Can specify one or more values, also as a comma-separated list (e.g. --value component.a='1' --value component.b='2' or --value component.a='1',component.b='2').")
 	cobraCmd.Flags().StringSliceVarP(&o.ValueFiles, "values-file", "f", []string{}, "Path(s) to one or more JSON or YAML files with configuration values.")
 
@@ -168,13 +169,14 @@ func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, 
 	deployStep.Start()
 
 	err = deploy.Deploy(deploy.Options{
-		Components:  components,
-		Values:      vals,
-		StatusFunc:  cmd.printDeployStatus,
-		KubeConfig:  kubeconfig,
-		KymaVersion: cmd.opts.Source,
-		KymaProfile: cmd.opts.Profile,
-		Logger:      l,
+		Components:     components,
+		Values:         vals,
+		StatusFunc:     cmd.printDeployStatus,
+		KubeConfig:     kubeconfig,
+		KymaVersion:    cmd.opts.Source,
+		KymaProfile:    cmd.opts.Profile,
+		Logger:         l,
+		WorkerPoolSize: cmd.opts.WorkerPoolSize,
 	})
 	if err != nil {
 		deployStep.Failuref("Failed to deploy Kyma.")
@@ -195,10 +197,10 @@ func (cmd *command) printDeployStatus(status deploy.ComponentStatus) {
 		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' deployed", status.Component))
 		statusStep.Success()
 	case deploy.RecoverableError:
-		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' failed. Retrying...", status.Component))
+		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' failed with reason(%s). Retrying...", status.Component, status.Error.Error()))
 		statusStep.Failure()
 	case deploy.UnrecoverableError:
-		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' failed and terminated", status.Component))
+		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' failed with reason(%s) and terminated", status.Component, status.Error.Error()))
 		statusStep.Failure()
 	}
 }
