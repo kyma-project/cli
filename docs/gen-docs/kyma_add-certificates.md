@@ -2,7 +2,7 @@
 title: kyma add-certificates
 ---
 
-Adds certtificates to local storage.
+Adds certificates to local storage.
 
 ## Synopsis
 

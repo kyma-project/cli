@@ -23,7 +23,7 @@ Kyma CLI allows you to install, test, and manage Kyma.
 
 ## See also
 
-* [kyma add-certificates](#kyma-add-certificates-kyma-add-certificates)	 - Adds certtificates to local storage.
+* [kyma add-certificates](#kyma-add-certificates-kyma-add-certificates)	 - Adds certificates to local storage.
 * [kyma apply](#kyma-apply-kyma-apply)	 - Applies local resources to the Kyma cluster.
 * [kyma completion](#kyma-completion-kyma-completion)	 - Generates bash or zsh completion scripts.
 * [kyma console](#kyma-console-kyma-console)	 - [DEPRECATED] Opens the Kyma Console in a web browser.
