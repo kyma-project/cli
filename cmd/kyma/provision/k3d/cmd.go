@@ -117,14 +117,17 @@ func (c *command) verifyK3dStatus() error {
 			s.Failure()
 			return err
 		}
-	} else if err := c.allocatePorts(ports...); err != nil {
-		s.Failure()
-		return errors.Wrap(err, "Port cannot be allocated")
-	} else if registryExists {
-		// only registry exists
-		if err := k3d.DeleteRegistry(c.opts.Verbose, c.opts.Timeout, c.opts.Name); err != nil {
+	} else {
+		if err := c.allocatePorts(ports...); err != nil {
 			s.Failure()
-			return err
+			return errors.Wrap(err, "Port cannot be allocated")
+		}
+		if registryExists {
+			// only registry exists
+			if err := k3d.DeleteRegistry(c.opts.Verbose, c.opts.Timeout, c.opts.Name); err != nil {
+				s.Failure()
+				return err
+			}
 		}
 	}
 
@@ -138,7 +141,7 @@ func (c *command) deleteExistingK3dCluster(registryExists bool) error {
 	if !c.opts.NonInteractive {
 		answer = c.CurrentStep.PromptYesNo("Do you want to remove the existing k3d cluster? ")
 		if !answer {
-			return fmt.Errorf("user decided not to remove the existing k3d cluster")
+			return fmt.Errorf("User decided not to remove the existing k3d cluster")
 		}
 	}
 	if c.opts.NonInteractive || answer {

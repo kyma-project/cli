@@ -65,10 +65,10 @@ func checkVersion(verbose bool) error {
 
 	minVersion, _ := semver.Parse(k3dMinVersion)
 	if version.Major > minVersion.Major {
-		return fmt.Errorf("you are using an unsupported k3d major version '%d'. "+
+		return fmt.Errorf("You are using an unsupported k3d major version '%d'. "+
 			"This may not work. The recommended k3d major version is '%d'", version.Major, minVersion.Major)
 	} else if version.LT(minVersion) {
-		return fmt.Errorf("you are using an unsupported k3d version '%s'. "+
+		return fmt.Errorf("You are using an unsupported k3d version '%s'. "+
 			"This may not work. The recommended k3d version is >= '%s'", version, minVersion)
 	}
 
