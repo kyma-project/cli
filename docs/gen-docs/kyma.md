@@ -23,6 +23,7 @@ Kyma CLI allows you to install, test, and manage Kyma.
 
 ## See also
 
+* [kyma add-hosts](#kyma-add-hosts-kyma-add-hosts)	 - Adds specified domain to the system host file.
 * [kyma apply](#kyma-apply-kyma-apply)	 - Applies local resources to the Kyma cluster.
 * [kyma completion](#kyma-completion-kyma-completion)	 - Generates bash or zsh completion scripts.
 * [kyma console](#kyma-console-kyma-console)	 - [DEPRECATED] Opens the Kyma Console in a web browser.
