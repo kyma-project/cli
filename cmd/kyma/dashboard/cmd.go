@@ -99,7 +99,7 @@ func (cmd *command) runDashboardContainer(dashboardURL string) error {
 		step.LogInfo("Logs from the container:")
 		followCtx := context.Background()
 		cmd.Finalizers.Add(dockerWrapper.Stop(followCtx, id, func(i ...interface{}) { fmt.Print(i...) }))
-		return dockerWrapper.ContainerFollowRun(followCtx, id, func(i ...interface{}) { fmt.Print(i...) })
+		return dockerWrapper.ContainerFollowRun(followCtx, id)
 	}
 	return nil
 }
