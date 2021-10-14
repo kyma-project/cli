@@ -67,7 +67,7 @@ type KymaClient interface {
 // Wrapper provides helper functions
 type Wrapper interface {
 	PullImageAndStartContainer(ctx context.Context, opts ContainerRunOpts) (string, error)
-	ContainerFollowRun(ctx context.Context, containerID string, log func(...interface{})) error
+	ContainerFollowRun(ctx context.Context, containerID string) error
 	Stop(ctx context.Context, containerID string, log func(...interface{})) func()
 	IsDockerDesktopOS(ctx context.Context) (bool, error)
 }
@@ -248,8 +248,8 @@ func (w *dockerWrapper) PullImageAndStartContainer(ctx context.Context, opts Con
 }
 
 // ContainerFollowRun attaches a connection to a container and logs the output
-func (w *dockerWrapper) ContainerFollowRun(ctx context.Context, containerID string, log func(...interface{})) error {
-	return hydroformDocker.FollowRun(ctx, w.Docker, containerID, log)
+func (w *dockerWrapper) ContainerFollowRun(ctx context.Context, containerID string) error {
+	return hydroformDocker.FollowRun(ctx, w.Docker, containerID)
 }
 
 // Stop stops a container with additional logging
