@@ -2,6 +2,7 @@ package kyma
 
 import (
 	"github.com/kyma-project/cli/cmd/kyma/apply"
+	"github.com/kyma-project/cli/cmd/kyma/certificates"
 	"github.com/kyma-project/cli/cmd/kyma/completion"
 	"github.com/kyma-project/cli/cmd/kyma/console"
 	"github.com/kyma-project/cli/cmd/kyma/create"
@@ -79,6 +80,7 @@ Kyma CLI allows you to install, test, and manage Kyma.
 		dashboard.NewCmd(dashboard.NewOptions(o)),
 		deploy.NewCmd(deploy.NewOptions(o)),
 		undeploy.NewCmd(undeploy.NewOptions(o)),
+		certificates.NewCmd(o),
 	)
 
 	testCmd := test.NewCmd()
