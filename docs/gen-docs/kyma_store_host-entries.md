@@ -2,7 +2,7 @@
 title: kyma store host-entries
 ---
 
-Adds domain entries to the system host file.
+Stores certificates or host files in the local system.
 
 ## Synopsis
 

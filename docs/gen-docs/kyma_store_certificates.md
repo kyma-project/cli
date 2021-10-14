@@ -2,7 +2,7 @@
 title: kyma store certificates
 ---
 
-Stores certificates to local storage.
+Stores certificates in local storage.
 
 ## Synopsis
 

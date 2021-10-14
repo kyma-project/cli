@@ -21,6 +21,6 @@ Stores certificates or host files into local system.
 ## See also
 
 * [kyma](#kyma-kyma)	 - Controls a Kyma cluster.
-* [kyma store certificates](#kyma-store-certificates-kyma-store-certificates)	 - Stores certificates to local storage.
-* [kyma store host-entries](#kyma-store-host-entries-kyma-store-host-entries)	 - Adds domain entries to the system host file.
+* [kyma store certificates](#kyma-store-certificates-kyma-store-certificates)	 - Stores certificates in local storage.
+* [kyma store host-entries](#kyma-store-host-entries-kyma-store-host-entries)	 - Stores certificates or host files in the local system.
 
