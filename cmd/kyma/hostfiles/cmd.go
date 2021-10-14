@@ -46,7 +46,7 @@ func NewCmd(o *Options) *cobra.Command {
 //Run runs the command
 func (cmd *command) Run() error {
 	var err error
-
+	s := cmd.NewStep("")
 	if cmd.opts.CI {
 		cmd.Factory.NonInteractive = true
 	}
@@ -64,7 +64,8 @@ func (cmd *command) Run() error {
 	}
 
 	if !root.IsWithSudo() {
-		return errors.Wrap(err, "Could not add domains to host file. Make sure you are using sudo.")
+		s.LogError("Could not store certificates locally. Make sure you are using sudo.")
+		return nil
 	}
 
 	clusterConfig, err := installation.GetClusterInfoFromConfigMap(cmd.K8s)
@@ -72,7 +73,6 @@ func (cmd *command) Run() error {
 		return errors.Wrap(err, "Failed to get cluster information.")
 	}
 
-	s := cmd.NewStep("Adding domains to /etc/hosts")
 	err = hosts.AddDevDomainsToEtcHosts2(s, clusterConfig, cmd.K8s, cmd.opts.Domain)
 	if err != nil {
 		s.Failure()
