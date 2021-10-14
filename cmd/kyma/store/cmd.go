@@ -8,7 +8,7 @@ import (
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "store",
-		Short: "Stores certificates or host files into local system.",
+		Short: "Stores certificates or host files in the local system.",
 	}
 	return cmd
 }

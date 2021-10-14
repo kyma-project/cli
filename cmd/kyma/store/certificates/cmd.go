@@ -105,11 +105,7 @@ func (cmd *command) importCertificate() error {
 func (cmd *command) approveImportCertificate() bool {
 	qImportCertsStep := cmd.NewStep("Install Kyma certificate locally")
 	defer qImportCertsStep.Success()
-	if cmd.avoidUserInteraction() {
-		//do not import if user-interaction has to be avoided (suppress sudo pwd request)
-		return false
-	}
-	return qImportCertsStep.PromptYesNo("Do you want to install the Kyma certificate locally?")
+	return !cmd.avoidUserInteraction()
 }
 
 func (cmd *command) avoidUserInteraction() bool {

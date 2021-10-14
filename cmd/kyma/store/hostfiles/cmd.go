@@ -5,7 +5,7 @@ import (
 	"github.com/kyma-project/cli/internal/hosts"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/root"
-	"github.com/kyma-project/cli/pkg/installation"
+	"github.com/kyma-project/cli/pkg/step"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -32,7 +32,7 @@ func NewCmd(o *cli.Options) *cobra.Command {
 
 	cobraCmd := &cobra.Command{
 		Use:   "host-entries",
-		Short: "Stores certificates or host files in the local system.",
+		Short: "Stores domain entries in the system host file.",
 		Long: `Use this command to add domain to the host file of the local system.
 `,
 		RunE: func(_ *cobra.Command, _ []string) error { return cmd.Run() },
@@ -43,7 +43,11 @@ func NewCmd(o *cli.Options) *cobra.Command {
 //Run runs the command
 func (cmd *command) Run() error {
 	var err error
-	s := cmd.NewStep("")
+	f := step.Factory{
+		NonInteractive: true,
+	}
+
+	s := f.NewStep("")
 	if cmd.opts.CI {
 		cmd.Factory.NonInteractive = true
 	}
@@ -61,12 +65,7 @@ func (cmd *command) Run() error {
 		return nil
 	}
 
-	clusterConfig, err := installation.GetClusterInfoFromConfigMap(cmd.K8s)
-	if err != nil {
-		return errors.Wrap(err, "Failed to get cluster information.")
-	}
-
-	err = hosts.AddDevDomainsToEtcHosts2(s, clusterConfig, cmd.K8s, defaultDomain)
+	err = hosts.AddDevDomainsToEtcHosts2(s, cmd.K8s, defaultDomain)
 	if err != nil {
 		s.Failure()
 		if cmd.opts.Verbose {

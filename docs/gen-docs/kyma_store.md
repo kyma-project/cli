@@ -2,11 +2,11 @@
 title: kyma store
 ---
 
-Stores certificates or host files into local system.
+Stores certificates or host files in the local system.
 
 ## Synopsis
 
-Stores certificates or host files into local system.
+Stores certificates or host files in the local system.
 
 ## Flags inherited from parent commands
 
@@ -22,5 +22,5 @@ Stores certificates or host files into local system.
 
 * [kyma](#kyma-kyma)	 - Controls a Kyma cluster.
 * [kyma store certificates](#kyma-store-certificates-kyma-store-certificates)	 - Stores certificates in local storage.
-* [kyma store host-entries](#kyma-store-host-entries-kyma-store-host-entries)	 - Stores certificates or host files in the local system.
+* [kyma store host-entries](#kyma-store-host-entries-kyma-store-host-entries)	 - Stores domain entries in the system host file.
 

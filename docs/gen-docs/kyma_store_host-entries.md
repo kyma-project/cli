@@ -2,7 +2,7 @@
 title: kyma store host-entries
 ---
 
-Stores certificates or host files in the local system.
+Stores domain entries in the system host file.
 
 ## Synopsis
 
@@ -25,5 +25,5 @@ kyma store host-entries [flags]
 
 ## See also
 
-* [kyma store](#kyma-store-kyma-store)	 - Stores certificates or host files into local system.
+* [kyma store](#kyma-store-kyma-store)	 - Stores certificates or host files in the local system.
 

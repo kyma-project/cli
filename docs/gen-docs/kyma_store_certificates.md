@@ -24,5 +24,5 @@ kyma store certificates [flags]
 
 ## See also
 
-* [kyma store](#kyma-store-kyma-store)	 - Stores certificates or host files into local system.
+* [kyma store](#kyma-store-kyma-store)	 - Stores certificates or host files in the local system.
 
