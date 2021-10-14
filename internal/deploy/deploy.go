@@ -2,6 +2,7 @@ package deploy
 
 import (
 	"context"
+	"fmt"
 	"github.com/kyma-incubator/reconciler/pkg/cluster"
 	"github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-incubator/reconciler/pkg/model"
@@ -46,7 +47,7 @@ func Deploy(opts Options) error {
 	kebCluster := prepareKebCluster(opts, kebComponents)
 
 	runtimeBuilder := service.NewRuntimeBuilder(reconciliation.NewInMemoryReconciliationRepository(), opts.Logger)
-	return runtimeBuilder.RunLocal(opts.Components.PrerequisiteNames(), func(component string, msg *reconciler.CallbackMessage) {
+	reconcilationResult, err := runtimeBuilder.RunLocal(opts.Components.PrerequisiteNames(), func(component string, msg *reconciler.CallbackMessage) {
 		var state ComponentState
 		switch msg.Status {
 		case reconciler.StatusSuccess:
@@ -59,10 +60,12 @@ func Deploy(opts Options) error {
 
 		opts.StatusFunc(ComponentStatus{component, state})
 	}).Run(context.TODO(), kebCluster)
+	fmt.Printf("Reconcilation result : %v", reconcilationResult)
+	return err
 }
 
-func prepareKebComponents(components component.List, vals values.Values) (*[]keb.Component, error) {
-	var kebComponents []keb.Component
+func prepareKebComponents(components component.List, vals values.Values) ([]*keb.Component, error) {
+	var kebComponents []*keb.Component
 	all := append(components.Prerequisites, components.Components...)
 	for _, c := range all {
 		kebComponent := keb.Component{
@@ -88,13 +91,13 @@ func prepareKebComponents(components component.List, vals values.Values) (*[]keb
 			}
 		}
 
-		kebComponents = append(kebComponents, kebComponent)
+		kebComponents = append(kebComponents, &kebComponent)
 	}
 
-	return &kebComponents, nil
+	return kebComponents, nil
 }
 
-func prepareKebCluster(opts Options, kebComponents *[]keb.Component) *cluster.State {
+func prepareKebCluster(opts Options, kebComponents []*keb.Component) *cluster.State {
 	return &cluster.State{
 		Cluster: &model.ClusterEntity{
 			Version:    1,
