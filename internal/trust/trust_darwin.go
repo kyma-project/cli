@@ -1,3 +1,4 @@
+//go:build darwin
 // +build darwin
 
 package trust
@@ -75,4 +76,14 @@ func (keychain) Instructions() string {
 func (keychain) InstructionsKyma2() string {
 	return "1. Download the certificate: kubectl get secret kyma-gateway-certs -n istio-system -o jsonpath='{.data.tls\\.crt}' > kyma.crt\n" +
 		"2. Import the certificate: sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain kyma.crt\n"
+}
+
+func (k keychain) StoreCertificateKyma2(file string, i Informer) error {
+
+	_, err := cli.RunCmd("sudo", "security", "add-trusted-cert", "-d", "-r", "trustRoot", "-k", "/Library/Keychains/System.keychain", file)
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("\nCould not import the Kyma root certificate. Follow the instructions below to import it manually:\n-----\n%s-----\n", k.Instructions()))
+	}
+
+	return nil
 }

@@ -60,17 +60,9 @@ func (cmd *command) importCertificate() error {
 		NonInteractive: true,
 	}
 	s := f.NewStep("Importing Kyma certificate")
-
+	ca := trust.NewCertifier(cmd.K8s)
 	if !root.IsWithSudo() {
 		s.LogError("Could not store certificates locally. Make sure you are using sudo.")
-		return nil
-	}
-
-	ca := trust.NewCertifier(cmd.K8s)
-
-	if !cmd.approveImportCertificate() {
-		//no approval given: stop import
-		ca.InstructionsKyma2()
 		return nil
 	}
 
@@ -95,19 +87,10 @@ func (cmd *command) importCertificate() error {
 
 	// create a simple step to print certificate import steps without a spinner (spinner overwrites sudo prompt)
 	// TODO refactor how certifier logs when the old install command is gone
-	if err := ca.StoreCertificate(tmpFile.Name(), s); err != nil {
+	if err := ca.StoreCertificateKyma2(tmpFile.Name(), s); err != nil {
+		ca.InstructionsKyma2()
 		return err
 	}
 	s.Successf("Kyma root certificate imported")
 	return nil
-}
-
-func (cmd *command) approveImportCertificate() bool {
-	qImportCertsStep := cmd.NewStep("Install Kyma certificate locally")
-	defer qImportCertsStep.Success()
-	return !cmd.avoidUserInteraction()
-}
-
-func (cmd *command) avoidUserInteraction() bool {
-	return cmd.NonInteractive || cmd.CI
 }

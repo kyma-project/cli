@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 package trust
@@ -107,4 +108,25 @@ func certDomain(certFile string) (string, error) {
 	}
 
 	return strings.Replace(matches[1], "'", "", -1), nil
+}
+
+func (c certauth) StoreCertificateKyma2(file string, i Informer) error {
+
+	// get domain to put on the certificate name.
+	// Linux does not have a proper certificate manager and we need to be able to identify the certificate
+	domain, err := certDomain(file)
+	if err != nil {
+		return err
+	}
+
+	_, err = cli.RunCmd("sudo", "cp", file, fmt.Sprintf("/usr/local/share/ca-certificates/kyma-%s.crt", domain))
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("\nCould not import the Kyma certificates. Follow the instructions to import them manually:\n-----\n%s-----\n", c.InstructionsKyma2()))
+	}
+	_, err = cli.RunCmd("sudo", "update-ca-certificates")
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("\nCould not import the Kyma certificates. Follow the instructions to import them manually:\n-----\n%s-----\n", c.InstructionsKyma2()))
+	}
+
+	return nil
 }

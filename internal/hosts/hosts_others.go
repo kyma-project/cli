@@ -1,3 +1,4 @@
+//go:build !windows
 // +build !windows
 
 package hosts
@@ -30,6 +31,45 @@ func addDevDomainsToEtcHostsOSSpecific(domain string, s step.Step, hostAlias str
 			return nil
 		}
 	}
+	_, err := cli.RunCmd("sudo",
+		"sed", "-i.bak",
+		fmt.Sprintf("/%s/d", domain),
+		hostsFile)
+	if err != nil {
+		notifyUserFunc(err)
+		return nil
+	}
+
+	if !strings.HasSuffix(hostAlias, "\n") {
+		hostAlias = hostAlias + "\n"
+	}
+
+	cmd := exec.Command("sudo", "tee", "-a", hostsFile)
+	buf := &bytes.Buffer{}
+	_, err = fmt.Fprint(buf, hostAlias)
+	if err != nil {
+		notifyUserFunc(err)
+		return nil
+	}
+	cmd.Stdin = buf
+	err = cmd.Run()
+	if err != nil {
+		notifyUserFunc(err)
+		return nil
+	}
+	return nil
+}
+
+func addDevDomainsToEtcHostsOSSpecificKyma2(domain string, s step.Step, hostAlias string) error {
+	notifyUserFunc := func(err error) {
+		if err != nil {
+			s.LogInfof("Error: %s", err.Error())
+		}
+		s.LogInfof("Execute the following command manually to add domain entries:\n###\n sudo sed -i.bak \"/"+domain+"/d\" "+hostsFile+" && echo '%s' | sudo tee -a /etc/hosts\r\n###\n", hostAlias)
+	}
+
+	s.LogInfo("Adding domain mappings to your 'hosts' file")
+
 	_, err := cli.RunCmd("sudo",
 		"sed", "-i.bak",
 		fmt.Sprintf("/%s/d", domain),

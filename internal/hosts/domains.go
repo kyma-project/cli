@@ -70,5 +70,5 @@ func AddDevDomainsToEtcHostsKyma2(
 	}
 
 	hostAlias := "127.0.0.1" + hostnames
-	return addDevDomainsToEtcHostsOSSpecific(domain, s, hostAlias)
+	return addDevDomainsToEtcHostsOSSpecificKyma2(domain, s, hostAlias)
 }
