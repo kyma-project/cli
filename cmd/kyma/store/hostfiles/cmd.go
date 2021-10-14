@@ -65,7 +65,7 @@ func (cmd *command) Run() error {
 		return nil
 	}
 
-	err = hosts.AddDevDomainsToEtcHosts2(s, cmd.K8s, defaultDomain)
+	err = hosts.AddDevDomainsToEtcHostsKyma2(s, cmd.K8s, defaultDomain)
 	if err != nil {
 		s.Failure()
 		if cmd.opts.Verbose {

@@ -54,7 +54,7 @@ func AddDevDomainsToEtcHosts(
 
 	return addDevDomainsToEtcHostsOSSpecific(domain, s, hostAlias)
 }
-func AddDevDomainsToEtcHosts2(
+func AddDevDomainsToEtcHostsKyma2(
 	s step.Step, kymaKube kube.KymaKube, domain string) error {
 	hostnames := ""
 
