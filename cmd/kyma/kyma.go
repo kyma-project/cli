@@ -2,7 +2,6 @@ package kyma
 
 import (
 	"github.com/kyma-project/cli/cmd/kyma/apply"
-	"github.com/kyma-project/cli/cmd/kyma/certificates"
 	"github.com/kyma-project/cli/cmd/kyma/completion"
 	"github.com/kyma-project/cli/cmd/kyma/console"
 	"github.com/kyma-project/cli/cmd/kyma/create"
@@ -19,6 +18,9 @@ import (
 	"github.com/kyma-project/cli/cmd/kyma/provision/k3d"
 	"github.com/kyma-project/cli/cmd/kyma/provision/minikube"
 	"github.com/kyma-project/cli/cmd/kyma/run"
+	"github.com/kyma-project/cli/cmd/kyma/store"
+	"github.com/kyma-project/cli/cmd/kyma/store/certificates"
+	"github.com/kyma-project/cli/cmd/kyma/store/hostfiles"
 	"github.com/kyma-project/cli/cmd/kyma/sync"
 	"github.com/kyma-project/cli/cmd/kyma/test"
 	testdefs "github.com/kyma-project/cli/cmd/kyma/test/definitions"
@@ -69,6 +71,10 @@ Kyma CLI allows you to install, test, and manage Kyma.
 	gardenerCmd.AddCommand(aws.NewCmd(aws.NewOptions(o)))
 	provisionCmd.AddCommand(gardenerCmd)
 
+	storeCmd := store.NewCmd()
+	storeCmd.AddCommand(certificates.NewCmd(o))
+	storeCmd.AddCommand(hostfiles.NewCmd(o))
+
 	cmd.AddCommand(
 		version.NewCmd(version.NewOptions(o)),
 		completion.NewCmd(),
@@ -80,7 +86,7 @@ Kyma CLI allows you to install, test, and manage Kyma.
 		dashboard.NewCmd(dashboard.NewOptions(o)),
 		deploy.NewCmd(deploy.NewOptions(o)),
 		undeploy.NewCmd(undeploy.NewOptions(o)),
-		certificates.NewCmd(o),
+		storeCmd,
 	)
 
 	testCmd := test.NewCmd()

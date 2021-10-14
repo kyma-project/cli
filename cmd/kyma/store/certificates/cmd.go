@@ -26,8 +26,8 @@ func NewCmd(o *cli.Options) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "add-certificates",
-		Short: "Adds certificates to local storage.",
+		Use:   "certificates",
+		Short: "Stores certificates to local storage.",
 		Long:  `Use this command to add the certificates to the local storage of machine after the installation.`,
 		RunE:  func(_ *cobra.Command, _ []string) error { return c.Run() },
 	}

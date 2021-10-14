@@ -23,7 +23,6 @@ Kyma CLI allows you to install, test, and manage Kyma.
 
 ## See also
 
-* [kyma add-certificates](#kyma-add-certificates-kyma-add-certificates)	 - Adds certificates to local storage.
 * [kyma apply](#kyma-apply-kyma-apply)	 - Applies local resources to the Kyma cluster.
 * [kyma completion](#kyma-completion-kyma-completion)	 - Generates bash or zsh completion scripts.
 * [kyma console](#kyma-console-kyma-console)	 - [DEPRECATED] Opens the Kyma Console in a web browser.
@@ -34,6 +33,7 @@ Kyma CLI allows you to install, test, and manage Kyma.
 * [kyma install](#kyma-install-kyma-install)	 - [DEPRECATED] Installs Kyma on a running Kubernetes cluster.
 * [kyma provision](#kyma-provision-kyma-provision)	 - Provisions a cluster for Kyma installation.
 * [kyma run](#kyma-run-kyma-run)	 - Runs resources.
+* [kyma store](#kyma-store-kyma-store)	 - Stores certificates or host files into local system.
 * [kyma sync](#kyma-sync-kyma-sync)	 - Synchronizes the local resources for your Function.
 * [kyma test](#kyma-test-kyma-test)	 - [DEPRECATED] Runs tests on a provisioned Kyma cluster.
 * [kyma undeploy](#kyma-undeploy-kyma-undeploy)	 - Undeploys Kyma from a running Kubernetes cluster.

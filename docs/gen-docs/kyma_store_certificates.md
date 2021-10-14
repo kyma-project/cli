@@ -1,15 +1,15 @@
 ---
-title: kyma add-certificates
+title: kyma store certificates
 ---
 
-Adds certificates to local storage.
+Stores certificates to local storage.
 
 ## Synopsis
 
 Use this command to add the certificates to the local storage of machine after the installation.
 
 ```bash
-kyma add-certificates [flags]
+kyma store certificates [flags]
 ```
 
 ## Flags inherited from parent commands
@@ -24,5 +24,5 @@ kyma add-certificates [flags]
 
 ## See also
 
-* [kyma](#kyma-kyma)	 - Controls a Kyma cluster.
+* [kyma store](#kyma-store-kyma-store)	 - Stores certificates or host files into local system.
 
