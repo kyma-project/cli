@@ -64,7 +64,7 @@ func (cmd *command) Run() error {
 	}
 
 	if !root.IsWithSudo() {
-		s.LogError("Could not store certificates locally. Make sure you are using sudo.")
+		s.LogError("Could not add entries to host file. Make sure you are using sudo.")
 		return nil
 	}
 
