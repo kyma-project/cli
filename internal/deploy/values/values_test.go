@@ -234,17 +234,51 @@ func TestMerge(t *testing.T) {
 			require.NoError(t, err)
 			require.Truef(t, reflect.DeepEqual(expected, actual), "want: %#v\n got: %#v\n", expected, actual)
 		})
+
+		t.Run("custom domain", func(t *testing.T) {
+			actual, err := Merge(Sources{
+				Domain: "hello.io",
+			}, "testdata", clusterinfo.K3d{ClusterName: "foo"})
+
+			expected := Values{
+				"global": map[string]interface{}{
+					"domainName": "hello.io",
+					"tlsCrt":     defaultLocalTLSCrtEnc,
+					"tlsKey":     defaultLocalTLSKeyEnc,
+				},
+				"serverless": map[string]interface{}{
+					"dockerRegistry": map[string]interface{}{
+						"enableInternal":        false,
+						"internalServerAddress": "k3d-foo-registry:5000",
+						"serverAddress":         "k3d-foo-registry:5000",
+						"registryAddress":       "k3d-foo-registry:5000",
+					},
+				},
+			}
+
+			require.NoError(t, err)
+			require.Truef(t, reflect.DeepEqual(expected, actual), "want: %#v\n got: %#v\n", expected, actual)
+		})
 	})
 
 	t.Run("gardener", func(t *testing.T) {
 		t.Run("default values", func(t *testing.T) {
-			actual, err := Merge(Sources{
-				Values: []string{
-					"global.domainName=github.com",
+			actual, err := Merge(Sources{}, "testdata", clusterinfo.Gardener{Domain: "foo.gardener.com"})
+
+			expected := Values{
+				"global": map[string]interface{}{
+					"domainName": "foo.gardener.com",
 				},
-			}, "testdata", clusterinfo.Gardener{
-				Domain: "foo.gardener.com",
-			})
+			}
+
+			require.NoError(t, err)
+			require.Truef(t, reflect.DeepEqual(expected, actual), "want: %#v\n got: %#v\n", expected, actual)
+		})
+
+		t.Run("custom domain via values", func(t *testing.T) {
+			actual, err := Merge(Sources{
+				Values: []string{"global.domainName=github.com"},
+			}, "testdata", clusterinfo.Gardener{Domain: "foo.gardener.com"})
 
 			expected := Values{
 				"global": map[string]interface{}{
@@ -256,14 +290,14 @@ func TestMerge(t *testing.T) {
 			require.Truef(t, reflect.DeepEqual(expected, actual), "want: %#v\n got: %#v\n", expected, actual)
 		})
 
-		t.Run("default values overridden", func(t *testing.T) {
-			actual, err := Merge(Sources{}, "testdata", clusterinfo.Gardener{
-				Domain: "foo.gardener.com",
-			})
+		t.Run("custom domain", func(t *testing.T) {
+			actual, err := Merge(Sources{
+				Domain: "github.com",
+			}, "testdata", clusterinfo.Gardener{Domain: "foo.gardener.com"})
 
 			expected := Values{
 				"global": map[string]interface{}{
-					"domainName": "foo.gardener.com",
+					"domainName": "github.com",
 				},
 			}
 
