@@ -1,19 +1,23 @@
 package deploy
 
 import (
+	"context"
 	"fmt"
+
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/service"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
+	"github.com/kyma-project/cli/internal/clusterinfo"
 	"github.com/kyma-project/cli/internal/deploy"
 	"github.com/kyma-project/cli/internal/deploy/istioctl"
 
-	"github.com/kyma-project/cli/internal/deploy/component"
-	"github.com/kyma-project/cli/internal/deploy/values"
 	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
 	"time"
+
+	"github.com/kyma-project/cli/internal/deploy/component"
+	"github.com/kyma-project/cli/internal/deploy/values"
 
 	"github.com/kyma-project/cli/internal/resolve"
 
@@ -21,7 +25,6 @@ import (
 	"github.com/kyma-project/cli/internal/config"
 	"github.com/kyma-project/cli/internal/coredns"
 	"github.com/kyma-project/cli/internal/files"
-	"github.com/kyma-project/cli/internal/k3d"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/nice"
 	"github.com/kyma-project/cli/internal/trust"
@@ -107,18 +110,18 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	vals, err := values.Merge(cmd.opts.Sources, ws, cmd.K8s.Static())
+	clusterinfo, err := clusterinfo.Discover(context.Background(), cmd.K8s.Static())
 	if err != nil {
-		return err
+		return errors.Wrap(err, "Failed to discover underlying cluster type")
 	}
 
-	isK3d, err := k3d.IsK3dCluster(cmd.K8s.Static())
+	vals, err := values.Merge(cmd.opts.Sources, ws.WorkspaceDir, clusterinfo)
 	if err != nil {
 		return err
 	}
 
 	hasCustomDomain := cmd.opts.Domain != ""
-	if _, err := coredns.Patch(l.Desugar(), cmd.K8s.Static(), hasCustomDomain, isK3d); err != nil {
+	if _, err := coredns.Patch(l.Desugar(), cmd.K8s.Static(), hasCustomDomain, clusterinfo); err != nil {
 		return err
 	}
 
@@ -143,7 +146,7 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	return cmd.printSummary(vals, deployTime)
+	return cmd.printSummary(deployTime)
 }
 
 func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, vals values.Values) error {
@@ -321,19 +324,10 @@ func (cmd *command) approveImportCertificate() bool {
 	return qImportCertsStep.PromptYesNo("Do you want to install the Kyma certificate locally?")
 }
 
-func (cmd *command) printSummary(vals values.Values, duration time.Duration) error {
-	globals := vals["global"]
-	var domainName string
-	if globalsMap, ok := globals.(map[string]interface{}); ok {
-		domainName = globalsMap["domainName"].(string)
-	} else {
-		return errors.New("domain not found in overrides")
-	}
-
+func (cmd *command) printSummary(duration time.Duration) error {
 	sum := nice.Summary{
 		NonInteractive: cmd.NonInteractive,
 		Version:        cmd.opts.Source,
-		URL:            domainName,
 		Duration:       duration,
 	}
 
