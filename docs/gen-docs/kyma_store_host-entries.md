@@ -25,5 +25,5 @@ kyma store host-entries [flags]
 
 ## See also
 
-* [kyma store](#kyma-store-kyma-store)	 - Stores certificates or host files in the local system.
+* [kyma store](#kyma-store-kyma-store)	 - Imports certificates to local keychain or adds domains to the local host file.
 

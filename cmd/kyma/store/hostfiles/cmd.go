@@ -48,9 +48,6 @@ func (cmd *command) Run() error {
 	}
 
 	s := f.NewStep("")
-	if cmd.opts.CI {
-		cmd.Factory.NonInteractive = true
-	}
 
 	if cmd.opts.Verbose {
 		cmd.Factory.UseLogger = true

@@ -2,11 +2,11 @@
 title: kyma store
 ---
 
-Stores certificates or host files in the local system.
+Imports certificates to local keychain or adds domains to the local host file.
 
 ## Synopsis
 
-Stores certificates or host files in the local system.
+Imports certificates to local keychain or adds domains to the local host file.
 
 ## Flags inherited from parent commands
 
