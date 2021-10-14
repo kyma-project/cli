@@ -146,7 +146,7 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	return cmd.printSummary(vals, deployTime)
+	return cmd.printSummary(deployTime)
 }
 
 func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, vals values.Values) error {
@@ -324,19 +324,10 @@ func (cmd *command) approveImportCertificate() bool {
 	return qImportCertsStep.PromptYesNo("Do you want to install the Kyma certificate locally?")
 }
 
-func (cmd *command) printSummary(vals values.Values, duration time.Duration) error {
-	globals := vals["global"]
-	var domainName string
-	if globalsMap, ok := globals.(map[string]interface{}); ok {
-		domainName = globalsMap["domainName"].(string)
-	} else {
-		return errors.New("domain not found in overrides")
-	}
-
+func (cmd *command) printSummary(duration time.Duration) error {
 	sum := nice.Summary{
 		NonInteractive: cmd.NonInteractive,
 		Version:        cmd.opts.Source,
-		URL:            domainName,
 		Duration:       duration,
 	}
 
