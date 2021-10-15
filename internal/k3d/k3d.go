@@ -208,6 +208,7 @@ func StartCluster(verbose bool, timeout time.Duration, workers int, k3sArgs []st
 	cmdArgs := []string{
 		"cluster", "create", k3d.ClusterName,
 		"--kubeconfig-update-default",
+		"--kubeconfig-switch-context",
 		"--timeout", fmt.Sprintf("%ds", int(timeout.Seconds())),
 		"--agents", fmt.Sprintf("%d", workers),
 		"--k3s-arg", "--disable=traefik@server:0",
