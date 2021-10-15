@@ -32,8 +32,8 @@ func NewCmd(o *cli.Options) *cobra.Command {
 
 	cobraCmd := &cobra.Command{
 		Use:   "host-entries",
-		Short: "Imports domain entries in the system host file.",
-		Long: `Use this command to add domain to the host file of the local system.
+		Short: "Imports domain entries in the system hosts file.",
+		Long: `Use this command to add domain to the hosts file of the local system.
 `,
 		RunE: func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 	}
