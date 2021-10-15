@@ -32,7 +32,7 @@ func NewCmd(o *cli.Options) *cobra.Command {
 
 	cobraCmd := &cobra.Command{
 		Use:   "host-entries",
-		Short: "Stores domain entries in the system host file.",
+		Short: "Imports domain entries in the system host file.",
 		Long: `Use this command to add domain to the host file of the local system.
 `,
 		RunE: func(_ *cobra.Command, _ []string) error { return cmd.Run() },
@@ -58,7 +58,7 @@ func (cmd *command) Run() error {
 	}
 
 	if !root.IsWithSudo() {
-		s.LogError("Could not add entries to host file. Make sure you are using sudo.")
+		s.LogError("Elevated permissions are required to make entries to host file. Make sure you are using sudo.")
 		return nil
 	}
 

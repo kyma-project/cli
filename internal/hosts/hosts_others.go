@@ -30,36 +30,22 @@ func addDevDomainsToEtcHostsOSSpecific(domain string, s step.Step, hostAlias str
 			return nil
 		}
 	}
-	_, err := cli.RunCmd("sudo",
-		"sed", "-i.bak",
-		fmt.Sprintf("/%s/d", domain),
-		hostsFile)
+	err := addDevDomainsRunCmd(domain, s, hostAlias)
 	if err != nil {
-		notifyUserFunc(err)
-		return nil
-	}
-
-	if !strings.HasSuffix(hostAlias, "\n") {
-		hostAlias = hostAlias + "\n"
-	}
-
-	cmd := exec.Command("sudo", "tee", "-a", hostsFile)
-	buf := &bytes.Buffer{}
-	_, err = fmt.Fprint(buf, hostAlias)
-	if err != nil {
-		notifyUserFunc(err)
-		return nil
-	}
-	cmd.Stdin = buf
-	err = cmd.Run()
-	if err != nil {
-		notifyUserFunc(err)
-		return nil
+		return err
 	}
 	return nil
 }
 
 func addDevDomainsToEtcHostsOSSpecificKyma2(domain string, s step.Step, hostAlias string) error {
+	err := addDevDomainsRunCmd(domain, s, hostAlias)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func addDevDomainsRunCmd(domain string, s step.Step, hostAlias string) error {
 	notifyUserFunc := func(err error) {
 		if err != nil {
 			s.LogInfof("Error: %s", err.Error())

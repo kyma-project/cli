@@ -1,16 +1,12 @@
 ---
-title: kyma store certificates
+title: kyma import
 ---
 
-Stores certificates in local storage.
+Imports certificates to local keychain or adds domains to the local host file.
 
 ## Synopsis
 
-Use this command to add the certificates to the local storage of machine after the installation.
-
-```bash
-kyma store certificates [flags]
-```
+Imports certificates to local keychain or adds domains to the local host file.
 
 ## Flags inherited from parent commands
 
@@ -24,5 +20,7 @@ kyma store certificates [flags]
 
 ## See also
 
-* [kyma store](#kyma-store-kyma-store)	 - Imports certificates to local keychain or adds domains to the local host file.
+* [kyma](#kyma-kyma)	 - Controls a Kyma cluster.
+* [kyma import certificates](#kyma-import-certificates-kyma-import-certificates)	 - Imports certificates in local storage.
+* [kyma import host-entries](#kyma-import-host-entries-kyma-import-host-entries)	 - Imports domain entries in the system host file.
 

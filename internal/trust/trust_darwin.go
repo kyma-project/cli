@@ -81,7 +81,7 @@ func (k keychain) StoreCertificateKyma2(file string, i Informer) error {
 
 	_, err := cli.RunCmd("sudo", "security", "add-trusted-cert", "-d", "-r", "trustRoot", "-k", "/Library/Keychains/System.keychain", file)
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("\nCould not import the Kyma root certificate. Follow the instructions below to import it manually:\n-----\n%s-----\n", k.Instructions()))
+		return errors.Wrap(err, fmt.Sprintf("\nCould not import the Kyma root certificate. Follow the instructions below to import it manually:\n-----\n%s-----\n", k.InstructionsKyma2()))
 	}
 
 	return nil

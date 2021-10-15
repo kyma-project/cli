@@ -7,7 +7,7 @@ import (
 //NewCmd creates a new store command
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "store",
+		Use:   "import",
 		Short: "Imports certificates to local keychain or adds domains to the local host file.",
 	}
 	return cmd

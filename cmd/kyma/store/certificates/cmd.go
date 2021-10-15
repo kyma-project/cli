@@ -27,7 +27,7 @@ func NewCmd(o *cli.Options) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "certificates",
-		Short: "Stores certificates in local storage.",
+		Short: "Imports certificates in local storage.",
 		Long:  `Use this command to add the certificates to the local storage of machine after the installation.`,
 		RunE:  func(_ *cobra.Command, _ []string) error { return c.Run() },
 	}
@@ -59,7 +59,7 @@ func (cmd *command) importCertificate() error {
 	s := f.NewStep("Importing Kyma certificate")
 	ca := trust.NewCertifier(cmd.K8s)
 	if !root.IsWithSudo() {
-		s.LogError("Could not store certificates locally. Make sure you are using sudo.")
+		s.LogError("Elevated permissions are required to store certificates locally. Make sure you are using sudo.")
 		return nil
 	}
 

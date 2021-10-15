@@ -1,12 +1,17 @@
 ---
-title: kyma store
+title: kyma import host-entries
 ---
 
-Imports certificates to local keychain or adds domains to the local host file.
+Imports domain entries in the system host file.
 
 ## Synopsis
 
-Imports certificates to local keychain or adds domains to the local host file.
+Use this command to add domain to the host file of the local system.
+
+
+```bash
+kyma import host-entries [flags]
+```
 
 ## Flags inherited from parent commands
 
@@ -20,7 +25,5 @@ Imports certificates to local keychain or adds domains to the local host file.
 
 ## See also
 
-* [kyma](#kyma-kyma)	 - Controls a Kyma cluster.
-* [kyma store certificates](#kyma-store-certificates-kyma-store-certificates)	 - Stores certificates in local storage.
-* [kyma store host-entries](#kyma-store-host-entries-kyma-store-host-entries)	 - Stores domain entries in the system host file.
+* [kyma import](#kyma-import-kyma-import)	 - Imports certificates to local keychain or adds domains to the local host file.
 
