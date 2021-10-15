@@ -2,11 +2,11 @@
 title: kyma import host-entries
 ---
 
-Imports domain entries in the system host file.
+Imports domain entries in the system hosts file.
 
 ## Synopsis
 
-Use this command to add domain to the host file of the local system.
+Use this command to add domain to the hosts file of the local system.
 
 
 ```bash
