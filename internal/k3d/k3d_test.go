@@ -127,7 +127,7 @@ func TestStartCluster(t *testing.T) {
 	k3dSettings := Settings{
 		ClusterName: "kyma",
 		Args:        []string{"--alsologtostderr"},
-		Version:     "1.20.7",
+		Version:     "1.20.11",
 		PortMapping: []string{"80:80@loadbalancer", "443:443@loadbalancer"},
 	}
 	err := StartCluster(false, 5*time.Second, 1, []string{}, []string{"k3d-kyma-registry.localhost"}, k3dSettings)
