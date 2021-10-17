@@ -1,19 +1,23 @@
 package deploy
 
 import (
+	"context"
 	"fmt"
+
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/service"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
+	"github.com/kyma-project/cli/internal/clusterinfo"
 	"github.com/kyma-project/cli/internal/deploy"
 	"github.com/kyma-project/cli/internal/deploy/istioctl"
 
-	"github.com/kyma-project/cli/internal/deploy/component"
-	"github.com/kyma-project/cli/internal/deploy/values"
 	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
 	"time"
+
+	"github.com/kyma-project/cli/internal/deploy/component"
+	"github.com/kyma-project/cli/internal/deploy/values"
 
 	"github.com/kyma-project/cli/internal/resolve"
 
@@ -21,7 +25,6 @@ import (
 	"github.com/kyma-project/cli/internal/config"
 	"github.com/kyma-project/cli/internal/coredns"
 	"github.com/kyma-project/cli/internal/files"
-	"github.com/kyma-project/cli/internal/k3d"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/nice"
 	"github.com/kyma-project/cli/internal/trust"
@@ -70,6 +73,7 @@ func NewCmd(o *Options) *cobra.Command {
 		fmt.Sprintf("Kyma deployment profile. If not specified, Kyma uses its default configuration. The supported profiles are: %s, %s.", profileEvaluation, profileProduction))
 	cobraCmd.Flags().StringVarP(&o.TLSCrtFile, "tls-crt", "", "", "TLS certificate file for the domain used for installation.")
 	cobraCmd.Flags().StringVarP(&o.TLSKeyFile, "tls-key", "", "", "TLS key file for the domain used for installation.")
+	cobraCmd.Flags().IntVarP(&o.WorkerPoolSize, "concurrency", "", 4, "Set maximum number of workers to run simultaneously to deploy Kyma.")
 	cobraCmd.Flags().StringSliceVarP(&o.Values, "value", "", []string{}, "Set configuration values. Can specify one or more values, also as a comma-separated list (e.g. --value component.a='1' --value component.b='2' or --value component.a='1',component.b='2').")
 	cobraCmd.Flags().StringSliceVarP(&o.ValueFiles, "values-file", "f", []string{}, "Path(s) to one or more JSON or YAML files with configuration values.")
 
@@ -106,18 +110,18 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	vals, err := values.Merge(cmd.opts.Sources, ws, cmd.K8s.Static())
+	clusterinfo, err := clusterinfo.Discover(context.Background(), cmd.K8s.Static())
 	if err != nil {
-		return err
+		return errors.Wrap(err, "Failed to discover underlying cluster type")
 	}
 
-	isK3d, err := k3d.IsK3dCluster(cmd.K8s.Static())
+	vals, err := values.Merge(cmd.opts.Sources, ws.WorkspaceDir, clusterinfo)
 	if err != nil {
 		return err
 	}
 
 	hasCustomDomain := cmd.opts.Domain != ""
-	if _, err := coredns.Patch(l.Desugar(), cmd.K8s.Static(), hasCustomDomain, isK3d); err != nil {
+	if _, err := coredns.Patch(l.Desugar(), cmd.K8s.Static(), hasCustomDomain, clusterinfo); err != nil {
 		return err
 	}
 
@@ -142,7 +146,7 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	return cmd.printSummary(vals, deployTime)
+	return cmd.printSummary(deployTime)
 }
 
 func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, vals values.Values) error {
@@ -165,13 +169,14 @@ func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, 
 	deployStep.Start()
 
 	err = deploy.Deploy(deploy.Options{
-		Components:  components,
-		Values:      vals,
-		StatusFunc:  cmd.printDeployStatus,
-		KubeConfig:  kubeconfig,
-		KymaVersion: cmd.opts.Source,
-		KymaProfile: cmd.opts.Profile,
-		Logger:      l,
+		Components:     components,
+		Values:         vals,
+		StatusFunc:     cmd.printDeployStatus,
+		KubeConfig:     kubeconfig,
+		KymaVersion:    cmd.opts.Source,
+		KymaProfile:    cmd.opts.Profile,
+		Logger:         l,
+		WorkerPoolSize: cmd.opts.WorkerPoolSize,
 	})
 	if err != nil {
 		deployStep.Failuref("Failed to deploy Kyma.")
@@ -192,10 +197,10 @@ func (cmd *command) printDeployStatus(status deploy.ComponentStatus) {
 		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' deployed", status.Component))
 		statusStep.Success()
 	case deploy.RecoverableError:
-		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' failed. Retrying...", status.Component))
+		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' failed with reason(%s). Retrying...", status.Component, status.Error.Error()))
 		statusStep.Failure()
 	case deploy.UnrecoverableError:
-		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' failed and terminated", status.Component))
+		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' failed with reason(%s) and terminated", status.Component, status.Error.Error()))
 		statusStep.Failure()
 	}
 }
@@ -319,19 +324,10 @@ func (cmd *command) approveImportCertificate() bool {
 	return qImportCertsStep.PromptYesNo("Do you want to install the Kyma certificate locally?")
 }
 
-func (cmd *command) printSummary(vals values.Values, duration time.Duration) error {
-	globals := vals["global"]
-	var domainName string
-	if globalsMap, ok := globals.(map[string]interface{}); ok {
-		domainName = globalsMap["domainName"].(string)
-	} else {
-		return errors.New("domain not found in overrides")
-	}
-
+func (cmd *command) printSummary(duration time.Duration) error {
 	sum := nice.Summary{
 		NonInteractive: cmd.NonInteractive,
 		Version:        cmd.opts.Source,
-		URL:            domainName,
 		Duration:       duration,
 	}
 

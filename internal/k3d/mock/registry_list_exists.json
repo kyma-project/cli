@@ -1,0 +1,57 @@
+[
+  {
+    "name": "k3d-kyma-registry",
+    "role": "registry",
+    "image": "sha256:b2cb11db9d3d60af38d9d6841d3b8b053e5972c0b7e4e6351e9ea4374ed37d8c",
+    "env": [
+      "K3S_KUBECONFIG_OUTPUT=/output/kubeconfig.yaml",
+      "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    ],
+    "Cmd": [
+      "/etc/docker/registry/config.yml"
+    ],
+    "portMappings": {
+      "5000/tcp": [
+        {
+          "HostIp": "0.0.0.0",
+          "HostPort": "5000"
+        }
+      ]
+    },
+    "restart": true,
+    "created": "2021-10-08T07:32:43.146200224Z",
+    "runtimeLabels": {
+      "k3d.cluster": "",
+      "k3d.registry.host": "",
+      "k3d.registry.hostIP": "0.0.0.0",
+      "k3d.role": "registry",
+      "k3d.version": "v5.0.0"
+    },
+    "Networks": [
+      "k3d-kyma",
+      "bridge"
+    ],
+    "ExtraHosts": null,
+    "serverOpts": {
+      "kubeAPI": {
+        "Port": "",
+        "Binding": {
+          "HostIp": "",
+          "HostPort": ""
+        }
+      }
+    },
+    "agentOpts": {},
+    "GPURequest": "",
+    "Memory": "",
+    "State": {
+      "Running": true,
+      "Status": "running",
+      "Started": ""
+    },
+    "IP": {
+      "IP": "",
+      "Static": false
+    }
+  }
+]

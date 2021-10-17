@@ -3,16 +3,11 @@ package k3d
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
-)
-
-const (
-	mockDir = "src/github.com/kyma-project/cli/internal/k3d/mock"
 )
 
 func TestMain(m *testing.M) {
@@ -32,7 +27,16 @@ func setup() bool {
 		fmt.Println("Could not inject k3d mock directory into PATH: env-var GOPATH is undefined")
 		return false
 	}
-	os.Setenv("PATH", fmt.Sprintf("%s:%s", filepath.Join(os.Getenv("GOPATH"), mockDir), os.Getenv("PATH")))
+
+	currentDir, err := os.Getwd()
+	fmt.Println(currentDir)
+	if err != nil {
+		fmt.Println(err.Error())
+		return false
+	}
+	mockDir := fmt.Sprintf("%s/mock", currentDir)
+
+	os.Setenv("PATH", fmt.Sprintf("%s:%s", mockDir, os.Getenv("PATH")))
 	return true
 }
 
@@ -42,11 +46,11 @@ type testFunc func(output string, err error)
 func TestRunCmd(t *testing.T) {
 	tests := []struct {
 		cmd      []string
-		verifyer testFunc
+		verifier testFunc
 	}{
 		{
 			cmd: []string{"cluster", "list"},
-			verifyer: testFunc(func(output string, err error) {
+			verifier: testFunc(func(output string, err error) {
 				if !strings.Contains(output, "kyma-cluster") {
 					require.Fail(t, fmt.Sprintf("Expected string 'kyma-cluster' is missing in k3d output: %s", output))
 				}
@@ -54,7 +58,7 @@ func TestRunCmd(t *testing.T) {
 		},
 		{
 			cmd: []string{"cluster", "xyz"},
-			verifyer: testFunc(func(output string, err error) {
+			verifier: testFunc(func(output string, err error) {
 				require.NotEmpty(t, err, "Error object expected")
 			}),
 		},
@@ -62,8 +66,8 @@ func TestRunCmd(t *testing.T) {
 
 	for testID, testCase := range tests {
 		output, err := RunCmd(false, 5*time.Second, testCase.cmd...)
-		require.NotNilf(t, testCase.verifyer, "Verifyer function missing for test #'%d'", testID)
-		testCase.verifyer(output, err)
+		require.NotNilf(t, testCase.verifier, "Verifier function missing for test #'%d'", testID)
+		testCase.verifier(output, err)
 	}
 
 }
@@ -102,6 +106,23 @@ func TestInitializeFailed(t *testing.T) {
 	os.Setenv("PATH", pathPrev)
 }
 
+func TestRegistryExists(t *testing.T) {
+	exists, err := RegistryExists(false, "kyma")
+	require.NoError(t, err)
+	require.True(t, exists)
+}
+
+func TestCreateRegistry(t *testing.T) {
+	registryURL, err := CreateRegistry(false, 5*time.Second, "kyma")
+	require.Equal(t, "kyma-registry:5000", registryURL)
+	require.NoError(t, err)
+}
+
+func TestDeleteRegistry(t *testing.T) {
+	err := DeleteRegistry(false, 5*time.Second, "kyma")
+	require.NoError(t, err)
+}
+
 func TestStartCluster(t *testing.T) {
 	k3dSettings := Settings{
 		ClusterName: "kyma",
@@ -109,7 +130,7 @@ func TestStartCluster(t *testing.T) {
 		Version:     "1.20.7",
 		PortMapping: []string{"80:80@loadbalancer", "443:443@loadbalancer"},
 	}
-	err := StartCluster(false, 5*time.Second, 1, []string{"--alsologtostderr"}, []string{"--no-rollback"}, k3dSettings)
+	err := StartCluster(false, 5*time.Second, 1, []string{}, []string{"k3d-kyma-registry.localhost"}, k3dSettings)
 	require.NoError(t, err)
 }
 

@@ -29,8 +29,8 @@ type Options struct {
 	Source         string
 	Components     []string
 	ComponentsFile string
-	Domain         string
 	Profile        string
+	WorkerPoolSize int
 }
 
 //NewOptions creates options with default values

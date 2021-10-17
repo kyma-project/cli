@@ -130,7 +130,7 @@ func (c *command) runContainer(ctx context.Context, client *client.Client, cfg w
 		fmt.Println("Logs from the container:")
 		followCtx := context.Background()
 		c.Finalizers.Add(docker.Stop(followCtx, client, id, func(i ...interface{}) { fmt.Print(i...) }))
-		return docker.FollowRun(followCtx, client, id, func(i ...interface{}) { fmt.Print(i...) })
+		return docker.FollowRun(followCtx, client, id)
 	}
 	return nil
 }

@@ -1,0 +1,1 @@
+INFO[0000] Deleted k3d-kyma-registry.localhost

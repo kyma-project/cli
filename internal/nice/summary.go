@@ -32,9 +32,11 @@ func (s *Summary) Print() error {
 	fmt.Print(" installation took:\t\t")
 	nicePrint.PrintImportantf("%d hours %d minutes", int64(s.Duration.Hours()), int64(s.Duration.Minutes()))
 
-	nicePrint.PrintKyma()
-	fmt.Print(" is running at:\t\t")
-	nicePrint.PrintImportant(s.URL)
+	if s.URL != "" {
+		nicePrint.PrintKyma()
+		fmt.Print(" is running at:\t\t")
+		nicePrint.PrintImportant(s.URL)
+	}
 
 	// Console
 
