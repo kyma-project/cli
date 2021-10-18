@@ -2,153 +2,242 @@ package k3d
 
 import (
 	"fmt"
-	"os"
-	"strings"
 	"testing"
 	"time"
 
+	"github.com/kyma-project/cli/internal/cli/mocks"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 )
 
-func TestMain(m *testing.M) {
-	if !setup() {
-		fmt.Println("Setup of k3d test failed: test case for k3d can't be executed")
-		return
-	}
-	code := m.Run()
-	//shutdown()
-	os.Exit(code)
+const (
+	testClusterName = "kyma"
+	testTimeout     = 5 * time.Second
+)
+
+type V5TestSuite struct {
+	suite.Suite
+	client       Client
+	mockExecutor *mocks.Executor
 }
 
-// Place this folder at the beginning of PATH env-var to ensure this
-// mock-script will be used instead of a locally installed k3d tool.
-func setup() bool {
-	if os.Getenv("GOPATH") == "" {
-		fmt.Println("Could not inject k3d mock directory into PATH: env-var GOPATH is undefined")
-		return false
-	}
-
-	currentDir, err := os.Getwd()
-	fmt.Println(currentDir)
-	if err != nil {
-		fmt.Println(err.Error())
-		return false
-	}
-	mockDir := fmt.Sprintf("%s/mock", currentDir)
-
-	os.Setenv("PATH", fmt.Sprintf("%s:%s", mockDir, os.Getenv("PATH")))
-	return true
+func (suite *V5TestSuite) SetupTest() {
+	suite.mockExecutor = &mocks.Executor{}
+	suite.client = NewClient(suite.mockExecutor, testClusterName, true, testTimeout, true)
 }
 
-// function to verify output of k3d tool
-type testFunc func(output string, err error)
+func (suite *V5TestSuite) TestVerifyStatus() {
+	suite.mockExecutor.On("RunCmd", mock.Anything, "k3d", "version").Return("k3d version v5.0.0\nk3s version v1.21.5-k3s2 (default)", nil)
 
-func TestRunCmd(t *testing.T) {
-	tests := []struct {
-		cmd      []string
-		verifier testFunc
-	}{
-		{
-			cmd: []string{"cluster", "list"},
-			verifier: testFunc(func(output string, err error) {
-				if !strings.Contains(output, "kyma-cluster") {
-					require.Fail(t, fmt.Sprintf("Expected string 'kyma-cluster' is missing in k3d output: %s", output))
-				}
-			}),
+	suite.mockExecutor.On("RunCmd", mock.Anything, "k3d", "cluster", "list").Return("", nil)
+
+	err := suite.client.VerifyStatus()
+	suite.Nil(err)
+}
+
+func (suite *V5TestSuite) TestCheckVersionIncompMinor() {
+	suite.mockExecutor.On("RunCmd", mock.Anything, "k3d", "version").Return("k3d version v4.4.8\nk3s version v1.21.3-k3s1 (default)", nil)
+
+	err := suite.client.VerifyStatus()
+	suite.Error(err)
+}
+
+func (suite *V5TestSuite) TestCheckVersionIncompMajor() {
+	suite.mockExecutor.On("RunCmd", mock.Anything, "k3d", "version").Return("k3d version v6.1.0\nk3s version latest (default)", nil)
+
+	err := suite.client.VerifyStatus()
+	suite.Error(err)
+}
+
+func (suite *V5TestSuite) TestClusterExistsTrue() {
+	clusterExistsOutput := `  [
+    {
+      "name": "kyma",
+      "nodes": [
+        {
+          "name": "k3d-kyma-serverlb",
+          "role": "loadbalancer",
+          "State": {
+            "Running": true,
+            "Status": "running"
+          }
+        },
+        {
+          "name": "k3d-kyma-server-0",
+          "role": "server",
+          "State": {
+            "Running": true,
+            "Status": "running"
+          }
+        }
+      ]
+    }
+  ]`
+	suite.mockExecutor.On("RunCmd", mock.Anything, "k3d", "cluster", "list", "-o", "json").
+		Return(clusterExistsOutput, nil)
+
+	exists, err := suite.client.ClusterExists()
+	suite.True(exists)
+	suite.Nil(err)
+}
+
+func (suite *V5TestSuite) TestClusterExistsFalse() {
+	suite.mockExecutor.On("RunCmd", mock.Anything, "k3d", "cluster", "list", "-o", "json").
+		Return("[]", nil)
+
+	exists, err := suite.client.ClusterExists()
+	suite.False(exists)
+	suite.Nil(err)
+}
+
+func (suite *V5TestSuite) TestRegistryExistsTrue() {
+	registryExistsOutput := `[
+  {
+    "name": "k3d-kyma-registry",
+    "role": "registry",
+    "State": {
+      "Running": true,
+      "Status": "running",
+      "Started": ""
+    }
+  }
+]`
+	suite.mockExecutor.On("RunCmd", mock.Anything, "k3d", "registry", "list", "-o", "json").
+		Return(registryExistsOutput, nil)
+
+	exists, err := suite.client.RegistryExists("kyma-registry")
+	suite.True(exists)
+	suite.Nil(err)
+}
+
+func (suite *V5TestSuite) TestRegistryExistsFalse() {
+	suite.mockExecutor.On("RunCmd", mock.Anything, "k3d", "registry", "list", "-o", "json").
+		Return("[]", nil)
+
+	exists, err := suite.client.RegistryExists("k3d-kyma-registry")
+	suite.False(exists)
+	suite.Nil(err)
+}
+
+func (suite *V5TestSuite) TestCreateCluster() {
+	settings := CreateClusterSettings{
+		Args:              []string{"--verbose"},
+		KubernetesVersion: "1.20.11",
+		PortMapping:       []string{"80:80@loadbalancer", "443:443@loadbalancer"},
+		Workers:           0,
+		V5Settings: V5CreateClusterSettings{
+			K3sArgs:     []string{},
+			UseRegistry: []string{"k3d-own-registry:5001"},
 		},
-		{
-			cmd: []string{"cluster", "xyz"},
-			verifier: testFunc(func(output string, err error) {
-				require.NotEmpty(t, err, "Error object expected")
-			}),
+	}
+
+	suite.mockExecutor.On("RunCmd", mock.Anything, "k3d", "cluster", "create", testClusterName,
+		"--kubeconfig-update-default",
+		"--timeout", "5s",
+		"--agents", "0",
+		"--image", "rancher/k3s:v1.20.11-k3s1",
+		"--kubeconfig-switch-context",
+		"--k3s-arg", "--disable=traefik@server:0",
+		"--registry-use", "k3d-own-registry:5001",
+		"--port", "80:80@loadbalancer",
+		"--port", "443:443@loadbalancer",
+		"--verbose").Return("", nil)
+
+	err := suite.client.CreateCluster(settings)
+	suite.Nil(err)
+}
+
+func (suite *V5TestSuite) TestCreateRegistry() {
+	suite.mockExecutor.On("RunCmd", mock.Anything, "k3d", "registry", "create", "kyma-registry",
+		"--port", "5000").Return("", nil)
+
+	registryName, err := suite.client.CreateRegistry("kyma-registry")
+	suite.Nil(err)
+	suite.Equal("kyma-registry:5000", registryName)
+}
+
+func (suite *V5TestSuite) TestDeleteCluster() {
+	suite.mockExecutor.On("RunCmd", mock.Anything, "k3d", "cluster", "delete", testClusterName).Return("", nil)
+
+	err := suite.client.DeleteCluster()
+	suite.Nil(err)
+}
+
+func (suite *V5TestSuite) TestDeleteRegistry() {
+	registryName := fmt.Sprintf(V5DefaultRegistryNamePattern, testClusterName)
+	suite.mockExecutor.On("RunCmd", mock.Anything, "k3d", "registry", "delete", fmt.Sprintf("k3d-%s", registryName)).Return("", nil)
+
+	err := suite.client.DeleteRegistry(registryName)
+	suite.Nil(err)
+}
+
+func TestV5TestSuite(t *testing.T) {
+	suite.Run(t, new(V5TestSuite))
+}
+
+type V4TestSuite struct {
+	suite.Suite
+	client       Client
+	mockExecutor *mocks.Executor
+}
+
+func (suite *V4TestSuite) SetupTest() {
+	suite.mockExecutor = &mocks.Executor{}
+	suite.client = NewClient(suite.mockExecutor, testClusterName, true, testTimeout, false)
+}
+
+func (suite *V4TestSuite) TestCheckVersionIncompMinor() {
+	suite.mockExecutor.On("RunCmd", mock.Anything, "k3d", "version").Return("k3d version v3.4.8\nk3s version v1.21.3-k3s1 (default)", nil)
+
+	err := suite.client.VerifyStatus()
+	suite.Error(err)
+}
+
+func (suite *V4TestSuite) TestCheckVersionIncompMajor() {
+	suite.mockExecutor.On("RunCmd", mock.Anything, "k3d", "version").Return("k3d version v5.1.0\nk3s version latest (default)", nil)
+
+	err := suite.client.VerifyStatus()
+	suite.Error(err)
+}
+
+func (suite *V4TestSuite) TestCreateCluster() {
+	settings := CreateClusterSettings{
+		Args:              []string{"--verbose"},
+		KubernetesVersion: "1.20.11",
+		PortMapping:       []string{"80:80@loadbalancer", "443:443@loadbalancer"},
+		Workers:           1,
+		V4Settings: V4CreateClusterSettings{
+			ServerArgs: []string{"--alsologtostderr"},
+			AgentArgs:  []string{"--no-rollback"},
 		},
 	}
 
-	for testID, testCase := range tests {
-		output, err := RunCmd(false, 5*time.Second, testCase.cmd...)
-		require.NotNilf(t, testCase.verifier, "Verifier function missing for test #'%d'", testID)
-		testCase.verifier(output, err)
-	}
+	suite.mockExecutor.On("RunCmd", mock.Anything, "k3d", "cluster", "create", testClusterName,
+		"--kubeconfig-update-default",
+		"--timeout", "5s",
+		"--agents", "1",
+		"--image", "rancher/k3s:v1.20.11-k3s1",
+		"--registry-create",
+		"--k3s-server-arg", "--disable",
+		"--k3s-server-arg", "traefik",
+		"--k3s-server-arg", "--alsologtostderr",
+		"--k3s-agent-arg", "--no-rollback",
+		"--port", "80:80@loadbalancer",
+		"--port", "443:443@loadbalancer",
+		"--verbose").Return("", nil)
 
+	err := suite.client.CreateCluster(settings)
+	suite.Nil(err)
 }
 
-func TestCheckVersion(t *testing.T) {
-	err := checkVersion(false)
-	require.NoError(t, err)
-}
-
-func TestCheckVersionIncompatibleMinor(t *testing.T) {
-	os.Setenv("K3D_MOCK_DUMPFILE", "version_incompminor.txt")
-	err := checkVersion(false)
-	require.Error(t, err)
-	os.Setenv("K3D_MOCK_DUMPFILE", "")
-}
-
-func TestCheckVersionIncompatibleMajor(t *testing.T) {
-	os.Setenv("K3D_MOCK_DUMPFILE", "version_incompmajor.txt")
-	err := checkVersion(false)
-	require.Error(t, err)
-	os.Setenv("K3D_MOCK_DUMPFILE", "")
-}
-
-func TestInitialize(t *testing.T) {
-	err := Initialize(false)
-	require.NoError(t, err)
-}
-
-func TestInitializeFailed(t *testing.T) {
-	pathPrev := os.Getenv("PATH")
-	os.Setenv("PATH", "/usr/bin")
-
-	err := Initialize(false)
-	require.Error(t, err)
-
-	os.Setenv("PATH", pathPrev)
-}
-
-func TestRegistryExists(t *testing.T) {
-	exists, err := RegistryExists(false, "kyma")
-	require.NoError(t, err)
-	require.True(t, exists)
-}
-
-func TestCreateRegistry(t *testing.T) {
-	registryURL, err := CreateRegistry(false, 5*time.Second, "kyma")
-	require.Equal(t, "kyma-registry:5000", registryURL)
-	require.NoError(t, err)
-}
-
-func TestDeleteRegistry(t *testing.T) {
-	err := DeleteRegistry(false, 5*time.Second, "kyma")
-	require.NoError(t, err)
-}
-
-func TestStartCluster(t *testing.T) {
-	k3dSettings := Settings{
-		ClusterName: "kyma",
-		Args:        []string{"--alsologtostderr"},
-		Version:     "1.20.7",
-		PortMapping: []string{"80:80@loadbalancer", "443:443@loadbalancer"},
-	}
-	err := StartCluster(false, 5*time.Second, 1, []string{}, []string{"k3d-kyma-registry.localhost"}, k3dSettings)
-	require.NoError(t, err)
-}
-
-func TestDeleteCluster(t *testing.T) {
-	err := DeleteCluster(false, 5*time.Second, "kyma")
-	require.NoError(t, err)
-}
-
-func TestClusterExists(t *testing.T) {
-	os.Setenv("K3D_MOCK_DUMPFILE", "cluster_list_exists.json")
-	exists, err := ClusterExists(false, "kyma")
-	require.NoError(t, err)
-	require.True(t, exists)
-	os.Setenv("K3D_MOCK_DUMPFILE", "")
+func TestV4TestSuite(t *testing.T) {
+	suite.Run(t, new(V4TestSuite))
 }
 
 func TestArgConstruction(t *testing.T) {
 	rawPorts := []string{"8000:80@loadbalancer", "8443:443@loadbalancer"}
 	res := constructArgs("-p", rawPorts)
 	require.Equal(t, []string{"-p", "8000:80@loadbalancer", "-p", "8443:443@loadbalancer"}, res)
+
 }

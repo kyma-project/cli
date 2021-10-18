@@ -15,10 +15,8 @@ type Cluster struct {
 
 //Node in the K3s setup (could be lb, main, agent etc.)
 type Node struct {
-	Name   string
-	Role   string
-	Labels map[string]string
-	State  State
+	Name  string
+	State State
 }
 
 //State of a node

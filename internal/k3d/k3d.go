@@ -9,155 +9,154 @@ import (
 	"time"
 
 	"github.com/blang/semver/v4"
+	"github.com/kyma-project/cli/internal/cli"
 	"github.com/pkg/errors"
 )
 
 const (
-	k3dMinVersion  string        = "5.0.0"
-	defaultTimeout time.Duration = 10 * time.Second
+	V4MinVersion                 string = "4.0.0"
+	V5MinVersion                 string = "5.0.0"
+	V5DefaultRegistryNamePattern string = "%s-registry"
+
+	binaryName string = "k3d"
 )
 
-//RunCmd executes a k3d command with given arguments
-func RunCmd(verbose bool, timeout time.Duration, args ...string) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+type Client interface {
+	runCmd(args ...string) (string, error)
+	checkVersion() error
+	VerifyStatus() error
+	ClusterExists() (bool, error)
+	RegistryExists(registryName string) (bool, error)
+	CreateCluster(settings CreateClusterSettings) error
+	CreateRegistry(registryName string) (string, error)
+	DeleteCluster() error
+	DeleteRegistry(registryName string) error
+}
+
+type CreateClusterSettings struct {
+	Args              []string
+	KubernetesVersion string
+	PortMap           map[string]int
+	PortMapping       []string
+	Workers           int
+	V4Settings        V4CreateClusterSettings
+	V5Settings        V5CreateClusterSettings
+}
+
+type V4CreateClusterSettings struct {
+	ServerArgs []string
+	AgentArgs  []string
+}
+
+type V5CreateClusterSettings struct {
+	K3sArgs     []string
+	UseRegistry []string
+}
+
+type client struct {
+	executor    cli.Executor
+	clusterName string
+	minVersion  string
+	verbose     bool
+	userTimeout time.Duration
+}
+
+// NewClient creates a new instance of the Client interface.
+// The 'isAlpha' parameter indicates whether the command is an alpha command. If so, the minimum k3d version is v5.
+func NewClient(executor cli.Executor, clusterName string, verbose bool, timeout time.Duration, isAlpha bool) Client {
+	var mink3dVersion string
+	if isAlpha {
+		mink3dVersion = V5MinVersion
+	} else {
+		mink3dVersion = V4MinVersion
+	}
+
+	return &client{
+		executor:    executor,
+		clusterName: clusterName,
+		verbose:     verbose,
+		userTimeout: timeout,
+		minVersion:  mink3dVersion,
+	}
+}
+
+func (c *client) runCmd(args ...string) (string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.userTimeout)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, "k3d", args...)
+	out, err := c.executor.RunCmd(ctx, binaryName, args...)
 
-	outBytes, err := cmd.CombinedOutput()
-	out := string(outBytes)
 	if err != nil {
-		if verbose {
-			fmt.Printf("Failing command:\n  k3d %s\nwith output:\n  %s\nand error:\n  %s\n", strings.Join(args, " "), string(out), err)
+		if c.verbose {
+			fmt.Printf("Failing command:\n  %s %s\nwith output:\n  %s\nand error:\n  %s\n", binaryName, strings.Join(args, " "), out, err)
 		}
-		return out, errors.Wrapf(err, "Executing 'k3d %s' failed with output '%s'", strings.Join(args, " "), out)
+		return out, errors.Wrapf(err, "Executing '%s %s' failed with output '%s'", binaryName, strings.Join(args, " "), out)
 	}
 
 	if ctx.Err() == context.DeadlineExceeded {
-		return out, fmt.Errorf("Executing 'k3d %s' command with output '%s' timed out, try running the command manually or increasing timeout using the 'timeout' flag", strings.Join(args, " "), out)
+		return out, fmt.Errorf("Executing '%s %s' command with output '%s' timed out. Try running the command manually or increasing the timeout using the 'timeout' flag", binaryName, strings.Join(args, " "), out)
 	}
 
-	if verbose {
-		fmt.Printf("\nExecuted command:\n  k3d %s\nwith output:\n  %s\n", strings.Join(args, " "), string(out))
+	if c.verbose {
+		fmt.Printf("\nExecuted command:\n %s %s\nwith output:\n  %s\n", binaryName, strings.Join(args, " "), out)
 	}
 	return out, nil
 }
 
 //checkVersion checks whether k3d version is supported
-func checkVersion(verbose bool) error {
-	versionOutput, err := RunCmd(verbose, defaultTimeout, "version")
+func (c *client) checkVersion() error {
+	versionOutput, err := c.runCmd("version")
 	if err != nil {
 		return err
 	}
 
-	exp, _ := regexp.Compile(`k3d version v([^\s-]+)`)
+	exp, _ := regexp.Compile(fmt.Sprintf(`%s version v([^\s-]+)`, binaryName))
 	versionString := exp.FindStringSubmatch(versionOutput)
-	if verbose {
-		fmt.Printf("Extracted K3d version: '%s'", versionString[1])
+	if c.verbose {
+		fmt.Printf("Extracted %s version: '%s'", binaryName, versionString[1])
 	}
 	if len(versionString) < 2 {
-		return fmt.Errorf("Could not extract k3d version from command output:\n%s", versionOutput)
+		return fmt.Errorf("Could not extract %s version from command output:\n%s", binaryName, versionOutput)
 	}
 	version, err := semver.Parse(versionString[1])
 	if err != nil {
 		return err
 	}
 
-	minVersion, _ := semver.Parse(k3dMinVersion)
+	minVersion, _ := semver.Parse(c.minVersion)
 	if version.Major > minVersion.Major {
-		return fmt.Errorf("You are using an unsupported k3d major version '%d'. "+
-			"This may not work. The recommended k3d major version is '%d'", version.Major, minVersion.Major)
+		return fmt.Errorf("You are using an unsupported %s major version '%d' for this command. "+
+			"This may not work. The recommended %s major version for this command is '%d'", binaryName, version.Major, binaryName, minVersion.Major)
 	} else if version.LT(minVersion) {
-		return fmt.Errorf("You are using an unsupported k3d version '%s'. "+
-			"This may not work. The recommended k3d version is >= '%s'", version, minVersion)
+		return fmt.Errorf("You are using an unsupported %s version '%s' for this command. "+
+			"This may not work. The recommended %s version for this command is >= '%s'", binaryName, version, binaryName, minVersion)
 	}
 
 	return nil
 }
 
-func getK3sImage(version string) (string, error) {
-	_, err := semver.Parse(version)
-	if err != nil {
-		return "", fmt.Errorf("Invalid Kubernetes version %v: %v", version, err)
-	}
-
-	return fmt.Sprintf("rancher/k3s:v%s-k3s1", version), nil
-}
-
-//Initialize verifies whether the k3d CLI tool is properly installed
-func Initialize(verbose bool) error {
+//VerifyStatus verifies whether the k3d CLI tool is properly installed
+func (c *client) VerifyStatus() error {
 	//ensure k3d is in PATH
-	if _, err := exec.LookPath("k3d"); err != nil {
-		if verbose {
-			fmt.Printf("Command 'k3d' not found in PATH")
+	if _, err := exec.LookPath(binaryName); err != nil {
+		if c.verbose {
+			fmt.Printf("Command '%s' not found in PATH", binaryName)
 		}
-		return fmt.Errorf("command 'k3d' not found. Please install k3d following the installation " +
-			"instructions provided at https://github.com/rancher/k3d#get")
+		return fmt.Errorf("Command '%s' not found. Please install %s (see https://github.com/rancher/k3d#get)", binaryName, binaryName)
 	}
 
-	if err := checkVersion(verbose); err != nil {
+	if err := c.checkVersion(); err != nil {
 		return err
 	}
 
-	//verify whether k3d seems to be properly installed
-	_, err := RunCmd(verbose, defaultTimeout, "cluster", "list")
-	return err
-}
-
-//RegistryExists checks whether a registry exists
-func RegistryExists(verbose bool, clusterName string) (bool, error) {
-	args := []string{"registry", "list", "-o", "json"}
-	registryJSON, err := RunCmd(verbose, defaultTimeout, args...)
-	if err != nil {
-		return false, err
-	}
-
-	registryName := fmt.Sprintf("k3d-%s-registry", clusterName)
-	registryList := &RegistryList{}
-	if err := registryList.Unmarshal([]byte(registryJSON)); err != nil {
-		return false, err
-	}
-
-	for _, registry := range registryList.Registries {
-		if registry.Name == registryName {
-			if verbose {
-				fmt.Printf("K3d registry '%s' exists", registryName)
-			}
-			return true, nil
-		}
-	}
-
-	if verbose {
-		fmt.Printf("K3d registry '%s' does not exist", registryName)
-	}
-	return false, nil
-}
-
-// CreateRegistry creates a k3d registry
-func CreateRegistry(verbose bool, timeout time.Duration, clusterName string) (string, error) {
-	// k3d automatically adds a 'k3d' prefix
-	registryName := fmt.Sprintf("%s-registry", clusterName)
-	registryPort := "5000"
-	cmdArgs := []string{
-		"registry", "create", registryName,
-		"--port", registryPort,
-	}
-
-	_, err := RunCmd(verbose, timeout, cmdArgs...)
-	return fmt.Sprintf("%s:%s", registryName, registryPort), err
-}
-
-// DeleteRegistry deletes a k3d registry
-func DeleteRegistry(verbose bool, timeout time.Duration, clusterName string) error {
-	registryName := fmt.Sprintf("k3d-%s-registry", clusterName)
-	_, err := RunCmd(verbose, timeout, "registry", "delete", registryName)
+	// execute a command and return the error
+	_, err := c.runCmd("cluster", "list")
 	return err
 }
 
 //ClusterExists checks whether a cluster exists
-func ClusterExists(verbose bool, clusterName string) (bool, error) {
-	args := []string{"cluster", "list", "-o", "json"}
-	clusterJSON, err := RunCmd(verbose, defaultTimeout, args...)
+func (c *client) ClusterExists() (bool, error) {
+	clusterJSON, err := c.runCmd("cluster", "list", "-o", "json")
 	if err != nil {
 		return false, err
 	}
@@ -168,65 +167,132 @@ func ClusterExists(verbose bool, clusterName string) (bool, error) {
 	}
 
 	for _, cluster := range clusterList.Clusters {
-		if cluster.Name == clusterName {
-			if verbose {
-				fmt.Printf("K3d cluster '%s' exists", clusterName)
+		if cluster.Name == c.clusterName {
+			if c.verbose {
+				fmt.Printf("k3d cluster '%s' exists", c.clusterName)
 			}
 			return true, nil
 		}
 	}
 
-	if verbose {
-		fmt.Printf("K3d cluster '%s' does not exist", clusterName)
+	if c.verbose {
+		fmt.Printf("k3d cluster '%s' does not exist", c.clusterName)
 	}
 	return false, nil
 }
 
-func constructArgs(argname string, rawPorts []string) []string {
-	portMap := []string{}
-	for _, port := range rawPorts {
-		portMap = append(portMap, argname, port)
+//RegistryExists checks whether a registry exists
+func (c *client) RegistryExists(registryName string) (bool, error) {
+	registryJSON, err := c.runCmd("registry", "list", "-o", "json")
+	if err != nil {
+		return false, err
 	}
-	return portMap
+
+	registryList := &RegistryList{}
+	if err := registryList.Unmarshal([]byte(registryJSON)); err != nil {
+		return false, err
+	}
+
+	for _, registry := range registryList.Registries {
+		if registry.Name == fmt.Sprintf("k3d-%s", registryName) {
+			if c.verbose {
+				fmt.Printf("k3d registry '%s' exists", registryName)
+			}
+			return true, nil
+		}
+	}
+
+	if c.verbose {
+		fmt.Printf("k3d registry '%s' does not exist", registryName)
+	}
+	return false, nil
 }
 
-type Settings struct {
-	ClusterName string
-	Args        []string
-	Version     string
-	PortMap     map[string]int
-	PortMapping []string
-}
-
-//StartCluster starts a cluster
-func StartCluster(verbose bool, timeout time.Duration, workers int, k3sArgs []string, k3sRegistry []string, k3d Settings) error {
-	k3sImage, err := getK3sImage(k3d.Version)
+//CreateCluster creates a cluster
+func (c *client) CreateCluster(settings CreateClusterSettings) error {
+	k3sImage, err := getK3sImage(settings.KubernetesVersion)
 	if err != nil {
 		return err
 	}
 
 	cmdArgs := []string{
-		"cluster", "create", k3d.ClusterName,
+		"cluster", "create", c.clusterName,
 		"--kubeconfig-update-default",
-		"--timeout", fmt.Sprintf("%ds", int(timeout.Seconds())),
-		"--agents", fmt.Sprintf("%d", workers),
-		"--k3s-arg", "--disable=traefik@server:0",
+		"--timeout", fmt.Sprintf("%ds", int(c.userTimeout.Seconds())),
+		"--agents", fmt.Sprintf("%d", settings.Workers),
 		"--image", k3sImage,
 	}
 
-	cmdArgs = append(cmdArgs, constructArgs("--registry-use", k3sRegistry)...)
-	cmdArgs = append(cmdArgs, constructArgs("--k3s-arg", k3sArgs)...)
-	cmdArgs = append(cmdArgs, constructArgs("--port", k3d.PortMapping)...)
+	if c.minVersion == V4MinVersion {
+		cmdArgs = append(cmdArgs, getCreateClusterV4Args(settings)...)
+	} else {
+		cmdArgs = append(cmdArgs, getCreateClusterV5Args(settings)...)
+	}
 
+	cmdArgs = append(cmdArgs, constructArgs("--port", settings.PortMapping)...)
 	//add further k3d args which are not offered by the Kyma CLI flags
-	cmdArgs = append(cmdArgs, k3d.Args...)
+	cmdArgs = append(cmdArgs, settings.Args...)
 
-	_, err = RunCmd(verbose, timeout, cmdArgs...)
+	_, err = c.runCmd(cmdArgs...)
 	return err
 }
 
-//DeleteCluster deletes a cluster
-func DeleteCluster(verbose bool, timeout time.Duration, clusterName string) error {
-	_, err := RunCmd(verbose, timeout, "cluster", "delete", clusterName)
+// CreateRegistry creates a k3d registry
+func (c *client) CreateRegistry(registryName string) (string, error) {
+	registryPort := "5000"
+
+	_, err := c.runCmd("registry", "create", registryName, "--port", registryPort)
+	return fmt.Sprintf("%s:%s", registryName, registryPort), err
+}
+
+// DeleteCluster deletes a k3d registry
+func (c *client) DeleteCluster() error {
+	_, err := c.runCmd("cluster", "delete", c.clusterName)
 	return err
+}
+
+// DeleteRegistry deletes a k3d registry
+func (c *client) DeleteRegistry(registryName string) error {
+	_, err := c.runCmd("registry", "delete", fmt.Sprintf("k3d-%s", registryName))
+	return err
+}
+
+func getCreateClusterV4Args(settings CreateClusterSettings) []string {
+	cmdArgs := []string{
+		"--registry-create",
+		"--k3s-server-arg", "--disable",
+		"--k3s-server-arg", "traefik",
+	}
+	cmdArgs = append(cmdArgs, constructArgs("--k3s-server-arg", settings.V4Settings.ServerArgs)...)
+	cmdArgs = append(cmdArgs, constructArgs("--k3s-agent-arg", settings.V4Settings.AgentArgs)...)
+
+	return cmdArgs
+}
+
+func getCreateClusterV5Args(settings CreateClusterSettings) []string {
+	cmdArgs := []string{
+		"--kubeconfig-switch-context",
+		"--k3s-arg", "--disable=traefik@server:0",
+	}
+	cmdArgs = append(cmdArgs, constructArgs("--registry-use", settings.V5Settings.UseRegistry)...)
+	cmdArgs = append(cmdArgs, constructArgs("--k3s-arg", settings.V5Settings.K3sArgs)...)
+
+	return cmdArgs
+}
+
+func getK3sImage(kubernetesVersion string) (string, error) {
+	_, err := semver.Parse(kubernetesVersion)
+	if err != nil {
+		return "", fmt.Errorf("Invalid Kubernetes version %v: %v", kubernetesVersion, err)
+	}
+
+	return fmt.Sprintf("rancher/k3s:v%s-k3s1", kubernetesVersion), nil
+}
+
+func constructArgs(argName string, rawPorts []string) []string {
+	var portMap []string
+	for _, port := range rawPorts {
+		portMap = append(portMap, argName, port)
+	}
+	return portMap
 }
