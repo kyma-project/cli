@@ -16,11 +16,11 @@ type Certifier interface {
 	// StoreCertificate imports the given certificate file from kyma 2 into the trusted root certificates manager of the OS.
 	StoreCertificateKyma2(file string, info Informer) error
 
-	// Instructions provides instructions on how to manually store a certificate.
+	// Instructions provides instructions on how to manually import a certificate.
 	// Use in case it can not be stored by calling StoreCertificate.
 	Instructions() string
 
-	// InstructionsKyma2 provides instructions on how to manually store a certificate for kyma 2.
+	// InstructionsKyma2 provides instructions on how to manually import a certificate for kyma 2.
 	// Use in case it can not be stored by calling StoreCertificate.
 	InstructionsKyma2() string
 }

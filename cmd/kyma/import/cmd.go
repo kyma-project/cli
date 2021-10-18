@@ -1,10 +1,10 @@
-package store
+package _import
 
 import (
 	"github.com/spf13/cobra"
 )
 
-//NewCmd creates a new store command
+//NewCmd creates a new import command
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "import",

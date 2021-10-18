@@ -7,6 +7,9 @@ import (
 	"github.com/kyma-project/cli/cmd/kyma/create"
 	"github.com/kyma-project/cli/cmd/kyma/dashboard"
 	"github.com/kyma-project/cli/cmd/kyma/deploy"
+	"github.com/kyma-project/cli/cmd/kyma/import"
+	"github.com/kyma-project/cli/cmd/kyma/import/certificates"
+	"github.com/kyma-project/cli/cmd/kyma/import/hostfiles"
 	initial "github.com/kyma-project/cli/cmd/kyma/init"
 	"github.com/kyma-project/cli/cmd/kyma/install"
 	"github.com/kyma-project/cli/cmd/kyma/provision/aks"
@@ -18,9 +21,6 @@ import (
 	"github.com/kyma-project/cli/cmd/kyma/provision/k3d"
 	"github.com/kyma-project/cli/cmd/kyma/provision/minikube"
 	"github.com/kyma-project/cli/cmd/kyma/run"
-	"github.com/kyma-project/cli/cmd/kyma/store"
-	"github.com/kyma-project/cli/cmd/kyma/store/certificates"
-	"github.com/kyma-project/cli/cmd/kyma/store/hostfiles"
 	"github.com/kyma-project/cli/cmd/kyma/sync"
 	"github.com/kyma-project/cli/cmd/kyma/test"
 	testdefs "github.com/kyma-project/cli/cmd/kyma/test/definitions"
@@ -71,7 +71,7 @@ Kyma CLI allows you to install, test, and manage Kyma.
 	gardenerCmd.AddCommand(aws.NewCmd(aws.NewOptions(o)))
 	provisionCmd.AddCommand(gardenerCmd)
 
-	storeCmd := store.NewCmd()
+	storeCmd := _import.NewCmd()
 	storeCmd.AddCommand(certificates.NewCmd(o))
 	storeCmd.AddCommand(hostfiles.NewCmd(o))
 
