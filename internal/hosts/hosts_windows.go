@@ -3,6 +3,7 @@
 package hosts
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/kyma-project/cli/pkg/step"
