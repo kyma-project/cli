@@ -3,10 +3,10 @@
 package hosts
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/kyma-project/cli/pkg/step"
+	"github.com/kyma-project/cli/internal/cli"
 )
 
 func addDevDomainsToEtcHostsOSSpecific(domain string, s step.Step, hostAlias string) error {
@@ -28,7 +28,6 @@ func addDevDomainsToEtcHostsOSSpecificKyma2(domain string, s step.Step, hostAlia
 
 func addDevDomainsRunCmd(domain string, s step.Step, hostAlias string) error {
 
-	s.LogErrorf("Add these lines to your " + hostsFile + " file:")
 	hostsArray := strings.Split(hostAlias, " ")
 	ip := hostsArray[0]
 	hostsArray = hostsArray[1:]
@@ -37,8 +36,15 @@ func addDevDomainsRunCmd(domain string, s step.Step, hostAlias string) error {
 		if len(hostsArray) < chunkLen {
 			chunkLen = len(hostsArray)
 		}
-		fmt.Printf("%s %s\n", ip, strings.Join(hostsArray[:chunkLen], " "))
+
+		addLine :=  ip + " " + strings.Join(hostsArray[:chunkLen], " ")
 		hostsArray = hostsArray[chunkLen:]
+		commandToRun := "echo "+ addLine + " >> " + hostsFile
+		_, err := cli.RunCmd("cmd","/c",commandToRun)
+		if err != nil {
+			s.LogErrorf("Add these lines to your " + hostsFile + " file:")
+			fmt.Printf("%s %s\n", ip, strings.Join(hostsArray[:chunkLen], " "))
+		}
 	}
 	return nil
 }
