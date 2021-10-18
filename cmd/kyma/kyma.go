@@ -71,7 +71,7 @@ Kyma CLI allows you to install, test, and manage Kyma.
 	gardenerCmd.AddCommand(aws.NewCmd(aws.NewOptions(o)))
 	provisionCmd.AddCommand(gardenerCmd)
 
-	storeCmd := _import.NewCmd()
+	storeCmd := store.NewCmd()
 	storeCmd.AddCommand(certificates.NewCmd(o))
 	storeCmd.AddCommand(hostfiles.NewCmd(o))
 

@@ -1,4 +1,4 @@
-package _import
+package store
 
 import (
 	"github.com/spf13/cobra"
