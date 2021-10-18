@@ -3,7 +3,6 @@ package k3d
 import (
 	"context"
 	"fmt"
-	"os/exec"
 	"regexp"
 	"strings"
 	"time"
@@ -138,7 +137,7 @@ func (c *client) checkVersion() error {
 //VerifyStatus verifies whether the k3d CLI tool is properly installed
 func (c *client) VerifyStatus() error {
 	//ensure k3d is in PATH
-	if _, err := exec.LookPath(binaryName); err != nil {
+	if _, err := c.executor.LookPath(binaryName); err != nil {
 		if c.verbose {
 			fmt.Printf("Command '%s' not found in PATH", binaryName)
 		}
