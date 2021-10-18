@@ -65,7 +65,6 @@ Kyma CLI allows you to install, test, and manage Kyma.
 	alphaCmd := alpha.NewCmd()
 	alphaCmd.AddCommand(alphaprovisionCmd)
 
-
 	//Stable commands
 	provisionCmd := provision.NewCmd()
 	provisionCmd.AddCommand(minikube.NewCmd(minikube.NewOptions(o)))
