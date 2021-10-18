@@ -2,7 +2,6 @@ package deploy
 
 import (
 	"context"
-	"fmt"
 	"github.com/kyma-incubator/reconciler/pkg/cluster"
 	"github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-incubator/reconciler/pkg/model"
@@ -40,10 +39,10 @@ type Options struct {
 	WorkerPoolSize int
 }
 
-func Deploy(opts Options) error {
+func Deploy(opts Options) (error, *service.ReconciliationResult) {
 	kebComponents, err := prepareKebComponents(opts.Components, opts.Values)
 	if err != nil {
-		return nil
+		return nil, nil
 	}
 
 	kebCluster := prepareKebCluster(opts, kebComponents)
@@ -66,8 +65,14 @@ func Deploy(opts Options) error {
 
 		opts.StatusFunc(ComponentStatus{component, state, errorRecieved})
 	}).WithWorkerPoolSize(opts.WorkerPoolSize).Run(context.TODO(), kebCluster)
-	fmt.Printf("Reconcilation result : %v", reconcilationResult)
-	return err
+
+	//fmt.Printf("Reconcilation result : %s \n", reconcilationResult.GetResult())
+	//
+	//for _, i := range reconcilationResult.GetOperations() {
+	//	fmt.Printf("component: %s and state: %v \n",i.Component, i.State)
+	//}
+
+	return err, reconcilationResult
 }
 
 func prepareKebComponents(components component.List, vals values.Values) ([]*keb.Component, error) {

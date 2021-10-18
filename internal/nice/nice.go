@@ -38,3 +38,23 @@ func (n *Nice) PrintImportant(s string) {
 func (n *Nice) PrintImportantf(format string, a ...interface{}) {
 	n.PrintImportant(fmt.Sprintf(format, a...))
 }
+
+func (n *Nice) PrintSuccess(s string) {
+	if n.NonInteractive {
+		fmt.Println(s)
+	} else {
+		ct.ChangeColor(ct.Green, true, ct.None, false)
+		fmt.Println(s)
+		ct.ResetColor()
+	}
+}
+
+func (n *Nice) PrintFailure(s string) {
+	if n.NonInteractive {
+		fmt.Println(s)
+	} else {
+		ct.ChangeColor(ct.Red, true, ct.None, false)
+		fmt.Println(s)
+		ct.ResetColor()
+	}
+}

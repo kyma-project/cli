@@ -3,8 +3,11 @@ package deploy
 import (
 	"context"
 	"fmt"
+	"github.com/kyma-incubator/reconciler/pkg/model"
 
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/service"
+	svc "github.com/kyma-incubator/reconciler/pkg/scheduler/service"
+
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
 	"github.com/kyma-project/cli/internal/clusterinfo"
 	"github.com/kyma-project/cli/internal/deploy"
@@ -81,7 +84,7 @@ func NewCmd(o *Options) *cobra.Command {
 }
 
 func (cmd *command) Run(o *Options) error {
-	start := time.Now()
+	//start := time.Now()
 
 	var err error
 
@@ -140,13 +143,13 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	deployTime := time.Since(start)
+	//deployTime := time.Since(start)
 
 	if err := cmd.importCertificate(); err != nil {
 		return err
 	}
-
-	return cmd.printSummary(deployTime)
+	return nil
+	//return cmd.printSummary(deployTime)
 }
 
 func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, vals values.Values) error {
@@ -168,7 +171,7 @@ func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, 
 	deployStep := cmd.NewStep("Deploying Kyma")
 	deployStep.Start()
 
-	err = deploy.Deploy(deploy.Options{
+	err, recoResult := deploy.Deploy(deploy.Options{
 		Components:     components,
 		Values:         vals,
 		StatusFunc:     cmd.printDeployStatus,
@@ -183,8 +186,20 @@ func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, 
 		return err
 	}
 
-	deployStep.Successf("Kyma deployed successfully!")
-	return nil
+	if recoResult.GetResult() == model.ClusterStatusError {
+		deployStep.Failuref("Failed to deploy Kyma, check the logs above for failures.")
+		//return errors.Wrap(err, "Failed to deploy Kyma")
+	}
+
+	if recoResult.GetResult() == model.ClusterStatusReady {
+		deployStep.Successf("Kyma deployed successfully!")
+		//return nil
+	}
+	start := time.Now()
+	deployTime := time.Since(start)
+
+	return cmd.printSummary(deployTime, recoResult)
+	//return  nil
 }
 
 func (cmd *command) printDeployStatus(status deploy.ComponentStatus) {
@@ -324,15 +339,20 @@ func (cmd *command) approveImportCertificate() bool {
 	return qImportCertsStep.PromptYesNo("Do you want to install the Kyma certificate locally?")
 }
 
-func (cmd *command) printSummary(duration time.Duration) error {
+func (cmd *command) printSummary(duration time.Duration, result *svc.ReconciliationResult) error {
 	sum := nice.Summary{
 		NonInteractive: cmd.NonInteractive,
 		Version:        cmd.opts.Source,
 		Duration:       duration,
 	}
 
-	return sum.Print()
+	//return sum.Print()
+	return sum.PrintComponentSummary(result)
 }
+
+
+
+
 
 func (cmd *command) setKubeClient() error {
 	var err error

@@ -2,6 +2,8 @@ package nice
 
 import (
 	"fmt"
+	"github.com/kyma-incubator/reconciler/pkg/model"
+	"github.com/kyma-incubator/reconciler/pkg/scheduler/service"
 	"time"
 )
 
@@ -14,6 +16,24 @@ type Summary struct {
 	Dashboard      string
 	Email          string
 	Password       string
+}
+
+func (s *Summary) PrintComponentSummary(result *service.ReconciliationResult) error{
+	nicePrint := Nice{
+		NonInteractive: s.NonInteractive,
+	}
+
+	for _, comp := range result.GetOperations() {
+		fmt.Printf("Component: %s has installation status:\t", comp.Component)
+		if comp.State ==  model.OperationStateDone {
+			nicePrint.PrintSuccess(string(comp.State))
+		}
+		if comp.State ==  model.OperationStateError {
+			nicePrint.PrintFailure(string(comp.State))
+		}
+	}
+	return nil
+
 }
 
 func (s *Summary) Print() error {
@@ -72,3 +92,5 @@ func (s *Summary) Print() error {
 
 	return nil
 }
+
+
