@@ -51,9 +51,9 @@ func (c certauth) CertificateKyma2() ([]byte, error) {
 }
 
 func (c certauth) StoreCertificate(file string, i Informer) error {
-	i.LogInfo("Kyma wants to add its root certificate to the trusted certificate store.")
+	i.LogInfo("Kyma wants to add its root certificate to the trusted certificate import.")
 	if root.IsWithSudo() {
-		i.LogInfo("You're running CLI with sudo. CLI has to add the Kyma certificate to the trusted certificate store. Type 'y' to allow this action.")
+		i.LogInfo("You're running CLI with sudo. CLI has to add the Kyma certificate to the trusted certificate import. Type 'y' to allow this action.")
 		if !root.PromptUser() {
 			i.LogInfo(fmt.Sprintf("\nCould not import the Kyma root certificate. Follow the instructions to import it manually:\n-----\n%s-----\n", c.Instructions()))
 			return nil
@@ -107,4 +107,25 @@ func certDomain(certFile string) (string, error) {
 	}
 
 	return strings.Replace(matches[1], "'", "", -1), nil
+}
+
+func (c certauth) StoreCertificateKyma2(file string, i Informer) error {
+
+	// get domain to put on the certificate name.
+	// Linux does not have a proper certificate manager and we need to be able to identify the certificate
+	domain, err := certDomain(file)
+	if err != nil {
+		return err
+	}
+
+	_, err = cli.RunCmd("sudo", "cp", file, fmt.Sprintf("/usr/local/share/ca-certificates/kyma-%s.crt", domain))
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("\nCould not import the Kyma certificates. Follow the instructions to import them manually:\n-----\n%s-----\n", c.InstructionsKyma2()))
+	}
+	_, err = cli.RunCmd("sudo", "update-ca-certificates")
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("\nCould not import the Kyma certificates. Follow the instructions to import them manually:\n-----\n%s-----\n", c.InstructionsKyma2()))
+	}
+
+	return nil
 }

@@ -76,3 +76,13 @@ func (certutil) InstructionsKyma2() string {
 		"3. Decode the certificate: certutil -decode tmp.txt kyma.crt ; del tmp.txt\n" +
 		"4. Import the certificate: certutil -addstore -f Root kyma.crt\n"
 }
+
+func (c certutil) StoreCertificateKyma2(file string, i Informer) error {
+	i.LogInfo("Kyma is adding its root certificate to the trusted certificates.")
+	// Only automatically add the cert if already on admin mode, can't ask for admin password from go
+	_, err := cli.RunCmd("certutil", "-addstore", "-f", "Root", file)
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("\nCould not import the Kyma root certificate. Follow the instructions below to import it manually:\n-----\n%s-----\n", c.InstructionsKyma2()))
+	}
+	return nil
+}

@@ -14,7 +14,7 @@ func NewCmd(o *Options) *cobra.Command {
 		Long: `Use this command to provision Kubernetes clusters with Gardener on GCP for Kyma installation. 
 To successfully provision a cluster on GCP, you must first create a service account to pass its details as one of the command parameters. 
 Check the roles and create a service account using instructions at https://gardener.cloud/050-tutorials/content/howto/gardener_gcp/.
-Use service account details to create a Secret and store it in Gardener.`,
+Use service account details to create a Secret and import it in Gardener.`,
 
 		RunE: func(_ *cobra.Command, _ []string) error { return c.Run() },
 	}

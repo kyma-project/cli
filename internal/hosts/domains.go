@@ -54,3 +54,21 @@ func AddDevDomainsToEtcHosts(
 
 	return addDevDomainsToEtcHostsOSSpecific(domain, s, hostAlias)
 }
+func AddDevDomainsToEtcHostsKyma2(
+	s step.Step, kymaKube kube.KymaKube, domain string) error {
+	hostnames := ""
+
+	vsList, err := kymaKube.Istio().NetworkingV1alpha3().VirtualServices("").List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		return err
+	}
+
+	for _, v := range vsList.Items {
+		for _, host := range v.Spec.Hosts {
+			hostnames = hostnames + " " + host
+		}
+	}
+
+	hostAlias := "127.0.0.1" + hostnames
+	return addDevDomainsToEtcHostsOSSpecificKyma2(domain, s, hostAlias)
+}

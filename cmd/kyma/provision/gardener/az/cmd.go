@@ -13,7 +13,7 @@ func NewCmd(o *Options) *cobra.Command {
 		Short: "Provisions a Kubernetes cluster using Gardener on Azure.",
 		Long: `Use this command to provision Kubernetes clusters with Gardener on Azure for Kyma installation. 
 To successfully provision a cluster on Azure, you must first create a service account to pass its details as one of the command parameters. 
-Create a service account with the ` + "`contributor`" + ` role. Use service account details to create a Secret and store it in Gardener.`,
+Create a service account with the ` + "`contributor`" + ` role. Use service account details to create a Secret and import it in Gardener.`,
 
 		RunE: func(_ *cobra.Command, _ []string) error { return c.Run() },
 	}
