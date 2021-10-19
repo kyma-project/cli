@@ -9,7 +9,6 @@ import (
 
 type Summary struct {
 	NonInteractive bool
-	Duration       time.Duration
 	Version        string
 	URL            string
 	Console        string
@@ -18,25 +17,35 @@ type Summary struct {
 	Password       string
 }
 
-func (s *Summary) PrintComponentSummary(result *service.ReconciliationResult) error{
+func (s *Summary) PrintFailedComponentSummary(result *service.ReconciliationResult) error{
 	nicePrint := Nice{
 		NonInteractive: s.NonInteractive,
 	}
+	failedComps := []string{}
+	successfulComps := []string{}
 
 	for _, comp := range result.GetOperations() {
-		fmt.Printf("Component: %s has installation status:\t", comp.Component)
-		if comp.State ==  model.OperationStateDone {
-			nicePrint.PrintSuccess(string(comp.State))
+		if comp.State == model.OperationStateError {
+			failedComps = append(failedComps, comp.Component)
 		}
-		if comp.State ==  model.OperationStateError {
-			nicePrint.PrintFailure(string(comp.State))
+		if comp.State == model.OperationStateDone {
+			successfulComps = append(successfulComps, comp.Component)
 		}
 	}
+
+	fmt.Println()
+	fmt.Printf("Deployed Components: ")
+	nicePrint.PrintImportantf("%d/%d", len(successfulComps), len(successfulComps) + len(failedComps))
+	fmt.Println("Failed:")
+	for _, items := range failedComps {
+		fmt.Printf("- %s\n", items)
+	}
+	fmt.Println()
 	return nil
 
 }
 
-func (s *Summary) Print() error {
+func (s *Summary) Print(t time.Duration) error {
 	nicePrint := Nice{
 		NonInteractive: s.NonInteractive,
 	}
@@ -50,7 +59,7 @@ func (s *Summary) Print() error {
 
 	nicePrint.PrintKyma()
 	fmt.Print(" installation took:\t\t")
-	nicePrint.PrintImportantf("%d hours %d minutes", int64(s.Duration.Hours()), int64(s.Duration.Minutes()))
+	nicePrint.PrintImportantf("%d hours %d minutes", int64(t.Hours()), int64(t.Minutes()))
 
 	if s.URL != "" {
 		nicePrint.PrintKyma()

@@ -6,8 +6,6 @@ import (
 	"github.com/kyma-incubator/reconciler/pkg/model"
 
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/service"
-	svc "github.com/kyma-incubator/reconciler/pkg/scheduler/service"
-
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
 	"github.com/kyma-project/cli/internal/clusterinfo"
 	"github.com/kyma-project/cli/internal/deploy"
@@ -84,7 +82,7 @@ func NewCmd(o *Options) *cobra.Command {
 }
 
 func (cmd *command) Run(o *Options) error {
-	//start := time.Now()
+	start := time.Now()
 
 	var err error
 
@@ -102,6 +100,9 @@ func (cmd *command) Run(o *Options) error {
 	if err = cmd.setKubeClient(); err != nil {
 		return err
 	}
+
+	summary := cmd.setSummary()
+
 
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
 		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
@@ -138,21 +139,19 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	err = cmd.deployKyma(l, components, vals)
+	err = cmd.deployKyma(l, components, vals, summary)
 	if err != nil {
 		return err
 	}
 
-	//deployTime := time.Since(start)
-
+	deployTime := time.Since(start)
 	if err := cmd.importCertificate(); err != nil {
 		return err
 	}
-	return nil
-	//return cmd.printSummary(deployTime)
+	return summary.Print(deployTime)
 }
 
-func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, vals values.Values) error {
+func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, vals values.Values, summary *nice.Summary) error {
 	kubeconfigPath := kube.KubeconfigPath(cmd.KubeconfigPath)
 	kubeconfig, err := ioutil.ReadFile(kubeconfigPath)
 	if err != nil {
@@ -186,20 +185,19 @@ func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, 
 		return err
 	}
 
+
 	if recoResult.GetResult() == model.ClusterStatusError {
-		deployStep.Failuref("Failed to deploy Kyma, check the logs above for failures.")
-		//return errors.Wrap(err, "Failed to deploy Kyma")
+		summary.PrintFailedComponentSummary(recoResult)
+
+		deployStep.Failuref("Failed to deploy Kyma, check the summary above for failures.")
+		return errors.Wrap(err, "Kyma deployment failed with errors")
 	}
 
 	if recoResult.GetResult() == model.ClusterStatusReady {
 		deployStep.Successf("Kyma deployed successfully!")
-		//return nil
+		return nil
 	}
-	start := time.Now()
-	deployTime := time.Since(start)
-
-	return cmd.printSummary(deployTime, recoResult)
-	//return  nil
+	return  nil
 }
 
 func (cmd *command) printDeployStatus(status deploy.ComponentStatus) {
@@ -339,16 +337,17 @@ func (cmd *command) approveImportCertificate() bool {
 	return qImportCertsStep.PromptYesNo("Do you want to install the Kyma certificate locally?")
 }
 
-func (cmd *command) printSummary(duration time.Duration, result *svc.ReconciliationResult) error {
-	sum := nice.Summary{
+func (cmd *command) setSummary() *nice.Summary {
+	return &nice.Summary{
 		NonInteractive: cmd.NonInteractive,
 		Version:        cmd.opts.Source,
-		Duration:       duration,
 	}
 
-	//return sum.Print()
-	return sum.PrintComponentSummary(result)
 }
+
+//func (cmd *command) printSummary(duration time.Duration, result *svc.ReconciliationResult) error {
+//	return cmd.Summary.Print()
+//}
 
 
 
