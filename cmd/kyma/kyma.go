@@ -10,6 +10,9 @@ import (
 	"github.com/kyma-project/cli/cmd/kyma/create"
 	"github.com/kyma-project/cli/cmd/kyma/dashboard"
 	"github.com/kyma-project/cli/cmd/kyma/deploy"
+	"github.com/kyma-project/cli/cmd/kyma/import"
+	"github.com/kyma-project/cli/cmd/kyma/import/certificates"
+	"github.com/kyma-project/cli/cmd/kyma/import/hostfiles"
 	initial "github.com/kyma-project/cli/cmd/kyma/init"
 	"github.com/kyma-project/cli/cmd/kyma/install"
 	"github.com/kyma-project/cli/cmd/kyma/provision/aks"
@@ -77,6 +80,10 @@ Kyma CLI allows you to install, test, and manage Kyma.
 	gardenerCmd.AddCommand(aws.NewCmd(aws.NewOptions(o)))
 	provisionCmd.AddCommand(gardenerCmd)
 
+	storeCmd := store.NewCmd()
+	storeCmd.AddCommand(certificates.NewCmd(o))
+	storeCmd.AddCommand(hostfiles.NewCmd(o))
+
 	cmd.AddCommand(
 		alphaCmd,
 		version.NewCmd(version.NewOptions(o)),
@@ -89,6 +96,7 @@ Kyma CLI allows you to install, test, and manage Kyma.
 		dashboard.NewCmd(dashboard.NewOptions(o)),
 		deploy.NewCmd(deploy.NewOptions(o)),
 		undeploy.NewCmd(undeploy.NewOptions(o)),
+		storeCmd,
 	)
 
 	testCmd := test.NewCmd()
