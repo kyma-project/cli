@@ -9,7 +9,7 @@ Provisions a Kubernetes cluster using Gardener on Amazon Web Services (AWS).
 Use this command to provision Kubernetes clusters with Gardener on AWS for Kyma installation. 
 To successfully provision a cluster on AWS, you must first create a service account to pass its details as one of the command parameters. 
 Check the roles and create a service account using instructions at https://gardener.cloud/050-tutorials/content/howto/gardener_aws/.
-Use service account details to create a Secret and store it in Gardener.
+Use service account details to create a Secret and import it in Gardener.
 
 ```bash
 kyma provision gardener aws [flags]
