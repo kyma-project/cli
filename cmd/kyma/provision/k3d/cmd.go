@@ -36,7 +36,7 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&o.Name, "name", "kyma", `Name of the Kyma cluster`)
-	cmd.Flags().IntVar(&o.Workers, "workers", 0, "Number of worker nodes (k3d agents)")
+	cmd.Flags().IntVar(&o.Workers, "workers", 1, "Number of worker nodes (k3d agents)")
 	cmd.Flags().StringSliceVarP(&o.K3sArgs, "k3s-arg", "s", []string{}, "One or more arguments passed from k3d to the k3s command (format: ARG@NODEFILTER[;@NODEFILTER])")
 	cmd.Flags().DurationVar(&o.Timeout, "timeout", 5*time.Minute, `Maximum time for the provisioning. If you want no timeout, enter "0".`)
 	cmd.Flags().StringSliceVarP(&o.K3dArgs, "k3d-arg", "", []string{}, "One or more arguments passed to the k3d provisioning command (e.g. --k3d-arg='--no-rollback')")
