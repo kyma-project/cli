@@ -66,12 +66,6 @@ func Deploy(opts Options) (error, *service.ReconciliationResult) {
 		opts.StatusFunc(ComponentStatus{component, state, errorRecieved})
 	}).WithWorkerPoolSize(opts.WorkerPoolSize).Run(context.TODO(), kebCluster)
 
-	//fmt.Printf("Reconcilation result : %s \n", reconcilationResult.GetResult())
-	//
-	//for _, i := range reconcilationResult.GetOperations() {
-	//	fmt.Printf("component: %s and state: %v \n",i.Component, i.State)
-	//}
-
 	return err, reconcilationResult
 }
 
