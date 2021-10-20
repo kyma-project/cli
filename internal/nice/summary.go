@@ -34,9 +34,10 @@ func (s *Summary) PrintFailedComponentSummary(result *service.ReconciliationResu
 	}
 
 	fmt.Println()
+	fmt.Printf("CMPS: %v\n",successfulComps)
 	fmt.Printf("Deployed Components: ")
 	nicePrint.PrintImportantf("%d/%d", len(successfulComps), len(successfulComps) + len(failedComps))
-	fmt.Println("Failed:")
+	fmt.Println("Following components could not be deployed:")
 	for _, items := range failedComps {
 		fmt.Printf("- %s\n", items)
 	}

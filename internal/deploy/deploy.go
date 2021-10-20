@@ -56,10 +56,10 @@ func Deploy(opts Options) (error, *service.ReconciliationResult) {
 			state = Success
 			errorRecieved = nil
 		case reconciler.StatusFailed:
-			errorRecieved = errors.Errorf("Error encountered: %s", msg.Error)
+			errorRecieved = errors.Errorf("%s", msg.Error)
 			state = RecoverableError
 		case reconciler.StatusError:
-			errorRecieved = errors.Errorf("Aborting! Unrecoverable error encountered: %s", msg.Error)
+			errorRecieved = errors.Errorf("%s", msg.Error)
 			state = UnrecoverableError
 		}
 

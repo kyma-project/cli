@@ -180,12 +180,10 @@ func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, 
 		return err
 	}
 
-
 	if recoResult.GetResult() == model.ClusterStatusError {
 		summary.PrintFailedComponentSummary(recoResult)
-
-		deployStep.Failuref("Failed to deploy Kyma, check the summary above for failures.")
-		return errors.Wrap(err, "Kyma deployment failed with errors")
+		deployStep.Failure()
+		return errors.Errorf("Kyma deployment failed with errors")
 	}
 
 	if recoResult.GetResult() == model.ClusterStatusReady {
@@ -208,7 +206,7 @@ func (cmd *command) printDeployStatus(status deploy.ComponentStatus) {
 		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' failed. Retrying...\n%s\n ", status.Component, status.Error.Error()))
 		statusStep.Failure()
 	case deploy.UnrecoverableError:
-		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' failed and terminated.\n%s\n", status.Component, status.Error.Error()))
+		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' failed, giving up.\n%s\n", status.Component, status.Error.Error()))
 		statusStep.Failure()
 	}
 }
@@ -281,20 +279,6 @@ func (cmd *command) avoidUserInteraction() bool {
 	return cmd.NonInteractive || cmd.CI
 }
 
-func (cmd *command) printSummary(duration time.Duration) error {
-	sum := nice.Summary{
-		NonInteractive: cmd.NonInteractive,
-		Version:        cmd.opts.Source,
-	}
-
-}
-
-//func (cmd *command) printSummary(duration time.Duration, result *svc.ReconciliationResult) error {
-//	return cmd.Summary.Print()
-//}
-
-
-
 
 
 func (cmd *command) setKubeClient() error {
@@ -366,4 +350,11 @@ func (cmd *command) installPrerequisites(wsp string) error {
 
 	preReqStep.Successf("Installed Prerequisites")
 	return nil
+}
+
+func (cmd *command) setSummary() *nice.Summary {
+	       return &nice.Summary{
+		NonInteractive: cmd.NonInteractive,
+		Version:        cmd.opts.Source,
+	}
 }
