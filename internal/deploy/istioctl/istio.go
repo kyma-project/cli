@@ -357,7 +357,7 @@ func unTar(source, target string, deleteSource bool) error {
 }
 
 func unZip(source, target string, deleteSource bool) error {
-	archive, err := zip.OpenReader(source)
+	archive, err := zip.OpenReader(filepath.Clean(source))
 	if err != nil {
 		return err
 	}
@@ -380,7 +380,7 @@ func unZip(source, target string, deleteSource bool) error {
 			return err
 		}
 
-		dstFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+		dstFile, err := os.OpenFile(filepath.Clean(filePath), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
 		if err != nil {
 			return err
 		}

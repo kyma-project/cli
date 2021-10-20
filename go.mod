@@ -1,6 +1,6 @@
 module github.com/kyma-project/cli
 
-go 1.14
+go 1.17
 
 replace (
 	// github.com/kyma-incubator/hydroform/parallel-install => ../hydroform/parallel-install
