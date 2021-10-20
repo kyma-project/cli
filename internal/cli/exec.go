@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"context"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -15,28 +14,4 @@ func RunCmd(c string, args ...string) (string, error) {
 		return "", fmt.Errorf("Executing command '%s %s' failed with output '%s' and error message '%s'", c, args, out, err)
 	}
 	return strings.Replace(string(out), "'", "", -1), nil
-}
-
-//go:generate mockery --name Executor
-type Executor interface {
-	RunCmd(ctx context.Context, name string, args ...string) (string, error)
-	LookPath(file string) (string, error)
-}
-
-type executor struct{}
-
-func NewExecutor() Executor {
-	return &executor{}
-}
-
-func (e *executor) RunCmd(ctx context.Context, name string, args ...string) (string, error) {
-	cmd := exec.CommandContext(ctx, name, args...)
-
-	outBytes, err := cmd.CombinedOutput()
-	out := string(outBytes)
-	return out, err
-}
-
-func (e *executor) LookPath(file string) (string, error) {
-	return exec.LookPath(file)
 }

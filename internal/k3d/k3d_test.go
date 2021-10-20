@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kyma-project/cli/internal/cli/mocks"
+	"github.com/kyma-project/cli/internal/k3d/mocks"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -18,39 +18,41 @@ const (
 
 type V5TestSuite struct {
 	suite.Suite
-	client       Client
-	mockExecutor *mocks.Executor
+	client         Client
+	mockCmdRunner  *mocks.CmdRunner
+	mockPathLooker *mocks.PathLooker
 }
 
 func (suite *V5TestSuite) SetupTest() {
-	suite.mockExecutor = &mocks.Executor{}
-	suite.client = NewClient(suite.mockExecutor, testClusterName, true, testTimeout, true)
+	suite.mockCmdRunner = &mocks.CmdRunner{}
+	suite.mockPathLooker = &mocks.PathLooker{}
+	suite.client = NewClient(suite.mockCmdRunner, suite.mockPathLooker, testClusterName, true, testTimeout, true)
 }
 
 func (suite *V5TestSuite) TestVerifyStatus() {
-	suite.mockExecutor.On("LookPath", "k3d").Return("", nil)
+	suite.mockPathLooker.On("Look", "k3d").Return("", nil)
 
-	suite.mockExecutor.On("RunCmd", mock.Anything, "k3d", "version").Return("k3d version v5.0.0\nk3s version v1.21.5-k3s2 (default)", nil)
+	suite.mockCmdRunner.On("Run", mock.Anything, "k3d", "version").Return("k3d version v5.0.0\nk3s version v1.21.5-k3s2 (default)", nil)
 
-	suite.mockExecutor.On("RunCmd", mock.Anything, "k3d", "cluster", "list").Return("", nil)
+	suite.mockCmdRunner.On("Run", mock.Anything, "k3d", "cluster", "list").Return("", nil)
 
 	err := suite.client.VerifyStatus()
 	suite.Nil(err)
 }
 
 func (suite *V5TestSuite) TestCheckVersionIncompMinor() {
-	suite.mockExecutor.On("LookPath", "k3d").Return("", nil)
+	suite.mockPathLooker.On("Look", "k3d").Return("", nil)
 
-	suite.mockExecutor.On("RunCmd", mock.Anything, "k3d", "version").Return("k3d version v4.4.8\nk3s version v1.21.3-k3s1 (default)", nil)
+	suite.mockCmdRunner.On("Run", mock.Anything, "k3d", "version").Return("k3d version v4.4.8\nk3s version v1.21.3-k3s1 (default)", nil)
 
 	err := suite.client.VerifyStatus()
 	suite.Error(err)
 }
 
 func (suite *V5TestSuite) TestCheckVersionIncompMajor() {
-	suite.mockExecutor.On("LookPath", "k3d").Return("", nil)
+	suite.mockPathLooker.On("Look", "k3d").Return("", nil)
 
-	suite.mockExecutor.On("RunCmd", mock.Anything, "k3d", "version").Return("k3d version v6.1.0\nk3s version latest (default)", nil)
+	suite.mockCmdRunner.On("Run", mock.Anything, "k3d", "version").Return("k3d version v6.1.0\nk3s version latest (default)", nil)
 
 	err := suite.client.VerifyStatus()
 	suite.Error(err)
@@ -80,7 +82,7 @@ func (suite *V5TestSuite) TestClusterExistsTrue() {
       ]
     }
   ]`
-	suite.mockExecutor.On("RunCmd", mock.Anything, "k3d", "cluster", "list", "-o", "json").
+	suite.mockCmdRunner.On("Run", mock.Anything, "k3d", "cluster", "list", "-o", "json").
 		Return(clusterExistsOutput, nil)
 
 	exists, err := suite.client.ClusterExists()
@@ -89,7 +91,7 @@ func (suite *V5TestSuite) TestClusterExistsTrue() {
 }
 
 func (suite *V5TestSuite) TestClusterExistsFalse() {
-	suite.mockExecutor.On("RunCmd", mock.Anything, "k3d", "cluster", "list", "-o", "json").
+	suite.mockCmdRunner.On("Run", mock.Anything, "k3d", "cluster", "list", "-o", "json").
 		Return("[]", nil)
 
 	exists, err := suite.client.ClusterExists()
@@ -109,7 +111,7 @@ func (suite *V5TestSuite) TestRegistryExistsTrue() {
     }
   }
 ]`
-	suite.mockExecutor.On("RunCmd", mock.Anything, "k3d", "registry", "list", "-o", "json").
+	suite.mockCmdRunner.On("Run", mock.Anything, "k3d", "registry", "list", "-o", "json").
 		Return(registryExistsOutput, nil)
 
 	exists, err := suite.client.RegistryExists("kyma-registry")
@@ -118,7 +120,7 @@ func (suite *V5TestSuite) TestRegistryExistsTrue() {
 }
 
 func (suite *V5TestSuite) TestRegistryExistsFalse() {
-	suite.mockExecutor.On("RunCmd", mock.Anything, "k3d", "registry", "list", "-o", "json").
+	suite.mockCmdRunner.On("Run", mock.Anything, "k3d", "registry", "list", "-o", "json").
 		Return("[]", nil)
 
 	exists, err := suite.client.RegistryExists("k3d-kyma-registry")
@@ -138,7 +140,7 @@ func (suite *V5TestSuite) TestCreateCluster() {
 		},
 	}
 
-	suite.mockExecutor.On("RunCmd", mock.Anything, "k3d", "cluster", "create", testClusterName,
+	suite.mockCmdRunner.On("Run", mock.Anything, "k3d", "cluster", "create", testClusterName,
 		"--kubeconfig-update-default",
 		"--timeout", "5s",
 		"--agents", "0",
@@ -155,7 +157,7 @@ func (suite *V5TestSuite) TestCreateCluster() {
 }
 
 func (suite *V5TestSuite) TestCreateRegistry() {
-	suite.mockExecutor.On("RunCmd", mock.Anything, "k3d", "registry", "create", "kyma-registry",
+	suite.mockCmdRunner.On("Run", mock.Anything, "k3d", "registry", "create", "kyma-registry",
 		"--port", "5000").Return("", nil)
 
 	registryName, err := suite.client.CreateRegistry("kyma-registry")
@@ -164,7 +166,7 @@ func (suite *V5TestSuite) TestCreateRegistry() {
 }
 
 func (suite *V5TestSuite) TestDeleteCluster() {
-	suite.mockExecutor.On("RunCmd", mock.Anything, "k3d", "cluster", "delete", testClusterName).Return("", nil)
+	suite.mockCmdRunner.On("Run", mock.Anything, "k3d", "cluster", "delete", testClusterName).Return("", nil)
 
 	err := suite.client.DeleteCluster()
 	suite.Nil(err)
@@ -172,7 +174,7 @@ func (suite *V5TestSuite) TestDeleteCluster() {
 
 func (suite *V5TestSuite) TestDeleteRegistry() {
 	registryName := fmt.Sprintf(V5DefaultRegistryNamePattern, testClusterName)
-	suite.mockExecutor.On("RunCmd", mock.Anything, "k3d", "registry", "delete", fmt.Sprintf("k3d-%s", registryName)).Return("", nil)
+	suite.mockCmdRunner.On("Run", mock.Anything, "k3d", "registry", "delete", fmt.Sprintf("k3d-%s", registryName)).Return("", nil)
 
 	err := suite.client.DeleteRegistry(registryName)
 	suite.Nil(err)
@@ -184,28 +186,30 @@ func TestV5TestSuite(t *testing.T) {
 
 type V4TestSuite struct {
 	suite.Suite
-	client       Client
-	mockExecutor *mocks.Executor
+	client         Client
+	mockCmdRunner  *mocks.CmdRunner
+	mockPathLooker *mocks.PathLooker
 }
 
 func (suite *V4TestSuite) SetupTest() {
-	suite.mockExecutor = &mocks.Executor{}
-	suite.client = NewClient(suite.mockExecutor, testClusterName, true, testTimeout, false)
+	suite.mockCmdRunner = &mocks.CmdRunner{}
+	suite.mockPathLooker = &mocks.PathLooker{}
+	suite.client = NewClient(suite.mockCmdRunner, suite.mockPathLooker, testClusterName, true, testTimeout, false)
 }
 
 func (suite *V4TestSuite) TestCheckVersionIncompMinor() {
-	suite.mockExecutor.On("LookPath", "k3d").Return("", nil)
+	suite.mockPathLooker.On("Look", "k3d").Return("", nil)
 
-	suite.mockExecutor.On("RunCmd", mock.Anything, "k3d", "version").Return("k3d version v3.4.8\nk3s version v1.21.3-k3s1 (default)", nil)
+	suite.mockCmdRunner.On("Run", mock.Anything, "k3d", "version").Return("k3d version v3.4.8\nk3s version v1.21.3-k3s1 (default)", nil)
 
 	err := suite.client.VerifyStatus()
 	suite.Error(err)
 }
 
 func (suite *V4TestSuite) TestCheckVersionIncompMajor() {
-	suite.mockExecutor.On("LookPath", "k3d").Return("", nil)
+	suite.mockPathLooker.On("Look", "k3d").Return("", nil)
 
-	suite.mockExecutor.On("RunCmd", mock.Anything, "k3d", "version").Return("k3d version v5.1.0\nk3s version latest (default)", nil)
+	suite.mockCmdRunner.On("Run", mock.Anything, "k3d", "version").Return("k3d version v5.1.0\nk3s version latest (default)", nil)
 
 	err := suite.client.VerifyStatus()
 	suite.Error(err)
@@ -223,7 +227,7 @@ func (suite *V4TestSuite) TestCreateCluster() {
 		},
 	}
 
-	suite.mockExecutor.On("RunCmd", mock.Anything, "k3d", "cluster", "create", testClusterName,
+	suite.mockCmdRunner.On("Run", mock.Anything, "k3d", "cluster", "create", testClusterName,
 		"--kubeconfig-update-default",
 		"--timeout", "5s",
 		"--agents", "1",

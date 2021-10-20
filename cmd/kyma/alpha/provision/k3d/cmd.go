@@ -58,7 +58,7 @@ func (c *command) Run() error {
 	var err error
 	var registryURL string
 
-	k3dClient := k3d.NewClient(cli.NewExecutor(), c.opts.Name, c.opts.Verbose, c.opts.Timeout, true)
+	k3dClient := k3d.NewClient(k3d.NewCmdRunner(), k3d.NewPathLooker(), c.opts.Name, c.opts.Verbose, c.opts.Timeout, true)
 	registryName := fmt.Sprintf(k3d.V5DefaultRegistryNamePattern, c.opts.Name)
 
 	if err = c.verifyK3dStatus(k3dClient, registryName); err != nil {
@@ -84,7 +84,7 @@ func (c *command) verifyK3dStatus(k3dClient k3d.Client, registryName string) err
 	s.Status("Checking if port flags are valid")
 	ports, err := extractPortsFromFlag(c.opts.PortMapping)
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Could not extract host ports from %s", c.opts.PortMapping))
+		return errors.Wrapf(err, "Could not extract host ports from %s", c.opts.PortMapping)
 	}
 
 	s.Status("Checking if k3d registry of previous kyma installation exists")

@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/blang/semver/v4"
-	"github.com/kyma-project/cli/internal/cli"
 	"github.com/pkg/errors"
 )
 
@@ -53,7 +52,8 @@ type V5CreateClusterSettings struct {
 }
 
 type client struct {
-	executor    cli.Executor
+	cmdRunner   CmdRunner
+	pathLooker  PathLooker
 	clusterName string
 	minVersion  string
 	verbose     bool
@@ -62,7 +62,7 @@ type client struct {
 
 // NewClient creates a new instance of the Client interface.
 // The 'isAlpha' parameter indicates whether the command is an alpha command. If so, the minimum k3d version is v5.
-func NewClient(executor cli.Executor, clusterName string, verbose bool, timeout time.Duration, isAlpha bool) Client {
+func NewClient(cmdRunner CmdRunner, pathLooker PathLooker, clusterName string, verbose bool, timeout time.Duration, isAlpha bool) Client {
 	var mink3dVersion string
 	if isAlpha {
 		mink3dVersion = V5MinVersion
@@ -71,7 +71,8 @@ func NewClient(executor cli.Executor, clusterName string, verbose bool, timeout 
 	}
 
 	return &client{
-		executor:    executor,
+		cmdRunner:   cmdRunner,
+		pathLooker:  pathLooker,
 		clusterName: clusterName,
 		verbose:     verbose,
 		userTimeout: timeout,
@@ -83,7 +84,7 @@ func (c *client) runCmd(args ...string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.userTimeout)
 	defer cancel()
 
-	out, err := c.executor.RunCmd(ctx, binaryName, args...)
+	out, err := c.cmdRunner.Run(ctx, binaryName, args...)
 
 	if err != nil {
 		if c.verbose {
@@ -137,7 +138,7 @@ func (c *client) checkVersion() error {
 //VerifyStatus verifies whether the k3d CLI tool is properly installed
 func (c *client) VerifyStatus() error {
 	//ensure k3d is in PATH
-	if _, err := c.executor.LookPath(binaryName); err != nil {
+	if _, err := c.pathLooker.Look(binaryName); err != nil {
 		if c.verbose {
 			fmt.Printf("Command '%s' not found in PATH", binaryName)
 		}
