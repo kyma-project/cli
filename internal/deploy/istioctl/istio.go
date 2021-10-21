@@ -104,7 +104,7 @@ func (i *Installation) Install() error {
 	}
 	i.setArch()
 	if err := i.getIstioVersion(); err != nil {
-		return errors.Wrap(err, "failed to check wanted istio version")
+		return errors.Wrap(err, "failed to get istio version")
 	}
 	exist, err := i.checkIfBinaryExists()
 	if err != nil {

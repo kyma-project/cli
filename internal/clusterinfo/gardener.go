@@ -24,7 +24,7 @@ func getGardenerDomain(ctx context.Context, kubeClient kubernetes.Interface) (do
 
 		domainName = configMap.Data["domain"]
 		if domainName == "" {
-			return errors.Errorf("domain is empty in %s configmap", "shoot-info")
+			return errors.New("domain is empty in shoot-info configmap")
 		}
 
 		return nil
