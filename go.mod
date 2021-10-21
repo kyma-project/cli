@@ -166,7 +166,7 @@ require (
 	github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90
 	github.com/kyma-incubator/hydroform/provision v0.0.0-20210514061348-c71b69cb362e
 	github.com/kyma-incubator/octopus v0.0.0-20200922132758-2b721e93b58b
-	github.com/kyma-incubator/reconciler v0.0.0-20211006151027-6e130cb729c5
+	github.com/kyma-incubator/reconciler v0.0.0-20211020131130-6cf748c72587
 	github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20201125092745-687c943ac940
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect

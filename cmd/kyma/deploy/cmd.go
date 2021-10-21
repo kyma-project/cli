@@ -3,6 +3,7 @@ package deploy
 import (
 	"context"
 	"fmt"
+	"github.com/kyma-incubator/reconciler/pkg/model"
 
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/service"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
@@ -98,6 +99,8 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
+	summary := cmd.setSummary()
+
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
 		return errors.Wrap(err, "failed to initialize the Kubernetes client from given kubeconfig")
 	}
@@ -133,17 +136,16 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	err = cmd.deployKyma(l, components, vals)
+	err = cmd.deployKyma(l, components, vals, summary)
 	if err != nil {
 		return err
 	}
 
 	deployTime := time.Since(start)
-
-	return cmd.printSummary(deployTime)
+	return summary.Print(deployTime)
 }
 
-func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, vals values.Values) error {
+func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, vals values.Values, summary *nice.Summary) error {
 	kubeconfigPath := kube.KubeconfigPath(cmd.KubeconfigPath)
 	kubeconfig, err := ioutil.ReadFile(kubeconfigPath)
 	if err != nil {
@@ -162,7 +164,7 @@ func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, 
 	deployStep := cmd.NewStep("Deploying Kyma")
 	deployStep.Start()
 
-	err = deploy.Deploy(deploy.Options{
+	recoResult, err := deploy.Deploy(deploy.Options{
 		Components:     components,
 		Values:         vals,
 		StatusFunc:     cmd.printDeployStatus,
@@ -177,7 +179,16 @@ func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, 
 		return err
 	}
 
-	deployStep.Successf("Kyma deployed successfully!")
+	if recoResult.GetResult() == model.ClusterStatusError {
+		summary.PrintFailedComponentSummary(recoResult)
+		deployStep.Failure()
+		return errors.Errorf("Kyma deployment failed.")
+	}
+
+	if recoResult.GetResult() == model.ClusterStatusReady {
+		deployStep.Successf("Kyma deployed successfully!")
+		return nil
+	}
 	return nil
 }
 
@@ -194,7 +205,7 @@ func (cmd *command) printDeployStatus(status deploy.ComponentStatus) {
 		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' failed. Retrying...\n%s\n ", status.Component, status.Error.Error()))
 		statusStep.Failure()
 	case deploy.UnrecoverableError:
-		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' failed and terminated.\n%s\n", status.Component, status.Error.Error()))
+		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' failed, all retries exhausted.\n%s\n", status.Component, status.Error.Error()))
 		statusStep.Failure()
 	}
 }
@@ -267,16 +278,6 @@ func (cmd *command) avoidUserInteraction() bool {
 	return cmd.NonInteractive || cmd.CI
 }
 
-func (cmd *command) printSummary(duration time.Duration) error {
-	sum := nice.Summary{
-		NonInteractive: cmd.NonInteractive,
-		Version:        cmd.opts.Source,
-		Duration:       duration,
-	}
-
-	return sum.Print()
-}
-
 func (cmd *command) setKubeClient() error {
 	var err error
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
@@ -346,4 +347,11 @@ func (cmd *command) installPrerequisites(wsp string) error {
 
 	preReqStep.Successf("Installed Prerequisites")
 	return nil
+}
+
+func (cmd *command) setSummary() *nice.Summary {
+	return &nice.Summary{
+		NonInteractive: cmd.NonInteractive,
+		Version:        cmd.opts.Source,
+	}
 }

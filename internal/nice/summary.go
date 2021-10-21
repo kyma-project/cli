@@ -2,12 +2,13 @@ package nice
 
 import (
 	"fmt"
+	"github.com/kyma-incubator/reconciler/pkg/model"
+	"github.com/kyma-incubator/reconciler/pkg/scheduler/service"
 	"time"
 )
 
 type Summary struct {
 	NonInteractive bool
-	Duration       time.Duration
 	Version        string
 	URL            string
 	Console        string
@@ -16,7 +17,33 @@ type Summary struct {
 	Password       string
 }
 
-func (s *Summary) Print() error {
+func (s *Summary) PrintFailedComponentSummary(result *service.ReconciliationResult) {
+	nicePrint := Nice{
+		NonInteractive: s.NonInteractive,
+	}
+	failedComps := []string{}
+	successfulComps := []string{}
+
+	for _, comp := range result.GetOperations() {
+		if comp.State == model.OperationStateError {
+			failedComps = append(failedComps, comp.Component)
+		}
+		if comp.State == model.OperationStateDone {
+			successfulComps = append(successfulComps, comp.Component)
+		}
+	}
+
+	fmt.Println()
+	fmt.Printf("Deployed Components: ")
+	nicePrint.PrintImportantf("%d/%d", len(successfulComps), len(successfulComps)+len(failedComps))
+	fmt.Println("Could not deploy the following components:")
+	for _, items := range failedComps {
+		fmt.Printf("- %s\n", items)
+	}
+	fmt.Println()
+}
+
+func (s *Summary) Print(t time.Duration) error {
 	nicePrint := Nice{
 		NonInteractive: s.NonInteractive,
 	}
@@ -30,7 +57,7 @@ func (s *Summary) Print() error {
 
 	nicePrint.PrintKyma()
 	fmt.Print(" installation took:\t\t")
-	nicePrint.PrintImportantf("%d hours %d minutes", int64(s.Duration.Hours()), int64(s.Duration.Minutes()))
+	nicePrint.PrintImportantf("%d hours %d minutes", int64(t.Hours()), int64(t.Minutes()))
 
 	if s.URL != "" {
 		nicePrint.PrintKyma()

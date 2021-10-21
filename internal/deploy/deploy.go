@@ -2,7 +2,6 @@ package deploy
 
 import (
 	"context"
-	"encoding/json"
 	"github.com/kyma-incubator/reconciler/pkg/cluster"
 	"github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-incubator/reconciler/pkg/model"
@@ -40,19 +39,16 @@ type Options struct {
 	WorkerPoolSize int
 }
 
-func Deploy(opts Options) error {
+func Deploy(opts Options) (*service.ReconciliationResult, error) {
 	kebComponents, err := prepareKebComponents(opts.Components, opts.Values)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
-	kebCluster, err := prepareKebCluster(opts, kebComponents)
-	if err != nil {
-		return nil
-	}
+	kebCluster := prepareKebCluster(opts, kebComponents)
 
 	runtimeBuilder := service.NewRuntimeBuilder(reconciliation.NewInMemoryReconciliationRepository(), opts.Logger)
-	return runtimeBuilder.RunLocal(opts.Components.PrerequisiteNames(), func(component string, msg *reconciler.CallbackMessage) {
+	reconcilationResult, err := runtimeBuilder.RunLocal(opts.Components.PrerequisiteNames(), func(component string, msg *reconciler.CallbackMessage) {
 		var state ComponentState
 		var errorRecieved error
 		switch msg.Status {
@@ -60,18 +56,21 @@ func Deploy(opts Options) error {
 			state = Success
 			errorRecieved = nil
 		case reconciler.StatusFailed:
-			errorRecieved = errors.Errorf("Error: %s", msg.Error)
+			errorRecieved = errors.Errorf("%s", msg.Error)
 			state = RecoverableError
 		case reconciler.StatusError:
-			errorRecieved = errors.Errorf("Error: aborting deployment: %s", msg.Error)
+			errorRecieved = errors.Errorf("%s", msg.Error)
 			state = UnrecoverableError
 		}
+
 		opts.StatusFunc(ComponentStatus{component, state, errorRecieved})
 	}).WithWorkerPoolSize(opts.WorkerPoolSize).Run(context.TODO(), kebCluster)
+
+	return reconcilationResult, err
 }
 
-func prepareKebComponents(components component.List, vals values.Values) ([]keb.Component, error) {
-	var kebComponents []keb.Component
+func prepareKebComponents(components component.List, vals values.Values) ([]*keb.Component, error) {
+	var kebComponents []*keb.Component
 	all := append(components.Prerequisites, components.Components...)
 	for _, c := range all {
 		kebComponent := keb.Component{
@@ -97,40 +96,35 @@ func prepareKebComponents(components component.List, vals values.Values) ([]keb.
 			}
 		}
 
-		kebComponents = append(kebComponents, kebComponent)
+		kebComponents = append(kebComponents, &kebComponent)
 	}
 
 	return kebComponents, nil
 }
 
-func prepareKebCluster(opts Options, kebComponents []keb.Component) (*cluster.State, error) {
-	kebComponentsJSON, err := json.Marshal(kebComponents)
-	if err != nil {
-		return nil, err
-	}
-
+func prepareKebCluster(opts Options, kebComponents []*keb.Component) *cluster.State {
 	return &cluster.State{
 		Cluster: &model.ClusterEntity{
 			Version:    1,
-			Cluster:    "local",
+			RuntimeID:  "local",
 			Kubeconfig: string(opts.KubeConfig),
 			Contract:   1,
 		},
 		Configuration: &model.ClusterConfigurationEntity{
 			Version:        1,
-			Cluster:        "local",
+			RuntimeID:      "local",
 			ClusterVersion: 1,
 			KymaVersion:    opts.KymaVersion,
 			KymaProfile:    opts.KymaProfile,
-			Components:     string(kebComponentsJSON),
+			Components:     kebComponents,
 			Contract:       1,
 		},
 		Status: &model.ClusterStatusEntity{
 			ID:             1,
-			Cluster:        "local",
+			RuntimeID:      "local",
 			ClusterVersion: 1,
 			ConfigVersion:  1,
 			Status:         model.ClusterStatusReconcilePending,
 		},
-	}, nil
+	}
 }

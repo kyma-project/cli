@@ -71,22 +71,34 @@ func TestPrepareKebComponents(t *testing.T) {
 	result, err := prepareKebComponents(components, vals)
 	require.NoError(t, err)
 	require.Len(t, expected, 3)
-	require.Equal(t, expected[0].Component, result[0].Component)
-	require.ElementsMatch(t, expected[0].Configuration, result[0].Configuration)
-	require.Equal(t, expected[0].Namespace, result[0].Namespace)
-	require.Equal(t, expected[1].Component, result[1].Component)
-	require.ElementsMatch(t, expected[1].Configuration, result[1].Configuration)
-	require.Equal(t, expected[1].Namespace, result[1].Namespace)
-	require.Equal(t, expected[2].Component, result[2].Component)
-	require.ElementsMatch(t, expected[2].Configuration, result[2].Configuration)
-	require.Equal(t, expected[2].Namespace, result[2].Namespace)
+	require.Equal(t, expected[0].Component, (result)[0].Component)
+	require.ElementsMatch(t, expected[0].Configuration, (result)[0].Configuration)
+	require.Equal(t, expected[0].Namespace, (result)[0].Namespace)
+	require.Equal(t, expected[1].Component, (result)[1].Component)
+	require.ElementsMatch(t, expected[1].Configuration, (result)[1].Configuration)
+	require.Equal(t, expected[1].Namespace, (result)[1].Namespace)
+	require.Equal(t, expected[2].Component, (result)[2].Component)
+	require.ElementsMatch(t, expected[2].Configuration, (result)[2].Configuration)
+	require.Equal(t, expected[2].Namespace, (result)[2].Namespace)
 }
 func TestPrepareKebCluster(t *testing.T) {
-	var expected = []keb.Component{
+	var expected = []*keb.Component{
 		{
 			Component: "comp-1",
 			Configuration: []keb.Configuration{
 				{Key: "global.domainName", Value: "domain-1"},
+			},
+			Namespace: "ns-2",
+		},
+	}
+
+	var expCompWithConf = []*keb.Component{
+		{
+			URL:       "",
+			Version:   "",
+			Component: "comp-1",
+			Configuration: []keb.Configuration{
+				{Key: "global.domainName", Secret: false, Value: "domain-1"},
 			},
 			Namespace: "ns-2",
 		},
@@ -105,29 +117,28 @@ func TestPrepareKebCluster(t *testing.T) {
 	expectedState := &cluster.State{
 		Cluster: &model.ClusterEntity{
 			Version:    1,
-			Cluster:    "local",
+			RuntimeID:  "local",
 			Kubeconfig: "kubeconfig-1",
 			Contract:   1,
 		},
 		Configuration: &model.ClusterConfigurationEntity{
 			Version:        1,
-			Cluster:        "local",
+			RuntimeID:      "local",
 			ClusterVersion: 1,
 			KymaVersion:    "version-1",
 			KymaProfile:    "profile-1",
-			Components:     "[{\"URL\":\"\",\"component\":\"comp-1\",\"configuration\":[{\"key\":\"global.domainName\",\"secret\":false,\"value\":\"domain-1\"}],\"namespace\":\"ns-2\",\"version\":\"\"}]",
+			Components:     expCompWithConf,
 			Contract:       1,
 		},
 		Status: &model.ClusterStatusEntity{
 			ID:             1,
-			Cluster:        "local",
+			RuntimeID:      "local",
 			ClusterVersion: 1,
 			ConfigVersion:  1,
 			Status:         model.ClusterStatusReconcilePending,
 		},
 	}
 
-	result, err := prepareKebCluster(options, expected)
-	require.NoError(t, err)
+	result := prepareKebCluster(options, expected)
 	require.Equal(t, expectedState, result)
 }
