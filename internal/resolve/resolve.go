@@ -34,7 +34,7 @@ func Files(files []string, dstDir string) ([]string, error) {
 		case 1:
 			// In case the file provided is not a URL, check if it exists locally
 			if _, err := os.Stat(file); os.IsNotExist(err) {
-				return nil, fmt.Errorf("File '%s' not found", file)
+				return nil, fmt.Errorf("file '%s' not found", file)
 			}
 			result = append(result, urlTokens[0])
 		case 2:

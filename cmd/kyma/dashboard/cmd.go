@@ -53,7 +53,7 @@ func (cmd *command) Run() error {
 	}
 
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
-		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid.")
+		return errors.Wrap(err, "failed to initialize the Kubernetes client from given kubeconfig")
 	}
 
 	localDashboardURL := fmt.Sprintf("http://localhost:%s/", cmd.opts.Port)
@@ -65,7 +65,7 @@ func (cmd *command) runDashboardContainer(dashboardURL string) error {
 
 	dockerWrapper, err := docker.NewWrapper()
 	if err != nil {
-		return errors.Wrap(err, "Error while trying to interact with docker")
+		return errors.Wrap(err, "failed to interact with docker")
 	}
 
 	ctx := context.Background()
@@ -73,7 +73,7 @@ func (cmd *command) runDashboardContainer(dashboardURL string) error {
 	var envs []string
 	if dockerDesktop, err := dockerWrapper.IsDockerDesktopOS(ctx); err != nil {
 		step.Failure()
-		return errors.Wrap(err, "Error while trying to interact with docker")
+		return errors.Wrap(err, "failed to interact with docker")
 	} else if dockerDesktop {
 		envs = append(envs, "DOCKER_DESKTOP_CLUSTER=true")
 	}
@@ -89,7 +89,7 @@ func (cmd *command) runDashboardContainer(dashboardURL string) error {
 
 	if err != nil {
 		step.Failure()
-		return errors.Wrap(err, "Could not start container")
+		return errors.Wrap(err, "unable to start container")
 	}
 	step.Successf("Started container: %s", cmd.opts.ContainerName)
 

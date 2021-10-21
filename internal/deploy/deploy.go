@@ -80,7 +80,7 @@ func prepareKebComponents(components component.List, vals values.Values) ([]*keb
 		if componentVals, exists := vals[c.Name]; exists {
 			valsMap, ok := componentVals.(map[string]interface{})
 			if !ok {
-				return nil, errors.New("Component value must be a map")
+				return nil, errors.New("component value must be a map")
 			}
 			for k, v := range valsMap {
 				kebComponent.Configuration = append(kebComponent.Configuration, keb.Configuration{Key: k, Value: v})
@@ -89,7 +89,7 @@ func prepareKebComponents(components component.List, vals values.Values) ([]*keb
 		if globalVals, exists := vals["global"]; exists {
 			valsMap, ok := globalVals.(map[string]interface{})
 			if !ok {
-				return nil, errors.New("Global value must be a map")
+				return nil, errors.New("global value must be a map")
 			}
 			for k, v := range valsMap {
 				kebComponent.Configuration = append(kebComponent.Configuration, keb.Configuration{Key: "global." + k, Value: v})

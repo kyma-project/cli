@@ -79,7 +79,7 @@ func (b *builder) mergeSources() (map[string]interface{}, error) {
 	for _, file := range b.files {
 		vals, err := loadValuesFile(file)
 		if err != nil {
-			return nil, errors.Wrap(err, fmt.Sprintf("Failed to process values defined in file '%s'", file))
+			return nil, errors.Wrap(err, fmt.Sprintf("failed to process values defined in file '%s'", file))
 		}
 
 		if err := mergo.Map(&result, vals, mergo.WithOverride); err != nil {
