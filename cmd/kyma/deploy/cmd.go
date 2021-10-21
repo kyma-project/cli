@@ -203,7 +203,7 @@ func (cmd *command) prepareWorkspace(l *zap.SugaredLogger) (*workspace.Workspace
 	if err := cmd.decideVersionUpgrade(); err != nil {
 		return nil, err
 	}
-	wsStep := cmd.NewStep(fmt.Sprintf("Fetching Kyma sources(%s)", cmd.opts.Source))
+	wsStep := cmd.NewStep(fmt.Sprintf("Fetching Kyma sources (%s)", cmd.opts.Source))
 
 	if cmd.opts.Source != VersionLocal {
 		_, err := os.Stat(cmd.opts.WorkspacePath)
