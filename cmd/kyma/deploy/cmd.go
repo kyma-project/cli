@@ -101,7 +101,6 @@ func (cmd *command) Run(o *Options) error {
 
 	summary := cmd.setSummary()
 
-
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
 		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
 	}
@@ -165,7 +164,7 @@ func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, 
 	deployStep := cmd.NewStep("Deploying Kyma")
 	deployStep.Start()
 
-	err, recoResult := deploy.Deploy(deploy.Options{
+	recoResult, err := deploy.Deploy(deploy.Options{
 		Components:     components,
 		Values:         vals,
 		StatusFunc:     cmd.printDeployStatus,
@@ -190,7 +189,7 @@ func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, 
 		deployStep.Successf("Kyma deployed successfully!")
 		return nil
 	}
-	return  nil
+	return nil
 }
 
 func (cmd *command) printDeployStatus(status deploy.ComponentStatus) {
@@ -279,8 +278,6 @@ func (cmd *command) avoidUserInteraction() bool {
 	return cmd.NonInteractive || cmd.CI
 }
 
-
-
 func (cmd *command) setKubeClient() error {
 	var err error
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
@@ -353,7 +350,7 @@ func (cmd *command) installPrerequisites(wsp string) error {
 }
 
 func (cmd *command) setSummary() *nice.Summary {
-	       return &nice.Summary{
+	return &nice.Summary{
 		NonInteractive: cmd.NonInteractive,
 		Version:        cmd.opts.Source,
 	}

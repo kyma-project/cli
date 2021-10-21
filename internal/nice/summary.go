@@ -17,7 +17,7 @@ type Summary struct {
 	Password       string
 }
 
-func (s *Summary) PrintFailedComponentSummary(result *service.ReconciliationResult) error{
+func (s *Summary) PrintFailedComponentSummary(result *service.ReconciliationResult) {
 	nicePrint := Nice{
 		NonInteractive: s.NonInteractive,
 	}
@@ -34,16 +34,13 @@ func (s *Summary) PrintFailedComponentSummary(result *service.ReconciliationResu
 	}
 
 	fmt.Println()
-	fmt.Printf("CMPS: %v\n",successfulComps)
 	fmt.Printf("Deployed Components: ")
-	nicePrint.PrintImportantf("%d/%d", len(successfulComps), len(successfulComps) + len(failedComps))
+	nicePrint.PrintImportantf("%d/%d", len(successfulComps), len(successfulComps)+len(failedComps))
 	fmt.Println("Following components could not be deployed:")
 	for _, items := range failedComps {
 		fmt.Printf("- %s\n", items)
 	}
 	fmt.Println()
-	return nil
-
 }
 
 func (s *Summary) Print(t time.Duration) error {
@@ -102,5 +99,3 @@ func (s *Summary) Print(t time.Duration) error {
 
 	return nil
 }
-
-

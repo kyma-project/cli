@@ -39,10 +39,10 @@ type Options struct {
 	WorkerPoolSize int
 }
 
-func Deploy(opts Options) (error, *service.ReconciliationResult) {
+func Deploy(opts Options) (*service.ReconciliationResult, error) {
 	kebComponents, err := prepareKebComponents(opts.Components, opts.Values)
 	if err != nil {
-		return nil, nil
+		return nil, err
 	}
 
 	kebCluster := prepareKebCluster(opts, kebComponents)
@@ -66,7 +66,7 @@ func Deploy(opts Options) (error, *service.ReconciliationResult) {
 		opts.StatusFunc(ComponentStatus{component, state, errorRecieved})
 	}).WithWorkerPoolSize(opts.WorkerPoolSize).Run(context.TODO(), kebCluster)
 
-	return err, reconcilationResult
+	return reconcilationResult, err
 }
 
 func prepareKebComponents(components component.List, vals values.Values) ([]*keb.Component, error) {
