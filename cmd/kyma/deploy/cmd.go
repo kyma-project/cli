@@ -182,7 +182,7 @@ func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, 
 	if recoResult.GetResult() == model.ClusterStatusError {
 		summary.PrintFailedComponentSummary(recoResult)
 		deployStep.Failure()
-		return errors.Errorf("Kyma deployment failed with errors")
+		return errors.Errorf("Kyma deployment failed.")
 	}
 
 	if recoResult.GetResult() == model.ClusterStatusReady {
