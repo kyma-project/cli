@@ -66,7 +66,7 @@ func addClusterSpecificDefaults(builder *builder, clusterInfo clusterinfo.Info) 
 func addValueFiles(builder *builder, opts Sources, workspaceDir string) error {
 	valueFiles, err := resolve.Files(opts.ValueFiles, filepath.Join(workspaceDir, "tmp"))
 	if err != nil {
-		return errors.Wrap(err, "Failed to resolve value files")
+		return errors.Wrap(err, "failed to resolve value files")
 	}
 	for _, file := range valueFiles {
 		builder.addValuesFile(file)
@@ -97,11 +97,11 @@ func addDomainValues(builder *builder, opts Sources) error {
 	if opts.TLSCrtFile != "" && opts.TLSKeyFile != "" {
 		tlsCrt, err := readFileAndEncode(opts.TLSCrtFile)
 		if err != nil {
-			return errors.Wrap(err, "failed to read")
+			return errors.Wrap(err, "failed to read TLS certificate")
 		}
 		tlsKey, err := readFileAndEncode(opts.TLSKeyFile)
 		if err != nil {
-			return errors.Wrap(err, "failed to read")
+			return errors.Wrap(err, "failed to read TLS key")
 		}
 		domainOverrides["tlsKey"] = tlsKey
 		domainOverrides["tlsCrt"] = tlsCrt

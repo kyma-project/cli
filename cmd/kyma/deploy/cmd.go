@@ -99,7 +99,7 @@ func (cmd *command) Run(o *Options) error {
 	}
 
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
-		return errors.Wrap(err, "Could not initialize the Kubernetes client. Make sure your kubeconfig is valid")
+		return errors.Wrap(err, "failed to initialize the Kubernetes client from given kubeconfig")
 	}
 
 	l := cli.NewLogger(o.Verbose).Sugar()
@@ -108,18 +108,18 @@ func (cmd *command) Run(o *Options) error {
 		return err
 	}
 
-	clusterinfo, err := clusterinfo.Discover(context.Background(), cmd.K8s.Static())
+	clusterInfo, err := clusterinfo.Discover(context.Background(), cmd.K8s.Static())
 	if err != nil {
-		return errors.Wrap(err, "Failed to discover underlying cluster type")
+		return errors.Wrap(err, "failed to discover underlying cluster type")
 	}
 
-	vals, err := values.Merge(cmd.opts.Sources, ws.WorkspaceDir, clusterinfo)
+	vals, err := values.Merge(cmd.opts.Sources, ws.WorkspaceDir, clusterInfo)
 	if err != nil {
 		return err
 	}
 
 	hasCustomDomain := cmd.opts.Domain != ""
-	if _, err := coredns.Patch(l.Desugar(), cmd.K8s.Static(), hasCustomDomain, clusterinfo); err != nil {
+	if _, err := coredns.Patch(l.Desugar(), cmd.K8s.Static(), hasCustomDomain, clusterInfo); err != nil {
 		return err
 	}
 
@@ -147,7 +147,7 @@ func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, 
 	kubeconfigPath := kube.KubeconfigPath(cmd.KubeconfigPath)
 	kubeconfig, err := ioutil.ReadFile(kubeconfigPath)
 	if err != nil {
-		return errors.Wrap(err, "Could not read kubeconfig")
+		return errors.Wrap(err, "failed to read kubeconfig")
 	}
 
 	undo := zap.RedirectStdLog(l.Desugar())
@@ -203,7 +203,7 @@ func (cmd *command) prepareWorkspace(l *zap.SugaredLogger) (*workspace.Workspace
 	if err := cmd.decideVersionUpgrade(); err != nil {
 		return nil, err
 	}
-	wsStep := cmd.NewStep(fmt.Sprintf("Fetching Kyma sources(%s)", cmd.opts.Source))
+	wsStep := cmd.NewStep(fmt.Sprintf("Fetching Kyma sources (%s)", cmd.opts.Source))
 
 	if cmd.opts.Source != VersionLocal {
 		_, err := os.Stat(cmd.opts.WorkspacePath)
@@ -215,7 +215,7 @@ func (cmd *command) prepareWorkspace(l *zap.SugaredLogger) (*workspace.Workspace
 			if !isWorkspaceEmpty && cmd.opts.WorkspacePath != getDefaultWorkspacePath() {
 				if !wsStep.PromptYesNo(fmt.Sprintf("Existing files in workspace folder '%s' will be deleted. Are you sure you want to continue? ", cmd.opts.WorkspacePath)) {
 					wsStep.Failure()
-					return nil, fmt.Errorf("aborting deployment")
+					return nil, errors.Errorf("aborting deployment")
 				}
 			}
 		}
@@ -223,17 +223,17 @@ func (cmd *command) prepareWorkspace(l *zap.SugaredLogger) (*workspace.Workspace
 
 	wsp, err := cmd.opts.ResolveLocalWorkspacePath()
 	if err != nil {
-		return nil, errors.Wrap(err, "Could not resolve workspace path")
+		return nil, errors.Wrap(err, "unable to resolve workspace path")
 	}
 
 	wsFact, err := workspace.NewFactory(nil, wsp, l)
 	if err != nil {
-		return nil, errors.Wrap(err, "Could not instantiate workspace factory")
+		return nil, errors.Wrap(err, "failed to instantiate workspace factory")
 	}
 
 	err = service.UseGlobalWorkspaceFactory(wsFact)
 	if err != nil {
-		return nil, errors.Wrap(err, "Could not set global workspace factory")
+		return nil, errors.Wrap(err, "unable to set global workspace factory")
 	}
 
 	ws, err := wsFact.Get(cmd.opts.Source)
@@ -280,7 +280,7 @@ func (cmd *command) printSummary(duration time.Duration) error {
 func (cmd *command) setKubeClient() error {
 	var err error
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
-		return errors.Wrap(err, "Cannot initialize the Kubernetes client. Make sure your kubeconfig is valid")
+		return errors.Wrap(err, "failed to initialize the Kubernetes client from given kubeconfig")
 	}
 	return nil
 }

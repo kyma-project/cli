@@ -1,9 +1,8 @@
-// Package Gardener contains special logic to manage installation in Gardener clusters
 package clusterinfo
 
 import (
 	"context"
-	"fmt"
+	"github.com/pkg/errors"
 	"time"
 
 	"github.com/avast/retry-go"
@@ -25,7 +24,7 @@ func getGardenerDomain(ctx context.Context, kubeClient kubernetes.Interface) (do
 
 		domainName = configMap.Data["domain"]
 		if domainName == "" {
-			return fmt.Errorf("domain is empty in %s configmap", "shoot-info")
+			return errors.New("domain is empty in shoot-info configmap")
 		}
 
 		return nil
