@@ -2,9 +2,13 @@
 
 ## Overview
 
-Kyma CLI is a command line tool which supports [Kyma](https://github.com/kyma-project/kyma) developers. It provides a set of commands you can use to provision clusters as well as install, manage, and test Kyma.
+Kyma CLI is a command line tool which supports [Kyma](https://github.com/kyma-project/kyma) developers. It provides a set of commands and flags you can use to:
 
->**TIP:** This document briefly describes the concept of Kyma CLI. Read the [complete documentation](https://kyma-project.io/docs/cli/) to learn more.
+- Provision a cluster locally or on cloud providers, such as GCP or Azure, or use Gardener to set up and easily manage your clusters.
+- Deploy, manage, and undeploy Kyma.
+- Manage your Functions.
+
+>**TIP:** This document briefly describes the concept of Kyma CLI. Read the [Kyma documentation](https://kyma-project.io/docs/kyma/latest/) to learn more.
 
 ## Installation
 
@@ -20,30 +24,28 @@ To install the latest release of Kyma CLI on Windows using [Chocolatey](https://
 choco install kyma-cli
 ```
 
-Read more about [installation options](https://github.com/kyma-project/cli/blob/main/docs/04-01-installation.md).
+Read more about [installation options](https://kyma-project.io/docs/kyma/latest/04-operation-guides/operations/01-install-kyma-CLI/).
 
 ## Use Kyma CLI
 
 Once you have installed the CLI, you can use its set of commands and flags to provision a cluster and start working with Kyma.
 
-In a nutshell, this is the syntax you can use to run the commands from your terminal:
+For the commands and flags to work, they must follow this syntax:
 
 ```bash
 kyma {COMMAND} {FLAGS}
 ```
 
-where:
+- **{COMMAND}** specifies the operation you want to perform, such as provisioning the cluster or deploying Kyma.
+- **{FLAGS}** specifies optional flags you can use to enrich your command.
 
-- **{COMMAND}** specifies the operation you want to perform.
-- **{FLAGS}** specifies optional flags.
-
-Example:
+See the example:
 
 ```bash
-kyma install -s main
+kyma deploy -s main
 ```
 
->**TIP:** Read more about the available [commands and flags](https://github.com/kyma-project/cli/blob/main/docs/03-01-use-kyma-cli.md).You can also try out Kyma CLI using [these examples](https://github.com/kyma-project/cli/blob/main/docs/03-02-examples.md).
+>**TIP:** Read more about the available [commands and flags](https://github.com/kyma-project/cli/tree/main/docs/gen-docs).
 
 ## Development
 
@@ -73,7 +75,7 @@ The binary is saved to the `bin` folder in the Kyma CLI repository.
 
 ### Kyma CLI stable binaries
 
-Kyma CLI is used in CI jobs that install or test Kyma or provision clusters. To effectively support this process, we publish the stable binaries created from the `stable` tag which corresponds to the latest stable version of Kyma CLI.
+Kyma CLI is used in CI jobs that install or test Kyma or provision clusters. To effectively support this process, we publish the stable binaries created from the `stable` tag, which corresponds to the latest stable version of Kyma CLI.
 
 To download the binaries, run:
 
