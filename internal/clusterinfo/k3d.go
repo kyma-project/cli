@@ -1,9 +1,8 @@
-// Package k3d contains special logic to manage installation in k3d clusters
 package clusterinfo
 
 import (
 	"context"
-	"errors"
+	"github.com/pkg/errors"
 	"strings"
 	"time"
 	"unicode"

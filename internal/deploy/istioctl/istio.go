@@ -4,9 +4,9 @@ import (
 	"archive/tar"
 	"archive/zip"
 	"compress/gzip"
-	"errors"
 	"fmt"
 	"github.com/kyma-project/cli/internal/files"
+	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
@@ -104,7 +104,7 @@ func (i *Installation) Install() error {
 	}
 	i.setArch()
 	if err := i.getIstioVersion(); err != nil {
-		return fmt.Errorf("error checking wanted istio version: %s", err)
+		return errors.Wrap(err, "failed to check wanted istio version")
 	}
 	exist, err := i.checkIfBinaryExists()
 	if err != nil {
@@ -112,14 +112,14 @@ func (i *Installation) Install() error {
 	}
 	if !exist {
 		if err := i.downloadIstio(); err != nil {
-			return fmt.Errorf("error downloading istioctl: %s", err)
+			return errors.Errorf("error downloading istioctl: %s", err)
 		}
 		if err := i.extractIstio(); err != nil {
-			return fmt.Errorf("error extracting istioctl: %s", err)
+			return errors.Errorf("error extracting istioctl: %s", err)
 		}
 	}
 	if err := i.exportEnvVar(); err != nil {
-		return fmt.Errorf("error exporting environment variable: %s", err)
+		return errors.Errorf("error exporting environment variable: %s", err)
 	}
 	return nil
 }
@@ -167,7 +167,7 @@ func (i *Installation) setOS() error {
 	case linux.name:
 		i.osExt = linux.ext
 	default:
-		return fmt.Errorf("unknown OS: %s", i.osExt)
+		return errors.Errorf("unknown OS: %s", i.osExt)
 	}
 	return nil
 }
@@ -424,5 +424,5 @@ func sanitizeExtractPath(destination, filePath string) (string, error) {
 	if strings.HasPrefix(destpath, filepath.Clean(destination)+string(os.PathSeparator)) {
 		return destpath, nil
 	}
-	return "", fmt.Errorf("%s: illegal destination path", destpath)
+	return "", errors.Errorf("%s: illegal destination path", destpath)
 }
