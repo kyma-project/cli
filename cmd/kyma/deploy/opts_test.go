@@ -1,11 +1,13 @@
 package deploy
 
 import (
-	"github.com/kyma-project/cli/internal/deploy/values"
-	"github.com/stretchr/testify/require"
 	"os"
 	"path"
 	"testing"
+	"time"
+
+	"github.com/kyma-project/cli/internal/deploy/values"
+	"github.com/stretchr/testify/require"
 )
 
 func TestOptsValidation(t *testing.T) {
@@ -86,12 +88,14 @@ func TestOptsValidation(t *testing.T) {
 		err = os.Remove(ws)
 		require.NoError(t, err)
 	})
+
 	t.Run("When workspace empty, then expect default workspace path", func(t *testing.T) {
 		opts := Options{Source: "main"}
 		wsp, err := opts.ResolveLocalWorkspacePath()
 		require.NoError(t, err)
 		require.Equal(t, defaultWorkspacePath, wsp)
 	})
+
 	t.Run("Check kyma workspace is being deleted", func(t *testing.T) {
 		ws := path.Join("testdata", "checkDeleteWS")
 		opts := Options{Source: "main", WorkspacePath: ws}
@@ -103,5 +107,12 @@ func TestOptsValidation(t *testing.T) {
 		_, err = os.Stat(ws)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "no such file or directory")
+	})
+
+	t.Run("Negative timeout should be rejected", func(t *testing.T) {
+		opts := Options{Timeout: -10 * time.Minute}
+		err := opts.validateFlags()
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "timeout must be a positive duration")
 	})
 }
