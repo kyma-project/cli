@@ -3,11 +3,13 @@ package deploy
 import (
 	"context"
 	"fmt"
+
 	"github.com/kyma-incubator/reconciler/pkg/model"
 
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/service"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
 	"github.com/kyma-project/cli/internal/clusterinfo"
+	"github.com/kyma-project/cli/internal/coredns"
 	"github.com/kyma-project/cli/internal/deploy"
 	"github.com/kyma-project/cli/internal/deploy/istioctl"
 
@@ -24,7 +26,6 @@ import (
 
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/config"
-	"github.com/kyma-project/cli/internal/coredns"
 	"github.com/kyma-project/cli/internal/files"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/nice"
@@ -54,7 +55,7 @@ func NewCmd(o *Options) *cobra.Command {
 		Use:     "deploy",
 		Short:   "Deploys Kyma on a running Kubernetes cluster.",
 		Long:    "Use this command to deploy, upgrade, or adapt Kyma on a running Kubernetes cluster.",
-		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run(cmd.opts) },
+		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.RunWithTimeout() },
 		Aliases: []string{"d"},
 	}
 	cobraCmd.Flags().StringSliceVarP(&o.Components, "component", "", []string{}, "Provide one or more components to deploy (e.g. --component componentName@namespace)")
@@ -75,14 +76,13 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd.Flags().IntVarP(&o.WorkerPoolSize, "concurrency", "", 4, "Set maximum number of workers to run simultaneously to deploy Kyma.")
 	cobraCmd.Flags().StringSliceVarP(&o.Values, "value", "", []string{}, "Set configuration values. Can specify one or more values, also as a comma-separated list (e.g. --value component.a='1' --value component.b='2' or --value component.a='1',component.b='2').")
 	cobraCmd.Flags().StringSliceVarP(&o.ValueFiles, "values-file", "f", []string{}, "Path(s) to one or more JSON or YAML files with configuration values.")
+	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 20*time.Minute, "Maximum time for the deployment.")
 
 	return cobraCmd
 }
 
-func (cmd *command) Run(o *Options) error {
+func (cmd *command) RunWithTimeout() error {
 	start := time.Now()
-
-	var err error
 
 	if cmd.opts.CI {
 		cmd.Factory.NonInteractive = true
@@ -91,58 +91,88 @@ func (cmd *command) Run(o *Options) error {
 		cmd.Factory.UseLogger = true
 	}
 
-	if err = cmd.opts.validateFlags(); err != nil {
+	if err := cmd.opts.validateFlags(); err != nil {
 		return err
 	}
+	timeout := time.After(cmd.opts.Timeout)
+	errChan := make(chan error)
+	go cmd.run(errChan)
+
+	for {
+		select {
+		case <-timeout:
+			timeoutStep := cmd.NewStep("Timeout reached while waiting for deployment to complete")
+			timeoutStep.Failure()
+			return nil
+		case err := <-errChan:
+			if err != nil {
+				return err
+			}
+			deployTime := time.Since(start)
+			return cmd.printSummary(deployTime)
+		}
+	}
+}
+
+func (cmd *command) run(errChan chan error) {
+	var err error
 
 	if err = cmd.setKubeClient(); err != nil {
-		return err
+		errChan <- err
+		return
 	}
 
 	summary := cmd.setSummary()
 
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
-		return errors.Wrap(err, "failed to initialize the Kubernetes client from given kubeconfig")
+		errChan <- errors.Wrap(err, "failed to initialize the Kubernetes client from given kubeconfig")
+		return
 	}
 
-	l := cli.NewLogger(o.Verbose).Sugar()
+	l := cli.NewLogger(cmd.opts.Verbose).Sugar()
 	ws, err := cmd.prepareWorkspace(l)
 	if err != nil {
-		return err
+		errChan <- err
+		return
 	}
 
 	clusterInfo, err := clusterinfo.Discover(context.Background(), cmd.K8s.Static())
 	if err != nil {
-		return errors.Wrap(err, "failed to discover underlying cluster type")
+		errChan <- errors.Wrap(err, "failed to discover underlying cluster type")
+		return
 	}
 
 	vals, err := values.Merge(cmd.opts.Sources, ws.WorkspaceDir, clusterInfo)
 	if err != nil {
-		return err
+		errChan <- err
+		return
 	}
 
 	hasCustomDomain := cmd.opts.Domain != ""
-	if _, err := coredns.Patch(l.Desugar(), cmd.K8s.Static(), hasCustomDomain, clusterInfo); err != nil {
-		return err
+	if _, err := coredns.Patch(l.Desugar(), cmd.K8s.Static(), hasCustomDomain, clusterinfo); err != nil {
+		errChan <- err
+		return
 	}
 
 	components, err := cmd.resolveComponents(ws)
 	if err != nil {
-		return err
+		errChan <- err
+		return
 	}
 
 	err = cmd.installPrerequisites(ws.WorkspaceDir)
 	if err != nil {
-		return err
+		errChan <- err
+		return
 	}
 
 	err = cmd.deployKyma(l, components, vals, summary)
 	if err != nil {
-		return err
+		errChan <- err
+		return
 	}
 
-	deployTime := time.Since(start)
-	return summary.Print(deployTime)
+	errChan <- nil
 }
 
 func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, vals values.Values, summary *nice.Summary) error {

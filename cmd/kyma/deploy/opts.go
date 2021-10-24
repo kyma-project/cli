@@ -2,13 +2,15 @@ package deploy
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+	"time"
+
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/deploy/values"
 	"github.com/kyma-project/cli/internal/files"
 	"github.com/kyma-project/cli/internal/version"
 	"github.com/pkg/errors"
-	"os"
-	"path/filepath"
 )
 
 var (
@@ -31,6 +33,7 @@ type Options struct {
 	ComponentsFile string
 	Profile        string
 	WorkerPoolSize int
+	Timeout        time.Duration
 }
 
 //NewOptions creates options with default values
@@ -94,6 +97,9 @@ func (o *Options) validateFlags() error {
 	if err := o.validateTLSCertAndKey(); err != nil {
 		return err
 	}
+	if err := o.validateTimeout(); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -130,5 +136,12 @@ func (o *Options) validateTLSCertAndKey() error {
 		return errors.New("tls cert not found")
 	}
 
+	return nil
+}
+
+func (o *Options) validateTimeout() error {
+	if o.Timeout <= 0 {
+		return errors.New("timeout must be a positive duration")
+	}
 	return nil
 }
