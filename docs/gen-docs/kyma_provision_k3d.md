@@ -2,7 +2,7 @@
 title: kyma provision k3d
 ---
 
-Provisions a Kubernetes cluster based on k3d v5.
+Provisions a Kubernetes cluster based on k3d v4.
 
 ## Synopsis
 
@@ -15,14 +15,14 @@ kyma provision k3d [flags]
 ## Flags
 
 ```bash
-      --k3d-arg strings        One or more arguments passed to the k3d provisioning command (e.g. --k3d-arg='--no-rollback')
-  -s, --k3s-arg strings        One or more arguments passed from k3d to the k3s command (format: ARG@NODEFILTER[;@NODEFILTER])
-  -k, --kube-version string    Kubernetes version of the cluster (default "1.20.11")
-      --name string            Name of the Kyma cluster (default "kyma")
-  -p, --port strings           Map ports 80 and 443 of K3D loadbalancer (e.g. -p 80:80@loadbalancer -p 443:443@loadbalancer) (default [80:80@loadbalancer,443:443@loadbalancer])
-      --registry-use strings   Connect to one or more k3d-managed registries. Kyma automatically creates a registry for serverless images.
-      --timeout duration       Maximum time for the provisioning. If you want no timeout, enter "0". (default 5m0s)
-      --workers int            Number of worker nodes (k3d agents) (default 1)
+  -a, --agent-arg strings     One or more arguments passed to the k3d agent command on agent nodes (e.g. --agent-arg='--alsologtostderr')
+      --k3d-arg strings       One or more arguments passed to the k3d provisioning command (e.g. --k3d-arg='--no-rollback')
+  -k, --kube-version string   Kubernetes version of the cluster (default "1.20.11")
+      --name string           Name of the Kyma cluster (default "kyma")
+  -p, --port strings          Map ports 80 and 443 of K3D loadbalancer (e.g. -p 80:80@loadbalancer -p 443:443@loadbalancer) (default [80:80@loadbalancer,443:443@loadbalancer])
+  -s, --server-arg strings    One or more arguments passed to the Kubernetes API server (e.g. --server-arg='--alsologtostderr')
+      --timeout duration      Maximum time for the provisioning. If you want no timeout, enter "0". (default 5m0s)
+      --workers int           Number of worker nodes (k3d agents) (default 1)
 ```
 
 ## Flags inherited from parent commands
