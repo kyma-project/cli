@@ -94,6 +94,7 @@ func (cmd *command) RunWithTimeout() error {
 	if err := cmd.opts.validateFlags(); err != nil {
 		return err
 	}
+
 	timeout := time.After(cmd.opts.Timeout)
 	errChan := make(chan error)
 	go cmd.run(errChan, start)
