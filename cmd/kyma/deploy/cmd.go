@@ -202,6 +202,10 @@ func (cmd *command) printDeployStatus(status deploy.ComponentStatus) {
 		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' deployed", status.Component))
 		statusStep.Success()
 	case deploy.RecoverableError:
+		if _, ok := deploy.PrintedStatus[status.Component]; ok {
+			return
+		}
+		deploy.PrintedStatus[status.Component] = status.State
 		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' failed. Retrying...\n%s\n ", status.Component, status.Error.Error()))
 		statusStep.Failure()
 	case deploy.UnrecoverableError:
