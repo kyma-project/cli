@@ -96,7 +96,7 @@ func (cmd *command) RunWithTimeout() error {
 	}
 	timeout := time.After(cmd.opts.Timeout)
 	errChan := make(chan error)
-	go cmd.run(errChan)
+	go cmd.run(errChan, start)
 
 	for {
 		select {
@@ -105,24 +105,18 @@ func (cmd *command) RunWithTimeout() error {
 			timeoutStep.Failure()
 			return nil
 		case err := <-errChan:
-			if err != nil {
-				return err
-			}
-			deployTime := time.Since(start)
-			return cmd.printSummary(deployTime)
+			return err
 		}
 	}
 }
 
-func (cmd *command) run(errChan chan error) {
+func (cmd *command) run(errChan chan error, start time.Time) {
 	var err error
 
 	if err = cmd.setKubeClient(); err != nil {
 		errChan <- err
 		return
 	}
-
-	summary := cmd.setSummary()
 
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
 		errChan <- errors.Wrap(err, "failed to initialize the Kubernetes client from given kubeconfig")
@@ -149,7 +143,7 @@ func (cmd *command) run(errChan chan error) {
 	}
 
 	hasCustomDomain := cmd.opts.Domain != ""
-	if _, err := coredns.Patch(l.Desugar(), cmd.K8s.Static(), hasCustomDomain, clusterinfo); err != nil {
+	if _, err := coredns.Patch(l.Desugar(), cmd.K8s.Static(), hasCustomDomain, clusterInfo); err != nil {
 		errChan <- err
 		return
 	}
@@ -166,13 +160,15 @@ func (cmd *command) run(errChan chan error) {
 		return
 	}
 
+	summary := cmd.setSummary()
 	err = cmd.deployKyma(l, components, vals, summary)
 	if err != nil {
 		errChan <- err
 		return
 	}
 
-	errChan <- nil
+	deployTime := time.Since(start)
+	errChan <- summary.Print(deployTime)
 }
 
 func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, vals values.Values, summary *nice.Summary) error {
