@@ -13,7 +13,7 @@ import (
 func TestOptsValidation(t *testing.T) {
 	t.Run("unknown profile", func(t *testing.T) {
 		opts := Options{Profile: "fancy"}
-		err := opts.validateFlags()
+		err := opts.validateProfile()
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "unknown profile: fancy")
 	})
@@ -22,7 +22,7 @@ func TestOptsValidation(t *testing.T) {
 		profiles := []string{"", "evaluation", "production"}
 		for _, p := range profiles {
 			opts := Options{Profile: p}
-			err := opts.validateFlags()
+			err := opts.validateProfile()
 			require.NoError(t, err)
 		}
 	})
@@ -33,7 +33,7 @@ func TestOptsValidation(t *testing.T) {
 				TLSKeyFile: "not-existing.key",
 			},
 		}
-		err := opts.validateFlags()
+		err := opts.validateTLSCertAndKey()
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "tls key not found")
 	})
@@ -46,7 +46,7 @@ func TestOptsValidation(t *testing.T) {
 				TLSCrtFile: "not-existing.crt",
 			},
 		}
-		err := opts.validateFlags()
+		err := opts.validateTLSCertAndKey()
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "tls cert not found")
 	})
@@ -59,7 +59,7 @@ func TestOptsValidation(t *testing.T) {
 				TLSCrtFile: dummyFilePath,
 			},
 		}
-		err := opts.validateFlags()
+		err := opts.validateTLSCertAndKey()
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "tls key not found")
 	})
@@ -72,7 +72,7 @@ func TestOptsValidation(t *testing.T) {
 				TLSCrtFile: dummyFilePath,
 			},
 		}
-		err := opts.validateFlags()
+		err := opts.validateTLSCertAndKey()
 		require.NoError(t, err)
 	})
 	t.Run("Check workspace folder is not deleted when it is set", func(t *testing.T) {
@@ -111,7 +111,7 @@ func TestOptsValidation(t *testing.T) {
 
 	t.Run("Negative timeout should be rejected", func(t *testing.T) {
 		opts := Options{Timeout: -10 * time.Minute}
-		err := opts.validateFlags()
+		err := opts.validateTimeout()
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "timeout must be a positive duration")
 	})
