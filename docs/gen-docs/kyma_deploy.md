@@ -26,6 +26,7 @@ kyma deploy [flags]
                                  	- Deploy a commit (8 characters or more), for example: "kyma deploy --source=34edf09a"
                                  	- Deploy a pull request, for example "kyma deploy --source=PR-9486"
                                  	- Deploy the local sources: "kyma deploy --source=local" (default "main")
+      --timeout duration         Maximum time for the deployment. (default 20m0s)
       --tls-crt string           TLS certificate file for the domain used for installation.
       --tls-key string           TLS key file for the domain used for installation.
       --value strings            Set configuration values. Can specify one or more values, also as a comma-separated list (e.g. --value component.a='1' --value component.b='2' or --value component.a='1',component.b='2').
