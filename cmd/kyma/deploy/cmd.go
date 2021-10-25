@@ -82,8 +82,6 @@ func NewCmd(o *Options) *cobra.Command {
 }
 
 func (cmd *command) RunWithTimeout() error {
-	start := time.Now()
-
 	if cmd.opts.CI {
 		cmd.Factory.NonInteractive = true
 	}
@@ -97,7 +95,9 @@ func (cmd *command) RunWithTimeout() error {
 
 	timeout := time.After(cmd.opts.Timeout)
 	errChan := make(chan error)
-	go cmd.run(errChan, start)
+	go func() {
+		errChan <- cmd.run()
+	}()
 
 	for {
 		select {
@@ -111,65 +111,58 @@ func (cmd *command) RunWithTimeout() error {
 	}
 }
 
-func (cmd *command) run(errChan chan error, start time.Time) {
+func (cmd *command) run() error {
+	start := time.Now()
+
 	var err error
 
 	if err = cmd.setKubeClient(); err != nil {
-		errChan <- err
-		return
+		return err
 	}
 
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
-		errChan <- errors.Wrap(err, "failed to initialize the Kubernetes client from given kubeconfig")
-		return
+		return errors.Wrap(err, "failed to initialize the Kubernetes client from given kubeconfig")
 	}
 
 	l := cli.NewLogger(cmd.opts.Verbose).Sugar()
 	ws, err := cmd.prepareWorkspace(l)
 	if err != nil {
-		errChan <- err
-		return
+		return err
 	}
 
 	clusterInfo, err := clusterinfo.Discover(context.Background(), cmd.K8s.Static())
 	if err != nil {
-		errChan <- errors.Wrap(err, "failed to discover underlying cluster type")
-		return
+		return errors.Wrap(err, "failed to discover underlying cluster type")
 	}
 
 	vals, err := values.Merge(cmd.opts.Sources, ws.WorkspaceDir, clusterInfo)
 	if err != nil {
-		errChan <- err
-		return
+		return err
 	}
 
 	hasCustomDomain := cmd.opts.Domain != ""
 	if _, err := coredns.Patch(l.Desugar(), cmd.K8s.Static(), hasCustomDomain, clusterInfo); err != nil {
-		errChan <- err
-		return
+		return err
 	}
 
 	components, err := cmd.resolveComponents(ws)
 	if err != nil {
-		errChan <- err
-		return
+		return err
 	}
 
 	err = cmd.installPrerequisites(ws.WorkspaceDir)
 	if err != nil {
-		errChan <- err
-		return
+		return err
 	}
 
 	summary := cmd.setSummary()
 	err = cmd.deployKyma(l, components, vals, summary)
 	if err != nil {
-		errChan <- err
-		return
+		return err
 	}
 
 	deployTime := time.Since(start)
-	errChan <- summary.Print(deployTime)
+	return summary.Print(deployTime)
 }
 
 func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, vals values.Values, summary *nice.Summary) error {
