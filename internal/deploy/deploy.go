@@ -27,7 +27,8 @@ type ComponentStatus struct {
 	State     ComponentState
 	Error     error
 }
-var PrintedStatus =  make(map[string]ComponentState)
+
+var PrintedStatus = make(map[string]ComponentState)
 
 type Options struct {
 	Components     component.List
