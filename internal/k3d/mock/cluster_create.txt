@@ -1,9 +1,0 @@
-INFO[0000] Created network 'k3d-kyma'
-INFO[0000] Created volume 'k3d-kyma-images'
-INFO[0001] Creating node 'k3d-kyma-server-0'
-INFO[0006] Creating LoadBalancer 'k3d-kyma-serverlb'
-INFO[0007] (Optional) Trying to get IP of the docker host and inject it into the cluster as 'host.k3d.internal' for easy access
-INFO[0009] Successfully added host record to /etc/hosts in 2/2 nodes and to the CoreDNS ConfigMap
-INFO[0009] Cluster 'kyma' created successfully!
-INFO[0009] You can now use it like this:
-kubectl cluster-info

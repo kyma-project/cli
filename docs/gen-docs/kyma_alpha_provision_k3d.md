@@ -1,5 +1,5 @@
 ---
-title: kyma provision k3d
+title: kyma alpha provision k3d
 ---
 
 Provisions a Kubernetes cluster based on k3d v5.
@@ -9,7 +9,7 @@ Provisions a Kubernetes cluster based on k3d v5.
 Use this command to provision a k3d-based Kubernetes cluster for Kyma installation.
 
 ```bash
-kyma provision k3d [flags]
+kyma alpha provision k3d [flags]
 ```
 
 ## Flags
@@ -37,5 +37,5 @@ kyma provision k3d [flags]
 
 ## See also
 
-* [kyma provision](#kyma-provision-kyma-provision)	 - Provisions a cluster for Kyma installation.
+* [kyma alpha provision](#kyma-alpha-provision-kyma-alpha-provision)	 - Provisions a cluster for Kyma installation.
 

@@ -1,2 +1,0 @@
-NAME                          ROLE       CLUSTER   STATUS
-k3d-kyma-registry   registry             running
