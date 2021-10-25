@@ -20,6 +20,9 @@ bin
 .idea
 .vscode
 
+# OS temporary files
+.DS_Store
+
 # Changelog temporary directory
 .changelog/
 

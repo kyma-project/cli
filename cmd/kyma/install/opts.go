@@ -36,11 +36,11 @@ func (o *Options) validateFlags() error {
 	// validate source flag
 	kymaVersion, err := version.NewKymaVersion(o.Source)
 	if err != nil {
-		return errors.Errorf("Provided version (%s) is not a valid semantic version. It should be of format X.Y.Z", o.Source)
+		return errors.Errorf("Provided version (%s) is not a valid semantic version. It must be of format X.Y.Z", o.Source)
 	}
 
 	if kymaVersion.IsKyma2() {
-		return errors.New("Kyma version 2.x can not be installed via 'install'. Please use the 'deploy' command, which supports Kyma 2 versions")
+		return errors.New("Kyma version 2.x cannot be installed with 'install'. Use the 'deploy' command, which supports Kyma 2.x")
 	}
 
 	return nil

@@ -60,7 +60,7 @@ Kyma CLI allows you to install, test, and manage Kyma.
 	cmd.PersistentFlags().BoolVar(&o.CI, "ci", false, "Enables the CI mode to run on CI/CD systems. It avoids any user interaction (such as no dialog prompts) and ensures that logs are formatted properly in log files (such as no spinners for CLI steps).")
 	// Kubeconfig env var and default paths are resolved by the kyma k8s client using the k8s defined resolution strategy.
 	cmd.PersistentFlags().StringVar(&o.KubeconfigPath, "kubeconfig", "", `Path to the kubeconfig file. If undefined, Kyma CLI uses the KUBECONFIG environment variable, or falls back "/$HOME/.kube/config".`)
-	cmd.PersistentFlags().BoolP("help", "h", false, "Command help")
+	cmd.PersistentFlags().BoolP("help", "h", false, "Provides command help.")
 
 	//Temporary commands
 	alphaprovisionCmd := alphaprovision.NewCmd()
