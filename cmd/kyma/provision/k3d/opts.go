@@ -13,8 +13,8 @@ type Options struct {
 	Name              string
 	Workers           int
 	Timeout           time.Duration
-	K3sArgs           []string
-	UseRegistry       []string
+	ServerArgs        []string
+	AgentArgs         []string
 	K3dArgs           []string
 	KubernetesVersion string
 	PortMapping       []string
