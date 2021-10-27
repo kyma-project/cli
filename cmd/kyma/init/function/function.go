@@ -76,7 +76,7 @@ func (c *command) Run() error {
 	}
 
 	if c.opts.Runtime == "python38" {
-		s.LogInfof("Python 38 is deprecated. We recommend python39.")
+		s.LogInfof("Runtime python38 is deprecated. We recommend python39.")
 	}
 
 	configuration := workspace.Cfg{
