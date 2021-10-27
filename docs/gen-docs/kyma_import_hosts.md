@@ -2,11 +2,11 @@
 title: kyma import hosts
 ---
 
-Imports domain entries in the system hosts file.
+Imports the hosts of exposed workloads in the system hosts file.
 
 ## Synopsis
 
-Use this command to add domains to the hosts file of the local system.
+Use this command to add the hosts of exposed workloads to the hosts file of the local system.
 
 
 ```bash
