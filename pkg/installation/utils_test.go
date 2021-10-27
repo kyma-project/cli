@@ -5,16 +5,8 @@ import (
 	"path"
 	"testing"
 
-	stepMocks "github.com/kyma-project/cli/pkg/step/mocks"
 	"github.com/stretchr/testify/require"
 )
-
-func Test_GetLatestAvailableMainHash(t *testing.T) {
-	t.Parallel()
-	h, err := getLatestAvailableMainHash(&stepMocks.Step{}, 5, true)
-	require.NoError(t, err)
-	require.True(t, isHex(h))
-}
 
 func Test_LoadInstallationFiles(t *testing.T) {
 	t.Parallel()
