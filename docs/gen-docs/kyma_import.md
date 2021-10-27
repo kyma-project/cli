@@ -2,11 +2,11 @@
 title: kyma import
 ---
 
-Imports certificates to local keychain or adds domains to the local host file.
+Imports certificates to local certificates storage or adds domains to the local host file.
 
 ## Synopsis
 
-Imports certificates to local keychain or adds domains to the local host file.
+Imports certificates to local certificates storage or adds domains to the local host file.
 
 ## Flags inherited from parent commands
 

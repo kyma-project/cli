@@ -25,5 +25,5 @@ kyma import host-entries [flags]
 
 ## See also
 
-* [kyma import](#kyma-import-kyma-import)	 - Imports certificates to local keychain or adds domains to the local host file.
+* [kyma import](#kyma-import-kyma-import)	 - Imports certificates to local certificates storage or adds domains to the local host file.
 
