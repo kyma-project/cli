@@ -43,7 +43,7 @@ func (k keychain) Certificate() ([]byte, error) {
 func (k keychain) CertificateKyma2() ([]byte, error) {
 	s, err := k.k8s.Static().CoreV1().Secrets("istio-system").Get(context.Background(), "kyma-gateway-certs", metav1.GetOptions{})
 	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("\nCould not retrieve the Kyma root certificate. Follow the instructions to import it manually:\n-----\n%s-----\n", k.Instructions()))
+		return nil, errors.Wrap(err, fmt.Sprintf("\nCould not retrieve the Kyma root certificate. Follow the instructions to import it manually:\n-----\n%s-----\n", k.InstructionsKyma2()))
 	}
 
 	return s.Data["tls.crt"], nil

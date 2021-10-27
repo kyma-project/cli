@@ -85,7 +85,6 @@ func (cmd *command) importCertificate() error {
 	// create a simple step to print certificate import steps without a spinner (spinner overwrites sudo prompt)
 	// TODO refactor how certifier logs when the old install command is gone
 	if err := ca.StoreCertificateKyma2(tmpFile.Name(), s); err != nil {
-		ca.InstructionsKyma2()
 		return err
 	}
 	s.Successf("Kyma root certificate imported")
