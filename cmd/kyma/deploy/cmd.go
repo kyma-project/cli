@@ -202,7 +202,7 @@ func (cmd *command) printDeployStatus(status deploy.ComponentStatus) {
 		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' deployed", status.Component))
 		statusStep.Success()
 	case deploy.RecoverableError:
-		if deploy.PrintedStatus[status.Component]{
+		if deploy.PrintedStatus[status.Component] {
 			return
 		}
 		deploy.PrintedStatus[status.Component] = true
