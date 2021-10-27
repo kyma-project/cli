@@ -209,7 +209,7 @@ func (cmd *command) printDeployStatus(status deploy.ComponentStatus) {
 		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' failed. Retrying...\n%s\n ", status.Component, status.Error.Error()))
 		statusStep.Failure()
 	case deploy.UnrecoverableError:
-		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' failed, all retries exhausted.\n%s\n", status.Component, status.Error.Error()))
+		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' failed \n%s\n", status.Component, status.Error.Error()))
 		statusStep.Failure()
 	}
 }
