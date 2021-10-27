@@ -33,7 +33,7 @@ func NewCmd(o *cli.Options) *cobra.Command {
 	cobraCmd := &cobra.Command{
 		Use:   "hosts",
 		Short: "Imports the hosts of exposed workloads in the system hosts file.",
-		Long: `Use this command to add domains to the hosts file of the local system.
+		Long: `Use this command to add the hosts of exposed workloads to the hosts file of the local system.
 `,
 		RunE: func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 	}
