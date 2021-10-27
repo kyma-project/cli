@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	V4MinVersion                 string = "4.0.0"
-	V5MinVersion                 string = "5.0.0"
+	V4MinRequiredVersion         string = "4.0.0"
+	V5MinRequiredVersion         string = "5.0.0"
 	V5DefaultRegistryNamePattern string = "%s-registry"
 
 	binaryName string = "k3d"
@@ -52,12 +52,12 @@ type V5CreateClusterSettings struct {
 }
 
 type client struct {
-	cmdRunner   CmdRunner
-	pathLooker  PathLooker
-	clusterName string
-	minVersion  string
-	verbose     bool
-	userTimeout time.Duration
+	cmdRunner          CmdRunner
+	pathLooker         PathLooker
+	clusterName        string
+	minRequiredVersion string
+	verbose            bool
+	userTimeout        time.Duration
 }
 
 // NewClient creates a new instance of the Client interface.
@@ -65,18 +65,18 @@ type client struct {
 func NewClient(cmdRunner CmdRunner, pathLooker PathLooker, clusterName string, verbose bool, timeout time.Duration, isAlpha bool) Client {
 	var mink3dVersion string
 	if isAlpha {
-		mink3dVersion = V5MinVersion
+		mink3dVersion = V5MinRequiredVersion
 	} else {
-		mink3dVersion = V4MinVersion
+		mink3dVersion = V4MinRequiredVersion
 	}
 
 	return &client{
-		cmdRunner:   cmdRunner,
-		pathLooker:  pathLooker,
-		clusterName: clusterName,
-		verbose:     verbose,
-		userTimeout: timeout,
-		minVersion:  mink3dVersion,
+		cmdRunner:          cmdRunner,
+		pathLooker:         pathLooker,
+		clusterName:        clusterName,
+		verbose:            verbose,
+		userTimeout:        timeout,
+		minRequiredVersion: mink3dVersion,
 	}
 }
 
@@ -105,31 +105,34 @@ func (c *client) runCmd(args ...string) (string, error) {
 
 //checkVersion checks whether k3d version is supported
 func (c *client) checkVersion() error {
-	versionOutput, err := c.runCmd("version")
+	binaryVersionOutput, err := c.runCmd("version")
 	if err != nil {
 		return err
 	}
 
 	exp, _ := regexp.Compile(fmt.Sprintf(`%s version v([^\s-]+)`, binaryName))
-	versionString := exp.FindStringSubmatch(versionOutput)
+	binaryVersion := exp.FindStringSubmatch(binaryVersionOutput)
 	if c.verbose {
-		fmt.Printf("Extracted %s version: '%s'", binaryName, versionString[1])
+		fmt.Printf("Extracted %s version: '%s'", binaryName, binaryVersion[1])
 	}
-	if len(versionString) < 2 {
-		return fmt.Errorf("Could not extract %s version from command output:\n%s", binaryName, versionOutput)
+	if len(binaryVersion) < 2 {
+		return fmt.Errorf("Could not extract %s version from command output:\n%s", binaryName, binaryVersionOutput)
 	}
-	version, err := semver.Parse(versionString[1])
+	binarySemVersion, err := semver.Parse(binaryVersion[1])
 	if err != nil {
 		return err
 	}
 
-	minVersion, _ := semver.Parse(c.minVersion)
-	if version.Major > minVersion.Major {
-		return fmt.Errorf("You are using an unsupported %s major version '%d' for this command. "+
-			"This may not work. The recommended %s major version for this command is '%d'", binaryName, version.Major, binaryName, minVersion.Major)
-	} else if version.LT(minVersion) {
-		return fmt.Errorf("You are using an unsupported %s version '%s' for this command. "+
-			"This may not work. The recommended %s version for this command is >= '%s'", binaryName, version, binaryName, minVersion)
+	minRequiredSemVersion, _ := semver.Parse(c.minRequiredVersion)
+	if binarySemVersion.Major > minRequiredSemVersion.Major {
+		incompatibleMajorVersionMsg := "You are using an unsupported k3d major version '%d'. The supported k3d major version for this command is '%d'."
+		if c.minRequiredVersion == V4MinRequiredVersion {
+			incompatibleMajorVersionMsg += "\n\nIf you want to use k3d v5, try the dedicated 'kyma alpha provision k3d' command"
+		}
+		return fmt.Errorf(incompatibleMajorVersionMsg, binarySemVersion.Major, minRequiredSemVersion.Major)
+	} else if binarySemVersion.LT(minRequiredSemVersion) {
+		incompatibleVersionMsg := "You are using an unsupported k3d version '%s'. The supported k3d version for this command is >= '%s'."
+		return fmt.Errorf(incompatibleVersionMsg, binaryVersion, minRequiredSemVersion)
 	}
 
 	return nil
@@ -223,7 +226,7 @@ func (c *client) CreateCluster(settings CreateClusterSettings) error {
 		"--image", k3sImage,
 	}
 
-	if c.minVersion == V4MinVersion {
+	if c.minRequiredVersion == V4MinRequiredVersion {
 		cmdArgs = append(cmdArgs, getCreateClusterV4Args(settings)...)
 	} else {
 		cmdArgs = append(cmdArgs, getCreateClusterV5Args(settings)...)
