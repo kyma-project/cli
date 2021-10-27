@@ -59,7 +59,7 @@ func (cmd *command) importCertificate() error {
 	s := f.NewStep("Importing Kyma certificate")
 	ca := trust.NewCertifier(cmd.K8s)
 	if !root.IsWithSudo() {
-		s.LogError("Elevated permissions are required to import certs locally. Make sure you are using sudo.")
+		s.LogError("Elevated permissions are required to import certificates locally. Make sure you are using sudo.")
 		return nil
 	}
 
