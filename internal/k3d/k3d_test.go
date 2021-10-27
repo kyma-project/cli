@@ -200,7 +200,7 @@ func (suite *V4TestSuite) SetupTest() {
 func (suite *V4TestSuite) TestCheckVersionIncompMinor() {
 	suite.mockPathLooker.On("Look", "k3d").Return("", nil)
 
-	suite.mockCmdRunner.On("Run", mock.Anything, "k3d", "version").Return("k3d version v3.4.8\nk3s version v1.21.3-k3s1 (default)", nil)
+	suite.mockCmdRunner.On("Run", mock.Anything, "k3d", "version").Return("k3d version v3.4.0\nk3s version v1.21.3-k3s1 (default)", nil)
 
 	err := suite.client.VerifyStatus()
 	suite.Error(err)

@@ -81,13 +81,13 @@ func (c *command) verifyK3dStatus(k3dClient k3d.Client, registryName string) err
 		return err
 	}
 
-	s.Status("Checking if port flags are valid")
+	s.LogInfo("Checking if port flags are valid")
 	ports, err := extractPortsFromFlag(c.opts.PortMapping)
 	if err != nil {
 		return errors.Wrapf(err, "Could not extract host ports from %s", c.opts.PortMapping)
 	}
 
-	s.Status("Checking if k3d registry of previous kyma installation exists")
+	s.LogInfo("Checking if k3d registry of previous kyma installation exists")
 	registryExists, err := k3dClient.RegistryExists(registryName)
 	if err != nil {
 		s.Failure()
@@ -101,15 +101,22 @@ func (c *command) verifyK3dStatus(k3dClient k3d.Client, registryName string) err
 		return err
 	}
 
-	if clusterExists && c.PromptUserToDeleteExistingCluster() {
+	if clusterExists {
+		if !c.PromptUserToDeleteExistingCluster() {
+			s.Failure()
+			return fmt.Errorf("User decided not to remove the existing k3d cluster")
+		}
+
 		if registryExists {
 			if err := k3dClient.DeleteRegistry(registryName); err != nil {
+				s.Failure()
 				return err
 			}
 			s.LogInfo("Deleted k3d registry of previous kyma installation")
 		}
 
 		if err := k3dClient.DeleteCluster(); err != nil {
+			s.Failure()
 			return err
 		}
 		s.LogInfo("Deleted k3d cluster of previous kyma installation")

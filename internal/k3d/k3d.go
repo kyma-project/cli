@@ -125,11 +125,14 @@ func (c *client) checkVersion() error {
 
 	minVersion, _ := semver.Parse(c.minVersion)
 	if version.Major > minVersion.Major {
-		return fmt.Errorf("You are using an unsupported %s major version '%d' for this command. "+
-			"This may not work. The recommended %s major version for this command is '%d'", binaryName, version.Major, binaryName, minVersion.Major)
+		incompatibleMajorVersionMsg := "You are using an unsupported k3d major version '%d'. The supported k3d major version for this command is '%d'."
+		if c.minVersion == V4MinVersion {
+			incompatibleMajorVersionMsg += "\n\nIf you want to use k3d v5, try the dedicated 'kyma alpha provision k3d' command"
+		}
+		return fmt.Errorf(incompatibleMajorVersionMsg, version.Major, minVersion.Major)
 	} else if version.LT(minVersion) {
-		return fmt.Errorf("You are using an unsupported %s version '%s' for this command. "+
-			"This may not work. The recommended %s version for this command is >= '%s'", binaryName, version, binaryName, minVersion)
+		incompatibleVersionMsg := "You are using an unsupported k3d version '%s'. The supported k3d version for this command is >= '%s'."
+		return fmt.Errorf(incompatibleVersionMsg, version, minVersion)
 	}
 
 	return nil
