@@ -21,6 +21,6 @@ Imports certificates to local certificates storage or adds domains to the local 
 ## See also
 
 * [kyma](#kyma-kyma)	 - Controls a Kyma cluster.
-* [kyma import certificates](#kyma-import-certificates-kyma-import-certificates)	 - Imports certificates in local storage.
-* [kyma import host-entries](#kyma-import-host-entries-kyma-import-host-entries)	 - Imports domain entries in the system hosts file.
+* [kyma import certs](#kyma-import-certs-kyma-import-certs)	 - Imports certificates in local storage.
+* [kyma import hosts](#kyma-import-hosts-kyma-import-hosts)	 - Imports domain entries in the system hosts file.
 

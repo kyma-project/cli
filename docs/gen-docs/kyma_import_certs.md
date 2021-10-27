@@ -1,15 +1,15 @@
 ---
-title: kyma import certificates
+title: kyma import certs
 ---
 
 Imports certificates in local storage.
 
 ## Synopsis
 
-Use this command to add the certificates to the local storage of machine after the installation.
+Use this command to add the certificates to the local certificates storage of machine after the installation.
 
 ```bash
-kyma import certificates [flags]
+kyma import certs [flags]
 ```
 
 ## Flags inherited from parent commands

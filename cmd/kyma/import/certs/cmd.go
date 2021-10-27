@@ -1,4 +1,4 @@
-package certificates
+package certs
 
 import (
 	"io/ioutil"
@@ -26,9 +26,9 @@ func NewCmd(o *cli.Options) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "certificates",
+		Use:   "certs",
 		Short: "Imports certificates in local storage.",
-		Long:  `Use this command to add the certificates to the local storage of machine after the installation.`,
+		Long:  `Use this command to add the certificates to the local certificates storage of machine after the installation.`,
 		RunE:  func(_ *cobra.Command, _ []string) error { return c.Run() },
 	}
 	return cmd
@@ -59,7 +59,7 @@ func (cmd *command) importCertificate() error {
 	s := f.NewStep("Importing Kyma certificate")
 	ca := trust.NewCertifier(cmd.K8s)
 	if !root.IsWithSudo() {
-		s.LogError("Elevated permissions are required to import certificates locally. Make sure you are using sudo.")
+		s.LogError("Elevated permissions are required to import certs locally. Make sure you are using sudo.")
 		return nil
 	}
 
