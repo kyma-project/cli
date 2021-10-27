@@ -28,6 +28,8 @@ type ComponentStatus struct {
 	Error     error
 }
 
+var PrintedStatus = make(map[string]bool)
+
 type Options struct {
 	Components     component.List
 	Values         values.Values

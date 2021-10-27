@@ -200,8 +200,8 @@ func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, 
 	}
 
 	if recoResult.GetResult() == model.ClusterStatusError {
-		summary.PrintFailedComponentSummary(recoResult)
 		deployStep.Failure()
+		summary.PrintFailedComponentSummary(recoResult)
 		return errors.Errorf("Kyma deployment failed.")
 	}
 
@@ -222,10 +222,14 @@ func (cmd *command) printDeployStatus(status deploy.ComponentStatus) {
 		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' deployed", status.Component))
 		statusStep.Success()
 	case deploy.RecoverableError:
+		if deploy.PrintedStatus[status.Component] {
+			return
+		}
+		deploy.PrintedStatus[status.Component] = true
 		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' failed. Retrying...\n%s\n ", status.Component, status.Error.Error()))
 		statusStep.Failure()
 	case deploy.UnrecoverableError:
-		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' failed, all retries exhausted.\n%s\n", status.Component, status.Error.Error()))
+		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' failed \n%s\n", status.Component, status.Error.Error()))
 		statusStep.Failure()
 	}
 }
