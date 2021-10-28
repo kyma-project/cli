@@ -1,16 +1,16 @@
 ---
-title: kyma import host-entries
+title: kyma import hosts
 ---
 
-Imports domain entries in the system hosts file.
+Imports the hosts of exposed workloads in the system hosts file.
 
 ## Synopsis
 
-Use this command to add domain to the hosts file of the local system.
+Use this command to add the hosts of exposed workloads to the hosts file of the local system.
 
 
 ```bash
-kyma import host-entries [flags]
+kyma import hosts [flags]
 ```
 
 ## Flags inherited from parent commands
@@ -25,5 +25,5 @@ kyma import host-entries [flags]
 
 ## See also
 
-* [kyma import](#kyma-import-kyma-import)	 - Imports certificates to local keychain or adds domains to the local host file.
+* [kyma import](#kyma-import-kyma-import)	 - Imports certificates to local certificates storage or adds domains to the local host file.
 

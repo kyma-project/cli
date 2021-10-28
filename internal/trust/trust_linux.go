@@ -44,7 +44,7 @@ func (c certauth) Certificate() ([]byte, error) {
 func (c certauth) CertificateKyma2() ([]byte, error) {
 	s, err := c.k8s.Static().CoreV1().Secrets("istio-system").Get(context.Background(), "kyma-gateway-certs", metav1.GetOptions{})
 	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("\nCould not retrieve the Kyma root certificate. Follow the instructions to import it manually:\n-----\n%s-----\n", c.Instructions()))
+		return nil, errors.Wrap(err, fmt.Sprintf("\nCould not retrieve the Kyma root certificate. Follow the instructions to import it manually:\n-----\n%s-----\n", c.InstructionsKyma2()))
 	}
 
 	return s.Data["tls.crt"], nil

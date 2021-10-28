@@ -1,4 +1,4 @@
-package certificates
+package certs
 
 import (
 	"io/ioutil"
@@ -26,9 +26,9 @@ func NewCmd(o *cli.Options) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "certificates",
+		Use:   "certs",
 		Short: "Imports certificates in local storage.",
-		Long:  `Use this command to add the certificates to the local storage of machine after the installation.`,
+		Long:  `Use this command to add the certificates to the local certificates storage of machine after the installation.`,
 		RunE:  func(_ *cobra.Command, _ []string) error { return c.Run() },
 	}
 	return cmd
@@ -85,7 +85,6 @@ func (cmd *command) importCertificate() error {
 	// create a simple step to print certificate import steps without a spinner (spinner overwrites sudo prompt)
 	// TODO refactor how certifier logs when the old install command is gone
 	if err := ca.StoreCertificateKyma2(tmpFile.Name(), s); err != nil {
-		ca.InstructionsKyma2()
 		return err
 	}
 	s.Successf("Kyma root certificate imported")

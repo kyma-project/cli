@@ -1,4 +1,4 @@
-package hostfiles
+package hosts
 
 import (
 	"github.com/kyma-project/cli/internal/cli"
@@ -31,9 +31,9 @@ func NewCmd(o *cli.Options) *cobra.Command {
 	}
 
 	cobraCmd := &cobra.Command{
-		Use:   "host-entries",
-		Short: "Imports domain entries in the system hosts file.",
-		Long: `Use this command to add domain to the hosts file of the local system.
+		Use:   "hosts",
+		Short: "Imports the hosts of exposed workloads in the system hosts file.",
+		Long: `Use this command to add the hosts of exposed workloads to the hosts file of the local system.
 `,
 		RunE: func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 	}
