@@ -50,11 +50,16 @@ func (o *Options) ResolveLocalWorkspacePath() (string, error) {
 	if o.Source == VersionLocal && o.WorkspacePath == defaultWorkspacePath {
 		//use Kyma sources stored in GOPATH (if they exist)
 		goPath := os.Getenv("GOPATH")
-		if goPath != "" {
-			kymaPath := filepath.Join(goPath, "src", "github.com", "kyma-project", "kyma")
-			if o.pathExists(kymaPath, "Local Kyma source directory") == nil {
-				return kymaPath, nil
+		if goPath == "" {
+			homeDir, err := os.UserHomeDir()
+			if err != nil {
+				return "", err
 			}
+			goPath = filepath.Join(homeDir, "go")
+		}
+		kymaPath := filepath.Join(goPath, "src", "github.com", "kyma-project", "kyma")
+		if o.pathExists(kymaPath, "Local Kyma source directory") == nil {
+			return kymaPath, nil
 		}
 	}
 
