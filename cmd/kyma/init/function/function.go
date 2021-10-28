@@ -43,8 +43,8 @@ Use the flags to specify the initial configuration for your Function or to choos
 	cmd.Flags().StringVarP(&o.Runtime, "runtime", "r", defaultRuntime, `Flag used to define the environment for running your Function. Use one of these options:
 	- nodejs12
 	- nodejs14
-	- python38
-	- python39`)
+	- python39
+	- python38 (deprecated)`)
 
 	// git function options
 	cmd.Flags().StringVar(&o.URL, "url", "", `Git repository URL`)
@@ -73,6 +73,10 @@ func (c *command) Run() error {
 		if err != nil {
 			return err
 		}
+	}
+
+	if c.opts.Runtime == "python38" {
+		s.LogInfof("Runtime python38 is deprecated. We recommend python39.")
 	}
 
 	configuration := workspace.Cfg{
