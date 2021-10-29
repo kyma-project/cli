@@ -176,7 +176,7 @@ func (c *command) createK3dCluster(k3dClient k3d.Client, registryURL string) err
 		},
 	}
 
-	err := k3dClient.CreateCluster(settings, false)
+	err := k3dClient.CreateCluster(settings, true)
 	if err != nil {
 		s.Failuref("Could not create k3d cluster '%s'", c.opts.Name)
 		return err
