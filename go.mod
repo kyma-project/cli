@@ -21,6 +21,44 @@ replace (
 )
 
 require (
+	github.com/Masterminds/semver/v3 v3.1.1
+	github.com/avast/retry-go v3.0.0+incompatible
+	github.com/blang/semver/v4 v4.0.0
+	github.com/briandowns/spinner v1.12.0
+	github.com/daviddengcn/go-colortext v1.0.0
+	github.com/docker/cli v20.10.6+incompatible
+	github.com/docker/docker v20.10.8+incompatible
+	github.com/docker/go-connections v0.4.0
+	github.com/fatih/color v1.10.0
+	github.com/imdario/mergo v0.3.12
+	github.com/kyma-incubator/hydroform/function v0.0.0-20211013085232-f50b80b24d73
+	github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90
+	github.com/kyma-incubator/hydroform/provision v0.0.0-20210514061348-c71b69cb362e
+	github.com/kyma-incubator/octopus v0.0.0-20200922132758-2b721e93b58b
+	github.com/kyma-incubator/reconciler v0.0.0-20211029133534-5323b7d3ab43
+	github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20201125092745-687c943ac940
+	github.com/olekukonko/tablewriter v0.0.5
+	github.com/opencontainers/image-spec v1.0.1
+	github.com/pkg/browser v0.0.0-20210115035449-ce105d075bb4
+	github.com/pkg/errors v0.9.1
+	github.com/spf13/cobra v1.2.1
+	github.com/stretchr/testify v1.7.0
+	go.uber.org/zap v1.17.0
+	gopkg.in/src-d/go-git.v4 v4.13.1
+	gopkg.in/yaml.v2 v2.4.0
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
+	gotest.tools v2.2.0+incompatible
+	helm.sh/helm/v3 v3.6.3
+	istio.io/api v0.0.0-20210520012029-891c0c12abfd
+	istio.io/client-go v1.10.1
+	k8s.io/api v0.21.0
+	k8s.io/apiextensions-apiserver v0.21.0
+	k8s.io/apimachinery v0.21.0
+	k8s.io/client-go v0.21.0
+	sigs.k8s.io/yaml v1.2.0
+)
+
+require (
 	cloud.google.com/go v0.64.0 // indirect
 	cloud.google.com/go/storage v1.10.0 // indirect
 	github.com/Azure/azure-sdk-for-go v45.0.0+incompatible // indirect
@@ -39,7 +77,6 @@ require (
 	github.com/ChrisTrenkamp/goxpath v0.0.0-20190607011252-c5096ec8773d // indirect
 	github.com/MakeNowJust/heredoc v0.0.0-20170808103936-bb23615498cd // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
-	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/Masterminds/sprig/v3 v3.2.2 // indirect
 	github.com/Masterminds/squirrel v1.5.0 // indirect
 	github.com/Microsoft/go-winio v0.4.16 // indirect
@@ -59,15 +96,12 @@ require (
 	github.com/armon/go-metrics v0.0.0-20180917152333-f0300d1749da // indirect
 	github.com/armon/go-radix v1.0.0 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535 // indirect
-	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/aws/aws-sdk-go v1.31.9 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d // indirect
 	github.com/bgentry/speakeasy v0.1.0 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
-	github.com/blang/semver/v4 v4.0.0
 	github.com/bmatcuk/doublestar v1.1.5 // indirect
-	github.com/briandowns/spinner v1.12.0
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e // indirect
 	github.com/containerd/cgroups v0.0.0-20201119153540-4cbc285b3327 // indirect
@@ -77,21 +111,16 @@ require (
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/cyphar/filepath-securejoin v0.2.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/daviddengcn/go-colortext v1.0.0
 	github.com/deislabs/oras v0.11.1 // indirect
 	github.com/dimchansky/utfbom v1.1.0 // indirect
-	github.com/docker/cli v20.10.6+incompatible
 	github.com/docker/distribution v2.7.1+incompatible // indirect
-	github.com/docker/docker v20.10.8+incompatible
 	github.com/docker/docker-credential-helpers v0.6.3 // indirect
-	github.com/docker/go-connections v0.4.0
 	github.com/docker/go-metrics v0.0.0-20180209012529-399ea8c73916 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/dylanmei/iso8601 v0.1.0 // indirect
 	github.com/emirpasic/gods v1.12.0 // indirect
 	github.com/evanphx/json-patch v4.9.0+incompatible // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20151013193312-d6023ce2651d // indirect
-	github.com/fatih/color v1.10.0
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/form3tech-oss/jwt-go v3.2.2+incompatible // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
@@ -151,7 +180,6 @@ require (
 	github.com/hashicorp/yamux v0.0.0-20180604194846-3520598351bb // indirect
 	github.com/huandu/xstrings v1.3.1 // indirect
 	github.com/iancoleman/strcase v0.1.3 // indirect
-	github.com/imdario/mergo v0.3.12
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/jmespath/go-jmespath v0.3.0 // indirect
@@ -162,12 +190,6 @@ require (
 	github.com/jstemmer/go-junit-report v0.9.1 // indirect
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
 	github.com/kevinburke/ssh_config v0.0.0-20201106050909-4977a11b4351 // indirect
-	github.com/kyma-incubator/hydroform/function v0.0.0-20211013085232-f50b80b24d73
-	github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90
-	github.com/kyma-incubator/hydroform/provision v0.0.0-20210514061348-c71b69cb362e
-	github.com/kyma-incubator/octopus v0.0.0-20200922132758-2b721e93b58b
-	github.com/kyma-incubator/reconciler v0.0.0-20211020131130-6cf748c72587
-	github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20201125092745-687c943ac940
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
 	github.com/lib/pq v1.10.0 // indirect
@@ -206,16 +228,12 @@ require (
 	github.com/mozillazg/go-httpheader v0.2.1 // indirect
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d // indirect
 	github.com/oklog/run v1.0.0 // indirect
-	github.com/olekukonko/tablewriter v0.0.5
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/image-spec v1.0.1
 	github.com/opencontainers/runc v0.1.1 // indirect
 	github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db // indirect
 	github.com/panjf2000/ants/v2 v2.4.6 // indirect
 	github.com/pelletier/go-toml v1.2.0 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
-	github.com/pkg/browser v0.0.0-20210115035449-ce105d075bb4
-	github.com/pkg/errors v0.9.1
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/posener/complete v1.2.1 // indirect
 	github.com/prometheus/client_golang v1.7.1 // indirect
@@ -230,14 +248,12 @@ require (
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/spf13/afero v1.2.2 // indirect
 	github.com/spf13/cast v1.4.1 // indirect
-	github.com/spf13/cobra v1.2.1
 	github.com/spf13/jwalterweatherman v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.8.1 // indirect
 	github.com/square/go-jose/v3 v3.0.0-20200630053402-0a67ce9b0693 // indirect
 	github.com/src-d/gcfg v1.4.0 // indirect
 	github.com/stretchr/objx v0.2.0 // indirect
-	github.com/stretchr/testify v1.7.0
 	github.com/subosito/gotenv v1.2.0 // indirect
 	github.com/svanharmelen/jsonapi v0.0.0-20180618144545-0c0828c3f16d // indirect
 	github.com/tencentcloud/tencentcloud-sdk-go v3.0.82+incompatible // indirect
@@ -257,7 +273,6 @@ require (
 	go.starlark.net v0.0.0-20200306205701-8dd3e2ee1dd5 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
-	go.uber.org/zap v1.17.0
 	golang.org/x/crypto v0.0.0-20210421170649-83a5a9bb288b // indirect
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
 	golang.org/x/mod v0.3.1-0.20200828183125-ce943fd02449 // indirect
@@ -279,21 +294,10 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.51.0 // indirect
 	gopkg.in/src-d/go-billy.v4 v4.3.2 // indirect
-	gopkg.in/src-d/go-git.v4 v4.13.1
 	gopkg.in/warnings.v0 v0.1.2 // indirect
-	gopkg.in/yaml.v2 v2.4.0
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
-	gotest.tools v2.2.0+incompatible
-	helm.sh/helm/v3 v3.6.3
-	istio.io/api v0.0.0-20210520012029-891c0c12abfd
-	istio.io/client-go v1.10.1
 	istio.io/gogo-genproto v0.0.0-20210113155706-4daf5697332f // indirect
-	k8s.io/api v0.21.0
-	k8s.io/apiextensions-apiserver v0.21.0
-	k8s.io/apimachinery v0.21.0
 	k8s.io/apiserver v0.21.0 // indirect
 	k8s.io/cli-runtime v0.21.0 // indirect
-	k8s.io/client-go v0.21.0
 	k8s.io/component-base v0.21.0 // indirect
 	k8s.io/klog/v2 v2.8.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20210305001622-591a79e4bda7 // indirect
@@ -303,5 +307,4 @@ require (
 	sigs.k8s.io/kustomize/api v0.8.5 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.10.15 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.1.0 // indirect
-	sigs.k8s.io/yaml v1.2.0
 )
