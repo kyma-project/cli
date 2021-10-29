@@ -5,8 +5,6 @@ import (
 	"fmt"
 
 	"github.com/kyma-incubator/reconciler/pkg/model"
-	"github.com/kyma-project/cli/internal/k3d"
-
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/service"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
 	"github.com/kyma-project/cli/internal/clusterinfo"
@@ -136,10 +134,7 @@ func (cmd *command) run() error {
 		return errors.Wrap(err, "failed to discover underlying cluster type")
 	}
 
-
-
-
-	vals, err := values.Merge(cmd.opts.Sources, ws.WorkspaceDir, clusterInfo, )
+	vals, err := values.Merge(cmd.opts.Sources, ws.WorkspaceDir, clusterInfo)
 	if err != nil {
 		return err
 	}

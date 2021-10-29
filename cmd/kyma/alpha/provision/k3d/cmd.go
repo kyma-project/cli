@@ -58,13 +58,12 @@ func (c *command) Run() error {
 	var err error
 	var registryURL string
 
-	k3dClient := k3d.NewClient(k3d.NewCmdRunner(), k3d.NewPathLooker(), c.opts.Name, c.opts.Verbose, c.opts.Timeout, true)
-	registryName := fmt.Sprintf(k3d.V5DefaultRegistryNamePattern, c.opts.Name)
+	k3dClient := k3d.NewClient(k3d.NewCmdRunner(), k3d.NewPathLooker(), c.opts.Name, c.opts.Verbose, c.opts.Timeout)
 
-	if err = c.verifyK3dStatus(k3dClient, registryName); err != nil {
+	if err = c.verifyK3dStatus(k3dClient); err != nil {
 		return err
 	}
-	if registryURL, err = c.createK3dRegistry(k3dClient, registryName); err != nil {
+	if registryURL, err = c.createK3dRegistry(k3dClient); err != nil {
 		return err
 	}
 	if err = c.createK3dCluster(k3dClient, registryURL); err != nil {
@@ -74,9 +73,9 @@ func (c *command) Run() error {
 }
 
 //Verifies if k3d is properly installed and pre-conditions are fulfilled
-func (c *command) verifyK3dStatus(k3dClient k3d.Client, registryName string) error {
+func (c *command) verifyK3dStatus(k3dClient k3d.Client) error {
 	s := c.NewStep("Verifying k3d status")
-	if err := k3dClient.VerifyStatus(); err != nil {
+	if err := k3dClient.VerifyStatus(true); err != nil {
 		s.Failure()
 		return err
 	}
@@ -88,7 +87,7 @@ func (c *command) verifyK3dStatus(k3dClient k3d.Client, registryName string) err
 	}
 
 	s.LogInfo("Checking if k3d registry of previous kyma installation exists")
-	registryExists, err := k3dClient.RegistryExists(registryName)
+	registryExists, err := k3dClient.RegistryExists()
 	if err != nil {
 		s.Failure()
 		return err
@@ -108,7 +107,7 @@ func (c *command) verifyK3dStatus(k3dClient k3d.Client, registryName string) err
 		}
 
 		if registryExists {
-			if err := k3dClient.DeleteRegistry(registryName); err != nil {
+			if err := k3dClient.DeleteRegistry(); err != nil {
 				s.Failure()
 				return err
 			}
@@ -128,7 +127,7 @@ func (c *command) verifyK3dStatus(k3dClient k3d.Client, registryName string) err
 		}
 		if registryExists {
 			// only registry exists
-			if err := k3dClient.DeleteRegistry(registryName); err != nil {
+			if err := k3dClient.DeleteRegistry(); err != nil {
 				s.Failure()
 				return err
 			}
@@ -148,15 +147,15 @@ func (c *command) PromptUserToDeleteExistingCluster() bool {
 	return c.opts.NonInteractive || answer
 }
 
-func (c *command) createK3dRegistry(k3dClient k3d.Client, registryName string) (string, error) {
-	s := c.NewStep(fmt.Sprintf("Create k3d registry '%s'", registryName))
+func (c *command) createK3dRegistry(k3dClient k3d.Client) (string, error) {
+	s := c.NewStep(fmt.Sprintf("Create k3d registry"))
 
-	registryURL, err := k3dClient.CreateRegistry(registryName)
+	registryURL, err := k3dClient.CreateRegistry()
 	if err != nil {
 		s.Failuref("Could not create k3d registry")
 		return "", err
 	}
-	s.Successf("Created k3d registry '%s'", registryName)
+	s.Successf("Created k3d registry '%s'", registryURL)
 	return registryURL, nil
 }
 
@@ -177,7 +176,7 @@ func (c *command) createK3dCluster(k3dClient k3d.Client, registryURL string) err
 		},
 	}
 
-	err := k3dClient.CreateCluster(settings)
+	err := k3dClient.CreateCluster(settings, false)
 	if err != nil {
 		s.Failuref("Could not create k3d cluster '%s'", c.opts.Name)
 		return err
