@@ -20,17 +20,10 @@ const (
 
 type Values map[string]interface{}
 
-
-type RegistryPortGetter interface {
-	GetRegistryPort(clusterName string) (string, error)
-}
-
-func Merge(sources Sources, workspaceDir string, clusterInfo clusterinfo.Info, registryPortGetter RegistryPortGetter) (Values, error) {
+func Merge(sources Sources, workspaceDir string, clusterInfo clusterinfo.Info, k3dRegistryPort string) (Values, error) {
 	builder := &builder{}
 
-	if err := addClusterSpecificDefaults(builder, clusterInfo, registryPortGetter); err != nil {
-		return nil, err
-	}
+	addClusterSpecificDefaults(builder, clusterInfo, k3dRegistryPort)
 
 	if err := addValueFiles(builder, sources, workspaceDir); err != nil {
 		return nil, err
@@ -52,14 +45,10 @@ func Merge(sources Sources, workspaceDir string, clusterInfo clusterinfo.Info, r
 	return vals, nil
 }
 
-func addClusterSpecificDefaults(builder *builder, clusterInfo clusterinfo.Info, registryPortGetter RegistryPortGetter) error {
+func addClusterSpecificDefaults(builder *builder, clusterInfo clusterinfo.Info, k3dRegistryPort string) {
 	if k3d, isK3d := clusterInfo.(clusterinfo.K3d); isK3d {
 
-		port, err := registryPortGetter.GetRegistryPort(k3d.ClusterName)
-		if err != nil {
-			return err
-		}
-		k3dRegistry := fmt.Sprintf("k3d-%s-registry:%s", k3d.ClusterName, port)
+		k3dRegistry := fmt.Sprintf("k3d-%s-registry:%s", k3d.ClusterName, k3dRegistryPort)
 		registryConfig := serverlessRegistryConfig{
 			enable:                false,
 			registryAddress:       k3dRegistry,
@@ -73,7 +62,6 @@ func addClusterSpecificDefaults(builder *builder, clusterInfo clusterinfo.Info, 
 	} else if gardener, isGardener := clusterInfo.(clusterinfo.Gardener); isGardener {
 		builder.addGlobalDomainName(gardener.Domain)
 	}
-	return nil
 }
 
 func addValueFiles(builder *builder, opts Sources, workspaceDir string) error {

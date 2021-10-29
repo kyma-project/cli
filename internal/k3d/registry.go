@@ -1,6 +1,18 @@
 package k3d
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"os"
+	"path/filepath"
+
+	"github.com/kyma-project/cli/internal/files"
+	"gopkg.in/yaml.v3"
+)
+
+const (
+	k3dDirectory  = "k3d"
+	k3dConfigFile = "config.yaml"
+)
 
 //RegistryList containing Registry entities
 type RegistryList struct {
@@ -22,4 +34,63 @@ func (cl *RegistryList) Unmarshal(data []byte) error {
 	}
 	cl.Registries = registries
 	return nil
+}
+
+type Config struct {
+	MappedRegistryPort string `yaml:"mapped_registry_port"`
+}
+
+func SaveRegistryPort(port string) error {
+	kymaHomePath, err := files.KymaHome()
+	if err != nil {
+		return err
+	}
+	p := filepath.Join(kymaHomePath, k3dDirectory)
+
+	if _, err := os.Stat(p); os.IsNotExist(err) {
+		err = os.MkdirAll(p, 0777)
+		if err != nil {
+			return err
+		}
+	}
+
+	config := &Config{MappedRegistryPort: port}
+	yamlConfig, err := yaml.Marshal(config)
+	if err != nil {
+		return err
+	}
+
+	configFilePath := filepath.Join(p, k3dConfigFile)
+
+	if err := os.WriteFile(configFilePath, yamlConfig, 0666); err != nil {
+		return err
+	}
+	return nil
+}
+
+func ReadRegistryPort() (string, error) {
+	kymaHomePath, err := files.KymaHome()
+	if err != nil {
+		return "", err
+	}
+	p := filepath.Join(kymaHomePath, k3dDirectory)
+
+	if _, err := os.Stat(p); os.IsNotExist(err) {
+		err = os.MkdirAll(p, 0777)
+		if err != nil {
+			return "", err
+		}
+	}
+	configFilePath := filepath.Join(p, k3dConfigFile)
+	yamlConfig, err := os.ReadFile(configFilePath)
+	if err != nil {
+		return "", err
+	}
+
+	var config Config
+	if err := yaml.Unmarshal(yamlConfig, &config); err != nil {
+		return "", err
+	}
+
+	return config.MappedRegistryPort, nil
 }
