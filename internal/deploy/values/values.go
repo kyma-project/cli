@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 
 	"github.com/kyma-project/cli/internal/clusterinfo"
-
 	"github.com/kyma-project/cli/internal/resolve"
 	"github.com/pkg/errors"
 	"helm.sh/helm/v3/pkg/strvals"
@@ -21,10 +20,17 @@ const (
 
 type Values map[string]interface{}
 
-func Merge(sources Sources, workspaceDir string, clusterInfo clusterinfo.Info) (Values, error) {
+
+type RegistryPortGetter interface {
+	GetRegistryPort(clusterName string) (string, error)
+}
+
+func Merge(sources Sources, workspaceDir string, clusterInfo clusterinfo.Info, registryPortGetter RegistryPortGetter) (Values, error) {
 	builder := &builder{}
 
-	addClusterSpecificDefaults(builder, clusterInfo)
+	if err := addClusterSpecificDefaults(builder, clusterInfo, registryPortGetter); err != nil {
+		return nil, err
+	}
 
 	if err := addValueFiles(builder, sources, workspaceDir); err != nil {
 		return nil, err
@@ -46,13 +52,12 @@ func Merge(sources Sources, workspaceDir string, clusterInfo clusterinfo.Info) (
 	return vals, nil
 }
 
-func addClusterSpecificDefaults(builder *builder, clusterInfo clusterinfo.Info) {
+func addClusterSpecificDefaults(builder *builder, clusterInfo clusterinfo.Info, registryPortGetter RegistryPortGetter) error {
 	if k3d, isK3d := clusterInfo.(clusterinfo.K3d); isK3d {
-		// This if statement is required as k3d v4 exposes its registry (when the --registry-create flag is set) automatically to port 5000.
-		// For k3d v5, we have the default port of 5001 (because of https://github.com/kyma-project/cli/issues/1061)
-		port := "5000"
-		if k3d.IsV5 {
-			port = "5001"
+
+		port, err := registryPortGetter.GetRegistryPort(k3d.ClusterName)
+		if err != nil {
+			return err
 		}
 		k3dRegistry := fmt.Sprintf("k3d-%s-registry:%s", k3d.ClusterName, port)
 		registryConfig := serverlessRegistryConfig{
@@ -68,6 +73,7 @@ func addClusterSpecificDefaults(builder *builder, clusterInfo clusterinfo.Info) 
 	} else if gardener, isGardener := clusterInfo.(clusterinfo.Gardener); isGardener {
 		builder.addGlobalDomainName(gardener.Domain)
 	}
+	return nil
 }
 
 func addValueFiles(builder *builder, opts Sources, workspaceDir string) error {

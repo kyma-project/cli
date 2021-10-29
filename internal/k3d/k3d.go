@@ -29,6 +29,7 @@ type Client interface {
 	CreateRegistry(registryName string) (string, error)
 	DeleteCluster() error
 	DeleteRegistry(registryName string) error
+	GetRegistryPort() (string, error)
 }
 
 type CreateClusterSettings struct {
@@ -138,6 +139,32 @@ func (c *client) checkVersion() error {
 	return nil
 }
 
+func (c *client) getRegistryByName(registryName string) (*Registry, error) {
+	registryJSON, err := c.runCmd("registry", "list", "-o", "json")
+	if err != nil {
+		return nil, err
+	}
+
+	registryList := &RegistryList{}
+	if err := registryList.Unmarshal([]byte(registryJSON)); err != nil {
+		return nil, err
+	}
+
+	for _, registry := range registryList.Registries {
+		if registry.Name == fmt.Sprintf("k3d-%s", registryName) {
+			if c.verbose {
+				fmt.Printf("k3d registry '%s' exists", registryName)
+			}
+			return &registry, nil
+		}
+	}
+
+	if c.verbose {
+		fmt.Printf("k3d registry '%s' does not exist", registryName)
+	}
+	return nil, nil
+}
+
 //VerifyStatus verifies whether the k3d CLI tool is properly installed
 func (c *client) VerifyStatus() error {
 	//ensure k3d is in PATH
@@ -186,29 +213,11 @@ func (c *client) ClusterExists() (bool, error) {
 
 //RegistryExists checks whether a registry exists
 func (c *client) RegistryExists(registryName string) (bool, error) {
-	registryJSON, err := c.runCmd("registry", "list", "-o", "json")
+	registry, err := c.getRegistryByName(registryName)
 	if err != nil {
 		return false, err
 	}
-
-	registryList := &RegistryList{}
-	if err := registryList.Unmarshal([]byte(registryJSON)); err != nil {
-		return false, err
-	}
-
-	for _, registry := range registryList.Registries {
-		if registry.Name == fmt.Sprintf("k3d-%s", registryName) {
-			if c.verbose {
-				fmt.Printf("k3d registry '%s' exists", registryName)
-			}
-			return true, nil
-		}
-	}
-
-	if c.verbose {
-		fmt.Printf("k3d registry '%s' does not exist", registryName)
-	}
-	return false, nil
+	return registry != nil, nil
 }
 
 //CreateCluster creates a cluster
@@ -258,6 +267,22 @@ func (c *client) DeleteCluster() error {
 func (c *client) DeleteRegistry(registryName string) error {
 	_, err := c.runCmd("registry", "delete", fmt.Sprintf("k3d-%s", registryName))
 	return err
+}
+
+func (c *client) GetRegistryPort() (string, error) {
+	registryName := fmt.Sprintf(V5DefaultRegistryNamePattern, c.clusterName)
+
+	registry, err := c.getRegistryByName(registryName)
+	if err != nil {
+		return "", err
+	}
+
+	for k, _ := range registry.PortMappings {
+		port := strings.Split(k, "/")[0]
+		return port, nil
+	}
+
+	return "", errors.New("k3d port mapping not found")
 }
 
 func getCreateClusterV4Args(settings CreateClusterSettings) []string {

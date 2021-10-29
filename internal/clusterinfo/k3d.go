@@ -2,14 +2,10 @@ package clusterinfo
 
 import (
 	"context"
-	"fmt"
-	"regexp"
 	"strings"
 	"time"
 	"unicode"
 
-	"github.com/blang/semver/v4"
-	"github.com/kyma-project/cli/internal/cli"
 	"github.com/pkg/errors"
 
 	"github.com/avast/retry-go"
@@ -87,29 +83,4 @@ func k3dClusterName(ctx context.Context, kubeClient kubernetes.Interface) (k3dNa
 	}
 
 	return k3dName, nil
-}
-
-func isK3dVersion5() (bool, error) {
-	//as soon as k3d v5 is the standard this function can be removed.
-	binaryVersionOutput, err := cli.RunCmd("k3d", "version")
-	if err != nil {
-		return false, err
-	}
-
-	exp, _ := regexp.Compile(`k3d version v([^\s-]+)`)
-	binaryVersion := exp.FindStringSubmatch(binaryVersionOutput)
-
-	if len(binaryVersion) < 2 {
-		return false, fmt.Errorf("Could not extract k3d version from command output:\n%s", binaryVersionOutput)
-	}
-	binarySemVersion, err := semver.Parse(binaryVersion[1])
-	if err != nil {
-		return false, err
-	}
-
-	if binarySemVersion.Major != 5 {
-		return false, nil
-	}
-
-	return true, nil
 }

@@ -9,8 +9,9 @@ type RegistryList struct {
 
 //Registry including list of nodes
 type Registry struct {
-	Name  string
-	State State
+	Name         string
+	State        State
+	PortMappings map[string]interface{}
 }
 
 //Unmarshal converts a JSON to nested structs
