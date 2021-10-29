@@ -195,9 +195,9 @@ func TestMerge(t *testing.T) {
 				"serverless": map[string]interface{}{
 					"dockerRegistry": map[string]interface{}{
 						"enableInternal":        false,
-						"internalServerAddress": "k3d-foo-registry:5001",
-						"serverAddress":         "k3d-foo-registry:5001",
-						"registryAddress":       "k3d-foo-registry:5001",
+						"internalServerAddress": "k3d-foo-registry:5000",
+						"serverAddress":         "k3d-foo-registry:5000",
+						"registryAddress":       "k3d-foo-registry:5000",
 					},
 				},
 			}
@@ -225,9 +225,9 @@ func TestMerge(t *testing.T) {
 				"serverless": map[string]interface{}{
 					"dockerRegistry": map[string]interface{}{
 						"enableInternal":        true,
-						"internalServerAddress": "k3d-foo-registry:5001",
-						"serverAddress":         "k3d-foo-registry:5001",
-						"registryAddress":       "k3d-foo-registry:5001",
+						"internalServerAddress": "k3d-foo-registry:5000",
+						"serverAddress":         "k3d-foo-registry:5000",
+						"registryAddress":       "k3d-foo-registry:5000",
 					},
 				},
 			}
@@ -250,9 +250,9 @@ func TestMerge(t *testing.T) {
 				"serverless": map[string]interface{}{
 					"dockerRegistry": map[string]interface{}{
 						"enableInternal":        false,
-						"internalServerAddress": "k3d-foo-registry:5001",
-						"serverAddress":         "k3d-foo-registry:5001",
-						"registryAddress":       "k3d-foo-registry:5001",
+						"internalServerAddress": "k3d-foo-registry:5000",
+						"serverAddress":         "k3d-foo-registry:5000",
+						"registryAddress":       "k3d-foo-registry:5000",
 					},
 				},
 			}

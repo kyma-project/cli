@@ -2,6 +2,7 @@ package clusterinfo
 
 import (
 	"context"
+
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -19,6 +20,7 @@ func (Gardener) sealed() {}
 
 type K3d struct {
 	ClusterName string
+	IsV5        bool
 }
 
 func (K3d) sealed() {}
@@ -52,5 +54,10 @@ func Discover(ctx context.Context, kubeClient kubernetes.Interface) (Info, error
 		return nil, err
 	}
 
-	return K3d{ClusterName: k3dClusterName}, nil
+	isK3dV5, err := isK3dVersion5()
+	if err != nil {
+		return nil, err
+	}
+
+	return K3d{ClusterName: k3dClusterName, IsV5: isK3dV5}, nil
 }

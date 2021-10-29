@@ -48,7 +48,13 @@ func Merge(sources Sources, workspaceDir string, clusterInfo clusterinfo.Info) (
 
 func addClusterSpecificDefaults(builder *builder, clusterInfo clusterinfo.Info) {
 	if k3d, isK3d := clusterInfo.(clusterinfo.K3d); isK3d {
-		k3dRegistry := fmt.Sprintf("k3d-%s-registry:5001", k3d.ClusterName)
+		// This if statement is required as k3d v4 exposes its registry (when the --registry-create flag is set) automatically to port 5000.
+		// For k3d v5, we have the default port of 5001 (because of https://github.com/kyma-project/cli/issues/1061)
+		port := "5000"
+		if k3d.IsV5 {
+			port = "5001"
+		}
+		k3dRegistry := fmt.Sprintf("k3d-%s-registry:%s", k3d.ClusterName, port)
 		registryConfig := serverlessRegistryConfig{
 			enable:                false,
 			registryAddress:       k3dRegistry,
