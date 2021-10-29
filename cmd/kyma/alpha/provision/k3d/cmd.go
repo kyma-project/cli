@@ -148,7 +148,7 @@ func (c *command) PromptUserToDeleteExistingCluster() bool {
 }
 
 func (c *command) createK3dRegistry(k3dClient k3d.Client) (string, error) {
-	s := c.NewStep(fmt.Sprintf("Create k3d registry"))
+	s := c.NewStep("Create k3d registry")
 
 	registryURL, err := k3dClient.CreateRegistry()
 	if err != nil {
