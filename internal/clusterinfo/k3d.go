@@ -2,10 +2,11 @@ package clusterinfo
 
 import (
 	"context"
-	"github.com/pkg/errors"
 	"strings"
 	"time"
 	"unicode"
+
+	"github.com/pkg/errors"
 
 	"github.com/avast/retry-go"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

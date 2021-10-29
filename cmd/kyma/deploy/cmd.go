@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/kyma-incubator/reconciler/pkg/model"
-
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/service"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
 	"github.com/kyma-project/cli/internal/clusterinfo"

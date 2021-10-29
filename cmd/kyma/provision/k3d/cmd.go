@@ -58,7 +58,7 @@ func (c *command) Run() error {
 
 	var err error
 
-	k3dClient := k3d.NewClient(k3d.NewCmdRunner(), k3d.NewPathLooker(), c.opts.Name, c.opts.Verbose, c.opts.Timeout, false)
+	k3dClient := k3d.NewClient(k3d.NewCmdRunner(), k3d.NewPathLooker(), c.opts.Name, c.opts.Verbose, c.opts.Timeout)
 
 	if err = c.verifyK3dStatus(k3dClient); err != nil {
 		return err
@@ -73,7 +73,7 @@ func (c *command) Run() error {
 //Verifies if k3d is properly installed and pre-conditions are fulfilled
 func (c *command) verifyK3dStatus(k3dClient k3d.Client) error {
 	s := c.NewStep("Verifying k3d status")
-	if err := k3dClient.VerifyStatus(); err != nil {
+	if err := k3dClient.VerifyStatus(false); err != nil {
 		s.Failure()
 		return err
 	}
@@ -134,7 +134,7 @@ func (c *command) createK3dCluster(k3dClient k3d.Client) error {
 		},
 	}
 
-	err := k3dClient.CreateCluster(settings)
+	err := k3dClient.CreateCluster(settings, false)
 	if err != nil {
 		s.Failuref("Could not create k3d cluster '%s'", c.opts.Name)
 		return err

@@ -2,12 +2,13 @@ package values
 
 import (
 	"fmt"
-	"github.com/kyma-project/cli/internal/clusterinfo"
-	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"testing"
+
+	"github.com/kyma-project/cli/internal/clusterinfo"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMerge(t *testing.T) {
