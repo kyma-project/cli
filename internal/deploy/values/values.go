@@ -3,9 +3,10 @@ package values
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/kyma-project/cli/internal/clusterinfo"
 	"io/ioutil"
 	"path/filepath"
+
+	"github.com/kyma-project/cli/internal/clusterinfo"
 
 	"github.com/kyma-project/cli/internal/resolve"
 	"github.com/pkg/errors"
@@ -47,7 +48,7 @@ func Merge(sources Sources, workspaceDir string, clusterInfo clusterinfo.Info) (
 
 func addClusterSpecificDefaults(builder *builder, clusterInfo clusterinfo.Info) {
 	if k3d, isK3d := clusterInfo.(clusterinfo.K3d); isK3d {
-		k3dRegistry := fmt.Sprintf("k3d-%s-registry:5000", k3d.ClusterName)
+		k3dRegistry := fmt.Sprintf("k3d-%s-registry:5001", k3d.ClusterName)
 		registryConfig := serverlessRegistryConfig{
 			enable:                false,
 			registryAddress:       k3dRegistry,

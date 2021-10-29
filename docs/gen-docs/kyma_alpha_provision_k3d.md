@@ -19,7 +19,7 @@ kyma alpha provision k3d [flags]
   -s, --k3s-arg strings        One or more arguments passed from k3d to the k3s command (format: ARG@NODEFILTER[;@NODEFILTER])
   -k, --kube-version string    Kubernetes version of the cluster (default "1.20.11")
       --name string            Name of the Kyma cluster (default "kyma")
-  -p, --port strings           Map ports 80 and 443 of K3D loadbalancer (e.g. -p 80:80@loadbalancer -p 443:443@loadbalancer) (default [80:80@loadbalancer,443:443@loadbalancer])
+  -p, --port strings           Map ports 80 and 443 of k3d loadbalancer (e.g. -p 80:80@loadbalancer -p 443:443@loadbalancer) (default [80:80@loadbalancer,443:443@loadbalancer])
       --registry-use strings   Connect to one or more k3d-managed registries. Kyma automatically creates a registry for serverless images.
       --timeout duration       Maximum time for the provisioning. If you want no timeout, enter "0". (default 5m0s)
       --workers int            Number of worker nodes (k3d agents) (default 1)

@@ -158,11 +158,11 @@ func (suite *V5TestSuite) TestCreateCluster() {
 
 func (suite *V5TestSuite) TestCreateRegistry() {
 	suite.mockCmdRunner.On("Run", mock.Anything, "k3d", "registry", "create", "kyma-registry",
-		"--port", "5000").Return("", nil)
+		"--port", "5001").Return("", nil)
 
 	registryName, err := suite.client.CreateRegistry("kyma-registry")
 	suite.Nil(err)
-	suite.Equal("kyma-registry:5000", registryName)
+	suite.Equal("kyma-registry:5001", registryName)
 }
 
 func (suite *V5TestSuite) TestDeleteCluster() {

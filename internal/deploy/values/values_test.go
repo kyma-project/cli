@@ -2,12 +2,13 @@ package values
 
 import (
 	"fmt"
-	"github.com/kyma-project/cli/internal/clusterinfo"
-	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"testing"
+
+	"github.com/kyma-project/cli/internal/clusterinfo"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMerge(t *testing.T) {
@@ -194,9 +195,9 @@ func TestMerge(t *testing.T) {
 				"serverless": map[string]interface{}{
 					"dockerRegistry": map[string]interface{}{
 						"enableInternal":        false,
-						"internalServerAddress": "k3d-foo-registry:5000",
-						"serverAddress":         "k3d-foo-registry:5000",
-						"registryAddress":       "k3d-foo-registry:5000",
+						"internalServerAddress": "k3d-foo-registry:5001",
+						"serverAddress":         "k3d-foo-registry:5001",
+						"registryAddress":       "k3d-foo-registry:5001",
 					},
 				},
 			}
@@ -224,9 +225,9 @@ func TestMerge(t *testing.T) {
 				"serverless": map[string]interface{}{
 					"dockerRegistry": map[string]interface{}{
 						"enableInternal":        true,
-						"internalServerAddress": "k3d-foo-registry:5000",
-						"serverAddress":         "k3d-foo-registry:5000",
-						"registryAddress":       "k3d-foo-registry:5000",
+						"internalServerAddress": "k3d-foo-registry:5001",
+						"serverAddress":         "k3d-foo-registry:5001",
+						"registryAddress":       "k3d-foo-registry:5001",
 					},
 				},
 			}
@@ -249,9 +250,9 @@ func TestMerge(t *testing.T) {
 				"serverless": map[string]interface{}{
 					"dockerRegistry": map[string]interface{}{
 						"enableInternal":        false,
-						"internalServerAddress": "k3d-foo-registry:5000",
-						"serverAddress":         "k3d-foo-registry:5000",
-						"registryAddress":       "k3d-foo-registry:5000",
+						"internalServerAddress": "k3d-foo-registry:5001",
+						"serverAddress":         "k3d-foo-registry:5001",
+						"registryAddress":       "k3d-foo-registry:5001",
 					},
 				},
 			}

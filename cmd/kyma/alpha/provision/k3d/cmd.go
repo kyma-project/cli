@@ -42,7 +42,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cmd.Flags().StringSliceVarP(&o.K3dArgs, "k3d-arg", "", []string{}, "One or more arguments passed to the k3d provisioning command (e.g. --k3d-arg='--no-rollback')")
 	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.20.11", "Kubernetes version of the cluster")
 	cmd.Flags().StringSliceVar(&o.UseRegistry, "registry-use", []string{}, "Connect to one or more k3d-managed registries. Kyma automatically creates a registry for serverless images.")
-	cmd.Flags().StringSliceVarP(&o.PortMapping, "port", "p", []string{"80:80@loadbalancer", "443:443@loadbalancer"}, "Map ports 80 and 443 of K3D loadbalancer (e.g. -p 80:80@loadbalancer -p 443:443@loadbalancer)")
+	cmd.Flags().StringSliceVarP(&o.PortMapping, "port", "p", []string{"80:80@loadbalancer", "443:443@loadbalancer"}, "Map ports 80 and 443 of k3d loadbalancer (e.g. -p 80:80@loadbalancer -p 443:443@loadbalancer)")
 	return cmd
 }
 

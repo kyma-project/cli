@@ -242,7 +242,7 @@ func (c *client) CreateCluster(settings CreateClusterSettings) error {
 
 // CreateRegistry creates a k3d registry
 func (c *client) CreateRegistry(registryName string) (string, error) {
-	registryPort := "5000"
+	registryPort := "5001"
 
 	_, err := c.runCmd("registry", "create", registryName, "--port", registryPort)
 	return fmt.Sprintf("%s:%s", registryName, registryPort), err
