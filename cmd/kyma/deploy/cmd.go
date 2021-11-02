@@ -4,6 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"io/ioutil"
+	"os"
+	"path"
+	"path/filepath"
+	"time"
+
 	"github.com/kyma-incubator/reconciler/pkg/model"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/service"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
@@ -11,12 +17,6 @@ import (
 	"github.com/kyma-project/cli/internal/coredns"
 	"github.com/kyma-project/cli/internal/deploy"
 	"github.com/kyma-project/cli/internal/deploy/istioctl"
-
-	"io/ioutil"
-	"os"
-	"path"
-	"path/filepath"
-	"time"
 
 	"github.com/kyma-project/cli/internal/deploy/component"
 	"github.com/kyma-project/cli/internal/deploy/values"
