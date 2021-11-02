@@ -253,11 +253,9 @@ func (c *client) CreateRegistry() (string, error) {
 	registryName := fmt.Sprintf(v5DefaultRegistryNamePattern, c.clusterName)
 	registryPort := "5001"
 
-	if _, err := c.runCmd("registry", "create", registryName, "--port", registryPort); err != nil {
-		return "", err
-	}
+	_, err := c.runCmd("registry", "create", registryName, "--port", registryPort)
 
-	return fmt.Sprintf("%s:%s", registryName, registryPort), nil
+	return fmt.Sprintf("%s:%s", registryName, registryPort), err
 }
 
 // DeleteCluster deletes a k3d registry
