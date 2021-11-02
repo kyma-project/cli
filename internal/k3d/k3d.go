@@ -257,9 +257,7 @@ func (c *client) CreateRegistry() (string, error) {
 		return "", err
 	}
 
-	err := SaveRegistryPort(registryPort)
-
-	return fmt.Sprintf("%s:%s", registryName, registryPort), err
+	return fmt.Sprintf("%s:%s", registryName, registryPort), nil
 }
 
 // DeleteCluster deletes a k3d registry

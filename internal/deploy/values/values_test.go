@@ -147,7 +147,7 @@ func TestMerge(t *testing.T) {
 				TLSCrtFile: tc.tlsCrt,
 				TLSKeyFile: tc.tlsKey,
 			}
-			actual, err := Merge(opts, "testdata", clusterinfo.Unrecognized{}, "5001")
+			actual, err := Merge(opts, "testdata", clusterinfo.Unrecognized{})
 
 			if tc.expectedErr {
 				require.Error(t, err)
@@ -165,7 +165,7 @@ func TestMerge(t *testing.T) {
 		opts := Sources{
 			ValueFiles: []string{fmt.Sprintf("%s:/%s", fakeServer.URL, "valid-values-1.yaml")},
 		}
-		actual, err := Merge(opts, "testdata", clusterinfo.Unrecognized{}, "5001")
+		actual, err := Merge(opts, "testdata", clusterinfo.Unrecognized{})
 
 		expected := Values{
 			"component": map[string]interface{}{
@@ -184,7 +184,7 @@ func TestMerge(t *testing.T) {
 
 	t.Run("k3d", func(t *testing.T) {
 		t.Run("default values", func(t *testing.T) {
-			actual, err := Merge(Sources{}, "testdata", clusterinfo.K3d{ClusterName: "foo"}, "5001")
+			actual, err := Merge(Sources{}, "testdata", clusterinfo.K3d{ClusterName: "foo"})
 
 			expected := Values{
 				"global": map[string]interface{}{
@@ -195,9 +195,9 @@ func TestMerge(t *testing.T) {
 				"serverless": map[string]interface{}{
 					"dockerRegistry": map[string]interface{}{
 						"enableInternal":        false,
-						"internalServerAddress": "k3d-foo-registry:5001",
-						"serverAddress":         "k3d-foo-registry:5001",
-						"registryAddress":       "k3d-foo-registry:5001",
+						"internalServerAddress": "k3d-foo-registry:5000",
+						"serverAddress":         "k3d-foo-registry:5000",
+						"registryAddress":       "k3d-foo-registry:5000",
 					},
 				},
 			}
@@ -214,7 +214,7 @@ func TestMerge(t *testing.T) {
 					"global.tlsKey=github_tls_key",
 					"serverless.dockerRegistry.enableInternal=true",
 				},
-			}, "testdata", clusterinfo.K3d{ClusterName: "foo"}, "5001")
+			}, "testdata", clusterinfo.K3d{ClusterName: "foo"})
 
 			expected := Values{
 				"global": map[string]interface{}{
@@ -225,9 +225,9 @@ func TestMerge(t *testing.T) {
 				"serverless": map[string]interface{}{
 					"dockerRegistry": map[string]interface{}{
 						"enableInternal":        true,
-						"internalServerAddress": "k3d-foo-registry:5001",
-						"serverAddress":         "k3d-foo-registry:5001",
-						"registryAddress":       "k3d-foo-registry:5001",
+						"internalServerAddress": "k3d-foo-registry:5000",
+						"serverAddress":         "k3d-foo-registry:5000",
+						"registryAddress":       "k3d-foo-registry:5000",
 					},
 				},
 			}
@@ -239,7 +239,7 @@ func TestMerge(t *testing.T) {
 		t.Run("custom domain", func(t *testing.T) {
 			actual, err := Merge(Sources{
 				Domain: "hello.io",
-			}, "testdata", clusterinfo.K3d{ClusterName: "foo"}, "5001")
+			}, "testdata", clusterinfo.K3d{ClusterName: "foo"})
 
 			expected := Values{
 				"global": map[string]interface{}{
@@ -250,9 +250,9 @@ func TestMerge(t *testing.T) {
 				"serverless": map[string]interface{}{
 					"dockerRegistry": map[string]interface{}{
 						"enableInternal":        false,
-						"internalServerAddress": "k3d-foo-registry:5001",
-						"serverAddress":         "k3d-foo-registry:5001",
-						"registryAddress":       "k3d-foo-registry:5001",
+						"internalServerAddress": "k3d-foo-registry:5000",
+						"serverAddress":         "k3d-foo-registry:5000",
+						"registryAddress":       "k3d-foo-registry:5000",
 					},
 				},
 			}
@@ -264,7 +264,7 @@ func TestMerge(t *testing.T) {
 
 	t.Run("gardener", func(t *testing.T) {
 		t.Run("default values", func(t *testing.T) {
-			actual, err := Merge(Sources{}, "testdata", clusterinfo.Gardener{Domain: "foo.gardener.com"}, "5001")
+			actual, err := Merge(Sources{}, "testdata", clusterinfo.Gardener{Domain: "foo.gardener.com"})
 
 			expected := Values{
 				"global": map[string]interface{}{
@@ -279,7 +279,7 @@ func TestMerge(t *testing.T) {
 		t.Run("custom domain via values", func(t *testing.T) {
 			actual, err := Merge(Sources{
 				Values: []string{"global.domainName=github.com"},
-			}, "testdata", clusterinfo.Gardener{Domain: "foo.gardener.com"}, "5001")
+			}, "testdata", clusterinfo.Gardener{Domain: "foo.gardener.com"})
 
 			expected := Values{
 				"global": map[string]interface{}{
@@ -294,7 +294,7 @@ func TestMerge(t *testing.T) {
 		t.Run("custom domain", func(t *testing.T) {
 			actual, err := Merge(Sources{
 				Domain: "github.com",
-			}, "testdata", clusterinfo.Gardener{Domain: "foo.gardener.com"}, "5001")
+			}, "testdata", clusterinfo.Gardener{Domain: "foo.gardener.com"})
 
 			expected := Values{
 				"global": map[string]interface{}{

@@ -4,6 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"io/ioutil"
+	"os"
+	"path"
+	"path/filepath"
+	"time"
+
 	"github.com/kyma-incubator/reconciler/pkg/model"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/service"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
@@ -11,13 +17,6 @@ import (
 	"github.com/kyma-project/cli/internal/coredns"
 	"github.com/kyma-project/cli/internal/deploy"
 	"github.com/kyma-project/cli/internal/deploy/istioctl"
-	"github.com/kyma-project/cli/internal/k3d"
-
-	"io/ioutil"
-	"os"
-	"path"
-	"path/filepath"
-	"time"
 
 	"github.com/kyma-project/cli/internal/deploy/component"
 	"github.com/kyma-project/cli/internal/deploy/values"
@@ -135,11 +134,7 @@ func (cmd *command) run() error {
 		return errors.Wrap(err, "failed to discover underlying cluster type")
 	}
 
-	k3dRegistryPort, err := k3d.ReadRegistryPort()
-	if err != nil {
-		return err
-	}
-	vals, err := values.Merge(cmd.opts.Sources, ws.WorkspaceDir, clusterInfo, k3dRegistryPort)
+	vals, err := values.Merge(cmd.opts.Sources, ws.WorkspaceDir, clusterInfo)
 	if err != nil {
 		return err
 	}

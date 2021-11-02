@@ -20,10 +20,10 @@ const (
 
 type Values map[string]interface{}
 
-func Merge(sources Sources, workspaceDir string, clusterInfo clusterinfo.Info, k3dRegistryPort string) (Values, error) {
+func Merge(sources Sources, workspaceDir string, clusterInfo clusterinfo.Info) (Values, error) {
 	builder := &builder{}
 
-	addClusterSpecificDefaults(builder, clusterInfo, k3dRegistryPort)
+	addClusterSpecificDefaults(builder, clusterInfo)
 
 	if err := addValueFiles(builder, sources, workspaceDir); err != nil {
 		return nil, err
@@ -45,10 +45,10 @@ func Merge(sources Sources, workspaceDir string, clusterInfo clusterinfo.Info, k
 	return vals, nil
 }
 
-func addClusterSpecificDefaults(builder *builder, clusterInfo clusterinfo.Info, k3dRegistryPort string) {
+func addClusterSpecificDefaults(builder *builder, clusterInfo clusterinfo.Info) {
 	if k3d, isK3d := clusterInfo.(clusterinfo.K3d); isK3d {
 
-		k3dRegistry := fmt.Sprintf("k3d-%s-registry:%s", k3d.ClusterName, k3dRegistryPort)
+		k3dRegistry := fmt.Sprintf("k3d-%s-registry:5000", k3d.ClusterName)
 		registryConfig := serverlessRegistryConfig{
 			enable:                false,
 			registryAddress:       k3dRegistry,
