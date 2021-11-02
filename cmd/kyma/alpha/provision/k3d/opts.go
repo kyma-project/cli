@@ -15,6 +15,7 @@ type Options struct {
 	Timeout           time.Duration
 	K3sArgs           []string
 	UseRegistry       []string
+	RegistryPort      string
 	K3dArgs           []string
 	KubernetesVersion string
 	PortMapping       []string

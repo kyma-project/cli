@@ -26,7 +26,7 @@ type Client interface {
 	ClusterExists() (bool, error)
 	RegistryExists() (bool, error)
 	CreateCluster(settings CreateClusterSettings, isV5 bool) error
-	CreateRegistry() (string, error)
+	CreateRegistry(registryPort string) (string, error)
 	DeleteCluster() error
 	DeleteRegistry() error
 }
@@ -249,12 +249,10 @@ func (c *client) CreateCluster(settings CreateClusterSettings, isV5 bool) error 
 }
 
 // CreateRegistry creates a k3d registry
-func (c *client) CreateRegistry() (string, error) {
+func (c *client) CreateRegistry(registryPort string) (string, error) {
 	registryName := fmt.Sprintf(v5DefaultRegistryNamePattern, c.clusterName)
-	registryPort := "5001"
 
 	_, err := c.runCmd("registry", "create", registryName, "--port", registryPort)
-
 	return fmt.Sprintf("%s:%s", registryName, registryPort), err
 }
 

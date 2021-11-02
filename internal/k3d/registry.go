@@ -1,8 +1,6 @@
 package k3d
 
-import (
-	"encoding/json"
-)
+import "encoding/json"
 
 //RegistryList containing Registry entities
 type RegistryList struct {
