@@ -123,6 +123,10 @@ func (c *command) PromptUserToDeleteExistingCluster() bool {
 func (c *command) createK3dCluster(k3dClient k3d.Client) error {
 	s := c.NewStep(fmt.Sprintf("Create K3d cluster '%s'", c.opts.Name))
 
+	if err := k3d.SaveRegistryPort("5000"); err != nil {
+		return err
+	}
+
 	settings := k3d.CreateClusterSettings{
 		Args:              parseK3dArgs(c.opts.K3dArgs),
 		KubernetesVersion: c.opts.KubernetesVersion,
