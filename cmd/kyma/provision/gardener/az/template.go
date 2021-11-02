@@ -59,7 +59,7 @@ func (c *azCmd) NewProvider() (*types.Provider, error) {
 	p.CustomConfigurations["workercidr"] = "10.250.0.0/16"
 	p.CustomConfigurations["networking_type"] = "calico"
 	p.CustomConfigurations["machine_image_name"] = "gardenlinux"
-	p.CustomConfigurations["machine_image_version"] = "184.0.0"
+	p.CustomConfigurations["machine_image_version"] = "318.8.0"
 	p.CustomConfigurations["zones"] = c.opts.Zones
 
 	for _, e := range c.opts.Extra {
