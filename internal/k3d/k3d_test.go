@@ -160,7 +160,7 @@ func (suite *V5TestSuite) TestCreateRegistry() {
 	suite.mockCmdRunner.On("Run", mock.Anything, "k3d", "registry", "create", "kyma-registry",
 		"--port", "5001").Return("", nil)
 
-	registryName, err := suite.client.CreateRegistry()
+	registryName, err := suite.client.CreateRegistry("5001")
 	suite.Nil(err)
 	suite.Equal("kyma-registry:5001", registryName)
 }
