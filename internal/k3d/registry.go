@@ -40,6 +40,8 @@ type Config struct {
 	MappedRegistryPort string `yaml:"mapped_registry_port"`
 }
 
+// SaveRegistryPort writes the given port to the KYMA_HOME directory
+// This function is called in the `provision` step and ensures that the correct k3d registry port is used during the `deploy`step.
 func SaveRegistryPort(port string) error {
 	kymaHomePath, err := files.KymaHome()
 	if err != nil {
@@ -68,6 +70,8 @@ func SaveRegistryPort(port string) error {
 	return nil
 }
 
+// ReadRegistryPort reads the registry port from the KYMA_HOME directory
+// This function is called in the `deploy` step and ensures that the correct k3d registry port is used.
 func ReadRegistryPort() (string, error) {
 	kymaHomePath, err := files.KymaHome()
 	if err != nil {
