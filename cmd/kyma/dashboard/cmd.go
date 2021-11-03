@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/docker/docker/api/types/mount"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/pkg/docker"
@@ -56,11 +57,14 @@ func (cmd *command) Run() error {
 		return errors.Wrap(err, "failed to initialize the Kubernetes client from given kubeconfig")
 	}
 
-	localDashboardURL := fmt.Sprintf("http://localhost:%s/", cmd.opts.Port)
-	return cmd.runDashboardContainer(localDashboardURL)
+	kubeconfigPath := kube.KubeconfigPath(cmd.KubeconfigPath)
+	kubeconfigFilename := "config.yaml" // this is the kubeconfig filename in the container
+
+	localDashboardURL := fmt.Sprintf("http://localhost:%s?kubeconfigID=%s", cmd.opts.Port, kubeconfigFilename)
+	return cmd.runDashboardContainer(localDashboardURL, kubeconfigPath, kubeconfigFilename)
 }
 
-func (cmd *command) runDashboardContainer(dashboardURL string) error {
+func (cmd *command) runDashboardContainer(dashboardURL, kubeconfigPath, kubeconfigFilename string) error {
 	step := cmd.NewStep(fmt.Sprintf("Starting container: %s", cmd.opts.ContainerName))
 
 	dockerWrapper, err := docker.NewWrapper()
@@ -75,16 +79,31 @@ func (cmd *command) runDashboardContainer(dashboardURL string) error {
 		step.Failure()
 		return errors.Wrap(err, "failed to interact with docker")
 	} else if dockerDesktop {
-		envs = append(envs, "DOCKER_DESKTOP_CLUSTER=true")
+		dockerEnv := "DOCKER_DESKTOP_CLUSTER=true"
+		envs = append(envs, dockerEnv)
+		if cmd.Verbose {
+			fmt.Printf("Docker installation seems to be Docker Desktop. Appending '%s' to env variables of container\n", dockerEnv)
+		}
+	}
+
+	if cmd.Verbose {
+		fmt.Printf("Mounting kubeconfig '%s' into container ...\n", kubeconfigPath)
 	}
 
 	id, err := dockerWrapper.PullImageAndStartContainer(ctx, docker.ContainerRunOpts{
-		Ports: map[string]string{
-			"3001": cmd.opts.Port,
-		},
 		Envs:          envs,
 		ContainerName: cmd.opts.ContainerName,
 		Image:         "eu.gcr.io/kyma-project/busola:latest",
+		Mounts: []mount.Mount{
+			{
+				Type:   mount.TypeBind,
+				Source: kubeconfigPath,
+				Target: fmt.Sprintf("/app/core/kubeconfig/%s", kubeconfigFilename),
+			},
+		},
+		Ports: map[string]string{
+			"3001": cmd.opts.Port,
+		},
 	})
 
 	if err != nil {
