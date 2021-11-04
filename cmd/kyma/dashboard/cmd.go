@@ -120,6 +120,7 @@ func (cmd *command) runDashboardContainer(dashboardURL, kubeconfigPath, kubeconf
 		cmd.Finalizers.Add(dockerWrapper.Stop(followCtx, id, func(i ...interface{}) { fmt.Print(i...) }))
 		return dockerWrapper.ContainerFollowRun(followCtx, id)
 	}
+
 	return nil
 }
 
