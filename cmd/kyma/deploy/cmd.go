@@ -198,7 +198,7 @@ func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, 
 		return err
 	}
 
-	if recoResult.GetResult() == model.ClusterStatusError {
+	if recoResult.GetResult() == model.ClusterStatusReconcileError {
 		deployStep.Failure()
 		summary.PrintFailedComponentSummary(recoResult)
 		return errors.Errorf("Kyma deployment failed.")
