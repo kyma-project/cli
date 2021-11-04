@@ -1,3 +1,4 @@
+//go:build !windows
 // +build !windows
 
 package hosts
@@ -30,14 +31,6 @@ func addDevDomainsToEtcHostsOSSpecific(domain string, s step.Step, hostAlias str
 			return nil
 		}
 	}
-	err := addDevDomainsRunCmd(domain, s, hostAlias)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func addDevDomainsToEtcHostsOSSpecificKyma2(domain string, s step.Step, hostAlias string) error {
 	err := addDevDomainsRunCmd(domain, s, hostAlias)
 	if err != nil {
 		return err
