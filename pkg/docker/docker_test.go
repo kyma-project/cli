@@ -17,6 +17,7 @@ import (
 	"github.com/docker/cli/cli/config/types"
 	imageTypes "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/go-connections/nat"
 	"github.com/kyma-project/cli/pkg/docker/mocks"
@@ -188,7 +189,7 @@ func Test_mapMap(t *testing.T) {
 	require.Equal(t, expected, actual)
 }
 
-func Test_PullImageAndStartContainergst(t *testing.T) {
+func Test_PullImageAndStartContainer(t *testing.T) {
 	mockDocker := &mocks.Client{}
 	mockWrapper := dockerWrapper{Docker: mockDocker}
 
@@ -196,7 +197,14 @@ func Test_PullImageAndStartContainergst(t *testing.T) {
 		ContainerName: "container-name",
 		Envs:          nil,
 		Image:         "valid-image",
-		Ports:         map[string]string{"3000": "3001"},
+		Mounts: []mount.Mount{
+			{
+				Type:   mount.TypeBind,
+				Source: "valid/source/path",
+				Target: "valid/target/path",
+			},
+		},
+		Ports: map[string]string{"3000": "3001"},
 	}
 	testContainerID := "container-id-123"
 	testErr := errors.New("container create and start error")

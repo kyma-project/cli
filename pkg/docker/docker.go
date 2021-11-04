@@ -17,6 +17,7 @@ import (
 	"github.com/docker/cli/cli/streams"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
 	docker "github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/archive"
@@ -81,6 +82,7 @@ type ContainerRunOpts struct {
 	ContainerName string
 	Envs          []string
 	Image         string
+	Mounts        []mount.Mount
 	Ports         map[string]string
 }
 
@@ -220,6 +222,7 @@ func (w *dockerWrapper) PullImageAndStartContainer(ctx context.Context, opts Con
 	hostConfig := &container.HostConfig{
 		PortBindings: portMap(opts.Ports),
 		AutoRemove:   true,
+		Mounts:       opts.Mounts,
 	}
 
 	var r io.ReadCloser
