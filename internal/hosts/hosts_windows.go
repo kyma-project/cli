@@ -19,14 +19,6 @@ func addDevDomainsToEtcHostsOSSpecific(domain string, s step.Step, hostAlias str
 	return nil
 }
 
-func addDevDomainsToEtcHostsOSSpecificKyma2(domain string, s step.Step, hostAlias string) error {
-	err := addDevDomainsRunCmd(domain, s, hostAlias)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func addDevDomainsRunCmd(domain string, s step.Step, hostAlias string) error {
 
 	hostsArray := strings.Split(hostAlias, " ")

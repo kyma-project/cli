@@ -10,10 +10,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	defaultDomain = "kyma.local"
-)
-
 type command struct {
 	opts *cli.Options
 	cli.Command
@@ -62,7 +58,7 @@ func (cmd *command) Run() error {
 		return nil
 	}
 
-	err = hosts.AddDevDomainsToEtcHostsKyma2(s, cmd.K8s, defaultDomain)
+	err = hosts.AddDevDomainsToEtcHostsKyma2(s, cmd.K8s)
 	if err != nil {
 		s.Failure()
 		if cmd.opts.Verbose {
@@ -70,6 +66,6 @@ func (cmd *command) Run() error {
 		}
 		return err
 	}
-	s.Successf("Domains added")
+	s.Successf("Domain import finished")
 	return nil
 }
