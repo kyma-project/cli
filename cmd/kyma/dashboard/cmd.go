@@ -34,7 +34,6 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cmd.Flags().StringVarP(&o.Port, "port", "p", "3001", `Specify the port on which the local dashboard will be exposed.`)
 	cmd.Flags().StringVar(&o.ContainerName, "container-name", "busola", `Specify the name of the local container.`)
-	cmd.Flags().BoolVarP(&o.Detach, "detach", "d", false, `Change this flag to "true" if you don't want to follow the logs of the local container.`)
 
 	return cmd
 }
@@ -78,6 +77,11 @@ func (cmd *command) runDashboardContainer() error {
 		}
 	}
 
+	if !cmd.Verbose {
+		// when NODE_ENV is set to "development", only logs with type "Error" are printed from the busola container
+		envs = append(envs, "NODE_ENV=development")
+	}
+
 	containerRunOpts, dashboardURL := cmd.initContainerRunOpts(envs)
 	id, err := dockerWrapper.PullImageAndStartContainer(ctx, containerRunOpts)
 
@@ -89,13 +93,9 @@ func (cmd *command) runDashboardContainer() error {
 
 	cmd.openDashboard(dashboardURL)
 
-	if !cmd.opts.Detach {
-		step.LogInfo("Logs from the container:")
-		followCtx := context.Background()
-		cmd.Finalizers.Add(dockerWrapper.Stop(followCtx, id, func(i ...interface{}) { fmt.Print(i...) }))
-		return dockerWrapper.ContainerFollowRun(followCtx, id)
-	}
-	return nil
+	followCtx := context.Background()
+	cmd.Finalizers.Add(dockerWrapper.Stop(followCtx, id, func(i ...interface{}) { fmt.Print(i...) }))
+	return dockerWrapper.ContainerFollowRun(followCtx, id)
 }
 
 func (cmd *command) initContainerRunOpts(envs []string) (docker.ContainerRunOpts, string) {
