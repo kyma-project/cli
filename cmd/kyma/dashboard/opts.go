@@ -10,7 +10,6 @@ import (
 type Options struct {
 	*cli.Options
 	ContainerName string
-	Detach        bool
 	Port          string
 }
 

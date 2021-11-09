@@ -16,7 +16,6 @@ kyma dashboard [flags]
 
 ```bash
       --container-name string   Specify the name of the local container. (default "busola")
-  -d, --detach                  Change this flag to "true" if you don't want to follow the logs of the local container.
   -p, --port string             Specify the port on which the local dashboard will be exposed. (default "3001")
 ```
 
