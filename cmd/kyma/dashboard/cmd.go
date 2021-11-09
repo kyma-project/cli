@@ -53,19 +53,11 @@ func (cmd *command) Run() error {
 		cmd.Factory.UseLogger = true
 	}
 
-	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
-		return errors.Wrap(err, "failed to initialize the Kubernetes client from given kubeconfig")
-	}
-
-	kubeconfigPath := kube.KubeconfigPath(cmd.KubeconfigPath)
-	kubeconfigFilename := "config.yaml" // this is the kubeconfig filename in the container
-
-	localDashboardURL := fmt.Sprintf("http://localhost:%s?kubeconfigID=%s", cmd.opts.Port, kubeconfigFilename)
-	return cmd.runDashboardContainer(localDashboardURL, kubeconfigPath, kubeconfigFilename)
+	return cmd.runDashboardContainer()
 }
 
-func (cmd *command) runDashboardContainer(dashboardURL, kubeconfigPath, kubeconfigFilename string) error {
-	step := cmd.NewStep(fmt.Sprintf("Starting container: %s", cmd.opts.ContainerName))
+func (cmd *command) runDashboardContainer() error {
+	step := cmd.NewStep(fmt.Sprintf("Starting container: %s:", cmd.opts.ContainerName))
 
 	dockerWrapper, err := docker.NewWrapper()
 	if err != nil {
@@ -86,25 +78,8 @@ func (cmd *command) runDashboardContainer(dashboardURL, kubeconfigPath, kubeconf
 		}
 	}
 
-	if cmd.Verbose {
-		fmt.Printf("Mounting kubeconfig '%s' into container ...\n", kubeconfigPath)
-	}
-
-	id, err := dockerWrapper.PullImageAndStartContainer(ctx, docker.ContainerRunOpts{
-		Envs:          envs,
-		ContainerName: cmd.opts.ContainerName,
-		Image:         "eu.gcr.io/kyma-project/busola:latest",
-		Mounts: []mount.Mount{
-			{
-				Type:   mount.TypeBind,
-				Source: kubeconfigPath,
-				Target: fmt.Sprintf("/app/core/kubeconfig/%s", kubeconfigFilename),
-			},
-		},
-		Ports: map[string]string{
-			"3001": cmd.opts.Port,
-		},
-	})
+	containerRunOpts, dashboardURL := cmd.initContainerRunOpts(envs)
+	id, err := dockerWrapper.PullImageAndStartContainer(ctx, containerRunOpts)
 
 	if err != nil {
 		step.Failure()
@@ -121,6 +96,38 @@ func (cmd *command) runDashboardContainer(dashboardURL, kubeconfigPath, kubeconf
 		return dockerWrapper.ContainerFollowRun(followCtx, id)
 	}
 	return nil
+}
+
+func (cmd *command) initContainerRunOpts(envs []string) (docker.ContainerRunOpts, string) {
+	containerRunOpts := docker.ContainerRunOpts{
+		Envs:          envs,
+		ContainerName: cmd.opts.ContainerName,
+		Image:         "eu.gcr.io/kyma-project/busola:latest",
+		Ports: map[string]string{
+			"3001": cmd.opts.Port,
+		},
+	}
+
+	containerKubeconfigFilename := "config.yaml" // this is the kubeconfig filename in the container
+	kubeconfigPath := kube.KubeconfigPath(cmd.KubeconfigPath)
+	dashboardURL := fmt.Sprintf("http://localhost:%s", cmd.opts.Port)
+	if _, err := kube.NewFromConfig("", kubeconfigPath); err != nil {
+		cmd.CurrentStep.LogInfof("WARNING: kubeconfig is not mounted into container: %v", err)
+	} else {
+		if cmd.Verbose {
+			fmt.Printf("Mounting kubeconfig '%s' into container ...\n", kubeconfigPath)
+		}
+		containerRunOpts.Mounts = []mount.Mount{
+			{
+				Type:   mount.TypeBind,
+				Source: kubeconfigPath,
+				Target: fmt.Sprintf("/app/core/kubeconfig/%s", containerKubeconfigFilename),
+			},
+		}
+		dashboardURL = fmt.Sprintf("%s?kubeconfigID=%s", dashboardURL, containerKubeconfigFilename)
+	}
+
+	return containerRunOpts, dashboardURL
 }
 
 func (cmd *command) openDashboard(url string) {
