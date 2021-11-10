@@ -123,7 +123,7 @@ func (c *client) checkVersion(minRequiredVersion string) error {
 		return fmt.Errorf(incompatibleMajorVersionMsg, binarySemVersion.Major, minRequiredSemVersion.Major)
 	} else if binarySemVersion.LT(minRequiredSemVersion) {
 		incompatibleVersionMsg := "You are using an unsupported k3d version '%s'. The supported k3d version for this command is >= '%s'."
-		return fmt.Errorf(incompatibleVersionMsg, binaryVersion, minRequiredSemVersion)
+		return fmt.Errorf(incompatibleVersionMsg, binarySemVersion, minRequiredSemVersion)
 	}
 
 	return nil

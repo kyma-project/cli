@@ -32,7 +32,7 @@ func (suite *V5TestSuite) SetupTest() {
 func (suite *V5TestSuite) TestVerifyStatus() {
 	suite.mockPathLooker.On("Look", "k3d").Return("", nil)
 
-	suite.mockCmdRunner.On("Run", mock.Anything, "k3d", "version").Return("k3d version v5.0.0\nk3s version v1.21.5-k3s2 (default)", nil)
+	suite.mockCmdRunner.On("Run", mock.Anything, "k3d", "version").Return("k3d version v5.1.0\nk3s version v1.21.5-k3s2 (default)", nil)
 
 	suite.mockCmdRunner.On("Run", mock.Anything, "k3d", "cluster", "list").Return("", nil)
 
