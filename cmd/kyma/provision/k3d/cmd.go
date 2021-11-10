@@ -87,14 +87,14 @@ func (c *command) verifyK3dStatus(k3dClient k3d.Client) error {
 		return errors.Wrapf(err, "Could not extract host ports from %s", c.opts.PortMapping)
 	}
 
-	s.LogInfo("Checking if k3d registry of previous kyma installation exists")
+	s.LogInfo("Checking if k3d registry of previous Kyma installation exists")
 	registryExists, err := k3dClient.RegistryExists()
 	if err != nil {
 		s.Failure()
 		return err
 	}
 
-	s.LogInfo("Checking if k3d cluster of previous kyma installation exists")
+	s.LogInfo("Checking if k3d cluster of previous Kyma installation exists")
 	clusterExists, err := k3dClient.ClusterExists()
 	if err != nil {
 		s.Failure()
@@ -112,14 +112,14 @@ func (c *command) verifyK3dStatus(k3dClient k3d.Client) error {
 				s.Failure()
 				return err
 			}
-			s.LogInfo("Deleted k3d registry of previous kyma installation")
+			s.LogInfo("Deleted k3d registry of previous Kyma installation")
 		}
 
 		if err := k3dClient.DeleteCluster(); err != nil {
 			s.Failure()
 			return err
 		}
-		s.LogInfo("Deleted k3d cluster of previous kyma installation")
+		s.LogInfo("Deleted k3d cluster of previous Kyma installation")
 
 	} else {
 		if err := allocatePorts(ports...); err != nil {
@@ -132,7 +132,7 @@ func (c *command) verifyK3dStatus(k3dClient k3d.Client) error {
 				s.Failure()
 				return err
 			}
-			s.LogInfo("Deleted k3d registry of previous kyma installation")
+			s.LogInfo("Deleted k3d registry of previous Kyma installation")
 		}
 	}
 
