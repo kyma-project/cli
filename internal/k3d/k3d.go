@@ -13,7 +13,7 @@ import (
 
 const (
 	v4MinRequiredVersion         string = "4.0.0"
-	v5MinRequiredVersion         string = "5.0.0"
+	v5MinRequiredVersion         string = "5.1.0"
 	v5DefaultRegistryNamePattern string = "%s-registry"
 
 	binaryName string = "k3d"
@@ -123,7 +123,7 @@ func (c *client) checkVersion(minRequiredVersion string) error {
 		return fmt.Errorf(incompatibleMajorVersionMsg, binarySemVersion.Major, minRequiredSemVersion.Major)
 	} else if binarySemVersion.LT(minRequiredSemVersion) {
 		incompatibleVersionMsg := "You are using an unsupported k3d version '%s'. The supported k3d version for this command is >= '%s'."
-		return fmt.Errorf(incompatibleVersionMsg, binaryVersion, minRequiredSemVersion)
+		return fmt.Errorf(incompatibleVersionMsg, binarySemVersion, minRequiredSemVersion)
 	}
 
 	return nil
@@ -221,7 +221,13 @@ func (c *client) RegistryExists() (bool, error) {
 
 //CreateCluster creates a cluster
 func (c *client) CreateCluster(settings CreateClusterSettings, isV5 bool) error {
-	k3sImage, err := getK3sImage(settings.KubernetesVersion)
+	var k3sImage string
+	var err error
+	if isV5 {
+		k3sImage, err = getK3sImageForV5(settings.KubernetesVersion)
+	} else {
+		k3sImage, err = getK3sImageForV4(settings.KubernetesVersion)
+	}
 	if err != nil {
 		return err
 	}
@@ -293,13 +299,29 @@ func getCreateClusterV5Args(settings CreateClusterSettings) []string {
 	return cmdArgs
 }
 
-func getK3sImage(kubernetesVersion string) (string, error) {
+func getK3sImageForV4(kubernetesVersion string) (string, error) {
 	_, err := semver.Parse(kubernetesVersion)
 	if err != nil {
 		return "", fmt.Errorf("Invalid Kubernetes version %v: %v", kubernetesVersion, err)
 	}
 
 	return fmt.Sprintf("rancher/k3s:v%s-k3s1", kubernetesVersion), nil
+}
+
+// getK3sImageForV5 parses the given Kubernetes version into a corresponding k3s image tag.
+func getK3sImageForV5(kubernetesVersion string) (string, error) {
+	// using the `ParseTolerant` function as the `Parse` function fails when there is no patch version specified
+	semVer, err := semver.ParseTolerant(kubernetesVersion)
+	if err != nil {
+		return "", fmt.Errorf("Invalid Kubernetes version %v: %v", kubernetesVersion, err)
+	}
+
+	// printing a warning to the user if there was a patch version specified in the Kubernetes version
+	if semVer.Patch != 0 {
+		fmt.Printf("WARNING: The specified Kubernetes patch version (%d) will not be considered. k3d will use the latest available patch version of the specified Kubernetes minor version.", semVer.Patch)
+	}
+
+	return fmt.Sprintf("+v%d.%d", semVer.Major, semVer.Minor), nil
 }
 
 func constructArgs(argName string, rawPorts []string) []string {

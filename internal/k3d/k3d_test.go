@@ -32,7 +32,7 @@ func (suite *V5TestSuite) SetupTest() {
 func (suite *V5TestSuite) TestVerifyStatus() {
 	suite.mockPathLooker.On("Look", "k3d").Return("", nil)
 
-	suite.mockCmdRunner.On("Run", mock.Anything, "k3d", "version").Return("k3d version v5.0.0\nk3s version v1.21.5-k3s2 (default)", nil)
+	suite.mockCmdRunner.On("Run", mock.Anything, "k3d", "version").Return("k3d version v5.1.0\nk3s version v1.21.5-k3s2 (default)", nil)
 
 	suite.mockCmdRunner.On("Run", mock.Anything, "k3d", "cluster", "list").Return("", nil)
 
@@ -131,7 +131,7 @@ func (suite *V5TestSuite) TestRegistryExistsFalse() {
 func (suite *V5TestSuite) TestCreateCluster() {
 	settings := CreateClusterSettings{
 		Args:              []string{"--verbose"},
-		KubernetesVersion: "1.20.11",
+		KubernetesVersion: "1.20",
 		PortMapping:       []string{"80:80@loadbalancer", "443:443@loadbalancer"},
 		Workers:           0,
 		V5Settings: V5CreateClusterSettings{
@@ -144,7 +144,7 @@ func (suite *V5TestSuite) TestCreateCluster() {
 		"--kubeconfig-update-default",
 		"--timeout", "5s",
 		"--agents", "0",
-		"--image", "rancher/k3s:v1.20.11-k3s1",
+		"--image", "+v1.20",
 		"--kubeconfig-switch-context",
 		"--k3s-arg", "--disable=traefik@server:0",
 		"--registry-use", "k3d-own-registry:5001",
