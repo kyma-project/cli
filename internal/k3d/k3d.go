@@ -13,7 +13,7 @@ import (
 
 const (
 	v4MinRequiredVersion         string = "4.0.0"
-	v5MinRequiredVersion         string = "5.0.0"
+	v5MinRequiredVersion         string = "5.1.0"
 	v5DefaultRegistryNamePattern string = "%s-registry"
 
 	binaryName string = "k3d"
@@ -221,7 +221,13 @@ func (c *client) RegistryExists() (bool, error) {
 
 //CreateCluster creates a cluster
 func (c *client) CreateCluster(settings CreateClusterSettings, isV5 bool) error {
-	k3sImage, err := getK3sImage(settings.KubernetesVersion)
+	var k3sImage string
+	var err error
+	if isV5 {
+		k3sImage, err = getK3sImageForV5(settings.KubernetesVersion)
+	} else {
+		k3sImage, err = getK3sImageForV4(settings.KubernetesVersion)
+	}
 	if err != nil {
 		return err
 	}
@@ -293,13 +299,30 @@ func getCreateClusterV5Args(settings CreateClusterSettings) []string {
 	return cmdArgs
 }
 
-func getK3sImage(kubernetesVersion string) (string, error) {
+func getK3sImageForV4(kubernetesVersion string) (string, error) {
 	_, err := semver.Parse(kubernetesVersion)
 	if err != nil {
 		return "", fmt.Errorf("Invalid Kubernetes version %v: %v", kubernetesVersion, err)
 	}
 
 	return fmt.Sprintf("rancher/k3s:v%s-k3s1", kubernetesVersion), nil
+}
+
+// getK3sImageForV5 only takes the major version of kubernetes and transform it to a k3s image tag from the channelserver (See https://update.k3s.io/v1-release/channels).
+func getK3sImageForV5(kubernetesVersion string) (string, error) {
+	// we need to use the `ParseTolerant` function as the `Parse` function failes when there is no patch version specified.
+	semVer, err := semver.ParseTolerant(kubernetesVersion)
+	if err != nil {
+		return "", fmt.Errorf("Invalid Kubernetes version %v: %v", kubernetesVersion, err)
+	}
+
+	// if there was a patch version specified in the Kubernetes version, warn the user that this patch version is not considered by k3d.
+	// if no patch version was specified, the `ParseTolerant` function will add a 0
+	if semVer.Patch != 0 {
+		fmt.Printf("WARNING: The specified Kubernetes patch version (%d) will not be considered. k3d will use the latest available patch version of the specified Kubernetes minor version.", semVer.Patch)
+	}
+
+	return fmt.Sprintf("+v%d.%d", semVer.Major, semVer.Minor), nil
 }
 
 func constructArgs(argName string, rawPorts []string) []string {
