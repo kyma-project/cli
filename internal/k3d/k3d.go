@@ -308,16 +308,15 @@ func getK3sImageForV4(kubernetesVersion string) (string, error) {
 	return fmt.Sprintf("rancher/k3s:v%s-k3s1", kubernetesVersion), nil
 }
 
-// getK3sImageForV5 only takes the major version of kubernetes and transform it to a k3s image tag from the channelserver (See https://update.k3s.io/v1-release/channels).
+// getK3sImageForV5 parses the given Kubernetes version into a corresponding k3s image tag.
 func getK3sImageForV5(kubernetesVersion string) (string, error) {
-	// we need to use the `ParseTolerant` function as the `Parse` function failes when there is no patch version specified.
+	// using the `ParseTolerant` function as the `Parse` function fails when there is no patch version specified
 	semVer, err := semver.ParseTolerant(kubernetesVersion)
 	if err != nil {
 		return "", fmt.Errorf("Invalid Kubernetes version %v: %v", kubernetesVersion, err)
 	}
 
-	// if there was a patch version specified in the Kubernetes version, warn the user that this patch version is not considered by k3d.
-	// if no patch version was specified, the `ParseTolerant` function will add a 0
+	// printing a warning to the user if there was a patch version specified in the Kubernetes version
 	if semVer.Patch != 0 {
 		fmt.Printf("WARNING: The specified Kubernetes patch version (%d) will not be considered. k3d will use the latest available patch version of the specified Kubernetes minor version.", semVer.Patch)
 	}
