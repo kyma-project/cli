@@ -110,6 +110,7 @@ func prepareKebCluster(opts Options, kebComponents []*keb.Component) *cluster.St
 			Version:    1,
 			RuntimeID:  "local",
 			Kubeconfig: string(opts.KubeConfig),
+			Metadata:   &keb.Metadata{},
 			Contract:   1,
 		},
 		Configuration: &model.ClusterConfigurationEntity{

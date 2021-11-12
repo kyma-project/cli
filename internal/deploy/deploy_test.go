@@ -119,6 +119,7 @@ func TestPrepareKebCluster(t *testing.T) {
 			Version:    1,
 			RuntimeID:  "local",
 			Kubeconfig: "kubeconfig-1",
+			Metadata:   &keb.Metadata{},
 			Contract:   1,
 		},
 		Configuration: &model.ClusterConfigurationEntity{

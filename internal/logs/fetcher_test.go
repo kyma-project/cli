@@ -12,7 +12,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/core/v1"
+	policyv1 "k8s.io/api/policy/v1"
 	"k8s.io/api/policy/v1beta1"
+	policyv1beta1 "k8s.io/api/policy/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
@@ -205,15 +207,23 @@ func (f *fakePodGetter) Patch(ctx context.Context, name string, pt types.PatchTy
 func (f *fakePodGetter) Bind(ctx context.Context, binding *v1.Binding, opts metav1.CreateOptions) error {
 	panic("not implemented")
 }
-func (f *fakePodGetter) GetEphemeralContainers(ctx context.Context, podName string, options metav1.GetOptions) (*v1.EphemeralContainers, error) {
+func (f *fakePodGetter) GetEphemeralContainers(ctx context.Context, podName string, options metav1.GetOptions) (*v1.EphemeralContainer, error) {
 	panic("not implemented")
 }
-func (f *fakePodGetter) UpdateEphemeralContainers(ctx context.Context, podName string, ephemeralContainers *v1.EphemeralContainers, opts metav1.UpdateOptions) (*v1.EphemeralContainers, error) {
+func (f *fakePodGetter) UpdateEphemeralContainers(ctx context.Context, podName string, pod *v1.Pod, opts metav1.UpdateOptions) (*v1.Pod, error) {
 	panic("not implemented")
 }
 func (f *fakePodGetter) Evict(ctx context.Context, eviction *v1beta1.Eviction) error {
 	panic("not implemented")
 }
 func (f *fakePodGetter) ProxyGet(scheme, name, port, path string, params map[string]string) rest.ResponseWrapper {
+	panic("not implemented")
+}
+
+func (f *fakePodGetter) EvictV1(ctx context.Context, eviction *policyv1.Eviction) error {
+	panic("not implemented")
+}
+
+func (f *fakePodGetter) EvictV1beta1(ctx context.Context, eviction *policyv1beta1.Eviction) error {
 	panic("not implemented")
 }
