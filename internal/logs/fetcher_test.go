@@ -224,6 +224,6 @@ func (f *fakePodGetter) EvictV1(ctx context.Context, eviction *policyv1.Eviction
 	panic("not implemented")
 }
 
-func (f *fakePodGetter) EvictV1beta1(ctx context.Context, eviction *policyv1beta1.Eviction) error  {
+func (f *fakePodGetter) EvictV1beta1(ctx context.Context, eviction *policyv1beta1.Eviction) error {
 	panic("not implemented")
 }
