@@ -112,7 +112,8 @@ func (cmd *command) initContainerRunOpts(envs []string) (docker.ContainerRunOpts
 	kubeconfigPath := kube.KubeconfigPath(cmd.KubeconfigPath)
 	dashboardURL := fmt.Sprintf("http://localhost:%s", cmd.opts.Port)
 	if _, err := kube.NewFromConfig("", kubeconfigPath); err != nil {
-		cmd.CurrentStep.LogInfof("WARNING: kubeconfig is not mounted into container: %v", err)
+		cmd.CurrentStep.LogInfof("WARNING: There was a problem figuring out the current kubeconfig, "+
+			"so the dashboard will start without having the current context attached. More detailed reason:  %v", err)
 	} else {
 		if cmd.Verbose {
 			fmt.Printf("Mounting kubeconfig '%s' into container ...\n", kubeconfigPath)
