@@ -2,7 +2,6 @@ package completion
 
 import (
 	"fmt"
-	"io"
 	"os"
 
 	"github.com/pkg/errors"
@@ -15,11 +14,47 @@ func NewCmd() *cobra.Command {
 		Use:   "completion bash|zsh",
 		Short: "Generates bash or zsh completion scripts.",
 		Long: `Use this command to display the shell completion code used for interactive command completion. 
-To configure your shell to load completions, use one of the following commands:
-for the bash: ". <(kyma completion bash)",
-for the zsh: ". <(kyma completion zsh)",
-for the fish: "kyma completion fish | source",
-for the powershell: "kyma completion powershell | Out-String | Invoke-Expression".
+To configure your shell to load completions, use:
+
+Bash:
+
+  $ source <(kyma completion bash)
+
+  # To load completions for each session, execute once:
+  # Linux:
+  $ kyma completion bash > /etc/bash_completion.d/kyma
+  # macOS:
+  $ kyma completion bash > /usr/local/etc/bash_completion.d/kyma
+
+Zsh:
+ 
+  # If shell completion is not already enabled in your environment,
+  # you will need to enable it.  You can execute the following once:
+
+  $ echo "autoload -U compinit; compinit" >> ~/.zshrc
+
+  # To load completions only once, execute:
+  $ source <(kyma completion bash)
+
+  # To load completions for each session, execute once:
+  $ kyma completion zsh > "${fpath[1]}/_kyma"
+
+  # You will need to start a new shell for this setup to take effect.
+
+Fish:
+
+  $ kyma completion fish | source
+
+  # To load completions for each session, execute once:
+  $ kyma completion fish > ~/.config/fish/completions/kyma.fish
+
+Powershell:
+
+  PS> yourprogram completion powershell | Out-String | Invoke-Expression
+
+  # To load completions for every new session, run:
+  PS> yourprogram completion powershell > yourprogram.ps1
+  # and source this file from your PowerShell profile.
 `,
 		RunE:    completion,
 		Aliases: []string{},
@@ -29,7 +64,7 @@ for the powershell: "kyma completion powershell | Out-String | Invoke-Expression
 
 func completion(cmd *cobra.Command, args []string) error {
 	if len(args) != 1 {
-		fmt.Println("Usage: kyma completion bash|zsh")
+		fmt.Println("Usage: kyma completion bash|zsh|fish|powershell")
 		fmt.Println("See 'kyma completion -h' for help")
 		return nil
 	}
@@ -39,10 +74,10 @@ func completion(cmd *cobra.Command, args []string) error {
 		err := cmd.Root().GenBashCompletion(os.Stdout)
 		return errors.Wrap(err, "Error generating bash completion")
 	case "zsh":
-		err := genZshCompletion(cmd, os.Stdout)
+		err := cmd.Root().GenZshCompletion(os.Stdout)
 		return errors.Wrap(err, "Error generating zsh completion")
 	case "fish":
-		err := cmd.Root().GenFishCompletion(os.Stdout, false)
+		err := cmd.Root().GenFishCompletion(os.Stdout, true)
 		return errors.Wrap(err, "Error generating fish completion")
 	case "powershell":
 		err := cmd.Root().GenPowerShellCompletion(os.Stdout)
@@ -52,16 +87,4 @@ func completion(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
-}
-
-func genZshCompletion(cmd *cobra.Command, out io.Writer) error {
-	err := cmd.Root().GenZshCompletion(out)
-	if err != nil {
-		return err
-	}
-
-	zshCompdef := "\ncompdef _kyma kyma\n"
-
-	_, err = io.WriteString(out, zshCompdef)
-	return err
 }
