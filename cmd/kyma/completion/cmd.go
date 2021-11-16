@@ -2,6 +2,7 @@ package completion
 
 import (
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/pkg/errors"
@@ -27,19 +28,18 @@ Bash:
   $ kyma completion bash > /usr/local/etc/bash_completion.d/kyma
 
 Zsh:
- 
-  # If shell completion is not already enabled in your environment,
-  # you will need to enable it.  You can execute the following once:
 
-  $ echo "autoload -U compinit; compinit" >> ~/.zshrc
-
-  # To load completions only once, execute:
-  $ source <(kyma completion bash)
+  $ source <(kyma completion zsh)
 
   # To load completions for each session, execute once:
   $ kyma completion zsh > "${fpath[1]}/_kyma"
 
   # You will need to start a new shell for this setup to take effect.
+
+  # If shell completion is not already enabled in your environment,
+  # you will need to enable it.  You can execute the following once:
+
+  $ echo "autoload -U compinit; compinit" >> ~/.zshrc
 
 Fish:
 
@@ -74,7 +74,7 @@ func completion(cmd *cobra.Command, args []string) error {
 		err := cmd.Root().GenBashCompletion(os.Stdout)
 		return errors.Wrap(err, "Error generating bash completion")
 	case "zsh":
-		err := cmd.Root().GenZshCompletion(os.Stdout)
+		err := genZshCompletion(cmd, os.Stdout)
 		return errors.Wrap(err, "Error generating zsh completion")
 	case "fish":
 		err := cmd.Root().GenFishCompletion(os.Stdout, true)
@@ -87,4 +87,16 @@ func completion(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+func genZshCompletion(cmd *cobra.Command, out io.Writer) error {
+	err := cmd.Root().GenZshCompletion(out)
+	if err != nil {
+		return err
+	}
+
+	zshCompdef := "\ncompdef _kyma kyma\n"
+
+	_, err = io.WriteString(out, zshCompdef)
+	return err
 }

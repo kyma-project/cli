@@ -20,19 +20,18 @@ Bash:
   $ kyma completion bash > /usr/local/etc/bash_completion.d/kyma
 
 Zsh:
- 
-  # If shell completion is not already enabled in your environment,
-  # you will need to enable it.  You can execute the following once:
 
-  $ echo "autoload -U compinit; compinit" >> ~/.zshrc
-
-  # To load completions only once, execute:
-  $ source <(kyma completion bash)
+  $ source <(kyma completion zsh)
 
   # To load completions for each session, execute once:
   $ kyma completion zsh > "${fpath[1]}/_kyma"
 
   # You will need to start a new shell for this setup to take effect.
+
+  # If shell completion is not already enabled in your environment,
+  # you will need to enable it.  You can execute the following once:
+
+  $ echo "autoload -U compinit; compinit" >> ~/.zshrc
 
 Fish:
 
