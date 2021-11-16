@@ -205,6 +205,31 @@ func TestMerge(t *testing.T) {
 			require.Truef(t, reflect.DeepEqual(expected, actual), "want: %#v\n got: %#v\n", expected, actual)
 		})
 
+		t.Run("Serverless registry overrides", func(t *testing.T) {
+			src := Sources{ValueFiles: []string{"./testdata/registry-overrides.yaml"}}
+			actual, err := Merge(src, "testdata", clusterinfo.K3d{ClusterName: "foo"})
+
+			expected := Values{
+				"global": map[string]interface{}{
+					"domainName": "local.kyma.dev",
+					"tlsCrt":     defaultLocalTLSCrtEnc,
+					"tlsKey":     defaultLocalTLSKeyEnc,
+				},
+				"serverless": map[string]interface{}{
+					"dockerRegistry": map[string]interface{}{
+						"enableInternal":        true,
+						"password":              "secret password",
+						"internalServerAddress": "internal-address",
+						"serverAddress":         "external-address",
+						"registryAddress":       "external-push-address",
+					},
+				},
+			}
+
+			require.NoError(t, err)
+			require.Truef(t, reflect.DeepEqual(expected, actual), "want: %#v\n got: %#v\n", expected, actual)
+		})
+
 		t.Run("default values overridden", func(t *testing.T) {
 			actual, err := Merge(Sources{
 				Values: []string{
