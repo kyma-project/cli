@@ -15,7 +15,11 @@ func NewCmd() *cobra.Command {
 		Use:   "completion bash|zsh",
 		Short: "Generates bash or zsh completion scripts.",
 		Long: `Use this command to display the shell completion code used for interactive command completion. 
-To configure your shell to load completions, add ` + "`. <(kyma completion bash)`" + ` to your bash profile or ` + "`. <(kyma completion zsh)`" + ` to your zsh profile.
+To configure your shell to load completions, use one of the following commands:
+for the bash: ". <(kyma completion bash)",
+for the zsh: ". <(kyma completion zsh)",
+for the fish: "kyma completion fish | source",
+for the powershell: "kyma completion powershell | Out-String | Invoke-Expression".
 `,
 		RunE:    completion,
 		Aliases: []string{},
@@ -37,6 +41,12 @@ func completion(cmd *cobra.Command, args []string) error {
 	case "zsh":
 		err := genZshCompletion(cmd, os.Stdout)
 		return errors.Wrap(err, "Error generating zsh completion")
+	case "fish":
+		err := cmd.Root().GenFishCompletion(os.Stdout, false)
+		return errors.Wrap(err, "Error generating fish completion")
+	case "powershell":
+		err := cmd.Root().GenPowerShellCompletion(os.Stdout)
+		return errors.Wrap(err, "Error generating powershell completion")
 	default:
 		fmt.Printf("Sorry, completion is not supported for %q", shell)
 	}
