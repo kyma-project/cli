@@ -443,5 +443,8 @@ func initReader(source string) (*zip.Reader, error) {
 
 	reader := bytes.NewReader(buff.Bytes())
 	zipReader, err := zip.NewReader(reader, size)
+	if err != nil {
+		return nil, err
+	}
 	return zipReader, nil
 }
