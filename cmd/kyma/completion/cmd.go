@@ -50,10 +50,10 @@ Fish:
 
 Powershell:
 
-  PS> yourprogram completion powershell | Out-String | Invoke-Expression
+  PS> kyma completion powershell | Out-String | Invoke-Expression
 
   # To load completions for every new session, run:
-  PS> yourprogram completion powershell > yourprogram.ps1
+  PS> kyma completion powershell > kyma.ps1
   # and source this file from your PowerShell profile.
 `,
 		RunE:    completion,
