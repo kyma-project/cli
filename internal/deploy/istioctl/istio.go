@@ -11,7 +11,6 @@ import (
 	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"path"
@@ -361,7 +360,7 @@ func unTar(source, target string, deleteSource bool) error {
 func unZip(source, target string, deleteSource bool) error {
 	zipReader, err := initReader(source)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	for _, f := range zipReader.File {
