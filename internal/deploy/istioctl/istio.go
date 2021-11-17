@@ -3,6 +3,7 @@ package istioctl
 import (
 	"archive/tar"
 	"archive/zip"
+	"bytes"
 	"compress/gzip"
 	"fmt"
 	"github.com/kyma-project/cli/internal/files"
@@ -10,6 +11,7 @@ import (
 	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"path"
@@ -357,13 +359,12 @@ func unTar(source, target string, deleteSource bool) error {
 }
 
 func unZip(source, target string, deleteSource bool) error {
-	archive, err := zip.OpenReader(filepath.Clean(source))
+	zipReader, err := initReader(source)
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
-	defer archive.Close()
 
-	for _, f := range archive.File {
+	for _, f := range zipReader.File {
 		filePath, err := sanitizeExtractPath(target, f.Name)
 		if err != nil {
 			return err
@@ -421,8 +422,27 @@ func copyInChunks(dstFile *os.File, srcFile io.Reader) error {
 
 func sanitizeExtractPath(destination, filePath string) (string, error) {
 	destpath := filepath.Join(destination, filePath)
-	if strings.HasPrefix(destpath, filepath.Clean(destination)+string(os.PathSeparator)) {
-		return destpath, nil
+	if strings.Contains(destpath, "..") {
+		return "", errors.Errorf("illegal destination path: %s", destpath)
 	}
-	return "", errors.Errorf("%s: illegal destination path", destpath)
+	if !strings.HasPrefix(destpath, filepath.Clean(destination)+string(os.PathSeparator)) {
+		return "", errors.Errorf("illegal destination path: %s", destpath)
+	}
+	return destpath, nil
+}
+
+func initReader(source string) (*zip.Reader, error) {
+	ioReader , err := os.Open(source)
+	if err != nil {
+		return nil, err
+	}
+	buff := bytes.NewBuffer([]byte{})
+	size, err := io.Copy(buff, ioReader)
+	if err != nil {
+		return nil, err
+	}
+
+	reader := bytes.NewReader(buff.Bytes())
+	zipReader, err := zip.NewReader(reader, size)
+	return zipReader, nil
 }
