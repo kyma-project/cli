@@ -431,7 +431,7 @@ func sanitizeExtractPath(destination, filePath string) (string, error) {
 }
 
 func initReader(source string) (*zip.Reader, error) {
-	ioReader , err := os.Open(source)
+	ioReader, err := os.Open(source)
 	if err != nil {
 		return nil, err
 	}
