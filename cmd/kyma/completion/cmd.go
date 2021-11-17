@@ -15,7 +15,46 @@ func NewCmd() *cobra.Command {
 		Use:   "completion bash|zsh",
 		Short: "Generates bash or zsh completion scripts.",
 		Long: `Use this command to display the shell completion code used for interactive command completion. 
-To configure your shell to load completions, add ` + "`. <(kyma completion bash)`" + ` to your bash profile or ` + "`. <(kyma completion zsh)`" + ` to your zsh profile.
+To configure your shell to load completions, use:
+
+Bash:
+
+  $ source <(kyma completion bash)
+
+  # To load completions for each session, execute once:
+  # Linux:
+  $ kyma completion bash > /etc/bash_completion.d/kyma
+  # macOS:
+  $ kyma completion bash > /usr/local/etc/bash_completion.d/kyma
+
+Zsh:
+
+  $ source <(kyma completion zsh)
+
+  # To load completions for each session, execute once:
+  $ kyma completion zsh > "${fpath[1]}/_kyma"
+
+  # You will need to start a new shell for this setup to take effect.
+
+  # If shell completion is not already enabled in your environment, you must enable it.
+  # Execute the following once:
+
+  $ echo "autoload -U compinit; compinit" >> ~/.zshrc
+
+Fish:
+
+  $ kyma completion fish | source
+
+  # To load completions for each session, execute once:
+  $ kyma completion fish > ~/.config/fish/completions/kyma.fish
+
+Powershell:
+
+  PS> kyma completion powershell | Out-String | Invoke-Expression
+
+  # To load completions for every new session, run:
+  PS> kyma completion powershell > kyma.ps1
+  # and source this file from your PowerShell profile.
 `,
 		RunE:    completion,
 		Aliases: []string{},
@@ -25,7 +64,7 @@ To configure your shell to load completions, add ` + "`. <(kyma completion bash)
 
 func completion(cmd *cobra.Command, args []string) error {
 	if len(args) != 1 {
-		fmt.Println("Usage: kyma completion bash|zsh")
+		fmt.Println("Usage: kyma completion bash|zsh|fish|powershell")
 		fmt.Println("See 'kyma completion -h' for help")
 		return nil
 	}
@@ -37,6 +76,12 @@ func completion(cmd *cobra.Command, args []string) error {
 	case "zsh":
 		err := genZshCompletion(cmd, os.Stdout)
 		return errors.Wrap(err, "Error generating zsh completion")
+	case "fish":
+		err := cmd.Root().GenFishCompletion(os.Stdout, true)
+		return errors.Wrap(err, "Error generating fish completion")
+	case "powershell":
+		err := cmd.Root().GenPowerShellCompletion(os.Stdout)
+		return errors.Wrap(err, "Error generating powershell completion")
 	default:
 		fmt.Printf("Sorry, completion is not supported for %q", shell)
 	}

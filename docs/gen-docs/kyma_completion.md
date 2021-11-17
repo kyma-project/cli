@@ -7,7 +7,46 @@ Generates bash or zsh completion scripts.
 ## Synopsis
 
 Use this command to display the shell completion code used for interactive command completion. 
-To configure your shell to load completions, add `. <(kyma completion bash)` to your bash profile or `. <(kyma completion zsh)` to your zsh profile.
+To configure your shell to load completions, use:
+
+Bash:
+
+  $ source <(kyma completion bash)
+
+  # To load completions for each session, execute once:
+  # Linux:
+  $ kyma completion bash > /etc/bash_completion.d/kyma
+  # macOS:
+  $ kyma completion bash > /usr/local/etc/bash_completion.d/kyma
+
+Zsh:
+
+  $ source <(kyma completion zsh)
+
+  # To load completions for each session, execute once:
+  $ kyma completion zsh > "${fpath[1]}/_kyma"
+
+  # You will need to start a new shell for this setup to take effect.
+
+  # If shell completion is not already enabled in your environment, you must enable it.
+  # Execute the following once:
+
+  $ echo "autoload -U compinit; compinit" >> ~/.zshrc
+
+Fish:
+
+  $ kyma completion fish | source
+
+  # To load completions for each session, execute once:
+  $ kyma completion fish > ~/.config/fish/completions/kyma.fish
+
+Powershell:
+
+  PS> kyma completion powershell | Out-String | Invoke-Expression
+
+  # To load completions for every new session, run:
+  PS> kyma completion powershell > kyma.ps1
+  # and source this file from your PowerShell profile.
 
 
 ```bash
