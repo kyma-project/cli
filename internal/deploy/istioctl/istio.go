@@ -358,6 +358,7 @@ func unTar(source, target string, deleteSource bool) error {
 }
 
 func unZip(source, target string, deleteSource bool) error {
+	source = filepath.Clean(source)
 	zipReader, err := initReader(source)
 	if err != nil {
 		return err
