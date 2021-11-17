@@ -28,8 +28,8 @@ Zsh:
 
   # You will need to start a new shell for this setup to take effect.
 
-  # If shell completion is not already enabled in your environment,
-  # you will need to enable it.  You can execute the following once:
+  # If shell completion is not already enabled in your environment, you must enable it.
+  # Execute the following once:
 
   $ echo "autoload -U compinit; compinit" >> ~/.zshrc
 
