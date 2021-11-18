@@ -3,6 +3,7 @@ package istioctl
 import (
 	"archive/tar"
 	"archive/zip"
+	"bytes"
 	"compress/gzip"
 	"fmt"
 	"github.com/kyma-project/cli/internal/files"
@@ -357,13 +358,13 @@ func unTar(source, target string, deleteSource bool) error {
 }
 
 func unZip(source, target string, deleteSource bool) error {
-	archive, err := zip.OpenReader(filepath.Clean(source))
+	source = filepath.Clean(source)
+	zipReader, err := initReader(source)
 	if err != nil {
 		return err
 	}
-	defer archive.Close()
 
-	for _, f := range archive.File {
+	for _, f := range zipReader.File {
 		filePath, err := sanitizeExtractPath(target, f.Name)
 		if err != nil {
 			return err
@@ -384,18 +385,18 @@ func unZip(source, target string, deleteSource bool) error {
 		if err != nil {
 			return err
 		}
+		defer dstFile.Close()
 
 		fileInArchive, err := f.Open()
 		if err != nil {
 			return err
 		}
+		defer fileInArchive.Close()
 
 		if err := copyInChunks(dstFile, fileInArchive); err != nil {
 			return err
 		}
 
-		dstFile.Close()
-		fileInArchive.Close()
 	}
 	if deleteSource {
 		if err := os.Remove(source); err != nil {
@@ -421,8 +422,31 @@ func copyInChunks(dstFile *os.File, srcFile io.Reader) error {
 
 func sanitizeExtractPath(destination, filePath string) (string, error) {
 	destpath := filepath.Join(destination, filePath)
-	if strings.HasPrefix(destpath, filepath.Clean(destination)+string(os.PathSeparator)) {
-		return destpath, nil
+	if strings.Contains(destpath, "..") {
+		return "", errors.Errorf("illegal destination path: %s", destpath)
 	}
-	return "", errors.Errorf("%s: illegal destination path", destpath)
+	if !strings.HasPrefix(destpath, filepath.Clean(destination)+string(os.PathSeparator)) {
+		return "", errors.Errorf("illegal destination path: %s", destpath)
+	}
+	return destpath, nil
+}
+
+func initReader(source string) (*zip.Reader, error) {
+	ioReader, err := os.Open(source)
+	if err != nil {
+		return nil, err
+	}
+	defer ioReader.Close()
+	buff := bytes.NewBuffer([]byte{})
+	size, err := io.Copy(buff, ioReader)
+	if err != nil {
+		return nil, err
+	}
+
+	reader := bytes.NewReader(buff.Bytes())
+	zipReader, err := zip.NewReader(reader, size)
+	if err != nil {
+		return nil, err
+	}
+	return zipReader, nil
 }
