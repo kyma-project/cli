@@ -433,10 +433,10 @@ func sanitizeExtractPath(destination, filePath string) (string, error) {
 
 func initReader(source string) (*zip.Reader, error) {
 	ioReader, err := os.Open(source)
-	defer ioReader.Close()
 	if err != nil {
 		return nil, err
 	}
+	defer ioReader.Close()
 	buff := bytes.NewBuffer([]byte{})
 	size, err := io.Copy(buff, ioReader)
 	if err != nil {
