@@ -385,18 +385,18 @@ func unZip(source, target string, deleteSource bool) error {
 		if err != nil {
 			return err
 		}
+		defer dstFile.Close()
 
 		fileInArchive, err := f.Open()
 		if err != nil {
 			return err
 		}
+		defer fileInArchive.Close()
 
 		if err := copyInChunks(dstFile, fileInArchive); err != nil {
 			return err
 		}
 
-		dstFile.Close()
-		fileInArchive.Close()
 	}
 	if deleteSource {
 		if err := os.Remove(source); err != nil {
@@ -433,6 +433,7 @@ func sanitizeExtractPath(destination, filePath string) (string, error) {
 
 func initReader(source string) (*zip.Reader, error) {
 	ioReader, err := os.Open(source)
+	defer ioReader.Close()
 	if err != nil {
 		return nil, err
 	}
