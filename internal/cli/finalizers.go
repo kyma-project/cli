@@ -25,7 +25,6 @@ func NewFinalizer() *Finalizers {
 		logger: *NewLogger(false).Sugar(),
 	}
 	fin.setupCloseHandler()
-
 	return fin
 }
 
@@ -41,13 +40,14 @@ func (f *Finalizers) setupCloseHandler() {
 		sig := <-c
 		f.logger.Infof("\r- Signal '%v' received from Terminal. Exiting...\n ", sig)
 		wg.Add(1)
-		go func() {
-			for _, f := range f.funcs {
-				if f != nil {
+		for _, f := range f.funcs {
+			if f != nil {
+				go func() {
+					defer wg.Done()
 					f()
-				}
+				}()
 			}
-		}()
+		}
 		waitTimeout(&wg, timeout)
 		f.exit(0)
 	}()
