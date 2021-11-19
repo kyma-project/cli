@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 )
@@ -31,28 +32,36 @@ func (f *Finalizers) Add(function func()) {
 }
 
 func (f *Finalizers) setupCloseHandler() {
+	wg := sync.WaitGroup{}
 	c := make(chan os.Signal, 1)
 	f.notify(c, syscall.SIGTERM, syscall.SIGINT)
 	go func() {
 		sig := <-c
-		fmt.Printf("\r- Signal '%v' received from Terminal. Exiting...\n ", sig)
-		lastChan := make(chan struct{})
 
+		fmt.Printf("\r- Signal '%v' received from Terminal. Exiting...\n ", sig)
+		wg.Add(1)
 		go func() {
 			for _, f := range f.funcs {
 				if f != nil {
 					f()
 				}
 			}
-			lastChan <- struct{}{}
 		}()
-
-		go func() {
-			time.Sleep(timeout)
-			lastChan <- struct{}{}
-		}()
-
-		<-lastChan
+		waitTimeout(&wg, timeout)
 		f.exit(0)
 	}()
+}
+
+func waitTimeout(wg *sync.WaitGroup, timeout time.Duration) bool {
+	c := make(chan struct{})
+	go func() {
+		defer close(c)
+		wg.Wait()
+	}()
+	select {
+	case <-c:
+		return false // completed normally
+	case <-time.After(timeout):
+		return true // timed out
+	}
 }
