@@ -1,7 +1,7 @@
 package cli
 
 import (
-	"fmt"
+	"go.uber.org/zap"
 	"os"
 	"os/signal"
 	"sync"
@@ -15,12 +15,14 @@ type Finalizers struct {
 	notify func(c chan<- os.Signal, sig ...os.Signal)
 	exit   func(int)
 	funcs  []func()
+	logger zap.SugaredLogger
 }
 
 func NewFinalizer() *Finalizers {
 	fin := &Finalizers{
 		notify: signal.Notify,
 		exit:   os.Exit,
+		logger: *NewLogger(false).Sugar(),
 	}
 	fin.setupCloseHandler()
 
@@ -37,8 +39,7 @@ func (f *Finalizers) setupCloseHandler() {
 	f.notify(c, syscall.SIGTERM, syscall.SIGINT)
 	go func() {
 		sig := <-c
-
-		fmt.Printf("\r- Signal '%v' received from Terminal. Exiting...\n ", sig)
+		f.logger.Infof("\r- Signal '%v' received from Terminal. Exiting...\n ", sig)
 		wg.Add(1)
 		go func() {
 			for _, f := range f.funcs {
