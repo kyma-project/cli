@@ -207,10 +207,13 @@ func (c *Creator) write(out io.Writer, suites JUnitTestSuites) error {
 	if err != nil {
 		return err
 	}
-	_, err = out.Write([]byte(xml.Header))
-	if err != nil {
+	n, err := out.Write([]byte(xml.Header))
+	if err != nil || n <= 0 {
 		return err
 	}
-	_, err = out.Write(doc)
-	return err
+	n, err = out.Write(doc)
+	if err != nil || n <= 0 {
+		return err
+	}
+	return nil
 }
