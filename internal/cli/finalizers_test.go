@@ -54,7 +54,8 @@ func TestFinalizer_Add(t *testing.T) {
 			t.Parallel()
 
 			d := &Finalizers{
-				funcs: funcs,
+				funcs:  funcs,
+				logger: NewLogger(false).Sugar(),
 			}
 
 			d.Add(f)
@@ -113,16 +114,6 @@ func TestFinalizer_setupCloseHandler(t *testing.T) {
 			},
 			nilFuncs: 3,
 		},
-		{
-			name: "should receive SIGINT syscall and exit because of nil functions",
-			fields: fields{
-				notify: fixNotify(syscall.SIGINT),
-				funcs: []func(chan int) func(){
-					fixNilFunc, fixNilFunc, fixNilFunc,
-				},
-			},
-			nilFuncs: 3,
-		},
 	}
 	for _, tt := range tests {
 		funcs := tt.fields.funcs
@@ -139,6 +130,7 @@ func TestFinalizer_setupCloseHandler(t *testing.T) {
 				notify: notify,
 				exit:   fixExit(exit),
 				funcs:  fixFuncs(counterChan, funcs),
+				logger: NewLogger(false).Sugar(),
 			}
 
 			d.setupCloseHandler()
