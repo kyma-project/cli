@@ -39,15 +39,15 @@ func (f *Finalizers) setupCloseHandler() {
 	go func() {
 		sig := <-c
 		f.logger.Infof("\r- Signal '%v' received from Terminal. Exiting...\n ", sig)
-		for _, f := range f.funcs {
-			if f != nil {
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
+		wg.Add(1)
+		go func(){
+			for _, f := range f.funcs {
+				if f != nil {
 					f()
-				}()
+				}
 			}
-		}
+			defer wg.Done()
+		}()
 		waitTimeout(&wg, timeout)
 		f.exit(0)
 	}()
