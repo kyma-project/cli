@@ -114,7 +114,6 @@ func TestFinalizer_setupCloseHandler(t *testing.T) {
 			},
 			nilFuncs: 3,
 		},
-
 	}
 	for _, tt := range tests {
 		funcs := tt.fields.funcs
