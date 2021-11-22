@@ -54,7 +54,7 @@ func TestFinalizer_Add(t *testing.T) {
 			t.Parallel()
 
 			d := &Finalizers{
-				funcs: funcs,
+				funcs:  funcs,
 				logger: NewLogger(false).Sugar(),
 			}
 
