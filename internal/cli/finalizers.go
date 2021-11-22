@@ -40,7 +40,7 @@ func (f *Finalizers) setupCloseHandler() {
 		sig := <-c
 		f.logger.Infof("\r- Signal '%v' received from Terminal. Exiting...\n ", sig)
 		wg.Add(1)
-		go func(){
+		go func() {
 			for _, f := range f.funcs {
 				if f != nil {
 					f()
