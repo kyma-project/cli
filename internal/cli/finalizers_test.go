@@ -55,6 +55,7 @@ func TestFinalizer_Add(t *testing.T) {
 
 			d := &Finalizers{
 				funcs: funcs,
+				logger: NewLogger(false).Sugar(),
 			}
 
 			d.Add(f)
@@ -139,6 +140,7 @@ func TestFinalizer_setupCloseHandler(t *testing.T) {
 				notify: notify,
 				exit:   fixExit(exit),
 				funcs:  fixFuncs(counterChan, funcs),
+				logger: NewLogger(false).Sugar(),
 			}
 
 			d.setupCloseHandler()

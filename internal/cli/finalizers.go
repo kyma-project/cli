@@ -15,14 +15,14 @@ type Finalizers struct {
 	notify func(c chan<- os.Signal, sig ...os.Signal)
 	exit   func(int)
 	funcs  []func()
-	logger zap.SugaredLogger
+	logger *zap.SugaredLogger
 }
 
 func NewFinalizer() *Finalizers {
 	fin := &Finalizers{
 		notify: signal.Notify,
 		exit:   os.Exit,
-		logger: *NewLogger(false).Sugar(),
+		logger: NewLogger(false).Sugar(),
 	}
 	fin.setupCloseHandler()
 	return fin
