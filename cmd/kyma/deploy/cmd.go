@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/kyma-incubator/reconciler/pkg/model"
+	"github.com/kyma-incubator/reconciler/pkg/reconciler/chart"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/service"
-	"github.com/kyma-incubator/reconciler/pkg/reconciler/workspace"
 	"github.com/kyma-project/cli/internal/clusterinfo"
 	"github.com/kyma-project/cli/internal/coredns"
 	"github.com/kyma-project/cli/internal/deploy"
@@ -233,7 +233,7 @@ func (cmd *command) printDeployStatus(status deploy.ComponentStatus) {
 	}
 }
 
-func (cmd *command) prepareWorkspace(l *zap.SugaredLogger) (*workspace.Workspace, error) {
+func (cmd *command) prepareWorkspace(l *zap.SugaredLogger) (*chart.KymaWorkspace, error) {
 	if err := cmd.decideVersionUpgrade(); err != nil {
 		return nil, err
 	}
@@ -260,7 +260,7 @@ func (cmd *command) prepareWorkspace(l *zap.SugaredLogger) (*workspace.Workspace
 		return nil, errors.Wrap(err, "unable to resolve workspace path")
 	}
 
-	wsFact, err := workspace.NewFactory(nil, wsp, l)
+	wsFact, err := chart.NewFactory(nil, wsp, l)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to instantiate workspace factory")
 	}
@@ -280,7 +280,7 @@ func (cmd *command) prepareWorkspace(l *zap.SugaredLogger) (*workspace.Workspace
 	return ws, nil
 }
 
-func (cmd *command) resolveComponents(ws *workspace.Workspace) (component.List, error) {
+func (cmd *command) resolveComponents(ws *chart.KymaWorkspace) (component.List, error) {
 	if len(cmd.opts.Components) > 0 {
 		components := component.FromStrings(cmd.opts.Components)
 		return components, nil
