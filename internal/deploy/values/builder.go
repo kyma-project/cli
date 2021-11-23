@@ -13,8 +13,9 @@ import (
 )
 
 type builder struct {
-	files  []string
-	values []map[string]interface{}
+	files         []string
+	values        []map[string]interface{}
+	defaultValues []map[string]interface{}
 }
 
 func (b *builder) addValuesFile(filePath string) *builder {
@@ -27,16 +28,21 @@ func (b *builder) addValues(values map[string]interface{}) *builder {
 	return b
 }
 
-func (b *builder) addGlobalDomainName(domainName string) *builder {
-	return b.addValues(map[string]interface{}{
+func (b *builder) addDefaultValues(values map[string]interface{}) *builder {
+	b.defaultValues = append(b.defaultValues, values)
+	return b
+}
+
+func (b *builder) addDefaultGlobalDomainName(domainName string) *builder {
+	return b.addDefaultValues(map[string]interface{}{
 		"global": map[string]interface{}{
 			"domainName": domainName,
 		},
 	})
 }
 
-func (b *builder) addGlobalTLSCrtAndKey(tlsCrt, tlsKey string) *builder {
-	return b.addValues(map[string]interface{}{
+func (b *builder) addDefaultGlobalTLSCrtAndKey(tlsCrt, tlsKey string) *builder {
+	return b.addDefaultValues(map[string]interface{}{
 		"global": map[string]interface{}{
 			"tlsCrt": tlsCrt,
 			"tlsKey": tlsKey,
@@ -51,8 +57,8 @@ type serverlessRegistryConfig struct {
 	registryAddress       string
 }
 
-func (b *builder) addServerlessRegistryConfig(config serverlessRegistryConfig) *builder {
-	return b.addValues(map[string]interface{}{
+func (b *builder) addDefaultServerlessRegistryConfig(config serverlessRegistryConfig) *builder {
+	return b.addDefaultValues(map[string]interface{}{
 		"serverless": map[string]interface{}{
 			"dockerRegistry": map[string]interface{}{
 				"enableInternal":        config.enable,
@@ -76,6 +82,12 @@ func (b *builder) build() (map[string]interface{}, error) {
 func (b *builder) mergeSources() (map[string]interface{}, error) {
 	result := make(map[string]interface{})
 
+	for _, defaults := range b.defaultValues {
+		if err := mergo.Map(&result, defaults, mergo.WithOverride); err != nil {
+			return nil, errors.Wrap(err, "while merging values from files")
+		}
+	}
+
 	for _, file := range b.files {
 		vals, err := loadValuesFile(file)
 		if err != nil {
@@ -83,13 +95,13 @@ func (b *builder) mergeSources() (map[string]interface{}, error) {
 		}
 
 		if err := mergo.Map(&result, vals, mergo.WithOverride); err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "while merging values from files")
 		}
 	}
 
 	for _, override := range b.values {
 		if err := mergo.Map(&result, override, mergo.WithOverride); err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "while merging overrides values")
 		}
 	}
 
