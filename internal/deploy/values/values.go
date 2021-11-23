@@ -55,11 +55,11 @@ func addClusterSpecificDefaults(builder *builder, clusterInfo clusterinfo.Info) 
 			internalServerAddress: k3dRegistry,
 		}
 		builder.
-			addServerlessDefaultRegistryConfig(defaultRegistryConfig).
-			addGlobalDomainName(defaultLocalKymaDomain).
-			addGlobalTLSCrtAndKey(defaultLocalTLSCrtEnc, defaultLocalTLSKeyEnc)
+			addDefaultServerlessRegistryConfig(defaultRegistryConfig).
+			addDefaultGlobalDomainName(defaultLocalKymaDomain).
+			addDefaultGlobalTLSCrtAndKey(defaultLocalTLSCrtEnc, defaultLocalTLSKeyEnc)
 	} else if gardener, isGardener := clusterInfo.(clusterinfo.Gardener); isGardener {
-		builder.addGlobalDomainName(gardener.Domain)
+		builder.addDefaultGlobalDomainName(gardener.Domain)
 	}
 }
 
