@@ -12,7 +12,6 @@ replace (
 	// Required to work with the hydroform terraform integration
 	github.com/hashicorp/consul v0.0.0-20171026175957-610f3c86a089 => github.com/hashicorp/consul/sdk v0.7.0
 	github.com/hashicorp/consul/api v1.3.0 => github.com/hashicorp/consul/api v0.0.0-20191112221531-8742361660b6
-	github.com/kyma-incubator/reconciler => /Users/i539990/Projects/kyma/go/src/github.com/kyma-incubator/reconciler
 
 	github.com/spf13/viper => github.com/spf13/viper v1.7.0
 
