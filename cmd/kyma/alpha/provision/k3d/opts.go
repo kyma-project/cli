@@ -10,15 +10,15 @@ import (
 type Options struct {
 	*cli.Options
 
-	Name                   string
-	Workers                int
-	Timeout                time.Duration
-	K3sArgs                []string
-	UseRegistry            []string
-	RegistryPort           string
-	K3dArgs                []string
-	MinorKubernetesVersion string
-	PortMapping            []string
+	Name              string
+	Workers           int
+	Timeout           time.Duration
+	K3sArgs           []string
+	UseRegistry       []string
+	RegistryPort      string
+	K3dArgs           []string
+	KubernetesVersion string
+	PortMapping       []string
 }
 
 //NewOptions creates options with default values
