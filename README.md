@@ -80,6 +80,6 @@ Kyma CLI is used in CI jobs that install or test Kyma or provision clusters. To 
 To download the binaries, run:
 
 ```bash
-curl -Lo kyma https://storage.googleapis.com/kyma-cli-stable/kyma-darwin # kyma-linux, kyma-linux-arm, kyma.exe or kyma-arm.exe
+curl -Lo kyma https://storage.googleapis.com/kyma-cli-stable/kyma-darwin # kyma-linux, kyma-linux-arm, kyma.exe, or kyma-arm.exe
 chmod +x kyma
 ```
