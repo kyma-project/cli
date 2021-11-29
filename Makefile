@@ -28,7 +28,7 @@ build-windows:
 
 .PHONY: build-windows-arm
 build-windows-arm:
-	CGO_ENABLED=0 GOOS=windows GOARCH=arm go build -o ./bin/kyma.exe $(FLAGS) ./cmd
+	CGO_ENABLED=0 GOOS=windows GOARCH=arm go build -o ./bin/kyma-arm.exe $(FLAGS) ./cmd
 
 .PHONY: build-linux
 build-linux:
@@ -65,10 +65,12 @@ integration-test:
 archive:
 	cp -r bin/* $(ARTIFACTS)
 
-.PHONY: upload-stable
-upload-stable: 
-ifdef STABLE
+.PHONY: upload-binaries
+upload-binaries:
+ifeq ($(STABLE), true)
 	gsutil cp bin/* $(KYMA_CLI_STABLE_BUCKET)
+else
+	gsutil cp bin/* $(KYMA_CLI_UNSTABLE_BUCKET)
 endif
 
 .PHONY: release
@@ -91,7 +93,7 @@ local: validate test install
 ci-pr: resolve validate build test integration-test
 
 .PHONY: ci-main
-ci-main: resolve validate build test integration-test upload-stable
+ci-main: resolve validate build test integration-test upload-binaries
 
 .PHONY: ci-release
 ci-release: resolve validate build test integration-test archive release

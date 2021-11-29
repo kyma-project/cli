@@ -77,8 +77,8 @@ func (cmd *command) runDashboardContainer() error {
 		}
 	}
 
-	if !cmd.Verbose {
-		// when NODE_ENV is set to "development", only logs with type "Error" are printed from the busola container
+	if cmd.Verbose {
+		// when NODE_ENV is set to "development", all kind of logs are printed from the busola container
 		envs = append(envs, "NODE_ENV=development")
 	}
 
