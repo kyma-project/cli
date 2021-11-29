@@ -25,12 +25,12 @@ type Definition struct {
 }
 
 // PrerequisiteNames returns all names of prerequisites from the current component list
-func (l *List) PrerequisiteNames() []string {
+func (l *List) PrerequisiteNames() [][]string {
 	var names []string
 	for _, c := range l.Prerequisites {
 		names = append(names, c.Name)
 	}
-	return names
+	return [][]string{names}
 }
 
 // FromFile creates a new list of components from a file
