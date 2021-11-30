@@ -58,8 +58,8 @@ func (cmd *command) importCertificate() error {
 	}
 	s := f.NewStep("Importing Kyma certificate")
 	ca := trust.NewCertifier(cmd.K8s)
-	if _, er := root.IsWithSudo(); er != nil {
-		s.LogErrorf("%v\n", er)
+	if er := root.IsWithSudo(); er != nil {
+		s.LogErrorf("%v", er)
 		return nil
 	}
 

@@ -53,8 +53,8 @@ func (cmd *command) Run() error {
 		return errors.Wrap(err, "failed to initialize the Kubernetes client from given kubeconfig")
 	}
 
-	if _, er := root.IsWithSudo(); er != nil {
-		s.LogErrorf("%v\n", er)
+	if er := root.IsWithSudo(); er != nil {
+		s.LogErrorf("%v", er)
 		return nil
 	}
 

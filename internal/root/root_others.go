@@ -8,9 +8,9 @@ import (
 )
 
 // IsWithSudo tells if a command is runnig with root privileges on
-func IsWithSudo() (bool,error) {
+func IsWithSudo() (error) {
 	if os.Getenv("SUDO_UID") != "" {
-		return true, nil
+		return nil
 	}
-	return false, errors.New("Elevated permissions are required to make entries to host file. Make sure you are using sudo")
+	return errors.New("Elevated permissions are required to make entries to host file. Make sure you are using sudo")
 }

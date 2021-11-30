@@ -50,7 +50,7 @@ func (c certutil) CertificateKyma2() ([]byte, error) {
 func (c certutil) StoreCertificate(file string, i Informer) error {
 	i.LogInfo("Kyma wants to add its root certificate to the trusted certificates.")
 
-	if _, er := root.IsWithSudo(); er == nil {
+	if er := root.IsWithSudo(); er == nil {
 		i.LogInfo("You're running the command as an administrator. CLI has to add the Kyma root certificate to the trusted certificates. Type 'y' to allow this action.")
 		if !root.PromptUser() {
 			i.LogInfo(fmt.Sprintf("\nCould not import the Kyma root certificate, please follow the instructions below to import it manually:\n-----\n%s-----\n", c.Instructions()))
