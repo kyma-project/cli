@@ -3,12 +3,12 @@
 package root
 
 import (
-	"os"
 	"github.com/pkg/errors"
+	"os"
 )
 
 // IsWithSudo tells if a command is runnig with root privileges on
-func IsWithSudo() (error) {
+func IsWithSudo() error {
 	if os.Getenv("SUDO_UID") != "" {
 		return nil
 	}
