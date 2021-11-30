@@ -21,7 +21,7 @@ kyma provision k3d [flags]
       --name string            Name of the Kyma cluster (default "kyma")
   -p, --port strings           Map ports 80 and 443 of K3D loadbalancer (e.g. -p 80:80@loadbalancer -p 443:443@loadbalancer) (default [80:80@loadbalancer,443:443@loadbalancer])
       --registry-port string   Specify the port on which the k3d registry will be exposed (default "5001")
-      --registry-use strings   Connect to one or more k3d-managed registries. Kyma automatically creates a registry for serverless images.
+      --registry-use strings   Connect to one or more k3d-managed registries. Kyma automatically creates a registry for Serverless images.
       --timeout duration       Maximum time for the provisioning. If you want no timeout, enter "0". (default 5m0s)
       --workers int            Number of worker nodes (k3d agents) (default 1)
 ```
