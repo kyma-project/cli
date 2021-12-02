@@ -41,15 +41,15 @@ func NewCmd(o *Options) *cobra.Command {
 		RunE:  func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 	}
 
-	cobraCmd.Flags().StringSliceVarP(&o.Components, "component", "", []string{}, "Provide one or more components to deploy (e.g. --component componentName@namespace)")
+	cobraCmd.Flags().StringSliceVarP(&o.Components, "component", "", []string{}, "Provide one or more components to undeploy (e.g. --component componentName@namespace)")
 	cobraCmd.Flags().StringVarP(&o.ComponentsFile, "components-file", "c", "", `Path to the components file (default "$HOME/.kyma/sources/installation/resources/components.yaml" or ".kyma-sources/installation/resources/components.yaml")`)
 	cobraCmd.Flags().StringVarP(&o.WorkspacePath, "workspace", "w", "", `Path to download Kyma sources (default "$HOME/.kyma/sources" or ".kyma-sources")`)
 	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", config.DefaultKyma2Version, `Installation source:
-	- Deploy a specific release, for example: "kyma deploy --source=2.0.0"
-	- Deploy a specific branch of the Kyma repository on kyma-project.org: "kyma deploy --source=<my-branch-name>"
-	- Deploy a commit (8 characters or more), for example: "kyma deploy --source=34edf09a"
-	- Deploy a pull request, for example "kyma deploy --source=PR-9486"
-	- Deploy the local sources: "kyma deploy --source=local"`)
+	- Undeploy from a specific release, for example: "kyma undeploy --source=2.0.0"
+	- Undeploy from a specific branch of the Kyma repository on kyma-project.org: "kyma undeploy --source=<my-branch-name>"
+	- Undeploy from a commit (8 characters or more), for example: "kyma undeploy --source=34edf09a"
+	- Undeploy from a pull request, for example "kyma undeploy --source=PR-9486"
+	- Undeploy from the local sources: "kyma undeploy --source=local"`)
 
 	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", "", "Custom domain used for installation.")
 	cobraCmd.Flags().StringVarP(&o.Profile, "profile", "p", "",
@@ -124,14 +124,14 @@ func (cmd *command) Run() error {
 		WorkerPoolSize: cmd.opts.WorkerPoolSize,
 	})
 	if err != nil {
-		unDeployStep.Failuref("Failed to deploy Kyma.")
+		unDeployStep.Failuref("Failed to undeploy Kyma.")
 		return err
 	}
 
 	if recoResult.GetResult() == model.ClusterStatusDeleteError {
 		unDeployStep.Failure()
 		cmd.setSummary().PrintFailedComponentSummary(recoResult)
-		return errors.Errorf("Kyma deployment failed.")
+		return errors.Errorf("Kyma undeployment failed.")
 	}
 
 	if recoResult.GetResult() == model.ClusterStatusDeleted {
