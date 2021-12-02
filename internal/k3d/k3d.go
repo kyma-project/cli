@@ -12,20 +12,19 @@ import (
 )
 
 const (
-	v4MinRequiredVersion         string = "4.0.0"
-	v5MinRequiredVersion         string = "5.0.0"
-	v5DefaultRegistryNamePattern string = "%s-registry"
+	minRequiredVersion         string = "5.0.0"
+	defaultRegistryNamePattern string = "%s-registry"
 
 	binaryName string = "k3d"
 )
 
 type Client interface {
 	runCmd(args ...string) (string, error)
-	checkVersion(minRequiredVersion string) error
-	VerifyStatus(isV5 bool) error
+	checkVersion() error
+	VerifyStatus() error
 	ClusterExists() (bool, error)
 	RegistryExists() (bool, error)
-	CreateCluster(settings CreateClusterSettings, isV5 bool) error
+	CreateCluster(settings CreateClusterSettings) error
 	CreateRegistry(registryPort string) (string, error)
 	DeleteCluster() error
 	DeleteRegistry() error
@@ -37,18 +36,8 @@ type CreateClusterSettings struct {
 	PortMap           map[string]int
 	PortMapping       []string
 	Workers           int
-	V4Settings        V4CreateClusterSettings
-	V5Settings        V5CreateClusterSettings
-}
-
-type V4CreateClusterSettings struct {
-	ServerArgs []string
-	AgentArgs  []string
-}
-
-type V5CreateClusterSettings struct {
-	K3sArgs     []string
-	UseRegistry []string
+	K3sArgs           []string
+	UseRegistry       []string
 }
 
 type client struct {
@@ -60,7 +49,6 @@ type client struct {
 }
 
 // NewClient creates a new instance of the Client interface.
-// The 'isAlpha' parameter indicates whether the command is an alpha command. If so, the minimum k3d version is v5.
 func NewClient(cmdRunner CmdRunner, pathLooker PathLooker, clusterName string, verbose bool, timeout time.Duration) Client {
 	return &client{
 		cmdRunner:   cmdRunner,
@@ -95,7 +83,7 @@ func (c *client) runCmd(args ...string) (string, error) {
 }
 
 //checkVersion checks whether k3d version is supported
-func (c *client) checkVersion(minRequiredVersion string) error {
+func (c *client) checkVersion() error {
 	binaryVersionOutput, err := c.runCmd("version")
 	if err != nil {
 		return err
@@ -117,9 +105,6 @@ func (c *client) checkVersion(minRequiredVersion string) error {
 	minRequiredSemVersion, _ := semver.Parse(minRequiredVersion)
 	if binarySemVersion.Major > minRequiredSemVersion.Major {
 		incompatibleMajorVersionMsg := "You are using an unsupported k3d major version '%d'. The supported k3d major version for this command is '%d'."
-		if minRequiredVersion == v4MinRequiredVersion {
-			incompatibleMajorVersionMsg += "\n\nIf you want to use k3d v5, try the dedicated 'kyma alpha provision k3d' command"
-		}
 		return fmt.Errorf(incompatibleMajorVersionMsg, binarySemVersion.Major, minRequiredSemVersion.Major)
 	} else if binarySemVersion.LT(minRequiredSemVersion) {
 		incompatibleVersionMsg := "You are using an unsupported k3d version '%s'. The supported k3d version for this command is >= '%s'."
@@ -157,7 +142,7 @@ func (c *client) getRegistryByName(registryName string) (*Registry, error) {
 }
 
 //VerifyStatus verifies whether the k3d CLI tool is properly installed
-func (c *client) VerifyStatus(isV5 bool) error {
+func (c *client) VerifyStatus() error {
 	//ensure k3d is in PATH
 	if _, err := c.pathLooker.Look(binaryName); err != nil {
 		if c.verbose {
@@ -166,13 +151,7 @@ func (c *client) VerifyStatus(isV5 bool) error {
 		return fmt.Errorf("Command '%s' not found. Please install %s (see https://github.com/rancher/k3d#get)", binaryName, binaryName)
 	}
 
-	var minRequiredVersion string
-	if isV5 {
-		minRequiredVersion = v5MinRequiredVersion
-	} else {
-		minRequiredVersion = v4MinRequiredVersion
-	}
-	if err := c.checkVersion(minRequiredVersion); err != nil {
+	if err := c.checkVersion(); err != nil {
 		return err
 	}
 
@@ -210,7 +189,7 @@ func (c *client) ClusterExists() (bool, error) {
 
 //RegistryExists checks whether a registry exists
 func (c *client) RegistryExists() (bool, error) {
-	registryName := fmt.Sprintf(v5DefaultRegistryNamePattern, c.clusterName)
+	registryName := fmt.Sprintf(defaultRegistryNamePattern, c.clusterName)
 
 	registry, err := c.getRegistryByName(registryName)
 	if err != nil {
@@ -220,7 +199,7 @@ func (c *client) RegistryExists() (bool, error) {
 }
 
 //CreateCluster creates a cluster
-func (c *client) CreateCluster(settings CreateClusterSettings, isV5 bool) error {
+func (c *client) CreateCluster(settings CreateClusterSettings) error {
 	k3sImage, err := getK3sImage(settings.KubernetesVersion)
 	if err != nil {
 		return err
@@ -234,11 +213,7 @@ func (c *client) CreateCluster(settings CreateClusterSettings, isV5 bool) error 
 		"--image", k3sImage,
 	}
 
-	if isV5 {
-		cmdArgs = append(cmdArgs, getCreateClusterV5Args(settings)...)
-	} else {
-		cmdArgs = append(cmdArgs, getCreateClusterV4Args(settings)...)
-	}
+	cmdArgs = append(cmdArgs, getCreateClusterArgs(settings)...)
 
 	cmdArgs = append(cmdArgs, constructArgs("--port", settings.PortMapping)...)
 	//add further k3d args which are not offered by the Kyma CLI flags
@@ -250,7 +225,7 @@ func (c *client) CreateCluster(settings CreateClusterSettings, isV5 bool) error 
 
 // CreateRegistry creates a k3d registry
 func (c *client) CreateRegistry(registryPort string) (string, error) {
-	registryName := fmt.Sprintf(v5DefaultRegistryNamePattern, c.clusterName)
+	registryName := fmt.Sprintf(defaultRegistryNamePattern, c.clusterName)
 
 	_, err := c.runCmd("registry", "create", registryName, "--port", registryPort)
 	return fmt.Sprintf("%s:%s", registryName, registryPort), err
@@ -264,31 +239,19 @@ func (c *client) DeleteCluster() error {
 
 // DeleteRegistry deletes a k3d registry
 func (c *client) DeleteRegistry() error {
-	registryName := fmt.Sprintf(v5DefaultRegistryNamePattern, c.clusterName)
+	registryName := fmt.Sprintf(defaultRegistryNamePattern, c.clusterName)
 
 	_, err := c.runCmd("registry", "delete", fmt.Sprintf("k3d-%s", registryName))
 	return err
 }
 
-func getCreateClusterV4Args(settings CreateClusterSettings) []string {
-	cmdArgs := []string{
-		"--registry-create",
-		"--k3s-server-arg", "--disable",
-		"--k3s-server-arg", "traefik",
-	}
-	cmdArgs = append(cmdArgs, constructArgs("--k3s-server-arg", settings.V4Settings.ServerArgs)...)
-	cmdArgs = append(cmdArgs, constructArgs("--k3s-agent-arg", settings.V4Settings.AgentArgs)...)
-
-	return cmdArgs
-}
-
-func getCreateClusterV5Args(settings CreateClusterSettings) []string {
+func getCreateClusterArgs(settings CreateClusterSettings) []string {
 	cmdArgs := []string{
 		"--kubeconfig-switch-context",
 		"--k3s-arg", "--disable=traefik@server:0",
 	}
-	cmdArgs = append(cmdArgs, constructArgs("--registry-use", settings.V5Settings.UseRegistry)...)
-	cmdArgs = append(cmdArgs, constructArgs("--k3s-arg", settings.V5Settings.K3sArgs)...)
+	cmdArgs = append(cmdArgs, constructArgs("--registry-use", settings.UseRegistry)...)
+	cmdArgs = append(cmdArgs, constructArgs("--k3s-arg", settings.K3sArgs)...)
 
 	return cmdArgs
 }
