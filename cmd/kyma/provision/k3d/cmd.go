@@ -76,7 +76,7 @@ func (c *command) Run() error {
 //Verifies if k3d is properly installed and pre-conditions are fulfilled
 func (c *command) verifyK3dStatus(k3dClient k3d.Client) error {
 	s := c.NewStep("Verifying k3d status")
-	if err := k3dClient.VerifyStatus(true); err != nil {
+	if err := k3dClient.VerifyStatus(); err != nil {
 		s.Failure()
 		return err
 	}
@@ -171,13 +171,11 @@ func (c *command) createK3dCluster(k3dClient k3d.Client, registryURL string) err
 		KubernetesVersion: c.opts.KubernetesVersion,
 		PortMapping:       c.opts.PortMapping,
 		Workers:           c.opts.Workers,
-		V5Settings: k3d.V5CreateClusterSettings{
-			K3sArgs:     c.opts.K3sArgs,
-			UseRegistry: c.opts.UseRegistry,
-		},
+		K3sArgs:           c.opts.K3sArgs,
+		UseRegistry:       c.opts.UseRegistry,
 	}
 
-	err := k3dClient.CreateCluster(settings, true)
+	err := k3dClient.CreateCluster(settings)
 	if err != nil {
 		s.Failuref("Could not create k3d cluster '%s'", c.opts.Name)
 		return err
