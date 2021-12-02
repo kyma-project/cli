@@ -178,7 +178,7 @@ func (suite *K3dTestSuite) TestDeleteRegistry() {
 	suite.Nil(err)
 }
 
-func Testk3dSuite(t *testing.T) {
+func TestK3dSuite(t *testing.T) {
 	suite.Run(t, new(K3dTestSuite))
 }
 
