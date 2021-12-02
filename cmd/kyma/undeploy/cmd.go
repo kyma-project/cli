@@ -3,20 +3,21 @@ package undeploy
 import (
 	"context"
 	"fmt"
-	"github.com/avast/retry-go"
-	"github.com/pkg/errors"
-	v1 "k8s.io/api/core/v1"
-	apixv1beta1client "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
-	apierr "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	k8sRetry "k8s.io/client-go/util/retry"
-	"sync"
+	"io/ioutil"
 	"time"
 
+	"github.com/kyma-incubator/reconciler/pkg/model"
+	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/clusterinfo"
+	"github.com/kyma-project/cli/internal/config"
+	"github.com/kyma-project/cli/internal/deploy"
+	"github.com/kyma-project/cli/internal/deploy/component"
+	"github.com/kyma-project/cli/internal/deploy/values"
 	"github.com/kyma-project/cli/internal/kube"
+	"github.com/kyma-project/cli/internal/nice"
 
 	"github.com/spf13/cobra"
 )
@@ -38,14 +39,13 @@ const (
 type command struct {
 	opts *Options
 	cli.Command
-	apixClient apixv1beta1client.ApiextensionsV1beta1Interface
 }
 
 //NewCmd creates a new kyma command
 func NewCmd(o *Options) *cobra.Command {
 
 	cmd := command{
-		Command: cli.Command{Options: o.Options},
+		Command: cli.Command{Options: o.Options.Options},
 		opts:    o,
 	}
 
@@ -56,6 +56,24 @@ func NewCmd(o *Options) *cobra.Command {
 		RunE:  func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 	}
 
+	cobraCmd.Flags().StringSliceVarP(&o.Components, "component", "", []string{}, "Provide one or more components to deploy (e.g. --component componentName@namespace)")
+	cobraCmd.Flags().StringVarP(&o.ComponentsFile, "components-file", "c", "", `Path to the components file (default "$HOME/.kyma/sources/installation/resources/components.yaml" or ".kyma-sources/installation/resources/components.yaml")`)
+	cobraCmd.Flags().StringVarP(&o.WorkspacePath, "workspace", "w", "", `Path to download Kyma sources (default "$HOME/.kyma/sources" or ".kyma-sources")`)
+	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", config.DefaultKyma2Version, `Installation source:
+	- Deploy a specific release, for example: "kyma deploy --source=2.0.0"
+	- Deploy a specific branch of the Kyma repository on kyma-project.org: "kyma deploy --source=<my-branch-name>"
+	- Deploy a commit (8 characters or more), for example: "kyma deploy --source=34edf09a"
+	- Deploy a pull request, for example "kyma deploy --source=PR-9486"
+	- Deploy the local sources: "kyma deploy --source=local"`)
+
+	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", "", "Custom domain used for installation.")
+	cobraCmd.Flags().StringVarP(&o.Profile, "profile", "p", "",
+		fmt.Sprintf("Kyma deployment profile. If not specified, Kyma uses its default configuration. The supported profiles are: %s, %s.", profileEvaluation, profileProduction))
+	cobraCmd.Flags().StringVarP(&o.TLSCrtFile, "tls-crt", "", "", "TLS certificate file for the domain used for installation.")
+	cobraCmd.Flags().StringVarP(&o.TLSKeyFile, "tls-key", "", "", "TLS key file for the domain used for installation.")
+	cobraCmd.Flags().IntVarP(&o.WorkerPoolSize, "concurrency", "", 4, "Set maximum number of workers to run simultaneously to deploy Kyma.")
+	cobraCmd.Flags().StringSliceVarP(&o.Values, "value", "", []string{}, "Set configuration values. Can specify one or more values, also as a comma-separated list (e.g. --value component.a='1' --value component.b='2' or --value component.a='1',component.b='2').")
+	cobraCmd.Flags().StringSliceVarP(&o.ValueFiles, "values-file", "f", []string{}, "Path(s) to one or more JSON or YAML files with configuration values.")
 	cobraCmd.Flags().BoolVarP(&o.KeepCRDs, "keep-crds", "", false, "Set --keep-crds=true to keep CRDs on clean-up")
 	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 6*time.Minute, "Maximum time for the deletion")
 	return cobraCmd
@@ -77,313 +95,97 @@ func (cmd *command) Run() error {
 		return errors.Wrap(err, "Cannot initialize the Kubernetes client. Make sure your kubeconfig is valid")
 	}
 
-	if cmd.apixClient, err = apixv1beta1client.NewForConfig(cmd.K8s.RestConfig()); err != nil {
-		return err
-	}
-
-	if err := cmd.deleteKymaNamespaces(); err != nil {
-		return err
-	}
-	if !cmd.opts.KeepCRDs {
-		if err := cmd.deleteKymaCRDs(); err != nil {
-			return err
-
-		}
-	}
-	if err := cmd.waitForNamespaces(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (cmd *command) removeServerlessCredentialFinalizers() error {
-	secrets, err := cmd.K8s.Static().CoreV1().Secrets(v1.NamespaceAll).List(context.Background(), metav1.ListOptions{LabelSelector: "serverless.kyma-project.io/config=credentials"})
-	if err != nil && !apierr.IsNotFound(err) {
-		return err
-	}
-
-	if secrets == nil {
-		return nil
-	}
-
-	for i := range secrets.Items {
-		secret := secrets.Items[i]
-
-		if len(secret.GetFinalizers()) <= 0 {
-			continue
-		}
-
-		secret.SetFinalizers(nil)
-		if _, err := cmd.K8s.Static().CoreV1().Secrets(secret.GetNamespace()).Update(context.Background(), &secret, metav1.UpdateOptions{}); err != nil {
-			return err
-		}
-
-		if cmd.Verbose {
-			cmd.CurrentStep.Status(fmt.Sprintf("Deleted finalizer from \"%s\" Secret", secret.GetName()))
-		}
-	}
-
-	return nil
-}
-
-func (cmd *command) removeCustomResourcesFinalizers() error {
-	if err := cmd.removeCustomResourceFinalizersByLabel(crLabelReconciler); err != nil {
-		return err
-	}
-	if err := cmd.removeCustomResourceFinalizersByLabel(crLabelIstio); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (cmd *command) removeCustomResourceFinalizersByLabel(label string) error {
-	crds, err := cmd.apixClient.CustomResourceDefinitions().List(context.Background(), metav1.ListOptions{LabelSelector: label})
-	if err != nil && !apierr.IsNotFound(err) {
-		return err
-	}
-	if crds == nil {
-		return nil
-	}
-
-	for _, crd := range crds.Items {
-		gvr := schema.GroupVersionResource{
-			Group:    crd.Spec.Group,
-			Version:  crd.Spec.Version,
-			Resource: crd.Spec.Names.Plural,
-		}
-
-		customResourceList, err := cmd.K8s.Dynamic().Resource(gvr).Namespace(v1.NamespaceAll).List(context.Background(), metav1.ListOptions{})
-		if err != nil && !apierr.IsNotFound(err) {
-			return err
-		}
-		if customResourceList == nil {
-			continue
-		}
-
-		for i := range customResourceList.Items {
-			cr := customResourceList.Items[i]
-			retryErr := k8sRetry.RetryOnConflict(k8sRetry.DefaultRetry, func() error { return cmd.removeCustomResourceFinalizers(gvr, cr) })
-			if retryErr != nil {
-				return errors.Wrap(retryErr, "deleting finalizer failed:")
-			}
-		}
-	}
-
-	return nil
-}
-
-func (cmd *command) removeCustomResourceFinalizers(gvr schema.GroupVersionResource, cr unstructured.Unstructured) error {
-	// Retrieve the latest version of Custom Resource before attempting update
-	// RetryOnConflict uses exponential backoff to avoid exhausting the apiserver
-	res, err := cmd.K8s.Dynamic().Resource(gvr).Namespace(cr.GetNamespace()).Get(context.Background(), cr.GetName(), metav1.GetOptions{})
-	if err != nil && !apierr.IsNotFound(err) {
-		return err
-	}
-	if res == nil {
-		return nil
-	}
-
-	if len(res.GetFinalizers()) > 0 {
-		if cmd.Verbose {
-			cmd.CurrentStep.Status(fmt.Sprintf("Deleting finalizer for \"%s\" %s", res.GetName(), cr.GetKind()))
-		}
-
-		res.SetFinalizers(nil)
-		_, err := cmd.K8s.Dynamic().Resource(gvr).Namespace(res.GetNamespace()).Update(context.Background(), res, metav1.UpdateOptions{})
-		if err != nil {
-			return err
-		}
-
-		if cmd.Verbose {
-			cmd.CurrentStep.Status(fmt.Sprintf("Deleted finalizer for \"%s\" %s", res.GetName(), res.GetKind()))
-		}
-	}
-
-	if !cmd.opts.KeepCRDs {
-		err = cmd.K8s.Dynamic().Resource(gvr).Namespace(res.GetNamespace()).Delete(context.Background(), res.GetName(), metav1.DeleteOptions{})
-		if err != nil && !apierr.IsNotFound(err) {
-			return err
-		}
-	}
-	return nil
-}
-
-func (cmd *command) deleteKymaNamespaces() error {
-	step := cmd.NewStep("Deleting Kyma Namespaces")
-
-	if !cmd.NonInteractive && !cmd.CI {
-		if !step.PromptYesNo("This will delete all Kyma Namespace resources. Do you want to continue? ") {
-			return errors.New("Undeploy cancelled by user")
-		}
-	}
-
-	var wg sync.WaitGroup
-	wg.Add(len(namespaces))
-	finishedCh := make(chan bool)
-	errorCh := make(chan error)
-
-	for _, namespace := range namespaces {
-		go func(ns string) {
-			defer wg.Done()
-			err := retry.Do(func() error {
-				if cmd.Verbose {
-					cmd.CurrentStep.Status(fmt.Sprintf("Deleting Namespace \"%s\"", ns))
-				}
-
-				if err := cmd.K8s.Static().CoreV1().Namespaces().Delete(context.Background(), ns, metav1.DeleteOptions{}); err != nil && !apierr.IsNotFound(err) {
-					errorCh <- err
-				}
-
-				nsT, err := cmd.K8s.Static().CoreV1().Namespaces().Get(context.Background(), ns, metav1.GetOptions{})
-				if err != nil && !apierr.IsNotFound(err) {
-					errorCh <- err
-				} else if apierr.IsNotFound(err) {
-					return nil
-				}
-
-				return errors.Wrapf(err, "\"%s\" Namespace still exists in \"%s\" Phase", nsT.Name, nsT.Status.Phase)
-			})
-			if err != nil {
-				errorCh <- err
-				return
-			}
-
-			if cmd.Verbose {
-				cmd.CurrentStep.Status(fmt.Sprintf("\"%s\" Namespace is removed", ns))
-			}
-		}(namespace)
-	}
-
-	go func() {
-		wg.Wait()
-		close(errorCh)
-		close(finishedCh)
-	}()
-
-	// process deletion results
-	var errWrapped error
-	for {
-		select {
-		case <-finishedCh:
-			if errWrapped != nil {
-				step.Failure()
-			} else {
-				step.Successf("All Kyma Namespaces marked for deletion")
-			}
-			return errWrapped
-		case err := <-errorCh:
-			if err != nil {
-				if errWrapped == nil {
-					errWrapped = err
-				} else {
-					errWrapped = errors.Wrap(err, errWrapped.Error())
-				}
-			}
-		}
-	}
-}
-
-func (cmd *command) waitForNamespaces() error {
-
-	cmd.NewStep("Waiting for Namespace deletion")
-
-	timeout := time.After(cmd.opts.Timeout)
-	poll := time.Tick(6 * time.Second)
-	for {
-		select {
-		case <-timeout:
-			cmd.CurrentStep.Failuref("Timed out while waiting for Namespace deletion")
-			return errors.New("Timed out")
-		case <-poll:
-			if err := cmd.removeFinalizers(); err != nil {
-				return err
-			}
-			ok, err := cmd.checkKymaNamespaces()
-			if err != nil {
-				return err
-			} else if ok {
-				return nil
-			}
-		}
-	}
-}
-
-func (cmd *command) removeFinalizers() error {
-	if err := cmd.removeServerlessCredentialFinalizers(); err != nil {
-		return err
-	}
-
-	if err := cmd.removeCustomResourcesFinalizers(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (cmd *command) checkKymaNamespaces() (bool, error) {
-	namespaceList, err := cmd.K8s.Static().CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{})
+	kubeconfigPath := kube.KubeconfigPath(cmd.KubeconfigPath)
+	kubeconfig, err := ioutil.ReadFile(kubeconfigPath)
 	if err != nil {
-		return false, err
+		return errors.Wrap(err, "failed to read kubeconfig")
 	}
 
-	if namespaceList.Size() == 0 {
-		cmd.CurrentStep.Successf("No remaining Kyma Namespaces found")
-		return true, nil
-	}
-
-	for i := range namespaceList.Items {
-		if contains(namespaces, namespaceList.Items[i].Name) {
-			cmd.CurrentStep.Status(fmt.Sprintf("Namespace %s still in state '%s'", namespaceList.Items[i].Name, namespaceList.Items[i].Status.Phase))
-			return false, nil
-		}
-	}
-
-	cmd.CurrentStep.Successf("No remaining Kyma Namespaces found")
-
-	return true, nil
-}
-
-func (cmd *command) deleteKymaCRDs() error {
-	step := cmd.NewStep("Deleting CRDs")
-
-	err := cmd.deleteCRDsByLabelWithRetry(crLabelReconciler)
+	// Prepare workspace
+	wsStep := cmd.NewStep(fmt.Sprintf("Fetching Kyma sources (%s)", cmd.opts.Source))
+	l := cli.NewLogger(cmd.opts.Verbose).Sugar()
+	ws, err := deploy.PrepareWorkspace(cmd.opts.WorkspacePath, cmd.opts.Source, wsStep, !cmd.avoidUserInteraction(), cmd.opts.IsLocal(), l)
 	if err != nil {
-		step.Failure()
-		return errors.Wrapf(err, "Failed to delete resource")
+		return err
 	}
 
-	err = cmd.deleteCRDsByLabelWithRetry(crLabelIstio)
+	clusterInfo, err := clusterinfo.Discover(context.Background(), cmd.K8s.Static())
 	if err != nil {
-		step.Failure()
-		return errors.Wrapf(err, "Failed to delete resource")
+		return errors.Wrap(err, "failed to discover underlying cluster type")
 	}
 
-	step.Successf("Removed Kyma CRDs")
-
-	return nil
-}
-
-func (cmd *command) deleteCRDsByLabelWithRetry(labelSelector string) error {
-
-	if cmd.Verbose {
-		cmd.CurrentStep.Status(fmt.Sprintf("Deleting CRD by label: \"%s\"", labelSelector))
+	vals, err := values.Merge(cmd.opts.Sources, ws.WorkspaceDir, clusterInfo)
+	if err != nil {
+		return err
 	}
 
-	return retry.Do(func() error {
-		if err := cmd.K8s.Dynamic().Resource(crdGvr).DeleteCollection(context.TODO(), metav1.DeleteOptions{}, metav1.ListOptions{LabelSelector: labelSelector}); err != nil {
-			return errors.Wrap(err, "Error occurred during resources delete: ")
-		}
-		return nil
+	components, err := component.Resolve(cmd.opts.Components, cmd.opts.ComponentsFile, ws)
+	if err != nil {
+		return err
+	}
+
+	unDeployStep := cmd.NewStep("Undeploying Kyma")
+	unDeployStep.Start()
+
+	// do the undeploy
+	recoResult, err := deploy.Undeploy(deploy.Options{
+		Components:     components,
+		Values:         vals,
+		StatusFunc:     cmd.printDeployStatus,
+		KubeConfig:     kubeconfig,
+		KymaVersion:    cmd.opts.Source,
+		KymaProfile:    cmd.opts.Profile,
+		Logger:         l,
+		WorkerPoolSize: cmd.opts.WorkerPoolSize,
 	})
+	if err != nil {
+		unDeployStep.Failuref("Failed to deploy Kyma.")
+		return err
+	}
+
+	if recoResult.GetResult() == model.ClusterStatusDeleteError {
+		unDeployStep.Failure()
+		cmd.setSummary().PrintFailedComponentSummary(recoResult)
+		return errors.Errorf("Kyma deployment failed.")
+	}
+
+	if recoResult.GetResult() == model.ClusterStatusDeleted {
+		unDeployStep.Success()
+	}
+	unDeployStep.Successf("Kyma undeployed successfully!")
+	return nil
 }
 
-func contains(items []string, item string) bool {
-	for _, i := range items {
-		if i == item {
-			return true
-		}
+func (cmd *command) printDeployStatus(status deploy.ComponentStatus) {
+	if cmd.Verbose {
+		return
 	}
-	return false
+
+	switch status.State {
+	case deploy.Success:
+		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' deleted", status.Component))
+		statusStep.Success()
+	case deploy.RecoverableError:
+		if deploy.PrintedStatus[status.Component] {
+			return
+		}
+		deploy.PrintedStatus[status.Component] = true
+		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' failed. Retrying...\n%s\n ", status.Component, status.Error.Error()))
+		statusStep.Failure()
+	case deploy.UnrecoverableError:
+		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' failed \n%s\n", status.Component, status.Error.Error()))
+		statusStep.Failure()
+	}
+}
+
+// avoidUserInteraction returns true if user won't provide input
+func (cmd *command) avoidUserInteraction() bool {
+	return cmd.NonInteractive || cmd.CI
+}
+
+func (cmd *command) setSummary() *nice.Summary {
+	return &nice.Summary{
+		NonInteractive: cmd.NonInteractive,
+		Version:        cmd.opts.Source,
+	}
 }
