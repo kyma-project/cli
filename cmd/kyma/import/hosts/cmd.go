@@ -53,8 +53,8 @@ func (cmd *command) Run() error {
 		return errors.Wrap(err, "failed to initialize the Kubernetes client from given kubeconfig")
 	}
 
-	if !root.IsWithSudo() {
-		s.LogError("Elevated permissions are required to make entries to host file. Make sure you are using sudo.")
+	if er := root.IsWithSudo(); er != nil {
+		s.LogErrorf("%v", er)
 		return nil
 	}
 

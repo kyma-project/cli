@@ -24,7 +24,7 @@ func addDevDomainsToEtcHostsOSSpecific(domain string, s step.Step, hostAlias str
 	}
 
 	s.LogInfo("Adding domain mappings to your 'hosts' file")
-	if root.IsWithSudo() {
+	if er := root.IsWithSudo(); er == nil {
 		s.LogInfo("You're running CLI with sudo. CLI has to add Kyma domain entries to your 'hosts'. Type 'y' to allow this action")
 		if !root.PromptUser() {
 			notifyUserFunc(nil)
