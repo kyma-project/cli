@@ -8,7 +8,6 @@ import (
 
 	"github.com/kyma-incubator/reconciler/pkg/model"
 	"github.com/pkg/errors"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/clusterinfo"
@@ -20,20 +19,6 @@ import (
 	"github.com/kyma-project/cli/internal/nice"
 
 	"github.com/spf13/cobra"
-)
-
-var (
-	crdGvr = schema.GroupVersionResource{
-		Group:    "apiextensions.k8s.io",
-		Version:  "v1",
-		Resource: "customresourcedefinitions",
-	}
-	namespaces = []string{"istio-system", "kyma-system", "kyma-integration"}
-)
-
-const (
-	crLabelReconciler = "reconciler.kyma-project.io/managed-by=reconciler"
-	crLabelIstio      = "install.operator.istio.io/owning-resource-namespace=istio-system"
 )
 
 type command struct {
