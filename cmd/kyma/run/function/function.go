@@ -138,7 +138,7 @@ func (c *command) runContainer(ctx context.Context, client *client.Client, cfg w
 func (c *command) parseEnvs(envVars []workspace.EnvVar) []string {
 	var envs []string
 	for _, env := range envVars {
-		envs = append(envs, fmt.Sprintf("%s:%s", env.Name, env.Value))
+		envs = append(envs, fmt.Sprintf("%s=%s", env.Name, env.Value))
 	}
 	return envs
 }
