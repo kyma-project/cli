@@ -42,5 +42,5 @@ kyma apply function [flags]
 
 ## See also
 
-* [kyma apply](#kyma-apply-kyma-apply)	 - Applies local resources to the Kyma cluster.
+* [kyma apply](kyma_apply.md)	 - Applies local resources to the Kyma cluster.
 

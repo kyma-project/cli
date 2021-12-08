@@ -42,5 +42,5 @@ kyma create system SYSTEM_NAME [flags]
 
 ## See also
 
-* [kyma create](#kyma-create-kyma-create)	 - Creates resources on the Kyma cluster.
+* [kyma create](kyma_create.md)	 - Creates resources on the Kyma cluster.
 

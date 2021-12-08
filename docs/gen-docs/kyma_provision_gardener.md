@@ -20,8 +20,8 @@ Provisions a cluster using Gardener on GCP, Azure, or AWS.
 
 ## See also
 
-* [kyma provision](#kyma-provision-kyma-provision)	 - Provisions a cluster for Kyma installation.
-* [kyma provision gardener aws](#kyma-provision-gardener-aws-kyma-provision-gardener-aws)	 - Provisions a Kubernetes cluster using Gardener on Amazon Web Services (AWS).
-* [kyma provision gardener az](#kyma-provision-gardener-az-kyma-provision-gardener-az)	 - Provisions a Kubernetes cluster using Gardener on Azure.
-* [kyma provision gardener gcp](#kyma-provision-gardener-gcp-kyma-provision-gardener-gcp)	 - Provisions a Kubernetes cluster using Gardener on Google Cloud Platform (GCP).
+* [kyma provision](kyma_provision.md)	 - Provisions a cluster for Kyma installation.
+* [kyma provision gardener aws](kyma_provision_gardener_aws.md)	 - Provisions a Kubernetes cluster using Gardener on Amazon Web Services (AWS).
+* [kyma provision gardener az](kyma_provision_gardener_az.md)	 - Provisions a Kubernetes cluster using Gardener on Azure.
+* [kyma provision gardener gcp](kyma_provision_gardener_gcp.md)	 - Provisions a Kubernetes cluster using Gardener on Google Cloud Platform (GCP).
 

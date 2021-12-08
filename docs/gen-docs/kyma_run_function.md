@@ -36,5 +36,5 @@ kyma run function [flags]
 
 ## See also
 
-* [kyma run](#kyma-run-kyma-run)	 - Runs resources.
+* [kyma run](kyma_run.md)	 - Runs resources.
 

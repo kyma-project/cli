@@ -23,20 +23,20 @@ Kyma CLI allows you to install, test, and manage Kyma.
 
 ## See also
 
-* [kyma apply](#kyma-apply-kyma-apply)	 - Applies local resources to the Kyma cluster.
-* [kyma completion](#kyma-completion-kyma-completion)	 - Generates bash or zsh completion scripts.
-* [kyma console](#kyma-console-kyma-console)	 - [DEPRECATED] Opens the Kyma Console in a web browser.
-* [kyma create](#kyma-create-kyma-create)	 - Creates resources on the Kyma cluster.
-* [kyma dashboard](#kyma-dashboard-kyma-dashboard)	 - Runs the Kyma dashboard locally and opens it directly in a web browser.
-* [kyma deploy](#kyma-deploy-kyma-deploy)	 - Deploys Kyma on a running Kubernetes cluster.
-* [kyma import](#kyma-import-kyma-import)	 - Imports certificates to local certificates storage or adds domains to the local host file.
-* [kyma init](#kyma-init-kyma-init)	 - Creates local resources for your project.
-* [kyma install](#kyma-install-kyma-install)	 - [DEPRECATED] Installs Kyma on a running Kubernetes cluster.
-* [kyma provision](#kyma-provision-kyma-provision)	 - Provisions a cluster for Kyma installation.
-* [kyma run](#kyma-run-kyma-run)	 - Runs resources.
-* [kyma sync](#kyma-sync-kyma-sync)	 - Synchronizes the local resources for your Function.
-* [kyma test](#kyma-test-kyma-test)	 - [DEPRECATED] Runs tests on a provisioned Kyma cluster.
-* [kyma undeploy](#kyma-undeploy-kyma-undeploy)	 - Undeploys Kyma from a running Kubernetes cluster.
-* [kyma upgrade](#kyma-upgrade-kyma-upgrade)	 - [DEPRECATED] Upgrades Kyma
-* [kyma version](#kyma-version-kyma-version)	 - Displays the version of Kyma CLI and of the connected Kyma cluster.
+* [kyma apply](kyma_apply.md)	 - Applies local resources to the Kyma cluster.
+* [kyma completion](kyma_completion.md)	 - Generates bash or zsh completion scripts.
+* [kyma console](kyma_console.md)	 - [DEPRECATED] Opens the Kyma Console in a web browser.
+* [kyma create](kyma_create.md)	 - Creates resources on the Kyma cluster.
+* [kyma dashboard](kyma_dashboard.md)	 - Runs the Kyma dashboard locally and opens it directly in a web browser.
+* [kyma deploy](kyma_deploy.md)	 - Deploys Kyma on a running Kubernetes cluster.
+* [kyma import](kyma_import.md)	 - Imports certificates to local certificates storage or adds domains to the local host file.
+* [kyma init](kyma_init.md)	 - Creates local resources for your project.
+* [kyma install](kyma_install.md)	 - [DEPRECATED] Installs Kyma on a running Kubernetes cluster.
+* [kyma provision](kyma_provision.md)	 - Provisions a cluster for Kyma installation.
+* [kyma run](kyma_run.md)	 - Runs resources.
+* [kyma sync](kyma_sync.md)	 - Synchronizes the local resources for your Function.
+* [kyma test](kyma_test.md)	 - [DEPRECATED] Runs tests on a provisioned Kyma cluster.
+* [kyma undeploy](kyma_undeploy.md)	 - Undeploys Kyma from a running Kubernetes cluster.
+* [kyma upgrade](kyma_upgrade.md)	 - [DEPRECATED] Upgrades Kyma
+* [kyma version](kyma_version.md)	 - Displays the version of Kyma CLI and of the connected Kyma cluster.
 

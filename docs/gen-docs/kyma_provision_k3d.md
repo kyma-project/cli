@@ -38,5 +38,5 @@ kyma provision k3d [flags]
 
 ## See also
 
-* [kyma provision](#kyma-provision-kyma-provision)	 - Provisions a cluster for Kyma installation.
+* [kyma provision](kyma_provision.md)	 - Provisions a cluster for Kyma installation.
 

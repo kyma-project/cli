@@ -42,5 +42,5 @@ kyma test run <test-definition-1> <test-definition-2> ... <test-definition-N> [f
 
 ## See also
 
-* [kyma test](#kyma-test-kyma-test)	 - [DEPRECATED] Runs tests on a provisioned Kyma cluster.
+* [kyma test](kyma_test.md)	 - [DEPRECATED] Runs tests on a provisioned Kyma cluster.
 

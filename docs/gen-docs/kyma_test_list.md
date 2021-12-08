@@ -26,5 +26,5 @@ kyma test list [flags]
 
 ## See also
 
-* [kyma test](#kyma-test-kyma-test)	 - [DEPRECATED] Runs tests on a provisioned Kyma cluster.
+* [kyma test](kyma_test.md)	 - [DEPRECATED] Runs tests on a provisioned Kyma cluster.
 

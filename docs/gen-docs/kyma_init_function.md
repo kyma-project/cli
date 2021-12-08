@@ -42,5 +42,5 @@ kyma init function [flags]
 
 ## See also
 
-* [kyma init](#kyma-init-kyma-init)	 - Creates local resources for your project.
+* [kyma init](kyma_init.md)	 - Creates local resources for your project.
 
