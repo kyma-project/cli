@@ -167,8 +167,8 @@ func filePrepender(cmd *cobra.Command) string {
 
 func linkHandler(cmd *cobra.Command) string {
 	name := cmd.CommandPath()
-	formatted := strings.ReplaceAll(name, " ", "-")
-	return fmt.Sprintf("#%s-%s", formatted, formatted)
+	formatted := strings.ReplaceAll(name, " ", "_")
+	return fmt.Sprintf("%s.md", formatted)
 }
 
 func hasSeeAlso(cmd *cobra.Command) bool {

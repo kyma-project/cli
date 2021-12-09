@@ -32,5 +32,5 @@ kyma version [flags]
 
 ## See also
 
-* [kyma](#kyma-kyma)	 - Controls a Kyma cluster.
+* [kyma](kyma.md)	 - Controls a Kyma cluster.
 

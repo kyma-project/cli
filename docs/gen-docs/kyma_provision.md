@@ -20,10 +20,10 @@ Provisions a cluster for Kyma installation.
 
 ## See also
 
-* [kyma](#kyma-kyma)	 - Controls a Kyma cluster.
-* [kyma provision aks](#kyma-provision-aks-kyma-provision-aks)	 - Provisions an Azure Kubernetes Service (AKS) cluster on Azure.
-* [kyma provision gardener](#kyma-provision-gardener-kyma-provision-gardener)	 - Provisions a cluster using Gardener on GCP, Azure, or AWS.
-* [kyma provision gke](#kyma-provision-gke-kyma-provision-gke)	 - Provisions a Google Kubernetes Engine (GKE) cluster on Google Cloud Platform (GCP).
-* [kyma provision k3d](#kyma-provision-k3d-kyma-provision-k3d)	 - Provisions a Kubernetes cluster based on k3d v5.
-* [kyma provision minikube](#kyma-provision-minikube-kyma-provision-minikube)	 - [DEPRECATED] Provisions Minikube.
+* [kyma](kyma.md)	 - Controls a Kyma cluster.
+* [kyma provision aks](kyma_provision_aks.md)	 - Provisions an Azure Kubernetes Service (AKS) cluster on Azure.
+* [kyma provision gardener](kyma_provision_gardener.md)	 - Provisions a cluster using Gardener on GCP, Azure, or AWS.
+* [kyma provision gke](kyma_provision_gke.md)	 - Provisions a Google Kubernetes Engine (GKE) cluster on Google Cloud Platform (GCP).
+* [kyma provision k3d](kyma_provision_k3d.md)	 - Provisions a Kubernetes cluster based on k3d v5.
+* [kyma provision minikube](kyma_provision_minikube.md)	 - [DEPRECATED] Provisions Minikube.
 

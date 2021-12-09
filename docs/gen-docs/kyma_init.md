@@ -20,6 +20,6 @@ Use this command to initialize the configuration.
 
 ## See also
 
-* [kyma](#kyma-kyma)	 - Controls a Kyma cluster.
-* [kyma init function](#kyma-init-function-kyma-init-function)	 - Creates local resources for your Function.
+* [kyma](kyma.md)	 - Controls a Kyma cluster.
+* [kyma init function](kyma_init_function.md)	 - Creates local resources for your Function.
 

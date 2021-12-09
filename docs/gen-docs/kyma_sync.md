@@ -20,6 +20,6 @@ Use this command to download the given resource's code and dependencies from the
 
 ## See also
 
-* [kyma](#kyma-kyma)	 - Controls a Kyma cluster.
-* [kyma sync function](#kyma-sync-function-kyma-sync-function)	 - Synchronizes the local resources for your Function.
+* [kyma](kyma.md)	 - Controls a Kyma cluster.
+* [kyma sync function](kyma_sync_function.md)	 - Synchronizes the local resources for your Function.
 

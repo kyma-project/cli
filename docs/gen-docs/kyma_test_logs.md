@@ -36,5 +36,5 @@ kyma test logs <test-suite-1> <test-suite-2> ... <test-suite-N> [flags]
 
 ## See also
 
-* [kyma test](#kyma-test-kyma-test)	 - [DEPRECATED] Runs tests on a provisioned Kyma cluster.
+* [kyma test](kyma_test.md)	 - [DEPRECATED] Runs tests on a provisioned Kyma cluster.
 

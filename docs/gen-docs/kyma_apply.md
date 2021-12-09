@@ -20,6 +20,6 @@ Use this command to apply the resource configuration to the Kyma cluster.
 
 ## See also
 
-* [kyma](#kyma-kyma)	 - Controls a Kyma cluster.
-* [kyma apply function](#kyma-apply-function-kyma-apply-function)	 - Applies local resources for your Function to the Kyma cluster.
+* [kyma](kyma.md)	 - Controls a Kyma cluster.
+* [kyma apply function](kyma_apply_function.md)	 - Applies local resources for your Function to the Kyma cluster.
 

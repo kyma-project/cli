@@ -32,5 +32,5 @@ kyma sync function [flags]
 
 ## See also
 
-* [kyma sync](#kyma-sync-kyma-sync)	 - Synchronizes the local resources for your Function.
+* [kyma sync](kyma_sync.md)	 - Synchronizes the local resources for your Function.
 

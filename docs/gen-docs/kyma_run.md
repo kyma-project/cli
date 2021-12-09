@@ -20,6 +20,6 @@ Use this command to run resources.
 
 ## See also
 
-* [kyma](#kyma-kyma)	 - Controls a Kyma cluster.
-* [kyma run function](#kyma-run-function-kyma-run-function)	 - Runs Functions locally.
+* [kyma](kyma.md)	 - Controls a Kyma cluster.
+* [kyma run function](kyma_run_function.md)	 - Runs Functions locally.
 
