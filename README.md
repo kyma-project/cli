@@ -83,9 +83,9 @@ To download the binaries, run:
 curl -Lo kyma https://storage.googleapis.com/kyma-cli-stable/kyma-darwin # kyma-linux, kyma-linux-arm, kyma.exe, or kyma-arm.exe
 chmod +x kyma
 ```
-In addition to these binaries we also provide binaries using the latest reconciler version. We try to build those binaries daily.
+In addition to the stable binaries, we also provide binaries using the latest reconciler version. We try to build those binaries daily.
 
-To download these binaries, run:
+To download the binaries using the latest reconciler version, run:
 
 ```bash
 curl -Lo kyma https://storage.googleapis.com/kyma-cli-unstable/kyma-darwin # kyma-linux, kyma-linux-arm, kyma.exe, or kyma-arm.exe
