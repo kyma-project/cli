@@ -1,18 +1,22 @@
 package undeploy
 
 import (
+	"github.com/kyma-project/cli/cmd/kyma/deploy"
 	"github.com/kyma-project/cli/internal/cli"
-	"time"
+)
+
+const (
+	VersionLocal      = "local"
+	profileEvaluation = "evaluation"
+	profileProduction = "production"
 )
 
 //Options defines available options for the command
 type Options struct {
-	*cli.Options
-	KeepCRDs bool
-	Timeout  time.Duration
+	*deploy.Options
 }
 
 //NewOptions creates options with default values
 func NewOptions(o *cli.Options) *Options {
-	return &Options{Options: o}
+	return &Options{Options: deploy.NewOptions(o)}
 }

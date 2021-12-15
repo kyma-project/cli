@@ -1,13 +1,14 @@
 package deploy
 
 import (
+	"testing"
+
 	"github.com/kyma-incubator/reconciler/pkg/cluster"
 	"github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-incubator/reconciler/pkg/model"
 	"github.com/kyma-project/cli/internal/deploy/component"
 	"github.com/kyma-project/cli/internal/deploy/values"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestPrepareKebComponents(t *testing.T) {
@@ -140,6 +141,10 @@ func TestPrepareKebCluster(t *testing.T) {
 		},
 	}
 
-	result := prepareKebCluster(options, expected)
+	result := prepareKebCluster(options, expected, false)
+	require.Equal(t, expectedState, result)
+
+	expectedState.Status.Status = model.ClusterStatusDeletePending
+	result = prepareKebCluster(options, expected, true)
 	require.Equal(t, expectedState, result)
 }

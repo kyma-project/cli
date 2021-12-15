@@ -2,9 +2,10 @@ package nice
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/kyma-incubator/reconciler/pkg/model"
 	"github.com/kyma-incubator/reconciler/pkg/scheduler/service"
-	"time"
 )
 
 type Summary struct {
@@ -24,7 +25,9 @@ func (s *Summary) PrintFailedComponentSummary(result *service.ReconciliationResu
 	failedComps := []string{}
 	successfulComps := []string{}
 
-	for _, comp := range result.GetOperations() {
+	ops := result.GetOperations()
+
+	for _, comp := range ops {
 		if comp.State == model.OperationStateError {
 			failedComps = append(failedComps, comp.Component)
 		}
@@ -34,9 +37,16 @@ func (s *Summary) PrintFailedComponentSummary(result *service.ReconciliationResu
 	}
 
 	fmt.Println()
-	fmt.Printf("Deployed Components: ")
-	nicePrint.PrintImportantf("%d/%d", len(successfulComps), len(successfulComps)+len(failedComps))
-	fmt.Println("Could not deploy the following components:")
+	if len(ops) > 0 && ops[0].Type == model.OperationTypeDelete {
+		fmt.Printf("Deleted Components: ")
+		nicePrint.PrintImportantf("%d/%d", len(successfulComps), len(successfulComps)+len(failedComps))
+		fmt.Println("Could not delete the following components:")
+	} else {
+		fmt.Printf("Deployed Components: ")
+		nicePrint.PrintImportantf("%d/%d", len(successfulComps), len(successfulComps)+len(failedComps))
+		fmt.Println("Could not deploy the following components:")
+	}
+
 	for _, items := range failedComps {
 		fmt.Printf("- %s\n", items)
 	}
