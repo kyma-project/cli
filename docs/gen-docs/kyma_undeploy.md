@@ -20,7 +20,7 @@ kyma undeploy [flags]
       --concurrency int          Set maximum number of workers to run simultaneously to deploy Kyma. (default 4)
   -d, --domain string            Custom domain used for installation.
   -p, --profile string           Kyma deployment profile. If not specified, Kyma uses its default configuration. The supported profiles are: evaluation, production.
-  -s, --source string            Installation source:
+  -s, --source string            Source of installation to be undeployed:
                                  	- Undeploy from a specific release, for example: "kyma undeploy --source=2.0.0"
                                  	- Undeploy from a specific branch of the Kyma repository on kyma-project.org: "kyma undeploy --source=<my-branch-name>"
                                  	- Undeploy from a commit (8 characters or more), for example: "kyma undeploy --source=34edf09a"
