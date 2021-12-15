@@ -2,11 +2,15 @@ package component
 
 import (
 	"encoding/json"
-	"github.com/pkg/errors"
-	"gopkg.in/yaml.v3"
 	"io/ioutil"
+	"path"
 	"path/filepath"
 	"strings"
+
+	"github.com/kyma-incubator/reconciler/pkg/reconciler/chart"
+	"github.com/kyma-project/cli/internal/resolve"
+	"github.com/pkg/errors"
+	"gopkg.in/yaml.v3"
 )
 
 const defaultNamespace = "kyma-system"
@@ -22,6 +26,23 @@ type List struct {
 type Definition struct {
 	Name      string `yaml:"name" json:"name"`
 	Namespace string `yaml:"namespace" json:"namespace"`
+}
+
+// Resolve creates a component list from the given component names or the file
+func Resolve(components []string, componentsFile string, ws *chart.KymaWorkspace) (List, error) {
+	if len(components) > 0 {
+		components := FromStrings(components)
+		return components, nil
+	}
+	if componentsFile != "" {
+		filePath, err := resolve.File(componentsFile, filepath.Join(ws.WorkspaceDir, "tmp"))
+		if err != nil {
+			return List{}, err
+		}
+		return FromFile(filePath)
+	}
+
+	return FromFile(path.Join(ws.InstallationResourceDir, "components.yaml"))
 }
 
 // PrerequisiteNames returns all names of prerequisites from the current component list

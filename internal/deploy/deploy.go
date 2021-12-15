@@ -2,6 +2,7 @@ package deploy
 
 import (
 	"context"
+
 	"github.com/kyma-incubator/reconciler/pkg/cluster"
 	"github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-incubator/reconciler/pkg/model"
@@ -42,12 +43,20 @@ type Options struct {
 }
 
 func Deploy(opts Options) (*service.ReconciliationResult, error) {
+	return doReconciliation(opts, false)
+}
+
+func Undeploy(opts Options) (*service.ReconciliationResult, error) {
+	return doReconciliation(opts, true)
+}
+
+func doReconciliation(opts Options, delete bool) (*service.ReconciliationResult, error) {
 	kebComponents, err := prepareKebComponents(opts.Components, opts.Values)
 	if err != nil {
 		return nil, err
 	}
 
-	kebCluster := prepareKebCluster(opts, kebComponents)
+	kebCluster := prepareKebCluster(opts, kebComponents, delete)
 
 	runtimeBuilder := service.NewRuntimeBuilder(reconciliation.NewInMemoryReconciliationRepository(), opts.Logger)
 	reconcilationResult, err := runtimeBuilder.RunLocal(opts.Components.PrerequisiteNames(), func(component string, msg *reconciler.CallbackMessage) {
@@ -104,7 +113,12 @@ func prepareKebComponents(components component.List, vals values.Values) ([]*keb
 	return kebComponents, nil
 }
 
-func prepareKebCluster(opts Options, kebComponents []*keb.Component) *cluster.State {
+func prepareKebCluster(opts Options, kebComponents []*keb.Component, delete bool) *cluster.State {
+	status := model.ClusterStatusReconcilePending
+	if delete {
+		status = model.ClusterStatusDeletePending
+	}
+
 	return &cluster.State{
 		Cluster: &model.ClusterEntity{
 			Version:    1,
@@ -127,7 +141,7 @@ func prepareKebCluster(opts Options, kebComponents []*keb.Component) *cluster.St
 			RuntimeID:      "local",
 			ClusterVersion: 1,
 			ConfigVersion:  1,
-			Status:         model.ClusterStatusReconcilePending,
+			Status:         status,
 		},
 	}
 }
