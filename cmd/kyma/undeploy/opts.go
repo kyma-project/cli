@@ -14,7 +14,6 @@ const (
 //Options defines available options for the command
 type Options struct {
 	*deploy.Options
-	KeepCRDs bool
 }
 
 //NewOptions creates options with default values

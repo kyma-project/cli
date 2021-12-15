@@ -143,4 +143,8 @@ func TestPrepareKebCluster(t *testing.T) {
 
 	result := prepareKebCluster(options, expected, false)
 	require.Equal(t, expectedState, result)
+
+	expectedState.Status.Status = model.ClusterStatusDeletePending
+	result = prepareKebCluster(options, expected, true)
+	require.Equal(t, expectedState, result)
 }

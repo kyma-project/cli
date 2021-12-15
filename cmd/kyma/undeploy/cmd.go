@@ -59,7 +59,6 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd.Flags().IntVarP(&o.WorkerPoolSize, "concurrency", "", 4, "Set maximum number of workers to run simultaneously to deploy Kyma.")
 	cobraCmd.Flags().StringSliceVarP(&o.Values, "value", "", []string{}, "Set configuration values. Can specify one or more values, also as a comma-separated list (e.g. --value component.a='1' --value component.b='2' or --value component.a='1',component.b='2').")
 	cobraCmd.Flags().StringSliceVarP(&o.ValueFiles, "values-file", "f", []string{}, "Path(s) to one or more JSON or YAML files with configuration values.")
-	cobraCmd.Flags().BoolVarP(&o.KeepCRDs, "keep-crds", "", false, "Set --keep-crds=true to keep CRDs on clean-up")
 	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 6*time.Minute, "Maximum time for the deletion")
 	return cobraCmd
 }
@@ -109,8 +108,8 @@ func (cmd *command) Run() error {
 		return err
 	}
 
-	unDeployStep := cmd.NewStep("Undeploying Kyma")
-	unDeployStep.Start()
+	undeployStep := cmd.NewStep("Undeploying Kyma")
+	undeployStep.Start()
 
 	// do the undeploy
 	recoResult, err := deploy.Undeploy(deploy.Options{
@@ -124,20 +123,20 @@ func (cmd *command) Run() error {
 		WorkerPoolSize: cmd.opts.WorkerPoolSize,
 	})
 	if err != nil {
-		unDeployStep.Failuref("Failed to undeploy Kyma.")
+		undeployStep.Failuref("Failed to undeploy Kyma.")
 		return err
 	}
 
 	if recoResult.GetResult() == model.ClusterStatusDeleteError {
-		unDeployStep.Failure()
+		undeployStep.Failure()
 		cmd.setSummary().PrintFailedComponentSummary(recoResult)
 		return errors.Errorf("Kyma undeployment failed.")
 	}
 
 	if recoResult.GetResult() == model.ClusterStatusDeleted {
-		unDeployStep.Success()
+		undeployStep.Success()
 	}
-	unDeployStep.Successf("Kyma undeployed successfully!")
+	undeployStep.Successf("Kyma undeployed successfully!")
 	return nil
 }
 
