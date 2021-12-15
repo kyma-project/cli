@@ -6,13 +6,9 @@ import (
 
 	"io/ioutil"
 	"os"
-	"path"
-	"path/filepath"
 	"time"
 
 	"github.com/kyma-incubator/reconciler/pkg/model"
-	"github.com/kyma-incubator/reconciler/pkg/reconciler/chart"
-	"github.com/kyma-incubator/reconciler/pkg/reconciler/service"
 	"github.com/kyma-project/cli/internal/clusterinfo"
 	"github.com/kyma-project/cli/internal/coredns"
 	"github.com/kyma-project/cli/internal/deploy"
@@ -21,11 +17,8 @@ import (
 	"github.com/kyma-project/cli/internal/deploy/component"
 	"github.com/kyma-project/cli/internal/deploy/values"
 
-	"github.com/kyma-project/cli/internal/resolve"
-
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/config"
-	"github.com/kyma-project/cli/internal/files"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/nice"
 	"github.com/kyma-project/cli/internal/version"
@@ -123,8 +116,15 @@ func (cmd *command) run() error {
 		return errors.Wrap(err, "failed to initialize the Kubernetes client from given kubeconfig")
 	}
 
+	// check version upgrade
+	if err := cmd.decideVersionUpgrade(); err != nil {
+		return err
+	}
+
+	// Prepare workspace
+	wsStep := cmd.NewStep(fmt.Sprintf("Fetching Kyma sources (%s)", cmd.opts.Source))
 	l := cli.NewLogger(cmd.opts.Verbose).Sugar()
-	ws, err := cmd.prepareWorkspace(l)
+	ws, err := deploy.PrepareWorkspace(cmd.opts.WorkspacePath, cmd.opts.Source, wsStep, !cmd.avoidUserInteraction(), cmd.opts.IsLocal(), l)
 	if err != nil {
 		return err
 	}
@@ -144,7 +144,7 @@ func (cmd *command) run() error {
 		return err
 	}
 
-	components, err := cmd.resolveComponents(ws)
+	components, err := component.Resolve(cmd.opts.Components, cmd.opts.ComponentsFile, ws)
 	if err != nil {
 		return err
 	}
@@ -231,69 +231,6 @@ func (cmd *command) printDeployStatus(status deploy.ComponentStatus) {
 		statusStep := cmd.NewStep(fmt.Sprintf("Component '%s' failed \n%s\n", status.Component, status.Error.Error()))
 		statusStep.Failure()
 	}
-}
-
-func (cmd *command) prepareWorkspace(l *zap.SugaredLogger) (*chart.KymaWorkspace, error) {
-	if err := cmd.decideVersionUpgrade(); err != nil {
-		return nil, err
-	}
-	wsStep := cmd.NewStep(fmt.Sprintf("Fetching Kyma sources (%s)", cmd.opts.Source))
-
-	if cmd.opts.Source != VersionLocal {
-		_, err := os.Stat(cmd.opts.WorkspacePath)
-		if !os.IsNotExist(err) && !cmd.avoidUserInteraction() {
-			isWorkspaceEmpty, err := files.IsDirEmpty(cmd.opts.WorkspacePath)
-			if err != nil {
-				return nil, err
-			}
-			if !isWorkspaceEmpty && cmd.opts.WorkspacePath != getDefaultWorkspacePath() {
-				if !wsStep.PromptYesNo(fmt.Sprintf("Existing files in workspace folder '%s' will be deleted. Are you sure you want to continue? ", cmd.opts.WorkspacePath)) {
-					wsStep.Failure()
-					return nil, errors.Errorf("aborting deployment")
-				}
-			}
-		}
-	}
-
-	wsp, err := cmd.opts.ResolveLocalWorkspacePath()
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to resolve workspace path")
-	}
-
-	wsFact, err := chart.NewFactory(nil, wsp, l)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to instantiate workspace factory")
-	}
-
-	err = service.UseGlobalWorkspaceFactory(wsFact)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to set global workspace factory")
-	}
-
-	ws, err := wsFact.Get(cmd.opts.Source)
-	if err != nil {
-		return nil, errors.Wrap(err, "Could not fetch workspace")
-	}
-
-	wsStep.Successf("Using Kyma from the workspace directory: %s", wsp)
-
-	return ws, nil
-}
-
-func (cmd *command) resolveComponents(ws *chart.KymaWorkspace) (component.List, error) {
-	if len(cmd.opts.Components) > 0 {
-		components := component.FromStrings(cmd.opts.Components)
-		return components, nil
-	}
-	if cmd.opts.ComponentsFile != "" {
-		filePath, err := resolve.File(cmd.opts.ComponentsFile, filepath.Join(ws.WorkspaceDir, "tmp"))
-		if err != nil {
-			return component.List{}, err
-		}
-		return component.FromFile(filePath)
-	}
-
-	return component.FromFile(path.Join(ws.InstallationResourceDir, "components.yaml"))
 }
 
 // avoidUserInteraction returns true if user won't provide input
