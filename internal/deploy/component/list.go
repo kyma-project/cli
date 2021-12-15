@@ -28,7 +28,7 @@ type Definition struct {
 	Namespace string `yaml:"namespace" json:"namespace"`
 }
 
-// Resolve creates a compnent list from the given component names or the file
+// Resolve creates a component list from the given component names or the file
 func Resolve(components []string, componentsFile string, ws *chart.KymaWorkspace) (List, error) {
 	if len(components) > 0 {
 		components := FromStrings(components)
