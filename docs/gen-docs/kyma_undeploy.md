@@ -19,7 +19,6 @@ kyma undeploy [flags]
   -c, --components-file string   Path to the components file (default "$HOME/.kyma/sources/installation/resources/components.yaml" or ".kyma-sources/installation/resources/components.yaml")
       --concurrency int          Set maximum number of workers to run simultaneously to deploy Kyma. (default 4)
   -d, --domain string            Custom domain used for installation.
-      --keep-crds                Set --keep-crds=true to keep CRDs on clean-up
   -p, --profile string           Kyma deployment profile. If not specified, Kyma uses its default configuration. The supported profiles are: evaluation, production.
   -s, --source string            Installation source:
                                  	- Undeploy from a specific release, for example: "kyma undeploy --source=2.0.0"
