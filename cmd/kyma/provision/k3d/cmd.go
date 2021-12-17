@@ -124,6 +124,9 @@ func (c *command) verifyK3dStatus(k3dClient k3d.Client) error {
 	} else {
 		if err := allocatePorts(ports...); err != nil {
 			s.Failure()
+			if strings.Contains(err.Error(), "bind: permission denied") {
+				s.LogInfo("Hint: The following error can potentially be mitigated by either running the command with `sudo` privileges or specifying other ports with the `--port` flag:")
+			}
 			return errors.Wrap(err, "Port cannot be allocated")
 		}
 		if registryExists {
