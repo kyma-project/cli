@@ -13,12 +13,14 @@ func TestResolveWorkspace(t *testing.T) {
 		ws := path.Join("dummyWS")
 		err := os.Mkdir(ws, 0700)
 		require.NoError(t, err)
+		defer func() {
+			err := os.Remove(ws)
+			require.NoError(t, err)
+		}()
 		wsp, err := ResolveLocalWorkspacePath(ws, true)
 		require.NoError(t, err)
 		require.Equal(t, ws, wsp)
 		err = pathExists(ws, "dummy ws path")
-		require.NoError(t, err)
-		err = os.Remove(ws)
 		require.NoError(t, err)
 	})
 

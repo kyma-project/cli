@@ -14,6 +14,7 @@ import (
 	"github.com/kyma-project/cli/internal/config"
 	"github.com/kyma-project/cli/internal/deploy"
 	"github.com/kyma-project/cli/internal/deploy/component"
+	"github.com/kyma-project/cli/internal/deploy/istioctl"
 	"github.com/kyma-project/cli/internal/deploy/values"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/nice"
@@ -89,6 +90,11 @@ func (cmd *command) Run() error {
 	wsStep := cmd.NewStep(fmt.Sprintf("Fetching Kyma sources (%s)", cmd.opts.Source))
 	l := cli.NewLogger(cmd.opts.Verbose).Sugar()
 	ws, err := deploy.PrepareWorkspace(cmd.opts.WorkspacePath, cmd.opts.Source, wsStep, !cmd.avoidUserInteraction(), cmd.opts.IsLocal(), l)
+	if err != nil {
+		return err
+	}
+
+	err = cmd.initialSetup(ws.WorkspaceDir)
 	if err != nil {
 		return err
 	}
@@ -172,4 +178,20 @@ func (cmd *command) setSummary() *nice.Summary {
 		NonInteractive: cmd.NonInteractive,
 		Version:        cmd.opts.Source,
 	}
+}
+
+func (cmd *command) initialSetup(wsp string) error {
+	preReqStep := cmd.NewStep("Initial setup")
+
+	istio, err := istioctl.New(wsp)
+	if err != nil {
+		return err
+	}
+	err = istio.Install()
+	if err != nil {
+		return err
+	}
+
+	preReqStep.Success()
+	return nil
 }
