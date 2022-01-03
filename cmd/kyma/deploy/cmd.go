@@ -149,7 +149,7 @@ func (cmd *command) run() error {
 		return err
 	}
 
-	err = cmd.installPrerequisites(ws.WorkspaceDir)
+	err = cmd.initialSetup(ws.WorkspaceDir)
 	if err != nil {
 		return err
 	}
@@ -293,8 +293,8 @@ func (cmd *command) decideVersionUpgrade() error {
 	return nil
 }
 
-func (cmd *command) installPrerequisites(wsp string) error {
-	preReqStep := cmd.NewStep("Installing Prerequisites")
+func (cmd *command) initialSetup(wsp string) error {
+	preReqStep := cmd.NewStep("Initial setup")
 
 	istio, err := istioctl.New(wsp)
 	if err != nil {
@@ -305,7 +305,7 @@ func (cmd *command) installPrerequisites(wsp string) error {
 		return err
 	}
 
-	preReqStep.Successf("Installed Prerequisites")
+	preReqStep.Success()
 	return nil
 }
 
