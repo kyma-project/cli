@@ -6,9 +6,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"fmt"
-	"github.com/kyma-project/cli/internal/files"
-	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -17,11 +14,15 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"github.com/kyma-project/cli/internal/files"
+	"github.com/pkg/errors"
+	"gopkg.in/yaml.v2"
 )
 
 const defaultIstioChartPath = "/resources/istio-configuration/Chart.yaml"
 const archSupport = "1.6"
-const environmentVariable = "ISTIOCTL_PATH"
+const envVar = "ISTIOCTL_PATH"
 const dirName = "istio"
 const binName = "istioctl"
 const winBinName = "istioctl.exe"
@@ -62,7 +63,6 @@ type Installation struct {
 	IstioChartPath string
 	Client         HTTPClient
 	kymaHome       string
-	environmentVar string
 	istioVersion   string
 	osExt          string
 	istioArch      string
@@ -87,7 +87,6 @@ func New(workspacePath string) (Installation, error) {
 		IstioChartPath: defaultIstioChartPath,
 		Client:         &http.Client{},
 		kymaHome:       kymaHome,
-		environmentVar: environmentVariable,
 		archSupport:    archSupport,
 		dirName:        dirName,
 		binName:        binName,
@@ -243,10 +242,10 @@ func (i *Installation) extractIstio() error {
 }
 
 func (i *Installation) exportEnvVar() error {
-	if i.environmentVar == "" || i.binPath == "" {
-		return errors.New("envVar or binPath empty")
+	if i.binPath == "" {
+		return errors.New("failed exporting istioctl envvar: binPath empty")
 	}
-	if err := os.Setenv(i.environmentVar, i.binPath); err != nil {
+	if err := os.Setenv(envVar, i.binPath); err != nil {
 		return err
 	}
 	return nil
