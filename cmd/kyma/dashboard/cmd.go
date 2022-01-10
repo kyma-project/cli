@@ -131,7 +131,7 @@ func (cmd *command) initContainerRunOpts(envs []string) (docker.ContainerRunOpts
 
 	if runtime.GOOS == "linux" {
 		if cmd.Verbose {
-			fmt.Printf("Operating System seems to be linux. Changing the Docker network mode to 'host'")
+			fmt.Printf("Operating system seems to be Linux. Changing the Docker network mode to 'host'")
 		}
 		containerRunOpts.NetworkMode = "host"
 	}
