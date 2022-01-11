@@ -83,6 +83,7 @@ type ContainerRunOpts struct {
 	Envs          []string
 	Image         string
 	Mounts        []mount.Mount
+	NetworkMode   string
 	Ports         map[string]string
 }
 
@@ -223,6 +224,7 @@ func (w *dockerWrapper) PullImageAndStartContainer(ctx context.Context, opts Con
 		PortBindings: portMap(opts.Ports),
 		AutoRemove:   true,
 		Mounts:       opts.Mounts,
+		NetworkMode:  container.NetworkMode(opts.NetworkMode),
 	}
 
 	var r io.ReadCloser

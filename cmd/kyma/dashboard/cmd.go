@@ -3,6 +3,7 @@ package dashboard
 import (
 	"context"
 	"fmt"
+	"runtime"
 
 	"github.com/docker/docker/api/types/mount"
 	"github.com/kyma-project/cli/internal/cli"
@@ -126,6 +127,13 @@ func (cmd *command) initContainerRunOpts(envs []string) (docker.ContainerRunOpts
 			},
 		}
 		dashboardURL = fmt.Sprintf("%s?kubeconfigID=%s", dashboardURL, containerKubeconfigFilename)
+	}
+
+	if runtime.GOOS == "linux" {
+		if cmd.Verbose {
+			fmt.Printf("Operating system seems to be Linux. Changing the Docker network mode to 'host'")
+		}
+		containerRunOpts.NetworkMode = "host"
 	}
 
 	return containerRunOpts, dashboardURL
