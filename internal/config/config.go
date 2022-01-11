@@ -7,5 +7,5 @@ package config
 
 const (
 	DefaultKyma1Version = "1.24.8"
-	DefaultKyma2Version = "2.0.0"
+	DefaultKyma2Version = "2.0.2"
 )
