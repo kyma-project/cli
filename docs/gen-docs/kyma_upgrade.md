@@ -30,7 +30,7 @@ kyma upgrade [flags]
                                	- To use the main branch, write "kyma install --source=main".
                                	- To use a commit, write "kyma upgrade --source=34edf09a".
                                	- To use the local sources, write "kyma upgrade --source=local".
-                               	- To use a custom installer image, write "kyma upgrade --source=user/my-kyma-installer:v1.4.0". (default "1.24.8")
+                               	- To use a custom installer image, write "kyma upgrade --source=user/my-kyma-installer:v1.4.0". (default "1.24.9")
       --src-path string        Absolute path to local sources.
       --timeout duration       Timeout after which CLI stops watching the upgrade progress. (default 1h0m0s)
       --tls-cert string        TLS certificate for the domain used for the upgrade. The certificate must be a base64-encoded value.
