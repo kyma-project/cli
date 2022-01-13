@@ -61,7 +61,7 @@ kyma install [flags]
                                	- To use a commit, write "kyma install --source=34edf09a".
                                	- To use a pull request, write "kyma install --source=PR-9486" (only works if '/resources' is modified).
                                	- To use the local sources, write "kyma install --source=local".
-                               	- To use a custom installer image, write "kyma install --source=user/my-kyma-installer:v1.4.0". (default "1.24.6")
+                               	- To use a custom installer image, write "kyma install --source=user/my-kyma-installer:v1.4.0". (default "1.24.9")
       --src-path string        Absolute path to local sources.
       --timeout duration       Timeout after which CLI stops watching the installation progress. (default 1h0m0s)
       --tls-cert string        TLS certificate for the domain used for installation. The certificate must be a base64-encoded value.
