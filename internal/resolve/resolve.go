@@ -57,7 +57,7 @@ func Files(files []string, dstDir string) ([]string, error) {
 // RemoteReader returns a reader to a remote file.
 func RemoteReader(path string) (io.ReadCloser, error) {
 	client := &http.Client{
-		Timeout: 5 * time.Second,
+		Timeout: 60 * time.Second,
 	}
 	// nolint: gosec
 	resp, err := client.Get(path)
