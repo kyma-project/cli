@@ -31,9 +31,9 @@ require (
 	github.com/docker/go-connections v0.4.0
 	github.com/fatih/color v1.10.0
 	github.com/imdario/mergo v0.3.12
-	github.com/kyma-incubator/hydroform/function v0.0.0-20211013085232-f50b80b24d73
-	github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90
-	github.com/kyma-incubator/hydroform/provision v0.0.0-20210514061348-c71b69cb362e
+	github.com/kyma-incubator/hydroform/function v0.0.0-20211124081653-7f0b85b318e1
+	github.com/kyma-incubator/hydroform/install v0.0.0-20211124081653-7f0b85b318e1
+	github.com/kyma-incubator/hydroform/provision v0.0.0-20211124081653-7f0b85b318e1
 	github.com/kyma-incubator/octopus v0.0.0-20200922132758-2b721e93b58b
 	github.com/kyma-incubator/reconciler v0.0.0-20220110162842-fe5f865b7552
 	github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20201125092745-687c943ac940
