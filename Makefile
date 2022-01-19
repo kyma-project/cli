@@ -1,10 +1,10 @@
 .DEFAULT_GOAL := local
 
 ifndef VERSION
-	VERSION = ${shell git describe --tags --always}
+	VERSION=${shell git rev-parse --abbrev-ref HEAD}-${shell git rev-parse --short HEAD} # branch-commit_hash
 endif
 
-ifeq ($(VERSION),stable)
+ifeq (${shell git rev-list -n 1 tags/stable},${shell git rev-parse HEAD}) # if stable tag is the same as current commit
 	VERSION = stable-${shell git rev-parse --short HEAD}
 endif
 
