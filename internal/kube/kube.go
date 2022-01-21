@@ -5,7 +5,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/kyma-project/cli/pkg/api/octopus"
 	istio "istio.io/client-go/pkg/clientset/versioned"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
@@ -20,7 +19,6 @@ import (
 type KymaKube interface {
 	Static() kubernetes.Interface
 	Dynamic() dynamic.Interface
-	Octopus() octopus.Interface
 	Istio() istio.Interface
 
 	// RestConfig provides the REST configuration of the kubernetes client
