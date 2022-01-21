@@ -34,10 +34,8 @@ require (
 	github.com/kyma-incubator/hydroform/function v0.0.0-20211013085232-f50b80b24d73
 	github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90
 	github.com/kyma-incubator/hydroform/provision v0.0.0-20210514061348-c71b69cb362e
-	github.com/kyma-incubator/octopus v0.0.0-20200922132758-2b721e93b58b
 	github.com/kyma-incubator/reconciler v0.0.0-20220110162842-fe5f865b7552
 	github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20201125092745-687c943ac940
-	github.com/olekukonko/tablewriter v0.0.5
 	github.com/opencontainers/image-spec v1.0.1
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/pkg/errors v0.9.1
@@ -55,7 +53,6 @@ require (
 	k8s.io/apiextensions-apiserver v0.22.4
 	k8s.io/apimachinery v0.22.4
 	k8s.io/client-go v0.22.4
-	sigs.k8s.io/yaml v1.2.0
 )
 
 require (
@@ -315,8 +312,8 @@ require (
 	k8s.io/kubectl v0.22.4 // indirect
 	k8s.io/utils v0.0.0-20210819203725-bdf08cb9a70a // indirect
 	oras.land/oras-go v0.4.0 // indirect
-	sigs.k8s.io/controller-runtime v0.6.3 // indirect
 	sigs.k8s.io/kustomize/api v0.8.11 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.11.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.1.2 // indirect
+	sigs.k8s.io/yaml v1.2.0 // indirect
 )
