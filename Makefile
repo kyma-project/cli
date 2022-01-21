@@ -1,11 +1,13 @@
 .DEFAULT_GOAL := local
 
 ifndef VERSION
-	VERSION = ${shell git describe --tags --always}
-endif
+	VERSION = ${shell git rev-parse --abbrev-ref HEAD}-${shell git rev-parse --short HEAD}
 
-ifeq ($(VERSION),stable)
-	VERSION = stable-${shell git rev-parse --short HEAD}
+	ifneq (${shell git tag -l "stable"},) # if there is a stable tag
+		ifeq (${shell git rev-list -n 1 tags/stable},${shell git rev-parse HEAD}) # if stable tag is the same as current commit
+			VERSION = stable-${shell git rev-parse --short HEAD}
+		endif
+	endif
 endif
 
 FLAGS = -ldflags '-s -w -X github.com/kyma-project/cli/cmd/kyma/version.Version=$(VERSION)'
@@ -97,4 +99,3 @@ ci-main: resolve validate build test integration-test upload-binaries
 
 .PHONY: ci-release
 ci-release: resolve validate build test integration-test archive release
-
