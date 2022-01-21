@@ -22,13 +22,6 @@ import (
 	"github.com/kyma-project/cli/cmd/kyma/provision/minikube"
 	"github.com/kyma-project/cli/cmd/kyma/run"
 	"github.com/kyma-project/cli/cmd/kyma/sync"
-	"github.com/kyma-project/cli/cmd/kyma/test"
-	testdefs "github.com/kyma-project/cli/cmd/kyma/test/definitions"
-	testdel "github.com/kyma-project/cli/cmd/kyma/test/delete"
-	testlist "github.com/kyma-project/cli/cmd/kyma/test/list"
-	testlogs "github.com/kyma-project/cli/cmd/kyma/test/logs"
-	testrun "github.com/kyma-project/cli/cmd/kyma/test/run"
-	teststatus "github.com/kyma-project/cli/cmd/kyma/test/status"
 	"github.com/kyma-project/cli/cmd/kyma/undeploy"
 	"github.com/kyma-project/cli/cmd/kyma/version"
 
@@ -88,16 +81,6 @@ Kyma CLI allows you to install, test, and manage Kyma.
 		undeploy.NewCmd(undeploy.NewOptions(o)),
 		storeCmd,
 	)
-
-	testCmd := test.NewCmd()
-	testRunCmd := testrun.NewCmd(testrun.NewOptions(o))
-	testStatusCmd := teststatus.NewCmd(teststatus.NewOptions(o))
-	testDeleteCmd := testdel.NewCmd(testdel.NewOptions(o))
-	testListCmd := testlist.NewCmd(testlist.NewOptions(o))
-	testDefsCmd := testdefs.NewCmd(testdefs.NewOptions(o))
-	testLogsCmd := testlogs.NewCmd(testlogs.NewOptions(o))
-	testCmd.AddCommand(testRunCmd, testStatusCmd, testDeleteCmd, testListCmd, testDefsCmd, testLogsCmd)
-	cmd.AddCommand(testCmd)
 
 	cmd.AddCommand(
 		initial.NewCmd(o),
