@@ -40,6 +40,7 @@ type Options struct {
 	KymaProfile    string
 	Logger         *zap.SugaredLogger
 	WorkerPoolSize int
+	DeleteStrategy string
 }
 
 func Deploy(opts Options) (*service.ReconciliationResult, error) {
@@ -58,8 +59,13 @@ func doReconciliation(opts Options, delete bool) (*service.ReconciliationResult,
 
 	kebCluster := prepareKebCluster(opts, kebComponents, delete)
 
+	ds, err := service.NewDeleteStrategy(opts.DeleteStrategy)
+	if err != nil {
+		return nil, err
+	}
+
 	runtimeBuilder := service.NewRuntimeBuilder(reconciliation.NewInMemoryReconciliationRepository(), opts.Logger)
-	reconcilationResult, err := runtimeBuilder.RunLocal(opts.Components.PrerequisiteNames(), func(component string, msg *reconciler.CallbackMessage) {
+	reconcilationResult, err := runtimeBuilder.RunLocal(func(component string, msg *reconciler.CallbackMessage) {
 		var state ComponentState
 		var errorRecieved error
 		switch msg.Status {
@@ -75,7 +81,13 @@ func doReconciliation(opts Options, delete bool) (*service.ReconciliationResult,
 		}
 
 		opts.StatusFunc(ComponentStatus{component, state, errorRecieved})
-	}).WithWorkerPoolSize(opts.WorkerPoolSize).Run(context.TODO(), kebCluster)
+	}).
+		WithSchedulerConfig(&service.SchedulerConfig{
+			PreComponents:  opts.Components.PrerequisiteNames(),
+			DeleteStrategy: ds,
+		}).
+		WithWorkerPoolSize(opts.WorkerPoolSize).
+		Run(context.TODO(), kebCluster)
 
 	return reconcilationResult, err
 }

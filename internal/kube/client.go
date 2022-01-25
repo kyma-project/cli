@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kyma-project/cli/pkg/api/octopus"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 
@@ -31,7 +30,6 @@ const (
 type client struct {
 	static  kubernetes.Interface
 	dynamic dynamic.Interface
-	octps   octopus.Interface
 	istio   istio.Interface
 	restCfg *rest.Config
 	kubeCfg *api.Config
@@ -62,11 +60,6 @@ func NewFromConfigWithTimeout(url, file string, t time.Duration) (KymaKube, erro
 		return nil, err
 	}
 
-	octClient, err := octopus.NewFromConfig(config)
-	if err != nil {
-		return nil, err
-	}
-
 	istioClient, err := istio.NewForConfig(config)
 	if err != nil {
 		return nil, err
@@ -80,7 +73,6 @@ func NewFromConfigWithTimeout(url, file string, t time.Duration) (KymaKube, erro
 	return &client{
 			static:  sClient,
 			dynamic: dClient,
-			octps:   octClient,
 			istio:   istioClient,
 			restCfg: config,
 			kubeCfg: kubeConfig,
@@ -94,10 +86,6 @@ func (c *client) Static() kubernetes.Interface {
 
 func (c *client) Dynamic() dynamic.Interface {
 	return c.dynamic
-}
-
-func (c *client) Octopus() octopus.Interface {
-	return c.octps
 }
 
 func (c *client) Istio() istio.Interface {

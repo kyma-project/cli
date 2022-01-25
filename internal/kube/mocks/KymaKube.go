@@ -10,8 +10,6 @@ import (
 
 	mock "github.com/stretchr/testify/mock"
 
-	octopus "github.com/kyma-project/cli/pkg/api/octopus"
-
 	rest "k8s.io/client-go/rest"
 
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -126,22 +124,6 @@ func (_m *KymaKube) KubeConfig() *api.Config {
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*api.Config)
-		}
-	}
-
-	return r0
-}
-
-// Octopus provides a mock function with given fields:
-func (_m *KymaKube) Octopus() octopus.Interface {
-	ret := _m.Called()
-
-	var r0 octopus.Interface
-	if rf, ok := ret.Get(0).(func() octopus.Interface); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(octopus.Interface)
 		}
 	}
 

@@ -7,7 +7,7 @@ Controls a Kyma cluster.
 ## Synopsis
 
 Kyma is a flexible and easy way to connect and extend enterprise applications in a cloud-native world.
-Kyma CLI allows you to install, test, and manage Kyma.
+Kyma CLI allows you to install and manage Kyma.
 
 
 
@@ -35,7 +35,6 @@ Kyma CLI allows you to install, test, and manage Kyma.
 * [kyma provision](kyma_provision.md)	 - Provisions a cluster for Kyma installation.
 * [kyma run](kyma_run.md)	 - Runs resources.
 * [kyma sync](kyma_sync.md)	 - Synchronizes the local resources for your Function.
-* [kyma test](kyma_test.md)	 - [DEPRECATED] Runs tests on a provisioned Kyma cluster.
 * [kyma undeploy](kyma_undeploy.md)	 - Undeploys Kyma from a running Kubernetes cluster.
 * [kyma upgrade](kyma_upgrade.md)	 - [DEPRECATED] Upgrades Kyma
 * [kyma version](kyma_version.md)	 - Displays the version of Kyma CLI and of the connected Kyma cluster.
