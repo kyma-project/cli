@@ -61,7 +61,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd.Flags().StringSliceVarP(&o.Values, "value", "", []string{}, "Set configuration values. Can specify one or more values, also as a comma-separated list (e.g. --value component.a='1' --value component.b='2' or --value component.a='1',component.b='2').")
 	cobraCmd.Flags().StringSliceVarP(&o.ValueFiles, "values-file", "f", []string{}, "Path(s) to one or more JSON or YAML files with configuration values.")
 	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "", 6*time.Minute, "Maximum time for the deletion")
-	cobraCmd.Flags().StringVar(&o.DeleteStrategy, "delete-strategy", "system", "Specify if only kyma resources should be deleted (system) or all resources (all)")
+	cobraCmd.Flags().StringVar(&o.DeleteStrategy, "delete-strategy", "system", "Specify if only Kyma resources are deleted (system) or all resources (all)")
 	return cobraCmd
 }
 
