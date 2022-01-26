@@ -26,7 +26,7 @@ kyma undeploy [flags]
                                  	- Undeploy from a specific branch of the Kyma repository on kyma-project.org: "kyma undeploy --source=<my-branch-name>"
                                  	- Undeploy from a commit (8 characters or more), for example: "kyma undeploy --source=34edf09a"
                                  	- Undeploy from a pull request, for example "kyma undeploy --source=PR-9486"
-                                 	- Undeploy from the local sources: "kyma undeploy --source=local" (default "main")
+                                 	- Undeploy from the local sources: "kyma undeploy --source=local" (default "2.0.4")
       --timeout duration         Maximum time for the deletion (default 6m0s)
       --tls-crt string           TLS certificate file for the domain used for installation.
       --tls-key string           TLS key file for the domain used for installation.
