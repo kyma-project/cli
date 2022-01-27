@@ -1233,8 +1233,8 @@ github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90 h
 github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90/go.mod h1:/qouJL+g8Tsllh/VcxK1Li6NCyuqyXSlq1i9InKSZJk=
 github.com/kyma-incubator/hydroform/provision v0.0.0-20210514061348-c71b69cb362e h1:NmCX2tiETOsSupBJ0nIHsKHhevl4T3TMTu2c1LlgE/k=
 github.com/kyma-incubator/hydroform/provision v0.0.0-20210514061348-c71b69cb362e/go.mod h1:x4YfWgupo4fc7vgGFb0aJfSWCh9W72ipmNekfY1oYeo=
-github.com/kyma-incubator/reconciler v0.0.0-20220126114301-0c29fec244d9 h1:CDdpWECprXJNZlt3PM2avlY5oJs5ZfT4m40tHADVEdU=
-github.com/kyma-incubator/reconciler v0.0.0-20220126114301-0c29fec244d9/go.mod h1:WTE1Tn9465gBcalCCSMR4JIjFOfUu8OaXQiUlJb0ewU=
+github.com/kyma-incubator/reconciler v0.0.0-20220126164101-25b1ff8ebd51 h1:2H3zJ0yAfkD8cC+eI8TJV/dymMyRs4gJgmmkbKvXKwA=
+github.com/kyma-incubator/reconciler v0.0.0-20220126164101-25b1ff8ebd51/go.mod h1:WTE1Tn9465gBcalCCSMR4JIjFOfUu8OaXQiUlJb0ewU=
 github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20200817094157-8392259f5be1/go.mod h1:Svisep1qUjML69qtRee5OcDOpWVjxID2Nb6E/xyhQ5k=
 github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20201125092745-687c943ac940 h1:TEquDCgUClhTnSIOc3oZn1YZ53/aK4mu3AwXu6kih+4=
 github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20201125092745-687c943ac940/go.mod h1:jDvGQt3ccmrDW/9dZufC8e4xwr+PUTR74IJ0yQ81Jhk=
@@ -1379,10 +1379,11 @@ github.com/mitchellh/reflectwalk v1.0.1 h1:FVzMWA5RllMAKIdUSC8mdWo3XtwoecrH79BY7
 github.com/mitchellh/reflectwalk v1.0.1/go.mod h1:mSTlrgnPZtwu0c4WaC2kGObEpuNDbx0jmZXqmk4esnw=
 github.com/moby/locker v1.0.1 h1:fOXqR41zeveg4fFODix+1Ch4mj/gT0NE1XJbp/epuBg=
 github.com/moby/locker v1.0.1/go.mod h1:S7SDdo5zpBK84bzzVlKr2V0hz+7x9hWbYC/kq7oQppc=
-github.com/moby/moby v20.10.3+incompatible h1:xb8YMvBm8Eu02WrJU/SIHnKZmYSnwnadXiczjcNsQPI=
 github.com/moby/moby v20.10.3+incompatible/go.mod h1:fDXVQ6+S340veQPv35CzDahGBmHsiclFwfEygB/TWMc=
 github.com/moby/moby v20.10.5+incompatible h1:X1Kfy/GrYL4UMcxWrIZCw4saZsIbd+W/++w6HA6STb8=
 github.com/moby/moby v20.10.5+incompatible/go.mod h1:fDXVQ6+S340veQPv35CzDahGBmHsiclFwfEygB/TWMc=
+github.com/moby/moby v20.10.12+incompatible h1:MJVrdG0tIQqVJQBTdtooPuZQFIgski5pYTXlcW8ToE0=
+github.com/moby/moby v20.10.12+incompatible/go.mod h1:fDXVQ6+S340veQPv35CzDahGBmHsiclFwfEygB/TWMc=
 github.com/moby/spdystream v0.2.0 h1:cjW1zVyyoiM0T7b6UoySUFqzXMoqRckQtXwGPiBhOM8=
 github.com/moby/spdystream v0.2.0/go.mod h1:f7i0iNDQJ059oMTcWxx8MA/zKFIuD/lY+0GqbN2Wy8c=
 github.com/moby/sys/mount v0.2.0 h1:WhCW5B355jtxndN5ovugJlMFJawbUODuW8fSnEH6SSM=
