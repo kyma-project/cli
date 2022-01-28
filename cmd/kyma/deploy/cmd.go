@@ -94,9 +94,10 @@ func (cmd *command) RunWithTimeout() error {
 	for {
 		select {
 		case <-timeout:
-			timeoutStep := cmd.NewStep("Timeout reached while waiting for deployment to complete")
+			msg := "Timeout reached while waiting for deployment to complete"
+			timeoutStep := cmd.NewStep(msg)
 			timeoutStep.Failure()
-			return nil
+			return errors.New(msg)
 		case err := <-errChan:
 			return err
 		}
