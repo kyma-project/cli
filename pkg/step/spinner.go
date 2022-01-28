@@ -86,6 +86,14 @@ func (s *stepWithSpinner) LogErrorf(format string, args ...interface{}) {
 	s.logTof(os.Stderr, color.YellowString(warningGlyph)+format, args...)
 }
 
+func (s *stepWithSpinner) LogWarn(msg string) {
+	s.logTo(os.Stdout, warningGlyph+msg)
+}
+
+func (s *stepWithSpinner) LogWarnf(format string, args ...interface{}) {
+	s.logTof(os.Stdout, warningGlyph+format, args...)
+}
+
 func (s *stepWithSpinner) logTof(to io.Writer, format string, args ...interface{}) {
 	isActive := s.spinner.Active()
 	s.spinner.Stop()

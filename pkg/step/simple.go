@@ -72,6 +72,14 @@ func (s *simpleStep) LogErrorf(format string, args ...interface{}) {
 	s.LogError(fmt.Sprintf(format, args...))
 }
 
+func (s *simpleStep) LogWarn(msg string) {
+	fmt.Printf("%s%s\n", warningGlyph, msg)
+}
+
+func (s *simpleStep) LogWarnf(format string, args ...interface{}) {
+	s.LogWarn(fmt.Sprintf(format, args...))
+}
+
 func (s *simpleStep) Prompt(msg string) (string, error) {
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Printf("%s%s", questionGlyph, msg)
