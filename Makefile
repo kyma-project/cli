@@ -96,10 +96,7 @@ local: validate test install
 ci-pr: resolve validate build test integration-test
 
 .PHONY: ci-main
-ci-main: resolve validate build test integration-test
-
-.PHONY: ci-publish
-ci-publish: resolve validate build test integration-test upload-binaries
+ci-main: resolve validate build test integration-test upload-binaries
 
 .PHONY: ci-release
 ci-release: resolve validate build test integration-test archive release
