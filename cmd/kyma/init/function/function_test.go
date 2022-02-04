@@ -28,7 +28,7 @@ func TestFunctionFlags(t *testing.T) {
 		"--dir", "/fakepath",
 		"--name", "test-name",
 		"--namespace", "test-namespace",
-		"--runtime", "python38",
+		"--runtime", "python39",
 		"--url", "test-url",
 		"--repository-name", "test-repository-name",
 		"--reference", "test-reference",
@@ -38,7 +38,7 @@ func TestFunctionFlags(t *testing.T) {
 	require.Equal(t, "/fakepath", o.Dir, "The parsed value for the --dir flag not as expected.")
 	require.Equal(t, "test-name", o.Name, "The parsed value for the --name flag not as expected.")
 	require.Equal(t, "test-namespace", o.Namespace, "The parsed value for the --namespace flag not as expected.")
-	require.Equal(t, "python38", o.Runtime, "The parsed value for the --runtime flag not as expected.")
+	require.Equal(t, "python39", o.Runtime, "The parsed value for the --runtime flag not as expected.")
 	require.Equal(t, "test-url", o.URL, "The parsed value for the --url flag not as expected.")
 	require.Equal(t, "test-repository-name", o.RepositoryName, "The parsed value for the --repository-name flag not as expected.")
 	require.Equal(t, "test-reference", o.Reference, "The parsed value for the --reference flag not as expected.")
