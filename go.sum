@@ -1233,8 +1233,8 @@ github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90 h
 github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90/go.mod h1:/qouJL+g8Tsllh/VcxK1Li6NCyuqyXSlq1i9InKSZJk=
 github.com/kyma-incubator/hydroform/provision v0.0.0-20210514061348-c71b69cb362e h1:NmCX2tiETOsSupBJ0nIHsKHhevl4T3TMTu2c1LlgE/k=
 github.com/kyma-incubator/hydroform/provision v0.0.0-20210514061348-c71b69cb362e/go.mod h1:x4YfWgupo4fc7vgGFb0aJfSWCh9W72ipmNekfY1oYeo=
-github.com/kyma-incubator/reconciler v0.0.0-20220204124404-896ad9a38d4c h1:OPu88qi0jPHDc9XVRAyCD4zIgOvw0Uh8sOvq3QfpK74=
-github.com/kyma-incubator/reconciler v0.0.0-20220204124404-896ad9a38d4c/go.mod h1:WTE1Tn9465gBcalCCSMR4JIjFOfUu8OaXQiUlJb0ewU=
+github.com/kyma-incubator/reconciler v0.0.0-20220208094500-dc452075cc41 h1:0Zk4P5EMcjO+r5Bq/3g3Hx0FNVlAF6LcWSY5Z6KVaTY=
+github.com/kyma-incubator/reconciler v0.0.0-20220208094500-dc452075cc41/go.mod h1:WTE1Tn9465gBcalCCSMR4JIjFOfUu8OaXQiUlJb0ewU=
 github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20200817094157-8392259f5be1/go.mod h1:Svisep1qUjML69qtRee5OcDOpWVjxID2Nb6E/xyhQ5k=
 github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20201125092745-687c943ac940 h1:TEquDCgUClhTnSIOc3oZn1YZ53/aK4mu3AwXu6kih+4=
 github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20201125092745-687c943ac940/go.mod h1:jDvGQt3ccmrDW/9dZufC8e4xwr+PUTR74IJ0yQ81Jhk=
