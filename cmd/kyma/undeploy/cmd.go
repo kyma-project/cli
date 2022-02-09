@@ -203,7 +203,7 @@ func (cmd *command) initialSetup(wsp string) error {
 }
 
 // resolveVersion determines which version of kyma has to be used for undeploy.
-// Version is automatically detected from the cluster and can be optionally overriden via flag.
+// Version is automatically detected from the cluster and can be optionally overridden via flag.
 func (cmd *command) resolveVersion() error {
 	if cmd.opts.Source != "" {
 		return nil
