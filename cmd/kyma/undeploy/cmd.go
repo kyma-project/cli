@@ -213,8 +213,11 @@ func (cmd *command) resolveVersion() error {
 		return errors.Wrap(err, "could not determine Kyma version to undeploy")
 	}
 
-	if v.None() {
+	switch {
+	case v.None():
 		return errors.New("could not determine Kyma version to undeploy: version info empty")
+	case v.IsKyma1():
+		return errors.Errorf("Kyma version [%s] not supported", v.String())
 	}
 
 	cmd.opts.Source = v.String()
