@@ -11,13 +11,13 @@ import (
 
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/clusterinfo"
-	"github.com/kyma-project/cli/internal/config"
 	"github.com/kyma-project/cli/internal/deploy"
 	"github.com/kyma-project/cli/internal/deploy/component"
 	"github.com/kyma-project/cli/internal/deploy/istioctl"
 	"github.com/kyma-project/cli/internal/deploy/values"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/nice"
+	"github.com/kyma-project/cli/internal/version"
 
 	"github.com/spf13/cobra"
 )
@@ -45,7 +45,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd.Flags().StringSliceVarP(&o.Components, "component", "", []string{}, "Provide one or more components to undeploy (e.g. --component componentName@namespace)")
 	cobraCmd.Flags().StringVarP(&o.ComponentsFile, "components-file", "c", "", `Path to the components file (default "$HOME/.kyma/sources/installation/resources/components.yaml" or ".kyma-sources/installation/resources/components.yaml")`)
 	cobraCmd.Flags().StringVarP(&o.WorkspacePath, "workspace", "w", "", `Path to download Kyma sources (default "$HOME/.kyma/sources" or ".kyma-sources")`)
-	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", config.DefaultKyma2Version, `Source of installation to be undeployed:
+	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", "", `Undeploy source usually automatically detected, use this flag to override the detection:
 	- Undeploy from a specific release, for example: "kyma undeploy --source=2.0.0"
 	- Undeploy from a specific branch of the Kyma repository on kyma-project.org: "kyma undeploy --source=<my-branch-name>"
 	- Undeploy from a commit (8 characters or more), for example: "kyma undeploy --source=34edf09a"
@@ -88,6 +88,10 @@ func (cmd *command) Run() error {
 	}
 
 	// Prepare workspace
+	if err := cmd.resolveVersion(); err != nil {
+		return err
+	}
+
 	wsStep := cmd.NewStep(fmt.Sprintf("Fetching Kyma sources (%s)", cmd.opts.Source))
 	l := cli.NewLogger(cmd.opts.Verbose).Sugar()
 	ws, err := deploy.PrepareWorkspace(cmd.opts.WorkspacePath, cmd.opts.Source, wsStep, !cmd.avoidUserInteraction(), cmd.opts.IsLocal(), l)
@@ -195,5 +199,24 @@ func (cmd *command) initialSetup(wsp string) error {
 	}
 
 	preReqStep.Success()
+	return nil
+}
+
+// resolveVersion determines which version of kyma has to be used for undeploy.
+// Version is automatically detected from the cluster and can be optionally overriden via flag.
+func (cmd *command) resolveVersion() error {
+	if cmd.opts.Source != "" {
+		return nil
+	}
+	v, err := version.GetCurrentKymaVersion(cmd.K8s)
+	if err != nil {
+		return errors.Wrap(err, "could not determine Kyma version to undeploy")
+	}
+
+	if v.None() {
+		return errors.New("could not determine Kyma version to undeploy: version info empty")
+	}
+
+	cmd.opts.Source = v.String()
 	return nil
 }

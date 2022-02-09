@@ -3,12 +3,6 @@ module github.com/kyma-project/cli
 go 1.17
 
 replace (
-	// github.com/kyma-incubator/hydroform/parallel-install => ../hydroform/parallel-install
-	//TODO: remove this part as Helm 3.5.4 got released (see dep in Hydroform API)
-	//see https://github.com/helm/helm/issues/9354 + https://github.com/helm/helm/pull/9492
-	github.com/docker/distribution => github.com/docker/distribution v0.0.0-20191216044856-a8371794149d
-	github.com/docker/docker => github.com/moby/moby v20.10.5+incompatible
-
 	// Required to work with the hydroform terraform integration
 	github.com/hashicorp/consul v0.0.0-20171026175957-610f3c86a089 => github.com/hashicorp/consul/sdk v0.7.0
 	github.com/hashicorp/consul/api v1.3.0 => github.com/hashicorp/consul/api v0.0.0-20191112221531-8742361660b6
@@ -113,7 +107,6 @@ require (
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e // indirect
 	github.com/containerd/cgroups v1.0.1 // indirect
 	github.com/containerd/containerd v1.5.7 // indirect
-	github.com/containerd/continuity v0.1.0 // indirect
 	github.com/coreos/etcd v3.3.13+incompatible // indirect
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/cyphar/filepath-securejoin v0.2.2 // indirect
