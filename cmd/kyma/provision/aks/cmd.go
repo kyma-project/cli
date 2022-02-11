@@ -4,7 +4,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var defaultKubernetesVersion string = "1.19.11"
+var defaultKubernetesVersion string = "1.21.11"
 
 func NewCmd(o *Options) *cobra.Command {
 	c := newAksCmd(o)
