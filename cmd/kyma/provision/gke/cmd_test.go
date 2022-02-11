@@ -32,7 +32,7 @@ func TestProvisionGKEFlags(t *testing.T) {
 		"-n", "my-cluster",
 		"-p", "my-project",
 		"-c", "/my/credentials/file",
-		"-k", "1.18.0",
+		"-k", "1.21.0",
 		"-l", "us-central1-c",
 		"-t", "quantum-computer",
 		"--disk-size", "2000",
@@ -45,7 +45,7 @@ func TestProvisionGKEFlags(t *testing.T) {
 	require.Equal(t, "my-cluster", o.Name, "The parsed value for the name flag not as expected.")
 	require.Equal(t, "my-project", o.Project, "The parsed value for the project flag not as expected.")
 	require.Equal(t, "/my/credentials/file", o.CredentialsFile, "The parsed value for the credentials flag not as expected.")
-	require.Equal(t, "1.18.0", o.KubernetesVersion, "The parsed value for the kube-version flag not as expected.")
+	require.Equal(t, "1.21.0", o.KubernetesVersion, "The parsed value for the kube-version flag not as expected.")
 	require.Equal(t, "us-central1-c", o.Location, "The parsed value for the location flag not as expected.")
 	require.Equal(t, "quantum-computer", o.MachineType, "The parsed value for the type flag not as expected.")
 	require.Equal(t, 2000, o.DiskSizeGB, "The parsed value for the disk-size flag not as expected.")
