@@ -37,7 +37,7 @@ require (
 	github.com/kyma-incubator/hydroform/function v0.0.0-20211013085232-f50b80b24d73
 	github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90
 	github.com/kyma-incubator/hydroform/provision v0.0.0-20210514061348-c71b69cb362e
-	github.com/kyma-incubator/reconciler v0.0.0-20220126164101-25b1ff8ebd51
+	github.com/kyma-incubator/reconciler v0.0.0-20220211063504-2f19047b7ae6
 	github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20201125092745-687c943ac940
 	github.com/opencontainers/image-spec v1.0.1
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8

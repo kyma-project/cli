@@ -2,7 +2,6 @@ package deploy
 
 import (
 	"context"
-	"github.com/kyma-incubator/reconciler/pkg/scheduler/occupancy"
 
 	"github.com/kyma-incubator/reconciler/pkg/cluster"
 	"github.com/kyma-incubator/reconciler/pkg/keb"
@@ -65,7 +64,7 @@ func doReconciliation(opts Options, delete bool) (*service.ReconciliationResult,
 		return nil, err
 	}
 
-	runtimeBuilder := service.NewRuntimeBuilder(reconciliation.NewInMemoryReconciliationRepository(), occupancy.NewInMemoryOccupancyRepository(), opts.Logger)
+	runtimeBuilder := service.NewRuntimeBuilder(reconciliation.NewInMemoryReconciliationRepository(), opts.Logger)
 	reconcilationResult, err := runtimeBuilder.RunLocal(func(component string, msg *reconciler.CallbackMessage) {
 		var state ComponentState
 		var errorRecieved error
