@@ -11,11 +11,13 @@ var expectedList = List{
 	Prerequisites: []Definition{
 		{Name: "pre-1", Namespace: "ns-1"},
 		{Name: "pre-2", Namespace: "ns"},
+		{Name: "pre-3", Namespace: "ns", Url: "some-url", Version: "1.2.3"},
 	},
 	Components: []Definition{
 		{Name: "comp-1", Namespace: "ns"},
 		{Name: "comp-2", Namespace: "ns-2"},
 		{Name: "comp-3", Namespace: "ns"},
+		{Name: "comp-4", Namespace: "ns-2", Url: "some-url", Version: "1.2.3"},
 	},
 }
 

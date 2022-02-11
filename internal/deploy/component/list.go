@@ -26,6 +26,8 @@ type List struct {
 type Definition struct {
 	Name      string `yaml:"name" json:"name"`
 	Namespace string `yaml:"namespace" json:"namespace"`
+	Url string `yaml:"url" json:"url"`
+	Version string `yaml:"version" json:"version"`
 }
 
 // Resolve creates a component list from the given component names or the file
