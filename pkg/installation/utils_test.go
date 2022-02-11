@@ -21,7 +21,7 @@ func Test_LoadInstallationFiles(t *testing.T) {
 		Options: &Options{
 			IsLocal:          true,
 			fromLocalSources: false,
-			configVersion:    "1.24.9",
+			configVersion:    "1.24.10",
 			bucket:           releaseBucket,
 		},
 	}
@@ -34,7 +34,7 @@ func Test_LoadInstallationFiles(t *testing.T) {
 		Options: &Options{
 			IsLocal:          false,
 			fromLocalSources: false,
-			configVersion:    "1.24.9",
+			configVersion:    "1.24.10",
 			bucket:           releaseBucket,
 		},
 	}
