@@ -135,7 +135,7 @@ func TestInstallKyma(t *testing.T) {
 	iServiceMock.On("CheckInstallationState", mock.Anything).Return(installSDK.InstallationState{State: "Installed"}, nil).Once()
 	kymaMock.On("WaitPodStatusByLabel", "kyma-installer", "name", "kyma-installer", v1.PodRunning).Return(nil)
 
-	i.Options.Source = "1.24.9"
+	i.Options.Source = "1.24.10"
 	r, err = i.InstallKyma()
 	require.NoError(t, err)
 	require.NotEmpty(t, r)
