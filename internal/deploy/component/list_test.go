@@ -11,13 +11,13 @@ var expectedList = List{
 	Prerequisites: []Definition{
 		{Name: "pre-1", Namespace: "ns-1"},
 		{Name: "pre-2", Namespace: "ns"},
-		{Name: "pre-3", Namespace: "ns", Url: "some-url", Version: "1.2.3"},
+		{Name: "pre-3", Namespace: "ns", URL: "some-url", Version: "1.2.3"},
 	},
 	Components: []Definition{
 		{Name: "comp-1", Namespace: "ns"},
 		{Name: "comp-2", Namespace: "ns-2"},
 		{Name: "comp-3", Namespace: "ns"},
-		{Name: "comp-4", Namespace: "ns-2", Url: "some-url", Version: "1.2.3"},
+		{Name: "comp-4", Namespace: "ns-2", URL: "some-url", Version: "1.2.3"},
 	},
 }
 
@@ -49,21 +49,21 @@ func TestFromFile(t *testing.T) {
 
 func TestFromStrings(t *testing.T) {
 	t.Run("Add Component in default namespace", func(t *testing.T) {
-		list := FromStrings([]string{"comp-1"})
+		list, _ := FromStrings([]string{"comp-1"})
 		require.Equal(t, "kyma-system", list.DefaultNamespace)
 		require.Equal(t, "comp-1", list.Components[0].Name)
 		require.Equal(t, "kyma-system", list.Components[0].Namespace)
 	})
 
 	t.Run("Add Component in custom namespace", func(t *testing.T) {
-		list := FromStrings([]string{"comp-1@ns-1"})
+		list, _ := FromStrings([]string{"comp-1@ns-1"})
 		require.Equal(t, "kyma-system", list.DefaultNamespace)
 		require.Equal(t, "comp-1", list.Components[0].Name)
 		require.Equal(t, "ns-1", list.Components[0].Namespace)
 	})
 
 	t.Run("Add multiple Components", func(t *testing.T) {
-		list := FromStrings([]string{"comp-1@ns-1", "comp-2", "comp-3", "comp-4@ns-2"})
+		list, _ := FromStrings([]string{"comp-1@ns-1", "comp-2", "comp-3", "comp-4@ns-2"})
 		require.Equal(t, "kyma-system", list.DefaultNamespace)
 		require.Equal(t, "comp-1", list.Components[0].Name)
 		require.Equal(t, "ns-1", list.Components[0].Namespace)

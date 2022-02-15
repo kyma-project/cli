@@ -26,14 +26,17 @@ type List struct {
 type Definition struct {
 	Name      string `yaml:"name" json:"name"`
 	Namespace string `yaml:"namespace" json:"namespace"`
-	Url string `yaml:"url" json:"url"`
-	Version string `yaml:"version" json:"version"`
+	URL       string `yaml:"url" json:"url"`
+	Version   string `yaml:"version" json:"version"`
 }
 
 // Resolve creates a component list from the given component names or the file
 func Resolve(components []string, componentsFile string, ws *chart.KymaWorkspace) (List, error) {
 	if len(components) > 0 {
-		components := FromStrings(components)
+		components, err := FromStrings(components)
+		if err != nil {
+			return List{}, err
+		}
 		return components, nil
 	}
 	if componentsFile != "" {
@@ -88,23 +91,28 @@ func FromFile(filePath string) (List, error) {
 }
 
 // FromStrings creates a new list of components from strings
-func FromStrings(components []string) List {
+func FromStrings(components []string) (List, error) {
 	list := List{
 		DefaultNamespace: defaultNamespace,
 	}
 
 	for _, item := range components {
-		namespace := defaultNamespace
-
-		tokens := strings.Split(item, "@")
-		if len(tokens) == 2 {
-			namespace = tokens[1]
+		var definition = Definition{Namespace: defaultNamespace}
+		if strings.HasPrefix(item, "{") {
+			if err := json.Unmarshal([]byte(item), &definition); err != nil {
+				return List{}, errors.Wrapf(err, "Failed to process component in JSON format '%s'", item)
+			}
+		} else {
+			tokens := strings.Split(item, "@")
+			if len(tokens) == 2 {
+				definition.Namespace = tokens[1]
+			}
+			definition.Name = tokens[0]
 		}
 
-		definition := Definition{Name: tokens[0], Namespace: namespace}
 		list.Components = append(list.Components, definition)
 	}
-	return list
+	return list, nil
 }
 
 func isJSON(filePath string) bool {
