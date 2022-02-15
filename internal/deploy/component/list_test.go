@@ -92,7 +92,7 @@ func TestFromStrings(t *testing.T) {
 		require.Equal(t, "some-url", list.Components[0].URL)
 		require.Empty(t, list.Components[0].Version)
 	})
- 
+
 	t.Run("Add multiple Components via different notations", func(t *testing.T) {
 		list, _ := FromStrings([]string{"comp-1@ns-1", "{\"name\": \"comp-2\",\"url\": \"some-url\"}", "comp-3", "{\"name\": \"comp-4\",\"namespace\": \"ns-2\",\"url\": \"some-url-2\",\"version\": \"3.2\"}"})
 		require.Equal(t, "kyma-system", list.DefaultNamespace)
