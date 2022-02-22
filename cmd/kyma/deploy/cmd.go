@@ -50,7 +50,9 @@ func NewCmd(o *Options) *cobra.Command {
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.RunWithTimeout() },
 		Aliases: []string{"d"},
 	}
-	cobraCmd.Flags().StringSliceVarP(&o.Components, "component", "", []string{}, "Provide one or more components to deploy (e.g. --component componentName@namespace)")
+	cobraCmd.Flags().StringArrayVarP(&o.Components, "component", "", []string{}, `Provide one or more components to deploy, for example:
+	- With short-hand notation: "--component name@namespace"
+	- With verbose JSON structure "--component '{"name": "componentName","namespace": "componenNamespace","url": "componentUrl","version": "1.2.3"}'`)
 	cobraCmd.Flags().StringVarP(&o.ComponentsFile, "components-file", "c", "", `Path to the components file (default "$HOME/.kyma/sources/installation/resources/components.yaml" or ".kyma-sources/installation/resources/components.yaml")`)
 	cobraCmd.Flags().StringVarP(&o.WorkspacePath, "workspace", "w", "", `Path to download Kyma sources (default "$HOME/.kyma/sources" or ".kyma-sources")`)
 	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", config.DefaultKyma2Version, `Installation source:
@@ -59,7 +61,6 @@ func NewCmd(o *Options) *cobra.Command {
 	- Deploy a commit (8 characters or more), for example: "kyma deploy --source=34edf09a"
 	- Deploy a pull request, for example "kyma deploy --source=PR-9486"
 	- Deploy the local sources: "kyma deploy --source=local"`)
-
 	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", "", "Custom domain used for installation.")
 	cobraCmd.Flags().StringVarP(&o.Profile, "profile", "p", "",
 		fmt.Sprintf("Kyma deployment profile. If not specified, Kyma uses its default configuration. The supported profiles are: %s, %s.", profileEvaluation, profileProduction))
