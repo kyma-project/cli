@@ -7,6 +7,8 @@ replace (
 	github.com/hashicorp/consul v0.0.0-20171026175957-610f3c86a089 => github.com/hashicorp/consul/sdk v0.7.0
 	github.com/hashicorp/consul/api v1.3.0 => github.com/hashicorp/consul/api v0.0.0-20191112221531-8742361660b6
 
+	github.com/kyma-incubator/reconciler => github.com/skhalash/reconciler v0.0.0-20220223121226-5ed94231519f
+
 	// in conflict with reconciler and terraform, we should be able to remove it once we remove terraform
 	github.com/spf13/afero => github.com/spf13/afero v1.2.2
 
