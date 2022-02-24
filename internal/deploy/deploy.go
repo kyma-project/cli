@@ -7,6 +7,7 @@ import (
 	"github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-incubator/reconciler/pkg/model"
 	"github.com/kyma-incubator/reconciler/pkg/reconciler"
+	reconcilerservice "github.com/kyma-incubator/reconciler/pkg/reconciler/service"
 	"github.com/kyma-incubator/reconciler/pkg/scheduler/reconciliation"
 	"github.com/kyma-incubator/reconciler/pkg/scheduler/service"
 	"github.com/kyma-project/cli/internal/deploy/component"
@@ -27,6 +28,7 @@ type ComponentStatus struct {
 	Component string
 	State     ComponentState
 	Error     error
+	Manifest  string
 }
 
 var PrintedStatus = make(map[string]bool)
@@ -44,6 +46,7 @@ type Options struct {
 }
 
 func Deploy(opts Options) (*service.ReconciliationResult, error) {
+	reconcilerservice.EnableReconcilerDryRun()
 	return doReconciliation(opts, false)
 }
 
@@ -80,7 +83,7 @@ func doReconciliation(opts Options, delete bool) (*service.ReconciliationResult,
 			state = UnrecoverableError
 		}
 
-		opts.StatusFunc(ComponentStatus{component, state, errorRecieved})
+		opts.StatusFunc(ComponentStatus{component, state, errorRecieved, msg.Manifest})
 	}).
 		WithSchedulerConfig(&service.SchedulerConfig{
 			PreComponents:  opts.Components.PrerequisiteNames(),

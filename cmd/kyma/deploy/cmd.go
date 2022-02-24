@@ -32,7 +32,8 @@ import (
 
 type command struct {
 	cli.Command
-	opts *Options
+	opts      *Options
+	manifests []string
 }
 
 //NewCmd creates a new deploy command
@@ -210,6 +211,7 @@ func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, 
 		deployStep.Successf("Kyma deployed successfully!")
 		return nil
 	}
+
 	return nil
 }
 
@@ -217,6 +219,8 @@ func (cmd *command) printDeployStatus(status deploy.ComponentStatus) {
 	if cmd.Verbose {
 		return
 	}
+
+	fmt.Println(status.Manifest)
 
 	switch status.State {
 	case deploy.Success:
