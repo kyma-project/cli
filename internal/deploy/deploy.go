@@ -43,10 +43,13 @@ type Options struct {
 	Logger         *zap.SugaredLogger
 	WorkerPoolSize int
 	DeleteStrategy string
+	DryRun         bool
 }
 
 func Deploy(opts Options) (*service.ReconciliationResult, error) {
-	reconcilerservice.EnableReconcilerDryRun()
+	if opts.DryRun {
+		reconcilerservice.EnableReconcilerDryRun()
+	}
 	return doReconciliation(opts, false)
 }
 
