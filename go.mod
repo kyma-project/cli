@@ -7,7 +7,7 @@ replace (
 	github.com/hashicorp/consul v0.0.0-20171026175957-610f3c86a089 => github.com/hashicorp/consul/sdk v0.7.0
 	github.com/hashicorp/consul/api v1.3.0 => github.com/hashicorp/consul/api v0.0.0-20191112221531-8742361660b6
 
-	github.com/kyma-incubator/reconciler => github.com/skhalash/reconciler v0.0.0-20220223171204-b5fb0633ac66
+	github.com/kyma-incubator/reconciler => github.com/skhalash/reconciler v0.0.0-20220228072957-7ba2412b8d4c
 
 	// in conflict with reconciler and terraform, we should be able to remove it once we remove terraform
 	github.com/spf13/afero => github.com/spf13/afero v1.2.2
@@ -33,7 +33,7 @@ require (
 	github.com/kyma-incubator/hydroform/function v0.0.0-20220201101045-fa7ac5fbce3f
 	github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90
 	github.com/kyma-incubator/hydroform/provision v0.0.0-20210514061348-c71b69cb362e
-	github.com/kyma-incubator/reconciler v0.0.0-20220217120940-3e4c962661f6
+	github.com/kyma-incubator/reconciler v0.0.0-20220225191854-ca88446a8508
 	github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20201125092745-687c943ac940
 	github.com/opencontainers/image-spec v1.0.2
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
