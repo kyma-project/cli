@@ -2,6 +2,7 @@ package deploy
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/kyma-incubator/reconciler/pkg/cluster"
 	"github.com/kyma-incubator/reconciler/pkg/keb"
@@ -70,6 +71,8 @@ func doReconciliation(opts Options, delete bool) (*service.ReconciliationResult,
 		return nil, err
 	}
 
+	manifests := make(chan ComponentStatus)
+
 	runtimeBuilder := service.NewRuntimeBuilder(reconciliation.NewInMemoryReconciliationRepository(), opts.Logger)
 	reconcilationResult, err := runtimeBuilder.RunLocal(func(component string, msg *reconciler.CallbackMessage) {
 		var state ComponentState
@@ -86,7 +89,9 @@ func doReconciliation(opts Options, delete bool) (*service.ReconciliationResult,
 			state = UnrecoverableError
 		}
 
-		opts.StatusFunc(ComponentStatus{component, state, errorRecieved, msg.Manifest})
+		status := ComponentStatus{component, state, errorRecieved, msg.Manifest}
+		manifests <- status
+		opts.StatusFunc(status)
 	}).
 		WithSchedulerConfig(&service.SchedulerConfig{
 			PreComponents:  opts.Components.PrerequisiteNames(),
@@ -95,7 +100,18 @@ func doReconciliation(opts Options, delete bool) (*service.ReconciliationResult,
 		WithWorkerPoolSize(opts.WorkerPoolSize).
 		Run(context.TODO(), kebCluster)
 
+	close(manifests)
+	if opts.DryRun {
+		printManifests(manifests)
+	}
+
 	return reconcilationResult, err
+}
+
+func printManifests(ch chan ComponentStatus) {
+	for val := range ch {
+		fmt.Println(val.Manifest)
+	}
 }
 
 func prepareKebComponents(components component.List, vals values.Values) ([]*keb.Component, error) {

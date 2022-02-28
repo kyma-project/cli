@@ -218,11 +218,9 @@ func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, 
 }
 
 func (cmd *command) printDeployStatus(status deploy.ComponentStatus) {
-	if cmd.Verbose {
+	if cmd.Verbose || cmd.opts.DryRun {
 		return
 	}
-
-	fmt.Println(status.Manifest)
 
 	switch status.State {
 	case deploy.Success:
