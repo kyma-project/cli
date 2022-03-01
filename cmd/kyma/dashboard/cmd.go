@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"runtime"
+	"strings"
+
+	"golang.org/x/sys/unix"
 
 	"github.com/docker/docker/api/types/mount"
 	"github.com/kyma-project/cli/internal/cli"
@@ -129,7 +132,7 @@ func (cmd *command) initContainerRunOpts(envs []string) (docker.ContainerRunOpts
 		dashboardURL = fmt.Sprintf("%s?kubeconfigID=%s", dashboardURL, containerKubeconfigFilename)
 	}
 
-	if runtime.GOOS == "linux" {
+	if isLinuxOperatingSystem() {
 		if cmd.Verbose {
 			fmt.Printf("Operating system seems to be Linux. Changing the Docker network mode to 'host'")
 		}
@@ -151,4 +154,20 @@ func (cmd *command) openDashboard(url string) {
 		return
 	}
 	step.Success()
+}
+
+func isLinuxOperatingSystem() bool {
+	if runtime.GOOS != "linux" {
+		return false
+	}
+
+	var uname unix.Utsname
+	if err := unix.Uname(&uname); err == nil {
+		// check if the operating system is Windows Subsystem for Linux
+		if strings.Contains(string(uname.Release[:]), "microsoft") {
+			return false
+		}
+	}
+	
+	return true
 }
