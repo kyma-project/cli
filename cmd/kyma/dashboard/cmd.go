@@ -168,6 +168,6 @@ func isLinuxOperatingSystem() bool {
 			return false
 		}
 	}
-	
+
 	return true
 }
