@@ -33,7 +33,7 @@ type ComponentStatus struct {
 }
 
 var PrintedStatus = make(map[string]bool)
-var manifestsBuffer []string
+var manifestsBuffer []ComponentStatus
 
 type Options struct {
 	Components     component.List
@@ -72,7 +72,7 @@ func doReconciliation(opts Options, delete bool) (*service.ReconciliationResult,
 		return nil, err
 	}
 
-	manifests := make(chan string)
+	manifests := make(chan ComponentStatus)
 
 	runtimeBuilder := service.NewRuntimeBuilder(reconciliation.NewInMemoryReconciliationRepository(), opts.Logger)
 	reconcilationResult, err := runtimeBuilder.RunLocal(func(component string, msg *reconciler.CallbackMessage) {
@@ -91,11 +91,14 @@ func doReconciliation(opts Options, delete bool) (*service.ReconciliationResult,
 		}
 
 		status := ComponentStatus{component, state, errorRecieved, msg.Manifest}
+
 		if opts.DryRun {
 			go bufferMan(manifests)
 		}
+
 		opts.StatusFunc(status)
-		manifests <- status.Manifest
+		manifests <- status
+
 	}).
 		WithSchedulerConfig(&service.SchedulerConfig{
 			PreComponents:  opts.Components.PrerequisiteNames(),
@@ -112,14 +115,24 @@ func doReconciliation(opts Options, delete bool) (*service.ReconciliationResult,
 	return reconcilationResult, err
 }
 
-func bufferMan(ch chan string) {
-	var str string
+func bufferMan(ch chan ComponentStatus) {
+	var str ComponentStatus
 	str = <-ch
 	manifestsBuffer = append(manifestsBuffer, str)
 }
 
 func printManifests() {
-	fmt.Printf("buffer: %s", manifestsBuffer)
+
+	for _, v := range manifestsBuffer {
+		if v.Error != nil {
+			fmt.Printf("Rendering of Component: %s failed with %s", v.Component, v.Error.Error())
+			return
+		}
+	}
+
+	for _, val := range manifestsBuffer {
+		fmt.Printf("%s", val.Manifest)
+	}
 }
 
 func prepareKebComponents(components component.List, vals values.Values) ([]*keb.Component, error) {

@@ -158,14 +158,53 @@ func (cmd *command) run() error {
 		return err
 	}
 
+	if cmd.opts.DryRun {
+		return cmd.dryRunKyma(l, components, vals)
+	}
+
 	summary := cmd.setSummary()
+	// if cmd.opts.DryRun {
+	// 	err = cmd.dryRunKyma(l, components, vals)
+	// } else {
 	err = cmd.deployKyma(l, components, vals, summary)
+
+	// }
+
 	if err != nil {
 		return err
 	}
 
 	deployTime := time.Since(start)
 	return summary.Print(deployTime)
+}
+
+func (cmd *command) dryRunKyma(l *zap.SugaredLogger, components component.List, vals values.Values) error {
+	kubeconfigPath := kube.KubeconfigPath(cmd.KubeconfigPath)
+	kubeconfig, err := ioutil.ReadFile(kubeconfigPath)
+	if err != nil {
+		return errors.Wrap(err, "failed to read kubeconfig")
+	}
+	undo := zap.RedirectStdLog(l.Desugar())
+	defer undo()
+
+	fmt.Println("Running Kyma in dry run mode!")
+
+	_, err = deploy.Deploy(deploy.Options{
+		Components:     components,
+		Values:         vals,
+		StatusFunc:     cmd.printDeployStatus,
+		KubeConfig:     kubeconfig,
+		KymaVersion:    cmd.opts.Source,
+		KymaProfile:    cmd.opts.Profile,
+		Logger:         l,
+		WorkerPoolSize: cmd.opts.WorkerPoolSize,
+		DryRun:         cmd.opts.DryRun,
+	})
+	if err != nil {
+		fmt.Errorf("Failed to generate Kyma Manifests.")
+		return err
+	}
+	return nil
 }
 
 func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, vals values.Values, summary *nice.Summary) error {
