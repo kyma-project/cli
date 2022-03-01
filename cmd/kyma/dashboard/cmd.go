@@ -6,8 +6,6 @@ import (
 	"runtime"
 	"strings"
 
-	"golang.org/x/sys/unix"
-
 	"github.com/docker/docker/api/types/mount"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
@@ -161,10 +159,9 @@ func isLinuxOperatingSystem() bool {
 		return false
 	}
 
-	var uname unix.Utsname
-	if err := unix.Uname(&uname); err == nil {
-		// check if the operating system is Windows Subsystem for Linux
-		if strings.Contains(string(uname.Release[:]), "microsoft") {
+	// check if the operating system is Windows Subsystem for Linux
+	if kernelRelease, err := cli.RunCmd("uname -r"); err == nil {
+		if strings.Contains(kernelRelease, "microsoft") {
 			return false
 		}
 	}
