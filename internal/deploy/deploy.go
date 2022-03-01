@@ -33,6 +33,7 @@ type ComponentStatus struct {
 }
 
 var PrintedStatus = make(map[string]bool)
+var manifestsBuffer []string
 
 type Options struct {
 	Components     component.List
@@ -71,7 +72,7 @@ func doReconciliation(opts Options, delete bool) (*service.ReconciliationResult,
 		return nil, err
 	}
 
-	manifests := make(chan ComponentStatus)
+	manifests := make(chan string)
 
 	runtimeBuilder := service.NewRuntimeBuilder(reconciliation.NewInMemoryReconciliationRepository(), opts.Logger)
 	reconcilationResult, err := runtimeBuilder.RunLocal(func(component string, msg *reconciler.CallbackMessage) {
@@ -90,8 +91,11 @@ func doReconciliation(opts Options, delete bool) (*service.ReconciliationResult,
 		}
 
 		status := ComponentStatus{component, state, errorRecieved, msg.Manifest}
-		manifests <- status
+		if opts.DryRun {
+			go bufferMan(manifests)
+		}
 		opts.StatusFunc(status)
+		manifests <- status.Manifest
 	}).
 		WithSchedulerConfig(&service.SchedulerConfig{
 			PreComponents:  opts.Components.PrerequisiteNames(),
@@ -102,16 +106,20 @@ func doReconciliation(opts Options, delete bool) (*service.ReconciliationResult,
 
 	close(manifests)
 	if opts.DryRun {
-		printManifests(manifests)
+		printManifests()
 	}
 
 	return reconcilationResult, err
 }
 
-func printManifests(ch chan ComponentStatus) {
-	for val := range ch {
-		fmt.Println(val.Manifest)
-	}
+func bufferMan(ch chan string) {
+	var str string
+	str = <-ch
+	manifestsBuffer = append(manifestsBuffer, str)
+}
+
+func printManifests() {
+	fmt.Printf("buffer: %s", manifestsBuffer)
 }
 
 func prepareKebComponents(components component.List, vals values.Values) ([]*keb.Component, error) {
