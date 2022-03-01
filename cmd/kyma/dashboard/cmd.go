@@ -160,7 +160,7 @@ func isLinuxOperatingSystem() bool {
 	}
 
 	// check if the operating system is Windows Subsystem for Linux
-	if kernelRelease, err := cli.RunCmd("uname -r"); err == nil {
+	if kernelRelease, err := cli.RunCmd("uname", "-r"); err == nil {
 		if strings.Contains(kernelRelease, "microsoft") {
 			return false
 		}
