@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"runtime"
+	"strings"
 
 	"github.com/docker/docker/api/types/mount"
 	"github.com/kyma-project/cli/internal/cli"
@@ -129,7 +130,7 @@ func (cmd *command) initContainerRunOpts(envs []string) (docker.ContainerRunOpts
 		dashboardURL = fmt.Sprintf("%s?kubeconfigID=%s", dashboardURL, containerKubeconfigFilename)
 	}
 
-	if runtime.GOOS == "linux" {
+	if isLinuxOperatingSystem() {
 		if cmd.Verbose {
 			fmt.Printf("Operating system seems to be Linux. Changing the Docker network mode to 'host'")
 		}
@@ -151,4 +152,19 @@ func (cmd *command) openDashboard(url string) {
 		return
 	}
 	step.Success()
+}
+
+func isLinuxOperatingSystem() bool {
+	if runtime.GOOS != "linux" {
+		return false
+	}
+
+	// check if the operating system is Windows Subsystem for Linux
+	if kernelRelease, err := cli.RunCmd("uname", "-r"); err == nil {
+		if strings.Contains(kernelRelease, "microsoft") {
+			return false
+		}
+	}
+
+	return true
 }
