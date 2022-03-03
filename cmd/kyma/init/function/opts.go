@@ -21,6 +21,7 @@ type Options struct {
 	Reference      string
 	BaseDir        string
 	SourcePath     string
+	VsCode         bool
 }
 
 //NewOptions creates options with default values
