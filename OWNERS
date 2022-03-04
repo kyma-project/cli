@@ -1,11 +1,18 @@
-approvers:
- - clebs
- - suleymanakbas91
- - a-thaler
- - hisarbalik
- - bszwarc
- - lilitgh
- - shorim
- - jeremyharisch
- - elchead
- - chrkl
+filters:
+  "*.md":
+    approvers:
+      - technical-writers
+    reviewers:
+      - technical-writers
+    labels:
+      - area/documentation
+  "/.kyma-project-io/":
+    approvers:
+      - infra
+    reviewers:
+      - infra
+  ".*":
+    approvers:
+      - developers
+    reviewers:
+      - developers
