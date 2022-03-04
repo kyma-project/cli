@@ -1,18 +1,32 @@
-filters:
-  "*.md":
-    approvers:
-      - technical-writers
-    reviewers:
-      - technical-writers
-    labels:
-      - area/documentation
-  "/.kyma-project-io/":
-    approvers:
-      - infra
-    reviewers:
-      - infra
-  ".*":
-    approvers:
-      - developers
-    reviewers:
-      - developers
+approvers:
+  - clebs
+  - jeremyharisch
+  - tobiscr
+  - khlifi411
+  - ruanxin
+  - Tomasz-Smelcerz-SAP
+  - jakobmoellersap
+  - adityabhatia
+  - a-thaler
+  - rakesh-garimella
+  - shorim
+  - skhalash
+  - chrkl
+  - lindnerby
+  - dennis-ge
+reviewers:
+  - clebs
+  - jeremyharisch
+  - tobiscr
+  - khlifi411
+  - ruanxin
+  - Tomasz-Smelcerz-SAP
+  - jakobmoellersap
+  - adityabhatia
+  - a-thaler
+  - rakesh-garimella
+  - shorim
+  - skhalash
+  - chrkl
+  - lindnerby
+  - dennis-ge
