@@ -32,8 +32,7 @@ import (
 
 type command struct {
 	cli.Command
-	opts      *Options
-	manifests []string
+	opts *Options
 }
 
 //NewCmd creates a new deploy command

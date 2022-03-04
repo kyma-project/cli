@@ -116,8 +116,7 @@ func doReconciliation(opts Options, delete bool) (*service.ReconciliationResult,
 }
 
 func manifestCollector(ch chan ComponentStatus) {
-	var str ComponentStatus
-	str = <-ch
+	str := <-ch
 	manifestsBuffer = append(manifestsBuffer, str)
 }
 
