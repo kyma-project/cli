@@ -29,6 +29,7 @@ type Options struct {
 	WorkerPoolSize int
 	Timeout        time.Duration
 	DefaultWS      string
+	DryRun         bool
 }
 
 //NewOptions creates options with default values
