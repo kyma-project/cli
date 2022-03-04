@@ -29,7 +29,7 @@ type ComponentStatus struct {
 	Component string
 	State     ComponentState
 	Error     error
-	Manifest  string
+	Manifest  *string
 }
 
 var PrintedStatus = make(map[string]bool)
@@ -93,11 +93,11 @@ func doReconciliation(opts Options, delete bool) (*service.ReconciliationResult,
 		status := ComponentStatus{component, state, errorRecieved, msg.Manifest}
 
 		if opts.DryRun {
-			go bufferMan(manifests)
+			go manifestCollector(manifests)
+			manifests <- status
 		}
 
 		opts.StatusFunc(status)
-		manifests <- status
 
 	}).
 		WithSchedulerConfig(&service.SchedulerConfig{
@@ -115,7 +115,7 @@ func doReconciliation(opts Options, delete bool) (*service.ReconciliationResult,
 	return reconcilationResult, err
 }
 
-func bufferMan(ch chan ComponentStatus) {
+func manifestCollector(ch chan ComponentStatus) {
 	var str ComponentStatus
 	str = <-ch
 	manifestsBuffer = append(manifestsBuffer, str)
@@ -131,7 +131,7 @@ func printManifests() {
 	}
 
 	for _, val := range manifestsBuffer {
-		fmt.Printf("%s", val.Manifest)
+		fmt.Printf("%s", *val.Manifest)
 	}
 }
 

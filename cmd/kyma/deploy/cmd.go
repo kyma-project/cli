@@ -3,7 +3,7 @@ package deploy
 import (
 	"context"
 	"fmt"
-
+	"github.com/kyma-project/cli/pkg/step"
 	"io/ioutil"
 	"os"
 	"time"
@@ -121,11 +121,21 @@ func (cmd *command) run() error {
 	}
 
 	// check version upgrade
-	if err := cmd.decideVersionUpgrade(); err != nil {
-		return err
+	if !cmd.opts.DryRun {
+		if err := cmd.decideVersionUpgrade(); err != nil {
+			return err
+		}
 	}
 
-	// Prepare workspace
+	if cmd.opts.DryRun {
+		return cmd.dryRunKyma()
+	}
+
+	return cmd.deployDefault(start)
+
+}
+
+func (cmd *command) deployDefault(start time.Time) error {
 	wsStep := cmd.NewStep(fmt.Sprintf("Fetching Kyma sources (%s)", cmd.opts.Source))
 	l := cli.NewLogger(cmd.opts.Verbose).Sugar()
 	ws, err := deploy.PrepareWorkspace(cmd.opts.WorkspacePath, cmd.opts.Source, wsStep, !cmd.avoidUserInteraction(), cmd.opts.IsLocal(), l)
@@ -158,17 +168,9 @@ func (cmd *command) run() error {
 		return err
 	}
 
-	if cmd.opts.DryRun {
-		return cmd.dryRunKyma(l, components, vals)
-	}
-
 	summary := cmd.setSummary()
-	// if cmd.opts.DryRun {
-	// 	err = cmd.dryRunKyma(l, components, vals)
-	// } else {
-	err = cmd.deployKyma(l, components, vals, summary)
 
-	// }
+	err = cmd.deployKyma(l, components, vals, summary)
 
 	if err != nil {
 		return err
@@ -178,7 +180,38 @@ func (cmd *command) run() error {
 	return summary.Print(deployTime)
 }
 
-func (cmd *command) dryRunKyma(l *zap.SugaredLogger, components component.List, vals values.Values) error {
+func (cmd *command) dryRunKyma() error {
+	l := cli.NewLogger(cmd.opts.Verbose).Sugar()
+	ws, err := deploy.PrepareDryRunWorkspace(cmd.opts.WorkspacePath, cmd.opts.Source, cmd.opts.IsLocal(), l)
+	if err != nil {
+		return err
+	}
+
+	clusterInfo, err := clusterinfo.Discover(context.Background(), cmd.K8s.Static())
+	if err != nil {
+		return errors.Wrap(err, "failed to discover underlying cluster type")
+	}
+
+	vals, err := values.Merge(cmd.opts.Sources, ws.WorkspaceDir, clusterInfo)
+	if err != nil {
+		return err
+	}
+
+	hasCustomDomain := cmd.opts.Domain != ""
+	if _, err := coredns.Patch(l.Desugar(), cmd.K8s.Static(), hasCustomDomain, clusterInfo); err != nil {
+		return err
+	}
+
+	components, err := component.Resolve(cmd.opts.Components, cmd.opts.ComponentsFile, ws)
+	if err != nil {
+		return err
+	}
+
+	err = cmd.initialSetup(ws.WorkspaceDir)
+	if err != nil {
+		return err
+	}
+
 	kubeconfigPath := kube.KubeconfigPath(cmd.KubeconfigPath)
 	kubeconfig, err := ioutil.ReadFile(kubeconfigPath)
 	if err != nil {
@@ -186,8 +219,6 @@ func (cmd *command) dryRunKyma(l *zap.SugaredLogger, components component.List, 
 	}
 	undo := zap.RedirectStdLog(l.Desugar())
 	defer undo()
-
-	fmt.Println("Running Kyma in dry run mode!")
 
 	_, err = deploy.Deploy(deploy.Options{
 		Components:     components,
@@ -339,7 +370,10 @@ func (cmd *command) decideVersionUpgrade() error {
 }
 
 func (cmd *command) initialSetup(wsp string) error {
-	preReqStep := cmd.NewStep("Initial setup")
+	var preReqStep step.Step
+	if !cmd.opts.DryRun {
+		preReqStep = cmd.NewStep("Initial setup")
+	}
 
 	istio, err := istioctl.New(wsp)
 	if err != nil {
@@ -350,7 +384,9 @@ func (cmd *command) initialSetup(wsp string) error {
 		return err
 	}
 
-	preReqStep.Success()
+	if !cmd.opts.DryRun {
+		preReqStep.Success()
+	}
 	return nil
 }
 
