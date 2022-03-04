@@ -63,7 +63,7 @@ func NewCmd(o *Options) *cobra.Command {
 	- Deploy a pull request, for example "kyma deploy --source=PR-9486"
 	- Deploy the local sources: "kyma deploy --source=local"`)
 	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", "", "Custom domain used for installation.")
-	cobraCmd.Flags().BoolVar(&o.DryRun, "dry-run", false, "Dry run / render manifests only")
+	cobraCmd.Flags().BoolVar(&o.DryRun, "dry-run", false, "Render manifests only.")
 	cobraCmd.Flags().StringVarP(&o.Profile, "profile", "p", "",
 		fmt.Sprintf("Kyma deployment profile. If not specified, Kyma uses its default configuration. The supported profiles are: %s, %s.", profileEvaluation, profileProduction))
 	cobraCmd.Flags().StringVarP(&o.TLSCrtFile, "tls-crt", "", "", "TLS certificate file for the domain used for installation.")
@@ -120,22 +120,18 @@ func (cmd *command) run() error {
 		return errors.Wrap(err, "failed to initialize the Kubernetes client from given kubeconfig")
 	}
 
-	// check version upgrade
-	if !cmd.opts.DryRun {
-		if err := cmd.decideVersionUpgrade(); err != nil {
-			return err
-		}
-	}
-
 	if cmd.opts.DryRun {
-		return cmd.dryRunKyma()
+		return cmd.dryRun()
 	}
 
-	return cmd.deployDefault(start)
+	if err := cmd.decideVersionUpgrade(); err != nil {
+		return err
+	}
 
+	return cmd.deploy(start)
 }
 
-func (cmd *command) deployDefault(start time.Time) error {
+func (cmd *command) deploy(start time.Time) error {
 	wsStep := cmd.NewStep(fmt.Sprintf("Fetching Kyma sources (%s)", cmd.opts.Source))
 	l := cli.NewLogger(cmd.opts.Verbose).Sugar()
 	ws, err := deploy.PrepareWorkspace(cmd.opts.WorkspacePath, cmd.opts.Source, wsStep, !cmd.avoidUserInteraction(), cmd.opts.IsLocal(), l)
@@ -180,7 +176,7 @@ func (cmd *command) deployDefault(start time.Time) error {
 	return summary.Print(deployTime)
 }
 
-func (cmd *command) dryRunKyma() error {
+func (cmd *command) dryRun() error {
 	l := cli.NewLogger(cmd.opts.Verbose).Sugar()
 	ws, err := deploy.PrepareDryRunWorkspace(cmd.opts.WorkspacePath, cmd.opts.Source, cmd.opts.IsLocal(), l)
 	if err != nil {
@@ -232,7 +228,7 @@ func (cmd *command) dryRunKyma() error {
 		DryRun:         cmd.opts.DryRun,
 	})
 	if err != nil {
-		fmt.Errorf("Failed to generate Kyma Manifests.")
+		fmt.Printf("failed to generate Kyma Manifests")
 		return err
 	}
 	return nil

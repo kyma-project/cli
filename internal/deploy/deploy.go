@@ -122,14 +122,12 @@ func manifestCollector(ch chan ComponentStatus) {
 }
 
 func printManifests() {
-
 	for _, v := range manifestsBuffer {
 		if v.Error != nil {
 			fmt.Printf("Rendering of Component: %s failed with %s", v.Component, v.Error.Error())
 			return
 		}
 	}
-
 	for _, val := range manifestsBuffer {
 		fmt.Printf("%s", *val.Manifest)
 	}
