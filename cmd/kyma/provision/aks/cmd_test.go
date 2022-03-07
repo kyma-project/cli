@@ -32,7 +32,7 @@ func TestProvisionAKSFlags(t *testing.T) {
 		"-n", "my-cluster",
 		"-p", "my-resource-group",
 		"-c", "/my/credentials/file",
-		"-k", "1.19.0",
+		"-k", "1.21.11",
 		"-l", "us-central1-c",
 		"-t", "quantum-computer",
 		"--disk-size", "2000",
@@ -45,7 +45,7 @@ func TestProvisionAKSFlags(t *testing.T) {
 	require.Equal(t, "my-cluster", o.Name, "The parsed value for the name flag not as expected.")
 	require.Equal(t, "my-resource-group", o.Project, "The parsed value for the project flag not as expected.")
 	require.Equal(t, "/my/credentials/file", o.CredentialsFile, "The parsed value for the credentials flag not as expected.")
-	require.Equal(t, "1.19.0", o.KubernetesVersion, "The parsed value for the kube-version flag not as expected.")
+	require.Equal(t, "1.21.11", o.KubernetesVersion, "The parsed value for the kube-version flag not as expected.")
 	require.Equal(t, "us-central1-c", o.Location, "The parsed value for the location flag not as expected.")
 	require.Equal(t, "quantum-computer", o.MachineType, "The parsed value for the type flag not as expected.")
 	require.Equal(t, 2000, o.DiskSizeGB, "The parsed value for the disk-size flag not as expected.")
@@ -69,7 +69,7 @@ func TestNewCluster(t *testing.T) {
 	t.Parallel()
 	o := &Options{
 		Name:              "mega-cluster",
-		KubernetesVersion: "1.19.0",
+		KubernetesVersion: "1.21.11",
 		Location:          "north-pole",
 		MachineType:       "HAL",
 		DiskSizeGB:        9000,

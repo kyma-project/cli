@@ -3,7 +3,7 @@ package deploy
 import (
 	"context"
 	"fmt"
-
+	"github.com/kyma-project/cli/pkg/step"
 	"io/ioutil"
 	"os"
 	"time"
@@ -50,7 +50,9 @@ func NewCmd(o *Options) *cobra.Command {
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.RunWithTimeout() },
 		Aliases: []string{"d"},
 	}
-	cobraCmd.Flags().StringSliceVarP(&o.Components, "component", "", []string{}, "Provide one or more components to deploy (e.g. --component componentName@namespace)")
+	cobraCmd.Flags().StringArrayVarP(&o.Components, "component", "", []string{}, `Provide one or more components to deploy, for example:
+	- With short-hand notation: "--component name@namespace"
+	- With verbose JSON structure "--component '{"name": "componentName","namespace": "componenNamespace","url": "componentUrl","version": "1.2.3"}'`)
 	cobraCmd.Flags().StringVarP(&o.ComponentsFile, "components-file", "c", "", `Path to the components file (default "$HOME/.kyma/sources/installation/resources/components.yaml" or ".kyma-sources/installation/resources/components.yaml")`)
 	cobraCmd.Flags().StringVarP(&o.WorkspacePath, "workspace", "w", "", `Path to download Kyma sources (default "$HOME/.kyma/sources" or ".kyma-sources")`)
 	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", config.DefaultKyma2Version, `Installation source:
@@ -59,8 +61,8 @@ func NewCmd(o *Options) *cobra.Command {
 	- Deploy a commit (8 characters or more), for example: "kyma deploy --source=34edf09a"
 	- Deploy a pull request, for example "kyma deploy --source=PR-9486"
 	- Deploy the local sources: "kyma deploy --source=local"`)
-
 	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", "", "Custom domain used for installation.")
+	cobraCmd.Flags().BoolVar(&o.DryRun, "dry-run", false, "Render manifests only.")
 	cobraCmd.Flags().StringVarP(&o.Profile, "profile", "p", "",
 		fmt.Sprintf("Kyma deployment profile. If not specified, Kyma uses its default configuration. The supported profiles are: %s, %s.", profileEvaluation, profileProduction))
 	cobraCmd.Flags().StringVarP(&o.TLSCrtFile, "tls-crt", "", "", "TLS certificate file for the domain used for installation.")
@@ -94,9 +96,10 @@ func (cmd *command) RunWithTimeout() error {
 	for {
 		select {
 		case <-timeout:
-			timeoutStep := cmd.NewStep("Timeout reached while waiting for deployment to complete")
+			msg := "Timeout reached while waiting for deployment to complete"
+			timeoutStep := cmd.NewStep(msg)
 			timeoutStep.Failure()
-			return nil
+			return errors.New(msg)
 		case err := <-errChan:
 			return err
 		}
@@ -116,12 +119,18 @@ func (cmd *command) run() error {
 		return errors.Wrap(err, "failed to initialize the Kubernetes client from given kubeconfig")
 	}
 
-	// check version upgrade
+	if cmd.opts.DryRun {
+		return cmd.dryRun()
+	}
+
 	if err := cmd.decideVersionUpgrade(); err != nil {
 		return err
 	}
 
-	// Prepare workspace
+	return cmd.deploy(start)
+}
+
+func (cmd *command) deploy(start time.Time) error {
 	wsStep := cmd.NewStep(fmt.Sprintf("Fetching Kyma sources (%s)", cmd.opts.Source))
 	l := cli.NewLogger(cmd.opts.Verbose).Sugar()
 	ws, err := deploy.PrepareWorkspace(cmd.opts.WorkspacePath, cmd.opts.Source, wsStep, !cmd.avoidUserInteraction(), cmd.opts.IsLocal(), l)
@@ -155,13 +164,73 @@ func (cmd *command) run() error {
 	}
 
 	summary := cmd.setSummary()
+
 	err = cmd.deployKyma(l, components, vals, summary)
+
 	if err != nil {
 		return err
 	}
 
 	deployTime := time.Since(start)
 	return summary.Print(deployTime)
+}
+
+func (cmd *command) dryRun() error {
+	l := cli.NewLogger(cmd.opts.Verbose).Sugar()
+	ws, err := deploy.PrepareDryRunWorkspace(cmd.opts.WorkspacePath, cmd.opts.Source, cmd.opts.IsLocal(), l)
+	if err != nil {
+		return err
+	}
+
+	clusterInfo, err := clusterinfo.Discover(context.Background(), cmd.K8s.Static())
+	if err != nil {
+		return errors.Wrap(err, "failed to discover underlying cluster type")
+	}
+
+	vals, err := values.Merge(cmd.opts.Sources, ws.WorkspaceDir, clusterInfo)
+	if err != nil {
+		return err
+	}
+
+	hasCustomDomain := cmd.opts.Domain != ""
+	if _, err := coredns.Patch(l.Desugar(), cmd.K8s.Static(), hasCustomDomain, clusterInfo); err != nil {
+		return err
+	}
+
+	components, err := component.Resolve(cmd.opts.Components, cmd.opts.ComponentsFile, ws)
+	if err != nil {
+		return err
+	}
+
+	err = cmd.initialSetup(ws.WorkspaceDir)
+	if err != nil {
+		return err
+	}
+
+	kubeconfigPath := kube.KubeconfigPath(cmd.KubeconfigPath)
+	kubeconfig, err := ioutil.ReadFile(kubeconfigPath)
+	if err != nil {
+		return errors.Wrap(err, "failed to read kubeconfig")
+	}
+	undo := zap.RedirectStdLog(l.Desugar())
+	defer undo()
+
+	_, err = deploy.Deploy(deploy.Options{
+		Components:     components,
+		Values:         vals,
+		StatusFunc:     cmd.printDeployStatus,
+		KubeConfig:     kubeconfig,
+		KymaVersion:    cmd.opts.Source,
+		KymaProfile:    cmd.opts.Profile,
+		Logger:         l,
+		WorkerPoolSize: cmd.opts.WorkerPoolSize,
+		DryRun:         cmd.opts.DryRun,
+	})
+	if err != nil {
+		fmt.Printf("failed to generate Kyma Manifests")
+		return err
+	}
+	return nil
 }
 
 func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, vals values.Values, summary *nice.Summary) error {
@@ -192,6 +261,7 @@ func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, 
 		KymaProfile:    cmd.opts.Profile,
 		Logger:         l,
 		WorkerPoolSize: cmd.opts.WorkerPoolSize,
+		DryRun:         cmd.opts.DryRun,
 	})
 	if err != nil {
 		deployStep.Failuref("Failed to deploy Kyma.")
@@ -208,11 +278,12 @@ func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, 
 		deployStep.Successf("Kyma deployed successfully!")
 		return nil
 	}
+
 	return nil
 }
 
 func (cmd *command) printDeployStatus(status deploy.ComponentStatus) {
-	if cmd.Verbose {
+	if cmd.Verbose || cmd.opts.DryRun {
 		return
 	}
 
@@ -294,7 +365,10 @@ func (cmd *command) decideVersionUpgrade() error {
 }
 
 func (cmd *command) initialSetup(wsp string) error {
-	preReqStep := cmd.NewStep("Initial setup")
+	var preReqStep step.Step
+	if !cmd.opts.DryRun {
+		preReqStep = cmd.NewStep("Initial setup")
+	}
 
 	istio, err := istioctl.New(wsp)
 	if err != nil {
@@ -305,7 +379,9 @@ func (cmd *command) initialSetup(wsp string) error {
 		return err
 	}
 
-	preReqStep.Success()
+	if !cmd.opts.DryRun {
+		preReqStep.Success()
+	}
 	return nil
 }
 

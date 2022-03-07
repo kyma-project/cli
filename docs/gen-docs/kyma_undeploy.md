@@ -21,12 +21,12 @@ kyma undeploy [flags]
       --delete-strategy string   Specify if only Kyma resources are deleted (system) or all resources (all) (default "system")
   -d, --domain string            Custom domain used for installation.
   -p, --profile string           Kyma deployment profile. If not specified, Kyma uses its default configuration. The supported profiles are: evaluation, production.
-  -s, --source string            Source of installation to be undeployed:
+  -s, --source string            Undeploy source usually automatically detected. Use this flag to override the detection:
                                  	- Undeploy from a specific release, for example: "kyma undeploy --source=2.0.0"
                                  	- Undeploy from a specific branch of the Kyma repository on kyma-project.org: "kyma undeploy --source=<my-branch-name>"
                                  	- Undeploy from a commit (8 characters or more), for example: "kyma undeploy --source=34edf09a"
                                  	- Undeploy from a pull request, for example "kyma undeploy --source=PR-9486"
-                                 	- Undeploy from the local sources: "kyma undeploy --source=local" (default "main")
+                                 	- Undeploy from the local sources: "kyma undeploy --source=local"
       --timeout duration         Maximum time for the deletion (default 6m0s)
       --tls-crt string           TLS certificate file for the domain used for installation.
       --tls-key string           TLS key file for the domain used for installation.

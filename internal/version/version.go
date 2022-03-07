@@ -3,13 +3,14 @@ package version
 import (
 	"context"
 
+	"regexp"
+	"strings"
+
 	"github.com/Masterminds/semver/v3"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"regexp"
-	"strings"
 )
 
 type KymaVersion struct {
@@ -87,7 +88,7 @@ func GetCurrentKymaVersion(k8s kube.KymaKube) (KymaVersion, error) {
 }
 
 func checkKyma2(k8s kube.KymaKube) (bool, error) {
-	deps, err := getDeployments(k8s)
+	deps, err := getKymaDeployments(k8s)
 	if err != nil {
 		return false, err
 	}
@@ -97,12 +98,12 @@ func checkKyma2(k8s kube.KymaKube) (bool, error) {
 	return true, nil
 }
 
-func getDeployments(k8s kube.KymaKube) (*v1.DeploymentList, error) {
+func getKymaDeployments(k8s kube.KymaKube) (*v1.DeploymentList, error) {
 	return k8s.Static().AppsV1().Deployments("kyma-system").List(context.Background(), metav1.ListOptions{LabelSelector: "reconciler.kyma-project.io/managed-by=reconciler"})
 }
 
 func getKyma2Version(k8s kube.KymaKube) (KymaVersion, error) {
-	deployments, err := getDeployments(k8s)
+	deployments, err := getKymaDeployments(k8s)
 	if err != nil {
 		return KymaVersion{}, err
 	}

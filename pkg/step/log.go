@@ -78,6 +78,14 @@ func (s *logStep) LogErrorf(format string, args ...interface{}) {
 	s.LogError(fmt.Sprintf(format, args...))
 }
 
+func (s *logStep) LogWarn(msg string) {
+	s.logger.Warn(msg)
+}
+
+func (s *logStep) LogWarnf(format string, args ...interface{}) {
+	s.LogWarn(fmt.Sprintf(format, args...))
+}
+
 func (s *logStep) Prompt(msg string) (string, error) {
 	reader := bufio.NewReader(os.Stdin)
 	s.logger.Info(msg)

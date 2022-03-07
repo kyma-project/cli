@@ -7,6 +7,12 @@
     },
     {
       "name": "pre-2"
+    },
+    {
+      "name": "pre-3",
+      "namespace": "ns",
+      "url": "some-url",
+      "version": "1.2.3"
     }
   ],
   "components": [
@@ -19,6 +25,12 @@
     },
     {
       "name": "comp-3"
+    },
+    {
+      "name": "comp-4",
+      "namespace": "ns-2",
+      "url": "some-url",
+      "version": "1.2.3"
     }
   ]
 }

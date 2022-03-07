@@ -71,7 +71,8 @@ archive:
 upload-binaries:
 ifeq ($(STABLE), true)
 	gsutil cp bin/* $(KYMA_CLI_STABLE_BUCKET)
-else
+endif
+ifeq ($(UNSTABLE), true)
 	gsutil cp bin/* $(KYMA_CLI_UNSTABLE_BUCKET)
 endif
 
