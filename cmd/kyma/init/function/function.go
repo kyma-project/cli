@@ -96,23 +96,23 @@ func (c *command) Run() error {
 		Source:    c.opts.source(),
 	}
 
-	err = workspace.Initialize(configuration, c.opts.BaseDir)
+	err = workspace.Initialize(configuration, c.opts.Dir)
 	if err != nil {
 		s.Failure()
 		return err
 	}
 
 	if !c.opts.VsCode {
-		s.Successf("Project generated in %s", c.opts.BaseDir)
+		s.Successf("Project generated in %s", c.opts.Dir)
 		return nil
 	}
 
-	if err := validateVsCodeDir(c.opts.BaseDir); err != nil {
+	if err := validateVsCodeDir(c.opts.Dir); err != nil {
 		s.Failure()
 		return err
 	}
 
-	vsCodeDirPath := path.Join(c.opts.BaseDir, ".vscode")
+	vsCodeDirPath := path.Join(c.opts.Dir, ".vscode")
 	err = os.MkdirAll(vsCodeDirPath, 0700)
 	if err != nil {
 		s.Failure()

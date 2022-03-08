@@ -27,6 +27,7 @@ import (
 
 	"github.com/kyma-project/cli/cmd/kyma/provision"
 	"github.com/kyma-project/cli/cmd/kyma/upgrade"
+	"github.com/kyma-project/cli/cmd/kyma/get"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/spf13/cobra"
 )
@@ -87,7 +88,8 @@ Kyma CLI allows you to install and manage Kyma.
 		apply.NewCmd(o),
 		sync.NewCmd(o),
 		run.NewCmd(o),
+		get.NewCmd(o),
 	)
-
+	
 	return cmd
 }
