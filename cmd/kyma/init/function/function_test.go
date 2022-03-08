@@ -22,6 +22,7 @@ func TestFunctionFlags(t *testing.T) {
 	require.Equal(t, "", o.RepositoryName, "The parsed value for the --repository-name flag not as expected.")
 	require.Equal(t, "main", o.Reference, "The parsed value for the --reference flag not as expected.")
 	require.Equal(t, "/", o.BaseDir, "The parsed value for the --base-dir flag not as expected.")
+	require.Equal(t, false, o.VsCode, "Default value for the --vscode flag not as expected.")
 
 	// test passing flags
 	err := c.ParseFlags([]string{
@@ -33,6 +34,7 @@ func TestFunctionFlags(t *testing.T) {
 		"--repository-name", "test-repository-name",
 		"--reference", "test-reference",
 		"--base-dir", "test-base-dir",
+		"--vscode",
 	})
 	require.NoError(t, err, "Parsing flags should not return an error")
 	require.Equal(t, "/fakepath", o.Dir, "The parsed value for the --dir flag not as expected.")
@@ -43,6 +45,7 @@ func TestFunctionFlags(t *testing.T) {
 	require.Equal(t, "test-repository-name", o.RepositoryName, "The parsed value for the --repository-name flag not as expected.")
 	require.Equal(t, "test-reference", o.Reference, "The parsed value for the --reference flag not as expected.")
 	require.Equal(t, "test-base-dir", o.BaseDir, "The parsed value for the --base-dir flag not as expected.")
+	require.Equal(t, true, o.VsCode, "Parsed value for the --vscode flag not as expected.")
 
 	err = c.ParseFlags([]string{
 		"-d", "/tmpfile",

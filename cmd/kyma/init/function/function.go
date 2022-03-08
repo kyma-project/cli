@@ -59,7 +59,7 @@ Use the flags to specify the initial configuration for your Function or to choos
 	cmd.Flags().StringVar(&o.RepositoryName, "repository-name", "", `The name of the Git repository to be created`)
 	cmd.Flags().StringVar(&o.Reference, "reference", defaultReference, `Commit hash or branch name`)
 	cmd.Flags().StringVar(&o.BaseDir, "base-dir", defaultBaseDir, `A directory in the repository containing the Function's sources`)
-	cmd.Flags().BoolVar(&o.VsCode, "vscode", false, "Generate vscode settings")
+	cmd.Flags().BoolVar(&o.VsCode, "vscode", false, "Generate vscode settings containing config.yaml JSON schema for autocolmpletion (see kyma get schema for more info)")
 
 	return cmd
 }
