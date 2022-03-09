@@ -166,9 +166,9 @@ func prepareKebComponents(components component.List, vals values.Values) ([]*keb
 }
 
 func prepareKebCluster(opts Options, kebComponents []*keb.Component, delete bool) *cluster.State {
-	status := model.ClusterStatusReconcilePending
+	status := model.ClusterStatusReconciling
 	if delete {
-		status = model.ClusterStatusDeletePending
+		status = model.ClusterStatusDeleting
 	}
 
 	return &cluster.State{

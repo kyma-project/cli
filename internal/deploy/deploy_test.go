@@ -137,14 +137,14 @@ func TestPrepareKebCluster(t *testing.T) {
 			RuntimeID:      "local",
 			ClusterVersion: 1,
 			ConfigVersion:  1,
-			Status:         model.ClusterStatusReconcilePending,
+			Status:         model.ClusterStatusReconciling,
 		},
 	}
 
 	result := prepareKebCluster(options, expected, false)
 	require.Equal(t, expectedState, result)
 
-	expectedState.Status.Status = model.ClusterStatusDeletePending
+	expectedState.Status.Status = model.ClusterStatusDeleting
 	result = prepareKebCluster(options, expected, true)
 	require.Equal(t, expectedState, result)
 }
