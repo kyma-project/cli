@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/kyma-incubator/hydroform/function/pkg/resources/types"
+	"github.com/kyma-incubator/hydroform/function/pkg/workspace"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/stretchr/testify/require"
 )
@@ -13,7 +13,7 @@ import (
 func TestFunctionFlags(t *testing.T) {
 	t.Parallel()
 	o := NewOptions(&cli.Options{}, os.Stdout, map[string]func() ([]byte, error){
-		"serverless": types.ReflectSchema,
+		"serverless": workspace.ReflectSchema,
 	})
 	c := NewCmd(o)
 

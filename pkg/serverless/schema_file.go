@@ -3,13 +3,13 @@ package serverless
 import (
 	"io"
 
-	"github.com/kyma-incubator/hydroform/function/pkg/resources/types"
+	"github.com/kyma-incubator/hydroform/function/pkg/workspace"
 )
 
 type Schema struct{}
 
 func (s Schema) Write(w io.Writer, _ interface{}) error {
-	b, err := types.ReflectSchema()
+	b, err := workspace.ReflectSchema()
 	if err != nil {
 		return err
 	}

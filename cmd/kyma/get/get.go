@@ -3,7 +3,7 @@ package get
 import (
 	"os"
 
-	"github.com/kyma-incubator/hydroform/function/pkg/resources/types"
+	"github.com/kyma-incubator/hydroform/function/pkg/workspace"
 	"github.com/kyma-project/cli/cmd/kyma/get/schema"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/spf13/cobra"
@@ -11,7 +11,7 @@ import (
 
 var (
 	refMap = map[string]func() ([]byte, error){
-		"serverless": types.ReflectSchema,
+		"serverless": workspace.ReflectSchema,
 	}
 )
 

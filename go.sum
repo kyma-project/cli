@@ -1279,8 +1279,8 @@ github.com/likexian/simplejson-go v0.0.0-20190502021454-d8787b4bfa0b/go.mod h1:3
 github.com/lithammer/dedent v1.1.0/go.mod h1:jrXYCQtgg0nJiN+StA2KgR7w6CiQNv9Fd/Z9BP0jIOc=
 github.com/lusis/go-artifactory v0.0.0-20160115162124-7e4ce345df82 h1:wnfcqULT+N2seWf6y4yHzmi7GD2kNx4Ute0qArktD48=
 github.com/lusis/go-artifactory v0.0.0-20160115162124-7e4ce345df82/go.mod h1:y54tfGmO3NKssKveTEFFzH8C/akrSOy/iW9qEAUDV84=
-github.com/m00g3n/hydroform/function v0.0.0-20220302205837-ecb22fa30620 h1:EnUhXtOhhdhlapYHVLfyCl/fjKETIZB8SREcQKdh87k=
-github.com/m00g3n/hydroform/function v0.0.0-20220302205837-ecb22fa30620/go.mod h1:k7gpf7VB49OrCcQHrv3xTFUTEKrxo4asoLQRwHzFqMo=
+github.com/m00g3n/hydroform/function v0.0.0-20220309095037-c771fcd53cb8 h1:JjYCzbHYpzX5fta2RIgqnqpH4OE1f1BLA3IrlB2ZtHc=
+github.com/m00g3n/hydroform/function v0.0.0-20220309095037-c771fcd53cb8/go.mod h1:k7gpf7VB49OrCcQHrv3xTFUTEKrxo4asoLQRwHzFqMo=
 github.com/magiconair/properties v1.8.1/go.mod h1:PppfXfuXeibc/6YijjN8zIbojt8czPbwD3XqdrwzmxQ=
 github.com/magiconair/properties v1.8.4 h1:8KGKTcQQGm0Kv7vEbKFErAoAOFyyacLStRtQSeYtvkY=
 github.com/magiconair/properties v1.8.4/go.mod h1:y3VJvCyxH9uVvJTWEGAELF3aiYNyPKd5NZ3oSwXrF60=
