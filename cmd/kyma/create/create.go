@@ -6,10 +6,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	refMap = map[string]func() ([]byte, error){}
-)
-
 //NewCmd creates a new kyma CLI command
 func NewCmd(o *cli.Options) *cobra.Command {
 	cmd := &cobra.Command{
