@@ -550,6 +550,8 @@ github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible
 github.com/docker/distribution v2.7.1+incompatible/go.mod h1:J2gT2udsDAN96Uj4KfcMRqY0/ypR+oyYUYmja8H+y+w=
 github.com/docker/distribution v2.8.0+incompatible h1:l9EaZDICImO1ngI+uTifW+ZYvvz7fKISBAKpg+MbWbY=
 github.com/docker/distribution v2.8.0+incompatible/go.mod h1:J2gT2udsDAN96Uj4KfcMRqY0/ypR+oyYUYmja8H+y+w=
+github.com/docker/distribution v2.8.1+incompatible h1:Q50tZOPR6T/hjNsyc9g8/syEs6bk8XXApsHjKukMl68=
+github.com/docker/distribution v2.8.1+incompatible/go.mod h1:J2gT2udsDAN96Uj4KfcMRqY0/ypR+oyYUYmja8H+y+w=
 github.com/docker/docker v0.7.3-0.20190327010347-be7ac8be2ae0/go.mod h1:eEKB0N0r5NX/I1kEveEz05bcu8tLC/8azJZsviup8Sk=
 github.com/docker/docker v1.4.2-0.20200203170920-46ec8731fbce/go.mod h1:eEKB0N0r5NX/I1kEveEz05bcu8tLC/8azJZsviup8Sk=
 github.com/docker/docker v17.12.0-ce-rc1.0.20200618181300-9dc6525e6118+incompatible/go.mod h1:eEKB0N0r5NX/I1kEveEz05bcu8tLC/8azJZsviup8Sk=
@@ -1256,6 +1258,10 @@ github.com/kyma-incubator/hydroform/provision v0.0.0-20210514061348-c71b69cb362e
 github.com/kyma-incubator/hydroform/provision v0.0.0-20210514061348-c71b69cb362e/go.mod h1:x4YfWgupo4fc7vgGFb0aJfSWCh9W72ipmNekfY1oYeo=
 github.com/kyma-incubator/reconciler v0.0.0-20220308141216-c3f1b187c963 h1:swP7aokZCVkc4uxus3pJEFS3Ak4xqKp8hwkYSoWhBw0=
 github.com/kyma-incubator/reconciler v0.0.0-20220308141216-c3f1b187c963/go.mod h1:E643AtROXBKJsJHUxv/3D4x2gWKf5nfU/YiQhZICzS8=
+github.com/kyma-incubator/reconciler v0.0.0-20220311114650-fb4311702b35 h1:npIWSm//BPn4GQWsCmOnsVRCFa/c2/p2lVfxFIyQb6c=
+github.com/kyma-incubator/reconciler v0.0.0-20220311114650-fb4311702b35/go.mod h1:yEEFZBs+BlBLFnocsV7bqJ1pKIHz24t6tUQ6OJThmys=
+github.com/kyma-incubator/reconciler v0.0.0-20220311122650-31f8afdb153d h1:V1D13coX5ZpbglLQJiGGOgjTHP0GDdrkkpQ3in6FGE4=
+github.com/kyma-incubator/reconciler v0.0.0-20220311122650-31f8afdb153d/go.mod h1:yEEFZBs+BlBLFnocsV7bqJ1pKIHz24t6tUQ6OJThmys=
 github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20200817094157-8392259f5be1/go.mod h1:Svisep1qUjML69qtRee5OcDOpWVjxID2Nb6E/xyhQ5k=
 github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20201125092745-687c943ac940 h1:TEquDCgUClhTnSIOc3oZn1YZ53/aK4mu3AwXu6kih+4=
 github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20201125092745-687c943ac940/go.mod h1:jDvGQt3ccmrDW/9dZufC8e4xwr+PUTR74IJ0yQ81Jhk=
