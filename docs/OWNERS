@@ -1,0 +1,6 @@
+approvers:
+    - technical-writers
+reviewers:
+    - technical-writers
+labels:
+    - area/documentation
