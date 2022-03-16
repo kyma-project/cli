@@ -20,7 +20,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-const defaultIstioChartPath = "/resources/istio-configuration/Chart.yaml"
+const defaultIstioChartPath = "/resources/istio/Chart.yaml"
 const archSupport = "1.6"
 const envVar = "ISTIOCTL_PATH"
 const dirName = "istio"
@@ -82,9 +82,15 @@ func New(workspacePath string) (Installation, error) {
 	if err != nil {
 		return Installation{}, err
 	}
+
+	istioChartPath, err := setIstioChartPath(workspacePath, defaultIstioChartPath)
+	if err != nil {
+		return Installation{}, err
+	}
+
 	return Installation{
 		WorkspacePath:  workspacePath,
-		IstioChartPath: defaultIstioChartPath,
+		IstioChartPath: istioChartPath,
 		Client:         &http.Client{},
 		kymaHome:       kymaHome,
 		archSupport:    archSupport,
@@ -448,4 +454,18 @@ func initReader(source string) (*zip.Reader, error) {
 		return nil, err
 	}
 	return zipReader, nil
+}
+
+func setIstioChartPath(workspacePath string, defaultIstioChartPath string) (string, error) {
+	oldistioChartPath := "/resources/istio-configuration/Chart.yaml"
+
+	_, err := os.Stat(filepath.Join(workspacePath, defaultIstioChartPath))
+	if err == nil {
+		return defaultIstioChartPath, nil
+	}
+	if errors.Is(err, os.ErrNotExist) {
+		return oldistioChartPath, nil
+	}
+
+	return defaultIstioChartPath, err
 }
