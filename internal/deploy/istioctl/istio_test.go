@@ -261,21 +261,17 @@ func TestInstallation_setIstioChartPath(t *testing.T) {
 		name          string
 		workspacePath string
 		expected      string
-		wantErr       bool
 	}{
-		{name: "Only istio-configuration is present", workspacePath: "testdata/old", expected: "/resources/istio-configuration/Chart.yaml", wantErr: false},
-		{name: "Both istio and istio-configuration is present", workspacePath: "testdata/new", expected: "/resources/istio/Chart.yaml", wantErr: false},
-		{name: "Only istio is present", workspacePath: "testdata/default", expected: "/resources/istio/Chart.yaml", wantErr: false},
+		{name: "Only istio-configuration is present", workspacePath: "testdata/old", expected: "/resources/istio-configuration/Chart.yaml"},
+		{name: "Both istio and istio-configuration is present", workspacePath: "testdata/new", expected: "/resources/istio/Chart.yaml"},
+		{name: "Only istio is present", workspacePath: "testdata/default", expected: "/resources/istio/Chart.yaml"},
 	}
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := setIstioChartPath(tt.workspacePath, defaultIstioChartPath)
-			if tt.wantErr {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-			}
+			require.NoError(t, err)
+
 			require.Equal(t, tt.expected, got)
 		})
 	}
