@@ -2,13 +2,14 @@ package istioctl
 
 import (
 	"bytes"
-	"github.com/pkg/errors"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
 	"testing"
+
+	"github.com/pkg/errors"
+	"github.com/stretchr/testify/require"
 )
 
 func TestInstallation_getIstioVersion(t *testing.T) {
@@ -250,6 +251,32 @@ func TestInstallation_downloadFile(t *testing.T) {
 				_, err := os.Stat(tmpFile)
 				require.Error(t, err)
 			}
+		})
+	}
+}
+
+func TestInstallation_setIstioChartPath(t *testing.T) {
+
+	tests := []struct {
+		name          string
+		workspacePath string
+		expected      string
+		wantErr       bool
+	}{
+		{name: "Only istio-configuration is present", workspacePath: "testdata/old", expected: "/resources/istio-configuration/Chart.yaml", wantErr: false},
+		{name: "Both istio and istio-configuration is present", workspacePath: "testdata/new", expected: "/resources/istio/Chart.yaml", wantErr: false},
+		{name: "Only istio is present", workspacePath: "testdata/default", expected: "/resources/istio/Chart.yaml", wantErr: false},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := setIstioChartPath(tt.workspacePath, defaultIstioChartPath)
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			require.Equal(t, tt.expected, got)
 		})
 	}
 }
