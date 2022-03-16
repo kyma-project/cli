@@ -20,7 +20,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-const defaultIstioChartPath = "/resources/istio/Chart.yaml"
+const defaultIstioChartPath = "/resources/istio-configuration/Chart.yaml"
 const archSupport = "1.6"
 const envVar = "ISTIOCTL_PATH"
 const dirName = "istio"
