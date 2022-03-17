@@ -27,6 +27,7 @@ kyma init function [flags]
                                  	- nodejs14
                                  	- python39 (default "nodejs14")
       --url string               Git repository URL
+      --vscode                   Generate vscode settings containing config.yaml JSON schema for autocolmpletion (see "kyma get schema -h" for more info)
 ```
 
 ## Flags inherited from parent commands
