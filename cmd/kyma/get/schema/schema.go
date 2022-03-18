@@ -23,7 +23,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "schema SCHEMA_NAME",
 		Short: "Returns a JSON schema",
-		Long:  `Returns a json schema for the given name`,
+		Long:  `Returns a json schema for a given name`,
 		RunE:  func(_ *cobra.Command, args []string) error { return c.Run(args) },
 	}
 
