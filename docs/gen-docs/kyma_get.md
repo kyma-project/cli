@@ -2,11 +2,11 @@
 title: kyma get
 ---
 
-Gets kyma related resources.
+Gets Kyma-related resources.
 
 ## Synopsis
 
-Use this command to get Kyma related resources.
+Use this command to get Kyma-related resources.
 
 ## Flags inherited from parent commands
 

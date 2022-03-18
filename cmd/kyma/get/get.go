@@ -19,8 +19,8 @@ var (
 func NewCmd(o *cli.Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "get",
-		Short: "Gets kyma related resources.",
-		Long:  "Use this command to get Kyma related resources.",
+		Short: "Gets Kyma-related resources.",
+		Long:  "Use this command to get Kyma-related resources.",
 	}
 
 	cmd.AddCommand(schema.NewCmd(schema.NewOptions(o, os.Stdout, refMap)))

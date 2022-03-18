@@ -24,5 +24,5 @@ kyma get schema SCHEMA_NAME [flags]
 
 ## See also
 
-* [kyma get](kyma_get.md)	 - Gets kyma related resources.
+* [kyma get](kyma_get.md)	 - Gets Kyma-related resources.
 
