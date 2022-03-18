@@ -6,7 +6,7 @@ Returns a JSON schema
 
 ## Synopsis
 
-Returns a json schema for the given name
+Returns a json schema for a given name
 
 ```bash
 kyma get schema SCHEMA_NAME [flags]
