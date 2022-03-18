@@ -7,6 +7,8 @@ replace (
 	github.com/hashicorp/consul v0.0.0-20171026175957-610f3c86a089 => github.com/hashicorp/consul/sdk v0.7.0
 	github.com/hashicorp/consul/api v1.3.0 => github.com/hashicorp/consul/api v0.0.0-20191112221531-8742361660b6
 
+	github.com/kyma-incubator/hydroform/function => github.com/kyma-incubator/hydroform/function v0.0.0-20220316082314-44e9da3153e5
+
 	// in conflict with reconciler and terraform, we should be able to remove it once we remove terraform
 	github.com/spf13/afero => github.com/spf13/afero v1.2.2
 
@@ -31,7 +33,7 @@ require (
 	github.com/kyma-incubator/hydroform/function v0.0.0-20220201101045-fa7ac5fbce3f
 	github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90
 	github.com/kyma-incubator/hydroform/provision v0.0.0-20210514061348-c71b69cb362e
-	github.com/kyma-incubator/reconciler v0.0.0-20220308141216-c3f1b187c963
+	github.com/kyma-incubator/reconciler v0.0.0-20220317134115-c59535a13675
 	github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20201125092745-687c943ac940
 	github.com/opencontainers/image-spec v1.0.2
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
@@ -112,7 +114,7 @@ require (
 	github.com/cyphar/filepath-securejoin v0.2.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dimchansky/utfbom v1.1.0 // indirect
-	github.com/docker/distribution v2.8.0+incompatible // indirect
+	github.com/docker/distribution v2.8.1+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.6.3 // indirect
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
@@ -179,8 +181,10 @@ require (
 	github.com/hashicorp/terraform-svchost v0.0.0-20200729002733-f050f53b9734 // indirect
 	github.com/hashicorp/yamux v0.0.0-20180604194846-3520598351bb // indirect
 	github.com/huandu/xstrings v1.3.2 // indirect
+	github.com/iancoleman/orderedmap v0.0.0-20190318233801-ac98e3ecb4b0 // indirect
 	github.com/iancoleman/strcase v0.1.3 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/invopop/jsonschema v0.2.0 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/jmoiron/sqlx v1.3.1 // indirect
