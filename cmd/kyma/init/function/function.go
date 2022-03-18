@@ -1,11 +1,14 @@
 package function
 
 import (
+	"fmt"
 	"os"
+	"path"
 
 	"github.com/kyma-incubator/hydroform/function/pkg/workspace"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
+	"github.com/kyma-project/cli/pkg/vscode"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -56,6 +59,7 @@ Use the flags to specify the initial configuration for your Function or to choos
 	cmd.Flags().StringVar(&o.RepositoryName, "repository-name", "", `The name of the Git repository to be created`)
 	cmd.Flags().StringVar(&o.Reference, "reference", defaultReference, `Commit hash or branch name`)
 	cmd.Flags().StringVar(&o.BaseDir, "base-dir", defaultBaseDir, `A directory in the repository containing the Function's sources`)
+	cmd.Flags().BoolVar(&o.VsCode, "vscode", false, `Generate VS Code settings containing config.yaml JSON schema for autocompletion (see "kyma get schema -h" for more info)`)
 
 	return cmd
 }
@@ -76,6 +80,7 @@ func (c *command) Run() error {
 	if _, err := os.Stat(c.opts.Dir); os.IsNotExist(err) {
 		err = os.MkdirAll(c.opts.Dir, 0700)
 		if err != nil {
+			s.Failure()
 			return err
 		}
 	}
@@ -96,6 +101,45 @@ func (c *command) Run() error {
 		s.Failure()
 		return err
 	}
+
+	if !c.opts.VsCode {
+		s.Successf("Project generated in %s", c.opts.Dir)
+		return nil
+	}
+
+	if err := validateVsCodeDir(c.opts.Dir); err != nil {
+		s.Failure()
+		return err
+	}
+
+	vsCodeDirPath := path.Join(c.opts.Dir, ".vscode")
+	err = os.MkdirAll(vsCodeDirPath, 0700)
+	if err != nil {
+		s.Failure()
+		return err
+	}
+
+	if err := vscode.Workspace.Build(vsCodeDirPath); err != nil {
+		s.Failure()
+		return err
+	}
+
 	s.Successf("Project generated in %s", c.opts.Dir)
+	return nil
+}
+
+func validateVsCodeDir(vsCodeDir string) error {
+	for _, filename := range []string{"settings.json", "schema.json"} {
+		_, err := os.Stat(path.Join(vsCodeDir, ".vscode", filename))
+
+		if err == nil {
+			return fmt.Errorf("%q already exists", filename)
+		}
+
+		if !os.IsNotExist(err) {
+			return err
+		}
+	}
+
 	return nil
 }
