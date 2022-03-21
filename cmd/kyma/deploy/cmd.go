@@ -365,10 +365,14 @@ func (cmd *command) decideVersionUpgrade() error {
 }
 
 func (cmd *command) initialSetup(wsp string, logger* zap.SugaredLogger) error {
+<<<<<<< Updated upstream
 	var preReqStep step.Step
 	if !cmd.opts.DryRun {
 		preReqStep = cmd.NewStep("Initial setup")
 	}
+=======
+	preReqStep := cmd.NewStep("Initial setup")
+>>>>>>> Stashed changes
 
 	istio, err := istioctl.New(wsp, logger)
 	if err != nil {
