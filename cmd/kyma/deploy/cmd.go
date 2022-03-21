@@ -55,12 +55,12 @@ func NewCmd(o *Options) *cobra.Command {
 	- With verbose JSON structure "--component '{"name": "componentName","namespace": "componenNamespace","url": "componentUrl","version": "1.2.3"}'`)
 	cobraCmd.Flags().StringVarP(&o.ComponentsFile, "components-file", "c", "", `Path to the components file (default "$HOME/.kyma/sources/installation/resources/components.yaml" or ".kyma-sources/installation/resources/components.yaml")`)
 	cobraCmd.Flags().StringVarP(&o.WorkspacePath, "workspace", "w", "", `Path to download Kyma sources (default "$HOME/.kyma/sources" or ".kyma-sources")`)
-	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", config.DefaultKyma2Version, `Installation source:
+	cobraCmd.Flags().StringVarP(&o.Source, "source", "s", config.DefaultKyma2Version, fmt.Sprintf(`Installation source:
 	- Deploy a specific release, for example: "kyma deploy --source=2.0.0"
 	- Deploy a specific branch of the Kyma repository on kyma-project.org: "kyma deploy --source=<my-branch-name>"
 	- Deploy a commit (8 characters or more), for example: "kyma deploy --source=34edf09a"
 	- Deploy a pull request, for example "kyma deploy --source=PR-9486"
-	- Deploy the local sources: "kyma deploy --source=local"`)
+	- Deploy the local sources: "kyma deploy --source=local"`, config.DefaultKyma2Version))
 	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", "", "Custom domain used for installation.")
 	cobraCmd.Flags().BoolVar(&o.DryRun, "dry-run", false, "Render manifests only.")
 	cobraCmd.Flags().StringVarP(&o.Profile, "profile", "p", "",
@@ -158,7 +158,7 @@ func (cmd *command) deploy(start time.Time) error {
 		return err
 	}
 
-	err = cmd.initialSetup(ws.WorkspaceDir)
+	err = cmd.initialSetup(ws.WorkspaceDir, l)
 	if err != nil {
 		return err
 	}
@@ -364,13 +364,13 @@ func (cmd *command) decideVersionUpgrade() error {
 	return nil
 }
 
-func (cmd *command) initialSetup(wsp string) error {
+func (cmd *command) initialSetup(wsp string, logger* zap.SugaredLogger) error {
 	var preReqStep step.Step
 	if !cmd.opts.DryRun {
 		preReqStep = cmd.NewStep("Initial setup")
 	}
 
-	istio, err := istioctl.New(wsp)
+	istio, err := istioctl.New(wsp, logger)
 	if err != nil {
 		return err
 	}
