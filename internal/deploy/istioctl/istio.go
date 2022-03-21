@@ -127,6 +127,9 @@ func (i *Installation) Install() error {
 			return errors.Errorf("error extracting istioctl: %s", err)
 		}
 	}
+	if err := i.chmodX(); err != nil {
+		return errors.Errorf("error chmod +x to istioctl bianry: %s", err)
+	}
 	if err := i.exportEnvVar(); err != nil {
 		return errors.Errorf("error exporting environment variable: %s", err)
 	}
@@ -256,6 +259,15 @@ func (i *Installation) extractIstio() error {
 		}
 	}
 	i.logger.Debugf("istioctl extracted to: %s", targetPath)
+	return nil
+}
+
+func (i *Installation) chmodX() error {
+	var fileMode os.FileMode = 0777
+	 if err := os.Chmod(i.binPath, fileMode); err != nil {
+		 return errors.Wrap(err, fmt.Sprintf("Failed to change file mode of istioctl binary to: %s", fileMode))
+	 }
+	i.logger.Debugf("%s chmod to: %s", i.binPath, fileMode)
 	return nil
 }
 
