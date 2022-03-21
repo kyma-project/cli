@@ -202,7 +202,7 @@ func (cmd *command) dryRun() error {
 		return err
 	}
 
-	err = cmd.initialSetup(ws.WorkspaceDir)
+	err = cmd.initialSetup(ws.WorkspaceDir, l)
 	if err != nil {
 		return err
 	}
