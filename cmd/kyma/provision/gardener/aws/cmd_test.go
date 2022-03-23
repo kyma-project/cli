@@ -29,6 +29,9 @@ func TestProvisionGardenerAWSFlags(t *testing.T) {
 	require.Equal(t, 3, o.ScalerMax, "Default value for the scaler-max flag not as expected.")
 	require.Empty(t, o.Extra, "Default value for the extra flag not as expected.")
 	require.Equal(t, uint(3), o.Attempts, "Default value for the attempts flag not as expected.")
+	require.Equal(t, "00 18 * * 1,2,3,4,5", o.HibernationStart, "Default value for the project flag not as expected.")
+	require.Equal(t, "", o.HibernationEnd, "Default value for the project flag not as expected.")
+	require.Equal(t, "Europe/Berlin", o.HibernationLocation, "Default value for the project flag not as expected.")
 
 	// test passing flags
 	err := c.ParseFlags([]string{
@@ -98,14 +101,16 @@ func TestNewCluster(t *testing.T) {
 func TestNewProvider(t *testing.T) {
 	t.Parallel()
 	o := &Options{
-		Project:         "cool-project",
-		CredentialsFile: "/path/to/credentials",
-		Secret:          "Open sesame!",
-		Zones:           []string{"Desert"},
-		DiskType:        "a big one",
-		ScalerMin:       12,
-		ScalerMax:       26,
-		Extra:           []string{"VAR1=VALUE1", "VAR2=VALUE2"},
+		Project:             "cool-project",
+		CredentialsFile:     "/path/to/credentials",
+		Secret:              "Open sesame!",
+		Zones:               []string{"Desert"},
+		DiskType:            "a big one",
+		ScalerMin:           12,
+		ScalerMax:           26,
+		HibernationStart:    "00 18 * * 1,2,3,4,5",
+		HibernationLocation: "Europe/Berlin",
+		Extra:               []string{"VAR1=VALUE1", "VAR2=VALUE2"},
 	}
 	cmd := newAwsCmd(o)
 	p, err := cmd.NewProvider()
@@ -130,7 +135,10 @@ func TestNewProvider(t *testing.T) {
 	custom["workercidr"] = "10.250.0.0/16"
 	custom["networking_type"] = "calico"
 	custom["machine_image_name"] = "gardenlinux"
-	custom["machine_image_version"] = "318.8.0"
+	custom["machine_image_version"] = "576.5.0"
+	custom["hibernation_start"] = "00 18 * * 1,2,3,4,5"
+	custom["hibernation_end"] = ""
+	custom["hibernation_location"] = "Europe/Berlin"
 
 	require.Equal(t, custom, p.CustomConfigurations, "Provider extra configurations not as expected.")
 }

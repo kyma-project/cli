@@ -60,8 +60,11 @@ func (c *gcpCmd) NewProvider() (*types.Provider, error) {
 	p.CustomConfigurations["workercidr"] = "10.250.0.0/16"
 	p.CustomConfigurations["networking_type"] = "calico"
 	p.CustomConfigurations["machine_image_name"] = "gardenlinux"
-	p.CustomConfigurations["machine_image_version"] = "318.8.0"
+	p.CustomConfigurations["machine_image_version"] = "576.5.0"
 	p.CustomConfigurations["zones"] = c.opts.Zones
+	p.CustomConfigurations["hibernation_start"] = c.opts.HibernationStart
+	p.CustomConfigurations["hibernation_end"] = c.opts.HibernationEnd
+	p.CustomConfigurations["hibernation_location"] = c.opts.HibernationLocation
 
 	for _, e := range c.opts.Extra {
 		v := strings.Split(e, "=")
@@ -75,7 +78,7 @@ func (c *gcpCmd) NewProvider() (*types.Provider, error) {
 	return p, nil
 }
 
-func (c *gcpCmd) ProviderName() string { return "Garden(GCP)" }
+func (c *gcpCmd) ProviderName() string { return "Gardener(GCP)" }
 
 func (c *gcpCmd) Attempts() uint { return c.opts.Attempts }
 
