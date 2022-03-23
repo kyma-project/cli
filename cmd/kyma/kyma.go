@@ -24,6 +24,7 @@ import (
 
 	"github.com/kyma-project/cli/cmd/kyma/get"
 	"github.com/kyma-project/cli/cmd/kyma/provision"
+	"github.com/kyma-project/cli/cmd/kyma/provision/minikube"
 	"github.com/kyma-project/cli/cmd/kyma/upgrade"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/spf13/cobra"
@@ -52,6 +53,7 @@ Kyma CLI allows you to install and manage Kyma.
 
 	//Stable commands
 	provisionCmd := provision.NewCmd()
+	provisionCmd.AddCommand(minikube.NewCmd(minikube.NewOptions(o)))
 	provisionCmd.AddCommand(k3d.NewCmd(k3d.NewOptions(o)))
 	gardenerCmd := gardener.NewCmd()
 	gardenerCmd.AddCommand(gcp.NewCmd(gcp.NewOptions(o)))

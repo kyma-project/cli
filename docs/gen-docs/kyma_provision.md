@@ -23,4 +23,5 @@ Provisions a cluster for Kyma installation.
 * [kyma](kyma.md)	 - Controls a Kyma cluster.
 * [kyma provision gardener](kyma_provision_gardener.md)	 - Provisions a cluster using Gardener on GCP, Azure, or AWS.
 * [kyma provision k3d](kyma_provision_k3d.md)	 - Provisions a Kubernetes cluster based on k3d v5.
+* [kyma provision minikube](kyma_provision_minikube.md)	 - [DEPRECATED] Provisions Minikube.
 
