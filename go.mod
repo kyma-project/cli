@@ -39,7 +39,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	gotest.tools v2.2.0+incompatible
-	helm.sh/helm/v3 v3.8.1
+	helm.sh/helm/v3 v3.7.2
 	istio.io/api v0.0.0-20220321195058-2792e813eb9a
 	istio.io/client-go v1.13.2
 	k8s.io/api v0.23.4
@@ -229,7 +229,7 @@ require (
 	k8s.io/kube-openapi v0.0.0-20211115234752-e816edb12b65 // indirect
 	k8s.io/kubectl v0.23.4 // indirect
 	k8s.io/utils v0.0.0-20211116205334-6203023598ed // indirect
-	oras.land/oras-go v1.1.0 // indirect
+	oras.land/oras-go v0.4.0 // indirect
 	sigs.k8s.io/controller-runtime v0.11.0 // indirect
 	sigs.k8s.io/json v0.0.0-20211020170558-c049b76a60c6 // indirect
 	sigs.k8s.io/kustomize/api v0.10.1 // indirect
