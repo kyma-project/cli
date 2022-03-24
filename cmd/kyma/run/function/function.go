@@ -43,6 +43,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cmd.Flags().StringVarP(&o.FuncPort, "port", "p", "8080", `The port on which the container will be exposed.`)
 	cmd.Flags().BoolVar(&o.HotDeploy, "hot-deploy", false, `Change this flag to "true" if you want to start a Function in Hot Deploy mode.`)
 	cmd.Flags().BoolVar(&o.Debug, "debug", false, `Change this flag to "true" if you want to expose port 9229 for remote debugging.`)
+	cmd.Flags().StringVar(&o.CustomRuntimeImage, "custom-runtime-image", "", `Set custom runtime image base.`)
 
 	return cmd
 }
@@ -115,7 +116,7 @@ func (c *command) runContainer(ctx context.Context, client *client.Client, cfg w
 		),
 		ContainerName: c.opts.ContainerName,
 		Commands:      runtimes.ContainerCommands(cfg.Runtime, c.opts.Debug, c.opts.HotDeploy),
-		Image:         runtimes.ContainerImage(cfg.Runtime),
+		Image:         c.containerImage(cfg),
 		WorkDir:       c.opts.Dir,
 		User:          runtimes.ContainerUser(cfg.Runtime),
 	})
@@ -133,6 +134,13 @@ func (c *command) runContainer(ctx context.Context, client *client.Client, cfg w
 		return docker.FollowRun(followCtx, client, id)
 	}
 	return nil
+}
+
+func (c *command) containerImage(cfg workspace.Cfg) string {
+	if c.opts.CustomRuntimeImage != "" {
+		return c.opts.CustomRuntimeImage
+	}
+	return runtimes.ContainerImage(cfg.Runtime)
 }
 
 func (c *command) parseEnvs(envVars []workspace.EnvVar) []string {
