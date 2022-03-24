@@ -33,6 +33,9 @@ Use service account details to create a Secret and import it in Gardener.`,
 	cmd.Flags().IntVar(&o.ScalerMax, "scaler-max", 3, "Maximum autoscale value of the cluster.")
 	cmd.Flags().StringSliceVarP(&o.Extra, "extra", "e", nil, "One or more arguments provided as the `NAME=VALUE` key-value pairs to configure additional cluster settings. You can use this flag multiple times or enter the key-value pairs as a comma-separated list.")
 	cmd.Flags().UintVar(&o.Attempts, "attempts", 3, "Maximum number of attempts to provision the cluster.")
+	cmd.Flags().StringVar(&o.HibernationStart, "hibernation-start", "00 18 * * 1,2,3,4,5", "Cron expression to configure when the cluster should start hibernating")
+	cmd.Flags().StringVar(&o.HibernationEnd, "hibernation-end", "", "Cron expression to configure when the cluster should stop hibernating")
+	cmd.Flags().StringVar(&o.HibernationLocation, "hibernation-location", "Europe/Berlin", "Timezone in which the hibernation schedule should be applied.")
 
 	return cmd
 }
