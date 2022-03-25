@@ -1,3 +1,4 @@
+//go:build windows
 // +build windows
 
 package hosts
@@ -30,10 +31,10 @@ func addDevDomainsRunCmd(domain string, s step.Step, hostAlias string) error {
 			chunkLen = len(hostsArray)
 		}
 
-		addLine :=  ip + " " + strings.Join(hostsArray[:chunkLen], " ")
+		addLine := ip + " " + strings.Join(hostsArray[:chunkLen], " ")
 		hostsArray = hostsArray[chunkLen:]
-		commandToRun := "echo "+ addLine + " >> " + hostsFile
-		_, err := cli.RunCmd("cmd","/c",commandToRun)
+		commandToRun := "echo " + addLine + " >> " + hostsFile
+		_, err := cli.RunCmd("cmd", "/c", commandToRun)
 		if err != nil {
 			s.LogErrorf("Add these lines to your " + hostsFile + " file:")
 			fmt.Printf("%s %s\n", ip, strings.Join(hostsArray[:chunkLen], " "))
