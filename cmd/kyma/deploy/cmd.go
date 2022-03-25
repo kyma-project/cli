@@ -62,7 +62,7 @@ func NewCmd(o *Options) *cobra.Command {
 	- Deploy a pull request, for example "kyma deploy --source=PR-9486"
 	- Deploy the local sources: "kyma deploy --source=local"`)
 	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", "", "Custom domain used for installation.")
-	cobraCmd.Flags().BoolVar(&o.DryRun, "dry-run", false, "Render manifests only.")
+	cobraCmd.Flags().BoolVar(&o.DryRun, "dry-run", false, "Alpha feature: Renders the Kubernetes manifests without actually applying them. The generated resources are not sufficient to apply Kyma to a cluster, because components having custom installation routines (such as Istio) are not included.")
 	cobraCmd.Flags().StringVarP(&o.Profile, "profile", "p", "",
 		fmt.Sprintf("Kyma deployment profile. If not specified, Kyma uses its default configuration. The supported profiles are: %s, %s.", profileEvaluation, profileProduction))
 	cobraCmd.Flags().StringVarP(&o.TLSCrtFile, "tls-crt", "", "", "TLS certificate file for the domain used for installation.")
