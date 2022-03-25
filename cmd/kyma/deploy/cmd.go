@@ -158,7 +158,7 @@ func (cmd *command) deploy(start time.Time) error {
 		return err
 	}
 
-	err = cmd.initialSetup(ws.WorkspaceDir)
+	err = cmd.initialSetup(ws.WorkspaceDir, l)
 	if err != nil {
 		return err
 	}
@@ -202,7 +202,7 @@ func (cmd *command) dryRun() error {
 		return err
 	}
 
-	err = cmd.initialSetup(ws.WorkspaceDir)
+	err = cmd.initialSetup(ws.WorkspaceDir, l)
 	if err != nil {
 		return err
 	}
@@ -364,13 +364,13 @@ func (cmd *command) decideVersionUpgrade() error {
 	return nil
 }
 
-func (cmd *command) initialSetup(wsp string) error {
+func (cmd *command) initialSetup(wsp string, logger *zap.SugaredLogger) error {
 	var preReqStep step.Step
 	if !cmd.opts.DryRun {
 		preReqStep = cmd.NewStep("Initial setup")
 	}
 
-	istio, err := istioctl.New(wsp)
+	istio, err := istioctl.New(wsp, logger)
 	if err != nil {
 		return err
 	}

@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"fmt"
+	"go.uber.org/zap"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -59,6 +60,7 @@ type Config struct {
 }
 
 type Installation struct {
+	logger         *zap.SugaredLogger
 	WorkspacePath  string
 	IstioChartPath string
 	Client         HTTPClient
@@ -77,7 +79,7 @@ type Installation struct {
 	zipName        string
 }
 
-func New(workspacePath string) (Installation, error) {
+func New(workspacePath string, logger *zap.SugaredLogger) (Installation, error) {
 	kymaHome, err := files.KymaHome()
 	if err != nil {
 		return Installation{}, err
@@ -89,6 +91,7 @@ func New(workspacePath string) (Installation, error) {
 	}
 
 	return Installation{
+		logger:         logger,
 		WorkspacePath:  workspacePath,
 		IstioChartPath: istioChartPath,
 		Client:         &http.Client{},
@@ -124,6 +127,9 @@ func (i *Installation) Install() error {
 			return errors.Errorf("error extracting istioctl: %s", err)
 		}
 	}
+	if err := i.chmodX(); err != nil {
+		return errors.Errorf("error chmod +x to istioctl binary: %s", err)
+	}
 	if err := i.exportEnvVar(); err != nil {
 		return errors.Errorf("error exporting environment variable: %s", err)
 	}
@@ -144,22 +150,27 @@ func (i *Installation) getIstioVersion() error {
 	if i.istioVersion == "" {
 		return errors.New("istio version is empty")
 	}
+	i.logger.Debugf("istioctl version needed to install Kyma: %s", i.istioVersion)
 	if i.osExt == windows.ext {
 		i.binPath = filepath.Join(i.kymaHome, i.dirName, fmt.Sprintf("istio-%s", i.istioVersion), "bin", i.winBinName)
 	} else {
 		i.binPath = filepath.Join(i.kymaHome, i.dirName, fmt.Sprintf("istio-%s", i.istioVersion), "bin", i.binName)
 	}
+	i.logger.Debugf("path to istio binary: %s", i.binPath)
 	return nil
 }
 
 func (i *Installation) checkIfBinaryExists() (bool, error) {
 	_, err := os.Stat(i.binPath)
 	if err == nil {
+		i.logger.Debugf("istioctl binary already exists")
 		return true, nil
 	}
 	if errors.Is(err, os.ErrNotExist) {
+		i.logger.Debugf("istioctl binary does not exist")
 		return false, nil
 	}
+
 	return false, err
 }
 
@@ -196,39 +207,42 @@ func (i *Installation) downloadIstio() error {
 		nonArchURL = fmt.Sprintf("%s%s/istio-%s-%s.zip", i.downloadURL, i.istioVersion, i.istioVersion, i.osExt)
 	}
 
+	downloadPath := path.Join(i.kymaHome, dirName)
 	switch i.osExt {
 	case linux.ext:
 		if strings.Split(i.archSupport, ".")[1] >= strings.Split(i.istioVersion, ".")[1] {
-			err := i.downloadFile(path.Join(i.kymaHome, dirName), tarGzName, archURL)
+			err := i.downloadFile(downloadPath, tarGzName, archURL)
 			if err != nil {
 				return err
 			}
 		} else {
-			err := i.downloadFile(path.Join(i.kymaHome, dirName), tarGzName, nonArchURL)
+			err := i.downloadFile(downloadPath, tarGzName, nonArchURL)
 			if err != nil {
 				return err
 			}
 		}
 	case darwin.ext:
-		err := i.downloadFile(path.Join(i.kymaHome, dirName), tarGzName, nonArchURL)
+		err := i.downloadFile(downloadPath, tarGzName, nonArchURL)
 		if err != nil {
 			return err
 		}
 	case windows.ext:
-		err := i.downloadFile(path.Join(i.kymaHome, dirName), zipName, nonArchURL)
+		err := i.downloadFile(downloadPath, zipName, nonArchURL)
 		if err != nil {
 			return err
 		}
 	default:
 		return errors.New("unsupported operating system")
 	}
+	i.logger.Debugf("istioctl downloaded to: %s", downloadPath)
 	return nil
 }
 
 func (i *Installation) extractIstio() error {
+	targetPath := ""
 	if i.osExt == linux.ext || i.osExt == darwin.ext {
 		istioPath := filepath.Join(i.kymaHome, i.dirName, i.tarGzName)
-		targetPath := filepath.Join(i.kymaHome, i.dirName, i.tarName)
+		targetPath = filepath.Join(i.kymaHome, i.dirName, i.tarName)
 		if err := unGzip(istioPath, targetPath, true); err != nil {
 			return err
 		}
@@ -239,21 +253,32 @@ func (i *Installation) extractIstio() error {
 		}
 	} else {
 		istioPath := filepath.Join(i.kymaHome, i.dirName, i.zipName)
-		targetPath := filepath.Join(i.kymaHome, i.dirName)
+		targetPath = filepath.Join(i.kymaHome, i.dirName)
 		if err := unZip(istioPath, targetPath, true); err != nil {
 			return err
 		}
 	}
+	i.logger.Debugf("istioctl extracted to: %s", targetPath)
+	return nil
+}
+
+func (i *Installation) chmodX() error {
+	var fileMode os.FileMode = 0777
+	if err := os.Chmod(i.binPath, fileMode); err != nil {
+		return errors.Wrap(err, fmt.Sprintf("Failed to change file mode of istioctl binary to: %s", fileMode))
+	}
+	i.logger.Debugf("%s chmod to: %s", i.binPath, fileMode)
 	return nil
 }
 
 func (i *Installation) exportEnvVar() error {
 	if i.binPath == "" {
-		return errors.New("failed exporting istioctl envvar: binPath empty")
+		return errors.New("failed exporting istioctl environment variable: binPath empty")
 	}
 	if err := os.Setenv(envVar, i.binPath); err != nil {
 		return err
 	}
+	i.logger.Debugf("%s environment variable set to: %s", envVar, os.Getenv(envVar))
 	return nil
 }
 
