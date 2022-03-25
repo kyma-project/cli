@@ -2,6 +2,7 @@ package istioctl
 
 import (
 	"bytes"
+	"go.uber.org/zap"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -41,6 +42,7 @@ func TestInstallation_getIstioVersion(t *testing.T) {
 				osExt:          tt.fields.osExt,
 				binName:        tt.fields.binName,
 				winBinName:     tt.fields.winBinName,
+				logger:         zap.NewNop().Sugar(),
 			}
 			err := i.getIstioVersion()
 			if tt.wantErr {
@@ -71,6 +73,7 @@ func TestInstallation_checkIfBinaryExists(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			i := &Installation{
 				binPath: tt.fields.binPath,
+				logger:  zap.NewNop().Sugar(),
 			}
 			got, err := i.checkIfBinaryExists()
 			if tt.wantErr {
@@ -233,6 +236,7 @@ func TestInstallation_downloadFile(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			i := &Installation{
 				Client: tt.fields.Client,
+				logger: zap.NewNop().Sugar(),
 			}
 			getGetFunc = tt.getFunc
 			err := i.downloadFile(tt.args.filepath, tt.args.filename, tt.args.url)
