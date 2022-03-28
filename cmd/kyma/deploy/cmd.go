@@ -3,10 +3,11 @@ package deploy
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-project/cli/pkg/step"
 	"io/ioutil"
 	"os"
 	"time"
+
+	"github.com/kyma-project/cli/pkg/step"
 
 	"github.com/kyma-incubator/reconciler/pkg/model"
 	"github.com/kyma-project/cli/internal/clusterinfo"
@@ -271,7 +272,7 @@ func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, 
 	if recoResult.GetResult() == model.ClusterStatusReconcileError {
 		deployStep.Failure()
 		summary.PrintFailedComponentSummary(recoResult)
-		return errors.Errorf("Kyma deployment failed.")
+		return errors.Errorf("kyma deployment failed")
 	}
 
 	if recoResult.GetResult() == model.ClusterStatusReady {
