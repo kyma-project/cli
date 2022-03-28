@@ -71,12 +71,12 @@ func (cmd *command) importCertificate() error {
 
 	tmpFile, err := ioutil.TempFile(os.TempDir(), "kyma-*.crt")
 	if err != nil {
-		return errors.Wrap(err, "Cannot create temporary file for Kyma certificate.")
+		return errors.Wrap(err, "cannot create temporary file for Kyma certificate")
 	}
 	defer os.Remove(tmpFile.Name())
 
 	if _, err = tmpFile.Write(cert); err != nil {
-		return errors.Wrap(err, "Failed to write the Kyma certificate.")
+		return errors.Wrap(err, "failed to write the Kyma certificate")
 	}
 	if err := tmpFile.Close(); err != nil {
 		return err
