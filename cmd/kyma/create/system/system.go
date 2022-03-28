@@ -216,7 +216,7 @@ func createSystem(name string, update bool, k8s kube.KymaKube) (*unstructured.Un
 
 		_, err = k8s.Dynamic().Resource(sysRes).Update(context.Background(), itm, metav1.UpdateOptions{})
 		if err != nil {
-			return nil, errors.Wrap(err, "Failed to update system.")
+			return nil, errors.Wrap(err, "failed to update system")
 		}
 	} else {
 		newSys := &unstructured.Unstructured{
