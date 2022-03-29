@@ -216,7 +216,7 @@ func createSystem(name string, update bool, k8s kube.KymaKube) (*unstructured.Un
 
 		_, err = k8s.Dynamic().Resource(sysRes).Update(context.Background(), itm, metav1.UpdateOptions{})
 		if err != nil {
-			return nil, errors.Wrap(err, "Failed to update system.")
+			return nil, errors.Wrap(err, "failed to update system")
 		}
 	} else {
 		newSys := &unstructured.Unstructured{
@@ -231,7 +231,7 @@ func createSystem(name string, update bool, k8s kube.KymaKube) (*unstructured.Un
 
 		_, err = k8s.Dynamic().Resource(sysRes).Create(context.Background(), newSys, metav1.CreateOptions{})
 		if err != nil {
-			return nil, errors.Wrap(err, "Failed to create system.")
+			return nil, errors.Wrap(err, "failed to create system")
 		}
 	}
 
@@ -324,7 +324,7 @@ func createToken(name, namespace string, k8s kube.KymaKube) (*unstructured.Unstr
 
 	_, err = k8s.Dynamic().Resource(tokenRequestRes).Namespace(namespace).Create(context.Background(), newToken, metav1.CreateOptions{})
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to create token.")
+		return nil, errors.Wrap(err, "failed to create token")
 	}
 
 	err = k8s.WatchResource(tokenRequestRes, name, namespace, func(u *unstructured.Unstructured) (bool, error) {

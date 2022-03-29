@@ -3,9 +3,10 @@ package undeploy
 import (
 	"context"
 	"fmt"
-	"go.uber.org/zap"
 	"io/ioutil"
 	"time"
+
+	"go.uber.org/zap"
 
 	"github.com/kyma-incubator/reconciler/pkg/model"
 	"github.com/pkg/errors"
@@ -143,7 +144,7 @@ func (cmd *command) Run() error {
 	if recoResult.GetResult() == model.ClusterStatusDeleteError {
 		undeployStep.Failure()
 		cmd.setSummary().PrintFailedComponentSummary(recoResult)
-		return errors.Errorf("Kyma undeployment failed.")
+		return errors.Errorf("kyma undeployment failed")
 	}
 
 	if recoResult.GetResult() == model.ClusterStatusDeleted {
