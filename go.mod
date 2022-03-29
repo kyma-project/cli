@@ -5,9 +5,9 @@ go 1.17
 replace (
 	// This is needed because reconciler imports SAP-BTP-operator which has an old import of antlr4
 	github.com/antlr/antlr4 => github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20211106181442-e4c1a74c66bd
+	github.com/kyma-incubator/hydroform/function => /Users/I551114/go/src/github.com/kyma-project/hydroform/function
 
 	github.com/spf13/viper => github.com/spf13/viper v1.7.0
-
 	// Gardener deps import incompatible k8s APIs and they need to be replaced
 	k8s.io/api => k8s.io/api v0.23.3
 	k8s.io/client-go => k8s.io/client-go v0.23.3

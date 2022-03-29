@@ -1185,8 +1185,6 @@ github.com/kubernetes-sigs/go-open-service-broker-client v0.0.0-20180330214919-d
 github.com/kubernetes-sigs/go-open-service-broker-client v0.0.0-20190909175253-906fa5f9c249 h1:nQkW5khoOU4DC5ORWqvOlVh4oGxYPT6j6134cPIVm5Q=
 github.com/kubernetes-sigs/go-open-service-broker-client v0.0.0-20190909175253-906fa5f9c249/go.mod h1:s8wBC55/DEkNa3YMY1WLgpT33Ghpmw7v+waIxh15dYI=
 github.com/kubernetes-sigs/service-catalog v0.3.0/go.mod h1:zRfgMd1T9HuXR24Qj4GOu/TGWABVGw62MGlyHVcpWnU=
-github.com/kyma-incubator/hydroform/function v0.0.0-20220328095837-628cd2a79ec6 h1:sAj+M8TdkA3TniPg2b4lCcaHUilo9fleNBzt8v6waPw=
-github.com/kyma-incubator/hydroform/function v0.0.0-20220328095837-628cd2a79ec6/go.mod h1:cAhg1WfDfHwVdQvarjq7f6wHfo6+4cUTRdiHynhCB4I=
 github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90 h1:E9rWdmz/CEfO52VJ6P/1M3TysNbET/qyw6611RbKJo8=
 github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90/go.mod h1:/qouJL+g8Tsllh/VcxK1Li6NCyuqyXSlq1i9InKSZJk=
 github.com/kyma-incubator/hydroform/provision v0.0.0-20220323163845-f67742387d18 h1:mFXjV+CpzwImzWotKiachTzwmbA/XTbV7B4E6or/2UY=
