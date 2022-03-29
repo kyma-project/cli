@@ -20,7 +20,6 @@ type Options struct {
 	Detach             bool
 	Debug              bool
 	HotDeploy          bool
-	CustomRuntimeImage string
 }
 
 //NewOptions creates options with default values

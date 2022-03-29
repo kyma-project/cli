@@ -43,7 +43,6 @@ func NewCmd(o *Options) *cobra.Command {
 	cmd.Flags().StringVarP(&o.FuncPort, "port", "p", "8080", `The port on which the container will be exposed.`)
 	cmd.Flags().BoolVar(&o.HotDeploy, "hot-deploy", false, `Change this flag to "true" if you want to start a Function in Hot Deploy mode.`)
 	cmd.Flags().BoolVar(&o.Debug, "debug", false, `Change this flag to "true" if you want to expose port 9229 for remote debugging.`)
-	cmd.Flags().StringVar(&o.CustomRuntimeImage, "custom-runtime-image", "", `Set custom runtime image base.`)
 
 	return cmd
 }
@@ -73,30 +72,6 @@ func (c *command) Run() error {
 	return c.runContainer(ctx, client, cfg)
 }
 
-func workspaceConfig(path string) (workspace.Cfg, error) {
-	file, err := os.Open(path)
-	if err != nil {
-		return workspace.Cfg{}, err
-	}
-
-	var cfg workspace.Cfg
-	if err := yaml.NewDecoder(file).Decode(&cfg); err != nil {
-		return workspace.Cfg{}, errors.Wrap(err, "while trying to decode the configuration file")
-	}
-
-	supportedRuntimes := map[string]struct{}{
-		"nodejs12": {},
-		"nodejs14": {},
-		"python38": {},
-		"python39": {},
-	}
-	if _, ok := supportedRuntimes[cfg.Runtime]; !ok {
-		return workspace.Cfg{}, fmt.Errorf("unsupported runtime: %s", cfg.Runtime)
-	}
-
-	return cfg, nil
-}
-
 func (c *command) runContainer(ctx context.Context, client *client.Client, cfg workspace.Cfg) error {
 	step := c.NewStep(fmt.Sprintf("Running container: %s", c.opts.ContainerName))
 	ports := map[string]string{
@@ -112,11 +87,11 @@ func (c *command) runContainer(ctx context.Context, client *client.Client, cfg w
 		Ports: ports,
 		Envs: append(
 			runtimes.ContainerEnvs(cfg.Runtime, c.opts.HotDeploy),
-			c.parseEnvs(cfg.Env)...,
+			parseEnvs(cfg.Env)...,
 		),
 		ContainerName: c.opts.ContainerName,
 		Commands:      runtimes.ContainerCommands(cfg.Runtime, c.opts.Debug, c.opts.HotDeploy),
-		Image:         c.containerImage(cfg),
+		Image:         containerImage(cfg),
 		WorkDir:       c.opts.Dir,
 		User:          runtimes.ContainerUser(cfg.Runtime),
 	})
@@ -136,17 +111,40 @@ func (c *command) runContainer(ctx context.Context, client *client.Client, cfg w
 	return nil
 }
 
-func (c *command) containerImage(cfg workspace.Cfg) string {
-	if c.opts.CustomRuntimeImage != "" {
-		return c.opts.CustomRuntimeImage
+func workspaceConfig(path string) (workspace.Cfg, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return workspace.Cfg{}, err
 	}
-	return runtimes.ContainerImage(cfg.Runtime)
+
+	var cfg workspace.Cfg
+	if err := yaml.NewDecoder(file).Decode(&cfg); err != nil {
+		return workspace.Cfg{}, errors.Wrap(err, "while trying to decode the configuration file")
+	}
+
+	supportedRuntimes := map[string]struct{}{
+		"nodejs12": {},
+		"nodejs14": {},
+		"python39": {},
+	}
+	if _, ok := supportedRuntimes[cfg.Runtime]; !ok {
+		return workspace.Cfg{}, fmt.Errorf("unsupported runtime: %s", cfg.Runtime)
+	}
+
+	return cfg, nil
 }
 
-func (c *command) parseEnvs(envVars []workspace.EnvVar) []string {
+func parseEnvs(envVars []workspace.EnvVar) []string {
 	var envs []string
 	for _, env := range envVars {
 		envs = append(envs, fmt.Sprintf("%s=%s", env.Name, env.Value))
 	}
 	return envs
+}
+
+func containerImage(cfg workspace.Cfg) string {
+	if cfg.CustomRuntimeImage != "" {
+		return cfg.CustomRuntimeImage
+	}
+	return runtimes.ContainerImage(cfg.Runtime)
 }
