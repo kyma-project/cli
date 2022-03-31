@@ -143,8 +143,8 @@ func parseEnvs(envVars []workspace.EnvVar) []string {
 }
 
 func containerImage(cfg workspace.Cfg) string {
-	if cfg.CustomRuntimeImage != "" {
-		return cfg.CustomRuntimeImage
+	if cfg.RuntimeImageOverride != "" {
+		return cfg.RuntimeImageOverride
 	}
 	return runtimes.ContainerImage(cfg.Runtime)
 }

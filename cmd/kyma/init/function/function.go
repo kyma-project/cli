@@ -50,7 +50,7 @@ Use the flags to specify the initial configuration for your Function or to choos
 	cmd.Flags().StringVar(&o.Name, "name", "", `Function name.`)
 	cmd.Flags().StringVar(&o.Namespace, "namespace", "", `Namespace to which you want to apply your Function.`)
 	cmd.Flags().StringVarP(&o.Dir, "dir", "d", "", `Full path to the directory where you want to save the project.`)
-	cmd.Flags().StringVar(&o.CustomRuntimeImage, "custom-runtime-image", "", `Set custom runtime image base.`)
+	cmd.Flags().StringVar(&o.RuntimeImageOverride, "runtime-image-override", "", `Set custom runtime image base.`)
 	cmd.Flags().StringVarP(&o.Runtime, "runtime", "r", defaultRuntime, `Flag used to define the environment for running your Function. Use one of these options:
 	- nodejs12 (deprecated)
 	- nodejs14
@@ -92,11 +92,11 @@ func (c *command) Run() error {
 	}
 
 	configuration := workspace.Cfg{
-		Runtime:            c.opts.Runtime,
-		CustomRuntimeImage: c.opts.CustomRuntimeImage,
-		Name:               c.opts.Name,
-		Namespace:          c.opts.Namespace,
-		Source:             c.opts.source(),
+		Runtime:              c.opts.Runtime,
+		RuntimeImageOverride: c.opts.RuntimeImageOverride,
+		Name:                 c.opts.Name,
+		Namespace:            c.opts.Namespace,
+		Source:               c.opts.source(),
 	}
 
 	err = workspace.Initialize(configuration, c.opts.Dir)
