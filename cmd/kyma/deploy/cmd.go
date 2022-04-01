@@ -110,8 +110,11 @@ func (cmd *command) RunWithTimeout() error {
 func (cmd *command) run() error {
 	start := time.Now()
 
-	var err error
+	if cmd.opts.DryRun {
+		return cmd.dryRun()
+	}
 
+	var err error
 	if err = cmd.setKubeClient(); err != nil {
 		return err
 	}
@@ -119,11 +122,7 @@ func (cmd *command) run() error {
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
 		return errors.Wrap(err, "failed to initialize the Kubernetes client from given kubeconfig")
 	}
-
-	if cmd.opts.DryRun {
-		return cmd.dryRun()
-	}
-
+	
 	if err := cmd.decideVersionUpgrade(); err != nil {
 		return err
 	}
@@ -183,18 +182,8 @@ func (cmd *command) dryRun() error {
 		return err
 	}
 
-	clusterInfo, err := clusterinfo.Discover(context.Background(), cmd.K8s.Static())
+	vals, err := values.Merge(cmd.opts.Sources, ws.WorkspaceDir, clusterinfo.Unrecognized{})
 	if err != nil {
-		return errors.Wrap(err, "failed to discover underlying cluster type")
-	}
-
-	vals, err := values.Merge(cmd.opts.Sources, ws.WorkspaceDir, clusterInfo)
-	if err != nil {
-		return err
-	}
-
-	hasCustomDomain := cmd.opts.Domain != ""
-	if _, err := coredns.Patch(l.Desugar(), cmd.K8s.Static(), hasCustomDomain, clusterInfo); err != nil {
 		return err
 	}
 
@@ -208,11 +197,6 @@ func (cmd *command) dryRun() error {
 		return err
 	}
 
-	kubeconfigPath := kube.KubeconfigPath(cmd.KubeconfigPath)
-	kubeconfig, err := ioutil.ReadFile(kubeconfigPath)
-	if err != nil {
-		return errors.Wrap(err, "failed to read kubeconfig")
-	}
 	undo := zap.RedirectStdLog(l.Desugar())
 	defer undo()
 
@@ -220,12 +204,11 @@ func (cmd *command) dryRun() error {
 		Components:     components,
 		Values:         vals,
 		StatusFunc:     cmd.printDeployStatus,
-		KubeConfig:     kubeconfig,
 		KymaVersion:    cmd.opts.Source,
 		KymaProfile:    cmd.opts.Profile,
 		Logger:         l,
 		WorkerPoolSize: cmd.opts.WorkerPoolSize,
-		DryRun:         cmd.opts.DryRun,
+		DryRun:         true,
 	})
 	if err != nil {
 		fmt.Printf("failed to generate Kyma Manifests")
