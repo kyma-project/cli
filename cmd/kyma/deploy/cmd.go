@@ -122,7 +122,7 @@ func (cmd *command) run() error {
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
 		return errors.Wrap(err, "failed to initialize the Kubernetes client from given kubeconfig")
 	}
-	
+
 	if err := cmd.decideVersionUpgrade(); err != nil {
 		return err
 	}
@@ -204,6 +204,7 @@ func (cmd *command) dryRun() error {
 		Components:     components,
 		Values:         vals,
 		StatusFunc:     cmd.printDeployStatus,
+		KubeConfig:     []byte("dry-run"),
 		KymaVersion:    cmd.opts.Source,
 		KymaProfile:    cmd.opts.Profile,
 		Logger:         l,
@@ -245,7 +246,7 @@ func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, 
 		KymaProfile:    cmd.opts.Profile,
 		Logger:         l,
 		WorkerPoolSize: cmd.opts.WorkerPoolSize,
-		DryRun:         cmd.opts.DryRun,
+		DryRun:         false,
 	})
 	if err != nil {
 		deployStep.Failuref("Failed to deploy Kyma.")
