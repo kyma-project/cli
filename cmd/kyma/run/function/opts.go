@@ -13,13 +13,13 @@ import (
 type Options struct {
 	*cli.Options
 
-	Filename           string
-	Dir                string
-	ContainerName      string
-	FuncPort           string
-	Detach             bool
-	Debug              bool
-	HotDeploy          bool
+	Filename      string
+	Dir           string
+	ContainerName string
+	FuncPort      string
+	Detach        bool
+	Debug         bool
+	HotDeploy     bool
 }
 
 //NewOptions creates options with default values
