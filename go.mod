@@ -118,10 +118,15 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/huandu/xstrings v1.3.2 // indirect
+<<<<<<< HEAD
 	github.com/iancoleman/orderedmap v0.2.0 // indirect
 	github.com/iancoleman/strcase v0.1.3 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/invopop/jsonschema v0.4.0 // indirect
+=======
+	github.com/iancoleman/strcase v0.1.3 // indirect
+	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+>>>>>>> 2312d05 (remove tmp hydroform dependency)
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/jmoiron/sqlx v1.3.4 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
