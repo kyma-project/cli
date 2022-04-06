@@ -30,7 +30,7 @@ func TestFunctionFlags(t *testing.T) {
 		"--dir", "/fakepath",
 		"--name", "test-name",
 		"--namespace", "test-namespace",
-		"--custom-runtime-image", "custom-runtime-image",
+		"--runtime-image-override", "runtime-image-override",
 		"--runtime", "python39",
 		"--url", "test-url",
 		"--repository-name", "test-repository-name",
@@ -43,7 +43,7 @@ func TestFunctionFlags(t *testing.T) {
 	require.Equal(t, "test-name", o.Name, "The parsed value for the --name flag not as expected.")
 	require.Equal(t, "test-namespace", o.Namespace, "The parsed value for the --namespace flag not as expected.")
 	require.Equal(t, "python39", o.Runtime, "The parsed value for the --runtime flag not as expected.")
-	require.Equal(t, "custom-runtime-image", o.RuntimeImageOverride, "The parsed value for the --runtime-image-override flag not as expected.")
+	require.Equal(t, "runtime-image-override", o.RuntimeImageOverride, "The parsed value for the --runtime-image-override flag not as expected.")
 	require.Equal(t, "test-url", o.URL, "The parsed value for the --url flag not as expected.")
 	require.Equal(t, "test-repository-name", o.RepositoryName, "The parsed value for the --repository-name flag not as expected.")
 	require.Equal(t, "test-reference", o.Reference, "The parsed value for the --reference flag not as expected.")
@@ -59,7 +59,7 @@ func TestFunctionFlags(t *testing.T) {
 	require.Equal(t, "test-name", o.Name, "The parsed value for the --name flag not as expected.")
 	require.Equal(t, "test-namespace", o.Namespace, "The parsed value for the --namespace flag not as expected.")
 	require.Equal(t, "nodejs14", o.Runtime, "The parsed value for the --runtime flag not as expected.")
-	require.Equal(t, "custom-runtime-image", o.RuntimeImageOverride, "The parsed value for the --runtime-image-override flag not as expected.")
+	require.Equal(t, "runtime-image-override", o.RuntimeImageOverride, "The parsed value for the --runtime-image-override flag not as expected.")
 	require.Equal(t, "test-url", o.URL, "The parsed value for the --url flag not as expected.")
 	require.Equal(t, "test-repository-name", o.RepositoryName, "The parsed value for the --repository-name flag not as expected.")
 	require.Equal(t, "test-reference", o.Reference, "The parsed value for the --reference flag not as expected.")
