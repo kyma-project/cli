@@ -14,7 +14,7 @@ FLAGS = -ldflags '-s -w -X github.com/kyma-project/cli/cmd/kyma/version.Version=
 
 .PHONY: resolve
 resolve:
-	go mod tidy
+	go mod tidy -compat=1.17
 
 .PHONY: validate
 validate:
