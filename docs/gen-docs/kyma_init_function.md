@@ -16,18 +16,19 @@ kyma init function [flags]
 ## Flags
 
 ```bash
-      --base-dir string          A directory in the repository containing the Function's sources (default "/")
-  -d, --dir string               Full path to the directory where you want to save the project.
-      --name string              Function name.
-      --namespace string         Namespace to which you want to apply your Function.
-      --reference string         Commit hash or branch name (default "main")
-      --repository-name string   The name of the Git repository to be created
-  -r, --runtime string           Flag used to define the environment for running your Function. Use one of these options:
-                                 	- nodejs12 (deprecated)
-                                 	- nodejs14
-                                 	- python39 (default "nodejs14")
-      --url string               Git repository URL
-      --vscode                   Generate VS Code settings containing config.yaml JSON schema for autocompletion (see "kyma get schema -h" for more info)
+      --base-dir string                 A directory in the repository containing the Function's sources (default "/")
+  -d, --dir string                      Full path to the directory where you want to save the project.
+      --name string                     Function name.
+      --namespace string                Namespace to which you want to apply your Function.
+      --reference string                Commit hash or branch name (default "main")
+      --repository-name string          The name of the Git repository to be created
+  -r, --runtime string                  Flag used to define the environment for running your Function. Use one of these options:
+                                        	- nodejs12 (deprecated)
+                                        	- nodejs14
+                                        	- python39 (default "nodejs14")
+      --runtime-image-override string   Set custom runtime image base.
+      --url string                      Git repository URL
+      --vscode                          Generate VS Code settings containing config.yaml JSON schema for autocompletion (see "kyma get schema -h" for more info)
 ```
 
 ## Flags inherited from parent commands
