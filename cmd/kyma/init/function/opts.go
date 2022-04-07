@@ -12,16 +12,17 @@ import (
 type Options struct {
 	*cli.Options
 
-	Name           string
-	Namespace      string
-	Dir            string
-	Runtime        string
-	URL            string
-	RepositoryName string
-	Reference      string
-	BaseDir        string
-	SourcePath     string
-	VsCode         bool
+	Name                 string
+	Namespace            string
+	Dir                  string
+	Runtime              string
+	RuntimeImageOverride string
+	URL                  string
+	RepositoryName       string
+	Reference            string
+	BaseDir              string
+	SourcePath           string
+	VsCode               bool
 }
 
 //NewOptions creates options with default values
