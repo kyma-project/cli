@@ -5,12 +5,39 @@ go 1.17
 replace (
 	// This is needed because reconciler imports SAP-BTP-operator which has an old import of antlr4
 	github.com/antlr/antlr4 => github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20211106181442-e4c1a74c66bd
+	// Fix CVE-2021-41103
+	github.com/containerd/containerd => github.com/containerd/containerd v1.6.2
+	// Fix CVE-2022-24778
+	github.com/containerd/imgcrypt => github.com/containerd/imgcrypt v1.1.4
+	// Fix CVE-2021-41092
+	github.com/docker/cli => github.com/docker/cli v20.10.14+incompatible
 
+	// Fix CVE-2021-3121
+	github.com/gogo/protobuf => github.com/gogo/protobuf v1.3.2
+	// Fix CVE-2020-29529
+	// Fix CVE-2021-32574
+	github.com/hashicorp/consul => github.com/hashicorp/consul v1.10.1
+	// Fix CVE-2020-29529
+	github.com/hashicorp/go-slug => github.com/hashicorp/go-slug v0.5.0
+	// Fix CVE-2021-30465
+	github.com/opencontainers/runc => github.com/opencontainers/runc v1.1.0
+	// Fix CVE-2022-21698
+	github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.12.1
 	github.com/spf13/viper => github.com/spf13/viper v1.7.0
-
+	// Fix CVE-2021-29482
+	github.com/ulikunitz/xz => github.com/ulikunitz/xz v0.5.10
+	// Fix CVE-2020-29652
+	// Fix CVE-2022-27191
+	golang.org/x/crypto => golang.org/x/crypto v0.0.0-20220314234659-1baeb1ce4c0b
+	// Fix WS-2021-0200
+	gopkg.in/yaml.v2 => gopkg.in/yaml.v2 v2.4.0
+	// Fix CVE-2021-32690
+	helm.sh/helm/v3 => helm.sh/helm/v3 v3.7.2
 	// Gardener deps import incompatible k8s APIs and they need to be replaced
 	k8s.io/api => k8s.io/api v0.23.3
 	k8s.io/client-go => k8s.io/client-go v0.23.3
+	// Fix CVE-2019-18658
+	k8s.io/helm => k8s.io/helm v2.16.1+incompatible
 )
 
 require (
