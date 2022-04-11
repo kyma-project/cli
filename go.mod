@@ -19,6 +19,8 @@ replace (
 	github.com/hashicorp/consul => github.com/hashicorp/consul v1.10.1
 	// Fix CVE-2020-29529
 	github.com/hashicorp/go-slug => github.com/hashicorp/go-slug v0.5.0
+
+	github.com/kyma-incubator/hydroform/function => /Users/i517616/go/src/github.com/kyma-project/hydroform/function
 	// Fix CVE-2021-30465
 	github.com/opencontainers/runc => github.com/opencontainers/runc v1.1.0
 	// Fix CVE-2022-21698
