@@ -85,7 +85,7 @@ func (c *command) runContainer(ctx context.Context, client *client.Client, cfg w
 		Ports: ports,
 		Envs: append(
 			runtimes.ContainerEnvs(cfg.Runtime, c.opts.HotDeploy),
-			parseEnvs(cfg.Env)...,
+			c.parseEnvs(cfg.Env)...,
 		),
 		ContainerName: c.opts.ContainerName,
 		Image:         containerImage(cfg),
@@ -109,7 +109,7 @@ func (c *command) runContainer(ctx context.Context, client *client.Client, cfg w
 	return nil
 }
 
-func workspaceConfig(path string) (workspace.Cfg, error) {
+func (c *command) workspaceConfig(path string) (workspace.Cfg, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return workspace.Cfg{}, err
