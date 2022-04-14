@@ -138,7 +138,6 @@ func workspaceConfig(path string) (workspace.Cfg, error) {
 	return cfg, nil
 }
 
-func parseEnvs(envVars []workspace.EnvVar) []string {
 func (c *command) containerCommands(cfg workspace.Cfg) []string {
 	var cmd []string
 	if cfg.Source.Type == workspace.SourceTypeInline {
