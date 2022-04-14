@@ -70,36 +70,6 @@ func (c *command) Run() error {
 	return c.runContainer(ctx, client, cfg)
 }
 
-func (c *command) workspaceConfig(path string) (workspace.Cfg, error) {
-	file, err := os.Open(path)
-	if err != nil {
-		return workspace.Cfg{}, err
-	}
-
-	var cfg workspace.Cfg
-	if err := yaml.NewDecoder(file).Decode(&cfg); err != nil {
-		return workspace.Cfg{}, errors.Wrap(err, "while trying to decode the configuration file")
-	}
-
-	supportedRuntimes := map[string]struct{}{
-		"nodejs12": {},
-		"nodejs14": {},
-		"python38": {},
-		"python39": {},
-	}
-	if _, ok := supportedRuntimes[cfg.Runtime]; !ok {
-		return workspace.Cfg{}, fmt.Errorf("unsupported runtime: %s", cfg.Runtime)
-	}
-	sourceFile, depsfile, _ := workspace.InlineFileNames(cfg.Runtime)
-	if cfg.Source.SourceHandlerName == "" {
-		cfg.Source.SourceHandlerName = sourceFile
-	}
-	if cfg.Source.DepsHandlerName == "" {
-		cfg.Source.DepsHandlerName = depsfile
-	}
-	return cfg, nil
-}
-
 func (c *command) runContainer(ctx context.Context, client *client.Client, cfg workspace.Cfg) error {
 	step := c.NewStep(fmt.Sprintf("Running container: %s", c.opts.ContainerName))
 	ports := map[string]string{
@@ -115,11 +85,11 @@ func (c *command) runContainer(ctx context.Context, client *client.Client, cfg w
 		Ports: ports,
 		Envs: append(
 			runtimes.ContainerEnvs(cfg.Runtime, c.opts.HotDeploy),
-			c.parseEnvs(cfg.Env)...,
+			parseEnvs(cfg.Env)...,
 		),
 		ContainerName: c.opts.ContainerName,
+		Image:         containerImage(cfg),
 		Commands:      c.containerCommands(cfg),
-		Image:         runtimes.ContainerImage(cfg.Runtime),
 		User:          runtimes.ContainerUser,
 		Mounts:        runtimes.GetMounts(cfg.Source.Type, c.opts.Dir),
 	})
@@ -139,6 +109,36 @@ func (c *command) runContainer(ctx context.Context, client *client.Client, cfg w
 	return nil
 }
 
+func workspaceConfig(path string) (workspace.Cfg, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return workspace.Cfg{}, err
+	}
+
+	var cfg workspace.Cfg
+	if err := yaml.NewDecoder(file).Decode(&cfg); err != nil {
+		return workspace.Cfg{}, errors.Wrap(err, "while trying to decode the configuration file")
+	}
+
+	supportedRuntimes := map[string]struct{}{
+		"nodejs12": {},
+		"nodejs14": {},
+		"python39": {},
+	}
+	if _, ok := supportedRuntimes[cfg.Runtime]; !ok {
+		return workspace.Cfg{}, fmt.Errorf("unsupported runtime: %s", cfg.Runtime)
+	}
+	sourceFile, depsfile, _ := workspace.InlineFileNames(cfg.Runtime)
+	if cfg.Source.SourceHandlerName == "" {
+		cfg.Source.SourceHandlerName = sourceFile
+	}
+	if cfg.Source.DepsHandlerName == "" {
+		cfg.Source.DepsHandlerName = depsfile
+	}
+	return cfg, nil
+}
+
+func parseEnvs(envVars []workspace.EnvVar) []string {
 func (c *command) containerCommands(cfg workspace.Cfg) []string {
 	var cmd []string
 	if cfg.Source.Type == workspace.SourceTypeInline {
@@ -154,4 +154,11 @@ func (c *command) parseEnvs(envVars []workspace.EnvVar) []string {
 		envs = append(envs, fmt.Sprintf("%s=%s", env.Name, env.Value))
 	}
 	return envs
+}
+
+func containerImage(cfg workspace.Cfg) string {
+	if cfg.RuntimeImageOverride != "" {
+		return cfg.RuntimeImageOverride
+	}
+	return runtimes.ContainerImage(cfg.Runtime)
 }
