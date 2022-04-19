@@ -11,7 +11,6 @@ replace (
 	github.com/containerd/imgcrypt => github.com/containerd/imgcrypt v1.1.4
 	// Fix CVE-2021-41092
 	github.com/docker/cli => github.com/docker/cli v20.10.14+incompatible
-
 	// Fix CVE-2021-3121
 	github.com/gogo/protobuf => github.com/gogo/protobuf v1.3.2
 	// Fix CVE-2020-29529
@@ -51,7 +50,7 @@ require (
 	github.com/docker/go-connections v0.4.0
 	github.com/fatih/color v1.13.0
 	github.com/imdario/mergo v0.3.12
-	github.com/kyma-incubator/hydroform/function v0.0.0-20220405223324-1111684b4849
+	github.com/kyma-incubator/hydroform/function v0.0.0-20220414090226-f1fa39482951
 	github.com/kyma-incubator/hydroform/install v0.0.0-20200922142757-cae045912c90
 	github.com/kyma-incubator/hydroform/provision v0.0.0-20220328112638-579d66bc0d37
 	github.com/kyma-incubator/reconciler v0.0.0-20220413153224-a0b3c2fa1f1d
@@ -200,6 +199,7 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.32.1 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
+	github.com/rogpeppe/go-internal v1.6.1 // indirect
 	github.com/rubenv/sql-migrate v0.0.0-20210614095031-55d5740dbbcc // indirect
 	github.com/russross/blackfriday v1.5.2 // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect

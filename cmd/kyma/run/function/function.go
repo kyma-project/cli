@@ -3,8 +3,6 @@ package function
 import (
 	"context"
 	"fmt"
-	"os"
-
 	"github.com/docker/docker/client"
 	"github.com/kyma-incubator/hydroform/function/pkg/docker"
 	"github.com/kyma-incubator/hydroform/function/pkg/docker/runtimes"
@@ -12,8 +10,8 @@ import (
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-
 	"gopkg.in/yaml.v2"
+	"os"
 )
 
 type command struct {
@@ -52,7 +50,7 @@ func (c *command) Run() error {
 		return err
 	}
 
-	cfg, err := workspaceConfig(c.opts.Filename)
+	cfg, err := c.workspaceConfig(c.opts.Filename)
 	if err != nil {
 		return err
 	}
@@ -87,13 +85,13 @@ func (c *command) runContainer(ctx context.Context, client *client.Client, cfg w
 		Ports: ports,
 		Envs: append(
 			runtimes.ContainerEnvs(cfg.Runtime, c.opts.HotDeploy),
-			parseEnvs(cfg.Env)...,
+			c.parseEnvs(cfg.Env)...,
 		),
 		ContainerName: c.opts.ContainerName,
-		Commands:      runtimes.ContainerCommands(cfg.Runtime, c.opts.Debug, c.opts.HotDeploy),
 		Image:         containerImage(cfg),
-		WorkDir:       c.opts.Dir,
-		User:          runtimes.ContainerUser(cfg.Runtime),
+		Commands:      c.containerCommands(cfg),
+		User:          runtimes.ContainerUser,
+		Mounts:        runtimes.GetMounts(cfg.Source.Type, c.opts.Dir),
 	})
 	if err != nil {
 		step.Failure()
@@ -111,7 +109,7 @@ func (c *command) runContainer(ctx context.Context, client *client.Client, cfg w
 	return nil
 }
 
-func workspaceConfig(path string) (workspace.Cfg, error) {
+func (c *command) workspaceConfig(path string) (workspace.Cfg, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return workspace.Cfg{}, err
@@ -130,11 +128,29 @@ func workspaceConfig(path string) (workspace.Cfg, error) {
 	if _, ok := supportedRuntimes[cfg.Runtime]; !ok {
 		return workspace.Cfg{}, fmt.Errorf("unsupported runtime: %s", cfg.Runtime)
 	}
-
+	sourceFile, depsfile, supported := workspace.InlineFileNames(cfg.Runtime)
+	if !supported {
+		return workspace.Cfg{}, fmt.Errorf("unsupported runtime: %s", cfg.Runtime)
+	}
+	if cfg.Source.SourceHandlerName == "" {
+		cfg.Source.SourceHandlerName = sourceFile
+	}
+	if cfg.Source.DepsHandlerName == "" {
+		cfg.Source.DepsHandlerName = depsfile
+	}
 	return cfg, nil
 }
 
-func parseEnvs(envVars []workspace.EnvVar) []string {
+func (c *command) containerCommands(cfg workspace.Cfg) []string {
+	var cmd []string
+	if cfg.Source.Type == workspace.SourceTypeInline {
+		cmd = runtimes.MoveInlineCommand(cfg.Source.SourceHandlerName, cfg.Source.DepsHandlerName)
+	}
+
+	return append(cmd, runtimes.ContainerCommands(cfg.Runtime, c.opts.Debug, c.opts.HotDeploy)...)
+}
+
+func (c *command) parseEnvs(envVars []workspace.EnvVar) []string {
 	var envs []string
 	for _, env := range envVars {
 		envs = append(envs, fmt.Sprintf("%s=%s", env.Name, env.Value))
