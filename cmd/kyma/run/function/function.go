@@ -128,7 +128,10 @@ func (c *command) workspaceConfig(path string) (workspace.Cfg, error) {
 	if _, ok := supportedRuntimes[cfg.Runtime]; !ok {
 		return workspace.Cfg{}, fmt.Errorf("unsupported runtime: %s", cfg.Runtime)
 	}
-	sourceFile, depsfile, _ := workspace.InlineFileNames(cfg.Runtime)
+	sourceFile, depsfile, supported := workspace.InlineFileNames(cfg.Runtime)
+	if !supported {
+		return workspace.Cfg{}, fmt.Errorf("unsupported runtime: %s", cfg.Runtime)
+	}
 	if cfg.Source.SourceHandlerName == "" {
 		cfg.Source.SourceHandlerName = sourceFile
 	}
