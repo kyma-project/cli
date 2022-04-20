@@ -5,14 +5,16 @@ import (
 	"os"
 	"testing"
 
-	"github.com/kyma-incubator/hydroform/install/scheme"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube/mocks"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/dynamic/fake"
+	"k8s.io/client-go/kubernetes/scheme"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -154,7 +156,7 @@ func TestCreateToken(t *testing.T) {
 /* --- Helpers --- */
 
 func dynamicK8s(objects ...runtime.Object) *fake.FakeDynamicClient {
-	resSchema, err := scheme.DefaultScheme()
+	resSchema, err := defaultScheme()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -167,4 +169,22 @@ func fieldOrFail(t *testing.T, u *unstructured.Unstructured, fields ...string) s
 	require.NoError(t, err)
 	require.True(t, exists)
 	return f
+}
+
+func defaultScheme() (*runtime.Scheme, error) {
+	resourcesSchema := runtime.NewScheme()
+
+	var addToSchemes = []func(*runtime.Scheme) error{
+		scheme.AddToScheme,
+		apiextensionsv1beta1.AddToScheme,
+	}
+
+	for _, f := range addToSchemes {
+		err := f(resourcesSchema)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to add types to schema")
+		}
+	}
+
+	return resourcesSchema, nil
 }
