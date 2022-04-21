@@ -33,8 +33,8 @@ replace (
 	// Fix CVE-2021-32690
 	helm.sh/helm/v3 => helm.sh/helm/v3 v3.7.2
 	// Gardener deps import incompatible k8s APIs and they need to be replaced
-	k8s.io/api => k8s.io/api v0.23.3
-	k8s.io/client-go => k8s.io/client-go v0.23.3
+	k8s.io/api => k8s.io/api v0.23.5
+	k8s.io/client-go => k8s.io/client-go v0.23.5
 	// Fix CVE-2019-18658
 	k8s.io/helm => k8s.io/helm v2.16.1+incompatible
 )
