@@ -2,14 +2,15 @@ package kube
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/kyma-incubator/hydroform/install/scheme"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
+	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	"k8s.io/client-go/kubernetes/scheme"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -227,7 +228,7 @@ func fakeClientWithNS() *client {
 }
 
 func dynamicK8s(objects ...runtime.Object) *dynFake.FakeDynamicClient {
-	resSchema, err := scheme.DefaultScheme()
+	resSchema, err := defaultScheme()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -258,4 +259,22 @@ func TestDefaultNamespace(t *testing.T) {
 	c.kubeCfg.CurrentContext = "mycontext"
 	ns = c.DefaultNamespace()
 	require.Equal(t, "test", ns, "The kubeconfig namespace is expected.")
+}
+
+func defaultScheme() (*runtime.Scheme, error) {
+	resourcesSchema := runtime.NewScheme()
+
+	var addToSchemes = []func(*runtime.Scheme) error{
+		scheme.AddToScheme,
+		apiextensionsv1beta1.AddToScheme,
+	}
+
+	for _, f := range addToSchemes {
+		err := f(resourcesSchema)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to add types to schema")
+		}
+	}
+
+	return resourcesSchema, nil
 }
