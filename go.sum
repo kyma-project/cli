@@ -415,8 +415,8 @@ github.com/fsouza/fake-gcs-server v1.17.0/go.mod h1:D1rTE4YCyHFNa99oyJJ5HyclvN/0
 github.com/fvbommel/sortorder v1.0.1/go.mod h1:uk88iVf1ovNn1iLfgUVU2F9o5eO30ui720w+kxuqRs0=
 github.com/gabriel-vasile/mimetype v1.3.1/go.mod h1:fA8fi6KUiG7MgQQ+mEWotXoEOvmxRtOJlERCzSmRvr8=
 github.com/gabriel-vasile/mimetype v1.4.0/go.mod h1:fA8fi6KUiG7MgQQ+mEWotXoEOvmxRtOJlERCzSmRvr8=
-github.com/gardener/gardener v1.43.1 h1:k88MGEMm+0K5Q2d1ZyI56aO4fV8CzlSXwGnZXpElhW0=
-github.com/gardener/gardener v1.43.1/go.mod h1:L3g3pYdqhE3KoHzEIW7I3DOv1TUQl8VIEW1U+QOEmlA=
+github.com/gardener/gardener v1.45.0 h1:7KGKm5q7mrmqnsY3w5Jsw3zCbt1CPFMXrQkfgkT+d2g=
+github.com/gardener/gardener v1.45.0/go.mod h1:BsQ9s0Ms5rU1IAS1doVceBGj4kNBhSMQKaDB4a2ba4k=
 github.com/garyburd/redigo v1.6.3 h1:HCeeRluvAgMusMomi1+6Y5dmFOdYV/JzoRrrbFlkGIc=
 github.com/gavv/httpexpect v0.0.0-20170820080527-c44a6d7bb636 h1:FbWwmG7qBNykpmPppq5767far39ty4P7lOhpPNK8Ik4=
 github.com/gavv/httpexpect v0.0.0-20170820080527-c44a6d7bb636/go.mod h1:x+9tiU1YnrOvnB725RkpoLv1M62hOWzwo5OXotisrKc=
@@ -901,8 +901,8 @@ github.com/kubernetes-sigs/go-open-service-broker-client v0.0.0-20190909175253-9
 github.com/kubernetes-sigs/go-open-service-broker-client v0.0.0-20190909175253-906fa5f9c249/go.mod h1:s8wBC55/DEkNa3YMY1WLgpT33Ghpmw7v+waIxh15dYI=
 github.com/kyma-incubator/hydroform/function v0.0.0-20220414090226-f1fa39482951 h1:P4b+KIVfRTaJSSvV0Jbe3ihS29/NfHB7EbS4wPcxH/w=
 github.com/kyma-incubator/hydroform/function v0.0.0-20220414090226-f1fa39482951/go.mod h1:4ptoUdSZEg2Ht5oRp5ERRwW0XLXJRVX+LJv9q4W1H3U=
-github.com/kyma-incubator/hydroform/provision v0.0.0-20220328112638-579d66bc0d37 h1:slVKYiy5TyYMiQvLdny1SOqt/cEBdVCe2LqQRQnvjPo=
-github.com/kyma-incubator/hydroform/provision v0.0.0-20220328112638-579d66bc0d37/go.mod h1:kfydj5tPXb8eOsg+AC61sF1krMvwiFv2ya39QOSBAUE=
+github.com/kyma-incubator/hydroform/provision v0.0.0-20220425105141-5a9cfe49dabc h1:NsJseYEcaSMmGaUsq66uEeAuS+W4MPGEw8ELX7FuPO8=
+github.com/kyma-incubator/hydroform/provision v0.0.0-20220425105141-5a9cfe49dabc/go.mod h1:atZGoQRXzV2WED/nj6LdrdHwenSumDF8OfH7OMxoEag=
 github.com/kyma-incubator/reconciler v0.0.0-20220421112831-c5dd1a4fa560 h1:DreGwGJyGKjllg2shqJllDcVjazV0abaiWky6Gbn8Yc=
 github.com/kyma-incubator/reconciler v0.0.0-20220421112831-c5dd1a4fa560/go.mod h1:nVKzNBYnwvyBlOjXt8ohqfhMj+bq2WGl8miL8IxEr4E=
 github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 h1:SOEGU9fKiNWd/HOJuq6+3iTQz8KNCLtVX6idSoTLdUw=
@@ -1088,7 +1088,7 @@ github.com/onsi/ginkgo v1.14.2/go.mod h1:iSB4RoI2tjJc9BBv4NKIKWKya62Rps+oPG/Lv9k
 github.com/onsi/ginkgo v1.16.4/go.mod h1:dX+/inL/fNMqNlz0e9LfyB9TswhZpCVdJM/Z6Vvnwo0=
 github.com/onsi/ginkgo v1.16.5 h1:8xi0RTUf59SOSfEtZMvwTvXYMzG4gV23XVHOZiXNtnE=
 github.com/onsi/ginkgo v1.16.5/go.mod h1:+E8gABHa3K6zRBolWtd+ROzc/U5bkGt0FwiG042wbpU=
-github.com/onsi/ginkgo/v2 v2.1.0 h1:Rj+Was8Gt/ICSZY/CihVKK2cGy3rDqBYKSxVnmOXZzI=
+github.com/onsi/ginkgo/v2 v2.1.3 h1:e/3Cwtogj0HA+25nMP1jCMDIf8RtRYbGwGGuBIFztkc=
 github.com/onsi/gomega v0.0.0-20170829124025-dcabb60a477c/go.mod h1:C1qb7wdrVGGVU+Z6iS04AVkA3Q65CEZX59MT0QO5uiA=
 github.com/onsi/gomega v1.5.0/go.mod h1:ex+gbHU/CVuBBDIJjb2X0qEXbFg53c61hWP/1CpauHY=
 github.com/onsi/gomega v1.7.0/go.mod h1:ex+gbHU/CVuBBDIJjb2X0qEXbFg53c61hWP/1CpauHY=

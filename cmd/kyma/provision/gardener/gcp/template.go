@@ -60,7 +60,7 @@ func (c *gcpCmd) NewProvider() (*types.Provider, error) {
 	p.CustomConfigurations["workercidr"] = "10.250.0.0/16"
 	p.CustomConfigurations["networking_type"] = "calico"
 	p.CustomConfigurations["machine_image_name"] = "gardenlinux"
-	p.CustomConfigurations["machine_image_version"] = "576.5.0"
+	p.CustomConfigurations["machine_image_version"] = "576.7.0"
 	p.CustomConfigurations["zones"] = c.opts.Zones
 	p.CustomConfigurations["hibernation_start"] = c.opts.HibernationStart
 	p.CustomConfigurations["hibernation_end"] = c.opts.HibernationEnd
