@@ -51,7 +51,7 @@ require (
 	github.com/fatih/color v1.13.0
 	github.com/imdario/mergo v0.3.12
 	github.com/kyma-incubator/hydroform/function v0.0.0-20220414090226-f1fa39482951
-	github.com/kyma-incubator/hydroform/provision v0.0.0-20220328112638-579d66bc0d37
+	github.com/kyma-incubator/hydroform/provision v0.0.0-20220425105141-5a9cfe49dabc
 	github.com/kyma-incubator/reconciler v0.0.0-20220421112831-c5dd1a4fa560
 	github.com/opencontainers/image-spec v1.0.2
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
@@ -113,7 +113,7 @@ require (
 	github.com/exponent-io/jsonpath v0.0.0-20210407135951-1de76d718b3f // indirect
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.2 // indirect
-	github.com/gardener/gardener v1.43.1 // indirect
+	github.com/gardener/gardener v1.45.0 // indirect
 	github.com/go-errors/errors v1.0.2 // indirect
 	github.com/go-git/gcfg v1.5.0 // indirect
 	github.com/go-git/go-billy/v5 v5.3.1 // indirect
