@@ -1,9 +1,0 @@
-approvers:
-    - technical-writers
-reviewers:
-    - technical-writers
-labels:
-    - area/documentation
-
-options:
-    no_parent_owners: true
