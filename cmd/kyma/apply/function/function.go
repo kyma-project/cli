@@ -70,7 +70,8 @@ func (c *command) Run() error {
 	}
 
 	// Load project configuration
-	step := c.NewStep("Loading configuration...")
+	// TODO : Tu jest ten msg
+	step := c.NewStep("Cokolwiek")
 	var configuration workspace.Cfg
 	if err := yaml.NewDecoder(file).Decode(&configuration); err != nil {
 		step.Failure()
@@ -144,8 +145,8 @@ func (c *command) Run() error {
 		ctx, cancel = context.WithTimeout(ctx, c.opts.Timeout)
 	}
 	defer cancel()
-
-	step.Successf("Configuration loaded")
+	// TODO : Tu jest ten msg
+	step.Successf("Cokolwiek")
 
 	return mgr.Do(ctx, options)
 }
