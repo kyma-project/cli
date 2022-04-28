@@ -147,6 +147,7 @@ func (c *command) Run() error {
 		ctx, cancel = context.WithTimeout(ctx, c.opts.Timeout)
 	}
 	defer cancel()
+
 	step.Successf("Configuration loaded")
 
 	return mgr.Do(ctx, options)

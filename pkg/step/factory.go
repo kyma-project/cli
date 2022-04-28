@@ -27,6 +27,5 @@ func (f *Factory) NewStep(msg string) Step {
 	if f.MuteLogger {
 		return NewMutedStep()
 	}
-	//TODO: create NoOpStep() compatible with step interface and return it.
 	return newStepWithSpinner(msg)
 }
