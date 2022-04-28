@@ -64,14 +64,16 @@ func (c *command) Run() error {
 		c.opts.Filename = defaultFilename()
 	}
 
+	if c.opts.Output.value == "yaml" {
+		c.MuteLogger = true
+	}
 	file, err := os.Open(c.opts.Filename)
 	if err != nil {
 		return err
 	}
 
 	// Load project configuration
-	// TODO : Tu jest ten msg
-	step := c.NewStep("Cokolwiek")
+	step := c.NewStep("Loading configuration...")
 	var configuration workspace.Cfg
 	if err := yaml.NewDecoder(file).Decode(&configuration); err != nil {
 		step.Failure()
@@ -145,8 +147,7 @@ func (c *command) Run() error {
 		ctx, cancel = context.WithTimeout(ctx, c.opts.Timeout)
 	}
 	defer cancel()
-	// TODO : Tu jest ten msg
-	step.Successf("Cokolwiek")
+	step.Successf("Configuration loaded")
 
 	return mgr.Do(ctx, options)
 }

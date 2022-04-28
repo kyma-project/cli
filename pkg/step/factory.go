@@ -13,6 +13,7 @@ type FactoryInterface interface {
 type Factory struct {
 	NonInteractive bool
 	UseLogger      bool
+	MuteLogger     bool
 }
 
 // NewStep creates a new Step to print out the current status with or without a spinner.
@@ -23,5 +24,9 @@ func (f *Factory) NewStep(msg string) Step {
 	if f.NonInteractive || runtime.GOOS != "darwin" {
 		return newSimpleStep(msg)
 	}
+	if f.MuteLogger {
+		return NewMutedStep()
+	}
+	//TODO: create NoOpStep() compatible with step interface and return it.
 	return newStepWithSpinner(msg)
 }
