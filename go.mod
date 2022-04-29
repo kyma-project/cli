@@ -52,7 +52,7 @@ require (
 	github.com/imdario/mergo v0.3.12
 	github.com/kyma-incubator/hydroform/function v0.0.0-20220414090226-f1fa39482951
 	github.com/kyma-incubator/hydroform/provision v0.0.0-20220425105141-5a9cfe49dabc
-	github.com/kyma-incubator/reconciler v0.0.0-20220421112831-c5dd1a4fa560
+	github.com/kyma-incubator/reconciler v0.0.0-20220429090124-0b31099d941b
 	github.com/opencontainers/image-spec v1.0.2
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/pkg/errors v0.9.1
@@ -74,6 +74,7 @@ require (
 	cloud.google.com/go v0.88.0 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/BurntSushi/toml v0.4.1 // indirect
+	github.com/DATA-DOG/go-sqlmock v1.5.0 // indirect
 	github.com/InVisionApp/go-health v2.1.0+incompatible // indirect
 	github.com/InVisionApp/go-logger v1.0.1 // indirect
 	github.com/MakeNowJust/heredoc v0.0.0-20170808103936-bb23615498cd // indirect
@@ -146,7 +147,17 @@ require (
 	github.com/iancoleman/strcase v0.2.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/invopop/jsonschema v0.4.0 // indirect
+	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
+	github.com/jackc/pgconn v1.12.0 // indirect
+	github.com/jackc/pgio v1.0.0 // indirect
+	github.com/jackc/pgpassfile v1.0.0 // indirect
+	github.com/jackc/pgproto3/v2 v2.3.0 // indirect
+	github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b // indirect
+	github.com/jackc/pgtype v1.11.0 // indirect
+	github.com/jackc/pgx/v4 v4.16.0 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
+	github.com/jinzhu/inflection v1.0.0 // indirect
+	github.com/jinzhu/now v1.1.4 // indirect
 	github.com/jmoiron/sqlx v1.3.5 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
@@ -169,7 +180,7 @@ require (
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
-	github.com/mitchellh/mapstructure v1.4.3 // indirect
+	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/moby/locker v1.0.1 // indirect
 	github.com/moby/moby v20.10.14+incompatible // indirect
@@ -247,6 +258,8 @@ require (
 	gopkg.in/ini.v1 v1.66.4 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
+	gorm.io/driver/postgres v1.3.5 // indirect
+	gorm.io/gorm v1.23.5 // indirect
 	istio.io/api v0.0.0-20220321195058-2792e813eb9a // indirect
 	istio.io/gogo-genproto v0.0.0-20211208193508-5ab4acc9eb1e // indirect
 	k8s.io/apiserver v0.23.6 // indirect
