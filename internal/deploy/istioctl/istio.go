@@ -18,7 +18,7 @@ import (
 
 	"github.com/kyma-project/cli/internal/files"
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 const defaultIstioChartPath = "/resources/istio/Chart.yaml"
