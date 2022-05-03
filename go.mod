@@ -28,8 +28,6 @@ replace (
 	// Fix CVE-2020-29652
 	// Fix CVE-2022-27191
 	golang.org/x/crypto => golang.org/x/crypto v0.0.0-20220314234659-1baeb1ce4c0b
-	// Fix WS-2021-0200
-	gopkg.in/yaml.v2 => gopkg.in/yaml.v2 v2.4.0
 	// Fix CVE-2021-32690
 	helm.sh/helm/v3 => helm.sh/helm/v3 v3.7.2
 	// Gardener deps import incompatible k8s APIs and they need to be replaced
@@ -59,7 +57,6 @@ require (
 	github.com/spf13/cobra v1.4.0
 	github.com/stretchr/testify v1.7.1
 	go.uber.org/zap v1.21.0
-	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	gotest.tools v2.2.0+incompatible
 	helm.sh/helm/v3 v3.7.2
@@ -258,6 +255,7 @@ require (
 	gopkg.in/ini.v1 v1.66.4 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gorm.io/driver/postgres v1.3.5 // indirect
 	gorm.io/gorm v1.23.5 // indirect
 	istio.io/api v0.0.0-20220321195058-2792e813eb9a // indirect

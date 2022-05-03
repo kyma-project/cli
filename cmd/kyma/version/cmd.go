@@ -2,13 +2,14 @@ package version
 
 import (
 	"fmt"
+	"io"
+	"os"
+
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/version"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"io"
-	"os"
 )
 
 type command struct {
