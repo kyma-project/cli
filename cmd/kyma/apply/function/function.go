@@ -64,6 +64,9 @@ func (c *command) Run() error {
 		c.opts.Filename = defaultFilename()
 	}
 
+	if c.opts.Output.value == "yaml" {
+		c.MuteLogger = true
+	}
 	file, err := os.Open(c.opts.Filename)
 	if err != nil {
 		return err
