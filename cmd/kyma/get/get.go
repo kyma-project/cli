@@ -3,9 +3,9 @@ package get
 import (
 	"os"
 
-	"github.com/kyma-incubator/hydroform/function/pkg/workspace"
 	"github.com/kyma-project/cli/cmd/kyma/get/schema"
 	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/hydroform/function/pkg/workspace"
 	"github.com/spf13/cobra"
 )
 

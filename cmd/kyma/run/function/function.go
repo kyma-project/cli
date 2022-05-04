@@ -3,15 +3,16 @@ package function
 import (
 	"context"
 	"fmt"
+	"os"
+
 	"github.com/docker/docker/client"
-	"github.com/kyma-incubator/hydroform/function/pkg/docker"
-	"github.com/kyma-incubator/hydroform/function/pkg/docker/runtimes"
-	"github.com/kyma-incubator/hydroform/function/pkg/workspace"
 	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/hydroform/function/pkg/docker"
+	"github.com/kyma-project/hydroform/function/pkg/docker/runtimes"
+	"github.com/kyma-project/hydroform/function/pkg/workspace"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
-	"os"
 )
 
 type command struct {

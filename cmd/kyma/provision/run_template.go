@@ -6,11 +6,11 @@ import (
 	"log"
 
 	"github.com/avast/retry-go"
-	hf "github.com/kyma-incubator/hydroform/provision"
-	"github.com/kyma-incubator/hydroform/provision/types"
 	"github.com/kyma-project/cli/internal/files"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/pkg/step"
+	hf "github.com/kyma-project/hydroform/provision"
+	"github.com/kyma-project/hydroform/provision/types"
 )
 
 type Command interface {

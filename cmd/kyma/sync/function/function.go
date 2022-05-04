@@ -4,10 +4,10 @@ import (
 	"context"
 	"os"
 
-	"github.com/kyma-incubator/hydroform/function/pkg/client"
-	"github.com/kyma-incubator/hydroform/function/pkg/workspace"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
+	"github.com/kyma-project/hydroform/function/pkg/client"
+	"github.com/kyma-project/hydroform/function/pkg/workspace"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/runtime/schema"
