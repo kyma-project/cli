@@ -23,9 +23,9 @@ import (
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/go-connections/nat"
-	hydroformDocker "github.com/kyma-incubator/hydroform/function/pkg/docker"
 	"github.com/kyma-project/cli/internal/minikube"
 	"github.com/kyma-project/cli/pkg/step"
+	hydroformDocker "github.com/kyma-project/hydroform/function/pkg/docker"
 	specs "github.com/opencontainers/image-spec/specs-go/v1"
 )
 

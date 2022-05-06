@@ -5,8 +5,8 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/kyma-incubator/hydroform/function/pkg/workspace"
 	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/hydroform/function/pkg/workspace"
 )
 
 //Options defines available options for the command

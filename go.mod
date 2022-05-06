@@ -27,7 +27,7 @@ replace (
 	github.com/ulikunitz/xz => github.com/ulikunitz/xz v0.5.10
 	// Fix CVE-2020-29652
 	// Fix CVE-2022-27191
-	golang.org/x/crypto => golang.org/x/crypto v0.0.0-20220314234659-1baeb1ce4c0b
+	golang.org/x/crypto => golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4
 	// Fix CVE-2021-32690
 	helm.sh/helm/v3 => helm.sh/helm/v3 v3.7.2
 	// Gardener deps import incompatible k8s APIs and they need to be replaced
@@ -48,9 +48,9 @@ require (
 	github.com/docker/go-connections v0.4.0
 	github.com/fatih/color v1.13.0
 	github.com/imdario/mergo v0.3.12
-	github.com/kyma-incubator/hydroform/function v0.0.0-20220414090226-f1fa39482951
-	github.com/kyma-incubator/hydroform/provision v0.0.0-20220425105141-5a9cfe49dabc
 	github.com/kyma-incubator/reconciler v0.0.0-20220429090124-0b31099d941b
+	github.com/kyma-project/hydroform/function v0.0.0-20220502091726-c8c71d130f0f
+	github.com/kyma-project/hydroform/provision v0.0.0-20220502091726-c8c71d130f0f
 	github.com/opencontainers/image-spec v1.0.2
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/pkg/errors v0.9.1

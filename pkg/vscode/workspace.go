@@ -3,8 +3,8 @@ package vscode
 import (
 	"path"
 
-	"github.com/kyma-incubator/hydroform/function/pkg/workspace"
 	serverlessw "github.com/kyma-project/cli/pkg/serverless"
+	"github.com/kyma-project/hydroform/function/pkg/workspace"
 )
 
 type Configuration map[workspace.File]interface{}

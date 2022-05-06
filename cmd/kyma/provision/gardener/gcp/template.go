@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/kyma-incubator/hydroform/provision/types"
 	prov "github.com/kyma-project/cli/cmd/kyma/provision"
 	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/hydroform/provision/types"
 )
 
 func newGcpCmd(o *Options) *gcpCmd {

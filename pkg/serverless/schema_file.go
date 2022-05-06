@@ -3,7 +3,7 @@ package serverless
 import (
 	"io"
 
-	"github.com/kyma-incubator/hydroform/function/pkg/workspace"
+	"github.com/kyma-project/hydroform/function/pkg/workspace"
 )
 
 type Schema struct{}

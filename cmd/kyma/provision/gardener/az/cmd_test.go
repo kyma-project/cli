@@ -3,8 +3,8 @@ package az
 import (
 	"testing"
 
-	"github.com/kyma-incubator/hydroform/provision/types"
 	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/hydroform/provision/types"
 	"github.com/stretchr/testify/require"
 )
 

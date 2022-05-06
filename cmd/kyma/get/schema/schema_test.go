@@ -4,8 +4,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/kyma-incubator/hydroform/function/pkg/workspace"
 	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/hydroform/function/pkg/workspace"
 	"github.com/stretchr/testify/require"
 )
 

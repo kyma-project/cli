@@ -6,7 +6,7 @@ import (
 	"io"
 	"testing"
 
-	"github.com/kyma-incubator/hydroform/function/pkg/workspace"
+	"github.com/kyma-project/hydroform/function/pkg/workspace"
 )
 
 type errWriter struct{}
