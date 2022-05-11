@@ -16,8 +16,7 @@ kyma version [flags]
 ## Flags
 
 ```bash
-  -c, --client    Client version only (no server required)
-  -d, --details   Detailed information for each Kyma version
+  -c, --client   Client version only (no server required)
 ```
 
 ## Flags inherited from parent commands

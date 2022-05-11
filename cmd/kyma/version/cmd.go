@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"time"
 
+	"github.com/avast/retry-go"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/version"
@@ -38,7 +40,6 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 
 	cobraCmd.Flags().BoolVarP(&o.ClientOnly, "client", "c", false, "Client version only (no server required)")
-	cobraCmd.Flags().BoolVarP(&o.VersionDetails, "details", "d", false, "Detailed information for each Kyma version")
 	return cobraCmd
 }
 
@@ -57,14 +58,19 @@ func (cmd *command) Run() error {
 		return err
 	}
 
-	ver, err := version.GetCurrentKymaVersion(cmd.K8s)
-	if err != nil {
-		return err
-	}
+	err = retry.Do(
+		func() error {
+			ver, err := version.GetCurrentKymaVersion(cmd.K8s)
+			if err != nil {
+				return err
+			}
 
-	fmt.Fprintf(w, "Kyma cluster version: %s\n", ver.String())
+			fmt.Fprintf(w, "Kyma cluster version: %s\n", ver.String())
+			return nil
+		},
+		retry.Delay(3*time.Second), retry.Attempts(3), retry.DelayType(retry.BackOffDelay), retry.LastErrorOnly(!cmd.opts.Verbose))
 
-	return nil
+	return err
 }
 
 func (cmd *command) setKubeClient() error {
