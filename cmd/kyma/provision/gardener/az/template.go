@@ -112,3 +112,11 @@ func (c *azCmd) ValidateFlags() error {
 }
 
 func (c *azCmd) IsVerbose() bool { return c.opts.Verbose }
+
+func (c *azCmd) FilterErr(e error) error {
+	if strings.Contains(e.Error(), "already exists") {
+		return nil
+	}
+
+	return e
+}
