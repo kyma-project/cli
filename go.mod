@@ -18,7 +18,6 @@ replace (
 	github.com/hashicorp/consul => github.com/hashicorp/consul v1.10.1
 	// Fix CVE-2020-29529
 	github.com/hashicorp/go-slug => github.com/hashicorp/go-slug v0.5.0
-	github.com/kyma-project/hydroform/function => github.com/dbadura/hydroform/function v0.0.0-20220511063438-c5e95d6de66e
 	// Fix CVE-2021-30465
 	github.com/opencontainers/runc => github.com/opencontainers/runc v1.1.0
 	// Fix CVE-2022-21698
@@ -50,7 +49,7 @@ require (
 	github.com/fatih/color v1.13.0
 	github.com/imdario/mergo v0.3.12
 	github.com/kyma-incubator/reconciler v0.0.0-20220506131927-1b253f9cd165
-	github.com/kyma-project/hydroform/function v0.0.0-20220502091726-c8c71d130f0f
+	github.com/kyma-project/hydroform/function v0.0.0-20220516143704-b38ad24d755a
 	github.com/kyma-project/hydroform/provision v0.0.0-20220502091726-c8c71d130f0f
 	github.com/opencontainers/image-spec v1.0.2
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
