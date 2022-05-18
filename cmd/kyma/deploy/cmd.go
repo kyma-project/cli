@@ -320,11 +320,6 @@ func (cmd *command) decideVersionUpgrade() error {
 		return errors.Errorf("Version is non parsable: %s", cmd.opts.Source)
 	}
 
-	if cmd.avoidUserInteraction() {
-		verifyStep.Successf("A Kyma installation with version '%s' was found. Proceeding with upgrade to '%s' in non-interactive mode. ", currentVersion.String(), upgradeVersion.String())
-		return nil
-	}
-
 	upgradeScenario := currentVersion.IsCompatibleWith(upgradeVersion)
 	switch upgradeScenario {
 	case version.UpgradeEqualVersion:
@@ -338,8 +333,16 @@ func (cmd *command) decideVersionUpgrade() error {
 		}
 	case version.UpgradePossible:
 		{
-			verifyStep.Successf("A Kyma installation with version '%s' was found. ", currentVersion.String())
+			verifyStep.Successf("A Kyma installation with version '%s' was found. Upgrade to version %s supported. ", currentVersion.String(), upgradeVersion.String())
 		}
+	}
+
+	if cmd.avoidUserInteraction() {
+		if upgradeScenario == version.UpgradeUndetermined {
+			verifyStep.Failuref("Aborting upgrade to '%s' in non-interactive mode. ", currentVersion.String(), upgradeVersion.String())
+		}
+		verifyStep.Successf("Proceeding with upgrade to '%s' in non-interactive mode. ", currentVersion.String(), upgradeVersion.String())
+		return nil
 	}
 
 	if !verifyStep.PromptYesNo(fmt.Sprintf("Do you want to proceed with the upgrade to '%s'? ", upgradeVersion.String())) {
