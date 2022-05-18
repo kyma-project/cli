@@ -50,7 +50,7 @@ require (
 	github.com/imdario/mergo v0.3.12
 	github.com/kyma-incubator/reconciler v0.0.0-20220506131927-1b253f9cd165
 	github.com/kyma-project/hydroform/function v0.0.0-20220516143704-b38ad24d755a
-	github.com/kyma-project/hydroform/provision v0.0.0-20220502091726-c8c71d130f0f
+	github.com/kyma-project/hydroform/provision v0.0.0-20220518141604-b61344f7c498
 	github.com/opencontainers/image-spec v1.0.2
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/pkg/errors v0.9.1
@@ -110,7 +110,7 @@ require (
 	github.com/exponent-io/jsonpath v0.0.0-20210407135951-1de76d718b3f // indirect
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.2 // indirect
-	github.com/gardener/gardener v1.45.0 // indirect
+	github.com/gardener/gardener v1.46.2 // indirect
 	github.com/go-errors/errors v1.0.2 // indirect
 	github.com/go-git/gcfg v1.5.0 // indirect
 	github.com/go-git/go-billy/v5 v5.3.1 // indirect
