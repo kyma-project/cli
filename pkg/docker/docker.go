@@ -23,7 +23,6 @@ import (
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/go-connections/nat"
-	"github.com/kyma-project/cli/internal/minikube"
 	"github.com/kyma-project/cli/pkg/step"
 	hydroformDocker "github.com/kyma-project/hydroform/function/pkg/docker"
 	specs "github.com/opencontainers/image-spec/specs-go/v1"
@@ -96,31 +95,6 @@ func NewClient() (Client, error) {
 	return &dockerClient{
 		dClient,
 	}, nil
-}
-
-//NewMinikubeClient creates docker client for minikube docker-env
-func NewMinikubeClient(verbosity bool, profile string, timeout time.Duration) (Client, error) {
-	dClient, err := minikube.DockerClient(verbosity, profile, timeout)
-	if err != nil {
-		return nil, err
-	}
-
-	return &dockerClient{
-		dClient,
-	}, nil
-}
-
-func NewKymaClient(isLocal bool, verbosity bool, profile string, timeout time.Duration) (KymaClient, error) {
-	var err error
-	var dc Client
-	if isLocal {
-		dc, err = NewMinikubeClient(verbosity, profile, timeout)
-	} else {
-		dc, err = NewClient()
-	}
-	return &kymaDockerClient{
-		Docker: dc,
-	}, err
 }
 
 // NewWrapper creates a new wrapper around the docker client with helper funtions
