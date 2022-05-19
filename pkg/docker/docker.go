@@ -34,10 +34,6 @@ type dockerWrapper struct {
 	Docker Client
 }
 
-type kymaDockerClient struct {
-	Docker Client
-}
-
 //go:generate mockery --name Client
 type Client interface {
 	ContainerCreate(ctx context.Context, config *container.Config, hostConfig *container.HostConfig, networkingConfig *network.NetworkingConfig,
