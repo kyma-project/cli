@@ -1,14 +1,9 @@
 package docker
 
 import (
-	"bufio"
 	"context"
-	"encoding/base64"
-	"encoding/json"
-	"fmt"
 	"io"
 	"os"
-	"path"
 	"strings"
 	"time"
 
@@ -20,10 +15,8 @@ import (
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
 	docker "github.com/docker/docker/client"
-	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/go-connections/nat"
-	"github.com/kyma-project/cli/internal/minikube"
 	"github.com/kyma-project/cli/pkg/step"
 	hydroformDocker "github.com/kyma-project/hydroform/function/pkg/docker"
 	specs "github.com/opencontainers/image-spec/specs-go/v1"
@@ -41,13 +34,8 @@ type dockerWrapper struct {
 	Docker Client
 }
 
-type kymaDockerClient struct {
-	Docker Client
-}
-
 //go:generate mockery --name Client
 type Client interface {
-	ArchiveDirectory(srcPath string, options *archive.TarOptions) (io.ReadCloser, error)
 	ContainerCreate(ctx context.Context, config *container.Config, hostConfig *container.HostConfig, networkingConfig *network.NetworkingConfig,
 		platform *specs.Platform, containerName string) (container.ContainerCreateCreatedBody, error)
 	ContainerStart(ctx context.Context, containerID string, options types.ContainerStartOptions) error
@@ -98,31 +86,6 @@ func NewClient() (Client, error) {
 	}, nil
 }
 
-//NewMinikubeClient creates docker client for minikube docker-env
-func NewMinikubeClient(verbosity bool, profile string, timeout time.Duration) (Client, error) {
-	dClient, err := minikube.DockerClient(verbosity, profile, timeout)
-	if err != nil {
-		return nil, err
-	}
-
-	return &dockerClient{
-		dClient,
-	}, nil
-}
-
-func NewKymaClient(isLocal bool, verbosity bool, profile string, timeout time.Duration) (KymaClient, error) {
-	var err error
-	var dc Client
-	if isLocal {
-		dc, err = NewMinikubeClient(verbosity, profile, timeout)
-	} else {
-		dc, err = NewClient()
-	}
-	return &kymaDockerClient{
-		Docker: dc,
-	}, err
-}
-
 // NewWrapper creates a new wrapper around the docker client with helper funtions
 func NewWrapper() (Wrapper, error) {
 	dClient, err := NewClient()
@@ -132,85 +95,6 @@ func NewWrapper() (Wrapper, error) {
 	return &dockerWrapper{
 		Docker: dClient,
 	}, nil
-}
-
-func (d *dockerClient) ArchiveDirectory(srcPath string, options *archive.TarOptions) (io.ReadCloser, error) {
-	return archive.TarWithOptions(srcPath, &archive.TarOptions{})
-}
-
-func (k *kymaDockerClient) BuildKymaInstaller(localSrcPath, imageName string) error {
-	reader, err := k.Docker.ArchiveDirectory(localSrcPath, &archive.TarOptions{})
-	if err != nil {
-		return err
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(300)*time.Second)
-	defer cancel()
-	k.Docker.NegotiateAPIVersion(ctx)
-	args := make(map[string]*string)
-	_, err = k.Docker.ImageBuild(
-		ctx,
-		reader,
-		types.ImageBuildOptions{
-			Tags:           []string{strings.TrimSpace(string(imageName))},
-			SuppressOutput: true,
-			Remove:         true,
-			Dockerfile:     path.Join("tools", "kyma-installer", "kyma.Dockerfile"),
-			BuildArgs:      args,
-		},
-	)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (k *kymaDockerClient) PushKymaInstaller(image string, currentStep step.Step) error {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(300)*time.Second)
-	defer cancel()
-	k.Docker.NegotiateAPIVersion(ctx)
-	domain, _ := splitDockerDomain(image)
-	auth, err := resolve(domain)
-	if err != nil {
-		return err
-	}
-
-	encodedJSON, err := json.Marshal(auth)
-	if err != nil {
-		return err
-	}
-	authStr := base64.URLEncoding.EncodeToString(encodedJSON)
-
-	currentStep.LogInfof("Pushing Docker image: '%s'", image)
-
-	pusher, err := k.Docker.ImagePush(ctx, image, types.ImagePushOptions{RegistryAuth: authStr})
-	if err != nil {
-		return err
-	}
-
-	defer pusher.Close()
-
-	var errorMessage ErrorMessage
-	buffIOReader := bufio.NewReader(pusher)
-
-	for {
-		streamBytes, err := buffIOReader.ReadBytes('\n')
-		if err == io.EOF {
-			break
-		}
-		err = json.Unmarshal(streamBytes, &errorMessage)
-		if err != nil {
-			return err
-		}
-		if errorMessage.Error != "" {
-			if strings.Contains(errorMessage.Error, "unauthorized") || strings.Contains(errorMessage.Error, "requested access to the resource is denied") {
-				return fmt.Errorf("missing permissions to push Docker image: %s\nPlease run `docker login` to authenticate", errorMessage.Error)
-			}
-			return fmt.Errorf("failed to push Docker image: %s", errorMessage.Error)
-		}
-	}
-
-	return nil
 }
 
 // PullImageAndStartContainer creates, pulls and starts a container
