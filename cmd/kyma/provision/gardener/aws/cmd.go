@@ -28,7 +28,7 @@ Use service account details to create a Secret and import it in Gardener.`,
 	cmd.Flags().StringVarP(&o.MachineType, "type", "t", "m5.xlarge", "Machine type used for the cluster.")
 	cmd.Flags().StringVar(&o.DiskType, "disk-type", "gp2", "Type of disk to use on AWS.")
 	cmd.Flags().IntVar(&o.DiskSizeGB, "disk-size", 50, "Disk size (in GB) of the cluster.")
-	cmd.Flags().IntVar(&o.ScalerMin, "scaler-min", 2, "Minimum autoscale value of the cluster.")
+	cmd.Flags().IntVar(&o.ScalerMin, "scaler-min", 1, "Minimum autoscale value of the cluster.")
 	cmd.Flags().IntVar(&o.ScalerMax, "scaler-max", 3, "Maximum autoscale value of the cluster.")
 	cmd.Flags().StringSliceVarP(&o.Extra, "extra", "e", nil, "One or more arguments provided as the `NAME=VALUE` key-value pairs to configure additional cluster settings. You can use this flag multiple times or enter the key-value pairs as a comma-separated list.")
 	cmd.Flags().UintVar(&o.Attempts, "attempts", 3, "Maximum number of attempts to provision the cluster.")

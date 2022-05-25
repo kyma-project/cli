@@ -31,7 +31,7 @@ kyma provision gardener aws [flags]
   -p, --project string                Name of the Gardener project where you provision the cluster. (required)
   -r, --region string                 Region of the cluster. (default "eu-west-3")
       --scaler-max int                Maximum autoscale value of the cluster. (default 3)
-      --scaler-min int                Minimum autoscale value of the cluster. (default 2)
+      --scaler-min int                Minimum autoscale value of the cluster. (default 1)
   -s, --secret string                 Name of the Gardener secret used to access AWS. (required)
   -t, --type string                   Machine type used for the cluster. (default "m5.xlarge")
   -z, --zones strings                 Zones specify availability zones that are used to evenly distribute the worker pool. eg. --zones="europe-west3-a,europe-west3-b" (default [eu-west-3a])

@@ -25,7 +25,7 @@ func TestProvisionGardenerAzureFlags(t *testing.T) {
 	require.Equal(t, "Standard_D4_v3", o.MachineType, "Default value for the type flag not as expected.")
 	require.Equal(t, 50, o.DiskSizeGB, "Default value for the disk-size flag not as expected.")
 	require.Equal(t, "Standard_LRS", o.DiskType, "Default value for the disk-type flag not as expected.")
-	require.Equal(t, 2, o.ScalerMin, "Default value for the scaler-min flag not as expected.")
+	require.Equal(t, 1, o.ScalerMin, "Default value for the scaler-min flag not as expected.")
 	require.Equal(t, 3, o.ScalerMax, "Default value for the scaler-max flag not as expected.")
 	require.Empty(t, o.Extra, "Default value for the extra flag not as expected.")
 	require.Equal(t, uint(3), o.Attempts, "Default value for the attempts flag not as expected.")
@@ -135,7 +135,7 @@ func TestNewProvider(t *testing.T) {
 	custom["workercidr"] = "10.250.0.0/16"
 	custom["networking_type"] = "calico"
 	custom["machine_image_name"] = "gardenlinux"
-	custom["machine_image_version"] = "576.7.0"
+	custom["machine_image_version"] = "576.8.0"
 	custom["hibernation_start"] = "00 18 * * 1,2,3,4,5"
 	custom["hibernation_end"] = ""
 	custom["hibernation_location"] = "Europe/Berlin"
