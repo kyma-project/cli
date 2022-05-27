@@ -70,6 +70,24 @@ func (b *builder) addDefaultServerlessRegistryConfig(config serverlessRegistryCo
 	})
 }
 
+// https://github.com/GoogleContainerTools/kaniko/issues/1592
+// https://github.com/kyma-project/kyma/issues/13051
+func (b *builder) addDefaultServerlessKanikoForce() *builder {
+	return b.addDefaultValues(map[string]interface{}{
+		"serverless": map[string]interface{}{
+			"containers": map[string]interface{}{
+				"manager": map[string]interface{}{
+					"envs": map[string]interface{}{
+						"functionBuildExecutorArgs": map[string]interface{}{
+							"value": "--insecure,--skip-tls-verify,--skip-unused-stages,--log-format=text,--cache=true,--force",
+						},
+					},
+				},
+			},
+		},
+	})
+}
+
 func (b *builder) build() (map[string]interface{}, error) {
 	merged, err := b.mergeSources()
 	if err != nil {
