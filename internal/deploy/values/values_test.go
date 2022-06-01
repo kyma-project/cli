@@ -199,6 +199,15 @@ func TestMerge(t *testing.T) {
 						"serverAddress":         "k3d-foo-registry:5000",
 						"registryAddress":       "k3d-foo-registry:5000",
 					},
+					"containers": map[string]interface{}{
+						"manager": map[string]interface{}{
+							"envs": map[string]interface{}{
+								"functionBuildExecutorArgs": map[string]interface{}{
+									"value": "--insecure,--skip-tls-verify,--skip-unused-stages,--log-format=text,--cache=true,--force",
+								},
+							},
+						},
+					},
 				},
 			}
 
@@ -223,6 +232,15 @@ func TestMerge(t *testing.T) {
 						"internalServerAddress": "internal-address",
 						"serverAddress":         "external-address",
 						"registryAddress":       "external-push-address",
+					},
+					"containers": map[string]interface{}{
+						"manager": map[string]interface{}{
+							"envs": map[string]interface{}{
+								"functionBuildExecutorArgs": map[string]interface{}{
+									"value": "--insecure,--skip-tls-verify,--skip-unused-stages,--log-format=text,--cache=true,--force",
+								},
+							},
+						},
 					},
 				},
 			}
@@ -254,6 +272,15 @@ func TestMerge(t *testing.T) {
 						"serverAddress":         "k3d-foo-registry:5000",
 						"registryAddress":       "k3d-foo-registry:5000",
 					},
+					"containers": map[string]interface{}{
+						"manager": map[string]interface{}{
+							"envs": map[string]interface{}{
+								"functionBuildExecutorArgs": map[string]interface{}{
+									"value": "--insecure,--skip-tls-verify,--skip-unused-stages,--log-format=text,--cache=true,--force",
+								},
+							},
+						},
+					},
 				},
 			}
 
@@ -278,6 +305,15 @@ func TestMerge(t *testing.T) {
 						"internalServerAddress": "k3d-foo-registry:5000",
 						"serverAddress":         "k3d-foo-registry:5000",
 						"registryAddress":       "k3d-foo-registry:5000",
+					},
+					"containers": map[string]interface{}{
+						"manager": map[string]interface{}{
+							"envs": map[string]interface{}{
+								"functionBuildExecutorArgs": map[string]interface{}{
+									"value": "--insecure,--skip-tls-verify,--skip-unused-stages,--log-format=text,--cache=true,--force",
+								},
+							},
+						},
 					},
 				},
 			}
