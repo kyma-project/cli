@@ -19,7 +19,8 @@ replace (
 	// Fix CVE-2020-29529
 	github.com/hashicorp/go-slug => github.com/hashicorp/go-slug v0.5.0
 	// Fix CVE-2021-30465
-	github.com/opencontainers/runc => github.com/opencontainers/runc v1.1.0
+	// Fix CVE-2022-29162
+	github.com/opencontainers/runc => github.com/opencontainers/runc v1.1.2
 	// Fix CVE-2022-21698
 	github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.12.1
 	github.com/spf13/viper => github.com/spf13/viper v1.7.0
@@ -197,7 +198,7 @@ require (
 	github.com/onrik/logrus v0.8.0 // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/runc v1.1.1 // indirect
+	github.com/opencontainers/runc v1.1.2 // indirect
 	github.com/otiai10/copy v1.7.0 // indirect
 	github.com/panjf2000/ants/v2 v2.4.8 // indirect
 	github.com/pelletier/go-toml v1.9.4 // indirect
