@@ -1,16 +1,17 @@
 package deploy
 
 import (
+	"io/ioutil"
+	"os"
+	"testing"
+
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube/mocks"
 	"github.com/stretchr/testify/require"
-	"io/ioutil"
 	v1 "k8s.io/api/apps/v1"
 	coreV1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
-	"os"
-	"testing"
 )
 
 func Test_upgkyma2tokyma2_noninteractive(t *testing.T) {
@@ -51,7 +52,7 @@ func Test_upgkyma2tokyma2_noninteractive(t *testing.T) {
 	w.Close()
 	out, _ := ioutil.ReadAll(r)
 	os.Stdout = captureStdout
-	expectedOutput := "A Kyma installation with version '2.0.0' was found. Proceeding with upgrade to 'main' in non-interactive mode."
+	expectedOutput := "A Kyma installation was found, but compatibility between version '2.0.0' and 'main' is not guaranteed. This might cause errors!"
 	require.Contains(t, string(out), expectedOutput)
 	require.NoError(t, err)
 }
@@ -184,7 +185,7 @@ func Test_upgkymaFootokyma2_noninteractive(t *testing.T) {
 	w.Close()
 	out, _ := ioutil.ReadAll(r)
 	os.Stdout = captureStdout
-	expectedOutput := "A Kyma installation with version '12e41ab5' was found. Proceeding with upgrade to '2.0.0' in non-interactive mode."
+	expectedOutput := "A Kyma installation was found, but compatibility between version '12e41ab5' and '2.0.0' is not guaranteed. This might cause errors!"
 	require.Contains(t, string(out), expectedOutput)
 	require.NoError(t, err)
 }

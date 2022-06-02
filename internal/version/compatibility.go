@@ -59,7 +59,7 @@ func checkCompatibility(current string, next string) error {
 	if nxtVersion.LT(curVersion) {
 		return nextVersionLowerError.with(current, next)
 	}
-	if nxtVersion.Major > curVersion.Major || (uint64(nxtVersion.Minor)-uint64(curVersion.Minor) > 2) {
+	if nxtVersion.Major > curVersion.Major || (uint64(nxtVersion.Minor)-uint64(curVersion.Minor) > 1) { // only upgrade to the next minor version is guaranteed to work
 		return nextVersionTooGreatError.with(current, next)
 	}
 	return nil
