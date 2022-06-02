@@ -19,12 +19,12 @@ type Command interface {
 	KubeconfigPath() string
 	Attempts() uint
 	ProviderName() string
-
+	// FilterErr checks if e can be filtered out. If so, nil is returned, otherwise e is returned unchanged.
+	FilterErr(e error) error
 	ValidateFlags() error
 	NewStep(msg string) step.Step
 	NewCluster() *types.Cluster
 	NewProvider() (*types.Provider, error)
-
 	Run() error
 }
 
@@ -55,7 +55,7 @@ func RunTemplate(c Command) error {
 	err = retry.Do(
 		func() error {
 			cluster, err = hf.Provision(cluster, provider, types.WithDataDir(home), types.Persistent(), types.Verbose(c.IsVerbose()))
-			return err
+			return c.FilterErr(err)
 		},
 		retry.Attempts(c.Attempts()), retry.LastErrorOnly(!c.IsVerbose()))
 
