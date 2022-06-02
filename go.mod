@@ -111,6 +111,7 @@ require (
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.2 // indirect
 	github.com/gardener/gardener v1.46.2 // indirect
+	github.com/go-cmd/cmd v1.4.1 // indirect
 	github.com/go-errors/errors v1.0.2 // indirect
 	github.com/go-git/gcfg v1.5.0 // indirect
 	github.com/go-git/go-billy/v5 v5.3.1 // indirect
