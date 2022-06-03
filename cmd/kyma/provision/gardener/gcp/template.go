@@ -121,7 +121,7 @@ func (c *gcpCmd) ValidateFlags() error {
 func (c *gcpCmd) IsVerbose() bool { return c.opts.Verbose }
 
 func (c *gcpCmd) FilterErr(e error) error {
-	if strings.Contains(e.Error(), "already exists") {
+	if e != nil && strings.Contains(e.Error(), "already exists") {
 		return nil
 	}
 
