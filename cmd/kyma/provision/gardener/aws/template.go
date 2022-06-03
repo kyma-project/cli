@@ -120,7 +120,7 @@ func (c *awsCmd) ValidateFlags() error {
 func (c *awsCmd) IsVerbose() bool { return c.opts.Verbose }
 
 func (c *awsCmd) FilterErr(e error) error {
-	if strings.Contains(e.Error(), "already exists") {
+	if e != nil && strings.Contains(e.Error(), "already exists") {
 		return nil
 	}
 
