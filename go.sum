@@ -417,6 +417,8 @@ github.com/gabriel-vasile/mimetype v1.3.1/go.mod h1:fA8fi6KUiG7MgQQ+mEWotXoEOvmx
 github.com/gabriel-vasile/mimetype v1.4.0/go.mod h1:fA8fi6KUiG7MgQQ+mEWotXoEOvmxRtOJlERCzSmRvr8=
 github.com/gardener/gardener v1.46.2 h1:G5auN8JthqgzG/iiYVnHB1J8Sk0Pg+pQ6UvjX34PvZU=
 github.com/gardener/gardener v1.46.2/go.mod h1:BsQ9s0Ms5rU1IAS1doVceBGj4kNBhSMQKaDB4a2ba4k=
+github.com/gardener/gardener v1.48.0 h1:OjE5o+GP9AZsDfBt2yGRvrZOngt8bLTUWoYoQ86limk=
+github.com/gardener/gardener v1.48.0/go.mod h1:SxHdXYy4GWEbaP4X4axADf1eqhtfizpYXsB/q7D1GsU=
 github.com/garyburd/redigo v1.6.3 h1:HCeeRluvAgMusMomi1+6Y5dmFOdYV/JzoRrrbFlkGIc=
 github.com/gavv/httpexpect v0.0.0-20170820080527-c44a6d7bb636 h1:FbWwmG7qBNykpmPppq5767far39ty4P7lOhpPNK8Ik4=
 github.com/gavv/httpexpect v0.0.0-20170820080527-c44a6d7bb636/go.mod h1:x+9tiU1YnrOvnB725RkpoLv1M62hOWzwo5OXotisrKc=
@@ -908,6 +910,8 @@ github.com/kyma-project/hydroform/function v0.0.0-20220516143704-b38ad24d755a h1
 github.com/kyma-project/hydroform/function v0.0.0-20220516143704-b38ad24d755a/go.mod h1:s5xmckMEgPYqm9D09WvPZ34Zs4s6o2UTzzynMFcZiFI=
 github.com/kyma-project/hydroform/provision v0.0.0-20220518141604-b61344f7c498 h1:IU6okigaBzhhMKWe02yWEK2t1aZgkzJpbbPER7VGxoY=
 github.com/kyma-project/hydroform/provision v0.0.0-20220518141604-b61344f7c498/go.mod h1:EDvwJwyYn050Ie9+hUrYzuZvs4Qc5CDvjbbP55yL7j8=
+github.com/kyma-project/hydroform/provision v0.0.0-20220610112310-719a188e7b82 h1:txr0fWNhUoKHTNIYNtu/C5ef82JZRlDk9dGsLUsDUrE=
+github.com/kyma-project/hydroform/provision v0.0.0-20220610112310-719a188e7b82/go.mod h1:TtQBWEwsJFTmUura3iOVVpsM1X2y8ypA5Be171qZ6jY=
 github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 h1:SOEGU9fKiNWd/HOJuq6+3iTQz8KNCLtVX6idSoTLdUw=
 github.com/lann/builder v0.0.0-20180802200727-47ae307949d0/go.mod h1:dXGbAdH5GtBTC4WfIxhKZfyBF/HBFgRZSWwZ9g/He9o=
 github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 h1:P6pPBnrTSX3DEVR4fDembhRWSsG5rVo6hYhAB/ADZrk=
