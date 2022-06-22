@@ -5,8 +5,8 @@ go 1.17
 replace (
 	// This is needed because reconciler imports SAP-BTP-operator which has an old import of antlr4
 	github.com/antlr/antlr4 => github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20211106181442-e4c1a74c66bd
-	// Fix CVE-2021-41103
-	github.com/containerd/containerd => github.com/containerd/containerd v1.6.2
+	// Fix CVE-2021-41103 and CVE-2022-1996
+	github.com/containerd/containerd => github.com/containerd/containerd v1.6.6
 	// Fix CVE-2022-24778
 	github.com/containerd/imgcrypt => github.com/containerd/imgcrypt v1.1.4
 	// Fix CVE-2021-41092
@@ -52,7 +52,7 @@ require (
 	github.com/kyma-incubator/reconciler v0.0.0-20220530112659-7c7730de8709
 	github.com/kyma-project/hydroform/function v0.0.0-20220610112310-719a188e7b82
 	github.com/kyma-project/hydroform/provision v0.0.0-20220609115956-8e0ef3646a23
-	github.com/opencontainers/image-spec v1.0.2
+	github.com/opencontainers/image-spec v1.0.3-0.20211202183452-c5a74bcca799
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.4.0
@@ -80,7 +80,7 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.2 // indirect
 	github.com/Masterminds/squirrel v1.5.2 // indirect
 	github.com/Microsoft/go-winio v0.5.2 // indirect
-	github.com/Microsoft/hcsshim v0.9.2 // indirect
+	github.com/Microsoft/hcsshim v0.9.3 // indirect
 	github.com/Peripli/service-manager v0.19.9 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20220407094043-a94812496cf5 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
