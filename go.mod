@@ -49,7 +49,7 @@ require (
 	github.com/docker/go-connections v0.4.0
 	github.com/fatih/color v1.13.0
 	github.com/imdario/mergo v0.3.12
-	github.com/kyma-incubator/reconciler v0.0.0-20220530112659-7c7730de8709
+	github.com/kyma-incubator/reconciler v0.0.0-20220622095848-d9fb1a45d658
 	github.com/kyma-project/hydroform/function v0.0.0-20220610112310-719a188e7b82
 	github.com/kyma-project/hydroform/provision v0.0.0-20220609115956-8e0ef3646a23
 	github.com/opencontainers/image-spec v1.0.3-0.20211202183452-c5a74bcca799
@@ -96,7 +96,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/chai2010/gettext-go v0.0.0-20160711120539-c6fed771bfd5 // indirect
 	github.com/containerd/cgroups v1.0.3 // indirect
-	github.com/containerd/containerd v1.6.2 // indirect
+	github.com/containerd/containerd v1.6.6 // indirect
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/cyphar/filepath-securejoin v0.2.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -185,7 +185,7 @@ require (
 	github.com/onrik/logrus v0.8.0 // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/runc v1.1.2 // indirect
+	github.com/opencontainers/runc v1.1.3 // indirect
 	github.com/otiai10/copy v1.7.0 // indirect
 	github.com/panjf2000/ants/v2 v2.4.8 // indirect
 	github.com/pelletier/go-toml v1.9.4 // indirect
