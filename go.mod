@@ -5,8 +5,6 @@ go 1.17
 replace (
 	// This is needed because reconciler imports SAP-BTP-operator which has an old import of antlr4
 	github.com/antlr/antlr4 => github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20211106181442-e4c1a74c66bd
-	// Fix CVE-2021-41103 and CVE-2022-1996
-	github.com/containerd/containerd => github.com/containerd/containerd v1.6.6
 	// Fix CVE-2022-24778
 	github.com/containerd/imgcrypt => github.com/containerd/imgcrypt v1.1.4
 	// Fix CVE-2021-41092
@@ -49,9 +47,9 @@ require (
 	github.com/docker/go-connections v0.4.0
 	github.com/fatih/color v1.13.0
 	github.com/imdario/mergo v0.3.12
-	github.com/kyma-incubator/reconciler v0.0.0-20220622095848-d9fb1a45d658
+	github.com/kyma-incubator/reconciler v0.0.0-20220623094601-c070b5ec80e2
 	github.com/kyma-project/hydroform/function v0.0.0-20220624092712-be48492d56d7
-	github.com/kyma-project/hydroform/provision v0.0.0-20220609115956-8e0ef3646a23
+	github.com/kyma-project/hydroform/provision v0.0.0-20220623101246-77acde4617ab
 	github.com/opencontainers/image-spec v1.0.3-0.20211202183452-c5a74bcca799
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/pkg/errors v0.9.1
@@ -111,7 +109,7 @@ require (
 	github.com/exponent-io/jsonpath v0.0.0-20210407135951-1de76d718b3f // indirect
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.2 // indirect
-	github.com/gardener/gardener v1.48.0 // indirect
+	github.com/gardener/gardener v1.49.1 // indirect
 	github.com/go-cmd/cmd v1.4.1 // indirect
 	github.com/go-errors/errors v1.0.2 // indirect
 	github.com/go-git/gcfg v1.5.0 // indirect
