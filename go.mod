@@ -50,7 +50,7 @@ require (
 	github.com/fatih/color v1.13.0
 	github.com/imdario/mergo v0.3.12
 	github.com/kyma-incubator/reconciler v0.0.0-20220622095848-d9fb1a45d658
-	github.com/kyma-project/hydroform/function v0.0.0-20220610112310-719a188e7b82
+	github.com/kyma-project/hydroform/function v0.0.0-20220623092802-82115cbcbd21
 	github.com/kyma-project/hydroform/provision v0.0.0-20220609115956-8e0ef3646a23
 	github.com/opencontainers/image-spec v1.0.3-0.20211202183452-c5a74bcca799
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
