@@ -906,8 +906,8 @@ github.com/kubernetes-sigs/go-open-service-broker-client v0.0.0-20190909175253-9
 github.com/kubernetes-sigs/go-open-service-broker-client v0.0.0-20190909175253-906fa5f9c249/go.mod h1:s8wBC55/DEkNa3YMY1WLgpT33Ghpmw7v+waIxh15dYI=
 github.com/kyma-incubator/reconciler v0.0.0-20220622095848-d9fb1a45d658 h1:v2C5U17dbHaupATnz05N6mNo+EjEESagnW4/Kn/sloM=
 github.com/kyma-incubator/reconciler v0.0.0-20220622095848-d9fb1a45d658/go.mod h1:SaxfQZ4AOyPEz8pGYTSco+Xu+QkGJfnpljK54a2uGKY=
-github.com/kyma-project/hydroform/function v0.0.0-20220623092802-82115cbcbd21 h1:PI0cO0KLd54JHyz2A5zkabMvIhGppznPv/fhfu3vPyk=
-github.com/kyma-project/hydroform/function v0.0.0-20220623092802-82115cbcbd21/go.mod h1:JJm+KSMgXxeZL2qsMSBLvqDxjZ1W/A7a/pBWw8NMQOY=
+github.com/kyma-project/hydroform/function v0.0.0-20220624092712-be48492d56d7 h1:xP5h7EKnzJmOwbRZung4PnwdHve/lnDQ/0OgnpDmAr4=
+github.com/kyma-project/hydroform/function v0.0.0-20220624092712-be48492d56d7/go.mod h1:JJm+KSMgXxeZL2qsMSBLvqDxjZ1W/A7a/pBWw8NMQOY=
 github.com/kyma-project/hydroform/provision v0.0.0-20220609115956-8e0ef3646a23 h1:PzxUozkVOt6PKztAyJdmR3+whLa6Z4mOmdG2FYTO+jo=
 github.com/kyma-project/hydroform/provision v0.0.0-20220609115956-8e0ef3646a23/go.mod h1:TtQBWEwsJFTmUura3iOVVpsM1X2y8ypA5Be171qZ6jY=
 github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 h1:SOEGU9fKiNWd/HOJuq6+3iTQz8KNCLtVX6idSoTLdUw=
