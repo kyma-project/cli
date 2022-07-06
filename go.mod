@@ -50,7 +50,7 @@ require (
 	github.com/docker/go-connections v0.4.0
 	github.com/fatih/color v1.13.0
 	github.com/imdario/mergo v0.3.12
-	github.com/kyma-incubator/reconciler v0.0.0-20220623094601-c070b5ec80e2
+	github.com/kyma-incubator/reconciler v0.0.0-20220706112452-b072a1b57323
 	github.com/kyma-project/hydroform/function v0.0.0-20220627134457-64114d8b0432
 	github.com/kyma-project/hydroform/provision v0.0.0-20220623101246-77acde4617ab
 	github.com/opencontainers/image-spec v1.0.3-0.20220303224323-02efb9a75ee1
