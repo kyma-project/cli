@@ -1,0 +1,7 @@
+configs:
+  - name: some-random-chart-name
+    clientConfig: "CreateNamespace=true,Namespace=jet-cert"
+    overrides: "x=1"
+  - name: some-other-random-chart-name
+    clientConfig: "Namespace=my-amazing-ns"
+    overrides: "x=1"
