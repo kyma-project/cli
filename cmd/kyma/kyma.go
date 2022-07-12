@@ -1,6 +1,7 @@
 package kyma
 
 import (
+	"github.com/kyma-project/cli/cmd/kyma/alpha"
 	"github.com/kyma-project/cli/cmd/kyma/apply"
 	"github.com/kyma-project/cli/cmd/kyma/completion"
 	"github.com/kyma-project/cli/cmd/kyma/create"
@@ -78,6 +79,8 @@ Kyma CLI allows you to install and manage Kyma.
 		run.NewCmd(o),
 		get.NewCmd(o),
 	)
+
+	cmd.AddCommand(alpha.NewCmd(o))
 
 	return cmd
 }
