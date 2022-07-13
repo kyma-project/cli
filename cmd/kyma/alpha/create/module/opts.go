@@ -9,6 +9,7 @@ type Options struct {
 	*cli.Options
 
 	ModPath              string
+	PrivateKeyPath       string
 	ComponentNameMapping string
 	BaseUrl              string
 	ResourcePaths        []string

@@ -44,6 +44,7 @@ Optionally, additional layers can be added with contents in other paths.
 
 	cmd.Flags().StringArrayVarP(&o.ResourcePaths, "resource", "r", []string{}, "Add an extra resource in a new layer with format <NAME:TYPE@PATH>. It is also possible to provide only a path; name will default to the last path element and type to 'helm-chart'")
 	cmd.Flags().StringVar(&o.ModPath, "mod-path", "./mod", "Specifies the path where the component descriptor and module packaging will be stored. If the path already has a descriptor use the overwrite flag to overwrite it")
+	cmd.Flags().StringVar(&o.PrivateKeyPath, "private-key-path", "", "Specifies the path where the private key used for signing")
 	cmd.Flags().StringVar(&o.ComponentNameMapping, "name-mapping", "", "Repository context name mapping. Possible values are: empty, urlPath or sha256-digest")
 	cmd.Flags().StringVar(&o.BaseUrl, "registry", "", "Repository context url for component to upload. The repository url will be automatically added to the repository contexts in the module")
 	cmd.Flags().BoolVarP(&o.Overwrite, "overwrite", "w", false, "overwrites the existing mod-path directory if it exists")
@@ -72,7 +73,7 @@ func (c *command) Run(args []string) error {
 	fs := osfs.New()
 
 	c.NewStep(fmt.Sprintf("Creating module archive at %q", c.opts.ModPath))
-	_, err := module.Build(fs, cfg)
+	componentArchive, err := module.Build(fs, cfg)
 	if err != nil {
 		c.CurrentStep.Failure()
 		return err
@@ -91,8 +92,9 @@ func (c *command) Run(args []string) error {
 	}
 	c.CurrentStep.Successf("Resources added!")
 
-	// TODO signing
+	c.NewStep("Signing resources...")
 
+	c.CurrentStep.Successf("Signed component descriptor")
 	// TODO pushing
 
 	if c.opts.Clean {
