@@ -11,7 +11,7 @@ type Options struct {
 	ModPath              string
 	PrivateKeyPath       string
 	ComponentNameMapping string
-	BaseUrl              string
+	RegistryUrl          string
 	ResourcePaths        []string
 	Overwrite            bool
 	Clean                bool
