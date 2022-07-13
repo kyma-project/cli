@@ -45,7 +45,7 @@ Optionally, additional layers can be added with contents in other paths.
 	cmd.Flags().StringArrayVarP(&o.ResourcePaths, "resource", "r", []string{}, "Add an extra resource in a new layer with format <NAME:TYPE@PATH>. It is also possible to provide only a path; name will default to the last path element and type to 'helm-chart'")
 	cmd.Flags().StringVar(&o.ModPath, "mod-path", "./mod", "Specifies the path where the component descriptor and module packaging will be stored. If the path already has a descriptor use the overwrite flag to overwrite it")
 	cmd.Flags().StringVar(&o.ComponentNameMapping, "name-mapping", "", "Repository context name mapping. Possible values are: empty, urlPath or sha256-digest")
-	cmd.Flags().StringVar(&o.BaseUrl, "registry", "", "Repository context url for component to upload. The repository url will be automatically added to the repository contexts in the module")
+	cmd.Flags().StringVar(&o.RegistryUrl, "registry", "", "Repository context url for component to upload. The repository url will be automatically added to the repository contexts in the module")
 	cmd.Flags().BoolVarP(&o.Overwrite, "overwrite", "w", false, "overwrites the existing mod-path directory if it exists")
 	cmd.Flags().BoolVar(&o.Clean, "clean", false, "Remove the mod-path folder and all its contents at the end.")
 
@@ -64,20 +64,24 @@ func (c *command) Run(args []string) error {
 		ComponentArchivePath: c.opts.ModPath,
 		ComponentNameMapping: c.opts.ComponentNameMapping,
 		Overwrite:            c.opts.Overwrite,
-		BaseUrl:              c.opts.BaseUrl,
+		RegistryUrl:          c.opts.RegistryUrl,
 	}
+
+	/* -- CREATE ARCHIVE -- */
 
 	// prepend the module root to the paths
 	c.opts.ResourcePaths = append([]string{args[2]}, c.opts.ResourcePaths...)
 	fs := osfs.New()
 
 	c.NewStep(fmt.Sprintf("Creating module archive at %q", c.opts.ModPath))
-	_, err := module.Build(fs, cfg)
+	archive, err := module.Build(fs, cfg)
 	if err != nil {
 		c.CurrentStep.Failure()
 		return err
 	}
 	c.CurrentStep.Success()
+
+	/* -- BUNDLE RESOURCES -- */
 
 	c.NewStep("Adding resources...")
 	if err := os.MkdirAll(c.opts.ResourcePaths[0], os.ModePerm); err != nil {
@@ -85,15 +89,26 @@ func (c *command) Run(args []string) error {
 		return err
 	}
 
-	if err := module.AddResources(cfg, l, fs, c.opts.ResourcePaths...); err != nil {
+	if err := module.AddResources(archive, cfg, l, fs, c.opts.ResourcePaths...); err != nil {
 		c.CurrentStep.Failure()
 		return err
 	}
-	c.CurrentStep.Successf("Resources added!")
+	c.CurrentStep.Successf("Resources added")
 
-	// TODO signing
+	/* -- SIGN -- */
 
-	// TODO pushing
+	/* -- PUSH -- */
+
+	if c.opts.RegistryUrl != "" {
+		c.NewStep(fmt.Sprintf("Pushing image to %q", c.opts.RegistryUrl))
+		if err := module.Push(archive, cfg, fs, l); err != nil {
+			c.CurrentStep.Failure()
+			return err
+		}
+		c.CurrentStep.Success()
+	}
+
+	/* -- CLEANUP -- */
 
 	if c.opts.Clean {
 		c.NewStep(fmt.Sprintf("Cleaning up mod path %q", c.opts.ModPath))

@@ -32,12 +32,7 @@ type ResourceDescriptorList struct {
 
 // AddResources adds the resources in the given resource definitions into the archive and its FS.
 // A resource definition is a string with format: NAME:TYPE@PATH where NAME and TYPE can be ommited and will default to the last path element name and "helm-chart" respectively
-func AddResources(c *ComponentConfig, log *zap.SugaredLogger, fs vfs.FileSystem, resourceDefs ...string) error {
-	// Calling build will have no effect if the component config has not changed and is a safeguard in case the component is not there
-	archive, err := Build(fs, c)
-	if err != nil {
-		return err
-	}
+func AddResources(archive *ctf.ComponentArchive, c *ComponentConfig, log *zap.SugaredLogger, fs vfs.FileSystem, resourceDefs ...string) error {
 	compDescFilePath := filepath.Join(c.ComponentArchivePath, ctf.ComponentDescriptorFileName)
 
 	resources, err := generateResources(log, c.Version, resourceDefs...)
