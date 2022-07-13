@@ -10,7 +10,7 @@ type Options struct {
 
 	ModPath              string
 	ComponentNameMapping string
-	BaseUrl              string
+	RegistryUrl          string
 	ResourcePaths        []string
 	Overwrite            bool
 	Clean                bool
