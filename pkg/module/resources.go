@@ -31,7 +31,7 @@ type ResourceDescriptorList struct {
 }
 
 // AddResources adds the resources in the given resource definitions into the archive and its FS.
-// A resource definition is a string with format: NAME:TYPE@PATH where NAME and TYPE can be ommitted and will default to the last path element name and "helm-chart" respectively
+// A resource definition is a string with format: NAME:TYPE@PATH where NAME and TYPE can be omitted and will default to the last path element name and "helm-chart" respectively
 func AddResources(archive *ctf.ComponentArchive, c *ComponentConfig, log *zap.SugaredLogger, fs vfs.FileSystem, resourceDefs ...string) error {
 	compDescFilePath := filepath.Join(c.ComponentArchivePath, ctf.ComponentDescriptorFileName)
 
