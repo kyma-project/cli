@@ -99,10 +99,7 @@ func (c *client) PushManifest(ctx context.Context, ref string, manifest *ocispec
 		Annotations: manifest.Annotations,
 	}
 
-	resolver, err := c.resolver()
-	if err != nil {
-		return err
-	}
+	resolver := c.resolver()
 
 	pusher, err := resolver.Pusher(ctx, ref)
 	if err != nil {
@@ -186,7 +183,7 @@ func isSingleArchImage(mediaType string) bool {
 }
 
 // reslver returns an authenticated remote resolver for a reference.
-func (c *client) resolver() (remotes.Resolver, error) {
+func (c *client) resolver() remotes.Resolver {
 	scheme := "https"
 	if c.insecure {
 		scheme = "http"
@@ -212,5 +209,5 @@ func (c *client) resolver() (remotes.Resolver, error) {
 		},
 	}
 
-	return docker.NewResolver(do), nil
+	return docker.NewResolver(do)
 }
