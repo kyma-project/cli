@@ -35,6 +35,8 @@ This command provides the means to create such images out of a folder's contents
 
 This command will create a component descriptor in the descriptor path (./mod as a default) and package all the contents on the provided content path as a single layer.
 Optionally, additional layers can be added with contents in other paths.
+
+Finally, if a registry is provided, the created module will be pushed.
 `,
 
 		RunE:    func(_ *cobra.Command, args []string) error { return c.Run(args) },
@@ -47,7 +49,7 @@ Optionally, additional layers can be added with contents in other paths.
 	cmd.Flags().StringVar(&o.ComponentNameMapping, "name-mapping", "", "Repository context name mapping. Possible values are: empty, urlPath or sha256-digest")
 	cmd.Flags().StringVar(&o.RegistryUrl, "registry", "", "Repository context url for component to upload. The repository url will be automatically added to the repository contexts in the module")
 	cmd.Flags().StringVarP(&o.Credentials, "credentials", "c", "", "Basic authentication credentials for the given registry in the format user:password")
-	cmd.Flags().StringVarP(&o.Token, "token", "t", "", "Authentication token fr the given registry (alternative to basic authentication).")
+	cmd.Flags().StringVarP(&o.Token, "token", "t", "", "Authentication token for the given registry (alternative to basic authentication).")
 	cmd.Flags().BoolVarP(&o.Overwrite, "overwrite", "w", false, "overwrites the existing mod-path directory if it exists")
 	cmd.Flags().BoolVar(&o.Insecure, "insecure", false, "Use an insecure connection to access the registry.")
 	cmd.Flags().BoolVar(&o.Clean, "clean", false, "Remove the mod-path folder and all its contents at the end.")
