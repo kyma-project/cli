@@ -41,10 +41,10 @@ func AddResources(archive *ctf.ComponentArchive, c *ComponentConfig, log *zap.Su
 	}
 
 	log.Debugf("Adding %d resources...", len(resources))
-	for _, resource := range resources {
+	for i, resource := range resources {
 		if resource.Input != nil {
 			log.Debugf("Added input blob from %q", resource.Input.Path)
-			if err := addBlob(context.Background(), fs, archive, &resource); err != nil {
+			if err := addBlob(context.Background(), fs, archive, &resources[i]); err != nil {
 				return err
 			}
 		} else {
