@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	DEFAULT_TIMEOUT = 10 * time.Second
+	DefaultTimeout = 10 * time.Second
 )
 
 type Client interface {
@@ -69,7 +69,7 @@ func NewClient(o *Options) (Client, error) {
 	}
 
 	if c.timeout == 0 {
-		c.timeout = DEFAULT_TIMEOUT
+		c.timeout = DefaultTimeout
 	}
 
 	c.cache = NewInMemoryCache()
@@ -99,7 +99,7 @@ func (c *client) PushManifest(ctx context.Context, ref string, manifest *ocispec
 		Annotations: manifest.Annotations,
 	}
 
-	resolver, err := c.resolver(ctx)
+	resolver, err := c.resolver()
 	if err != nil {
 		return err
 	}
@@ -186,7 +186,7 @@ func isSingleArchImage(mediaType string) bool {
 }
 
 // reslver returns an authenticated remote resolver for a reference.
-func (c *client) resolver(ctx context.Context) (remotes.Resolver, error) {
+func (c *client) resolver() (remotes.Resolver, error) {
 	scheme := "https"
 	if c.insecure {
 		scheme = "http"
