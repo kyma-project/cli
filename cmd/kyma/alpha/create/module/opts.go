@@ -11,6 +11,9 @@ type Options struct {
 	ModPath              string
 	ComponentNameMapping string
 	RegistryUrl          string
+	Credentials          string
+	Token                string
+	Insecure             bool
 	ResourcePaths        []string
 	Overwrite            bool
 	Clean                bool
