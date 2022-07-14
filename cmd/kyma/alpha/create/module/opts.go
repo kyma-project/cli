@@ -10,7 +10,7 @@ type Options struct {
 
 	ModPath              string
 	ComponentNameMapping string
-	RegistryUrl          string
+	RegistryURL          string
 	Credentials          string
 	Token                string
 	Insecure             bool

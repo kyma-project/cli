@@ -49,7 +49,7 @@ func Push(archive *ctf.ComponentArchive, r *Remote, log *zap.SugaredLogger) erro
 		return errors.Wrap(err, "unable to build oci artifact for component acrchive")
 	}
 
-	ref, err := oci.OCIRef(archive.ComponentDescriptor.GetEffectiveRepositoryContext(), archive.ComponentDescriptor.Name, archive.ComponentDescriptor.Version)
+	ref, err := oci.Ref(archive.ComponentDescriptor.GetEffectiveRepositoryContext(), archive.ComponentDescriptor.Name, archive.ComponentDescriptor.Version)
 	if err != nil {
 		return errors.Wrap(err, "invalid component reference")
 	}

@@ -27,26 +27,26 @@ const MediaTypeGZip = "application/gzip"
 // MediaTypeOctetStream is the media type for any binary data.
 const MediaTypeOctetStream = "application/octet-stream"
 
-// BlobOutput is the output if read BlobInput.
-type BlobOutput struct {
+// Output is the output if read BlobInput.
+type Output struct {
 	Digest string
 	Size   int64
 	Reader io.ReadCloser
 }
 
-type BlobInputType string
+type InputType string
 
 const (
 	FileInputType = "file"
 	DirInputType  = "dir"
 )
 
-// BlobInput defines a local resource input that should be added to the component descriptor and
+// Input defines a local resource input that should be added to the component descriptor and
 // to the resource's access.
-type BlobInput struct {
+type Input struct {
 	// Type defines the input type of the blob to be added.
 	// Note that a input blob of type "dir" is automatically tarred.
-	Type BlobInputType `json:"type"`
+	Type InputType `json:"type"`
 	// MediaType is the mediatype of the defined file that is also added to the oci layer.
 	// Should be a custom media type in the form of "application/vnd.<mydomain>.<my description>"
 	MediaType string `json:"mediaType,omitempty"`
@@ -72,7 +72,7 @@ type BlobInput struct {
 }
 
 // Compress returns if the blob should be compressed using gzip.
-func (input BlobInput) Compress() bool {
+func (input Input) Compress() bool {
 	if input.CompressWithGzip == nil {
 		return false
 	}
@@ -80,7 +80,7 @@ func (input BlobInput) Compress() bool {
 }
 
 // SetMediaTypeIfNotDefined sets the media type of the input blob if its not defined
-func (input *BlobInput) SetMediaTypeIfNotDefined(mediaType string) {
+func (input *Input) SetMediaTypeIfNotDefined(mediaType string) {
 	if len(input.MediaType) != 0 {
 		return
 	}
@@ -88,7 +88,7 @@ func (input *BlobInput) SetMediaTypeIfNotDefined(mediaType string) {
 }
 
 // Read reads the configured blob and returns a reader to the given file.
-func (input *BlobInput) Read(ctx context.Context, fs vfs.FileSystem) (*BlobOutput, error) {
+func (input *Input) Read(ctx context.Context, fs vfs.FileSystem) (*Output, error) {
 	inputInfo, err := fs.Stat(input.Path)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get info for input blob from %q, %w", input.Path, err)
@@ -128,7 +128,7 @@ func (input *BlobInput) Read(ctx context.Context, fs vfs.FileSystem) (*BlobOutpu
 			}
 		}
 
-		return &BlobOutput{
+		return &Output{
 			Digest: digest.FromBytes(data.Bytes()).String(),
 			Size:   int64(data.Len()),
 			Reader: ioutil.NopCloser(&data),
@@ -161,13 +161,13 @@ func (input *BlobInput) Read(ctx context.Context, fs vfs.FileSystem) (*BlobOutpu
 				return nil, fmt.Errorf("unable to close gzip writer: %w", err)
 			}
 
-			return &BlobOutput{
+			return &Output{
 				Digest: digest.FromBytes(data.Bytes()).String(),
 				Size:   int64(data.Len()),
 				Reader: ioutil.NopCloser(&data),
 			}, nil
 		}
-		return &BlobOutput{
+		return &Output{
 			Digest: blobDigest.String(),
 			Size:   inputInfo.Size(),
 			Reader: inputBlob,

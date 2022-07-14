@@ -22,7 +22,7 @@ import (
 // ResourceDescriptor contains all information to describe a resource
 type ResourceDescriptor struct {
 	cdv2.Resource
-	Input *blob.BlobInput `json:"input,omitempty"`
+	Input *blob.Input `json:"input,omitempty"`
 }
 
 // ResourceDescriptorList contains a list of all informations to describe a resource.
@@ -31,7 +31,7 @@ type ResourceDescriptorList struct {
 }
 
 // AddResources adds the resources in the given resource definitions into the archive and its FS.
-// A resource definition is a string with format: NAME:TYPE@PATH where NAME and TYPE can be ommited and will default to the last path element name and "helm-chart" respectively
+// A resource definition is a string with format: NAME:TYPE@PATH where NAME and TYPE can be ommitted and will default to the last path element name and "helm-chart" respectively
 func AddResources(archive *ctf.ComponentArchive, c *ComponentConfig, log *zap.SugaredLogger, fs vfs.FileSystem, resourceDefs ...string) error {
 	compDescFilePath := filepath.Join(c.ComponentArchivePath, ctf.ComponentDescriptorFileName)
 
@@ -92,7 +92,7 @@ func generateResources(log *zap.SugaredLogger, version string, defs ...string) (
 			return nil, fmt.Errorf("the given resource %q could not be parsed. Please make sure it at least contains a path and follows the format NAME:TYPE@PATH", d)
 		}
 
-		r := ResourceDescriptor{Input: &blob.BlobInput{}}
+		r := ResourceDescriptor{Input: &blob.Input{}}
 
 		if len(items) == 1 {
 			r.Name = filepath.Base(items[0])

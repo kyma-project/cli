@@ -20,7 +20,7 @@ type ComponentConfig struct {
 	ComponentArchivePath string // Location of the component descriptor. If it does not exist it will be created.
 	Name                 string // Name of the module (mandatory)
 	Version              string // Version of the module (mandatory)
-	RegistryUrl          string // Registry URL to push the image to (optional)
+	RegistryURL          string // Registry URL to push the image to (optional)
 	ComponentNameMapping string // ComponentNameMapping describes the method that is used to map the "Component Name", "Component Version"-tuples to OCI Image References.
 	Overwrite            bool   // If true, existing module will be overwritten if the configuration differs.
 }
@@ -89,8 +89,8 @@ func Build(fs vfs.FileSystem, c *ComponentConfig) (*ctf.ComponentArchive, error)
 	cd.ComponentSpec.Version = c.Version
 	cd.Provider = cdv2.InternalProvider
 	cd.RepositoryContexts = make([]*cdv2.UnstructuredTypedObject, 0)
-	if len(c.RegistryUrl) != 0 {
-		repoCtx, err := cdv2.NewUnstructured(cdv2.NewOCIRegistryRepository(c.RegistryUrl, cdv2.ComponentNameMapping(c.ComponentNameMapping)))
+	if len(c.RegistryURL) != 0 {
+		repoCtx, err := cdv2.NewUnstructured(cdv2.NewOCIRegistryRepository(c.RegistryURL, cdv2.ComponentNameMapping(c.ComponentNameMapping)))
 		if err != nil {
 			return nil, fmt.Errorf("unable to create repository context: %w", err)
 		}
