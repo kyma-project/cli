@@ -249,6 +249,7 @@ func getCreateClusterArgs(settings CreateClusterSettings) []string {
 	cmdArgs := []string{
 		"--kubeconfig-switch-context",
 		"--k3s-arg", "--disable=traefik@server:0",
+		"--k3s-arg", "--kubelet-arg=containerd=/run/k3s/containerd/containerd.sock@all:*",
 	}
 	cmdArgs = append(cmdArgs, constructArgs("--registry-use", settings.UseRegistry)...)
 	cmdArgs = append(cmdArgs, constructArgs("--k3s-arg", settings.K3sArgs)...)

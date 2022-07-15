@@ -145,6 +145,7 @@ func (suite *K3dTestSuite) TestCreateCluster() {
 		"--image", "rancher/k3s:v1.20.11-k3s1",
 		"--kubeconfig-switch-context",
 		"--k3s-arg", "--disable=traefik@server:0",
+		"--k3s-arg", "--kubelet-arg=containerd=/run/k3s/containerd/containerd.sock@all:*",
 		"--registry-use", "k3d-own-registry:5001",
 		"--port", "80:80@loadbalancer",
 		"--port", "443:443@loadbalancer",
