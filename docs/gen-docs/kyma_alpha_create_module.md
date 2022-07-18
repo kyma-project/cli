@@ -30,7 +30,6 @@ kyma alpha create module MODULE_NAME MODULE_VERSION <CONTENT_PATH> [flags]
   -c, --credentials string     Basic authentication credentials for the given registry in the format user:password
       --insecure               Use an insecure connection to access the registry.
       --mod-path string        Specifies the path where the component descriptor and module packaging will be stored. If the path already has a descriptor use the overwrite flag to overwrite it (default "./mod")
-      --name-mapping string    Repository context name mapping. Possible values are: empty, urlPath or sha256-digest
   -w, --overwrite              overwrites the existing mod-path directory if it exists
       --registry string        Repository context url for component to upload. The repository url will be automatically added to the repository contexts in the module
   -r, --resource stringArray   Add an extra resource in a new layer with format <NAME:TYPE@PATH>. It is also possible to provide only a path; name will default to the last path element and type to 'helm-chart'
