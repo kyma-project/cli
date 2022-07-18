@@ -70,7 +70,6 @@ require (
 )
 
 require (
-	cloud.google.com/go v0.88.0 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/BurntSushi/toml v0.4.1 // indirect
 	github.com/InVisionApp/go-health v2.1.0+incompatible // indirect
