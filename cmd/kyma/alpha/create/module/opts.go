@@ -8,15 +8,14 @@ import (
 type Options struct {
 	*cli.Options
 
-	ModPath              string
-	ComponentNameMapping string
-	RegistryURL          string
-	Credentials          string
-	Token                string
-	Insecure             bool
-	ResourcePaths        []string
-	Overwrite            bool
-	Clean                bool
+	ModPath       string
+	RegistryURL   string
+	Credentials   string
+	Token         string
+	Insecure      bool
+	ResourcePaths []string
+	Overwrite     bool
+	Clean         bool
 }
 
 //NewOptions creates options with default values
