@@ -46,7 +46,6 @@ Finally, if a registry is provided, the created module will be pushed.
 
 	cmd.Flags().StringArrayVarP(&o.ResourcePaths, "resource", "r", []string{}, "Add an extra resource in a new layer with format <NAME:TYPE@PATH>. It is also possible to provide only a path; name will default to the last path element and type to 'helm-chart'")
 	cmd.Flags().StringVar(&o.ModPath, "mod-path", "./mod", "Specifies the path where the component descriptor and module packaging will be stored. If the path already has a descriptor use the overwrite flag to overwrite it")
-	cmd.Flags().StringVar(&o.ComponentNameMapping, "name-mapping", "", "Repository context name mapping. Possible values are: empty, urlPath or sha256-digest")
 	cmd.Flags().StringVar(&o.RegistryURL, "registry", "", "Repository context url for component to upload. The repository url will be automatically added to the repository contexts in the module")
 	cmd.Flags().StringVarP(&o.Credentials, "credentials", "c", "", "Basic authentication credentials for the given registry in the format user:password")
 	cmd.Flags().StringVarP(&o.Token, "token", "t", "", "Authentication token for the given registry (alternative to basic authentication).")
@@ -67,7 +66,6 @@ func (c *command) Run(args []string) error {
 		Name:                 args[0],
 		Version:              args[1],
 		ComponentArchivePath: c.opts.ModPath,
-		ComponentNameMapping: c.opts.ComponentNameMapping,
 		Overwrite:            c.opts.Overwrite,
 		RegistryURL:          c.opts.RegistryURL,
 	}
@@ -89,12 +87,17 @@ func (c *command) Run(args []string) error {
 	/* -- BUNDLE RESOURCES -- */
 
 	c.NewStep("Adding resources...")
-	if err := os.MkdirAll(c.opts.ResourcePaths[0], os.ModePerm); err != nil {
-		c.CurrentStep.Failure()
-		return err
+
+	defs := []module.ResourceDef{}
+	for _, p := range c.opts.ResourcePaths {
+		rd, err := module.ResourceDefFromString(p)
+		if err != nil {
+			return err
+		}
+		defs = append(defs, rd)
 	}
 
-	if err := module.AddResources(archive, cfg, l, fs, c.opts.ResourcePaths...); err != nil {
+	if err := module.AddResources(archive, cfg, l, fs, defs...); err != nil {
 		c.CurrentStep.Failure()
 		return err
 	}
@@ -107,11 +110,10 @@ func (c *command) Run(args []string) error {
 	if c.opts.RegistryURL != "" {
 		c.NewStep(fmt.Sprintf("Pushing image to %q", c.opts.RegistryURL))
 		r := &module.Remote{
-			Registry:             c.opts.RegistryURL,
-			ComponentNameMapping: c.opts.ComponentNameMapping,
-			Credentials:          c.opts.Credentials,
-			Token:                c.opts.Token,
-			Insecure:             c.opts.Insecure,
+			Registry:    c.opts.RegistryURL,
+			Credentials: c.opts.Credentials,
+			Token:       c.opts.Token,
+			Insecure:    c.opts.Insecure,
 		}
 		if err := module.Push(archive, r, l); err != nil {
 			c.CurrentStep.Failure()

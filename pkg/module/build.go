@@ -21,7 +21,6 @@ type ComponentConfig struct {
 	Name                 string // Name of the module (mandatory)
 	Version              string // Version of the module (mandatory)
 	RegistryURL          string // Registry URL to push the image to (optional)
-	ComponentNameMapping string // ComponentNameMapping describes the method that is used to map the "Component Name", "Component Version"-tuples to OCI Image References.
 	Overwrite            bool   // If true, existing module will be overwritten if the configuration differs.
 }
 
@@ -90,7 +89,7 @@ func Build(fs vfs.FileSystem, c *ComponentConfig) (*ctf.ComponentArchive, error)
 	cd.Provider = cdv2.InternalProvider
 	cd.RepositoryContexts = make([]*cdv2.UnstructuredTypedObject, 0)
 	if len(c.RegistryURL) != 0 {
-		repoCtx, err := cdv2.NewUnstructured(cdv2.NewOCIRegistryRepository(c.RegistryURL, cdv2.ComponentNameMapping(c.ComponentNameMapping)))
+		repoCtx, err := cdv2.NewUnstructured(cdv2.NewOCIRegistryRepository(c.RegistryURL, cdv2.OCIRegistryURLPathMapping))
 		if err != nil {
 			return nil, fmt.Errorf("unable to create repository context: %w", err)
 		}
@@ -124,12 +123,6 @@ func (cfg *ComponentConfig) validate() error {
 	}
 	if cfg.ComponentArchivePath == "" {
 		return errors.New("The module version can not be empty")
-	}
-	if cfg.ComponentNameMapping != "" {
-		if cfg.ComponentNameMapping != string(cdv2.OCIRegistryURLPathMapping) &&
-			cfg.ComponentNameMapping != string(cdv2.OCIRegistryDigestMapping) {
-			return fmt.Errorf("unknown component name mapping method %q", cfg.ComponentNameMapping)
-		}
 	}
 	return nil
 }

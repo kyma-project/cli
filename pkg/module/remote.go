@@ -14,11 +14,10 @@ import (
 
 // Remote represents remote OCI registry and means to access it
 type Remote struct {
-	Registry             string
-	ComponentNameMapping string
-	Credentials          string
-	Token                string
-	Insecure             bool
+	Registry    string
+	Credentials string
+	Token       string
+	Insecure    bool
 }
 
 // Push picks up the archive described in the cnfig and pushes it to the provided registry.
@@ -39,7 +38,7 @@ func Push(archive *ctf.ComponentArchive, r *Remote, log *zap.SugaredLogger) erro
 
 	// update repository context
 	if len(r.Registry) != 0 {
-		if err := cdv2.InjectRepositoryContext(archive.ComponentDescriptor, cdv2.NewOCIRegistryRepository(r.Registry, cdv2.ComponentNameMapping(r.ComponentNameMapping))); err != nil {
+		if err := cdv2.InjectRepositoryContext(archive.ComponentDescriptor, cdv2.NewOCIRegistryRepository(r.Registry, cdv2.OCIRegistryURLPathMapping)); err != nil {
 			return errors.Wrap(err, "unable to add repository context to component descriptor")
 		}
 	}
