@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
-	"strings"
 
 	cdv2 "github.com/gardener/component-spec/bindings-go/apis/v2"
 	"github.com/gardener/component-spec/bindings-go/apis/v2/cdutils"
@@ -22,7 +21,7 @@ import (
 // ResourceDescriptor contains all information to describe a resource
 type ResourceDescriptor struct {
 	cdv2.Resource
-	Input *blob.BlobInput `json:"input,omitempty"`
+	Input *blob.Input `json:"input,omitempty"`
 }
 
 // ResourceDescriptorList contains a list of all informations to describe a resource.
@@ -31,20 +30,20 @@ type ResourceDescriptorList struct {
 }
 
 // AddResources adds the resources in the given resource definitions into the archive and its FS.
-// A resource definition is a string with format: NAME:TYPE@PATH where NAME and TYPE can be ommited and will default to the last path element name and "helm-chart" respectively
-func AddResources(archive *ctf.ComponentArchive, c *ComponentConfig, log *zap.SugaredLogger, fs vfs.FileSystem, resourceDefs ...string) error {
+// A resource definition is a string with format: NAME:TYPE@PATH where NAME and TYPE can be omitted and will default to the last path element name and "helm-chart" respectively
+func AddResources(archive *ctf.ComponentArchive, c *ComponentConfig, log *zap.SugaredLogger, fs vfs.FileSystem, defs ...ResourceDef) error {
 	compDescFilePath := filepath.Join(c.ComponentArchivePath, ctf.ComponentDescriptorFileName)
 
-	resources, err := generateResources(log, c.Version, resourceDefs...)
+	resources, err := generateResources(log, c.Version, defs...)
 	if err != nil {
 		return err
 	}
 
 	log.Debugf("Adding %d resources...", len(resources))
-	for _, resource := range resources {
+	for i, resource := range resources {
 		if resource.Input != nil {
 			log.Debugf("Added input blob from %q", resource.Input.Path)
-			if err := addBlob(context.Background(), fs, archive, &resource); err != nil {
+			if err := addBlob(context.Background(), fs, archive, &resources[i]); err != nil {
 				return err
 			}
 		} else {
@@ -84,26 +83,14 @@ func AddResources(archive *ctf.ComponentArchive, c *ComponentConfig, log *zap.Su
 // generateResources generates resources by parsing the given definitions.
 // Definitions have the following format: NAME:TYPE@PATH
 // If a definition does not have a name or type, the name of the last path element will be used and it will be assumed to be a helm-chart type.
-func generateResources(log *zap.SugaredLogger, version string, defs ...string) ([]ResourceDescriptor, error) {
+func generateResources(log *zap.SugaredLogger, version string, defs ...ResourceDef) ([]ResourceDescriptor, error) {
 	res := []ResourceDescriptor{}
 	for _, d := range defs {
-		items := strings.FieldsFunc(d, func(r rune) bool { return r == ':' || r == '@' }) // split the elements of the format NAME:TYPE@PATH
-		if len(items) == 0 || len(items) == 2 {
-			return nil, fmt.Errorf("the given resource %q could not be parsed. Please make sure it at least contains a path and follows the format NAME:TYPE@PATH", d)
-		}
+		r := ResourceDescriptor{Input: &blob.Input{}}
 
-		r := ResourceDescriptor{Input: &blob.BlobInput{}}
-
-		if len(items) == 1 {
-			r.Name = filepath.Base(items[0])
-			r.Input.Path = items[0]
-			r.Type = "helm-chart"
-		} else {
-			r.Name = items[0]
-			r.Type = items[1]
-			r.Input.Path = items[2]
-		}
-
+		r.Name = d.Name()
+		r.Input.Path = d.Path()
+		r.Type = d.Type()
 		r.Version = version
 		r.Relation = "local"
 		dir, err := files.IsDir(r.Input.Path)
