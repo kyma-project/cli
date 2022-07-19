@@ -8,8 +8,7 @@ import (
 	cdoci "github.com/gardener/component-spec/bindings-go/oci"
 )
 
-// Ref wraps the componentspec provided OciRef function by exposing the cdv2.Repository interface
-// that is automatically parsed to an OCI registry.
+// Ref creates an absolute OCI URL to the component descriptor with name and version at the registry in the given repository.
 func Ref(repository cdv2.Repository, name, version string) (string, error) {
 	repoCtx, err := GetOCIRepositoryContext(repository)
 	if err != nil {

@@ -27,7 +27,7 @@ const MediaTypeGZip = "application/gzip"
 // MediaTypeOctetStream is the media type for any binary data.
 const MediaTypeOctetStream = "application/octet-stream"
 
-// Output is the output if read BlobInput.
+// Output is the output generated when reading a blob.Input.
 type Output struct {
 	Digest string
 	Size   int64
