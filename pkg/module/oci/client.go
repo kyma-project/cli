@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -26,6 +27,9 @@ const (
 type Client interface {
 	// GetManifest returns the ocispec Manifest for a reference
 	GetManifest(ctx context.Context, ref string) (*ocispecv1.Manifest, error)
+
+	// Fetch fetches the blob for the given ocispec Descriptor.
+	Fetch(ctx context.Context, ref string, desc ocispecv1.Descriptor, writer io.Writer) error
 
 	// PushManifest uploads the given manifest with all its layers to the given reference in the registry configured in the client.
 	PushManifest(ctx context.Context, ref string, manifest *ocispecv1.Manifest) error
@@ -84,6 +88,11 @@ func (c *client) Cache() Cache {
 func (c *client) GetManifest(ctx context.Context, ref string) (*ocispecv1.Manifest, error) {
 	// TODO
 	return nil, nil
+}
+
+func (c *client) Fetch(ctx context.Context, ref string, desc ocispecv1.Descriptor, writer io.Writer) error {
+	// TODO
+	return nil
 }
 
 func (c *client) PushManifest(ctx context.Context, ref string, manifest *ocispecv1.Manifest) error {

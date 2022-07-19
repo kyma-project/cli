@@ -1,19 +1,47 @@
 package module
 
 import (
+	"context"
 	"fmt"
 	cdv2 "github.com/gardener/component-spec/bindings-go/apis/v2"
 	cdv2Sign "github.com/gardener/component-spec/bindings-go/apis/v2/signatures"
 	"github.com/gardener/component-spec/bindings-go/ctf"
+	cdoci "github.com/gardener/component-spec/bindings-go/oci"
+	"github.com/kyma-project/cli/pkg/module/oci"
+	"github.com/mandelsoft/vfs/pkg/vfs"
+	"go.uber.org/zap"
 )
 
-func Sign() error {
-	signer, err := cdv2Sign.CreateRSASignerFromKeyFile(c.opts.PrivateKeyPath, cdv2.MediaTypePEM)
+func Sign(archive *ctf.ComponentArchive, cfg *ComponentConfig, privateKeyPath string, fs vfs.FileSystem, remote *Remote, log *zap.SugaredLogger) error {
+	ctx := context.Background()
+	repoCtx := cdv2.NewOCIRegistryRepository(remote.Registry, cdv2.OCIRegistryURLPathMapping)
+
+	signer, err := cdv2Sign.CreateRSASignerFromKeyFile(privateKeyPath, cdv2.MediaTypePEM)
 	if err != nil {
-		c.CurrentStep.Failure()
 		return fmt.Errorf("unable to create rsa signer: %w", err)
 	}
-	digestedCds, err := recursivelyAddDigestsToCd(cd, *repoCtx, ociClient, blobResolvers, context.TODO(), skipAccessTypesMap)
+
+	u, p := remote.UserPass()
+	ociClient, err := oci.NewClient(&oci.Options{
+		Registry: remote.Registry,
+		User:     u,
+		Secret:   p,
+		Insecure: remote.Insecure,
+	})
+	if err != nil {
+		return fmt.Errorf("unable to build oci client: %w", err)
+	}
+
+	cdresolver := cdoci.NewResolver(ociClient)
+	cd, blobResolver, err := cdresolver.ResolveWithBlobResolver(ctx, repoCtx, cfg.Name, cfg.Version)
+	if err != nil {
+		return fmt.Errorf("unable to to fetch component descriptor %s:%s: %w", cfg.Name, cfg.Version, err)
+	}
+
+	blobResolvers := map[string]ctf.BlobResolver{}
+	blobResolvers[fmt.Sprintf("%s:%s", cd.Name, cd.Version)] = blobResolver
+
+	digestedCds, err := recursivelyAddDigestsToCd(archive.ComponentDescriptor, *repoCtx, ociClient, blobResolvers, ctx)
 	if err != nil {
 		return fmt.Errorf("unable to add digests to component descriptor: %w", err)
 	}
@@ -39,7 +67,7 @@ func Sign() error {
 	}
 }
 
-func recursivelyAddDigestsToCd(cd *cdv2.ComponentDescriptor, repoContext cdv2.OCIRegistryRepository, ociClient ociclient.Client, blobResolvers map[string]ctf.BlobResolver, ctx context.Context, skipAccessTypes map[string]bool) ([]*cdv2.ComponentDescriptor, error) {
+func recursivelyAddDigestsToCd(cd *cdv2.ComponentDescriptor, repoContext cdv2.OCIRegistryRepository, ociClient interface{}, blobResolvers map[string]ctf.BlobResolver, ctx context.Context) ([]*cdv2.ComponentDescriptor, error) {
 	cdsWithHashes := []*cdv2.ComponentDescriptor{}
 
 	cdResolver := func(c context.Context, cd cdv2.ComponentDescriptor, cr cdv2.ComponentReference) (*cdv2.DigestSpec, error) {
@@ -55,7 +83,7 @@ func recursivelyAddDigestsToCd(cd *cdv2.ComponentDescriptor, repoContext cdv2.OC
 		}
 		blobResolvers[fmt.Sprintf("%s:%s", childCd.Name, childCd.Version)] = blobResolver
 
-		cds, err := recursivelyAddDigestsToCd(childCd, repoContext, ociClient, blobResolvers, ctx, skipAccessTypes)
+		cds, err := recursivelyAddDigestsToCd(childCd, repoContext, ociClient, blobResolvers, ctx)
 		if err != nil {
 			return nil, fmt.Errorf("failed resolving referenced cd %s:%s: %w", cr.Name, cr.Version, err)
 		}
@@ -75,18 +103,6 @@ func recursivelyAddDigestsToCd(cd *cdv2.ComponentDescriptor, repoContext cdv2.OC
 	hasher, err := cdv2Sign.HasherForName(cdv2Sign.SHA256)
 	if err != nil {
 		return nil, fmt.Errorf("failed creating hasher: %w", err)
-	}
-
-	// set the do not sign digest notation on skip-access-type resources
-	for i, res := range cd.Resources {
-		res := res
-		if _, ok := skipAccessTypes[res.Access.Type]; ok {
-			log := logger.Log.WithValues("componentDescriptor", cd, "resource.name", res.Name, "resource.version", res.Version, "resource.extraIdentity", res.ExtraIdentity)
-			log.Info(fmt.Sprintf("adding %s digest to resource based on skip-access-type", cdv2.ExcludeFromSignature))
-
-			res.Digest = cdv2.NewExcludeFromSignatureDigest()
-			cd.Resources[i] = res
-		}
 	}
 
 	digester := NewDigester(ociClient, *hasher)
