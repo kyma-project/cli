@@ -6,7 +6,7 @@ Experimental commands
 
 ## Synopsis
 
-Alpha commands are experimental unreleased features that should only be used by the Kyma team. Use at your own risk.
+Alpha commands are experimental, unreleased features that should only be used by the Kyma team. Use at your own risk.
 
 
 ## Flags inherited from parent commands

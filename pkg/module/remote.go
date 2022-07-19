@@ -12,7 +12,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// Remote represents remote OCI registry and means to access it
+// Remote represents remote OCI registry and the means to access it
 type Remote struct {
 	Registry    string
 	Credentials string
@@ -20,7 +20,7 @@ type Remote struct {
 	Insecure    bool
 }
 
-// Push picks up the archive described in the cnfig and pushes it to the provided registry.
+// Push picks up the archive described in the config and pushes it to the provided registry.
 // The credentials and token are optional parameters
 func Push(archive *ctf.ComponentArchive, r *Remote, log *zap.SugaredLogger) error {
 	u, p := r.UserPass()
@@ -45,7 +45,7 @@ func Push(archive *ctf.ComponentArchive, r *Remote, log *zap.SugaredLogger) erro
 
 	manifest, err := cdoci.NewManifestBuilder(ociClient.Cache(), archive).Build(ctx)
 	if err != nil {
-		return errors.Wrap(err, "unable to build oci artifact for component acrchive")
+		return errors.Wrap(err, "unable to build OCI artifact for component archive")
 	}
 
 	ref, err := oci.Ref(archive.ComponentDescriptor.GetEffectiveRepositoryContext(), archive.ComponentDescriptor.Name, archive.ComponentDescriptor.Version)

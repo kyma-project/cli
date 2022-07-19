@@ -10,7 +10,7 @@ type command struct {
 	cli.Command
 }
 
-//NewCmd creates a new kyma CLI command
+//NewCmd creates a new Kyma CLI command
 func NewCmd(o *Options) *cobra.Command {
 
 	c := command{
@@ -25,8 +25,8 @@ func NewCmd(o *Options) *cobra.Command {
 
 ### Detailed description
 
-Kyma modules are individual components that can be deplyed into a Kyma runtime. Modules are built and distributed as OCI continer images. 
-his command provides the means to unpack the contents of an image so that they can be deployed into a cluster or inspected by developers.
+Kyma modules are individual components that can be deployed into a Kyma runtime. Modules are built and distributed as OCI container images. 
+With this command, you can unpack the contents of an image so that they can be deployed into a cluster or inspected by developers.
 `,
 
 		RunE:    func(_ *cobra.Command, args []string) error { return c.Run(args) },

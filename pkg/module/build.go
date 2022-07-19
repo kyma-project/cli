@@ -17,11 +17,11 @@ import (
 
 // ComponentConfig contains all configurable fields for a component descriptor
 type ComponentConfig struct {
-	ComponentArchivePath string // Location of the component descriptor. If it does not exist it will be created.
+	ComponentArchivePath string // Location of the component descriptor. If it does not exist, it is created.
 	Name                 string // Name of the module (mandatory)
 	Version              string // Version of the module (mandatory)
 	RegistryURL          string // Registry URL to push the image to (optional)
-	Overwrite            bool   // If true, existing module will be overwritten if the configuration differs.
+	Overwrite            bool   // If true, existing module is overwritten if the configuration differs.
 }
 
 // Build creates a component archive with the given configuration
@@ -116,13 +116,13 @@ func Build(fs vfs.FileSystem, c *ComponentConfig) (*ctf.ComponentArchive, error)
 
 func (cfg *ComponentConfig) validate() error {
 	if cfg.Name == "" {
-		return errors.New("The module name can not be empty")
+		return errors.New("The module name cannot be empty")
 	}
 	if cfg.Version == "" {
-		return errors.New("The module version can not be empty")
+		return errors.New("The module version cannot be empty")
 	}
 	if cfg.ComponentArchivePath == "" {
-		return errors.New("The module version can not be empty")
+		return errors.New("The module version cannot be empty")
 	}
 	return nil
 }

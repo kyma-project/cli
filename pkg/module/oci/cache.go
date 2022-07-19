@@ -10,14 +10,14 @@ import (
 	ocispecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
-// Cache is the interface for a oci cache where descriptors can be added and fetched
+// Cache is the interface for an OCI cache where descriptors can be added and fetched
 type Cache interface {
 	io.Closer
 	Store
 	Add(desc ocispecv1.Descriptor, reader io.ReadCloser) error
 }
 
-// Store describes a read only descriptor store
+// Store describes a read-only descriptor store
 type Store interface {
 	Get(desc ocispecv1.Descriptor) (io.ReadCloser, error)
 }
@@ -26,7 +26,7 @@ type inmemoryCache struct {
 	store map[string][]byte
 }
 
-// NewInMemoryCache creates a new in memory cache.
+// NewInMemoryCache creates a new in-memory cache.
 func NewInMemoryCache() Cache {
 	return &inmemoryCache{
 		store: make(map[string][]byte),

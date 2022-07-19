@@ -9,7 +9,7 @@ import (
 )
 
 // Ref wraps the componentspec provided OciRef function by exposing the cdv2.Repository interface
-// that is automatically parsed to a oci registry.
+// that is automatically parsed to an OCI registry.
 func Ref(repository cdv2.Repository, name, version string) (string, error) {
 	repoCtx, err := GetOCIRepositoryContext(repository)
 	if err != nil {
