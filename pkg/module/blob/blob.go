@@ -27,7 +27,7 @@ const MediaTypeGZip = "application/gzip"
 // MediaTypeOctetStream is the media type for any binary data.
 const MediaTypeOctetStream = "application/octet-stream"
 
-// Output is the output if read BlobInput.
+// Output is the output generated when reading a blob.Input.
 type Output struct {
 	Digest string
 	Size   int64
@@ -45,9 +45,9 @@ const (
 // to the resource's access.
 type Input struct {
 	// Type defines the input type of the blob to be added.
-	// Note that a input blob of type "dir" is automatically tarred.
+	// Note that an input blob of type directory is automatically tarred.
 	Type InputType `json:"type"`
-	// MediaType is the mediatype of the defined file that is also added to the oci layer.
+	// MediaType is the media type of the defined file that is also added to the OCI layer.
 	// Should be a custom media type in the form of "application/vnd.<mydomain>.<my description>"
 	MediaType string `json:"mediaType,omitempty"`
 	// Path is the path that points to the blob to be added.
@@ -55,23 +55,23 @@ type Input struct {
 	// CompressWithGzip defines that the blob should be automatically compressed using gzip.
 	CompressWithGzip *bool `json:"compress,omitempty"`
 	// PreserveDir defines that the directory specified in the Path field should be included in the blob.
-	// Only supported for Type dir.
+	// Only relevant for blob input type directory.
 	PreserveDir bool `json:"preserveDir,omitempty"`
 	// IncludeFiles is a list of shell file name patterns that describe the files that should be included.
-	// If nothing is defined all files are included.
-	// Only relevant for blobinput type "dir".
+	// If nothing is defined, all files are included.
+	// Only relevant for blob input type directory.
 	IncludeFiles []string `json:"includeFiles,omitempty"`
 	// ExcludeFiles is a list of shell file name patterns that describe the files that should be excluded from the resulting tar.
 	// Excluded files always overwrite included files.
-	// Only relevant for blobinput type "dir".
+	// Only relevant for blob input type directory.
 	ExcludeFiles []string `json:"excludeFiles,omitempty"`
 	// FollowSymlinks configures to follow and resolve symlinks when a directory is tarred.
-	// This options will include the content of the symlink directly in the tar.
-	// This option should be used with care.
+	// This option will include the content of the symlink directly in the tar.
+	// Use this option with care!
 	FollowSymlinks bool `json:"followSymlinks,omitempty"`
 }
 
-// Compress returns if the blob should be compressed using gzip.
+// Compress returns wether the blob should be compressed using gzip.
 func (input Input) Compress() bool {
 	if input.CompressWithGzip == nil {
 		return false
@@ -79,7 +79,7 @@ func (input Input) Compress() bool {
 	return *input.CompressWithGzip
 }
 
-// SetMediaTypeIfNotDefined sets the media type of the input blob if its not defined
+// SetMediaTypeIfNotDefined sets the media type of the input blob if it's not defined.
 func (input *Input) SetMediaTypeIfNotDefined(mediaType string) {
 	if len(input.MediaType) != 0 {
 		return
@@ -97,7 +97,7 @@ func (input *Input) Read(ctx context.Context, fs vfs.FileSystem) (*Output, error
 	// automatically tar the input artifact if it is a directory
 	if input.Type == DirInputType {
 		if !inputInfo.IsDir() {
-			return nil, fmt.Errorf("resource type is dir but a file was provided")
+			return nil, fmt.Errorf("resource type is dir, but you provided a file")
 		}
 
 		var data bytes.Buffer
@@ -135,7 +135,7 @@ func (input *Input) Read(ctx context.Context, fs vfs.FileSystem) (*Output, error
 		}, nil
 	} else if input.Type == FileInputType {
 		if inputInfo.IsDir() {
-			return nil, fmt.Errorf("resource type is file but a directory was provided")
+			return nil, fmt.Errorf("resource type is file, but you provided a directory")
 		}
 		// otherwise just open the file
 		inputBlob, err := fs.Open(input.Path)
@@ -182,7 +182,7 @@ type TarFileSystemOptions struct {
 	IncludeFiles []string
 	ExcludeFiles []string
 	// PreserveDir defines that the directory specified in the Path field should be included in the blob.
-	// Only supported for Type dir.
+	// Only supported for Type directory.
 	PreserveDir    bool
 	FollowSymlinks bool
 
@@ -191,11 +191,11 @@ type TarFileSystemOptions struct {
 
 // Included determines whether a file should be included.
 func (opts *TarFileSystemOptions) Included(path string) (bool, error) {
-	// if a root path is given remove it rom the path to be checked
+	// Tf a root path is given, remove it from the path to be checked
 	if len(opts.root) != 0 {
 		path = strings.TrimPrefix(path, opts.root)
 	}
-	// first check if a exclude regex matches
+	// First, check if an exclude regex matches
 	for _, ex := range opts.ExcludeFiles {
 		match, err := filepath.Match(ex, path)
 		if err != nil {

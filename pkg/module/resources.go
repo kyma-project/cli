@@ -24,13 +24,13 @@ type ResourceDescriptor struct {
 	Input *blob.Input `json:"input,omitempty"`
 }
 
-// ResourceDescriptorList contains a list of all informations to describe a resource.
+// ResourceDescriptorList contains a list of all information to describe a resource.
 type ResourceDescriptorList struct {
 	Resources []ResourceDescriptor `json:"resources"`
 }
 
 // AddResources adds the resources in the given resource definitions into the archive and its FS.
-// A resource definition is a string with format: NAME:TYPE@PATH where NAME and TYPE can be omitted and will default to the last path element name and "helm-chart" respectively
+// A resource definition is a string with format: NAME:TYPE@PATH, where NAME and TYPE can be omitted and will default to the last path element name and "helm-chart" respectively
 func AddResources(archive *ctf.ComponentArchive, c *ComponentConfig, log *zap.SugaredLogger, fs vfs.FileSystem, defs ...ResourceDef) error {
 	compDescFilePath := filepath.Join(c.ComponentArchivePath, ctf.ComponentDescriptorFileName)
 
@@ -82,7 +82,7 @@ func AddResources(archive *ctf.ComponentArchive, c *ComponentConfig, log *zap.Su
 
 // generateResources generates resources by parsing the given definitions.
 // Definitions have the following format: NAME:TYPE@PATH
-// If a definition does not have a name or type, the name of the last path element will be used and it will be assumed to be a helm-chart type.
+// If a definition does not have a name or type, the name of the last path element is used and it is assumed to be a helm-chart type.
 func generateResources(log *zap.SugaredLogger, version string, defs ...ResourceDef) ([]ResourceDescriptor, error) {
 	res := []ResourceDescriptor{}
 	for _, d := range defs {

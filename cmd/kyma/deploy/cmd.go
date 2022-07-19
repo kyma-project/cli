@@ -212,7 +212,7 @@ func (cmd *command) dryRun() error {
 		DryRun:         true,
 	})
 	if err != nil {
-		fmt.Printf("failed to generate Kyma Manifests")
+		fmt.Printf("failed to generate Kyma manifests")
 		return err
 	}
 	return nil

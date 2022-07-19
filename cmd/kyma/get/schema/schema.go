@@ -13,7 +13,7 @@ type command struct {
 	cli.Command
 }
 
-//NewCmd creates a new kyma CLI command
+//NewCmd creates a new Kyma CLI command
 func NewCmd(o *Options) *cobra.Command {
 	c := command{
 		Command: cli.Command{Options: o.Options},

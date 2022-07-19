@@ -10,7 +10,7 @@ type command struct {
 	cli.Command
 }
 
-//NewCmd creates a new kyma CLI command
+//NewCmd creates a new Kyma CLI command
 func NewCmd(o *Options) *cobra.Command {
 
 	c := command{
@@ -25,7 +25,7 @@ func NewCmd(o *Options) *cobra.Command {
 
 ### Detailed description
 
-Kyma modules can be cryptographically signed to make sure they are correct and distibuted by a trusted authority. This command verifies the authenticity of a given module.
+Kyma modules can be cryptographically signed to make sure they are correct and distributed by a trusted authority. This command verifies the authenticity of a given module.
 `,
 
 		RunE: func(_ *cobra.Command, args []string) error { return c.Run(args) },

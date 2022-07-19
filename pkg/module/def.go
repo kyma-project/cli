@@ -22,7 +22,7 @@ type ResourceDef struct {
 func ResourceDefFromString(def string) (ResourceDef, error) {
 	items := strings.FieldsFunc(def, func(r rune) bool { return r == ':' || r == '@' }) // split the elements of the format NAME:TYPE@PATH
 	if len(items) == 0 || len(items) == 2 {
-		return ResourceDef{}, fmt.Errorf("the given resource %q could not be parsed. Please make sure it at least contains a path and follows the format NAME:TYPE@PATH", def)
+		return ResourceDef{}, fmt.Errorf("the given resource %q could not be parsed. At least, it must contain a path and follow the format NAME:TYPE@PATH", def)
 	}
 
 	// only path given: infer name and use default type

@@ -10,13 +10,13 @@ Use this command to create a Kyma module.
 
 ### Detailed description
 
-Kyma modules are individual components that can be deplyed into a Kyma runtime. Modules are built and distributed as OCI continer images. 
-This command provides the means to create such images out of a folder's contents.
+Kyma modules are individual components that can be deployed into a Kyma runtime. Modules are built and distributed as OCI container images. 
+With this command, you can create such images out of a folder's contents.
 
-This command will create a component descriptor in the descriptor path (./mod as a default) and package all the contents on the provided content path as a single layer.
-Optionally, additional layers can be added with contents in other paths.
+This command creates a component descriptor in the descriptor path (./mod as a default) and packages all the contents on the provided content path as a single layer.
+Optionally, you can create additional layers with contents in other paths.
 
-Finally, if a registry is provided, the created module will be pushed.
+Finally, if a registry is provided, the created module is pushed.
 
 
 ```bash
