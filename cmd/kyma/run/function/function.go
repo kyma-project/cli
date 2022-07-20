@@ -92,7 +92,7 @@ func (c *command) runContainer(ctx context.Context, client *client.Client, cfg w
 		Image:         containerImage(cfg),
 		Commands:      c.containerCommands(cfg),
 		User:          runtimes.ContainerUser,
-		Mounts:        runtimes.GetMounts(cfg.Source.Type, c.opts.Dir),
+		Mounts:        runtimes.GetMounts(cfg.Runtime, cfg.Source.Type, c.opts.Dir),
 	})
 	if err != nil {
 		step.Failure()
@@ -124,6 +124,7 @@ func (c *command) workspaceConfig(path string) (workspace.Cfg, error) {
 	supportedRuntimes := map[string]struct{}{
 		"nodejs12": {},
 		"nodejs14": {},
+		"nodejs16": {},
 		"python39": {},
 	}
 	if _, ok := supportedRuntimes[cfg.Runtime]; !ok {
@@ -145,7 +146,7 @@ func (c *command) workspaceConfig(path string) (workspace.Cfg, error) {
 func (c *command) containerCommands(cfg workspace.Cfg) []string {
 	var cmd []string
 	if cfg.Source.Type == workspace.SourceTypeInline {
-		cmd = runtimes.MoveInlineCommand(cfg.Source.SourceHandlerName, cfg.Source.DepsHandlerName)
+		cmd = runtimes.MoveInlineCommand(cfg.Runtime, cfg.Source.SourceHandlerName, cfg.Source.DepsHandlerName)
 	}
 
 	return append(cmd, runtimes.ContainerCommands(cfg.Runtime, c.opts.Debug, c.opts.HotDeploy)...)

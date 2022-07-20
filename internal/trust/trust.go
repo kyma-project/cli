@@ -17,11 +17,11 @@ type Certifier interface {
 	StoreCertificateKyma2(file string, info Informer) error
 
 	// Instructions provides instructions on how to manually import a certificate.
-	// Use in case it can not be stored by calling StoreCertificate.
+	// Use in case it cannot be stored by calling StoreCertificate.
 	Instructions() string
 
 	// InstructionsKyma2 provides instructions on how to manually import a certificate for kyma 2.
-	// Use in case it can not be stored by calling StoreCertificate.
+	// Use in case it cannot be stored by calling StoreCertificate.
 	InstructionsKyma2() string
 }
 

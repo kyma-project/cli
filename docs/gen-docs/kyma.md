@@ -23,6 +23,7 @@ Kyma CLI allows you to install and manage Kyma.
 
 ## See also
 
+* [kyma alpha](kyma_alpha.md)	 - Experimental commands
 * [kyma apply](kyma_apply.md)	 - Applies local resources to the Kyma cluster.
 * [kyma completion](kyma_completion.md)	 - Generates bash or zsh completion scripts.
 * [kyma create](kyma_create.md)	 - Creates resources on the Kyma cluster.

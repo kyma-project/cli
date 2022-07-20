@@ -60,7 +60,7 @@ func (c *gcpCmd) NewProvider() (*types.Provider, error) {
 	p.CustomConfigurations["workercidr"] = "10.250.0.0/16"
 	p.CustomConfigurations["networking_type"] = "calico"
 	p.CustomConfigurations["machine_image_name"] = "gardenlinux"
-	p.CustomConfigurations["machine_image_version"] = "576.8.0"
+	p.CustomConfigurations["machine_image_version"] = "576.9.0"
 	p.CustomConfigurations["zones"] = c.opts.Zones
 	p.CustomConfigurations["hibernation_start"] = c.opts.HibernationStart
 	p.CustomConfigurations["hibernation_end"] = c.opts.HibernationEnd
@@ -121,7 +121,7 @@ func (c *gcpCmd) ValidateFlags() error {
 func (c *gcpCmd) IsVerbose() bool { return c.opts.Verbose }
 
 func (c *gcpCmd) FilterErr(e error) error {
-	if strings.Contains(e.Error(), "already exists") {
+	if e != nil && strings.Contains(e.Error(), "already exists") {
 		return nil
 	}
 

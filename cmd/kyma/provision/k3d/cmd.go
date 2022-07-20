@@ -40,7 +40,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cmd.Flags().StringSliceVarP(&o.K3sArgs, "k3s-arg", "s", []string{}, "One or more arguments passed from k3d to the k3s command (format: ARG@NODEFILTER[;@NODEFILTER])")
 	cmd.Flags().DurationVar(&o.Timeout, "timeout", 5*time.Minute, `Maximum time for the provisioning. If you want no timeout, enter "0".`)
 	cmd.Flags().StringSliceVarP(&o.K3dArgs, "k3d-arg", "", []string{}, "One or more arguments passed to the k3d provisioning command (e.g. --k3d-arg='--no-rollback')")
-	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.21.9", "Kubernetes version of the cluster")
+	cmd.Flags().StringVarP(&o.KubernetesVersion, "kube-version", "k", "1.23.8", "Kubernetes version of the cluster")
 	cmd.Flags().StringSliceVar(&o.UseRegistry, "registry-use", []string{}, "Connect to one or more k3d-managed registries. Kyma automatically creates a registry for Serverless images.")
 	cmd.Flags().StringVar(&o.RegistryPort, "registry-port", "5001", "Specify the port on which the k3d registry will be exposed")
 	cmd.Flags().StringSliceVarP(&o.PortMapping, "port", "p", []string{"80:80@loadbalancer", "443:443@loadbalancer"}, "Map ports 80 and 443 of K3D loadbalancer (e.g. -p 80:80@loadbalancer -p 443:443@loadbalancer)")

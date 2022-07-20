@@ -19,7 +19,7 @@ func TestProvisionGardenerAzureFlags(t *testing.T) {
 	require.Equal(t, "", o.Project, "Default value for the project flag not as expected.")
 	require.Equal(t, "", o.CredentialsFile, "Default value for the credentials flag not as expected.")
 	require.Equal(t, "", o.Secret, "The parsed value for the secret flag not as expected.")
-	require.Equal(t, "1.21", o.KubernetesVersion, "Default value for the kube-version flag not as expected.")
+	require.Equal(t, "1.23", o.KubernetesVersion, "Default value for the kube-version flag not as expected.")
 	require.Equal(t, "westeurope", o.Region, "Default value for the region flag not as expected.")
 	require.Equal(t, []string{"1"}, o.Zones, "Default value for the zone flag not as expected.")
 	require.Equal(t, "Standard_D4_v3", o.MachineType, "Default value for the type flag not as expected.")
@@ -135,7 +135,7 @@ func TestNewProvider(t *testing.T) {
 	custom["workercidr"] = "10.250.0.0/16"
 	custom["networking_type"] = "calico"
 	custom["machine_image_name"] = "gardenlinux"
-	custom["machine_image_version"] = "576.8.0"
+	custom["machine_image_version"] = "576.9.0"
 	custom["hibernation_start"] = "00 18 * * 1,2,3,4,5"
 	custom["hibernation_end"] = ""
 	custom["hibernation_location"] = "Europe/Berlin"
