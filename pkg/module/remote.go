@@ -29,7 +29,7 @@ func Push(archive *ctf.ComponentArchive, r *Remote, log *zap.SugaredLogger) erro
 		User:     u,
 		Secret:   p,
 		Insecure: r.Insecure,
-	})
+	}, log)
 
 	if err != nil {
 		return errors.Wrap(err, "unable to create an OCI client")

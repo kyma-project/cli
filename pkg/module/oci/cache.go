@@ -10,6 +10,11 @@ import (
 	ocispecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
+var (
+	// ErrNotFound is an error that indicates that the file is not cached
+	ErrNotFound = errors.New("not cached")
+)
+
 // Cache is the interface for an OCI cache where descriptors can be added and fetched
 type Cache interface {
 	io.Closer
@@ -40,7 +45,7 @@ func (fs *inmemoryCache) Close() error {
 func (fs *inmemoryCache) Get(desc ocispecv1.Descriptor) (io.ReadCloser, error) {
 	data, ok := fs.store[desc.Digest.String()]
 	if !ok {
-		return nil, errors.New("not cached")
+		return nil, ErrNotFound
 	}
 	return ioutil.NopCloser(bytes.NewBuffer(data)), nil
 }

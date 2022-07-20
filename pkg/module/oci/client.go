@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"go.uber.org/zap"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -25,7 +26,11 @@ const (
 )
 
 type Client interface {
-	// GetManifest returns the ocispec manifest for a reference
+	// GetRawManifest returns the raw manifest for a reference.
+	// The returned manifest can either be single arch or multi arch (image index/manifest list)
+	GetRawManifest(ctx context.Context, ref string) (ocispecv1.Descriptor, []byte, error)
+
+	// GetManifest returns the ocispec Manifest for a reference
 	GetManifest(ctx context.Context, ref string) (*ocispecv1.Manifest, error)
 
 	// Fetch fetches the blob for the given ocispec Descriptor
@@ -41,6 +46,7 @@ type Client interface {
 type client struct {
 	cache    Cache
 	registry string
+	logger   *zap.SugaredLogger
 	// user to authenticate when calling the registry configured in the client
 	user string
 	// secret can be either a password (if user provided) or a long-lived token.
@@ -63,13 +69,14 @@ type Options struct {
 	Insecure bool
 }
 
-func NewClient(o *Options) (Client, error) {
+func NewClient(o *Options, logger *zap.SugaredLogger) (Client, error) {
 	c := &client{
 		registry: o.Registry,
 		user:     o.User,
 		secret:   o.Secret,
 		timeout:  o.Timeout,
 		insecure: o.Insecure,
+		logger:   logger,
 	}
 
 	if c.timeout == 0 {
@@ -85,14 +92,117 @@ func (c *client) Cache() Cache {
 	return c.cache
 }
 
+func (c *client) GetRawManifest(ctx context.Context, ref string) (ocispecv1.Descriptor, []byte, error) {
+	refspec, err := ParseRef(ref)
+	if err != nil {
+		return ocispecv1.Descriptor{}, nil, fmt.Errorf("unable to parse ref: %w", err)
+	}
+	ref = refspec.String()
+
+	resolver := c.resolver()
+
+	_, desc, err := resolver.Resolve(ctx, ref)
+	if err != nil {
+		return ocispecv1.Descriptor{}, nil, err
+	}
+
+	if desc.MediaType == MediaTypeDockerV2Schema1Manifest || desc.MediaType == MediaTypeDockerV2Schema1SignedManifest {
+		convertedManifestDesc, err := ConvertV1ManifestToV2(ctx, c, c.cache, ref, desc)
+		if err != nil {
+			return ocispecv1.Descriptor{}, nil, fmt.Errorf("unable to convert v1 manifest to v2: %w", err)
+		}
+		desc = convertedManifestDesc
+	}
+
+	if !isSingleArchImage(desc.MediaType) && !isMultiArchImage(desc.MediaType) {
+		return ocispecv1.Descriptor{}, nil, fmt.Errorf("media type is not an image manifest or image index: %s", desc.MediaType)
+	}
+
+	data := bytes.NewBuffer([]byte{})
+	if err := c.Fetch(ctx, ref, desc, data); err != nil {
+		return ocispecv1.Descriptor{}, nil, err
+	}
+	rawManifest := data.Bytes()
+
+	return desc, rawManifest, nil
+}
+
 func (c *client) GetManifest(ctx context.Context, ref string) (*ocispecv1.Manifest, error) {
-	// TODO
-	return nil, nil
+	desc, rawManifest, err := c.GetRawManifest(ctx, ref)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get manifest: %w", err)
+	}
+
+	if desc.MediaType != ocispecv1.MediaTypeImageManifest && desc.MediaType != images.MediaTypeDockerSchema2Manifest {
+		return nil, fmt.Errorf("media type is not an image manifest: %s", desc.MediaType)
+	}
+
+	var manifest ocispecv1.Manifest
+	if err := json.Unmarshal(rawManifest, &manifest); err != nil {
+		return nil, fmt.Errorf("unable to unmarshal manifest: %w", err)
+	}
+
+	return &manifest, nil
 }
 
 func (c *client) Fetch(ctx context.Context, ref string, desc ocispecv1.Descriptor, writer io.Writer) error {
-	// TODO
+	refspec, err := ParseRef(ref)
+	if err != nil {
+		return fmt.Errorf("unable to parse ref: %w", err)
+	}
+	ref = refspec.String()
+
+	reader, err := c.getFetchReader(ctx, ref, desc)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err := reader.Close(); err != nil {
+			c.logger.Error(err, "failed closing reader", "ref", ref)
+		}
+	}()
+
+	if _, err := io.Copy(writer, reader); err != nil {
+		return err
+	}
 	return nil
+}
+
+func (c *client) getFetchReader(ctx context.Context, ref string, desc ocispecv1.Descriptor) (io.ReadCloser, error) {
+	if c.cache != nil {
+		reader, err := c.cache.Get(desc)
+		if err != nil && !errors.Is(ErrNotFound, err) {
+			return nil, err
+		}
+		if err == nil {
+			return reader, nil
+		}
+	}
+
+	resolver := c.resolver()
+
+	fetcher, err := resolver.Fetcher(ctx, ref)
+	if err != nil {
+		return nil, err
+	}
+	reader, err := fetcher.Fetch(ctx, desc)
+	if err != nil {
+		return nil, err
+	}
+	// try to cache
+	if c.cache != nil {
+		if err := c.cache.Add(desc, reader); err != nil {
+			// do not throw an error as cache is just an optimization
+			if err = reader.Close(); err != nil {
+				c.logger.Info("unable to close reader", "ref", ref, "error", err.Error())
+
+			}
+			return fetcher.Fetch(ctx, desc)
+		}
+		return c.cache.Get(desc)
+	}
+
+	return reader, err
 }
 
 func (c *client) PushManifest(ctx context.Context, ref string, manifest *ocispecv1.Manifest) error {
@@ -191,6 +301,11 @@ func isSingleArchImage(mediaType string) bool {
 		mediaType == images.MediaTypeDockerSchema2Manifest
 }
 
+func isMultiArchImage(mediaType string) bool {
+	return mediaType == ocispecv1.MediaTypeImageIndex ||
+		mediaType == images.MediaTypeDockerSchema2ManifestList
+}
+
 // resolver returns an authenticated remote resolver for a reference.
 func (c *client) resolver() remotes.Resolver {
 	scheme := "https"
@@ -207,12 +322,7 @@ func (c *client) resolver() remotes.Resolver {
 				Capabilities: docker.HostCapabilityPull | docker.HostCapabilityResolve | docker.HostCapabilityPush,
 			}
 
-			config.Authorizer = docker.NewAuthorizer(config.Client, func(host string) (string, string, error) {
-				if host != c.registry {
-					return "", "", fmt.Errorf("The given host %q differs from the authorised host", host)
-				}
-				return c.user, c.secret, nil
-			})
+			config.Authorizer = docker.NewDockerAuthorizer(docker.WithAuthClient(config.Client))
 
 			return []docker.RegistryHost{config}, nil
 		},

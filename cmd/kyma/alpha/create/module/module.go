@@ -46,7 +46,6 @@ Finally, if a registry is provided, the created module is pushed.
 
 	cmd.Flags().StringArrayVarP(&o.ResourcePaths, "resource", "r", []string{}, "Add an extra resource in a new layer with format <NAME:TYPE@PATH>. It is also possible to provide only a path; name will default to the last path element and type to 'helm-chart'")
 	cmd.Flags().StringVar(&o.ModPath, "mod-path", "./mod", "Specifies the path where the component descriptor and module packaging will be stored. If the path already has a descriptor use the overwrite flag to overwrite it")
-	cmd.Flags().StringVar(&o.PrivateKeyPath, "private-key-path", "", "Specifies the path where the private key used for signing")
 	cmd.Flags().StringVar(&o.RegistryURL, "registry", "", "Repository context url for component to upload. The repository url will be automatically added to the repository contexts in the module")
 	cmd.Flags().StringVarP(&o.Credentials, "credentials", "c", "", "Basic authentication credentials for the given registry in the format user:password")
 	cmd.Flags().StringVarP(&o.Token, "token", "t", "", "Authentication token for the given registry (alternative to basic authentication).")
@@ -109,17 +108,6 @@ func (c *command) Run(args []string) error {
 		Credentials: c.opts.Credentials,
 		Token:       c.opts.Token,
 		Insecure:    c.opts.Insecure,
-	}
-
-	/* -- SIGN -- */
-
-	if c.opts.PrivateKeyPath != "" {
-		c.NewStep("Signing resources...")
-		if err := module.Sign(archive, cfg, c.opts.PrivateKeyPath, fs, r, l); err != nil {
-			c.CurrentStep.Failure()
-			return err
-		}
-		c.CurrentStep.Successf("Signed component descriptor")
 	}
 
 	/* -- PUSH -- */

@@ -16,8 +16,6 @@ type Options struct {
 	ResourcePaths []string
 	Overwrite     bool
 	Clean         bool
-	PrivateKeyPath       string
-
 }
 
 //NewOptions creates options with default values
