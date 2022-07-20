@@ -11,6 +11,7 @@ type Options struct {
 	Credentials    string
 	Token          string
 	Insecure       bool
+	ModPath        string
 }
 
 //NewOptions creates options with default values

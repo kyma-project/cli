@@ -20,7 +20,7 @@ type ComponentSignConfig struct {
 	PrivateKeyPath string // The private key used for signing (mandatory)
 }
 
-func Sign(archive *ctf.ComponentArchive, cfg *ComponentSignConfig, privateKeyPath string, signatureName string, remote *Remote, log *zap.SugaredLogger) ([]*cdv2.ComponentDescriptor, error) {
+func Sign(cfg *ComponentSignConfig, privateKeyPath string, signatureName string, remote *Remote, log *zap.SugaredLogger) ([]*cdv2.ComponentDescriptor, error) {
 	if err := cfg.validate(); err != nil {
 		return nil, err
 	}
@@ -126,11 +126,9 @@ func (cfg *ComponentSignConfig) validate() error {
 	if cfg.Version == "" {
 		return errors.New("The module version cannot be empty")
 	}
-
 	if cfg.RegistryURL == "" {
 		return errors.New("The Registry URL cannot be empty")
 	}
-
 	if cfg.PrivateKeyPath == "" {
 		return errors.New("The private key path cannot be empty")
 	}

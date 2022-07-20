@@ -32,8 +32,6 @@ type ResourceDescriptorList struct {
 // AddResources adds the resources in the given resource definitions into the archive and its FS.
 // A resource definition is a string with format: NAME:TYPE@PATH, where NAME and TYPE can be omitted and will default to the last path element name and "helm-chart" respectively
 func AddResources(archive *ctf.ComponentArchive, c *ComponentConfig, log *zap.SugaredLogger, fs vfs.FileSystem, defs ...ResourceDef) error {
-	compDescFilePath := filepath.Join(c.ComponentArchivePath, ctf.ComponentDescriptorFileName)
-
 	resources, err := generateResources(log, c.Version, defs...)
 	if err != nil {
 		return err
@@ -66,17 +64,24 @@ func AddResources(archive *ctf.ComponentArchive, c *ComponentConfig, log *zap.Su
 		if err := cdvalidation.Validate(archive.ComponentDescriptor); err != nil {
 			return fmt.Errorf("invalid component descriptor: %w", err)
 		}
-
-		data, err := yaml.Marshal(archive.ComponentDescriptor)
-		if err != nil {
-			return fmt.Errorf("unable to encode component descriptor: %w", err)
-		}
-		if err := vfs.WriteFile(fs, compDescFilePath, data, 0664); err != nil {
-			return fmt.Errorf("unable to write modified comonent descriptor: %w", err)
+		if err := WriteComponentDescriptor(fs, archive.ComponentDescriptor, c.ComponentArchivePath, ctf.ComponentDescriptorFileName); err != nil {
+			return err
 		}
 		log.Debugf("Successfully added resource to component descriptor")
 	}
 	log.Debugf("Successfully added all resources to component descriptor")
+	return nil
+}
+
+func WriteComponentDescriptor(fs vfs.FileSystem, cd *cdv2.ComponentDescriptor, filePath string, fileName string) error {
+	compDescFilePath := filepath.Join(filePath, fileName)
+	data, err := yaml.Marshal(cd)
+	if err != nil {
+		return fmt.Errorf("unable to encode component descriptor: %w", err)
+	}
+	if err := vfs.WriteFile(fs, compDescFilePath, data, 0664); err != nil {
+		return fmt.Errorf("unable to write modified comonent descriptor: %w", err)
+	}
 	return nil
 }
 
