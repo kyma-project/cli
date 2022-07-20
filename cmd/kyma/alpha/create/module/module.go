@@ -103,17 +103,16 @@ func (c *command) Run(args []string) error {
 	}
 	c.CurrentStep.Successf("Resources added")
 
-	r := &module.Remote{
-		Registry:    c.opts.RegistryURL,
-		Credentials: c.opts.Credentials,
-		Token:       c.opts.Token,
-		Insecure:    c.opts.Insecure,
-	}
-
 	/* -- PUSH -- */
 
 	if c.opts.RegistryURL != "" {
 		c.NewStep(fmt.Sprintf("Pushing image to %q", c.opts.RegistryURL))
+		r := &module.Remote{
+			Registry:    c.opts.RegistryURL,
+			Credentials: c.opts.Credentials,
+			Token:       c.opts.Token,
+			Insecure:    c.opts.Insecure,
+		}
 		if err := module.Push(archive, r, l); err != nil {
 			c.CurrentStep.Failure()
 			return err

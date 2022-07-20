@@ -30,7 +30,7 @@ type Client interface {
 	// The returned manifest can either be single arch or multi arch (image index/manifest list)
 	GetRawManifest(ctx context.Context, ref string) (ocispecv1.Descriptor, []byte, error)
 
-	// GetManifest returns the ocispec Manifest for a reference
+	// GetManifest returns the ocispec manifest for a reference
 	GetManifest(ctx context.Context, ref string) (*ocispecv1.Manifest, error)
 
 	// Fetch fetches the blob for the given ocispec Descriptor
