@@ -3,6 +3,7 @@ package module
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 
 	cdv2 "github.com/gardener/component-spec/bindings-go/apis/v2"
@@ -106,6 +107,7 @@ func generateResources(log *zap.SugaredLogger, version string, defs ...ResourceD
 			r.Input.Type = "dir"
 			compress := true
 			r.Input.CompressWithGzip = &compress
+			r.Input.ExcludeFiles = d.excludedFiles
 		} else {
 			r.Input.Type = "file"
 		}
@@ -146,4 +148,69 @@ func (rd ResourceDescriptor) String() string {
 		return err.Error()
 	}
 	return string(y)
+}
+
+// builtInResources contains a set of resources that will automatically be created if found inspecting a module path
+var builtInResources = map[string]ResourceDef{
+	"crds": {
+		name:         "crds",
+		resourceType: "crds",
+	},
+	"operator": {
+		name:         "operator",
+		resourceType: "operator",
+	},
+	"profiles": {
+		name:         "profiles",
+		resourceType: "profiles",
+	},
+	"channels": {
+		name:         "channels",
+		resourceType: "channels",
+	},
+	"config.yaml": {
+		name:         "config",
+		resourceType: "yaml",
+	},
+}
+
+// Inspect analyzes the contents of a module and creates resource definitions for each separate layer the module should be split into
+func Inspect(path string, log *zap.SugaredLogger) ([]ResourceDef, error) {
+	log.Debugf("Inspecting module contents at [%s]:", path)
+	// check path subfolders
+	infos, err := os.ReadDir(path)
+	if err != nil {
+		return nil, fmt.Errorf("could not Inspect module folder %q: %w", path, err)
+	}
+	// module root path is always added
+	defs := []ResourceDef{}
+	base, err := ResourceDefFromString(path)
+	if err != nil {
+		return nil, err
+	}
+	defs = append(defs, base) // put the base module def first
+	// for each element in the mod path [crds, operator, profiles, channels, config.yaml] create a def and validate it
+	for _, i := range infos {
+		if r, ok := builtInResources[i.Name()]; ok {
+			log.Debugf("Found built in layer %q", i.Name())
+
+			r.path = filepath.Join(path, i.Name())
+			if i.IsDir() {
+				empty, err := files.IsDirEmpty(r.path)
+				if err != nil {
+					return nil, fmt.Errorf("could not determine if directory %q is empty: %w", r.path, err)
+				}
+				if empty {
+					log.Debugf("Layer %q has no content, skipping", i.Name())
+					continue
+				}
+				defs[0].excludedFiles = append(defs[0].excludedFiles, i.Name()+"/*") // all contents of the directory need to be excluded
+			}
+
+			defs = append(defs, r)
+			defs[0].excludedFiles = append(defs[0].excludedFiles, i.Name()) // exclude the resource from the base layer as it has its own layer
+			log.Debugf("Added layer %+v", r)
+		}
+	}
+	return defs, nil
 }
