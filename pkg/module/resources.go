@@ -182,35 +182,52 @@ func Inspect(path string, log *zap.SugaredLogger) ([]ResourceDef, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not Inspect module folder %q: %w", path, err)
 	}
-	// module root path is always added
+
 	defs := []ResourceDef{}
-	base, err := ResourceDefFromString(path)
-	if err != nil {
-		return nil, err
-	}
-	defs = append(defs, base) // put the base module def first
-	// for each element in the mod path [crds, operator, profiles, channels, config.yaml] create a def and validate it
+	// for each element in the mod path [charts, crds, operator, profiles, channels, config.yaml] create a def and validate it
 	for _, i := range infos {
-		if r, ok := builtInResources[i.Name()]; ok {
+		// special case for charts folder
+		if i.Name() == "charts" {
+			charts, err := os.ReadDir(filepath.Join(path, "charts"))
+			if err != nil {
+				return nil, err
+			}
+
+			for _, i := range charts {
+				log.Debugf("Found chart %q", i.Name())
+				r := ResourceDef{
+					name:         i.Name(),
+					path:         filepath.Join(path, "charts", i.Name()),
+					resourceType: "helm-chart",
+				}
+				if defs, err = appendDefIfValid(defs, r, i, log); err != nil {
+					return nil, err
+				}
+
+			}
+		} else if r, ok := builtInResources[i.Name()]; ok {
 			log.Debugf("Found built in layer %q", i.Name())
 
 			r.path = filepath.Join(path, i.Name())
-			if i.IsDir() {
-				empty, err := files.IsDirEmpty(r.path)
-				if err != nil {
-					return nil, fmt.Errorf("could not determine if directory %q is empty: %w", r.path, err)
-				}
-				if empty {
-					log.Debugf("Layer %q has no content, skipping", i.Name())
-					continue
-				}
-				defs[0].excludedFiles = append(defs[0].excludedFiles, i.Name()+"/*") // all contents of the directory need to be excluded
+			if defs, err = appendDefIfValid(defs, r, i, log); err != nil {
+				return nil, err
 			}
-
-			defs = append(defs, r)
-			defs[0].excludedFiles = append(defs[0].excludedFiles, i.Name()) // exclude the resource from the base layer as it has its own layer
-			log.Debugf("Added layer %+v", r)
 		}
 	}
 	return defs, nil
+}
+
+func appendDefIfValid(defs []ResourceDef, r ResourceDef, i os.DirEntry, log *zap.SugaredLogger) ([]ResourceDef, error) {
+	if i.IsDir() {
+		empty, err := files.IsDirEmpty(r.path)
+		if err != nil {
+			return nil, fmt.Errorf("could not determine if directory %q is empty: %w", r.path, err)
+		}
+		if empty {
+			log.Debugf("Resource %q has no content, skipping", i.Name())
+			return defs, nil
+		}
+	}
+	log.Debugf("Added layer %+v", r)
+	return append(defs, r), nil
 }
