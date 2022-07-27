@@ -39,6 +39,7 @@ This command signing all module resources recursively based on an unsigned compo
 	cmd.Flags().StringVar(&o.ModPath, "mod-path", "./mod", "Specifies the path where the signed component descriptor will be stored")
 	cmd.Flags().StringVar(&o.SignatureName, "signature-name", "", "name of the signature for signing")
 	cmd.Flags().StringVar(&o.RegistryURL, "registry", "", "Repository context url where unsigned component descriptor located")
+	cmd.Flags().StringVar(&o.SignedRegistryURL, "signed-registry", "", "Repository context url where signed component descriptor located")
 	cmd.Flags().StringVarP(&o.Credentials, "credentials", "c", "", "Basic authentication credentials for the given registry in the format user:password")
 	cmd.Flags().StringVarP(&o.Token, "token", "t", "", "Authentication token for the given registry (alternative to basic authentication).")
 	cmd.Flags().BoolVar(&o.Insecure, "insecure", false, "Use an insecure connection to access the registry.")
@@ -56,8 +57,8 @@ func (c *command) Run(args []string) error {
 	signCfg := &module.ComponentSignConfig{
 		Name:           args[0],
 		Version:        args[1],
-		RegistryURL:    c.opts.RegistryURL,
 		PrivateKeyPath: c.opts.PrivateKeyPath,
+		SignatureName:  c.opts.SignatureName,
 	}
 
 	remote := &module.Remote{
@@ -68,20 +69,55 @@ func (c *command) Run(args []string) error {
 	}
 
 	c.NewStep("Fetch and signing component descriptor...")
-	digestedCds, err := module.Sign(signCfg, c.opts.PrivateKeyPath, c.opts.SignatureName, remote, log)
+	digestedCds, err := module.Sign(signCfg, remote, log)
 	if err != nil {
 		c.CurrentStep.Failure()
 		return err
 	}
 
+	// TODO: at the moment only support one cd, consider extend this further
+	if len(digestedCds) < 1 {
+		c.CurrentStep.Failure()
+	}
+
 	c.NewStep("Generating signed component descriptor...")
 	fs := osfs.New()
-	for _, digestedCd := range digestedCds {
-		if err := module.WriteComponentDescriptor(fs, digestedCd, c.opts.ModPath, fmt.Sprintf("signed-%s", ctf.ComponentDescriptorFileName)); err != nil {
+	firstDigestedCd := digestedCds[0]
+	if err := module.WriteComponentDescriptor(fs, firstDigestedCd, c.opts.ModPath, ctf.ComponentDescriptorFileName); err != nil {
+		c.CurrentStep.Failure()
+		return err
+	}
+
+	c.CurrentStep.Successf("Signed component descriptor generated at %s", c.opts.ModPath)
+
+	if c.opts.SignedRegistryURL != "" {
+		cfg := &module.ComponentConfig{
+			Name:                 signCfg.Name,
+			Version:              signCfg.Version,
+			ComponentArchivePath: c.opts.ModPath,
+			Overwrite:            false,
+			RegistryURL:          c.opts.SignedRegistryURL,
+		}
+		archive, err := module.Build(fs, cfg)
+		if err != nil {
 			c.CurrentStep.Failure()
 			return err
 		}
+		c.CurrentStep.Success()
+
+		c.NewStep(fmt.Sprintf("Pushing signed component descriptor to %q", c.opts.SignedRegistryURL))
+		archive.ComponentDescriptor = firstDigestedCd
+		r := &module.Remote{
+			Registry:    c.opts.SignedRegistryURL,
+			Credentials: c.opts.Credentials,
+			Token:       c.opts.Token,
+			Insecure:    c.opts.Insecure,
+		}
+		if err := module.Push(archive, r, log); err != nil {
+			c.CurrentStep.Failure()
+			return err
+		}
+		c.CurrentStep.Success()
 	}
-	c.CurrentStep.Successf("Signed component descriptor generated at %s", c.opts.ModPath)
 	return nil
 }

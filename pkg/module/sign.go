@@ -16,11 +16,11 @@ import (
 type ComponentSignConfig struct {
 	Name           string // Name of the module (mandatory)
 	Version        string // Version of the module (mandatory)
-	RegistryURL    string // Registry URL where unsigned Component descriptor located (mandatory)
 	PrivateKeyPath string // The private key used for signing (mandatory)
+	SignatureName  string // Name of the signature for signing
 }
 
-func Sign(cfg *ComponentSignConfig, privateKeyPath string, signatureName string, remote *Remote, log *zap.SugaredLogger) ([]*cdv2.ComponentDescriptor, error) {
+func Sign(cfg *ComponentSignConfig, remote *Remote, log *zap.SugaredLogger) ([]*cdv2.ComponentDescriptor, error) {
 	if err := cfg.validate(); err != nil {
 		return nil, err
 	}
@@ -28,7 +28,7 @@ func Sign(cfg *ComponentSignConfig, privateKeyPath string, signatureName string,
 	ctx := context.Background()
 	repoCtx := cdv2.NewOCIRegistryRepository(remote.Registry, cdv2.OCIRegistryURLPathMapping)
 
-	signer, err := cdv2Sign.CreateRSASignerFromKeyFile(privateKeyPath, cdv2.MediaTypePEM)
+	signer, err := cdv2Sign.CreateRSASignerFromKeyFile(cfg.PrivateKeyPath, cdv2.MediaTypePEM)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create rsa signer: %w", err)
 	}
@@ -64,7 +64,7 @@ func Sign(cfg *ComponentSignConfig, privateKeyPath string, signatureName string,
 			return nil, fmt.Errorf("unable to create hasher: %w", err)
 		}
 
-		if err := cdv2Sign.SignComponentDescriptor(digestedCd, signer, *hasher, signatureName); err != nil {
+		if err := cdv2Sign.SignComponentDescriptor(digestedCd, signer, *hasher, cfg.SignatureName); err != nil {
 			return nil, fmt.Errorf("unable to sign component descriptor: %w", err)
 		}
 		log.Info(fmt.Sprintf("Signed component descriptor %s %s", digestedCd.Name, digestedCd.Version))
@@ -126,11 +126,11 @@ func (cfg *ComponentSignConfig) validate() error {
 	if cfg.Version == "" {
 		return errors.New("The module version cannot be empty")
 	}
-	if cfg.RegistryURL == "" {
-		return errors.New("The Registry URL cannot be empty")
-	}
 	if cfg.PrivateKeyPath == "" {
 		return errors.New("The private key path cannot be empty")
+	}
+	if cfg.SignatureName == "" {
+		return errors.New("The signature name cannot be empty")
 	}
 
 	return nil
