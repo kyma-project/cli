@@ -24,12 +24,12 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "module MODULE_NAME MODULE_VERSION [flags]",
-		Short: "Sign all module resources from unsigned component descriptor which hosted in a remote OCI registry",
+		Short: "Sign all module resources from unsigned component descriptor which is hosted in a remote OCI registry",
 		Long: `Use this command to sign a Kyma module.
 
 ### Detailed description
 
-This command signing all module resources recursively based on an unsigned component descriptor which hosted in a remote OCI registry with provided private key, the output (signed-component-descriptor.yaml) will be saved in the descriptor path (./mod as a default) as 
+This command signs all module resources recursively based on an unsigned component descriptor hosted in an OCI registry with the provided private key. The output (component-descriptor.yaml), is then saved in the descriptor path (./mod as a default) as a signed component descriptor. If signed-registry are provided, it will push the signed component descriptor.
 `,
 		RunE:    func(_ *cobra.Command, args []string) error { return c.Run(args) },
 		Aliases: []string{"mod"},
