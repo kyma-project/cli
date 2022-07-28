@@ -79,6 +79,7 @@ func (c *command) Run(args []string) error {
 	if len(digestedCds) < 1 {
 		c.CurrentStep.Failure()
 	}
+	c.CurrentStep.Success()
 
 	c.NewStep("Generating signed component descriptor...")
 	fs := osfs.New()
