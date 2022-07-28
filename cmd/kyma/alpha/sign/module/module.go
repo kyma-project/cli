@@ -29,7 +29,7 @@ func NewCmd(o *Options) *cobra.Command {
 
 ### Detailed description
 
-This command signs all module resources recursively based on an unsigned component descriptor hosted in an OCI registry with the provided private key. The output (component-descriptor.yaml), is then saved in the descriptor path (./mod as a default) as a signed component descriptor. If signed-registry are provided, it will push the signed component descriptor.
+This command signs all module resources recursively based on an unsigned component descriptor hosted in an OCI registry with the provided private key. Then, the output (component-descriptor.yaml) is saved in the descriptor path (default: ./mod) as a signed component descriptor. If signed-registry are provided, the command pushes the signed component descriptor.
 `,
 		RunE:    func(_ *cobra.Command, args []string) error { return c.Run(args) },
 		Aliases: []string{"mod"},
