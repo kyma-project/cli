@@ -2,7 +2,7 @@
 title: kyma alpha sign module
 ---
 
-Sign all module resources from unsigned component descriptor which is hosted in a remote OCI registry
+Signs all module resources from unsigned an component descriptor that's hosted in a remote OCI registry
 
 ## Synopsis
 
@@ -10,7 +10,7 @@ Use this command to sign a Kyma module.
 
 ### Detailed description
 
-This command signs all module resources recursively based on an unsigned component descriptor hosted in an OCI registry with the provided private key. The output (component-descriptor.yaml), is then saved in the descriptor path (./mod as a default) as a signed component descriptor. If signed-registry are provided, it will push the signed component descriptor.
+This command signs all module resources recursively based on an unsigned component descriptor hosted in an OCI registry with the provided private key. Then, the output (component-descriptor.yaml) is saved in the descriptor path (default: ./mod) as a signed component descriptor. If signed-registry are provided, the command pushes the signed component descriptor.
 
 
 ```bash
@@ -42,5 +42,5 @@ kyma alpha sign module MODULE_NAME MODULE_VERSION [flags]
 
 ## See also
 
-* [kyma alpha sign](kyma_alpha_sign.md)	 - Sign all module resources from unsigned component descriptor which hosted in a remote OCI registry
+* [kyma alpha sign](kyma_alpha_sign.md)	 - Signs all module resources from unsigned an component descriptor that's hosted in a remote OCI registry
 
