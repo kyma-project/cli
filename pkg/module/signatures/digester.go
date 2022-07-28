@@ -37,7 +37,7 @@ func (d *Digester) DigestForResource(ctx context.Context, cd cdv2.ComponentDescr
 
 	switch res.Access.Type {
 	case cdv2.OCIRegistryType:
-		return d.digestForOciArtifact(ctx, cd, res)
+		return d.digestForOciArtifact(ctx, res)
 	case cdv2.LocalOCIBlobType:
 		return d.digestForLocalOciBlob(ctx, cd, res)
 	default:
@@ -85,7 +85,7 @@ func (d *Digester) digestForLocalOciBlob(ctx context.Context, componentDescripto
 	}, nil
 }
 
-func (d *Digester) digestForOciArtifact(ctx context.Context, componentDescriptor cdv2.ComponentDescriptor, res cdv2.Resource) (*cdv2.DigestSpec, error) {
+func (d *Digester) digestForOciArtifact(ctx context.Context, res cdv2.Resource) (*cdv2.DigestSpec, error) {
 	if res.Access.GetType() != cdv2.OCIRegistryType {
 		return nil, fmt.Errorf("unsupported access type %s in digestForOciArtifact", res.Access.Type)
 	}

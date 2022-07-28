@@ -107,13 +107,9 @@ func (c *command) Run(args []string) error {
 
 		c.NewStep(fmt.Sprintf("Pushing signed component descriptor to %q", c.opts.SignedRegistryURL))
 		archive.ComponentDescriptor = firstDigestedCd
-		r := &module.Remote{
-			Registry:    c.opts.SignedRegistryURL,
-			Credentials: c.opts.Credentials,
-			Token:       c.opts.Token,
-			Insecure:    c.opts.Insecure,
-		}
-		if err := module.Push(archive, r, log); err != nil {
+		// Assume the credential are same between registry which host unsigned and signed component descriptor
+		remote.Registry = c.opts.SignedRegistryURL
+		if err := module.Push(archive, remote, log); err != nil {
 			c.CurrentStep.Failure()
 			return err
 		}
