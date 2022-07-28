@@ -68,7 +68,7 @@ func (c *command) Run(args []string) error {
 		Insecure:    c.opts.Insecure,
 	}
 
-	c.NewStep("Fetch and signing component descriptor...")
+	c.NewStep("Fetching and signing component descriptor...")
 	digestedCds, err := module.Sign(signCfg, remote, log)
 	if err != nil {
 		c.CurrentStep.Failure()
