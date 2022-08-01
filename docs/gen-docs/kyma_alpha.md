@@ -23,5 +23,5 @@ Alpha commands are experimental, unreleased features that should only be used by
 
 * [kyma](kyma.md)	 - Controls a Kyma cluster.
 * [kyma alpha create](kyma_alpha_create.md)	 - Creates resources on the Kyma cluster.
-* [kyma alpha sign](kyma_alpha_sign.md)	 - Signs all module resources from unsigned an component descriptor that's hosted in a remote OCI registry
+* [kyma alpha sign](kyma_alpha_sign.md)	 - Signs all module resources from an unsigned component descriptor that's hosted in a remote OCI registry
 

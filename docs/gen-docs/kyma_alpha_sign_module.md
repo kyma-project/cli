@@ -42,5 +42,5 @@ kyma alpha sign module MODULE_NAME MODULE_VERSION [flags]
 
 ## See also
 
-* [kyma alpha sign](kyma_alpha_sign.md)	 - Signs all module resources from unsigned an component descriptor that's hosted in a remote OCI registry
+* [kyma alpha sign](kyma_alpha_sign.md)	 - Signs all module resources from an unsigned component descriptor that's hosted in a remote OCI registry
 
