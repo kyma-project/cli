@@ -24,7 +24,7 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "module MODULE_NAME MODULE_VERSION [flags]",
-		Short: "Signs all module resources from unsigned an component descriptor that's hosted in a remote OCI registry",
+		Short: "Signs all module resources from an unsigned component descriptor that's hosted in a remote OCI registry",
 		Long: `Use this command to sign a Kyma module.
 
 ### Detailed description
