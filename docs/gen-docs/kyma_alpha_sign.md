@@ -21,5 +21,5 @@ Use this command to sign all module resources from an unsigned component descrip
 ## See also
 
 * [kyma alpha](kyma_alpha.md)	 - Experimental commands
-* [kyma alpha sign module](kyma_alpha_sign_module.md)	 - Signs all module resources from unsigned an component descriptor that's hosted in a remote OCI registry
+* [kyma alpha sign module](kyma_alpha_sign_module.md)	 - Signs all module resources from an unsigned component descriptor that's hosted in a remote OCI registry
 
