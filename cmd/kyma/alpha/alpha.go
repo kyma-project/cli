@@ -2,6 +2,7 @@ package alpha
 
 import (
 	"github.com/kyma-project/cli/cmd/kyma/alpha/create"
+	initcmd "github.com/kyma-project/cli/cmd/kyma/alpha/initcmd"
 	"github.com/kyma-project/cli/cmd/kyma/alpha/sign"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/spf13/cobra"
@@ -18,6 +19,7 @@ func NewCmd(o *cli.Options) *cobra.Command {
 
 	cmd.AddCommand(create.NewCmd(o))
 	cmd.AddCommand(sign.NewCmd(o))
+	cmd.AddCommand(initcmd.NewCmd(o))
 
 	return cmd
 }

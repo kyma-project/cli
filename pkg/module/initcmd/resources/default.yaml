@@ -1,0 +1,2 @@
+# This is the default K8s CustomResource definition file for the module "{{ .ModuleName}}"
+# Add the default CR definition below
