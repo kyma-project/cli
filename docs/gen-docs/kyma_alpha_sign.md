@@ -1,13 +1,12 @@
 ---
-title: kyma alpha
+title: kyma alpha sign
 ---
 
-Experimental commands
+Signs all module resources from an unsigned component descriptor that's hosted in a remote OCI registry
 
 ## Synopsis
 
-Alpha commands are experimental, unreleased features that should only be used by the Kyma team. Use at your own risk.
-
+Use this command to sign all module resources from an unsigned component descriptor that's hosted in a remote OCI registry
 
 ## Flags inherited from parent commands
 
@@ -21,7 +20,6 @@ Alpha commands are experimental, unreleased features that should only be used by
 
 ## See also
 
-* [kyma](kyma.md)	 - Controls a Kyma cluster.
-* [kyma alpha create](kyma_alpha_create.md)	 - Creates resources on the Kyma cluster.
-* [kyma alpha sign](kyma_alpha_sign.md)	 - Signs all module resources from an unsigned component descriptor that's hosted in a remote OCI registry
+* [kyma alpha](kyma_alpha.md)	 - Experimental commands
+* [kyma alpha sign module](kyma_alpha_sign_module.md)	 - Signs all module resources from an unsigned component descriptor that's hosted in a remote OCI registry
 

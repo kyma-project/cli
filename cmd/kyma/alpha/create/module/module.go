@@ -103,8 +103,6 @@ func (c *command) Run(args []string) error {
 	}
 	c.CurrentStep.Successf("Resources added")
 
-	/* -- SIGN -- */
-
 	/* -- PUSH -- */
 
 	if c.opts.RegistryURL != "" {
