@@ -12,9 +12,8 @@ import (
 
 const directoryMode os.FileMode = 0755
 
-type resourcesToCreate struct{}
-
-func (r resourcesToCreate) start(rb resourceBuilder) error {
+// createResources is where you define all resources to be created.
+func createResources(rb resourceBuilder) error {
 	//paths may be absolute, they are resolved against the current working directory anyway
 	return rb.createDirectory("/charts").
 		createDirectory("/crds").
@@ -69,16 +68,9 @@ func createEmptyModule(fs vfs.FileSystemWithWorkingDirectory, name string) error
 		return fmt.Errorf("unable to chdir into module directory: %w", err)
 	}
 
-	//Inside the  module directory
-	return createResources(fs, builderOptions{name})
-}
-
-func createResources(fs vfs.FileSystemWithWorkingDirectory, opts builderOptions) error {
-
 	rb := resourceBuilder{
 		targetFs: fs,
-		opts:     opts,
+		opts:     builderOptions{name},
 	}
-
-	return resourcesToCreate{}.start(rb)
+	return createResources(rb)
 }
