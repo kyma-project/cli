@@ -48,51 +48,6 @@ func (rb *resourceBuilder) createDirectory(pathName string) *resourceBuilder {
 	return rb
 }
 
-func (rb *resourceBuilder) createEmptyFile(pathName string) *resourceBuilder {
-	if rb.err != nil {
-		return rb
-	}
-
-	pathName = strings.TrimPrefix(pathName, "/")
-
-	_, err := rb.targetFs.Create(pathName)
-	if err != nil {
-		rb.err = fmt.Errorf("An error while creating an empty file %q: %w", pathName, err)
-	}
-
-	return rb
-}
-
-// createStaticDataFile creates a file in the target filesystem with the data from the same file in the embedded filesystem
-func (rb *resourceBuilder) createStaticDataFile(pathName string) *resourceBuilder {
-	if rb.err != nil {
-		return rb
-	}
-
-	pathName = strings.TrimPrefix(pathName, "/")
-	embeddedPathName := path.Join(embeddedRoot, pathName)
-
-	data, err := embeddedRes.ReadFile(embeddedPathName)
-	if err != nil {
-		rb.err = fmt.Errorf("An error while reading embedded file %q: %w", embeddedPathName, err)
-		return rb
-	}
-
-	targetFile, err := rb.targetFs.Create(pathName)
-	if err != nil {
-		rb.err = fmt.Errorf("An error while creating target file %q: %w", pathName, err)
-		return rb
-	}
-	defer targetFile.Close()
-
-	_, err = targetFile.Write(data)
-	if err != nil {
-		rb.err = fmt.Errorf("An error while writing data to a target file %q: %w", pathName, err)
-	}
-
-	return rb
-}
-
 // createFileFromTemplate creates a file in the target filesystem using a golang template data from the file with the same name in the embedded filesystem
 // The template from the file is resolved against a dataTemplateOptions struct instance
 func (rb *resourceBuilder) createFileFromTemplate(pathName string) *resourceBuilder {

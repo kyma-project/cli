@@ -61,7 +61,7 @@ func (c *command) Run(args []string) error {
 
 	/* -- INIT EMPTY MODULE -- */
 
-	c.NewStep(fmt.Sprintf("Initalizing an empty module named %q in the %q parent directory", name, parentDir))
+	c.NewStep(fmt.Sprintf("Initializing an empty module named %q in the %q parent directory", name, parentDir))
 	err := initcmd.InitEmpty(osfs.New(), name, parentDir)
 	if err != nil {
 		c.CurrentStep.Failure()

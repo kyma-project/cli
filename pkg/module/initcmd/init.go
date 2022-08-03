@@ -54,17 +54,20 @@ func InitEmpty(fs vfs.FileSystem, name, parentDir string) error {
 		return fmt.Errorf("unable to create module: error accessing parent directory %q: %w", parentDir, err)
 	}
 
-	return createEmptyModule(fswd, name, parentDir)
+	return createEmptyModule(fswd, name)
 
 }
 
-func createEmptyModule(fs vfs.FileSystemWithWorkingDirectory, name, parentDir string) error {
+func createEmptyModule(fs vfs.FileSystemWithWorkingDirectory, name string) error {
 
 	err := fs.Mkdir(name, directoryMode)
 	if err != nil {
 		return fmt.Errorf("unable to create module directory: %w", err)
 	}
-	fs.Chdir(name)
+	err = fs.Chdir(name)
+	if err != nil {
+		return fmt.Errorf("unable to chdir into module directory: %w", err)
+	}
 
 	//Inside the  module directory
 	return createResources(fs, builderOptions{name})
