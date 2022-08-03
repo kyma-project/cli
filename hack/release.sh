@@ -16,13 +16,13 @@ delete_stable_tag() {
 
 get_new_release_version() {
     # get the list of tags in a reverse chronological order
-    TAG_LIST=($(git tag --sort=-taggerdate))
+    TAG_LIST=($(git tag --sort=-creatordate))
     NEW_RELEASE_VERSION=${TAG_LIST[0]}
 }
 
 get_current_release_version() {
     # get the list of tags in a reverse chronological order excluding release candidate tags
-    TAG_LIST_WITHOUT_RC=($(git tag --sort=-taggerdate | grep -v -e "-rc"))
+    TAG_LIST_WITHOUT_RC=($(git tag --sort=-creatordate | grep -v -e "-rc"))
     if [[ $NEW_RELEASE_VERSION == *"-rc"* ]]; then
         CURRENT_RELEASE_VERSION=${TAG_LIST_WITHOUT_RC[0]}
     else
