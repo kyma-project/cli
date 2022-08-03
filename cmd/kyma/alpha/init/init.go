@@ -1,7 +1,7 @@
-package initcmd
+package init
 
 import (
-	"github.com/kyma-project/cli/cmd/kyma/alpha/initcmd/module"
+	"github.com/kyma-project/cli/cmd/kyma/alpha/init/module"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/spf13/cobra"
 )

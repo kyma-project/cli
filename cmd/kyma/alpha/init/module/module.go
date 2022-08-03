@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/kyma-project/cli/internal/cli"
-	"github.com/kyma-project/cli/pkg/module/initcmd"
+	"github.com/kyma-project/cli/pkg/module/scaffold"
 	"github.com/mandelsoft/vfs/pkg/osfs"
 	"github.com/spf13/cobra"
 )
@@ -55,14 +55,13 @@ func (c *command) Run(args []string) error {
 		cli.AlphaWarn()
 	}
 
-	//l := cli.NewLogger(c.opts.Verbose).Sugar()
 	name := args[0]
 	parentDir := args[1]
 
 	/* -- INIT EMPTY MODULE -- */
 
 	c.NewStep(fmt.Sprintf("Initializing an empty module named %q in the %q parent directory", name, parentDir))
-	err := initcmd.InitEmpty(osfs.New(), name, parentDir)
+	err := scaffold.InitEmpty(osfs.New(), name, parentDir)
 	if err != nil {
 		c.CurrentStep.Failure()
 		return err

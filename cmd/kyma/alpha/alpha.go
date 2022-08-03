@@ -2,7 +2,7 @@ package alpha
 
 import (
 	"github.com/kyma-project/cli/cmd/kyma/alpha/create"
-	initcmd "github.com/kyma-project/cli/cmd/kyma/alpha/initcmd"
+	initcmd "github.com/kyma-project/cli/cmd/kyma/alpha/init"
 	"github.com/kyma-project/cli/cmd/kyma/alpha/sign"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/spf13/cobra"
