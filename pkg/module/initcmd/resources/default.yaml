@@ -1,2 +1,2 @@
-# This is the default K8s CustomResource definition file for the module "{{ .ModuleName}}"
-# Add the default CR definition below
+# This is the default Kubernetes CustomResourceDefinition file for the module "{{ .ModuleName}}"
+# Add the default CustomResourceDefinition below.

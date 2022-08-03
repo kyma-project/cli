@@ -30,17 +30,17 @@ func NewCmd(o *Options) *cobra.Command {
 ### Detailed description
 
 Kyma modules are individual components that can be deployed into a Kyma runtime. 
-With this command, you can initialize an empty module folder's for the purpose of further development.
+With this command, you can initialize an empty module folder for the purpose of further development.
 
 This command creates a directory with a given name in the target directory.
-In this directory you'll find the template files and subdirectories corresponding to the required module structure:
+In this directory, you'll find the template files and subdirectories corresponding to the required module structure:
     charts/       // folder containing a set of charts (each in a subfolder)
     crds/         // folder containing all CRDs required by the module
     operator/     // folder containing the operator needed to manage the module
     profiles/     // folder containing all profile settings
     channels/     // folder containing all channel settings
-    config.yaml   // yaml file containing installation configuration for any chart in the module that requires custom helm settings
-    README.md     // Documentation explaining the module format, how it translates to OCI images and how to develop one (can be mostly empty at the beginning)
+    config.yaml   // YAML file containing installation configuration for any chart in the module that requires custom Helm settings
+    README.md     // document explaining the module format, how it translates to OCI images, and how to develop one (can be mostly empty at the beginning)
 `,
 
 		RunE:    func(_ *cobra.Command, args []string) error { return c.Run(args) },

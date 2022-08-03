@@ -48,7 +48,7 @@ func (rb *resourceBuilder) createDirectory(pathName string) *resourceBuilder {
 	return rb
 }
 
-// createFileFromTemplate creates a file in the target filesystem using a golang template data from the file with the same name in the embedded filesystem
+// createFileFromTemplate creates a file in the target filesystem using a Golang template with data from the file with the same name in the embedded filesystem
 // The template from the file is resolved against a dataTemplateOptions struct instance
 func (rb *resourceBuilder) createFileFromTemplate(pathName string) *resourceBuilder {
 	if rb.err != nil {
@@ -60,19 +60,19 @@ func (rb *resourceBuilder) createFileFromTemplate(pathName string) *resourceBuil
 
 	data, err := embeddedRes.ReadFile(embeddedPathName)
 	if err != nil {
-		rb.err = fmt.Errorf("An error while reading embedded file %q: %w", embeddedPathName, err)
+		rb.err = fmt.Errorf("Error while reading embedded file %q: %w", embeddedPathName, err)
 		return rb
 	}
 
 	t, err := template.New("t").Parse(string(data))
 	if err != nil {
-		rb.err = fmt.Errorf("An error while parsing template from embedded file %q: %w", embeddedPathName, err)
+		rb.err = fmt.Errorf("Error while parsing template from embedded file %q: %w", embeddedPathName, err)
 		return rb
 	}
 
 	targetFile, err := rb.targetFs.Create(pathName)
 	if err != nil {
-		rb.err = fmt.Errorf("An error while creating target file %q: %w", pathName, err)
+		rb.err = fmt.Errorf("Error while creating target file %q: %w", pathName, err)
 		return rb
 	}
 	defer targetFile.Close()
@@ -83,7 +83,7 @@ func (rb *resourceBuilder) createFileFromTemplate(pathName string) *resourceBuil
 	}
 	err = t.Execute(targetFile, templateOpts)
 	if err != nil {
-		rb.err = fmt.Errorf("An error while writing data to a target file %q: %w", pathName, err)
+		rb.err = fmt.Errorf("Error while writing data to a target file %q: %w", pathName, err)
 	}
 
 	return rb
