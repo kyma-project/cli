@@ -12,9 +12,10 @@ const (
 
 // ResourceDef represents a resource definition that can be added to a module as a layer
 type ResourceDef struct {
-	name         string
-	resourceType string
-	path         string
+	name          string
+	resourceType  string
+	path          string
+	excludedFiles []string
 }
 
 // ResourceDefFromString creates a resource definition from a string with format NAME:TYPE@PATH

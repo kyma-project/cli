@@ -71,9 +71,6 @@ func (c *command) Run(args []string) error {
 	}
 
 	/* -- CREATE ARCHIVE -- */
-
-	// prepend the module root to the paths
-	c.opts.ResourcePaths = append([]string{args[2]}, c.opts.ResourcePaths...)
 	fs := osfs.New()
 
 	c.NewStep(fmt.Sprintf("Creating module archive at %q", c.opts.ModPath))
@@ -88,7 +85,13 @@ func (c *command) Run(args []string) error {
 
 	c.NewStep("Adding resources...")
 
-	defs := []module.ResourceDef{}
+	// Create base resource defs with module root and its sub-layers
+	defs, err := module.Inspect(args[2], l)
+	if err != nil {
+		return err
+	}
+
+	// add extra resources
 	for _, p := range c.opts.ResourcePaths {
 		rd, err := module.ResourceDefFromString(p)
 		if err != nil {

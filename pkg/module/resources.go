@@ -3,6 +3,7 @@ package module
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 
 	cdv2 "github.com/gardener/component-spec/bindings-go/apis/v2"
@@ -106,6 +107,7 @@ func generateResources(log *zap.SugaredLogger, version string, defs ...ResourceD
 			r.Input.Type = "dir"
 			compress := true
 			r.Input.CompressWithGzip = &compress
+			r.Input.ExcludeFiles = d.excludedFiles
 		} else {
 			r.Input.Type = "file"
 		}
@@ -146,4 +148,86 @@ func (rd ResourceDescriptor) String() string {
 		return err.Error()
 	}
 	return string(y)
+}
+
+// builtInResources contains a set of resources that will automatically be created if found inspecting a module path
+var builtInResources = map[string]ResourceDef{
+	"crds": {
+		name:         "crds",
+		resourceType: "crds",
+	},
+	"operator": {
+		name:         "operator",
+		resourceType: "operator",
+	},
+	"profiles": {
+		name:         "profiles",
+		resourceType: "profiles",
+	},
+	"channels": {
+		name:         "channels",
+		resourceType: "channels",
+	},
+	"config.yaml": {
+		name:         "config",
+		resourceType: "yaml",
+	},
+}
+
+// Inspect analyzes the contents of a module and creates resource definitions for each separate layer the module should be split into
+func Inspect(path string, log *zap.SugaredLogger) ([]ResourceDef, error) {
+	log.Debugf("Inspecting module contents at [%s]:", path)
+	// check path subfolders
+	infos, err := os.ReadDir(path)
+	if err != nil {
+		return nil, fmt.Errorf("could not Inspect module folder %q: %w", path, err)
+	}
+
+	defs := []ResourceDef{}
+	// for each element in the mod path [charts, crds, operator, profiles, channels, config.yaml] create a def and validate it
+	for _, i := range infos {
+		// special case for charts folder
+		if i.Name() == "charts" {
+			charts, err := os.ReadDir(filepath.Join(path, "charts"))
+			if err != nil {
+				return nil, err
+			}
+
+			for _, i := range charts {
+				log.Debugf("Found chart %q", i.Name())
+				r := ResourceDef{
+					name:         i.Name(),
+					path:         filepath.Join(path, "charts", i.Name()),
+					resourceType: "helm-chart",
+				}
+				if defs, err = appendDefIfValid(defs, r, i, log); err != nil {
+					return nil, err
+				}
+
+			}
+		} else if r, ok := builtInResources[i.Name()]; ok {
+			log.Debugf("Found built in layer %q", i.Name())
+
+			r.path = filepath.Join(path, i.Name())
+			if defs, err = appendDefIfValid(defs, r, i, log); err != nil {
+				return nil, err
+			}
+		}
+	}
+	return defs, nil
+}
+
+func appendDefIfValid(defs []ResourceDef, r ResourceDef, i os.DirEntry, log *zap.SugaredLogger) ([]ResourceDef, error) {
+	if i.IsDir() {
+		empty, err := files.IsDirEmpty(r.path)
+		if err != nil {
+			return nil, fmt.Errorf("could not determine if directory %q is empty: %w", r.path, err)
+		}
+		if empty {
+			log.Debugf("Resource %q has no content, skipping", i.Name())
+			return defs, nil
+		}
+	}
+	log.Debugf("Added layer %+v", r)
+	return append(defs, r), nil
 }
