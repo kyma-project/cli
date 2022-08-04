@@ -7,6 +7,8 @@ import (
 //Options defines available options for the init module command
 type Options struct {
 	*cli.Options
+	ModuleName string
+	ParentDir  string
 }
 
 //NewOptions creates options with default values
