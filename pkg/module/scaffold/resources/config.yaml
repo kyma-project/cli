@@ -1,0 +1,2 @@
+# This is the Helm configuration file for the module "{{ .ModuleName}}"
+# Add the installation configuration for any chart in the module that requires custom Helm settings.
