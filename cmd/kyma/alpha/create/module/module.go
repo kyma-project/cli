@@ -61,7 +61,7 @@ func (c *command) Run(args []string) error {
 		cli.AlphaWarn()
 	}
 
-	_, err := module.ValidateModuleName(args[0])
+	_, err := module.ValidateName(args[0])
 	if err != nil {
 		return err
 	}

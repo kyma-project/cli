@@ -70,7 +70,7 @@ func (c *command) Run(args []string) error {
 		cli.AlphaWarn()
 	}
 
-	name, err := module.ValidateModuleName(c.opts.ModuleName)
+	name, err := module.ValidateName(c.opts.ModuleName)
 	if err != nil {
 		return err
 	}
