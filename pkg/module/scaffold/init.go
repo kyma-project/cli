@@ -27,16 +27,24 @@ func createResources(rb resourceBuilder) error {
 }
 
 // Init initializes an empty module directory structure with the given name inside given parentDir
-func InitEmpty(fs vfs.FileSystem, name, parentDir string) error {
+func InitEmpty(fsys vfs.FileSystem, name, parentDir string) error {
 
-	fileInfo, err := fs.Stat(parentDir)
+	fileInfo, err := fsys.Stat(parentDir)
 
 	if err != nil {
-		return fmt.Errorf("unable to read module's parent directory %q: %w", parentDir, err)
-	}
-
-	if !fileInfo.IsDir() {
-		return fmt.Errorf("unable to create module: %q is not a directory", parentDir)
+		if errors.Is(err, os.ErrNotExist) {
+			//create directory tree for the user and continue
+			err = fsys.MkdirAll(parentDir, directoryMode)
+			if err != nil {
+				return fmt.Errorf("Error while creating directory %q: %w", parentDir, err)
+			}
+		} else {
+			return fmt.Errorf("unable to access module's parent directory %q: %w", parentDir, err)
+		}
+	} else {
+		if !fileInfo.IsDir() {
+			return fmt.Errorf("unable to create module: %q is not a directory", parentDir)
+		}
 	}
 
 	moduleDir := path.Join(parentDir, name)
@@ -48,7 +56,7 @@ func InitEmpty(fs vfs.FileSystem, name, parentDir string) error {
 		return fmt.Errorf("unable to create module: %w", err)
 	}
 
-	fswd, err := cwdfs.New(fs, parentDir)
+	fswd, err := cwdfs.New(fsys, parentDir)
 	if err != nil {
 		return fmt.Errorf("unable to create module: error accessing parent directory %q: %w", parentDir, err)
 	}
@@ -57,19 +65,19 @@ func InitEmpty(fs vfs.FileSystem, name, parentDir string) error {
 
 }
 
-func createEmptyModule(fs vfs.FileSystemWithWorkingDirectory, name string) error {
+func createEmptyModule(fsys vfs.FileSystemWithWorkingDirectory, name string) error {
 
-	err := fs.Mkdir(name, directoryMode)
+	err := fsys.Mkdir(name, directoryMode)
 	if err != nil {
 		return fmt.Errorf("unable to create module directory: %w", err)
 	}
-	err = fs.Chdir(name)
+	err = fsys.Chdir(name)
 	if err != nil {
 		return fmt.Errorf("unable to chdir into module directory: %w", err)
 	}
 
 	rb := resourceBuilder{
-		targetFs: fs,
+		targetFs: fsys,
 		opts:     builderOptions{name},
 	}
 	return createResources(rb)

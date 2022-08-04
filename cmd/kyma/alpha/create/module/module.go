@@ -61,6 +61,11 @@ func (c *command) Run(args []string) error {
 		cli.AlphaWarn()
 	}
 
+	_, err := module.ValidateModuleName(args[0])
+	if err != nil {
+		return err
+	}
+
 	l := cli.NewLogger(c.opts.Verbose).Sugar()
 	cfg := &module.ComponentConfig{
 		Name:                 args[0],

@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/pkg/module"
 	"github.com/kyma-project/cli/pkg/module/scaffold"
 	"github.com/mandelsoft/vfs/pkg/osfs"
 	"github.com/spf13/cobra"
@@ -69,18 +70,18 @@ func (c *command) Run(args []string) error {
 		cli.AlphaWarn()
 	}
 
-	name := c.opts.ModuleName
-	parentDir := c.opts.ParentDir
+	name, err := module.ValidateModuleName(c.opts.ModuleName)
+	if err != nil {
+		return err
+	}
 
+	parentDir := c.opts.ParentDir
 	if parentDir == "" {
 		parentDir, err = os.Getwd()
 		if err != nil {
-			c.CurrentStep.Failure()
 			return fmt.Errorf("Error while getting current working directory: %w", err)
 		}
 	}
-
-	/* -- INIT EMPTY MODULE -- */
 
 	c.NewStep(fmt.Sprintf("Initializing an empty module named %q in the %q parent directory", name, parentDir))
 	err = scaffold.InitEmpty(osfs.New(), name, parentDir)

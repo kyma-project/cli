@@ -22,5 +22,5 @@ Use this command to initialize resources locally.
 ## See also
 
 * [kyma alpha](kyma_alpha.md)	 - Experimental commands
-* [kyma alpha init module](kyma_alpha_init_module.md)	 - Initializes an empty module with the given name in the given parent directory.
+* [kyma alpha init module](kyma_alpha_init_module.md)	 - Initializes an empty module with the given name.
 
