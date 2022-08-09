@@ -152,22 +152,6 @@ func (rd ResourceDescriptor) String() string {
 
 // builtInResources contains a set of resources that will automatically be created if found inspecting a module path
 var builtInResources = map[string]ResourceDef{
-	"crds": {
-		name:         "crds",
-		resourceType: "crds",
-	},
-	"operator": {
-		name:         "operator",
-		resourceType: "operator",
-	},
-	"profiles": {
-		name:         "profiles",
-		resourceType: "profiles",
-	},
-	"channels": {
-		name:         "channels",
-		resourceType: "channels",
-	},
 	"config.yaml": {
 		name:         "config",
 		resourceType: "yaml",
@@ -184,7 +168,7 @@ func Inspect(path string, log *zap.SugaredLogger) ([]ResourceDef, error) {
 	}
 
 	defs := []ResourceDef{}
-	// for each element in the mod path [charts, crds, operator, profiles, channels, config.yaml] create a def and validate it
+	// for each element in the mod path [charts, config.yaml] create a def and validate it
 	for _, i := range infos {
 		// special case for charts folder
 		if i.Name() == "charts" {

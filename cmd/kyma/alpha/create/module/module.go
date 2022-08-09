@@ -6,6 +6,7 @@ import (
 
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/pkg/module"
+	"github.com/kyma-project/cli/pkg/module/oci"
 	"github.com/mandelsoft/vfs/pkg/osfs"
 	"github.com/spf13/cobra"
 )
@@ -15,7 +16,7 @@ type command struct {
 	cli.Command
 }
 
-//NewCmd creates a new Kyma CLI command
+// NewCmd creates a new Kyma CLI command
 func NewCmd(o *Options) *cobra.Command {
 
 	c := command{
@@ -24,8 +25,8 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "module MODULE_NAME MODULE_VERSION <CONTENT_PATH> [flags]",
-		Short: "Creates a module bundled as an OCI image from the contents of the given path",
+		Use:   "module OCI_IMAGE_NAME MODULE_VERSION <CONTENT_PATH> [flags]",
+		Short: "Creates a module bundled as an OCI image with the given OCI image name from the contents of the given path",
 		Long: `Use this command to create a Kyma module.
 
 ### Detailed description
@@ -46,7 +47,7 @@ Finally, if a registry is provided, the created module is pushed.
 
 	cmd.Flags().StringArrayVarP(&o.ResourcePaths, "resource", "r", []string{}, "Add an extra resource in a new layer with format <NAME:TYPE@PATH>. It is also possible to provide only a path; name will default to the last path element and type to 'helm-chart'")
 	cmd.Flags().StringVar(&o.ModPath, "mod-path", "./mod", "Specifies the path where the component descriptor and module packaging will be stored. If the path already has a descriptor use the overwrite flag to overwrite it")
-	cmd.Flags().StringVar(&o.RegistryURL, "registry", "", "Repository context url for component to upload. The repository url will be automatically added to the repository contexts in the module")
+	cmd.Flags().StringVar(&o.RegistryURL, "registry", "", "Repository context url for module to upload. The repository url will be automatically added to the repository contexts in the module")
 	cmd.Flags().StringVarP(&o.Credentials, "credentials", "c", "", "Basic authentication credentials for the given registry in the format user:password")
 	cmd.Flags().StringVarP(&o.Token, "token", "t", "", "Authentication token for the given registry (alternative to basic authentication).")
 	cmd.Flags().BoolVarP(&o.Overwrite, "overwrite", "w", false, "overwrites the existing mod-path directory if it exists")
@@ -61,8 +62,12 @@ func (c *command) Run(args []string) error {
 		cli.AlphaWarn()
 	}
 
-	_, err := module.ValidateName(args[0])
+	ref, err := oci.ParseRef(args[0])
 	if err != nil {
+		return err
+	}
+
+	if err := module.ValidateName(ref.ShortName()); err != nil {
 		return err
 	}
 

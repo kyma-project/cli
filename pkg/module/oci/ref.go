@@ -3,10 +3,11 @@ package oci
 import (
 	"errors"
 	"fmt"
-	dockerreference "github.com/containerd/containerd/reference/docker"
-	"github.com/opencontainers/go-digest"
 	"path"
 	"strings"
+
+	dockerreference "github.com/containerd/containerd/reference/docker"
+	"github.com/opencontainers/go-digest"
 
 	cdv2 "github.com/gardener/component-spec/bindings-go/apis/v2"
 	cdoci "github.com/gardener/component-spec/bindings-go/oci"
@@ -105,4 +106,12 @@ func (r RefSpec) String() string {
 
 func (r *RefSpec) Name() string {
 	return path.Join(r.Host, r.Repository)
+}
+
+func (r *RefSpec) ShortName() string {
+	t := strings.Split(r.Repository, "/")
+	if len(t) == 0 {
+		return ""
+	}
+	return t[len(t)-1]
 }

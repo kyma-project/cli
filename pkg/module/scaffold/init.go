@@ -16,10 +16,7 @@ const directoryMode os.FileMode = 0755
 func createResources(rb resourceBuilder) error {
 	//paths may be absolute, they are resolved against the current working directory anyway
 	return rb.createDirectory("/charts").
-		createDirectory("/crds").
 		createDirectory("/operator").
-		createDirectory("/profiles").
-		createDirectory("/channels").
 		createFileFromTemplate("config.yaml").
 		createFileFromTemplate("default.yaml").
 		createFileFromTemplate("README.md").
