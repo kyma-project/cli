@@ -21,7 +21,7 @@ In the module directory, you'll find the template files and subdirectories corre
     charts/       // folder containing a set of charts (each in a subfolder)
     operator/     // folder containing the operator needed to manage the module
     config.yaml   // YAML file containing the installation configuration for any chart in the module that requires custom Helm settings
-	default.yaml  // yaml file containing the default CR needed to start the module installation.
+	default.yaml  // YAML file containing the default CR needed to start the module installation.
     README.md     // document explaining the module format, how it translates to OCI images, and how to develop one (can be mostly empty at the beginning)
 
 

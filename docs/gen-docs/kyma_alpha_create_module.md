@@ -2,7 +2,7 @@
 title: kyma alpha create module
 ---
 
-Creates a module bundled as an OCI image from the contents of the given path
+Creates a module bundled as an OCI image with the given OCI image name from the contents of the given path
 
 ## Synopsis
 
@@ -20,7 +20,7 @@ Finally, if a registry is provided, the created module is pushed.
 
 
 ```bash
-kyma alpha create module MODULE_NAME MODULE_VERSION <CONTENT_PATH> [flags]
+kyma alpha create module OCI_IMAGE_NAME MODULE_VERSION <CONTENT_PATH> [flags]
 ```
 
 ## Flags
@@ -31,7 +31,7 @@ kyma alpha create module MODULE_NAME MODULE_VERSION <CONTENT_PATH> [flags]
       --insecure               Use an insecure connection to access the registry.
       --mod-path string        Specifies the path where the component descriptor and module packaging will be stored. If the path already has a descriptor use the overwrite flag to overwrite it (default "./mod")
   -w, --overwrite              overwrites the existing mod-path directory if it exists
-      --registry string        Repository context url for component to upload. The repository url will be automatically added to the repository contexts in the module
+      --registry string        Repository context url for module to upload. The repository url will be automatically added to the repository contexts in the module
   -r, --resource stringArray   Add an extra resource in a new layer with format <NAME:TYPE@PATH>. It is also possible to provide only a path; name will default to the last path element and type to 'helm-chart'
   -t, --token string           Authentication token for the given registry (alternative to basic authentication).
 ```
