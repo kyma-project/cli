@@ -6,6 +6,7 @@ import (
 
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/pkg/module"
+	"github.com/kyma-project/cli/pkg/module/oci"
 	"github.com/mandelsoft/vfs/pkg/osfs"
 	"github.com/spf13/cobra"
 )
@@ -15,7 +16,7 @@ type command struct {
 	cli.Command
 }
 
-//NewCmd creates a new Kyma CLI command
+// NewCmd creates a new Kyma CLI command
 func NewCmd(o *Options) *cobra.Command {
 
 	c := command{
@@ -61,8 +62,12 @@ func (c *command) Run(args []string) error {
 		cli.AlphaWarn()
 	}
 
-	_, err := module.ValidateName(args[0])
+	ref, err := oci.ParseRef(args[0])
 	if err != nil {
+		return err
+	}
+
+	if err := module.ValidateName(ref.ShortName()); err != nil {
 		return err
 	}
 

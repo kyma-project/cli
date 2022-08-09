@@ -16,7 +16,7 @@ type command struct {
 	cli.Command
 }
 
-//NewCmd creates a new Kyma CLI command
+// NewCmd creates a new Kyma CLI command
 func NewCmd(o *Options) *cobra.Command {
 
 	c := command{
@@ -40,11 +40,9 @@ The name of the  module directory is the same as the name of the module.
 Module name must start with a letter and may only consist of alphanumeric and '.', '_', or '-' characters.
 In the module directory, you'll find the template files and subdirectories corresponding to the required module structure:
     charts/       // folder containing a set of charts (each in a subfolder)
-    crds/         // folder containing all CRDs required by the module
     operator/     // folder containing the operator needed to manage the module
-    profiles/     // folder containing all profile settings
-    channels/     // folder containing all channel settings
     config.yaml   // YAML file containing the installation configuration for any chart in the module that requires custom Helm settings
+	default.yaml  // yaml file containing the default CR needed to start the module installation.
     README.md     // document explaining the module format, how it translates to OCI images, and how to develop one (can be mostly empty at the beginning)
 `,
 
@@ -58,34 +56,29 @@ In the module directory, you'll find the template files and subdirectories corre
 		panic(err)
 	}
 
-	//TODO: Add validation
-
 	return cmd
 }
 
 func (c *command) Run(args []string) error {
-	var err error
-
 	if !c.opts.NonInteractive {
 		cli.AlphaWarn()
 	}
 
-	name, err := module.ValidateName(c.opts.ModuleName)
-	if err != nil {
+	if err := module.ValidateName(c.opts.ModuleName); err != nil {
 		return err
 	}
 
 	parentDir := c.opts.ParentDir
 	if parentDir == "" {
+		var err error
 		parentDir, err = os.Getwd()
 		if err != nil {
 			return fmt.Errorf("Error while getting current working directory: %w", err)
 		}
 	}
 
-	c.NewStep(fmt.Sprintf("Initializing an empty module named %q in the %q parent directory", name, parentDir))
-	err = scaffold.InitEmpty(osfs.New(), name, parentDir)
-	if err != nil {
+	c.NewStep(fmt.Sprintf("Initializing an empty module named %q in the %q parent directory", c.opts.ModuleName, parentDir))
+	if err := scaffold.InitEmpty(osfs.New(), c.opts.ModuleName, parentDir); err != nil {
 		c.CurrentStep.Failure()
 		return err
 	}
