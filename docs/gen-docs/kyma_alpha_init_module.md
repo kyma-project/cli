@@ -19,11 +19,9 @@ The name of the  module directory is the same as the name of the module.
 Module name must start with a letter and may only consist of alphanumeric and '.', '_', or '-' characters.
 In the module directory, you'll find the template files and subdirectories corresponding to the required module structure:
     charts/       // folder containing a set of charts (each in a subfolder)
-    crds/         // folder containing all CRDs required by the module
     operator/     // folder containing the operator needed to manage the module
-    profiles/     // folder containing all profile settings
-    channels/     // folder containing all channel settings
     config.yaml   // YAML file containing the installation configuration for any chart in the module that requires custom Helm settings
+	default.yaml  // yaml file containing the default CR needed to start the module installation.
     README.md     // document explaining the module format, how it translates to OCI images, and how to develop one (can be mostly empty at the beginning)
 
 
