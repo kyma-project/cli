@@ -53,7 +53,7 @@ require (
 	github.com/gardener/component-spec/bindings-go v0.0.66
 	github.com/go-logr/logr v1.2.3
 	github.com/imdario/mergo v0.3.12
-	github.com/kyma-incubator/reconciler v0.0.0-20220802133443-d7fa51336fe4
+	github.com/kyma-incubator/reconciler v0.0.0-20220810111849-a00986c58999
 	github.com/kyma-project/hydroform/function v0.0.0-20220627134457-64114d8b0432
 	github.com/kyma-project/hydroform/provision v0.0.0-20220623101246-77acde4617ab
 	github.com/mandelsoft/vfs v0.0.0-20210530103237-5249dc39ce91
