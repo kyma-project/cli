@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"strings"
 	"time"
 
@@ -146,7 +145,7 @@ func ParseV1Manifest(ctx context.Context, client Client, ref string, v1Manifest 
 				return nil, nil, nil, fmt.Errorf("unable to decompress layer blob: %w", err)
 			}
 
-			decompressedData, err := ioutil.ReadAll(decompressedReader)
+			decompressedData, err := io.ReadAll(decompressedReader)
 			if err != nil {
 				return nil, nil, nil, fmt.Errorf("unable to read decompressed layer blob: %w", err)
 			}

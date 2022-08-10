@@ -6,11 +6,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"go.uber.org/zap"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"time"
+
+	"go.uber.org/zap"
 
 	"github.com/containerd/containerd/content"
 	"github.com/containerd/containerd/errdefs"
@@ -239,7 +239,7 @@ func (c *client) PushManifest(ctx context.Context, ref string, manifest *ocispec
 				Digest:    digest.FromBytes(dummyConfig),
 				Size:      int64(len(dummyConfig)),
 			}
-			if err := c.cache.Add(manifest.Config, ioutil.NopCloser(bytes.NewBuffer(dummyConfig))); err != nil {
+			if err := c.cache.Add(manifest.Config, io.NopCloser(bytes.NewBuffer(dummyConfig))); err != nil {
 				return fmt.Errorf("unable to add dummy config to cache: %w", err)
 			}
 		}
@@ -256,7 +256,7 @@ func (c *client) PushManifest(ctx context.Context, ref string, manifest *ocispec
 		}
 	}
 
-	if err := c.cache.Add(desc, ioutil.NopCloser(bytes.NewBuffer(manifestBytes))); err != nil {
+	if err := c.cache.Add(desc, io.NopCloser(bytes.NewBuffer(manifestBytes))); err != nil {
 		return fmt.Errorf("unable to add manifest to cache: %w", err)
 	}
 

@@ -2,12 +2,13 @@ package istioctl
 
 import (
 	"bytes"
-	"go.uber.org/zap"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"path"
 	"testing"
+
+	"go.uber.org/zap"
 
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
@@ -218,7 +219,7 @@ func TestInstallation_downloadFile(t *testing.T) {
 		{name: "Download Istioctl", fields: fields{Client: &mockClient{}}, args: args{filepath: "tmp", filename: "mock_download.txt", url: "someUrl"},
 			getFunc: func(url string) (*http.Response, error) {
 				jsonBody := `{"name":"Istioctl","full_name":"Istioctl binary mock download","bin":{"data": "some binary"}}`
-				r := ioutil.NopCloser(bytes.NewReader([]byte(jsonBody)))
+				r := io.NopCloser(bytes.NewReader([]byte(jsonBody)))
 				return &http.Response{
 					StatusCode: 200,
 					Body:       r,

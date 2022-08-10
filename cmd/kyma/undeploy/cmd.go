@@ -3,7 +3,7 @@ package undeploy
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"time"
 
 	"go.uber.org/zap"
@@ -29,7 +29,7 @@ type command struct {
 	cli.Command
 }
 
-//NewCmd creates a new kyma command
+// NewCmd creates a new kyma command
 func NewCmd(o *Options) *cobra.Command {
 
 	cmd := command{
@@ -67,7 +67,7 @@ func NewCmd(o *Options) *cobra.Command {
 	return cobraCmd
 }
 
-//Run runs the command
+// Run runs the command
 func (cmd *command) Run() error {
 	var err error
 
@@ -84,7 +84,7 @@ func (cmd *command) Run() error {
 	}
 
 	kubeconfigPath := kube.KubeconfigPath(cmd.KubeconfigPath)
-	kubeconfig, err := ioutil.ReadFile(kubeconfigPath)
+	kubeconfig, err := os.ReadFile(kubeconfigPath)
 	if err != nil {
 		return errors.Wrap(err, "failed to read kubeconfig")
 	}

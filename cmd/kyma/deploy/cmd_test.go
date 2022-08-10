@@ -1,7 +1,7 @@
 package deploy
 
 import (
-	"io/ioutil"
+	"io"
 	"os"
 	"testing"
 
@@ -50,7 +50,7 @@ func Test_upgkyma2tokyma2_noninteractive(t *testing.T) {
 	err := cmd.decideVersionUpgrade()
 
 	w.Close()
-	out, _ := ioutil.ReadAll(r)
+	out, _ := io.ReadAll(r)
 	os.Stdout = captureStdout
 	expectedOutput := "A Kyma installation was found, but compatibility between version '2.0.0' and 'main' is not guaranteed. This might cause errors!"
 	require.Contains(t, string(out), expectedOutput)
@@ -93,7 +93,7 @@ func Test_upgkyma2tokyma2_interactive(t *testing.T) {
 	err := cmd.decideVersionUpgrade()
 
 	w.Close()
-	out, _ := ioutil.ReadAll(r)
+	out, _ := io.ReadAll(r)
 	os.Stdout = captureStdout
 	expectedOutput := "Do you want to proceed with the upgrade to 'main'? Type [y/N]:"
 	require.Contains(t, string(out), expectedOutput)
@@ -139,7 +139,7 @@ func Test_upgkyma1tokyma2_interactive(t *testing.T) {
 	err := cmd.decideVersionUpgrade()
 
 	w.Close()
-	out, _ := ioutil.ReadAll(r)
+	out, _ := io.ReadAll(r)
 	os.Stdout = captureStdout
 	expectedOutput := "Do you want to proceed with the upgrade to '2.0.0'? Type [y/N]:"
 	require.Contains(t, string(out), expectedOutput)
@@ -183,7 +183,7 @@ func Test_upgkymaFootokyma2_noninteractive(t *testing.T) {
 	err := cmd.decideVersionUpgrade()
 
 	w.Close()
-	out, _ := ioutil.ReadAll(r)
+	out, _ := io.ReadAll(r)
 	os.Stdout = captureStdout
 	expectedOutput := "A Kyma installation was found, but compatibility between version '12e41ab5' and '2.0.0' is not guaranteed. This might cause errors!"
 	require.Contains(t, string(out), expectedOutput)

@@ -2,7 +2,7 @@ package provision
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 
 	"github.com/avast/retry-go"
@@ -43,7 +43,7 @@ func RunTemplate(c Command) error {
 	}
 	if !c.IsVerbose() {
 		// discard all the noise from terraform logs if not verbose
-		log.SetOutput(ioutil.Discard)
+		log.SetOutput(io.Discard)
 	}
 	s = c.NewStep(fmt.Sprintf("Provisioning %s cluster", c.ProviderName()))
 	home, err := files.KymaHome()

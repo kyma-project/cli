@@ -1,7 +1,6 @@
 package certs
 
 import (
-	"io/ioutil"
 	"os"
 
 	"github.com/kyma-project/cli/internal/cli"
@@ -18,7 +17,7 @@ type command struct {
 	cli.Command
 }
 
-//NewCmd creates a new dashboard command
+// NewCmd creates a new dashboard command
 func NewCmd(o *cli.Options) *cobra.Command {
 	c := command{
 		Command: cli.Command{Options: o},
@@ -34,7 +33,7 @@ func NewCmd(o *cli.Options) *cobra.Command {
 	return cmd
 }
 
-//Run runs the command
+// Run runs the command
 func (cmd *command) Run() error {
 	var err error
 
@@ -69,7 +68,7 @@ func (cmd *command) importCertificate() error {
 		return err
 	}
 
-	tmpFile, err := ioutil.TempFile(os.TempDir(), "kyma-*.crt")
+	tmpFile, err := os.CreateTemp(os.TempDir(), "kyma-*.crt")
 	if err != nil {
 		return errors.Wrap(err, "cannot create temporary file for Kyma certificate")
 	}

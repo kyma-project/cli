@@ -3,7 +3,7 @@ package values
 import (
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/kyma-project/cli/internal/clusterinfo"
@@ -119,7 +119,7 @@ func addDomainValues(builder *builder, opts Sources) error {
 }
 
 func readFileAndEncode(filename string) (string, error) {
-	content, err := ioutil.ReadFile(filename)
+	content, err := os.ReadFile(filename)
 	if err != nil {
 		return "", err
 	}

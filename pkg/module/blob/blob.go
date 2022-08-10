@@ -7,11 +7,11 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	pathutil "path"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/mandelsoft/vfs/pkg/vfs"
@@ -131,7 +131,7 @@ func (input *Input) Read(ctx context.Context, fs vfs.FileSystem) (*Output, error
 		return &Output{
 			Digest: digest.FromBytes(data.Bytes()).String(),
 			Size:   int64(data.Len()),
-			Reader: ioutil.NopCloser(&data),
+			Reader: io.NopCloser(&data),
 		}, nil
 	} else if input.Type == FileInputType {
 		if inputInfo.IsDir() {
@@ -164,7 +164,7 @@ func (input *Input) Read(ctx context.Context, fs vfs.FileSystem) (*Output, error
 			return &Output{
 				Digest: digest.FromBytes(data.Bytes()).String(),
 				Size:   int64(data.Len()),
-				Reader: ioutil.NopCloser(&data),
+				Reader: io.NopCloser(&data),
 			}, nil
 		}
 		return &Output{
@@ -260,6 +260,11 @@ func addFileToTar(ctx context.Context, fs vfs.FileSystem, tw *tar.Writer, path s
 		return err
 	}
 	header.Name = path
+
+	// zero out time modifiers to always get the exact same hash on tar layers; only contents should influence the hash not when they were generated
+	header.AccessTime = time.Time{}
+	header.ChangeTime = time.Time{}
+	header.ModTime = time.Time{}
 
 	switch {
 	case info.IsDir():

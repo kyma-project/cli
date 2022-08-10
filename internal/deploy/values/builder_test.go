@@ -1,10 +1,11 @@
 package values
 
 import (
+	"os"
+	"testing"
+
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
-	"io/ioutil"
-	"testing"
 )
 
 func TestBuild(t *testing.T) {
@@ -29,7 +30,7 @@ func TestBuild(t *testing.T) {
 			addValues(override2)
 
 		// read expected result
-		data, err := ioutil.ReadFile("testdata/deployment-values-result.yaml")
+		data, err := os.ReadFile("testdata/deployment-values-result.yaml")
 		require.NoError(t, err)
 		var expected map[string]interface{}
 		err = yaml.Unmarshal(data, &expected)

@@ -1,7 +1,7 @@
 package sync
 
 import (
-	"io/ioutil"
+	"io"
 	"testing"
 
 	"github.com/kyma-project/cli/internal/cli"
@@ -13,7 +13,7 @@ func TestSubcommands(t *testing.T) {
 	c := NewCmd(&cli.Options{
 		KubeconfigPath: "/fakepath",
 	})
-	c.SetOutput(ioutil.Discard) // not interested in the command's output
+	c.SetOutput(io.Discard) // not interested in the command's output
 
 	// test default flag values
 	require.NoError(t, c.Execute(), "Command execution must not fail")

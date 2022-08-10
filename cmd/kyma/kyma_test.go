@@ -1,7 +1,7 @@
 package kyma
 
 import (
-	"io/ioutil"
+	"io"
 	"testing"
 
 	"github.com/kyma-project/cli/internal/cli"
@@ -13,7 +13,7 @@ func TestKymaFlags(t *testing.T) {
 	t.Parallel()
 	o := &cli.Options{}
 	c := NewCmd(o)
-	c.SetOutput(ioutil.Discard) // not interested in the command's output
+	c.SetOutput(io.Discard) // not interested in the command's output
 
 	// test default flag values
 	require.Equal(t, "", o.KubeconfigPath, "kubeconfig path must be empty when default")
@@ -31,7 +31,7 @@ func TestKymaFlags(t *testing.T) {
 func TestKymaSubcommands(t *testing.T) {
 	t.Parallel()
 	c := NewCmd(&cli.Options{})
-	c.SetOutput(ioutil.Discard) // not interested in the command's output
+	c.SetOutput(io.Discard) // not interested in the command's output
 
 	// test default flag values
 	require.NoError(t, c.Execute(), "Command execution must not fail")
