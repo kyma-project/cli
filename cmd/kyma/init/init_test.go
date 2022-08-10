@@ -1,7 +1,7 @@
 package init
 
 import (
-	"io/ioutil"
+	"io"
 	"testing"
 
 	"github.com/kyma-project/cli/internal/cli"
@@ -11,7 +11,7 @@ import (
 func TestSubcommands(t *testing.T) {
 	t.Parallel()
 	c := NewCmd(&cli.Options{})
-	c.SetOutput(ioutil.Discard) // not interested in the command's output
+	c.SetOutput(io.Discard) // not interested in the command's output
 
 	// test default flag values
 	require.NoError(t, c.Execute(), "Command execution must not fail")

@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"testing"
 
@@ -65,7 +65,7 @@ func genConfigFile() *dockerConfigFile.ConfigFile {
 }
 
 func Test_Resolve_happy_path(t *testing.T) {
-	tmpHome, err := ioutil.TempDir("/tmp", "config-test")
+	tmpHome, err := os.MkdirTemp("/tmp", "config-test")
 	assert.NilError(t, err)
 	defer os.RemoveAll(tmpHome)
 
@@ -73,7 +73,7 @@ func Test_Resolve_happy_path(t *testing.T) {
 	b, err := json.Marshal(configFile)
 	assert.NilError(t, err)
 	tmpFile := fmt.Sprintf("%s/config.json", tmpHome)
-	err = ioutil.WriteFile(tmpFile, b, 0600)
+	err = os.WriteFile(tmpFile, b, 0600)
 	assert.NilError(t, err)
 
 	os.Setenv("DOCKER_CONFIG", tmpHome)
@@ -123,7 +123,7 @@ func Test_PullImageAndStartContainer(t *testing.T) {
 
 	t.Run("happy path", func(t *testing.T) {
 		mockDocker.On("ImagePull", ctx, testOpts.Image, mock.AnythingOfType("types.ImagePullOptions")).Return(
-			ioutil.NopCloser(bytes.NewReader(nil)), nil).Times(1)
+			io.NopCloser(bytes.NewReader(nil)), nil).Times(1)
 
 		mockDocker.On("ContainerCreate", ctx, mock.AnythingOfType("*container.Config"),
 			mock.AnythingOfType("*container.HostConfig"), mock.Anything, mock.Anything, testOpts.ContainerName).Return(
@@ -139,7 +139,7 @@ func Test_PullImageAndStartContainer(t *testing.T) {
 
 	t.Run("image pull error", func(t *testing.T) {
 		mockDocker.On("ImagePull", ctx, testOpts.Image, mock.AnythingOfType("types.ImagePullOptions")).Return(
-			ioutil.NopCloser(bytes.NewReader(nil)), testErr).Times(1)
+			io.NopCloser(bytes.NewReader(nil)), testErr).Times(1)
 
 		id, err := mockWrapper.PullImageAndStartContainer(ctx, testOpts)
 
@@ -150,7 +150,7 @@ func Test_PullImageAndStartContainer(t *testing.T) {
 
 	t.Run("container create error", func(t *testing.T) {
 		mockDocker.On("ImagePull", ctx, testOpts.Image, mock.AnythingOfType("types.ImagePullOptions")).Return(
-			ioutil.NopCloser(bytes.NewReader(nil)), nil).Times(1)
+			io.NopCloser(bytes.NewReader(nil)), nil).Times(1)
 
 		mockDocker.On("ContainerCreate", ctx, mock.AnythingOfType("*container.Config"),
 			mock.AnythingOfType("*container.HostConfig"), mock.Anything, mock.Anything, testOpts.ContainerName).Return(
@@ -165,7 +165,7 @@ func Test_PullImageAndStartContainer(t *testing.T) {
 
 	t.Run("container start error", func(t *testing.T) {
 		mockDocker.On("ImagePull", ctx, testOpts.Image, mock.AnythingOfType("types.ImagePullOptions")).Return(
-			ioutil.NopCloser(bytes.NewReader(nil)), nil).Times(1)
+			io.NopCloser(bytes.NewReader(nil)), nil).Times(1)
 
 		mockDocker.On("ContainerCreate", ctx, mock.AnythingOfType("*container.Config"),
 			mock.AnythingOfType("*container.HostConfig"), mock.Anything, mock.Anything, testOpts.ContainerName).Return(

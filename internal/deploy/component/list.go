@@ -2,7 +2,7 @@ package component
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -15,14 +15,14 @@ import (
 
 const defaultNamespace = "kyma-system"
 
-//List collects component definitions
+// List collects component definitions
 type List struct {
 	DefaultNamespace string       `yaml:"defaultNamespace" json:"defaultNamespace"`
 	Prerequisites    []Definition `yaml:"prerequisites" json:"prerequisites"`
 	Components       []Definition `yaml:"components" json:"components"`
 }
 
-//Definition defines a component in component list
+// Definition defines a component in component list
 type Definition struct {
 	Name      string `yaml:"name" json:"name"`
 	Namespace string `yaml:"namespace" json:"namespace"`
@@ -65,7 +65,7 @@ func FromFile(filePath string) (List, error) {
 		return List{}, errors.New("Path to a components file is required")
 	}
 
-	data, err := ioutil.ReadFile(filePath)
+	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return List{}, err
 	}

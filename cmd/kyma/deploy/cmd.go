@@ -3,7 +3,6 @@ package deploy
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"time"
 
@@ -36,7 +35,7 @@ type command struct {
 	opts *Options
 }
 
-//NewCmd creates a new deploy command
+// NewCmd creates a new deploy command
 func NewCmd(o *Options) *cobra.Command {
 
 	cmd := command{
@@ -220,7 +219,7 @@ func (cmd *command) dryRun() error {
 
 func (cmd *command) deployKyma(l *zap.SugaredLogger, components component.List, vals values.Values, summary *nice.Summary) error {
 	kubeconfigPath := kube.KubeconfigPath(cmd.KubeconfigPath)
-	kubeconfig, err := ioutil.ReadFile(kubeconfigPath)
+	kubeconfig, err := os.ReadFile(kubeconfigPath)
 	if err != nil {
 		return errors.Wrap(err, "failed to read kubeconfig")
 	}

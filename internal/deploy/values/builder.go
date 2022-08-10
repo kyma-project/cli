@@ -3,7 +3,7 @@ package values
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -129,7 +129,7 @@ func (b *builder) mergeSources() (map[string]interface{}, error) {
 func loadValuesFile(filePath string) (map[string]interface{}, error) {
 	var vals map[string]interface{}
 
-	data, err := ioutil.ReadFile(filePath)
+	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, err
 	}

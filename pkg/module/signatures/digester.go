@@ -7,10 +7,11 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"github.com/kyma-project/cli/pkg/module/oci"
 	"io"
-	"io/ioutil"
+	"os"
 	"reflect"
+
+	"github.com/kyma-project/cli/pkg/module/oci"
 
 	cdv2 "github.com/gardener/component-spec/bindings-go/apis/v2"
 	"github.com/gardener/component-spec/bindings-go/apis/v2/signatures"
@@ -55,7 +56,7 @@ func (d *Digester) digestForLocalOciBlob(ctx context.Context, componentDescripto
 		return nil, fmt.Errorf("unable to decode repository context: %w", err)
 	}
 
-	tmpfile, err := ioutil.TempFile("", "")
+	tmpfile, err := os.CreateTemp("", "")
 	if err != nil {
 		return nil, fmt.Errorf("unable to create tempfile: %w", err)
 	}

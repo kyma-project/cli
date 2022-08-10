@@ -6,15 +6,15 @@ import (
 	"bytes"
 	"compress/gzip"
 	"fmt"
-	"go.uber.org/zap"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"go.uber.org/zap"
 
 	"github.com/kyma-project/cli/internal/files"
 	"github.com/pkg/errors"
@@ -133,7 +133,7 @@ func (i *Installation) Install() error {
 
 func (i *Installation) getIstioVersion() error {
 	var chart Config
-	istioConfig, err := ioutil.ReadFile(filepath.Join(i.WorkspacePath, i.IstioChartPath))
+	istioConfig, err := os.ReadFile(filepath.Join(i.WorkspacePath, i.IstioChartPath))
 	if err != nil {
 		return err
 	}
