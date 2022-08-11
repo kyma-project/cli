@@ -42,6 +42,9 @@ spec:
 func Template(archive *ctf.ComponentArchive, channel, path string, fs vfs.FileSystem) ([]byte, error) {
 
 	d, err := remoteDescriptor(archive)
+	if err != nil {
+		return nil, err
+	}
 
 	ref, err := oci.ParseRef(d.Name)
 	if err != nil {
