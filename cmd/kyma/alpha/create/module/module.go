@@ -136,13 +136,13 @@ func (c *command) Run(args []string) error {
 		c.CurrentStep.Success()
 
 		c.NewStep("Generating module template")
-		t, err := module.Template(archive.ComponentDescriptor, c.opts.Channel, args[2], fs)
+		t, err := module.Template(archive, c.opts.Channel, args[2], fs)
 		if err != nil {
 			c.CurrentStep.Failure()
 			return err
 		}
 
-		if err := vfs.WriteFile(fs, c.opts.TemplateOutput, []byte(t), os.ModePerm); err != nil {
+		if err := vfs.WriteFile(fs, c.opts.TemplateOutput, t, os.ModePerm); err != nil {
 			c.CurrentStep.Failure()
 			return err
 		}

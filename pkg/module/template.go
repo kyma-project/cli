@@ -1,12 +1,17 @@
 package module
 
 import (
+	"bytes"
+	"context"
+	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"strings"
 	"text/template"
 
 	v2 "github.com/gardener/component-spec/bindings-go/apis/v2"
+	"github.com/gardener/component-spec/bindings-go/ctf"
+	cdoci "github.com/gardener/component-spec/bindings-go/oci"
 	"github.com/kyma-project/cli/pkg/module/oci"
 	"github.com/mandelsoft/vfs/pkg/vfs"
 	"sigs.k8s.io/yaml"
@@ -34,16 +39,18 @@ spec:
 {{yaml .Descriptor | printf "%s" | indent 4}}
 `
 
-func Template(d *v2.ComponentDescriptor, channel, path string, fs vfs.FileSystem) (string, error) {
+func Template(archive *ctf.ComponentArchive, channel, path string, fs vfs.FileSystem) ([]byte, error) {
+
+	d, err := remoteDescriptor(archive)
 
 	ref, err := oci.ParseRef(d.Name)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	data, err := vfs.ReadFile(fs, filepath.Join(path, "default.yaml"))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	td := struct { // Custom struct for the template
@@ -60,15 +67,15 @@ func Template(d *v2.ComponentDescriptor, channel, path string, fs vfs.FileSystem
 
 	t, err := template.New("modTemplate").Funcs(template.FuncMap{"yaml": yaml.Marshal, "indent": Indent}).Parse(modTemplate)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	w := &strings.Builder{}
+	w := &bytes.Buffer{}
 	if err := t.Execute(w, td); err != nil {
-		return "", fmt.Errorf("could not generate a module template out of the component descriptor: %w", err)
+		return nil, fmt.Errorf("could not generate a module template out of the component descriptor: %w", err)
 	}
 
-	return w.String(), nil
+	return w.Bytes(), nil
 }
 
 // indent prepends the given number of whitespaces to eachline in the given string
@@ -90,4 +97,32 @@ func Indent(n int, in string) string {
 		}
 	}
 	return out.String()
+}
+
+// remoteDescriptor generates the remote component descriptor from the local archive the same way module.Push does.
+// the module template uses the remote descriptor to install the module
+func remoteDescriptor(archive *ctf.ComponentArchive) (*v2.ComponentDescriptor, error) {
+	store := oci.NewInMemoryCache()
+
+	manifest, err := cdoci.NewManifestBuilder(store, archive).Build(context.TODO())
+	if err != nil {
+		return nil, err
+	}
+
+	r, err := store.Get(manifest.Layers[0])
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := cdoci.ReadComponentDescriptorFromTar(r)
+	if err != nil {
+		return nil, err
+	}
+
+	remoteDesc := &v2.ComponentDescriptor{}
+	if err := json.Unmarshal(data, remoteDesc); err != nil {
+		return nil, err
+	}
+
+	return remoteDesc, nil
 }
