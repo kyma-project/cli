@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/kyma-project/cli/internal/cli"
-	"github.com/kyma-project/cli/pkg/module"
-	"github.com/kyma-project/cli/pkg/module/oci"
 	"github.com/mandelsoft/vfs/pkg/osfs"
 	"github.com/mandelsoft/vfs/pkg/vfs"
 	"github.com/spf13/cobra"
+
+	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/pkg/module"
+	"github.com/kyma-project/cli/pkg/module/oci"
 )
 
 type command struct {
@@ -19,7 +20,6 @@ type command struct {
 
 // NewCmd creates a new Kyma CLI command
 func NewCmd(o *Options) *cobra.Command {
-
 	c := command{
 		Command: cli.Command{Options: o.Options},
 		opts:    o,
@@ -50,7 +50,7 @@ Finally, if a registry is provided, the created module is pushed.
 	cmd.Flags().StringVar(&o.ModPath, "mod-path", "./mod", "Specifies the path where the component descriptor and module packaging will be stored. If the path already has a descriptor use the overwrite flag to overwrite it")
 	cmd.Flags().StringVar(&o.RegistryURL, "registry", "", "Repository context url for module to upload. The repository url will be automatically added to the repository contexts in the module")
 	cmd.Flags().StringVarP(&o.Credentials, "credentials", "c", "", "Basic authentication credentials for the given registry in the format user:password")
-	cmd.Flags().StringVarP(&o.TemplateOutput, "output", "o", "template.yaml", "File to output the module template if the module is uploaded to a registry")
+	cmd.Flags().StringVarP(&o.TemplateOutput, "output", "o", "template.yaml", "File to which to output the module template if the module is uploaded to a registry")
 	cmd.Flags().StringVar(&o.Channel, "channel", "stable", "Channel to use for the module template.")
 	cmd.Flags().StringVarP(&o.Token, "token", "t", "", "Authentication token for the given registry (alternative to basic authentication).")
 	cmd.Flags().BoolVarP(&o.Overwrite, "overwrite", "w", false, "overwrites the existing mod-path directory if it exists")
