@@ -2,6 +2,7 @@ package module
 
 import (
 	"fmt"
+
 	"github.com/gardener/component-spec/bindings-go/ctf"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/pkg/module"
@@ -14,7 +15,7 @@ type command struct {
 	cli.Command
 }
 
-//NewCmd creates a new Kyma CLI command
+// NewCmd creates a new Kyma CLI command
 func NewCmd(o *Options) *cobra.Command {
 
 	c := command{

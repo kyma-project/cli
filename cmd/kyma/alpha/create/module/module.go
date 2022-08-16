@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/mandelsoft/vfs/pkg/osfs"
+	"github.com/mandelsoft/vfs/pkg/vfs"
+	"github.com/spf13/cobra"
+
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/pkg/module"
 	"github.com/kyma-project/cli/pkg/module/oci"
-	"github.com/mandelsoft/vfs/pkg/osfs"
-	"github.com/spf13/cobra"
 )
 
 type command struct {
@@ -18,7 +20,6 @@ type command struct {
 
 // NewCmd creates a new Kyma CLI command
 func NewCmd(o *Options) *cobra.Command {
-
 	c := command{
 		Command: cli.Command{Options: o.Options},
 		opts:    o,
@@ -27,7 +28,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "module OCI_IMAGE_NAME MODULE_VERSION <CONTENT_PATH> [flags]",
 		Short: "Creates a module bundled as an OCI image with the given OCI image name from the contents of the given path",
-		Long: `Use this command to create a Kyma module.
+		Long: `Use this command to create a Kyma module and bundle it as an OCI image.
 
 ### Detailed description
 
@@ -49,6 +50,8 @@ Finally, if a registry is provided, the created module is pushed.
 	cmd.Flags().StringVar(&o.ModPath, "mod-path", "./mod", "Specifies the path where the component descriptor and module packaging will be stored. If the path already has a descriptor use the overwrite flag to overwrite it")
 	cmd.Flags().StringVar(&o.RegistryURL, "registry", "", "Repository context url for module to upload. The repository url will be automatically added to the repository contexts in the module")
 	cmd.Flags().StringVarP(&o.Credentials, "credentials", "c", "", "Basic authentication credentials for the given registry in the format user:password")
+	cmd.Flags().StringVarP(&o.TemplateOutput, "output", "o", "template.yaml", "File to which to output the module template if the module is uploaded to a registry")
+	cmd.Flags().StringVar(&o.Channel, "channel", "stable", "Channel to use for the module template.")
 	cmd.Flags().StringVarP(&o.Token, "token", "t", "", "Authentication token for the given registry (alternative to basic authentication).")
 	cmd.Flags().BoolVarP(&o.Overwrite, "overwrite", "w", false, "overwrites the existing mod-path directory if it exists")
 	cmd.Flags().BoolVar(&o.Insecure, "insecure", false, "Use an insecure connection to access the registry.")
@@ -116,7 +119,7 @@ func (c *command) Run(args []string) error {
 	}
 	c.CurrentStep.Successf("Resources added")
 
-	/* -- PUSH -- */
+	/* -- PUSH & TEMPLATE -- */
 
 	if c.opts.RegistryURL != "" {
 		c.NewStep(fmt.Sprintf("Pushing image to %q", c.opts.RegistryURL))
@@ -127,6 +130,19 @@ func (c *command) Run(args []string) error {
 			Insecure:    c.opts.Insecure,
 		}
 		if err := module.Push(archive, r, l); err != nil {
+			c.CurrentStep.Failure()
+			return err
+		}
+		c.CurrentStep.Success()
+
+		c.NewStep("Generating module template")
+		t, err := module.Template(archive, c.opts.Channel, args[2], fs)
+		if err != nil {
+			c.CurrentStep.Failure()
+			return err
+		}
+
+		if err := vfs.WriteFile(fs, c.opts.TemplateOutput, t, os.ModePerm); err != nil {
 			c.CurrentStep.Failure()
 			return err
 		}
