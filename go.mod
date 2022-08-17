@@ -7,8 +7,12 @@ replace (
 	github.com/antlr/antlr4 => github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20211106181442-e4c1a74c66bd
 	// Fix CVE-2022-24778
 	github.com/containerd/imgcrypt => github.com/containerd/imgcrypt v1.1.4
-	// Fix CVE-2021-41092
-	github.com/docker/cli => github.com/docker/cli v20.10.14+incompatible
+	// Fix CVE-2022-29526
+	github.com/docker/cli => github.com/docker/cli v20.10.17+incompatible
+	// Fix CVE-2022-29526
+	github.com/docker/docker => github.com/docker/docker v20.10.17+incompatible
+	// Fix CVE-2022-1996
+	github.com/gardener/gardener => github.com/gardener/gardener v1.53.2
 	// Fix CVE-2021-3121
 	github.com/gogo/protobuf => github.com/gogo/protobuf v1.3.2
 	// Fix CVE-2020-29529
@@ -16,6 +20,10 @@ replace (
 	github.com/hashicorp/consul => github.com/hashicorp/consul v1.10.1
 	// Fix CVE-2020-29529
 	github.com/hashicorp/go-slug => github.com/hashicorp/go-slug v0.5.0
+	// Fix CVE-2020-28852
+	github.com/mandelsoft/vfs => github.com/mandelsoft/vfs v0.0.0-20220805210647-bf14a11bfe31
+	// Fix CVE-2022-29526
+	github.com/moby/moby => github.com/moby/moby v20.10.17+incompatible
 	// Fix CVE-2021-30465
 	// Fix CVE-2022-29162
 	github.com/opencontainers/runc => github.com/opencontainers/runc v1.1.2
@@ -67,10 +75,10 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	gotest.tools v2.2.0+incompatible
 	helm.sh/helm/v3 v3.7.2
-	istio.io/client-go v1.13.2
-	k8s.io/api v0.24.1
-	k8s.io/apiextensions-apiserver v0.23.6
-	k8s.io/apimachinery v0.24.1
+	istio.io/client-go v1.14.0
+	k8s.io/api v0.24.3
+	k8s.io/apiextensions-apiserver v0.24.3
+	k8s.io/apimachinery v0.24.3
 	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible
 	sigs.k8s.io/yaml v1.3.0
 )
@@ -236,11 +244,10 @@ require (
 	gopkg.in/ini.v1 v1.66.4 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	istio.io/api v0.0.0-20220321195058-2792e813eb9a // indirect
-	istio.io/gogo-genproto v0.0.0-20211208193508-5ab4acc9eb1e // indirect
-	k8s.io/apiserver v0.23.6 // indirect
+	istio.io/api v0.0.0-20220512181135-e8ec1e1d89de // indirect
+	k8s.io/apiserver v0.24.3 // indirect
 	k8s.io/cli-runtime v0.23.6 // indirect
-	k8s.io/component-base v0.23.6 // indirect
+	k8s.io/component-base v0.24.3 // indirect
 	k8s.io/klog/v2 v2.60.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20220328201542-3ee0da9b0b42 // indirect
 	k8s.io/kubectl v0.23.6 // indirect
