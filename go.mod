@@ -22,6 +22,8 @@ replace (
 	github.com/hashicorp/go-slug => github.com/hashicorp/go-slug v0.5.0
 	// Fix CVE-2020-28852
 	github.com/mandelsoft/vfs => github.com/mandelsoft/vfs v0.0.0-20220805210647-bf14a11bfe31
+	// Fix CVE-2022-29526
+	github.com/moby/moby => github.com/moby/moby v20.10.17+incompatible
 	// Fix CVE-2021-30465
 	// Fix CVE-2022-29162
 	github.com/opencontainers/runc => github.com/opencontainers/runc v1.1.2
@@ -256,5 +258,3 @@ require (
 	sigs.k8s.io/kustomize/kyaml v0.13.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.1 // indirect
 )
-
-replace github.com/moby/moby => github.com/moby/moby v20.10.17+incompatible
