@@ -2,37 +2,8 @@ module github.com/kyma-project/cli
 
 go 1.17
 
-replace (
-	// This is needed because reconciler imports SAP-BTP-operator which has an old import of antlr4
-	github.com/antlr/antlr4 => github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20211106181442-e4c1a74c66bd
-	// Fix CVE-2022-24778
-	github.com/containerd/imgcrypt => github.com/containerd/imgcrypt v1.1.4
-	// Fix CVE-2022-29526
-	github.com/docker/cli => github.com/docker/cli v20.10.17+incompatible
-	// Fix CVE-2022-29526
-	github.com/docker/docker => github.com/docker/docker v20.10.17+incompatible
-	// Fix CVE-2022-1996
-	github.com/gardener/gardener => github.com/gardener/gardener v1.53.2
-	// Fix CVE-2020-29529
-	// Fix CVE-2021-32574
-	github.com/hashicorp/consul => github.com/hashicorp/consul v1.10.1
-	// Fix CVE-2020-29529
-	github.com/hashicorp/go-slug => github.com/hashicorp/go-slug v0.5.0
-	// Fix CVE-2020-28852
-	github.com/mandelsoft/vfs => github.com/mandelsoft/vfs v0.0.0-20220805210647-bf14a11bfe31
-	// Fix CVE-2022-29526
-	github.com/moby/moby => github.com/moby/moby v20.10.17+incompatible
-	// Fix CVE-2021-30465
-	// Fix CVE-2022-29162
-	github.com/opencontainers/runc => github.com/opencontainers/runc v1.1.2
-	// Fix CVE-2022-21698
-	github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.12.1
-	github.com/spf13/viper => github.com/spf13/viper v1.7.0
-	// Fix CVE-2021-29482
-	github.com/ulikunitz/xz => github.com/ulikunitz/xz v0.5.10
-	// required to avoid locking with gardner dependency updates
-	k8s.io/client-go => k8s.io/client-go v0.24.4
-)
+// required to avoid locking with gardner dependency updates
+replace k8s.io/client-go => k8s.io/client-go v0.24.4
 
 require (
 	github.com/Masterminds/semver/v3 v3.1.1
@@ -51,7 +22,7 @@ require (
 	github.com/kyma-incubator/reconciler v0.0.0-20220816130123-6737ad008070
 	github.com/kyma-project/hydroform/function v0.0.0-20220627134457-64114d8b0432
 	github.com/kyma-project/hydroform/provision v0.0.0-20220627134457-64114d8b0432
-	github.com/mandelsoft/vfs v0.0.0-20210530103237-5249dc39ce91
+	github.com/mandelsoft/vfs v0.0.0-20220805210647-bf14a11bfe31
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.0.3-0.20220303224323-02efb9a75ee1
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
@@ -107,7 +78,7 @@ require (
 	github.com/exponent-io/jsonpath v0.0.0-20210407135951-1de76d718b3f // indirect
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.2 // indirect
-	github.com/gardener/gardener v1.49.1 // indirect
+	github.com/gardener/gardener v1.53.2 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-cmd/cmd v1.4.1 // indirect
 	github.com/go-errors/errors v1.0.2 // indirect
@@ -182,6 +153,7 @@ require (
 	github.com/otiai10/copy v1.7.0 // indirect
 	github.com/panjf2000/ants/v2 v2.4.8 // indirect
 	github.com/pelletier/go-toml v1.9.4 // indirect
+	github.com/pelletier/go-toml/v2 v2.0.0-beta.8 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pierrec/lz4/v4 v4.1.14 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
