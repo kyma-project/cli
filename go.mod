@@ -13,8 +13,6 @@ replace (
 	github.com/docker/docker => github.com/docker/docker v20.10.17+incompatible
 	// Fix CVE-2022-1996
 	github.com/gardener/gardener => github.com/gardener/gardener v1.53.2
-	// Fix CVE-2021-3121
-	github.com/gogo/protobuf => github.com/gogo/protobuf v1.3.2
 	// Fix CVE-2020-29529
 	// Fix CVE-2021-32574
 	github.com/hashicorp/consul => github.com/hashicorp/consul v1.10.1
