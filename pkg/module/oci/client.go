@@ -322,8 +322,16 @@ func (c *client) resolver() remotes.Resolver {
 				Capabilities: docker.HostCapabilityPull | docker.HostCapabilityResolve | docker.HostCapabilityPush,
 			}
 
-			config.Authorizer = docker.NewDockerAuthorizer(docker.WithAuthClient(config.Client))
+			//The secret alone may be enough for token-based auth scenarios
+			if c.secret != "" {
+				f := func(host string) (string, string, error) {
+					//We do nothing with the host value
+					return c.user, c.secret, nil
+				}
 
+				config.Authorizer = docker.NewDockerAuthorizer(docker.WithAuthCreds(f))
+
+			}
 			return []docker.RegistryHost{config}, nil
 		},
 	}
