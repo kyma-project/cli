@@ -10,7 +10,7 @@ require (
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/blang/semver/v4 v4.0.0
 	github.com/briandowns/spinner v1.18.1
-	github.com/containerd/containerd v1.6.6
+	github.com/containerd/containerd v1.6.8
 	github.com/daviddengcn/go-colortext v1.0.0
 	github.com/docker/cli v20.10.17+incompatible
 	github.com/docker/docker v20.10.17+incompatible
@@ -50,7 +50,7 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.2 // indirect
 	github.com/Masterminds/squirrel v1.5.3 // indirect
 	github.com/Microsoft/go-winio v0.5.2 // indirect
-	github.com/Microsoft/hcsshim v0.9.3 // indirect
+	github.com/Microsoft/hcsshim v0.9.4 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20220407094043-a94812496cf5 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
