@@ -21,7 +21,7 @@ require (
 	github.com/imdario/mergo v0.3.12
 	github.com/kyma-incubator/reconciler v0.0.0-20220822113133-915ef2279ff2
 	github.com/kyma-project/hydroform/function v0.0.0-20220627134457-64114d8b0432
-	github.com/kyma-project/hydroform/provision v0.0.0-20220627134457-64114d8b0432
+	github.com/kyma-project/hydroform/provision v0.0.0-20220823073408-8107dddf81a4
 	github.com/mandelsoft/vfs v0.0.0-20220805210647-bf14a11bfe31
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.0.3-0.20220303224323-02efb9a75ee1
