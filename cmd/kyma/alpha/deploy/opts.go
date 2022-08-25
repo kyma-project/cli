@@ -19,3 +19,7 @@ type Options struct {
 func NewOptions(o *cli.Options) *Options {
 	return &Options{Options: o}
 }
+
+func (o *Options) validateFlags() error {
+	return nil
+}

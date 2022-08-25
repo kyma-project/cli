@@ -1,10 +1,12 @@
 package deploy
 
 import (
-	"errors"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/kube"
 	"github.com/spf13/cobra"
 )
 
@@ -61,4 +63,46 @@ func (cmd *command) RunWithTimeout() error {
 			return err
 		}
 	}
+}
+
+func (cmd *command) run() error {
+	start := time.Now()
+
+	if cmd.opts.DryRun {
+		return cmd.dryRun()
+	}
+
+	var err error
+	if err = cmd.setKubeClient(); err != nil {
+		return err
+	}
+
+	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
+		return errors.Wrap(err, "failed to initialize the Kubernetes client from given kubeconfig")
+	}
+
+	/*
+		if err := cmd.decideVersionUpgrade(); err != nil {
+			return err
+		}
+	*/
+
+	return cmd.deploy(start)
+}
+
+func (cmd *command) dryRun() error {
+	return nil
+}
+
+func (cmd *command) deploy(start time.Time) error {
+	//TODO: Implement
+	return nil
+}
+
+func (cmd *command) setKubeClient() error {
+	var err error
+	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
+		return errors.Wrap(err, "failed to initialize the Kubernetes client from given kubeconfig")
+	}
+	return nil
 }
