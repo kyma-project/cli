@@ -12,9 +12,10 @@ import (
 	v2 "github.com/gardener/component-spec/bindings-go/apis/v2"
 	"github.com/gardener/component-spec/bindings-go/ctf"
 	cdoci "github.com/gardener/component-spec/bindings-go/oci"
-	"github.com/kyma-project/cli/pkg/module/oci"
 	"github.com/mandelsoft/vfs/pkg/vfs"
 	"sigs.k8s.io/yaml"
+
+	"github.com/kyma-project/cli/pkg/module/oci"
 )
 
 const modTemplate = `apiVersion: operator.kyma-project.io/v1alpha1
@@ -23,7 +24,7 @@ metadata:
   name: moduletemplate-{{ .ShortName }}
   namespace: kyma-system
   labels:
-    "operator.kyma-project.io/managed-by": "kyma-operator"
+    "operator.kyma-project.io/managed-by": "lifecycle-manager"
     "operator.kyma-project.io/controller-name": "manifest"
     "operator.kyma-project.io/module-name": "{{ .ShortName }}"
   annotations:
@@ -40,7 +41,6 @@ spec:
 `
 
 func Template(archive *ctf.ComponentArchive, channel, path string, fs vfs.FileSystem) ([]byte, error) {
-
 	d, err := remoteDescriptor(archive)
 	if err != nil {
 		return nil, err
