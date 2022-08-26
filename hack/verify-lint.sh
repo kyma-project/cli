@@ -47,8 +47,7 @@ golangci::run_checks() {
 }
 
 main() {
-  #result=$(git status --porcelain)
-  result=""
+  result=$(git status --porcelain)
   if [[ "${result}" != "" ]]; then
     echo "ERROR: git is currently in a dirty state:" 
     echo "${result}"
