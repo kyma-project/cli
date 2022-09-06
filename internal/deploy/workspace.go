@@ -2,9 +2,10 @@ package deploy
 
 import (
 	"fmt"
-	"github.com/kyma-incubator/reconciler/pkg/reconciler/service"
 	"os"
 	"path/filepath"
+
+	"github.com/kyma-incubator/reconciler/pkg/reconciler/service"
 
 	"github.com/kyma-incubator/reconciler/pkg/reconciler/chart"
 	"github.com/kyma-project/cli/internal/files"
@@ -41,7 +42,7 @@ func PrepareDryRunWorkspace(workspace, source string, local bool, l *zap.Sugared
 }
 
 func fetchWorkspace(workspace, source string, local bool, l *zap.SugaredLogger) (*chart.KymaWorkspace, error) {
-	wsp, err := ResolveLocalWorkspacePath(workspace, local)
+	wsp, err := resolveLocalWorkspacePath(workspace, local)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to resolve workspace path")
 	}
@@ -86,7 +87,7 @@ func PrepareWorkspace(workspace, source string, step step.Step, interactive, loc
 	return ws, nil
 }
 
-func ResolveLocalWorkspacePath(ws string, local bool) (string, error) {
+func resolveLocalWorkspacePath(ws string, local bool) (string, error) {
 	defaultWS := getDefaultWorkspacePath()
 
 	if ws == "" {
@@ -95,18 +96,8 @@ func ResolveLocalWorkspacePath(ws string, local bool) (string, error) {
 	//resolve local Kyma source directory only if user has not defined a custom workspace directory
 	if local && ws == defaultWS {
 		//use Kyma sources stored in GOPATH (if they exist)
-		goPath := os.Getenv("GOPATH")
-		if goPath == "" {
-			homeDir, err := os.UserHomeDir()
-			if err != nil {
-				return "", err
-			}
-			goPath = filepath.Join(homeDir, "go")
-		}
-		kymaPath := filepath.Join(goPath, "src", "github.com", "kyma-project", "kyma")
-		if pathExists(kymaPath, "Local Kyma source directory") == nil {
-			return kymaPath, nil
-		}
+		kymaRepo := filepath.Join("github.com", "kyma-project", "kyma")
+		return resolveLocalRepo(kymaRepo)
 	}
 
 	if !local {
@@ -117,6 +108,25 @@ func ResolveLocalWorkspacePath(ws string, local bool) (string, error) {
 
 	//no Kyma sources found in GOPATH
 	return ws, nil
+}
+
+// resolveLocalRepo tries to find the repository with the given name in the GOPATH
+// the repository must have its full name starting from $GOPATH/src
+func resolveLocalRepo(repo string) (string, error) {
+	goPath := os.Getenv("GOPATH")
+	if goPath == "" {
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		goPath = filepath.Join(homeDir, "go")
+	}
+	path := filepath.Join(goPath, repo)
+	if err := pathExists(path, "Local Kyma source directory"); err != nil {
+		return "", err
+	}
+
+	return path, nil
 }
 
 func pathExists(path string, description string) error {

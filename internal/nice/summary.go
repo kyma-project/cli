@@ -107,5 +107,6 @@ func (s *Summary) Print(t time.Duration) error {
 	nicePrint.PrintKyma()
 	fmt.Printf("-ing! :)\n\n")
 
+	// TODO refactor function when old deploy goes away, no need to return an error
 	return nil
 }
