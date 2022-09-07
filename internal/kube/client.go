@@ -124,7 +124,10 @@ func (c *client) Apply(manifest []byte) error {
 
 	for {
 		select {
-		case data := <-objChan:
+		case data, ok := <-objChan:
+			if !ok {
+				return nil
+			}
 			if err := c.applyManifest(data, mapper); err != nil {
 				return err
 			}
