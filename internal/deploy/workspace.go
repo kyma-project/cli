@@ -121,6 +121,8 @@ func resolveLocalRepo(repo string) (string, error) {
 		}
 		goPath = filepath.Join(homeDir, "go")
 	}
+	goPath = filepath.Join(goPath, "src")
+
 	path := filepath.Join(goPath, repo)
 	if err := pathExists(path, "Local Kyma source directory"); err != nil {
 		return "", err
