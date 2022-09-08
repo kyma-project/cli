@@ -27,6 +27,9 @@ type KymaKube interface {
 	// KubeConfig provides the currently used kubeconfig
 	KubeConfig() *api.Config
 
+	// Apply provides the functionality as `kubectl apply -f` for the given yaml.
+	Apply(manifest []byte) error
+
 	// DefaultNamespace finds out what the default namespace is based on:
 	// 1. Default namespace on the Kubeconfig
 	// 2. Default cluster namespace constant

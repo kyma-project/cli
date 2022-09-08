@@ -17,7 +17,7 @@ func TestResolveWorkspace(t *testing.T) {
 			err := os.Remove(ws)
 			require.NoError(t, err)
 		}()
-		wsp, err := ResolveLocalWorkspacePath(ws, true)
+		wsp, err := resolveLocalWorkspacePath(ws, true)
 		require.NoError(t, err)
 		require.Equal(t, ws, wsp)
 		err = pathExists(ws, "dummy ws path")
@@ -25,7 +25,7 @@ func TestResolveWorkspace(t *testing.T) {
 	})
 
 	t.Run("When workspace empty, then expect default workspace path", func(t *testing.T) {
-		wsp, err := ResolveLocalWorkspacePath("", false)
+		wsp, err := resolveLocalWorkspacePath("", false)
 		require.NoError(t, err)
 		require.Equal(t, getDefaultWorkspacePath(), wsp)
 	})
@@ -34,7 +34,7 @@ func TestResolveWorkspace(t *testing.T) {
 		ws := path.Join("checkDeleteWS")
 		err := os.Mkdir(ws, 0700)
 		require.NoError(t, err)
-		wsp, err := ResolveLocalWorkspacePath(ws, false)
+		wsp, err := resolveLocalWorkspacePath(ws, false)
 		require.NoError(t, err)
 		require.Equal(t, ws, wsp)
 		_, err = os.Stat(ws)

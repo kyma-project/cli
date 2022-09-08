@@ -1,23 +1,34 @@
 package kube
 
 import (
+	"bufio"
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 
+	"k8s.io/client-go/discovery"
+	memory "k8s.io/client-go/discovery/cached"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/restmapper"
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	istio "istio.io/client-go/pkg/clientset/versioned"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
+	utilyaml "k8s.io/apimachinery/pkg/util/yaml"
 )
 
 const (
@@ -98,6 +109,104 @@ func (c *client) RestConfig() *rest.Config {
 
 func (c *client) KubeConfig() *api.Config {
 	return c.kubeCfg
+}
+
+func (c *client) Apply(manifest []byte) error {
+	// Prepare a RESTMapper to find GVR
+	dc, err := discovery.NewDiscoveryClientForConfig(c.restCfg)
+	if err != nil {
+		return err
+	}
+	mapper := restmapper.NewDeferredDiscoveryRESTMapper(memory.NewMemCacheClient(dc))
+
+	// parse manifest
+	objChan, parseErr := parseManifest(manifest)
+
+	for {
+		select {
+		case data, ok := <-objChan:
+			if !ok {
+				return nil
+			}
+			if err := c.applyManifest(data, mapper); err != nil {
+				return err
+			}
+		case err, ok := <-parseErr:
+			if !ok {
+				return nil
+			}
+			if err == nil {
+				continue
+			}
+			return err
+		}
+	}
+}
+
+// parseManifest can parse a multi-doc yaml manifest and send back each unstructured object through the channel
+func parseManifest(data []byte) (<-chan []byte, <-chan error) {
+	chanErr := make(chan error)
+	chanBytes := make(chan []byte)
+	multidocReader := utilyaml.NewYAMLReader(bufio.NewReader(bytes.NewReader(data)))
+
+	go func() {
+		defer close(chanErr)
+		defer close(chanBytes)
+
+		for {
+			buf, err := multidocReader.Read()
+			if err != nil {
+				if err == io.EOF {
+					return
+				}
+				chanErr <- errors.Wrap(err, "failed to read yaml data")
+				return
+			}
+			chanBytes <- buf
+		}
+	}()
+	return chanBytes, chanErr
+}
+
+// applyAsync applies the given manifest with the given mapping.
+func (c *client) applyManifest(manifest []byte, mapper *restmapper.DeferredDiscoveryRESTMapper) error {
+	// Decode YAML manifest into unstructured.Unstructured
+	decode := scheme.Codecs.UniversalDeserializer().Decode
+	obj := &unstructured.Unstructured{}
+	_, gvk, err := decode(manifest, nil, obj)
+	if err != nil {
+		return err
+	}
+
+	// Find GVR
+	mapping, err := mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
+	if err != nil {
+		return err
+	}
+
+	// Obtain REST interface for the GVR
+	var dr dynamic.ResourceInterface
+	if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
+		// namespaced resources should specify the namespace
+		dr = c.dynamic.Resource(mapping.Resource).Namespace(obj.GetNamespace())
+	} else {
+		// for cluster-wide resources
+		dr = c.dynamic.Resource(mapping.Resource)
+	}
+
+	// Marshal object into JSON
+	data, err := json.Marshal(obj)
+	if err != nil {
+		return err
+	}
+
+	// Create or Update the object with SSA
+	// types.ApplyPatchType indicates SSA.
+	_, err = dr.Patch(context.Background(), obj.GetName(), types.ApplyPatchType, data, metav1.PatchOptions{
+		FieldManager: "kyma",
+	})
+
+	return err
 }
 
 func (c *client) IsPodDeployed(namespace, name string) (bool, error) {
