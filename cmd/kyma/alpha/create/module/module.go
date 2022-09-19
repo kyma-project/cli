@@ -117,7 +117,21 @@ func (c *command) Run(args []string) error {
 		c.CurrentStep.Failure()
 		return err
 	}
+
 	c.CurrentStep.Successf("Resources added")
+
+	c.NewStep("Validating Default CR")
+	vSkipped, err := module.ValidateDefaultCR(args[2], l)
+	if err != nil {
+		c.CurrentStep.Failure()
+		return err
+	}
+	//TODO: Do we need this? Maybe we should not print any message at all in that case?
+	if vSkipped {
+		c.CurrentStep.Successf("Default CR validation skipped - no default CR")
+	} else {
+		c.CurrentStep.Successf("Default CR validation succeeded")
+	}
 
 	/* -- PUSH & TEMPLATE -- */
 

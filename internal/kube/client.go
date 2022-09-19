@@ -51,6 +51,35 @@ func NewFromConfig(url, file string) (KymaKube, error) {
 	return NewFromConfigWithTimeout(url, file, defaultHTTPTimeout)
 }
 
+// NewFromRestConfigWithTimeout
+func NewFromRestConfigWithTimeout(config *rest.Config, t time.Duration) (KymaKube, error) {
+
+	config.Timeout = t
+
+	sClient, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	dClient, err := dynamic.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	istioClient, err := istio.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	return &client{
+			static:  sClient,
+			dynamic: dClient,
+			istio:   istioClient,
+			restCfg: config,
+		},
+		nil
+}
+
 // NewFromConfigWithTimeout creates a new Kubernetes client based on the given Kubeconfig either provided by URL (in-cluster config) or via file (out-of-cluster config).
 // Allows to set a custom timeout for the Kubernetes HTTP client.
 func NewFromConfigWithTimeout(url, file string, t time.Duration) (KymaKube, error) {
