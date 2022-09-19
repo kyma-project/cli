@@ -17,7 +17,7 @@ import (
 
 const defaultCRName = "default.yaml"
 
-//readDefaultCR reads the default CR file's contents. The first returned value is true if the file exists. It's false if the file does not exist or an error occured.
+//readDefaultCR reads the default CR file's contents. The first returned value is true if the file exists. It's false if the file does not exist or an error occurred.
 func readDefaultCR(modulePath string) (bool, []byte, error) {
 	//TODO: Do we need to override the name or it's always "default.yaml"?
 	crPath := filepath.Join(modulePath, defaultCRName)
@@ -36,7 +36,7 @@ func readDefaultCR(modulePath string) (bool, []byte, error) {
 
 	crData, err := os.ReadFile(crPath)
 	if err != nil {
-		return false, nil, fmt.Errorf("Error reading the default CR file `%q`: %w", err)
+		return false, nil, fmt.Errorf("Error reading the default CR file `%q`: %w", crPath, err)
 	}
 
 	return true, crData, nil
