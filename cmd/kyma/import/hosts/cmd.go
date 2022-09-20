@@ -15,10 +15,10 @@ type command struct {
 	cli.Command
 }
 
-//Version contains the cli binary version injected by the build system
+// Version contains the cli binary version injected by the build system
 var Version string
 
-//NewCmd creates a new kyma command
+// NewCmd creates a new kyma command
 func NewCmd(o *cli.Options) *cobra.Command {
 
 	cmd := command{
@@ -36,7 +36,7 @@ func NewCmd(o *cli.Options) *cobra.Command {
 	return cobraCmd
 }
 
-//Run runs the command
+// Run runs the command
 func (cmd *command) Run() error {
 	var err error
 	f := step.Factory{

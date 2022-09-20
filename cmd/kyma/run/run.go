@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-//NewCmd creates a new run command
+// NewCmd creates a new run command
 func NewCmd(o *cli.Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "run",

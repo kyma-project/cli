@@ -27,7 +27,7 @@ type command struct {
 	cli.Command
 }
 
-//NewCmd creates a new apply command
+// NewCmd creates a new apply command
 func NewCmd(o *Options) *cobra.Command {
 	c := command{
 		opts:    o,

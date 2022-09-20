@@ -4,7 +4,7 @@ import (
 	"github.com/kyma-project/cli/pkg/step"
 )
 
-//Options defines available options for the command
+// Options defines available options for the command
 type Options struct {
 	CI      bool
 	Verbose bool
@@ -13,7 +13,7 @@ type Options struct {
 	Finalizers     *Finalizers
 }
 
-//NewOptions creates options with default values
+// NewOptions creates options with default values
 func NewOptions() *Options {
 	return &Options{
 		Finalizers: NewFinalizer(),

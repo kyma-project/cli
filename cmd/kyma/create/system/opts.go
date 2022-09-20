@@ -6,7 +6,7 @@ import (
 	"github.com/kyma-project/cli/internal/cli"
 )
 
-//Options defines available options for the version command
+// Options defines available options for the version command
 type Options struct {
 	*cli.Options
 	Namespace    string
@@ -15,7 +15,7 @@ type Options struct {
 	Timeout      time.Duration
 }
 
-//NewOptions creates options with default values
+// NewOptions creates options with default values
 func NewOptions(o *cli.Options) *Options {
 	return &Options{Options: o}
 }

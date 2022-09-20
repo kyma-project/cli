@@ -82,7 +82,7 @@ func (c *client) runCmd(args ...string) (string, error) {
 	return out, nil
 }
 
-//checkVersion checks whether k3d version is supported
+// checkVersion checks whether k3d version is supported
 func (c *client) checkVersion() error {
 	binaryVersionOutput, err := c.runCmd("version")
 	if err != nil {
@@ -114,7 +114,7 @@ func (c *client) checkVersion() error {
 	return nil
 }
 
-//getRegistryByName gets one k3d registry by name
+// getRegistryByName gets one k3d registry by name
 func (c *client) getRegistryByName(registryName string) (*Registry, error) {
 	registryJSON, err := c.runCmd("registry", "list", "-o", "json")
 	if err != nil {
@@ -141,7 +141,7 @@ func (c *client) getRegistryByName(registryName string) (*Registry, error) {
 	return nil, nil
 }
 
-//VerifyStatus verifies whether the k3d CLI tool is properly installed
+// VerifyStatus verifies whether the k3d CLI tool is properly installed
 func (c *client) VerifyStatus() error {
 	//ensure k3d is in PATH
 	if _, err := c.pathLooker.Look(binaryName); err != nil {
@@ -160,7 +160,7 @@ func (c *client) VerifyStatus() error {
 	return err
 }
 
-//ClusterExists checks whether a cluster exists
+// ClusterExists checks whether a cluster exists
 func (c *client) ClusterExists() (bool, error) {
 	clusterJSON, err := c.runCmd("cluster", "list", "-o", "json")
 	if err != nil {
@@ -187,7 +187,7 @@ func (c *client) ClusterExists() (bool, error) {
 	return false, nil
 }
 
-//RegistryExists checks whether a registry exists
+// RegistryExists checks whether a registry exists
 func (c *client) RegistryExists() (bool, error) {
 	registryName := fmt.Sprintf(defaultRegistryNamePattern, c.clusterName)
 
@@ -198,7 +198,7 @@ func (c *client) RegistryExists() (bool, error) {
 	return registry != nil, nil
 }
 
-//CreateCluster creates a cluster
+// CreateCluster creates a cluster
 func (c *client) CreateCluster(settings CreateClusterSettings) error {
 	k3sImage, err := getK3sImage(settings.KubernetesVersion)
 	if err != nil {

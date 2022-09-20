@@ -18,7 +18,7 @@ type command struct {
 	cli.Command
 }
 
-//NewCmd creates a new init command
+// NewCmd creates a new init command
 func NewCmd(o *Options) *cobra.Command {
 	c := command{
 		opts:    o,

@@ -4,7 +4,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-//NewCmd creates a new az command
+// NewCmd creates a new az command
 func NewCmd(o *Options) *cobra.Command {
 	c := newAzCmd(o)
 

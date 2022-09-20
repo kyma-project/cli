@@ -75,7 +75,7 @@ type ContainerRunOpts struct {
 	Ports         map[string]string
 }
 
-//NewClient creates docker client using docker environment of the OS
+// NewClient creates docker client using docker environment of the OS
 func NewClient() (Client, error) {
 	dClient, err := docker.NewClientWithOpts(docker.FromEnv)
 	if err != nil {
