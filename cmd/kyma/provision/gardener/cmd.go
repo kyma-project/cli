@@ -4,7 +4,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-//NewCmd creates a new gardener command
+// NewCmd creates a new gardener command
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "gardener",
