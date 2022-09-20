@@ -6,7 +6,7 @@ import (
 	"github.com/kyma-project/cli/internal/cli"
 )
 
-//Options defines available options for the k3d provisioning command
+// Options defines available options for the k3d provisioning command
 type Options struct {
 	*cli.Options
 
@@ -21,7 +21,7 @@ type Options struct {
 	PortMapping       []string
 }
 
-//NewOptions creates options with default values
+// NewOptions creates options with default values
 func NewOptions(o *cli.Options) *Options {
 	return &Options{Options: o}
 }

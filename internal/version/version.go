@@ -74,7 +74,7 @@ func (kv *KymaVersion) String() string {
 	return kv.stringVersion
 }
 
-//GetCurrentKymaVersion determines the semanticVersion of kyma installed in the cluster via the provided kubernetes client
+// GetCurrentKymaVersion determines the semanticVersion of kyma installed in the cluster via the provided kubernetes client
 func GetCurrentKymaVersion(k8s kube.KymaKube) (KymaVersion, error) {
 	isKyma2, err := checkKyma2(k8s)
 	if err != nil {

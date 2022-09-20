@@ -20,7 +20,7 @@ type command struct {
 	cli.Command
 }
 
-//NewCmd creates a new dashboard command
+// NewCmd creates a new dashboard command
 func NewCmd(o *Options) *cobra.Command {
 	c := command{
 		Command: cli.Command{Options: o.Options},
@@ -40,7 +40,7 @@ func NewCmd(o *Options) *cobra.Command {
 	return cmd
 }
 
-//Run runs the command
+// Run runs the command
 func (cmd *command) Run() error {
 	var err error
 

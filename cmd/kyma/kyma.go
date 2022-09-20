@@ -27,7 +27,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-//NewCmd creates a new Kyma CLI command
+// NewCmd creates a new Kyma CLI command
 func NewCmd(o *cli.Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "kyma",

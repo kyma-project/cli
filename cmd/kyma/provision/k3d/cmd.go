@@ -20,7 +20,7 @@ type command struct {
 	cli.Command
 }
 
-//NewCmd creates a new k3d command
+// NewCmd creates a new k3d command
 func NewCmd(o *Options) *cobra.Command {
 	c := command{
 		Command: cli.Command{Options: o.Options},
@@ -47,7 +47,7 @@ func NewCmd(o *Options) *cobra.Command {
 	return cmd
 }
 
-//Run runs the command
+// Run runs the command
 func (c *command) Run() error {
 	if c.opts.CI {
 		c.Factory.NonInteractive = true
@@ -73,7 +73,7 @@ func (c *command) Run() error {
 	return nil
 }
 
-//Verifies if k3d is properly installed and pre-conditions are fulfilled
+// Verifies if k3d is properly installed and pre-conditions are fulfilled
 func (c *command) verifyK3dStatus(k3dClient k3d.Client) error {
 	s := c.NewStep("Verifying k3d status")
 	if err := k3dClient.VerifyStatus(); err != nil {
@@ -163,7 +163,7 @@ func (c *command) createK3dRegistry(k3dClient k3d.Client) (string, error) {
 	return registryURL, nil
 }
 
-//Create a k3d cluster
+// Create a k3d cluster
 func (c *command) createK3dCluster(k3dClient k3d.Client, registryURL string) error {
 	s := c.NewStep(fmt.Sprintf("Create K3d cluster '%s'", c.opts.Name))
 
@@ -201,7 +201,7 @@ func extractPortsFromFlag(portFlag []string) ([]int, error) {
 	return ports, nil
 }
 
-//Check if a port is allocated
+// Check if a port is allocated
 func allocatePorts(ports ...int) error {
 	for _, port := range ports {
 		con, err := net.Listen("tcp", fmt.Sprintf(":%d", port))

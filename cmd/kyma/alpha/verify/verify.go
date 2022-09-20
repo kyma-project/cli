@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-//NewCmd verifys a new kyma CLI command
+// NewCmd verifys a new kyma CLI command
 func NewCmd(o *cli.Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "verify",

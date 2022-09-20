@@ -4,7 +4,7 @@ import (
 	"runtime"
 )
 
-//FactoryInterface is an abstraction for step factory
+// FactoryInterface is an abstraction for step factory
 type FactoryInterface interface {
 	NewStep(msg string) Step
 }

@@ -6,7 +6,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-//Info is a discriminated union (can be either Gardener or K3d or Unrecognized)
+// Info is a discriminated union (can be either Gardener or K3d or Unrecognized)
 type Info interface {
 	//unexported method to make sure that Info members are only implemented by the clusterinfo package
 	sealed()

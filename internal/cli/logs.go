@@ -25,15 +25,15 @@ func createVerboseLogger() (*zap.Logger, error) {
 	return config.Build()
 }
 
-//NewHydroformLoggerAdapter adapts a ZAP logger to a Hydrofrom compatible logger
+// NewHydroformLoggerAdapter adapts a ZAP logger to a Hydrofrom compatible logger
 func NewHydroformLoggerAdapter(logger *zap.Logger) *HydroformLoggerAdapter {
 	return &HydroformLoggerAdapter{
 		logger: logger,
 	}
 }
 
-//HydroformLoggerAdapter is implementing the logger interface of Hydroform
-//to make it compatible with the ZAP logger API.
+// HydroformLoggerAdapter is implementing the logger interface of Hydroform
+// to make it compatible with the ZAP logger API.
 type HydroformLoggerAdapter struct {
 	logger *zap.Logger
 }
