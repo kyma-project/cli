@@ -22,7 +22,7 @@ golangci::install() {
   export PATH="${INSTALL_DIR}:${PATH}"
 
   shout "Install the golangci-lint in version ${GOLANGCI_LINT_VERSION}"
-  curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b "${INSTALL_DIR}" ${GOLANGCI_LINT_VERSION}
+  curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | bash -s -- -b "${INSTALL_DIR}" ${GOLANGCI_LINT_VERSION}
   echo -e "${GREEN}√ install golangci-lint${NC}"
 
 }
