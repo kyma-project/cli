@@ -10,6 +10,7 @@ import (
 
 	"github.com/kyma-project/cli/internal/kube"
 	"go.uber.org/zap"
+	"gopkg.in/yaml.v3"
 	amv "k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
@@ -42,15 +43,64 @@ func readDefaultCR(modulePath string) (bool, []byte, error) {
 	return true, crData, nil
 }
 
+//ensureDefaultNamespace parses crData and ensures that metadata.namespace is set to the value "default". This is because of how we use the envtest to validate the CR.
+func ensureDefaultNamespace(crData []byte) ([]byte, error) {
+
+	//Parse input data into a generic Map
+	modelMap := make(map[string]interface{})
+	err := yaml.Unmarshal([]byte(crData), &modelMap)
+	if err != nil {
+		return nil, fmt.Errorf("Error during parsing default CR: %w", err)
+	}
+
+	//Traverse the Map to look for "metadata.namespace"
+	metadataVal, ok := modelMap["metadata"]
+	if !ok {
+		return nil, errors.New("Error during parsing default CR: no \"metadata\" attribute")
+	}
+
+	metadataMap, ok := metadataVal.(map[string]interface{})
+	if !ok {
+		return nil, errors.New("Error during parsing default CR: \"metadata\" attribute is not a Map")
+	}
+
+	namespaceVal, ok := metadataMap["namespace"]
+	if !ok {
+		//Add the "metadata.namespace" attribute if missing
+		metadataMap["namespace"] = "default"
+	} else {
+		//Set the "metadata.namespace" if different than "default"
+		existing, ok := namespaceVal.(string)
+		if !ok {
+			return nil, errors.New("Error during parsing default CR: \"metadata.namespace\" attribute is not a string")
+		}
+		if existing != "default" {
+			metadataMap["namespace"] = "default"
+		}
+	}
+
+	output, err := yaml.Marshal(modelMap)
+	if err != nil {
+		return nil, fmt.Errorf("Error during parsing default CR: %w", err)
+	}
+
+	return output, nil
+}
+
 func ValidateDefaultCR(modulePath string, log *zap.SugaredLogger) (skipped bool, err error) {
 
-	exists, crData, err := readDefaultCR(modulePath)
+	exists, rawCRData, err := readDefaultCR(modulePath)
 	if err != nil {
 		return false, err
 	}
 	if !exists {
 		//If there's no "default.yaml" file, skip the validation.
 		return true, nil
+	}
+
+	crData, err := ensureDefaultNamespace(rawCRData)
+	if err != nil {
+		return false, err
 	}
 
 	//TODO: How to get this directory path programatically? What's the contract?
