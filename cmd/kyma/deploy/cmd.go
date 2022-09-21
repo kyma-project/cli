@@ -61,6 +61,7 @@ func NewCmd(o *Options) *cobra.Command {
 	- Deploy a commit (8 characters or more), for example: "kyma deploy --source=34edf09a"
 	- Deploy a pull request, for example "kyma deploy --source=PR-9486"
 	- Deploy the local sources: "kyma deploy --source=local"`)
+	cobraCmd.Flags().BoolVar(&o.K3d, "k3d", false, "Setting k3d parameter to true results in deployment with kyma overrides needed for k3d")
 	cobraCmd.Flags().StringVarP(&o.Domain, "domain", "d", "", "Custom domain used for installation.")
 	cobraCmd.Flags().BoolVar(&o.DryRun, "dry-run", false, "Alpha feature: Renders the Kubernetes manifests without actually applying them. The generated resources are not sufficient to apply Kyma to a cluster, because components having custom installation routines (such as Istio) are not included.")
 	cobraCmd.Flags().StringVarP(&o.Profile, "profile", "p", "",
