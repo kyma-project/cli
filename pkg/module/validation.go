@@ -43,7 +43,7 @@ func readDefaultCR(modulePath string) (bool, []byte, error) {
 	return true, crData, nil
 }
 
-//ensureDefaultNamespace parses crData and ensures that metadata.namespace is set to the value "default". This is because of how we use the envtest to validate the CR.
+//ensureDefaultNamespace parses crData and ensures that the metadata.namespace attibute exists and it's value is "default". This is because of how we use the envtest to validate the CR.
 func ensureDefaultNamespace(crData []byte) ([]byte, error) {
 
 	//Parse input data into a generic Map
