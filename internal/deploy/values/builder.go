@@ -88,7 +88,7 @@ func (b *builder) addDefaultServerlessKanikoForce() *builder {
 	})
 }
 
-func (b *builder) addk3dFlagForIstio() *builder {
+func (b *builder) addDefaultk3dValuesForIstio() *builder {
 	return b.addDefaultValues(map[string]interface{}{
 		"istio": map[string]interface{}{
 			"helmValues": map[string]interface{}{
