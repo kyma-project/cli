@@ -25,8 +25,6 @@ func Merge(sources Sources, workspaceDir string, clusterInfo clusterinfo.Info) (
 
 	addClusterSpecificDefaults(builder, clusterInfo)
 
-	addk3dValues(builder, sources)
-
 	if err := addValueFiles(builder, sources, workspaceDir); err != nil {
 		return nil, err
 	}
@@ -119,10 +117,6 @@ func addDomainValues(builder *builder, opts Sources) error {
 	}
 
 	return nil
-}
-
-func addk3dValues(builder *builder, opts Sources) {
-
 }
 
 func readFileAndEncode(filename string) (string, error) {
