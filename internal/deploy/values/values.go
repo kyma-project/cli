@@ -61,7 +61,8 @@ func addClusterSpecificDefaults(builder *builder, clusterInfo clusterinfo.Info) 
 			addDefaultServerlessRegistryConfig(defaultRegistryConfig).
 			addDefaultGlobalDomainName(defaultLocalKymaDomain).
 			addDefaultGlobalTLSCrtAndKey(defaultLocalTLSCrtEnc, defaultLocalTLSKeyEnc).
-			addDefaultServerlessKanikoForce()
+			addDefaultServerlessKanikoForce().
+			addDefaultk3dIstioCniDir()
 	} else if gardener, isGardener := clusterInfo.(clusterinfo.Gardener); isGardener {
 		builder.addDefaultGlobalDomainName(gardener.Domain)
 	}
@@ -121,11 +122,7 @@ func addDomainValues(builder *builder, opts Sources) error {
 }
 
 func addk3dValues(builder *builder, opts Sources) {
-	builder.addValues(Values{
-		"global": map[string]interface{}{
-			"k3d": opts.K3d,
-		},
-	})
+
 }
 
 func readFileAndEncode(filename string) (string, error) {

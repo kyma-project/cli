@@ -6,5 +6,4 @@ type Sources struct {
 	ValueFiles []string
 	TLSCrtFile string
 	TLSKeyFile string
-	K3d        bool
 }
