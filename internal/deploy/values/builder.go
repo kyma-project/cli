@@ -88,15 +88,10 @@ func (b *builder) addDefaultServerlessKanikoForce() *builder {
 	})
 }
 
-func (b *builder) addDefaultk3dIstioCniDir() *builder {
+func (b *builder) addDefaultk3dFlagForIstio() *builder {
 	return b.addDefaultValues(map[string]interface{}{
 		"istio": map[string]interface{}{
-			"values": map[string]interface{}{
-				"cni": map[string]string{
-					"cniConfDir": "/var/lib/rancher/k3s/agent/etc/cni/net.d",
-					"cniBinDir": "/bin",
-				},
-			},
+			"k3d": true,
 		},
 	})
 }
