@@ -91,7 +91,12 @@ func (b *builder) addDefaultServerlessKanikoForce() *builder {
 func (b *builder) addk3dFlagForIstio() *builder {
 	return b.addDefaultValues(map[string]interface{}{
 		"istio": map[string]interface{}{
-			"k3d": true,
+			"helmValues": map[string]interface{}{
+				"cni": map[string]string{
+					"cniConfDir": "/var/lib/rancher/k3s/agent/etc/cni/net.d",
+					"cniBinDir":  "/bin",
+				},
+			},
 		},
 	})
 }
