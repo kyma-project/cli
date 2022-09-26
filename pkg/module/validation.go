@@ -107,7 +107,7 @@ func readDefaultCR(modulePath string) (bool, []byte, error) {
 	return true, crData, nil
 }
 
-//ensureDefaultNamespace ensures that metadata.namespace is set to the value "default". This is because of how we use the envtest to validate the CR.
+//ensureDefaultNamespace ensures that the metadata.namespace attribute exists and it's value is "default". This is because of how we use the envtest to validate the CR.
 func ensureDefaultNamespace(modelMap map[string]interface{}) error {
 
 	//Traverse the Map to look for "metadata.namespace"
