@@ -209,6 +209,14 @@ func TestMerge(t *testing.T) {
 						},
 					},
 				},
+				"istio": map[string]interface{}{
+					"helmValues": map[string]interface{}{
+						"cni": map[string]string{
+							"cniConfDir": "/var/lib/rancher/k3s/agent/etc/cni/net.d",
+							"cniBinDir":  "/bin",
+						},
+					},
+				},
 			}
 
 			require.NoError(t, err)
@@ -240,6 +248,14 @@ func TestMerge(t *testing.T) {
 									"value": "--insecure,--skip-tls-verify,--skip-unused-stages,--log-format=text,--cache=true,--force",
 								},
 							},
+						},
+					},
+				},
+				"istio": map[string]interface{}{
+					"helmValues": map[string]interface{}{
+						"cni": map[string]string{
+							"cniConfDir": "/var/lib/rancher/k3s/agent/etc/cni/net.d",
+							"cniBinDir":  "/bin",
 						},
 					},
 				},
@@ -282,6 +298,14 @@ func TestMerge(t *testing.T) {
 						},
 					},
 				},
+				"istio": map[string]interface{}{
+					"helmValues": map[string]interface{}{
+						"cni": map[string]string{
+							"cniConfDir": "/var/lib/rancher/k3s/agent/etc/cni/net.d",
+							"cniBinDir":  "/bin",
+						},
+					},
+				},
 			}
 
 			require.NoError(t, err)
@@ -313,6 +337,14 @@ func TestMerge(t *testing.T) {
 									"value": "--insecure,--skip-tls-verify,--skip-unused-stages,--log-format=text,--cache=true,--force",
 								},
 							},
+						},
+					},
+				},
+				"istio": map[string]interface{}{
+					"helmValues": map[string]interface{}{
+						"cni": map[string]string{
+							"cniConfDir": "/var/lib/rancher/k3s/agent/etc/cni/net.d",
+							"cniBinDir":  "/bin",
 						},
 					},
 				},

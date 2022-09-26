@@ -88,6 +88,19 @@ func (b *builder) addDefaultServerlessKanikoForce() *builder {
 	})
 }
 
+func (b *builder) addDefaultk3dValuesForIstio() *builder {
+	return b.addDefaultValues(map[string]interface{}{
+		"istio": map[string]interface{}{
+			"helmValues": map[string]interface{}{
+				"cni": map[string]string{
+					"cniConfDir": "/var/lib/rancher/k3s/agent/etc/cni/net.d",
+					"cniBinDir":  "/bin",
+				},
+			},
+		},
+	})
+}
+
 func (b *builder) build() (map[string]interface{}, error) {
 	merged, err := b.mergeSources()
 	if err != nil {

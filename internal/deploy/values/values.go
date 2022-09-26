@@ -59,7 +59,8 @@ func addClusterSpecificDefaults(builder *builder, clusterInfo clusterinfo.Info) 
 			addDefaultServerlessRegistryConfig(defaultRegistryConfig).
 			addDefaultGlobalDomainName(defaultLocalKymaDomain).
 			addDefaultGlobalTLSCrtAndKey(defaultLocalTLSCrtEnc, defaultLocalTLSKeyEnc).
-			addDefaultServerlessKanikoForce()
+			addDefaultServerlessKanikoForce().
+			addDefaultk3dValuesForIstio()
 	} else if gardener, isGardener := clusterInfo.(clusterinfo.Gardener); isGardener {
 		builder.addDefaultGlobalDomainName(gardener.Domain)
 	}
