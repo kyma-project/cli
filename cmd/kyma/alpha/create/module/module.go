@@ -2,6 +2,7 @@ package module
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/mandelsoft/vfs/pkg/osfs"
@@ -9,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/envtest"
 	"github.com/kyma-project/cli/pkg/module"
 	"github.com/kyma-project/cli/pkg/module/oci"
 )
@@ -75,6 +77,27 @@ func (c *command) Run(args []string) error {
 	}
 
 	l := cli.NewLogger(c.opts.Verbose).Sugar()
+
+	/* -- VALIDATE DEFAULT CR -- */
+
+	c.NewStep("Validating Default CR")
+	envtestBinariesPath, err := c.envtestSetup()
+	if err != nil {
+		return err
+	}
+
+	vSkipped, err := module.ValidateDefaultCR(args[2], envtestBinariesPath, l)
+	if err != nil {
+		c.CurrentStep.Failure()
+		return err
+	}
+	//TODO: Do we need this? Maybe we should not print any message at all in that case?
+	if vSkipped {
+		c.CurrentStep.Successf("Default CR validation skipped - no default CR")
+	} else {
+		c.CurrentStep.Successf("Default CR validation succeeded")
+	}
+
 	cfg := &module.ComponentConfig{
 		Name:                 args[0],
 		Version:              args[1],
@@ -120,19 +143,6 @@ func (c *command) Run(args []string) error {
 
 	c.CurrentStep.Successf("Resources added")
 
-	c.NewStep("Validating Default CR")
-	vSkipped, err := module.ValidateDefaultCR(args[2], l)
-	if err != nil {
-		c.CurrentStep.Failure()
-		return err
-	}
-	//TODO: Do we need this? Maybe we should not print any message at all in that case?
-	if vSkipped {
-		c.CurrentStep.Successf("Default CR validation skipped - no default CR")
-	} else {
-		c.CurrentStep.Successf("Default CR validation succeeded")
-	}
-
 	/* -- PUSH & TEMPLATE -- */
 
 	if c.opts.RegistryURL != "" {
@@ -175,4 +185,14 @@ func (c *command) Run(args []string) error {
 	}
 
 	return nil
+}
+
+func (cmd *command) envtestSetup() (string, error) {
+	s := cmd.NewStep("Setting up envtest...")
+	envtestBinariesPath, err := envtest.Setup(s, true)
+	if err != nil {
+		log.Fatal(err)
+	}
+	s.Successf("using envtest from %q", envtestBinariesPath)
+	return envtestBinariesPath, nil
 }

@@ -19,7 +19,7 @@ import (
 
 const defaultCRName = "default.yaml"
 
-func ValidateDefaultCR(modulePath string, log *zap.SugaredLogger) (skipped bool, err error) {
+func ValidateDefaultCR(modulePath, envtestBinariesPath string, log *zap.SugaredLogger) (skipped bool, err error) {
 
 	exists, crData, err := readDefaultCR(modulePath)
 	if err != nil {
@@ -59,7 +59,7 @@ func ValidateDefaultCR(modulePath string, log *zap.SugaredLogger) (skipped bool,
 		return false, err
 	}
 
-	envTest, restCfg, err := startValidationEnv(crdFilePath)
+	envTest, restCfg, err := startValidationEnv(crdFilePath, envtestBinariesPath)
 	if err != nil {
 		return false, err
 	}
@@ -202,12 +202,13 @@ func renderYamlFromMap(modelMap map[string]interface{}) ([]byte, error) {
 
 }
 
-func startValidationEnv(crdFilePath string) (*envtest.Environment, *rest.Config, error) {
+func startValidationEnv(crdFilePath, envtestBinariesPath string) (*envtest.Environment, *rest.Config, error) {
 
 	envTest := &envtest.Environment{
 		CRDInstallOptions: envtest.CRDInstallOptions{
 			Paths: []string{crdFilePath},
 		},
+		BinaryAssetsDirectory: envtestBinariesPath,
 		ErrorIfCRDPathMissing: true,
 	}
 
