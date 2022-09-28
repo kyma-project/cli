@@ -62,8 +62,8 @@ Finally, if a registry is provided, the created module is pushed.
 	return cmd
 }
 
-func (c *command) Run(args []string) error {
-	if !c.opts.NonInteractive {
+func (cmd *command) Run(args []string) error {
+	if !cmd.opts.NonInteractive {
 		cli.AlphaWarn()
 	}
 
@@ -76,50 +76,50 @@ func (c *command) Run(args []string) error {
 		return err
 	}
 
-	l := cli.NewLogger(c.opts.Verbose).Sugar()
+	l := cli.NewLogger(cmd.opts.Verbose).Sugar()
 
 	/* -- VALIDATE DEFAULT CR -- */
 
-	c.NewStep("Validating Default CR")
-	envtestBinariesPath, err := c.envtestSetup()
+	cmd.NewStep("Validating Default CR")
+	envtestBinariesPath, err := cmd.envtestSetup()
 	if err != nil {
 		return err
 	}
 
 	vSkipped, err := module.ValidateDefaultCR(args[2], envtestBinariesPath, l)
 	if err != nil {
-		c.CurrentStep.Failure()
+		cmd.CurrentStep.Failure()
 		return err
 	}
 	//TODO: Do we need this? Maybe we should not print any message at all in that case?
 	if vSkipped {
-		c.CurrentStep.Successf("Default CR validation skipped - no default CR")
+		cmd.CurrentStep.Successf("Default CR validation skipped - no default CR")
 	} else {
-		c.CurrentStep.Successf("Default CR validation succeeded")
+		cmd.CurrentStep.Successf("Default CR validation succeeded")
 	}
 
 	cfg := &module.ComponentConfig{
 		Name:                 args[0],
 		Version:              args[1],
-		ComponentArchivePath: c.opts.ModPath,
-		Overwrite:            c.opts.Overwrite,
-		RegistryURL:          c.opts.RegistryURL,
+		ComponentArchivePath: cmd.opts.ModPath,
+		Overwrite:            cmd.opts.Overwrite,
+		RegistryURL:          cmd.opts.RegistryURL,
 	}
 
 	/* -- CREATE ARCHIVE -- */
 	fs := osfs.New()
 
-	c.NewStep(fmt.Sprintf("Creating module archive at %q", c.opts.ModPath))
+	cmd.NewStep(fmt.Sprintf("Creating module archive at %q", cmd.opts.ModPath))
 	archive, err := module.Build(fs, cfg)
 	if err != nil {
-		c.CurrentStep.Failure()
+		cmd.CurrentStep.Failure()
 		return err
 	}
-	c.CurrentStep.Success()
+	cmd.CurrentStep.Success()
 
 	/* -- BUNDLE RESOURCES -- */
 
-	c.NewStep("Adding resources...")
+	cmd.NewStep("Adding resources...")
 
 	// Create base resource defs with module root and its sub-layers
 	defs, err := module.Inspect(args[2], l)
@@ -128,7 +128,7 @@ func (c *command) Run(args []string) error {
 	}
 
 	// add extra resources
-	for _, p := range c.opts.ResourcePaths {
+	for _, p := range cmd.opts.ResourcePaths {
 		rd, err := module.ResourceDefFromString(p)
 		if err != nil {
 			return err
@@ -137,51 +137,51 @@ func (c *command) Run(args []string) error {
 	}
 
 	if err := module.AddResources(archive, cfg, l, fs, defs...); err != nil {
-		c.CurrentStep.Failure()
+		cmd.CurrentStep.Failure()
 		return err
 	}
 
-	c.CurrentStep.Successf("Resources added")
+	cmd.CurrentStep.Successf("Resources added")
 
 	/* -- PUSH & TEMPLATE -- */
 
-	if c.opts.RegistryURL != "" {
-		c.NewStep(fmt.Sprintf("Pushing image to %q", c.opts.RegistryURL))
+	if cmd.opts.RegistryURL != "" {
+		cmd.NewStep(fmt.Sprintf("Pushing image to %q", cmd.opts.RegistryURL))
 		r := &module.Remote{
-			Registry:    c.opts.RegistryURL,
-			Credentials: c.opts.Credentials,
-			Token:       c.opts.Token,
-			Insecure:    c.opts.Insecure,
+			Registry:    cmd.opts.RegistryURL,
+			Credentials: cmd.opts.Credentials,
+			Token:       cmd.opts.Token,
+			Insecure:    cmd.opts.Insecure,
 		}
 		if err := module.Push(archive, r, l); err != nil {
-			c.CurrentStep.Failure()
+			cmd.CurrentStep.Failure()
 			return err
 		}
-		c.CurrentStep.Success()
+		cmd.CurrentStep.Success()
 
-		c.NewStep("Generating module template")
-		t, err := module.Template(archive, c.opts.Channel, args[2], fs)
+		cmd.NewStep("Generating module template")
+		t, err := module.Template(archive, cmd.opts.Channel, args[2], fs)
 		if err != nil {
-			c.CurrentStep.Failure()
+			cmd.CurrentStep.Failure()
 			return err
 		}
 
-		if err := vfs.WriteFile(fs, c.opts.TemplateOutput, t, os.ModePerm); err != nil {
-			c.CurrentStep.Failure()
+		if err := vfs.WriteFile(fs, cmd.opts.TemplateOutput, t, os.ModePerm); err != nil {
+			cmd.CurrentStep.Failure()
 			return err
 		}
-		c.CurrentStep.Success()
+		cmd.CurrentStep.Success()
 	}
 
 	/* -- CLEANUP -- */
 
-	if c.opts.Clean {
-		c.NewStep(fmt.Sprintf("Cleaning up mod path %q", c.opts.ModPath))
-		if err := os.RemoveAll(c.opts.ModPath); err != nil {
-			c.CurrentStep.Failure()
+	if cmd.opts.Clean {
+		cmd.NewStep(fmt.Sprintf("Cleaning up mod path %q", cmd.opts.ModPath))
+		if err := os.RemoveAll(cmd.opts.ModPath); err != nil {
+			cmd.CurrentStep.Failure()
 			return err
 		}
-		c.CurrentStep.Success()
+		cmd.CurrentStep.Success()
 	}
 
 	return nil

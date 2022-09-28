@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	DefaultVersion  = "1.24.x!"
+	DefaultVersion  = "1.24.x!" //1.24.x! means the latest available patch version for 1.24 branch
 	versionEnv      = "ENVTEST_K8S_VERSION"
 	envtestSetupBin = "setup-envtest"
 )
@@ -51,7 +51,12 @@ func Setup(step step.Step, verbose bool) (string, error) {
 
 	//Install envtest binaries using setup-envtest
 	envtestSetupBinPath := filepath.Join(p, envtestSetupBin)
-	version := DefaultVersion
+
+	version := os.Getenv(versionEnv)
+	if version == "" {
+		version = DefaultVersion
+	}
+
 	envtestInstallBinariesCmd := exec.Command(envtestSetupBinPath, "use", version, "--bin-dir", p)
 	out, err := envtestInstallBinariesCmd.CombinedOutput()
 	if err != nil {
@@ -77,28 +82,23 @@ func Setup(step step.Step, verbose bool) (string, error) {
 
 //extractPath extracts the envtest binaries path from the "setup-envtest" command output
 func extractPath(envtestSetupMsg string) (string, error) {
-	r, err := regexp.Compile(`[pP]ath:(.+)`)
-	if err != nil {
-		return "", err
-	}
-	matches := r.FindStringSubmatch(envtestSetupMsg)
-	if len(matches) != 2 {
-		return "", errors.New("Couldn't find envtest binaries path in the \"setup-envtest\" command output")
-	}
-
-	return strings.TrimSpace(matches[1]), nil
+	return parseEnvtestSetupMsg(envtestSetupMsg, `[pP]ath:(.+)`, "envtest binaries path")
 
 }
 
 //extractVersion extracts the envtest binaries version from the "setup-envtest" command output
 func extractVersion(envtestSetupMsg string) (string, error) {
-	r, err := regexp.Compile(`[vV]ersion:(.+)`)
+	return parseEnvtestSetupMsg(envtestSetupMsg, `[vV]ersion:(.+)`, "envtest version")
+}
+
+func parseEnvtestSetupMsg(envtestSetupMsg, rgxp, objName string) (string, error) {
+	r, err := regexp.Compile(rgxp)
 	if err != nil {
 		return "", err
 	}
 	matches := r.FindStringSubmatch(envtestSetupMsg)
 	if len(matches) != 2 {
-		return "", errors.New("Couldn't find envtest version in the \"setup-envtest\" command output")
+		return "", fmt.Errorf("Couldn't find %s in the \"setup-envtest\" command output", objName)
 	}
 
 	return strings.TrimSpace(matches[1]), nil

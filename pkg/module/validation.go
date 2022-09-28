@@ -46,7 +46,7 @@ func ValidateDefaultCR(modulePath, envtestBinariesPath string, log *zap.SugaredL
 		return false, fmt.Errorf("Error finding CRD file in the %q directory: %w", searchDirPath, err)
 	}
 	if !crdFound {
-		return false, fmt.Errorf("Can't find the CRD for CR instance defined in \"default.yaml\" (group: %q, kind %q)", group, kind)
+		return false, fmt.Errorf("Can't find the CRD for CR instance defined in %q (group: %q, kind %q)", defaultCRName, group, kind)
 	}
 
 	err = ensureDefaultNamespace(crMap)
