@@ -399,4 +399,23 @@ func TestMerge(t *testing.T) {
 			require.Truef(t, reflect.DeepEqual(expected, actual), "want: %#v\n got: %#v\n", expected, actual)
 		})
 	})
+	
+	t.Run("gke", func(t *testing.T) {
+		t.Run("default values", func(t *testing.T) {
+			actual, err := Merge(Sources{}, "testdata", clusterinfo.GKE{})
+
+			expected := Values{
+				"istio": map[string]interface{}{
+					"helmValues": map[string]interface{}{
+						"cni": map[string]string{
+							"cniBinDir":  "/home/kubernetes/bin",
+						},
+					},
+				},
+			}
+
+			require.NoError(t, err)
+			require.Truef(t, reflect.DeepEqual(expected, actual), "want: %#v\n got: %#v\n", expected, actual)
+		})
+	})
 }

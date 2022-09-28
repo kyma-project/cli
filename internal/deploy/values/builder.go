@@ -101,6 +101,18 @@ func (b *builder) addDefaultk3dValuesForIstio() *builder {
 	})
 }
 
+func (b *builder) addDefaultGkeValuesForIstio() *builder {
+	return b.addDefaultValues(map[string]interface{}{
+		"istio": map[string]interface{}{
+			"helmValues": map[string]interface{}{
+				"cni": map[string]string{
+					"cniBinDir": "/home/kubernetes/bin",
+				},
+			},
+		},
+	})
+}
+
 func (b *builder) build() (map[string]interface{}, error) {
 	merged, err := b.mergeSources()
 	if err != nil {
