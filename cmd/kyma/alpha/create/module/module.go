@@ -81,10 +81,7 @@ func (cmd *command) Run(args []string) error {
 	/* -- VALIDATE DEFAULT CR -- */
 
 	cmd.NewStep("Validating Default CR")
-	envtestBinariesPath, err := cmd.envtestSetup()
-	if err != nil {
-		return err
-	}
+	envtestBinariesPath := cmd.envtestSetup()
 
 	vSkipped, err := module.ValidateDefaultCR(args[2], envtestBinariesPath, l)
 	if err != nil {
@@ -187,12 +184,12 @@ func (cmd *command) Run(args []string) error {
 	return nil
 }
 
-func (cmd *command) envtestSetup() (string, error) {
+func (cmd *command) envtestSetup() string {
 	s := cmd.NewStep("Setting up envtest...")
 	envtestBinariesPath, err := envtest.Setup(s, true)
 	if err != nil {
 		log.Fatal(err)
 	}
 	s.Successf("using envtest from %q", envtestBinariesPath)
-	return envtestBinariesPath, nil
+	return envtestBinariesPath
 }
