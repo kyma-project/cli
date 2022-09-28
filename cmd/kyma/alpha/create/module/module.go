@@ -58,6 +58,7 @@ Finally, if a registry is provided, the created module is pushed.
 	cmd.Flags().BoolVarP(&o.Overwrite, "overwrite", "w", false, "overwrites the existing mod-path directory if it exists")
 	cmd.Flags().BoolVar(&o.Insecure, "insecure", false, "Use an insecure connection to access the registry.")
 	cmd.Flags().BoolVar(&o.Clean, "clean", false, "Remove the mod-path folder and all its contents at the end.")
+	cmd.Flags().BoolVar(&o.ValidateDefaultCR, "validateCR", true, "Validate the Custom Resource defined in the \"default.yaml\" file")
 
 	return cmd
 }
@@ -78,21 +79,23 @@ func (cmd *command) Run(args []string) error {
 
 	l := cli.NewLogger(cmd.opts.Verbose).Sugar()
 
-	/* -- VALIDATE DEFAULT CR -- */
+	if cmd.opts.ValidateDefaultCR {
+		/* -- VALIDATE DEFAULT CR -- */
 
-	cmd.NewStep("Validating Default CR")
-	envtestBinariesPath := cmd.envtestSetup()
+		cmd.NewStep("Validating Default CR")
+		envtestBinariesPath := cmd.envtestSetup()
 
-	vSkipped, err := module.ValidateDefaultCR(args[2], envtestBinariesPath, l)
-	if err != nil {
-		cmd.CurrentStep.Failure()
-		return err
-	}
-	//TODO: Do we need this? Maybe we should not print any message at all in that case?
-	if vSkipped {
-		cmd.CurrentStep.Successf("Default CR validation skipped - no default CR")
-	} else {
-		cmd.CurrentStep.Successf("Default CR validation succeeded")
+		vSkipped, err := module.ValidateDefaultCR(args[2], envtestBinariesPath, l)
+		if err != nil {
+			cmd.CurrentStep.Failure()
+			return err
+		}
+
+		if vSkipped {
+			cmd.CurrentStep.Successf("Default CR validation skipped - no default CR")
+		} else {
+			cmd.CurrentStep.Successf("Default CR validation succeeded")
+		}
 	}
 
 	cfg := &module.ComponentConfig{
