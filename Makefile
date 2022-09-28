@@ -12,7 +12,7 @@ endif
 
 FLAGS = -ldflags '-s -w -X github.com/kyma-project/cli/cmd/kyma/version.Version=$(VERSION)'
 
-.PHONE: gcp-authenticate
+.PHONY: gcp-authenticate
 gcp-authenticate:
 	@echo "Authenticating to gcloud"
     @gcloud auth activate-service-account --key-file "$GOOGLE_APPLICATION_CREDENTIALS" || exit 1
