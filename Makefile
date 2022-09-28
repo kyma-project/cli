@@ -12,8 +12,8 @@ endif
 
 FLAGS = -ldflags '-s -w -X github.com/kyma-project/cli/cmd/kyma/version.Version=$(VERSION)'
 
-.PHONE: gcp_authenticate
-gcp_authenticate:
+.PHONE: gcp-authenticate
+gcp-authenticate:
 	@echo "Authenticating to gcloud"
     @gcloud auth activate-service-account --key-file "$GOOGLE_APPLICATION_CREDENTIALS" || exit 1
 
@@ -101,7 +101,7 @@ local: validate test install
 ci-pr: resolve validate build test integration-test
 
 .PHONY: ci-main
-ci-main: gcp_authenticate resolve validate build test integration-test upload-binaries
+ci-main: gcp-authenticate resolve validate build test integration-test upload-binaries
 
 .PHONY: ci-release
 ci-release: resolve validate build test integration-test archive release
