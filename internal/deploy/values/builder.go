@@ -105,8 +105,11 @@ func (b *builder) addDefaultGkeValuesForIstio() *builder {
 	return b.addDefaultValues(map[string]interface{}{
 		"istio": map[string]interface{}{
 			"helmValues": map[string]interface{}{
-				"cni": map[string]string{
+				"cni": map[string]interface{}{
 					"cniBinDir": "/home/kubernetes/bin",
+					"resourceQuotas": map[string]bool{
+						"enabled": true,
+					},
 				},
 			},
 		},
