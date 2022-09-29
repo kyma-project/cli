@@ -15,7 +15,7 @@ FLAGS = -ldflags '-s -w -X github.com/kyma-project/cli/cmd/kyma/version.Version=
 .PHONY: gcp-authenticate
 gcp-authenticate:
 	@echo "Authenticating to gcloud"
-	@gcloud auth activate-service-account --key-file "$GOOGLE_APPLICATION_CREDENTIALS" || exit 1
+	@gcloud auth activate-service-account --key-file "$(GOOGLE_APPLICATION_CREDENTIALS)" || exit 1
 
 .PHONY: resolve
 resolve:
