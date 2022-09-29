@@ -12,6 +12,11 @@ endif
 
 FLAGS = -ldflags '-s -w -X github.com/kyma-project/cli/cmd/kyma/version.Version=$(VERSION)'
 
+.PHONY: gcp-authenticate
+gcp-authenticate:
+	@echo "Authenticating to gcloud"
+	@gcloud auth activate-service-account --key-file "$GOOGLE_APPLICATION_CREDENTIALS" || exit 1
+
 .PHONY: resolve
 resolve:
 	go mod tidy -compat=1.18
@@ -96,7 +101,7 @@ local: validate test install
 ci-pr: resolve validate build test integration-test
 
 .PHONY: ci-main
-ci-main: resolve validate build test integration-test upload-binaries
+ci-main: gcp-authenticate resolve validate build test integration-test upload-binaries
 
 .PHONY: ci-release
 ci-release: resolve validate build test integration-test archive release
