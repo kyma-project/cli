@@ -26,6 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	utilyaml "k8s.io/apimachinery/pkg/util/yaml"
@@ -51,7 +52,8 @@ func NewFromConfig(url, file string) (KymaKube, error) {
 	return NewFromConfigWithTimeout(url, file, defaultHTTPTimeout)
 }
 
-// NewFromRestConfigWithTimeout
+// NewFromRestConfigWithTimeout returns a KymaKube given already existing rest.Config. It means that the access to a single cluster is given explicitly.
+// The returned KymaKube has an empty (but not nil) kubeCfg property. This is on purpose: we will not use this property to switch between contexts or access any remote clusters, the access to the single cluster is already provided by the config parameter.
 func NewFromRestConfigWithTimeout(config *rest.Config, t time.Duration) (KymaKube, error) {
 
 	config.Timeout = t
@@ -71,11 +73,23 @@ func NewFromRestConfigWithTimeout(config *rest.Config, t time.Duration) (KymaKub
 		return nil, err
 	}
 
+	//An empty k8s.io/client-go/tools/clientcmd/api.Config object.
+	kubeConfig := &api.Config{
+		Preferences: api.Preferences{
+			Extensions: map[string]runtime.Object{},
+		},
+		Clusters:   map[string]*api.Cluster{},
+		AuthInfos:  map[string]*api.AuthInfo{},
+		Contexts:   map[string]*api.Context{},
+		Extensions: map[string]runtime.Object{},
+	}
+
 	return &client{
 			static:  sClient,
 			dynamic: dClient,
 			istio:   istioClient,
 			restCfg: config,
+			kubeCfg: kubeConfig,
 		},
 		nil
 }
