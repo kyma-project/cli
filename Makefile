@@ -14,10 +14,7 @@ FLAGS = -ldflags '-s -w -X github.com/kyma-project/cli/cmd/kyma/version.Version=
 
 .PHONY: gcp-authenticate
 gcp-authenticate:
-ifdef $(GOOGLE_APPLICATION_CREDENTIALS)
-	@echo "Authenticating to gcloud"
-	@gcloud auth activate-service-account --key-file "$(GOOGLE_APPLICATION_CREDENTIALS)" || exit 1
-endif
+	gcloud auth activate-service-account --key-file "$(GOOGLE_APPLICATION_CREDENTIALS)"
 
 .PHONY: resolve
 resolve:
@@ -75,7 +72,7 @@ archive:
 	cp -r bin/* $(ARTIFACTS)
 
 .PHONY: upload-binaries
-upload-binaries:
+upload-binaries: gcp-authenticate
 ifeq ($(STABLE), true)
 	gsutil cp bin/* $(KYMA_CLI_STABLE_BUCKET)
 endif
@@ -103,7 +100,7 @@ local: validate test install
 ci-pr: resolve validate build test integration-test
 
 .PHONY: ci-main
-ci-main: gcp-authenticate resolve validate build test integration-test upload-binaries
+ci-main: resolve validate build test integration-test upload-binaries
 
 .PHONY: ci-release
 ci-release: resolve validate build test integration-test archive release
