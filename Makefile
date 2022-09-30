@@ -12,12 +12,6 @@ endif
 
 FLAGS = -ldflags '-s -w -X github.com/kyma-project/cli/cmd/kyma/version.Version=$(VERSION)'
 
-.PHONY: gcp-authenticate
-gcp-authenticate:
-ifdef $(GOOGLE_APPLICATION_CREDENTIALS)
-	gcloud auth activate-service-account --key-file "$(GOOGLE_APPLICATION_CREDENTIALS)"
-endif
-
 .PHONY: resolve
 resolve:
 	go mod tidy -compat=1.18
@@ -76,9 +70,11 @@ archive:
 .PHONY: upload-binaries
 upload-binaries: gcp-authenticate
 ifeq ($(STABLE), true)
+	gcloud auth activate-service-account --key-file "$(GOOGLE_APPLICATION_CREDENTIALS)"
 	gsutil cp bin/* $(KYMA_CLI_STABLE_BUCKET)
 endif
 ifeq ($(UNSTABLE), true)
+	gcloud auth activate-service-account --key-file "$(GOOGLE_APPLICATION_CREDENTIALS)"
 	gsutil cp bin/* $(KYMA_CLI_UNSTABLE_BUCKET)
 endif
 
