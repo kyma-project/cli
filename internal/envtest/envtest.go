@@ -80,13 +80,13 @@ func Setup(step step.Step, verbose bool) (string, error) {
 	return envtestBinariesPath, nil
 }
 
-//extractPath extracts the envtest binaries path from the "setup-envtest" command output
+// extractPath extracts the envtest binaries path from the "setup-envtest" command output
 func extractPath(envtestSetupMsg string) (string, error) {
 	return parseEnvtestSetupMsg(envtestSetupMsg, `[pP]ath:(.+)`, "envtest binaries path")
 
 }
 
-//extractVersion extracts the envtest binaries version from the "setup-envtest" command output
+// extractVersion extracts the envtest binaries version from the "setup-envtest" command output
 func extractVersion(envtestSetupMsg string) (string, error) {
 	return parseEnvtestSetupMsg(envtestSetupMsg, `[vV]ersion:(.+)`, "envtest version")
 }

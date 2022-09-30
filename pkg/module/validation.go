@@ -82,7 +82,7 @@ func ValidateDefaultCR(modulePath, envtestBinariesPath string, log *zap.SugaredL
 	return false, nil
 }
 
-//readDefaultCR reads the default CR file's contents. The returned bool is true if the data is successfully read, it's false otherwise.
+// readDefaultCR reads the default CR file's contents. The returned bool is true if the data is successfully read, it's false otherwise.
 func readDefaultCR(modulePath string) (bool, []byte, error) {
 	//TODO: Do we need to override the name or it's always "default.yaml"?
 	crPath := filepath.Join(modulePath, defaultCRName)
@@ -107,7 +107,7 @@ func readDefaultCR(modulePath string) (bool, []byte, error) {
 	return true, crData, nil
 }
 
-//ensureDefaultNamespace ensures that the metadata.namespace attribute exists and it's value is "default". This is because of how we use the envtest to validate the CR.
+// ensureDefaultNamespace ensures that the metadata.namespace attribute exists and it's value is "default". This is because of how we use the envtest to validate the CR.
 func ensureDefaultNamespace(modelMap map[string]interface{}) error {
 
 	//Traverse the Map to look for "metadata.namespace"
@@ -151,7 +151,7 @@ func readGroupKind(crMap map[string]interface{}) (group, kind string, retErr err
 	return
 }
 
-//mustReadMap reads a value from the given map using the given key. The value must be a Map. An error is returned if the key is not in the input map, or the value is not a Map.
+// mustReadMap reads a value from the given map using the given key. The value must be a Map. An error is returned if the key is not in the input map, or the value is not a Map.
 func mustReadMap(input map[string]interface{}, key string) (map[string]interface{}, error) {
 	attrVal, ok := input[key]
 	if !ok {
@@ -166,7 +166,7 @@ func mustReadMap(input map[string]interface{}, key string) (map[string]interface
 	return asMap, nil
 }
 
-//mustReadString reads a value from the given map using the given key. The value must be a string. An error is returned if the key is not in the map, or the value is not a string.
+// mustReadString reads a value from the given map using the given key. The value must be a string. An error is returned if the key is not in the map, or the value is not a string.
 func mustReadString(input map[string]interface{}, key string) (string, error) {
 	attrVal, ok := input[key]
 	if !ok {
@@ -223,7 +223,7 @@ func startValidationEnv(crdFilePath, envtestBinariesPath string) (*envtest.Envir
 	return envTest, restCfg, nil
 }
 
-//findCRDFileFor returns path to the file with a CRD definition for the given group and kind, if exists. It looks in the dirPath directory and all of it's subdirectories, recursively. The first parameter is true if the file is found, it's false otherwise.
+// findCRDFileFor returns path to the file with a CRD definition for the given group and kind, if exists. It looks in the dirPath directory and all of it's subdirectories, recursively. The first parameter is true if the file is found, it's false otherwise.
 func findCRDFileFor(group, kind, dirPath string) (bool, string, error) {
 
 	//list all files in the dirPath and all it's subdirectories, recursively
@@ -253,7 +253,7 @@ func findCRDFileFor(group, kind, dirPath string) (bool, string, error) {
 	return false, "", nil
 }
 
-//isCRDFileFor checks if the given file is a CRD for given group and kind.
+// isCRDFileFor checks if the given file is a CRD for given group and kind.
 func isCRDFileFor(group, kind, filePath string) (bool, error) {
 	{
 
@@ -322,7 +322,7 @@ func isCRDFileFor(group, kind, filePath string) (bool, error) {
 	}
 }
 
-//listFiles returns an unordered slice of all the files within the given directory and all it's subdirectories, recursively.
+// listFiles returns an unordered slice of all the files within the given directory and all it's subdirectories, recursively.
 func listFiles(dirPath string) ([]string, error) {
 
 	res := []string{}
