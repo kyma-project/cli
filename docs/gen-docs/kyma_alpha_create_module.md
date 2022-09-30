@@ -36,6 +36,7 @@ kyma alpha create module OCI_IMAGE_NAME MODULE_VERSION <CONTENT_PATH> [flags]
       --registry string        Repository context url for module to upload. The repository url will be automatically added to the repository contexts in the module
   -r, --resource stringArray   Add an extra resource in a new layer with format <NAME:TYPE@PATH>. It is also possible to provide only a path; name will default to the last path element and type to 'helm-chart'
   -t, --token string           Authentication token for the given registry (alternative to basic authentication).
+      --validateCR             Validate the Custom Resource defined in the "default.yaml" file (default true)
 ```
 
 ## Flags inherited from parent commands
