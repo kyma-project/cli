@@ -3,7 +3,10 @@ module github.com/kyma-project/cli
 go 1.18
 
 // required to avoid locking with gardner dependency updates
-replace k8s.io/client-go => k8s.io/client-go v0.24.4
+replace (
+	github.com/moby/moby => github.com/moby/moby v20.10.18+incompatible
+	k8s.io/client-go => k8s.io/client-go v0.24.4
+)
 
 require (
 	github.com/Masterminds/semver/v3 v3.1.1
@@ -13,7 +16,7 @@ require (
 	github.com/containerd/containerd v1.6.8
 	github.com/daviddengcn/go-colortext v1.0.0
 	github.com/docker/cli v20.10.17+incompatible
-	github.com/docker/docker v20.10.17+incompatible
+	github.com/docker/docker v20.10.18+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/fatih/color v1.13.0
 	github.com/gardener/component-spec/bindings-go v0.0.66
@@ -138,7 +141,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/moby/locker v1.0.1 // indirect
-	github.com/moby/moby v20.10.17+incompatible // indirect
+	github.com/moby/moby v20.10.18+incompatible // indirect
 	github.com/moby/spdystream v0.2.0 // indirect
 	github.com/moby/sys/mount v0.3.2 // indirect
 	github.com/moby/sys/mountinfo v0.6.1 // indirect
