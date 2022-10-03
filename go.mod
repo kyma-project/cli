@@ -32,7 +32,7 @@ require (
 	go.uber.org/zap v1.21.0
 	gopkg.in/yaml.v3 v3.0.1
 	gotest.tools v2.2.0+incompatible
-	helm.sh/helm/v3 v3.9.3
+	helm.sh/helm/v3 v3.9.4
 	istio.io/client-go v1.14.0
 	k8s.io/api v0.24.4
 	k8s.io/apiextensions-apiserver v0.24.3
