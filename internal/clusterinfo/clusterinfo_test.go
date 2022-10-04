@@ -51,6 +51,26 @@ func TestDiscover(t *testing.T) {
 		require.Equal(t, "cool-cluster", k3d.ClusterName)
 	})
 
+	t.Run("gke cluster", func(t *testing.T) {
+		clientset := fake.NewSimpleClientset(&corev1.NodeList{
+			Items: []corev1.Node{
+				{
+					Status: corev1.NodeStatus{
+						NodeInfo: corev1.NodeSystemInfo{
+							KubeProxyVersion: "v1.23.10-gke.1000",
+						},
+					},
+				},
+			},
+		})
+
+		info, err := Discover(context.Background(), clientset)
+		require.NoError(t, err)
+
+		_, isGke := info.(GKE)
+		require.True(t, isGke)
+	})
+
 	t.Run("unrecognized cluster", func(t *testing.T) {
 		clientset := fake.NewSimpleClientset(&corev1.NodeList{
 			Items: []corev1.Node{

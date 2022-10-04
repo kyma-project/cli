@@ -24,6 +24,10 @@ type K3d struct {
 
 func (K3d) sealed() {}
 
+type GKE struct{}
+
+func (GKE) sealed() {}
+
 type Unrecognized struct {
 }
 
@@ -37,6 +41,14 @@ func Discover(ctx context.Context, kubeClient kubernetes.Interface) (Info, error
 
 	if gardenerDomain != "" {
 		return Gardener{Domain: gardenerDomain}, nil
+	}
+
+	isGke, err := isGkeCluster(ctx, kubeClient)
+	if err != nil {
+		return nil, err
+	}
+	if isGke {
+		return GKE{}, nil
 	}
 
 	isK3d, err := isK3dCluster(ctx, kubeClient)

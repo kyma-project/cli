@@ -63,6 +63,8 @@ func addClusterSpecificDefaults(builder *builder, clusterInfo clusterinfo.Info) 
 			addDefaultk3dValuesForIstio()
 	} else if gardener, isGardener := clusterInfo.(clusterinfo.Gardener); isGardener {
 		builder.addDefaultGlobalDomainName(gardener.Domain)
+	} else if _, isGke := clusterInfo.(clusterinfo.GKE); isGke {
+		builder.addDefaultGkeValuesForIstio()
 	}
 }
 
