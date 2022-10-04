@@ -3,10 +3,7 @@ module github.com/kyma-project/cli
 go 1.18
 
 // required to avoid locking with gardner dependency updates
-replace (
-	github.com/moby/moby => github.com/moby/moby v20.10.18+incompatible
-	k8s.io/client-go => k8s.io/client-go v0.24.4
-)
+replace k8s.io/client-go => k8s.io/client-go v0.24.4
 
 require (
 	github.com/Masterminds/semver/v3 v3.1.1
