@@ -68,7 +68,7 @@ archive:
 	cp -r bin/* $(ARTIFACTS)
 
 .PHONY: upload-binaries
-upload-binaries: gcp-authenticate
+upload-binaries:
 ifeq ($(STABLE), true)
 	gcloud auth activate-service-account --key-file "$(GOOGLE_APPLICATION_CREDENTIALS)"
 	gsutil cp bin/* $(KYMA_CLI_STABLE_BUCKET)
