@@ -3,8 +3,10 @@
 package mocks
 
 import (
-	dynamic "k8s.io/client-go/dynamic"
+	corev1 "k8s.io/api/core/v1"
 	api "k8s.io/client-go/tools/clientcmd/api"
+
+	dynamic "k8s.io/client-go/dynamic"
 
 	kubernetes "k8s.io/client-go/kubernetes"
 
@@ -16,7 +18,7 @@ import (
 
 	unstructured "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	v1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/apps/v1"
 
 	versioned "istio.io/client-go/pkg/clientset/versioned"
 )
@@ -176,12 +178,26 @@ func (_m *KymaKube) Static() kubernetes.Interface {
 	return r0
 }
 
+// WaitDeploymentStatus provides a mock function with given fields: namespace, name, cond, status
+func (_m *KymaKube) WaitDeploymentStatus(namespace string, name string, cond v1.DeploymentConditionType, status corev1.ConditionStatus) error {
+	ret := _m.Called(namespace, name, cond, status)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, string, v1.DeploymentConditionType, corev1.ConditionStatus) error); ok {
+		r0 = rf(namespace, name, cond, status)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // WaitPodStatus provides a mock function with given fields: namespace, name, status
-func (_m *KymaKube) WaitPodStatus(namespace string, name string, status v1.PodPhase) error {
+func (_m *KymaKube) WaitPodStatus(namespace string, name string, status corev1.PodPhase) error {
 	ret := _m.Called(namespace, name, status)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, string, v1.PodPhase) error); ok {
+	if rf, ok := ret.Get(0).(func(string, string, corev1.PodPhase) error); ok {
 		r0 = rf(namespace, name, status)
 	} else {
 		r0 = ret.Error(0)
@@ -191,11 +207,11 @@ func (_m *KymaKube) WaitPodStatus(namespace string, name string, status v1.PodPh
 }
 
 // WaitPodStatusByLabel provides a mock function with given fields: namespace, labelName, labelValue, status
-func (_m *KymaKube) WaitPodStatusByLabel(namespace string, labelName string, labelValue string, status v1.PodPhase) error {
+func (_m *KymaKube) WaitPodStatusByLabel(namespace string, labelName string, labelValue string, status corev1.PodPhase) error {
 	ret := _m.Called(namespace, labelName, labelValue, status)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, string, string, v1.PodPhase) error); ok {
+	if rf, ok := ret.Get(0).(func(string, string, string, corev1.PodPhase) error); ok {
 		r0 = rf(namespace, labelName, labelValue, status)
 	} else {
 		r0 = ret.Error(0)

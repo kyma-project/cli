@@ -1,6 +1,7 @@
 package kube
 
 import (
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -46,6 +47,9 @@ type KymaKube interface {
 
 	// WaitPodStatusByLabel selects a set of pods by label and waits for them
 	WaitPodStatusByLabel(namespace, labelName, labelValue string, status corev1.PodPhase) error
+
+	// WaitDeploymentStatus waits for the given deployment to have the desired status for the given condition type
+	WaitDeploymentStatus(namespace, name string, cond appsv1.DeploymentConditionType, status corev1.ConditionStatus) error
 
 	// WatchResource watches an arbitrary resource using the k8s unstructured API.
 	// To check if the resource is in the desired state, checkFn is called repeatedly passing the resource as parameter,

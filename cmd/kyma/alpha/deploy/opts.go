@@ -10,11 +10,13 @@ import (
 // Options defines available options for the command
 type Options struct {
 	*cli.Options
-	Modules     []string
-	ModulesFile string
-	Timeout     time.Duration
-	DryRun      bool
-	Source      string
+	Modules        []string
+	ModulesFile    string
+	Timeout        time.Duration
+	DryRun         bool
+	Kustomizations []string
+	Channel        string
+	Templates      []string
 }
 
 // NewOptions creates options with default values

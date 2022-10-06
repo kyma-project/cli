@@ -15,18 +15,19 @@ kyma alpha deploy [flags]
 ## Flags
 
 ```bash
-      --dry-run               Renders the Kubernetes manifests without actually applying them.
-  -m, --module stringArray    Provide one or more modules to activate after the deployment is finished, for example:
-                              	- With short-hand notation: "--module name@namespace"
-                              	- With verbose JSON structure "--module '{"name": "componentName","namespace": "componenNamespace","url": "componentUrl","version": "1.2.3"}'
-  -f, --modules-file string   Path to file containing a list of modules.
-  -s, --source string         Installation source:
-                              	- Deploy a specific release  of the lifecycle and module manager: "kyma deploy --source=2.0.0"
-                              	- Deploy a specific branch of the lifecycle and module manager: "kyma deploy --source=<my-branch-name>"
-                              	- Deploy a commit (8 characters or more) of the lifecycle and module manager: "kyma deploy --source=34edf09a"
-                              	- Deploy a pull request, for example "kyma deploy --source=PR-9486"
-                              	- Deploy the local sources  of the lifecycle and module manager: "kyma deploy --source=local" (default "main")
-  -t, --timeout duration      Maximum time for the deployment. (default 20m0s)
+  -c, --channel string              Select which channel to deploy from: stable, fast, nightly. (default "stable")
+      --dry-run                     Renders the Kubernetes manifests without actually applying them.
+  -k, --kustomization stringArray   Provide one or more kustomizations to deploy. This flag accepts a URL with an optional reference (commit, branch or release) in the format URL@ref or a local path to the directory of the kustomization file.
+                                    	Defaults to deploying lifecycle-manager and module-manager from github main branch.
+                                    	Examples:
+                                    	- Deploy a specific release of the lifecycle manager: "kyma deploy -k https://github.com/kyma-project/lifecycle-manager/operator/config/default@1.2.3"
+                                    	- Deploy a local module manager: "kyma deploy --kustomization /path/to/repo/module-manager/operator/config/default"
+                                    	- Deploy a branch of lifecycle manager with a custom URL: "kyma deploy -k https://gitlab.com/forked-from-github/lifecycle-manager/operator/config/default@feature-branch-1"
+  -m, --module stringArray          Provide one or more modules to activate after the deployment is finished. Example: "--module name@namespace" (namespace is optional).
+  -f, --modules-file string         Path to file containing a list of modules.
+      --template stringArray        Provide one or more module templates to deploy.
+                                    	WARNING: This is a temporary flag for development and will be removed soon.
+  -t, --timeout duration            Maximum time for the deployment. (default 20m0s)
 ```
 
 ## Flags inherited from parent commands

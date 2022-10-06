@@ -22,7 +22,7 @@ const modTemplate = `apiVersion: operator.kyma-project.io/v1alpha1
 kind: ModuleTemplate
 metadata:
   name: moduletemplate-{{ .ShortName }}
-  namespace: kyma-system
+  namespace: kcp-system
   labels:
     "operator.kyma-project.io/managed-by": "lifecycle-manager"
     "operator.kyma-project.io/controller-name": "manifest"

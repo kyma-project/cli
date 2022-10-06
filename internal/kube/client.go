@@ -11,8 +11,10 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/discovery"
 	memory "k8s.io/client-go/discovery/cached"
 	"k8s.io/client-go/dynamic"
@@ -230,25 +232,45 @@ func (c *client) IsPodDeployedByLabel(namespace, labelName, labelValue string) (
 	return len(pods.Items) > 0, nil
 }
 
+func (c *client) WaitDeploymentStatus(namespace, name string, cond appsv1.DeploymentConditionType, status corev1.ConditionStatus) error {
+	watchFn := func() (bool, error) {
+		d, err := c.static.AppsV1().Deployments(namespace).Get(context.Background(), name, metav1.GetOptions{})
+		if err != nil && k8sErrors.IsNotFound(err) {
+			return false, err
+		}
+
+		for _, c := range d.Status.Conditions {
+			if c.Type == cond {
+				return c.Status == status, nil
+			}
+		}
+		return false, nil
+	}
+
+	return watch(name, watchFn, c.restCfg.Timeout)
+}
+
 func (c *client) WaitPodStatus(namespace, name string, status corev1.PodPhase) error {
-	for {
+	watchFn := func() (bool, error) {
 		pod, err := c.Static().CoreV1().Pods(namespace).Get(context.Background(), name, metav1.GetOptions{})
-		if err != nil && !strings.Contains(err.Error(), "not found") {
-			return err
+		if err != nil && !k8sErrors.IsNotFound(err) {
+			return false, err
 		}
 
 		if status == pod.Status.Phase {
-			return nil
+			return true, nil
 		}
-		time.Sleep(defaultWaitSleep)
+		return false, nil
 	}
+
+	return watch(name, watchFn, c.restCfg.Timeout)
 }
 
 func (c *client) WaitPodStatusByLabel(namespace, labelName, labelValue string, status corev1.PodPhase) error {
-	for {
+	watchFn := func() (bool, error) {
 		pods, err := c.Static().CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{LabelSelector: fmt.Sprintf("%s=%s", labelName, labelValue)})
 		if err != nil {
-			return err
+			return false, err
 		}
 
 		ok := true
@@ -259,37 +281,48 @@ func (c *client) WaitPodStatusByLabel(namespace, labelName, labelValue string, s
 				break
 			}
 		}
-		if ok {
-			return nil
-		}
-		time.Sleep(defaultWaitSleep)
+		return ok, nil
 	}
+
+	return watch(fmt.Sprintf("Pod labeled: %s=%s", labelName, labelValue), watchFn, c.restCfg.Timeout)
 }
 
 func (c *client) WatchResource(res schema.GroupVersionResource, name, namespace string, checkFn func(u *unstructured.Unstructured) (bool, error)) error {
-	var timeout <-chan time.Time
-	if c.restCfg.Timeout > 0 {
-		timeout = time.After(c.restCfg.Timeout)
+	watchFn := func() (bool, error) {
+		var itm *unstructured.Unstructured
+		var err error
+		if namespace != "" {
+			itm, err = c.Dynamic().Resource(res).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
+		} else {
+			itm, err = c.Dynamic().Resource(res).Get(context.Background(), name, metav1.GetOptions{})
+		}
+		if err != nil {
+			return false, errors.Wrapf(err, "Failed to check %s", res.Resource)
+		}
+		return checkFn(itm)
 	}
+
+	return watch(res.Resource, watchFn, c.restCfg.Timeout)
+}
+
+func (c *client) DefaultNamespace() string {
+	if ctx, ok := c.KubeConfig().Contexts[c.KubeConfig().CurrentContext]; ok && ctx.Namespace != "" {
+		return ctx.Namespace
+	}
+	return defaultNamespace
+}
+
+// watch provides a unified implementation to watch resources.
+func watch(res string, watchFn func() (bool, error), timeout time.Duration) error {
+	timeChan := time.After(timeout)
 
 	for {
 		select {
-		case <-timeout:
-			return fmt.Errorf("Timeout reached while waiting for %s", res.Resource)
+		case <-timeChan:
+			return fmt.Errorf("Timeout reached while waiting for %s", res)
 
 		default:
-			var itm *unstructured.Unstructured
-			var err error
-			if namespace != "" {
-				itm, err = c.Dynamic().Resource(res).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
-			} else {
-				itm, err = c.Dynamic().Resource(res).Get(context.Background(), name, metav1.GetOptions{})
-			}
-			if err != nil {
-				return errors.Wrapf(err, "Failed to check %s", res.Resource)
-			}
-
-			finished, err := checkFn(itm)
+			finished, err := watchFn()
 			if err != nil {
 				return err
 			}
@@ -299,11 +332,4 @@ func (c *client) WatchResource(res schema.GroupVersionResource, name, namespace 
 			time.Sleep(defaultWaitSleep)
 		}
 	}
-}
-
-func (c *client) DefaultNamespace() string {
-	if ctx, ok := c.KubeConfig().Contexts[c.KubeConfig().CurrentContext]; ok && ctx.Namespace != "" {
-		return ctx.Namespace
-	}
-	return defaultNamespace
 }
