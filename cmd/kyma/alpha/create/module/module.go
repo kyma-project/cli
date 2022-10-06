@@ -2,7 +2,6 @@ package module
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/mandelsoft/vfs/pkg/osfs"
@@ -13,6 +12,7 @@ import (
 	"github.com/kyma-project/cli/internal/envtest"
 	"github.com/kyma-project/cli/pkg/module"
 	"github.com/kyma-project/cli/pkg/module/oci"
+	"github.com/kyma-project/cli/pkg/step"
 )
 
 type command struct {
@@ -83,18 +83,29 @@ func (cmd *command) Run(args []string) error {
 		/* -- VALIDATE DEFAULT CR -- */
 
 		cmd.NewStep("Validating Default CR")
-		envtestBinariesPath := cmd.envtestSetup(cmd.opts.Verbose)
-
-		vSkipped, err := module.ValidateDefaultCR(args[2], envtestBinariesPath, l)
+		crValidator, err := module.NewDefaultCRValidator(args[2])
 		if err != nil {
 			cmd.CurrentStep.Failure()
 			return err
 		}
 
-		if vSkipped {
-			cmd.CurrentStep.Successf("Default CR validation skipped - no default CR")
-		} else {
+		if crValidator.DefaultCRExists() {
+
+			envtestBinariesPath, err := cmd.envtestSetup(cmd.CurrentStep, cmd.opts.Verbose)
+			if err != nil {
+				cmd.CurrentStep.Failure()
+				return err
+			}
+
+			cmd.CurrentStep.Status("Running")
+			err = crValidator.Run(envtestBinariesPath, l)
+			if err != nil {
+				cmd.CurrentStep.Failure()
+				return err
+			}
 			cmd.CurrentStep.Successf("Default CR validation succeeded")
+		} else {
+			cmd.CurrentStep.Successf("Default CR validation skipped - no default CR")
 		}
 	}
 
@@ -187,16 +198,14 @@ func (cmd *command) Run(args []string) error {
 	return nil
 }
 
-func (cmd *command) envtestSetup(verbose bool) string {
-	s := cmd.NewStep("Setting up envtest...")
+func (cmd *command) envtestSetup(s step.Step, verbose bool) (string, error) {
+	s.Status("Setting up envtest...")
 	envtestBinariesPath, err := envtest.Setup(s, verbose)
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 	if verbose {
-		s.Successf("using envtest from %q", envtestBinariesPath)
-	} else {
-		s.Success()
+		s.Status(fmt.Sprintf("using envtest from %q", envtestBinariesPath))
 	}
-	return envtestBinariesPath
+	return envtestBinariesPath, nil
 }

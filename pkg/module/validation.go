@@ -19,49 +19,67 @@ import (
 
 const defaultCRName = "default.yaml"
 
-func ValidateDefaultCR(modulePath, envtestBinariesPath string, log *zap.SugaredLogger) (skipped bool, err error) {
+type defaultCRValidator struct {
+	modulePath string
+	fileExists bool
+	crData     []byte
+}
 
-	exists, crData, err := readDefaultCR(modulePath)
+func NewDefaultCRValidator(modulePath string) (*defaultCRValidator, error) {
+	fileExists, crData, err := readDefaultCR(modulePath)
 	if err != nil {
-		return false, err
-	}
-	if !exists {
-		//If there's no "default.yaml" file, skip the validation.
-		return true, nil
+		return nil, err
 	}
 
-	crMap, err := parseYamlToMap(crData)
+	return &defaultCRValidator{
+		modulePath: modulePath,
+		fileExists: fileExists,
+		crData:     crData,
+	}, nil
+}
+
+func (v *defaultCRValidator) DefaultCRExists() bool {
+	return v.fileExists
+}
+
+func (v *defaultCRValidator) Run(envtestBinariesPath string, log *zap.SugaredLogger) (err error) {
+
+	if !v.fileExists {
+		return errors.New("Default CR file does not exist")
+	}
+
+	crMap, err := parseYamlToMap(v.crData)
 	if err != nil {
-		return false, fmt.Errorf("Error during parsing default CR: %w", err)
+		return fmt.Errorf("Error during parsing default CR: %w", err)
 	}
 
 	group, kind, err := readGroupKind(crMap)
 	if err != nil {
-		return false, err
+		return err
 	}
 
-	searchDirPath := filepath.Join(modulePath, "charts")
+	searchDirPath := filepath.Join(v.modulePath, "charts")
 	crdFound, crdFilePath, err := findCRDFileFor(group, kind, searchDirPath)
 	if err != nil {
-		return false, fmt.Errorf("Error finding CRD file in the %q directory: %w", searchDirPath, err)
+		return fmt.Errorf("Error finding CRD file in the %q directory: %w", searchDirPath, err)
 	}
 	if !crdFound {
-		return false, fmt.Errorf("Can't find the CRD for CR instance defined in %q (group: %q, kind %q)", defaultCRName, group, kind)
+		return fmt.Errorf("Can't find the CRD for CR instance defined in %q (group: %q, kind %q)", defaultCRName, group, kind)
 	}
 
 	err = ensureDefaultNamespace(crMap)
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	properCR, err := renderYamlFromMap(crMap)
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	envTest, restCfg, err := startValidationEnv(crdFilePath, envtestBinariesPath)
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	defer func() {
@@ -77,9 +95,9 @@ func ValidateDefaultCR(modulePath, envtestBinariesPath string, log *zap.SugaredL
 
 	err = kc.Apply(properCR)
 	if err != nil {
-		return false, fmt.Errorf("Error during applying the default CR: %w", err)
+		return fmt.Errorf("Error during applying the default CR: %w", err)
 	}
-	return false, nil
+	return nil
 }
 
 // readDefaultCR reads the default CR file's contents. The returned bool is true if the data is successfully read, it's false otherwise.

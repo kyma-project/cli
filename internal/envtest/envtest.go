@@ -1,13 +1,11 @@
 package envtest
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"runtime"
 	"strings"
 
 	"github.com/kyma-project/cli/internal/files"
@@ -28,12 +26,6 @@ func Setup(step step.Step, verbose bool) (string, error) {
 
 	//Install setup-envtest
 	if _, err := os.Stat(filepath.Join(p, envtestSetupBin)); os.IsNotExist(err) {
-		if runtime.GOOS == "windows" {
-			if _, err := exec.LookPath("bash"); err != nil {
-				return "", errors.New("\nBash is not installed. To install bash on windows please see http://win-bash.sourceforge.net")
-			}
-		}
-
 		kymaGobinEnv := "GOBIN=" + p
 		envtestSetupCmd := exec.Command("go", "install", "sigs.k8s.io/controller-runtime/tools/setup-envtest@latest")
 		envtestSetupCmd.Env = os.Environ()
