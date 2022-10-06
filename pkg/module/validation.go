@@ -19,30 +19,30 @@ import (
 
 const defaultCRName = "default.yaml"
 
-type defaultCRValidator struct {
+type DefaultCRValidator struct {
 	modulePath string
 	fileExists bool
 	crData     []byte
 }
 
-func NewDefaultCRValidator(modulePath string) (*defaultCRValidator, error) {
+func NewDefaultCRValidator(modulePath string) (*DefaultCRValidator, error) {
 	fileExists, crData, err := readDefaultCR(modulePath)
 	if err != nil {
 		return nil, err
 	}
 
-	return &defaultCRValidator{
+	return &DefaultCRValidator{
 		modulePath: modulePath,
 		fileExists: fileExists,
 		crData:     crData,
 	}, nil
 }
 
-func (v *defaultCRValidator) DefaultCRExists() bool {
+func (v *DefaultCRValidator) DefaultCRExists() bool {
 	return v.fileExists
 }
 
-func (v *defaultCRValidator) Run(envtestBinariesPath string, log *zap.SugaredLogger) (err error) {
+func (v *DefaultCRValidator) Run(envtestBinariesPath string, log *zap.SugaredLogger) (err error) {
 
 	if !v.fileExists {
 		return errors.New("Default CR file does not exist")
