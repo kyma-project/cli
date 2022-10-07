@@ -131,7 +131,7 @@ func ensureDefaultNamespace(modelMap map[string]interface{}) error {
 	//Traverse the Map to look for "metadata.namespace"
 	metadataMap, err := mustReadMap(modelMap, "metadata")
 	if err != nil {
-		return fmt.Errorf("Error during parsing default CR: %w", err)
+		return fmt.Errorf("Error parsing default CR: %w", err)
 	}
 
 	namespaceVal, ok := metadataMap["namespace"]
