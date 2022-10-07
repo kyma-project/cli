@@ -105,20 +105,11 @@ func readDefaultCR(modulePath string) (bool, []byte, error) {
 	//TODO: Do we need to override the name or it's always "default.yaml"?
 	crPath := filepath.Join(modulePath, defaultCRName)
 
-	fileInfo, err := os.Stat(crPath)
+	crData, err := os.ReadFile(crPath)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return false, nil, nil
 		}
-		return false, nil, fmt.Errorf("Error accessing the default CR file `%q`: %w", crPath, err)
-	}
-
-	if !fileInfo.Mode().IsRegular() {
-		return false, nil, fmt.Errorf("Error reading the default CR file `%q`: Not a regular file", crPath)
-	}
-
-	crData, err := os.ReadFile(crPath)
-	if err != nil {
 		return false, nil, fmt.Errorf("Error reading the default CR file `%q`: %w", crPath, err)
 	}
 
