@@ -50,7 +50,7 @@ func (v *DefaultCRValidator) Run(envtestBinariesPath string, log *zap.SugaredLog
 
 	crMap, err := parseYamlToMap(v.crData)
 	if err != nil {
-		return fmt.Errorf("Error during parsing default CR: %w", err)
+		return fmt.Errorf("Error parsing default CR: %w", err)
 	}
 
 	group, kind, err := readGroupKind(crMap)
@@ -87,7 +87,7 @@ func (v *DefaultCRValidator) Run(envtestBinariesPath string, log *zap.SugaredLog
 		if stopErr != nil {
 			//TODO: This doesn't seem to print anything...
 			log.Error(fmt.Errorf("Error stopping envTest: %w", stopErr))
-			//THIS does: fmt.Println(fmt.Errorf("Error during stopping envTest: %w", stopErr))
+			//THIS does: fmt.Println(fmt.Errorf("Error stopping envTest: %w", stopErr))
 		}
 	}()
 
@@ -95,7 +95,7 @@ func (v *DefaultCRValidator) Run(envtestBinariesPath string, log *zap.SugaredLog
 
 	err = kc.Apply(properCR)
 	if err != nil {
-		return fmt.Errorf("Error during applying the default CR: %w", err)
+		return fmt.Errorf("Error applying the default CR: %w", err)
 	}
 	return nil
 }
