@@ -142,7 +142,7 @@ func ensureDefaultNamespace(modelMap map[string]interface{}) error {
 		//Set the "metadata.namespace" if different than "default"
 		existing, ok := namespaceVal.(string)
 		if !ok {
-			return errors.New("Error during parsing default CR: Attribute \"metadata.namespace\" is not a string")
+			return errors.New("Error parsing default CR: Attribute \"metadata.namespace\" is not a string")
 		}
 		if existing != "default" {
 			metadataMap["namespace"] = "default"
