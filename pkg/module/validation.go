@@ -213,7 +213,7 @@ func renderYamlFromMap(modelMap map[string]interface{}) ([]byte, error) {
 
 	output, err := yaml.Marshal(modelMap)
 	if err != nil {
-		return nil, fmt.Errorf("Error during processing default CR data: %w", err)
+		return nil, fmt.Errorf("Error processing default CR data: %w", err)
 	}
 
 	return output, nil
