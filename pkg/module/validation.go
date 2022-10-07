@@ -25,8 +25,8 @@ type DefaultCRValidator struct {
 	crData     []byte
 }
 
-func NewDefaultCRValidator(modulePath string) (*DefaultCRValidator, error) {
-	fileExists, crData, err := readDefaultCR(modulePath)
+func NewDefaultCRValidator(modulePath, defaultCRPath string) (*DefaultCRValidator, error) {
+	fileExists, crData, err := readDefaultCR(modulePath, defaultCRPath)
 	if err != nil {
 		return nil, err
 	}
@@ -101,9 +101,13 @@ func (v *DefaultCRValidator) Run(envtestBinariesPath string, log *zap.SugaredLog
 }
 
 // readDefaultCR reads the default CR file's contents. The returned bool is true if the data is successfully read, it's false otherwise.
-func readDefaultCR(modulePath string) (bool, []byte, error) {
-	//TODO: Do we need to override the name or it's always "default.yaml"?
-	crPath := filepath.Join(modulePath, defaultCRName)
+func readDefaultCR(modulePath, defaultCRPath string) (bool, []byte, error) {
+
+	//If file path is not given explicitly, fallback to "default.yaml" in the module's directory
+	crPath := defaultCRPath
+	if crPath == "" {
+		crPath = filepath.Join(modulePath, defaultCRName)
+	}
 
 	crData, err := os.ReadFile(crPath)
 	if err != nil {

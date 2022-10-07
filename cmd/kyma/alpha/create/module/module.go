@@ -15,6 +15,8 @@ import (
 	"github.com/kyma-project/cli/pkg/step"
 )
 
+const defaultCRPathEnv = "KYMACLI_DEFAULT_CR_PATH" //Location of the default CR YAML file for the module. Optional, defaults to "default.yaml" in the module's directory
+
 type command struct {
 	opts *Options
 	cli.Command
@@ -83,7 +85,7 @@ func (cmd *command) Run(args []string) error {
 		/* -- VALIDATE DEFAULT CR -- */
 
 		cmd.NewStep("Validating Default CR")
-		crValidator, err := module.NewDefaultCRValidator(args[2])
+		crValidator, err := module.NewDefaultCRValidator(args[2], os.Getenv(defaultCRPathEnv))
 		if err != nil {
 			cmd.CurrentStep.Failure()
 			return err
