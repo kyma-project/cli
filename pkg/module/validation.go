@@ -203,7 +203,7 @@ func parseYamlToMap(crData []byte) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	err := yaml.Unmarshal([]byte(crData), &modelMap)
 	if err != nil {
-		return nil, fmt.Errorf("Error during parsing default CR: %w", err)
+		return nil, fmt.Errorf("Error parsing default CR: %w", err)
 	}
 
 	return modelMap, nil
