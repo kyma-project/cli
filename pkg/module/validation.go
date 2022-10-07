@@ -86,7 +86,7 @@ func (v *DefaultCRValidator) Run(envtestBinariesPath string, log *zap.SugaredLog
 		stopErr := envTest.Stop()
 		if stopErr != nil {
 			//TODO: This doesn't seem to print anything...
-			log.Error(fmt.Errorf("Error during stopping envTest: %w", stopErr))
+			log.Error(fmt.Errorf("Error stopping envTest: %w", stopErr))
 			//THIS does: fmt.Println(fmt.Errorf("Error during stopping envTest: %w", stopErr))
 		}
 	}()
