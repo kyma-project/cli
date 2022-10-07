@@ -106,10 +106,10 @@ func readDefaultCR(modulePath string) (bool, []byte, error) {
 	crPath := filepath.Join(modulePath, defaultCRName)
 
 	fileInfo, err := os.Stat(crPath)
-	if errors.Is(err, os.ErrNotExist) {
-		return false, nil, nil
-	}
 	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return false, nil, nil
+		}
 		return false, nil, fmt.Errorf("Error accessing the default CR file `%q`: %w", crPath, err)
 	}
 
