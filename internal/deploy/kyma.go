@@ -3,6 +3,7 @@ package deploy
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"text/template"
 
 	"github.com/kyma-project/cli/internal/kube"
@@ -24,25 +25,37 @@ spec:
     enabled: {{ .Sync }}
 `
 
-// Kyma deploys the Kyma CR
-// TODO delete deploy.go when the old reconciler is gone.
-func Kyma(k8s kube.KymaKube, dryRun bool) error {
-	t, err := template.New("kymaCR").Parse(kymaCRTemplate)
-	if err != nil {
-		return fmt.Errorf("could not parse Kyma CR template: %w", err)
-	}
-
-	data := struct {
-		Channel string
-		Sync    bool
-	}{
-		Channel: "stable",
-		Sync:    false,
-	}
-
+// Kyma deploys the Kyma CR. If no kymaCRPath is provided, it deploys the default CR.
+func Kyma(k8s kube.KymaKube, channel, kymaCRpath string, dryRun bool) error {
+	// TODO delete deploy.go when the old reconciler is gone.
 	kymaCR := bytes.Buffer{}
-	if err := t.Execute(&kymaCR, data); err != nil {
-		return fmt.Errorf("could not build Kyma CR: %w", err)
+
+	if kymaCRpath != "" {
+		data, err := os.ReadFile(kymaCRpath)
+		if err != nil {
+			return fmt.Errorf("could not read kyma CR file: %w", err)
+		}
+		kymaCR.Write(data)
+	} else {
+		t, err := template.New("kymaCR").Parse(kymaCRTemplate)
+		if err != nil {
+			return fmt.Errorf("could not parse Kyma CR template: %w", err)
+		}
+
+		if channel == "" {
+			channel = "stable"
+		}
+		data := struct {
+			Channel string
+			Sync    bool
+		}{
+			Channel: channel,
+			Sync:    false,
+		}
+
+		if err := t.Execute(&kymaCR, data); err != nil {
+			return fmt.Errorf("could not build Kyma CR: %w", err)
+		}
 	}
 	if dryRun {
 		fmt.Printf("%s\n---\n", kymaCR.String())
