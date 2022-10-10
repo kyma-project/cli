@@ -36,7 +36,7 @@ func ParseKustomization(s string) (Definition, error) {
 	// split URL from ref
 	items := strings.Split(s, "@")
 	if len(items) == 0 || len(items) > 2 {
-		return Definition{}, fmt.Errorf("the given kustomization %q could not be parsed: at least, it must contain a location (URL or path) and URLs can optionally have a reference in format URL@ref", s)
+		return Definition{}, fmt.Errorf("the given kustomization %q could not be parsed: at least, it must contain a location (URL or path); optionally, URLs can have a reference in format URL@ref", s)
 	}
 
 	res := Definition{}
@@ -49,7 +49,7 @@ func ParseKustomization(s string) (Definition, error) {
 	if u.Scheme != "" && u.Host != "" {
 		pathChunks := strings.Split(u.Path, "/")
 		if len(pathChunks) < 3 {
-			return Definition{}, fmt.Errorf("The provided URL %q does not belong to a repository. It should follow the format DOMAIN.EXT/OWNER/REPO/[SUBPATH]", items[0])
+			return Definition{}, fmt.Errorf("The provided URL %q does not belong to a repository. It must follow the format DOMAIN.EXT/OWNER/REPO/[SUBPATH]", items[0])
 		}
 		res.Name = pathChunks[2]
 		if len(items) == 2 {
@@ -124,9 +124,9 @@ func Build(def Definition) ([]byte, error) {
 	return cmd.CombinedOutput()
 }
 
-// kustomizeBinPath looks for the kustomize binary in the PATH or in the default kyma home folder.
-// If not there in any location, os.ErrNotExist is returned.
-// Any other error means smething went wrong.
+// kustomizeBinPath looks for the kustomize binary in the PATH or in the default Kyma home folder.
+// If it's not there in any location, os.ErrNotExist is returned.
+// Any other error means something went wrong.
 func kustomizeBinPath() (string, error) {
 	p, err := exec.LookPath(kustomizeBin)
 	if err != nil && !errors.Is(err, exec.ErrNotFound) {

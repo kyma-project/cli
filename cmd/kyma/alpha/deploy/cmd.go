@@ -40,13 +40,13 @@ func NewCmd(o *Options) *cobra.Command {
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.RunWithTimeout() },
 		Aliases: []string{"d"},
 	}
-	cobraCmd.Flags().StringArrayVarP(&o.Kustomizations, "kustomization", "k", []string{}, `Provide one or more kustomizations to deploy. Each occurrence of the flag accepts a URL with an optional reference (commit, branch or release) in the format URL@ref or a local path to the directory of the kustomization file.
-	Defaults to deploying lifecycle-manager and module-manager from github main branch.
+	cobraCmd.Flags().StringArrayVarP(&o.Kustomizations, "kustomization", "k", []string{}, `Provide one or more kustomizations to deploy. Each occurrence of the flag accepts a URL with an optional reference (commit, branch, or release) in the format URL@ref or a local path to the directory of the kustomization file.
+	Defaults to deploying Lifecycle Manager and Module Manager from GitHub main branch.
 	Examples:
-	- Deploy a specific release of the lifecycle manager: "kyma deploy -k https://github.com/kyma-project/lifecycle-manager/operator/config/default@1.2.3"
-	- Deploy a local module manager: "kyma deploy --kustomization /path/to/repo/module-manager/operator/config/default"
-	- Deploy a branch of lifecycle manager with a custom URL: "kyma deploy -k https://gitlab.com/forked-from-github/lifecycle-manager/operator/config/default@feature-branch-1"
-	- Deploy the main branch of lifecycle-manager while using local sources of module-manager: "kyma deploy -k /path/to/repo/module-manager/operator/config/default -k https://github.com/kyma-project/lifecycle-manager/operator/config/default@main"`)
+	- Deploy a specific release of the Lifecycle Manager: "kyma deploy -k https://github.com/kyma-project/lifecycle-manager/operator/config/default@1.2.3"
+	- Deploy a local Module Manager: "kyma deploy --kustomization /path/to/repo/module-manager/operator/config/default"
+	- Deploy a branch of Lifecycle Manager with a custom URL: "kyma deploy -k https://gitlab.com/forked-from-github/lifecycle-manager/operator/config/default@feature-branch-1"
+	- Deploy the main branch of Lifecycle Manager while using local sources of Module Manager: "kyma deploy -k /path/to/repo/module-manager/operator/config/default -k https://github.com/kyma-project/lifecycle-manager/operator/config/default@main"`)
 	cobraCmd.Flags().StringArrayVarP(&o.Modules, "module", "m", []string{}, `Provide one or more modules to activate after the deployment is finished. Example: "--module name@namespace" (namespace is optional).`)
 	cobraCmd.Flags().StringVarP(&o.ModulesFile, "modules-file", "f", "", `Path to file containing a list of modules.`)
 	cobraCmd.Flags().StringVarP(&o.Channel, "channel", "c", "stable", `Select which channel to deploy from: stable, fast, nightly.`)
@@ -216,9 +216,9 @@ func (cmd *command) waitForOperators() error {
 
 	go func() {
 		err := cmd.K8s.WaitDeploymentStatus("kcp-system", "lifecycle-manager-controller-manager", appsv1.DeploymentAvailable, corev1.ConditionTrue)
-		lifecycleStep := cmd.NewStep("Lifecycle manager deployed")
+		lifecycleStep := cmd.NewStep("Lifecycle Manager deployed")
 		if err != nil {
-			lifecycleStep.Failuref("Failed to deploy Lifecycle manager")
+			lifecycleStep.Failuref("Failed to deploy Lifecycle Manager")
 		} else {
 			lifecycleStep.Success()
 		}
@@ -227,9 +227,9 @@ func (cmd *command) waitForOperators() error {
 
 	go func() {
 		err := cmd.K8s.WaitDeploymentStatus("kcp-system", "module-manager-controller-manager", appsv1.DeploymentAvailable, corev1.ConditionTrue)
-		moduleStep := cmd.NewStep("Module manager deployed")
+		moduleStep := cmd.NewStep("Module Manager deployed")
 		if err != nil {
-			moduleStep.Failuref("Failed to deploy Module manager")
+			moduleStep.Failuref("Failed to deploy Module Manager")
 		} else {
 			moduleStep.Success()
 		}
