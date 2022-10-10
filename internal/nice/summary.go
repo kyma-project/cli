@@ -18,9 +18,9 @@ type Summary struct {
 	Password       string
 }
 
-func (s *Summary) PrintFailedComponentSummary(result *service.ReconciliationResult) {
+func (sum *Summary) PrintFailedComponentSummary(result *service.ReconciliationResult) {
 	nicePrint := Nice{
-		NonInteractive: s.NonInteractive,
+		NonInteractive: sum.NonInteractive,
 	}
 	failedComps := []string{}
 	successfulComps := []string{}
@@ -53,9 +53,9 @@ func (s *Summary) PrintFailedComponentSummary(result *service.ReconciliationResu
 	fmt.Println()
 }
 
-func (s *Summary) Print(t time.Duration) error {
+func (sum *Summary) Print(t time.Duration) error {
 	nicePrint := Nice{
-		NonInteractive: s.NonInteractive,
+		NonInteractive: sum.NonInteractive,
 	}
 
 	// Installation info
@@ -63,44 +63,54 @@ func (s *Summary) Print(t time.Duration) error {
 	fmt.Println()
 	nicePrint.PrintKyma()
 	fmt.Print(" is installed in version:\t")
-	nicePrint.PrintImportant(s.Version)
+	nicePrint.PrintImportant(sum.Version)
 
 	nicePrint.PrintKyma()
 	fmt.Print(" installation took:\t\t")
-	nicePrint.PrintImportantf("%d hours %d minutes", int64(t.Hours()), int64(t.Minutes()))
+	h, m, s := "", "", ""
+	if int64(t.Hours()) != 0 {
+		h = fmt.Sprintf("%d hours", int64(t.Hours()))
+	}
+	if int64(t.Minutes()) != 0 {
+		m = fmt.Sprintf("%d minutes", int64(t.Minutes()))
+	}
+	if int64(t.Seconds()) != 0 {
+		s = fmt.Sprintf("%d seconds", int64(t.Seconds()))
+	}
+	nicePrint.PrintImportantf("%s%s%s", h, m, s)
 
-	if s.URL != "" {
+	if sum.URL != "" {
 		nicePrint.PrintKyma()
 		fmt.Print(" is running at:\t\t")
-		nicePrint.PrintImportant(s.URL)
+		nicePrint.PrintImportant(sum.URL)
 	}
 
 	// Console
 
-	if s.Console != "" {
+	if sum.Console != "" {
 		nicePrint.PrintKyma()
 		fmt.Print(" console:\t\t\t")
-		nicePrint.PrintImportantf(s.Console)
+		nicePrint.PrintImportantf(sum.Console)
 	}
 
-	if s.Dashboard != "" {
+	if sum.Dashboard != "" {
 		nicePrint.PrintKyma()
 		fmt.Print(" dashboard:\t\t\t")
-		nicePrint.PrintImportantf(s.Dashboard)
+		nicePrint.PrintImportantf(sum.Dashboard)
 	}
 
 	// Admin credentials
 
-	if s.Email != "" {
+	if sum.Email != "" {
 		nicePrint.PrintKyma()
 		fmt.Print(" admin email:\t\t")
-		nicePrint.PrintImportant(s.Email)
+		nicePrint.PrintImportant(sum.Email)
 	}
 
-	if !s.NonInteractive && s.Password != "" {
+	if !sum.NonInteractive && sum.Password != "" {
 		nicePrint.PrintKyma()
 		fmt.Printf(" admin password:\t\t")
-		nicePrint.PrintImportant(s.Password)
+		nicePrint.PrintImportant(sum.Password)
 	}
 
 	fmt.Printf("\nHappy ")

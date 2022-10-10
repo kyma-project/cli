@@ -1,0 +1,44 @@
+apiVersion: operator.kyma-project.io/v1alpha1
+kind: ModuleTemplate
+metadata:
+  name: moduletemplate-loadtest
+  namespace: kcp-system
+  labels:
+    "operator.kyma-project.io/managed-by": "lifecycle-manager"
+    "operator.kyma-project.io/controller-name": "manifest"
+    "operator.kyma-project.io/module-name": "loadtest"
+  annotations:
+    "operator.kyma-project.io/module-version": "0.0.2"
+    "operator.kyma-project.io/module-provider": "internal"
+    "operator.kyma-project.io/descriptor-schema-version": "v2"
+spec:
+  target: remote
+  channel: stable
+  data:
+    apiVersion: operator.kyma-project.io/v1alpha1
+    kind: LongOperation
+    metadata:
+      name: longoperation-sample
+    spec:
+      # TODO(user): Add fields here
+  descriptor:
+    component:
+      componentReferences: []
+      name: kyma.project.io/module/loadtest
+      provider: internal
+      repositoryContexts:
+        - baseUrl: europe-west3-docker.pkg.dev/sap-kyma-jellyfish-dev/loadtest-operator/unsigned
+          componentNameMapping: urlPath
+          type: ociRegistry
+      resources:
+        - access:
+            digest: sha256:9174bbbb5abd7ae7dc60018d0ff57e470f54d1d77517534e3172f00f2b8d58e9
+            type: localOciBlob
+          name: loadtest-operator
+          relation: local
+          type: helm-chart
+          version: 0.0.2
+      sources: []
+      version: 0.0.2
+    meta:
+      schemaVersion: v2

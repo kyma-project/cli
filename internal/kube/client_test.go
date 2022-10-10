@@ -224,6 +224,9 @@ func fakeClientWithNS() *client {
 				},
 			},
 		),
+		restCfg: &rest.Config{
+			Timeout: 30 * time.Second,
+		},
 	}
 }
 
