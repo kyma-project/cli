@@ -181,7 +181,7 @@ func (cmd *command) Run(args []string) error {
 	return nil
 }
 
-// shouldPushToRegistry returns true, if the module artifact should be pushed to the configured registry.
+// shouldPushToRegistry returns true, if the module artifact should be pushed to the configured registry
 func (cmd *command) shouldPushToRegistry() bool {
 	return cmd.opts.RegistryURL != ""
 }
