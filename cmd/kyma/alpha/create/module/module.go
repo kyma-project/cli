@@ -83,14 +83,12 @@ func (cmd *command) Run(args []string) error {
 
 	l := cli.NewLogger(cmd.opts.Verbose).Sugar()
 
-	defaultCRValidated := false
-	if cmd.opts.ValidateDefaultCR {
-		/* -- VALIDATE DEFAULT CR ON DEMAND-- */
+	/* -- VALIDATE DEFAULT CR -- */
+	if cmd.opts.ValidateDefaultCR || cmd.shouldPushToRegistry() {
 		err = cmd.validateDefaultCR(args[2], l)
 		if err != nil {
 			return err
 		}
-		defaultCRValidated = true
 	}
 
 	cfg := &module.ComponentConfig{
@@ -140,15 +138,7 @@ func (cmd *command) Run(args []string) error {
 
 	/* -- PUSH & TEMPLATE -- */
 
-	if cmd.opts.RegistryURL != "" {
-
-		// Mandatory default CR validation when pushing
-		if !defaultCRValidated {
-			err = cmd.validateDefaultCR(args[2], l)
-			if err != nil {
-				return err
-			}
-		}
+	if cmd.shouldPushToRegistry() {
 
 		cmd.NewStep(fmt.Sprintf("Pushing image to %q", cmd.opts.RegistryURL))
 		r := &module.Remote{
@@ -189,6 +179,11 @@ func (cmd *command) Run(args []string) error {
 	}
 
 	return nil
+}
+
+// shouldPushToRegistry returns true, if the module artifact should be pushed to the configured registry.
+func (cmd *command) shouldPushToRegistry() bool {
+	return cmd.opts.RegistryURL != ""
 }
 
 func (cmd *command) validateDefaultCR(modulePath string, l *zap.SugaredLogger) error {
