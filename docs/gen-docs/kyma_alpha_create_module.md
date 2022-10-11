@@ -17,6 +17,7 @@ This command creates a component descriptor in the descriptor path (./mod as a d
 Optionally, you can create additional layers with contents in other paths.
 
 Finally, if a registry is provided, the created module is pushed.
+Before pushing, additional module validation is performed, e.g: the default custom resource defined in the \"default.yaml\" file is validated against CustomResourceDefinition.
 
 
 ```bash
@@ -36,7 +37,7 @@ kyma alpha create module OCI_IMAGE_NAME MODULE_VERSION <CONTENT_PATH> [flags]
       --registry string        Repository context url for module to upload. The repository url will be automatically added to the repository contexts in the module
   -r, --resource stringArray   Add an extra resource in a new layer with format <NAME:TYPE@PATH>. It is also possible to provide only a path; name will default to the last path element and type to 'helm-chart'
   -t, --token string           Authentication token for the given registry (alternative to basic authentication).
-      --validateCR             Validate the Custom Resource defined in the "default.yaml" file (default true)
+      --validateCR             Validate the custom resource defined in the "default.yaml" file on demand. This validation always runs when pushing the module.
 ```
 
 ## Flags inherited from parent commands

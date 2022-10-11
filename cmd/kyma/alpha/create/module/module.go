@@ -7,6 +7,7 @@ import (
 	"github.com/mandelsoft/vfs/pkg/osfs"
 	"github.com/mandelsoft/vfs/pkg/vfs"
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
 
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/envtest"
@@ -15,7 +16,7 @@ import (
 	"github.com/kyma-project/cli/pkg/step"
 )
 
-const defaultCRPathEnv = "KYMACLI_DEFAULT_CR_PATH" //Location of the default CR YAML file for the module. Optional, defaults to "default.yaml" in the module's directory
+const defaultCRPathEnv = "KYMACLI_DEFAULT_CR_PATH" //Location of the default CR YAML file for the module. Optional, defaults to the "default.yaml" file in the module's directory
 
 type command struct {
 	opts *Options
@@ -43,6 +44,7 @@ This command creates a component descriptor in the descriptor path (./mod as a d
 Optionally, you can create additional layers with contents in other paths.
 
 Finally, if a registry is provided, the created module is pushed.
+Before pushing, additional module validation is performed, e.g: the default custom resource defined in the \"default.yaml\" file is validated against CustomResourceDefinition.
 `,
 
 		RunE:    func(_ *cobra.Command, args []string) error { return c.Run(args) },
@@ -60,7 +62,7 @@ Finally, if a registry is provided, the created module is pushed.
 	cmd.Flags().BoolVarP(&o.Overwrite, "overwrite", "w", false, "overwrites the existing mod-path directory if it exists")
 	cmd.Flags().BoolVar(&o.Insecure, "insecure", false, "Use an insecure connection to access the registry.")
 	cmd.Flags().BoolVar(&o.Clean, "clean", false, "Remove the mod-path folder and all its contents at the end.")
-	cmd.Flags().BoolVar(&o.ValidateDefaultCR, "validateCR", true, "Validate the Custom Resource defined in the \"default.yaml\" file")
+	cmd.Flags().BoolVar(&o.ValidateDefaultCR, "validateCR", false, "Validate the custom resource defined in the \"default.yaml\" file on demand. This validation always runs when pushing the module.")
 
 	return cmd
 }
@@ -81,34 +83,14 @@ func (cmd *command) Run(args []string) error {
 
 	l := cli.NewLogger(cmd.opts.Verbose).Sugar()
 
+	defaultCRValidated := false
 	if cmd.opts.ValidateDefaultCR {
-		/* -- VALIDATE DEFAULT CR -- */
-
-		cmd.NewStep("Validating Default CR")
-		crValidator, err := module.NewDefaultCRValidator(args[2], os.Getenv(defaultCRPathEnv))
+		/* -- VALIDATE DEFAULT CR ON DEMAND-- */
+		err = cmd.validateDefaultCR(args[2], l)
 		if err != nil {
-			cmd.CurrentStep.Failure()
 			return err
 		}
-
-		if crValidator.DefaultCRExists() {
-
-			envtestBinariesPath, err := cmd.envtestSetup(cmd.CurrentStep, cmd.opts.Verbose)
-			if err != nil {
-				cmd.CurrentStep.Failure()
-				return err
-			}
-
-			cmd.CurrentStep.Status("Running")
-			err = crValidator.Run(envtestBinariesPath, l)
-			if err != nil {
-				cmd.CurrentStep.Failure()
-				return err
-			}
-			cmd.CurrentStep.Successf("Default CR validation succeeded")
-		} else {
-			cmd.CurrentStep.Successf("Default CR validation skipped - no default CR")
-		}
+		defaultCRValidated = true
 	}
 
 	cfg := &module.ComponentConfig{
@@ -140,7 +122,7 @@ func (cmd *command) Run(args []string) error {
 		return err
 	}
 
-	// add extra resources
+	// Add extra resources
 	for _, p := range cmd.opts.ResourcePaths {
 		rd, err := module.ResourceDefFromString(p)
 		if err != nil {
@@ -159,6 +141,15 @@ func (cmd *command) Run(args []string) error {
 	/* -- PUSH & TEMPLATE -- */
 
 	if cmd.opts.RegistryURL != "" {
+
+		// Mandatory default CR validation when pushing
+		if !defaultCRValidated {
+			err = cmd.validateDefaultCR(args[2], l)
+			if err != nil {
+				return err
+			}
+		}
+
 		cmd.NewStep(fmt.Sprintf("Pushing image to %q", cmd.opts.RegistryURL))
 		r := &module.Remote{
 			Registry:    cmd.opts.RegistryURL,
@@ -195,6 +186,36 @@ func (cmd *command) Run(args []string) error {
 			return err
 		}
 		cmd.CurrentStep.Success()
+	}
+
+	return nil
+}
+
+func (cmd *command) validateDefaultCR(modulePath string, l *zap.SugaredLogger) error {
+	cmd.NewStep("Validating Default CR")
+	crValidator, err := module.NewDefaultCRValidator(modulePath, os.Getenv(defaultCRPathEnv))
+	if err != nil {
+		cmd.CurrentStep.Failure()
+		return err
+	}
+
+	if crValidator.DefaultCRExists() {
+
+		envtestBinariesPath, err := cmd.envtestSetup(cmd.CurrentStep, cmd.opts.Verbose)
+		if err != nil {
+			cmd.CurrentStep.Failure()
+			return err
+		}
+
+		cmd.CurrentStep.Status("Running")
+		err = crValidator.Run(envtestBinariesPath, l)
+		if err != nil {
+			cmd.CurrentStep.Failure()
+			return err
+		}
+		cmd.CurrentStep.Successf("Default CR validation succeeded")
+	} else {
+		cmd.CurrentStep.Successf("Default CR validation skipped - no default CR")
 	}
 
 	return nil
