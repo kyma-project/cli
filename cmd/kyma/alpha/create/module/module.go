@@ -43,7 +43,7 @@ With this command, you can create such images out of a folder's contents.
 This command creates a component descriptor in the descriptor path (./mod as a default) and packages all the contents on the provided content path as a single layer.
 Optionally, you can create additional layers with contents in other paths.
 
-Finally, if you provided a registry to which to push the artifact, the created module is pushed and validated. For example, the default CR defined in the \"default.yaml\" file is validated against CustomResourceDefinition.
+Finally, if you provided a registry to which to push the artifact, the created module is validated and pushed. For example, the default CR defined in the \"default.yaml\" file is validated against CustomResourceDefinition.
 
 Alternatively, if you don't push to registry, you can trigger an on-demand validation with `--validateCR=true`.
 `,
