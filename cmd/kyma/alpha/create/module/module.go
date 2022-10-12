@@ -45,7 +45,7 @@ Optionally, you can create additional layers with contents in other paths.
 
 Finally, if you provided a registry to which to push the artifact, the created module is validated and pushed. For example, the default CR defined in the \"default.yaml\" file is validated against CustomResourceDefinition.
 
-Alternatively, if you don't push to registry, you can trigger an on-demand validation with `--validateCR=true`.
+Alternatively, if you don't push to registry, you can trigger an on-demand validation with "--validateCR=true".
 `,
 
 		RunE:    func(_ *cobra.Command, args []string) error { return c.Run(args) },
