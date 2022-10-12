@@ -7,11 +7,16 @@ import (
 	"github.com/mandelsoft/vfs/pkg/osfs"
 	"github.com/mandelsoft/vfs/pkg/vfs"
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
 
 	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/envtest"
 	"github.com/kyma-project/cli/pkg/module"
 	"github.com/kyma-project/cli/pkg/module/oci"
+	"github.com/kyma-project/cli/pkg/step"
 )
+
+const defaultCRPathEnv = "KYMACLI_DEFAULT_CR_PATH" //Location of the default CR YAML file for the module. Optional, defaults to the "default.yaml" file in the module's directory
 
 type command struct {
 	opts *Options
@@ -38,7 +43,9 @@ With this command, you can create such images out of a folder's contents.
 This command creates a component descriptor in the descriptor path (./mod as a default) and packages all the contents on the provided content path as a single layer.
 Optionally, you can create additional layers with contents in other paths.
 
-Finally, if a registry is provided, the created module is pushed.
+Finally, if you provided a registry to which to push the artifact, the created module is validated and pushed. For example, the default CR defined in the \"default.yaml\" file is validated against CustomResourceDefinition.
+
+Alternatively, if you don't push to registry, you can trigger an on-demand validation with "--validateCR=true".
 `,
 
 		RunE:    func(_ *cobra.Command, args []string) error { return c.Run(args) },
@@ -56,12 +63,13 @@ Finally, if a registry is provided, the created module is pushed.
 	cmd.Flags().BoolVarP(&o.Overwrite, "overwrite", "w", false, "overwrites the existing mod-path directory if it exists")
 	cmd.Flags().BoolVar(&o.Insecure, "insecure", false, "Use an insecure connection to access the registry.")
 	cmd.Flags().BoolVar(&o.Clean, "clean", false, "Remove the mod-path folder and all its contents at the end.")
+	cmd.Flags().BoolVar(&o.ValidateDefaultCR, "validateCR", false, "Validate the custom resource defined in the \"default.yaml\" file on demand. This validation always runs when pushing the module.")
 
 	return cmd
 }
 
-func (c *command) Run(args []string) error {
-	if !c.opts.NonInteractive {
+func (cmd *command) Run(args []string) error {
+	if !cmd.opts.NonInteractive {
 		cli.AlphaWarn()
 	}
 
@@ -74,29 +82,38 @@ func (c *command) Run(args []string) error {
 		return err
 	}
 
-	l := cli.NewLogger(c.opts.Verbose).Sugar()
+	l := cli.NewLogger(cmd.opts.Verbose).Sugar()
+
+	/* -- VALIDATE DEFAULT CR -- */
+	if cmd.opts.ValidateDefaultCR || cmd.shouldPushToRegistry() {
+		err = cmd.validateDefaultCR(args[2], l)
+		if err != nil {
+			return err
+		}
+	}
+
 	cfg := &module.ComponentConfig{
 		Name:                 args[0],
 		Version:              args[1],
-		ComponentArchivePath: c.opts.ModPath,
-		Overwrite:            c.opts.Overwrite,
-		RegistryURL:          c.opts.RegistryURL,
+		ComponentArchivePath: cmd.opts.ModPath,
+		Overwrite:            cmd.opts.Overwrite,
+		RegistryURL:          cmd.opts.RegistryURL,
 	}
 
 	/* -- CREATE ARCHIVE -- */
 	fs := osfs.New()
 
-	c.NewStep(fmt.Sprintf("Creating module archive at %q", c.opts.ModPath))
+	cmd.NewStep(fmt.Sprintf("Creating module archive at %q", cmd.opts.ModPath))
 	archive, err := module.Build(fs, cfg)
 	if err != nil {
-		c.CurrentStep.Failure()
+		cmd.CurrentStep.Failure()
 		return err
 	}
-	c.CurrentStep.Success()
+	cmd.CurrentStep.Success()
 
 	/* -- BUNDLE RESOURCES -- */
 
-	c.NewStep("Adding resources...")
+	cmd.NewStep("Adding resources...")
 
 	// Create base resource defs with module root and its sub-layers
 	defs, err := module.Inspect(args[2], l)
@@ -104,8 +121,8 @@ func (c *command) Run(args []string) error {
 		return err
 	}
 
-	// add extra resources
-	for _, p := range c.opts.ResourcePaths {
+	// Add extra resources
+	for _, p := range cmd.opts.ResourcePaths {
 		rd, err := module.ResourceDefFromString(p)
 		if err != nil {
 			return err
@@ -114,51 +131,100 @@ func (c *command) Run(args []string) error {
 	}
 
 	if err := module.AddResources(archive, cfg, l, fs, defs...); err != nil {
-		c.CurrentStep.Failure()
+		cmd.CurrentStep.Failure()
 		return err
 	}
-	c.CurrentStep.Successf("Resources added")
+
+	cmd.CurrentStep.Successf("Resources added")
 
 	/* -- PUSH & TEMPLATE -- */
 
-	if c.opts.RegistryURL != "" {
-		c.NewStep(fmt.Sprintf("Pushing image to %q", c.opts.RegistryURL))
+	if cmd.shouldPushToRegistry() {
+
+		cmd.NewStep(fmt.Sprintf("Pushing image to %q", cmd.opts.RegistryURL))
 		r := &module.Remote{
-			Registry:    c.opts.RegistryURL,
-			Credentials: c.opts.Credentials,
-			Token:       c.opts.Token,
-			Insecure:    c.opts.Insecure,
+			Registry:    cmd.opts.RegistryURL,
+			Credentials: cmd.opts.Credentials,
+			Token:       cmd.opts.Token,
+			Insecure:    cmd.opts.Insecure,
 		}
 		if err := module.Push(archive, r, l); err != nil {
-			c.CurrentStep.Failure()
+			cmd.CurrentStep.Failure()
 			return err
 		}
-		c.CurrentStep.Success()
+		cmd.CurrentStep.Success()
 
-		c.NewStep("Generating module template")
-		t, err := module.Template(archive, c.opts.Channel, args[2], fs)
+		cmd.NewStep("Generating module template")
+		t, err := module.Template(archive, cmd.opts.Channel, args[2], fs)
 		if err != nil {
-			c.CurrentStep.Failure()
+			cmd.CurrentStep.Failure()
 			return err
 		}
 
-		if err := vfs.WriteFile(fs, c.opts.TemplateOutput, t, os.ModePerm); err != nil {
-			c.CurrentStep.Failure()
+		if err := vfs.WriteFile(fs, cmd.opts.TemplateOutput, t, os.ModePerm); err != nil {
+			cmd.CurrentStep.Failure()
 			return err
 		}
-		c.CurrentStep.Success()
+		cmd.CurrentStep.Success()
 	}
 
 	/* -- CLEANUP -- */
 
-	if c.opts.Clean {
-		c.NewStep(fmt.Sprintf("Cleaning up mod path %q", c.opts.ModPath))
-		if err := os.RemoveAll(c.opts.ModPath); err != nil {
-			c.CurrentStep.Failure()
+	if cmd.opts.Clean {
+		cmd.NewStep(fmt.Sprintf("Cleaning up mod path %q", cmd.opts.ModPath))
+		if err := os.RemoveAll(cmd.opts.ModPath); err != nil {
+			cmd.CurrentStep.Failure()
 			return err
 		}
-		c.CurrentStep.Success()
+		cmd.CurrentStep.Success()
 	}
 
 	return nil
+}
+
+// shouldPushToRegistry returns true, if the module artifact should be pushed to the configured registry
+func (cmd *command) shouldPushToRegistry() bool {
+	return cmd.opts.RegistryURL != ""
+}
+
+func (cmd *command) validateDefaultCR(modulePath string, l *zap.SugaredLogger) error {
+	cmd.NewStep("Validating Default CR")
+	crValidator, err := module.NewDefaultCRValidator(modulePath, os.Getenv(defaultCRPathEnv))
+	if err != nil {
+		cmd.CurrentStep.Failure()
+		return err
+	}
+
+	if crValidator.DefaultCRExists() {
+
+		envtestBinariesPath, err := cmd.envtestSetup(cmd.CurrentStep, cmd.opts.Verbose)
+		if err != nil {
+			cmd.CurrentStep.Failure()
+			return err
+		}
+
+		cmd.CurrentStep.Status("Running")
+		err = crValidator.Run(envtestBinariesPath, l)
+		if err != nil {
+			cmd.CurrentStep.Failure()
+			return err
+		}
+		cmd.CurrentStep.Successf("Default CR validation succeeded")
+	} else {
+		cmd.CurrentStep.Successf("Default CR validation skipped - no default CR")
+	}
+
+	return nil
+}
+
+func (cmd *command) envtestSetup(s step.Step, verbose bool) (string, error) {
+	s.Status("Setting up envtest...")
+	envtestBinariesPath, err := envtest.Setup(s, verbose)
+	if err != nil {
+		return "", err
+	}
+	if verbose {
+		s.Status(fmt.Sprintf("using envtest from %q", envtestBinariesPath))
+	}
+	return envtestBinariesPath, nil
 }

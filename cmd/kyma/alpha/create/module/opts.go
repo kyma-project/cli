@@ -8,16 +8,17 @@ import (
 type Options struct {
 	*cli.Options
 
-	ModPath        string
-	RegistryURL    string
-	Credentials    string
-	TemplateOutput string
-	Channel        string
-	Token          string
-	Insecure       bool
-	ResourcePaths  []string
-	Overwrite      bool
-	Clean          bool
+	ModPath           string
+	RegistryURL       string
+	Credentials       string
+	TemplateOutput    string
+	Channel           string
+	Token             string
+	Insecure          bool
+	ResourcePaths     []string
+	Overwrite         bool
+	Clean             bool
+	ValidateDefaultCR bool
 }
 
 // NewOptions creates options with default values

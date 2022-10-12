@@ -16,7 +16,9 @@ With this command, you can create such images out of a folder's contents.
 This command creates a component descriptor in the descriptor path (./mod as a default) and packages all the contents on the provided content path as a single layer.
 Optionally, you can create additional layers with contents in other paths.
 
-Finally, if a registry is provided, the created module is pushed.
+Finally, if you provided a registry to which to push the artifact, the created module is validated and pushed. For example, the default CR defined in the \"default.yaml\" file is validated against CustomResourceDefinition.
+
+Alternatively, if you don't push to registry, you can trigger an on-demand validation with "--validateCR=true".
 
 
 ```bash
@@ -36,6 +38,7 @@ kyma alpha create module OCI_IMAGE_NAME MODULE_VERSION <CONTENT_PATH> [flags]
       --registry string        Repository context url for module to upload. The repository url will be automatically added to the repository contexts in the module
   -r, --resource stringArray   Add an extra resource in a new layer with format <NAME:TYPE@PATH>. It is also possible to provide only a path; name will default to the last path element and type to 'helm-chart'
   -t, --token string           Authentication token for the given registry (alternative to basic authentication).
+      --validateCR             Validate the custom resource defined in the "default.yaml" file on demand. This validation always runs when pushing the module.
 ```
 
 ## Flags inherited from parent commands
