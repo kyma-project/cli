@@ -119,9 +119,12 @@ func Build(def Definition) ([]byte, error) {
 		path = fmt.Sprintf(buildURLPattern, def.Location, def.Ref)
 	}
 
-	cmd := exec.Command(p, "build", path)
+	out, err := exec.Command(p, "build", path).CombinedOutput()
+	if err != nil {
+		return nil, fmt.Errorf("could not build kustomization: %s: %w", out, err)
+	}
 
-	return cmd.CombinedOutput()
+	return out, nil
 }
 
 // kustomizeBinPath looks for the kustomize binary in the PATH or in the default Kyma home folder.
