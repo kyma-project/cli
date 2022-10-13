@@ -12,8 +12,8 @@ require (
 	github.com/briandowns/spinner v1.18.1
 	github.com/containerd/containerd v1.6.8
 	github.com/daviddengcn/go-colortext v1.0.0
-	github.com/docker/cli v20.10.17+incompatible
-	github.com/docker/docker v20.10.17+incompatible
+	github.com/docker/cli v20.10.18+incompatible
+	github.com/docker/docker v20.10.18+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/fatih/color v1.13.0
 	github.com/gardener/component-spec/bindings-go v0.0.66
@@ -32,7 +32,7 @@ require (
 	go.uber.org/zap v1.21.0
 	gopkg.in/yaml.v3 v3.0.1
 	gotest.tools v2.2.0+incompatible
-	helm.sh/helm/v3 v3.9.3
+	helm.sh/helm/v3 v3.9.4
 	istio.io/client-go v1.14.0
 	k8s.io/api v0.24.4
 	k8s.io/apiextensions-apiserver v0.24.3
@@ -138,7 +138,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/moby/locker v1.0.1 // indirect
-	github.com/moby/moby v20.10.17+incompatible // indirect
+	github.com/moby/moby v20.10.18+incompatible // indirect
 	github.com/moby/spdystream v0.2.0 // indirect
 	github.com/moby/sys/mount v0.3.2 // indirect
 	github.com/moby/sys/mountinfo v0.6.1 // indirect
