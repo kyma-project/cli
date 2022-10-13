@@ -1,2 +1,0 @@
-# This is the default Kubernetes CustomResource file for the module "{{ .ModuleName}}"
-# Add the default CustomResource below.
