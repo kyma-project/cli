@@ -1,6 +1,7 @@
 package envtest
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -18,6 +19,9 @@ const (
 	envtestSetupBin = "setup-envtest"
 )
 
+// based on "kubernetes-sigs/controller-runtime/tools/setup-envtest/versions/parse.go", but more strict
+var envtestVersionRegexp = regexp.MustCompile(`^(0|[1-9]\d{0,2})\.(0|[1-9]\d{0,2})\.(0|[1-9]\d{0,3})$`)
+
 func Setup(step step.Step, verbose bool) (string, error) {
 	p, err := files.KymaHome()
 	if err != nil {
@@ -32,9 +36,9 @@ func Setup(step step.Step, verbose bool) (string, error) {
 		envtestSetupCmd.Env = append(envtestSetupCmd.Env, kymaGobinEnv)
 
 		//go install is silent when executed successfully
-		_, err := envtestSetupCmd.CombinedOutput()
+		out, err := envtestSetupCmd.CombinedOutput()
 		if err != nil {
-			return "", fmt.Errorf("error installing setup-envtest: %w", err)
+			return "", fmt.Errorf("error installing setup-envtest: %w. Details: %s", err, string(out))
 		} else if verbose {
 			step.LogInfof("Installed setup-envtest in: %q", p)
 		}
@@ -44,15 +48,15 @@ func Setup(step step.Step, verbose bool) (string, error) {
 	//Install envtest binaries using setup-envtest
 	envtestSetupBinPath := filepath.Join(p, envtestSetupBin)
 
-	version := os.Getenv(versionEnv)
-	if version == "" {
-		version = DefaultVersion
+	version, err := resolveEnvtestVersion()
+	if err != nil {
+		return "", err
 	}
 
 	envtestInstallBinariesCmd := exec.Command(envtestSetupBinPath, "use", version, "--bin-dir", p)
 	out, err := envtestInstallBinariesCmd.CombinedOutput()
 	if err != nil {
-		return "", fmt.Errorf("error installing envtest binaries: %w", err)
+		return "", fmt.Errorf("error installing envtest binaries: %w. Details: %s", err, string(out))
 	}
 
 	envtestBinariesPath, err := extractPath(string(out))
@@ -94,4 +98,19 @@ func parseEnvtestSetupMsg(envtestSetupMsg, rgxp, objName string) (string, error)
 	}
 
 	return strings.TrimSpace(matches[1]), nil
+}
+
+// resolveEnvtestVersion validates the envtest version provided via the environment variable. It returns the default version if the variable is not found.
+func resolveEnvtestVersion() (string, error) {
+	v, defined := os.LookupEnv(versionEnv)
+	if !defined {
+		return DefaultVersion, nil
+	}
+
+	trimmed := strings.TrimSpace(v)
+	if !envtestVersionRegexp.MatchString(trimmed) {
+		return "", errors.New("Invalid value of \"ENVTEST_K8S_VERSION\" variable, only proper semversions are allowed, e.g: 1.24.2")
+	}
+
+	return trimmed, nil
 }
