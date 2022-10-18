@@ -2,11 +2,13 @@ package clusterinfo
 
 import (
 	"context"
+	"testing"
+
+	"github.com/kyma-project/cli/cmd/kyma/provision"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
-	"testing"
 )
 
 func TestDiscover(t *testing.T) {
@@ -57,7 +59,7 @@ func TestDiscover(t *testing.T) {
 				{
 					Status: corev1.NodeStatus{
 						NodeInfo: corev1.NodeSystemInfo{
-							KubeProxyVersion: "v1.23.10-gke.1000",
+							KubeProxyVersion: "v" + provision.DefaultK8sFullVersion + "-gke.1000",
 						},
 					},
 				},
