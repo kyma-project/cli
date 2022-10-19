@@ -20,10 +20,7 @@ const (
 )
 
 var (
-	deprecatedRuntimes = map[string]struct{}{
-		"nodejs12": {},
-		"python38": {},
-	}
+	deprecatedRuntimes = map[string]struct{}{}
 )
 
 type command struct {
@@ -52,7 +49,6 @@ Use the flags to specify the initial configuration for your Function or to choos
 	cmd.Flags().StringVarP(&o.Dir, "dir", "d", "", `Full path to the directory where you want to save the project.`)
 	cmd.Flags().StringVar(&o.RuntimeImageOverride, "runtime-image-override", "", `Set custom runtime image base.`)
 	cmd.Flags().StringVarP(&o.Runtime, "runtime", "r", defaultRuntime, `Flag used to define the environment for running your Function. Use one of these options:
-	- nodejs12 (deprecated)
 	- nodejs14
 	- nodejs16	
 	- python39`)
