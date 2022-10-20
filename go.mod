@@ -19,9 +19,9 @@ require (
 	github.com/gardener/component-spec/bindings-go v0.0.66
 	github.com/go-logr/logr v1.2.3
 	github.com/imdario/mergo v0.3.12
-	github.com/kyma-incubator/reconciler v0.0.0-20221004083116-001a6ccbdc83
-	github.com/kyma-project/hydroform/function v0.0.0-20220627134457-64114d8b0432
-	github.com/kyma-project/hydroform/provision v0.0.0-20220823073408-8107dddf81a4
+	github.com/kyma-incubator/reconciler v0.0.0-20221019140346-bb1aca4dcc63
+	github.com/kyma-project/hydroform/function v0.0.0-20221019152339-a661398f485c
+	github.com/kyma-project/hydroform/provision v0.0.0-20221019152339-a661398f485c
 	github.com/mandelsoft/vfs v0.0.0-20220805210647-bf14a11bfe31
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.0.3-0.20220303224323-02efb9a75ee1
@@ -196,7 +196,7 @@ require (
 	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4 // indirect
 	golang.org/x/sys v0.0.0-20220728004956-3c1f35247d10 // indirect
 	golang.org/x/term v0.0.0-20220411215600-e5f449aeb171 // indirect
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/text v0.3.8 // indirect
 	golang.org/x/time v0.0.0-20220609170525-579cf78fd858 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20220502173005-c8bf987b8c21 // indirect
