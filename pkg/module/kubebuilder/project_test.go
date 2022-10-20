@@ -32,12 +32,15 @@ func TestParseProject(t *testing.T) {
 		Name:   "example",
 		Layout: []string{"go.kubebuilder.io/v3"},
 		Repo:   "sigs.k8s.io/kubebuilder/example",
+		path:   path,
 	}
 	require.Equal(t, expected, p)
 }
 
 func testKubebuilderProject(t *testing.T) string {
 	d, err := os.MkdirTemp("", "kubebuilder-project")
+	require.NoError(t, err)
+	err = os.Mkdir(filepath.Join(d, "operator"), os.ModePerm)
 	require.NoError(t, err)
 
 	f, err := os.Create(filepath.Join(d, projectFile))
