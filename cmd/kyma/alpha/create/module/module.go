@@ -1,6 +1,7 @@
 package module
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -10,13 +11,9 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/kyma-project/cli/internal/cli"
-	"github.com/kyma-project/cli/internal/envtest"
 	"github.com/kyma-project/cli/pkg/module"
 	"github.com/kyma-project/cli/pkg/module/oci"
-	"github.com/kyma-project/cli/pkg/step"
 )
-
-const defaultCRPathEnv = "KYMACLI_DEFAULT_CR_PATH" //Location of the default CR YAML file for the module. Optional, defaults to the "default.yaml" file in the module's directory
 
 type command struct {
 	opts *Options
@@ -48,6 +45,12 @@ Finally, if you provided a registry to which to push the artifact, the created m
 Alternatively, if you don't push to registry, you can trigger an on-demand validation with "--validateCR=true".
 `,
 
+		Example: `Examples:
+Build module modA in version 1.2.3 and push it to a remote registry
+		kyma alpha create module modA 1.2.3 /path/to/module --registry https://dockerhub.com
+Build module modB in version 3.2.1 and push it to a local registry "unsigned" subflder without tls
+		kyma alpha create module modA 1.2.3 /path/to/module --registry http://localhost:5001/unsigned --insecure
+`,
 		RunE:    func(_ *cobra.Command, args []string) error { return c.Run(args) },
 		Aliases: []string{"mod"},
 	}
@@ -63,7 +66,7 @@ Alternatively, if you don't push to registry, you can trigger an on-demand valid
 	cmd.Flags().BoolVarP(&o.Overwrite, "overwrite", "w", false, "overwrites the existing mod-path directory if it exists")
 	cmd.Flags().BoolVar(&o.Insecure, "insecure", false, "Use an insecure connection to access the registry.")
 	cmd.Flags().BoolVar(&o.Clean, "clean", false, "Remove the mod-path folder and all its contents at the end.")
-	cmd.Flags().BoolVar(&o.ValidateDefaultCR, "validateCR", false, "Validate the custom resource defined in the \"default.yaml\" file on demand. This validation always runs when pushing the module.")
+	cmd.Flags().BoolVar(&o.ValidateDefaultCR, "validate-cr", false, "Validate the custom resource defined in the \"default.yaml\" file on demand. This validation always runs when pushing the module.")
 
 	return cmd
 }
@@ -84,14 +87,6 @@ func (cmd *command) Run(args []string) error {
 
 	l := cli.NewLogger(cmd.opts.Verbose).Sugar()
 
-	/* -- VALIDATE DEFAULT CR -- */
-	if cmd.opts.ValidateDefaultCR || cmd.shouldPushToRegistry() {
-		err = cmd.validateDefaultCR(args[2], l)
-		if err != nil {
-			return err
-		}
-	}
-
 	cfg := &module.ComponentConfig{
 		Name:                 args[0],
 		Version:              args[1],
@@ -111,31 +106,35 @@ func (cmd *command) Run(args []string) error {
 	}
 	cmd.CurrentStep.Success()
 
-	/* -- BUNDLE RESOURCES -- */
-
-	cmd.NewStep("Adding resources...")
+	/* -- Inspect and build Module -- */
+	cmd.NewStep("Parse and build module...")
 
 	// Create base resource defs with module root and its sub-layers
-	defs, err := module.Inspect(args[2], l)
+	modDef, err := module.Inspect(args[2], cfg, cmd.opts.ResourcePaths, cmd.CurrentStep, l)
 	if err != nil {
+		cmd.CurrentStep.Failure()
 		return err
 	}
+	cmd.CurrentStep.Successf("Module built")
 
-	// Add extra resources
-	for _, p := range cmd.opts.ResourcePaths {
-		rd, err := module.ResourceDefFromString(p)
+	/* -- VALIDATE DEFAULT CR -- */
+	if cmd.opts.ValidateDefaultCR || cmd.shouldPushToRegistry() {
+		err = cmd.validateDefaultCR(args[2], modDef.DefaultCR, l)
 		if err != nil {
 			return err
 		}
-		defs = append(defs, rd)
 	}
 
-	if err := module.AddResources(archive, cfg, l, fs, defs...); err != nil {
+	/* -- BUNDLE RESOURCES -- */
+
+	cmd.NewStep("Bundling resources...")
+
+	if err := module.AddResources(archive, cfg, l, fs, modDef); err != nil {
 		cmd.CurrentStep.Failure()
 		return err
 	}
 
-	cmd.CurrentStep.Successf("Resources added")
+	cmd.CurrentStep.Successf("Resources bundled")
 
 	/* -- PUSH & TEMPLATE -- */
 
@@ -155,7 +154,7 @@ func (cmd *command) Run(args []string) error {
 		cmd.CurrentStep.Success()
 
 		cmd.NewStep("Generating module template")
-		t, err := module.Template(archive, cmd.opts.Channel, args[2], fs)
+		t, err := module.Template(archive, cmd.opts.Channel, modDef.DefaultCR)
 		if err != nil {
 			cmd.CurrentStep.Failure()
 			return err
@@ -171,6 +170,7 @@ func (cmd *command) Run(args []string) error {
 	/* -- CLEANUP -- */
 
 	if cmd.opts.Clean {
+		// TODO clean generated chart
 		cmd.NewStep(fmt.Sprintf("Cleaning up mod path %q", cmd.opts.ModPath))
 		if err := os.RemoveAll(cmd.opts.ModPath); err != nil {
 			cmd.CurrentStep.Failure()
@@ -187,44 +187,21 @@ func (cmd *command) shouldPushToRegistry() bool {
 	return cmd.opts.RegistryURL != ""
 }
 
-func (cmd *command) validateDefaultCR(modulePath string, l *zap.SugaredLogger) error {
+func (cmd *command) validateDefaultCR(modPath string, cr []byte, l *zap.SugaredLogger) error {
 	cmd.NewStep("Validating Default CR")
-	crValidator, err := module.NewDefaultCRValidator(modulePath, os.Getenv(defaultCRPathEnv))
+	crValidator, err := module.NewDefaultCRValidator(cr, modPath)
 	if err != nil {
 		cmd.CurrentStep.Failure()
 		return err
 	}
 
-	if crValidator.DefaultCRExists() {
-
-		envtestBinariesPath, err := cmd.envtestSetup(cmd.CurrentStep, cmd.opts.Verbose)
-		if err != nil {
-			cmd.CurrentStep.Failure()
-			return err
+	if err := crValidator.Run(cmd.CurrentStep, cmd.opts.Verbose, l); err != nil {
+		if errors.Is(err, module.ErrEmptyCR) {
+			cmd.CurrentStep.Successf("Default CR validation skipped - no default CR")
+			return nil
 		}
-
-		cmd.CurrentStep.Status("Running")
-		err = crValidator.Run(envtestBinariesPath, l)
-		if err != nil {
-			cmd.CurrentStep.Failure()
-			return err
-		}
-		cmd.CurrentStep.Successf("Default CR validation succeeded")
-	} else {
-		cmd.CurrentStep.Successf("Default CR validation skipped - no default CR")
+		return err
 	}
-
+	cmd.CurrentStep.Successf("Default CR validation succeeded")
 	return nil
-}
-
-func (cmd *command) envtestSetup(s step.Step, verbose bool) (string, error) {
-	s.Status("Setting up envtest...")
-	envtestBinariesPath, err := envtest.Setup(s, verbose)
-	if err != nil {
-		return "", err
-	}
-	if verbose {
-		s.Status(fmt.Sprintf("using envtest from %q", envtestBinariesPath))
-	}
-	return envtestBinariesPath, nil
 }

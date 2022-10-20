@@ -5,14 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"path/filepath"
 	"strings"
 	"text/template"
 
 	v2 "github.com/gardener/component-spec/bindings-go/apis/v2"
 	"github.com/gardener/component-spec/bindings-go/ctf"
 	cdoci "github.com/gardener/component-spec/bindings-go/oci"
-	"github.com/mandelsoft/vfs/pkg/vfs"
 	"sigs.k8s.io/yaml"
 
 	"github.com/kyma-project/cli/pkg/module/oci"
@@ -40,18 +38,13 @@ spec:
 {{yaml .Descriptor | printf "%s" | indent 4}}
 `
 
-func Template(archive *ctf.ComponentArchive, channel, path string, fs vfs.FileSystem) ([]byte, error) {
+func Template(archive *ctf.ComponentArchive, channel string, data []byte) ([]byte, error) {
 	d, err := remoteDescriptor(archive)
 	if err != nil {
 		return nil, err
 	}
 
 	ref, err := oci.ParseRef(d.Name)
-	if err != nil {
-		return nil, err
-	}
-
-	data, err := vfs.ReadFile(fs, filepath.Join(path, "default.yaml"))
 	if err != nil {
 		return nil, err
 	}

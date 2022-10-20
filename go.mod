@@ -30,6 +30,7 @@ require (
 	github.com/spf13/cobra v1.4.0
 	github.com/stretchr/testify v1.7.2
 	go.uber.org/zap v1.21.0
+	golang.org/x/exp v0.0.0-20221012211006-4de253d81b95
 	gopkg.in/yaml.v3 v3.0.1
 	gotest.tools v2.2.0+incompatible
 	helm.sh/helm/v3 v3.9.4

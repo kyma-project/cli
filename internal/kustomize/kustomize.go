@@ -108,7 +108,8 @@ func Setup(step step.Step, verbose bool) error {
 }
 
 // Build generates a manifest given a path using kustomize
-func Build(def Definition) ([]byte, error) {
+// Additional args might be given to the kustomize build command
+func Build(def Definition, args ...string) ([]byte, error) {
 	p, err := kustomizeBinPath()
 	if err != nil {
 		return nil, fmt.Errorf("error getting kustomize binary: %w", err)
@@ -119,12 +120,32 @@ func Build(def Definition) ([]byte, error) {
 		path = fmt.Sprintf(buildURLPattern, def.Location, def.Ref)
 	}
 
-	out, err := exec.Command(p, "build", path).CombinedOutput()
+	// prepend command and path to args
+	args = append([]string{"build", path}, args...)
+
+	out, err := exec.Command(p, args...).CombinedOutput()
 	if err != nil {
 		return nil, fmt.Errorf("could not build kustomization: %s: %w", out, err)
 	}
 
 	return out, nil
+}
+
+// Set image edits the given image to the given value in the kustomization found in path.
+func SetImage(path, img, value string) error {
+	p, err := kustomizeBinPath()
+	if err != nil {
+		return fmt.Errorf("error getting kustomize binary: %w", err)
+	}
+
+	c := exec.Command(p, "edit", "set", "image", fmt.Sprintf("%s=%s", img, value))
+	c.Dir = path
+	out, err := c.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("could not build kustomization: %s: %w", out, err)
+	}
+
+	return nil
 }
 
 // kustomizeBinPath looks for the kustomize binary in the PATH or in the default Kyma home folder.

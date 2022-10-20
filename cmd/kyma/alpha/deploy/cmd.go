@@ -203,7 +203,7 @@ func (cmd *command) dryRun() error {
 			fmt.Printf("%s\n---\n", string(b))
 		}
 
-		if err := deploy.Kyma(cmd.K8s, cmd.opts.Channel, cmd.opts.KymaCR, false); err != nil {
+		if err := deploy.Kyma(cmd.K8s, cmd.opts.Channel, cmd.opts.KymaCR, true); err != nil {
 			return err
 		}
 	}
