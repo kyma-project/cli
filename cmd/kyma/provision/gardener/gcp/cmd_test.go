@@ -3,6 +3,7 @@ package gcp
 import (
 	"testing"
 
+	"github.com/kyma-project/cli/cmd/kyma/provision"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/hydroform/provision/types"
 	"github.com/stretchr/testify/require"
@@ -19,7 +20,7 @@ func TestProvisionGardenerGCPFlags(t *testing.T) {
 	require.Equal(t, "", o.Project, "Default value for the project flag not as expected.")
 	require.Equal(t, "", o.CredentialsFile, "Default value for the credentials flag not as expected.")
 	require.Equal(t, "", o.Secret, "The parsed value for the secret flag not as expected.")
-	require.Equal(t, "1.23", o.KubernetesVersion, "Default value for the kube-version flag not as expected.")
+	require.Equal(t, provision.DefaultK8sShortVersion, o.KubernetesVersion, "Default value for the kube-version flag not as expected.")
 	require.Equal(t, "europe-west3", o.Region, "Default value for the region flag not as expected.")
 	require.Equal(t, []string{"europe-west3-a"}, o.Zones, "Default value for the zone flag not as expected.")
 	require.Equal(t, "n1-standard-4", o.MachineType, "Default value for the type flag not as expected.")
