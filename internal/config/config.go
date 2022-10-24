@@ -6,7 +6,7 @@
 package config
 
 const (
-	DefaultKyma2Version = "main"
+	DefaultKyma2Version = "2.8.0"
 	// DefaultManagerVersion sets the version for the kyma lifecycle and module managers to install when deploying the kyma setup.
 	DefaultManagerVersion = "main"
 )
