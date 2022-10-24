@@ -17,10 +17,10 @@ const (
 	V3      = "go.kubebuilder.io/v3"
 	V4alpha = "go.kubebuilder.io/v4alpha"
 
-	projectFile          = "operator/PROJECT"
+	projectFile          = "PROJECT"
 	configFile           = "config.yaml"
-	defaultKustomization = "operator/config/default"
-	samplesPath          = "operator/config/samples/"
+	defaultKustomization = "config/default"
+	samplesPath          = "config/samples/"
 
 	crdFileIdentifier = "customresourcedefinition"
 	chartsFolder      = "charts/%s-operator"

@@ -40,8 +40,6 @@ func TestParseProject(t *testing.T) {
 func testKubebuilderProject(t *testing.T) string {
 	d, err := os.MkdirTemp("", "kubebuilder-project")
 	require.NoError(t, err)
-	err = os.Mkdir(filepath.Join(d, "operator"), os.ModePerm)
-	require.NoError(t, err)
 
 	f, err := os.Create(filepath.Join(d, projectFile))
 	defer func() {
