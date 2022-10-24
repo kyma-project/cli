@@ -74,7 +74,9 @@ func (p *Project) Build(name, version, registry string) (string, error) {
 	}
 
 	// create output folders
-	chartsPath := filepath.Join(p.path, fmt.Sprintf(chartsFolder, name))
+	pieces := strings.Split(name, "/")
+	chartName := pieces[len(pieces)-1] // always return the last part of the path
+	chartsPath := filepath.Join(p.path, fmt.Sprintf(chartsFolder, chartName))
 	outPath := filepath.Join(chartsPath, templatesFolder)
 	crdsPath := filepath.Join(chartsPath, crdsFolder)
 
@@ -103,6 +105,11 @@ func (p *Project) Build(name, version, registry string) (string, error) {
 
 	if err := filepath.WalkDir(outPath, mvFn); err != nil {
 		return "", err
+	}
+
+	// generate Chart.yaml file
+	if err := addChart(chartName, version, chartsPath); err != nil {
+		return "", fmt.Errorf("could not generate Chart.yaml file: %w", err)
 	}
 
 	return chartsPath, nil
