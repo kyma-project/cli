@@ -181,6 +181,7 @@ func Inspect(path string, cfg *ComponentConfig, customDefs []string, s step.Step
 	p, err := kubebuilder.ParseProject(path)
 	if err == nil {
 		// Kubebuilder project
+		log.Debug("Kubebuilder project detected.")
 		// generated chart -> layer 1
 		chartPath, err := p.Build(cfg.Name, cfg.Version, cfg.RegistryURL) // TODO maybe switch from charts to pure manifests
 		if err != nil {
@@ -224,9 +225,15 @@ func Inspect(path string, cfg *ComponentConfig, customDefs []string, s step.Step
 
 	} else if errors.Is(err, os.ErrNotExist) {
 		// custom module
+		log.Debug("No kubebuilder project detected, bundling module in a single layer.")
+		absPath, err := filepath.Abs(path)
+		if err != nil {
+			fmt.Errorf("could not get absolute path to %q: %w", err)
+		}
+
 		l := Layer{
-			name:         filepath.Base(path),
-			path:         path,
+			name:         filepath.Base(absPath),
+			path:         absPath,
 			resourceType: typeHelmChart,
 		}
 		// exclude any custom resources that overlap with module root to avoid bundling them twice
