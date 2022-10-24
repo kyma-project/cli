@@ -66,7 +66,6 @@ Build module modB in version 3.2.1 and push it to a local registry "unsigned" su
 	cmd.Flags().BoolVarP(&o.Overwrite, "overwrite", "w", false, "overwrites the existing mod-path directory if it exists")
 	cmd.Flags().BoolVar(&o.Insecure, "insecure", false, "Use an insecure connection to access the registry.")
 	cmd.Flags().BoolVar(&o.Clean, "clean", false, "Remove the mod-path folder and all its contents at the end.")
-	cmd.Flags().BoolVar(&o.ValidateDefaultCR, "validate-cr", false, "Validate the custom resource defined in the \"default.yaml\" file on demand. This validation always runs when pushing the module.")
 
 	return cmd
 }
@@ -118,11 +117,9 @@ func (cmd *command) Run(args []string) error {
 	cmd.CurrentStep.Successf("Module built")
 
 	/* -- VALIDATE DEFAULT CR -- */
-	if cmd.opts.ValidateDefaultCR || cmd.shouldPushToRegistry() {
-		err = cmd.validateDefaultCR(args[2], modDef.DefaultCR, l)
-		if err != nil {
-			return err
-		}
+	err = cmd.validateDefaultCR(args[2], modDef.DefaultCR, l)
+	if err != nil {
+		return err
 	}
 
 	/* -- BUNDLE RESOURCES -- */
@@ -138,7 +135,7 @@ func (cmd *command) Run(args []string) error {
 
 	/* -- PUSH & TEMPLATE -- */
 
-	if cmd.shouldPushToRegistry() {
+	if cmd.opts.RegistryURL != "" {
 
 		cmd.NewStep(fmt.Sprintf("Pushing image to %q", cmd.opts.RegistryURL))
 		r := &module.Remote{
@@ -180,11 +177,6 @@ func (cmd *command) Run(args []string) error {
 	}
 
 	return nil
-}
-
-// shouldPushToRegistry returns true, if the module artifact should be pushed to the configured registry
-func (cmd *command) shouldPushToRegistry() bool {
-	return cmd.opts.RegistryURL != ""
 }
 
 func (cmd *command) validateDefaultCR(modPath string, cr []byte, l *zap.SugaredLogger) error {

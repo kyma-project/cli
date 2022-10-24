@@ -228,7 +228,7 @@ func Inspect(path string, cfg *ComponentConfig, customDefs []string, s step.Step
 		log.Debug("No kubebuilder project detected, bundling module in a single layer.")
 		absPath, err := filepath.Abs(path)
 		if err != nil {
-			fmt.Errorf("could not get absolute path to %q: %w", err)
+			return nil, fmt.Errorf("could not get absolute path to %q: %w", path, err)
 		}
 
 		l := Layer{
