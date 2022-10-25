@@ -31,8 +31,8 @@ kyma alpha create module OCI_IMAGE_NAME MODULE_VERSION <CONTENT_PATH> [flags]
 Examples:
 Build module modA in version 1.2.3 and push it to a remote registry
 		kyma alpha create module modA 1.2.3 /path/to/module --registry https://dockerhub.com
-Build module modB in version 3.2.1 and push it to a local registry "unsigned" subflder without tls
-		kyma alpha create module modA 1.2.3 /path/to/module --registry http://localhost:5001/unsigned --insecure
+Build module modB in version 3.2.1 and push it to a local registry "unsigned" subfolder without tls
+		kyma alpha create module modA 3.2.1 /path/to/module --registry http://localhost:5001/unsigned --insecure
 
 ```
 
