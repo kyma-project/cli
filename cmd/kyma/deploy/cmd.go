@@ -122,9 +122,10 @@ func (cmd *command) run() error {
 		return errors.Wrap(err, "failed to initialize the Kubernetes client from given kubeconfig")
 	}
 
-	if err := cmd.detectManagedEnvironment(); err != nil {
+	if err := cli.DetectManagedEnvironment(&cmd.Command); err != nil {
 		return err
 	}
+
 	if err := cmd.decideVersionUpgrade(); err != nil {
 		return err
 	}
@@ -301,18 +302,6 @@ func (cmd *command) setKubeClient() error {
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
 		return errors.Wrap(err, "failed to initialize the Kubernetes client from given kubeconfig")
 	}
-	return nil
-}
-
-func (cmd *command) detectManagedEnvironment() error {
-	detectStep := cmd.NewStep("Detecting managed Kyma runtime")
-
-	if clusterinfo.IsManagedKyma(cmd.K8s.RestConfig()) {
-		if !detectStep.PromptYesNo("This is a managed Kyma runtime. Deploy manually at your own risk. Are you sure you want to continue? ") {
-			return errors.New("Deploy command stopped by user")
-		}
-	}
-	detectStep.Success()
 	return nil
 }
 
