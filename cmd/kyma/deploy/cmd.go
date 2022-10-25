@@ -338,9 +338,9 @@ func (cmd *command) decideVersionUpgrade() error {
 
 	if cmd.avoidUserInteraction() {
 		if upgradeScenario == version.UpgradeUndetermined {
-			verifyStep.Failuref("Aborting upgrade to '%s' in non-interactive mode. ", currentVersion.String(), upgradeVersion.String())
+			verifyStep.Failuref("Aborting upgrade to '%s' in non-interactive mode. ", upgradeVersion.String())
 		}
-		verifyStep.Successf("Proceeding with upgrade to '%s' in non-interactive mode. ", currentVersion.String(), upgradeVersion.String())
+		verifyStep.Successf("Proceeding with upgrade to '%s' in non-interactive mode. ", upgradeVersion.String())
 		return nil
 	}
 
