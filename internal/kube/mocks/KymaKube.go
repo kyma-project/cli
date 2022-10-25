@@ -72,27 +72,6 @@ func (_m *KymaKube) Dynamic() dynamic.Interface {
 	return r0
 }
 
-// IsManagedKyma provides a mock function with given fields:
-func (_m *KymaKube) IsManagedKyma() (bool, error) {
-	ret := _m.Called()
-
-	var r0 bool
-	if rf, ok := ret.Get(0).(func() bool); ok {
-		r0 = rf()
-	} else {
-		r0 = ret.Get(0).(bool)
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // IsPodDeployed provides a mock function with given fields: namespace, name
 func (_m *KymaKube) IsPodDeployed(namespace string, name string) (bool, error) {
 	ret := _m.Called(namespace, name)

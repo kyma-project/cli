@@ -307,7 +307,7 @@ func (cmd *command) setKubeClient() error {
 func (cmd *command) detectManagedEnvironment() error {
 	detectStep := cmd.NewStep("Detecting managed Kyma runtime")
 
-	managed, err := cmd.K8s.IsManagedKyma()
+	managed, err := clusterinfo.IsManagedKyma(cmd.K8s.RestConfig())
 	if err != nil {
 		return errors.Wrap(err, "Error detecting managed Kyma instance")
 	}

@@ -56,7 +56,4 @@ type KymaKube interface {
 	// until either it returns true or the timeout is reached.
 	// If the timeout is reached an error is returned.
 	WatchResource(res schema.GroupVersionResource, name, namespace string, checkFn func(u *unstructured.Unstructured) (bool, error)) error
-
-	// IsManagedKyma returns true if the k8s go-client is configured to access a managed kyma runtime
-	IsManagedKyma() (bool, error)
 }
