@@ -122,14 +122,9 @@ func (cmd *command) run() error {
 		return errors.Wrap(err, "failed to initialize the Kubernetes client from given kubeconfig")
 	}
 
-	managed, err := cmd.K8s.IsManagedKyma()
-	if err != nil {
-		return errors.Wrap(err, "The installation points to an SKR. TODO: Implement")
+	if err := cmd.detectManagedEnvironment(); err != nil {
+		return err
 	}
-	if managed {
-		fmt.Println("This is a managed Kyma instance. Do you want to continue? TODO: Implement")
-	}
-
 	if err := cmd.decideVersionUpgrade(); err != nil {
 		return err
 	}
@@ -306,6 +301,22 @@ func (cmd *command) setKubeClient() error {
 	if cmd.K8s, err = kube.NewFromConfig("", cmd.KubeconfigPath); err != nil {
 		return errors.Wrap(err, "failed to initialize the Kubernetes client from given kubeconfig")
 	}
+	return nil
+}
+
+func (cmd *command) detectManagedEnvironment() error {
+	detectStep := cmd.NewStep("Detecting managed Kyma runtime")
+
+	managed, err := cmd.K8s.IsManagedKyma()
+	if err != nil {
+		return errors.Wrap(err, "Error detecting managed Kyma instance")
+	}
+	if managed {
+		if !detectStep.PromptYesNo("This is a managed Kyma runtime. Deploy manually at your own risk. Are you sure you want to continue? ") {
+			return errors.New("Deploy command stopped by user")
+		}
+	}
+	detectStep.Success()
 	return nil
 }
 
