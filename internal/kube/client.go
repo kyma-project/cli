@@ -156,6 +156,13 @@ func (c *client) KubeConfig() *api.Config {
 	return c.kubeCfg
 }
 
+func (c *client) IsManagedKyma() (bool, error) {
+	fmt.Println(">>>>==== API Server: ===================")
+	fmt.Println(c.restCfg.Host)
+	fmt.Println("====================================<<<<")
+	return true, nil
+}
+
 func (c *client) Apply(manifest []byte) error {
 	// Prepare a RESTMapper to find GVR
 	dc, err := discovery.NewDiscoveryClientForConfig(c.restCfg)
