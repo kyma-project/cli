@@ -9,43 +9,38 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kyma-project/cli/internal/envtest"
 	"github.com/kyma-project/cli/internal/kube"
+	"github.com/kyma-project/cli/pkg/step"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 	amv "k8s.io/apimachinery/pkg/util/validation"
-	"k8s.io/client-go/rest"
-	"sigs.k8s.io/controller-runtime/pkg/envtest"
 )
 
-const defaultCRName = "default.yaml"
+var ErrEmptyCR = errors.New("provided CR is empty")
 
 type DefaultCRValidator struct {
 	modulePath string
-	fileExists bool
 	crData     []byte
 }
 
-func NewDefaultCRValidator(modulePath, defaultCRPath string) (*DefaultCRValidator, error) {
-	fileExists, crData, err := readDefaultCR(modulePath, defaultCRPath)
-	if err != nil {
-		return nil, err
-	}
-
+func NewDefaultCRValidator(cr []byte, modulePath string) (*DefaultCRValidator, error) {
 	return &DefaultCRValidator{
 		modulePath: modulePath,
-		fileExists: fileExists,
-		crData:     crData,
+		crData:     cr,
 	}, nil
 }
 
-func (v *DefaultCRValidator) DefaultCRExists() bool {
-	return v.fileExists
-}
+func (v *DefaultCRValidator) Run(s step.Step, verbose bool, log *zap.SugaredLogger) error {
+	// skip validation if no CR detected
+	if len(v.crData) == 0 {
+		return nil
+	}
 
-func (v *DefaultCRValidator) Run(envtestBinariesPath string, log *zap.SugaredLogger) (err error) {
-
-	if !v.fileExists {
-		return errors.New("Default CR file does not exist")
+	// setup test env
+	runner, err := envtest.Setup(s, verbose)
+	if err != nil {
+		return err
 	}
 
 	crMap, err := parseYamlToMap(v.crData)
@@ -64,7 +59,7 @@ func (v *DefaultCRValidator) Run(envtestBinariesPath string, log *zap.SugaredLog
 		return fmt.Errorf("Error finding CRD file in the %q directory: %w", searchDirPath, err)
 	}
 	if !crdFound {
-		return fmt.Errorf("Can't find the CRD for CR instance defined in %q (group: %q, kind %q)", defaultCRName, group, kind)
+		return fmt.Errorf("Can't find the CRD for (group: %q, kind %q)", group, kind)
 	}
 
 	err = ensureDefaultNamespace(crMap)
@@ -77,47 +72,26 @@ func (v *DefaultCRValidator) Run(envtestBinariesPath string, log *zap.SugaredLog
 		return err
 	}
 
-	envTest, restCfg, err := startValidationEnv(crdFilePath, envtestBinariesPath)
-	if err != nil {
+	if err := runner.Start(crdFilePath, log); err != nil {
 		return err
 	}
-
 	defer func() {
-		stopErr := envTest.Stop()
-		if stopErr != nil {
+		if err := runner.Stop(); err != nil {
 			//TODO: This doesn't seem to print anything...
-			log.Error(fmt.Errorf("Error stopping envTest: %w", stopErr))
+			log.Error(fmt.Errorf("Error stopping envTest: %w", err))
 			//THIS does: fmt.Println(fmt.Errorf("Error stopping envTest: %w", stopErr))
 		}
 	}()
 
-	kc, err := kube.NewFromRestConfigWithTimeout(restCfg, 30*time.Second)
-
-	err = kc.Apply(properCR)
+	kc, err := kube.NewFromRestConfigWithTimeout(runner.RestClient(), 30*time.Second)
 	if err != nil {
+		return err
+	}
+
+	if err := kc.Apply(properCR); err != nil {
 		return fmt.Errorf("Error applying the default CR: %w", err)
 	}
 	return nil
-}
-
-// readDefaultCR reads the default CR file's contents. The returned bool is true if the data is successfully read, it's false otherwise.
-func readDefaultCR(modulePath, defaultCRPath string) (bool, []byte, error) {
-
-	//If file path is not given explicitly, fallback to "default.yaml" in the module's directory
-	crPath := defaultCRPath
-	if crPath == "" {
-		crPath = filepath.Join(modulePath, defaultCRName)
-	}
-
-	crData, err := os.ReadFile(crPath)
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return false, nil, nil
-		}
-		return false, nil, fmt.Errorf("Error reading the default CR file `%q`: %w", crPath, err)
-	}
-
-	return true, crData, nil
 }
 
 // ensureDefaultNamespace ensures that the metadata.namespace attribute exists and it's value is "default". This is because of how we use the envtest to validate the CR.
@@ -213,27 +187,6 @@ func renderYamlFromMap(modelMap map[string]interface{}) ([]byte, error) {
 
 	return output, nil
 
-}
-
-func startValidationEnv(crdFilePath, envtestBinariesPath string) (*envtest.Environment, *rest.Config, error) {
-
-	envTest := &envtest.Environment{
-		CRDInstallOptions: envtest.CRDInstallOptions{
-			Paths: []string{crdFilePath},
-		},
-		BinaryAssetsDirectory: envtestBinariesPath,
-		ErrorIfCRDPathMissing: true,
-	}
-
-	restCfg, err := envTest.Start()
-	if err != nil {
-		return nil, nil, fmt.Errorf("could not start the `envtest` envionment: %w", err)
-	}
-	if restCfg == nil {
-		return nil, nil, fmt.Errorf("could not get the RestConfig for the `envtest` envionment: %w", err)
-	}
-
-	return envTest, restCfg, nil
 }
 
 // findCRDFileFor returns path to the file with a CRD definition for the given group and kind, if exists. It looks in the dirPath directory and all of it's subdirectories, recursively. The first parameter is true if the file is found, it's false otherwise.

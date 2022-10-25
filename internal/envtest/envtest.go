@@ -11,6 +11,9 @@ import (
 
 	"github.com/kyma-project/cli/internal/files"
 	"github.com/kyma-project/cli/pkg/step"
+	"go.uber.org/zap"
+	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/envtest"
 )
 
 const (
@@ -22,10 +25,16 @@ const (
 // based on "kubernetes-sigs/controller-runtime/tools/setup-envtest/versions/parse.go", but more strict
 var envtestVersionRegexp = regexp.MustCompile(`^(0|[1-9]\d{0,2})\.(0|[1-9]\d{0,2})\.(0|[1-9]\d{0,3})$`)
 
-func Setup(step step.Step, verbose bool) (string, error) {
+type Runner struct {
+	binPath    string
+	env        *envtest.Environment
+	restClient *rest.Config
+}
+
+func Setup(step step.Step, verbose bool) (*Runner, error) {
 	p, err := files.KymaHome()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	//Install setup-envtest
@@ -38,7 +47,7 @@ func Setup(step step.Step, verbose bool) (string, error) {
 		//go install is silent when executed successfully
 		out, err := envtestSetupCmd.CombinedOutput()
 		if err != nil {
-			return "", fmt.Errorf("error installing setup-envtest: %w. Details: %s", err, string(out))
+			return nil, fmt.Errorf("error installing setup-envtest: %w. Details: %s", err, string(out))
 		} else if verbose {
 			step.LogInfof("Installed setup-envtest in: %q", p)
 		}
@@ -50,18 +59,18 @@ func Setup(step step.Step, verbose bool) (string, error) {
 
 	version, err := resolveEnvtestVersion()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	envtestInstallBinariesCmd := exec.Command(envtestSetupBinPath, "use", version, "--bin-dir", p)
 	out, err := envtestInstallBinariesCmd.CombinedOutput()
 	if err != nil {
-		return "", fmt.Errorf("error installing envtest binaries: %w. Details: %s", err, string(out))
+		return nil, fmt.Errorf("error installing envtest binaries: %w. Details: %s", err, string(out))
 	}
 
 	envtestBinariesPath, err := extractPath(string(out))
 	if err != nil {
-		return "", fmt.Errorf("error installing envtest binaries: %w", err)
+		return nil, fmt.Errorf("error installing envtest binaries: %w", err)
 	}
 
 	if verbose {
@@ -73,7 +82,41 @@ func Setup(step step.Step, verbose bool) (string, error) {
 		}
 	}
 
-	return envtestBinariesPath, nil
+	return &Runner{
+		binPath: envtestBinariesPath,
+	}, nil
+}
+
+func (r *Runner) RestClient() *rest.Config {
+	return r.restClient
+}
+
+func (r *Runner) Start(crdFilePath string, log *zap.SugaredLogger) (err error) {
+
+	r.env = &envtest.Environment{
+		CRDInstallOptions: envtest.CRDInstallOptions{
+			Paths: []string{crdFilePath},
+		},
+		BinaryAssetsDirectory: r.binPath,
+		ErrorIfCRDPathMissing: true,
+	}
+
+	r.restClient, err = r.env.Start()
+	if err != nil {
+		return fmt.Errorf("could not start the `envtest` envionment: %w", err)
+	}
+	if r.restClient == nil {
+		return fmt.Errorf("could not get the RestConfig for the `envtest` envionment: %w", err)
+	}
+
+	return nil
+}
+
+func (r *Runner) Stop() error {
+	if err := r.env.Stop(); err != nil {
+		return fmt.Errorf("could not stop CR validation: %w", err)
+	}
+	return nil
 }
 
 // extractPath extracts the envtest binaries path from the "setup-envtest" command output

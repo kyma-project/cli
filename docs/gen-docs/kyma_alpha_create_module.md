@@ -25,6 +25,17 @@ Alternatively, if you don't push to registry, you can trigger an on-demand valid
 kyma alpha create module OCI_IMAGE_NAME MODULE_VERSION <CONTENT_PATH> [flags]
 ```
 
+## Examples
+
+```bash
+Examples:
+Build module modA in version 1.2.3 and push it to a remote registry
+		kyma alpha create module modA 1.2.3 /path/to/module --registry https://dockerhub.com
+Build module modB in version 3.2.1 and push it to a local registry "unsigned" subfolder without tls
+		kyma alpha create module modA 3.2.1 /path/to/module --registry http://localhost:5001/unsigned --insecure
+
+```
+
 ## Flags
 
 ```bash
@@ -38,7 +49,6 @@ kyma alpha create module OCI_IMAGE_NAME MODULE_VERSION <CONTENT_PATH> [flags]
       --registry string        Repository context url for module to upload. The repository url will be automatically added to the repository contexts in the module
   -r, --resource stringArray   Add an extra resource in a new layer with format <NAME:TYPE@PATH>. It is also possible to provide only a path; name will default to the last path element and type to 'helm-chart'
   -t, --token string           Authentication token for the given registry (alternative to basic authentication).
-      --validateCR             Validate the custom resource defined in the "default.yaml" file on demand. This validation always runs when pushing the module.
 ```
 
 ## Flags inherited from parent commands

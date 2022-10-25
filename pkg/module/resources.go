@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	cdv2 "github.com/gardener/component-spec/bindings-go/apis/v2"
 	"github.com/gardener/component-spec/bindings-go/apis/v2/cdutils"
@@ -12,6 +13,8 @@ import (
 	"github.com/gardener/component-spec/bindings-go/ctf"
 	"github.com/kyma-project/cli/internal/files"
 	"github.com/kyma-project/cli/pkg/module/blob"
+	"github.com/kyma-project/cli/pkg/module/kubebuilder"
+	"github.com/kyma-project/cli/pkg/step"
 	"github.com/mandelsoft/vfs/pkg/vfs"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -32,8 +35,8 @@ type ResourceDescriptorList struct {
 
 // AddResources adds the resources in the given resource definitions into the archive and its FS.
 // A resource definition is a string with format: NAME:TYPE@PATH, where NAME and TYPE can be omitted and will default to the last path element name and "helm-chart" respectively
-func AddResources(archive *ctf.ComponentArchive, c *ComponentConfig, log *zap.SugaredLogger, fs vfs.FileSystem, defs ...ResourceDef) error {
-	resources, err := generateResources(log, c.Version, defs...)
+func AddResources(archive *ctf.ComponentArchive, c *ComponentConfig, log *zap.SugaredLogger, fs vfs.FileSystem, modDef *Definition) error {
+	resources, err := generateResources(log, c.Version, modDef.Resources...)
 	if err != nil {
 		return err
 	}
@@ -89,7 +92,7 @@ func WriteComponentDescriptor(fs vfs.FileSystem, cd *cdv2.ComponentDescriptor, f
 // generateResources generates resources by parsing the given definitions.
 // Definitions have the following format: NAME:TYPE@PATH
 // If a definition does not have a name or type, the name of the last path element is used and it is assumed to be a helm-chart type.
-func generateResources(log *zap.SugaredLogger, version string, defs ...ResourceDef) ([]ResourceDescriptor, error) {
+func generateResources(log *zap.SugaredLogger, version string, defs ...Layer) ([]ResourceDescriptor, error) {
 	res := []ResourceDescriptor{}
 	for _, d := range defs {
 		r := ResourceDescriptor{Input: &blob.Input{}}
@@ -150,67 +153,127 @@ func (rd ResourceDescriptor) String() string {
 	return string(y)
 }
 
-// builtInResources contains a set of resources that will automatically be created if found inspecting a module path
-var builtInResources = map[string]ResourceDef{
-	"config.yaml": {
-		name:         "config",
-		resourceType: "yaml",
-	},
+type Definition struct {
+	Resources []Layer
+	Repo      string
+	DefaultCR []byte
 }
 
 // Inspect analyzes the contents of a module and creates resource definitions for each separate layer the module should be split into
-func Inspect(path string, log *zap.SugaredLogger) ([]ResourceDef, error) {
+// Inspect supports:
+// Kubebuilder projects: if a PROJECT file is found and correctly parsed, the project will automatically be generated and layered.
+// Custom module: If not a kubebuilder project, the user has complete freedom to layer the contents as desired via customDefs. Any contents of path not included in the customDefs will be added to the base layer
+func Inspect(path string, cfg *ComponentConfig, customDefs []string, s step.Step, log *zap.SugaredLogger) (*Definition, error) {
 	log.Debugf("Inspecting module contents at [%s]:", path)
-	// check path subfolders
-	infos, err := os.ReadDir(path)
-	if err != nil {
-		return nil, fmt.Errorf("could not Inspect module folder %q: %w", path, err)
-	}
+	defs := []Layer{}
 
-	defs := []ResourceDef{}
-	// for each element in the mod path [charts, config.yaml] create a def and validate it
-	for _, i := range infos {
-		// special case for charts folder
-		if i.Name() == "charts" {
-			charts, err := os.ReadDir(filepath.Join(path, "charts"))
+	for _, d := range customDefs {
+		rd, err := LayerFromString(d)
+		if err != nil {
+			return nil, err
+		}
+
+		defs, err = appendDefIfValid(defs, rd, log)
+		if err != nil {
+			return nil, err
+		}
+	}
+	p, err := kubebuilder.ParseProject(path)
+	if err == nil {
+		// Kubebuilder project
+		log.Debug("Kubebuilder project detected.")
+		// generated chart -> layer 1
+		chartPath, err := p.Build(cfg.Name, cfg.Version, cfg.RegistryURL) // TODO maybe switch from charts to pure manifests
+		if err != nil {
+			return nil, err
+		}
+		// config.yaml -> layer 2
+		configPath, err := p.Config()
+		if err != nil {
+			return nil, err
+		}
+
+		// Add default CR if generating template
+		cr := []byte{}
+		if cfg.RegistryURL != "" {
+			cr, err = p.DefaultCR(s)
 			if err != nil {
 				return nil, err
 			}
+		}
 
-			for _, i := range charts {
-				log.Debugf("Found chart %q", i.Name())
-				r := ResourceDef{
-					name:         i.Name(),
-					path:         filepath.Join(path, "charts", i.Name()),
-					resourceType: "helm-chart",
-				}
-				if defs, err = appendDefIfValid(defs, r, i, log); err != nil {
-					return nil, err
-				}
+		md := &Definition{
+			Repo:      p.Repo,
+			DefaultCR: cr,
+		}
 
-			}
-		} else if r, ok := builtInResources[i.Name()]; ok {
-			log.Debugf("Found built in layer %q", i.Name())
+		charts := Layer{
+			name:         filepath.Base(chartPath),
+			resourceType: typeHelmChart,
+			path:         chartPath,
+		}
+		config := Layer{
+			name:         configLayerName,
+			resourceType: typeYaml,
+			path:         configPath,
+		}
 
-			r.path = filepath.Join(path, i.Name())
-			if defs, err = appendDefIfValid(defs, r, i, log); err != nil {
-				return nil, err
+		md.Resources = append(md.Resources, charts, config)
+		md.Resources = append(md.Resources, defs...)
+
+		return md, nil
+
+	} else if errors.Is(err, os.ErrNotExist) {
+		// custom module
+		log.Debug("No kubebuilder project detected, bundling module in a single layer.")
+		absPath, err := filepath.Abs(path)
+		if err != nil {
+			return nil, fmt.Errorf("could not get absolute path to %q: %w", path, err)
+		}
+
+		l := Layer{
+			name:         filepath.Base(absPath),
+			path:         absPath,
+			resourceType: typeHelmChart,
+		}
+		// exclude any custom resources that overlap with module root to avoid bundling them twice
+		for _, d := range defs {
+			if strings.HasPrefix(d.path, l.path) {
+				l.excludedFiles = append(l.excludedFiles, d.path)
 			}
 		}
+		// prepend the base resource def
+		base, err := appendDefIfValid(nil, l, log)
+		if err != nil {
+			return nil, err
+		}
+
+		return &Definition{
+			Resources: append(base, defs...),
+		}, nil
 	}
-	return defs, nil
+	// there is an error other than not exists
+	return nil, err
 }
 
-func appendDefIfValid(defs []ResourceDef, r ResourceDef, i os.DirEntry, log *zap.SugaredLogger) ([]ResourceDef, error) {
-	if i.IsDir() {
+func appendDefIfValid(defs []Layer, r Layer, log *zap.SugaredLogger) ([]Layer, error) {
+	info, err := os.Stat(r.path)
+	if err != nil {
+		return nil, fmt.Errorf("could not validate resource %q: %w", r.path, err)
+	}
+
+	if info.IsDir() {
 		empty, err := files.IsDirEmpty(r.path)
 		if err != nil {
 			return nil, fmt.Errorf("could not determine if directory %q is empty: %w", r.path, err)
 		}
 		if empty {
-			log.Debugf("Resource %q has no content, skipping", i.Name())
+			log.Debugf("Resource %q has no content, skipping", r.Path())
 			return defs, nil
 		}
+	} else if info.Size() == 0 {
+		log.Debugf("Resource %q has no content, skipping", r.Path())
+		return defs, nil
 	}
 	log.Debugf("Added layer %+v", r)
 	return append(defs, r), nil
