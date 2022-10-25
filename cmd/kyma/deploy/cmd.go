@@ -122,6 +122,10 @@ func (cmd *command) run() error {
 		return errors.Wrap(err, "failed to initialize the Kubernetes client from given kubeconfig")
 	}
 
+	if cmd.K8s.isManagedKyma() {
+		return errors.Wrap(err, "The installation points to an SKR. TODO: Implement")
+	}
+
 	if err := cmd.decideVersionUpgrade(); err != nil {
 		return err
 	}
