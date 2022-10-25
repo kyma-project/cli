@@ -2,10 +2,17 @@ package clusterinfo
 
 import (
 	"context"
-	"fmt"
+	"strings"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+)
+
+const (
+	devEnvAPIServerSuffix    = ".dev.kyma.ondemand.com"
+	stageEnvAPIServerSuffix  = ".stage.kyma.ondemand.com"
+	prodEnvAPIServerSuffix   = ".kyma.ondemand.com"
+	legacyEnvAPIServerSuffix = ".stage.kyma.ondemand.com"
 )
 
 // Info is a discriminated union (can be either Gardener or K3d or Unrecognized)
@@ -71,9 +78,20 @@ func Discover(ctx context.Context, kubeClient kubernetes.Interface) (Info, error
 }
 
 // IsManagedKyma returns true if the k8s go-client is configured to access a managed kyma runtime
-func IsManagedKyma(restConfig *rest.Config) (bool, error) {
-	fmt.Println(">>>>==== API Server: ===================")
-	fmt.Println(restConfig.Host)
-	fmt.Println("====================================<<<<")
-	return true, nil
+func IsManagedKyma(restConfig *rest.Config) bool {
+	//Legacy
+	if strings.HasSuffix(restConfig.Host, legacyEnvAPIServerSuffix) {
+		return true
+	}
+	if strings.HasSuffix(restConfig.Host, devEnvAPIServerSuffix) {
+		return true
+	}
+	if strings.HasSuffix(restConfig.Host, stageEnvAPIServerSuffix) {
+		return true
+	}
+	if strings.HasSuffix(restConfig.Host, prodEnvAPIServerSuffix) {
+		return true
+	}
+
+	return false
 }
