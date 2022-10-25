@@ -15,7 +15,7 @@ func DetectManagedEnvironment(cmd *Command) error {
 	if clusterinfo.IsManagedKyma(cmd.K8s.RestConfig()) {
 		detectStep.LogWarn(managedKymaWarning)
 		if !detectStep.PromptYesNo("Do you really want to proceed? ") {
-			return errors.New("Deploy command stopped by user")
+			return errors.New("Command stopped by user")
 		}
 	}
 	detectStep.Success()
