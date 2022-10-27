@@ -122,8 +122,10 @@ func (cmd *command) run() error {
 		return errors.Wrap(err, "failed to initialize the Kubernetes client from given kubeconfig")
 	}
 
-	if err := cli.DetectManagedEnvironment(cmd.K8s, cmd.Factory.NewStep("")); err != nil {
-		return err
+	if !cmd.opts.NonInteractive {
+		if err := cli.DetectManagedEnvironment(cmd.K8s, cmd.Factory.NewStep("")); err != nil {
+			return err
+		}
 	}
 
 	if err := cmd.decideVersionUpgrade(); err != nil {
