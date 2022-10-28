@@ -65,9 +65,13 @@ func (c *command) Run() error {
 	if err = c.verifyK3dStatus(k3dClient); err != nil {
 		return err
 	}
-	if registryURL, err = c.createK3dRegistry(k3dClient); err != nil {
-		return err
+
+	if len(c.opts.UseRegistry) == 0 {
+		if registryURL, err = c.createK3dRegistry(k3dClient); err != nil {
+			return err
+		}
 	}
+
 	if err = c.createK3dCluster(k3dClient, registryURL); err != nil {
 		return err
 	}
@@ -96,7 +100,7 @@ func (c *command) verifyK3dStatus(k3dClient k3d.Client) error {
 	}
 
 	s.LogInfo("Checking if k3d cluster of previous kyma installation exists")
-	clusterExists, err := k3dClient.ClusterExists()
+	clusterExists, err := k3dClient.ClusterExists(c.opts.Name)
 	if err != nil {
 		s.Failure()
 		return err
@@ -168,7 +172,9 @@ func (c *command) createK3dRegistry(k3dClient k3d.Client) (string, error) {
 func (c *command) createK3dCluster(k3dClient k3d.Client, registryURL string) error {
 	s := c.NewStep(fmt.Sprintf("Create K3d cluster '%s'", c.opts.Name))
 
-	c.opts.UseRegistry = append(c.opts.UseRegistry, registryURL)
+	if len(registryURL) > 0 {
+		c.opts.UseRegistry = append(c.opts.UseRegistry, registryURL)
+	}
 
 	settings := k3d.CreateClusterSettings{
 		Args:              parseK3dArgs(c.opts.K3dArgs),

@@ -22,7 +22,7 @@ type Client interface {
 	runCmd(args ...string) (string, error)
 	checkVersion() error
 	VerifyStatus() error
-	ClusterExists() (bool, error)
+	ClusterExists(name string) (bool, error)
 	RegistryExists() (bool, error)
 	CreateCluster(settings CreateClusterSettings) error
 	CreateRegistry(registryPort string) (string, error)
@@ -160,8 +160,8 @@ func (c *client) VerifyStatus() error {
 	return err
 }
 
-// ClusterExists checks whether a cluster exists
-func (c *client) ClusterExists() (bool, error) {
+// ClusterExists checks whether the given cluster exists
+func (c *client) ClusterExists(name string) (bool, error) {
 	clusterJSON, err := c.runCmd("cluster", "list", "-o", "json")
 	if err != nil {
 		return false, err
@@ -216,6 +216,7 @@ func (c *client) CreateCluster(settings CreateClusterSettings) error {
 	cmdArgs = append(cmdArgs, getCreateClusterArgs(settings)...)
 
 	cmdArgs = append(cmdArgs, constructArgs("--port", settings.PortMapping)...)
+
 	//add further k3d args which are not offered by the Kyma CLI flags
 	cmdArgs = append(cmdArgs, settings.Args...)
 
