@@ -58,7 +58,6 @@ func (c *command) Run() error {
 	}
 
 	var err error
-	var registries []string
 
 	k3dClient := k3d.NewClient(k3d.NewCmdRunner(), k3d.NewPathLooker(), c.opts.Name, c.opts.Verbose, c.opts.Timeout)
 
@@ -71,10 +70,10 @@ func (c *command) Run() error {
 		if err != nil {
 			return err
 		}
-		registries = append(registries, defaultRegistry)
+		c.opts.UseRegistry = append(c.opts.UseRegistry, defaultRegistry)
 	}
 
-	if err = c.createK3dCluster(k3dClient, registries); err != nil {
+	if err = c.createK3dCluster(k3dClient); err != nil {
 		return err
 	}
 
@@ -172,7 +171,7 @@ func (c *command) createK3dRegistry(k3dClient k3d.Client) (string, error) {
 }
 
 // Create a k3d cluster
-func (c *command) createK3dCluster(k3dClient k3d.Client, registries []string) error {
+func (c *command) createK3dCluster(k3dClient k3d.Client) error {
 	s := c.NewStep(fmt.Sprintf("Create K3d cluster '%s'", c.opts.Name))
 
 	settings := k3d.CreateClusterSettings{
@@ -181,7 +180,7 @@ func (c *command) createK3dCluster(k3dClient k3d.Client, registries []string) er
 		PortMapping:       c.opts.PortMapping,
 		Workers:           c.opts.Workers,
 		K3sArgs:           c.opts.K3sArgs,
-		UseRegistry:       registries,
+		UseRegistry:       c.opts.UseRegistry,
 	}
 
 	err := k3dClient.CreateCluster(settings)
