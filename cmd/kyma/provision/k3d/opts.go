@@ -10,7 +10,7 @@ import (
 type Options struct {
 	*cli.Options
 
-	Name              string //here
+	Name              string
 	Workers           int
 	Timeout           time.Duration
 	K3sArgs           []string
