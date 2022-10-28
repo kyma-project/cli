@@ -100,7 +100,7 @@ func (c *command) verifyK3dStatus(k3dClient k3d.Client) error {
 	}
 
 	s.LogInfo("Checking if k3d cluster of previous kyma installation exists")
-	clusterExists, err := k3dClient.ClusterExists(c.opts.Name)
+	clusterExists, err := k3dClient.ClusterExists()
 	if err != nil {
 		s.Failure()
 		return err

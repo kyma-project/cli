@@ -22,7 +22,7 @@ type Client interface {
 	runCmd(args ...string) (string, error)
 	checkVersion() error
 	VerifyStatus() error
-	ClusterExists(name string) (bool, error)
+	ClusterExists() (bool, error)
 	RegistryExists() (bool, error)
 	CreateCluster(settings CreateClusterSettings) error
 	CreateRegistry(registryPort string) (string, error)
@@ -161,7 +161,7 @@ func (c *client) VerifyStatus() error {
 }
 
 // ClusterExists checks whether the given cluster exists
-func (c *client) ClusterExists(name string) (bool, error) {
+func (c *client) ClusterExists() (bool, error) {
 	clusterJSON, err := c.runCmd("cluster", "list", "-o", "json")
 	if err != nil {
 		return false, err
