@@ -18,6 +18,9 @@ const (
 	binaryName string = "k3d"
 )
 
+// 64 seems to be the upper limit for a host name of a running k3d registry.
+var registryNameRegexp = regexp.MustCompile("Successfully created registry[^']+['](.{5,64})[']")
+
 type Client interface {
 	runCmd(args ...string) (string, error)
 	checkVersion() error
@@ -127,7 +130,7 @@ func (c *client) getRegistryByName(registryName string) (*Registry, error) {
 	}
 
 	for _, registry := range registryList.Registries {
-		if registry.Name == fmt.Sprintf("k3d-%s", registryName) {
+		if registry.Name == registryName {
 			if c.verbose {
 				fmt.Printf("k3d registry '%s' exists", registryName)
 			}
@@ -191,7 +194,7 @@ func (c *client) ClusterExists() (bool, error) {
 func (c *client) RegistryExists() (bool, error) {
 	registryName := fmt.Sprintf(defaultRegistryNamePattern, c.clusterName)
 
-	registry, err := c.getRegistryByName(registryName)
+	registry, err := c.getRegistryByName(fmt.Sprintf("k3d-%s", registryName))
 	if err != nil {
 		return false, err
 	}
@@ -227,8 +230,18 @@ func (c *client) CreateCluster(settings CreateClusterSettings) error {
 func (c *client) CreateRegistry(registryPort string) (string, error) {
 	registryName := fmt.Sprintf(defaultRegistryNamePattern, c.clusterName)
 
-	_, err := c.runCmd("registry", "create", registryName, "--port", registryPort)
-	return fmt.Sprintf("%s:%s", registryName, registryPort), err
+	out, err := c.runCmd("registry", "create", registryName, "--port", registryPort)
+	if err != nil {
+		return "", err
+	}
+
+	registryNameMatch := registryNameRegexp.FindStringSubmatch(out)
+	if len(registryNameMatch) > 0 {
+		return fmt.Sprintf("%s:%s", registryNameMatch[1], registryPort), nil
+	}
+
+	//fallback to k3d convention if the regexp fails
+	return fmt.Sprintf("%s:%s", registryName, registryPort), nil
 }
 
 // DeleteCluster deletes a k3d registry

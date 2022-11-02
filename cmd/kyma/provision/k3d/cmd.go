@@ -58,19 +58,25 @@ func (c *command) Run() error {
 	}
 
 	var err error
-	var registryURL string
 
 	k3dClient := k3d.NewClient(k3d.NewCmdRunner(), k3d.NewPathLooker(), c.opts.Name, c.opts.Verbose, c.opts.Timeout)
 
 	if err = c.verifyK3dStatus(k3dClient); err != nil {
 		return err
 	}
-	if registryURL, err = c.createK3dRegistry(k3dClient); err != nil {
+
+	if len(c.opts.UseRegistry) == 0 {
+		defaultRegistry, err := c.createK3dRegistry(k3dClient)
+		if err != nil {
+			return err
+		}
+		c.opts.UseRegistry = append(c.opts.UseRegistry, defaultRegistry)
+	}
+
+	if err = c.createK3dCluster(k3dClient); err != nil {
 		return err
 	}
-	if err = c.createK3dCluster(k3dClient, registryURL); err != nil {
-		return err
-	}
+
 	return nil
 }
 
@@ -165,10 +171,8 @@ func (c *command) createK3dRegistry(k3dClient k3d.Client) (string, error) {
 }
 
 // Create a k3d cluster
-func (c *command) createK3dCluster(k3dClient k3d.Client, registryURL string) error {
+func (c *command) createK3dCluster(k3dClient k3d.Client) error {
 	s := c.NewStep(fmt.Sprintf("Create K3d cluster '%s'", c.opts.Name))
-
-	c.opts.UseRegistry = append(c.opts.UseRegistry, registryURL)
 
 	settings := k3d.CreateClusterSettings{
 		Args:              parseK3dArgs(c.opts.K3dArgs),
