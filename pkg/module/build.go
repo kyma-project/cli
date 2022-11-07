@@ -10,58 +10,54 @@ import (
 	cdvalidation "github.com/gardener/component-spec/bindings-go/apis/v2/validation"
 	"github.com/gardener/component-spec/bindings-go/codec"
 	"github.com/gardener/component-spec/bindings-go/ctf"
+	"github.com/kyma-project/cli/pkg/module/git"
 	"github.com/mandelsoft/vfs/pkg/projectionfs"
 	"github.com/mandelsoft/vfs/pkg/vfs"
 	"sigs.k8s.io/yaml"
 )
 
-// ComponentConfig contains all configurable fields for a component descriptor
-type ComponentConfig struct {
-	ComponentArchivePath string // Location of the component descriptor. If it does not exist, it is created.
-	Name                 string // Name of the module (mandatory)
-	Version              string // Version of the module (mandatory)
-	RegistryURL          string // Registry URL to push the image to (optional)
-	Overwrite            bool   // If true, existing module is overwritten if the configuration differs.
-}
-
 // Build creates a component archive with the given configuration
-func Build(fs vfs.FileSystem, c *ComponentConfig) (*ctf.ComponentArchive, error) {
-	if err := c.validate(); err != nil {
+func Build(fs vfs.FileSystem, def *Definition) (*ctf.ComponentArchive, error) {
+	if err := def.validate(); err != nil {
 		return nil, err
 	}
 
-	compDescFilePath := filepath.Join(c.ComponentArchivePath, ctf.ComponentDescriptorFileName)
-	if !c.Overwrite {
+	compDescFilePath := filepath.Join(def.ArchivePath, ctf.ComponentDescriptorFileName)
+	if !def.Overwrite {
 		_, err := fs.Stat(compDescFilePath)
 		if err != nil && !os.IsNotExist(err) {
 			return nil, err
 		}
 		if err == nil {
 			// add the input to the ctf format
-			archiveFs, err := projectionfs.New(fs, c.ComponentArchivePath)
+			archiveFs, err := projectionfs.New(fs, def.ArchivePath)
 			if err != nil {
 				return nil, fmt.Errorf("unable to create projectionfilesystem: %w", err)
 			}
 
 			archive, err := ctf.NewComponentArchiveFromFilesystem(archiveFs, codec.DisableValidation(true))
 			if err != nil {
-				return nil, fmt.Errorf("unable to parse component archive from %s: %w", c.ComponentArchivePath, err)
+				return nil, fmt.Errorf("unable to parse component archive from %s: %w", def.ArchivePath, err)
 			}
 
 			cd := archive.ComponentDescriptor
 
-			if c.Name != "" {
-				if cd.Name != "" && cd.Name != c.Name {
-					return nil, errors.New("unable to overwrite the existing component name: forbidden")
-				}
-				cd.Name = c.Name
+			if err := addSources(cd, def); err != nil {
+				return nil, err
 			}
 
-			if c.Version != "" {
-				if cd.Version != "" && cd.Version != c.Version {
+			if def.Name != "" {
+				if cd.Name != "" && cd.Name != def.Name {
+					return nil, errors.New("unable to overwrite the existing component name: forbidden")
+				}
+				cd.Name = def.Name
+			}
+
+			if def.Version != "" {
+				if cd.Version != "" && cd.Version != def.Version {
 					return nil, errors.New("unable to overwrite the existing component version: forbidden")
 				}
-				cd.Version = c.Version
+				cd.Version = def.Version
 			}
 
 			if err = cdvalidation.Validate(cd); err != nil {
@@ -74,22 +70,25 @@ func Build(fs vfs.FileSystem, c *ComponentConfig) (*ctf.ComponentArchive, error)
 
 	// build minimal archive
 
-	if err := fs.MkdirAll(c.ComponentArchivePath, os.ModePerm); err != nil {
-		return nil, fmt.Errorf("unable to create component-archive path %q: %w", c.ComponentArchivePath, err)
+	if err := fs.MkdirAll(def.ArchivePath, os.ModePerm); err != nil {
+		return nil, fmt.Errorf("unable to create component-archive path %q: %w", def.ArchivePath, err)
 	}
-	archiveFs, err := projectionfs.New(fs, c.ComponentArchivePath)
+	archiveFs, err := projectionfs.New(fs, def.ArchivePath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create projectionfilesystem: %w", err)
 	}
 
 	cd := &cdv2.ComponentDescriptor{}
+	if err := addSources(cd, def); err != nil {
+		return nil, err
+	}
 	cd.Metadata.Version = cdv2.SchemaVersion
-	cd.ComponentSpec.Name = c.Name
-	cd.ComponentSpec.Version = c.Version
+	cd.ComponentSpec.Name = def.Name
+	cd.ComponentSpec.Version = def.Version
 	cd.Provider = cdv2.InternalProvider
 	cd.RepositoryContexts = make([]*cdv2.UnstructuredTypedObject, 0)
-	if len(c.RegistryURL) != 0 {
-		repoCtx, err := cdv2.NewUnstructured(cdv2.NewOCIRegistryRepository(c.RegistryURL, cdv2.OCIRegistryURLPathMapping))
+	if len(def.RegistryURL) != 0 {
+		repoCtx, err := cdv2.NewUnstructured(cdv2.NewOCIRegistryRepository(def.RegistryURL, cdv2.OCIRegistryURLPathMapping))
 		if err != nil {
 			return nil, fmt.Errorf("unable to create repository context: %w", err)
 		}
@@ -114,15 +113,11 @@ func Build(fs vfs.FileSystem, c *ComponentConfig) (*ctf.ComponentArchive, error)
 	return ctf.NewComponentArchive(cd, archiveFs), nil
 }
 
-func (cfg *ComponentConfig) validate() error {
-	if cfg.Name == "" {
-		return errors.New("The module name cannot be empty")
+func addSources(cd *cdv2.ComponentDescriptor, def *Definition) error {
+	src, err := git.Source(def.Source, def.Repo, def.Version)
+	if err != nil {
+		return err
 	}
-	if cfg.Version == "" {
-		return errors.New("The module version cannot be empty")
-	}
-	if cfg.ComponentArchivePath == "" {
-		return errors.New("The module version cannot be empty")
-	}
+	cd.Sources = append(cd.Sources, *src)
 	return nil
 }

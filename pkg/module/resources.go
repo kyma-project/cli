@@ -35,8 +35,8 @@ type ResourceDescriptorList struct {
 
 // AddResources adds the resources in the given resource definitions into the archive and its FS.
 // A resource definition is a string with format: NAME:TYPE@PATH, where NAME and TYPE can be omitted and will default to the last path element name and "helm-chart" respectively
-func AddResources(archive *ctf.ComponentArchive, c *ComponentConfig, log *zap.SugaredLogger, fs vfs.FileSystem, modDef *Definition) error {
-	resources, err := generateResources(log, c.Version, modDef.Resources...)
+func AddResources(archive *ctf.ComponentArchive, modDef *Definition, log *zap.SugaredLogger, fs vfs.FileSystem) error {
+	resources, err := generateResources(log, modDef.Version, modDef.Layers...)
 	if err != nil {
 		return err
 	}
@@ -68,7 +68,7 @@ func AddResources(archive *ctf.ComponentArchive, c *ComponentConfig, log *zap.Su
 		if err := cdvalidation.Validate(archive.ComponentDescriptor); err != nil {
 			return fmt.Errorf("invalid component descriptor: %w", err)
 		}
-		if err := WriteComponentDescriptor(fs, archive.ComponentDescriptor, c.ComponentArchivePath, ctf.ComponentDescriptorFileName); err != nil {
+		if err := WriteComponentDescriptor(fs, archive.ComponentDescriptor, modDef.ArchivePath, ctf.ComponentDescriptorFileName); err != nil {
 			return err
 		}
 		log.Debugf("Successfully added resource to component descriptor")
@@ -153,58 +153,65 @@ func (rd ResourceDescriptor) String() string {
 	return string(y)
 }
 
-type Definition struct {
-	Resources []Layer
-	Repo      string
-	DefaultCR []byte
-}
-
-// Inspect analyzes the contents of a module and creates resource definitions for each separate layer the module should be split into
+// Inspect analyzes the contents of a module and updates the module definition provided as parameter with all information contained in the module (layers, metadata and resources).
 // Inspect supports:
 // Kubebuilder projects: if a PROJECT file is found and correctly parsed, the project will automatically be generated and layered.
 // Custom module: If not a kubebuilder project, the user has complete freedom to layer the contents as desired via customDefs. Any contents of path not included in the customDefs will be added to the base layer
-func Inspect(path string, cfg *ComponentConfig, customDefs []string, s step.Step, log *zap.SugaredLogger) (*Definition, error) {
-	log.Debugf("Inspecting module contents at [%s]:", path)
-	defs := []Layer{}
+func Inspect(def *Definition, customDefs []string, s step.Step, log *zap.SugaredLogger) error {
+	log.Debugf("Inspecting module contents at [%s]:", def.Source)
+	layers := []Layer{}
 
 	for _, d := range customDefs {
 		rd, err := LayerFromString(d)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
-		defs, err = appendDefIfValid(defs, rd, log)
+		layers, err = appendDefIfValid(layers, rd, log)
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
-	p, err := kubebuilder.ParseProject(path)
+
+	p, err := kubebuilder.ParseProject(def.Source)
 	if err == nil {
 		// Kubebuilder project
 		log.Debug("Kubebuilder project detected.")
+
+		// use kubebuilder project name if no override given
+		if def.Name == "" {
+			def.Name = p.FullName()
+		}
+		if err := def.validate(); err != nil {
+			return err
+		}
+
 		// generated chart -> layer 1
-		chartPath, err := p.Build(cfg.Name, cfg.Version, cfg.RegistryURL) // TODO maybe switch from charts to pure manifests
+		chartPath, err := p.Build(def.Name, def.Version, def.RegistryURL) // TODO switch from charts to pure manifests when mod-mngr is ready
 		if err != nil {
-			return nil, err
+			return err
 		}
 		// config.yaml -> layer 2
 		configPath, err := p.Config()
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		// Add default CR if generating template
 		cr := []byte{}
-		if cfg.RegistryURL != "" {
-			cr, err = p.DefaultCR(s)
-			if err != nil {
-				return nil, err
+		if def.RegistryURL != "" {
+			if def.DefaultCRPath == "" {
+				cr, err = p.DefaultCR(s)
+				if err != nil {
+					return err
+				}
+			} else {
+				cr, err := os.ReadFile(def.DefaultCRPath)
+				if err != nil {
+					return fmt.Errorf("could not read CR file %q: %w", def.DefaultCRPath, err)
+				}
+				def.DefaultCR = cr
 			}
-		}
-
-		md := &Definition{
-			Repo:      p.Repo,
-			DefaultCR: cr,
 		}
 
 		charts := Layer{
@@ -218,17 +225,22 @@ func Inspect(path string, cfg *ComponentConfig, customDefs []string, s step.Step
 			path:         configPath,
 		}
 
-		md.Resources = append(md.Resources, charts, config)
-		md.Resources = append(md.Resources, defs...)
+		def.Repo = p.Repo
+		def.DefaultCR = cr
+		def.Layers = append(def.Layers, charts, config)
+		def.Layers = append(def.Layers, layers...)
 
-		return md, nil
+		return nil
 
 	} else if errors.Is(err, os.ErrNotExist) {
 		// custom module
 		log.Debug("No kubebuilder project detected, bundling module in a single layer.")
-		absPath, err := filepath.Abs(path)
+		if err := def.validate(); err != nil {
+			return err
+		}
+		absPath, err := filepath.Abs(def.Source)
 		if err != nil {
-			return nil, fmt.Errorf("could not get absolute path to %q: %w", path, err)
+			return fmt.Errorf("could not get absolute path to %q: %w", def.Source, err)
 		}
 
 		l := Layer{
@@ -237,7 +249,7 @@ func Inspect(path string, cfg *ComponentConfig, customDefs []string, s step.Step
 			resourceType: typeHelmChart,
 		}
 		// exclude any custom resources that overlap with module root to avoid bundling them twice
-		for _, d := range defs {
+		for _, d := range layers {
 			if strings.HasPrefix(d.path, l.path) {
 				l.excludedFiles = append(l.excludedFiles, d.path)
 			}
@@ -245,15 +257,14 @@ func Inspect(path string, cfg *ComponentConfig, customDefs []string, s step.Step
 		// prepend the base resource def
 		base, err := appendDefIfValid(nil, l, log)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
-		return &Definition{
-			Resources: append(base, defs...),
-		}, nil
+		def.Layers = append(base, layers...)
+		return nil
 	}
 	// there is an error other than not exists
-	return nil, err
+	return err
 }
 
 func appendDefIfValid(defs []Layer, r Layer, log *zap.SugaredLogger) ([]Layer, error) {

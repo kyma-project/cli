@@ -10,7 +10,7 @@ import (
 const (
 	chartFile     = "Chart.yaml"
 	chartTemplate = `apiVersion: v2
-name: {{ .Name }}-operator
+name: {{ .Name }}
 description: A Helm chart for the Operator in a Cluster based on a Kustomize Manifest
 type: application
 version: {{ .Version }}

@@ -8,10 +8,14 @@ import (
 type Options struct {
 	*cli.Options
 
+	Name           string
+	Version        string
+	Path           string
 	ModPath        string
 	RegistryURL    string
 	Credentials    string
 	TemplateOutput string
+	DefaultCRPath  string
 	Channel        string
 	Token          string
 	Insecure       bool
