@@ -19,7 +19,7 @@ require (
 	github.com/gardener/component-spec/bindings-go v0.0.66
 	github.com/go-logr/logr v1.2.3
 	github.com/imdario/mergo v0.3.13
-	github.com/kyma-incubator/reconciler v0.0.0-20221102095238-a3b6df7d2e27
+	github.com/kyma-incubator/reconciler v0.0.0-20221108125752-12506041f7e8
 	github.com/kyma-project/hydroform/function v0.0.0-20221108103139-c30022d0c510
 	github.com/kyma-project/hydroform/provision v0.0.0-20221019152339-a661398f485c
 	github.com/mandelsoft/vfs v0.0.0-20220805210647-bf14a11bfe31
@@ -154,7 +154,7 @@ require (
 	github.com/nwaples/rardecode v1.1.3 // indirect
 	github.com/opencontainers/runc v1.1.3 // indirect
 	github.com/otiai10/copy v1.7.0 // indirect
-	github.com/panjf2000/ants/v2 v2.4.8 // indirect
+	github.com/panjf2000/ants/v2 v2.6.0 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.5 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
