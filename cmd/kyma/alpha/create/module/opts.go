@@ -14,7 +14,7 @@ type Options struct {
 	TemplateOutput string
 	Channel        string
 	Token          string
-	Insecure       string
+	Insecure       bool
 	ResourcePaths  []string
 	Overwrite      bool
 	Clean          bool
