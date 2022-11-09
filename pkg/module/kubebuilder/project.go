@@ -15,7 +15,7 @@ import (
 
 const (
 	V3      = "go.kubebuilder.io/v3"
-	V4alpha = "go.kubebuilder.io/v4alpha"
+	V4alpha = "go.kubebuilder.io/v4-alpha"
 
 	projectFile          = "PROJECT"
 	configFile           = "config.yaml"
