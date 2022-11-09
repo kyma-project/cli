@@ -115,15 +115,6 @@ func (c *command) Run() error {
 		return err
 	}
 
-	if configuration.Source.Type == workspace.SourceTypeGit {
-		gitRepository, err := resources.NewPublicGitRepository(configuration)
-		if err != nil {
-			step.Failure()
-			return errors.Wrap(err, "Unable to read the Git repository from the provided configuration")
-		}
-		mgr.AddParent(operator.NewGenericOperator(client.Resource(operator.GVRGitRepository).Namespace(configuration.Namespace), gitRepository), nil)
-	}
-
 	mgr.AddParent(
 		operator.NewGenericOperator(client.Resource(operator.GVRFunction).Namespace(configuration.Namespace), function),
 		[]operator.Operator{
