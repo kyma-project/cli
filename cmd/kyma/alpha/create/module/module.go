@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/mandelsoft/vfs/pkg/osfs"
 	"github.com/mandelsoft/vfs/pkg/vfs"
@@ -64,13 +65,18 @@ Build module modB in version 3.2.1 and push it to a local registry "unsigned" su
 	cmd.Flags().StringVar(&o.Channel, "channel", "stable", "Channel to use for the module template.")
 	cmd.Flags().StringVarP(&o.Token, "token", "t", "", "Authentication token for the given registry (alternative to basic authentication).")
 	cmd.Flags().BoolVarP(&o.Overwrite, "overwrite", "w", false, "overwrites the existing mod-path directory if it exists")
-	cmd.Flags().BoolVar(&o.Insecure, "insecure", false, "Use an insecure connection to access the registry.")
+	cmd.Flags().StringVar(&o.Insecure, "insecure", "", "Use an insecure connection to access the registry.")
 	cmd.Flags().BoolVar(&o.Clean, "clean", false, "Remove the mod-path folder and all its contents at the end.")
 
 	return cmd
 }
 
 func (cmd *command) Run(args []string) error {
+
+	if err := cmd.validateInsecureFlag(); err != nil {
+		return err
+	}
+
 	if !cmd.opts.NonInteractive {
 		cli.AlphaWarn()
 	}
@@ -138,12 +144,12 @@ func (cmd *command) Run(args []string) error {
 	if cmd.opts.RegistryURL != "" {
 
 		cmd.NewStep(fmt.Sprintf("Pushing image to %q", cmd.opts.RegistryURL))
-		r := &module.Remote{
-			Registry:    cmd.opts.RegistryURL,
-			Credentials: cmd.opts.Credentials,
-			Token:       cmd.opts.Token,
-			Insecure:    cmd.opts.Insecure,
+		r, err := cmd.validateInsecureRegistry()
+		if err != nil {
+			cmd.CurrentStep.Failure()
+			return err
 		}
+
 		if err := module.Push(archive, r, l); err != nil {
 			cmd.CurrentStep.Failure()
 			return err
@@ -195,5 +201,46 @@ func (cmd *command) validateDefaultCR(modPath string, cr []byte, l *zap.SugaredL
 		return err
 	}
 	cmd.CurrentStep.Successf("Default CR validation succeeded")
+	return nil
+}
+
+func (cmd *command) validateInsecureRegistry() (*module.Remote, error) {
+	res := &module.Remote{
+		Registry:    cmd.opts.RegistryURL,
+		Credentials: cmd.opts.Credentials,
+		Token:       cmd.opts.Token,
+		Insecure:    cmd.opts.Insecure == "true",
+	}
+
+	//Override insecure setting if https (because it's secure)
+	if strings.HasPrefix(cmd.opts.RegistryURL, "https:") {
+		res.Insecure = false
+	}
+
+	if strings.HasPrefix(cmd.opts.RegistryURL, "http:") {
+		res.Insecure = true
+		//If user has not defined --insecure flag explicitly, display a warning
+		cmd.CurrentStep.LogWarn("CAUTION: You are about to push the module artifact to the insecure registry")
+		if cmd.opts.Insecure == "" && !cmd.opts.NonInteractive {
+			if !cmd.CurrentStep.PromptYesNo("Do you really want to proceed? ") {
+				return nil, errors.New("Command stopped by user")
+			}
+
+		}
+
+	}
+
+	return res, nil
+}
+
+func (cmd *command) validateInsecureFlag() error {
+	if len(cmd.opts.Insecure) == 0 {
+		return nil
+	}
+
+	if cmd.opts.Insecure != "true" && cmd.opts.Insecure != "false" {
+		return errors.New(`Invalid value of the --insecure flag, only "true" and "false" are valid`)
+	}
+
 	return nil
 }
