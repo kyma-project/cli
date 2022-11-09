@@ -2,8 +2,6 @@ module github.com/kyma-project/cli
 
 go 1.18
 
-replace github.com/kyma-incubator/reconciler => ../../kyma-incubator/reconciler
-
 // required to avoid locking with gardner dependency updates
 replace k8s.io/client-go => k8s.io/client-go v0.25.2
 
@@ -21,7 +19,7 @@ require (
 	github.com/gardener/component-spec/bindings-go v0.0.66
 	github.com/go-logr/logr v1.2.3
 	github.com/imdario/mergo v0.3.13
-	github.com/kyma-incubator/reconciler v0.0.0-20221102095238-a3b6df7d2e27
+	github.com/kyma-incubator/reconciler v0.0.0-20221108125752-12506041f7e8
 	github.com/kyma-project/hydroform/function v0.0.0-20221021103849-87a95b03cbfa
 	github.com/kyma-project/hydroform/provision v0.0.0-20221019152339-a661398f485c
 	github.com/mandelsoft/vfs v0.0.0-20220805210647-bf14a11bfe31
