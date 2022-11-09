@@ -39,6 +39,9 @@ func (cfg *Definition) validate() error {
 	if cfg.Version == "" {
 		return errors.New("The module version cannot be empty")
 	}
+	if cfg.Source == "" {
+		return errors.New("The module source path cannot be empty")
+	}
 	if cfg.ArchivePath == "" {
 		return errors.New("The module archive path cannot be empty")
 	}

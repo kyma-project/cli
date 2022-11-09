@@ -79,6 +79,10 @@ func (cmd *command) Run(args []string) error {
 
 	l := cli.NewLogger(cmd.opts.Verbose).Sugar()
 
+	if err := cmd.opts.ValidatePath(); err != nil {
+		return err
+	}
+
 	modDef := &module.Definition{
 		Name:          cmd.opts.Name,
 		Version:       cmd.opts.Version,
