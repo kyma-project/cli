@@ -214,11 +214,18 @@ func (cmd *command) validateInsecureRegistry() (*module.Remote, error) {
 
 	//Override insecure setting if https (because it's secure)
 	if strings.HasPrefix(cmd.opts.RegistryURL, "https:") {
+		if cmd.opts.Insecure == "true" {
+			return nil, errors.New("the provided value of the --insecure flag does not match the configured secure registry (https://)")
+		}
 		res.Insecure = false
 	}
 
 	if strings.HasPrefix(cmd.opts.RegistryURL, "http:") {
+		if cmd.opts.Insecure == "false" {
+			return nil, errors.New("the provided value of the --insecure flag does not match the configured insecure registry (http://)")
+		}
 		res.Insecure = true
+
 		//If user has not defined --insecure flag explicitly, display a warning
 		cmd.CurrentStep.LogWarn("CAUTION: You are about to push the module artifact to the insecure registry")
 		if cmd.opts.Insecure == "" && !cmd.opts.NonInteractive {
