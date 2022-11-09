@@ -19,7 +19,7 @@ require (
 	github.com/gardener/component-spec/bindings-go v0.0.66
 	github.com/go-logr/logr v1.2.3
 	github.com/imdario/mergo v0.3.13
-	github.com/kyma-incubator/reconciler v0.0.0-20221102095238-a3b6df7d2e27
+	github.com/kyma-incubator/reconciler v0.0.0-20221108125752-12506041f7e8
 	github.com/kyma-project/hydroform/function v0.0.0-20221108103139-c30022d0c510
 	github.com/kyma-project/hydroform/provision v0.0.0-20221019152339-a661398f485c
 	github.com/mandelsoft/vfs v0.0.0-20220805210647-bf14a11bfe31
@@ -33,11 +33,11 @@ require (
 	golang.org/x/exp v0.0.0-20221012211006-4de253d81b95
 	gopkg.in/yaml.v3 v3.0.1
 	gotest.tools v2.2.0+incompatible
-	helm.sh/helm/v3 v3.9.4
+	helm.sh/helm/v3 v3.10.1
 	istio.io/client-go v1.14.0
-	k8s.io/api v0.25.0
-	k8s.io/apiextensions-apiserver v0.25.0
-	k8s.io/apimachinery v0.25.0
+	k8s.io/api v0.25.2
+	k8s.io/apiextensions-apiserver v0.25.2
+	k8s.io/apimachinery v0.25.2
 	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible
 	sigs.k8s.io/controller-runtime v0.13.0
 	sigs.k8s.io/yaml v1.3.0
@@ -45,8 +45,8 @@ require (
 
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
-	github.com/BurntSushi/toml v1.0.0 // indirect
-	github.com/MakeNowJust/heredoc v0.0.0-20170808103936-bb23615498cd // indirect
+	github.com/BurntSushi/toml v1.1.0 // indirect
+	github.com/MakeNowJust/heredoc v1.0.0 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Masterminds/sprig/v3 v3.2.2 // indirect
@@ -76,11 +76,11 @@ require (
 	github.com/elazarl/goproxy v0.0.0-20191011121108-aa519ddbe484 // indirect
 	github.com/emicklei/go-restful/v3 v3.8.0 // indirect
 	github.com/emirpasic/gods v1.12.1 // indirect
-	github.com/evanphx/json-patch v4.12.0+incompatible // indirect
+	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
 	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20210407135951-1de76d718b3f // indirect
 	github.com/fatih/structs v1.1.0 // indirect
-	github.com/fsnotify/fsnotify v1.5.4 // indirect
+	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/gardener/gardener v1.53.2 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-cmd/cmd v1.4.1 // indirect
@@ -100,7 +100,7 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/btree v1.0.1 // indirect
 	github.com/google/gnostic v0.5.7-v3refs // indirect
-	github.com/google/go-cmp v0.5.8 // indirect
+	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/google/uuid v1.3.0 // indirect
@@ -154,7 +154,7 @@ require (
 	github.com/nwaples/rardecode v1.1.3 // indirect
 	github.com/opencontainers/runc v1.1.3 // indirect
 	github.com/otiai10/copy v1.7.0 // indirect
-	github.com/panjf2000/ants/v2 v2.6.0 // indirect
+	github.com/panjf2000/ants/v2 v2.4.8 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.5 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
