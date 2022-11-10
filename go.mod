@@ -20,7 +20,7 @@ require (
 	github.com/go-logr/logr v1.2.3
 	github.com/imdario/mergo v0.3.13
 	github.com/kyma-incubator/reconciler v0.0.0-20221108125752-12506041f7e8
-	github.com/kyma-project/hydroform/function v0.0.0-20221108103139-c30022d0c510
+	github.com/kyma-project/hydroform/function v0.0.0-20221110090034-a9a38151fecc
 	github.com/kyma-project/hydroform/provision v0.0.0-20221019152339-a661398f485c
 	github.com/mandelsoft/vfs v0.0.0-20220805210647-bf14a11bfe31
 	github.com/opencontainers/go-digest v1.0.0
@@ -141,7 +141,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/moby/locker v1.0.1 // indirect
-	github.com/moby/moby v20.10.18+incompatible // indirect
+	github.com/moby/moby v20.10.21+incompatible // indirect
 	github.com/moby/spdystream v0.2.0 // indirect
 	github.com/moby/sys/mount v0.3.2 // indirect
 	github.com/moby/sys/mountinfo v0.6.1 // indirect
