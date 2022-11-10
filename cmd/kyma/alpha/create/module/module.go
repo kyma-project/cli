@@ -55,13 +55,13 @@ Build module modB in version 3.2.1 and push it to a local registry "unsigned" su
 	}
 
 	cmd.Flags().StringVar(&o.Version, "version", "", "Version of the module. This flag is mandatory.")
-	cmd.Flags().StringVarP(&o.Name, "name", "n", "", "Override the module name of the kubebuilder project. If the module is not a kubebuilder project this flag is mandatory.")
+	cmd.Flags().StringVarP(&o.Name, "name", "n", "", "Override the module name of the kubebuilder project. If the module is not a kubebuilder project, this flag is mandatory.")
 	cmd.Flags().StringVarP(&o.Path, "path", "p", "", "Path to the module contents. (default current directory)")
-	cmd.Flags().StringVar(&o.ModCache, "mod-cache", "./mod", "Specifies the path where the module artifacts are locally cached to generate the image. If the path already has a module use the overwrite flag to overwrite it.")
+	cmd.Flags().StringVar(&o.ModCache, "mod-cache", "./mod", "Specifies the path where the module artifacts are locally cached to generate the image. If the path already has a module, use the overwrite flag to overwrite it.")
 	cmd.Flags().StringArrayVarP(&o.ResourcePaths, "resource", "r", []string{}, "Add an extra resource in a new layer with format <NAME:TYPE@PATH>. It is also possible to provide only a path; name will default to the last path element and type to 'helm-chart'")
 	cmd.Flags().StringVar(&o.RegistryURL, "registry", "", "Repository context url for module to upload. The repository url will be automatically added to the repository contexts in the module")
 	cmd.Flags().StringVarP(&o.Credentials, "credentials", "c", "", "Basic authentication credentials for the given registry in the format user:password")
-	cmd.Flags().StringVar(&o.DefaultCRPath, "default-cr", "", "File containing the default Custom Resource of the module. If the module is a kubebuilder project, the default CR will be automatically detected.")
+	cmd.Flags().StringVar(&o.DefaultCRPath, "default-cr", "", "File containing the default custom resource of the module. If the module is a kubebuilder project, the default CR will be automatically detected.")
 	cmd.Flags().StringVarP(&o.TemplateOutput, "output", "o", "template.yaml", "File to which to output the module template if the module is uploaded to a registry")
 	cmd.Flags().StringVar(&o.Channel, "channel", "stable", "Channel to use for the module template.")
 	cmd.Flags().StringVarP(&o.Token, "token", "t", "", "Authentication token for the given registry (alternative to basic authentication).")
