@@ -93,12 +93,12 @@ func (c *command) Run(args []string) error {
 	c.CurrentStep.Successf("Signed component descriptor generated at %s", c.opts.ModPath)
 
 	if c.opts.SignedRegistryURL != "" {
-		cfg := &module.ComponentConfig{
-			Name:                 signCfg.Name,
-			Version:              signCfg.Version,
-			ComponentArchivePath: c.opts.ModPath,
-			Overwrite:            false,
-			RegistryURL:          c.opts.SignedRegistryURL,
+		cfg := &module.Definition{
+			Name:        signCfg.Name,
+			Version:     signCfg.Version,
+			ArchivePath: c.opts.ModPath,
+			Overwrite:   false,
+			RegistryURL: c.opts.SignedRegistryURL,
 		}
 		archive, err := module.Build(fs, cfg)
 		if err != nil {

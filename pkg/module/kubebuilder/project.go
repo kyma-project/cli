@@ -15,7 +15,7 @@ import (
 
 const (
 	V3      = "go.kubebuilder.io/v3"
-	V4alpha = "go.kubebuilder.io/v4alpha"
+	V4alpha = "go.kubebuilder.io/v4-alpha"
 
 	projectFile          = "PROJECT"
 	configFile           = "config.yaml"
@@ -23,7 +23,7 @@ const (
 	samplesPath          = "config/samples/"
 
 	crdFileIdentifier = "customresourcedefinition"
-	chartsFolder      = "charts/%s-operator"
+	chartsFolder      = "charts/%s"
 	templatesFolder   = "templates"
 	crdsFolder        = "crds"
 )
@@ -31,6 +31,7 @@ const (
 type Project struct {
 	Layout []string `json:"layout,omitempty"`
 	Name   string   `json:"projectName,omitempty"`
+	Domain string   `json:"domain,omitempty"`
 	Repo   string   `json:"repo,omitempty"`
 	path   string
 }
@@ -50,7 +51,14 @@ func ParseProject(path string) (*Project, error) {
 	return p, nil
 }
 
-// Build builds the kubebuilder project default kustomization in the given path. Sets the image the tag: <registry>/<name>-operator:<version>; and returns the folder containing the resulting chart.
+func (p *Project) FullName() string {
+	if p.Domain != "" {
+		return fmt.Sprintf("%s/%s", p.Domain, p.Name)
+	}
+	return p.Name
+}
+
+// Build builds the kubebuilder project default kustomization following the given definition. Sets the image the tag: <def.registry>/<def.name>:<def.version>; and returns the folder containing the resulting chart.
 func (p *Project) Build(name, version, registry string) (string, error) {
 	// check layout
 	if !(slices.Contains(p.Layout, V3) || slices.Contains(p.Layout, V4alpha)) {
@@ -59,9 +67,9 @@ func (p *Project) Build(name, version, registry string) (string, error) {
 	// edit kustomization image and setup build
 	img := ""
 	if registry == "" {
-		img = fmt.Sprintf("%s-operator:%s", name, version)
+		img = fmt.Sprintf("%s:%s", name, version)
 	} else {
-		img = fmt.Sprintf("%s/%s-operator:%s", registry, name, version)
+		img = fmt.Sprintf("%s/%s:%s", registry, name, version)
 	}
 
 	buildPath := filepath.Join(p.path, defaultKustomization)
