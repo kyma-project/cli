@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/mandelsoft/vfs/pkg/osfs"
 	"github.com/mandelsoft/vfs/pkg/vfs"
@@ -71,6 +72,7 @@ Build module modB in version 3.2.1 and push it to a local registry "unsigned" su
 }
 
 func (cmd *command) Run(args []string) error {
+
 	if !cmd.opts.NonInteractive {
 		cli.AlphaWarn()
 	}
@@ -138,12 +140,12 @@ func (cmd *command) Run(args []string) error {
 	if cmd.opts.RegistryURL != "" {
 
 		cmd.NewStep(fmt.Sprintf("Pushing image to %q", cmd.opts.RegistryURL))
-		r := &module.Remote{
-			Registry:    cmd.opts.RegistryURL,
-			Credentials: cmd.opts.Credentials,
-			Token:       cmd.opts.Token,
-			Insecure:    cmd.opts.Insecure,
+		r, err := cmd.validateInsecureRegistry()
+		if err != nil {
+			cmd.CurrentStep.Failure()
+			return err
 		}
+
 		if err := module.Push(archive, r, l); err != nil {
 			cmd.CurrentStep.Failure()
 			return err
@@ -196,4 +198,32 @@ func (cmd *command) validateDefaultCR(modPath string, cr []byte, l *zap.SugaredL
 	}
 	cmd.CurrentStep.Successf("Default CR validation succeeded")
 	return nil
+}
+
+func (cmd *command) validateInsecureRegistry() (*module.Remote, error) {
+	res := &module.Remote{
+		Registry:    cmd.opts.RegistryURL,
+		Credentials: cmd.opts.Credentials,
+		Token:       cmd.opts.Token,
+		Insecure:    cmd.opts.Insecure,
+	}
+
+	if strings.HasPrefix(strings.ToLower(cmd.opts.RegistryURL), "https:") {
+		res.Insecure = false
+		return res, nil
+	}
+
+	if strings.HasPrefix(strings.ToLower(cmd.opts.RegistryURL), "http:") {
+		res.Insecure = true
+
+		if !cmd.opts.Insecure && !cmd.opts.NonInteractive {
+			cmd.CurrentStep.LogWarn("CAUTION: Pushing the module artifact to the insecure registry")
+			if !cmd.CurrentStep.PromptYesNo("Do you really want to proceed? ") {
+				return nil, errors.New("Command stopped by user")
+			}
+
+		}
+	}
+
+	return res, nil
 }
