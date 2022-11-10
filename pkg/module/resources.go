@@ -177,94 +177,101 @@ func Inspect(def *Definition, customDefs []string, s step.Step, log *zap.Sugared
 	if err == nil {
 		// Kubebuilder project
 		log.Debug("Kubebuilder project detected.")
-
-		// use kubebuilder project name if no override given
-		if def.Name == "" {
-			def.Name = p.FullName()
-		}
-		if err := def.validate(); err != nil {
-			return err
-		}
-
-		// generated chart -> layer 1
-		chartPath, err := p.Build(def.Name, def.Version, def.RegistryURL) // TODO switch from charts to pure manifests when mod-mngr is ready
-		if err != nil {
-			return err
-		}
-		// config.yaml -> layer 2
-		configPath, err := p.Config()
-		if err != nil {
-			return err
-		}
-
-		// Add default CR if generating template
-		cr := []byte{}
-		if def.RegistryURL != "" {
-			if def.DefaultCRPath == "" {
-				cr, err = p.DefaultCR(s)
-				if err != nil {
-					return err
-				}
-			} else {
-				cr, err := os.ReadFile(def.DefaultCRPath)
-				if err != nil {
-					return fmt.Errorf("could not read CR file %q: %w", def.DefaultCRPath, err)
-				}
-				def.DefaultCR = cr
-			}
-		}
-
-		charts := Layer{
-			name:         filepath.Base(chartPath),
-			resourceType: typeHelmChart,
-			path:         chartPath,
-		}
-		config := Layer{
-			name:         configLayerName,
-			resourceType: typeYaml,
-			path:         configPath,
-		}
-
-		def.Repo = p.Repo
-		def.DefaultCR = cr
-		def.Layers = append(def.Layers, charts, config)
-		def.Layers = append(def.Layers, layers...)
-
-		return nil
+		return inspectProject(def, p, layers, s)
 
 	} else if errors.Is(err, os.ErrNotExist) {
 		// custom module
 		log.Debug("No kubebuilder project detected, bundling module in a single layer.")
-		if err := def.validate(); err != nil {
-			return err
-		}
-		absPath, err := filepath.Abs(def.Source)
-		if err != nil {
-			return fmt.Errorf("could not get absolute path to %q: %w", def.Source, err)
-		}
-
-		l := Layer{
-			name:         filepath.Base(absPath),
-			path:         absPath,
-			resourceType: typeHelmChart,
-		}
-		// exclude any custom resources that overlap with module root to avoid bundling them twice
-		for _, d := range layers {
-			if strings.HasPrefix(d.path, l.path) {
-				l.excludedFiles = append(l.excludedFiles, d.path)
-			}
-		}
-		// prepend the base resource def
-		base, err := appendDefIfValid(nil, l, log)
-		if err != nil {
-			return err
-		}
-
-		def.Layers = append(base, layers...)
-		return nil
+		return inspectCustom(def, layers, log)
 	}
 	// there is an error other than not exists
 	return err
+}
+
+func inspectProject(def *Definition, p *kubebuilder.Project, layers []Layer, s step.Step) error {
+	// use kubebuilder project name if no override given
+	if def.Name == "" {
+		def.Name = p.FullName()
+	}
+	if err := def.validate(); err != nil {
+		return err
+	}
+
+	// generated chart -> layer 1
+	chartPath, err := p.Build(def.Name, def.Version, def.RegistryURL) // TODO switch from charts to pure manifests when mod-mngr is ready
+	if err != nil {
+		return err
+	}
+	// config.yaml -> layer 2
+	configPath, err := p.Config()
+	if err != nil {
+		return err
+	}
+
+	// Add default CR if generating template
+	cr := []byte{}
+	if def.RegistryURL != "" {
+		if def.DefaultCRPath == "" {
+			cr, err = p.DefaultCR(s)
+			if err != nil {
+				return err
+			}
+		} else {
+			cr, err := os.ReadFile(def.DefaultCRPath)
+			if err != nil {
+				return fmt.Errorf("could not read CR file %q: %w", def.DefaultCRPath, err)
+			}
+			def.DefaultCR = cr
+		}
+	}
+
+	charts := Layer{
+		name:         filepath.Base(chartPath),
+		resourceType: typeHelmChart,
+		path:         chartPath,
+	}
+	config := Layer{
+		name:         configLayerName,
+		resourceType: typeYaml,
+		path:         configPath,
+	}
+
+	def.Repo = p.Repo
+	def.DefaultCR = cr
+	def.Layers = append(def.Layers, charts, config)
+	def.Layers = append(def.Layers, layers...)
+
+	return nil
+}
+
+func inspectCustom(def *Definition, layers []Layer, log *zap.SugaredLogger) error {
+	if err := def.validate(); err != nil {
+		return err
+	}
+	absPath, err := filepath.Abs(def.Source)
+	if err != nil {
+		return fmt.Errorf("could not get absolute path to %q: %w", def.Source, err)
+	}
+
+	l := Layer{
+		name:         filepath.Base(absPath),
+		path:         absPath,
+		resourceType: typeHelmChart,
+	}
+	// exclude any custom resources that overlap with module root to avoid bundling them twice
+	for _, d := range layers {
+		if strings.HasPrefix(d.path, l.path) {
+			l.excludedFiles = append(l.excludedFiles, d.path)
+		}
+	}
+	// prepend the base resource def
+	base, err := appendDefIfValid(nil, l, log)
+	if err != nil {
+		return err
+	}
+
+	def.Layers = append(base, layers...)
+	return nil
 }
 
 func appendDefIfValid(defs []Layer, r Layer, log *zap.SugaredLogger) ([]Layer, error) {

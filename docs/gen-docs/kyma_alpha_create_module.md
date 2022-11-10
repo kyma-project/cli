@@ -44,7 +44,7 @@ Build module modB in version 3.2.1 and push it to a local registry "unsigned" su
   -c, --credentials string     Basic authentication credentials for the given registry in the format user:password
       --default-cr string      File containing the default Custom Resource of the module. If the module is a kubebuilder project, the default CR will be automatically detected.
       --insecure               Use an insecure connection to access the registry.
-      --mod-path string        Specifies the target path where the module will be built into. If the path already has a descriptor use the overwrite flag to overwrite it. This flag shuld only be used by experienced users. (default "./mod")
+      --mod-cache string       Specifies the path where the module artifacts are locally cached to generate the image. If the path already has a module use the overwrite flag to overwrite it. (default "./mod")
   -n, --name string            Override the module name of the kubebuilder project. If the module is not a kubebuilder project this flag is mandatory.
   -o, --output string          File to which to output the module template if the module is uploaded to a registry (default "template.yaml")
   -w, --overwrite              overwrites the existing mod-path directory if it exists

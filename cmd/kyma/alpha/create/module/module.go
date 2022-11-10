@@ -57,7 +57,7 @@ Build module modB in version 3.2.1 and push it to a local registry "unsigned" su
 	cmd.Flags().StringVar(&o.Version, "version", "", "Version of the module. This flag is mandatory.")
 	cmd.Flags().StringVarP(&o.Name, "name", "n", "", "Override the module name of the kubebuilder project. If the module is not a kubebuilder project this flag is mandatory.")
 	cmd.Flags().StringVarP(&o.Path, "path", "p", "", "Path to the module contents. (default current directory)")
-	cmd.Flags().StringVar(&o.ModPath, "mod-path", "./mod", "Specifies the target path where the module will be built into. If the path already has a descriptor use the overwrite flag to overwrite it. This flag shuld only be used by experienced users.")
+	cmd.Flags().StringVar(&o.ModCache, "mod-cache", "./mod", "Specifies the path where the module artifacts are locally cached to generate the image. If the path already has a module use the overwrite flag to overwrite it.")
 	cmd.Flags().StringArrayVarP(&o.ResourcePaths, "resource", "r", []string{}, "Add an extra resource in a new layer with format <NAME:TYPE@PATH>. It is also possible to provide only a path; name will default to the last path element and type to 'helm-chart'")
 	cmd.Flags().StringVar(&o.RegistryURL, "registry", "", "Repository context url for module to upload. The repository url will be automatically added to the repository contexts in the module")
 	cmd.Flags().StringVarP(&o.Credentials, "credentials", "c", "", "Basic authentication credentials for the given registry in the format user:password")
@@ -87,7 +87,7 @@ func (cmd *command) Run(args []string) error {
 		Name:          cmd.opts.Name,
 		Version:       cmd.opts.Version,
 		Source:        cmd.opts.Path,
-		ArchivePath:   cmd.opts.ModPath,
+		ArchivePath:   cmd.opts.ModCache,
 		Overwrite:     cmd.opts.Overwrite,
 		RegistryURL:   cmd.opts.RegistryURL,
 		DefaultCRPath: cmd.opts.DefaultCRPath,
@@ -111,7 +111,7 @@ func (cmd *command) Run(args []string) error {
 	/* -- CREATE ARCHIVE -- */
 	fs := osfs.New()
 
-	cmd.NewStep(fmt.Sprintf("Creating module archive at %q", cmd.opts.ModPath))
+	cmd.NewStep(fmt.Sprintf("Creating module archive at %q", cmd.opts.ModCache))
 	archive, err := module.Build(fs, modDef)
 	if err != nil {
 		cmd.CurrentStep.Failure()
@@ -164,8 +164,8 @@ func (cmd *command) Run(args []string) error {
 
 	if cmd.opts.Clean {
 		// TODO clean generated chart
-		cmd.NewStep(fmt.Sprintf("Cleaning up mod path %q", cmd.opts.ModPath))
-		if err := os.RemoveAll(cmd.opts.ModPath); err != nil {
+		cmd.NewStep(fmt.Sprintf("Cleaning up mod path %q", cmd.opts.ModCache))
+		if err := os.RemoveAll(cmd.opts.ModCache); err != nil {
 			cmd.CurrentStep.Failure()
 			return err
 		}

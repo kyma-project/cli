@@ -15,7 +15,7 @@ type Options struct {
 	Name           string
 	Version        string
 	Path           string
-	ModPath        string
+	ModCache       string
 	RegistryURL    string
 	Credentials    string
 	TemplateOutput string

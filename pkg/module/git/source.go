@@ -54,12 +54,6 @@ func Source(path, repo, version string) (*cdv2.Source, error) {
 	}
 
 	return src, nil
-	// name: PROJECT.projectName
-	// version: (from CLI Flag for module)
-	// type: git
-	// access:
-	//   repoUrl: PROJECT.repo
-	//   type: github
 }
 
 // domain extracts the domain name (without extension) from a URL.
