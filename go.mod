@@ -21,7 +21,7 @@ require (
 	github.com/go-logr/logr v1.2.3
 	github.com/imdario/mergo v0.3.13
 	github.com/kyma-incubator/reconciler v0.0.0-20221108125752-12506041f7e8
-	github.com/kyma-project/hydroform/function v0.0.0-20221110090034-a9a38151fecc
+	github.com/kyma-project/hydroform/function v0.0.0-20221111164731-50ed68b4611b
 	github.com/kyma-project/hydroform/provision v0.0.0-20221019152339-a661398f485c
 	github.com/mandelsoft/vfs v0.0.0-20220805210647-bf14a11bfe31
 	github.com/opencontainers/go-digest v1.0.0
