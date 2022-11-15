@@ -61,11 +61,12 @@ func (c *command) Run() error {
 
 	k3dClient := k3d.NewClient(k3d.NewCmdRunner(), k3d.NewPathLooker(), c.opts.Name, c.opts.Verbose, c.opts.Timeout)
 
-	if err = c.verifyK3dStatus(k3dClient); err != nil {
+	kinfo, err := c.setupK3d(k3dClient)
+	if err != nil {
 		return err
 	}
 
-	if len(c.opts.UseRegistry) == 0 {
+	if kinfo.shouldManageDefaultRegistry {
 		defaultRegistry, err := c.createK3dRegistry(k3dClient)
 		if err != nil {
 			return err
@@ -80,73 +81,102 @@ func (c *command) Run() error {
 	return nil
 }
 
-// Verifies if k3d is properly installed and pre-conditions are fulfilled
-func (c *command) verifyK3dStatus(k3dClient k3d.Client) error {
-	s := c.NewStep("Verifying k3d status")
-	if err := k3dClient.VerifyStatus(); err != nil {
-		s.Failure()
-		return err
-	}
+// setupK3d ensures that k3d is properly installed and pre-conditions are fulfilled
+func (c *command) setupK3d(k3dClient k3d.Client) (*k3dInfo, error) {
+	vs := c.NewStep("Verifying k3d status")
 
-	s.LogInfo("Checking if port flags are valid")
-	ports, err := extractPortsFromFlag(c.opts.PortMapping)
+	vs.LogInfo("Checking if port flags are valid")
+	portsConfig, err := extractPortsFromFlag(c.opts.PortMapping)
 	if err != nil {
-		return errors.Wrapf(err, "Could not extract host ports from %s", c.opts.PortMapping)
+		vs.Failure()
+		return nil, errors.Wrapf(err, "Could not extract host ports from %s", c.opts.PortMapping)
 	}
 
-	s.LogInfo("Checking if k3d registry of previous kyma installation exists")
-	registryExists, err := k3dClient.RegistryExists()
+	kinfo, err := c.getK3dInfo(k3dClient)
 	if err != nil {
-		s.Failure()
-		return err
+		vs.Failure()
+		return nil, err
 	}
 
-	s.LogInfo("Checking if k3d cluster of previous kyma installation exists")
+	err = c.manageK3dSetup(k3dClient, kinfo, portsConfig)
+	if err != nil {
+		vs.Failure()
+		return nil, err
+	}
+	vs.Successf("k3d status verified")
+	return kinfo, nil
+}
+
+func (c *command) getK3dInfo(k3dClient k3d.Client) (*k3dInfo, error) {
+
+	err := k3dClient.VerifyStatus()
+	if err != nil {
+		return nil, err
+	}
+
+	useDefaultRegistry := len(c.opts.UseRegistry) == 0
+	var defaultRegistryExists bool
+
+	if useDefaultRegistry {
+		c.CurrentStep.LogInfo("Checking if k3d registry of previous kyma installation exists")
+		defaultRegistryExists, err = k3dClient.RegistryExists()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	c.CurrentStep.LogInfo("Checking if k3d cluster of previous kyma installation exists")
 	clusterExists, err := k3dClient.ClusterExists()
 	if err != nil {
-		s.Failure()
-		return err
+		return nil, err
 	}
 
-	if clusterExists {
+	return &k3dInfo{
+		clusterExists,
+		useDefaultRegistry,
+		defaultRegistryExists,
+	}, nil
+}
+
+func (c *command) manageK3dSetup(k3dClient k3d.Client, kinfo *k3dInfo, portsConfig []int) error {
+
+	deleteRegistryIfRequired := func() error {
+		if kinfo.shouldManageDefaultRegistry && kinfo.defaultRegistryExists {
+			if err := k3dClient.DeleteRegistry(); err != nil {
+				return err
+			}
+			c.CurrentStep.LogInfo("Deleted k3d registry of previous kyma installation")
+		}
+		return nil
+	}
+
+	if kinfo.clusterExists {
 		if !c.PromptUserToDeleteExistingCluster() {
-			s.Failure()
 			return fmt.Errorf("User decided not to remove the existing k3d cluster")
 		}
 
-		if registryExists {
-			if err := k3dClient.DeleteRegistry(); err != nil {
-				s.Failure()
-				return err
-			}
-			s.LogInfo("Deleted k3d registry of previous kyma installation")
+		if err := deleteRegistryIfRequired(); err != nil {
+			return err
 		}
 
 		if err := k3dClient.DeleteCluster(); err != nil {
-			s.Failure()
 			return err
 		}
-		s.LogInfo("Deleted k3d cluster of previous kyma installation")
+		c.CurrentStep.LogInfo("Deleted k3d cluster of previous kyma installation")
 
 	} else {
-		if err := allocatePorts(ports...); err != nil {
-			s.Failure()
+		if err := allocatePorts(portsConfig...); err != nil {
 			if strings.Contains(err.Error(), "bind: permission denied") {
-				s.LogInfo("Hint: The following error can potentially be mitigated by either running the command with `sudo` privileges or specifying other ports with the `--port` flag:")
+				c.CurrentStep.LogInfo("Hint: The following error can potentially be mitigated by either running the command with `sudo` privileges or specifying other ports with the `--port` flag:")
 			}
 			return errors.Wrap(err, "Port cannot be allocated")
 		}
-		if registryExists {
-			// only registry exists
-			if err := k3dClient.DeleteRegistry(); err != nil {
-				s.Failure()
-				return err
-			}
-			s.LogInfo("Deleted k3d registry of previous kyma installation")
+
+		if err := deleteRegistryIfRequired(); err != nil {
+			return err
 		}
 	}
 
-	s.Successf("k3d status verified")
 	return nil
 }
 
@@ -226,4 +256,12 @@ func parseK3dArgs(args []string) []string {
 		res = append(res, strings.Split(arg, " ")...)
 	}
 	return res
+}
+
+type k3dInfo struct {
+	clusterExists bool
+	//indicates if the default k3d registry should be created/deleted
+	shouldManageDefaultRegistry bool
+	//only valid if shouldManageDefaultRegistry is true
+	defaultRegistryExists bool
 }
