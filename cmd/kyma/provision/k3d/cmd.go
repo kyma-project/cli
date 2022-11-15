@@ -61,7 +61,7 @@ func (c *command) Run() error {
 
 	k3dClient := k3d.NewClient(k3d.NewCmdRunner(), k3d.NewPathLooker(), c.opts.Name, c.opts.Verbose, c.opts.Timeout)
 
-	kinfo, err := c.setupK3d(k3dClient)
+	kinfo, err := c.initK3d(k3dClient)
 	if err != nil {
 		return err
 	}
@@ -81,8 +81,8 @@ func (c *command) Run() error {
 	return nil
 }
 
-// setupK3d ensures that k3d is properly installed and pre-conditions are fulfilled
-func (c *command) setupK3d(k3dClient k3d.Client) (*k3dInfo, error) {
+// initK3d ensures that k3d is properly installed and pre-conditions are fulfilled
+func (c *command) initK3d(k3dClient k3d.Client) (*k3dInfo, error) {
 	vs := c.NewStep("Verifying k3d status")
 
 	vs.LogInfo("Checking if port flags are valid")
@@ -98,7 +98,7 @@ func (c *command) setupK3d(k3dClient k3d.Client) (*k3dInfo, error) {
 		return nil, err
 	}
 
-	err = c.manageK3dSetup(k3dClient, kinfo, portsConfig)
+	err = c.cleanupK3d(k3dClient, kinfo, portsConfig)
 	if err != nil {
 		vs.Failure()
 		return nil, err
@@ -138,7 +138,7 @@ func (c *command) getK3dInfo(k3dClient k3d.Client) (*k3dInfo, error) {
 	}, nil
 }
 
-func (c *command) manageK3dSetup(k3dClient k3d.Client, kinfo *k3dInfo, portsConfig []int) error {
+func (c *command) cleanupK3d(k3dClient k3d.Client, kinfo *k3dInfo, portsConfig []int) error {
 
 	deleteRegistryIfRequired := func() error {
 		if kinfo.shouldManageDefaultRegistry && kinfo.defaultRegistryExists {
