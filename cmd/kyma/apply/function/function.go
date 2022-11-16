@@ -108,7 +108,6 @@ func (c *command) Run() error {
 	if err != nil {
 		step.LogErrorf("%s\n%s", err, "Check if your cluster is available and has Kyma installed.")
 	}
-
 	apiRules, err := resources.NewAPIRule(configuration, kymaAddress)
 	if err != nil {
 		step.Failure()
@@ -151,7 +150,7 @@ func (c *command) kymaHostAddress() (string, error) {
 	case err != nil:
 		err = errors.Wrapf(err, "Unable to read the Kyma host URL due to error")
 	case vs != nil && len(vs.Spec.GetServers()) > 0 && len(vs.Spec.Servers[0].Hosts) > 0:
-		url = strings.TrimPrefix(vs.Spec.Servers[0].Hosts[0], "*.")
+		url = strings.TrimPrefix(vs.Spec.Servers[0].Hosts[0], "*.") // TODO Brakujacy jeden case
 	default:
 		err = errors.New("kyma host URL could not be obtained")
 	}

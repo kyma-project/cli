@@ -1,9 +1,12 @@
 module github.com/kyma-project/cli
 
-go 1.18
+go 1.19
 
 // required to avoid locking with gardner dependency updates
-replace k8s.io/client-go => k8s.io/client-go v0.25.2
+replace (
+	github.com/kyma-project/hydroform/function => /Users/I551114/go/src/github.com/kyma-project/hydroform/function
+	k8s.io/client-go => k8s.io/client-go v0.25.2
+)
 
 require (
 	github.com/Masterminds/semver/v3 v3.1.1
