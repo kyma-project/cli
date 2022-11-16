@@ -1,5 +1,5 @@
 # These are the default owners for the whole content of the repository. The default owners are automatically added as reviewers when you open a pull request, unless different owners are specified in the file.
-* @clebs @jeremyharisch @khlifi411 @ruanxin @Tomasz-Smelcerz-SAP @jakobmoellersap @adityabhatia @skhalash @lindnerby @adityabhatia @dennis-ge
+* @clebs @jeremyharisch @khlifi411 @ruanxin @Tomasz-Smelcerz-SAP @jakobmoellersap @adityabhatia @lindnerby @adityabhatia @dennis-ge
 
 # Owners of the .kyma-project-io folder
 /.kyma-project-io/ @m00g3n @pPrecel @dbadura @kwiatekus @moelsayed @cortey @anoipm
