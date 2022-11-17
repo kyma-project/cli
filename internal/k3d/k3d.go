@@ -190,7 +190,7 @@ func (c *client) ClusterExists() (bool, error) {
 	return false, nil
 }
 
-// RegistryExists checks whether a registry exists
+// RegistryExists checks whether a default registry exists
 func (c *client) RegistryExists() (bool, error) {
 	registryName := fmt.Sprintf(defaultRegistryNamePattern, c.clusterName)
 
@@ -226,7 +226,7 @@ func (c *client) CreateCluster(settings CreateClusterSettings) error {
 	return err
 }
 
-// CreateRegistry creates a k3d registry
+// CreateRegistry creates a k3d registry with the default name
 func (c *client) CreateRegistry(registryPort string) (string, error) {
 	registryName := fmt.Sprintf(defaultRegistryNamePattern, c.clusterName)
 
@@ -250,7 +250,7 @@ func (c *client) DeleteCluster() error {
 	return err
 }
 
-// DeleteRegistry deletes a k3d registry
+// DeleteRegistry deletes the default k3d registry
 func (c *client) DeleteRegistry() error {
 	registryName := fmt.Sprintf(defaultRegistryNamePattern, c.clusterName)
 
