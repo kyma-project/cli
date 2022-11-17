@@ -66,7 +66,7 @@ func (c *command) Run() error {
 		return err
 	}
 
-	if kinfo.shouldManageDefaultRegistry {
+	if kinfo.manageDefaultRegistry {
 		defaultRegistry, err := c.createK3dRegistry(k3dClient)
 		if err != nil {
 			return err
@@ -141,7 +141,7 @@ func (c *command) getK3dInfo(k3dClient k3d.Client) (*k3dInfo, error) {
 func (c *command) cleanupK3d(k3dClient k3d.Client, kinfo *k3dInfo, portsConfig []int) error {
 
 	deleteRegistryIfRequired := func() error {
-		if kinfo.shouldManageDefaultRegistry && kinfo.defaultRegistryExists {
+		if kinfo.manageDefaultRegistry && kinfo.defaultRegistryExists {
 			if err := k3dClient.DeleteRegistry(); err != nil {
 				return err
 			}
@@ -261,7 +261,7 @@ func parseK3dArgs(args []string) []string {
 type k3dInfo struct {
 	clusterExists bool
 	//indicates if the default k3d registry should be created/deleted
-	shouldManageDefaultRegistry bool
+	manageDefaultRegistry bool
 	//only valid if shouldManageDefaultRegistry is true
 	defaultRegistryExists bool
 }
