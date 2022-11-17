@@ -108,6 +108,7 @@ func (c *command) Run() error {
 	if err != nil {
 		step.LogErrorf("%s\n%s", err, "Check if your cluster is available and has Kyma installed.")
 	}
+
 	apiRules, err := resources.NewAPIRule(configuration, kymaAddress)
 	if err != nil {
 		step.Failure()

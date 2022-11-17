@@ -1,6 +1,6 @@
 module github.com/kyma-project/cli
 
-go 1.19
+go 1.18
 
 // required to avoid locking with gardner dependency updates
 replace (
