@@ -92,7 +92,7 @@ func (c *command) Run() error {
 
 	mgr := manager.NewManager()
 
-	function, err := resources.NewFunction(configuration)
+	function, err := resources.NewFunction(&configuration)
 	if err != nil {
 		step.Failure()
 		return err
@@ -150,7 +150,7 @@ func (c *command) kymaHostAddress() (string, error) {
 	case err != nil:
 		err = errors.Wrapf(err, "Unable to read the Kyma host URL due to error")
 	case vs != nil && len(vs.Spec.GetServers()) > 0 && len(vs.Spec.Servers[0].Hosts) > 0:
-		url = strings.TrimPrefix(vs.Spec.Servers[0].Hosts[0], "*.") // TODO Brakujacy jeden case
+		url = strings.TrimPrefix(vs.Spec.Servers[0].Hosts[0], "*.")
 	default:
 		err = errors.New("kyma host URL could not be obtained")
 	}
