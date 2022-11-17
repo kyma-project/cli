@@ -10,14 +10,15 @@ import (
 	"github.com/kyma-project/cli/internal/kustomize"
 	"github.com/kyma-project/cli/pkg/errs"
 
-	"github.com/kyma-project/cli/internal/cli"
-	"github.com/kyma-project/cli/internal/kube"
-	"github.com/kyma-project/cli/internal/nice"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+
+	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/kube"
+	"github.com/kyma-project/cli/internal/nice"
 )
 
 type command struct {
@@ -43,10 +44,10 @@ func NewCmd(o *Options) *cobra.Command {
 	cobraCmd.Flags().StringArrayVarP(&o.Kustomizations, "kustomization", "k", []string{}, `Provide one or more kustomizations to deploy. Each occurrence of the flag accepts a URL with an optional reference (commit, branch, or release) in the format URL@ref or a local path to the directory of the kustomization file.
 	Defaults to deploying Lifecycle Manager and Module Manager from GitHub main branch.
 	Examples:
-	- Deploy a specific release of the Lifecycle Manager: "kyma deploy -k https://github.com/kyma-project/lifecycle-manager/operator/config/default@1.2.3"
+	- Deploy a specific release of the Lifecycle Manager: "kyma deploy -k https://github.com/kyma-project/lifecycle-manager/config/default@1.2.3"
 	- Deploy a local Module Manager: "kyma deploy --kustomization /path/to/repo/module-manager/operator/config/default"
-	- Deploy a branch of Lifecycle Manager with a custom URL: "kyma deploy -k https://gitlab.com/forked-from-github/lifecycle-manager/operator/config/default@feature-branch-1"
-	- Deploy the main branch of Lifecycle Manager while using local sources of Module Manager: "kyma deploy -k /path/to/repo/module-manager/operator/config/default -k https://github.com/kyma-project/lifecycle-manager/operator/config/default@main"`)
+	- Deploy a branch of Lifecycle Manager with a custom URL: "kyma deploy -k https://gitlab.com/forked-from-github/lifecycle-manager/config/default@feature-branch-1"
+	- Deploy the main branch of Lifecycle Manager while using local sources of Module Manager: "kyma deploy -k /path/to/repo/module-manager/operator/config/default -k https://github.com/kyma-project/lifecycle-manager/config/default@main"`)
 	cobraCmd.Flags().StringArrayVarP(&o.Modules, "module", "m", []string{}, `Provide one or more modules to activate after the deployment is finished. Example: "--module name@namespace" (namespace is optional).`)
 	cobraCmd.Flags().StringVarP(&o.ModulesFile, "modules-file", "f", "", `Path to file containing a list of modules.`)
 	cobraCmd.Flags().StringVarP(&o.Channel, "channel", "c", "stable", `Select which channel to deploy from: stable, fast, nightly.`)
