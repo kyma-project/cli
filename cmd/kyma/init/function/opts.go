@@ -65,10 +65,9 @@ func (o Options) source() workspace.Source {
 	if o.URL != "" {
 		return workspace.Source{
 			SourceGit: workspace.SourceGit{
-				BaseDir:    o.BaseDir,
-				Reference:  o.Reference,
-				Repository: o.RepositoryName,
-				URL:        o.URL,
+				BaseDir:   o.BaseDir,
+				Reference: o.Reference,
+				URL:       o.URL,
 			},
 			Type: workspace.SourceTypeGit,
 		}

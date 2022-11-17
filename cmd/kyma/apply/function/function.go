@@ -92,7 +92,7 @@ func (c *command) Run() error {
 
 	mgr := manager.NewManager()
 
-	function, err := resources.NewFunction(configuration)
+	function, err := resources.NewFunction(&configuration)
 	if err != nil {
 		step.Failure()
 		return err
