@@ -3,10 +3,7 @@ module github.com/kyma-project/cli
 go 1.18
 
 // required to avoid locking with gardner dependency updates
-replace (
-	github.com/kyma-project/hydroform/function => /Users/I551114/go/src/github.com/kyma-project/hydroform/function
-	k8s.io/client-go => k8s.io/client-go v0.25.2
-)
+replace k8s.io/client-go => k8s.io/client-go v0.25.2
 
 require (
 	github.com/Masterminds/semver/v3 v3.1.1
@@ -24,7 +21,7 @@ require (
 	github.com/go-logr/logr v1.2.3
 	github.com/imdario/mergo v0.3.13
 	github.com/kyma-incubator/reconciler v0.0.0-20221114104242-32b3a26222e4
-	github.com/kyma-project/hydroform/function v0.0.0-20221114085246-ad4d0a3353a8
+	github.com/kyma-project/hydroform/function v0.0.0-20221117103224-ec92306cab5f
 	github.com/kyma-project/hydroform/provision v0.0.0-20221019152339-a661398f485c
 	github.com/mandelsoft/vfs v0.0.0-20220805210647-bf14a11bfe31
 	github.com/opencontainers/go-digest v1.0.0
