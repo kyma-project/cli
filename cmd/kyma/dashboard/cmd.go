@@ -35,7 +35,7 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.Port, "port", "p", "3001", `Specify the port on which the local dashboard will be exposed.`)
-	cmd.Flags().StringVar(&o.ContainerName, "container-name", "busola", `Specify the name of the local container.`)
+	cmd.Flags().StringVar(&o.ContainerName, "container-name", "kyma-dashboard", `Specify the name of the local container.`)
 
 	return cmd
 }
@@ -80,7 +80,7 @@ func (cmd *command) runDashboardContainer() error {
 	}
 
 	if cmd.Verbose {
-		// when NODE_ENV is set to "development", all kind of logs are printed from the busola container
+		// when NODE_ENV is set to "development", all kind of logs are printed from the kyma-dashboard container
 		envs = append(envs, "NODE_ENV=development")
 	}
 
@@ -104,7 +104,7 @@ func (cmd *command) initContainerRunOpts(envs []string) (docker.ContainerRunOpts
 	containerRunOpts := docker.ContainerRunOpts{
 		Envs:          envs,
 		ContainerName: cmd.opts.ContainerName,
-		Image:         "eu.gcr.io/kyma-project/busola:latest",
+		Image:         "eu.gcr.io/kyma-project/kyma-dashboard-local-prod:latest",
 		Ports: map[string]string{
 			"3001": cmd.opts.Port,
 		},

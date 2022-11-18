@@ -15,7 +15,7 @@ kyma dashboard [flags]
 ## Flags
 
 ```bash
-      --container-name string   Specify the name of the local container. (default "busola")
+      --container-name string   Specify the name of the local container. (default "kyma-dashboard")
   -p, --port string             Specify the port on which the local dashboard will be exposed. (default "3001")
 ```
 
