@@ -104,7 +104,7 @@ func (cmd *command) initContainerRunOpts(envs []string) (docker.ContainerRunOpts
 	containerRunOpts := docker.ContainerRunOpts{
 		Envs:          envs,
 		ContainerName: cmd.opts.ContainerName,
-		Image:         "eu.gcr.io/kyma-project/busola:latest",
+		Image:         "eu.gcr.io/kyma-project/kyma-dashboard-local-prod:latest",
 		Ports: map[string]string{
 			"3001": cmd.opts.Port,
 		},
