@@ -6,6 +6,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/kyma-project/cli/internal/clusterinfo"
+	"github.com/kyma-project/cli/internal/coredns"
 	"github.com/kyma-project/cli/internal/deploy"
 	"github.com/kyma-project/cli/internal/kustomize"
 	"github.com/kyma-project/cli/pkg/dashboard"
@@ -147,6 +149,11 @@ func (cmd *command) deploy(start time.Time) error {
 		defer func() { os.Stderr = stderr }()
 	}
 
+	clusterInfo, err := clusterinfo.Discover(context.Background(), cmd.K8s.Static())
+	if err != nil {
+		return errors.Wrap(err, "failed to discover underlying cluster type")
+	}
+
 	deployStep := cmd.NewStep("Deploying Kyma")
 	deployStep.Start()
 
@@ -158,6 +165,10 @@ func (cmd *command) deploy(start time.Time) error {
 
 	// wait for operators to be ready
 	if err := cmd.waitForOperators(); err != nil {
+		return err
+	}
+
+	if _, err := coredns.Patch(l.Desugar(), cmd.K8s.Static(), false, clusterInfo); err != nil {
 		return err
 	}
 

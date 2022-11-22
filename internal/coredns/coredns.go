@@ -49,6 +49,7 @@ const (
 `
 	hostsTemplate = `
     {{ .K3dRegistryIP}} {{ .K3dRegistryHost}}
+	{{ .K3dRegistryIP}} {{ .K3dRegistryHost}}.localhost
 `
 	// Default domain names for coreDNS patch
 	coreDNSLocalDomainName  = `(.*)\.local\.kyma\.dev`
