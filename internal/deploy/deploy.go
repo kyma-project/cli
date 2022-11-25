@@ -139,6 +139,8 @@ func prepareKebComponents(components component.List, vals values.Values) ([]*keb
 		kebComponent := keb.Component{
 			Component: c.Name,
 			Namespace: c.Namespace,
+			URL:       c.URL,
+			Version:   c.Version,
 		}
 		if componentVals, exists := vals[c.Name]; exists {
 			valsMap, ok := componentVals.(map[string]interface{})
