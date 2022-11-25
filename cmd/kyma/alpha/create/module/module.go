@@ -64,7 +64,7 @@ Build module modB in version 3.2.1 and push it to a local registry "unsigned" su
 	cmd.Flags().StringVarP(&o.Credentials, "credentials", "c", "", "Basic authentication credentials for the given registry in the format user:password")
 	cmd.Flags().StringVar(&o.DefaultCRPath, "default-cr", "", "File containing the default custom resource of the module. If the module is a kubebuilder project, the default CR will be automatically detected.")
 	cmd.Flags().StringVarP(&o.TemplateOutput, "output", "o", "template.yaml", "File to which to output the module template if the module is uploaded to a registry")
-	cmd.Flags().StringVar(&o.Channel, "channel", "stable", "Channel to use for the module template.")
+	cmd.Flags().StringVar(&o.Channel, "channel", "regular", "Channel to use for the module template.")
 	cmd.Flags().StringVarP(&o.Token, "token", "t", "", "Authentication token for the given registry (alternative to basic authentication).")
 	cmd.Flags().BoolVarP(&o.Overwrite, "overwrite", "w", false, "overwrites the existing mod-path directory if it exists")
 	cmd.Flags().BoolVar(&o.Insecure, "insecure", false, "Use an insecure connection to access the registry.")
