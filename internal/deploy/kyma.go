@@ -43,7 +43,7 @@ func Kyma(k8s kube.KymaKube, channel, kymaCRpath string, dryRun bool) error {
 		}
 
 		if channel == "" {
-			channel = "stable"
+			channel = "regular"
 		}
 		data := struct {
 			Channel string
