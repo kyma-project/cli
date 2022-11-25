@@ -39,7 +39,7 @@ Build module modB in version 3.2.1 and push it to a local registry "unsigned" su
 ## Flags
 
 ```bash
-      --channel string         Channel to use for the module template. (default "stable")
+      --channel string         Channel to use for the module template. (default "regular")
       --clean                  Remove the mod-path folder and all its contents at the end.
   -c, --credentials string     Basic authentication credentials for the given registry in the format user:password
       --default-cr string      File containing the default custom resource of the module. If the module is a kubebuilder project, the default CR will be automatically detected.
