@@ -99,6 +99,7 @@ func TestPrepareKebComponents(t *testing.T) {
 	require.Equal(t, expected[2].Namespace, (result)[2].Namespace)
 	require.Equal(t, expected[3].Component, (result)[3].Component)
 	require.ElementsMatch(t, expected[3].Configuration, (result)[3].Configuration)
+	require.Equal(t, expected[3].Namespace, (result)[3].Namespace)
 	require.Equal(t, expected[3].URL, (result)[3].URL)
 	require.Equal(t, expected[3].Version, (result)[3].Version)
 }
