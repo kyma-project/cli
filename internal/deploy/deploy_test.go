@@ -15,7 +15,11 @@ func TestPrepareKebComponents(t *testing.T) {
 	var components = component.List{
 		DefaultNamespace: "ns-1",
 		Prerequisites:    []component.Definition{{Name: "pre-1", Namespace: "ns-1"}},
-		Components:       []component.Definition{{Name: "comp-1", Namespace: "ns-2"}, {Name: "comp-2", Namespace: "ns-1"}},
+		Components: []component.Definition{
+			{Name: "comp-1", Namespace: "ns-2"},
+			{Name: "comp-2", Namespace: "ns-1"},
+			{Name: "comp-4", Namespace: "ns-4", URL: "https://someurl.com", Version: "version-4"},
+		},
 	}
 
 	var vals = values.Values{
@@ -67,11 +71,23 @@ func TestPrepareKebComponents(t *testing.T) {
 			},
 			Namespace: "ns-1",
 		},
+		{
+			Component: "comp-4",
+			Configuration: []keb.Configuration{
+				{Key: "global.domainName", Value: "domain-1"},
+				{Key: "global.tlsCrt", Value: "tls-crt-1"},
+				{Key: "global.tlsKey", Value: "tls-key-1"},
+			},
+			Namespace: "ns-4",
+			URL:       "https://someurl.com",
+			Version:   "version-4",
+		},
 	}
 
 	result, err := prepareKebComponents(components, vals)
 	require.NoError(t, err)
-	require.Len(t, expected, 3)
+	require.Len(t, result, 4)
+	require.Len(t, expected, 4)
 	require.Equal(t, expected[0].Component, (result)[0].Component)
 	require.ElementsMatch(t, expected[0].Configuration, (result)[0].Configuration)
 	require.Equal(t, expected[0].Namespace, (result)[0].Namespace)
@@ -81,6 +97,11 @@ func TestPrepareKebComponents(t *testing.T) {
 	require.Equal(t, expected[2].Component, (result)[2].Component)
 	require.ElementsMatch(t, expected[2].Configuration, (result)[2].Configuration)
 	require.Equal(t, expected[2].Namespace, (result)[2].Namespace)
+	require.Equal(t, expected[3].Component, (result)[3].Component)
+	require.ElementsMatch(t, expected[3].Configuration, (result)[3].Configuration)
+	require.Equal(t, expected[3].Namespace, (result)[3].Namespace)
+	require.Equal(t, expected[3].URL, (result)[3].URL)
+	require.Equal(t, expected[3].Version, (result)[3].Version)
 }
 func TestPrepareKebCluster(t *testing.T) {
 	var expected = []*keb.Component{
