@@ -31,6 +31,13 @@ type command struct {
 	opts *Options
 }
 
+const (
+	hostsTemplate = `
+    {{ .K3dRegistryIP}} {{ .K3dRegistryHost}}
+    {{ .K3dRegistryIP}} {{ .K3dRegistryHost}}.localhost
+`
+)
+
 // NewCmd creates a new deploy command
 func NewCmd(o *Options) *cobra.Command {
 
@@ -168,7 +175,7 @@ func (cmd *command) deploy(start time.Time) error {
 		return err
 	}
 
-	if _, err := coredns.Patch(l.Desugar(), cmd.K8s.Static(), false, clusterInfo); err != nil {
+	if _, err := coredns.Patch(l.Desugar(), cmd.K8s.Static(), false, clusterInfo, hostsTemplate); err != nil {
 		return err
 	}
 
