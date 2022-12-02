@@ -434,8 +434,8 @@ github.com/docker/distribution v2.8.1+incompatible/go.mod h1:J2gT2udsDAN96Uj4Kfc
 github.com/docker/docker v1.4.2-0.20190924003213-a8608b5b67c7/go.mod h1:eEKB0N0r5NX/I1kEveEz05bcu8tLC/8azJZsviup8Sk=
 github.com/docker/docker v20.10.9+incompatible/go.mod h1:eEKB0N0r5NX/I1kEveEz05bcu8tLC/8azJZsviup8Sk=
 github.com/docker/docker v20.10.11+incompatible/go.mod h1:eEKB0N0r5NX/I1kEveEz05bcu8tLC/8azJZsviup8Sk=
-github.com/docker/docker v20.10.20+incompatible h1:kH9tx6XO+359d+iAkumyKDc5Q1kOwPuAUaeri48nD6E=
-github.com/docker/docker v20.10.20+incompatible/go.mod h1:eEKB0N0r5NX/I1kEveEz05bcu8tLC/8azJZsviup8Sk=
+github.com/docker/docker v20.10.21+incompatible h1:UTLdBmHk3bEY+w8qeO5KttOhy6OmXWsl/FEet9Uswog=
+github.com/docker/docker v20.10.21+incompatible/go.mod h1:eEKB0N0r5NX/I1kEveEz05bcu8tLC/8azJZsviup8Sk=
 github.com/docker/docker-credential-helpers v0.6.3/go.mod h1:WRaJzqw3CTB9bk10avuGsjVBZsD05qeibJ1/TYlvc0Y=
 github.com/docker/docker-credential-helpers v0.7.0 h1:xtCHsjxogADNZcdv1pKUHXryefjlVRqWqIhk/uXJp0A=
 github.com/docker/docker-credential-helpers v0.7.0/go.mod h1:rETQfLdHNT3foU5kuNkFR1R1V12OJRRO5lzt2D1b5X0=
@@ -985,8 +985,8 @@ github.com/ktrysmt/go-bitbucket v0.6.4/go.mod h1:9u0v3hsd2rqCHRIpbir1oP7F58uo5dq
 github.com/kylelemons/godebug v1.1.0 h1:RPNrshWIDI6G2gRW9EHilWtl7Z6Sb1BR0xunSBf0SNc=
 github.com/kyma-incubator/reconciler v0.0.0-20221129124302-c1d7dbc43fa6 h1:ynieDWEESt+OmoZK7705n5y1FrROZSYUIFUc6HVdrow=
 github.com/kyma-incubator/reconciler v0.0.0-20221129124302-c1d7dbc43fa6/go.mod h1:6thcm/NP9wyl4GGahlSIfa6c8zxo/zYiUP2d/PUVPp4=
-github.com/kyma-project/hydroform/function v0.0.0-20221117103224-ec92306cab5f h1:nXnO9CHrDypezjrwPWzWQ9Go+fQO5k2Ncm6m1v3Cg5c=
-github.com/kyma-project/hydroform/function v0.0.0-20221117103224-ec92306cab5f/go.mod h1:K7bfBBesefKDFmeHgAcChbqt7aaibtxSxdMKpM/MKkc=
+github.com/kyma-project/hydroform/function v0.0.0-20221202082519-8cd1c2a4c268 h1:97Aryt87+s68D9d9bQnKdE6tuULMdCIIaMpFX5LVsTQ=
+github.com/kyma-project/hydroform/function v0.0.0-20221202082519-8cd1c2a4c268/go.mod h1:uNaUYcFyK100sIiokOJ07/rPXSvvG2gRNbXt4wRM4ks=
 github.com/kyma-project/hydroform/provision v0.0.0-20221019152339-a661398f485c h1:/GZ/Ng/KJRA+SMzsV1g5/6hjuGhXeaDr0/O+E8vFcf4=
 github.com/kyma-project/hydroform/provision v0.0.0-20221019152339-a661398f485c/go.mod h1:cebam+0dpVRALbGBveyqs1VvgH2Ai6w042F9JBR7M5M=
 github.com/kyma-project/istio/operator v0.0.0-20221107094910-89bc304f6079 h1:87IWxLO7OkiFYNLFAiibJzwLHX1qiNv0MeUT9EnSrLQ=
