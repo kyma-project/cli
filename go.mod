@@ -13,7 +13,7 @@ require (
 	github.com/containerd/containerd v1.6.8
 	github.com/daviddengcn/go-colortext v1.0.0
 	github.com/docker/cli v20.10.21+incompatible
-	github.com/docker/docker v20.10.20+incompatible
+	github.com/docker/docker v20.10.21+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/fatih/color v1.13.0
 	github.com/gardener/component-spec/bindings-go v0.0.66
@@ -21,7 +21,7 @@ require (
 	github.com/go-logr/logr v1.2.3
 	github.com/imdario/mergo v0.3.13
 	github.com/kyma-incubator/reconciler v0.0.0-20221129124302-c1d7dbc43fa6
-	github.com/kyma-project/hydroform/function v0.0.0-20221117103224-ec92306cab5f
+	github.com/kyma-project/hydroform/function v0.0.0-20221202082519-8cd1c2a4c268
 	github.com/kyma-project/hydroform/provision v0.0.0-20221019152339-a661398f485c
 	github.com/mandelsoft/vfs v0.0.0-20220805210647-bf14a11bfe31
 	github.com/opencontainers/go-digest v1.0.0
