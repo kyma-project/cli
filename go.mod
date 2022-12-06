@@ -20,7 +20,7 @@ require (
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-logr/logr v1.2.3
 	github.com/imdario/mergo v0.3.13
-	github.com/kyma-incubator/reconciler v0.0.0-20221129124302-c1d7dbc43fa6
+	github.com/kyma-incubator/reconciler v0.0.0-20221201103316-19003e6ad140
 	github.com/kyma-project/hydroform/function v0.0.0-20221202082519-8cd1c2a4c268
 	github.com/kyma-project/hydroform/provision v0.0.0-20221019152339-a661398f485c
 	github.com/mandelsoft/vfs v0.0.0-20220805210647-bf14a11bfe31
@@ -30,7 +30,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.6.1
 	github.com/stretchr/testify v1.8.1
-	go.uber.org/zap v1.23.0
+	go.uber.org/zap v1.24.0
 	golang.org/x/exp v0.0.0-20221031165847-c99f073a8326
 	gopkg.in/yaml.v3 v3.0.1
 	gotest.tools v2.2.0+incompatible
@@ -95,6 +95,7 @@ require (
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.20.0 // indirect
 	github.com/go-openapi/swag v0.21.1 // indirect
+	github.com/go-yaml/yaml v2.1.0+incompatible // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-migrate/migrate/v4 v4.15.1 // indirect
@@ -127,7 +128,7 @@ require (
 	github.com/kevinburke/ssh_config v0.0.0-20201106050909-4977a11b4351 // indirect
 	github.com/klauspost/compress v1.15.11 // indirect
 	github.com/klauspost/pgzip v1.2.5 // indirect
-	github.com/kyma-project/istio/operator v0.0.0-20221107094910-89bc304f6079 // indirect
+	github.com/kyma-project/istio/operator v0.0.0-20221129102055-d37c5c8e6add // indirect
 	github.com/kyma-project/module-manager/operator v0.0.0-20221020113457-620af4f4b365 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
