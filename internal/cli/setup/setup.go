@@ -18,9 +18,9 @@ import (
 )
 
 const (
-	DefaultVersion  = "1.24.x!" //1.24.x! means the latest available patch version for 1.24 branch
-	versionEnv      = "ENVTEST_K8S_VERSION"
-	envtestSetupBin = "setup-envtest"
+	envtestDefaultVersion = "1.24.x!" //1.24.x! means the latest available patch version for 1.24 branch
+	envtestVersionEnv     = "ENVTEST_K8S_VERSION"
+	envtestSetupBin       = "setup-envtest"
 )
 
 // based on "kubernetes-sigs/controller-runtime/tools/setup-envtest/versions/parse.go", but more strict
@@ -91,9 +91,9 @@ func EnvTest(step step.Step, verbose bool) (*envtest.Runner, error) {
 
 // resolveEnvtestVersion validates the envtest version provided via the environment variable. It returns the default version if the variable is not found.
 func resolveEnvtestVersion() (string, error) {
-	v, defined := os.LookupEnv(versionEnv)
+	v, defined := os.LookupEnv(envtestVersionEnv)
 	if !defined {
-		return DefaultVersion, nil
+		return envtestDefaultVersion, nil
 	}
 
 	trimmed := strings.TrimSpace(v)
