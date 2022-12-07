@@ -111,8 +111,9 @@ func (cmd *command) run() error {
 		return err
 	}
 
-	if err := cmd.wizard(); err != nil {
-		return err
+	// do not starrt the dashboard if not interactive
+	if cmd.opts.CI || cmd.opts.NonInteractive {
+		return nil
 	}
 
 	return cmd.wizard()
@@ -279,12 +280,12 @@ func (cmd *command) wizard() error {
 	}
 	// make sure the dahboard container always stops at the end and the cursor restored
 	cmd.Finalizers.Add(dash.StopFunc(context.Background(), func(i ...interface{}) { fmt.Print(i...) }))
-	cmd.Finalizers.Add(func() { cmd.CurrentStep.Stop(true) })
 
 	if err := dash.Open(fmt.Sprintf("/cluster/%s/namespaces/%s/kymas/details/%s", cluster, ns, name)); err != nil {
 		cmd.CurrentStep.Failure()
 		return err
 	}
+	cmd.CurrentStep.Successf("Dashboard started. To exit press Ctrl+C")
 
 	return dash.Watch(context.Background())
 }

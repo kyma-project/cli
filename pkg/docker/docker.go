@@ -2,6 +2,7 @@ package docker
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -15,10 +16,10 @@ import (
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
 	docker "github.com/docker/docker/client"
-	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/go-connections/nat"
 	"github.com/kyma-project/cli/pkg/step"
-	hydroformDocker "github.com/kyma-project/hydroform/function/pkg/docker"
+	"github.com/moby/moby/pkg/jsonmessage"
+	"github.com/moby/moby/pkg/stdcopy"
 	specs "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
@@ -56,7 +57,7 @@ type KymaClient interface {
 // Wrapper provides helper functions
 type Wrapper interface {
 	PullImageAndStartContainer(ctx context.Context, opts ContainerRunOpts) (string, error)
-	ContainerFollowRun(ctx context.Context, containerID string) error
+	ContainerFollowRun(ctx context.Context, containerID string, forwardOutput bool) error
 	Stop(ctx context.Context, containerID string, log func(...interface{})) func()
 	IsDockerDesktopOS(ctx context.Context) (bool, error)
 }
@@ -137,13 +138,36 @@ func (w *dockerWrapper) PullImageAndStartContainer(ctx context.Context, opts Con
 }
 
 // ContainerFollowRun attaches a connection to a container and logs the output
-func (w *dockerWrapper) ContainerFollowRun(ctx context.Context, containerID string) error {
-	return hydroformDocker.FollowRun(ctx, w.Docker, containerID)
+func (w *dockerWrapper) ContainerFollowRun(ctx context.Context, containerID string, forwardOutput bool) error {
+	buf, err := w.Docker.ContainerAttach(ctx, containerID, types.ContainerAttachOptions{
+		Stdout: true,
+		Stderr: true,
+		Stream: true,
+	})
+	if err != nil {
+		return err
+	}
+	defer buf.Close()
+
+	dstout, dsterr := io.Discard, io.Discard
+	if forwardOutput {
+		dstout, dsterr = os.Stdout, os.Stderr
+	}
+
+	_, err = stdcopy.StdCopy(dstout, dsterr, buf.Reader)
+
+	return err
 }
 
 // Stop stops a container with additional logging
 func (w *dockerWrapper) Stop(ctx context.Context, containerID string, log func(...interface{})) func() {
-	return hydroformDocker.Stop(ctx, w.Docker, containerID, log)
+	return func() {
+		log(fmt.Sprintf("\r- Removing container %s...\n", containerID))
+		err := w.Docker.ContainerStop(ctx, containerID, nil)
+		if err != nil {
+			log(err)
+		}
+	}
 }
 
 func (w *dockerWrapper) IsDockerDesktopOS(ctx context.Context) (bool, error) {

@@ -6,7 +6,7 @@ import (
 
 	"github.com/docker/docker/api/types/mount"
 	"github.com/kyma-project/cli/internal/kube"
-	"github.com/kyma-project/cli/internal/os"
+	cliOS "github.com/kyma-project/cli/internal/os"
 	"github.com/kyma-project/cli/pkg/docker"
 	"github.com/pkg/browser"
 )
@@ -58,6 +58,8 @@ func (c *Container) Start() error {
 	if c.verbose {
 		// when NODE_ENV is set to "development", all kind of logs are printed from the kyma-dashboard container
 		envs = append(envs, "NODE_ENV=development")
+	} else {
+		envs = append(envs, "NODE_ENV=production")
 	}
 	if err != nil {
 		return fmt.Errorf("failed to interact with docker: %w", err)
@@ -88,7 +90,7 @@ func (c *Container) Open(path string) error {
 
 // Watch attaches to the running docker container and forwards its output.
 func (c *Container) Watch(ctx context.Context) error {
-	return c.docker.ContainerFollowRun(ctx, c.id)
+	return c.docker.ContainerFollowRun(ctx, c.id, c.verbose)
 }
 
 // StopFunc returns a function to stop the dashboard container with the given context and logging function.
@@ -124,7 +126,7 @@ func (c *Container) containerOpts(envs []string) docker.ContainerRunOpts {
 		c.kubeconfigMounted = true
 	}
 
-	if os.IsLinux() {
+	if cliOS.IsLinux() {
 		if c.verbose {
 			fmt.Printf("Operating system seems to be Linux. Changing the Docker network mode to 'host'")
 		}
