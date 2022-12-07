@@ -12,6 +12,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/cli/setup"
 	"github.com/kyma-project/cli/pkg/module"
 )
 
@@ -93,6 +94,10 @@ func (cmd *command) Run(args []string) error {
 		Overwrite:     cmd.opts.Overwrite,
 		RegistryURL:   cmd.opts.RegistryURL,
 		DefaultCRPath: cmd.opts.DefaultCRPath,
+	}
+
+	if err := setup.Kustomize(&cmd.Command); err != nil {
+		return err
 	}
 
 	/* -- Inspect and build Module -- */

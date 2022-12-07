@@ -2,12 +2,10 @@ package deploy
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"time"
 
 	"github.com/kyma-project/cli/internal/deploy"
-	"github.com/kyma-project/cli/internal/kustomize"
 	"github.com/kyma-project/cli/pkg/errs"
 
 	"github.com/pkg/errors"
@@ -17,6 +15,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 
 	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/cli/setup"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/nice"
 )
@@ -107,7 +106,7 @@ func (cmd *command) run() error {
 }
 
 func (cmd *command) deploy(start time.Time) error {
-	if err := cmd.initialSetup(); err != nil {
+	if err := setup.Kustomize(&cmd.Command); err != nil {
 		return err
 	}
 
@@ -177,15 +176,6 @@ func (cmd *command) deploy(start time.Time) error {
 
 	deployTime := time.Since(start)
 	return summary.Print(deployTime)
-}
-
-func (cmd *command) initialSetup() error {
-	s := cmd.NewStep("Setting up kustomize...")
-	if err := kustomize.Setup(s, true); err != nil {
-		log.Fatal(err)
-	}
-	s.Successf("Kustomize ready")
-	return nil
 }
 
 func (cmd *command) dryRun() error {
