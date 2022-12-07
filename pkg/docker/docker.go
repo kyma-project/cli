@@ -16,10 +16,10 @@ import (
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
 	docker "github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/jsonmessage"
+	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/docker/go-connections/nat"
 	"github.com/kyma-project/cli/pkg/step"
-	"github.com/moby/moby/pkg/jsonmessage"
-	"github.com/moby/moby/pkg/stdcopy"
 	specs "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
