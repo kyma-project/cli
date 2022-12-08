@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kyma-project/cli/internal/cli/setup"
+	setup "github.com/kyma-project/cli/internal/cli/setup/envtest"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/pkg/step"
 	"go.uber.org/zap"

@@ -1,19 +1,16 @@
-package setup
+package envtest
 
 import (
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
 
-	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/envtest"
 	"github.com/kyma-project/cli/internal/files"
-	"github.com/kyma-project/cli/internal/kustomize"
 	"github.com/kyma-project/cli/pkg/step"
 )
 
@@ -25,15 +22,6 @@ const (
 
 // based on "kubernetes-sigs/controller-runtime/tools/setup-envtest/versions/parse.go", but more strict
 var envtestVersionRegexp = regexp.MustCompile(`^(0|[1-9]\d{0,2})\.(0|[1-9]\d{0,2})\.(0|[1-9]\d{0,3})$`)
-
-func Kustomize(cmd *cli.Command) error {
-	s := cmd.NewStep("Setting up kustomize...")
-	if err := kustomize.Setup(s, true); err != nil {
-		log.Fatal(err)
-	}
-	s.Successf("Kustomize ready")
-	return nil
-}
 
 func EnvTest(step step.Step, verbose bool) (*envtest.Runner, error) {
 	p, err := files.KymaHome()
