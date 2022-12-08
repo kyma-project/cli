@@ -10,7 +10,7 @@ const (
 	DefaultStepSuccessMsg = "Kustomize ready"
 )
 
-// ExtendCmd is used to extend the CLI command whith the SetupKustomize() function
+// ExtendCmd is used to extend the CLI command with the SetupKustomize() function
 type ExtendCmd struct {
 }
 
