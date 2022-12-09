@@ -1,6 +1,7 @@
 package deploy
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -8,13 +9,16 @@ import (
 
 	"github.com/kyma-project/cli/internal/deploy"
 	"github.com/kyma-project/cli/internal/kustomize"
+	"github.com/kyma-project/cli/pkg/dashboard"
 	"github.com/kyma-project/cli/pkg/errs"
 
-	"github.com/pkg/errors"
+	"errors"
+
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
@@ -100,10 +104,19 @@ func (cmd *command) run() error {
 
 	var err error
 	if cmd.K8s, err = kube.NewFromConfigWithTimeout("", cmd.KubeconfigPath, cmd.opts.Timeout); err != nil {
-		return errors.Wrap(err, "failed to initialize the Kubernetes client from given kubeconfig")
+		return fmt.Errorf("failed to initialize the Kubernetes client from given kubeconfig: %w", err)
 	}
 
-	return cmd.deploy(start)
+	if err := cmd.deploy(start); err != nil {
+		return err
+	}
+
+	// do not starrt the dashboard if not interactive
+	if cmd.opts.CI || cmd.opts.NonInteractive {
+		return nil
+	}
+
+	return cmd.wizard()
 }
 
 func (cmd *command) deploy(start time.Time) error {
@@ -239,4 +252,40 @@ func (cmd *command) waitForOperators() error {
 
 	// Merge errors from all async calls (2)
 	return errs.MergeErrors(<-errChan, <-errChan)
+}
+
+func (cmd *command) wizard() error {
+	// get all infos for the dashboard URL
+	ctx, cancel := context.WithTimeout(context.Background(), cmd.opts.Timeout)
+	defer cancel()
+
+	kymas, err := cmd.K8s.Dynamic().Resource(deploy.KymaGVR).List(ctx, v1.ListOptions{})
+	if err != nil {
+		return err
+	}
+
+	if len(kymas.Items) < 1 {
+		return errors.New("No Kyma CR found in cluster")
+	}
+
+	cluster := cmd.K8s.KubeConfig().CurrentContext
+	name := kymas.Items[0].GetName()
+	ns := kymas.Items[0].GetNamespace()
+
+	cmd.NewStep("Start module dashboard ")
+	dash := dashboard.New("kyma-dashboard", "3001", cmd.KubeconfigPath, cmd.Verbose)
+	if err := dash.Start(); err != nil {
+		cmd.CurrentStep.Failure()
+		return err
+	}
+	// make sure the dahboard container always stops at the end and the cursor restored
+	cmd.Finalizers.Add(dash.StopFunc(context.Background(), func(i ...interface{}) { fmt.Print(i...) }))
+
+	if err := dash.Open(fmt.Sprintf("/cluster/%s/namespaces/%s/kymas/details/%s", cluster, ns, name)); err != nil {
+		cmd.CurrentStep.Failure()
+		return err
+	}
+	cmd.CurrentStep.Successf("Dashboard started. To exit press Ctrl+C")
+
+	return dash.Watch(context.Background())
 }

@@ -7,6 +7,7 @@ import (
 	"text/template"
 
 	"github.com/kyma-project/cli/internal/kube"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 const kymaCRTemplate = `apiVersion: operator.kyma-project.io/v1alpha1
@@ -24,6 +25,12 @@ spec:
   sync:
     enabled: {{ .Sync }}
 `
+
+var KymaGVR = schema.GroupVersionResource{
+	Group:    "operator.kyma-project.io",
+	Version:  "v1alpha1",
+	Resource: "kymas",
+}
 
 // Kyma deploys the Kyma CR. If no kymaCRPath is provided, it deploys the default CR.
 func Kyma(k8s kube.KymaKube, channel, kymaCRpath string, dryRun bool) error {
