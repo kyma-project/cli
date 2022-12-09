@@ -5,8 +5,8 @@ import (
 	"os"
 	"time"
 
-	kustomizeSetup "github.com/kyma-project/cli/internal/cli/setup/kustomize"
 	"github.com/kyma-project/cli/internal/deploy"
+	"github.com/kyma-project/cli/internal/kustomize"
 	"github.com/kyma-project/cli/pkg/errs"
 
 	"github.com/pkg/errors"
@@ -23,7 +23,6 @@ import (
 type command struct {
 	cli.Command
 	opts *Options
-	kustomizeSetup.ExtendCmd
 }
 
 // NewCmd creates a new deploy command
@@ -108,12 +107,12 @@ func (cmd *command) run() error {
 
 func (cmd *command) deploy(start time.Time) error {
 
-	setupStep := cmd.NewStep(kustomizeSetup.DefaultNewStepMsg)
-	if err := cmd.SetupKustomize(setupStep); err != nil {
-		setupStep.Failure()
+	cmd.NewStep(cli.KustomizeSetupStepName)
+	if err := kustomize.Setup(cmd.CurrentStep, true); err != nil {
+		cmd.CurrentStep.Failure()
 		return err
 	}
-	setupStep.Successf(kustomizeSetup.DefaultStepSuccessMsg)
+	cmd.CurrentStep.Successf(cli.KustomizeSetupStepSuccessMsg)
 
 	if cmd.opts.DryRun {
 		return cmd.dryRun()
