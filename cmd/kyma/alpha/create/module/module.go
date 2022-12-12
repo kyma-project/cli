@@ -96,12 +96,12 @@ func (cmd *command) Run(args []string) error {
 		DefaultCRPath: cmd.opts.DefaultCRPath,
 	}
 
-	cmd.NewStep(cli.KustomizeSetupStepName)
+	cmd.NewStep("Setting up kustomize...")
 	if err := kustomize.Setup(cmd.CurrentStep, true); err != nil {
 		cmd.CurrentStep.Failure()
 		return err
 	}
-	cmd.CurrentStep.Successf(cli.KustomizeSetupStepSuccessMsg)
+	cmd.CurrentStep.Successf("Kustomize ready")
 
 	/* -- Inspect and build Module -- */
 	cmd.NewStep("Parse and build module...")

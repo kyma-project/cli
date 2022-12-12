@@ -107,12 +107,12 @@ func (cmd *command) run() error {
 
 func (cmd *command) deploy(start time.Time) error {
 
-	cmd.NewStep(cli.KustomizeSetupStepName)
+	cmd.NewStep("Setting up kustomize...")
 	if err := kustomize.Setup(cmd.CurrentStep, true); err != nil {
 		cmd.CurrentStep.Failure()
 		return err
 	}
-	cmd.CurrentStep.Successf(cli.KustomizeSetupStepSuccessMsg)
+	cmd.CurrentStep.Successf("Kustomize ready")
 
 	if cmd.opts.DryRun {
 		return cmd.dryRun()
