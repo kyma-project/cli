@@ -3,7 +3,6 @@ package deploy
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"time"
 
@@ -120,9 +119,13 @@ func (cmd *command) run() error {
 }
 
 func (cmd *command) deploy(start time.Time) error {
-	if err := cmd.initialSetup(); err != nil {
+
+	cmd.NewStep("Setting up kustomize...")
+	if err := kustomize.Setup(cmd.CurrentStep, true); err != nil {
+		cmd.CurrentStep.Failure()
 		return err
 	}
+	cmd.CurrentStep.Successf("Kustomize ready")
 
 	if cmd.opts.DryRun {
 		return cmd.dryRun()
@@ -190,15 +193,6 @@ func (cmd *command) deploy(start time.Time) error {
 
 	deployTime := time.Since(start)
 	return summary.Print(deployTime)
-}
-
-func (cmd *command) initialSetup() error {
-	s := cmd.NewStep("Setting up kustomize...")
-	if err := kustomize.Setup(s, true); err != nil {
-		log.Fatal(err)
-	}
-	s.Successf("Kustomize ready")
-	return nil
 }
 
 func (cmd *command) dryRun() error {

@@ -12,12 +12,13 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/kustomize"
 	"github.com/kyma-project/cli/pkg/module"
 )
 
 type command struct {
-	opts *Options
 	cli.Command
+	opts *Options
 }
 
 // NewCmd creates a new Kyma CLI command
@@ -94,6 +95,13 @@ func (cmd *command) Run(args []string) error {
 		RegistryURL:   cmd.opts.RegistryURL,
 		DefaultCRPath: cmd.opts.DefaultCRPath,
 	}
+
+	cmd.NewStep("Setting up kustomize...")
+	if err := kustomize.Setup(cmd.CurrentStep, true); err != nil {
+		cmd.CurrentStep.Failure()
+		return err
+	}
+	cmd.CurrentStep.Successf("Kustomize ready")
 
 	/* -- Inspect and build Module -- */
 	cmd.NewStep("Parse and build module...")

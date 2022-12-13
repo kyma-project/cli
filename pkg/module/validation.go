@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kyma-project/cli/internal/envtest"
+	setup "github.com/kyma-project/cli/internal/cli/setup/envtest"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/pkg/step"
 	"go.uber.org/zap"
@@ -38,7 +38,7 @@ func (v *DefaultCRValidator) Run(s step.Step, verbose bool, log *zap.SugaredLogg
 	}
 
 	// setup test env
-	runner, err := envtest.Setup(s, verbose)
+	runner, err := setup.EnvTest(s, verbose)
 	if err != nil {
 		return err
 	}
