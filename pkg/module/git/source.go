@@ -19,23 +19,22 @@ const (
 var errNotGit = errors.New("not a git repository")
 
 func Source(path, repo, version string) (*cdv2.Source, error) {
-	u, err := url.Parse(repo)
-	if err != nil {
-		return nil, fmt.Errorf("could not parse repository URL %q: %w", repo, err)
-	}
-
-	pieces := strings.Split(u.Path, "/")
-	repoName := pieces[len(pieces)-1]
-
+	var repoURL *url.URL
 	src := &cdv2.Source{
 		IdentityObjectMeta: cdv2.IdentityObjectMeta{
-			Name:    repoName,
 			Version: version,
 			Type:    "git",
 		},
 		Access: &cdv2.UnstructuredTypedObject{
-			Object: map[string]interface{}{"repoUrl": repo, "type": domain(u)},
+			Object: make(map[string]interface{}),
 		},
+	}
+	if repo != "" {
+		var err error
+		repoURL, err = url.Parse(repo)
+		if err != nil {
+			return nil, fmt.Errorf("could not parse repository URL %q: %w", repo, err)
+		}
 	}
 
 	// check for .git
@@ -44,6 +43,29 @@ func Source(path, repo, version string) (*cdv2.Source, error) {
 		if err != nil {
 			return src, fmt.Errorf("could not get git information from %q: %w", gitPath, err)
 		}
+
+		// get URL from git info if not provided in the project
+		if repo == "" {
+			remotes, err := r.Remotes()
+			if err != nil {
+				return src, err
+			}
+
+			if len(remotes) > 0 {
+				var err error
+				// get remote URL and convert to HTTP in case it is an SSH URL
+				u := remotes[0].Config().URLs[0]
+				u = strings.Replace(u, ":", "/", 1)
+				u = strings.Replace(u, "git@", "https://", 1)
+				u = strings.TrimSuffix(u, ".git")
+				repoURL, err = url.Parse(u)
+
+				if err != nil {
+					return src, fmt.Errorf("could not parse repository URL %q: %w", repo, err)
+				}
+			}
+		}
+
 		head, err := r.Head()
 		if err != nil {
 			return src, fmt.Errorf("could not get git information from %q: %w", gitPath, err)
@@ -51,6 +73,16 @@ func Source(path, repo, version string) (*cdv2.Source, error) {
 
 		src.Access.Object["ref"] = head.Name().String()
 		src.Access.Object["commit"] = head.Hash().String()
+	}
+
+	if repoURL != nil {
+		pieces := strings.Split(repoURL.Path, "/")
+		repoName := pieces[len(pieces)-1]
+
+		src.IdentityObjectMeta.Name = repoName
+		fmt.Println(repoName)
+		src.Access.Object["repoUrl"] = repoURL.String()
+		src.Access.Object["type"] = domain(repoURL)
 	}
 
 	return src, nil
