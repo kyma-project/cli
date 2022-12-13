@@ -14,7 +14,7 @@ import (
 
 const (
 	defaultLifecycleManager = "https://github.com/kyma-project/lifecycle-manager/config/default"
-	defaultModuleManager    = "https://github.com/kyma-project/module-manager/operator/config/default"
+	defaultModuleManager    = "https://github.com/kyma-project/module-manager/config/default"
 	defaultRetries          = 3
 	defaultInitialBackoff   = 3 * time.Second
 )
