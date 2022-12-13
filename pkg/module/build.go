@@ -118,6 +118,8 @@ func addSources(cd *cdv2.ComponentDescriptor, def *Definition) error {
 	if err != nil {
 		return err
 	}
-	cd.Sources = append(cd.Sources, *src)
+	if src != nil {
+		cd.Sources = append(cd.Sources, *src)
+	}
 	return nil
 }
