@@ -57,7 +57,7 @@ func ParseRef(ref string) (RefSpec, error) {
 
 	parsedRef, err := dockerreference.ParseDockerRef(ref)
 	if err != nil {
-		return RefSpec{}, err
+		return RefSpec{}, fmt.Errorf("could not parse OCI reference: %w", err)
 	}
 
 	spec := RefSpec{

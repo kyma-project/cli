@@ -28,7 +28,7 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "module OCI_IMAGE_NAME MODULE_VERSION <CONTENT_PATH> [flags]",
+		Use:   "module [flags]",
 		Short: "Creates a module bundled as an OCI image with the given OCI image name from the contents of the given path",
 		Long: `Use this command to create a Kyma module and bundle it as an OCI image.
 
@@ -37,8 +37,12 @@ func NewCmd(o *Options) *cobra.Command {
 Kyma modules are individual components that can be deployed into a Kyma runtime. Modules are built and distributed as OCI container images. 
 With this command, you can create such images out of a folder's contents.
 
-This command creates a component descriptor in the descriptor path (./mod as a default) and packages all the contents on the provided content path as a single layer.
-Optionally, you can create additional layers with contents in other paths.
+This command creates a component descriptor in the descriptor path (./mod as a default) and packages all the contents on the provided path as an OCI image.
+Kubebuilder projects are supported, if the path contains a kubebuilder project, it will be built and pre-defined layers will be created based on its known contents.
+
+Alternatively, a custom (non kubebuilder) module can be created by providing a path that does not contain a kubebuilder project. In that case all the contents of the path will be bundled as a single layer.
+
+Optionally, you can manually add additional layers with contents in other paths (see the "resource" flag for more information).
 
 Finally, if you provided a registry to which to push the artifact, the created module is validated and pushed. For example, the default CR defined in the \"default.yaml\" file is validated against CustomResourceDefinition.
 
@@ -46,10 +50,10 @@ Alternatively, if you don't push to registry, you can trigger an on-demand valid
 `,
 
 		Example: `Examples:
-Build module modA in version 1.2.3 and push it to a remote registry
-		kyma alpha create module modA 1.2.3 /path/to/module --registry https://dockerhub.com
-Build module modB in version 3.2.1 and push it to a local registry "unsigned" subfolder without tls
-		kyma alpha create module modA 3.2.1 /path/to/module --registry http://localhost:5001/unsigned --insecure
+Build module my-domain/modA in version 1.2.3 and push it to a remote registry
+		kyma alpha create module -n my-domain/modA --version 1.2.3 -p /path/to/module --registry https://dockerhub.com
+Build module my-domain/modB in version 3.2.1 and push it to a local registry "unsigned" subfolder without tls
+		kyma alpha create module -n my-domain/modB --version 3.2.1 -p /path/to/module --registry http://localhost:5001/unsigned --insecure
 `,
 		RunE:    func(_ *cobra.Command, args []string) error { return c.Run(args) },
 		Aliases: []string{"mod"},
