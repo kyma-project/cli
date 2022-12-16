@@ -20,7 +20,7 @@ require (
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-logr/logr v1.2.3
 	github.com/imdario/mergo v0.3.13
-	github.com/kyma-incubator/reconciler v0.0.0-20221214080255-44bf1f90de9a
+	github.com/kyma-incubator/reconciler v0.0.0-20221216083533-0e73b4cf4934
 	github.com/kyma-project/hydroform/function v0.0.0-20221202082519-8cd1c2a4c268
 	github.com/kyma-project/hydroform/provision v0.0.0-20221019152339-a661398f485c
 	github.com/mandelsoft/vfs v0.0.0-20220805210647-bf14a11bfe31
