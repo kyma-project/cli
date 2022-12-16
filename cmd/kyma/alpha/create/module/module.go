@@ -84,7 +84,7 @@ func (cmd *command) Run(args []string) error {
 	if err := cmd.opts.ValidatePath(); err != nil {
 		return err
 	}
-	
+
 	if err := cmd.opts.ValidateChannel(); err != nil {
 		return err
 	}
