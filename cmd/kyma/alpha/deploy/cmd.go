@@ -158,7 +158,7 @@ func (cmd *command) deploy(start time.Time) error {
 
 	clusterInfo, err := clusterinfo.Discover(context.Background(), cmd.K8s.Static())
 	if err != nil {
-		return errors.Wrap(err, "failed to discover underlying cluster type")
+		return err
 	}
 
 	deployStep := cmd.NewStep("Deploying Kyma")
