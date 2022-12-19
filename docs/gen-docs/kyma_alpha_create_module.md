@@ -14,11 +14,11 @@ Kyma modules are individual components that can be deployed into a Kyma runtime.
 With this command, you can create such images out of a folder's contents.
 
 This command creates a component descriptor in the descriptor path (./mod as a default) and packages all the contents on the provided path as an OCI image.
-Kubebuilder projects are supported, if the path contains a kubebuilder project, it will be built and pre-defined layers will be created based on its known contents.
+Kubebuilder projects are supported. If the path contains a kubebuilder project, it will be built, and the pre-defined layers will be created based on its known contents.
 
 Alternatively, a custom (non kubebuilder) module can be created by providing a path that does not contain a kubebuilder project. In that case all the contents of the path will be bundled as a single layer.
 
-Optionally, you can manually add additional layers with contents in other paths (see the "resource" flag for more information).
+Optionally, you can manually add additional layers with contents in other paths (see the [`resource` flag](#flags) for more information).
 
 Finally, if you provided a registry to which to push the artifact, the created module is validated and pushed. For example, the default CR defined in the \"default.yaml\" file is validated against CustomResourceDefinition.
 
