@@ -47,7 +47,7 @@ const (
     loadbalance
 }
 `
-	hostsTemplate = `
+	defaultHostsTemplate = `
     {{ .K3dRegistryIP}} {{ .K3dRegistryHost}}
 `
 	// Default domain names for coreDNS patch
@@ -56,7 +56,7 @@ const (
 )
 
 // Patch patches the CoreDNS configuration based on the overrides and the cloud provider.
-func Patch(logger *zap.Logger, kubeClient kubernetes.Interface, hasCustomDomain bool, clusterInfo clusterinfo.Info) (cm *v1.ConfigMap, err error) {
+func Patch(logger *zap.Logger, kubeClient kubernetes.Interface, hasCustomDomain bool, clusterInfo clusterinfo.Info, customHostsTemplate string) (cm *v1.ConfigMap, err error) {
 	err = retry.Do(func() error {
 		_, err := kubeClient.AppsV1().Deployments("kube-system").Get(context.TODO(), "coredns", metav1.GetOptions{})
 		if err != nil {
@@ -68,7 +68,7 @@ func Patch(logger *zap.Logger, kubeClient kubernetes.Interface, hasCustomDomain 
 		}
 
 		// patches contain each key and value that needs to be patched in the coredns configmap data field.
-		patches, err := generatePatches(hasCustomDomain, clusterInfo)
+		patches, err := generatePatches(hasCustomDomain, clusterInfo, customHostsTemplate)
 		if err != nil {
 			return err
 		}
@@ -134,7 +134,7 @@ func newCoreDNSConfigMap(data map[string]string) *v1.ConfigMap {
 	}
 }
 
-func generatePatches(hasCustomDomain bool, clusterInfo clusterinfo.Info) (map[string]string, error) {
+func generatePatches(hasCustomDomain bool, clusterInfo clusterinfo.Info, customHostsTemplate string) (map[string]string, error) {
 	var err error
 	patches := make(map[string]string)
 
@@ -155,7 +155,7 @@ func generatePatches(hasCustomDomain bool, clusterInfo clusterinfo.Info) (map[st
 
 	// Patch NodeHosts only on K3d
 	if k3d, isK3d := clusterInfo.(clusterinfo.K3d); isK3d {
-		patches["NodeHosts"], err = generateHosts(k3d.ClusterName)
+		patches["NodeHosts"], err = generateHosts(k3d.ClusterName, customHostsTemplate)
 		if err != nil {
 			return nil, err
 		}
@@ -179,12 +179,16 @@ func generateCorefile(domainName string) (coreFile string, err error) {
 	return
 }
 
-func generateHosts(clusterName string) (string, error) {
+func generateHosts(clusterName string, customHostsTemplate string) (string, error) {
+
 	registryIP, err := k3dRegistryIP(clusterName)
 	if err != nil {
 		return "", err
 	}
-
+	hostsTemplate := defaultHostsTemplate
+	if customHostsTemplate != "" {
+		hostsTemplate = customHostsTemplate
+	}
 	patchVars := struct {
 		K3dRegistryHost string
 		K3dRegistryIP   string

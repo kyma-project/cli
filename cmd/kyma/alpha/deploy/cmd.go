@@ -6,6 +6,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/kyma-project/cli/internal/clusterinfo"
+	"github.com/kyma-project/cli/internal/coredns"
 	"github.com/kyma-project/cli/internal/deploy"
 	"github.com/kyma-project/cli/internal/kustomize"
 	"github.com/kyma-project/cli/pkg/dashboard"
@@ -28,6 +30,13 @@ type command struct {
 	cli.Command
 	opts *Options
 }
+
+const (
+	hostsTemplate = `
+    {{ .K3dRegistryIP}} {{ .K3dRegistryHost}}
+    {{ .K3dRegistryIP}} {{ .K3dRegistryHost}}.localhost
+`
+)
 
 // NewCmd creates a new deploy command
 func NewCmd(o *Options) *cobra.Command {
@@ -147,6 +156,11 @@ func (cmd *command) deploy(start time.Time) error {
 		defer func() { os.Stderr = stderr }()
 	}
 
+	clusterInfo, err := clusterinfo.Discover(context.Background(), cmd.K8s.Static())
+	if err != nil {
+		return err
+	}
+
 	deployStep := cmd.NewStep("Deploying Kyma")
 	deployStep.Start()
 
@@ -158,6 +172,10 @@ func (cmd *command) deploy(start time.Time) error {
 
 	// wait for operators to be ready
 	if err := cmd.waitForOperators(); err != nil {
+		return err
+	}
+
+	if _, err := coredns.Patch(l.Desugar(), cmd.K8s.Static(), false, clusterInfo, hostsTemplate); err != nil {
 		return err
 	}
 
