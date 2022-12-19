@@ -86,6 +86,10 @@ func (cmd *command) Run(args []string) error {
 		return err
 	}
 
+	if err := cmd.opts.ValidateChannel(); err != nil {
+		return err
+	}
+
 	modDef := &module.Definition{
 		Name:          cmd.opts.Name,
 		Version:       cmd.opts.Version,
