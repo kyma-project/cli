@@ -34,7 +34,7 @@ require (
 	golang.org/x/exp v0.0.0-20221031165847-c99f073a8326
 	gopkg.in/yaml.v3 v3.0.1
 	gotest.tools v2.2.0+incompatible
-	helm.sh/helm/v3 v3.10.2
+	helm.sh/helm/v3 v3.10.3
 	istio.io/client-go v1.14.0
 	k8s.io/api v0.25.4
 	k8s.io/apiextensions-apiserver v0.25.4
