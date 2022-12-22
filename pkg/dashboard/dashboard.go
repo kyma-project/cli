@@ -120,7 +120,7 @@ func (c *Container) containerOpts(envs []string) docker.ContainerRunOpts {
 			{
 				Type:   mount.TypeBind,
 				Source: kubeconfigPath,
-				Target: fmt.Sprintf("/app/core/kubeconfig/%s", containerKubeconfigFile),
+				Target: fmt.Sprintf("/app/core-ui/public/kubeconfig/%s", containerKubeconfigFile),
 			},
 		}
 		c.kubeconfigMounted = true
