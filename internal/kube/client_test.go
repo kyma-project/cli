@@ -161,7 +161,9 @@ func TestWaitPodStatusByLabel(t *testing.T) {
 func TestWatchResource(t *testing.T) {
 	t.Parallel()
 	c := &client{
-		restCfg: &rest.Config{},
+		restCfg: &rest.Config{
+			Timeout: 1 * time.Second,
+		},
 		dynamic: dynamicK8s(
 			&unstructured.Unstructured{
 				Object: map[string]interface{}{
@@ -186,7 +188,7 @@ func TestWatchResource(t *testing.T) {
 		return exists && status == "partying", nil
 	}
 
-	// non namepsaced
+	// non namespaced
 	err := c.WatchResource(schema.GroupVersionResource{Group: "fakeAPI", Version: "fakeVersion", Resource: "fakes"}, "samus", "", checkFn)
 	require.NoError(t, err)
 
