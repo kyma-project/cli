@@ -121,6 +121,14 @@ func (cmd *command) Run(args []string) error {
 	}
 	cmd.CurrentStep.Successf("Module built")
 
+	if modDef.DefaultCRPath != "" {
+		cr, err := os.ReadFile(modDef.DefaultCRPath)
+		if err != nil {
+			return fmt.Errorf("could not read CR file %q: %w", modDef.DefaultCRPath, err)
+		}
+		modDef.DefaultCR = cr
+	}
+
 	/* -- VALIDATE DEFAULT CR -- */
 	if err := cmd.validateDefaultCR(modDef, l); err != nil {
 		return err
@@ -195,6 +203,7 @@ func (cmd *command) Run(args []string) error {
 
 func (cmd *command) validateDefaultCR(modDef *module.Definition, l *zap.SugaredLogger) error {
 	cmd.NewStep("Validating Default CR")
+
 	crValidator, err := module.NewDefaultCRValidator(modDef.DefaultCR, modDef.Source)
 	if err != nil {
 		cmd.CurrentStep.Failure()
