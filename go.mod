@@ -3,7 +3,7 @@ module github.com/kyma-project/cli
 go 1.18
 
 // required to avoid locking with gardner dependency updates
-replace k8s.io/client-go => k8s.io/client-go v0.26.0
+replace k8s.io/client-go => k8s.io/client-go v0.25.2
 
 require (
 	github.com/Masterminds/semver/v3 v3.1.1
@@ -20,7 +20,7 @@ require (
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-logr/logr v1.2.3
 	github.com/imdario/mergo v0.3.13
-	github.com/kyma-incubator/reconciler v0.0.0-20230103132810-e03a6c8168ea
+	github.com/kyma-incubator/reconciler v0.0.0-20221216083533-0e73b4cf4934
 	github.com/kyma-project/hydroform/function v0.0.0-20221202082519-8cd1c2a4c268
 	github.com/kyma-project/hydroform/provision v0.0.0-20221019152339-a661398f485c
 	github.com/mandelsoft/vfs v0.0.0-20220805210647-bf14a11bfe31
@@ -36,9 +36,9 @@ require (
 	gotest.tools v2.2.0+incompatible
 	helm.sh/helm/v3 v3.10.3
 	istio.io/client-go v1.14.0
-	k8s.io/api v0.26.0
-	k8s.io/apiextensions-apiserver v0.26.0
-	k8s.io/apimachinery v0.26.0
+	k8s.io/api v0.25.4
+	k8s.io/apiextensions-apiserver v0.25.4
+	k8s.io/apimachinery v0.25.4
 	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible
 	sigs.k8s.io/controller-runtime v0.13.1
 	sigs.k8s.io/yaml v1.3.0
@@ -95,6 +95,7 @@ require (
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.20.0 // indirect
 	github.com/go-openapi/swag v0.21.1 // indirect
+	github.com/go-yaml/yaml v2.1.0+incompatible // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-migrate/migrate/v4 v4.15.1 // indirect
@@ -152,7 +153,7 @@ require (
 	github.com/moby/spdystream v0.2.0 // indirect
 	github.com/moby/sys/mount v0.3.2 // indirect
 	github.com/moby/sys/mountinfo v0.6.2 // indirect
-	github.com/moby/term v0.0.0-20220808134915-39b0c02b01ae // indirect
+	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00 // indirect
@@ -161,7 +162,7 @@ require (
 	github.com/nwaples/rardecode v1.1.3 // indirect
 	github.com/opencontainers/runc v1.1.4 // indirect
 	github.com/otiai10/copy v1.9.0 // indirect
-	github.com/panjf2000/ants/v2 v2.7.1 // indirect
+	github.com/panjf2000/ants/v2 v2.6.0 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.5 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
@@ -173,7 +174,7 @@ require (
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/rubenv/sql-migrate v1.1.2 // indirect
-	github.com/russross/blackfriday/v2 v2.1.0 // indirect
+	github.com/russross/blackfriday v1.6.0 // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
@@ -200,12 +201,12 @@ require (
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/crypto v0.1.0 // indirect
-	golang.org/x/net v0.3.1-0.20221206200815-1e63c2f08a10 // indirect
+	golang.org/x/net v0.2.0 // indirect
 	golang.org/x/oauth2 v0.2.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.3.0 // indirect
-	golang.org/x/term v0.3.0 // indirect
-	golang.org/x/text v0.5.0 // indirect
+	golang.org/x/sys v0.2.0 // indirect
+	golang.org/x/term v0.2.0 // indirect
+	golang.org/x/text v0.4.0 // indirect
 	golang.org/x/time v0.2.0 // indirect
 	google.golang.org/api v0.102.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
@@ -220,12 +221,12 @@ require (
 	istio.io/api v0.0.0-20221108152712-3017a057f724 // indirect
 	istio.io/istio v0.0.0-20221109080248-089f536c0f26 // indirect
 	istio.io/pkg v0.0.0-20221031153201-960bb47e80ce // indirect
-	k8s.io/apiserver v0.26.0 // indirect
-	k8s.io/cli-runtime v0.26.0 // indirect
-	k8s.io/component-base v0.26.0 // indirect
+	k8s.io/apiserver v0.25.4 // indirect
+	k8s.io/cli-runtime v0.25.4 // indirect
+	k8s.io/component-base v0.25.4 // indirect
 	k8s.io/klog/v2 v2.80.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20221106113015-f73e7dbcfe29 // indirect
-	k8s.io/kubectl v0.26.0 // indirect
+	k8s.io/kubectl v0.25.4 // indirect
 	k8s.io/utils v0.0.0-20221107191617-1a15be271d1d // indirect
 	oras.land/oras-go v1.2.0 // indirect
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect

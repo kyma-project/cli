@@ -23,6 +23,7 @@ type Remote struct {
 // Push picks up the archive described in the config and pushes it to the provided registry.
 // The credentials and token are optional parameters
 func Push(archive *ctf.ComponentArchive, r *Remote, log *zap.SugaredLogger) error {
+
 	u, p := r.UserPass()
 	ociClient, err := oci.NewClient(&oci.Options{
 		Registry: r.Registry,
@@ -38,7 +39,18 @@ func Push(archive *ctf.ComponentArchive, r *Remote, log *zap.SugaredLogger) erro
 
 	// update repository context
 	if len(r.Registry) != 0 {
-		if err := cdv2.InjectRepositoryContext(archive.ComponentDescriptor, cdv2.NewOCIRegistryRepository(r.Registry, cdv2.OCIRegistryURLPathMapping)); err != nil {
+		nameMapping := cdv2.OCIRegistryURLPathMapping
+		if rc := archive.ComponentDescriptor.GetEffectiveRepositoryContext(); rc != nil {
+			var repo cdv2.OCIRegistryRepository
+			if err = rc.DecodeInto(&repo); err != nil {
+				return errors.Wrap(err, "unable to decode component descriptor")
+			}
+
+			if repo.ComponentNameMapping == cdv2.OCIRegistryDigestMapping {
+				nameMapping = cdv2.OCIRegistryDigestMapping
+			}
+		}
+		if err := cdv2.InjectRepositoryContext(archive.ComponentDescriptor, cdv2.NewOCIRegistryRepository(r.Registry, nameMapping)); err != nil {
 			return errors.Wrap(err, "unable to add repository context to component descriptor")
 		}
 	}

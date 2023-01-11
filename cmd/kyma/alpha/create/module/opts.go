@@ -5,9 +5,10 @@ import (
 	"os"
 	"path/filepath"
 
+	"regexp"
+
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/pkg/errors"
-	"regexp"
 )
 
 // Options defines available options for the create module command
@@ -15,6 +16,7 @@ type Options struct {
 	*cli.Options
 
 	Name                 string
+	NameMappingMode      string
 	Version              string
 	Path                 string
 	ModCache             string

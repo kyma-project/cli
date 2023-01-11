@@ -88,7 +88,11 @@ func Build(fs vfs.FileSystem, def *Definition) (*ctf.ComponentArchive, error) {
 	cd.Provider = cdv2.InternalProvider
 	cd.RepositoryContexts = make([]*cdv2.UnstructuredTypedObject, 0)
 	if len(def.RegistryURL) != 0 {
-		repoCtx, err := cdv2.NewUnstructured(cdv2.NewOCIRegistryRepository(def.RegistryURL, cdv2.OCIRegistryURLPathMapping))
+		nameMapping := cdv2.OCIRegistryURLPathMapping
+		if def.NameMappingMode == string(cdv2.OCIRegistryDigestMapping) {
+			nameMapping = cdv2.OCIRegistryDigestMapping
+		}
+		repoCtx, err := cdv2.NewUnstructured(cdv2.NewOCIRegistryRepository(def.RegistryURL, nameMapping))
 		if err != nil {
 			return nil, fmt.Errorf("unable to create repository context: %w", err)
 		}

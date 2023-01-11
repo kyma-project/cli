@@ -46,6 +46,7 @@ Alternatively, a custom (non kubebuilder) module can be created by providing a p
 Optionally, you can manually add additional layers with contents in other paths (see [resource flag](#flags) for more information).
 
 Finally, if you provided a registry to which to push the artifact, the created module is validated and pushed. For example, the default CR defined in the \"default.yaml\" file is validated against CustomResourceDefinition.
+To push into some public registries, for example the central docker.io registry, you have to change the OCM Component Name Mapping with the following flag: --nameMapping=sha256-digest. This is because the central docker registry does not accept artifact names with more than two path segments, and such names are generated with the default name mapping: \"urlPath\". In this case the name of the pushed artifact will contain a sha256 digest of the full Component name.
 
 Alternatively, if you don't push to registry, you can trigger an on-demand validation with "--validateCR=true".
 `,
@@ -62,6 +63,7 @@ Build module my-domain/modB in version 3.2.1 and push it to a local registry "un
 
 	cmd.Flags().StringVar(&o.Version, "version", "", "Version of the module. This flag is mandatory.")
 	cmd.Flags().StringVarP(&o.Name, "name", "n", "", "Override the module name of the kubebuilder project. If the module is not a kubebuilder project, this flag is mandatory.")
+	cmd.Flags().StringVar(&o.NameMappingMode, "nameMapping", "urlPath", "Overrides the OCM Component Name Mapping. Allowed values: \"urlPath\" or \"sha256-digest\". This flag is optional.")
 	cmd.Flags().StringVarP(&o.Path, "path", "p", "", "Path to the module contents. (default current directory)")
 	cmd.Flags().StringVar(&o.ModCache, "mod-cache", "./mod", "Specifies the path where the module artifacts are locally cached to generate the image. If the path already has a module, use the overwrite flag to overwrite it.")
 	cmd.Flags().StringArrayVarP(&o.ResourcePaths, "resource", "r", []string{}, "Add an extra resource in a new layer with format <NAME:TYPE@PATH>. It is also possible to provide only a path; name will default to the last path element and type to 'helm-chart'")
@@ -97,13 +99,14 @@ func (cmd *command) Run(args []string) error {
 	}
 
 	modDef := &module.Definition{
-		Name:          cmd.opts.Name,
-		Version:       cmd.opts.Version,
-		Source:        cmd.opts.Path,
-		ArchivePath:   cmd.opts.ModCache,
-		Overwrite:     cmd.opts.Overwrite,
-		RegistryURL:   cmd.opts.RegistryURL,
-		DefaultCRPath: cmd.opts.DefaultCRPath,
+		Name:            cmd.opts.Name,
+		NameMappingMode: cmd.opts.NameMappingMode,
+		Version:         cmd.opts.Version,
+		Source:          cmd.opts.Path,
+		ArchivePath:     cmd.opts.ModCache,
+		Overwrite:       cmd.opts.Overwrite,
+		RegistryURL:     cmd.opts.RegistryURL,
+		DefaultCRPath:   cmd.opts.DefaultCRPath,
 	}
 
 	cmd.NewStep("Setting up kustomize...")
@@ -122,14 +125,6 @@ func (cmd *command) Run(args []string) error {
 		return err
 	}
 	cmd.CurrentStep.Successf("Module built")
-
-	if modDef.DefaultCRPath != "" {
-		cr, err := os.ReadFile(modDef.DefaultCRPath)
-		if err != nil {
-			return fmt.Errorf("could not read CR file %q: %w", modDef.DefaultCRPath, err)
-		}
-		modDef.DefaultCR = cr
-	}
 
 	/* -- VALIDATE DEFAULT CR -- */
 	if err := cmd.validateDefaultCR(modDef, l); err != nil {
@@ -205,7 +200,6 @@ func (cmd *command) Run(args []string) error {
 
 func (cmd *command) validateDefaultCR(modDef *module.Definition, l *zap.SugaredLogger) error {
 	cmd.NewStep("Validating Default CR")
-
 	crValidator, err := module.NewDefaultCRValidator(modDef.DefaultCR, modDef.Source)
 	if err != nil {
 		cmd.CurrentStep.Failure()
