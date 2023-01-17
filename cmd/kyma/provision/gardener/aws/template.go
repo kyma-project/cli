@@ -59,7 +59,7 @@ func (c *awsCmd) NewProvider() (*types.Provider, error) {
 	p.CustomConfigurations["workercidr"] = "10.250.0.0/16"
 	p.CustomConfigurations["networking_type"] = "calico"
 	p.CustomConfigurations["machine_image_name"] = "gardenlinux"
-	p.CustomConfigurations["machine_image_version"] = "576.9.0"
+	p.CustomConfigurations["machine_image_version"] = "576.12.0"
 	p.CustomConfigurations["zones"] = c.opts.Zones
 	p.CustomConfigurations["hibernation_start"] = c.opts.HibernationStart
 	p.CustomConfigurations["hibernation_end"] = c.opts.HibernationEnd
@@ -107,7 +107,12 @@ func (c *awsCmd) ValidateFlags() error {
 
 	for _, zone := range c.opts.Zones {
 		if !strings.HasPrefix(zone, c.opts.Region) {
-			errMessage.WriteString(fmt.Sprintf("\n Provided zone %s and region %s do not match. Please provide the right region for the zone.", zone, c.opts.Region))
+			errMessage.WriteString(
+				fmt.Sprintf(
+					"\n Provided zone %s and region %s do not match. Please provide the right region for the zone.",
+					zone, c.opts.Region,
+				),
+			)
 		}
 	}
 
