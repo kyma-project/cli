@@ -39,8 +39,10 @@ spec:
 {{yaml .Descriptor | printf "%s" | indent 4}}
 `
 
+	//nolint:gosec
 	OCIRegistryCredLabel = "oci-registry-cred"
-	credSecretLabel      = "operator.kyma-project.io/oci-registry-cred"
+	//nolint:gosec
+	credSecretLabel = "operator.kyma-project.io/oci-registry-cred"
 )
 
 func Template(archive *ctf.ComponentArchive, channel string, data []byte, enableRegistryCred bool) ([]byte, error) {
