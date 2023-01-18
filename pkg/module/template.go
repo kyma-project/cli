@@ -42,20 +42,20 @@ spec:
 	//nolint:gosec
 	OCIRegistryCredLabel = "oci-registry-cred"
 	//nolint:gosec
-	credSecretLabel = "operator.kyma-project.io/oci-registry-cred"
+	registryCredLabelKey = "operator.kyma-project.io/oci-registry-cred"
 )
 
-func Template(archive *ctf.ComponentArchive, channel string, data []byte, enableRegistryCred bool) ([]byte, error) {
+func Template(archive *ctf.ComponentArchive, channel string, data []byte, registryCredLabelValue string) ([]byte, error) {
 	descriptor, err := remoteDescriptor(archive)
 	if err != nil {
 		return nil, err
 	}
-	if enableRegistryCred {
+	if registryCredLabelValue != "" {
 		for i := range descriptor.Resources {
 			resource := &descriptor.Resources[i]
 			resource.SetLabels([]v2.Label{{
 				Name:  OCIRegistryCredLabel,
-				Value: json.RawMessage(fmt.Sprintf(`{"%s": "%s"}`, credSecretLabel, descriptor.Name)),
+				Value: json.RawMessage(fmt.Sprintf(`{"%s": "%s"}`, registryCredLabelKey, registryCredLabelValue)),
 			}})
 		}
 	}
