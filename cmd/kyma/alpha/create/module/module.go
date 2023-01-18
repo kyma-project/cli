@@ -66,6 +66,7 @@ Build module my-domain/modB in version 3.2.1 and push it to a local registry "un
 	cmd.Flags().StringVar(&o.ModCache, "mod-cache", "./mod", "Specifies the path where the module artifacts are locally cached to generate the image. If the path already has a module, use the overwrite flag to overwrite it.")
 	cmd.Flags().StringArrayVarP(&o.ResourcePaths, "resource", "r", []string{}, "Add an extra resource in a new layer with format <NAME:TYPE@PATH>. It is also possible to provide only a path; name will default to the last path element and type to 'helm-chart'")
 	cmd.Flags().StringVar(&o.RegistryURL, "registry", "", "Repository context url for module to upload. The repository url will be automatically added to the repository contexts in the module")
+	cmd.Flags().BoolVar(&o.EnableRegistryCred, "enable-registry-cred", false, "Enable this flag to append a label into each descriptor resource, it indicates the dockerconfigjson secret (config separately) which provide credential for private repository.")
 	cmd.Flags().StringVarP(&o.Credentials, "credentials", "c", "", "Basic authentication credentials for the given registry in the format user:password")
 	cmd.Flags().StringVar(&o.DefaultCRPath, "default-cr", "", "File containing the default custom resource of the module. If the module is a kubebuilder project, the default CR will be automatically detected.")
 	cmd.Flags().StringVarP(&o.TemplateOutput, "output", "o", "template.yaml", "File to which to output the module template if the module is uploaded to a registry")
@@ -173,7 +174,7 @@ func (cmd *command) Run(args []string) error {
 		cmd.CurrentStep.Success()
 
 		cmd.NewStep("Generating module template")
-		t, err := module.Template(archive, cmd.opts.Channel, modDef.DefaultCR)
+		t, err := module.Template(archive, cmd.opts.Channel, modDef.DefaultCR, cmd.opts.EnableRegistryCred)
 		if err != nil {
 			cmd.CurrentStep.Failure()
 			return err

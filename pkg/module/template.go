@@ -16,7 +16,8 @@ import (
 	"github.com/kyma-project/cli/pkg/module/oci"
 )
 
-const modTemplate = `apiVersion: operator.kyma-project.io/v1alpha1
+const (
+	modTemplate = `apiVersion: operator.kyma-project.io/v1alpha1
 kind: ModuleTemplate
 metadata:
   name: moduletemplate-{{ .ShortName }}
@@ -38,13 +39,25 @@ spec:
 {{yaml .Descriptor | printf "%s" | indent 4}}
 `
 
-func Template(archive *ctf.ComponentArchive, channel string, data []byte) ([]byte, error) {
-	d, err := remoteDescriptor(archive)
+	OCIRegistryCredLabel = "oci-registry-cred"
+	credSecretLabel      = "operator.kyma-project.io/oci-registry-cred"
+)
+
+func Template(archive *ctf.ComponentArchive, channel string, data []byte, enableRegistryCred bool) ([]byte, error) {
+	descriptor, err := remoteDescriptor(archive)
 	if err != nil {
 		return nil, err
 	}
-
-	ref, err := oci.ParseRef(d.Name)
+	if enableRegistryCred {
+		for i := range descriptor.Resources {
+			resource := &descriptor.Resources[i]
+			resource.SetLabels([]v2.Label{{
+				Name:  OCIRegistryCredLabel,
+				Value: json.RawMessage(fmt.Sprintf(`{"%s": "%s"}`, credSecretLabel, descriptor.Name)),
+			}})
+		}
+	}
+	ref, err := oci.ParseRef(descriptor.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +69,7 @@ func Template(archive *ctf.ComponentArchive, channel string, data []byte) ([]byt
 		Data       string // contents for the spec.data section of the template taken from the defaults.yaml file in the mod folder
 	}{
 		ShortName:  ref.ShortName(),
-		Descriptor: d,
+		Descriptor: descriptor,
 		Channel:    channel,
 		Data:       string(data),
 	}

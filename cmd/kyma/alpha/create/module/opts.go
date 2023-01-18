@@ -14,20 +14,21 @@ import (
 type Options struct {
 	*cli.Options
 
-	Name           string
-	Version        string
-	Path           string
-	ModCache       string
-	RegistryURL    string
-	Credentials    string
-	TemplateOutput string
-	DefaultCRPath  string
-	Channel        string
-	Token          string
-	Insecure       bool
-	ResourcePaths  []string
-	Overwrite      bool
-	Clean          bool
+	Name               string
+	Version            string
+	Path               string
+	ModCache           string
+	RegistryURL        string
+	Credentials        string
+	TemplateOutput     string
+	DefaultCRPath      string
+	Channel            string
+	Token              string
+	Insecure           bool
+	ResourcePaths      []string
+	Overwrite          bool
+	Clean              bool
+	EnableRegistryCred bool
 }
 
 const (
