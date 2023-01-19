@@ -41,8 +41,6 @@ spec:
 
 	//nolint:gosec
 	OCIRegistryCredLabel = "oci-registry-cred"
-	//nolint:gosec
-	registryCredLabelKey = "operator.kyma-project.io/oci-registry-cred"
 )
 
 func Template(archive *ctf.ComponentArchive, channel string, data []byte, registryCredSelector string) ([]byte, error) {
