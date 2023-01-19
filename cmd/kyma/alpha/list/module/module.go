@@ -2,6 +2,7 @@ package module
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"time"
@@ -184,7 +185,7 @@ func (cmd *command) printKymaActiveTemplates(ctx context.Context, kyma *unstruct
 			},
 		)
 	}
-	return printTable(entries)
+	return printTable(entries, cmd.NonInteractive)
 }
 
 func (cmd *command) printModuleTemplates(templates *unstructured.UnstructuredList) error {
@@ -217,7 +218,7 @@ func (cmd *command) printModuleTemplates(templates *unstructured.UnstructuredLis
 		entries = append(entries, tableEntry{name, fqdn, channel, version, namespacedName})
 	}
 
-	return printTable(entries)
+	return printTable(entries, cmd.NonInteractive)
 }
 
 type tableEntryWithState struct {
@@ -227,7 +228,15 @@ type tableEntry struct {
 	Module, FQDN, Channel, Version, Source string
 }
 
-func printTable[entry any](entries []entry) error {
+func printTable[entry any](entries []entry, nonInteractive bool) error {
+	if nonInteractive {
+		data, err := json.MarshalIndent(entries, "", "  ")
+		if err != nil {
+			return err
+		}
+		fmt.Printf("%s\n", data)
+		return nil
+	}
 	headerFmt := color.New(color.FgWhite, color.Underline).SprintfFunc()
 	columnFmt := color.New(color.FgCyan).SprintfFunc()
 	typeOfTableEntry := reflect.TypeOf(entries).Elem()
