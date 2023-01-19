@@ -11,9 +11,9 @@ import (
 	v2 "github.com/gardener/component-spec/bindings-go/apis/v2"
 	"github.com/gardener/component-spec/bindings-go/ctf"
 	cdoci "github.com/gardener/component-spec/bindings-go/oci"
-	"sigs.k8s.io/yaml"
-
 	"github.com/kyma-project/cli/pkg/module/oci"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/yaml"
 )
 
 const (
@@ -45,17 +45,25 @@ spec:
 	registryCredLabelKey = "operator.kyma-project.io/oci-registry-cred"
 )
 
-func Template(archive *ctf.ComponentArchive, channel string, data []byte, registryCredLabelValue string) ([]byte, error) {
+func Template(archive *ctf.ComponentArchive, channel string, data []byte, registryCredSelector string) ([]byte, error) {
 	descriptor, err := remoteDescriptor(archive)
 	if err != nil {
 		return nil, err
 	}
-	if registryCredLabelValue != "" {
+	if registryCredSelector != "" {
+		selector, err := metav1.ParseToLabelSelector(registryCredSelector)
+		if err != nil {
+			return nil, err
+		}
+		matchLabels, err := json.Marshal(selector.MatchLabels)
+		if err != nil {
+			return nil, err
+		}
 		for i := range descriptor.Resources {
 			resource := &descriptor.Resources[i]
 			resource.SetLabels([]v2.Label{{
 				Name:  OCIRegistryCredLabel,
-				Value: json.RawMessage(fmt.Sprintf(`{"%s": "%s"}`, registryCredLabelKey, registryCredLabelValue)),
+				Value: matchLabels,
 			}})
 		}
 	}
