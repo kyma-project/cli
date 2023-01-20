@@ -11,12 +11,13 @@ import (
 	v2 "github.com/gardener/component-spec/bindings-go/apis/v2"
 	"github.com/gardener/component-spec/bindings-go/ctf"
 	cdoci "github.com/gardener/component-spec/bindings-go/oci"
-	"sigs.k8s.io/yaml"
-
 	"github.com/kyma-project/cli/pkg/module/oci"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/yaml"
 )
 
-const modTemplate = `apiVersion: operator.kyma-project.io/v1alpha1
+const (
+	modTemplate = `apiVersion: operator.kyma-project.io/v1alpha1
 kind: ModuleTemplate
 metadata:
   name: moduletemplate-{{ .ShortName }}
@@ -38,13 +39,33 @@ spec:
 {{yaml .Descriptor | printf "%s" | indent 4}}
 `
 
-func Template(archive *ctf.ComponentArchive, channel string, data []byte) ([]byte, error) {
-	d, err := remoteDescriptor(archive)
+	//nolint:gosec
+	OCIRegistryCredLabel = "oci-registry-cred"
+)
+
+func Template(archive *ctf.ComponentArchive, channel string, data []byte, registryCredSelector string) ([]byte, error) {
+	descriptor, err := remoteDescriptor(archive)
 	if err != nil {
 		return nil, err
 	}
-
-	ref, err := oci.ParseRef(d.Name)
+	if registryCredSelector != "" {
+		selector, err := metav1.ParseToLabelSelector(registryCredSelector)
+		if err != nil {
+			return nil, err
+		}
+		matchLabels, err := json.Marshal(selector.MatchLabels)
+		if err != nil {
+			return nil, err
+		}
+		for i := range descriptor.Resources {
+			resource := &descriptor.Resources[i]
+			resource.SetLabels([]v2.Label{{
+				Name:  OCIRegistryCredLabel,
+				Value: matchLabels,
+			}})
+		}
+	}
+	ref, err := oci.ParseRef(descriptor.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +77,7 @@ func Template(archive *ctf.ComponentArchive, channel string, data []byte) ([]byt
 		Data       string // contents for the spec.data section of the template taken from the defaults.yaml file in the mod folder
 	}{
 		ShortName:  ref.ShortName(),
-		Descriptor: d,
+		Descriptor: descriptor,
 		Channel:    channel,
 		Data:       string(data),
 	}
