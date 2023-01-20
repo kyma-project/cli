@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"strings"
 	"text/tabwriter"
 	"text/template"
 	"time"
@@ -216,10 +215,6 @@ func (cmd *command) printModuleTemplates(templates *unstructured.UnstructuredLis
 	}
 	tmpl, err := template.New("module-template").Funcs(
 		template.FuncMap{
-			"lastPartOfFQDN": func(fqdn string) string {
-				splitFQDN := strings.Split(fqdn, "/")
-				return splitFQDN[len(splitFQDN)-1]
-			},
 			"headers": func() bool {
 				return !cmd.opts.NoHeaders
 			},
