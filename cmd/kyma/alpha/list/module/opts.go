@@ -7,16 +7,19 @@ import (
 
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/pkg/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // Options defines available options for the create module command
 type Options struct {
 	*cli.Options
 
-	Channel   string
-	Timeout   time.Duration
-	KymaName  string
-	Namespace string
+	Channel       string
+	Timeout       time.Duration
+	Namespace     string
+	AllNamespaces bool
+	NoHeaders     bool
+	Output        string
 }
 
 const (
@@ -35,14 +38,27 @@ func NewOptions(o *cli.Options) *Options {
 
 // validateFlags performs a sanity check of provided options
 func (o *Options) validateFlags() error {
+	if err := o.validateOutput(); err != nil {
+		return err
+	}
 	if err := o.validateTimeout(); err != nil {
 		return err
 	}
-
 	if err := o.validateChannel(); err != nil {
 		return err
 	}
 
+	if o.AllNamespaces {
+		o.Namespace = metav1.NamespaceAll
+	}
+
+	return nil
+}
+
+func (o *Options) validateOutput() error {
+	if len(o.Output) > 0 && (o.Output != "json" && o.Output != "yaml") {
+		return errors.New("output must either be json or yaml.")
+	}
 	return nil
 }
 

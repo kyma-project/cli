@@ -2,21 +2,28 @@ package module
 
 import (
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
-	"reflect"
+	"os"
+	"strings"
+	"text/tabwriter"
+	"text/template"
 	"time"
 
-	"github.com/fatih/color"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/clusterinfo"
 	"github.com/kyma-project/cli/internal/kube"
-	"github.com/rodaine/table"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
+
+//go:embed list.tmpl
+var moduleTemplates string
 
 var moduleTemplateResource = schema.GroupVersionResource{
 	Group:    "operator.kyma-project.io",
@@ -81,21 +88,37 @@ List all modules for the kyma "some-kyma" in the "alpha" channel
 		&o.Timeout, "timeout", "t", 1*time.Minute, "Maximum time for the list operation to retrieve ModuleTemplates.",
 	)
 	cmd.Flags().StringVarP(
-		&o.KymaName, "kyma", "k", "",
-		"The namespaced name of the kyma to use to list active module templates in the form 'namespace/name'.",
-	)
-	cmd.Flags().StringVarP(
-		&o.Namespace, "namespace", "n", metav1.NamespaceAll,
+		&o.Namespace, "namespace", "n", metav1.NamespaceDefault,
 		"The namespace to use. An empty namespace uses 'default'",
+	)
+	cmd.Flags().BoolVarP(
+		&o.AllNamespaces, "all-namespaces", "A", false,
+		"If present, list the requested object(s) across all namespaces. Namespace in current context is ignored even if specified with --namespace",
+	)
+	cmd.Flags().BoolVar(
+		&o.NoHeaders, "no-headers", false,
+		" When using the default output format, don't print headers (default print headers)",
+	)
+
+	cmd.Flags().StringVarP(
+		&o.Output, "output", "o", "",
+		"Output format. One of: (json, yaml). By default uses an in-built template function if interactive or json if non-interactive.",
 	)
 
 	return cmd
 }
 
-func (cmd *command) Run(ctx context.Context, _ []string) error {
-
+func (cmd *command) Run(ctx context.Context, args []string) error {
 	if !cmd.opts.NonInteractive {
 		cli.AlphaWarn()
+	}
+
+	kymaName := ""
+	if len(args) > 1 {
+		return errors.New("you can only pass one Kyma resource to list active modules for")
+	}
+	if len(args) == 1 {
+		kymaName = args[0]
 	}
 
 	if err := cmd.opts.validateFlags(); err != nil {
@@ -105,10 +128,10 @@ func (cmd *command) Run(ctx context.Context, _ []string) error {
 	ctx, cancel := context.WithTimeout(ctx, cmd.opts.Timeout)
 	defer cancel()
 
-	return cmd.run(ctx)
+	return cmd.run(ctx, kymaName)
 }
 
-func (cmd *command) run(ctx context.Context) error {
+func (cmd *command) run(ctx context.Context, kymaName string) error {
 	start := time.Now()
 
 	var err error
@@ -120,12 +143,12 @@ func (cmd *command) run(ctx context.Context) error {
 		return err
 	}
 
-	if cmd.opts.KymaName != "" {
+	if kymaName != "" {
 		kyma, err := cmd.K8s.Dynamic().Resource(kymaResource).Namespace(cmd.opts.Namespace).Get(
-			ctx, cmd.opts.KymaName, metav1.GetOptions{},
+			ctx, kymaName, metav1.GetOptions{},
 		)
 		if err != nil {
-			return fmt.Errorf("could not get kyma, verify %s: %w", cmd.opts.KymaName, err)
+			return fmt.Errorf("could not get kyma %s/%s: %w", cmd.opts.Namespace, kymaName, err)
 		}
 		if err := cmd.printKymaActiveTemplates(ctx, kyma); err != nil {
 			return err
@@ -153,135 +176,61 @@ func (cmd *command) printKymaActiveTemplates(ctx context.Context, kyma *unstruct
 	if err != nil {
 		return fmt.Errorf("could not parse moduleStatus: %w", err)
 	}
-	var entries []tableEntryWithState
+	templateList := &unstructured.UnstructuredList{Items: make([]unstructured.Unstructured, 0, len(statusItems))}
 	for i := range statusItems {
 		item, _ := statusItems[i].(map[string]interface{})
 		templateInfo, _, err := unstructured.NestedMap(item, "templateInfo")
 		if err != nil {
 			return fmt.Errorf("could not parse templateInfo: %w", err)
 		}
-		channel, _ := templateInfo["channel"]
-		if cmd.opts.Channel != "" && cmd.opts.Channel != channel {
-			continue
-		}
-		template, err := cmd.K8s.Dynamic().Resource(moduleTemplateResource).Namespace(templateInfo["namespace"].(string)).Get(
+		tpl, err := cmd.K8s.Dynamic().Resource(moduleTemplateResource).Namespace(templateInfo["namespace"].(string)).Get(
 			ctx, templateInfo["name"].(string), metav1.GetOptions{},
 		)
 		if err != nil {
 			return err
 		}
-		fqdn, err := getModuleName(*template)
-		if err != nil {
-			return err
-		}
-		entries = append(
-			entries, tableEntryWithState{
-				item["moduleName"].(string),
-				fqdn,
-				channel.(string),
-				templateInfo["version"].(string),
-				fmt.Sprintf("%s/%s", item["namespace"].(string), item["name"].(string)),
-				item["state"].(string),
-			},
-		)
+		anns := tpl.GetAnnotations()
+		anns["state.cmd.kyma-project.io"] = item["state"].(string)
+		tpl.SetAnnotations(anns)
+		templateList.Items = append(templateList.Items, *tpl)
 	}
-	return printTable(entries, cmd.NonInteractive)
+	return cmd.printModuleTemplates(templateList)
 }
 
 func (cmd *command) printModuleTemplates(templates *unstructured.UnstructuredList) error {
-	var entries []tableEntry
-	for _, template := range templates.Items {
-		name, ok := template.GetLabels()["operator.kyma-project.io/module-name"]
-		if !ok {
-			name = template.GetName()
-		}
-		fqdn, err := getModuleName(template)
-		if err != nil {
-			return err
-		}
-
-		channel, err := getModuleChannel(template)
-		if err != nil {
-			return err
-		}
-		if cmd.opts.Channel != "" && cmd.opts.Channel != channel {
-			continue
-		}
-
-		namespacedName := fmt.Sprintf("%s/%s", template.GetNamespace(), template.GetName())
-
-		version, err := getModuleVersion(template)
-		if err != nil {
-			return err
-		}
-
-		entries = append(entries, tableEntry{name, fqdn, channel, version, namespacedName})
-	}
-
-	return printTable(entries, cmd.NonInteractive)
-}
-
-type tableEntryWithState struct {
-	Module, FQDN, Channel, Version, Source, State string
-}
-type tableEntry struct {
-	Module, FQDN, Channel, Version, Source string
-}
-
-func printTable[entry any](entries []entry, nonInteractive bool) error {
-	if nonInteractive {
-		data, err := json.MarshalIndent(entries, "", "  ")
-		if err != nil {
-			return err
+	if cmd.opts.NonInteractive || cmd.opts.Output != "" {
+		var data []byte
+		var err error
+		switch cmd.opts.Output {
+		case "yaml":
+			if data, err = yaml.Marshal(templates); err != nil {
+				return err
+			}
+		default:
+			if data, err = json.MarshalIndent(templates, "", "  "); err != nil {
+				return err
+			}
 		}
 		fmt.Printf("%s\n", data)
 		return nil
 	}
-	headerFmt := color.New(color.FgWhite, color.Underline).SprintfFunc()
-	columnFmt := color.New(color.FgCyan).SprintfFunc()
-	typeOfTableEntry := reflect.TypeOf(entries).Elem()
-	fieldAmount := typeOfTableEntry.NumField()
-	columnHeaders := make([]interface{}, 0, fieldAmount)
-	for i := 0; i < fieldAmount; i++ {
-		columnHeaders = append(columnHeaders, typeOfTableEntry.Field(i).Name)
-	}
-	tbl := table.New(columnHeaders...)
-	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
-	for _, entry := range entries {
-		value := reflect.ValueOf(entry)
-		rowValues := make([]interface{}, 0, fieldAmount)
-		for i := 0; i < fieldAmount; i++ {
-			rowValues = append(rowValues, value.Field(i).String())
-		}
-		tbl.AddRow(rowValues...)
-	}
-	tbl.Print()
-	return nil
-}
-
-func getModuleName(template unstructured.Unstructured) (string, error) {
-	name, _, err := unstructured.NestedString(
-		template.UnstructuredContent(), "spec", "descriptor", "component", "name",
-	)
+	tmpl, err := template.New("module-template").Funcs(
+		template.FuncMap{
+			"lastPartOfFQDN": func(fqdn string) string {
+				splitFQDN := strings.Split(fqdn, "/")
+				return splitFQDN[len(splitFQDN)-1]
+			},
+			"headers": func() bool {
+				return !cmd.opts.NoHeaders
+			},
+		},
+	).Parse(moduleTemplates)
 	if err != nil {
-		return "", fmt.Errorf("could not resolve module version for %s", template)
+		return err
 	}
-	return name, nil
-}
-func getModuleVersion(template unstructured.Unstructured) (string, error) {
-	version, _, err := unstructured.NestedString(
-		template.UnstructuredContent(), "spec", "descriptor", "component", "version",
-	)
-	if err != nil {
-		return "", fmt.Errorf("could not resolve module version for %s", template)
+	tabWriter := tabwriter.NewWriter(os.Stdout, 0, 8, 2, '\t', 0)
+	if err := tmpl.Execute(tabWriter, templates); err != nil {
+		return nil
 	}
-	return version, nil
-}
-
-func getModuleChannel(template unstructured.Unstructured) (string, error) {
-	channel, _, err := unstructured.NestedString(template.UnstructuredContent(), "spec", "channel")
-	if err != nil {
-		return "", err
-	}
-	return channel, nil
+	return tabWriter.Flush()
 }
