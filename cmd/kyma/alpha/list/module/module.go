@@ -182,13 +182,25 @@ func (cmd *command) printKymaActiveTemplates(ctx context.Context, kyma *unstruct
 		if err != nil {
 			return fmt.Errorf("could not parse templateInfo: %w", err)
 		}
-		tpl, err := cmd.K8s.Dynamic().Resource(moduleTemplateResource).Namespace(templateInfo["namespace"].(string)).Get(
-			ctx, templateInfo["name"].(string), metav1.GetOptions{},
+		templateNamespace, ok := templateInfo["namespace"]
+		if !ok {
+			return fmt.Errorf("could not extract template namespace from %v", templateInfo)
+		}
+		templateName, ok := templateInfo["name"]
+		if !ok {
+			return fmt.Errorf("could not extract template name from %v", templateInfo)
+		}
+
+		tpl, err := cmd.K8s.Dynamic().Resource(moduleTemplateResource).Namespace(templateNamespace.(string)).Get(
+			ctx, templateName.(string), metav1.GetOptions{},
 		)
 		if err != nil {
 			return err
 		}
 		anns := tpl.GetAnnotations()
+		if anns == nil {
+			anns = make(map[string]string)
+		}
 		anns["state.cmd.kyma-project.io"] = item["state"].(string)
 		tpl.SetAnnotations(anns)
 		templateList.Items = append(templateList.Items, *tpl)
@@ -198,20 +210,7 @@ func (cmd *command) printKymaActiveTemplates(ctx context.Context, kyma *unstruct
 
 func (cmd *command) printModuleTemplates(templates *unstructured.UnstructuredList) error {
 	if cmd.opts.NonInteractive || cmd.opts.Output != "" {
-		var data []byte
-		var err error
-		switch cmd.opts.Output {
-		case "yaml":
-			if data, err = yaml.Marshal(templates); err != nil {
-				return err
-			}
-		default:
-			if data, err = json.MarshalIndent(templates, "", "  "); err != nil {
-				return err
-			}
-		}
-		fmt.Printf("%s\n", data)
-		return nil
+		return cmd.printNonInteractiveModuleTemplates(templates)
 	}
 	tmpl, err := template.New("module-template").Funcs(
 		template.FuncMap{
@@ -225,7 +224,24 @@ func (cmd *command) printModuleTemplates(templates *unstructured.UnstructuredLis
 	}
 	tabWriter := tabwriter.NewWriter(os.Stdout, 0, 8, 2, '\t', 0)
 	if err := tmpl.Execute(tabWriter, templates); err != nil {
-		return nil
+		return fmt.Errorf("could not print table: %w", err)
 	}
 	return tabWriter.Flush()
+}
+
+func (cmd *command) printNonInteractiveModuleTemplates(templates *unstructured.UnstructuredList) error {
+	var data []byte
+	var err error
+	switch cmd.opts.Output {
+	case "yaml":
+		if data, err = yaml.Marshal(templates); err != nil {
+			return err
+		}
+	default:
+		if data, err = json.MarshalIndent(templates, "", "  "); err != nil {
+			return err
+		}
+	}
+	fmt.Printf("%s\n", data)
+	return nil
 }
