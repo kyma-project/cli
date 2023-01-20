@@ -2,11 +2,11 @@
 title: kyma alpha list module
 ---
 
-list all available modules available for creation in the cluster
+list all available modules available for creation in the cluster or in the given Kyma resource
 
 ## Synopsis
 
-Use this command to list Kyma modules availabel in the cluster.
+Use this command to list Kyma modules available in the cluster.
 
 ### Detailed description
 
@@ -24,7 +24,7 @@ Finally, you can restrict and select a custom namespace for the command.
 
 
 ```bash
-kyma alpha list module [flags]
+kyma alpha list module [kyma] [flags]
 ```
 
 ## Examples
@@ -36,18 +36,20 @@ List all modules
 List all modules in the "regular" channel
 		kyma alpha list module --channel regular
 List all modules for the kyma "some-kyma" in the namespace "custom" in the "alpha" channel
-		kyma alpha list module --kyma some-kyma -c alpha -n "custom"
+		kyma alpha list module some-kyma -c alpha -n "custom"
 List all modules for the kyma "some-kyma" in the "alpha" channel
-		kyma alpha list module --kyma some-kyma -c alpha
+		kyma alpha list module some-kyma -c alpha
 
 ```
 
 ## Flags
 
 ```bash
+  -A, --all-namespaces     If present, list the requested object(s) across all namespaces. Namespace in current context is ignored even if specified with --namespace
   -c, --channel string     Channel to use for the module template.
-  -k, --kyma string        The namespaced name of the kyma to use to list active module templates in the form 'namespace/name'.
-  -n, --namespace string   The namespace to use. An empty namespace uses 'default'
+  -n, --namespace string   The namespace to use. An empty namespace uses 'default' (default "default")
+      --no-headers          When using the default output format, don't print headers (default print headers)
+  -o, --output string      Output format. One of: (json, yaml). By default uses an in-built template function if interactive or json if non-interactive.
   -t, --timeout duration   Maximum time for the list operation to retrieve ModuleTemplates. (default 1m0s)
 ```
 

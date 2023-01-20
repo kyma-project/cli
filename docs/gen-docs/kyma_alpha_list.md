@@ -22,5 +22,5 @@ Use this command to list resources on the Kyma cluster.
 ## See also
 
 * [kyma alpha](kyma_alpha.md)	 - Experimental commands
-* [kyma alpha list module](kyma_alpha_list_module.md)	 - list all available modules available for creation in the cluster
+* [kyma alpha list module](kyma_alpha_list_module.md)	 - list all available modules available for creation in the cluster or in the given Kyma resource
 

@@ -57,7 +57,7 @@ func (o *Options) validateFlags() error {
 
 func (o *Options) validateOutput() error {
 	if len(o.Output) > 0 && (o.Output != "json" && o.Output != "yaml") {
-		return errors.New("output must either be json or yaml.")
+		return errors.New("output must either be json or yaml")
 	}
 	return nil
 }

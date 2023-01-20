@@ -50,9 +50,9 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "module [flags]",
-		Short: "list all available modules available for creation in the cluster",
-		Long: `Use this command to list Kyma modules availabel in the cluster.
+		Use:   "module [kyma] [flags]",
+		Short: "list all available modules available for creation in the cluster or in the given Kyma resource",
+		Long: `Use this command to list Kyma modules available in the cluster.
 
 ### Detailed description
 
@@ -75,9 +75,9 @@ List all modules
 List all modules in the "regular" channel
 		kyma alpha list module --channel regular
 List all modules for the kyma "some-kyma" in the namespace "custom" in the "alpha" channel
-		kyma alpha list module --kyma some-kyma -c alpha -n "custom"
+		kyma alpha list module some-kyma -c alpha -n "custom"
 List all modules for the kyma "some-kyma" in the "alpha" channel
-		kyma alpha list module --kyma some-kyma -c alpha
+		kyma alpha list module some-kyma -c alpha
 `,
 		RunE:    func(cmd *cobra.Command, args []string) error { return c.Run(cmd.Context(), args) },
 		Aliases: []string{"mod", "mods", "modules"},
