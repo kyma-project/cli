@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 	"text/tabwriter"
 	"text/template"
 	"time"
@@ -15,10 +16,10 @@ import (
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/yaml"
 )
 
 //go:embed list.tmpl
@@ -100,8 +101,8 @@ List all modules for the kyma "some-kyma" in the "alpha" channel
 	)
 
 	cmd.Flags().StringVarP(
-		&o.Output, "output", "o", "",
-		"Output format. One of: (json, yaml). By default uses an in-built template function if interactive or json if non-interactive.",
+		&o.Output, "output", "o", "go-template-file",
+		"Output format. One of: (json, yaml). By default uses an in-built template file. It is currently impossible to add your own template file.",
 	)
 
 	return cmd
@@ -214,20 +215,27 @@ func (cmd *command) printKymaActiveTemplates(ctx context.Context, kyma *unstruct
 }
 
 func (cmd *command) printModuleTemplates(templates *unstructured.UnstructuredList) error {
-	if cmd.opts.NonInteractive || cmd.opts.Output != "" {
+	if cmd.opts.Output != "go-template-file" {
 		return cmd.printNonInteractiveModuleTemplates(templates)
 	}
-	tmpl, err := template.New("module-template").Funcs(
-		template.FuncMap{
-			"headers": func() bool {
-				return !cmd.opts.NoHeaders
-			},
-		},
-	).Parse(moduleTemplates)
+	tmpl, err := template.New("module-template").Parse(moduleTemplates)
 	if err != nil {
 		return err
 	}
 	tabWriter := tabwriter.NewWriter(os.Stdout, 0, 8, 2, '\t', 0)
+	if !cmd.opts.NoHeaders {
+		tableFormat := []string{
+			"operator.kyma-project.io/module-name",
+			"Domain Name (FQDN)",
+			"Channel",
+			"Version",
+			"Template",
+			"State",
+		}
+		if _, err := tabWriter.Write([]byte(strings.Join(tableFormat, "\t") + "\n")); err != nil {
+			return err
+		}
+	}
 	if err := tmpl.Execute(tabWriter, templates); err != nil {
 		return fmt.Errorf("could not print table: %w", err)
 	}

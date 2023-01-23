@@ -3,6 +3,7 @@ package module
 import (
 	"fmt"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/kyma-project/cli/internal/cli"
@@ -56,10 +57,17 @@ func (o *Options) validateFlags() error {
 }
 
 func (o *Options) validateOutput() error {
-	if len(o.Output) > 0 && (o.Output != "json" && o.Output != "yaml") {
-		return errors.New("output must either be json or yaml")
+	valids := []string{
+		"json",
+		"yaml",
+		"go-template-file",
 	}
-	return nil
+	for _, valid := range valids {
+		if o.Output == valid {
+			return nil
+		}
+	}
+	return fmt.Errorf("output must be one of: (%s)", strings.Join(valids, ", "))
 }
 
 func (o *Options) validateTimeout() error {

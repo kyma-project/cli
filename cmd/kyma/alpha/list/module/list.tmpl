@@ -1,5 +1,3 @@
-{{if headers}}{{ "operator.kyma-project.io/module-name" }}{{"\t"}}{{ "Domain Name (FQDN)" }}{{"\t"}}{{ "Channel" }}{{"\t"}}{{ "Version" }}{{"\t"}}{{ "Template" }}{{"\t"}}{{ "State" }}{{end}}
 {{- range .Items -}}
-{{$descriptor := .Object.spec.descriptor.component}}{{$metadata := .Object.metadata}}
-{{ index $metadata.labels "operator.kyma-project.io/module-name" }}{{"\t"}}{{ $descriptor.name }}{{"\t"}}{{ .Object.spec.channel }}{{"\t"}}{{ $descriptor.version }}{{"\t"}}{{ $metadata.namespace }}/{{ $metadata.name }}{{"\t"}}{{ index $metadata.annotations "state.cmd.kyma-project.io" }}
+{{$descriptor := .Object.spec.descriptor.component}}{{$metadata := .Object.metadata}}{{ index $metadata.labels "operator.kyma-project.io/module-name" }}{{"\t"}}{{ $descriptor.name }}{{"\t"}}{{ .Object.spec.channel }}{{"\t"}}{{ $descriptor.version }}{{"\t"}}{{ $metadata.namespace }}/{{ $metadata.name }}{{"\t"}}{{ index $metadata.annotations "state.cmd.kyma-project.io" }}{{"\n"}}
 {{- end -}}
