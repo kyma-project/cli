@@ -133,9 +133,11 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 func (cmd *command) run(ctx context.Context, kymaName string) error {
 	start := time.Now()
 
-	var err error
-	if cmd.K8s, err = kube.NewFromConfigWithTimeout("", cmd.KubeconfigPath, cmd.opts.Timeout); err != nil {
-		return fmt.Errorf("failed to initialize the Kubernetes client from given kubeconfig: %w", err)
+	if cmd.K8s == nil {
+		var err error
+		if cmd.K8s, err = kube.NewFromConfigWithTimeout("", cmd.KubeconfigPath, cmd.opts.Timeout); err != nil {
+			return fmt.Errorf("failed to initialize the Kubernetes client from given kubeconfig: %w", err)
+		}
 	}
 
 	if _, err := clusterinfo.Discover(ctx, cmd.K8s.Static()); err != nil {
@@ -204,6 +206,9 @@ func (cmd *command) printKymaActiveTemplates(ctx context.Context, kyma *unstruct
 		anns["state.cmd.kyma-project.io"] = item["state"].(string)
 		tpl.SetAnnotations(anns)
 		templateList.Items = append(templateList.Items, *tpl)
+		if templateList.GetKind() == "" {
+			templateList.SetGroupVersionKind(moduleTemplateResource.GroupVersion().WithKind(tpl.GetKind() + "List"))
+		}
 	}
 	return cmd.printModuleTemplates(templateList)
 }
