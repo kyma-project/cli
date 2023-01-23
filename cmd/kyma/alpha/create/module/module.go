@@ -45,10 +45,11 @@ Alternatively, a custom (non kubebuilder) module can be created by providing a p
 
 Optionally, you can manually add additional layers with contents in other paths (see [resource flag](#flags) for more information).
 
-Finally, if you provided a registry to which to push the artifact, the created module is validated and pushed. For example, the default CR defined in the \"default.yaml\" file is validated against CustomResourceDefinition.
-To push into some public registries, for example the central docker.io registry, you have to change the OCM Component Name Mapping with the following flag: --nameMapping=sha256-digest. This is because the central docker registry does not accept artifact names with more than two path segments, and such names are generated with the default name mapping: \"urlPath\". In this case the name of the pushed artifact will contain a sha256 digest of the full Component name.
+Finally, if you provided a registry to which to push the artifact, the created module is validated and pushed. During the validation the default CR defined in the optional \"default.yaml\" file is validated against CustomResourceDefinition.
+Alternatively, you can trigger an on-demand default CR validation with "--validateCR=true", in case you don't push to registry.
 
-Alternatively, if you don't push to registry, you can trigger an on-demand validation with "--validateCR=true".
+To push the artifact into some registries, for example the central docker.io registry, you have to change the OCM Component Name Mapping with the following flag: --nameMapping=sha256-digest. This is necessary because the registry does not accept artifact URLs with more than two path segments, and such URLs are generated with the default name mapping: \"urlPath\". In the case of the \"sha256-digest\" mapping the artifact URL contains just a sha256 digest of the full Component Name and fits the path length restrictions.
+
 `,
 
 		Example: `Examples:
