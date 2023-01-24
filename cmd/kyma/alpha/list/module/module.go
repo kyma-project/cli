@@ -215,16 +215,34 @@ func (cmd *command) printKymaActiveTemplates(ctx context.Context, kyma *unstruct
 }
 
 func (cmd *command) printModuleTemplates(templates *unstructured.UnstructuredList) error {
-	if cmd.opts.Output != "go-template-file" {
-		return cmd.printNonInteractiveModuleTemplates(templates)
+	switch cmd.opts.Output {
+	case "go-template-file":
+		return cmd.printModuleTemplatesTable(templates)
+	case "yaml":
+		data, err := yaml.Marshal(templates)
+		if err != nil {
+			return err
+		}
+		_, err = fmt.Printf("%s\n", data)
+		return err
+	default:
+		data, err := json.MarshalIndent(templates, "", "  ")
+		if err != nil {
+			return err
+		}
+		_, err = fmt.Printf("%s\n", data)
+		return err
 	}
+}
+
+func (cmd *command) printModuleTemplatesTable(templates *unstructured.UnstructuredList) error {
 	tmpl, err := template.New("module-template").Parse(moduleTemplates)
 	if err != nil {
 		return err
 	}
 	tabWriter := tabwriter.NewWriter(os.Stdout, 0, 8, 2, '\t', 0)
 	if !cmd.opts.NoHeaders {
-		tableFormat := []string{
+		headers := []string{
 			"operator.kyma-project.io/module-name",
 			"Domain Name (FQDN)",
 			"Channel",
@@ -232,7 +250,7 @@ func (cmd *command) printModuleTemplates(templates *unstructured.UnstructuredLis
 			"Template",
 			"State",
 		}
-		if _, err := tabWriter.Write([]byte(strings.Join(tableFormat, "\t") + "\n")); err != nil {
+		if _, err := tabWriter.Write([]byte(strings.Join(headers, "\t") + "\n")); err != nil {
 			return err
 		}
 	}
@@ -240,21 +258,4 @@ func (cmd *command) printModuleTemplates(templates *unstructured.UnstructuredLis
 		return fmt.Errorf("could not print table: %w", err)
 	}
 	return tabWriter.Flush()
-}
-
-func (cmd *command) printNonInteractiveModuleTemplates(templates *unstructured.UnstructuredList) error {
-	var data []byte
-	var err error
-	switch cmd.opts.Output {
-	case "yaml":
-		if data, err = yaml.Marshal(templates); err != nil {
-			return err
-		}
-	default:
-		if data, err = json.MarshalIndent(templates, "", "  "); err != nil {
-			return err
-		}
-	}
-	fmt.Printf("%s\n", data)
-	return nil
 }

@@ -20,10 +20,10 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
-//go:embed kyma_sample.yaml
+//go:embed testdata/kyma_sample.yaml
 var kymaTestSample []byte
 
-//go:embed template_sample.yaml
+//go:embed testdata/template_sample.yaml
 var moduleTemplateTestSample []byte
 
 func Test_list_modules_without_Kyma(t *testing.T) {
