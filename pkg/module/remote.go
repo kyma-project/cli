@@ -12,9 +12,17 @@ import (
 	"go.uber.org/zap"
 )
 
+type NameMapping cdv2.ComponentNameMapping
+
+const (
+	URLPathNameMapping = NameMapping(cdv2.OCIRegistryURLPathMapping)
+	DigestNameMapping  = NameMapping(cdv2.OCIRegistryDigestMapping)
+)
+
 // Remote represents remote OCI registry and the means to access it
 type Remote struct {
 	Registry    string
+	NameMapping NameMapping
 	Credentials string
 	Token       string
 	Insecure    bool
@@ -39,19 +47,19 @@ func Push(archive *ctf.ComponentArchive, r *Remote, log *zap.SugaredLogger) erro
 
 	// update repository context
 	if len(r.Registry) != 0 {
-		nameMapping := cdv2.OCIRegistryURLPathMapping
 		if rc := archive.ComponentDescriptor.GetEffectiveRepositoryContext(); rc != nil {
+			//This code executes, for example, during push of the existing module (repo 1) to another repository (repo 2). A valid scenario for the CLI "sign module" cmd.
 			var repo cdv2.OCIRegistryRepository
 			if err = rc.DecodeInto(&repo); err != nil {
 				return errors.Wrap(err, "unable to decode component descriptor")
 			}
 
-			if repo.ComponentNameMapping == cdv2.OCIRegistryDigestMapping {
-				nameMapping = cdv2.OCIRegistryDigestMapping
+			//Inject only if the repo is different
+			if repo.BaseURL != r.Registry || repo.ComponentNameMapping != cdv2.ComponentNameMapping(r.NameMapping) {
+				if err := cdv2.InjectRepositoryContext(archive.ComponentDescriptor, cdv2.NewOCIRegistryRepository(r.Registry, cdv2.ComponentNameMapping(r.NameMapping))); err != nil {
+					return errors.Wrap(err, "unable to add repository context to component descriptor")
+				}
 			}
-		}
-		if err := cdv2.InjectRepositoryContext(archive.ComponentDescriptor, cdv2.NewOCIRegistryRepository(r.Registry, nameMapping)); err != nil {
-			return errors.Wrap(err, "unable to add repository context to component descriptor")
 		}
 	}
 

@@ -29,45 +29,56 @@ func Build(fs vfs.FileSystem, def *Definition) (*ctf.ComponentArchive, error) {
 			return nil, err
 		}
 		if err == nil {
-			// add the input to the ctf format
-			archiveFs, err := projectionfs.New(fs, def.ArchivePath)
-			if err != nil {
-				return nil, fmt.Errorf("unable to create projectionfilesystem: %w", err)
-			}
-
-			archive, err := ctf.NewComponentArchiveFromFilesystem(archiveFs, codec.DisableValidation(true))
-			if err != nil {
-				return nil, fmt.Errorf("unable to parse component archive from %s: %w", def.ArchivePath, err)
-			}
-
-			cd := archive.ComponentDescriptor
-
-			if err := addSources(cd, def); err != nil {
-				return nil, err
-			}
-
-			if def.Name != "" {
-				if cd.Name != "" && cd.Name != def.Name {
-					return nil, errors.New("unable to overwrite the existing component name: forbidden")
-				}
-				cd.Name = def.Name
-			}
-
-			if def.Version != "" {
-				if cd.Version != "" && cd.Version != def.Version {
-					return nil, errors.New("unable to overwrite the existing component version: forbidden")
-				}
-				cd.Version = def.Version
-			}
-
-			if err = cdvalidation.Validate(cd); err != nil {
-				return nil, fmt.Errorf("invalid component descriptor: %w", err)
-			}
-
-			return archive, nil
+			//Overwrite == false and component descriptor exists
+			return buildWithoutOverwriting(fs, def)
 		}
 	}
 
+	//Overwrite == true OR (Overwrite == false AND the component descriptor does not exist)
+	return buildFull(fs, def, compDescFilePath)
+}
+
+// buildWithoutOverwriting builds over an existing descriptor without overwriting
+func buildWithoutOverwriting(fs vfs.FileSystem, def *Definition) (*ctf.ComponentArchive, error) {
+	// add the input to the ctf format
+	archiveFs, err := projectionfs.New(fs, def.ArchivePath)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create projectionfilesystem: %w", err)
+	}
+
+	archive, err := ctf.NewComponentArchiveFromFilesystem(archiveFs, codec.DisableValidation(true))
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse component archive from %s: %w", def.ArchivePath, err)
+	}
+
+	cd := archive.ComponentDescriptor
+
+	if err := addSources(cd, def); err != nil {
+		return nil, err
+	}
+
+	if def.Name != "" {
+		if cd.Name != "" && cd.Name != def.Name {
+			return nil, errors.New("unable to overwrite the existing component name: forbidden")
+		}
+		cd.Name = def.Name
+	}
+
+	if def.Version != "" {
+		if cd.Version != "" && cd.Version != def.Version {
+			return nil, errors.New("unable to overwrite the existing component version: forbidden")
+		}
+		cd.Version = def.Version
+	}
+
+	if err = cdvalidation.Validate(cd); err != nil {
+		return nil, fmt.Errorf("invalid component descriptor: %w", err)
+	}
+
+	return archive, nil
+}
+
+func buildFull(fs vfs.FileSystem, def *Definition, compDescFilePath string) (*ctf.ComponentArchive, error) {
 	// build minimal archive
 
 	if err := fs.MkdirAll(def.ArchivePath, os.ModePerm); err != nil {
@@ -88,11 +99,7 @@ func Build(fs vfs.FileSystem, def *Definition) (*ctf.ComponentArchive, error) {
 	cd.Provider = cdv2.InternalProvider
 	cd.RepositoryContexts = make([]*cdv2.UnstructuredTypedObject, 0)
 	if len(def.RegistryURL) != 0 {
-		nameMapping := cdv2.OCIRegistryURLPathMapping
-		if def.NameMappingMode == string(cdv2.OCIRegistryDigestMapping) {
-			nameMapping = cdv2.OCIRegistryDigestMapping
-		}
-		repoCtx, err := cdv2.NewUnstructured(cdv2.NewOCIRegistryRepository(def.RegistryURL, nameMapping))
+		repoCtx, err := cdv2.NewUnstructured(cdv2.NewOCIRegistryRepository(def.RegistryURL, cdv2.ComponentNameMapping(def.NameMappingMode)))
 		if err != nil {
 			return nil, fmt.Errorf("unable to create repository context: %w", err)
 		}

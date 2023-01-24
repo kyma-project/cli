@@ -16,6 +16,11 @@ import (
 	"github.com/kyma-project/cli/pkg/module"
 )
 
+const (
+	defaultMappingMode = "urlPath"
+	digestMappingMode  = "sha256-digest"
+)
+
 type command struct {
 	cli.Command
 	opts *Options
@@ -64,11 +69,11 @@ Build module my-domain/modB in version 3.2.1 and push it to a local registry "un
 
 	cmd.Flags().StringVar(&o.Version, "version", "", "Version of the module. This flag is mandatory.")
 	cmd.Flags().StringVarP(&o.Name, "name", "n", "", "Override the module name of the kubebuilder project. If the module is not a kubebuilder project, this flag is mandatory.")
-	cmd.Flags().StringVar(&o.NameMappingMode, "nameMapping", "urlPath", "Overrides the OCM Component Name Mapping. Allowed values: \"urlPath\" or \"sha256-digest\". This flag is optional.")
 	cmd.Flags().StringVarP(&o.Path, "path", "p", "", "Path to the module contents. (default current directory)")
 	cmd.Flags().StringVar(&o.ModCache, "mod-cache", "./mod", "Specifies the path where the module artifacts are locally cached to generate the image. If the path already has a module, use the overwrite flag to overwrite it.")
 	cmd.Flags().StringArrayVarP(&o.ResourcePaths, "resource", "r", []string{}, "Add an extra resource in a new layer with format <NAME:TYPE@PATH>. It is also possible to provide only a path; name will default to the last path element and type to 'helm-chart'")
 	cmd.Flags().StringVar(&o.RegistryURL, "registry", "", "Repository context url for module to upload. The repository url will be automatically added to the repository contexts in the module")
+	cmd.Flags().StringVar(&o.NameMappingMode, "nameMapping", "urlPath", "Overrides the OCM Component Name Mapping. Allowed values: \"urlPath\" or \"sha256-digest\". This flag is optional.")
 	cmd.Flags().StringVar(&o.RegistryCredSelector, "registry-cred-selector", "",
 		"label selector to identify a secret of type kubernetes.io/dockerconfigjson (that needs to be created externally) which allows the image to be accessed in private image registries. This can be used if you push your module to a registry with authenticated access. Example: \"label1=value1,label2=value2\"")
 	cmd.Flags().StringVarP(&o.Credentials, "credentials", "c", "", "Basic authentication credentials for the given registry in the format user:password")
@@ -99,14 +104,19 @@ func (cmd *command) Run(args []string) error {
 		return err
 	}
 
+	nameMappingMode, err := module.ParseNameMapping(cmd.opts.NameMappingMode)
+	if err != nil {
+		return err
+	}
+
 	modDef := &module.Definition{
 		Name:            cmd.opts.Name,
-		NameMappingMode: cmd.opts.NameMappingMode,
 		Version:         cmd.opts.Version,
 		Source:          cmd.opts.Path,
 		ArchivePath:     cmd.opts.ModCache,
 		Overwrite:       cmd.opts.Overwrite,
 		RegistryURL:     cmd.opts.RegistryURL,
+		NameMappingMode: nameMappingMode,
 		DefaultCRPath:   cmd.opts.DefaultCRPath,
 	}
 
@@ -158,7 +168,7 @@ func (cmd *command) Run(args []string) error {
 	if cmd.opts.RegistryURL != "" {
 
 		cmd.NewStep(fmt.Sprintf("Pushing image to %q", cmd.opts.RegistryURL))
-		r, err := cmd.validateInsecureRegistry()
+		r, err := cmd.validateInsecureRegistry(modDef.NameMappingMode)
 		if err != nil {
 			cmd.CurrentStep.Failure()
 			return err
@@ -218,9 +228,11 @@ func (cmd *command) validateDefaultCR(modDef *module.Definition, l *zap.SugaredL
 	return nil
 }
 
-func (cmd *command) validateInsecureRegistry() (*module.Remote, error) {
+func (cmd *command) validateInsecureRegistry(nameMapping module.NameMapping) (*module.Remote, error) {
+
 	res := &module.Remote{
 		Registry:    cmd.opts.RegistryURL,
+		NameMapping: nameMapping,
 		Credentials: cmd.opts.Credentials,
 		Token:       cmd.opts.Token,
 		Insecure:    cmd.opts.Insecure,
