@@ -16,11 +16,6 @@ import (
 	"github.com/kyma-project/cli/pkg/module"
 )
 
-const (
-	defaultMappingMode = "urlPath"
-	digestMappingMode  = "sha256-digest"
-)
-
 type command struct {
 	cli.Command
 	opts *Options

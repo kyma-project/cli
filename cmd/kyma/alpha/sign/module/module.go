@@ -2,7 +2,6 @@ package module
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/gardener/component-spec/bindings-go/ctf"
 	"github.com/kyma-project/cli/internal/cli"
@@ -104,7 +103,7 @@ func (c *command) Run(args []string) error {
 	if c.opts.SignedRegistryURL != "" {
 		c.NewStep("Rebuilding the module...")
 
-		cwd, err := os.Getwd()
+		cwd, err := fs.Getwd()
 		if err != nil {
 			return fmt.Errorf("could not ge the current directory: %w", err)
 		}
@@ -118,7 +117,6 @@ func (c *command) Run(args []string) error {
 			RegistryURL:     c.opts.SignedRegistryURL,
 			NameMappingMode: remote.NameMapping,
 		}
-		fs := osfs.New()
 		archive, err := module.Build(fs, cfg)
 		if err != nil {
 			c.CurrentStep.Failure()
