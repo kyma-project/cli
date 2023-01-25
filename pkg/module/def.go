@@ -57,5 +57,5 @@ func ParseNameMapping(val string) (NameMapping, error) {
 	} else if val == string(DigestNameMapping) {
 		return DigestNameMapping, nil
 	}
-	return "", fmt.Errorf("Invalid mapping mode: %s. Only %s or %s are allowed.", val, URLPathNameMapping, DigestNameMapping)
+	return "", fmt.Errorf("invalid mapping mode: %s, only %s or %s are allowed", val, URLPathNameMapping, DigestNameMapping)
 }
