@@ -10,7 +10,7 @@ Use this command to list Kyma modules available in the cluster.
 
 ### Detailed description
 
-For more information on Kyma modules, see the [kyma alpha create module](kyma_alpha_create_module.md) command.
+For more information on Kyma modules, see the 'create module' command.
 
 This command lists all available modules in the cluster. 
 A module is available when a ModuleTemplate is found for instantiating it with proper defaults.

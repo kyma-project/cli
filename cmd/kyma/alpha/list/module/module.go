@@ -56,7 +56,7 @@ func NewCmd(o *Options) *cobra.Command {
 
 ### Detailed description
 
-For more information on Kyma modules, see the 'create module'' command.
+For more information on Kyma modules, see the 'create module' command.
 
 This command lists all available modules in the cluster. 
 A module is available when a ModuleTemplate is found for instantiating it with proper defaults.
