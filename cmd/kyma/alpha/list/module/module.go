@@ -51,22 +51,22 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "module [kyma] [flags]",
-		Short: "list all available modules available for creation in the cluster or in the given Kyma resource",
+		Short: "Lists all modules available for creation in the cluster or in the given Kyma resource",
 		Long: `Use this command to list Kyma modules available in the cluster.
 
 ### Detailed description
 
-For more information on Kyma modules, see the "create module" command.
+For more information on Kyma modules, see the 'create module'' command.
 
 This command lists all available modules in the cluster. 
 A module is available when a ModuleTemplate is found for instantiating it with proper defaults.
 
 Optionally, you can manually add a release channel to filter available modules only for the given channel.
 
-Also, you can specify a Kyma to use to lookup only the active modules within that Kyma instance. If this is specified,
-the ModuleTemplates will also have a Field called "State" which will reflect the actual state of the module.
+Also, you can specify a Kyma to look up only the active modules within that Kyma instance. If this is specified,
+the ModuleTemplates will also have a Field called **State** which will reflect the actual state of the module.
 
-Finally, you can restrict and select a custom namespace for the command.
+Finally, you can restrict and select a custom Namespace for the command.
 `,
 
 		Example: `Examples:

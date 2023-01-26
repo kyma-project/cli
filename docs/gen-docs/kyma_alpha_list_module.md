@@ -2,7 +2,7 @@
 title: kyma alpha list module
 ---
 
-list all available modules available for creation in the cluster or in the given Kyma resource
+Lists all modules available for creation in the cluster or in the given Kyma resource
 
 ## Synopsis
 
@@ -10,17 +10,17 @@ Use this command to list Kyma modules available in the cluster.
 
 ### Detailed description
 
-For more information on Kyma modules, see the "create module" command.
+For more information on Kyma modules, see the [kyma alpha create module](kyma_alpha_create_module.md) command.
 
 This command lists all available modules in the cluster. 
 A module is available when a ModuleTemplate is found for instantiating it with proper defaults.
 
 Optionally, you can manually add a release channel to filter available modules only for the given channel.
 
-Also, you can specify a Kyma to use to lookup only the active modules within that Kyma instance. If this is specified,
-the ModuleTemplates will also have a Field called "State" which will reflect the actual state of the module.
+Also, you can specify a Kyma to look up only the active modules within that Kyma instance. If this is specified,
+the ModuleTemplates will also have a Field called **State** which will reflect the actual state of the module.
 
-Finally, you can restrict and select a custom namespace for the command.
+Finally, you can restrict and select a custom Namespace for the command.
 
 
 ```bash
@@ -59,7 +59,7 @@ List all modules for the kyma "some-kyma" in the "alpha" channel
       --ci                  Enables the CI mode to run on CI/CD systems. It avoids any user interaction (such as no dialog prompts) and ensures that logs are formatted properly in log files (such as no spinners for CLI steps).
   -h, --help                Provides command help.
       --kubeconfig string   Path to the kubeconfig file. If undefined, Kyma CLI uses the KUBECONFIG environment variable, or falls back "/$HOME/.kube/config".
-      --non-interactive     Enables the non-interactive shell mode (no colorized output, no spinner)
+      --non-interactive     Enables the non-interactive shell mode (no colorized output, no spinner).
   -v, --verbose             Displays details of actions triggered by the command.
 ```
 
