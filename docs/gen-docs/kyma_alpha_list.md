@@ -1,12 +1,13 @@
 ---
-title: kyma provision
+title: kyma alpha list
 ---
 
-Provisions a cluster for Kyma installation.
+Lists resources on the Kyma cluster.
 
 ## Synopsis
 
-Provisions a cluster for Kyma installation.
+Use this command to list resources on the Kyma cluster.
+
 
 ## Flags inherited from parent commands
 
@@ -20,7 +21,6 @@ Provisions a cluster for Kyma installation.
 
 ## See also
 
-* [kyma](kyma.md)	 - Controls a Kyma cluster.
-* [kyma provision gardener](kyma_provision_gardener.md)	 - Provisions a cluster using Gardener on GCP, Azure, or AWS.
-* [kyma provision k3d](kyma_provision_k3d.md)	 - Provisions a Kubernetes cluster based on k3d v5.
+* [kyma alpha](kyma_alpha.md)	 - Experimental commands
+* [kyma alpha list module](kyma_alpha_list_module.md)	 - Lists all modules available for creation in the cluster or in the given Kyma resource
 
