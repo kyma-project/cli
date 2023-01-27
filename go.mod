@@ -22,7 +22,7 @@ require (
 	github.com/imdario/mergo v0.3.13
 	github.com/kyma-incubator/reconciler v0.0.0-20230103132810-e03a6c8168ea
 	github.com/kyma-project/hydroform/function v0.0.0-20221202082519-8cd1c2a4c268
-	github.com/kyma-project/hydroform/provision v0.0.0-20221019152339-a661398f485c
+	github.com/kyma-project/hydroform/provision v0.0.0-20230127124234-b67611c40868
 	github.com/mandelsoft/vfs v0.0.0-20220805210647-bf14a11bfe31
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.0-rc2
@@ -35,7 +35,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 	gotest.tools v2.2.0+incompatible
 	helm.sh/helm/v3 v3.10.3
-	istio.io/client-go v1.14.0
+	istio.io/client-go v1.16.1
 	k8s.io/api v0.26.0
 	k8s.io/apiextensions-apiserver v0.26.0
 	k8s.io/apimachinery v0.26.0
@@ -200,12 +200,12 @@ require (
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/crypto v0.1.0 // indirect
-	golang.org/x/net v0.3.1-0.20221206200815-1e63c2f08a10 // indirect
+	golang.org/x/net v0.5.0 // indirect
 	golang.org/x/oauth2 v0.2.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.3.0 // indirect
-	golang.org/x/term v0.3.0 // indirect
-	golang.org/x/text v0.5.0 // indirect
+	golang.org/x/sys v0.4.0 // indirect
+	golang.org/x/term v0.4.0 // indirect
+	golang.org/x/text v0.6.0 // indirect
 	golang.org/x/time v0.2.0 // indirect
 	google.golang.org/api v0.102.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
@@ -217,7 +217,7 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	istio.io/api v0.0.0-20221108152712-3017a057f724 // indirect
+	istio.io/api v0.0.0-20221208070204-0528cb6ce63b // indirect
 	istio.io/istio v0.0.0-20221109080248-089f536c0f26 // indirect
 	istio.io/pkg v0.0.0-20221031153201-960bb47e80ce // indirect
 	k8s.io/apiserver v0.26.0 // indirect
