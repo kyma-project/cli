@@ -45,9 +45,11 @@ Alternatively, a custom (non kubebuilder) module can be created by providing a p
 
 Optionally, you can manually add additional layers with contents in other paths (see [resource flag](#flags) for more information).
 
-Finally, if you provided a registry to which to push the artifact, the created module is validated and pushed. For example, the default CR defined in the \"default.yaml\" file is validated against CustomResourceDefinition.
+Finally, if you provided a registry to which to push the artifact, the created module is validated and pushed. During the validation the default CR defined in the optional "default.yaml" file is validated against CustomResourceDefinition.
+Alternatively, you can trigger an on-demand default CR validation with "--validateCR=true", in case you don't push to the registry.
 
-Alternatively, if you don't push to registry, you can trigger an on-demand validation with "--validateCR=true".
+To push the artifact into some registries, for example, the central docker.io registry, you have to change the OCM Component Name Mapping with the following flag: "--nameMapping=sha256-digest". This is necessary because the registry does not accept artifact URLs with more than two path segments, and such URLs are generated with the default name mapping: "urlPath". In the case of the "sha256-digest" mapping, the artifact URL contains just a sha256 digest of the full Component Name and fits the path length restrictions.
+
 `,
 
 		Example: `Examples:
@@ -66,6 +68,7 @@ Build module my-domain/modB in version 3.2.1 and push it to a local registry "un
 	cmd.Flags().StringVar(&o.ModCache, "mod-cache", "./mod", "Specifies the path where the module artifacts are locally cached to generate the image. If the path already has a module, use the overwrite flag to overwrite it.")
 	cmd.Flags().StringArrayVarP(&o.ResourcePaths, "resource", "r", []string{}, "Add an extra resource in a new layer with format <NAME:TYPE@PATH>. It is also possible to provide only a path; name will default to the last path element and type to 'helm-chart'")
 	cmd.Flags().StringVar(&o.RegistryURL, "registry", "", "Repository context url for module to upload. The repository url will be automatically added to the repository contexts in the module")
+	cmd.Flags().StringVar(&o.NameMappingMode, "nameMapping", "urlPath", "Overrides the OCM Component Name Mapping, one of: \"urlPath\" or \"sha256-digest\"")
 	cmd.Flags().StringVar(&o.RegistryCredSelector, "registry-cred-selector", "",
 		"label selector to identify a secret of type kubernetes.io/dockerconfigjson (that needs to be created externally) which allows the image to be accessed in private image registries. This can be used if you push your module to a registry with authenticated access. Example: \"label1=value1,label2=value2\"")
 	cmd.Flags().StringVarP(&o.Credentials, "credentials", "c", "", "Basic authentication credentials for the given registry in the format user:password")
@@ -96,14 +99,20 @@ func (cmd *command) Run(args []string) error {
 		return err
 	}
 
+	nameMappingMode, err := module.ParseNameMapping(cmd.opts.NameMappingMode)
+	if err != nil {
+		return err
+	}
+
 	modDef := &module.Definition{
-		Name:          cmd.opts.Name,
-		Version:       cmd.opts.Version,
-		Source:        cmd.opts.Path,
-		ArchivePath:   cmd.opts.ModCache,
-		Overwrite:     cmd.opts.Overwrite,
-		RegistryURL:   cmd.opts.RegistryURL,
-		DefaultCRPath: cmd.opts.DefaultCRPath,
+		Name:            cmd.opts.Name,
+		Version:         cmd.opts.Version,
+		Source:          cmd.opts.Path,
+		ArchivePath:     cmd.opts.ModCache,
+		Overwrite:       cmd.opts.Overwrite,
+		RegistryURL:     cmd.opts.RegistryURL,
+		NameMappingMode: nameMappingMode,
+		DefaultCRPath:   cmd.opts.DefaultCRPath,
 	}
 
 	cmd.NewStep("Setting up kustomize...")
@@ -122,14 +131,6 @@ func (cmd *command) Run(args []string) error {
 		return err
 	}
 	cmd.CurrentStep.Successf("Module built")
-
-	if modDef.DefaultCRPath != "" {
-		cr, err := os.ReadFile(modDef.DefaultCRPath)
-		if err != nil {
-			return fmt.Errorf("could not read CR file %q: %w", modDef.DefaultCRPath, err)
-		}
-		modDef.DefaultCR = cr
-	}
 
 	/* -- VALIDATE DEFAULT CR -- */
 	if err := cmd.validateDefaultCR(modDef, l); err != nil {
@@ -162,7 +163,7 @@ func (cmd *command) Run(args []string) error {
 	if cmd.opts.RegistryURL != "" {
 
 		cmd.NewStep(fmt.Sprintf("Pushing image to %q", cmd.opts.RegistryURL))
-		r, err := cmd.validateInsecureRegistry()
+		r, err := cmd.validateInsecureRegistry(modDef.NameMappingMode)
 		if err != nil {
 			cmd.CurrentStep.Failure()
 			return err
@@ -205,7 +206,6 @@ func (cmd *command) Run(args []string) error {
 
 func (cmd *command) validateDefaultCR(modDef *module.Definition, l *zap.SugaredLogger) error {
 	cmd.NewStep("Validating Default CR")
-
 	crValidator, err := module.NewDefaultCRValidator(modDef.DefaultCR, modDef.Source)
 	if err != nil {
 		cmd.CurrentStep.Failure()
@@ -223,9 +223,11 @@ func (cmd *command) validateDefaultCR(modDef *module.Definition, l *zap.SugaredL
 	return nil
 }
 
-func (cmd *command) validateInsecureRegistry() (*module.Remote, error) {
+func (cmd *command) validateInsecureRegistry(nameMapping module.NameMapping) (*module.Remote, error) {
+
 	res := &module.Remote{
 		Registry:    cmd.opts.RegistryURL,
+		NameMapping: nameMapping,
 		Credentials: cmd.opts.Credentials,
 		Token:       cmd.opts.Token,
 		Insecure:    cmd.opts.Insecure,

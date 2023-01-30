@@ -40,6 +40,7 @@ This command signs all module resources recursively based on an unsigned compone
 	cmd.Flags().StringVar(&o.ModPath, "mod-path", "./mod", "Specifies the path where the signed component descriptor will be stored")
 	cmd.Flags().StringVar(&o.SignatureName, "signature-name", "", "name of the signature for signing")
 	cmd.Flags().StringVar(&o.RegistryURL, "registry", "", "Repository context url where unsigned component descriptor located")
+	cmd.Flags().StringVar(&o.NameMappingMode, "nameMapping", "urlPath", "Overrides the OCM Component Name Mapping, one of: \"urlPath\" or \"sha256-digest\"")
 	cmd.Flags().StringVar(&o.SignedRegistryURL, "signed-registry", "", "Repository context url where signed component descriptor located")
 	cmd.Flags().StringVarP(&o.Credentials, "credentials", "c", "", "Basic authentication credentials for the given registry in the format user:password")
 	cmd.Flags().StringVarP(&o.Token, "token", "t", "", "Authentication token for the given registry (alternative to basic authentication).")
@@ -62,14 +63,21 @@ func (c *command) Run(args []string) error {
 		SignatureName:  c.opts.SignatureName,
 	}
 
+	c.NewStep("Fetching and signing component descriptor...")
+	nameMappingMode, err := module.ParseNameMapping(c.opts.NameMappingMode)
+	if err != nil {
+		c.CurrentStep.Failure()
+		return err
+	}
+
 	remote := &module.Remote{
 		Registry:    c.opts.RegistryURL,
+		NameMapping: nameMappingMode,
 		Credentials: c.opts.Credentials,
 		Token:       c.opts.Token,
 		Insecure:    c.opts.Insecure,
 	}
 
-	c.NewStep("Fetching and signing component descriptor...")
 	digestedCds, err := module.Sign(signCfg, remote, log)
 	if err != nil {
 		c.CurrentStep.Failure()
@@ -93,12 +101,21 @@ func (c *command) Run(args []string) error {
 	c.CurrentStep.Successf("Signed component descriptor generated at %s", c.opts.ModPath)
 
 	if c.opts.SignedRegistryURL != "" {
+		c.NewStep("Rebuilding the module...")
+
+		cwd, err := fs.Getwd()
+		if err != nil {
+			return fmt.Errorf("could not ge the current directory: %w", err)
+		}
+
 		cfg := &module.Definition{
-			Name:        signCfg.Name,
-			Version:     signCfg.Version,
-			ArchivePath: c.opts.ModPath,
-			Overwrite:   false,
-			RegistryURL: c.opts.SignedRegistryURL,
+			Source:          cwd,
+			Name:            signCfg.Name,
+			Version:         signCfg.Version,
+			ArchivePath:     c.opts.ModPath,
+			Overwrite:       false,
+			RegistryURL:     c.opts.SignedRegistryURL,
+			NameMappingMode: remote.NameMapping,
 		}
 		archive, err := module.Build(fs, cfg)
 		if err != nil {
@@ -117,5 +134,6 @@ func (c *command) Run(args []string) error {
 		}
 		c.CurrentStep.Success()
 	}
+
 	return nil
 }

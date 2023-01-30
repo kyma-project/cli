@@ -23,6 +23,7 @@ kyma alpha sign module MODULE_NAME MODULE_VERSION [flags]
   -c, --credentials string       Basic authentication credentials for the given registry in the format user:password
       --insecure                 Use an insecure connection to access the registry.
       --mod-path string          Specifies the path where the signed component descriptor will be stored (default "./mod")
+      --nameMapping string       Overrides the OCM Component Name Mapping, one of: "urlPath" or "sha256-digest" (default "urlPath")
       --private-key string       Specifies the path where the private key used for signing
       --registry string          Repository context url where unsigned component descriptor located
       --signature-name string    name of the signature for signing
