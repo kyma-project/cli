@@ -38,20 +38,22 @@ status:
       reason: ModulesAreReady
       status: "True"
       type: Ready
-  moduleStatus:
-    - generation: 1
-      moduleName: manifest-1
-      name: kyma--50-9-manifest-1
-      namespace: default
+  modules:
+    - name: manifest-1
       state: Ready
-      templateInfo:
-        channel: stable
-        generation: 1
-        gvk:
-          group: operator.kyma-project.io
-          kind: Manifest
-          version: v1alpha1
-        name: manifest-1
-        namespace: default
-        version: 0.0.4
+      channel: stable
+      manifest:
+        apiVersion: operator.kyma-project.io/v1alpha1
+        kind: Manifest
+        metadata:
+          generation: 1
+          name: kyma--50-9-manifest-1
+      template:
+        apiVersion: operator.kyma-project.io/v1alpha1
+        kind: ModuleTemplate
+        metadata:
+          generation: 1
+          name: manifest-1
+          namespace: kcp-system
+      version: 0.0.4
   state: Ready

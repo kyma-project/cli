@@ -16,12 +16,14 @@ import (
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
 	memory "k8s.io/client-go/discovery/cached"
+	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/restmapper"
 	"sigs.k8s.io/yaml"
 )
@@ -44,6 +46,7 @@ var kymaResource = schema.GroupVersionResource{
 type command struct {
 	cli.Command
 	opts *Options
+	meta.RESTMapper
 }
 
 // NewCmd creates a new Kyma CLI command
@@ -145,6 +148,15 @@ func (cmd *command) run(ctx context.Context, kymaName string) error {
 		}
 	}
 
+	if cmd.RESTMapper == nil {
+		disco, err := discovery.NewDiscoveryClientForConfig(cmd.K8s.RestConfig())
+		if err != nil {
+			cmd.RESTMapper = meta.NewDefaultRESTMapper(scheme.Scheme.PreferredVersionAllGroups())
+		} else {
+			cmd.RESTMapper = restmapper.NewDeferredDiscoveryRESTMapper(memory.NewMemCacheClient(disco))
+		}
+	}
+
 	if _, err := clusterinfo.Discover(ctx, cmd.K8s.Static()); err != nil {
 		return err
 	}
@@ -184,13 +196,6 @@ func (cmd *command) printKymaActiveTemplates(ctx context.Context, kyma *unstruct
 	}
 	templateList := &unstructured.UnstructuredList{Items: make([]unstructured.Unstructured, 0, len(statusItems))}
 
-	disco, err := discovery.NewDiscoveryClientForConfig(cmd.K8s.RestConfig())
-	if err != nil {
-		return fmt.Errorf("could not create dynamic discovery client")
-	}
-	cachedDisco := memory.NewMemCacheClient(disco)
-	mapper := restmapper.NewDeferredDiscoveryRESTMapper(cachedDisco)
-
 	for i := range statusItems {
 		item, _ := statusItems[i].(map[string]interface{})
 		tmplt, _, err := unstructured.NestedMap(item, "template")
@@ -201,11 +206,14 @@ func (cmd *command) printKymaActiveTemplates(ctx context.Context, kyma *unstruct
 		if err := runtime.DefaultUnstructuredConverter.FromUnstructured(tmplt, obj); err != nil {
 			return fmt.Errorf("could not parse template info into obj %s: %w", obj, err)
 		}
-		mapping, err := mapper.RESTMapping(obj.GroupVersionKind().GroupKind(), obj.GroupVersionKind().Version)
+		mapping, err := cmd.RESTMapping(obj.GroupVersionKind().GroupKind(), obj.GroupVersionKind().Version)
+		var resource schema.GroupVersionResource
 		if err != nil {
-			return fmt.Errorf("could not determine mapping for %s: %w", obj.GroupVersionKind(), err)
+			resource, _ = meta.UnsafeGuessKindToResource(obj.GroupVersionKind())
+		} else {
+			resource = mapping.Resource
 		}
-		tpl, err := cmd.K8s.Dynamic().Resource(mapping.Resource).Namespace(obj.GetNamespace()).Get(
+		tpl, err := cmd.K8s.Dynamic().Resource(resource).Namespace(obj.GetNamespace()).Get(
 			ctx, obj.GetName(), metav1.GetOptions{},
 		)
 		if err != nil {
