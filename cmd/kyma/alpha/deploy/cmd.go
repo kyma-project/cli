@@ -69,7 +69,7 @@ func NewCmd(o *Options) *cobra.Command {
 	)
 	cobraCmd.Flags().StringVarP(&o.ModulesFile, "modules-file", "f", "", `Path to file containing a list of modules.`)
 	cobraCmd.Flags().StringVarP(
-		&o.Channel, "channel", "c", "stable", `Select which channel to deploy from: stable, fast, nightly.`,
+		&o.Channel, "channel", "c", "regular", `Select which channel to deploy from.`,
 	)
 	cobraCmd.Flags().StringVarP(
 		&o.Namespace, "namespace", "n", "kyma-system",

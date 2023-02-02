@@ -15,7 +15,7 @@ kyma alpha deploy [flags]
 ## Flags
 
 ```bash
-  -c, --channel string              Select which channel to deploy from: stable, fast, nightly. (default "stable")
+  -c, --channel string              Select which channel to deploy from. (default "regular")
       --dry-run                     Renders the Kubernetes manifests without actually applying them.
   -k, --kustomization stringArray   Provide one or more kustomizations to deploy. Each occurrence of the flag accepts a URL with an optional reference (commit, branch, or release) in the format URL@ref or a local path to the directory of the kustomization file.
                                     	Defaults to deploying Lifecycle Manager and Module Manager from GitHub main branch.
