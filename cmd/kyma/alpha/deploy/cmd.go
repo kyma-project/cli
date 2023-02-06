@@ -73,7 +73,7 @@ func NewCmd(o *Options) *cobra.Command {
 	)
 	cobraCmd.Flags().StringVarP(
 		&o.Namespace, "namespace", "n", "kyma-system",
-		"The namespace to deploy the Kyma custom resource in.",
+		"The Namespace to deploy the the Kyma custom resource in.",
 	)
 	cobraCmd.Flags().StringVar(&o.Channel, "kyma-cr", "", `Provide a custom Kyma CR file for the deployment.`)
 

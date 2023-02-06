@@ -96,7 +96,7 @@ List all modules for the kyma "some-kyma" in the "alpha" channel
 	)
 	cmd.Flags().StringVarP(
 		&o.Namespace, "namespace", "n", "kyma-system",
-		"The namespace to list modules in.",
+		"The Namespace to list the modules in.",
 	)
 	cmd.Flags().BoolVarP(
 		&o.AllNamespaces, "all-namespaces", "A", false,
