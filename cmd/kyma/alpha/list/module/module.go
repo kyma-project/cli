@@ -16,9 +16,15 @@ import (
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/discovery"
+	memory "k8s.io/client-go/discovery/cached"
+	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/restmapper"
 	"sigs.k8s.io/yaml"
 )
 
@@ -40,6 +46,7 @@ var kymaResource = schema.GroupVersionResource{
 type command struct {
 	cli.Command
 	opts *Options
+	meta.RESTMapper
 }
 
 // NewCmd creates a new Kyma CLI command
@@ -88,8 +95,8 @@ List all modules for the kyma "some-kyma" in the "alpha" channel
 		&o.Timeout, "timeout", "t", 1*time.Minute, "Maximum time for the list operation to retrieve ModuleTemplates.",
 	)
 	cmd.Flags().StringVarP(
-		&o.Namespace, "namespace", "n", metav1.NamespaceDefault,
-		"The namespace to use. An empty namespace uses 'default'",
+		&o.Namespace, "namespace", "n", "kyma-system",
+		"The Namespace to list the modules in.",
 	)
 	cmd.Flags().BoolVarP(
 		&o.AllNamespaces, "all-namespaces", "A", false,
@@ -141,6 +148,15 @@ func (cmd *command) run(ctx context.Context, kymaName string) error {
 		}
 	}
 
+	if cmd.RESTMapper == nil {
+		disco, err := discovery.NewDiscoveryClientForConfig(cmd.K8s.RestConfig())
+		if err != nil {
+			cmd.RESTMapper = meta.NewDefaultRESTMapper(scheme.Scheme.PreferredVersionAllGroups())
+		} else {
+			cmd.RESTMapper = restmapper.NewDeferredDiscoveryRESTMapper(memory.NewMemCacheClient(disco))
+		}
+	}
+
 	if _, err := clusterinfo.Discover(ctx, cmd.K8s.Static()); err != nil {
 		return err
 	}
@@ -174,28 +190,31 @@ func (cmd *command) run(ctx context.Context, kymaName string) error {
 }
 
 func (cmd *command) printKymaActiveTemplates(ctx context.Context, kyma *unstructured.Unstructured) error {
-	statusItems, _, err := unstructured.NestedSlice(kyma.UnstructuredContent(), "status", "moduleStatus")
+	statusItems, _, err := unstructured.NestedSlice(kyma.UnstructuredContent(), "status", "modules")
 	if err != nil {
 		return fmt.Errorf("could not parse moduleStatus: %w", err)
 	}
 	templateList := &unstructured.UnstructuredList{Items: make([]unstructured.Unstructured, 0, len(statusItems))}
+
 	for i := range statusItems {
 		item, _ := statusItems[i].(map[string]interface{})
-		templateInfo, _, err := unstructured.NestedMap(item, "templateInfo")
+		tmplt, _, err := unstructured.NestedMap(item, "template")
 		if err != nil {
-			return fmt.Errorf("could not parse templateInfo: %w", err)
+			return fmt.Errorf("could not parse template: %w", err)
 		}
-		templateNamespace, ok := templateInfo["namespace"]
-		if !ok {
-			return fmt.Errorf("could not extract template namespace from %v", templateInfo)
+		obj := &metav1.PartialObjectMetadata{}
+		if err := runtime.DefaultUnstructuredConverter.FromUnstructured(tmplt, obj); err != nil {
+			return fmt.Errorf("could not parse template info into obj %s: %w", obj, err)
 		}
-		templateName, ok := templateInfo["name"]
-		if !ok {
-			return fmt.Errorf("could not extract template name from %v", templateInfo)
+		mapping, err := cmd.RESTMapping(obj.GroupVersionKind().GroupKind(), obj.GroupVersionKind().Version)
+		var resource schema.GroupVersionResource
+		if err != nil {
+			resource, _ = meta.UnsafeGuessKindToResource(obj.GroupVersionKind())
+		} else {
+			resource = mapping.Resource
 		}
-
-		tpl, err := cmd.K8s.Dynamic().Resource(moduleTemplateResource).Namespace(templateNamespace.(string)).Get(
-			ctx, templateName.(string), metav1.GetOptions{},
+		tpl, err := cmd.K8s.Dynamic().Resource(resource).Namespace(obj.GetNamespace()).Get(
+			ctx, obj.GetName(), metav1.GetOptions{},
 		)
 		if err != nil {
 			return err

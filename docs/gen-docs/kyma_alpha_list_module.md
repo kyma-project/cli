@@ -47,7 +47,7 @@ List all modules for the kyma "some-kyma" in the "alpha" channel
 ```bash
   -A, --all-namespaces     If present, list the requested object(s) across all namespaces. Namespace in current context is ignored even if specified with --namespace
   -c, --channel string     Channel to use for the module template.
-  -n, --namespace string   The namespace to use. An empty namespace uses 'default' (default "default")
+  -n, --namespace string   The Namespace to list the modules in. (default "kyma-system")
       --no-headers          When using the default output format, don't print headers (default print headers)
   -o, --output string      Output format. One of: (json, yaml). By default uses an in-built template file. It is currently impossible to add your own template file. (default "go-template-file")
   -t, --timeout duration   Maximum time for the list operation to retrieve ModuleTemplates. (default 1m0s)
