@@ -27,7 +27,7 @@ kyma alpha deploy [flags]
       --kyma-cr string              Provide a custom Kyma CR file for the deployment.
   -m, --module stringArray          Provide one or more modules to activate after the deployment is finished. Example: "--module name@namespace" (namespace is optional).
   -f, --modules-file string         Path to file containing a list of modules.
-  -n, --namespace string            The namespace to deploy the Kyma custom resource in. An empty namespace uses 'kyma-system' (default "kyma-system")
+  -n, --namespace string            The namespace to deploy the Kyma custom resource in. (default "kyma-system")
       --template stringArray        Provide one or more module templates to deploy.
                                     	WARNING: This is a temporary flag for development and will be removed soon.
   -t, --timeout duration            Maximum time for the deployment. (default 20m0s)
