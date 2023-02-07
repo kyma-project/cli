@@ -133,6 +133,9 @@ func (cmd *command) run(ctx context.Context, moduleName string) error {
 		}
 		_, err = cmd.K8s.Dynamic().Resource(kymaResource).Namespace(cmd.opts.Namespace).Update(
 			ctx, kyma, metav1.UpdateOptions{})
+		if err != nil {
+			return fmt.Errorf("failed to update Kyma %s in %s: %w", cmd.opts.KymaName, cmd.opts.Namespace, err)
+		}
 
 		if cmd.opts.Wait {
 			time.Sleep(2 * time.Second)
