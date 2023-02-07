@@ -75,7 +75,7 @@ func NewCmd(o *Options) *cobra.Command {
 		&o.Namespace, "namespace", "n", "kyma-system",
 		"The Namespace to deploy the the Kyma custom resource in.",
 	)
-	cobraCmd.Flags().StringVar(&o.Channel, "kyma-cr", "", `Provide a custom Kyma CR file for the deployment.`)
+	cobraCmd.Flags().StringVar(&o.KymaCR, "kyma-cr", "", `Provide a custom Kyma CR file for the deployment.`)
 
 	// TODO remove this flag when module templates can be fetched from release.
 	// Might be worth keeping this flag with another name to install extra templates??
