@@ -2,7 +2,6 @@ package module
 
 import (
 	"context"
-	_ "embed"
 	"fmt"
 	"time"
 
@@ -131,7 +130,7 @@ func (cmd *command) run(ctx context.Context, moduleName string) error {
 		if err != nil {
 			return fmt.Errorf("failed to set modules list in Kyma spec: %w", err)
 		}
-		_, err := cmd.K8s.Dynamic().Resource(kymaResource).Namespace(cmd.opts.Namespace).Update(
+		_, err = cmd.K8s.Dynamic().Resource(kymaResource).Namespace(cmd.opts.Namespace).Update(
 			ctx, kyma, metav1.UpdateOptions{})
 
 		if cmd.opts.Wait {

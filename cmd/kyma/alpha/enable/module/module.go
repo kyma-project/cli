@@ -2,7 +2,6 @@ package module
 
 import (
 	"context"
-	_ "embed"
 	"fmt"
 	"time"
 
