@@ -60,7 +60,7 @@ TODO
 	)
 	cmd.Flags().StringVarP(
 		&o.Channel, "channel", "c", "",
-		"The channel of the module to use.",
+		"The channel of the module to enable.",
 	)
 	cmd.Flags().StringVarP(
 		&o.Namespace, "namespace", "n", metav1.NamespaceDefault,
@@ -69,6 +69,9 @@ TODO
 	cmd.Flags().StringVarP(
 		&o.KymaName, "kyma-name", "k", defaultKymaName,
 		"The name of the Kyma to use. An empty name uses 'default-kyma'",
+	)
+	cmd.Flags().BoolVarP(&o.Wait, "wait", "w", false,
+		"Wait until the given Kyma resource is ready",
 	)
 
 	return cmd
@@ -121,14 +124,32 @@ func (cmd *command) run(ctx context.Context, moduleName string) error {
 
 	desiredModules, err := enableModule(modules, moduleName, cmd.opts.Channel)
 	if err != nil {
-		return fmt.Errorf("could not enable module: %w", err)
+		return fmt.Errorf("could not find module to enable: %w", err)
 	}
-	err = unstructured.SetNestedSlice(kyma.Object, desiredModules, "spec", "modules")
-	if err != nil {
-		return fmt.Errorf("failed to set modules list in Kyma spec: %w", err)
+
+	if len(modules) != len(desiredModules) {
+		err = unstructured.SetNestedSlice(kyma.Object, desiredModules, "spec", "modules")
+		if err != nil {
+			return fmt.Errorf("failed to set modules list in Kyma spec: %w", err)
+		}
+		_, err = cmd.K8s.Dynamic().Resource(kymaResource).Namespace(cmd.opts.Namespace).Update(
+			ctx, kyma, metav1.UpdateOptions{})
+
+		if cmd.opts.Wait {
+			time.Sleep(2 * time.Second)
+			checkFn := func(u *unstructured.Unstructured) (bool, error) {
+				status, exists, err := unstructured.NestedString(u.Object, "status", "state")
+				if err != nil {
+					return false, errors.Wrap(err, "error waiting for Kyma readiness")
+				}
+				return exists && status == "Ready", nil
+			}
+			err = cmd.K8s.WatchResource(kymaResource, cmd.opts.KymaName, cmd.opts.Namespace, checkFn)
+			if err != nil {
+				return errors.Wrap(err, "failed to watch resource Kyma for state 'Ready'")
+			}
+		}
 	}
-	_, err = cmd.K8s.Dynamic().Resource(kymaResource).Namespace(cmd.opts.Namespace).Update(
-		ctx, kyma, metav1.UpdateOptions{})
 
 	l := cli.NewLogger(cmd.opts.Verbose).Sugar()
 	l.Infof("enabling module took %s", time.Since(start))
@@ -137,8 +158,8 @@ func (cmd *command) run(ctx context.Context, moduleName string) error {
 }
 
 func enableModule(modules []interface{}, name, channel string) ([]interface{}, error) {
-	for i := range modules {
-		module, _ := modules[i].(map[string]interface{})
+	for _, m := range modules {
+		module, _ := m.(map[string]interface{})
 		moduleName, found := module["name"]
 		if !found {
 			return nil, errors.New("invalid item in modules spec: name field missing")
