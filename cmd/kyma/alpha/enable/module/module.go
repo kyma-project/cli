@@ -165,12 +165,11 @@ func enableModule(modules []interface{}, name, channel string) ([]interface{}, e
 			return nil, errors.New("invalid item in modules spec: name field missing")
 		}
 		if moduleName == name {
-			moduleChannel, found := module["channel"]
-			if found && moduleChannel != channel {
-				break
+			moduleChannel, cFound := module["channel"]
+			if cFound && moduleChannel == channel {
+				// module already enabled
+				return modules, nil
 			}
-			// module already enabled
-			return modules, nil
 		}
 	}
 	newModule := make(map[string]interface{})
