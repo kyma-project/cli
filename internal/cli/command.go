@@ -21,7 +21,7 @@ func (c *Command) NewStep(msg string) step.Step {
 	return s
 }
 
-func (c *Command) EnsureClusterAcces(ctx context.Context, timeout time.Duration) error {
+func (c *Command) EnsureClusterAccess(ctx context.Context, timeout time.Duration) error {
 	if c.K8s == nil {
 		var err error
 		if c.K8s, err = kube.NewFromConfigWithTimeout("", c.KubeconfigPath, timeout); err != nil {

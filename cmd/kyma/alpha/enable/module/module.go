@@ -73,6 +73,7 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 	if !cmd.opts.NonInteractive {
 		cli.AlphaWarn()
 	}
+
 	if len(args) != 1 {
 		return errors.New("you must pass one Kyma module name to enable it")
 	}
@@ -90,7 +91,7 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 
 func (cmd *command) run(ctx context.Context, moduleName string) error {
 	start := time.Now()
-	if err := cmd.EnsureClusterAcces(ctx, cmd.opts.Timeout); err != nil {
+	if err := cmd.EnsureClusterAccess(ctx, cmd.opts.Timeout); err != nil {
 		return err
 	}
 
@@ -138,9 +139,11 @@ func enableModule(modules []interface{}, name, channel string) ([]interface{}, e
 			}
 		}
 	}
+
 	newModule := make(map[string]interface{})
 	newModule["name"] = name
 	newModule["channel"] = channel
 	modules = append(modules, newModule)
+
 	return modules, nil
 }
