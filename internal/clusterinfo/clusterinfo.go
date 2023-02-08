@@ -2,8 +2,10 @@ package clusterinfo
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
@@ -76,14 +78,31 @@ func Discover(ctx context.Context, kubeClient kubernetes.Interface) (Info, error
 }
 
 // IsManagedKyma returns true if the k8s go-client is configured to access a managed kyma runtime
-func IsManagedKyma(restConfig *rest.Config) bool {
-	//Legacy, may be removed in the future
+func IsManagedKyma(ctx context.Context, restConfig *rest.Config, kubeClient kubernetes.Interface) (bool, error) {
+	//1) Verfiy the domain
 	if strings.HasSuffix(restConfig.Host, legacyEnvAPIServerSuffix) {
-		return true
+		//Legacy, may be removed in the future
+		return lookupConfigMapMarker(ctx, kubeClient)
 	}
 	if strings.HasSuffix(restConfig.Host, skrEnvAPIServerSuffix) {
-		return true
+		return lookupConfigMapMarker(ctx, kubeClient)
 	}
 
-	return false
+	return false, nil
+}
+
+func lookupConfigMapMarker(ctx context.Context, kubeClient kubernetes.Interface) (bool, error) {
+	opts := metav1.ListOptions{LabelSelector: "reconciler.kyma-project.io/managed-by=reconciler"}
+	cmList, err := kubeClient.CoreV1().ConfigMaps("kyma-system").List(ctx, opts)
+	if err != nil {
+		return false, fmt.Errorf("Error listing ConfigMaps in the \"kyma-system\" namespace: %w", err)
+	}
+
+	for _, cm := range cmList.Items {
+		if cm.Data["is-managed-kyma-runtime"] == "true" {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }

@@ -84,7 +84,7 @@ func (cmd *command) Run() error {
 	}
 
 	if !cmd.opts.NonInteractive {
-		if err := cli.DetectManagedEnvironment(cmd.K8s, cmd.Factory.NewStep("")); err != nil {
+		if err := cli.DetectManagedEnvironment(context.Background(), cmd.K8s, cmd.Factory.NewStep("")); err != nil {
 			return err
 		}
 	}
