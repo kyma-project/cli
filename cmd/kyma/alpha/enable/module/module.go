@@ -10,10 +10,7 @@ import (
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
-const defaultKymaName = "default-kyma"
 
 type command struct {
 	cli.Command
@@ -55,11 +52,11 @@ Enable "my-module" from "alpha"" channel in "default-kyma" from "kyma-system" na
 		"The channel of the module to enable.",
 	)
 	cmd.Flags().StringVarP(
-		&o.Namespace, "namespace", "n", metav1.NamespaceDefault,
-		"The namespace of the Kyma to use. An empty namespace uses 'default'",
+		&o.Namespace, "namespace", "n", cli.KymaNamespaceDefault,
+		"The namespace of the Kyma to use. An empty namespace defaults to 'kyma-system'",
 	)
 	cmd.Flags().StringVarP(
-		&o.KymaName, "kyma-name", "k", defaultKymaName,
+		&o.KymaName, "kyma-name", "k", cli.KymaNameDefault,
 		"The name of the Kyma to use. An empty name uses 'default-kyma'",
 	)
 	cmd.Flags().BoolVarP(&o.Wait, "wait", "w", false,
