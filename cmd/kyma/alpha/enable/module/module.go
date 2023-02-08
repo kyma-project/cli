@@ -47,8 +47,9 @@ This command enables an available module in the cluster.
 A module is available when a ModuleTemplate is found for instantiating it with proper defaults.
 `,
 
-		Example: `Examples:
-TODO
+		Example: `Example:
+Enable "my-module" from "alpha"" channel in "default-kyma" from "kyma-system" namespace
+		kyma alpha enable module my-module -c alpha -n kyma-system -k default-kyma
 `,
 		RunE:    func(cmd *cobra.Command, args []string) error { return c.Run(cmd.Context(), args) },
 		Aliases: []string{"mod", "mods", "modules"},

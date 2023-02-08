@@ -46,8 +46,9 @@ For more information on Kyma modules, see the 'create module' command.
 This command disables an active module in the cluster.
 `,
 
-		Example: `Examples:
-TODO
+		Example: `Example:
+Disable "my-module" from "alpha"" channel in "default-kyma" from "kyma-system" namespace
+		kyma alpha disable module my-module -c alpha -n kyma-system -k default-kyma
 `,
 		RunE:    func(cmd *cobra.Command, args []string) error { return c.Run(cmd.Context(), args) },
 		Aliases: []string{"mod", "mods", "modules"},
