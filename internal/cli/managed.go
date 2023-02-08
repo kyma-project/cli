@@ -18,7 +18,7 @@ func DetectManagedEnvironment(ctx context.Context, k kube.KymaKube, s step.Step)
 		return err
 	}
 	if managed {
-		s.LogWarn(managedKymaWarning)
+		s.LogInfo(managedKymaWarning)
 		if !s.PromptYesNo("Do you really want to proceed? ") {
 			return errors.New("Command stopped by user")
 		}
