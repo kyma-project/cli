@@ -3,6 +3,8 @@ package module
 import (
 	"context"
 	"fmt"
+	"github.com/kyma-project/cli/internal/cli/alpha/module"
+	"k8s.io/apimachinery/pkg/types"
 	"time"
 
 	"github.com/kyma-project/cli/internal/cli"
@@ -11,17 +13,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 const defaultKymaName = "default-kyma"
-
-var kymaResource = schema.GroupVersionResource{
-	Group:    "operator.kyma-project.io",
-	Version:  "v1alpha1",
-	Resource: "kymas",
-}
 
 type command struct {
 	cli.Command
@@ -81,7 +75,6 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 	if !cmd.opts.NonInteractive {
 		cli.AlphaWarn()
 	}
-
 	if len(args) != 1 {
 		return errors.New("you must pass one Kyma module name to enable it")
 	}
@@ -110,16 +103,12 @@ func (cmd *command) run(ctx context.Context, moduleName string) error {
 	if _, err := clusterinfo.Discover(ctx, cmd.K8s.Static()); err != nil {
 		return err
 	}
+	kyma := types.NamespacedName{}
+	moduleInteractor := module.NewInteractor(cmd.K8s, kyma)
 
-	kyma, err := cmd.K8s.Dynamic().Resource(kymaResource).Namespace(cmd.opts.Namespace).Get(
-		ctx, cmd.opts.KymaName, metav1.GetOptions{})
-	if err != nil {
-		return fmt.Errorf("could not get Kyma %s/%s: %w", cmd.opts.Namespace, cmd.opts.KymaName, err)
-	}
-
-	modules, _, err := unstructured.NestedSlice(kyma.UnstructuredContent(), "spec", "modules")
-	if err != nil {
-		return fmt.Errorf("could not parse modules spec: %w", err)
+	modules, err2 := moduleInteractor.Get(ctx)
+	if err2 != nil {
+		return err2
 	}
 
 	desiredModules, err := enableModule(modules, moduleName, cmd.opts.Channel)
@@ -128,28 +117,12 @@ func (cmd *command) run(ctx context.Context, moduleName string) error {
 	}
 
 	if len(modules) != len(desiredModules) {
-		err = unstructured.SetNestedSlice(kyma.Object, desiredModules, "spec", "modules")
-		if err != nil {
-			return fmt.Errorf("failed to set modules list in Kyma spec: %w", err)
+		if err = moduleInteractor.Update(ctx, desiredModules); err != nil {
+			return err
 		}
-		_, err = cmd.K8s.Dynamic().Resource(kymaResource).Namespace(cmd.opts.Namespace).Update(
-			ctx, kyma, metav1.UpdateOptions{})
-		if err != nil {
-			return fmt.Errorf("failed to update Kyma %s in %s: %w", cmd.opts.KymaName, cmd.opts.Namespace, err)
-		}
-
 		if cmd.opts.Wait {
-			time.Sleep(2 * time.Second)
-			checkFn := func(u *unstructured.Unstructured) (bool, error) {
-				status, exists, err := unstructured.NestedString(u.Object, "status", "state")
-				if err != nil {
-					return false, errors.Wrap(err, "error waiting for Kyma readiness")
-				}
-				return exists && status == "Ready", nil
-			}
-			err = cmd.K8s.WatchResource(kymaResource, cmd.opts.KymaName, cmd.opts.Namespace, checkFn)
-			if err != nil {
-				return errors.Wrap(err, "failed to watch resource Kyma for state 'Ready'")
+			if err = moduleInteractor.WaitForKymaReadiness(); err != nil {
+				return err
 			}
 		}
 	}
@@ -162,13 +135,13 @@ func (cmd *command) run(ctx context.Context, moduleName string) error {
 
 func enableModule(modules []interface{}, name, channel string) ([]interface{}, error) {
 	for _, m := range modules {
-		module, _ := m.(map[string]interface{})
-		moduleName, found := module["name"]
+		mod, _ := m.(map[string]interface{})
+		moduleName, found := mod["name"]
 		if !found {
 			return nil, errors.New("invalid item in modules spec: name field missing")
 		}
 		if moduleName == name {
-			moduleChannel, cFound := module["channel"]
+			moduleChannel, cFound := mod["channel"]
 			if cFound && moduleChannel == channel {
 				// module already enabled
 				return modules, nil
