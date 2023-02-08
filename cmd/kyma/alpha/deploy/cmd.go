@@ -32,6 +32,11 @@ type command struct {
 }
 
 const (
+	lifecycleManagerKustomization = "https://github.com/kyma-project/lifecycle-manager/config/default"
+	moduleManagerKustomization    = "https://github.com/kyma-project/module-manager/config/default"
+	lifecycleManagerRef           = "b9b6251ea4dac0d3d60019a98fb2dea30fb20bde"
+	moduleManagerRef              = "275f0c18b28453dfeaf1c8c22fecec70da969f71"
+
 	hostsTemplate = `
     {{ .K3dRegistryIP}} {{ .K3dRegistryHost}}
     {{ .K3dRegistryIP}} {{ .K3dRegistryHost}}.localhost
@@ -54,13 +59,14 @@ func NewCmd(o *Options) *cobra.Command {
 		Aliases: []string{"d"},
 	}
 	cobraCmd.Flags().StringArrayVarP(
-		&o.Kustomizations, "kustomization", "k", []string{},
+		&o.Kustomizations, "kustomization", "k", []string{
+			fmt.Sprintf("%s@%s", lifecycleManagerKustomization, lifecycleManagerRef),
+			fmt.Sprintf("%s@%s", moduleManagerKustomization, moduleManagerRef),
+		},
 		`Provide one or more kustomizations to deploy. Each occurrence of the flag accepts a URL with an optional reference (commit, branch, or release) in the format URL@ref or a local path to the directory of the kustomization file.
 	Defaults to deploying Lifecycle Manager and Module Manager from GitHub main branch.
 	Examples:
-	- Deploy a specific release of the Lifecycle Manager: "kyma deploy -k https://github.com/kyma-project/lifecycle-manager/config/default@1.2.3"
-	- Deploy a local Module Manager: "kyma deploy --kustomization /path/to/repo/module-manager/config/default"
-	- Deploy a branch of Lifecycle Manager with a custom URL: "kyma deploy -k https://gitlab.com/forked-from-github/lifecycle-manager/config/default@feature-branch-1"
+	- Deploy a specific release of the Lifecycle Manager and Module Manager: "kyma deploy -k https://github.com/kyma-project/lifecycle-manager/config/default --kustomization /path/to/repo/module-manager/config/default"
 	- Deploy the main branch of Lifecycle Manager while using local sources of Module Manager: "kyma deploy -k /path/to/repo/module-manager/config/default -k https://github.com/kyma-project/lifecycle-manager/config/default@main"`,
 	)
 	cobraCmd.Flags().StringArrayVarP(
