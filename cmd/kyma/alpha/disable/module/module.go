@@ -134,10 +134,7 @@ func disableModule(modules []interface{}, name, channel string) ([]interface{}, 
 			if cFound && moduleChannel != channel {
 				continue
 			}
-			copy(modules[i:], modules[i+1:])
-			modules[len(modules)-1] = nil
-			modules = modules[:len(modules)-1]
-			return modules, nil
+			return append(modules[:i], modules[i+1:]...), nil
 		}
 	}
 
