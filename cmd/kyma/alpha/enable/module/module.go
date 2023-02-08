@@ -8,8 +8,6 @@ import (
 	"time"
 
 	"github.com/kyma-project/cli/internal/cli"
-	"github.com/kyma-project/cli/internal/clusterinfo"
-	"github.com/kyma-project/cli/internal/kube"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -92,23 +90,15 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 
 func (cmd *command) run(ctx context.Context, moduleName string) error {
 	start := time.Now()
-
-	if cmd.K8s == nil {
-		var err error
-		if cmd.K8s, err = kube.NewFromConfigWithTimeout("", cmd.KubeconfigPath, cmd.opts.Timeout); err != nil {
-			return fmt.Errorf("failed to initialize the Kubernetes client from given kubeconfig: %w", err)
-		}
-	}
-
-	if _, err := clusterinfo.Discover(ctx, cmd.K8s.Static()); err != nil {
+	if err := cmd.EnsureClusterAcces(ctx, cmd.opts.Timeout); err != nil {
 		return err
 	}
-	kyma := types.NamespacedName{}
-	moduleInteractor := module.NewInteractor(cmd.K8s, kyma)
 
-	modules, err2 := moduleInteractor.Get(ctx)
-	if err2 != nil {
-		return err2
+	kyma := types.NamespacedName{Name: cmd.opts.KymaName, Namespace: cmd.opts.Namespace}
+	moduleInteractor := module.NewInteractor(cmd.K8s, kyma)
+	modules, err := moduleInteractor.Get(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get modules: %w", err)
 	}
 
 	desiredModules, err := enableModule(modules, moduleName, cmd.opts.Channel)
