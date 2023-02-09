@@ -130,10 +130,10 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 	ctx, cancel := context.WithTimeout(ctx, cmd.opts.Timeout)
 	defer cancel()
 
-	return cmd.run(ctx, cmd.opts.KymaName)
+	return cmd.run(ctx)
 }
 
-func (cmd *command) run(ctx context.Context, kymaName string) error {
+func (cmd *command) run(ctx context.Context) error {
 	start := time.Now()
 
 	if cmd.K8s == nil {
@@ -156,12 +156,12 @@ func (cmd *command) run(ctx context.Context, kymaName string) error {
 		return err
 	}
 
-	if kymaName != "" {
+	if cmd.opts.KymaName != "" {
 		kyma, err := cmd.K8s.Dynamic().Resource(kymaResource).Namespace(cmd.opts.Namespace).Get(
-			ctx, kymaName, metav1.GetOptions{},
+			ctx, cmd.opts.KymaName, metav1.GetOptions{},
 		)
 		if err != nil {
-			return fmt.Errorf("could not get kyma %s/%s: %w", cmd.opts.Namespace, kymaName, err)
+			return fmt.Errorf("could not get kyma %s/%s: %w", cmd.opts.Namespace, cmd.opts.KymaName, err)
 		}
 		if err := cmd.printKymaActiveTemplates(ctx, kyma); err != nil {
 			return err
