@@ -14,7 +14,6 @@ import (
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/clusterinfo"
 	"github.com/kyma-project/cli/internal/kube"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -82,9 +81,9 @@ List all modules
 List all modules in the "regular" channel
 		kyma alpha list module --channel regular
 List all modules for the kyma "some-kyma" in the namespace "custom" in the "alpha" channel
-		kyma alpha list module some-kyma -c alpha -n "custom"
+		kyma alpha list module -k some-kyma -c alpha -n custom
 List all modules for the kyma "some-kyma" in the "alpha" channel
-		kyma alpha list module some-kyma -c alpha
+		kyma alpha list module -k some-kyma -c alpha
 `,
 		RunE:    func(cmd *cobra.Command, args []string) error { return c.Run(cmd.Context(), args) },
 		Aliases: []string{"mod", "mods", "modules"},
@@ -93,6 +92,10 @@ List all modules for the kyma "some-kyma" in the "alpha" channel
 	cmd.Flags().StringVarP(&o.Channel, "channel", "c", "", "Channel to use for the module template.")
 	cmd.Flags().DurationVarP(
 		&o.Timeout, "timeout", "t", 1*time.Minute, "Maximum time for the list operation to retrieve ModuleTemplates.",
+	)
+	cmd.Flags().StringVarP(
+		&o.KymaName, "kyma-name", "k", cli.KymaNameDefault,
+		"The name of the Kyma to use. An empty name uses 'default-kyma'",
 	)
 	cmd.Flags().StringVarP(
 		&o.Namespace, "namespace", "n", cli.KymaNamespaceDefault,
@@ -120,14 +123,6 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 		cli.AlphaWarn()
 	}
 
-	kymaName := ""
-	if len(args) > 1 {
-		return errors.New("you can only pass one Kyma resource to list active modules for")
-	}
-	if len(args) == 1 {
-		kymaName = args[0]
-	}
-
 	if err := cmd.opts.validateFlags(); err != nil {
 		return err
 	}
@@ -135,7 +130,7 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 	ctx, cancel := context.WithTimeout(ctx, cmd.opts.Timeout)
 	defer cancel()
 
-	return cmd.run(ctx, kymaName)
+	return cmd.run(ctx, cmd.opts.KymaName)
 }
 
 func (cmd *command) run(ctx context.Context, kymaName string) error {

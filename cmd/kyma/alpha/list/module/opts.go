@@ -15,6 +15,7 @@ import (
 type Options struct {
 	*cli.Options
 
+	KymaName      string
 	Channel       string
 	Timeout       time.Duration
 	Namespace     string
