@@ -39,7 +39,7 @@ func (i *Interactor) Get(ctx context.Context) (ModulesList, error) {
 	kyma, err := i.Client.Dynamic().Resource(kymaResource).Namespace(namespace).Get(
 		ctx, name, metav1.GetOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("could not get Kyma %s/%s: %w", namespace, name, err)
+		return nil, fmt.Errorf("could not get Kyma with name %s and namespace %s: %w", name, namespace, err)
 	}
 
 	modules, _, err := unstructured.NestedSlice(kyma.UnstructuredContent(), "spec", "modules")

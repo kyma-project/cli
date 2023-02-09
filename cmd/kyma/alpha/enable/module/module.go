@@ -130,7 +130,7 @@ func enableModule(modules []interface{}, name, channel string) ([]interface{}, e
 		}
 		if moduleName == name {
 			moduleChannel, cFound := mod["channel"]
-			if cFound && moduleChannel == channel {
+			if channel == "" || cFound && moduleChannel == channel {
 				// module already enabled
 				return modules, nil
 			}
@@ -139,7 +139,10 @@ func enableModule(modules []interface{}, name, channel string) ([]interface{}, e
 
 	newModule := make(map[string]interface{})
 	newModule["name"] = name
-	newModule["channel"] = channel
+	if channel != "" {
+		newModule["channel"] = channel
+	}
+
 	modules = append(modules, newModule)
 
 	return modules, nil

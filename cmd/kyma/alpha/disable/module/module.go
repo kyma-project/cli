@@ -126,13 +126,16 @@ func disableModule(modules []interface{}, name, channel string) ([]interface{}, 
 		if !found {
 			return nil, errors.New("invalid item in modules spec: name field missing")
 		}
-		if moduleName == name {
+		if moduleName != name {
+			continue
+		}
+		if channel != "" {
 			moduleChannel, cFound := mod["channel"]
 			if cFound && moduleChannel != channel {
 				continue
 			}
-			return append(modules[:i], modules[i+1:]...), nil
 		}
+		return append(modules[:i], modules[i+1:]...), nil
 	}
 
 	return nil, errors.Errorf("no active module %s %s found to disable", name, channel)
