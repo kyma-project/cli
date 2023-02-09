@@ -23,7 +23,7 @@ kyma alpha enable module [name] [flags]
 ## Examples
 
 ```bash
-Example:
+
 Enable "my-module" from "alpha"" channel in "default-kyma" from "kyma-system" namespace
 		kyma alpha enable module my-module -c alpha -n kyma-system -k default-kyma
 

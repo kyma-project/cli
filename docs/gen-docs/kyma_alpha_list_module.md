@@ -30,7 +30,7 @@ kyma alpha list module [kyma] [flags]
 ## Examples
 
 ```bash
-Examples:
+
 List all modules
 		kyma alpha list module
 List all modules in the "regular" channel

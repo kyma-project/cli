@@ -22,7 +22,7 @@ kyma alpha disable module [name] [flags]
 ## Examples
 
 ```bash
-Example:
+
 Disable "my-module" from "alpha"" channel in "default-kyma" from "kyma-system" namespace
 		kyma alpha disable module my-module -c alpha -n kyma-system -k default-kyma
 
