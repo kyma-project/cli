@@ -35,7 +35,7 @@ For more information on Kyma modules, see the 'create module' command.
 This command disables an active module in the cluster.
 `,
 
-		Example: `Example:
+		Example: `
 Disable "my-module" from "alpha"" channel in "default-kyma" from "kyma-system" namespace
 		kyma alpha disable module my-module -c alpha -n kyma-system -k default-kyma
 `,

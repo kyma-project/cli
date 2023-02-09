@@ -69,7 +69,7 @@ the ModuleTemplates will also have a Field called **State** which will reflect t
 Finally, you can restrict and select a custom Namespace for the command.
 `,
 
-		Example: `Examples:
+		Example: `
 List all modules
 		kyma alpha list module
 List all modules in the "regular" channel
