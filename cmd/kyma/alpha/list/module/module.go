@@ -94,8 +94,8 @@ List all modules for the kyma "some-kyma" in the "alpha" channel
 		&o.Timeout, "timeout", "t", 1*time.Minute, "Maximum time for the list operation to retrieve ModuleTemplates.",
 	)
 	cmd.Flags().StringVarP(
-		&o.KymaName, "kyma-name", "k", cli.KymaNameDefault,
-		"The name of the Kyma to use. An empty name uses 'default-kyma'",
+		&o.KymaName, "kyma-name", "k", "",
+		"The name a specific Kyma to use.",
 	)
 	cmd.Flags().StringVarP(
 		&o.Namespace, "namespace", "n", cli.KymaNamespaceDefault,
