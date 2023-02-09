@@ -1,11 +1,14 @@
 package module
 
-import "github.com/kyma-project/cli/internal/cli"
+import (
+	"github.com/kyma-project/cli/internal/cli"
+)
 
 type Options struct {
 	*cli.Options
 
 	RegistryURL       string
+	NameMappingMode   string
 	PrivateKeyPath    string
 	SignatureName     string
 	Credentials       string

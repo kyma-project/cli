@@ -53,24 +53,40 @@ func NewCmd(o *Options) *cobra.Command {
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.RunWithTimeout() },
 		Aliases: []string{"d"},
 	}
-	cobraCmd.Flags().StringArrayVarP(&o.Kustomizations, "kustomization", "k", []string{}, `Provide one or more kustomizations to deploy. Each occurrence of the flag accepts a URL with an optional reference (commit, branch, or release) in the format URL@ref or a local path to the directory of the kustomization file.
+	cobraCmd.Flags().StringArrayVarP(
+		&o.Kustomizations, "kustomization", "k", []string{},
+		`Provide one or more kustomizations to deploy. Each occurrence of the flag accepts a URL with an optional reference (commit, branch, or release) in the format URL@ref or a local path to the directory of the kustomization file.
 	Defaults to deploying Lifecycle Manager and Module Manager from GitHub main branch.
 	Examples:
 	- Deploy a specific release of the Lifecycle Manager: "kyma deploy -k https://github.com/kyma-project/lifecycle-manager/config/default@1.2.3"
 	- Deploy a local Module Manager: "kyma deploy --kustomization /path/to/repo/module-manager/config/default"
 	- Deploy a branch of Lifecycle Manager with a custom URL: "kyma deploy -k https://gitlab.com/forked-from-github/lifecycle-manager/config/default@feature-branch-1"
-	- Deploy the main branch of Lifecycle Manager while using local sources of Module Manager: "kyma deploy -k /path/to/repo/module-manager/config/default -k https://github.com/kyma-project/lifecycle-manager/config/default@main"`)
-	cobraCmd.Flags().StringArrayVarP(&o.Modules, "module", "m", []string{}, `Provide one or more modules to activate after the deployment is finished. Example: "--module name@namespace" (namespace is optional).`)
+	- Deploy the main branch of Lifecycle Manager while using local sources of Module Manager: "kyma deploy -k /path/to/repo/module-manager/config/default -k https://github.com/kyma-project/lifecycle-manager/config/default@main"`,
+	)
+	cobraCmd.Flags().StringArrayVarP(
+		&o.Modules, "module", "m", []string{},
+		`Provide one or more modules to activate after the deployment is finished. Example: "--module name@namespace" (namespace is optional).`,
+	)
 	cobraCmd.Flags().StringVarP(&o.ModulesFile, "modules-file", "f", "", `Path to file containing a list of modules.`)
-	cobraCmd.Flags().StringVarP(&o.Channel, "channel", "c", "stable", `Select which channel to deploy from: stable, fast, nightly.`)
-	cobraCmd.Flags().StringVar(&o.Channel, "kyma-cr", "", `Provide a custom Kyma CR file for the deployment.`)
+	cobraCmd.Flags().StringVarP(
+		&o.Channel, "channel", "c", "regular", `Select which channel to deploy from.`,
+	)
+	cobraCmd.Flags().StringVarP(
+		&o.Namespace, "namespace", "n", "kyma-system",
+		"The Namespace to deploy the the Kyma custom resource in.",
+	)
+	cobraCmd.Flags().StringVar(&o.KymaCR, "kyma-cr", "", `Provide a custom Kyma CR file for the deployment.`)
 
 	// TODO remove this flag when module templates can be fetched from release.
 	// Might be worth keeping this flag with another name to install extra templates??
-	cobraCmd.Flags().StringArrayVar(&o.Templates, "template", []string{}, `Provide one or more module templates to deploy.
-	WARNING: This is a temporary flag for development and will be removed soon.`)
+	cobraCmd.Flags().StringArrayVar(
+		&o.Templates, "template", []string{}, `Provide one or more module templates to deploy.
+	WARNING: This is a temporary flag for development and will be removed soon.`,
+	)
 
-	cobraCmd.Flags().BoolVar(&o.DryRun, "dry-run", false, "Renders the Kubernetes manifests without actually applying them.")
+	cobraCmd.Flags().BoolVar(
+		&o.DryRun, "dry-run", false, "Renders the Kubernetes manifests without actually applying them.",
+	)
 	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "t", 20*time.Minute, "Maximum time for the deployment.")
 
 	return cobraCmd
@@ -197,7 +213,11 @@ func (cmd *command) deploy(start time.Time) error {
 		modStep.Success()
 
 		kymaStep := cmd.NewStep("Kyma CR deployed")
-		if err := deploy.Kyma(cmd.K8s, cmd.opts.Channel, cmd.opts.KymaCR, false); err != nil {
+		if err := deploy.Kyma(
+			cmd.K8s,
+			cmd.opts.Namespace,
+			cmd.opts.Channel, cmd.opts.KymaCR, false,
+		); err != nil {
 			kymaStep.Failuref("Failed to deploy Kyma CR")
 			return err
 		}
@@ -229,7 +249,11 @@ func (cmd *command) dryRun() error {
 			fmt.Printf("%s\n---\n", string(b))
 		}
 
-		if err := deploy.Kyma(cmd.K8s, cmd.opts.Channel, cmd.opts.KymaCR, true); err != nil {
+		if err := deploy.Kyma(
+			cmd.K8s,
+			cmd.opts.Namespace,
+			cmd.opts.Channel, cmd.opts.KymaCR, true,
+		); err != nil {
 			return err
 		}
 	}
@@ -241,7 +265,9 @@ func (cmd *command) waitForOperators() error {
 	defer close(errChan)
 
 	go func() {
-		err := cmd.K8s.WaitDeploymentStatus("kcp-system", "lifecycle-manager-controller-manager", appsv1.DeploymentAvailable, corev1.ConditionTrue)
+		err := cmd.K8s.WaitDeploymentStatus(
+			"kcp-system", "lifecycle-manager-controller-manager", appsv1.DeploymentAvailable, corev1.ConditionTrue,
+		)
 		lifecycleStep := cmd.NewStep("Lifecycle Manager deployed")
 		if err != nil {
 			lifecycleStep.Failuref("Failed to deploy Lifecycle Manager")
@@ -252,7 +278,9 @@ func (cmd *command) waitForOperators() error {
 	}()
 
 	go func() {
-		err := cmd.K8s.WaitDeploymentStatus("kcp-system", "module-manager-controller-manager", appsv1.DeploymentAvailable, corev1.ConditionTrue)
+		err := cmd.K8s.WaitDeploymentStatus(
+			"kcp-system", "module-manager-controller-manager", appsv1.DeploymentAvailable, corev1.ConditionTrue,
+		)
 		moduleStep := cmd.NewStep("Module Manager deployed")
 		if err != nil {
 			moduleStep.Failuref("Failed to deploy Module Manager")

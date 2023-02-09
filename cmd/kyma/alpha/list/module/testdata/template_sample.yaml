@@ -14,7 +14,7 @@ metadata:
     operator.kyma-project.io/managed-by: lifecycle-manager
     operator.kyma-project.io/module-name: manifest-1
   name: manifest-1
-  namespace: default
+  namespace: kcp-system
   resourceVersion: "249413"
   uid: 70691d7e-e532-420d-89c9-4df203e86953
 spec:

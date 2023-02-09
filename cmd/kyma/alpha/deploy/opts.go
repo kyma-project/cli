@@ -12,6 +12,7 @@ type Options struct {
 	*cli.Options
 	DryRun         bool
 	ModulesFile    string
+	Namespace      string
 	Channel        string
 	KymaCR         string
 	Modules        []string

@@ -15,7 +15,7 @@ kyma alpha deploy [flags]
 ## Flags
 
 ```bash
-  -c, --channel string              Select which channel to deploy from: stable, fast, nightly. (default "stable")
+  -c, --channel string              Select which channel to deploy from. (default "regular")
       --dry-run                     Renders the Kubernetes manifests without actually applying them.
   -k, --kustomization stringArray   Provide one or more kustomizations to deploy. Each occurrence of the flag accepts a URL with an optional reference (commit, branch, or release) in the format URL@ref or a local path to the directory of the kustomization file.
                                     	Defaults to deploying Lifecycle Manager and Module Manager from GitHub main branch.
@@ -27,6 +27,7 @@ kyma alpha deploy [flags]
       --kyma-cr string              Provide a custom Kyma CR file for the deployment.
   -m, --module stringArray          Provide one or more modules to activate after the deployment is finished. Example: "--module name@namespace" (namespace is optional).
   -f, --modules-file string         Path to file containing a list of modules.
+  -n, --namespace string            The Namespace to deploy the the Kyma custom resource in. (default "kyma-system")
       --template stringArray        Provide one or more module templates to deploy.
                                     	WARNING: This is a temporary flag for development and will be removed soon.
   -t, --timeout duration            Maximum time for the deployment. (default 20m0s)

@@ -7,10 +7,16 @@ import (
 	"text/template"
 
 	"github.com/kyma-project/cli/internal/kube"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-const kymaCRTemplate = `apiVersion: operator.kyma-project.io/v1alpha1
+const kymaCRTemplate = `apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Namespace }}
+---
+apiVersion: operator.kyma-project.io/v1alpha1
 kind: Kyma
 metadata:
   annotations:
@@ -18,7 +24,7 @@ metadata:
   labels:
     operator.kyma-project.io/managed-by: lifecycle-manager
   name: default-kyma
-  namespace: kcp-system
+  namespace: {{ .Namespace }}
 spec:
   channel: {{ .Channel }}
   modules: []
@@ -33,9 +39,12 @@ var KymaGVR = schema.GroupVersionResource{
 }
 
 // Kyma deploys the Kyma CR. If no kymaCRPath is provided, it deploys the default CR.
-func Kyma(k8s kube.KymaKube, channel, kymaCRpath string, dryRun bool) error {
+func Kyma(k8s kube.KymaKube, namespace, channel, kymaCRpath string, dryRun bool) error {
 	// TODO delete deploy.go when the old reconciler is gone.
 	kymaCR := bytes.Buffer{}
+
+	nsObj := &v1.Namespace{}
+	nsObj.SetName(namespace)
 
 	if kymaCRpath != "" {
 		data, err := os.ReadFile(kymaCRpath)
@@ -53,11 +62,13 @@ func Kyma(k8s kube.KymaKube, channel, kymaCRpath string, dryRun bool) error {
 			channel = "regular"
 		}
 		data := struct {
-			Channel string
-			Sync    bool
+			Channel   string
+			Sync      bool
+			Namespace string
 		}{
-			Channel: channel,
-			Sync:    false,
+			Channel:   channel,
+			Sync:      false,
+			Namespace: namespace,
 		}
 
 		if err := t.Execute(&kymaCR, data); err != nil {
