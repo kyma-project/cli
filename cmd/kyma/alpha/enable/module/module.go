@@ -104,7 +104,9 @@ func (cmd *command) run(ctx context.Context, moduleName string) error {
 		return fmt.Errorf("could not find module to enable: %w", err)
 	}
 
-	if len(modules) != len(desiredModules) {
+	if len(modules) == len(desiredModules) {
+		fmt.Println("Module already enabled")
+	} else {
 		if err = moduleInteractor.Update(ctx, desiredModules); err != nil {
 			return err
 		}

@@ -67,7 +67,6 @@ func (i *Interactor) Update(ctx context.Context, modules ModulesList) error {
 	if err != nil {
 		return fmt.Errorf("failed to update Kyma %s in %s: %w", name, namespace, err)
 	}
-
 	return nil
 }
 
@@ -76,15 +75,31 @@ func (i *Interactor) WaitForKymaReadiness() error {
 	name := i.ResourceName.Name
 	time.Sleep(2 * time.Second)
 	checkFn := func(u *unstructured.Unstructured) (bool, error) {
-		status, exists, err := unstructured.NestedString(u.Object, "status", "state")
+		status, _, err := unstructured.NestedString(u.Object, "status", "state")
 		if err != nil {
-			return false, errors.Wrap(err, "error waiting for Kyma readiness")
+			return false, errors.Wrap(err, "could not parse status state")
 		}
-		return exists && status == "Ready", nil
+
+		switch status {
+		case "Ready":
+			fmt.Println("Modules successfully changed. Kyma in state 'Ready'")
+			return true, nil
+		case "Error":
+			operation, exists, err := unstructured.NestedString(u.Object, "status", "lastOperation", "operation")
+			if err != nil {
+				return false, fmt.Errorf("could not parse status lastOperation: %w", err)
+			}
+			if exists {
+				return false, errors.Errorf("updating Kyma resulted in error state with last operation: %s", operation)
+			}
+			return false, errors.New("Kyma in state error")
+		default:
+			return false, nil
+		}
 	}
 	err := i.Client.WatchResource(kymaResource, name, namespace, checkFn)
 	if err != nil {
-		return errors.Wrap(err, "failed to watch resource Kyma for state 'Ready'")
+		return err
 	}
 	return nil
 }
