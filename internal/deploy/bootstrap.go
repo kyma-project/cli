@@ -13,13 +13,36 @@ import (
 )
 
 const (
-	defaultRetries        = 3
-	defaultInitialBackoff = 3 * time.Second
+	defaultRetries            = 3
+	defaultInitialBackoff     = 3 * time.Second
+	wildCardRoleAndAssignment = `---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kyma-cli-provisioned-wildcard
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["*"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: lifecycle-manager-wildcard
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kyma-cli-provisioned-wildcard
+subjects:
+- kind: ServiceAccount
+  name: lifecycle-manager-controller-manager
+  namespace: kcp-system
+`
 )
 
 // Bootstrap deploys the kustomization files for the prerequisites for Kyma.
 // Returns true if the Kyma CRD was deployed.
-func Bootstrap(kustomizations []string, k8s kube.KymaKube, dryRun bool) (bool, error) {
+func Bootstrap(kustomizations []string, k8s kube.KymaKube, addWildCard, dryRun bool) (bool, error) {
 	var defs []kustomize.Definition
 	// defaults
 	for _, k := range kustomizations {
@@ -34,6 +57,10 @@ func Bootstrap(kustomizations []string, k8s kube.KymaKube, dryRun bool) (bool, e
 	manifests, err := build(defs)
 	if err != nil {
 		return false, err
+	}
+
+	if addWildCard {
+		manifests = append(manifests, []byte(wildCardRoleAndAssignment)...)
 	}
 
 	// apply manifests with incremental retry
