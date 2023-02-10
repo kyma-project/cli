@@ -16,7 +16,7 @@ require (
 	github.com/docker/docker v20.10.21+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/fatih/color v1.14.1
-	github.com/gardener/component-spec/bindings-go v0.0.66
+	github.com/gardener/component-spec/bindings-go v0.0.80
 	github.com/go-git/go-git/v5 v5.5.2
 	github.com/go-logr/logr v1.2.3
 	github.com/imdario/mergo v0.3.13
