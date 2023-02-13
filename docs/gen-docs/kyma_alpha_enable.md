@@ -2,11 +2,11 @@
 title: kyma alpha enable
 ---
 
-Enables a resource on the Kyma cluster.
+Enables a resource in the Kyma cluster.
 
 ## Synopsis
 
-Use this command to enable a resource on the Kyma cluster.
+Use this command to enable a resource in the Kyma cluster.
 
 
 ## Flags inherited from parent commands
@@ -21,6 +21,6 @@ Use this command to enable a resource on the Kyma cluster.
 
 ## See also
 
-* [kyma alpha](kyma_alpha.md)	 - Experimental commands
-* [kyma alpha enable module](kyma_alpha_enable_module.md)	 - Enables a module in the cluster or in the given Kyma resource
+* [kyma alpha](kyma_alpha.md)	 - Experimental commands.
+* [kyma alpha enable module](kyma_alpha_enable_module.md)	 - Enables a module in the cluster or in the given Kyma resource.
 

@@ -2,11 +2,11 @@
 title: kyma alpha disable
 ---
 
-Disables a resource on the Kyma cluster.
+Disables a resource in the Kyma cluster.
 
 ## Synopsis
 
-Use this command to disable a resource on the Kyma cluster.
+Use this command to disable a resource in the Kyma cluster.
 
 
 ## Flags inherited from parent commands
@@ -21,6 +21,6 @@ Use this command to disable a resource on the Kyma cluster.
 
 ## See also
 
-* [kyma alpha](kyma_alpha.md)	 - Experimental commands
-* [kyma alpha disable module](kyma_alpha_disable_module.md)	 - Disables a module in the cluster or in the given Kyma resource
+* [kyma alpha](kyma_alpha.md)	 - Experimental commands.
+* [kyma alpha disable module](kyma_alpha_disable_module.md)	 - Disables a module in the cluster or in the given Kyma resource.
 
