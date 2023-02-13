@@ -25,7 +25,7 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "module [name] [flags]",
-		Short: "Enables a module in the cluster or in the given Kyma resource",
+		Short: "Enables a module in the cluster or in the given Kyma resource.",
 		Long: `Use this command to enable Kyma modules available in the cluster.
 
 ### Detailed description
@@ -33,11 +33,11 @@ func NewCmd(o *Options) *cobra.Command {
 For more information on Kyma modules, see the 'create module' command.
 
 This command enables an available module in the cluster. 
-A module is available when a ModuleTemplate is found for instantiating it with proper defaults.
+A module is available when it is released with a ModuleTemplate. The ModuleTemplate is used for instantiating the module with proper default configuration.
 `,
 
 		Example: `
-Enable "my-module" from "alpha"" channel in "default-kyma" from "kyma-system" namespace
+Enable "my-module" from "alpha" channel in "default-kyma" in "kyma-system" Namespace
 		kyma alpha enable module my-module -c alpha -n kyma-system -k default-kyma
 `,
 		RunE:    func(cmd *cobra.Command, args []string) error { return c.Run(cmd.Context(), args) },
@@ -49,18 +49,18 @@ Enable "my-module" from "alpha"" channel in "default-kyma" from "kyma-system" na
 	)
 	cmd.Flags().StringVarP(
 		&o.Channel, "channel", "c", "",
-		"The channel of the module to enable.",
+		"The name of the module's channel to enable.",
 	)
 	cmd.Flags().StringVarP(
 		&o.Namespace, "namespace", "n", cli.KymaNamespaceDefault,
-		"The namespace of the Kyma to use. An empty namespace defaults to 'kyma-system'",
+		"The name of the Kyma Namespace to use. If empty, the default 'kyma-system' Namespace is used. (default \"kyma-system\")",
 	)
 	cmd.Flags().StringVarP(
 		&o.KymaName, "kyma-name", "k", cli.KymaNameDefault,
-		"The name of the Kyma to use. An empty name uses 'default-kyma'",
+		"The name of the Kyma resource to use. If empty, the 'default-kyma' is used. (default \"default-kyma\")",
 	)
 	cmd.Flags().BoolVarP(&o.Wait, "wait", "w", false,
-		"Wait until the given Kyma resource is ready",
+		"Wait until the given Kyma resource is ready.",
 	)
 
 	return cmd

@@ -9,8 +9,8 @@ import (
 func NewCmd(o *cli.Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "enable",
-		Short: "Enables a resource on the Kyma cluster.",
-		Long: `Use this command to enable a resource on the Kyma cluster.
+		Short: "Enables a resource in the Kyma cluster.",
+		Long: `Use this command to enable a resource in the Kyma cluster.
 `,
 	}
 

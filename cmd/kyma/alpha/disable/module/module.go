@@ -25,8 +25,8 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "module [name] [flags]",
-		Short: "Disables a module in the cluster or in the given Kyma resource",
-		Long: `Use this command to disable Kyma modules active in the cluster.
+		Short: "Disables a module in the cluster or in the given Kyma resource.",
+		Long: `Use this command to disable active Kyma modules in the cluster.
 
 ### Detailed description
 
@@ -36,7 +36,7 @@ This command disables an active module in the cluster.
 `,
 
 		Example: `
-Disable "my-module" from "alpha"" channel in "default-kyma" from "kyma-system" namespace
+Disable "my-module" from the "alpha" channel in "default-kyma" in "kyma-system" Namespace
 		kyma alpha disable module my-module -c alpha -n kyma-system -k default-kyma
 `,
 		RunE:    func(cmd *cobra.Command, args []string) error { return c.Run(cmd.Context(), args) },
@@ -48,18 +48,18 @@ Disable "my-module" from "alpha"" channel in "default-kyma" from "kyma-system" n
 	)
 	cmd.Flags().StringVarP(
 		&o.Channel, "channel", "c", "",
-		"The channel of the module to use.",
+		"The name of the module's channel to use.",
 	)
 	cmd.Flags().StringVarP(
 		&o.Namespace, "namespace", "n", cli.KymaNamespaceDefault,
-		"The namespace of the Kyma to use. An empty namespace defaults to 'kyma-system'",
+		"The name of the Kyma Namespace to use. If empty, the default 'kyma-system' Namespace is used. (default \"kyma-system\")",
 	)
 	cmd.Flags().StringVarP(
 		&o.KymaName, "kyma-name", "k", cli.KymaNameDefault,
-		"The name of the Kyma to use. An empty name uses 'default-kyma'",
+		"The name of the Kyma resource to use. If empty, the 'default-kyma' is used. (default \"default-kyma\")",
 	)
 	cmd.Flags().BoolVarP(&o.Wait, "wait", "w", false,
-		"Wait until the given Kyma resource is ready",
+		" Wait until the given Kyma resource is ready.",
 	)
 
 	return cmd

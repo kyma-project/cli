@@ -95,7 +95,7 @@ List all modules for the kyma "some-kyma" in the "alpha" channel
 	)
 	cmd.Flags().StringVarP(
 		&o.KymaName, "kyma-name", "k", "",
-		"The name a specific Kyma to use.",
+		"The name of the Kyma resource to use.",
 	)
 	cmd.Flags().StringVarP(
 		&o.Namespace, "namespace", "n", cli.KymaNamespaceDefault,
@@ -107,7 +107,7 @@ List all modules for the kyma "some-kyma" in the "alpha" channel
 	)
 	cmd.Flags().BoolVar(
 		&o.NoHeaders, "no-headers", false,
-		" When using the default output format, don't print headers (default print headers)",
+		"When using the default output format, don't print headers. (default print headers)",
 	)
 
 	cmd.Flags().StringVarP(
