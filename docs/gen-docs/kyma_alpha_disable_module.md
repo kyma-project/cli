@@ -32,10 +32,10 @@ Disable "my-module" from the "alpha" channel in "default-kyma" in "kyma-system" 
 
 ```bash
   -c, --channel string     The name of the module's channel to use.
-  -k, --kyma-name string   The name of the Kyma resource to use. If empty, the 'default-kyma' is used. (default "default-kyma")
-  -n, --namespace string   The name of the Kyma Namespace to use. If empty, the default 'kyma-system' Namespace is used. (default "kyma-system")
+  -k, --kyma-name string   The name of the Kyma resource to use. If empty, the 'default-kyma' is used. (default "default-kyma") (default "default-kyma")
+  -n, --namespace string   The name of the Kyma Namespace to use. If empty, the default 'kyma-system' Namespace is used. (default "kyma-system") (default "kyma-system")
   -t, --timeout duration   Maximum time for the operation to disable a module. (default 1m0s)
-  -w, --wait               Wait until the given Kyma resource is ready.
+  -w, --wait                Wait until the given Kyma resource is ready.
 ```
 
 ## Flags inherited from parent commands
@@ -50,5 +50,5 @@ Disable "my-module" from the "alpha" channel in "default-kyma" in "kyma-system" 
 
 ## See also
 
-* [kyma alpha disable](kyma_alpha_disable.md)	 - Disables a resource on the Kyma cluster.
+* [kyma alpha disable](kyma_alpha_disable.md)	 - Disables a resource in the Kyma cluster.
 

@@ -33,8 +33,8 @@ Enable "my-module" from "alpha" channel in "default-kyma" in "kyma-system" Names
 
 ```bash
   -c, --channel string     The name of the module's channel to enable.
-  -k, --kyma-name string   The name of the Kyma resource to use. If empty, the 'default-kyma' is used. (default "default-kyma")
-  -n, --namespace string   The name of the Kyma Namespace to use. If empty, the default 'kyma-system' Namespace is used. (default "kyma-system")
+  -k, --kyma-name string   The name of the Kyma resource to use. If empty, the 'default-kyma' is used. (default "default-kyma") (default "default-kyma")
+  -n, --namespace string   The name of the Kyma Namespace to use. If empty, the default 'kyma-system' Namespace is used. (default "kyma-system") (default "kyma-system")
   -t, --timeout duration   Maximum time for the operation to enable a module. (default 1m0s)
   -w, --wait               Wait until the given Kyma resource is ready.
 ```
@@ -51,5 +51,5 @@ Enable "my-module" from "alpha" channel in "default-kyma" in "kyma-system" Names
 
 ## See also
 
-* [kyma alpha enable](kyma_alpha_enable.md)	 - Enables a resource on the Kyma cluster.
+* [kyma alpha enable](kyma_alpha_enable.md)	 - Enables a resource in the Kyma cluster.
 
