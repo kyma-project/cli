@@ -158,6 +158,13 @@ func (cmd *command) Run(args []string) error {
 
 	cmd.CurrentStep.Successf("Image created")
 
+	/* -- ADD SECURITY SCANNING METADATA -- */
+	cmd.NewStep("Configuring security scanning...")
+	if err := module.AddSecurityScanningMetadata(archive.ComponentDescriptor, modDef, fs); err != nil {
+		cmd.CurrentStep.Failure()
+		return err
+	}
+	cmd.CurrentStep.Successf("Security scanning configured")
 	/* -- PUSH & TEMPLATE -- */
 
 	if cmd.opts.RegistryURL != "" {

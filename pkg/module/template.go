@@ -95,7 +95,7 @@ func Template(archive *ctf.ComponentArchive, channel string, data []byte, regist
 	return w.Bytes(), nil
 }
 
-// indent prepends the given number of whitespaces to eachline in the given string
+// Indent prepends the given number of whitespaces to eachline in the given string
 func Indent(n int, in string) string {
 	out := strings.Builder{}
 
