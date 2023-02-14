@@ -41,12 +41,11 @@ var KymaGVR = schema.GroupVersionResource{
 }
 
 const (
-	certManagerVersion = "v1.11.0"
-	certManagerURL     = "https://github.com/cert-manager/cert-manager/releases/download/" + certManagerVersion + "/cert-manager.yaml"
+	certManagerURL = "https://github.com/cert-manager/cert-manager/releases/download/%s/cert-manager.yaml"
 )
 
 // Kyma deploys the Kyma CR. If no kymaCRPath is provided, it deploys the default CR.
-func Kyma(k8s kube.KymaKube, namespace, channel, kymaCRpath string, certManager, dryRun bool) error {
+func Kyma(k8s kube.KymaKube, namespace, channel, kymaCRpath, certManagerVersion string, dryRun bool) error {
 	// TODO delete deploy.go when the old reconciler is gone.
 	yamlBytes := bytes.Buffer{}
 
@@ -83,20 +82,27 @@ func Kyma(k8s kube.KymaKube, namespace, channel, kymaCRpath string, certManager,
 		}
 	}
 
-	if certManager {
+	result := yamlBytes.Bytes()
+
+	if certManagerVersion != "" {
 		// Get the data
-		resp, err := http.Get(certManagerURL)
+		resp, err := http.Get(fmt.Sprintf(certManagerURL, certManagerVersion))
 		if err != nil {
 			return fmt.Errorf("could not download cert-manager: %w", err)
 		}
-		if _, err := io.Copy(&yamlBytes, resp.Body); err != nil {
+
+		certManagerBytes, err := io.ReadAll(resp.Body)
+		if err != nil {
 			return fmt.Errorf("could not write cert-manager data to yaml: %w", err)
 		}
+		result = append(result, []byte("\n---\n")...)
+		result = append(result, certManagerBytes...)
 	}
 
 	if dryRun {
-		fmt.Printf("%s\n---\n", yamlBytes.String())
+		fmt.Printf("%s\n---\n", result)
 		return nil
 	}
-	return k8s.Apply(yamlBytes.Bytes())
+
+	return k8s.Apply(result)
 }

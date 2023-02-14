@@ -87,8 +87,9 @@ func NewCmd(o *Options) *cobra.Command {
 	WARNING: This is a temporary flag for development and will be removed soon.`,
 	)
 
-	cobraCmd.Flags().BoolVar(
-		&o.CertManager, "cert-manager", false, "Installs cert-manager.",
+	cobraCmd.Flags().StringVar(
+		&o.CertManagerVersion, "cert-manager", "v1.11.0",
+		"Installs cert-manager from the specified static version. an empty string skips the installation.",
 	)
 
 	cobraCmd.Flags().BoolVar(
@@ -96,7 +97,7 @@ func NewCmd(o *Options) *cobra.Command {
 	)
 
 	cobraCmd.Flags().BoolVar(
-		&o.WildcardPermissions, "with-wildcard-permissions", false,
+		&o.WildcardPermissions, "wildcard-permissions", true,
 		`WARNING: DO NOT USE ON PRODUCTIVE CLUSTERS! 
 Creates a wildcard cluster-role to allow for easy local installation permissions of lifecycle-manager.
 Allows for usage of lifecycle-manager without having to worry about modules requiring specific RBAC permissions.`,
@@ -238,7 +239,7 @@ func (cmd *command) deploy(start time.Time) error {
 			cmd.opts.Namespace,
 			cmd.opts.Channel,
 			cmd.opts.KymaCR,
-			cmd.opts.CertManager,
+			cmd.opts.CertManagerVersion,
 			false,
 		); err != nil {
 			kymaStep.Failuref("Failed to deploy Kyma CR")
@@ -277,7 +278,7 @@ func (cmd *command) dryRun() error {
 			cmd.opts.Namespace,
 			cmd.opts.Channel,
 			cmd.opts.KymaCR,
-			cmd.opts.CertManager,
+			cmd.opts.CertManagerVersion,
 			true,
 		); err != nil {
 			return err

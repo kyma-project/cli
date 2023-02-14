@@ -25,6 +25,7 @@ kyma alpha deploy [flags]
 ## Flags
 
 ```bash
+      --cert-manager string         Installs cert-manager from the specified static version. an empty string skips the installation. (default "v1.11.0")
   -c, --channel string              Select which channel to deploy from. (default "regular")
       --dry-run                     Renders the Kubernetes manifests without actually applying them.
   -k, --kustomization stringArray   Provide one or more kustomizations to deploy. Each occurrence of the flag accepts a URL with an optional reference (commit, branch, or release) in the format URL@ref or a local path to the directory of the kustomization file.
@@ -38,9 +39,9 @@ kyma alpha deploy [flags]
       --template stringArray        Provide one or more module templates to deploy.
                                     	WARNING: This is a temporary flag for development and will be removed soon.
   -t, --timeout duration            Maximum time for the deployment. (default 20m0s)
-      --with-wildcard-permissions   WARNING: DO NOT USE ON PRODUCTIVE CLUSTERS! 
+      --wildcard-permissions        WARNING: DO NOT USE ON PRODUCTIVE CLUSTERS! 
                                     Creates a wildcard cluster-role to allow for easy local installation permissions of lifecycle-manager.
-                                    Allows for usage of lifecycle-manager without having to worry about modules requiring specific RBAC permissions.
+                                    Allows for usage of lifecycle-manager without having to worry about modules requiring specific RBAC permissions. (default true)
 ```
 
 ## Flags inherited from parent commands

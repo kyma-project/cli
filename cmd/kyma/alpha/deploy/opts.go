@@ -13,7 +13,7 @@ type Options struct {
 	WildcardPermissions bool
 	DryRun              bool
 	OpenDashboard       bool
-	CertManager         bool
+	CertManagerVersion  string
 	ModulesFile         string
 	Namespace           string
 	Channel             string
