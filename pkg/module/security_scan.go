@@ -66,6 +66,9 @@ func appendProtecodeImagesLayers(descriptor *v2.ComponentDescriptor, config *Sec
 			return err
 		}
 		imageTypeLabel, err := generateOCMLabel("type", "third-party-image")
+		if err != nil {
+			return err
+		}
 		imageLayerMetadata := v2.IdentityObjectMeta{
 			Name:    imageName,
 			Type:    v2.OCIImageType,
@@ -73,6 +76,9 @@ func appendProtecodeImagesLayers(descriptor *v2.ComponentDescriptor, config *Sec
 			Labels:  []v2.Label{imageTypeLabel},
 		}
 		imageLayerAccess, err := v2.NewUnstructured(v2.NewOCIRegistryAccess(imageURL))
+		if err != nil {
+			return err
+		}
 		protecodeImageLayerResource := v2.Resource{
 			IdentityObjectMeta: imageLayerMetadata,
 			Relation:           v2.ExternalRelation,
