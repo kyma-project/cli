@@ -92,6 +92,7 @@ func IsManagedKyma(ctx context.Context, restConfig *rest.Config, kubeClient kube
 	return false, nil
 }
 
+// lookupConfigMapMarker tries to find a "kyma-system/skr-configmap" "marker" ConfigMap with specific labels and payload.
 func lookupConfigMapMarker(ctx context.Context, kubeClient kubernetes.Interface) (bool, error) {
 	cm, err := kubeClient.CoreV1().ConfigMaps("kyma-system").Get(ctx, "skr-configmap", metav1.GetOptions{})
 
@@ -102,8 +103,12 @@ func lookupConfigMapMarker(ctx context.Context, kubeClient kubernetes.Interface)
 		return false, fmt.Errorf("Error getting ConfigMaps in the \"kyma-system\" namespace: %w", err)
 	}
 
-	if cm != nil && cm.ObjectMeta.Labels != nil && cm.ObjectMeta.Labels["reconciler.kyma-project.io/managed-by"] == "reconciler" {
-		return true, nil
+	if cm == nil || cm.ObjectMeta.Labels == nil || cm.Data == nil {
+		return false, nil
 	}
-	return false, nil
+
+	res := cm.ObjectMeta.Labels["reconciler.kyma-project.io/managed-by"] == "reconciler" &&
+		cm.Data["is-managed-kyma-runtime"] == "true"
+
+	return res, nil
 }
