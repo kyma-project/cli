@@ -6,8 +6,10 @@ import (
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/pointer"
 	"time"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -24,12 +26,14 @@ type ModulesList []interface{}
 type Interactor struct {
 	Client       kube.KymaKube
 	ResourceName types.NamespacedName
+	ForceUpdate  bool
 }
 
-func NewInteractor(client kube.KymaKube, name types.NamespacedName) Interactor {
+func NewInteractor(client kube.KymaKube, name types.NamespacedName, forceUpdate bool) Interactor {
 	return Interactor{
 		Client:       client,
 		ResourceName: name,
+		ForceUpdate:  forceUpdate,
 	}
 }
 
@@ -62,8 +66,17 @@ func (i *Interactor) Update(ctx context.Context, modules ModulesList) error {
 	if err != nil {
 		return fmt.Errorf("failed to set modules list in Kyma spec: %w", err)
 	}
-	_, err = i.Client.Dynamic().Resource(kymaResource).Namespace(namespace).Update(
-		ctx, kyma, metav1.UpdateOptions{})
+	kyma.SetManagedFields(nil)
+	data, err := runtime.Encode(unstructured.UnstructuredJSONScheme, kyma)
+	if err != nil {
+		return fmt.Errorf("failed to marshal kyma object: %w", err)
+	}
+	patchOpts := metav1.PatchOptions{FieldManager: "kyma"}
+	if i.ForceUpdate {
+		patchOpts.Force = pointer.Bool(true)
+	}
+	_, err = i.Client.Dynamic().Resource(kymaResource).Namespace(namespace).Patch(
+		ctx, kyma.GetName(), types.ApplyPatchType, data, patchOpts)
 	if err != nil {
 		return fmt.Errorf("failed to update Kyma %s in %s: %w", name, namespace, err)
 	}

@@ -59,6 +59,9 @@ Enable "my-module" from "alpha" channel in "default-kyma" in "kyma-system" Names
 		&o.KymaName, "kyma-name", "k", cli.KymaNameDefault,
 		"The name of the Kyma resource to use. If empty, the 'default-kyma' is used. (default \"default-kyma\")",
 	)
+	cmd.Flags().BoolVarP(&o.Force, "force-conflicts", "f", false,
+		"Force the patching of Kyma spec modules in case its managed field has already been edited by another source then Kyma CLI.",
+	)
 	cmd.Flags().BoolVarP(&o.Wait, "wait", "w", false,
 		"Wait until the given Kyma resource is ready.",
 	)
@@ -93,7 +96,7 @@ func (cmd *command) run(ctx context.Context, moduleName string) error {
 	}
 
 	kyma := types.NamespacedName{Name: cmd.opts.KymaName, Namespace: cmd.opts.Namespace}
-	moduleInteractor := module.NewInteractor(cmd.K8s, kyma)
+	moduleInteractor := module.NewInteractor(cmd.K8s, kyma, cmd.opts.Force)
 	modules, err := moduleInteractor.Get(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get modules: %w", err)

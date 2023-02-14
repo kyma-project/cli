@@ -14,6 +14,7 @@ type Options struct {
 	Channel   string
 	Namespace string
 	KymaName  string
+	Force     bool
 	Wait      bool
 }
 
