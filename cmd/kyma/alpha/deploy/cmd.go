@@ -198,6 +198,20 @@ func (cmd *command) deploy(start time.Time) error {
 		return err
 	}
 
+	if cmd.opts.CertManagerVersion != "" {
+		go func() {
+			certManagerStep := cmd.NewStep("Deploying cert-manager.io")
+			certManagerStep.Start()
+			if err := deploy.CertManager(cmd.K8s, cmd.opts.CertManagerVersion, false); err != nil {
+				certManagerStep.Failuref("Failed to deploy cert-manager.io.")
+			}
+			certManagerStep.Successf(
+				"Deployed cert-manager.io in version %s",
+				cmd.opts.CertManagerVersion,
+			)
+		}()
+	}
+
 	deployStep := cmd.NewStep("Deploying Kyma")
 	deployStep.Start()
 
@@ -232,16 +246,8 @@ func (cmd *command) deploy(start time.Time) error {
 			}
 		}
 		modStep.Success()
-
 		kymaStep := cmd.NewStep("Kyma CR deployed")
-		if err := deploy.Kyma(
-			cmd.K8s,
-			cmd.opts.Namespace,
-			cmd.opts.Channel,
-			cmd.opts.KymaCR,
-			cmd.opts.CertManagerVersion,
-			false,
-		); err != nil {
+		if err := deploy.Kyma(cmd.K8s, cmd.opts.Namespace, cmd.opts.Channel, cmd.opts.KymaCR, false); err != nil {
 			kymaStep.Failuref("Failed to deploy Kyma CR")
 			return err
 		}
@@ -258,6 +264,12 @@ func (cmd *command) deploy(start time.Time) error {
 }
 
 func (cmd *command) dryRun() error {
+	if cmd.opts.CertManagerVersion != "" {
+		if err := deploy.CertManager(cmd.K8s, cmd.opts.CertManagerVersion, true); err != nil {
+			return err
+		}
+	}
+
 	hasKyma, err := deploy.Bootstrap(cmd.opts.Kustomizations, cmd.K8s, cmd.opts.WildcardPermissions, true)
 	if err != nil {
 		return err
@@ -273,14 +285,7 @@ func (cmd *command) dryRun() error {
 			fmt.Printf("%s\n---\n", string(b))
 		}
 
-		if err := deploy.Kyma(
-			cmd.K8s,
-			cmd.opts.Namespace,
-			cmd.opts.Channel,
-			cmd.opts.KymaCR,
-			cmd.opts.CertManagerVersion,
-			true,
-		); err != nil {
+		if err := deploy.Kyma(cmd.K8s, cmd.opts.Namespace, cmd.opts.Channel, cmd.opts.KymaCR, true); err != nil {
 			return err
 		}
 	}

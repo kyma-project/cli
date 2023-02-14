@@ -15,8 +15,7 @@ import (
 const (
 	defaultRetries            = 3
 	defaultInitialBackoff     = 3 * time.Second
-	wildCardRoleAndAssignment = `---
-apiVersion: rbac.authorization.k8s.io/v1
+	wildCardRoleAndAssignment = `apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: kyma-cli-provisioned-wildcard
@@ -36,8 +35,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: lifecycle-manager-controller-manager
-  namespace: kcp-system
-`
+  namespace: kcp-system`
 )
 
 // Bootstrap deploys the kustomization files for the prerequisites for Kyma.
