@@ -88,6 +88,10 @@ func NewCmd(o *Options) *cobra.Command {
 	)
 
 	cobraCmd.Flags().BoolVar(
+		&o.CertManager, "cert-manager", false, "Installs cert-manager.",
+	)
+
+	cobraCmd.Flags().BoolVar(
 		&o.DryRun, "dry-run", false, "Renders the Kubernetes manifests without actually applying them.",
 	)
 
@@ -232,7 +236,10 @@ func (cmd *command) deploy(start time.Time) error {
 		if err := deploy.Kyma(
 			cmd.K8s,
 			cmd.opts.Namespace,
-			cmd.opts.Channel, cmd.opts.KymaCR, false,
+			cmd.opts.Channel,
+			cmd.opts.KymaCR,
+			cmd.opts.CertManager,
+			false,
 		); err != nil {
 			kymaStep.Failuref("Failed to deploy Kyma CR")
 			return err
@@ -268,7 +275,10 @@ func (cmd *command) dryRun() error {
 		if err := deploy.Kyma(
 			cmd.K8s,
 			cmd.opts.Namespace,
-			cmd.opts.Channel, cmd.opts.KymaCR, true,
+			cmd.opts.Channel,
+			cmd.opts.KymaCR,
+			cmd.opts.CertManager,
+			true,
 		); err != nil {
 			return err
 		}

@@ -3,6 +3,8 @@ package deploy
 import (
 	"bytes"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"text/template"
 
@@ -38,10 +40,15 @@ var KymaGVR = schema.GroupVersionResource{
 	Resource: "kymas",
 }
 
+const (
+	certManagerVersion = "v1.11.0"
+	certManagerURL     = "https://github.com/cert-manager/cert-manager/releases/download/" + certManagerVersion + "/cert-manager.yaml"
+)
+
 // Kyma deploys the Kyma CR. If no kymaCRPath is provided, it deploys the default CR.
-func Kyma(k8s kube.KymaKube, namespace, channel, kymaCRpath string, dryRun bool) error {
+func Kyma(k8s kube.KymaKube, namespace, channel, kymaCRpath string, certManager, dryRun bool) error {
 	// TODO delete deploy.go when the old reconciler is gone.
-	kymaCR := bytes.Buffer{}
+	yamlBytes := bytes.Buffer{}
 
 	nsObj := &v1.Namespace{}
 	nsObj.SetName(namespace)
@@ -51,9 +58,9 @@ func Kyma(k8s kube.KymaKube, namespace, channel, kymaCRpath string, dryRun bool)
 		if err != nil {
 			return fmt.Errorf("could not read kyma CR file: %w", err)
 		}
-		kymaCR.Write(data)
+		yamlBytes.Write(data)
 	} else {
-		t, err := template.New("kymaCR").Parse(kymaCRTemplate)
+		t, err := template.New("yamlBytes").Parse(kymaCRTemplate)
 		if err != nil {
 			return fmt.Errorf("could not parse Kyma CR template: %w", err)
 		}
@@ -71,13 +78,25 @@ func Kyma(k8s kube.KymaKube, namespace, channel, kymaCRpath string, dryRun bool)
 			Namespace: namespace,
 		}
 
-		if err := t.Execute(&kymaCR, data); err != nil {
+		if err := t.Execute(&yamlBytes, data); err != nil {
 			return fmt.Errorf("could not build Kyma CR: %w", err)
 		}
 	}
+
+	if certManager {
+		// Get the data
+		resp, err := http.Get(certManagerURL)
+		if err != nil {
+			return fmt.Errorf("could not download cert-manager: %w", err)
+		}
+		if _, err := io.Copy(&yamlBytes, resp.Body); err != nil {
+			return fmt.Errorf("could not write cert-manager data to yaml: %w", err)
+		}
+	}
+
 	if dryRun {
-		fmt.Printf("%s\n---\n", kymaCR.String())
+		fmt.Printf("%s\n---\n", yamlBytes.String())
 		return nil
 	}
-	return k8s.Apply(kymaCR.Bytes())
+	return k8s.Apply(yamlBytes.Bytes())
 }
