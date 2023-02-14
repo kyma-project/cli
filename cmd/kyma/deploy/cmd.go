@@ -47,9 +47,10 @@ func NewCmd(o *Options) *cobra.Command {
 		Use:     "deploy",
 		Short:   "Deploys Kyma on a running Kubernetes cluster.",
 		Long:    "Use this command to deploy, upgrade, or adapt Kyma on a running Kubernetes cluster.",
-		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.RunWithTimeout() },
+		RunE:    func(cc *cobra.Command, _ []string) error { return cmd.RunWithTimeout(cc.Context()) },
 		Aliases: []string{"d"},
 	}
+
 	cobraCmd.Flags().StringArrayVarP(&o.Components, "component", "", []string{}, `Provide one or more components to deploy, for example:
 	- With short-hand notation: "--component name@namespace"
 	- With verbose JSON structure "--component '{"name": "componentName","namespace": "componenNamespace","url": "componentUrl","version": "1.2.3"}'`)
@@ -75,7 +76,7 @@ func NewCmd(o *Options) *cobra.Command {
 	return cobraCmd
 }
 
-func (cmd *command) RunWithTimeout() error {
+func (cmd *command) RunWithTimeout(ctx context.Context) error {
 	if cmd.opts.CI {
 		cmd.Factory.NonInteractive = true
 	}
@@ -90,7 +91,7 @@ func (cmd *command) RunWithTimeout() error {
 	timeout := time.After(cmd.opts.Timeout)
 	errChan := make(chan error)
 	go func() {
-		errChan <- cmd.run()
+		errChan <- cmd.run(ctx)
 	}()
 
 	for {
@@ -106,7 +107,7 @@ func (cmd *command) RunWithTimeout() error {
 	}
 }
 
-func (cmd *command) run() error {
+func (cmd *command) run(ctx context.Context) error {
 	start := time.Now()
 
 	if cmd.opts.DryRun {
@@ -123,7 +124,7 @@ func (cmd *command) run() error {
 	}
 
 	if !cmd.opts.NonInteractive {
-		if err := cli.DetectManagedEnvironment(context.Background(), cmd.K8s, cmd.Factory.NewStep("")); err != nil {
+		if err := cli.DetectManagedEnvironment(ctx, cmd.K8s, cmd.Factory.NewStep("")); err != nil {
 			return err
 		}
 	}
@@ -132,10 +133,10 @@ func (cmd *command) run() error {
 		return err
 	}
 
-	return cmd.deploy(start)
+	return cmd.deploy(ctx, start)
 }
 
-func (cmd *command) deploy(start time.Time) error {
+func (cmd *command) deploy(ctx context.Context, start time.Time) error {
 	wsStep := cmd.NewStep(fmt.Sprintf("Fetching Kyma sources (%s)", cmd.opts.Source))
 	l := cli.NewLogger(cmd.opts.Verbose).Sugar()
 	ws, err := deploy.PrepareWorkspace(cmd.opts.WorkspacePath, cmd.opts.Source, wsStep, !cmd.avoidUserInteraction(), cmd.opts.IsLocal(), l)
@@ -143,7 +144,7 @@ func (cmd *command) deploy(start time.Time) error {
 		return err
 	}
 
-	clusterInfo, err := clusterinfo.Discover(context.Background(), cmd.K8s.Static())
+	clusterInfo, err := clusterinfo.Discover(ctx, cmd.K8s.Static())
 	if err != nil {
 		return errors.Wrap(err, "failed to discover underlying cluster type")
 	}

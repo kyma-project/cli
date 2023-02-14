@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -92,17 +93,17 @@ func IsManagedKyma(ctx context.Context, restConfig *rest.Config, kubeClient kube
 }
 
 func lookupConfigMapMarker(ctx context.Context, kubeClient kubernetes.Interface) (bool, error) {
-	opts := metav1.ListOptions{LabelSelector: "reconciler.kyma-project.io/managed-by=reconciler"}
-	cmList, err := kubeClient.CoreV1().ConfigMaps("kyma-system").List(ctx, opts)
+	cm, err := kubeClient.CoreV1().ConfigMaps("kyma-system").Get(ctx, "skr-configmap", metav1.GetOptions{})
+
 	if err != nil {
-		return false, fmt.Errorf("Error listing ConfigMaps in the \"kyma-system\" namespace: %w", err)
-	}
-
-	for _, cm := range cmList.Items {
-		if cm.Data["is-managed-kyma-runtime"] == "true" {
-			return true, nil
+		if k8sErrors.IsNotFound(err) {
+			return false, nil
 		}
+		return false, fmt.Errorf("Error getting ConfigMaps in the \"kyma-system\" namespace: %w", err)
 	}
 
+	if cm != nil && cm.ObjectMeta.Labels != nil && cm.ObjectMeta.Labels["reconciler.kyma-project.io/managed-by"] == "reconciler" {
+		return true, nil
+	}
 	return false, nil
 }
