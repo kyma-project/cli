@@ -100,7 +100,7 @@ func lookupConfigMapMarker(ctx context.Context, kubeClient kubernetes.Interface)
 		if k8sErrors.IsNotFound(err) {
 			return false, nil
 		}
-		return false, fmt.Errorf("Error getting ConfigMaps in the \"kyma-system\" namespace: %w", err)
+		return false, fmt.Errorf("failed to get ConfigMap \"skr-configmap\"  in the \"kyma-system\" namespace: %w", err)
 	}
 
 	if cm == nil || cm.ObjectMeta.Labels == nil || cm.Data == nil {
