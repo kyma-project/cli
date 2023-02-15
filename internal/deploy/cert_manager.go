@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/avast/retry-go"
 	"github.com/kyma-project/cli/internal/kube"
 )
 
@@ -35,5 +36,10 @@ func CertManager(ctx context.Context, k8s kube.KymaKube, certManagerVersion stri
 		return nil
 	}
 
-	return k8s.Apply(ctx, result.Bytes())
+	return retry.Do(
+		func() error {
+			return k8s.Apply(context.Background(), result.Bytes())
+		}, retry.Attempts(defaultRetries), retry.Delay(defaultInitialBackoff), retry.DelayType(retry.BackOffDelay),
+		retry.LastErrorOnly(false), retry.Context(ctx),
+	)
 }

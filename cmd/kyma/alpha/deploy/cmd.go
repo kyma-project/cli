@@ -132,8 +132,7 @@ func (cmd *command) RunWithTimeout(ctx context.Context) error {
 	err := cmd.run(ctx)
 
 	// yes, I tried errors.As and errors.Is, and both did not work or threw vet issues...
-	isDeadlineErr := strings.Contains(err.Error(), context.DeadlineExceeded.Error())
-	if isDeadlineErr {
+	if err != nil && strings.Contains(err.Error(), context.DeadlineExceeded.Error()) {
 		msg := "Timeout reached while waiting for deployment to complete"
 		timeoutStep := cmd.NewStep(msg)
 		timeoutStep.Failure()
