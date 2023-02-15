@@ -79,6 +79,7 @@ Build module my-domain/modB in version 3.2.1 and push it to a local registry "un
 	cmd.Flags().BoolVarP(&o.Overwrite, "overwrite", "w", false, "overwrites the existing mod-path directory if it exists")
 	cmd.Flags().BoolVar(&o.Insecure, "insecure", false, "Use an insecure connection to access the registry.")
 	cmd.Flags().BoolVar(&o.Clean, "clean", false, "Remove the mod-path folder and all its contents at the end.")
+	cmd.Flags().StringVar(&o.SecurityScanConfig, "sec-scan-cfg", "", "Path to security scan configuration file.")
 
 	return cmd
 }
@@ -159,12 +160,15 @@ func (cmd *command) Run(args []string) error {
 	cmd.CurrentStep.Successf("Image created")
 
 	/* -- ADD SECURITY SCANNING METADATA -- */
-	cmd.NewStep("Configuring security scanning...")
-	if err := module.AddSecurityScanningMetadata(archive.ComponentDescriptor, modDef, fs); err != nil {
-		cmd.CurrentStep.Failure()
-		return err
+	if cmd.opts.SecurityScanConfig != "" {
+		cmd.NewStep("Configuring security scanning...")
+		err = module.AddSecurityScanningMetadata(archive.ComponentDescriptor, modDef, fs, cmd.opts.SecurityScanConfig)
+		if err != nil {
+			cmd.CurrentStep.Failure()
+			return err
+		}
+		cmd.CurrentStep.Successf("Security scanning configured")
 	}
-	cmd.CurrentStep.Successf("Security scanning configured")
 	/* -- PUSH & TEMPLATE -- */
 
 	if cmd.opts.RegistryURL != "" {

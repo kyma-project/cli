@@ -18,19 +18,25 @@ var ErrFailedToParseImageURL = errors.New("error parsing protecode image URL")
 const (
 	secConfigFileName = "sec-scanners-config.yaml"
 	secScanLabelKey   = "scan.security.kyma-project.io"
+	secLabelKey       = "security.kyma-project.io"
 	secScanEnabled    = "enabled"
 )
 
-func AddSecurityScanningMetadata(descriptor *v2.ComponentDescriptor, modDef *Definition, fs vfs.FileSystem) error {
+var labelTemplate = "%s." + secScanLabelKey
+var globalLabelTemplate = "%s." + secLabelKey
+
+func AddSecurityScanningMetadata(descriptor *v2.ComponentDescriptor, modDef *Definition, fs vfs.FileSystem,
+	securityConfigPath string,
+) error {
 	//parse security config file
-	config, err := parseSecurityScanConfig(modDef.Source)
+	config, err := parseSecurityScanConfig(securityConfigPath)
 	if err != nil {
 		return err
 	}
 	excludedWhitesourcePathPatterns := strings.Join(config.WhiteSource.Exclude, ",")
 
 	// add security scan enabled global label
-	err = appendLabelToAccessor(descriptor, secScanLabelKey, secScanEnabled)
+	err = appendLabelToAccessor(descriptor, "scan", secScanEnabled, globalLabelTemplate)
 	if err != nil {
 		return err
 	}
@@ -40,13 +46,16 @@ func AddSecurityScanningMetadata(descriptor *v2.ComponentDescriptor, modDef *Def
 	//add whitesource sec scan labels
 	for srcIdx := range descriptor.Sources {
 		src := &descriptor.Sources[srcIdx]
-		if err := appendLabelToAccessor(src, "language", config.WhiteSource.Language); err != nil {
+		err := appendLabelToAccessor(src, "language", config.WhiteSource.Language, labelTemplate)
+		if err != nil {
 			return err
 		}
-		if err := appendLabelToAccessor(src, "subprojects", config.WhiteSource.SubProjects); err != nil {
+		err = appendLabelToAccessor(src, "subprojects", config.WhiteSource.SubProjects, labelTemplate)
+		if err != nil {
 			return err
 		}
-		if err := appendLabelToAccessor(src, "exclude", excludedWhitesourcePathPatterns); err != nil {
+		err = appendLabelToAccessor(src, "exclude", excludedWhitesourcePathPatterns, labelTemplate)
+		if err != nil {
 			return err
 		}
 	}
@@ -65,7 +74,8 @@ func appendProtecodeImagesLayers(descriptor *v2.ComponentDescriptor, config *Sec
 		if err != nil {
 			return err
 		}
-		imageTypeLabel, err := generateOCMLabel("type", "third-party-image")
+
+		imageTypeLabel, err := generateOCMLabel("type", "third-party-image", labelTemplate)
 		if err != nil {
 			return err
 		}
@@ -89,7 +99,7 @@ func appendProtecodeImagesLayers(descriptor *v2.ComponentDescriptor, config *Sec
 	return nil
 }
 
-func generateOCMLabel(prefix, value string) (v2.Label, error) {
+func generateOCMLabel(prefix, value, tpl string) (v2.Label, error) {
 	labelValue, err := json.Marshal(map[string]string{
 		prefix: value,
 	})
@@ -97,7 +107,7 @@ func generateOCMLabel(prefix, value string) (v2.Label, error) {
 		return v2.Label{}, err
 	}
 	return v2.Label{
-		Name:  fmt.Sprintf("%s.%s", prefix, secScanLabelKey),
+		Name:  fmt.Sprintf(tpl, prefix),
 		Value: labelValue,
 	}, nil
 }
@@ -127,8 +137,8 @@ type WhiteSourceSecCfg struct {
 	Exclude     []string `json:"exclude"`
 }
 
-func parseSecurityScanConfig(moduleContentsPath string) (*SecurityScanCfg, error) {
-	configFilePath := path.Join(moduleContentsPath, secConfigFileName)
+func parseSecurityScanConfig(securityConfigPath string) (*SecurityScanCfg, error) {
+	configFilePath := path.Join(securityConfigPath, secConfigFileName)
 	fileBytes, err := os.ReadFile(configFilePath)
 	if err != nil {
 		return nil, err
@@ -140,9 +150,9 @@ func parseSecurityScanConfig(moduleContentsPath string) (*SecurityScanCfg, error
 	return secCfg, nil
 }
 
-func appendLabelToAccessor(labeled v2.LabelsAccessor, prefix, value string) error {
+func appendLabelToAccessor(labeled v2.LabelsAccessor, prefix, value, tpl string) error {
 	labels := labeled.GetLabels()
-	labelValue, err := generateOCMLabel(prefix, value)
+	labelValue, err := generateOCMLabel(prefix, value, tpl)
 	if err != nil {
 		return err
 	}

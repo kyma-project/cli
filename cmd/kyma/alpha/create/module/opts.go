@@ -31,6 +31,7 @@ type Options struct {
 	Overwrite            bool
 	Clean                bool
 	RegistryCredSelector string
+	SecurityScanConfig   string
 }
 
 const (
