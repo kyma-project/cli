@@ -3,7 +3,7 @@ module github.com/kyma-project/cli
 go 1.18
 
 // required to avoid locking with gardner dependency updates
-replace k8s.io/client-go => k8s.io/client-go v0.26.0
+replace k8s.io/client-go => k8s.io/client-go v0.26.1
 
 require (
 	github.com/Masterminds/semver/v3 v3.2.0
@@ -39,6 +39,7 @@ require (
 	k8s.io/api v0.26.1
 	k8s.io/apiextensions-apiserver v0.26.0
 	k8s.io/apimachinery v0.26.1
+	k8s.io/cli-runtime v0.26.1
 	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible
 	sigs.k8s.io/controller-runtime v0.13.1
 	sigs.k8s.io/yaml v1.3.0
@@ -222,7 +223,6 @@ require (
 	istio.io/istio v0.0.0-20221109080248-089f536c0f26 // indirect
 	istio.io/pkg v0.0.0-20221031153201-960bb47e80ce // indirect
 	k8s.io/apiserver v0.26.0 // indirect
-	k8s.io/cli-runtime v0.26.0 // indirect
 	k8s.io/component-base v0.26.0 // indirect
 	k8s.io/klog/v2 v2.80.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20221106113015-f73e7dbcfe29 // indirect

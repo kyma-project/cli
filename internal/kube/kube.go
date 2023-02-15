@@ -1,6 +1,8 @@
 package kube
 
 import (
+	"context"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -29,7 +31,7 @@ type KymaKube interface {
 	KubeConfig() *api.Config
 
 	// Apply provides the functionality as `kubectl apply -f` for the given yaml.
-	Apply(manifest []byte) error
+	Apply(ctx context.Context, manifest []byte) error
 
 	// DefaultNamespace finds out what the default namespace is based on:
 	// 1. Default namespace on the Kubeconfig
@@ -49,11 +51,16 @@ type KymaKube interface {
 	WaitPodStatusByLabel(namespace, labelName, labelValue string, status corev1.PodPhase) error
 
 	// WaitDeploymentStatus waits for the given deployment to have the desired status for the given condition type
-	WaitDeploymentStatus(namespace, name string, cond appsv1.DeploymentConditionType, status corev1.ConditionStatus) error
+	WaitDeploymentStatus(
+		namespace, name string, cond appsv1.DeploymentConditionType, status corev1.ConditionStatus,
+	) error
 
 	// WatchResource watches an arbitrary resource using the k8s unstructured API.
 	// To check if the resource is in the desired state, checkFn is called repeatedly passing the resource as parameter,
 	// until either it returns true or the timeout is reached.
 	// If the timeout is reached an error is returned.
-	WatchResource(res schema.GroupVersionResource, name, namespace string, checkFn func(u *unstructured.Unstructured) (bool, error)) error
+	WatchResource(
+		res schema.GroupVersionResource, name, namespace string,
+		checkFn func(u *unstructured.Unstructured) (bool, error),
+	) error
 }

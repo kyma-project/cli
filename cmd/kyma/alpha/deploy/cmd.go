@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/kyma-project/cli/internal/clusterinfo"
@@ -52,7 +53,7 @@ func NewCmd(o *Options) *cobra.Command {
 		Use:     "deploy",
 		Short:   "Deploys Kyma on a running Kubernetes cluster.",
 		Long:    "Use this command to deploy, upgrade, or adapt Kyma on a running Kubernetes cluster.",
-		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.RunWithTimeout() },
+		RunE:    func(cobraCmd *cobra.Command, _ []string) error { return cmd.RunWithTimeout(cobraCmd.Context()) },
 		Aliases: []string{"d"},
 		Example: `
 - Deploy the latest version of the Lifecycle Manager for trying out Modules: "kyma deploy -k https://github.com/kyma-project/lifecycle-manager/config/default -with-wildcard-permissions"
@@ -113,7 +114,7 @@ Allows for usage of lifecycle-manager without having to worry about modules requ
 	return cobraCmd
 }
 
-func (cmd *command) RunWithTimeout() error {
+func (cmd *command) RunWithTimeout(ctx context.Context) error {
 	if cmd.opts.CI {
 		cmd.Factory.NonInteractive = true
 	}
@@ -125,26 +126,23 @@ func (cmd *command) RunWithTimeout() error {
 		return err
 	}
 
-	timeout := time.After(cmd.opts.Timeout)
-	errChan := make(chan error)
-	go func() {
-		errChan <- cmd.run()
-	}()
+	ctx, cancel := context.WithTimeout(ctx, cmd.opts.Timeout)
+	defer cancel()
 
-	for {
-		select {
-		case <-timeout:
-			msg := "Timeout reached while waiting for deployment to complete"
-			timeoutStep := cmd.NewStep(msg)
-			timeoutStep.Failure()
-			return errors.New(msg)
-		case err := <-errChan:
-			return err
-		}
+	err := cmd.run(ctx)
+
+	// yes, I tried errors.As and errors.Is, and both did not work or threw vet issues...
+	if err != nil && strings.Contains(err.Error(), context.DeadlineExceeded.Error()) {
+		msg := "Timeout reached while waiting for deployment to complete"
+		timeoutStep := cmd.NewStep(msg)
+		timeoutStep.Failure()
+		return fmt.Errorf("%s: %w", msg, err)
 	}
+
+	return err
 }
 
-func (cmd *command) run() error {
+func (cmd *command) run(ctx context.Context) error {
 	start := time.Now()
 
 	var err error
@@ -152,7 +150,7 @@ func (cmd *command) run() error {
 		return fmt.Errorf("failed to initialize the Kubernetes client from given kubeconfig: %w", err)
 	}
 
-	if err := cmd.deploy(start); err != nil {
+	if err := cmd.deploy(ctx, start); err != nil {
 		return err
 	}
 
@@ -161,10 +159,10 @@ func (cmd *command) run() error {
 		return nil
 	}
 
-	return cmd.wizard()
+	return cmd.wizard(ctx)
 }
 
-func (cmd *command) deploy(start time.Time) error {
+func (cmd *command) deploy(ctx context.Context, start time.Time) error {
 
 	cmd.NewStep("Setting up kustomize...")
 	if err := kustomize.Setup(cmd.CurrentStep, true); err != nil {
@@ -174,7 +172,7 @@ func (cmd *command) deploy(start time.Time) error {
 	cmd.CurrentStep.Successf("Kustomize ready")
 
 	if cmd.opts.DryRun {
-		return cmd.dryRun()
+		return cmd.dryRun(ctx)
 	}
 
 	l := cli.NewLogger(cmd.opts.Verbose).Sugar()
@@ -193,7 +191,7 @@ func (cmd *command) deploy(start time.Time) error {
 		defer func() { os.Stderr = stderr }()
 	}
 
-	clusterInfo, err := clusterinfo.Discover(context.Background(), cmd.K8s.Static())
+	clusterInfo, err := clusterinfo.Discover(ctx, cmd.K8s.Static())
 	if err != nil {
 		return err
 	}
@@ -201,9 +199,16 @@ func (cmd *command) deploy(start time.Time) error {
 	if cmd.opts.CertManagerVersion != "" {
 		certManagerStep := cmd.NewStep("Deploying cert-manager.io")
 		certManagerStep.Start()
-		if err := deploy.CertManager(cmd.K8s, cmd.opts.CertManagerVersion, false); err != nil {
+		if err := deploy.CertManager(ctx, cmd.K8s, cmd.opts.CertManagerVersion, false); err != nil {
 			certManagerStep.LogWarn(err.Error())
 			certManagerStep.Failuref("Failed to deploy cert-manager.io.")
+		}
+		err := cmd.K8s.WaitDeploymentStatus(
+			"cert-manager", "cert-manager-webhook", appsv1.DeploymentAvailable, corev1.ConditionTrue,
+		)
+		if err != nil {
+			certManagerStep.LogWarn(err.Error())
+			certManagerStep.Failuref("cert-manager.io webhook failed to start.")
 		}
 		certManagerStep.Successf(
 			"Deployed cert-manager.io in version %s",
@@ -214,7 +219,7 @@ func (cmd *command) deploy(start time.Time) error {
 	deployStep := cmd.NewStep("Deploying Kyma")
 	deployStep.Start()
 
-	hasKyma, err := deploy.Bootstrap(cmd.opts.Kustomizations, cmd.K8s, cmd.opts.WildcardPermissions, false)
+	hasKyma, err := deploy.Bootstrap(ctx, cmd.opts.Kustomizations, cmd.K8s, cmd.opts.WildcardPermissions, false)
 	if err != nil {
 		deployStep.Failuref("Failed to deploy Kyma.")
 		return err
@@ -239,14 +244,14 @@ func (cmd *command) deploy(start time.Time) error {
 				modStep.Failuref("Failed to deploy modules")
 				return err
 			}
-			if err := cmd.K8s.Apply(b); err != nil {
+			if err := cmd.K8s.Apply(ctx, b); err != nil {
 				modStep.Failuref("Failed to deploy modules")
 				return err
 			}
 		}
 		modStep.Success()
 		kymaStep := cmd.NewStep("Kyma CR deployed")
-		if err := deploy.Kyma(cmd.K8s, cmd.opts.Namespace, cmd.opts.Channel, cmd.opts.KymaCR, false); err != nil {
+		if err := deploy.Kyma(ctx, cmd.K8s, cmd.opts.Namespace, cmd.opts.Channel, cmd.opts.KymaCR, false); err != nil {
 			kymaStep.Failuref("Failed to deploy Kyma CR")
 			return err
 		}
@@ -262,14 +267,14 @@ func (cmd *command) deploy(start time.Time) error {
 	return summary.Print(deployTime)
 }
 
-func (cmd *command) dryRun() error {
+func (cmd *command) dryRun(ctx context.Context) error {
 	if cmd.opts.CertManagerVersion != "" {
-		if err := deploy.CertManager(cmd.K8s, cmd.opts.CertManagerVersion, true); err != nil {
+		if err := deploy.CertManager(ctx, cmd.K8s, cmd.opts.CertManagerVersion, true); err != nil {
 			return err
 		}
 	}
 
-	hasKyma, err := deploy.Bootstrap(cmd.opts.Kustomizations, cmd.K8s, cmd.opts.WildcardPermissions, true)
+	hasKyma, err := deploy.Bootstrap(ctx, cmd.opts.Kustomizations, cmd.K8s, cmd.opts.WildcardPermissions, true)
 	if err != nil {
 		return err
 	}
@@ -284,7 +289,7 @@ func (cmd *command) dryRun() error {
 			fmt.Printf("%s\n---\n", string(b))
 		}
 
-		if err := deploy.Kyma(cmd.K8s, cmd.opts.Namespace, cmd.opts.Channel, cmd.opts.KymaCR, true); err != nil {
+		if err := deploy.Kyma(ctx, cmd.K8s, cmd.opts.Namespace, cmd.opts.Channel, cmd.opts.KymaCR, true); err != nil {
 			return err
 		}
 	}
@@ -312,9 +317,9 @@ func (cmd *command) waitForOperators() error {
 	return errs.MergeErrors(<-errChan)
 }
 
-func (cmd *command) wizard() error {
+func (cmd *command) wizard(ctx context.Context) error {
 	// get all infos for the dashboard URL
-	ctx, cancel := context.WithTimeout(context.Background(), cmd.opts.Timeout)
+	ctx, cancel := context.WithTimeout(ctx, cmd.opts.Timeout)
 	defer cancel()
 
 	kymas, err := cmd.K8s.Dynamic().Resource(deploy.KymaGVR).List(ctx, v1.ListOptions{})
@@ -337,7 +342,7 @@ func (cmd *command) wizard() error {
 		return err
 	}
 	// make sure the dahboard container always stops at the end and the cursor restored
-	cmd.Finalizers.Add(dash.StopFunc(context.Background(), func(i ...interface{}) { fmt.Print(i...) }))
+	cmd.Finalizers.Add(dash.StopFunc(ctx, func(i ...interface{}) { fmt.Print(i...) }))
 
 	if err := dash.Open(fmt.Sprintf("/cluster/%s/namespaces/%s/kymas/details/%s", cluster, ns, name)); err != nil {
 		cmd.CurrentStep.Failure()
@@ -345,5 +350,5 @@ func (cmd *command) wizard() error {
 	}
 	cmd.CurrentStep.Successf("Dashboard started. To exit press Ctrl+C")
 
-	return dash.Watch(context.Background())
+	return dash.Watch(ctx)
 }

@@ -1,6 +1,7 @@
 package module
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -58,32 +59,62 @@ Build module my-domain/modA in version 1.2.3 and push it to a remote registry
 Build module my-domain/modB in version 3.2.1 and push it to a local registry "unsigned" subfolder without tls
 		kyma alpha create module -n my-domain/modB --version 3.2.1 -p /path/to/module --registry http://localhost:5001/unsigned --insecure
 `,
-		RunE:    func(_ *cobra.Command, args []string) error { return c.Run(args) },
+		RunE:    func(cobraCmd *cobra.Command, args []string) error { return c.Run(cobraCmd.Context(), args) },
 		Aliases: []string{"mod"},
 	}
 
 	cmd.Flags().StringVar(&o.Version, "version", "", "Version of the module. This flag is mandatory.")
-	cmd.Flags().StringVarP(&o.Name, "name", "n", "", "Override the module name of the kubebuilder project. If the module is not a kubebuilder project, this flag is mandatory.")
+	cmd.Flags().StringVarP(
+		&o.Name, "name", "n", "",
+		"Override the module name of the kubebuilder project. If the module is not a kubebuilder project, this flag is mandatory.",
+	)
 	cmd.Flags().StringVarP(&o.Path, "path", "p", "", "Path to the module contents. (default current directory)")
-	cmd.Flags().StringVar(&o.ModCache, "mod-cache", "./mod", "Specifies the path where the module artifacts are locally cached to generate the image. If the path already has a module, use the overwrite flag to overwrite it.")
-	cmd.Flags().StringArrayVarP(&o.ResourcePaths, "resource", "r", []string{}, "Add an extra resource in a new layer with format <NAME:TYPE@PATH>. It is also possible to provide only a path; name will default to the last path element and type to 'helm-chart'")
-	cmd.Flags().StringVar(&o.RegistryURL, "registry", "", "Repository context url for module to upload. The repository url will be automatically added to the repository contexts in the module")
-	cmd.Flags().StringVar(&o.NameMappingMode, "nameMapping", "urlPath", "Overrides the OCM Component Name Mapping, one of: \"urlPath\" or \"sha256-digest\"")
-	cmd.Flags().StringVar(&o.RegistryCredSelector, "registry-cred-selector", "",
-		"label selector to identify a secret of type kubernetes.io/dockerconfigjson (that needs to be created externally) which allows the image to be accessed in private image registries. This can be used if you push your module to a registry with authenticated access. Example: \"label1=value1,label2=value2\"")
-	cmd.Flags().StringVarP(&o.Credentials, "credentials", "c", "", "Basic authentication credentials for the given registry in the format user:password")
-	cmd.Flags().StringVar(&o.DefaultCRPath, "default-cr", "", "File containing the default custom resource of the module. If the module is a kubebuilder project, the default CR will be automatically detected.")
-	cmd.Flags().StringVarP(&o.TemplateOutput, "output", "o", "template.yaml", "File to which to output the module template if the module is uploaded to a registry")
+	cmd.Flags().StringVar(
+		&o.ModCache, "mod-cache", "./mod",
+		"Specifies the path where the module artifacts are locally cached to generate the image. If the path already has a module, use the overwrite flag to overwrite it.",
+	)
+	cmd.Flags().StringArrayVarP(
+		&o.ResourcePaths, "resource", "r", []string{},
+		"Add an extra resource in a new layer with format <NAME:TYPE@PATH>. It is also possible to provide only a path; name will default to the last path element and type to 'helm-chart'",
+	)
+	cmd.Flags().StringVar(
+		&o.RegistryURL, "registry", "",
+		"Repository context url for module to upload. The repository url will be automatically added to the repository contexts in the module",
+	)
+	cmd.Flags().StringVar(
+		&o.NameMappingMode, "nameMapping", "urlPath",
+		"Overrides the OCM Component Name Mapping, one of: \"urlPath\" or \"sha256-digest\"",
+	)
+	cmd.Flags().StringVar(
+		&o.RegistryCredSelector, "registry-cred-selector", "",
+		"label selector to identify a secret of type kubernetes.io/dockerconfigjson (that needs to be created externally) which allows the image to be accessed in private image registries. This can be used if you push your module to a registry with authenticated access. Example: \"label1=value1,label2=value2\"",
+	)
+	cmd.Flags().StringVarP(
+		&o.Credentials, "credentials", "c", "",
+		"Basic authentication credentials for the given registry in the format user:password",
+	)
+	cmd.Flags().StringVar(
+		&o.DefaultCRPath, "default-cr", "",
+		"File containing the default custom resource of the module. If the module is a kubebuilder project, the default CR will be automatically detected.",
+	)
+	cmd.Flags().StringVarP(
+		&o.TemplateOutput, "output", "o", "template.yaml",
+		"File to which to output the module template if the module is uploaded to a registry",
+	)
 	cmd.Flags().StringVar(&o.Channel, "channel", "regular", "Channel to use for the module template.")
-	cmd.Flags().StringVarP(&o.Token, "token", "t", "", "Authentication token for the given registry (alternative to basic authentication).")
-	cmd.Flags().BoolVarP(&o.Overwrite, "overwrite", "w", false, "overwrites the existing mod-path directory if it exists")
+	cmd.Flags().StringVarP(
+		&o.Token, "token", "t", "", "Authentication token for the given registry (alternative to basic authentication).",
+	)
+	cmd.Flags().BoolVarP(
+		&o.Overwrite, "overwrite", "w", false, "overwrites the existing mod-path directory if it exists",
+	)
 	cmd.Flags().BoolVar(&o.Insecure, "insecure", false, "Use an insecure connection to access the registry.")
 	cmd.Flags().BoolVar(&o.Clean, "clean", false, "Remove the mod-path folder and all its contents at the end.")
 
 	return cmd
 }
 
-func (cmd *command) Run(args []string) error {
+func (cmd *command) Run(ctx context.Context, args []string) error {
 
 	if !cmd.opts.NonInteractive {
 		cli.AlphaWarn()
@@ -133,7 +164,7 @@ func (cmd *command) Run(args []string) error {
 	cmd.CurrentStep.Successf("Module built")
 
 	/* -- VALIDATE DEFAULT CR -- */
-	if err := cmd.validateDefaultCR(modDef, l); err != nil {
+	if err := cmd.validateDefaultCR(ctx, modDef, l); err != nil {
 		return err
 	}
 
@@ -204,7 +235,7 @@ func (cmd *command) Run(args []string) error {
 	return nil
 }
 
-func (cmd *command) validateDefaultCR(modDef *module.Definition, l *zap.SugaredLogger) error {
+func (cmd *command) validateDefaultCR(ctx context.Context, modDef *module.Definition, l *zap.SugaredLogger) error {
 	cmd.NewStep("Validating Default CR")
 	crValidator, err := module.NewDefaultCRValidator(modDef.DefaultCR, modDef.Source)
 	if err != nil {
@@ -212,7 +243,7 @@ func (cmd *command) validateDefaultCR(modDef *module.Definition, l *zap.SugaredL
 		return err
 	}
 
-	if err := crValidator.Run(cmd.CurrentStep, cmd.opts.Verbose, l); err != nil {
+	if err := crValidator.Run(ctx, cmd.CurrentStep, cmd.opts.Verbose, l); err != nil {
 		if errors.Is(err, module.ErrEmptyCR) {
 			cmd.CurrentStep.Successf("Default CR validation skipped - no default CR")
 			return nil

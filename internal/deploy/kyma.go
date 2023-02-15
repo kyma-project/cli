@@ -2,6 +2,7 @@ package deploy
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 	"text/template"
@@ -40,7 +41,7 @@ var KymaGVR = schema.GroupVersionResource{
 }
 
 // Kyma deploys the Kyma CR. If no kymaCRPath is provided, it deploys the default CR.
-func Kyma(k8s kube.KymaKube, namespace, channel, kymaCRpath string, dryRun bool) error {
+func Kyma(ctx context.Context, k8s kube.KymaKube, namespace, channel, kymaCRpath string, dryRun bool) error {
 	// TODO delete deploy.go when the old reconciler is gone.
 	yamlBytes := bytes.Buffer{}
 
@@ -84,5 +85,5 @@ func Kyma(k8s kube.KymaKube, namespace, channel, kymaCRpath string, dryRun bool)
 		return nil
 	}
 
-	return k8s.Apply(result)
+	return k8s.Apply(ctx, result)
 }

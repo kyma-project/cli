@@ -2,10 +2,12 @@ package deploy
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"net/http"
 
+	"github.com/avast/retry-go"
 	"github.com/kyma-project/cli/internal/kube"
 )
 
@@ -14,7 +16,7 @@ const (
 )
 
 // CertManager deploys the Kyma CR. If no kymaCRPath is provided, it deploys the default CR.
-func CertManager(k8s kube.KymaKube, certManagerVersion string, dryRun bool) error {
+func CertManager(ctx context.Context, k8s kube.KymaKube, certManagerVersion string, dryRun bool) error {
 	result := bytes.Buffer{}
 
 	// Get the data
@@ -34,5 +36,10 @@ func CertManager(k8s kube.KymaKube, certManagerVersion string, dryRun bool) erro
 		return nil
 	}
 
-	return k8s.Apply(result.Bytes())
+	return retry.Do(
+		func() error {
+			return k8s.Apply(context.Background(), result.Bytes())
+		}, retry.Attempts(defaultRetries), retry.Delay(defaultInitialBackoff), retry.DelayType(retry.BackOffDelay),
+		retry.LastErrorOnly(false), retry.Context(ctx),
+	)
 }
