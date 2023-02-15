@@ -199,17 +199,16 @@ func (cmd *command) deploy(start time.Time) error {
 	}
 
 	if cmd.opts.CertManagerVersion != "" {
-		go func() {
-			certManagerStep := cmd.NewStep("Deploying cert-manager.io")
-			certManagerStep.Start()
-			if err := deploy.CertManager(cmd.K8s, cmd.opts.CertManagerVersion, false); err != nil {
-				certManagerStep.Failuref("Failed to deploy cert-manager.io.")
-			}
-			certManagerStep.Successf(
-				"Deployed cert-manager.io in version %s",
-				cmd.opts.CertManagerVersion,
-			)
-		}()
+		certManagerStep := cmd.NewStep("Deploying cert-manager.io")
+		certManagerStep.Start()
+		if err := deploy.CertManager(cmd.K8s, cmd.opts.CertManagerVersion, false); err != nil {
+			certManagerStep.LogWarn(err.Error())
+			certManagerStep.Failuref("Failed to deploy cert-manager.io.")
+		}
+		certManagerStep.Successf(
+			"Deployed cert-manager.io in version %s",
+			cmd.opts.CertManagerVersion,
+		)
 	}
 
 	deployStep := cmd.NewStep("Deploying Kyma")
