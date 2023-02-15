@@ -79,7 +79,8 @@ Build module my-domain/modB in version 3.2.1 and push it to a local registry "un
 	cmd.Flags().BoolVarP(&o.Overwrite, "overwrite", "w", false, "overwrites the existing mod-path directory if it exists")
 	cmd.Flags().BoolVar(&o.Insecure, "insecure", false, "Use an insecure connection to access the registry.")
 	cmd.Flags().BoolVar(&o.Clean, "clean", false, "Remove the mod-path folder and all its contents at the end.")
-	cmd.Flags().StringVar(&o.SecurityScanConfig, "sec-scan-cfg", "", "Path to security scan configuration file.")
+	cmd.Flags().StringVar(&o.SecurityScanConfig, "sec-scan-cfg", "", "Path to the directory holding " +
+		"the security scan configuration file.")
 
 	return cmd
 }

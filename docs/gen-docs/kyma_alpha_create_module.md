@@ -59,6 +59,7 @@ Build module my-domain/modB in version 3.2.1 and push it to a local registry "un
       --registry string                 Repository context url for module to upload. The repository url will be automatically added to the repository contexts in the module
       --registry-cred-selector string   label selector to identify a secret of type kubernetes.io/dockerconfigjson (that needs to be created externally) which allows the image to be accessed in private image registries. This can be used if you push your module to a registry with authenticated access. Example: "label1=value1,label2=value2"
   -r, --resource stringArray            Add an extra resource in a new layer with format <NAME:TYPE@PATH>. It is also possible to provide only a path; name will default to the last path element and type to 'helm-chart'
+      --sec-scan-cfg string             Path to the directory holding the security scan configuration file.
   -t, --token string                    Authentication token for the given registry (alternative to basic authentication).
       --version string                  Version of the module. This flag is mandatory.
 ```
