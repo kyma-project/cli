@@ -72,9 +72,7 @@ func (i *Interactor) Update(ctx context.Context, modules ModulesList) error {
 		return fmt.Errorf("failed to marshal kyma object: %w", err)
 	}
 	patchOpts := metav1.PatchOptions{FieldManager: "kyma"}
-	if i.ForceUpdate {
-		patchOpts.Force = pointer.Bool(true)
-	}
+	patchOpts.Force = pointer.Bool(i.ForceUpdate)
 	_, err = i.Client.Dynamic().Resource(kymaResource).Namespace(namespace).Patch(
 		ctx, kyma.GetName(), types.ApplyPatchType, data, patchOpts)
 	if err != nil {

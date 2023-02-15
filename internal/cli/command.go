@@ -30,7 +30,7 @@ func (c *Command) EnsureClusterAccess(ctx context.Context, timeout time.Duration
 	}
 
 	if _, err := clusterinfo.Discover(ctx, c.K8s.Static()); err != nil {
-		return err
+		return fmt.Errorf("failed to discover clusterinfo: %w", err)
 	}
 
 	return nil
