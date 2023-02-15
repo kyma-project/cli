@@ -4,17 +4,23 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
+	istio "istio.io/client-go/pkg/clientset/versioned"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	utilyaml "k8s.io/apimachinery/pkg/util/yaml"
+	"k8s.io/cli-runtime/pkg/resource"
 	"k8s.io/client-go/discovery"
 	memory "k8s.io/client-go/discovery/cached"
 	"k8s.io/client-go/dynamic"
@@ -23,15 +29,10 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
 	"k8s.io/client-go/tools/clientcmd/api"
+	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/yaml"
 
-	istio "istio.io/client-go/pkg/clientset/versioned"
-	"k8s.io/apimachinery/pkg/api/meta"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
-	utilyaml "k8s.io/apimachinery/pkg/util/yaml"
+	v1extensions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 )
 
 const (
@@ -49,6 +50,7 @@ type client struct {
 	kubeCfg *api.Config
 	disco   discovery.DiscoveryInterface
 	mapper  meta.ResettableRESTMapper
+	nClient ctrlClient.Client
 }
 
 // NewFromConfig creates a new Kubernetes client based on the given Kubeconfig either provided by URL (in-cluster config) or via file (out-of-cluster config).
@@ -136,6 +138,17 @@ func NewFromConfigWithTimeout(url, file string, t time.Duration) (KymaKube, erro
 
 	mapper := restmapper.NewDeferredDiscoveryRESTMapper(memory.NewMemCacheClient(disco))
 
+	newScheme := scheme.Scheme
+
+	if err := v1extensions.AddToScheme(newScheme); err != nil {
+		return nil, err
+	}
+
+	nClient, err := ctrlClient.New(config, ctrlClient.Options{Scheme: newScheme})
+	if err != nil {
+		return nil, err
+	}
+
 	return &client{
 			static:  sClient,
 			dynamic: dClient,
@@ -144,6 +157,7 @@ func NewFromConfigWithTimeout(url, file string, t time.Duration) (KymaKube, erro
 			kubeCfg: kubeConfig,
 			disco:   disco,
 			mapper:  mapper,
+			nClient: nClient,
 		},
 		nil
 }
@@ -168,102 +182,54 @@ func (c *client) KubeConfig() *api.Config {
 	return c.kubeCfg
 }
 
-func (c *client) Apply(manifest []byte) error {
+func (c *client) Apply(ctx context.Context, manifest []byte) error {
 
 	// parse manifest
-	objChan, parseErr := parseManifest(manifest)
+	manifests, err := parseManifest(manifest)
+	if err != nil {
+		return err
+	}
 
-	for {
-		select {
-		case data, ok := <-objChan:
-			if !ok {
-				return nil
-			}
-			if err := c.applyManifest(data, true); err != nil {
-				return err
-			}
-		case err, ok := <-parseErr:
-			if !ok {
-				return nil
-			}
-			if err == nil {
-				continue
-			}
+	objs := make([]*resource.Info, 0, len(manifests))
+	for _, manifest := range manifests {
+
+		obj := &unstructured.Unstructured{}
+		if err := yaml.Unmarshal(manifest, obj); err != nil {
 			return err
 		}
+
+		gvk := obj.GroupVersionKind()
+		mapping, err := c.mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
+		if meta.IsNoMatchError(err) {
+			c.mapper.Reset()
+			mapping, _ = c.mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
+			err = nil
+		}
+		if err != nil {
+			return err
+		}
+
+		objs = append(objs, &resource.Info{Object: obj, Mapping: mapping})
 	}
+
+	return ConcurrentSSA(c.nClient, "kyma", false).Run(ctx, objs)
 }
 
 // parseManifest can parse a multi-doc yaml manifest and send back each unstructured object through the channel
-func parseManifest(data []byte) (<-chan []byte, <-chan error) {
-	chanErr := make(chan error)
-	chanBytes := make(chan []byte)
+func parseManifest(data []byte) ([][]byte, error) {
+	var chanBytes [][]byte
 	multidocReader := utilyaml.NewYAMLReader(bufio.NewReader(bytes.NewReader(data)))
 
-	go func() {
-		defer close(chanErr)
-		defer close(chanBytes)
-
-		for {
-			buf, err := multidocReader.Read()
-			if err != nil {
-				if err == io.EOF {
-					return
-				}
-				chanErr <- errors.Wrap(err, "failed to read yaml data")
-				return
+	for {
+		buf, err := multidocReader.Read()
+		if err != nil {
+			if err == io.EOF {
+				return chanBytes, nil
 			}
-			chanBytes <- buf
+			return nil, errors.Wrap(err, "failed to read yaml data")
 		}
-	}()
-	return chanBytes, chanErr
-}
-
-// applyAsync applies the given manifest with the given mapping.
-func (c *client) applyManifest(manifest []byte, reset bool) error {
-	// Decode YAML manifest into unstructured.Unstructured
-	decode := scheme.Codecs.UniversalDeserializer().Decode
-	obj := &unstructured.Unstructured{}
-	_, gvk, err := decode(manifest, nil, obj)
-	if err != nil {
-		return err
+		chanBytes = append(chanBytes, buf)
 	}
-
-	// Find GVR
-	mapping, err := c.mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
-	if err != nil {
-		if reset && meta.IsNoMatchError(err) {
-			c.mapper.Reset()
-			return c.applyManifest(manifest, false)
-		}
-		return err
-	}
-
-	// Obtain REST interface for the GVR
-	var dr dynamic.ResourceInterface
-	if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
-		// namespaced resources should specify the namespace
-		dr = c.dynamic.Resource(mapping.Resource).Namespace(obj.GetNamespace())
-	} else {
-		// for cluster-wide resources
-		dr = c.dynamic.Resource(mapping.Resource)
-	}
-
-	// Marshal object into JSON
-	data, err := json.Marshal(obj)
-	if err != nil {
-		return err
-	}
-
-	// Create or Update the object with SSA
-	// types.ApplyPatchType indicates SSA.
-	_, err = dr.Patch(
-		context.Background(), obj.GetName(), types.ApplyPatchType, data, metav1.PatchOptions{
-			FieldManager: "kyma",
-		},
-	)
-
-	return err
 }
 
 func (c *client) IsPodDeployed(namespace, name string) (bool, error) {

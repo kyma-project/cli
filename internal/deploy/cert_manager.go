@@ -2,6 +2,7 @@ package deploy
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -14,7 +15,7 @@ const (
 )
 
 // CertManager deploys the Kyma CR. If no kymaCRPath is provided, it deploys the default CR.
-func CertManager(k8s kube.KymaKube, certManagerVersion string, dryRun bool) error {
+func CertManager(ctx context.Context, k8s kube.KymaKube, certManagerVersion string, dryRun bool) error {
 	result := bytes.Buffer{}
 
 	// Get the data
@@ -34,5 +35,5 @@ func CertManager(k8s kube.KymaKube, certManagerVersion string, dryRun bool) erro
 		return nil
 	}
 
-	return k8s.Apply(result.Bytes())
+	return k8s.Apply(ctx, result.Bytes())
 }

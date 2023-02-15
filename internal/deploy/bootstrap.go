@@ -2,6 +2,7 @@ package deploy
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"regexp"
 	"time"
@@ -40,7 +41,9 @@ subjects:
 
 // Bootstrap deploys the kustomization files for the prerequisites for Kyma.
 // Returns true if the Kyma CRD was deployed.
-func Bootstrap(kustomizations []string, k8s kube.KymaKube, addWildCard, dryRun bool) (bool, error) {
+func Bootstrap(
+	ctx context.Context, kustomizations []string, k8s kube.KymaKube, addWildCard, dryRun bool,
+) (bool, error) {
 	var defs []kustomize.Definition
 	// defaults
 	for _, k := range kustomizations {
@@ -67,9 +70,9 @@ func Bootstrap(kustomizations []string, k8s kube.KymaKube, addWildCard, dryRun b
 	} else {
 		err := retry.Do(
 			func() error {
-				return k8s.Apply(manifests)
+				return k8s.Apply(context.Background(), manifests)
 			}, retry.Attempts(defaultRetries), retry.Delay(defaultInitialBackoff), retry.DelayType(retry.BackOffDelay),
-			retry.LastErrorOnly(false),
+			retry.LastErrorOnly(false), retry.Context(ctx),
 		)
 
 		if err != nil {
