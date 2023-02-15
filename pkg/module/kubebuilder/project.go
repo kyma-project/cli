@@ -2,9 +2,11 @@ package kubebuilder
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/kyma-project/cli/internal/kustomize"
@@ -155,13 +157,23 @@ func (p *Project) DefaultCR(s step.Step) ([]byte, error) {
 	defaultCR := ""
 	if len(d) > 1 {
 		// ask for specific file
-		names := []string{}
-		for _, f := range d {
-			names = append(names, f.Name())
+		var promptString strings.Builder
+		promptString.WriteString(fmt.Sprintf("Please specify the file to use as default CR in %s:\n", samplesDir))
+
+		files := map[int32]string{}
+		for i, f := range d {
+			files[int32(i+1)] = f.Name()
+			promptString.WriteString(fmt.Sprintf("[%d] %s\n", i+1, f.Name()))
 		}
 
-		answer, err := s.Prompt(fmt.Sprintf("Please specify the file to use as default CR in %s: %v\n", samplesDir, names))
-		defaultCR = filepath.Join(samplesDir, answer)
+		answer, err := s.Prompt(promptString.String())
+		answerInt, _ := strconv.ParseInt(answer, 10, 32)
+		fileName := files[int32(answerInt)]
+		if len(fileName) == 0 {
+			err = errors.Errorf("invalid input [%d] for CR selection", answerInt)
+		}
+
+		defaultCR = filepath.Join(samplesDir, files[int32(answerInt)])
 		if err != nil {
 			return nil, fmt.Errorf("could not obtain default CR from user prompt: %w", err)
 		}
