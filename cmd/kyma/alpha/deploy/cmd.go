@@ -131,7 +131,7 @@ func (cmd *command) RunWithTimeout(ctx context.Context) error {
 	err := cmd.run(ctx)
 
 	cancelDueToTimeout := context.DeadlineExceeded
-	if errors.As(err, &cancelDueToTimeout) {
+	if errors.As(err, &cancelDueToTimeout) { //nolint:govet
 		msg := "Timeout reached while waiting for deployment to complete"
 		timeoutStep := cmd.NewStep(msg)
 		timeoutStep.Failure()
