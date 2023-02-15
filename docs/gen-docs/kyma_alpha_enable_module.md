@@ -32,10 +32,10 @@ Enable "my-module" from "alpha" channel in "default-kyma" in "kyma-system" Names
 ## Flags
 
 ```bash
-  -c, --channel string     The name of the module's channel to enable.
-  -f, --force-conflicts    Force the patching of Kyma spec modules in case its managed field has already been edited by another source then Kyma CLI.
-  -k, --kyma-name string   The name of the Kyma resource to use. If empty, the 'default-kyma' is used. (default "default-kyma") (default "default-kyma")
-  -n, --namespace string   The name of the Kyma Namespace to use. If empty, the default 'kyma-system' Namespace is used. (default "kyma-system") (default "kyma-system")
+  -c, --channel string     Module's channel to enable.
+  -f, --force-conflicts    Forces the patching of Kyma spec modules in case their managed field was edited by a source other than Kyma CLI.
+  -k, --kyma-name string   Kyma resource to use. If empty, 'default-kyma' is used. (default "default-kyma") (default "default-kyma")
+  -n, --namespace string   Kyma Namespace to use. If empty, the default 'kyma-system' Namespace is used. (default "kyma-system") (default "kyma-system")
   -t, --timeout duration   Maximum time for the operation to enable a module. (default 1m0s)
   -w, --wait               Wait until the given Kyma resource is ready.
 ```
