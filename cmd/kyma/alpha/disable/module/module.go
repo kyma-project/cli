@@ -48,21 +48,21 @@ Disable "my-module" from the "alpha" channel in "default-kyma" in "kyma-system" 
 	)
 	cmd.Flags().StringVarP(
 		&o.Channel, "channel", "c", "",
-		"The name of the module's channel to use.",
+		"Module's channel to use.",
 	)
 	cmd.Flags().StringVarP(
 		&o.Namespace, "namespace", "n", cli.KymaNamespaceDefault,
-		"The name of the Kyma Namespace to use. If empty, the default 'kyma-system' Namespace is used. (default \"kyma-system\")",
+		"Kyma Namespace to use. If empty, the default 'kyma-system' Namespace is used. (default \"kyma-system\")",
 	)
 	cmd.Flags().StringVarP(
 		&o.KymaName, "kyma-name", "k", cli.KymaNameDefault,
-		"The name of the Kyma resource to use. If empty, the 'default-kyma' is used. (default \"default-kyma\")",
+		"Kyma resource to use. If empty, 'default-kyma' is used. (default \"default-kyma\")",
 	)
 	cmd.Flags().BoolVarP(&o.Force, "force-conflicts", "f", false,
-		"Force the patching of Kyma spec modules in case its managed field has already been edited by another source than Kyma CLI.",
+		"Forces the patching of Kyma spec modules in case their managed field was edited by a source other than Kyma CLI.",
 	)
 	cmd.Flags().BoolVarP(&o.Wait, "wait", "w", false,
-		" Wait until the given Kyma resource is ready.",
+		"Wait until the given Kyma resource is ready.",
 	)
 
 	return cmd

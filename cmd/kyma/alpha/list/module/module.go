@@ -95,7 +95,7 @@ List all modules for the kyma "some-kyma" in the "alpha" channel
 	)
 	cmd.Flags().StringVarP(
 		&o.KymaName, "kyma-name", "k", "",
-		"The name of the Kyma resource to use.",
+		"Kyma resource to use.",
 	)
 	cmd.Flags().StringVarP(
 		&o.Namespace, "namespace", "n", cli.KymaNamespaceDefault,
