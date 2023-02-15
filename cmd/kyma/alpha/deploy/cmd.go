@@ -32,6 +32,8 @@ type command struct {
 }
 
 const (
+	lifecycleManagerKustomization = "https://github.com/kyma-project/lifecycle-manager/config/default"
+
 	hostsTemplate = `
     {{ .K3dRegistryIP}} {{ .K3dRegistryHost}}
     {{ .K3dRegistryIP}} {{ .K3dRegistryHost}}.localhost
@@ -52,16 +54,17 @@ func NewCmd(o *Options) *cobra.Command {
 		Long:    "Use this command to deploy, upgrade, or adapt Kyma on a running Kubernetes cluster.",
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.RunWithTimeout() },
 		Aliases: []string{"d"},
+		Example: `
+- Deploy the latest version of the Lifecycle Manager for trying out Modules: "kyma deploy -k https://github.com/kyma-project/lifecycle-manager/config/default -with-wildcard-permissions"
+- Deploy the main branch of Lifecycle Manager: "kyma deploy -k https://github.com/kyma-project/lifecycle-manager/config/default@main"
+- Deploy a local version of Lifecycle Manager: "kyma deploy -k /path/to/repo/lifecycle-manager/config/default"
+`,
 	}
 	cobraCmd.Flags().StringArrayVarP(
-		&o.Kustomizations, "kustomization", "k", []string{},
+		&o.Kustomizations, "kustomization", "k", []string{lifecycleManagerKustomization},
 		`Provide one or more kustomizations to deploy. Each occurrence of the flag accepts a URL with an optional reference (commit, branch, or release) in the format URL@ref or a local path to the directory of the kustomization file.
 	Defaults to deploying Lifecycle Manager and Module Manager from GitHub main branch.
-	Examples:
-	- Deploy a specific release of the Lifecycle Manager: "kyma deploy -k https://github.com/kyma-project/lifecycle-manager/config/default@1.2.3"
-	- Deploy a local Module Manager: "kyma deploy --kustomization /path/to/repo/module-manager/config/default"
-	- Deploy a branch of Lifecycle Manager with a custom URL: "kyma deploy -k https://gitlab.com/forked-from-github/lifecycle-manager/config/default@feature-branch-1"
-	- Deploy the main branch of Lifecycle Manager while using local sources of Module Manager: "kyma deploy -k /path/to/repo/module-manager/config/default -k https://github.com/kyma-project/lifecycle-manager/config/default@main"`,
+	`,
 	)
 	cobraCmd.Flags().StringArrayVarP(
 		&o.Modules, "module", "m", []string{},
@@ -84,9 +87,27 @@ func NewCmd(o *Options) *cobra.Command {
 	WARNING: This is a temporary flag for development and will be removed soon.`,
 	)
 
+	cobraCmd.Flags().StringVar(
+		&o.CertManagerVersion, "cert-manager", "v1.11.0",
+		"Installs cert-manager from the specified static version. an empty string skips the installation.",
+	)
+
 	cobraCmd.Flags().BoolVar(
 		&o.DryRun, "dry-run", false, "Renders the Kubernetes manifests without actually applying them.",
 	)
+
+	cobraCmd.Flags().BoolVar(
+		&o.WildcardPermissions, "wildcard-permissions", true,
+		`WARNING: DO NOT USE ON PRODUCTIVE CLUSTERS! 
+Creates a wildcard cluster-role to allow for easy local installation permissions of lifecycle-manager.
+Allows for usage of lifecycle-manager without having to worry about modules requiring specific RBAC permissions.`,
+	)
+
+	cobraCmd.Flags().BoolVar(
+		&o.OpenDashboard, "open-dashboard", false,
+		`Opens the Busola Dashboard at startup. Only works when a graphical interface is available and when running in interactive mode`,
+	)
+
 	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "t", 20*time.Minute, "Maximum time for the deployment.")
 
 	return cobraCmd
@@ -136,7 +157,7 @@ func (cmd *command) run() error {
 	}
 
 	// do not starrt the dashboard if not interactive
-	if cmd.opts.CI || cmd.opts.NonInteractive {
+	if cmd.opts.CI || cmd.opts.NonInteractive || !cmd.opts.OpenDashboard {
 		return nil
 	}
 
@@ -177,10 +198,23 @@ func (cmd *command) deploy(start time.Time) error {
 		return err
 	}
 
+	if cmd.opts.CertManagerVersion != "" {
+		certManagerStep := cmd.NewStep("Deploying cert-manager.io")
+		certManagerStep.Start()
+		if err := deploy.CertManager(cmd.K8s, cmd.opts.CertManagerVersion, false); err != nil {
+			certManagerStep.LogWarn(err.Error())
+			certManagerStep.Failuref("Failed to deploy cert-manager.io.")
+		}
+		certManagerStep.Successf(
+			"Deployed cert-manager.io in version %s",
+			cmd.opts.CertManagerVersion,
+		)
+	}
+
 	deployStep := cmd.NewStep("Deploying Kyma")
 	deployStep.Start()
 
-	hasKyma, err := deploy.Bootstrap(cmd.opts.Kustomizations, cmd.K8s, false)
+	hasKyma, err := deploy.Bootstrap(cmd.opts.Kustomizations, cmd.K8s, cmd.opts.WildcardPermissions, false)
 	if err != nil {
 		deployStep.Failuref("Failed to deploy Kyma.")
 		return err
@@ -211,13 +245,8 @@ func (cmd *command) deploy(start time.Time) error {
 			}
 		}
 		modStep.Success()
-
 		kymaStep := cmd.NewStep("Kyma CR deployed")
-		if err := deploy.Kyma(
-			cmd.K8s,
-			cmd.opts.Namespace,
-			cmd.opts.Channel, cmd.opts.KymaCR, false,
-		); err != nil {
+		if err := deploy.Kyma(cmd.K8s, cmd.opts.Namespace, cmd.opts.Channel, cmd.opts.KymaCR, false); err != nil {
 			kymaStep.Failuref("Failed to deploy Kyma CR")
 			return err
 		}
@@ -234,7 +263,13 @@ func (cmd *command) deploy(start time.Time) error {
 }
 
 func (cmd *command) dryRun() error {
-	hasKyma, err := deploy.Bootstrap(cmd.opts.Kustomizations, cmd.K8s, true)
+	if cmd.opts.CertManagerVersion != "" {
+		if err := deploy.CertManager(cmd.K8s, cmd.opts.CertManagerVersion, true); err != nil {
+			return err
+		}
+	}
+
+	hasKyma, err := deploy.Bootstrap(cmd.opts.Kustomizations, cmd.K8s, cmd.opts.WildcardPermissions, true)
 	if err != nil {
 		return err
 	}
@@ -249,11 +284,7 @@ func (cmd *command) dryRun() error {
 			fmt.Printf("%s\n---\n", string(b))
 		}
 
-		if err := deploy.Kyma(
-			cmd.K8s,
-			cmd.opts.Namespace,
-			cmd.opts.Channel, cmd.opts.KymaCR, true,
-		); err != nil {
+		if err := deploy.Kyma(cmd.K8s, cmd.opts.Namespace, cmd.opts.Channel, cmd.opts.KymaCR, true); err != nil {
 			return err
 		}
 	}
@@ -277,21 +308,8 @@ func (cmd *command) waitForOperators() error {
 		errChan <- err
 	}()
 
-	go func() {
-		err := cmd.K8s.WaitDeploymentStatus(
-			"kcp-system", "module-manager-controller-manager", appsv1.DeploymentAvailable, corev1.ConditionTrue,
-		)
-		moduleStep := cmd.NewStep("Module Manager deployed")
-		if err != nil {
-			moduleStep.Failuref("Failed to deploy Module Manager")
-		} else {
-			moduleStep.Success()
-		}
-		errChan <- err
-	}()
-
 	// Merge errors from all async calls (2)
-	return errs.MergeErrors(<-errChan, <-errChan)
+	return errs.MergeErrors(<-errChan)
 }
 
 func (cmd *command) wizard() error {

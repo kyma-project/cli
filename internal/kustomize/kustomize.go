@@ -36,20 +36,28 @@ func ParseKustomization(s string) (Definition, error) {
 	// split URL from ref
 	items := strings.Split(s, "@")
 	if len(items) == 0 || len(items) > 2 {
-		return Definition{}, fmt.Errorf("the given kustomization %q could not be parsed: at least, it must contain a location (URL or path); optionally, URLs can have a reference in format URL@ref", s)
+		return Definition{}, fmt.Errorf(
+			"the given kustomization %q could not be parsed: at least, it must contain a location (URL or path); optionally, URLs can have a reference in format URL@ref",
+			s,
+		)
 	}
 
 	res := Definition{}
 	u, err := url.Parse(items[0])
 	if err != nil {
-		return Definition{}, fmt.Errorf("could not parse the given location %q: make sure it is a valid URL or path", items[0])
+		return Definition{}, fmt.Errorf(
+			"could not parse the given location %q: make sure it is a valid URL or path", items[0],
+		)
 	}
 
 	// URL case
 	if u.Scheme != "" && u.Host != "" {
 		pathChunks := strings.Split(u.Path, "/")
 		if len(pathChunks) < 3 {
-			return Definition{}, fmt.Errorf("The provided URL %q does not belong to a repository. It must follow the format DOMAIN.EXT/OWNER/REPO/[SUBPATH]", items[0])
+			return Definition{}, fmt.Errorf(
+				"The provided URL %q does not belong to a repository. It must follow the format DOMAIN.EXT/OWNER/REPO/[SUBPATH]",
+				items[0],
+			)
 		}
 		res.Name = pathChunks[2]
 		if len(items) == 2 {
@@ -142,7 +150,7 @@ func SetImage(path, img, value string) error {
 	c.Dir = path
 	out, err := c.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("could not build kustomization: %s: %w", out, err)
+		return fmt.Errorf("could not set image: %s: %w", out, err)
 	}
 
 	return nil

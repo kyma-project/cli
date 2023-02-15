@@ -47,6 +47,8 @@ type client struct {
 	istio   istio.Interface
 	restCfg *rest.Config
 	kubeCfg *api.Config
+	disco   discovery.DiscoveryInterface
+	mapper  meta.ResettableRESTMapper
 }
 
 // NewFromConfig creates a new Kubernetes client based on the given Kubeconfig either provided by URL (in-cluster config) or via file (out-of-cluster config).
@@ -126,12 +128,22 @@ func NewFromConfigWithTimeout(url, file string, t time.Duration) (KymaKube, erro
 		return nil, err
 	}
 
+	// Prepare a RESTMapper to find GVR
+	disco, err := discovery.NewDiscoveryClientForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	mapper := restmapper.NewDeferredDiscoveryRESTMapper(memory.NewMemCacheClient(disco))
+
 	return &client{
 			static:  sClient,
 			dynamic: dClient,
 			istio:   istioClient,
 			restCfg: config,
 			kubeCfg: kubeConfig,
+			disco:   disco,
+			mapper:  mapper,
 		},
 		nil
 }
@@ -157,12 +169,6 @@ func (c *client) KubeConfig() *api.Config {
 }
 
 func (c *client) Apply(manifest []byte) error {
-	// Prepare a RESTMapper to find GVR
-	dc, err := discovery.NewDiscoveryClientForConfig(c.restCfg)
-	if err != nil {
-		return err
-	}
-	mapper := restmapper.NewDeferredDiscoveryRESTMapper(memory.NewMemCacheClient(dc))
 
 	// parse manifest
 	objChan, parseErr := parseManifest(manifest)
@@ -173,7 +179,7 @@ func (c *client) Apply(manifest []byte) error {
 			if !ok {
 				return nil
 			}
-			if err := c.applyManifest(data, mapper); err != nil {
+			if err := c.applyManifest(data, true); err != nil {
 				return err
 			}
 		case err, ok := <-parseErr:
@@ -214,7 +220,7 @@ func parseManifest(data []byte) (<-chan []byte, <-chan error) {
 }
 
 // applyAsync applies the given manifest with the given mapping.
-func (c *client) applyManifest(manifest []byte, mapper *restmapper.DeferredDiscoveryRESTMapper) error {
+func (c *client) applyManifest(manifest []byte, reset bool) error {
 	// Decode YAML manifest into unstructured.Unstructured
 	decode := scheme.Codecs.UniversalDeserializer().Decode
 	obj := &unstructured.Unstructured{}
@@ -224,8 +230,12 @@ func (c *client) applyManifest(manifest []byte, mapper *restmapper.DeferredDisco
 	}
 
 	// Find GVR
-	mapping, err := mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
+	mapping, err := c.mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
 	if err != nil {
+		if reset && meta.IsNoMatchError(err) {
+			c.mapper.Reset()
+			return c.applyManifest(manifest, false)
+		}
 		return err
 	}
 
@@ -247,9 +257,11 @@ func (c *client) applyManifest(manifest []byte, mapper *restmapper.DeferredDisco
 
 	// Create or Update the object with SSA
 	// types.ApplyPatchType indicates SSA.
-	_, err = dr.Patch(context.Background(), obj.GetName(), types.ApplyPatchType, data, metav1.PatchOptions{
-		FieldManager: "kyma",
-	})
+	_, err = dr.Patch(
+		context.Background(), obj.GetName(), types.ApplyPatchType, data, metav1.PatchOptions{
+			FieldManager: "kyma",
+		},
+	)
 
 	return err
 }
@@ -267,7 +279,9 @@ func (c *client) IsPodDeployed(namespace, name string) (bool, error) {
 }
 
 func (c *client) IsPodDeployedByLabel(namespace, labelName, labelValue string) (bool, error) {
-	pods, err := c.Static().CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{LabelSelector: fmt.Sprintf("%s=%s", labelName, labelValue)})
+	pods, err := c.Static().CoreV1().Pods(namespace).List(
+		context.Background(), metav1.ListOptions{LabelSelector: fmt.Sprintf("%s=%s", labelName, labelValue)},
+	)
 	if err != nil {
 		return false, err
 	}
@@ -275,7 +289,9 @@ func (c *client) IsPodDeployedByLabel(namespace, labelName, labelValue string) (
 	return len(pods.Items) > 0, nil
 }
 
-func (c *client) WaitDeploymentStatus(namespace, name string, cond appsv1.DeploymentConditionType, status corev1.ConditionStatus) error {
+func (c *client) WaitDeploymentStatus(
+	namespace, name string, cond appsv1.DeploymentConditionType, status corev1.ConditionStatus,
+) error {
 	watchFn := func() (bool, error) {
 		d, err := c.static.AppsV1().Deployments(namespace).Get(context.Background(), name, metav1.GetOptions{})
 		if err != nil && k8sErrors.IsNotFound(err) {
@@ -311,7 +327,9 @@ func (c *client) WaitPodStatus(namespace, name string, status corev1.PodPhase) e
 
 func (c *client) WaitPodStatusByLabel(namespace, labelName, labelValue string, status corev1.PodPhase) error {
 	watchFn := func() (bool, error) {
-		pods, err := c.Static().CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{LabelSelector: fmt.Sprintf("%s=%s", labelName, labelValue)})
+		pods, err := c.Static().CoreV1().Pods(namespace).List(
+			context.Background(), metav1.ListOptions{LabelSelector: fmt.Sprintf("%s=%s", labelName, labelValue)},
+		)
 		if err != nil {
 			return false, err
 		}
@@ -330,12 +348,16 @@ func (c *client) WaitPodStatusByLabel(namespace, labelName, labelValue string, s
 	return watch(fmt.Sprintf("Pod labeled: %s=%s", labelName, labelValue), watchFn, c.restCfg.Timeout)
 }
 
-func (c *client) WatchResource(res schema.GroupVersionResource, name, namespace string, checkFn func(u *unstructured.Unstructured) (bool, error)) error {
+func (c *client) WatchResource(
+	res schema.GroupVersionResource, name, namespace string, checkFn func(u *unstructured.Unstructured) (bool, error),
+) error {
 	watchFn := func() (bool, error) {
 		var itm *unstructured.Unstructured
 		var err error
 		if namespace != "" {
-			itm, err = c.Dynamic().Resource(res).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
+			itm, err = c.Dynamic().Resource(res).Namespace(namespace).Get(
+				context.Background(), name, metav1.GetOptions{},
+			)
 		} else {
 			itm, err = c.Dynamic().Resource(res).Get(context.Background(), name, metav1.GetOptions{})
 		}
