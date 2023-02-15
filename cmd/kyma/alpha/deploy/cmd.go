@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/kyma-project/cli/internal/clusterinfo"
@@ -130,8 +131,8 @@ func (cmd *command) RunWithTimeout(ctx context.Context) error {
 
 	err := cmd.run(ctx)
 
-	cancelDueToTimeout := context.DeadlineExceeded
-	if errors.As(err, &cancelDueToTimeout) { //nolint:govet
+	isDeadlineErr := strings.Contains(err.Error(), context.DeadlineExceeded.Error())
+	if isDeadlineErr { //nolint:govet
 		msg := "Timeout reached while waiting for deployment to complete"
 		timeoutStep := cmd.NewStep(msg)
 		timeoutStep.Failure()
