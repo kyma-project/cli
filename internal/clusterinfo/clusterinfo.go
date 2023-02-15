@@ -78,11 +78,9 @@ func Discover(ctx context.Context, kubeClient kubernetes.Interface) (Info, error
 	return K3d{ClusterName: k3dClusterName}, nil
 }
 
-// IsManagedKyma returns true if the k8s go-client is configured to access a managed kyma runtime
+// IsManagedKyma returns true if the k8s go-client is configured to access a managed Kyma runtime
 func IsManagedKyma(ctx context.Context, restConfig *rest.Config, kubeClient kubernetes.Interface) (bool, error) {
-	//1) Verfiy the domain
 	if strings.HasSuffix(restConfig.Host, legacyEnvAPIServerSuffix) {
-		//Legacy, may be removed in the future
 		return lookupConfigMapMarker(ctx, kubeClient)
 	}
 	if strings.HasSuffix(restConfig.Host, skrEnvAPIServerSuffix) {
@@ -92,7 +90,7 @@ func IsManagedKyma(ctx context.Context, restConfig *rest.Config, kubeClient kube
 	return false, nil
 }
 
-// lookupConfigMapMarker tries to find a "kyma-system/skr-configmap" "marker" ConfigMap with specific labels and payload.
+// lookupConfigMapMarker tries to find a "kyma-system/skr-configmap" marker ConfigMap with specific labels and payload.
 func lookupConfigMapMarker(ctx context.Context, kubeClient kubernetes.Interface) (bool, error) {
 	cm, err := kubeClient.CoreV1().ConfigMaps("kyma-system").Get(ctx, "skr-configmap", metav1.GetOptions{})
 
