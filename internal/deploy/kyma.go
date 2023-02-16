@@ -7,6 +7,7 @@ import (
 	"os"
 	"text/template"
 
+	"github.com/avast/retry-go"
 	"github.com/kyma-project/cli/internal/kube"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -84,6 +85,9 @@ func Kyma(ctx context.Context, k8s kube.KymaKube, namespace, channel, kymaCRpath
 		fmt.Printf("%s---\n", result)
 		return nil
 	}
+	return retry.Do(func() error {
+		return k8s.Apply(context.Background(), result)
+	}, retry.Attempts(defaultRetries), retry.Delay(defaultInitialBackoff), retry.DelayType(retry.BackOffDelay),
+		retry.LastErrorOnly(false), retry.Context(ctx))
 
-	return k8s.Apply(ctx, result)
 }
