@@ -2,8 +2,11 @@ package clusterinfo
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
@@ -75,15 +78,35 @@ func Discover(ctx context.Context, kubeClient kubernetes.Interface) (Info, error
 	return K3d{ClusterName: k3dClusterName}, nil
 }
 
-// IsManagedKyma returns true if the k8s go-client is configured to access a managed kyma runtime
-func IsManagedKyma(restConfig *rest.Config) bool {
-	//Legacy, may be removed in the future
+// IsManagedKyma returns true if the k8s go-client is configured to access a managed Kyma runtime
+func IsManagedKyma(ctx context.Context, restConfig *rest.Config, kubeClient kubernetes.Interface) (bool, error) {
 	if strings.HasSuffix(restConfig.Host, legacyEnvAPIServerSuffix) {
-		return true
+		return lookupConfigMapMarker(ctx, kubeClient)
 	}
 	if strings.HasSuffix(restConfig.Host, skrEnvAPIServerSuffix) {
-		return true
+		return lookupConfigMapMarker(ctx, kubeClient)
 	}
 
-	return false
+	return false, nil
+}
+
+// lookupConfigMapMarker tries to find a "kyma-system/skr-configmap" marker ConfigMap with specific labels and payload.
+func lookupConfigMapMarker(ctx context.Context, kubeClient kubernetes.Interface) (bool, error) {
+	cm, err := kubeClient.CoreV1().ConfigMaps("kyma-system").Get(ctx, "skr-configmap", metav1.GetOptions{})
+
+	if err != nil {
+		if k8sErrors.IsNotFound(err) {
+			return false, nil
+		}
+		return false, fmt.Errorf("failed to get ConfigMap \"skr-configmap\"  in the \"kyma-system\" namespace: %w", err)
+	}
+
+	if cm == nil || cm.ObjectMeta.Labels == nil || cm.Data == nil {
+		return false, nil
+	}
+
+	res := cm.ObjectMeta.Labels["reconciler.kyma-project.io/managed-by"] == "reconciler" &&
+		cm.Data["is-managed-kyma-runtime"] == "true"
+
+	return res, nil
 }
