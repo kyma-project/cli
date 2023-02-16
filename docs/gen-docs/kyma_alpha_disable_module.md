@@ -33,8 +33,8 @@ Disable "my-module" from the "alpha" channel in "default-kyma" in "kyma-system" 
 ```bash
   -c, --channel string     Module's channel to use.
   -f, --force-conflicts    Forces the patching of Kyma spec modules in case their managed field was edited by a source other than Kyma CLI.
-  -k, --kyma-name string   Kyma resource to use. If empty, 'default-kyma' is used. (default "default-kyma") (default "default-kyma")
-  -n, --namespace string   Kyma Namespace to use. If empty, the default 'kyma-system' Namespace is used. (default "kyma-system") (default "kyma-system")
+  -k, --kyma-name string   Kyma resource to use. If empty, 'default-kyma' is used. (default "default-kyma")
+  -n, --namespace string   Kyma Namespace to use. If empty, the default 'kyma-system' Namespace is used. (default "kyma-system")
   -t, --timeout duration   Maximum time for the operation to disable a module. (default 1m0s)
   -w, --wait               Wait until the given Kyma resource is ready.
 ```
