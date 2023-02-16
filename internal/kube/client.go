@@ -79,6 +79,24 @@ func NewFromRestConfigWithTimeout(config *rest.Config, t time.Duration) (KymaKub
 		return nil, err
 	}
 
+	disco, err := discovery.NewDiscoveryClientForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	mapper := restmapper.NewDeferredDiscoveryRESTMapper(memory.NewMemCacheClient(disco))
+
+	newScheme := scheme.Scheme
+
+	if err := v1extensions.AddToScheme(newScheme); err != nil {
+		return nil, err
+	}
+
+	nClient, err := ctrlClient.New(config, ctrlClient.Options{Scheme: newScheme})
+	if err != nil {
+		return nil, err
+	}
+
 	//An empty k8s.io/client-go/tools/clientcmd/api.Config object.
 	kubeConfig := &api.Config{
 		Preferences: api.Preferences{
@@ -96,6 +114,9 @@ func NewFromRestConfigWithTimeout(config *rest.Config, t time.Duration) (KymaKub
 			istio:   istioClient,
 			restCfg: config,
 			kubeCfg: kubeConfig,
+			disco:   disco,
+			mapper:  mapper,
+			nClient: nClient,
 		},
 		nil
 }
@@ -130,7 +151,6 @@ func NewFromConfigWithTimeout(url, file string, t time.Duration) (KymaKube, erro
 		return nil, err
 	}
 
-	// Prepare a RESTMapper to find GVR
 	disco, err := discovery.NewDiscoveryClientForConfig(config)
 	if err != nil {
 		return nil, err
