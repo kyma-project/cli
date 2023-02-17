@@ -1104,8 +1104,6 @@ github.com/ktrysmt/go-bitbucket v0.6.4/go.mod h1:9u0v3hsd2rqCHRIpbir1oP7F58uo5dq
 github.com/kylelemons/godebug v1.1.0 h1:RPNrshWIDI6G2gRW9EHilWtl7Z6Sb1BR0xunSBf0SNc=
 github.com/kyma-incubator/reconciler v0.0.0-20230203092534-fd85106be3cd h1:BycDCodhNQG1248zSobgE6I/T6nGN8qlHVgcBSVb91k=
 github.com/kyma-incubator/reconciler v0.0.0-20230203092534-fd85106be3cd/go.mod h1:VNUfzgLpmNa02/+LGNbW4zhh1X/PaJwQ1IeCM1uA2A0=
-github.com/kyma-project/hydroform/function v0.0.0-20221202082519-8cd1c2a4c268 h1:97Aryt87+s68D9d9bQnKdE6tuULMdCIIaMpFX5LVsTQ=
-github.com/kyma-project/hydroform/function v0.0.0-20221202082519-8cd1c2a4c268/go.mod h1:uNaUYcFyK100sIiokOJ07/rPXSvvG2gRNbXt4wRM4ks=
 github.com/kyma-project/hydroform/provision v0.0.0-20230127124234-b67611c40868 h1:RV2QLbL7Za94O62CvDlrdcLRK5GFI2Zq0GNUe0mCMZk=
 github.com/kyma-project/hydroform/provision v0.0.0-20230127124234-b67611c40868/go.mod h1:ttfW/oPcTIMMtAqY9qpocdAaQ2A+5nN8ZQl2L+1rIac=
 github.com/kyma-project/istio/operator v0.0.0-20221129102055-d37c5c8e6add h1:ohTtnIlNXSQPHB/nMZvBXs+uBnTqQ6HRSgAvptyWzlc=
