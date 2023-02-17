@@ -217,11 +217,10 @@ func inspectProject(def *Definition, p *kubebuilder.Project, layers []Layer, s s
 				return err
 			}
 		} else {
-			cr, err := os.ReadFile(def.DefaultCRPath)
+			cr, err = os.ReadFile(def.DefaultCRPath)
 			if err != nil {
 				return fmt.Errorf("could not read CR file %q: %w", def.DefaultCRPath, err)
 			}
-			def.DefaultCR = cr
 		}
 	}
 
