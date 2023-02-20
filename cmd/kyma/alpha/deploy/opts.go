@@ -10,6 +10,7 @@ import (
 // Options defines available options for the command
 type Options struct {
 	*cli.Options
+	LifecycleManager    string
 	WildcardPermissions bool
 	DryRun              bool
 	OpenDashboard       bool

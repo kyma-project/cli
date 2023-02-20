@@ -13,6 +13,8 @@ import (
 	"github.com/kyma-project/cli/internal/kustomize"
 	"github.com/kyma-project/cli/pkg/dashboard"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/kustomize/kyaml/kio"
+	"sigs.k8s.io/kustomize/kyaml/yaml"
 
 	"errors"
 
@@ -92,6 +94,11 @@ func NewCmd(o *Options) *cobra.Command {
 		&o.CertManagerVersion, "cert-manager", "v1.11.0",
 		"Installs cert-manager from the specified static version. an empty string skips the installation.",
 	)
+	cobraCmd.Flags().StringVar(
+		&o.LifecycleManager, "lifecycle-manager",
+		"eu.gcr.io/kyma-project/lifecycle-manager:latest",
+		"Installs lifecycle-manager with the specified image.",
+	)
 
 	cobraCmd.Flags().BoolVar(
 		&o.DryRun, "dry-run", false, "Renders the Kubernetes manifests without actually applying them.",
@@ -163,14 +170,6 @@ func (cmd *command) run(ctx context.Context) error {
 }
 
 func (cmd *command) deploy(ctx context.Context, start time.Time) error {
-
-	cmd.NewStep("Setting up kustomize...")
-	if err := kustomize.Setup(cmd.CurrentStep, true); err != nil {
-		cmd.CurrentStep.Failure()
-		return err
-	}
-	cmd.CurrentStep.Successf("Kustomize ready")
-
 	if cmd.opts.DryRun {
 		return cmd.dryRun(ctx)
 	}
@@ -218,7 +217,13 @@ func (cmd *command) deploy(ctx context.Context, start time.Time) error {
 
 	deployStep := cmd.NewStep("Deploying Kustomizations")
 	deployStep.Start()
-	hasKyma, err := deploy.Bootstrap(ctx, cmd.opts.Kustomizations, cmd.K8s, cmd.opts.WildcardPermissions, false)
+	filters, err := cmd.kustomizeFilters()
+	if err != nil {
+		return err
+	}
+	hasKyma, err := deploy.Bootstrap(
+		ctx, cmd.opts.Kustomizations, cmd.K8s, filters, cmd.opts.WildcardPermissions, false,
+	)
 	if err != nil {
 		deployStep.Failuref("Failed to deploy Kustomizations %s: %s", cmd.opts.Kustomizations, err.Error())
 		return err
@@ -277,7 +282,14 @@ func (cmd *command) dryRun(ctx context.Context) error {
 		}
 	}
 
-	hasKyma, err := deploy.Bootstrap(ctx, cmd.opts.Kustomizations, cmd.K8s, cmd.opts.WildcardPermissions, true)
+	filters, err := cmd.kustomizeFilters()
+	if err != nil {
+		return err
+	}
+
+	hasKyma, err := deploy.Bootstrap(
+		ctx, cmd.opts.Kustomizations, cmd.K8s, filters, cmd.opts.WildcardPermissions, true,
+	)
 	if err != nil {
 		return err
 	}
@@ -341,4 +353,42 @@ func (cmd *command) wizard(ctx context.Context) error {
 	cmd.CurrentStep.Successf("Dashboard started. To exit press Ctrl+C")
 
 	return dash.Watch(ctx)
+}
+
+// kustomizeFilters sets up all filters that will be used by kustomize when running the command
+func (cmd *command) kustomizeFilters() ([]kio.Filter, error) {
+	var filters []kio.Filter
+	if len(cmd.opts.LifecycleManager) > 0 {
+		for _, separator := range []string{"@", ":"} {
+			var image, ref string
+			if strings.Contains(cmd.opts.LifecycleManager, separator) {
+				split := strings.Split(cmd.opts.LifecycleManager, separator)
+				if len(split) != 2 {
+					return nil, fmt.Errorf(
+						"lifecycle manager image is invalid: %s", cmd.opts.LifecycleManager,
+					)
+				}
+				image, ref = split[0], split[1]
+				if len(ref) == 0 {
+					return nil, fmt.Errorf(
+						"lifecycle manager image is invalid: %s", cmd.opts.LifecycleManager,
+					)
+				}
+			} else {
+				image, ref = "", cmd.opts.LifecycleManager
+			}
+
+			filters = append(
+				filters,
+				kustomize.ImageModifier(
+					"*lifecycle-manager*", image, ref, separator == "@",
+					func(key, value, tag string, node *yaml.RNode) {
+						cmd.NewStep(fmt.Sprintf("Used Lifecycle-Manager: %s", value)).Success()
+					},
+				),
+			)
+			break
+		}
+	}
+	return filters, nil
 }

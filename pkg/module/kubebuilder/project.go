@@ -67,16 +67,12 @@ func (p *Project) Build(name, version, registry string) (string, error) {
 	// edit kustomization image and setup build
 	img := ""
 	if registry == "" {
-		img = fmt.Sprintf("%s:%s", name, version)
+		img = fmt.Sprintf("%s", name)
 	} else {
-		img = fmt.Sprintf("%s/%s:%s", registry, name, version)
+		img = fmt.Sprintf("%s/%s", registry, name)
 	}
 
-	buildPath := filepath.Join(p.path, defaultKustomization)
-	if err := kustomize.SetImage(buildPath, "controller", img); err != nil {
-		return "", fmt.Errorf("could not edit kustomization image: %w", err)
-	}
-	k, err := kustomize.ParseKustomization(buildPath)
+	k, err := kustomize.ParseKustomization(filepath.Join(p.path, defaultKustomization))
 	if err != nil {
 		return "", err
 	}
@@ -96,7 +92,9 @@ func (p *Project) Build(name, version, registry string) (string, error) {
 	}
 
 	// do build
-	if _, err := kustomize.Build(k, "-o", outPath); err != nil {
+	if _, err := kustomize.Build(
+		k, outPath, kustomize.ControllerImageModifier(img, version),
+	); err != nil {
 		return "", err
 	}
 
@@ -160,7 +158,11 @@ func (p *Project) DefaultCR(s step.Step) ([]byte, error) {
 			names = append(names, f.Name())
 		}
 
-		answer, err := s.Prompt(fmt.Sprintf("Please specify the file to use as default CR in %s: %v\n", samplesDir, names))
+		answer, err := s.Prompt(
+			fmt.Sprintf(
+				"Please specify the file to use as default CR in %s: %v\n", samplesDir, names,
+			),
+		)
 		defaultCR = filepath.Join(samplesDir, answer)
 		if err != nil {
 			return nil, fmt.Errorf("could not obtain default CR from user prompt: %w", err)

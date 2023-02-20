@@ -1,26 +1,20 @@
 package kustomize
 
 import (
-	"errors"
 	"fmt"
 	"net/url"
 	"os"
-	"os/exec"
-	"path/filepath"
-	"runtime"
 	"strings"
 
-	"github.com/kyma-project/cli/internal/cli"
-	"github.com/kyma-project/cli/internal/files"
-	"github.com/kyma-project/cli/pkg/step"
+	"sigs.k8s.io/kustomize/api/filters/imagetag"
+	"sigs.k8s.io/kustomize/api/krusty"
+	"sigs.k8s.io/kustomize/api/types"
+	"sigs.k8s.io/kustomize/kyaml/filesys"
+	"sigs.k8s.io/kustomize/kyaml/kio"
+	"sigs.k8s.io/kustomize/kyaml/yaml"
 )
 
 const (
-	DefaultVersion     = "4.5.7"
-	versionEnv         = "KUSTOMIZE_VERSION"
-	kustomizeinstaller = "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
-	kustomizeBin       = "kustomize"
-
 	buildURLPattern = "%s?ref=%s" // pattern for URL locations Definition.Location?ref=Definition.Ref
 	defaultURLRef   = "main"
 	localRef        = "local"
@@ -75,103 +69,72 @@ func ParseKustomization(s string) (Definition, error) {
 	return res, nil
 }
 
-func Setup(step step.Step, verbose bool) error {
-	// check if binary is there (not interested in the path itself at setup)
-	_, err := kustomizeBinPath()
-
-	// if not installed, install
-	if errors.Is(err, os.ErrNotExist) {
-		if runtime.GOOS == "windows" {
-			if _, err := exec.LookPath("bash"); err != nil {
-				return errors.New("\nBash is not installed. To install bash on windows please see http://win-bash.sourceforge.net")
-			}
-		}
-
-		v := os.Getenv(versionEnv)
-		if v == "" {
-			v = DefaultVersion
-		}
-
-		home, err := files.KymaHome()
-		if err != nil {
-			return err
-		}
-
-		downloadCmd := exec.Command("curl", "-s", kustomizeinstaller)
-		installCmd := exec.Command("bash", "-s", "--", v, home)
-
-		// pipe the downloaded script to the install command
-		out, err := cli.Pipe(downloadCmd, installCmd)
-		if err != nil {
-			return fmt.Errorf("error installing kustomize %w", err)
-		} else if verbose {
-			step.LogInfof("Installed Kustomize: %s", out)
-		}
-		return nil
-	}
-	if err != nil {
-		return fmt.Errorf("error getting kustomize binary: %w", err)
-	}
-	return nil
-}
+const NoOutputFile = ""
 
 // Build generates a manifest given a path using kustomize
 // Additional args might be given to the kustomize build command
-func Build(def Definition, args ...string) ([]byte, error) {
-	p, err := kustomizeBinPath()
-	if err != nil {
-		return nil, fmt.Errorf("error getting kustomize binary: %w", err)
-	}
+func Build(def Definition, outPath string, filters ...kio.Filter) ([]byte, error) {
+	opts := krusty.MakeDefaultOptions()
+	kustomize := krusty.MakeKustomizer(opts)
 
 	path := def.Location
 	if def.Ref != localRef {
 		path = fmt.Sprintf(buildURLPattern, def.Location, def.Ref)
 	}
 
-	// prepend command and path to args
-	args = append([]string{"build", path}, args...)
-
-	out, err := exec.Command(p, args...).CombinedOutput()
+	results, err := kustomize.Run(filesys.MakeFsOnDisk(), path)
 	if err != nil {
-		return nil, fmt.Errorf("could not build kustomization: %s: %w", out, err)
+		return nil, fmt.Errorf("could not build kustomization: %w", err)
 	}
 
-	return out, nil
+	for i, filter := range filters {
+		if err := results.ApplyFilter(filter); err != nil {
+			return nil, fmt.Errorf("could not apply filter (number %v): %w", i, err)
+		}
+	}
+
+	yaml, err := results.AsYaml()
+	if err != nil {
+		return nil, fmt.Errorf("could not parse kustomization as yaml: %w", err)
+	}
+
+	if outPath != "" {
+		if err := os.WriteFile(outPath, yaml, os.ModePerm); err != nil {
+			return nil, fmt.Errorf("could not write rendered kustomization as yaml to %s: %w", outPath, err)
+		}
+	}
+
+	return yaml, nil
 }
 
-// Set image edits the given image to the given value in the kustomization found in path.
-func SetImage(path, img, value string) error {
-	p, err := kustomizeBinPath()
-	if err != nil {
-		return fmt.Errorf("error getting kustomize binary: %w", err)
-	}
+const (
+	ControllerImageName = "controller"
+)
 
-	c := exec.Command(p, "edit", "set", "image", fmt.Sprintf("%s=%s", img, value))
-	c.Dir = path
-	out, err := c.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("could not set image: %s: %w", out, err)
-	}
-
-	return nil
+func ControllerImageModifier(img, ver string) imagetag.Filter {
+	return ImageModifier(ControllerImageName, img, ver, false, nil)
 }
 
-// kustomizeBinPath looks for the kustomize binary in the PATH or in the default Kyma home folder.
-// If it's not there in any location, os.ErrNotExist is returned.
-// Any other error means something went wrong.
-func kustomizeBinPath() (string, error) {
-	p, err := exec.LookPath(kustomizeBin)
-	if err != nil && !errors.Is(err, exec.ErrNotFound) {
-		return p, err
+func ImageModifier(
+	name, img, ver string, isDigest bool, callback func(key, value, tag string, node *yaml.RNode),
+) imagetag.Filter {
+	filter := imagetag.Filter{
+		ImageTag: types.Image{
+			Name:    name,
+			NewName: img,
+		},
+		FsSlice: []types.FieldSpec{
+			{Path: "spec/containers[]/image"},
+			{Path: "spec/template/spec/containers[]/image"},
+		},
 	}
-	if p != "" {
-		return p, nil
+	if isDigest {
+		filter.ImageTag.Digest = ver
+	} else {
+		filter.ImageTag.NewTag = ver
 	}
-
-	home, err := files.KymaHome()
-	if err != nil {
-		return "", err
+	if callback != nil {
+		(&filter).WithMutationTracker(callback)
 	}
-
-	return exec.LookPath(filepath.Join(home, kustomizeBin))
+	return filter
 }

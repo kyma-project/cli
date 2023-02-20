@@ -13,7 +13,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/kyma-project/cli/internal/cli"
-	"github.com/kyma-project/cli/internal/kustomize"
 	"github.com/kyma-project/cli/pkg/module"
 )
 
@@ -103,7 +102,8 @@ Build module my-domain/modB in version 3.2.1 and push it to a local registry "un
 	)
 	cmd.Flags().StringVar(&o.Channel, "channel", "regular", "Channel to use for the module template.")
 	cmd.Flags().StringVarP(
-		&o.Token, "token", "t", "", "Authentication token for the given registry (alternative to basic authentication).",
+		&o.Token, "token", "t", "",
+		"Authentication token for the given registry (alternative to basic authentication).",
 	)
 	cmd.Flags().BoolVarP(
 		&o.Overwrite, "overwrite", "w", false, "overwrites the existing mod-path directory if it exists",
@@ -145,13 +145,6 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 		NameMappingMode: nameMappingMode,
 		DefaultCRPath:   cmd.opts.DefaultCRPath,
 	}
-
-	cmd.NewStep("Setting up kustomize...")
-	if err := kustomize.Setup(cmd.CurrentStep, true); err != nil {
-		cmd.CurrentStep.Failure()
-		return err
-	}
-	cmd.CurrentStep.Successf("Kustomize ready")
 
 	/* -- Inspect and build Module -- */
 	cmd.NewStep("Parse and build module...")

@@ -11,6 +11,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/cli-runtime/pkg/resource"
+	"sigs.k8s.io/kustomize/kyaml/kio"
 
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/kustomize"
@@ -45,7 +46,7 @@ subjects:
 // Bootstrap deploys the kustomization files for the prerequisites for Kyma.
 // Returns true if the Kyma CRD was deployed.
 func Bootstrap(
-	ctx context.Context, kustomizations []string, k8s kube.KymaKube, addWildCard, dryRun bool,
+	ctx context.Context, kustomizations []string, k8s kube.KymaKube, filters []kio.Filter, addWildCard, dryRun bool,
 ) (bool, error) {
 	var defs []kustomize.Definition
 	// defaults
@@ -58,7 +59,7 @@ func Bootstrap(
 	}
 
 	// build manifests
-	manifests, err := build(defs)
+	manifests, err := build(defs, filters)
 	if err != nil {
 		return false, err
 	}
@@ -108,10 +109,10 @@ func checkDeploymentReadiness(objs []*resource.Info, k8s kube.KymaKube) error {
 	return nil
 }
 
-func build(kustomizations []kustomize.Definition) ([]byte, error) {
+func build(kustomizations []kustomize.Definition, filters []kio.Filter) ([]byte, error) {
 	ms := bytes.Buffer{}
 	for _, k := range kustomizations {
-		manifest, err := kustomize.Build(k)
+		manifest, err := kustomize.Build(k, kustomize.NoOutputFile, filters...)
 		if err != nil {
 			return nil, fmt.Errorf("could not build manifest for %s: %w", k.Name, err)
 		}
