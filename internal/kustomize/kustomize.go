@@ -132,14 +132,14 @@ type override struct {
 
 var ErrImageInvalidArgs = errors.New(
 	`invalid format of image, use one of the following options:
-- <image>:<newtag>
-- <image>@<digest>
-- <image>`,
+- <image>:<newtag>, in which case both image and tag get overritten
+- <image>@<digest>, in which case both image and digest get overritten
+- <tag>, in which case the default image is used but with a different tag`,
 )
 
 // parseOverride parses the override parameters
 // from the given arg into a struct
-// copied from https://github.com/kubernetes-sigs/kustomize/blob/22dbd3eb17d9980f900d761ff3665c2b1849726b/kustomize/commands/edit/set/setimage.go#L231
+// heavily inspired by kustomize edit https://github.com/kubernetes-sigs/kustomize/blob/22dbd3eb17d9980f900d761ff3665c2b1849726b/kustomize/commands/edit/set/setimage.go#L231
 func parseOverride(arg string) (override, error) {
 	// match <image>@<digest>
 	if d := strings.Split(arg, "@"); len(d) > 1 {
@@ -160,7 +160,7 @@ func parseOverride(arg string) (override, error) {
 	// match <image>
 	if len(arg) > 0 {
 		return override{
-			name: arg,
+			tag: arg,
 		}, nil
 	}
 	return override{}, ErrImageInvalidArgs

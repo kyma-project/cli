@@ -56,14 +56,13 @@ func NewCmd(o *Options) *cobra.Command {
 		Example: `
 - Deploy the latest version of the Lifecycle Manager for trying out Modules: "kyma deploy -k https://github.com/kyma-project/lifecycle-manager/config/default -with-wildcard-permissions"
 - Deploy the main branch of Lifecycle Manager: "kyma deploy -k https://github.com/kyma-project/lifecycle-manager/config/default@main"
-- Deploy a local version of Lifecycle Manager: "kyma deploy -k /path/to/repo/lifecycle-manager/config/default"
-`,
+- Deploy a local version of Lifecycle Manager: "kyma deploy -k /path/to/repo/lifecycle-manager/config/default"`,
 	}
 	cobraCmd.Flags().StringArrayVarP(
 		&o.Kustomizations, "kustomization", "k", []string{lifecycleManagerKustomization},
-		`Provide one or more kustomizations to deploy. Each occurrence of the flag accepts a URL with an optional reference (commit, branch, or release) in the format URL@ref or a local path to the directory of the kustomization file.
-	Defaults to deploying Lifecycle Manager and Module Manager from GitHub main branch.
-	`,
+		`Provide one or more kustomizations to deploy. 
+Each occurrence of the flag accepts a URL with an optional reference (commit, branch, or release) in the format URL@ref or a local path to the directory of the kustomization file.
+Defaults to deploying Lifecycle Manager and Module Manager from GitHub main branch.`,
 	)
 	cobraCmd.Flags().StringArrayVarP(
 		&o.Modules, "module", "m", []string{},
@@ -83,7 +82,7 @@ func NewCmd(o *Options) *cobra.Command {
 	// Might be worth keeping this flag with another name to install extra templates??
 	cobraCmd.Flags().StringArrayVar(
 		&o.Templates, "template", []string{}, `Provide one or more module templates to deploy.
-	WARNING: This is a temporary flag for development and will be removed soon.`,
+WARNING: This is a temporary flag for development and will be removed soon.`,
 	)
 
 	cobraCmd.Flags().StringVar(
@@ -91,9 +90,11 @@ func NewCmd(o *Options) *cobra.Command {
 		"Installs cert-manager from the specified static version. an empty string skips the installation.",
 	)
 	cobraCmd.Flags().StringVar(
-		&o.LifecycleManager, "lifecycle-manager",
-		"eu.gcr.io/kyma-project/lifecycle-manager:latest",
-		"Installs lifecycle-manager with the specified image.",
+		&o.LifecycleManager, "lifecycle-manager", "eu.gcr.io/kyma-project/lifecycle-manager:latest",
+		`Installs lifecycle-manager with the specified image:
+- Use "my-registry.org/lifecycle-manager:my-tag"" to use a custom version of lifecycle-manager.
+- Use "europe-docker.pkg.dev/kyma-project/prod/lifecycle-manager@sha256:cb74b29cfe80c639c9ee9..." to use a custom version of lifecycle-manager with a digest.
+- Use a tag like "v20230220-7b8e9515" to override the default tag used, it will then use "eu.gcr.io/kyma-project/lifecycle-manager:v20230220-7b8e9515".`,
 	)
 
 	cobraCmd.Flags().BoolVar(
@@ -102,9 +103,9 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cobraCmd.Flags().BoolVar(
 		&o.WildcardPermissions, "wildcard-permissions", true,
-		`WARNING: DO NOT USE ON PRODUCTIVE CLUSTERS! 
-Creates a wildcard cluster-role to allow for easy local installation permissions of lifecycle-manager.
-Allows for usage of lifecycle-manager without having to worry about modules requiring specific RBAC permissions.`,
+		`Creates a wildcard cluster-role to allow for easy local installation permissions of lifecycle-manager.
+Allows for usage of lifecycle-manager without having to worry about modules requiring specific RBAC permissions.
+WARNING: DO NOT USE ON PRODUCTIVE CLUSTERS!`,
 	)
 
 	cobraCmd.Flags().BoolVar(
@@ -317,7 +318,7 @@ func (cmd *command) wizard(ctx context.Context) error {
 	}
 
 	if len(kymas.Items) < 1 {
-		return errors.New("No Kyma CR found in cluster")
+		return errors.New("no Kyma CR found in cluster")
 	}
 
 	cluster := cmd.K8s.KubeConfig().CurrentContext
