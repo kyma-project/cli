@@ -101,6 +101,8 @@ func (c *ConcurrentDefaultSSA) serverSideApplyResourceInfo(
 		)
 	}
 
+	obj.SetManagedFields(nil)
+
 	opts := []ctrlClient.PatchOption{c.owner}
 	if c.force {
 		opts = append(opts, ctrlClient.ForceOwnership)

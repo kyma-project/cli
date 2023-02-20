@@ -12,7 +12,7 @@ import (
 	"github.com/kyma-project/cli/internal/deploy"
 	"github.com/kyma-project/cli/internal/kustomize"
 	"github.com/kyma-project/cli/pkg/dashboard"
-	"github.com/kyma-project/cli/pkg/errs"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"errors"
 
@@ -179,7 +179,7 @@ func (cmd *command) deploy(ctx context.Context, start time.Time) error {
 
 	summary := &nice.Summary{
 		NonInteractive: cmd.NonInteractive,
-		Version:        "",
+		Version:        "alpha deployment with lifecycle-manager",
 	}
 
 	undo := zap.RedirectStdLog(l.Desugar())
@@ -216,52 +216,55 @@ func (cmd *command) deploy(ctx context.Context, start time.Time) error {
 		)
 	}
 
-	deployStep := cmd.NewStep("Deploying Kyma")
+	deployStep := cmd.NewStep("Deploying Kustomizations")
 	deployStep.Start()
-
 	hasKyma, err := deploy.Bootstrap(ctx, cmd.opts.Kustomizations, cmd.K8s, cmd.opts.WildcardPermissions, false)
 	if err != nil {
-		deployStep.Failuref("Failed to deploy Kyma.")
+		deployStep.Failuref("Failed to deploy Kustomizations %s: %s", cmd.opts.Kustomizations, err.Error())
 		return err
 	}
+	deployStep.Successf("Kustomizations deployed: %s", cmd.opts.Kustomizations)
 
-	// wait for operators to be ready
-	if err := cmd.waitForOperators(); err != nil {
-		return err
-	}
-
+	coreDns := cmd.NewStep("Patching CoreDNS")
+	coreDns.Start()
 	if _, err := coredns.Patch(l.Desugar(), cmd.K8s.Static(), false, clusterInfo, hostsTemplate); err != nil {
+		coreDns.Failuref("error patching CoreDNS: %s", err)
 		return err
 	}
+	coreDns.Successf("CoreDNS patched successfully")
 
 	// deploy modules and kyma CR
 	if hasKyma {
 		// TODO change to fetch templates from release artifacts
-		modStep := cmd.NewStep("Modules deployed")
-		for _, t := range cmd.opts.Templates {
-			b, err := os.ReadFile(t)
-			if err != nil {
-				modStep.Failuref("Failed to deploy modules")
-				return err
+		if len(cmd.opts.Templates) > 0 {
+			modStep := cmd.NewStep("Module Templates deployed")
+			for _, t := range cmd.opts.Templates {
+				b, err := os.ReadFile(t)
+				if err != nil {
+					modStep.Failuref("Failed to deploy module templates")
+					return err
+				}
+				resources, err := cmd.K8s.ParseManifest(b)
+				if err != nil {
+					modStep.Failuref("Failed to parse manifest for module templates")
+					return err
+				}
+				if err := cmd.K8s.Apply(ctx, resources); err != nil {
+					modStep.Failuref("Failed to deploy module templates")
+					return err
+				}
 			}
-			if err := cmd.K8s.Apply(ctx, b); err != nil {
-				modStep.Failuref("Failed to deploy modules")
-				return err
-			}
+			modStep.Success()
 		}
-		modStep.Success()
-		kymaStep := cmd.NewStep("Kyma CR deployed")
+
+		kymaStep := cmd.NewStep("Deploying Kyma CR")
+		kymaStep.Start()
 		if err := deploy.Kyma(ctx, cmd.K8s, cmd.opts.Namespace, cmd.opts.Channel, cmd.opts.KymaCR, false); err != nil {
-			kymaStep.Failuref("Failed to deploy Kyma CR")
+			kymaStep.Failuref("Failed to deploy Kyma CR: %s", err.Error())
 			return err
 		}
-		kymaStep.Success()
-
-	} else {
-		deployStep.LogInfo("There was no Kyma CRD present in the prerequisites, no modules will be installed.")
+		kymaStep.Successf("Kyma CR deployed and Ready!")
 	}
-
-	deployStep.Successf("Kyma deployed successfully!")
 
 	deployTime := time.Since(start)
 	return summary.Print(deployTime)
@@ -289,32 +292,13 @@ func (cmd *command) dryRun(ctx context.Context) error {
 			fmt.Printf("%s\n---\n", string(b))
 		}
 
-		if err := deploy.Kyma(ctx, cmd.K8s, cmd.opts.Namespace, cmd.opts.Channel, cmd.opts.KymaCR, true); err != nil {
+		if err := deploy.Kyma(
+			ctx, cmd.K8s, cmd.opts.Namespace, cmd.opts.Channel, cmd.opts.KymaCR, true,
+		); err != nil {
 			return err
 		}
 	}
 	return nil
-}
-
-func (cmd *command) waitForOperators() error {
-	errChan := make(chan error)
-	defer close(errChan)
-
-	go func() {
-		err := cmd.K8s.WaitDeploymentStatus(
-			"kcp-system", "lifecycle-manager-controller-manager", appsv1.DeploymentAvailable, corev1.ConditionTrue,
-		)
-		lifecycleStep := cmd.NewStep("Lifecycle Manager deployed")
-		if err != nil {
-			lifecycleStep.Failuref("Failed to deploy Lifecycle Manager")
-		} else {
-			lifecycleStep.Success()
-		}
-		errChan <- err
-	}()
-
-	// Merge errors from all async calls (2)
-	return errs.MergeErrors(<-errChan)
 }
 
 func (cmd *command) wizard(ctx context.Context) error {
@@ -322,7 +306,13 @@ func (cmd *command) wizard(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, cmd.opts.Timeout)
 	defer cancel()
 
-	kymas, err := cmd.K8s.Dynamic().Resource(deploy.KymaGVR).List(ctx, v1.ListOptions{})
+	kymas, err := cmd.K8s.Dynamic().Resource(
+		schema.GroupVersionResource{
+			Group:    "operator.kyma-project.io",
+			Version:  "v1alpha1",
+			Resource: "kymas",
+		},
+	).List(ctx, v1.ListOptions{})
 	if err != nil {
 		return err
 	}

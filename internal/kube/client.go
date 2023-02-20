@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	lifecycleManagerApi "github.com/kyma-project/lifecycle-manager/api"
 	"github.com/pkg/errors"
 	istio "istio.io/client-go/pkg/clientset/versioned"
 	appsv1 "k8s.io/api/apps/v1"
@@ -91,6 +92,9 @@ func NewFromRestConfigWithTimeout(config *rest.Config, t time.Duration) (KymaKub
 	if err := v1extensions.AddToScheme(newScheme); err != nil {
 		return nil, err
 	}
+	if err := lifecycleManagerApi.AddToScheme(newScheme); err != nil {
+		return nil, err
+	}
 
 	nClient, err := ctrlClient.New(config, ctrlClient.Options{Scheme: newScheme})
 	if err != nil {
@@ -163,6 +167,9 @@ func NewFromConfigWithTimeout(url, file string, t time.Duration) (KymaKube, erro
 	if err := v1extensions.AddToScheme(newScheme); err != nil {
 		return nil, err
 	}
+	if err := lifecycleManagerApi.AddToScheme(newScheme); err != nil {
+		return nil, err
+	}
 
 	nClient, err := ctrlClient.New(config, ctrlClient.Options{Scheme: newScheme})
 	if err != nil {
@@ -202,12 +209,11 @@ func (c *client) KubeConfig() *api.Config {
 	return c.kubeCfg
 }
 
-func (c *client) Apply(ctx context.Context, manifest []byte) error {
-
+func (c *client) ParseManifest(manifest []byte) ([]*resource.Info, error) {
 	// parse manifest
 	manifests, err := parseManifest(manifest)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	objs := make([]*resource.Info, 0, len(manifests))
@@ -215,7 +221,7 @@ func (c *client) Apply(ctx context.Context, manifest []byte) error {
 
 		obj := &unstructured.Unstructured{}
 		if err := yaml.Unmarshal(manifest, obj); err != nil {
-			return err
+			return nil, err
 		}
 
 		gvk := obj.GroupVersionKind()
@@ -226,12 +232,24 @@ func (c *client) Apply(ctx context.Context, manifest []byte) error {
 			err = nil
 		}
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		objs = append(objs, &resource.Info{Object: obj, Mapping: mapping})
+		objs = append(
+			objs, &resource.Info{
+				Name:            obj.GetName(),
+				Namespace:       obj.GetNamespace(),
+				ResourceVersion: obj.GetResourceVersion(),
+				Object:          obj,
+				Mapping:         mapping,
+			},
+		)
 	}
 
+	return objs, nil
+}
+
+func (c *client) Apply(ctx context.Context, objs []*resource.Info) error {
 	return ConcurrentSSA(c.nClient, "kyma", false).Run(ctx, objs)
 }
 
@@ -278,7 +296,7 @@ func (c *client) IsPodDeployedByLabel(namespace, labelName, labelValue string) (
 func (c *client) WaitDeploymentStatus(
 	namespace, name string, cond appsv1.DeploymentConditionType, status corev1.ConditionStatus,
 ) error {
-	watchFn := func() (bool, error) {
+	watchFn := func(ctx context.Context) (bool, error) {
 		d, err := c.static.AppsV1().Deployments(namespace).Get(context.Background(), name, metav1.GetOptions{})
 		if err != nil && k8sErrors.IsNotFound(err) {
 			return false, err
@@ -292,12 +310,12 @@ func (c *client) WaitDeploymentStatus(
 		return false, nil
 	}
 
-	return watch(name, watchFn, c.restCfg.Timeout)
+	return watch(context.Background(), name, watchFn, c.restCfg.Timeout)
 }
 
 func (c *client) WaitPodStatus(namespace, name string, status corev1.PodPhase) error {
-	watchFn := func() (bool, error) {
-		pod, err := c.Static().CoreV1().Pods(namespace).Get(context.Background(), name, metav1.GetOptions{})
+	watchFn := func(ctx context.Context) (bool, error) {
+		pod, err := c.Static().CoreV1().Pods(namespace).Get(ctx, name, metav1.GetOptions{})
 		if err != nil && !k8sErrors.IsNotFound(err) {
 			return false, err
 		}
@@ -308,13 +326,13 @@ func (c *client) WaitPodStatus(namespace, name string, status corev1.PodPhase) e
 		return false, nil
 	}
 
-	return watch(name, watchFn, c.restCfg.Timeout)
+	return watch(context.Background(), name, watchFn, c.restCfg.Timeout)
 }
 
 func (c *client) WaitPodStatusByLabel(namespace, labelName, labelValue string, status corev1.PodPhase) error {
-	watchFn := func() (bool, error) {
+	watchFn := func(ctx context.Context) (bool, error) {
 		pods, err := c.Static().CoreV1().Pods(namespace).List(
-			context.Background(), metav1.ListOptions{LabelSelector: fmt.Sprintf("%s=%s", labelName, labelValue)},
+			ctx, metav1.ListOptions{LabelSelector: fmt.Sprintf("%s=%s", labelName, labelValue)},
 		)
 		if err != nil {
 			return false, err
@@ -331,21 +349,23 @@ func (c *client) WaitPodStatusByLabel(namespace, labelName, labelValue string, s
 		return ok, nil
 	}
 
-	return watch(fmt.Sprintf("Pod labeled: %s=%s", labelName, labelValue), watchFn, c.restCfg.Timeout)
+	return watch(
+		context.Background(), fmt.Sprintf("Pod labeled: %s=%s", labelName, labelValue), watchFn, c.restCfg.Timeout,
+	)
 }
 
 func (c *client) WatchResource(
 	res schema.GroupVersionResource, name, namespace string, checkFn func(u *unstructured.Unstructured) (bool, error),
 ) error {
-	watchFn := func() (bool, error) {
+	watchFn := func(ctx context.Context) (bool, error) {
 		var itm *unstructured.Unstructured
 		var err error
 		if namespace != "" {
 			itm, err = c.Dynamic().Resource(res).Namespace(namespace).Get(
-				context.Background(), name, metav1.GetOptions{},
+				ctx, name, metav1.GetOptions{},
 			)
 		} else {
-			itm, err = c.Dynamic().Resource(res).Get(context.Background(), name, metav1.GetOptions{})
+			itm, err = c.Dynamic().Resource(res).Get(ctx, name, metav1.GetOptions{})
 		}
 		if err != nil {
 			return false, errors.Wrapf(err, "Failed to check %s", res.Resource)
@@ -353,7 +373,22 @@ func (c *client) WatchResource(
 		return checkFn(itm)
 	}
 
-	return watch(res.Resource, watchFn, c.restCfg.Timeout)
+	return watch(context.Background(), res.Resource, watchFn, c.restCfg.Timeout)
+}
+
+func (c *client) WatchObject(
+	ctx context.Context, obj ctrlClient.Object, checkFn func(u ctrlClient.Object) (bool, error),
+) error {
+
+	key := ctrlClient.ObjectKeyFromObject(obj)
+	watchFn := func(ctx context.Context) (bool, error) {
+		if err := c.nClient.Get(ctx, key, obj); err != nil {
+			return false, errors.Wrapf(err, "Failed to check %s", key)
+		}
+		return checkFn(obj)
+	}
+
+	return watch(ctx, key.String(), watchFn, c.restCfg.Timeout)
 }
 
 func (c *client) DefaultNamespace() string {
@@ -365,23 +400,21 @@ func (c *client) DefaultNamespace() string {
 
 // watch provides a unified implementation to watch resources.
 // timeout of zero does NOT mean "no timeout", i.e. "wait forever" - it means the function will time-out almost immediately - at the discretion of the golang scheduler.
-func watch(res string, watchFn func() (bool, error), timeout time.Duration) error {
-	timeChan := time.After(timeout)
+func watch(
+	ctx context.Context, res string, watchFn func(ctx context.Context) (bool, error), timeout time.Duration,
+) error {
+
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
 
 	for {
-		select {
-		case <-timeChan:
-			return fmt.Errorf("Timeout reached while waiting for %s", res)
-
-		default:
-			finished, err := watchFn()
-			if err != nil {
-				return err
-			}
-			if finished {
-				return nil
-			}
-			time.Sleep(defaultWaitSleep)
+		finished, err := watchFn(ctx)
+		if err != nil {
+			return fmt.Errorf("error waiting for %s: %w", res, err)
 		}
+		if finished {
+			return nil
+		}
+		time.Sleep(defaultWaitSleep)
 	}
 }

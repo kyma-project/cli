@@ -3,9 +3,10 @@
 package mocks
 
 import (
-	context "context"
-
 	api "k8s.io/client-go/tools/clientcmd/api"
+	client "sigs.k8s.io/controller-runtime/pkg/client"
+
+	context "context"
 
 	corev1 "k8s.io/api/core/v1"
 
@@ -14,6 +15,8 @@ import (
 	kubernetes "k8s.io/client-go/kubernetes"
 
 	mock "github.com/stretchr/testify/mock"
+
+	resource "k8s.io/cli-runtime/pkg/resource"
 
 	rest "k8s.io/client-go/rest"
 
@@ -31,13 +34,13 @@ type KymaKube struct {
 	mock.Mock
 }
 
-// Apply provides a mock function with given fields: ctx, manifest
-func (_m *KymaKube) Apply(ctx context.Context, manifest []byte) error {
-	ret := _m.Called(ctx, manifest)
+// Apply provides a mock function with given fields: ctx, objs
+func (_m *KymaKube) Apply(ctx context.Context, objs []*resource.Info) error {
+	ret := _m.Called(ctx, objs)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, []byte) error); ok {
-		r0 = rf(ctx, manifest)
+	if rf, ok := ret.Get(0).(func(context.Context, []*resource.Info) error); ok {
+		r0 = rf(ctx, objs)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -155,6 +158,32 @@ func (_m *KymaKube) KubeConfig() *api.Config {
 	return r0
 }
 
+// ParseManifest provides a mock function with given fields: manifest
+func (_m *KymaKube) ParseManifest(manifest []byte) ([]*resource.Info, error) {
+	ret := _m.Called(manifest)
+
+	var r0 []*resource.Info
+	var r1 error
+	if rf, ok := ret.Get(0).(func([]byte) ([]*resource.Info, error)); ok {
+		return rf(manifest)
+	}
+	if rf, ok := ret.Get(0).(func([]byte) []*resource.Info); ok {
+		r0 = rf(manifest)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*resource.Info)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func([]byte) error); ok {
+		r1 = rf(manifest)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // RestConfig provides a mock function with given fields:
 func (_m *KymaKube) RestConfig() *rest.Config {
 	ret := _m.Called()
@@ -222,6 +251,20 @@ func (_m *KymaKube) WaitPodStatusByLabel(namespace string, labelName string, lab
 	var r0 error
 	if rf, ok := ret.Get(0).(func(string, string, string, corev1.PodPhase) error); ok {
 		r0 = rf(namespace, labelName, labelValue, status)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// WatchObject provides a mock function with given fields: ctx, obj, checkFn
+func (_m *KymaKube) WatchObject(ctx context.Context, obj client.Object, checkFn func(client.Object) (bool, error)) error {
+	ret := _m.Called(ctx, obj, checkFn)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, client.Object, func(client.Object) (bool, error)) error); ok {
+		r0 = rf(ctx, obj, checkFn)
 	} else {
 		r0 = ret.Error(0)
 	}

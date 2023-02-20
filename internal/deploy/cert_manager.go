@@ -38,7 +38,11 @@ func CertManager(ctx context.Context, k8s kube.KymaKube, certManagerVersion stri
 
 	return retry.Do(
 		func() error {
-			return k8s.Apply(context.Background(), result.Bytes())
+			objs, err := k8s.ParseManifest(result.Bytes())
+			if err != nil {
+				return err
+			}
+			return k8s.Apply(context.Background(), objs)
 		}, retry.Attempts(defaultRetries), retry.Delay(defaultInitialBackoff), retry.DelayType(retry.BackOffDelay),
 		retry.LastErrorOnly(false), retry.Context(ctx),
 	)

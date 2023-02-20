@@ -8,6 +8,9 @@ import (
 	"time"
 
 	"github.com/avast/retry-go"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/cli-runtime/pkg/resource"
 
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/kustomize"
@@ -68,19 +71,41 @@ func Bootstrap(
 	if dryRun {
 		fmt.Println(string(manifests))
 	} else {
+		var objs []*resource.Info
 		err := retry.Do(
 			func() error {
-				return k8s.Apply(context.Background(), manifests)
+				objs, err = k8s.ParseManifest(manifests)
+				if err != nil {
+					return err
+				}
+				return k8s.Apply(context.Background(), objs)
 			}, retry.Attempts(defaultRetries), retry.Delay(defaultInitialBackoff), retry.DelayType(retry.BackOffDelay),
 			retry.LastErrorOnly(false), retry.Context(ctx),
 		)
-
 		if err != nil {
+			return false, err
+		}
+
+		if err := checkDeploymentReadiness(objs, k8s); err != nil {
 			return false, err
 		}
 	}
 
 	return hasKyma(string(manifests))
+}
+
+func checkDeploymentReadiness(objs []*resource.Info, k8s kube.KymaKube) error {
+	for _, obj := range objs {
+		if obj.Object.GetObjectKind().GroupVersionKind().Kind != "Deployment" {
+			continue
+		}
+		if err := k8s.WaitDeploymentStatus(
+			obj.Namespace, obj.Name, appsv1.DeploymentAvailable, corev1.ConditionTrue,
+		); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func build(kustomizations []kustomize.Definition) ([]byte, error) {
