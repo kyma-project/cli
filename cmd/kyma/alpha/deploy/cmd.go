@@ -237,19 +237,14 @@ func (cmd *command) deploy(ctx context.Context, start time.Time) error {
 	// deploy modules and kyma CR
 	if hasKyma {
 		// TODO change to fetch templates from release artifacts
-		modStep := cmd.NewStep("Modules deployed")
-		for _, t := range cmd.opts.Templates {
-			b, err := os.ReadFile(t)
-			if err != nil {
+		if len(cmd.opts.Templates) > 0 {
+			modStep := cmd.NewStep("Modules deployed")
+			if err := deploy.ModuleTemplates(ctx, cmd.K8s, cmd.opts.Templates); err != nil {
 				modStep.Failuref("Failed to deploy modules")
 				return err
 			}
-			if err := cmd.K8s.Apply(ctx, b); err != nil {
-				modStep.Failuref("Failed to deploy modules")
-				return err
-			}
+			modStep.Success()
 		}
-		modStep.Success()
 		kymaStep := cmd.NewStep("Kyma CR deployed")
 		if err := deploy.Kyma(ctx, cmd.K8s, cmd.opts.Namespace, cmd.opts.Channel, cmd.opts.KymaCR, false); err != nil {
 			kymaStep.Failuref("Failed to deploy Kyma CR")
