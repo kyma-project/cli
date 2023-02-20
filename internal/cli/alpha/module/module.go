@@ -3,6 +3,8 @@ package module
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -10,14 +12,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/pointer"
-	"time"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 var kymaResource = schema.GroupVersionResource{
 	Group:    "operator.kyma-project.io",
-	Version:  "v1alpha1",
+	Version:  "v1beta1",
 	Resource: "kymas",
 }
 
@@ -41,7 +42,8 @@ func (i *Interactor) Get(ctx context.Context) (ModulesList, error) {
 	namespace := i.ResourceName.Namespace
 	name := i.ResourceName.Name
 	kyma, err := i.Client.Dynamic().Resource(kymaResource).Namespace(namespace).Get(
-		ctx, name, metav1.GetOptions{})
+		ctx, name, metav1.GetOptions{},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("could not get Kyma with name %s and namespace %s: %w", name, namespace, err)
 	}
@@ -57,7 +59,8 @@ func (i *Interactor) Update(ctx context.Context, modules ModulesList) error {
 	namespace := i.ResourceName.Namespace
 	name := i.ResourceName.Name
 	kyma, err := i.Client.Dynamic().Resource(kymaResource).Namespace(namespace).Get(
-		ctx, name, metav1.GetOptions{})
+		ctx, name, metav1.GetOptions{},
+	)
 	if err != nil {
 		return fmt.Errorf("could not get Kyma %s/%s: %w", namespace, name, err)
 	}
@@ -74,7 +77,8 @@ func (i *Interactor) Update(ctx context.Context, modules ModulesList) error {
 	patchOpts := metav1.PatchOptions{FieldManager: "kyma"}
 	patchOpts.Force = pointer.Bool(i.ForceUpdate)
 	_, err = i.Client.Dynamic().Resource(kymaResource).Namespace(namespace).Patch(
-		ctx, kyma.GetName(), types.ApplyPatchType, data, patchOpts)
+		ctx, kyma.GetName(), types.ApplyPatchType, data, patchOpts,
+	)
 	if err != nil {
 		return fmt.Errorf("failed to update Kyma %s in %s: %w", name, namespace, err)
 	}

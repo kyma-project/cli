@@ -21,7 +21,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/kyma-project/cli/internal/cli"
-	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/nice"
 )
 
@@ -149,9 +148,8 @@ func (cmd *command) RunWithTimeout(ctx context.Context) error {
 func (cmd *command) run(ctx context.Context) error {
 	start := time.Now()
 
-	var err error
-	if cmd.K8s, err = kube.NewFromConfigWithTimeout("", cmd.KubeconfigPath, cmd.opts.Timeout); err != nil {
-		return fmt.Errorf("failed to initialize the Kubernetes client from given kubeconfig: %w", err)
+	if err := cmd.EnsureClusterAccess(ctx, cmd.opts.Timeout); err != nil {
+		return err
 	}
 
 	if err := cmd.deploy(ctx, start); err != nil {

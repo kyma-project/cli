@@ -1,4 +1,4 @@
-apiVersion: operator.kyma-project.io/v1alpha1
+apiVersion: operator.kyma-project.io/v1beta1
 kind: Kyma
 metadata:
   annotations:
@@ -43,13 +43,13 @@ status:
       state: Ready
       channel: stable
       manifest:
-        apiVersion: operator.kyma-project.io/v1alpha1
+        apiVersion: operator.kyma-project.io/v1beta1
         kind: Manifest
         metadata:
           generation: 1
           name: kyma--50-9-manifest-1
       template:
-        apiVersion: operator.kyma-project.io/v1alpha1
+        apiVersion: operator.kyma-project.io/v1beta1
         kind: ModuleTemplate
         metadata:
           generation: 1
