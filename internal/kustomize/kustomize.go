@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"regexp"
 	"strings"
 
+	"github.com/pkg/errors"
 	"sigs.k8s.io/kustomize/api/filters/imagetag"
 	"sigs.k8s.io/kustomize/api/krusty"
 	"sigs.k8s.io/kustomize/api/types"
@@ -111,27 +113,77 @@ const (
 	ControllerImageName = "controller"
 )
 
-func ControllerImageModifier(img, ver string) imagetag.Filter {
-	return ImageModifier(ControllerImageName, img, ver, false, nil)
+func LifecycleManagerImageModifier(overrideString string, onOverride func(image string)) (imagetag.Filter, error) {
+	override, err := parseOverride(overrideString)
+	if err != nil {
+		return imagetag.Filter{}, err
+	}
+	return ImageModifier(
+		"*lifecycle-manager*", override.name, override.tag, override.digest,
+		func(key, value, tag string, node *yaml.RNode) { onOverride(value) },
+	), nil
+}
+
+type override struct {
+	name   string
+	digest string
+	tag    string
+}
+
+var ErrImageInvalidArgs = errors.New(
+	`invalid format of image, use one of the following options:
+- <image>:<newtag>
+- <image>@<digest>
+- <image>`,
+)
+
+// parseOverride parses the override parameters
+// from the given arg into a struct
+// copied from https://github.com/kubernetes-sigs/kustomize/blob/22dbd3eb17d9980f900d761ff3665c2b1849726b/kustomize/commands/edit/set/setimage.go#L231
+func parseOverride(arg string) (override, error) {
+	// match <image>@<digest>
+	if d := strings.Split(arg, "@"); len(d) > 1 {
+		return override{
+			name:   d[0],
+			digest: d[1],
+		}, nil
+	}
+
+	// match <image>:<tag>
+	if t := regexp.MustCompile(`^(.*):([a-zA-Z0-9._-]*|\*)$`).FindStringSubmatch(arg); len(t) == 3 {
+		return override{
+			name: t[1],
+			tag:  t[2],
+		}, nil
+	}
+
+	// match <image>
+	if len(arg) > 0 {
+		return override{
+			name: arg,
+		}, nil
+	}
+	return override{}, ErrImageInvalidArgs
+}
+
+func ControllerImageModifier(img, tag string) imagetag.Filter {
+	return ImageModifier(ControllerImageName, img, tag, "", nil)
 }
 
 func ImageModifier(
-	name, img, ver string, isDigest bool, callback func(key, value, tag string, node *yaml.RNode),
+	name, img, tag, digest string, callback func(key, value, tag string, node *yaml.RNode),
 ) imagetag.Filter {
 	filter := imagetag.Filter{
 		ImageTag: types.Image{
 			Name:    name,
 			NewName: img,
+			NewTag:  tag,
+			Digest:  digest,
 		},
 		FsSlice: []types.FieldSpec{
 			{Path: "spec/containers[]/image"},
 			{Path: "spec/template/spec/containers[]/image"},
 		},
-	}
-	if isDigest {
-		filter.ImageTag.Digest = ver
-	} else {
-		filter.ImageTag.NewTag = ver
 	}
 	if callback != nil {
 		(&filter).WithMutationTracker(callback)

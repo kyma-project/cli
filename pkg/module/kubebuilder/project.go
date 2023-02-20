@@ -67,7 +67,7 @@ func (p *Project) Build(name, version, registry string) (string, error) {
 	// edit kustomization image and setup build
 	img := ""
 	if registry == "" {
-		img = fmt.Sprintf("%s", name)
+		img = name
 	} else {
 		img = fmt.Sprintf("%s/%s", registry, name)
 	}

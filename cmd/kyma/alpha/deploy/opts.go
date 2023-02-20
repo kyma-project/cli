@@ -1,10 +1,13 @@
 package deploy
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/kustomize"
 	"github.com/pkg/errors"
+	"sigs.k8s.io/kustomize/kyaml/kio"
 )
 
 // Options defines available options for the command
@@ -23,6 +26,7 @@ type Options struct {
 	Kustomizations      []string
 	Templates           []string
 	Timeout             time.Duration
+	Filters             []kio.Filter
 }
 
 // NewOptions creates options with default values
@@ -36,6 +40,10 @@ func (o *Options) validateFlags() error {
 		return err
 	}
 
+	if err := o.validateFilters(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -43,5 +51,24 @@ func (o *Options) validateTimeout() error {
 	if o.Timeout <= 0 {
 		return errors.New("timeout must be a positive duration")
 	}
+	return nil
+}
+
+// validateFilters sets up all filters that will be used by kustomize when running the command
+func (o *Options) validateFilters() error {
+	var filters []kio.Filter
+	if len(o.LifecycleManager) > 0 {
+		modifier, err := kustomize.LifecycleManagerImageModifier(
+			o.LifecycleManager,
+			func(image string) {
+				o.NewStep(fmt.Sprintf("Used Lifecycle-Manager: %s", image)).Success()
+			},
+		)
+		if err != nil {
+			return err
+		}
+		filters = append(filters, modifier)
+	}
+	o.Filters = filters
 	return nil
 }
