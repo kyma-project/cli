@@ -16,8 +16,6 @@ import (
 
 	mock "github.com/stretchr/testify/mock"
 
-	resource "k8s.io/cli-runtime/pkg/resource"
-
 	rest "k8s.io/client-go/rest"
 
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -34,15 +32,38 @@ type KymaKube struct {
 	mock.Mock
 }
 
-// Apply provides a mock function with given fields: ctx, objs
-func (_m *KymaKube) Apply(ctx context.Context, objs []*resource.Info) error {
-	ret := _m.Called(ctx, objs)
+// Apply provides a mock function with given fields: ctx, force, objs
+func (_m *KymaKube) Apply(ctx context.Context, force bool, objs ...client.Object) error {
+	_va := make([]interface{}, len(objs))
+	for _i := range objs {
+		_va[_i] = objs[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, force)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, []*resource.Info) error); ok {
-		r0 = rf(ctx, objs)
+	if rf, ok := ret.Get(0).(func(context.Context, bool, ...client.Object) error); ok {
+		r0 = rf(ctx, force, objs...)
 	} else {
 		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// Ctrl provides a mock function with given fields:
+func (_m *KymaKube) Ctrl() client.WithWatch {
+	ret := _m.Called()
+
+	var r0 client.WithWatch
+	if rf, ok := ret.Get(0).(func() client.WithWatch); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(client.WithWatch)
+		}
 	}
 
 	return r0
@@ -159,19 +180,19 @@ func (_m *KymaKube) KubeConfig() *api.Config {
 }
 
 // ParseManifest provides a mock function with given fields: manifest
-func (_m *KymaKube) ParseManifest(manifest []byte) ([]*resource.Info, error) {
+func (_m *KymaKube) ParseManifest(manifest []byte) ([]client.Object, error) {
 	ret := _m.Called(manifest)
 
-	var r0 []*resource.Info
+	var r0 []client.Object
 	var r1 error
-	if rf, ok := ret.Get(0).(func([]byte) ([]*resource.Info, error)); ok {
+	if rf, ok := ret.Get(0).(func([]byte) ([]client.Object, error)); ok {
 		return rf(manifest)
 	}
-	if rf, ok := ret.Get(0).(func([]byte) []*resource.Info); ok {
+	if rf, ok := ret.Get(0).(func([]byte) []client.Object); ok {
 		r0 = rf(manifest)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*resource.Info)
+			r0 = ret.Get(0).([]client.Object)
 		}
 	}
 

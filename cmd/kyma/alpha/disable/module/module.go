@@ -125,10 +125,7 @@ func (cmd *command) run(ctx context.Context, l *zap.SugaredLogger, moduleName st
 	if err != nil {
 		return fmt.Errorf("failed to get modules: %w", err)
 	}
-	desiredModules, err := disableModule(modules, moduleName, cmd.opts.Channel)
-	if err != nil {
-		return fmt.Errorf("could not disable module: %w", err)
-	}
+	desiredModules := disableModule(modules, moduleName, cmd.opts.Channel)
 
 	patchStep := cmd.NewStep("Patching modules for Kyma")
 	if err = moduleInteractor.Apply(ctx, desiredModules); err != nil {
@@ -151,7 +148,7 @@ func (cmd *command) run(ctx context.Context, l *zap.SugaredLogger, moduleName st
 	return nil
 }
 
-func disableModule(modules []v1beta1.Module, name, channel string) ([]v1beta1.Module, error) {
+func disableModule(modules []v1beta1.Module, name, channel string) []v1beta1.Module {
 	for i, mod := range modules {
 		if mod.Name != name {
 			continue
@@ -161,7 +158,7 @@ func disableModule(modules []v1beta1.Module, name, channel string) ([]v1beta1.Mo
 				continue
 			}
 		}
-		return append(modules[:i], modules[i+1:]...), nil
+		return append(modules[:i], modules[i+1:]...)
 	}
-	return modules, nil
+	return modules
 }

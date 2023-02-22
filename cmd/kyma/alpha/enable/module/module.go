@@ -127,10 +127,7 @@ func (cmd *command) run(ctx context.Context, l *zap.SugaredLogger, moduleName st
 		return fmt.Errorf("failed to get modules: %w", err)
 	}
 
-	desiredModules, err := enableModule(modules, moduleName, cmd.opts.Channel)
-	if err != nil {
-		return fmt.Errorf("could not find module to enable: %w", err)
-	}
+	desiredModules := enableModule(modules, moduleName, cmd.opts.Channel)
 
 	patchStep := cmd.NewStep("Patching modules for Kyma")
 	if err = moduleInteractor.Apply(ctx, desiredModules); err != nil {
@@ -151,12 +148,12 @@ func (cmd *command) run(ctx context.Context, l *zap.SugaredLogger, moduleName st
 	return nil
 }
 
-func enableModule(modules []v1beta1.Module, name, channel string) ([]v1beta1.Module, error) {
+func enableModule(modules []v1beta1.Module, name, channel string) []v1beta1.Module {
 	for _, mod := range modules {
 		if mod.Name == name {
 			if channel == "" || mod.Channel == channel {
 				// module already enabled
-				return modules, nil
+				return modules
 			}
 		}
 	}
@@ -168,5 +165,5 @@ func enableModule(modules []v1beta1.Module, name, channel string) ([]v1beta1.Mod
 
 	modules = append(modules, newModule)
 
-	return modules, nil
+	return modules
 }

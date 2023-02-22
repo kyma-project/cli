@@ -27,6 +27,7 @@ kyma alpha deploy [flags]
       --cert-manager string         Installs cert-manager from the specified static version. an empty string skips the installation. (default "v1.11.0")
   -c, --channel string              Select which channel to deploy from. (default "regular")
       --dry-run                     Renders the Kubernetes manifests without actually applying them.
+  -f, --force-conflicts             Forces the patching of Kyma spec modules in case their managed field was edited by a source other than Kyma CLI.
   -k, --kustomization stringArray   Provide one or more kustomizations to deploy. 
                                     Each occurrence of the flag accepts a URL with an optional reference (commit, branch, or release) in the format URL@ref or a local path to the directory of the kustomization file.
                                     Defaults to deploying Lifecycle Manager and Module Manager from GitHub main branch. (default [https://github.com/kyma-project/lifecycle-manager/config/default])
@@ -36,7 +37,6 @@ kyma alpha deploy [flags]
                                     - Use "europe-docker.pkg.dev/kyma-project/prod/lifecycle-manager@sha256:cb74b29cfe80c639c9ee9..." to use a custom version of lifecycle-manager with a digest.
                                     - Use a tag like "v20230220-7b8e9515" to override the default tag used, it will then use "eu.gcr.io/kyma-project/lifecycle-manager:v20230220-7b8e9515". (default "eu.gcr.io/kyma-project/lifecycle-manager:latest")
   -m, --module stringArray          Provide one or more modules to activate after the deployment is finished. Example: "--module name@namespace" (namespace is optional).
-  -f, --modules-file string         Path to file containing a list of modules.
   -n, --namespace string            The Namespace to deploy the the Kyma custom resource in. (default "kyma-system")
       --open-dashboard              Opens the Busola Dashboard at startup. Only works when a graphical interface is available and when running in interactive mode
       --template stringArray        Provide one or more module templates to deploy.
