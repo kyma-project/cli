@@ -110,6 +110,8 @@ Build module my-domain/modB in version 3.2.1 and push it to a local registry "un
 	)
 	cmd.Flags().BoolVar(&o.Insecure, "insecure", false, "Use an insecure connection to access the registry.")
 	cmd.Flags().BoolVar(&o.Clean, "clean", false, "Remove the mod-path folder and all its contents at the end.")
+	cmd.Flags().StringVar(&o.SecurityScanConfig, "sec-scan-cfg", "", "Path to the directory holding "+
+		"the security scan configuration file.")
 
 	return cmd
 }
@@ -189,6 +191,16 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 
 	cmd.CurrentStep.Successf("Image created")
 
+	/* -- ADD SECURITY SCANNING METADATA -- */
+	if cmd.opts.SecurityScanConfig != "" {
+		cmd.NewStep("Configuring security scanning...")
+		err = module.AddSecurityScanningMetadata(archive.ComponentDescriptor, modDef, fs, cmd.opts.SecurityScanConfig)
+		if err != nil {
+			cmd.CurrentStep.Failure()
+			return err
+		}
+		cmd.CurrentStep.Successf("Security scanning configured")
+	}
 	/* -- PUSH & TEMPLATE -- */
 
 	if cmd.opts.RegistryURL != "" {

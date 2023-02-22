@@ -80,10 +80,6 @@ func Push(archive *ctf.ComponentArchive, r *Remote, log *zap.SugaredLogger) erro
 	return nil
 }
 
-func Pull() {
-	// TODO
-}
-
 // UserPass splits the credentials string into user and password.
 // If the string is empty or can't be split, it returns 2 empty strings.
 func (r *Remote) UserPass() (string, string) {
