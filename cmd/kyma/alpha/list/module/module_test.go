@@ -11,6 +11,7 @@ import (
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube/mocks"
 	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/json"
@@ -48,7 +49,7 @@ func Test_list_modules_without_Kyma(t *testing.T) {
 				a.Equal(
 					`WARNING: This command is experimental and might change in its final version. Use at your own risk.
 operator.kyma-project.io/module-name	Domain Name (FQDN)			Channel		Version		Template		State
-manifest-1				kyma.project.io/module/loadtest		stable		0.0.4		default/manifest-1	Ready
+manifest-1				kyma.project.io/module/loadtest		stable		0.0.4		kcp-system/manifest-1	Ready
 `,
 					string(out),
 				)
@@ -65,7 +66,7 @@ manifest-1				kyma.project.io/module/loadtest		stable		0.0.4		default/manifest-1
 				a.Equal(
 					`WARNING: This command is experimental and might change in its final version. Use at your own risk.
 operator.kyma-project.io/module-name	Domain Name (FQDN)			Channel		Version		Template		State
-manifest-1				kyma.project.io/module/loadtest		stable		0.0.4		default/manifest-1	<no value>
+manifest-1				kyma.project.io/module/loadtest		stable		0.0.4		kcp-system/manifest-1	<no value>
 `,
 					string(out),
 				)
@@ -82,7 +83,7 @@ manifest-1				kyma.project.io/module/loadtest		stable		0.0.4		default/manifest-1
 				a := assert.New(t)
 				a.Equal(
 					`operator.kyma-project.io/module-name	Domain Name (FQDN)			Channel		Version		Template		State
-manifest-1				kyma.project.io/module/loadtest		stable		0.0.4		default/manifest-1	Ready
+manifest-1				kyma.project.io/module/loadtest		stable		0.0.4		kcp-system/manifest-1	Ready
 `,
 					string(out),
 				)
@@ -99,7 +100,7 @@ manifest-1				kyma.project.io/module/loadtest		stable		0.0.4		default/manifest-1
 			func(t *testing.T, out []byte) {
 				a := assert.New(t)
 				a.Equal(
-					`manifest-1	kyma.project.io/module/loadtest		stable	0.0.4	default/manifest-1	Ready
+					`manifest-1	kyma.project.io/module/loadtest		stable	0.0.4	kcp-system/manifest-1	Ready
 `,
 					string(out),
 				)
@@ -153,6 +154,7 @@ manifest-1				kyma.project.io/module/loadtest		stable		0.0.4		default/manifest-1
 						Timeout:   1 * time.Minute,
 						Namespace: metav1.NamespaceDefault,
 					},
+					RESTMapper: meta.NewDefaultRESTMapper(scheme.Scheme.PreferredVersionAllGroups()),
 				}
 				test.cmd(cmd)
 
@@ -166,7 +168,7 @@ manifest-1				kyma.project.io/module/loadtest		stable		0.0.4		default/manifest-1
 				os.Stdout = w
 				var args []string
 				if test.useKyma {
-					args = append(args, kyma.GetName())
+					cmd.opts.KymaName = kyma.GetName()
 				}
 				err := cmd.Run(context.Background(), args)
 

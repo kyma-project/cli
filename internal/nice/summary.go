@@ -67,17 +67,7 @@ func (sum *Summary) Print(t time.Duration) error {
 
 	nicePrint.PrintKyma()
 	fmt.Print(" installation took:\t\t")
-	h, m, s := "", "", ""
-	if int64(t.Hours()) != 0 {
-		h = fmt.Sprintf("%d hours", int64(t.Hours()))
-	}
-	if int64(t.Minutes()) != 0 {
-		m = fmt.Sprintf("%d minutes", int64(t.Minutes()))
-	}
-	if int64(t.Seconds()) != 0 {
-		s = fmt.Sprintf("%d seconds", int64(t.Seconds()))
-	}
-	nicePrint.PrintImportantf("%s%s%s", h, m, s)
+	nicePrint.PrintImportantf("%s", t.Round(time.Second).String())
 
 	if sum.URL != "" {
 		nicePrint.PrintKyma()

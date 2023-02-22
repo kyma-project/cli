@@ -2,6 +2,7 @@ package deploy
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"regexp"
 	"time"
@@ -13,35 +14,44 @@ import (
 )
 
 const (
-	defaultLifecycleManager = "https://github.com/kyma-project/lifecycle-manager/config/default"
-	defaultModuleManager    = "https://github.com/kyma-project/module-manager/config/default"
-	defaultRetries          = 3
-	defaultInitialBackoff   = 3 * time.Second
+	defaultRetries            = 3
+	defaultInitialBackoff     = 3 * time.Second
+	wildCardRoleAndAssignment = `apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kyma-cli-provisioned-wildcard
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["*"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: lifecycle-manager-wildcard
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kyma-cli-provisioned-wildcard
+subjects:
+- kind: ServiceAccount
+  name: lifecycle-manager-controller-manager
+  namespace: kcp-system`
 )
 
 // Bootstrap deploys the kustomization files for the prerequisites for Kyma.
 // Returns true if the Kyma CRD was deployed.
-func Bootstrap(kustomizations []string, k8s kube.KymaKube, dryRun bool) (bool, error) {
-	defs := []kustomize.Definition{}
+func Bootstrap(
+	ctx context.Context, kustomizations []string, k8s kube.KymaKube, addWildCard, dryRun bool,
+) (bool, error) {
+	var defs []kustomize.Definition
 	// defaults
-	if len(kustomizations) == 0 {
-		lm, err := kustomize.ParseKustomization(defaultLifecycleManager)
+	for _, k := range kustomizations {
+		parsed, err := kustomize.ParseKustomization(k)
 		if err != nil {
 			return false, err
 		}
-		mm, err := kustomize.ParseKustomization(defaultModuleManager)
-		if err != nil {
-			return false, err
-		}
-		defs = append(defs, lm, mm)
-	} else {
-		for _, k := range kustomizations {
-			parsed, err := kustomize.ParseKustomization(k)
-			if err != nil {
-				return false, err
-			}
-			defs = append(defs, parsed)
-		}
+		defs = append(defs, parsed)
 	}
 
 	// build manifests
@@ -50,13 +60,20 @@ func Bootstrap(kustomizations []string, k8s kube.KymaKube, dryRun bool) (bool, e
 		return false, err
 	}
 
+	if addWildCard {
+		manifests = append(manifests, []byte(wildCardRoleAndAssignment)...)
+	}
+
 	// apply manifests with incremental retry
 	if dryRun {
 		fmt.Println(string(manifests))
 	} else {
-		err := retry.Do(func() error {
-			return k8s.Apply(manifests)
-		}, retry.Attempts(defaultRetries), retry.Delay(defaultInitialBackoff), retry.DelayType(retry.BackOffDelay), retry.LastErrorOnly(false))
+		err := retry.Do(
+			func() error {
+				return k8s.Apply(context.Background(), manifests)
+			}, retry.Attempts(defaultRetries), retry.Delay(defaultInitialBackoff), retry.DelayType(retry.BackOffDelay),
+			retry.LastErrorOnly(false), retry.Context(ctx),
+		)
 
 		if err != nil {
 			return false, err
