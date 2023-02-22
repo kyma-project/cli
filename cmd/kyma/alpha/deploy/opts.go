@@ -17,8 +17,8 @@ type Options struct {
 	WildcardPermissions bool
 	DryRun              bool
 	OpenDashboard       bool
+	Force               bool
 	CertManagerVersion  string
-	ModulesFile         string
 	Namespace           string
 	Channel             string
 	KymaCR              string

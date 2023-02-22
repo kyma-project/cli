@@ -9,9 +9,10 @@ import (
 
 	"errors"
 
-	"github.com/kyma-project/cli/internal/clusterinfo"
+	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/coredns"
 	"github.com/kyma-project/cli/internal/deploy"
+	"github.com/kyma-project/cli/internal/nice"
 	"github.com/kyma-project/cli/pkg/dashboard"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
@@ -19,9 +20,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-
-	"github.com/kyma-project/cli/internal/cli"
-	"github.com/kyma-project/cli/internal/nice"
 )
 
 type command struct {
@@ -67,7 +65,6 @@ Defaults to deploying Lifecycle Manager and Module Manager from GitHub main bran
 		&o.Modules, "module", "m", []string{},
 		`Provide one or more modules to activate after the deployment is finished. Example: "--module name@namespace" (namespace is optional).`,
 	)
-	cobraCmd.Flags().StringVarP(&o.ModulesFile, "modules-file", "f", "", `Path to file containing a list of modules.`)
 	cobraCmd.Flags().StringVarP(
 		&o.Channel, "channel", "c", "regular", `Select which channel to deploy from.`,
 	)
@@ -111,6 +108,10 @@ WARNING: DO NOT USE ON PRODUCTIVE CLUSTERS!`,
 		&o.OpenDashboard, "open-dashboard", false,
 		`Opens the Busola Dashboard at startup. Only works when a graphical interface is available and when running in interactive mode`,
 	)
+	cobraCmd.Flags().BoolVarP(
+		&o.Force, "force-conflicts", "f", false,
+		"Forces the patching of Kyma spec modules in case their managed field was edited by a source other than Kyma CLI.",
+	)
 
 	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "t", 20*time.Minute, "Maximum time for the deployment.")
 
@@ -148,10 +149,6 @@ func (cmd *command) RunWithTimeout(ctx context.Context) error {
 func (cmd *command) run(ctx context.Context) error {
 	start := time.Now()
 
-	if err := cmd.EnsureClusterAccess(ctx, cmd.opts.Timeout); err != nil {
-		return err
-	}
-
 	if err := cmd.deploy(ctx, start); err != nil {
 		return err
 	}
@@ -179,21 +176,24 @@ func (cmd *command) deploy(ctx context.Context, start time.Time) error {
 	undo := zap.RedirectStdLog(l.Desugar())
 	defer undo()
 
+	clusterAccess := cmd.NewStep("Ensuring Cluster Access")
+	info, err := cmd.EnsureClusterAccess(ctx, cmd.opts.Timeout)
+	if err != nil {
+		clusterAccess.Failuref("Could not ensure cluster Access")
+		return err
+	}
+	clusterAccess.Successf("Successfully connected to cluster")
+
 	if !cmd.opts.Verbose {
 		stderr := os.Stderr
 		os.Stderr = nil
 		defer func() { os.Stderr = stderr }()
 	}
 
-	clusterInfo, err := clusterinfo.Discover(ctx, cmd.K8s.Static())
-	if err != nil {
-		return err
-	}
-
 	if cmd.opts.CertManagerVersion != "" {
 		certManagerStep := cmd.NewStep("Deploying cert-manager.io")
 		certManagerStep.Start()
-		if err := deploy.CertManager(ctx, cmd.K8s, cmd.opts.CertManagerVersion, false); err != nil {
+		if err := deploy.CertManager(ctx, cmd.K8s, cmd.opts.CertManagerVersion, cmd.opts.Force, false); err != nil {
 			certManagerStep.LogWarn(err.Error())
 			certManagerStep.Failuref("Failed to deploy cert-manager.io.")
 		}
@@ -213,7 +213,7 @@ func (cmd *command) deploy(ctx context.Context, start time.Time) error {
 	deployStep := cmd.NewStep("Deploying Kustomizations")
 	deployStep.Start()
 	hasKyma, err := deploy.Bootstrap(
-		ctx, cmd.opts.Kustomizations, cmd.K8s, cmd.opts.Filters, cmd.opts.WildcardPermissions, false,
+		ctx, cmd.opts.Kustomizations, cmd.K8s, cmd.opts.Filters, cmd.opts.WildcardPermissions, cmd.opts.Force, false,
 	)
 	if err != nil {
 		deployStep.Failuref("Failed to deploy Kustomizations %s: %s", cmd.opts.Kustomizations, err.Error())
@@ -223,7 +223,7 @@ func (cmd *command) deploy(ctx context.Context, start time.Time) error {
 
 	coreDNS := cmd.NewStep("Patching CoreDNS")
 	coreDNS.Start()
-	if _, err := coredns.Patch(l.Desugar(), cmd.K8s.Static(), false, clusterInfo, hostsTemplate); err != nil {
+	if _, err := coredns.Patch(l.Desugar(), cmd.K8s.Static(), false, info, hostsTemplate); err != nil {
 		coreDNS.Failuref("error patching CoreDNS: %s", err)
 		return err
 	}
@@ -234,14 +234,16 @@ func (cmd *command) deploy(ctx context.Context, start time.Time) error {
 		// TODO change to fetch templates from release artifacts
 		if len(cmd.opts.Templates) > 0 {
 			modStep := cmd.NewStep("Module Templates deployed")
-			if err := deploy.ModuleTemplates(ctx, cmd.K8s, cmd.opts.Templates); err != nil {
+			if err := deploy.ModuleTemplates(ctx, cmd.K8s, cmd.opts.Templates, cmd.opts.Force, false); err != nil {
 				modStep.Failuref("Failed to deploy module templates")
 				return err
 			}
 			modStep.Success()
 		}
 		kymaStep := cmd.NewStep("Deploying Kyma CR")
-		if err := deploy.Kyma(ctx, cmd.K8s, cmd.opts.Namespace, cmd.opts.Channel, cmd.opts.KymaCR, false); err != nil {
+		if err := deploy.Kyma(
+			ctx, cmd.K8s, cmd.opts.Namespace, cmd.opts.Channel, cmd.opts.KymaCR, cmd.opts.Force, false,
+		); err != nil {
 			kymaStep.Failuref("Failed to deploy Kyma CR: %s", err.Error())
 			return err
 		}
@@ -254,30 +256,25 @@ func (cmd *command) deploy(ctx context.Context, start time.Time) error {
 
 func (cmd *command) dryRun(ctx context.Context) error {
 	if cmd.opts.CertManagerVersion != "" {
-		if err := deploy.CertManager(ctx, cmd.K8s, cmd.opts.CertManagerVersion, true); err != nil {
+		if err := deploy.CertManager(ctx, cmd.K8s, cmd.opts.CertManagerVersion, cmd.opts.Force, true); err != nil {
 			return err
 		}
 	}
 
 	hasKyma, err := deploy.Bootstrap(
-		ctx, cmd.opts.Kustomizations, cmd.K8s, cmd.opts.Filters, cmd.opts.WildcardPermissions, true,
+		ctx, cmd.opts.Kustomizations, cmd.K8s, cmd.opts.Filters, cmd.opts.WildcardPermissions, cmd.opts.Force, true,
 	)
 	if err != nil {
 		return err
 	}
 
 	if hasKyma {
-		// TODO change to fetch templates from release artifacts
-		for _, t := range cmd.opts.Templates {
-			b, err := os.ReadFile(t)
-			if err != nil {
-				return err
-			}
-			fmt.Printf("%s\n---\n", string(b))
+		if err := deploy.ModuleTemplates(ctx, cmd.K8s, cmd.opts.Templates, cmd.opts.Force, true); err != nil {
+			return err
 		}
 
 		if err := deploy.Kyma(
-			ctx, cmd.K8s, cmd.opts.Namespace, cmd.opts.Channel, cmd.opts.KymaCR, true,
+			ctx, cmd.K8s, cmd.opts.Namespace, cmd.opts.Channel, cmd.opts.KymaCR, cmd.opts.Force, true,
 		); err != nil {
 			return err
 		}

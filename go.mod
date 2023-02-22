@@ -19,6 +19,7 @@ require (
 	github.com/gardener/component-spec/bindings-go v0.0.80
 	github.com/go-git/go-git/v5 v5.5.2
 	github.com/go-logr/logr v1.2.3
+	github.com/go-logr/zapr v1.2.3
 	github.com/imdario/mergo v0.3.13
 	github.com/kyma-incubator/reconciler v0.0.0-20230203092534-fd85106be3cd
 	github.com/kyma-project/hydroform/function v0.0.0-20221202082519-8cd1c2a4c268
@@ -42,7 +43,7 @@ require (
 	k8s.io/apimachinery v0.26.1
 	k8s.io/cli-runtime v0.26.1
 	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible
-	k8s.io/utils v0.0.0-20230202215443-34013725500c
+	k8s.io/klog/v2 v2.90.0
 	sigs.k8s.io/controller-runtime v0.14.4
 	sigs.k8s.io/kustomize/api v0.12.1
 	sigs.k8s.io/kustomize/kyaml v0.13.9
@@ -230,9 +231,9 @@ require (
 	istio.io/pkg v0.0.0-20221031153201-960bb47e80ce // indirect
 	k8s.io/apiserver v0.26.1 // indirect
 	k8s.io/component-base v0.26.1 // indirect
-	k8s.io/klog/v2 v2.90.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20230202010329-39b3636cbaa3 // indirect
 	k8s.io/kubectl v0.26.1 // indirect
+	k8s.io/utils v0.0.0-20230202215443-34013725500c // indirect
 	oras.land/oras-go v1.2.2 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect

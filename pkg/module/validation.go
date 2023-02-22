@@ -94,7 +94,7 @@ func (v *DefaultCRValidator) Run(ctx context.Context, s step.Step, verbose bool,
 		return err
 	}
 
-	if err := kc.Apply(ctx, objs); err != nil {
+	if err := kc.Apply(ctx, false, objs...); err != nil {
 		return fmt.Errorf("Error applying the default CR: %w", err)
 	}
 	return nil

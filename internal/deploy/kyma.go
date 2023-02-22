@@ -9,27 +9,18 @@ import (
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/lifecycle-manager/api/v1beta1"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/cli-runtime/pkg/resource"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
 
 // Kyma deploys the Kyma CR. If no kymaCRPath is provided, it deploys the default CR.
 func Kyma(
-	ctx context.Context, k8s kube.KymaKube, namespace, channel, kymaCRpath string, dryRun bool,
+	ctx context.Context, k8s kube.KymaKube, namespace, channel, kymaCRpath string, force, dryRun bool,
 ) error {
-	nsObj := &v1.Namespace{}
-	nsObj.SetName(namespace)
+	namespaceObj := &v1.Namespace{}
+	namespaceObj.SetName(namespace)
 
 	kyma := &v1beta1.Kyma{}
-	kyma.SetName("default-kyma")
-	kyma.SetNamespace(namespace)
-	kyma.SetAnnotations(map[string]string{"cli.kyma-project.io/source": "deploy"})
-	kyma.SetLabels(map[string]string{"operator.kyma-project.io/managed-by": "lifecycle-manager"})
-	kyma.Spec.Channel = channel
-	kyma.Spec.Sync.Enabled = false
-	kyma.Spec.Modules = []v1beta1.Module{}
-
 	if kymaCRpath != "" {
 		data, err := os.ReadFile(kymaCRpath)
 		if err != nil {
@@ -38,10 +29,18 @@ func Kyma(
 		if err := yaml.Unmarshal(data, kyma); err != nil {
 			return fmt.Errorf("kyma cr file is not valid: %w", err)
 		}
+	} else {
+		kyma.SetName("default-kyma")
+		kyma.SetNamespace(namespace)
+		kyma.SetAnnotations(map[string]string{"cli.kyma-project.io/source": "deploy"})
+		kyma.SetLabels(map[string]string{"operator.kyma-project.io/managed-by": "lifecycle-manager"})
+		kyma.Spec.Channel = channel
+		kyma.Spec.Sync.Enabled = false
+		kyma.Spec.Modules = []v1beta1.Module{}
 	}
 
 	if dryRun {
-		result, err := yaml.Marshal(nsObj)
+		result, err := yaml.Marshal(namespaceObj)
 		if err != nil {
 			return err
 		}
@@ -55,19 +54,7 @@ func Kyma(
 	}
 	if err := retry.Do(
 		func() error {
-			return k8s.Apply(
-				context.Background(), []*resource.Info{
-					{
-						Name:   nsObj.GetName(),
-						Object: nsObj,
-					},
-					{
-						Name:      kyma.GetName(),
-						Namespace: kyma.GetNamespace(),
-						Object:    kyma,
-					},
-				},
-			)
+			return k8s.Apply(context.Background(), force, namespaceObj, kyma)
 		}, retry.Attempts(defaultRetries), retry.Delay(defaultInitialBackoff), retry.DelayType(retry.BackOffDelay),
 		retry.LastErrorOnly(false), retry.Context(ctx),
 	); err != nil {
@@ -75,8 +62,7 @@ func Kyma(
 	}
 
 	if err := k8s.WatchObject(
-		ctx,
-		kyma,
+		ctx, kyma,
 		func(kyma ctrlClient.Object) (bool, error) {
 			return string(kyma.(*v1beta1.Kyma).Status.State) == string(v1beta1.StateReady), nil
 		},

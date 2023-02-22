@@ -22,12 +22,17 @@ func newStepWithSpinner(msg string) Step {
 		spinner.WithSuffix(" "+msg),
 	)
 	s.Start()
-	return &stepWithSpinner{s, msg}
+	return &stepWithSpinner{s, msg, time.Now()}
 }
 
 type stepWithSpinner struct {
 	spinner *spinner.Spinner
 	msg     string
+	start   time.Time
+}
+
+func (s *stepWithSpinner) time() string {
+	return fmt.Sprintf("(%s)", time.Since(s.start).Round(time.Millisecond).String())
 }
 
 func (s *stepWithSpinner) Start() {
@@ -35,7 +40,7 @@ func (s *stepWithSpinner) Start() {
 }
 
 func (s *stepWithSpinner) Status(msg string) {
-	s.msg = fmt.Sprintf(" %s: %s", s.msg, msg)
+	s.msg = fmt.Sprintf(" %s: %s %s", s.msg, msg, s.time())
 }
 
 func (s *stepWithSpinner) Success() {
@@ -66,7 +71,7 @@ func (s *stepWithSpinner) Stop(success bool) {
 	} else {
 		gliph = color.RedString(failureGlyph)
 	}
-	s.spinner.FinalMSG = fmt.Sprintf("%s%s\n", gliph, s.msg)
+	s.spinner.FinalMSG = fmt.Sprintf("%s%s %s\n", gliph, s.msg, s.time())
 	s.spinner.Stop()
 }
 

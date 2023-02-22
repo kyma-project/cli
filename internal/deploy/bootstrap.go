@@ -10,7 +10,7 @@ import (
 	"github.com/avast/retry-go"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/cli-runtime/pkg/resource"
+	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/kustomize/kyaml/kio"
 
 	"github.com/kyma-project/cli/internal/kube"
@@ -46,7 +46,8 @@ subjects:
 // Bootstrap deploys the kustomization files for the prerequisites for Kyma.
 // Returns true if the Kyma CRD was deployed.
 func Bootstrap(
-	ctx context.Context, kustomizations []string, k8s kube.KymaKube, filters []kio.Filter, addWildCard, dryRun bool,
+	ctx context.Context, kustomizations []string, k8s kube.KymaKube, filters []kio.Filter, addWildCard, force bool,
+	dryRun bool,
 ) (bool, error) {
 	var defs []kustomize.Definition
 	// defaults
@@ -72,18 +73,17 @@ func Bootstrap(
 	if dryRun {
 		fmt.Println(string(manifests))
 	} else {
-		var objs []*resource.Info
-		err := retry.Do(
+		objs, err := k8s.ParseManifest(manifests)
+		if err != nil {
+			return false, err
+		}
+
+		if err := retry.Do(
 			func() error {
-				objs, err = k8s.ParseManifest(manifests)
-				if err != nil {
-					return err
-				}
-				return k8s.Apply(context.Background(), objs)
+				return k8s.Apply(context.Background(), force, objs...)
 			}, retry.Attempts(defaultRetries), retry.Delay(defaultInitialBackoff), retry.DelayType(retry.BackOffDelay),
 			retry.LastErrorOnly(false), retry.Context(ctx),
-		)
-		if err != nil {
+		); err != nil {
 			return false, err
 		}
 
@@ -95,13 +95,13 @@ func Bootstrap(
 	return hasKyma(string(manifests))
 }
 
-func checkDeploymentReadiness(objs []*resource.Info, k8s kube.KymaKube) error {
+func checkDeploymentReadiness(objs []ctrlClient.Object, k8s kube.KymaKube) error {
 	for _, obj := range objs {
-		if obj.Object.GetObjectKind().GroupVersionKind().Kind != "Deployment" {
+		if obj.GetObjectKind().GroupVersionKind().Kind != "Deployment" {
 			continue
 		}
 		if err := k8s.WaitDeploymentStatus(
-			obj.Namespace, obj.Name, appsv1.DeploymentAvailable, corev1.ConditionTrue,
+			obj.GetNamespace(), obj.GetName(), appsv1.DeploymentAvailable, corev1.ConditionTrue,
 		); err != nil {
 			return err
 		}

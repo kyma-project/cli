@@ -44,14 +44,14 @@ const (
 
 // client is the default KymaKube implementation
 type client struct {
-	static  kubernetes.Interface
-	dynamic dynamic.Interface
-	istio   istio.Interface
-	restCfg *rest.Config
-	kubeCfg *api.Config
-	disco   discovery.DiscoveryInterface
-	mapper  meta.ResettableRESTMapper
-	nClient ctrlClient.Client
+	static     kubernetes.Interface
+	dynamic    dynamic.Interface
+	istio      istio.Interface
+	restCfg    *rest.Config
+	kubeCfg    *api.Config
+	disco      discovery.DiscoveryInterface
+	mapper     meta.ResettableRESTMapper
+	ctrlClient ctrlClient.WithWatch
 }
 
 // NewFromConfig creates a new Kubernetes client based on the given Kubeconfig either provided by URL (in-cluster config) or via file (out-of-cluster config).
@@ -96,7 +96,7 @@ func NewFromRestConfigWithTimeout(config *rest.Config, t time.Duration) (KymaKub
 		return nil, err
 	}
 
-	nClient, err := ctrlClient.New(config, ctrlClient.Options{Scheme: newScheme})
+	nClient, err := ctrlClient.NewWithWatch(config, ctrlClient.Options{Scheme: newScheme})
 	if err != nil {
 		return nil, err
 	}
@@ -113,14 +113,14 @@ func NewFromRestConfigWithTimeout(config *rest.Config, t time.Duration) (KymaKub
 	}
 
 	return &client{
-			static:  sClient,
-			dynamic: dClient,
-			istio:   istioClient,
-			restCfg: config,
-			kubeCfg: kubeConfig,
-			disco:   disco,
-			mapper:  mapper,
-			nClient: nClient,
+			static:     sClient,
+			dynamic:    dClient,
+			istio:      istioClient,
+			restCfg:    config,
+			kubeCfg:    kubeConfig,
+			disco:      disco,
+			mapper:     mapper,
+			ctrlClient: nClient,
 		},
 		nil
 }
@@ -171,20 +171,20 @@ func NewFromConfigWithTimeout(url, file string, t time.Duration) (KymaKube, erro
 		return nil, err
 	}
 
-	nClient, err := ctrlClient.New(config, ctrlClient.Options{Scheme: newScheme})
+	ctrlClient, err := ctrlClient.NewWithWatch(config, ctrlClient.Options{Scheme: newScheme})
 	if err != nil {
 		return nil, err
 	}
 
 	return &client{
-			static:  sClient,
-			dynamic: dClient,
-			istio:   istioClient,
-			restCfg: config,
-			kubeCfg: kubeConfig,
-			disco:   disco,
-			mapper:  mapper,
-			nClient: nClient,
+			static:     sClient,
+			dynamic:    dClient,
+			istio:      istioClient,
+			restCfg:    config,
+			kubeCfg:    kubeConfig,
+			disco:      disco,
+			mapper:     mapper,
+			ctrlClient: ctrlClient,
 		},
 		nil
 }
@@ -195,6 +195,10 @@ func (c *client) Static() kubernetes.Interface {
 
 func (c *client) Dynamic() dynamic.Interface {
 	return c.dynamic
+}
+
+func (c *client) Ctrl() ctrlClient.WithWatch {
+	return c.ctrlClient
 }
 
 func (c *client) Istio() istio.Interface {
@@ -209,22 +213,30 @@ func (c *client) KubeConfig() *api.Config {
 	return c.kubeCfg
 }
 
-func (c *client) ParseManifest(manifest []byte) ([]*resource.Info, error) {
+func (c *client) ParseManifest(manifest []byte) ([]ctrlClient.Object, error) {
 	// parse manifest
 	manifests, err := parseManifest(manifest)
 	if err != nil {
 		return nil, err
 	}
 
-	objs := make([]*resource.Info, 0, len(manifests))
+	objs := make([]ctrlClient.Object, 0, len(manifests))
 	for _, manifest := range manifests {
 
 		obj := &unstructured.Unstructured{}
 		if err := yaml.Unmarshal(manifest, obj); err != nil {
 			return nil, err
 		}
+		objs = append(objs, obj)
+	}
 
-		gvk := obj.GroupVersionKind()
+	return objs, nil
+}
+
+func (c *client) Apply(ctx context.Context, force bool, objs ...ctrlClient.Object) error {
+	infos := make([]*resource.Info, 0, len(objs))
+	for _, obj := range objs {
+		gvk := obj.GetObjectKind().GroupVersionKind()
 		mapping, err := c.mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
 		if meta.IsNoMatchError(err) {
 			c.mapper.Reset()
@@ -232,11 +244,11 @@ func (c *client) ParseManifest(manifest []byte) ([]*resource.Info, error) {
 			err = nil
 		}
 		if err != nil {
-			return nil, err
+			return err
 		}
 
-		objs = append(
-			objs, &resource.Info{
+		infos = append(
+			infos, &resource.Info{
 				Name:            obj.GetName(),
 				Namespace:       obj.GetNamespace(),
 				ResourceVersion: obj.GetResourceVersion(),
@@ -245,12 +257,7 @@ func (c *client) ParseManifest(manifest []byte) ([]*resource.Info, error) {
 			},
 		)
 	}
-
-	return objs, nil
-}
-
-func (c *client) Apply(ctx context.Context, objs []*resource.Info) error {
-	return ConcurrentSSA(c.nClient, "kyma", false).Run(ctx, objs)
+	return ConcurrentSSA(c.ctrlClient, "kyma", force).Run(ctx, infos)
 }
 
 // parseManifest can parse a multi-doc yaml manifest and send back each unstructured object through the channel
@@ -382,7 +389,7 @@ func (c *client) WatchObject(
 
 	key := ctrlClient.ObjectKeyFromObject(obj)
 	watchFn := func(ctx context.Context) (bool, error) {
-		if err := c.nClient.Get(ctx, key, obj); err != nil {
+		if err := c.ctrlClient.Get(ctx, key, obj); err != nil {
 			return false, errors.Wrapf(err, "Failed to check %s", key)
 		}
 		return checkFn(obj)

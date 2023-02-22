@@ -7,8 +7,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/cli-runtime/pkg/resource"
-	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
+	ctrl "sigs.k8s.io/controller-runtime/pkg/client"
 
 	istio "istio.io/client-go/pkg/clientset/versioned"
 	"k8s.io/client-go/dynamic"
@@ -25,6 +24,7 @@ type KymaKube interface {
 	Static() kubernetes.Interface
 	Dynamic() dynamic.Interface
 	Istio() istio.Interface
+	Ctrl() ctrl.WithWatch
 
 	// RestConfig provides the REST configuration of the kubernetes client
 	RestConfig() *rest.Config
@@ -34,10 +34,10 @@ type KymaKube interface {
 
 	// ParseManifest uses a manifest .yaml file and returns resource Infos that can be used to determine mappings
 	// and interact with them in the cluster
-	ParseManifest(manifest []byte) ([]*resource.Info, error)
+	ParseManifest(manifest []byte) ([]ctrl.Object, error)
 
-	// Apply provides the functionality as `kubectl apply -f` for the given yaml.
-	Apply(ctx context.Context, objs []*resource.Info) error
+	// Apply provides the functionality as `kubectl apply -f --server-side` for the given yaml.
+	Apply(ctx context.Context, force bool, objs ...ctrl.Object) error
 
 	// DefaultNamespace finds out what the default namespace is based on:
 	// 1. Default namespace on the Kubeconfig
@@ -74,5 +74,5 @@ type KymaKube interface {
 	// To check if the resource is in the desired state, checkFn is called repeatedly passing the resource as parameter,
 	// until either it returns true or the timeout is reached.
 	// If the timeout is reached an error is returned.
-	WatchObject(ctx context.Context, obj ctrlClient.Object, checkFn func(o ctrlClient.Object) (bool, error)) error
+	WatchObject(ctx context.Context, obj ctrl.Object, checkFn func(o ctrl.Object) (bool, error)) error
 }

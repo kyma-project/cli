@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/go-logr/zapr"
 	"go.uber.org/zap"
+	"k8s.io/klog/v2"
 )
 
 // NewLogger returns the logger used for CLI log output (used in Hydroform deployments)
@@ -14,6 +16,8 @@ func NewLogger(printLogs bool) *zap.Logger {
 		if err != nil {
 			log.Fatalf("Can't initialize zap logger: %v", err)
 		}
+
+		klog.SetLogger(zapr.NewLoggerWithOptions(logger))
 		return logger
 	}
 	return zap.NewNop()

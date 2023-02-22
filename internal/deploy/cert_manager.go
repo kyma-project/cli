@@ -16,7 +16,7 @@ const (
 )
 
 // CertManager deploys the Kyma CR. If no kymaCRPath is provided, it deploys the default CR.
-func CertManager(ctx context.Context, k8s kube.KymaKube, certManagerVersion string, dryRun bool) error {
+func CertManager(ctx context.Context, k8s kube.KymaKube, certManagerVersion string, force, dryRun bool) error {
 	result := bytes.Buffer{}
 
 	// Get the data
@@ -42,7 +42,7 @@ func CertManager(ctx context.Context, k8s kube.KymaKube, certManagerVersion stri
 			if err != nil {
 				return err
 			}
-			return k8s.Apply(context.Background(), objs)
+			return k8s.Apply(context.Background(), force, objs...)
 		}, retry.Attempts(defaultRetries), retry.Delay(defaultInitialBackoff), retry.DelayType(retry.BackOffDelay),
 		retry.LastErrorOnly(false), retry.Context(ctx),
 	)

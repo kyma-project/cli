@@ -27,7 +27,6 @@ type ConcurrentDefaultSSA struct {
 	clnt      ctrlClient.Client
 	owner     ctrlClient.FieldOwner
 	versioner runtime.GroupVersioner
-	converter runtime.ObjectConvertor
 	force     bool
 }
 
@@ -35,7 +34,6 @@ func ConcurrentSSA(clnt ctrlClient.Client, owner ctrlClient.FieldOwner, force bo
 	return &ConcurrentDefaultSSA{
 		clnt: clnt, owner: owner, force: force,
 		versioner: schema.GroupVersions(clnt.Scheme().PrioritizedVersionsAllGroups()),
-		converter: clnt.Scheme(),
 	}
 }
 
@@ -44,7 +42,7 @@ func (c *ConcurrentDefaultSSA) Run(ctx context.Context, resources []*resource.In
 	logger := log.FromContext(ctx, "owner", c.owner)
 	logger.V(2).Info("ServerSideApply", "resources", len(resources))
 
-	// The Runtime Complexity of this Branch is N as only ServerSideApplier Patch is required
+	// The Runtime Complexity of this Branch is N as only ServerSideApplier Apply is required
 	results := make(chan error, len(resources))
 	for i := range resources {
 		i := i
@@ -90,10 +88,7 @@ func (c *ConcurrentDefaultSSA) serverSideApply(
 	)
 }
 
-func (c *ConcurrentDefaultSSA) serverSideApplyResourceInfo(
-	ctx context.Context,
-	info *resource.Info,
-) error {
+func (c *ConcurrentDefaultSSA) serverSideApplyResourceInfo(ctx context.Context, info *resource.Info) error {
 	obj, isTyped := info.Object.(ctrlClient.Object)
 	if !isTyped {
 		return fmt.Errorf(
@@ -102,6 +97,7 @@ func (c *ConcurrentDefaultSSA) serverSideApplyResourceInfo(
 	}
 
 	obj.SetManagedFields(nil)
+	obj.SetResourceVersion("")
 
 	opts := []ctrlClient.PatchOption{c.owner}
 	if c.force {
@@ -129,7 +125,7 @@ func (c *ConcurrentDefaultSSA) convertUnstructuredToTyped(
 	if mapping != nil {
 		gv = mapping.GroupVersionKind.GroupVersion()
 	}
-	if obj, err := c.converter.ConvertToVersion(obj, gv); err == nil {
+	if obj, err := c.clnt.Scheme().UnsafeConvertToVersion(obj, gv); err == nil {
 		return obj
 	}
 	return obj
