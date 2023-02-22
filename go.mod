@@ -35,7 +35,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 	gotest.tools v2.2.0+incompatible
 	helm.sh/helm/v3 v3.11.1
-	istio.io/client-go v1.16.1
+	istio.io/client-go v1.17.0
 	k8s.io/api v0.26.1
 	k8s.io/apiextensions-apiserver v0.26.1
 	k8s.io/apimachinery v0.26.1
@@ -220,7 +220,7 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	istio.io/api v0.0.0-20221208070204-0528cb6ce63b // indirect
+	istio.io/api v0.0.0-20230204131218-41d7951eb9e4 // indirect
 	istio.io/istio v0.0.0-20221109080248-089f536c0f26 // indirect
 	istio.io/pkg v0.0.0-20221031153201-960bb47e80ce // indirect
 	k8s.io/apiserver v0.26.1 // indirect
