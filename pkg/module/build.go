@@ -137,10 +137,10 @@ func addSources(cd *cdv2.ComponentDescriptor, def *Definition) error {
 }
 
 func BuildNewOCIRegistryRepository(registry string, mapping cdv2.ComponentNameMapping) *cdv2.OCIRegistryRepository {
-	return cdv2.NewOCIRegistryRepository(NoSchemeURL(registry), mapping)
+	return cdv2.NewOCIRegistryRepository(noSchemeURL(registry), mapping)
 }
 
-func NoSchemeURL(url string) string {
+func noSchemeURL(url string) string {
 	regex := regexp.MustCompile(`^https?://`)
 	return regex.ReplaceAllString(url, "")
 }
