@@ -27,7 +27,7 @@ func Sign(cfg *ComponentSignConfig, remote *Remote, log *zap.SugaredLogger) ([]*
 	}
 
 	ctx := context.Background()
-	repoCtx := cdv2.NewOCIRegistryRepository(remote.Registry, cdv2.ComponentNameMapping(remote.NameMapping))
+	repoCtx := BuildNewOCIRegistryRepository(remote.Registry, cdv2.ComponentNameMapping(remote.NameMapping))
 
 	signer, err := cdv2Sign.CreateRSASignerFromKeyFile(cfg.PrivateKeyPath, cdv2.MediaTypePEM)
 	if err != nil {

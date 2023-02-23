@@ -13,6 +13,7 @@ import (
 	"github.com/kyma-project/cli/pkg/module/git"
 	"github.com/mandelsoft/vfs/pkg/projectionfs"
 	"github.com/mandelsoft/vfs/pkg/vfs"
+	"regexp"
 	"sigs.k8s.io/yaml"
 )
 
@@ -99,7 +100,7 @@ func buildFull(fs vfs.FileSystem, def *Definition, compDescFilePath string) (*ct
 	cd.Provider = cdv2.InternalProvider
 	cd.RepositoryContexts = make([]*cdv2.UnstructuredTypedObject, 0)
 	if len(def.RegistryURL) != 0 {
-		repoCtx, err := cdv2.NewUnstructured(cdv2.NewOCIRegistryRepository(def.RegistryURL, cdv2.ComponentNameMapping(def.NameMappingMode)))
+		repoCtx, err := cdv2.NewUnstructured(BuildNewOCIRegistryRepository(def.RegistryURL, cdv2.ComponentNameMapping(def.NameMappingMode)))
 		if err != nil {
 			return nil, fmt.Errorf("unable to create repository context: %w", err)
 		}
@@ -133,4 +134,13 @@ func addSources(cd *cdv2.ComponentDescriptor, def *Definition) error {
 		cd.Sources = append(cd.Sources, *src)
 	}
 	return nil
+}
+
+func BuildNewOCIRegistryRepository(registry string, mapping cdv2.ComponentNameMapping) *cdv2.OCIRegistryRepository {
+	return cdv2.NewOCIRegistryRepository(NoSchemeURL(registry), mapping)
+}
+
+func NoSchemeURL(url string) string {
+	regex := regexp.MustCompile(`^https?://`)
+	return regex.ReplaceAllString(url, "")
 }

@@ -55,8 +55,8 @@ func Push(archive *ctf.ComponentArchive, r *Remote, log *zap.SugaredLogger) erro
 			}
 
 			//Inject only if the repo is different
-			if repo.BaseURL != r.Registry || repo.ComponentNameMapping != cdv2.ComponentNameMapping(r.NameMapping) {
-				if err := cdv2.InjectRepositoryContext(archive.ComponentDescriptor, cdv2.NewOCIRegistryRepository(r.Registry, cdv2.ComponentNameMapping(r.NameMapping))); err != nil {
+			if repo.BaseURL != NoSchemeURL(r.Registry) || repo.ComponentNameMapping != cdv2.ComponentNameMapping(r.NameMapping) {
+				if err := cdv2.InjectRepositoryContext(archive.ComponentDescriptor, BuildNewOCIRegistryRepository(r.Registry, cdv2.ComponentNameMapping(r.NameMapping))); err != nil {
 					return errors.Wrap(err, "unable to add repository context to component descriptor")
 				}
 			}
