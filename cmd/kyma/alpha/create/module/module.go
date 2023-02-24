@@ -10,6 +10,8 @@ import (
 	"github.com/mandelsoft/vfs/pkg/memoryfs"
 	"github.com/mandelsoft/vfs/pkg/osfs"
 	"github.com/mandelsoft/vfs/pkg/vfs"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
+	compdescv2 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/versions/v2"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 
@@ -98,6 +100,12 @@ Build module my-domain/modB in version 3.2.1 and push it to a local registry "un
 		"File to which to output the module template if the module is uploaded to a registry",
 	)
 	cmd.Flags().StringVar(&o.Channel, "channel", "regular", "Channel to use for the module template.")
+	cmd.Flags().StringVar(
+		&o.SchemaVersion, "descriptor-version", compdescv2.SchemaVersion, fmt.Sprintf(
+			"Schema version to use for the generated OCM descriptor. One of %s",
+			strings.Join(compdesc.DefaultSchemes.Names(), ","),
+		),
+	)
 	cmd.Flags().StringVarP(
 		&o.Token, "token", "t", "",
 		"Authentication token for the given registry (alternative to basic authentication).",
@@ -140,6 +148,10 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 		cli.AlphaWarn()
 	}
 
+	if err := cmd.opts.ValidateVersion(); err != nil {
+		return err
+	}
+
 	if err := cmd.opts.ValidatePath(); err != nil {
 		return err
 	}
@@ -160,6 +172,7 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 		RegistryURL:     cmd.opts.RegistryURL,
 		NameMappingMode: nameMappingMode,
 		DefaultCRPath:   cmd.opts.DefaultCRPath,
+		SchemaVersion:   cmd.opts.SchemaVersion,
 	}
 
 	cmd.NewStep("Parse and build module...")

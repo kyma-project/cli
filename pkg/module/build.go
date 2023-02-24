@@ -8,8 +8,10 @@ import (
 	"github.com/mandelsoft/vfs/pkg/projectionfs"
 	"github.com/mandelsoft/vfs/pkg/vfs"
 	"github.com/open-component-model/ocm/pkg/common/accessobj"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/attrs/compatattr"
 	ocm "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	v1 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/meta/v1"
+	compdescv2 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/versions/v2"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/cpi"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/comparch"
 )
@@ -37,8 +39,13 @@ func buildFull(fs vfs.FileSystem, path string, def *Definition) (*comparch.Compo
 		return nil, fmt.Errorf("unable to create projectionfilesystem: %w", err)
 	}
 
+	ctx := cpi.DefaultContext()
+	if err := compatattr.Set(ctx, def.SchemaVersion == compdescv2.SchemaVersion); err != nil {
+		return nil, fmt.Errorf("could not set compatibility attribute for v2: %w", err)
+	}
+
 	archive, err := comparch.New(
-		cpi.DefaultContext(),
+		ctx,
 		accessobj.ACC_CREATE, archiveFs,
 		nil,
 		nil,
@@ -49,16 +56,23 @@ func buildFull(fs vfs.FileSystem, path string, def *Definition) (*comparch.Compo
 	}
 
 	cd := archive.GetDescriptor()
-	if err := addSources(cd, def); err != nil {
-		return nil, err
-	}
-	cd.ComponentSpec.SetName(def.Name)
-	cd.ComponentSpec.SetVersion(def.Version)
+	cd.Metadata.ConfiguredVersion = def.SchemaVersion
 	builtByCLI, err := v1.NewLabel("kyma-project.io/built-by", "cli", v1.WithVersion("v1"))
 	if err != nil {
 		return nil, err
 	}
-	cd.Provider = v1.Provider{Name: "kyma-project.io", Labels: v1.Labels{*builtByCLI}}
+
+	if compatattr.Get(ctx) {
+		cd.Provider = v1.Provider{Name: "internal"}
+	} else {
+		cd.Provider = v1.Provider{Name: "kyma-project.io", Labels: v1.Labels{*builtByCLI}}
+	}
+
+	if err := addSources(ctx, cd, def); err != nil {
+		return nil, err
+	}
+	cd.ComponentSpec.SetName(def.Name)
+	cd.ComponentSpec.SetVersion(def.Version)
 
 	ocm.DefaultResources(cd)
 
@@ -69,8 +83,8 @@ func buildFull(fs vfs.FileSystem, path string, def *Definition) (*comparch.Compo
 	return archive, nil
 }
 
-func addSources(cd *ocm.ComponentDescriptor, def *Definition) error {
-	src, err := git.Source(def.Source, def.Repo, def.Version)
+func addSources(ctx cpi.Context, cd *ocm.ComponentDescriptor, def *Definition) error {
+	src, err := git.Source(ctx, def.Source, def.Repo, def.Version)
 	if err != nil {
 		return err
 	}

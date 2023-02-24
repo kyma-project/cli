@@ -49,6 +49,7 @@ Build module my-domain/modB in version 3.2.1 and push it to a local registry "un
       --clean                           Remove the mod-path folder and all its contents at the end.
   -c, --credentials string              Basic authentication credentials for the given registry in the format user:password
       --default-cr string               File containing the default custom resource of the module. If the module is a kubebuilder project, the default CR will be automatically detected.
+      --descriptor-version string       Schema version to use for the generated OCM descriptor. One of ocm.software/v3alpha1,v2 (default "v2")
       --insecure                        Use an insecure connection to access the registry.
   -n, --name string                     Override the module name of the kubebuilder project. If the module is not a kubebuilder project, this flag is mandatory.
       --nameMapping string              Overrides the OCM Component Name Mapping, one of: "urlPath" or "sha256-digest" (default "urlPath")

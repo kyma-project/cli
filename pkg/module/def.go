@@ -9,6 +9,7 @@ import (
 
 // Definition contains all infrmation and configuration that defines a module (e.g. component descriptor config, template config, layers, CRs...)
 type Definition struct {
+	SchemaVersion   string      // schema version for the ocm descriptor
 	Source          string      // path to the sources to create the module
 	Name            string      // Name of the module (mandatory)
 	NameMappingMode NameMapping // Component Name mapping as defined in OCM spec.

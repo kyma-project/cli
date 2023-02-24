@@ -6,11 +6,15 @@ import (
 	"strings"
 
 	"github.com/open-component-model/ocm/pkg/contexts/credentials"
+	oci "github.com/open-component-model/ocm/pkg/contexts/oci/repositories/ocireg"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/attrs/compatattr"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/cpi"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/comparch"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/genericocireg"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/ocireg"
 	componentTransfer "github.com/open-component-model/ocm/pkg/contexts/ocm/transfer"
+	"github.com/open-component-model/ocm/pkg/runtime"
 )
 
 type NameMapping ocireg.ComponentNameMapping
@@ -29,7 +33,7 @@ type Remote struct {
 	Insecure    bool
 }
 
-func (r *Remote) GetRepository() (cpi.Repository, error) {
+func (r *Remote) GetRepository(ctx cpi.Context) (cpi.Repository, error) {
 	var creds credentials.Credentials
 	if !r.Insecure {
 		u, p := r.UserPass()
@@ -38,9 +42,18 @@ func (r *Remote) GetRepository() (cpi.Repository, error) {
 			"password": p,
 		}
 	}
-	repo, err := cpi.DefaultContext().RepositoryForSpec(
-		ocireg.NewRepositorySpec(
-			NoSchemeURL(r.Registry), &ocireg.ComponentRepositoryMeta{
+	var repoType string
+	if compatattr.Get(ctx) {
+		repoType = oci.LegacyType
+	} else {
+		repoType = oci.Type
+	}
+	repo, err := ctx.RepositoryForSpec(
+		genericocireg.NewRepositorySpec(
+			&oci.RepositorySpec{
+				ObjectVersionedType: runtime.NewVersionedObjectType(repoType),
+				BaseURL:             NoSchemeURL(r.Registry),
+			}, &ocireg.ComponentRepositoryMeta{
 				ComponentNameMapping: ocireg.ComponentNameMapping(r.NameMapping),
 			},
 		), creds,
@@ -59,8 +72,7 @@ func NoSchemeURL(url string) string {
 // Push picks up the archive described in the config and pushes it to the provided registry.
 // The credentials and token are optional parameters
 func Push(archive *comparch.ComponentArchive, r *Remote) (ocm.ComponentVersionAccess, error) {
-
-	repo, err := r.GetRepository()
+	repo, err := r.GetRepository(archive.GetContext())
 	if err != nil {
 		return nil, err
 	}

@@ -25,10 +25,6 @@ metadata:
     "operator.kyma-project.io/managed-by": "lifecycle-manager"
     "operator.kyma-project.io/controller-name": "manifest"
     "operator.kyma-project.io/module-name": "{{ .ShortName }}"
-  annotations:
-    "operator.kyma-project.io/module-version": "{{ .Descriptor.Version }}"
-    "operator.kyma-project.io/module-provider": "{{ .Descriptor.ComponentSpec.Provider.GetName }}"
-    "operator.kyma-project.io/descriptor-schema-version": "{{ .Descriptor.Metadata.ConfiguredVersion }}"
 spec:
   target: remote
   channel: {{.Channel}}
@@ -70,14 +66,19 @@ func Template(
 		return nil, err
 	}
 
+	cva, err := compdesc.Convert(descriptor)
+	if err != nil {
+		return nil, err
+	}
+
 	td := struct { // Custom struct for the template
-		ShortName  string                        // Last part of the component descriptor name
-		Descriptor *compdesc.ComponentDescriptor // descriptor info for the template
+		ShortName  string                              // Last part of the component descriptor name
+		Descriptor compdesc.ComponentDescriptorVersion // descriptor info for the template
 		Channel    string
 		Data       string // contents for the spec.data section of the template taken from the defaults.yaml file in the mod folder
 	}{
 		ShortName:  ref.ShortName(),
-		Descriptor: descriptor,
+		Descriptor: cva,
 		Channel:    channel,
 		Data:       string(data),
 	}

@@ -8,8 +8,10 @@ import (
 
 	"github.com/go-git/go-git/v5"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/accessmethods/github"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/attrs/compatattr"
 	ocm "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	ocmv1 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/meta/v1"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/cpi"
 )
 
 const (
@@ -19,7 +21,7 @@ const (
 
 var errNotGit = errors.New("not a git repository")
 
-func Source(path, repo, version string) (*ocm.Source, error) {
+func Source(ctx cpi.Context, path, repo, version string) (*ocm.Source, error) {
 
 	var ref, commit string
 	// check for .git
@@ -66,8 +68,15 @@ func Source(path, repo, version string) (*ocm.Source, error) {
 		return nil, err
 	}
 
+	var sourceType string
+	if compatattr.Get(ctx) {
+		sourceType = "git"
+	} else {
+		sourceType = github.CONSUMER_TYPE
+	}
+
 	return &ocm.Source{
-		SourceMeta: ocm.SourceMeta{Type: github.CONSUMER_TYPE, ElementMeta: ocm.ElementMeta{
+		SourceMeta: ocm.SourceMeta{Type: sourceType, ElementMeta: ocm.ElementMeta{
 			Name:    Identity,
 			Version: version,
 			Labels:  ocmv1.Labels{*refLabel},

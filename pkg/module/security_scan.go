@@ -63,7 +63,8 @@ func AddSecurityScanningMetadata(descriptor *ocm.ComponentDescriptor, securityCo
 		return err
 	}
 
-	return nil
+	ocm.DefaultResources(descriptor)
+	return ocm.Validate(descriptor)
 }
 
 func appendProtecodeImagesLayers(descriptor *ocm.ComponentDescriptor, config *SecurityScanCfg) error {
@@ -94,7 +95,6 @@ func appendProtecodeImagesLayers(descriptor *ocm.ComponentDescriptor, config *Se
 		}
 		descriptor.Resources = append(descriptor.Resources, protecodeImageLayerResource)
 	}
-	ocm.DefaultResources(descriptor)
 	return nil
 }
 

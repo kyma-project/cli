@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"regexp"
 
+	"github.com/blang/semver/v4"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/pkg/errors"
 )
@@ -25,6 +27,7 @@ type Options struct {
 	TemplateOutput       string
 	DefaultCRPath        string
 	Channel              string
+	SchemaVersion        string
 	Token                string
 	Insecure             bool
 	PersistentArchive    bool
@@ -46,6 +49,18 @@ var (
 // NewOptions creates options with default values
 func NewOptions(o *cli.Options) *Options {
 	return &Options{Options: o}
+}
+
+func (o *Options) ValidateVersion() error {
+	sv, err := semver.New(o.Version)
+	if err != nil {
+		return err
+	}
+	o.Version = sv.String()
+	if !strings.HasPrefix(o.Version, "v") {
+		o.Version = fmt.Sprintf("v%s", o.Version)
+	}
+	return nil
 }
 
 func (o *Options) ValidatePath() error {

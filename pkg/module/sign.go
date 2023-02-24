@@ -8,6 +8,7 @@ import (
 
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/cpi"
 	"github.com/open-component-model/ocm/pkg/signing"
 	"github.com/open-component-model/ocm/pkg/signing/handlers/rsa"
 	"github.com/open-component-model/ocm/pkg/signing/hasher/sha512"
@@ -26,7 +27,7 @@ func Sign(cfg *ComponentSignConfig, remote *Remote) error {
 		return err
 	}
 
-	repo, err := remote.GetRepository()
+	repo, err := remote.GetRepository(cpi.DefaultContext())
 	if err != nil {
 		return err
 	}
@@ -69,7 +70,7 @@ func Verify(cfg *ComponentSignConfig, remote *Remote) error {
 		return err
 	}
 
-	repo, err := remote.GetRepository()
+	repo, err := remote.GetRepository(cpi.DefaultContext())
 	if err != nil {
 		return err
 	}
