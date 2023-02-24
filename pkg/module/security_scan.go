@@ -1,7 +1,6 @@
 package module
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -24,8 +23,8 @@ const (
 	secScanEnabled    = "enabled"
 )
 
-var labelTemplate = "%s." + secScanLabelKey
-var globalLabelTemplate = "%s." + secLabelKey
+var labelTemplate = secScanLabelKey + "/%s"
+var globalLabelTemplate = secLabelKey + "/%s"
 
 func AddSecurityScanningMetadata(descriptor *ocm.ComponentDescriptor, securityConfigPath string) error {
 	//parse security config file
@@ -69,7 +68,7 @@ func AddSecurityScanningMetadata(descriptor *ocm.ComponentDescriptor, securityCo
 
 func appendProtecodeImagesLayers(descriptor *ocm.ComponentDescriptor, config *SecurityScanCfg) error {
 	for _, imageURL := range config.Protecode {
-		imageName, err := getImageName(imageURL)
+		imageName, imageTag, err := getImageName(imageURL)
 		if err != nil {
 			return err
 		}
@@ -79,47 +78,41 @@ func appendProtecodeImagesLayers(descriptor *ocm.ComponentDescriptor, config *Se
 			return err
 		}
 
+		access := ociartifact.New(imageURL)
+		access.SetType(ociartifact.LegacyType)
 		protecodeImageLayerResource := ocm.Resource{
 			ResourceMeta: ocm.ResourceMeta{
 				ElementMeta: ocm.ElementMeta{
-					Name:   imageName,
-					Labels: []ocmv1.Label{*imageTypeLabel},
+					Name:    imageName,
+					Labels:  []ocmv1.Label{*imageTypeLabel},
+					Version: imageTag,
 				},
 				Type:     ociimage.TYPE,
 				Relation: ocmv1.ExternalRelation,
 			},
-			Access: ociartifact.New(imageURL),
+			Access: access,
 		}
 		descriptor.Resources = append(descriptor.Resources, protecodeImageLayerResource)
 	}
+	ocm.DefaultResources(descriptor)
 	return nil
 }
 
-func generateOCMLabel(prefix, value, tpl string) (*ocmv1.Label, error) {
-	labelValue, err := json.Marshal(
-		map[string]string{
-			prefix: value,
-		},
-	)
-	if err != nil {
-		return &ocmv1.Label{}, err
-	}
-
-	return ocmv1.NewLabel(fmt.Sprintf(tpl, prefix), labelValue)
+func generateOCMLabel(key, value, tpl string) (*ocmv1.Label, error) {
+	return ocmv1.NewLabel(fmt.Sprintf(tpl, key), value, ocmv1.WithVersion("v1"))
 }
 
-func getImageName(imageURL string) (string, error) {
+func getImageName(imageURL string) (string, string, error) {
 	imageTagSlice := strings.Split(imageURL, ":")
 	if len(imageTagSlice) != 2 {
-		return "", ErrFailedToParseImageURL
+		return "", "", ErrFailedToParseImageURL
 	}
 	repoImageSlice := strings.Split(imageTagSlice[0], "/")
-	l := len(repoImageSlice)
-	if l == 0 {
-		return "", ErrFailedToParseImageURL
+	if len(repoImageSlice) == 0 {
+		return "", "", ErrFailedToParseImageURL
 	}
 
-	return repoImageSlice[l-1], nil
+	return repoImageSlice[len(repoImageSlice)-1], imageTagSlice[len(imageTagSlice)-1], nil
 }
 
 type SecurityScanCfg struct {
@@ -146,9 +139,9 @@ func parseSecurityScanConfig(securityConfigPath string) (*SecurityScanCfg, error
 	return secCfg, nil
 }
 
-func appendLabelToAccessor(labeled ocm.LabelsAccessor, prefix, value, tpl string) error {
+func appendLabelToAccessor(labeled ocm.LabelsAccessor, key, value, tpl string) error {
 	labels := labeled.GetLabels()
-	labelValue, err := generateOCMLabel(prefix, value, tpl)
+	labelValue, err := generateOCMLabel(key, value, tpl)
 	if err != nil {
 		return err
 	}

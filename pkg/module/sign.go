@@ -37,7 +37,7 @@ func Sign(cfg *ComponentSignConfig, remote *Remote) error {
 	}
 
 	signReg := signing.DefaultRegistry()
-	issuer := "kyma-project.ío/cli"
+	issuer := "kyma-project.io/cli"
 
 	key, err := privateKey(cfg.KeyPath)
 	if err != nil {
@@ -45,6 +45,10 @@ func Sign(cfg *ComponentSignConfig, remote *Remote) error {
 	}
 
 	signReg.RegisterPrivateKey(cfg.SignatureName, key)
+
+	if idx := cva.GetDescriptor().GetSignatureIndex(cfg.SignatureName); idx < 0 {
+		return fmt.Errorf("descriptor was already signed under %s at signature index %v", cfg.SignatureName, idx)
+	}
 
 	if err := compdesc.Sign(
 		ocm.DefaultContext().CredentialsContext(),
@@ -56,6 +60,7 @@ func Sign(cfg *ComponentSignConfig, remote *Remote) error {
 	); err != nil {
 		return err
 	}
+
 	return cva.Close()
 }
 
@@ -83,10 +88,7 @@ func Verify(cfg *ComponentSignConfig, remote *Remote) error {
 
 	signReg.RegisterPublicKey(cfg.SignatureName, key)
 
-	return compdesc.Verify(
-		cva.GetDescriptor(),
-		signReg, cfg.SignatureName,
-	)
+	return compdesc.Verify(cva.GetDescriptor(), signReg, cfg.SignatureName)
 }
 
 func (cfg *ComponentSignConfig) validate() error {
@@ -109,7 +111,7 @@ func (cfg *ComponentSignConfig) validate() error {
 func privateKey(pathToPrivateKey string) (interface{}, error) {
 	privKeyFile, err := os.ReadFile(pathToPrivateKey)
 	if err != nil {
-		return nil, fmt.Errorf("unable to open private key file: %w", err)
+		return nil, fmt.Errorf("unable to open key file: %w", err)
 	}
 
 	block, _ := pem.Decode(privKeyFile)
@@ -126,7 +128,7 @@ func privateKey(pathToPrivateKey string) (interface{}, error) {
 func publicKey(pathToPublicKey string) (interface{}, error) {
 	publicKeyFile, err := os.ReadFile(pathToPublicKey)
 	if err != nil {
-		return nil, fmt.Errorf("unable to open private key file: %w", err)
+		return nil, fmt.Errorf("unable to open key file: %w", err)
 	}
 
 	block, _ := pem.Decode(publicKeyFile)
@@ -135,7 +137,7 @@ func publicKey(pathToPublicKey string) (interface{}, error) {
 	}
 	key, err := x509.ParsePKIXPublicKey(block.Bytes)
 	if err != nil {
-		return nil, fmt.Errorf("unable to parse private key: %w", err)
+		return nil, fmt.Errorf("unable to parse public key: %w", err)
 	}
 	return key, nil
 }

@@ -50,16 +50,15 @@ Build module my-domain/modB in version 3.2.1 and push it to a local registry "un
   -c, --credentials string              Basic authentication credentials for the given registry in the format user:password
       --default-cr string               File containing the default custom resource of the module. If the module is a kubebuilder project, the default CR will be automatically detected.
       --insecure                        Use an insecure connection to access the registry.
-      --mod-cache string                Specifies the path where the module artifacts are locally cached to generate the image. If the path already has a module, use the overwrite flag to overwrite it. (default "./mod")
   -n, --name string                     Override the module name of the kubebuilder project. If the module is not a kubebuilder project, this flag is mandatory.
       --nameMapping string              Overrides the OCM Component Name Mapping, one of: "urlPath" or "sha256-digest" (default "urlPath")
   -o, --output string                   File to which to output the module template if the module is uploaded to a registry (default "template.yaml")
-  -w, --overwrite                       overwrites the existing mod-path directory if it exists
   -p, --path string                     Path to the module contents. (default current directory)
+      --persistent-archive              Use the host filesystem instead of inmemory archiving to build the module
       --registry string                 Repository context url for module to upload. The repository url will be automatically added to the repository contexts in the module
       --registry-cred-selector string   label selector to identify a secret of type kubernetes.io/dockerconfigjson (that needs to be created externally) which allows the image to be accessed in private image registries. This can be used if you push your module to a registry with authenticated access. Example: "label1=value1,label2=value2"
   -r, --resource stringArray            Add an extra resource in a new layer with format <NAME:TYPE@PATH>. It is also possible to provide only a path; name will default to the last path element and type to 'helm-chart'
-      --sec-scan-cfg string             Path to the directory holding the security scan configuration file.
+      --sec-scan-cfg string             Path to the file holding the security scan configuration.
   -t, --token string                    Authentication token for the given registry (alternative to basic authentication).
       --version string                  Version of the module. This flag is mandatory.
 ```

@@ -7,9 +7,9 @@ import (
 	"os"
 	"strings"
 
+	"github.com/mandelsoft/vfs/pkg/memoryfs"
 	"github.com/mandelsoft/vfs/pkg/osfs"
 	"github.com/mandelsoft/vfs/pkg/vfs"
-	"github.com/open-component-model/ocm/pkg/common/accessio"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 
@@ -69,10 +69,6 @@ Build module my-domain/modB in version 3.2.1 and push it to a local registry "un
 		"Override the module name of the kubebuilder project. If the module is not a kubebuilder project, this flag is mandatory.",
 	)
 	cmd.Flags().StringVarP(&o.Path, "path", "p", "", "Path to the module contents. (default current directory)")
-	cmd.Flags().StringVar(
-		&o.ModCache, "mod-cache", "./mod",
-		"Specifies the path where the module artifacts are locally cached to generate the image. If the path already has a module, use the overwrite flag to overwrite it.",
-	)
 	cmd.Flags().StringArrayVarP(
 		&o.ResourcePaths, "resource", "r", []string{},
 		"Add an extra resource in a new layer with format <NAME:TYPE@PATH>. It is also possible to provide only a path; name will default to the last path element and type to 'helm-chart'",
@@ -106,20 +102,23 @@ Build module my-domain/modB in version 3.2.1 and push it to a local registry "un
 		&o.Token, "token", "t", "",
 		"Authentication token for the given registry (alternative to basic authentication).",
 	)
-	cmd.Flags().BoolVarP(
-		&o.Overwrite, "overwrite", "w", false, "overwrites the existing mod-path directory if it exists",
-	)
 	cmd.Flags().BoolVar(&o.Insecure, "insecure", false, "Use an insecure connection to access the registry.")
+	cmd.Flags().BoolVar(
+		&o.PersistentArchive, "persistent-archive", false,
+		"Use the host filesystem instead of inmemory archiving to build the module",
+	)
 	cmd.Flags().BoolVar(&o.Clean, "clean", false, "Remove the mod-path folder and all its contents at the end.")
 	cmd.Flags().StringVar(
-		&o.SecurityScanConfig, "sec-scan-cfg", "", "Path to the directory holding "+
-			"the security scan configuration file.",
+		&o.SecurityScanConfig, "sec-scan-cfg", "", "Path to the file holding "+
+			"the security scan configuration.",
 	)
 
 	return cmd
 }
 
 func (cmd *command) Run(ctx context.Context, args []string) error {
+	osFS := osfs.New()
+
 	if cmd.opts.CI {
 		cmd.Factory.NonInteractive = true
 	}
@@ -158,14 +157,11 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 		Name:            cmd.opts.Name,
 		Version:         cmd.opts.Version,
 		Source:          cmd.opts.Path,
-		ArchivePath:     cmd.opts.ModCache,
-		Overwrite:       cmd.opts.Overwrite,
 		RegistryURL:     cmd.opts.RegistryURL,
 		NameMappingMode: nameMappingMode,
 		DefaultCRPath:   cmd.opts.DefaultCRPath,
 	}
 
-	/* -- Inspect and build Module -- */
 	cmd.NewStep("Parse and build module...")
 
 	// Create base resource defs with module root and its sub-layers
@@ -175,33 +171,34 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 	}
 	cmd.CurrentStep.Successf("Module built")
 
-	/* -- VALIDATE DEFAULT CR -- */
 	if err := cmd.validateDefaultCR(ctx, modDef, l); err != nil {
 		return err
 	}
 
-	/* -- CREATE ARCHIVE -- */
-	fs := accessio.FileSystem(osfs.New())
-
 	cmd.NewStep(fmt.Sprintf("Creating module archive at %q", cmd.opts.ModCache))
-	archive, err := module.Build(fs, modDef)
+	var archiveFS vfs.FileSystem
+	if cmd.opts.PersistentArchive {
+		archiveFS = osFS
+	} else {
+		archiveFS = memoryfs.New()
+	}
+	// this builds the archive in memory, Alternatively one can store it on disk or in temp folder
+	archive, err := module.Build(archiveFS, modDef)
 	if err != nil {
 		cmd.CurrentStep.Failure()
 		return err
 	}
 	cmd.CurrentStep.Success()
 
-	/* -- Create Image -- */
 	cmd.NewStep("Adding layers to archive...")
 
-	if err := module.AddResources(archive, modDef, l, fs); err != nil {
+	if err := module.AddResources(archive, modDef, l, osFS); err != nil {
 		cmd.CurrentStep.Failure()
 		return err
 	}
 
 	cmd.CurrentStep.Success()
 
-	/* -- ADD SECURITY SCANNING METADATA -- */
 	if cmd.opts.SecurityScanConfig != "" {
 		cmd.NewStep("Configuring security scanning...")
 		err = module.AddSecurityScanningMetadata(archive.GetDescriptor(), cmd.opts.SecurityScanConfig)
@@ -236,14 +233,12 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 			return err
 		}
 
-		if err := vfs.WriteFile(fs, cmd.opts.TemplateOutput, t, os.ModePerm); err != nil {
+		if err := vfs.WriteFile(osFS, cmd.opts.TemplateOutput, t, os.ModePerm); err != nil {
 			cmd.CurrentStep.Failure()
 			return err
 		}
 		cmd.CurrentStep.Successf("template successfully generated at %s", cmd.opts.TemplateOutput)
 	}
-
-	/* -- CLEANUP -- */
 
 	if cmd.opts.Clean {
 		// TODO clean generated chart

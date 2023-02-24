@@ -27,8 +27,8 @@ type Options struct {
 	Channel              string
 	Token                string
 	Insecure             bool
+	PersistentArchive    bool
 	ResourcePaths        []string
-	Overwrite            bool
 	Clean                bool
 	RegistryCredSelector string
 	SecurityScanConfig   string
@@ -67,8 +67,10 @@ func (o *Options) ValidatePath() error {
 func (o *Options) ValidateChannel() error {
 
 	if len(o.Channel) < ChannelMinLength || len(o.Channel) > ChannelMaxLength {
-		return fmt.Errorf("invalid channel length, length should between %d and %d, %w",
-			ChannelMinLength, ChannelMaxLength, ErrChannelValidation)
+		return fmt.Errorf(
+			"invalid channel length, length should between %d and %d, %w",
+			ChannelMinLength, ChannelMaxLength, ErrChannelValidation,
+		)
 	}
 	matched, _ := regexp.MatchString(`^[a-z]+$`, o.Channel)
 	if !matched {

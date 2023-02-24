@@ -54,11 +54,6 @@ func AddResources(
 	if err := compdesc.Validate(descriptor); err != nil {
 		return fmt.Errorf("invalid component descriptor: %w", err)
 	}
-	if err := WriteComponentDescriptor(
-		fs, descriptor, modDef.ArchivePath, comparch.ComponentDescriptorFileName,
-	); err != nil {
-		return fmt.Errorf("could not write descriptor: %w", err)
-	}
 
 	log.Debugf("Successfully added all resources to component descriptor")
 	return nil

@@ -123,8 +123,6 @@ func AccessForFileOrFolder(fs vfs.FileSystem, input *Input) (accessio.BlobAccess
 
 // Read reads the configured blob and returns a reader to the given file.
 func (input *Input) Read(ctx context.Context, fs vfs.FileSystem) (*Output, error) {
-	// default media type to binary data if nothing else is defined
-	input.SetMediaTypeIfNotDefined(MediaTypeOctetStream)
 	inputInfo, err := fs.Stat(input.Path)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get info for input blob from %q, %w", input.Path, err)
@@ -209,6 +207,8 @@ func (input *Input) Read(ctx context.Context, fs vfs.FileSystem) (*Output, error
 				reader:   io.NopCloser(&data),
 			}, nil
 		}
+		// default media type to binary data if nothing else is defined
+		input.SetMediaTypeIfNotDefined(MediaTypeOctetStream)
 		return &Output{
 			mimeType: input.MediaType,
 			digest:   blobDigest.String(),

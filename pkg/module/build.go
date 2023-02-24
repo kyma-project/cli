@@ -1,10 +1,8 @@
 package module
 
 import (
-	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/kyma-project/cli/pkg/module/git"
 	"github.com/mandelsoft/vfs/pkg/projectionfs"
@@ -16,83 +14,25 @@ import (
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/comparch"
 )
 
-// Build creates a component archive with the given configuration
+// Build creates a component archive with the given configuration.
+// An empty vfs.FileSystem causes a FileSystem to be created in
+// the temporary OS folder
 func Build(fs vfs.FileSystem, def *Definition) (*comparch.ComponentArchive, error) {
 	if err := def.validate(); err != nil {
 		return nil, err
 	}
 
-	compDescFilePath := filepath.Join(def.ArchivePath, comparch.ComponentDescriptorFileName)
-	if !def.Overwrite {
-		_, err := fs.Stat(compDescFilePath)
-		if err != nil && !os.IsNotExist(err) {
-			return nil, err
-		}
-		if err == nil {
-			//Overwrite == false and component descriptor exists
-			return buildWithoutOverwriting(fs, def)
-		}
-	}
-
 	//Overwrite == true OR (Overwrite == false AND the component descriptor does not exist)
-	return buildFull(fs, def)
+	return buildFull(fs, "mod", def)
 }
 
-// buildWithoutOverwriting builds over an existing descriptor without overwriting
-func buildWithoutOverwriting(fs vfs.FileSystem, def *Definition) (*comparch.ComponentArchive, error) {
-	// add the input to the comparch format
-	archiveFs, err := projectionfs.New(fs, def.ArchivePath)
-	if err != nil {
-		return nil, fmt.Errorf("unable to create projectionfilesystem: %w", err)
-	}
-
-	archive, err := comparch.New(
-		cpi.DefaultContext(),
-		accessobj.ACC_WRITABLE, archiveFs,
-		nil,
-		nil,
-		vfs.ModePerm,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("unable to parse component archive from %s: %w", def.ArchivePath, err)
-	}
-
-	cd := archive.GetDescriptor()
-
-	if err := addSources(cd, def); err != nil {
-		return nil, err
-	}
-
-	if def.Name != "" {
-		if cd.Name != "" && cd.Name != def.Name {
-			return nil, errors.New("unable to overwrite the existing component name: forbidden")
-		}
-		cd.Name = def.Name
-	}
-
-	if def.Version != "" {
-		if cd.Version != "" && cd.Version != def.Version {
-			return nil, errors.New("unable to overwrite the existing component version: forbidden")
-		}
-		cd.Version = def.Version
-	}
-
-	ocm.DefaultResources(cd)
-
-	if err = ocm.Validate(cd); err != nil {
-		return nil, fmt.Errorf("invalid component descriptor: %w", err)
-	}
-
-	return archive, nil
-}
-
-func buildFull(fs vfs.FileSystem, def *Definition) (*comparch.ComponentArchive, error) {
+func buildFull(fs vfs.FileSystem, path string, def *Definition) (*comparch.ComponentArchive, error) {
 	// build minimal archive
 
-	if err := fs.MkdirAll(def.ArchivePath, os.ModePerm); err != nil {
-		return nil, fmt.Errorf("unable to create component-archive path %q: %w", def.ArchivePath, err)
+	if err := fs.MkdirAll(path, os.ModePerm); err != nil {
+		return nil, fmt.Errorf("unable to create component-archive path %q: %w", fs.Normalize(path), err)
 	}
-	archiveFs, err := projectionfs.New(fs, def.ArchivePath)
+	archiveFs, err := projectionfs.New(fs, path)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create projectionfilesystem: %w", err)
 	}

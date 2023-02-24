@@ -27,7 +27,7 @@ metadata:
     "operator.kyma-project.io/module-name": "{{ .ShortName }}"
   annotations:
     "operator.kyma-project.io/module-version": "{{ .Descriptor.Version }}"
-    "operator.kyma-project.io/module-provider": "{{ .Descriptor.ComponentSpec.Provider }}"
+    "operator.kyma-project.io/module-provider": "{{ .Descriptor.ComponentSpec.Provider.GetName }}"
     "operator.kyma-project.io/descriptor-schema-version": "{{ .Descriptor.Metadata.ConfiguredVersion }}"
 spec:
   target: remote

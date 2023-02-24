@@ -291,7 +291,7 @@ func (cmd *command) wizard(ctx context.Context) error {
 	kymas, err := cmd.K8s.Dynamic().Resource(
 		schema.GroupVersionResource{
 			Group:    "operator.kyma-project.io",
-			Version:  "v1alpha1",
+			Version:  "v1beta1",
 			Resource: "kymas",
 		},
 	).List(ctx, v1.ListOptions{})
