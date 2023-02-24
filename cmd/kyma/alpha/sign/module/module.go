@@ -41,9 +41,6 @@ This command signs all module resources recursively based on an unsigned compone
 		&o.PrivateKeyPath, "key", "", "Specifies the path where the private key used for signing",
 	)
 	cmd.Flags().StringVar(
-		&o.ModPath, "mod-path", "./mod", "Specifies the path where the signed component descriptor will be stored",
-	)
-	cmd.Flags().StringVar(
 		&o.SignatureName, "signature-name", "kyma-project.io/module-signature", "name of the signature for signing",
 	)
 	cmd.Flags().StringVar(
@@ -52,9 +49,6 @@ This command signs all module resources recursively based on an unsigned compone
 	cmd.Flags().StringVar(
 		&o.NameMappingMode, "nameMapping", "urlPath",
 		"Overrides the OCM Component Name Mapping, one of: \"urlPath\" or \"sha256-digest\"",
-	)
-	cmd.Flags().StringVar(
-		&o.SignedRegistryURL, "signed-registry", "", "Repository context url where signed component descriptor located",
 	)
 	cmd.Flags().StringVarP(
 		&o.Credentials, "credentials", "c", "",

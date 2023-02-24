@@ -8,16 +8,14 @@ import (
 type Options struct {
 	*cli.Options
 
-	Name, Version     string
-	RegistryURL       string
-	NameMappingMode   string
-	PublicKeyPath     string
-	SignatureName     string
-	Credentials       string
-	Token             string
-	Insecure          bool
-	ModPath           string
-	SignedRegistryURL string
+	Name, Version   string
+	RegistryURL     string
+	NameMappingMode string
+	PublicKeyPath   string
+	SignatureName   string
+	Credentials     string
+	Token           string
+	Insecure        bool
 }
 
 // NewOptions creates options with default values

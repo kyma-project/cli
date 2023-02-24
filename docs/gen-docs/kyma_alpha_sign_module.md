@@ -20,17 +20,15 @@ kyma alpha sign module MODULE_NAME MODULE_VERSION [flags]
 ## Flags
 
 ```bash
-  -c, --credentials string       Basic authentication credentials for the given registry in the format user:password
-      --insecure                 Use an insecure connection to access the registry.
-      --key string               Specifies the path where the private key used for signing
-      --mod-path string          Specifies the path where the signed component descriptor will be stored (default "./mod")
-      --name string              Name of the module
-      --nameMapping string       Overrides the OCM Component Name Mapping, one of: "urlPath" or "sha256-digest" (default "urlPath")
-      --registry string          Repository context url where unsigned component descriptor located
-      --signature-name string    name of the signature for signing (default "kyma-project.io/module-signature")
-      --signed-registry string   Repository context url where signed component descriptor located
-  -t, --token string             Authentication token for the given registry (alternative to basic authentication).
-      --version string           Version of the module
+  -c, --credentials string      Basic authentication credentials for the given registry in the format user:password
+      --insecure                Use an insecure connection to access the registry.
+      --key string              Specifies the path where the private key used for signing
+      --name string             Name of the module
+      --nameMapping string      Overrides the OCM Component Name Mapping, one of: "urlPath" or "sha256-digest" (default "urlPath")
+      --registry string         Repository context url where unsigned component descriptor located
+      --signature-name string   name of the signature for signing (default "kyma-project.io/module-signature")
+  -t, --token string            Authentication token for the given registry (alternative to basic authentication).
+      --version string          Version of the module
 ```
 
 ## Flags inherited from parent commands

@@ -5,8 +5,6 @@ go 1.18
 // required to avoid locking with gardner dependency updates
 replace k8s.io/client-go => k8s.io/client-go v0.26.1
 
-replace github.com/kyma-project/lifecycle-manager => ../lifecycle-manager
-
 require (
 	github.com/Masterminds/semver/v3 v3.2.0
 	github.com/avast/retry-go v3.0.0+incompatible
@@ -118,6 +116,7 @@ require (
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/fvbommel/sortorder v1.0.1 // indirect
+	github.com/gardener/component-spec/bindings-go v0.0.80 // indirect
 	github.com/gardener/gardener v1.53.2 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-cmd/cmd v1.4.1 // indirect
