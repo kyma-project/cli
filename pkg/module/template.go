@@ -2,16 +2,15 @@ package module
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
 	"text/template"
 
-	v2 "github.com/gardener/component-spec/bindings-go/apis/v2"
-	"github.com/gardener/component-spec/bindings-go/ctf"
-	cdoci "github.com/gardener/component-spec/bindings-go/oci"
 	"github.com/kyma-project/cli/pkg/module/oci"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
+	ocmv1 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/meta/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 )
@@ -29,7 +28,7 @@ metadata:
   annotations:
     "operator.kyma-project.io/module-version": "{{ .Descriptor.Version }}"
     "operator.kyma-project.io/module-provider": "{{ .Descriptor.ComponentSpec.Provider }}"
-    "operator.kyma-project.io/descriptor-schema-version": "{{ .Descriptor.Metadata.Version }}"
+    "operator.kyma-project.io/descriptor-schema-version": "{{ .Descriptor.Metadata.ConfiguredVersion }}"
 spec:
   target: remote
   channel: {{.Channel}}
@@ -43,11 +42,10 @@ spec:
 	OCIRegistryCredLabel = "oci-registry-cred"
 )
 
-func Template(archive *ctf.ComponentArchive, channel string, data []byte, registryCredSelector string) ([]byte, error) {
-	descriptor, err := remoteDescriptor(archive)
-	if err != nil {
-		return nil, err
-	}
+func Template(
+	remote ocm.ComponentVersionAccess, channel string, data []byte, registryCredSelector string,
+) ([]byte, error) {
+	descriptor := remote.GetDescriptor()
 	if registryCredSelector != "" {
 		selector, err := metav1.ParseToLabelSelector(registryCredSelector)
 		if err != nil {
@@ -59,10 +57,12 @@ func Template(archive *ctf.ComponentArchive, channel string, data []byte, regist
 		}
 		for i := range descriptor.Resources {
 			resource := &descriptor.Resources[i]
-			resource.SetLabels([]v2.Label{{
-				Name:  OCIRegistryCredLabel,
-				Value: matchLabels,
-			}})
+			resource.SetLabels(
+				[]ocmv1.Label{{
+					Name:  OCIRegistryCredLabel,
+					Value: matchLabels,
+				}},
+			)
 		}
 	}
 	ref, err := oci.ParseRef(descriptor.Name)
@@ -71,8 +71,8 @@ func Template(archive *ctf.ComponentArchive, channel string, data []byte, regist
 	}
 
 	td := struct { // Custom struct for the template
-		ShortName  string                  // Last part of the component descriptor name
-		Descriptor *v2.ComponentDescriptor // descriptor info for the template
+		ShortName  string                        // Last part of the component descriptor name
+		Descriptor *compdesc.ComponentDescriptor // descriptor info for the template
 		Channel    string
 		Data       string // contents for the spec.data section of the template taken from the defaults.yaml file in the mod folder
 	}{
@@ -114,32 +114,4 @@ func Indent(n int, in string) string {
 		}
 	}
 	return out.String()
-}
-
-// remoteDescriptor generates the remote component descriptor from the local archive the same way module.Push does.
-// the module template uses the remote descriptor to install the module
-func remoteDescriptor(archive *ctf.ComponentArchive) (*v2.ComponentDescriptor, error) {
-	store := oci.NewInMemoryCache()
-
-	manifest, err := cdoci.NewManifestBuilder(store, archive).Build(context.TODO())
-	if err != nil {
-		return nil, err
-	}
-
-	r, err := store.Get(manifest.Layers[0])
-	if err != nil {
-		return nil, err
-	}
-
-	data, err := cdoci.ReadComponentDescriptorFromTar(r)
-	if err != nil {
-		return nil, err
-	}
-
-	remoteDesc := &v2.ComponentDescriptor{}
-	if err := json.Unmarshal(data, remoteDesc); err != nil {
-		return nil, err
-	}
-
-	return remoteDesc, nil
 }

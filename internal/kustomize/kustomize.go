@@ -1,9 +1,9 @@
 package kustomize
 
 import (
+	"bytes"
 	"fmt"
 	"net/url"
-	"os"
 	"regexp"
 	"strings"
 
@@ -73,9 +73,23 @@ func ParseKustomization(s string) (Definition, error) {
 
 const NoOutputFile = ""
 
+func BuildMany(kustomizations []Definition, filters []kio.Filter) ([]byte, error) {
+	ms := bytes.Buffer{}
+	for _, k := range kustomizations {
+		manifest, err := Build(k, filters...)
+		if err != nil {
+			return nil, fmt.Errorf("could not build manifest for %s: %w", k.Name, err)
+		}
+		ms.Write(manifest)
+		ms.WriteString("\n---\n")
+	}
+
+	return ms.Bytes(), nil
+}
+
 // Build generates a manifest given a path using kustomize
 // Additional args might be given to the kustomize build command
-func Build(def Definition, outPath string, filters ...kio.Filter) ([]byte, error) {
+func Build(def Definition, filters ...kio.Filter) ([]byte, error) {
 	opts := krusty.MakeDefaultOptions()
 	kustomize := krusty.MakeKustomizer(opts)
 
@@ -95,18 +109,12 @@ func Build(def Definition, outPath string, filters ...kio.Filter) ([]byte, error
 		}
 	}
 
-	yaml, err := results.AsYaml()
+	yml, err := results.AsYaml()
 	if err != nil {
-		return nil, fmt.Errorf("could not parse kustomization as yaml: %w", err)
+		return nil, fmt.Errorf("could not parse kustomization as yml: %w", err)
 	}
 
-	if outPath != "" {
-		if err := os.WriteFile(outPath, yaml, os.ModePerm); err != nil {
-			return nil, fmt.Errorf("could not write rendered kustomization as yaml to %s: %w", outPath, err)
-		}
-	}
-
-	return yaml, nil
+	return yml, nil
 }
 
 const (

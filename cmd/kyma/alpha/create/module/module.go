@@ -9,6 +9,7 @@ import (
 
 	"github.com/mandelsoft/vfs/pkg/osfs"
 	"github.com/mandelsoft/vfs/pkg/vfs"
+	"github.com/open-component-model/ocm/pkg/common/accessio"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 
@@ -110,19 +111,35 @@ Build module my-domain/modB in version 3.2.1 and push it to a local registry "un
 	)
 	cmd.Flags().BoolVar(&o.Insecure, "insecure", false, "Use an insecure connection to access the registry.")
 	cmd.Flags().BoolVar(&o.Clean, "clean", false, "Remove the mod-path folder and all its contents at the end.")
-	cmd.Flags().StringVar(&o.SecurityScanConfig, "sec-scan-cfg", "", "Path to the directory holding "+
-		"the security scan configuration file.")
+	cmd.Flags().StringVar(
+		&o.SecurityScanConfig, "sec-scan-cfg", "", "Path to the directory holding "+
+			"the security scan configuration file.",
+	)
 
 	return cmd
 }
 
 func (cmd *command) Run(ctx context.Context, args []string) error {
+	if cmd.opts.CI {
+		cmd.Factory.NonInteractive = true
+	}
+	if cmd.opts.Verbose {
+		cmd.Factory.UseLogger = true
+	}
+
+	l := cli.NewLogger(cmd.opts.Verbose).Sugar()
+	undo := zap.RedirectStdLog(l.Desugar())
+	defer undo()
+
+	if !cmd.opts.Verbose {
+		stderr := os.Stderr
+		os.Stderr = nil
+		defer func() { os.Stderr = stderr }()
+	}
 
 	if !cmd.opts.NonInteractive {
 		cli.AlphaWarn()
 	}
-
-	l := cli.NewLogger(cmd.opts.Verbose).Sugar()
 
 	if err := cmd.opts.ValidatePath(); err != nil {
 		return err
@@ -164,7 +181,7 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 	}
 
 	/* -- CREATE ARCHIVE -- */
-	fs := osfs.New()
+	fs := accessio.FileSystem(osfs.New())
 
 	cmd.NewStep(fmt.Sprintf("Creating module archive at %q", cmd.opts.ModCache))
 	archive, err := module.Build(fs, modDef)
@@ -175,19 +192,19 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 	cmd.CurrentStep.Success()
 
 	/* -- Create Image -- */
-	cmd.NewStep("Creating image...")
+	cmd.NewStep("Adding layers to archive...")
 
 	if err := module.AddResources(archive, modDef, l, fs); err != nil {
 		cmd.CurrentStep.Failure()
 		return err
 	}
 
-	cmd.CurrentStep.Successf("Image created")
+	cmd.CurrentStep.Success()
 
 	/* -- ADD SECURITY SCANNING METADATA -- */
 	if cmd.opts.SecurityScanConfig != "" {
 		cmd.NewStep("Configuring security scanning...")
-		err = module.AddSecurityScanningMetadata(archive.ComponentDescriptor, modDef, fs, cmd.opts.SecurityScanConfig)
+		err = module.AddSecurityScanningMetadata(archive.GetDescriptor(), cmd.opts.SecurityScanConfig)
 		if err != nil {
 			cmd.CurrentStep.Failure()
 			return err
@@ -205,14 +222,15 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 			return err
 		}
 
-		if err := module.Push(archive, r, l); err != nil {
+		remote, err := module.Push(archive, r)
+		if err != nil {
 			cmd.CurrentStep.Failure()
 			return err
 		}
-		cmd.CurrentStep.Success()
+		cmd.CurrentStep.Successf("module successfully pushed to %q", cmd.opts.RegistryURL)
 
 		cmd.NewStep("Generating module template")
-		t, err := module.Template(archive, cmd.opts.Channel, modDef.DefaultCR, cmd.opts.RegistryCredSelector)
+		t, err := module.Template(remote, cmd.opts.Channel, modDef.DefaultCR, cmd.opts.RegistryCredSelector)
 		if err != nil {
 			cmd.CurrentStep.Failure()
 			return err
@@ -222,7 +240,7 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 			cmd.CurrentStep.Failure()
 			return err
 		}
-		cmd.CurrentStep.Success()
+		cmd.CurrentStep.Successf("template successfully generated at %s", cmd.opts.TemplateOutput)
 	}
 
 	/* -- CLEANUP -- */

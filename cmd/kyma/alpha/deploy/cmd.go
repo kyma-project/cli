@@ -10,6 +10,7 @@ import (
 	"errors"
 
 	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/config"
 	"github.com/kyma-project/cli/internal/coredns"
 	"github.com/kyma-project/cli/internal/deploy"
 	"github.com/kyma-project/cli/internal/nice"
@@ -29,6 +30,7 @@ type command struct {
 
 const (
 	lifecycleManagerKustomization = "https://github.com/kyma-project/lifecycle-manager/config/default"
+	modulesKustomization          = "https://github.com/kyma-project/kyma/modules@" + config.DefaultKyma2Version
 
 	hostsTemplate = `
     {{ .K3dRegistryIP}} {{ .K3dRegistryHost}}
@@ -77,7 +79,7 @@ Defaults to deploying Lifecycle Manager and Module Manager from GitHub main bran
 	// TODO remove this flag when module templates can be fetched from release.
 	// Might be worth keeping this flag with another name to install extra templates??
 	cobraCmd.Flags().StringArrayVar(
-		&o.Templates, "template", []string{}, `Provide one or more module templates to deploy.
+		&o.Templates, "templates", []string{modulesKustomization}, `Provide one or more module templates to deploy.
 WARNING: This is a temporary flag for development and will be removed soon.`,
 	)
 
@@ -231,14 +233,13 @@ func (cmd *command) deploy(ctx context.Context, start time.Time) error {
 
 	// deploy modules and kyma CR
 	if hasKyma {
-		// TODO change to fetch templates from release artifacts
 		if len(cmd.opts.Templates) > 0 {
-			modStep := cmd.NewStep("Module Templates deployed")
+			modStep := cmd.NewStep("Deploying Module Templates")
 			if err := deploy.ModuleTemplates(ctx, cmd.K8s, cmd.opts.Templates, cmd.opts.Force, false); err != nil {
 				modStep.Failuref("Failed to deploy module templates")
 				return err
 			}
-			modStep.Success()
+			modStep.Successf("Module Templates deployed: %s", cmd.opts.Templates)
 		}
 		kymaStep := cmd.NewStep("Deploying Kyma CR")
 		if err := deploy.Kyma(

@@ -92,10 +92,13 @@ func (p *Project) Build(name, version, registry string) (string, error) {
 	}
 
 	// do build
-	if _, err := kustomize.Build(
-		k, outPath, kustomize.ControllerImageModifier(img, version),
-	); err != nil {
+	yml, err := kustomize.Build(k, kustomize.ControllerImageModifier(img, version))
+	if err != nil {
 		return "", err
+	}
+
+	if err := os.WriteFile(filepath.Join(outPath, "rendered.yaml"), yml, os.ModePerm); err != nil {
+		return "", fmt.Errorf("could not write rendered kustomization as yml to %s: %w", outPath, err)
 	}
 
 	// move CRDs to their folder

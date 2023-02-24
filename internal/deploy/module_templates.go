@@ -2,44 +2,30 @@ package deploy
 
 import (
 	"context"
-	"fmt"
-	"os"
 
-	"github.com/avast/retry-go"
 	"github.com/kyma-project/cli/internal/kube"
-	ctrl "sigs.k8s.io/controller-runtime/pkg/client"
+	"github.com/kyma-project/cli/internal/kustomize"
 )
 
 func ModuleTemplates(ctx context.Context, k8s kube.KymaKube, templates []string, force, dryRun bool) error {
-	totalObjs := []ctrl.Object{}
-
-	for _, t := range templates {
-		b, err := os.ReadFile(t)
+	var defs []kustomize.Definition
+	// defaults
+	for _, k := range templates {
+		parsed, err := kustomize.ParseKustomization(k)
 		if err != nil {
 			return err
 		}
-
-		if dryRun {
-			fmt.Printf("%s---\n", b)
-			continue
-		}
-
-		objs, err := k8s.ParseManifest(b)
-		if err != nil {
-			return err
-		}
-		totalObjs = append(totalObjs, objs...)
-
+		defs = append(defs, parsed)
 	}
 
-	if err := retry.Do(
-		func() error {
-			return k8s.Apply(context.Background(), force, totalObjs...)
-		}, retry.Attempts(defaultRetries), retry.Delay(defaultInitialBackoff), retry.DelayType(retry.BackOffDelay),
-		retry.LastErrorOnly(false), retry.Context(ctx),
-	); err != nil {
+	// build manifests
+	manifests, err := kustomize.BuildMany(defs, nil)
+	if err != nil {
 		return err
 	}
 
-	return nil
+	return applyManifests(
+		ctx, k8s, manifests, applyOpts{
+			dryRun, force, defaultRetries, defaultInitialBackoff},
+	)
 }

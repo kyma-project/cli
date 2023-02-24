@@ -15,6 +15,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/mandelsoft/vfs/pkg/vfs"
+	"github.com/open-component-model/ocm/pkg/common/accessio"
 	"github.com/opencontainers/go-digest"
 )
 
@@ -29,9 +30,38 @@ const MediaTypeOctetStream = "application/octet-stream"
 
 // Output is the output generated when reading a blob.Input.
 type Output struct {
-	Digest string
-	Size   int64
-	Reader io.ReadCloser
+	mimeType string
+	digest   string
+	size     int64
+	reader   io.ReadCloser
+}
+
+func (o *Output) Get() ([]byte, error) {
+	return io.ReadAll(o.reader)
+}
+
+func (o *Output) Reader() (io.ReadCloser, error) {
+	return o.reader, nil
+}
+
+func (o *Output) Close() error {
+	return o.reader.Close()
+}
+
+func (o *Output) Size() int64 {
+	return o.size
+}
+
+func (o *Output) MimeType() string {
+	return o.mimeType
+}
+
+func (o *Output) DigestKnown() bool {
+	return true
+}
+
+func (o *Output) Digest() digest.Digest {
+	return digest.FromString(o.digest)
 }
 
 type InputType string
@@ -87,8 +117,14 @@ func (input *Input) SetMediaTypeIfNotDefined(mediaType string) {
 	input.MediaType = mediaType
 }
 
+func AccessForFileOrFolder(fs vfs.FileSystem, input *Input) (accessio.BlobAccess, error) {
+	return input.Read(context.Background(), fs)
+}
+
 // Read reads the configured blob and returns a reader to the given file.
 func (input *Input) Read(ctx context.Context, fs vfs.FileSystem) (*Output, error) {
+	// default media type to binary data if nothing else is defined
+	input.SetMediaTypeIfNotDefined(MediaTypeOctetStream)
 	inputInfo, err := fs.Stat(input.Path)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get info for input blob from %q, %w", input.Path, err)
@@ -105,12 +141,14 @@ func (input *Input) Read(ctx context.Context, fs vfs.FileSystem) (*Output, error
 		if input.Compress() {
 			input.SetMediaTypeIfNotDefined(MediaTypeGZip)
 			gw := gzip.NewWriter(&data)
-			if err := TarFileSystem(ctx, fs, input.Path, gw, TarFileSystemOptions{
-				IncludeFiles:   input.IncludeFiles,
-				ExcludeFiles:   input.ExcludeFiles,
-				PreserveDir:    input.PreserveDir,
-				FollowSymlinks: input.FollowSymlinks,
-			}); err != nil {
+			if err := TarFileSystem(
+				ctx, fs, input.Path, gw, TarFileSystemOptions{
+					IncludeFiles:   input.IncludeFiles,
+					ExcludeFiles:   input.ExcludeFiles,
+					PreserveDir:    input.PreserveDir,
+					FollowSymlinks: input.FollowSymlinks,
+				},
+			); err != nil {
 				return nil, fmt.Errorf("unable to tar input artifact: %w", err)
 			}
 			if err := gw.Close(); err != nil {
@@ -118,20 +156,23 @@ func (input *Input) Read(ctx context.Context, fs vfs.FileSystem) (*Output, error
 			}
 		} else {
 			input.SetMediaTypeIfNotDefined(MediaTypeTar)
-			if err := TarFileSystem(ctx, fs, input.Path, &data, TarFileSystemOptions{
-				IncludeFiles:   input.IncludeFiles,
-				ExcludeFiles:   input.ExcludeFiles,
-				PreserveDir:    input.PreserveDir,
-				FollowSymlinks: input.FollowSymlinks,
-			}); err != nil {
+			if err := TarFileSystem(
+				ctx, fs, input.Path, &data, TarFileSystemOptions{
+					IncludeFiles:   input.IncludeFiles,
+					ExcludeFiles:   input.ExcludeFiles,
+					PreserveDir:    input.PreserveDir,
+					FollowSymlinks: input.FollowSymlinks,
+				},
+			); err != nil {
 				return nil, fmt.Errorf("unable to tar input artifact: %w", err)
 			}
 		}
 
 		return &Output{
-			Digest: digest.FromBytes(data.Bytes()).String(),
-			Size:   int64(data.Len()),
-			Reader: io.NopCloser(&data),
+			mimeType: input.MediaType,
+			digest:   digest.FromBytes(data.Bytes()).String(),
+			size:     int64(data.Len()),
+			reader:   io.NopCloser(&data),
 		}, nil
 	} else if input.Type == FileInputType {
 		if inputInfo.IsDir() {
@@ -162,15 +203,17 @@ func (input *Input) Read(ctx context.Context, fs vfs.FileSystem) (*Output, error
 			}
 
 			return &Output{
-				Digest: digest.FromBytes(data.Bytes()).String(),
-				Size:   int64(data.Len()),
-				Reader: io.NopCloser(&data),
+				mimeType: input.MediaType,
+				digest:   digest.FromBytes(data.Bytes()).String(),
+				size:     int64(data.Len()),
+				reader:   io.NopCloser(&data),
 			}, nil
 		}
 		return &Output{
-			Digest: blobDigest.String(),
-			Size:   inputInfo.Size(),
-			Reader: inputBlob,
+			mimeType: input.MediaType,
+			digest:   blobDigest.String(),
+			size:     inputInfo.Size(),
+			reader:   inputBlob,
 		}, nil
 	} else {
 		return nil, fmt.Errorf("unknown input type %q", input.Path)
@@ -224,7 +267,9 @@ func (opts *TarFileSystemOptions) Included(path string) (bool, error) {
 }
 
 // TarFileSystem creates a tar archive from a filesystem.
-func TarFileSystem(ctx context.Context, fs vfs.FileSystem, root string, writer io.Writer, opts TarFileSystemOptions) error {
+func TarFileSystem(
+	ctx context.Context, fs vfs.FileSystem, root string, writer io.Writer, opts TarFileSystemOptions,
+) error {
 	tw := tar.NewWriter(writer)
 	if opts.PreserveDir {
 		opts.root = pathutil.Base(root)
@@ -235,7 +280,9 @@ func TarFileSystem(ctx context.Context, fs vfs.FileSystem, root string, writer i
 	return tw.Close()
 }
 
-func addFileToTar(ctx context.Context, fs vfs.FileSystem, tw *tar.Writer, path string, realPath string, opts TarFileSystemOptions) error {
+func addFileToTar(
+	ctx context.Context, fs vfs.FileSystem, tw *tar.Writer, path string, realPath string, opts TarFileSystemOptions,
+) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -274,19 +321,21 @@ func addFileToTar(ctx context.Context, fs vfs.FileSystem, tw *tar.Writer, path s
 				return fmt.Errorf("unable to write header for %q: %w", path, err)
 			}
 		}
-		err := vfs.Walk(fs, realPath, func(subFilePath string, info os.FileInfo, err error) error {
-			if subFilePath == realPath {
-				return nil
-			}
-			if err != nil {
-				return err
-			}
-			relPath, err := filepath.Rel(realPath, subFilePath)
-			if err != nil {
-				return fmt.Errorf("unable to calculate relative path for %s: %w", subFilePath, err)
-			}
-			return addFileToTar(ctx, fs, tw, pathutil.Join(path, relPath), subFilePath, opts)
-		})
+		err := vfs.Walk(
+			fs, realPath, func(subFilePath string, info os.FileInfo, err error) error {
+				if subFilePath == realPath {
+					return nil
+				}
+				if err != nil {
+					return err
+				}
+				relPath, err := filepath.Rel(realPath, subFilePath)
+				if err != nil {
+					return fmt.Errorf("unable to calculate relative path for %s: %w", subFilePath, err)
+				}
+				return addFileToTar(ctx, fs, tw, pathutil.Join(path, relPath), subFilePath, opts)
+			},
+		)
 		return err
 	case info.Mode().IsRegular():
 		if err := tw.WriteHeader(header); err != nil {

@@ -1,30 +1,26 @@
 package module
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
-	cdv2 "github.com/gardener/component-spec/bindings-go/apis/v2"
-	"github.com/gardener/component-spec/bindings-go/apis/v2/cdutils"
-	cdvalidation "github.com/gardener/component-spec/bindings-go/apis/v2/validation"
-	"github.com/gardener/component-spec/bindings-go/ctf"
 	"github.com/kyma-project/cli/internal/files"
 	"github.com/kyma-project/cli/pkg/module/blob"
 	"github.com/kyma-project/cli/pkg/module/kubebuilder"
 	"github.com/kyma-project/cli/pkg/step"
 	"github.com/mandelsoft/vfs/pkg/vfs"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/comparch"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
 )
 
 // ResourceDescriptor contains all information to describe a resource
 type ResourceDescriptor struct {
-	cdv2.Resource
+	compdesc.Resource
 	Input *blob.Input `json:"input,omitempty"`
 }
 
@@ -35,7 +31,10 @@ type ResourceDescriptorList struct {
 
 // AddResources adds the resources in the given resource definitions into the archive and its FS.
 // A resource definition is a string with format: NAME:TYPE@PATH, where NAME and TYPE can be omitted and will default to the last path element name and "helm-chart" respectively
-func AddResources(archive *ctf.ComponentArchive, modDef *Definition, log *zap.SugaredLogger, fs vfs.FileSystem) error {
+func AddResources(
+	archive *comparch.ComponentArchive, modDef *Definition, log *zap.SugaredLogger, fs vfs.FileSystem,
+) error {
+	descriptor := archive.GetDescriptor()
 	resources, err := generateResources(log, modDef.Version, modDef.Layers...)
 	if err != nil {
 		return err
@@ -44,42 +43,32 @@ func AddResources(archive *ctf.ComponentArchive, modDef *Definition, log *zap.Su
 	log.Debugf("Adding %d resources...", len(resources))
 	for i, resource := range resources {
 		if resource.Input != nil {
-			log.Debugf("Added input blob from %q", resource.Input.Path)
-			if err := addBlob(context.Background(), fs, archive, &resources[i]); err != nil {
+			if err := addBlob(fs, archive, &resources[i]); err != nil {
 				return err
 			}
-		} else {
-			id := archive.ComponentDescriptor.GetResourceIndex(resource.Resource)
-			if id != -1 {
-				log.Debugf("Found existing resource in component descriptor, attempt merge...")
-				mergedRes := cdutils.MergeResources(archive.ComponentDescriptor.Resources[id], resource.Resource)
-				if errList := cdvalidation.ValidateResource(field.NewPath(""), mergedRes); len(errList) != 0 {
-					return errList.ToAggregate()
-				}
-				archive.ComponentDescriptor.Resources[id] = mergedRes
-			} else {
-				if errList := cdvalidation.ValidateResource(field.NewPath(""), resource.Resource); len(errList) != 0 {
-					return errList.ToAggregate()
-				}
-				archive.ComponentDescriptor.Resources = append(archive.ComponentDescriptor.Resources, resource.Resource)
-			}
+			log.Debugf("Added input blob from %q", resource.Input.Path)
 		}
-
-		if err := cdvalidation.Validate(archive.ComponentDescriptor); err != nil {
-			return fmt.Errorf("invalid component descriptor: %w", err)
-		}
-		if err := WriteComponentDescriptor(fs, archive.ComponentDescriptor, modDef.ArchivePath, ctf.ComponentDescriptorFileName); err != nil {
-			return err
-		}
-		log.Debugf("Successfully added resource to component descriptor")
 	}
+	compdesc.DefaultResources(descriptor)
+
+	if err := compdesc.Validate(descriptor); err != nil {
+		return fmt.Errorf("invalid component descriptor: %w", err)
+	}
+	if err := WriteComponentDescriptor(
+		fs, descriptor, modDef.ArchivePath, comparch.ComponentDescriptorFileName,
+	); err != nil {
+		return fmt.Errorf("could not write descriptor: %w", err)
+	}
+
 	log.Debugf("Successfully added all resources to component descriptor")
 	return nil
 }
 
-func WriteComponentDescriptor(fs vfs.FileSystem, cd *cdv2.ComponentDescriptor, filePath string, fileName string) error {
+func WriteComponentDescriptor(
+	fs vfs.FileSystem, cd *compdesc.ComponentDescriptor, filePath string, fileName string,
+) error {
 	compDescFilePath := filepath.Join(filePath, fileName)
-	data, err := yaml.Marshal(cd)
+	data, err := compdesc.Encode(cd)
 	if err != nil {
 		return fmt.Errorf("unable to encode component descriptor: %w", err)
 	}
@@ -121,28 +110,21 @@ func generateResources(log *zap.SugaredLogger, version string, defs ...Layer) ([
 	return res, nil
 }
 
-func addBlob(ctx context.Context, fs vfs.FileSystem, archive *ctf.ComponentArchive, resource *ResourceDescriptor) error {
-	b, err := resource.Input.Read(ctx, fs)
+func addBlob(fs vfs.FileSystem, archive *comparch.ComponentArchive, resource *ResourceDescriptor) error {
+	access, err := blob.AccessForFileOrFolder(fs, resource.Input)
 	if err != nil {
 		return err
 	}
 
-	// default media type to binary data if nothing else is defined
-	resource.Input.SetMediaTypeIfNotDefined(blob.MediaTypeOctetStream)
-
-	err = archive.AddResource(&resource.Resource, ctf.BlobInfo{
-		MediaType: resource.Input.MediaType,
-		Digest:    b.Digest,
-		Size:      b.Size,
-	}, b.Reader)
+	blobAccess, err := archive.AddBlob(
+		access, string(resource.Input.Type),
+		resource.Resource.Name, nil,
+	)
 	if err != nil {
-		b.Reader.Close()
-		return fmt.Errorf("unable to add input blob to archive: %w", err)
+		return err
 	}
-	if err := b.Reader.Close(); err != nil {
-		return fmt.Errorf("unable to close input file: %w", err)
-	}
-	return nil
+
+	return archive.SetResource(&resource.ResourceMeta, blobAccess)
 }
 
 func (rd ResourceDescriptor) String() string {
@@ -198,7 +180,9 @@ func inspectProject(def *Definition, p *kubebuilder.Project, layers []Layer, s s
 	}
 
 	// generated chart -> layer 1
-	chartPath, err := p.Build(def.Name, def.Version, def.RegistryURL) // TODO switch from charts to pure manifests when mod-mngr is ready
+	chartPath, err := p.Build(
+		def.Name, def.Version, def.RegistryURL,
+	) // TODO switch from charts to pure manifests when mod-mngr is ready
 	if err != nil {
 		return err
 	}

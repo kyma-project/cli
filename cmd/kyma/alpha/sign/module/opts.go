@@ -7,6 +7,7 @@ import (
 type Options struct {
 	*cli.Options
 
+	Name, Version     string
 	RegistryURL       string
 	NameMappingMode   string
 	PrivateKeyPath    string

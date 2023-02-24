@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/open-component-model/ocm/pkg/contexts/oci/artdesc"
 	"go.uber.org/zap"
 
 	"github.com/containerd/containerd/content"
@@ -37,7 +38,7 @@ type Client interface {
 	Fetch(ctx context.Context, ref string, desc ocispecv1.Descriptor, writer io.Writer) error
 
 	// PushManifest uploads the given manifest with all its layers to the given reference in the registry configured in the client.
-	PushManifest(ctx context.Context, ref string, manifest *ocispecv1.Manifest) error
+	PushManifest(ctx context.Context, ref string, manifest *artdesc.Manifest) error
 
 	// Cache exposes the client's cache where all intermediate manifests and data are stored.
 	Cache() Cache
@@ -115,7 +116,9 @@ func (c *client) GetRawManifest(ctx context.Context, ref string) (ocispecv1.Desc
 	}
 
 	if !isSingleArchImage(desc.MediaType) && !isMultiArchImage(desc.MediaType) {
-		return ocispecv1.Descriptor{}, nil, fmt.Errorf("media type is not an image manifest or image index: %s", desc.MediaType)
+		return ocispecv1.Descriptor{}, nil, fmt.Errorf(
+			"media type is not an image manifest or image index: %s", desc.MediaType,
+		)
 	}
 
 	data := bytes.NewBuffer([]byte{})
@@ -205,7 +208,7 @@ func (c *client) getFetchReader(ctx context.Context, ref string, desc ocispecv1.
 	return reader, err
 }
 
-func (c *client) PushManifest(ctx context.Context, ref string, manifest *ocispecv1.Manifest) error {
+func (c *client) PushManifest(ctx context.Context, ref string, manifest *artdesc.Manifest) error {
 	manifestBytes, err := json.Marshal(manifest)
 	if err != nil {
 		return fmt.Errorf("unable to marshal manifest: %w", err)

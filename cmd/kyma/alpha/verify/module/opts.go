@@ -7,6 +7,17 @@ import (
 // Options defines available options for the version command
 type Options struct {
 	*cli.Options
+
+	Name, Version     string
+	RegistryURL       string
+	NameMappingMode   string
+	PublicKeyPath     string
+	SignatureName     string
+	Credentials       string
+	Token             string
+	Insecure          bool
+	ModPath           string
+	SignedRegistryURL string
 }
 
 // NewOptions creates options with default values

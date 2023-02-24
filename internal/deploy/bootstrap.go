@@ -1,13 +1,9 @@
 package deploy
 
 import (
-	"bytes"
 	"context"
-	"fmt"
 	"regexp"
-	"time"
 
-	"github.com/avast/retry-go"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -18,8 +14,6 @@ import (
 )
 
 const (
-	defaultRetries            = 3
-	defaultInitialBackoff     = 3 * time.Second
 	wildCardRoleAndAssignment = `apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -60,7 +54,7 @@ func Bootstrap(
 	}
 
 	// build manifests
-	manifests, err := build(defs, filters)
+	manifests, err := kustomize.BuildMany(defs, filters)
 	if err != nil {
 		return false, err
 	}
@@ -69,27 +63,11 @@ func Bootstrap(
 		manifests = append(manifests, []byte(wildCardRoleAndAssignment)...)
 	}
 
-	// apply manifests with incremental retry
-	if dryRun {
-		fmt.Println(string(manifests))
-	} else {
-		objs, err := k8s.ParseManifest(manifests)
-		if err != nil {
-			return false, err
-		}
-
-		if err := retry.Do(
-			func() error {
-				return k8s.Apply(context.Background(), force, objs...)
-			}, retry.Attempts(defaultRetries), retry.Delay(defaultInitialBackoff), retry.DelayType(retry.BackOffDelay),
-			retry.LastErrorOnly(false), retry.Context(ctx),
-		); err != nil {
-			return false, err
-		}
-
-		if err := checkDeploymentReadiness(objs, k8s); err != nil {
-			return false, err
-		}
+	if err := applyManifests(
+		ctx, k8s, manifests, applyOpts{
+			dryRun, force, defaultRetries, defaultInitialBackoff},
+	); err != nil {
+		return false, err
 	}
 
 	return hasKyma(string(manifests))
@@ -107,20 +85,6 @@ func checkDeploymentReadiness(objs []ctrlClient.Object, k8s kube.KymaKube) error
 		}
 	}
 	return nil
-}
-
-func build(kustomizations []kustomize.Definition, filters []kio.Filter) ([]byte, error) {
-	ms := bytes.Buffer{}
-	for _, k := range kustomizations {
-		manifest, err := kustomize.Build(k, kustomize.NoOutputFile, filters...)
-		if err != nil {
-			return nil, fmt.Errorf("could not build manifest for %s: %w", k.Name, err)
-		}
-		ms.Write(manifest)
-		ms.WriteString("\n---\n")
-	}
-
-	return ms.Bytes(), nil
 }
 
 // hasKyma checks if the given manifest contains the Kyma CRD

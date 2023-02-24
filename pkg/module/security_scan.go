@@ -4,13 +4,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	v2 "github.com/gardener/component-spec/bindings-go/apis/v2"
-	"github.com/gardener/component-spec/bindings-go/ctf"
-	"github.com/mandelsoft/vfs/pkg/vfs"
 	"os"
 	"path"
-	"sigs.k8s.io/yaml"
 	"strings"
+
+	"github.com/open-component-model/ocm/cmds/ocm/commands/ocmcmds/common/inputs/types/ociimage"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/accessmethods/ociartifact"
+	ocm "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
+	ocmv1 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/meta/v1"
+	"sigs.k8s.io/yaml"
 )
 
 var ErrFailedToParseImageURL = errors.New("error parsing protecode image URL")
@@ -25,9 +27,7 @@ const (
 var labelTemplate = "%s." + secScanLabelKey
 var globalLabelTemplate = "%s." + secLabelKey
 
-func AddSecurityScanningMetadata(descriptor *v2.ComponentDescriptor, modDef *Definition, fs vfs.FileSystem,
-	securityConfigPath string,
-) error {
+func AddSecurityScanningMetadata(descriptor *ocm.ComponentDescriptor, securityConfigPath string) error {
 	//parse security config file
 	config, err := parseSecurityScanConfig(securityConfigPath)
 	if err != nil {
@@ -64,11 +64,10 @@ func AddSecurityScanningMetadata(descriptor *v2.ComponentDescriptor, modDef *Def
 		return err
 	}
 
-	return WriteComponentDescriptor(fs, descriptor, modDef.ArchivePath,
-		ctf.ComponentDescriptorFileName)
+	return nil
 }
 
-func appendProtecodeImagesLayers(descriptor *v2.ComponentDescriptor, config *SecurityScanCfg) error {
+func appendProtecodeImagesLayers(descriptor *ocm.ComponentDescriptor, config *SecurityScanCfg) error {
 	for _, imageURL := range config.Protecode {
 		imageName, err := getImageName(imageURL)
 		if err != nil {
@@ -79,37 +78,34 @@ func appendProtecodeImagesLayers(descriptor *v2.ComponentDescriptor, config *Sec
 		if err != nil {
 			return err
 		}
-		imageLayerMetadata := v2.IdentityObjectMeta{
-			Name:    imageName,
-			Type:    v2.OCIImageType,
-			Version: descriptor.Version,
-			Labels:  []v2.Label{imageTypeLabel},
-		}
-		imageLayerAccess, err := v2.NewUnstructured(v2.NewOCIRegistryAccess(imageURL))
-		if err != nil {
-			return err
-		}
-		protecodeImageLayerResource := v2.Resource{
-			IdentityObjectMeta: imageLayerMetadata,
-			Relation:           v2.ExternalRelation,
-			Access:             &imageLayerAccess,
+
+		protecodeImageLayerResource := ocm.Resource{
+			ResourceMeta: ocm.ResourceMeta{
+				ElementMeta: ocm.ElementMeta{
+					Name:   imageName,
+					Labels: []ocmv1.Label{*imageTypeLabel},
+				},
+				Type:     ociimage.TYPE,
+				Relation: ocmv1.ExternalRelation,
+			},
+			Access: ociartifact.New(imageURL),
 		}
 		descriptor.Resources = append(descriptor.Resources, protecodeImageLayerResource)
 	}
 	return nil
 }
 
-func generateOCMLabel(prefix, value, tpl string) (v2.Label, error) {
-	labelValue, err := json.Marshal(map[string]string{
-		prefix: value,
-	})
+func generateOCMLabel(prefix, value, tpl string) (*ocmv1.Label, error) {
+	labelValue, err := json.Marshal(
+		map[string]string{
+			prefix: value,
+		},
+	)
 	if err != nil {
-		return v2.Label{}, err
+		return &ocmv1.Label{}, err
 	}
-	return v2.Label{
-		Name:  fmt.Sprintf(tpl, prefix),
-		Value: labelValue,
-	}, nil
+
+	return ocmv1.NewLabel(fmt.Sprintf(tpl, prefix), labelValue)
 }
 
 func getImageName(imageURL string) (string, error) {
@@ -150,13 +146,13 @@ func parseSecurityScanConfig(securityConfigPath string) (*SecurityScanCfg, error
 	return secCfg, nil
 }
 
-func appendLabelToAccessor(labeled v2.LabelsAccessor, prefix, value, tpl string) error {
+func appendLabelToAccessor(labeled ocm.LabelsAccessor, prefix, value, tpl string) error {
 	labels := labeled.GetLabels()
 	labelValue, err := generateOCMLabel(prefix, value, tpl)
 	if err != nil {
 		return err
 	}
-	labels = append(labels, labelValue)
+	labels = append(labels, *labelValue)
 	labeled.SetLabels(labels)
 	return nil
 }

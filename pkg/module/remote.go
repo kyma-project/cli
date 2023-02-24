@@ -1,22 +1,22 @@
 package module
 
 import (
-	"context"
+	"fmt"
 	"strings"
 
-	cdv2 "github.com/gardener/component-spec/bindings-go/apis/v2"
-	"github.com/gardener/component-spec/bindings-go/ctf"
-	cdoci "github.com/gardener/component-spec/bindings-go/oci"
-	"github.com/kyma-project/cli/pkg/module/oci"
-	"github.com/pkg/errors"
-	"go.uber.org/zap"
+	"github.com/open-component-model/ocm/pkg/contexts/credentials"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/cpi"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/comparch"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/ocireg"
+	componentTransfer "github.com/open-component-model/ocm/pkg/contexts/ocm/transfer"
 )
 
-type NameMapping cdv2.ComponentNameMapping
+type NameMapping ocireg.ComponentNameMapping
 
 const (
-	URLPathNameMapping = NameMapping(cdv2.OCIRegistryURLPathMapping)
-	DigestNameMapping  = NameMapping(cdv2.OCIRegistryDigestMapping)
+	URLPathNameMapping = NameMapping(ocireg.OCIRegistryURLPathMapping)
+	DigestNameMapping  = NameMapping(ocireg.OCIRegistryDigestMapping)
 )
 
 // Remote represents remote OCI registry and the means to access it
@@ -30,54 +30,39 @@ type Remote struct {
 
 // Push picks up the archive described in the config and pushes it to the provided registry.
 // The credentials and token are optional parameters
-func Push(archive *ctf.ComponentArchive, r *Remote, log *zap.SugaredLogger) error {
+func Push(archive *comparch.ComponentArchive, r *Remote) (ocm.ComponentVersionAccess, error) {
 
-	u, p := r.UserPass()
-	ociClient, err := oci.NewClient(&oci.Options{
-		Registry: r.Registry,
-		User:     u,
-		Secret:   p,
-		Insecure: r.Insecure,
-	}, log)
-
-	if err != nil {
-		return errors.Wrap(err, "unable to create an OCI client")
-	}
-	ctx := context.Background()
-
-	// update repository context
-	if len(r.Registry) != 0 {
-		if rc := archive.ComponentDescriptor.GetEffectiveRepositoryContext(); rc != nil {
-			//This code executes, for example, during push of the existing module (repo 1) to another repository (repo 2). A valid scenario for the CLI "sign module" cmd.
-			var repo cdv2.OCIRegistryRepository
-			if err = rc.DecodeInto(&repo); err != nil {
-				return errors.Wrap(err, "unable to decode component descriptor")
-			}
-
-			//Inject only if the repo is different
-			if repo.BaseURL != r.Registry || repo.ComponentNameMapping != cdv2.ComponentNameMapping(r.NameMapping) {
-				if err := cdv2.InjectRepositoryContext(archive.ComponentDescriptor, cdv2.NewOCIRegistryRepository(r.Registry, cdv2.ComponentNameMapping(r.NameMapping))); err != nil {
-					return errors.Wrap(err, "unable to add repository context to component descriptor")
-				}
-			}
+	var creds credentials.Credentials
+	if !r.Insecure {
+		u, p := r.UserPass()
+		creds = credentials.DirectCredentials{
+			"username": u,
+			"password": p,
 		}
 	}
 
-	manifest, err := cdoci.NewManifestBuilder(ociClient.Cache(), archive).Build(ctx)
+	repo, err := cpi.DefaultContext().RepositoryForSpec(
+		ocireg.NewRepositorySpec(
+			r.Registry, &ocireg.ComponentRepositoryMeta{
+				ComponentNameMapping: ocireg.ComponentNameMapping(r.NameMapping),
+			},
+		), creds,
+	)
 	if err != nil {
-		return errors.Wrap(err, "unable to build OCI artifact for component archive")
+		return nil, fmt.Errorf("error creating repository from spec: %w", err)
 	}
 
-	ref, err := oci.Ref(archive.ComponentDescriptor.GetEffectiveRepositoryContext(), archive.ComponentDescriptor.Name, archive.ComponentDescriptor.Version)
-	if err != nil {
-		return errors.Wrap(err, "invalid component reference")
-	}
-	if err := ociClient.PushManifest(ctx, ref, manifest); err != nil {
-		return err
-	}
-	log.Debugf("Successfully uploaded manifest at %q", ref)
+	err = componentTransfer.TransferVersion(
+		nil, nil, archive.ComponentVersionAccess, repo, nil,
+	)
 
-	return nil
+	if err != nil {
+		return nil, fmt.Errorf("could not finish component transfer: %w", err)
+	}
+
+	return repo.LookupComponentVersion(
+		archive.ComponentVersionAccess.GetName(), archive.ComponentVersionAccess.GetVersion(),
+	)
 }
 
 // UserPass splits the credentials string into user and password.

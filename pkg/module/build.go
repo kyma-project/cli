@@ -6,23 +6,23 @@ import (
 	"os"
 	"path/filepath"
 
-	cdv2 "github.com/gardener/component-spec/bindings-go/apis/v2"
-	cdvalidation "github.com/gardener/component-spec/bindings-go/apis/v2/validation"
-	"github.com/gardener/component-spec/bindings-go/codec"
-	"github.com/gardener/component-spec/bindings-go/ctf"
 	"github.com/kyma-project/cli/pkg/module/git"
 	"github.com/mandelsoft/vfs/pkg/projectionfs"
 	"github.com/mandelsoft/vfs/pkg/vfs"
-	"sigs.k8s.io/yaml"
+	"github.com/open-component-model/ocm/pkg/common/accessobj"
+	ocm "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
+	v1 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/meta/v1"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/cpi"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/comparch"
 )
 
 // Build creates a component archive with the given configuration
-func Build(fs vfs.FileSystem, def *Definition) (*ctf.ComponentArchive, error) {
+func Build(fs vfs.FileSystem, def *Definition) (*comparch.ComponentArchive, error) {
 	if err := def.validate(); err != nil {
 		return nil, err
 	}
 
-	compDescFilePath := filepath.Join(def.ArchivePath, ctf.ComponentDescriptorFileName)
+	compDescFilePath := filepath.Join(def.ArchivePath, comparch.ComponentDescriptorFileName)
 	if !def.Overwrite {
 		_, err := fs.Stat(compDescFilePath)
 		if err != nil && !os.IsNotExist(err) {
@@ -35,23 +35,29 @@ func Build(fs vfs.FileSystem, def *Definition) (*ctf.ComponentArchive, error) {
 	}
 
 	//Overwrite == true OR (Overwrite == false AND the component descriptor does not exist)
-	return buildFull(fs, def, compDescFilePath)
+	return buildFull(fs, def)
 }
 
 // buildWithoutOverwriting builds over an existing descriptor without overwriting
-func buildWithoutOverwriting(fs vfs.FileSystem, def *Definition) (*ctf.ComponentArchive, error) {
-	// add the input to the ctf format
+func buildWithoutOverwriting(fs vfs.FileSystem, def *Definition) (*comparch.ComponentArchive, error) {
+	// add the input to the comparch format
 	archiveFs, err := projectionfs.New(fs, def.ArchivePath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create projectionfilesystem: %w", err)
 	}
 
-	archive, err := ctf.NewComponentArchiveFromFilesystem(archiveFs, codec.DisableValidation(true))
+	archive, err := comparch.New(
+		cpi.DefaultContext(),
+		accessobj.ACC_WRITABLE, archiveFs,
+		nil,
+		nil,
+		vfs.ModePerm,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse component archive from %s: %w", def.ArchivePath, err)
 	}
 
-	cd := archive.ComponentDescriptor
+	cd := archive.GetDescriptor()
 
 	if err := addSources(cd, def); err != nil {
 		return nil, err
@@ -71,14 +77,16 @@ func buildWithoutOverwriting(fs vfs.FileSystem, def *Definition) (*ctf.Component
 		cd.Version = def.Version
 	}
 
-	if err = cdvalidation.Validate(cd); err != nil {
+	ocm.DefaultResources(cd)
+
+	if err = ocm.Validate(cd); err != nil {
 		return nil, fmt.Errorf("invalid component descriptor: %w", err)
 	}
 
 	return archive, nil
 }
 
-func buildFull(fs vfs.FileSystem, def *Definition, compDescFilePath string) (*ctf.ComponentArchive, error) {
+func buildFull(fs vfs.FileSystem, def *Definition) (*comparch.ComponentArchive, error) {
 	// build minimal archive
 
 	if err := fs.MkdirAll(def.ArchivePath, os.ModePerm); err != nil {
@@ -89,48 +97,49 @@ func buildFull(fs vfs.FileSystem, def *Definition, compDescFilePath string) (*ct
 		return nil, fmt.Errorf("unable to create projectionfilesystem: %w", err)
 	}
 
-	cd := &cdv2.ComponentDescriptor{}
+	archive, err := comparch.New(
+		cpi.DefaultContext(),
+		accessobj.ACC_CREATE, archiveFs,
+		nil,
+		nil,
+		vfs.ModePerm,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("unable to build archive for minimal descriptor: %w", err)
+	}
+
+	cd := archive.GetDescriptor()
 	if err := addSources(cd, def); err != nil {
 		return nil, err
 	}
-	cd.Metadata.Version = cdv2.SchemaVersion
-	cd.ComponentSpec.Name = def.Name
-	cd.ComponentSpec.Version = def.Version
-	cd.Provider = cdv2.InternalProvider
-	cd.RepositoryContexts = make([]*cdv2.UnstructuredTypedObject, 0)
-	if len(def.RegistryURL) != 0 {
-		repoCtx, err := cdv2.NewUnstructured(cdv2.NewOCIRegistryRepository(def.RegistryURL, cdv2.ComponentNameMapping(def.NameMappingMode)))
-		if err != nil {
-			return nil, fmt.Errorf("unable to create repository context: %w", err)
-		}
-		cd.RepositoryContexts = []*cdv2.UnstructuredTypedObject{&repoCtx}
+	cd.ComponentSpec.SetName(def.Name)
+	cd.ComponentSpec.SetVersion(def.Version)
+	builtByCLI, err := v1.NewLabel("kyma-project.io/built-by", "cli", v1.WithVersion("v1"))
+	if err != nil {
+		return nil, err
 	}
-	if err := cdv2.DefaultComponent(cd); err != nil {
-		return nil, fmt.Errorf("unable to default component descriptor: %w", err)
-	}
+	cd.Provider = v1.Provider{Name: "kyma-project.io", Labels: v1.Labels{*builtByCLI}}
 
-	if err := cdvalidation.Validate(cd); err != nil {
+	ocm.DefaultResources(cd)
+
+	if err := ocm.Validate(cd); err != nil {
 		return nil, fmt.Errorf("unable to validate component descriptor: %w", err)
 	}
 
-	data, err := yaml.Marshal(cd)
-	if err != nil {
-		return nil, fmt.Errorf("unable to marshal component descriptor: %w", err)
-	}
-	if err := vfs.WriteFile(fs, compDescFilePath, data, os.ModePerm); err != nil {
-		return nil, fmt.Errorf("unable to write component descriptor to %s: %w", compDescFilePath, err)
-	}
-
-	return ctf.NewComponentArchive(cd, archiveFs), nil
+	return archive, nil
 }
 
-func addSources(cd *cdv2.ComponentDescriptor, def *Definition) error {
+func addSources(cd *ocm.ComponentDescriptor, def *Definition) error {
 	src, err := git.Source(def.Source, def.Repo, def.Version)
 	if err != nil {
 		return err
 	}
-	if src != nil {
+
+	if idx := cd.GetSourceIndex(&src.SourceMeta); idx < 0 {
 		cd.Sources = append(cd.Sources, *src)
+	} else {
+		cd.Sources[idx] = *src
 	}
+
 	return nil
 }

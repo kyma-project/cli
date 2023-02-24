@@ -5,7 +5,9 @@ import (
 	"log"
 
 	"github.com/go-logr/zapr"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"k8s.io/klog/v2"
 )
 
@@ -17,7 +19,9 @@ func NewLogger(printLogs bool) *zap.Logger {
 			log.Fatalf("Can't initialize zap logger: %v", err)
 		}
 
-		klog.SetLogger(zapr.NewLoggerWithOptions(logger))
+		logr := zapr.NewLoggerWithOptions(logger)
+		klog.SetLogger(logr)
+		ocm.DefaultContext().LoggingContext().SetBaseLogger(logr)
 		return logger
 	}
 	return zap.NewNop()
@@ -25,6 +29,7 @@ func NewLogger(printLogs bool) *zap.Logger {
 
 func createVerboseLogger() (*zap.Logger, error) {
 	config := zap.NewDevelopmentConfig()
+	config.Level = zap.NewAtomicLevelAt(zapcore.Level(-3))
 	config.DisableStacktrace = true
 	return config.Build()
 }

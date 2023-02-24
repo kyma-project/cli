@@ -2,6 +2,7 @@ package module
 
 import (
 	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/pkg/module"
 	"github.com/spf13/cobra"
 )
 
@@ -31,9 +32,74 @@ Kyma modules can be cryptographically signed to make sure they are correct and d
 		RunE: func(_ *cobra.Command, args []string) error { return c.Run(args) },
 	}
 
+	cmd.Flags().StringVar(
+		&o.Name, "name", "", "Name of the module",
+	)
+	cmd.Flags().StringVar(
+		&o.Version, "version", "", "Version of the module",
+	)
+	cmd.Flags().StringVar(
+		&o.PublicKeyPath, "key", "", "Specifies the path where the private key used for signing",
+	)
+	cmd.Flags().StringVar(
+		&o.ModPath, "mod-path", "./mod", "Specifies the path where the signed component descriptor will be stored",
+	)
+	cmd.Flags().StringVar(&o.SignatureName, "signature-name", "", "name of the signature for signing")
+	cmd.Flags().StringVar(
+		&o.RegistryURL, "registry", "", "Repository context url where unsigned component descriptor located",
+	)
+	cmd.Flags().StringVar(
+		&o.NameMappingMode, "nameMapping", "urlPath",
+		"Overrides the OCM Component Name Mapping, one of: \"urlPath\" or \"sha256-digest\"",
+	)
+	cmd.Flags().StringVar(
+		&o.SignedRegistryURL, "signed-registry", "", "Repository context url where signed component descriptor located",
+	)
+	cmd.Flags().StringVarP(
+		&o.Credentials, "credentials", "c", "",
+		"Basic authentication credentials for the given registry in the format user:password",
+	)
+	cmd.Flags().StringVarP(
+		&o.Token, "token", "t", "",
+		"Authentication token for the given registry (alternative to basic authentication).",
+	)
+	cmd.Flags().BoolVar(&o.Insecure, "insecure", false, "Use an insecure connection to access the registry.")
+
 	return cmd
 }
 
-func (c *command) Run(args []string) error {
+func (c *command) Run(_ []string) error {
+	if !c.opts.NonInteractive {
+		cli.AlphaWarn()
+	}
+
+	signCfg := &module.ComponentSignConfig{
+		Name:          c.opts.Name,
+		Version:       c.opts.Version,
+		KeyPath:       c.opts.PublicKeyPath,
+		SignatureName: c.opts.SignatureName,
+	}
+
+	c.NewStep("Fetching and signing component descriptor...")
+	nameMappingMode, err := module.ParseNameMapping(c.opts.NameMappingMode)
+	if err != nil {
+		c.CurrentStep.Failure()
+		return err
+	}
+
+	remote := &module.Remote{
+		Registry:    c.opts.RegistryURL,
+		NameMapping: nameMappingMode,
+		Credentials: c.opts.Credentials,
+		Token:       c.opts.Token,
+		Insecure:    c.opts.Insecure,
+	}
+
+	if err := module.Verify(signCfg, remote); err != nil {
+		c.CurrentStep.Failure()
+		return err
+	}
+	c.CurrentStep.Success()
+
 	return nil
 }
