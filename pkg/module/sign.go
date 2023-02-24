@@ -39,21 +39,24 @@ func Sign(cfg *ComponentSignConfig, remote *Remote) error {
 	signReg := signing.DefaultRegistry()
 	issuer := "kyma-project.ío/cli"
 
-	key, err := RSAKey(cfg.KeyPath)
+	key, err := privateKey(cfg.KeyPath)
 	if err != nil {
 		return err
 	}
 
 	signReg.RegisterPrivateKey(cfg.SignatureName, key)
 
-	return compdesc.Sign(
+	if err := compdesc.Sign(
 		ocm.DefaultContext().CredentialsContext(),
 		cva.GetDescriptor(),
 		key,
 		signReg.GetSigner(rsa.Algorithm),
 		signReg.GetHasher(sha512.Algorithm),
 		cfg.SignatureName, issuer,
-	)
+	); err != nil {
+		return err
+	}
+	return cva.Close()
 }
 
 func Verify(cfg *ComponentSignConfig, remote *Remote) error {
@@ -73,7 +76,7 @@ func Verify(cfg *ComponentSignConfig, remote *Remote) error {
 
 	signReg := signing.DefaultRegistry()
 
-	key, err := RSAKey(cfg.KeyPath)
+	key, err := publicKey(cfg.KeyPath)
 	if err != nil {
 		return err
 	}
@@ -103,7 +106,7 @@ func (cfg *ComponentSignConfig) validate() error {
 	return nil
 }
 
-func RSAKey(pathToPrivateKey string) (interface{}, error) {
+func privateKey(pathToPrivateKey string) (interface{}, error) {
 	privKeyFile, err := os.ReadFile(pathToPrivateKey)
 	if err != nil {
 		return nil, fmt.Errorf("unable to open private key file: %w", err)
@@ -113,14 +116,26 @@ func RSAKey(pathToPrivateKey string) (interface{}, error) {
 	if block == nil {
 		return nil, fmt.Errorf("unable to decode pem formatted block in key: %w", err)
 	}
-	untypedPrivateKey, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse private key: %w", err)
 	}
+	return key, nil
+}
 
-	key, ok := untypedPrivateKey.(*rsa.PrivateKey)
-	if !ok {
-		return nil, fmt.Errorf("parsed private key is not of type *rsa.PrivateKey: %T", untypedPrivateKey)
+func publicKey(pathToPublicKey string) (interface{}, error) {
+	publicKeyFile, err := os.ReadFile(pathToPublicKey)
+	if err != nil {
+		return nil, fmt.Errorf("unable to open private key file: %w", err)
+	}
+
+	block, _ := pem.Decode(publicKeyFile)
+	if block == nil {
+		return nil, fmt.Errorf("unable to decode pem formatted block in key: %w", err)
+	}
+	key, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse private key: %w", err)
 	}
 	return key, nil
 }

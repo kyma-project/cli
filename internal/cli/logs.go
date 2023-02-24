@@ -13,18 +13,22 @@ import (
 
 // NewLogger returns the logger used for CLI log output (used in Hydroform deployments)
 func NewLogger(printLogs bool) *zap.Logger {
+	var logger *zap.Logger
 	if printLogs {
-		logger, err := createVerboseLogger()
-		if err != nil {
+		var err error
+
+		if logger, err = createVerboseLogger(); err != nil {
 			log.Fatalf("Can't initialize zap logger: %v", err)
 		}
 
-		logr := zapr.NewLoggerWithOptions(logger)
-		klog.SetLogger(logr)
-		ocm.DefaultContext().LoggingContext().SetBaseLogger(logr)
-		return logger
+	} else {
+		logger = zap.NewNop()
 	}
-	return zap.NewNop()
+	logr := zapr.NewLoggerWithOptions(logger)
+	klog.SetLogger(logr)
+	ocm.DefaultContext().LoggingContext().SetBaseLogger(logr)
+
+	return logger
 }
 
 func createVerboseLogger() (*zap.Logger, error) {

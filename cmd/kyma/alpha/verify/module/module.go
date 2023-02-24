@@ -41,7 +41,9 @@ Kyma modules can be cryptographically signed to make sure they are correct and d
 	cmd.Flags().StringVar(
 		&o.PublicKeyPath, "key", "", "Specifies the path where the private key used for signing",
 	)
-	cmd.Flags().StringVar(&o.SignatureName, "signature-name", "", "name of the signature for signing")
+	cmd.Flags().StringVar(
+		&o.SignatureName, "signature-name", "kyma-project.io/module-signature", "name of the signature for signing",
+	)
 	cmd.Flags().StringVar(
 		&o.RegistryURL, "registry", "", "Repository context url where unsigned component descriptor located",
 	)
@@ -74,10 +76,9 @@ func (c *command) Run(_ []string) error {
 		SignatureName: c.opts.SignatureName,
 	}
 
-	c.NewStep("Fetching and signing component descriptor...")
+	c.NewStep("Fetching and verifying component descriptor...")
 	nameMappingMode, err := module.ParseNameMapping(c.opts.NameMappingMode)
 	if err != nil {
-		c.CurrentStep.Failure()
 		return err
 	}
 
@@ -90,10 +91,10 @@ func (c *command) Run(_ []string) error {
 	}
 
 	if err := module.Verify(signCfg, remote); err != nil {
-		c.CurrentStep.Failure()
+		c.CurrentStep.Failuref("Invalid!")
 		return err
 	}
-	c.CurrentStep.Success()
+	c.CurrentStep.Successf("Valid!")
 
 	return nil
 }
