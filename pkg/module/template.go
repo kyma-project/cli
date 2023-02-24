@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	modTemplate = `apiVersion: operator.kyma-project.io/v1alpha1
+	modTemplate = `apiVersion: operator.kyma-project.io/v1beta1
 kind: ModuleTemplate
 metadata:
   name: moduletemplate-{{ .ShortName }}

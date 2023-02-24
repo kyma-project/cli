@@ -6,11 +6,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/open-component-model/ocm/pkg/contexts/credentials"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
-	"github.com/open-component-model/ocm/pkg/contexts/ocm/cpi"
-	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/ocireg"
 	"github.com/open-component-model/ocm/pkg/signing"
 	"github.com/open-component-model/ocm/pkg/signing/handlers/rsa"
 	"github.com/open-component-model/ocm/pkg/signing/hasher/sha512"
@@ -29,21 +26,7 @@ func Sign(cfg *ComponentSignConfig, remote *Remote) error {
 		return err
 	}
 
-	var creds credentials.Credentials
-	if !remote.Insecure {
-		u, p := remote.UserPass()
-		creds = credentials.DirectCredentials{
-			"username": u,
-			"password": p,
-		}
-	}
-	repo, err := cpi.DefaultContext().RepositoryForSpec(
-		ocireg.NewRepositorySpec(
-			remote.Registry, &ocireg.ComponentRepositoryMeta{
-				ComponentNameMapping: ocireg.ComponentNameMapping(remote.NameMapping),
-			},
-		), creds,
-	)
+	repo, err := remote.GetRepository()
 	if err != nil {
 		return err
 	}
@@ -78,21 +61,7 @@ func Verify(cfg *ComponentSignConfig, remote *Remote) error {
 		return err
 	}
 
-	var creds credentials.Credentials
-	if !remote.Insecure {
-		u, p := remote.UserPass()
-		creds = credentials.DirectCredentials{
-			"username": u,
-			"password": p,
-		}
-	}
-	repo, err := cpi.DefaultContext().RepositoryForSpec(
-		ocireg.NewRepositorySpec(
-			remote.Registry, &ocireg.ComponentRepositoryMeta{
-				ComponentNameMapping: ocireg.ComponentNameMapping(remote.NameMapping),
-			},
-		), creds,
-	)
+	repo, err := remote.GetRepository()
 	if err != nil {
 		return err
 	}

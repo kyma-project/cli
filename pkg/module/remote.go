@@ -2,6 +2,7 @@ package module
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/open-component-model/ocm/pkg/contexts/credentials"
@@ -28,10 +29,7 @@ type Remote struct {
 	Insecure    bool
 }
 
-// Push picks up the archive described in the config and pushes it to the provided registry.
-// The credentials and token are optional parameters
-func Push(archive *comparch.ComponentArchive, r *Remote) (ocm.ComponentVersionAccess, error) {
-
+func (r *Remote) GetRepository() (cpi.Repository, error) {
 	var creds credentials.Credentials
 	if !r.Insecure {
 		u, p := r.UserPass()
@@ -40,16 +38,31 @@ func Push(archive *comparch.ComponentArchive, r *Remote) (ocm.ComponentVersionAc
 			"password": p,
 		}
 	}
-
 	repo, err := cpi.DefaultContext().RepositoryForSpec(
 		ocireg.NewRepositorySpec(
-			r.Registry, &ocireg.ComponentRepositoryMeta{
+			NoSchemeURL(r.Registry), &ocireg.ComponentRepositoryMeta{
 				ComponentNameMapping: ocireg.ComponentNameMapping(r.NameMapping),
 			},
 		), creds,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("error creating repository from spec: %w", err)
+	}
+	return repo, nil
+}
+
+func NoSchemeURL(url string) string {
+	regex := regexp.MustCompile(`^https?://`)
+	return regex.ReplaceAllString(url, "")
+}
+
+// Push picks up the archive described in the config and pushes it to the provided registry.
+// The credentials and token are optional parameters
+func Push(archive *comparch.ComponentArchive, r *Remote) (ocm.ComponentVersionAccess, error) {
+
+	repo, err := r.GetRepository()
+	if err != nil {
+		return nil, err
 	}
 
 	err = componentTransfer.TransferVersion(

@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/kyma-project/cli/internal/kustomize"
@@ -145,34 +146,56 @@ func (p *Project) DefaultCR(s step.Step) ([]byte, error) {
 	}
 
 	samplesDir := filepath.Join(p.path, samplesPath)
-	d, err := os.ReadDir(samplesDir)
+	filesInDir, err := os.ReadDir(samplesDir)
 	if err != nil {
 		return nil, fmt.Errorf("could not read samples dir %q: %w", samplesDir, err)
 	}
 
-	if len(d) == 0 {
+	if len(filesInDir) == 0 {
 		return nil, fmt.Errorf("no default CR available: samples directory %q is empty", samplesDir)
 	}
 	defaultCR := ""
-	if len(d) > 1 {
+	if len(filesInDir) > 1 {
 		// ask for specific file
-		names := []string{}
-		for _, f := range d {
-			names = append(names, f.Name())
-		}
+		var promptString strings.Builder
+		promptString.WriteString(fmt.Sprintf("Please specify the file to use as default CR in %s:\n", samplesDir))
 
-		answer, err := s.Prompt(
-			fmt.Sprintf(
-				"Please specify the file to use as default CR in %s: %v\n", samplesDir, names,
-			),
-		)
-		defaultCR = filepath.Join(samplesDir, answer)
+		filesMap := map[int]string{}
+		fileIndex := 1
+		for _, file := range filesInDir {
+			if strings.HasSuffix(file.Name(), ".yaml") || strings.HasSuffix(file.Name(), ".yml") {
+				filesMap[fileIndex] = file.Name()
+				promptString.WriteString(fmt.Sprintf("[%d] %s\n", fileIndex, file.Name()))
+				fileIndex++
+			}
+		}
+		promptString.WriteString(fmt.Sprintln("Press ENTER to select the first option as default."))
+
+		answer, err := s.Prompt(promptString.String())
 		if err != nil {
 			return nil, fmt.Errorf("could not obtain default CR from user prompt: %w", err)
 		}
-	} else {
-		// use only file in folder
-		defaultCR = filepath.Join(samplesDir, d[0].Name())
+		var parsedIndex int
+		if answer == "" {
+			parsedIndex = 1 // Default to the first choice
+		} else {
+			parsedIndex, err = strconv.Atoi(answer)
+			if err != nil {
+				return nil, fmt.Errorf("could not obtain default CR from user prompt: %w", err)
+			}
+		}
+		fileName, exists := filesMap[parsedIndex]
+		if !exists {
+			err = fmt.Errorf("invalid input [%d] for CR selection", parsedIndex)
+			return nil, fmt.Errorf("could not obtain default CR from user prompt: %w", err)
+		}
+
+		defaultCR = filepath.Join(samplesDir, fileName)
+		if err != nil {
+			return nil, fmt.Errorf("could not obtain default CR from user prompt: %w", err)
+		}
+	} else { // use only file in folder
+		defaultCR = filepath.Join(samplesDir, filesInDir[0].Name())
 	}
 
 	return os.ReadFile(defaultCR)
