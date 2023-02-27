@@ -41,8 +41,8 @@ require (
 	k8s.io/apimachinery v0.26.1
 	k8s.io/cli-runtime v0.26.1
 	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible
-	k8s.io/utils v0.0.0-20221107191617-1a15be271d1d
-	sigs.k8s.io/controller-runtime v0.13.1
+	k8s.io/utils v0.0.0-20221128185143-99ec85e7a448
+	sigs.k8s.io/controller-runtime v0.14.4
 	sigs.k8s.io/yaml v1.3.0
 )
 
@@ -209,7 +209,7 @@ require (
 	golang.org/x/sys v0.5.0 // indirect
 	golang.org/x/term v0.5.0 // indirect
 	golang.org/x/text v0.7.0 // indirect
-	golang.org/x/time v0.2.0 // indirect
+	golang.org/x/time v0.3.0 // indirect
 	google.golang.org/api v0.102.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20221027153422-115e99e71e1c // indirect
