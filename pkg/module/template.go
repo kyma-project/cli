@@ -26,7 +26,7 @@ metadata:
     "operator.kyma-project.io/controller-name": "manifest"
     "operator.kyma-project.io/module-name": "{{ .ShortName }}"
 spec:
-  target: remote
+  target: {{.Target}}
   channel: {{.Channel}}
   data:
 {{.Data | indent 4}}
@@ -39,7 +39,7 @@ spec:
 )
 
 func Template(
-	remote ocm.ComponentVersionAccess, channel string, data []byte, registryCredSelector string,
+	remote ocm.ComponentVersionAccess, channel, target string, data []byte, registryCredSelector string,
 ) ([]byte, error) {
 	descriptor := remote.GetDescriptor()
 	if registryCredSelector != "" {
@@ -75,11 +75,13 @@ func Template(
 		ShortName  string                              // Last part of the component descriptor name
 		Descriptor compdesc.ComponentDescriptorVersion // descriptor info for the template
 		Channel    string
+		Target     string
 		Data       string // contents for the spec.data section of the template taken from the defaults.yaml file in the mod folder
 	}{
 		ShortName:  ref.ShortName(),
 		Descriptor: cva,
 		Channel:    channel,
+		Target:     target,
 		Data:       string(data),
 	}
 

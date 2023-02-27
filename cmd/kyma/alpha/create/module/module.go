@@ -100,6 +100,7 @@ Build module my-domain/modB in version 3.2.1 and push it to a local registry "un
 		"File to which to output the module template if the module is uploaded to a registry",
 	)
 	cmd.Flags().StringVar(&o.Channel, "channel", "regular", "Channel to use for the module template.")
+	cmd.Flags().StringVar(&o.Target, "target", "control-plane", "Target to use when determining where to install the module. Can be 'control-plane' or 'remote'.")
 	cmd.Flags().StringVar(
 		&o.SchemaVersion, "descriptor-version", compdescv2.SchemaVersion, fmt.Sprintf(
 			"Schema version to use for the generated OCM descriptor. One of %s",
@@ -117,7 +118,7 @@ Build module my-domain/modB in version 3.2.1 and push it to a local registry "un
 	)
 	cmd.Flags().BoolVar(&o.Clean, "clean", false, "Remove the mod-path folder and all its contents at the end.")
 	cmd.Flags().StringVar(
-		&o.SecurityScanConfig, "sec-scan-cfg", "", "Path to the file holding "+
+		&o.SecurityScanConfig, "sec-scanners-config", "sec-scanners-config.yaml", "Path to the file holding "+
 			"the security scan configuration.",
 	)
 
@@ -157,6 +158,10 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 	}
 
 	if err := cmd.opts.ValidateChannel(); err != nil {
+		return err
+	}
+
+	if err := cmd.opts.ValidateTarget(); err != nil {
 		return err
 	}
 
@@ -214,12 +219,16 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 
 	if cmd.opts.SecurityScanConfig != "" {
 		cmd.NewStep("Configuring security scanning...")
-		err = module.AddSecurityScanningMetadata(archive.GetDescriptor(), cmd.opts.SecurityScanConfig)
-		if err != nil {
-			cmd.CurrentStep.Failure()
-			return err
+		if _, err := osFS.Stat(cmd.opts.SecurityScanConfig); err == nil {
+			err = module.AddSecurityScanningMetadata(archive.GetDescriptor(), cmd.opts.SecurityScanConfig)
+			if err != nil {
+				cmd.CurrentStep.Failure()
+				return err
+			}
+			cmd.CurrentStep.Successf("Security scanning configured")
+		} else {
+			cmd.CurrentStep.Failuref("Security scanning configuration was skipped: %s", err.Error())
 		}
-		cmd.CurrentStep.Successf("Security scanning configured")
 	}
 	/* -- PUSH & TEMPLATE -- */
 
@@ -240,7 +249,7 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 		cmd.CurrentStep.Successf("module successfully pushed to %q", cmd.opts.RegistryURL)
 
 		cmd.NewStep("Generating module template")
-		t, err := module.Template(remote, cmd.opts.Channel, modDef.DefaultCR, cmd.opts.RegistryCredSelector)
+		t, err := module.Template(remote, cmd.opts.Channel, cmd.opts.Target, modDef.DefaultCR, cmd.opts.RegistryCredSelector)
 		if err != nil {
 			cmd.CurrentStep.Failure()
 			return err

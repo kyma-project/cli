@@ -27,6 +27,7 @@ type Options struct {
 	TemplateOutput       string
 	DefaultCRPath        string
 	Channel              string
+	Target               string
 	SchemaVersion        string
 	Token                string
 	Insecure             bool
@@ -92,4 +93,17 @@ func (o *Options) ValidateChannel() error {
 		return fmt.Errorf("invalid channel format, only allow characters from a-z")
 	}
 	return nil
+}
+
+func (o *Options) ValidateTarget() error {
+	valid := []string{
+		"control-plane",
+		"remote",
+	}
+	for i := range valid {
+		if o.Target == valid[i] {
+			return nil
+		}
+	}
+	return fmt.Errorf("target %s is invalid, allowed: %s", o.Target, valid)
 }

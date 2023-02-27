@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path"
 	"strings"
 
 	"github.com/open-component-model/ocm/cmds/ocm/commands/ocmcmds/common/inputs/types/ociimage"
@@ -17,10 +16,9 @@ import (
 var ErrFailedToParseImageURL = errors.New("error parsing protecode image URL")
 
 const (
-	secConfigFileName = "sec-scanners-config.yaml"
-	secScanLabelKey   = "scan.security.kyma-project.io"
-	secLabelKey       = "security.kyma-project.io"
-	secScanEnabled    = "enabled"
+	secScanLabelKey = "scan.security.kyma-project.io"
+	secLabelKey     = "security.kyma-project.io"
+	secScanEnabled  = "enabled"
 )
 
 var labelTemplate = secScanLabelKey + "/%s"
@@ -127,8 +125,7 @@ type WhiteSourceSecCfg struct {
 }
 
 func parseSecurityScanConfig(securityConfigPath string) (*SecurityScanCfg, error) {
-	configFilePath := path.Join(securityConfigPath, secConfigFileName)
-	fileBytes, err := os.ReadFile(configFilePath)
+	fileBytes, err := os.ReadFile(securityConfigPath)
 	if err != nil {
 		return nil, err
 	}
