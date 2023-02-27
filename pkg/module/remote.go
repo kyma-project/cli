@@ -14,6 +14,7 @@ import (
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/genericocireg"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/ocireg"
 	componentTransfer "github.com/open-component-model/ocm/pkg/contexts/ocm/transfer"
+	ocmerrors "github.com/open-component-model/ocm/pkg/errors"
 	"github.com/open-component-model/ocm/pkg/runtime"
 )
 
@@ -75,6 +76,16 @@ func Push(archive *comparch.ComponentArchive, r *Remote) (ocm.ComponentVersionAc
 	repo, err := r.GetRepository(archive.GetContext())
 	if err != nil {
 		return nil, err
+	}
+
+	name := archive.ComponentVersionAccess.GetName()
+	version := archive.ComponentVersionAccess.GetVersion()
+	exists, err := repo.ExistsComponentVersion(name, version)
+	if exists {
+		return nil, fmt.Errorf("component version already exists: %s, version %s", name, version)
+	}
+	if err != nil && !ocmerrors.IsErrNotFound(err) {
+		return nil, fmt.Errorf("could not determine if component version already exists: %w", err)
 	}
 
 	err = componentTransfer.TransferVersion(

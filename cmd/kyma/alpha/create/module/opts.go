@@ -21,7 +21,7 @@ type Options struct {
 	NameMappingMode      string
 	Version              string
 	Path                 string
-	ModCache             string
+	ModuleArchivePath    string
 	RegistryURL          string
 	Credentials          string
 	TemplateOutput       string
@@ -33,7 +33,7 @@ type Options struct {
 	Insecure             bool
 	PersistentArchive    bool
 	ResourcePaths        []string
-	Clean                bool
+	ArchiveCleanup       bool
 	RegistryCredSelector string
 	SecurityScanConfig   string
 }
@@ -53,7 +53,7 @@ func NewOptions(o *cli.Options) *Options {
 }
 
 func (o *Options) ValidateVersion() error {
-	sv, err := semver.New(o.Version)
+	sv, err := semver.ParseTolerant(o.Version)
 	if err != nil {
 		return err
 	}

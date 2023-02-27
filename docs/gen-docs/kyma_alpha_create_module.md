@@ -46,16 +46,17 @@ Build module my-domain/modB in version 3.2.1 and push it to a local registry "un
 
 ```bash
       --channel string                  Channel to use for the module template. (default "regular")
-      --clean                           Remove the mod-path folder and all its contents at the end.
+      --clean                           Remove the archive folder and all its contents at the end if used in conjunction with persistent archiving.
   -c, --credentials string              Basic authentication credentials for the given registry in the format user:password
       --default-cr string               File containing the default custom resource of the module. If the module is a kubebuilder project, the default CR will be automatically detected.
       --descriptor-version string       Schema version to use for the generated OCM descriptor. One of ocm.software/v3alpha1,v2 (default "v2")
       --insecure                        Use an insecure connection to access the registry.
+      --module-archive-path string      Specifies the path where the module artifacts are locally cached to generate the image. If the path already has a module, use the overwrite flag to overwrite it. (default "./mod")
+      --module-archive-persistence      Use the host filesystem instead of inmemory archiving to build the module
   -n, --name string                     Override the module name of the kubebuilder project. If the module is not a kubebuilder project, this flag is mandatory.
       --nameMapping string              Overrides the OCM Component Name Mapping, one of: "urlPath" or "sha256-digest" (default "urlPath")
   -o, --output string                   File to which to output the module template if the module is uploaded to a registry (default "template.yaml")
   -p, --path string                     Path to the module contents. (default current directory)
-      --persistent-archive              Use the host filesystem instead of inmemory archiving to build the module
       --registry string                 Repository context url for module to upload. The repository url will be automatically added to the repository contexts in the module
       --registry-cred-selector string   label selector to identify a secret of type kubernetes.io/dockerconfigjson (that needs to be created externally) which allows the image to be accessed in private image registries. This can be used if you push your module to a registry with authenticated access. Example: "label1=value1,label2=value2"
   -r, --resource stringArray            Add an extra resource in a new layer with format <NAME:TYPE@PATH>. It is also possible to provide only a path; name will default to the last path element and type to 'helm-chart'

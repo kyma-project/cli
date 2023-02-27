@@ -16,7 +16,7 @@ type Definition struct {
 	Version         string      // Version of the module (mandatory)
 	RegistryURL     string      // Registry URL to push the image to (optional)
 	DefaultCRPath   string      // path to the file containing the CR to include in the module template  (optional)
-	Overwrite       bool        // If true, existing module is overwritten if the configuration differs.
+	Override        bool        // If true, existing module is overwritten if the configuration differs.
 
 	// these fields will be filled out when inspecting the module contents
 	Layers    []Layer

@@ -70,6 +70,17 @@ Build module my-domain/modB in version 3.2.1 and push it to a local registry "un
 		&o.Name, "name", "n", "",
 		"Override the module name of the kubebuilder project. If the module is not a kubebuilder project, this flag is mandatory.",
 	)
+
+	cmd.Flags().StringVar(
+		&o.ModuleArchivePath, "module-archive-path", "./mod",
+		"Specifies the path where the module artifacts are locally cached to generate the image. If the path already has a module, use the overwrite flag to overwrite it.",
+	)
+	cmd.Flags().BoolVar(
+		&o.PersistentArchive, "module-archive-persistence", false,
+		"Use the host filesystem instead of inmemory archiving to build the module",
+	)
+	cmd.Flags().BoolVar(&o.ArchiveCleanup, "module-archive-cleanup", false, "Remove the archive folder and all its contents at the end if used in conjunction with persistent archiving.")
+
 	cmd.Flags().StringVarP(&o.Path, "path", "p", "", "Path to the module contents. (default current directory)")
 	cmd.Flags().StringArrayVarP(
 		&o.ResourcePaths, "resource", "r", []string{},
@@ -112,11 +123,6 @@ Build module my-domain/modB in version 3.2.1 and push it to a local registry "un
 		"Authentication token for the given registry (alternative to basic authentication).",
 	)
 	cmd.Flags().BoolVar(&o.Insecure, "insecure", false, "Use an insecure connection to access the registry.")
-	cmd.Flags().BoolVar(
-		&o.PersistentArchive, "persistent-archive", false,
-		"Use the host filesystem instead of inmemory archiving to build the module",
-	)
-	cmd.Flags().BoolVar(&o.Clean, "clean", false, "Remove the mod-path folder and all its contents at the end.")
 	cmd.Flags().StringVar(
 		&o.SecurityScanConfig, "sec-scanners-config", "sec-scanners-config.yaml", "Path to the file holding "+
 			"the security scan configuration.",
@@ -193,20 +199,22 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 		return err
 	}
 
-	cmd.NewStep(fmt.Sprintf("Creating module archive at %q", cmd.opts.ModCache))
+	cmd.NewStep(fmt.Sprintf("Creating module archive"))
 	var archiveFS vfs.FileSystem
 	if cmd.opts.PersistentArchive {
 		archiveFS = osFS
+		l.Info("using host filesystem for archive")
 	} else {
 		archiveFS = memoryfs.New()
+		l.Info("using in-memory archive")
 	}
 	// this builds the archive in memory, Alternatively one can store it on disk or in temp folder
-	archive, err := module.Build(archiveFS, modDef)
+	archive, err := module.Build(archiveFS, cmd.opts.ModuleArchivePath, modDef)
 	if err != nil {
 		cmd.CurrentStep.Failure()
 		return err
 	}
-	cmd.CurrentStep.Success()
+	cmd.CurrentStep.Successf("Module archive created")
 
 	cmd.NewStep("Adding layers to archive...")
 
@@ -218,8 +226,8 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 	cmd.CurrentStep.Success()
 
 	if cmd.opts.SecurityScanConfig != "" {
-		cmd.NewStep("Configuring security scanning...")
 		if _, err := osFS.Stat(cmd.opts.SecurityScanConfig); err == nil {
+			cmd.NewStep("Configuring security scanning...")
 			err = module.AddSecurityScanningMetadata(archive.GetDescriptor(), cmd.opts.SecurityScanConfig)
 			if err != nil {
 				cmd.CurrentStep.Failure()
@@ -227,7 +235,7 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 			}
 			cmd.CurrentStep.Successf("Security scanning configured")
 		} else {
-			cmd.CurrentStep.Failuref("Security scanning configuration was skipped: %s", err.Error())
+			l.Warnf("Security scanning configuration was skipped: %s", err.Error())
 		}
 	}
 	/* -- PUSH & TEMPLATE -- */
@@ -246,7 +254,7 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 			cmd.CurrentStep.Failure()
 			return err
 		}
-		cmd.CurrentStep.Successf("module successfully pushed to %q", cmd.opts.RegistryURL)
+		cmd.CurrentStep.Successf("Module successfully pushed to %q", cmd.opts.RegistryURL)
 
 		cmd.NewStep("Generating module template")
 		t, err := module.Template(remote, cmd.opts.Channel, cmd.opts.Target, modDef.DefaultCR, cmd.opts.RegistryCredSelector)
@@ -259,13 +267,13 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 			cmd.CurrentStep.Failure()
 			return err
 		}
-		cmd.CurrentStep.Successf("template successfully generated at %s", cmd.opts.TemplateOutput)
+		cmd.CurrentStep.Successf("Template successfully generated at %s", cmd.opts.TemplateOutput)
 	}
 
-	if cmd.opts.Clean {
+	if cmd.opts.PersistentArchive && cmd.opts.ArchiveCleanup {
 		// TODO clean generated chart
-		cmd.NewStep(fmt.Sprintf("Cleaning up mod path %q", cmd.opts.ModCache))
-		if err := os.RemoveAll(cmd.opts.ModCache); err != nil {
+		cmd.NewStep(fmt.Sprintf("Cleaning up mod path %q", cmd.opts.ModuleArchivePath))
+		if err := os.RemoveAll(cmd.opts.ModuleArchivePath); err != nil {
 			cmd.CurrentStep.Failure()
 			return err
 		}

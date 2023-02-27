@@ -19,16 +19,14 @@ import (
 // Build creates a component archive with the given configuration.
 // An empty vfs.FileSystem causes a FileSystem to be created in
 // the temporary OS folder
-func Build(fs vfs.FileSystem, def *Definition) (*comparch.ComponentArchive, error) {
+func Build(fs vfs.FileSystem, path string, def *Definition) (*comparch.ComponentArchive, error) {
 	if err := def.validate(); err != nil {
 		return nil, err
 	}
-
-	//Overwrite == true OR (Overwrite == false AND the component descriptor does not exist)
-	return buildFull(fs, "mod", def)
+	return build(fs, path, def)
 }
 
-func buildFull(fs vfs.FileSystem, path string, def *Definition) (*comparch.ComponentArchive, error) {
+func build(fs vfs.FileSystem, path string, def *Definition) (*comparch.ComponentArchive, error) {
 	// build minimal archive
 
 	if err := fs.MkdirAll(path, os.ModePerm); err != nil {

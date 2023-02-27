@@ -181,10 +181,16 @@ func inspectProject(def *Definition, p *kubebuilder.Project, layers []Layer, s s
 	if err != nil {
 		return err
 	}
+
 	// config.yaml -> layer 2
-	configPath, err := p.Config()
-	if err != nil {
-		return err
+	if configPath, err := p.Config(); err == nil {
+		def.Layers = append(def.Layers, Layer{
+			name:         configLayerName,
+			resourceType: typeYaml,
+			path:         configPath,
+		})
+	} else if !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("error while determining config layer: %w", err)
 	}
 
 	// Add default CR if generating template
@@ -203,20 +209,13 @@ func inspectProject(def *Definition, p *kubebuilder.Project, layers []Layer, s s
 		}
 	}
 
-	charts := Layer{
+	def.Repo = p.Repo
+	def.DefaultCR = cr
+	def.Layers = append(def.Layers, Layer{
 		name:         filepath.Base(chartPath),
 		resourceType: typeHelmChart,
 		path:         chartPath,
-	}
-	config := Layer{
-		name:         configLayerName,
-		resourceType: typeYaml,
-		path:         configPath,
-	}
-
-	def.Repo = p.Repo
-	def.DefaultCR = cr
-	def.Layers = append(def.Layers, charts, config)
+	})
 	def.Layers = append(def.Layers, layers...)
 
 	return nil
