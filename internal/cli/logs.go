@@ -27,13 +27,16 @@ func NewLogger(printLogs bool) *zap.Logger {
 	logr := zapr.NewLoggerWithOptions(logger)
 	klog.SetLogger(logr)
 	ocm.DefaultContext().LoggingContext().SetBaseLogger(logr)
+	ocm.DefaultContext().LoggingContext().SetDefaultLevel(9)
+	ocm.DefaultContext().CredentialsContext().LoggingContext().SetBaseLogger(logr)
+	ocm.DefaultContext().CredentialsContext().LoggingContext().SetDefaultLevel(9)
 
 	return logger
 }
 
 func createVerboseLogger() (*zap.Logger, error) {
 	config := zap.NewDevelopmentConfig()
-	config.Level = zap.NewAtomicLevelAt(zapcore.Level(-3))
+	config.Level = zap.NewAtomicLevelAt(zapcore.Level(-9))
 	config.DisableStacktrace = true
 	return config.Build()
 }

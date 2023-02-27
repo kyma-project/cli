@@ -2,10 +2,13 @@ package module
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
 	"github.com/open-component-model/ocm/pkg/contexts/credentials"
+	"github.com/open-component-model/ocm/pkg/contexts/credentials/repositories/dockerconfig"
 	oci "github.com/open-component-model/ocm/pkg/contexts/oci/repositories/ocireg"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/attrs/compatattr"
@@ -14,7 +17,7 @@ import (
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/genericocireg"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/ocireg"
 	componentTransfer "github.com/open-component-model/ocm/pkg/contexts/ocm/transfer"
-	ocmerrors "github.com/open-component-model/ocm/pkg/errors"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/transfer/transferhandler/standard"
 	"github.com/open-component-model/ocm/pkg/runtime"
 )
 
@@ -37,10 +40,26 @@ type Remote struct {
 func (r *Remote) GetRepository(ctx cpi.Context) (cpi.Repository, error) {
 	var creds credentials.Credentials
 	if !r.Insecure {
-		u, p := r.UserPass()
-		creds = credentials.DirectCredentials{
-			"username": u,
-			"password": p,
+		if home, err := os.UserHomeDir(); err == nil {
+			path := filepath.Join(home, ".docker", "config.json")
+			if repo, err := dockerconfig.NewRepository(ctx.CredentialsContext(), path, true); err == nil {
+				// this uses the first part of the url to resolve the correct host, e.g.
+				// ghcr.io/jakobmoellersap/testmodule => ghcr.io
+				hostNameInDockerConfigJson := strings.Split(NoSchemeURL(r.Registry), "/")[0]
+				creds, err = repo.LookupCredentials(hostNameInDockerConfigJson)
+				if err != nil {
+					// this forces creds to be nil in case the host was not found in the native docker store
+					creds = nil
+				}
+			}
+		}
+		// if no creds are set, try to use username and password that are provided.
+		if creds == nil {
+			u, p := r.UserPass()
+			creds = credentials.DirectCredentials{
+				"username": u,
+				"password": p,
+			}
 		}
 	}
 	var repoType string
@@ -49,19 +68,23 @@ func (r *Remote) GetRepository(ctx cpi.Context) (cpi.Repository, error) {
 	} else {
 		repoType = oci.Type
 	}
-	repo, err := ctx.RepositoryForSpec(
-		genericocireg.NewRepositorySpec(
-			&oci.RepositorySpec{
-				ObjectVersionedType: runtime.NewVersionedObjectType(repoType),
-				BaseURL:             NoSchemeURL(r.Registry),
-			}, &ocireg.ComponentRepositoryMeta{
-				ComponentNameMapping: ocireg.ComponentNameMapping(r.NameMapping),
-			},
-		), creds,
+
+	ociRepoSpec := &oci.RepositorySpec{
+		ObjectVersionedType: runtime.NewVersionedObjectType(repoType),
+		BaseURL:             NoSchemeURL(r.Registry),
+	}
+	genericSpec := genericocireg.NewRepositorySpec(
+		ociRepoSpec, &ocireg.ComponentRepositoryMeta{
+			ComponentNameMapping: ocireg.ComponentNameMapping(r.NameMapping),
+		},
 	)
+
+	repo, err := ctx.RepositoryForSpec(genericSpec, creds)
+
 	if err != nil {
 		return nil, fmt.Errorf("error creating repository from spec: %w", err)
 	}
+
 	return repo, nil
 }
 
@@ -72,27 +95,20 @@ func NoSchemeURL(url string) string {
 
 // Push picks up the archive described in the config and pushes it to the provided registry.
 // The credentials and token are optional parameters
-func Push(archive *comparch.ComponentArchive, r *Remote) (ocm.ComponentVersionAccess, error) {
+func Push(archive *comparch.ComponentArchive, r *Remote, overwrite bool) (ocm.ComponentVersionAccess, error) {
 	repo, err := r.GetRepository(archive.GetContext())
 	if err != nil {
 		return nil, err
 	}
 
-	name := archive.ComponentVersionAccess.GetName()
-	version := archive.ComponentVersionAccess.GetVersion()
-	exists, err := repo.ExistsComponentVersion(name, version)
-	if exists {
-		return nil, fmt.Errorf("component version already exists: %s, version %s", name, version)
-	}
-	if err != nil && !ocmerrors.IsErrNotFound(err) {
-		return nil, fmt.Errorf("could not determine if component version already exists: %w", err)
-	}
-
-	err = componentTransfer.TransferVersion(
-		nil, nil, archive.ComponentVersionAccess, repo, nil,
-	)
-
+	transferHandler, err := standard.New(standard.Overwrite(overwrite))
 	if err != nil {
+		return nil, fmt.Errorf("could not setup archive transfer: %w", err)
+	}
+
+	if err = componentTransfer.TransferVersion(
+		nil, nil, archive.ComponentVersionAccess, repo, transferHandler,
+	); err != nil {
 		return nil, fmt.Errorf("could not finish component transfer: %w", err)
 	}
 

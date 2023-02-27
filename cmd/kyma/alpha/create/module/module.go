@@ -80,6 +80,7 @@ Build module my-domain/modB in version 3.2.1 and push it to a local registry "un
 		"Use the host filesystem instead of inmemory archiving to build the module",
 	)
 	cmd.Flags().BoolVar(&o.ArchiveCleanup, "module-archive-cleanup", false, "Remove the archive folder and all its contents at the end if used in conjunction with persistent archiving.")
+	cmd.Flags().BoolVar(&o.ArchiveVersionOverwrite, "module-archive-version-overwrite", false, "overwrite existing component versions of the module. If set to false, the push will be a No-Op.")
 
 	cmd.Flags().StringVarP(&o.Path, "path", "p", "", "Path to the module contents. (default current directory)")
 	cmd.Flags().StringArrayVarP(
@@ -249,7 +250,7 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 			return err
 		}
 
-		remote, err := module.Push(archive, r)
+		remote, err := module.Push(archive, r, cmd.opts.ArchiveVersionOverwrite)
 		if err != nil {
 			cmd.CurrentStep.Failure()
 			return err

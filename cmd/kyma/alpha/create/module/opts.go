@@ -17,25 +17,26 @@ import (
 type Options struct {
 	*cli.Options
 
-	Name                 string
-	NameMappingMode      string
-	Version              string
-	Path                 string
-	ModuleArchivePath    string
-	RegistryURL          string
-	Credentials          string
-	TemplateOutput       string
-	DefaultCRPath        string
-	Channel              string
-	Target               string
-	SchemaVersion        string
-	Token                string
-	Insecure             bool
-	PersistentArchive    bool
-	ResourcePaths        []string
-	ArchiveCleanup       bool
-	RegistryCredSelector string
-	SecurityScanConfig   string
+	Name                    string
+	NameMappingMode         string
+	Version                 string
+	Path                    string
+	ModuleArchivePath       string
+	RegistryURL             string
+	Credentials             string
+	TemplateOutput          string
+	DefaultCRPath           string
+	Channel                 string
+	Target                  string
+	SchemaVersion           string
+	Token                   string
+	Insecure                bool
+	PersistentArchive       bool
+	ResourcePaths           []string
+	ArchiveCleanup          bool
+	ArchiveVersionOverwrite bool
+	RegistryCredSelector    string
+	SecurityScanConfig      string
 }
 
 const (
