@@ -26,7 +26,7 @@ kyma provision gardener aws [flags]
       --hibernation-end string        Cron expression to configure when the cluster should stop hibernating
       --hibernation-location string   Timezone in which the hibernation schedule should be applied. (default "Europe/Berlin")
       --hibernation-start string      Cron expression to configure when the cluster should start hibernating (default "00 18 * * 1,2,3,4,5")
-  -k, --kube-version string           Kubernetes version of the cluster. (default "1.24")
+  -k, --kube-version string           Kubernetes version of the cluster. (default "1.25")
   -n, --name string                   Name of the cluster to provision. (required)
   -p, --project string                Name of the Gardener project where you provision the cluster. (required)
   -r, --region string                 Region of the cluster. (default "eu-west-3")
