@@ -59,18 +59,11 @@ func (p *Project) FullName() string {
 	return p.Name
 }
 
-// Build builds the kubebuilder project default kustomization following the given definition. Sets the image the tag: <def.registry>/<def.name>:<def.version>; and returns the folder containing the resulting chart.
-func (p *Project) Build(name, version, registry string) (string, error) {
+// Build builds the kubebuilder project default kustomization following the given definition.
+func (p *Project) Build(name, version string) (string, error) {
 	// check layout
 	if !(slices.Contains(p.Layout, V3) || slices.Contains(p.Layout, V4alpha)) {
 		return "", fmt.Errorf("project layout %v is not supported", p.Layout)
-	}
-	// edit kustomization image and setup build
-	img := ""
-	if registry == "" {
-		img = name
-	} else {
-		img = fmt.Sprintf("%s/%s", registry, name)
 	}
 
 	k, err := kustomize.ParseKustomization(filepath.Join(p.path, defaultKustomization))
@@ -93,7 +86,7 @@ func (p *Project) Build(name, version, registry string) (string, error) {
 	}
 
 	// do build
-	yml, err := kustomize.Build(k, kustomize.ControllerImageModifier(img, version))
+	yml, err := kustomize.Build(k)
 	if err != nil {
 		return "", err
 	}

@@ -174,10 +174,6 @@ func parseOverride(arg string) (override, error) {
 	return override{}, ErrImageInvalidArgs
 }
 
-func ControllerImageModifier(img, tag string) imagetag.Filter {
-	return ImageModifier(ControllerImageName, img, tag, "", nil)
-}
-
 func ImageModifier(
 	name, img, tag, digest string, callback func(key, value, tag string, node *yaml.RNode),
 ) imagetag.Filter {

@@ -163,7 +163,7 @@ func inspectProject(def *Definition, p *kubebuilder.Project, layers []Layer, s s
 
 	// generated chart -> layer 1
 	chartPath, err := p.Build(
-		def.Name, def.Version, def.RegistryURL,
+		def.Name, def.Version,
 	) // TODO switch from charts to pure manifests when mod-mngr is ready
 	if err != nil {
 		return err
@@ -181,7 +181,7 @@ func inspectProject(def *Definition, p *kubebuilder.Project, layers []Layer, s s
 	}
 
 	// Add default CR if generating template
-	cr := []byte{}
+	var cr []byte
 	if def.RegistryURL != "" {
 		if def.DefaultCRPath == "" {
 			cr, err = p.DefaultCR(s)
