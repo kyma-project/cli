@@ -10,7 +10,7 @@ Use this command to verify a Kyma module.
 
 ### Detailed description
 
-Kyma modules can be cryptographically signed to make sure they are correct and distributed by a trusted authority. This command verifies the authenticity of a given module.
+Kyma modules can be cryptographically signed to ensure they are correct and distributed by a trusted authority. This command verifies the authenticity of a given module.
 
 
 ```bash
@@ -20,15 +20,15 @@ kyma alpha verify module --name MODULE_NAME --version MODULE_VERSION --registry 
 ## Flags
 
 ```bash
-  -c, --credentials string      Basic authentication credentials for the given registry in the format user:password
-      --insecure                Use an insecure connection to access the registry.
-      --key string              Specifies the path where the private key used for signing
-      --name string             Name of the module
-      --name-mapping string     Overrides the OCM Component Name Mapping, one of: "urlPath" or "sha256-digest" (default "urlPath")
-      --registry string         Repository context url where unsigned component descriptor located
-      --signature-name string   name of the signature for signing (default "kyma-project.io/module-signature")
+  -c, --credentials string      Basic authentication credentials for the given registry in the user:password format
+      --insecure                Uses an insecure connection to access the registry.
+      --key string              Specifies the path where a public key is used for signing.
+      --name string             Name of the module.
+      --name-mapping string     Overrides the OCM Component Name Mapping, Use: "urlPath" or "sha256-digest". (default "urlPath")
+      --registry string         Context URL of the repository for the module. The repository's URL is automatically added to the repository's contexts in the module.
+      --signature-name string   name of the signature to use. (default "kyma-project.io/module-signature")
   -t, --token string            Authentication token for the given registry (alternative to basic authentication).
-      --version string          Version of the module
+      --version string          Version of the module.
 ```
 
 ## Flags inherited from parent commands
@@ -43,5 +43,5 @@ kyma alpha verify module --name MODULE_NAME --version MODULE_VERSION --registry 
 
 ## See also
 
-* [kyma alpha verify](kyma_alpha_verify.md)	 - Verifies kyma resources.
+* [kyma alpha verify](kyma_alpha_verify.md)	 - Verifies all module resources from a signed module component descriptor that's hosted in a remote OCI registry
 

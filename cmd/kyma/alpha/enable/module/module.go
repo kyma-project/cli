@@ -151,10 +151,8 @@ func (cmd *command) run(ctx context.Context, l *zap.SugaredLogger, moduleName st
 func enableModule(modules []v1beta1.Module, name, channel string) []v1beta1.Module {
 	for _, mod := range modules {
 		if mod.Name == name {
-			if channel == "" || mod.Channel == channel {
-				// module already enabled
-				return modules
-			}
+			mod.Channel = channel
+			return modules
 		}
 	}
 

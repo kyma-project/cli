@@ -33,7 +33,6 @@ type Options struct {
 	Insecure                bool
 	PersistentArchive       bool
 	ResourcePaths           []string
-	ArchiveCleanup          bool
 	ArchiveVersionOverwrite bool
 	RegistryCredSelector    string
 	SecurityScanConfig      string

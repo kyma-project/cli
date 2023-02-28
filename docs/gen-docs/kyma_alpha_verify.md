@@ -2,12 +2,11 @@
 title: kyma alpha verify
 ---
 
-Verifies kyma resources.
+Verifies all module resources from a signed module component descriptor that's hosted in a remote OCI registry
 
 ## Synopsis
 
-Use this command to verify Kyma resources.
-
+Use this command to verify all module resources from a signed module descriptor that's hosted in a remote OCI registry
 
 ## Flags inherited from parent commands
 

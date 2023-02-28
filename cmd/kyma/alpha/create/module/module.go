@@ -73,46 +73,48 @@ Build module my-domain/modB in version 3.2.1 and push it to a local registry "un
 
 	cmd.Flags().StringVar(
 		&o.ModuleArchivePath, "module-archive-path", "./mod",
-		"Specifies the path where the module artifacts are locally cached to generate the image. If the path already has a module, use the overwrite flag to overwrite it.",
+		"Specifies the path where the module artifacts are locally cached to generate the image. If the path already has a module, use the \"--module-archive-version-overwrite\" flag to overwrite it.",
 	)
 	cmd.Flags().BoolVar(
 		&o.PersistentArchive, "module-archive-persistence", false,
-		"Use the host filesystem instead of inmemory archiving to build the module",
+		"Uses the host filesystem instead of inmemory archiving to build the module.",
 	)
-	cmd.Flags().BoolVar(&o.ArchiveCleanup, "module-archive-cleanup", false, "Remove the archive folder and all its contents at the end if used in conjunction with persistent archiving.")
-	cmd.Flags().BoolVar(&o.ArchiveVersionOverwrite, "module-archive-version-overwrite", false, "overwrite existing component versions of the module. If set to false, the push will be a No-Op.")
+	cmd.Flags().BoolVar(&o.ArchiveVersionOverwrite, "module-archive-version-overwrite", false, "Overwrites existing component's versions of the module. If set to false, the push is a No-Op.")
 
-	cmd.Flags().StringVarP(&o.Path, "path", "p", "", "Path to the module contents. (default current directory)")
+	cmd.Flags().StringVarP(&o.Path, "path", "p", "", "Path to the module's contents. (default current directory)")
 	cmd.Flags().StringArrayVarP(
 		&o.ResourcePaths, "resource", "r", []string{},
-		"Add an extra resource in a new layer with format <NAME:TYPE@PATH>. It is also possible to provide only a path; name will default to the last path element and type to 'helm-chart'",
+		"Add an extra resource in a new layer in the <NAME:TYPE@PATH> format. If you provide only a path, the name defaults to the last path element, and the type is set to 'helm-chart'.",
 	)
 	cmd.Flags().StringVar(
 		&o.RegistryURL, "registry", "",
-		"Repository context url for module to upload. The repository url will be automatically added to the repository contexts in the module",
+		"Context URL of the repository. The repository URL will be automatically added to the repository contexts in the module descriptor.",
 	)
 	cmd.Flags().StringVar(
 		&o.NameMappingMode, "name-mapping", "urlPath",
-		"Overrides the OCM Component Name Mapping, one of: \"urlPath\" or \"sha256-digest\"",
+		"Overrides the OCM Component Name Mapping, Use: \"urlPath\" or \"sha256-digest\".",
 	)
 	cmd.Flags().StringVar(
 		&o.RegistryCredSelector, "registry-cred-selector", "",
-		"label selector to identify a secret of type kubernetes.io/dockerconfigjson (that needs to be created externally) which allows the image to be accessed in private image registries. This can be used if you push your module to a registry with authenticated access. Example: \"label1=value1,label2=value2\"",
+		"Label selector to identify an externally created Secret of type \"kubernetes.io/dockerconfigjson\". "+
+			"It allows the image to be accessed in private image registries. "+
+			"It can be used when you push your module to a registry with authenticated access. "+
+			"For example, \"label1=value1,label2=value2\".",
 	)
 	cmd.Flags().StringVarP(
 		&o.Credentials, "credentials", "c", "",
-		"Basic authentication credentials for the given registry in the format user:password",
+		"Basic authentication credentials for the given registry in the user:password format",
 	)
 	cmd.Flags().StringVar(
 		&o.DefaultCRPath, "default-cr", "",
-		"File containing the default custom resource of the module. If the module is a kubebuilder project, the default CR will be automatically detected.",
+		"File containing the default custom resource of the module. If the module is a kubebuilder project, the default CR is automatically detected.",
 	)
 	cmd.Flags().StringVarP(
 		&o.TemplateOutput, "output", "o", "template.yaml",
-		"File to which to output the module template if the module is uploaded to a registry",
+		"File to write the module template if the module is uploaded to a registry.",
 	)
 	cmd.Flags().StringVar(&o.Channel, "channel", "regular", "Channel to use for the module template.")
-	cmd.Flags().StringVar(&o.Target, "target", "control-plane", "Target to use when determining where to install the module. Can be 'control-plane' or 'remote'.")
+	cmd.Flags().StringVar(&o.Target, "target", "control-plane", "Target to use when determining where to install the module. Use 'control-plane' or 'remote'.")
 	cmd.Flags().StringVar(
 		&o.SchemaVersion, "descriptor-version", compdescv2.SchemaVersion, fmt.Sprintf(
 			"Schema version to use for the generated OCM descriptor. One of %s",
@@ -123,7 +125,7 @@ Build module my-domain/modB in version 3.2.1 and push it to a local registry "un
 		&o.Token, "token", "t", "",
 		"Authentication token for the given registry (alternative to basic authentication).",
 	)
-	cmd.Flags().BoolVar(&o.Insecure, "insecure", false, "Use an insecure connection to access the registry.")
+	cmd.Flags().BoolVar(&o.Insecure, "insecure", false, "Uses an insecure connection to access the registry.")
 	cmd.Flags().StringVar(
 		&o.SecurityScanConfig, "sec-scanners-config", "sec-scanners-config.yaml", "Path to the file holding "+
 			"the security scan configuration.",
@@ -145,12 +147,6 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 	l := cli.NewLogger(cmd.opts.Verbose).Sugar()
 	undo := zap.RedirectStdLog(l.Desugar())
 	defer undo()
-
-	if !cmd.opts.Verbose {
-		stderr := os.Stderr
-		os.Stderr = nil
-		defer func() { os.Stderr = stderr }()
-	}
 
 	if !cmd.opts.NonInteractive {
 		cli.AlphaWarn()
@@ -234,6 +230,9 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 				cmd.CurrentStep.Failure()
 				return err
 			}
+			if err := archive.Update(); err != nil {
+				return fmt.Errorf("could not write security scanning configuration into archive: %w", err)
+			}
 			cmd.CurrentStep.Successf("Security scanning configured")
 		} else {
 			l.Warnf("Security scanning configuration was skipped: %s", err.Error())
@@ -269,16 +268,6 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 			return err
 		}
 		cmd.CurrentStep.Successf("Template successfully generated at %s", cmd.opts.TemplateOutput)
-	}
-
-	if cmd.opts.PersistentArchive && cmd.opts.ArchiveCleanup {
-		// TODO clean generated chart
-		cmd.NewStep(fmt.Sprintf("Cleaning up mod path %q", cmd.opts.ModuleArchivePath))
-		if err := os.RemoveAll(cmd.opts.ModuleArchivePath); err != nil {
-			cmd.CurrentStep.Failure()
-			return err
-		}
-		cmd.CurrentStep.Success()
 	}
 
 	return nil

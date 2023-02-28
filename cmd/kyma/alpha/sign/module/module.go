@@ -32,33 +32,34 @@ This command signs all module resources recursively based on an unsigned compone
 		Aliases: []string{"mod"},
 	}
 	cmd.Flags().StringVar(
-		&o.Name, "name", "", "Name of the module",
+		&o.Name, "name", "", "Name of the module.",
 	)
 	cmd.Flags().StringVar(
-		&o.Version, "version", "", "Version of the module",
+		&o.Version, "version", "", "Version of the module.",
 	)
 	cmd.Flags().StringVar(
-		&o.PrivateKeyPath, "key", "", "Specifies the path where the private key used for signing",
+		&o.PrivateKeyPath, "key", "", "Specifies the path where a private key is used for signing.",
 	)
 	cmd.Flags().StringVar(
-		&o.SignatureName, "signature-name", "kyma-project.io/module-signature", "name of the signature for signing",
+		&o.SignatureName, "signature-name", "kyma-project.io/module-signature", "name of the signature to use.",
 	)
 	cmd.Flags().StringVar(
-		&o.RegistryURL, "registry", "", "Repository context url where unsigned component descriptor located",
+		&o.RegistryURL, "registry", "", "Context URL of the repository for the module. "+
+			"The repository's URL is automatically added to the repository's contexts in the module.",
 	)
 	cmd.Flags().StringVar(
 		&o.NameMappingMode, "name-mapping", "urlPath",
-		"Overrides the OCM Component Name Mapping, one of: \"urlPath\" or \"sha256-digest\"",
+		"Overrides the OCM Component Name Mapping, Use: \"urlPath\" or \"sha256-digest\".",
 	)
 	cmd.Flags().StringVarP(
 		&o.Credentials, "credentials", "c", "",
-		"Basic authentication credentials for the given registry in the format user:password",
+		"Basic authentication credentials for the given registry in the user:password format",
 	)
 	cmd.Flags().StringVarP(
 		&o.Token, "token", "t", "",
 		"Authentication token for the given registry (alternative to basic authentication).",
 	)
-	cmd.Flags().BoolVar(&o.Insecure, "insecure", false, "Use an insecure connection to access the registry.")
+	cmd.Flags().BoolVar(&o.Insecure, "insecure", false, "Uses an insecure connection to access the registry.")
 
 	return cmd
 }

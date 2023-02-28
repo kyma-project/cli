@@ -59,9 +59,9 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 	cobraCmd.Flags().StringArrayVarP(
 		&o.Kustomizations, "kustomization", "k", []string{lifecycleManagerKustomization},
-		`Provide one or more kustomizations to deploy. 
-Each occurrence of the flag accepts a URL with an optional reference (commit, branch, or release) in the format URL@ref or a local path to the directory of the kustomization file.
-Defaults to deploying Lifecycle Manager and Module Manager from GitHub main branch.`,
+		`Provides one or more kustomizations to deploy. 
+Each flag occurrence accepts a URL with an optional reference (commit, branch, or release) in URL@ref format or a local path to the directory of the kustomization file.
+By default, Lifecycle Manager is deployed from the GitHub main branch.`,
 	)
 	cobraCmd.Flags().StringArrayVarP(
 		&o.Modules, "module", "m", []string{},
@@ -89,10 +89,10 @@ WARNING: This is a temporary flag for development and will be removed soon.`,
 	)
 	cobraCmd.Flags().StringVar(
 		&o.LifecycleManager, "lifecycle-manager", "eu.gcr.io/kyma-project/lifecycle-manager:latest",
-		`Installs lifecycle-manager with the specified image:
-- Use "my-registry.org/lifecycle-manager:my-tag"" to use a custom version of lifecycle-manager.
-- Use "europe-docker.pkg.dev/kyma-project/prod/lifecycle-manager@sha256:cb74b29cfe80c639c9ee9..." to use a custom version of lifecycle-manager with a digest.
-- Use a tag like "v20230220-7b8e9515" to override the default tag used, it will then use "eu.gcr.io/kyma-project/lifecycle-manager:v20230220-7b8e9515".`,
+		`Installs Lifecycle Manager with the specified image:
+- Use "my-registry.org/lifecycle-manager:my-tag"" to use a custom version of Lifecycle Manager.
+- Use "europe-docker.pkg.dev/kyma-project/prod/lifecycle-manager@sha256:cb74b29cfe80c639c9ee9..." to use a custom version of Lifecycle Manager with a digest.
+- Specify a tag to override the default one. For example, when specifying "v20230220-7b8e9515",  the "eu.gcr.io/kyma-project/lifecycle-manager:v20230220-7b8e9515" tag is used.`,
 	)
 
 	cobraCmd.Flags().BoolVar(
@@ -101,8 +101,8 @@ WARNING: This is a temporary flag for development and will be removed soon.`,
 
 	cobraCmd.Flags().BoolVar(
 		&o.WildcardPermissions, "wildcard-permissions", true,
-		`Creates a wildcard cluster-role to allow for easy local installation permissions of lifecycle-manager.
-Allows for usage of lifecycle-manager without having to worry about modules requiring specific RBAC permissions.
+		`Creates a wildcard cluster-role to allow for easy local installation permissions of Lifecycle Manager.
+Allows for Lifecycle Manager usage without worrying about modules requiring specific RBAC permissions.
 WARNING: DO NOT USE ON PRODUCTIVE CLUSTERS!`,
 	)
 
