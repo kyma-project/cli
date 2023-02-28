@@ -20,7 +20,7 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "module MODULE_NAME MODULE_VERSION [flags]",
+		Use:   "module --name MODULE_NAME --version MODULE_VERSION --registry MODULE_REGISTRY [flags]",
 		Short: "Signs all module resources from an unsigned component descriptor that's hosted in a remote OCI registry",
 		Long: `Use this command to sign a Kyma module.
 
@@ -47,7 +47,7 @@ This command signs all module resources recursively based on an unsigned compone
 		&o.RegistryURL, "registry", "", "Repository context url where unsigned component descriptor located",
 	)
 	cmd.Flags().StringVar(
-		&o.NameMappingMode, "nameMapping", "urlPath",
+		&o.NameMappingMode, "name-mapping", "urlPath",
 		"Overrides the OCM Component Name Mapping, one of: \"urlPath\" or \"sha256-digest\"",
 	)
 	cmd.Flags().StringVarP(

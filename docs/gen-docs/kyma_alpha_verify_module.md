@@ -14,7 +14,7 @@ Kyma modules can be cryptographically signed to make sure they are correct and d
 
 
 ```bash
-kyma alpha verify module <MODULE_IMAGE> [flags]
+kyma alpha verify module --name MODULE_NAME --version MODULE_VERSION --registry MODULE_REGISTRY [flags]
 ```
 
 ## Flags
@@ -24,7 +24,7 @@ kyma alpha verify module <MODULE_IMAGE> [flags]
       --insecure                Use an insecure connection to access the registry.
       --key string              Specifies the path where the private key used for signing
       --name string             Name of the module
-      --nameMapping string      Overrides the OCM Component Name Mapping, one of: "urlPath" or "sha256-digest" (default "urlPath")
+      --name-mapping string     Overrides the OCM Component Name Mapping, one of: "urlPath" or "sha256-digest" (default "urlPath")
       --registry string         Repository context url where unsigned component descriptor located
       --signature-name string   name of the signature for signing (default "kyma-project.io/module-signature")
   -t, --token string            Authentication token for the given registry (alternative to basic authentication).

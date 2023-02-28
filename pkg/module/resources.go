@@ -11,6 +11,7 @@ import (
 	"github.com/kyma-project/cli/pkg/module/kubebuilder"
 	"github.com/kyma-project/cli/pkg/step"
 	"github.com/mandelsoft/vfs/pkg/vfs"
+	"github.com/open-component-model/ocm/pkg/common/accessobj"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/comparch"
 	"github.com/pkg/errors"
@@ -59,20 +60,6 @@ func AddResources(
 	return nil
 }
 
-func WriteComponentDescriptor(
-	fs vfs.FileSystem, cd *compdesc.ComponentDescriptor, filePath string, fileName string,
-) error {
-	compDescFilePath := filepath.Join(filePath, fileName)
-	data, err := compdesc.Encode(cd)
-	if err != nil {
-		return fmt.Errorf("unable to encode component descriptor: %w", err)
-	}
-	if err := vfs.WriteFile(fs, compDescFilePath, data, 0664); err != nil {
-		return fmt.Errorf("unable to write modified comonent descriptor: %w", err)
-	}
-	return nil
-}
-
 // generateResources generates resources by parsing the given definitions.
 // Definitions have the following format: NAME:TYPE@PATH
 // If a definition does not have a name or type, the name of the last path element is used and it is assumed to be a helm-chart type.
@@ -112,7 +99,7 @@ func addBlob(fs vfs.FileSystem, archive *comparch.ComponentArchive, resource *Re
 	}
 
 	blobAccess, err := archive.AddBlob(
-		access, string(resource.Input.Type),
+		accessobj.CachedBlobAccessForDataAccess(archive.GetContext(), access.MimeType(), access), string(resource.Input.Type),
 		resource.Resource.Name, nil,
 	)
 	if err != nil {

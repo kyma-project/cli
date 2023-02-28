@@ -23,12 +23,12 @@ Optionally, you can manually add additional layers with contents in other paths 
 Finally, if you provided a registry to which to push the artifact, the created module is validated and pushed. During the validation the default CR defined in the optional "default.yaml" file is validated against CustomResourceDefinition.
 Alternatively, you can trigger an on-demand default CR validation with "--validateCR=true", in case you don't push to the registry.
 
-To push the artifact into some registries, for example, the central docker.io registry, you have to change the OCM Component Name Mapping with the following flag: "--nameMapping=sha256-digest". This is necessary because the registry does not accept artifact URLs with more than two path segments, and such URLs are generated with the default name mapping: "urlPath". In the case of the "sha256-digest" mapping, the artifact URL contains just a sha256 digest of the full Component Name and fits the path length restrictions.
+To push the artifact into some registries, for example, the central docker.io registry, you have to change the OCM Component Name Mapping with the following flag: "--name-mapping=sha256-digest". This is necessary because the registry does not accept artifact URLs with more than two path segments, and such URLs are generated with the default name mapping: "urlPath". In the case of the "sha256-digest" mapping, the artifact URL contains just a sha256 digest of the full Component Name and fits the path length restrictions.
 
 
 
 ```bash
-kyma alpha create module [flags]
+kyma alpha create module --name MODULE_NAME --version MODULE_VERSION --registry MODULE_REGISTRY [flags]
 ```
 
 ## Examples
@@ -55,7 +55,7 @@ Build module my-domain/modB in version 3.2.1 and push it to a local registry "un
       --module-archive-persistence         Use the host filesystem instead of inmemory archiving to build the module
       --module-archive-version-overwrite   overwrite existing component versions of the module. If set to false, the push will be a No-Op.
   -n, --name string                        Override the module name of the kubebuilder project. If the module is not a kubebuilder project, this flag is mandatory.
-      --nameMapping string                 Overrides the OCM Component Name Mapping, one of: "urlPath" or "sha256-digest" (default "urlPath")
+      --name-mapping string                Overrides the OCM Component Name Mapping, one of: "urlPath" or "sha256-digest" (default "urlPath")
   -o, --output string                      File to which to output the module template if the module is uploaded to a registry (default "template.yaml")
   -p, --path string                        Path to the module contents. (default current directory)
       --registry string                    Repository context url for module to upload. The repository url will be automatically added to the repository contexts in the module

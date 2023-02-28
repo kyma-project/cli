@@ -20,7 +20,7 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "module <MODULE_IMAGE>",
+		Use:   "module --name MODULE_NAME --version MODULE_VERSION --registry MODULE_REGISTRY [flags]",
 		Short: "Verifies the signature of a Kyma module bundled as an OCI container image.",
 		Long: `Use this command to verify a Kyma module.
 
@@ -48,7 +48,7 @@ Kyma modules can be cryptographically signed to make sure they are correct and d
 		&o.RegistryURL, "registry", "", "Repository context url where unsigned component descriptor located",
 	)
 	cmd.Flags().StringVar(
-		&o.NameMappingMode, "nameMapping", "urlPath",
+		&o.NameMappingMode, "name-mapping", "urlPath",
 		"Overrides the OCM Component Name Mapping, one of: \"urlPath\" or \"sha256-digest\"",
 	)
 	cmd.Flags().StringVarP(

@@ -32,7 +32,7 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "module [flags]",
+		Use:   "module --name MODULE_NAME --version MODULE_VERSION --registry MODULE_REGISTRY [flags]",
 		Short: "Creates a module bundled as an OCI image with the given OCI image name from the contents of the given path",
 		Long: `Use this command to create a Kyma module and bundle it as an OCI image.
 
@@ -51,7 +51,7 @@ Optionally, you can manually add additional layers with contents in other paths 
 Finally, if you provided a registry to which to push the artifact, the created module is validated and pushed. During the validation the default CR defined in the optional "default.yaml" file is validated against CustomResourceDefinition.
 Alternatively, you can trigger an on-demand default CR validation with "--validateCR=true", in case you don't push to the registry.
 
-To push the artifact into some registries, for example, the central docker.io registry, you have to change the OCM Component Name Mapping with the following flag: "--nameMapping=sha256-digest". This is necessary because the registry does not accept artifact URLs with more than two path segments, and such URLs are generated with the default name mapping: "urlPath". In the case of the "sha256-digest" mapping, the artifact URL contains just a sha256 digest of the full Component Name and fits the path length restrictions.
+To push the artifact into some registries, for example, the central docker.io registry, you have to change the OCM Component Name Mapping with the following flag: "--name-mapping=sha256-digest". This is necessary because the registry does not accept artifact URLs with more than two path segments, and such URLs are generated with the default name mapping: "urlPath". In the case of the "sha256-digest" mapping, the artifact URL contains just a sha256 digest of the full Component Name and fits the path length restrictions.
 
 `,
 
@@ -92,7 +92,7 @@ Build module my-domain/modB in version 3.2.1 and push it to a local registry "un
 		"Repository context url for module to upload. The repository url will be automatically added to the repository contexts in the module",
 	)
 	cmd.Flags().StringVar(
-		&o.NameMappingMode, "nameMapping", "urlPath",
+		&o.NameMappingMode, "name-mapping", "urlPath",
 		"Overrides the OCM Component Name Mapping, one of: \"urlPath\" or \"sha256-digest\"",
 	)
 	cmd.Flags().StringVar(
@@ -244,13 +244,13 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 	if cmd.opts.RegistryURL != "" {
 
 		cmd.NewStep(fmt.Sprintf("Pushing image to %q", cmd.opts.RegistryURL))
-		r, err := cmd.validateInsecureRegistry(modDef.NameMappingMode)
+		remote, err := cmd.getRemote(modDef.NameMappingMode)
 		if err != nil {
 			cmd.CurrentStep.Failure()
 			return err
 		}
 
-		remote, err := module.Push(archive, r, cmd.opts.ArchiveVersionOverwrite)
+		componentVersionAccess, err := remote.Push(archive, cmd.opts.ArchiveVersionOverwrite)
 		if err != nil {
 			cmd.CurrentStep.Failure()
 			return err
@@ -258,7 +258,7 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 		cmd.CurrentStep.Successf("Module successfully pushed to %q", cmd.opts.RegistryURL)
 
 		cmd.NewStep("Generating module template")
-		t, err := module.Template(remote, cmd.opts.Channel, cmd.opts.Target, modDef.DefaultCR, cmd.opts.RegistryCredSelector)
+		t, err := module.Template(componentVersionAccess, cmd.opts.Channel, cmd.opts.Target, modDef.DefaultCR, cmd.opts.RegistryCredSelector)
 		if err != nil {
 			cmd.CurrentStep.Failure()
 			return err
@@ -303,7 +303,7 @@ func (cmd *command) validateDefaultCR(ctx context.Context, modDef *module.Defini
 	return nil
 }
 
-func (cmd *command) validateInsecureRegistry(nameMapping module.NameMapping) (*module.Remote, error) {
+func (cmd *command) getRemote(nameMapping module.NameMapping) (*module.Remote, error) {
 
 	res := &module.Remote{
 		Registry:    cmd.opts.RegistryURL,
@@ -321,12 +321,11 @@ func (cmd *command) validateInsecureRegistry(nameMapping module.NameMapping) (*m
 	if strings.HasPrefix(strings.ToLower(cmd.opts.RegistryURL), "http:") {
 		res.Insecure = true
 
-		if !cmd.opts.Insecure && !cmd.opts.NonInteractive {
+		if !cmd.opts.Insecure {
 			cmd.CurrentStep.LogWarn("CAUTION: Pushing the module artifact to the insecure registry")
-			if !cmd.CurrentStep.PromptYesNo("Do you really want to proceed? ") {
-				return nil, errors.New("Command stopped by user")
+			if !cmd.opts.NonInteractive && !cmd.CurrentStep.PromptYesNo("Do you really want to proceed? ") {
+				return nil, errors.New("command stopped by user")
 			}
-
 		}
 	}
 

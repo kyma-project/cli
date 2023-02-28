@@ -14,7 +14,7 @@ This command signs all module resources recursively based on an unsigned compone
 
 
 ```bash
-kyma alpha sign module MODULE_NAME MODULE_VERSION [flags]
+kyma alpha sign module --name MODULE_NAME --version MODULE_VERSION --registry MODULE_REGISTRY [flags]
 ```
 
 ## Flags
@@ -24,7 +24,7 @@ kyma alpha sign module MODULE_NAME MODULE_VERSION [flags]
       --insecure                Use an insecure connection to access the registry.
       --key string              Specifies the path where the private key used for signing
       --name string             Name of the module
-      --nameMapping string      Overrides the OCM Component Name Mapping, one of: "urlPath" or "sha256-digest" (default "urlPath")
+      --name-mapping string     Overrides the OCM Component Name Mapping, one of: "urlPath" or "sha256-digest" (default "urlPath")
       --registry string         Repository context url where unsigned component descriptor located
       --signature-name string   name of the signature for signing (default "kyma-project.io/module-signature")
   -t, --token string            Authentication token for the given registry (alternative to basic authentication).
