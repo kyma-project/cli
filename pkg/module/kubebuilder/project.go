@@ -65,22 +65,6 @@ func (p *Project) Build(name, version, registry string) (string, error) {
 	if !(slices.Contains(p.Layout, V3) || slices.Contains(p.Layout, V4alpha)) {
 		return "", fmt.Errorf("project layout %v is not supported", p.Layout)
 	}
-	// edit kustomization image and setup build
-	img := ""
-	if registry == "" {
-		img = fmt.Sprintf("%s:%s", name, version)
-	} else {
-		img = fmt.Sprintf("%s/%s:%s", registry, name, version)
-	}
-
-	buildPath := filepath.Join(p.path, defaultKustomization)
-	if err := kustomize.SetImage(buildPath, "controller", img); err != nil {
-		return "", fmt.Errorf("could not edit kustomization image: %w", err)
-	}
-	k, err := kustomize.ParseKustomization(buildPath)
-	if err != nil {
-		return "", err
-	}
 
 	// create output folders
 	pieces := strings.Split(name, "/")
@@ -97,6 +81,11 @@ func (p *Project) Build(name, version, registry string) (string, error) {
 	}
 
 	// do build
+	buildPath := filepath.Join(p.path, defaultKustomization)
+	k, err := kustomize.ParseKustomization(buildPath)
+	if err != nil {
+		return "", err
+	}
 	if _, err := kustomize.Build(k, "-o", outPath); err != nil {
 		return "", err
 	}
