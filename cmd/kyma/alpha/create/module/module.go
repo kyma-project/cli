@@ -200,7 +200,7 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 		return err
 	}
 
-	cmd.NewStep(fmt.Sprintf("Creating module archive"))
+	cmd.NewStep("Creating module archive")
 	var archiveFS vfs.FileSystem
 	if cmd.opts.PersistentArchive {
 		archiveFS = osFS

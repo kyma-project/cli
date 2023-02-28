@@ -45,8 +45,8 @@ func (r *Remote) GetRepository(ctx cpi.Context) (cpi.Repository, error) {
 			if repo, err := dockerconfig.NewRepository(ctx.CredentialsContext(), path, true); err == nil {
 				// this uses the first part of the url to resolve the correct host, e.g.
 				// ghcr.io/jakobmoellersap/testmodule => ghcr.io
-				hostNameInDockerConfigJson := strings.Split(NoSchemeURL(r.Registry), "/")[0]
-				creds, err = repo.LookupCredentials(hostNameInDockerConfigJson)
+				hostNameInDockerConfigJSON := strings.Split(NoSchemeURL(r.Registry), "/")[0]
+				creds, err = repo.LookupCredentials(hostNameInDockerConfigJSON)
 				if err != nil {
 					// this forces creds to be nil in case the host was not found in the native docker store
 					creds = nil
