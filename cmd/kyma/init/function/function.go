@@ -102,12 +102,12 @@ func (c *command) Run() error {
 	}
 
 	configuration := workspace.Cfg{
-		SchemaVersion:        workspace.SchemaVersionDefault,
 		Runtime:              c.opts.Runtime,
 		RuntimeImageOverride: c.opts.RuntimeImageOverride,
 		Name:                 c.opts.Name,
 		Namespace:            c.opts.Namespace,
 		Source:               c.opts.source(),
+		SchemaVersion:        workspace.SchemaVersionDefault,
 	}
 
 	err = workspace.Initialize(configuration, c.opts.Dir)
