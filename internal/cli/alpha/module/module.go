@@ -15,17 +15,20 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/watch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type Interactor interface {
 	// Get retrieves all modules that the Interactor deals with.
 	Get(ctx context.Context) ([]v1beta1.Module, error)
-	// Apply applies all modules that the Interactor deals with.
-	Apply(ctx context.Context, modules []v1beta1.Module) error
+	// Update applies all modules that the Interactor deals with.
+	Update(ctx context.Context, modules []v1beta1.Module) error
 	// WaitUntilReady blocks until all Modules are confirmed to be applied and ready
-	WaitUntilReady(ctx context.Context, onError func(kyma *v1beta1.Kyma)) error
+	WaitUntilReady(ctx context.Context) error
 }
+
+var _ Interactor = &DefaultInteractor{}
 
 type DefaultInteractor struct {
 	Logger                   *zap.SugaredLogger
@@ -60,7 +63,9 @@ func (i *DefaultInteractor) Get(ctx context.Context) ([]v1beta1.Module, error) {
 	return kyma.Spec.Modules, nil
 }
 
-func (i *DefaultInteractor) Apply(ctx context.Context, modules []v1beta1.Module) error {
+// Update tries to update the modules in the Kyma Instance and retries on failure
+// It exits without retrying if the Kyma Resource cannot be fetched at least once.
+func (i *DefaultInteractor) Update(ctx context.Context, modules []v1beta1.Module) error {
 	ctx, cancel := context.WithTimeout(ctx, i.Timeout)
 	defer cancel()
 
@@ -69,29 +74,30 @@ func (i *DefaultInteractor) Apply(ctx context.Context, modules []v1beta1.Module)
 		return err
 	}
 	oldGen := kyma.GetGeneration()
-
-	kyma.Spec.Modules = modules
 	if err := retry.Do(
 		func() error {
-			return i.K8s.Apply(context.Background(), i.ForceUpdate, kyma)
+			kyma.Spec.Modules = modules
+			if err := i.K8s.Ctrl().Update(ctx, kyma, &client.UpdateOptions{FieldManager: "kyma"}); err != nil {
+				return err
+			}
+			newGen := kyma.GetGeneration()
+			i.changed = oldGen != newGen
+			i.lastKnownResourceVersion = kyma.GetResourceVersion()
+			return nil
 		}, retry.Attempts(3), retry.Delay(3*time.Second), retry.DelayType(retry.BackOffDelay),
 		retry.LastErrorOnly(false), retry.Context(ctx),
 	); err != nil {
 		return err
 	}
-	newGen := kyma.GetGeneration()
-
-	i.changed = oldGen != newGen
-	i.lastKnownResourceVersion = kyma.GetResourceVersion()
 
 	return nil
 }
 
 // WaitUntilReady uses the internal i.changed tracker to determine wether the last apply caused
 // any changes on the cluster. If it did not, then it will shortcut to retrieve the latest version
-// from the cluster and determine if its ready. If it has been changed, then
-// it will start a watch request and read out the last state. If it is in error
-// it will attempt it again until ctx times out or max retries is reached.
+// from the cluster and determine if it is ready. If it has been changed, then
+// it will start a watch request and read out the last state. If it is in error,
+// it will attempt it again until ctx times out.
 // If the logger is active (usually based on verbosity), it will also log the error.
 // The error returned will always contain all aggregated errors encountered during the watch if the kyma never got ready
 // If there is no error available (e.g. because the lifecycle manager never updated the resource version)
@@ -115,7 +121,7 @@ func (i *DefaultInteractor) WaitUntilReady(ctx context.Context) error {
 		if err := i.K8s.Ctrl().List(ctx, &kymas, &options); err != nil {
 			return fmt.Errorf("could not start listing for kyma readiness: %w", err)
 		}
-		return i.isKymaReady(&kymas.Items[0])
+		return IsKymaReady(i.Logger, &kymas.Items[0])
 	}
 
 	watcher, err := i.K8s.Ctrl().Watch(ctx, &kymas, &options)
@@ -128,14 +134,15 @@ func (i *DefaultInteractor) WaitUntilReady(ctx context.Context) error {
 	for {
 		select {
 		case res := <-watcher.ResultChan():
-			if res.Object == nil {
+			if res.Object == nil || res.Type != watch.Modified {
 				continue
 			}
 			if objMeta, err := meta.Accessor(res.Object); err != nil ||
 				(i.changed && i.lastKnownResourceVersion == objMeta.GetResourceVersion()) {
+				i.Logger.Info("changed generation but observed resource version is still the same")
 				continue
 			}
-			if err := i.isKymaReady(res.Object); err != nil {
+			if err := IsKymaReady(i.Logger, res.Object); err != nil {
 				i.Logger.Errorf("%s", err)
 				errs = append(errs, err)
 				continue
@@ -150,10 +157,20 @@ func (i *DefaultInteractor) WaitUntilReady(ctx context.Context) error {
 	}
 }
 
-func (i *DefaultInteractor) isKymaReady(obj runtime.Object) error {
+// IsKymaReady interprets the status of a Kyma Resource and uses this to determine if it can be considered Ready.
+// It checks for v1beta1.StateReady, and if it is set, determines if this state can be trusted by observing
+// if the status fields match the desired state, and if the lastOperation is filled by the lifecycle-manager.
+func IsKymaReady(l *zap.SugaredLogger, obj runtime.Object) error {
 	kyma := obj.(*v1beta1.Kyma)
+	l.Info(kyma.Status)
 	switch kyma.Status.State {
 	case v1beta1.StateReady:
+		if len(kyma.Status.Modules) != len(kyma.Spec.Modules) {
+			return fmt.Errorf("kyma has status Ready but cannot be up to date "+
+				"since modules tracked in status differ from modules in desired state/spec (%v in status, %v in spec)",
+				len(kyma.Status.Modules), len(kyma.Spec.Modules))
+		}
+
 		lastOperation := kyma.Status.LastOperation
 		if lastOperation.Operation == "" {
 			return fmt.Errorf(

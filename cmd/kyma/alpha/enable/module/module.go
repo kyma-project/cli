@@ -130,7 +130,7 @@ func (cmd *command) run(ctx context.Context, l *zap.SugaredLogger, moduleName st
 	desiredModules := enableModule(modules, moduleName, cmd.opts.Channel)
 
 	patchStep := cmd.NewStep("Patching modules for Kyma")
-	if err = moduleInteractor.Apply(ctx, desiredModules); err != nil {
+	if err = moduleInteractor.Update(ctx, desiredModules); err != nil {
 		patchStep.Failuref("Could not apply modules for Kyma")
 		return err
 	}
