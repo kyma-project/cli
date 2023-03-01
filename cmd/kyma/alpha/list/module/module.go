@@ -96,12 +96,6 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 		cmd.Factory.UseLogger = true
 	}
 
-	//if !cmd.opts.Verbose {
-	//	stderr := os.Stderr
-	//	os.Stderr = nil
-	//	defer func() { os.Stderr = stderr }()
-	//}
-
 	if !cmd.opts.NonInteractive {
 		cli.AlphaWarn()
 	}
