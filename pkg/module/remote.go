@@ -48,10 +48,14 @@ func (r *Remote) GetRepository(ctx cpi.Context) (cpi.Repository, error) {
 	} else {
 		repoType = oci.Type
 	}
+	url := NoSchemeURL(r.Registry)
+	if r.Insecure {
+		url = fmt.Sprintf("http://%s", url)
+	}
 
 	ociRepoSpec := &oci.RepositorySpec{
 		ObjectVersionedType: runtime.NewVersionedObjectType(repoType),
-		BaseURL:             NoSchemeURL(r.Registry),
+		BaseURL:             url,
 	}
 	genericSpec := genericocireg.NewRepositorySpec(
 		ociRepoSpec, &ocireg.ComponentRepositoryMeta{
