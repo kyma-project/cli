@@ -10,15 +10,16 @@ import (
 
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube/mocks"
+	"github.com/kyma-project/lifecycle-manager/api"
+	"github.com/kyma-project/lifecycle-manager/api/v1beta1"
 	"github.com/stretchr/testify/assert"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/json"
 	"k8s.io/apimachinery/pkg/util/yaml"
 	fakedynamic "k8s.io/client-go/dynamic/fake"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
+	fake2 "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 //go:embed testdata/kyma_sample.yaml
@@ -29,8 +30,8 @@ var moduleTemplateTestSample []byte
 
 func Test_list_modules_without_Kyma(t *testing.T) {
 
-	kyma := &unstructured.Unstructured{}
-	moduleTemplate := &unstructured.Unstructured{}
+	kyma := &v1beta1.Kyma{}
+	moduleTemplate := &v1beta1.ModuleTemplate{}
 
 	testCases := []struct {
 		name    string
@@ -42,31 +43,31 @@ func Test_list_modules_without_Kyma(t *testing.T) {
 			"Interactive",
 			true,
 			func(cmd command) {
-				cmd.opts.Output = "go-template-file"
+				cmd.opts.Output = "tabwriter"
 			},
 			func(t *testing.T, out []byte) {
 				a := assert.New(t)
 				a.Equal(
 					`WARNING: This command is experimental and might change in its final version. Use at your own risk.
-operator.kyma-project.io/module-name	Domain Name (FQDN)			Channel		Version		Template		State
-manifest-1				kyma.project.io/module/loadtest		stable		0.0.4		kcp-system/manifest-1	Ready
+Template		operator.kyma-project.io/module-name	Domain Name (FQDN)			Channel		Version		State
+kcp-system/manifest-1	manifest-1				kyma.project.io/module/loadtest		stable		0.0.4		Ready
 `,
 					string(out),
 				)
 			},
 		}, {
-			"Interactive (All in Cluster)",
+			"Interactive (Namespace specific)",
 			false,
 			func(cmd command) {
-				cmd.opts.Output = "go-template-file"
-				cmd.opts.AllNamespaces = true
+				cmd.opts.Output = "tabwriter"
+				cmd.opts.Namespace = "kcp-system"
 			},
 			func(t *testing.T, out []byte) {
 				a := assert.New(t)
 				a.Equal(
 					`WARNING: This command is experimental and might change in its final version. Use at your own risk.
-operator.kyma-project.io/module-name	Domain Name (FQDN)			Channel		Version		Template		State
-manifest-1				kyma.project.io/module/loadtest		stable		0.0.4		kcp-system/manifest-1	<no value>
+Template		operator.kyma-project.io/module-name	Domain Name (FQDN)			Channel		Version
+kcp-system/manifest-1	manifest-1				kyma.project.io/module/loadtest		stable		0.0.4
 `,
 					string(out),
 				)
@@ -77,13 +78,13 @@ manifest-1				kyma.project.io/module/loadtest		stable		0.0.4		kcp-system/manifes
 			true,
 			func(cmd command) {
 				cmd.opts.NonInteractive = true
-				cmd.opts.Output = "go-template-file"
+				cmd.opts.Output = "tabwriter"
 			},
 			func(t *testing.T, out []byte) {
 				a := assert.New(t)
 				a.Equal(
-					`operator.kyma-project.io/module-name	Domain Name (FQDN)			Channel		Version		Template		State
-manifest-1				kyma.project.io/module/loadtest		stable		0.0.4		kcp-system/manifest-1	Ready
+					`Template		operator.kyma-project.io/module-name	Domain Name (FQDN)			Channel		Version		State
+kcp-system/manifest-1	manifest-1				kyma.project.io/module/loadtest		stable		0.0.4		Ready
 `,
 					string(out),
 				)
@@ -94,13 +95,13 @@ manifest-1				kyma.project.io/module/loadtest		stable		0.0.4		kcp-system/manifes
 			true,
 			func(cmd command) {
 				cmd.opts.NonInteractive = true
-				cmd.opts.Output = "go-template-file"
+				cmd.opts.Output = "tabwriter"
 				cmd.opts.NoHeaders = true
 			},
 			func(t *testing.T, out []byte) {
 				a := assert.New(t)
 				a.Equal(
-					`manifest-1	kyma.project.io/module/loadtest		stable	0.0.4	kcp-system/manifest-1	Ready
+					`kcp-system/manifest-1	manifest-1	kyma.project.io/module/loadtest		stable	0.0.4	Ready
 `,
 					string(out),
 				)
@@ -115,7 +116,7 @@ manifest-1				kyma.project.io/module/loadtest		stable		0.0.4		kcp-system/manifes
 			},
 			func(t *testing.T, out []byte) {
 				a := assert.New(t)
-				outputList := &unstructured.UnstructuredList{}
+				outputList := &v1beta1.ModuleTemplateList{}
 				a.NoError(yaml.Unmarshal(out, outputList))
 				a.Len(outputList.Items, 1)
 				a.Equal(moduleTemplate.GetName(), outputList.Items[0].GetName())
@@ -130,7 +131,7 @@ manifest-1				kyma.project.io/module/loadtest		stable		0.0.4		kcp-system/manifes
 			},
 			func(t *testing.T, out []byte) {
 				a := assert.New(t)
-				outputList := &unstructured.UnstructuredList{}
+				outputList := &v1beta1.ModuleTemplateList{}
 				a.NoError(json.Unmarshal(out, outputList))
 				a.Len(outputList.Items, 1)
 				a.Equal(moduleTemplate.GetName(), outputList.Items[0].GetName())
@@ -147,27 +148,35 @@ manifest-1				kyma.project.io/module/loadtest		stable		0.0.4		kcp-system/manifes
 				a.NoError(yaml.Unmarshal(moduleTemplateTestSample, moduleTemplate))
 				kymaMock := &mocks.KymaKube{}
 				cmd := command{
+
 					Command: cli.Command{
-						K8s: kymaMock,
+						Options: cli.NewOptions(),
+						K8s:     kymaMock,
 					},
 					opts: &Options{Options: cli.NewOptions(),
 						Timeout:   1 * time.Minute,
-						Namespace: metav1.NamespaceDefault,
+						Namespace: metav1.NamespaceAll,
 					},
-					RESTMapper: meta.NewDefaultRESTMapper(scheme.Scheme.PreferredVersionAllGroups()),
 				}
 				test.cmd(cmd)
 
+				a.NoError(api.AddToScheme(scheme.Scheme))
+
+				ctrlClient := fake2.NewClientBuilder().WithScheme(scheme.Scheme).
+					WithObjects(kyma).
+					WithLists(&v1beta1.ModuleTemplateList{Items: []v1beta1.ModuleTemplate{*moduleTemplate}}).Build()
 				static := fake.NewSimpleClientset()
 				dynamic := fakedynamic.NewSimpleDynamicClient(scheme.Scheme, kyma, moduleTemplate)
 				kymaMock.On("Dynamic").Return(dynamic)
 				kymaMock.On("Static").Return(static).Once()
+				kymaMock.On("Ctrl").Return(ctrlClient)
 
 				captureStdout := os.Stdout
 				r, w, _ := os.Pipe()
 				os.Stdout = w
 				var args []string
 				if test.useKyma {
+					cmd.opts.Namespace = kyma.GetNamespace()
 					cmd.opts.KymaName = kyma.GetName()
 				}
 				err := cmd.Run(context.Background(), args)

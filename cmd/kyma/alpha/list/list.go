@@ -9,8 +9,9 @@ import (
 // NewCmd creates a new Kyma CLI command
 func NewCmd(o *cli.Options) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "list",
-		Short: "Lists resources on the Kyma cluster.",
+		Use:     "list",
+		Aliases: []string{"get"},
+		Short:   "Lists resources on the Kyma cluster.",
 		Long: `Use this command to list resources on the Kyma cluster.
 `,
 	}
