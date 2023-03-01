@@ -68,8 +68,7 @@ func NewDefaultTemplateTable(noHeaders, appendState bool) *DefaultTemplateTable 
 }
 
 type DefaultTemplateTable struct {
-	noHeaders   bool
-	appendState bool
+	noHeaders bool
 	templateTableEntries
 }
 
@@ -82,8 +81,8 @@ func (t *DefaultTemplateTable) Print(writer io.Writer, templates []v1beta1.Modul
 			return err
 		}
 	}
-	for _, tplt := range templates {
-		values, err := t.templateTableEntries.values(&tplt)
+	for i := range templates {
+		values, err := t.templateTableEntries.values(&templates[i])
 		if err != nil {
 			return err
 		}
