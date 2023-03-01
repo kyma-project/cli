@@ -2,9 +2,10 @@ package function
 
 import (
 	"fmt"
-	"github.com/kyma-project/cli/cmd/kyma/sync/function"
 	"os"
 	"path"
+
+	"github.com/kyma-project/cli/cmd/kyma/sync/function"
 
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/kube"
@@ -15,7 +16,7 @@ import (
 )
 
 const (
-	defaultRuntime   = "nodejs16"
+	defaultRuntime   = "nodejs18"
 	defaultReference = "main"
 	defaultBaseDir   = "/"
 )
@@ -56,6 +57,7 @@ Use the flags to specify the initial configuration for your Function or to choos
 		`Flag used to define the environment for running your Function. Use one of these options:
 	- nodejs14 (deprecated)
 	- nodejs16
+	- nodejs18	
 	- python39`,
 	)
 	cmd.Flags().StringVar(&o.SchemaVersion, "schema-version", string(workspace.SchemaVersionDefault), `Version of the config API.`)
