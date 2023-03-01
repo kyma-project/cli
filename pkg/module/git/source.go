@@ -3,40 +3,27 @@ package git
 import (
 	"errors"
 	"fmt"
-	"net/url"
 	"os"
 	"path/filepath"
-	"strings"
 
-	cdv2 "github.com/gardener/component-spec/bindings-go/apis/v2"
 	"github.com/go-git/go-git/v5"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/accessmethods/github"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/attrs/compatattr"
+	ocm "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
+	ocmv1 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/meta/v1"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/cpi"
 )
 
 const (
 	gitFolder = ".git"
+	Identity  = "module-sources"
 )
 
 var errNotGit = errors.New("not a git repository")
 
-func Source(path, repo, version string) (*cdv2.Source, error) {
-	var repoURL *url.URL
-	src := &cdv2.Source{
-		IdentityObjectMeta: cdv2.IdentityObjectMeta{
-			Version: version,
-			Type:    "git",
-		},
-		Access: &cdv2.UnstructuredTypedObject{
-			Object: make(map[string]interface{}),
-		},
-	}
-	if repo != "" {
-		var err error
-		repoURL, err = url.Parse(repo)
-		if err != nil {
-			return nil, fmt.Errorf("could not parse repository URL %q: %w", repo, err)
-		}
-	}
+func Source(ctx cpi.Context, path, repo, version string) (*ocm.Source, error) {
 
+	var ref, commit string
 	// check for .git
 	if gitPath, err := findGitInfo(path); err == nil {
 		r, err := git.PlainOpen(gitPath)
@@ -54,11 +41,7 @@ func Source(path, repo, version string) (*cdv2.Source, error) {
 			if len(remotes) > 0 {
 				var err error
 				// get remote URL and convert to HTTP in case it is an SSH URL
-				u := remotes[0].Config().URLs[0]
-				u = strings.Replace(u, ":", "/", 1)
-				u = strings.Replace(u, "git@", "https://", 1)
-				u = strings.TrimSuffix(u, gitFolder)
-				repoURL, err = url.Parse(u)
+				repo = remotes[0].Config().URLs[0]
 
 				if err != nil {
 					return nil, fmt.Errorf("could not parse repository URL %q: %w", repo, err)
@@ -71,38 +54,35 @@ func Source(path, repo, version string) (*cdv2.Source, error) {
 			return nil, fmt.Errorf("could not get git information from %q: %w", gitPath, err)
 		}
 
-		src.Access.Object["ref"] = head.Name().String()
-		src.Access.Object["commit"] = head.Hash().String()
+		ref = head.Name().String()
+		commit = head.Hash().String()
 	}
 
 	// without a repo URL we can't create a valid source => skipping source
-	if repoURL == nil {
+	if repo == "" {
 		return nil, nil
 	}
 
-	pieces := strings.Split(repoURL.Path, "/")
-	repoName := pieces[len(pieces)-1]
-
-	src.IdentityObjectMeta.Name = repoName
-	src.Access.Object["repoUrl"] = repoURL.String()
-	src.Access.Object["type"] = domain(repoURL)
-
-	return src, nil
-}
-
-// domain extracts the domain name (without extension) from a URL.
-func domain(u *url.URL) string {
-	// depending on the format the URL was passed on, the domain can be in different places.
-	h := u.Hostname()
-	if h == "" {
-		h = u.Scheme
-		if h == "" {
-			h = u.Path
-		}
+	refLabel, err := ocmv1.NewLabel("git.kyma-project.io/ref", ref, ocmv1.WithVersion("v1"))
+	if err != nil {
+		return nil, err
 	}
-	parts := strings.Split(h, ".")
 
-	return parts[len(parts)-2]
+	var sourceType string
+	if compatattr.Get(ctx) {
+		sourceType = "git"
+	} else {
+		sourceType = github.CONSUMER_TYPE
+	}
+
+	return &ocm.Source{
+		SourceMeta: ocm.SourceMeta{Type: sourceType, ElementMeta: ocm.ElementMeta{
+			Name:    Identity,
+			Version: version,
+			Labels:  ocmv1.Labels{*refLabel},
+		}},
+		Access: github.New(repo, "", commit),
+	}, nil
 }
 
 // findGitInfo recursively crawls a path up until a .git folder is found and returns its path.

@@ -59,11 +59,16 @@ func (p *Project) FullName() string {
 	return p.Name
 }
 
-// Build builds the kubebuilder project default kustomization following the given definition. Sets the image the tag: <def.registry>/<def.name>:<def.version>; and returns the folder containing the resulting chart.
-func (p *Project) Build(name, version, registry string) (string, error) {
+// Build builds the kubebuilder project default kustomization following the given definition.
+func (p *Project) Build(name, version string) (string, error) {
 	// check layout
 	if !(slices.Contains(p.Layout, V3) || slices.Contains(p.Layout, V4alpha)) {
 		return "", fmt.Errorf("project layout %v is not supported", p.Layout)
+	}
+
+	k, err := kustomize.ParseKustomization(filepath.Join(p.path, defaultKustomization))
+	if err != nil {
+		return "", err
 	}
 
 	// create output folders
@@ -81,13 +86,13 @@ func (p *Project) Build(name, version, registry string) (string, error) {
 	}
 
 	// do build
-	buildPath := filepath.Join(p.path, defaultKustomization)
-	k, err := kustomize.ParseKustomization(buildPath)
+	yml, err := kustomize.Build(k)
 	if err != nil {
 		return "", err
 	}
-	if _, err := kustomize.Build(k, "-o", outPath); err != nil {
-		return "", err
+
+	if err := os.WriteFile(filepath.Join(outPath, "rendered.yaml"), yml, os.ModePerm); err != nil {
+		return "", fmt.Errorf("could not write rendered kustomization as yml to %s: %w", outPath, err)
 	}
 
 	// move CRDs to their folder

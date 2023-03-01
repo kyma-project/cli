@@ -7,10 +7,12 @@ import (
 	"github.com/kyma-project/cli/cmd/kyma/create"
 	"github.com/kyma-project/cli/cmd/kyma/dashboard"
 	"github.com/kyma-project/cli/cmd/kyma/deploy"
+	"github.com/kyma-project/cli/cmd/kyma/get"
 	imprt "github.com/kyma-project/cli/cmd/kyma/import"
 	"github.com/kyma-project/cli/cmd/kyma/import/certs"
 	"github.com/kyma-project/cli/cmd/kyma/import/hosts"
 	initial "github.com/kyma-project/cli/cmd/kyma/init"
+	"github.com/kyma-project/cli/cmd/kyma/provision"
 	"github.com/kyma-project/cli/cmd/kyma/provision/gardener"
 	"github.com/kyma-project/cli/cmd/kyma/provision/gardener/aws"
 	"github.com/kyma-project/cli/cmd/kyma/provision/gardener/az"
@@ -20,9 +22,6 @@ import (
 	"github.com/kyma-project/cli/cmd/kyma/sync"
 	"github.com/kyma-project/cli/cmd/kyma/undeploy"
 	"github.com/kyma-project/cli/cmd/kyma/version"
-
-	"github.com/kyma-project/cli/cmd/kyma/get"
-	"github.com/kyma-project/cli/cmd/kyma/provision"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/spf13/cobra"
 )
@@ -41,11 +40,22 @@ Kyma CLI allows you to install and manage Kyma.
 		SilenceUsage:  true,
 	}
 
-	cmd.PersistentFlags().BoolVarP(&o.Verbose, "verbose", "v", false, "Displays details of actions triggered by the command.")
-	cmd.PersistentFlags().BoolVar(&o.NonInteractive, "non-interactive", false, "Enables the non-interactive shell mode (no colorized output, no spinner).")
-	cmd.PersistentFlags().BoolVar(&o.CI, "ci", false, "Enables the CI mode to run on CI/CD systems. It avoids any user interaction (such as no dialog prompts) and ensures that logs are formatted properly in log files (such as no spinners for CLI steps).")
+	cmd.PersistentFlags().BoolVarP(
+		&o.Verbose, "verbose", "v", false, "Displays details of actions triggered by the command.",
+	)
+	cmd.PersistentFlags().BoolVar(
+		&o.NonInteractive, "non-interactive", false,
+		"Enables the non-interactive shell mode (no colorized output, no spinner).",
+	)
+	cmd.PersistentFlags().BoolVar(
+		&o.CI, "ci", false,
+		"Enables the CI mode to run on CI/CD systems. It avoids any user interaction (such as no dialog prompts) and ensures that logs are formatted properly in log files (such as no spinners for CLI steps).",
+	)
 	// Kubeconfig env var and default paths are resolved by the kyma k8s client using the k8s defined resolution strategy.
-	cmd.PersistentFlags().StringVar(&o.KubeconfigPath, "kubeconfig", "", `Path to the kubeconfig file. If undefined, Kyma CLI uses the KUBECONFIG environment variable, or falls back "/$HOME/.kube/config".`)
+	cmd.PersistentFlags().StringVar(
+		&o.KubeconfigPath, "kubeconfig", "",
+		`Path to the kubeconfig file. If undefined, Kyma CLI uses the KUBECONFIG environment variable, or falls back "/$HOME/.kube/config".`,
+	)
 	cmd.PersistentFlags().BoolP("help", "h", false, "Provides command help.")
 
 	//Stable commands

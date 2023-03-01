@@ -10,8 +10,8 @@ import (
 func NewCmd(o *cli.Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "sign",
-		Short: "Signs all module resources from an unsigned component descriptor that's hosted in a remote OCI registry",
-		Long:  "Use this command to sign all module resources from an unsigned component descriptor that's hosted in a remote OCI registry",
+		Short: "Signs all module resources from an unsigned module component descriptor that's hosted in a remote OCI registry",
+		Long:  "Use this command to sign all module resources from an unsigned module component descriptor that's hosted in a remote OCI registry",
 	}
 
 	cmd.AddCommand(module.NewCmd(module.NewOptions(o)))

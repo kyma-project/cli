@@ -23,12 +23,12 @@ Optionally, you can manually add additional layers with contents in other paths 
 Finally, if you provided a registry to which to push the artifact, the created module is validated and pushed. During the validation the default CR defined in the optional "default.yaml" file is validated against CustomResourceDefinition.
 Alternatively, you can trigger an on-demand default CR validation with "--validateCR=true", in case you don't push to the registry.
 
-To push the artifact into some registries, for example, the central docker.io registry, you have to change the OCM Component Name Mapping with the following flag: "--nameMapping=sha256-digest". This is necessary because the registry does not accept artifact URLs with more than two path segments, and such URLs are generated with the default name mapping: "urlPath". In the case of the "sha256-digest" mapping, the artifact URL contains just a sha256 digest of the full Component Name and fits the path length restrictions.
+To push the artifact into some registries, for example, the central docker.io registry, you have to change the OCM Component Name Mapping with the following flag: "--name-mapping=sha256-digest". This is necessary because the registry does not accept artifact URLs with more than two path segments, and such URLs are generated with the default name mapping: "urlPath". In the case of the "sha256-digest" mapping, the artifact URL contains just a sha256 digest of the full Component Name and fits the path length restrictions.
 
 
 
 ```bash
-kyma alpha create module [flags]
+kyma alpha create module --name MODULE_NAME --version MODULE_VERSION --registry MODULE_REGISTRY [flags]
 ```
 
 ## Examples
@@ -45,23 +45,25 @@ Build module my-domain/modB in version 3.2.1 and push it to a local registry "un
 ## Flags
 
 ```bash
-      --channel string                  Channel to use for the module template. (default "regular")
-      --clean                           Remove the mod-path folder and all its contents at the end.
-  -c, --credentials string              Basic authentication credentials for the given registry in the format user:password
-      --default-cr string               File containing the default custom resource of the module. If the module is a kubebuilder project, the default CR will be automatically detected.
-      --insecure                        Use an insecure connection to access the registry.
-      --mod-cache string                Specifies the path where the module artifacts are locally cached to generate the image. If the path already has a module, use the overwrite flag to overwrite it. (default "./mod")
-  -n, --name string                     Override the module name of the kubebuilder project. If the module is not a kubebuilder project, this flag is mandatory.
-      --nameMapping string              Overrides the OCM Component Name Mapping, one of: "urlPath" or "sha256-digest" (default "urlPath")
-  -o, --output string                   File to which to output the module template if the module is uploaded to a registry (default "template.yaml")
-  -w, --overwrite                       overwrites the existing mod-path directory if it exists
-  -p, --path string                     Path to the module contents. (default current directory)
-      --registry string                 Repository context url for module to upload. The repository url will be automatically added to the repository contexts in the module
-      --registry-cred-selector string   label selector to identify a secret of type kubernetes.io/dockerconfigjson (that needs to be created externally) which allows the image to be accessed in private image registries. This can be used if you push your module to a registry with authenticated access. Example: "label1=value1,label2=value2"
-  -r, --resource stringArray            Add an extra resource in a new layer with format <NAME:TYPE@PATH>. It is also possible to provide only a path; name will default to the last path element and type to 'helm-chart'
-      --sec-scan-cfg string             Path to the directory holding the security scan configuration file.
-  -t, --token string                    Authentication token for the given registry (alternative to basic authentication).
-      --version string                  Version of the module. This flag is mandatory.
+      --channel string                     Channel to use for the module template. (default "regular")
+  -c, --credentials string                 Basic authentication credentials for the given registry in the user:password format
+      --default-cr string                  File containing the default custom resource of the module. If the module is a kubebuilder project, the default CR is automatically detected.
+      --descriptor-version string          Schema version to use for the generated OCM descriptor. One of ocm.software/v3alpha1,v2 (default "v2")
+      --insecure                           Uses an insecure connection to access the registry.
+      --module-archive-path string         Specifies the path where the module artifacts are locally cached to generate the image. If the path already has a module, use the "--module-archive-version-overwrite" flag to overwrite it. (default "./mod")
+      --module-archive-persistence         Uses the host filesystem instead of inmemory archiving to build the module.
+      --module-archive-version-overwrite   Overwrites existing component's versions of the module. If set to false, the push is a No-Op.
+  -n, --name string                        Override the module name of the kubebuilder project. If the module is not a kubebuilder project, this flag is mandatory.
+      --name-mapping string                Overrides the OCM Component Name Mapping, Use: "urlPath" or "sha256-digest". (default "urlPath")
+  -o, --output string                      File to write the module template if the module is uploaded to a registry. (default "template.yaml")
+  -p, --path string                        Path to the module's contents. (default current directory)
+      --registry string                    Context URL of the repository. The repository URL will be automatically added to the repository contexts in the module descriptor.
+      --registry-cred-selector string      Label selector to identify an externally created Secret of type "kubernetes.io/dockerconfigjson". It allows the image to be accessed in private image registries. It can be used when you push your module to a registry with authenticated access. For example, "label1=value1,label2=value2".
+  -r, --resource stringArray               Add an extra resource in a new layer in the <NAME:TYPE@PATH> format. If you provide only a path, the name defaults to the last path element, and the type is set to 'helm-chart'.
+      --sec-scanners-config string         Path to the file holding the security scan configuration. (default "sec-scanners-config.yaml")
+      --target string                      Target to use when determining where to install the module. Use 'control-plane' or 'remote'. (default "control-plane")
+  -t, --token string                       Authentication token for the given registry (alternative to basic authentication).
+      --version string                     Version of the module. This flag is mandatory.
 ```
 
 ## Flags inherited from parent commands

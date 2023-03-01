@@ -1,26 +1,22 @@
 package kustomize
 
 import (
-	"errors"
+	"bytes"
 	"fmt"
 	"net/url"
-	"os"
-	"os/exec"
-	"path/filepath"
-	"runtime"
+	"regexp"
 	"strings"
 
-	"github.com/kyma-project/cli/internal/cli"
-	"github.com/kyma-project/cli/internal/files"
-	"github.com/kyma-project/cli/pkg/step"
+	"github.com/pkg/errors"
+	"sigs.k8s.io/kustomize/api/filters/imagetag"
+	"sigs.k8s.io/kustomize/api/krusty"
+	"sigs.k8s.io/kustomize/api/types"
+	"sigs.k8s.io/kustomize/kyaml/filesys"
+	"sigs.k8s.io/kustomize/kyaml/kio"
+	"sigs.k8s.io/kustomize/kyaml/yaml"
 )
 
 const (
-	DefaultVersion     = "4.5.7"
-	versionEnv         = "KUSTOMIZE_VERSION"
-	kustomizeinstaller = "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
-	kustomizeBin       = "kustomize"
-
 	buildURLPattern = "%s?ref=%s" // pattern for URL locations Definition.Location?ref=Definition.Ref
 	defaultURLRef   = "main"
 	localRef        = "local"
@@ -75,103 +71,126 @@ func ParseKustomization(s string) (Definition, error) {
 	return res, nil
 }
 
-func Setup(step step.Step, verbose bool) error {
-	// check if binary is there (not interested in the path itself at setup)
-	_, err := kustomizeBinPath()
+const NoOutputFile = ""
 
-	// if not installed, install
-	if errors.Is(err, os.ErrNotExist) {
-		if runtime.GOOS == "windows" {
-			if _, err := exec.LookPath("bash"); err != nil {
-				return errors.New("\nBash is not installed. To install bash on windows please see http://win-bash.sourceforge.net")
-			}
-		}
-
-		v := os.Getenv(versionEnv)
-		if v == "" {
-			v = DefaultVersion
-		}
-
-		home, err := files.KymaHome()
+func BuildMany(kustomizations []Definition, filters []kio.Filter) ([]byte, error) {
+	ms := bytes.Buffer{}
+	for _, k := range kustomizations {
+		manifest, err := Build(k, filters...)
 		if err != nil {
-			return err
+			return nil, fmt.Errorf("could not build manifest for %s: %w", k.Name, err)
 		}
-
-		downloadCmd := exec.Command("curl", "-s", kustomizeinstaller)
-		installCmd := exec.Command("bash", "-s", "--", v, home)
-
-		// pipe the downloaded script to the install command
-		out, err := cli.Pipe(downloadCmd, installCmd)
-		if err != nil {
-			return fmt.Errorf("error installing kustomize %w", err)
-		} else if verbose {
-			step.LogInfof("Installed Kustomize: %s", out)
-		}
-		return nil
+		ms.Write(manifest)
+		ms.WriteString("\n---\n")
 	}
-	if err != nil {
-		return fmt.Errorf("error getting kustomize binary: %w", err)
-	}
-	return nil
+
+	return ms.Bytes(), nil
 }
 
 // Build generates a manifest given a path using kustomize
 // Additional args might be given to the kustomize build command
-func Build(def Definition, args ...string) ([]byte, error) {
-	p, err := kustomizeBinPath()
-	if err != nil {
-		return nil, fmt.Errorf("error getting kustomize binary: %w", err)
-	}
+func Build(def Definition, filters ...kio.Filter) ([]byte, error) {
+	opts := krusty.MakeDefaultOptions()
+	kustomize := krusty.MakeKustomizer(opts)
 
 	path := def.Location
 	if def.Ref != localRef {
 		path = fmt.Sprintf(buildURLPattern, def.Location, def.Ref)
 	}
 
-	// prepend command and path to args
-	args = append([]string{"build", path}, args...)
-
-	out, err := exec.Command(p, args...).CombinedOutput()
+	results, err := kustomize.Run(filesys.MakeFsOnDisk(), path)
 	if err != nil {
-		return nil, fmt.Errorf("could not build kustomization: %s: %w", out, err)
+		return nil, fmt.Errorf("could not build kustomization: %w", err)
 	}
 
-	return out, nil
+	for i, filter := range filters {
+		if err := results.ApplyFilter(filter); err != nil {
+			return nil, fmt.Errorf("could not apply filter (number %v): %w", i, err)
+		}
+	}
+
+	yml, err := results.AsYaml()
+	if err != nil {
+		return nil, fmt.Errorf("could not parse kustomization as yml: %w", err)
+	}
+
+	return yml, nil
 }
 
-// Set image edits the given image to the given value in the kustomization found in path.
-func SetImage(path, img, value string) error {
-	p, err := kustomizeBinPath()
-	if err != nil {
-		return fmt.Errorf("error getting kustomize binary: %w", err)
-	}
+const (
+	ControllerImageName = "controller"
+)
 
-	c := exec.Command(p, "edit", "set", "image", fmt.Sprintf("%s=%s", img, value))
-	c.Dir = path
-	out, err := c.CombinedOutput()
+func LifecycleManagerImageModifier(overrideString string, onOverride func(image string)) (imagetag.Filter, error) {
+	override, err := parseOverride(overrideString)
 	if err != nil {
-		return fmt.Errorf("could not set image: %s: %w", out, err)
+		return imagetag.Filter{}, err
 	}
-
-	return nil
+	return ImageModifier(
+		"*lifecycle-manager*", override.name, override.tag, override.digest,
+		func(key, value, tag string, node *yaml.RNode) { onOverride(value) },
+	), nil
 }
 
-// kustomizeBinPath looks for the kustomize binary in the PATH or in the default Kyma home folder.
-// If it's not there in any location, os.ErrNotExist is returned.
-// Any other error means something went wrong.
-func kustomizeBinPath() (string, error) {
-	p, err := exec.LookPath(kustomizeBin)
-	if err != nil && !errors.Is(err, exec.ErrNotFound) {
-		return p, err
-	}
-	if p != "" {
-		return p, nil
+type override struct {
+	name   string
+	digest string
+	tag    string
+}
+
+var ErrImageInvalidArgs = errors.New(
+	`invalid format of image, use one of the following options:
+- <image>:<newtag>, in which case both image and tag get overritten
+- <image>@<digest>, in which case both image and digest get overritten
+- <tag>, in which case the default image is used but with a different tag`,
+)
+
+// parseOverride parses the override parameters
+// from the given arg into a struct
+// heavily inspired by kustomize edit https://github.com/kubernetes-sigs/kustomize/blob/22dbd3eb17d9980f900d761ff3665c2b1849726b/kustomize/commands/edit/set/setimage.go#L231
+func parseOverride(arg string) (override, error) {
+	// match <image>@<digest>
+	if d := strings.Split(arg, "@"); len(d) > 1 {
+		return override{
+			name:   d[0],
+			digest: d[1],
+		}, nil
 	}
 
-	home, err := files.KymaHome()
-	if err != nil {
-		return "", err
+	// match <image>:<tag>
+	if t := regexp.MustCompile(`^(.*):([a-zA-Z0-9._-]*|\*)$`).FindStringSubmatch(arg); len(t) == 3 {
+		return override{
+			name: t[1],
+			tag:  t[2],
+		}, nil
 	}
 
-	return exec.LookPath(filepath.Join(home, kustomizeBin))
+	// match <image>
+	if len(arg) > 0 {
+		return override{
+			tag: arg,
+		}, nil
+	}
+	return override{}, ErrImageInvalidArgs
+}
+
+func ImageModifier(
+	name, img, tag, digest string, callback func(key, value, tag string, node *yaml.RNode),
+) imagetag.Filter {
+	filter := imagetag.Filter{
+		ImageTag: types.Image{
+			Name:    name,
+			NewName: img,
+			NewTag:  tag,
+			Digest:  digest,
+		},
+		FsSlice: []types.FieldSpec{
+			{Path: "spec/containers[]/image"},
+			{Path: "spec/template/spec/containers[]/image"},
+		},
+	}
+	if callback != nil {
+		(&filter).WithMutationTracker(callback)
+	}
+	return filter
 }

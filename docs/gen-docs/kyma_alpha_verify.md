@@ -1,12 +1,12 @@
 ---
-title: kyma alpha sign
+title: kyma alpha verify
 ---
 
-Signs all module resources from an unsigned module component descriptor that's hosted in a remote OCI registry
+Verifies all module resources from a signed module component descriptor that's hosted in a remote OCI registry
 
 ## Synopsis
 
-Use this command to sign all module resources from an unsigned module component descriptor that's hosted in a remote OCI registry
+Use this command to verify all module resources from a signed module descriptor that's hosted in a remote OCI registry
 
 ## Flags inherited from parent commands
 
@@ -21,5 +21,5 @@ Use this command to sign all module resources from an unsigned module component 
 ## See also
 
 * [kyma alpha](kyma_alpha.md)	 - Experimental commands
-* [kyma alpha sign module](kyma_alpha_sign_module.md)	 - Signs all module resources from an unsigned component descriptor that's hosted in a remote OCI registry
+* [kyma alpha verify module](kyma_alpha_verify_module.md)	 - Verifies the signature of a Kyma module bundled as an OCI container image.
 

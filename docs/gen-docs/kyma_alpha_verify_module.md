@@ -1,20 +1,20 @@
 ---
-title: kyma alpha sign module
+title: kyma alpha verify module
 ---
 
-Signs all module resources from an unsigned component descriptor that's hosted in a remote OCI registry
+Verifies the signature of a Kyma module bundled as an OCI container image.
 
 ## Synopsis
 
-Use this command to sign a Kyma module.
+Use this command to verify a Kyma module.
 
 ### Detailed description
 
-This command signs all module resources recursively based on an unsigned component descriptor hosted in an OCI registry with the provided private key. Then, the output (component-descriptor.yaml) is saved in the descriptor path (default: ./mod) as a signed component descriptor. If signed-registry are provided, the command pushes the signed component descriptor.
+Kyma modules can be cryptographically signed to ensure they are correct and distributed by a trusted authority. This command verifies the authenticity of a given module.
 
 
 ```bash
-kyma alpha sign module --name MODULE_NAME --version MODULE_VERSION --registry MODULE_REGISTRY [flags]
+kyma alpha verify module --name MODULE_NAME --version MODULE_VERSION --registry MODULE_REGISTRY [flags]
 ```
 
 ## Flags
@@ -22,7 +22,7 @@ kyma alpha sign module --name MODULE_NAME --version MODULE_VERSION --registry MO
 ```bash
   -c, --credentials string      Basic authentication credentials for the given registry in the user:password format
       --insecure                Uses an insecure connection to access the registry.
-      --key string              Specifies the path where a private key is used for signing.
+      --key string              Specifies the path where a public key is used for signing.
       --name string             Name of the module.
       --name-mapping string     Overrides the OCM Component Name Mapping, Use: "urlPath" or "sha256-digest". (default "urlPath")
       --registry string         Context URL of the repository for the module. The repository's URL is automatically added to the repository's contexts in the module.
@@ -43,5 +43,5 @@ kyma alpha sign module --name MODULE_NAME --version MODULE_VERSION --registry MO
 
 ## See also
 
-* [kyma alpha sign](kyma_alpha_sign.md)	 - Signs all module resources from an unsigned module component descriptor that's hosted in a remote OCI registry
+* [kyma alpha verify](kyma_alpha_verify.md)	 - Verifies all module resources from a signed module component descriptor that's hosted in a remote OCI registry
 

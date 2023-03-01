@@ -3,9 +3,13 @@ package module
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-project/cli/internal/cli/alpha/module"
-	"k8s.io/apimachinery/pkg/types"
+	"os"
 	"time"
+
+	"github.com/kyma-project/cli/internal/cli/alpha/module"
+	"github.com/kyma-project/lifecycle-manager/api/v1beta1"
+	"go.uber.org/zap"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/pkg/errors"
@@ -58,10 +62,12 @@ Disable "my-module" from the "alpha" channel in "default-kyma" in "kyma-system" 
 		&o.KymaName, "kyma-name", "k", cli.KymaNameDefault,
 		"Kyma resource to use. If empty, 'default-kyma' is used.",
 	)
-	cmd.Flags().BoolVarP(&o.Force, "force-conflicts", "f", false,
+	cmd.Flags().BoolVarP(
+		&o.Force, "force-conflicts", "f", false,
 		"Forces the patching of Kyma spec modules in case their managed field was edited by a source other than Kyma CLI.",
 	)
-	cmd.Flags().BoolVarP(&o.Wait, "wait", "w", false,
+	cmd.Flags().BoolVarP(
+		&o.Wait, "wait", "w", false,
 		"Wait until the given Kyma resource is ready.",
 	)
 
@@ -69,6 +75,23 @@ Disable "my-module" from the "alpha" channel in "default-kyma" in "kyma-system" 
 }
 
 func (cmd *command) Run(ctx context.Context, args []string) error {
+	if cmd.opts.CI {
+		cmd.Factory.NonInteractive = true
+	}
+	if cmd.opts.Verbose {
+		cmd.Factory.UseLogger = true
+	}
+
+	l := cli.NewLogger(cmd.opts.Verbose).Sugar()
+	undo := zap.RedirectStdLog(l.Desugar())
+	defer undo()
+
+	if !cmd.opts.Verbose {
+		stderr := os.Stderr
+		os.Stderr = nil
+		defer func() { os.Stderr = stderr }()
+	}
+
 	if !cmd.opts.NonInteractive {
 		cli.AlphaWarn()
 	}
@@ -85,61 +108,60 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 	ctx, cancel := context.WithTimeout(ctx, cmd.opts.Timeout)
 	defer cancel()
 
-	return cmd.run(ctx, moduleName)
+	return cmd.run(ctx, l, moduleName)
 }
 
-func (cmd *command) run(ctx context.Context, moduleName string) error {
-	start := time.Now()
-	if err := cmd.EnsureClusterAccess(ctx, cmd.opts.Timeout); err != nil {
+func (cmd *command) run(ctx context.Context, l *zap.SugaredLogger, moduleName string) error {
+	clusterAccess := cmd.NewStep("Ensuring Cluster Access")
+	if _, err := cmd.EnsureClusterAccess(ctx, cmd.opts.Timeout); err != nil {
+		clusterAccess.Failuref("Could not ensure cluster Access")
 		return err
 	}
+	clusterAccess.Successf("Successfully connected to cluster")
 
 	kyma := types.NamespacedName{Name: cmd.opts.KymaName, Namespace: cmd.opts.Namespace}
-	moduleInteractor := module.NewInteractor(cmd.K8s, kyma, cmd.opts.Force)
+	moduleInteractor := module.NewInteractor(l, cmd.K8s, kyma, cmd.opts.Timeout, cmd.opts.Force)
 	modules, err := moduleInteractor.Get(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get modules: %w", err)
 	}
 	desiredModules, err := disableModule(modules, moduleName, cmd.opts.Channel)
 	if err != nil {
-		return fmt.Errorf("could not disable module: %w", err)
+		return err
 	}
 
-	if len(modules) != len(desiredModules) {
-		if err = moduleInteractor.Update(ctx, desiredModules); err != nil {
+	patchStep := cmd.NewStep("Patching modules for Kyma")
+	if err = moduleInteractor.Update(ctx, desiredModules); err != nil {
+		patchStep.Failuref("Could not apply modules for Kyma")
+		return err
+	}
+	patchStep.Successf("Modules patched!")
+
+	if cmd.opts.Wait {
+		waitStep := cmd.NewStep("Waiting for Kyma to become Ready")
+		if err = moduleInteractor.WaitUntilReady(
+			ctx,
+		); err != nil {
+			waitStep.Failuref("Kyma did not get Ready")
 			return err
 		}
-		if cmd.opts.Wait {
-			if err = moduleInteractor.WaitForKymaReadiness(); err != nil {
-				return err
-			}
-		}
+		waitStep.Successf("Kyma is Ready")
 	}
-
-	l := cli.NewLogger(cmd.opts.Verbose).Sugar()
-	l.Infof("disabling module took %s", time.Since(start))
 
 	return nil
 }
 
-func disableModule(modules []interface{}, name, channel string) ([]interface{}, error) {
-	for i := range modules {
-		mod, _ := modules[i].(map[string]interface{})
-		moduleName, found := mod["name"]
-		if !found {
-			return nil, errors.New("invalid item in modules spec: name field missing")
-		}
-		if moduleName != name {
+func disableModule(modules []v1beta1.Module, name, channel string) ([]v1beta1.Module, error) {
+	for i, mod := range modules {
+		if mod.Name != name {
 			continue
 		}
 		if channel != "" {
-			moduleChannel, cFound := mod["channel"]
-			if cFound && moduleChannel != channel {
+			if mod.Channel != channel {
 				continue
 			}
 		}
 		return append(modules[:i], modules[i+1:]...), nil
 	}
-
-	return nil, errors.Errorf("no active module %s %s found to disable", name, channel)
+	return modules, fmt.Errorf("could not disable module as it was not found: %s in channel %s", name, channel)
 }

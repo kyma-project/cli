@@ -27,5 +27,6 @@ Alpha commands are experimental, unreleased features that should only be used by
 * [kyma alpha disable](kyma_alpha_disable.md)	 - Disables a resource in the Kyma cluster.
 * [kyma alpha enable](kyma_alpha_enable.md)	 - Enables a resource in the Kyma cluster.
 * [kyma alpha list](kyma_alpha_list.md)	 - Lists resources on the Kyma cluster.
-* [kyma alpha sign](kyma_alpha_sign.md)	 - Signs all module resources from an unsigned component descriptor that's hosted in a remote OCI registry
+* [kyma alpha sign](kyma_alpha_sign.md)	 - Signs all module resources from an unsigned module component descriptor that's hosted in a remote OCI registry
+* [kyma alpha verify](kyma_alpha_verify.md)	 - Verifies all module resources from a signed module component descriptor that's hosted in a remote OCI registry
 

@@ -1,12 +1,8 @@
 package module
 
 import (
-	"fmt"
-
-	"github.com/gardener/component-spec/bindings-go/ctf"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/pkg/module"
-	"github.com/mandelsoft/vfs/pkg/osfs"
 	"github.com/spf13/cobra"
 )
 
@@ -24,7 +20,7 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "module MODULE_NAME MODULE_VERSION [flags]",
+		Use:   "module --name MODULE_NAME --version MODULE_VERSION --registry MODULE_REGISTRY [flags]",
 		Short: "Signs all module resources from an unsigned component descriptor that's hosted in a remote OCI registry",
 		Long: `Use this command to sign a Kyma module.
 
@@ -35,32 +31,49 @@ This command signs all module resources recursively based on an unsigned compone
 		RunE:    func(_ *cobra.Command, args []string) error { return c.Run(args) },
 		Aliases: []string{"mod"},
 	}
-	cmd.Args = cobra.ExactArgs(2)
-	cmd.Flags().StringVar(&o.PrivateKeyPath, "private-key", "", "Specifies the path where the private key used for signing")
-	cmd.Flags().StringVar(&o.ModPath, "mod-path", "./mod", "Specifies the path where the signed component descriptor will be stored")
-	cmd.Flags().StringVar(&o.SignatureName, "signature-name", "", "name of the signature for signing")
-	cmd.Flags().StringVar(&o.RegistryURL, "registry", "", "Repository context url where unsigned component descriptor located")
-	cmd.Flags().StringVar(&o.NameMappingMode, "nameMapping", "urlPath", "Overrides the OCM Component Name Mapping, one of: \"urlPath\" or \"sha256-digest\"")
-	cmd.Flags().StringVar(&o.SignedRegistryURL, "signed-registry", "", "Repository context url where signed component descriptor located")
-	cmd.Flags().StringVarP(&o.Credentials, "credentials", "c", "", "Basic authentication credentials for the given registry in the format user:password")
-	cmd.Flags().StringVarP(&o.Token, "token", "t", "", "Authentication token for the given registry (alternative to basic authentication).")
-	cmd.Flags().BoolVar(&o.Insecure, "insecure", false, "Use an insecure connection to access the registry.")
+	cmd.Flags().StringVar(
+		&o.Name, "name", "", "Name of the module.",
+	)
+	cmd.Flags().StringVar(
+		&o.Version, "version", "", "Version of the module.",
+	)
+	cmd.Flags().StringVar(
+		&o.PrivateKeyPath, "key", "", "Specifies the path where a private key is used for signing.",
+	)
+	cmd.Flags().StringVar(
+		&o.SignatureName, "signature-name", "kyma-project.io/module-signature", "name of the signature to use.",
+	)
+	cmd.Flags().StringVar(
+		&o.RegistryURL, "registry", "", "Context URL of the repository for the module. "+
+			"The repository's URL is automatically added to the repository's contexts in the module.",
+	)
+	cmd.Flags().StringVar(
+		&o.NameMappingMode, "name-mapping", "urlPath",
+		"Overrides the OCM Component Name Mapping, Use: \"urlPath\" or \"sha256-digest\".",
+	)
+	cmd.Flags().StringVarP(
+		&o.Credentials, "credentials", "c", "",
+		"Basic authentication credentials for the given registry in the user:password format",
+	)
+	cmd.Flags().StringVarP(
+		&o.Token, "token", "t", "",
+		"Authentication token for the given registry (alternative to basic authentication).",
+	)
+	cmd.Flags().BoolVar(&o.Insecure, "insecure", false, "Uses an insecure connection to access the registry.")
 
 	return cmd
 }
 
-func (c *command) Run(args []string) error {
+func (c *command) Run(_ []string) error {
 	if !c.opts.NonInteractive {
 		cli.AlphaWarn()
 	}
 
-	log := cli.NewLogger(c.opts.Verbose).Sugar()
-
 	signCfg := &module.ComponentSignConfig{
-		Name:           args[0],
-		Version:        args[1],
-		PrivateKeyPath: c.opts.PrivateKeyPath,
-		SignatureName:  c.opts.SignatureName,
+		Name:          c.opts.Name,
+		Version:       c.opts.Version,
+		KeyPath:       c.opts.PrivateKeyPath,
+		SignatureName: c.opts.SignatureName,
 	}
 
 	c.NewStep("Fetching and signing component descriptor...")
@@ -78,62 +91,11 @@ func (c *command) Run(args []string) error {
 		Insecure:    c.opts.Insecure,
 	}
 
-	digestedCds, err := module.Sign(signCfg, remote, log)
-	if err != nil {
+	if err := module.Sign(signCfg, remote); err != nil {
 		c.CurrentStep.Failure()
 		return err
-	}
-
-	// TODO: at the moment only support one cd, consider extend this further
-	if len(digestedCds) < 1 {
-		c.CurrentStep.Failure()
 	}
 	c.CurrentStep.Success()
-
-	c.NewStep("Generating signed component descriptor...")
-	fs := osfs.New()
-	firstDigestedCd := digestedCds[0]
-	if err := module.WriteComponentDescriptor(fs, firstDigestedCd, c.opts.ModPath, ctf.ComponentDescriptorFileName); err != nil {
-		c.CurrentStep.Failure()
-		return err
-	}
-
-	c.CurrentStep.Successf("Signed component descriptor generated at %s", c.opts.ModPath)
-
-	if c.opts.SignedRegistryURL != "" {
-		c.NewStep("Rebuilding the module...")
-
-		cwd, err := fs.Getwd()
-		if err != nil {
-			return fmt.Errorf("could not ge the current directory: %w", err)
-		}
-
-		cfg := &module.Definition{
-			Source:          cwd,
-			Name:            signCfg.Name,
-			Version:         signCfg.Version,
-			ArchivePath:     c.opts.ModPath,
-			Overwrite:       false,
-			RegistryURL:     c.opts.SignedRegistryURL,
-			NameMappingMode: remote.NameMapping,
-		}
-		archive, err := module.Build(fs, cfg)
-		if err != nil {
-			c.CurrentStep.Failure()
-			return err
-		}
-		c.CurrentStep.Success()
-
-		c.NewStep(fmt.Sprintf("Pushing signed component descriptor to %q", c.opts.SignedRegistryURL))
-		archive.ComponentDescriptor = firstDigestedCd
-		// Assume the credentials are same between registries that host unsigned and signed component descriptor
-		remote.Registry = c.opts.SignedRegistryURL
-		if err := module.Push(archive, remote, log); err != nil {
-			c.CurrentStep.Failure()
-			return err
-		}
-		c.CurrentStep.Success()
-	}
 
 	return nil
 }

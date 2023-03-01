@@ -32,13 +32,13 @@ var moduleTemplates string
 
 var moduleTemplateResource = schema.GroupVersionResource{
 	Group:    "operator.kyma-project.io",
-	Version:  "v1alpha1",
+	Version:  "v1beta1",
 	Resource: "moduletemplates",
 }
 
 var kymaResource = schema.GroupVersionResource{
 	Group:    "operator.kyma-project.io",
-	Version:  "v1alpha1",
+	Version:  "v1beta1",
 	Resource: "kymas",
 }
 

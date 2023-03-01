@@ -1,22 +1,34 @@
 package module
 
 import (
-	"context"
+	"fmt"
+	"os"
+	"path/filepath"
+	"regexp"
 	"strings"
 
-	cdv2 "github.com/gardener/component-spec/bindings-go/apis/v2"
-	"github.com/gardener/component-spec/bindings-go/ctf"
-	cdoci "github.com/gardener/component-spec/bindings-go/oci"
-	"github.com/kyma-project/cli/pkg/module/oci"
-	"github.com/pkg/errors"
-	"go.uber.org/zap"
+	"github.com/open-component-model/ocm/pkg/common"
+	"github.com/open-component-model/ocm/pkg/contexts/credentials"
+	"github.com/open-component-model/ocm/pkg/contexts/credentials/repositories/dockerconfig"
+	oci "github.com/open-component-model/ocm/pkg/contexts/oci/repositories/ocireg"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/attrs/compatattr"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/cpi"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/comparch"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/genericocireg"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/ocireg"
+	componentTransfer "github.com/open-component-model/ocm/pkg/contexts/ocm/transfer"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/transfer/transferhandler"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/transfer/transferhandler/standard"
+	"github.com/open-component-model/ocm/pkg/runtime"
 )
 
-type NameMapping cdv2.ComponentNameMapping
+type NameMapping ocireg.ComponentNameMapping
 
 const (
-	URLPathNameMapping = NameMapping(cdv2.OCIRegistryURLPathMapping)
-	DigestNameMapping  = NameMapping(cdv2.OCIRegistryDigestMapping)
+	URLPathNameMapping = NameMapping(ocireg.OCIRegistryURLPathMapping)
+	DigestNameMapping  = NameMapping(ocireg.OCIRegistryDigestMapping)
 )
 
 // Remote represents remote OCI registry and the means to access it
@@ -28,64 +40,108 @@ type Remote struct {
 	Insecure    bool
 }
 
-// Push picks up the archive described in the config and pushes it to the provided registry.
-// The credentials and token are optional parameters
-func Push(archive *ctf.ComponentArchive, r *Remote, log *zap.SugaredLogger) error {
+func (r *Remote) GetRepository(ctx cpi.Context) (cpi.Repository, error) {
+	creds := r.getCredentials(ctx)
+	var repoType string
+	if compatattr.Get(ctx) {
+		repoType = oci.LegacyType
+	} else {
+		repoType = oci.Type
+	}
 
-	u, p := r.UserPass()
-	ociClient, err := oci.NewClient(&oci.Options{
-		Registry: r.Registry,
-		User:     u,
-		Secret:   p,
-		Insecure: r.Insecure,
-	}, log)
+	ociRepoSpec := &oci.RepositorySpec{
+		ObjectVersionedType: runtime.NewVersionedObjectType(repoType),
+		BaseURL:             NoSchemeURL(r.Registry),
+	}
+	genericSpec := genericocireg.NewRepositorySpec(
+		ociRepoSpec, &ocireg.ComponentRepositoryMeta{
+			ComponentNameMapping: ocireg.ComponentNameMapping(r.NameMapping),
+		},
+	)
+
+	repo, err := ctx.RepositoryForSpec(genericSpec, creds)
 
 	if err != nil {
-		return errors.Wrap(err, "unable to create an OCI client")
+		return nil, fmt.Errorf("error creating repository from spec: %w", err)
 	}
-	ctx := context.Background()
 
-	// update repository context
-	if len(r.Registry) != 0 {
-		if rc := archive.ComponentDescriptor.GetEffectiveRepositoryContext(); rc != nil {
-			//This code executes, for example, during push of the existing module (repo 1) to another repository (repo 2). A valid scenario for the CLI "sign module" cmd.
-			var repo cdv2.OCIRegistryRepository
-			if err = rc.DecodeInto(&repo); err != nil {
-				return errors.Wrap(err, "unable to decode component descriptor")
-			}
+	return repo, nil
+}
 
-			//Inject only if the repo is different
-			if repo.BaseURL != noSchemeURL(r.Registry) || repo.ComponentNameMapping != cdv2.ComponentNameMapping(r.NameMapping) {
-				if err := cdv2.InjectRepositoryContext(archive.ComponentDescriptor, BuildNewOCIRegistryRepository(r.Registry, cdv2.ComponentNameMapping(r.NameMapping))); err != nil {
-					return errors.Wrap(err, "unable to add repository context to component descriptor")
-				}
+func (r *Remote) getCredentials(ctx cpi.Context) credentials.Credentials {
+	if r.Insecure {
+		return credentials.NewCredentials(nil)
+	}
+	var creds credentials.Credentials
+	if home, err := os.UserHomeDir(); err == nil {
+		path := filepath.Join(home, ".docker", "config.json")
+		if repo, err := dockerconfig.NewRepository(ctx.CredentialsContext(), path, true); err == nil {
+			// this uses the first part of the url to resolve the correct host, e.g.
+			// ghcr.io/jakobmoellersap/testmodule => ghcr.io
+			hostNameInDockerConfigJSON := strings.Split(NoSchemeURL(r.Registry), "/")[0]
+			if creds, err = repo.LookupCredentials(hostNameInDockerConfigJSON); err != nil {
+				// this forces creds to be nil in case the host was not found in the native docker store
+				creds = nil
 			}
 		}
 	}
-
-	manifest, err := cdoci.NewManifestBuilder(ociClient.Cache(), archive).Build(ctx)
-	if err != nil {
-		return errors.Wrap(err, "unable to build OCI artifact for component archive")
+	// if no creds are set, try to use username and password that are provided.
+	if creds == nil {
+		u, p := r.userPass()
+		if p == "" {
+			p = r.Token
+		}
+		creds = credentials.DirectCredentials{
+			"username": u,
+			"password": p,
+		}
 	}
-
-	ref, err := oci.Ref(archive.ComponentDescriptor.GetEffectiveRepositoryContext(), archive.ComponentDescriptor.Name, archive.ComponentDescriptor.Version)
-	if err != nil {
-		return errors.Wrap(err, "invalid component reference")
-	}
-	if err := ociClient.PushManifest(ctx, ref, manifest); err != nil {
-		return err
-	}
-	log.Debugf("Successfully uploaded manifest at %q", ref)
-
-	return nil
+	return creds
 }
 
-// UserPass splits the credentials string into user and password.
+// userPass splits the credentials string into user and password.
 // If the string is empty or can't be split, it returns 2 empty strings.
-func (r *Remote) UserPass() (string, string) {
+func (r *Remote) userPass() (string, string) {
 	u, p, found := strings.Cut(r.Credentials, ":")
 	if !found {
 		return "", ""
 	}
 	return u, p
+}
+
+func NoSchemeURL(url string) string {
+	regex := regexp.MustCompile(`^https?://`)
+	return regex.ReplaceAllString(url, "")
+}
+
+// Push picks up the archive described in the config and pushes it to the provided registry.
+// The credentials and token are optional parameters
+func (r *Remote) Push(archive *comparch.ComponentArchive, overwrite bool) (ocm.ComponentVersionAccess, error) {
+	repo, err := r.GetRepository(archive.GetContext())
+	if err != nil {
+		return nil, err
+	}
+
+	transferHandler, err := standard.New(standard.Overwrite(overwrite))
+	if err != nil {
+		return nil, fmt.Errorf("could not setup archive transfer: %w", err)
+	}
+
+	if err = componentTransfer.TransferVersion(
+		common.NewLoggingPrinter(archive.GetContext().Logger()), nil, archive.ComponentVersionAccess, repo, &customTransferHandler{transferHandler},
+	); err != nil {
+		return nil, fmt.Errorf("could not finish component transfer: %w", err)
+	}
+
+	return repo.LookupComponentVersion(
+		archive.ComponentVersionAccess.GetName(), archive.ComponentVersionAccess.GetVersion(),
+	)
+}
+
+type customTransferHandler struct {
+	transferhandler.TransferHandler
+}
+
+func (h *customTransferHandler) TransferVersion(repo ocm.Repository, src ocm.ComponentVersionAccess, meta *compdesc.ComponentReference) (ocm.ComponentVersionAccess, transferhandler.TransferHandler, error) {
+	return h.TransferHandler.TransferVersion(repo, src, meta)
 }

@@ -4,23 +4,39 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/go-logr/zapr"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"k8s.io/klog/v2"
 )
 
 // NewLogger returns the logger used for CLI log output (used in Hydroform deployments)
 func NewLogger(printLogs bool) *zap.Logger {
+	var logger *zap.Logger
 	if printLogs {
-		logger, err := createVerboseLogger()
-		if err != nil {
+		var err error
+
+		if logger, err = createVerboseLogger(); err != nil {
 			log.Fatalf("Can't initialize zap logger: %v", err)
 		}
-		return logger
+
+	} else {
+		logger = zap.NewNop()
 	}
-	return zap.NewNop()
+	logr := zapr.NewLoggerWithOptions(logger)
+	klog.SetLogger(logr)
+	ocm.DefaultContext().LoggingContext().SetBaseLogger(logr)
+	ocm.DefaultContext().LoggingContext().SetDefaultLevel(9)
+	ocm.DefaultContext().CredentialsContext().LoggingContext().SetBaseLogger(logr)
+	ocm.DefaultContext().CredentialsContext().LoggingContext().SetDefaultLevel(9)
+
+	return logger
 }
 
 func createVerboseLogger() (*zap.Logger, error) {
 	config := zap.NewDevelopmentConfig()
+	config.Level = zap.NewAtomicLevelAt(zapcore.Level(-9))
 	config.DisableStacktrace = true
 	return config.Build()
 }
