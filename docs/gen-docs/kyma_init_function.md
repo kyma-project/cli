@@ -26,6 +26,8 @@ kyma init function [flags]
                                         	- nodejs14 (deprecated)
                                         	- nodejs16	
                                         	- python39 (default "nodejs16")
+                                        	- python39 (default "nodejs14")
+      --schema-version string   Version of the config API. (default "v0")
       --runtime-image-override string   Set custom runtime image base.
       --url string                      Git repository URL
       --vscode                          Generate VS Code settings containing config.yaml JSON schema for autocompletion (see "kyma get schema -h" for more info)
