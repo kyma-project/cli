@@ -2,6 +2,7 @@ package function
 
 import (
 	"fmt"
+	"github.com/kyma-project/cli/cmd/kyma/sync/function"
 	"os"
 	"path"
 
@@ -54,9 +55,10 @@ Use the flags to specify the initial configuration for your Function or to choos
 		&o.Runtime, "runtime", "r", defaultRuntime,
 		`Flag used to define the environment for running your Function. Use one of these options:
 	- nodejs14 (deprecated)
-	- nodejs16	
+	- nodejs16
 	- python39`,
 	)
+	cmd.Flags().StringVar(&o.SchemaVersion, "schema-version", string(workspace.SchemaVersionDefault), `Version of the config API.`)
 
 	// git function options
 	cmd.Flags().StringVar(&o.URL, "url", "", `Git repository URL`)
@@ -101,13 +103,19 @@ func (c *command) Run() error {
 		)
 	}
 
+	schemaVersion, err := function.ParseSchemaVersion(c.opts.SchemaVersion)
+	if err != nil {
+		s.Failure()
+		return err
+	}
+
 	configuration := workspace.Cfg{
 		Runtime:              c.opts.Runtime,
 		RuntimeImageOverride: c.opts.RuntimeImageOverride,
 		Name:                 c.opts.Name,
 		Namespace:            c.opts.Namespace,
 		Source:               c.opts.source(),
-		SchemaVersion:        workspace.SchemaVersionDefault,
+		SchemaVersion:        schemaVersion,
 	}
 
 	err = workspace.Initialize(configuration, c.opts.Dir)

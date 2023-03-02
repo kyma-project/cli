@@ -43,7 +43,7 @@ Use the flags to specify the name of your Function, the Namespace, or the locati
 
 	cmd.Flags().StringVarP(&o.Namespace, "namespace", "n", "", `Namespace from which you want to sync the Function.`)
 	cmd.Flags().StringVarP(&o.Dir, "dir", "d", "", `Full path to the directory where you want to save the project.`)
-	cmd.Flags().StringVar(&o.SchemaVersion, "schemaVersion", string(workspace.SchemaVersionDefault), `Version of the config API.`)
+	cmd.Flags().StringVar(&o.SchemaVersion, "schema-version", string(workspace.SchemaVersionDefault), `Version of the config API.`)
 
 	return cmd
 }
@@ -73,7 +73,7 @@ func (c *command) Run(name string) error {
 		return c.K8s.Dynamic().Resource(resource).Namespace(namespace)
 	}
 
-	schemaVersion, err := parseSchemaVersion(c.opts.SchemaVersion)
+	schemaVersion, err := ParseSchemaVersion(c.opts.SchemaVersion)
 	if err != nil {
 		s.Failure()
 		return err
@@ -95,7 +95,7 @@ func (c *command) Run(name string) error {
 	return nil
 }
 
-func parseSchemaVersion(version string) (workspace.SchemaVersion, error) {
+func ParseSchemaVersion(version string) (workspace.SchemaVersion, error) {
 	for _, value := range workspace.AllowedSchemaVersions {
 		if version == string(value) {
 			return value, nil
