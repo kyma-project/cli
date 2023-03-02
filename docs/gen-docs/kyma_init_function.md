@@ -23,9 +23,9 @@ kyma init function [flags]
       --reference string                Commit hash or branch name (default "main")
       --repository-name string          The name of the Git repository to be created
   -r, --runtime string                  Flag used to define the environment for running your Function. Use one of these options:
-                                        	- nodejs14
+                                        	- nodejs14 (deprecated)
                                         	- nodejs16	
-                                        	- python39 (default "nodejs14")
+                                        	- python39 (default "nodejs16")
       --runtime-image-override string   Set custom runtime image base.
       --url string                      Git repository URL
       --vscode                          Generate VS Code settings containing config.yaml JSON schema for autocompletion (see "kyma get schema -h" for more info)

@@ -14,13 +14,15 @@ import (
 )
 
 const (
-	defaultRuntime   = "nodejs14"
+	defaultRuntime   = "nodejs16"
 	defaultReference = "main"
 	defaultBaseDir   = "/"
 )
 
 var (
-	deprecatedRuntimes = map[string]struct{}{}
+	deprecatedRuntimes = map[string]struct{}{
+		"nodejs14": {},
+	}
 )
 
 type command struct {
@@ -51,7 +53,7 @@ Use the flags to specify the initial configuration for your Function or to choos
 	cmd.Flags().StringVarP(
 		&o.Runtime, "runtime", "r", defaultRuntime,
 		`Flag used to define the environment for running your Function. Use one of these options:
-	- nodejs14
+	- nodejs14 (deprecated)
 	- nodejs16	
 	- python39`,
 	)
