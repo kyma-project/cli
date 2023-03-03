@@ -26,7 +26,7 @@ kyma alpha sign module --name MODULE_NAME --version MODULE_VERSION --registry MO
       --name string             Name of the module.
       --name-mapping string     Overrides the OCM Component Name Mapping, Use: "urlPath" or "sha256-digest". (default "urlPath")
       --registry string         Context URL of the repository for the module. The repository's URL is automatically added to the repository's contexts in the module.
-      --signature-name string   name of the signature to use. (default "kyma-project.io/module-signature")
+      --signature-name string   Name of the signature to use. (default "kyma-project.io/module-signature")
   -t, --token string            Authentication token for the given registry (alternative to basic authentication).
       --version string          Version of the module.
 ```

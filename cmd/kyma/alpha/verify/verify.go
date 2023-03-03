@@ -10,8 +10,8 @@ import (
 func NewCmd(o *cli.Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "verify",
-		Short: "Verifies all module resources from a signed module component descriptor that's hosted in a remote OCI registry",
-		Long:  "Use this command to verify all module resources from a signed module descriptor that's hosted in a remote OCI registry",
+		Short: "Verifies all module resources from a signed module component descriptor that's hosted in a remote OCI registry.",
+		Long:  "Use this command to verify all module resources from a signed module descriptor that's hosted in a remote OCI registry.",
 	}
 
 	cmd.AddCommand(module.NewCmd(module.NewOptions(o)))

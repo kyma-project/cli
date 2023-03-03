@@ -41,7 +41,7 @@ This command signs all module resources recursively based on an unsigned compone
 		&o.PrivateKeyPath, "key", "", "Specifies the path where a private key is used for signing.",
 	)
 	cmd.Flags().StringVar(
-		&o.SignatureName, "signature-name", "kyma-project.io/module-signature", "name of the signature to use.",
+		&o.SignatureName, "signature-name", "kyma-project.io/module-signature", "Name of the signature to use.",
 	)
 	cmd.Flags().StringVar(
 		&o.RegistryURL, "registry", "", "Context URL of the repository for the module. "+

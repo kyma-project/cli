@@ -65,27 +65,27 @@ By default, Lifecycle Manager is deployed from the GitHub main branch.`,
 	)
 	cobraCmd.Flags().StringArrayVarP(
 		&o.Modules, "module", "m", []string{},
-		`Provide one or more modules to activate after the deployment is finished. Example: "--module name@namespace" (namespace is optional).`,
+		`Provides one or more modules to activate after the deployment is finished. Example: "--module name@namespace" (namespace is optional).`,
 	)
 	cobraCmd.Flags().StringVarP(
 		&o.Channel, "channel", "c", "regular", `Select which channel to deploy from.`,
 	)
 	cobraCmd.Flags().StringVarP(
 		&o.Namespace, "namespace", "n", cli.KymaNamespaceDefault,
-		"The Namespace to deploy the the Kyma custom resource in.",
+		"The Namespace to deploy the Kyma custom resource in.",
 	)
-	cobraCmd.Flags().StringVar(&o.KymaCR, "kyma-cr", "", `Provide a custom Kyma CR file for the deployment.`)
+	cobraCmd.Flags().StringVar(&o.KymaCR, "kyma-cr", "", `Provides a custom Kyma CR file for the deployment.`)
 
 	// TODO remove this flag when module templates can be fetched from release.
 	// Might be worth keeping this flag with another name to install extra templates??
 	cobraCmd.Flags().StringArrayVar(
-		&o.Templates, "templates", []string{modulesKustomization}, `Provide one or more module templates to deploy.
+		&o.Templates, "templates", []string{modulesKustomization}, `Provides one or more module templates to deploy.
 WARNING: This is a temporary flag for development and will be removed soon.`,
 	)
 
 	cobraCmd.Flags().StringVar(
 		&o.CertManagerVersion, "cert-manager", "v1.11.0",
-		"Installs cert-manager from the specified static version. an empty string skips the installation.",
+		"Installs cert-manager from the specified static version. An empty string skips the installation.",
 	)
 	cobraCmd.Flags().StringVar(
 		&o.LifecycleManager, "lifecycle-manager", "eu.gcr.io/kyma-project/lifecycle-manager:latest",
@@ -108,7 +108,7 @@ WARNING: DO NOT USE ON PRODUCTIVE CLUSTERS!`,
 
 	cobraCmd.Flags().BoolVar(
 		&o.OpenDashboard, "open-dashboard", false,
-		`Opens the Busola Dashboard at startup. Only works when a graphical interface is available and when running in interactive mode`,
+		`Opens the Busola Dashboard at startup. Only works when a graphical interface is available and when running in the interactive mode.`,
 	)
 	cobraCmd.Flags().BoolVarP(
 		&o.Force, "force-conflicts", "f", false,
