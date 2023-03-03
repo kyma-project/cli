@@ -1,6 +1,6 @@
 module github.com/kyma-project/cli
 
-go 1.18
+go 1.19
 
 // required to avoid locking with gardner dependency updates
 replace k8s.io/client-go => k8s.io/client-go v0.26.1
