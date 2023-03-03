@@ -14,13 +14,15 @@ import (
 )
 
 const (
-	defaultRuntime   = "nodejs14"
+	defaultRuntime   = "nodejs16"
 	defaultReference = "main"
 	defaultBaseDir   = "/"
 )
 
 var (
-	deprecatedRuntimes = map[string]struct{}{}
+	deprecatedRuntimes = map[string]struct{}{
+		"nodejs14": {},
+	}
 )
 
 type command struct {
@@ -48,17 +50,25 @@ Use the flags to specify the initial configuration for your Function or to choos
 	cmd.Flags().StringVar(&o.Namespace, "namespace", "", `Namespace to which you want to apply your Function.`)
 	cmd.Flags().StringVarP(&o.Dir, "dir", "d", "", `Full path to the directory where you want to save the project.`)
 	cmd.Flags().StringVar(&o.RuntimeImageOverride, "runtime-image-override", "", `Set custom runtime image base.`)
-	cmd.Flags().StringVarP(&o.Runtime, "runtime", "r", defaultRuntime, `Flag used to define the environment for running your Function. Use one of these options:
-	- nodejs14
+	cmd.Flags().StringVarP(
+		&o.Runtime, "runtime", "r", defaultRuntime,
+		`Flag used to define the environment for running your Function. Use one of these options:
+	- nodejs14 (deprecated)
 	- nodejs16	
-	- python39`)
+	- python39`,
+	)
 
 	// git function options
 	cmd.Flags().StringVar(&o.URL, "url", "", `Git repository URL`)
 	cmd.Flags().StringVar(&o.RepositoryName, "repository-name", "", `The name of the Git repository to be created`)
 	cmd.Flags().StringVar(&o.Reference, "reference", defaultReference, `Commit hash or branch name`)
-	cmd.Flags().StringVar(&o.BaseDir, "base-dir", defaultBaseDir, `A directory in the repository containing the Function's sources`)
-	cmd.Flags().BoolVar(&o.VsCode, "vscode", false, `Generate VS Code settings containing config.yaml JSON schema for autocompletion (see "kyma get schema -h" for more info)`)
+	cmd.Flags().StringVar(
+		&o.BaseDir, "base-dir", defaultBaseDir, `A directory in the repository containing the Function's sources`,
+	)
+	cmd.Flags().BoolVar(
+		&o.VsCode, "vscode", false,
+		`Generate VS Code settings containing config.yaml JSON schema for autocompletion (see "kyma get schema -h" for more info)`,
+	)
 
 	return cmd
 }
@@ -85,7 +95,10 @@ func (c *command) Run() error {
 	}
 
 	if _, ok := deprecatedRuntimes[c.opts.Runtime]; ok {
-		s.LogWarnf("Runtime %s is deprecated and will be removed in the future. We recommend using a supported runtime version", c.opts.Runtime)
+		s.LogWarnf(
+			"Runtime %s is deprecated and will be removed in the future. We recommend using a supported runtime version",
+			c.opts.Runtime,
+		)
 	}
 
 	configuration := workspace.Cfg{

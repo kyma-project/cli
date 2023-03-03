@@ -12,25 +12,39 @@ Use this command to deploy, upgrade, or adapt Kyma on a running Kubernetes clust
 kyma alpha deploy [flags]
 ```
 
+## Examples
+
+```bash
+
+- Deploy the latest version of the Lifecycle Manager for trying out Modules: "kyma deploy -k https://github.com/kyma-project/lifecycle-manager/config/default -with-wildcard-permissions"
+- Deploy the main branch of Lifecycle Manager: "kyma deploy -k https://github.com/kyma-project/lifecycle-manager/config/default@main"
+- Deploy a local version of Lifecycle Manager: "kyma deploy -k /path/to/repo/lifecycle-manager/config/default"
+```
+
 ## Flags
 
 ```bash
+      --cert-manager string         Installs cert-manager from the specified static version. An empty string skips the installation. (default "v1.11.0")
   -c, --channel string              Select which channel to deploy from. (default "regular")
       --dry-run                     Renders the Kubernetes manifests without actually applying them.
-  -k, --kustomization stringArray   Provide one or more kustomizations to deploy. Each occurrence of the flag accepts a URL with an optional reference (commit, branch, or release) in the format URL@ref or a local path to the directory of the kustomization file.
-                                    	Defaults to deploying Lifecycle Manager and Module Manager from GitHub main branch.
-                                    	Examples:
-                                    	- Deploy a specific release of the Lifecycle Manager: "kyma deploy -k https://github.com/kyma-project/lifecycle-manager/config/default@1.2.3"
-                                    	- Deploy a local Module Manager: "kyma deploy --kustomization /path/to/repo/module-manager/config/default"
-                                    	- Deploy a branch of Lifecycle Manager with a custom URL: "kyma deploy -k https://gitlab.com/forked-from-github/lifecycle-manager/config/default@feature-branch-1"
-                                    	- Deploy the main branch of Lifecycle Manager while using local sources of Module Manager: "kyma deploy -k /path/to/repo/module-manager/config/default -k https://github.com/kyma-project/lifecycle-manager/config/default@main"
-      --kyma-cr string              Provide a custom Kyma CR file for the deployment.
-  -m, --module stringArray          Provide one or more modules to activate after the deployment is finished. Example: "--module name@namespace" (namespace is optional).
-  -f, --modules-file string         Path to file containing a list of modules.
-  -n, --namespace string            The Namespace to deploy the the Kyma custom resource in. (default "kyma-system")
-      --template stringArray        Provide one or more module templates to deploy.
-                                    	WARNING: This is a temporary flag for development and will be removed soon.
+  -f, --force-conflicts             Forces the patching of Kyma spec modules in case their managed field was edited by a source other than Kyma CLI.
+  -k, --kustomization stringArray   Provides one or more kustomizations to deploy. 
+                                    Each flag occurrence accepts a URL with an optional reference (commit, branch, or release) in URL@ref format or a local path to the directory of the kustomization file.
+                                    By default, Lifecycle Manager is deployed from the GitHub main branch. (default [https://github.com/kyma-project/lifecycle-manager/config/default])
+      --kyma-cr string              Provides a custom Kyma CR file for the deployment.
+      --lifecycle-manager string    Installs Lifecycle Manager with the specified image:
+                                    - Use "my-registry.org/lifecycle-manager:my-tag"" to use a custom version of Lifecycle Manager.
+                                    - Use "europe-docker.pkg.dev/kyma-project/prod/lifecycle-manager@sha256:cb74b29cfe80c639c9ee9..." to use a custom version of Lifecycle Manager with a digest.
+                                    - Specify a tag to override the default one. For example, when specifying "v20230220-7b8e9515",  the "eu.gcr.io/kyma-project/lifecycle-manager:v20230220-7b8e9515" tag is used. (default "eu.gcr.io/kyma-project/lifecycle-manager:latest")
+  -m, --module stringArray          Provides one or more modules to activate after the deployment is finished. Example: "--module name@namespace" (namespace is optional).
+  -n, --namespace string            The Namespace to deploy the Kyma custom resource in. (default "kyma-system")
+      --open-dashboard              Opens the Busola Dashboard at startup. Only works when a graphical interface is available and when running in the interactive mode.
+      --templates stringArray       Provides one or more module templates to deploy.
+                                    WARNING: This is a temporary flag for development and will be removed soon. (default [https://github.com/kyma-project/kyma/modules@2.11.2])
   -t, --timeout duration            Maximum time for the deployment. (default 20m0s)
+      --wildcard-permissions        Creates a wildcard cluster-role to allow for easy local installation permissions of Lifecycle Manager.
+                                    Allows for Lifecycle Manager usage without worrying about modules requiring specific RBAC permissions.
+                                    WARNING: DO NOT USE ON PRODUCTIVE CLUSTERS! (default true)
 ```
 
 ## Flags inherited from parent commands

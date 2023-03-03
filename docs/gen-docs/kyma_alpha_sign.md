@@ -2,11 +2,11 @@
 title: kyma alpha sign
 ---
 
-Signs all module resources from an unsigned component descriptor that's hosted in a remote OCI registry
+Signs all module resources from an unsigned module component descriptor that's hosted in a remote OCI registry
 
 ## Synopsis
 
-Use this command to sign all module resources from an unsigned component descriptor that's hosted in a remote OCI registry
+Use this command to sign all module resources from an unsigned module component descriptor that's hosted in a remote OCI registry
 
 ## Flags inherited from parent commands
 

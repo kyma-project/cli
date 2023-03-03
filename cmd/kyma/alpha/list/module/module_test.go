@@ -168,7 +168,7 @@ manifest-1				kyma.project.io/module/loadtest		stable		0.0.4		kcp-system/manifes
 				os.Stdout = w
 				var args []string
 				if test.useKyma {
-					args = append(args, kyma.GetName())
+					cmd.opts.KymaName = kyma.GetName()
 				}
 				err := cmd.Run(context.Background(), args)
 

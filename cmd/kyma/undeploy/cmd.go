@@ -41,7 +41,7 @@ func NewCmd(o *Options) *cobra.Command {
 		Use:   "undeploy",
 		Short: "Undeploys Kyma from a running Kubernetes cluster.",
 		Long:  `Use this command to undeploy Kyma from a running Kubernetes cluster.`,
-		RunE:  func(_ *cobra.Command, _ []string) error { return cmd.Run() },
+		RunE:  func(cc *cobra.Command, _ []string) error { return cmd.Run(cc.Context()) },
 	}
 
 	cobraCmd.Flags().StringSliceVarP(&o.Components, "component", "", []string{}, "Provide one or more components to undeploy (e.g. --component componentName@namespace)")
@@ -68,7 +68,7 @@ func NewCmd(o *Options) *cobra.Command {
 }
 
 // Run runs the command
-func (cmd *command) Run() error {
+func (cmd *command) Run(ctx context.Context) error {
 	var err error
 
 	if cmd.opts.CI {
@@ -84,7 +84,7 @@ func (cmd *command) Run() error {
 	}
 
 	if !cmd.opts.NonInteractive {
-		if err := cli.DetectManagedEnvironment(cmd.K8s, cmd.Factory.NewStep("")); err != nil {
+		if err := cli.DetectManagedEnvironment(ctx, cmd.K8s, cmd.Factory.NewStep("")); err != nil {
 			return err
 		}
 	}
@@ -112,7 +112,7 @@ func (cmd *command) Run() error {
 		return err
 	}
 
-	clusterInfo, err := clusterinfo.Discover(context.Background(), cmd.K8s.Static())
+	clusterInfo, err := clusterinfo.Discover(ctx, cmd.K8s.Static())
 	if err != nil {
 		return errors.Wrap(err, "failed to discover underlying cluster type")
 	}

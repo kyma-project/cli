@@ -4,17 +4,24 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
 	"time"
 
+	lifecycleManagerApi "github.com/kyma-project/lifecycle-manager/api"
 	"github.com/pkg/errors"
+	istio "istio.io/client-go/pkg/clientset/versioned"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	utilyaml "k8s.io/apimachinery/pkg/util/yaml"
+	"k8s.io/cli-runtime/pkg/resource"
 	"k8s.io/client-go/discovery"
 	memory "k8s.io/client-go/discovery/cached"
 	"k8s.io/client-go/dynamic"
@@ -23,15 +30,10 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
 	"k8s.io/client-go/tools/clientcmd/api"
+	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/yaml"
 
-	istio "istio.io/client-go/pkg/clientset/versioned"
-	"k8s.io/apimachinery/pkg/api/meta"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
-	utilyaml "k8s.io/apimachinery/pkg/util/yaml"
+	v1extensions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 )
 
 const (
@@ -42,11 +44,14 @@ const (
 
 // client is the default KymaKube implementation
 type client struct {
-	static  kubernetes.Interface
-	dynamic dynamic.Interface
-	istio   istio.Interface
-	restCfg *rest.Config
-	kubeCfg *api.Config
+	static     kubernetes.Interface
+	dynamic    dynamic.Interface
+	istio      istio.Interface
+	restCfg    *rest.Config
+	kubeCfg    *api.Config
+	disco      discovery.DiscoveryInterface
+	mapper     meta.ResettableRESTMapper
+	ctrlClient ctrlClient.WithWatch
 }
 
 // NewFromConfig creates a new Kubernetes client based on the given Kubeconfig either provided by URL (in-cluster config) or via file (out-of-cluster config).
@@ -75,6 +80,27 @@ func NewFromRestConfigWithTimeout(config *rest.Config, t time.Duration) (KymaKub
 		return nil, err
 	}
 
+	disco, err := discovery.NewDiscoveryClientForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	mapper := restmapper.NewDeferredDiscoveryRESTMapper(memory.NewMemCacheClient(disco))
+
+	newScheme := scheme.Scheme
+
+	if err := v1extensions.AddToScheme(newScheme); err != nil {
+		return nil, err
+	}
+	if err := lifecycleManagerApi.AddToScheme(newScheme); err != nil {
+		return nil, err
+	}
+
+	nClient, err := ctrlClient.NewWithWatch(config, ctrlClient.Options{Scheme: newScheme})
+	if err != nil {
+		return nil, err
+	}
+
 	//An empty k8s.io/client-go/tools/clientcmd/api.Config object.
 	kubeConfig := &api.Config{
 		Preferences: api.Preferences{
@@ -87,11 +113,14 @@ func NewFromRestConfigWithTimeout(config *rest.Config, t time.Duration) (KymaKub
 	}
 
 	return &client{
-			static:  sClient,
-			dynamic: dClient,
-			istio:   istioClient,
-			restCfg: config,
-			kubeCfg: kubeConfig,
+			static:     sClient,
+			dynamic:    dClient,
+			istio:      istioClient,
+			restCfg:    config,
+			kubeCfg:    kubeConfig,
+			disco:      disco,
+			mapper:     mapper,
+			ctrlClient: nClient,
 		},
 		nil
 }
@@ -126,12 +155,36 @@ func NewFromConfigWithTimeout(url, file string, t time.Duration) (KymaKube, erro
 		return nil, err
 	}
 
+	disco, err := discovery.NewDiscoveryClientForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	mapper := restmapper.NewDeferredDiscoveryRESTMapper(memory.NewMemCacheClient(disco))
+
+	newScheme := scheme.Scheme
+
+	if err := v1extensions.AddToScheme(newScheme); err != nil {
+		return nil, err
+	}
+	if err := lifecycleManagerApi.AddToScheme(newScheme); err != nil {
+		return nil, err
+	}
+
+	ctrlClient, err := ctrlClient.NewWithWatch(config, ctrlClient.Options{Scheme: newScheme})
+	if err != nil {
+		return nil, err
+	}
+
 	return &client{
-			static:  sClient,
-			dynamic: dClient,
-			istio:   istioClient,
-			restCfg: config,
-			kubeCfg: kubeConfig,
+			static:     sClient,
+			dynamic:    dClient,
+			istio:      istioClient,
+			restCfg:    config,
+			kubeCfg:    kubeConfig,
+			disco:      disco,
+			mapper:     mapper,
+			ctrlClient: ctrlClient,
 		},
 		nil
 }
@@ -142,6 +195,10 @@ func (c *client) Static() kubernetes.Interface {
 
 func (c *client) Dynamic() dynamic.Interface {
 	return c.dynamic
+}
+
+func (c *client) Ctrl() ctrlClient.WithWatch {
+	return c.ctrlClient
 }
 
 func (c *client) Istio() istio.Interface {
@@ -156,102 +213,68 @@ func (c *client) KubeConfig() *api.Config {
 	return c.kubeCfg
 }
 
-func (c *client) Apply(manifest []byte) error {
-	// Prepare a RESTMapper to find GVR
-	dc, err := discovery.NewDiscoveryClientForConfig(c.restCfg)
-	if err != nil {
-		return err
-	}
-	mapper := restmapper.NewDeferredDiscoveryRESTMapper(memory.NewMemCacheClient(dc))
-
+func (c *client) ParseManifest(manifest []byte) ([]ctrlClient.Object, error) {
 	// parse manifest
-	objChan, parseErr := parseManifest(manifest)
+	manifests, err := parseManifest(manifest)
+	if err != nil {
+		return nil, err
+	}
 
-	for {
-		select {
-		case data, ok := <-objChan:
-			if !ok {
-				return nil
-			}
-			if err := c.applyManifest(data, mapper); err != nil {
-				return err
-			}
-		case err, ok := <-parseErr:
-			if !ok {
-				return nil
-			}
-			if err == nil {
-				continue
-			}
+	objs := make([]ctrlClient.Object, 0, len(manifests))
+	for _, manifest := range manifests {
+
+		obj := &unstructured.Unstructured{}
+		if err := yaml.Unmarshal(manifest, obj); err != nil {
+			return nil, err
+		}
+		objs = append(objs, obj)
+	}
+
+	return objs, nil
+}
+
+func (c *client) Apply(ctx context.Context, force bool, objs ...ctrlClient.Object) error {
+	infos := make([]*resource.Info, 0, len(objs))
+	for _, obj := range objs {
+		gvk := obj.GetObjectKind().GroupVersionKind()
+		mapping, err := c.mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
+		if meta.IsNoMatchError(err) {
+			c.mapper.Reset()
+			mapping, _ = c.mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
+			err = nil
+		}
+		if err != nil {
 			return err
 		}
+
+		infos = append(
+			infos, &resource.Info{
+				Name:            obj.GetName(),
+				Namespace:       obj.GetNamespace(),
+				ResourceVersion: obj.GetResourceVersion(),
+				Object:          obj,
+				Mapping:         mapping,
+			},
+		)
 	}
+	return ConcurrentSSA(c.ctrlClient, "kyma", force).Run(ctx, infos)
 }
 
 // parseManifest can parse a multi-doc yaml manifest and send back each unstructured object through the channel
-func parseManifest(data []byte) (<-chan []byte, <-chan error) {
-	chanErr := make(chan error)
-	chanBytes := make(chan []byte)
+func parseManifest(data []byte) ([][]byte, error) {
+	var chanBytes [][]byte
 	multidocReader := utilyaml.NewYAMLReader(bufio.NewReader(bytes.NewReader(data)))
 
-	go func() {
-		defer close(chanErr)
-		defer close(chanBytes)
-
-		for {
-			buf, err := multidocReader.Read()
-			if err != nil {
-				if err == io.EOF {
-					return
-				}
-				chanErr <- errors.Wrap(err, "failed to read yaml data")
-				return
+	for {
+		buf, err := multidocReader.Read()
+		if err != nil {
+			if err == io.EOF {
+				return chanBytes, nil
 			}
-			chanBytes <- buf
+			return nil, errors.Wrap(err, "failed to read yaml data")
 		}
-	}()
-	return chanBytes, chanErr
-}
-
-// applyAsync applies the given manifest with the given mapping.
-func (c *client) applyManifest(manifest []byte, mapper *restmapper.DeferredDiscoveryRESTMapper) error {
-	// Decode YAML manifest into unstructured.Unstructured
-	decode := scheme.Codecs.UniversalDeserializer().Decode
-	obj := &unstructured.Unstructured{}
-	_, gvk, err := decode(manifest, nil, obj)
-	if err != nil {
-		return err
+		chanBytes = append(chanBytes, buf)
 	}
-
-	// Find GVR
-	mapping, err := mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
-	if err != nil {
-		return err
-	}
-
-	// Obtain REST interface for the GVR
-	var dr dynamic.ResourceInterface
-	if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
-		// namespaced resources should specify the namespace
-		dr = c.dynamic.Resource(mapping.Resource).Namespace(obj.GetNamespace())
-	} else {
-		// for cluster-wide resources
-		dr = c.dynamic.Resource(mapping.Resource)
-	}
-
-	// Marshal object into JSON
-	data, err := json.Marshal(obj)
-	if err != nil {
-		return err
-	}
-
-	// Create or Update the object with SSA
-	// types.ApplyPatchType indicates SSA.
-	_, err = dr.Patch(context.Background(), obj.GetName(), types.ApplyPatchType, data, metav1.PatchOptions{
-		FieldManager: "kyma",
-	})
-
-	return err
 }
 
 func (c *client) IsPodDeployed(namespace, name string) (bool, error) {
@@ -267,7 +290,9 @@ func (c *client) IsPodDeployed(namespace, name string) (bool, error) {
 }
 
 func (c *client) IsPodDeployedByLabel(namespace, labelName, labelValue string) (bool, error) {
-	pods, err := c.Static().CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{LabelSelector: fmt.Sprintf("%s=%s", labelName, labelValue)})
+	pods, err := c.Static().CoreV1().Pods(namespace).List(
+		context.Background(), metav1.ListOptions{LabelSelector: fmt.Sprintf("%s=%s", labelName, labelValue)},
+	)
 	if err != nil {
 		return false, err
 	}
@@ -275,8 +300,10 @@ func (c *client) IsPodDeployedByLabel(namespace, labelName, labelValue string) (
 	return len(pods.Items) > 0, nil
 }
 
-func (c *client) WaitDeploymentStatus(namespace, name string, cond appsv1.DeploymentConditionType, status corev1.ConditionStatus) error {
-	watchFn := func() (bool, error) {
+func (c *client) WaitDeploymentStatus(
+	namespace, name string, cond appsv1.DeploymentConditionType, status corev1.ConditionStatus,
+) error {
+	watchFn := func(ctx context.Context) (bool, error) {
 		d, err := c.static.AppsV1().Deployments(namespace).Get(context.Background(), name, metav1.GetOptions{})
 		if err != nil && k8sErrors.IsNotFound(err) {
 			return false, err
@@ -290,12 +317,12 @@ func (c *client) WaitDeploymentStatus(namespace, name string, cond appsv1.Deploy
 		return false, nil
 	}
 
-	return watch(name, watchFn, c.restCfg.Timeout)
+	return watch(context.Background(), name, watchFn, c.restCfg.Timeout)
 }
 
 func (c *client) WaitPodStatus(namespace, name string, status corev1.PodPhase) error {
-	watchFn := func() (bool, error) {
-		pod, err := c.Static().CoreV1().Pods(namespace).Get(context.Background(), name, metav1.GetOptions{})
+	watchFn := func(ctx context.Context) (bool, error) {
+		pod, err := c.Static().CoreV1().Pods(namespace).Get(ctx, name, metav1.GetOptions{})
 		if err != nil && !k8sErrors.IsNotFound(err) {
 			return false, err
 		}
@@ -306,12 +333,14 @@ func (c *client) WaitPodStatus(namespace, name string, status corev1.PodPhase) e
 		return false, nil
 	}
 
-	return watch(name, watchFn, c.restCfg.Timeout)
+	return watch(context.Background(), name, watchFn, c.restCfg.Timeout)
 }
 
 func (c *client) WaitPodStatusByLabel(namespace, labelName, labelValue string, status corev1.PodPhase) error {
-	watchFn := func() (bool, error) {
-		pods, err := c.Static().CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{LabelSelector: fmt.Sprintf("%s=%s", labelName, labelValue)})
+	watchFn := func(ctx context.Context) (bool, error) {
+		pods, err := c.Static().CoreV1().Pods(namespace).List(
+			ctx, metav1.ListOptions{LabelSelector: fmt.Sprintf("%s=%s", labelName, labelValue)},
+		)
 		if err != nil {
 			return false, err
 		}
@@ -327,17 +356,23 @@ func (c *client) WaitPodStatusByLabel(namespace, labelName, labelValue string, s
 		return ok, nil
 	}
 
-	return watch(fmt.Sprintf("Pod labeled: %s=%s", labelName, labelValue), watchFn, c.restCfg.Timeout)
+	return watch(
+		context.Background(), fmt.Sprintf("Pod labeled: %s=%s", labelName, labelValue), watchFn, c.restCfg.Timeout,
+	)
 }
 
-func (c *client) WatchResource(res schema.GroupVersionResource, name, namespace string, checkFn func(u *unstructured.Unstructured) (bool, error)) error {
-	watchFn := func() (bool, error) {
+func (c *client) WatchResource(
+	res schema.GroupVersionResource, name, namespace string, checkFn func(u *unstructured.Unstructured) (bool, error),
+) error {
+	watchFn := func(ctx context.Context) (bool, error) {
 		var itm *unstructured.Unstructured
 		var err error
 		if namespace != "" {
-			itm, err = c.Dynamic().Resource(res).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
+			itm, err = c.Dynamic().Resource(res).Namespace(namespace).Get(
+				ctx, name, metav1.GetOptions{},
+			)
 		} else {
-			itm, err = c.Dynamic().Resource(res).Get(context.Background(), name, metav1.GetOptions{})
+			itm, err = c.Dynamic().Resource(res).Get(ctx, name, metav1.GetOptions{})
 		}
 		if err != nil {
 			return false, errors.Wrapf(err, "Failed to check %s", res.Resource)
@@ -345,7 +380,22 @@ func (c *client) WatchResource(res schema.GroupVersionResource, name, namespace 
 		return checkFn(itm)
 	}
 
-	return watch(res.Resource, watchFn, c.restCfg.Timeout)
+	return watch(context.Background(), res.Resource, watchFn, c.restCfg.Timeout)
+}
+
+func (c *client) WatchObject(
+	ctx context.Context, obj ctrlClient.Object, checkFn func(u ctrlClient.Object) (bool, error),
+) error {
+
+	key := ctrlClient.ObjectKeyFromObject(obj)
+	watchFn := func(ctx context.Context) (bool, error) {
+		if err := c.ctrlClient.Get(ctx, key, obj); err != nil {
+			return false, errors.Wrapf(err, "Failed to check %s", key)
+		}
+		return checkFn(obj)
+	}
+
+	return watch(ctx, key.String(), watchFn, c.restCfg.Timeout)
 }
 
 func (c *client) DefaultNamespace() string {
@@ -357,23 +407,21 @@ func (c *client) DefaultNamespace() string {
 
 // watch provides a unified implementation to watch resources.
 // timeout of zero does NOT mean "no timeout", i.e. "wait forever" - it means the function will time-out almost immediately - at the discretion of the golang scheduler.
-func watch(res string, watchFn func() (bool, error), timeout time.Duration) error {
-	timeChan := time.After(timeout)
+func watch(
+	ctx context.Context, res string, watchFn func(ctx context.Context) (bool, error), timeout time.Duration,
+) error {
+
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
 
 	for {
-		select {
-		case <-timeChan:
-			return fmt.Errorf("Timeout reached while waiting for %s", res)
-
-		default:
-			finished, err := watchFn()
-			if err != nil {
-				return err
-			}
-			if finished {
-				return nil
-			}
-			time.Sleep(defaultWaitSleep)
+		finished, err := watchFn(ctx)
+		if err != nil {
+			return fmt.Errorf("error waiting for %s: %w", res, err)
 		}
+		if finished {
+			return nil
+		}
+		time.Sleep(defaultWaitSleep)
 	}
 }

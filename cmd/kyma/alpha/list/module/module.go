@@ -14,7 +14,6 @@ import (
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/clusterinfo"
 	"github.com/kyma-project/cli/internal/kube"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -33,13 +32,13 @@ var moduleTemplates string
 
 var moduleTemplateResource = schema.GroupVersionResource{
 	Group:    "operator.kyma-project.io",
-	Version:  "v1alpha1",
+	Version:  "v1beta1",
 	Resource: "moduletemplates",
 }
 
 var kymaResource = schema.GroupVersionResource{
 	Group:    "operator.kyma-project.io",
-	Version:  "v1alpha1",
+	Version:  "v1beta1",
 	Resource: "kymas",
 }
 
@@ -76,15 +75,15 @@ the ModuleTemplates will also have a Field called **State** which will reflect t
 Finally, you can restrict and select a custom Namespace for the command.
 `,
 
-		Example: `Examples:
+		Example: `
 List all modules
 		kyma alpha list module
 List all modules in the "regular" channel
 		kyma alpha list module --channel regular
 List all modules for the kyma "some-kyma" in the namespace "custom" in the "alpha" channel
-		kyma alpha list module some-kyma -c alpha -n "custom"
+		kyma alpha list module -k some-kyma -c alpha -n custom
 List all modules for the kyma "some-kyma" in the "alpha" channel
-		kyma alpha list module some-kyma -c alpha
+		kyma alpha list module -k some-kyma -c alpha
 `,
 		RunE:    func(cmd *cobra.Command, args []string) error { return c.Run(cmd.Context(), args) },
 		Aliases: []string{"mod", "mods", "modules"},
@@ -95,7 +94,11 @@ List all modules for the kyma "some-kyma" in the "alpha" channel
 		&o.Timeout, "timeout", "t", 1*time.Minute, "Maximum time for the list operation to retrieve ModuleTemplates.",
 	)
 	cmd.Flags().StringVarP(
-		&o.Namespace, "namespace", "n", "kyma-system",
+		&o.KymaName, "kyma-name", "k", "",
+		"Kyma resource to use.",
+	)
+	cmd.Flags().StringVarP(
+		&o.Namespace, "namespace", "n", cli.KymaNamespaceDefault,
 		"The Namespace to list the modules in.",
 	)
 	cmd.Flags().BoolVarP(
@@ -104,7 +107,7 @@ List all modules for the kyma "some-kyma" in the "alpha" channel
 	)
 	cmd.Flags().BoolVar(
 		&o.NoHeaders, "no-headers", false,
-		" When using the default output format, don't print headers (default print headers)",
+		"When using the default output format, don't print headers. (default print headers)",
 	)
 
 	cmd.Flags().StringVarP(
@@ -120,14 +123,6 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 		cli.AlphaWarn()
 	}
 
-	kymaName := ""
-	if len(args) > 1 {
-		return errors.New("you can only pass one Kyma resource to list active modules for")
-	}
-	if len(args) == 1 {
-		kymaName = args[0]
-	}
-
 	if err := cmd.opts.validateFlags(); err != nil {
 		return err
 	}
@@ -135,10 +130,10 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 	ctx, cancel := context.WithTimeout(ctx, cmd.opts.Timeout)
 	defer cancel()
 
-	return cmd.run(ctx, kymaName)
+	return cmd.run(ctx)
 }
 
-func (cmd *command) run(ctx context.Context, kymaName string) error {
+func (cmd *command) run(ctx context.Context) error {
 	start := time.Now()
 
 	if cmd.K8s == nil {
@@ -161,12 +156,12 @@ func (cmd *command) run(ctx context.Context, kymaName string) error {
 		return err
 	}
 
-	if kymaName != "" {
+	if cmd.opts.KymaName != "" {
 		kyma, err := cmd.K8s.Dynamic().Resource(kymaResource).Namespace(cmd.opts.Namespace).Get(
-			ctx, kymaName, metav1.GetOptions{},
+			ctx, cmd.opts.KymaName, metav1.GetOptions{},
 		)
 		if err != nil {
-			return fmt.Errorf("could not get kyma %s/%s: %w", cmd.opts.Namespace, kymaName, err)
+			return fmt.Errorf("could not get kyma %s/%s: %w", cmd.opts.Namespace, cmd.opts.KymaName, err)
 		}
 		if err := cmd.printKymaActiveTemplates(ctx, kyma); err != nil {
 			return err

@@ -14,21 +14,21 @@ This command signs all module resources recursively based on an unsigned compone
 
 
 ```bash
-kyma alpha sign module MODULE_NAME MODULE_VERSION [flags]
+kyma alpha sign module --name MODULE_NAME --version MODULE_VERSION --registry MODULE_REGISTRY [flags]
 ```
 
 ## Flags
 
 ```bash
-  -c, --credentials string       Basic authentication credentials for the given registry in the format user:password
-      --insecure                 Use an insecure connection to access the registry.
-      --mod-path string          Specifies the path where the signed component descriptor will be stored (default "./mod")
-      --nameMapping string       Overrides the OCM Component Name Mapping, one of: "urlPath" or "sha256-digest" (default "urlPath")
-      --private-key string       Specifies the path where the private key used for signing
-      --registry string          Repository context url where unsigned component descriptor located
-      --signature-name string    name of the signature for signing
-      --signed-registry string   Repository context url where signed component descriptor located
-  -t, --token string             Authentication token for the given registry (alternative to basic authentication).
+  -c, --credentials string      Basic authentication credentials for the given registry in the user:password format
+      --insecure                Uses an insecure connection to access the registry.
+      --key string              Specifies the path where a private key is used for signing.
+      --name string             Name of the module.
+      --name-mapping string     Overrides the OCM Component Name Mapping, Use: "urlPath" or "sha256-digest". (default "urlPath")
+      --registry string         Context URL of the repository for the module. The repository's URL is automatically added to the repository's contexts in the module.
+      --signature-name string   Name of the signature to use. (default "kyma-project.io/module-signature")
+  -t, --token string            Authentication token for the given registry (alternative to basic authentication).
+      --version string          Version of the module.
 ```
 
 ## Flags inherited from parent commands
@@ -43,5 +43,5 @@ kyma alpha sign module MODULE_NAME MODULE_VERSION [flags]
 
 ## See also
 
-* [kyma alpha sign](kyma_alpha_sign.md)	 - Signs all module resources from an unsigned component descriptor that's hosted in a remote OCI registry
+* [kyma alpha sign](kyma_alpha_sign.md)	 - Signs all module resources from an unsigned module component descriptor that's hosted in a remote OCI registry
 

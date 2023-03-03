@@ -1,4 +1,4 @@
-apiVersion: operator.kyma-project.io/v1alpha1
+apiVersion: operator.kyma-project.io/v1beta1
 kind: ModuleTemplate
 metadata:
   annotations:

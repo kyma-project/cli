@@ -19,6 +19,7 @@ bin
 # IDEs
 .idea
 .vscode
+.run
 
 # OS temporary files
 .DS_Store
@@ -29,3 +30,4 @@ bin
 # Kyma workspace and crt-file (created by deploy cmd)
 workspace
 kyma.crt
+mod

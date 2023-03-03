@@ -3,8 +3,11 @@ package alpha
 import (
 	"github.com/kyma-project/cli/cmd/kyma/alpha/create"
 	"github.com/kyma-project/cli/cmd/kyma/alpha/deploy"
+	"github.com/kyma-project/cli/cmd/kyma/alpha/disable"
+	"github.com/kyma-project/cli/cmd/kyma/alpha/enable"
 	"github.com/kyma-project/cli/cmd/kyma/alpha/list"
 	"github.com/kyma-project/cli/cmd/kyma/alpha/sign"
+	"github.com/kyma-project/cli/cmd/kyma/alpha/verify"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/spf13/cobra"
 )
@@ -20,8 +23,11 @@ func NewCmd(o *cli.Options) *cobra.Command {
 
 	cmd.AddCommand(create.NewCmd(o))
 	cmd.AddCommand(list.NewCmd(o))
+	cmd.AddCommand(enable.NewCmd(o))
+	cmd.AddCommand(disable.NewCmd(o))
 	cmd.AddCommand(deploy.NewCmd(deploy.NewOptions(o)))
 	cmd.AddCommand(sign.NewCmd(o))
+	cmd.AddCommand(verify.NewCmd(o))
 
 	return cmd
 }

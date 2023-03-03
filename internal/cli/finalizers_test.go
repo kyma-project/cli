@@ -50,18 +50,19 @@ func TestFinalizer_Add(t *testing.T) {
 		funcs := tt.funcs
 		f := tt.f
 
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			tt.name, func(t *testing.T) {
+				t.Parallel()
 
-			d := &Finalizers{
-				funcs:  funcs,
-				logger: NewLogger(false).Sugar(),
-			}
+				d := &Finalizers{
+					funcs: funcs,
+				}
 
-			d.Add(f)
+				d.Add(f)
 
-			require.Equal(t, expectedLen, len(d.funcs))
-		})
+				require.Equal(t, expectedLen, len(d.funcs))
+			},
+		)
 	}
 }
 
@@ -120,28 +121,29 @@ func TestFinalizer_setupCloseHandler(t *testing.T) {
 		nilFuncs := tt.nilFuncs
 		notify := tt.fields.notify
 
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			tt.name, func(t *testing.T) {
+				t.Parallel()
 
-			counterChan := make(chan int, len(funcs)-nilFuncs)
-			exit := make(chan struct{})
+				counterChan := make(chan int, len(funcs)-nilFuncs)
+				exit := make(chan struct{})
 
-			d := &Finalizers{
-				notify: notify,
-				exit:   fixExit(exit),
-				funcs:  fixFuncs(counterChan, funcs),
-				logger: NewLogger(false).Sugar(),
-			}
+				d := &Finalizers{
+					notify: notify,
+					exit:   fixExit(exit),
+					funcs:  fixFuncs(counterChan, funcs),
+				}
 
-			d.setupCloseHandler()
+				d.setupCloseHandler()
 
-			// wait until all functions end
-			for i := len(funcs) - nilFuncs; i != 0; i-- {
-				<-counterChan
-			}
+				// wait until all functions end
+				for i := len(funcs) - nilFuncs; i != 0; i-- {
+					<-counterChan
+				}
 
-			<-exit
-		})
+				<-exit
+			},
+		)
 	}
 }
 

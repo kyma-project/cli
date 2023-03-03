@@ -1,6 +1,7 @@
 package module
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -31,7 +32,7 @@ func NewDefaultCRValidator(cr []byte, modulePath string) (*DefaultCRValidator, e
 	}, nil
 }
 
-func (v *DefaultCRValidator) Run(s step.Step, verbose bool, log *zap.SugaredLogger) error {
+func (v *DefaultCRValidator) Run(ctx context.Context, s step.Step, verbose bool, log *zap.SugaredLogger) error {
 	// skip validation if no CR detected
 	if len(v.crData) == 0 {
 		return nil
@@ -88,7 +89,12 @@ func (v *DefaultCRValidator) Run(s step.Step, verbose bool, log *zap.SugaredLogg
 		return err
 	}
 
-	if err := kc.Apply(properCR); err != nil {
+	objs, err := kc.ParseManifest(properCR)
+	if err != nil {
+		return err
+	}
+
+	if err := kc.Apply(ctx, false, objs...); err != nil {
 		return fmt.Errorf("Error applying the default CR: %w", err)
 	}
 	return nil
