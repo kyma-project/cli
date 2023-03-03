@@ -40,7 +40,7 @@ kyma alpha deploy [flags]
   -n, --namespace string            The Namespace to deploy the the Kyma custom resource in. (default "kyma-system")
       --open-dashboard              Opens the Busola Dashboard at startup. Only works when a graphical interface is available and when running in interactive mode
       --templates stringArray       Provide one or more module templates to deploy.
-                                    WARNING: This is a temporary flag for development and will be removed soon. (default [https://github.com/kyma-project/kyma/modules@main])
+                                    WARNING: This is a temporary flag for development and will be removed soon. (default [https://github.com/kyma-project/kyma/modules@2.11.2])
   -t, --timeout duration            Maximum time for the deployment. (default 20m0s)
       --wildcard-permissions        Creates a wildcard cluster-role to allow for easy local installation permissions of Lifecycle Manager.
                                     Allows for Lifecycle Manager usage without worrying about modules requiring specific RBAC permissions.
