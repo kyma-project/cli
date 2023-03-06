@@ -71,8 +71,6 @@ func ParseKustomization(s string) (Definition, error) {
 	return res, nil
 }
 
-const NoOutputFile = ""
-
 func BuildMany(kustomizations []Definition, filters []kio.Filter) ([]byte, error) {
 	ms := bytes.Buffer{}
 	for _, k := range kustomizations {

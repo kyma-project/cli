@@ -79,7 +79,7 @@ By default, Lifecycle Manager is deployed from the GitHub main branch.`,
 	// TODO remove this flag when module templates can be fetched from release.
 	// Might be worth keeping this flag with another name to install extra templates??
 	cobraCmd.Flags().StringArrayVar(
-		&o.Templates, "templates", []string{modulesKustomization}, `Provide one or more module templates to deploy.
+		&o.Templates, "templates", []string{modulesKustomization}, `Provide one or more extra module templates to deploy.
 WARNING: This is a temporary flag for development and will be removed soon.`,
 	)
 
@@ -110,9 +110,14 @@ WARNING: DO NOT USE ON PRODUCTIVE CLUSTERS!`,
 		&o.OpenDashboard, "open-dashboard", false,
 		`Opens the Busola Dashboard at startup. Only works when a graphical interface is available and when running in interactive mode`,
 	)
+
 	cobraCmd.Flags().BoolVarP(
 		&o.Force, "force-conflicts", "f", false,
 		"Forces the patching of Kyma spec modules in case their managed field was edited by a source other than Kyma CLI.",
+	)
+
+	cobraCmd.Flags().BoolVarP(
+		&o.Bare, "bare", "b", false, "Deploy Kyma without any default module templates.",
 	)
 
 	cobraCmd.Flags().DurationVarP(&o.Timeout, "timeout", "t", 20*time.Minute, "Maximum time for the deployment.")
@@ -155,12 +160,12 @@ func (cmd *command) run(ctx context.Context) error {
 		return err
 	}
 
-	// do not starrt the dashboard if not interactive
+	// skip dashboard if non-interactive
 	if cmd.opts.CI || cmd.opts.NonInteractive || !cmd.opts.OpenDashboard {
 		return nil
 	}
 
-	return cmd.wizard(ctx)
+	return cmd.openDashboard(ctx)
 }
 
 func (cmd *command) deploy(ctx context.Context, start time.Time) error {
@@ -283,7 +288,7 @@ func (cmd *command) dryRun(ctx context.Context) error {
 	return nil
 }
 
-func (cmd *command) wizard(ctx context.Context) error {
+func (cmd *command) openDashboard(ctx context.Context) error {
 	// get all infos for the dashboard URL
 	ctx, cancel := context.WithTimeout(ctx, cmd.opts.Timeout)
 	defer cancel()

@@ -18,6 +18,7 @@ type Options struct {
 	DryRun              bool
 	OpenDashboard       bool
 	Force               bool
+	Bare                bool
 	CertManagerVersion  string
 	Namespace           string
 	Channel             string
