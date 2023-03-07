@@ -13,6 +13,7 @@ import (
 	"github.com/kyma-project/hydroform/function/pkg/client"
 	"github.com/kyma-project/hydroform/function/pkg/manager"
 	"github.com/kyma-project/hydroform/function/pkg/operator"
+	operator_types "github.com/kyma-project/hydroform/function/pkg/operator/types"
 	resources "github.com/kyma-project/hydroform/function/pkg/resources/unstructured"
 	"github.com/kyma-project/hydroform/function/pkg/workspace"
 	"github.com/pkg/errors"
@@ -80,6 +81,10 @@ func (c *command) Run() error {
 		return errors.Wrap(err, "Could not decode the configuration file")
 	}
 
+	if configuration.SchemaVersion == "" {
+		configuration.SchemaVersion = workspace.SchemaVersionDefault
+	}
+
 	if configuration.Source.SourcePath == "" {
 		configuration.Source.SourcePath = filepath.Dir(c.opts.Filename)
 	}
@@ -115,12 +120,13 @@ func (c *command) Run() error {
 		return err
 	}
 
+	subscriptionGVR := operator.SubscriptionGVR(configuration.SchemaVersion)
 	mgr.AddParent(
-		operator.NewGenericOperator(client.Resource(operator.GVRFunction).Namespace(configuration.Namespace), function),
+		operator.NewGenericOperator(client.Resource(operator_types.GVRFunction).Namespace(configuration.Namespace), function),
 		[]operator.Operator{
-			operator.NewSubscriptionOperator(client.Resource(operator.GVRSubscription).Namespace(configuration.Namespace),
+			operator.NewSubscriptionOperator(client.Resource(subscriptionGVR).Namespace(configuration.Namespace),
 				configuration.Name, configuration.Namespace, subscriptions...),
-			operator.NewAPIRuleOperator(client.Resource(operator.GVRApiRule).Namespace(configuration.Namespace),
+			operator.NewAPIRuleOperator(client.Resource(operator_types.GVRApiRule).Namespace(configuration.Namespace),
 				configuration.Name, apiRules...),
 		},
 	)

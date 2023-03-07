@@ -16,8 +16,9 @@ kyma sync function [flags]
 ## Flags
 
 ```bash
-  -d, --dir string         Full path to the directory where you want to save the project.
-  -n, --namespace string   Namespace from which you want to sync the Function.
+  -d, --dir string              Full path to the directory where you want to save the project.
+  -n, --namespace string        Namespace from which you want to sync the Function.
+      --schema-version string   Version of the config API. (default "v0")
 ```
 
 ## Flags inherited from parent commands

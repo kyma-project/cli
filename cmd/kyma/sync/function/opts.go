@@ -11,9 +11,10 @@ import (
 type Options struct {
 	*cli.Options
 
-	Namespace string
-	Dir       string
-	Timeout   time.Duration
+	Namespace     string
+	Dir           string
+	Timeout       time.Duration
+	SchemaVersion string
 }
 
 // NewOptions creates options with default values

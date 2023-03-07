@@ -2,6 +2,7 @@ package function
 
 import (
 	"context"
+	"fmt"
 	"os"
 
 	"github.com/kyma-project/cli/internal/cli"
@@ -42,6 +43,7 @@ Use the flags to specify the name of your Function, the Namespace, or the locati
 
 	cmd.Flags().StringVarP(&o.Namespace, "namespace", "n", "", `Namespace from which you want to sync the Function.`)
 	cmd.Flags().StringVarP(&o.Dir, "dir", "d", "", `Full path to the directory where you want to save the project.`)
+	cmd.Flags().StringVar(&o.SchemaVersion, "schema-version", string(workspace.SchemaVersionDefault), `Version of the config API.`)
 
 	return cmd
 }
@@ -71,9 +73,16 @@ func (c *command) Run(name string) error {
 		return c.K8s.Dynamic().Resource(resource).Namespace(namespace)
 	}
 
+	schemaVersion, err := ParseSchemaVersion(c.opts.SchemaVersion)
+	if err != nil {
+		s.Failure()
+		return err
+	}
+
 	cfg := workspace.Cfg{
-		Name:      name,
-		Namespace: c.opts.Namespace,
+		Name:          name,
+		Namespace:     c.opts.Namespace,
+		SchemaVersion: schemaVersion,
 	}
 
 	err = workspace.Synchronise(ctx, cfg, c.opts.Dir, buildClient)
@@ -84,4 +93,13 @@ func (c *command) Run(name string) error {
 
 	s.Successf("Function synchronised in %s", c.opts.Dir)
 	return nil
+}
+
+func ParseSchemaVersion(version string) (workspace.SchemaVersion, error) {
+	for _, value := range workspace.AllowedSchemaVersions {
+		if version == string(value) {
+			return value, nil
+		}
+	}
+	return "", fmt.Errorf("unexpected schema version %s", version)
 }

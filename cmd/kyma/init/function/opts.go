@@ -23,6 +23,7 @@ type Options struct {
 	BaseDir              string
 	SourcePath           string
 	VsCode               bool
+	SchemaVersion        string
 }
 
 // NewOptions creates options with default values
