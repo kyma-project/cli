@@ -3,3 +3,8 @@
 
 # All .md files
 *.md @mmitoraj @NHingerl @grego952 @IwonaLanger @nataliasitko
+
+# serverless related commands
+cmd/kyma/init @m00g3n @pPrecel @dbadura @kwiatekus @cortey @anoipm
+cmd/kyma/sync @m00g3n @pPrecel @dbadura @kwiatekus @cortey @anoipm
+cmd/kyma/apply @m00g3n @pPrecel @dbadura @kwiatekus @cortey @anoipm
