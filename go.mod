@@ -20,7 +20,7 @@ require (
 	github.com/go-logr/logr v1.2.3
 	github.com/go-logr/zapr v1.2.3
 	github.com/imdario/mergo v0.3.13
-	github.com/kyma-incubator/reconciler v0.0.0-20230203092534-fd85106be3cd
+	github.com/kyma-incubator/reconciler v0.0.0-20230308094053-71ea6eca816f
 	github.com/kyma-project/hydroform/function v0.0.0-20230228113933-44a09e52d52f
 	github.com/kyma-project/hydroform/provision v0.0.0-20230127124234-b67611c40868
 	github.com/kyma-project/lifecycle-manager v0.0.0-20230228084539-adc0e4a5f93a
