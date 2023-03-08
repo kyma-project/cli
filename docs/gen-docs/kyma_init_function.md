@@ -25,7 +25,8 @@ kyma init function [flags]
   -r, --runtime string                  Flag used to define the environment for running your Function. Use one of these options:
                                         	- nodejs14 (deprecated)
                                         	- nodejs16
-                                        	- python39 (default "nodejs16")
+                                        	- nodejs18	
+                                        	- python39 (default "nodejs18")
       --runtime-image-override string   Set custom runtime image base.
       --schema-version string           Version of the config API. (default "v0")
       --url string                      Git repository URL
