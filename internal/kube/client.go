@@ -406,13 +406,15 @@ func (c *client) DefaultNamespace() string {
 }
 
 // watch provides a unified implementation to watch resources.
-// timeout of zero does NOT mean "no timeout", i.e. "wait forever" - it means the function will time-out almost immediately - at the discretion of the golang scheduler.
+// timeout of zero means "no timeout", i.e. "wait forever"
 func watch(
 	ctx context.Context, res string, watchFn func(ctx context.Context) (bool, error), timeout time.Duration,
 ) error {
-
-	ctx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
+	if timeout.Milliseconds() != 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, timeout)
+		defer cancel()
+	}
 
 	for {
 		finished, err := watchFn(ctx)
