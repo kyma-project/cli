@@ -22,10 +22,6 @@ const (
 	defaultKustomization = "config/default"
 	samplesPath          = "config/samples/"
 
-	crdFileIdentifier = "customresourcedefinition"
-	chartsFolder      = "charts/%s"
-	templatesFolder   = "templates"
-	crdsFolder        = "crds"
 	OutputPath        = "manifests"
 )
 
@@ -75,15 +71,10 @@ func (p *Project) Build(name, version string) (string, error) {
 	pieces := strings.Split(name, "/")
 	moduleName := pieces[len(pieces)-1] // always return the last part of the path
 	manifestsPath := filepath.Join(p.path, OutputPath, moduleName)
-	//outPath := filepath.Join(manifestsPath, templatesFolder)
-	//crdsPath := filepath.Join(manifestsPath, crdsFolder)
 
 	if err := os.MkdirAll(manifestsPath, os.ModePerm); err != nil {
 		return "", fmt.Errorf("could not create chart templates output dir: %w", err)
 	}
-	//if err := os.MkdirAll(crdsPath, os.ModePerm); err != nil {
-	//	return "", fmt.Errorf("could not create chart CRDs output dir: %w", err)
-	//}
 
 	// do build
 	yml, err := kustomize.Build(k)
@@ -94,26 +85,6 @@ func (p *Project) Build(name, version string) (string, error) {
 	if err := os.WriteFile(renderedManifestPath, yml, os.ModePerm); err != nil {
 		return "", fmt.Errorf("could not write rendered kustomization as yml to %s: %w", manifestsPath, err)
 	}
-
-	// move CRDs to their folder
-	/*mvFn := func(path string, d fs.DirEntry, err error) error {
-		fileName := filepath.Base(path)
-		if strings.Contains(fileName, crdFileIdentifier) {
-			if err := os.Rename(path, filepath.Join(crdsPath, fileName)); err != nil {
-				return fmt.Errorf("could not move CRD file from %q to %q: %w", path, crdsPath, err)
-			}
-		}
-		return nil
-	}*/
-	/*
-		if err := filepath.WalkDir(outPath, mvFn); err != nil {
-			return "", err
-		}*/
-
-	// generate Chart.yaml file
-	/*if err := addChart(moduleName, version, manifestsPath); err != nil {
-		return "", fmt.Errorf("could not generate Chart.yaml file: %w", err)
-	}*/
 
 	return renderedManifestPath, nil
 }
