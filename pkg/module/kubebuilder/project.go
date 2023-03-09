@@ -55,7 +55,7 @@ func (p *Project) FullName() string {
 }
 
 // Build builds the kubebuilder project default kustomization following the given definition.
-func (p *Project) Build(name, version string) (string, error) {
+func (p *Project) Build(name string) (string, error) {
 	// check layout
 	if !(slices.Contains(p.Layout, V3) || slices.Contains(p.Layout, V4alpha)) {
 		return "", fmt.Errorf("project layout %v is not supported", p.Layout)

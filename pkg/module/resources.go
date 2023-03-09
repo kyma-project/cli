@@ -162,9 +162,7 @@ func inspectProject(def *Definition, p *kubebuilder.Project, layers []Layer, s s
 	}
 
 	// generated raw manifest -> layer 1
-	renderedManifestPath, err := p.Build(
-		def.Name, def.Version,
-	) // TODO switch from charts to pure manifests when mod-mngr is ready
+	renderedManifestPath, err := p.Build(def.Name)
 	if err != nil {
 		return err
 	}
