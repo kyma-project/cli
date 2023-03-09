@@ -23,9 +23,10 @@ type Options struct {
 	Namespace           string
 	Channel             string
 	KymaCR              string
+	Target              string
 	Modules             []string
 	Kustomizations      []string
-	Templates           []string
+	AdditionalTemplates []string
 	Timeout             time.Duration
 	Filters             []kio.Filter
 }
