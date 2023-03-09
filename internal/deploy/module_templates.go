@@ -27,9 +27,8 @@ func ModuleTemplates(ctx context.Context, k8s kube.KymaKube, templates []string,
 	filter := fieldspec.Filter{
 		FieldSpec: types.FieldSpec{
 			Gvk: resid.Gvk{
-				Group:   "operator.kyma-project.io",
-				Version: "v1alpha1",
-				Kind:    "ModuleTemplate",
+				Group: "operator.kyma-project.io",
+				Kind:  "ModuleTemplate",
 			},
 			Path:               "spec/target",
 			CreateIfNotPresent: false,
