@@ -66,7 +66,7 @@ func (v *DefaultCRValidator) Run(ctx context.Context, s step.Step, verbose bool,
 
 	err = ensureDefaultNamespace(crMap)
 	if err != nil {
-		return err
+		return fmt.Errorf("error parsing default CR: %w", err)
 	}
 
 	properCR, err := renderYamlFromMap(crMap)
@@ -107,7 +107,7 @@ func ensureDefaultNamespace(modelMap map[string]interface{}) error {
 	//Traverse the Map to look for "metadata.namespace"
 	metadataMap, err := mustReadMap(modelMap, "metadata")
 	if err != nil {
-		return fmt.Errorf("error parsing default CR: %w", err)
+		return err
 	}
 
 	namespaceVal, ok := metadataMap["namespace"]
@@ -118,7 +118,7 @@ func ensureDefaultNamespace(modelMap map[string]interface{}) error {
 		//Set the "metadata.namespace" if different than "default"
 		existing, ok := namespaceVal.(string)
 		if !ok {
-			return errors.New("error parsing default CR: Attribute \"metadata.namespace\" is not a string")
+			return errors.New("attribute \"metadata.namespace\" is not a string")
 		}
 		if existing != "default" {
 			metadataMap["namespace"] = "default"
