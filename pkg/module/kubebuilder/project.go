@@ -2,7 +2,6 @@ package kubebuilder
 
 import (
 	"fmt"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -27,6 +26,7 @@ const (
 	chartsFolder      = "charts/%s"
 	templatesFolder   = "templates"
 	crdsFolder        = "crds"
+	OutputPath        = "manifests"
 )
 
 type Project struct {
@@ -73,30 +73,30 @@ func (p *Project) Build(name, version string) (string, error) {
 
 	// create output folders
 	pieces := strings.Split(name, "/")
-	chartName := pieces[len(pieces)-1] // always return the last part of the path
-	chartsPath := filepath.Join(p.path, fmt.Sprintf(chartsFolder, chartName))
-	outPath := filepath.Join(chartsPath, templatesFolder)
-	crdsPath := filepath.Join(chartsPath, crdsFolder)
+	moduleName := pieces[len(pieces)-1] // always return the last part of the path
+	manifestsPath := filepath.Join(p.path, OutputPath, moduleName)
+	//outPath := filepath.Join(manifestsPath, templatesFolder)
+	//crdsPath := filepath.Join(manifestsPath, crdsFolder)
 
-	if err := os.MkdirAll(outPath, os.ModePerm); err != nil {
+	if err := os.MkdirAll(manifestsPath, os.ModePerm); err != nil {
 		return "", fmt.Errorf("could not create chart templates output dir: %w", err)
 	}
-	if err := os.MkdirAll(crdsPath, os.ModePerm); err != nil {
-		return "", fmt.Errorf("could not create chart CRDs output dir: %w", err)
-	}
+	//if err := os.MkdirAll(crdsPath, os.ModePerm); err != nil {
+	//	return "", fmt.Errorf("could not create chart CRDs output dir: %w", err)
+	//}
 
 	// do build
 	yml, err := kustomize.Build(k)
 	if err != nil {
 		return "", err
 	}
-
-	if err := os.WriteFile(filepath.Join(outPath, "rendered.yaml"), yml, os.ModePerm); err != nil {
-		return "", fmt.Errorf("could not write rendered kustomization as yml to %s: %w", outPath, err)
+	renderedManifestPath := filepath.Join(manifestsPath, "rendered.yaml")
+	if err := os.WriteFile(renderedManifestPath, yml, os.ModePerm); err != nil {
+		return "", fmt.Errorf("could not write rendered kustomization as yml to %s: %w", manifestsPath, err)
 	}
 
 	// move CRDs to their folder
-	mvFn := func(path string, d fs.DirEntry, err error) error {
+	/*mvFn := func(path string, d fs.DirEntry, err error) error {
 		fileName := filepath.Base(path)
 		if strings.Contains(fileName, crdFileIdentifier) {
 			if err := os.Rename(path, filepath.Join(crdsPath, fileName)); err != nil {
@@ -104,18 +104,18 @@ func (p *Project) Build(name, version string) (string, error) {
 			}
 		}
 		return nil
-	}
-
-	if err := filepath.WalkDir(outPath, mvFn); err != nil {
-		return "", err
-	}
+	}*/
+	/*
+		if err := filepath.WalkDir(outPath, mvFn); err != nil {
+			return "", err
+		}*/
 
 	// generate Chart.yaml file
-	if err := addChart(chartName, version, chartsPath); err != nil {
+	/*if err := addChart(moduleName, version, manifestsPath); err != nil {
 		return "", fmt.Errorf("could not generate Chart.yaml file: %w", err)
-	}
+	}*/
 
-	return chartsPath, nil
+	return renderedManifestPath, nil
 }
 
 func (p *Project) Config() (string, error) {

@@ -161,8 +161,8 @@ func inspectProject(def *Definition, p *kubebuilder.Project, layers []Layer, s s
 		return err
 	}
 
-	// generated chart -> layer 1
-	chartPath, err := p.Build(
+	// generated raw manifest -> layer 1
+	renderedManifestPath, err := p.Build(
 		def.Name, def.Version,
 	) // TODO switch from charts to pure manifests when mod-mngr is ready
 	if err != nil {
@@ -199,9 +199,9 @@ func inspectProject(def *Definition, p *kubebuilder.Project, layers []Layer, s s
 	def.Repo = p.Repo
 	def.DefaultCR = cr
 	def.Layers = append(def.Layers, Layer{
-		name:         filepath.Base(chartPath),
-		resourceType: typeHelmChart,
-		path:         chartPath,
+		name:         rawManifestLayerName,
+		resourceType: typeYaml,
+		path:         renderedManifestPath,
 	})
 	def.Layers = append(def.Layers, layers...)
 

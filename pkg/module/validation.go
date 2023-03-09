@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/kyma-project/cli/pkg/module/kubebuilder"
 	"io"
 	"os"
 	"path/filepath"
@@ -21,14 +22,15 @@ import (
 var ErrEmptyCR = errors.New("provided CR is empty")
 
 type DefaultCRValidator struct {
-	modulePath string
-	crData     []byte
+	crdSearchDir string
+	crData       []byte
 }
 
 func NewDefaultCRValidator(cr []byte, modulePath string) (*DefaultCRValidator, error) {
+	crdSearchDir := filepath.Join(modulePath, kubebuilder.OutputPath)
 	return &DefaultCRValidator{
-		modulePath: modulePath,
-		crData:     cr,
+		crdSearchDir: crdSearchDir,
+		crData:       cr,
 	}, nil
 }
 
@@ -46,7 +48,7 @@ func (v *DefaultCRValidator) Run(ctx context.Context, s step.Step, verbose bool,
 
 	crMap, err := parseYamlToMap(v.crData)
 	if err != nil {
-		return fmt.Errorf("Error parsing default CR: %w", err)
+		return fmt.Errorf("error parsing default CR: %w", err)
 	}
 
 	group, kind, err := readGroupKind(crMap)
@@ -54,13 +56,12 @@ func (v *DefaultCRValidator) Run(ctx context.Context, s step.Step, verbose bool,
 		return err
 	}
 
-	searchDirPath := filepath.Join(v.modulePath, "charts")
-	crdFound, crdFilePath, err := findCRDFileFor(group, kind, searchDirPath)
+	crdFound, crdFilePath, err := findCRDFileFor(group, kind, v.crdSearchDir)
 	if err != nil {
-		return fmt.Errorf("Error finding CRD file in the %q directory: %w", searchDirPath, err)
+		return fmt.Errorf("error finding CRD file in the %q directory: %w", v.crdSearchDir, err)
 	}
 	if !crdFound {
-		return fmt.Errorf("Can't find the CRD for (group: %q, kind %q)", group, kind)
+		return fmt.Errorf("can't find the CRD for (group: %q, kind %q)", group, kind)
 	}
 
 	err = ensureDefaultNamespace(crMap)
@@ -231,7 +232,7 @@ func isCRDFileFor(group, kind, filePath string) (bool, error) {
 
 		f, err := os.Open(filePath)
 		if err != nil {
-			return false, fmt.Errorf("Error reading \"%q\": %w", filePath, err)
+			return false, fmt.Errorf("error reading \"%q\": %w", filePath, err)
 		}
 		defer f.Close()
 

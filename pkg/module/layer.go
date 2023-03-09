@@ -8,6 +8,7 @@ import (
 
 const (
 	configLayerName = "config"
+	rawManifestLayerName="raw-manifest"
 	typeHelmChart   = "helm-chart"
 	typeYaml        = "yaml"
 )
