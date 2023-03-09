@@ -21,8 +21,7 @@ const (
 	configFile           = "config.yaml"
 	defaultKustomization = "config/default"
 	samplesPath          = "config/samples/"
-
-	OutputPath        = "manifests"
+	OutputPath           = "manifests"
 )
 
 type Project struct {
