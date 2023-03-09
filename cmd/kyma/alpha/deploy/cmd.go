@@ -90,7 +90,7 @@ By default, Lifecycle Manager is deployed from the GitHub main branch.`,
 	cobraCmd.Flags().StringArrayVar(
 		&o.AdditionalTemplates,
 		"extra-templates",
-		[]string{"https://github.com/kyma-project/kyma/modules@main"},
+		[]string{},
 		`Provide one or more additional module templates via URL or local path to apply after deployment.`,
 	)
 	cobraCmd.Flags().StringVar(
@@ -244,7 +244,7 @@ func (cmd *command) deploy(ctx context.Context) error {
 
 	if !cmd.opts.Bare {
 		modStep := cmd.NewStep("Deploying default module templates")
-		if err := deploy.DefaultModuleTemplates(ctx, cmd.K8s, cmd.opts.Force, false); err != nil {
+		if err := deploy.DefaultModuleTemplates(ctx, cmd.K8s, cmd.opts.Target, cmd.opts.Force, false); err != nil {
 			modStep.Failuref("Failed to deploy default module templates")
 			return err
 		}
@@ -253,7 +253,7 @@ func (cmd *command) deploy(ctx context.Context) error {
 
 	if len(cmd.opts.AdditionalTemplates) > 0 {
 		modStep := cmd.NewStep("Deploying additional module templates")
-		if err := deploy.ModuleTemplates(ctx, cmd.K8s, cmd.opts.AdditionalTemplates, cmd.opts.Force, false); err != nil {
+		if err := deploy.ModuleTemplates(ctx, cmd.K8s, cmd.opts.AdditionalTemplates, cmd.opts.Target, cmd.opts.Force, false); err != nil {
 			modStep.Failuref("Failed to deploy additional module templates")
 			return err
 		}
@@ -315,17 +315,28 @@ func (cmd *command) dryRun(ctx context.Context) error {
 		return err
 	}
 
-	if hasKyma {
-		if err := deploy.ModuleTemplates(ctx, cmd.K8s, cmd.opts.AdditionalTemplates, cmd.opts.Force, true); err != nil {
-			return err
-		}
+	if !hasKyma {
+		return nil
+	}
 
-		if err := deploy.Kyma(
-			ctx, cmd.K8s, cmd.opts.Namespace, cmd.opts.Channel, cmd.opts.KymaCR, cmd.opts.Force, true,
-		); err != nil {
+	if !cmd.opts.Bare {
+		if err := deploy.DefaultModuleTemplates(ctx, cmd.K8s, cmd.opts.Target, cmd.opts.Force, true); err != nil {
 			return err
 		}
 	}
+
+	if len(cmd.opts.AdditionalTemplates) > 0 {
+		if err := deploy.ModuleTemplates(ctx, cmd.K8s, cmd.opts.AdditionalTemplates, cmd.opts.Target, cmd.opts.Force, true); err != nil {
+			return err
+		}
+	}
+
+	if err := deploy.Kyma(
+		ctx, cmd.K8s, cmd.opts.Namespace, cmd.opts.Channel, cmd.opts.KymaCR, cmd.opts.Force, true,
+	); err != nil {
+		return err
+	}
+
 	return nil
 }
 

@@ -46,6 +46,10 @@ func (o *Options) validateFlags() error {
 		return err
 	}
 
+	if err := o.validateTarget(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -71,4 +75,12 @@ func (o *Options) validateFilters() error {
 	filters = append(filters, modifier)
 	o.Filters = filters
 	return nil
+}
+
+func (o *Options) validateTarget() error {
+	if o.Target == "control-plane" || o.Target == "remote" {
+		return nil
+	}
+
+	return errors.New("Invalid target flag. Must be either 'control-plane' or 'remote'")
 }
