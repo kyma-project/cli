@@ -7,10 +7,10 @@ import (
 )
 
 const (
-	configLayerName = "config"
-	rawManifestLayerName="raw-manifest"
-	typeHelmChart   = "helm-chart"
-	typeYaml        = "yaml"
+	configLayerName      = "config"
+	rawManifestLayerName = "raw-manifest"
+	typeHelmChart        = "helm-chart"
+	typeYaml             = "yaml"
 )
 
 // Layer encapsulates all necessary data to create an OCI layer
