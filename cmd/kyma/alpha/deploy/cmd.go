@@ -38,7 +38,6 @@ const (
 `
 )
 
-// NewCmd creates a new deploy command
 func NewCmd(o *Options) *cobra.Command {
 
 	cmd := command{
@@ -142,7 +141,7 @@ func (cmd *command) RunWithTimeout(ctx context.Context) error {
 
 	err := cmd.run(ctx)
 
-	// yes, I tried errors.As and errors.Is, and both did not work or threw vet issues...
+	// errors.As and errors.Is both do not work or throw vet issues
 	if err != nil && strings.Contains(err.Error(), context.DeadlineExceeded.Error()) {
 		msg := "Timeout reached while waiting for deployment to complete"
 		timeoutStep := cmd.NewStep(msg)
@@ -236,7 +235,7 @@ func (cmd *command) deploy(ctx context.Context, start time.Time) error {
 	}
 	coreDNS.Successf("CoreDNS patched successfully")
 
-	// deploy modules and kyma CR
+	// deploy modules and Kyma CR
 	if hasKyma {
 		if len(cmd.opts.Templates) > 0 {
 			modStep := cmd.NewStep("Deploying Module Templates")
@@ -318,7 +317,7 @@ func (cmd *command) openDashboard(ctx context.Context) error {
 		cmd.CurrentStep.Failure()
 		return err
 	}
-	// make sure the dahboard container always stops at the end and the cursor restored
+	// make sure the dashboard container always stops at the end and the cursor restored
 	cmd.Finalizers.Add(dash.StopFunc(ctx, func(i ...interface{}) { fmt.Print(i...) }))
 
 	if err := dash.Open(fmt.Sprintf("/cluster/%s/namespaces/%s/kymas/details/%s", cluster, ns, name)); err != nil {

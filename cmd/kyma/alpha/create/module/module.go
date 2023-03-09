@@ -61,7 +61,7 @@ Build module my-domain/modA in version 1.2.3 and push it to a remote registry
 Build module my-domain/modB in version 3.2.1 and push it to a local registry "unsigned" subfolder without tls
 		kyma alpha create module -n my-domain/modB --version 3.2.1 -p /path/to/module --registry http://localhost:5001/unsigned --insecure
 `,
-		RunE:    func(cobraCmd *cobra.Command, args []string) error { return c.Run(cobraCmd.Context(), args) },
+		RunE:    func(cobraCmd *cobra.Command, args []string) error { return c.Run(cobraCmd.Context()) },
 		Aliases: []string{"mod"},
 	}
 
@@ -77,7 +77,7 @@ Build module my-domain/modB in version 3.2.1 and push it to a local registry "un
 	)
 	cmd.Flags().BoolVar(
 		&o.PersistentArchive, "module-archive-persistence", false,
-		"Uses the host filesystem instead of inmemory archiving to build the module.",
+		"Uses the host filesystem instead of in-memory archiving to build the module.",
 	)
 	cmd.Flags().BoolVar(&o.ArchiveVersionOverwrite, "module-archive-version-overwrite", false, "Overwrites existing component's versions of the module. If set to false, the push is a No-Op.")
 
@@ -134,7 +134,7 @@ Build module my-domain/modB in version 3.2.1 and push it to a local registry "un
 	return cmd
 }
 
-func (cmd *command) Run(ctx context.Context, args []string) error {
+func (cmd *command) Run(ctx context.Context) error {
 	osFS := osfs.New()
 
 	if cmd.opts.CI {
