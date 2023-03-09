@@ -82,5 +82,5 @@ func (o *Options) validateTarget() error {
 		return nil
 	}
 
-	return errors.New("Invalid target flag. Must be either 'control-plane' or 'remote'")
+	return errors.New("target must be either 'control-plane' or 'remote'")
 }
