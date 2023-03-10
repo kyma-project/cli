@@ -73,7 +73,7 @@ Enable "my-module" from "alpha" channel in "default-kyma" in "kyma-system" Names
 	)
 	cmd.Flags().StringVarP(
 		&o.Policy, "policy", "p", CustomResourcePolicyCreateAndDelete,
-		fmt.Sprintf("Determines how the module is managed, either install or ignore the default values provided in the module template. Available values are '%s' or '%s'.",
+		fmt.Sprintf("Determines how the module is managed. Use '%s' to install the default values provided in the module template or '%s' to ignore them.",
 			CustomResourcePolicyCreateAndDelete, CustomResourcePolicyIgnore))
 
 	return cmd
