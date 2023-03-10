@@ -136,9 +136,9 @@ WARNING: DO NOT USE ON PRODUCTIVE CLUSTERS!`,
 		"Forces the patching of Kyma spec modules in case their managed field was edited by a source other than Kyma CLI.",
 	)
 	cobraCmd.Flags().BoolVarP(
-		&o.Bare,
-		"bare",
-		"b",
+		&o.SkipDefaultTemplates,
+		"skip-default-templates",
+		"s",
 		false,
 		"Skip applying default module templates after the deployment.",
 	)
@@ -242,7 +242,7 @@ func (cmd *command) deploy(ctx context.Context) error {
 		return cmd.printSummary(start)
 	}
 
-	if !cmd.opts.Bare {
+	if !cmd.opts.SkipDefaultTemplates {
 		modStep := cmd.NewStep("Deploying default module templates")
 		if err := deploy.DefaultModuleTemplates(ctx, cmd.K8s, cmd.opts.Target, cmd.opts.Force, false); err != nil {
 			modStep.Failuref("Failed to deploy default module templates")
@@ -319,7 +319,7 @@ func (cmd *command) dryRun(ctx context.Context) error {
 		return nil
 	}
 
-	if !cmd.opts.Bare {
+	if !cmd.opts.SkipDefaultTemplates {
 		if err := deploy.DefaultModuleTemplates(ctx, cmd.K8s, cmd.opts.Target, cmd.opts.Force, true); err != nil {
 			return err
 		}

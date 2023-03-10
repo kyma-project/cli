@@ -24,7 +24,6 @@ kyma alpha deploy [flags]
 ## Flags
 
 ```bash
-  -b, --bare                          Skip applying default module templates after the deployment.
       --cert-manager string           Installs cert-manager from the specified static version. An empty string skips the installation. (default "v1.11.0")
   -c, --channel string                Select which channel to deploy from. (default "regular")
       --dry-run                       Renders the Kubernetes manifests without actually applying them.
@@ -41,6 +40,7 @@ kyma alpha deploy [flags]
   -m, --module stringArray            Provide one or more modules to activate after the deployment is finished. Example: "--module name@namespace" (namespace is optional).
   -n, --namespace string              The Namespace to deploy the the Kyma custom resource in. (default "kyma-system")
       --open-dashboard                Opens the Busola Dashboard at startup. Only works when a graphical interface is available and when running in interactive mode
+  -s, --skip-default-templates        Skip applying default module templates after the deployment.
       --target string                 Target to use when determining where to install default modules. Available values are 'control-plane' or 'remote'. (default "control-plane")
   -t, --timeout duration              Maximum time for the deployment. (default 20m0s)
       --wildcard-permissions          Creates a wildcard cluster-role to allow for easy local installation permissions of Lifecycle Manager.
