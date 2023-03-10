@@ -25,11 +25,11 @@ kyma alpha deploy [flags]
 
 ```bash
       --cert-manager string           Installs cert-manager from the specified static version. An empty string skips the installation. (default "v1.11.0")
-  -c, --channel string                Select which channel to deploy from. (default "regular")
+  -c, --channel string                Selects which channel to deploy from. (default "regular")
       --dry-run                       Renders the Kubernetes manifests without actually applying them.
       --extra-templates stringArray   Provide one or more additional module templates via URL or local path to apply after deployment.
   -f, --force-conflicts               Forces the patching of Kyma spec modules in case their managed field was edited by a source other than Kyma CLI.
-  -k, --kustomization stringArray     Provides one or more kustomizations to deploy. 
+  -k, --kustomization stringArray     Provide one or more kustomizations to deploy. 
                                       Each flag occurrence accepts a URL with an optional reference (commit, branch, or release) in URL@ref format or a local path to the directory of the kustomization file.
                                       By default, Lifecycle Manager is deployed from the GitHub main branch. (default [https://github.com/kyma-project/lifecycle-manager/config/default])
       --kyma-cr string                Provide a custom Kyma CR file for the deployment.
@@ -38,9 +38,9 @@ kyma alpha deploy [flags]
                                       - Use "europe-docker.pkg.dev/kyma-project/prod/lifecycle-manager@sha256:cb74b29cfe80c639c9ee9..." to use a custom version of Lifecycle Manager with a digest.
                                       - Specify a tag to override the default one. For example, when specifying "v20230220-7b8e9515",  the "eu.gcr.io/kyma-project/lifecycle-manager:v20230220-7b8e9515" tag is used. (default "eu.gcr.io/kyma-project/lifecycle-manager:latest")
   -m, --module stringArray            Provide one or more modules to activate after the deployment is finished. Example: "--module name@namespace" (namespace is optional).
-  -n, --namespace string              The Namespace to deploy the the Kyma custom resource in. (default "kyma-system")
+  -n, --namespace string              The Namespace to deploy the Kyma custom resource in. (default "kyma-system")
       --open-dashboard                Opens the Busola Dashboard at startup. Only works when a graphical interface is available and when running in interactive mode
-  -s, --skip-default-templates        Skip applying default module templates after the deployment.
+  -s, --skip-default-templates        Skips applying default module templates after the deployment.
       --target string                 Target to use when determining where to install default modules. Available values are 'control-plane' or 'remote'. (default "control-plane")
   -t, --timeout duration              Maximum time for the deployment. (default 20m0s)
       --wildcard-permissions          Creates a wildcard cluster-role to allow for easy local installation permissions of Lifecycle Manager.
