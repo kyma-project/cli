@@ -145,7 +145,7 @@ WARNING: DO NOT USE ON PRODUCTIVE CLUSTERS!`,
 	cobraCmd.Flags().StringVar(
 		&o.Target,
 		"target",
-		"control-plane",
+		targetControlPlane,
 		"Target to use when determining where to install default modules. Available values are 'control-plane' or 'remote'.",
 	)
 	cobraCmd.Flags().DurationVarP(
