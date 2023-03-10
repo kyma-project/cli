@@ -66,5 +66,5 @@ func (o *Options) validatePolicy() error {
 		return nil
 	}
 
-	return errors.New(fmt.Sprintf("policy must be either %s or %s.", CustomResourcePolicyCreateAndDelete, CustomResourcePolicyIgnore))
+	return fmt.Errorf("policy must be either %s or %s", CustomResourcePolicyCreateAndDelete, CustomResourcePolicyIgnore)
 }
