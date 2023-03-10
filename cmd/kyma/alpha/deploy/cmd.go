@@ -56,7 +56,7 @@ func NewCmd(o *Options) *cobra.Command {
 		"kustomization",
 		"k",
 		[]string{lifecycleManagerKustomization},
-		`Provides one or more kustomizations to deploy. 
+		`Provide one or more kustomizations to deploy. 
 Each flag occurrence accepts a URL with an optional reference (commit, branch, or release) in URL@ref format or a local path to the directory of the kustomization file.
 By default, Lifecycle Manager is deployed from the GitHub main branch.`,
 	)
@@ -72,14 +72,14 @@ By default, Lifecycle Manager is deployed from the GitHub main branch.`,
 		"channel",
 		"c",
 		"regular",
-		`Select which channel to deploy from.`,
+		`Selects which channel to deploy from.`,
 	)
 	cobraCmd.Flags().StringVarP(
 		&o.Namespace,
 		"namespace",
 		"n",
 		cli.KymaNamespaceDefault,
-		"The Namespace to deploy the the Kyma custom resource in.",
+		"The Namespace to deploy the Kyma custom resource in.",
 	)
 	cobraCmd.Flags().StringVar(
 		&o.KymaCR,
@@ -140,7 +140,7 @@ WARNING: DO NOT USE ON PRODUCTIVE CLUSTERS!`,
 		"skip-default-templates",
 		"s",
 		false,
-		"Skip applying default module templates after the deployment.",
+		"Skips applying default module templates after the deployment.",
 	)
 	cobraCmd.Flags().StringVar(
 		&o.Target,
