@@ -121,7 +121,7 @@ func (cmd *command) run(ctx context.Context, l *zap.SugaredLogger, moduleName st
 
 	kyma := types.NamespacedName{Name: cmd.opts.KymaName, Namespace: cmd.opts.Namespace}
 	moduleInteractor := module.NewInteractor(l, cmd.K8s, kyma, cmd.opts.Timeout, cmd.opts.Force)
-	modules, err := moduleInteractor.Get(ctx)
+	modules, _, err := moduleInteractor.Get(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get modules: %w", err)
 	}

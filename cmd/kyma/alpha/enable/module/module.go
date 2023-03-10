@@ -122,9 +122,23 @@ func (cmd *command) run(ctx context.Context, l *zap.SugaredLogger, moduleName st
 
 	kyma := types.NamespacedName{Name: cmd.opts.KymaName, Namespace: cmd.opts.Namespace}
 	moduleInteractor := module.NewInteractor(l, cmd.K8s, kyma, cmd.opts.Timeout, cmd.opts.Force)
-	modules, err := moduleInteractor.Get(ctx)
+	modules, kymaChannel, err := moduleInteractor.Get(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get modules: %w", err)
+	}
+
+	templates, err := moduleInteractor.GetAllModuleTemplatesOfModule(ctx, moduleName)
+	if err != nil {
+		return fmt.Errorf("could not retrieve templates in cluster to determine valid channels: %w", err)
+	}
+	channelToLookup := cmd.opts.Channel
+	if channelToLookup == "" {
+		channelToLookup = kymaChannel
+	}
+	if !doesChannelExist(templates, channelToLookup) {
+		return fmt.Errorf("the channel [%s] does not exist for the ModuleTemplate [%s]. "+
+			"choose from one of the available channels: %v",
+			channelToLookup, moduleName, mapTemplatesToChannels(templates))
 	}
 
 	desiredModules := enableModule(modules, moduleName, cmd.opts.Channel)
@@ -164,4 +178,21 @@ func enableModule(modules []v1beta1.Module, name, channel string) []v1beta1.Modu
 	modules = append(modules, newModule)
 
 	return modules
+}
+
+func doesChannelExist(templates []v1beta1.ModuleTemplate, channel string) bool {
+	for _, template := range templates {
+		if template.Spec.Channel == channel {
+			return true
+		}
+	}
+	return false
+}
+
+func mapTemplatesToChannels(templates []v1beta1.ModuleTemplate) []string {
+	mapped := make([]string, len(templates))
+	for i, e := range templates {
+		mapped[i] = e.Spec.Channel
+	}
+	return mapped
 }
