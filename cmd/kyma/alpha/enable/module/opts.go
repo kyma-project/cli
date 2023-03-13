@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	CustomResourcePolicyCreateAndDelete = "CreateAndDelete"
-	CustomResourcePolicyIgnore          = "Ignore"
+	customResourcePolicyCreateAndDelete = "CreateAndDelete"
+	customResourcePolicyIgnore          = "Ignore"
 )
 
 type Options struct {
@@ -62,9 +62,9 @@ func (o *Options) validateChannel() error {
 }
 
 func (o *Options) validatePolicy() error {
-	if o.Policy == CustomResourcePolicyCreateAndDelete || o.Policy == CustomResourcePolicyIgnore {
+	if o.Policy == customResourcePolicyCreateAndDelete || o.Policy == customResourcePolicyIgnore {
 		return nil
 	}
 
-	return fmt.Errorf("policy must be either %s or %s", CustomResourcePolicyCreateAndDelete, CustomResourcePolicyIgnore)
+	return fmt.Errorf("policy must be either %s or %s", customResourcePolicyCreateAndDelete, customResourcePolicyIgnore)
 }

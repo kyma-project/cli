@@ -11,6 +11,6 @@ func TestInvalidPolicy(t *testing.T) {
 		opts := Options{Policy: "Unknown"}
 		err := opts.validatePolicy()
 		require.Error(t, err)
-		require.Contains(t, err.Error(), fmt.Sprintf("policy must be either %s or %s", CustomResourcePolicyCreateAndDelete, CustomResourcePolicyIgnore))
+		require.Contains(t, err.Error(), fmt.Sprintf("policy must be either %s or %s", customResourcePolicyCreateAndDelete, customResourcePolicyIgnore))
 	})
 }
