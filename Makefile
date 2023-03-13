@@ -102,3 +102,8 @@ ci-main: resolve validate build test integration-test upload-binaries
 
 .PHONY: ci-release
 ci-release: resolve validate build test integration-test archive release
+
+.PHONY: ci-alpha-integration-linux
+ci-alpha-integration-linux: build-linux
+	./bin/kyma-linux provision k3d --ci
+	./bin/kyma-linux alpha deploy --ci
