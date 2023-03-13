@@ -72,7 +72,7 @@ Enable "my-module" from "alpha" channel in "default-kyma" in "kyma-system" Names
 		"Wait until the given Kyma resource is ready.",
 	)
 	cmd.Flags().StringVarP(
-		&o.Policy, "policy", "p", customResourcePolicyCreateAndDelete,
+		&o.Policy, "policy", "p", string(customResourcePolicyCreateAndDelete),
 		fmt.Sprintf("Determines how the module is managed. Use '%s' to install the default values provided in the module template or '%s' to ignore them.",
 			customResourcePolicyCreateAndDelete, customResourcePolicyIgnore))
 
