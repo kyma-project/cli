@@ -34,7 +34,7 @@ func TestChannelValidation(t *testing.T) {
 		},
 	}
 
-	moduleInteractor := mock.MockInteractor{}
+	moduleInteractor := mock.Interactor{}
 	moduleInteractor.Test(t)
 	moduleInteractor.On("GetAllModuleTemplates", ctx).Return(allTemplates, nil)
 
