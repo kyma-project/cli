@@ -10,22 +10,22 @@ import (
 func TestDisableModule(t *testing.T) {
 	installedModules := []v1beta1.Module{
 		{
-			"module1",
-			"",
-			"alpha",
-			"Ignore",
+			Name:                 "module1",
+			ControllerName:       "",
+			Channel:              "alpha",
+			CustomResourcePolicy: "Ignore",
 		},
 		{
-			"module2",
-			"",
-			"",
-			"CreateAndDelete",
+			Name:                 "module2",
+			ControllerName:       "",
+			Channel:              "",
+			CustomResourcePolicy: "CreateAndDelete",
 		},
 		{
-			"module3",
-			"",
-			"regular",
-			"",
+			Name:                 "module3",
+			ControllerName:       "",
+			Channel:              "regular",
+			CustomResourcePolicy: "",
 		},
 	}
 
