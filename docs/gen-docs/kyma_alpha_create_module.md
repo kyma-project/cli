@@ -51,7 +51,7 @@ Build module my-domain/modB in version 3.2.1 and push it to a local registry "un
       --descriptor-version string          Schema version to use for the generated OCM descriptor. One of ocm.software/v3alpha1,v2 (default "v2")
       --insecure                           Uses an insecure connection to access the registry.
       --module-archive-path string         Specifies the path where the module artifacts are locally cached to generate the image. If the path already has a module, use the "--module-archive-version-overwrite" flag to overwrite it. (default "./mod")
-      --module-archive-persistence         Uses the host filesystem instead of inmemory archiving to build the module.
+      --module-archive-persistence         Uses the host filesystem instead of in-memory archiving to build the module.
       --module-archive-version-overwrite   Overwrites existing component's versions of the module. If set to false, the push is a No-Op.
   -n, --name string                        Override the module name of the kubebuilder project. If the module is not a kubebuilder project, this flag is mandatory.
       --name-mapping string                Overrides the OCM Component Name Mapping, Use: "urlPath" or "sha256-digest". (default "urlPath")
