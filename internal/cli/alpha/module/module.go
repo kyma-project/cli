@@ -26,6 +26,7 @@ type Interactor interface {
 	Update(ctx context.Context, modules []v1beta1.Module) error
 	// WaitUntilReady blocks until all Modules are confirmed to be applied and ready
 	WaitUntilReady(ctx context.Context) error
+	GetAllModuleTemplates(ctx context.Context) (v1beta1.ModuleTemplateList, error)
 }
 
 var _ Interactor = &DefaultInteractor{}
@@ -63,34 +64,12 @@ func (i *DefaultInteractor) Get(ctx context.Context) ([]v1beta1.Module, string, 
 	return kyma.Spec.Modules, kyma.Spec.Channel, nil
 }
 
-func (i *DefaultInteractor) GetAllModuleTemplatesOfModule(ctx context.Context, moduleIdentifier string) (
-	[]v1beta1.ModuleTemplate, error) {
+func (i *DefaultInteractor) GetAllModuleTemplates(ctx context.Context) (v1beta1.ModuleTemplateList, error) {
 	var allTemplates v1beta1.ModuleTemplateList
 	if err := i.K8s.Ctrl().List(ctx, &allTemplates); err != nil {
-		return nil, fmt.Errorf("could not get Moduletemplates: %w", err)
+		return v1beta1.ModuleTemplateList{}, fmt.Errorf("could not get Moduletemplates: %w", err)
 	}
-
-	var filteredModuleTemplates []v1beta1.ModuleTemplate
-	for _, mt := range allTemplates.Items {
-		if mt.Labels[v1beta1.ModuleName] == moduleIdentifier {
-			filteredModuleTemplates = append(filteredModuleTemplates, mt)
-			continue
-		}
-		if mt.ObjectMeta.Name == moduleIdentifier {
-			filteredModuleTemplates = append(filteredModuleTemplates, mt)
-			continue
-		}
-		descriptor, err := mt.Spec.GetDescriptor()
-		if err != nil {
-			return nil, fmt.Errorf("invalid ModuleTemplate descriptor: %v", err)
-		}
-		if descriptor.Name == moduleIdentifier {
-			filteredModuleTemplates = append(filteredModuleTemplates, mt)
-			continue
-		}
-	}
-
-	return filteredModuleTemplates, nil
+	return allTemplates, nil
 }
 
 // Update tries to update the modules in the Kyma Instance and retries on failure
