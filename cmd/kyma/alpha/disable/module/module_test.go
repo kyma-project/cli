@@ -1,13 +1,12 @@
 package module
 
 import (
-	"fmt"
 	"github.com/kyma-project/lifecycle-manager/api/v1beta1"
-	"github.com/stretchr/testify/require"
+	"reflect"
 	"testing"
 )
 
-func TestDisableModule(t *testing.T) {
+func Test_disableModule(t *testing.T) {
 	installedModules := []v1beta1.Module{
 		{
 			Name:                 "module1",
@@ -29,90 +28,84 @@ func TestDisableModule(t *testing.T) {
 		},
 	}
 
-	testCases := []struct {
-		name            string
-		existingModules []v1beta1.Module
-		moduleName      string
-		channel         string
-		out             func(t *testing.T, outputModules []v1beta1.Module, err error)
+	type args struct {
+		modules []v1beta1.Module
+		name    string
+		channel string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []v1beta1.Module
+		wantErr bool
 	}{
 		{
-			name:            "Not found module",
-			existingModules: installedModules,
-			moduleName:      "module1",
-			channel:         "regular",
-			out: func(t *testing.T, outputModules []v1beta1.Module, err error) {
-				require.Equal(t,
-					installedModules,
-					outputModules,
-				)
-
-				require.Equal(t, fmt.Errorf("could not disable module as it was not found: module1 in channel regular"), err)
+			name: "Not found module",
+			args: args{
+				modules: installedModules,
+				name:    "module1",
+				channel: "regular",
 			},
+			want:    installedModules,
+			wantErr: true,
 		},
 		{
-			name:            "Module disabled successfully from the module channel",
-			existingModules: installedModules,
-			moduleName:      "module3",
-			channel:         "regular",
-			out: func(t *testing.T, outputModules []v1beta1.Module, err error) {
-				require.Equal(t,
-					[]v1beta1.Module{
-						{
-							Name:                 "module1",
-							ControllerName:       "",
-							Channel:              "alpha",
-							CustomResourcePolicy: "Ignore",
-						},
-						{
-							Name:                 "module2",
-							ControllerName:       "",
-							Channel:              "",
-							CustomResourcePolicy: "CreateAndDelete",
-						},
-					},
-					outputModules,
-				)
-
-				require.Equal(t, nil, err)
+			name: "Module disabled successfully from the module channel",
+			args: args{
+				modules: installedModules,
+				name:    "module3",
+				channel: "regular",
 			},
+			want: []v1beta1.Module{
+				{
+					Name:                 "module1",
+					ControllerName:       "",
+					Channel:              "alpha",
+					CustomResourcePolicy: "Ignore",
+				},
+				{
+					Name:                 "module2",
+					ControllerName:       "",
+					Channel:              "",
+					CustomResourcePolicy: "CreateAndDelete",
+				},
+			},
+			wantErr: false,
 		},
 		{
-			name:            "Module disabled successfully from the global Kyma channel",
-			existingModules: installedModules,
-			moduleName:      "module2",
-			channel:         "alpha",
-			out: func(t *testing.T, outputModules []v1beta1.Module, err error) {
-				require.Equal(t,
-					[]v1beta1.Module{
-						{
-							Name:                 "module1",
-							ControllerName:       "",
-							Channel:              "alpha",
-							CustomResourcePolicy: "Ignore",
-						},
-						{
-							Name:                 "module3",
-							ControllerName:       "",
-							Channel:              "regular",
-							CustomResourcePolicy: "",
-						},
-					},
-					outputModules,
-				)
-
-				require.Equal(t, nil, err)
+			name: "Module disabled successfully from the global Kyma channel",
+			args: args{
+				modules: installedModules,
+				name:    "module2",
+				channel: "alpha",
 			},
+			want: []v1beta1.Module{
+				{
+					Name:                 "module1",
+					ControllerName:       "",
+					Channel:              "alpha",
+					CustomResourcePolicy: "Ignore",
+				},
+				{
+					Name:                 "module3",
+					ControllerName:       "",
+					Channel:              "regular",
+					CustomResourcePolicy: "",
+				},
+			},
+			wantErr: false,
 		},
 	}
-
-	for _, test := range testCases {
-		t.Run(
-			test.name, func(t *testing.T) {
-				modules, err := disableModule(test.existingModules, test.moduleName, test.channel)
-
-				test.out(t, modules, err)
-			},
-		)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := disableModule(tt.args.modules, tt.args.name, tt.args.channel)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("disableModule() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("disableModule() got = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }
