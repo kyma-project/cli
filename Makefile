@@ -106,6 +106,8 @@ ci-release: resolve validate build test integration-test archive release
 .PHONY: ci-test-integration-cluster-linux
 ci-test-integration-cluster-linux: build-linux
 	./bin/kyma-linux provision k3d --ci --name=kyma-cli-integration
+	pwd
+	ls -la
 	go test ./tests/integration/cluster_test.go -v -args --kubeconfig=${shell k3d kubeconfig write kyma-cli-integration}
 
 .PHONY: local-test-integration-cluster-darwin
