@@ -126,9 +126,14 @@ func (cmd *command) run(ctx context.Context, l *zap.SugaredLogger, moduleName st
 
 	kyma := types.NamespacedName{Name: cmd.opts.KymaName, Namespace: cmd.opts.Namespace}
 	moduleInteractor := module.NewInteractor(l, cmd.K8s, kyma, cmd.opts.Timeout, cmd.opts.Force)
-	modules, err := moduleInteractor.Get(ctx)
+	modules, kymaChannel, err := moduleInteractor.Get(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get modules: %w", err)
+	}
+
+	err = validateChannel(ctx, &moduleInteractor, moduleName, cmd.opts.Channel, kymaChannel)
+	if err != nil {
+		return fmt.Errorf("failed to validate module channel: %w", err)
 	}
 
 	desiredModules := enableModule(modules, moduleName, cmd.opts.Channel, cmd.opts.Policy)
@@ -152,6 +157,53 @@ func (cmd *command) run(ctx context.Context, l *zap.SugaredLogger, moduleName st
 	return nil
 }
 
+func validateChannel(ctx context.Context, moduleInteractor module.Interactor,
+	moduleIdentifier string, channel string, kymaChannel string) error {
+	allTemplates, err := moduleInteractor.GetAllModuleTemplates(ctx)
+	if err != nil {
+		return fmt.Errorf("could not retrieve module templates in cluster to determine valid channels: %v", err)
+	}
+
+	filteredModuleTemplates, err := filterModuleTemplates(allTemplates, moduleIdentifier)
+	if err != nil {
+		return fmt.Errorf("could not process module templates in the cluster: %v", err)
+	}
+	if channel == "" {
+		channel = kymaChannel
+	}
+	if !doesChannelExist(filteredModuleTemplates, channel) {
+		return fmt.Errorf("the channel [%s] does not exist for the module template [%s]. "+
+			"choose from one of the available channels: %v",
+			channel, moduleIdentifier, mapTemplatesToChannels(filteredModuleTemplates))
+	}
+	return nil
+}
+
+func filterModuleTemplates(allTemplates v1beta1.ModuleTemplateList,
+	moduleIdentifier string) ([]v1beta1.ModuleTemplate, error) {
+	var filteredModuleTemplates []v1beta1.ModuleTemplate
+
+	for _, mt := range allTemplates.Items {
+		if mt.Labels[v1beta1.ModuleName] == moduleIdentifier {
+			filteredModuleTemplates = append(filteredModuleTemplates, mt)
+			continue
+		}
+		if mt.ObjectMeta.Name == moduleIdentifier {
+			filteredModuleTemplates = append(filteredModuleTemplates, mt)
+			continue
+		}
+		descriptor, err := mt.Spec.GetDescriptor()
+		if err != nil {
+			return nil, fmt.Errorf("invalid ModuleTemplate descriptor: %v", err)
+		}
+		if descriptor.Name == moduleIdentifier {
+			filteredModuleTemplates = append(filteredModuleTemplates, mt)
+			continue
+		}
+	}
+	return filteredModuleTemplates, nil
+}
+
 func enableModule(modules []v1beta1.Module, name, channel string, customResourcePolicy string) []v1beta1.Module {
 	for idx := range modules {
 		if modules[idx].Name == name {
@@ -169,4 +221,21 @@ func enableModule(modules []v1beta1.Module, name, channel string, customResource
 	modules = append(modules, newModule)
 
 	return modules
+}
+
+func doesChannelExist(templates []v1beta1.ModuleTemplate, channel string) bool {
+	for _, template := range templates {
+		if template.Spec.Channel == channel {
+			return true
+		}
+	}
+	return false
+}
+
+func mapTemplatesToChannels(templates []v1beta1.ModuleTemplate) []string {
+	mapped := make([]string, len(templates))
+	for i, e := range templates {
+		mapped[i] = e.Spec.Channel
+	}
+	return mapped
 }

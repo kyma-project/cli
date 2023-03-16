@@ -20,12 +20,13 @@ import (
 )
 
 type Interactor interface {
-	// Get retrieves all modules that the Interactor deals with.
-	Get(ctx context.Context) ([]v1beta1.Module, error)
+	// Get retrieves all modules and the channel of the kyma CR that the Interactor deals with.
+	Get(ctx context.Context) ([]v1beta1.Module, string, error)
 	// Update applies all modules that the Interactor deals with.
 	Update(ctx context.Context, modules []v1beta1.Module) error
 	// WaitUntilReady blocks until all Modules are confirmed to be applied and ready
 	WaitUntilReady(ctx context.Context) error
+	GetAllModuleTemplates(ctx context.Context) (v1beta1.ModuleTemplateList, error)
 }
 
 var _ Interactor = &DefaultInteractor{}
@@ -52,15 +53,23 @@ func NewInteractor(
 	}
 }
 
-func (i *DefaultInteractor) Get(ctx context.Context) ([]v1beta1.Module, error) {
+func (i *DefaultInteractor) Get(ctx context.Context) ([]v1beta1.Module, string, error) {
 	kyma := &v1beta1.Kyma{}
 	if err := i.K8s.Ctrl().Get(ctx, i.Key, kyma); err != nil {
-		return nil, fmt.Errorf("could not get Kyma %ss: %w", i.Key, err)
+		return nil, "", fmt.Errorf("could not get Kyma %ss: %w", i.Key, err)
 	}
 
 	i.lastKnownResourceVersion = kyma.GetResourceVersion()
 
-	return kyma.Spec.Modules, nil
+	return kyma.Spec.Modules, kyma.Spec.Channel, nil
+}
+
+func (i *DefaultInteractor) GetAllModuleTemplates(ctx context.Context) (v1beta1.ModuleTemplateList, error) {
+	var allTemplates v1beta1.ModuleTemplateList
+	if err := i.K8s.Ctrl().List(ctx, &allTemplates); err != nil {
+		return v1beta1.ModuleTemplateList{}, fmt.Errorf("could not get Moduletemplates: %w", err)
+	}
+	return allTemplates, nil
 }
 
 // Update tries to update the modules in the Kyma Instance and retries on failure
@@ -93,7 +102,7 @@ func (i *DefaultInteractor) Update(ctx context.Context, modules []v1beta1.Module
 	return nil
 }
 
-// WaitUntilReady uses the internal i.changed tracker to determine wether the last apply caused
+// WaitUntilReady uses the internal i.changed tracker to determine whether the last apply caused
 // any changes on the cluster. If it did not, then it will shortcut to retrieve the latest version
 // from the cluster and determine if it is ready. If it has been changed, then
 // it will start a watch request and read out the last state. If it is in error,
