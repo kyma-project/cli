@@ -109,6 +109,8 @@ ci-test-integration-cluster-linux: build-linux
 	pwd
 	ls -la
 	k3d cluster list
+	go version
+	k3d kubeconfig write kyma-cli-integration
 	go test ./tests/integration/cluster_test.go -v -args --kubeconfig=${shell k3d kubeconfig write kyma-cli-integration}
 
 .PHONY: local-test-integration-cluster-darwin
