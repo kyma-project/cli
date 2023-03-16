@@ -71,6 +71,10 @@ Enable "my-module" from "alpha" channel in "default-kyma" in "kyma-system" Names
 		&o.Wait, "wait", "w", false,
 		"Wait until the given Kyma resource is ready.",
 	)
+	cmd.Flags().StringVarP(
+		&o.Policy, "policy", "p", string(customResourcePolicyCreateAndDelete),
+		fmt.Sprintf("Determines how the module is managed. Use '%s' to install the default values provided in the module template or '%s' to ignore them.",
+			customResourcePolicyCreateAndDelete, customResourcePolicyIgnore))
 
 	return cmd
 }
@@ -127,7 +131,7 @@ func (cmd *command) run(ctx context.Context, l *zap.SugaredLogger, moduleName st
 		return fmt.Errorf("failed to get modules: %w", err)
 	}
 
-	desiredModules := enableModule(modules, moduleName, cmd.opts.Channel)
+	desiredModules := enableModule(modules, moduleName, cmd.opts.Channel, cmd.opts.Policy)
 
 	patchStep := cmd.NewStep("Patching modules for Kyma")
 	if err = moduleInteractor.Update(ctx, desiredModules); err != nil {
@@ -148,15 +152,16 @@ func (cmd *command) run(ctx context.Context, l *zap.SugaredLogger, moduleName st
 	return nil
 }
 
-func enableModule(modules []v1beta1.Module, name, channel string) []v1beta1.Module {
-	for _, mod := range modules {
-		if mod.Name == name {
-			mod.Channel = channel
+func enableModule(modules []v1beta1.Module, name, channel string, customResourcePolicy string) []v1beta1.Module {
+	for idx := range modules {
+		if modules[idx].Name == name {
+			modules[idx].Channel = channel
+			modules[idx].CustomResourcePolicy = v1beta1.CustomResourcePolicy(customResourcePolicy)
 			return modules
 		}
 	}
 
-	newModule := v1beta1.Module{Name: name}
+	newModule := v1beta1.Module{Name: name, CustomResourcePolicy: v1beta1.CustomResourcePolicy(customResourcePolicy)}
 	if channel != "" {
 		newModule.Channel = channel
 	}

@@ -14,4 +14,11 @@ func TestOptsValidation(t *testing.T) {
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "timeout must be a positive duration")
 	})
+
+	t.Run("Invalid targets should be rejected", func(t *testing.T) {
+		opts := Options{Target: "some-target"}
+		err := opts.validateTarget()
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "target must be either 'control-plane' or 'remote'")
+	})
 }

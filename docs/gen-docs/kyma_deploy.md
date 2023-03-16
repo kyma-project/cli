@@ -17,7 +17,7 @@ kyma deploy [flags]
 ```bash
       --component stringArray    Provide one or more components to deploy, for example:
                                  	- With short-hand notation: "--component name@namespace"
-                                 	- With verbose JSON structure "--component '{"name": "componentName","namespace": "componenNamespace","url": "componentUrl","version": "1.2.3"}'
+                                 	- With verbose JSON structure "--component '{"name": "componentName","namespace": "componentNamespace","url": "componentUrl","version": "1.2.3"}'
   -c, --components-file string   Path to the components file (default "$HOME/.kyma/sources/installation/resources/components.yaml" or ".kyma-sources/installation/resources/components.yaml")
       --concurrency int          Set maximum number of workers to run simultaneously to deploy Kyma. (default 4)
   -d, --domain string            Custom domain used for installation.
