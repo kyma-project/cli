@@ -190,7 +190,7 @@ func execKymaAlphaCmd(args ...string) error {
 	if err != nil {
 		return err
 	}
-	binPath := fmt.Sprintf("%s%s", path.Join(path.Dir(path.Dir(curr)), "bin"), "/kyma-darwin")
+	binPath := fmt.Sprintf("%s%s", path.Join(path.Dir(path.Dir(curr)), "bin"), "/kyma-linux")
 	args = append([]string{"alpha", "--ci"}, args...)
 	fmt.Printf("Executing: %s %s\n", binPath, strings.Join(args, " "))
 	fmt.Println("---")
