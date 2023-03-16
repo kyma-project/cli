@@ -157,7 +157,7 @@ func disableModule(modules []v1beta1.Module, name, channel string) ([]v1beta1.Mo
 			continue
 		}
 		if channel != "" {
-			if mod.Channel != channel {
+			if mod.Channel != "" && mod.Channel != channel {
 				continue
 			}
 		}
