@@ -38,10 +38,10 @@ require (
 	gotest.tools v2.2.0+incompatible
 	helm.sh/helm/v3 v3.11.1
 	istio.io/client-go v1.17.1
-	k8s.io/api v0.26.1
+	k8s.io/api v0.26.2
 	k8s.io/apiextensions-apiserver v0.26.1
-	k8s.io/apimachinery v0.26.1
-	k8s.io/cli-runtime v0.26.1
+	k8s.io/apimachinery v0.26.2
+	k8s.io/cli-runtime v0.26.2
 	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible
 	k8s.io/klog/v2 v2.90.0
 	sigs.k8s.io/controller-runtime v0.14.4
