@@ -9,6 +9,7 @@ import (
 	"github.com/kyma-project/cli/pkg/step"
 
 	"github.com/kyma-incubator/reconciler/pkg/model"
+
 	"github.com/kyma-project/cli/internal/clusterinfo"
 	"github.com/kyma-project/cli/internal/coredns"
 	"github.com/kyma-project/cli/internal/deploy"
@@ -17,16 +18,17 @@ import (
 	"github.com/kyma-project/cli/internal/deploy/component"
 	"github.com/kyma-project/cli/internal/deploy/values"
 
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
+	"go.uber.org/zap"
+
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/config"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/nice"
 	"github.com/kyma-project/cli/internal/version"
-	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
-	"go.uber.org/zap"
 
-	//Register all reconcilers
+	// Register all reconcilers
 	_ "github.com/kyma-incubator/reconciler/pkg/reconciler/instances"
 )
 
@@ -124,7 +126,7 @@ func (cmd *command) run(ctx context.Context) error {
 	}
 
 	if !cmd.opts.NonInteractive {
-		if err := cli.DetectManagedEnvironment(ctx, cmd.K8s, cmd.Factory.NewStep("")); err != nil {
+		if err := cli.DetectManagedEnvironment(ctx, cmd.K8s, cmd.Factory.NewStep("Detecting Environment")); err != nil {
 			return err
 		}
 	}
