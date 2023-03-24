@@ -414,7 +414,7 @@ func (cmd *command) detectManagedKyma(ctx context.Context) error {
 	}
 
 	kymaManagedFields := deployedKymaCRs.Items[0].GetManagedFields()
-	if kymaManagedFields == nil || len(kymaManagedFields) == 0 {
+	if len(kymaManagedFields) == 0 {
 		return nil
 	}
 
