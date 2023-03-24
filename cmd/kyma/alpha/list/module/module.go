@@ -118,7 +118,7 @@ List all modules for the kyma "some-kyma" in the "alpha" channel
 	return cmd
 }
 
-func (cmd *command) Run(ctx context.Context, args []string) error {
+func (cmd *command) Run(ctx context.Context, _ []string) error {
 	if !cmd.opts.NonInteractive {
 		cli.AlphaWarn()
 	}

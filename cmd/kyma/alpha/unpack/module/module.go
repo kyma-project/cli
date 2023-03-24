@@ -36,6 +36,6 @@ With this command, you can unpack the contents of an image so that they can be d
 	return cmd
 }
 
-func (c *command) Run(args []string) error {
+func (c *command) Run(_ []string) error {
 	return nil
 }

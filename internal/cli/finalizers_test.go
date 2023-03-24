@@ -175,7 +175,7 @@ func fixFuncWithSleep(counter chan int) func() {
 	}
 }
 
-func fixNilFunc(counter chan int) func() {
+func fixNilFunc(_ chan int) func() {
 	return nil
 }
 

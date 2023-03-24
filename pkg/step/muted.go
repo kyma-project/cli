@@ -12,49 +12,49 @@ type mutedStep struct {
 func (m mutedStep) Start() {
 }
 
-func (m mutedStep) Status(msg string) {
+func (m mutedStep) Status(_ string) {
 }
 
 func (m mutedStep) Success() {
 }
 
-func (m mutedStep) Successf(format string, args ...interface{}) {
+func (m mutedStep) Successf(_ string, _ ...interface{}) {
 }
 
 func (m mutedStep) Failure() {
 }
 
-func (m mutedStep) Failuref(format string, args ...interface{}) {
+func (m mutedStep) Failuref(_ string, _ ...interface{}) {
 }
 
-func (m mutedStep) Stop(success bool) {
+func (m mutedStep) Stop(_ bool) {
 }
 
-func (m mutedStep) Stopf(success bool, format string, args ...interface{}) {
+func (m mutedStep) Stopf(_ bool, _ string, _ ...interface{}) {
 }
 
-func (m mutedStep) LogInfo(msg string) {
+func (m mutedStep) LogInfo(_ string) {
 }
 
-func (m mutedStep) LogInfof(format string, args ...interface{}) {
+func (m mutedStep) LogInfof(_ string, _ ...interface{}) {
 }
 
-func (m mutedStep) LogError(msg string) {
+func (m mutedStep) LogError(_ string) {
 }
 
-func (m mutedStep) LogErrorf(format string, args ...interface{}) {
+func (m mutedStep) LogErrorf(_ string, _ ...interface{}) {
 }
 
-func (m mutedStep) LogWarn(msg string) {
+func (m mutedStep) LogWarn(_ string) {
 }
 
-func (m mutedStep) LogWarnf(format string, args ...interface{}) {
+func (m mutedStep) LogWarnf(_ string, _ ...interface{}) {
 }
 
-func (m mutedStep) Prompt(msg string) (string, error) {
+func (m mutedStep) Prompt(_ string) (string, error) {
 	return "", nil
 }
 
-func (m mutedStep) PromptYesNo(msg string) bool {
+func (m mutedStep) PromptYesNo(_ string) bool {
 	return false
 }

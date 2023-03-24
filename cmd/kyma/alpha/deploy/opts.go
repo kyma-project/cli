@@ -51,11 +51,7 @@ func (o *Options) validateFlags() error {
 		return err
 	}
 
-	if err := o.validateTarget(); err != nil {
-		return err
-	}
-
-	return nil
+	return o.validateTarget()
 }
 
 func (o *Options) validateTimeout() error {
