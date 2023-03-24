@@ -408,8 +408,8 @@ func (cmd *command) detectManagedKyma(ctx context.Context) error {
 		Resource: "kymas",
 	}
 
-	deployedKymaCRs, _ := cmd.K8s.Dynamic().Resource(kymaResource).List(ctx, v1.ListOptions{})
-	if deployedKymaCRs == nil || len(deployedKymaCRs.Items) == 0 {
+	deployedKymaCRs, err := cmd.K8s.Dynamic().Resource(kymaResource).List(ctx, v1.ListOptions{})
+	if err != nil || deployedKymaCRs == nil || len(deployedKymaCRs.Items) == 0 {
 		return nil
 	}
 
