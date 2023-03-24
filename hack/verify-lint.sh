@@ -8,7 +8,7 @@ set -E         # needs to be set if we want the ERR trap
 readonly CURRENT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 readonly ROOT_PATH=$( cd "${CURRENT_DIR}/.." && pwd )
 readonly TMP_DIR=$(mktemp -d)
-readonly GOLANGCI_LINT_VERSION="v1.49.0"
+readonly GOLANGCI_LINT_VERSION="v1.52.1"
 
 source "${CURRENT_DIR}/utilities.sh" || { echo 'Cannot load CI utilities.'; exit 1; }
 

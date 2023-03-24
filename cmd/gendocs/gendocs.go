@@ -58,10 +58,7 @@ func genMarkdownTree(cmd *cobra.Command, dir string) error {
 	if _, err := io.WriteString(f, filePrepender(cmd)); err != nil {
 		return err
 	}
-	if err := genMarkdown(cmd, f); err != nil {
-		return err
-	}
-	return nil
+	return genMarkdown(cmd, f)
 }
 
 func genMarkdown(cmd *cobra.Command, w io.Writer) error {

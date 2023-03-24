@@ -331,13 +331,9 @@ func (cmd *command) dryRun(ctx context.Context) error {
 		}
 	}
 
-	if err := deploy.Kyma(
+	return deploy.Kyma(
 		ctx, cmd.K8s, cmd.opts.Namespace, cmd.opts.Channel, cmd.opts.KymaCR, cmd.opts.Force, true,
-	); err != nil {
-		return err
-	}
-
-	return nil
+	)
 }
 
 func (cmd *command) openDashboard(ctx context.Context) error {

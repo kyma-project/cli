@@ -2,8 +2,9 @@ package module
 
 import (
 	"fmt"
-	"github.com/kyma-project/lifecycle-manager/api/v1beta1"
 	"time"
+
+	"github.com/kyma-project/lifecycle-manager/api/v1beta1"
 
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/pkg/errors"
@@ -37,11 +38,7 @@ func (o *Options) validateFlags() error {
 	if err := o.validateChannel(); err != nil {
 		return err
 	}
-	if err := o.validatePolicy(); err != nil {
-		return err
-	}
-
-	return nil
+	return o.validatePolicy()
 }
 
 func (o *Options) validateTimeout() error {

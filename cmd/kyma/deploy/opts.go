@@ -52,11 +52,7 @@ func (o *Options) validateFlags() error {
 	if err := o.validateTLSCertAndKey(); err != nil {
 		return err
 	}
-	if err := o.validateTimeout(); err != nil {
-		return err
-	}
-
-	return nil
+	return o.validateTimeout()
 }
 
 func (o *Options) validateSource() error {
