@@ -45,10 +45,7 @@ func (cmd *command) Run() error {
 		return errors.Wrap(err, "failed to initialize the Kubernetes client from given kubeconfig")
 	}
 
-	if err := cmd.importCertificate(); err != nil {
-		return err
-	}
-	return nil
+	return cmd.importCertificate()
 }
 
 func (cmd *command) importCertificate() error {
