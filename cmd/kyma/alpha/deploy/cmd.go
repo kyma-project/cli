@@ -209,7 +209,7 @@ func (cmd *command) deploy(ctx context.Context) error {
 	}
 	clusterAccess.Successf("Successfully connected to cluster")
 
-	if !cmd.opts.NonInteractive {
+	if !cmd.opts.CI && !cmd.opts.NonInteractive {
 		if err := cmd.detectManagedKyma(ctx); err != nil {
 			return err
 		}
