@@ -3,6 +3,7 @@ package deploy
 import (
 	"context"
 	"fmt"
+	"golang.org/x/exp/slices"
 	"os"
 	"strings"
 	"time"
@@ -208,6 +209,12 @@ func (cmd *command) deploy(ctx context.Context) error {
 	}
 	clusterAccess.Successf("Successfully connected to cluster")
 
+	if !cmd.opts.NonInteractive {
+		if err := cmd.detectManagedKyma(ctx); err != nil {
+			return err
+		}
+	}
+
 	if !cmd.opts.Verbose {
 		stderr := os.Stderr
 		os.Stderr = nil
@@ -392,4 +399,46 @@ func (cmd *command) handleTimeoutErr(err error) error {
 	}
 
 	return err
+}
+
+func (cmd *command) detectManagedKyma(ctx context.Context) error {
+	kymaResource := schema.GroupVersionResource{
+		Group:    "operator.kyma-project.io",
+		Version:  "v1beta1",
+		Resource: "kymas",
+	}
+
+	deployedKymaCRs, _ := cmd.K8s.Dynamic().Resource(kymaResource).List(ctx, v1.ListOptions{})
+	if deployedKymaCRs == nil || len(deployedKymaCRs.Items) == 0 {
+		return nil
+	}
+
+	kymaManagedFields := deployedKymaCRs.Items[0].GetManagedFields()
+	if len(kymaManagedFields) == 0 {
+		return nil
+	}
+
+	managedKymaField := v1.ManagedFieldsEntry{
+		Manager:     "lifecycle-manager",
+		Subresource: "status",
+	}
+	unmanagedKymaField := v1.ManagedFieldsEntry{
+		Manager:     "unmanaged-kyma",
+		Subresource: "status",
+	}
+
+	managedKymaWarning := "CAUTION: You are trying to use Kyma CLI to change a managed Kyma Resource. This action may corrupt the Kyma runtime. Proceed at your own risk."
+
+	if slices.ContainsFunc(kymaManagedFields, func(field v1.ManagedFieldsEntry) bool {
+		return field.Subresource == managedKymaField.Subresource && field.Manager == managedKymaField.Manager
+	}) && !slices.ContainsFunc(kymaManagedFields, func(field v1.ManagedFieldsEntry) bool {
+		return field.Subresource == unmanagedKymaField.Subresource && field.Manager == unmanagedKymaField.Manager
+	}) {
+		cmd.CurrentStep.LogInfo(managedKymaWarning)
+		if !cmd.CurrentStep.PromptYesNo("Do you really want to proceed? ") {
+			return errors.New("command stopped by user")
+		}
+	}
+
+	return nil
 }
