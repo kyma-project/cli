@@ -83,7 +83,7 @@ func (i *DefaultInteractor) Update(ctx context.Context, modules []v1beta1.Module
 		return err
 	}
 	oldGen := kyma.GetGeneration()
-	if err := retry.Do(
+	err := retry.Do(
 		func() error {
 			kyma.Spec.Modules = modules
 			if err := i.K8s.Ctrl().Update(ctx, kyma, &client.UpdateOptions{FieldManager: "kyma"}); err != nil {
@@ -95,11 +95,8 @@ func (i *DefaultInteractor) Update(ctx context.Context, modules []v1beta1.Module
 			return nil
 		}, retry.Attempts(3), retry.Delay(3*time.Second), retry.DelayType(retry.BackOffDelay),
 		retry.LastErrorOnly(false), retry.Context(ctx),
-	); err != nil {
-		return err
-	}
-
-	return nil
+	)
+	return err
 }
 
 // WaitUntilReady uses the internal i.changed tracker to determine whether the last apply caused

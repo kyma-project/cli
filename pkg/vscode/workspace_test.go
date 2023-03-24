@@ -11,7 +11,7 @@ import (
 
 type errWriter struct{}
 
-func (w *errWriter) Write(p []byte) (n int, err error) {
+func (w *errWriter) Write(_ []byte) (n int, err error) {
 	return -1, fmt.Errorf("write error")
 }
 

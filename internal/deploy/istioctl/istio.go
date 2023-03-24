@@ -437,9 +437,8 @@ func copyInChunks(dstFile *os.File, srcFile io.Reader) error {
 		if err != nil {
 			if err == io.EOF {
 				break
-			} else {
-				return err
 			}
+			return err
 		}
 	}
 	return nil

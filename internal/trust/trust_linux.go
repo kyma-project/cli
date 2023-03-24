@@ -110,7 +110,7 @@ func certDomain(certFile string) (string, error) {
 	return strings.Replace(matches[1], "'", "", -1), nil
 }
 
-func (c certauth) StoreCertificateKyma2(file string, i Informer) error {
+func (c certauth) StoreCertificateKyma2(file string, _ Informer) error {
 
 	// get domain to put on the certificate name.
 	// Linux does not have a proper certificate manager and we need to be able to identify the certificate
