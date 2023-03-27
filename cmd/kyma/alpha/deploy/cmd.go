@@ -209,12 +209,6 @@ func (cmd *command) deploy(ctx context.Context) error {
 	}
 	clusterAccess.Successf("Successfully connected to cluster")
 
-	if !cmd.opts.CI && !cmd.opts.NonInteractive {
-		if err := cmd.detectManagedKyma(ctx); err != nil {
-			return err
-		}
-	}
-
 	if !cmd.opts.Verbose {
 		stderr := os.Stderr
 		os.Stderr = nil
@@ -235,6 +229,12 @@ func (cmd *command) deploy(ctx context.Context) error {
 		return err
 	}
 	deployStep.Successf("Kustomizations deployed: %s", cmd.opts.Kustomizations)
+
+	if !cmd.opts.CI && !cmd.opts.NonInteractive {
+		if err := cmd.detectManagedKyma(ctx); err != nil {
+			return err
+		}
+	}
 
 	coreDNS := cmd.NewStep("Patching CoreDNS")
 	coreDNS.Start()
