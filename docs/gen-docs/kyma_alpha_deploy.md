@@ -36,7 +36,7 @@ kyma alpha deploy [flags]
       --lifecycle-manager string      Installs Lifecycle Manager with the specified image:
                                       - Use "my-registry.org/lifecycle-manager:my-tag"" to use a custom version of Lifecycle Manager.
                                       - Use "europe-docker.pkg.dev/kyma-project/prod/lifecycle-manager@sha256:cb74b29cfe80c639c9ee9..." to use a custom version of Lifecycle Manager with a digest.
-                                      - Specify a tag to override the default one. For example, when specifying "v20230220-7b8e9515",  the "eu.gcr.io/kyma-project/lifecycle-manager:v20230220-7b8e9515" tag is used. (default "eu.gcr.io/kyma-project/lifecycle-manager:latest")
+                                      - Specify a tag to override the default one. For example, when specifying "v20230220-7b8e9515",  the "eu.gcr.io/kyma-project/lifecycle-manager:v20230220-7b8e9515" tag is used.
   -m, --module stringArray            Provide one or more modules to activate after the deployment is finished. Example: "--module name@namespace" (namespace is optional).
   -n, --namespace string              The Namespace to deploy the Kyma custom resource in. (default "kyma-system")
       --open-dashboard                Opens the Busola Dashboard at startup. Only works when a graphical interface is available and when running in interactive mode
