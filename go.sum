@@ -1412,8 +1412,6 @@ github.com/onsi/gomega v1.22.1/go.mod h1:x6n7VNe4hw0vkyYUM4mjIXx3JbLiPaBPNgB7PRQ
 github.com/onsi/gomega v1.23.0/go.mod h1:Z/NWtiqwBrwUt4/2loMmHL63EDLnYHmVbuBpDr2vQAg=
 github.com/onsi/gomega v1.27.1 h1:rfztXRbg6nv/5f+Raen9RcGoSecHIFgBBLQK3Wdj754=
 github.com/onsi/gomega v1.27.1/go.mod h1:aHX5xOykVYzWOV4WqQy0sy8BQptgukenXpCXfadcIAw=
-github.com/open-component-model/ocm v0.1.0 h1:K1RrHOWO3erTqPZkLKvQ0JRA/uGXGpHaS+uKkIrVZMk=
-github.com/open-component-model/ocm v0.1.0/go.mod h1:aPlBtHOXiAVG9wy7vL1fIwwEjJwB0HMk5n16JlI5k2o=
 github.com/open-component-model/ocm v0.2.0 h1:3/T54MO/E3dzMRV8X1eQ1RWI3UPc4QM1cw1B2mufbE4=
 github.com/open-component-model/ocm v0.2.0/go.mod h1:SzDUp1q7p/8hUf7sdHCx3qNzJzU6cyAAfJZMtBrJqAI=
 github.com/opencontainers/go-digest v0.0.0-20170106003457-a6d0ee40d420/go.mod h1:cMLVZDEM3+U2I4VmLI6N8jQYUd2OVphdqWwCJHrFt2s=
