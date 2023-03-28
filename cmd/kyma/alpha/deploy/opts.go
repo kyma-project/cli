@@ -64,7 +64,6 @@ func (o *Options) validateTimeout() error {
 // validateFilters sets up all filters that will be used by kustomize when running the command
 func (o *Options) validateFilters() error {
 	var filters []kio.Filter
-
 	modifier, err := kustomize.LifecycleManagerImageModifier(
 		o.LifecycleManager,
 		func(image string) {
@@ -75,7 +74,6 @@ func (o *Options) validateFilters() error {
 		return err
 	}
 	filters = append(filters, modifier)
-
 	o.Filters = filters
 	return nil
 }
