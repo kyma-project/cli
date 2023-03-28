@@ -116,9 +116,13 @@ func Build(def Definition, filters ...kio.Filter) ([]byte, error) {
 }
 
 func LifecycleManagerImageModifier(overrideString string, onOverride func(image string)) (imagetag.Filter, error) {
-	override, err := parseOverride(overrideString)
-	if err != nil {
-		return imagetag.Filter{}, err
+	override := override{}
+	if overrideString != "" {
+		var err error
+		override, err = parseOverride(overrideString)
+		if err != nil {
+			return imagetag.Filter{}, err
+		}
 	}
 	return ImageModifier(
 		"*lifecycle-manager*", override.name, override.tag, override.digest,
