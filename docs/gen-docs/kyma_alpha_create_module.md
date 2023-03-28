@@ -50,6 +50,7 @@ Build module my-domain/modB in version 3.2.1 and push it to a local registry "un
       --default-cr string                  File containing the default custom resource of the module. If the module is a kubebuilder project, the default CR is automatically detected.
       --descriptor-version string          Schema version to use for the generated OCM descriptor. One of ocm.software/v3alpha1,v2 (default "v2")
       --insecure                           Uses an insecure connection to access the registry.
+      --key string                         Specifies the path where a private key is used for signing.
       --module-archive-path string         Specifies the path where the module artifacts are locally cached to generate the image. If the path already has a module, use the "--module-archive-version-overwrite" flag to overwrite it. (default "./mod")
       --module-archive-persistence         Uses the host filesystem instead of in-memory archiving to build the module.
       --module-archive-version-overwrite   Overwrites existing component's versions of the module. If set to false, the push is a No-Op.

@@ -25,7 +25,7 @@ require (
 	github.com/kyma-project/hydroform/provision v0.0.0-20230127124234-b67611c40868
 	github.com/kyma-project/lifecycle-manager v0.0.0-20230228084539-adc0e4a5f93a
 	github.com/mandelsoft/vfs v0.0.0-20220805210647-bf14a11bfe31
-	github.com/open-component-model/ocm v0.1.0
+	github.com/open-component-model/ocm v0.2.0
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.0-rc2
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
