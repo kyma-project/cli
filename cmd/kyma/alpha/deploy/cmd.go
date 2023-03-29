@@ -106,7 +106,7 @@ By default, Lifecycle Manager is deployed from the GitHub main branch.`,
 		`Installs Lifecycle Manager with the specified image:
 - Use "my-registry.org/lifecycle-manager:my-tag"" to use a custom version of Lifecycle Manager.
 - Use "europe-docker.pkg.dev/kyma-project/prod/lifecycle-manager@sha256:cb74b29cfe80c639c9ee9..." to use a custom version of Lifecycle Manager with a digest.
-- Specify a tag to override the default one. For example, when specifying "v20230220-7b8e9515",  the "eu.gcr.io/kyma-project/lifecycle-manager:v20230220-7b8e9515" tag is used.`,
+- Specify a tag to override the default one. For example, when specifying "v20230220-7b8e9515", the "eu.gcr.io/kyma-project/lifecycle-manager:v20230220-7b8e9515" tag is used.`,
 	)
 	cobraCmd.Flags().BoolVar(
 		&o.DryRun,
