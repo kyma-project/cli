@@ -1,6 +1,8 @@
 package kyma
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/kyma-project/cli/cmd/kyma/alpha"
 	"github.com/kyma-project/cli/cmd/kyma/apply"
 	"github.com/kyma-project/cli/cmd/kyma/completion"
@@ -24,7 +26,17 @@ import (
 	"github.com/kyma-project/cli/cmd/kyma/version"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/spf13/cobra"
+	"io"
+	"net/http"
+	"runtime/debug"
 )
+
+type KymaCLIMetadata struct {
+	Name   string `json:"name"`
+	Commit struct {
+		SHA string `json:"sha"`
+	} `json:"commit"`
+}
 
 // NewCmd creates a new Kyma CLI command
 func NewCmd(o *cli.Options) *cobra.Command {
@@ -57,6 +69,52 @@ Kyma CLI allows you to install and manage Kyma.
 		`Path to the kubeconfig file. If undefined, Kyma CLI uses the KUBECONFIG environment variable, or falls back "/$HOME/.kube/config".`,
 	)
 	cmd.PersistentFlags().BoolP("help", "h", false, "Provides command help.")
+
+	//	Check for new versions
+	response, err := http.Get("https://api.github.com/repos/kyma-project/cli/tags")
+
+	//	For any problems in fetching, reading or parsing the response from GitHub API, we simply ignore it
+	//	and don't disrupt the usual CLI Flow
+	if err != nil {
+	}
+	defer response.Body.Close()
+
+	responseData, err := io.ReadAll(response.Body)
+	if err != nil {
+	}
+
+	var githubTags []KymaCLIMetadata
+	err = json.Unmarshal(responseData, &githubTags)
+	if err != nil {
+	}
+	var stableCLI KymaCLIMetadata
+	for _, tag := range githubTags {
+		if tag.Name == "stable" {
+			stableCLI = tag
+			break
+		}
+	}
+
+	var stableCLINumber string
+	for _, tag := range githubTags {
+		if tag.Name != stableCLI.Name && tag.Commit.SHA == stableCLI.Commit.SHA {
+			stableCLINumber = tag.Name
+		}
+	}
+
+	var currentCommitSHA string
+	if info, ok := debug.ReadBuildInfo(); ok {
+		for _, setting := range info.Settings {
+			if setting.Key == "vcs.revision" {
+				currentCommitSHA = setting.Value
+			}
+		}
+	}
+
+	if version.Version != stableCLINumber || currentCommitSHA != stableCLI.Commit.SHA {
+		fmt.Println("CAUTION: You're using an outdated version of the Kyma CLI. The latest stable version is: ", stableCLINumber)
+		fmt.Println()
+	}
 
 	//Stable commands
 	provisionCmd := provision.NewCmd()
