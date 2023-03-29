@@ -1,0 +1,58 @@
+apiVersion: operator.kyma-project.io/v1beta1
+kind: ModuleTemplate
+metadata:
+  name: moduletemplate-template-operator
+  namespace: kcp-system
+  labels:
+    "operator.kyma-project.io/managed-by": "lifecycle-manager"
+    "operator.kyma-project.io/controller-name": "manifest"
+    "operator.kyma-project.io/module-name": "template-operator"
+spec:
+  target: remote
+  channel: regular
+  data:
+    apiVersion: operator.kyma-project.io/v1alpha1
+    kind: Sample
+    metadata:
+      name: sample-yaml
+    spec:
+      resourceFilePath: "./module-data/yaml"
+  descriptor:
+    component:
+      componentReferences: []
+      name: kyma-project.io/template-operator
+      provider: internal
+      repositoryContexts:
+      - baseUrl: http://k3d-registry.localhost:5000
+        componentNameMapping: urlPath
+        type: ociRegistry
+      resources:
+      - access:
+          digest: sha256:db86408caca4c94250d8291aa79655b84146f9cc45e0da49f05a52b3722d74a0
+          type: localOciBlob
+        name: config
+        relation: local
+        type: yaml
+        version: v1.2.3
+      - access:
+          digest: sha256:1735cfa45bf07b63427c8e11717278f8847e352a66af7633611db902386d18ed
+          type: localOciBlob
+        name: raw-manifest
+        relation: local
+        type: yaml
+        version: v1.2.3
+      sources:
+      - access:
+          commit: 11736fd1d8b12f978f2048195d458a60409a5ae8
+          repoUrl: github.com/kyma-project/template-operator
+          type: gitHub
+        labels:
+        - name: git.kyma-project.io/ref
+          value: refs/heads/main
+          version: v1
+        name: module-sources
+        type: git
+        version: v1.2.3
+      version: v1.2.3
+    meta:
+      schemaVersion: v2
