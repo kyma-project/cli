@@ -85,7 +85,7 @@ func (s *Step) Prompt(msg string) (string, error) {
 	return msg, nil
 }
 
-func (s *Step) PromptYesNo(msg string) bool {
+func (s *Step) PromptYesNo(_ string) bool {
 	return true
 }
 

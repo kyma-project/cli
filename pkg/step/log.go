@@ -58,7 +58,7 @@ func (s *logStep) Stopf(success bool, format string, args ...interface{}) {
 	s.Stop(success)
 }
 
-func (s *logStep) Stop(success bool) {
+func (s *logStep) Stop(_ bool) {
 	s.logger.Info(s.msg)
 }
 

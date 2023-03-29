@@ -92,11 +92,7 @@ func (c *command) Run() error {
 		c.opts.UseRegistry = append(c.opts.UseRegistry, defaultRegistry)
 	}
 
-	if err = c.createK3dCluster(k3dClient); err != nil {
-		return err
-	}
-
-	return nil
+	return c.createK3dCluster(k3dClient)
 }
 
 // initK3d ensures that k3d is properly installed and pre-conditions are fulfilled

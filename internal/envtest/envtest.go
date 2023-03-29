@@ -24,7 +24,7 @@ func (r *Runner) RestClient() *rest.Config {
 	return r.restClient
 }
 
-func (r *Runner) Start(crdFilePath string, log *zap.SugaredLogger) (err error) {
+func (r *Runner) Start(crdFilePath string, _ *zap.SugaredLogger) (err error) {
 
 	r.env = &envtest.Environment{
 		CRDInstallOptions: envtest.CRDInstallOptions{

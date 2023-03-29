@@ -101,7 +101,7 @@ func (v *DefaultCRValidator) Run(ctx context.Context, s step.Step, verbose bool,
 	return nil
 }
 
-// ensureDefaultNamespace ensures that the metadata.namespace attribute exists, and it's value is "default". This is because of how we use the envtest to validate the CR.
+// ensureDefaultNamespace ensures that the metadata.namespace attribute exists, and its value is "default". This is because of how we use the envtest to validate the CR.
 func ensureDefaultNamespace(modelMap map[string]interface{}) error {
 
 	//Traverse the Map to look for "metadata.namespace"
@@ -229,7 +229,6 @@ func findCRDFileFor(group, kind, dirPath string) (bool, string, error) {
 // isCRDFileFor checks if the given file is a CRD for given group and kind.
 func isCRDFileFor(group, kind, filePath string) (bool, error) {
 	{
-
 		f, err := os.Open(filePath)
 		if err != nil {
 			return false, fmt.Errorf("error reading \"%q\": %w", filePath, err)

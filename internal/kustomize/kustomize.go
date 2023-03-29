@@ -38,7 +38,6 @@ func ParseKustomization(s string) (Definition, error) {
 		)
 	}
 
-	res := Definition{}
 	u, err := url.Parse(items[0])
 	if err != nil {
 		return Definition{}, fmt.Errorf(
@@ -46,32 +45,31 @@ func ParseKustomization(s string) (Definition, error) {
 		)
 	}
 
-	// URL case
 	if u.Scheme != "" && u.Host != "" {
 		pathChunks := strings.Split(u.Path, "/")
 		if len(pathChunks) < 3 {
 			return Definition{}, fmt.Errorf(
-				"The provided URL %q does not belong to a repository. It must follow the format DOMAIN.EXT/OWNER/REPO/[SUBPATH]",
+				"the provided URL %q does not belong to a repository. It must follow the format DOMAIN.EXT/OWNER/REPO/[SUBPATH]",
 				items[0],
 			)
 		}
-		res.Name = pathChunks[2]
+		definition := Definition{}
+		definition.Name = pathChunks[2]
 		if len(items) == 2 {
-			res.Ref = items[1]
+			definition.Ref = items[1]
 		} else {
-			res.Ref = defaultURLRef
+			definition.Ref = defaultURLRef
 		}
-		res.Location = items[0]
-	} else { // Path case
-		res.Name = items[0]
-		res.Ref = localRef
-		res.Location = items[0]
+		definition.Location = items[0]
+		return definition, nil
 	}
 
-	return res, nil
+	return Definition{
+		Name:     items[0],
+		Ref:      localRef,
+		Location: items[0],
+	}, nil
 }
-
-const NoOutputFile = ""
 
 func BuildMany(kustomizations []Definition, filters []kio.Filter) ([]byte, error) {
 	ms := bytes.Buffer{}
@@ -117,14 +115,14 @@ func Build(def Definition, filters ...kio.Filter) ([]byte, error) {
 	return yml, nil
 }
 
-const (
-	ControllerImageName = "controller"
-)
-
 func LifecycleManagerImageModifier(overrideString string, onOverride func(image string)) (imagetag.Filter, error) {
-	override, err := parseOverride(overrideString)
-	if err != nil {
-		return imagetag.Filter{}, err
+	override := override{}
+	if overrideString != "" {
+		var err error
+		override, err = parseOverride(overrideString)
+		if err != nil {
+			return imagetag.Filter{}, err
+		}
 	}
 	return ImageModifier(
 		"*lifecycle-manager*", override.name, override.tag, override.digest,
@@ -140,8 +138,8 @@ type override struct {
 
 var ErrImageInvalidArgs = errors.New(
 	`invalid format of image, use one of the following options:
-- <image>:<newtag>, in which case both image and tag get overritten
-- <image>@<digest>, in which case both image and digest get overritten
+- <image>:<newtag>, in which case both image and tag get overwritten
+- <image>@<digest>, in which case both image and digest get overwritten
 - <tag>, in which case the default image is used but with a different tag`,
 )
 

@@ -23,11 +23,7 @@ func NewOptions(o *cli.Options) *Options {
 }
 
 func (o *Options) validateFlags() error {
-	if err := o.validateTimeout(); err != nil {
-		return err
-	}
-
-	return nil
+	return o.validateTimeout()
 }
 
 func (o *Options) validateTimeout() error {
