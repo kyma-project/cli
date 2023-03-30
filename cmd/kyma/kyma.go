@@ -28,6 +28,11 @@ import (
 
 // NewCmd creates a new Kyma CLI command
 func NewCmd(o *cli.Options) *cobra.Command {
+	versionCheckerLambda := func(cmd *cobra.Command, args []string) {
+		if !o.CI {
+			version.CheckForStableRelease()
+		}
+	}
 	cmd := &cobra.Command{
 		Use:   "kyma",
 		Short: "Controls a Kyma cluster.",
@@ -36,8 +41,12 @@ Kyma CLI allows you to install and manage Kyma.
 
 `,
 		// Affects children as well
-		SilenceErrors: false,
-		SilenceUsage:  true,
+		SilenceErrors:    false,
+		SilenceUsage:     true,
+		PersistentPreRun: versionCheckerLambda,
+		Run: func(cmd *cobra.Command, args []string) {
+			cmd.Help()
+		},
 	}
 
 	cmd.PersistentFlags().BoolVarP(
@@ -57,8 +66,6 @@ Kyma CLI allows you to install and manage Kyma.
 		`Path to the kubeconfig file. If undefined, Kyma CLI uses the KUBECONFIG environment variable, or falls back "/$HOME/.kube/config".`,
 	)
 	cmd.PersistentFlags().BoolP("help", "h", false, "Provides command help.")
-
-	version.CheckForStableRelease()
 
 	//Stable commands
 	provisionCmd := provision.NewCmd()

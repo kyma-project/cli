@@ -3,6 +3,7 @@ package version
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/kyma-project/cli/internal/nice"
 	"io"
 	"net/http"
 	"runtime/debug"
@@ -60,8 +61,9 @@ func CheckForStableRelease() {
 		}
 	}
 
+	nicePrint := nice.Nice{}
 	if Version != stableCLINumber || currentCommitSHA != stableCLI.Commit.SHA {
-		fmt.Println("CAUTION: You're using an outdated version of the Kyma CLI. The latest stable version is: ", stableCLINumber)
+		nicePrint.PrintImportantf("CAUTION: You're using an outdated version of the Kyma CLI. The latest stable version is: %s", stableCLINumber)
 		fmt.Println()
 	}
 }
