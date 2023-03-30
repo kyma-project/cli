@@ -11,6 +11,10 @@ Kyma CLI allows you to install and manage Kyma.
 
 
 
+```bash
+kyma [flags]
+```
+
 ## Flags
 
 ```bash
