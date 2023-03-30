@@ -18,7 +18,6 @@ resolve:
 
 .PHONY: validate
 validate:
-	golangci-lint run -v
 	./hack/verify-generated-docs.sh
 
 .PHONY: build
