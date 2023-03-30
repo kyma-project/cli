@@ -18,6 +18,7 @@ resolve:
 
 .PHONY: validate
 validate:
+	./hack/verify-lint.sh
 	./hack/verify-generated-docs.sh
 
 .PHONY: build
