@@ -30,7 +30,7 @@ golangci::install() {
 golangci::run_checks() {
   shout "Run golangci-lint checks"
   cd ${ROOT_PATH}
-  golangci-lint run
+  golangci-lint run -v
 
   echo -e "${GREEN}√ run golangci-lint${NC}"
 }
