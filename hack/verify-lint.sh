@@ -29,19 +29,9 @@ golangci::install() {
 
 golangci::run_checks() {
   shout "Run golangci-lint checks"
-  LINTS=(
-    # default golangci-lint lints
-    errcheck gosimple govet ineffassign staticcheck \
-    typecheck unused \
-    # additional lints
-    revive gofmt misspell gochecknoinits unparam exportloopref gosec
-  )
 
-  ENABLE=$(sed 's/ /,/g' <<< "${LINTS[@]}")
-
-  echo "Checks: ${LINTS[*]}"
   cd ${ROOT_PATH}
-  golangci-lint --disable-all --enable="${ENABLE}" --timeout=10m run --config $CURRENT_DIR/.golangci.yml
+  golangci-lint run
 
   echo -e "${GREEN}√ run golangci-lint${NC}"
 }
