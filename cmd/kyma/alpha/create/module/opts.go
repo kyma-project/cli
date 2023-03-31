@@ -36,6 +36,7 @@ type Options struct {
 	ArchiveVersionOverwrite bool
 	RegistryCredSelector    string
 	SecurityScanConfig      string
+	PrivateKeyPath          string
 }
 
 const (
@@ -106,4 +107,20 @@ func (o *Options) ValidateTarget() error {
 		}
 	}
 	return fmt.Errorf("target %s is invalid, allowed: %s", o.Target, valid)
+}
+
+func (o *Options) Validate() error {
+	if err := o.ValidateVersion(); err != nil {
+		return err
+	}
+
+	if err := o.ValidatePath(); err != nil {
+		return err
+	}
+
+	if err := o.ValidateChannel(); err != nil {
+		return err
+	}
+
+	return o.ValidateTarget()
 }

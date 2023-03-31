@@ -16,11 +16,15 @@ import (
 )
 
 type ComponentSignConfig struct {
-	Name          string // Name of the module (mandatory)
-	Version       string // Version of the module (mandatory)
-	KeyPath       string // The private key used for signing (mandatory)
-	SignatureName string // Name of the signature for signing
+	Name    string // Name of the module (mandatory)
+	Version string // Version of the module (mandatory)
+	KeyPath string // The private key used for signing (mandatory)
 }
+
+const (
+	SignatureName = "kyma-project.io/module-signature"
+	Issuer        = "kyma-project.io/cli"
+)
 
 func Sign(cfg *ComponentSignConfig, remote *Remote) error {
 	if err := cfg.validate(); err != nil {
@@ -38,17 +42,16 @@ func Sign(cfg *ComponentSignConfig, remote *Remote) error {
 	}
 
 	signReg := signing.DefaultRegistry()
-	issuer := "kyma-project.io/cli"
 
 	key, err := privateKey(cfg.KeyPath)
 	if err != nil {
 		return err
 	}
 
-	signReg.RegisterPrivateKey(cfg.SignatureName, key)
+	signReg.RegisterPrivateKey(SignatureName, key)
 
-	if idx := cva.GetDescriptor().GetSignatureIndex(cfg.SignatureName); idx < 0 {
-		return fmt.Errorf("descriptor was already signed under %s at signature index %v", cfg.SignatureName, idx)
+	if idx := cva.GetDescriptor().GetSignatureIndex(SignatureName); idx > 0 {
+		return fmt.Errorf("descriptor was already signed under %s at signature index %v", SignatureName, idx)
 	}
 
 	if err := compdesc.Sign(
@@ -57,7 +60,7 @@ func Sign(cfg *ComponentSignConfig, remote *Remote) error {
 		key,
 		signReg.GetSigner(rsa.Algorithm),
 		signReg.GetHasher(sha512.Algorithm),
-		cfg.SignatureName, issuer,
+		SignatureName, Issuer,
 	); err != nil {
 		return err
 	}
@@ -87,9 +90,9 @@ func Verify(cfg *ComponentSignConfig, remote *Remote) error {
 		return err
 	}
 
-	signReg.RegisterPublicKey(cfg.SignatureName, key)
+	signReg.RegisterPublicKey(SignatureName, key)
 
-	return compdesc.Verify(cva.GetDescriptor(), signReg, cfg.SignatureName)
+	return compdesc.Verify(cva.GetDescriptor(), signReg, SignatureName)
 }
 
 func (cfg *ComponentSignConfig) validate() error {
@@ -102,10 +105,6 @@ func (cfg *ComponentSignConfig) validate() error {
 	if cfg.KeyPath == "" {
 		return errors.New("The key path cannot be empty")
 	}
-	if cfg.SignatureName == "" {
-		return errors.New("The signature name cannot be empty")
-	}
-
 	return nil
 }
 

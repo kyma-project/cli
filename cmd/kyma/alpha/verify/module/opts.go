@@ -12,7 +12,6 @@ type Options struct {
 	RegistryURL     string
 	NameMappingMode string
 	PublicKeyPath   string
-	SignatureName   string
 	Credentials     string
 	Token           string
 	Insecure        bool
