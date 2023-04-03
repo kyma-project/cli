@@ -5,6 +5,8 @@ go 1.19
 // required to avoid locking with gardner dependency updates
 replace k8s.io/client-go => k8s.io/client-go v0.26.3
 
+replace github.com/vbatts/tar-split => github.com/vbatts/tar-split v0.11.3
+
 require (
 	github.com/Masterminds/semver/v3 v3.2.0
 	github.com/avast/retry-go v3.0.0+incompatible
