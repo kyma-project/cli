@@ -49,6 +49,10 @@ func NewCmd(o *Options) *cobra.Command {
 		&o.K3dArgs, "k3d-arg", "", []string{},
 		"One or more arguments passed to the k3d provisioning command (e.g. --k3d-arg='--no-rollback')",
 	)
+	cmd.Flags().StringSliceVarP(
+		&o.K3dRegistryArgs, "k3d-registry-arg", "", []string{},
+		"One or more arguments passed to the k3d registry create command (e.g. --k3d-registry-arg='--default-network podman')",
+	)
 	cmd.Flags().StringVarP(
 		&o.KubernetesVersion, "kube-version", "k", provision.DefaultK8sFullVersion, "Kubernetes version of the cluster",
 	)
@@ -205,7 +209,7 @@ func (c *command) PromptUserToDeleteExistingCluster() bool {
 func (c *command) createK3dRegistry(k3dClient k3d.Client) (string, error) {
 	s := c.NewStep("Create k3d registry")
 
-	registryURL, err := k3dClient.CreateRegistry(c.opts.RegistryPort)
+	registryURL, err := k3dClient.CreateRegistry(c.opts.RegistryPort, parseNestedArgs(c.opts.K3dRegistryArgs))
 	if err != nil {
 		s.Failuref("Could not create k3d registry")
 		return "", err
@@ -219,7 +223,7 @@ func (c *command) createK3dCluster(k3dClient k3d.Client) error {
 	s := c.NewStep(fmt.Sprintf("Create K3d cluster '%s'", c.opts.Name))
 
 	settings := k3d.CreateClusterSettings{
-		Args:              parseK3dArgs(c.opts.K3dArgs),
+		Args:              parseNestedArgs(c.opts.K3dArgs),
 		KubernetesVersion: c.opts.KubernetesVersion,
 		PortMapping:       c.opts.PortMapping,
 		Workers:           c.opts.Workers,
@@ -264,7 +268,7 @@ func allocatePorts(ports ...int) error {
 	return nil
 }
 
-func parseK3dArgs(args []string) []string {
+func parseNestedArgs(args []string) []string {
 	var res []string
 	for _, arg := range args {
 		res = append(res, strings.Split(arg, " ")...)
