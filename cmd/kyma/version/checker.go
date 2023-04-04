@@ -9,7 +9,11 @@ import (
 	"runtime/debug"
 )
 
-type KymaCLIMetadata struct {
+const (
+	GitHubAPIEndpoint = "https://api.github.com/repos/kyma-project/cli/tags"
+)
+
+type LatestGitTag struct {
 	Name   string `json:"name"`
 	Commit struct {
 		SHA string `json:"sha"`
@@ -18,10 +22,9 @@ type KymaCLIMetadata struct {
 
 // CheckForStableRelease Checks for new versions of the CLI
 func CheckForStableRelease() {
-	response, err := http.Get("https://api.github.com/repos/kyma-project/cli/tags")
+	response, err := http.Get(GitHubAPIEndpoint)
 
-	//	For any problems in fetching, reading or parsing the response from GitHub API, we simply ignore it
-	//	and don't disrupt the usual CLI Flow
+	//	Any errors in API call shouldn't disrupt the usual CLI flow
 	if err != nil {
 		return
 	}
@@ -32,12 +35,12 @@ func CheckForStableRelease() {
 		return
 	}
 
-	var githubTags []KymaCLIMetadata
+	var githubTags []LatestGitTag
 	err = json.Unmarshal(responseData, &githubTags)
 	if err != nil {
 		return
 	}
-	var stableCLI KymaCLIMetadata
+	var stableCLI LatestGitTag
 	for _, tag := range githubTags {
 		if tag.Name == "stable" {
 			stableCLI = tag
@@ -45,25 +48,36 @@ func CheckForStableRelease() {
 		}
 	}
 
-	var stableCLINumber string
+	var stableVersion string
 	for _, tag := range githubTags {
 		if tag.Name != stableCLI.Name && tag.Commit.SHA == stableCLI.Commit.SHA {
-			stableCLINumber = tag.Name
+			stableVersion = tag.Name
+			break
 		}
+	}
+	if stableVersion == "" {
+		return
 	}
 
 	var currentCommitSHA string
-	if info, ok := debug.ReadBuildInfo(); ok {
-		for _, setting := range info.Settings {
-			if setting.Key == "vcs.revision" {
-				currentCommitSHA = setting.Value
-			}
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		return
+	}
+	for _, setting := range info.Settings {
+		if setting.Key == "vcs.revision" {
+			currentCommitSHA = setting.Value
+			break
 		}
 	}
 
+	if currentCommitSHA == "" {
+		return
+	}
+
 	nicePrint := nice.Nice{}
-	if Version != stableCLINumber || currentCommitSHA != stableCLI.Commit.SHA {
-		nicePrint.PrintImportantf("CAUTION: You're using an outdated version of the Kyma CLI. The latest stable version is: %s", stableCLINumber)
+	if Version != stableVersion || currentCommitSHA != stableCLI.Commit.SHA {
+		nicePrint.PrintImportantf("CAUTION: You're using an outdated version of the Kyma CLI (%s). The latest stable version is: %s", Version, stableVersion)
 		fmt.Println()
 	}
 }

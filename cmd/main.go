@@ -1,9 +1,10 @@
 package main
 
 import (
+	"os"
+
 	"github.com/kyma-project/cli/cmd/kyma"
 	"github.com/kyma-project/cli/internal/cli"
-	"os"
 )
 
 func main() {

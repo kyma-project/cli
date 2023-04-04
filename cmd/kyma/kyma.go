@@ -28,11 +28,6 @@ import (
 
 // NewCmd creates a new Kyma CLI command
 func NewCmd(o *cli.Options) *cobra.Command {
-	versionCheckerLambda := func(cmd *cobra.Command, args []string) {
-		if !o.CI {
-			version.CheckForStableRelease()
-		}
-	}
 	cmd := &cobra.Command{
 		Use:   "kyma",
 		Short: "Controls a Kyma cluster.",
@@ -41,9 +36,13 @@ Kyma CLI allows you to install and manage Kyma.
 
 `,
 		// Affects children as well
-		SilenceErrors:    false,
-		SilenceUsage:     true,
-		PersistentPreRun: versionCheckerLambda,
+		SilenceErrors: false,
+		SilenceUsage:  true,
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			if !o.CI {
+				version.CheckForStableRelease()
+			}
+		},
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := cmd.Help(); err != nil {
 				_ = err
