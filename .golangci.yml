@@ -3,21 +3,20 @@ run:
 linters:
   disable-all: true
   enable:
-    - unused
+    - errcheck
     - exportloopref
+    - gochecknoinits
+    - gofmt
+    - gosec
     - gosimple
     - govet
     - ineffassign
     - misspell
+    - revive
     - staticcheck
-    - revive # replaces golint
-    - errcheck
     - typecheck
-    - gofmt
-    - gochecknoinits
     - unparam
-    - gosec
-
+    - unused
 issues:
   exclude:
     # Check this issue for more info: https://github.com/kyoh86/scopelint/issues/4

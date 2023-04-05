@@ -10,6 +10,22 @@ ifndef VERSION
 	endif
 endif
 
+ifeq (,$(shell go env GOBIN))
+	GOBIN=$(shell go env GOPATH)/bin
+else
+	GOBIN=$(shell go env GOBIN)
+endif
+LOCALBIN ?= $(shell pwd)/bin
+$(LOCALBIN):
+	mkdir -p $(LOCALBIN)
+GOLANG_CI_LINT = $(LOCALBIN)/golangci-lint
+GOLANG_CI_LINT_VERSION ?= v1.52.2
+
+.PHONY: lint
+lint:
+	GOBIN=$(LOCALBIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANG_CI_LINT_VERSION)
+	$(LOCALBIN)/golangci-lint run -v --timeout=10m ./...
+
 FLAGS = -ldflags '-s -w -X github.com/kyma-project/cli/cmd/kyma/version.Version=$(VERSION)'
 
 .PHONY: resolve
