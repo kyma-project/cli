@@ -78,7 +78,7 @@ func (keychain) InstructionsKyma2() string {
 		"2. Import the certificate: sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain kyma.crt\n"
 }
 
-func (k keychain) StoreCertificateKyma2(file string, i Informer) error {
+func (k keychain) StoreCertificateKyma2(file string, _ Informer) error {
 
 	_, err := cli.RunCmd("sudo", "security", "add-trusted-cert", "-d", "-r", "trustRoot", "-k", "/Library/Keychains/System.keychain", file)
 	if err != nil {
