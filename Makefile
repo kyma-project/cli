@@ -24,7 +24,7 @@ GOLANG_CI_LINT_VERSION ?= v1.52.2
 .PHONY: lint
 lint:
 	GOBIN=$(LOCALBIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANG_CI_LINT_VERSION)
-	$(LOCALBIN)/golangci-lint run -v --timeout=10m ./...
+	$(LOCALBIN)/golangci-lint run -v ./...
 
 FLAGS = -ldflags '-s -w -X github.com/kyma-project/cli/cmd/kyma/version.Version=$(VERSION)'
 
