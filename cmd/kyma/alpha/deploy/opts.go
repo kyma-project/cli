@@ -18,22 +18,21 @@ const (
 // Options defines available options for the command
 type Options struct {
 	*cli.Options
-	LifecycleManager     string
-	WildcardPermissions  bool
-	DryRun               bool
-	OpenDashboard        bool
-	Force                bool
-	SkipDefaultTemplates bool
-	CertManagerVersion   string
-	Namespace            string
-	Channel              string
-	KymaCR               string
-	Target               string
-	Modules              []string
-	Kustomizations       []string
-	AdditionalTemplates  []string
-	Timeout              time.Duration
-	Filters              []kio.Filter
+	LifecycleManager    string
+	WildcardPermissions bool
+	DryRun              bool
+	OpenDashboard       bool
+	Force               bool
+	CertManagerVersion  string
+	Namespace           string
+	Channel             string
+	KymaCR              string
+	Target              string
+	Modules             []string
+	Kustomizations      []string
+	AdditionalTemplates []string
+	Timeout             time.Duration
+	Filters             []kio.Filter
 }
 
 // NewOptions creates options with default values

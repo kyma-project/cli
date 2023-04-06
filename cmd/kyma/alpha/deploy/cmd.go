@@ -2,13 +2,13 @@ package deploy
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"golang.org/x/exp/slices"
 	"os"
 	"strings"
 	"time"
 
-	"errors"
+	"golang.org/x/exp/slices"
 
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/coredns"
@@ -136,13 +136,6 @@ WARNING: DO NOT USE ON PRODUCTIVE CLUSTERS!`,
 		false,
 		"Forces the patching of Kyma spec modules in case their managed field was edited by a source other than Kyma CLI.",
 	)
-	cobraCmd.Flags().BoolVarP(
-		&o.SkipDefaultTemplates,
-		"skip-default-templates",
-		"s",
-		false,
-		"Skips applying default module templates after the deployment.",
-	)
 	cobraCmd.Flags().StringVar(
 		&o.Target,
 		"target",
@@ -249,15 +242,6 @@ func (cmd *command) deploy(ctx context.Context) error {
 		return cmd.printSummary(start)
 	}
 
-	if !cmd.opts.SkipDefaultTemplates {
-		modStep := cmd.NewStep("Deploying default module templates")
-		if err := deploy.DefaultModuleTemplates(ctx, cmd.K8s, cmd.opts.Target, cmd.opts.Force, false); err != nil {
-			modStep.Failuref("Failed to deploy default module templates")
-			return err
-		}
-		modStep.Successf("Default module templates deployed")
-	}
-
 	if len(cmd.opts.AdditionalTemplates) > 0 {
 		modStep := cmd.NewStep("Deploying additional module templates")
 		if err := deploy.ModuleTemplates(ctx, cmd.K8s, cmd.opts.AdditionalTemplates, cmd.opts.Target, cmd.opts.Force, false); err != nil {
@@ -324,12 +308,6 @@ func (cmd *command) dryRun(ctx context.Context) error {
 
 	if !hasKyma {
 		return nil
-	}
-
-	if !cmd.opts.SkipDefaultTemplates {
-		if err := deploy.DefaultModuleTemplates(ctx, cmd.K8s, cmd.opts.Target, cmd.opts.Force, true); err != nil {
-			return err
-		}
 	}
 
 	if len(cmd.opts.AdditionalTemplates) > 0 {
