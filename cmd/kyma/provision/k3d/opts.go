@@ -17,6 +17,7 @@ type Options struct {
 	UseRegistry       []string
 	RegistryPort      string
 	K3dArgs           []string
+	K3dRegistryArgs   []string
 	KubernetesVersion string
 	PortMapping       []string
 }

@@ -41,9 +41,6 @@ This command signs all module resources recursively based on an unsigned compone
 		&o.PrivateKeyPath, "key", "", "Specifies the path where a private key is used for signing.",
 	)
 	cmd.Flags().StringVar(
-		&o.SignatureName, "signature-name", "kyma-project.io/module-signature", "name of the signature to use.",
-	)
-	cmd.Flags().StringVar(
 		&o.RegistryURL, "registry", "", "Context URL of the repository for the module. "+
 			"The repository's URL is automatically added to the repository's contexts in the module.",
 	)
@@ -70,10 +67,9 @@ func (c *command) Run(_ []string) error {
 	}
 
 	signCfg := &module.ComponentSignConfig{
-		Name:          c.opts.Name,
-		Version:       c.opts.Version,
-		KeyPath:       c.opts.PrivateKeyPath,
-		SignatureName: c.opts.SignatureName,
+		Name:    c.opts.Name,
+		Version: c.opts.Version,
+		KeyPath: c.opts.PrivateKeyPath,
 	}
 
 	c.NewStep("Fetching and signing component descriptor...")
@@ -91,7 +87,7 @@ func (c *command) Run(_ []string) error {
 		Insecure:    c.opts.Insecure,
 	}
 
-	if err := module.Sign(signCfg, remote); err != nil {
+	if err = module.Sign(signCfg, remote); err != nil {
 		c.CurrentStep.Failure()
 		return err
 	}

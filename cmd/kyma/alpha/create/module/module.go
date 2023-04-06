@@ -131,6 +131,10 @@ Build module my-domain/modB in version 3.2.1 and push it to a local registry "un
 			"the security scan configuration.",
 	)
 
+	cmd.Flags().StringVar(
+		&o.PrivateKeyPath, "key", "", "Specifies the path where a private key is used for signing.",
+	)
+
 	return cmd
 }
 
@@ -152,19 +156,7 @@ func (cmd *command) Run(ctx context.Context) error {
 		cli.AlphaWarn()
 	}
 
-	if err := cmd.opts.ValidateVersion(); err != nil {
-		return err
-	}
-
-	if err := cmd.opts.ValidatePath(); err != nil {
-		return err
-	}
-
-	if err := cmd.opts.ValidateChannel(); err != nil {
-		return err
-	}
-
-	if err := cmd.opts.ValidateTarget(); err != nil {
+	if err := cmd.opts.Validate(); err != nil {
 		return err
 	}
 
@@ -255,6 +247,21 @@ func (cmd *command) Run(ctx context.Context) error {
 			return err
 		}
 		cmd.CurrentStep.Successf("Module successfully pushed to %q", cmd.opts.RegistryURL)
+
+		if cmd.opts.PrivateKeyPath != "" {
+			signCfg := &module.ComponentSignConfig{
+				Name:    modDef.Name,
+				Version: modDef.Version,
+				KeyPath: cmd.opts.PrivateKeyPath,
+			}
+
+			cmd.NewStep("Fetching and signing component descriptor...")
+			if err = module.Sign(signCfg, remote); err != nil {
+				cmd.CurrentStep.Failure()
+				return err
+			}
+			cmd.CurrentStep.Success()
+		}
 
 		cmd.NewStep("Generating module template")
 		t, err := module.Template(componentVersionAccess, cmd.opts.Channel, cmd.opts.Target, modDef.DefaultCR, cmd.opts.RegistryCredSelector)
