@@ -6,25 +6,19 @@ import (
 	"github.com/kyma-project/cli/internal/nice"
 	"io"
 	"net/http"
-	"runtime/debug"
+	"regexp"
 )
 
 const (
-	GitHubAPIEndpoint = "https://api.github.com/repos/kyma-project/cli/tags"
+	GitHubAPIEndpoint = "https://api.github.com/repos/kyma-project/cli/releases/latest"
 )
 
 type LatestGitTag struct {
-	Name   string `json:"name"`
-	Commit struct {
-		SHA string `json:"sha"`
-	} `json:"commit"`
+	Name string `json:"tag_name"`
 }
 
-// CheckForStableRelease Checks for new versions of the CLI
 func CheckForStableRelease() {
 	response, err := http.Get(GitHubAPIEndpoint)
-
-	//	Any errors in API call shouldn't disrupt the usual CLI flow
 	if err != nil {
 		return
 	}
@@ -35,49 +29,18 @@ func CheckForStableRelease() {
 		return
 	}
 
-	var githubTags []LatestGitTag
-	err = json.Unmarshal(responseData, &githubTags)
+	var latestGitTag LatestGitTag
+	if err := json.Unmarshal(responseData, &latestGitTag); err != nil {
+		return
+	}
+
+	matched, err := regexp.MatchString("[0-9]+[.][0-9]+[.][0-9]+", Version)
 	if err != nil {
 		return
-	}
-	var stableCLI LatestGitTag
-	for _, tag := range githubTags {
-		if tag.Name == "stable" {
-			stableCLI = tag
-			break
-		}
-	}
-
-	var stableVersion string
-	for _, tag := range githubTags {
-		if tag.Name != stableCLI.Name && tag.Commit.SHA == stableCLI.Commit.SHA {
-			stableVersion = tag.Name
-			break
-		}
-	}
-	if stableVersion == "" {
-		return
-	}
-
-	var currentCommitSHA string
-	info, ok := debug.ReadBuildInfo()
-	if !ok {
-		return
-	}
-	for _, setting := range info.Settings {
-		if setting.Key == "vcs.revision" {
-			currentCommitSHA = setting.Value
-			break
-		}
-	}
-
-	if currentCommitSHA == "" {
-		return
-	}
-
-	nicePrint := nice.Nice{}
-	if Version != stableVersion || currentCommitSHA != stableCLI.Commit.SHA {
-		nicePrint.PrintImportantf("CAUTION: You're using an outdated version of the Kyma CLI (%s). The latest stable version is: %s", Version, stableVersion)
+	} else if matched && Version < latestGitTag.Name {
+		nicePrint := nice.Nice{}
+		nicePrint.PrintImportantf("CAUTION: You're using an outdated version of the Kyma CLI (%s)."+
+			" The latest stable version is: %s", Version, latestGitTag.Name)
 		fmt.Println()
 	}
 }
