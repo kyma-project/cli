@@ -2,7 +2,7 @@ package deploy
 
 import (
 	"context"
-	"github.com/kyma-project/cli/internal/config"
+
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/kustomize"
 	"sigs.k8s.io/kustomize/api/filters/fieldspec"
@@ -11,8 +11,6 @@ import (
 	"sigs.k8s.io/kustomize/kyaml/kio"
 	"sigs.k8s.io/kustomize/kyaml/resid"
 )
-
-const modulesKustomization = "https://github.com/kyma-project/kyma/modules@" + config.DefaultKyma2Version
 
 func ModuleTemplates(ctx context.Context, k8s kube.KymaKube, templates []string, target string, force, dryRun bool) error {
 	var defs []kustomize.Definition
@@ -45,8 +43,4 @@ func ModuleTemplates(ctx context.Context, k8s kube.KymaKube, templates []string,
 		ctx, k8s, manifests, applyOpts{
 			dryRun, force, defaultRetries, defaultInitialBackoff},
 	)
-}
-
-func DefaultModuleTemplates(ctx context.Context, k8s kube.KymaKube, target string, force, dryRun bool) error {
-	return ModuleTemplates(ctx, k8s, []string{modulesKustomization}, target, force, dryRun)
 }
