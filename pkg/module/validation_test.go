@@ -103,20 +103,20 @@ spec:
 	noMetadataYaml = `abc: def
 foo: bar
 `
-	noMetadataError = `Attribute "metadata" not found`
+	noMetadataError = `attribute "metadata" not found`
 
 	invalidMetadataTypeYaml = `
 abc: def
 metadata: 2
 `
-	invalidMetadataTypeError = `Attribute "metadata" is not a Map`
+	invalidMetadataTypeError = `attribute "metadata" is not a Map`
 
 	invalidNamespaceTypeYaml = `
 abc: def
 metadata:
   namespace: 2
 `
-	invalidNamespaceTypeError = `Attribute "metadata.namespace" is not a string`
+	invalidNamespaceTypeError = `attribute "metadata.namespace" is not a string`
 	missingNamespaceYaml      = `abc: def
 metadata:
     name: foobar
