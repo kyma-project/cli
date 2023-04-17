@@ -4,16 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/kyma-project/cli/pkg/module/kubebuilder"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/kyma-project/cli/pkg/module/kubebuilder"
+
 	setup "github.com/kyma-project/cli/internal/cli/setup/envtest"
 	"github.com/kyma-project/cli/internal/kube"
-	"github.com/kyma-project/cli/pkg/step"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 	amv "k8s.io/apimachinery/pkg/util/validation"
@@ -34,14 +34,14 @@ func NewDefaultCRValidator(cr []byte, modulePath string) (*DefaultCRValidator, e
 	}, nil
 }
 
-func (v *DefaultCRValidator) Run(ctx context.Context, s step.Step, verbose bool, log *zap.SugaredLogger) error {
+func (v *DefaultCRValidator) Run(ctx context.Context, log *zap.SugaredLogger) error {
 	// skip validation if no CR detected
 	if len(v.crData) == 0 {
 		return nil
 	}
 
 	// setup test env
-	runner, err := setup.EnvTest(s, verbose)
+	runner, err := setup.EnvTest()
 	if err != nil {
 		return err
 	}

@@ -288,7 +288,7 @@ func (cmd *command) validateDefaultCR(ctx context.Context, modDef *module.Defini
 		return err
 	}
 
-	if err := crValidator.Run(ctx, cmd.CurrentStep, cmd.opts.Verbose, l); err != nil {
+	if err := crValidator.Run(ctx, l); err != nil {
 		if errors.Is(err, module.ErrEmptyCR) {
 			cmd.CurrentStep.Successf("Default CR validation skipped - no default CR")
 			return nil
