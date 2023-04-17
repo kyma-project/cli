@@ -7,7 +7,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/containerd/containerd/log"
 	"github.com/open-component-model/ocm/pkg/common"
 	"github.com/open-component-model/ocm/pkg/contexts/credentials"
 	"github.com/open-component-model/ocm/pkg/contexts/credentials/repositories/dockerconfig"
@@ -23,7 +22,6 @@ import (
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/transfer/transferhandler"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/transfer/transferhandler/standard"
 	"github.com/open-component-model/ocm/pkg/runtime"
-	"github.com/sirupsen/logrus"
 )
 
 type NameMapping ocireg.ComponentNameMapping
@@ -32,12 +30,6 @@ const (
 	URLPathNameMapping = NameMapping(ocireg.OCIRegistryURLPathMapping)
 	DigestNameMapping  = NameMapping(ocireg.OCIRegistryDigestMapping)
 )
-
-func init() {
-	l := logrus.New()
-	l.Level = logrus.TraceLevel
-	log.L = logrus.NewEntry(l)
-}
 
 // Remote represents remote OCI registry and the means to access it
 type Remote struct {
@@ -154,7 +146,6 @@ func (r *Remote) Push(archive *comparch.ComponentArchive, overwrite bool) (ocm.C
 	}
 
 	if err = componentTransfer.TransferVersion(
-		//TODO: Entry point
 		common.NewLoggingPrinter(archive.GetContext().Logger()), nil, archive.ComponentVersionAccess, repo, &customTransferHandler{transferHandler},
 	); err != nil {
 		return nil, fmt.Errorf("could not finish component transfer: %w", err)

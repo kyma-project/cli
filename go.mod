@@ -7,8 +7,6 @@ replace k8s.io/client-go => k8s.io/client-go v0.26.3
 
 replace github.com/vbatts/tar-split => github.com/vbatts/tar-split v0.11.3
 
-replace github.com/open-component-model/ocm => ../../open-component-model/ocm
-
 require (
 	github.com/Masterminds/semver/v3 v3.2.0
 	github.com/avast/retry-go v3.0.0+incompatible
