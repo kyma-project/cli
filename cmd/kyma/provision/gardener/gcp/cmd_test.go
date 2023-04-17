@@ -54,6 +54,7 @@ func TestProvisionGardenerGCPFlags(t *testing.T) {
 			"--scaler-max", "99",
 			"--extra", "VAR1=VALUE1,VAR2=VALUE2",
 			"--attempts", "2",
+			"--gardenlinux-version", "934.7",
 		},
 	)
 
