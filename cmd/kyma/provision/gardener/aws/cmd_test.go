@@ -91,12 +91,13 @@ func TestProvisionGardenerAWSSubcommands(t *testing.T) {
 func TestNewCluster(t *testing.T) {
 	t.Parallel()
 	o := &Options{
-		Name:              "mega-cluster",
-		KubernetesVersion: "1.19.0",
-		Region:            "north-pole",
-		MachineType:       "HAL",
-		DiskSizeGB:        9000,
-		ScalerMax:         3,
+		Name:               "mega-cluster",
+		KubernetesVersion:  "1.19.0",
+		Region:             "north-pole",
+		MachineType:        "HAL",
+		DiskSizeGB:         9000,
+		ScalerMax:          3,
+		GardenLinuxVersion: "576.7.0",
 	}
 	cmd := newAwsCmd(o)
 	c := cmd.NewCluster()
@@ -145,7 +146,7 @@ func TestNewProvider(t *testing.T) {
 	custom["workercidr"] = "10.250.0.0/16"
 	custom["networking_type"] = "calico"
 	custom["machine_image_name"] = "gardenlinux"
-	custom["machine_image_version"] = "934.6.0"
+	custom["machine_image_version"] = o.GardenLinuxVersion
 	custom["hibernation_start"] = "00 18 * * 1,2,3,4,5"
 	custom["hibernation_end"] = ""
 	custom["hibernation_location"] = "Europe/Berlin"

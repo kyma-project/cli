@@ -36,6 +36,10 @@ func TestProvisionGardenerAzureFlags(t *testing.T) {
 	require.Equal(t, "00 18 * * 1,2,3,4,5", o.HibernationStart, "Default value for the project flag not as expected.")
 	require.Equal(t, "", o.HibernationEnd, "Default value for the project flag not as expected.")
 	require.Equal(t, "Europe/Berlin", o.HibernationLocation, "Default value for the project flag not as expected.")
+	require.Equal(
+		t, provision.DefaultGardenLinuxVersion, o.GardenLinuxVersion,
+		"Default value for the gardenlinux-version flag not as expected.",
+	)
 
 	// test passing flags
 	err := c.ParseFlags(
@@ -145,7 +149,7 @@ func TestNewProvider(t *testing.T) {
 	custom["workercidr"] = "10.250.0.0/16"
 	custom["networking_type"] = "calico"
 	custom["machine_image_name"] = "gardenlinux"
-	custom["machine_image_version"] = "934.6.0"
+	custom["machine_image_version"] = o.GardenLinuxVersion
 	custom["hibernation_start"] = "00 18 * * 1,2,3,4,5"
 	custom["hibernation_end"] = ""
 	custom["hibernation_location"] = "Europe/Berlin"
