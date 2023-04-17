@@ -1,8 +1,6 @@
 package module
 
 import (
-	"crypto/x509"
-	"encoding/pem"
 	"fmt"
 	"os"
 
@@ -109,16 +107,12 @@ func (cfg *ComponentSignConfig) validate() error {
 }
 
 func privateKey(pathToPrivateKey string) (interface{}, error) {
-	privKeyFile, err := os.ReadFile(pathToPrivateKey)
+	privateKeyFile, err := os.ReadFile(pathToPrivateKey)
 	if err != nil {
 		return nil, fmt.Errorf("unable to open key file: %w", err)
 	}
 
-	block, _ := pem.Decode(privKeyFile)
-	if block == nil {
-		return nil, fmt.Errorf("unable to decode pem formatted block in key: %w", err)
-	}
-	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	key, err := signing.ParsePrivateKey(privateKeyFile)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse private key: %w", err)
 	}
