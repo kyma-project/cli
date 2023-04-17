@@ -91,13 +91,12 @@ func TestProvisionGardenerGCPSubcommands(t *testing.T) {
 
 func TestNewCluster(t *testing.T) {
 	o := &Options{
-		Name:               "mega-cluster",
-		KubernetesVersion:  "1.19.0",
-		Region:             "north-pole",
-		MachineType:        "HAL",
-		DiskSizeGB:         9000,
-		ScalerMax:          3,
-		GardenLinuxVersion: "934.7",
+		Name:              "mega-cluster",
+		KubernetesVersion: "1.19.0",
+		Region:            "north-pole",
+		MachineType:       "HAL",
+		DiskSizeGB:        9000,
+		ScalerMax:         3,
 	}
 	cmd := newGcpCmd(o)
 	c := cmd.NewCluster()
@@ -122,6 +121,7 @@ func TestNewProvider(t *testing.T) {
 		HibernationStart:    "00 18 * * 1,2,3,4,5",
 		HibernationLocation: "Europe/Berlin",
 		Extra:               []string{"VAR1=VALUE1", "VAR2=VALUE2"},
+		GardenLinuxVersion:  "934.7",
 	}
 	cmd := newGcpCmd(o)
 	p, err := cmd.NewProvider()
