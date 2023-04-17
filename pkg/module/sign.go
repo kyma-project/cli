@@ -131,11 +131,7 @@ func publicKey(pathToPublicKey string) (interface{}, error) {
 		return nil, fmt.Errorf("unable to open key file: %w", err)
 	}
 
-	block, _ := pem.Decode(publicKeyFile)
-	if block == nil {
-		return nil, fmt.Errorf("unable to decode pem formatted block in key: %w", err)
-	}
-	key, err := x509.ParsePKIXPublicKey(block.Bytes)
+	key, err := signing.ParsePublicKey(publicKeyFile)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse public key: %w", err)
 	}
