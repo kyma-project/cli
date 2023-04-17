@@ -20,8 +20,8 @@ type ComponentSignConfig struct {
 }
 
 const (
-	SignatureName = "kyma-project.io/module-signature"
-	Issuer        = "kyma-project.io/cli"
+	SignatureName = "kyma-module-signature"
+	Issuer        = "kyma-cli"
 )
 
 func Sign(cfg *ComponentSignConfig, remote *Remote) error {
