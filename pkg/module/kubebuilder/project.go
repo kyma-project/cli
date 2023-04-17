@@ -132,9 +132,9 @@ func (p *Project) DefaultCR(s step.Step) ([]byte, error) {
 				fileIndex++
 			}
 		}
-		promptString.WriteString(fmt.Sprintln("Press ENTER to select the first option as default."))
+		//promptString.WriteString(fmt.Sprintln("Press ENTER to select the first option as default."))
 
-		answer, err := s.Prompt(promptString.String())
+		answer, err := "1", error(nil) //s.Prompt(promptString.String())
 		if err != nil {
 			return nil, fmt.Errorf("could not obtain default CR from user prompt: %w", err)
 		}
