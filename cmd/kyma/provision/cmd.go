@@ -6,6 +6,7 @@ import (
 
 const DefaultK8sShortVersion = "1.25"                       //default Kubernetes version for provisioning clusters on hyperscalers
 const DefaultK8sFullVersion = DefaultK8sShortVersion + ".6" //default Kubernetes version with the "patch" component (mainly for K3d/K3s)
+const DefaultGardenLinuxVersion = "934.6.0"                 //default Garden Linux version
 
 // NewCmd creates a new provision command
 func NewCmd() *cobra.Command {

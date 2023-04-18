@@ -10,6 +10,7 @@ type Options struct {
 	CredentialsFile     string
 	Secret              string
 	KubernetesVersion   string
+	GardenLinuxVersion  string
 	Region              string
 	Zones               []string
 	MachineType         string
