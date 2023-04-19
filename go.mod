@@ -15,7 +15,7 @@ require (
 	github.com/containerd/containerd v1.6.19
 	github.com/daviddengcn/go-colortext v1.0.0
 	github.com/docker/cli v20.10.23+incompatible
-	github.com/docker/docker v20.10.23+incompatible
+	github.com/docker/docker v20.10.24+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/fatih/color v1.14.1
 	github.com/go-git/go-git/v5 v5.5.2
