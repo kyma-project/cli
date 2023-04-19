@@ -89,8 +89,9 @@ func (r *Remote) getCredentials(ctx cpi.Context) credentials.Credentials {
 			}
 		}
 	}
+
 	// if no creds are set, try to use username and password that are provided.
-	if creds == nil {
+	if creds == nil || isEmptyAuth(creds) {
 		u, p := r.userPass()
 		if p == "" {
 			p = r.Token
@@ -101,6 +102,19 @@ func (r *Remote) getCredentials(ctx cpi.Context) credentials.Credentials {
 		}
 	}
 	return creds
+}
+
+// See: github.com/open-component-model/ocm/pkg/contexts/credentials/repositories/dockerconfig/repository.go#IsEmptyAuthConfig()
+func isEmptyAuth(creds credentials.Credentials) bool {
+
+	if len(creds.GetProperty("auth")) != 0 {
+		return false
+	}
+	if len(creds.GetProperty("username")) != 0 {
+		return false
+	}
+
+	return true
 }
 
 // userPass splits the credentials string into user and password.
