@@ -51,6 +51,10 @@ func Template(
 		if err != nil {
 			return nil, err
 		}
+		descriptor.SetLabels([]ocmv1.Label{{
+			Name:  OCIRegistryCredLabel,
+			Value: matchLabels,
+		}})
 		for i := range descriptor.Resources {
 			resource := &descriptor.Resources[i]
 			resource.SetLabels(

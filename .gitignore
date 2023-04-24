@@ -31,3 +31,6 @@ bin
 workspace
 kyma.crt
 mod
+
+# Generated template files (generate by alpha module create)
+/template.yaml

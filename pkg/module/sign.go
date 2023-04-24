@@ -1,8 +1,6 @@
 package module
 
 import (
-	"crypto/x509"
-	"encoding/pem"
 	"fmt"
 	"os"
 
@@ -22,8 +20,8 @@ type ComponentSignConfig struct {
 }
 
 const (
-	SignatureName = "kyma-project.io/module-signature"
-	Issuer        = "kyma-project.io/cli"
+	SignatureName = "kyma-module-signature"
+	Issuer        = "kyma-cli"
 )
 
 func Sign(cfg *ComponentSignConfig, remote *Remote) error {
@@ -109,16 +107,12 @@ func (cfg *ComponentSignConfig) validate() error {
 }
 
 func privateKey(pathToPrivateKey string) (interface{}, error) {
-	privKeyFile, err := os.ReadFile(pathToPrivateKey)
+	privateKeyFile, err := os.ReadFile(pathToPrivateKey)
 	if err != nil {
 		return nil, fmt.Errorf("unable to open key file: %w", err)
 	}
 
-	block, _ := pem.Decode(privKeyFile)
-	if block == nil {
-		return nil, fmt.Errorf("unable to decode pem formatted block in key: %w", err)
-	}
-	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	key, err := signing.ParsePrivateKey(privateKeyFile)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse private key: %w", err)
 	}
@@ -131,11 +125,7 @@ func publicKey(pathToPublicKey string) (interface{}, error) {
 		return nil, fmt.Errorf("unable to open key file: %w", err)
 	}
 
-	block, _ := pem.Decode(publicKeyFile)
-	if block == nil {
-		return nil, fmt.Errorf("unable to decode pem formatted block in key: %w", err)
-	}
-	key, err := x509.ParsePKIXPublicKey(block.Bytes)
+	key, err := signing.ParsePublicKey(publicKeyFile)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse public key: %w", err)
 	}
