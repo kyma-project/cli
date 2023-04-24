@@ -61,6 +61,10 @@ Create a service account with the ` + "`contributor`" + ` role. Use service acco
 		&o.HibernationLocation, "hibernation-location", "Europe/Berlin",
 		"Timezone in which the hibernation schedule should be applied.",
 	)
+	cmd.Flags().StringVarP(
+		&o.GardenLinuxVersion, "gardenlinux-version", "g", provision.DefaultGardenLinuxVersion,
+		"Garden Linux version of the cluster.",
+	)
 
 	return cmd
 }

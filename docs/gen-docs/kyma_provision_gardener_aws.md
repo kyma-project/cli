@@ -23,6 +23,7 @@ kyma provision gardener aws [flags]
       --disk-size int                 Disk size (in GB) of the cluster. (default 50)
       --disk-type string              Type of disk to use on AWS. (default "gp2")
   -e, --extra NAME=VALUE              One or more arguments provided as the NAME=VALUE key-value pairs to configure additional cluster settings. You can use this flag multiple times or enter the key-value pairs as a comma-separated list.
+  -g, --gardenlinux-version string    Garden Linux version of the cluster. (default "934.6.0")
       --hibernation-end string        Cron expression to configure when the cluster should stop hibernating
       --hibernation-location string   Timezone in which the hibernation schedule should be applied. (default "Europe/Berlin")
       --hibernation-start string      Cron expression to configure when the cluster should start hibernating (default "00 18 * * 1,2,3,4,5")

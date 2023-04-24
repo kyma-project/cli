@@ -11,7 +11,6 @@ import (
 
 	"github.com/kyma-project/cli/internal/envtest"
 	"github.com/kyma-project/cli/internal/files"
-	"github.com/kyma-project/cli/pkg/step"
 )
 
 const (
@@ -23,7 +22,7 @@ const (
 // based on "kubernetes-sigs/controller-runtime/tools/setup-envtest/versions/parse.go", but more strict
 var envtestVersionRegexp = regexp.MustCompile(`^(0|[1-9]\d{0,2})\.(0|[1-9]\d{0,2})\.(0|[1-9]\d{0,3})$`)
 
-func EnvTest(step step.Step, verbose bool) (*envtest.Runner, error) {
+func EnvTest() (*envtest.Runner, error) {
 	p, err := files.KymaHome()
 	if err != nil {
 		return nil, err
@@ -40,8 +39,6 @@ func EnvTest(step step.Step, verbose bool) (*envtest.Runner, error) {
 		out, err := envtestSetupCmd.CombinedOutput()
 		if err != nil {
 			return nil, fmt.Errorf("error installing setup-envtest: %w. Details: %s", err, string(out))
-		} else if verbose {
-			step.LogInfof("Installed setup-envtest in: %q", p)
 		}
 
 	}
@@ -63,15 +60,6 @@ func EnvTest(step step.Step, verbose bool) (*envtest.Runner, error) {
 	envtestBinariesPath, err := extractPath(string(out))
 	if err != nil {
 		return nil, fmt.Errorf("error installing envtest binaries: %w", err)
-	}
-
-	if verbose {
-		version, err := extractVersion(string(out))
-		if err == nil {
-			step.LogInfof("Installed envtest binaries in version %s, path: %q", version, envtestBinariesPath)
-		} else {
-			step.LogInfof("Installed envtest binaries in: %q", envtestBinariesPath)
-		}
 	}
 
 	return envtest.NewRunner(envtestBinariesPath, nil, nil), nil
@@ -96,11 +84,6 @@ func resolveEnvtestVersion() (string, error) {
 func extractPath(envtestSetupMsg string) (string, error) {
 	return parseEnvtestSetupMsg(envtestSetupMsg, `[pP]ath:(.+)`, "envtest binaries path")
 
-}
-
-// extractVersion extracts the envtest binaries version from the "setup-envtest" command output
-func extractVersion(envtestSetupMsg string) (string, error) {
-	return parseEnvtestSetupMsg(envtestSetupMsg, `[vV]ersion:(.+)`, "envtest version")
 }
 
 func parseEnvtestSetupMsg(envtestSetupMsg, rgxp, objName string) (string, error) {

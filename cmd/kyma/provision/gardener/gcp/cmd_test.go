@@ -54,6 +54,7 @@ func TestProvisionGardenerGCPFlags(t *testing.T) {
 			"--scaler-max", "99",
 			"--extra", "VAR1=VALUE1,VAR2=VALUE2",
 			"--attempts", "2",
+			"--gardenlinux-version", "934.7",
 		},
 	)
 
@@ -72,6 +73,7 @@ func TestProvisionGardenerGCPFlags(t *testing.T) {
 	require.Equal(t, "a big one", o.DiskType, "The parsed value for the disk-type flag not as expected.")
 	require.Equal(t, 88, o.ScalerMin, "The parsed value for the scaler-min flag not as expected.")
 	require.Equal(t, 99, o.ScalerMax, "The parsed value for the scaler-max flag not as expected.")
+	require.Equal(t, "934.7", o.GardenLinuxVersion, "The parsed value for the gardenlinux-version flag not as expected.")
 	require.Equal(
 		t, []string{"VAR1=VALUE1", "VAR2=VALUE2"}, o.Extra, "The parsed value for the extra flag not as expected.",
 	)
@@ -120,6 +122,7 @@ func TestNewProvider(t *testing.T) {
 		HibernationStart:    "00 18 * * 1,2,3,4,5",
 		HibernationLocation: "Europe/Berlin",
 		Extra:               []string{"VAR1=VALUE1", "VAR2=VALUE2"},
+		GardenLinuxVersion:  "934.7",
 	}
 	cmd := newGcpCmd(o)
 	p, err := cmd.NewProvider()
@@ -145,7 +148,7 @@ func TestNewProvider(t *testing.T) {
 	custom["workercidr"] = "10.250.0.0/16"
 	custom["networking_type"] = "calico"
 	custom["machine_image_name"] = "gardenlinux"
-	custom["machine_image_version"] = "934.6.0"
+	custom["machine_image_version"] = o.GardenLinuxVersion
 	custom["hibernation_start"] = "00 18 * * 1,2,3,4,5"
 	custom["hibernation_end"] = ""
 	custom["hibernation_location"] = "Europe/Berlin"
