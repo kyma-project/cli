@@ -2,7 +2,6 @@ package module
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"text/template"
@@ -10,8 +9,6 @@ import (
 	"github.com/kyma-project/cli/pkg/module/oci"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
-	ocmv1 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/meta/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 )
 
@@ -33,38 +30,10 @@ spec:
   descriptor:
 {{yaml .Descriptor | printf "%s" | indent 4}}
 `
-
-	//nolint:gosec
-	OCIRegistryCredLabel = "oci-registry-cred"
 )
 
-func Template(
-	remote ocm.ComponentVersionAccess, channel, target string, data []byte, registryCredSelector string,
-) ([]byte, error) {
+func Template(remote ocm.ComponentVersionAccess, channel, target string, data []byte) ([]byte, error) {
 	descriptor := remote.GetDescriptor()
-	if registryCredSelector != "" {
-		selector, err := metav1.ParseToLabelSelector(registryCredSelector)
-		if err != nil {
-			return nil, err
-		}
-		matchLabels, err := json.Marshal(selector.MatchLabels)
-		if err != nil {
-			return nil, err
-		}
-		descriptor.SetLabels([]ocmv1.Label{{
-			Name:  OCIRegistryCredLabel,
-			Value: matchLabels,
-		}})
-		for i := range descriptor.Resources {
-			resource := &descriptor.Resources[i]
-			resource.SetLabels(
-				[]ocmv1.Label{{
-					Name:  OCIRegistryCredLabel,
-					Value: matchLabels,
-				}},
-			)
-		}
-	}
 	ref, err := oci.ParseRef(descriptor.Name)
 	if err != nil {
 		return nil, err

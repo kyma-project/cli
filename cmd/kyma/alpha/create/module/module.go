@@ -207,7 +207,7 @@ func (cmd *command) Run(ctx context.Context) error {
 
 	cmd.NewStep("Adding layers to archive...")
 
-	if err := module.AddResources(archive, modDef, l, osFS); err != nil {
+	if err := module.AddResources(archive, modDef, l, osFS, cmd.opts.RegistryCredSelector); err != nil {
 		cmd.CurrentStep.Failure()
 		return err
 	}
@@ -264,7 +264,7 @@ func (cmd *command) Run(ctx context.Context) error {
 		}
 
 		cmd.NewStep("Generating module template")
-		t, err := module.Template(componentVersionAccess, cmd.opts.Channel, cmd.opts.Target, modDef.DefaultCR, cmd.opts.RegistryCredSelector)
+		t, err := module.Template(componentVersionAccess, cmd.opts.Channel, cmd.opts.Target, modDef.DefaultCR)
 		if err != nil {
 			cmd.CurrentStep.Failure()
 			return err
