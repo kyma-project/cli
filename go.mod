@@ -19,7 +19,7 @@ require (
 	github.com/docker/go-connections v0.4.0
 	github.com/fatih/color v1.14.1
 	github.com/go-git/go-git/v5 v5.5.2
-	github.com/go-logr/logr v1.2.3
+	github.com/go-logr/logr v1.2.4
 	github.com/go-logr/zapr v1.2.3
 	github.com/imdario/mergo v0.3.13
 	github.com/kyma-incubator/reconciler v0.0.0-20230427062256-f255ae8d0053
