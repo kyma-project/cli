@@ -1,6 +1,7 @@
 package module
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -13,11 +14,16 @@ import (
 	"github.com/mandelsoft/vfs/pkg/vfs"
 	"github.com/open-component-model/ocm/pkg/common/accessobj"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
+	ocmv1 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/meta/v1"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/comparch"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 )
+
+//nolint:gosec
+const OCIRegistryCredLabel = "oci-registry-cred"
 
 // ResourceDescriptor contains all information to describe a resource
 type ResourceDescriptor struct {
@@ -33,10 +39,29 @@ type ResourceDescriptorList struct {
 // AddResources adds the resources in the given resource definitions into the archive and its FS.
 // A resource definition is a string with format: NAME:TYPE@PATH, where NAME and TYPE can be omitted and will default to the last path element name and "helm-chart" respectively
 func AddResources(
-	archive *comparch.ComponentArchive, modDef *Definition, log *zap.SugaredLogger, fs vfs.FileSystem,
+	archive *comparch.ComponentArchive,
+	modDef *Definition,
+	log *zap.SugaredLogger,
+	fs vfs.FileSystem,
+	registryCredSelector string,
 ) error {
 	descriptor := archive.GetDescriptor()
-	resources, err := generateResources(log, modDef.Version, modDef.Layers...)
+	var matchLabels []byte
+	if registryCredSelector != "" {
+		selector, err := metav1.ParseToLabelSelector(registryCredSelector)
+		if err != nil {
+			return err
+		}
+		matchLabels, err = json.Marshal(selector.MatchLabels)
+		if err != nil {
+			return err
+		}
+		descriptor.SetLabels([]ocmv1.Label{{
+			Name:  OCIRegistryCredLabel,
+			Value: matchLabels,
+		}})
+	}
+	resources, err := generateResources(log, modDef.Version, matchLabels, modDef.Layers...)
 	if err != nil {
 		return err
 	}
@@ -63,7 +88,7 @@ func AddResources(
 // generateResources generates resources by parsing the given definitions.
 // Definitions have the following format: NAME:TYPE@PATH
 // If a definition does not have a name or type, the name of the last path element is used and it is assumed to be a helm-chart type.
-func generateResources(log *zap.SugaredLogger, version string, defs ...Layer) ([]ResourceDescriptor, error) {
+func generateResources(log *zap.SugaredLogger, version string, credLabel []byte, defs ...Layer) ([]ResourceDescriptor, error) {
 	res := []ResourceDescriptor{}
 	for _, d := range defs {
 		r := ResourceDescriptor{Input: &blob.Input{}}
@@ -84,6 +109,13 @@ func generateResources(log *zap.SugaredLogger, version string, defs ...Layer) ([
 			r.Input.ExcludeFiles = d.excludedFiles
 		} else {
 			r.Input.Type = "file"
+		}
+
+		if len(credLabel) != 0 {
+			r.SetLabels([]ocmv1.Label{{
+				Name:  OCIRegistryCredLabel,
+				Value: credLabel,
+			}})
 		}
 
 		log.Debugf("Generated resource:\n%s", r)
