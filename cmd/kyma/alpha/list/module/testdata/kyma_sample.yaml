@@ -10,6 +10,7 @@ metadata:
   generation: 4
   labels:
     operator.kyma-project.io/managed-by: lifecycle-manager
+    operator.kyma-project.io/sync: true
   name: kyma--50-9
   namespace: default
   resourceVersion: "9192623"
