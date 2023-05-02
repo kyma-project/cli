@@ -23,7 +23,7 @@ get_new_release_version() {
 get_previous_release_version() {
     # get the list of tags in a reverse chronological order excluding release candidate tags
     TAG_LIST_WITHOUT_RC=($(git tag --sort=-creatordate | grep -v -e "-rc"))
-    if [[ $NEW_RELEASE_VERSION == *"-rc"* ]]; then
+    if [[ $GORELEASER_CURRENT_TAG == *"-rc"* ]]; then
         export GORELEASER_PREVIOUS_TAG=${TAG_LIST_WITHOUT_RC[0]}
     else
         export GORELEASER_PREVIOUS_TAG=${TAG_LIST_WITHOUT_RC[1]}
