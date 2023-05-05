@@ -21,7 +21,6 @@ metadata:
   labels:
     "operator.kyma-project.io/managed-by": "lifecycle-manager"
     "operator.kyma-project.io/controller-name": "manifest"
-    "operator.kyma-project.io/sync": "true"
     "operator.kyma-project.io/module-name": "{{ .ShortName }}"
 spec:
   target: {{.Target}}

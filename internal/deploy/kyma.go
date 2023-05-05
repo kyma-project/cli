@@ -33,10 +33,7 @@ func Kyma(
 		kyma.SetName("default-kyma")
 		kyma.SetNamespace(namespace)
 		kyma.SetAnnotations(map[string]string{"cli.kyma-project.io/source": "deploy"})
-		kyma.SetLabels(map[string]string{
-			"operator.kyma-project.io/managed-by": "lifecycle-manager",
-			"operator.kyma-project.io/sync":       "true",
-		})
+		kyma.SetLabels(map[string]string{"operator.kyma-project.io/managed-by": "lifecycle-manager"})
 		kyma.Spec.Channel = channel
 		kyma.Spec.Sync.Enabled = false
 		kyma.Spec.Modules = []v1beta1.Module{}
