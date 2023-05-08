@@ -40,7 +40,7 @@ Kyma CLI allows you to install and manage Kyma.
 		SilenceUsage:  true,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			if !o.CI {
-				cli.CheckForStableRelease(version.Version)
+				cli.CheckForLatestRelease(version.Version)
 			}
 		},
 		Run: func(cmd *cobra.Command, args []string) {

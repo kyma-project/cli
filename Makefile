@@ -3,11 +3,6 @@
 ifndef VERSION
 	VERSION = ${shell git rev-parse --abbrev-ref HEAD}-${shell git rev-parse --short HEAD}
 
-	ifneq (${shell git tag -l "stable"},) # if there is a stable tag
-		ifeq (${shell git rev-list -n 1 tags/stable},${shell git rev-parse HEAD}) # if stable tag is the same as current commit
-			VERSION = stable-${shell git rev-parse --short HEAD}
-		endif
-	endif
 endif
 
 ifeq (,$(shell go env GOBIN))
@@ -84,10 +79,6 @@ archive:
 
 .PHONY: upload-binaries
 upload-binaries:
-ifeq ($(STABLE), true)
-	gcloud auth activate-service-account --key-file "$(GOOGLE_APPLICATION_CREDENTIALS)"
-	gsutil cp bin/* $(KYMA_CLI_STABLE_BUCKET)
-endif
 ifeq ($(UNSTABLE), true)
 	gcloud auth activate-service-account --key-file "$(GOOGLE_APPLICATION_CREDENTIALS)"
 	gsutil cp bin/* $(KYMA_CLI_UNSTABLE_BUCKET)

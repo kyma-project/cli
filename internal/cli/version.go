@@ -3,10 +3,11 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kyma-project/cli/internal/nice"
 	"io"
 	"net/http"
 	"regexp"
+
+	"github.com/kyma-project/cli/internal/nice"
 )
 
 const (
@@ -17,7 +18,7 @@ type latestGitTag struct {
 	Name string `json:"tag_name"`
 }
 
-func CheckForStableRelease(currentVersion string) {
+func CheckForLatestRelease(currentVersion string) {
 	response, err := http.Get(gitHubAPIEndpoint)
 	if err != nil {
 		return
@@ -41,7 +42,7 @@ func CheckForStableRelease(currentVersion string) {
 	if currentVersion < latestGitTag.Name {
 		nicePrint := nice.Nice{}
 		nicePrint.PrintImportantf("CAUTION: You're using an outdated version of the Kyma CLI (%s)."+
-			" The latest stable version is: %s", currentVersion, latestGitTag.Name)
+			" The latest released version is: %s", currentVersion, latestGitTag.Name)
 		fmt.Println()
 	}
 }

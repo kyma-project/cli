@@ -75,15 +75,8 @@ The binary is saved to the `bin` folder in the Kyma CLI repository.
 
 ### Kyma CLI binaries
 
-Kyma CLI is used in CI jobs that install or test Kyma or provision clusters. To effectively support this process, we publish the stable binaries created from the `stable` tag, which corresponds to the latest stable version of Kyma CLI.
-
-To download the binaries, run:
-
-```bash
-curl -Lo kyma https://storage.googleapis.com/kyma-cli-stable/kyma-darwin # kyma-linux, kyma-linux-arm, kyma.exe, or kyma-arm.exe
-chmod +x kyma
-```
-In addition to the stable binaries, we also provide binaries using the latest reconciler version. We try to build those binaries daily.
+Kyma CLI is used in CI jobs that install or test Kyma or provision clusters. To effectively support this process, 
+we provide binaries using the latest reconciler version. The binaries are built every time a PR is merged into the main branch. We publish the binaries as unstable images.
 
 To download the binaries using the latest reconciler version, run:
 
