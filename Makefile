@@ -79,10 +79,6 @@ archive:
 
 .PHONY: upload-binaries
 upload-binaries:
-ifeq ($(STABLE), true)
-	gcloud auth activate-service-account --key-file "$(GOOGLE_APPLICATION_CREDENTIALS)"
-	gsutil cp bin/* $(KYMA_CLI_STABLE_BUCKET)
-endif
 ifeq ($(UNSTABLE), true)
 	gcloud auth activate-service-account --key-file "$(GOOGLE_APPLICATION_CREDENTIALS)"
 	gsutil cp bin/* $(KYMA_CLI_UNSTABLE_BUCKET)
