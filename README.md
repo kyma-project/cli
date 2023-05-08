@@ -75,7 +75,7 @@ The binary is saved to the `bin` folder in the Kyma CLI repository.
 
 ### Kyma CLI binaries
 
-Kyma CLI is used in CI jobs that install or test Kyma or provision clusters. To effectively support this process, 
+Kyma CLI is used in CI jobs that install or test Kyma or provision clusters. To effectively support this process, we provide binaries using the latest reconciler version. The binaries are built every time a PR is merged into the main branch. We publish the binaries as unstable images.
 we provide binaries using the latest reconciler version. Those binaries are built after every PR is merged to the main branch and published as unstable image.
 
 To download the binaries using the latest reconciler version, run:
