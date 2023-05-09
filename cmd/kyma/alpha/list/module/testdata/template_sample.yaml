@@ -10,8 +10,6 @@ metadata:
   creationTimestamp: "2023-01-10T09:50:15Z"
   generation: 1
   labels:
-    operator.kyma-project.io/controller-name: manifest
-    operator.kyma-project.io/managed-by: lifecycle-manager
     operator.kyma-project.io/module-name: manifest-1
   name: manifest-1
   namespace: kcp-system

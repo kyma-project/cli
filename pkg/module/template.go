@@ -19,8 +19,6 @@ metadata:
   name: moduletemplate-{{ .ShortName }}
   namespace: kcp-system
   labels:
-    "operator.kyma-project.io/managed-by": "lifecycle-manager"
-    "operator.kyma-project.io/controller-name": "manifest"
     "operator.kyma-project.io/module-name": "{{ .ShortName }}"
 spec:
   target: {{.Target}}
