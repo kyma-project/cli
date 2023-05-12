@@ -186,7 +186,7 @@ func (cmd *command) runWithTimeout(ctx context.Context) error {
 
 func (cmd *command) deploy(ctx context.Context) error {
 	isInKcpMode := false
-	if cmd.opts.Target == targetControlPlane {
+	if cmd.opts.Target == targetRemote {
 		isInKcpMode = true
 	}
 	if cmd.opts.DryRun {
