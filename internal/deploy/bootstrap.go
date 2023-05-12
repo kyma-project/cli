@@ -94,10 +94,10 @@ func PatchDeploymentWithInKcpModeFlag(ctx context.Context, k8s kube.KymaKube, ma
 		if manifest.GetObjectKind().GroupVersionKind().Kind == "Deployment" {
 			hasKcpFlag := false
 			if manifestObj, success := manifest.(*unstructured.Unstructured); success {
-				manifestJson, err := json.Marshal(manifestObj.Object)
+				manifestJSON, err := json.Marshal(manifestObj.Object)
 				if err == nil {
 					deploymentSpec := appsv1.Deployment{}
-					if err = json.Unmarshal(manifestJson, &deploymentSpec); err == nil {
+					if err = json.Unmarshal(manifestJSON, &deploymentSpec); err == nil {
 						for _, arg := range deploymentSpec.Spec.Template.Spec.Containers[0].Args {
 							if arg == "--in-kcp-mode" || arg == "--in-kcp-mode=true" {
 								hasKcpFlag = true
