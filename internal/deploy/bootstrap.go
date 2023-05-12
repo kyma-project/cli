@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"regexp"
 
-	"github.com/mitchellh/mapstructure"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -41,22 +40,6 @@ subjects:
   name: lifecycle-manager-controller-manager
   namespace: kcp-system`
 )
-
-type DeploymentSpec struct {
-	Template SpecTemplate `yaml:"template" json:"template"`
-}
-
-type SpecTemplate struct {
-	Spec InnerTemplateSpec `yaml:"spec" json:"spec"`
-}
-
-type InnerTemplateSpec struct {
-	Containers []TemplateContainers `yaml:"containers" json:"containers"`
-}
-
-type TemplateContainers struct {
-	Args []string `yaml:"args" json:"args"`
-}
 
 type patchStringValue struct {
 	Op    string `json:"op"`
@@ -111,24 +94,28 @@ func PatchDeploymentWithInKcpModeFlag(ctx context.Context, k8s kube.KymaKube, ma
 		if manifest.GetObjectKind().GroupVersionKind().Kind == "Deployment" {
 			hasKcpFlag := false
 			if manifestObj, success := manifest.(*unstructured.Unstructured); success {
-				var deploymentSpec DeploymentSpec
-				if err := mapstructure.Decode(manifestObj.Object["spec"], &deploymentSpec); err == nil {
-					for _, arg := range deploymentSpec.Template.Spec.Containers[0].Args {
-						if arg == "--in-kcp-mode" || arg == "--in-kcp-mode=true" {
-							hasKcpFlag = true
-							break
+				manifestJson, err := json.Marshal(manifestObj.Object)
+				if err == nil {
+					deploymentSpec := appsv1.Deployment{}
+					if err = json.Unmarshal(manifestJson, &deploymentSpec); err == nil {
+						for _, arg := range deploymentSpec.Spec.Template.Spec.Containers[0].Args {
+							if arg == "--in-kcp-mode" || arg == "--in-kcp-mode=true" {
+								hasKcpFlag = true
+								break
+							}
 						}
-					}
-					if !hasKcpFlag && isInKcpMode {
-						payload := []patchStringValue{{
-							Op:    "add",
-							Path:  "/spec/template/spec/containers/0/args/-",
-							Value: "--in-kcp-mode",
-						}}
-						payloadBytes, _ := json.Marshal(payload)
-						if patchedDeployment, err = k8s.Static().AppsV1().Deployments(manifestObj.GetNamespace()).
-							Patch(ctx, manifestObj.GetName(), types.JSONPatchType, payloadBytes, v1.PatchOptions{}); err != nil {
-							return nil, err
+						if !hasKcpFlag && isInKcpMode {
+							payload := []patchStringValue{{
+								Op:    "add",
+								Path:  "/spec/template/spec/containers/0/args/-",
+								Value: "--in-kcp-mode",
+							}}
+							payloadBytes, _ := json.Marshal(payload)
+							var err error
+							if patchedDeployment, err = k8s.Static().AppsV1().Deployments(manifestObj.GetNamespace()).
+								Patch(ctx, manifestObj.GetName(), types.JSONPatchType, payloadBytes, v1.PatchOptions{}); err != nil {
+								return nil, err
+							}
 						}
 					}
 				}
