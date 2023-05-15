@@ -40,7 +40,7 @@ build-windows:
 
 .PHONY: build-windows-arm
 build-windows-arm:
-	CGO_ENABLED=0 GOOS=windows GOARCH=arm go build -o ./bin/kyma-arm.exe $(FLAGS) ./cmd
+	CGO_ENABLED=0 GOOS=windows GOARCH=arm64 go build -o ./bin/kyma-arm.exe $(FLAGS) ./cmd
 
 .PHONY: build-linux
 build-linux:
@@ -54,9 +54,9 @@ build-linux-arm:
 build-darwin:
 	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o ./bin/kyma-darwin $(FLAGS) ./cmd
 
-# .PHONY: build-darwin-arm
-# build-darwin-arm:
-# 	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o ./bin/kyma-darwin-arm $(FLAGS) ./cmd
+ .PHONY: build-darwin-arm
+build-darwin-arm:
+	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o ./bin/kyma-darwin-arm $(FLAGS) ./cmd
 
 .PHONY: docs
 docs:
