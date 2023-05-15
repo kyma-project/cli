@@ -2,8 +2,6 @@ apiVersion: operator.kyma-project.io/v1beta1
 kind: ModuleTemplate
 metadata:
   labels:
-    operator.kyma-project.io/controller-name: manifest
-    operator.kyma-project.io/managed-by: lifecycle-manager
     operator.kyma-project.io/module-name: template-operator
   name: moduletemplate-template-operator
   namespace: kcp-system
