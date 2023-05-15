@@ -32,7 +32,7 @@ validate:
 	./hack/verify-generated-docs.sh
 
 .PHONY: build
-build: build-windows build-linux build-darwin build-windows-arm build-linux-arm
+build: build-windows build-linux build-darwin build-windows-arm build-linux-arm build-darwin-arm
 
 .PHONY: build-windows
 build-windows:
