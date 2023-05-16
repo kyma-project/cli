@@ -86,7 +86,7 @@ func Bootstrap(
 func PatchDeploymentWithInKcpModeFlag(manifestObjs []ctrlClient.Object, isInKcpMode bool) error {
 	var deployment *appsv1.Deployment
 	for _, manifest := range manifestObjs {
-		manifestJSON, err := getManifestJsonForDeployment(manifest)
+		manifestJSON, err := getManifestJSONForDeployment(manifest)
 		if err == nil && manifestJSON != nil {
 			deployment, err = getDeployment(manifestJSON)
 			if err == nil {
@@ -118,7 +118,7 @@ func patchManifest(deployment *appsv1.Deployment, manifest ctrlClient.Object) er
 	return nil
 }
 
-func getManifestJsonForDeployment(manifest ctrlClient.Object) ([]byte, error) {
+func getManifestJSONForDeployment(manifest ctrlClient.Object) ([]byte, error) {
 	if manifest.GetObjectKind().GroupVersionKind().Kind == "Deployment" {
 		if manifestObj, success := manifest.(*unstructured.Unstructured); success {
 			var manifestJSON []byte
