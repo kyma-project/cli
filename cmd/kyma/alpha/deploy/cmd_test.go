@@ -25,7 +25,7 @@ func Test_command_detectManagedKyma(t *testing.T) {
 	managedKymaMock := &mocks.KymaKube{}
 	managedKyma := &unstructured.Unstructured{}
 	managedKyma.SetKind("Kyma")
-	managedKyma.SetAPIVersion("operator.kyma-project.io/v1beta1")
+	managedKyma.SetAPIVersion("operator.kyma-project.io/v1beta2")
 	managedKyma.SetManagedFields([]metav1.ManagedFieldsEntry{
 		{
 			Manager:     "lifecycle-manager",
@@ -39,7 +39,7 @@ func Test_command_detectManagedKyma(t *testing.T) {
 	unmanagedKymaMock := &mocks.KymaKube{}
 	unmanagedKyma := &unstructured.Unstructured{}
 	unmanagedKyma.SetKind("Kyma")
-	unmanagedKyma.SetAPIVersion("operator.kyma-project.io/v1beta1")
+	unmanagedKyma.SetAPIVersion("operator.kyma-project.io/v1beta2")
 	unmanagedKyma.SetManagedFields([]metav1.ManagedFieldsEntry{
 		{
 			Manager:     "unmanaged-kyma",
@@ -53,7 +53,7 @@ func Test_command_detectManagedKyma(t *testing.T) {
 	noManagedFieldsMock := &mocks.KymaKube{}
 	noManagedFields := &unstructured.Unstructured{}
 	noManagedFields.SetKind("Kyma")
-	noManagedFields.SetAPIVersion("operator.kyma-project.io/v1beta1")
+	noManagedFields.SetAPIVersion("operator.kyma-project.io/v1beta2")
 	noManagedFieldsDynamic := fakedynamic.NewSimpleDynamicClient(scheme.Scheme, noManagedFields)
 	noManagedFieldsMock.On("Dynamic").Return(noManagedFieldsDynamic)
 

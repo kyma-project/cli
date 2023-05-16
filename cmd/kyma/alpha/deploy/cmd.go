@@ -329,7 +329,7 @@ func (cmd *command) openDashboard(ctx context.Context) error {
 	kymas, err := cmd.K8s.Dynamic().Resource(
 		schema.GroupVersionResource{
 			Group:    "operator.kyma-project.io",
-			Version:  "v1beta1",
+			Version:  "v1beta2",
 			Resource: "kymas",
 		},
 	).List(ctx, v1.ListOptions{})
@@ -382,7 +382,7 @@ func (cmd *command) handleTimeoutErr(err error) error {
 func (cmd *command) detectManagedKyma(ctx context.Context) error {
 	kymaResource := schema.GroupVersionResource{
 		Group:    "operator.kyma-project.io",
-		Version:  "v1beta1",
+		Version:  "v1beta2",
 		Resource: "kymas",
 	}
 
