@@ -15,7 +15,7 @@ import (
 
 // Kyma deploys the Kyma CR. If no kymaCRPath is provided, it deploys the default CR.
 func Kyma(
-	ctx context.Context, k8s kube.KymaKube, namespace, channel, kymaCRpath string, force, dryRun bool,
+	ctx context.Context, k8s kube.KymaKube, namespace, channel, kymaCRpath string, force, dryRun, kcpMode bool,
 ) error {
 	namespaceObj := &v1.Namespace{}
 	namespaceObj.SetName(namespace)
@@ -35,7 +35,9 @@ func Kyma(
 		kyma.SetAnnotations(map[string]string{"cli.kyma-project.io/source": "deploy"})
 		kyma.SetLabels(map[string]string{v1beta2.ManagedBy: "lifecycle-manager"})
 		kyma.Spec.Channel = channel
-		kyma.SetLabels(map[string]string{v1beta2.SyncLabel: v1beta2.DisableLabelValue})
+		if !kcpMode {
+			kyma.SetLabels(map[string]string{v1beta2.SyncLabel: v1beta2.DisableLabelValue})
+		}
 		kyma.Spec.Modules = []v1beta2.Module{}
 	}
 
