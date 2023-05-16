@@ -7,9 +7,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/types"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/kustomize/kyaml/kio"
 
@@ -41,12 +39,6 @@ subjects:
   namespace: kcp-system`
 )
 
-type patchStringValue struct {
-	Op    string `json:"op"`
-	Path  string `json:"path"`
-	Value string `json:"value"`
-}
-
 // Bootstrap deploys the kustomization files for the prerequisites for Kyma.
 // Returns true if the Kyma CRD was deployed.
 func Bootstrap(
@@ -73,68 +65,80 @@ func Bootstrap(
 		manifests = append(manifests, []byte(wildCardRoleAndAssignment)...)
 	}
 
-	manifestObjs, err := applyManifests(
-		ctx, k8s, manifests, applyOpts{
-			dryRun, force, defaultRetries, defaultInitialBackoff},
-	)
+	manifestObjs, err := parseManifests(k8s, manifests, dryRun)
 	if err != nil {
 		return false, err
 	}
-
-	if _, err = PatchDeploymentWithInKcpModeFlag(ctx, k8s, manifestObjs, isInKcpMode); err != nil {
+	if err = PatchDeploymentWithInKcpModeFlag(manifestObjs, isInKcpMode); err != nil {
+		return false, err
+	}
+	err = applyManifests(
+		ctx, k8s, manifests, applyOpts{
+			dryRun, force, defaultRetries, defaultInitialBackoff}, manifestObjs,
+	)
+	if err != nil {
 		return false, err
 	}
 
 	return hasKyma(string(manifests))
 }
 
-func PatchDeploymentWithInKcpModeFlag(ctx context.Context, k8s kube.KymaKube, manifestObjs []ctrlClient.Object, isInKcpMode bool) (*appsv1.Deployment, error) {
-	var patchedDeployment *appsv1.Deployment
+func PatchDeploymentWithInKcpModeFlag(manifestObjs []ctrlClient.Object, isInKcpMode bool) error {
+	var deployment *appsv1.Deployment
 	for _, manifest := range manifestObjs {
 		manifestJSON, err := getManifestJsonForDeployment(manifest)
 		if err == nil && manifestJSON != nil {
-			deploymentArgs, err := getDeploymentArgs(manifestJSON)
-			if err == nil && deploymentArgs != nil {
+			deployment, err = getDeployment(manifestJSON)
+			if err == nil {
+				deploymentArgs := deployment.Spec.Template.Spec.Containers[0].Args
 				hasKcpFlag := checkDeploymentHasKcpFlag(deploymentArgs)
 				if !hasKcpFlag && isInKcpMode {
-					payload := []patchStringValue{{
-						Op:    "add",
-						Path:  "/spec/template/spec/containers/0/args/-",
-						Value: "--in-kcp-mode",
-					}}
-					payloadBytes, _ := json.Marshal(payload)
-					var err error
-					if patchedDeployment, err = k8s.Static().AppsV1().Deployments(manifest.GetNamespace()).
-						Patch(ctx, manifest.GetName(), types.JSONPatchType, payloadBytes, v1.PatchOptions{}); err != nil {
-						return nil, err
+					deployment.Spec.Template.Spec.Containers[0].Args = append(deploymentArgs, "--in-kcp-mode")
+					err := patchManifest(deployment, manifest)
+					if err != nil {
+						return err
 					}
 				}
 			}
 		}
 	}
-	return patchedDeployment, nil
+	return nil
+}
+
+func patchManifest(deployment *appsv1.Deployment, manifest ctrlClient.Object) error {
+	manifestJSON, err := json.Marshal(deployment)
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(manifestJSON, &manifest.(*unstructured.Unstructured).Object)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func getManifestJsonForDeployment(manifest ctrlClient.Object) ([]byte, error) {
 	if manifest.GetObjectKind().GroupVersionKind().Kind == "Deployment" {
 		if manifestObj, success := manifest.(*unstructured.Unstructured); success {
-			if manifestJSON, err := json.Marshal(manifestObj.Object); err != nil {
+			var manifestJSON []byte
+			var err error
+			if manifestJSON, err = json.Marshal(manifestObj.Object); err != nil {
 				return nil, err
-			} else {
-				return manifestJSON, nil
 			}
+			return manifestJSON, nil
 		}
 	}
 	return nil, nil
 }
 
-func getDeploymentArgs(manifestJSON []byte) ([]string, error) {
+func getDeployment(manifestJSON []byte) (*appsv1.Deployment, error) {
 	deployment := &appsv1.Deployment{}
 	if err := json.Unmarshal(manifestJSON, deployment); err != nil {
 		return nil, err
 	}
 
-	return deployment.Spec.Template.Spec.Containers[0].Args, nil
+	return deployment, nil
 }
 
 func checkDeploymentHasKcpFlag(args []string) bool {
