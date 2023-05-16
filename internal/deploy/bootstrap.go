@@ -91,39 +91,60 @@ func Bootstrap(
 func PatchDeploymentWithInKcpModeFlag(ctx context.Context, k8s kube.KymaKube, manifestObjs []ctrlClient.Object, isInKcpMode bool) (*appsv1.Deployment, error) {
 	var patchedDeployment *appsv1.Deployment
 	for _, manifest := range manifestObjs {
-		if manifest.GetObjectKind().GroupVersionKind().Kind == "Deployment" {
-			hasKcpFlag := false
-			if manifestObj, success := manifest.(*unstructured.Unstructured); success {
-				manifestJSON, err := json.Marshal(manifestObj.Object)
-				if err == nil {
-					deploymentSpec := appsv1.Deployment{}
-					if err = json.Unmarshal(manifestJSON, &deploymentSpec); err == nil {
-						for _, arg := range deploymentSpec.Spec.Template.Spec.Containers[0].Args {
-							if arg == "--in-kcp-mode" || arg == "--in-kcp-mode=true" {
-								hasKcpFlag = true
-								break
-							}
-						}
-						if !hasKcpFlag && isInKcpMode {
-							payload := []patchStringValue{{
-								Op:    "add",
-								Path:  "/spec/template/spec/containers/0/args/-",
-								Value: "--in-kcp-mode",
-							}}
-							payloadBytes, _ := json.Marshal(payload)
-							var err error
-							if patchedDeployment, err = k8s.Static().AppsV1().Deployments(manifestObj.GetNamespace()).
-								Patch(ctx, manifestObj.GetName(), types.JSONPatchType, payloadBytes, v1.PatchOptions{}); err != nil {
-								return nil, err
-							}
-						}
+		manifestJSON, err := getManifestJsonForDeployment(manifest)
+		if err == nil && manifestJSON != nil {
+			deploymentArgs, err := getDeploymentArgs(manifestJSON)
+			if err == nil && deploymentArgs != nil {
+				hasKcpFlag := checkDeploymentHasKcpFlag(deploymentArgs)
+				if !hasKcpFlag && isInKcpMode {
+					payload := []patchStringValue{{
+						Op:    "add",
+						Path:  "/spec/template/spec/containers/0/args/-",
+						Value: "--in-kcp-mode",
+					}}
+					payloadBytes, _ := json.Marshal(payload)
+					var err error
+					if patchedDeployment, err = k8s.Static().AppsV1().Deployments(manifest.GetNamespace()).
+						Patch(ctx, manifest.GetName(), types.JSONPatchType, payloadBytes, v1.PatchOptions{}); err != nil {
+						return nil, err
 					}
 				}
-
 			}
 		}
 	}
 	return patchedDeployment, nil
+}
+
+func getManifestJsonForDeployment(manifest ctrlClient.Object) ([]byte, error) {
+	if manifest.GetObjectKind().GroupVersionKind().Kind == "Deployment" {
+		if manifestObj, success := manifest.(*unstructured.Unstructured); success {
+			if manifestJSON, err := json.Marshal(manifestObj.Object); err != nil {
+				return nil, err
+			} else {
+				return manifestJSON, nil
+			}
+		}
+	}
+	return nil, nil
+}
+
+func getDeploymentArgs(manifestJSON []byte) ([]string, error) {
+	deployment := &appsv1.Deployment{}
+	if err := json.Unmarshal(manifestJSON, deployment); err != nil {
+		return nil, err
+	}
+
+	return deployment.Spec.Template.Spec.Containers[0].Args, nil
+}
+
+func checkDeploymentHasKcpFlag(args []string) bool {
+	for _, arg := range args {
+		if arg == "--in-kcp-mode" || arg == "--in-kcp-mode=true" {
+			return true
+		}
+	}
+
+	return false
 }
 
 func checkDeploymentReadiness(objs []ctrlClient.Object, k8s kube.KymaKube) error {
