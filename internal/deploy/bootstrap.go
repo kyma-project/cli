@@ -87,20 +87,23 @@ func PatchDeploymentWithInKcpModeFlag(manifestObjs []ctrlClient.Object, isInKcpM
 	var deployment *appsv1.Deployment
 	for _, manifest := range manifestObjs {
 		manifestJSON, err := getManifestJSONForDeployment(manifest)
-		if err == nil && manifestJSON != nil {
-			deployment, err = getDeployment(manifestJSON)
-			if err == nil {
-				deploymentArgs := deployment.Spec.Template.Spec.Containers[0].Args
-				hasKcpFlag := checkDeploymentHasKcpFlag(deploymentArgs)
-				if !hasKcpFlag && isInKcpMode {
-					deployment.Spec.Template.Spec.Containers[0].Args = append(deploymentArgs, "--in-kcp-mode")
-					err := patchManifest(deployment, manifest)
-					if err != nil {
-						return err
-					}
-				}
+		if err != nil || manifestJSON == nil {
+			return err
+		}
+		deployment, err = getDeployment(manifestJSON)
+		if err != nil {
+			return err
+		}
+		deploymentArgs := deployment.Spec.Template.Spec.Containers[0].Args
+		hasKcpFlag := checkDeploymentHasKcpFlag(deploymentArgs)
+		if !hasKcpFlag && isInKcpMode {
+			deployment.Spec.Template.Spec.Containers[0].Args = append(deploymentArgs, "--in-kcp-mode")
+			err := patchManifest(deployment, manifest)
+			if err != nil {
+				return err
 			}
 		}
+
 	}
 	return nil
 }
@@ -119,15 +122,17 @@ func patchManifest(deployment *appsv1.Deployment, manifest ctrlClient.Object) er
 }
 
 func getManifestJSONForDeployment(manifest ctrlClient.Object) ([]byte, error) {
-	if manifest.GetObjectKind().GroupVersionKind().Kind == "Deployment" {
-		if manifestObj, success := manifest.(*unstructured.Unstructured); success {
-			var manifestJSON []byte
-			var err error
-			if manifestJSON, err = json.Marshal(manifestObj.Object); err != nil {
-				return nil, err
-			}
-			return manifestJSON, nil
+	if manifest.GetObjectKind().GroupVersionKind().Kind != "Deployment" {
+		return nil, nil
+	}
+	if manifestObj, success := manifest.(*unstructured.Unstructured); success {
+		var manifestJSON []byte
+		var err error
+		if manifestJSON, err = json.Marshal(manifestObj.Object); err != nil {
+			return nil, err
 		}
+		return manifestJSON, nil
+
 	}
 	return nil, nil
 }
