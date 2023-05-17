@@ -87,8 +87,11 @@ func PatchDeploymentWithInKcpModeFlag(manifestObjs []ctrlClient.Object, isInKcpM
 	var deployment *appsv1.Deployment
 	for _, manifest := range manifestObjs {
 		manifestJSON, err := getManifestJSONForDeployment(manifest)
-		if err != nil || manifestJSON == nil {
+		if err != nil {
 			return err
+		}
+		if manifestJSON == nil {
+			continue
 		}
 		deployment, err = getDeployment(manifestJSON)
 		if err != nil {
