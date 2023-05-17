@@ -7,7 +7,7 @@ import (
 
 	"github.com/avast/retry-go"
 	"github.com/kyma-project/cli/internal/kube"
-	"github.com/kyma-project/lifecycle-manager/api/v1beta1"
+	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	v1 "k8s.io/api/core/v1"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
@@ -15,12 +15,12 @@ import (
 
 // Kyma deploys the Kyma CR. If no kymaCRPath is provided, it deploys the default CR.
 func Kyma(
-	ctx context.Context, k8s kube.KymaKube, namespace, channel, kymaCRpath string, force, dryRun bool,
+	ctx context.Context, k8s kube.KymaKube, namespace, channel, kymaCRpath string, force, dryRun, kcpMode bool,
 ) error {
 	namespaceObj := &v1.Namespace{}
 	namespaceObj.SetName(namespace)
 
-	kyma := &v1beta1.Kyma{}
+	kyma := &v1beta2.Kyma{}
 	if kymaCRpath != "" {
 		data, err := os.ReadFile(kymaCRpath)
 		if err != nil {
@@ -33,10 +33,12 @@ func Kyma(
 		kyma.SetName("default-kyma")
 		kyma.SetNamespace(namespace)
 		kyma.SetAnnotations(map[string]string{"cli.kyma-project.io/source": "deploy"})
-		kyma.SetLabels(map[string]string{"operator.kyma-project.io/managed-by": "lifecycle-manager"})
+		kyma.SetLabels(map[string]string{v1beta2.ManagedBy: "lifecycle-manager"})
 		kyma.Spec.Channel = channel
-		kyma.Spec.Sync.Enabled = false
-		kyma.Spec.Modules = []v1beta1.Module{}
+		if !kcpMode {
+			kyma.SetLabels(map[string]string{v1beta2.SyncLabel: v1beta2.DisableLabelValue})
+		}
+		kyma.Spec.Modules = []v1beta2.Module{}
 	}
 
 	if dryRun {
@@ -64,7 +66,7 @@ func Kyma(
 	if err := k8s.WatchObject(
 		ctx, kyma,
 		func(kyma ctrlClient.Object) (bool, error) {
-			return string(kyma.(*v1beta1.Kyma).Status.State) == string(v1beta1.StateReady), nil
+			return string(kyma.(*v1beta2.Kyma).Status.State) == string(v1beta2.StateReady), nil
 		},
 	); err != nil {
 		return fmt.Errorf("kyma custom resource did not get ready: %w", err)

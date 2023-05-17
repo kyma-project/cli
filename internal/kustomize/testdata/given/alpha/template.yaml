@@ -1,4 +1,4 @@
-apiVersion: operator.kyma-project.io/v1beta1
+apiVersion: operator.kyma-project.io/v1beta2
 kind: ModuleTemplate
 metadata:
   name: moduletemplate-template-operator
@@ -6,7 +6,6 @@ metadata:
   labels:
     "operator.kyma-project.io/module-name": "template-operator"
 spec:
-  target: remote
   channel: regular
   data:
     apiVersion: operator.kyma-project.io/v1alpha1

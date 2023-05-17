@@ -254,7 +254,7 @@ func (cmd *command) deploy(ctx context.Context) error {
 
 	kymaStep := cmd.NewStep("Deploying Kyma CR")
 	if err := deploy.Kyma(
-		ctx, cmd.K8s, cmd.opts.Namespace, cmd.opts.Channel, cmd.opts.KymaCR, cmd.opts.Force, false,
+		ctx, cmd.K8s, cmd.opts.Namespace, cmd.opts.Channel, cmd.opts.KymaCR, cmd.opts.Force, false, isInKcpMode,
 	); err != nil {
 		kymaStep.Failuref("Failed to deploy Kyma CR: %s", err.Error())
 		return err
@@ -318,7 +318,7 @@ func (cmd *command) dryRun(ctx context.Context, isInKcpMode bool) error {
 	}
 
 	return deploy.Kyma(
-		ctx, cmd.K8s, cmd.opts.Namespace, cmd.opts.Channel, cmd.opts.KymaCR, cmd.opts.Force, true,
+		ctx, cmd.K8s, cmd.opts.Namespace, cmd.opts.Channel, cmd.opts.KymaCR, cmd.opts.Force, true, isInKcpMode,
 	)
 }
 
@@ -330,7 +330,7 @@ func (cmd *command) openDashboard(ctx context.Context) error {
 	kymas, err := cmd.K8s.Dynamic().Resource(
 		schema.GroupVersionResource{
 			Group:    "operator.kyma-project.io",
-			Version:  "v1beta1",
+			Version:  "v1beta2",
 			Resource: "kymas",
 		},
 	).List(ctx, v1.ListOptions{})
@@ -383,7 +383,7 @@ func (cmd *command) handleTimeoutErr(err error) error {
 func (cmd *command) detectManagedKyma(ctx context.Context) error {
 	kymaResource := schema.GroupVersionResource{
 		Group:    "operator.kyma-project.io",
-		Version:  "v1beta1",
+		Version:  "v1beta2",
 		Resource: "kymas",
 	}
 
