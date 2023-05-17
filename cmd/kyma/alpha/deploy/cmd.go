@@ -185,8 +185,9 @@ func (cmd *command) runWithTimeout(ctx context.Context) error {
 }
 
 func (cmd *command) deploy(ctx context.Context) error {
+	isInKcpMode := cmd.opts.Target == targetRemote
 	if cmd.opts.DryRun {
-		return cmd.dryRun(ctx)
+		return cmd.dryRun(ctx, isInKcpMode)
 	}
 
 	start := time.Now()
@@ -221,7 +222,7 @@ func (cmd *command) deploy(ctx context.Context) error {
 	deployStep := cmd.NewStep("Deploying Kustomizations")
 	deployStep.Start()
 	hasKyma, err := deploy.Bootstrap(
-		ctx, cmd.opts.Kustomizations, cmd.K8s, cmd.opts.Filters, cmd.opts.WildcardPermissions, cmd.opts.Force, false,
+		ctx, cmd.opts.Kustomizations, cmd.K8s, cmd.opts.Filters, cmd.opts.WildcardPermissions, cmd.opts.Force, false, isInKcpMode,
 	)
 	if err != nil {
 		deployStep.Failuref("Failed to deploy Kustomizations %s: %s", cmd.opts.Kustomizations, err.Error())
@@ -292,7 +293,7 @@ func (cmd *command) deployCertManager(ctx context.Context) {
 	)
 }
 
-func (cmd *command) dryRun(ctx context.Context) error {
+func (cmd *command) dryRun(ctx context.Context, isInKcpMode bool) error {
 	if cmd.opts.CertManagerVersion != "" {
 		if err := deploy.CertManager(ctx, cmd.K8s, cmd.opts.CertManagerVersion, cmd.opts.Force, true); err != nil {
 			return err
@@ -300,7 +301,7 @@ func (cmd *command) dryRun(ctx context.Context) error {
 	}
 
 	hasKyma, err := deploy.Bootstrap(
-		ctx, cmd.opts.Kustomizations, cmd.K8s, cmd.opts.Filters, cmd.opts.WildcardPermissions, cmd.opts.Force, true,
+		ctx, cmd.opts.Kustomizations, cmd.K8s, cmd.opts.Filters, cmd.opts.WildcardPermissions, cmd.opts.Force, true, isInKcpMode,
 	)
 	if err != nil {
 		return err
