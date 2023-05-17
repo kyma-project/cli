@@ -69,7 +69,6 @@ func TestPatchDeploymentWithInKcpModeFlag(t *testing.T) {
 
 	type args struct {
 		manifestObjs []ctrlClient.Object
-		isInKcpMode  bool
 	}
 
 	tests := []struct {
@@ -79,36 +78,16 @@ func TestPatchDeploymentWithInKcpModeFlag(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "isInKcpMode is false with no in-kcp-mode flag",
+			name: "non-existing in-kcp-mode flag",
 			args: args{
-				isInKcpMode:  false,
-				manifestObjs: manifestObjs,
-			},
-			wantErr: false,
-			want:    false,
-		},
-		{
-			name: "isInKcpMode is true with no in-kcp-mode flag",
-			args: args{
-				isInKcpMode:  true,
 				manifestObjs: manifestObjs,
 			},
 			wantErr: false,
 			want:    true,
 		},
 		{
-			name: "isInKcpMode is false with in-kcp-mode flag",
+			name: "existing in-kcp-mode flag",
 			args: args{
-				isInKcpMode:  false,
-				manifestObjs: kcpManifestObjs,
-			},
-			wantErr: false,
-			want:    true,
-		},
-		{
-			name: "isInKcpMode is true with in-kcp-mode flag",
-			args: args{
-				isInKcpMode:  true,
 				manifestObjs: kcpManifestObjs,
 			},
 			wantErr: false,
@@ -117,7 +96,7 @@ func TestPatchDeploymentWithInKcpModeFlag(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := PatchDeploymentWithInKcpModeFlag(tt.args.manifestObjs, tt.args.isInKcpMode)
+			err := patchDeploymentWithInKcpModeFlag(tt.args.manifestObjs)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("PatchDeploymentWithInKcpMode() error = %v, wantErr %v", err, tt.wantErr)
 			}

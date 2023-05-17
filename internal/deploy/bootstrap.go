@@ -69,8 +69,10 @@ func Bootstrap(
 	if err != nil {
 		return false, err
 	}
-	if err = PatchDeploymentWithInKcpModeFlag(manifestObjs, isInKcpMode); err != nil {
-		return false, err
+	if isInKcpMode {
+		if err = patchDeploymentWithInKcpModeFlag(manifestObjs); err != nil {
+			return false, err
+		}
 	}
 	err = applyManifests(
 		ctx, k8s, manifests, applyOpts{
@@ -83,7 +85,7 @@ func Bootstrap(
 	return hasKyma(string(manifests))
 }
 
-func PatchDeploymentWithInKcpModeFlag(manifestObjs []ctrlClient.Object, isInKcpMode bool) error {
+func patchDeploymentWithInKcpModeFlag(manifestObjs []ctrlClient.Object) error {
 	var deployment *appsv1.Deployment
 	for _, manifest := range manifestObjs {
 		manifestJSON, err := getManifestJSONForDeployment(manifest)
@@ -99,7 +101,7 @@ func PatchDeploymentWithInKcpModeFlag(manifestObjs []ctrlClient.Object, isInKcpM
 		}
 		deploymentArgs := deployment.Spec.Template.Spec.Containers[0].Args
 		hasKcpFlag := checkDeploymentHasKcpFlag(deploymentArgs)
-		if !hasKcpFlag && isInKcpMode {
+		if !hasKcpFlag {
 			deployment.Spec.Template.Spec.Containers[0].Args = append(deploymentArgs, "--in-kcp-mode")
 			err := patchManifest(deployment, manifest)
 			if err != nil {
