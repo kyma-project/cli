@@ -22,7 +22,6 @@ const (
 var errNotGit = errors.New("not a git repository")
 
 func Source(ctx cpi.Context, path, repo, version string) (*ocm.Source, error) {
-
 	var ref, commit string
 	// check for .git
 	if gitPath, err := findGitInfo(path); err == nil {

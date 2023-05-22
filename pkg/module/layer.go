@@ -9,7 +9,6 @@ import (
 const (
 	configLayerName      = "config"
 	rawManifestLayerName = "raw-manifest"
-	typeHelmChart        = "helm-chart"
 	typeYaml             = "yaml"
 )
 
@@ -21,17 +20,8 @@ type Layer struct {
 	excludedFiles []string
 }
 
-func NewLayer(name, resType, path string, excludedFiles ...string) *Layer {
-	return &Layer{
-		name:          name,
-		resourceType:  resType,
-		path:          path,
-		excludedFiles: excludedFiles,
-	}
-}
-
 // LayerFromString creates a layer resource from a string with format NAME:TYPE@PATH
-// NAME and TYPE can be omitted and will default to the last path element name and "helm-chart" respectively.
+// NAME and TYPE can be omitted and will default to the last path element name and "yaml" respectively.
 func LayerFromString(def string) (Layer, error) {
 	items := strings.FieldsFunc(def, func(r rune) bool { return r == ':' || r == '@' }) // split the elements of the format NAME:TYPE@PATH
 	if len(items) == 0 || len(items) == 2 {
@@ -46,7 +36,7 @@ func LayerFromString(def string) (Layer, error) {
 
 		return Layer{
 			name:         name,
-			resourceType: typeHelmChart,
+			resourceType: typeYaml,
 			path:         items[0],
 		}, nil
 	}

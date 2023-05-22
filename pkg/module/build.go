@@ -86,11 +86,12 @@ func addSources(ctx cpi.Context, cd *ocm.ComponentDescriptor, def *Definition) e
 	if err != nil {
 		return err
 	}
-
-	if idx := cd.GetSourceIndex(&src.SourceMeta); idx < 0 {
-		cd.Sources = append(cd.Sources, *src)
-	} else {
-		cd.Sources[idx] = *src
+	if src != nil {
+		if idx := cd.GetSourceIndex(&src.SourceMeta); idx < 0 {
+			cd.Sources = append(cd.Sources, *src)
+		} else {
+			cd.Sources[idx] = *src
+		}
 	}
 
 	return nil

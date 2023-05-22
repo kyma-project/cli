@@ -37,7 +37,7 @@ type ResourceDescriptorList struct {
 }
 
 // AddResources adds the resources in the given resource definitions into the archive and its FS.
-// A resource definition is a string with format: NAME:TYPE@PATH, where NAME and TYPE can be omitted and will default to the last path element name and "helm-chart" respectively
+// A resource definition is a string with format: NAME:TYPE@PATH, where NAME and TYPE can be omitted and will default to the last path element name and "yaml" respectively
 func AddResources(
 	archive *comparch.ComponentArchive,
 	modDef *Definition,
@@ -87,7 +87,7 @@ func AddResources(
 
 // generateResources generates resources by parsing the given definitions.
 // Definitions have the following format: NAME:TYPE@PATH
-// If a definition does not have a name or type, the name of the last path element is used and it is assumed to be a helm-chart type.
+// If a definition does not have a name or type, the name of the last path element is used and it is assumed to be a yaml type.
 func generateResources(log *zap.SugaredLogger, version string, credLabel []byte, defs ...Layer) ([]ResourceDescriptor, error) {
 	res := []ResourceDescriptor{}
 	for _, d := range defs {
@@ -250,7 +250,7 @@ func inspectCustom(def *Definition, layers []Layer, log *zap.SugaredLogger) erro
 	l := Layer{
 		name:         filepath.Base(absPath),
 		path:         absPath,
-		resourceType: typeHelmChart,
+		resourceType: typeYaml,
 	}
 	// exclude any custom resources that overlap with module root to avoid bundling them twice
 	for _, d := range layers {

@@ -7,7 +7,7 @@ import (
 	"github.com/kyma-project/cli/pkg/module/oci"
 )
 
-// Definition contains all infrmation and configuration that defines a module (e.g. component descriptor config, template config, layers, CRs...)
+// Definition contains all information and configuration that defines a module (e.g. component descriptor config, template config, layers, CRs...)
 type Definition struct {
 	SchemaVersion   string      // schema version for the ocm descriptor
 	Source          string      // path to the sources to create the module
@@ -27,7 +27,7 @@ type Definition struct {
 // validate checks that the configuration has all required data for a module to be valid.
 func (cfg *Definition) validate() error {
 	if cfg.Name == "" {
-		return errors.New("The module name cannot be empty")
+		return errors.New("the module name cannot be empty")
 	}
 
 	ref, err := oci.ParseRef(cfg.Name)
@@ -40,10 +40,10 @@ func (cfg *Definition) validate() error {
 	}
 
 	if cfg.Version == "" {
-		return errors.New("The module version cannot be empty")
+		return errors.New("the module version cannot be empty")
 	}
 	if cfg.Source == "" {
-		return errors.New("The module source path cannot be empty")
+		return errors.New("the module source path cannot be empty")
 	}
 	return nil
 }
