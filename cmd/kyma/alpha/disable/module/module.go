@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/kyma-project/cli/internal/cli/alpha/module"
-	"github.com/kyma-project/lifecycle-manager/api/v1beta1"
+	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -151,7 +151,7 @@ func (cmd *command) run(ctx context.Context, l *zap.SugaredLogger, moduleName st
 	return nil
 }
 
-func disableModule(modules []v1beta1.Module, name, channel string) ([]v1beta1.Module, error) {
+func disableModule(modules []v1beta2.Module, name, channel string) ([]v1beta2.Module, error) {
 	for i, mod := range modules {
 		if mod.Name != name {
 			continue

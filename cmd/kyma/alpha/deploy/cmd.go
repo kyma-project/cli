@@ -185,8 +185,9 @@ func (cmd *command) runWithTimeout(ctx context.Context) error {
 }
 
 func (cmd *command) deploy(ctx context.Context) error {
+	isInKcpMode := cmd.opts.Target == targetRemote
 	if cmd.opts.DryRun {
-		return cmd.dryRun(ctx)
+		return cmd.dryRun(ctx, isInKcpMode)
 	}
 
 	start := time.Now()
@@ -221,7 +222,7 @@ func (cmd *command) deploy(ctx context.Context) error {
 	deployStep := cmd.NewStep("Deploying Kustomizations")
 	deployStep.Start()
 	hasKyma, err := deploy.Bootstrap(
-		ctx, cmd.opts.Kustomizations, cmd.K8s, cmd.opts.Filters, cmd.opts.WildcardPermissions, cmd.opts.Force, false,
+		ctx, cmd.opts.Kustomizations, cmd.K8s, cmd.opts.Filters, cmd.opts.WildcardPermissions, cmd.opts.Force, false, isInKcpMode,
 	)
 	if err != nil {
 		deployStep.Failuref("Failed to deploy Kustomizations %s: %s", cmd.opts.Kustomizations, err.Error())
@@ -253,7 +254,7 @@ func (cmd *command) deploy(ctx context.Context) error {
 
 	kymaStep := cmd.NewStep("Deploying Kyma CR")
 	if err := deploy.Kyma(
-		ctx, cmd.K8s, cmd.opts.Namespace, cmd.opts.Channel, cmd.opts.KymaCR, cmd.opts.Force, false,
+		ctx, cmd.K8s, cmd.opts.Namespace, cmd.opts.Channel, cmd.opts.KymaCR, cmd.opts.Force, false, isInKcpMode,
 	); err != nil {
 		kymaStep.Failuref("Failed to deploy Kyma CR: %s", err.Error())
 		return err
@@ -292,7 +293,7 @@ func (cmd *command) deployCertManager(ctx context.Context) {
 	)
 }
 
-func (cmd *command) dryRun(ctx context.Context) error {
+func (cmd *command) dryRun(ctx context.Context, isInKcpMode bool) error {
 	if cmd.opts.CertManagerVersion != "" {
 		if err := deploy.CertManager(ctx, cmd.K8s, cmd.opts.CertManagerVersion, cmd.opts.Force, true); err != nil {
 			return err
@@ -300,7 +301,7 @@ func (cmd *command) dryRun(ctx context.Context) error {
 	}
 
 	hasKyma, err := deploy.Bootstrap(
-		ctx, cmd.opts.Kustomizations, cmd.K8s, cmd.opts.Filters, cmd.opts.WildcardPermissions, cmd.opts.Force, true,
+		ctx, cmd.opts.Kustomizations, cmd.K8s, cmd.opts.Filters, cmd.opts.WildcardPermissions, cmd.opts.Force, true, isInKcpMode,
 	)
 	if err != nil {
 		return err
@@ -317,7 +318,7 @@ func (cmd *command) dryRun(ctx context.Context) error {
 	}
 
 	return deploy.Kyma(
-		ctx, cmd.K8s, cmd.opts.Namespace, cmd.opts.Channel, cmd.opts.KymaCR, cmd.opts.Force, true,
+		ctx, cmd.K8s, cmd.opts.Namespace, cmd.opts.Channel, cmd.opts.KymaCR, cmd.opts.Force, true, isInKcpMode,
 	)
 }
 
@@ -329,7 +330,7 @@ func (cmd *command) openDashboard(ctx context.Context) error {
 	kymas, err := cmd.K8s.Dynamic().Resource(
 		schema.GroupVersionResource{
 			Group:    "operator.kyma-project.io",
-			Version:  "v1beta1",
+			Version:  "v1beta2",
 			Resource: "kymas",
 		},
 	).List(ctx, v1.ListOptions{})
@@ -382,7 +383,7 @@ func (cmd *command) handleTimeoutErr(err error) error {
 func (cmd *command) detectManagedKyma(ctx context.Context) error {
 	kymaResource := schema.GroupVersionResource{
 		Group:    "operator.kyma-project.io",
-		Version:  "v1beta1",
+		Version:  "v1beta2",
 		Resource: "kymas",
 	}
 

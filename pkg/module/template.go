@@ -13,17 +13,14 @@ import (
 )
 
 const (
-	modTemplate = `apiVersion: operator.kyma-project.io/v1beta1
+	modTemplate = `apiVersion: operator.kyma-project.io/v1beta2
 kind: ModuleTemplate
 metadata:
   name: moduletemplate-{{ .ShortName }}
   namespace: kcp-system
   labels:
-    "operator.kyma-project.io/managed-by": "lifecycle-manager"
-    "operator.kyma-project.io/controller-name": "manifest"
     "operator.kyma-project.io/module-name": "{{ .ShortName }}"
 spec:
-  target: {{.Target}}
   channel: {{.Channel}}
   data:
 {{.Data | indent 4}}
@@ -48,13 +45,11 @@ func Template(remote ocm.ComponentVersionAccess, channel, target string, data []
 		ShortName  string                              // Last part of the component descriptor name
 		Descriptor compdesc.ComponentDescriptorVersion // descriptor info for the template
 		Channel    string
-		Target     string
 		Data       string // contents for the spec.data section of the template taken from the defaults.yaml file in the mod folder
 	}{
 		ShortName:  ref.ShortName(),
 		Descriptor: cva,
 		Channel:    channel,
-		Target:     target,
 		Data:       string(data),
 	}
 

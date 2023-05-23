@@ -3,7 +3,7 @@ package module
 import (
 	"context"
 	"github.com/kyma-project/cli/cmd/kyma/alpha/enable/module/mock"
-	"github.com/kyma-project/lifecycle-manager/api/v1beta1"
+	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	"github.com/kyma-project/lifecycle-manager/pkg/testutils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -14,22 +14,22 @@ import (
 func TestChannelValidation(t *testing.T) {
 	// GIVEN
 	ctx := context.TODO()
-	template1, _ := testutils.ModuleTemplateFactory(v1beta1.Module{
+	template1, _ := testutils.ModuleTemplateFactory(v1beta2.Module{
 		Name:                 "test",
 		ControllerName:       "-",
 		Channel:              "fast",
 		CustomResourcePolicy: "-",
-	}, unstructured.Unstructured{})
-	template2, _ := testutils.ModuleTemplateFactory(v1beta1.Module{
+	}, unstructured.Unstructured{}, false)
+	template2, _ := testutils.ModuleTemplateFactory(v1beta2.Module{
 		Name:                 "not-test",
 		ControllerName:       "-",
 		Channel:              "alpha",
 		CustomResourcePolicy: "-",
-	}, unstructured.Unstructured{})
-	allTemplates := v1beta1.ModuleTemplateList{
+	}, unstructured.Unstructured{}, false)
+	allTemplates := v1beta2.ModuleTemplateList{
 		TypeMeta: metav1.TypeMeta{},
 		ListMeta: metav1.ListMeta{},
-		Items: []v1beta1.ModuleTemplate{
+		Items: []v1beta2.ModuleTemplate{
 			*template1, *template2,
 		},
 	}

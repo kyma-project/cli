@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kyma-project/lifecycle-manager/api/v1beta1"
+	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/pkg/errors"
 )
 
 const (
-	customResourcePolicyCreateAndDelete v1beta1.CustomResourcePolicy = v1beta1.CustomResourcePolicyCreateAndDelete
-	customResourcePolicyIgnore          v1beta1.CustomResourcePolicy = v1beta1.CustomResourcePolicyIgnore
+	customResourcePolicyCreateAndDelete v1beta2.CustomResourcePolicy = v1beta2.CustomResourcePolicyCreateAndDelete
+	customResourcePolicyIgnore          v1beta2.CustomResourcePolicy = v1beta2.CustomResourcePolicyIgnore
 )
 
 type Options struct {
@@ -60,7 +60,7 @@ func (o *Options) validateChannel() error {
 }
 
 func (o *Options) validatePolicy() error {
-	if v1beta1.CustomResourcePolicy(o.Policy) == customResourcePolicyCreateAndDelete || v1beta1.CustomResourcePolicy(o.Policy) == customResourcePolicyIgnore {
+	if v1beta2.CustomResourcePolicy(o.Policy) == customResourcePolicyCreateAndDelete || v1beta2.CustomResourcePolicy(o.Policy) == customResourcePolicyIgnore {
 		return nil
 	}
 

@@ -1,13 +1,13 @@
 package module
 
 import (
-	"github.com/kyma-project/lifecycle-manager/api/v1beta1"
+	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	"reflect"
 	"testing"
 )
 
 func Test_disableModule(t *testing.T) {
-	installedModules := []v1beta1.Module{
+	installedModules := []v1beta2.Module{
 		{
 			Name:                 "module1",
 			ControllerName:       "",
@@ -29,14 +29,14 @@ func Test_disableModule(t *testing.T) {
 	}
 
 	type args struct {
-		modules []v1beta1.Module
+		modules []v1beta2.Module
 		name    string
 		channel string
 	}
 	tests := []struct {
 		name    string
 		args    args
-		want    []v1beta1.Module
+		want    []v1beta2.Module
 		wantErr bool
 	}{
 		{
@@ -56,7 +56,7 @@ func Test_disableModule(t *testing.T) {
 				name:    "module3",
 				channel: "regular",
 			},
-			want: []v1beta1.Module{
+			want: []v1beta2.Module{
 				{
 					Name:                 "module1",
 					ControllerName:       "",
@@ -79,7 +79,7 @@ func Test_disableModule(t *testing.T) {
 				name:    "module2",
 				channel: "alpha",
 			},
-			want: []v1beta1.Module{
+			want: []v1beta2.Module{
 				{
 					Name:                 "module1",
 					ControllerName:       "",
