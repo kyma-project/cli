@@ -1,9 +1,9 @@
-apiVersion: operator.kyma-project.io/v1beta1
+apiVersion: operator.kyma-project.io/v1beta2
 kind: Kyma
 metadata:
   annotations:
     kubectl.kubernetes.io/last-applied-configuration: |
-      {"apiVersion":"operator.kyma-project.io/v1alpha1","kind":"Kyma","metadata":{"annotations":{},"name":"kyma--50-9","namespace":"default"},"spec":{"channel":"stable","modules":[{"name":"manifest-1"},{"name":"manifest-2"},{"name":"manifest-3"},{"name":"manifest-4"},{"name":"manifest-5"},{"name":"manifest-6"},{"name":"manifest-7"},{"name":"manifest-8"},{"name":"manifest-9"},{"name":"manifest-10"},{"name":"manifest-11"},{"name":"manifest-12"},{"name":"manifest-13"},{"name":"manifest-14"},{"name":"manifest-15"},{"name":"manifest-16"},{"name":"manifest-17"},{"name":"manifest-18"},{"name":"manifest-19"},{"name":"manifest-20"}],"sync":{"enabled":true,"moduleCatalog":true}}}
+      {"apiVersion":"operator.kyma-project.io/v1beta2","kind":"Kyma","metadata":{"annotations":{},"name":"kyma--50-9","namespace":"default"},"spec":{"channel":"stable","modules":[{"name":"manifest-1"},{"name":"manifest-2"},{"name":"manifest-3"},{"name":"manifest-4"},{"name":"manifest-5"},{"name":"manifest-6"},{"name":"manifest-7"},{"name":"manifest-8"},{"name":"manifest-9"},{"name":"manifest-10"},{"name":"manifest-11"},{"name":"manifest-12"},{"name":"manifest-13"},{"name":"manifest-14"},{"name":"manifest-15"},{"name":"manifest-16"},{"name":"manifest-17"},{"name":"manifest-18"},{"name":"manifest-19"},{"name":"manifest-20"}]}}
   creationTimestamp: "2023-01-13T12:58:51Z"
   finalizers:
     - operator.kyma-project.io/Kyma
@@ -18,11 +18,6 @@ spec:
   channel: stable
   modules:
     - name: manifest-1
-  sync:
-    enabled: true
-    moduleCatalog: true
-    noModuleCopy: true
-    strategy: secret
 status:
   activeChannel: stable
   conditions:
@@ -43,13 +38,13 @@ status:
       state: Ready
       channel: stable
       manifest:
-        apiVersion: operator.kyma-project.io/v1beta1
+        apiVersion: operator.kyma-project.io/v1beta2
         kind: Manifest
         metadata:
           generation: 1
           name: kyma--50-9-manifest-1
       template:
-        apiVersion: operator.kyma-project.io/v1beta1
+        apiVersion: operator.kyma-project.io/v1beta2
         kind: ModuleTemplate
         metadata:
           generation: 1

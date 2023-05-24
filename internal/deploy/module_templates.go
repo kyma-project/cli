@@ -39,8 +39,14 @@ func ModuleTemplates(ctx context.Context, k8s kube.KymaKube, templates []string,
 		return err
 	}
 
-	return applyManifests(
+	manifestObjs, err := parseManifests(k8s, manifests, dryRun)
+	if err != nil {
+		return err
+	}
+	err = applyManifests(
 		ctx, k8s, manifests, applyOpts{
-			dryRun, force, defaultRetries, defaultInitialBackoff},
+			dryRun, force, defaultRetries, defaultInitialBackoff}, manifestObjs,
 	)
+
+	return err
 }

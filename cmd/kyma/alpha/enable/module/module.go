@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/kyma-project/cli/internal/cli/alpha/module"
-	"github.com/kyma-project/lifecycle-manager/api/v1beta1"
+	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -179,12 +179,12 @@ func validateChannel(ctx context.Context, moduleInteractor module.Interactor,
 	return nil
 }
 
-func filterModuleTemplates(allTemplates v1beta1.ModuleTemplateList,
-	moduleIdentifier string) ([]v1beta1.ModuleTemplate, error) {
-	var filteredModuleTemplates []v1beta1.ModuleTemplate
+func filterModuleTemplates(allTemplates v1beta2.ModuleTemplateList,
+	moduleIdentifier string) ([]v1beta2.ModuleTemplate, error) {
+	var filteredModuleTemplates []v1beta2.ModuleTemplate
 
 	for _, mt := range allTemplates.Items {
-		if mt.Labels[v1beta1.ModuleName] == moduleIdentifier {
+		if mt.Labels[v1beta2.ModuleName] == moduleIdentifier {
 			filteredModuleTemplates = append(filteredModuleTemplates, mt)
 			continue
 		}
@@ -204,16 +204,16 @@ func filterModuleTemplates(allTemplates v1beta1.ModuleTemplateList,
 	return filteredModuleTemplates, nil
 }
 
-func enableModule(modules []v1beta1.Module, name, channel string, customResourcePolicy string) []v1beta1.Module {
+func enableModule(modules []v1beta2.Module, name, channel string, customResourcePolicy string) []v1beta2.Module {
 	for idx := range modules {
 		if modules[idx].Name == name {
 			modules[idx].Channel = channel
-			modules[idx].CustomResourcePolicy = v1beta1.CustomResourcePolicy(customResourcePolicy)
+			modules[idx].CustomResourcePolicy = v1beta2.CustomResourcePolicy(customResourcePolicy)
 			return modules
 		}
 	}
 
-	newModule := v1beta1.Module{Name: name, CustomResourcePolicy: v1beta1.CustomResourcePolicy(customResourcePolicy)}
+	newModule := v1beta2.Module{Name: name, CustomResourcePolicy: v1beta2.CustomResourcePolicy(customResourcePolicy)}
 	if channel != "" {
 		newModule.Channel = channel
 	}
@@ -223,7 +223,7 @@ func enableModule(modules []v1beta1.Module, name, channel string, customResource
 	return modules
 }
 
-func doesChannelExist(templates []v1beta1.ModuleTemplate, channel string) bool {
+func doesChannelExist(templates []v1beta2.ModuleTemplate, channel string) bool {
 	for _, template := range templates {
 		if template.Spec.Channel == channel {
 			return true
@@ -232,7 +232,7 @@ func doesChannelExist(templates []v1beta1.ModuleTemplate, channel string) bool {
 	return false
 }
 
-func mapTemplatesToChannels(templates []v1beta1.ModuleTemplate) []string {
+func mapTemplatesToChannels(templates []v1beta2.ModuleTemplate) []string {
 	mapped := make([]string, len(templates))
 	for i, e := range templates {
 		mapped[i] = e.Spec.Channel
