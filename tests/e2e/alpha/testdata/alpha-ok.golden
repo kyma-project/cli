@@ -1,0 +1,22 @@
+Alpha commands are experimental, unreleased features that should only be used by the Kyma team. Use at your own risk.
+
+Usage:
+  kyma alpha [command]
+
+Available Commands:
+  create      Creates resources on the Kyma cluster.
+  deploy      Deploys Kyma on a running Kubernetes cluster.
+  disable     Disables a resource in the Kyma cluster.
+  enable      Enables a resource in the Kyma cluster.
+  list        Lists resources on the Kyma cluster.
+  sign        Signs all module resources from an unsigned module component descriptor that's hosted in a remote OCI registry
+  verify      Verifies all module resources from a signed module component descriptor that's hosted in a remote OCI registry
+
+Global Flags:
+      --ci                  Enables the CI mode to run on CI/CD systems. It avoids any user interaction (such as no dialog prompts) and ensures that logs are formatted properly in log files (such as no spinners for CLI steps).
+  -h, --help                Provides command help.
+      --kubeconfig string   Path to the kubeconfig file. If undefined, Kyma CLI uses the KUBECONFIG environment variable, or falls back "/$HOME/.kube/config".
+      --non-interactive     Enables the non-interactive shell mode (no colorized output, no spinner).
+  -v, --verbose             Displays details of actions triggered by the command.
+
+Use "kyma alpha [command] --help" for more information about a command.
