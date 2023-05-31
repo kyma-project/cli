@@ -13,7 +13,7 @@ import (
 
 const (
 	containerKubeconfigFile = "config.yaml" // this is the kubeconfig filename in the container
-	image                   = "eu.gcr.io/kyma-project/kyma-dashboard-local-prod:latest"
+	image                   = "europe-docker.pkg.dev/kyma-project/prod/kyma-dashboard-local-prod:latest"
 )
 
 // Container is a wrapper around the kyma dashboard docker container, providing an easy to use API to manage the kyam dashboard.
