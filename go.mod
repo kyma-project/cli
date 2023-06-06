@@ -11,6 +11,8 @@ replace github.com/vbatts/tar-split => github.com/vbatts/tar-split v0.11.3
 // remove once https://github.com/cert-manager/cert-manager/issues/5953 is fixed
 replace github.com/Venafi/vcert/v4 => github.com/jetstack/vcert/v4 v4.9.6-0.20230127103832-3aa3dfd6613d
 
+replace github.com/kyma-project/hydroform/function => github.com/kwiatekus/hydroform/function v0.0.0-20230606121158-041f3c2464c8
+
 require (
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/avast/retry-go v3.0.0+incompatible
