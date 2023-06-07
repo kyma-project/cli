@@ -198,7 +198,7 @@ func isDependencyInstalled(client dynamic.Interface, dependencyCRD schema.GroupV
 
 	if err != nil {
 		if k8sErrors.IsNotFound(err) {
-			return errors.Errorf("Failed to apply %s. %s module is missing..", dependencyCRD.Resource, dependencyCRD.Group)
+			return errors.Errorf("failed to apply %s. %s module is missing", dependencyCRD.Resource, dependencyCRD.Group)
 		}
 		return err
 	}
