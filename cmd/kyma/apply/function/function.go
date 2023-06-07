@@ -107,7 +107,7 @@ func (c *command) Run() error {
 
 	operators := []operator.Operator{}
 
-	if configuration.Subscriptions != nil {
+	if len(configuration.Subscriptions) != 0 {
 
 		subscriptionGVR := operator.SubscriptionGVR(configuration.SchemaVersion)
 		err := isDependencyInstalled(client, subscriptionGVR)
@@ -125,7 +125,7 @@ func (c *command) Run() error {
 			configuration.Name, configuration.Namespace, subscriptions...))
 	}
 
-	if configuration.APIRules != nil {
+	if len(configuration.APIRules) != 0 {
 
 		err := isDependencyInstalled(client, operator_types.GVRApiRule)
 		if err != nil {
