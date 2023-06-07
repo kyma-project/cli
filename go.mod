@@ -11,8 +11,6 @@ replace github.com/vbatts/tar-split => github.com/vbatts/tar-split v0.11.3
 // remove once https://github.com/cert-manager/cert-manager/issues/5953 is fixed
 replace github.com/Venafi/vcert/v4 => github.com/jetstack/vcert/v4 v4.9.6-0.20230127103832-3aa3dfd6613d
 
-replace github.com/kyma-project/hydroform/function => github.com/kwiatekus/hydroform/function v0.0.0-20230606121158-041f3c2464c8
-
 require (
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/avast/retry-go v3.0.0+incompatible
@@ -29,7 +27,7 @@ require (
 	github.com/go-logr/zapr v1.2.3
 	github.com/imdario/mergo v0.3.13
 	github.com/kyma-incubator/reconciler v0.0.0-20230427062256-f255ae8d0053
-	github.com/kyma-project/hydroform/function v0.0.0-20230511065356-7c87adf20e49
+	github.com/kyma-project/hydroform/function v0.0.0-20230607080739-8cda607c4599
 	github.com/kyma-project/hydroform/provision v0.0.0-20230418133637-1ea26b368bb6
 	github.com/kyma-project/lifecycle-manager v0.0.0-20230515084114-0cd8e8e80748
 	github.com/mandelsoft/vfs v0.0.0-20220805210647-bf14a11bfe31
