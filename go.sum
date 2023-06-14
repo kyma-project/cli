@@ -1179,8 +1179,8 @@ github.com/kylelemons/godebug v1.1.0 h1:RPNrshWIDI6G2gRW9EHilWtl7Z6Sb1BR0xunSBf0
 github.com/kylelemons/godebug v1.1.0/go.mod h1:9/0rRGxNHcop5bhtWyNeEfOS8JIWk580+fNqagV/RAw=
 github.com/kyma-incubator/reconciler v0.0.0-20230427062256-f255ae8d0053 h1:w5U5uQFmsWXWYS+e/t8g7Ai/BNP9+FF2ToJ3jhWMb4Y=
 github.com/kyma-incubator/reconciler v0.0.0-20230427062256-f255ae8d0053/go.mod h1:Xgvl68xt2qKPKrzh73UbeHjmT4VdSNJPKXpozkMPUN0=
-github.com/kyma-project/hydroform/function v0.0.0-20230511065356-7c87adf20e49 h1:BKTl2U/sGKrDgyr0ycxuat5k1dL57zXKGXHZXvseK34=
-github.com/kyma-project/hydroform/function v0.0.0-20230511065356-7c87adf20e49/go.mod h1:aNqrx5xoV2sOw5FZFShUzFLpc5VJku9YhokKC3PyQro=
+github.com/kyma-project/hydroform/function v0.0.0-20230607080739-8cda607c4599 h1:Td//yZwb1Ns64N5H59g9/2o/UtphRcsxPJmWET/mXS8=
+github.com/kyma-project/hydroform/function v0.0.0-20230607080739-8cda607c4599/go.mod h1:aNqrx5xoV2sOw5FZFShUzFLpc5VJku9YhokKC3PyQro=
 github.com/kyma-project/hydroform/provision v0.0.0-20230418133637-1ea26b368bb6 h1:k8TsRKhbYr+uQ1Glpbwii9kBqMPSFEZdMSov9KJjgiA=
 github.com/kyma-project/hydroform/provision v0.0.0-20230418133637-1ea26b368bb6/go.mod h1:eXIZaENQU/Y4sq20z3AgiFg6hSZUP4DmQ2JTMtFt+A8=
 github.com/kyma-project/istio/operator v0.0.0-20221129102055-d37c5c8e6add h1:ohTtnIlNXSQPHB/nMZvBXs+uBnTqQ6HRSgAvptyWzlc=
