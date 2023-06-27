@@ -148,7 +148,7 @@ func (cmd *command) run(ctx context.Context, l *zap.SugaredLogger, moduleName st
 	if cmd.opts.Wait {
 		waitStep := cmd.NewStep("Waiting for Kyma to become Ready")
 		if err = moduleInteractor.WaitUntilReady(ctx); err != nil {
-			waitStep.Failuref("Kyma did not get Ready")
+			waitStep.Failuref("kyma did not get ready: %s", err)
 			return err
 		}
 		waitStep.Successf("Kyma is Ready")

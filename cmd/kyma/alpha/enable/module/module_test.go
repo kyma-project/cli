@@ -19,13 +19,13 @@ func TestChannelValidation(t *testing.T) {
 		ControllerName:       "-",
 		Channel:              "fast",
 		CustomResourcePolicy: "-",
-	}, unstructured.Unstructured{}, false)
+	}, unstructured.Unstructured{}, false, false, false)
 	template2, _ := testutils.ModuleTemplateFactory(v1beta2.Module{
 		Name:                 "not-test",
 		ControllerName:       "-",
 		Channel:              "alpha",
 		CustomResourcePolicy: "-",
-	}, unstructured.Unstructured{}, false)
+	}, unstructured.Unstructured{}, false, false, false)
 	allTemplates := v1beta2.ModuleTemplateList{
 		TypeMeta: metav1.TypeMeta{},
 		ListMeta: metav1.ListMeta{},

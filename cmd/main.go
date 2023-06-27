@@ -11,7 +11,8 @@ func main() {
 	command := kyma.NewCmd(cli.NewOptions())
 
 	err := command.Execute()
+
 	if err != nil {
-		os.Exit(1)
+		os.Exit(cli.GetExitCode(err))
 	}
 }
