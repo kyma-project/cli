@@ -22,12 +22,12 @@ require (
 	github.com/docker/docker v20.10.24+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/fatih/color v1.14.1
-	github.com/go-git/go-git/v5 v5.5.2
+	github.com/go-git/go-git/v5 v5.7.0
 	github.com/go-logr/logr v1.2.4
 	github.com/go-logr/zapr v1.2.3
-	github.com/imdario/mergo v0.3.13
-	github.com/kyma-incubator/reconciler v0.0.0-20230427062256-f255ae8d0053
-	github.com/kyma-project/hydroform/function v0.0.0-20230511065356-7c87adf20e49
+	github.com/imdario/mergo v0.3.15
+	github.com/kyma-incubator/reconciler v0.0.0-20230622145557-b23e244ca299
+	github.com/kyma-project/hydroform/function v0.0.0-20230607080739-8cda607c4599
 	github.com/kyma-project/hydroform/provision v0.0.0-20230418133637-1ea26b368bb6
 	github.com/kyma-project/lifecycle-manager v0.0.0-20230515084114-0cd8e8e80748
 	github.com/mandelsoft/vfs v0.0.0-20220805210647-bf14a11bfe31
@@ -71,8 +71,8 @@ require (
 	github.com/Masterminds/squirrel v1.5.3 // indirect
 	github.com/Microsoft/go-winio v0.6.0 // indirect
 	github.com/Microsoft/hcsshim v0.9.7 // indirect
-	github.com/ProtonMail/go-crypto v0.0.0-20221026131551-cf6655e29de4 // indirect
-	github.com/acomagu/bufpipe v1.0.3 // indirect
+	github.com/ProtonMail/go-crypto v0.0.0-20230518184743-7afd39499903 // indirect
+	github.com/acomagu/bufpipe v1.0.4 // indirect
 	github.com/andybalholm/brotli v1.0.4 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
 	github.com/aws/aws-sdk-go-v2 v1.17.1 // indirect
@@ -129,8 +129,8 @@ require (
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-cmd/cmd v1.4.1 // indirect
 	github.com/go-errors/errors v1.4.2 // indirect
-	github.com/go-git/gcfg v1.5.0 // indirect
-	github.com/go-git/go-billy/v5 v5.4.0 // indirect
+	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
+	github.com/go-git/go-billy/v5 v5.4.1 // indirect
 	github.com/go-gorp/gorp/v3 v3.1.0 // indirect
 	github.com/go-openapi/jsonpointer v0.19.6 // indirect
 	github.com/go-openapi/jsonreference v0.20.2 // indirect
@@ -217,7 +217,7 @@ require (
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pierrec/lz4/v4 v4.1.14 // indirect
-	github.com/pjbgf/sha1cd v0.2.3 // indirect
+	github.com/pjbgf/sha1cd v0.3.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_golang v1.14.0 // indirect
 	github.com/prometheus/client_model v0.3.0 // indirect
@@ -229,7 +229,7 @@ require (
 	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
-	github.com/skeema/knownhosts v1.1.0 // indirect
+	github.com/skeema/knownhosts v1.1.1 // indirect
 	github.com/spf13/afero v1.9.2 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
@@ -254,14 +254,14 @@ require (
 	go.starlark.net v0.0.0-20230128213706-3f75dec8e403 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
-	golang.org/x/crypto v0.6.0 // indirect
+	golang.org/x/crypto v0.9.0 // indirect
 	golang.org/x/mod v0.9.0 // indirect
-	golang.org/x/net v0.8.0 // indirect
+	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/oauth2 v0.4.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.6.0 // indirect
-	golang.org/x/term v0.6.0 // indirect
-	golang.org/x/text v0.8.0 // indirect
+	golang.org/x/sys v0.8.0 // indirect
+	golang.org/x/term v0.8.0 // indirect
+	golang.org/x/text v0.9.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.7.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
