@@ -91,6 +91,13 @@ func AddResources(
 func generateResources(log *zap.SugaredLogger, version string, credLabel []byte, defs ...Layer) ([]ResourceDescriptor, error) {
 	res := []ResourceDescriptor{}
 	for _, d := range defs {
+		//DEBUG
+		fmt.Println("-- Layer: ----------------------------->")
+		fmt.Println("name:", d.name)
+		fmt.Println("resourceType:", d.resourceType)
+		fmt.Println("path:", d.path)
+		fmt.Println("excludedFiles:", d.excludedFiles)
+		fmt.Println("<---------------------------------------")
 		r := ResourceDescriptor{Input: &blob.Input{}}
 
 		r.Name = d.Name()
@@ -149,11 +156,46 @@ func (rd ResourceDescriptor) String() string {
 	return string(y)
 }
 
-// Inspect analyzes the contents of a module and updates the module definition provided as parameter with all information contained in the module (layers, metadata and resources).
-// Inspect supports:
+// Inspect updates the module definition provided as parameter with necessary data.
+// Inspect supports a single source file path.
+func Inspect(def *Definition, log *zap.SugaredLogger) error {
+	log.Debugf("Inspecting module contents at [%s]:", def.Source)
+
+	if err := def.validate(); err != nil {
+		return err
+	}
+
+	// generated raw manifest -> layer 1
+	def.Layers = append(def.Layers, Layer{
+		name:         rawManifestLayerName,
+		resourceType: typeYaml,
+		path:         def.SingleManifestPath,
+	})
+
+	// Add default CR if generating template
+	var cr []byte
+	if def.RegistryURL != "" {
+		if def.DefaultCRPath != "" {
+			var err error
+			cr, err = os.ReadFile(def.DefaultCRPath)
+			if err != nil {
+				return fmt.Errorf("could not read CR file %q: %w", def.DefaultCRPath, err)
+			}
+		}
+	}
+
+	def.DefaultCR = cr
+	//def.Repo = p.Repo
+
+	return nil
+}
+
+// InspectLegacy analyzes the contents of a module and updates the module definition provided as parameter with all information contained in the module (layers, metadata and resources).
+// InspectLegacy supports:
 // Kubebuilder projects: if a PROJECT file is found and correctly parsed, the project will automatically be generated and layered.
 // Custom module: If not a kubebuilder project, the user has complete freedom to layer the contents as desired via customDefs. Any contents of path not included in the customDefs will be added to the base layer
-func Inspect(def *Definition, customDefs []string, s step.Step, log *zap.SugaredLogger) error {
+// Deprecated.
+func InspectLegacy(def *Definition, customDefs []string, s step.Step, log *zap.SugaredLogger) error {
 	log.Debugf("Inspecting module contents at [%s]:", def.Source)
 	layers := []Layer{}
 

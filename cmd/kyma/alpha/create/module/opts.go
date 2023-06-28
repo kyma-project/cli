@@ -37,6 +37,7 @@ type Options struct {
 	RegistryCredSelector    string
 	SecurityScanConfig      string
 	PrivateKeyPath          string
+	ModuleConfigFile        string
 }
 
 const (
@@ -45,7 +46,11 @@ const (
 )
 
 var (
-	ErrChannelValidation = errors.New("channel validation failed")
+	ErrChannelValidation       = errors.New("channel validation failed")
+	ErrManifestPathValidation  = errors.New("YAML manifest path validation failed")
+	ErrDefaultCRPathValidation = errors.New("default CR path validation failed")
+	ErrNameValidation          = errors.New("name validation failed")
+	ErrVersionValidation       = errors.New("version validation failed")
 )
 
 // NewOptions creates options with default values
@@ -110,17 +115,23 @@ func (o *Options) ValidateTarget() error {
 }
 
 func (o *Options) Validate() error {
-	if err := o.ValidateVersion(); err != nil {
-		return err
+	if !o.WithModuleConfigFile() {
+		if err := o.ValidateVersion(); err != nil {
+			return err
+		}
+
+		if err := o.ValidateChannel(); err != nil {
+			return err
+		}
 	}
 
 	if err := o.ValidatePath(); err != nil {
 		return err
 	}
 
-	if err := o.ValidateChannel(); err != nil {
-		return err
-	}
-
 	return o.ValidateTarget()
+}
+
+func (o *Options) WithModuleConfigFile() bool {
+	return len(o.ModuleConfigFile) > 0
 }

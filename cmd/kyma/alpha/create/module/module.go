@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/mandelsoft/vfs/pkg/memoryfs"
@@ -17,6 +18,10 @@ import (
 
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/pkg/module"
+)
+
+const (
+	moduleConfigFileArg = "module-config-file"
 )
 
 type command struct {
@@ -32,12 +37,12 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "module --name MODULE_NAME --version MODULE_VERSION --registry MODULE_REGISTRY [flags]",
+		Use:   "module [--module-config-file MODULE_CONFIG_FILE | --name MODULE_NAME --version MODULE_VERSION] --registry MODULE_REGISTRY [flags]",
 		Short: "Creates a module bundled as an OCI image with the given OCI image name from the contents of the given path",
 		Long: `Use this command to create a Kyma module and bundle it as an OCI image.
 
 ### Detailed description
-
+[TODO: Update]
 Kyma modules are individual components that can be deployed into a Kyma runtime. Modules are built and distributed as OCI container images. 
 With this command, you can create such images out of a folder's contents.
 
@@ -64,6 +69,87 @@ Build module my-domain/modB in version 3.2.1 and push it to a local registry "un
 		RunE:    func(cobraCmd *cobra.Command, args []string) error { return c.Run(cobraCmd.Context()) },
 		Aliases: []string{"mod"},
 	}
+
+	cmd.Flags().StringVar(
+		&o.ModuleConfigFile, moduleConfigFileArg, "",
+		"Specifies the module configuration file",
+	)
+
+	if o.WithModuleConfigFile() {
+		return configureFlagsWithModuleConfigFile(cmd, o)
+	}
+
+	return configureLegacyFlags(cmd, o)
+}
+
+// configureFlagsWithModuleConfigFile configures the command for creating the module using module config file
+func configureFlagsWithModuleConfigFile(cmd *cobra.Command, o *Options) *cobra.Command {
+
+	cmd.Flags().StringVarP(&o.Path, "path", "p", "", "Path to the module's contents. (default current directory)")
+	cmd.Flags().StringVar(
+		&o.ModuleArchivePath, "module-archive-path", "./mod",
+		"Specifies the path where the module artifacts are locally cached to generate the image. If the path already has a module, use the \"--module-archive-version-overwrite\" flag to overwrite it.",
+	)
+	cmd.Flags().BoolVar(
+		&o.PersistentArchive, "module-archive-persistence", false,
+		"Uses the host filesystem instead of in-memory archiving to build the module.",
+	)
+	cmd.Flags().BoolVar(&o.ArchiveVersionOverwrite, "module-archive-version-overwrite", false, "Overwrites existing component's versions of the module. If set to false, the push is a No-Op.")
+
+	cmd.Flags().StringVar(
+		&o.RegistryURL, "registry", "",
+		"Context URL of the repository. The repository URL will be automatically added to the repository contexts in the module descriptor.",
+	)
+	cmd.Flags().StringVar(
+		&o.NameMappingMode, "name-mapping", "urlPath",
+		"Overrides the OCM Component Name Mapping, Use: \"urlPath\" or \"sha256-digest\".",
+	)
+	cmd.Flags().StringVar(
+		&o.RegistryCredSelector, "registry-cred-selector", "",
+		"Label selector to identify an externally created Secret of type \"kubernetes.io/dockerconfigjson\". "+
+			"It allows the image to be accessed in private image registries. "+
+			"It can be used when you push your module to a registry with authenticated access. "+
+			"For example, \"label1=value1,label2=value2\".",
+	)
+	cmd.Flags().StringVarP(
+		&o.Credentials, "credentials", "c", "",
+		"Basic authentication credentials for the given registry in the user:password format",
+	)
+	cmd.Flags().StringVar(
+		&o.DefaultCRPath, "default-cr", "",
+		"File containing the default custom resource of the module. If the module is a kubebuilder project, the default CR is automatically detected.",
+	)
+	cmd.Flags().StringVarP(
+		&o.TemplateOutput, "output", "o", "template.yaml",
+		"File to write the module template if the module is uploaded to a registry.",
+	)
+	cmd.Flags().StringVar(&o.Channel, "channel", "regular", "Channel to use for the module template.")
+	cmd.Flags().StringVar(&o.Target, "target", "control-plane", "Target to use when determining where to install the module. Use 'control-plane' or 'remote'.")
+	cmd.Flags().StringVar(
+		&o.SchemaVersion, "descriptor-version", compdescv2.SchemaVersion, fmt.Sprintf(
+			"Schema version to use for the generated OCM descriptor. One of %s",
+			strings.Join(compdesc.DefaultSchemes.Names(), ","),
+		),
+	)
+	cmd.Flags().StringVarP(
+		&o.Token, "token", "t", "",
+		"Authentication token for the given registry (alternative to basic authentication).",
+	)
+	cmd.Flags().BoolVar(&o.Insecure, "insecure", false, "Uses an insecure connection to access the registry.")
+	cmd.Flags().StringVar(
+		&o.SecurityScanConfig, "sec-scanners-config", "sec-scanners-config.yaml", "Path to the file holding "+
+			"the security scan configuration.",
+	)
+
+	cmd.Flags().StringVar(
+		&o.PrivateKeyPath, "key", "", "Specifies the path where a private key is used for signing.",
+	)
+
+	return cmd
+}
+
+// configureLegacyFlags configures the command for the legacy (deprecated) way of creating the module
+func configureLegacyFlags(cmd *cobra.Command, o *Options) *cobra.Command {
 
 	cmd.Flags().StringVar(&o.Version, "version", "", "Version of the module. This flag is mandatory.")
 	cmd.Flags().StringVarP(
@@ -160,27 +246,24 @@ func (cmd *command) Run(ctx context.Context) error {
 		return err
 	}
 
-	nameMappingMode, err := module.ParseNameMapping(cmd.opts.NameMappingMode)
+	modDef, err := cmd.moduleDefinitionFromOptions()
 	if err != nil {
 		return err
-	}
-
-	modDef := &module.Definition{
-		Name:            cmd.opts.Name,
-		Version:         cmd.opts.Version,
-		Source:          cmd.opts.Path,
-		RegistryURL:     cmd.opts.RegistryURL,
-		NameMappingMode: nameMappingMode,
-		DefaultCRPath:   cmd.opts.DefaultCRPath,
-		SchemaVersion:   cmd.opts.SchemaVersion,
 	}
 
 	cmd.NewStep("Parse and build module...")
 
 	// Create base resource defs with module root and its sub-layers
-	if err := module.Inspect(modDef, cmd.opts.ResourcePaths, cmd.CurrentStep, l); err != nil {
-		cmd.CurrentStep.Failure()
-		return err
+	if cmd.opts.WithModuleConfigFile() {
+		if err := module.Inspect(modDef, l); err != nil {
+			cmd.CurrentStep.Failure()
+			return err
+		}
+	} else {
+		if err := module.InspectLegacy(modDef, cmd.opts.ResourcePaths, cmd.CurrentStep, l); err != nil {
+			cmd.CurrentStep.Failure()
+			return err
+		}
 	}
 	cmd.CurrentStep.Successf("Module built")
 
@@ -198,12 +281,18 @@ func (cmd *command) Run(ctx context.Context) error {
 		l.Info("using in-memory archive")
 	}
 	// this builds the archive in memory, Alternatively one can store it on disk or in temp folder
-	archive, err := module.Build(archiveFS, cmd.opts.ModuleArchivePath, modDef)
+	archive, err := module.CreateArchive(archiveFS, cmd.opts.ModuleArchivePath, modDef)
 	if err != nil {
 		cmd.CurrentStep.Failure()
 		return err
 	}
 	cmd.CurrentStep.Successf("Module archive created")
+
+	//DEBUG
+	dump, _ := module.DumpDescriptor(archive.GetDescriptor())
+	fmt.Println("// 1 ///////////////////////////////////")
+	fmt.Println(dump)
+	fmt.Println("== 1 ===================================")
 
 	cmd.NewStep("Adding layers to archive...")
 
@@ -230,6 +319,7 @@ func (cmd *command) Run(ctx context.Context) error {
 			l.Warnf("Security scanning configuration was skipped: %s", err.Error())
 		}
 	}
+
 	/* -- PUSH & TEMPLATE -- */
 
 	if cmd.opts.RegistryURL != "" {
@@ -242,6 +332,7 @@ func (cmd *command) Run(ctx context.Context) error {
 		}
 
 		componentVersionAccess, err := remote.Push(archive, cmd.opts.ArchiveVersionOverwrite)
+
 		if err != nil {
 			cmd.CurrentStep.Failure()
 			return err
@@ -282,7 +373,16 @@ func (cmd *command) Run(ctx context.Context) error {
 
 func (cmd *command) validateDefaultCR(ctx context.Context, modDef *module.Definition, l *zap.SugaredLogger) error {
 	cmd.NewStep("Validating Default CR")
-	crValidator, err := module.NewDefaultCRValidator(modDef.DefaultCR, modDef.Source)
+	var crValidator *module.DefaultCRValidator
+	var err error
+
+	if cmd.opts.WithModuleConfigFile() {
+		//TODO: Implement
+		cmd.CurrentStep.Successf("Default CR validation skipped (not implemented yet)")
+		return nil
+	} else {
+		crValidator, err = module.NewDefaultCRValidator(modDef.DefaultCR, modDef.Source)
+	}
 	if err != nil {
 		cmd.CurrentStep.Failure()
 		return err
@@ -323,6 +423,84 @@ func (cmd *command) getRemote(nameMapping module.NameMapping) (*module.Remote, e
 				return nil, errors.New("command stopped by user")
 			}
 		}
+	}
+
+	return res, nil
+}
+
+func (cmd *command) moduleDefinitionFromOptions() (*module.Definition, error) {
+
+	var res *module.Definition
+	nameMappingMode, err := module.ParseNameMapping(cmd.opts.NameMappingMode)
+	if err != nil {
+		return nil, err
+	}
+
+	if cmd.opts.WithModuleConfigFile() {
+		//new approach, config-file  based
+
+		moduleConfig, err := ParseConfig(cmd.opts.ModuleConfigFile)
+		if err != nil {
+			return nil, err
+		}
+
+		err = moduleConfig.Validate()
+		if err != nil {
+			return nil, err
+		}
+
+		defaultCRPath, err := resolveFilePath(moduleConfig.DefaultCRPath, cmd.opts.Path)
+		if err != nil {
+			return nil, fmt.Errorf("%w,  %w", ErrDefaultCRPathValidation, err)
+		}
+
+		moduleManifestPath, err := resolveFilePath(moduleConfig.ManifestPath, cmd.opts.Path)
+		if err != nil {
+			return nil, fmt.Errorf("%w,  %w", ErrManifestPathValidation, err)
+		}
+
+		res = &module.Definition{
+			Name:               moduleConfig.Name,
+			Version:            moduleConfig.Version,
+			Source:             cmd.opts.Path,
+			RegistryURL:        cmd.opts.RegistryURL,
+			NameMappingMode:    nameMappingMode,
+			DefaultCRPath:      defaultCRPath,
+			SingleManifestPath: moduleManifestPath,
+			SchemaVersion:      cmd.opts.SchemaVersion,
+		}
+	} else {
+		//legacy approach, flag-based
+		res = &module.Definition{
+			Name:            cmd.opts.Name,
+			Version:         cmd.opts.Version,
+			Source:          cmd.opts.Path,
+			RegistryURL:     cmd.opts.RegistryURL,
+			NameMappingMode: nameMappingMode,
+			DefaultCRPath:   cmd.opts.DefaultCRPath,
+			SchemaVersion:   cmd.opts.SchemaVersion,
+		}
+	}
+
+	return res, nil
+}
+
+// resolvePath resolves given path if it's absolute or uses the provided prefix to make it absolute.
+// Returns an error if the path does not exist or is a directory.
+func resolveFilePath(given, absolutePrefix string) (string, error) {
+
+	res := given
+
+	if !filepath.IsAbs(res) {
+		res = filepath.Join(absolutePrefix, given)
+	}
+
+	fi, err := os.Stat(res)
+	if err != nil {
+		return "", err
+	}
+	if fi.IsDir() {
+		return "", fmt.Errorf("%q is directory", res)
 	}
 
 	return res, nil
