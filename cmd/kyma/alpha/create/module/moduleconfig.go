@@ -10,7 +10,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type ModuleConfig struct {
+type Config struct {
 	Name          string            `yaml:"name"`         //required, the name of the Module
 	Version       string            `yaml:"version"`      //required, the version of the Module
 	Channel       string            `yaml:"channel"`      //required, channel that should be used in the ModuleTemplate
@@ -30,14 +30,14 @@ const (
 	moduleNameMaxLen  = 255
 )
 
-func ParseConfig(filePath string) (*ModuleConfig, error) {
+func ParseConfig(filePath string) (*Config, error) {
 	data, err := os.ReadFile(filePath)
 
 	if err != nil {
 		return nil, fmt.Errorf("error reading module config file %q: %w", filePath, err)
 	}
 
-	res := ModuleConfig{}
+	res := Config{}
 	err = yaml.Unmarshal(data, &res)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing module config file %q: %w", filePath, err)
@@ -46,7 +46,7 @@ func ParseConfig(filePath string) (*ModuleConfig, error) {
 	return &res, nil
 }
 
-func (c *ModuleConfig) Validate() error {
+func (c *Config) Validate() error {
 	return newConfigValidator(c).
 		validateName().
 		validateVersion().
@@ -57,11 +57,11 @@ func (c *ModuleConfig) Validate() error {
 type configValidationFunc func() error
 
 type configValidator struct {
-	config     *ModuleConfig
+	config     *Config
 	validators []configValidationFunc
 }
 
-func newConfigValidator(cnf *ModuleConfig) *configValidator {
+func newConfigValidator(cnf *Config) *configValidator {
 	return &configValidator{
 		config:     cnf,
 		validators: []configValidationFunc{},

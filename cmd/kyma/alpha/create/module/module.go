@@ -383,6 +383,7 @@ func (cmd *command) validateDefaultCR(ctx context.Context, modDef *module.Defini
 	} else {
 		crValidator, err = module.NewDefaultCRValidator(modDef.DefaultCR, modDef.Source)
 	}
+
 	if err != nil {
 		cmd.CurrentStep.Failure()
 		return err

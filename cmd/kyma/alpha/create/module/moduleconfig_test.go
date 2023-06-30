@@ -34,7 +34,7 @@ func TestValidateVersion(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(
 			tt.tCase, func(t *testing.T) {
-				mc := ModuleConfig{
+				mc := Config{
 					Version: tt.version,
 				}
 
@@ -93,7 +93,7 @@ func TestValidateName(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(
 			tt.tCase, func(t *testing.T) {
-				mc := ModuleConfig{
+				mc := Config{
 					Name: tt.name,
 				}
 
@@ -147,7 +147,7 @@ func TestValidateChannel(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(
 			tt.tCase, func(t *testing.T) {
-				mc := ModuleConfig{
+				mc := Config{
 					Channel: tt.channel,
 				}
 
