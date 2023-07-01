@@ -11,12 +11,11 @@ var ErrorCodeMap = map[error]int{
 }
 
 func GetExitCode(err error) int {
-	switch err.(type) {
+	switch err := err.(type) {
 	default:
 		return handleSingleError(err)
 	case retry.Error:
-		errorList := err.(retry.Error)
-		return handleListOfErrors(errorList)
+		return handleListOfErrors(err)
 	}
 }
 
