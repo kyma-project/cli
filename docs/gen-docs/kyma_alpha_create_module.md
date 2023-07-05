@@ -2,43 +2,82 @@
 title: kyma alpha create module
 ---
 
-Creates a module bundled as an OCI image with the given OCI image name from the contents of the given path
+Creates a module bundled as an OCI artifact
 
 ## Synopsis
 
-Use this command to create a Kyma module and bundle it as an OCI image.
+Use this command to create a Kyma module, bundle it as an OCI artifact and optionally push it to the OCI registry.
 
 ### Detailed description
 
-Kyma modules are individual components that can be deployed into a Kyma runtime. Modules are built and distributed as OCI container images. 
-With this command, you can create such images out of a folder's contents.
+This command lets you to create a Kyma module as an OCI artifact and optionally push it to the OCI registry of you choice.
+For more information about what is a Kyma module see the [documentation](https://github.com/kyma-project/lifecycle-manager)
 
-This command creates a component descriptor in the descriptor path (./mod as a default) and packages all the contents on the provided path as an OCI image.
-Kubebuilder projects are supported. If the path contains a kubebuilder project, it will be built and pre-defined layers will be created based on its known contents.
+This command creates a module from an existing directory containing module's source files.
+The directory MUST be a valid git project that is publicly available.
+The command supports two directory layouts for the module:
+- Simple: Just a directory with a valid git configuration. All the module's sources are defined in this directory.
+- Kubebuild projects (DEPRECATED): A directory with a valid Kubebuilder project. This is a convenience mode for the users who are creating the module operator(s) using the Kubebuilder toolset.
+Both modes require providing an explicit path to the module's project directory using "--path" flag or invoking the command from within the that directory.
 
-Alternatively, a custom (non kubebuilder) module can be created by providing a path that does not contain a kubebuilder project. In that case all the contents of the path will be bundled as a single layer.
+### Simple mode configuration
 
-Optionally, you can manually add additional layers with contents in other paths (see [resource flag](#flags) for more information).
+You configure the simple mode by providing the "--module-config-file" flag with a config file path.
+The module config file is a YAML file used to configure the following attributes for the module:
 
-Finally, if you provided a registry to which to push the artifact, the created module is validated and pushed. During the validation the default CR defined in the optional "default.yaml" file is validated against CustomResourceDefinition.
-Alternatively, you can trigger an on-demand default CR validation with "--validateCR=true", in case you don't push to the registry.
+- name:         a string, required, the name of the Module
+- version:      a string, required, the version of the Module
+- channel:      a string, required, channel that should be used in the ModuleTemplate
+- manifest:     a string, required, reference to the manifests, must be a relative file name.
+- defaultCR:    a string, optional, reference to a YAML file containing the default CR for the module, must be a relative file name.
+- resourceName: a string, optional, default={NAME}-{CHANNEL}, the name for the ModuleTemplate that will be created
+- security:     a string, optional, name of the security scanners config file
+- internal:     a bool, optional, default=false, determines whether the ModuleTemplate should have the internal flag or not
+- beta:         a bool, optional, default=false, determines whether the ModuleTemplate should have the beta flag or not
+- labels:       a map with string keys and values, optional, additional labels for the generated ModuleTemplate
+- annotations:  a map with string keys and values, optional, additional annotations for the generated ModuleTemplate
 
-To push the artifact into some registries, for example, the central docker.io registry, you have to change the OCM Component Name Mapping with the following flag: "--name-mapping=sha256-digest". This is necessary because the registry does not accept artifact URLs with more than two path segments, and such URLs are generated with the default name mapping: "urlPath". In the case of the "sha256-digest" mapping, the artifact URL contains just a sha256 digest of the full Component Name and fits the path length restrictions.
+The "manifest" and "defaultCR" paths are resolved against the module's directory, as configured with "--path" flag.
+The "manifest" file contains all the module's resources in a single, multi-document YAML file. These resources will be created in the Kyma cluster when the module is activated.
+The "defaultCR" file contain a default Custom Resource for the module that will be installed along with the module.
+It is additionally schema-validated against the Custom Resource Definition for it's Group/Kind that must exists is the set of resources in the "manifest" file.
+
+### Kubebuilder mode configuration
+The Kubebuilder mode is DEPRECATED.
+The Kubebuilder mode is configured automatically if the "--module-config-file" flag is not provided.
+
+In this mode you have to explicitly provide the module name and version using "--name" and "--version" flags, respectively.
+Some defaults, like the module manifest file location and the default CR file location are then resolved automatically, but you can override these with available flags.
+
+### Modules as OCI artifacts
+Modules are built and distributed as OCI artifacts. 
+This command creates a component descriptor in the configured descriptor path (./mod as a default) and packages all the contents on the provided path as an OCI artifact.
+The internal structure of the artifact conforms to the [Open Component Model](https://ocm.software/) scheme version 3.
+
+If you configured the "--registry" flag, the created module is validated and pushed to the configured registry.
+During the validation the default CR resource, if defined, is validated against a corresponding CustomResourceDefinition.
+You can also trigger an on-demand default CR validation with "--validateCR=true", in case you don't push to the registry.
+
+#### Name Mapping Modes
+To push the artifact into some registries, for example, the central docker.io registry, you have to change the OCM Component Name Mapping with the following flag: "--name-mapping=sha256-digest". This is necessary because the registry does not accept artifact URLs with more than two path segments, and such URLs are generated with the default name mapping: "urlPath". In the case of the "sha256-digest" mapping, the artifact URL contains just a sha256 digest of the full Component Name and fits the path length restrictions. The downside of the "sha256-mapping" is that the module name is no longer visible in the artifact URL, as it contains the sha256 digest of the defined name.
 
 
 
 ```bash
-kyma alpha create module --name MODULE_NAME --version MODULE_VERSION --registry MODULE_REGISTRY [flags]
+kyma alpha create module [--module-config-file MODULE_CONFIG_FILE | --name MODULE_NAME --version MODULE_VERSION] [--path MODULE_DIRECTORY] [--registry MODULE_REGISTRY] [flags]
 ```
 
 ## Examples
 
 ```bash
 Examples:
-Build module my-domain/modA in version 1.2.3 and push it to a remote registry
-		kyma alpha create module -n my-domain/modA --version 1.2.3 -p /path/to/module --registry https://dockerhub.com
-Build module my-domain/modB in version 3.2.1 and push it to a local registry "unsigned" subfolder without tls
-		kyma alpha create module -n my-domain/modB --version 3.2.1 -p /path/to/module --registry http://localhost:5001/unsigned --insecure
+Build a simple module and push it to a remote registry
+		kyma alpha create module --module-config-file=/path/to/module-config-file -path /path/to/module --registry http://localhost:5001/unsigned --insecure
+Build a Kubebuilder module my-domain/modB in version 1.2.3 and push it to a remote registry
+		kyma alpha create module --name my-domain/modB --version 1.2.3 --path /path/to/module --registry https://dockerhub.com
+Build a Kubebuilder module my-domain/modC in version 3.2.1 and push it to a local registry "unsigned" subfolder without tls
+		kyma alpha create module --name my-domain/modC --version 3.2.1 --path /path/to/module --registry http://localhost:5001/unsigned --insecure
+
 
 ```
 
@@ -54,6 +93,7 @@ Build module my-domain/modB in version 3.2.1 and push it to a local registry "un
       --module-archive-path string         Specifies the path where the module artifacts are locally cached to generate the image. If the path already has a module, use the "--module-archive-version-overwrite" flag to overwrite it. (default "./mod")
       --module-archive-persistence         Uses the host filesystem instead of in-memory archiving to build the module.
       --module-archive-version-overwrite   Overwrites existing component's versions of the module. If set to false, the push is a No-Op.
+      --module-config-file string          Specifies the module configuration file
   -n, --name string                        Override the module name of the kubebuilder project. If the module is not a kubebuilder project, this flag is mandatory.
       --name-mapping string                Overrides the OCM Component Name Mapping, Use: "urlPath" or "sha256-digest". (default "urlPath")
   -o, --output string                      File to write the module template if the module is uploaded to a registry. (default "template.yaml")
@@ -62,7 +102,6 @@ Build module my-domain/modB in version 3.2.1 and push it to a local registry "un
       --registry-cred-selector string      Label selector to identify an externally created Secret of type "kubernetes.io/dockerconfigjson". It allows the image to be accessed in private image registries. It can be used when you push your module to a registry with authenticated access. For example, "label1=value1,label2=value2".
   -r, --resource stringArray               Add an extra resource in a new layer in the <NAME:TYPE@PATH> format. If you provide only a path, the name defaults to the last path element, and the type is set to 'helm-chart'.
       --sec-scanners-config string         Path to the file holding the security scan configuration. (default "sec-scanners-config.yaml")
-      --target string                      Target to use when determining where to install the module. Use 'control-plane' or 'remote'. (default "control-plane")
   -t, --token string                       Authentication token for the given registry (alternative to basic authentication).
       --version string                     Version of the module. This flag is mandatory.
 ```

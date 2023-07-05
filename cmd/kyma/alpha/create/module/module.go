@@ -17,6 +17,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/nice"
 	"github.com/kyma-project/cli/pkg/module"
 )
 
@@ -50,7 +51,7 @@ This command creates a module from an existing directory containing module's sou
 The directory MUST be a valid git project that is publicly available.
 The command supports two directory layouts for the module:
 - Simple: Just a directory with a valid git configuration. All the module's sources are defined in this directory.
-- Kubebuild projects: A directory with a valid Kubebuilder project. This is a convenience mode for the users who are creating the module operator(s) using the Kubebuilder toolset.
+- Kubebuild projects (DEPRECATED): A directory with a valid Kubebuilder project. This is a convenience mode for the users who are creating the module operator(s) using the Kubebuilder toolset.
 Both modes require providing an explicit path to the module's project directory using "--path" flag or invoking the command from within the that directory.
 
 ### Simple mode configuration
@@ -58,17 +59,17 @@ Both modes require providing an explicit path to the module's project directory 
 You configure the simple mode by providing the "--module-config-file" flag with a config file path.
 The module config file is a YAML file used to configure the following attributes for the module:
 
-- name          //string, required, the name of the Module
-- version       //string, required, the version of the Module
-- channel       //string, required, channel that should be used in the ModuleTemplate
-- manifest      //string, required, reference to the manifests, must be a relative file name.
-- defaultCR     //string, optional, reference to a YAML file containing the default CR for the module, must be a relative file name.
-- resourceName  //string, optional, default={NAME}-{CHANNEL}, the name for the ModuleTemplate that will be created
-- security      //string, optional, name of the security scanners config file
-- internal      //bool, optional, default=false, determines whether the ModuleTemplate should have the internal flag or not
-- beta          //bool, optional, default=false, determines whether the ModuleTemplate should have the beta flag or not
-- labels        //a map with string keys and values, optional, additional labels for the generated ModuleTemplate
-- annotations   //a map with string keys and values, optional, additional annotations for the generated ModuleTemplate
+- name:         a string, required, the name of the Module
+- version:      a string, required, the version of the Module
+- channel:      a string, required, channel that should be used in the ModuleTemplate
+- manifest:     a string, required, reference to the manifests, must be a relative file name.
+- defaultCR:    a string, optional, reference to a YAML file containing the default CR for the module, must be a relative file name.
+- resourceName: a string, optional, default={NAME}-{CHANNEL}, the name for the ModuleTemplate that will be created
+- security:     a string, optional, name of the security scanners config file
+- internal:     a bool, optional, default=false, determines whether the ModuleTemplate should have the internal flag or not
+- beta:         a bool, optional, default=false, determines whether the ModuleTemplate should have the beta flag or not
+- labels:       a map with string keys and values, optional, additional labels for the generated ModuleTemplate
+- annotations:  a map with string keys and values, optional, additional annotations for the generated ModuleTemplate
 
 The "manifest" and "defaultCR" paths are resolved against the module's directory, as configured with "--path" flag.
 The "manifest" file contains all the module's resources in a single, multi-document YAML file. These resources will be created in the Kyma cluster when the module is activated.
@@ -76,6 +77,7 @@ The "defaultCR" file contain a default Custom Resource for the module that will 
 It is additionally schema-validated against the Custom Resource Definition for it's Group/Kind that must exists is the set of resources in the "manifest" file.
 
 ### Kubebuilder mode configuration
+The Kubebuilder mode is DEPRECATED.
 The Kubebuilder mode is configured automatically if the "--module-config-file" flag is not provided.
 
 In this mode you have to explicitly provide the module name and version using "--name" and "--version" flags, respectively.
@@ -444,6 +446,9 @@ func (cmd *command) moduleDefinitionFromOptions() (*module.Definition, error) {
 			SchemaVersion:      cmd.opts.SchemaVersion,
 		}
 	} else {
+		np := nice.Nice{}
+		np.PrintImportant("WARNING: The Kubebuilder support in this command is DEPRECATED. Use the simple mode by providing the \"--module-config-file\" flag instead.")
+
 		//legacy approach, flag-based
 		res = &module.Definition{
 			Name:            cmd.opts.Name,
