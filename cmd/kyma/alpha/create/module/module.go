@@ -37,14 +37,15 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "module [--module-config-file MODULE_CONFIG_FILE | --name MODULE_NAME --version MODULE_VERSION] --registry MODULE_REGISTRY [flags]",
-		Short: "Creates a module bundled as an OCI image with the given OCI image name from the contents of the given path",
-		Long: `Use this command to create a Kyma module and bundle it as an OCI image.
+		Use:   "module [--module-config-file MODULE_CONFIG_FILE | --name MODULE_NAME --version MODULE_VERSION] [--registry MODULE_REGISTRY] [flags]",
+		Short: "Creates a module bundled as an OCI artifact",
+		Long: `Use this command to create a Kyma module, bundle it as an OCI artifact and optionally push it to the OCI registry.
 
 ### Detailed description
-[TODO: Update]
+
 Kyma modules are individual components that can be deployed into a Kyma runtime. Modules are built and distributed as OCI container images. 
 With this command, you can create such images out of a folder's contents.
+
 
 This command creates a component descriptor in the descriptor path (./mod as a default) and packages all the contents on the provided path as an OCI image.
 Kubebuilder projects are supported. If the path contains a kubebuilder project, it will be built and pre-defined layers will be created based on its known contents.
@@ -75,31 +76,25 @@ Build module my-domain/modB in version 3.2.1 and push it to a local registry "un
 		"Specifies the module configuration file",
 	)
 
-	if o.WithModuleConfigFile() {
-		return configureFlagsWithModuleConfigFile(cmd, o)
-	}
-
-	return configureLegacyFlags(cmd, o)
-}
-
-// configureFlagsWithModuleConfigFile configures the command for creating the module using module config file
-func configureFlagsWithModuleConfigFile(cmd *cobra.Command, o *Options) *cobra.Command {
-
-	cmd.Flags().StringVarP(&o.Path, "path", "p", "", "Path to the module's contents. (default current directory)")
 	cmd.Flags().StringVar(
 		&o.ModuleArchivePath, "module-archive-path", "./mod",
 		"Specifies the path where the module artifacts are locally cached to generate the image. If the path already has a module, use the \"--module-archive-version-overwrite\" flag to overwrite it.",
 	)
+
 	cmd.Flags().BoolVar(
 		&o.PersistentArchive, "module-archive-persistence", false,
 		"Uses the host filesystem instead of in-memory archiving to build the module.",
 	)
+
 	cmd.Flags().BoolVar(&o.ArchiveVersionOverwrite, "module-archive-version-overwrite", false, "Overwrites existing component's versions of the module. If set to false, the push is a No-Op.")
+
+	cmd.Flags().StringVarP(&o.Path, "path", "p", "", "Path to the module's contents. (default current directory)")
 
 	cmd.Flags().StringVar(
 		&o.RegistryURL, "registry", "",
 		"Context URL of the repository. The repository URL will be automatically added to the repository contexts in the module descriptor.",
 	)
+
 	cmd.Flags().StringVar(
 		&o.NameMappingMode, "name-mapping", "urlPath",
 		"Overrides the OCM Component Name Mapping, Use: \"urlPath\" or \"sha256-digest\".",
@@ -115,16 +110,12 @@ func configureFlagsWithModuleConfigFile(cmd *cobra.Command, o *Options) *cobra.C
 		&o.Credentials, "credentials", "c", "",
 		"Basic authentication credentials for the given registry in the user:password format",
 	)
-	cmd.Flags().StringVar(
-		&o.DefaultCRPath, "default-cr", "",
-		"File containing the default custom resource of the module. If the module is a kubebuilder project, the default CR is automatically detected.",
-	)
+
 	cmd.Flags().StringVarP(
 		&o.TemplateOutput, "output", "o", "template.yaml",
 		"File to write the module template if the module is uploaded to a registry.",
 	)
-	cmd.Flags().StringVar(&o.Channel, "channel", "regular", "Channel to use for the module template.")
-	cmd.Flags().StringVar(&o.Target, "target", "control-plane", "Target to use when determining where to install the module. Use 'control-plane' or 'remote'.")
+
 	cmd.Flags().StringVar(
 		&o.SchemaVersion, "descriptor-version", compdescv2.SchemaVersion, fmt.Sprintf(
 			"Schema version to use for the generated OCM descriptor. One of %s",
@@ -136,6 +127,7 @@ func configureFlagsWithModuleConfigFile(cmd *cobra.Command, o *Options) *cobra.C
 		"Authentication token for the given registry (alternative to basic authentication).",
 	)
 	cmd.Flags().BoolVar(&o.Insecure, "insecure", false, "Uses an insecure connection to access the registry.")
+
 	cmd.Flags().StringVar(
 		&o.SecurityScanConfig, "sec-scanners-config", "sec-scanners-config.yaml", "Path to the file holding "+
 			"the security scan configuration.",
@@ -144,6 +136,10 @@ func configureFlagsWithModuleConfigFile(cmd *cobra.Command, o *Options) *cobra.C
 	cmd.Flags().StringVar(
 		&o.PrivateKeyPath, "key", "", "Specifies the path where a private key is used for signing.",
 	)
+
+	if !o.WithModuleConfigFile() {
+		configureLegacyFlags(cmd, o)
+	}
 
 	return cmd
 }
@@ -152,74 +148,23 @@ func configureFlagsWithModuleConfigFile(cmd *cobra.Command, o *Options) *cobra.C
 func configureLegacyFlags(cmd *cobra.Command, o *Options) *cobra.Command {
 
 	cmd.Flags().StringVar(&o.Version, "version", "", "Version of the module. This flag is mandatory.")
+
 	cmd.Flags().StringVarP(
 		&o.Name, "name", "n", "",
 		"Override the module name of the kubebuilder project. If the module is not a kubebuilder project, this flag is mandatory.",
 	)
 
-	cmd.Flags().StringVar(
-		&o.ModuleArchivePath, "module-archive-path", "./mod",
-		"Specifies the path where the module artifacts are locally cached to generate the image. If the path already has a module, use the \"--module-archive-version-overwrite\" flag to overwrite it.",
-	)
-	cmd.Flags().BoolVar(
-		&o.PersistentArchive, "module-archive-persistence", false,
-		"Uses the host filesystem instead of in-memory archiving to build the module.",
-	)
-	cmd.Flags().BoolVar(&o.ArchiveVersionOverwrite, "module-archive-version-overwrite", false, "Overwrites existing component's versions of the module. If set to false, the push is a No-Op.")
-
-	cmd.Flags().StringVarP(&o.Path, "path", "p", "", "Path to the module's contents. (default current directory)")
 	cmd.Flags().StringArrayVarP(
 		&o.ResourcePaths, "resource", "r", []string{},
 		"Add an extra resource in a new layer in the <NAME:TYPE@PATH> format. If you provide only a path, the name defaults to the last path element, and the type is set to 'helm-chart'.",
 	)
-	cmd.Flags().StringVar(
-		&o.RegistryURL, "registry", "",
-		"Context URL of the repository. The repository URL will be automatically added to the repository contexts in the module descriptor.",
-	)
-	cmd.Flags().StringVar(
-		&o.NameMappingMode, "name-mapping", "urlPath",
-		"Overrides the OCM Component Name Mapping, Use: \"urlPath\" or \"sha256-digest\".",
-	)
-	cmd.Flags().StringVar(
-		&o.RegistryCredSelector, "registry-cred-selector", "",
-		"Label selector to identify an externally created Secret of type \"kubernetes.io/dockerconfigjson\". "+
-			"It allows the image to be accessed in private image registries. "+
-			"It can be used when you push your module to a registry with authenticated access. "+
-			"For example, \"label1=value1,label2=value2\".",
-	)
-	cmd.Flags().StringVarP(
-		&o.Credentials, "credentials", "c", "",
-		"Basic authentication credentials for the given registry in the user:password format",
-	)
+
 	cmd.Flags().StringVar(
 		&o.DefaultCRPath, "default-cr", "",
 		"File containing the default custom resource of the module. If the module is a kubebuilder project, the default CR is automatically detected.",
 	)
-	cmd.Flags().StringVarP(
-		&o.TemplateOutput, "output", "o", "template.yaml",
-		"File to write the module template if the module is uploaded to a registry.",
-	)
-	cmd.Flags().StringVar(&o.Channel, "channel", "regular", "Channel to use for the module template.")
-	cmd.Flags().StringVar(&o.Target, "target", "control-plane", "Target to use when determining where to install the module. Use 'control-plane' or 'remote'.")
-	cmd.Flags().StringVar(
-		&o.SchemaVersion, "descriptor-version", compdescv2.SchemaVersion, fmt.Sprintf(
-			"Schema version to use for the generated OCM descriptor. One of %s",
-			strings.Join(compdesc.DefaultSchemes.Names(), ","),
-		),
-	)
-	cmd.Flags().StringVarP(
-		&o.Token, "token", "t", "",
-		"Authentication token for the given registry (alternative to basic authentication).",
-	)
-	cmd.Flags().BoolVar(&o.Insecure, "insecure", false, "Uses an insecure connection to access the registry.")
-	cmd.Flags().StringVar(
-		&o.SecurityScanConfig, "sec-scanners-config", "sec-scanners-config.yaml", "Path to the file holding "+
-			"the security scan configuration.",
-	)
 
-	cmd.Flags().StringVar(
-		&o.PrivateKeyPath, "key", "", "Specifies the path where a private key is used for signing.",
-	)
+	cmd.Flags().StringVar(&o.Channel, "channel", "regular", "Channel to use for the module template.")
 
 	return cmd
 }
@@ -288,12 +233,6 @@ func (cmd *command) Run(ctx context.Context) error {
 	}
 	cmd.CurrentStep.Successf("Module archive created")
 
-	//DEBUG
-	dump, _ := module.DumpDescriptor(archive.GetDescriptor())
-	fmt.Println("// 1 ///////////////////////////////////")
-	fmt.Println(dump)
-	fmt.Println("== 1 ===================================")
-
 	cmd.NewStep("Adding layers to archive...")
 
 	if err := module.AddResources(archive, modDef, l, osFS, cmd.opts.RegistryCredSelector); err != nil {
@@ -355,7 +294,7 @@ func (cmd *command) Run(ctx context.Context) error {
 		}
 
 		cmd.NewStep("Generating module template")
-		t, err := module.Template(componentVersionAccess, cmd.opts.Channel, cmd.opts.Target, modDef.DefaultCR)
+		t, err := module.Template(componentVersionAccess, cmd.opts.Channel, modDef.DefaultCR)
 		if err != nil {
 			cmd.CurrentStep.Failure()
 			return err
@@ -373,20 +312,17 @@ func (cmd *command) Run(ctx context.Context) error {
 
 func (cmd *command) validateDefaultCR(ctx context.Context, modDef *module.Definition, l *zap.SugaredLogger) error {
 	cmd.NewStep("Validating Default CR")
-	var crValidator *module.DefaultCRValidator
-	var err error
 
-	if cmd.opts.WithModuleConfigFile() {
-		//TODO: Implement
-		cmd.CurrentStep.Successf("Default CR validation skipped (not implemented yet)")
-		return nil
-	} else {
-		crValidator, err = module.NewDefaultCRValidator(modDef.DefaultCR, modDef.Source)
+	type validator interface {
+		Run(ctx context.Context, log *zap.SugaredLogger) error
 	}
 
-	if err != nil {
-		cmd.CurrentStep.Failure()
-		return err
+	var crValidator validator
+
+	if cmd.opts.WithModuleConfigFile() {
+		crValidator = module.NewSingleManifestFileCRValidator(modDef.DefaultCR, modDef.SingleManifestPath)
+	} else {
+		crValidator = module.NewDefaultCRValidator(modDef.DefaultCR, modDef.Source)
 	}
 
 	if err := crValidator.Run(ctx, l); err != nil {

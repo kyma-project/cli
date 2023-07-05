@@ -9,14 +9,11 @@ import (
 	"github.com/mandelsoft/vfs/pkg/vfs"
 	"github.com/open-component-model/ocm/pkg/common/accessobj"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/attrs/compatattr"
-	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	ocm "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	v1 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/meta/v1"
 	compdescv2 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/versions/v2"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/cpi"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/comparch"
-
-	"gopkg.in/yaml.v3"
 )
 
 // CreateArchive creates a component archive with the given configuration.
@@ -27,14 +24,6 @@ func CreateArchive(fs vfs.FileSystem, path string, def *Definition) (*comparch.C
 		return nil, err
 	}
 	return createArchive(fs, path, def)
-}
-
-func DumpDescriptor(desc *compdesc.ComponentDescriptor) (string, error) {
-	output, err := yaml.Marshal(desc)
-	if err != nil {
-		return "", err
-	}
-	return string(output), err
 }
 
 func createArchive(fs vfs.FileSystem, path string, def *Definition) (*comparch.ComponentArchive, error) {

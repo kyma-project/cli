@@ -26,24 +26,18 @@ type DefaultCRValidator struct {
 	crData       []byte
 }
 
-func NewDefaultCRValidator(cr []byte, modulePath string) (*DefaultCRValidator, error) {
+func NewDefaultCRValidator(cr []byte, modulePath string) *DefaultCRValidator {
 	crdSearchDir := filepath.Join(modulePath, kubebuilder.OutputPath)
 	return &DefaultCRValidator{
 		crdSearchDir: crdSearchDir,
 		crData:       cr,
-	}, nil
+	}
 }
 
 func (v *DefaultCRValidator) Run(ctx context.Context, log *zap.SugaredLogger) error {
 	// skip validation if no CR detected
 	if len(v.crData) == 0 {
-		return nil
-	}
-
-	// setup test env
-	runner, err := setup.EnvTest()
-	if err != nil {
-		return err
+		return ErrEmptyCR
 	}
 
 	crMap, err := parseYamlToMap(v.crData)
@@ -56,12 +50,23 @@ func (v *DefaultCRValidator) Run(ctx context.Context, log *zap.SugaredLogger) er
 		return err
 	}
 
+	// find the file containing the CRD for given group and kind
 	crdFound, crdFilePath, err := findCRDFileFor(group, kind, v.crdSearchDir)
 	if err != nil {
 		return fmt.Errorf("error finding CRD file in the %q directory: %w", v.crdSearchDir, err)
 	}
 	if !crdFound {
 		return fmt.Errorf("can't find the CRD for (group: %q, kind %q)", group, kind)
+	}
+
+	return runTestEnv(ctx, log, crdFilePath, crMap)
+}
+
+func runTestEnv(ctx context.Context, log *zap.SugaredLogger, crdFilePath string, crMap map[string]interface{}) error {
+	// setup test env
+	runner, err := setup.EnvTest()
+	if err != nil {
+		return err
 	}
 
 	err = ensureDefaultNamespace(crMap)
@@ -228,10 +233,19 @@ func findCRDFileFor(group, kind, dirPath string) (bool, string, error) {
 
 // isCRDFileFor checks if the given file is a CRD for given group and kind.
 func isCRDFileFor(group, kind, filePath string) (bool, error) {
+	res, err := getCRDFromFile(group, kind, filePath)
+	if err != nil {
+		return false, err
+	}
+	return res != nil, nil
+}
+
+// getCRDFromFile tries to find a CRD for given group and kind in the given multi-document YAML file. Returns a generic map representation of the CRD
+func getCRDFromFile(group, kind, filePath string) ([]byte, error) {
 	{
 		f, err := os.Open(filePath)
 		if err != nil {
-			return false, fmt.Errorf("error reading \"%q\": %w", filePath, err)
+			return nil, fmt.Errorf("error reading \"%q\": %w", filePath, err)
 		}
 		defer f.Close()
 
@@ -248,7 +262,7 @@ func isCRDFileFor(group, kind, filePath string) (bool, error) {
 			err = yd.Decode(modelMap)
 			if err != nil {
 				//fail fast if it's not a proper YAML
-				return false, err
+				return nil, err
 			}
 
 			//Ensure it's a CRD
@@ -280,17 +294,21 @@ func isCRDFileFor(group, kind, filePath string) (bool, error) {
 
 			//Check if this CRD is the one we're looking for
 			if groupVal == group && kindVal == kind {
-				return true, nil
+				res, err := yaml.Marshal(modelMap)
+				if err != nil {
+					return nil, err
+				}
+				return res, nil
 			}
 		}
 
 		if errors.Is(err, io.EOF) {
 			//Failure: No document in the file matches our search criteria.
-			return false, nil
+			return nil, nil
 		}
 
 		//We should never get here, because Decode() should return EOF once there's no more data to read.
-		return false, err
+		return nil, err
 	}
 }
 
@@ -333,4 +351,62 @@ func ValidateName(name string) error {
 	}
 
 	return nil
+}
+
+type SingleManifestFileCRValidator struct {
+	manifestPath string
+	crData       []byte
+}
+
+func NewSingleManifestFileCRValidator(cr []byte, manifestPath string) *SingleManifestFileCRValidator {
+	return &SingleManifestFileCRValidator{
+		manifestPath: manifestPath,
+		crData:       cr,
+	}
+}
+
+func (v *SingleManifestFileCRValidator) Run(ctx context.Context, log *zap.SugaredLogger) error {
+	// skip validation if no CR detected
+	if len(v.crData) == 0 {
+		return ErrEmptyCR
+	}
+
+	crMap, err := parseYamlToMap(v.crData)
+	if err != nil {
+		return fmt.Errorf("error parsing default CR: %w", err)
+	}
+
+	group, kind, err := readGroupKind(crMap)
+	if err != nil {
+		return err
+	}
+
+	// extract CRD matching group and kind from the multi-document YAML manifest
+	crdBytes, err := getCRDFromFile(group, kind, v.manifestPath)
+	if err != nil {
+		return fmt.Errorf("error finding CRD file in the %q file: %w", v.manifestPath, err)
+	}
+	if crdBytes == nil {
+		return fmt.Errorf("can't find the CRD for (group: %q, kind %q)", group, kind)
+	}
+
+	// store extracted CRD in a temp file
+	tempDir, err := os.MkdirTemp("", "temporary-crd")
+	if err != nil {
+		return fmt.Errorf("error creating temporary directory: %w", err)
+	}
+	defer func() {
+		err := os.RemoveAll(tempDir)
+		if err != nil {
+			log.Warn("Error removing temporary directory", err)
+		}
+	}()
+	tempCRDFile := filepath.Join(tempDir, "crd.yaml")
+	err = os.WriteFile(tempCRDFile, crdBytes, 0666)
+	if err != nil {
+		return fmt.Errorf("error writing temporary CRD file %q file: %w", tempCRDFile, err)
+	}
+
+	// run testEnv using the temporary file with extracted CRD
+	return runTestEnv(ctx, log, tempCRDFile, crMap)
 }

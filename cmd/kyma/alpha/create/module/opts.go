@@ -27,7 +27,6 @@ type Options struct {
 	TemplateOutput          string
 	DefaultCRPath           string
 	Channel                 string
-	Target                  string
 	SchemaVersion           string
 	Token                   string
 	Insecure                bool
@@ -101,19 +100,6 @@ func (o *Options) ValidateChannel() error {
 	return nil
 }
 
-func (o *Options) ValidateTarget() error {
-	valid := []string{
-		"control-plane",
-		"remote",
-	}
-	for i := range valid {
-		if o.Target == valid[i] {
-			return nil
-		}
-	}
-	return fmt.Errorf("target %s is invalid, allowed: %s", o.Target, valid)
-}
-
 func (o *Options) Validate() error {
 	if !o.WithModuleConfigFile() {
 		if err := o.ValidateVersion(); err != nil {
@@ -125,11 +111,7 @@ func (o *Options) Validate() error {
 		}
 	}
 
-	if err := o.ValidatePath(); err != nil {
-		return err
-	}
-
-	return o.ValidateTarget()
+	return o.ValidatePath()
 }
 
 func (o *Options) WithModuleConfigFile() bool {
