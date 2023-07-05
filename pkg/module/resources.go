@@ -91,13 +91,6 @@ func AddResources(
 func generateResources(log *zap.SugaredLogger, version string, credLabel []byte, defs ...Layer) ([]ResourceDescriptor, error) {
 	res := []ResourceDescriptor{}
 	for _, d := range defs {
-		//DEBUG
-		fmt.Println("-- Layer: ----------------------------->")
-		fmt.Println("name:", d.name)
-		fmt.Println("resourceType:", d.resourceType)
-		fmt.Println("path:", d.path)
-		fmt.Println("excludedFiles:", d.excludedFiles)
-		fmt.Println("<---------------------------------------")
 		r := ResourceDescriptor{Input: &blob.Input{}}
 
 		r.Name = d.Name()
