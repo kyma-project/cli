@@ -15,14 +15,11 @@ import (
 	compdescv2 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/versions/v2"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
+	"golang.org/x/exp/maps"
 
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/internal/nice"
 	"github.com/kyma-project/cli/pkg/module"
-)
-
-const (
-	moduleConfigFileArg = "module-config-file"
 )
 
 type command struct {
@@ -111,7 +108,7 @@ Build a Kubebuilder module my-domain/modC in version 3.2.1 and push it to a loca
 	}
 
 	cmd.Flags().StringVar(
-		&o.ModuleConfigFile, moduleConfigFileArg, "",
+		&o.ModuleConfigFile, "module-config-file", "",
 		"Specifies the module configuration file",
 	)
 
@@ -230,7 +227,8 @@ func (cmd *command) Run(ctx context.Context) error {
 		return err
 	}
 
-	modDef, err := cmd.moduleDefinitionFromOptions()
+	modDef, modCnf, err := cmd.moduleDefinitionFromOptions()
+
 	if err != nil {
 		return err
 	}
@@ -333,7 +331,27 @@ func (cmd *command) Run(ctx context.Context) error {
 		}
 
 		cmd.NewStep("Generating module template")
-		t, err := module.Template(componentVersionAccess, cmd.opts.Channel, modDef.DefaultCR)
+
+		labels := map[string]string{}
+		annotations := map[string]string{}
+
+		var resourceName = ""
+
+		if modCnf != nil {
+			resourceName = modCnf.ResourceName
+
+			maps.Copy(labels, modCnf.Labels)
+			maps.Copy(annotations, modCnf.Annotations)
+
+			if modCnf.Beta {
+				labels["operator.kyma-project.io/beta"] = "true"
+			}
+			if modCnf.Internal {
+				labels["operator.kyma-project.io/internal"] = "true"
+			}
+		}
+
+		t, err := module.Template(componentVersionAccess, resourceName, cmd.opts.Channel, modDef.DefaultCR, labels, annotations)
 		if err != nil {
 			cmd.CurrentStep.Failure()
 			return err
@@ -344,6 +362,7 @@ func (cmd *command) Run(ctx context.Context) error {
 			return err
 		}
 		cmd.CurrentStep.Successf("Template successfully generated at %s", cmd.opts.TemplateOutput)
+
 	}
 
 	return nil
@@ -404,12 +423,14 @@ func (cmd *command) getRemote(nameMapping module.NameMapping) (*module.Remote, e
 	return res, nil
 }
 
-func (cmd *command) moduleDefinitionFromOptions() (*module.Definition, error) {
+func (cmd *command) moduleDefinitionFromOptions() (*module.Definition, *Config, error) {
 
-	var res *module.Definition
+	var def *module.Definition
+	var cnf *Config
+
 	nameMappingMode, err := module.ParseNameMapping(cmd.opts.NameMappingMode)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if cmd.opts.WithModuleConfigFile() {
@@ -417,25 +438,25 @@ func (cmd *command) moduleDefinitionFromOptions() (*module.Definition, error) {
 
 		moduleConfig, err := ParseConfig(cmd.opts.ModuleConfigFile)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		err = moduleConfig.Validate()
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		defaultCRPath, err := resolveFilePath(moduleConfig.DefaultCRPath, cmd.opts.Path)
 		if err != nil {
-			return nil, fmt.Errorf("%w,  %w", ErrDefaultCRPathValidation, err)
+			return nil, nil, fmt.Errorf("%w,  %w", ErrDefaultCRPathValidation, err)
 		}
 
 		moduleManifestPath, err := resolveFilePath(moduleConfig.ManifestPath, cmd.opts.Path)
 		if err != nil {
-			return nil, fmt.Errorf("%w,  %w", ErrManifestPathValidation, err)
+			return nil, nil, fmt.Errorf("%w,  %w", ErrManifestPathValidation, err)
 		}
 
-		res = &module.Definition{
+		def = &module.Definition{
 			Name:               moduleConfig.Name,
 			Version:            moduleConfig.Version,
 			Source:             cmd.opts.Path,
@@ -445,12 +466,13 @@ func (cmd *command) moduleDefinitionFromOptions() (*module.Definition, error) {
 			SingleManifestPath: moduleManifestPath,
 			SchemaVersion:      cmd.opts.SchemaVersion,
 		}
+		cnf = moduleConfig
 	} else {
 		np := nice.Nice{}
 		np.PrintImportant("WARNING: The Kubebuilder support in this command is DEPRECATED. Use the simple mode by providing the \"--module-config-file\" flag instead.")
 
 		//legacy approach, flag-based
-		res = &module.Definition{
+		def = &module.Definition{
 			Name:            cmd.opts.Name,
 			Version:         cmd.opts.Version,
 			Source:          cmd.opts.Path,
@@ -461,7 +483,7 @@ func (cmd *command) moduleDefinitionFromOptions() (*module.Definition, error) {
 		}
 	}
 
-	return res, nil
+	return def, cnf, nil
 }
 
 // resolvePath resolves given path if it's absolute or uses the provided prefix to make it absolute.
