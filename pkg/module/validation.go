@@ -84,9 +84,7 @@ func runTestEnv(ctx context.Context, log *zap.SugaredLogger, crdFilePath string,
 	}
 	defer func() {
 		if err := runner.Stop(); err != nil {
-			//TODO: This doesn't seem to print anything...
 			log.Error(fmt.Errorf("error stopping envTest: %w", err))
-			//THIS does: fmt.Println(fmt.Errorf("Error stopping envTest: %w", stopErr))
 		}
 	}()
 
@@ -402,7 +400,7 @@ func (v *SingleManifestFileCRValidator) Run(ctx context.Context, log *zap.Sugare
 		}
 	}()
 	tempCRDFile := filepath.Join(tempDir, "crd.yaml")
-	err = os.WriteFile(tempCRDFile, crdBytes, 0666)
+	err = os.WriteFile(tempCRDFile, crdBytes, 0600)
 	if err != nil {
 		return fmt.Errorf("error writing temporary CRD file %q file: %w", tempCRDFile, err)
 	}
