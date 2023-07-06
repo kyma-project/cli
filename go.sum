@@ -1181,8 +1181,8 @@ github.com/kyma-project/hydroform/provision v0.0.0-20230418133637-1ea26b368bb6 h
 github.com/kyma-project/hydroform/provision v0.0.0-20230418133637-1ea26b368bb6/go.mod h1:eXIZaENQU/Y4sq20z3AgiFg6hSZUP4DmQ2JTMtFt+A8=
 github.com/kyma-project/istio/operator v0.0.0-20221129102055-d37c5c8e6add h1:ohTtnIlNXSQPHB/nMZvBXs+uBnTqQ6HRSgAvptyWzlc=
 github.com/kyma-project/istio/operator v0.0.0-20221129102055-d37c5c8e6add/go.mod h1:K5jDoHdqW8EI2vXX+7J+RnEmk4YQRnd6fTmuuSyQ3Qg=
-github.com/kyma-project/lifecycle-manager v0.0.0-20230515084114-0cd8e8e80748 h1:9XdRAm5obA1/cHdrstolxz0TwxZdmgTyTw31oPrjTHQ=
-github.com/kyma-project/lifecycle-manager v0.0.0-20230515084114-0cd8e8e80748/go.mod h1:G+HHF0oOUQYQ8g2VNvpYe1wreR42ri/upK3lj5D4J2c=
+github.com/kyma-project/lifecycle-manager v0.0.0-20230626125722-e28fc6438d83 h1:kA6QUuA6oSOQe9F0gW2e8x4dGRdol9UAsw8zPIUKswo=
+github.com/kyma-project/lifecycle-manager v0.0.0-20230626125722-e28fc6438d83/go.mod h1:mik/72CzndvOf8OH11a+CGufl2Ua6Lqk8HIUet3u7To=
 github.com/kyma-project/module-manager/operator v0.0.0-20221020113457-620af4f4b365 h1:50FLPAynQ7++CJb2ZEdfnCRO68cDcJoa+eo3qUwElc4=
 github.com/kyma-project/module-manager/operator v0.0.0-20221020113457-620af4f4b365/go.mod h1:N0kmS8pTNXq+7/Bdr6vfogmw03H+uYMCauTQ6U6+kA0=
 github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 h1:SOEGU9fKiNWd/HOJuq6+3iTQz8KNCLtVX6idSoTLdUw=

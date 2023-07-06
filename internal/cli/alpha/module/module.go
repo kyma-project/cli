@@ -185,6 +185,8 @@ func IsKymaReady(l *zap.SugaredLogger, obj runtime.Object) error {
 			)
 		}
 		return nil
+	case v1beta2.StateWarning:
+		return ErrKymaInWarningState
 	default:
 		lastOperation := kyma.Status.LastOperation
 		if lastOperation.Operation == "" {

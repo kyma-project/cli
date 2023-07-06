@@ -29,7 +29,7 @@ require (
 	github.com/kyma-incubator/reconciler v0.0.0-20230630093527-31217ab6a174
 	github.com/kyma-project/hydroform/function v0.0.0-20230628151226-25b31247e585
 	github.com/kyma-project/hydroform/provision v0.0.0-20230418133637-1ea26b368bb6
-	github.com/kyma-project/lifecycle-manager v0.0.0-20230515084114-0cd8e8e80748
+	github.com/kyma-project/lifecycle-manager v0.0.0-20230626125722-e28fc6438d83
 	github.com/mandelsoft/vfs v0.0.0-20220805210647-bf14a11bfe31
 	github.com/open-component-model/ocm v0.3.0-rc.1
 	github.com/opencontainers/go-digest v1.0.0
