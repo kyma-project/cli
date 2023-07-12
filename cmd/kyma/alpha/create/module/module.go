@@ -57,7 +57,7 @@ To configure the simple mode, provide the `--module-config-file` flag with a con
 The module config file is a YAML file used to configure the following attributes for the module:
 
 - name:         a string, required, the name of the module
-- version:      a string, required, the version of the Module
+- version:      a string, required, the version of the module
 - channel:      a string, required, channel that should be used in the ModuleTemplate
 - manifest:     a string, required, reference to the manifests, must be a relative file name.
 - defaultCR:    a string, optional, reference to a YAML file containing the default CR for the module, must be a relative file name.
