@@ -60,7 +60,7 @@ The module config file is a YAML file used to configure the following attributes
 - version:      a string, required, the version of the module
 - channel:      a string, required, channel that should be used in the ModuleTemplate CR
 - manifest:     a string, required, reference to the manifest, must be a relative file name
-- defaultCR:    a string, optional, reference to a YAML file containing the default CR for the module, must be a relative file name.
+- defaultCR:    a string, optional, reference to a yaml file containing the default CR for the module, must be a relative file name
 - resourceName: a string, optional, default={NAME}-{CHANNEL}, the name for the ModuleTemplate CR that will be created
 - security:     a string, optional, name of the security scanners config file
 - internal:     a boolean, optional, default=false, determines whether the ModuleTemplate CR should have the internal flag or not
