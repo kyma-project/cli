@@ -86,7 +86,7 @@ This command creates a component descriptor in the configured descriptor path (.
 The internal structure of the artifact conforms to the [Open Component Model](https://ocm.software/) scheme version 3.
 
 If you configured the `--registry` flag, the created module is validated and pushed to the configured registry.
-During the validation the default CR resource, if defined, is validated against a corresponding CustomResourceDefinition.
+During the validation the **defaultCR** resource, if defined, is validated against a corresponding CustomResourceDefinition.
 You can also trigger an on-demand default CR validation with "--validateCR=true", in case you don't push to the registry.
 
 #### Name Mapping Modes
