@@ -66,7 +66,7 @@ The module config file is a YAML file used to configure the following attributes
 - internal:     a boolean, optional, default=false, determines whether the ModuleTemplate CR should have the internal flag or not
 - beta:         a boolean, optional, default=false, determines whether the ModuleTemplate CR should have the beta flag or not
 - labels:       a map with string keys and values, optional, additional labels for the generated ModuleTemplate CR
-- annotations:  a map with string keys and values, optional, additional annotations for the generated ModuleTemplate
+- annotations:  a map with string keys and values, optional, additional annotations for the generated ModuleTemplate CR
 
 The "manifest" and "defaultCR" paths are resolved against the module's directory, as configured with "--path" flag.
 The "manifest" file contains all the module's resources in a single, multi-document YAML file. These resources will be created in the Kyma cluster when the module is activated.
