@@ -75,7 +75,7 @@ It is additionally schema-validated against the Custom Resource Definition for i
 
 ### Kubebuilder mode configuration
 The Kubebuilder mode is DEPRECATED.
-The Kubebuilder mode is configured automatically if the "--module-config-file" flag is not provided.
+The Kubebuilder mode is configured automatically if the `--module-config-file` flag is not provided.
 
 In this mode you have to explicitly provide the module name and version using "--name" and "--version" flags, respectively.
 Some defaults, like the module manifest file location and the default CR file location are then resolved automatically, but you can override these with available flags.
