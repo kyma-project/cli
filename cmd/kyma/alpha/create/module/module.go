@@ -85,7 +85,7 @@ Modules are built and distributed as OCI artifacts.
 This command creates a component descriptor in the configured descriptor path (./mod as a default) and packages all the contents on the provided path as an OCI artifact.
 The internal structure of the artifact conforms to the [Open Component Model](https://ocm.software/) scheme version 3.
 
-If you configured the "--registry" flag, the created module is validated and pushed to the configured registry.
+If you configured the `--registry` flag, the created module is validated and pushed to the configured registry.
 During the validation the default CR resource, if defined, is validated against a corresponding CustomResourceDefinition.
 You can also trigger an on-demand default CR validation with "--validateCR=true", in case you don't push to the registry.
 
