@@ -48,7 +48,7 @@ This command creates a module from an existing directory containing the module's
 The directory MUST be a valid git project that is publicly available.
 The command supports two directory layouts for the module:
 - Simple: Just a directory with a valid git configuration. All the module's sources are defined in this directory.
-- Kubebuild projects (DEPRECATED): A directory with a valid Kubebuilder project. This is a convenience mode for the users who are creating the module operator(s) using the Kubebuilder toolset.
+- Kubebuilder (DEPRECATED): A directory with a valid Kubebuilder project. Module operator(s) are created using the Kubebuilder toolset.
 Both modes require providing an explicit path to the module's project directory using "--path" flag or invoking the command from within the that directory.
 
 ### Simple mode configuration
