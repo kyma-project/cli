@@ -89,7 +89,7 @@ If you configured the `--registry` flag, the created module is validated and pus
 During the validation the **defaultCR** resource, if defined, is validated against a corresponding CustomResourceDefinition.
 You can also trigger an on-demand **defaultCR** validation with `--validateCR=true`, in case you don't push the module to the registry.
 
-#### Name Mapping Modes
+#### Name Mapping
 To push the artifact into some registries, for example, the central docker.io registry, you have to change the OCM Component Name Mapping with the following flag: `--name-mapping=sha256-digest`. This is necessary because the registry does not accept artifact URLs with more than two path segments, and such URLs are generated with the default name mapping: **urlPath**. In the case of the `sha256-digest` mapping, the artifact URL contains just a sha256 digest of the full Component Name and fits the path length restrictions. The downside of the `sha256-mapping` is that the module name is no longer visible in the artifact URL, as it contains the sha256 digest of the defined name.
 
 `,
