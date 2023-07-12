@@ -64,7 +64,7 @@ The module config file is a YAML file used to configure the following attributes
 - resourceName: a string, optional, default={NAME}-{CHANNEL}, the name for the ModuleTemplate CR that will be created
 - security:     a string, optional, name of the security scanners config file
 - internal:     a boolean, optional, default=false, determines whether the ModuleTemplate CR should have the internal flag or not
-- beta:         a bool, optional, default=false, determines whether the ModuleTemplate should have the beta flag or not
+- beta:         a boolean, optional, default=false, determines whether the ModuleTemplate CR should have the beta flag or not
 - labels:       a map with string keys and values, optional, additional labels for the generated ModuleTemplate
 - annotations:  a map with string keys and values, optional, additional annotations for the generated ModuleTemplate
 
