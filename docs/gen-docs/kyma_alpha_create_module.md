@@ -10,44 +10,44 @@ Use this command to create a Kyma module, bundle it as an OCI artifact and optio
 
 ### Detailed description
 
-This command lets you to create a Kyma module as an OCI artifact and optionally push it to the OCI registry of you choice.
-For more information about what is a Kyma module see the [documentation](https://github.com/kyma-project/lifecycle-manager)
+This command allows you to create a Kyma module as an OCI artifact and optionally push it to the OCI registry of your choice.
+For more information about a Kyma module see the [documentation](https://github.com/kyma-project/lifecycle-manager).
 
-This command creates a module from an existing directory containing module's source files.
-The directory MUST be a valid git project that is publicly available.
-The command supports two directory layouts for the module:
+This command creates a module from an existing directory containing the module's source files.
+The directory must be a valid git project that is publicly available.
+The command supports two types of directory layouts for the module:
 - Simple: Just a directory with a valid git configuration. All the module's sources are defined in this directory.
-- Kubebuild projects (DEPRECATED): A directory with a valid Kubebuilder project. This is a convenience mode for the users who are creating the module operator(s) using the Kubebuilder toolset.
-Both modes require providing an explicit path to the module's project directory using "--path" flag or invoking the command from within the that directory.
+- Kubebuilder (DEPRECATED): A directory with a valid Kubebuilder project. Module operator(s) are created using the Kubebuilder toolset.
+Both simple and Kubebuilder projects require providing an explicit path to the module's project directory using the "--path" flag or invoking the command from within that directory.
 
 ### Simple mode configuration
 
-You configure the simple mode by providing the "--module-config-file" flag with a config file path.
+To configure the simple mode, provide the "--module-config-file" flag with a config file path.
 The module config file is a YAML file used to configure the following attributes for the module:
 
-- name:         a string, required, the name of the Module
-- version:      a string, required, the version of the Module
-- channel:      a string, required, channel that should be used in the ModuleTemplate
-- manifest:     a string, required, reference to the manifests, must be a relative file name.
-- defaultCR:    a string, optional, reference to a YAML file containing the default CR for the module, must be a relative file name.
-- resourceName: a string, optional, default={NAME}-{CHANNEL}, the name for the ModuleTemplate that will be created
+- name:         a string, required, the name of the module
+- version:      a string, required, the version of the module
+- channel:      a string, required, channel that should be used in the ModuleTemplate CR
+- manifest:     a string, required, reference to the manifest, must be a relative file name
+- defaultCR:    a string, optional, reference to a yaml file containing the default CR for the module, must be a relative file name
+- resourceName: a string, optional, default={NAME}-{CHANNEL}, the name for the ModuleTemplate CR that will be created
 - security:     a string, optional, name of the security scanners config file
-- internal:     a bool, optional, default=false, determines whether the ModuleTemplate should have the internal flag or not
-- beta:         a bool, optional, default=false, determines whether the ModuleTemplate should have the beta flag or not
-- labels:       a map with string keys and values, optional, additional labels for the generated ModuleTemplate
-- annotations:  a map with string keys and values, optional, additional annotations for the generated ModuleTemplate
+- internal:     a boolean, optional, default=false, determines whether the ModuleTemplate CR should have the internal flag or not
+- beta:         a boolean, optional, default=false, determines whether the ModuleTemplate CR should have the beta flag or not
+- labels:       a map with string keys and values, optional, additional labels for the generated ModuleTemplate CR
+- annotations:  a map with string keys and values, optional, additional annotations for the generated ModuleTemplate CR
 
-The "manifest" and "defaultCR" paths are resolved against the module's directory, as configured with "--path" flag.
-The "manifest" file contains all the module's resources in a single, multi-document YAML file. These resources will be created in the Kyma cluster when the module is activated.
-The "defaultCR" file contain a default Custom Resource for the module that will be installed along with the module.
-It is additionally schema-validated against the Custom Resource Definition for it's Group/Kind that must exists is the set of resources in the "manifest" file.
+The**manifes** and **defaultCR** paths are resolved against the module's directory, as configured with the "--path" flag.
+The **manifest** file contains all the module's resources in a single, multi-document yaml file. These resources will be created in the Kyma cluster when the module is activated.
+The **defaultCR** file contains a default custom resource for the module that will be installed along with the module.
+The Default CR is additionally schema-validated against the Custom Resource Definition. The CRD used for the validation must exist in the set of the module's resources.
 
 ### Kubebuilder mode configuration
 The Kubebuilder mode is DEPRECATED.
 The Kubebuilder mode is configured automatically if the "--module-config-file" flag is not provided.
 
-In this mode you have to explicitly provide the module name and version using "--name" and "--version" flags, respectively.
-Some defaults, like the module manifest file location and the default CR file location are then resolved automatically, but you can override these with available flags.
+In this mode, you have to explicitly provide the module name and version using the "--name" and "--version" flags, respectively.
+Some defaults, like the module manifest file location and the default CR file location, are then resolved automatically, but you can override these with the available flags.
 
 ### Modules as OCI artifacts
 Modules are built and distributed as OCI artifacts. 
@@ -55,11 +55,11 @@ This command creates a component descriptor in the configured descriptor path (.
 The internal structure of the artifact conforms to the [Open Component Model](https://ocm.software/) scheme version 3.
 
 If you configured the "--registry" flag, the created module is validated and pushed to the configured registry.
-During the validation the default CR resource, if defined, is validated against a corresponding CustomResourceDefinition.
-You can also trigger an on-demand default CR validation with "--validateCR=true", in case you don't push to the registry.
+During the validation the **defaultCR** resource, if defined, is validated against a corresponding CustomResourceDefinition.
+You can also trigger an on-demand **defaultCR** validation with "--validateCR=true", in case you don't push the module to the registry.
 
-#### Name Mapping Modes
-To push the artifact into some registries, for example, the central docker.io registry, you have to change the OCM Component Name Mapping with the following flag: "--name-mapping=sha256-digest". This is necessary because the registry does not accept artifact URLs with more than two path segments, and such URLs are generated with the default name mapping: "urlPath". In the case of the "sha256-digest" mapping, the artifact URL contains just a sha256 digest of the full Component Name and fits the path length restrictions. The downside of the "sha256-mapping" is that the module name is no longer visible in the artifact URL, as it contains the sha256 digest of the defined name.
+#### Name Mapping
+To push the artifact into some registries, for example, the central docker.io registry, you have to change the OCM Component Name Mapping with the following flag: "--name-mapping=sha256-digest". This is necessary because the registry does not accept artifact URLs with more than two path segments, and such URLs are generated with the default name mapping: **urlPath**. In the case of the "sha256-digest" mapping, the artifact URL contains just a sha256 digest of the full Component Name and fits the path length restrictions. The downside of the "sha256-mapping" is that the module name is no longer visible in the artifact URL, as it contains the sha256 digest of the defined name.
 
 
 
