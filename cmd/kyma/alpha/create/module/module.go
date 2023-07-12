@@ -56,7 +56,7 @@ Both simple and Kubebuilder projects require providing an explicit path to the m
 To configure the simple mode, provide the `--module-config-file` flag with a config file path.
 The module config file is a YAML file used to configure the following attributes for the module:
 
-- name:         a string, required, the name of the Module
+- name:         a string, required, the name of the module
 - version:      a string, required, the version of the Module
 - channel:      a string, required, channel that should be used in the ModuleTemplate
 - manifest:     a string, required, reference to the manifests, must be a relative file name.
