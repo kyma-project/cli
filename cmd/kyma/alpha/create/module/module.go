@@ -71,7 +71,7 @@ The module config file is a YAML file used to configure the following attributes
 The**manifes** and **defaultCR** paths are resolved against the module's directory, as configured with the `--path` flag.
 The **manifest** file contains all the module's resources in a single, multi-document yaml file. These resources will be created in the Kyma cluster when the module is activated.
 The **defaultCR** file contains a default custom resource for the module that will be installed along with the module.
-It is additionally schema-validated against the Custom Resource Definition for it's Group/Kind that must exists is the set of resources in the "manifest" file.
+The Default CR is additionally schema-validated against the Custom Resource Definition. The CRD used for the validation must exist in the set of the module's resources.
 
 ### Kubebuilder mode configuration
 The Kubebuilder mode is DEPRECATED.
