@@ -41,7 +41,7 @@ func NewCmd(o *Options) *cobra.Command {
 
 ### Detailed description
 
-This command lets you to create a Kyma module as an OCI artifact and optionally push it to the OCI registry of you choice.
+This command allows you to create a Kyma module as an OCI artifact and optionally push it to the OCI registry of your choice.
 For more information about what is a Kyma module see the [documentation](https://github.com/kyma-project/lifecycle-manager)
 
 This command creates a module from an existing directory containing module's source files.
