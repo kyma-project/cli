@@ -45,7 +45,7 @@ This command allows you to create a Kyma module as an OCI artifact and optionall
 For more information about a Kyma module see the [documentation](https://github.com/kyma-project/lifecycle-manager).
 
 This command creates a module from an existing directory containing the module's source files.
-The directory MUST be a valid git project that is publicly available.
+The directory must be a valid git project that is publicly available.
 The command supports two types of directory layouts for the module:
 - Simple: Just a directory with a valid git configuration. All the module's sources are defined in this directory.
 - Kubebuilder (DEPRECATED): A directory with a valid Kubebuilder project. Module operator(s) are created using the Kubebuilder toolset.
