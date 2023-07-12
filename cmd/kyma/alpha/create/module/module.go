@@ -53,7 +53,7 @@ Both simple and Kubebuilder projects require providing an explicit path to the m
 
 ### Simple mode configuration
 
-You configure the simple mode by providing the "--module-config-file" flag with a config file path.
+To configure the simple mode, provide the `--module-config-file` flag with a config file path.
 The module config file is a YAML file used to configure the following attributes for the module:
 
 - name:         a string, required, the name of the Module
