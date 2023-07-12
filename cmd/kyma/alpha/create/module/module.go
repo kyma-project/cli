@@ -446,9 +446,12 @@ func (cmd *command) moduleDefinitionFromOptions() (*module.Definition, *Config, 
 			return nil, nil, err
 		}
 
-		defaultCRPath, err := resolveFilePath(moduleConfig.DefaultCRPath, cmd.opts.Path)
-		if err != nil {
-			return nil, nil, fmt.Errorf("%w,  %w", ErrDefaultCRPathValidation, err)
+		var defaultCRPath string
+		if moduleConfig.DefaultCRPath != "" {
+			defaultCRPath, err = resolveFilePath(moduleConfig.DefaultCRPath, cmd.opts.Path)
+			if err != nil {
+				return nil, nil, fmt.Errorf("%w,  %w", ErrDefaultCRPathValidation, err)
+			}
 		}
 
 		moduleManifestPath, err := resolveFilePath(moduleConfig.ManifestPath, cmd.opts.Path)

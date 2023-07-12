@@ -33,7 +33,9 @@ metadata:
 spec:
   channel: {{.Channel}}
   data:
-{{.Data | indent 4}}
+{{- with .Data}}
+{{. | indent 4}}
+{{- end}}
   descriptor:
 {{yaml .Descriptor | printf "%s" | indent 4}}
 `

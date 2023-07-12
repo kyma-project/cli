@@ -83,7 +83,7 @@ func (cv *configValidator) validateName() *configValidator {
 		}
 		matched, _ := regexp.MatchString(moduleNamePattern, cv.config.Name)
 		if !matched {
-			return fmt.Errorf("%w for input %q, name does not match %s pattern", ErrNameValidation, cv.config.Name, moduleNamePattern)
+			return fmt.Errorf("%w for input %q, name must match the required pattern, e.g: 'github.com/path-to/your-repo'", ErrNameValidation, cv.config.Name)
 		}
 
 		return nil
