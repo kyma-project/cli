@@ -29,7 +29,7 @@ The module config file is a YAML file used to configure the following attributes
 - version:      a string, required, the version of the module
 - channel:      a string, required, channel that should be used in the ModuleTemplate CR
 - manifest:     a string, required, reference to the manifest, must be a relative file name
-- defaultCR:    a string, optional, reference to a yaml file containing the default CR for the module, must be a relative file name
+- defaultCR:    a string, optional, reference to a YAML file containing the default CR for the module, must be a relative file name
 - resourceName: a string, optional, default={NAME}-{CHANNEL}, the name for the ModuleTemplate CR that will be created
 - security:     a string, optional, name of the security scanners config file
 - internal:     a boolean, optional, default=false, determines whether the ModuleTemplate CR should have the internal flag or not
@@ -38,7 +38,7 @@ The module config file is a YAML file used to configure the following attributes
 - annotations:  a map with string keys and values, optional, additional annotations for the generated ModuleTemplate CR
 
 The**manifes** and **defaultCR** paths are resolved against the module's directory, as configured with the "--path" flag.
-The **manifest** file contains all the module's resources in a single, multi-document yaml file. These resources will be created in the Kyma cluster when the module is activated.
+The **manifest** file contains all the module's resources in a single, multi-document YAML file. These resources will be created in the Kyma cluster when the module is activated.
 The **defaultCR** file contains a default custom resource for the module that will be installed along with the module.
 The Default CR is additionally schema-validated against the Custom Resource Definition. The CRD used for the validation must exist in the set of the module's resources.
 
