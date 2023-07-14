@@ -23,10 +23,7 @@ func CreateArchive(fs vfs.FileSystem, path string, def *Definition) (*comparch.C
 	if err := def.validate(); err != nil {
 		return nil, err
 	}
-	return createArchive(fs, path, def)
-}
 
-func createArchive(fs vfs.FileSystem, path string, def *Definition) (*comparch.ComponentArchive, error) {
 	// build minimal archive
 
 	if err := fs.MkdirAll(path, os.ModePerm); err != nil {
