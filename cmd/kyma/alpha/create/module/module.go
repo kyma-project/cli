@@ -351,7 +351,12 @@ func (cmd *command) Run(ctx context.Context) error {
 			}
 		}
 
-		t, err := module.Template(componentVersionAccess, resourceName, cmd.opts.Channel, modDef.DefaultCR, labels, annotations)
+		var channel = cmd.opts.Channel
+		if modCnf != nil {
+			channel = modCnf.Channel
+		}
+
+		t, err := module.Template(componentVersionAccess, resourceName, channel, modDef.DefaultCR, labels, annotations)
 		if err != nil {
 			cmd.CurrentStep.Failure()
 			return err
