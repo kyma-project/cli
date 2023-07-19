@@ -86,6 +86,10 @@ ifeq ($(UNSTABLE), true)
 	gsutil cp bin/* $(KYMA_CLI_UNSTABLE_BUCKET)
 endif
 
+.PHONY: upload-unstable-binaries
+upload-unstable-binaries:
+	gsutil cp bin/* $(KYMA_CLI_UNSTABLE_BUCKET)
+
 .PHONY: release
 release:
 	./hack/release.sh
@@ -110,3 +114,6 @@ ci-main: resolve validate build test integration-test upload-binaries
 
 .PHONY: ci-release
 ci-release: resolve validate build test integration-test archive release
+
+.PHONY: ci-publish
+ci-release: resolve build upload-unstable-binaries
