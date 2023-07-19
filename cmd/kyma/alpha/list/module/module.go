@@ -214,12 +214,16 @@ func (cmd *command) printKymaActiveTemplates(ctx context.Context, kyma *unstruct
 		if err != nil {
 			return err
 		}
-		anns := tpl.GetAnnotations()
-		if anns == nil {
-			anns = make(map[string]string)
+		annotations := tpl.GetAnnotations()
+		if annotations == nil {
+			annotations = make(map[string]string)
 		}
-		anns["state.cmd.kyma-project.io"] = item["state"].(string)
-		tpl.SetAnnotations(anns)
+		stateValue, ok := item["state"].(string)
+		if !ok {
+			continue
+		}
+		annotations["state.cmd.kyma-project.io"] = stateValue
+		tpl.SetAnnotations(annotations)
 		templateList.Items = append(templateList.Items, *tpl)
 		if templateList.GetKind() == "" {
 			templateList.SetGroupVersionKind(moduleTemplateResource.GroupVersion().WithKind(tpl.GetKind() + "List"))

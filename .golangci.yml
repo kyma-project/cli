@@ -5,6 +5,7 @@ linters:
   enable:
     - errcheck
     - exportloopref
+    - forcetypeassert
     - gochecknoinits
     - gofmt
     - gosec
