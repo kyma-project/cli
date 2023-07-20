@@ -110,6 +110,3 @@ ci-main: resolve validate build test integration-test upload-binaries
 
 .PHONY: ci-release
 ci-release: resolve validate build test integration-test archive release
-
-.PHONY: ci-publish
-ci-publish: resolve build upload-binaries
