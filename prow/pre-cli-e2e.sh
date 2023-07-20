@@ -1,6 +1,5 @@
 set -e
 apk add nodejs npm
-echo "Bump reconciler version used by the Kyma CLI"
 make resolve
 make build-linux
 cp ./bin/kyma-linux /usr/local/bin/kyma
