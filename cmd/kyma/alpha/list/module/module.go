@@ -218,11 +218,15 @@ func (cmd *command) printKymaActiveTemplates(ctx context.Context, kyma *unstruct
 		if annotations == nil {
 			annotations = make(map[string]string)
 		}
-		stateValue, ok := item["state"].(string)
+		stateValue, ok := item["state"]
 		if !ok {
 			continue
 		}
-		annotations["state.cmd.kyma-project.io"] = stateValue
+		stateAnnotationValue, ok := stateValue.(string)
+		if !ok {
+			continue
+		}
+		annotations["state.cmd.kyma-project.io"] = stateAnnotationValue
 		tpl.SetAnnotations(annotations)
 		templateList.Items = append(templateList.Items, *tpl)
 		if templateList.GetKind() == "" {
