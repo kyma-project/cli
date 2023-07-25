@@ -264,7 +264,7 @@ func (cmd *command) Run(ctx context.Context) error {
 		}
 
 		cmd.NewStep("Generating module template")
-		t, err := module.Template(componentVersionAccess, cmd.opts.Channel, cmd.opts.Target, modDef.DefaultCR)
+		t, err := module.Template(componentVersionAccess, cmd.opts.Channel, modDef.DefaultCR)
 		if err != nil {
 			cmd.CurrentStep.Failure()
 			return err

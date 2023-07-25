@@ -18,6 +18,9 @@ linters:
     - typecheck
     - unparam
     - unused
+linters-settings:
+  errcheck:
+    check-type-assertions: true
 issues:
   exclude:
     # Check this issue for more info: https://github.com/kyoh86/scopelint/issues/4

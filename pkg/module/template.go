@@ -29,7 +29,7 @@ spec:
 `
 )
 
-func Template(remote ocm.ComponentVersionAccess, channel, target string, data []byte) ([]byte, error) {
+func Template(remote ocm.ComponentVersionAccess, channel string, data []byte) ([]byte, error) {
 	descriptor := remote.GetDescriptor()
 	ref, err := oci.ParseRef(descriptor.Name)
 	if err != nil {

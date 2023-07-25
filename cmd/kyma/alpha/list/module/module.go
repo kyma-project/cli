@@ -192,7 +192,10 @@ func (cmd *command) printKymaActiveTemplates(ctx context.Context, kyma *unstruct
 	templateList := &unstructured.UnstructuredList{Items: make([]unstructured.Unstructured, 0, len(statusItems))}
 
 	for i := range statusItems {
-		item, _ := statusItems[i].(map[string]interface{})
+		item, ok := statusItems[i].(map[string]interface{})
+		if !ok {
+			continue
+		}
 		tmplt, _, err := unstructured.NestedMap(item, "template")
 		if err != nil {
 			return fmt.Errorf("could not parse template: %w", err)
