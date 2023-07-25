@@ -6,5 +6,5 @@ cp ./bin/kyma-linux /usr/local/bin/kyma
 kyma provision k3d --ci
 kyma deploy --ci
 #make -C "../kyma/tests/fast-integration" "ci"
-ls
-kyma undeploy --ci --timeout=10m0s
+kubectl get pvc -A
+kyma undeploy --ci --timeout=15m0s
