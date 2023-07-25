@@ -37,7 +37,7 @@ The module config file is a YAML file used to configure the following attributes
 - labels:       a map with string keys and values, optional, additional labels for the generated ModuleTemplate CR
 - annotations:  a map with string keys and values, optional, additional annotations for the generated ModuleTemplate CR
 
-The**manifes** and **defaultCR** paths are resolved against the module's directory, as configured with the "--path" flag.
+The **manifest** and **defaultCR** paths are resolved against the module's directory, as configured with the "--path" flag.
 The **manifest** file contains all the module's resources in a single, multi-document YAML file. These resources will be created in the Kyma cluster when the module is activated.
 The **defaultCR** file contains a default custom resource for the module that will be installed along with the module.
 The Default CR is additionally schema-validated against the Custom Resource Definition. The CRD used for the validation must exist in the set of the module's resources.
