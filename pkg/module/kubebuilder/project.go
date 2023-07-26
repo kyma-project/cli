@@ -17,8 +17,8 @@ const (
 	V3      = "go.kubebuilder.io/v3"
 	V4alpha = "go.kubebuilder.io/v4-alpha"
 
-	projectFile          = "PROJECT"
-	configFile           = "config.yaml"
+	projectFile = "PROJECT"
+	// configFile           = "config.yaml"
 	defaultKustomization = "config/default"
 	samplesPath          = "config/samples/"
 	OutputPath           = "manifests"
@@ -86,18 +86,6 @@ func (p *Project) Build(name string) (string, error) {
 	}
 
 	return renderedManifestPath, nil
-}
-
-func (p *Project) Config() (string, error) {
-	configPath := filepath.Join(p.path, configFile)
-	info, err := os.Stat(configPath)
-	if err != nil {
-		return "", err
-	}
-	if info.IsDir() {
-		return "", fmt.Errorf("expected file but found directory at %q", configPath)
-	}
-	return configPath, nil
 }
 
 // DefaultCR checks the samples of the project to obtain the default CR for the operator and returns its contents.
