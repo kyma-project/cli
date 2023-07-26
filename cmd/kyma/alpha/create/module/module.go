@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/mandelsoft/vfs/pkg/memoryfs"
@@ -14,8 +15,10 @@ import (
 	compdescv2 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/versions/v2"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
+	"golang.org/x/exp/maps"
 
 	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/nice"
 	"github.com/kyma-project/cli/pkg/module"
 )
 
@@ -32,64 +35,102 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "module --name MODULE_NAME --version MODULE_VERSION --registry MODULE_REGISTRY [flags]",
-		Short: "Creates a module bundled as an OCI image with the given OCI image name from the contents of the given path",
-		Long: `Use this command to create a Kyma module and bundle it as an OCI image.
+		Use:   "module [--module-config-file MODULE_CONFIG_FILE | --name MODULE_NAME --version MODULE_VERSION] [--path MODULE_DIRECTORY] [--registry MODULE_REGISTRY] [flags]",
+		Short: "Creates a module bundled as an OCI artifact",
+		Long: `Use this command to create a Kyma module, bundle it as an OCI artifact and optionally push it to the OCI registry.
 
 ### Detailed description
 
-Kyma modules are individual components that can be deployed into a Kyma runtime. Modules are built and distributed as OCI container images. 
-With this command, you can create such images out of a folder's contents.
+This command allows you to create a Kyma module as an OCI artifact and optionally push it to the OCI registry of your choice.
+For more information about a Kyma module see the [documentation](https://github.com/kyma-project/lifecycle-manager).
 
-This command creates a component descriptor in the descriptor path (./mod as a default) and packages all the contents on the provided path as an OCI image.
-Kubebuilder projects are supported. If the path contains a kubebuilder project, it will be built and pre-defined layers will be created based on its known contents.
+This command creates a module from an existing directory containing the module's source files.
+The directory must be a valid git project that is publicly available.
+The command supports two types of directory layouts for the module:
+- Simple: Just a directory with a valid git configuration. All the module's sources are defined in this directory.
+- Kubebuilder (DEPRECATED): A directory with a valid Kubebuilder project. Module operator(s) are created using the Kubebuilder toolset.
+Both simple and Kubebuilder projects require providing an explicit path to the module's project directory using the "--path" flag or invoking the command from within that directory.
 
-Alternatively, a custom (non kubebuilder) module can be created by providing a path that does not contain a kubebuilder project. In that case all the contents of the path will be bundled as a single layer.
+### Simple mode configuration
 
-Optionally, you can manually add additional layers with contents in other paths (see [resource flag](#flags) for more information).
+To configure the simple mode, provide the "--module-config-file" flag with a config file path.
+The module config file is a YAML file used to configure the following attributes for the module:
 
-Finally, if you provided a registry to which to push the artifact, the created module is validated and pushed. During the validation the default CR defined in the optional "default.yaml" file is validated against CustomResourceDefinition.
-Alternatively, you can trigger an on-demand default CR validation with "--validateCR=true", in case you don't push to the registry.
+- name:         a string, required, the name of the module
+- version:      a string, required, the version of the module
+- channel:      a string, required, channel that should be used in the ModuleTemplate CR
+- manifest:     a string, required, reference to the manifest, must be a relative file name
+- defaultCR:    a string, optional, reference to a YAML file containing the default CR for the module, must be a relative file name
+- resourceName: a string, optional, default={NAME}-{CHANNEL}, the name for the ModuleTemplate CR that will be created
+- security:     a string, optional, name of the security scanners config file
+- internal:     a boolean, optional, default=false, determines whether the ModuleTemplate CR should have the internal flag or not
+- beta:         a boolean, optional, default=false, determines whether the ModuleTemplate CR should have the beta flag or not
+- labels:       a map with string keys and values, optional, additional labels for the generated ModuleTemplate CR
+- annotations:  a map with string keys and values, optional, additional annotations for the generated ModuleTemplate CR
 
-To push the artifact into some registries, for example, the central docker.io registry, you have to change the OCM Component Name Mapping with the following flag: "--name-mapping=sha256-digest". This is necessary because the registry does not accept artifact URLs with more than two path segments, and such URLs are generated with the default name mapping: "urlPath". In the case of the "sha256-digest" mapping, the artifact URL contains just a sha256 digest of the full Component Name and fits the path length restrictions.
+The **manifest** and **defaultCR** paths are resolved against the module's directory, as configured with the "--path" flag.
+The **manifest** file contains all the module's resources in a single, multi-document YAML file. These resources will be created in the Kyma cluster when the module is activated.
+The **defaultCR** file contains a default custom resource for the module that will be installed along with the module.
+The Default CR is additionally schema-validated against the Custom Resource Definition. The CRD used for the validation must exist in the set of the module's resources.
+
+### Kubebuilder mode configuration
+The Kubebuilder mode is DEPRECATED.
+The Kubebuilder mode is configured automatically if the "--module-config-file" flag is not provided.
+
+In this mode, you have to explicitly provide the module name and version using the "--name" and "--version" flags, respectively.
+Some defaults, like the module manifest file location and the default CR file location, are then resolved automatically, but you can override these with the available flags.
+
+### Modules as OCI artifacts
+Modules are built and distributed as OCI artifacts. 
+This command creates a component descriptor in the configured descriptor path (./mod as a default) and packages all the contents on the provided path as an OCI artifact.
+The internal structure of the artifact conforms to the [Open Component Model](https://ocm.software/) scheme version 3.
+
+If you configured the "--registry" flag, the created module is validated and pushed to the configured registry.
+During the validation the **defaultCR** resource, if defined, is validated against a corresponding CustomResourceDefinition.
+You can also trigger an on-demand **defaultCR** validation with "--validateCR=true", in case you don't push the module to the registry.
+
+#### Name Mapping
+To push the artifact into some registries, for example, the central docker.io registry, you have to change the OCM Component Name Mapping with the following flag: "--name-mapping=sha256-digest". This is necessary because the registry does not accept artifact URLs with more than two path segments, and such URLs are generated with the default name mapping: **urlPath**. In the case of the "sha256-digest" mapping, the artifact URL contains just a sha256 digest of the full Component Name and fits the path length restrictions. The downside of the "sha256-mapping" is that the module name is no longer visible in the artifact URL, as it contains the sha256 digest of the defined name.
 
 `,
 
 		Example: `Examples:
-Build module my-domain/modA in version 1.2.3 and push it to a remote registry
-		kyma alpha create module -n my-domain/modA --version 1.2.3 -p /path/to/module --registry https://dockerhub.com
-Build module my-domain/modB in version 3.2.1 and push it to a local registry "unsigned" subfolder without tls
-		kyma alpha create module -n my-domain/modB --version 3.2.1 -p /path/to/module --registry http://localhost:5001/unsigned --insecure
+Build a simple module and push it to a remote registry
+		kyma alpha create module --module-config-file=/path/to/module-config-file -path /path/to/module --registry http://localhost:5001/unsigned --insecure
+Build a Kubebuilder module my-domain/modB in version 1.2.3 and push it to a remote registry
+		kyma alpha create module --name my-domain/modB --version 1.2.3 --path /path/to/module --registry https://dockerhub.com
+Build a Kubebuilder module my-domain/modC in version 3.2.1 and push it to a local registry "unsigned" subfolder without tls
+		kyma alpha create module --name my-domain/modC --version 3.2.1 --path /path/to/module --registry http://localhost:5001/unsigned --insecure
+
 `,
 		RunE:    func(cobraCmd *cobra.Command, args []string) error { return c.Run(cobraCmd.Context()) },
 		Aliases: []string{"mod"},
 	}
 
-	cmd.Flags().StringVar(&o.Version, "version", "", "Version of the module. This flag is mandatory.")
-	cmd.Flags().StringVarP(
-		&o.Name, "name", "n", "",
-		"Override the module name of the kubebuilder project. If the module is not a kubebuilder project, this flag is mandatory.",
+	cmd.Flags().StringVar(
+		&o.ModuleConfigFile, "module-config-file", "",
+		"Specifies the module configuration file",
 	)
 
 	cmd.Flags().StringVar(
 		&o.ModuleArchivePath, "module-archive-path", "./mod",
 		"Specifies the path where the module artifacts are locally cached to generate the image. If the path already has a module, use the \"--module-archive-version-overwrite\" flag to overwrite it.",
 	)
+
 	cmd.Flags().BoolVar(
 		&o.PersistentArchive, "module-archive-persistence", false,
 		"Uses the host filesystem instead of in-memory archiving to build the module.",
 	)
+
 	cmd.Flags().BoolVar(&o.ArchiveVersionOverwrite, "module-archive-version-overwrite", false, "Overwrites existing component's versions of the module. If set to false, the push is a No-Op.")
 
 	cmd.Flags().StringVarP(&o.Path, "path", "p", "", "Path to the module's contents. (default current directory)")
-	cmd.Flags().StringArrayVarP(
-		&o.ResourcePaths, "resource", "r", []string{},
-		"Add an extra resource in a new layer in the <NAME:TYPE@PATH> format. If you provide only a path, the name defaults to the last path element, and the type is set to 'helm-chart'.",
-	)
+
 	cmd.Flags().StringVar(
 		&o.RegistryURL, "registry", "",
 		"Context URL of the repository. The repository URL will be automatically added to the repository contexts in the module descriptor.",
 	)
+
 	cmd.Flags().StringVar(
 		&o.NameMappingMode, "name-mapping", "urlPath",
 		"Overrides the OCM Component Name Mapping, Use: \"urlPath\" or \"sha256-digest\".",
@@ -105,16 +146,12 @@ Build module my-domain/modB in version 3.2.1 and push it to a local registry "un
 		&o.Credentials, "credentials", "c", "",
 		"Basic authentication credentials for the given registry in the user:password format",
 	)
-	cmd.Flags().StringVar(
-		&o.DefaultCRPath, "default-cr", "",
-		"File containing the default custom resource of the module. If the module is a kubebuilder project, the default CR is automatically detected.",
-	)
+
 	cmd.Flags().StringVarP(
 		&o.TemplateOutput, "output", "o", "template.yaml",
 		"File to write the module template if the module is uploaded to a registry.",
 	)
-	cmd.Flags().StringVar(&o.Channel, "channel", "regular", "Channel to use for the module template.")
-	cmd.Flags().StringVar(&o.Target, "target", "control-plane", "Target to use when determining where to install the module. Use 'control-plane' or 'remote'.")
+
 	cmd.Flags().StringVar(
 		&o.SchemaVersion, "descriptor-version", compdescv2.SchemaVersion, fmt.Sprintf(
 			"Schema version to use for the generated OCM descriptor. One of %s",
@@ -126,6 +163,7 @@ Build module my-domain/modB in version 3.2.1 and push it to a local registry "un
 		"Authentication token for the given registry (alternative to basic authentication).",
 	)
 	cmd.Flags().BoolVar(&o.Insecure, "insecure", false, "Uses an insecure connection to access the registry.")
+
 	cmd.Flags().StringVar(
 		&o.SecurityScanConfig, "sec-scanners-config", "sec-scanners-config.yaml", "Path to the file holding "+
 			"the security scan configuration.",
@@ -134,6 +172,35 @@ Build module my-domain/modB in version 3.2.1 and push it to a local registry "un
 	cmd.Flags().StringVar(
 		&o.PrivateKeyPath, "key", "", "Specifies the path where a private key is used for signing.",
 	)
+
+	if !o.WithModuleConfigFile() {
+		configureLegacyFlags(cmd, o)
+	}
+
+	return cmd
+}
+
+// configureLegacyFlags configures the command for the legacy (deprecated) way of creating the module
+func configureLegacyFlags(cmd *cobra.Command, o *Options) *cobra.Command {
+
+	cmd.Flags().StringVar(&o.Version, "version", "", "Version of the module. This flag is mandatory.")
+
+	cmd.Flags().StringVarP(
+		&o.Name, "name", "n", "",
+		"Override the module name of the kubebuilder project. If the module is not a kubebuilder project, this flag is mandatory.",
+	)
+
+	cmd.Flags().StringArrayVarP(
+		&o.ResourcePaths, "resource", "r", []string{},
+		"Add an extra resource in a new layer in the <NAME:TYPE@PATH> format. If you provide only a path, the name defaults to the last path element, and the type is set to 'helm-chart'.",
+	)
+
+	cmd.Flags().StringVar(
+		&o.DefaultCRPath, "default-cr", "",
+		"File containing the default custom resource of the module. If the module is a kubebuilder project, the default CR is automatically detected.",
+	)
+
+	cmd.Flags().StringVar(&o.Channel, "channel", "regular", "Channel to use for the module template.")
 
 	return cmd
 }
@@ -160,27 +227,25 @@ func (cmd *command) Run(ctx context.Context) error {
 		return err
 	}
 
-	nameMappingMode, err := module.ParseNameMapping(cmd.opts.NameMappingMode)
+	modDef, modCnf, err := cmd.moduleDefinitionFromOptions()
+
 	if err != nil {
 		return err
-	}
-
-	modDef := &module.Definition{
-		Name:            cmd.opts.Name,
-		Version:         cmd.opts.Version,
-		Source:          cmd.opts.Path,
-		RegistryURL:     cmd.opts.RegistryURL,
-		NameMappingMode: nameMappingMode,
-		DefaultCRPath:   cmd.opts.DefaultCRPath,
-		SchemaVersion:   cmd.opts.SchemaVersion,
 	}
 
 	cmd.NewStep("Parse and build module...")
 
 	// Create base resource defs with module root and its sub-layers
-	if err := module.Inspect(modDef, cmd.opts.ResourcePaths, cmd.CurrentStep, l); err != nil {
-		cmd.CurrentStep.Failure()
-		return err
+	if cmd.opts.WithModuleConfigFile() {
+		if err := module.Inspect(modDef, l); err != nil {
+			cmd.CurrentStep.Failure()
+			return err
+		}
+	} else {
+		if err := module.InspectLegacy(modDef, cmd.opts.ResourcePaths, cmd.CurrentStep, l); err != nil {
+			cmd.CurrentStep.Failure()
+			return err
+		}
 	}
 	cmd.CurrentStep.Successf("Module built")
 
@@ -198,7 +263,7 @@ func (cmd *command) Run(ctx context.Context) error {
 		l.Info("using in-memory archive")
 	}
 	// this builds the archive in memory, Alternatively one can store it on disk or in temp folder
-	archive, err := module.Build(archiveFS, cmd.opts.ModuleArchivePath, modDef)
+	archive, err := module.CreateArchive(archiveFS, cmd.opts.ModuleArchivePath, modDef)
 	if err != nil {
 		cmd.CurrentStep.Failure()
 		return err
@@ -230,6 +295,7 @@ func (cmd *command) Run(ctx context.Context) error {
 			l.Warnf("Security scanning configuration was skipped: %s", err.Error())
 		}
 	}
+
 	/* -- PUSH & TEMPLATE -- */
 
 	if cmd.opts.RegistryURL != "" {
@@ -242,6 +308,7 @@ func (cmd *command) Run(ctx context.Context) error {
 		}
 
 		componentVersionAccess, err := remote.Push(archive, cmd.opts.ArchiveVersionOverwrite)
+
 		if err != nil {
 			cmd.CurrentStep.Failure()
 			return err
@@ -264,7 +331,33 @@ func (cmd *command) Run(ctx context.Context) error {
 		}
 
 		cmd.NewStep("Generating module template")
-		t, err := module.Template(componentVersionAccess, cmd.opts.Channel, modDef.DefaultCR)
+
+		labels := map[string]string{}
+		annotations := map[string]string{}
+
+		var resourceName = ""
+
+		if modCnf != nil {
+			resourceName = modCnf.ResourceName
+
+			maps.Copy(labels, modCnf.Labels)
+			maps.Copy(annotations, modCnf.Annotations)
+
+			if modCnf.Beta {
+				labels["operator.kyma-project.io/beta"] = "true"
+			}
+			if modCnf.Internal {
+				labels["operator.kyma-project.io/internal"] = "true"
+			}
+		}
+
+		var channel = cmd.opts.Channel
+		if modCnf != nil {
+			channel = modCnf.Channel
+		}
+
+		t, err := module.Template(componentVersionAccess, resourceName, channel, modDef.DefaultCR, labels, annotations)
+
 		if err != nil {
 			cmd.CurrentStep.Failure()
 			return err
@@ -275,6 +368,7 @@ func (cmd *command) Run(ctx context.Context) error {
 			return err
 		}
 		cmd.CurrentStep.Successf("Template successfully generated at %s", cmd.opts.TemplateOutput)
+
 	}
 
 	return nil
@@ -282,10 +376,17 @@ func (cmd *command) Run(ctx context.Context) error {
 
 func (cmd *command) validateDefaultCR(ctx context.Context, modDef *module.Definition, l *zap.SugaredLogger) error {
 	cmd.NewStep("Validating Default CR")
-	crValidator, err := module.NewDefaultCRValidator(modDef.DefaultCR, modDef.Source)
-	if err != nil {
-		cmd.CurrentStep.Failure()
-		return err
+
+	type validator interface {
+		Run(ctx context.Context, log *zap.SugaredLogger) error
+	}
+
+	var crValidator validator
+
+	if cmd.opts.WithModuleConfigFile() {
+		crValidator = module.NewSingleManifestFileCRValidator(modDef.DefaultCR, modDef.SingleManifestPath)
+	} else {
+		crValidator = module.NewDefaultCRValidator(modDef.DefaultCR, modDef.Source)
 	}
 
 	if err := crValidator.Run(ctx, l); err != nil {
@@ -323,6 +424,93 @@ func (cmd *command) getRemote(nameMapping module.NameMapping) (*module.Remote, e
 				return nil, errors.New("command stopped by user")
 			}
 		}
+	}
+
+	return res, nil
+}
+
+func (cmd *command) moduleDefinitionFromOptions() (*module.Definition, *Config, error) {
+
+	var def *module.Definition
+	var cnf *Config
+
+	nameMappingMode, err := module.ParseNameMapping(cmd.opts.NameMappingMode)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if cmd.opts.WithModuleConfigFile() {
+		//new approach, config-file  based
+
+		moduleConfig, err := ParseConfig(cmd.opts.ModuleConfigFile)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		err = moduleConfig.Validate()
+		if err != nil {
+			return nil, nil, err
+		}
+
+		var defaultCRPath string
+		if moduleConfig.DefaultCRPath != "" {
+			defaultCRPath, err = resolveFilePath(moduleConfig.DefaultCRPath, cmd.opts.Path)
+			if err != nil {
+				return nil, nil, fmt.Errorf("%w,  %w", ErrDefaultCRPathValidation, err)
+			}
+		}
+
+		moduleManifestPath, err := resolveFilePath(moduleConfig.ManifestPath, cmd.opts.Path)
+		if err != nil {
+			return nil, nil, fmt.Errorf("%w,  %w", ErrManifestPathValidation, err)
+		}
+
+		def = &module.Definition{
+			Name:               moduleConfig.Name,
+			Version:            moduleConfig.Version,
+			Source:             cmd.opts.Path,
+			RegistryURL:        cmd.opts.RegistryURL,
+			NameMappingMode:    nameMappingMode,
+			DefaultCRPath:      defaultCRPath,
+			SingleManifestPath: moduleManifestPath,
+			SchemaVersion:      cmd.opts.SchemaVersion,
+		}
+		cnf = moduleConfig
+	} else {
+		np := nice.Nice{}
+		np.PrintImportant("WARNING: The Kubebuilder support in this command is DEPRECATED. Use the simple mode by providing the \"--module-config-file\" flag instead.")
+
+		//legacy approach, flag-based
+		def = &module.Definition{
+			Name:            cmd.opts.Name,
+			Version:         cmd.opts.Version,
+			Source:          cmd.opts.Path,
+			RegistryURL:     cmd.opts.RegistryURL,
+			NameMappingMode: nameMappingMode,
+			DefaultCRPath:   cmd.opts.DefaultCRPath,
+			SchemaVersion:   cmd.opts.SchemaVersion,
+		}
+	}
+
+	return def, cnf, nil
+}
+
+// resolvePath resolves given path if it's absolute or uses the provided prefix to make it absolute.
+// Returns an error if the path does not exist or is a directory.
+func resolveFilePath(given, absolutePrefix string) (string, error) {
+
+	res := given
+
+	if !filepath.IsAbs(res) {
+		res = filepath.Join(absolutePrefix, given)
+	}
+
+	fi, err := os.Stat(res)
+	if err != nil {
+		return "", err
+	}
+	if fi.IsDir() {
+		return "", fmt.Errorf("%q is directory", res)
 	}
 
 	return res, nil
