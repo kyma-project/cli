@@ -3,8 +3,10 @@ package git
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/accessmethods/github"
@@ -40,12 +42,18 @@ func Source(ctx cpi.Context, path, repo, version string) (*ocm.Source, error) {
 
 			if len(remotes) > 0 {
 				var err error
-				// get remote URL and convert to HTTP in case it is an SSH URL
-				repo = remotes[0].Config().URLs[0]
-
-				if err != nil {
-					return nil, fmt.Errorf("could not parse repository URL %q: %w", repo, err)
+				// get remote URL and convert to HTTPS in case it is an SSH URL
+				httpURL := remotes[0].Config().URLs[0]
+				if strings.HasPrefix(httpURL, "git") {
+					httpURL = strings.Replace(httpURL, ":", "/", 1)
+					httpURL = strings.Replace(httpURL, "git@", "https://", 1)
+					httpURL = strings.TrimSuffix(httpURL, gitFolder)
 				}
+				repoURL, err := url.Parse(httpURL)
+				if err != nil {
+					return nil, fmt.Errorf("could not parse repository URL %q: %w", httpURL, err)
+				}
+				repo = repoURL.String()
 			}
 		}
 

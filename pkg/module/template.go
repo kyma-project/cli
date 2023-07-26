@@ -16,20 +16,32 @@ const (
 	modTemplate = `apiVersion: operator.kyma-project.io/v1beta2
 kind: ModuleTemplate
 metadata:
-  name: moduletemplate-{{ .ShortName }}
+  name: {{.ResourceName}}
   namespace: kcp-system
+{{- with .Labels}}
   labels:
-    "operator.kyma-project.io/module-name": "{{ .ShortName }}"
+    {{- range $key, $value := . }}
+    {{ printf "%q" $key }}: {{ printf "%q" $value }}
+    {{- end}}
+{{- end}} 
+{{- with .Annotations}}
+  annotations:
+    {{- range $key, $value := . }}
+    {{ printf "%q" $key }}: {{ printf "%q" $value }}
+    {{- end}}
+{{- end}} 
 spec:
   channel: {{.Channel}}
   data:
-{{.Data | indent 4}}
+{{- with .Data}}
+{{. | indent 4}}
+{{- end}}
   descriptor:
 {{yaml .Descriptor | printf "%s" | indent 4}}
 `
 )
 
-func Template(remote ocm.ComponentVersionAccess, channel, target string, data []byte) ([]byte, error) {
+func Template(remote ocm.ComponentVersionAccess, moduleTemplateName, channel string, data []byte, labels, annotations map[string]string) ([]byte, error) {
 	descriptor := remote.GetDescriptor()
 	ref, err := oci.ParseRef(descriptor.Name)
 	if err != nil {
@@ -41,16 +53,26 @@ func Template(remote ocm.ComponentVersionAccess, channel, target string, data []
 		return nil, err
 	}
 
+	shortName := ref.ShortName()
+	labels["operator.kyma-project.io/module-name"] = shortName
+	resourceName := moduleTemplateName
+	if len(resourceName) == 0 {
+		resourceName = shortName + "-" + channel
+	}
 	td := struct { // Custom struct for the template
-		ShortName  string                              // Last part of the component descriptor name
-		Descriptor compdesc.ComponentDescriptorVersion // descriptor info for the template
-		Channel    string
-		Data       string // contents for the spec.data section of the template taken from the defaults.yaml file in the mod folder
+		ResourceName string                              // K8s resource name of the generated ModuleTemplate
+		Descriptor   compdesc.ComponentDescriptorVersion // descriptor info for the template
+		Channel      string
+		Data         string // contents for the spec.data section of the template taken from the defaults.yaml file in the mod folder
+		Labels       map[string]string
+		Annotations  map[string]string
 	}{
-		ShortName:  ref.ShortName(),
-		Descriptor: cva,
-		Channel:    channel,
-		Data:       string(data),
+		ResourceName: resourceName,
+		Descriptor:   cva,
+		Channel:      channel,
+		Data:         string(data),
+		Labels:       labels,
+		Annotations:  annotations,
 	}
 
 	t, err := template.New("modTemplate").Funcs(template.FuncMap{"yaml": yaml.Marshal, "indent": Indent}).Parse(modTemplate)

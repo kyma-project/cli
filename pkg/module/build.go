@@ -16,17 +16,14 @@ import (
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/comparch"
 )
 
-// Build creates a component archive with the given configuration.
+// CreateArchive creates a component archive with the given configuration.
 // An empty vfs.FileSystem causes a FileSystem to be created in
 // the temporary OS folder
-func Build(fs vfs.FileSystem, path string, def *Definition) (*comparch.ComponentArchive, error) {
+func CreateArchive(fs vfs.FileSystem, path string, def *Definition) (*comparch.ComponentArchive, error) {
 	if err := def.validate(); err != nil {
 		return nil, err
 	}
-	return build(fs, path, def)
-}
 
-func build(fs vfs.FileSystem, path string, def *Definition) (*comparch.ComponentArchive, error) {
 	// build minimal archive
 
 	if err := fs.MkdirAll(path, os.ModePerm); err != nil {
