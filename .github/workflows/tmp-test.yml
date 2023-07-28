@@ -1,0 +1,45 @@
+name: Trigger test
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+jobs:
+  wait-for-img:
+    name: "Wait for Image Build"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: autotelic/action-wait-for-status-check@v1
+        id: wait-for-build
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # Context for which we should look for the matching status
+          statusName: ${{ (github.event_name == 'pull_request') && 'pull-lifecycle-mgr-build' || 'main-lifecycle-mgr-build' }}
+          timeoutSeconds: 300 # 5 mins due to flakiness of build speed in prow
+          intervalSeconds: 10
+      - name: Exit If Failing Build Requirement
+        if: steps.wait-for-build.outputs.state != 'success'
+        run: |
+          echo "Image build did not succeed, skipping E2E Test!"
+          exit 1
+
+  e2e-integration:
+    strategy:
+      matrix:
+        cli-stability: [ "unstable" ]
+    name: "Run E2E tests"
+    needs: [wait-for-img]
+    runs-on: ubuntu-latest
+    env:
+      K3D_VERSION: v5.4.7
+      ISTIO_VERSION: 1.17.1
+      CM_VERSION: v1.12.0
+      KLM_VERSION_TAG: latest
+      KLM_IMAGE_REPO: prod
+    steps:
+      - name: Install prerequisites
+        run: |
+          sudo apt update -y
+          sudo apt upgrade -y
+          sudo apt install git curl wget make bash golang-go -y
