@@ -3,6 +3,7 @@ package deploy
 import (
 	"context"
 	"fmt"
+	"github.com/kyma-project/cli/pkg/errs"
 	"os"
 
 	"github.com/avast/retry-go"
@@ -65,8 +66,12 @@ func Kyma(
 
 	if err := k8s.WatchObject(
 		ctx, kyma,
-		func(kyma ctrlClient.Object) (bool, error) {
-			return string(kyma.(*v1beta2.Kyma).Status.State) == string(v1beta2.StateReady), nil
+		func(obj ctrlClient.Object) (bool, error) {
+			tKyma, ok := obj.(*v1beta2.Kyma)
+			if !ok {
+				return false, errs.ErrTypeAssertKyma
+			}
+			return string(tKyma.Status.State) == string(v1beta2.StateReady), nil
 		},
 	); err != nil {
 		return fmt.Errorf("kyma custom resource did not get ready: %w", err)

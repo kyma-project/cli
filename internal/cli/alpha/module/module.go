@@ -3,6 +3,7 @@ package module
 import (
 	"context"
 	"fmt"
+	"github.com/kyma-project/cli/pkg/errs"
 	"time"
 
 	"github.com/avast/retry-go"
@@ -167,7 +168,10 @@ func (i *DefaultInteractor) WaitUntilReady(ctx context.Context) error {
 // It checks for v1beta2.StateReady, and if it is set, determines if this state can be trusted by observing
 // if the status fields match the desired state, and if the lastOperation is filled by the lifecycle-manager.
 func IsKymaReady(l *zap.SugaredLogger, obj runtime.Object) error {
-	kyma := obj.(*v1beta2.Kyma)
+	kyma, ok := obj.(*v1beta2.Kyma)
+	if !ok {
+		return errs.ErrTypeAssertKyma
+	}
 	l.Info(kyma.Status)
 	switch kyma.Status.State {
 	case v1beta2.StateReady:

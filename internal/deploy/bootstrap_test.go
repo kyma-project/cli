@@ -101,7 +101,7 @@ func TestPatchDeploymentWithInKcpModeFlag(t *testing.T) {
 				t.Errorf("PatchDeploymentWithInKcpMode() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
-			hasKcpFlag := validateDeploymentHasKcpFlag(tt.args.manifestObjs)
+			hasKcpFlag := validateDeploymentHasKcpFlag(t, tt.args.manifestObjs)
 			if !assert.Equal(t, tt.want, hasKcpFlag) {
 				t.Errorf("PatchDeploymentWithInKcpModeFlag() got = %t, want %t", hasKcpFlag, tt.want)
 			}
@@ -109,10 +109,13 @@ func TestPatchDeploymentWithInKcpModeFlag(t *testing.T) {
 	}
 }
 
-func validateDeploymentHasKcpFlag(objs []ctrlClient.Object) bool {
+func validateDeploymentHasKcpFlag(t *testing.T, objs []ctrlClient.Object) bool {
 	for _, obj := range objs {
 		if obj.GetObjectKind().GroupVersionKind().Kind == "Deployment" {
-			manifestJSON, _ := json.Marshal(obj.(*unstructured.Unstructured).Object)
+			unstr, ok := obj.(*unstructured.Unstructured)
+			assert.True(t, ok)
+			manifestJSON, err := json.Marshal(unstr.Object)
+			assert.NoError(t, err)
 			deployment := &appsv1.Deployment{}
 			if err := json.Unmarshal(manifestJSON, deployment); err == nil {
 				if slices.Contains(deployment.Spec.Template.Spec.Containers[0].Args, "--in-kcp-mode") {

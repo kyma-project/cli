@@ -3,6 +3,7 @@ package deploy
 import (
 	"context"
 	"encoding/json"
+	"github.com/pkg/errors"
 	"regexp"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -113,12 +114,19 @@ func patchDeploymentWithInKcpModeFlag(manifestObjs []ctrlClient.Object) error {
 	return nil
 }
 
+var ErrPatchManifestType = errors.New("failed to cast manifest object to Unstructured")
+
 func patchManifest(deployment *appsv1.Deployment, manifest ctrlClient.Object) error {
 	manifestJSON, err := json.Marshal(deployment)
 	if err != nil {
 		return err
 	}
-	err = json.Unmarshal(manifestJSON, &manifest.(*unstructured.Unstructured).Object)
+	unstrct, ok := manifest.(*unstructured.Unstructured)
+	if !ok {
+		return ErrPatchManifestType
+	}
+
+	err = json.Unmarshal(manifestJSON, &unstrct.Object)
 	if err != nil {
 		return err
 	}
