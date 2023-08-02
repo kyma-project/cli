@@ -234,8 +234,6 @@ func inspectProject(def *Definition, p *kubebuilder.Project, layers []Layer, s s
 		return err
 	}
 
-	// Config Layer is deprecated since KLM only supports Raw Manifest Rendering now.
-
 	// Add default CR if generating template
 	var cr []byte
 	if def.RegistryURL != "" {
