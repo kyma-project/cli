@@ -30,7 +30,7 @@ require (
 	github.com/kyma-project/hydroform/function v0.0.0-20230628151226-25b31247e585
 	github.com/kyma-project/hydroform/provision v0.0.0-20230418133637-1ea26b368bb6
 	github.com/kyma-project/lifecycle-manager v0.0.0-20230626125722-e28fc6438d83
-	github.com/mandelsoft/vfs v0.0.0-20220805210647-bf14a11bfe31
+	github.com/mandelsoft/vfs v0.0.0-20230714093241-d557f163aecd
 	github.com/open-component-model/ocm v0.3.0-rc.1
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.0-rc2
@@ -254,14 +254,14 @@ require (
 	go.starlark.net v0.0.0-20230128213706-3f75dec8e403 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
-	golang.org/x/crypto v0.9.0 // indirect
+	golang.org/x/crypto v0.10.0 // indirect
 	golang.org/x/mod v0.9.0 // indirect
-	golang.org/x/net v0.10.0 // indirect
+	golang.org/x/net v0.11.0 // indirect
 	golang.org/x/oauth2 v0.4.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.8.0 // indirect
-	golang.org/x/term v0.8.0 // indirect
-	golang.org/x/text v0.9.0 // indirect
+	golang.org/x/sys v0.9.0 // indirect
+	golang.org/x/term v0.9.0 // indirect
+	golang.org/x/text v0.10.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.7.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
