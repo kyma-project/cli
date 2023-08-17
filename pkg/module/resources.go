@@ -234,17 +234,6 @@ func inspectProject(def *Definition, p *kubebuilder.Project, layers []Layer, s s
 		return err
 	}
 
-	// config.yaml -> layer 2
-	if configPath, err := p.Config(); err == nil {
-		def.Layers = append(def.Layers, Layer{
-			name:         configLayerName,
-			resourceType: typeYaml,
-			path:         configPath,
-		})
-	} else if !errors.Is(err, os.ErrNotExist) {
-		return fmt.Errorf("error while determining config layer: %w", err)
-	}
-
 	// Add default CR if generating template
 	var cr []byte
 	if def.RegistryURL != "" {

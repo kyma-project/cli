@@ -10,10 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kyma-project/cli/pkg/module/kubebuilder"
-
 	setup "github.com/kyma-project/cli/internal/cli/setup/envtest"
 	"github.com/kyma-project/cli/internal/kube"
+	"github.com/kyma-project/cli/pkg/module/kubebuilder"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 	amv "k8s.io/apimachinery/pkg/util/validation"
@@ -24,6 +23,7 @@ var ErrEmptyCR = errors.New("provided CR is empty")
 type DefaultCRValidator struct {
 	crdSearchDir string
 	crData       []byte
+	crd          []byte
 }
 
 func NewDefaultCRValidator(cr []byte, modulePath string) *DefaultCRValidator {
@@ -51,13 +51,14 @@ func (v *DefaultCRValidator) Run(ctx context.Context, log *zap.SugaredLogger) er
 	}
 
 	// find the file containing the CRD for given group and kind
-	crdFound, crdFilePath, err := findCRDFileFor(group, kind, v.crdSearchDir)
+	crd, crdFilePath, err := findCRDFileFor(group, kind, v.crdSearchDir)
 	if err != nil {
 		return fmt.Errorf("error finding CRD file in the %q directory: %w", v.crdSearchDir, err)
 	}
-	if !crdFound {
+	if crd == nil {
 		return fmt.Errorf("can't find the CRD for (group: %q, kind %q)", group, kind)
 	}
+	v.crd = crd
 
 	return runTestEnv(ctx, log, crdFilePath, crMap)
 }
@@ -200,42 +201,43 @@ func renderYamlFromMap(modelMap map[string]interface{}) ([]byte, error) {
 }
 
 // findCRDFileFor returns path to the file with a CRD definition for the given group and kind, if exists.
-// It looks in the dirPath directory and all of its subdirectories, recursively. The first parameter is true if the file is found, it's false otherwise.
-func findCRDFileFor(group, kind, dirPath string) (bool, string, error) {
+// It looks in the dirPath directory and all of its subdirectories, recursively.
+func findCRDFileFor(group, kind, dirPath string) ([]byte, string, error) {
 
 	//list all files in the dirPath and all it's subdirectories, recursively
 	files, err := listFiles(dirPath)
 	if err != nil {
-		return false, "", fmt.Errorf("error listing files in %q directory: %w", dirPath, err)
+		return nil, "", fmt.Errorf("error listing files in %q directory: %w", dirPath, err)
 	}
 
 	var found string
+	var crd []byte
 	for _, f := range files {
-		ok, err := isCRDFileFor(group, kind, f)
+		crd, err = getCRDFileFor(group, kind, f)
 		if err != nil {
 			//Error is expected. Either the file is not YAML, or it's not a CRD, or it's a CRD but not the one we're looking for.
 			continue
 		}
-		if ok {
+		if crd != nil {
 			found = f
 			break
 		}
 	}
 
 	if found != "" {
-		return true, found, nil
+		return crd, found, nil
 	}
 
-	return false, "", nil
+	return nil, "", nil
 }
 
-// isCRDFileFor checks if the given file is a CRD for given group and kind.
-func isCRDFileFor(group, kind, filePath string) (bool, error) {
+// getCRDFileFor returns the crd if the given file is a CRD for given group and kind.
+func getCRDFileFor(group, kind, filePath string) ([]byte, error) {
 	res, err := getCRDFromFile(group, kind, filePath)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
-	return res != nil, nil
+	return res, nil
 }
 
 // getCRDFromFile tries to find a CRD for given group and kind in the given multi-document YAML file. Returns a generic map representation of the CRD
@@ -354,6 +356,7 @@ func ValidateName(name string) error {
 type SingleManifestFileCRValidator struct {
 	manifestPath string
 	crData       []byte
+	crd          []byte
 }
 
 func NewSingleManifestFileCRValidator(cr []byte, manifestPath string) *SingleManifestFileCRValidator {
@@ -387,6 +390,7 @@ func (v *SingleManifestFileCRValidator) Run(ctx context.Context, log *zap.Sugare
 	if crdBytes == nil {
 		return fmt.Errorf("can't find the CRD for (group: %q, kind %q)", group, kind)
 	}
+	v.crd = crdBytes
 
 	// store extracted CRD in a temp file
 	tempDir, err := os.MkdirTemp("", "temporary-crd")
@@ -407,4 +411,12 @@ func (v *SingleManifestFileCRValidator) Run(ctx context.Context, log *zap.Sugare
 
 	// run testEnv using the temporary file with extracted CRD
 	return runTestEnv(ctx, log, tempCRDFile, crMap)
+}
+
+func (v *SingleManifestFileCRValidator) GetCrd() []byte {
+	return v.crd
+}
+
+func (v *DefaultCRValidator) GetCrd() []byte {
+	return v.crd
 }
