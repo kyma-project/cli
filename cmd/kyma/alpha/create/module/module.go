@@ -8,6 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/nice"
+	"github.com/kyma-project/cli/pkg/module"
 	"github.com/mandelsoft/vfs/pkg/memoryfs"
 	"github.com/mandelsoft/vfs/pkg/osfs"
 	"github.com/mandelsoft/vfs/pkg/vfs"
@@ -16,10 +19,8 @@ import (
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"golang.org/x/exp/maps"
-
-	"github.com/kyma-project/cli/internal/cli"
-	"github.com/kyma-project/cli/internal/nice"
-	"github.com/kyma-project/cli/pkg/module"
+	"gopkg.in/yaml.v3"
+	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 )
 
 type command struct {
@@ -205,6 +206,11 @@ func configureLegacyFlags(cmd *cobra.Command, o *Options) *cobra.Command {
 	return cmd
 }
 
+type validator interface {
+	GetCrd() []byte
+	Run(ctx context.Context, log *zap.SugaredLogger) error
+}
+
 func (cmd *command) Run(ctx context.Context) error {
 	osFS := osfs.New()
 
@@ -249,7 +255,8 @@ func (cmd *command) Run(ctx context.Context) error {
 	}
 	cmd.CurrentStep.Successf("Module built")
 
-	if err := cmd.validateDefaultCR(ctx, modDef, l); err != nil {
+	var crValidator validator
+	if crValidator, err = cmd.validateDefaultCR(ctx, modDef, l); err != nil {
 		return err
 	}
 
@@ -350,6 +357,12 @@ func (cmd *command) Run(ctx context.Context) error {
 				labels["operator.kyma-project.io/internal"] = "true"
 			}
 		}
+		isClusterScoped := isCrdClusterScoped(crValidator.GetCrd())
+		if isClusterScoped {
+			annotations["operator.kyma-project.io/is-cluster-scoped"] = "true"
+		} else {
+			annotations["operator.kyma-project.io/is-cluster-scoped"] = "false"
+		}
 
 		var channel = cmd.opts.Channel
 		if modCnf != nil {
@@ -374,15 +387,10 @@ func (cmd *command) Run(ctx context.Context) error {
 	return nil
 }
 
-func (cmd *command) validateDefaultCR(ctx context.Context, modDef *module.Definition, l *zap.SugaredLogger) error {
+func (cmd *command) validateDefaultCR(ctx context.Context, modDef *module.Definition, l *zap.SugaredLogger) (validator, error) {
 	cmd.NewStep("Validating Default CR")
 
-	type validator interface {
-		Run(ctx context.Context, log *zap.SugaredLogger) error
-	}
-
 	var crValidator validator
-
 	if cmd.opts.WithModuleConfigFile() {
 		crValidator = module.NewSingleManifestFileCRValidator(modDef.DefaultCR, modDef.SingleManifestPath)
 	} else {
@@ -392,12 +400,12 @@ func (cmd *command) validateDefaultCR(ctx context.Context, modDef *module.Defini
 	if err := crValidator.Run(ctx, l); err != nil {
 		if errors.Is(err, module.ErrEmptyCR) {
 			cmd.CurrentStep.Successf("Default CR validation skipped - no default CR")
-			return nil
+			return crValidator, nil
 		}
-		return err
+		return crValidator, err
 	}
 	cmd.CurrentStep.Successf("Default CR validation succeeded")
-	return nil
+	return crValidator, nil
 }
 
 func (cmd *command) getRemote(nameMapping module.NameMapping) (*module.Remote, error) {
@@ -514,4 +522,17 @@ func resolveFilePath(given, absolutePrefix string) (string, error) {
 	}
 
 	return res, nil
+}
+
+func isCrdClusterScoped(crdBytes []byte) bool {
+	if crdBytes == nil {
+		return false
+	}
+
+	crd := &apiextensions.CustomResourceDefinition{}
+	if err := yaml.Unmarshal(crdBytes, crd); err != nil {
+		return false
+	}
+
+	return crd.Spec.Scope == apiextensions.ClusterScoped
 }
