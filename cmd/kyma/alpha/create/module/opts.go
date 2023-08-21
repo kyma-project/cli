@@ -2,6 +2,7 @@ package module
 
 import (
 	"fmt"
+	"github.com/kyma-project/cli/internal/nice"
 	"os"
 	"path/filepath"
 	"strings"
@@ -37,6 +38,7 @@ type Options struct {
 	SecurityScanConfig      string
 	PrivateKeyPath          string
 	ModuleConfigFile        string
+	KubebuilderProject      bool
 }
 
 const (
@@ -101,7 +103,7 @@ func (o *Options) ValidateChannel() error {
 }
 
 func (o *Options) Validate() error {
-	if !o.WithModuleConfigFile() {
+	if o.KubebuilderProject {
 		if err := o.ValidateVersion(); err != nil {
 			return err
 		}
@@ -109,6 +111,12 @@ func (o *Options) Validate() error {
 		if err := o.ValidateChannel(); err != nil {
 			return err
 		}
+	} else if !o.WithModuleConfigFile() {
+		np := nice.Nice{}
+		np.PrintImportant("WARNING: \"--module-config-file\" flag is required. If you want to build a module " +
+			"from a Kubebuilder project instead, use the \"--kubebuilder-project\" flag.")
+		err := errors.New("\"--module-config-file\" flag is required")
+		return err
 	}
 
 	return o.ValidatePath()
