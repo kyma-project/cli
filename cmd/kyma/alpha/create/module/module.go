@@ -451,7 +451,7 @@ func (cmd *command) moduleDefinitionFromOptions() (*module.Definition, *Config, 
 
 	if cmd.opts.KubebuilderProject {
 		np := nice.Nice{}
-		np.PrintImportant("WARNING: The Kubebuilder support is DEPRECATED. Use the simple mode by providing the \"--kubebuilder-project\" flag instead.")
+		np.PrintImportant("WARNING: The Kubebuilder support is DEPRECATED. Use the simple mode by providing the \"--module-config-file\" flag instead.")
 
 		//legacy approach, flag-based
 		def = &module.Definition{
