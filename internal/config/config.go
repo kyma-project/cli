@@ -6,5 +6,5 @@
 package config
 
 const (
-	DefaultKyma2Version = "main"
+	DefaultKyma2Version = "2.17.1"
 )
