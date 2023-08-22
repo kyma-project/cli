@@ -1,3 +1,5 @@
+[![REUSE status](https://api.reuse.software/badge/github.com/kyma-project/cli)](https://api.reuse.software/info/github.com/kyma-project/cli)
+
 # Kyma CLI
 
 ## Overview
@@ -8,7 +10,7 @@ Kyma CLI is a command line tool which supports [Kyma](https://github.com/kyma-pr
 - Deploy, manage, and undeploy Kyma.
 - Manage your Functions.
 
->**TIP:** This document briefly describes the concept of Kyma CLI. Read the [Kyma documentation](https://kyma-project.io/docs/kyma/latest/) to learn more.
+>**TIP:** This document briefly describes the concept of Kyma CLI. Read the [Kyma documentation](https://kyma-project.io/#/01-overview/ui/README?id=kyma-cli) to learn more.
 
 ## Installation
 
@@ -24,7 +26,7 @@ To install the latest release of Kyma CLI on Windows using [Chocolatey](https://
 choco install kyma-cli
 ```
 
-Read more about [installation options](https://kyma-project.io/docs/kyma/latest/04-operation-guides/operations/01-install-kyma-CLI/).
+Read more about [installation options](https://kyma-project.io/#/04-operation-guides/operations/01-install-kyma-CLI).
 
 ## Use Kyma CLI
 
