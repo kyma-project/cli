@@ -174,7 +174,9 @@ Build a Kubebuilder module my-domain/modC in version 3.2.1 and push it to a loca
 		&o.PrivateKeyPath, "key", "", "Specifies the path where a private key is used for signing.",
 	)
 
-	if !o.WithModuleConfigFile() {
+	cmd.Flags().BoolVar(&o.KubebuilderProject, "kubebuilder-project", false, "Specifies provided module is a Kubebuilder Project.")
+
+	if o.KubebuilderProject {
 		configureLegacyFlags(cmd, o)
 	}
 
@@ -242,13 +244,13 @@ func (cmd *command) Run(ctx context.Context) error {
 	cmd.NewStep("Parse and build module...")
 
 	// Create base resource defs with module root and its sub-layers
-	if cmd.opts.WithModuleConfigFile() {
-		if err := module.Inspect(modDef, l); err != nil {
+	if cmd.opts.KubebuilderProject {
+		if err := module.InspectLegacy(modDef, cmd.opts.ResourcePaths, cmd.CurrentStep, l); err != nil {
 			cmd.CurrentStep.Failure()
 			return err
 		}
 	} else {
-		if err := module.InspectLegacy(modDef, cmd.opts.ResourcePaths, cmd.CurrentStep, l); err != nil {
+		if err := module.Inspect(modDef, l); err != nil {
 			cmd.CurrentStep.Failure()
 			return err
 		}
@@ -391,10 +393,10 @@ func (cmd *command) validateDefaultCR(ctx context.Context, modDef *module.Defini
 	cmd.NewStep("Validating Default CR")
 
 	var crValidator validator
-	if cmd.opts.WithModuleConfigFile() {
-		crValidator = module.NewSingleManifestFileCRValidator(modDef.DefaultCR, modDef.SingleManifestPath)
-	} else {
+	if cmd.opts.KubebuilderProject {
 		crValidator = module.NewDefaultCRValidator(modDef.DefaultCR, modDef.Source)
+	} else {
+		crValidator = module.NewSingleManifestFileCRValidator(modDef.DefaultCR, modDef.SingleManifestPath)
 	}
 
 	if err := crValidator.Run(ctx, l); err != nil {
@@ -447,46 +449,9 @@ func (cmd *command) moduleDefinitionFromOptions() (*module.Definition, *Config, 
 		return nil, nil, err
 	}
 
-	if cmd.opts.WithModuleConfigFile() {
-		//new approach, config-file  based
-
-		moduleConfig, err := ParseConfig(cmd.opts.ModuleConfigFile)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		err = moduleConfig.Validate()
-		if err != nil {
-			return nil, nil, err
-		}
-
-		var defaultCRPath string
-		if moduleConfig.DefaultCRPath != "" {
-			defaultCRPath, err = resolveFilePath(moduleConfig.DefaultCRPath, cmd.opts.Path)
-			if err != nil {
-				return nil, nil, fmt.Errorf("%w,  %w", ErrDefaultCRPathValidation, err)
-			}
-		}
-
-		moduleManifestPath, err := resolveFilePath(moduleConfig.ManifestPath, cmd.opts.Path)
-		if err != nil {
-			return nil, nil, fmt.Errorf("%w,  %w", ErrManifestPathValidation, err)
-		}
-
-		def = &module.Definition{
-			Name:               moduleConfig.Name,
-			Version:            moduleConfig.Version,
-			Source:             cmd.opts.Path,
-			RegistryURL:        cmd.opts.RegistryURL,
-			NameMappingMode:    nameMappingMode,
-			DefaultCRPath:      defaultCRPath,
-			SingleManifestPath: moduleManifestPath,
-			SchemaVersion:      cmd.opts.SchemaVersion,
-		}
-		cnf = moduleConfig
-	} else {
+	if cmd.opts.KubebuilderProject {
 		np := nice.Nice{}
-		np.PrintImportant("WARNING: The Kubebuilder support in this command is DEPRECATED. Use the simple mode by providing the \"--module-config-file\" flag instead.")
+		np.PrintImportant("WARNING: The Kubebuilder support is DEPRECATED. Use the simple mode by providing the \"--module-config-file\" flag instead.")
 
 		//legacy approach, flag-based
 		def = &module.Definition{
@@ -498,7 +463,44 @@ func (cmd *command) moduleDefinitionFromOptions() (*module.Definition, *Config, 
 			DefaultCRPath:   cmd.opts.DefaultCRPath,
 			SchemaVersion:   cmd.opts.SchemaVersion,
 		}
+		return def, cnf, nil
 	}
+
+	//new approach, config-file  based
+	moduleConfig, err := ParseConfig(cmd.opts.ModuleConfigFile)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	err = moduleConfig.Validate()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var defaultCRPath string
+	if moduleConfig.DefaultCRPath != "" {
+		defaultCRPath, err = resolveFilePath(moduleConfig.DefaultCRPath, cmd.opts.Path)
+		if err != nil {
+			return nil, nil, fmt.Errorf("%w,  %w", ErrDefaultCRPathValidation, err)
+		}
+	}
+
+	moduleManifestPath, err := resolveFilePath(moduleConfig.ManifestPath, cmd.opts.Path)
+	if err != nil {
+		return nil, nil, fmt.Errorf("%w,  %w", ErrManifestPathValidation, err)
+	}
+
+	def = &module.Definition{
+		Name:               moduleConfig.Name,
+		Version:            moduleConfig.Version,
+		Source:             cmd.opts.Path,
+		RegistryURL:        cmd.opts.RegistryURL,
+		NameMappingMode:    nameMappingMode,
+		DefaultCRPath:      defaultCRPath,
+		SingleManifestPath: moduleManifestPath,
+		SchemaVersion:      cmd.opts.SchemaVersion,
+	}
+	cnf = moduleConfig
 
 	return def, cnf, nil
 }
