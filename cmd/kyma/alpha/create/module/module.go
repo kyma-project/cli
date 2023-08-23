@@ -176,9 +176,7 @@ Build a Kubebuilder module my-domain/modC in version 3.2.1 and push it to a loca
 
 	cmd.Flags().BoolVar(&o.KubebuilderProject, "kubebuilder-project", false, "Specifies provided module is a Kubebuilder Project.")
 
-	if o.KubebuilderProject {
-		configureLegacyFlags(cmd, o)
-	}
+	configureLegacyFlags(cmd, o)
 
 	return cmd
 }
