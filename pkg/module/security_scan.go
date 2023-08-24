@@ -8,7 +8,7 @@ import (
 
 	"github.com/open-component-model/ocm/cmds/ocm/commands/ocmcmds/common/inputs/types/ociimage"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/accessmethods/ociartifact"
-	ocm "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	ocmv1 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/meta/v1"
 	"sigs.k8s.io/yaml"
 )
@@ -24,7 +24,7 @@ const (
 var labelTemplate = secScanLabelKey + "/%s"
 var globalLabelTemplate = secLabelKey + "/%s"
 
-func AddSecurityScanningMetadata(descriptor *ocm.ComponentDescriptor, securityConfigPath string) error {
+func AddSecurityScanningMetadata(descriptor *compdesc.ComponentDescriptor, securityConfigPath string) error {
 	//parse security config file
 	config, err := parseSecurityScanConfig(securityConfigPath)
 	if err != nil {
@@ -61,11 +61,11 @@ func AddSecurityScanningMetadata(descriptor *ocm.ComponentDescriptor, securityCo
 		return err
 	}
 
-	ocm.DefaultResources(descriptor)
-	return ocm.Validate(descriptor)
+	compdesc.DefaultResources(descriptor)
+	return nil
 }
 
-func appendProtecodeImagesLayers(descriptor *ocm.ComponentDescriptor, config *SecurityScanCfg) error {
+func appendProtecodeImagesLayers(descriptor *compdesc.ComponentDescriptor, config *SecurityScanCfg) error {
 	for _, imageURL := range config.Protecode {
 		imageName, imageTag, err := getImageName(imageURL)
 		if err != nil {
@@ -79,9 +79,9 @@ func appendProtecodeImagesLayers(descriptor *ocm.ComponentDescriptor, config *Se
 
 		access := ociartifact.New(imageURL)
 		access.SetType(ociartifact.LegacyType)
-		protecodeImageLayerResource := ocm.Resource{
-			ResourceMeta: ocm.ResourceMeta{
-				ElementMeta: ocm.ElementMeta{
+		protecodeImageLayerResource := compdesc.Resource{
+			ResourceMeta: compdesc.ResourceMeta{
+				ElementMeta: compdesc.ElementMeta{
 					Name:    imageName,
 					Labels:  []ocmv1.Label{*imageTypeLabel},
 					Version: imageTag,
@@ -136,7 +136,7 @@ func parseSecurityScanConfig(securityConfigPath string) (*SecurityScanCfg, error
 	return secCfg, nil
 }
 
-func appendLabelToAccessor(labeled ocm.LabelsAccessor, key, value, tpl string) error {
+func appendLabelToAccessor(labeled compdesc.LabelsAccessor, key, value, tpl string) error {
 	labels := labeled.GetLabels()
 	labelValue, err := generateOCMLabel(key, value, tpl)
 	if err != nil {

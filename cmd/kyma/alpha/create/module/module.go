@@ -285,7 +285,6 @@ func (cmd *command) Run(ctx context.Context) error {
 	}
 
 	cmd.CurrentStep.Success()
-
 	if cmd.opts.SecurityScanConfig != "" {
 		cmd.NewStep("Configuring security scanning...")
 		if _, err := osFS.Stat(cmd.opts.SecurityScanConfig); err == nil {
