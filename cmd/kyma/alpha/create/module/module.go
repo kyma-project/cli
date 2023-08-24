@@ -299,7 +299,7 @@ func (cmd *command) Run(ctx context.Context) error {
 			}
 			cmd.CurrentStep.Successf("Security scanning configured")
 		} else {
-			l.Errorf("Security scanning configuration was skipped: %s", err.Error())
+			l.Warnf("Security scanning configuration was skipped: %s", err.Error())
 			cmd.CurrentStep.Failure()
 		}
 	}
