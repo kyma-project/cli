@@ -287,8 +287,8 @@ func (cmd *command) Run(ctx context.Context) error {
 	cmd.CurrentStep.Success()
 
 	if cmd.opts.SecurityScanConfig != "" {
+		cmd.NewStep("Configuring security scanning...")
 		if _, err := osFS.Stat(cmd.opts.SecurityScanConfig); err == nil {
-			cmd.NewStep("Configuring security scanning...")
 			err = module.AddSecurityScanningMetadata(archive.GetDescriptor(), cmd.opts.SecurityScanConfig)
 			if err != nil {
 				cmd.CurrentStep.Failure()
@@ -300,6 +300,7 @@ func (cmd *command) Run(ctx context.Context) error {
 			cmd.CurrentStep.Successf("Security scanning configured")
 		} else {
 			l.Warnf("Security scanning configuration was skipped: %s", err.Error())
+			cmd.CurrentStep.Failure()
 		}
 	}
 
