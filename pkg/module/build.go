@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/kyma-project/cli/pkg/module/git"
 	"github.com/mandelsoft/vfs/pkg/projectionfs"
 	"github.com/mandelsoft/vfs/pkg/vfs"
 	"github.com/open-component-model/ocm/pkg/common/accessobj"
@@ -14,6 +13,10 @@ import (
 	compdescv2 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/versions/v2"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/cpi"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/comparch"
+
+	"github.com/kyma-project/cli/internal/files"
+	"github.com/kyma-project/cli/pkg/module/git"
+	"github.com/kyma-project/cli/pkg/module/source"
 )
 
 // CreateArchive creates a component archive with the given configuration.
@@ -79,6 +82,14 @@ func CreateArchive(fs vfs.FileSystem, path string, def *Definition) (*comparch.C
 }
 
 func addSources(ctx cpi.Context, cd *ocm.ComponentDescriptor, def *Definition) error {
+	//isGitDirectory, _ := files.FindDirectoryContaining(def.Source, ".git")
+	gitSource := source.NewGitSource()
+
+	switch isGitDirectory {
+	case files.DirectoryFound:
+		src, err := gitSource.FetchSource(ctx, def.Source, def.Repo, def.Version)
+
+	}
 	src, err := git.Source(ctx, def.Source, def.Repo, def.Version)
 	if err != nil {
 		return err

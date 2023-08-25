@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/mandelsoft/vfs/pkg/vfs"
+	"github.com/pkg/errors"
 )
 
 const kymaFolder = ".kyma"
@@ -70,4 +71,29 @@ func FileType(fs vfs.FileSystem, path string) (string, error) {
 	// Use the net/http package's handy DectectContentType function. Always returns a valid
 	// content-type by returning "application/octet-stream" if no others seemed to match.
 	return http.DetectContentType(buf), nil
+}
+
+// FindDirectoryContaining returns the path to the directory containing the targetFolderName
+// and a bool indicating if the directory was found or not.
+// If the directory was not found, the error will be os.ErrNotExist.
+// The search starts at the path and continues to the root of the filesystem.
+// The targetFolderName can be a relative path.
+// Example:
+//
+//	FindDirectoryContaining("` + path + `", "` + targetFolderName + `")
+func FindDirectoryContaining(path, targetFolderName string) (string, bool, error) {
+	if path == string(filepath.Separator) {
+		return "", false, os.ErrNotExist
+	}
+
+	targetPath := filepath.Join(path, targetFolderName)
+	_, err := os.Stat(targetPath)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return FindDirectoryContaining(filepath.Dir(path), targetFolderName)
+		}
+		return "", false, err
+	}
+
+	return targetPath, true, nil
 }
