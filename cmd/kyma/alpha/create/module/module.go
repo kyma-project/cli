@@ -344,10 +344,14 @@ func (cmd *command) Run(ctx context.Context) error {
 		annotations := map[string]string{}
 
 		var resourceName = ""
+		var namespace = "kcp-system"
 
 		if modCnf != nil {
 			resourceName = modCnf.ResourceName
 
+			if modCnf.Namespace != "" {
+				namespace = modCnf.Namespace
+			}
 			maps.Copy(labels, modCnf.Labels)
 			maps.Copy(annotations, modCnf.Annotations)
 
@@ -370,7 +374,7 @@ func (cmd *command) Run(ctx context.Context) error {
 			channel = modCnf.Channel
 		}
 
-		t, err := module.Template(componentVersionAccess, resourceName, channel, modDef.DefaultCR, labels, annotations)
+		t, err := module.Template(componentVersionAccess, resourceName, namespace, channel, modDef.DefaultCR, labels, annotations)
 
 		if err != nil {
 			cmd.CurrentStep.Failure()

@@ -2,12 +2,12 @@ package module
 
 import (
 	"fmt"
-	"github.com/kyma-project/cli/internal/nice"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
-	"regexp"
+	"github.com/kyma-project/cli/internal/nice"
 
 	"github.com/blang/semver/v4"
 	"github.com/kyma-project/cli/internal/cli"
@@ -51,6 +51,7 @@ var (
 	ErrManifestPathValidation  = errors.New("YAML manifest path validation failed")
 	ErrDefaultCRPathValidation = errors.New("default CR path validation failed")
 	ErrNameValidation          = errors.New("name validation failed")
+	ErrNamespaceValidation     = errors.New("namespace validation failed")
 	ErrVersionValidation       = errors.New("version validation failed")
 )
 

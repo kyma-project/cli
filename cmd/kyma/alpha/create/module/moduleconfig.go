@@ -17,6 +17,7 @@ type Config struct {
 	ManifestPath  string            `yaml:"manifest"`     //required, reference to the manifests, must be a relative file name.
 	DefaultCRPath string            `yaml:"defaultCR"`    //optional, reference to a YAML file containing the default CR for the module, must be a relative file name.
 	ResourceName  string            `yaml:"resourceName"` //optional, default={NAME}-{CHANNEL}, the name for the ModuleTemplate that will be created
+	Namespace     string            `yaml:"namespace"`    //optional, default=kcp-system, the namespace where the ModuleTemplate will be deployed
 	Security      string            `yaml:"security"`     //optional, name of the security scanners config file
 	Internal      bool              `yaml:"internal"`     //optional, default=false, determines whether the ModuleTemplate should have the internal flag or not
 	Beta          bool              `yaml:"beta"`         //optional, default=false, determines whether the ModuleTemplate should have the beta flag or not
@@ -28,6 +29,7 @@ const (
 	//taken from "github.com/open-component-model/ocm/resources/component-descriptor-v2-schema.yaml"
 	moduleNamePattern = "^[a-z][-a-z0-9]*([.][a-z][-a-z0-9]*)*[.][a-z]{2,}(/[a-z][-a-z0-9_]*([.][a-z][-a-z0-9_]*)*)+$"
 	moduleNameMaxLen  = 255
+	namespaceMaxLen   = 253
 )
 
 func ParseConfig(filePath string) (*Config, error) {
@@ -49,6 +51,7 @@ func ParseConfig(filePath string) (*Config, error) {
 func (c *Config) Validate() error {
 	return newConfigValidator(c).
 		validateName().
+		validateNamespace().
 		validateVersion().
 		validateChannel().
 		do()
@@ -75,15 +78,31 @@ func (cv *configValidator) addValidator(fn configValidationFunc) *configValidato
 
 func (cv *configValidator) validateName() *configValidator {
 	fn := func() error {
-		if len(cv.config.Name) == 0 {
-			return fmt.Errorf("%w, module name cannot be empty", ErrNameValidation)
-		}
 		if len(cv.config.Name) > moduleNameMaxLen {
 			return fmt.Errorf("%w, module name length cannot exceed 255 characters", ErrNameValidation)
 		}
 		matched, _ := regexp.MatchString(moduleNamePattern, cv.config.Name)
 		if !matched {
 			return fmt.Errorf("%w for input %q, name must match the required pattern, e.g: 'github.com/path-to/your-repo'", ErrNameValidation, cv.config.Name)
+		}
+
+		return nil
+	}
+
+	return cv.addValidator(fn)
+}
+
+func (cv *configValidator) validateNamespace() *configValidator {
+	fn := func() error {
+		if len(cv.config.Namespace) == 0 {
+			return nil
+		}
+		if len(cv.config.Namespace) > moduleNameMaxLen {
+			return fmt.Errorf("%w, module name length cannot exceed 253 characters", ErrNamespaceValidation)
+		}
+		matched, _ := regexp.MatchString("^[a-z0-9]+(?:-[a-z0-9]+)*$", cv.config.Namespace)
+		if !matched {
+			return fmt.Errorf("%w for input %q, namespace must contain only small alphanumeric characters and hyphens", ErrNamespaceValidation, cv.config.Namespace)
 		}
 
 		return nil
