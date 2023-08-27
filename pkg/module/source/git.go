@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"path/filepath"
 	"strings"
 
 	"github.com/go-git/go-git/v5"
@@ -16,7 +17,6 @@ import (
 
 const (
 	gitFolder = ".git"
-	Identity  = "module-sources"
 	refLabel  = "git.kyma-project.io/ref"
 )
 
@@ -31,12 +31,12 @@ func NewGitSource() *GitSource {
 }
 
 func (g *GitSource) FetchSource(ctx cpi.Context, path, repo, version string) (*ocm.Source, error) {
-	ref, commit, err := getGitInfo(path)
+	ref, commit, err := g.getGitInfo(path)
 	if err != nil {
 		return nil, err
 	}
 
-	repo, err = determineRepositoryURL(repo, ref, commit)
+	repo, err = g.determineRepositoryURL(repo)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func (g *GitSource) FetchSource(ctx cpi.Context, path, repo, version string) (*o
 		sourceType = github.CONSUMER_TYPE
 	}
 
-	refLabel, err := ocmv1.NewLabel(refLabel, ref, ocmv1.WithVersion("v1"))
+	label, err := ocmv1.NewLabel(refLabel, ref, ocmv1.WithVersion(ocmVersion))
 	if err != nil {
 		return nil, err
 	}
@@ -56,9 +56,9 @@ func (g *GitSource) FetchSource(ctx cpi.Context, path, repo, version string) (*o
 	sourceMeta := ocm.SourceMeta{
 		Type: sourceType,
 		ElementMeta: ocm.ElementMeta{
-			Name:    Identity,
+			Name:    ocmIdentityName,
 			Version: version,
-			Labels:  ocmv1.Labels{*refLabel},
+			Labels:  ocmv1.Labels{*label},
 		},
 	}
 
@@ -68,7 +68,7 @@ func (g *GitSource) FetchSource(ctx cpi.Context, path, repo, version string) (*o
 	}, nil
 }
 
-func determineRepositoryURL(repo, ref, commit string) (string, error) {
+func (g *GitSource) determineRepositoryURL(repo string) (string, error) {
 	if repo == "" {
 		r, err := git.PlainOpen(".")
 		if err != nil {
@@ -98,10 +98,14 @@ func determineRepositoryURL(repo, ref, commit string) (string, error) {
 	return repo, nil
 }
 
-func getGitInfo(gitPath string) (string, string, error) {
+func (g *GitSource) getGitInfo(gitPath string) (string, string, error) {
 	if gitPath == "" {
-		return "", "", fmt.Errorf("could not get git information for the path: %w", gitPath)
+		return "", "", fmt.Errorf("could not get git information for the path: %s", gitPath)
 
+	}
+
+	if gitPath == string(filepath.Separator) {
+		return "", "", errNotGit
 	}
 
 	r, err := git.PlainOpen(gitPath)

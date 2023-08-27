@@ -14,7 +14,8 @@ import (
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/cpi"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/comparch"
 
-	"github.com/kyma-project/cli/pkg/module/git"
+	"github.com/kyma-project/cli/internal/files"
+	"github.com/kyma-project/cli/pkg/module/source"
 )
 
 // CreateArchive creates a component archive with the given configuration.
@@ -80,7 +81,17 @@ func CreateArchive(fs vfs.FileSystem, path string, def *Definition) (*comparch.C
 }
 
 func addSources(ctx cpi.Context, cd *ocm.ComponentDescriptor, def *Definition) error {
-	src, err := git.Source(ctx, def.Source, def.Repo, def.Version)
+	var src *ocm.Source
+	var err error
+
+	if gitPath, ok, _ := files.FindDirectoryContaining(def.Source, ".git"); ok {
+		gitSource := source.NewGitSource()
+		src, err = fetchSource(ctx, gitSource, gitPath, def.Repo, def.Version)
+	} else {
+		fsSource := source.NewFileSystemSource()
+		src, err = fetchSource(ctx, fsSource, def.Source, def.Repo, def.Version)
+	}
+
 	if err != nil {
 		return err
 	}
@@ -92,4 +103,12 @@ func addSources(ctx cpi.Context, cd *ocm.ComponentDescriptor, def *Definition) e
 	}
 
 	return nil
+}
+
+func fetchSource(ctx cpi.Context, src source.Source, path, repo, version string) (*ocm.Source, error) {
+	fetchedSrc, err := src.FetchSource(ctx, path, repo, version)
+	if err != nil {
+		return nil, err
+	}
+	return fetchedSrc, nil
 }
