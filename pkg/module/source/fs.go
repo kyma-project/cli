@@ -1,6 +1,7 @@
 package source
 
 import (
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/accessmethods/localfsblob"
 	ocm "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	ocmv1 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/meta/v1"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/cpi"
@@ -17,8 +18,8 @@ func NewFileSystemSource() *FileSystemSource {
 	return &FileSystemSource{}
 }
 
-func (f *FileSystemSource) FetchSource(_ cpi.Context, _, _, version string) (*ocm.Source, error) {
-	label, err := ocmv1.NewLabel(refLabel, refFsNoGitLabel, ocmv1.WithVersion(ocmVersion))
+func (f *FileSystemSource) FetchSource(_ cpi.Context, path, _, version string) (*ocm.Source, error) {
+	label, err := ocmv1.NewLabel(refFsNoGitLabel, "", ocmv1.WithVersion(ocmVersion))
 	if err != nil {
 		return nil, err
 	}
@@ -32,5 +33,6 @@ func (f *FileSystemSource) FetchSource(_ cpi.Context, _, _, version string) (*oc
 				Labels:  ocmv1.Labels{*label},
 			},
 		},
+		Access: localfsblob.New(path, ""),
 	}, nil
 }
