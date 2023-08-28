@@ -16,8 +16,10 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+var accessVersion ocm.ComponentVersionAccess
+
 func TestTemplate(t *testing.T) {
-	accessVersion := createOcmComponentVersionAccess(t)
+	accessVersion = createOcmComponentVersionAccess(t)
 	type args struct {
 		remote             ocm.ComponentVersionAccess
 		moduleTemplateName string
@@ -43,7 +45,7 @@ func TestTemplate(t *testing.T) {
 			},
 			want: getExpectedModuleTemplate(t, "",
 				"alpha", map[string]string{
-					"operator.kyma-project.io/module-name": "template-operator"}, map[string]string{}, accessVersion),
+					"operator.kyma-project.io/module-name": "template-operator"}, map[string]string{}),
 			wantErr: false,
 		},
 		{
@@ -57,7 +59,7 @@ func TestTemplate(t *testing.T) {
 			},
 			want: getExpectedModuleTemplate(t, "kyma-system",
 				"regular", map[string]string{
-					"operator.kyma-project.io/module-name": "template-operator"}, map[string]string{}, accessVersion),
+					"operator.kyma-project.io/module-name": "template-operator"}, map[string]string{}),
 			wantErr: false,
 		},
 		{
@@ -72,7 +74,7 @@ func TestTemplate(t *testing.T) {
 			want: getExpectedModuleTemplate(t, "kyma-system",
 				"regular", map[string]string{
 					"operator.kyma-project.io/module-name": "template-operator", "is-custom-label": "true"},
-				map[string]string{}, accessVersion),
+				map[string]string{}),
 			wantErr: false,
 		},
 		{
@@ -87,7 +89,7 @@ func TestTemplate(t *testing.T) {
 			want: getExpectedModuleTemplate(t, "kyma-system",
 				"regular", map[string]string{
 					"operator.kyma-project.io/module-name": "template-operator"},
-				map[string]string{"is-custom-annotation": "true"}, accessVersion),
+				map[string]string{"is-custom-annotation": "true"}),
 			wantErr: false,
 		},
 	}
@@ -122,8 +124,8 @@ func createOcmComponentVersionAccess(t *testing.T) ocm.ComponentVersionAccess {
 
 func getExpectedModuleTemplate(t *testing.T,
 	namespace string, channel string, labels map[string]string,
-	annotations map[string]string, version ocm.ComponentVersionAccess) []byte {
-	cva, _ := compdesc.Convert(version.GetDescriptor())
+	annotations map[string]string) []byte {
+	cva, _ := compdesc.Convert(accessVersion.GetDescriptor())
 	temp, _ := template.New("modTemplate").Funcs(template.FuncMap{"yaml": yaml.Marshal, "indent": Indent}).Parse(modTemplate)
 	td := moduleTemplateData{
 		ResourceName: "template-operator-regular",
