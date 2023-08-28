@@ -39,12 +39,12 @@ func TestTemplate(t *testing.T) {
 			name: "ModuleTemplate with default values",
 			args: args{
 				remote:      accessVersion,
-				channel:     "alpha",
+				channel:     "regular",
 				labels:      map[string]string{},
 				annotations: map[string]string{},
 			},
 			want: getExpectedModuleTemplate(t, "",
-				"alpha", map[string]string{
+				map[string]string{
 					"operator.kyma-project.io/module-name": "template-operator"}, map[string]string{}),
 			wantErr: false,
 		},
@@ -58,7 +58,7 @@ func TestTemplate(t *testing.T) {
 				annotations: map[string]string{},
 			},
 			want: getExpectedModuleTemplate(t, "kyma-system",
-				"regular", map[string]string{
+				map[string]string{
 					"operator.kyma-project.io/module-name": "template-operator"}, map[string]string{}),
 			wantErr: false,
 		},
@@ -72,7 +72,7 @@ func TestTemplate(t *testing.T) {
 				annotations: map[string]string{},
 			},
 			want: getExpectedModuleTemplate(t, "kyma-system",
-				"regular", map[string]string{
+				map[string]string{
 					"operator.kyma-project.io/module-name": "template-operator", "is-custom-label": "true"},
 				map[string]string{}),
 			wantErr: false,
@@ -87,7 +87,7 @@ func TestTemplate(t *testing.T) {
 				annotations: map[string]string{"is-custom-annotation": "true"},
 			},
 			want: getExpectedModuleTemplate(t, "kyma-system",
-				"regular", map[string]string{
+				map[string]string{
 					"operator.kyma-project.io/module-name": "template-operator"},
 				map[string]string{"is-custom-annotation": "true"}),
 			wantErr: false,
@@ -123,14 +123,14 @@ func createOcmComponentVersionAccess(t *testing.T) ocm.ComponentVersionAccess {
 }
 
 func getExpectedModuleTemplate(t *testing.T,
-	namespace string, channel string, labels map[string]string,
+	namespace string, labels map[string]string,
 	annotations map[string]string) []byte {
 	cva, _ := compdesc.Convert(accessVersion.GetDescriptor())
 	temp, _ := template.New("modTemplate").Funcs(template.FuncMap{"yaml": yaml.Marshal, "indent": Indent}).Parse(modTemplate)
 	td := moduleTemplateData{
 		ResourceName: "template-operator-regular",
 		Namespace:    namespace,
-		Channel:      channel,
+		Channel:      "regular",
 		Annotations:  annotations,
 		Labels:       labels,
 		Data:         "",
