@@ -203,6 +203,8 @@ func configureLegacyFlags(cmd *cobra.Command, o *Options) *cobra.Command {
 
 	cmd.Flags().StringVar(&o.Channel, "channel", "regular", "Channel to use for the module template.")
 
+	cmd.Flags().StringVar(&o.Namespace, "namespace", kcpSystemNamespace, "Specifies the namespace where the ModuleTemplate is deployed.")
+
 	return cmd
 }
 
@@ -346,14 +348,10 @@ func (cmd *command) Run(ctx context.Context) error {
 		annotations := map[string]string{}
 
 		var resourceName = ""
-		var namespace = kcpSystemNamespace
 
 		if modCnf != nil {
 			resourceName = modCnf.ResourceName
 
-			if modCnf.Namespace != "" {
-				namespace = modCnf.Namespace
-			}
 			maps.Copy(labels, modCnf.Labels)
 			maps.Copy(annotations, modCnf.Annotations)
 
@@ -374,6 +372,14 @@ func (cmd *command) Run(ctx context.Context) error {
 		var channel = cmd.opts.Channel
 		if modCnf != nil {
 			channel = modCnf.Channel
+		}
+
+		var namespace = cmd.opts.Namespace
+		if modCnf != nil && modCnf.Namespace != "" {
+			namespace = modCnf.Namespace
+		}
+		if namespace == "" {
+			namespace = kcpSystemNamespace
 		}
 
 		t, err := module.Template(componentVersionAccess, resourceName, namespace, channel, modDef.DefaultCR, labels, annotations)

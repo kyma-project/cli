@@ -97,6 +97,7 @@ Build a Kubebuilder module my-domain/modC in version 3.2.1 and push it to a loca
       --module-config-file string          Specifies the module configuration file
   -n, --name string                        Override the module name of the kubebuilder project. If the module is not a kubebuilder project, this flag is mandatory.
       --name-mapping string                Overrides the OCM Component Name Mapping, Use: "urlPath" or "sha256-digest". (default "urlPath")
+      --namespace string                   Specifies the namespace where the ModuleTemplate is deployed. (default "kcp-system")
   -o, --output string                      File to write the module template if the module is uploaded to a registry. (default "template.yaml")
   -p, --path string                        Path to the module's contents. (default current directory)
       --registry string                    Context URL of the repository. The repository URL will be automatically added to the repository contexts in the module descriptor.

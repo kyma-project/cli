@@ -39,6 +39,7 @@ type Options struct {
 	PrivateKeyPath          string
 	ModuleConfigFile        string
 	KubebuilderProject      bool
+	Namespace               string
 }
 
 const (
