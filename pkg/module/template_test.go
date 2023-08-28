@@ -41,7 +41,7 @@ func TestTemplate(t *testing.T) {
 				labels:      map[string]string{},
 				annotations: map[string]string{},
 			},
-			want: getExpectedModuleTemplate(t, "template-operator-regular", "",
+			want: getExpectedModuleTemplate(t, "",
 				"regular", map[string]string{
 					"operator.kyma-project.io/module-name": "template-operator"}, map[string]string{}, accessVersion),
 			wantErr: false,
@@ -55,7 +55,7 @@ func TestTemplate(t *testing.T) {
 				labels:      map[string]string{},
 				annotations: map[string]string{},
 			},
-			want: getExpectedModuleTemplate(t, "template-operator-regular", "kyma-system",
+			want: getExpectedModuleTemplate(t, "kyma-system",
 				"regular", map[string]string{
 					"operator.kyma-project.io/module-name": "template-operator"}, map[string]string{}, accessVersion),
 			wantErr: false,
@@ -69,7 +69,7 @@ func TestTemplate(t *testing.T) {
 				labels:      map[string]string{"is-custom-label": "true"},
 				annotations: map[string]string{},
 			},
-			want: getExpectedModuleTemplate(t, "template-operator-regular", "kyma-system",
+			want: getExpectedModuleTemplate(t, "kyma-system",
 				"regular", map[string]string{
 					"operator.kyma-project.io/module-name": "template-operator", "is-custom-label": "true"},
 				map[string]string{}, accessVersion),
@@ -84,7 +84,7 @@ func TestTemplate(t *testing.T) {
 				labels:      map[string]string{},
 				annotations: map[string]string{"is-custom-annotation": "true"},
 			},
-			want: getExpectedModuleTemplate(t, "template-operator-regular", "kyma-system",
+			want: getExpectedModuleTemplate(t, "kyma-system",
 				"regular", map[string]string{
 					"operator.kyma-project.io/module-name": "template-operator"},
 				map[string]string{"is-custom-annotation": "true"}, accessVersion),
@@ -108,9 +108,10 @@ func TestTemplate(t *testing.T) {
 func createOcmComponentVersionAccess(t *testing.T) ocm.ComponentVersionAccess {
 	tempFs, err := osfs.NewTempFileSystem()
 	assert.Equal(t, nil, err)
-	ociSpec, _ := ctf.NewRepositorySpec(accessobj.ACC_CREATE, "test", accessio.PathFileSystem(tempFs), accessobj.FormatDirectory)
+	ociSpec, err := ctf.NewRepositorySpec(accessobj.ACC_CREATE, "test", accessio.PathFileSystem(tempFs), accessobj.FormatDirectory)
 	assert.Equal(t, nil, err)
 	repo, err := ocm.New().RepositoryForSpec(ociSpec)
+	assert.Equal(t, nil, err)
 	comp, err := repo.LookupComponent("github.com/kyma-project/template-operator")
 	assert.Equal(t, nil, err)
 	version, err := comp.NewVersion("v1")
@@ -120,12 +121,12 @@ func createOcmComponentVersionAccess(t *testing.T) ocm.ComponentVersionAccess {
 }
 
 func getExpectedModuleTemplate(t *testing.T,
-	resourceName string, namespace string, channel string, labels map[string]string,
+	namespace string, channel string, labels map[string]string,
 	annotations map[string]string, version ocm.ComponentVersionAccess) []byte {
 	cva, _ := compdesc.Convert(version.GetDescriptor())
 	temp, _ := template.New("modTemplate").Funcs(template.FuncMap{"yaml": yaml.Marshal, "indent": Indent}).Parse(modTemplate)
 	td := moduleTemplateData{
-		ResourceName: resourceName,
+		ResourceName: "template-operator-regular",
 		Namespace:    namespace,
 		Channel:      channel,
 		Annotations:  annotations,
