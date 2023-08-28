@@ -79,6 +79,9 @@ func (cv *configValidator) addValidator(fn configValidationFunc) *configValidato
 
 func (cv *configValidator) validateName() *configValidator {
 	fn := func() error {
+		if len(cv.config.Name) == 0 {
+			return fmt.Errorf("%w, module name cannot be empty", ErrNameValidation)
+		}
 		if len(cv.config.Name) > moduleNameMaxLen {
 			return fmt.Errorf("%w, module name length cannot exceed 255 characters", ErrNameValidation)
 		}
