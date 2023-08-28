@@ -378,9 +378,6 @@ func (cmd *command) Run(ctx context.Context) error {
 		if modCnf != nil && modCnf.Namespace != "" {
 			namespace = modCnf.Namespace
 		}
-		if namespace == "" {
-			namespace = kcpSystemNamespace
-		}
 
 		t, err := module.Template(componentVersionAccess, resourceName, namespace, channel, modDef.DefaultCR, labels, annotations)
 
