@@ -37,12 +37,12 @@ func TestTemplate(t *testing.T) {
 			name: "ModuleTemplate with default values",
 			args: args{
 				remote:      accessVersion,
-				channel:     "regular",
+				channel:     "alpha",
 				labels:      map[string]string{},
 				annotations: map[string]string{},
 			},
 			want: getExpectedModuleTemplate(t, "",
-				"regular", map[string]string{
+				"alpha", map[string]string{
 					"operator.kyma-project.io/module-name": "template-operator"}, map[string]string{}, accessVersion),
 			wantErr: false,
 		},
