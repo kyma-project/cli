@@ -81,25 +81,18 @@ func CreateArchive(fs vfs.FileSystem, path string, def *Definition) (*comparch.C
 }
 
 func addSources(ctx cpi.Context, cd *ocm.ComponentDescriptor, def *Definition) error {
-	var src *ocm.Source
-	var err error
-
 	if gitPath, ok, _ := files.FindDirectoryContaining(def.Source, ".git"); ok {
 		gitSource := source.NewGitSource()
-		src, err = fetchSource(ctx, gitSource, gitPath, def.Repo, def.Version)
-	} else {
-		fsSource := source.NewFileSystemSource()
-		src, err = fetchSource(ctx, fsSource, def.Source, def.Repo, def.Version)
-	}
+		src, err := fetchSource(ctx, gitSource, gitPath, def.Repo, def.Version)
 
-	if err != nil {
-		return err
-	}
-
-	if idx := cd.GetSourceIndex(&src.SourceMeta); idx < 0 {
-		cd.Sources = append(cd.Sources, *src)
-	} else {
-		cd.Sources[idx] = *src
+		if err != nil {
+			return err
+		}
+		if idx := cd.GetSourceIndex(&src.SourceMeta); idx < 0 {
+			cd.Sources = append(cd.Sources, *src)
+		} else {
+			cd.Sources[idx] = *src
+		}
 	}
 
 	return nil
