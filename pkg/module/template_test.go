@@ -125,8 +125,10 @@ func createOcmComponentVersionAccess(t *testing.T) ocm.ComponentVersionAccess {
 func getExpectedModuleTemplate(t *testing.T,
 	namespace string, labels map[string]string,
 	annotations map[string]string) []byte {
-	cva, _ := compdesc.Convert(accessVersion.GetDescriptor())
-	temp, _ := template.New("modTemplate").Funcs(template.FuncMap{"yaml": yaml.Marshal, "indent": Indent}).Parse(modTemplate)
+	cva, err := compdesc.Convert(accessVersion.GetDescriptor())
+	assert.Equal(t, nil, err)
+	temp, err := template.New("modTemplate").Funcs(template.FuncMap{"yaml": yaml.Marshal, "indent": Indent}).Parse(modTemplate)
+	assert.Equal(t, nil, err)
 	td := moduleTemplateData{
 		ResourceName: "template-operator-regular",
 		Namespace:    namespace,
@@ -137,7 +139,7 @@ func getExpectedModuleTemplate(t *testing.T,
 		Descriptor:   cva,
 	}
 	w := &bytes.Buffer{}
-	err := temp.Execute(w, td)
+	err = temp.Execute(w, td)
 	assert.Equal(t, nil, err)
 	return w.Bytes()
 }
