@@ -30,7 +30,7 @@ func NewGitSource() *GitSource {
 	return &GitSource{}
 }
 
-func (g *GitSource) FetchSource(ctx cpi.Context, path, repo, version string) (*ocm.Source, error) {
+func (g GitSource) FetchSource(ctx cpi.Context, path, repo, version string) (*ocm.Source, error) {
 	ref, commit, err := g.getGitInfo(path)
 	if err != nil {
 		return nil, err
@@ -68,7 +68,7 @@ func (g *GitSource) FetchSource(ctx cpi.Context, path, repo, version string) (*o
 	}, nil
 }
 
-func (g *GitSource) determineRepositoryURL(repo string) (string, error) {
+func (g GitSource) determineRepositoryURL(repo string) (string, error) {
 	if repo == "" {
 		r, err := git.PlainOpen(".")
 		if err != nil {
@@ -98,7 +98,7 @@ func (g *GitSource) determineRepositoryURL(repo string) (string, error) {
 	return repo, nil
 }
 
-func (g *GitSource) getGitInfo(gitPath string) (string, string, error) {
+func (g GitSource) getGitInfo(gitPath string) (string, string, error) {
 	if gitPath == "" {
 		return "", "", fmt.Errorf("could not get git information for the path: %s", gitPath)
 
