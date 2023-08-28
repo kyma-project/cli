@@ -211,6 +211,8 @@ type validator interface {
 	Run(ctx context.Context, log *zap.SugaredLogger) error
 }
 
+const kcpSystemNamespace = "kcp-system"
+
 func (cmd *command) Run(ctx context.Context) error {
 	osFS := osfs.New()
 
@@ -344,7 +346,7 @@ func (cmd *command) Run(ctx context.Context) error {
 		annotations := map[string]string{}
 
 		var resourceName = ""
-		var namespace = "kcp-system"
+		var namespace = kcpSystemNamespace
 
 		if modCnf != nil {
 			resourceName = modCnf.ResourceName

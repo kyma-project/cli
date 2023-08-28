@@ -28,6 +28,7 @@ type Config struct {
 const (
 	//taken from "github.com/open-component-model/ocm/resources/component-descriptor-v2-schema.yaml"
 	moduleNamePattern = "^[a-z][-a-z0-9]*([.][a-z][-a-z0-9]*)*[.][a-z]{2,}(/[a-z][-a-z0-9_]*([.][a-z][-a-z0-9_]*)*)+$"
+	namespacePattern  = "^[a-z0-9]+(?:-[a-z0-9]+)*$"
 	moduleNameMaxLen  = 255
 	namespaceMaxLen   = 253
 )
@@ -97,10 +98,10 @@ func (cv *configValidator) validateNamespace() *configValidator {
 		if len(cv.config.Namespace) == 0 {
 			return nil
 		}
-		if len(cv.config.Namespace) > moduleNameMaxLen {
+		if len(cv.config.Namespace) > namespaceMaxLen {
 			return fmt.Errorf("%w, module name length cannot exceed 253 characters", ErrNamespaceValidation)
 		}
-		matched, _ := regexp.MatchString("^[a-z0-9]+(?:-[a-z0-9]+)*$", cv.config.Namespace)
+		matched, _ := regexp.MatchString(namespacePattern, cv.config.Namespace)
 		if !matched {
 			return fmt.Errorf("%w for input %q, namespace must contain only small alphanumeric characters and hyphens", ErrNamespaceValidation, cv.config.Namespace)
 		}
