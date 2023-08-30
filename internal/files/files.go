@@ -81,9 +81,9 @@ func FileType(fs vfs.FileSystem, path string) (string, error) {
 // Example:
 //
 //	FindDirectoryContaining("` + path + `", "` + targetFolderName + `")
-func FindDirectoryContaining(path, targetFolderName string) (string, bool, error) {
+func FindDirectoryContaining(path, targetFolderName string) (string, error) {
 	if path == string(filepath.Separator) {
-		return "", false, os.ErrNotExist
+		return "", os.ErrNotExist
 	}
 
 	targetPath := filepath.Join(path, targetFolderName)
@@ -92,8 +92,8 @@ func FindDirectoryContaining(path, targetFolderName string) (string, bool, error
 		if errors.Is(err, os.ErrNotExist) {
 			return FindDirectoryContaining(filepath.Dir(path), targetFolderName)
 		}
-		return "", false, err
+		return "", err
 	}
 
-	return targetPath, true, nil
+	return targetPath, nil
 }

@@ -1,7 +1,6 @@
-package source
+package gitsource
 
 import (
-	"errors"
 	"fmt"
 	"net/url"
 	"path/filepath"
@@ -14,21 +13,6 @@ import (
 	ocmv1 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/meta/v1"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/cpi"
 )
-
-const (
-	gitFolder = ".git"
-	refLabel  = "git.kyma-project.io/ref"
-)
-
-var (
-	errNotGit = errors.New("not a git repository")
-)
-
-type GitSource struct{}
-
-func NewGitSource() *GitSource {
-	return &GitSource{}
-}
 
 func (g GitSource) FetchSource(ctx cpi.Context, path, repo, version string) (*ocm.Source, error) {
 	ref, commit, err := g.getGitInfo(path)
