@@ -37,8 +37,9 @@ func AddSecurityScanningMetadata(descriptor *ocm.ComponentDescriptor, securityCo
 	if err != nil {
 		return err
 	}
+	// Skip add scanning information if no source provided
 	if len(descriptor.Sources) == 0 {
-		return errors.New("found no sources in component descriptor")
+		return nil
 	}
 	//add whitesource sec scan labels
 	for srcIdx := range descriptor.Sources {
