@@ -8,9 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/kyma-project/cli/internal/cli"
-	"github.com/kyma-project/cli/internal/nice"
-	"github.com/kyma-project/cli/pkg/module"
 	"github.com/mandelsoft/vfs/pkg/memoryfs"
 	"github.com/mandelsoft/vfs/pkg/osfs"
 	"github.com/mandelsoft/vfs/pkg/vfs"
@@ -21,6 +18,10 @@ import (
 	"golang.org/x/exp/maps"
 	"gopkg.in/yaml.v3"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
+
+	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/nice"
+	"github.com/kyma-project/cli/pkg/module"
 )
 
 type command struct {
@@ -203,6 +204,8 @@ func configureLegacyFlags(cmd *cobra.Command, o *Options) *cobra.Command {
 
 	cmd.Flags().StringVar(&o.Channel, "channel", "regular", "Channel to use for the module template.")
 
+	cmd.Flags().StringVar(&o.Namespace, "namespace", kcpSystemNamespace, "Specifies the namespace where the ModuleTemplate is deployed.")
+
 	return cmd
 }
 
@@ -210,6 +213,8 @@ type validator interface {
 	GetCrd() []byte
 	Run(ctx context.Context, log *zap.SugaredLogger) error
 }
+
+const kcpSystemNamespace = "kcp-system"
 
 func (cmd *command) Run(ctx context.Context) error {
 	osFS := osfs.New()
@@ -370,7 +375,12 @@ func (cmd *command) Run(ctx context.Context) error {
 			channel = modCnf.Channel
 		}
 
-		t, err := module.Template(componentVersionAccess, resourceName, channel, modDef.DefaultCR, labels, annotations)
+		var namespace = cmd.opts.Namespace
+		if modCnf != nil && modCnf.Namespace != "" {
+			namespace = modCnf.Namespace
+		}
+
+		t, err := module.Template(componentVersionAccess, resourceName, namespace, channel, modDef.DefaultCR, labels, annotations)
 
 		if err != nil {
 			cmd.CurrentStep.Failure()

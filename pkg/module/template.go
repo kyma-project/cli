@@ -6,10 +6,11 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/kyma-project/cli/pkg/module/oci"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	"sigs.k8s.io/yaml"
+
+	"github.com/kyma-project/cli/pkg/module/oci"
 )
 
 const (
@@ -17,7 +18,7 @@ const (
 kind: ModuleTemplate
 metadata:
   name: {{.ResourceName}}
-  namespace: kcp-system
+  namespace: {{.Namespace}}
 {{- with .Labels}}
   labels:
     {{- range $key, $value := . }}
@@ -41,7 +42,17 @@ spec:
 `
 )
 
-func Template(remote ocm.ComponentVersionAccess, moduleTemplateName, channel string, data []byte, labels, annotations map[string]string) ([]byte, error) {
+type moduleTemplateData struct {
+	ResourceName string // K8s resource name of the generated ModuleTemplate
+	Namespace    string
+	Descriptor   compdesc.ComponentDescriptorVersion // descriptor info for the template
+	Channel      string
+	Data         string // contents for the spec.data section of the template taken from the defaults.yaml file in the mod folder
+	Labels       map[string]string
+	Annotations  map[string]string
+}
+
+func Template(remote ocm.ComponentVersionAccess, moduleTemplateName, namespace string, channel string, data []byte, labels, annotations map[string]string) ([]byte, error) {
 	descriptor := remote.GetDescriptor()
 	ref, err := oci.ParseRef(descriptor.Name)
 	if err != nil {
@@ -59,15 +70,10 @@ func Template(remote ocm.ComponentVersionAccess, moduleTemplateName, channel str
 	if len(resourceName) == 0 {
 		resourceName = shortName + "-" + channel
 	}
-	td := struct { // Custom struct for the template
-		ResourceName string                              // K8s resource name of the generated ModuleTemplate
-		Descriptor   compdesc.ComponentDescriptorVersion // descriptor info for the template
-		Channel      string
-		Data         string // contents for the spec.data section of the template taken from the defaults.yaml file in the mod folder
-		Labels       map[string]string
-		Annotations  map[string]string
-	}{
+
+	td := moduleTemplateData{
 		ResourceName: resourceName,
+		Namespace:    namespace,
 		Descriptor:   cva,
 		Channel:      channel,
 		Data:         string(data),

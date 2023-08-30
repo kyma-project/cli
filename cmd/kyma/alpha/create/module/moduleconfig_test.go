@@ -112,6 +112,65 @@ func TestValidateName(t *testing.T) {
 	}
 }
 
+func TestValidateNamespace(t *testing.T) {
+	tests := []struct {
+		tCase     string
+		namespace string
+		isValid   bool
+	}{
+		{
+			tCase:     "proper namespace",
+			namespace: "kyma-system",
+			isValid:   true,
+		},
+		{
+			tCase:     "proper namespace",
+			namespace: "kyma-system-1",
+			isValid:   true,
+		},
+		{
+			tCase:     "empty namespace",
+			namespace: "",
+			isValid:   true,
+		},
+		{
+			tCase:     "invalid namespace - contains capital letters",
+			namespace: "Kyma",
+			isValid:   false,
+		},
+		{
+			tCase:     "invalid namespace - contains invalid characters",
+			namespace: "kyma,system",
+			isValid:   false,
+		},
+		{
+			tCase:     "invalid namespace - starts with hyphen",
+			namespace: "-kyma",
+			isValid:   false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(
+			tt.tCase, func(t *testing.T) {
+				mc := Config{
+					Namespace: tt.namespace,
+				}
+
+				err := newConfigValidator(&mc).
+					validateNamespace().
+					do()
+
+				if !tt.isValid && err == nil {
+					t.Errorf("Namespace validation failed for input %q: Expected an error but success is reported", tt.namespace)
+				}
+				if tt.isValid && err != nil {
+					t.Error(err)
+				}
+			},
+		)
+	}
+}
+
 func TestValidateChannel(t *testing.T) {
 	tests := []struct {
 		tCase   string
