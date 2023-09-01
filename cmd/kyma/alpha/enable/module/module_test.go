@@ -2,14 +2,13 @@ package module
 
 import (
 	"context"
-	"strings"
-	"testing"
-
 	"github.com/kyma-project/cli/cmd/kyma/alpha/enable/module/mock"
 	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	"github.com/kyma-project/lifecycle-manager/pkg/testutils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"strings"
+	"testing"
 )
 
 func TestChannelValidation(t *testing.T) {
@@ -20,13 +19,13 @@ func TestChannelValidation(t *testing.T) {
 		ControllerName:       "-",
 		Channel:              "fast",
 		CustomResourcePolicy: "-",
-	}, unstructured.Unstructured{}, false, false, false, false)
+	}, unstructured.Unstructured{}, false, false, false)
 	template2, _ := testutils.ModuleTemplateFactory(v1beta2.Module{
 		Name:                 "not-test",
 		ControllerName:       "-",
 		Channel:              "alpha",
 		CustomResourcePolicy: "-",
-	}, unstructured.Unstructured{}, false, false, false, false)
+	}, unstructured.Unstructured{}, false, false, false)
 	allTemplates := v1beta2.ModuleTemplateList{
 		TypeMeta: metav1.TypeMeta{},
 		ListMeta: metav1.ListMeta{},
