@@ -192,7 +192,7 @@ func filterModuleTemplates(allTemplates v1beta2.ModuleTemplateList,
 			filteredModuleTemplates = append(filteredModuleTemplates, mt)
 			continue
 		}
-		descriptor, err := mt.GetDescriptor()
+		descriptor, err := mt.Spec.GetDescriptor()
 		if err != nil {
 			return nil, fmt.Errorf("invalid ModuleTemplate descriptor: %v", err)
 		}
