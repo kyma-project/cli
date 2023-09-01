@@ -3,17 +3,18 @@ package deploy
 import (
 	"context"
 	"encoding/json"
-	"github.com/pkg/errors"
 	"regexp"
 
-	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/kustomize/kyaml/kio"
+	"github.com/pkg/errors"
 
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/kustomize"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/kustomize/kyaml/kio"
 )
 
 const (
@@ -70,6 +71,7 @@ func Bootstrap(
 	if err != nil {
 		return false, err
 	}
+	manifestObjs = filterCRD(manifestObjs)
 	if isInKcpMode {
 		if err = patchDeploymentWithInKcpModeFlag(manifestObjs); err != nil {
 			return false, err
@@ -84,6 +86,19 @@ func Bootstrap(
 	}
 
 	return hasKyma(string(manifests))
+}
+
+// we have to manually configure CreationTimestamp for CRD until this bug get fixed
+// https://github.com/kubernetes-sigs/kustomize/issues/5031
+func filterCRD(objs []ctrlClient.Object) []ctrlClient.Object {
+	var filteredObjs []ctrlClient.Object
+	for _, obj := range objs {
+		if obj.GetObjectKind().GroupVersionKind().Kind == "CustomResourceDefinition" {
+			obj.SetCreationTimestamp(metav1.Now())
+		}
+		filteredObjs = append(filteredObjs, obj)
+	}
+	return filteredObjs
 }
 
 func patchDeploymentWithInKcpModeFlag(manifestObjs []ctrlClient.Object) error {
