@@ -19,6 +19,13 @@ jobs:
       KUSTOMIZE_VERSION: 4.5.7
       ISTIO_VERSION: 1.17.1
     steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: 'go.mod'
+          cache-dependency-path: 'go.sum'
       - name: Set up k3d
         run: wget -qO - https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG=$K3D_VERSION bash
       - id: Build Kyma CLI
