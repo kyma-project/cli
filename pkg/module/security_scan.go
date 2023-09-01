@@ -115,9 +115,12 @@ func getImageName(imageURL string) (string, string, error) {
 
 type SecurityScanCfg struct {
 	ModuleName  string            `json:"module-name"`
+	ModuleRepo  string            `json:"module-repo"`
+	CommitHash  string            `json:"module-hash"`
 	Protecode   []string          `json:"protecode"`
 	WhiteSource WhiteSourceSecCfg `json:"whitesource"`
 }
+
 type WhiteSourceSecCfg struct {
 	Language    string   `json:"language"`
 	SubProjects string   `json:"subprojects"`

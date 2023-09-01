@@ -84,7 +84,7 @@ func (g GitSource) determineRepositoryURL(repo string) (string, error) {
 
 func (g GitSource) getGitInfo(gitPath string) (string, string, error) {
 	if gitPath == "" {
-		return "", "", fmt.Errorf("could not get git information for the path: %s", gitPath)
+		return "", "", fmt.Errorf("could not get git information, the path is empty")
 
 	}
 
