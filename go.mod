@@ -8,12 +8,6 @@ replace github.com/docker/cli => github.com/docker/cli v23.0.1+incompatible
 
 replace github.com/docker/docker => github.com/docker/docker v23.0.1+incompatible
 
-replace github.com/kyma-project/hydroform/function => ../hydroform/function
-
-replace github.com/kyma-project/hydroform/provision => ../hydroform/provision
-
-replace github.com/kyma-incubator/reconciler => ../../kyma-incubator/reconciler
-
 require (
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/avast/retry-go v3.0.0+incompatible
@@ -29,9 +23,9 @@ require (
 	github.com/go-logr/logr v1.2.4
 	github.com/go-logr/zapr v1.2.4
 	github.com/imdario/mergo v1.0.0
-	github.com/kyma-incubator/reconciler v0.0.0-20230816101649-6b351968dd33
-	github.com/kyma-project/hydroform/function v0.0.0-20230628151226-25b31247e585
-	github.com/kyma-project/hydroform/provision v0.0.0-20230418133637-1ea26b368bb6
+	github.com/kyma-incubator/reconciler v0.0.0-20230901101246-00dd6cde0c03
+	github.com/kyma-project/hydroform/function v0.0.0-20230831071441-f3501c89bace
+	github.com/kyma-project/hydroform/provision v0.0.0-20230831071441-f3501c89bace
 	github.com/kyma-project/lifecycle-manager v0.0.0-20230825143048-a539ff44d1c3
 	github.com/mandelsoft/vfs v0.0.0-20230714093241-d557f163aecd
 	github.com/open-component-model/ocm v0.3.0-rc.1
