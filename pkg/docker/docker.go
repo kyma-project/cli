@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"time"
 
 	dockerConfig "github.com/docker/cli/cli/config"
 	configTypes "github.com/docker/cli/cli/config/types"
@@ -37,10 +38,10 @@ type dockerWrapper struct {
 //go:generate mockery --name Client
 type Client interface {
 	ContainerCreate(ctx context.Context, config *container.Config, hostConfig *container.HostConfig, networkingConfig *network.NetworkingConfig,
-		platform *specs.Platform, containerName string) (container.CreateResponse, error)
+		platform *specs.Platform, containerName string) (container.ContainerCreateCreatedBody, error)
 	ContainerStart(ctx context.Context, containerID string, options types.ContainerStartOptions) error
 	ContainerAttach(ctx context.Context, container string, options types.ContainerAttachOptions) (types.HijackedResponse, error)
-	ContainerStop(ctx context.Context, containerID string, options container.StopOptions) error
+	ContainerStop(ctx context.Context, containerID string, timeout *time.Duration) error
 	ImageBuild(ctx context.Context, buildContext io.Reader, options types.ImageBuildOptions) (types.ImageBuildResponse, error)
 	ImagePull(ctx context.Context, refStr string, options types.ImagePullOptions) (io.ReadCloser, error)
 	ImagePush(ctx context.Context, image string, options types.ImagePushOptions) (io.ReadCloser, error)
@@ -162,7 +163,7 @@ func (w *dockerWrapper) ContainerFollowRun(ctx context.Context, containerID stri
 func (w *dockerWrapper) Stop(ctx context.Context, containerID string, log func(...interface{})) func() {
 	return func() {
 		log(fmt.Sprintf("\r- Removing container %s...\n", containerID))
-		err := w.Docker.ContainerStop(ctx, containerID, container.StopOptions{})
+		err := w.Docker.ContainerStop(ctx, containerID, nil)
 		if err != nil {
 			log(err)
 		}
