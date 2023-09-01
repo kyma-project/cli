@@ -79,7 +79,7 @@ func FileType(fs vfs.FileSystem, path string) (string, error) {
 func SearchForTargetDirByName(root string, targetFolderName string) (gitFolderPath string, walkErr error) {
 	walkErr = filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			return fmt.Errorf("error while walking the path %q: %v\n", path, err)
+			return fmt.Errorf("error while walking the path %q: %v", path, err)
 		}
 		if info.IsDir() && info.Name() == targetFolderName {
 			gitFolderPath = path
