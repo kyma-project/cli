@@ -1,0 +1,55 @@
+name: Smoke Tests
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+jobs:
+  cli-deploy:
+    strategy:
+      matrix:
+        cli-stability: ["unstable"]
+        target: ["default", "control-plane"]
+    name: "kyma alpha deploy --ci --non-interactive"
+    runs-on: ubuntu-latest
+    env:
+      LIFECYCLE_MANAGER: ${{ github.repository }}
+      K3D_VERSION: v5.4.7
+      KUSTOMIZE_VERSION: 4.5.7
+      ISTIO_VERSION: 1.17.1
+    steps:
+      - name: Set up k3d
+        run: wget -qO - https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG=$K3D_VERSION bash
+      - id: Build Kyma CLI
+        run: make build-linux
+      - run: ln -s /usr/local/bin/kyma-linux /usr/local/bin/kyma
+      - name: Run Provision
+        run: |
+          kyma --ci provision k3d \
+            -p 8083:80@loadbalancer \
+            -p 8443:443@loadbalancer \
+            --timeout 1m \
+            --k3d-arg --no-rollback \
+            --name kyma
+      - name: Update Kubeconfigs
+        run: k3d kubeconfig merge -a -d
+      - name: Setup Control-Plane requirements
+        if: ${{ matrix.target  == 'control-plane' }}
+        run: |
+          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x kubectl
+          mv kubectl /usr/local/bin
+          
+          kubectl label node k3d-kyma-server-0 iam.gke.io/gke-metadata-server-enabled=true
+
+          curl -L https://istio.io/downloadIstio | TARGET_ARCH=x86_64 sh -
+          chmod +x istio-$ISTIO_VERSION/bin/istioctl
+          mv istio-$ISTIO_VERSION/bin/istioctl /usr/local/bin
+          istioctl install --set profile=demo -y
+          
+          kubectl create namespace kyma-system
+          kubectl create namespace kcp-system
+
+          kubectl apply -f https://raw.githubusercontent.com/prometheus-community/helm-charts/kube-prometheus-stack-47.0.0/charts/kube-prometheus-stack/crds/crd-servicemonitors.yaml
+      - run: kyma --ci alpha deploy -k config/${{ matrix.target }}

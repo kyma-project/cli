@@ -127,7 +127,7 @@ func Test_PullImageAndStartContainer(t *testing.T) {
 
 		mockDocker.On("ContainerCreate", ctx, mock.AnythingOfType("*container.Config"),
 			mock.AnythingOfType("*container.HostConfig"), mock.Anything, mock.Anything, testOpts.ContainerName).Return(
-			container.ContainerCreateCreatedBody{ID: testContainerID}, nil).Times(1)
+			container.CreateResponse{ID: testContainerID}, nil).Times(1)
 
 		mockDocker.On("ContainerStart", ctx, testContainerID, mock.AnythingOfType("types.ContainerStartOptions")).Return(nil).Times(1)
 
@@ -154,7 +154,7 @@ func Test_PullImageAndStartContainer(t *testing.T) {
 
 		mockDocker.On("ContainerCreate", ctx, mock.AnythingOfType("*container.Config"),
 			mock.AnythingOfType("*container.HostConfig"), mock.Anything, mock.Anything, testOpts.ContainerName).Return(
-			container.ContainerCreateCreatedBody{}, testErr).Times(1)
+			container.CreateResponse{}, testErr).Times(1)
 
 		id, err := mockWrapper.PullImageAndStartContainer(ctx, testOpts)
 
@@ -169,7 +169,7 @@ func Test_PullImageAndStartContainer(t *testing.T) {
 
 		mockDocker.On("ContainerCreate", ctx, mock.AnythingOfType("*container.Config"),
 			mock.AnythingOfType("*container.HostConfig"), mock.Anything, mock.Anything, testOpts.ContainerName).Return(
-			container.ContainerCreateCreatedBody{ID: testContainerID}, nil).Times(1)
+			container.CreateResponse{ID: testContainerID}, nil).Times(1)
 
 		mockDocker.On("ContainerStart", ctx, testContainerID, mock.AnythingOfType("types.ContainerStartOptions")).Return(testErr).Times(1)
 
