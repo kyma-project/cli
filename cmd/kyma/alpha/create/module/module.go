@@ -281,8 +281,13 @@ func (cmd *command) Run(ctx context.Context) error {
 	gitPath, err := files.SearchForTargetDirByName(modDef.Source, ".git")
 	if gitPath == "" || err != nil {
 		l.Warnf("could not find git repository root, using %s directory", modDef.Source)
-		l.Warn("It will result in skipping sources to be added to the layer")
-		// this builds the archive in memory, Alternatively one can store it on disk or in temp folder
+		cmd.CurrentStep.LogWarn("CAUTION: The target folder is not a git repository. Therefore, the security scan will not be performed and the module sources will not be added to the layer")
+		if !cmd.avoidUserInteraction() {
+			if !cmd.CurrentStep.PromptYesNo("Do you want to continue? ") {
+				return errors.New("command stopped by user")
+			}
+		}
+
 		archive, err = module.CreateArchive(archiveFS, cmd.opts.ModuleArchivePath, modDef, false)
 		if err != nil {
 			cmd.CurrentStep.Failure()
@@ -313,13 +318,13 @@ func (cmd *command) Run(ctx context.Context) error {
 	// Security Scan
 	if cmd.opts.SecurityScanConfig != "" && gitPath != "" { // security scan is only supported for target git repositories
 		cmd.NewStep("Configuring security scanning...")
-		if _, err := osFS.Stat(cmd.opts.SecurityScanConfig); err == nil {
+		if _, err = osFS.Stat(cmd.opts.SecurityScanConfig); err == nil {
 			err = module.AddSecurityScanningMetadata(archive.GetDescriptor(), cmd.opts.SecurityScanConfig)
 			if err != nil {
 				cmd.CurrentStep.Failure()
 				return err
 			}
-			if err := archive.Update(); err != nil {
+			if err = archive.Update(); err != nil {
 				return fmt.Errorf("could not write security scanning configuration into archive: %w", err)
 			}
 			cmd.CurrentStep.Successf("Security scanning configured")
@@ -532,6 +537,11 @@ func (cmd *command) moduleDefinitionFromOptions() (*module.Definition, *Config, 
 	cnf = moduleConfig
 
 	return def, cnf, nil
+}
+
+// avoidUserInteraction returns true if user won't provide input
+func (cmd *command) avoidUserInteraction() bool {
+	return cmd.NonInteractive || cmd.CI
 }
 
 // resolvePath resolves given path if it's absolute or uses the provided prefix to make it absolute.
