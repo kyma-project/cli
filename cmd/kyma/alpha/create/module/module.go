@@ -281,8 +281,11 @@ func (cmd *command) Run(ctx context.Context) error {
 	gitPath, err := files.SearchForTargetDirByName(modDef.Source, ".git")
 	if gitPath == "" || err != nil {
 		l.Warnf("could not find git repository root, using %s directory", modDef.Source)
-		fmt.Println()
-		nice.NewNice().PrintImportant("! CAUTION: The target folder is not a git repository. Therefore, the security scan will not be performed and the module sources will not be added to the layer")
+		n := nice.NewNice()
+		n.PrintImportant("! CAUTION: The target folder is not a git repository. The sources will be not added to the layer")
+		if err = files.IsFileExists(cmd.opts.SecurityScanConfig); err == nil {
+			n.PrintImportant("  The security scan configuration file was not found. The security scan will be skipped")
+		}
 		if !cmd.avoidUserInteraction() {
 			if !cmd.CurrentStep.PromptYesNo("Do you want to continue? ") {
 				cmd.CurrentStep.Failure()
@@ -320,7 +323,7 @@ func (cmd *command) Run(ctx context.Context) error {
 	// Security Scan
 	if cmd.opts.SecurityScanConfig != "" && gitPath != "" { // security scan is only supported for target git repositories
 		cmd.NewStep("Configuring security scanning...")
-		if _, err = osFS.Stat(cmd.opts.SecurityScanConfig); err == nil {
+		if err = files.IsFileExists(cmd.opts.SecurityScanConfig); err == nil {
 			err = module.AddSecurityScanningMetadata(archive.GetDescriptor(), cmd.opts.SecurityScanConfig)
 			if err != nil {
 				cmd.CurrentStep.Failure()

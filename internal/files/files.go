@@ -89,3 +89,15 @@ func SearchForTargetDirByName(root string, targetFolderName string) (gitFolderPa
 	})
 	return
 }
+
+// IsFileExists checks if the given file exists.
+// If the file does not exist the function returns an error.
+func IsFileExists(filePath string) error {
+	if filePath == "" {
+		return fmt.Errorf("file path is empty")
+	}
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		return fmt.Errorf("file %q does not exist", filePath)
+	}
+	return nil
+}

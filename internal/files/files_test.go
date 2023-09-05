@@ -54,6 +54,38 @@ func TestSearchForTargetDirByName(t *testing.T) {
 	})
 }
 
+func TestIsFileExists(t *testing.T) {
+	t.Run("validFilePath", func(t *testing.T) {
+		// Create and write a temporary file for testing
+		tmpFile, _ := os.CreateTemp("", "temp")
+		defer os.Remove(tmpFile.Name())
+
+		err := IsFileExists(tmpFile.Name())
+
+		if err != nil {
+			t.Errorf("Expected nil, but got error: %v", err)
+		}
+	})
+
+	t.Run("invalidFilePath", func(t *testing.T) {
+		err := IsFileExists("/invalid/path")
+
+		expectedErr := `file "/invalid/path" does not exist`
+		if err == nil || err.Error() != expectedErr {
+			t.Errorf("Expected an error with message: %v, but got: %v", expectedErr, err)
+		}
+	})
+
+	t.Run("emptyFilePath", func(t *testing.T) {
+		err := IsFileExists("")
+
+		expectedErr := "file path is empty"
+		if err == nil || err.Error() != expectedErr {
+			t.Errorf("Expected an error with message: %v, but got: %v", expectedErr, err)
+		}
+	})
+}
+
 func createTempDir(t *testing.T) string {
 	t.Helper()
 
@@ -63,7 +95,7 @@ func createTempDir(t *testing.T) string {
 	}
 
 	t.Cleanup(func() {
-		os.RemoveAll(tmpDir)
+		_ = os.RemoveAll(tmpDir)
 	})
 
 	return tmpDir
