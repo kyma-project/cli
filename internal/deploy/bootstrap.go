@@ -71,7 +71,7 @@ func Bootstrap(
 	if err != nil {
 		return false, err
 	}
-	manifestObjs = filterCRD(manifestObjs)
+	manifestObjs = fixCreationTimestampForCRD(manifestObjs)
 	if isInKcpMode {
 		if err = patchDeploymentWithInKcpModeFlag(manifestObjs); err != nil {
 			return false, err
@@ -90,7 +90,7 @@ func Bootstrap(
 
 // we have to manually configure CreationTimestamp for CRD until this bug get fixed
 // https://github.com/kubernetes-sigs/kustomize/issues/5031
-func filterCRD(objs []ctrlClient.Object) []ctrlClient.Object {
+func fixCreationTimestampForCRD(objs []ctrlClient.Object) []ctrlClient.Object {
 	var filteredObjs []ctrlClient.Object
 	for _, obj := range objs {
 		if obj.GetObjectKind().GroupVersionKind().Kind == "CustomResourceDefinition" {
