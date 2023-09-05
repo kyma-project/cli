@@ -281,9 +281,11 @@ func (cmd *command) Run(ctx context.Context) error {
 	gitPath, err := files.SearchForTargetDirByName(modDef.Source, ".git")
 	if gitPath == "" || err != nil {
 		l.Warnf("could not find git repository root, using %s directory", modDef.Source)
-		cmd.CurrentStep.LogWarn("CAUTION: The target folder is not a git repository. Therefore, the security scan will not be performed and the module sources will not be added to the layer")
+		fmt.Println()
+		nice.NewNice().PrintImportant("! CAUTION: The target folder is not a git repository. Therefore, the security scan will not be performed and the module sources will not be added to the layer")
 		if !cmd.avoidUserInteraction() {
 			if !cmd.CurrentStep.PromptYesNo("Do you want to continue? ") {
+				cmd.CurrentStep.Failure()
 				return errors.New("command stopped by user")
 			}
 		}
