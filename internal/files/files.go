@@ -90,11 +90,23 @@ func SearchForTargetDirByName(root string, targetFolderName string) (gitFolderPa
 	return
 }
 
-// IsFileExists checks if the given file exists.
-// If the file does not exist the function returns an error.
+// IsFileExists checks if the file exists.
+// If the file path is relative, it converts it to absolute path.
+// If the file does not exist, it returns an error.
+// If the file exists, it returns nil.
 func IsFileExists(filePath string) error {
 	if filePath == "" {
 		return fmt.Errorf("file path is empty")
+	}
+	// Check if the provided path is absolute
+	isAbsolute := filepath.IsAbs(filePath)
+	// If the path is relative, make it absolute
+	if !isAbsolute {
+		absPath, err := filepath.Abs(filePath)
+		if err != nil {
+			return fmt.Errorf("failed to convert relative path to absolute path: %v", err)
+		}
+		filePath = absPath
 	}
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		return fmt.Errorf("file %q does not exist", filePath)
