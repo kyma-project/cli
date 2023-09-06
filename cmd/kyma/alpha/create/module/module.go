@@ -284,7 +284,7 @@ func (cmd *command) Run(ctx context.Context) error {
 		n := nice.NewNice()
 		n.PrintImportant("! CAUTION: The target folder is not a git repository. The sources will be not added to the layer")
 		if files.IsFileExists(cmd.opts.SecurityScanConfig) {
-			n.PrintImportant("  The security scan configuration file was provided. But the security scan will be skipped")
+			n.PrintImportant("  The security scan configuration file has been provided, but it will be skipped due to the absence of repository information.")
 		}
 		if !cmd.avoidUserInteraction() {
 			if !cmd.CurrentStep.PromptYesNo("Do you want to continue? ") {
