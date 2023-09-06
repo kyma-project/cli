@@ -55,35 +55,32 @@ func TestSearchForTargetDirByName(t *testing.T) {
 }
 
 func TestIsFileExists(t *testing.T) {
-	t.Run("validFilePath", func(t *testing.T) {
-		// Create and write a temporary file for testing
-		tmpFile, _ := os.CreateTemp("", "temp")
-		defer os.Remove(tmpFile.Name())
+	tests := []struct {
+		filePath     string
+		expectedBool bool
+	}{
+		{"", false},
+		{"nonexistentfile.txt", false},
+		{"existingfile.txt", true},
+		{"/invalid/path", false},
+	}
 
-		err := IsFileExists(tmpFile.Name())
+	// Create a temporary file for testing.
+	tempFile, err := os.CreateTemp("", "testfile")
+	if err != nil {
+		t.Fatalf("Failed to create temporary file: %v", err)
+	}
+	defer tempFile.Close()
+	defer os.Remove(tempFile.Name())
 
-		if err != nil {
-			t.Errorf("Expected nil, but got error: %v", err)
-		}
-	})
-
-	t.Run("invalidFilePath", func(t *testing.T) {
-		err := IsFileExists("/invalid/path")
-
-		expectedErr := `file "/invalid/path" does not exist`
-		if err == nil || err.Error() != expectedErr {
-			t.Errorf("Expected an error with message: %v, but got: %v", expectedErr, err)
-		}
-	})
-
-	t.Run("emptyFilePath", func(t *testing.T) {
-		err := IsFileExists("")
-
-		expectedErr := "file path is empty"
-		if err == nil || err.Error() != expectedErr {
-			t.Errorf("Expected an error with message: %v, but got: %v", expectedErr, err)
-		}
-	})
+	for _, test := range tests {
+		t.Run(test.filePath, func(t *testing.T) {
+			exists := IsFileExists(test.filePath)
+			if exists != test.expectedBool {
+				t.Errorf("Expected IsFileExists(%s) to be %v, but got %v", test.filePath, test.expectedBool, exists)
+			}
+		})
+	}
 }
 
 func createTempDir(t *testing.T) string {
