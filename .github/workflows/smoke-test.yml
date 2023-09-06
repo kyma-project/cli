@@ -12,8 +12,6 @@ jobs:
     env:
       LIFECYCLE_MANAGER: ${{ github.repository }}
       K3D_VERSION: v5.4.7
-      KUSTOMIZE_VERSION: 4.5.7
-      ISTIO_VERSION: 1.17.1
     steps:
       - name: Checkout
         uses: actions/checkout@v3
