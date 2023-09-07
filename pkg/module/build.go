@@ -19,7 +19,7 @@ import (
 // CreateArchive creates a component archive with the given configuration.
 // An empty vfs.FileSystem causes a FileSystem to be created in
 // the temporary OS folder
-func CreateArchive(fs vfs.FileSystem, path string, def *Definition) (*comparch.ComponentArchive, error) {
+func CreateArchive(fs vfs.FileSystem, path, gitRemote string, def *Definition) (*comparch.ComponentArchive, error) {
 	if err := def.validate(); err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func CreateArchive(fs vfs.FileSystem, path string, def *Definition) (*comparch.C
 		cd.Provider = v1.Provider{Name: "kyma-project.io", Labels: v1.Labels{*builtByCLI}}
 	}
 
-	if err := addSources(ctx, cd, def); err != nil {
+	if err := addSources(ctx, cd, def, gitRemote); err != nil {
 		return nil, err
 	}
 	cd.ComponentSpec.SetName(def.Name)
@@ -78,8 +78,8 @@ func CreateArchive(fs vfs.FileSystem, path string, def *Definition) (*comparch.C
 	return archive, nil
 }
 
-func addSources(ctx cpi.Context, cd *ocm.ComponentDescriptor, def *Definition) error {
-	src, err := git.Source(ctx, def.Source, def.Repo, def.Version)
+func addSources(ctx cpi.Context, cd *ocm.ComponentDescriptor, def *Definition, gitRemote string) error {
+	src, err := git.Source(ctx, def.Source, def.Repo, def.Version, gitRemote)
 	if err != nil {
 		return err
 	}

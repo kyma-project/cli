@@ -125,6 +125,11 @@ Build a Kubebuilder module my-domain/modC in version 3.2.1 and push it to a loca
 
 	cmd.Flags().BoolVar(&o.ArchiveVersionOverwrite, "module-archive-version-overwrite", false, "Overwrites existing component's versions of the module. If set to false, the push is a No-Op.")
 
+	cmd.Flags().StringVar(
+		&o.GitRemote, "git-remote", "origin",
+		"Specifies the remote name of the wanted GitHub repository. For Example \"origin\" or \"upstream\"",
+	)
+
 	cmd.Flags().StringVarP(&o.Path, "path", "p", "", "Path to the module's contents. (default current directory)")
 
 	cmd.Flags().StringVar(
@@ -274,7 +279,7 @@ func (cmd *command) Run(ctx context.Context) error {
 		l.Info("using in-memory archive")
 	}
 	// this builds the archive in memory, Alternatively one can store it on disk or in temp folder
-	archive, err := module.CreateArchive(archiveFS, cmd.opts.ModuleArchivePath, modDef)
+	archive, err := module.CreateArchive(archiveFS, cmd.opts.ModuleArchivePath, cmd.opts.GitRemote, modDef)
 	if err != nil {
 		cmd.CurrentStep.Failure()
 		return err

@@ -23,27 +23,34 @@ const (
 
 var errNotGit = errors.New("not a git repository")
 
-func Source(ctx cpi.Context, path, repo, version string) (*ocm.Source, error) {
+func Source(ctx cpi.Context, path, repo, version, gitRemote string) (*ocm.Source, error) {
 
 	var ref, commit string
 	// check for .git
 	if gitPath, err := findGitInfo(path); err == nil {
-		r, err := git.PlainOpen(gitPath)
+		gitRepository, err := git.PlainOpen(gitPath)
 		if err != nil {
 			return nil, fmt.Errorf("could not get git information from %q: %w", gitPath, err)
 		}
 
 		// get URL from git info if not provided in the project
 		if repo == "" {
-			remotes, err := r.Remotes()
+			remotes, err := gitRepository.Remotes()
 			if err != nil {
 				return nil, fmt.Errorf("could not get git remotes for repository: %w", err)
 			}
 
-			if len(remotes) > 0 {
-				var err error
+			remote := &git.Remote{}
+			for _, r := range remotes {
+				if r.Config().Name == gitRemote {
+					remote = r
+					break
+				}
+			}
+
+			if remote.Config() != nil { // TODO double check if it is really nil
 				// get remote URL and convert to HTTPS in case it is an SSH URL
-				httpURL := remotes[0].Config().URLs[0]
+				httpURL := remote.Config().URLs[0]
 				if strings.HasPrefix(httpURL, "git") {
 					httpURL = strings.Replace(httpURL, ":", "/", 1)
 					httpURL = strings.Replace(httpURL, "git@", "https://", 1)
@@ -54,10 +61,12 @@ func Source(ctx cpi.Context, path, repo, version string) (*ocm.Source, error) {
 					return nil, fmt.Errorf("could not parse repository URL %q: %w", httpURL, err)
 				}
 				repo = repoURL.String()
+			} else {
+				return nil, fmt.Errorf("could not find git remote in %q: %s", gitPath, gitRemote)
 			}
 		}
 
-		head, err := r.Head()
+		head, err := gitRepository.Head()
 		if err != nil {
 			return nil, fmt.Errorf("could not get git information from %q: %w", gitPath, err)
 		}
