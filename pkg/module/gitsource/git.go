@@ -20,9 +20,10 @@ func (g GitSource) FetchSource(ctx cpi.Context, path, repo, version string) (*oc
 		return nil, err
 	}
 
-	repo, err = g.determineRepositoryURL(repo)
-	if err != nil {
-		return nil, err
+	if repo == "" {
+		if repo, err = g.determineRepositoryURL(); err != nil {
+			return nil, err
+		}
 	}
 
 	sourceType := "git"
@@ -52,34 +53,28 @@ func (g GitSource) FetchSource(ctx cpi.Context, path, repo, version string) (*oc
 	}, nil
 }
 
-func (g GitSource) determineRepositoryURL(repo string) (string, error) {
-	if repo == "" {
-		r, err := git.PlainOpen(".")
-		if err != nil {
-			return "", fmt.Errorf("could not open git repository: %w", err)
-		}
-
-		remotes, err := r.Remotes()
-		if err != nil {
-			return "", fmt.Errorf("could not get git remotes: %w", err)
-		}
-
-		if len(remotes) > 0 {
-			httpURL := remotes[0].Config().URLs[0]
-			if strings.HasPrefix(httpURL, "git") {
-				httpURL = strings.Replace(httpURL, ":", "/", 1)
-				httpURL = strings.Replace(httpURL, "git@", "https://", 1)
-				httpURL = strings.TrimSuffix(httpURL, gitFolder)
-			}
-			repoURL, err := url.Parse(httpURL)
-			if err != nil {
-				return "", fmt.Errorf("could not parse repository URL: %w", err)
-			}
-			repo = repoURL.String()
-		}
+func (g GitSource) determineRepositoryURL() (string, error) {
+	r, err := git.PlainOpen(".")
+	if err != nil {
+		return "", fmt.Errorf("could not open git repository: %w", err)
 	}
 
-	return repo, nil
+	remotes, err := r.Remotes()
+	if err != nil || len(remotes) == 0 {
+		return "", fmt.Errorf("could not get git remotes: %w", err)
+	}
+
+	httpURL := remotes[0].Config().URLs[0]
+	if strings.HasPrefix(httpURL, "git") {
+		httpURL = strings.Replace(httpURL, ":", "/", 1)
+		httpURL = strings.Replace(httpURL, "git@", "https://", 1)
+		httpURL = strings.TrimSuffix(httpURL, gitFolder)
+	}
+	repoURL, err := url.Parse(httpURL)
+	if err != nil {
+		return "", fmt.Errorf("could not parse repository URL: %w", err)
+	}
+	return repoURL.String(), nil
 }
 
 func (g GitSource) getGitInfo(gitPath string) (string, string, error) {
