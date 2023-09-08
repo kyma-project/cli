@@ -12,6 +12,11 @@ type Nice struct {
 	NonInteractive bool
 }
 
+// NewNice returns a new Nice instance
+func NewNice(NonInteractive bool) *Nice {
+	return &Nice{NonInteractive}
+}
+
 // PrintKyma prints the Kyma word with its identity color
 func (n *Nice) PrintKyma() {
 	if n.NonInteractive {

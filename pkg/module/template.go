@@ -6,10 +6,11 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/kyma-project/cli/pkg/module/oci"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	"sigs.k8s.io/yaml"
+
+	"github.com/kyma-project/cli/pkg/module/oci"
 )
 
 const (
