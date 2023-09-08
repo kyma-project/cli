@@ -40,29 +40,9 @@ func Source(ctx cpi.Context, path, repo, version, gitRemote string) (*ocm.Source
 				return nil, fmt.Errorf("could not get git remotes for repository: %w", err)
 			}
 
-			remote := &git.Remote{}
-			for _, r := range remotes {
-				if r.Config().Name == gitRemote {
-					remote = r
-					break
-				}
-			}
-
-			if remote.Config() != nil { // TODO double check if it is really nil
-				// get remote URL and convert to HTTPS in case it is an SSH URL
-				httpURL := remote.Config().URLs[0]
-				if strings.HasPrefix(httpURL, "git") {
-					httpURL = strings.Replace(httpURL, ":", "/", 1)
-					httpURL = strings.Replace(httpURL, "git@", "https://", 1)
-					httpURL = strings.TrimSuffix(httpURL, gitFolder)
-				}
-				repoURL, err := url.Parse(httpURL)
-				if err != nil {
-					return nil, fmt.Errorf("could not parse repository URL %q: %w", httpURL, err)
-				}
-				repo = repoURL.String()
-			} else {
-				return nil, fmt.Errorf("could not find git remote in %q: %s", gitPath, gitRemote)
+			repo, err = FetchRepoURLFromRemotes(remotes, gitRemote)
+			if err != nil {
+				return nil, err
 			}
 		}
 
@@ -119,4 +99,30 @@ func findGitInfo(path string) (string, error) {
 	}
 
 	return gitPath, nil
+}
+
+func FetchRepoURLFromRemotes(gitRemotes []*git.Remote, remoteName string) (string, error) {
+	remote := &git.Remote{}
+	for _, r := range gitRemotes {
+		if r.Config().Name == remoteName {
+			remote = r
+			break
+		}
+	}
+
+	if remote.Config() != nil {
+		// get remote URL and convert to HTTPS in case it is an SSH URL
+		httpURL := remote.Config().URLs[0]
+		if strings.HasPrefix(httpURL, "git") {
+			httpURL = strings.Replace(httpURL, ":", "/", 1)
+			httpURL = strings.Replace(httpURL, "git@", "https://", 1)
+			httpURL = strings.TrimSuffix(httpURL, gitFolder)
+		}
+		repoURL, err := url.Parse(httpURL)
+		if err != nil {
+			return "", fmt.Errorf("could not parse repository URL %q: %w", httpURL, err)
+		}
+		return repoURL.String(), nil
+	}
+	return "", fmt.Errorf("could not find git remote in: %s", remoteName)
 }
