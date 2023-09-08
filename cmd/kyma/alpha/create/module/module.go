@@ -298,7 +298,7 @@ func (cmd *command) Run(ctx context.Context) error {
 			}
 		}
 
-		archive, err = module.CreateArchive(archiveFS, cmd.opts.ModuleArchivePath, modDef, false)
+		archive, err = module.CreateArchive(archiveFS, cmd.opts.ModuleArchivePath, cmd.opts.GitRemote, modDef, false)
 		if err != nil {
 			cmd.CurrentStep.Failure()
 			return err

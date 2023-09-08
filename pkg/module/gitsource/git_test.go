@@ -1,11 +1,11 @@
-package git_test
+package gitsource_test
 
 import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"testing"
 
-	internalgit "github.com/kyma-project/cli/pkg/module/git"
+	"github.com/kyma-project/cli/pkg/module/gitsource"
 )
 
 func Test_fetchRepoURLFromRemotes(t *testing.T) {
@@ -54,7 +54,7 @@ func Test_fetchRepoURLFromRemotes(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := internalgit.FetchRepoURLFromRemotes(tt.args.gitRemotes, tt.args.remoteName)
+			got, err := gitsource.FetchRepoURLFromRemotes(tt.args.gitRemotes, tt.args.remoteName)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("fetchRepoURLFromRemotes() error = %v, wantErr %v", err, tt.wantErr)
 				return
