@@ -281,7 +281,7 @@ func (cmd *command) Run(ctx context.Context) error {
 	gitPath, err := files.SearchForTargetDirByName(modDef.Source, ".git")
 	if gitPath == "" || err != nil {
 		l.Warnf("could not find git repository root, using %s directory", modDef.Source)
-		n := nice.NewNice()
+		n := nice.NewNice(cmd.opts.NonInteractive)
 		n.PrintImportant("! CAUTION: The target folder is not a git repository. The sources will be not added to the layer")
 		if files.IsFileExists(cmd.opts.SecurityScanConfig) {
 			n.PrintImportant("  The security scan configuration file has been provided, but it will be skipped due to the absence of repository information.")

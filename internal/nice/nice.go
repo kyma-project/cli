@@ -13,8 +13,8 @@ type Nice struct {
 }
 
 // NewNice returns a new Nice instance
-func NewNice() *Nice {
-	return &Nice{}
+func NewNice(NonInteractive bool) *Nice {
+	return &Nice{NonInteractive}
 }
 
 // PrintKyma prints the Kyma word with its identity color
