@@ -10,8 +10,9 @@ import (
 	"github.com/kyma-project/cli/internal/nice"
 
 	"github.com/blang/semver/v4"
-	"github.com/kyma-project/cli/internal/cli"
 	"github.com/pkg/errors"
+
+	"github.com/kyma-project/cli/internal/cli"
 )
 
 // Options defines available options for the create module command

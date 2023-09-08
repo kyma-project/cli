@@ -8,19 +8,22 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/kyma-project/cli/internal/cli"
-	"github.com/kyma-project/cli/internal/nice"
-	"github.com/kyma-project/cli/pkg/module"
 	"github.com/mandelsoft/vfs/pkg/memoryfs"
 	"github.com/mandelsoft/vfs/pkg/osfs"
 	"github.com/mandelsoft/vfs/pkg/vfs"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	compdescv2 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/versions/v2"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/comparch"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"golang.org/x/exp/maps"
 	"gopkg.in/yaml.v3"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
+
+	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/files"
+	"github.com/kyma-project/cli/internal/nice"
+	"github.com/kyma-project/cli/pkg/module"
 )
 
 type command struct {
@@ -273,12 +276,39 @@ func (cmd *command) Run(ctx context.Context) error {
 		archiveFS = memoryfs.New()
 		l.Info("using in-memory archive")
 	}
-	// this builds the archive in memory, Alternatively one can store it on disk or in temp folder
-	archive, err := module.CreateArchive(archiveFS, cmd.opts.ModuleArchivePath, modDef)
-	if err != nil {
-		cmd.CurrentStep.Failure()
-		return err
+
+	var archive *comparch.ComponentArchive
+	gitPath, err := files.SearchForTargetDirByName(modDef.Source, ".git")
+	if gitPath == "" || err != nil {
+		l.Warnf("could not find git repository root, using %s directory", modDef.Source)
+		n := nice.NewNice(cmd.opts.NonInteractive)
+		n.PrintImportant("\n! CAUTION: The target folder is not a git repository. The sources will be not added to the layer")
+		if files.IsFileExists(cmd.opts.SecurityScanConfig) {
+			n.PrintImportant("  The security scan configuration file has been provided, but it will be skipped due to the absence of repository information.")
+		}
+		if !cmd.avoidUserInteraction() {
+			if !cmd.CurrentStep.PromptYesNo("Do you want to continue? ") {
+				cmd.CurrentStep.Failure()
+				return errors.New("command stopped by user")
+			}
+		}
+
+		archive, err = module.CreateArchive(archiveFS, cmd.opts.ModuleArchivePath, modDef, false)
+		if err != nil {
+			cmd.CurrentStep.Failure()
+			return err
+		}
+	} else {
+		l.Infof("found git repository root at %s", gitPath)
+		l.Infof("adding sources to the layer")
+		modDef.Source = gitPath // set the source to the git root
+		archive, err = module.CreateArchive(archiveFS, cmd.opts.ModuleArchivePath, modDef, true)
+		if err != nil {
+			cmd.CurrentStep.Failure()
+			return err
+		}
 	}
+
 	cmd.CurrentStep.Successf("Module archive created")
 
 	cmd.NewStep("Adding layers to archive...")
@@ -290,9 +320,10 @@ func (cmd *command) Run(ctx context.Context) error {
 
 	cmd.CurrentStep.Success()
 
-	if cmd.opts.SecurityScanConfig != "" {
+	// Security Scan
+	if cmd.opts.SecurityScanConfig != "" && gitPath != "" { // security scan is only supported for target git repositories
 		cmd.NewStep("Configuring security scanning...")
-		if _, err := osFS.Stat(cmd.opts.SecurityScanConfig); err == nil {
+		if files.IsFileExists(cmd.opts.SecurityScanConfig) {
 			err = module.AddSecurityScanningMetadata(archive.GetDescriptor(), cmd.opts.SecurityScanConfig)
 			if err != nil {
 				cmd.CurrentStep.Failure()
@@ -303,7 +334,7 @@ func (cmd *command) Run(ctx context.Context) error {
 			}
 			cmd.CurrentStep.Successf("Security scanning configured")
 		} else {
-			l.Warnf("Security scanning configuration was skipped: %s", err.Error())
+			l.Warnf("Security scanning configuration was skipped")
 			cmd.CurrentStep.Failure()
 		}
 	}
@@ -511,6 +542,11 @@ func (cmd *command) moduleDefinitionFromOptions() (*module.Definition, *Config, 
 	cnf = moduleConfig
 
 	return def, cnf, nil
+}
+
+// avoidUserInteraction returns true if user won't provide input
+func (cmd *command) avoidUserInteraction() bool {
+	return cmd.NonInteractive || cmd.CI
 }
 
 // resolvePath resolves given path if it's absolute or uses the provided prefix to make it absolute.

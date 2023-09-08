@@ -3,8 +3,8 @@ package module
 import (
 	"fmt"
 	"os"
+	"strings"
 
-	"github.com/kyma-project/cli/pkg/module/git"
 	"github.com/mandelsoft/vfs/pkg/projectionfs"
 	"github.com/mandelsoft/vfs/pkg/vfs"
 	"github.com/open-component-model/ocm/pkg/common/accessobj"
@@ -14,12 +14,18 @@ import (
 	compdescv2 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/versions/v2"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/cpi"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/comparch"
+
+	"github.com/kyma-project/cli/pkg/module/gitsource"
 )
+
+type Source interface {
+	FetchSource(ctx cpi.Context, path, repo, version string) (*ocm.Source, error)
+}
 
 // CreateArchive creates a component archive with the given configuration.
 // An empty vfs.FileSystem causes a FileSystem to be created in
 // the temporary OS folder
-func CreateArchive(fs vfs.FileSystem, path string, def *Definition) (*comparch.ComponentArchive, error) {
+func CreateArchive(fs vfs.FileSystem, path string, def *Definition, isTargetDirAGitRepo bool) (*comparch.ComponentArchive, error) {
 	if err := def.validate(); err != nil {
 		return nil, err
 	}
@@ -63,8 +69,10 @@ func CreateArchive(fs vfs.FileSystem, path string, def *Definition) (*comparch.C
 		cd.Provider = v1.Provider{Name: "kyma-project.io", Labels: v1.Labels{*builtByCLI}}
 	}
 
-	if err := addSources(ctx, cd, def); err != nil {
-		return nil, err
+	if isTargetDirAGitRepo {
+		if err := addSources(ctx, cd, def); err != nil {
+			return nil, err
+		}
 	}
 	cd.ComponentSpec.SetName(def.Name)
 	cd.ComponentSpec.SetVersion(def.Version)
@@ -78,21 +86,26 @@ func CreateArchive(fs vfs.FileSystem, path string, def *Definition) (*comparch.C
 	return archive, nil
 }
 
+// addSources adds the sources to the component descriptor. If the def.Source is a git repository
 func addSources(ctx cpi.Context, cd *ocm.ComponentDescriptor, def *Definition) error {
-	src, err := git.Source(ctx, def.Source, def.Repo, def.Version)
-	if err != nil {
-		return err
+	if strings.HasSuffix(def.Source, ".git") {
+		gitSource := gitsource.NewGitSource()
+		src, err := gitSource.FetchSource(ctx, def.Source, def.Repo, def.Version)
+
+		if err != nil {
+			return err
+		}
+		appendSourcesForCd(cd, src)
 	}
 
-	if src == nil {
-		return nil
-	}
+	return nil
+}
 
+// appendSourcesForCd appends the given source to the component descriptor.
+func appendSourcesForCd(cd *ocm.ComponentDescriptor, src *ocm.Source) {
 	if idx := cd.GetSourceIndex(&src.SourceMeta); idx < 0 {
 		cd.Sources = append(cd.Sources, *src)
 	} else {
 		cd.Sources[idx] = *src
 	}
-
-	return nil
 }
