@@ -1122,8 +1122,8 @@ github.com/kyma-project/hydroform/provision v0.0.0-20230831071441-f3501c89bace h
 github.com/kyma-project/hydroform/provision v0.0.0-20230831071441-f3501c89bace/go.mod h1:l89i/K8RhjbxiC7UF72gJQRkyOhvZ3LV/qADHI0JDEk=
 github.com/kyma-project/istio/operator v0.0.0-20230228134142-81d1f5a49e44 h1:o9x1dsOZPRiVYFnkZQG6SVh1Myiw/UG+92SR9FIdn0M=
 github.com/kyma-project/istio/operator v0.0.0-20230228134142-81d1f5a49e44/go.mod h1:AGCG2FqIIn2ANZe0qCm71PUwDZszSQDSReoLTekY/bs=
-github.com/kyma-project/lifecycle-manager v0.0.0-20230901063849-efb1c76570af h1:EDm7JiSGdAWfAOl9KYMWkMXlBJ+/41ZvjLzrdTPLNTA=
-github.com/kyma-project/lifecycle-manager v0.0.0-20230901063849-efb1c76570af/go.mod h1:touvUNucIOGaETyoaqyGaPfeZEuK8cdVwa2Psm+6qfI=
+github.com/kyma-project/lifecycle-manager v0.0.0-20230911065458-6926c58bcd43 h1:9/rYJzKGq0oiG5bqP7brI0cq1wuzCpubf4ScB8y8xbE=
+github.com/kyma-project/lifecycle-manager v0.0.0-20230911065458-6926c58bcd43/go.mod h1:touvUNucIOGaETyoaqyGaPfeZEuK8cdVwa2Psm+6qfI=
 github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 h1:SOEGU9fKiNWd/HOJuq6+3iTQz8KNCLtVX6idSoTLdUw=
 github.com/lann/builder v0.0.0-20180802200727-47ae307949d0/go.mod h1:dXGbAdH5GtBTC4WfIxhKZfyBF/HBFgRZSWwZ9g/He9o=
 github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 h1:P6pPBnrTSX3DEVR4fDembhRWSsG5rVo6hYhAB/ADZrk=

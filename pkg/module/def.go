@@ -3,21 +3,23 @@ package module
 import (
 	"errors"
 	"fmt"
+	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 
 	"github.com/kyma-project/cli/pkg/module/oci"
 )
 
 // Definition contains all infrmation and configuration that defines a module (e.g. component descriptor config, template config, layers, CRs...)
 type Definition struct {
-	SchemaVersion      string      // schema version for the ocm descriptor
-	Source             string      // path to the sources to create the module
-	Name               string      // Name of the module (mandatory)
-	NameMappingMode    NameMapping // Component Name mapping as defined in OCM spec.
-	Version            string      // Version of the module (mandatory)
-	RegistryURL        string      // Registry URL to push the image to (optional)
-	DefaultCRPath      string      // path to the file containing the CR to include in the module template  (optional)
-	SingleManifestPath string      // path to the file containing combined manifest for the module (optional)
-	Override           bool        // If true, existing module is overwritten if the configuration differs.
+	SchemaVersion      string                     // schema version for the ocm descriptor
+	Source             string                     // path to the sources to create the module
+	Name               string                     // Name of the module (mandatory)
+	NameMappingMode    NameMapping                // Component Name mapping as defined in OCM spec.
+	Version            string                     // Version of the module (mandatory)
+	RegistryURL        string                     // Registry URL to push the image to (optional)
+	DefaultCRPath      string                     // path to the file containing the CR to include in the module template  (optional)
+	SingleManifestPath string                     // path to the file containing combined manifest for the module (optional)
+	Override           bool                       // If true, existing module is overwritten if the configuration differs.
+	CustomStateChecks  []v1beta2.CustomStateCheck // specifies optional behavior for determining module state.
 
 	// these fields will be filled out when inspecting the module contents
 	Layers    []Layer

@@ -2,6 +2,7 @@ package module
 
 import (
 	"fmt"
+	"github.com/kyma-project/cli/pkg/module"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -19,28 +20,31 @@ import (
 type Options struct {
 	*cli.Options
 
-	Name                    string
-	NameMappingMode         string
-	Version                 string
-	Path                    string
-	ModuleArchivePath       string
-	RegistryURL             string
-	Credentials             string
-	TemplateOutput          string
-	DefaultCRPath           string
-	Channel                 string
-	SchemaVersion           string
-	Token                   string
-	Insecure                bool
-	PersistentArchive       bool
-	ResourcePaths           []string
-	ArchiveVersionOverwrite bool
-	RegistryCredSelector    string
-	SecurityScanConfig      string
-	PrivateKeyPath          string
-	ModuleConfigFile        string
-	KubebuilderProject      bool
-	Namespace               string
+	Name                         string
+	NameMappingMode              string
+	Version                      string
+	Path                         string
+	ModuleArchivePath            string
+	RegistryURL                  string
+	Credentials                  string
+	TemplateOutput               string
+	DefaultCRPath                string
+	Channel                      string
+	SchemaVersion                string
+	Token                        string
+	Insecure                     bool
+	PersistentArchive            bool
+	ResourcePaths                []string
+	ArchiveVersionOverwrite      bool
+	RegistryCredSelector         string
+	SecurityScanConfig           string
+	PrivateKeyPath               string
+	ModuleConfigFile             string
+	KubebuilderProject           bool
+	Namespace                    string
+	CustomStateCheckPaths        []string
+	CustomStateCheckValues       []string
+	CustomStateCheckMappedStates []string
 }
 
 const (
@@ -62,7 +66,7 @@ func NewOptions(o *cli.Options) *Options {
 	return &Options{Options: o}
 }
 
-func (o *Options) ValidateVersion() error {
+func (o *Options) validateVersion() error {
 	sv, err := semver.ParseTolerant(o.Version)
 	if err != nil {
 		return err
@@ -74,7 +78,7 @@ func (o *Options) ValidateVersion() error {
 	return nil
 }
 
-func (o *Options) ValidatePath() error {
+func (o *Options) validatePath() error {
 	var err error
 	if o.Path == "" {
 		o.Path, err = os.Getwd()
@@ -90,7 +94,7 @@ func (o *Options) ValidatePath() error {
 	return err
 }
 
-func (o *Options) ValidateChannel() error {
+func (o *Options) validateChannel() error {
 
 	if len(o.Channel) < ChannelMinLength || len(o.Channel) > ChannelMaxLength {
 		return fmt.Errorf(
@@ -105,13 +109,26 @@ func (o *Options) ValidateChannel() error {
 	return nil
 }
 
+func (o *Options) validateCustomStateCheck() error {
+	if !o.KubebuilderProject && (len(o.CustomStateCheckPaths)+
+		len(o.CustomStateCheckValues)+len(o.CustomStateCheckMappedStates) != 0) {
+		return fmt.Errorf(
+			"providing custom state check for non-legacy configuration through arguments is not allowed, "+
+				"use config file, %w", module.ErrCustomStateCheckValidation,
+		)
+	}
+
+	return module.ValidateCustomStateCheck(o.CustomStateCheckPaths,
+		o.CustomStateCheckValues, o.CustomStateCheckMappedStates)
+}
+
 func (o *Options) Validate() error {
 	if o.KubebuilderProject {
-		if err := o.ValidateVersion(); err != nil {
+		if err := o.validateVersion(); err != nil {
 			return err
 		}
 
-		if err := o.ValidateChannel(); err != nil {
+		if err := o.validateChannel(); err != nil {
 			return err
 		}
 	} else if !o.WithModuleConfigFile() {
@@ -122,9 +139,17 @@ func (o *Options) Validate() error {
 		return err
 	}
 
-	return o.ValidatePath()
+	if err := o.validatePath(); err != nil {
+		return err
+	}
+
+	return o.validateCustomStateCheck()
 }
 
 func (o *Options) WithModuleConfigFile() bool {
 	return len(o.ModuleConfigFile) > 0
+}
+
+func (o *Options) IsCustomStateCheckPresent() bool {
+	return len(o.CustomStateCheckPaths) > 0
 }

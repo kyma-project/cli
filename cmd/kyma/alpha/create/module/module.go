@@ -177,6 +177,15 @@ Build a Kubebuilder module my-domain/modC in version 3.2.1 and push it to a loca
 		&o.PrivateKeyPath, "key", "", "Specifies the path where a private key is used for signing.",
 	)
 
+	cmd.Flags().StringSliceVar(&o.CustomStateCheckPaths, "state-check-json-paths", []string{},
+		"Specifies list of json paths for custom state check for the module. Eg: status.health,status.health")
+	cmd.Flags().StringSliceVar(&o.CustomStateCheckValues, "state-check-values", []string{},
+		"Specifies list of corresponding values of json paths for custom state check for the module. "+
+			"Eg: green,red")
+	cmd.Flags().StringSliceVar(&o.CustomStateCheckMappedStates, "state-check-mapped-states", []string{},
+		"Specifies list of custom states that are mapped to the module CR for corresponding values "+
+			"at the json path. Eg: Ready,Error NOTE: must be a valid Kyma CR state.")
+
 	cmd.Flags().BoolVar(&o.KubebuilderProject, "kubebuilder-project", false, "Specifies provided module is a Kubebuilder Project.")
 
 	configureLegacyFlags(cmd, o)
@@ -410,7 +419,8 @@ func (cmd *command) Run(ctx context.Context) error {
 			namespace = modCnf.Namespace
 		}
 
-		t, err := module.Template(componentVersionAccess, resourceName, namespace, channel, modDef.DefaultCR, labels, annotations)
+		t, err := module.Template(componentVersionAccess, resourceName, namespace,
+			channel, modDef.DefaultCR, labels, annotations, modDef.CustomStateChecks)
 
 		if err != nil {
 			cmd.CurrentStep.Failure()
@@ -492,15 +502,19 @@ func (cmd *command) moduleDefinitionFromOptions() (*module.Definition, *Config, 
 		np := nice.Nice{}
 		np.PrintImportant("WARNING: The Kubebuilder support is DEPRECATED. Use the simple mode by providing the \"--module-config-file\" flag instead.")
 
+		customStateChecks := module.GenerateChecks(cmd.opts.CustomStateCheckPaths,
+			cmd.opts.CustomStateCheckValues, cmd.opts.CustomStateCheckMappedStates)
+
 		//legacy approach, flag-based
 		def = &module.Definition{
-			Name:            cmd.opts.Name,
-			Version:         cmd.opts.Version,
-			Source:          cmd.opts.Path,
-			RegistryURL:     cmd.opts.RegistryURL,
-			NameMappingMode: nameMappingMode,
-			DefaultCRPath:   cmd.opts.DefaultCRPath,
-			SchemaVersion:   cmd.opts.SchemaVersion,
+			Name:              cmd.opts.Name,
+			Version:           cmd.opts.Version,
+			Source:            cmd.opts.Path,
+			RegistryURL:       cmd.opts.RegistryURL,
+			NameMappingMode:   nameMappingMode,
+			DefaultCRPath:     cmd.opts.DefaultCRPath,
+			SchemaVersion:     cmd.opts.SchemaVersion,
+			CustomStateChecks: customStateChecks,
 		}
 		return def, cnf, nil
 	}
@@ -538,6 +552,7 @@ func (cmd *command) moduleDefinitionFromOptions() (*module.Definition, *Config, 
 		DefaultCRPath:      defaultCRPath,
 		SingleManifestPath: moduleManifestPath,
 		SchemaVersion:      cmd.opts.SchemaVersion,
+		CustomStateChecks:  moduleConfig.CustomStateChecks,
 	}
 	cnf = moduleConfig
 
