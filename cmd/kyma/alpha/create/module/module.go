@@ -182,15 +182,6 @@ Build a Kubebuilder module my-domain/modC in version 3.2.1 and push it to a loca
 		&o.PrivateKeyPath, "key", "", "Specifies the path where a private key is used for signing.",
 	)
 
-	cmd.Flags().StringSliceVar(&o.CustomStateCheckPaths, "state-check-json-paths", []string{},
-		"Specifies the list of JSON paths for custom state check for the module. For example, status.health,status.health")
-	cmd.Flags().StringSliceVar(&o.CustomStateCheckValues, "state-check-values", []string{},
-		"Specifies the list of corresponding values of JSON paths for the module custom state check. "+
-			"For example, green, red")
-	cmd.Flags().StringSliceVar(&o.CustomStateCheckMappedStates, "state-check-mapped-states", []string{},
-		"Specifies the list of custom states mapped to the module CR for corresponding values at the JSON path. "+
-			"For example, Ready, Error **NOTE**: must be a valid Kyma CR state.")
-
 	cmd.Flags().BoolVar(&o.KubebuilderProject, "kubebuilder-project", false, "Specifies provided module is a Kubebuilder Project.")
 
 	configureLegacyFlags(cmd, o)
@@ -507,9 +498,6 @@ func (cmd *command) moduleDefinitionFromOptions() (*module.Definition, *Config, 
 		np := nice.Nice{}
 		np.PrintImportant("WARNING: The Kubebuilder support is DEPRECATED. Use the simple mode by providing the \"--module-config-file\" flag instead.")
 
-		customStateChecks := module.GenerateChecks(cmd.opts.CustomStateCheckPaths,
-			cmd.opts.CustomStateCheckValues, cmd.opts.CustomStateCheckMappedStates)
-
 		//legacy approach, flag-based
 		def = &module.Definition{
 			Name:              cmd.opts.Name,
@@ -519,7 +507,7 @@ func (cmd *command) moduleDefinitionFromOptions() (*module.Definition, *Config, 
 			NameMappingMode:   nameMappingMode,
 			DefaultCRPath:     cmd.opts.DefaultCRPath,
 			SchemaVersion:     cmd.opts.SchemaVersion,
-			CustomStateChecks: customStateChecks,
+			CustomStateChecks: nil,
 		}
 		return def, cnf, nil
 	}

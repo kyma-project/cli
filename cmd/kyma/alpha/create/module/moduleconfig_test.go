@@ -1,6 +1,7 @@
 package module
 
 import (
+	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	"testing"
 )
 
@@ -222,5 +223,75 @@ func TestValidateChannel(t *testing.T) {
 				}
 			},
 		)
+	}
+}
+
+func TestValidateCustomStateChecks(t *testing.T) {
+	tests := []struct {
+		name    string
+		config  Config
+		wantErr bool
+	}{
+		{
+			name: "No error when custom state check not provided",
+			config: Config{
+				CustomStateChecks: nil,
+			},
+			wantErr: false,
+		},
+		{
+			name: "No error when proper custom state check provided",
+			config: Config{
+				CustomStateChecks: []v1beta2.CustomStateCheck{
+					{
+						JSONPath:    "status.health",
+						Value:       "green",
+						MappedState: v1beta2.StateReady,
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Error when partial custom state check provided",
+			config: Config{
+				CustomStateChecks: []v1beta2.CustomStateCheck{
+					{
+						JSONPath:    "",
+						Value:       "green",
+						MappedState: v1beta2.StateReady,
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Error when invalid state provided",
+			config: Config{
+				CustomStateChecks: []v1beta2.CustomStateCheck{
+					{
+						JSONPath:    "status.health",
+						Value:       "green",
+						MappedState: "",
+					},
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cv := &configValidator{
+				config:     &tt.config,
+				validators: []configValidationFunc{},
+			}
+			err := cv.validateCustomStateChecks().do()
+			if err == nil && tt.wantErr {
+				t.Error("validateCustomStateChecks() returned no error when an error was expected")
+			}
+			if err != nil && !tt.wantErr {
+				t.Errorf("validateCustomStateChecks() returned %v, when no error was expected", err)
+			}
+		})
 	}
 }
