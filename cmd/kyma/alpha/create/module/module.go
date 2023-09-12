@@ -178,13 +178,13 @@ Build a Kubebuilder module my-domain/modC in version 3.2.1 and push it to a loca
 	)
 
 	cmd.Flags().StringSliceVar(&o.CustomStateCheckPaths, "state-check-json-paths", []string{},
-		"Specifies list of json paths for custom state check for the module. Eg: status.health,status.health")
+		"Specifies the list of JSON paths for custom state check for the module. For example, status.health,status.health")
 	cmd.Flags().StringSliceVar(&o.CustomStateCheckValues, "state-check-values", []string{},
-		"Specifies list of corresponding values of json paths for custom state check for the module. "+
-			"Eg: green,red")
+		"Specifies the list of corresponding values of JSON paths for the module custom state check. "+
+			"For example, green, red")
 	cmd.Flags().StringSliceVar(&o.CustomStateCheckMappedStates, "state-check-mapped-states", []string{},
-		"Specifies list of custom states that are mapped to the module CR for corresponding values "+
-			"at the json path. Eg: Ready,Error NOTE: must be a valid Kyma CR state.")
+		"Specifies the list of custom states mapped to the module CR for corresponding values at the JSON path. "+
+			"For example, Ready, Error **NOTE**: must be a valid Kyma CR state.")
 
 	cmd.Flags().BoolVar(&o.KubebuilderProject, "kubebuilder-project", false, "Specifies provided module is a Kubebuilder Project.")
 

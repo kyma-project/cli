@@ -104,9 +104,9 @@ Build a Kubebuilder module my-domain/modC in version 3.2.1 and push it to a loca
       --registry-cred-selector string       Label selector to identify an externally created Secret of type "kubernetes.io/dockerconfigjson". It allows the image to be accessed in private image registries. It can be used when you push your module to a registry with authenticated access. For example, "label1=value1,label2=value2".
   -r, --resource stringArray                Add an extra resource in a new layer in the <NAME:TYPE@PATH> format. If you provide only a path, the name defaults to the last path element, and the type is set to 'helm-chart'.
       --sec-scanners-config string          Path to the file holding the security scan configuration. (default "sec-scanners-config.yaml")
-      --state-check-json-paths strings      Specifies list of json paths for custom state check for the module. Eg: status.health,status.health
-      --state-check-mapped-states strings   Specifies list of custom states that are mapped to the module CR for corresponding values at the json path. Eg: Ready,Error NOTE: must be a valid Kyma CR state.
-      --state-check-values strings          Specifies list of corresponding values of json paths for custom state check for the module. Eg: green,red
+      --state-check-json-paths strings      Specifies the list of JSON paths for custom state check for the module. For example, status.health,status.health
+      --state-check-mapped-states strings   Specifies the list of custom states mapped to the module CR for corresponding values at the JSON path. For example, Ready, Error **NOTE**: must be a valid Kyma CR state.
+      --state-check-values strings          Specifies the list of corresponding values of JSON paths for the module custom state check. For example, green, red
   -t, --token string                        Authentication token for the given registry (alternative to basic authentication).
       --version string                      Version of the module. This flag is mandatory.
 ```
