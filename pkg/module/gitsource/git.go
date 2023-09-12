@@ -65,7 +65,7 @@ func (g GitSource) determineRepositoryURL(gitRemote string) (string, error) {
 	}
 
 	// get URL from git info if not provided in the project
-	repo, err := FetchRepoURLFromRemotes(remotes, gitRemote)
+	repo, err := fetchRepoURLFromRemotes(remotes, gitRemote)
 	if err != nil {
 		return "", err
 	}
@@ -96,7 +96,7 @@ func (g GitSource) getGitInfo(gitPath string) (string, string, error) {
 	return head.Name().String(), head.Hash().String(), nil
 }
 
-func FetchRepoURLFromRemotes(gitRemotes []*git.Remote, remoteName string) (string, error) {
+func fetchRepoURLFromRemotes(gitRemotes []*git.Remote, remoteName string) (string, error) {
 	remote := &git.Remote{}
 	for _, r := range gitRemotes {
 		if r.Config().Name == remoteName {
