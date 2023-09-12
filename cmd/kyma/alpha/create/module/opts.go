@@ -25,6 +25,7 @@ type Options struct {
 	Version                      string
 	Path                         string
 	ModuleArchivePath            string
+	GitRemote                    string
 	RegistryURL                  string
 	Credentials                  string
 	TemplateOutput               string

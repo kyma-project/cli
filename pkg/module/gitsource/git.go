@@ -14,14 +14,14 @@ import (
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/cpi"
 )
 
-func (g GitSource) FetchSource(ctx cpi.Context, path, repo, version string) (*ocm.Source, error) {
+func (g GitSource) FetchSource(ctx cpi.Context, path, repo, version, gitRemote string) (*ocm.Source, error) {
 	ref, commit, err := g.getGitInfo(path)
 	if err != nil {
 		return nil, err
 	}
 
 	if repo == "" {
-		if repo, err = g.determineRepositoryURL(); err != nil {
+		if repo, err = g.determineRepositoryURL(gitRemote); err != nil {
 			return nil, err
 		}
 	}
@@ -53,7 +53,7 @@ func (g GitSource) FetchSource(ctx cpi.Context, path, repo, version string) (*oc
 	}, nil
 }
 
-func (g GitSource) determineRepositoryURL() (string, error) {
+func (g GitSource) determineRepositoryURL(gitRemote string) (string, error) {
 	r, err := git.PlainOpen(".")
 	if err != nil {
 		return "", fmt.Errorf("could not open git repository: %w", err)
@@ -64,17 +64,12 @@ func (g GitSource) determineRepositoryURL() (string, error) {
 		return "", fmt.Errorf("could not get git remotes: %w", err)
 	}
 
-	httpURL := remotes[0].Config().URLs[0]
-	if strings.HasPrefix(httpURL, "git") {
-		httpURL = strings.Replace(httpURL, ":", "/", 1)
-		httpURL = strings.Replace(httpURL, "git@", "https://", 1)
-		httpURL = strings.TrimSuffix(httpURL, gitFolder)
-	}
-	repoURL, err := url.Parse(httpURL)
+	// get URL from git info if not provided in the project
+	repo, err := fetchRepoURLFromRemotes(remotes, gitRemote)
 	if err != nil {
-		return "", fmt.Errorf("could not parse repository URL: %w", err)
+		return "", err
 	}
-	return repoURL.String(), nil
+	return repo, nil
 }
 
 func (g GitSource) getGitInfo(gitPath string) (string, string, error) {
@@ -99,4 +94,30 @@ func (g GitSource) getGitInfo(gitPath string) (string, string, error) {
 	}
 
 	return head.Name().String(), head.Hash().String(), nil
+}
+
+func fetchRepoURLFromRemotes(gitRemotes []*git.Remote, remoteName string) (string, error) {
+	remote := &git.Remote{}
+	for _, r := range gitRemotes {
+		if r.Config().Name == remoteName {
+			remote = r
+			break
+		}
+	}
+
+	if remote.Config() != nil {
+		// get remote URL and convert to HTTPS in case it is an SSH URL
+		httpURL := remote.Config().URLs[0]
+		if strings.HasPrefix(httpURL, "git") {
+			httpURL = strings.Replace(httpURL, ":", "/", 1)
+			httpURL = strings.Replace(httpURL, "git@", "https://", 1)
+			httpURL = strings.TrimSuffix(httpURL, gitFolder)
+		}
+		repoURL, err := url.Parse(httpURL)
+		if err != nil {
+			return "", fmt.Errorf("could not parse repository URL %q: %w", httpURL, err)
+		}
+		return repoURL.String(), nil
+	}
+	return "", fmt.Errorf("could not find git remote in: %s", remoteName)
 }

@@ -178,7 +178,6 @@ func Inspect(def *Definition, log *zap.SugaredLogger) error {
 	}
 
 	def.DefaultCR = cr
-	//def.Repo = p.Repo
 
 	return nil
 }
