@@ -128,6 +128,11 @@ Build a Kubebuilder module my-domain/modC in version 3.2.1 and push it to a loca
 
 	cmd.Flags().BoolVar(&o.ArchiveVersionOverwrite, "module-archive-version-overwrite", false, "Overwrites existing component's versions of the module. If set to false, the push is a No-Op.")
 
+	cmd.Flags().StringVar(
+		&o.GitRemote, "git-remote", "origin",
+		"Specifies the remote name of the wanted GitHub repository. For Example \"origin\" or \"upstream\"",
+	)
+
 	cmd.Flags().StringVarP(&o.Path, "path", "p", "", "Path to the module's contents. (default current directory)")
 
 	cmd.Flags().StringVar(
@@ -293,7 +298,7 @@ func (cmd *command) Run(ctx context.Context) error {
 			}
 		}
 
-		archive, err = module.CreateArchive(archiveFS, cmd.opts.ModuleArchivePath, modDef, false)
+		archive, err = module.CreateArchive(archiveFS, cmd.opts.ModuleArchivePath, cmd.opts.GitRemote, modDef, false)
 		if err != nil {
 			cmd.CurrentStep.Failure()
 			return err
@@ -302,7 +307,7 @@ func (cmd *command) Run(ctx context.Context) error {
 		l.Infof("found git repository root at %s", gitPath)
 		l.Infof("adding sources to the layer")
 		modDef.Source = gitPath // set the source to the git root
-		archive, err = module.CreateArchive(archiveFS, cmd.opts.ModuleArchivePath, modDef, true)
+		archive, err = module.CreateArchive(archiveFS, cmd.opts.ModuleArchivePath, cmd.opts.GitRemote, modDef, true)
 		if err != nil {
 			cmd.CurrentStep.Failure()
 			return err

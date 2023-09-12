@@ -25,7 +25,7 @@ type Source interface {
 // CreateArchive creates a component archive with the given configuration.
 // An empty vfs.FileSystem causes a FileSystem to be created in
 // the temporary OS folder
-func CreateArchive(fs vfs.FileSystem, path string, def *Definition, isTargetDirAGitRepo bool) (*comparch.ComponentArchive, error) {
+func CreateArchive(fs vfs.FileSystem, path, gitRemote string, def *Definition, isTargetDirAGitRepo bool) (*comparch.ComponentArchive, error) {
 	if err := def.validate(); err != nil {
 		return nil, err
 	}
@@ -70,7 +70,7 @@ func CreateArchive(fs vfs.FileSystem, path string, def *Definition, isTargetDirA
 	}
 
 	if isTargetDirAGitRepo {
-		if err := addSources(ctx, cd, def); err != nil {
+		if err := addSources(ctx, cd, def, gitRemote); err != nil {
 			return nil, err
 		}
 	}
@@ -87,10 +87,10 @@ func CreateArchive(fs vfs.FileSystem, path string, def *Definition, isTargetDirA
 }
 
 // addSources adds the sources to the component descriptor. If the def.Source is a git repository
-func addSources(ctx cpi.Context, cd *ocm.ComponentDescriptor, def *Definition) error {
+func addSources(ctx cpi.Context, cd *ocm.ComponentDescriptor, def *Definition, gitRemote string) error {
 	if strings.HasSuffix(def.Source, ".git") {
 		gitSource := gitsource.NewGitSource()
-		src, err := gitSource.FetchSource(ctx, def.Source, def.Repo, def.Version)
+		src, err := gitSource.FetchSource(ctx, def.Source, def.Repo, def.Version, gitRemote)
 
 		if err != nil {
 			return err
