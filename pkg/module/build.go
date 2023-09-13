@@ -5,17 +5,15 @@ import (
 	"os"
 	"strings"
 
+	"github.com/kyma-project/cli/pkg/module/gitsource"
 	"github.com/mandelsoft/vfs/pkg/projectionfs"
 	"github.com/mandelsoft/vfs/pkg/vfs"
 	"github.com/open-component-model/ocm/pkg/common/accessobj"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/attrs/compatattr"
 	ocm "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	v1 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/meta/v1"
-	compdescv2 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/versions/v2"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/cpi"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/comparch"
-
-	"github.com/kyma-project/cli/pkg/module/gitsource"
 )
 
 type Source interface {
@@ -41,9 +39,6 @@ func CreateArchive(fs vfs.FileSystem, path, gitRemote string, def *Definition, i
 	}
 
 	ctx := cpi.DefaultContext()
-	if err := compatattr.Set(ctx, def.SchemaVersion == compdescv2.SchemaVersion); err != nil {
-		return nil, fmt.Errorf("could not set compatibility attribute for v2: %w", err)
-	}
 
 	archive, err := comparch.New(
 		ctx,
