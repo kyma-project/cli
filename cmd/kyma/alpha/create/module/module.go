@@ -60,17 +60,19 @@ Both simple and Kubebuilder projects require providing an explicit path to the m
 To configure the simple mode, provide the "--module-config-file" flag with a config file path.
 The module config file is a YAML file used to configure the following attributes for the module:
 
-- name:         a string, required, the name of the module
-- version:      a string, required, the version of the module
-- channel:      a string, required, channel that should be used in the ModuleTemplate CR
-- manifest:     a string, required, reference to the manifest, must be a relative file name
-- defaultCR:    a string, optional, reference to a YAML file containing the default CR for the module, must be a relative file name
-- resourceName: a string, optional, default={NAME}-{CHANNEL}, the name for the ModuleTemplate CR that will be created
-- security:     a string, optional, name of the security scanners config file
-- internal:     a boolean, optional, default=false, determines whether the ModuleTemplate CR should have the internal flag or not
-- beta:         a boolean, optional, default=false, determines whether the ModuleTemplate CR should have the beta flag or not
-- labels:       a map with string keys and values, optional, additional labels for the generated ModuleTemplate CR
-- annotations:  a map with string keys and values, optional, additional annotations for the generated ModuleTemplate CR
+- name:             a string, required, the name of the module
+- version:          a string, required, the version of the module
+- channel:          a string, required, channel that should be used in the ModuleTemplate CR
+- manifest:         a string, required, reference to the manifest, must be a relative file name
+- defaultCR:        a string, optional, reference to a YAML file containing the default CR for the module, must be a relative file name
+- resourceName:     a string, optional, default={NAME}-{CHANNEL}, the name for the ModuleTemplate CR that will be created
+- security:         a string, optional, name of the security scanners config file
+- internal:         a boolean, optional, default=false, determines whether the ModuleTemplate CR should have the internal flag or not
+- beta:             a boolean, optional, default=false, determines whether the ModuleTemplate CR should have the beta flag or not
+- labels:           a map with string keys and values, optional, additional labels for the generated ModuleTemplate CR
+- annotations:      a map with string keys and values, optional, additional annotations for the generated ModuleTemplate CR
+- customStateCheck: a map with string keys and values, optional, define mapping between custom states to valid supported status
+                    see also https://github.com/kyma-project/lifecycle-manager/blob/main/docs/technical-reference/api/moduleTemplate-cr.md#speccustomstatecheck
 
 The **manifest** and **defaultCR** paths are resolved against the module's directory, as configured with the "--path" flag.
 The **manifest** file contains all the module's resources in a single, multi-document YAML file. These resources will be created in the Kyma cluster when the module is activated.
@@ -428,7 +430,6 @@ func (cmd *command) Run(ctx context.Context) error {
 			return err
 		}
 		cmd.CurrentStep.Successf("Template successfully generated at %s", cmd.opts.TemplateOutput)
-
 	}
 
 	return nil
@@ -456,7 +457,6 @@ func (cmd *command) validateDefaultCR(ctx context.Context, modDef *module.Defini
 }
 
 func (cmd *command) getRemote(nameMapping module.NameMapping) (*module.Remote, error) {
-
 	res := &module.Remote{
 		Registry:    cmd.opts.RegistryURL,
 		NameMapping: nameMapping,
@@ -485,7 +485,6 @@ func (cmd *command) getRemote(nameMapping module.NameMapping) (*module.Remote, e
 }
 
 func (cmd *command) moduleDefinitionFromOptions() (*module.Definition, *Config, error) {
-
 	var def *module.Definition
 	var cnf *Config
 
@@ -560,7 +559,6 @@ func (cmd *command) avoidUserInteraction() bool {
 // resolvePath resolves given path if it's absolute or uses the provided prefix to make it absolute.
 // Returns an error if the path does not exist or is a directory.
 func resolveFilePath(given, absolutePrefix string) (string, error) {
-
 	res := given
 
 	if !filepath.IsAbs(res) {
