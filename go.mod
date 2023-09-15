@@ -38,7 +38,6 @@ require (
 	go.uber.org/zap v1.25.0
 	golang.org/x/exp v0.0.0-20230713183714-613f0c0eb8a1
 	gopkg.in/yaml.v3 v3.0.1
-	gotest.tools v2.2.0+incompatible
 	helm.sh/helm/v3 v3.12.3
 	istio.io/client-go v1.19.0-alpha.1.0.20230825174843-7a8fbe28cb5d
 	k8s.io/klog/v2 v2.100.1

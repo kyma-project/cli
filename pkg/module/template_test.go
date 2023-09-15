@@ -2,10 +2,11 @@ package module
 
 import (
 	"bytes"
-	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	"reflect"
 	"testing"
 	"text/template"
+
+	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 
 	"github.com/mandelsoft/vfs/pkg/osfs"
 	"github.com/open-component-model/ocm/pkg/common/accessio"
@@ -13,7 +14,7 @@ import (
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/ctf"
-	"gotest.tools/assert"
+	"github.com/stretchr/testify/assert"
 	"sigs.k8s.io/yaml"
 )
 

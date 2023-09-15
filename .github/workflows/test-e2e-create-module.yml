@@ -15,6 +15,8 @@ jobs:
     env:
       LIFECYCLE_MANAGER: ${{ github.repository }}
       K3D_VERSION: v5.4.7
+      MODULE_TEMPLATE_VERSION: v1.0.0
+      OCI_REPOSITORY_URL: http://k3d-oci.localhost:5001
     steps:
       - name: Checkout Kyma CLI
         uses: actions/checkout@v3
@@ -35,6 +37,9 @@ jobs:
         with:
           repository: kyma-project/template-operator
           path: ./template-operator/
+      - name: export template-operator URL
+        run: |
+          echo "TEST_REPOSITORY_URL=$(git remote get-url origin)" >> "$GITHUB_ENV"
       - name: Set up k3d
         run: wget -qO - https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG=$K3D_VERSION bash
       - name: Provision OCI Registry
@@ -49,7 +54,9 @@ jobs:
           --registry http://k3d-oci.localhost:5001 \
           --insecure \
           --kubebuilder-project \
-          --version 1.0.0 -v
+          --version $MODULE_TEMPLATE_VERSION -v
+          --output /tmp/kubebuilder-template.yaml
+          echo "MODULE_TEMPLATE_PATH=/tmp/kubebuilder-template.yaml" >> "$GITHUB_ENV"
       - name: Run create module with module-config
         if: ${{ matrix.e2e-test == 'kyma-create-module-module-config' }}
         run: |
@@ -61,4 +68,9 @@ jobs:
           --registry http://k3d-oci.localhost:5001 \
           --insecure \
           --module-config-file ./module-config.yaml \
-          --version 1.0.0 -v
+          --version $MODULE_TEMPLATE_VERSION -v
+          --output /tmp/module-config-template.yaml
+          echo "MODULE_TEMPLATE_PATH=/tmp/module-config-template.yaml" >> "$GITHUB_ENV"
+      - name: Verify module template
+        run: |
+          make -C tests/e2e ${{ matrix.e2e-test }}

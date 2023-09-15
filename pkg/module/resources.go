@@ -160,8 +160,8 @@ func Inspect(def *Definition, log *zap.SugaredLogger) error {
 
 	// generated raw manifest -> layer 1
 	def.Layers = append(def.Layers, Layer{
-		name:         rawManifestLayerName,
-		resourceType: typeYaml,
+		name:         RawManifestLayerName,
+		resourceType: TypeYaml,
 		path:         def.SingleManifestPath,
 	})
 
@@ -252,8 +252,8 @@ func inspectProject(def *Definition, p *kubebuilder.Project, layers []Layer, s s
 	def.Repo = p.Repo
 	def.DefaultCR = cr
 	def.Layers = append(def.Layers, Layer{
-		name:         rawManifestLayerName,
-		resourceType: typeYaml,
+		name:         RawManifestLayerName,
+		resourceType: TypeYaml,
 		path:         renderedManifestPath,
 	})
 	def.Layers = append(def.Layers, layers...)
