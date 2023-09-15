@@ -40,15 +40,13 @@ jobs:
       - name: Provision OCI Registry
         run: |
           k3d registry create oci.localhost --port 5001
-      - name: Update Kubeconfigs
-        run: k3d kubeconfig merge -a -d
       - name: Run create module essential
         if: ${{ matrix.e2e-test == 'kyma-create-module-essential' }}
         run: |
           kyma alpha create module \
           --name kyma-project.io/module/template-operator \
           --path ./template-operator \
-          --registry http://oci.localhost:5001 \
+          --registry http://k3d-oci.localhost:5001 \
           --insecure \
           --kubebuilder-project \
           --version 1.0.0 -v
