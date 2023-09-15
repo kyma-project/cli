@@ -240,7 +240,7 @@ func TestValidateCustomStateChecks(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "No error when proper custom state check provided",
+			name: "Error when only one valid custom state check provided",
 			config: Config{
 				CustomStateChecks: []v1beta2.CustomStateCheck{
 					{
@@ -250,12 +250,17 @@ func TestValidateCustomStateChecks(t *testing.T) {
 					},
 				},
 			},
-			wantErr: false,
+			wantErr: true,
 		},
 		{
-			name: "Error when partial custom state check provided",
+			name: "Error when custom state check without JSONPath provided",
 			config: Config{
 				CustomStateChecks: []v1beta2.CustomStateCheck{
+					{
+						JSONPath:    "status.health",
+						Value:       "red",
+						MappedState: v1beta2.StateError,
+					},
 					{
 						JSONPath:    "",
 						Value:       "green",
@@ -266,17 +271,45 @@ func TestValidateCustomStateChecks(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "Error when invalid state provided",
+			name: "Error when custom state check without MappedState provided",
 			config: Config{
 				CustomStateChecks: []v1beta2.CustomStateCheck{
 					{
 						JSONPath:    "status.health",
 						Value:       "green",
+						MappedState: v1beta2.StateReady,
+					},
+					{
+						JSONPath:    "status.health",
+						Value:       "red",
 						MappedState: "",
 					},
 				},
 			},
 			wantErr: true,
+		},
+		{
+			name: "No error when at least two valid custom state checks provided",
+			config: Config{
+				CustomStateChecks: []v1beta2.CustomStateCheck{
+					{
+						JSONPath:    "status.health",
+						Value:       "green",
+						MappedState: v1beta2.StateReady,
+					},
+					{
+						JSONPath:    "status.health",
+						Value:       "red",
+						MappedState: v1beta2.StateError,
+					},
+					{
+						JSONPath:    "status.health",
+						Value:       "yellow",
+						MappedState: v1beta2.StateWarning,
+					},
+				},
+			},
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
