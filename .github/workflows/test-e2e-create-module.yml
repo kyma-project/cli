@@ -9,7 +9,7 @@ jobs:
   e2e:
     strategy:
       matrix:
-        e2e-test: [ "kyma-create-module-essential"]
+        e2e-test: [ "kyma-create-module-kubebuilder-project", "kyma-create-module-module-config"]
     name: "Run E2E tests"
     runs-on: ubuntu-latest
     env:
@@ -40,8 +40,8 @@ jobs:
       - name: Provision OCI Registry
         run: |
           k3d registry create oci.localhost --port 5001
-      - name: Run create module essential
-        if: ${{ matrix.e2e-test == 'kyma-create-module-essential' }}
+      - name: Run create module with kubebuilder-project
+        if: ${{ matrix.e2e-test == 'kyma-create-module-kubebuilder-project' }}
         run: |
           kyma alpha create module \
           --name kyma-project.io/module/template-operator \
@@ -49,4 +49,16 @@ jobs:
           --registry http://k3d-oci.localhost:5001 \
           --insecure \
           --kubebuilder-project \
+          --version 1.0.0 -v
+      - name: Run create module with module-config
+        if: ${{ matrix.e2e-test == 'kyma-create-module-module-config' }}
+        run: |
+          cd ./template-operator
+          make build-manifests
+          kyma alpha create module \
+          --name kyma-project.io/module/template-operator \
+          --path . \
+          --registry http://k3d-oci.localhost:5001 \
+          --insecure \
+          --module-config-file ./module-config.yaml \
           --version 1.0.0 -v
