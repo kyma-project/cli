@@ -1,0 +1,52 @@
+name: TestSuite E2E - create module
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+jobs:
+  e2e:
+    strategy:
+      matrix:
+        e2e-test: [ "kyma-create-module-essential"]
+    name: "Run E2E tests"
+    runs-on: ubuntu-latest
+    env:
+      LIFECYCLE_MANAGER: ${{ github.repository }}
+      K3D_VERSION: v5.4.7
+    steps:
+      - name: Checkout Kyma CLI
+        uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: 'go.mod'
+          cache-dependency-path: 'go.sum'
+      - name: Build Kyma CLI
+        run: | 
+          make resolve validate build-linux
+          chmod +x ./bin/kyma-linux
+          ls -la ./bin
+          mv ./bin/kyma-linux /usr/local/bin/kyma
+        timeout-minutes: 10
+      - name: Checkout template-operator
+        uses: actions/checkout@v3
+        with:
+          repository: kyma-project/template-operator
+          path: ./template-operator/
+      - name: Set up k3d
+        run: wget -qO - https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG=$K3D_VERSION bash
+      - name: Provision OCI Registry
+        run: |
+          k3d registry create oci.localhost --port 5001
+      - name: Run create module essential
+        if: ${{ matrix.e2e-test == 'kyma-create-module-essential' }}
+        run: |
+          kyma alpha create module \
+          --name kyma-project.io/module/template-operator \
+          --path ./template-operator \
+          --registry http://k3d-oci.localhost:5001 \
+          --insecure \
+          --kubebuilder-project \
+          --version 1.0.0 -v
