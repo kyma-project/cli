@@ -1,6 +1,8 @@
 package module
 
 import (
+	"slices"
+
 	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	"github.com/pkg/errors"
 )
@@ -22,4 +24,16 @@ func IsValidMappedState(s string) bool {
 		}
 	}
 	return false
+}
+
+func ContainsAllRequiredStates(checks []v1beta2.CustomStateCheck) bool {
+	containsError := slices.ContainsFunc(checks, func(csc v1beta2.CustomStateCheck) bool {
+		return csc.MappedState == v1beta2.StateError
+	})
+
+	containsReady := slices.ContainsFunc(checks, func(csc v1beta2.CustomStateCheck) bool {
+		return csc.MappedState == v1beta2.StateReady
+	})
+
+	return containsError && containsReady
 }
