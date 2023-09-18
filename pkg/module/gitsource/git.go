@@ -14,12 +14,17 @@ import (
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/cpi"
 )
 
-func (g GitSource) FetchSource(ctx cpi.Context, path, repo, version string) (*ocm.Source, error) {
+func (g GitSource) FetchSource(ctx cpi.Context, path, repo, version, gitRemote string) (*ocm.Source, error) {
 	ref, commit, err := g.getGitInfo(path)
 	if err != nil {
 		return nil, err
 	}
 
+	if repo == "" {
+		if repo, err = g.determineRepositoryURL(gitRemote); err != nil {
+			return nil, err
+		}
+	}
 	sourceType := "git"
 	if !compatattr.Get(ctx) {
 		sourceType = github.CONSUMER_TYPE
@@ -47,8 +52,8 @@ func (g GitSource) FetchSource(ctx cpi.Context, path, repo, version string) (*oc
 	}, nil
 }
 
-func (g GitSource) DetermineRepositoryURL(gitRemote string, repoPath string) (string, error) {
-	r, err := git.PlainOpen(repoPath)
+func (g GitSource) determineRepositoryURL(gitRemote string) (string, error) {
+	r, err := git.PlainOpen(".")
 	if err != nil {
 		return "", fmt.Errorf("could not open git repository: %w", err)
 	}
