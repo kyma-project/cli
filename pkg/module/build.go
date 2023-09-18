@@ -9,7 +9,6 @@ import (
 	"github.com/mandelsoft/vfs/pkg/projectionfs"
 	"github.com/mandelsoft/vfs/pkg/vfs"
 	"github.com/open-component-model/ocm/pkg/common/accessobj"
-	"github.com/open-component-model/ocm/pkg/contexts/ocm/attrs/compatattr"
 	ocm "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	v1 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/meta/v1"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/cpi"
@@ -58,14 +57,10 @@ func CreateArchive(fs vfs.FileSystem, path, gitRemote string, def *Definition, i
 		return nil, err
 	}
 
-	if compatattr.Get(ctx) {
-		cd.Provider = v1.Provider{Name: "internal"}
-	} else {
-		cd.Provider = v1.Provider{Name: "kyma-project.io", Labels: v1.Labels{*builtByCLI}}
-	}
+	cd.Provider = v1.Provider{Name: "kyma-project.io", Labels: v1.Labels{*builtByCLI}}
 
 	if isTargetDirAGitRepo {
-		if err := addSources(ctx, cd, def, gitRemote); err != nil {
+		if err := addSources(cd, def, gitRemote); err != nil {
 			return nil, err
 		}
 	}
@@ -82,10 +77,10 @@ func CreateArchive(fs vfs.FileSystem, path, gitRemote string, def *Definition, i
 }
 
 // addSources adds the sources to the component descriptor. If the def.Source is a git repository
-func addSources(ctx cpi.Context, cd *ocm.ComponentDescriptor, def *Definition, gitRemote string) error {
+func addSources(cd *ocm.ComponentDescriptor, def *Definition, gitRemote string) error {
 	if strings.HasSuffix(def.Source, ".git") {
 		gitSource := gitsource.NewGitSource()
-		src, err := gitSource.FetchSource(ctx, def.Source, def.Repo, def.Version, gitRemote)
+		src, err := gitSource.FetchSource(def.Source, def.Repo, def.Version, gitRemote)
 
 		if err != nil {
 			return err
