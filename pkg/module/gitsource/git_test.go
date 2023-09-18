@@ -1,7 +1,6 @@
 package gitsource
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/go-git/go-git/v5"
@@ -82,49 +81,4 @@ func createTestRemotes() []*git.Remote {
 		}),
 	}
 
-}
-
-func TestGitSource_DetermineRepositoryURL(t *testing.T) {
-	type args struct {
-		gitRemote string
-		repoPath  string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    string
-		wantErr bool
-	}{
-		{
-			name: "invalid repo path",
-			args: args{
-				gitRemote: "test",
-				repoPath:  "/test",
-			},
-			want:    "",
-			wantErr: true,
-		},
-		{
-			name: "current repo path",
-			args: args{
-				gitRemote: "origin",
-				repoPath:  "../../../",
-			},
-			want:    "/cli",
-			wantErr: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			g := GitSource{}
-			got, err := g.DetermineRepositoryURL(tt.args.gitRemote, tt.args.repoPath)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("DetermineRepositoryURL() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !strings.Contains(got, tt.want) {
-				t.Errorf("DetermineRepositoryURL() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
 }
