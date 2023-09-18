@@ -90,7 +90,15 @@ func CreateArchive(fs vfs.FileSystem, path, gitRemote string, def *Definition, i
 func addSources(ctx cpi.Context, cd *ocm.ComponentDescriptor, def *Definition, gitRemote string) error {
 	if strings.HasSuffix(def.Source, ".git") {
 		gitSource := gitsource.NewGitSource()
-		src, err := gitSource.FetchSource(ctx, def.Source, def.Repo, def.Version, gitRemote)
+		if def.Repo == "" {
+			var repo string
+			var err error
+			if repo, err = gitSource.DetermineRepositoryURL(gitRemote, def.Source); err != nil {
+				return err
+			}
+			def.Repo = repo
+		}
+		src, err := gitSource.FetchSource(ctx, def.Source, def.Repo, def.Version)
 
 		if err != nil {
 			return err
