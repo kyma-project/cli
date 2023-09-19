@@ -24,7 +24,7 @@ import (
 func Test_ModuleTemplate(t *testing.T) {
 	moduleTemplateVersion := os.Getenv("MODULE_TEMPLATE_VERSION")
 	ociRepoURL := os.Getenv("OCI_REPOSITORY_URL")
-	//testRepoURL := os.Getenv("TEST_REPOSITORY_URL")
+	testRepoURL := os.Getenv("TEST_REPOSITORY_URL")
 
 	template, err := e2e.ReadModuleTemplate(os.Getenv("MODULE_TEMPLATE_PATH"))
 	assert.Nil(t, err)
@@ -66,5 +66,5 @@ func Test_ModuleTemplate(t *testing.T) {
 	assert.Nil(t, err)
 	githubAccessSpec, ok := sourceAccessSpec.(*github.AccessSpec)
 	assert.Equal(t, githubAccessSpec.Type, github.Type)
-	//assert.Equal(t, githubAccessSpec.RepoURL, testRepoURL)
+	assert.Equal(t, githubAccessSpec.RepoURL, testRepoURL)
 }
