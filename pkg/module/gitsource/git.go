@@ -12,16 +12,10 @@ import (
 	ocmv1 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/meta/v1"
 )
 
-func (g GitSource) FetchSource(path, repo, version, gitRemote string) (*ocm.Source, error) {
+func (g GitSource) FetchSource(path, repo, version string) (*ocm.Source, error) {
 	ref, commit, err := g.getGitInfo(path)
 	if err != nil {
 		return nil, err
-	}
-
-	if repo == "" {
-		if repo, err = g.determineRepositoryURL(gitRemote); err != nil {
-			return nil, err
-		}
 	}
 
 	sourceType := github.CONSUMER_TYPE
@@ -48,8 +42,12 @@ func (g GitSource) FetchSource(path, repo, version, gitRemote string) (*ocm.Sour
 	}, nil
 }
 
-func (g GitSource) determineRepositoryURL(gitRemote string) (string, error) {
-	r, err := git.PlainOpen(".")
+func (g GitSource) DetermineRepositoryURL(gitRemote, repo, repoPath string) (string, error) {
+	if repo != "" {
+		return repo, nil
+	}
+
+	r, err := git.PlainOpen(repoPath)
 	if err != nil {
 		return "", fmt.Errorf("could not open git repository: %w", err)
 	}
@@ -60,7 +58,7 @@ func (g GitSource) determineRepositoryURL(gitRemote string) (string, error) {
 	}
 
 	// get URL from git info if not provided in the project
-	repo, err := fetchRepoURLFromRemotes(remotes, gitRemote)
+	repo, err = fetchRepoURLFromRemotes(remotes, gitRemote)
 	if err != nil {
 		return "", err
 	}

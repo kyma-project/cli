@@ -1,9 +1,10 @@
 package gitsource
 
 import (
+	"testing"
+
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
-	"testing"
 )
 
 func Test_fetchRepoURLFromRemotes(t *testing.T) {

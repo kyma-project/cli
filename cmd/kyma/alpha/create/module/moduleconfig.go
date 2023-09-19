@@ -168,7 +168,11 @@ func (cv *configValidator) validateChannel() *configValidator {
 
 func (cv *configValidator) validateCustomStateChecks() *configValidator {
 	fn := func() error {
-		for _, check := range cv.config.CustomStateChecks {
+		cscs := cv.config.CustomStateChecks
+		if len(cscs) == 0 {
+			return nil
+		}
+		for _, check := range cscs {
 			if len(check.JSONPath) == 0 || len(check.Value) == 0 || len(check.MappedState) == 0 {
 				return fmt.Errorf("%w for check %v, not all fields were provided",
 					module.ErrCustomStateCheckValidation, check)
@@ -178,6 +182,12 @@ func (cv *configValidator) validateCustomStateChecks() *configValidator {
 					module.ErrCustomStateCheckValidation, check.MappedState)
 			}
 		}
+
+		if !module.ContainsAllRequiredStates(cscs) {
+			return fmt.Errorf("%w: customStateCheck must contain both required states 'Error' and 'Ready'",
+				module.ErrCustomStateCheckValidation)
+		}
+
 		return nil
 
 	}
