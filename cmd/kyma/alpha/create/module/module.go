@@ -60,17 +60,19 @@ Both simple and Kubebuilder projects require providing an explicit path to the m
 To configure the simple mode, provide the "--module-config-file" flag with a config file path.
 The module config file is a YAML file used to configure the following attributes for the module:
 
-- name:         a string, required, the name of the module
-- version:      a string, required, the version of the module
-- channel:      a string, required, channel that should be used in the ModuleTemplate CR
-- manifest:     a string, required, reference to the manifest, must be a relative file name
-- defaultCR:    a string, optional, reference to a YAML file containing the default CR for the module, must be a relative file name
-- resourceName: a string, optional, default={NAME}-{CHANNEL}, the name for the ModuleTemplate CR that will be created
-- security:     a string, optional, name of the security scanners config file
-- internal:     a boolean, optional, default=false, determines whether the ModuleTemplate CR should have the internal flag or not
-- beta:         a boolean, optional, default=false, determines whether the ModuleTemplate CR should have the beta flag or not
-- labels:       a map with string keys and values, optional, additional labels for the generated ModuleTemplate CR
-- annotations:  a map with string keys and values, optional, additional annotations for the generated ModuleTemplate CR
+- name:             a string, required, the name of the module
+- version:          a string, required, the version of the module
+- channel:          a string, required, channel that should be used in the ModuleTemplate CR
+- manifest:         a string, required, reference to the manifest, must be a relative file name
+- defaultCR:        a string, optional, reference to a YAML file containing the default CR for the module, must be a relative file name
+- resourceName:     a string, optional, default={NAME}-{CHANNEL}, the name for the ModuleTemplate CR that will be created
+- security:         a string, optional, name of the security scanners config file
+- internal:         a boolean, optional, default=false, determines whether the ModuleTemplate CR should have the internal flag or not
+- beta:             a boolean, optional, default=false, determines whether the ModuleTemplate CR should have the beta flag or not
+- labels:           a map with string keys and values, optional, additional labels for the generated ModuleTemplate CR
+- annotations:      a map with string keys and values, optional, additional annotations for the generated ModuleTemplate CR
+- customStateCheck: a map with string keys and values, optional, define mapping between custom states to valid supported status
+                    see also https://github.com/kyma-project/lifecycle-manager/blob/main/docs/technical-reference/api/moduleTemplate-cr.md#speccustomstatecheck
 
 The **manifest** and **defaultCR** paths are resolved against the module's directory, as configured with the "--path" flag.
 The **manifest** file contains all the module's resources in a single, multi-document YAML file. These resources will be created in the Kyma cluster when the module is activated.
@@ -181,15 +183,6 @@ Build a Kubebuilder module my-domain/modC in version 3.2.1 and push it to a loca
 	cmd.Flags().StringVar(
 		&o.PrivateKeyPath, "key", "", "Specifies the path where a private key is used for signing.",
 	)
-
-	cmd.Flags().StringSliceVar(&o.CustomStateCheckPaths, "state-check-json-paths", []string{},
-		"Specifies the list of JSON paths for custom state check for the module. For example, status.health,status.health")
-	cmd.Flags().StringSliceVar(&o.CustomStateCheckValues, "state-check-values", []string{},
-		"Specifies the list of corresponding values of JSON paths for the module custom state check. "+
-			"For example, green, red")
-	cmd.Flags().StringSliceVar(&o.CustomStateCheckMappedStates, "state-check-mapped-states", []string{},
-		"Specifies the list of custom states mapped to the module CR for corresponding values at the JSON path. "+
-			"For example, Ready, Error **NOTE**: must be a valid Kyma CR state.")
 
 	cmd.Flags().BoolVar(&o.KubebuilderProject, "kubebuilder-project", false, "Specifies provided module is a Kubebuilder Project.")
 
@@ -437,7 +430,6 @@ func (cmd *command) Run(ctx context.Context) error {
 			return err
 		}
 		cmd.CurrentStep.Successf("Template successfully generated at %s", cmd.opts.TemplateOutput)
-
 	}
 
 	return nil
@@ -465,7 +457,6 @@ func (cmd *command) validateDefaultCR(ctx context.Context, modDef *module.Defini
 }
 
 func (cmd *command) getRemote(nameMapping module.NameMapping) (*module.Remote, error) {
-
 	res := &module.Remote{
 		Registry:    cmd.opts.RegistryURL,
 		NameMapping: nameMapping,
@@ -494,7 +485,6 @@ func (cmd *command) getRemote(nameMapping module.NameMapping) (*module.Remote, e
 }
 
 func (cmd *command) moduleDefinitionFromOptions() (*module.Definition, *Config, error) {
-
 	var def *module.Definition
 	var cnf *Config
 
@@ -507,9 +497,6 @@ func (cmd *command) moduleDefinitionFromOptions() (*module.Definition, *Config, 
 		np := nice.Nice{}
 		np.PrintImportant("WARNING: The Kubebuilder support is DEPRECATED. Use the simple mode by providing the \"--module-config-file\" flag instead.")
 
-		customStateChecks := module.GenerateChecks(cmd.opts.CustomStateCheckPaths,
-			cmd.opts.CustomStateCheckValues, cmd.opts.CustomStateCheckMappedStates)
-
 		//legacy approach, flag-based
 		def = &module.Definition{
 			Name:              cmd.opts.Name,
@@ -519,7 +506,7 @@ func (cmd *command) moduleDefinitionFromOptions() (*module.Definition, *Config, 
 			NameMappingMode:   nameMappingMode,
 			DefaultCRPath:     cmd.opts.DefaultCRPath,
 			SchemaVersion:     cmd.opts.SchemaVersion,
-			CustomStateChecks: customStateChecks,
+			CustomStateChecks: nil,
 		}
 		return def, cnf, nil
 	}
@@ -572,7 +559,6 @@ func (cmd *command) avoidUserInteraction() bool {
 // resolvePath resolves given path if it's absolute or uses the provided prefix to make it absolute.
 // Returns an error if the path does not exist or is a directory.
 func resolveFilePath(given, absolutePrefix string) (string, error) {
-
 	res := given
 
 	if !filepath.IsAbs(res) {
