@@ -312,17 +312,17 @@ func TestValidateCustomStateChecks(t *testing.T) {
 			wantErr: false,
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for i := range tests {
+		t.Run(tests[i].name, func(t *testing.T) {
 			cv := &configValidator{
-				config:     &tt.config,
+				config:     &tests[i].config,
 				validators: []configValidationFunc{},
 			}
 			err := cv.validateCustomStateChecks().do()
-			if err == nil && tt.wantErr {
+			if err == nil && tests[i].wantErr {
 				t.Error("validateCustomStateChecks() returned no error when an error was expected")
 			}
-			if err != nil && !tt.wantErr {
+			if err != nil && !tests[i].wantErr {
 				t.Errorf("validateCustomStateChecks() returned %v, when no error was expected", err)
 			}
 		})
