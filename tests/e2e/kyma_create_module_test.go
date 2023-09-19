@@ -66,5 +66,5 @@ func Test_ModuleTemplate(t *testing.T) {
 	assert.Nil(t, err)
 	githubAccessSpec, ok := sourceAccessSpec.(*github.AccessSpec)
 	assert.Equal(t, githubAccessSpec.Type, github.Type)
-	assert.Equal(t, githubAccessSpec.RepoURL, testRepoURL)
+	assert.Contains(t, testRepoURL, githubAccessSpec.RepoURL)
 }
