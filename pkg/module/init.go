@@ -4,6 +4,7 @@ import (
 	"github.com/open-component-model/ocm/pkg/contexts/oci"
 	"github.com/open-component-model/ocm/pkg/contexts/oci/repositories/ocireg"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
+	// nolint:revive
 	_ "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/versions"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/cpi"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/comparch"
