@@ -47,11 +47,7 @@ func (g GitSource) FetchSource(ctx cpi.Context, path, repo, version string) (*oc
 	}, nil
 }
 
-func (g GitSource) DetermineRepositoryURL(gitRemote, repo, repoPath string) (string, error) {
-	if repo != "" {
-		return repo, nil
-	}
-
+func (g GitSource) DetermineRepositoryURL(gitRemote string, repoPath string) (string, error) {
 	r, err := git.PlainOpen(repoPath)
 	if err != nil {
 		return "", fmt.Errorf("could not open git repository: %w", err)
@@ -63,7 +59,7 @@ func (g GitSource) DetermineRepositoryURL(gitRemote, repo, repoPath string) (str
 	}
 
 	// get URL from git info if not provided in the project
-	repo, err = fetchRepoURLFromRemotes(remotes, gitRemote)
+	repo, err := fetchRepoURLFromRemotes(remotes, gitRemote)
 	if err != nil {
 		return "", err
 	}
