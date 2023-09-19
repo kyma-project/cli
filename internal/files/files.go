@@ -15,7 +15,7 @@ import (
 
 const kymaFolder = ".kyma"
 
-var customSkipSearch = errors.New("found .git directory, skipping search")
+var errCustomSkipSearch = errors.New("found .git directory, skipping search")
 
 func KymaHome() (string, error) {
 	u, err := user.Current()
@@ -86,12 +86,12 @@ func SearchForTargetDirByName(root string, targetFolderName string) (gitFolderPa
 		}
 		if info.IsDir() && info.Name() == targetFolderName {
 			gitFolderPath = path
-			return customSkipSearch
+			return errCustomSkipSearch
 		}
 		return nil
 	})
 
-	if walkErr == customSkipSearch {
+	if walkErr == errCustomSkipSearch {
 		return gitFolderPath, nil
 	}
 	return
