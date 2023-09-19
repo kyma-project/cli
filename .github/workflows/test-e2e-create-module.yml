@@ -9,7 +9,7 @@ jobs:
   e2e:
     strategy:
       matrix:
-        e2e-test: [ "create-module-kubebuilder-project", "create_module_module_config"]
+        e2e-test: [ "create_module_kubebuilder_project", "create_module_module_config"]
     name: "Run E2E tests"
     runs-on: ubuntu-latest
     env:
@@ -46,7 +46,7 @@ jobs:
         run: |
           k3d registry create oci.localhost --port 5001
       - name: Run create module with kubebuilder-project
-        if: ${{ matrix.e2e-test == 'create-module-kubebuilder-project' }}
+        if: ${{ matrix.e2e-test == 'create_module_kubebuilder_project' }}
         run: |
           kyma alpha create module \
           --name kyma-project.io/module/template-operator \

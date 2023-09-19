@@ -32,7 +32,7 @@ help: ## Display this help.
 ##@ E2E Tests
 
 .PHONY: create_module_kubebuilder_project
-create-module-kubebuilder-project:
+create_module_kubebuilder_project:
 	go test --tags=create_module_kubebuilder_project
 
 .PHONY: create_module_module_config
