@@ -77,7 +77,7 @@ func CreateArchive(fs vfs.FileSystem, path, gitRemote string, def *Definition, i
 }
 
 // addSources adds the sources to the component descriptor. If the def.Source is a git repository
-func addSources( cd *ocm.ComponentDescriptor, def *Definition, gitRemote string) error {
+func addSources(cd *ocm.ComponentDescriptor, def *Definition, gitRemote string) error {
 	if strings.HasSuffix(def.Source, ".git") {
 		gitSource := gitsource.NewGitSource()
 		var err error
