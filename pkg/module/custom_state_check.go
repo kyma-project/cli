@@ -1,7 +1,8 @@
 package module
 
 import (
-	"fmt"
+	"slices"
+
 	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	"github.com/pkg/errors"
 )
@@ -25,43 +26,14 @@ func IsValidMappedState(s string) bool {
 	return false
 }
 
-func ValidateCustomStateCheck(paths, values, states []string) error {
-	if (len(paths)*len(values)*len(states) == 0) && (len(paths)+len(values)+len(states) != 0) {
-		return fmt.Errorf(
-			"%w, all 3 arguments must be provided",
-			ErrCustomStateCheckValidation,
-		)
-	}
+func ContainsAllRequiredStates(checks []v1beta2.CustomStateCheck) bool {
+	containsError := slices.ContainsFunc(checks, func(csc v1beta2.CustomStateCheck) bool {
+		return csc.MappedState == v1beta2.StateError
+	})
 
-	if len(paths) != len(values) || len(values) != len(states) {
-		return fmt.Errorf(
-			"%w, same number of paths, values, and states must be provided",
-			ErrCustomStateCheckValidation,
-		)
-	}
+	containsReady := slices.ContainsFunc(checks, func(csc v1beta2.CustomStateCheck) bool {
+		return csc.MappedState == v1beta2.StateReady
+	})
 
-	for _, state := range states {
-		if !IsValidMappedState(state) {
-			return fmt.Errorf(
-				"%w, the provided state [%q] is a not a valid state",
-				ErrCustomStateCheckValidation, state,
-			)
-		}
-	}
-
-	return nil
-}
-
-func GenerateChecks(paths, values, states []string) []v1beta2.CustomStateCheck {
-	var checks []v1beta2.CustomStateCheck
-
-	for i := range paths {
-		checks = append(checks, v1beta2.CustomStateCheck{
-			JSONPath:    paths[i],
-			Value:       values[i],
-			MappedState: v1beta2.State(states[i]),
-		})
-	}
-
-	return checks
+	return containsError && containsReady
 }

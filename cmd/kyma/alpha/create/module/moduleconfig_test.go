@@ -1,6 +1,7 @@
 package module
 
 import (
+	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	"testing"
 )
 
@@ -222,5 +223,108 @@ func TestValidateChannel(t *testing.T) {
 				}
 			},
 		)
+	}
+}
+
+func TestValidateCustomStateChecks(t *testing.T) {
+	tests := []struct {
+		name    string
+		config  Config
+		wantErr bool
+	}{
+		{
+			name: "No error when custom state check not provided",
+			config: Config{
+				CustomStateChecks: nil,
+			},
+			wantErr: false,
+		},
+		{
+			name: "Error when only one valid custom state check provided",
+			config: Config{
+				CustomStateChecks: []v1beta2.CustomStateCheck{
+					{
+						JSONPath:    "status.health",
+						Value:       "green",
+						MappedState: v1beta2.StateReady,
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Error when custom state check without JSONPath provided",
+			config: Config{
+				CustomStateChecks: []v1beta2.CustomStateCheck{
+					{
+						JSONPath:    "status.health",
+						Value:       "red",
+						MappedState: v1beta2.StateError,
+					},
+					{
+						JSONPath:    "",
+						Value:       "green",
+						MappedState: v1beta2.StateReady,
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Error when custom state check without MappedState provided",
+			config: Config{
+				CustomStateChecks: []v1beta2.CustomStateCheck{
+					{
+						JSONPath:    "status.health",
+						Value:       "green",
+						MappedState: v1beta2.StateReady,
+					},
+					{
+						JSONPath:    "status.health",
+						Value:       "red",
+						MappedState: "",
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "No error when at least two valid custom state checks provided",
+			config: Config{
+				CustomStateChecks: []v1beta2.CustomStateCheck{
+					{
+						JSONPath:    "status.health",
+						Value:       "green",
+						MappedState: v1beta2.StateReady,
+					},
+					{
+						JSONPath:    "status.health",
+						Value:       "red",
+						MappedState: v1beta2.StateError,
+					},
+					{
+						JSONPath:    "status.health",
+						Value:       "yellow",
+						MappedState: v1beta2.StateWarning,
+					},
+				},
+			},
+			wantErr: false,
+		},
+	}
+	for i := range tests {
+		t.Run(tests[i].name, func(t *testing.T) {
+			cv := &configValidator{
+				config:     &tests[i].config,
+				validators: []configValidationFunc{},
+			}
+			err := cv.validateCustomStateChecks().do()
+			if err == nil && tests[i].wantErr {
+				t.Error("validateCustomStateChecks() returned no error when an error was expected")
+			}
+			if err != nil && !tests[i].wantErr {
+				t.Errorf("validateCustomStateChecks() returned %v, when no error was expected", err)
+			}
+		})
 	}
 }

@@ -14,7 +14,7 @@ LOCALBIN ?= $(shell pwd)/bin
 $(LOCALBIN):
 	mkdir -p $(LOCALBIN)
 GOLANG_CI_LINT = $(LOCALBIN)/golangci-lint
-GOLANG_CI_LINT_VERSION ?= v1.53.3
+GOLANG_CI_LINT_VERSION ?= v1.54.2
 
 .PHONY: lint
 lint:
