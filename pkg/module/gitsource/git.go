@@ -106,10 +106,9 @@ func fetchRepoURLFromRemotes(gitRemotes []*git.Remote, remoteName string) (strin
 	if remote.Config() != nil {
 		// get remote URL and convert to HTTPS in case it is an SSH URL
 		httpURL := remote.Config().URLs[0]
-		if strings.HasPrefix(httpURL, "git") {
+		if strings.HasPrefix(httpURL, "git@") {
 			httpURL = strings.Replace(httpURL, ":", "/", 1)
 			httpURL = strings.Replace(httpURL, "git@", "https://", 1)
-			httpURL = strings.TrimSuffix(httpURL, gitFolder)
 		}
 		repoURL, err := url.Parse(httpURL)
 		if err != nil {
