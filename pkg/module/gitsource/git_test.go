@@ -42,6 +42,14 @@ func Test_fetchRepoURLFromRemotes(t *testing.T) {
 			want:    "",
 			wantErr: true,
 		},
+		{name: "Should return unchanged string -  no scheme format",
+			args: args{
+				gitRemotes: createTestRemotes(),
+				remoteName: "origin",
+			},
+			want:    "github.com/user-test/test",
+			wantErr: false,
+		},
 		{name: "Should return return error due invalid URL",
 			args: args{
 				gitRemotes: createTestRemotes(),
