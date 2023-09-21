@@ -71,12 +71,16 @@ func Test_ModuleTemplate(t *testing.T) {
 
 	// test security scan labels
 	assert.Equal(t, len(descriptor.Labels), 5)
-	devBranch := descriptor.Labels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "dev-branch"))
+	var devBranch string
+	devBranch := descriptor.Labels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "dev-branch"), &devBranch)
 	assert.Equal(t, devBranch, "main")
-	rcTag := descriptor.Labels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "rc-tag"))
+	var rcTag string
+	descriptor.Labels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "rc-tag"), &rcTag)
 	assert.Equal(t, rcTag, "0.5.0")
-	language := descriptor.Labels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "language"))
+	var language string
+	descriptor.Labels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "language"), &language)
 	assert.Equal(t, language, "golang-mod")
-	exclude := descriptor.Labels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "exclude"))
+	var exclude string
+	descriptor.Labels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "exclude"), &exclude)
 	assert.Equal(t, exclude, "**/test/**,**/*_test.go")
 }
