@@ -55,7 +55,7 @@ jobs:
           --insecure \
           --kubebuilder-project \
           --version $MODULE_TEMPLATE_VERSION -v \
-          --output /tmp/kubebuilder-template.yaml
+          --output /tmp/kubebuilder-template.yaml \
           --module-archive-version-overwrite
           echo "MODULE_TEMPLATE_PATH=/tmp/kubebuilder-template.yaml" >> "$GITHUB_ENV"
       - name: Run create module with module-config
@@ -70,7 +70,7 @@ jobs:
           --insecure \
           --module-config-file ./module-config.yaml \
           --version $MODULE_TEMPLATE_VERSION -v \
-          --output /tmp/module-config-template.yaml
+          --output /tmp/module-config-template.yaml \
           --module-archive-version-overwrite
           echo "MODULE_TEMPLATE_PATH=/tmp/module-config-template.yaml" >> "$GITHUB_ENV"
       - name: Verify module template
