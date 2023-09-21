@@ -70,19 +70,18 @@ func Test_ModuleTemplate(t *testing.T) {
 	assert.Contains(t, testRepoURL, githubAccessSpec.RepoURL)
 
 	// test security scan labels
-	fmt.Println(descriptor.Labels[0].Name)
-	fmt.Println(descriptor.Labels[0].Value)
+	secScanLabels := descriptor.Sources[0].Labels
 
 	var devBranch string
-	descriptor.Labels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "dev-branch"), &devBranch)
+	secScanLabels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "dev-branch"), &devBranch)
 	assert.Equal(t, "main", devBranch)
 	var rcTag string
-	descriptor.Labels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "rc-tag"), &rcTag)
+	secScanLabels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "rc-tag"), &rcTag)
 	assert.Equal(t, "0.5.0", rcTag)
 	var language string
-	descriptor.Labels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "language"), &language)
+	secScanLabels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "language"), &language)
 	assert.Equal(t, "golang-mod", language)
 	var exclude string
-	descriptor.Labels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "exclude"), &exclude)
+	secScanLabels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "exclude"), &exclude)
 	assert.Equal(t, "**/test/**,**/*_test.go", exclude)
 }
