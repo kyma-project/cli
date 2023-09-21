@@ -86,5 +86,5 @@ func Test_ModuleTemplate(t *testing.T) {
 
 	var exclude string
 	yaml.Unmarshal(secScanLabels[4].Value, &exclude)
-	assert.Equal(t, "'**/test/**,**/*_test.go'", exclude)
+	assert.Equal(t, "**/test/**,**/*_test.go", exclude)
 }
