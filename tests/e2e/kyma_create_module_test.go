@@ -85,6 +85,6 @@ func Test_ModuleTemplate(t *testing.T) {
 	assert.Equal(t, "golang-mod", language)
 
 	var exclude string
-	yaml.Unmarshal(secScanLabels[3].Value, &exclude)
+	yaml.Unmarshal(secScanLabels[4].Value, &exclude)
 	assert.Equal(t, "'**/test/**,**/*_test.go'", exclude)
 }
