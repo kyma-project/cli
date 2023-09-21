@@ -71,6 +71,7 @@ func Test_ModuleTemplate(t *testing.T) {
 
 	// test security scan labels
 	secScanLabels := descriptor.Sources[0].Labels
+	fmt.Println(secScanLabels)
 
 	var devBranch string
 	secScanLabels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "dev-branch"), &devBranch)
