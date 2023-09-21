@@ -39,7 +39,6 @@ jobs:
       - name: export template-operator URL
         run: |
           cd ./template-operator
-          vim ./sec-scanners-config.yaml
           echo "TEST_REPOSITORY_URL=$(git remote get-url origin)" >> "$GITHUB_ENV"
       - name: Set up k3d
         run: wget -qO - https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG=$K3D_VERSION bash
@@ -57,6 +56,7 @@ jobs:
           --kubebuilder-project \
           --version $MODULE_TEMPLATE_VERSION -v \
           --output /tmp/kubebuilder-template.yaml
+          --module-archive-version-overwrite
           echo "MODULE_TEMPLATE_PATH=/tmp/kubebuilder-template.yaml" >> "$GITHUB_ENV"
       - name: Run create module with module-config
         if: ${{ matrix.e2e-test == 'create_module_module_config' }}
@@ -71,6 +71,7 @@ jobs:
           --module-config-file ./module-config.yaml \
           --version $MODULE_TEMPLATE_VERSION -v \
           --output /tmp/module-config-template.yaml
+          --module-archive-version-overwrite
           echo "MODULE_TEMPLATE_PATH=/tmp/module-config-template.yaml" >> "$GITHUB_ENV"
       - name: Verify module template
         run: |
