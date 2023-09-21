@@ -39,6 +39,7 @@ jobs:
       - name: export template-operator URL
         run: |
           cd ./template-operator
+          vim ./sec-scanners-config.yaml
           echo "TEST_REPOSITORY_URL=$(git remote get-url origin)" >> "$GITHUB_ENV"
       - name: Set up k3d
         run: wget -qO - https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG=$K3D_VERSION bash
