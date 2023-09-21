@@ -3,6 +3,7 @@
 package e2e_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"testing"
@@ -71,18 +72,17 @@ func Test_ModuleTemplate(t *testing.T) {
 
 	// test security scan labels
 	secScanLabels := descriptor.Sources[0].Labels
-	fmt.Println(secScanLabels[0].Value)
 
 	var devBranch string
 	secScanLabels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "dev-branch"), &devBranch)
-	assert.Equal(t, "main", devBranch)
+	assert.Equal(t, "main", json.Marshal(&devBranch))
 	var rcTag string
 	secScanLabels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "rc-tag"), &rcTag)
-	assert.Equal(t, "0.5.0", rcTag)
+	assert.Equal(t, "0.5.0", json.Marshal(&rcTag))
 	var language string
 	secScanLabels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "language"), &language)
-	assert.Equal(t, "golang-mod", language)
+	assert.Equal(t, "golang-mod", json.Marshal(&language))
 	var exclude string
 	secScanLabels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "exclude"), &exclude)
-	assert.Equal(t, "**/test/**,**/*_test.go", exclude)
+	assert.Equal(t, "**/test/**,**/*_test.go", json.Marshal(&exclude))
 }
