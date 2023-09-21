@@ -3,7 +3,6 @@
 package e2e_test
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"testing"
@@ -19,6 +18,7 @@ import (
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/cpi"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/genericocireg"
 	ocmOCIReg "github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/ocireg"
+	"gopkg.in/yaml.v3"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -75,22 +75,22 @@ func Test_ModuleTemplate(t *testing.T) {
 
 	var devBranchJson string
 	secScanLabels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "dev-branch"), &devBranchJson)
-	devBranch, err := json.Marshal(&devBranchJson)
+	devBranch, err := yaml.Marshal(devBranchJson)
 	assert.Nil(t, err)
 	assert.Equal(t, "main", string(devBranch))
 	var rcTagJson string
 	secScanLabels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "rc-tag"), &rcTagJson)
-	rcTag, err := json.Marshal(&rcTagJson)
+	rcTag, err := yaml.Marshal(rcTagJson)
 	assert.Nil(t, err)
 	assert.Equal(t, "0.5.0", string(rcTag))
 	var languageJson string
 	secScanLabels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "language"), &languageJson)
-	language, err := json.Marshal(&languageJson)
+	language, err := yaml.Marshal(languageJson)
 	assert.Nil(t, err)
 	assert.Equal(t, "golang-mod", string(language))
 	var excludeJson string
 	secScanLabels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "exclude"), &excludeJson)
-	exclude, err := json.Marshal(&excludeJson)
+	exclude, err := yaml.Marshal(excludeJson)
 	assert.Nil(t, err)
 	assert.Equal(t, "**/test/**,**/*_test.go", string(exclude))
 }
