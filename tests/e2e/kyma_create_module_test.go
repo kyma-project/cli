@@ -70,17 +70,18 @@ func Test_ModuleTemplate(t *testing.T) {
 	assert.Contains(t, testRepoURL, githubAccessSpec.RepoURL)
 
 	// test security scan labels
-	assert.Equal(t, len(descriptor.Labels), 5)
+	fmt.Println(descriptor.Labels)
+	assert.Equal(t, 5, len(descriptor.Labels))
 	var devBranch string
 	descriptor.Labels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "dev-branch"), &devBranch)
-	assert.Equal(t, devBranch, "main")
+	assert.Equal(t, "main", devBranch)
 	var rcTag string
 	descriptor.Labels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "rc-tag"), &rcTag)
-	assert.Equal(t, rcTag, "0.5.0")
+	assert.Equal(t, "0.5.0", rcTag)
 	var language string
 	descriptor.Labels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "language"), &language)
-	assert.Equal(t, language, "golang-mod")
+	assert.Equal(t, "golang-mod", language)
 	var exclude string
 	descriptor.Labels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "exclude"), &exclude)
-	assert.Equal(t, exclude, "**/test/**,**/*_test.go")
+	assert.Equal(t, "**/test/**,**/*_test.go", exclude)
 }
