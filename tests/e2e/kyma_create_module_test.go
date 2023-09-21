@@ -3,6 +3,7 @@
 package e2e_test
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -67,4 +68,15 @@ func Test_ModuleTemplate(t *testing.T) {
 	githubAccessSpec, ok := sourceAccessSpec.(*github.AccessSpec)
 	assert.Equal(t, githubAccessSpec.Type, github.Type)
 	assert.Contains(t, testRepoURL, githubAccessSpec.RepoURL)
+
+	// test security scan labels
+	assert.Equal(t, len(descriptor.Labels), 5)
+	devBranch := descriptor.Labels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "dev-branch"))
+	assert.Equal(t, devBranch, "main")
+	rcTag := descriptor.Labels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "rc-tag"))
+	assert.Equal(t, rcTag, "0.5.0")
+	language := descriptor.Labels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "language"))
+	assert.Equal(t, language, "golang-mod")
+	exclude := descriptor.Labels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "exclude"))
+	assert.Equal(t, exclude, "**/test/**,**/*_test.go")
 }

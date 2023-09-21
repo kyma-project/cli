@@ -16,12 +16,12 @@ import (
 var ErrFailedToParseImageURL = errors.New("error parsing protecode image URL")
 
 const (
-	secScanLabelKey = "scan.security.kyma-project.io"
+	SecScanLabelKey = "scan.security.kyma-project.io"
 	secLabelKey     = "security.kyma-project.io"
 	secScanEnabled  = "enabled"
 )
 
-var labelTemplate = secScanLabelKey + "/%s"
+var labelTemplate = SecScanLabelKey + "/%s"
 var globalLabelTemplate = secLabelKey + "/%s"
 
 func AddSecurityScanningMetadata(descriptor *ocm.ComponentDescriptor, securityConfigPath string) error {
