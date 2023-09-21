@@ -73,6 +73,12 @@ func Test_ModuleTemplate(t *testing.T) {
 	// test security scan labels
 	secScanLabels := descriptor.Sources[0].Labels
 
+	fmt.Println(descriptor.Sources[0].Labels[0].Value)
+	fmt.Println(descriptor.Sources[0].Labels[1].Value)
+	fmt.Println(descriptor.Sources[0].Labels[2].Value)
+	fmt.Println(descriptor.Sources[0].Labels[3].Value)
+	fmt.Println(descriptor.Sources[0].Labels[4].Value)
+
 	var devBranchJson string
 	secScanLabels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "dev-branch"), &devBranchJson)
 	devBranch, err := yaml.Marshal(devBranchJson)
@@ -92,5 +98,5 @@ func Test_ModuleTemplate(t *testing.T) {
 	secScanLabels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "exclude"), &excludeJson)
 	exclude, err := yaml.Marshal(excludeJson)
 	assert.Nil(t, err)
-	assert.Equal(t, "**/test/**,**/*_test.go", string(exclude))
+	assert.Equal(t, "'**/test/**,**/*_test.go'", string(exclude))
 }
