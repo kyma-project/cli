@@ -3,7 +3,6 @@
 package e2e_test
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
@@ -73,34 +72,19 @@ func Test_ModuleTemplate(t *testing.T) {
 	// test security scan labels
 	secScanLabels := descriptor.Sources[0].Labels
 
-	var test string
-	yaml.Unmarshal(descriptor.Sources[0].Labels[1].Value, &test)
-	fmt.Println(test)
-	yaml.Unmarshal(descriptor.Sources[0].Labels[2].Value, &test)
-	fmt.Println(test)
-	yaml.Unmarshal(descriptor.Sources[0].Labels[3].Value, &test)
-	fmt.Println(test)
-	yaml.Unmarshal(descriptor.Sources[0].Labels[4].Value, &test)
-	fmt.Println(test)
+	var devBranch string
+	yaml.Unmarshal(secScanLabels[1].Value, &devBranch)
+	assert.Equal(t, "main", devBranch)
 
-	var devBranchJson string
-	secScanLabels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "dev-branch"), &devBranchJson)
-	devBranch, err := yaml.Marshal(devBranchJson)
-	assert.Nil(t, err)
-	assert.Equal(t, "main", string(devBranch))
-	var rcTagJson string
-	secScanLabels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "rc-tag"), &rcTagJson)
-	rcTag, err := yaml.Marshal(rcTagJson)
-	assert.Nil(t, err)
-	assert.Equal(t, "0.5.0", string(rcTag))
-	var languageJson string
-	secScanLabels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "language"), &languageJson)
-	language, err := yaml.Marshal(languageJson)
-	assert.Nil(t, err)
-	assert.Equal(t, "golang-mod", string(language))
-	var excludeJson string
-	secScanLabels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "exclude"), &excludeJson)
-	exclude, err := yaml.Marshal(excludeJson)
-	assert.Nil(t, err)
-	assert.Equal(t, "'**/test/**,**/*_test.go'", string(exclude))
+	var rcTag string
+	yaml.Unmarshal(secScanLabels[2].Value, &rcTag)
+	assert.Equal(t, "0.5.0", rcTag)
+
+	var language string
+	yaml.Unmarshal(secScanLabels[3].Value, &language)
+	assert.Equal(t, "golang-mod", language)
+
+	var exclude string
+	yaml.Unmarshal(secScanLabels[3].Value, &exclude)
+	assert.Equal(t, "'**/test/**,**/*_test.go'", exclude)
 }
