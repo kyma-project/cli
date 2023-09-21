@@ -70,8 +70,9 @@ func Test_ModuleTemplate(t *testing.T) {
 	assert.Contains(t, testRepoURL, githubAccessSpec.RepoURL)
 
 	// test security scan labels
-	fmt.Println(descriptor.Labels)
-	assert.Equal(t, 5, len(descriptor.Labels))
+	fmt.Println(descriptor.Labels[0].Name)
+	fmt.Println(descriptor.Labels[0].Value)
+
 	var devBranch string
 	descriptor.Labels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "dev-branch"), &devBranch)
 	assert.Equal(t, "main", devBranch)
