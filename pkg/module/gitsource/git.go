@@ -8,22 +8,17 @@ import (
 
 	"github.com/go-git/go-git/v5"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/accessmethods/github"
-	"github.com/open-component-model/ocm/pkg/contexts/ocm/attrs/compatattr"
 	ocm "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	ocmv1 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/meta/v1"
-	"github.com/open-component-model/ocm/pkg/contexts/ocm/cpi"
 )
 
-func (g GitSource) FetchSource(ctx cpi.Context, path, repo, version string) (*ocm.Source, error) {
+func (g GitSource) FetchSource(path, repo, version string) (*ocm.Source, error) {
 	ref, commit, err := g.getGitInfo(path)
 	if err != nil {
 		return nil, err
 	}
 
-	sourceType := "git"
-	if !compatattr.Get(ctx) {
-		sourceType = github.CONSUMER_TYPE
-	}
+	sourceType := github.CONSUMER_TYPE
 
 	label, err := ocmv1.NewLabel(refLabel, ref, ocmv1.WithVersion(ocmVersion))
 	if err != nil {
@@ -106,10 +101,9 @@ func fetchRepoURLFromRemotes(gitRemotes []*git.Remote, remoteName string) (strin
 	if remote.Config() != nil {
 		// get remote URL and convert to HTTPS in case it is an SSH URL
 		httpURL := remote.Config().URLs[0]
-		if strings.HasPrefix(httpURL, "git") {
+		if strings.HasPrefix(httpURL, "git@") {
 			httpURL = strings.Replace(httpURL, ":", "/", 1)
 			httpURL = strings.Replace(httpURL, "git@", "https://", 1)
-			httpURL = strings.TrimSuffix(httpURL, gitFolder)
 		}
 		repoURL, err := url.Parse(httpURL)
 		if err != nil {

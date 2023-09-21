@@ -7,7 +7,6 @@ import (
 const (
 	ocmIdentityName = "module-sources"
 	ocmVersion      = "v1"
-	gitFolder       = ".git"
 	refLabel        = "git.kyma-project.io/ref"
 )
 

@@ -5,17 +5,14 @@ import (
 	"os"
 	"strings"
 
+	"github.com/kyma-project/cli/pkg/module/gitsource"
 	"github.com/mandelsoft/vfs/pkg/projectionfs"
 	"github.com/mandelsoft/vfs/pkg/vfs"
 	"github.com/open-component-model/ocm/pkg/common/accessobj"
-	"github.com/open-component-model/ocm/pkg/contexts/ocm/attrs/compatattr"
 	ocm "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	v1 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/meta/v1"
-	compdescv2 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/versions/v2"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/cpi"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/comparch"
-
-	"github.com/kyma-project/cli/pkg/module/gitsource"
 )
 
 type Source interface {
@@ -41,9 +38,6 @@ func CreateArchive(fs vfs.FileSystem, path, gitRemote string, def *Definition, i
 	}
 
 	ctx := cpi.DefaultContext()
-	if err := compatattr.Set(ctx, def.SchemaVersion == compdescv2.SchemaVersion); err != nil {
-		return nil, fmt.Errorf("could not set compatibility attribute for v2: %w", err)
-	}
 
 	archive, err := comparch.New(
 		ctx,
@@ -63,14 +57,10 @@ func CreateArchive(fs vfs.FileSystem, path, gitRemote string, def *Definition, i
 		return nil, err
 	}
 
-	if compatattr.Get(ctx) {
-		cd.Provider = v1.Provider{Name: "internal"}
-	} else {
-		cd.Provider = v1.Provider{Name: "kyma-project.io", Labels: v1.Labels{*builtByCLI}}
-	}
+	cd.Provider = v1.Provider{Name: "kyma-project.io", Labels: v1.Labels{*builtByCLI}}
 
 	if isTargetDirAGitRepo {
-		if err := addSources(ctx, cd, def, gitRemote); err != nil {
+		if err := addSources(cd, def, gitRemote); err != nil {
 			return nil, err
 		}
 	}
@@ -87,14 +77,14 @@ func CreateArchive(fs vfs.FileSystem, path, gitRemote string, def *Definition, i
 }
 
 // addSources adds the sources to the component descriptor. If the def.Source is a git repository
-func addSources(ctx cpi.Context, cd *ocm.ComponentDescriptor, def *Definition, gitRemote string) error {
+func addSources(cd *ocm.ComponentDescriptor, def *Definition, gitRemote string) error {
 	if strings.HasSuffix(def.Source, ".git") {
 		gitSource := gitsource.NewGitSource()
 		var err error
 		if def.Repo, err = gitSource.DetermineRepositoryURL(gitRemote, def.Repo, def.Source); err != nil {
 			return err
 		}
-		src, err := gitSource.FetchSource(ctx, def.Source, def.Repo, def.Version)
+		src, err := gitSource.FetchSource(def.Source, def.Repo, def.Version)
 
 		if err != nil {
 			return err

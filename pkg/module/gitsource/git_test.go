@@ -18,12 +18,20 @@ func Test_fetchRepoURLFromRemotes(t *testing.T) {
 		want    string
 		wantErr bool
 	}{
-		{name: "Should return correct GitHub URL",
+		{name: "Should return correct GitHub URL - Git default format",
 			args: args{
 				gitRemotes: createTestRemotes(),
-				remoteName: "upstream",
+				remoteName: "upstream-git-default",
 			},
-			want:    "github.com/kyma-test/test",
+			want:    "https://github.com/kyma-test/test.git",
+			wantErr: false,
+		},
+		{name: "Should return correct GitHub URL -  https format",
+			args: args{
+				gitRemotes: createTestRemotes(),
+				remoteName: "upstream-https",
+			},
+			want:    "https://github.com/kyma-test/test.git",
 			wantErr: false,
 		},
 		{name: "Should return return error due remote not existing",
@@ -33,6 +41,14 @@ func Test_fetchRepoURLFromRemotes(t *testing.T) {
 			},
 			want:    "",
 			wantErr: true,
+		},
+		{name: "Should return unchanged string -  no scheme format",
+			args: args{
+				gitRemotes: createTestRemotes(),
+				remoteName: "origin",
+			},
+			want:    "github.com/user-test/test",
+			wantErr: false,
 		},
 		{name: "Should return return error due invalid URL",
 			args: args{
@@ -68,8 +84,12 @@ func Test_fetchRepoURLFromRemotes(t *testing.T) {
 func createTestRemotes() []*git.Remote {
 	return []*git.Remote{
 		git.NewRemote(nil, &config.RemoteConfig{
-			Name: "upstream",
-			URLs: []string{"github.com/kyma-test/test"},
+			Name: "upstream-git-default",
+			URLs: []string{"git@github.com:kyma-test/test.git"},
+		}),
+		git.NewRemote(nil, &config.RemoteConfig{
+			Name: "upstream-https",
+			URLs: []string{"https://github.com/kyma-test/test.git"},
 		}),
 		git.NewRemote(nil, &config.RemoteConfig{
 			Name: "origin",

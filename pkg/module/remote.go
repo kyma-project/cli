@@ -12,7 +12,6 @@ import (
 	"github.com/open-component-model/ocm/pkg/contexts/credentials/repositories/dockerconfig"
 	oci "github.com/open-component-model/ocm/pkg/contexts/oci/repositories/ocireg"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
-	"github.com/open-component-model/ocm/pkg/contexts/ocm/attrs/compatattr"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/cpi"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/comparch"
@@ -42,12 +41,8 @@ type Remote struct {
 
 func (r *Remote) GetRepository(ctx cpi.Context) (cpi.Repository, error) {
 	creds := r.getCredentials(ctx)
-	var repoType string
-	if compatattr.Get(ctx) {
-		repoType = oci.LegacyType
-	} else {
-		repoType = oci.Type
-	}
+	repoType := oci.Type
+
 	url := NoSchemeURL(r.Registry)
 	if r.Insecure {
 		url = fmt.Sprintf("http://%s", url)
@@ -57,6 +52,7 @@ func (r *Remote) GetRepository(ctx cpi.Context) (cpi.Repository, error) {
 		ObjectVersionedType: runtime.NewVersionedObjectType(repoType),
 		BaseURL:             url,
 	}
+
 	genericSpec := genericocireg.NewRepositorySpec(
 		ociRepoSpec, &ocireg.ComponentRepositoryMeta{
 			ComponentNameMapping: ocireg.ComponentNameMapping(r.NameMapping),
