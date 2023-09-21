@@ -73,16 +73,24 @@ func Test_ModuleTemplate(t *testing.T) {
 	// test security scan labels
 	secScanLabels := descriptor.Sources[0].Labels
 
-	var devBranch string
-	secScanLabels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "dev-branch"), &devBranch)
-	assert.Equal(t, "main", json.Marshal(&devBranch))
-	var rcTag string
-	secScanLabels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "rc-tag"), &rcTag)
-	assert.Equal(t, "0.5.0", json.Marshal(&rcTag))
-	var language string
-	secScanLabels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "language"), &language)
-	assert.Equal(t, "golang-mod", json.Marshal(&language))
-	var exclude string
-	secScanLabels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "exclude"), &exclude)
-	assert.Equal(t, "**/test/**,**/*_test.go", json.Marshal(&exclude))
+	var devBranchJson string
+	secScanLabels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "dev-branch"), &devBranchJson)
+	devBranch, err := json.Marshal(&devBranchJson)
+	assert.Nil(t, err)
+	assert.Equal(t, "main", devBranch)
+	var rcTagJson string
+	secScanLabels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "rc-tag"), &rcTagJson)
+	rcTag, err := json.Marshal(&rcTagJson)
+	assert.Nil(t, err)
+	assert.Equal(t, "0.5.0", rcTag)
+	var languageJson string
+	secScanLabels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "language"), &languageJson)
+	language, err := json.Marshal(&languageJson)
+	assert.Nil(t, err)
+	assert.Equal(t, "golang-mod", language)
+	var excludeJson string
+	secScanLabels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "exclude"), &excludeJson)
+	exclude, err := json.Marshal(&excludeJson)
+	assert.Nil(t, err)
+	assert.Equal(t, "**/test/**,**/*_test.go", exclude)
 }
