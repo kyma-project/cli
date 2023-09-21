@@ -48,7 +48,6 @@ jobs:
       - name: Run create module with kubebuilder-project
         if: ${{ matrix.e2e-test == 'create_module_kubebuilder_project' }}
         run: |
-          vim ./template-operator/sec-scanners-config.yaml
           kyma alpha create module \
           --name kyma-project.io/module/template-operator \
           --path ./template-operator \
@@ -62,7 +61,6 @@ jobs:
         if: ${{ matrix.e2e-test == 'create_module_module_config' }}
         run: |
           cd ./template-operator
-          vim sec-scanners-config.yaml
           make build-manifests
           kyma alpha create module \
           --name kyma-project.io/module/template-operator \
