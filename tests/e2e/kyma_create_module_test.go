@@ -72,7 +72,7 @@ func Test_ModuleTemplate(t *testing.T) {
 	// test security scan labels
 	assert.Equal(t, len(descriptor.Labels), 5)
 	var devBranch string
-	devBranch := descriptor.Labels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "dev-branch"), &devBranch)
+	descriptor.Labels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "dev-branch"), &devBranch)
 	assert.Equal(t, devBranch, "main")
 	var rcTag string
 	descriptor.Labels.GetValue(fmt.Sprintf("%s/%s", module.SecScanLabelKey, "rc-tag"), &rcTag)
