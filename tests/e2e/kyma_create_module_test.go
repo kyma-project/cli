@@ -74,7 +74,13 @@ func Test_ModuleTemplate(t *testing.T) {
 	secScanLabels := descriptor.Sources[0].Labels
 
 	var test string
-	yaml.Unmarshal(descriptor.Sources[0].Labels[0].Value, &test)
+	yaml.Unmarshal(descriptor.Sources[0].Labels[1].Value, &test)
+	fmt.Println(test)
+	yaml.Unmarshal(descriptor.Sources[0].Labels[2].Value, &test)
+	fmt.Println(test)
+	yaml.Unmarshal(descriptor.Sources[0].Labels[3].Value, &test)
+	fmt.Println(test)
+	yaml.Unmarshal(descriptor.Sources[0].Labels[4].Value, &test)
 	fmt.Println(test)
 
 	var devBranchJson string
