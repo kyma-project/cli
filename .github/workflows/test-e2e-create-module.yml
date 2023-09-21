@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       K3D_VERSION: v5.4.7
-      MODULE_TEMPLATE_VERSION: v1.0.1
+      MODULE_TEMPLATE_VERSION: v1.0.0
       OCI_REPOSITORY_URL: http://k3d-oci.localhost:5001
     steps:
       - name: Checkout Kyma CLI
@@ -48,6 +48,7 @@ jobs:
       - name: Run create module with kubebuilder-project
         if: ${{ matrix.e2e-test == 'create_module_kubebuilder_project' }}
         run: |
+          vim ./template-operator/sec-scanners-config.yaml
           kyma alpha create module \
           --name kyma-project.io/module/template-operator \
           --path ./template-operator \
@@ -55,13 +56,13 @@ jobs:
           --insecure \
           --kubebuilder-project \
           --version $MODULE_TEMPLATE_VERSION -v \
-          --output /tmp/kubebuilder-template.yaml \
-          --module-archive-version-overwrite
+          --output /tmp/kubebuilder-template.yaml
           echo "MODULE_TEMPLATE_PATH=/tmp/kubebuilder-template.yaml" >> "$GITHUB_ENV"
       - name: Run create module with module-config
         if: ${{ matrix.e2e-test == 'create_module_module_config' }}
         run: |
           cd ./template-operator
+          vim sec-scanners-config.yaml
           make build-manifests
           kyma alpha create module \
           --name kyma-project.io/module/template-operator \
@@ -70,8 +71,7 @@ jobs:
           --insecure \
           --module-config-file ./module-config.yaml \
           --version $MODULE_TEMPLATE_VERSION -v \
-          --output /tmp/module-config-template.yaml \
-          --module-archive-version-overwrite
+          --output /tmp/module-config-template.yaml 
           echo "MODULE_TEMPLATE_PATH=/tmp/module-config-template.yaml" >> "$GITHUB_ENV"
       - name: Verify module template
         run: |
