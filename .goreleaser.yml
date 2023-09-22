@@ -38,8 +38,24 @@ snapshot:
 changelog:
   use: github
   sort: asc
+  groups:
+    - title: Bug fixes
+      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
+      order: 1
+    - title: Dependencies
+      regexp: '^.*?deps(\([[:word:]]+\))??!?:.+$'
+      order: 2
+    - title: Documentation
+      regexp: '^.*?docs(\([[:word:]]+\))??!?:.+$'
+      order: 3
+    - title: Test suites
+      regexp: '^.*?test(\([[:word:]]+\))??!?:.+$'
+      order: 4
+    - title: Features
+      order: 0
   filters:
     exclude:
       - "^docs:"
       - "^test:"
-      - "^bump"
+      - '^(B|b)ump'
+      - '^.*?chore(\([[:word:]]+\))??!?:.+$'
