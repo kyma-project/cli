@@ -1,0 +1,30 @@
+name: Lint PR Title
+run-name: ${{github.event.pull_request.title}}
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - edited
+      - synchronize
+
+jobs:
+  check:
+    name: Check Title
+    runs-on: ubuntu-latest
+    steps:
+      - uses: amannn/action-semantic-pull-request@c3cd5d1ea3580753008872425915e343e351ab54
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            deps
+            chore
+            docs
+            feat
+            fix
+            test
+          requireScope: false
+          # https://regex101.com/r/YybDgS/1
+          subjectPattern: ^([A-Z].*[^.]|bump .*)$
