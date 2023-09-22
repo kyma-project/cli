@@ -2,6 +2,8 @@ package module
 
 import (
 	"fmt"
+	"github.com/kyma-project/cli/pkg/module"
+	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	"os"
 	"regexp"
 	"strings"
@@ -11,18 +13,19 @@ import (
 )
 
 type Config struct {
-	Name          string            `yaml:"name"`         //required, the name of the Module
-	Version       string            `yaml:"version"`      //required, the version of the Module
-	Channel       string            `yaml:"channel"`      //required, channel that should be used in the ModuleTemplate
-	ManifestPath  string            `yaml:"manifest"`     //required, reference to the manifests, must be a relative file name.
-	DefaultCRPath string            `yaml:"defaultCR"`    //optional, reference to a YAML file containing the default CR for the module, must be a relative file name.
-	ResourceName  string            `yaml:"resourceName"` //optional, default={NAME}-{CHANNEL}, the name for the ModuleTemplate that will be created
-	Namespace     string            `yaml:"namespace"`    //optional, default=kcp-system, the namespace where the ModuleTemplate will be deployed
-	Security      string            `yaml:"security"`     //optional, name of the security scanners config file
-	Internal      bool              `yaml:"internal"`     //optional, default=false, determines whether the ModuleTemplate should have the internal flag or not
-	Beta          bool              `yaml:"beta"`         //optional, default=false, determines whether the ModuleTemplate should have the beta flag or not
-	Labels        map[string]string `yaml:"labels"`       //optional, additional labels for the ModuleTemplate
-	Annotations   map[string]string `yaml:"annotations"`  //optional, additional annotations for the ModuleTemplate
+	Name              string                     `yaml:"name"`             //required, the name of the Module
+	Version           string                     `yaml:"version"`          //required, the version of the Module
+	Channel           string                     `yaml:"channel"`          //required, channel that should be used in the ModuleTemplate
+	ManifestPath      string                     `yaml:"manifest"`         //required, reference to the manifests, must be a relative file name.
+	DefaultCRPath     string                     `yaml:"defaultCR"`        //optional, reference to a YAML file containing the default CR for the module, must be a relative file name.
+	ResourceName      string                     `yaml:"resourceName"`     //optional, default={NAME}-{CHANNEL}, the name for the ModuleTemplate that will be created
+	Namespace         string                     `yaml:"namespace"`        //optional, default=kcp-system, the namespace where the ModuleTemplate will be deployed
+	Security          string                     `yaml:"security"`         //optional, name of the security scanners config file
+	Internal          bool                       `yaml:"internal"`         //optional, default=false, determines whether the ModuleTemplate should have the internal flag or not
+	Beta              bool                       `yaml:"beta"`             //optional, default=false, determines whether the ModuleTemplate should have the beta flag or not
+	Labels            map[string]string          `yaml:"labels"`           //optional, additional labels for the ModuleTemplate
+	Annotations       map[string]string          `yaml:"annotations"`      //optional, additional annotations for the ModuleTemplate
+	CustomStateChecks []v1beta2.CustomStateCheck `yaml:"customStateCheck"` //optional, specifies custom state check for module
 }
 
 const (
@@ -55,6 +58,7 @@ func (c *Config) Validate() error {
 		validateNamespace().
 		validateVersion().
 		validateChannel().
+		validateCustomStateChecks().
 		do()
 }
 
@@ -155,6 +159,35 @@ func (cv *configValidator) validateChannel() *configValidator {
 		if !matched {
 			return fmt.Errorf("%w for input %q, invalid channel format, only allow characters from a-z", ErrChannelValidation, cv.config.Channel)
 		}
+		return nil
+
+	}
+
+	return cv.addValidator(fn)
+}
+
+func (cv *configValidator) validateCustomStateChecks() *configValidator {
+	fn := func() error {
+		cscs := cv.config.CustomStateChecks
+		if len(cscs) == 0 {
+			return nil
+		}
+		for _, check := range cscs {
+			if len(check.JSONPath) == 0 || len(check.Value) == 0 || len(check.MappedState) == 0 {
+				return fmt.Errorf("%w for check %v, not all fields were provided",
+					module.ErrCustomStateCheckValidation, check)
+			}
+			if !module.IsValidMappedState(string(check.MappedState)) {
+				return fmt.Errorf("%w because %s is not a valid state name in kyma",
+					module.ErrCustomStateCheckValidation, check.MappedState)
+			}
+		}
+
+		if !module.ContainsAllRequiredStates(cscs) {
+			return fmt.Errorf("%w: customStateCheck must contain both required states 'Error' and 'Ready'",
+				module.ErrCustomStateCheckValidation)
+		}
+
 		return nil
 
 	}

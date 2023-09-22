@@ -3,13 +3,15 @@ package module
 import (
 	"bytes"
 	"fmt"
+	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	"strings"
 	"text/template"
 
-	"github.com/kyma-project/cli/pkg/module/oci"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	"sigs.k8s.io/yaml"
+
+	"github.com/kyma-project/cli/pkg/module/oci"
 )
 
 const (
@@ -32,6 +34,14 @@ metadata:
 {{- end}} 
 spec:
   channel: {{.Channel}}
+{{- with .CustomStateChecks}}
+  customStateCheck:
+    {{- range .}}
+    - jsonPath: '{{.JSONPath}}'
+      value: '{{.Value}}'
+      mappedState: '{{.MappedState}}'
+    {{- end}}
+{{- end}} 
   data:
 {{- with .Data}}
 {{. | indent 4}}
@@ -42,16 +52,18 @@ spec:
 )
 
 type moduleTemplateData struct {
-	ResourceName string // K8s resource name of the generated ModuleTemplate
-	Namespace    string
-	Descriptor   compdesc.ComponentDescriptorVersion // descriptor info for the template
-	Channel      string
-	Data         string // contents for the spec.data section of the template taken from the defaults.yaml file in the mod folder
-	Labels       map[string]string
-	Annotations  map[string]string
+	ResourceName      string // K8s resource name of the generated ModuleTemplate
+	Namespace         string
+	Descriptor        compdesc.ComponentDescriptorVersion // descriptor info for the template
+	Channel           string
+	Data              string // contents for the spec.data section of the template taken from the defaults.yaml file in the mod folder
+	Labels            map[string]string
+	Annotations       map[string]string
+	CustomStateChecks []v1beta2.CustomStateCheck
 }
 
-func Template(remote ocm.ComponentVersionAccess, moduleTemplateName, namespace string, channel string, data []byte, labels, annotations map[string]string) ([]byte, error) {
+func Template(remote ocm.ComponentVersionAccess, moduleTemplateName, namespace, channel string, data []byte,
+	labels, annotations map[string]string, customsStateChecks []v1beta2.CustomStateCheck) ([]byte, error) {
 	descriptor := remote.GetDescriptor()
 	ref, err := oci.ParseRef(descriptor.Name)
 	if err != nil {
@@ -69,15 +81,15 @@ func Template(remote ocm.ComponentVersionAccess, moduleTemplateName, namespace s
 	if len(resourceName) == 0 {
 		resourceName = shortName + "-" + channel
 	}
-
 	td := moduleTemplateData{
-		ResourceName: resourceName,
-		Namespace:    namespace,
-		Descriptor:   cva,
-		Channel:      channel,
-		Data:         string(data),
-		Labels:       labels,
-		Annotations:  annotations,
+		ResourceName:      resourceName,
+		Namespace:         namespace,
+		Descriptor:        cva,
+		Channel:           channel,
+		Data:              string(data),
+		Labels:            labels,
+		Annotations:       annotations,
+		CustomStateChecks: customsStateChecks,
 	}
 
 	t, err := template.New("modTemplate").Funcs(template.FuncMap{"yaml": yaml.Marshal, "indent": Indent}).Parse(modTemplate)

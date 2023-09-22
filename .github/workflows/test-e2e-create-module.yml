@@ -1,0 +1,77 @@
+name: TestSuite E2E - create module
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+jobs:
+  e2e:
+    strategy:
+      matrix:
+        e2e-test: [ "create_module_kubebuilder_project", "create_module_module_config"]
+    name: "Run E2E tests"
+    runs-on: ubuntu-latest
+    env:
+      K3D_VERSION: v5.4.7
+      MODULE_TEMPLATE_VERSION: v1.0.0
+      OCI_REPOSITORY_URL: http://k3d-oci.localhost:5001
+    steps:
+      - name: Checkout Kyma CLI
+        uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: 'go.mod'
+          cache-dependency-path: 'go.sum'
+      - name: Build Kyma CLI
+        run: | 
+          make resolve validate build-linux
+          chmod +x ./bin/kyma-linux
+          ls -la ./bin
+          mv ./bin/kyma-linux /usr/local/bin/kyma
+        timeout-minutes: 10
+      - name: Checkout template-operator
+        uses: actions/checkout@v3
+        with:
+          repository: kyma-project/template-operator
+          path: ./template-operator/
+      - name: export template-operator URL
+        run: |
+          cd ./template-operator
+          echo "TEST_REPOSITORY_URL=$(git remote get-url origin)" >> "$GITHUB_ENV"
+      - name: Set up k3d
+        run: wget -qO - https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG=$K3D_VERSION bash
+      - name: Provision OCI Registry
+        run: |
+          k3d registry create oci.localhost --port 5001
+      - name: Run create module with kubebuilder-project
+        if: ${{ matrix.e2e-test == 'create_module_kubebuilder_project' }}
+        run: |
+          kyma alpha create module \
+          --name kyma-project.io/module/template-operator \
+          --path ./template-operator \
+          --registry http://k3d-oci.localhost:5001 \
+          --insecure \
+          --kubebuilder-project \
+          --version $MODULE_TEMPLATE_VERSION -v \
+          --output /tmp/kubebuilder-template.yaml
+          echo "MODULE_TEMPLATE_PATH=/tmp/kubebuilder-template.yaml" >> "$GITHUB_ENV"
+      - name: Run create module with module-config
+        if: ${{ matrix.e2e-test == 'create_module_module_config' }}
+        run: |
+          cd ./template-operator
+          make build-manifests
+          kyma alpha create module \
+          --name kyma-project.io/module/template-operator \
+          --path . \
+          --registry http://k3d-oci.localhost:5001 \
+          --insecure \
+          --module-config-file ./module-config.yaml \
+          --version $MODULE_TEMPLATE_VERSION -v \
+          --output /tmp/module-config-template.yaml
+          echo "MODULE_TEMPLATE_PATH=/tmp/module-config-template.yaml" >> "$GITHUB_ENV"
+      - name: Verify module template
+        run: |
+          echo $MODULE_TEMPLATE_PATH
+          make -C tests/e2e ${{ matrix.e2e-test }}

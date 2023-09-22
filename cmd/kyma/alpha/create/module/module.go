@@ -8,19 +8,22 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/kyma-project/cli/internal/cli"
-	"github.com/kyma-project/cli/internal/nice"
-	"github.com/kyma-project/cli/pkg/module"
 	"github.com/mandelsoft/vfs/pkg/memoryfs"
 	"github.com/mandelsoft/vfs/pkg/osfs"
 	"github.com/mandelsoft/vfs/pkg/vfs"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	compdescv2 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/versions/v2"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/comparch"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"golang.org/x/exp/maps"
 	"gopkg.in/yaml.v3"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
+
+	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/files"
+	"github.com/kyma-project/cli/internal/nice"
+	"github.com/kyma-project/cli/pkg/module"
 )
 
 type command struct {
@@ -57,17 +60,19 @@ Both simple and Kubebuilder projects require providing an explicit path to the m
 To configure the simple mode, provide the "--module-config-file" flag with a config file path.
 The module config file is a YAML file used to configure the following attributes for the module:
 
-- name:         a string, required, the name of the module
-- version:      a string, required, the version of the module
-- channel:      a string, required, channel that should be used in the ModuleTemplate CR
-- manifest:     a string, required, reference to the manifest, must be a relative file name
-- defaultCR:    a string, optional, reference to a YAML file containing the default CR for the module, must be a relative file name
-- resourceName: a string, optional, default={NAME}-{CHANNEL}, the name for the ModuleTemplate CR that will be created
-- security:     a string, optional, name of the security scanners config file
-- internal:     a boolean, optional, default=false, determines whether the ModuleTemplate CR should have the internal flag or not
-- beta:         a boolean, optional, default=false, determines whether the ModuleTemplate CR should have the beta flag or not
-- labels:       a map with string keys and values, optional, additional labels for the generated ModuleTemplate CR
-- annotations:  a map with string keys and values, optional, additional annotations for the generated ModuleTemplate CR
+- name:             a string, required, the name of the module
+- version:          a string, required, the version of the module
+- channel:          a string, required, channel that should be used in the ModuleTemplate CR
+- manifest:         a string, required, reference to the manifest, must be a relative file name
+- defaultCR:        a string, optional, reference to a YAML file containing the default CR for the module, must be a relative file name
+- resourceName:     a string, optional, default={NAME}-{CHANNEL}, the name for the ModuleTemplate CR that will be created
+- security:         a string, optional, name of the security scanners config file
+- internal:         a boolean, optional, default=false, determines whether the ModuleTemplate CR should have the internal flag or not
+- beta:             a boolean, optional, default=false, determines whether the ModuleTemplate CR should have the beta flag or not
+- labels:           a map with string keys and values, optional, additional labels for the generated ModuleTemplate CR
+- annotations:      a map with string keys and values, optional, additional annotations for the generated ModuleTemplate CR
+- customStateCheck: a map with string keys and values, optional, define mapping between custom states to valid supported status
+                    see also https://github.com/kyma-project/lifecycle-manager/blob/main/docs/technical-reference/api/moduleTemplate-cr.md#speccustomstatecheck
 
 The **manifest** and **defaultCR** paths are resolved against the module's directory, as configured with the "--path" flag.
 The **manifest** file contains all the module's resources in a single, multi-document YAML file. These resources will be created in the Kyma cluster when the module is activated.
@@ -124,6 +129,11 @@ Build a Kubebuilder module my-domain/modC in version 3.2.1 and push it to a loca
 	)
 
 	cmd.Flags().BoolVar(&o.ArchiveVersionOverwrite, "module-archive-version-overwrite", false, "Overwrites existing component's versions of the module. If set to false, the push is a No-Op.")
+
+	cmd.Flags().StringVar(
+		&o.GitRemote, "git-remote", "origin",
+		"Specifies the remote name of the wanted GitHub repository. For Example \"origin\" or \"upstream\"",
+	)
 
 	cmd.Flags().StringVarP(&o.Path, "path", "p", "", "Path to the module's contents. (default current directory)")
 
@@ -273,12 +283,39 @@ func (cmd *command) Run(ctx context.Context) error {
 		archiveFS = memoryfs.New()
 		l.Info("using in-memory archive")
 	}
-	// this builds the archive in memory, Alternatively one can store it on disk or in temp folder
-	archive, err := module.CreateArchive(archiveFS, cmd.opts.ModuleArchivePath, modDef)
-	if err != nil {
-		cmd.CurrentStep.Failure()
-		return err
+
+	var archive *comparch.ComponentArchive
+	gitPath, err := files.SearchForTargetDirByName(modDef.Source, ".git")
+	if gitPath == "" || err != nil {
+		l.Warnf("could not find git repository root, using %s directory", modDef.Source)
+		n := nice.NewNice(cmd.opts.NonInteractive)
+		n.PrintImportant("\n! CAUTION: The target folder is not a git repository. The sources will be not added to the layer")
+		if files.IsFileExists(cmd.opts.SecurityScanConfig) {
+			n.PrintImportant("  The security scan configuration file has been provided, but it will be skipped due to the absence of repository information.")
+		}
+		if !cmd.avoidUserInteraction() {
+			if !cmd.CurrentStep.PromptYesNo("Do you want to continue? ") {
+				cmd.CurrentStep.Failure()
+				return errors.New("command stopped by user")
+			}
+		}
+
+		archive, err = module.CreateArchive(archiveFS, cmd.opts.ModuleArchivePath, cmd.opts.GitRemote, modDef, false)
+		if err != nil {
+			cmd.CurrentStep.Failure()
+			return err
+		}
+	} else {
+		l.Infof("found git repository root at %s", gitPath)
+		l.Infof("adding sources to the layer")
+		modDef.Source = gitPath // set the source to the git root
+		archive, err = module.CreateArchive(archiveFS, cmd.opts.ModuleArchivePath, cmd.opts.GitRemote, modDef, true)
+		if err != nil {
+			cmd.CurrentStep.Failure()
+			return err
+		}
 	}
+
 	cmd.CurrentStep.Successf("Module archive created")
 
 	cmd.NewStep("Adding layers to archive...")
@@ -290,9 +327,10 @@ func (cmd *command) Run(ctx context.Context) error {
 
 	cmd.CurrentStep.Success()
 
-	if cmd.opts.SecurityScanConfig != "" {
+	// Security Scan
+	if cmd.opts.SecurityScanConfig != "" && gitPath != "" { // security scan is only supported for target git repositories
 		cmd.NewStep("Configuring security scanning...")
-		if _, err := osFS.Stat(cmd.opts.SecurityScanConfig); err == nil {
+		if files.IsFileExists(cmd.opts.SecurityScanConfig) {
 			err = module.AddSecurityScanningMetadata(archive.GetDescriptor(), cmd.opts.SecurityScanConfig)
 			if err != nil {
 				cmd.CurrentStep.Failure()
@@ -303,7 +341,7 @@ func (cmd *command) Run(ctx context.Context) error {
 			}
 			cmd.CurrentStep.Successf("Security scanning configured")
 		} else {
-			l.Warnf("Security scanning configuration was skipped: %s", err.Error())
+			l.Warnf("Security scanning configuration was skipped")
 			cmd.CurrentStep.Failure()
 		}
 	}
@@ -379,7 +417,8 @@ func (cmd *command) Run(ctx context.Context) error {
 			namespace = modCnf.Namespace
 		}
 
-		t, err := module.Template(componentVersionAccess, resourceName, namespace, channel, modDef.DefaultCR, labels, annotations)
+		t, err := module.Template(componentVersionAccess, resourceName, namespace,
+			channel, modDef.DefaultCR, labels, annotations, modDef.CustomStateChecks)
 
 		if err != nil {
 			cmd.CurrentStep.Failure()
@@ -391,7 +430,6 @@ func (cmd *command) Run(ctx context.Context) error {
 			return err
 		}
 		cmd.CurrentStep.Successf("Template successfully generated at %s", cmd.opts.TemplateOutput)
-
 	}
 
 	return nil
@@ -419,7 +457,6 @@ func (cmd *command) validateDefaultCR(ctx context.Context, modDef *module.Defini
 }
 
 func (cmd *command) getRemote(nameMapping module.NameMapping) (*module.Remote, error) {
-
 	res := &module.Remote{
 		Registry:    cmd.opts.RegistryURL,
 		NameMapping: nameMapping,
@@ -448,7 +485,6 @@ func (cmd *command) getRemote(nameMapping module.NameMapping) (*module.Remote, e
 }
 
 func (cmd *command) moduleDefinitionFromOptions() (*module.Definition, *Config, error) {
-
 	var def *module.Definition
 	var cnf *Config
 
@@ -463,13 +499,14 @@ func (cmd *command) moduleDefinitionFromOptions() (*module.Definition, *Config, 
 
 		//legacy approach, flag-based
 		def = &module.Definition{
-			Name:            cmd.opts.Name,
-			Version:         cmd.opts.Version,
-			Source:          cmd.opts.Path,
-			RegistryURL:     cmd.opts.RegistryURL,
-			NameMappingMode: nameMappingMode,
-			DefaultCRPath:   cmd.opts.DefaultCRPath,
-			SchemaVersion:   cmd.opts.SchemaVersion,
+			Name:              cmd.opts.Name,
+			Version:           cmd.opts.Version,
+			Source:            cmd.opts.Path,
+			RegistryURL:       cmd.opts.RegistryURL,
+			NameMappingMode:   nameMappingMode,
+			DefaultCRPath:     cmd.opts.DefaultCRPath,
+			SchemaVersion:     cmd.opts.SchemaVersion,
+			CustomStateChecks: nil,
 		}
 		return def, cnf, nil
 	}
@@ -507,16 +544,21 @@ func (cmd *command) moduleDefinitionFromOptions() (*module.Definition, *Config, 
 		DefaultCRPath:      defaultCRPath,
 		SingleManifestPath: moduleManifestPath,
 		SchemaVersion:      cmd.opts.SchemaVersion,
+		CustomStateChecks:  moduleConfig.CustomStateChecks,
 	}
 	cnf = moduleConfig
 
 	return def, cnf, nil
 }
 
+// avoidUserInteraction returns true if user won't provide input
+func (cmd *command) avoidUserInteraction() bool {
+	return cmd.NonInteractive || cmd.CI
+}
+
 // resolvePath resolves given path if it's absolute or uses the provided prefix to make it absolute.
 // Returns an error if the path does not exist or is a directory.
 func resolveFilePath(given, absolutePrefix string) (string, error) {
-
 	res := given
 
 	if !filepath.IsAbs(res) {

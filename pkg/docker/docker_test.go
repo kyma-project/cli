@@ -18,9 +18,9 @@ import (
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/go-connections/nat"
 	"github.com/kyma-project/cli/pkg/docker/mocks"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"gotest.tools/assert"
 )
 
 func Test_SplitDockerDomain(t *testing.T) {
@@ -66,20 +66,20 @@ func genConfigFile() *dockerConfigFile.ConfigFile {
 
 func Test_Resolve_happy_path(t *testing.T) {
 	tmpHome, err := os.MkdirTemp("/tmp", "config-test")
-	assert.NilError(t, err)
+	assert.Nil(t, err)
 	defer os.RemoveAll(tmpHome)
 
 	configFile := genConfigFile()
 	b, err := json.Marshal(configFile)
-	assert.NilError(t, err)
+	assert.Nil(t, err)
 	tmpFile := fmt.Sprintf("%s/config.json", tmpHome)
 	err = os.WriteFile(tmpFile, b, 0600)
-	assert.NilError(t, err)
+	assert.Nil(t, err)
 
 	os.Setenv("DOCKER_CONFIG", tmpHome)
 
 	dockerCFG, err := resolve("example.com")
-	assert.NilError(t, err)
+	assert.Nil(t, err)
 	assert.Equal(t, dockerCFG.Username, "user")
 	assert.Equal(t, dockerCFG.Password, "pass")
 }
@@ -127,7 +127,7 @@ func Test_PullImageAndStartContainer(t *testing.T) {
 
 		mockDocker.On("ContainerCreate", ctx, mock.AnythingOfType("*container.Config"),
 			mock.AnythingOfType("*container.HostConfig"), mock.Anything, mock.Anything, testOpts.ContainerName).Return(
-			container.ContainerCreateCreatedBody{ID: testContainerID}, nil).Times(1)
+			container.CreateResponse{ID: testContainerID}, nil).Times(1)
 
 		mockDocker.On("ContainerStart", ctx, testContainerID, mock.AnythingOfType("types.ContainerStartOptions")).Return(nil).Times(1)
 
@@ -154,7 +154,7 @@ func Test_PullImageAndStartContainer(t *testing.T) {
 
 		mockDocker.On("ContainerCreate", ctx, mock.AnythingOfType("*container.Config"),
 			mock.AnythingOfType("*container.HostConfig"), mock.Anything, mock.Anything, testOpts.ContainerName).Return(
-			container.ContainerCreateCreatedBody{}, testErr).Times(1)
+			container.CreateResponse{}, testErr).Times(1)
 
 		id, err := mockWrapper.PullImageAndStartContainer(ctx, testOpts)
 
@@ -169,7 +169,7 @@ func Test_PullImageAndStartContainer(t *testing.T) {
 
 		mockDocker.On("ContainerCreate", ctx, mock.AnythingOfType("*container.Config"),
 			mock.AnythingOfType("*container.HostConfig"), mock.Anything, mock.Anything, testOpts.ContainerName).Return(
-			container.ContainerCreateCreatedBody{ID: testContainerID}, nil).Times(1)
+			container.CreateResponse{ID: testContainerID}, nil).Times(1)
 
 		mockDocker.On("ContainerStart", ctx, testContainerID, mock.AnythingOfType("types.ContainerStartOptions")).Return(testErr).Times(1)
 

@@ -10,8 +10,9 @@ import (
 	"github.com/kyma-project/cli/internal/nice"
 
 	"github.com/blang/semver/v4"
-	"github.com/kyma-project/cli/internal/cli"
 	"github.com/pkg/errors"
+
+	"github.com/kyma-project/cli/internal/cli"
 )
 
 // Options defines available options for the create module command
@@ -23,6 +24,7 @@ type Options struct {
 	Version                 string
 	Path                    string
 	ModuleArchivePath       string
+	GitRemote               string
 	RegistryURL             string
 	Credentials             string
 	TemplateOutput          string
@@ -61,7 +63,7 @@ func NewOptions(o *cli.Options) *Options {
 	return &Options{Options: o}
 }
 
-func (o *Options) ValidateVersion() error {
+func (o *Options) validateVersion() error {
 	sv, err := semver.ParseTolerant(o.Version)
 	if err != nil {
 		return err
@@ -73,7 +75,7 @@ func (o *Options) ValidateVersion() error {
 	return nil
 }
 
-func (o *Options) ValidatePath() error {
+func (o *Options) validatePath() error {
 	var err error
 	if o.Path == "" {
 		o.Path, err = os.Getwd()
@@ -89,7 +91,7 @@ func (o *Options) ValidatePath() error {
 	return err
 }
 
-func (o *Options) ValidateChannel() error {
+func (o *Options) validateChannel() error {
 
 	if len(o.Channel) < ChannelMinLength || len(o.Channel) > ChannelMaxLength {
 		return fmt.Errorf(
@@ -106,11 +108,11 @@ func (o *Options) ValidateChannel() error {
 
 func (o *Options) Validate() error {
 	if o.KubebuilderProject {
-		if err := o.ValidateVersion(); err != nil {
+		if err := o.validateVersion(); err != nil {
 			return err
 		}
 
-		if err := o.ValidateChannel(); err != nil {
+		if err := o.validateChannel(); err != nil {
 			return err
 		}
 	} else if !o.WithModuleConfigFile() {
@@ -121,7 +123,7 @@ func (o *Options) Validate() error {
 		return err
 	}
 
-	return o.ValidatePath()
+	return o.validatePath()
 }
 
 func (o *Options) WithModuleConfigFile() bool {
