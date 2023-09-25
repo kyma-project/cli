@@ -10,8 +10,7 @@ updates:
     schedule:
       interval: "daily"
     commit-message:
-      prefix: "gomod"
-      include: "scope"
+      prefix: "chore(dependabot)"
   - package-ecosystem: "docker"
     directory: "/"
     labels:
@@ -20,5 +19,4 @@ updates:
     schedule:
       interval: "daily"
     commit-message:
-      prefix: "docker"
-      include: "scope"
+      prefix: "chore(dependabot)"
