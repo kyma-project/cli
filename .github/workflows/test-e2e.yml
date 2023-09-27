@@ -71,7 +71,5 @@ jobs:
           --version $MODULE_TEMPLATE_VERSION -v \
           --output /tmp/module-config-template.yaml 
           echo "MODULE_TEMPLATE_PATH=/tmp/module-config-template.yaml" >> "$GITHUB_ENV"
-      - name: Apply ModuleTemplate
-        run: kubectl apply -f $MODULE_TEMPLATE_PATH
-      - name: Verify ModuleTemplate is deploy (TEMP)
-        run: kubectl get ModuleTemplate -n kcp-system
+      - name: Run E2E tests
+        run: make -C tests/e2e cli_e2e_tests
