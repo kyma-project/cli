@@ -16,12 +16,12 @@ import (
 var ErrFailedToParseImageURL = errors.New("error parsing protecode image URL")
 
 const (
-	secScanLabelKey = "scan.security.kyma-project.io"
+	SecScanLabelKey = "scan.security.kyma-project.io"
 	secLabelKey     = "security.kyma-project.io"
 	secScanEnabled  = "enabled"
 )
 
-var labelTemplate = secScanLabelKey + "/%s"
+var labelTemplate = SecScanLabelKey + "/%s"
 var globalLabelTemplate = secLabelKey + "/%s"
 
 func AddSecurityScanningMetadata(descriptor *ocm.ComponentDescriptor, securityConfigPath string) error {
@@ -37,17 +37,26 @@ func AddSecurityScanningMetadata(descriptor *ocm.ComponentDescriptor, securityCo
 	if err != nil {
 		return err
 	}
+
 	if len(descriptor.Sources) == 0 {
 		return errors.New("found no sources in component descriptor")
 	}
 	//add whitesource sec scan labels
 	for srcIdx := range descriptor.Sources {
 		src := &descriptor.Sources[srcIdx]
-		err := appendLabelToAccessor(src, "language", config.WhiteSource.Language, labelTemplate)
+		// add dev branch label
+		err = appendLabelToAccessor(src, "dev-branch", config.DevBranch, labelTemplate)
 		if err != nil {
 			return err
 		}
-		err = appendLabelToAccessor(src, "subprojects", config.WhiteSource.SubProjects, labelTemplate)
+
+		// add rc tag label
+		err = appendLabelToAccessor(src, "rc-tag", config.RcTag, labelTemplate)
+		if err != nil {
+			return err
+		}
+
+		err := appendLabelToAccessor(src, "language", config.WhiteSource.Language, labelTemplate)
 		if err != nil {
 			return err
 		}
@@ -117,11 +126,12 @@ type SecurityScanCfg struct {
 	ModuleName  string            `json:"module-name"`
 	Protecode   []string          `json:"protecode"`
 	WhiteSource WhiteSourceSecCfg `json:"whitesource"`
+	DevBranch   string            `json:"dev-branch"`
+	RcTag       string            `json:"rc-tag"`
 }
 type WhiteSourceSecCfg struct {
-	Language    string   `json:"language"`
-	SubProjects string   `json:"subprojects"`
-	Exclude     []string `json:"exclude"`
+	Language string   `json:"language"`
+	Exclude  []string `json:"exclude"`
 }
 
 func parseSecurityScanConfig(securityConfigPath string) (*SecurityScanCfg, error) {

@@ -18,6 +18,8 @@ import (
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/genericocireg"
 	ocmOCIReg "github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/ocireg"
 
+	"gopkg.in/yaml.v3"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -67,4 +69,22 @@ func Test_ModuleTemplate(t *testing.T) {
 	githubAccessSpec, ok := sourceAccessSpec.(*github.AccessSpec)
 	assert.Equal(t, githubAccessSpec.Type, github.Type)
 	assert.Contains(t, testRepoURL, githubAccessSpec.RepoURL)
+	// test security scan labels
+	secScanLabels := descriptor.Sources[0].Labels
+
+	var devBranch string
+	yaml.Unmarshal(secScanLabels[1].Value, &devBranch)
+	assert.Equal(t, "main", devBranch)
+
+	var rcTag string
+	yaml.Unmarshal(secScanLabels[2].Value, &rcTag)
+	assert.Equal(t, "0.5.0", rcTag)
+
+	var language string
+	yaml.Unmarshal(secScanLabels[3].Value, &language)
+	assert.Equal(t, "golang-mod", language)
+
+	var exclude string
+	yaml.Unmarshal(secScanLabels[4].Value, &exclude)
+	assert.Equal(t, "**/test/**,**/*_test.go", exclude)
 }
