@@ -17,6 +17,7 @@ import (
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/cpi"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/genericocireg"
 	ocmOCIReg "github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/ocireg"
+
 	"gopkg.in/yaml.v3"
 
 	"github.com/stretchr/testify/assert"
@@ -68,7 +69,6 @@ func Test_ModuleTemplate(t *testing.T) {
 	githubAccessSpec, ok := sourceAccessSpec.(*github.AccessSpec)
 	assert.Equal(t, githubAccessSpec.Type, github.Type)
 	assert.Contains(t, testRepoURL, githubAccessSpec.RepoURL)
-
 	// test security scan labels
 	secScanLabels := descriptor.Sources[0].Labels
 
