@@ -38,3 +38,7 @@ create_module_kubebuilder_project:
 .PHONY: create_module_module_config
 create_module_module_config:
 	go test --tags=create_module_module_config
+
+.PHONY: cli_e2e_tests
+e2e-tests:
+	go test --tags=e2e_tests
