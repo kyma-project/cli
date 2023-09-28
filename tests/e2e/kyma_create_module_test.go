@@ -30,62 +30,65 @@ var _ = Describe("Module Creation", Ordered, func() {
 	Expect(err).To(Not(HaveOccurred()))
 	Expect(descriptor.SchemaVersion()).To(Equal(v2.SchemaVersion))
 
-	// test descriptor.component.repositoryContexts
-	Expect(len(descriptor.RepositoryContexts)).To(Equal(1))
-	unstructuredRepo := descriptor.GetEffectiveRepositoryContext()
-	typedRepo, err := unstructuredRepo.Evaluate(cpi.DefaultContext().RepositoryTypes())
-	Expect(err).To(Not(HaveOccurred()))
-	concreteRepo, ok := typedRepo.(*genericocireg.RepositorySpec)
-	Expect(ok).To(BeTrue())
-	Expect(concreteRepo.ComponentNameMapping).To(Equal(ocmOCIReg.OCIRegistryURLPathMapping))
-	Expect(concreteRepo.GetType()).To(Equal(ocireg.Type))
-	Expect(concreteRepo.Name()).To(Equal(ociRepoURL))
+	It("descriptor.component.repositoryContexts should be correct", func() {
+		Expect(len(descriptor.RepositoryContexts)).To(Equal(1))
+		unstructuredRepo := descriptor.GetEffectiveRepositoryContext()
+		typedRepo, err := unstructuredRepo.Evaluate(cpi.DefaultContext().RepositoryTypes())
+		Expect(err).To(Not(HaveOccurred()))
+		concreteRepo, ok := typedRepo.(*genericocireg.RepositorySpec)
+		Expect(ok).To(BeTrue())
+		Expect(concreteRepo.ComponentNameMapping).To(Equal(ocmOCIReg.OCIRegistryURLPathMapping))
+		Expect(concreteRepo.GetType()).To(Equal(ocireg.Type))
+		Expect(concreteRepo.Name()).To(Equal(ociRepoURL))
+	})
 
-	// test descriptor.component.resources[0]
-	Expect(len(descriptor.Resources)).To(Equal(1))
-	resource := descriptor.Resources[0]
-	Expect(resource.Name).To(Equal(module.RawManifestLayerName))
-	Expect(resource.Relation).To(Equal(ocmMetaV1.LocalRelation))
-	Expect(resource.Type).To(Equal(module.TypeYaml))
-	Expect(resource.Version).To(Equal(moduleTemplateVersion))
+	It("descriptor.component.resources should be correct", func() {
+		Expect(len(descriptor.Resources)).To(Equal(1))
+		resource := descriptor.Resources[0]
+		Expect(resource.Name).To(Equal(module.RawManifestLayerName))
+		Expect(resource.Relation).To(Equal(ocmMetaV1.LocalRelation))
+		Expect(resource.Type).To(Equal(module.TypeYaml))
+		Expect(resource.Version).To(Equal(moduleTemplateVersion))
 
-	// test descriptor.component.resources[0].access
-	resourceAccessSpec, err := ocm.DefaultContext().AccessSpecForSpec(resource.Access)
-	Expect(err).To(Not(HaveOccurred()))
-	localblobAccessSpec, ok := resourceAccessSpec.(*localblob.AccessSpec)
-	Expect(ok).To(BeTrue())
-	Expect(localblobAccessSpec.GetType()).To(Equal(localblob.Type))
-	Expect(localblobAccessSpec.LocalReference).To(Equal("sha256:"))
+		resourceAccessSpec, err := ocm.DefaultContext().AccessSpecForSpec(resource.Access)
+		Expect(err).To(Not(HaveOccurred()))
+		localblobAccessSpec, ok := resourceAccessSpec.(*localblob.AccessSpec)
+		Expect(ok).To(BeTrue())
+		Expect(localblobAccessSpec.GetType()).To(Equal(localblob.Type))
+		Expect(localblobAccessSpec.LocalReference).To(Equal("sha256:"))
+	})
 
-	// test descriptor.component.sources
-	Expect(len(descriptor.Sources)).To(Equal(1))
-	source := descriptor.Sources[0]
-	sourceAccessSpec, err := ocm.DefaultContext().AccessSpecForSpec(source.Access)
-	Expect(err).To(Not(HaveOccurred()))
-	githubAccessSpec, ok := sourceAccessSpec.(*github.AccessSpec)
-	Expect(githubAccessSpec.Type).To(Equal(github.Type))
-	Expect(testRepoURL).To(Equal(githubAccessSpec.RepoURL))
+	It("descriptor.component.sources should be correct", func() {
+		Expect(len(descriptor.Sources)).To(Equal(1))
+		source := descriptor.Sources[0]
+		sourceAccessSpec, err := ocm.DefaultContext().AccessSpecForSpec(source.Access)
+		Expect(err).To(Not(HaveOccurred()))
+		githubAccessSpec, ok := sourceAccessSpec.(*github.AccessSpec)
+		Expect(ok).To(BeTrue())
+		Expect(githubAccessSpec.Type).To(Equal(github.Type))
+		Expect(testRepoURL).To(Equal(githubAccessSpec.RepoURL))
+	})
 
-	// test security scan labels
-	secScanLabels := descriptor.Sources[0].Labels
+	It("security scan labels should be correct", func() {
+		secScanLabels := descriptor.Sources[0].Labels
+		var devBranch string
+		err = yaml.Unmarshal(secScanLabels[1].Value, &devBranch)
+		Expect(err).To(Not(HaveOccurred()))
+		Expect(devBranch).To(Equal("main"))
 
-	var devBranch string
-	err = yaml.Unmarshal(secScanLabels[1].Value, &devBranch)
-	Expect(err).To(Not(HaveOccurred()))
-	Expect(devBranch).To(Equal("main"))
+		var rcTag string
+		err = yaml.Unmarshal(secScanLabels[2].Value, &rcTag)
+		Expect(err).To(Not(HaveOccurred()))
+		Expect(rcTag).To(Equal("0.5.0"))
 
-	var rcTag string
-	err = yaml.Unmarshal(secScanLabels[2].Value, &rcTag)
-	Expect(err).To(Not(HaveOccurred()))
-	Expect(rcTag).To(Equal("0.5.0"))
+		var language string
+		err = yaml.Unmarshal(secScanLabels[3].Value, &language)
+		Expect(err).To(Not(HaveOccurred()))
+		Expect(language).To(Equal("golang-mod"))
 
-	var language string
-	err = yaml.Unmarshal(secScanLabels[3].Value, &language)
-	Expect(err).To(Not(HaveOccurred()))
-	Expect(language).To(Equal("golang-mod"))
-
-	var exclude string
-	err = yaml.Unmarshal(secScanLabels[4].Value, &exclude)
-	Expect(err).To(Not(HaveOccurred()))
-	Expect(exclude).To(Equal("**/test/**,**/*_test.go"))
+		var exclude string
+		err = yaml.Unmarshal(secScanLabels[4].Value, &exclude)
+		Expect(err).To(Not(HaveOccurred()))
+		Expect(exclude).To(Equal("**/test/**,**/*_test.go"))
+	})
 })
