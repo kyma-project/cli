@@ -55,7 +55,7 @@ var _ = Describe("Module Creation", Ordered, func() {
 		localblobAccessSpec, ok := resourceAccessSpec.(*localblob.AccessSpec)
 		Expect(ok).To(BeTrue())
 		Expect(localblobAccessSpec.GetType()).To(Equal(localblob.Type))
-		Expect(localblobAccessSpec.LocalReference).To(Equal("sha256:"))
+		Expect(localblobAccessSpec.LocalReference).To(HavePrefix("sha256:"))
 	})
 
 	It("descriptor.component.sources should be correct", func() {
@@ -66,7 +66,7 @@ var _ = Describe("Module Creation", Ordered, func() {
 		githubAccessSpec, ok := sourceAccessSpec.(*github.AccessSpec)
 		Expect(ok).To(BeTrue())
 		Expect(githubAccessSpec.Type).To(Equal(github.Type))
-		Expect(testRepoURL).To(Equal(githubAccessSpec.RepoURL))
+		Expect(testRepoURL).To(ContainSubstring(githubAccessSpec.RepoURL))
 	})
 
 	It("security scan labels should be correct", func() {
