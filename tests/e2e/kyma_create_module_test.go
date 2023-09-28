@@ -20,7 +20,6 @@ import (
 )
 
 var _ = Describe("Module Creation", Ordered, func() {
-	GinkgoWriter.Println("Starting test run!")
 	moduleTemplateVersion := os.Getenv("MODULE_TEMPLATE_VERSION")
 	ociRepoURL := os.Getenv("OCI_REPOSITORY_URL")
 	testRepoURL := os.Getenv("TEST_REPOSITORY_URL")
