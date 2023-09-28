@@ -33,12 +33,12 @@ help: ## Display this help.
 
 .PHONY: create_module_kubebuilder_project
 create_module_kubebuilder_project:
-	go test --tags=create_module_kubebuilder_project
+	go test -ginkgo.v -ginkgo.focus "Module Creation"
 
 .PHONY: create_module_module_config
 create_module_module_config:
-	go test --tags=create_module_module_config
+	go test -ginkgo.v -ginkgo.focus "Module Creation"
 
-.PHONY: cli_e2e_tests
-e2e-tests:
-	go test --tags=e2e_tests
+.PHONY: deploy_enable_disable
+deploy_enable_disable:
+	go test -ginkgo.v -ginkgo.focus "Kyma Deployment, Enabling and Disabling"
