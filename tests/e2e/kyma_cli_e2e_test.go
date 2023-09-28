@@ -5,4 +5,5 @@ import (
 )
 
 var _ = Describe("Kyma Deployment, Enabling and Disabling", Ordered, func() {
+	// TODO: apply the module template
 })
