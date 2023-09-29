@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
-	"github.com/onsi/ginkgo/v2"
 	"github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
@@ -72,7 +71,6 @@ func IsKymaCRInReadyState(ctx context.Context,
 		Name:      kymaName,
 	}, &kyma)
 
-	ginkgo.GinkgoWriter.Println(kyma.Spec)
 	if err != nil || kyma.Status.State != v1beta2.StateReady {
 		return false
 	}
