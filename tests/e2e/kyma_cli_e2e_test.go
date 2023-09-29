@@ -3,6 +3,7 @@ package e2e_test
 import (
 	"os/exec"
 
+	"github.com/kyma-project/cli/internal/cli"
 	. "github.com/kyma-project/cli/tests/e2e"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -18,12 +19,11 @@ var _ = Describe("Kyma Deployment, Enabling and Disabling", Ordered, func() {
 		Expect(err).NotTo(HaveOccurred())
 		Eventually(string(deployOut)).Should(ContainSubstring("Kyma CR deployed and Ready"))
 
-		//By("Then Kyma CR should be deployed")
-		//kymaResource := schema.GroupVersionResource{
-		//	Group:    "operator.kyma-project.io",
-		//	Version:  "v1beta2",
-		//	Resource: "kymas",
-		//}
+		By("Then Kyma CR should be Ready")
+		Eventually(IsKymaCRInReadyState).
+			WithContext(ctx).
+			WithArguments(k8sClient, cli.KymaNameDefault, cli.KymaNamespaceDefault).
+			Should(BeTrue())
 
 		By("Then Lifecycle Manager should be Ready")
 		Eventually(IsDeploymentReady).
