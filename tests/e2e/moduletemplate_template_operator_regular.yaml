@@ -1,0 +1,48 @@
+apiVersion: operator.kyma-project.io/v1beta2
+kind: ModuleTemplate
+metadata:
+  name: template-operator-regular
+  namespace: kcp-system
+  labels:
+    "operator.kyma-project.io/module-name": "template-operator"
+spec:
+  channel: regular
+  data:
+    apiVersion: operator.kyma-project.io/v1alpha1
+    kind: Sample
+    metadata:
+      name: sample-yaml
+    spec:
+      resourceFilePath: "./module-data/yaml"
+  descriptor:
+    component:
+      componentReferences: []
+      name: kyma-project.io/template-operator
+      provider: internal
+      repositoryContexts:
+        - baseUrl: europe-west3-docker.pkg.dev/sap-kyma-jellyfish-dev/template-operator
+          componentNameMapping: urlPath
+          type: ociRegistry
+      resources:
+        - access:
+            digest: sha256:903eda97406482c42b7aa34ae7da1dac68fdacaccd2a70158ef13a09c2230915
+            type: localOciBlob
+          name: raw-manifest
+          relation: local
+          type: yaml
+          version: v1.1.0-smoke-test
+      sources:
+        - access:
+            commit: d9ddb3ddd0e4579bba24b7f56027a939fb559e1f
+            repoUrl: https://github.com/kyma-project/cli
+            type: gitHub
+          labels:
+            - name: git.kyma-project.io/ref
+              value: refs/heads/main
+              version: v1
+          name: module-sources
+          type: git
+          version: v1.1.0-smoke-test
+      version: v1.1.0-smoke-test
+    meta:
+      schemaVersion: v2

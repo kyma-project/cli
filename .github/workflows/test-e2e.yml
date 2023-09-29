@@ -78,7 +78,7 @@ jobs:
           --sec-scanners-config ./template-operator/sec-scanners-config.yaml
           echo "MODULE_TEMPLATE_PATH=/tmp/kubebuilder-template.yaml" >> "$GITHUB_ENV"
       - name: Run create module with module-config
-        if: ${{ matrix.e2e-test == 'create_module_module_config' || matrix.e2e-test == 'deploy_enable_disable'}}
+        if: ${{ matrix.e2e-test == 'create_module_module_config'}}
         run: |
           cd ./template-operator
           make build-manifests
