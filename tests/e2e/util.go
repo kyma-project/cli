@@ -5,9 +5,9 @@ import (
 	"os"
 
 	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
-	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func ReadModuleTemplate(filepath string) (*v1beta2.ModuleTemplate, error) {
@@ -21,10 +21,14 @@ func ReadModuleTemplate(filepath string) (*v1beta2.ModuleTemplate, error) {
 }
 
 func IsDeploymentReady(ctx context.Context,
-	client *kubernetes.Clientset,
+	k8sClient client.Client,
 	deploymentName string,
 	namespace string) (bool, error) {
-	deployment, err := client.AppsV1().Deployments(namespace).Get(ctx, deploymentName, v1.GetOptions{})
+	var deployment appsv1.Deployment
+	err := k8sClient.Get(ctx, client.ObjectKey{
+		Namespace: namespace,
+		Name:      deploymentName,
+	}, &deployment)
 
 	if err != nil {
 		return false, err
