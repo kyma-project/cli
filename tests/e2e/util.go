@@ -23,33 +23,33 @@ func ReadModuleTemplate(filepath string) (*v1beta2.ModuleTemplate, error) {
 func IsDeploymentReady(ctx context.Context,
 	k8sClient client.Client,
 	deploymentName string,
-	namespace string) (bool, error) {
+	namespace string) bool {
 	var deployment appsv1.Deployment
 	err := k8sClient.Get(ctx, client.ObjectKey{
 		Namespace: namespace,
 		Name:      deploymentName,
 	}, &deployment)
 
-	if err != nil {
-		return false, err
+	if err != nil || deployment.Status.AvailableReplicas == 0 {
+		return false
 	}
 
-	return deployment.Status.AvailableReplicas > 0, nil
+	return true
 }
 
 func IsKymaCRInReadyState(ctx context.Context,
 	k8sClient client.Client,
 	kymaName string,
-	namespace string) (bool, error) {
+	namespace string) bool {
 	var kyma v1beta2.Kyma
 	err := k8sClient.Get(ctx, client.ObjectKey{
 		Namespace: namespace,
 		Name:      kymaName,
 	}, &kyma)
 
-	if err != nil {
-		return false, err
+	if err != nil || kyma.Status.State != v1beta2.StateReady {
+		return false
 	}
 
-	return kyma.Status.State == v1beta2.StateReady, nil
+	return true
 }
