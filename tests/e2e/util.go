@@ -108,11 +108,7 @@ func IsCRDAvailable(ctx context.Context,
 		Name: name,
 	}, &crd)
 
-	if err != nil {
-		return false
-	}
-
-	return true
+	return err == nil
 }
 
 func IsCRReady(resourceType string,
