@@ -95,8 +95,8 @@ func ApplyModuleTemplate(
 
 func EnableModuleOnKyma(moduleName string) error {
 	cmd := exec.Command("kyma", "alpha", "enable", "module", moduleName)
-	_, err := cmd.CombinedOutput()
-	if err != nil {
+	enableOut, err := cmd.CombinedOutput()
+	if err != nil || !strings.Contains(string(enableOut), "Modules patched") {
 		return errModuleEnablingFailed
 	}
 
@@ -110,7 +110,7 @@ func IsCRDAvailable(ctx context.Context,
 	err := k8sClient.Get(ctx, client.ObjectKey{
 		Name: name,
 	}, &crd)
-	GinkgoWriter.Println(crd)
+
 	return err == nil
 }
 
