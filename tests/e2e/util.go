@@ -6,7 +6,6 @@ import (
 	"os/exec"
 
 	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
-	"github.com/onsi/ginkgo/v2/dsl/core"
 	"github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
@@ -61,14 +60,11 @@ func IsKymaCRInReadyState(ctx context.Context,
 
 func ApplyModuleTemplate(
 	moduleTemplatePath string) error {
-	//cmd := exec.Command("kubectl", "apply", "-f", moduleTemplatePath)
-	cmd := exec.Command("pwd")
+	cmd := exec.Command("kubectl", "apply", "-f", moduleTemplatePath)
 
-	currentPath, err := cmd.CombinedOutput()
-
-	core.GinkgoWriter.Println(string(currentPath))
+	_, err := cmd.CombinedOutput()
 	if err != nil {
-		return err
+		return errModuleTemplateNotApplied
 	}
 
 	return nil
