@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -37,7 +36,7 @@ var _ = BeforeSuite(func() {
 	kubeConfig := ctrl.GetConfigOrDie()
 	Expect(kubeConfig).NotTo(BeNil())
 	var err error
-	Expect(v1beta2.AddToScheme(scheme.Scheme)).NotTo(HaveOccurred())
+	//Expect(v1beta2.AddToScheme(scheme.Scheme)).NotTo(HaveOccurred())
 
 	k8sClient, err = client.New(kubeConfig, client.Options{Scheme: scheme.Scheme})
 	Expect(err).NotTo(HaveOccurred())
