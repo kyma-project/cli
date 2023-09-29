@@ -82,7 +82,8 @@ func ApplyModuleTemplate(
 	moduleTemplatePath string) error {
 	cmd := exec.Command("ls")
 
-	_, err := cmd.CombinedOutput()
+	lsOutput, err := cmd.CombinedOutput()
+	core.GinkgoWriter.Println(lsOutput)
 	if err != nil {
 		return errModuleTemplateNotApplied
 	}
@@ -99,12 +100,10 @@ func ApplyModuleTemplate(
 
 func EnableModuleOnKyma(moduleName string) error {
 	cmd := exec.Command("kyma", "alpha", "enable", "module", moduleName)
-	enableOut, err := cmd.CombinedOutput()
-	core.GinkgoWriter.Println(string(err.Error()))
+	_, err := cmd.CombinedOutput()
 	if err != nil {
-		return err
+		return errModuleEnablingFailed
 	}
-	core.GinkgoWriter.Println(enableOut)
 
 	return nil
 }
