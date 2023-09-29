@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
-	"github.com/onsi/ginkgo/v2/dsl/core"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -52,7 +51,5 @@ func IsKymaCRInReadyState(ctx context.Context,
 		return false, err
 	}
 
-	// TODO: Remove
-	core.GinkgoWriter.Println(kyma)
 	return kyma.Status.State == v1beta2.StateReady, nil
 }
