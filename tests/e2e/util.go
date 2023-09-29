@@ -60,7 +60,9 @@ func IsKymaCRInReadyState(ctx context.Context,
 
 func ApplyModuleTemplate(
 	moduleTemplatePath string) error {
-	cmd := exec.Command("kubectl", "apply", "-f", moduleTemplatePath)
+	//cmd := exec.Command("kubectl", "apply", "-f", moduleTemplatePath)
+	cmd := exec.Command("pwd")
+
 	_, err := cmd.CombinedOutput()
 
 	if err != nil {
