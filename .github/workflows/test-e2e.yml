@@ -87,6 +87,8 @@ jobs:
           --module-config-file ./module-config.yaml \
           --version $MODULE_TEMPLATE_VERSION -v \
           --output /tmp/module-config-template.yaml 
+          pwd
+          ls
           echo "MODULE_TEMPLATE_PATH=/tmp/module-config-template.yaml" >> "$GITHUB_ENV"
       - name: Run E2E tests
         run: make -C tests/e2e ${{ matrix.e2e-test }}
