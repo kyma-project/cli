@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
+	. "github.com/onsi/ginkgo/v2"
 	"github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
@@ -54,6 +55,7 @@ func IsDeploymentReady(ctx context.Context,
 		Name:      deploymentName,
 	}, &deployment)
 
+	GinkgoWriter.Println(deployment)
 	if err != nil || deployment.Status.AvailableReplicas == 0 {
 		return false
 	}
@@ -71,6 +73,7 @@ func IsKymaCRInReadyState(ctx context.Context,
 		Name:      kymaName,
 	}, &kyma)
 
+	GinkgoWriter.Println(kyma)
 	if err != nil || kyma.Status.State != v1beta2.StateReady {
 		return false
 	}
@@ -107,7 +110,7 @@ func IsCRDAvailable(ctx context.Context,
 	err := k8sClient.Get(ctx, client.ObjectKey{
 		Name: name,
 	}, &crd)
-
+	GinkgoWriter.Println(crd)
 	return err == nil
 }
 
@@ -118,6 +121,7 @@ func IsCRReady(resourceType string,
 		namespace, "-o", "jsonpath='{.status.state}'")
 
 	statusOutput, err := cmd.CombinedOutput()
+	GinkgoWriter.Println(statusOutput)
 	if err != nil || string(statusOutput) != "Ready" {
 		return false
 	}
