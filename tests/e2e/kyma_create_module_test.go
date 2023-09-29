@@ -27,7 +27,7 @@ var _ = Describe("Module Creation", Ordered, func() {
 	testRepoURL := os.Getenv("TEST_REPOSITORY_URL")
 	var descriptor *v1beta2.Descriptor
 
-	When("ModuleTemplate is parsed", func() {
+	It("When ModuleTemplate is parsed", func() {
 		template, err := ReadModuleTemplate(os.Getenv("MODULE_TEMPLATE_PATH"))
 		Expect(err).To(Not(HaveOccurred()))
 		descriptor, err = template.GetDescriptor()

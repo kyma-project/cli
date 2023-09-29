@@ -3,12 +3,16 @@ package e2e
 import (
 	"context"
 	"os"
+	"os/exec"
 
 	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
+	"github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+var errModuleTemplateNotApplied = errors.New("failed to apply moduletemplate")
 
 func ReadModuleTemplate(filepath string) (*v1beta2.ModuleTemplate, error) {
 	moduleTemplate := &v1beta2.ModuleTemplate{}
@@ -52,4 +56,16 @@ func IsKymaCRInReadyState(ctx context.Context,
 	}
 
 	return true
+}
+
+func ApplyModuleTemplate(
+	moduleTemplatePath string) error {
+	cmd := exec.Command("kubectl", "apply", "-f", moduleTemplatePath)
+	_, err := cmd.CombinedOutput()
+
+	if err != nil {
+		return errModuleTemplateNotApplied
+	}
+
+	return nil
 }

@@ -17,7 +17,7 @@ var _ = Describe("Kyma Deployment, Enabling and Disabling", Ordered, func() {
 		deployCmd := exec.Command("kyma", "alpha", "deploy")
 		deployOut, err := deployCmd.CombinedOutput()
 		Expect(err).NotTo(HaveOccurred())
-		Eventually(string(deployOut)).Should(ContainSubstring("Kyma CR deployed and Ready"))
+		Expect(string(deployOut)).Should(ContainSubstring("Kyma CR deployed and Ready"))
 
 		By("Then Kyma CR should be Ready")
 		Eventually(IsKymaCRInReadyState).
@@ -25,7 +25,7 @@ var _ = Describe("Kyma Deployment, Enabling and Disabling", Ordered, func() {
 			WithArguments(k8sClient, cli.KymaNameDefault, cli.KymaNamespaceDefault).
 			Should(BeTrue())
 
-		By("Then Lifecycle Manager should be Ready")
+		By("And Lifecycle Manager should be Ready")
 		Eventually(IsDeploymentReady).
 			WithContext(ctx).
 			WithArguments(k8sClient, "lifecycle-manager-controller-manager", kcpSystemNamespace).
@@ -34,13 +34,13 @@ var _ = Describe("Kyma Deployment, Enabling and Disabling", Ordered, func() {
 
 	It("Then should enable template-operator successfully", func() {
 		By("Applying the template-operator ModuleTemplate")
+		Expect(ApplyModuleTemplate("$MODULE_TEMPLATE_PATH")).Should(Succeed())
 
 		By("Then template-operator ModuleTemplate should be available in cluster")
 
-		By("Then Lifecycle Manager should be Ready")
-		Eventually(IsDeploymentReady).
-			WithContext(ctx).
-			WithArguments(k8sClient, "lifecycle-manager-controller-manager", kcpSystemNamespace).
-			Should(BeTrue())
+		By("When template-operator is enabled on Kyma")
+
+		By("Then template-operator resources are deployed in the cluster")
+
 	})
 })
