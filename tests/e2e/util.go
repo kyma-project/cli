@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
-	"github.com/onsi/ginkgo/v2/dsl/core"
 	"github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
+	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -80,17 +80,9 @@ func IsKymaCRInReadyState(ctx context.Context,
 
 func ApplyModuleTemplate(
 	moduleTemplatePath string) error {
-	cmd := exec.Command("ls")
+	cmd := exec.Command("kubectl", "apply", "-f", moduleTemplatePath)
 
-	lsOutput, err := cmd.CombinedOutput()
-	core.GinkgoWriter.Println(lsOutput)
-	if err != nil {
-		return errModuleTemplateNotApplied
-	}
-
-	cmd = exec.Command("kubectl", "apply", "-f", moduleTemplatePath)
-
-	_, err = cmd.CombinedOutput()
+	_, err := cmd.CombinedOutput()
 	if err != nil {
 		return errModuleTemplateNotApplied
 	}
@@ -106,4 +98,33 @@ func EnableModuleOnKyma(moduleName string) error {
 	}
 
 	return nil
+}
+
+func IsCRDAvailable(ctx context.Context,
+	k8sClient client.Client,
+	name string) bool {
+	var crd apiextensions.CustomResourceDefinition
+	err := k8sClient.Get(ctx, client.ObjectKey{
+		Name: name,
+	}, &crd)
+
+	if err != nil {
+		return false
+	}
+
+	return true
+}
+
+func IsCRReady(resourceType string,
+	resourceName string,
+	namespace string) bool {
+	cmd := exec.Command("kubectl", "get", resourceType, resourceName, "-n",
+		namespace, "-o", "jsonpath='{.status.state}'")
+
+	statusOutput, err := cmd.CombinedOutput()
+	if err != nil || string(statusOutput) != "Ready" {
+		return false
+	}
+
+	return true
 }
