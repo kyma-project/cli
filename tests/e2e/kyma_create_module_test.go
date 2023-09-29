@@ -30,7 +30,7 @@ var _ = Describe("Module Creation", Ordered, func() {
 	Expect(err).To(Not(HaveOccurred()))
 	Expect(descriptor.SchemaVersion()).To(Equal(v2.SchemaVersion))
 
-	It("descriptor.component.repositoryContexts should be correct", func() {
+	It("Then descriptor.component.repositoryContexts should be correct", func() {
 		Expect(len(descriptor.RepositoryContexts)).To(Equal(1))
 		unstructuredRepo := descriptor.GetEffectiveRepositoryContext()
 		typedRepo, err := unstructuredRepo.Evaluate(cpi.DefaultContext().RepositoryTypes())
@@ -42,7 +42,7 @@ var _ = Describe("Module Creation", Ordered, func() {
 		Expect(concreteRepo.Name()).To(Equal(ociRepoURL))
 	})
 
-	It("descriptor.component.resources should be correct", func() {
+	It("Then descriptor.component.resources should be correct", func() {
 		Expect(len(descriptor.Resources)).To(Equal(1))
 		resource := descriptor.Resources[0]
 		Expect(resource.Name).To(Equal(module.RawManifestLayerName))
@@ -58,7 +58,7 @@ var _ = Describe("Module Creation", Ordered, func() {
 		Expect(localblobAccessSpec.LocalReference).To(HavePrefix("sha256:"))
 	})
 
-	It("descriptor.component.sources should be correct", func() {
+	It("Then descriptor.component.sources should be correct", func() {
 		Expect(len(descriptor.Sources)).To(Equal(1))
 		source := descriptor.Sources[0]
 		sourceAccessSpec, err := ocm.DefaultContext().AccessSpecForSpec(source.Access)
@@ -69,7 +69,7 @@ var _ = Describe("Module Creation", Ordered, func() {
 		Expect(testRepoURL).To(ContainSubstring(githubAccessSpec.RepoURL))
 	})
 
-	It("security scan labels should be correct", func() {
+	It("Then security scan labels should be correct", func() {
 		secScanLabels := descriptor.Sources[0].Labels
 		var devBranch string
 		err = yaml.Unmarshal(secScanLabels[1].Value, &devBranch)
