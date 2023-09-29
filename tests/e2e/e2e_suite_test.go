@@ -28,6 +28,10 @@ var _ = BeforeSuite(func() {
 	ctx, cancel = context.WithCancel(context.TODO())
 	SetDefaultEventuallyPollingInterval(interval)
 	SetDefaultEventuallyTimeout(timeout)
+
+	go func() {
+		defer GinkgoRecover()
+	}()
 })
 
 var _ = AfterSuite(func() {
