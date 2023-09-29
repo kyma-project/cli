@@ -73,7 +73,6 @@ func IsKymaCRInReadyState(ctx context.Context,
 		Name:      kymaName,
 	}, &kyma)
 
-	GinkgoWriter.Println(kyma)
 	if err != nil || kyma.Status.State != v1beta2.StateReady {
 		return false
 	}
@@ -123,6 +122,25 @@ func IsCRReady(resourceType string,
 	statusOutput, err := cmd.CombinedOutput()
 	GinkgoWriter.Println(statusOutput)
 	if err != nil || string(statusOutput) != "Ready" {
+		return false
+	}
+
+	return true
+}
+
+func IsModuleReadyInKymaStatus(ctx context.Context,
+	k8sClient client.Client,
+	kymaName string,
+	namespace string,
+	moduleName string) bool {
+	var kyma v1beta2.Kyma
+	err := k8sClient.Get(ctx, client.ObjectKey{
+		Namespace: namespace,
+		Name:      kymaName,
+	}, &kyma)
+
+	if err != nil || kyma.Status.Modules == nil || kyma.Status.Modules[0].Name != moduleName ||
+		kyma.Status.Modules[0].State != v1beta2.StateReady {
 		return false
 	}
 

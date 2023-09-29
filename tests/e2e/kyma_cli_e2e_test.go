@@ -34,7 +34,7 @@ var _ = Describe("Kyma Deployment, Enabling and Disabling", Ordered, func() {
 		By("Enabling template-operator on Kyma")
 		Expect(EnableModuleOnKyma("template-operator")).To(Succeed())
 
-		Eventually(IsKymaCRInReadyState).
+		Eventually(IsModuleReadyInKymaStatus).
 			WithContext(ctx).
 			WithArguments(k8sClient, cli.KymaNameDefault, cli.KymaNamespaceDefault).
 			Should(BeTrue())
