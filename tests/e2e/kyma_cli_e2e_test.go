@@ -34,6 +34,11 @@ var _ = Describe("Kyma Deployment, Enabling and Disabling", Ordered, func() {
 		By("Enabling template-operator on Kyma")
 		Expect(EnableModuleOnKyma("template-operator")).To(Succeed())
 
+		Eventually(IsKymaCRInReadyState).
+			WithContext(ctx).
+			WithArguments(k8sClient, cli.KymaNameDefault, cli.KymaNamespaceDefault).
+			Should(BeTrue())
+
 		By("Then template-operator resources are deployed in the cluster")
 		Eventually(IsCRDAvailable).
 			WithContext(ctx).
