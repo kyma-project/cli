@@ -32,10 +32,10 @@ var _ = Describe("Kyma Deployment, Enabling and Disabling", Ordered, func() {
 	It("Then should enable template-operator successfully", func() {
 		By("Applying the template-operator ModuleTemplate")
 		templateOperatorModuleTemplate := os.Getenv("MODULE_TEMPLATE_PATH")
-		GinkgoWriter.Println(templateOperatorModuleTemplate)
-		Expect(ApplyModuleTemplate(templateOperatorModuleTemplate)).Should(Succeed())
+		Expect(ApplyModuleTemplate(templateOperatorModuleTemplate)).To(Succeed())
 
 		By("Enabling template-operator on Kyma")
+		Expect(EnableModuleOnKyma("template-operator")).To(Succeed())
 
 		By("Then template-operator resources are deployed in the cluster")
 

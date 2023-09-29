@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
+	"github.com/onsi/ginkgo/v2/dsl/core"
 	"github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
@@ -16,6 +17,7 @@ import (
 var (
 	errKymaDeployCommandFailed  = errors.New("failed to run kyma alpha deploy")
 	errModuleTemplateNotApplied = errors.New("failed to apply ModuleTemplate")
+	errModuleEnablingFailed     = errors.New("failed to enable module")
 )
 
 func ReadModuleTemplate(filepath string) (*v1beta2.ModuleTemplate, error) {
@@ -84,6 +86,17 @@ func ApplyModuleTemplate(
 	if err != nil {
 		return errModuleTemplateNotApplied
 	}
+
+	return nil
+}
+
+func EnableModuleOnKyma(moduleName string) error {
+	cmd := exec.Command("kyma", "alpha", "enable", "module", moduleName)
+	enableOut, err := cmd.CombinedOutput()
+	if err != nil {
+		return errModuleEnablingFailed
+	}
+	core.GinkgoWriter.Println(enableOut)
 
 	return nil
 }
