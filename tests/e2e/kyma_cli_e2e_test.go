@@ -2,7 +2,7 @@ package e2e_test
 
 import (
 	"fmt"
-	"os/exec"
+	"os"
 
 	"github.com/kyma-project/cli/internal/cli"
 	. "github.com/kyma-project/cli/tests/e2e"
@@ -15,10 +15,7 @@ var _ = Describe("Kyma Deployment, Enabling and Disabling", Ordered, func() {
 
 	It("Then should install Kyma and Lifecycle Manager successfully", func() {
 		By("Executing kyma alpha deploy command")
-		deployCmd := exec.Command("kyma", "alpha", "deploy")
-		deployOut, err := deployCmd.CombinedOutput()
-		Expect(err).NotTo(HaveOccurred())
-		Expect(string(deployOut)).Should(ContainSubstring("Kyma CR deployed and Ready"))
+		Expect(ExecuteKymaDeployCommand()).To(Succeed())
 
 		By("Then Kyma CR should be Ready")
 		Eventually(IsKymaCRInReadyState).
@@ -35,12 +32,12 @@ var _ = Describe("Kyma Deployment, Enabling and Disabling", Ordered, func() {
 
 	It("Then should enable template-operator successfully", func() {
 		By("Applying the template-operator ModuleTemplate")
+		templateOperatorModuleTemplate := os.Getenv("MODULE_TEMPLATE_PATH")
+		GinkgoWriter.Println(templateOperatorModuleTemplate)
 		Expect(ApplyModuleTemplate(fmt.Sprintf("%s/%s", "../../template-operator",
-			"$MODULE_TEMPLATE_PATH"))).Should(Succeed())
+			templateOperatorModuleTemplate))).Should(Succeed())
 
-		By("Then template-operator ModuleTemplate should be available in cluster")
-
-		By("When template-operator is enabled on Kyma")
+		By("Enabling template-operator on Kyma")
 
 		By("Then template-operator resources are deployed in the cluster")
 

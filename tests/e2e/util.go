@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	"github.com/pkg/errors"
@@ -12,7 +13,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var errModuleTemplateNotApplied = errors.New("failed to apply moduletemplate")
+var (
+	errKymaDeployCommandFailed  = errors.New("failed to run kyma alpha deploy")
+	errModuleTemplateNotApplied = errors.New("failed to apply moduletemplate")
+)
 
 func ReadModuleTemplate(filepath string) (*v1beta2.ModuleTemplate, error) {
 	moduleTemplate := &v1beta2.ModuleTemplate{}
@@ -22,6 +26,20 @@ func ReadModuleTemplate(filepath string) (*v1beta2.ModuleTemplate, error) {
 	}
 	err = yaml.Unmarshal(moduleFile, &moduleTemplate)
 	return moduleTemplate, err
+}
+
+func ExecuteKymaDeployCommand() error {
+	deployCmd := exec.Command("kyma", "alpha", "deploy")
+	deployOut, err := deployCmd.CombinedOutput()
+	if err != nil {
+		return errKymaDeployCommandFailed
+	}
+
+	if !strings.Contains(string(deployOut), "Kyma CR deployed and Ready") {
+		return errKymaDeployCommandFailed
+	}
+
+	return nil
 }
 
 func IsDeploymentReady(ctx context.Context,
