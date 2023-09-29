@@ -64,7 +64,7 @@ func ApplyModuleTemplate(
 	_, err := cmd.CombinedOutput()
 
 	if err != nil {
-		return errModuleTemplateNotApplied
+		return err
 	}
 
 	return nil
