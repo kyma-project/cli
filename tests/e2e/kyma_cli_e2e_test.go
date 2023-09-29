@@ -27,6 +27,6 @@ var _ = Describe("Kyma Deployment, Enabling and Disabling", Ordered, func() {
 		By("Then Lifecycle Manager should be deployed")
 		lifecycleManager, err := client.AppsV1().Deployments(kcpSystemNamespace).
 			Get(ctx, "lifecycle-manager-controller-manager", v1.GetOptions{})
-		GinkgoWriter.Println(lifecycleManager.Name)
+		GinkgoWriter.Println(lifecycleManager.Status)
 	})
 })
