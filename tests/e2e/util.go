@@ -139,6 +139,7 @@ func IsModuleReadyInKymaStatus(ctx context.Context,
 		Name:      kymaName,
 	}, &kyma)
 
+	GinkgoWriter.Println(kyma.Status.Modules)
 	if err != nil || kyma.Status.Modules == nil || kyma.Status.Modules[0].Name != moduleName ||
 		kyma.Status.Modules[0].State != v1beta2.StateReady {
 		return false
