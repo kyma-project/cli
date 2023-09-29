@@ -78,9 +78,17 @@ func IsKymaCRInReadyState(ctx context.Context,
 
 func ApplyModuleTemplate(
 	moduleTemplatePath string) error {
-	cmd := exec.Command("kubectl", "apply", "-f", moduleTemplatePath)
+	//cmd := exec.Command("kubectl", "apply", "-f", moduleTemplatePath)
+	cmd := exec.Command("cd", "./../template-operator/tmp")
 
 	_, err := cmd.CombinedOutput()
+	if err != nil {
+		return errModuleTemplateNotApplied
+	}
+
+	cmd = exec.Command("ls")
+
+	_, err = cmd.CombinedOutput()
 	if err != nil {
 		return errModuleTemplateNotApplied
 	}
