@@ -93,8 +93,9 @@ func ApplyModuleTemplate(
 func EnableModuleOnKyma(moduleName string) error {
 	cmd := exec.Command("kyma", "alpha", "enable", "module", moduleName)
 	enableOut, err := cmd.CombinedOutput()
+	core.GinkgoWriter.Println(string(err.Error()))
 	if err != nil {
-		return errModuleEnablingFailed
+		return err
 	}
 	core.GinkgoWriter.Println(enableOut)
 
