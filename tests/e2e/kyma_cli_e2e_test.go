@@ -29,7 +29,7 @@ var _ = Describe("Kyma Deployment, Enabling and Disabling", Ordered, func() {
 
 	It("Then should enable template-operator successfully", func() {
 		By("Applying the template-operator ModuleTemplate")
-		Expect(ApplyModuleTemplate("/tests/e2e/moduletemplate_template_operator_regular.yaml")).To(Succeed())
+		Expect(ApplyModuleTemplate("moduletemplate_template_operator_regular.yaml")).To(Succeed())
 
 		By("Enabling template-operator on Kyma")
 		Expect(EnableModuleOnKyma("template-operator")).To(Succeed())
