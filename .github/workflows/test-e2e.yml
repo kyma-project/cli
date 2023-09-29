@@ -95,4 +95,5 @@ jobs:
         run: |
           pwd
           ls
+          ls /tmp
           make -C tests/e2e ${{ matrix.e2e-test }}
