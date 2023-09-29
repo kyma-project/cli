@@ -24,7 +24,6 @@ var _ = Describe("Module Creation", Ordered, func() {
 	ociRepoURL := os.Getenv("OCI_REPOSITORY_URL")
 	testRepoURL := os.Getenv("TEST_REPOSITORY_URL")
 
-	By("Reading the ModuleTemplate")
 	template, err := e2e.ReadModuleTemplate(os.Getenv("MODULE_TEMPLATE_PATH"))
 	Expect(err).To(Not(HaveOccurred()))
 	descriptor, err := template.GetDescriptor()
