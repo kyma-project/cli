@@ -4,7 +4,8 @@ import (
 	"os"
 
 	"github.com/kyma-project/cli/pkg/module"
-	"github.com/kyma-project/cli/tests/e2e"
+	. "github.com/kyma-project/cli/tests/e2e"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/open-component-model/ocm/pkg/contexts/oci/repositories/ocireg"
@@ -24,7 +25,7 @@ var _ = Describe("Module Creation", Ordered, func() {
 	ociRepoURL := os.Getenv("OCI_REPOSITORY_URL")
 	testRepoURL := os.Getenv("TEST_REPOSITORY_URL")
 
-	template, err := e2e.ReadModuleTemplate(os.Getenv("MODULE_TEMPLATE_PATH"))
+	template, err := ReadModuleTemplate(os.Getenv("MODULE_TEMPLATE_PATH"))
 	Expect(err).To(Not(HaveOccurred()))
 	descriptor, err := template.GetDescriptor()
 	Expect(err).To(Not(HaveOccurred()))
