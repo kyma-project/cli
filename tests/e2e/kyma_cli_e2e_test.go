@@ -31,4 +31,16 @@ var _ = Describe("Kyma Deployment, Enabling and Disabling", Ordered, func() {
 			WithArguments(k8sClient, "lifecycle-manager-controller-manager", kcpSystemNamespace).
 			Should(BeTrue())
 	})
+
+	It("Then should enable template-operator successfully", func() {
+		By("Applying the template-operator ModuleTemplate")
+
+		By("Then template-operator ModuleTemplate should be available in cluster")
+
+		By("Then Lifecycle Manager should be Ready")
+		Eventually(IsDeploymentReady).
+			WithContext(ctx).
+			WithArguments(k8sClient, "lifecycle-manager-controller-manager", kcpSystemNamespace).
+			Should(BeTrue())
+	})
 })

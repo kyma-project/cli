@@ -5,6 +5,7 @@ import (
 
 	"github.com/kyma-project/cli/pkg/module"
 	. "github.com/kyma-project/cli/tests/e2e"
+	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -24,12 +25,15 @@ var _ = Describe("Module Creation", Ordered, func() {
 	moduleTemplateVersion := os.Getenv("MODULE_TEMPLATE_VERSION")
 	ociRepoURL := os.Getenv("OCI_REPOSITORY_URL")
 	testRepoURL := os.Getenv("TEST_REPOSITORY_URL")
+	var descriptor *v1beta2.Descriptor
 
-	template, err := ReadModuleTemplate(os.Getenv("MODULE_TEMPLATE_PATH"))
-	Expect(err).To(Not(HaveOccurred()))
-	descriptor, err := template.GetDescriptor()
-	Expect(err).To(Not(HaveOccurred()))
-	Expect(descriptor.SchemaVersion()).To(Equal(v2.SchemaVersion))
+	When("ModuleTemplate is parsed", func() {
+		template, err := ReadModuleTemplate(os.Getenv("MODULE_TEMPLATE_PATH"))
+		Expect(err).To(Not(HaveOccurred()))
+		descriptor, err = template.GetDescriptor()
+		Expect(err).To(Not(HaveOccurred()))
+		Expect(descriptor.SchemaVersion()).To(Equal(v2.SchemaVersion))
+	})
 
 	It("Then descriptor.component.repositoryContexts should be correct", func() {
 		Expect(len(descriptor.RepositoryContexts)).To(Equal(1))
@@ -73,7 +77,7 @@ var _ = Describe("Module Creation", Ordered, func() {
 	It("Then security scan labels should be correct", func() {
 		secScanLabels := descriptor.Sources[0].Labels
 		var devBranch string
-		err = yaml.Unmarshal(secScanLabels[1].Value, &devBranch)
+		err := yaml.Unmarshal(secScanLabels[1].Value, &devBranch)
 		Expect(err).To(Not(HaveOccurred()))
 		Expect(devBranch).To(Equal("main"))
 
