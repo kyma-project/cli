@@ -16,7 +16,7 @@ var _ = Describe("Kyma Deployment, Enabling and Disabling", Ordered, func() {
 		deployCmd := exec.Command("kyma", "alpha", "deploy")
 		deployOut, err := deployCmd.CombinedOutput()
 		Expect(err).NotTo(HaveOccurred())
-		Eventually(string(deployOut)).Should(ContainSubstring("Happy Kyma-ing!"))
+		Eventually(string(deployOut)).Should(ContainSubstring("Kyma CR deployed and Ready"))
 
 		//By("Then Kyma CR should be deployed")
 		//kymaResource := schema.GroupVersionResource{
