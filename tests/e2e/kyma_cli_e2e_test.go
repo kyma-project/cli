@@ -1,7 +1,6 @@
 package e2e_test
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/kyma-project/cli/internal/cli"
@@ -34,8 +33,7 @@ var _ = Describe("Kyma Deployment, Enabling and Disabling", Ordered, func() {
 		By("Applying the template-operator ModuleTemplate")
 		templateOperatorModuleTemplate := os.Getenv("MODULE_TEMPLATE_PATH")
 		GinkgoWriter.Println(templateOperatorModuleTemplate)
-		Expect(ApplyModuleTemplate(fmt.Sprintf("%s/%s", "../../template-operator/",
-			templateOperatorModuleTemplate))).Should(Succeed())
+		Expect(ApplyModuleTemplate(templateOperatorModuleTemplate)).Should(Succeed())
 
 		By("Enabling template-operator on Kyma")
 
