@@ -32,6 +32,9 @@ jobs:
         with:
           go-version-file: 'go.mod'
           cache-dependency-path: 'go.sum'
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        id: install
       - name: Build Kyma CLI
         run: | 
           make resolve validate build-linux

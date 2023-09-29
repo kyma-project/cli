@@ -15,7 +15,7 @@ import (
 
 var (
 	errKymaDeployCommandFailed  = errors.New("failed to run kyma alpha deploy")
-	errModuleTemplateNotApplied = errors.New("failed to apply moduletemplate")
+	errModuleTemplateNotApplied = errors.New("failed to apply ModuleTemplate")
 )
 
 func ReadModuleTemplate(filepath string) (*v1beta2.ModuleTemplate, error) {
