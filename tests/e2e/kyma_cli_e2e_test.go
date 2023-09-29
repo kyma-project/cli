@@ -36,7 +36,7 @@ var _ = Describe("Kyma Deployment, Enabling and Disabling", Ordered, func() {
 
 		Eventually(IsModuleReadyInKymaStatus).
 			WithContext(ctx).
-			WithArguments(k8sClient, cli.KymaNameDefault, cli.KymaNamespaceDefault).
+			WithArguments(k8sClient, cli.KymaNameDefault, cli.KymaNamespaceDefault, "template-operator").
 			Should(BeTrue())
 
 		By("Then template-operator resources are deployed in the cluster")
@@ -44,17 +44,17 @@ var _ = Describe("Kyma Deployment, Enabling and Disabling", Ordered, func() {
 			WithContext(ctx).
 			WithArguments(k8sClient, "samples.operator.kyma-project.io").
 			Should(BeTrue())
-		//Eventually(IsDeploymentReady).
-		//	WithContext(ctx).
-		//	WithArguments(k8sClient, "template-operator-v1-controller-manager", "template-operator-system").
-		//	Should(BeTrue())
-		//Eventually(IsDeploymentReady).
-		//	WithContext(ctx).
-		//	WithArguments(k8sClient, "sample-redis-deployment", "manifest-redis").
-		//	Should(BeTrue())
-		//Eventually(IsCRReady).
-		//	WithContext(ctx).
-		//	WithArguments("sample", "sample-yaml", "kyma-system").
-		//	Should(BeTrue())
+		Eventually(IsDeploymentReady).
+			WithContext(ctx).
+			WithArguments(k8sClient, "template-operator-v1-controller-manager", "template-operator-system").
+			Should(BeTrue())
+		Eventually(IsDeploymentReady).
+			WithContext(ctx).
+			WithArguments(k8sClient, "sample-redis-deployment", "manifest-redis").
+			Should(BeTrue())
+		Eventually(IsCRReady).
+			WithContext(ctx).
+			WithArguments("sample", "sample-yaml", "kyma-system").
+			Should(BeTrue())
 	})
 })
