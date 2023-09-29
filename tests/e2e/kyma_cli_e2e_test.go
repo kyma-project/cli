@@ -35,7 +35,7 @@ var _ = Describe("Kyma Deployment, Enabling and Disabling", Ordered, func() {
 
 	It("Then should enable template-operator successfully", func() {
 		By("Applying the template-operator ModuleTemplate")
-		Expect(ApplyModuleTemplate(fmt.Sprintf("/template-operator/", "$MODULE_TEMPLATE_PATH"))).Should(Succeed())
+		Expect(ApplyModuleTemplate(fmt.Sprintf("%s/%s", "/template-operator", "$MODULE_TEMPLATE_PATH"))).Should(Succeed())
 
 		By("Then template-operator ModuleTemplate should be available in cluster")
 
