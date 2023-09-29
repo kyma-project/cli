@@ -6,6 +6,7 @@ import (
 	"os/exec"
 
 	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
+	"github.com/onsi/ginkgo/v2/dsl/core"
 	"github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
@@ -63,8 +64,9 @@ func ApplyModuleTemplate(
 	//cmd := exec.Command("kubectl", "apply", "-f", moduleTemplatePath)
 	cmd := exec.Command("pwd")
 
-	_, err := cmd.CombinedOutput()
+	currentPath, err := cmd.CombinedOutput()
 
+	core.GinkgoWriter.Println(string(currentPath))
 	if err != nil {
 		return err
 	}
