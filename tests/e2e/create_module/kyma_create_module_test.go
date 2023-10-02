@@ -1,6 +1,7 @@
 package create_module_test
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -25,7 +26,7 @@ func Test_ModuleTemplate(t *testing.T) {
 	ociRepoURL := os.Getenv("OCI_REPOSITORY_URL")
 	testRepoURL := os.Getenv("TEST_REPOSITORY_URL")
 
-	template, err := e2e.ReadModuleTemplate(os.Getenv("MODULE_TEMPLATE_PATH"))
+	template, err := e2e.ReadModuleTemplate(fmt.Sprintf("%s/%s", "..", os.Getenv("MODULE_TEMPLATE_PATH")))
 	assert.Nil(t, err)
 	descriptor, err := template.GetDescriptor()
 	assert.Nil(t, err)
