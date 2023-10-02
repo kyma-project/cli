@@ -5,6 +5,8 @@ metadata:
   namespace: kcp-system
   labels:
     "operator.kyma-project.io/module-name": "template-operator"
+  annotations:
+    "operator.kyma-project.io/is-cluster-scoped": "false"
 spec:
   channel: regular
   data:
@@ -17,6 +19,10 @@ spec:
   descriptor:
     component:
       componentReferences: []
+      labels:
+        - name: security.kyma-project.io/scan
+          value: enabled
+          version: v1
       name: kyma-project.io/template-operator
       provider: internal
       repositoryContexts:
@@ -25,24 +31,33 @@ spec:
           type: ociRegistry
       resources:
         - access:
-            digest: sha256:903eda97406482c42b7aa34ae7da1dac68fdacaccd2a70158ef13a09c2230915
+            digest: sha256:69128340d9f0130a4b5fc3cbe0bbe3660b694a6b4c74dc8a9819ff9c785ca774
             type: localOciBlob
           name: raw-manifest
           relation: local
           type: yaml
-          version: v1.1.0-smoke-test
+          version: v1.0.0-e2e
       sources:
         - access:
-            commit: d9ddb3ddd0e4579bba24b7f56027a939fb559e1f
-            repoUrl: https://github.com/kyma-project/cli
+            commit: df40b4455b437a412fe5656143bacd6b542b3a7c
+            repoUrl: github.com/kyma-project/template-operator
             type: gitHub
           labels:
             - name: git.kyma-project.io/ref
-              value: refs/heads/main
+              value: refs/heads/sec_scanners_change
+              version: v1
+            - name: scan.security.kyma-project.io/language
+              value: golang-mod
+              version: v1
+            - name: scan.security.kyma-project.io/subprojects
+              value: ""
+              version: v1
+            - name: scan.security.kyma-project.io/exclude
+              value: '**/test/**,**/*_test.go'
               version: v1
           name: module-sources
           type: git
-          version: v1.1.0-smoke-test
-      version: v1.1.0-smoke-test
+          version: v1.0.0-e2e
+      version: v1.0.0-e2e
     meta:
       schemaVersion: v2
