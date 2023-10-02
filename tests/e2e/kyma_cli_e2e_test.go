@@ -46,7 +46,7 @@ var _ = Describe("Kyma Deployment, Enabling and Disabling", Ordered, func() {
 			Should(BeTrue())
 		Eventually(IsDeploymentReady).
 			WithContext(ctx).
-			WithArguments(k8sClient, "template-operator-v1-controller-manager", "template-operator-system").
+			WithArguments(k8sClient, "template-operator-controller-manager", "template-operator-system").
 			Should(BeTrue())
 		Eventually(IsDeploymentReady).
 			WithContext(ctx).
@@ -74,7 +74,7 @@ var _ = Describe("Kyma Deployment, Enabling and Disabling", Ordered, func() {
 			Should(BeFalse())
 		Eventually(IsDeploymentReady).
 			WithContext(ctx).
-			WithArguments(k8sClient, "template-operator-v1-controller-manager", "template-operator-system").
+			WithArguments(k8sClient, "template-operator-controller-manager", "template-operator-system").
 			Should(BeFalse())
 		Eventually(IsDeploymentReady).
 			WithContext(ctx).
