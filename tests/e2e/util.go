@@ -94,7 +94,11 @@ func ApplyModuleTemplate(
 
 func EnableModuleOnKymaWithReadyStateModule(moduleName string) bool {
 	cmd := exec.Command("kyma", "alpha", "enable", "module", moduleName, "-w")
-	cmd.Run()
+	err := cmd.Run()
+	if exitErr, ok := err.(*exec.ExitError); ok {
+		exitCode := exitErr.ExitCode()
+		return exitCode == 1
+	}
 	exitCode := cmd.ProcessState.ExitCode()
 
 	GinkgoWriter.Println("Exit code", exitCode)
@@ -103,7 +107,11 @@ func EnableModuleOnKymaWithReadyStateModule(moduleName string) bool {
 
 func EnableModuleOnKymaWithWarningStateModule(moduleName string) bool {
 	cmd := exec.Command("kyma", "alpha", "enable", "module", moduleName, "-w")
-	cmd.Run()
+	err := cmd.Run()
+	if exitErr, ok := err.(*exec.ExitError); ok {
+		exitCode := exitErr.ExitCode()
+		return exitCode == 2
+	}
 	exitCode := cmd.ProcessState.ExitCode()
 
 	return exitCode == 2
