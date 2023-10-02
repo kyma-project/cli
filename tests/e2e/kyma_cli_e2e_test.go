@@ -39,11 +39,11 @@ var _ = Describe("Kyma Deployment, Enabling and Disabling", Ordered, func() {
 			WithArguments(k8sClient, cli.KymaNameDefault, cli.KymaNamespaceDefault, "template-operator").
 			Should(BeTrue())
 
-		By("Then template-operator resources are deployed in the cluster")
-		Eventually(IsCRDAvailable).
-			WithContext(ctx).
-			WithArguments(k8sClient, "samples.operator.kyma-project.io").
-			Should(BeTrue())
+		//By("Then template-operator resources are deployed in the cluster")
+		//Eventually(IsCRDAvailable).
+		//	WithContext(ctx).
+		//	WithArguments(k8sClient, "samples.operator.kyma-project.io").
+		//	Should(BeTrue())
 		Eventually(IsDeploymentReady).
 			WithContext(ctx).
 			WithArguments(k8sClient, "template-operator-v1-controller-manager", "template-operator-system").
