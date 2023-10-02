@@ -121,7 +121,7 @@ func IsCRReady(resourceType string,
 
 	statusOutput, err := cmd.CombinedOutput()
 	GinkgoWriter.Println(string(statusOutput))
-	if err != nil || string(statusOutput) != "Ready" {
+	if err != nil || string(statusOutput) != "'Ready'" {
 		return false
 	}
 
