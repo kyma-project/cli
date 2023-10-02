@@ -55,7 +55,7 @@ func IsDeploymentReady(ctx context.Context,
 		Name:      deploymentName,
 	}, &deployment)
 
-	GinkgoWriter.Println(deployment)
+	GinkgoWriter.Println(deployment.Status.AvailableReplicas)
 	if err != nil || deployment.Status.AvailableReplicas == 0 {
 		return false
 	}
@@ -120,7 +120,7 @@ func IsCRReady(resourceType string,
 		namespace, "-o", "jsonpath='{.status.state}'")
 
 	statusOutput, err := cmd.CombinedOutput()
-	GinkgoWriter.Println(statusOutput)
+	GinkgoWriter.Println(string(statusOutput))
 	if err != nil || string(statusOutput) != "Ready" {
 		return false
 	}
