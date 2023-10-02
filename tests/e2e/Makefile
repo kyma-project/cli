@@ -33,11 +33,11 @@ help: ## Display this help.
 
 .PHONY: create_module_kubebuilder_project
 create_module_kubebuilder_project:
-	go test kyma_create_module_test.go
+	go test -run "Test_ModuleTemplate"
 
 .PHONY: create_module_module_config
 create_module_module_config:
-	go test kyma_create_module_test.go
+	go test -run "Test_ModuleTemplate"
 
 .PHONY: deploy_enable_disable
 deploy_enable_disable:

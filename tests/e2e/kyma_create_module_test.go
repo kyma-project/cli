@@ -6,7 +6,6 @@ import (
 
 	"github.com/kyma-project/cli/pkg/module"
 
-	//"github.com/kyma-project/cli/tests/e2e"
 	"github.com/open-component-model/ocm/pkg/contexts/oci/repositories/ocireg"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/accessmethods/github"
