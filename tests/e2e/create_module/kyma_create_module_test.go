@@ -1,7 +1,6 @@
 package create_module_test
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
@@ -29,7 +28,6 @@ func Test_ModuleTemplate(t *testing.T) {
 	template, err := e2e.ReadModuleTemplate(os.Getenv("MODULE_TEMPLATE_PATH"))
 	assert.Nil(t, err)
 	descriptor, err := template.GetDescriptor()
-	fmt.Print(descriptor)
 	assert.Nil(t, err)
 	assert.Equal(t, descriptor.SchemaVersion(), v2.SchemaVersion)
 
