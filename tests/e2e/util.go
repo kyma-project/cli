@@ -138,7 +138,7 @@ func DisableModuleOnKyma(moduleName string) error {
 	}
 
 	GinkgoWriter.Println("Exit code", exitCode)
-	if exitCode != 2 {
+	if exitCode != 0 {
 		return errModuleDisablingFailed
 	}
 	return nil
