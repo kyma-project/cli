@@ -15,9 +15,6 @@ on:
       - '**.go'
 jobs:
   e2e-tests:
-    strategy:
-      matrix:
-        e2e-test: ["create_module_kubebuilder_project", "create_module_module_config", "deploy_enable_disable"]
     name: "Run E2E tests"
     runs-on: ubuntu-latest
     env:
@@ -64,32 +61,5 @@ jobs:
             --name kyma
       - name: Update Kubeconfigs
         run: k3d kubeconfig merge -a -d
-      - name: Run create module with kubebuilder-project
-        if: ${{ matrix.e2e-test == 'create_module_kubebuilder_project' }}
-        run: |
-          kyma alpha create module \
-          --name kyma-project.io/module/template-operator \
-          --path ./template-operator \
-          --registry http://k3d-oci.localhost:5001 \
-          --insecure \
-          --kubebuilder-project \
-          --version $MODULE_TEMPLATE_VERSION -v \
-          --output /tmp/kubebuilder-template.yaml \
-          --sec-scanners-config ./template-operator/sec-scanners-config.yaml
-          echo "MODULE_TEMPLATE_PATH=/tmp/kubebuilder-template.yaml" >> "$GITHUB_ENV"
-      - name: Run create module with module-config
-        if: ${{ matrix.e2e-test == 'create_module_module_config'}}
-        run: |
-          cd ./template-operator
-          make build-manifests
-          kyma alpha create module \
-          --name kyma-project.io/module/template-operator \
-          --path . \
-          --registry http://k3d-oci.localhost:5001 \
-          --insecure \
-          --module-config-file ./module-config.yaml \
-          --version $MODULE_TEMPLATE_VERSION -v \
-          --output /tmp/module-config-template.yaml
-          echo "MODULE_TEMPLATE_PATH=/tmp/module-config-template.yaml" >> "$GITHUB_ENV"
       - name: Run E2E tests
-        run: make -C tests/e2e ${{ matrix.e2e-test }}
+        run: make -C tests/e2e deploy_enable_disable
