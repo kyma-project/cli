@@ -55,7 +55,7 @@ func IsDeploymentReady(ctx context.Context,
 		Name:      deploymentName,
 	}, &deployment)
 
-	GinkgoWriter.Println(deployment.Status.AvailableReplicas)
+	GinkgoWriter.Println("Available replicas:", deployment.Status.AvailableReplicas)
 	if err != nil || deployment.Status.AvailableReplicas == 0 {
 		return false
 	}
