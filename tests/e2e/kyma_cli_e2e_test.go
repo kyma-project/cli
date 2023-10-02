@@ -57,4 +57,32 @@ var _ = Describe("Kyma Deployment, Enabling and Disabling", Ordered, func() {
 			WithArguments("sample", "sample-yaml", "kyma-system").
 			Should(BeTrue())
 	})
+
+	It("Then should disable template-operator successfully", func() {
+		By("Disabling template-operator on Kyma")
+		Expect(DisableModuleOnKyma("template-operator")).To(Succeed())
+
+		Eventually(IsKymaCRInReadyState).
+			WithContext(ctx).
+			WithArguments(k8sClient, cli.KymaNameDefault, cli.KymaNamespaceDefault).
+			Should(BeTrue())
+
+		By("Then template-operator resources are removed from the cluster")
+		Eventually(IsCRDAvailable).
+			WithContext(ctx).
+			WithArguments(k8sClient, "samples.operator.kyma-project.io").
+			Should(BeFalse())
+		Eventually(IsDeploymentReady).
+			WithContext(ctx).
+			WithArguments(k8sClient, "template-operator-v1-controller-manager", "template-operator-system").
+			Should(BeFalse())
+		Eventually(IsDeploymentReady).
+			WithContext(ctx).
+			WithArguments(k8sClient, "sample-redis-deployment", "manifest-redis").
+			Should(BeFalse())
+		Eventually(IsCRReady).
+			WithContext(ctx).
+			WithArguments("sample", "sample-yaml", "kyma-system").
+			Should(BeFalse())
+	})
 })

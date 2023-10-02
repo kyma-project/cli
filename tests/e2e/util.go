@@ -102,6 +102,16 @@ func EnableModuleOnKyma(moduleName string) error {
 	return nil
 }
 
+func DisableModuleOnKyma(moduleName string) error {
+	cmd := exec.Command("kyma", "alpha", "disable", "module", moduleName)
+	enableOut, err := cmd.CombinedOutput()
+	if err != nil || !strings.Contains(string(enableOut), "Modules patched") {
+		return errModuleEnablingFailed
+	}
+
+	return nil
+}
+
 func IsCRDAvailable(ctx context.Context,
 	k8sClient client.Client,
 	name string) bool {
