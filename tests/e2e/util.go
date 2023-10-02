@@ -11,7 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 	appsv1 "k8s.io/api/apps/v1"
-	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
+	v1extensions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -105,7 +105,7 @@ func EnableModuleOnKyma(moduleName string) error {
 func IsCRDAvailable(ctx context.Context,
 	k8sClient client.Client,
 	name string) bool {
-	var crd apiextensions.CustomResourceDefinition
+	var crd v1extensions.CustomResourceDefinition
 	err := k8sClient.Get(ctx, client.ObjectKey{
 		Name: name,
 	}, &crd)
