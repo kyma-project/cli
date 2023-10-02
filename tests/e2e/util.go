@@ -1,4 +1,4 @@
-package e2e_test
+package e2e
 
 import (
 	"context"
@@ -9,9 +9,9 @@ import (
 	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	. "github.com/onsi/ginkgo/v2" //nolint:stylecheck,revive
 	"github.com/pkg/errors"
+	"gopkg.in/yaml.v3"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
-	"k8s.io/apimachinery/pkg/util/yaml"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

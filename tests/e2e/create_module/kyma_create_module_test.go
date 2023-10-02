@@ -1,11 +1,11 @@
-package e2e_test
+package create_module_test
 
 import (
 	"os"
 	"testing"
 
 	"github.com/kyma-project/cli/pkg/module"
-
+	"github.com/kyma-project/cli/tests/e2e"
 	"github.com/open-component-model/ocm/pkg/contexts/oci/repositories/ocireg"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/accessmethods/github"
@@ -25,7 +25,7 @@ func Test_ModuleTemplate(t *testing.T) {
 	ociRepoURL := os.Getenv("OCI_REPOSITORY_URL")
 	testRepoURL := os.Getenv("TEST_REPOSITORY_URL")
 
-	template, err := ReadModuleTemplate(os.Getenv("MODULE_TEMPLATE_PATH"))
+	template, err := e2e.ReadModuleTemplate(os.Getenv("MODULE_TEMPLATE_PATH"))
 	assert.Nil(t, err)
 	descriptor, err := template.GetDescriptor()
 	assert.Nil(t, err)
