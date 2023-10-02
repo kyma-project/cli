@@ -105,9 +105,8 @@ func EnableModuleOnKymaWithReadyStateModule(moduleName string) error {
 	GinkgoWriter.Println("Exit code", exitCode)
 	if exitCode != 0 {
 		return errModuleEnablingFailed
-	} else {
-		return nil
 	}
+	return nil
 }
 
 func EnableModuleOnKymaWithWarningStateModule(moduleName string) error {
@@ -123,9 +122,8 @@ func EnableModuleOnKymaWithWarningStateModule(moduleName string) error {
 	GinkgoWriter.Println("Exit code", exitCode)
 	if exitCode != 2 {
 		return errModuleEnablingFailed
-	} else {
-		return nil
 	}
+	return nil
 }
 
 func DisableModuleOnKyma(moduleName string) error {
