@@ -2,7 +2,6 @@ package e2e_test
 
 import (
 	"github.com/kyma-project/cli/internal/cli"
-	. "github.com/kyma-project/cli/tests/e2e"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
