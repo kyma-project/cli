@@ -183,3 +183,23 @@ func IsModuleReadyInKymaStatus(ctx context.Context,
 
 	return true
 }
+
+func IsModuleInWarningStateInKymaStatus(ctx context.Context,
+	k8sClient client.Client,
+	kymaName string,
+	namespace string,
+	moduleName string) bool {
+	var kyma v1beta2.Kyma
+	err := k8sClient.Get(ctx, client.ObjectKey{
+		Namespace: namespace,
+		Name:      kymaName,
+	}, &kyma)
+
+	GinkgoWriter.Println(kyma.Status.Modules)
+	if err != nil || kyma.Status.Modules == nil || kyma.Status.Modules[0].Name != moduleName ||
+		kyma.Status.Modules[0].State != v1beta2.StateWarning {
+		return false
+	}
+
+	return true
+}
