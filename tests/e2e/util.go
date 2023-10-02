@@ -179,8 +179,6 @@ func IsCRInWarningState(resourceType string,
 	statusOutput, err := cmd.CombinedOutput()
 	GinkgoWriter.Println(string(statusOutput))
 	if err != nil || string(statusOutput) != "'Warning'" {
-		GinkgoWriter.Print(err)
-		GinkgoWriter.Print(string(statusOutput) != "'Warning'")
 		return false
 	}
 
