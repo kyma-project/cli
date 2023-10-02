@@ -97,12 +97,12 @@ func EnableModuleOnKymaWithReadyStateModule(moduleName string) bool {
 	err := cmd.Run()
 	if exitErr, ok := err.(*exec.ExitError); ok {
 		exitCode := exitErr.ExitCode()
-		return exitCode == 1
+		return exitCode == 0
 	}
 	exitCode := cmd.ProcessState.ExitCode()
 
 	GinkgoWriter.Println("Exit code", exitCode)
-	return exitCode == 1
+	return exitCode == 0
 }
 
 func EnableModuleOnKymaWithWarningStateModule(moduleName string) bool {
