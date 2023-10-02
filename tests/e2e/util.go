@@ -92,29 +92,40 @@ func ApplyModuleTemplate(
 	return nil
 }
 
-func EnableModuleOnKymaWithReadyStateModule(moduleName string) bool {
+func EnableModuleOnKymaWithReadyStateModule(moduleName string) error {
 	cmd := exec.Command("kyma", "alpha", "enable", "module", moduleName, "-w")
 	err := cmd.Run()
+	var exitCode int
 	if exitErr, ok := err.(*exec.ExitError); ok {
-		exitCode := exitErr.ExitCode()
-		return exitCode == 0
+		exitCode = exitErr.ExitCode()
+	} else {
+		exitCode = cmd.ProcessState.ExitCode()
 	}
-	exitCode := cmd.ProcessState.ExitCode()
 
 	GinkgoWriter.Println("Exit code", exitCode)
-	return exitCode == 0
+	if exitCode != 0 {
+		return errModuleEnablingFailed
+	} else {
+		return nil
+	}
 }
 
-func EnableModuleOnKymaWithWarningStateModule(moduleName string) bool {
+func EnableModuleOnKymaWithWarningStateModule(moduleName string) error {
 	cmd := exec.Command("kyma", "alpha", "enable", "module", moduleName, "-w")
 	err := cmd.Run()
+	var exitCode int
 	if exitErr, ok := err.(*exec.ExitError); ok {
-		exitCode := exitErr.ExitCode()
-		return exitCode == 2
+		exitCode = exitErr.ExitCode()
+	} else {
+		exitCode = cmd.ProcessState.ExitCode()
 	}
-	exitCode := cmd.ProcessState.ExitCode()
 
-	return exitCode == 2
+	GinkgoWriter.Println("Exit code", exitCode)
+	if exitCode != 2 {
+		return errModuleEnablingFailed
+	} else {
+		return nil
+	}
 }
 
 func DisableModuleOnKyma(moduleName string) error {
