@@ -64,6 +64,7 @@ func Test_ModuleTemplate(t *testing.T) {
 	sourceAccessSpec, err := ocm.DefaultContext().AccessSpecForSpec(source.Access)
 	assert.Nil(t, err)
 	githubAccessSpec, ok := sourceAccessSpec.(*github.AccessSpec)
+	assert.Equal(t, ok, true)
 	assert.Equal(t, githubAccessSpec.Type, github.Type)
 	assert.Contains(t, testRepoURL, githubAccessSpec.RepoURL)
 
@@ -71,18 +72,22 @@ func Test_ModuleTemplate(t *testing.T) {
 	secScanLabels := descriptor.Sources[0].Labels
 
 	var devBranch string
-	yaml.Unmarshal(secScanLabels[1].Value, &devBranch)
+	err = yaml.Unmarshal(secScanLabels[1].Value, &devBranch)
+	assert.Nil(t, err)
 	assert.Equal(t, "main", devBranch)
 
 	var rcTag string
-	yaml.Unmarshal(secScanLabels[2].Value, &rcTag)
+	err = yaml.Unmarshal(secScanLabels[2].Value, &rcTag)
+	assert.Nil(t, err)
 	assert.Equal(t, "0.5.0", rcTag)
 
 	var language string
-	yaml.Unmarshal(secScanLabels[3].Value, &language)
+	err = yaml.Unmarshal(secScanLabels[3].Value, &language)
+	assert.Nil(t, err)
 	assert.Equal(t, "golang-mod", language)
 
 	var exclude string
-	yaml.Unmarshal(secScanLabels[4].Value, &exclude)
+	err = yaml.Unmarshal(secScanLabels[4].Value, &exclude)
+	assert.Nil(t, err)
 	assert.Equal(t, "**/test/**,**/*_test.go", exclude)
 }
