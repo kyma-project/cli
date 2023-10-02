@@ -135,7 +135,7 @@ var _ = Describe("Kyma Deployment, Enabling and Disabling Warning Module", Order
 			WithContext(ctx).
 			WithArguments(k8sClient, "sample-redis-deployment", "manifest-redis").
 			Should(BeTrue())
-		Eventually(IsCRReady).
+		Eventually(IsCRInWarningState).
 			WithContext(ctx).
 			WithArguments("sample", "sample-yaml", "kyma-system").
 			Should(BeTrue())

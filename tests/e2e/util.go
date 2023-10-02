@@ -19,6 +19,7 @@ var (
 	errKymaDeployCommandFailed  = errors.New("failed to run kyma alpha deploy")
 	errModuleTemplateNotApplied = errors.New("failed to apply ModuleTemplate")
 	errModuleEnablingFailed     = errors.New("failed to enable module")
+	errModuleDisablingFailed    = errors.New("failed to disable module")
 )
 
 func ReadModuleTemplate(filepath string) (*v1beta2.ModuleTemplate, error) {
@@ -127,12 +128,19 @@ func EnableModuleOnKymaWithWarningStateModule(moduleName string) error {
 }
 
 func DisableModuleOnKyma(moduleName string) error {
-	cmd := exec.Command("kyma", "alpha", "disable", "module", moduleName)
-	enableOut, err := cmd.CombinedOutput()
-	if err != nil || !strings.Contains(string(enableOut), "Modules patched") {
-		return errModuleEnablingFailed
+	cmd := exec.Command("kyma", "alpha", "disable", "module", moduleName, "-w")
+	err := cmd.Run()
+	var exitCode int
+	if exitErr, ok := err.(*exec.ExitError); ok {
+		exitCode = exitErr.ExitCode()
+	} else {
+		exitCode = cmd.ProcessState.ExitCode()
 	}
 
+	GinkgoWriter.Println("Exit code", exitCode)
+	if exitCode != 2 {
+		return errModuleDisablingFailed
+	}
 	return nil
 }
 
@@ -156,6 +164,21 @@ func IsCRReady(resourceType string,
 	statusOutput, err := cmd.CombinedOutput()
 	GinkgoWriter.Println(string(statusOutput))
 	if err != nil || string(statusOutput) != "'Ready'" {
+		return false
+	}
+
+	return true
+}
+
+func IsCRInWarningState(resourceType string,
+	resourceName string,
+	namespace string) bool {
+	cmd := exec.Command("kubectl", "get", resourceType, resourceName, "-n",
+		namespace, "-o", "jsonpath='{.status.state}'")
+
+	statusOutput, err := cmd.CombinedOutput()
+	GinkgoWriter.Println(string(statusOutput))
+	if err != nil || string(statusOutput) != "'Warning'" {
 		return false
 	}
 
