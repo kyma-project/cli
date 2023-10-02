@@ -41,4 +41,4 @@ create_module_module_config:
 
 .PHONY: deploy_enable_disable
 deploy_enable_disable:
-	go test -ginkgo.v -ginkgo.focus "Kyma Deployment, Enabling and Disabling"
+	go test kyma_cli_e2e_test.go -ginkgo.v
