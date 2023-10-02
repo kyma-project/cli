@@ -92,14 +92,21 @@ func ApplyModuleTemplate(
 	return nil
 }
 
-func EnableModuleOnKyma(moduleName string) error {
-	cmd := exec.Command("kyma", "alpha", "enable", "module", moduleName)
-	enableOut, err := cmd.CombinedOutput()
-	if err != nil || !strings.Contains(string(enableOut), "Modules patched") {
-		return errModuleEnablingFailed
-	}
+func EnableModuleOnKymaWithReadyStateModule(moduleName string) bool {
+	cmd := exec.Command("kyma", "alpha", "enable", "module", moduleName, "-w")
+	cmd.Run()
+	exitCode := cmd.ProcessState.ExitCode()
 
-	return nil
+	GinkgoWriter.Println("Exit code", exitCode)
+	return exitCode == 1
+}
+
+func EnableModuleOnKymaWithWarningStateModule(moduleName string) bool {
+	cmd := exec.Command("kyma", "alpha", "enable", "module", moduleName, "-w")
+	cmd.Run()
+	exitCode := cmd.ProcessState.ExitCode()
+
+	return exitCode == 2
 }
 
 func DisableModuleOnKyma(moduleName string) error {

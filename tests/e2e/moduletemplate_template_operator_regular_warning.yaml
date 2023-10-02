@@ -1,0 +1,63 @@
+apiVersion: operator.kyma-project.io/v1beta2
+kind: ModuleTemplate
+metadata:
+  name: template-operator-regular
+  namespace: kcp-system
+  labels:
+    "operator.kyma-project.io/module-name": "template-operator"
+  annotations:
+    "operator.kyma-project.io/is-cluster-scoped": "false"
+spec:
+  channel: regular
+  data:
+    apiVersion: operator.kyma-project.io/v1alpha1
+    kind: Sample
+    metadata:
+      name: sample-yaml
+    spec:
+      resourceFilePath: "./module-data/yaml"
+  descriptor:
+    component:
+      componentReferences: []
+      labels:
+        - name: security.kyma-project.io/scan
+          value: enabled
+          version: v1
+      name: kyma-project.io/template-operator
+      provider: internal
+      repositoryContexts:
+        - baseUrl: europe-west3-docker.pkg.dev/sap-kyma-jellyfish-dev/template-operator
+          componentNameMapping: urlPath
+          type: ociRegistry
+      resources:
+        - access:
+            digest: sha256:e88f3d1a80dbce2084f4991905a3e9847a58bd0e5b666754aa9105b9d49e82ba
+            type: localOciBlob
+          name: raw-manifest
+          relation: local
+          type: yaml
+          version: v1.0.0-e2e-warning
+      sources:
+        - access:
+            commit: df40b4455b437a412fe5656143bacd6b542b3a7c
+            repoUrl: github.com/kyma-project/template-operator
+            type: gitHub
+          labels:
+            - name: git.kyma-project.io/ref
+              value: refs/heads/sec_scanners_change
+              version: v1
+            - name: scan.security.kyma-project.io/language
+              value: golang-mod
+              version: v1
+            - name: scan.security.kyma-project.io/subprojects
+              value: ""
+              version: v1
+            - name: scan.security.kyma-project.io/exclude
+              value: '**/test/**,**/*_test.go'
+              version: v1
+          name: module-sources
+          type: git
+          version: v1.0.0-e2e-warning
+      version: v1.0.0-e2e-warning
+    meta:
+      schemaVersion: v2
