@@ -13,23 +13,22 @@ var _ = Describe("Kyma Deployment, Enabling and Disabling Module", Ordered, func
 		"template-operator-controller-manager": "template-operator-system",
 		"sample-redis-deployment":              "manifest-redis",
 	}
-	BeforeAll(func() {
-		Context("Given a Kyma Cluster", func() {
-			It("When `kyma alpha deploy` command is executed")
-			Expect(ExecuteKymaDeployCommand()).To(Succeed())
 
-			By("Then the Kyma CR is in a ready state")
-			Eventually(IsKymaCRInReadyState).
-				WithContext(ctx).
-				WithArguments(k8sClient, cli.KymaNameDefault, cli.KymaNamespaceDefault).
-				Should(BeTrue())
+	Context("Given a Kyma Cluster", func() {
+		It("When `kyma alpha deploy` command is executed")
+		Expect(ExecuteKymaDeployCommand()).To(Succeed())
 
-			By("And the Lifecycle Manager is in a ready state")
-			Eventually(IsDeploymentReady).
-				WithContext(ctx).
-				WithArguments(k8sClient, "lifecycle-manager-controller-manager", kcpSystemNamespace).
-				Should(BeTrue())
-		})
+		By("Then the Kyma CR is in a ready state")
+		Eventually(IsKymaCRInReadyState).
+			WithContext(ctx).
+			WithArguments(k8sClient, cli.KymaNameDefault, cli.KymaNamespaceDefault).
+			Should(BeTrue())
+
+		By("And the Lifecycle Manager is in a ready state")
+		Eventually(IsDeploymentReady).
+			WithContext(ctx).
+			WithArguments(k8sClient, "lifecycle-manager-controller-manager", kcpSystemNamespace).
+			Should(BeTrue())
 	})
 
 	Context("Given a valid Template Operator module template", func() {
