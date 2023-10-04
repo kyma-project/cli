@@ -15,9 +15,6 @@ on:
       - '**.go'
 jobs:
   e2e-tests:
-    strategy:
-      matrix:
-        e2e-test: [ "deploy_enable_disable_ready_state_module", "deploy_enable_disable_warning_state_module" ]
     name: "Run E2E tests"
     runs-on: ubuntu-latest
     env:
@@ -54,4 +51,4 @@ jobs:
       - name: Update Kubeconfigs
         run: k3d kubeconfig merge -a -d
       - name: Run E2E tests
-        run: make -C tests/e2e ${{ matrix.e2e-test }}
+        run: make -C tests/e2e deploy_enable_disable

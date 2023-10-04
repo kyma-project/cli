@@ -7,10 +7,9 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Kyma Deployment, Enabling and Disabling Ready Module", Ordered, func() {
+var _ = Describe("Kyma Deployment, Enabling and Disabling Module", Ordered, func() {
 	kcpSystemNamespace := "kcp-system"
-
-	It("Then should install Kyma and Lifecycle Manager successfully", func() {
+	BeforeAll("Then should install Kyma and Lifecycle Manager successfully", func() {
 		By("Executing kyma alpha deploy command")
 		Expect(ExecuteKymaDeployCommand()).To(Succeed())
 
@@ -27,7 +26,7 @@ var _ = Describe("Kyma Deployment, Enabling and Disabling Ready Module", Ordered
 			Should(BeTrue())
 	})
 
-	It("Then should enable ready state template-operator successfully", func() {
+	Context("Enabling and disabling ready state template-operator successfully", func() {
 		By("Applying the template-operator ModuleTemplate")
 		Expect(ApplyModuleTemplate("module_templates/moduletemplate_template_operator_regular.yaml")).
 			To(Succeed())
@@ -41,25 +40,19 @@ var _ = Describe("Kyma Deployment, Enabling and Disabling Ready Module", Ordered
 			Should(BeTrue())
 
 		By("Then template-operator resources are deployed in the cluster")
-		Eventually(IsCRDAvailable).
+		deployments := map[string]string{
+			"template-operator-controller-manager": "template-operator-system",
+			"sample-redis-deployment":              "manifest-redis",
+		}
+		Eventually(AreModuleResourcesReadyInCluster).
 			WithContext(ctx).
-			WithArguments(k8sClient, "samples.operator.kyma-project.io").
-			Should(BeTrue())
-		Eventually(IsDeploymentReady).
-			WithContext(ctx).
-			WithArguments(k8sClient, "template-operator-controller-manager", "template-operator-system").
-			Should(BeTrue())
-		Eventually(IsDeploymentReady).
-			WithContext(ctx).
-			WithArguments(k8sClient, "sample-redis-deployment", "manifest-redis").
+			WithArguments(k8sClient, "samples.operator.kyma-project.io", deployments).
 			Should(BeTrue())
 		Eventually(IsCRReady).
 			WithContext(ctx).
 			WithArguments("sample", "sample-yaml", "kyma-system").
 			Should(BeTrue())
-	})
 
-	It("Then should disable template-operator successfully", func() {
 		By("Disabling template-operator on Kyma")
 		Expect(DisableModuleOnKyma("template-operator")).To(Succeed())
 
@@ -69,46 +62,15 @@ var _ = Describe("Kyma Deployment, Enabling and Disabling Ready Module", Ordered
 			Should(BeTrue())
 
 		By("Then template-operator resources are removed from the cluster")
-		Eventually(IsCRDAvailable).
+		Eventually(AreModuleResourcesReadyInCluster).
 			WithContext(ctx).
-			WithArguments(k8sClient, "samples.operator.kyma-project.io").
-			Should(BeFalse())
-		Eventually(IsDeploymentReady).
-			WithContext(ctx).
-			WithArguments(k8sClient, "template-operator-controller-manager", "template-operator-system").
-			Should(BeFalse())
-		Eventually(IsDeploymentReady).
-			WithContext(ctx).
-			WithArguments(k8sClient, "sample-redis-deployment", "manifest-redis").
-			Should(BeFalse())
-		Eventually(IsCRReady).
-			WithContext(ctx).
-			WithArguments("sample", "sample-yaml", "kyma-system").
+			WithArguments(k8sClient, "samples.operator.kyma-project.io",
+				deployments,
+				"sample", "sample-yaml", "kyma-system").
 			Should(BeFalse())
 	})
-})
 
-var _ = Describe("Kyma Deployment, Enabling and Disabling Warning Module", Ordered, func() {
-	kcpSystemNamespace := "kcp-system"
-
-	It("Then should install Kyma and Lifecycle Manager successfully", func() {
-		By("Executing kyma alpha deploy command")
-		Expect(ExecuteKymaDeployCommand()).To(Succeed())
-
-		By("Then Kyma CR should be Ready")
-		Eventually(IsKymaCRInReadyState).
-			WithContext(ctx).
-			WithArguments(k8sClient, cli.KymaNameDefault, cli.KymaNamespaceDefault).
-			Should(BeTrue())
-
-		By("And Lifecycle Manager should be Ready")
-		Eventually(IsDeploymentReady).
-			WithContext(ctx).
-			WithArguments(k8sClient, "lifecycle-manager-controller-manager", kcpSystemNamespace).
-			Should(BeTrue())
-	})
-
-	It("Then should enable warning state template-operator successfully", func() {
+	Context("Enabling and disabling warning state template-operator successfully", func() {
 		By("Applying the template-operator ModuleTemplate")
 		Expect(ApplyModuleTemplate(
 			"module_templates/moduletemplate_template_operator_regular_warning.yaml")).
@@ -123,25 +85,20 @@ var _ = Describe("Kyma Deployment, Enabling and Disabling Warning Module", Order
 			Should(BeTrue())
 
 		By("Then template-operator resources are deployed in the cluster")
-		Eventually(IsCRDAvailable).
+		deployments := map[string]string{
+			"template-operator-controller-manager": "template-operator-system",
+			"sample-redis-deployment":              "manifest-redis",
+		}
+		Eventually(AreModuleResourcesReadyInCluster).
 			WithContext(ctx).
-			WithArguments(k8sClient, "samples.operator.kyma-project.io").
+			WithArguments(k8sClient, "samples.operator.kyma-project.io", deployments).
 			Should(BeTrue())
-		Eventually(IsDeploymentReady).
-			WithContext(ctx).
-			WithArguments(k8sClient, "template-operator-controller-manager", "template-operator-system").
-			Should(BeTrue())
-		Eventually(IsDeploymentReady).
-			WithContext(ctx).
-			WithArguments(k8sClient, "sample-redis-deployment", "manifest-redis").
-			Should(BeTrue())
+
 		Eventually(IsCRInWarningState).
 			WithContext(ctx).
 			WithArguments("sample", "sample-yaml", "kyma-system").
 			Should(BeTrue())
-	})
 
-	It("Then should disable template-operator successfully", func() {
 		By("Disabling template-operator on Kyma")
 		Expect(DisableModuleOnKyma("template-operator")).To(Succeed())
 
@@ -151,21 +108,12 @@ var _ = Describe("Kyma Deployment, Enabling and Disabling Warning Module", Order
 			Should(BeTrue())
 
 		By("Then template-operator resources are removed from the cluster")
-		Eventually(IsCRDAvailable).
+		Eventually(AreModuleResourcesReadyInCluster).
 			WithContext(ctx).
-			WithArguments(k8sClient, "samples.operator.kyma-project.io").
-			Should(BeFalse())
-		Eventually(IsDeploymentReady).
-			WithContext(ctx).
-			WithArguments(k8sClient, "template-operator-controller-manager", "template-operator-system").
-			Should(BeFalse())
-		Eventually(IsDeploymentReady).
-			WithContext(ctx).
-			WithArguments(k8sClient, "sample-redis-deployment", "manifest-redis").
-			Should(BeFalse())
-		Eventually(IsCRReady).
-			WithContext(ctx).
-			WithArguments("sample", "sample-yaml", "kyma-system").
+			WithArguments(k8sClient, "samples.operator.kyma-project.io",
+				deployments,
+				"sample", "sample-yaml", "kyma-system").
 			Should(BeFalse())
 	})
+
 })

@@ -224,3 +224,19 @@ func IsModuleInWarningStateInKymaStatus(ctx context.Context,
 
 	return true
 }
+
+func AreModuleResourcesReadyInCluster(ctx context.Context,
+	k8sClient client.Client,
+	crdName string,
+	deploymentNamesAndNamespaces map[string]string) bool {
+	if !IsCRDAvailable(ctx, k8sClient, crdName) {
+		return false
+	}
+	for k, v := range deploymentNamesAndNamespaces {
+		if !IsDeploymentReady(ctx, k8sClient, k, v) {
+			return false
+		}
+	}
+
+	return true
+}

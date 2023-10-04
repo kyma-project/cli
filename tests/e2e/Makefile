@@ -39,10 +39,6 @@ create_module_kubebuilder_project:
 create_module_module_config:
 	go test ./create_module -run "Test_ModuleTemplate"
 
-.PHONY: deploy_enable_disable_ready_state_module
-deploy_enable_disable_ready_state_module:
-	go test -ginkgo.v -ginkgo.focus "Kyma Deployment, Enabling and Disabling Ready Module"
-
-.PHONY: deploy_enable_disable_warning_state_module
-deploy_enable_disable_warning_state_module:
-	go test -ginkgo.v -ginkgo.focus "Kyma Deployment, Enabling and Disabling Warning Module"
+.PHONY: deploy_enable_disable
+deploy_enable_disable:
+	go test -ginkgo.v -ginkgo.focus "Kyma Deployment, Enabling and Disabling Module"
