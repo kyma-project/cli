@@ -67,9 +67,7 @@ var _ = Describe("Kyma Deployment, Enabling and Disabling Module", Ordered, func
 			By("Then template-operator resources are removed from the cluster")
 			Eventually(AreModuleResourcesReadyInCluster).
 				WithContext(ctx).
-				WithArguments(k8sClient, "samples.operator.kyma-project.io",
-					deployments,
-					"sample", "sample-yaml", "kyma-system").
+				WithArguments(k8sClient, "samples.operator.kyma-project.io", deployments).
 				Should(BeFalse())
 		})
 
