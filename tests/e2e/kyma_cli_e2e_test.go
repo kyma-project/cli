@@ -15,8 +15,9 @@ var _ = Describe("Kyma Deployment, Enabling and Disabling Module", Ordered, func
 	}
 
 	Context("Given a Kyma Cluster", func() {
-		It("When `kyma alpha deploy` command is executed")
-		Expect(ExecuteKymaDeployCommand()).To(Succeed())
+		It("When `kyma alpha deploy` command is executed", func() {
+			Expect(ExecuteKymaDeployCommand()).To(Succeed())
+		})
 
 		By("Then the Kyma CR is in a ready state")
 		Eventually(IsKymaCRInReadyState).
