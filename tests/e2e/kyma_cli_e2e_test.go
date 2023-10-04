@@ -9,7 +9,7 @@ import (
 
 var _ = Describe("Kyma Deployment, Enabling and Disabling Module", Ordered, func() {
 	kcpSystemNamespace := "kcp-system"
-	BeforeAll("Then should install Kyma and Lifecycle Manager successfully", func() {
+	BeforeAll(func() {
 		By("Executing kyma alpha deploy command")
 		Expect(ExecuteKymaDeployCommand()).To(Succeed())
 
