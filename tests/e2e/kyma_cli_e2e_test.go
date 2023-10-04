@@ -14,20 +14,22 @@ var _ = Describe("Kyma Deployment, Enabling and Disabling Module", Ordered, func
 		"sample-redis-deployment":              "manifest-redis",
 	}
 	BeforeAll(func() {
-		By("Executing kyma alpha deploy command")
-		Expect(ExecuteKymaDeployCommand()).To(Succeed())
+		Context("Given a Kyma Cluster", func() {
+			It("When `kyma alpha deploy` command is executed")
+			Expect(ExecuteKymaDeployCommand()).To(Succeed())
 
-		By("Then Kyma CR should be Ready")
-		Eventually(IsKymaCRInReadyState).
-			WithContext(ctx).
-			WithArguments(k8sClient, cli.KymaNameDefault, cli.KymaNamespaceDefault).
-			Should(BeTrue())
+			By("Then the Kyma CR is in a ready state")
+			Eventually(IsKymaCRInReadyState).
+				WithContext(ctx).
+				WithArguments(k8sClient, cli.KymaNameDefault, cli.KymaNamespaceDefault).
+				Should(BeTrue())
 
-		By("And Lifecycle Manager should be Ready")
-		Eventually(IsDeploymentReady).
-			WithContext(ctx).
-			WithArguments(k8sClient, "lifecycle-manager-controller-manager", kcpSystemNamespace).
-			Should(BeTrue())
+			By("And the Lifecycle Manager is in a ready state")
+			Eventually(IsDeploymentReady).
+				WithContext(ctx).
+				WithArguments(k8sClient, "lifecycle-manager-controller-manager", kcpSystemNamespace).
+				Should(BeTrue())
+		})
 	})
 
 	Context("Enabling and disabling ready state template-operator successfully", func() {
