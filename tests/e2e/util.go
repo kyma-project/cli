@@ -258,7 +258,7 @@ func CreateModuleCommand(versionOverwrite bool, path, registry, configFilePath, 
 	createOut, err := createModuleCmd.CombinedOutput()
 
 	if err != nil {
-		if !strings.Contains(string(createOut), "version already exists") {
+		if strings.Contains(string(createOut), "version already exists") {
 			return ErrCreateModuleFailedWithSameVersion
 		} else {
 			return fmt.Errorf("create module command failed with err %s", err)
