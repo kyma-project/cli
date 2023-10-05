@@ -18,7 +18,7 @@ func Test_SameVersion_ModuleCreation(t *testing.T) {
 	// TODO: REMOVE
 	cmd := exec.Command("ls")
 	lsOut, _ := cmd.CombinedOutput()
-	fmt.Print(lsOut)
+	fmt.Print(string(lsOut))
 
 	t.Run("Create same version module with module-archive-version-overwrite flag", func(t *testing.T) {
 		err := e2e.CreateModuleCommand(true, path, registry, configFilePath, version)
