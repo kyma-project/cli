@@ -137,13 +137,9 @@ func (r *Remote) Push(archive *comparch.ComponentArchive, overwrite bool) (ocm.C
 	}
 
 	if !overwrite {
-		versionAlreadyExists, err := repo.ExistsComponentVersion(
+		versionAlreadyExists, _ := repo.ExistsComponentVersion(
 			archive.ComponentVersionAccess.GetName(), archive.ComponentVersionAccess.GetVersion(),
 		)
-
-		if err != nil {
-			return nil, err
-		}
 
 		if versionAlreadyExists {
 			return nil, fmt.Errorf("version %s already exists", archive.ComponentVersionAccess.GetVersion())
