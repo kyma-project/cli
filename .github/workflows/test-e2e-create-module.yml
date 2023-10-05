@@ -33,7 +33,7 @@ jobs:
           go-version-file: 'go.mod'
           cache-dependency-path: 'go.sum'
       - name: Build Kyma CLI
-        run: | 
+        run: |
           make resolve validate build-linux
           chmod +x ./bin/kyma-linux
           ls -la ./bin

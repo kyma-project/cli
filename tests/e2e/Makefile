@@ -33,8 +33,12 @@ help: ## Display this help.
 
 .PHONY: create_module_kubebuilder_project
 create_module_kubebuilder_project:
-	go test --tags=create_module_kubebuilder_project
+	go test ./create_module -run "Test_ModuleTemplate"
 
 .PHONY: create_module_module_config
 create_module_module_config:
-	go test --tags=create_module_module_config
+	go test ./create_module -run "Test_ModuleTemplate"
+
+.PHONY: deploy_enable_disable
+deploy_enable_disable:
+	go test -ginkgo.v -ginkgo.focus "Kyma Deployment, Enabling and Disabling Module"
