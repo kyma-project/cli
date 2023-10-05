@@ -39,6 +39,10 @@ create_module_kubebuilder_project:
 create_module_module_config:
 	go test ./create_module -run "Test_ModuleTemplate"
 
+.PHONY: create_module_same_version
+create_module_same_version:
+	go test ./create_module -run "Test_SameVersion_ModuleCreation"
+
 .PHONY: deploy_enable_disable
 deploy_enable_disable:
 	go test -ginkgo.v -ginkgo.focus "Kyma Deployment, Enabling and Disabling Module"
