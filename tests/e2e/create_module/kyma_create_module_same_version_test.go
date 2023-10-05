@@ -1,8 +1,6 @@
 package create_module_test
 
 import (
-	"fmt"
-	"os/exec"
 	"testing"
 
 	"github.com/kyma-project/cli/tests/e2e"
@@ -14,11 +12,6 @@ func Test_SameVersion_ModuleCreation(t *testing.T) {
 	registry := "http://k3d-oci.localhost:5001"
 	configFilePath := "../../../template-operator/module-config.yaml"
 	version := "v1.0.0"
-
-	// TODO: REMOVE
-	cmd := exec.Command("ls")
-	lsOut, _ := cmd.CombinedOutput()
-	fmt.Print(string(lsOut))
 
 	t.Run("Create same version module with module-archive-version-overwrite flag", func(t *testing.T) {
 		err := e2e.CreateModuleCommand(true, path, registry, configFilePath, version)
