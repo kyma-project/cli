@@ -46,7 +46,7 @@ func ExecuteKymaDeployCommand() error {
 	return nil
 }
 
-func IsDeploymentReady(ctx context.Context,
+func DeploymentIsReady(ctx context.Context,
 	k8sClient client.Client,
 	deploymentName string,
 	namespace string) bool {
@@ -64,7 +64,7 @@ func IsDeploymentReady(ctx context.Context,
 	return true
 }
 
-func IsKymaCRInReadyState(ctx context.Context,
+func KymaCRIsInReadyState(ctx context.Context,
 	k8sClient client.Client,
 	kymaName string,
 	namespace string) bool {
@@ -93,7 +93,7 @@ func ApplyModuleTemplate(
 	return nil
 }
 
-func EnableModuleOnKymaWithReadyStateModule(moduleName string) error {
+func enableKymaModuleWithExpectedExitCode(moduleName string, expectedExitCode int) error {
 	cmd := exec.Command("kyma", "alpha", "enable", "module", moduleName, "-w")
 	err := cmd.Run()
 	var exitCode int
@@ -104,27 +104,21 @@ func EnableModuleOnKymaWithReadyStateModule(moduleName string) error {
 	}
 
 	GinkgoWriter.Println("Exit code", exitCode)
-	if exitCode != 0 {
+	if exitCode != expectedExitCode {
 		return errModuleEnablingFailed
 	}
 	return nil
 }
 
-func EnableModuleOnKymaWithWarningStateModule(moduleName string) error {
-	cmd := exec.Command("kyma", "alpha", "enable", "module", moduleName, "-w")
-	err := cmd.Run()
-	var exitCode int
-	if exitErr, ok := err.(*exec.ExitError); ok {
-		exitCode = exitErr.ExitCode()
-	} else {
-		exitCode = cmd.ProcessState.ExitCode()
-	}
+func EnableKymaModuleWithReadyState(moduleName string) error {
+	expectedExitCode := 0
+	return enableKymaModuleWithExpectedExitCode(moduleName, expectedExitCode)
+}
 
-	GinkgoWriter.Println("Exit code", exitCode)
-	if exitCode != 2 {
-		return errModuleEnablingFailed
-	}
-	return nil
+func EnableKymaModuleWithWarningState(moduleName string) error {
+	expectedExitCode := 2
+	return enableKymaModuleWithExpectedExitCode(moduleName, expectedExitCode)
+
 }
 
 func DisableModuleOnKyma(moduleName string) error {
@@ -144,7 +138,7 @@ func DisableModuleOnKyma(moduleName string) error {
 	return nil
 }
 
-func IsCRDAvailable(ctx context.Context,
+func CRDIsAvailable(ctx context.Context,
 	k8sClient client.Client,
 	name string) bool {
 	var crd v1extensions.CustomResourceDefinition
@@ -155,41 +149,42 @@ func IsCRDAvailable(ctx context.Context,
 	return err == nil
 }
 
-func IsCRReady(resourceType string,
+func crIsInExpectedState(resourceType string,
 	resourceName string,
-	namespace string) bool {
+	namespace string,
+	expectedState string) bool {
 	cmd := exec.Command("kubectl", "get", resourceType, resourceName, "-n",
 		namespace, "-o", "jsonpath='{.status.state}'")
 
 	statusOutput, err := cmd.CombinedOutput()
 	GinkgoWriter.Println(string(statusOutput))
-	if err != nil || string(statusOutput) != "'Ready'" {
+	if err != nil || string(statusOutput) != expectedState {
 		return false
 	}
 
 	return true
 }
 
-func IsCRInWarningState(resourceType string,
+func CRIsReady(resourceType string,
 	resourceName string,
 	namespace string) bool {
-	cmd := exec.Command("kubectl", "get", resourceType, resourceName, "-n",
-		namespace, "-o", "jsonpath='{.status.state}'")
-
-	statusOutput, err := cmd.CombinedOutput()
-	GinkgoWriter.Println(string(statusOutput))
-	if err != nil || string(statusOutput) != "'Warning'" {
-		return false
-	}
-
-	return true
+	expectedState := "'Ready'"
+	return crIsInExpectedState(resourceType, resourceName, namespace, expectedState)
 }
 
-func IsModuleReadyInKymaStatus(ctx context.Context,
+func CRIsInWarningState(resourceType string,
+	resourceName string,
+	namespace string) bool {
+	expectedState := "'Warning'"
+	return crIsInExpectedState(resourceType, resourceName, namespace, expectedState)
+}
+
+func kymaContainsModuleInExpectedState(ctx context.Context,
 	k8sClient client.Client,
 	kymaName string,
 	namespace string,
-	moduleName string) bool {
+	moduleName string,
+	expectedState v1beta2.State) bool {
 	var kyma v1beta2.Kyma
 	err := k8sClient.Get(ctx, client.ObjectKey{
 		Namespace: namespace,
@@ -198,42 +193,42 @@ func IsModuleReadyInKymaStatus(ctx context.Context,
 
 	GinkgoWriter.Println(kyma.Status.Modules)
 	if err != nil || kyma.Status.Modules == nil || kyma.Status.Modules[0].Name != moduleName ||
-		kyma.Status.Modules[0].State != v1beta2.StateReady {
+		kyma.Status.Modules[0].State != expectedState {
 		return false
 	}
 
 	return true
 }
 
-func IsModuleInWarningStateInKymaStatus(ctx context.Context,
+func KymaContainsModuleInReadyState(ctx context.Context,
 	k8sClient client.Client,
 	kymaName string,
 	namespace string,
 	moduleName string) bool {
-	var kyma v1beta2.Kyma
-	err := k8sClient.Get(ctx, client.ObjectKey{
-		Namespace: namespace,
-		Name:      kymaName,
-	}, &kyma)
 
-	GinkgoWriter.Println(kyma.Status.Modules)
-	if err != nil || kyma.Status.Modules == nil || kyma.Status.Modules[0].Name != moduleName ||
-		kyma.Status.Modules[0].State != v1beta2.StateWarning {
-		return false
-	}
-
-	return true
+	expectedState := v1beta2.StateReady
+	return kymaContainsModuleInExpectedState(ctx, k8sClient, kymaName, namespace, moduleName, expectedState)
 }
 
-func AreModuleResourcesReadyInCluster(ctx context.Context,
+func KymaContainsModuleInWarningState(ctx context.Context,
+	k8sClient client.Client,
+	kymaName string,
+	namespace string,
+	moduleName string) bool {
+
+	expectedState := v1beta2.StateWarning
+	return kymaContainsModuleInExpectedState(ctx, k8sClient, kymaName, namespace, moduleName, expectedState)
+}
+
+func ModuleResourcesAreReady(ctx context.Context,
 	k8sClient client.Client,
 	crdName string,
 	deploymentNamesAndNamespaces map[string]string) bool {
-	if !IsCRDAvailable(ctx, k8sClient, crdName) {
+	if !CRDIsAvailable(ctx, k8sClient, crdName) {
 		return false
 	}
 	for k, v := range deploymentNamesAndNamespaces {
-		if !IsDeploymentReady(ctx, k8sClient, k, v) {
+		if !DeploymentIsReady(ctx, k8sClient, k, v) {
 			return false
 		}
 	}

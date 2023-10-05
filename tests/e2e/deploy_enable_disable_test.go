@@ -7,6 +7,8 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+// TODO: Drop Is from function names (add in the middle)
+
 var _ = Describe("Kyma CLI deploy, enable and disable commands usage", Ordered, func() {
 	kcpSystemNamespace := "kcp-system"
 	deployments := map[string]string{
@@ -19,13 +21,13 @@ var _ = Describe("Kyma CLI deploy, enable and disable commands usage", Ordered, 
 			Expect(ExecuteKymaDeployCommand()).To(Succeed())
 
 			By("Then the Kyma CR is in a ready state")
-			Eventually(IsKymaCRInReadyState).
+			Eventually(KymaCRIsInReadyState).
 				WithContext(ctx).
 				WithArguments(k8sClient, cli.KymaNameDefault, cli.KymaNamespaceDefault).
 				Should(BeTrue())
 
 			By("And the Lifecycle Manager is in a ready state")
-			Eventually(IsDeploymentReady).
+			Eventually(DeploymentIsReady).
 				WithContext(ctx).
 				WithArguments(k8sClient, "lifecycle-manager-controller-manager", kcpSystemNamespace).
 				Should(BeTrue())
@@ -38,23 +40,22 @@ var _ = Describe("Kyma CLI deploy, enable and disable commands usage", Ordered, 
 				To(Succeed())
 
 			By("And the Template Operator gets enabled")
-			Expect(EnableModuleOnKymaWithReadyStateModule("template-operator")).To(Succeed())
-
-			Eventually(IsModuleReadyInKymaStatus).
+			Expect(EnableKymaModuleWithReadyState("template-operator")).To(Succeed())
+			Eventually(KymaContainsModuleInReadyState).
 				WithContext(ctx).
 				WithArguments(k8sClient, cli.KymaNameDefault, cli.KymaNamespaceDefault, "template-operator").
 				Should(BeTrue())
 		})
 
 		It("Then Template Operator resources are deployed in the cluster", func() {
-			Eventually(AreModuleResourcesReadyInCluster).
+			Eventually(ModuleResourcesAreReady).
 				WithContext(ctx).
 				WithArguments(k8sClient, "samples.operator.kyma-project.io", deployments).
 				Should(BeTrue())
 		})
 
 		It("And the Template Operator's CR state is ready", func() {
-			Eventually(IsCRReady).
+			Eventually(CRIsReady).
 				WithContext(ctx).
 				WithArguments("sample", "sample-yaml", "kyma-system").
 				Should(BeTrue())
@@ -65,14 +66,14 @@ var _ = Describe("Kyma CLI deploy, enable and disable commands usage", Ordered, 
 		It("When `kyma disable module` command is execute", func() {
 			Expect(DisableModuleOnKyma("template-operator")).To(Succeed())
 
-			Eventually(IsKymaCRInReadyState).
+			Eventually(KymaCRIsInReadyState).
 				WithContext(ctx).
 				WithArguments(k8sClient, cli.KymaNameDefault, cli.KymaNamespaceDefault).
 				Should(BeTrue())
 		})
 
 		It("Then the Template Operator's resources are removed from the cluster", func() {
-			Eventually(AreModuleResourcesReadyInCluster).
+			Eventually(ModuleResourcesAreReady).
 				WithContext(ctx).
 				WithArguments(k8sClient, "samples.operator.kyma-project.io", deployments).
 				Should(BeFalse())
@@ -87,23 +88,23 @@ var _ = Describe("Kyma CLI deploy, enable and disable commands usage", Ordered, 
 		})
 
 		It("And the Template Operator enable command invoked", func() {
-			Expect(EnableModuleOnKymaWithWarningStateModule("template-operator")).To(Succeed())
+			Expect(EnableKymaModuleWithWarningState("template-operator")).To(Succeed())
 
-			Eventually(IsModuleInWarningStateInKymaStatus).
+			Eventually(KymaContainsModuleInWarningState).
 				WithContext(ctx).
 				WithArguments(k8sClient, cli.KymaNameDefault, cli.KymaNamespaceDefault, "template-operator").
 				Should(BeTrue())
 		})
 
 		It("Then the Template Operator's resources are deployed in the cluster", func() {
-			Eventually(AreModuleResourcesReadyInCluster).
+			Eventually(ModuleResourcesAreReady).
 				WithContext(ctx).
 				WithArguments(k8sClient, "samples.operator.kyma-project.io", deployments).
 				Should(BeTrue())
 		})
 
 		It("And the Template Operator's CR state is in a warning state", func() {
-			Eventually(IsCRInWarningState).
+			Eventually(CRIsInWarningState).
 				WithContext(ctx).
 				WithArguments("sample", "sample-yaml", "kyma-system").
 				Should(BeTrue())
@@ -114,14 +115,14 @@ var _ = Describe("Kyma CLI deploy, enable and disable commands usage", Ordered, 
 		It("When `kyma disable module` command is executed", func() {
 			Expect(DisableModuleOnKyma("template-operator")).To(Succeed())
 
-			Eventually(IsKymaCRInReadyState).
+			Eventually(KymaCRIsInReadyState).
 				WithContext(ctx).
 				WithArguments(k8sClient, cli.KymaNameDefault, cli.KymaNamespaceDefault).
 				Should(BeTrue())
 		})
 
 		It("Then Template Operator's resources are removed from the cluster", func() {
-			Eventually(AreModuleResourcesReadyInCluster).
+			Eventually(ModuleResourcesAreReady).
 				WithContext(ctx).
 				WithArguments(k8sClient, "samples.operator.kyma-project.io", deployments).
 				Should(BeFalse())
