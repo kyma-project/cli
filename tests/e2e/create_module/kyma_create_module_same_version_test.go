@@ -12,7 +12,7 @@ import (
 func Test_SameVersion_ModuleCreation(t *testing.T) {
 	path := "../../../template-operator"
 	registry := "http://k3d-oci.localhost:5001"
-	configFilePath := "../../../../template-operator/module-config.yaml"
+	configFilePath := "../../../template-operator/module-config.yaml"
 	version := "v1.0.0"
 
 	// TODO: REMOVE
