@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Kyma Deployment, Enabling and Disabling Module", Ordered, func() {
+var _ = Describe("Kyma CLI deploy, enable and disable commands usage", Ordered, func() {
 	kcpSystemNamespace := "kcp-system"
 	deployments := map[string]string{
 		"template-operator-controller-manager": "template-operator-system",
