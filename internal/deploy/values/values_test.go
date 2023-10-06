@@ -192,65 +192,6 @@ func TestMerge(t *testing.T) {
 					"tlsCrt":     defaultLocalTLSCrtEnc,
 					"tlsKey":     defaultLocalTLSKeyEnc,
 				},
-				"serverless": map[string]interface{}{
-					"dockerRegistry": map[string]interface{}{
-						"enableInternal":        false,
-						"internalServerAddress": "k3d-foo-registry:5000",
-						"serverAddress":         "k3d-foo-registry:5000",
-						"registryAddress":       "k3d-foo-registry:5000",
-					},
-					"containers": map[string]interface{}{
-						"manager": map[string]interface{}{
-							"envs": map[string]interface{}{
-								"functionBuildExecutorArgs": map[string]interface{}{
-									"value": "--insecure,--skip-tls-verify,--skip-unused-stages,--log-format=text,--cache=true,--force",
-								},
-							},
-						},
-					},
-				},
-				"istio": map[string]interface{}{
-					"helmValues": map[string]interface{}{
-						"cni": map[string]string{
-							"cniConfDir": "/var/lib/rancher/k3s/agent/etc/cni/net.d",
-							"cniBinDir":  "/bin",
-						},
-					},
-				},
-			}
-
-			require.NoError(t, err)
-			require.Truef(t, reflect.DeepEqual(expected, actual), "want: %#v\n got: %#v\n", expected, actual)
-		})
-
-		t.Run("Serverless registry overrides", func(t *testing.T) {
-			src := Sources{ValueFiles: []string{"./testdata/registry-overrides.yaml"}}
-			actual, err := Merge(src, "testdata", clusterinfo.K3d{ClusterName: "foo"})
-
-			expected := Values{
-				"global": map[string]interface{}{
-					"domainName": "local.kyma.dev",
-					"tlsCrt":     defaultLocalTLSCrtEnc,
-					"tlsKey":     defaultLocalTLSKeyEnc,
-				},
-				"serverless": map[string]interface{}{
-					"dockerRegistry": map[string]interface{}{
-						"enableInternal":        true,
-						"password":              "secret password",
-						"internalServerAddress": "internal-address",
-						"serverAddress":         "external-address",
-						"registryAddress":       "external-push-address",
-					},
-					"containers": map[string]interface{}{
-						"manager": map[string]interface{}{
-							"envs": map[string]interface{}{
-								"functionBuildExecutorArgs": map[string]interface{}{
-									"value": "--insecure,--skip-tls-verify,--skip-unused-stages,--log-format=text,--cache=true,--force",
-								},
-							},
-						},
-					},
-				},
 				"istio": map[string]interface{}{
 					"helmValues": map[string]interface{}{
 						"cni": map[string]string{
@@ -271,7 +212,6 @@ func TestMerge(t *testing.T) {
 					"global.domainName=github.com",
 					"global.tlsCrt=github_tls_crt",
 					"global.tlsKey=github_tls_key",
-					"serverless.dockerRegistry.enableInternal=true",
 				},
 			}, "testdata", clusterinfo.K3d{ClusterName: "foo"})
 
@@ -280,23 +220,6 @@ func TestMerge(t *testing.T) {
 					"domainName": "github.com",
 					"tlsCrt":     "github_tls_crt",
 					"tlsKey":     "github_tls_key",
-				},
-				"serverless": map[string]interface{}{
-					"dockerRegistry": map[string]interface{}{
-						"enableInternal":        true,
-						"internalServerAddress": "k3d-foo-registry:5000",
-						"serverAddress":         "k3d-foo-registry:5000",
-						"registryAddress":       "k3d-foo-registry:5000",
-					},
-					"containers": map[string]interface{}{
-						"manager": map[string]interface{}{
-							"envs": map[string]interface{}{
-								"functionBuildExecutorArgs": map[string]interface{}{
-									"value": "--insecure,--skip-tls-verify,--skip-unused-stages,--log-format=text,--cache=true,--force",
-								},
-							},
-						},
-					},
 				},
 				"istio": map[string]interface{}{
 					"helmValues": map[string]interface{}{
@@ -322,23 +245,6 @@ func TestMerge(t *testing.T) {
 					"domainName": "hello.io",
 					"tlsCrt":     defaultLocalTLSCrtEnc,
 					"tlsKey":     defaultLocalTLSKeyEnc,
-				},
-				"serverless": map[string]interface{}{
-					"dockerRegistry": map[string]interface{}{
-						"enableInternal":        false,
-						"internalServerAddress": "k3d-foo-registry:5000",
-						"serverAddress":         "k3d-foo-registry:5000",
-						"registryAddress":       "k3d-foo-registry:5000",
-					},
-					"containers": map[string]interface{}{
-						"manager": map[string]interface{}{
-							"envs": map[string]interface{}{
-								"functionBuildExecutorArgs": map[string]interface{}{
-									"value": "--insecure,--skip-tls-verify,--skip-unused-stages,--log-format=text,--cache=true,--force",
-								},
-							},
-						},
-					},
 				},
 				"istio": map[string]interface{}{
 					"helmValues": map[string]interface{}{
