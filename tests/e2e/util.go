@@ -27,8 +27,8 @@ var (
 const (
 	exitCodeNoError = 0
 	exitCodeWarning = 2
-	readyState      = v1beta2.StateReady
-	warningState    = v1beta2.StateWarning
+	ReadyState      = v1beta2.StateReady
+	WarningState    = v1beta2.StateWarning
 )
 
 func ReadModuleTemplate(filepath string) (*v1beta2.ModuleTemplate, error) {
@@ -148,7 +148,7 @@ func CRDIsAvailable(ctx context.Context,
 	return err == nil
 }
 
-func crIsInExpectedState(resourceType string,
+func CrIsInExpectedState(resourceType string,
 	resourceName string,
 	namespace string,
 	expectedState v1beta2.State) bool {
@@ -165,19 +165,7 @@ func crIsInExpectedState(resourceType string,
 	return err == nil && strings.Contains(string(statusOutput), string(expectedState))
 }
 
-func CRIsReady(resourceType string,
-	resourceName string,
-	namespace string) bool {
-	return crIsInExpectedState(resourceType, resourceName, namespace, readyState)
-}
-
-func CRIsInWarningState(resourceType string,
-	resourceName string,
-	namespace string) bool {
-	return crIsInExpectedState(resourceType, resourceName, namespace, warningState)
-}
-
-func kymaContainsModuleInExpectedState(ctx context.Context,
+func KymaContainsModuleInExpectedState(ctx context.Context,
 	k8sClient client.Client,
 	kymaName string,
 	namespace string,
@@ -193,24 +181,6 @@ func kymaContainsModuleInExpectedState(ctx context.Context,
 
 	return err == nil && kyma.Status.Modules != nil && kyma.Status.Modules[0].Name == moduleName &&
 		kyma.Status.Modules[0].State == expectedState
-}
-
-func KymaContainsModuleInReadyState(ctx context.Context,
-	k8sClient client.Client,
-	kymaName string,
-	namespace string,
-	moduleName string) bool {
-
-	return kymaContainsModuleInExpectedState(ctx, k8sClient, kymaName, namespace, moduleName, readyState)
-}
-
-func KymaContainsModuleInWarningState(ctx context.Context,
-	k8sClient client.Client,
-	kymaName string,
-	namespace string,
-	moduleName string) bool {
-
-	return kymaContainsModuleInExpectedState(ctx, k8sClient, kymaName, namespace, moduleName, warningState)
 }
 
 func ModuleResourcesAreReady(ctx context.Context,

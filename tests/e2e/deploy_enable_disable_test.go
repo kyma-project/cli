@@ -39,9 +39,13 @@ var _ = Describe("Kyma CLI deploy, enable and disable commands usage", Ordered, 
 
 			By("And the Template Operator gets enabled")
 			Expect(EnableKymaModuleWithReadyState("template-operator")).To(Succeed())
-			Eventually(KymaContainsModuleInReadyState).
+			Eventually(KymaContainsModuleInExpectedState).
 				WithContext(ctx).
-				WithArguments(k8sClient, cli.KymaNameDefault, cli.KymaNamespaceDefault, "template-operator").
+				WithArguments(k8sClient,
+					cli.KymaNameDefault,
+					cli.KymaNamespaceDefault,
+					"template-operator",
+					ReadyState).
 				Should(BeTrue())
 		})
 
@@ -53,9 +57,9 @@ var _ = Describe("Kyma CLI deploy, enable and disable commands usage", Ordered, 
 		})
 
 		It("And the Template Operator's CR state is ready", func() {
-			Eventually(CRIsReady).
+			Eventually(CrIsInExpectedState).
 				WithContext(ctx).
-				WithArguments("sample", "sample-yaml", "kyma-system").
+				WithArguments("sample", "sample-yaml", "kyma-system", ReadyState).
 				Should(BeTrue())
 		})
 	})
@@ -88,9 +92,13 @@ var _ = Describe("Kyma CLI deploy, enable and disable commands usage", Ordered, 
 		It("And the Template Operator enable command invoked", func() {
 			Expect(EnableKymaModuleWithWarningState("template-operator")).To(Succeed())
 
-			Eventually(KymaContainsModuleInWarningState).
+			Eventually(KymaContainsModuleInExpectedState).
 				WithContext(ctx).
-				WithArguments(k8sClient, cli.KymaNameDefault, cli.KymaNamespaceDefault, "template-operator").
+				WithArguments(k8sClient,
+					cli.KymaNameDefault,
+					cli.KymaNamespaceDefault,
+					"template-operator",
+					WarningState).
 				Should(BeTrue())
 		})
 
@@ -102,9 +110,9 @@ var _ = Describe("Kyma CLI deploy, enable and disable commands usage", Ordered, 
 		})
 
 		It("And the Template Operator's CR state is in a warning state", func() {
-			Eventually(CRIsInWarningState).
+			Eventually(CrIsInExpectedState).
 				WithContext(ctx).
-				WithArguments("sample", "sample-yaml", "kyma-system").
+				WithArguments("sample", "sample-yaml", "kyma-system", WarningState).
 				Should(BeTrue())
 		})
 	})
