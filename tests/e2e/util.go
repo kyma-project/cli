@@ -9,6 +9,7 @@ import (
 
 	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	. "github.com/onsi/ginkgo/v2" //nolint:stylecheck,revive
+	v1 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/meta/v1"
 	"github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
 	v1extensions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -25,6 +26,11 @@ var (
 		"failed to create module with same version exists message")
 )
 
+const (
+	exitCodeNoError = 0
+	exitCodeWarning = 2
+)
+
 func ReadModuleTemplate(filepath string) (*v1beta2.ModuleTemplate, error) {
 	moduleTemplate := &v1beta2.ModuleTemplate{}
 	moduleFile, err := os.ReadFile(filepath)
@@ -39,7 +45,7 @@ func ExecuteKymaDeployCommand() error {
 	deployCmd := exec.Command("kyma", "alpha", "deploy")
 	deployOut, err := deployCmd.CombinedOutput()
 	if err != nil {
-		return errKymaDeployCommandFailed
+		return fmt.Errorf("%w: %v", errKymaDeployCommandFailed, err)
 	}
 
 	if !strings.Contains(string(deployOut), "Kyma CR deployed and Ready") {
@@ -60,11 +66,7 @@ func DeploymentIsReady(ctx context.Context,
 	}, &deployment)
 
 	GinkgoWriter.Println("Available replicas:", deployment.Status.AvailableReplicas)
-	if err != nil || deployment.Status.AvailableReplicas == 0 {
-		return false
-	}
-
-	return true
+	return err == nil && deployment.Status.AvailableReplicas != 0
 }
 
 func KymaCRIsInReadyState(ctx context.Context,
@@ -77,11 +79,7 @@ func KymaCRIsInReadyState(ctx context.Context,
 		Name:      kymaName,
 	}, &kyma)
 
-	if err != nil || kyma.Status.State != v1beta2.StateReady {
-		return false
-	}
-
-	return true
+	return err == nil && kyma.Status.State == v1beta2.StateReady
 }
 
 func ApplyModuleTemplate(
@@ -90,7 +88,7 @@ func ApplyModuleTemplate(
 
 	_, err := cmd.CombinedOutput()
 	if err != nil {
-		return errModuleTemplateNotApplied
+		return fmt.Errorf("%w: %v", errModuleTemplateNotApplied, err)
 	}
 
 	return nil
@@ -108,19 +106,17 @@ func enableKymaModuleWithExpectedExitCode(moduleName string, expectedExitCode in
 
 	GinkgoWriter.Println("Exit code", exitCode)
 	if exitCode != expectedExitCode {
-		return errModuleEnablingFailed
+		return fmt.Errorf("%w: %v", errModuleEnablingFailed, err)
 	}
 	return nil
 }
 
 func EnableKymaModuleWithReadyState(moduleName string) error {
-	expectedExitCode := 0
-	return enableKymaModuleWithExpectedExitCode(moduleName, expectedExitCode)
+	return enableKymaModuleWithExpectedExitCode(moduleName, exitCodeNoError)
 }
 
 func EnableKymaModuleWithWarningState(moduleName string) error {
-	expectedExitCode := 2
-	return enableKymaModuleWithExpectedExitCode(moduleName, expectedExitCode)
+	return enableKymaModuleWithExpectedExitCode(moduleName, exitCodeWarning)
 
 }
 
@@ -136,7 +132,7 @@ func DisableModuleOnKyma(moduleName string) error {
 
 	GinkgoWriter.Println("Exit code", exitCode)
 	if exitCode != 0 {
-		return errModuleDisablingFailed
+		return fmt.Errorf("%w: %v", errModuleDisablingFailed, err)
 	}
 	return nil
 }
@@ -152,37 +148,24 @@ func CRDIsAvailable(ctx context.Context,
 	return err == nil
 }
 
-func crIsInExpectedState(resourceType string,
+func CrIsInExpectedState(resourceType string,
 	resourceName string,
 	namespace string,
-	expectedState string) bool {
+	expectedState v1beta2.State) bool {
 	cmd := exec.Command("kubectl", "get", resourceType, resourceName, "-n",
 		namespace, "-o", "jsonpath='{.status.state}'")
 
 	statusOutput, err := cmd.CombinedOutput()
-	GinkgoWriter.Println(string(statusOutput))
-	if err != nil || string(statusOutput) != expectedState {
+	if err != nil {
 		return false
 	}
 
-	return true
+	GinkgoWriter.Println(string(statusOutput))
+
+	return err == nil && strings.Contains(string(statusOutput), string(expectedState))
 }
 
-func CRIsReady(resourceType string,
-	resourceName string,
-	namespace string) bool {
-	expectedState := "'Ready'"
-	return crIsInExpectedState(resourceType, resourceName, namespace, expectedState)
-}
-
-func CRIsInWarningState(resourceType string,
-	resourceName string,
-	namespace string) bool {
-	expectedState := "'Warning'"
-	return crIsInExpectedState(resourceType, resourceName, namespace, expectedState)
-}
-
-func kymaContainsModuleInExpectedState(ctx context.Context,
+func KymaContainsModuleInExpectedState(ctx context.Context,
 	k8sClient client.Client,
 	kymaName string,
 	namespace string,
@@ -195,32 +178,9 @@ func kymaContainsModuleInExpectedState(ctx context.Context,
 	}, &kyma)
 
 	GinkgoWriter.Println(kyma.Status.Modules)
-	if err != nil || kyma.Status.Modules == nil || kyma.Status.Modules[0].Name != moduleName ||
-		kyma.Status.Modules[0].State != expectedState {
-		return false
-	}
 
-	return true
-}
-
-func KymaContainsModuleInReadyState(ctx context.Context,
-	k8sClient client.Client,
-	kymaName string,
-	namespace string,
-	moduleName string) bool {
-
-	expectedState := v1beta2.StateReady
-	return kymaContainsModuleInExpectedState(ctx, k8sClient, kymaName, namespace, moduleName, expectedState)
-}
-
-func KymaContainsModuleInWarningState(ctx context.Context,
-	k8sClient client.Client,
-	kymaName string,
-	namespace string,
-	moduleName string) bool {
-
-	expectedState := v1beta2.StateWarning
-	return kymaContainsModuleInExpectedState(ctx, k8sClient, kymaName, namespace, moduleName, expectedState)
+	return err == nil && kyma.Status.Modules != nil && kyma.Status.Modules[0].Name == moduleName &&
+		kyma.Status.Modules[0].State == expectedState
 }
 
 func ModuleResourcesAreReady(ctx context.Context,
@@ -237,6 +197,17 @@ func ModuleResourcesAreReady(ctx context.Context,
 	}
 
 	return true
+}
+
+func Flatten(labels v1.Labels) map[string]string {
+	labelsMap := make(map[string]string)
+	for _, l := range labels {
+		var value string
+		_ = yaml.Unmarshal(l.Value, &value)
+		labelsMap[l.Name] = value
+	}
+
+	return labelsMap
 }
 
 func CreateModuleCommand(versionOverwrite bool, path, registry, configFilePath, version string) error {
@@ -256,8 +227,7 @@ func CreateModuleCommand(versionOverwrite bool, path, registry, configFilePath, 
 		if strings.Contains(string(createOut), fmt.Sprintf("version %s already exists", version)) {
 			return ErrCreateModuleFailedWithSameVersion
 		}
-		return fmt.Errorf("create module command failed with err %s", createOut)
+		return fmt.Errorf("create module command failed with err %s", err)
 	}
-
 	return nil
 }

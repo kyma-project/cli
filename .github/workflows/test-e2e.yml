@@ -51,4 +51,4 @@ jobs:
       - name: Update Kubeconfigs
         run: k3d kubeconfig merge -a -d
       - name: Run E2E tests
-        run: make -C tests/e2e deploy_enable_disable
+        run: make -C tests/e2e test-module-enabling-disabling

@@ -15,8 +15,6 @@ import (
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/cpi"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/genericocireg"
 	ocmOCIReg "github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/ocireg"
-	"gopkg.in/yaml.v3"
-
 	"github.com/stretchr/testify/assert"
 )
 
@@ -70,24 +68,11 @@ func Test_ModuleTemplate(t *testing.T) {
 
 	// test security scan labels
 	secScanLabels := descriptor.Sources[0].Labels
-
-	var devBranch string
-	err = yaml.Unmarshal(secScanLabels[1].Value, &devBranch)
-	assert.Nil(t, err)
-	assert.Equal(t, "main", devBranch)
-
-	var rcTag string
-	err = yaml.Unmarshal(secScanLabels[2].Value, &rcTag)
-	assert.Nil(t, err)
-	assert.Equal(t, "0.5.0", rcTag)
-
-	var language string
-	err = yaml.Unmarshal(secScanLabels[3].Value, &language)
-	assert.Nil(t, err)
-	assert.Equal(t, "golang-mod", language)
-
-	var exclude string
-	err = yaml.Unmarshal(secScanLabels[4].Value, &exclude)
-	assert.Nil(t, err)
-	assert.Equal(t, "**/test/**,**/*_test.go", exclude)
+	assert.Equal(t, map[string]string{
+		"git.kyma-project.io/ref":                  "refs/heads/main",
+		"scan.security.kyma-project.io/dev-branch": "main",
+		"scan.security.kyma-project.io/rc-tag":     "0.5.0",
+		"scan.security.kyma-project.io/language":   "golang-mod",
+		"scan.security.kyma-project.io/exclude":    "**/test/**,**/*_test.go",
+	}, e2e.Flatten(secScanLabels))
 }

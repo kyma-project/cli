@@ -24,15 +24,22 @@ spec:
           value: enabled
           version: v1
       name: kyma-project.io/template-operator
-      provider: internal
+      provider: '{"name":"kyma-project.io","labels":[{"name":"kyma-project.io/built-by","value":"cli","version":"v1"}]}'
       repositoryContexts:
         - baseUrl: europe-west3-docker.pkg.dev/sap-kyma-jellyfish-dev/template-operator
           componentNameMapping: urlPath
-          type: ociRegistry
+          type: OCIRegistry
       resources:
         - access:
-            digest: sha256:e88f3d1a80dbce2084f4991905a3e9847a58bd0e5b666754aa9105b9d49e82ba
-            type: localOciBlob
+            globalAccess:
+              digest: sha256:e88f3d1a80dbce2084f4991905a3e9847a58bd0e5b666754aa9105b9d49e82ba
+              mediaType: application/octet-stream
+              ref: europe-west3-docker.pkg.dev/sap-kyma-jellyfish-dev/template-operator/component-descriptors/kyma-project.io/template-operator
+              size: 12812
+              type: ociBlob
+            localReference: sha256:e88f3d1a80dbce2084f4991905a3e9847a58bd0e5b666754aa9105b9d49e82ba
+            mediaType: application/octet-stream
+            type: localBlob
           name: raw-manifest
           relation: local
           type: yaml
@@ -46,17 +53,20 @@ spec:
             - name: git.kyma-project.io/ref
               value: refs/heads/sec_scanners_change
               version: v1
+            - name: scan.security.kyma-project.io/dev-branch
+              value: main
+              version: v1
+            - name: scan.security.kyma-project.io/rc-tag
+              value: 0.5.0
+              version: v1
             - name: scan.security.kyma-project.io/language
               value: golang-mod
-              version: v1
-            - name: scan.security.kyma-project.io/subprojects
-              value: ""
               version: v1
             - name: scan.security.kyma-project.io/exclude
               value: '**/test/**,**/*_test.go'
               version: v1
           name: module-sources
-          type: git
+          type: Github
           version: v1.0.0-e2e-warning
       version: v1.0.0-e2e-warning
     meta:
