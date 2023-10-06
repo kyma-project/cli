@@ -74,5 +74,5 @@ func Test_ModuleTemplate(t *testing.T) {
 		"scan.security.kyma-project.io/rc-tag":     "0.5.0",
 		"scan.security.kyma-project.io/language":   "golang-mod",
 		"scan.security.kyma-project.io/exclude":    "**/test/**,**/*_test.go",
-	}, e2e.FlattenSecurityLabels(secScanLabels))
+	}, e2e.Flatten(secScanLabels))
 }

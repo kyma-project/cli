@@ -227,7 +227,7 @@ func ModuleResourcesAreReady(ctx context.Context,
 	return true
 }
 
-func FlattenSecurityLabels(labels v1.Labels) map[string]string {
+func Flatten(labels v1.Labels) map[string]string {
 	labelsMap := make(map[string]string)
 	for _, l := range labels {
 		var value string
