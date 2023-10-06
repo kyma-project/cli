@@ -50,44 +50,6 @@ func (b *builder) addDefaultGlobalTLSCrtAndKey(tlsCrt, tlsKey string) *builder {
 	})
 }
 
-type serverlessRegistryConfig struct {
-	enable                bool
-	serverAddress         string
-	internalServerAddress string
-	registryAddress       string
-}
-
-func (b *builder) addDefaultServerlessRegistryConfig(config serverlessRegistryConfig) *builder {
-	return b.addDefaultValues(map[string]interface{}{
-		"serverless": map[string]interface{}{
-			"dockerRegistry": map[string]interface{}{
-				"enableInternal":        config.enable,
-				"internalServerAddress": config.internalServerAddress,
-				"serverAddress":         config.serverAddress,
-				"registryAddress":       config.registryAddress,
-			},
-		},
-	})
-}
-
-// https://github.com/GoogleContainerTools/kaniko/issues/1592
-// https://github.com/kyma-project/kyma/issues/13051
-func (b *builder) addDefaultServerlessKanikoForce() *builder {
-	return b.addDefaultValues(map[string]interface{}{
-		"serverless": map[string]interface{}{
-			"containers": map[string]interface{}{
-				"manager": map[string]interface{}{
-					"envs": map[string]interface{}{
-						"functionBuildExecutorArgs": map[string]interface{}{
-							"value": "--insecure,--skip-tls-verify,--skip-unused-stages,--log-format=text,--cache=true,--force",
-						},
-					},
-				},
-			},
-		},
-	})
-}
-
 func (b *builder) addDefaultk3dValuesForIstio() *builder {
 	return b.addDefaultValues(map[string]interface{}{
 		"istio": map[string]interface{}{

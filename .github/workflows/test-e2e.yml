@@ -1,4 +1,4 @@
-name: TestSuite Smoke
+name: TestSuite E2E
 
 on:
   push:
@@ -14,20 +14,22 @@ on:
       - 'go.sum'
       - '**.go'
 jobs:
-  cli-deploy:
-    name: "kyma deploy"
+  e2e-tests:
+    name: "Run E2E tests"
     runs-on: ubuntu-latest
     env:
-      LIFECYCLE_MANAGER: ${{ github.repository }}
       K3D_VERSION: v5.4.7
     steps:
-      - name: Checkout
+      - name: Checkout Kyma CLI
         uses: actions/checkout@v3
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
           go-version-file: 'go.mod'
           cache-dependency-path: 'go.sum'
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        id: install
       - name: Build Kyma CLI
         run: | 
           make resolve validate build-linux
@@ -48,5 +50,5 @@ jobs:
             --name kyma
       - name: Update Kubeconfigs
         run: k3d kubeconfig merge -a -d
-      - name: Run kyma deploy
-        run: kyma --ci alpha deploy
+      - name: Run E2E tests
+        run: make -C tests/e2e test-module-enabling-disabling
