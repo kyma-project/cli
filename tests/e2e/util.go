@@ -161,7 +161,7 @@ func crIsInExpectedState(resourceType string,
 		return false
 	}
 
-	unquotedStatus, err := strconv.Unquote(string(statusOutput))
+	_, _, unquotedStatus, err := strconv.UnquoteChar(string(statusOutput), '\'')
 	GinkgoWriter.Println(unquotedStatus)
 
 	return err == nil && unquotedStatus == string(expectedState)
