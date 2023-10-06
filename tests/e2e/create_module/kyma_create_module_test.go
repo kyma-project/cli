@@ -69,7 +69,7 @@ func Test_ModuleTemplate(t *testing.T) {
 	// test security scan labels
 	secScanLabels := descriptor.Sources[0].Labels
 	assert.Equal(t, map[string]string{
-		"git.kyma-project.io/ref":                  "refs/heads/sec_scanners_change",
+		"git.kyma-project.io/ref":                  "refs/heads/main",
 		"scan.security.kyma-project.io/dev-branch": "main",
 		"scan.security.kyma-project.io/rc-tag":     "0.5.0",
 		"scan.security.kyma-project.io/language":   "golang-mod",
