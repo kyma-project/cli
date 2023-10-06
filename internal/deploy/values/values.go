@@ -2,7 +2,6 @@ package values
 
 import (
 	"encoding/base64"
-	"fmt"
 	"os"
 	"path/filepath"
 
@@ -46,20 +45,10 @@ func Merge(sources Sources, workspaceDir string, clusterInfo clusterinfo.Info) (
 }
 
 func addClusterSpecificDefaults(builder *builder, clusterInfo clusterinfo.Info) {
-	if k3d, isK3d := clusterInfo.(clusterinfo.K3d); isK3d {
-
-		k3dRegistry := fmt.Sprintf("k3d-%s-registry:5000", k3d.ClusterName)
-		defaultRegistryConfig := serverlessRegistryConfig{
-			enable:                false,
-			registryAddress:       k3dRegistry,
-			serverAddress:         k3dRegistry,
-			internalServerAddress: k3dRegistry,
-		}
+	if _, isK3d := clusterInfo.(clusterinfo.K3d); isK3d {
 		builder.
-			addDefaultServerlessRegistryConfig(defaultRegistryConfig).
 			addDefaultGlobalDomainName(defaultLocalKymaDomain).
 			addDefaultGlobalTLSCrtAndKey(defaultLocalTLSCrtEnc, defaultLocalTLSKeyEnc).
-			addDefaultServerlessKanikoForce().
 			addDefaultk3dValuesForIstio()
 	} else if gardener, isGardener := clusterInfo.(clusterinfo.Gardener); isGardener {
 		builder.addDefaultGlobalDomainName(gardener.Domain)
