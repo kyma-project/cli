@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 
 	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
@@ -158,7 +159,8 @@ func crIsInExpectedState(resourceType string,
 	statusOutput, err := cmd.CombinedOutput()
 	GinkgoWriter.Println(string(statusOutput))
 
-	return err == nil && string(statusOutput) == string(expectedState)
+	unquotedStatus, _ := strconv.Unquote(string(statusOutput))
+	return err == nil && unquotedStatus == string(expectedState)
 }
 
 func CRIsReady(resourceType string,
