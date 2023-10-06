@@ -17,7 +17,7 @@ jobs:
   e2e:
     strategy:
       matrix:
-        e2e-test: [ "create_module_kubebuilder_project", "create_module_module_config"]
+        e2e-test: [ "test-kubebuilder-module-creation", "test-moduleconfig-module-creation"]
     name: "Run E2E tests"
     runs-on: ubuntu-latest
     env:
@@ -54,7 +54,7 @@ jobs:
         run: |
           k3d registry create oci.localhost --port 5001
       - name: Run create module with kubebuilder-project
-        if: ${{ matrix.e2e-test == 'create_module_kubebuilder_project' }}
+        if: ${{ matrix.e2e-test == 'test-kubebuilder-module-creation' }}
         run: |
           kyma alpha create module \
           --name kyma-project.io/module/template-operator \
@@ -67,7 +67,7 @@ jobs:
           --sec-scanners-config ./template-operator/sec-scanners-config.yaml
           echo "MODULE_TEMPLATE_PATH=/tmp/kubebuilder-template.yaml" >> "$GITHUB_ENV"
       - name: Run create module with module-config
-        if: ${{ matrix.e2e-test == 'create_module_module_config' }}
+        if: ${{ matrix.e2e-test == 'test-moduleconfig-module-creation' }}
         run: |
           cd ./template-operator
           make build-manifests

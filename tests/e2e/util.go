@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
@@ -22,6 +23,13 @@ var (
 	errModuleDisablingFailed    = errors.New("failed to disable module")
 )
 
+const (
+	exitCodeNoError = 0
+	exitCodeWarning = 2
+	readyState      = "'Ready'"
+	warningState    = "'Warning'"
+)
+
 func ReadModuleTemplate(filepath string) (*v1beta2.ModuleTemplate, error) {
 	moduleTemplate := &v1beta2.ModuleTemplate{}
 	moduleFile, err := os.ReadFile(filepath)
@@ -36,7 +44,7 @@ func ExecuteKymaDeployCommand() error {
 	deployCmd := exec.Command("kyma", "alpha", "deploy")
 	deployOut, err := deployCmd.CombinedOutput()
 	if err != nil {
-		return errKymaDeployCommandFailed
+		return fmt.Errorf("%w: %v", errKymaDeployCommandFailed, err)
 	}
 
 	if !strings.Contains(string(deployOut), "Kyma CR deployed and Ready") {
@@ -57,11 +65,7 @@ func DeploymentIsReady(ctx context.Context,
 	}, &deployment)
 
 	GinkgoWriter.Println("Available replicas:", deployment.Status.AvailableReplicas)
-	if err != nil || deployment.Status.AvailableReplicas == 0 {
-		return false
-	}
-
-	return true
+	return err == nil && deployment.Status.AvailableReplicas != 0
 }
 
 func KymaCRIsInReadyState(ctx context.Context,
@@ -74,11 +78,7 @@ func KymaCRIsInReadyState(ctx context.Context,
 		Name:      kymaName,
 	}, &kyma)
 
-	if err != nil || kyma.Status.State != v1beta2.StateReady {
-		return false
-	}
-
-	return true
+	return err == nil && kyma.Status.State == v1beta2.StateReady
 }
 
 func ApplyModuleTemplate(
@@ -87,7 +87,7 @@ func ApplyModuleTemplate(
 
 	_, err := cmd.CombinedOutput()
 	if err != nil {
-		return errModuleTemplateNotApplied
+		return fmt.Errorf("%w: %v", errModuleTemplateNotApplied, err)
 	}
 
 	return nil
@@ -105,19 +105,17 @@ func enableKymaModuleWithExpectedExitCode(moduleName string, expectedExitCode in
 
 	GinkgoWriter.Println("Exit code", exitCode)
 	if exitCode != expectedExitCode {
-		return errModuleEnablingFailed
+		return fmt.Errorf("%w: %v", errModuleEnablingFailed, err)
 	}
 	return nil
 }
 
 func EnableKymaModuleWithReadyState(moduleName string) error {
-	expectedExitCode := 0
-	return enableKymaModuleWithExpectedExitCode(moduleName, expectedExitCode)
+	return enableKymaModuleWithExpectedExitCode(moduleName, exitCodeNoError)
 }
 
 func EnableKymaModuleWithWarningState(moduleName string) error {
-	expectedExitCode := 2
-	return enableKymaModuleWithExpectedExitCode(moduleName, expectedExitCode)
+	return enableKymaModuleWithExpectedExitCode(moduleName, exitCodeWarning)
 
 }
 
@@ -133,7 +131,7 @@ func DisableModuleOnKyma(moduleName string) error {
 
 	GinkgoWriter.Println("Exit code", exitCode)
 	if exitCode != 0 {
-		return errModuleDisablingFailed
+		return fmt.Errorf("%w: %v", errModuleDisablingFailed, err)
 	}
 	return nil
 }
@@ -158,25 +156,20 @@ func crIsInExpectedState(resourceType string,
 
 	statusOutput, err := cmd.CombinedOutput()
 	GinkgoWriter.Println(string(statusOutput))
-	if err != nil || string(statusOutput) != expectedState {
-		return false
-	}
 
-	return true
+	return err == nil && string(statusOutput) == expectedState
 }
 
 func CRIsReady(resourceType string,
 	resourceName string,
 	namespace string) bool {
-	expectedState := "'Ready'"
-	return crIsInExpectedState(resourceType, resourceName, namespace, expectedState)
+	return crIsInExpectedState(resourceType, resourceName, namespace, readyState)
 }
 
 func CRIsInWarningState(resourceType string,
 	resourceName string,
 	namespace string) bool {
-	expectedState := "'Warning'"
-	return crIsInExpectedState(resourceType, resourceName, namespace, expectedState)
+	return crIsInExpectedState(resourceType, resourceName, namespace, warningState)
 }
 
 func kymaContainsModuleInExpectedState(ctx context.Context,
@@ -192,6 +185,7 @@ func kymaContainsModuleInExpectedState(ctx context.Context,
 	}, &kyma)
 
 	GinkgoWriter.Println(kyma.Status.Modules)
+
 	if err != nil || kyma.Status.Modules == nil || kyma.Status.Modules[0].Name != moduleName ||
 		kyma.Status.Modules[0].State != expectedState {
 		return false

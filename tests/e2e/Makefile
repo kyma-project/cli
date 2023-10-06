@@ -31,14 +31,14 @@ help: ## Display this help.
 
 ##@ E2E Tests
 
-.PHONY: create_module_kubebuilder_project
-create_module_kubebuilder_project:
+.PHONY: test-kubebuilder-module-creation
+test-kubebuilder-module-creation:
 	go test ./create_module -run "Test_ModuleTemplate"
 
-.PHONY: create_module_module_config
-create_module_module_config:
+.PHONY: test-moduleconfig-module-creation
+test-moduleconfig-module-creation:
 	go test ./create_module -run "Test_ModuleTemplate"
 
-.PHONY: deploy_enable_disable
-deploy_enable_disable:
+.PHONY: test-module-enabling-disabling
+test-module-enabling-disabling:
 	go test -ginkgo.v -ginkgo.focus "Kyma CLI deploy, enable and disable commands usage"
