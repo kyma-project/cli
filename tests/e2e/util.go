@@ -27,8 +27,6 @@ var (
 const (
 	exitCodeNoError = 0
 	exitCodeWarning = 2
-	crReadyState    = "'Ready'"
-	crWarningState  = "'Warning'"
 	readyState      = v1beta2.StateReady
 	warningState    = v1beta2.StateWarning
 )
@@ -153,26 +151,26 @@ func CRDIsAvailable(ctx context.Context,
 func crIsInExpectedState(resourceType string,
 	resourceName string,
 	namespace string,
-	expectedState string) bool {
+	expectedState v1beta2.State) bool {
 	cmd := exec.Command("kubectl", "get", resourceType, resourceName, "-n",
 		namespace, "-o", "jsonpath='{.status.state}'")
 
 	statusOutput, err := cmd.CombinedOutput()
 	GinkgoWriter.Println(string(statusOutput))
 
-	return err == nil && string(statusOutput) == expectedState
+	return err == nil && string(statusOutput) == string(expectedState)
 }
 
 func CRIsReady(resourceType string,
 	resourceName string,
 	namespace string) bool {
-	return crIsInExpectedState(resourceType, resourceName, namespace, crReadyState)
+	return crIsInExpectedState(resourceType, resourceName, namespace, readyState)
 }
 
 func CRIsInWarningState(resourceType string,
 	resourceName string,
 	namespace string) bool {
-	return crIsInExpectedState(resourceType, resourceName, namespace, crWarningState)
+	return crIsInExpectedState(resourceType, resourceName, namespace, warningState)
 }
 
 func kymaContainsModuleInExpectedState(ctx context.Context,
