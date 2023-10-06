@@ -32,7 +32,7 @@ help: ## Display this help.
 ##@ E2E Tests
 
 .PHONY: test-module-creation
-test-kubebuilder-module-creation:
+test-module-creation:
 	go test ./create_module -run "Test_ModuleTemplate"
 
 .PHONY: test-module-enabling-disabling
