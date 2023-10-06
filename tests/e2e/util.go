@@ -232,7 +232,7 @@ func ModuleResourcesAreReady(ctx context.Context,
 }
 
 func FlattenSecurityLabels(labels v1.Labels) map[string]string {
-	var labelsMap map[string]string
+	labelsMap := make(map[string]string)
 	for _, l := range labels {
 		var value string
 		_ = yaml.Unmarshal(l.Value, &value)
