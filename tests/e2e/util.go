@@ -157,9 +157,12 @@ func crIsInExpectedState(resourceType string,
 		namespace, "-o", "jsonpath='{.status.state}'")
 
 	statusOutput, err := cmd.CombinedOutput()
+	if err != nil {
+		return false
+	}
 	GinkgoWriter.Println(string(statusOutput))
 
-	unquotedStatus, _ := strconv.Unquote(string(statusOutput))
+	unquotedStatus, err := strconv.Unquote(string(statusOutput))
 	return err == nil && unquotedStatus == string(expectedState)
 }
 
