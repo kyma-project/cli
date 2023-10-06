@@ -7,8 +7,6 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-// TODO: Drop Is from function names (add in the middle)
-
 var _ = Describe("Kyma CLI deploy, enable and disable commands usage", Ordered, func() {
 	kcpSystemNamespace := "kcp-system"
 	deployments := map[string]string{
