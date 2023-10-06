@@ -27,8 +27,10 @@ var (
 const (
 	exitCodeNoError = 0
 	exitCodeWarning = 2
-	readyState      = "'Ready'"
-	warningState    = "'Warning'"
+	crReadyState    = "'Ready'"
+	crWarningState  = "'Warning'"
+	readyState      = v1beta2.StateReady
+	warningState    = v1beta2.StateWarning
 )
 
 func ReadModuleTemplate(filepath string) (*v1beta2.ModuleTemplate, error) {
@@ -164,13 +166,13 @@ func crIsInExpectedState(resourceType string,
 func CRIsReady(resourceType string,
 	resourceName string,
 	namespace string) bool {
-	return crIsInExpectedState(resourceType, resourceName, namespace, readyState)
+	return crIsInExpectedState(resourceType, resourceName, namespace, crReadyState)
 }
 
 func CRIsInWarningState(resourceType string,
 	resourceName string,
 	namespace string) bool {
-	return crIsInExpectedState(resourceType, resourceName, namespace, warningState)
+	return crIsInExpectedState(resourceType, resourceName, namespace, crWarningState)
 }
 
 func kymaContainsModuleInExpectedState(ctx context.Context,
@@ -187,12 +189,8 @@ func kymaContainsModuleInExpectedState(ctx context.Context,
 
 	GinkgoWriter.Println(kyma.Status.Modules)
 
-	if err != nil || kyma.Status.Modules == nil || kyma.Status.Modules[0].Name != moduleName ||
-		kyma.Status.Modules[0].State != expectedState {
-		return false
-	}
-
-	return true
+	return err == nil && kyma.Status.Modules != nil && kyma.Status.Modules[0].Name == moduleName &&
+		kyma.Status.Modules[0].State == expectedState
 }
 
 func KymaContainsModuleInReadyState(ctx context.Context,
@@ -201,8 +199,7 @@ func KymaContainsModuleInReadyState(ctx context.Context,
 	namespace string,
 	moduleName string) bool {
 
-	expectedState := v1beta2.StateReady
-	return kymaContainsModuleInExpectedState(ctx, k8sClient, kymaName, namespace, moduleName, expectedState)
+	return kymaContainsModuleInExpectedState(ctx, k8sClient, kymaName, namespace, moduleName, readyState)
 }
 
 func KymaContainsModuleInWarningState(ctx context.Context,
@@ -211,8 +208,7 @@ func KymaContainsModuleInWarningState(ctx context.Context,
 	namespace string,
 	moduleName string) bool {
 
-	expectedState := v1beta2.StateWarning
-	return kymaContainsModuleInExpectedState(ctx, k8sClient, kymaName, namespace, moduleName, expectedState)
+	return kymaContainsModuleInExpectedState(ctx, k8sClient, kymaName, namespace, moduleName, warningState)
 }
 
 func ModuleResourcesAreReady(ctx context.Context,
