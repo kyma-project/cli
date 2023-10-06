@@ -9,6 +9,7 @@ import (
 
 	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	. "github.com/onsi/ginkgo/v2" //nolint:stylecheck,revive
+	v1 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/meta/v1"
 	"github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
 	v1extensions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -228,4 +229,15 @@ func ModuleResourcesAreReady(ctx context.Context,
 	}
 
 	return true
+}
+
+func FlattenSecurityLabels(labels v1.Labels) map[string]string {
+	var labelsMap map[string]string
+	for _, l := range labels {
+		var value string
+		_ = yaml.Unmarshal(l.Value, &value)
+		labelsMap[l.Name] = value
+	}
+
+	return labelsMap
 }
