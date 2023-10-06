@@ -27,8 +27,6 @@ var (
 const (
 	exitCodeNoError = 0
 	exitCodeWarning = 2
-	ReadyState      = v1beta2.StateReady
-	WarningState    = v1beta2.StateWarning
 )
 
 func ReadModuleTemplate(filepath string) (*v1beta2.ModuleTemplate, error) {

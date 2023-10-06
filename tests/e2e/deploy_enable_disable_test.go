@@ -3,6 +3,7 @@ package e2e_test
 import (
 	"github.com/kyma-project/cli/internal/cli"
 	. "github.com/kyma-project/cli/tests/e2e"
+	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
@@ -45,7 +46,7 @@ var _ = Describe("Kyma CLI deploy, enable and disable commands usage", Ordered, 
 					cli.KymaNameDefault,
 					cli.KymaNamespaceDefault,
 					"template-operator",
-					ReadyState).
+					v1beta2.StateReady).
 				Should(BeTrue())
 		})
 
@@ -59,7 +60,7 @@ var _ = Describe("Kyma CLI deploy, enable and disable commands usage", Ordered, 
 		It("And the Template Operator's CR state is ready", func() {
 			Eventually(CrIsInExpectedState).
 				WithContext(ctx).
-				WithArguments("sample", "sample-yaml", "kyma-system", ReadyState).
+				WithArguments("sample", "sample-yaml", "kyma-system", v1beta2.StateReady).
 				Should(BeTrue())
 		})
 	})
@@ -98,7 +99,7 @@ var _ = Describe("Kyma CLI deploy, enable and disable commands usage", Ordered, 
 					cli.KymaNameDefault,
 					cli.KymaNamespaceDefault,
 					"template-operator",
-					WarningState).
+					v1beta2.StateWarning).
 				Should(BeTrue())
 		})
 
@@ -112,7 +113,7 @@ var _ = Describe("Kyma CLI deploy, enable and disable commands usage", Ordered, 
 		It("And the Template Operator's CR state is in a warning state", func() {
 			Eventually(CrIsInExpectedState).
 				WithContext(ctx).
-				WithArguments("sample", "sample-yaml", "kyma-system", WarningState).
+				WithArguments("sample", "sample-yaml", "kyma-system", v1beta2.StateWarning).
 				Should(BeTrue())
 		})
 	})
