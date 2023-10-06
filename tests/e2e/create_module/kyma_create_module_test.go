@@ -1,6 +1,4 @@
-//go:build create_module_kubebuilder_project || create_module_module_config
-
-package e2e_test
+package create_module_test
 
 import (
 	"os"
@@ -17,8 +15,6 @@ import (
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/cpi"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/genericocireg"
 	ocmOCIReg "github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/ocireg"
-	"gopkg.in/yaml.v3"
-
 	"github.com/stretchr/testify/assert"
 )
 
@@ -66,25 +62,17 @@ func Test_ModuleTemplate(t *testing.T) {
 	sourceAccessSpec, err := ocm.DefaultContext().AccessSpecForSpec(source.Access)
 	assert.Nil(t, err)
 	githubAccessSpec, ok := sourceAccessSpec.(*github.AccessSpec)
+	assert.Equal(t, ok, true)
 	assert.Equal(t, githubAccessSpec.Type, github.Type)
 	assert.Contains(t, testRepoURL, githubAccessSpec.RepoURL)
 
 	// test security scan labels
 	secScanLabels := descriptor.Sources[0].Labels
-
-	var devBranch string
-	yaml.Unmarshal(secScanLabels[1].Value, &devBranch)
-	assert.Equal(t, "main", devBranch)
-
-	var rcTag string
-	yaml.Unmarshal(secScanLabels[2].Value, &rcTag)
-	assert.Equal(t, "0.5.0", rcTag)
-
-	var language string
-	yaml.Unmarshal(secScanLabels[3].Value, &language)
-	assert.Equal(t, "golang-mod", language)
-
-	var exclude string
-	yaml.Unmarshal(secScanLabels[4].Value, &exclude)
-	assert.Equal(t, "**/test/**,**/*_test.go", exclude)
+	assert.Equal(t, map[string]string{
+		"git.kyma-project.io/ref":                  "refs/heads/main",
+		"scan.security.kyma-project.io/dev-branch": "main",
+		"scan.security.kyma-project.io/rc-tag":     "0.5.0",
+		"scan.security.kyma-project.io/language":   "golang-mod",
+		"scan.security.kyma-project.io/exclude":    "**/test/**,**/*_test.go",
+	}, e2e.Flatten(secScanLabels))
 }
