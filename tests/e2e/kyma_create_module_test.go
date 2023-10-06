@@ -33,6 +33,12 @@ func Test_ModuleTemplate(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, descriptor.SchemaVersion(), v2.SchemaVersion)
 
+	// test annotations
+	annotations := template.Annotations
+	expectedModuleTemplateVersion := os.Getenv("MODULE_TEMPLATE_VERSION")
+	assert.Equal(t, annotations["operator.kyma-project.io/module-version"], expectedModuleTemplateVersion)
+	assert.Equal(t, annotations["operator.kyma-project.io/is-cluster-scoped"], "false")
+
 	// test descriptor.component.repositoryContexts
 	assert.Equal(t, len(descriptor.RepositoryContexts), 1)
 	unstructuredRepo := descriptor.GetEffectiveRepositoryContext()

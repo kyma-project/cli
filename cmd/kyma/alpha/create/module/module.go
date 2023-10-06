@@ -407,6 +407,12 @@ func (cmd *command) Run(ctx context.Context) error {
 			annotations["operator.kyma-project.io/is-cluster-scoped"] = "false"
 		}
 
+		version := cmd.opts.Version
+		if modCnf != nil {
+			version = modCnf.Version
+		}
+		annotations["operator.kyma-project.io/module-version"] = version
+
 		var channel = cmd.opts.Channel
 		if modCnf != nil {
 			channel = modCnf.Channel
