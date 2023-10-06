@@ -160,9 +160,10 @@ func crIsInExpectedState(resourceType string,
 	if err != nil {
 		return false
 	}
-	GinkgoWriter.Println(string(statusOutput))
 
 	unquotedStatus, err := strconv.Unquote(string(statusOutput))
+	GinkgoWriter.Println(unquotedStatus)
+
 	return err == nil && unquotedStatus == string(expectedState)
 }
 
