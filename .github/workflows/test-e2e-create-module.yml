@@ -83,4 +83,4 @@ jobs:
       - name: Verify module template
         run: |
           echo $MODULE_TEMPLATE_PATH
-          make -C tests/e2e ${{ matrix.e2e-test }}
+          make -C tests/e2e test-module-creation

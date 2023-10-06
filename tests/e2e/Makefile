@@ -31,12 +31,8 @@ help: ## Display this help.
 
 ##@ E2E Tests
 
-.PHONY: test-kubebuilder-module-creation
+.PHONY: test-module-creation
 test-kubebuilder-module-creation:
-	go test ./create_module -run "Test_ModuleTemplate"
-
-.PHONY: test-moduleconfig-module-creation
-test-moduleconfig-module-creation:
 	go test ./create_module -run "Test_ModuleTemplate"
 
 .PHONY: test-module-enabling-disabling
