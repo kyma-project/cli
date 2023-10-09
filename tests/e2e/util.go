@@ -18,10 +18,12 @@ import (
 )
 
 var (
-	errKymaDeployCommandFailed  = errors.New("failed to run kyma alpha deploy")
-	errModuleTemplateNotApplied = errors.New("failed to apply ModuleTemplate")
-	errModuleEnablingFailed     = errors.New("failed to enable module")
-	errModuleDisablingFailed    = errors.New("failed to disable module")
+	errKymaDeployCommandFailed           = errors.New("failed to run kyma alpha deploy")
+	errModuleTemplateNotApplied          = errors.New("failed to apply ModuleTemplate")
+	errModuleEnablingFailed              = errors.New("failed to enable module")
+	errModuleDisablingFailed             = errors.New("failed to disable module")
+	ErrCreateModuleFailedWithSameVersion = errors.New(
+		"failed to create module with same version exists message")
 )
 
 const (
@@ -206,4 +208,26 @@ func Flatten(labels v1.Labels) map[string]string {
 	}
 
 	return labelsMap
+}
+
+func CreateModuleCommand(versionOverwrite bool, path, registry, configFilePath, version string) error {
+	var createModuleCmd *exec.Cmd
+	if versionOverwrite {
+		createModuleCmd = exec.Command("kyma", "alpha", "create", "module",
+			"--path", path, "--registry", registry, "--insecure", "--module-config-file", configFilePath,
+			"--version", version, "--module-archive-version-overwrite")
+	} else {
+		createModuleCmd = exec.Command("kyma", "alpha", "create", "module",
+			"--path", path, "--registry", registry, "--insecure", "--module-config-file", configFilePath,
+			"--version", version)
+	}
+	createOut, err := createModuleCmd.CombinedOutput()
+
+	if err != nil {
+		if strings.Contains(string(createOut), fmt.Sprintf("version %s already exists", version)) {
+			return ErrCreateModuleFailedWithSameVersion
+		}
+		return fmt.Errorf("create module command failed with err %s", err)
+	}
+	return nil
 }

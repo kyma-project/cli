@@ -17,7 +17,8 @@ jobs:
   e2e:
     strategy:
       matrix:
-        e2e-test: [ "test-kubebuilder-module-creation", "test-moduleconfig-module-creation"]
+        e2e-test: [ "test-kubebuilder-module-creation", "test-moduleconfig-module-creation",
+                    "test-same-version-module-creation"]
     name: "Run E2E tests"
     runs-on: ubuntu-latest
     env:
@@ -67,7 +68,7 @@ jobs:
           --sec-scanners-config ./template-operator/sec-scanners-config.yaml
           echo "MODULE_TEMPLATE_PATH=/tmp/kubebuilder-template.yaml" >> "$GITHUB_ENV"
       - name: Run create module with module-config
-        if: ${{ matrix.e2e-test == 'test-moduleconfig-module-creation' }}
+        if: ${{ matrix.e2e-test == 'test-moduleconfig-module-creation' || matrix.e2e-test == 'test-same-version-module-creation'}}
         run: |
           cd ./template-operator
           make build-manifests
@@ -81,6 +82,12 @@ jobs:
           --output /tmp/module-config-template.yaml 
           echo "MODULE_TEMPLATE_PATH=/tmp/module-config-template.yaml" >> "$GITHUB_ENV"
       - name: Verify module template
+        if: ${{ matrix.e2e-test == 'test-moduleconfig-module-creation' || matrix.e2e-test == 'test-kubebuilder-module-creation'}}
         run: |
           echo $MODULE_TEMPLATE_PATH
           make -C tests/e2e test-module-creation
+      - name: Run E2E tests
+        if: ${{ matrix.e2e-test == 'test-same-version-module-creation'}}
+        run: |
+          echo $MODULE_TEMPLATE_PATH
+          make -C tests/e2e test-same-version-module-creation

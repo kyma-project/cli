@@ -35,6 +35,10 @@ help: ## Display this help.
 test-module-creation:
 	go test ./create_module -run "Test_ModuleTemplate"
 
+.PHONY: test-same-version-module-creation
+test-same-version-module-creation:
+	go test ./create_module -run "Test_SameVersion_ModuleCreation"
+
 .PHONY: test-module-enabling-disabling
 test-module-enabling-disabling:
 	go test -ginkgo.v -ginkgo.focus "Kyma CLI deploy, enable and disable commands usage"
