@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	"github.com/mandelsoft/vfs/pkg/memoryfs"
 	"github.com/mandelsoft/vfs/pkg/osfs"
 	"github.com/mandelsoft/vfs/pkg/vfs"
@@ -16,7 +18,6 @@ import (
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/comparch"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
-	"golang.org/x/exp/maps"
 	"gopkg.in/yaml.v3"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 
@@ -382,36 +383,10 @@ func (cmd *command) Run(ctx context.Context) error {
 
 		cmd.NewStep("Generating module template")
 
-		labels := map[string]string{}
-		annotations := map[string]string{}
-
 		var resourceName = ""
-
 		if modCnf != nil {
 			resourceName = modCnf.ResourceName
-
-			maps.Copy(labels, modCnf.Labels)
-			maps.Copy(annotations, modCnf.Annotations)
-
-			if modCnf.Beta {
-				labels["operator.kyma-project.io/beta"] = "true"
-			}
-			if modCnf.Internal {
-				labels["operator.kyma-project.io/internal"] = "true"
-			}
 		}
-		isClusterScoped := isCrdClusterScoped(crValidator.GetCrd())
-		if isClusterScoped {
-			annotations["operator.kyma-project.io/is-cluster-scoped"] = "true"
-		} else {
-			annotations["operator.kyma-project.io/is-cluster-scoped"] = "false"
-		}
-
-		version := cmd.opts.Version
-		if modCnf != nil {
-			version = modCnf.Version
-		}
-		annotations["operator.kyma-project.io/module-version"] = version
 
 		var channel = cmd.opts.Channel
 		if modCnf != nil {
@@ -422,6 +397,9 @@ func (cmd *command) Run(ctx context.Context) error {
 		if modCnf != nil && modCnf.Namespace != "" {
 			namespace = modCnf.Namespace
 		}
+
+		labels := cmd.getModuleTemplateLabels(modCnf)
+		annotations := cmd.getModuleTemplateAnnotations(modCnf, crValidator)
 
 		t, err := module.Template(componentVersionAccess, resourceName, namespace,
 			channel, modDef.DefaultCR, labels, annotations, modDef.CustomStateChecks)
@@ -439,6 +417,41 @@ func (cmd *command) Run(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (cmd *command) getModuleTemplateLabels(modCnf *Config) map[string]string {
+	labels := map[string]string{}
+	if modCnf != nil {
+		maps.Copy(labels, modCnf.Labels)
+
+		if modCnf.Beta {
+			labels[v1beta2.BetaLabel] = v1beta2.EnableLabelValue
+		}
+		if modCnf.Internal {
+			labels[v1beta2.InternalLabel] = v1beta2.EnableLabelValue
+		}
+	}
+
+	return labels
+}
+
+func (cmd *command) getModuleTemplateAnnotations(modCnf *Config, crValidator validator) map[string]string {
+	annotations := map[string]string{}
+	moduleVersion := cmd.opts.Version
+	if modCnf != nil {
+		maps.Copy(annotations, modCnf.Annotations)
+
+		moduleVersion = modCnf.Version
+	}
+
+	isClusterScoped := isCrdClusterScoped(crValidator.GetCrd())
+	if isClusterScoped {
+		annotations[v1beta2.IsClusterScopedAnnotation] = v1beta2.EnableLabelValue
+	} else {
+		annotations[v1beta2.IsClusterScopedAnnotation] = v1beta2.DisableLabelValue
+	}
+	annotations["operator.kyma-project.io/module-version"] = moduleVersion
+	return annotations
 }
 
 func (cmd *command) validateDefaultCR(ctx context.Context, modDef *module.Definition, l *zap.SugaredLogger) (validator, error) {
