@@ -19,7 +19,6 @@ import (
 )
 
 func Test_ModuleTemplate(t *testing.T) {
-	moduleTemplateVersion := os.Getenv("MODULE_TEMPLATE_VERSION")
 	ociRepoURL := os.Getenv("OCI_REPOSITORY_URL")
 	testRepoURL := os.Getenv("TEST_REPOSITORY_URL")
 
@@ -28,6 +27,12 @@ func Test_ModuleTemplate(t *testing.T) {
 	descriptor, err := template.GetDescriptor()
 	assert.Nil(t, err)
 	assert.Equal(t, descriptor.SchemaVersion(), v2.SchemaVersion)
+
+	// test annotations
+	annotations := template.Annotations
+	expectedModuleTemplateVersion := os.Getenv("MODULE_TEMPLATE_VERSION")
+	assert.Equal(t, annotations["operator.kyma-project.io/module-version"], expectedModuleTemplateVersion)
+	assert.Equal(t, annotations["operator.kyma-project.io/is-cluster-scoped"], "false")
 
 	// test descriptor.component.repositoryContexts
 	assert.Equal(t, len(descriptor.RepositoryContexts), 1)
@@ -46,7 +51,7 @@ func Test_ModuleTemplate(t *testing.T) {
 	assert.Equal(t, resource.Name, module.RawManifestLayerName)
 	assert.Equal(t, resource.Relation, ocmMetaV1.LocalRelation)
 	assert.Equal(t, resource.Type, module.TypeYaml)
-	assert.Equal(t, resource.Version, moduleTemplateVersion)
+	assert.Equal(t, resource.Version, expectedModuleTemplateVersion)
 
 	// test descriptor.component.resources[0].access
 	resourceAccessSpec, err := ocm.DefaultContext().AccessSpecForSpec(resource.Access)

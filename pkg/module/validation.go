@@ -356,7 +356,7 @@ func ValidateName(name string) error {
 type SingleManifestFileCRValidator struct {
 	manifestPath string
 	crData       []byte
-	crd          []byte
+	Crd          []byte
 }
 
 func NewSingleManifestFileCRValidator(cr []byte, manifestPath string) *SingleManifestFileCRValidator {
@@ -390,7 +390,7 @@ func (v *SingleManifestFileCRValidator) Run(ctx context.Context, log *zap.Sugare
 	if crdBytes == nil {
 		return fmt.Errorf("can't find the CRD for (group: %q, kind %q)", group, kind)
 	}
-	v.crd = crdBytes
+	v.Crd = crdBytes
 
 	// store extracted CRD in a temp file
 	tempDir, err := os.MkdirTemp("", "temporary-crd")
@@ -414,7 +414,7 @@ func (v *SingleManifestFileCRValidator) Run(ctx context.Context, log *zap.Sugare
 }
 
 func (v *SingleManifestFileCRValidator) GetCrd() []byte {
-	return v.crd
+	return v.Crd
 }
 
 func (v *DefaultCRValidator) GetCrd() []byte {
