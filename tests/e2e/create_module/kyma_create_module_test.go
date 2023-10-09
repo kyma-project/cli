@@ -19,7 +19,6 @@ import (
 )
 
 func Test_ModuleTemplate(t *testing.T) {
-	moduleTemplateVersion := os.Getenv("MODULE_TEMPLATE_VERSION")
 	ociRepoURL := os.Getenv("OCI_REPOSITORY_URL")
 	testRepoURL := os.Getenv("TEST_REPOSITORY_URL")
 
@@ -52,7 +51,7 @@ func Test_ModuleTemplate(t *testing.T) {
 	assert.Equal(t, resource.Name, module.RawManifestLayerName)
 	assert.Equal(t, resource.Relation, ocmMetaV1.LocalRelation)
 	assert.Equal(t, resource.Type, module.TypeYaml)
-	assert.Equal(t, resource.Version, moduleTemplateVersion)
+	assert.Equal(t, resource.Version, expectedModuleTemplateVersion)
 
 	// test descriptor.component.resources[0].access
 	resourceAccessSpec, err := ocm.DefaultContext().AccessSpecForSpec(resource.Access)
