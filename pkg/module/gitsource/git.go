@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/open-component-model/ocm/pkg/contexts/credentials/builtin/github/identity"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/accessmethods/github"
 	ocm "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	ocmv1 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/meta/v1"
@@ -18,8 +19,6 @@ func (g GitSource) FetchSource(path, repo, version string) (*ocm.Source, error) 
 		return nil, err
 	}
 
-	sourceType := github.CONSUMER_TYPE
-
 	label, err := ocmv1.NewLabel(refLabel, ref, ocmv1.WithVersion(ocmVersion))
 	if err != nil {
 		return nil, err
@@ -28,7 +27,7 @@ func (g GitSource) FetchSource(path, repo, version string) (*ocm.Source, error) 
 	access := github.New(repo, "", commit)
 
 	sourceMeta := ocm.SourceMeta{
-		Type: sourceType,
+		Type: identity.CONSUMER_TYPE,
 		ElementMeta: ocm.ElementMeta{
 			Name:    ocmIdentityName,
 			Version: version,
