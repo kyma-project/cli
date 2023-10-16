@@ -75,7 +75,7 @@ func doReconciliation(opts Options, delete bool) (*service.ReconciliationResult,
 	manifests := make(chan ComponentStatus)
 	runtimeBuilder := service.NewRuntimeBuilder(reconciliation.NewInMemoryReconciliationRepository(), opts.Logger)
 	statusFunc := func(component string, msg *reconciler.CallbackMessage) {
-		var status ComponentStatus
+		status := ComponentStatus{component, "", nil, msg.Manifest}
 		switch msg.Status {
 		case reconciler.StatusSuccess:
 			status = ComponentStatus{component, Success, nil, msg.Manifest}
