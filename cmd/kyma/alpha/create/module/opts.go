@@ -92,14 +92,16 @@ func (o *Options) validatePath() error {
 }
 
 func (o *Options) validateChannel() error {
-
 	if len(o.Channel) < ChannelMinLength || len(o.Channel) > ChannelMaxLength {
 		return fmt.Errorf(
 			"invalid channel length, length should between %d and %d, %w",
 			ChannelMinLength, ChannelMaxLength, ErrChannelValidation,
 		)
 	}
-	matched, _ := regexp.MatchString(`^[a-z]+$`, o.Channel)
+	matched, err := regexp.MatchString(`^[a-z]+$`, o.Channel)
+	if err != nil {
+		return fmt.Errorf("failed to evaluate regex for channel: %w", err)
+	}
 	if !matched {
 		return fmt.Errorf("invalid channel format, only allow characters from a-z")
 	}

@@ -346,8 +346,12 @@ func addFileToTar(
 			return fmt.Errorf("unable to open file %q: %w", path, err)
 		}
 		if _, err := io.Copy(tw, file); err != nil {
-			_ = file.Close()
-			return fmt.Errorf("unable to add file to tar %q: %w", path, err)
+			copyErr := err
+			err = file.Close()
+			if err != nil {
+				return fmt.Errorf("unable to close file %q: %w", path, err)
+			}
+			return fmt.Errorf("unable to add file to tar %q: %w", path, copyErr)
 		}
 		if err := file.Close(); err != nil {
 			return fmt.Errorf("unable to close file %q: %w", path, err)
