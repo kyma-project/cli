@@ -73,24 +73,23 @@ func doReconciliation(opts Options, delete bool) (*service.ReconciliationResult,
 	}
 
 	manifests := make(chan ComponentStatus)
-
 	runtimeBuilder := service.NewRuntimeBuilder(reconciliation.NewInMemoryReconciliationRepository(), opts.Logger)
-	reconcilationResult, err := runtimeBuilder.RunLocal(func(component string, msg *reconciler.CallbackMessage) {
-		var state ComponentState
-		var errorRecieved error
+	statusFunc := func(component string, msg *reconciler.CallbackMessage) {
+		var status ComponentStatus
 		switch msg.Status {
 		case reconciler.StatusSuccess:
-			state = Success
-			errorRecieved = nil
+			status = ComponentStatus{component, Success, nil, msg.Manifest}
 		case reconciler.StatusFailed:
-			errorRecieved = errors.Errorf("%s", msg.Error)
-			state = RecoverableError
+			status = ComponentStatus{component,
+				RecoverableError,
+				errors.Errorf("%s", msg.Error),
+				msg.Manifest}
 		case reconciler.StatusError:
-			errorRecieved = errors.Errorf("%s", msg.Error)
-			state = UnrecoverableError
+			status = ComponentStatus{component,
+				UnrecoverableError,
+				errors.Errorf("%s", msg.Error),
+				msg.Manifest}
 		}
-
-		status := ComponentStatus{component, state, errorRecieved, msg.Manifest}
 
 		if opts.DryRun {
 			go manifestCollector(manifests)
@@ -98,8 +97,9 @@ func doReconciliation(opts Options, delete bool) (*service.ReconciliationResult,
 		}
 
 		opts.StatusFunc(status)
+	}
 
-	}).
+	reconcilationResult, err := runtimeBuilder.RunLocal(statusFunc).
 		WithSchedulerConfig(&service.SchedulerConfig{
 			PreComponents:  opts.Components.PrerequisiteNames(),
 			DeleteStrategy: ds,
