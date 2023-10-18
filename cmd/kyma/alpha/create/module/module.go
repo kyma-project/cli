@@ -337,7 +337,7 @@ func (cmd *command) Run(ctx context.Context) error {
 				cmd.CurrentStep.Failure()
 				return err
 			}
-			if err := archive.Update(); err != nil {
+			if err := archive.Close(); err != nil {
 				return fmt.Errorf("could not write security scanning configuration into archive: %w", err)
 			}
 			cmd.CurrentStep.Successf("Security scanning configured")
