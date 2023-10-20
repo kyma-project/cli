@@ -98,7 +98,10 @@ func (g value) Type() string {
 	return "value"
 }
 
-func defaultFilename() string {
-	pwd, _ := os.Getwd()
-	return path.Join(pwd, workspace.CfgFilename)
+func defaultFilename() (string, error) {
+	pwd, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+	return path.Join(pwd, workspace.CfgFilename), nil
 }
