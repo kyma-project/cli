@@ -1,6 +1,7 @@
 package create_module_test
 
 import (
+	"github.com/open-component-model/ocm/pkg/runtime"
 	"os"
 	"testing"
 
@@ -37,7 +38,7 @@ func Test_ModuleTemplate(t *testing.T) {
 	// test descriptor.component.repositoryContexts
 	assert.Equal(t, len(descriptor.RepositoryContexts), 1)
 	unstructuredRepo := descriptor.GetEffectiveRepositoryContext()
-	typedRepo, err := unstructuredRepo.Evaluate(cpi.DefaultContext().RepositoryTypes())
+	typedRepo, err := runtime.EvaluateUnstructured(unstructuredRepo, cpi.DefaultContext().RepositoryTypes().BaseScheme())
 	assert.Nil(t, err)
 	concreteRepo, ok := typedRepo.(*genericocireg.RepositorySpec)
 	assert.Equal(t, ok, true)

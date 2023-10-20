@@ -347,7 +347,6 @@ func (cmd *command) Run(ctx context.Context) error {
 	/* -- PUSH & TEMPLATE -- */
 
 	if cmd.opts.RegistryURL != "" {
-
 		cmd.NewStep(fmt.Sprintf("Pushing image to %q", cmd.opts.RegistryURL))
 		remote, err := cmd.getRemote(modDef.NameMappingMode)
 		if err != nil {
