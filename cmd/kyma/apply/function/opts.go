@@ -101,7 +101,7 @@ func (g value) Type() string {
 func defaultFilename() (string, error) {
 	pwd, err := os.Getwd()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to get current working directory: %w", err)
 	}
 	return path.Join(pwd, workspace.CfgFilename), nil
 }

@@ -66,7 +66,7 @@ func (c *command) Run() error {
 	if c.opts.Filename == "" {
 		filename, err := defaultFilename()
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to create default filename: %w", err)
 		}
 		c.opts.Filename = filename
 	}

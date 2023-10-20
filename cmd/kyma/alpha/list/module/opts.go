@@ -90,7 +90,7 @@ func (o *Options) validateChannel() error {
 	}
 	matched, err := regexp.MatchString(`^[a-z]+$`, o.Channel)
 	if err != nil {
-		return nil
+		return fmt.Errorf("failed to evaluate regex for channel: %w", err)
 	}
 	if !matched {
 		return fmt.Errorf("invalid channel format, only allow characters from a-z")
