@@ -2,12 +2,11 @@ package module
 
 import (
 	"fmt"
+	"github.com/kyma-project/cli/pkg/module"
+	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	"os"
 	"regexp"
 	"strings"
-
-	"github.com/kyma-project/cli/pkg/module"
-	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 
 	"github.com/blang/semver/v4"
 	"gopkg.in/yaml.v3"
@@ -92,7 +91,7 @@ func (cv *configValidator) validateName() *configValidator {
 		}
 		matched, err := regexp.MatchString(moduleNamePattern, cv.config.Name)
 		if err != nil {
-			return fmt.Errorf("failed to evaluate regex for name: %w", err)
+			return fmt.Errorf("failed to evaluate regex for module name pattern: %w", err)
 		}
 		if !matched {
 			return fmt.Errorf("%w for input %q, name must match the required pattern, e.g: 'github.com/path-to/your-repo'", ErrNameValidation, cv.config.Name)
@@ -114,7 +113,7 @@ func (cv *configValidator) validateNamespace() *configValidator {
 		}
 		matched, err := regexp.MatchString(namespacePattern, cv.config.Namespace)
 		if err != nil {
-			return fmt.Errorf("failed to evaluate regex for namespace: %w", err)
+			return fmt.Errorf("failed to evaluate regex for module namespace pattern: %w", err)
 		}
 		if !matched {
 			return fmt.Errorf("%w for input %q, namespace must contain only small alphanumeric characters and hyphens", ErrNamespaceValidation, cv.config.Namespace)

@@ -92,7 +92,6 @@ func (o *Options) validatePath() error {
 }
 
 func (o *Options) validateChannel() error {
-
 	if len(o.Channel) < ChannelMinLength || len(o.Channel) > ChannelMaxLength {
 		return fmt.Errorf(
 			"invalid channel length, length should between %d and %d, %w",
