@@ -64,7 +64,11 @@ Use the flags to specify the desired location for the source files or run the co
 
 func (c *command) Run() error {
 	if c.opts.Filename == "" {
-		c.opts.Filename = defaultFilename()
+		filename, err := defaultFilename()
+		if err != nil {
+			return fmt.Errorf("failed to create default filename: %w", err)
+		}
+		c.opts.Filename = filename
 	}
 
 	if c.opts.Output.value == "yaml" {
