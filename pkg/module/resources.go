@@ -1,7 +1,6 @@
 package module
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -18,12 +17,8 @@ import (
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/comparch"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 )
-
-//nolint:gosec
-const OCIRegistryCredLabel = "oci-registry-cred"
 
 // ResourceDescriptor contains all information to describe a resource
 type ResourceDescriptor struct {
@@ -45,23 +40,8 @@ func AddResources(
 	fs vfs.FileSystem,
 	registryCredSelector string,
 ) error {
-	descriptor := archive.GetDescriptor()
-	var matchLabels []byte
-	if registryCredSelector != "" {
-		selector, err := metav1.ParseToLabelSelector(registryCredSelector)
-		if err != nil {
-			return err
-		}
-		matchLabels, err = json.Marshal(selector.MatchLabels)
-		if err != nil {
-			return err
-		}
-		descriptor.SetLabels([]ocmv1.Label{{
-			Name:  OCIRegistryCredLabel,
-			Value: matchLabels,
-		}})
-	}
-	resources, err := generateResources(log, modDef.Version, matchLabels, modDef.Layers...)
+
+	resources, err := generateResources(log, modDef.Version, registryCredSelector, modDef.Layers...)
 	if err != nil {
 		return err
 	}
@@ -75,11 +55,6 @@ func AddResources(
 			log.Debugf("Added input blob from %q", resource.Input.Path)
 		}
 	}
-	compdesc.DefaultResources(descriptor)
-
-	if err := compdesc.Validate(descriptor); err != nil {
-		return fmt.Errorf("invalid component descriptor: %w", err)
-	}
 
 	log.Debugf("Successfully added all resources to component descriptor")
 	return nil
@@ -88,8 +63,12 @@ func AddResources(
 // generateResources generates resources by parsing the given definitions.
 // Definitions have the following format: NAME:TYPE@PATH
 // If a definition does not have a name or type, the name of the last path element is used and it is assumed to be a helm-chart type.
-func generateResources(log *zap.SugaredLogger, version string, credLabel []byte, defs ...Layer) ([]ResourceDescriptor, error) {
+func generateResources(log *zap.SugaredLogger, version, registryCredSelector string, defs ...Layer) ([]ResourceDescriptor, error) {
 	res := []ResourceDescriptor{}
+	credMatchLabels, err := CreateCredMatchLabels(registryCredSelector)
+	if err != nil {
+		return nil, err
+	}
 	for _, d := range defs {
 		r := ResourceDescriptor{Input: &blob.Input{}}
 
@@ -111,10 +90,10 @@ func generateResources(log *zap.SugaredLogger, version string, credLabel []byte,
 			r.Input.Type = "file"
 		}
 
-		if len(credLabel) != 0 {
+		if len(credMatchLabels) != 0 {
 			r.SetLabels([]ocmv1.Label{{
 				Name:  OCIRegistryCredLabel,
-				Value: credLabel,
+				Value: credMatchLabels,
 			}})
 		}
 

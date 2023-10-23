@@ -15,7 +15,6 @@ import (
 	"github.com/mandelsoft/vfs/pkg/vfs"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	compdescv2 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/versions/v2"
-	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/comparch"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
@@ -275,7 +274,6 @@ func (cmd *command) Run(ctx context.Context) error {
 		return err
 	}
 
-	cmd.NewStep("Creating module archive")
 	var archiveFS vfs.FileSystem
 	if cmd.opts.PersistentArchive {
 		archiveFS = osFS
@@ -285,7 +283,15 @@ func (cmd *command) Run(ctx context.Context) error {
 		l.Info("using in-memory archive")
 	}
 
-	var archive *comparch.ComponentArchive
+	cmd.NewStep("Creating component descriptor")
+
+	componentDescriptor, err := module.InitComponentDescriptor(modDef)
+	if err != nil {
+		cmd.CurrentStep.Failure()
+		return err
+	}
+	cmd.CurrentStep.Successf("component descriptor created")
+
 	gitPath, err := files.SearchForTargetDirByName(modDef.Source, ".git")
 	if gitPath == "" || err != nil {
 		l.Warnf("could not find git repository root, using %s directory", modDef.Source)
@@ -301,21 +307,35 @@ func (cmd *command) Run(ctx context.Context) error {
 			}
 		}
 
-		archive, err = module.CreateArchive(archiveFS, cmd.opts.ModuleArchivePath, cmd.opts.GitRemote, modDef, false)
-		if err != nil {
-			cmd.CurrentStep.Failure()
-			return err
-		}
 	} else {
 		l.Infof("found git repository root at %s", gitPath)
 		l.Infof("adding sources to the layer")
 		modDef.Source = gitPath // set the source to the git root
-		archive, err = module.CreateArchive(archiveFS, cmd.opts.ModuleArchivePath, cmd.opts.GitRemote, modDef, true)
-		if err != nil {
+		if err := module.AddSources(componentDescriptor, modDef, cmd.opts.GitRemote); err != nil {
 			cmd.CurrentStep.Failure()
 			return err
 		}
 	}
+
+	// Security Scan
+	if cmd.opts.SecurityScanConfig != "" && gitPath != "" { // security scan is only supported for target git repositories
+		cmd.NewStep("Configuring security scanning...")
+		if files.IsFileExists(cmd.opts.SecurityScanConfig) {
+			err = module.AddSecurityScanningMetadata(componentDescriptor, cmd.opts.SecurityScanConfig)
+			if err != nil {
+				cmd.CurrentStep.Failure()
+				return err
+			}
+			cmd.CurrentStep.Successf("Security scanning configured")
+		} else {
+			l.Warnf("Security scanning configuration was skipped")
+			cmd.CurrentStep.Failure()
+		}
+	}
+
+	cmd.NewStep("Creating module archive")
+
+	archive, err := module.CreateArchive(archiveFS, cmd.opts.ModuleArchivePath, componentDescriptor)
 
 	cmd.CurrentStep.Successf("Module archive created")
 
@@ -328,24 +348,6 @@ func (cmd *command) Run(ctx context.Context) error {
 
 	cmd.CurrentStep.Success()
 
-	// Security Scan
-	if cmd.opts.SecurityScanConfig != "" && gitPath != "" { // security scan is only supported for target git repositories
-		cmd.NewStep("Configuring security scanning...")
-		if files.IsFileExists(cmd.opts.SecurityScanConfig) {
-			err = module.AddSecurityScanningMetadata(archive.GetDescriptor(), cmd.opts.SecurityScanConfig)
-			if err != nil {
-				cmd.CurrentStep.Failure()
-				return err
-			}
-			cmd.CurrentStep.Successf("Security scanning configured")
-		} else {
-			l.Warnf("Security scanning configuration was skipped")
-			cmd.CurrentStep.Failure()
-		}
-	}
-
-	/* -- PUSH & TEMPLATE -- */
-
 	if cmd.opts.RegistryURL != "" {
 		cmd.NewStep(fmt.Sprintf("Pushing image to %q", cmd.opts.RegistryURL))
 		remote, err := cmd.getRemote(modDef.NameMappingMode)
@@ -353,7 +355,6 @@ func (cmd *command) Run(ctx context.Context) error {
 			cmd.CurrentStep.Failure()
 			return err
 		}
-
 		componentVersionAccess, err := remote.Push(archive, cmd.opts.ArchiveVersionOverwrite)
 
 		if err != nil {
