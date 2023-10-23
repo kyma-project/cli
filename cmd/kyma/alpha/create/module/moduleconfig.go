@@ -2,11 +2,12 @@ package module
 
 import (
 	"fmt"
-	"github.com/kyma-project/cli/pkg/module"
-	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	"os"
 	"regexp"
 	"strings"
+
+	"github.com/kyma-project/cli/pkg/module"
+	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 
 	"github.com/blang/semver/v4"
 	"gopkg.in/yaml.v3"
@@ -89,7 +90,10 @@ func (cv *configValidator) validateName() *configValidator {
 		if len(cv.config.Name) > moduleNameMaxLen {
 			return fmt.Errorf("%w, module name length cannot exceed 255 characters", ErrNameValidation)
 		}
-		matched, _ := regexp.MatchString(moduleNamePattern, cv.config.Name)
+		matched, err := regexp.MatchString(moduleNamePattern, cv.config.Name)
+		if err != nil {
+			return fmt.Errorf("failed to evaluate regex for name: %w", err)
+		}
 		if !matched {
 			return fmt.Errorf("%w for input %q, name must match the required pattern, e.g: 'github.com/path-to/your-repo'", ErrNameValidation, cv.config.Name)
 		}
@@ -108,7 +112,10 @@ func (cv *configValidator) validateNamespace() *configValidator {
 		if len(cv.config.Namespace) > namespaceMaxLen {
 			return fmt.Errorf("%w, module name length cannot exceed 253 characters", ErrNamespaceValidation)
 		}
-		matched, _ := regexp.MatchString(namespacePattern, cv.config.Namespace)
+		matched, err := regexp.MatchString(namespacePattern, cv.config.Namespace)
+		if err != nil {
+			return fmt.Errorf("failed to evaluate regex for namespace: %w", err)
+		}
 		if !matched {
 			return fmt.Errorf("%w for input %q, namespace must contain only small alphanumeric characters and hyphens", ErrNamespaceValidation, cv.config.Namespace)
 		}
@@ -155,7 +162,10 @@ func (cv *configValidator) validateChannel() *configValidator {
 				"%w for input %q, invalid channel length, length should between %d and %d",
 				ErrChannelValidation, cv.config.Channel, ChannelMinLength, ChannelMaxLength)
 		}
-		matched, _ := regexp.MatchString(`^[a-z]+$`, cv.config.Channel)
+		matched, err := regexp.MatchString(`^[a-z]+$`, cv.config.Channel)
+		if err != nil {
+			return fmt.Errorf("failed to evaluate regex for channel: %w", err)
+		}
 		if !matched {
 			return fmt.Errorf("%w for input %q, invalid channel format, only allow characters from a-z", ErrChannelValidation, cv.config.Channel)
 		}
