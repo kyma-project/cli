@@ -62,16 +62,16 @@ func AddResources(
 
 // generateResources generates resources by parsing the given definitions.
 // Definitions have the following format: NAME:TYPE@PATH
-// If a definition does not have a name or type, the name of the last path element is used and it is assumed to be a helm-chart type.
+// If a definition does not have a name or type, the name of the last path element is used,
+// and it is assumed to be a helm-chart type.
 func generateResources(log *zap.SugaredLogger, version, registryCredSelector string, defs ...Layer) ([]ResourceDescriptor, error) {
-	res := []ResourceDescriptor{}
+	var res []ResourceDescriptor
 	credMatchLabels, err := CreateCredMatchLabels(registryCredSelector)
 	if err != nil {
 		return nil, err
 	}
 	for _, d := range defs {
 		r := ResourceDescriptor{Input: &blob.Input{}}
-
 		r.Name = d.Name()
 		r.Input.Path = d.Path()
 		r.Type = d.Type()
@@ -168,7 +168,7 @@ func Inspect(def *Definition, log *zap.SugaredLogger) error {
 // Deprecated.
 func InspectLegacy(def *Definition, customDefs []string, s step.Step, log *zap.SugaredLogger) error {
 	log.Debugf("Inspecting module contents at [%s]:", def.Source)
-	layers := []Layer{}
+	var layers []Layer
 
 	for _, d := range customDefs {
 		rd, err := LayerFromString(d)
@@ -193,7 +193,6 @@ func InspectLegacy(def *Definition, customDefs []string, s step.Step, log *zap.S
 		log.Debug("No kubebuilder project detected, bundling module in a single layer.")
 		return inspectCustom(def, layers, log)
 	}
-	// there is an error other than not exists
 	return err
 }
 

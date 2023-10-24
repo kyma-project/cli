@@ -2,9 +2,6 @@ package module
 
 import (
 	"fmt"
-	"os"
-	"strings"
-
 	"github.com/kyma-project/cli/pkg/module/gitsource"
 	"github.com/mandelsoft/vfs/pkg/projectionfs"
 	"github.com/mandelsoft/vfs/pkg/vfs"
@@ -12,6 +9,7 @@ import (
 	ocm "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/cpi"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/comparch"
+	"os"
 	"sigs.k8s.io/yaml"
 )
 
@@ -61,21 +59,17 @@ func CreateArchive(fs vfs.FileSystem, path string, cd *ocm.ComponentDescriptor) 
 	)
 }
 
-// AddSources adds the sources to the component descriptor. If the def.Source is a git repository
-func AddSources(cd *ocm.ComponentDescriptor, def *Definition, gitRemote string) error {
-	if strings.HasSuffix(def.Source, ".git") {
-		gitSource := gitsource.NewGitSource()
-		var err error
-		if def.Repo, err = gitSource.DetermineRepositoryURL(gitRemote, def.Repo, def.Source); err != nil {
-			return err
-		}
-		src, err := gitSource.FetchSource(def.Source, def.Repo, def.Version)
-
-		if err != nil {
-			return err
-		}
-		appendSourcesForCd(cd, src)
+// AddGitSources adds the git sources to the component descriptor
+func AddGitSources(cd *ocm.ComponentDescriptor, def *Definition, gitRemote string) error {
+	var err error
+	if def.Repo, err = gitsource.DetermineRepositoryURL(gitRemote, def.Repo, def.Source); err != nil {
+		return err
 	}
+	src, err := gitsource.FetchSource(def.Source, def.Repo, def.Version)
+	if err != nil {
+		return err
+	}
+	appendSourcesForCd(cd, src)
 
 	return nil
 }

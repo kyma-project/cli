@@ -1,16 +1,12 @@
-// package files provides all functionality to manage kyma CLI local files.
 package files
 
 import (
 	"errors"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"os/user"
 	"path/filepath"
-
-	"github.com/mandelsoft/vfs/pkg/vfs"
 )
 
 const kymaFolder = ".kyma"
@@ -33,7 +29,7 @@ func KymaHome() (string, error) {
 	return p, nil
 }
 
-// isDir determines if a file represented by `path` is a directory or not
+// IsDir determines if a file represented by `path` is a directory or not
 func IsDir(path string) (bool, error) {
 	fileInfo, err := os.Stat(path)
 	if err != nil {
@@ -57,25 +53,6 @@ func IsDirEmpty(path string) (bool, error) {
 	return false, err
 }
 
-// FileType returns the mimetype of a file.
-func FileType(fs vfs.FileSystem, path string) (string, error) {
-	file, err := fs.Open(path)
-	if err != nil {
-		return "", err
-	}
-	defer file.Close()
-	// Only the first 512 bytes are used to sniff the content type.
-	buf := make([]byte, 512)
-	_, err = file.Read(buf)
-	if err != nil {
-		return "", err
-	}
-
-	// Use the net/http package's handy DectectContentType function. Always returns a valid
-	// content-type by returning "application/octet-stream" if no others seemed to match.
-	return http.DetectContentType(buf), nil
-}
-
 // SearchForTargetDirByName walks the given root path and searches for a directory with the given name.
 // If the directory is found the function returns the path to the directory and nil as error.
 // If the directory is not found the function returns an empty string and an error.
@@ -91,7 +68,7 @@ func SearchForTargetDirByName(root string, targetFolderName string) (gitFolderPa
 		return nil
 	})
 
-	if walkErr == errCustomSkipSearch {
+	if errors.Is(walkErr, errCustomSkipSearch) {
 		return gitFolderPath, nil
 	}
 	return
