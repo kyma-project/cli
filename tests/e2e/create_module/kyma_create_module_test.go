@@ -42,40 +42,44 @@ func Test_ModuleTemplate(t *testing.T) {
 		assert.Equal(t, repo.Object["type"], ocireg.Type)
 	})
 
-	// test descriptor.component.resources[0]
-	assert.Equal(t, len(descriptor.Resources), 1)
-	resource := descriptor.Resources[0]
-	assert.Equal(t, resource.Name, module.RawManifestLayerName)
-	assert.Equal(t, resource.Relation, ocmMetaV1.LocalRelation)
-	assert.Equal(t, resource.Type, module.TypeYaml)
-	expectedModuleTemplateVersion := os.Getenv("MODULE_TEMPLATE_VERSION")
-	assert.Equal(t, resource.Version, expectedModuleTemplateVersion)
+	t.Run("test descriptor.component.resources[0]", func(t *testing.T) {
+		assert.Equal(t, len(descriptor.Resources), 1)
+		resource := descriptor.Resources[0]
+		assert.Equal(t, resource.Name, module.RawManifestLayerName)
+		assert.Equal(t, resource.Relation, ocmMetaV1.LocalRelation)
+		assert.Equal(t, resource.Type, module.TypeYaml)
+		expectedModuleTemplateVersion := os.Getenv("MODULE_TEMPLATE_VERSION")
+		assert.Equal(t, resource.Version, expectedModuleTemplateVersion)
+	})
 
-	// test descriptor.component.resources[0].access
-	resourceAccessSpec, err := ocm.DefaultContext().AccessSpecForSpec(resource.Access)
-	assert.Nil(t, err)
-	localblobAccessSpec, ok := resourceAccessSpec.(*localblob.AccessSpec)
-	assert.Equal(t, ok, true)
-	assert.Equal(t, localblobAccessSpec.GetType(), localblob.Type)
-	assert.Contains(t, localblobAccessSpec.LocalReference, "sha256:")
+	t.Run("test descriptor.component.resources[0].access", func(t *testing.T) {
+		resourceAccessSpec, err := ocm.DefaultContext().AccessSpecForSpec(descriptor.Resources[0].Access)
+		assert.Nil(t, err)
+		localblobAccessSpec, ok := resourceAccessSpec.(*localblob.AccessSpec)
+		assert.Equal(t, ok, true)
+		assert.Equal(t, localblobAccessSpec.GetType(), localblob.Type)
+		assert.Contains(t, localblobAccessSpec.LocalReference, "sha256:")
+	})
 
-	// test descriptor.component.sources
-	assert.Equal(t, len(descriptor.Sources), 1)
-	source := descriptor.Sources[0]
-	sourceAccessSpec, err := ocm.DefaultContext().AccessSpecForSpec(source.Access)
-	assert.Nil(t, err)
-	githubAccessSpec, ok := sourceAccessSpec.(*github.AccessSpec)
-	assert.Equal(t, ok, true)
-	assert.Equal(t, githubAccessSpec.Type, github.Type)
-	assert.Contains(t, testRepoURL, githubAccessSpec.RepoURL)
+	t.Run("test descriptor.component.sources", func(t *testing.T) {
+		assert.Equal(t, len(descriptor.Sources), 1)
+		source := descriptor.Sources[0]
+		sourceAccessSpec, err := ocm.DefaultContext().AccessSpecForSpec(source.Access)
+		assert.Nil(t, err)
+		githubAccessSpec, ok := sourceAccessSpec.(*github.AccessSpec)
+		assert.Equal(t, ok, true)
+		assert.Equal(t, githubAccessSpec.Type, github.Type)
+		assert.Contains(t, testRepoURL, githubAccessSpec.RepoURL)
+	})
 
-	// test security scan labels
-	secScanLabels := descriptor.Sources[0].Labels
-	assert.Equal(t, map[string]string{
-		"git.kyma-project.io/ref":                  "refs/heads/main",
-		"scan.security.kyma-project.io/dev-branch": "main",
-		"scan.security.kyma-project.io/rc-tag":     "0.5.0",
-		"scan.security.kyma-project.io/language":   "golang-mod",
-		"scan.security.kyma-project.io/exclude":    "**/test/**,**/*_test.go",
-	}, e2e.Flatten(secScanLabels))
+	t.Run("test security scan labels", func(t *testing.T) {
+		secScanLabels := descriptor.Sources[0].Labels
+		assert.Equal(t, map[string]string{
+			"git.kyma-project.io/ref":                  "refs/heads/main",
+			"scan.security.kyma-project.io/dev-branch": "main",
+			"scan.security.kyma-project.io/rc-tag":     "0.5.0",
+			"scan.security.kyma-project.io/language":   "golang-mod",
+			"scan.security.kyma-project.io/exclude":    "**/test/**,**/*_test.go",
+		}, e2e.Flatten(secScanLabels))
+	})
 }
