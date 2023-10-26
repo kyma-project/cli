@@ -136,6 +136,17 @@ func (r *Remote) Push(archive *comparch.ComponentArchive, overwrite bool) (ocm.C
 		return nil, err
 	}
 
+	if !overwrite {
+		versionAlreadyExists, _ := repo.ExistsComponentVersion(
+			archive.ComponentVersionAccess.GetName(), archive.ComponentVersionAccess.GetVersion(),
+		)
+
+		if versionAlreadyExists {
+			return nil, fmt.Errorf("version %s already exists, please use --module-archive-version-overwrite "+
+				"flag to overwrite it", archive.ComponentVersionAccess.GetVersion())
+		}
+	}
+
 	transferHandler, err := standard.New(standard.Overwrite(overwrite))
 	if err != nil {
 		return nil, fmt.Errorf("could not setup archive transfer: %w", err)

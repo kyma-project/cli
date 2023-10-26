@@ -19,11 +19,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           types: |
-            deps
             chore
+            deps
             docs
             feat
             fix
+            refactor
             test
           requireScope: false
           # https://regex101.com/r/YybDgS/1

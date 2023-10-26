@@ -92,7 +92,10 @@ func (c *client) checkVersion() error {
 		return err
 	}
 
-	exp, _ := regexp.Compile(fmt.Sprintf(`%s version v([^\s-]+)`, binaryName))
+	exp, err := regexp.Compile(fmt.Sprintf(`%s version v([^\s-]+)`, binaryName))
+	if err != nil {
+		return fmt.Errorf("failed to evaluate regex for version naming schema: %w", err)
+	}
 	binaryVersion := exp.FindStringSubmatch(binaryVersionOutput)
 	if c.verbose {
 		fmt.Printf("Extracted %s version: '%s'", binaryName, binaryVersion[1])
@@ -105,7 +108,10 @@ func (c *client) checkVersion() error {
 		return err
 	}
 
-	minRequiredSemVersion, _ := semver.Parse(minRequiredVersion)
+	minRequiredSemVersion, err := semver.Parse(minRequiredVersion)
+	if err != nil {
+		return fmt.Errorf("failed to parse semantic version: %w", err)
+	}
 	if binarySemVersion.Major > minRequiredSemVersion.Major {
 		incompatibleMajorVersionMsg := "You are using an unsupported k3d major version '%d'. The supported k3d major version for this command is '%d'."
 		return fmt.Errorf(incompatibleMajorVersionMsg, binarySemVersion.Major, minRequiredSemVersion.Major)
