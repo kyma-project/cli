@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kyma-project/cli/pkg/errs"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -59,7 +58,7 @@ func (c *ConcurrentDefaultSSA) Run(ctx context.Context, resources []*resource.In
 	ssaFinish := time.Since(ssaStart)
 
 	if errsFromApply != nil {
-		return fmt.Errorf("ServerSideApply failed (after %s): %w", ssaFinish, errs.MergeErrors(errsFromApply...))
+		return fmt.Errorf("ServerSideApply failed (after %s): %w", ssaFinish, errors.Join(errsFromApply...))
 	}
 	logger.V(2).Info("ServerSideApply finished", "time", ssaFinish)
 	return nil
