@@ -28,7 +28,7 @@ kyma deploy [flags]
                                  	- Deploy a specific branch of the Kyma repository on kyma-project.org: "kyma deploy --source=<my-branch-name>"
                                  	- Deploy a commit (8 characters or more), for example: "kyma deploy --source=34edf09a"
                                  	- Deploy a pull request, for example "kyma deploy --source=PR-9486"
-                                 	- Deploy the local sources: "kyma deploy --source=local" (default "2.19.2")
+                                 	- Deploy the local sources: "kyma deploy --source=local" (default "2.19.3")
   -t, --timeout duration         Maximum time for the deployment. (default 20m0s)
       --tls-crt string           TLS certificate file for the domain used for installation.
       --tls-key string           TLS key file for the domain used for installation.
