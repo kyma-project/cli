@@ -17,7 +17,7 @@ import (
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/comparch"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/genericocireg"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/ocireg"
-	componentTransfer "github.com/open-component-model/ocm/pkg/contexts/ocm/transfer"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/transfer"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/transfer/transferhandler"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/transfer/transferhandler/standard"
 	"github.com/open-component-model/ocm/pkg/runtime"
@@ -75,7 +75,7 @@ func (r *Remote) getCredentials(ctx cpi.Context) credentials.Credentials {
 	var creds credentials.Credentials
 	if home, err := os.UserHomeDir(); err == nil {
 		path := filepath.Join(home, ".docker", "config.json")
-		if repo, err := dockerconfig.NewRepository(ctx.CredentialsContext(), path, true); err == nil {
+		if repo, err := dockerconfig.NewRepository(ctx.CredentialsContext(), path, nil, true); err == nil {
 			// this uses the first part of the url to resolve the correct host, e.g.
 			// ghcr.io/jakobmoellersap/testmodule => ghcr.io
 			hostNameInDockerConfigJSON := strings.Split(NoSchemeURL(r.Registry), "/")[0]
@@ -100,9 +100,7 @@ func (r *Remote) getCredentials(ctx cpi.Context) credentials.Credentials {
 	return creds
 }
 
-// See: github.com/open-component-model/ocm/pkg/contexts/credentials/repositories/dockerconfig/repository.go#IsEmptyAuthConfig()
 func isEmptyAuth(creds credentials.Credentials) bool {
-
 	if len(creds.GetProperty("auth")) != 0 {
 		return false
 	}
@@ -152,7 +150,7 @@ func (r *Remote) Push(archive *comparch.ComponentArchive, overwrite bool) (ocm.C
 		return nil, fmt.Errorf("could not setup archive transfer: %w", err)
 	}
 
-	if err = componentTransfer.TransferVersion(
+	if err = transfer.TransferVersion(
 		common.NewLoggingPrinter(archive.GetContext().Logger()), nil, archive.ComponentVersionAccess, repo, &customTransferHandler{transferHandler},
 	); err != nil {
 		return nil, fmt.Errorf("could not finish component transfer: %w", err)
@@ -167,6 +165,6 @@ type customTransferHandler struct {
 	transferhandler.TransferHandler
 }
 
-func (h *customTransferHandler) TransferVersion(repo ocm.Repository, src ocm.ComponentVersionAccess, meta *compdesc.ComponentReference) (ocm.ComponentVersionAccess, transferhandler.TransferHandler, error) {
-	return h.TransferHandler.TransferVersion(repo, src, meta)
+func (h *customTransferHandler) TransferVersion(repo ocm.Repository, src ocm.ComponentVersionAccess, meta *compdesc.ComponentReference, tgt ocm.Repository) (ocm.ComponentVersionAccess, transferhandler.TransferHandler, error) {
+	return h.TransferHandler.TransferVersion(repo, src, meta, tgt)
 }

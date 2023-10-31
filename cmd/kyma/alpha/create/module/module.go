@@ -15,7 +15,6 @@ import (
 	"github.com/mandelsoft/vfs/pkg/vfs"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	compdescv2 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/versions/v2"
-	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/comparch"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
@@ -275,7 +274,6 @@ func (cmd *command) Run(ctx context.Context) error {
 		return err
 	}
 
-	cmd.NewStep("Creating module archive")
 	var archiveFS vfs.FileSystem
 	if cmd.opts.PersistentArchive {
 		archiveFS = osFS
@@ -285,7 +283,14 @@ func (cmd *command) Run(ctx context.Context) error {
 		l.Info("using in-memory archive")
 	}
 
-	var archive *comparch.ComponentArchive
+	cmd.NewStep("Creating component descriptor")
+	componentDescriptor, err := module.InitComponentDescriptor(modDef)
+	if err != nil {
+		cmd.CurrentStep.Failure()
+		return err
+	}
+	cmd.CurrentStep.Successf("component descriptor created")
+
 	gitPath, err := files.SearchForTargetDirByName(modDef.Source, ".git")
 	if gitPath == "" || err != nil {
 		l.Warnf("could not find git repository root, using %s directory", modDef.Source)
@@ -301,44 +306,23 @@ func (cmd *command) Run(ctx context.Context) error {
 			}
 		}
 
-		archive, err = module.CreateArchive(archiveFS, cmd.opts.ModuleArchivePath, cmd.opts.GitRemote, modDef, false)
-		if err != nil {
-			cmd.CurrentStep.Failure()
-			return err
-		}
 	} else {
-		l.Infof("found git repository root at %s", gitPath)
-		l.Infof("adding sources to the layer")
+		l.Infof("found git repository root at %s: adding git sources to the layer", gitPath)
 		modDef.Source = gitPath // set the source to the git root
-		archive, err = module.CreateArchive(archiveFS, cmd.opts.ModuleArchivePath, cmd.opts.GitRemote, modDef, true)
-		if err != nil {
+		if err := module.AddGitSources(componentDescriptor, modDef, cmd.opts.GitRemote); err != nil {
 			cmd.CurrentStep.Failure()
 			return err
 		}
 	}
-
-	cmd.CurrentStep.Successf("Module archive created")
-
-	cmd.NewStep("Adding layers to archive...")
-
-	if err := module.AddResources(archive, modDef, l, osFS, cmd.opts.RegistryCredSelector); err != nil {
-		cmd.CurrentStep.Failure()
-		return err
-	}
-
-	cmd.CurrentStep.Success()
 
 	// Security Scan
 	if cmd.opts.SecurityScanConfig != "" && gitPath != "" { // security scan is only supported for target git repositories
 		cmd.NewStep("Configuring security scanning...")
 		if files.IsFileExists(cmd.opts.SecurityScanConfig) {
-			err = module.AddSecurityScanningMetadata(archive.GetDescriptor(), cmd.opts.SecurityScanConfig)
+			err = module.AddSecurityScanningMetadata(componentDescriptor, cmd.opts.SecurityScanConfig)
 			if err != nil {
 				cmd.CurrentStep.Failure()
 				return err
-			}
-			if err := archive.Update(); err != nil {
-				return fmt.Errorf("could not write security scanning configuration into archive: %w", err)
 			}
 			cmd.CurrentStep.Successf("Security scanning configured")
 		} else {
@@ -347,74 +331,83 @@ func (cmd *command) Run(ctx context.Context) error {
 		}
 	}
 
-	/* -- PUSH & TEMPLATE -- */
-
-	if cmd.opts.RegistryURL != "" {
-
-		cmd.NewStep(fmt.Sprintf("Pushing image to %q", cmd.opts.RegistryURL))
-		remote, err := cmd.getRemote(modDef.NameMappingMode)
-		if err != nil {
-			cmd.CurrentStep.Failure()
-			return err
-		}
-
-		componentVersionAccess, err := remote.Push(archive, cmd.opts.ArchiveVersionOverwrite)
-
-		if err != nil {
-			cmd.CurrentStep.Failure()
-			return err
-		}
-		cmd.CurrentStep.Successf("Module successfully pushed to %q", cmd.opts.RegistryURL)
-
-		if cmd.opts.PrivateKeyPath != "" {
-			signCfg := &module.ComponentSignConfig{
-				Name:    modDef.Name,
-				Version: modDef.Version,
-				KeyPath: cmd.opts.PrivateKeyPath,
-			}
-
-			cmd.NewStep("Fetching and signing component descriptor...")
-			if err = module.Sign(signCfg, remote); err != nil {
-				cmd.CurrentStep.Failure()
-				return err
-			}
-			cmd.CurrentStep.Success()
-		}
-
-		cmd.NewStep("Generating module template")
-
-		var resourceName = ""
-		if modCnf != nil {
-			resourceName = modCnf.ResourceName
-		}
-
-		var channel = cmd.opts.Channel
-		if modCnf != nil {
-			channel = modCnf.Channel
-		}
-
-		var namespace = cmd.opts.Namespace
-		if modCnf != nil && modCnf.Namespace != "" {
-			namespace = modCnf.Namespace
-		}
-
-		labels := cmd.getModuleTemplateLabels(modCnf)
-		annotations := cmd.getModuleTemplateAnnotations(modCnf, crValidator)
-
-		t, err := module.Template(componentVersionAccess, resourceName, namespace,
-			channel, modDef.DefaultCR, labels, annotations, modDef.CustomStateChecks)
-
-		if err != nil {
-			cmd.CurrentStep.Failure()
-			return err
-		}
-
-		if err := vfs.WriteFile(osFS, cmd.opts.TemplateOutput, t, os.ModePerm); err != nil {
-			cmd.CurrentStep.Failure()
-			return err
-		}
-		cmd.CurrentStep.Successf("Template successfully generated at %s", cmd.opts.TemplateOutput)
+	cmd.NewStep("Creating module archive...")
+	archive, err := module.CreateArchive(archiveFS, cmd.opts.ModuleArchivePath, componentDescriptor)
+	if err != nil {
+		cmd.CurrentStep.Failure()
+		return err
 	}
+	cmd.CurrentStep.Successf("Module archive created")
+
+	cmd.NewStep("Adding layers to archive...")
+	if err = module.AddResources(archive, modDef, l, osFS, cmd.opts.RegistryCredSelector); err != nil {
+		cmd.CurrentStep.Failure()
+		return err
+	}
+	cmd.CurrentStep.Successf("Layers successfully added to archive")
+
+	if cmd.opts.RegistryURL == "" {
+		return nil
+	}
+
+	cmd.NewStep(fmt.Sprintf("Pushing image to %q", cmd.opts.RegistryURL))
+	remote, err := cmd.getRemote(modDef.NameMappingMode)
+	if err != nil {
+		cmd.CurrentStep.Failure()
+		return err
+	}
+	componentVersionAccess, err := remote.Push(archive, cmd.opts.ArchiveVersionOverwrite)
+	if err != nil {
+		cmd.CurrentStep.Failure()
+		return err
+	}
+	cmd.CurrentStep.Successf("Module successfully pushed")
+
+	if cmd.opts.PrivateKeyPath != "" {
+		cmd.NewStep("Fetching and signing component descriptor...")
+		signConfig := &module.ComponentSignConfig{
+			Name:    modDef.Name,
+			Version: modDef.Version,
+			KeyPath: cmd.opts.PrivateKeyPath,
+		}
+		if err = module.Sign(signConfig, remote); err != nil {
+			cmd.CurrentStep.Failure()
+			return err
+		}
+		cmd.CurrentStep.Success()
+	}
+
+	cmd.NewStep("Generating module template...")
+	var resourceName = ""
+	if modCnf != nil {
+		resourceName = modCnf.ResourceName
+	}
+
+	var channel = cmd.opts.Channel
+	if modCnf != nil {
+		channel = modCnf.Channel
+	}
+
+	var namespace = cmd.opts.Namespace
+	if modCnf != nil && modCnf.Namespace != "" {
+		namespace = modCnf.Namespace
+	}
+
+	labels := cmd.getModuleTemplateLabels(modCnf)
+	annotations := cmd.getModuleTemplateAnnotations(modCnf, crValidator)
+
+	template, err := module.Template(componentVersionAccess, resourceName, namespace,
+		channel, modDef.DefaultCR, labels, annotations, modDef.CustomStateChecks)
+	if err != nil {
+		cmd.CurrentStep.Failure()
+		return err
+	}
+
+	if err := vfs.WriteFile(osFS, cmd.opts.TemplateOutput, template, os.ModePerm); err != nil {
+		cmd.CurrentStep.Failure()
+		return err
+	}
+	cmd.CurrentStep.Successf("Template successfully generated at %s", cmd.opts.TemplateOutput)
 
 	return nil
 }

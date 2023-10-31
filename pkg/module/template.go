@@ -105,7 +105,7 @@ func Template(remote ocm.ComponentVersionAccess, moduleTemplateName, namespace, 
 	return w.Bytes(), nil
 }
 
-// Indent prepends the given number of whitespaces to eachline in the given string
+// Indent prepends the given number of whitespaces to each line in the given string
 func Indent(n int, in string) string {
 	out := strings.Builder{}
 
