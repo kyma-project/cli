@@ -90,7 +90,7 @@ func generateResources(log *zap.SugaredLogger, version, registryCredSelector str
 			r.Input.Type = "file"
 		}
 
-		if len(credMatchLabels) != 0 {
+		if len(credMatchLabels) > 0 {
 			r.SetLabels([]ocmv1.Label{{
 				Name:  OCIRegistryCredLabel,
 				Value: credMatchLabels,
