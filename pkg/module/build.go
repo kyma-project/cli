@@ -28,12 +28,7 @@ func CreateArchive(fs vfs.FileSystem, path string, cd *ocm.ComponentDescriptor) 
 	if err != nil {
 		return nil, fmt.Errorf("unable to create projectionfilesystem: %w", err)
 	}
-
 	ctx := cpi.DefaultContext()
-
-	if err != nil {
-		return nil, fmt.Errorf("unable to build archive for minimal descriptor: %w", err)
-	}
 	descriptorVersioned, err := ocm.Convert(cd, &ocm.EncodeOptions{SchemaVersion: cd.SchemaVersion()})
 	if err != nil {
 		return nil, fmt.Errorf("unable to build archive for minimal descriptor: %w", err)
@@ -46,11 +41,11 @@ func CreateArchive(fs vfs.FileSystem, path string, cd *ocm.ComponentDescriptor) 
 	if err != nil {
 		return nil, err
 	}
+	defer file.Close()
 	_, err = file.Write(data)
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
 	return comparch.New(
 		ctx,
 		accessobj.ACC_CREATE, archiveFs, nil,
