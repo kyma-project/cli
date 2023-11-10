@@ -97,12 +97,6 @@ func (sum *Summary) Print(t time.Duration) error {
 		nicePrint.PrintImportant(sum.Email)
 	}
 
-	if !sum.NonInteractive && sum.Password != "" {
-		nicePrint.PrintKyma()
-		fmt.Printf(" admin password:\t\t")
-		nicePrint.PrintImportant(sum.Password)
-	}
-
 	fmt.Printf("\nHappy ")
 	nicePrint.PrintKyma()
 	fmt.Printf("-ing! :)\n\n")
