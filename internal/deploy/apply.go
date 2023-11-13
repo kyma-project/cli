@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	defaultRetries        = 5
+	defaultRetries        = 10
 	defaultInitialBackoff = 10 * time.Second
 )
 
