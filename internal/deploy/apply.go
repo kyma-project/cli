@@ -12,7 +12,7 @@ import (
 
 const (
 	defaultRetries        = 5
-	defaultInitialBackoff = 10 * time.Second
+	defaultInitialBackoff = 20 * time.Second
 )
 
 type applyOpts struct {
