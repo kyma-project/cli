@@ -27,7 +27,7 @@ require (
 	github.com/kyma-project/hydroform/function v0.0.0-20230831071441-f3501c89bace
 	github.com/kyma-project/hydroform/provision v0.0.0-20230831071441-f3501c89bace
 	github.com/kyma-project/lifecycle-manager v0.0.0-20230911065458-6926c58bcd43
-	github.com/mandelsoft/vfs v0.0.0-20230714093241-d557f163aecd
+	github.com/mandelsoft/vfs v0.4.0
 	github.com/onsi/ginkgo/v2 v2.13.0
 	github.com/onsi/gomega v1.27.10
 	github.com/open-component-model/ocm v0.4.0
