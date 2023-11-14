@@ -9,6 +9,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"k8s.io/klog/v2"
+	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // NewLogger returns the logger used for CLI log output (used in Hydroform deployments)
@@ -25,6 +26,7 @@ func NewLogger(printLogs bool) *zap.Logger {
 		logger = zap.NewNop()
 	}
 	logr := zapr.NewLoggerWithOptions(logger)
+	ctrllog.SetLogger(zapr.NewLoggerWithOptions(zap.NewNop()))
 	klog.SetLogger(logr)
 	ocm.DefaultContext().LoggingContext().SetBaseLogger(logr)
 	ocm.DefaultContext().LoggingContext().SetDefaultLevel(9)
