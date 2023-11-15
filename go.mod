@@ -29,7 +29,7 @@ require (
 	github.com/kyma-project/lifecycle-manager v0.0.0-20230911065458-6926c58bcd43
 	github.com/mandelsoft/vfs v0.4.0
 	github.com/onsi/ginkgo/v2 v2.13.1
-	github.com/onsi/gomega v1.29.0
+	github.com/onsi/gomega v1.30.0
 	github.com/open-component-model/ocm v0.4.0
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.0-rc5
