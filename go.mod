@@ -4,10 +4,6 @@ go 1.21
 
 replace github.com/imdario/mergo => github.com/imdario/mergo v0.3.5
 
-replace github.com/docker/cli => github.com/docker/cli v23.0.1+incompatible
-
-replace github.com/docker/docker => github.com/docker/docker v23.0.1+incompatible
-
 require (
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/avast/retry-go v3.0.0+incompatible
