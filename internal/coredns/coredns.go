@@ -207,7 +207,7 @@ func generateHosts(clusterName string, customHostsTemplate string) (string, erro
 
 // the defaultInspector uses the standard docker client to get container information from the daemon in the local ENV
 var defaultInspector = func(ctx context.Context, containerID string) (dockerTypes.ContainerJSON, error) {
-	client, err := docker.NewClientWithOpts(docker.FromEnv)
+	client, err := docker.NewClientWithOpts(docker.FromEnv, docker.WithAPIVersionNegotiation())
 	if err != nil {
 		return dockerTypes.ContainerJSON{}, err
 	}
