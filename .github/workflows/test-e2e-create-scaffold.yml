@@ -63,14 +63,11 @@ jobs:
       - name: Run create module with module-config
         run: |
           cd ./template-operator
-          make build-manifests
           kyma alpha create module \
-          --name kyma-project.io/module/template-operator \
           --path . \
           --registry http://k3d-oci.localhost:5001 \
           --insecure \
           --module-config-file ./module-config.yaml \
-          --version $MODULE_TEMPLATE_VERSION -v \
           --output /tmp/module-config-template.yaml 
           echo "MODULE_TEMPLATE_PATH=/tmp/module-config-template.yaml" >> "$GITHUB_ENV"
       - name: Verify module template
