@@ -1,4 +1,4 @@
-name: TestSuite E2E - create module
+name: TestSuite E2E - create scaffold
 
 on:
   push:
