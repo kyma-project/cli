@@ -30,35 +30,35 @@ func Test_ModuleTemplate(t *testing.T) {
 	t.Run("test annotations", func(t *testing.T) {
 		annotations := template.Annotations
 		expectedModuleTemplateVersion := os.Getenv("MODULE_TEMPLATE_VERSION")
-		assert.Equal(t, annotations["operator.kyma-project.io/module-version"], expectedModuleTemplateVersion)
-		assert.Equal(t, annotations["operator.kyma-project.io/is-cluster-scoped"], "false")
+		assert.Equal(t, expectedModuleTemplateVersion, annotations["operator.kyma-project.io/module-version"])
+		assert.Equal(t, "false", annotations["operator.kyma-project.io/is-cluster-scoped"])
 	})
 
 	t.Run("test descriptor.component.repositoryContexts", func(t *testing.T) {
-		assert.Equal(t, len(descriptor.RepositoryContexts), 1)
+		assert.Equal(t, 1, len(descriptor.RepositoryContexts))
 		repo := descriptor.GetEffectiveRepositoryContext()
-		assert.Equal(t, repo.Object["baseUrl"], ociRepoURL)
-		assert.Equal(t, repo.Object["componentNameMapping"], string(ocmOCIReg.OCIRegistryURLPathMapping))
-		assert.Equal(t, repo.Object["type"], ocireg.Type)
+		assert.Equal(t, ociRepoURL, repo.Object["baseUrl"])
+		assert.Equal(t, string(ocmOCIReg.OCIRegistryURLPathMapping), repo.Object["componentNameMapping"])
+		assert.Equal(t, ocireg.Type, repo.Object["type"])
 	})
 
 	t.Run("test descriptor.component.resources[0]", func(t *testing.T) {
-		assert.Equal(t, len(descriptor.Resources), 1)
-		resource := descriptor.Resources[0]
-		assert.Equal(t, resource.Name, module.RawManifestLayerName)
-		assert.Equal(t, resource.Relation, ocmMetaV1.LocalRelation)
-		assert.Equal(t, resource.Type, module.TypeYaml)
+		assert.Equal(t, 2, len(descriptor.Resources))
+		resource := descriptor.Resources[1]
+		assert.Equal(t, module.RawManifestLayerName, resource.Name)
+		assert.Equal(t, ocmMetaV1.LocalRelation, resource.Relation)
+		assert.Equal(t, module.TypeYaml, resource.Type)
 		expectedModuleTemplateVersion := os.Getenv("MODULE_TEMPLATE_VERSION")
-		assert.Equal(t, resource.Version, expectedModuleTemplateVersion)
+		assert.Equal(t, expectedModuleTemplateVersion, resource.Version)
 	})
 
 	t.Run("test descriptor.component.resources[0].access", func(t *testing.T) {
-		resourceAccessSpec, err := ocm.DefaultContext().AccessSpecForSpec(descriptor.Resources[0].Access)
+		resourceAccessSpec, err := ocm.DefaultContext().AccessSpecForSpec(descriptor.Resources[1].Access)
 		assert.Nil(t, err)
-		localblobAccessSpec, ok := resourceAccessSpec.(*localblob.AccessSpec)
-		assert.Equal(t, ok, true)
-		assert.Equal(t, localblobAccessSpec.GetType(), localblob.Type)
-		assert.Contains(t, localblobAccessSpec.LocalReference, "sha256:")
+		localBlobAccessSpec, ok := resourceAccessSpec.(*localblob.AccessSpec)
+		assert.True(t, ok)
+		assert.Equal(t, localblob.Type, localBlobAccessSpec.GetType())
+		assert.Contains(t, "sha256:", localBlobAccessSpec.LocalReference)
 	})
 
 	t.Run("test descriptor.component.sources", func(t *testing.T) {
@@ -67,9 +67,9 @@ func Test_ModuleTemplate(t *testing.T) {
 		sourceAccessSpec, err := ocm.DefaultContext().AccessSpecForSpec(source.Access)
 		assert.Nil(t, err)
 		githubAccessSpec, ok := sourceAccessSpec.(*github.AccessSpec)
-		assert.Equal(t, ok, true)
-		assert.Equal(t, githubAccessSpec.Type, github.Type)
-		assert.Contains(t, testRepoURL, githubAccessSpec.RepoURL)
+		assert.True(t, ok)
+		assert.Equal(t, github.Type, githubAccessSpec.Type)
+		assert.Contains(t, githubAccessSpec.RepoURL, testRepoURL)
 	})
 
 	t.Run("test security scan labels", func(t *testing.T) {
