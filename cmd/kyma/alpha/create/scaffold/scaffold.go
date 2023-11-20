@@ -32,26 +32,26 @@ func NewCmd(o *Options) *cobra.Command {
 a basic directory structure and creating default files based on the provided flags.
 The command generates the following files:
  - Module Config - module-config.yaml (always generated)
- - Manifest - template-operate.yaml (generated when --gen-manifest flag set)
- - Security Scanners Config - sec-scanners-config.yaml (generated when --gen-sec-config flag set)
- - Default CR - config/samples/operator.kyma-project.io_v1alpha1_sample.yaml (generated when --gen-default-cr flag set)
+ - Manifest - template-operate.yaml (generated when "--gen-manifest" flag set)
+ - Security Scanners Config - sec-scanners-config.yaml (generated when "--gen-sec-config" flag set)
+ - Default CR - config/samples/operator.kyma-project.io_v1alpha1_sample.yaml (generated when "--gen-default-cr" flag set)
 
-Users can specify required fields of the module config with CLI arguments like:
---module-name
---module-version
---module-channel
---module-manifest-path (cannot be used with --gen-manifest flag)
+You must specify the required fields of the module config using the following CLI arguments:
+--module-name [NAME]
+--module-version [VERSION]
+--module-channel [CHANNEL]
+--module-manifest-path [MANIFEST-PATH] (cannot be used with "--gen-manifest" flag)
 
-Note: If the required fields arenot provided, then module-config.yaml is not ready to use out-of-the-box. The user must manually edit the file to make it usable.
-The sec-scanners-config.yaml must also always be edited to be usable.
+**NOTE:**: If the required fields aren't provided, the module-config.yaml is not ready to use out-of-the-box. You must manually edit the file to make it usable.
+Also, edit the sec-scanners-config.yaml to be able to use it.
 
 The command is designed to streamline the module creation process in Kyma, making it easier and more 
 efficient for developers to get started with new modules. It supports customization through various flags, 
 allowing for a tailored scaffolding experience according to the specific needs of the module being created.`,
 		Example: `Examples:
-Build create a simple scaffold for a module
+Generate a simple scaffold for a module
 		kyma alpha create scaffold --module-name=template-operator --module-version=1.0.0 --module-channel=regular --module-manifest-path=./template-operator.yaml
-Build create a scaffold with manifest file, default CR, and security config for a module
+Generate a scaffold with manifest file, default CR, and security config for a module
 		kyma alpha create scaffold --module-name=template-operator --module-version=1.0.0 --module-channel=regular --gen-manifest --gen-sec-config --gen-default-cr
 `,
 		RunE: func(cobraCmd *cobra.Command, args []string) error { return c.Run(cobraCmd.Context()) },
@@ -59,7 +59,7 @@ Build create a scaffold with manifest file, default CR, and security config for 
 
 	cmd.Flags().BoolVarP(
 		&o.Overwrite, "overwrite", "o", false,
-		"Specifies if scaffold overwrite existing files",
+		"Specifies if the scaffold overwrites existing files",
 	)
 	cmd.Flags().StringVarP(
 		&o.Directory, "directory", "d", "./",
