@@ -10,15 +10,15 @@ Scaffold generates the necessary files for creating a new module in Kyma. This i
 a basic directory structure and creating default files based on the provided flags.
 The command generates the following files:
  - Module Config - module-config.yaml (always generated)
- - Manifest - template-operate.yaml (generated when "--gen-manifest" flag set)
- - Security Scanners Config - sec-scanners-config.yaml (generated when "--gen-sec-config" flag set)
- - Default CR - config/samples/operator.kyma-project.io_v1alpha1_sample.yaml (generated when "--gen-default-cr" flag set)
+ - Manifest - template-operate.yaml (generated when the "--gen-manifest" flag is set)
+ - Security Scanners Config - sec-scanners-config.yaml (generated when the "--gen-sec-config" flag is set)
+ - Default CR - config/samples/operator.kyma-project.io_v1alpha1_sample.yaml (generated when the "--gen-default-cr" is flag set)
 
 You must specify the required fields of the module config using the following CLI arguments:
 --module-name [NAME]
 --module-version [VERSION]
 --module-channel [CHANNEL]
---module-manifest-path [MANIFEST-PATH] (cannot be used with "--gen-manifest" flag)
+--module-manifest-path [MANIFEST-PATH] (cannot be used with the "--gen-manifest" flag)
 
 **NOTE:**: If the required fields aren't provided, the module-config.yaml is not ready to use out-of-the-box. You must manually edit the file to make it usable.
 Also, edit the sec-scanners-config.yaml to be able to use it.
