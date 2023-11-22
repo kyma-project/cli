@@ -40,7 +40,7 @@ You must specify the required fields of the module config using the following CL
 --module-name [NAME]
 --module-version [VERSION]
 --module-channel [CHANNEL]
---module-manifest-path [MANIFEST-PATH] (cannot be used with "--gen-manifest" flag)
+--module-manifest-path [MANIFEST-PATH] (cannot be used with the "--gen-manifest" flag)
 
 **NOTE:**: If the required fields aren't provided, the module-config.yaml is not ready to use out-of-the-box. You must manually edit the file to make it usable.
 Also, edit the sec-scanners-config.yaml to be able to use it.
