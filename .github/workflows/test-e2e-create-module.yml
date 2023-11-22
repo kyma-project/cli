@@ -76,7 +76,6 @@ jobs:
           --module-config-file ./module-config.yaml \
           --version $MODULE_TEMPLATE_VERSION -v \
           --output /tmp/module-config-template.yaml
-          --sec-scanners-config ./template-operator/sec-scanners-config.yaml
           echo "MODULE_TEMPLATE_PATH=/tmp/module-config-template.yaml" >> "$GITHUB_ENV"
       - name: Verify module template
         if: ${{ matrix.e2e-test == 'test-moduleconfig-module-creation' || matrix.e2e-test == 'test-kubebuilder-module-creation'}}

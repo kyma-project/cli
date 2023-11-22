@@ -44,19 +44,19 @@ func AddSecurityScanningMetadata(descriptor *ocm.ComponentDescriptor, securityCo
 	//add whitesource sec scan labels
 	for srcIdx := range descriptor.Sources {
 		src := &descriptor.Sources[srcIdx]
-		// add dev branch label
-		err = appendLabelToAccessor(src, "dev-branch", config.DevBranch, labelTemplate)
-		if err != nil {
-			return err
-		}
-
-		// add rc tag label
 		err = appendLabelToAccessor(src, "rc-tag", config.RcTag, labelTemplate)
 		if err != nil {
 			return err
 		}
-
-		err := appendLabelToAccessor(src, "language", config.WhiteSource.Language, labelTemplate)
+		err = appendLabelToAccessor(src, "language", config.WhiteSource.Language, labelTemplate)
+		if err != nil {
+			return err
+		}
+		err = appendLabelToAccessor(src, "dev-branch", config.DevBranch, labelTemplate)
+		if err != nil {
+			return err
+		}
+		err = appendLabelToAccessor(src, "subprojects", config.SubProjects, labelTemplate)
 		if err != nil {
 			return err
 		}
@@ -128,6 +128,7 @@ type SecurityScanCfg struct {
 	WhiteSource WhiteSourceSecCfg `json:"whitesource"`
 	DevBranch   string            `json:"dev-branch"`
 	RcTag       string            `json:"rc-tag"`
+	SubProjects string            `json:"subprojects"`
 }
 type WhiteSourceSecCfg struct {
 	Language string   `json:"language"`
