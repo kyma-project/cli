@@ -32,7 +32,7 @@ func NewCmd(o *Options) *cobra.Command {
 a basic directory structure and creating default files based on the provided flags.
 The command generates the following files:
  - Module Config - module-config.yaml (always generated)
- - Manifest - template-operate.yaml (generated when "--gen-manifest" flag set)
+ - Manifest - template-operate.yaml (generated when the "--gen-manifest" flag is set)
  - Security Scanners Config - sec-scanners-config.yaml (generated when "--gen-sec-config" flag set)
  - Default CR - config/samples/operator.kyma-project.io_v1alpha1_sample.yaml (generated when "--gen-default-cr" flag set)
 
