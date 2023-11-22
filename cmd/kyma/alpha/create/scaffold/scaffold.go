@@ -33,7 +33,7 @@ a basic directory structure and creating default files based on the provided fla
 The command generates the following files:
  - Module Config - module-config.yaml (always generated)
  - Manifest - template-operate.yaml (generated when the "--gen-manifest" flag is set)
- - Security Scanners Config - sec-scanners-config.yaml (generated when "--gen-sec-config" flag set)
+ - Security Scanners Config - sec-scanners-config.yaml (generated when the "--gen-sec-config" flag is set)
  - Default CR - config/samples/operator.kyma-project.io_v1alpha1_sample.yaml (generated when "--gen-default-cr" flag set)
 
 You must specify the required fields of the module config using the following CLI arguments:
