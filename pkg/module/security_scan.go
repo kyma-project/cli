@@ -56,10 +56,12 @@ func AddSecurityScanningMetadata(descriptor *ocm.ComponentDescriptor, securityCo
 		if err != nil {
 			return err
 		}
-		err = appendLabelToAccessor(src, "subprojects", config.SubProjects, labelTemplate)
+
+		err = appendLabelToAccessor(src, "subprojects", config.WhiteSource.SubProjects, labelTemplate)
 		if err != nil {
 			return err
 		}
+
 		err = appendLabelToAccessor(src, "exclude", excludedWhitesourcePathPatterns, labelTemplate)
 		if err != nil {
 			return err
@@ -128,11 +130,11 @@ type SecurityScanCfg struct {
 	WhiteSource WhiteSourceSecCfg `json:"whitesource"`
 	DevBranch   string            `json:"dev-branch"`
 	RcTag       string            `json:"rc-tag"`
-	SubProjects string            `json:"subprojects"`
 }
 type WhiteSourceSecCfg struct {
-	Language string   `json:"language"`
-	Exclude  []string `json:"exclude"`
+	Language    string   `json:"language"`
+	SubProjects string   `json:"subprojects"`
+	Exclude     []string `json:"exclude"`
 }
 
 func parseSecurityScanConfig(securityConfigPath string) (*SecurityScanCfg, error) {
