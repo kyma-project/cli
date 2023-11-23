@@ -75,7 +75,7 @@ func Test_ModuleTemplate(t *testing.T) {
 		localBlobAccessSpec, ok := resourceAccessSpec.(*localblob.AccessSpec)
 		assert.True(t, ok)
 		assert.Equal(t, localblob.Type, localBlobAccessSpec.GetType())
-		assert.Contains(t, "sha256:", localBlobAccessSpec.LocalReference)
+		assert.Contains(t, localBlobAccessSpec.LocalReference, "sha256:")
 	})
 
 	t.Run("test descriptor.component.sources", func(t *testing.T) {
@@ -86,7 +86,7 @@ func Test_ModuleTemplate(t *testing.T) {
 		githubAccessSpec, ok := sourceAccessSpec.(*github.AccessSpec)
 		assert.True(t, ok)
 		assert.Equal(t, github.Type, githubAccessSpec.Type)
-		assert.Contains(t, githubAccessSpec.RepoURL, testRepoURL)
+		assert.Contains(t, testRepoURL, githubAccessSpec.RepoURL)
 	})
 
 	t.Run("test security scan labels", func(t *testing.T) {
