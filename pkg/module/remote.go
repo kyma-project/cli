@@ -151,11 +151,10 @@ func (r *Remote) Push(archive *comparch.ComponentArchive, overwrite bool) (ocm.C
 			if descriptorResourcesAreEquivalent(archive.GetDescriptor().Resources,
 				versionAccess.GetDescriptor().Resources) {
 				return versionAccess, false, nil
-			} else {
-				return nil, false, fmt.Errorf("version %s already exists with different content, please use "+
-					"--module-archive-version-overwrite flag to overwrite it",
-					archive.ComponentVersionAccess.GetVersion())
 			}
+			return nil, false, fmt.Errorf("version %s already exists with different content, please use "+
+				"--module-archive-version-overwrite flag to overwrite it",
+				archive.ComponentVersionAccess.GetVersion())
 		}
 	}
 
@@ -201,15 +200,26 @@ func descriptorResourcesAreEquivalent(localResources, remoteResources compdesc.R
 	for _, res := range remoteResources {
 		localResource := localResourcesMap[res.Name]
 		if res.Name == RawManifestLayerName {
-			remoteAccessObject := res.Access.(*runtime.UnstructuredVersionedTypedObject).Object
-			_, ok := localResourcesMap[res.Name]
+			remoteAccess, ok := res.Access.(*runtime.UnstructuredVersionedTypedObject)
 			if !ok {
 				return false
 			}
-			localAccessObject := localResource.Access.(*localblob.AccessSpec)
 
+			_, ok = localResourcesMap[res.Name]
+			if !ok {
+				return false
+			}
+			localAccessObject, ok := localResource.Access.(*localblob.AccessSpec)
+			if !ok {
+				return false
+			}
+
+			remoteAccessLocalReference, ok := remoteAccess.Object[accessLocalReferenceFieldName].(string)
+			if !ok {
+				return false
+			}
 			// Trimming 7 characters because locally the sha256 is followed by '.' but remote it is followed by ':'
-			if remoteAccessObject[accessLocalReferenceFieldName].(string)[7:] != localAccessObject.LocalReference[7:] {
+			if remoteAccessLocalReference[7:] != localAccessObject.LocalReference[7:] {
 				return false
 			}
 		} else if !res.IsEquivalent(&localResource) {

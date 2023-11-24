@@ -49,10 +49,16 @@ func Test_ModuleTemplate(t *testing.T) {
 		assert.Equal(t, 2, len(descriptor.Resources))
 
 		resource := descriptor.Resources[0]
+		assert.Equal(t, "template-operator", resource.Name)
+		assert.Equal(t, ocmMetaV1.ExternalRelation, resource.Relation)
+		assert.Equal(t, "ociImage", resource.Type)
+		expectedModuleTemplateVersion := os.Getenv("MODULE_TEMPLATE_VERSION")
+		assert.Equal(t, expectedModuleTemplateVersion, resource.Version)
+
+		resource = descriptor.Resources[1]
 		assert.Equal(t, module.RawManifestLayerName, resource.Name)
 		assert.Equal(t, ocmMetaV1.LocalRelation, resource.Relation)
 		assert.Equal(t, module.TypeYaml, resource.Type)
-		expectedModuleTemplateVersion := os.Getenv("MODULE_TEMPLATE_VERSION")
 		assert.Equal(t, expectedModuleTemplateVersion, resource.Version)
 	})
 

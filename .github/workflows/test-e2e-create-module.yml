@@ -53,15 +53,16 @@ jobs:
       - name: Run create module with kubebuilder-project
         if: ${{ matrix.e2e-test == 'test-kubebuilder-module-creation' }}
         run: |
+          cd ./template-operator
           kyma alpha create module \
           --name kyma-project.io/module/template-operator \
-          --path ./template-operator \
+          --path . \
           --registry http://k3d-oci.localhost:5001 \
           --insecure \
           --kubebuilder-project \
           --version $MODULE_TEMPLATE_VERSION -v \
           --output /tmp/kubebuilder-template.yaml \
-          --sec-scanners-config ./template-operator/sec-scanners-config.yaml
+          --sec-scanners-config sec-scanners-config.yaml
           echo "MODULE_TEMPLATE_PATH=/tmp/kubebuilder-template.yaml" >> "$GITHUB_ENV"
       - name: Run create module with module-config
         if: ${{ matrix.e2e-test == 'test-moduleconfig-module-creation' || matrix.e2e-test == 'test-same-version-module-creation'}}
@@ -75,14 +76,15 @@ jobs:
           --insecure \
           --module-config-file ./module-config.yaml \
           --version $MODULE_TEMPLATE_VERSION -v \
-          --sec-scanners-config ./template-operator/sec-scanners-config.yaml \
+          --sec-scanners-config sec-scanners-config.yaml \
           --output /tmp/module-config-template.yaml 
           echo "MODULE_TEMPLATE_PATH=/tmp/module-config-template.yaml" >> "$GITHUB_ENV"
       - name: Create a different security scanners config file for different layers
         if: ${{matrix.e2e-test == 'test-same-version-module-creation'}}
         run: |
           cd ./template-operator
-          echo 'module-name: template-operator
+          echo \
+          "module-name: template-operator
           rc-tag: 0.5.0
           dev-branch: main
           protecode:
@@ -90,8 +92,9 @@ jobs:
           whitesource:
             language: golang-mod
             exclude:
-              - "**/test/**"
-              - "**/*_test.go"' > sec-scanners-config-changed.yaml
+              - \"**/test/**\"
+              - \"**/*_test.go\"" > sec-scanners-config-changed.yaml
+          cat sec-scanners-config-changed.yaml
       - name: Verify module template
         if: ${{ matrix.e2e-test == 'test-moduleconfig-module-creation' || matrix.e2e-test == 'test-kubebuilder-module-creation'}}
         run: |
