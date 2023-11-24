@@ -11,7 +11,7 @@ func Test_SameVersion_ModuleCreation(t *testing.T) {
 	path := "../../../template-operator"
 	registry := "http://k3d-oci.localhost:5001"
 	configFilePath := "../../../template-operator/module-config.yaml"
-	version := "v1.0.0"
+	version := "0.1.0"
 
 	t.Run("Create same version module with module-archive-version-overwrite flag", func(t *testing.T) {
 		err := e2e.CreateModuleCommand(true, path, registry, configFilePath, version)
