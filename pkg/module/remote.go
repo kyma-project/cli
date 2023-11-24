@@ -12,6 +12,7 @@ import (
 	"github.com/open-component-model/ocm/pkg/contexts/credentials/repositories/dockerconfig"
 	oci "github.com/open-component-model/ocm/pkg/contexts/oci/repositories/ocireg"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/accessmethods/localblob"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/cpi"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/comparch"
@@ -26,8 +27,9 @@ import (
 type NameMapping ocireg.ComponentNameMapping
 
 const (
-	URLPathNameMapping = NameMapping(ocireg.OCIRegistryURLPathMapping)
-	DigestNameMapping  = NameMapping(ocireg.OCIRegistryDigestMapping)
+	URLPathNameMapping            = NameMapping(ocireg.OCIRegistryURLPathMapping)
+	DigestNameMapping             = NameMapping(ocireg.OCIRegistryDigestMapping)
+	accessLocalReferenceFieldName = "localReference"
 )
 
 // Remote represents remote OCI registry and the means to access it
@@ -126,45 +128,94 @@ func NoSchemeURL(url string) string {
 	return regex.ReplaceAllString(url, "")
 }
 
-// Push picks up the archive described in the config and pushes it to the provided registry.
+// Push picks up the archive described in the config and pushes it to the provided registry if not existing.
 // The credentials and token are optional parameters
-func (r *Remote) Push(archive *comparch.ComponentArchive, overwrite bool) (ocm.ComponentVersionAccess, error) {
+func (r *Remote) Push(archive *comparch.ComponentArchive, overwrite bool) (ocm.ComponentVersionAccess, bool, error) {
 	repo, err := r.GetRepository(archive.GetContext())
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	if !overwrite {
-		versionAlreadyExists, _ := repo.ExistsComponentVersion(
-			archive.ComponentVersionAccess.GetName(), archive.ComponentVersionAccess.GetVersion(),
-		)
+		versionExists, _ := repo.ExistsComponentVersion(archive.ComponentVersionAccess.GetName(),
+			archive.ComponentVersionAccess.GetVersion())
 
-		if versionAlreadyExists {
-			return nil, fmt.Errorf("version %s already exists, please use --module-archive-version-overwrite "+
-				"flag to overwrite it", archive.ComponentVersionAccess.GetVersion())
+		if versionExists {
+			versionAccess, err := repo.LookupComponentVersion(
+				archive.ComponentVersionAccess.GetName(), archive.ComponentVersionAccess.GetVersion(),
+			)
+			if err != nil {
+				return nil, false, fmt.Errorf("could not lookup component version: %w", err)
+			}
+
+			if descriptorResourcesAreEquivalent(archive.GetDescriptor().Resources,
+				versionAccess.GetDescriptor().Resources) {
+				return versionAccess, false, nil
+			} else {
+				return nil, false, fmt.Errorf("version %s already exists with different content, please use "+
+					"--module-archive-version-overwrite flag to overwrite it",
+					archive.ComponentVersionAccess.GetVersion())
+			}
 		}
 	}
 
 	transferHandler, err := standard.New(standard.Overwrite(overwrite))
 	if err != nil {
-		return nil, fmt.Errorf("could not setup archive transfer: %w", err)
+		return nil, false, fmt.Errorf("could not setup archive transfer: %w", err)
 	}
 
 	if err = transfer.TransferVersion(
-		common.NewLoggingPrinter(archive.GetContext().Logger()), nil, archive.ComponentVersionAccess, repo, &customTransferHandler{transferHandler},
+		common.NewLoggingPrinter(archive.GetContext().Logger()), nil, archive.ComponentVersionAccess, repo,
+		&customTransferHandler{transferHandler},
 	); err != nil {
-		return nil, fmt.Errorf("could not finish component transfer: %w", err)
+		return nil, false, fmt.Errorf("could not finish component transfer: %w", err)
 	}
 
-	return repo.LookupComponentVersion(
+	componentVersion, err := repo.LookupComponentVersion(
 		archive.ComponentVersionAccess.GetName(), archive.ComponentVersionAccess.GetVersion(),
 	)
+
+	return componentVersion, err == nil, err
 }
 
 type customTransferHandler struct {
 	transferhandler.TransferHandler
 }
 
-func (h *customTransferHandler) TransferVersion(repo ocm.Repository, src ocm.ComponentVersionAccess, meta *compdesc.ComponentReference, tgt ocm.Repository) (ocm.ComponentVersionAccess, transferhandler.TransferHandler, error) {
+func (h *customTransferHandler) TransferVersion(repo ocm.Repository, src ocm.ComponentVersionAccess,
+	meta *compdesc.ComponentReference, tgt ocm.Repository) (ocm.ComponentVersionAccess, transferhandler.TransferHandler,
+	error) {
 	return h.TransferHandler.TransferVersion(repo, src, meta, tgt)
+}
+
+func descriptorResourcesAreEquivalent(localResources, remoteResources compdesc.Resources) bool {
+	if len(localResources) != len(remoteResources) {
+		return false
+	}
+
+	localResourcesMap := map[string]compdesc.Resource{}
+	for _, res := range localResources {
+		localResourcesMap[res.Name] = res
+	}
+
+	for _, res := range remoteResources {
+		localResource := localResourcesMap[res.Name]
+		if res.Name == RawManifestLayerName {
+			remoteAccessObject := res.Access.(*runtime.UnstructuredVersionedTypedObject).Object
+			_, ok := localResourcesMap[res.Name]
+			if !ok {
+				return false
+			}
+			localAccessObject := localResource.Access.(*localblob.AccessSpec)
+
+			// Trimming 7 characters because locally the sha256 is followed by '.' but remote it is followed by ':'
+			if remoteAccessObject[accessLocalReferenceFieldName].(string)[7:] != localAccessObject.LocalReference[7:] {
+				return false
+			}
+		} else if !res.IsEquivalent(&localResource) {
+			return false
+		}
+	}
+
+	return true
 }
