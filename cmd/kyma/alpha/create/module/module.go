@@ -397,7 +397,7 @@ func (cmd *command) Run(ctx context.Context) error {
 	annotations := cmd.getModuleTemplateAnnotations(modCnf, crValidator)
 
 	template, err := module.Template(componentVersionAccess, resourceName, namespace,
-		channel, modDef.DefaultCR, labels, annotations, modDef.CustomStateChecks)
+		channel, modDef.DefaultCR, labels, annotations, modDef.CustomStateChecks, modCnf.Mandatory)
 	if err != nil {
 		cmd.CurrentStep.Failure()
 		return err

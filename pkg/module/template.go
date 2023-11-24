@@ -3,9 +3,10 @@ package module
 import (
 	"bytes"
 	"fmt"
-	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	"strings"
 	"text/template"
+
+	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
@@ -48,6 +49,7 @@ spec:
 {{- end}}
   descriptor:
 {{yaml .Descriptor | printf "%s" | indent 4}}
+  mandatory: {{.Mandatory}}
 `
 )
 
@@ -60,10 +62,12 @@ type moduleTemplateData struct {
 	Labels            map[string]string
 	Annotations       map[string]string
 	CustomStateChecks []v1beta2.CustomStateCheck
+	Mandatory         bool
 }
 
 func Template(remote ocm.ComponentVersionAccess, moduleTemplateName, namespace, channel string, data []byte,
-	labels, annotations map[string]string, customsStateChecks []v1beta2.CustomStateCheck) ([]byte, error) {
+	labels, annotations map[string]string, customsStateChecks []v1beta2.CustomStateCheck, mandatory bool) ([]byte,
+	error) {
 	descriptor := remote.GetDescriptor()
 	ref, err := oci.ParseRef(descriptor.Name)
 	if err != nil {
@@ -90,9 +94,13 @@ func Template(remote ocm.ComponentVersionAccess, moduleTemplateName, namespace, 
 		Labels:            labels,
 		Annotations:       annotations,
 		CustomStateChecks: customsStateChecks,
+		Mandatory:         mandatory,
 	}
 
-	t, err := template.New("modTemplate").Funcs(template.FuncMap{"yaml": yaml.Marshal, "indent": Indent}).Parse(modTemplate)
+	t, err := template.New("modTemplate").Funcs(template.FuncMap{
+		"yaml":   yaml.Marshal,
+		"indent": Indent,
+	}).Parse(modTemplate)
 	if err != nil {
 		return nil, err
 	}
