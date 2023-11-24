@@ -44,22 +44,24 @@ func AddSecurityScanningMetadata(descriptor *ocm.ComponentDescriptor, securityCo
 	//add whitesource sec scan labels
 	for srcIdx := range descriptor.Sources {
 		src := &descriptor.Sources[srcIdx]
-		// add dev branch label
+		err = appendLabelToAccessor(src, "rc-tag", config.RcTag, labelTemplate)
+		if err != nil {
+			return err
+		}
+		err = appendLabelToAccessor(src, "language", config.WhiteSource.Language, labelTemplate)
+		if err != nil {
+			return err
+		}
 		err = appendLabelToAccessor(src, "dev-branch", config.DevBranch, labelTemplate)
 		if err != nil {
 			return err
 		}
 
-		// add rc tag label
-		err = appendLabelToAccessor(src, "rc-tag", config.RcTag, labelTemplate)
+		err = appendLabelToAccessor(src, "subprojects", config.WhiteSource.SubProjects, labelTemplate)
 		if err != nil {
 			return err
 		}
 
-		err := appendLabelToAccessor(src, "language", config.WhiteSource.Language, labelTemplate)
-		if err != nil {
-			return err
-		}
 		err = appendLabelToAccessor(src, "exclude", excludedWhitesourcePathPatterns, labelTemplate)
 		if err != nil {
 			return err
@@ -130,8 +132,9 @@ type SecurityScanCfg struct {
 	RcTag       string            `json:"rc-tag"`
 }
 type WhiteSourceSecCfg struct {
-	Language string   `json:"language"`
-	Exclude  []string `json:"exclude"`
+	Language    string   `json:"language"`
+	SubProjects string   `json:"subprojects"`
+	Exclude     []string `json:"exclude"`
 }
 
 func parseSecurityScanConfig(securityConfigPath string) (*SecurityScanCfg, error) {
