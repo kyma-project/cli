@@ -22,7 +22,7 @@ require (
 	github.com/kyma-incubator/reconciler v0.0.0-20230927075501-a4fa93d4b07a
 	github.com/kyma-project/hydroform/function v0.0.0-20230831071441-f3501c89bace
 	github.com/kyma-project/hydroform/provision v0.0.0-20230831071441-f3501c89bace
-	github.com/kyma-project/lifecycle-manager v0.0.0-20230911065458-6926c58bcd43
+	github.com/kyma-project/lifecycle-manager v0.0.0-20231124135553-fdda00209549
 	github.com/mandelsoft/vfs v0.4.0
 	github.com/onsi/ginkgo/v2 v2.13.1
 	github.com/onsi/gomega v1.30.0
@@ -47,13 +47,13 @@ require (
 
 require (
 	k8s.io/api v0.28.4
-	k8s.io/apiextensions-apiserver v0.28.3
+	k8s.io/apiextensions-apiserver v0.28.4
 	k8s.io/apimachinery v0.28.4
-	k8s.io/apiserver v0.28.3 // indirect
-	k8s.io/cli-runtime v0.28.3
+	k8s.io/apiserver v0.28.4 // indirect
+	k8s.io/cli-runtime v0.28.4
 	k8s.io/client-go v0.28.4
-	k8s.io/component-base v0.28.3 // indirect
-	k8s.io/kubectl v0.28.2 // indirect
+	k8s.io/component-base v0.28.4 // indirect
+	k8s.io/kubectl v0.28.4 // indirect
 )
 
 require (
@@ -108,7 +108,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.19.1 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.13.43 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.13.13 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.33 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.70 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.43 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.37 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.45 // indirect
@@ -130,7 +130,7 @@ require (
 	github.com/buildkite/agent/v3 v3.58.0 // indirect
 	github.com/buildkite/interpolate v0.0.0-20200526001904-07f35b4ae251 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
-	github.com/cert-manager/cert-manager v1.12.3 // indirect
+	github.com/cert-manager/cert-manager v1.13.2 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/chai2010/gettext-go v1.0.2 // indirect
 	github.com/chrismellard/docker-credential-acr-env v0.0.0-20230304212654-82a0ddb27589 // indirect
@@ -177,7 +177,7 @@ require (
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
 	github.com/go-git/go-billy/v5 v5.5.0 // indirect
 	github.com/go-gorp/gorp/v3 v3.1.0 // indirect
-	github.com/go-jose/go-jose/v3 v3.0.0 // indirect
+	github.com/go-jose/go-jose/v3 v3.0.1 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/analysis v0.21.4 // indirect
 	github.com/go-openapi/errors v0.20.4 // indirect
@@ -233,7 +233,7 @@ require (
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/jedisct1/go-minisign v0.0.0-20230811132847-661be99b8267 // indirect
 	github.com/jellydator/ttlcache/v3 v3.1.0 // indirect
-	github.com/jmespath/go-jmespath v0.4.0 // indirect
+	github.com/jmespath/go-jmespath v0.4.1-0.20220621161143-b0104c826a24 // indirect
 	github.com/jmoiron/sqlx v1.3.5 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
@@ -376,7 +376,7 @@ require (
 	golang.org/x/sys v0.14.0 // indirect
 	golang.org/x/term v0.13.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
-	golang.org/x/time v0.3.0 // indirect
+	golang.org/x/time v0.4.0 // indirect
 	golang.org/x/tools v0.14.0 // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
@@ -397,12 +397,12 @@ require (
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	inet.af/netaddr v0.0.0-20230525184311-b8eac61e914a // indirect
-	istio.io/api v1.20.0-beta.0.0.20231031143729-871b2914253f // indirect
+	istio.io/api v1.20.0 // indirect
 	istio.io/istio v0.0.0-20230828165045-9fdfe780e1fc // indirect
 	k8s.io/kube-openapi v0.0.0-20231010175941-2dd684a91f00 // indirect
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b // indirect
 	oras.land/oras-go v1.2.4 // indirect
-	sigs.k8s.io/gateway-api v0.8.0-rc2 // indirect
+	sigs.k8s.io/gateway-api v0.8.0 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/release-utils v0.7.6 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.3.0 // indirect
