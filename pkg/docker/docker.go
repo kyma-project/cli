@@ -77,7 +77,7 @@ type ContainerRunOpts struct {
 
 // NewClient creates docker client using docker environment of the OS
 func NewClient() (Client, error) {
-	dClient, err := docker.NewClientWithOpts(docker.FromEnv)
+	dClient, err := docker.NewClientWithOpts(docker.FromEnv, docker.WithAPIVersionNegotiation())
 	if err != nil {
 		return nil, err
 	}

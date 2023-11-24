@@ -14,7 +14,7 @@ func Test_SameVersion_ModuleCreation(t *testing.T) {
 	configFilePath := "../../../template-operator/module-config.yaml"
 	secScannerConfigFile := "../../../template-operator/sec-scanners-config.yaml"
 	changedsecScannerConfigFile := "../../../template-operator/sec-scanners-config-changed.yaml"
-	version := "v1.0.0"
+	version := "1.0.0"
 
 	t.Run("Create same version module with module-archive-version-overwrite flag", func(t *testing.T) {
 		err := e2e.CreateModuleCommand(true, path, registry, configFilePath, version, secScannerConfigFile)

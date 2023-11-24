@@ -2,12 +2,10 @@ package module
 
 import (
 	"fmt"
+	"github.com/kyma-project/cli/internal/nice"
 	"os"
 	"path/filepath"
 	"regexp"
-	"strings"
-
-	"github.com/kyma-project/cli/internal/nice"
 
 	"github.com/blang/semver/v4"
 	"github.com/pkg/errors"
@@ -69,9 +67,6 @@ func (o *Options) validateVersion() error {
 		return err
 	}
 	o.Version = sv.String()
-	if !strings.HasPrefix(o.Version, "v") {
-		o.Version = fmt.Sprintf("v%s", o.Version)
-	}
 	return nil
 }
 
