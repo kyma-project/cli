@@ -210,21 +210,23 @@ func Flatten(labels v1.Labels) map[string]string {
 	return labelsMap
 }
 
-func CreateModuleCommand(versionOverwrite bool, path, registry, configFilePath, version string) error {
+func CreateModuleCommand(versionOverwrite bool,
+	path, registry, configFilePath, version, secScannerConfig string) error {
 	var createModuleCmd *exec.Cmd
 	if versionOverwrite {
 		createModuleCmd = exec.Command("kyma", "alpha", "create", "module",
 			"--path", path, "--registry", registry, "--insecure", "--module-config-file", configFilePath,
-			"--version", version, "--module-archive-version-overwrite")
+			"--version", version, "--module-archive-version-overwrite", "--sec-scanner-config", secScannerConfig)
 	} else {
 		createModuleCmd = exec.Command("kyma", "alpha", "create", "module",
 			"--path", path, "--registry", registry, "--insecure", "--module-config-file", configFilePath,
-			"--version", version)
+			"--version", version, "--sec-scanner-config", secScannerConfig)
 	}
 	createOut, err := createModuleCmd.CombinedOutput()
 
 	if err != nil {
-		if strings.Contains(string(createOut), fmt.Sprintf("version %s already exists", version)) {
+		if strings.Contains(string(createOut),
+			fmt.Sprintf("version %s already exists with different content", version)) {
 			return ErrCreateModuleFailedWithSameVersion
 		}
 		return fmt.Errorf("create module command failed with err %s", err)
