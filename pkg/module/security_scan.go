@@ -44,22 +44,24 @@ func AddSecurityScanningMetadata(descriptor *ocm.ComponentDescriptor, securityCo
 	//add whitesource sec scan labels
 	for srcIdx := range descriptor.Sources {
 		src := &descriptor.Sources[srcIdx]
-		// add dev branch label
+		err = appendLabelToAccessor(src, "rc-tag", config.RcTag, labelTemplate)
+		if err != nil {
+			return err
+		}
+		err = appendLabelToAccessor(src, "language", config.WhiteSource.Language, labelTemplate)
+		if err != nil {
+			return err
+		}
 		err = appendLabelToAccessor(src, "dev-branch", config.DevBranch, labelTemplate)
 		if err != nil {
 			return err
 		}
 
-		// add rc tag label
-		err = appendLabelToAccessor(src, "rc-tag", config.RcTag, labelTemplate)
+		err = appendLabelToAccessor(src, "subprojects", config.WhiteSource.SubProjects, labelTemplate)
 		if err != nil {
 			return err
 		}
 
-		err := appendLabelToAccessor(src, "language", config.WhiteSource.Language, labelTemplate)
-		if err != nil {
-			return err
-		}
 		err = appendLabelToAccessor(src, "exclude", excludedWhitesourcePathPatterns, labelTemplate)
 		if err != nil {
 			return err
@@ -130,9 +132,9 @@ type SecurityScanCfg struct {
 	RcTag       string            `json:"rc-tag" yaml:"rc-tag" comment:"string, release candidate tag"`
 }
 type WhiteSourceSecCfg struct {
-	Language string   `json:"language" yaml:"language" comment:"string, indicating the programming language the scanner has to analyze"`
-	SubProjects string   `json:"subprojects" yaml:"subprojects" comment:"string, specifing any subprojects"`
-	Exclude  []string `json:"exclude" yaml:"exclude" comment:"list, directories within the repository which should not be scanned"`
+	Language    string   `json:"language" yaml:"language" comment:"string, indicating the programming language the scanner has to analyze"`
+	SubProjects string   `json:"subprojects" yaml:"subprojects" comment:"string, specifying any subprojects"`
+	Exclude     []string `json:"exclude" yaml:"exclude" comment:"list, directories within the repository which should not be scanned"`
 }
 
 func parseSecurityScanConfig(securityConfigPath string) (*SecurityScanCfg, error) {
