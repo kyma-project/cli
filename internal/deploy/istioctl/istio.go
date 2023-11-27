@@ -36,7 +36,7 @@ const (
 )
 
 var (
-	ErrIstioSourcepath = errors.New("istio source path contains `..`")
+	errIstioSourcepath = errors.New("istio source path contains `..`")
 )
 
 type operatingSystem struct {
@@ -343,7 +343,7 @@ func unGzip(source, target string, deleteSource bool) error {
 
 func unTar(source, target string, deleteSource bool) error {
 	if strings.Contains(source, "..") {
-		return ErrIstioSourcepath
+		return errIstioSourcepath
 	}
 	reader, err := os.Open(source)
 	if err != nil {
