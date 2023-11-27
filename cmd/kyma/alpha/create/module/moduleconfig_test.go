@@ -251,7 +251,7 @@ func TestValidateCustomStateChecks(t *testing.T) {
 					{
 						JSONPath:    "status.health",
 						Value:       "green",
-						MappedState: v1beta2.StateReady,
+						MappedState: shared.StateReady,
 					},
 				},
 			},

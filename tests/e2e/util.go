@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/kyma-project/lifecycle-manager/api/shared"
 	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	. "github.com/onsi/ginkgo/v2" //nolint:stylecheck,revive
 	v1 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/meta/v1"
@@ -79,7 +80,7 @@ func KymaCRIsInReadyState(ctx context.Context,
 		Name:      kymaName,
 	}, &kyma)
 
-	return err == nil && kyma.Status.State == v1beta2.StateReady
+	return err == nil && kyma.Status.State == shared.StateReady
 }
 
 func ApplyModuleTemplate(
@@ -151,7 +152,7 @@ func CRDIsAvailable(ctx context.Context,
 func CrIsInExpectedState(resourceType string,
 	resourceName string,
 	namespace string,
-	expectedState v1beta2.State) bool {
+	expectedState shared.State) bool {
 	cmd := exec.Command("kubectl", "get", resourceType, resourceName, "-n",
 		namespace, "-o", "jsonpath='{.status.state}'")
 
@@ -170,7 +171,7 @@ func KymaContainsModuleInExpectedState(ctx context.Context,
 	kymaName string,
 	namespace string,
 	moduleName string,
-	expectedState v1beta2.State) bool {
+	expectedState shared.State) bool {
 	var kyma v1beta2.Kyma
 	err := k8sClient.Get(ctx, client.ObjectKey{
 		Namespace: namespace,

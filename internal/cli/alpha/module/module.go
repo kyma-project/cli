@@ -168,7 +168,7 @@ func (i *DefaultInteractor) WaitUntilReady(ctx context.Context) error {
 }
 
 // IsKymaReady interprets the status of a Kyma Resource and uses this to determine if it can be considered Ready.
-// It checks for v1beta2.StateReady, and if it is set, determines if this state can be trusted by observing
+// It checks for shared.StateReady, and if it is set, determines if this state can be trusted by observing
 // if the status fields match the desired state, and if the lastOperation is filled by the lifecycle-manager.
 func IsKymaReady(l *zap.SugaredLogger, obj runtime.Object) error {
 	kyma, ok := obj.(*v1beta2.Kyma)
