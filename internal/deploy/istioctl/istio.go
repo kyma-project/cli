@@ -16,21 +16,28 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/kyma-project/cli/internal/files"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
+
+	"github.com/kyma-project/cli/internal/files"
 )
 
-const defaultIstioChartPath = "/resources/istio/Chart.yaml"
-const archSupport = "1.6"
-const envVar = "ISTIOCTL_PATH"
-const dirName = "istio"
-const binName = "istioctl"
-const winBinName = "istioctl.exe"
-const downloadURL = "https://github.com/istio/istio/releases/download/"
-const tarGzName = "istio.tar.gz"
-const tarName = "istio.tar"
-const zipName = "istio.zip"
+const (
+	defaultIstioChartPath = "/resources/istio/Chart.yaml"
+	archSupport           = "1.6"
+	envVar                = "ISTIOCTL_PATH"
+	dirName               = "istio"
+	binName               = "istioctl"
+	winBinName            = "istioctl.exe"
+	downloadURL           = "https://github.com/istio/istio/releases/download/"
+	tarGzName             = "istio.tar.gz"
+	tarName               = "istio.tar"
+	zipName               = "istio.zip"
+)
+
+var (
+	errIstioSourcepath = errors.New("istio source path contains `..`")
+)
 
 type operatingSystem struct {
 	name string
@@ -197,7 +204,8 @@ func (i *Installation) downloadIstio() error {
 	// Istioctl download links
 	if i.osExt == darwin.ext || i.osExt == linux.ext {
 		nonArchURL = fmt.Sprintf("%s%s/istio-%s-%s.tar.gz", i.downloadURL, i.istioVersion, i.istioVersion, i.osExt)
-		archURL = fmt.Sprintf("%s%s/istio-%s-%s-%s.tar.gz", i.downloadURL, i.istioVersion, i.istioVersion, i.osExt, i.istioArch)
+		archURL = fmt.Sprintf("%s%s/istio-%s-%s-%s.tar.gz", i.downloadURL, i.istioVersion, i.istioVersion, i.osExt,
+			i.istioArch)
 	} else {
 		nonArchURL = fmt.Sprintf("%s%s/istio-%s-%s.zip", i.downloadURL, i.istioVersion, i.istioVersion, i.osExt)
 	}
@@ -334,6 +342,9 @@ func unGzip(source, target string, deleteSource bool) error {
 }
 
 func unTar(source, target string, deleteSource bool) error {
+	if strings.Contains(source, "..") {
+		return errIstioSourcepath
+	}
 	reader, err := os.Open(source)
 	if err != nil {
 		return err
