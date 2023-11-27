@@ -7,7 +7,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/open-component-model/ocm/pkg/common"
 	"github.com/open-component-model/ocm/pkg/contexts/credentials"
 	"github.com/open-component-model/ocm/pkg/contexts/credentials/repositories/dockerconfig"
 	oci "github.com/open-component-model/ocm/pkg/contexts/oci/repositories/ocireg"
@@ -18,9 +17,7 @@ import (
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/comparch"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/genericocireg"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/ocireg"
-	"github.com/open-component-model/ocm/pkg/contexts/ocm/transfer"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/transfer/transferhandler"
-	"github.com/open-component-model/ocm/pkg/contexts/ocm/transfer/transferhandler/standard"
 	"github.com/open-component-model/ocm/pkg/runtime"
 )
 
@@ -39,6 +36,7 @@ type Remote struct {
 	Credentials string
 	Token       string
 	Insecure    bool
+	OciRepo
 }
 
 func (r *Remote) GetRepository(ctx cpi.Context) (cpi.Repository, error) {
@@ -137,13 +135,10 @@ func (r *Remote) Push(archive *comparch.ComponentArchive, overwrite bool) (ocm.C
 	}
 
 	if !overwrite {
-		versionExists, _ := repo.ExistsComponentVersion(archive.ComponentVersionAccess.GetName(),
-			archive.ComponentVersionAccess.GetVersion())
+		versionExists, _ := r.ComponentVersionExists(archive, repo)
 
 		if versionExists {
-			versionAccess, err := repo.LookupComponentVersion(
-				archive.ComponentVersionAccess.GetName(), archive.ComponentVersionAccess.GetVersion(),
-			)
+			versionAccess, err := r.GetComponentVersion(archive, repo)
 			if err != nil {
 				return nil, false, fmt.Errorf("could not lookup component version: %w", err)
 			}
@@ -158,21 +153,11 @@ func (r *Remote) Push(archive *comparch.ComponentArchive, overwrite bool) (ocm.C
 		}
 	}
 
-	transferHandler, err := standard.New(standard.Overwrite(overwrite))
-	if err != nil {
-		return nil, false, fmt.Errorf("could not setup archive transfer: %w", err)
+	if err = r.PushComponentVersion(archive, repo, overwrite); err != nil {
+		return nil, false, err
 	}
 
-	if err = transfer.TransferVersion(
-		common.NewLoggingPrinter(archive.GetContext().Logger()), nil, archive.ComponentVersionAccess, repo,
-		&customTransferHandler{transferHandler},
-	); err != nil {
-		return nil, false, fmt.Errorf("could not finish component transfer: %w", err)
-	}
-
-	componentVersion, err := repo.LookupComponentVersion(
-		archive.ComponentVersionAccess.GetName(), archive.ComponentVersionAccess.GetVersion(),
-	)
+	componentVersion, err := r.GetComponentVersion(archive, repo)
 
 	return componentVersion, err == nil, err
 }
