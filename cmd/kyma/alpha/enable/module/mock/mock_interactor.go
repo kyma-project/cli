@@ -3,6 +3,7 @@ package mock
 
 import (
 	"context"
+
 	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	"github.com/stretchr/testify/mock"
 )

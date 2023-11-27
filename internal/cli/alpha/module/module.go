@@ -3,11 +3,12 @@ package module
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-project/cli/pkg/errs"
 	"time"
 
+	"github.com/kyma-project/cli/pkg/errs"
+
 	"github.com/avast/retry-go"
-	"github.com/kyma-project/cli/internal/kube"
+	"github.com/kyma-project/lifecycle-manager/api/shared"
 	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -18,6 +19,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/kyma-project/cli/internal/kube"
 )
 
 type Interactor interface {
@@ -174,7 +177,7 @@ func IsKymaReady(l *zap.SugaredLogger, obj runtime.Object) error {
 	}
 	l.Info(kyma.Status)
 	switch kyma.Status.State {
-	case v1beta2.StateReady:
+	case shared.StateReady:
 		if len(kyma.Status.Modules) != len(kyma.Spec.Modules) {
 			return fmt.Errorf("kyma has status Ready but cannot be up to date "+
 				"since modules tracked in status differ from modules in desired state/spec (%v in status, %v in spec)",
@@ -189,7 +192,7 @@ func IsKymaReady(l *zap.SugaredLogger, obj runtime.Object) error {
 			)
 		}
 		return nil
-	case v1beta2.StateWarning:
+	case shared.StateWarning:
 		return ErrKymaInWarningState
 	default:
 		lastOperation := kyma.Status.LastOperation

@@ -3,16 +3,17 @@ package module
 import (
 	"slices"
 
+	"github.com/kyma-project/lifecycle-manager/api/shared"
 	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	"github.com/pkg/errors"
 )
 
-var validStates = []v1beta2.State{
-	v1beta2.StateReady,
-	v1beta2.StateProcessing,
-	v1beta2.StateError,
-	v1beta2.StateDeleting,
-	v1beta2.StateWarning,
+var validStates = []shared.State{
+	shared.StateReady,
+	shared.StateProcessing,
+	shared.StateError,
+	shared.StateDeleting,
+	shared.StateWarning,
 }
 
 var ErrCustomStateCheckValidation = errors.New("custom state check validation failed")
@@ -28,11 +29,11 @@ func IsValidMappedState(s string) bool {
 
 func ContainsAllRequiredStates(checks []v1beta2.CustomStateCheck) bool {
 	containsError := slices.ContainsFunc(checks, func(csc v1beta2.CustomStateCheck) bool {
-		return csc.MappedState == v1beta2.StateError
+		return csc.MappedState == shared.StateError
 	})
 
 	containsReady := slices.ContainsFunc(checks, func(csc v1beta2.CustomStateCheck) bool {
-		return csc.MappedState == v1beta2.StateReady
+		return csc.MappedState == shared.StateReady
 	})
 
 	return containsError && containsReady
