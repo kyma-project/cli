@@ -2,9 +2,9 @@
 * @kyma-project/jellyfish
 
 # All .md files
-*.md @mmitoraj @NHingerl @grego952 @IwonaLanger @nataliasitko
+*.md @kyma-project/technical-writers
 
 # serverless related commands
-cmd/kyma/init @m00g3n @pPrecel @dbadura @kwiatekus @cortey @anoipm
-cmd/kyma/sync @m00g3n @pPrecel @dbadura @kwiatekus @cortey @anoipm
-cmd/kyma/apply @m00g3n @pPrecel @dbadura @kwiatekus @cortey @anoipm
+cmd/kyma/init @kyma-project/otters
+cmd/kyma/sync @kyma-project/otters
+cmd/kyma/apply @kyma-project/otters

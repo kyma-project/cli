@@ -9,10 +9,6 @@ on:
     branches:
       - main
       - 'release-**'
-    paths:
-      - 'go.mod'
-      - 'go.sum'
-      - '**.go'
 jobs:
   e2e:
     strategy:
@@ -23,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       K3D_VERSION: v5.4.7
-      MODULE_TEMPLATE_VERSION: v1.0.0
+      MODULE_TEMPLATE_VERSION: 0.1.0
       OCI_REPOSITORY_URL: http://k3d-oci.localhost:5001
     steps:
       - name: Checkout Kyma CLI
@@ -79,7 +75,7 @@ jobs:
           --insecure \
           --module-config-file ./module-config.yaml \
           --version $MODULE_TEMPLATE_VERSION -v \
-          --output /tmp/module-config-template.yaml 
+          --output /tmp/module-config-template.yaml
           echo "MODULE_TEMPLATE_PATH=/tmp/module-config-template.yaml" >> "$GITHUB_ENV"
       - name: Verify module template
         if: ${{ matrix.e2e-test == 'test-moduleconfig-module-creation' || matrix.e2e-test == 'test-kubebuilder-module-creation'}}

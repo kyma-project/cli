@@ -124,13 +124,14 @@ func getImageName(imageURL string) (string, string, error) {
 
 type SecurityScanCfg struct {
 	ModuleName  string            `json:"module-name" yaml:"module-name" comment:"string, name of your module"`
-	Protecode   []string          `json:"protecode" yaml:"protecode" comment:"string, name of your module"` // list, includes the images which must be scanned by the Protecode scanner (aka. Black Duck Binary Analysis)
+	Protecode   []string          `json:"protecode" yaml:"protecode" comment:"list, includes the images which must be scanned by the Protecode scanner (aka. Black Duck Binary Analysis)"`
 	WhiteSource WhiteSourceSecCfg `json:"whitesource" yaml:"whitesource" comment:"whitesource (aka. Mend) security scanner specific configuration"`
 	DevBranch   string            `json:"dev-branch" yaml:"dev-branch" comment:"string, name of the development branch"`
 	RcTag       string            `json:"rc-tag" yaml:"rc-tag" comment:"string, release candidate tag"`
 }
 type WhiteSourceSecCfg struct {
 	Language string   `json:"language" yaml:"language" comment:"string, indicating the programming language the scanner has to analyze"`
+	SubProjects string   `json:"subprojects" yaml:"subprojects" comment:"string, specifing any subprojects"`
 	Exclude  []string `json:"exclude" yaml:"exclude" comment:"list, directories within the repository which should not be scanned"`
 }
 
