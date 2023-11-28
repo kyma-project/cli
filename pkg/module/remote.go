@@ -36,7 +36,7 @@ type Remote struct {
 	Credentials string
 	Token       string
 	Insecure    bool
-	OciRepo
+	OciRepoAccess
 }
 
 func (r *Remote) GetRepository(ctx cpi.Context) (cpi.Repository, error) {
