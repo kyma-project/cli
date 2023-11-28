@@ -11,7 +11,7 @@ import (
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/transfer/transferhandler/standard"
 )
 
-//go:generate mockery --name OciRepoAccess
+//go:generate mockery --name OciRepoAccess --replace-type github.com/open-component-model/ocm/pkg/contexts/ocm/internal=internal:github.com/open-component-model/ocm/pkg/contexts/ocm/cpi
 type OciRepoAccess interface {
 	ComponentVersionExists(archive *comparch.ComponentArchive, repo cpi.Repository) (bool, error)
 	GetComponentVersion(archive *comparch.ComponentArchive, repo cpi.Repository) (ocm.ComponentVersionAccess, error)

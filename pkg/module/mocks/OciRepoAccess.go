@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	internal "github.com/open-component-model/ocm/pkg/contexts/ocm/internal"
+	internal "github.com/open-component-model/ocm/pkg/contexts/ocm/cpi"
 	comparch "github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/comparch"
 
 	mock "github.com/stretchr/testify/mock"
