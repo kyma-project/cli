@@ -11,7 +11,6 @@ import (
 	"github.com/open-component-model/ocm/pkg/contexts/credentials/repositories/dockerconfig"
 	oci "github.com/open-component-model/ocm/pkg/contexts/oci/repositories/ocireg"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
-	"github.com/open-component-model/ocm/pkg/contexts/ocm/accessmethods/localblob"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/cpi"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/comparch"
@@ -143,8 +142,7 @@ func (r *Remote) Push(archive *comparch.ComponentArchive, overwrite bool) (ocm.C
 				return nil, false, fmt.Errorf("could not lookup component version: %w", err)
 			}
 
-			if descriptorResourcesAreEquivalent(archive.GetDescriptor().Resources,
-				versionAccess.GetDescriptor().Resources) {
+			if r.DescriptorResourcesAreEquivalent(archive, versionAccess) {
 				return versionAccess, false, nil
 			}
 			return nil, false, fmt.Errorf("version %s already exists with different content, please use "+
@@ -170,47 +168,4 @@ func (h *customTransferHandler) TransferVersion(repo ocm.Repository, src ocm.Com
 	meta *compdesc.ComponentReference, tgt ocm.Repository) (ocm.ComponentVersionAccess, transferhandler.TransferHandler,
 	error) {
 	return h.TransferHandler.TransferVersion(repo, src, meta, tgt)
-}
-
-func descriptorResourcesAreEquivalent(localResources, remoteResources compdesc.Resources) bool {
-	if len(localResources) != len(remoteResources) {
-		return false
-	}
-
-	localResourcesMap := map[string]compdesc.Resource{}
-	for _, res := range localResources {
-		localResourcesMap[res.Name] = res
-	}
-
-	for _, res := range remoteResources {
-		localResource := localResourcesMap[res.Name]
-		if res.Name == RawManifestLayerName {
-			remoteAccess, ok := res.Access.(*runtime.UnstructuredVersionedTypedObject)
-			if !ok {
-				return false
-			}
-
-			_, ok = localResourcesMap[res.Name]
-			if !ok {
-				return false
-			}
-			localAccessObject, ok := localResource.Access.(*localblob.AccessSpec)
-			if !ok {
-				return false
-			}
-
-			remoteAccessLocalReference, ok := remoteAccess.Object[accessLocalReferenceFieldName].(string)
-			if !ok {
-				return false
-			}
-			// Trimming 7 characters because locally the sha256 is followed by '.' but remote it is followed by ':'
-			if remoteAccessLocalReference[7:] != localAccessObject.LocalReference[7:] {
-				return false
-			}
-		} else if !res.IsEquivalent(&localResource) {
-			return false
-		}
-	}
-
-	return true
 }

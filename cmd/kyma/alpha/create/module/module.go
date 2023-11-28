@@ -479,11 +479,12 @@ func (cmd *command) validateDefaultCR(ctx context.Context, modDef *module.Defini
 
 func (cmd *command) getRemote(nameMapping module.NameMapping) (*module.Remote, error) {
 	res := &module.Remote{
-		Registry:    cmd.opts.RegistryURL,
-		NameMapping: nameMapping,
-		Credentials: cmd.opts.Credentials,
-		Token:       cmd.opts.Token,
-		Insecure:    cmd.opts.Insecure,
+		Registry:      cmd.opts.RegistryURL,
+		NameMapping:   nameMapping,
+		Credentials:   cmd.opts.Credentials,
+		Token:         cmd.opts.Token,
+		Insecure:      cmd.opts.Insecure,
+		OciRepoAccess: &module.OciRepo{},
 	}
 
 	if strings.HasPrefix(strings.ToLower(cmd.opts.RegistryURL), "https:") {

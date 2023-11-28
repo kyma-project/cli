@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/mandelsoft/vfs/pkg/memoryfs"
-	"github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	ocmv1 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/meta/v1"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/comparch"
@@ -60,25 +59,18 @@ func TestRemote_Push(t *testing.T) {
 	compdesc.DefaultResources(cd)
 
 	archive, _ := module.CreateArchive(archiveFS, "./mod", cd)
-	ociRepoAccessMock := mocks.OciRepoAccess{}
-	ociRepoAccessMock.On("PushComponentVersion", archive, mock.Anything, mock.Anything).Return(nil)
-	ociRepoAccessMock.On("GetComponentVersion", archive,
-		mock.Anything).Return(mock.AnythingOfType("internal.ComponentVersionAccess"))
-
-	type fields struct {
-		OciRepoAccess module.OciRepoAccess
-	}
+	var ociRepoAccessMock mocks.OciRepoAccess
 	type args struct {
 		archive   *comparch.ComponentArchive
 		overwrite bool
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    ocm.ComponentVersionAccess
-		want1   bool
-		wantErr assert.ErrorAssertionFunc
+		name                 string
+		versionAlreadyExists bool
+		sameContent          bool
+		args                 args
+		wantIsPushed         bool
+		assertFn             func(err error, i ...interface{})
 	}{
 		{
 			name: "Same version, same content, with overwrite flag",
@@ -86,38 +78,121 @@ func TestRemote_Push(t *testing.T) {
 				overwrite: true,
 				archive:   archive,
 			},
-			fields: fields{
-				OciRepoAccess: &ociRepoAccessMock,
+			assertFn: func(err error, i ...interface{}) {
+				assert.NoError(t, err)
+				ociRepoAccessMock.AssertNumberOfCalls(t, "ComponentVersionExists", 0)
+				ociRepoAccessMock.AssertNumberOfCalls(t, "GetComponentVersion", 1)
+				ociRepoAccessMock.AssertNumberOfCalls(t, "PushComponentVersion", 1)
+				ociRepoAccessMock.AssertNumberOfCalls(t, "DescriptorResourcesAreEquivalent", 0)
 			},
+			wantIsPushed:         true,
+			versionAlreadyExists: false,
+			sameContent:          true,
 		},
 		{
 			name: "Same version, same content, without overwrite flag",
+			args: args{
+				overwrite: false,
+				archive:   archive,
+			},
+			assertFn: func(err error, i ...interface{}) {
+				assert.NoError(t, err)
+				ociRepoAccessMock.AssertNumberOfCalls(t, "ComponentVersionExists", 1)
+				ociRepoAccessMock.AssertNumberOfCalls(t, "GetComponentVersion", 1)
+				ociRepoAccessMock.AssertNumberOfCalls(t, "PushComponentVersion", 0)
+				ociRepoAccessMock.AssertNumberOfCalls(t, "DescriptorResourcesAreEquivalent", 1)
+			},
+			wantIsPushed:         false,
+			versionAlreadyExists: true,
+			sameContent:          true,
 		},
 		{
 			name: "Same version, different content, with overwrite flag",
+			args: args{
+				overwrite: true,
+				archive:   archive,
+			},
+			assertFn: func(err error, i ...interface{}) {
+				assert.NoError(t, err)
+				ociRepoAccessMock.AssertNumberOfCalls(t, "ComponentVersionExists", 0)
+				ociRepoAccessMock.AssertNumberOfCalls(t, "GetComponentVersion", 1)
+				ociRepoAccessMock.AssertNumberOfCalls(t, "PushComponentVersion", 1)
+				ociRepoAccessMock.AssertNumberOfCalls(t, "DescriptorResourcesAreEquivalent", 0)
+			},
+			wantIsPushed:         true,
+			versionAlreadyExists: true,
+			sameContent:          false,
 		},
 		{
 			name: "Same version, different content, without overwrite flag",
+			args: args{
+				overwrite: false,
+				archive:   archive,
+			},
+			assertFn: func(err error, i ...interface{}) {
+				assert.Errorf(t, err,
+					"version 1.0.0 already exists with different content, please use --module-archive-version-overwrite flag to overwrite it")
+				ociRepoAccessMock.AssertNumberOfCalls(t, "ComponentVersionExists", 1)
+				ociRepoAccessMock.AssertNumberOfCalls(t, "GetComponentVersion", 1)
+				ociRepoAccessMock.AssertNumberOfCalls(t, "PushComponentVersion", 0)
+				ociRepoAccessMock.AssertNumberOfCalls(t, "DescriptorResourcesAreEquivalent", 1)
+			},
+			wantIsPushed:         false,
+			versionAlreadyExists: true,
+			sameContent:          false,
 		},
 		{
 			name: "different version, with overwrite flag",
+			args: args{
+				overwrite: true,
+				archive:   archive,
+			},
+			assertFn: func(err error, i ...interface{}) {
+				assert.NoError(t, err)
+				ociRepoAccessMock.AssertNumberOfCalls(t, "ComponentVersionExists", 0)
+				ociRepoAccessMock.AssertNumberOfCalls(t, "GetComponentVersion", 1)
+				ociRepoAccessMock.AssertNumberOfCalls(t, "PushComponentVersion", 1)
+				ociRepoAccessMock.AssertNumberOfCalls(t, "DescriptorResourcesAreEquivalent", 0)
+			},
+			wantIsPushed:         true,
+			versionAlreadyExists: false,
+			sameContent:          false,
 		},
 		{
 			name: "different version, without overwrite flag",
+			args: args{
+				overwrite: false,
+				archive:   archive,
+			},
+			assertFn: func(err error, i ...interface{}) {
+				assert.NoError(t, err)
+				ociRepoAccessMock.AssertNumberOfCalls(t, "ComponentVersionExists", 1)
+				ociRepoAccessMock.AssertNumberOfCalls(t, "GetComponentVersion", 1)
+				ociRepoAccessMock.AssertNumberOfCalls(t, "PushComponentVersion", 1)
+				ociRepoAccessMock.AssertNumberOfCalls(t, "DescriptorResourcesAreEquivalent", 0)
+			},
+			wantIsPushed:         true,
+			versionAlreadyExists: false,
+			sameContent:          false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			ociRepoAccessMock = mocks.OciRepoAccess{}
+			ociRepoAccessMock.On("PushComponentVersion", archive, mock.Anything, mock.Anything).Return(nil)
+			ociRepoAccessMock.On("GetComponentVersion", archive,
+				mock.Anything).Return(nil, nil)
+			ociRepoAccessMock.On("ComponentVersionExists", archive, mock.Anything).Return(tt.versionAlreadyExists, nil)
+			ociRepoAccessMock.On("DescriptorResourcesAreEquivalent", mock.Anything,
+				mock.Anything).Return(tt.sameContent)
 			r := &module.Remote{
 				Insecure:      true,
-				OciRepoAccess: tt.fields.OciRepoAccess,
+				OciRepoAccess: &ociRepoAccessMock,
 			}
-			got, got1, err := r.Push(tt.args.archive, tt.args.overwrite)
-			if !tt.wantErr(t, err, fmt.Sprintf("Push(%v, %v)", tt.args.archive, tt.args.overwrite)) {
-				return
-			}
-			assert.Equalf(t, tt.want, got, "Push(%v, %v)", tt.args.archive, tt.args.overwrite)
-			assert.Equalf(t, tt.want1, got1, "Push(%v, %v)", tt.args.archive, tt.args.overwrite)
+			_, isPushed, err := r.Push(tt.args.archive, tt.args.overwrite)
+			tt.assertFn(err, fmt.Sprintf("Push(%v, %v)", tt.args.archive, tt.args.overwrite))
+
+			assert.Equalf(t, tt.wantIsPushed, isPushed, "Push(%v, %v)", tt.args.archive, tt.args.overwrite)
 		})
 	}
 }
