@@ -30,7 +30,7 @@ type Interactor interface {
 	Update(ctx context.Context, modules []v1beta2.Module) error
 	// WaitUntilReady blocks until all Modules are confirmed to be applied and ready
 	WaitUntilReady(ctx context.Context) error
-	GetAllModuleTemplates(ctx context.Context) (v1beta2.ModuleTemplateList, error)
+	GetFilteredModuleTemplates(ctx context.Context, moduleIdentifier string) ([]v1beta2.ModuleTemplate, error)
 }
 
 var _ Interactor = &DefaultInteractor{}
@@ -68,12 +68,43 @@ func (i *DefaultInteractor) Get(ctx context.Context) ([]v1beta2.Module, string, 
 	return kyma.Spec.Modules, kyma.Spec.Channel, nil
 }
 
-func (i *DefaultInteractor) GetAllModuleTemplates(ctx context.Context) (v1beta2.ModuleTemplateList, error) {
+func (i *DefaultInteractor) GetFilteredModuleTemplates(ctx context.Context,
+	moduleIdentifier string) ([]v1beta2.ModuleTemplate, error) {
 	var allTemplates v1beta2.ModuleTemplateList
 	if err := i.K8s.Ctrl().List(ctx, &allTemplates); err != nil {
-		return v1beta2.ModuleTemplateList{}, fmt.Errorf("could not get Moduletemplates: %w", err)
+		return []v1beta2.ModuleTemplate{}, fmt.Errorf("could not get Moduletemplates: %w", err)
 	}
-	return allTemplates, nil
+
+	filteredModuleTemplates, err := i.filterModuleTemplates(allTemplates, moduleIdentifier)
+	if err != nil {
+		return nil, fmt.Errorf("could not filter fetched Moduletemplates: %w", err)
+	}
+	return filteredModuleTemplates, nil
+}
+
+func (i *DefaultInteractor) filterModuleTemplates(allTemplates v1beta2.ModuleTemplateList,
+	moduleIdentifier string) ([]v1beta2.ModuleTemplate, error) {
+	var filteredModuleTemplates []v1beta2.ModuleTemplate
+
+	for _, mt := range allTemplates.Items {
+		if mt.Labels[v1beta2.ModuleName] == moduleIdentifier {
+			filteredModuleTemplates = append(filteredModuleTemplates, mt)
+			continue
+		}
+		if mt.ObjectMeta.Name == moduleIdentifier {
+			filteredModuleTemplates = append(filteredModuleTemplates, mt)
+			continue
+		}
+		descriptor, err := mt.GetDescriptor()
+		if err != nil {
+			return nil, fmt.Errorf("invalid ModuleTemplate descriptor: %v", err)
+		}
+		if descriptor.Name == moduleIdentifier {
+			filteredModuleTemplates = append(filteredModuleTemplates, mt)
+			continue
+		}
+	}
+	return filteredModuleTemplates, nil
 }
 
 // Update tries to update the modules in the Kyma Instance and retries on failure

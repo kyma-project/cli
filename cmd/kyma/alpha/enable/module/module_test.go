@@ -2,58 +2,84 @@ package module
 
 import (
 	"context"
-	"strings"
 	"testing"
 
-	"github.com/kyma-project/cli/cmd/kyma/alpha/enable/module/mock"
 	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
-	"github.com/kyma-project/lifecycle-manager/pkg/testutils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	"github.com/kyma-project/cli/cmd/kyma/alpha/enable/module/mock"
+	"github.com/kyma-project/cli/internal/cli/alpha/module"
 )
 
-func TestChannelValidation(t *testing.T) {
-	// GIVEN
+func Test_validateChannel(t *testing.T) {
+
 	ctx := context.TODO()
-	template1, _ := testutils.ModuleTemplateFactory(v1beta2.Module{
-		Name:                 "test",
-		ControllerName:       "-",
-		Channel:              "fast",
-		CustomResourcePolicy: "-",
-	}, unstructured.Unstructured{}, false, false, false, false)
-	template2, _ := testutils.ModuleTemplateFactory(v1beta2.Module{
-		Name:                 "not-test",
-		ControllerName:       "-",
-		Channel:              "alpha",
-		CustomResourcePolicy: "-",
-	}, unstructured.Unstructured{}, false, false, false, false)
-	allTemplates := v1beta2.ModuleTemplateList{
-		TypeMeta: metav1.TypeMeta{},
-		ListMeta: metav1.ListMeta{},
-		Items: []v1beta2.ModuleTemplate{
-			*template1, *template2,
+	filteredTemplates := []v1beta2.ModuleTemplate{
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-module-A"},
+			Spec:       v1beta2.ModuleTemplateSpec{Channel: "regular"},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-module-A"},
+			Spec:       v1beta2.ModuleTemplateSpec{Channel: "fast"},
 		},
 	}
 
 	moduleInteractor := mock.Interactor{}
 	moduleInteractor.Test(t)
-	moduleInteractor.On("GetAllModuleTemplates", ctx).Return(allTemplates, nil)
-
-	// WHEN 1
-	moduleName := "test"
-	channel := "alpha"
-	kymaChannel := "regular"
-	err := validateChannel(ctx, &moduleInteractor, moduleName, channel, kymaChannel)
-	// THEN 1
-	if !strings.Contains(err.Error(), "the channel ["+channel+"] does not exist") {
-		t.Fatalf("channel validation failed. invalid channel [%s] did not throw error.", channel)
+	moduleInteractor.On("GetFilteredModuleTemplates", ctx).Return(filteredTemplates, nil)
+	type args struct {
+		ctx              context.Context
+		moduleInteractor module.Interactor
+		moduleIdentifier string
+		channel          string
+		kymaChannel      string
 	}
-
-	// WHEN 2
-	channel = "fast"
-	err = validateChannel(ctx, &moduleInteractor, moduleName, channel, kymaChannel)
-	// THEN 2
-	if err != nil && strings.Contains(err.Error(), "the channel ["+channel+"] does not exist") {
-		t.Fatalf("channel validation failed. valid channel [%s] threw an error.", channel)
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "Invalid Channel throws an error.",
+			args: args{
+				ctx:              ctx,
+				moduleInteractor: &moduleInteractor,
+				moduleIdentifier: "sample-module",
+				channel:          "invalid",
+				kymaChannel:      "regular",
+			},
+			wantErr: true,
+		},
+		{
+			name: "Valid Module validation with specified channel.",
+			args: args{
+				ctx:              ctx,
+				moduleInteractor: &moduleInteractor,
+				moduleIdentifier: "sample-module",
+				channel:          "fast",
+				kymaChannel:      "regular",
+			},
+			wantErr: false,
+		},
+		{
+			name: "Valid Module validation without specified channel, use Kyma channel",
+			args: args{
+				ctx:              ctx,
+				moduleInteractor: &moduleInteractor,
+				moduleIdentifier: "sample-module",
+				channel:          "",
+				kymaChannel:      "regular",
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := validateChannel(tt.args.ctx, tt.args.moduleInteractor, tt.args.moduleIdentifier, tt.args.channel,
+				tt.args.kymaChannel); (err != nil) != tt.wantErr {
+				t.Errorf("validateChannel() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
 	}
 }
