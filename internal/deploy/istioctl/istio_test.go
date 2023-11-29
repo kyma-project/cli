@@ -29,9 +29,24 @@ func TestInstallation_getIstioVersion(t *testing.T) {
 		expectedVersion string
 		wantErr         bool
 	}{
-		{name: "Fetch Istio Version", fields: fields{IstioChartPath: "testdata/Chart.yaml"}, expectedVersion: "1.11.2", wantErr: false},
-		{name: "Istio Chart not existing", fields: fields{IstioChartPath: "testdata/nonExisting.yaml"}, expectedVersion: "", wantErr: true},
-		{name: "Corrupted Istio Chart", fields: fields{IstioChartPath: "testdata/corruptedChart.yaml"}, expectedVersion: "", wantErr: true},
+		{
+			name:            "Fetch Istio Version",
+			fields:          fields{IstioChartPath: "testdata/Chart.yaml"},
+			expectedVersion: "1.11.2",
+			wantErr:         false,
+		},
+		{
+			name:            "Istio Chart not existing",
+			fields:          fields{IstioChartPath: "testdata/nonExisting.yaml"},
+			expectedVersion: "",
+			wantErr:         true,
+		},
+		{
+			name:            "Corrupted Istio Chart",
+			fields:          fields{IstioChartPath: "testdata/corruptedChart.yaml"},
+			expectedVersion: "",
+			wantErr:         true,
+		},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -98,8 +113,16 @@ func Test_unGzip(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{name: "unGzip File", args: args{source: "testdata/istio_mock.tar.gz", target: "testdata/istio.tar", deleteSource: false}, wantErr: false},
-		{name: "File does not exist", args: args{source: "testdata/nonexistent.tar.gz", target: "testdata/istio.tar", deleteSource: false}, wantErr: true},
+		{
+			name:    "unGzip File",
+			args:    args{source: "testdata/istio_mock.tar.gz", target: "testdata/istio.tar", deleteSource: false},
+			wantErr: false,
+		},
+		{
+			name:    "File does not exist",
+			args:    args{source: "testdata/nonexistent.tar.gz", target: "testdata/istio.tar", deleteSource: false},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -133,8 +156,24 @@ func Test_unTar(t *testing.T) {
 		expectedFile string
 		wantErr      bool
 	}{
-		{name: "unTar File", args: args{source: "testdata/istio_mock.tar", target: "testdata", deleteSource: false}, expectedFile: "testdata/istio.txt", wantErr: false},
-		{name: "File does not exist", args: args{source: "testdata/nonexistent.tar", target: "testdata", deleteSource: false}, expectedFile: "testdata/istio.txt", wantErr: true},
+		{
+			name:         "unTar File",
+			args:         args{source: "testdata/istio_mock.tar", target: "testdata", deleteSource: false},
+			expectedFile: "testdata/istio.txt",
+			wantErr:      false,
+		},
+		{
+			name:         "File does not exist",
+			args:         args{source: "testdata/nonexistent.tar", target: "testdata", deleteSource: false},
+			expectedFile: "testdata/istio.txt",
+			wantErr:      true,
+		},
+		{
+			name:         "File path contains `..` - Zip Slip Check",
+			args:         args{source: "../istiomock.tar", target: "testdata", deleteSource: false},
+			expectedFile: "testdata/istio.txt",
+			wantErr:      true,
+		},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -167,8 +206,18 @@ func Test_unZip(t *testing.T) {
 		expectedFile string
 		wantErr      bool
 	}{
-		{name: "unZip File", args: args{source: "testdata/istio_mock.zip", target: "testdata", deleteSource: false}, expectedFile: "testdata/istio.txt", wantErr: false},
-		{name: "File does not exist", args: args{source: "testdata/nonexistent.zip", target: "testdata", deleteSource: false}, expectedFile: "testdata/istio.txt", wantErr: true},
+		{
+			name:         "unZip File",
+			args:         args{source: "testdata/istio_mock.zip", target: "testdata", deleteSource: false},
+			expectedFile: "testdata/istio.txt",
+			wantErr:      false,
+		},
+		{
+			name:         "File does not exist",
+			args:         args{source: "testdata/nonexistent.zip", target: "testdata", deleteSource: false},
+			expectedFile: "testdata/istio.txt",
+			wantErr:      true,
+		},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -216,7 +265,10 @@ func TestInstallation_downloadFile(t *testing.T) {
 		getFunc func(url string) (*http.Response, error)
 		wantErr bool
 	}{
-		{name: "Download Istioctl", fields: fields{Client: &mockClient{}}, args: args{filepath: "tmp", filename: "mock_download.txt", url: "someUrl"},
+		{
+			name:   "Download Istioctl",
+			fields: fields{Client: &mockClient{}},
+			args:   args{filepath: "tmp", filename: "mock_download.txt", url: "someUrl"},
 			getFunc: func(url string) (*http.Response, error) {
 				jsonBody := `{"name":"Istioctl","full_name":"Istioctl binary mock download","bin":{"data": "some binary"}}`
 				r := io.NopCloser(bytes.NewReader([]byte(jsonBody)))
@@ -224,13 +276,20 @@ func TestInstallation_downloadFile(t *testing.T) {
 					StatusCode: 200,
 					Body:       r,
 				}, nil
-			}, wantErr: false},
-		{name: "404 - Not found", fields: fields{Client: &mockClient{}}, args: args{filepath: "tmp", filename: "mock_download.txt", url: "someUrl"},
+			},
+			wantErr: false,
+		},
+		{
+			name:   "404 - Not found",
+			fields: fields{Client: &mockClient{}},
+			args:   args{filepath: "tmp", filename: "mock_download.txt", url: "someUrl"},
 			getFunc: func(url string) (*http.Response, error) {
 				return &http.Response{
 					StatusCode: 404,
 				}, errors.New("404 - Not Found")
-			}, wantErr: true},
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		tt := tt
