@@ -42,8 +42,8 @@ jobs:
           repository: kyma-project/template-operator
           path: ./template-operator/
       - name: export template-operator URL
+        working-directory: template-operator
         run: |
-          cd ./template-operator
           echo "TEST_REPOSITORY_URL=$(git remote get-url origin)" >> "$GITHUB_ENV"
       - name: Set up k3d
         run: wget -qO - https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG=$K3D_VERSION bash
