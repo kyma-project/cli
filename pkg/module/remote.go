@@ -125,39 +125,40 @@ func NoSchemeURL(url string) string {
 	return regex.ReplaceAllString(url, "")
 }
 
-// Push picks up the archive described in the config and pushes it to the provided registry if not existing.
-// The credentials and token are optional parameters
-func (r *Remote) Push(archive *comparch.ComponentArchive, overwrite bool) (ocm.ComponentVersionAccess, bool, error) {
-	repo, err := r.GetRepository(archive.GetContext())
-	if err != nil {
-		return nil, false, err
-	}
-
+func (r *Remote) ShouldPushArchive(repo cpi.Repository, archive *comparch.ComponentArchive, overwrite bool) (bool,
+	error) {
 	if !overwrite {
 		versionExists, _ := r.ComponentVersionExists(archive, repo)
 
 		if versionExists {
 			versionAccess, err := r.GetComponentVersion(archive, repo)
 			if err != nil {
-				return nil, false, fmt.Errorf("could not lookup component version: %w", err)
+				return false, fmt.Errorf("could not lookup component version: %w", err)
 			}
 
 			if r.DescriptorResourcesAreEquivalent(archive, versionAccess) {
-				return versionAccess, false, nil
+				return false, nil
 			}
-			return nil, false, fmt.Errorf("version %s already exists with different content, please use "+
+			return false, fmt.Errorf("version %s already exists with different content, please use "+
 				"--module-archive-version-overwrite flag to overwrite it",
 				archive.ComponentVersionAccess.GetVersion())
 		}
 	}
 
-	if err = r.PushComponentVersion(archive, repo, overwrite); err != nil {
-		return nil, false, err
+	return true, nil
+}
+
+// Push picks up the archive described in the config and pushes it to the provided registry.
+// The credentials and token are optional parameters
+func (r *Remote) Push(repo cpi.Repository, archive *comparch.ComponentArchive,
+	overwrite bool) (ocm.ComponentVersionAccess, error) {
+	if err := r.PushComponentVersion(archive, repo, overwrite); err != nil {
+		return nil, err
 	}
 
 	componentVersion, err := r.GetComponentVersion(archive, repo)
 
-	return componentVersion, err == nil, err
+	return componentVersion, err
 }
 
 type customTransferHandler struct {

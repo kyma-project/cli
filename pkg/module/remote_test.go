@@ -7,6 +7,7 @@ import (
 	"github.com/mandelsoft/vfs/pkg/memoryfs"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	ocmv1 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/meta/v1"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/cpi"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/comparch"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -48,7 +49,7 @@ func TestNoSchemaURL(t *testing.T) {
 	}
 }
 
-func TestRemote_Push(t *testing.T) {
+func TestRemote_ShouldPushArchive(t *testing.T) {
 	archiveFS := memoryfs.New()
 	cd := &compdesc.ComponentDescriptor{}
 	cd.ComponentSpec.SetName("test.io/module/test")
@@ -60,6 +61,7 @@ func TestRemote_Push(t *testing.T) {
 
 	archive, _ := module.CreateArchive(archiveFS, "./mod", cd)
 	var ociRepoAccessMock mocks.OciRepoAccess
+
 	type args struct {
 		archive   *comparch.ComponentArchive
 		overwrite bool
@@ -81,8 +83,7 @@ func TestRemote_Push(t *testing.T) {
 			assertFn: func(err error, i ...interface{}) {
 				assert.NoError(t, err)
 				ociRepoAccessMock.AssertNumberOfCalls(t, "ComponentVersionExists", 0)
-				ociRepoAccessMock.AssertNumberOfCalls(t, "GetComponentVersion", 1)
-				ociRepoAccessMock.AssertNumberOfCalls(t, "PushComponentVersion", 1)
+				ociRepoAccessMock.AssertNumberOfCalls(t, "GetComponentVersion", 0)
 				ociRepoAccessMock.AssertNumberOfCalls(t, "DescriptorResourcesAreEquivalent", 0)
 			},
 			wantIsPushed:         true,
@@ -99,7 +100,6 @@ func TestRemote_Push(t *testing.T) {
 				assert.NoError(t, err)
 				ociRepoAccessMock.AssertNumberOfCalls(t, "ComponentVersionExists", 1)
 				ociRepoAccessMock.AssertNumberOfCalls(t, "GetComponentVersion", 1)
-				ociRepoAccessMock.AssertNumberOfCalls(t, "PushComponentVersion", 0)
 				ociRepoAccessMock.AssertNumberOfCalls(t, "DescriptorResourcesAreEquivalent", 1)
 			},
 			wantIsPushed:         false,
@@ -115,8 +115,7 @@ func TestRemote_Push(t *testing.T) {
 			assertFn: func(err error, i ...interface{}) {
 				assert.NoError(t, err)
 				ociRepoAccessMock.AssertNumberOfCalls(t, "ComponentVersionExists", 0)
-				ociRepoAccessMock.AssertNumberOfCalls(t, "GetComponentVersion", 1)
-				ociRepoAccessMock.AssertNumberOfCalls(t, "PushComponentVersion", 1)
+				ociRepoAccessMock.AssertNumberOfCalls(t, "GetComponentVersion", 0)
 				ociRepoAccessMock.AssertNumberOfCalls(t, "DescriptorResourcesAreEquivalent", 0)
 			},
 			wantIsPushed:         true,
@@ -134,7 +133,6 @@ func TestRemote_Push(t *testing.T) {
 					"version 1.0.0 already exists with different content, please use --module-archive-version-overwrite flag to overwrite it")
 				ociRepoAccessMock.AssertNumberOfCalls(t, "ComponentVersionExists", 1)
 				ociRepoAccessMock.AssertNumberOfCalls(t, "GetComponentVersion", 1)
-				ociRepoAccessMock.AssertNumberOfCalls(t, "PushComponentVersion", 0)
 				ociRepoAccessMock.AssertNumberOfCalls(t, "DescriptorResourcesAreEquivalent", 1)
 			},
 			wantIsPushed:         false,
@@ -150,8 +148,7 @@ func TestRemote_Push(t *testing.T) {
 			assertFn: func(err error, i ...interface{}) {
 				assert.NoError(t, err)
 				ociRepoAccessMock.AssertNumberOfCalls(t, "ComponentVersionExists", 0)
-				ociRepoAccessMock.AssertNumberOfCalls(t, "GetComponentVersion", 1)
-				ociRepoAccessMock.AssertNumberOfCalls(t, "PushComponentVersion", 1)
+				ociRepoAccessMock.AssertNumberOfCalls(t, "GetComponentVersion", 0)
 				ociRepoAccessMock.AssertNumberOfCalls(t, "DescriptorResourcesAreEquivalent", 0)
 			},
 			wantIsPushed:         true,
@@ -167,8 +164,7 @@ func TestRemote_Push(t *testing.T) {
 			assertFn: func(err error, i ...interface{}) {
 				assert.NoError(t, err)
 				ociRepoAccessMock.AssertNumberOfCalls(t, "ComponentVersionExists", 1)
-				ociRepoAccessMock.AssertNumberOfCalls(t, "GetComponentVersion", 1)
-				ociRepoAccessMock.AssertNumberOfCalls(t, "PushComponentVersion", 1)
+				ociRepoAccessMock.AssertNumberOfCalls(t, "GetComponentVersion", 0)
 				ociRepoAccessMock.AssertNumberOfCalls(t, "DescriptorResourcesAreEquivalent", 0)
 			},
 			wantIsPushed:         true,
@@ -189,10 +185,11 @@ func TestRemote_Push(t *testing.T) {
 				Insecure:      true,
 				OciRepoAccess: &ociRepoAccessMock,
 			}
-			_, isPushed, err := r.Push(tt.args.archive, tt.args.overwrite)
+			repo, _ := r.GetRepository(cpi.DefaultContext())
+			got, err := r.ShouldPushArchive(repo, tt.args.archive, tt.args.overwrite)
 			tt.assertFn(err, fmt.Sprintf("Push(%v, %v)", tt.args.archive, tt.args.overwrite))
 
-			assert.Equalf(t, tt.wantIsPushed, isPushed, "Push(%v, %v)", tt.args.archive, tt.args.overwrite)
+			assert.Equalf(t, tt.wantIsPushed, got, "Push(%v, %v)", tt.args.archive, tt.args.overwrite)
 		})
 	}
 }

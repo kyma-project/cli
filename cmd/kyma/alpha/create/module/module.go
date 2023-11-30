@@ -13,8 +13,10 @@ import (
 	"github.com/mandelsoft/vfs/pkg/memoryfs"
 	"github.com/mandelsoft/vfs/pkg/osfs"
 	"github.com/mandelsoft/vfs/pkg/vfs"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	compdescv2 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/versions/v2"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/cpi"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
@@ -359,14 +361,33 @@ func (cmd *command) Run(ctx context.Context) error {
 		cmd.CurrentStep.Failure()
 		return err
 	}
-	componentVersionAccess, isPushed, err := remote.Push(archive, cmd.opts.ArchiveVersionOverwrite)
+
+	repo, err := remote.GetRepository(cpi.DefaultContext())
 	if err != nil {
 		cmd.CurrentStep.Failure()
 		return err
 	}
-	if isPushed {
+
+	var componentVersionAccess ocm.ComponentVersionAccess
+	shouldPushArchive, err := remote.ShouldPushArchive(repo, archive, cmd.opts.ArchiveVersionOverwrite)
+	if err != nil {
+		cmd.CurrentStep.Failure()
+		return err
+	}
+
+	if shouldPushArchive {
+		componentVersionAccess, err = remote.Push(repo, archive, cmd.opts.ArchiveVersionOverwrite)
+		if err != nil {
+			cmd.CurrentStep.Failure()
+			return err
+		}
 		cmd.CurrentStep.Successf("Module successfully pushed")
 	} else {
+		componentVersionAccess, err = remote.GetComponentVersion(archive, repo)
+		if err != nil {
+			cmd.CurrentStep.Failure()
+			return err
+		}
 		cmd.CurrentStep.Successf(fmt.Sprintf("Module already exists. Retrieved image from %q",
 			cmd.opts.RegistryURL))
 	}
