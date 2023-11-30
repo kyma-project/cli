@@ -382,20 +382,18 @@ func (cmd *command) Run(ctx context.Context) error {
 
 	cmd.NewStep("Generating module template...")
 	var resourceName = ""
-	if modCnf != nil {
-		resourceName = modCnf.ResourceName
-	}
-
+	mandatoryModule := false
 	var channel = cmd.opts.Channel
 	if modCnf != nil {
+		resourceName = modCnf.ResourceName
 		channel = modCnf.Channel
+		mandatoryModule = modCnf.Mandatory
 	}
 
 	var namespace = cmd.opts.Namespace
-	mandatoryModule := false
 	if modCnf != nil && modCnf.Namespace != "" {
 		namespace = modCnf.Namespace
-		mandatoryModule = modCnf.Mandatory
+
 	}
 
 	labels := cmd.getModuleTemplateLabels(modCnf)
