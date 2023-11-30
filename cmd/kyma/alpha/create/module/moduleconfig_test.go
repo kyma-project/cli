@@ -1,8 +1,10 @@
 package module
 
 import (
-	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	"testing"
+
+	"github.com/kyma-project/lifecycle-manager/api/shared"
+	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 )
 
 func TestValidateVersion(t *testing.T) {
@@ -44,7 +46,8 @@ func TestValidateVersion(t *testing.T) {
 					do()
 
 				if !tt.isValid && err == nil {
-					t.Errorf("Version validation failed for input %q: Expected an error but success is reported", tt.version)
+					t.Errorf("Version validation failed for input %q: Expected an error but success is reported",
+						tt.version)
 				}
 				if tt.isValid && err != nil {
 					t.Error(err)
@@ -162,7 +165,8 @@ func TestValidateNamespace(t *testing.T) {
 					do()
 
 				if !tt.isValid && err == nil {
-					t.Errorf("Namespace validation failed for input %q: Expected an error but success is reported", tt.namespace)
+					t.Errorf("Namespace validation failed for input %q: Expected an error but success is reported",
+						tt.namespace)
 				}
 				if tt.isValid && err != nil {
 					t.Error(err)
@@ -216,7 +220,8 @@ func TestValidateChannel(t *testing.T) {
 					do()
 
 				if !tt.isValid && err == nil {
-					t.Errorf("Channel validation failed for input %q: Expected an error but success is reported", tt.channel)
+					t.Errorf("Channel validation failed for input %q: Expected an error but success is reported",
+						tt.channel)
 				}
 				if tt.isValid && err != nil {
 					t.Error(err)
@@ -246,7 +251,7 @@ func TestValidateCustomStateChecks(t *testing.T) {
 					{
 						JSONPath:    "status.health",
 						Value:       "green",
-						MappedState: v1beta2.StateReady,
+						MappedState: shared.StateReady,
 					},
 				},
 			},
@@ -259,12 +264,12 @@ func TestValidateCustomStateChecks(t *testing.T) {
 					{
 						JSONPath:    "status.health",
 						Value:       "red",
-						MappedState: v1beta2.StateError,
+						MappedState: shared.StateError,
 					},
 					{
 						JSONPath:    "",
 						Value:       "green",
-						MappedState: v1beta2.StateReady,
+						MappedState: shared.StateReady,
 					},
 				},
 			},
@@ -277,7 +282,7 @@ func TestValidateCustomStateChecks(t *testing.T) {
 					{
 						JSONPath:    "status.health",
 						Value:       "green",
-						MappedState: v1beta2.StateReady,
+						MappedState: shared.StateReady,
 					},
 					{
 						JSONPath:    "status.health",
@@ -295,17 +300,17 @@ func TestValidateCustomStateChecks(t *testing.T) {
 					{
 						JSONPath:    "status.health",
 						Value:       "green",
-						MappedState: v1beta2.StateReady,
+						MappedState: shared.StateReady,
 					},
 					{
 						JSONPath:    "status.health",
 						Value:       "red",
-						MappedState: v1beta2.StateError,
+						MappedState: shared.StateError,
 					},
 					{
 						JSONPath:    "status.health",
 						Value:       "yellow",
-						MappedState: v1beta2.StateWarning,
+						MappedState: shared.StateWarning,
 					},
 				},
 			},

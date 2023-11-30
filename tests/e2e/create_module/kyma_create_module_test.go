@@ -92,6 +92,10 @@ func Test_ModuleTemplate(t *testing.T) {
 		assert.Contains(t, testRepoURL, githubAccessSpec.RepoURL)
 	})
 
+	t.Run("test spec.mandatory", func(t *testing.T) {
+		assert.Equal(t, false, template.Spec.Mandatory)
+	})
+
 	t.Run("test security scan labels", func(t *testing.T) {
 		secScanLabels := descriptor.Sources[0].Labels
 		flattened := e2e.Flatten(secScanLabels)

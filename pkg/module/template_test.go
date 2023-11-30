@@ -40,6 +40,7 @@ func TestTemplate(t *testing.T) {
 		labels             map[string]string
 		annotations        map[string]string
 		checks             []v1beta2.CustomStateCheck
+		mandatory          bool
 	}
 	tests := []struct {
 		name    string
@@ -55,11 +56,13 @@ func TestTemplate(t *testing.T) {
 				labels:      map[string]string{},
 				annotations: map[string]string{},
 				checks:      noCustomStateCheck,
+				mandatory:   false,
 			},
 			want: getExpectedModuleTemplate(t, "",
 				map[string]string{
-					"operator.kyma-project.io/module-name": "template-operator"}, map[string]string{},
-				noCustomStateCheck),
+					"operator.kyma-project.io/module-name": "template-operator",
+				}, map[string]string{},
+				noCustomStateCheck, false),
 			wantErr: false,
 		},
 		{
@@ -71,11 +74,13 @@ func TestTemplate(t *testing.T) {
 				labels:      map[string]string{},
 				annotations: map[string]string{},
 				checks:      noCustomStateCheck,
+				mandatory:   false,
 			},
 			want: getExpectedModuleTemplate(t, "kyma-system",
 				map[string]string{
-					"operator.kyma-project.io/module-name": "template-operator"}, map[string]string{},
-				noCustomStateCheck),
+					"operator.kyma-project.io/module-name": "template-operator",
+				}, map[string]string{},
+				noCustomStateCheck, false),
 			wantErr: false,
 		},
 		{
@@ -87,11 +92,13 @@ func TestTemplate(t *testing.T) {
 				labels:      map[string]string{"is-custom-label": "true"},
 				annotations: map[string]string{},
 				checks:      noCustomStateCheck,
+				mandatory:   false,
 			},
 			want: getExpectedModuleTemplate(t, "kyma-system",
 				map[string]string{
-					"operator.kyma-project.io/module-name": "template-operator", "is-custom-label": "true"},
-				map[string]string{}, noCustomStateCheck),
+					"operator.kyma-project.io/module-name": "template-operator", "is-custom-label": "true",
+				},
+				map[string]string{}, noCustomStateCheck, false),
 			wantErr: false,
 		},
 		{
@@ -103,11 +110,13 @@ func TestTemplate(t *testing.T) {
 				labels:      map[string]string{},
 				annotations: map[string]string{"is-custom-annotation": "true"},
 				checks:      noCustomStateCheck,
+				mandatory:   false,
 			},
 			want: getExpectedModuleTemplate(t, "kyma-system",
 				map[string]string{
-					"operator.kyma-project.io/module-name": "template-operator"},
-				map[string]string{"is-custom-annotation": "true"}, []v1beta2.CustomStateCheck{}),
+					"operator.kyma-project.io/module-name": "template-operator",
+				},
+				map[string]string{"is-custom-annotation": "true"}, []v1beta2.CustomStateCheck{}, false),
 			wantErr: false,
 		},
 		{
@@ -121,14 +130,30 @@ func TestTemplate(t *testing.T) {
 			},
 			want: getExpectedModuleTemplate(t, "",
 				map[string]string{"operator.kyma-project.io/module-name": "template-operator"}, map[string]string{},
-				defaultCustomStateCheck),
+				defaultCustomStateCheck, false),
+			wantErr: false,
+		},
+		{
+			name: "Mandatory ModuleTemplate",
+			args: args{
+				remote:      accessVersion,
+				namespace:   "kyma-system",
+				channel:     "regular",
+				labels:      map[string]string{},
+				annotations: map[string]string{},
+				checks:      noCustomStateCheck,
+				mandatory:   true,
+			},
+			want: getExpectedModuleTemplate(t, "kyma-system",
+				map[string]string{"operator.kyma-project.io/module-name": "template-operator"}, map[string]string{},
+				[]v1beta2.CustomStateCheck{}, true),
 			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := Template(tt.args.remote, tt.args.moduleTemplateName, tt.args.namespace, tt.args.channel,
-				tt.args.data, tt.args.labels, tt.args.annotations, tt.args.checks)
+				tt.args.data, tt.args.labels, tt.args.annotations, tt.args.checks, tt.args.mandatory)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Template() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -143,7 +168,8 @@ func TestTemplate(t *testing.T) {
 func createOcmComponentVersionAccess(t *testing.T) ocm.ComponentVersionAccess {
 	tempFs, err := osfs.NewTempFileSystem()
 	assert.Equal(t, nil, err)
-	ociSpec, err := ctf.NewRepositorySpec(accessobj.ACC_CREATE, "test", accessio.PathFileSystem(tempFs), accessobj.FormatDirectory)
+	ociSpec, err := ctf.NewRepositorySpec(accessobj.ACC_CREATE, "test", accessio.PathFileSystem(tempFs),
+		accessobj.FormatDirectory)
 	assert.Equal(t, nil, err)
 	repo, err := ocm.New().RepositoryForSpec(ociSpec)
 	assert.Equal(t, nil, err)
@@ -157,10 +183,13 @@ func createOcmComponentVersionAccess(t *testing.T) ocm.ComponentVersionAccess {
 
 func getExpectedModuleTemplate(t *testing.T,
 	namespace string, labels map[string]string,
-	annotations map[string]string, checks []v1beta2.CustomStateCheck) []byte {
+	annotations map[string]string, checks []v1beta2.CustomStateCheck, mandatory bool) []byte {
 	cva, err := compdesc.Convert(accessVersion.GetDescriptor())
 	assert.Equal(t, nil, err)
-	temp, err := template.New("modTemplate").Funcs(template.FuncMap{"yaml": yaml.Marshal, "indent": Indent}).Parse(modTemplate)
+	temp, err := template.New("modTemplate").Funcs(template.FuncMap{
+		"yaml":   yaml.Marshal,
+		"indent": Indent,
+	}).Parse(modTemplate)
 	assert.Equal(t, nil, err)
 	td := moduleTemplateData{
 		ResourceName:      "template-operator-regular",
@@ -171,6 +200,7 @@ func getExpectedModuleTemplate(t *testing.T,
 		Data:              "",
 		Descriptor:        cva,
 		CustomStateChecks: checks,
+		Mandatory:         mandatory,
 	}
 	w := &bytes.Buffer{}
 	err = temp.Execute(w, td)
