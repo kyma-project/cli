@@ -35,6 +35,7 @@ metadata:
 {{- end}} 
 spec:
   channel: {{.Channel}}
+  mandatory: {{.Mandatory}}
 {{- with .CustomStateChecks}}
   customStateCheck:
     {{- range .}}
@@ -49,7 +50,6 @@ spec:
 {{- end}}
   descriptor:
 {{yaml .Descriptor | printf "%s" | indent 4}}
-  mandatory: {{.Mandatory}}
 `
 )
 
