@@ -71,6 +71,9 @@ func (cmd *command) generateDefaultCR() error {
 			}
 
 			samplesDir, err := ensureDirExists(path.Join(cmd.opts.Directory, "config", "samples"))
+			if err != nil {
+				return err
+			}
 			filePath := path.Join(samplesDir, group+"_"+version+"_"+crd.Spec.Names.SingularKind+".yaml")
 			err = os.WriteFile(filePath, crYaml, 0600)
 			if err != nil {
