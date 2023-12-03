@@ -1,9 +1,10 @@
 package module
 
 import (
+	"github.com/spf13/cobra"
+
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/pkg/module"
-	"github.com/spf13/cobra"
 )
 
 type command struct {
@@ -80,11 +81,12 @@ func (c *command) Run(_ []string) error {
 	}
 
 	remote := &module.Remote{
-		Registry:    c.opts.RegistryURL,
-		NameMapping: nameMappingMode,
-		Credentials: c.opts.Credentials,
-		Token:       c.opts.Token,
-		Insecure:    c.opts.Insecure,
+		Registry:      c.opts.RegistryURL,
+		NameMapping:   nameMappingMode,
+		Credentials:   c.opts.Credentials,
+		Token:         c.opts.Token,
+		Insecure:      c.opts.Insecure,
+		OciRepoAccess: &module.OciRepo{},
 	}
 
 	if err := module.Verify(signCfg, remote); err != nil {

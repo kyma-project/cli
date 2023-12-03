@@ -2,11 +2,13 @@ package module
 
 import (
 	"fmt"
-	"github.com/kyma-project/cli/pkg/module"
-	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	"os"
 	"regexp"
 	"strings"
+
+	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
+
+	"github.com/kyma-project/cli/pkg/module"
 
 	"github.com/blang/semver/v4"
 	"gopkg.in/yaml.v3"
@@ -17,6 +19,7 @@ type Config struct {
 	Version           string                     `yaml:"version" comment:"required, the version of the Module"`
 	Channel           string                     `yaml:"channel" comment:"required, channel that should be used in the ModuleTemplate"`
 	ManifestPath      string                     `yaml:"manifest" comment:"required, reference to the manifests, must be a relative file name"`
+	Mandatory         bool                       `yaml:"mandatory" comment:"optional, default=false, indicates whether the module is mandatory to be installed on all clusters"`
 	DefaultCRPath     string                     `yaml:"defaultCR" comment:"optional, reference to a YAML file containing the default CR for the module, must be a relative file name"`
 	ResourceName      string                     `yaml:"resourceName" comment:"optional, default={NAME}-{CHANNEL}, the name for the ModuleTemplate that will be created"`
 	Namespace         string                     `yaml:"namespace" comment:"optional, default=kcp-system, the namespace where the ModuleTemplate will be deployed"`
@@ -29,7 +32,7 @@ type Config struct {
 }
 
 const (
-	//taken from "github.com/open-component-model/ocm/resources/component-descriptor-v2-schema.yaml"
+	// taken from "github.com/open-component-model/ocm/resources/component-descriptor-v2-schema.yaml"
 	moduleNamePattern = "^[a-z][-a-z0-9]*([.][a-z][-a-z0-9]*)*[.][a-z]{2,}(/[a-z][-a-z0-9_]*([.][a-z][-a-z0-9_]*)*)+$"
 	namespacePattern  = "^[a-z0-9]+(?:-[a-z0-9]+)*$"
 	moduleNameMaxLen  = 255
@@ -94,7 +97,8 @@ func (cv *configValidator) validateName() *configValidator {
 			return fmt.Errorf("failed to evaluate regex for module name pattern: %w", err)
 		}
 		if !matched {
-			return fmt.Errorf("%w for input %q, name must match the required pattern, e.g: 'github.com/path-to/your-repo'", ErrNameValidation, cv.config.Name)
+			return fmt.Errorf("%w for input %q, name must match the required pattern, e.g: 'github.com/path-to/your-repo'",
+				ErrNameValidation, cv.config.Name)
 		}
 
 		return nil
@@ -116,7 +120,8 @@ func (cv *configValidator) validateNamespace() *configValidator {
 			return fmt.Errorf("failed to evaluate regex for module namespace pattern: %w", err)
 		}
 		if !matched {
-			return fmt.Errorf("%w for input %q, namespace must contain only small alphanumeric characters and hyphens", ErrNamespaceValidation, cv.config.Namespace)
+			return fmt.Errorf("%w for input %q, namespace must contain only small alphanumeric characters and hyphens",
+				ErrNamespaceValidation, cv.config.Namespace)
 		}
 
 		return nil
@@ -131,7 +136,7 @@ func (cv *configValidator) validateVersion() *configValidator {
 		prefix := ""
 		val := strings.TrimSpace(cv.config.Version)
 
-		//strip the leading "v", if any, because it's not part of a proper semver
+		// strip the leading "v", if any, because it's not part of a proper semver
 		if strings.HasPrefix(val, "v") {
 			prefix = "v"
 			val = val[1:]
@@ -142,7 +147,7 @@ func (cv *configValidator) validateVersion() *configValidator {
 			return fmt.Errorf("%w for input %q, %w", ErrVersionValidation, cv.config.Version, err)
 		}
 
-		//restore "v" prefix, if any
+		// restore "v" prefix, if any
 		correct := prefix + sv.String()
 
 		if correct != cv.config.Version {
@@ -166,7 +171,8 @@ func (cv *configValidator) validateChannel() *configValidator {
 			return fmt.Errorf("failed to evaluate regex for channel: %w", err)
 		}
 		if !matched {
-			return fmt.Errorf("%w for input %q, invalid channel format, only allow characters from a-z", ErrChannelValidation, cv.config.Channel)
+			return fmt.Errorf("%w for input %q, invalid channel format, only allow characters from a-z",
+				ErrChannelValidation, cv.config.Channel)
 		}
 		return nil
 

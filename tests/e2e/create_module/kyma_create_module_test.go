@@ -1,12 +1,11 @@
 package create_module_test
 
 import (
-	"github.com/open-component-model/ocm/pkg/contexts/ocm/accessmethods/ociartifact"
 	"os"
 	"testing"
 
-	"github.com/kyma-project/cli/pkg/module"
-	"github.com/kyma-project/cli/tests/e2e"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/accessmethods/ociartifact"
+
 	"github.com/open-component-model/ocm/pkg/contexts/oci/repositories/ocireg"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/accessmethods/github"
@@ -15,6 +14,9 @@ import (
 	v2 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/versions/v2"
 	ocmOCIReg "github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/ocireg"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/kyma-project/cli/pkg/module"
+	"github.com/kyma-project/cli/tests/e2e"
 )
 
 func Test_ModuleTemplate(t *testing.T) {
@@ -66,7 +68,8 @@ func Test_ModuleTemplate(t *testing.T) {
 		ociArtifactAccessSpec, ok := resourceAccessSpec.(*ociartifact.AccessSpec)
 		assert.True(t, ok)
 		assert.Equal(t, ociartifact.Type, ociArtifactAccessSpec.GetType())
-		assert.Equal(t, "europe-docker.pkg.dev/kyma-project/prod/template-operator:0.1.0", ociArtifactAccessSpec.ImageReference)
+		assert.Equal(t, "europe-docker.pkg.dev/kyma-project/prod/template-operator:0.1.0",
+			ociArtifactAccessSpec.ImageReference)
 	})
 
 	t.Run("test descriptor.component.resources[1].access", func(t *testing.T) {
@@ -87,6 +90,10 @@ func Test_ModuleTemplate(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, github.Type, githubAccessSpec.Type)
 		assert.Contains(t, testRepoURL, githubAccessSpec.RepoURL)
+	})
+
+	t.Run("test spec.mandatory", func(t *testing.T) {
+		assert.Equal(t, false, template.Spec.Mandatory)
 	})
 
 	t.Run("test security scan labels", func(t *testing.T) {

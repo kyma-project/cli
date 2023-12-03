@@ -3,15 +3,18 @@ package deploy
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-project/cli/pkg/errs"
 	"os"
 
+	"github.com/kyma-project/cli/pkg/errs"
+
 	"github.com/avast/retry-go"
-	"github.com/kyma-project/cli/internal/kube"
+	"github.com/kyma-project/lifecycle-manager/api/shared"
 	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	v1 "k8s.io/api/core/v1"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
+
+	"github.com/kyma-project/cli/internal/kube"
 )
 
 // Kyma deploys the Kyma CR. If no kymaCRPath is provided, it deploys the default CR.
@@ -71,7 +74,7 @@ func Kyma(
 			if !ok {
 				return false, errs.ErrTypeAssertKyma
 			}
-			return string(tKyma.Status.State) == string(v1beta2.StateReady), nil
+			return string(tKyma.Status.State) == string(shared.StateReady), nil
 		},
 	); err != nil {
 		return fmt.Errorf("kyma custom resource did not get ready: %w", err)
