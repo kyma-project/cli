@@ -99,7 +99,7 @@ func generateCRFields(apiVersion, kind string, properties map[string]Property) i
 			continue
 		case "metadata":
 			spec[propName] = map[string]interface{}{
-				"name": "sample-" + kind,
+				"name": "sample-" + strings.ToLower(kind),
 			}
 			continue
 		case "status":
