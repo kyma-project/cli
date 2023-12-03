@@ -5,11 +5,9 @@ import (
 	"fmt"
 	"github.com/kyma-project/cli/cmd/kyma/alpha/create/module"
 	"github.com/kyma-project/cli/internal/cli"
-	pkgmodule "github.com/kyma-project/cli/pkg/module"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"os"
-	"os/exec"
 	"reflect"
 	"strings"
 )
@@ -119,16 +117,28 @@ func (cmd *command) Run(_ context.Context) error {
 		return err
 	}
 
+	if cmd.opts.GenerateManifest || cmd.opts.GenerateDefaultCR {
+		cmd.NewStep("Generating webhook, rbac and crd objects...")
+
+		err := cmd.generateControllerObjects()
+		if err != nil {
+			cmd.CurrentStep.Failuref("%s: %s", errObjectsCreationFailed.Error(), err.Error())
+			return fmt.Errorf("%w: %s", errObjectsCreationFailed, err.Error())
+		}
+
+		cmd.CurrentStep.Successf("Generated webhook, rbac and crd objects in config/ directory")
+	}
+
 	if cmd.opts.GenerateManifest {
 		cmd.NewStep("Generating manifest file...")
 
 		err := cmd.generateManifest()
 		if err != nil {
-			cmd.CurrentStep.Failuref("%v: %w", errManifestCreationFailed, err)
-			return fmt.Errorf("%v: %w", errManifestCreationFailed, err)
+			cmd.CurrentStep.Failuref("%s: %s", errManifestCreationFailed.Error(), err.Error())
+			return fmt.Errorf("%w: %s", errManifestCreationFailed, err.Error())
 		}
 
-		cmd.CurrentStep.Successf("Generated %s", fileNameManifest)
+		cmd.CurrentStep.Successf("Generated manifest file - %s", fileNameManifest)
 	}
 
 	if cmd.opts.GenerateSecurityConfig {
@@ -136,11 +146,11 @@ func (cmd *command) Run(_ context.Context) error {
 
 		err := cmd.generateSecurityConfig()
 		if err != nil {
-			cmd.CurrentStep.Failuref("%w: %v", errSecurityConfigCreationFailed, err)
-			return fmt.Errorf("%w: %v", errSecurityConfigCreationFailed, err)
+			cmd.CurrentStep.Failuref("%s: %s", errSecurityConfigCreationFailed.Error(), err.Error())
+			return fmt.Errorf("%w: %s", errSecurityConfigCreationFailed, err.Error())
 		}
 
-		cmd.CurrentStep.Successf("Generated %s", fileNameSecurityConfig)
+		cmd.CurrentStep.Successf("Generated security config file - %s", fileNameSecurityConfig)
 	}
 
 	if cmd.opts.GenerateDefaultCR {
@@ -148,62 +158,33 @@ func (cmd *command) Run(_ context.Context) error {
 
 		err := cmd.generateDefaultCR()
 		if err != nil {
-			cmd.CurrentStep.Failuref("%w: %v", errDefaultCRCreationFailed, err)
-			return fmt.Errorf("%w: %v", errDefaultCRCreationFailed, err)
+			cmd.CurrentStep.Failuref("%s: %s", errDefaultCRCreationFailed.Error(), err.Error())
+			return fmt.Errorf("%w: %s", errDefaultCRCreationFailed, err.Error())
 		}
 
-		cmd.CurrentStep.Successf("Generated %s", fileNameDefaultCR)
+		cmd.CurrentStep.Successf("Generated default CR file(s) in config/samples/ directory")
 	}
 
 	cmd.NewStep("Generating module config file...")
 
 	err := cmd.generateModuleConfig()
 	if err != nil {
-		cmd.CurrentStep.Failuref("%w: %v", errModuleConfigCreationFailed, err)
-		return fmt.Errorf("%w: %v", errModuleConfigCreationFailed, err)
+		cmd.CurrentStep.Failuref("%s: %s", errModuleConfigCreationFailed.Error(), err.Error())
+		return fmt.Errorf("%w: %s", errModuleConfigCreationFailed, err.Error())
 	}
 
-	cmd.CurrentStep.Successf("Generated %s", fileNameModuleConfig)
+	cmd.CurrentStep.Successf("Generated module config file - %s", fileNameModuleConfig)
 	return nil
-}
-
-func (cmd *command) generateManifest() error {
-	makeCmd := exec.Command("make", "build-manifests")
-	makeCmd.Dir = cmd.opts.Directory
-	err := makeCmd.Run()
-	return err
-}
-
-func (cmd *command) generateSecurityConfig() error {
-	cfg := pkgmodule.SecurityScanCfg{
-		ModuleName: cmd.opts.ModuleConfigName,
-		Protecode: []string{"europe-docker.pkg.dev/kyma-project/prod/myimage:1.2.3",
-			"europe-docker.pkg.dev/kyma-project/prod/external/ghcr.io/mymodule/anotherimage:4.5.6"},
-		WhiteSource: pkgmodule.WhiteSourceSecCfg{
-			Exclude: []string{"**/test/**", "**/*_test.go"},
-		},
-	}
-	err := cmd.generateYamlFileFromObject(cfg, fileNameSecurityConfig)
-	return err
-}
-
-func (cmd *command) generateDefaultCR() error {
-	content := `apiVersion: operator.kyma-project.io/v1alpha1
-kind: Sample
-metadata:
-  name: sample-yaml
-spec:
-  resourceFilePath: "./module-data/yaml"`
-	return os.WriteFile(cmd.opts.getCompleteFilePath(fileNameDefaultCR), []byte(content), 0600)
 }
 
 func (cmd *command) generateModuleConfig() error {
 	cfg := module.Config{
-		Name:          cmd.opts.ModuleConfigName,
-		Version:       cmd.opts.ModuleConfigVersion,
-		Channel:       cmd.opts.ModuleConfigChannel,
-		DefaultCRPath: chooseValue(cmd.opts.GenerateDefaultCR, fileNameDefaultCR, ""),
-		Security:      chooseValue(cmd.opts.GenerateSecurityConfig, fileNameSecurityConfig, ""),
+		Name:    cmd.opts.ModuleConfigName,
+		Version: cmd.opts.ModuleConfigVersion,
+		Channel: cmd.opts.ModuleConfigChannel,
+		DefaultCRPath: chooseValue(cmd.opts.GenerateDefaultCR && len(generatedDefaultCRFiles) == 1,
+			generatedDefaultCRFiles[0], ""),
+		Security: chooseValue(cmd.opts.GenerateSecurityConfig, fileNameSecurityConfig, ""),
 	}
 	if cmd.opts.GenerateManifest {
 		cfg.ManifestPath = fileNameManifest
@@ -217,70 +198,12 @@ func (cmd *command) generateYamlFileFromObject(obj interface{}, fileName string)
 	reflectValue := reflect.ValueOf(obj)
 	var yamlBuilder strings.Builder
 	generateYaml(&yamlBuilder, reflectValue, 0, "")
-	yaml := yamlBuilder.String()
+	yamlString := yamlBuilder.String()
 
-	err := os.WriteFile(cmd.opts.getCompleteFilePath(fileName), []byte(yaml), 0600)
+	err := os.WriteFile(cmd.opts.getCompleteFilePath(fileName), []byte(yamlString), 0600)
 	if err != nil {
-		return fmt.Errorf("error writing file: %v", err)
+		return fmt.Errorf("error writing file: %w", err)
 	}
 
 	return nil
-}
-
-func generateYaml(yamlBuilder *strings.Builder, reflectValue reflect.Value, indentLevel int, commentPrefix string) {
-	t := reflectValue.Type()
-
-	indentPrefix := strings.Repeat("  ", indentLevel)
-	originalCommentPrefix := commentPrefix
-	for i := 0; i < t.NumField(); i++ {
-		field := t.Field(i)
-		value := reflectValue.Field(i)
-		tag := field.Tag.Get("yaml")
-		comment := field.Tag.Get("comment")
-
-		if value.IsZero() && !strings.Contains(comment, "required") {
-			commentPrefix = "# "
-		}
-
-		if value.Kind() == reflect.Struct {
-			yamlBuilder.WriteString(fmt.Sprintf("%s%s%s: # %s\n", commentPrefix, indentPrefix, tag, comment))
-			generateYaml(yamlBuilder, value, indentLevel+1, commentPrefix)
-			continue
-		}
-
-		if value.Kind() == reflect.Slice || value.Kind() == reflect.Map {
-			yamlBuilder.WriteString(fmt.Sprintf("%s%s%s: # %s\n", commentPrefix, indentPrefix, tag, comment))
-			for j := 0; j < value.Len(); j++ {
-				valueStr := getValueStr(value.Index(j))
-				yamlBuilder.WriteString(fmt.Sprintf("%s%s  - %s\n", commentPrefix, indentPrefix, valueStr))
-			}
-			if value.Len() == 0 {
-				yamlBuilder.WriteString(fmt.Sprintf("%s%s  - \n", commentPrefix, indentPrefix))
-			}
-			continue
-		}
-
-		valueStr := getValueStr(value)
-		yamlBuilder.WriteString(fmt.Sprintf("%s%s%s: %s # %s\n", commentPrefix, indentPrefix,
-			tag, valueStr, comment))
-
-		commentPrefix = originalCommentPrefix
-	}
-}
-
-func getValueStr(value reflect.Value) string {
-	valueStr := ""
-	if value.Kind() == reflect.String {
-		valueStr = fmt.Sprintf("\"%v\"", value.Interface())
-	} else {
-		valueStr = fmt.Sprintf("%v", value.Interface())
-	}
-	return valueStr
-}
-
-func chooseValue(condition bool, trueValue, falseValue string) string {
-	if condition {
-		return trueValue
-	}
-	return falseValue
 }
