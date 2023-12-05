@@ -353,6 +353,9 @@ func unTar(source, target string, deleteSource bool) error {
 			return err
 		}
 		headerPath, err := sanitizeExtractPath(target, header.Name)
+		if err != nil {
+			return err
+		}
 		info := header.FileInfo()
 		if info.IsDir() {
 			if err = os.MkdirAll(headerPath, info.Mode()); err != nil {
