@@ -35,10 +35,6 @@ const (
 	zipName               = "istio.zip"
 )
 
-var (
-	errArchiveExtractVuln = errors.New("target path contains `..`")
-)
-
 type operatingSystem struct {
 	name string
 	ext  string
