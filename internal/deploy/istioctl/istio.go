@@ -35,6 +35,10 @@ const (
 	zipName               = "istio.zip"
 )
 
+var (
+	errArchiveExtractVuln = errors.New("target path contains `..`")
+)
+
 type operatingSystem struct {
 	name string
 	ext  string
@@ -338,6 +342,9 @@ func unGzip(source, target string, deleteSource bool) error {
 }
 
 func unTar(source, target string, deleteSource bool) error {
+	if strings.Contains(target, "..") {
+		return errors.Errorf("illegal destination path: %s", target)
+	}
 	reader, err := os.Open(source)
 	if err != nil {
 		return err
@@ -352,10 +359,7 @@ func unTar(source, target string, deleteSource bool) error {
 		} else if err != nil {
 			return err
 		}
-		headerPath, err := sanitizeExtractPath(target, header.Name)
-		if err != nil {
-			return err
-		}
+		headerPath := fmt.Sprintf("%s/%s", target, header.Name)
 		info := header.FileInfo()
 		if info.IsDir() {
 			if err = os.MkdirAll(headerPath, info.Mode()); err != nil {
