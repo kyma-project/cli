@@ -6,7 +6,6 @@ import (
 	"github.com/kyma-project/cli/cmd/kyma/completion"
 	"github.com/kyma-project/cli/cmd/kyma/create"
 	"github.com/kyma-project/cli/cmd/kyma/dashboard"
-	"github.com/kyma-project/cli/cmd/kyma/deploy"
 	"github.com/kyma-project/cli/cmd/kyma/get"
 	imprt "github.com/kyma-project/cli/cmd/kyma/import"
 	"github.com/kyma-project/cli/cmd/kyma/import/certs"
@@ -20,7 +19,6 @@ import (
 	"github.com/kyma-project/cli/cmd/kyma/provision/k3d"
 	"github.com/kyma-project/cli/cmd/kyma/run"
 	"github.com/kyma-project/cli/cmd/kyma/sync"
-	"github.com/kyma-project/cli/cmd/kyma/undeploy"
 	"github.com/kyma-project/cli/cmd/kyma/version"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/spf13/cobra"
@@ -87,8 +85,6 @@ Kyma CLI allows you to install and manage Kyma.
 		provisionCmd,
 		create.NewCmd(o),
 		dashboard.NewCmd(dashboard.NewOptions(o)),
-		deploy.NewCmd(deploy.NewOptions(o)),
-		undeploy.NewCmd(undeploy.NewOptions(o)),
 		storeCmd,
 	)
 
