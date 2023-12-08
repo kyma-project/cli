@@ -5,87 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/kyma-incubator/reconciler/pkg/reconciler/service"
-
-	"github.com/kyma-incubator/reconciler/pkg/reconciler/chart"
 	"github.com/kyma-project/cli/internal/files"
-	"github.com/kyma-project/cli/pkg/step"
 	"github.com/pkg/errors"
-	"go.uber.org/zap"
 )
-
-func isWorkspaceEmpty(workspace string) (bool, error) {
-	_, err := os.Stat(workspace)
-	if !os.IsNotExist(err) {
-		isWorkspaceEmpty, err := files.IsDirEmpty(workspace)
-		if err != nil {
-			return false, err
-		}
-		if !isWorkspaceEmpty && workspace != getDefaultWorkspacePath() {
-			return false, nil
-		}
-	}
-	return true, nil
-}
-
-func PrepareDryRunWorkspace(workspace, source string, local bool, l *zap.SugaredLogger) (*chart.KymaWorkspace, error) {
-	if !local {
-		isEmpty, err := isWorkspaceEmpty(workspace)
-		if err != nil {
-			return nil, err
-		}
-		if !isEmpty {
-			return nil, errors.Errorf("Workspace '%s' not empty. Aborting deployment", workspace)
-		}
-	}
-	return fetchWorkspace(workspace, source, local, l)
-}
-
-func fetchWorkspace(workspace, source string, local bool, l *zap.SugaredLogger) (*chart.KymaWorkspace, error) {
-	wsp, err := resolveLocalWorkspacePath(workspace, local)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to resolve workspace path")
-	}
-
-	wsFact, err := chart.NewFactory(nil, wsp, l)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to instantiate workspace factory")
-	}
-
-	err = service.UseGlobalWorkspaceFactory(wsFact)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to set global workspace factory")
-	}
-
-	ws, err := wsFact.Get(source)
-	if err != nil {
-		return nil, errors.Wrap(err, "Could not fetch workspace")
-	}
-
-	return ws, nil
-}
-
-func PrepareWorkspace(workspace, source string, step step.Step, interactive, local bool, l *zap.SugaredLogger) (*chart.KymaWorkspace, error) {
-	if !local && interactive {
-		isEmpty, err := isWorkspaceEmpty(workspace)
-		if err != nil {
-			return nil, err
-		}
-		if !isEmpty && !step.PromptYesNo(fmt.Sprintf("Existing files in workspace folder '%s' will be deleted. Are you sure you want to continue? ", workspace)) {
-			step.Failure()
-			return nil, errors.Errorf("aborting deployment")
-		}
-	}
-
-	ws, err := fetchWorkspace(workspace, source, local, l)
-	if err != nil {
-		return nil, errors.Wrap(err, "Could not fetch workspace")
-	}
-
-	step.Successf("Using Kyma from the workspace directory: %s", ws.WorkspaceDir)
-
-	return ws, nil
-}
 
 func resolveLocalWorkspacePath(ws string, local bool) (string, error) {
 	defaultWS := getDefaultWorkspacePath()

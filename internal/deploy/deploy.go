@@ -1,16 +1,9 @@
 package deploy
 
 import (
-	"context"
-	"fmt"
-
 	"github.com/kyma-incubator/reconciler/pkg/cluster"
 	"github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-incubator/reconciler/pkg/model"
-	"github.com/kyma-incubator/reconciler/pkg/reconciler"
-	reconcilerservice "github.com/kyma-incubator/reconciler/pkg/reconciler/service"
-	"github.com/kyma-incubator/reconciler/pkg/scheduler/reconciliation"
-	"github.com/kyma-incubator/reconciler/pkg/scheduler/service"
 	"github.com/kyma-project/cli/internal/deploy/component"
 	"github.com/kyma-project/cli/internal/deploy/values"
 	"github.com/pkg/errors"
@@ -19,21 +12,12 @@ import (
 
 type ComponentState string
 
-const (
-	Success            ComponentState = "Success"
-	RecoverableError   ComponentState = "RecoverableError"
-	UnrecoverableError ComponentState = "UnrecoverableError"
-)
-
 type ComponentStatus struct {
 	Component string
 	State     ComponentState
 	Error     error
 	Manifest  *string
 }
-
-var PrintedStatus = make(map[string]bool)
-var manifestsBuffer []ComponentStatus
 
 type Options struct {
 	Components     component.List
@@ -46,90 +30,6 @@ type Options struct {
 	WorkerPoolSize int
 	DeleteStrategy string
 	DryRun         bool
-}
-
-func Deploy(opts Options) (*service.ReconciliationResult, error) {
-	if opts.DryRun {
-		reconcilerservice.EnableReconcilerDryRun()
-	}
-	return doReconciliation(opts, false)
-}
-
-func Undeploy(opts Options) (*service.ReconciliationResult, error) {
-	return doReconciliation(opts, true)
-}
-
-func doReconciliation(opts Options, delete bool) (*service.ReconciliationResult, error) {
-	kebComponents, err := prepareKebComponents(opts.Components, opts.Values)
-	if err != nil {
-		return nil, err
-	}
-
-	kebCluster := prepareKebCluster(opts, kebComponents, delete)
-
-	ds, err := service.NewDeleteStrategy(opts.DeleteStrategy)
-	if err != nil {
-		return nil, err
-	}
-
-	manifests := make(chan ComponentStatus)
-	runtimeBuilder := service.NewRuntimeBuilder(reconciliation.NewInMemoryReconciliationRepository(), opts.Logger)
-	statusFunc := func(component string, msg *reconciler.CallbackMessage) {
-		status := ComponentStatus{component, "", nil, msg.Manifest}
-		switch msg.Status {
-		case reconciler.StatusSuccess:
-			status = ComponentStatus{component, Success, nil, msg.Manifest}
-		case reconciler.StatusFailed:
-			status = ComponentStatus{component,
-				RecoverableError,
-				errors.Errorf("%s", msg.Error),
-				msg.Manifest}
-		case reconciler.StatusError:
-			status = ComponentStatus{component,
-				UnrecoverableError,
-				errors.Errorf("%s", msg.Error),
-				msg.Manifest}
-		}
-
-		if opts.DryRun {
-			go manifestCollector(manifests)
-			manifests <- status
-		}
-
-		opts.StatusFunc(status)
-	}
-
-	reconcilationResult, err := runtimeBuilder.RunLocal(statusFunc).
-		WithSchedulerConfig(&service.SchedulerConfig{
-			PreComponents:  opts.Components.PrerequisiteNames(),
-			DeleteStrategy: ds,
-		}).
-		WithWorkerPoolSize(opts.WorkerPoolSize).
-		Run(context.TODO(), kebCluster)
-
-	close(manifests)
-	if opts.DryRun {
-		printManifests()
-	}
-
-	return reconcilationResult, err
-}
-
-func manifestCollector(ch chan ComponentStatus) {
-	str := <-ch
-	manifestsBuffer = append(manifestsBuffer, str)
-}
-
-func printManifests() {
-	for _, v := range manifestsBuffer {
-		if v.Error != nil {
-			fmt.Printf("Rendering of Component: %s failed with %s", v.Component, v.Error.Error())
-			return
-		}
-	}
-	for _, val := range manifestsBuffer {
-		fmt.Printf("%s", *val.Manifest)
-	}
 }
 
 func prepareKebComponents(components component.List, vals values.Values) ([]*keb.Component, error) {
