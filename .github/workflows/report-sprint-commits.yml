@@ -1,0 +1,27 @@
+name: Report Sprint Test Suites
+run-name: A report for sprint commits
+
+# The report generation is performed ad hoc via manual invocation.
+on: workflow_dispatch
+
+env:
+  reporter: ${{ github.workspace }}/scripts/coverage-metrics/bin/utils/commit-test-suites/gauge-sprint-commits.py
+  pip_requirements: ${{ github.workspace }}/scripts/coverage-metrics/bin/utils/commit-test-suites/requirements.txt
+
+jobs:
+  generate-report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out report scripts
+        uses: actions/checkout@v4
+        with:
+          repository: kyma-project/qa-toolkit
+          path: scripts
+      - name: Adjust the report scripts
+        run: |
+          chmod a+x $reporter
+          python -m pip install --upgrade pip
+          pip install -r $pip_requirements
+      - name: Genarate a report
+        run: |
+          $reporter --repo https://github.com/kyma-project/cli.git --days 14 --e2e-path tests/
