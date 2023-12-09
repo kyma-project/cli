@@ -118,7 +118,7 @@ func (cmd *command) Run(_ context.Context) error {
 	}
 
 	if cmd.opts.GenerateManifest || cmd.opts.GenerateDefaultCR {
-		cmd.NewStep("Generating webhook, rbac and crd objects...")
+		cmd.NewStep("Generating webhook, rbac and crd objects...\n")
 
 		err := cmd.generateControllerObjects()
 		if err != nil {
@@ -130,7 +130,7 @@ func (cmd *command) Run(_ context.Context) error {
 	}
 
 	if cmd.opts.GenerateManifest {
-		cmd.NewStep("Generating manifest file...")
+		cmd.NewStep("Generating manifest file...\n")
 
 		err := cmd.generateManifest()
 		if err != nil {
@@ -142,7 +142,7 @@ func (cmd *command) Run(_ context.Context) error {
 	}
 
 	if cmd.opts.GenerateSecurityConfig {
-		cmd.NewStep("Generating security config file...")
+		cmd.NewStep("Generating security config file...\n")
 
 		err := cmd.generateSecurityConfig()
 		if err != nil {
@@ -154,7 +154,7 @@ func (cmd *command) Run(_ context.Context) error {
 	}
 
 	if cmd.opts.GenerateDefaultCR {
-		cmd.NewStep("Generating default CR file...")
+		cmd.NewStep("Generating default CR file...\n")
 
 		err := cmd.generateDefaultCR()
 		if err != nil {
@@ -165,7 +165,7 @@ func (cmd *command) Run(_ context.Context) error {
 		cmd.CurrentStep.Successf("Generated default CR file(s) in config/samples/ directory")
 	}
 
-	cmd.NewStep("Generating module config file...")
+	cmd.NewStep("Generating module config file...\n")
 
 	err := cmd.generateModuleConfig()
 	if err != nil {
@@ -179,17 +179,17 @@ func (cmd *command) Run(_ context.Context) error {
 
 func (cmd *command) generateModuleConfig() error {
 	cfg := module.Config{
-		Name:    cmd.opts.ModuleConfigName,
-		Version: cmd.opts.ModuleConfigVersion,
-		Channel: cmd.opts.ModuleConfigChannel,
-		DefaultCRPath: chooseValue(cmd.opts.GenerateDefaultCR && len(generatedDefaultCRFiles) == 1,
-			generatedDefaultCRFiles[0], ""),
-		Security: chooseValue(cmd.opts.GenerateSecurityConfig, fileNameSecurityConfig, ""),
+		Name:         cmd.opts.ModuleConfigName,
+		Version:      cmd.opts.ModuleConfigVersion,
+		Channel:      cmd.opts.ModuleConfigChannel,
+		ManifestPath: cmd.opts.ModuleConfigManifestPath,
+		Security:     chooseValue(cmd.opts.GenerateSecurityConfig, fileNameSecurityConfig, ""),
+	}
+	if cmd.opts.GenerateDefaultCR && len(generatedDefaultCRFiles) == 1 {
+		cfg.DefaultCRPath = generatedDefaultCRFiles[0]
 	}
 	if cmd.opts.GenerateManifest {
 		cfg.ManifestPath = fileNameManifest
-	} else if cmd.opts.ModuleConfigManifestPath != "" {
-		cfg.ManifestPath = cmd.opts.ModuleConfigManifestPath
 	}
 	return cmd.generateYamlFileFromObject(cfg, fileNameModuleConfig)
 }

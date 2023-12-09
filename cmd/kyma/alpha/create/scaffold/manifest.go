@@ -1,6 +1,8 @@
 package scaffold
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -36,8 +38,19 @@ func (cmd *command) generateControllerObjects() error {
 	controllerGenCmd.Dir = cmd.opts.Directory
 	controllerGenCmd.Env = append(os.Environ(), "GOBIN="+binPath)
 
+	var stdout, stderr bytes.Buffer
+	controllerGenCmd.Stdout = &stdout
+	controllerGenCmd.Stderr = &stderr
+
 	if err := controllerGenCmd.Run(); err != nil {
+		fmt.Printf("error running controller-gen: %s\n", err.Error())
+		fmt.Printf("Stdout:\n%s\n", stdout.String())
+		fmt.Printf("Stderr:\n%s\n", stderr.String())
+
 		return fmt.Errorf("error running controller-gen: %w", err)
+	}
+	if _, err = os.Stat(path.Join(cmd.opts.Directory, "config", "crd", "bases")); errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("error running controller-gen: controller-gen found no crds in the directory")
 	}
 	return nil
 }
