@@ -5,9 +5,11 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/kyma-project/lifecycle-manager/api/shared"
+	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
+
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/pkg/module"
-	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 )
 
 //go:embed testdata/clusterScopedCRD.yaml
@@ -79,9 +81,9 @@ func Test_command_getModuleTemplateLabels(t *testing.T) {
 				},
 			},
 			want: map[string]string{
-				"label1":          "value1",
-				"label2":          "value2",
-				v1beta2.BetaLabel: v1beta2.EnableLabelValue,
+				"label1":         "value1",
+				"label2":         "value2",
+				shared.BetaLabel: v1beta2.EnableLabelValue,
 			},
 		},
 		{
@@ -96,7 +98,7 @@ func Test_command_getModuleTemplateLabels(t *testing.T) {
 				},
 			},
 			want: map[string]string{
-				v1beta2.InternalLabel: v1beta2.EnableLabelValue,
+				shared.InternalLabel: v1beta2.EnableLabelValue,
 			},
 		},
 	}
@@ -150,7 +152,7 @@ func Test_command_getModuleTemplateAnnotations(t *testing.T) {
 				"annotation1": "value1",
 				"annotation2": "value2",
 				"operator.kyma-project.io/module-version": "1.1.1",
-				v1beta2.IsClusterScopedAnnotation:         v1beta2.DisableLabelValue,
+				shared.IsClusterScopedAnnotation:          v1beta2.DisableLabelValue,
 			},
 		},
 		{
@@ -173,7 +175,7 @@ func Test_command_getModuleTemplateAnnotations(t *testing.T) {
 			want: map[string]string{
 				"annotation1":                             "value1",
 				"annotation2":                             "value2",
-				v1beta2.IsClusterScopedAnnotation:         v1beta2.EnableLabelValue,
+				shared.IsClusterScopedAnnotation:          v1beta2.EnableLabelValue,
 				"operator.kyma-project.io/module-version": "1.1.1",
 			},
 		},
@@ -189,7 +191,7 @@ func Test_command_getModuleTemplateAnnotations(t *testing.T) {
 			},
 			want: map[string]string{
 				"operator.kyma-project.io/module-version": "1.0.0",
-				v1beta2.IsClusterScopedAnnotation:         v1beta2.DisableLabelValue,
+				shared.IsClusterScopedAnnotation:          v1beta2.DisableLabelValue,
 			},
 		},
 	}
@@ -199,7 +201,8 @@ func Test_command_getModuleTemplateAnnotations(t *testing.T) {
 				Command: tt.fields.Command,
 				opts:    tt.fields.opts,
 			}
-			if got := cmd.getModuleTemplateAnnotations(tt.args.modCnf, tt.args.crValidator); !reflect.DeepEqual(got, tt.want) {
+			if got := cmd.getModuleTemplateAnnotations(tt.args.modCnf, tt.args.crValidator); !reflect.DeepEqual(got,
+				tt.want) {
 				t.Errorf("getModuleTemplateAnnotations() = %v, want %v", got, tt.want)
 			}
 		})

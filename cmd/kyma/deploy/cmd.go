@@ -6,14 +6,11 @@ import (
 	"os"
 	"time"
 
-	"github.com/kyma-project/cli/pkg/step"
-
 	"github.com/kyma-incubator/reconciler/pkg/model"
 
 	"github.com/kyma-project/cli/internal/clusterinfo"
 	"github.com/kyma-project/cli/internal/coredns"
 	"github.com/kyma-project/cli/internal/deploy"
-	"github.com/kyma-project/cli/internal/deploy/istioctl"
 
 	"github.com/kyma-project/cli/internal/deploy/component"
 	"github.com/kyma-project/cli/internal/deploy/values"
@@ -166,11 +163,6 @@ func (cmd *command) deploy(ctx context.Context, start time.Time) error {
 		return err
 	}
 
-	err = cmd.initialSetup(ws.WorkspaceDir, l)
-	if err != nil {
-		return err
-	}
-
 	summary := cmd.setSummary()
 
 	err = cmd.deployKyma(l, components, vals, summary)
@@ -196,11 +188,6 @@ func (cmd *command) dryRun() error {
 	}
 
 	components, err := component.Resolve(cmd.opts.Components, cmd.opts.ComponentsFile, ws)
-	if err != nil {
-		return err
-	}
-
-	err = cmd.initialSetup(ws.WorkspaceDir, l)
 	if err != nil {
 		return err
 	}
@@ -357,27 +344,6 @@ func (cmd *command) decideVersionUpgrade() error {
 		return errors.New("Upgrade stopped by user")
 	}
 
-	return nil
-}
-
-func (cmd *command) initialSetup(wsp string, logger *zap.SugaredLogger) error {
-	var preReqStep step.Step
-	if !cmd.opts.DryRun {
-		preReqStep = cmd.NewStep("Initial setup")
-	}
-
-	istio, err := istioctl.New(wsp, logger)
-	if err != nil {
-		return err
-	}
-	err = istio.Install()
-	if err != nil {
-		return err
-	}
-
-	if !cmd.opts.DryRun {
-		preReqStep.Success()
-	}
 	return nil
 }
 

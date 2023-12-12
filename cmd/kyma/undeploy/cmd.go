@@ -6,8 +6,6 @@ import (
 	"os"
 	"time"
 
-	"go.uber.org/zap"
-
 	"github.com/kyma-incubator/reconciler/pkg/model"
 	"github.com/pkg/errors"
 
@@ -15,7 +13,6 @@ import (
 	"github.com/kyma-project/cli/internal/clusterinfo"
 	"github.com/kyma-project/cli/internal/deploy"
 	"github.com/kyma-project/cli/internal/deploy/component"
-	"github.com/kyma-project/cli/internal/deploy/istioctl"
 	"github.com/kyma-project/cli/internal/deploy/values"
 	"github.com/kyma-project/cli/internal/kube"
 	"github.com/kyma-project/cli/internal/nice"
@@ -107,11 +104,6 @@ func (cmd *command) Run(ctx context.Context) error {
 		return err
 	}
 
-	err = cmd.initialSetup(ws.WorkspaceDir, l)
-	if err != nil {
-		return err
-	}
-
 	clusterInfo, err := clusterinfo.Discover(ctx, cmd.K8s.Static())
 	if err != nil {
 		return errors.Wrap(err, "failed to discover underlying cluster type")
@@ -192,22 +184,6 @@ func (cmd *command) setSummary() *nice.Summary {
 		NonInteractive: cmd.NonInteractive,
 		Version:        cmd.opts.Source,
 	}
-}
-
-func (cmd *command) initialSetup(wsp string, logger *zap.SugaredLogger) error {
-	preReqStep := cmd.NewStep("Initial setup")
-
-	istio, err := istioctl.New(wsp, logger)
-	if err != nil {
-		return err
-	}
-	err = istio.Install()
-	if err != nil {
-		return err
-	}
-
-	preReqStep.Success()
-	return nil
 }
 
 // resolveVersion determines which version of kyma has to be used for undeploy.
