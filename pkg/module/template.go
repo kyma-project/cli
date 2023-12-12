@@ -6,6 +6,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/kyma-project/lifecycle-manager/api/shared"
 	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
@@ -80,7 +81,7 @@ func Template(remote ocm.ComponentVersionAccess, moduleTemplateName, namespace, 
 	}
 
 	shortName := ref.ShortName()
-	labels["operator.kyma-project.io/module-name"] = shortName
+	labels[shared.ModuleName] = shortName
 	resourceName := moduleTemplateName
 	if len(resourceName) == 0 {
 		resourceName = shortName + "-" + channel

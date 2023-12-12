@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/kyma-project/lifecycle-manager/api/shared"
-	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/kyma-project/cli/pkg/module"
@@ -83,7 +82,7 @@ func Test_command_getModuleTemplateLabels(t *testing.T) {
 			want: map[string]string{
 				"label1":         "value1",
 				"label2":         "value2",
-				shared.BetaLabel: v1beta2.EnableLabelValue,
+				shared.BetaLabel: shared.EnableLabelValue,
 			},
 		},
 		{
@@ -98,7 +97,7 @@ func Test_command_getModuleTemplateLabels(t *testing.T) {
 				},
 			},
 			want: map[string]string{
-				shared.InternalLabel: v1beta2.EnableLabelValue,
+				shared.InternalLabel: shared.EnableLabelValue,
 			},
 		},
 	}
@@ -149,10 +148,10 @@ func Test_command_getModuleTemplateAnnotations(t *testing.T) {
 				},
 			},
 			want: map[string]string{
-				"annotation1": "value1",
-				"annotation2": "value2",
-				"operator.kyma-project.io/module-version": "1.1.1",
-				shared.IsClusterScopedAnnotation:          v1beta2.DisableLabelValue,
+				"annotation1":                    "value1",
+				"annotation2":                    "value2",
+				shared.ModuleVersionAnnotation:   "1.1.1",
+				shared.IsClusterScopedAnnotation: shared.DisableLabelValue,
 			},
 		},
 		{
@@ -173,10 +172,10 @@ func Test_command_getModuleTemplateAnnotations(t *testing.T) {
 				},
 			},
 			want: map[string]string{
-				"annotation1":                             "value1",
-				"annotation2":                             "value2",
-				shared.IsClusterScopedAnnotation:          v1beta2.EnableLabelValue,
-				"operator.kyma-project.io/module-version": "1.1.1",
+				"annotation1":                    "value1",
+				"annotation2":                    "value2",
+				shared.IsClusterScopedAnnotation: shared.EnableLabelValue,
+				shared.ModuleVersionAnnotation:   "1.1.1",
 			},
 		},
 		{
@@ -190,8 +189,8 @@ func Test_command_getModuleTemplateAnnotations(t *testing.T) {
 				},
 			},
 			want: map[string]string{
-				"operator.kyma-project.io/module-version": "1.0.0",
-				shared.IsClusterScopedAnnotation:          v1beta2.DisableLabelValue,
+				shared.ModuleVersionAnnotation:   "1.0.0",
+				shared.IsClusterScopedAnnotation: shared.DisableLabelValue,
 			},
 		},
 	}

@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/kyma-project/lifecycle-manager/api/shared"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/accessmethods/ociartifact"
 
 	"github.com/open-component-model/ocm/pkg/contexts/oci/repositories/ocireg"
@@ -33,8 +34,8 @@ func Test_ModuleTemplate(t *testing.T) {
 	t.Run("test annotations", func(t *testing.T) {
 		annotations := template.Annotations
 		expectedModuleTemplateVersion := os.Getenv("MODULE_TEMPLATE_VERSION")
-		assert.Equal(t, expectedModuleTemplateVersion, annotations["operator.kyma-project.io/module-version"])
-		assert.Equal(t, "false", annotations["operator.kyma-project.io/is-cluster-scoped"])
+		assert.Equal(t, expectedModuleTemplateVersion, annotations[shared.ModuleVersionAnnotation])
+		assert.Equal(t, "false", annotations[shared.IsClusterScopedAnnotation])
 	})
 
 	t.Run("test descriptor.component.repositoryContexts", func(t *testing.T) {

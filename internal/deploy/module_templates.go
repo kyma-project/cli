@@ -3,16 +3,19 @@ package deploy
 import (
 	"context"
 
-	"github.com/kyma-project/cli/internal/kube"
-	"github.com/kyma-project/cli/internal/kustomize"
+	"github.com/kyma-project/lifecycle-manager/api/shared"
 	"sigs.k8s.io/kustomize/api/filters/fieldspec"
 	"sigs.k8s.io/kustomize/api/filters/filtersutil"
 	"sigs.k8s.io/kustomize/api/types"
 	"sigs.k8s.io/kustomize/kyaml/kio"
 	"sigs.k8s.io/kustomize/kyaml/resid"
+
+	"github.com/kyma-project/cli/internal/kube"
+	"github.com/kyma-project/cli/internal/kustomize"
 )
 
-func ModuleTemplates(ctx context.Context, k8s kube.KymaKube, templates []string, target string, force, dryRun bool) error {
+func ModuleTemplates(ctx context.Context, k8s kube.KymaKube, templates []string, target string,
+	force, dryRun bool) error {
 	var defs []kustomize.Definition
 	for _, k := range templates {
 		parsed, err := kustomize.ParseKustomization(k)
@@ -25,8 +28,8 @@ func ModuleTemplates(ctx context.Context, k8s kube.KymaKube, templates []string,
 	filter := fieldspec.Filter{
 		FieldSpec: types.FieldSpec{
 			Gvk: resid.Gvk{
-				Group: "operator.kyma-project.io",
-				Kind:  "ModuleTemplate",
+				Group: shared.OperatorGroup,
+				Kind:  string(shared.ModuleTemplateKind),
 			},
 			Path:               "spec/target",
 			CreateIfNotPresent: false,
@@ -45,7 +48,8 @@ func ModuleTemplates(ctx context.Context, k8s kube.KymaKube, templates []string,
 	}
 	err = applyManifests(
 		ctx, k8s, manifests, applyOpts{
-			dryRun, force, defaultRetries, defaultInitialBackoff}, manifestObjs,
+			dryRun, force, defaultRetries, defaultInitialBackoff,
+		}, manifestObjs,
 	)
 
 	return err

@@ -40,7 +40,7 @@ func Kyma(
 		kyma.SetLabels(map[string]string{shared.ManagedBy: "lifecycle-manager"})
 		kyma.Spec.Channel = channel
 		if !kcpMode {
-			kyma.SetLabels(map[string]string{shared.SyncLabel: v1beta2.DisableLabelValue})
+			kyma.SetLabels(map[string]string{shared.SyncLabel: shared.DisableLabelValue})
 		}
 		kyma.Spec.Modules = []v1beta2.Module{}
 	}
