@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/kyma-project/lifecycle-manager/api/shared"
 	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	"github.com/mandelsoft/vfs/pkg/memoryfs"
 	"github.com/mandelsoft/vfs/pkg/osfs"
@@ -447,10 +448,10 @@ func (cmd *command) getModuleTemplateLabels(modCnf *Config) map[string]string {
 		maps.Copy(labels, modCnf.Labels)
 
 		if modCnf.Beta {
-			labels[v1beta2.BetaLabel] = v1beta2.EnableLabelValue
+			labels[shared.BetaLabel] = v1beta2.EnableLabelValue
 		}
 		if modCnf.Internal {
-			labels[v1beta2.InternalLabel] = v1beta2.EnableLabelValue
+			labels[shared.InternalLabel] = v1beta2.EnableLabelValue
 		}
 	}
 
@@ -468,9 +469,9 @@ func (cmd *command) getModuleTemplateAnnotations(modCnf *Config, crValidator val
 
 	isClusterScoped := isCrdClusterScoped(crValidator.GetCrd())
 	if isClusterScoped {
-		annotations[v1beta2.IsClusterScopedAnnotation] = v1beta2.EnableLabelValue
+		annotations[shared.IsClusterScopedAnnotation] = v1beta2.EnableLabelValue
 	} else {
-		annotations[v1beta2.IsClusterScopedAnnotation] = v1beta2.DisableLabelValue
+		annotations[shared.IsClusterScopedAnnotation] = v1beta2.DisableLabelValue
 	}
 	annotations["operator.kyma-project.io/module-version"] = moduleVersion
 	return annotations
