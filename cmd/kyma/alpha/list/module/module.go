@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/kyma-project/lifecycle-manager/api/shared"
+	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,13 +35,13 @@ var moduleTemplates string
 
 var moduleTemplateResource = schema.GroupVersionResource{
 	Group:    shared.OperatorGroup,
-	Version:  "v1beta2",
+	Version:  v1beta2.GroupVersion.Version,
 	Resource: shared.ModuleTemplateKind.Plural(),
 }
 
 var kymaResource = schema.GroupVersionResource{
 	Group:    shared.OperatorGroup,
-	Version:  "v1beta2",
+	Version:  v1beta2.GroupVersion.Version,
 	Resource: shared.KymaKind.Plural(),
 }
 

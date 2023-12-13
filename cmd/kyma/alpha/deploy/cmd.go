@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/kyma-project/lifecycle-manager/api/shared"
+	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	"golang.org/x/exp/slices"
 
 	"github.com/spf13/cobra"
@@ -336,7 +337,7 @@ func (cmd *command) openDashboard(ctx context.Context) error {
 	kymas, err := cmd.K8s.Dynamic().Resource(
 		schema.GroupVersionResource{
 			Group:    shared.OperatorGroup,
-			Version:  "v1beta2",
+			Version:  v1beta2.GroupVersion.Version,
 			Resource: shared.KymaKind.Plural(),
 		},
 	).List(ctx, v1.ListOptions{})
@@ -389,7 +390,7 @@ func (cmd *command) handleTimeoutErr(err error) error {
 func (cmd *command) detectManagedKyma(ctx context.Context) error {
 	kymaResource := schema.GroupVersionResource{
 		Group:    shared.OperatorGroup,
-		Version:  "v1beta2",
+		Version:  v1beta2.GroupVersion.Version,
 		Resource: shared.KymaKind.Plural(),
 	}
 
