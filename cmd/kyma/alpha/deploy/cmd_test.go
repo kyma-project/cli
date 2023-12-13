@@ -2,14 +2,17 @@ package deploy
 
 import (
 	"context"
-	"github.com/kyma-project/cli/internal/cli"
-	"github.com/kyma-project/cli/internal/kube/mocks"
-	"github.com/kyma-project/cli/pkg/step"
+	"testing"
+
+	"github.com/kyma-project/lifecycle-manager/api/shared"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	fakedynamic "k8s.io/client-go/dynamic/fake"
 	"k8s.io/client-go/kubernetes/scheme"
-	"testing"
+
+	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/kube/mocks"
+	"github.com/kyma-project/cli/pkg/step"
 )
 
 func Test_command_detectManagedKyma(t *testing.T) {
@@ -24,7 +27,7 @@ func Test_command_detectManagedKyma(t *testing.T) {
 	// Managed Kyma
 	managedKymaMock := &mocks.KymaKube{}
 	managedKyma := &unstructured.Unstructured{}
-	managedKyma.SetKind("Kyma")
+	managedKyma.SetKind(string(shared.KymaKind))
 	managedKyma.SetAPIVersion("operator.kyma-project.io/v1beta2")
 	managedKyma.SetManagedFields([]metav1.ManagedFieldsEntry{
 		{
@@ -38,7 +41,7 @@ func Test_command_detectManagedKyma(t *testing.T) {
 	// Unmanaged Kyma
 	unmanagedKymaMock := &mocks.KymaKube{}
 	unmanagedKyma := &unstructured.Unstructured{}
-	unmanagedKyma.SetKind("Kyma")
+	unmanagedKyma.SetKind(string(shared.KymaKind))
 	unmanagedKyma.SetAPIVersion("operator.kyma-project.io/v1beta2")
 	unmanagedKyma.SetManagedFields([]metav1.ManagedFieldsEntry{
 		{
@@ -52,7 +55,7 @@ func Test_command_detectManagedKyma(t *testing.T) {
 	// kyma with no managed fields
 	noManagedFieldsMock := &mocks.KymaKube{}
 	noManagedFields := &unstructured.Unstructured{}
-	noManagedFields.SetKind("Kyma")
+	noManagedFields.SetKind(string(shared.KymaKind))
 	noManagedFields.SetAPIVersion("operator.kyma-project.io/v1beta2")
 	noManagedFieldsDynamic := fakedynamic.NewSimpleDynamicClient(scheme.Scheme, noManagedFields)
 	noManagedFieldsMock.On("Dynamic").Return(noManagedFieldsDynamic)

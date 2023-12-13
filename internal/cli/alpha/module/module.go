@@ -87,7 +87,7 @@ func (i *DefaultInteractor) filterModuleTemplates(allTemplates v1beta2.ModuleTem
 	var filteredModuleTemplates []v1beta2.ModuleTemplate
 
 	for _, mt := range allTemplates.Items {
-		if mt.Labels[v1beta2.ModuleName] == moduleIdentifier {
+		if mt.Labels[shared.ModuleName] == moduleIdentifier {
 			filteredModuleTemplates = append(filteredModuleTemplates, mt)
 			continue
 		}

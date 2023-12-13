@@ -6,6 +6,7 @@ import (
 	"testing"
 	"text/template"
 
+	"github.com/kyma-project/lifecycle-manager/api/shared"
 	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 
 	"github.com/mandelsoft/vfs/pkg/osfs"
@@ -60,7 +61,7 @@ func TestTemplate(t *testing.T) {
 			},
 			want: getExpectedModuleTemplate(t, "",
 				map[string]string{
-					"operator.kyma-project.io/module-name": "template-operator",
+					shared.ModuleName: "template-operator",
 				}, map[string]string{},
 				noCustomStateCheck, false),
 			wantErr: false,
@@ -78,7 +79,7 @@ func TestTemplate(t *testing.T) {
 			},
 			want: getExpectedModuleTemplate(t, "kyma-system",
 				map[string]string{
-					"operator.kyma-project.io/module-name": "template-operator",
+					shared.ModuleName: "template-operator",
 				}, map[string]string{},
 				noCustomStateCheck, false),
 			wantErr: false,
@@ -96,7 +97,7 @@ func TestTemplate(t *testing.T) {
 			},
 			want: getExpectedModuleTemplate(t, "kyma-system",
 				map[string]string{
-					"operator.kyma-project.io/module-name": "template-operator", "is-custom-label": "true",
+					shared.ModuleName: "template-operator", "is-custom-label": "true",
 				},
 				map[string]string{}, noCustomStateCheck, false),
 			wantErr: false,
@@ -114,7 +115,7 @@ func TestTemplate(t *testing.T) {
 			},
 			want: getExpectedModuleTemplate(t, "kyma-system",
 				map[string]string{
-					"operator.kyma-project.io/module-name": "template-operator",
+					shared.ModuleName: "template-operator",
 				},
 				map[string]string{"is-custom-annotation": "true"}, []v1beta2.CustomStateCheck{}, false),
 			wantErr: false,
@@ -129,7 +130,7 @@ func TestTemplate(t *testing.T) {
 				checks:      defaultCustomStateCheck,
 			},
 			want: getExpectedModuleTemplate(t, "",
-				map[string]string{"operator.kyma-project.io/module-name": "template-operator"}, map[string]string{},
+				map[string]string{shared.ModuleName: "template-operator"}, map[string]string{},
 				defaultCustomStateCheck, false),
 			wantErr: false,
 		},
@@ -145,7 +146,7 @@ func TestTemplate(t *testing.T) {
 				mandatory:   true,
 			},
 			want: getExpectedModuleTemplate(t, "kyma-system",
-				map[string]string{"operator.kyma-project.io/module-name": "template-operator"}, map[string]string{},
+				map[string]string{shared.ModuleName: "template-operator"}, map[string]string{},
 				[]v1beta2.CustomStateCheck{}, true),
 			wantErr: false,
 		},

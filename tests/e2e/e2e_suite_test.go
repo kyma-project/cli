@@ -6,15 +6,12 @@ import (
 	"time"
 
 	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
-	"github.com/kyma-project/lifecycle-manager/pkg/log"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"go.uber.org/zap/zapcore"
 	v1extensions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 const (
@@ -35,7 +32,6 @@ func TestE2e(t *testing.T) {
 
 var _ = BeforeSuite(func() {
 	ctx, cancel = context.WithCancel(context.TODO())
-	logf.SetLogger(log.ConfigLogger(9, zapcore.AddSync(GinkgoWriter)))
 
 	SetDefaultEventuallyPollingInterval(interval)
 	SetDefaultEventuallyTimeout(timeout)
