@@ -11,9 +11,8 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/kyma-project/cli/internal/cli"
-	"github.com/kyma-project/cli/internal/clusterinfo"
-	"github.com/kyma-project/cli/internal/kube"
+	"github.com/kyma-project/lifecycle-manager/api/shared"
+	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,21 +24,25 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/restmapper"
 	"sigs.k8s.io/yaml"
+
+	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/clusterinfo"
+	"github.com/kyma-project/cli/internal/kube"
 )
 
 //go:embed list.tmpl
 var moduleTemplates string
 
 var moduleTemplateResource = schema.GroupVersionResource{
-	Group:    "operator.kyma-project.io",
-	Version:  "v1beta2",
-	Resource: "moduletemplates",
+	Group:    shared.OperatorGroup,
+	Version:  v1beta2.GroupVersion.Version,
+	Resource: shared.ModuleTemplateKind.Plural(),
 }
 
 var kymaResource = schema.GroupVersionResource{
-	Group:    "operator.kyma-project.io",
-	Version:  "v1beta2",
-	Resource: "kymas",
+	Group:    shared.OperatorGroup,
+	Version:  v1beta2.GroupVersion.Version,
+	Resource: shared.KymaKind.Plural(),
 }
 
 type command struct {
@@ -268,7 +271,7 @@ func (cmd *command) printModuleTemplatesTable(templates *unstructured.Unstructur
 	tabWriter := tabwriter.NewWriter(os.Stdout, 0, 8, 2, '\t', 0)
 	if !cmd.opts.NoHeaders {
 		headers := []string{
-			"operator.kyma-project.io/module-name",
+			shared.ModuleName,
 			"Domain Name (FQDN)",
 			"Channel",
 			"Version",

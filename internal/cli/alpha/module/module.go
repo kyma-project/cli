@@ -3,11 +3,12 @@ package module
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-project/cli/pkg/errs"
 	"time"
 
+	"github.com/kyma-project/cli/pkg/errs"
+
 	"github.com/avast/retry-go"
-	"github.com/kyma-project/cli/internal/kube"
+	"github.com/kyma-project/lifecycle-manager/api/shared"
 	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -18,6 +19,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/kyma-project/cli/internal/kube"
 )
 
 type Interactor interface {
@@ -27,7 +30,7 @@ type Interactor interface {
 	Update(ctx context.Context, modules []v1beta2.Module) error
 	// WaitUntilReady blocks until all Modules are confirmed to be applied and ready
 	WaitUntilReady(ctx context.Context) error
-	GetAllModuleTemplates(ctx context.Context) (v1beta2.ModuleTemplateList, error)
+	GetFilteredModuleTemplates(ctx context.Context, moduleIdentifier string) ([]v1beta2.ModuleTemplate, error)
 }
 
 var _ Interactor = &DefaultInteractor{}
@@ -65,12 +68,43 @@ func (i *DefaultInteractor) Get(ctx context.Context) ([]v1beta2.Module, string, 
 	return kyma.Spec.Modules, kyma.Spec.Channel, nil
 }
 
-func (i *DefaultInteractor) GetAllModuleTemplates(ctx context.Context) (v1beta2.ModuleTemplateList, error) {
+func (i *DefaultInteractor) GetFilteredModuleTemplates(ctx context.Context,
+	moduleIdentifier string) ([]v1beta2.ModuleTemplate, error) {
 	var allTemplates v1beta2.ModuleTemplateList
 	if err := i.K8s.Ctrl().List(ctx, &allTemplates); err != nil {
-		return v1beta2.ModuleTemplateList{}, fmt.Errorf("could not get Moduletemplates: %w", err)
+		return []v1beta2.ModuleTemplate{}, fmt.Errorf("could not get Moduletemplates: %w", err)
 	}
-	return allTemplates, nil
+
+	filteredModuleTemplates, err := i.filterModuleTemplates(allTemplates, moduleIdentifier)
+	if err != nil {
+		return nil, fmt.Errorf("could not filter fetched Moduletemplates: %w", err)
+	}
+	return filteredModuleTemplates, nil
+}
+
+func (i *DefaultInteractor) filterModuleTemplates(allTemplates v1beta2.ModuleTemplateList,
+	moduleIdentifier string) ([]v1beta2.ModuleTemplate, error) {
+	var filteredModuleTemplates []v1beta2.ModuleTemplate
+
+	for _, mt := range allTemplates.Items {
+		if mt.Labels[shared.ModuleName] == moduleIdentifier {
+			filteredModuleTemplates = append(filteredModuleTemplates, mt)
+			continue
+		}
+		if mt.ObjectMeta.Name == moduleIdentifier {
+			filteredModuleTemplates = append(filteredModuleTemplates, mt)
+			continue
+		}
+		descriptor, err := mt.GetDescriptor()
+		if err != nil {
+			return nil, fmt.Errorf("invalid ModuleTemplate descriptor: %v", err)
+		}
+		if descriptor.Name == moduleIdentifier {
+			filteredModuleTemplates = append(filteredModuleTemplates, mt)
+			continue
+		}
+	}
+	return filteredModuleTemplates, nil
 }
 
 // Update tries to update the modules in the Kyma Instance and retries on failure
@@ -165,7 +199,7 @@ func (i *DefaultInteractor) WaitUntilReady(ctx context.Context) error {
 }
 
 // IsKymaReady interprets the status of a Kyma Resource and uses this to determine if it can be considered Ready.
-// It checks for v1beta2.StateReady, and if it is set, determines if this state can be trusted by observing
+// It checks for shared.StateReady, and if it is set, determines if this state can be trusted by observing
 // if the status fields match the desired state, and if the lastOperation is filled by the lifecycle-manager.
 func IsKymaReady(l *zap.SugaredLogger, obj runtime.Object) error {
 	kyma, ok := obj.(*v1beta2.Kyma)
@@ -174,7 +208,7 @@ func IsKymaReady(l *zap.SugaredLogger, obj runtime.Object) error {
 	}
 	l.Info(kyma.Status)
 	switch kyma.Status.State {
-	case v1beta2.StateReady:
+	case shared.StateReady:
 		if len(kyma.Status.Modules) != len(kyma.Spec.Modules) {
 			return fmt.Errorf("kyma has status Ready but cannot be up to date "+
 				"since modules tracked in status differ from modules in desired state/spec (%v in status, %v in spec)",
@@ -189,7 +223,7 @@ func IsKymaReady(l *zap.SugaredLogger, obj runtime.Object) error {
 			)
 		}
 		return nil
-	case v1beta2.StateWarning:
+	case shared.StateWarning:
 		return ErrKymaInWarningState
 	default:
 		lastOperation := kyma.Status.LastOperation

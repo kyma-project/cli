@@ -4,8 +4,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/kyma-project/cli/pkg/module"
-	"github.com/kyma-project/cli/tests/e2e"
+	"github.com/kyma-project/lifecycle-manager/api/shared"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/accessmethods/ociartifact"
+
 	"github.com/open-component-model/ocm/pkg/contexts/oci/repositories/ocireg"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/accessmethods/github"
@@ -14,6 +15,9 @@ import (
 	v2 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/versions/v2"
 	ocmOCIReg "github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/ocireg"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/kyma-project/cli/pkg/module"
+	"github.com/kyma-project/cli/tests/e2e"
 )
 
 func Test_ModuleTemplate(t *testing.T) {
@@ -30,35 +34,52 @@ func Test_ModuleTemplate(t *testing.T) {
 	t.Run("test annotations", func(t *testing.T) {
 		annotations := template.Annotations
 		expectedModuleTemplateVersion := os.Getenv("MODULE_TEMPLATE_VERSION")
-		assert.Equal(t, annotations["operator.kyma-project.io/module-version"], expectedModuleTemplateVersion)
-		assert.Equal(t, annotations["operator.kyma-project.io/is-cluster-scoped"], "false")
+		assert.Equal(t, expectedModuleTemplateVersion, annotations[shared.ModuleVersionAnnotation])
+		assert.Equal(t, "false", annotations[shared.IsClusterScopedAnnotation])
 	})
 
 	t.Run("test descriptor.component.repositoryContexts", func(t *testing.T) {
-		assert.Equal(t, len(descriptor.RepositoryContexts), 1)
+		assert.Equal(t, 1, len(descriptor.RepositoryContexts))
 		repo := descriptor.GetEffectiveRepositoryContext()
-		assert.Equal(t, repo.Object["baseUrl"], ociRepoURL)
-		assert.Equal(t, repo.Object["componentNameMapping"], string(ocmOCIReg.OCIRegistryURLPathMapping))
-		assert.Equal(t, repo.Object["type"], ocireg.Type)
+		assert.Equal(t, ociRepoURL, repo.Object["baseUrl"])
+		assert.Equal(t, string(ocmOCIReg.OCIRegistryURLPathMapping), repo.Object["componentNameMapping"])
+		assert.Equal(t, ocireg.Type, repo.Object["type"])
 	})
 
-	t.Run("test descriptor.component.resources[0]", func(t *testing.T) {
-		assert.Equal(t, len(descriptor.Resources), 1)
+	t.Run("test descriptor.component.resources", func(t *testing.T) {
+		assert.Equal(t, 2, len(descriptor.Resources))
+
 		resource := descriptor.Resources[0]
-		assert.Equal(t, resource.Name, module.RawManifestLayerName)
-		assert.Equal(t, resource.Relation, ocmMetaV1.LocalRelation)
-		assert.Equal(t, resource.Type, module.TypeYaml)
+		assert.Equal(t, "template-operator", resource.Name)
+		assert.Equal(t, ocmMetaV1.ExternalRelation, resource.Relation)
+		assert.Equal(t, "ociImage", resource.Type)
 		expectedModuleTemplateVersion := os.Getenv("MODULE_TEMPLATE_VERSION")
-		assert.Equal(t, resource.Version, expectedModuleTemplateVersion)
+		assert.Equal(t, expectedModuleTemplateVersion, resource.Version)
+
+		resource = descriptor.Resources[1]
+		assert.Equal(t, module.RawManifestLayerName, resource.Name)
+		assert.Equal(t, ocmMetaV1.LocalRelation, resource.Relation)
+		assert.Equal(t, module.TypeYaml, resource.Type)
+		assert.Equal(t, expectedModuleTemplateVersion, resource.Version)
 	})
 
 	t.Run("test descriptor.component.resources[0].access", func(t *testing.T) {
 		resourceAccessSpec, err := ocm.DefaultContext().AccessSpecForSpec(descriptor.Resources[0].Access)
 		assert.Nil(t, err)
-		localblobAccessSpec, ok := resourceAccessSpec.(*localblob.AccessSpec)
-		assert.Equal(t, ok, true)
-		assert.Equal(t, localblobAccessSpec.GetType(), localblob.Type)
-		assert.Contains(t, localblobAccessSpec.LocalReference, "sha256:")
+		ociArtifactAccessSpec, ok := resourceAccessSpec.(*ociartifact.AccessSpec)
+		assert.True(t, ok)
+		assert.Equal(t, ociartifact.Type, ociArtifactAccessSpec.GetType())
+		assert.Equal(t, "europe-docker.pkg.dev/kyma-project/prod/template-operator:0.1.0",
+			ociArtifactAccessSpec.ImageReference)
+	})
+
+	t.Run("test descriptor.component.resources[1].access", func(t *testing.T) {
+		resourceAccessSpec, err := ocm.DefaultContext().AccessSpecForSpec(descriptor.Resources[1].Access)
+		assert.Nil(t, err)
+		localBlobAccessSpec, ok := resourceAccessSpec.(*localblob.AccessSpec)
+		assert.True(t, ok)
+		assert.Equal(t, localblob.Type, localBlobAccessSpec.GetType())
+		assert.Contains(t, localBlobAccessSpec.LocalReference, "sha256:")
 	})
 
 	t.Run("test descriptor.component.sources", func(t *testing.T) {
@@ -67,19 +88,25 @@ func Test_ModuleTemplate(t *testing.T) {
 		sourceAccessSpec, err := ocm.DefaultContext().AccessSpecForSpec(source.Access)
 		assert.Nil(t, err)
 		githubAccessSpec, ok := sourceAccessSpec.(*github.AccessSpec)
-		assert.Equal(t, ok, true)
-		assert.Equal(t, githubAccessSpec.Type, github.Type)
+		assert.True(t, ok)
+		assert.Equal(t, github.Type, githubAccessSpec.Type)
 		assert.Contains(t, testRepoURL, githubAccessSpec.RepoURL)
+	})
+
+	t.Run("test spec.mandatory", func(t *testing.T) {
+		assert.Equal(t, false, template.Spec.Mandatory)
 	})
 
 	t.Run("test security scan labels", func(t *testing.T) {
 		secScanLabels := descriptor.Sources[0].Labels
+		flattened := e2e.Flatten(secScanLabels)
 		assert.Equal(t, map[string]string{
-			"git.kyma-project.io/ref":                  "refs/heads/main",
-			"scan.security.kyma-project.io/dev-branch": "main",
-			"scan.security.kyma-project.io/rc-tag":     "0.5.0",
-			"scan.security.kyma-project.io/language":   "golang-mod",
-			"scan.security.kyma-project.io/exclude":    "**/test/**,**/*_test.go",
-		}, e2e.Flatten(secScanLabels))
+			"git.kyma-project.io/ref":                   "refs/heads/main",
+			"scan.security.kyma-project.io/rc-tag":      "0.1.0",
+			"scan.security.kyma-project.io/language":    "golang-mod",
+			"scan.security.kyma-project.io/dev-branch":  "main",
+			"scan.security.kyma-project.io/subprojects": "false",
+			"scan.security.kyma-project.io/exclude":     "**/test/**,**/*_test.go",
+		}, flattened)
 	})
 }

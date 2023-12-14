@@ -7,7 +7,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/open-component-model/ocm/pkg/common"
 	"github.com/open-component-model/ocm/pkg/contexts/credentials"
 	"github.com/open-component-model/ocm/pkg/contexts/credentials/repositories/dockerconfig"
 	oci "github.com/open-component-model/ocm/pkg/contexts/oci/repositories/ocireg"
@@ -17,17 +16,16 @@ import (
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/comparch"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/genericocireg"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/ocireg"
-	"github.com/open-component-model/ocm/pkg/contexts/ocm/transfer"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/transfer/transferhandler"
-	"github.com/open-component-model/ocm/pkg/contexts/ocm/transfer/transferhandler/standard"
 	"github.com/open-component-model/ocm/pkg/runtime"
 )
 
 type NameMapping ocireg.ComponentNameMapping
 
 const (
-	URLPathNameMapping = NameMapping(ocireg.OCIRegistryURLPathMapping)
-	DigestNameMapping  = NameMapping(ocireg.OCIRegistryDigestMapping)
+	URLPathNameMapping            = NameMapping(ocireg.OCIRegistryURLPathMapping)
+	DigestNameMapping             = NameMapping(ocireg.OCIRegistryDigestMapping)
+	accessLocalReferenceFieldName = "localReference"
 )
 
 // Remote represents remote OCI registry and the means to access it
@@ -37,6 +35,7 @@ type Remote struct {
 	Credentials string
 	Token       string
 	Insecure    bool
+	OciRepoAccess
 }
 
 func (r *Remote) GetRepository(ctx cpi.Context) (cpi.Repository, error) {
@@ -126,45 +125,48 @@ func NoSchemeURL(url string) string {
 	return regex.ReplaceAllString(url, "")
 }
 
-// Push picks up the archive described in the config and pushes it to the provided registry.
-// The credentials and token are optional parameters
-func (r *Remote) Push(archive *comparch.ComponentArchive, overwrite bool) (ocm.ComponentVersionAccess, error) {
-	repo, err := r.GetRepository(archive.GetContext())
-	if err != nil {
-		return nil, err
-	}
-
+func (r *Remote) ShouldPushArchive(repo cpi.Repository, archive *comparch.ComponentArchive, overwrite bool) (bool,
+	error) {
 	if !overwrite {
-		versionAlreadyExists, _ := repo.ExistsComponentVersion(
-			archive.ComponentVersionAccess.GetName(), archive.ComponentVersionAccess.GetVersion(),
-		)
+		versionExists, _ := r.ComponentVersionExists(archive, repo)
 
-		if versionAlreadyExists {
-			return nil, fmt.Errorf("version %s already exists, please use --module-archive-version-overwrite "+
-				"flag to overwrite it", archive.ComponentVersionAccess.GetVersion())
+		if versionExists {
+			versionAccess, err := r.GetComponentVersion(archive, repo)
+			if err != nil {
+				return false, fmt.Errorf("could not lookup component version: %w", err)
+			}
+
+			if r.DescriptorResourcesAreEquivalent(archive, versionAccess) {
+				return false, nil
+			}
+			return false, fmt.Errorf("version %s already exists with different content, please use "+
+				"--module-archive-version-overwrite flag to overwrite it",
+				archive.ComponentVersionAccess.GetVersion())
 		}
 	}
 
-	transferHandler, err := standard.New(standard.Overwrite(overwrite))
-	if err != nil {
-		return nil, fmt.Errorf("could not setup archive transfer: %w", err)
+	return true, nil
+}
+
+// Push picks up the archive described in the config and pushes it to the provided registry.
+// The credentials and token are optional parameters
+func (r *Remote) Push(repo cpi.Repository, archive *comparch.ComponentArchive,
+	overwrite bool) (ocm.ComponentVersionAccess, error) {
+	if err := r.PushComponentVersion(archive, repo, overwrite); err != nil {
+		return nil, err
 	}
 
-	if err = transfer.TransferVersion(
-		common.NewLoggingPrinter(archive.GetContext().Logger()), nil, archive.ComponentVersionAccess, repo, &customTransferHandler{transferHandler},
-	); err != nil {
-		return nil, fmt.Errorf("could not finish component transfer: %w", err)
-	}
+	componentVersion, err := r.GetComponentVersion(archive, repo)
 
-	return repo.LookupComponentVersion(
-		archive.ComponentVersionAccess.GetName(), archive.ComponentVersionAccess.GetVersion(),
-	)
+	return componentVersion, err
 }
 
 type customTransferHandler struct {
 	transferhandler.TransferHandler
 }
 
-func (h *customTransferHandler) TransferVersion(repo ocm.Repository, src ocm.ComponentVersionAccess, meta *compdesc.ComponentReference, tgt ocm.Repository) (ocm.ComponentVersionAccess, transferhandler.TransferHandler, error) {
+func (h *customTransferHandler) TransferVersion(repo ocm.Repository, src ocm.ComponentVersionAccess,
+	meta *compdesc.ComponentReference, tgt ocm.Repository) (ocm.ComponentVersionAccess, transferhandler.TransferHandler,
+	error) {
 	return h.TransferHandler.TransferVersion(repo, src, meta, tgt)
 }

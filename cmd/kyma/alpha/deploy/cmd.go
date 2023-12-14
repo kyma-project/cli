@@ -8,19 +8,22 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kyma-project/lifecycle-manager/api/shared"
+	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	"golang.org/x/exp/slices"
 
-	"github.com/kyma-project/cli/internal/cli"
-	"github.com/kyma-project/cli/internal/coredns"
-	"github.com/kyma-project/cli/internal/deploy"
-	"github.com/kyma-project/cli/internal/nice"
-	"github.com/kyma-project/cli/pkg/dashboard"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/coredns"
+	"github.com/kyma-project/cli/internal/deploy"
+	"github.com/kyma-project/cli/internal/nice"
+	"github.com/kyma-project/cli/pkg/dashboard"
 )
 
 type command struct {
@@ -222,7 +225,8 @@ func (cmd *command) deploy(ctx context.Context) error {
 	deployStep := cmd.NewStep("Deploying Kustomizations")
 	deployStep.Start()
 	hasKyma, err := deploy.Bootstrap(
-		ctx, cmd.opts.Kustomizations, cmd.K8s, cmd.opts.Filters, cmd.opts.WildcardPermissions, cmd.opts.Force, false, isInKcpMode,
+		ctx, cmd.opts.Kustomizations, cmd.K8s, cmd.opts.Filters, cmd.opts.WildcardPermissions, cmd.opts.Force, false,
+		isInKcpMode,
 	)
 	if err != nil {
 		deployStep.Failuref("Failed to deploy Kustomizations %s: %s", cmd.opts.Kustomizations, err.Error())
@@ -245,7 +249,8 @@ func (cmd *command) deploy(ctx context.Context) error {
 
 	if len(cmd.opts.AdditionalTemplates) > 0 {
 		modStep := cmd.NewStep("Deploying additional module templates")
-		if err := deploy.ModuleTemplates(ctx, cmd.K8s, cmd.opts.AdditionalTemplates, cmd.opts.Target, cmd.opts.Force, false); err != nil {
+		if err := deploy.ModuleTemplates(ctx, cmd.K8s, cmd.opts.AdditionalTemplates, cmd.opts.Target, cmd.opts.Force,
+			false); err != nil {
 			modStep.Failuref("Failed to deploy additional module templates")
 			return err
 		}
@@ -301,7 +306,8 @@ func (cmd *command) dryRun(ctx context.Context, isInKcpMode bool) error {
 	}
 
 	hasKyma, err := deploy.Bootstrap(
-		ctx, cmd.opts.Kustomizations, cmd.K8s, cmd.opts.Filters, cmd.opts.WildcardPermissions, cmd.opts.Force, true, isInKcpMode,
+		ctx, cmd.opts.Kustomizations, cmd.K8s, cmd.opts.Filters, cmd.opts.WildcardPermissions, cmd.opts.Force, true,
+		isInKcpMode,
 	)
 	if err != nil {
 		return err
@@ -312,7 +318,8 @@ func (cmd *command) dryRun(ctx context.Context, isInKcpMode bool) error {
 	}
 
 	if len(cmd.opts.AdditionalTemplates) > 0 {
-		if err := deploy.ModuleTemplates(ctx, cmd.K8s, cmd.opts.AdditionalTemplates, cmd.opts.Target, cmd.opts.Force, true); err != nil {
+		if err := deploy.ModuleTemplates(ctx, cmd.K8s, cmd.opts.AdditionalTemplates, cmd.opts.Target, cmd.opts.Force,
+			true); err != nil {
 			return err
 		}
 	}
@@ -329,9 +336,9 @@ func (cmd *command) openDashboard(ctx context.Context) error {
 
 	kymas, err := cmd.K8s.Dynamic().Resource(
 		schema.GroupVersionResource{
-			Group:    "operator.kyma-project.io",
-			Version:  "v1beta2",
-			Resource: "kymas",
+			Group:    shared.OperatorGroup,
+			Version:  v1beta2.GroupVersion.Version,
+			Resource: shared.KymaKind.Plural(),
 		},
 	).List(ctx, v1.ListOptions{})
 	if err != nil {
@@ -382,9 +389,9 @@ func (cmd *command) handleTimeoutErr(err error) error {
 
 func (cmd *command) detectManagedKyma(ctx context.Context) error {
 	kymaResource := schema.GroupVersionResource{
-		Group:    "operator.kyma-project.io",
-		Version:  "v1beta2",
-		Resource: "kymas",
+		Group:    shared.OperatorGroup,
+		Version:  v1beta2.GroupVersion.Version,
+		Resource: shared.KymaKind.Plural(),
 	}
 
 	deployedKymaCRs, err := cmd.K8s.Dynamic().Resource(kymaResource).List(ctx, v1.ListOptions{})

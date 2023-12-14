@@ -3,6 +3,7 @@ package mock
 
 import (
 	"context"
+
 	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	"github.com/stretchr/testify/mock"
 )
@@ -26,7 +27,9 @@ func (m *Interactor) WaitUntilReady(ctx context.Context) error {
 	return args.Error(0)
 }
 
-func (m *Interactor) GetAllModuleTemplates(ctx context.Context) (v1beta2.ModuleTemplateList, error) {
+// nolint:revive
+func (m *Interactor) GetFilteredModuleTemplates(ctx context.Context, moduleIdentifier string) ([]v1beta2.ModuleTemplate,
+	error) {
 	args := m.Called(ctx)
-	return args.Get(0).(v1beta2.ModuleTemplateList), args.Error(1)
+	return args.Get(0).([]v1beta2.ModuleTemplate), args.Error(1)
 }

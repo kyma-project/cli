@@ -6,14 +6,16 @@ import (
 	"os"
 	"time"
 
-	"github.com/kyma-project/cli/internal/cli/alpha/module"
 	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/cli/alpha/module"
+
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+
+	"github.com/kyma-project/cli/internal/cli"
 )
 
 type command struct {
@@ -159,15 +161,11 @@ func (cmd *command) run(ctx context.Context, l *zap.SugaredLogger, moduleName st
 
 func validateChannel(ctx context.Context, moduleInteractor module.Interactor,
 	moduleIdentifier string, channel string, kymaChannel string) error {
-	allTemplates, err := moduleInteractor.GetAllModuleTemplates(ctx)
+	filteredModuleTemplates, err := moduleInteractor.GetFilteredModuleTemplates(ctx, moduleIdentifier)
 	if err != nil {
 		return fmt.Errorf("could not retrieve module templates in cluster to determine valid channels: %v", err)
 	}
 
-	filteredModuleTemplates, err := filterModuleTemplates(allTemplates, moduleIdentifier)
-	if err != nil {
-		return fmt.Errorf("could not process module templates in the cluster: %v", err)
-	}
 	if channel == "" {
 		channel = kymaChannel
 	}
@@ -177,31 +175,6 @@ func validateChannel(ctx context.Context, moduleInteractor module.Interactor,
 			channel, moduleIdentifier, mapTemplatesToChannels(filteredModuleTemplates))
 	}
 	return nil
-}
-
-func filterModuleTemplates(allTemplates v1beta2.ModuleTemplateList,
-	moduleIdentifier string) ([]v1beta2.ModuleTemplate, error) {
-	var filteredModuleTemplates []v1beta2.ModuleTemplate
-
-	for _, mt := range allTemplates.Items {
-		if mt.Labels[v1beta2.ModuleName] == moduleIdentifier {
-			filteredModuleTemplates = append(filteredModuleTemplates, mt)
-			continue
-		}
-		if mt.ObjectMeta.Name == moduleIdentifier {
-			filteredModuleTemplates = append(filteredModuleTemplates, mt)
-			continue
-		}
-		descriptor, err := mt.GetDescriptor()
-		if err != nil {
-			return nil, fmt.Errorf("invalid ModuleTemplate descriptor: %v", err)
-		}
-		if descriptor.Name == moduleIdentifier {
-			filteredModuleTemplates = append(filteredModuleTemplates, mt)
-			continue
-		}
-	}
-	return filteredModuleTemplates, nil
 }
 
 func enableModule(modules []v1beta2.Module, name, channel string, customResourcePolicy string) []v1beta2.Module {

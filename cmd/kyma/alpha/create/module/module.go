@@ -9,12 +9,14 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
+	"github.com/kyma-project/lifecycle-manager/api/shared"
 	"github.com/mandelsoft/vfs/pkg/memoryfs"
 	"github.com/mandelsoft/vfs/pkg/osfs"
 	"github.com/mandelsoft/vfs/pkg/vfs"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	compdescv2 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/versions/v2"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/cpi"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
@@ -128,7 +130,8 @@ Build a Kubebuilder module my-domain/modC in version 3.2.1 and push it to a loca
 		"Uses the host filesystem instead of in-memory archiving to build the module.",
 	)
 
-	cmd.Flags().BoolVar(&o.ArchiveVersionOverwrite, "module-archive-version-overwrite", false, "Overwrites existing component's versions of the module. If set to false, the push is a No-Op.")
+	cmd.Flags().BoolVar(&o.ArchiveVersionOverwrite, "module-archive-version-overwrite", false,
+		"Overwrites existing component's versions of the module. If set to false, the push is a No-Op.")
 
 	cmd.Flags().StringVar(
 		&o.GitRemote, "git-remote", "origin",
@@ -184,7 +187,8 @@ Build a Kubebuilder module my-domain/modC in version 3.2.1 and push it to a loca
 		&o.PrivateKeyPath, "key", "", "Specifies the path where a private key is used for signing.",
 	)
 
-	cmd.Flags().BoolVar(&o.KubebuilderProject, "kubebuilder-project", false, "Specifies provided module is a Kubebuilder Project.")
+	cmd.Flags().BoolVar(&o.KubebuilderProject, "kubebuilder-project", false,
+		"Specifies provided module is a Kubebuilder Project.")
 
 	configureLegacyFlags(cmd, o)
 
@@ -213,7 +217,8 @@ func configureLegacyFlags(cmd *cobra.Command, o *Options) *cobra.Command {
 
 	cmd.Flags().StringVar(&o.Channel, "channel", "regular", "Channel to use for the module template.")
 
-	cmd.Flags().StringVar(&o.Namespace, "namespace", kcpSystemNamespace, "Specifies the namespace where the ModuleTemplate is deployed.")
+	cmd.Flags().StringVar(&o.Namespace, "namespace", kcpSystemNamespace,
+		"Specifies the namespace where the ModuleTemplate is deployed.")
 
 	return cmd
 }
@@ -356,12 +361,36 @@ func (cmd *command) Run(ctx context.Context) error {
 		cmd.CurrentStep.Failure()
 		return err
 	}
-	componentVersionAccess, err := remote.Push(archive, cmd.opts.ArchiveVersionOverwrite)
+
+	repo, err := remote.GetRepository(cpi.DefaultContext())
 	if err != nil {
 		cmd.CurrentStep.Failure()
 		return err
 	}
-	cmd.CurrentStep.Successf("Module successfully pushed")
+
+	var componentVersionAccess ocm.ComponentVersionAccess
+	shouldPushArchive, err := remote.ShouldPushArchive(repo, archive, cmd.opts.ArchiveVersionOverwrite)
+	if err != nil {
+		cmd.CurrentStep.Failure()
+		return err
+	}
+
+	if shouldPushArchive {
+		componentVersionAccess, err = remote.Push(repo, archive, cmd.opts.ArchiveVersionOverwrite)
+		if err != nil {
+			cmd.CurrentStep.Failure()
+			return err
+		}
+		cmd.CurrentStep.Successf("Module successfully pushed")
+	} else {
+		componentVersionAccess, err = remote.GetComponentVersion(archive, repo)
+		if err != nil {
+			cmd.CurrentStep.Failure()
+			return err
+		}
+		cmd.CurrentStep.Successf(fmt.Sprintf("Module already exists. Retrieved image from %q",
+			cmd.opts.RegistryURL))
+	}
 
 	if cmd.opts.PrivateKeyPath != "" {
 		cmd.NewStep("Fetching and signing component descriptor...")
@@ -379,25 +408,25 @@ func (cmd *command) Run(ctx context.Context) error {
 
 	cmd.NewStep("Generating module template...")
 	var resourceName = ""
-	if modCnf != nil {
-		resourceName = modCnf.ResourceName
-	}
-
+	mandatoryModule := false
 	var channel = cmd.opts.Channel
 	if modCnf != nil {
+		resourceName = modCnf.ResourceName
 		channel = modCnf.Channel
+		mandatoryModule = modCnf.Mandatory
 	}
 
 	var namespace = cmd.opts.Namespace
 	if modCnf != nil && modCnf.Namespace != "" {
 		namespace = modCnf.Namespace
+
 	}
 
 	labels := cmd.getModuleTemplateLabels(modCnf)
 	annotations := cmd.getModuleTemplateAnnotations(modCnf, crValidator)
 
 	template, err := module.Template(componentVersionAccess, resourceName, namespace,
-		channel, modDef.DefaultCR, labels, annotations, modDef.CustomStateChecks)
+		channel, modDef.DefaultCR, labels, annotations, modDef.CustomStateChecks, mandatoryModule)
 	if err != nil {
 		cmd.CurrentStep.Failure()
 		return err
@@ -418,10 +447,10 @@ func (cmd *command) getModuleTemplateLabels(modCnf *Config) map[string]string {
 		maps.Copy(labels, modCnf.Labels)
 
 		if modCnf.Beta {
-			labels[v1beta2.BetaLabel] = v1beta2.EnableLabelValue
+			labels[shared.BetaLabel] = shared.EnableLabelValue
 		}
 		if modCnf.Internal {
-			labels[v1beta2.InternalLabel] = v1beta2.EnableLabelValue
+			labels[shared.InternalLabel] = shared.EnableLabelValue
 		}
 	}
 
@@ -439,15 +468,16 @@ func (cmd *command) getModuleTemplateAnnotations(modCnf *Config, crValidator val
 
 	isClusterScoped := isCrdClusterScoped(crValidator.GetCrd())
 	if isClusterScoped {
-		annotations[v1beta2.IsClusterScopedAnnotation] = v1beta2.EnableLabelValue
+		annotations[shared.IsClusterScopedAnnotation] = shared.EnableLabelValue
 	} else {
-		annotations[v1beta2.IsClusterScopedAnnotation] = v1beta2.DisableLabelValue
+		annotations[shared.IsClusterScopedAnnotation] = shared.DisableLabelValue
 	}
-	annotations["operator.kyma-project.io/module-version"] = moduleVersion
+	annotations[shared.ModuleVersionAnnotation] = moduleVersion
 	return annotations
 }
 
-func (cmd *command) validateDefaultCR(ctx context.Context, modDef *module.Definition, l *zap.SugaredLogger) (validator, error) {
+func (cmd *command) validateDefaultCR(ctx context.Context, modDef *module.Definition, l *zap.SugaredLogger) (validator,
+	error) {
 	cmd.NewStep("Validating Default CR")
 
 	var crValidator validator
@@ -470,11 +500,12 @@ func (cmd *command) validateDefaultCR(ctx context.Context, modDef *module.Defini
 
 func (cmd *command) getRemote(nameMapping module.NameMapping) (*module.Remote, error) {
 	res := &module.Remote{
-		Registry:    cmd.opts.RegistryURL,
-		NameMapping: nameMapping,
-		Credentials: cmd.opts.Credentials,
-		Token:       cmd.opts.Token,
-		Insecure:    cmd.opts.Insecure,
+		Registry:      cmd.opts.RegistryURL,
+		NameMapping:   nameMapping,
+		Credentials:   cmd.opts.Credentials,
+		Token:         cmd.opts.Token,
+		Insecure:      cmd.opts.Insecure,
+		OciRepoAccess: &module.OciRepo{},
 	}
 
 	if strings.HasPrefix(strings.ToLower(cmd.opts.RegistryURL), "https:") {
@@ -509,7 +540,7 @@ func (cmd *command) moduleDefinitionFromOptions() (*module.Definition, *Config, 
 		np := nice.Nice{}
 		np.PrintImportant("WARNING: The Kubebuilder support is DEPRECATED. Use the simple mode by providing the \"--module-config-file\" flag instead.")
 
-		//legacy approach, flag-based
+		// legacy approach, flag-based
 		def = &module.Definition{
 			Name:              cmd.opts.Name,
 			Version:           cmd.opts.Version,
@@ -523,7 +554,7 @@ func (cmd *command) moduleDefinitionFromOptions() (*module.Definition, *Config, 
 		return def, cnf, nil
 	}
 
-	//new approach, config-file  based
+	// new approach, config-file  based
 	moduleConfig, err := ParseConfig(cmd.opts.ModuleConfigFile)
 	if err != nil {
 		return nil, nil, err
