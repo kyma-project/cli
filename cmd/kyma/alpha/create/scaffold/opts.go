@@ -95,8 +95,8 @@ func (o *Options) validateFileOverwrite() error {
 		}
 		if o.GenerateDefaultCR {
 			entries, err := os.ReadDir(o.getCompleteFilePath(path.Join("config", "samples")))
-			if err != nil {
-				return fmt.Errorf("error while reading default CR directory: %w", err)
+			if err != nil && !errors.Is(err, os.ErrNotExist) {
+				return fmt.Errorf("error while validating default CR directory: %w", err)
 			}
 			if len(entries) != 0 {
 				return errFilesExist
