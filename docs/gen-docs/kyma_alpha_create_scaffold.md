@@ -8,13 +8,23 @@ Generates necessary files required for module creation
 
 Scaffold generates the necessary files for creating a new module in Kyma. This includes setting up 
 a basic directory structure and creating default files based on the provided flags.
-The command generates the following files:
- - Module Config - module-config.yaml (always generated)
- - Manifest - template-operate.yaml (generated when the "--gen-manifest" flag is set)
- - Security Scanners Config - sec-scanners-config.yaml (generated when the "--gen-sec-config" flag is set)
- - Default CR - config/samples/operator.kyma-project.io_v1alpha1_sample.yaml (generated when the "--gen-default-cr" is flag set)
 
-You must specify the required fields of the module config using the following CLI arguments:
+The command generates the following files:
+ - Module Config:
+	File: module-config.yaml
+	Generated when: always
+ - Manifest:
+	File: template-operator.yaml
+	Generated When: The "--gen-manifest" flag is set
+ - Security Scanners Config:
+	File: sec-scanners-config.yaml
+	Generated When: The "--gen-sec-config" flag is set
+ - Default CR(s):
+	File(s): config/samples/*.yaml
+	Generated When: The "--gen-default-cr" flag is set
+	**NOTE:** The generated default CRs might contain field values which violate integer or string pattern constraints. These are just templates that have to be modified. 
+
+You can specify the required fields of the module config using the following CLI arguments:
 --module-name [NAME]
 --module-version [VERSION]
 --module-channel [CHANNEL]
@@ -34,7 +44,6 @@ kyma alpha create scaffold [--module-name MODULE_NAME --module-version MODULE_VE
 ## Examples
 
 ```bash
-Examples:
 Generate a simple scaffold for a module
 		kyma alpha create scaffold --module-name=template-operator --module-version=1.0.0 --module-channel=regular --module-manifest-path=./template-operator.yaml
 Generate a scaffold with manifest file, default CR, and security config for a module
