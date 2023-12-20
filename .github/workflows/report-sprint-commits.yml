@@ -24,4 +24,4 @@ jobs:
           pip install -r $pip_requirements
       - name: Genarate a report
         run: |
-          $reporter --repo https://github.com/kyma-project/cli.git --days 14 --e2e-path tests/
+          $reporter --repo-url https://github.com/kyma-project/cli.git --days 14 --e2e tests/e2e
