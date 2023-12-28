@@ -10,7 +10,7 @@ import (
 
 	"github.com/kyma-project/cli/pkg/module"
 
-	"github.com/blang/semver/v4"
+	"github.com/Masterminds/semver/v3"
 	"gopkg.in/yaml.v3"
 )
 
@@ -142,7 +142,7 @@ func (cv *configValidator) validateVersion() *configValidator {
 			val = val[1:]
 		}
 
-		sv, err := semver.Parse(val)
+		sv, err := semver.StrictNewVersion(val)
 		if err != nil {
 			return fmt.Errorf("%w for input %q, %w", ErrVersionValidation, cv.config.Version, err)
 		}
