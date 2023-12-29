@@ -2,12 +2,13 @@ package module
 
 import (
 	"fmt"
-	"github.com/kyma-project/cli/internal/nice"
 	"os"
 	"path/filepath"
 	"regexp"
 
-	"github.com/blang/semver/v4"
+	"github.com/kyma-project/cli/internal/nice"
+
+	"github.com/Masterminds/semver/v3"
 	"github.com/pkg/errors"
 
 	"github.com/kyma-project/cli/internal/cli"
@@ -62,7 +63,7 @@ func NewOptions(o *cli.Options) *Options {
 }
 
 func (o *Options) validateVersion() error {
-	sv, err := semver.ParseTolerant(o.Version)
+	sv, err := semver.NewVersion(o.Version)
 	if err != nil {
 		return err
 	}
