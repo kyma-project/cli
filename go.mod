@@ -36,7 +36,7 @@ require (
 	golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.13.3
-	istio.io/client-go v1.20.0
+	istio.io/client-go v1.20.1
 	k8s.io/klog/v2 v2.110.1
 	sigs.k8s.io/controller-runtime v0.16.3
 	sigs.k8s.io/kustomize/api v0.16.0
@@ -362,7 +362,7 @@ require (
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	istio.io/api v1.20.0 // indirect
+	istio.io/api v1.20.1-0.20231207143627-8237149662d6 // indirect
 	k8s.io/kube-openapi v0.0.0-20231206194836-bf4651e18aa8 // indirect
 	k8s.io/utils v0.0.0-20231127182322-b307cd553661 // indirect
 	oras.land/oras-go v1.2.4 // indirect
