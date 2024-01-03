@@ -2,11 +2,12 @@ package scaffold
 
 import (
 	"fmt"
-	"github.com/kyma-project/cli/internal/cli"
-	"github.com/pkg/errors"
 	"os"
 	"path"
 	"path/filepath"
+
+	"github.com/kyma-project/cli/internal/cli"
+	"github.com/pkg/errors"
 )
 
 // Options specifies the flags for the scaffold command
@@ -16,26 +17,34 @@ type Options struct {
 	Overwrite bool
 	Directory string
 
-	// Optional Files
-	GenerateManifest       bool
-	GenerateSecurityConfig bool
-	GenerateDefaultCR      bool
+	ModuleConfigFile   string
+	ManifestFile       string
+	SecurityConfigFile string
+	DefaultCRFile      string
 
-	// Module Config Fields
-	ModuleConfigName         string
-	ModuleConfigVersion      string
-	ModuleConfigChannel      string
-	ModuleConfigManifestPath string
+	ModuleConfigName    string
+	ModuleConfigVersion string
+	ModuleConfigChannel string
+}
+
+func (o *Options) generateSecurityConfigFile() bool {
+	return o.SecurityConfigFile != ""
+}
+
+func (o *Options) generateDefaultCRFile() bool {
+	return o.DefaultCRFile != ""
 }
 
 var (
-	fileNameModuleConfig    = "module-config.yaml"
-	fileNameManifest        = "template-operator.yaml"
+	fileNameModuleConfig = "module-config.yaml"
+	//fileNameManifest        = "template-operator.yaml"
 	fileNameSecurityConfig  = "sec-scanners-config.yaml"
 	generatedDefaultCRFiles []string
 
 	errInvalidDirectory             = errors.New("provided directory does not exist")
 	errFilesExist                   = errors.New("scaffold already exists. use --overwrite flag to force scaffold creation")
+	errManifestFileEmpty            = errors.New("--gen-manifest flag must not be empty")
+	errModuleConfigEmpty            = errors.New("--module-config flag must not be empty")
 	errInvalidManifestOptions       = errors.New("flag --gen-manifest cannot be set when argument --module-manifest-path provided")
 	errManifestCreationFailed       = errors.New("could not generate manifest")
 	errObjectsCreationFailed        = errors.New("could not generate webhook, rbac, and crd objects")
@@ -54,11 +63,22 @@ func (o *Options) Validate() error {
 	if err != nil {
 		return err
 	}
-	err = o.validateFileOverwrite()
-	if err != nil {
-		return err
+
+	if o.ModuleConfigFile == "" {
+		return errModuleConfigEmpty
 	}
-	return o.validateManifestOptions()
+
+	if o.ManifestFile == "" {
+		return errManifestFileEmpty
+	}
+	/*
+		err = o.validateFileOverwrite()
+		if err != nil {
+			return err
+		}
+		return o.validateManifestOptions()
+	*/
+	return nil
 }
 
 func (o *Options) validateDirectory() error {
@@ -74,6 +94,7 @@ func (o *Options) validateDirectory() error {
 	return nil
 }
 
+/*
 func (o *Options) validateFileOverwrite() error {
 	if !o.Overwrite {
 		_, err := os.Stat(o.getCompleteFilePath(fileNameModuleConfig))
@@ -105,13 +126,16 @@ func (o *Options) validateFileOverwrite() error {
 	}
 	return nil
 }
+*/
 
+/*
 func (o *Options) validateManifestOptions() error {
 	if o.GenerateManifest && o.ModuleConfigManifestPath != "" {
 		return errInvalidManifestOptions
 	}
 	return nil
 }
+*/
 
 func (o *Options) getCompleteFilePath(fileName string) string {
 	return path.Join(o.Directory, fileName)

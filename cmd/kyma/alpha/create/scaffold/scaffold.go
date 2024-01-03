@@ -3,13 +3,25 @@ package scaffold
 import (
 	"context"
 	"fmt"
+	"os"
+	"reflect"
+	"strings"
+
 	"github.com/kyma-project/cli/cmd/kyma/alpha/create/module"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
-	"os"
-	"reflect"
-	"strings"
+)
+
+const (
+	defaultCRFlagName           = "gen-default-cr"
+	defaultCRFlagDefault        = "default-cr.yaml"
+	manifestFileFlagName        = "gen-manifest"
+	manifestFileFlagDefault     = "manifest.yaml"
+	moduleConfigFileFlagName    = "module-config"
+	moduleConfigFileFlagDefault = "module-config.yaml"
+	securityConfigFlagName      = "gen-security-config"
+	securityConfigFlagDefault   = "security-scanners-config.yaml"
 )
 
 type command struct {
@@ -59,32 +71,36 @@ allowing for a tailored scaffolding experience according to the specific needs o
 		Example: `Generate a simple scaffold for a module
 		kyma alpha create scaffold --module-name=template-operator --module-version=1.0.0 --module-channel=regular --module-manifest-path=./template-operator.yaml
 Generate a scaffold with manifest file, default CR, and security config for a module
-		kyma alpha create scaffold --module-name=template-operator --module-version=1.0.0 --module-channel=regular --gen-manifest --gen-sec-config --gen-default-cr
+		kyma alpha create scaffold --module-name=template-operator --module-version=1.0.0 --module-channel=regular --gen-manifest --gen-security-config --gen-default-cr
+Generate a scaffold with manifest file and default CR for a module, overriding default names
+		kyma alpha create scaffold --module-name=template-operator --module-version=1.0.0 --module-channel=regular --gen-manifest="my-manifest.yaml" --gen-default-cr="my-cr.yaml"
 `,
 		RunE: func(cobraCmd *cobra.Command, args []string) error { return c.Run(cobraCmd.Context()) },
 	}
 
-	cmd.Flags().BoolVarP(
-		&o.Overwrite, "overwrite", "o", false,
-		"Specifies if the scaffold overwrites existing files",
+	cmd.Flags().StringVar(
+		&o.ModuleConfigFile, moduleConfigFileFlagName, moduleConfigFileFlagDefault,
+		"Specifies the name for the generated module configuration file",
 	)
-	cmd.Flags().StringVarP(
-		&o.Directory, "directory", "d", "./",
-		"Specifies the directory where the scaffolding shall be generated",
-	)
+	cmd.Flags().Lookup(moduleConfigFileFlagName).NoOptDefVal = moduleConfigFileFlagDefault
 
-	cmd.Flags().BoolVar(
-		&o.GenerateSecurityConfig, "gen-sec-config", false,
-		"Specifies if security config should be generated",
+	cmd.Flags().StringVar(
+		&o.DefaultCRFile, defaultCRFlagName, "",
+		"Specifies the defaultCR in the generated module config. A blank defaultCR file is generated if it doesn't exist",
 	)
-	cmd.Flags().BoolVar(
-		&o.GenerateManifest, "gen-manifest", false,
-		"Specifies if manifest file should be generated",
+	cmd.Flags().Lookup(defaultCRFlagName).NoOptDefVal = defaultCRFlagDefault
+
+	cmd.Flags().StringVar(
+		&o.ManifestFile, manifestFileFlagName, manifestFileFlagDefault,
+		"Specifies the manifest in the generated module config. A blank manifest file is generated if it doesn't exist",
 	)
-	cmd.Flags().BoolVar(
-		&o.GenerateDefaultCR, "gen-default-cr", false,
-		"Specifies if a default CR should be generated",
+	cmd.Flags().Lookup(manifestFileFlagName).NoOptDefVal = manifestFileFlagDefault
+
+	cmd.Flags().StringVar(
+		&o.SecurityConfigFile, securityConfigFlagName, "",
+		"Specifies the security file in the generated module config. A scaffold security config file is generated if it doesn't exist",
 	)
+	cmd.Flags().Lookup(securityConfigFlagName).NoOptDefVal = securityConfigFlagDefault
 
 	cmd.Flags().StringVar(
 		&o.ModuleConfigName, "module-name", "",
@@ -98,15 +114,20 @@ Generate a scaffold with manifest file, default CR, and security config for a mo
 		&o.ModuleConfigChannel, "module-channel", "",
 		"Specifies the module channel in the generated module config file",
 	)
-	cmd.Flags().StringVar(
-		&o.ModuleConfigManifestPath, "module-manifest-path", "",
-		"Specifies the module manifest filepath in the generated module config file",
+	cmd.Flags().BoolVarP(
+		&o.Overwrite, "overwrite", "o", false,
+		"Specifies if the command overwrites an existing module configuration file",
+	)
+	cmd.Flags().StringVarP(
+		&o.Directory, "directory", "d", "./",
+		"Specifies the directory where the scaffolding shall be generated",
 	)
 
 	return cmd
 }
 
 func (cmd *command) Run(_ context.Context) error {
+
 	if cmd.opts.CI {
 		cmd.Factory.NonInteractive = true
 	}
@@ -122,83 +143,96 @@ func (cmd *command) Run(_ context.Context) error {
 		cli.AlphaWarn()
 	}
 
+	cmd.NewStep("Validating...\n")
 	if err := cmd.opts.Validate(); err != nil {
 		return err
 	}
+	cmd.CurrentStep.Success()
 
-	if cmd.opts.GenerateManifest || cmd.opts.GenerateDefaultCR {
-		cmd.NewStep("Generating webhook, rbac and crd objects...\n")
+	cmd.NewStep("Configuring manifest file...\n")
 
-		err := cmd.generateControllerObjects()
-		if err != nil {
-			cmd.CurrentStep.Failuref("%s: %s", errObjectsCreationFailed.Error(), err.Error())
-			return fmt.Errorf("%w: %s", errObjectsCreationFailed, err.Error())
-		}
-
-		cmd.CurrentStep.Successf("Generated webhook, rbac and crd objects in config/ directory")
+	manifestFileExists, err := cmd.manifestFileExists()
+	if err != nil {
+		return err
 	}
 
-	if cmd.opts.GenerateManifest {
-		cmd.NewStep("Generating manifest file...\n")
-
+	if manifestFileExists {
+		cmd.CurrentStep.Successf("Manifest file configured: %s", cmd.manifestFilePath())
+	} else {
+		cmd.CurrentStep.Status("Generating the manifest file")
 		err := cmd.generateManifest()
 		if err != nil {
 			cmd.CurrentStep.Failuref("%s: %s", errManifestCreationFailed.Error(), err.Error())
 			return fmt.Errorf("%w: %s", errManifestCreationFailed, err.Error())
 		}
 
-		cmd.CurrentStep.Successf("Generated manifest file - %s", fileNameManifest)
+		cmd.CurrentStep.Successf("Generated a blank manifest file: %s", cmd.manifestFilePath())
 	}
 
-	if cmd.opts.GenerateSecurityConfig {
-		cmd.NewStep("Generating security config file...\n")
-
-		err := cmd.generateSecurityConfig()
+	if cmd.opts.generateDefaultCRFile() {
+		cmd.NewStep("Configuring defaultCR file...\n")
+		defaultCRFileExists, err := cmd.defaultCRFileExists()
 		if err != nil {
-			cmd.CurrentStep.Failuref("%s: %s", errSecurityConfigCreationFailed.Error(), err.Error())
-			return fmt.Errorf("%w: %s", errSecurityConfigCreationFailed, err.Error())
+			return err
 		}
 
-		cmd.CurrentStep.Successf("Generated security config file - %s", fileNameSecurityConfig)
+		if defaultCRFileExists {
+			cmd.CurrentStep.Successf("defaultCR file configured: %s", cmd.defaultCRFilePath())
+		} else {
+			cmd.CurrentStep.Status("Generating the default CR file")
+			err := cmd.generateDefaultCRFile()
+			if err != nil {
+				cmd.CurrentStep.Failuref("%s: %s", errDefaultCRCreationFailed.Error(), err.Error())
+				return fmt.Errorf("%w: %s", errDefaultCRCreationFailed, err.Error())
+			}
+
+			cmd.CurrentStep.Successf("Generated a blank defaultCR file: %s", cmd.defaultCRFilePath())
+		}
 	}
 
-	if cmd.opts.GenerateDefaultCR {
-		cmd.NewStep("Generating default CR file...\n")
+	/*
+		if cmd.opts.GenerateSecurityConfig {
+			cmd.NewStep("Generating security config file...\n")
 
-		err := cmd.generateDefaultCR()
-		if err != nil {
-			cmd.CurrentStep.Failuref("%s: %s", errDefaultCRCreationFailed.Error(), err.Error())
-			return fmt.Errorf("%w: %s", errDefaultCRCreationFailed, err.Error())
+			err := cmd.generateSecurityConfig()
+			if err != nil {
+				cmd.CurrentStep.Failuref("%s: %s", errSecurityConfigCreationFailed.Error(), err.Error())
+				return fmt.Errorf("%w: %s", errSecurityConfigCreationFailed, err.Error())
+			}
+
+			cmd.CurrentStep.Successf("Generated security config file - %s", fileNameSecurityConfig)
 		}
 
-		cmd.CurrentStep.Successf("Generated default CR file(s) in config/samples/ directory")
-	}
+	*/
 
 	cmd.NewStep("Generating module config file...\n")
 
-	err := cmd.generateModuleConfig()
-	if err != nil {
-		cmd.CurrentStep.Failuref("%s: %s", errModuleConfigCreationFailed.Error(), err.Error())
-		return fmt.Errorf("%w: %s", errModuleConfigCreationFailed, err.Error())
-	}
+	/*
+		err := cmd.generateModuleConfig()
+		if err != nil {
+			cmd.CurrentStep.Failuref("%s: %s", errModuleConfigCreationFailed.Error(), err.Error())
+			return fmt.Errorf("%w: %s", errModuleConfigCreationFailed, err.Error())
+		}
+	*/
 
-	cmd.CurrentStep.Successf("Generated module config file - %s", fileNameModuleConfig)
+	fmt.Println()
+	fmt.Printf("ManifestFile: \"%s\"\n", cmd.opts.ManifestFile)
+	fmt.Printf("DefaultCRPath: \"%s\"\n", cmd.opts.DefaultCRFile)
+	fmt.Printf("SecurityConfigFile: \"%s\"\n", cmd.opts.SecurityConfigFile)
+
+	cmd.CurrentStep.Successf("Generated module config file - %s", cmd.opts.ModuleConfigFile)
+
 	return nil
 }
 
 func (cmd *command) generateModuleConfig() error {
 	cfg := module.Config{
-		Name:         cmd.opts.ModuleConfigName,
-		Version:      cmd.opts.ModuleConfigVersion,
-		Channel:      cmd.opts.ModuleConfigChannel,
-		ManifestPath: cmd.opts.ModuleConfigManifestPath,
-		Security:     chooseValue(cmd.opts.GenerateSecurityConfig, fileNameSecurityConfig, ""),
-	}
-	if cmd.opts.GenerateDefaultCR && len(generatedDefaultCRFiles) == 1 {
-		cfg.DefaultCRPath = generatedDefaultCRFiles[0]
-	}
-	if cmd.opts.GenerateManifest {
-		cfg.ManifestPath = fileNameManifest
+		Name:          cmd.opts.ModuleConfigName,
+		Version:       cmd.opts.ModuleConfigVersion,
+		Channel:       cmd.opts.ModuleConfigChannel,
+		ManifestPath:  cmd.opts.ManifestFile,
+		Security:      cmd.opts.SecurityConfigFile,
+		DefaultCRPath: cmd.opts.DefaultCRFile,
 	}
 	return cmd.generateYamlFileFromObject(cfg, fileNameModuleConfig)
 }
