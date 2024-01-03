@@ -22,9 +22,9 @@ type Options struct {
 	SecurityConfigFile string
 	DefaultCRFile      string
 
-	ModuleConfigName    string
-	ModuleConfigVersion string
-	ModuleConfigChannel string
+	ModuleName    string
+	ModuleVersion string
+	ModuleChannel string
 }
 
 func (o *Options) generateSecurityConfigFile() bool {
@@ -43,6 +43,9 @@ var (
 
 	errInvalidDirectory             = errors.New("provided directory does not exist")
 	errFilesExist                   = errors.New("scaffold already exists. use --overwrite flag to force scaffold creation")
+	errModuleNameEmpty              = errors.New("--module-name flag must not be empty")
+	errModuleVersionEmpty           = errors.New("--module-version flag must not be empty")
+	errModuleChannelEmpty           = errors.New("--module-channel flag must not be empty")
 	errManifestFileEmpty            = errors.New("--gen-manifest flag must not be empty")
 	errModuleConfigEmpty            = errors.New("--module-config flag must not be empty")
 	errInvalidManifestOptions       = errors.New("flag --gen-manifest cannot be set when argument --module-manifest-path provided")
@@ -59,6 +62,18 @@ func NewOptions(o *cli.Options) *Options {
 }
 
 func (o *Options) Validate() error {
+	if o.ModuleName == "" {
+		return errModuleNameEmpty
+	}
+
+	if o.ModuleVersion == "" {
+		return errModuleVersionEmpty
+	}
+
+	if o.ModuleChannel == "" {
+		return errModuleChannelEmpty
+	}
+
 	err := o.validateDirectory()
 	if err != nil {
 		return err

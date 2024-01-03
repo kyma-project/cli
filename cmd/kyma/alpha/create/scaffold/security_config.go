@@ -25,7 +25,7 @@ func (cmd *command) securityConfigFileExists() (bool, error) {
 
 func (cmd *command) generateSecurityConfigFile() error {
 	cfg := module.SecurityScanCfg{
-		ModuleName: cmd.opts.ModuleConfigName,
+		ModuleName: cmd.opts.ModuleName,
 		Protecode: []string{"europe-docker.pkg.dev/kyma-project/prod/myimage:1.2.3",
 			"europe-docker.pkg.dev/kyma-project/prod/external/ghcr.io/mymodule/anotherimage:4.5.6"},
 		WhiteSource: module.WhiteSourceSecCfg{

@@ -77,7 +77,18 @@ Generate a scaffold with manifest file and default CR for a module, overriding d
 `,
 		RunE: func(cobraCmd *cobra.Command, args []string) error { return c.Run(cobraCmd.Context()) },
 	}
-
+	cmd.Flags().StringVar(
+		&o.ModuleName, "module-name", "",
+		"Specifies the module name in the generated module config file",
+	)
+	cmd.Flags().StringVar(
+		&o.ModuleVersion, "module-version", "",
+		"Specifies the module version in the generated module config file",
+	)
+	cmd.Flags().StringVar(
+		&o.ModuleChannel, "module-channel", "",
+		"Specifies the module channel in the generated module config file",
+	)
 	cmd.Flags().StringVar(
 		&o.ModuleConfigFile, moduleConfigFileFlagName, moduleConfigFileFlagDefault,
 		"Specifies the name for the generated module configuration file",
@@ -102,18 +113,6 @@ Generate a scaffold with manifest file and default CR for a module, overriding d
 	)
 	cmd.Flags().Lookup(securityConfigFlagName).NoOptDefVal = securityConfigFlagDefault
 
-	cmd.Flags().StringVar(
-		&o.ModuleConfigName, "module-name", "",
-		"Specifies the module name in the generated module config file",
-	)
-	cmd.Flags().StringVar(
-		&o.ModuleConfigVersion, "module-version", "",
-		"Specifies the module version in the generated module config file",
-	)
-	cmd.Flags().StringVar(
-		&o.ModuleConfigChannel, "module-channel", "",
-		"Specifies the module channel in the generated module config file",
-	)
 	cmd.Flags().BoolVarP(
 		&o.Overwrite, "overwrite", "o", false,
 		"Specifies if the command overwrites an existing module configuration file",
@@ -231,9 +230,9 @@ func (cmd *command) Run(_ context.Context) error {
 
 func (cmd *command) generateModuleConfig() error {
 	cfg := module.Config{
-		Name:          cmd.opts.ModuleConfigName,
-		Version:       cmd.opts.ModuleConfigVersion,
-		Channel:       cmd.opts.ModuleConfigChannel,
+		Name:          cmd.opts.ModuleName,
+		Version:       cmd.opts.ModuleVersion,
+		Channel:       cmd.opts.ModuleChannel,
 		ManifestPath:  cmd.opts.ManifestFile,
 		Security:      cmd.opts.SecurityConfigFile,
 		DefaultCRPath: cmd.opts.DefaultCRFile,
@@ -241,13 +240,13 @@ func (cmd *command) generateModuleConfig() error {
 	return cmd.generateYamlFileFromObject(cfg, fileNameModuleConfig)
 }
 
-func (cmd *command) generateYamlFileFromObject(obj interface{}, fileName string) error {
+func (cmd *command) generateYamlFileFromObject(obj interface{}, filePath string) error {
 	reflectValue := reflect.ValueOf(obj)
 	var yamlBuilder strings.Builder
 	generateYaml(&yamlBuilder, reflectValue, 0, "")
 	yamlString := yamlBuilder.String()
 
-	err := os.WriteFile(fileName, []byte(yamlString), 0600)
+	err := os.WriteFile(filePath, []byte(yamlString), 0600)
 	if err != nil {
 		return fmt.Errorf("error writing file: %w", err)
 	}
