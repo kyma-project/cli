@@ -1,8 +1,29 @@
 package scaffold
 
-import "github.com/kyma-project/cli/pkg/module"
+import (
+	"os"
 
-func (cmd *command) generateSecurityConfig() error {
+	"github.com/kyma-project/cli/pkg/module"
+	"github.com/pkg/errors"
+)
+
+func (cmd *command) securityConfigFilePath() string {
+	return cmd.opts.getCompleteFilePath(cmd.opts.SecurityConfigFile)
+}
+
+func (cmd *command) securityConfigFileExists() (bool, error) {
+	if _, err := os.Stat(cmd.securityConfigFilePath()); err == nil {
+		return true, nil
+
+	} else if errors.Is(err, os.ErrNotExist) {
+		return false, nil
+
+	} else {
+		return false, err
+	}
+}
+
+func (cmd *command) generateSecurityConfigFile() error {
 	cfg := module.SecurityScanCfg{
 		ModuleName: cmd.opts.ModuleConfigName,
 		Protecode: []string{"europe-docker.pkg.dev/kyma-project/prod/myimage:1.2.3",
@@ -11,6 +32,6 @@ func (cmd *command) generateSecurityConfig() error {
 			Exclude: []string{"**/test/**", "**/*_test.go"},
 		},
 	}
-	err := cmd.generateYamlFileFromObject(cfg, fileNameSecurityConfig)
+	err := cmd.generateYamlFileFromObject(cfg, cmd.securityConfigFilePath())
 	return err
 }

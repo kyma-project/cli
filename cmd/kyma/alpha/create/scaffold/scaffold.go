@@ -175,7 +175,6 @@ func (cmd *command) Run(_ context.Context) error {
 		if err != nil {
 			return err
 		}
-
 		if defaultCRFileExists {
 			cmd.CurrentStep.Successf("defaultCR file configured: %s", cmd.defaultCRFilePath())
 		} else {
@@ -190,20 +189,25 @@ func (cmd *command) Run(_ context.Context) error {
 		}
 	}
 
-	/*
-		if cmd.opts.GenerateSecurityConfig {
-			cmd.NewStep("Generating security config file...\n")
-
-			err := cmd.generateSecurityConfig()
+	if cmd.opts.generateSecurityConfigFile() {
+		cmd.NewStep("Configuring security-scanners config file...\n")
+		secCfgFileExists, err := cmd.securityConfigFileExists()
+		if err != nil {
+			return err
+		}
+		if secCfgFileExists {
+			cmd.CurrentStep.Successf("security-scanners config file configured: %s", cmd.securityConfigFilePath())
+		} else {
+			cmd.CurrentStep.Status("Generating security-scanners config file")
+			err := cmd.generateSecurityConfigFile()
 			if err != nil {
 				cmd.CurrentStep.Failuref("%s: %s", errSecurityConfigCreationFailed.Error(), err.Error())
 				return fmt.Errorf("%w: %s", errSecurityConfigCreationFailed, err.Error())
 			}
 
-			cmd.CurrentStep.Successf("Generated security config file - %s", fileNameSecurityConfig)
+			cmd.CurrentStep.Successf("Generated security-scanners config file - %s", cmd.securityConfigFilePath())
 		}
-
-	*/
+	}
 
 	cmd.NewStep("Generating module config file...\n")
 
@@ -243,7 +247,7 @@ func (cmd *command) generateYamlFileFromObject(obj interface{}, fileName string)
 	generateYaml(&yamlBuilder, reflectValue, 0, "")
 	yamlString := yamlBuilder.String()
 
-	err := os.WriteFile(cmd.opts.getCompleteFilePath(fileName), []byte(yamlString), 0600)
+	err := os.WriteFile(fileName, []byte(yamlString), 0600)
 	if err != nil {
 		return fmt.Errorf("error writing file: %w", err)
 	}
