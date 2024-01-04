@@ -73,7 +73,11 @@ var _ = Describe("Create Scaffold Command", func() {
 			Expect(err.Error()).Should(ContainSubstring("scaffold module config file already exists"))
 
 			By("And no files should be generated")
-			Expect(filesIn(workDir)).Should(ContainElement("scaffold-module-config.yaml"))
+			files, err := filesIn(workDir)
+			Expect(err).Should(BeNil())
+			Expect(files).Should(HaveLen(1))
+			Expect(files).Should(ContainElement("scaffold-module-config.yaml"))
+			Expect(getMarkerFileData("scaffold-module-config.yaml")).Should(Equal(markerFileData))
 		})
 	})
 
@@ -103,6 +107,12 @@ var _ = Describe("Create Scaffold Command", func() {
 	})
 
 })
+
+func getMarkerFileData(name string) string {
+	data, err := os.ReadFile(name)
+	Expect(err).To(BeNil())
+	return string(data)
+}
 
 func createMarkerFile(name string) error {
 	err := os.WriteFile(name, []byte(markerFileData), 0600)
@@ -165,21 +175,13 @@ func resolveWorkingDirectory() (path string, cleanup func()) {
 }
 
 type CreateScaffoldCmd struct {
-	directory string
 	overwrite bool
-}
-
-func (cmd *CreateScaffoldCmd) directoryArg() string {
-	if cmd.directory == "" {
-		return ""
-	}
-	return fmt.Sprintf("--directory=%s", cmd.directory)
 }
 
 func (cmd *CreateScaffoldCmd) execute() error {
 	var createScaffoldCmd *exec.Cmd
 
-	args := []string{"alpha", "create", "scaffold", cmd.directoryArg()}
+	args := []string{"alpha", "create", "scaffold"}
 
 	if cmd.overwrite {
 		args = append(args, "--overwrite=true")
