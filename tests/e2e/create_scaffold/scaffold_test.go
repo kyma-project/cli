@@ -1,7 +1,6 @@
 package scaffold_test
 
 import (
-	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -62,7 +61,7 @@ var _ = Describe("Create Scaffold Command", func() {
 		})
 	})
 
-	Context("Given a directory with existing module configuration file", func() {
+	Context("Given a directory with an existing module configuration file", func() {
 		It("When `kyma alpha create scaffold` command is executed", func() {
 			Expect(createMarkerFile("scaffold-module-config.yaml")).To(Succeed())
 
@@ -73,15 +72,13 @@ var _ = Describe("Create Scaffold Command", func() {
 			Expect(err.Error()).Should(ContainSubstring("scaffold module config file already exists"))
 
 			By("And no files should be generated")
-			files, err := filesIn(workDir)
-			Expect(err).Should(BeNil())
-			Expect(files).Should(HaveLen(1))
-			Expect(files).Should(ContainElement("scaffold-module-config.yaml"))
+			Expect(filesIn(workDir)).Should(HaveLen(1))
+			Expect(filesIn(workDir)).Should(ContainElement("scaffold-module-config.yaml"))
 			Expect(getMarkerFileData("scaffold-module-config.yaml")).Should(Equal(markerFileData))
 		})
 	})
 
-	Context("Given a directory with existing module configuration file", func() {
+	Context("Given a directory with an existing module configuration file", func() {
 		It("When `kyma alpha create scaffold` command is executed with --overwrite flag", func() {
 			Expect(createMarkerFile("scaffold-module-config.yaml")).To(Succeed())
 
@@ -109,8 +106,11 @@ var _ = Describe("Create Scaffold Command", func() {
 	})
 
 	Context("Given an empty directory", func() {
-		It("When `kyma alpha create scaffold` command args override default names", func() {
+		It("When `kyma alpha create scaffold` command args override defaults", func() {
 			cmd := CreateScaffoldCmd{
+				moduleName:                    "github.com/custom/module",
+				moduleVersion:                 "3.2.1",
+				moduleChannel:                 "custom",
 				moduleConfigFileFlag:          "custom-module-config.yaml",
 				genManifestFlag:               "custom-manifest.yaml",
 				genDefaultCRFlag:              "custom-default-cr.yaml",
@@ -138,7 +138,9 @@ var _ = Describe("Create Scaffold Command", func() {
 			By("And module config contains expected entries")
 			actualModConf := moduleConfigFromFile(workDir, "custom-module-config.yaml")
 			expectedModConf := (&ModuleConfigBuilder{}).
-				defaults().
+				withName("github.com/custom/module").
+				withVersion("3.2.1").
+				withChannel("custom").
 				withManifestPath("custom-manifest.yaml").
 				withDefaultCRPath("custom-default-cr.yaml").
 				withSecurityScannersPath("custom-security-scanners-config.yaml").
@@ -170,19 +172,14 @@ func moduleConfigFromFile(dir, fileName string) *module.Config {
 	return &res
 }
 
-func filesIn(dir string) ([]string, error) {
+func filesIn(dir string) []string {
 	fi, err := os.Stat(dir)
-	if err != nil {
-		return nil, err
-	}
-	if !fi.IsDir() {
-		return nil, errors.New(fmt.Sprintf("Not a directory: %s", dir))
-	}
+	Expect(err).To(BeNil())
+	Expect(fi.IsDir()).To(BeTrueBecause("The provided path should be a directory: %s", dir))
+
 	dirFs := os.DirFS(dir)
 	entries, err := fs.ReadDir(dirFs, ".")
-	if err != nil {
-		return nil, err
-	}
+	Expect(err).To(BeNil())
 
 	res := []string{}
 	for _, ent := range entries {
@@ -191,7 +188,7 @@ func filesIn(dir string) ([]string, error) {
 		}
 	}
 
-	return res, nil
+	return res
 }
 
 func resolveWorkingDirectory() (path string, cleanup func()) {
@@ -212,11 +209,14 @@ func resolveWorkingDirectory() (path string, cleanup func()) {
 }
 
 type CreateScaffoldCmd struct {
-	overwrite                     bool
+	moduleName                    string
+	moduleVersion                 string
+	moduleChannel                 string
 	moduleConfigFileFlag          string
 	genDefaultCRFlag              string
 	genSecurityScannersConfigFlag string
 	genManifestFlag               string
+	overwrite                     bool
 }
 
 func (cmd *CreateScaffoldCmd) execute() error {
@@ -224,8 +224,16 @@ func (cmd *CreateScaffoldCmd) execute() error {
 
 	args := []string{"alpha", "create", "scaffold"}
 
-	if cmd.overwrite {
-		args = append(args, "--overwrite=true")
+	if cmd.moduleName != "" {
+		args = append(args, fmt.Sprintf("--module-name=%s", cmd.moduleName))
+	}
+
+	if cmd.moduleVersion != "" {
+		args = append(args, fmt.Sprintf("--module-version=%s", cmd.moduleVersion))
+	}
+
+	if cmd.moduleChannel != "" {
+		args = append(args, fmt.Sprintf("--module-channel=%s", cmd.moduleChannel))
 	}
 
 	if cmd.moduleConfigFileFlag != "" {
@@ -242,6 +250,10 @@ func (cmd *CreateScaffoldCmd) execute() error {
 
 	if cmd.genManifestFlag != "" {
 		args = append(args, fmt.Sprintf("--gen-manifest=%s", cmd.genManifestFlag))
+	}
+
+	if cmd.overwrite {
+		args = append(args, "--overwrite=true")
 	}
 
 	createScaffoldCmd = exec.Command("kyma", args...)
