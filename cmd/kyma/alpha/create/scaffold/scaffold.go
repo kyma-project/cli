@@ -177,7 +177,7 @@ func (cmd *command) Run(_ context.Context) error {
 	}
 	cmd.NewStep("Configuring manifest file...\n")
 	if manifestFileExists {
-		cmd.CurrentStep.Successf("Manifest file configured: %s", sgen.ManifestFilePath())
+		cmd.CurrentStep.Successf("manifest file exists, reusing: %s", sgen.ManifestFilePath())
 	} else {
 		cmd.CurrentStep.Status("Generating the manifest file")
 		err := sgen.GenerateManifest()
@@ -196,7 +196,7 @@ func (cmd *command) Run(_ context.Context) error {
 		}
 		cmd.NewStep("Configuring defaultCR file...\n")
 		if defaultCRFileExists {
-			cmd.CurrentStep.Successf("defaultCR file configured: %s", sgen.DefaultCRFilePath())
+			cmd.CurrentStep.Successf("defaultCR file exists, reusing: %s", sgen.DefaultCRFilePath())
 		} else {
 			cmd.CurrentStep.Status("Generating the default CR file")
 			err := sgen.GenerateDefaultCRFile()
@@ -216,7 +216,7 @@ func (cmd *command) Run(_ context.Context) error {
 		}
 		cmd.NewStep("Configuring security-scanners config file...\n")
 		if secCfgFileExists {
-			cmd.CurrentStep.Successf("security-scanners config file configured: %s", sgen.SecurityConfigFilePath())
+			cmd.CurrentStep.Successf("security-scanners config file exists, reusing: %s", sgen.SecurityConfigFilePath())
 		} else {
 			cmd.CurrentStep.Status("Generating security-scanners config file")
 			err := sgen.GenerateSecurityConfigFile()
