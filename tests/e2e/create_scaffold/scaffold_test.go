@@ -137,14 +137,45 @@ var _ = Describe("Create Scaffold Command", func() {
 
 			By("And module config contains expected entries")
 			actualModConf := moduleConfigFromFile(workDir, "custom-module-config.yaml")
-			expectedModConf := (&ModuleConfigBuilder{}).
-				withName("github.com/custom/module").
-				withVersion("3.2.1").
-				withChannel("custom").
-				withManifestPath("custom-manifest.yaml").
-				withDefaultCRPath("custom-default-cr.yaml").
-				withSecurityScannersPath("custom-security-scanners-config.yaml").
-				get()
+			expectedModConf := cmd.toConfigBuilder().get()
+			Expect(actualModConf).To(BeEquivalentTo(expectedModConf))
+		})
+	})
+
+	Context("Given directory with existing files", func() {
+		It("When `kyma alpha create scaffold` command is invoked with arguments that match file names", func() {
+
+			Expect(createMarkerFile("custom-manifest.yaml")).To(Succeed())
+			Expect(createMarkerFile("custom-default-cr.yaml")).To(Succeed())
+			Expect(createMarkerFile("custom-security-scanners-config.yaml")).To(Succeed())
+
+			cmd := CreateScaffoldCmd{
+				genManifestFlag:               "custom-manifest.yaml",
+				genDefaultCRFlag:              "custom-default-cr.yaml",
+				genSecurityScannersConfigFlag: "custom-security-scanners-config.yaml",
+			}
+
+			By("Then the command should succeed")
+			Expect(cmd.execute()).To(Succeed())
+
+			By("And there should be four files in the directory")
+			Expect(filesIn(workDir)).Should(HaveLen(4))
+
+			By("And the manifest file is reused (not generated)")
+			Expect(getMarkerFileData("custom-manifest.yaml")).Should(Equal(markerFileData))
+
+			By("And the defaultCR file is reused (not generated)")
+			Expect(getMarkerFileData("custom-default-cr.yaml")).Should(Equal(markerFileData))
+
+			By("And the security-scanners-config file is reused (not generated)")
+			Expect(getMarkerFileData("custom-security-scanners-config.yaml")).Should(Equal(markerFileData))
+
+			By("And the module config file is generated")
+			Expect(filesIn(workDir)).Should(ContainElement("scaffold-module-config.yaml"))
+
+			By("And module config contains expected entries")
+			actualModConf := moduleConfigFromFile(workDir, "scaffold-module-config.yaml")
+			expectedModConf := cmd.toConfigBuilder().get()
 			Expect(actualModConf).To(BeEquivalentTo(expectedModConf))
 		})
 	})
@@ -263,6 +294,30 @@ func (cmd *CreateScaffoldCmd) execute() error {
 		return fmt.Errorf("create scaffold command failed with output: %s and error: %w", cmdOut, err)
 	}
 	return nil
+}
+
+func (cmd *CreateScaffoldCmd) toConfigBuilder() *ModuleConfigBuilder {
+	res := &ModuleConfigBuilder{}
+	res.defaults()
+	if cmd.moduleName != "" {
+		res.withName(cmd.moduleName)
+	}
+	if cmd.moduleVersion != "" {
+		res.withVersion(cmd.moduleVersion)
+	}
+	if cmd.moduleChannel != "" {
+		res.withChannel(cmd.moduleChannel)
+	}
+	if cmd.genDefaultCRFlag != "" {
+		res.withDefaultCRPath(cmd.genDefaultCRFlag)
+	}
+	if cmd.genSecurityScannersConfigFlag != "" {
+		res.withSecurityScannersPath(cmd.genSecurityScannersConfigFlag)
+	}
+	if cmd.genManifestFlag != "" {
+		res.withManifestPath(cmd.genManifestFlag)
+	}
+	return res
 }
 
 type ModuleConfigBuilder struct {
