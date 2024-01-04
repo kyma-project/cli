@@ -81,13 +81,7 @@ func (o *Options) Validate() error {
 	if o.ManifestFile == "" {
 		return errManifestFileEmpty
 	}
-	/*
-		err = o.validateFileOverwrite()
-		if err != nil {
-			return err
-		}
-		return o.validateManifestOptions()
-	*/
+
 	return nil
 }
 
@@ -103,49 +97,6 @@ func (o *Options) validateDirectory() error {
 	o.Directory = "/" + absolutePath
 	return nil
 }
-
-/*
-func (o *Options) validateFileOverwrite() error {
-	if !o.Overwrite {
-		_, err := os.Stat(o.getCompleteFilePath(fileNameModuleConfig))
-		if !errors.Is(err, os.ErrNotExist) {
-			return errFilesExist
-		}
-
-		if o.GenerateManifest {
-			_, err := os.Stat(o.getCompleteFilePath(fileNameManifest))
-			if !errors.Is(err, os.ErrNotExist) {
-				return errFilesExist
-			}
-		}
-		if o.GenerateSecurityConfig {
-			_, err := os.Stat(o.getCompleteFilePath(fileNameSecurityConfig))
-			if !errors.Is(err, os.ErrNotExist) {
-				return errFilesExist
-			}
-		}
-		if o.GenerateDefaultCR {
-			entries, err := os.ReadDir(o.getCompleteFilePath(path.Join("config", "samples")))
-			if err != nil && !errors.Is(err, os.ErrNotExist) {
-				return fmt.Errorf("error while validating default CR directory: %w", err)
-			}
-			if len(entries) != 0 {
-				return errFilesExist
-			}
-		}
-	}
-	return nil
-}
-*/
-
-/*
-func (o *Options) validateManifestOptions() error {
-	if o.GenerateManifest && o.ModuleConfigManifestPath != "" {
-		return errInvalidManifestOptions
-	}
-	return nil
-}
-*/
 
 func (o *Options) getCompleteFilePath(fileName string) string {
 	return path.Join(o.Directory, fileName)

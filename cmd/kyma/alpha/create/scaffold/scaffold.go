@@ -20,7 +20,7 @@ const (
 	moduleConfigFileFlagName    = "module-config"
 	moduleConfigFileFlagDefault = "scaffold-module-config.yaml"
 	securityConfigFlagName      = "gen-security-config"
-	securityConfigFlagDefault   = "security-scanners-config.yaml"
+	securityConfigFlagDefault   = "sec-scanners-config.yaml"
 )
 
 type command struct {
@@ -37,7 +37,7 @@ func NewCmd(o *Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "scaffold [--module-name MODULE_NAME --module-version MODULE_VERSION --module-channel CHANNEL] [--directory MODULE_DIRECTORY] [flags]",
 		Short: "Generates necessary files required for module creation",
-		Long: `Scaffold configures or generates the necessary files for creating a new module in Kyma. This includes setting up 
+		Long: `Scaffold generates or configures the necessary files for creating a new module in Kyma. This includes setting up 
 a basic directory structure and creating default files based on the provided flags.
 
 The command is designed to streamline the module creation process in Kyma, making it easier and more 
@@ -64,7 +64,7 @@ The command generates or uses the following files:
 	Enabled: When the flag --gen-security-config is provided with or without value
 	Adjustable with flag: --gen-security-config[=VALUE], if provided without an explicit VALUE, the default value is used
 	Generated when: The file doesn't exist. If the file exists, it's name is used in the generated module configuration file
-	Default file name: security-scanners-config.yaml
+	Default file name: sec-scanners-config.yaml
 
 **NOTE:**: To protect the user from accidental file overwrites, this command by default doesn't overwrite any files.
 Only the module config file may be force-overwritten when the --overwrite=true flag is used.
@@ -74,7 +74,7 @@ You can specify the required fields of the module config using the following CLI
 --module-version=VERSION
 --module-channel=CHANNEL
 
-**NOTE:**: If the required fields aren't provided, the defaults are used and the module-config.yaml is not ready to be used. You must manually edit the file to make it usable.
+**NOTE:**: If the required fields aren't provided, the defaults are applied and the module-config.yaml is not ready to be used. You must manually edit the file to make it usable.
 Also, edit the sec-scanners-config.yaml to be able to use it.
 `,
 		Example: `Generate a minimal scaffold for a module - only a blank manifest file and module config file is generated using defaults
@@ -159,6 +159,15 @@ func (cmd *command) Run(_ context.Context) error {
 		cmd.CurrentStep.Failuref("%s", err.Error())
 		return fmt.Errorf("%w", err)
 	}
+	moduleConfigExists, err := cmd.moduleConfigFileExists()
+	if err != nil {
+		cmd.CurrentStep.Failuref("%s", err.Error())
+		return fmt.Errorf("%w", err)
+	}
+	if moduleConfigExists && !cmd.opts.Overwrite {
+		cmd.CurrentStep.Failuref("%s", errModuleConfigExists.Error())
+		return fmt.Errorf("%w", errModuleConfigExists)
+	}
 	cmd.CurrentStep.Success()
 
 	manifestFileExists, err := cmd.manifestFileExists()
@@ -221,14 +230,6 @@ func (cmd *command) Run(_ context.Context) error {
 
 	cmd.NewStep("Generating module config file...\n")
 
-	moduleConfigExists, err := cmd.moduleConfigFileExists()
-	if err != nil {
-		return err
-	}
-	if moduleConfigExists && !cmd.opts.Overwrite {
-		cmd.CurrentStep.Failuref("%s", errModuleConfigExists.Error())
-		return fmt.Errorf("%w", errModuleConfigExists)
-	}
 	err = cmd.generateModuleConfigFile()
 	if err != nil {
 		cmd.CurrentStep.Failuref("%s: %s", errModuleConfigCreationFailed.Error(), err.Error())
