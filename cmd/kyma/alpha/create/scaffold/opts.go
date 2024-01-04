@@ -36,13 +36,8 @@ func (o *Options) generateDefaultCRFile() bool {
 }
 
 var (
-	fileNameModuleConfig = "module-config.yaml"
-	//fileNameManifest        = "template-operator.yaml"
-	fileNameSecurityConfig  = "sec-scanners-config.yaml"
-	generatedDefaultCRFiles []string
-
 	errInvalidDirectory             = errors.New("provided directory does not exist")
-	errFilesExist                   = errors.New("scaffold already exists. use --overwrite flag to force scaffold creation")
+	errModuleConfigExists           = errors.New("scaffold module config already exists. use --overwrite flag to overwrite the file")
 	errModuleNameEmpty              = errors.New("--module-name flag must not be empty")
 	errModuleVersionEmpty           = errors.New("--module-version flag must not be empty")
 	errModuleChannelEmpty           = errors.New("--module-channel flag must not be empty")

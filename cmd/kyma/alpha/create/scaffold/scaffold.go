@@ -7,7 +7,6 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/kyma-project/cli/cmd/kyma/alpha/create/module"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
@@ -19,7 +18,7 @@ const (
 	manifestFileFlagName        = "gen-manifest"
 	manifestFileFlagDefault     = "manifest.yaml"
 	moduleConfigFileFlagName    = "module-config"
-	moduleConfigFileFlagDefault = "module-config.yaml"
+	moduleConfigFileFlagDefault = "scaffold-module-config.yaml"
 	securityConfigFlagName      = "gen-security-config"
 	securityConfigFlagDefault   = "security-scanners-config.yaml"
 )
@@ -36,57 +35,70 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "scaffold [--module-name MODULE_NAME --module-version MODULE_VERSION --module-channel CHANNEL --module-manifest] [--directory MODULE_DIRECTORY] [flags]",
+		Use:   "scaffold [--module-name MODULE_NAME --module-version MODULE_VERSION --module-channel CHANNEL] [--directory MODULE_DIRECTORY] [flags]",
 		Short: "Generates necessary files required for module creation",
-		Long: `Scaffold generates the necessary files for creating a new module in Kyma. This includes setting up 
+		Long: `Scaffold configures or generates the necessary files for creating a new module in Kyma. This includes setting up 
 a basic directory structure and creating default files based on the provided flags.
-
-The command generates the following files:
- - Module Config:
-	File: module-config.yaml
-	Generated when: always
- - Manifest:
-	File: template-operator.yaml
-	Generated When: The "--gen-manifest" flag is set
- - Security Scanners Config:
-	File: sec-scanners-config.yaml
-	Generated When: The "--gen-sec-config" flag is set
- - Default CR(s):
-	File(s): config/samples/*.yaml
-	Generated When: The "--gen-default-cr" flag is set
-	**NOTE:** The generated default CRs might contain field values which violate integer or string pattern constraints. These are just templates that have to be modified. 
-
-You can specify the required fields of the module config using the following CLI arguments:
---module-name [NAME]
---module-version [VERSION]
---module-channel [CHANNEL]
---module-manifest-path [MANIFEST-PATH] (cannot be used with the "--gen-manifest" flag)
-
-**NOTE:**: If the required fields aren't provided, the module-config.yaml is not ready to use out-of-the-box. You must manually edit the file to make it usable.
-Also, edit the sec-scanners-config.yaml to be able to use it.
 
 The command is designed to streamline the module creation process in Kyma, making it easier and more 
 efficient for developers to get started with new modules. It supports customization through various flags, 
-allowing for a tailored scaffolding experience according to the specific needs of the module being created.`,
-		Example: `Generate a simple scaffold for a module
-		kyma alpha create scaffold --module-name=template-operator --module-version=1.0.0 --module-channel=regular --module-manifest-path=./template-operator.yaml
-Generate a scaffold with manifest file, default CR, and security config for a module
-		kyma alpha create scaffold --module-name=template-operator --module-version=1.0.0 --module-channel=regular --gen-manifest --gen-security-config --gen-default-cr
-Generate a scaffold with manifest file and default CR for a module, overriding default names
-		kyma alpha create scaffold --module-name=template-operator --module-version=1.0.0 --module-channel=regular --gen-manifest="my-manifest.yaml" --gen-default-cr="my-cr.yaml"
+allowing for a tailored scaffolding experience according to the specific needs of the module being created.
+
+The command generates or uses the following files:
+ - Module Config:
+	Enabled: Always
+	Adjustable with flag: --module-config=VALUE
+	Generated when: The file doesn't exist or the --overwrite=true flag is provided
+	Default file name: scaffold-module-config.yaml
+ - Manifest:
+	Enabled: Always
+	Adjustable with flag: --gen-manifest=VALUE
+	Generated when: The file doesn't exist. If the file exists, it's name is used in the generated module configuration file
+	Default file name: manifest.yaml
+ - Default CR(s):
+	Enabled: When the flag --gen-default-cr is provided with or without value
+	Adjustable with flag: --gen-default-cr[=VALUE], if provided without an explicit VALUE, the default value is used
+	Generated when: The file doesn't exist. If the file exists, it's name is used in the generated module configuration file
+	Default file name: default-cr.yaml
+ - Security Scanners Config:
+	Enabled: When the flag --gen-security-config is provided with or without value
+	Adjustable with flag: --gen-security-config[=VALUE], if provided without an explicit VALUE, the default value is used
+	Generated when: The file doesn't exist. If the file exists, it's name is used in the generated module configuration file
+	Default file name: security-scanners-config.yaml
+
+**NOTE:**: To protect the user from accidental file overwrites, this command by default doesn't overwrite any files.
+Only the module config file may be force-overwritten when the --overwrite=true flag is used.
+
+You can specify the required fields of the module config using the following CLI flags:
+--module-name=NAME
+--module-version=VERSION
+--module-channel=CHANNEL
+
+**NOTE:**: If the required fields aren't provided, the defaults are used and the module-config.yaml is not ready to be used. You must manually edit the file to make it usable.
+Also, edit the sec-scanners-config.yaml to be able to use it.
+`,
+		Example: `Generate a minimal scaffold for a module - only a blank manifest file and module config file is generated using defaults
+                kyma alpha create scaffold
+Generate a scaffold providing required values explicitly
+                kyma alpha create scaffold --module-name="kyma-project.io/module/testmodule" --module-version="0.1.1" --module-channel=fast
+Generate a scaffold with a manifest file, default CR and security-scanners config for a module
+                kyma alpha create scaffold --gen-default-cr --gen-security-config
+Generate a scaffold with a manifest file, default CR and security-scanners config for a module, overriding default values
+                kyma alpha create scaffold --gen-manifest="my-manifest.yaml" --gen-default-cr="my-cr.yaml" --gen-security-config="my-seccfg.yaml"
+
 `,
 		RunE: func(cobraCmd *cobra.Command, args []string) error { return c.Run(cobraCmd.Context()) },
 	}
 	cmd.Flags().StringVar(
-		&o.ModuleName, "module-name", "",
+		&o.ModuleName, "module-name", "kyma-project.io/module/mymodule",
 		"Specifies the module name in the generated module config file",
 	)
 	cmd.Flags().StringVar(
-		&o.ModuleVersion, "module-version", "",
+		&o.ModuleVersion, "module-version", "0.0.1",
 		"Specifies the module version in the generated module config file",
 	)
 	cmd.Flags().StringVar(
-		&o.ModuleChannel, "module-channel", "",
+		&o.ModuleChannel, "module-channel", "regular",
 		"Specifies the module channel in the generated module config file",
 	)
 	cmd.Flags().StringVar(
@@ -144,17 +156,16 @@ func (cmd *command) Run(_ context.Context) error {
 
 	cmd.NewStep("Validating...\n")
 	if err := cmd.opts.Validate(); err != nil {
-		return err
+		cmd.CurrentStep.Failuref("%s", err.Error())
+		return fmt.Errorf("%w", err)
 	}
 	cmd.CurrentStep.Success()
-
-	cmd.NewStep("Configuring manifest file...\n")
 
 	manifestFileExists, err := cmd.manifestFileExists()
 	if err != nil {
 		return err
 	}
-
+	cmd.NewStep("Configuring manifest file...\n")
 	if manifestFileExists {
 		cmd.CurrentStep.Successf("Manifest file configured: %s", cmd.manifestFilePath())
 	} else {
@@ -169,11 +180,11 @@ func (cmd *command) Run(_ context.Context) error {
 	}
 
 	if cmd.opts.generateDefaultCRFile() {
-		cmd.NewStep("Configuring defaultCR file...\n")
 		defaultCRFileExists, err := cmd.defaultCRFileExists()
 		if err != nil {
 			return err
 		}
+		cmd.NewStep("Configuring defaultCR file...\n")
 		if defaultCRFileExists {
 			cmd.CurrentStep.Successf("defaultCR file configured: %s", cmd.defaultCRFilePath())
 		} else {
@@ -189,11 +200,11 @@ func (cmd *command) Run(_ context.Context) error {
 	}
 
 	if cmd.opts.generateSecurityConfigFile() {
-		cmd.NewStep("Configuring security-scanners config file...\n")
 		secCfgFileExists, err := cmd.securityConfigFileExists()
 		if err != nil {
 			return err
 		}
+		cmd.NewStep("Configuring security-scanners config file...\n")
 		if secCfgFileExists {
 			cmd.CurrentStep.Successf("security-scanners config file configured: %s", cmd.securityConfigFilePath())
 		} else {
@@ -210,34 +221,23 @@ func (cmd *command) Run(_ context.Context) error {
 
 	cmd.NewStep("Generating module config file...\n")
 
-	/*
-		err := cmd.generateModuleConfig()
-		if err != nil {
-			cmd.CurrentStep.Failuref("%s: %s", errModuleConfigCreationFailed.Error(), err.Error())
-			return fmt.Errorf("%w: %s", errModuleConfigCreationFailed, err.Error())
-		}
-	*/
+	moduleConfigExists, err := cmd.moduleConfigFileExists()
+	if err != nil {
+		return err
+	}
+	if moduleConfigExists && !cmd.opts.Overwrite {
+		cmd.CurrentStep.Failuref("%s", errModuleConfigExists.Error())
+		return fmt.Errorf("%w", errModuleConfigExists)
+	}
+	err = cmd.generateModuleConfigFile()
+	if err != nil {
+		cmd.CurrentStep.Failuref("%s: %s", errModuleConfigCreationFailed.Error(), err.Error())
+		return fmt.Errorf("%w: %s", errModuleConfigCreationFailed, err.Error())
+	}
 
-	fmt.Println()
-	fmt.Printf("ManifestFile: \"%s\"\n", cmd.opts.ManifestFile)
-	fmt.Printf("DefaultCRPath: \"%s\"\n", cmd.opts.DefaultCRFile)
-	fmt.Printf("SecurityConfigFile: \"%s\"\n", cmd.opts.SecurityConfigFile)
-
-	cmd.CurrentStep.Successf("Generated module config file - %s", cmd.opts.ModuleConfigFile)
+	cmd.CurrentStep.Successf("Generated module config file: %s", cmd.moduleConfigFilePath())
 
 	return nil
-}
-
-func (cmd *command) generateModuleConfig() error {
-	cfg := module.Config{
-		Name:          cmd.opts.ModuleName,
-		Version:       cmd.opts.ModuleVersion,
-		Channel:       cmd.opts.ModuleChannel,
-		ManifestPath:  cmd.opts.ManifestFile,
-		Security:      cmd.opts.SecurityConfigFile,
-		DefaultCRPath: cmd.opts.DefaultCRFile,
-	}
-	return cmd.generateYamlFileFromObject(cfg, fileNameModuleConfig)
 }
 
 func (cmd *command) generateYamlFileFromObject(obj interface{}, filePath string) error {
