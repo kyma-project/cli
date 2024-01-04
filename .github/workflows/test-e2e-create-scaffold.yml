@@ -36,31 +36,19 @@ jobs:
           ls -la ./bin
           mv ./bin/kyma-linux /usr/local/bin/kyma
         timeout-minutes: 10
-      - name: Checkout template-operator
-        uses: actions/checkout@v3
-        with:
-          repository: kyma-project/template-operator
-          path: ./template-operator/
-      - name: export template-operator URL
+      - name: Prepare directory
         run: |
-          cd ./template-operator
-          echo "TEST_REPOSITORY_URL=$(git remote get-url origin)" >> "$GITHUB_ENV"
-      - name: Set up k3d
-        run: wget -qO - https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG=$K3D_VERSION bash
-      - name: Provision OCI Registry
-        run: |
-          k3d registry create oci.localhost --port 5001
+          mkdir test-simple
       - name: Run create scaffold
         run: |
           kyma alpha create scaffold \
-          --directory ./template-operator \
-          --overwrite \
-          --module-name kyma-project.io/module/template-operator \
-          --module-version $MODULE_TEMPLATE_VERSION \
+          --directory ./test-simple \
+          --module-name kyma-project.io/module/e2e \
+          --module-version 1.2.3 \
           --module-channel regular \
-          --gen-manifest \
           --gen-default-cr
-      - name: Run create module with module-config
+          --gen-security-config
+      - name: Validate scaffold
         run: |
           cd ./template-operator
           kyma alpha create module \
