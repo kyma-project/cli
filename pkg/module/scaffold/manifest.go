@@ -7,12 +7,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (cmd *command) manifestFilePath() string {
-	return cmd.opts.getCompleteFilePath(cmd.opts.ManifestFile)
+func (g *Generator) ManifestFilePath() string {
+	return g.ManifestFile
 }
 
-func (cmd *command) manifestFileExists() (bool, error) {
-	if _, err := os.Stat(cmd.manifestFilePath()); err == nil {
+func (g *Generator) ManifestFileExists() (bool, error) {
+	if _, err := os.Stat(g.ManifestFilePath()); err == nil {
 		return true, nil
 
 	} else if errors.Is(err, os.ErrNotExist) {
@@ -23,13 +23,13 @@ func (cmd *command) manifestFileExists() (bool, error) {
 	}
 }
 
-func (cmd *command) generateManifest() error {
+func (g *Generator) GenerateManifest() error {
 
 	blankContents := `# This file holds the Manifest of your module, encompassing all resources installed in the cluster once the module is activated.
 # It should include the Custom Resource Definition for your module's default CustomResource, if it exists.
 
 `
-	filePath := cmd.manifestFilePath()
+	filePath := g.ManifestFilePath()
 	err := os.WriteFile(filePath, []byte(blankContents), 0600)
 	if err != nil {
 		return fmt.Errorf("error while saving %s: %w", filePath, err)

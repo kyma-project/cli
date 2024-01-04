@@ -7,12 +7,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (cmd *command) securityConfigFilePath() string {
-	return cmd.opts.getCompleteFilePath(cmd.opts.SecurityConfigFile)
+func (g *Generator) SecurityConfigFilePath() string {
+	return g.SecurityConfigFile
 }
 
-func (cmd *command) securityConfigFileExists() (bool, error) {
-	if _, err := os.Stat(cmd.securityConfigFilePath()); err == nil {
+func (g *Generator) SecurityConfigFileExists() (bool, error) {
+	if _, err := os.Stat(g.SecurityConfigFilePath()); err == nil {
 		return true, nil
 
 	} else if errors.Is(err, os.ErrNotExist) {
@@ -23,15 +23,15 @@ func (cmd *command) securityConfigFileExists() (bool, error) {
 	}
 }
 
-func (cmd *command) generateSecurityConfigFile() error {
+func (g *Generator) GenerateSecurityConfigFile() error {
 	cfg := module.SecurityScanCfg{
-		ModuleName: cmd.opts.ModuleName,
+		ModuleName: g.ModuleName,
 		Protecode: []string{"europe-docker.pkg.dev/kyma-project/prod/myimage:1.2.3",
 			"europe-docker.pkg.dev/kyma-project/prod/external/ghcr.io/mymodule/anotherimage:4.5.6"},
 		WhiteSource: module.WhiteSourceSecCfg{
 			Exclude: []string{"**/test/**", "**/*_test.go"},
 		},
 	}
-	err := cmd.generateYamlFileFromObject(cfg, cmd.securityConfigFilePath())
+	err := g.generateYamlFileFromObject(cfg, g.SecurityConfigFilePath())
 	return err
 }

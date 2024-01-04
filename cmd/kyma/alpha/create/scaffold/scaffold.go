@@ -3,11 +3,9 @@ package scaffold
 import (
 	"context"
 	"fmt"
-	"os"
-	"reflect"
-	"strings"
 
 	"github.com/kyma-project/cli/internal/cli"
+	scaffgen "github.com/kyma-project/cli/pkg/module/scaffold"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
@@ -159,7 +157,10 @@ func (cmd *command) Run(_ context.Context) error {
 		cmd.CurrentStep.Failuref("%s", err.Error())
 		return fmt.Errorf("%w", err)
 	}
-	moduleConfigExists, err := cmd.moduleConfigFileExists()
+
+	sgen := cmd.scaffoldGeneratorFromOptions()
+
+	moduleConfigExists, err := sgen.ModuleConfigFileExists()
 	if err != nil {
 		cmd.CurrentStep.Failuref("%s", err.Error())
 		return fmt.Errorf("%w", err)
@@ -170,77 +171,78 @@ func (cmd *command) Run(_ context.Context) error {
 	}
 	cmd.CurrentStep.Success()
 
-	manifestFileExists, err := cmd.manifestFileExists()
+	manifestFileExists, err := sgen.ManifestFileExists()
 	if err != nil {
 		return err
 	}
 	cmd.NewStep("Configuring manifest file...\n")
 	if manifestFileExists {
-		cmd.CurrentStep.Successf("Manifest file configured: %s", cmd.manifestFilePath())
+		cmd.CurrentStep.Successf("Manifest file configured: %s", sgen.ManifestFilePath())
 	} else {
 		cmd.CurrentStep.Status("Generating the manifest file")
-		err := cmd.generateManifest()
+		err := sgen.GenerateManifest()
 		if err != nil {
 			cmd.CurrentStep.Failuref("%s: %s", errManifestCreationFailed.Error(), err.Error())
 			return fmt.Errorf("%w: %s", errManifestCreationFailed, err.Error())
 		}
 
-		cmd.CurrentStep.Successf("Generated a blank manifest file: %s", cmd.manifestFilePath())
+		cmd.CurrentStep.Successf("Generated a blank manifest file: %s", sgen.ManifestFilePath())
 	}
 
 	if cmd.opts.generateDefaultCRFile() {
-		defaultCRFileExists, err := cmd.defaultCRFileExists()
+		defaultCRFileExists, err := sgen.DefaultCRFileExists()
 		if err != nil {
 			return err
 		}
 		cmd.NewStep("Configuring defaultCR file...\n")
 		if defaultCRFileExists {
-			cmd.CurrentStep.Successf("defaultCR file configured: %s", cmd.defaultCRFilePath())
+			cmd.CurrentStep.Successf("defaultCR file configured: %s", sgen.DefaultCRFilePath())
 		} else {
 			cmd.CurrentStep.Status("Generating the default CR file")
-			err := cmd.generateDefaultCRFile()
+			err := sgen.GenerateDefaultCRFile()
 			if err != nil {
 				cmd.CurrentStep.Failuref("%s: %s", errDefaultCRCreationFailed.Error(), err.Error())
 				return fmt.Errorf("%w: %s", errDefaultCRCreationFailed, err.Error())
 			}
 
-			cmd.CurrentStep.Successf("Generated a blank defaultCR file: %s", cmd.defaultCRFilePath())
+			cmd.CurrentStep.Successf("Generated a blank defaultCR file: %s", sgen.DefaultCRFilePath())
 		}
 	}
 
 	if cmd.opts.generateSecurityConfigFile() {
-		secCfgFileExists, err := cmd.securityConfigFileExists()
+		secCfgFileExists, err := sgen.SecurityConfigFileExists()
 		if err != nil {
 			return err
 		}
 		cmd.NewStep("Configuring security-scanners config file...\n")
 		if secCfgFileExists {
-			cmd.CurrentStep.Successf("security-scanners config file configured: %s", cmd.securityConfigFilePath())
+			cmd.CurrentStep.Successf("security-scanners config file configured: %s", sgen.SecurityConfigFilePath())
 		} else {
 			cmd.CurrentStep.Status("Generating security-scanners config file")
-			err := cmd.generateSecurityConfigFile()
+			err := sgen.GenerateSecurityConfigFile()
 			if err != nil {
 				cmd.CurrentStep.Failuref("%s: %s", errSecurityConfigCreationFailed.Error(), err.Error())
 				return fmt.Errorf("%w: %s", errSecurityConfigCreationFailed, err.Error())
 			}
 
-			cmd.CurrentStep.Successf("Generated security-scanners config file - %s", cmd.securityConfigFilePath())
+			cmd.CurrentStep.Successf("Generated security-scanners config file - %s", sgen.SecurityConfigFilePath())
 		}
 	}
 
 	cmd.NewStep("Generating module config file...\n")
 
-	err = cmd.generateModuleConfigFile()
+	err = sgen.GenerateModuleConfigFile()
 	if err != nil {
 		cmd.CurrentStep.Failuref("%s: %s", errModuleConfigCreationFailed.Error(), err.Error())
 		return fmt.Errorf("%w: %s", errModuleConfigCreationFailed, err.Error())
 	}
 
-	cmd.CurrentStep.Successf("Generated module config file: %s", cmd.moduleConfigFilePath())
+	cmd.CurrentStep.Successf("Generated module config file: %s", sgen.ModuleConfigFilePath())
 
 	return nil
 }
 
+/*
 func (cmd *command) generateYamlFileFromObject(obj interface{}, filePath string) error {
 	reflectValue := reflect.ValueOf(obj)
 	var yamlBuilder strings.Builder
@@ -253,4 +255,19 @@ func (cmd *command) generateYamlFileFromObject(obj interface{}, filePath string)
 	}
 
 	return nil
+}
+*/
+
+func (cmd *command) scaffoldGeneratorFromOptions() *scaffgen.Generator {
+	res := scaffgen.Generator{
+		ModuleName:         cmd.opts.ModuleName,
+		ModuleVersion:      cmd.opts.ModuleVersion,
+		ModuleChannel:      cmd.opts.ModuleChannel,
+		ModuleConfigFile:   cmd.opts.getCompleteFilePath(cmd.opts.ModuleConfigFile),
+		ManifestFile:       cmd.opts.getCompleteFilePath(cmd.opts.ManifestFile),
+		SecurityConfigFile: cmd.opts.getCompleteFilePath(cmd.opts.SecurityConfigFile),
+		DefaultCRFile:      cmd.opts.getCompleteFilePath(cmd.opts.DefaultCRFile),
+	}
+
+	return &res
 }

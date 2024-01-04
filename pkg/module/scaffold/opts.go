@@ -6,14 +6,11 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/kyma-project/cli/internal/cli"
 	"github.com/pkg/errors"
 )
 
 // Options specifies the flags for the scaffold command
 type Options struct {
-	*cli.Options
-
 	Overwrite bool
 	Directory string
 
@@ -27,17 +24,9 @@ type Options struct {
 	ModuleChannel string
 }
 
-func (o *Options) generateSecurityConfigFile() bool {
-	return o.SecurityConfigFile != ""
-}
-
-func (o *Options) generateDefaultCRFile() bool {
-	return o.DefaultCRFile != ""
-}
-
 var (
 	errInvalidDirectory             = errors.New("provided directory does not exist")
-	errModuleConfigExists           = errors.New("scaffold module config file already exists. use --overwrite flag to overwrite it")
+	errModuleConfigExists           = errors.New("scaffold module config already exists. use --overwrite flag to overwrite the file")
 	errModuleNameEmpty              = errors.New("--module-name flag must not be empty")
 	errModuleVersionEmpty           = errors.New("--module-version flag must not be empty")
 	errModuleChannelEmpty           = errors.New("--module-channel flag must not be empty")
@@ -50,40 +39,6 @@ var (
 	errDefaultCRCreationFailed      = errors.New("could not generate default CR")
 	errModuleConfigCreationFailed   = errors.New("could not generate module config")
 )
-
-// NewOptions creates options with default values
-func NewOptions(o *cli.Options) *Options {
-	return &Options{Options: o}
-}
-
-func (o *Options) Validate() error {
-	if o.ModuleName == "" {
-		return errModuleNameEmpty
-	}
-
-	if o.ModuleVersion == "" {
-		return errModuleVersionEmpty
-	}
-
-	if o.ModuleChannel == "" {
-		return errModuleChannelEmpty
-	}
-
-	err := o.validateDirectory()
-	if err != nil {
-		return err
-	}
-
-	if o.ModuleConfigFile == "" {
-		return errModuleConfigEmpty
-	}
-
-	if o.ManifestFile == "" {
-		return errManifestFileEmpty
-	}
-
-	return nil
-}
 
 func (o *Options) validateDirectory() error {
 	_, err := os.Stat(o.Directory)
