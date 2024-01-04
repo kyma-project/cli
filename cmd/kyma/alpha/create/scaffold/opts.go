@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"path/filepath"
 
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/pkg/errors"
@@ -86,13 +85,8 @@ func (o *Options) Validate() error {
 func (o *Options) validateDirectory() error {
 	_, err := os.Stat(o.Directory)
 	if errors.Is(err, os.ErrNotExist) {
-		return errInvalidDirectory
+		return fmt.Errorf("%w: %s", errInvalidDirectory, o.Directory)
 	}
-	absolutePath, err := filepath.Abs(o.Directory)
-	if err != nil {
-		return fmt.Errorf("error getting absolute file path to module directory: %w", err)
-	}
-	o.Directory = "/" + absolutePath
 	return nil
 }
 

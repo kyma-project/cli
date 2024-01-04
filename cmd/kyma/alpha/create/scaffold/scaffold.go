@@ -106,16 +106,16 @@ Generate a scaffold with a manifest file, default CR and security-scanners confi
 	cmd.Flags().Lookup(moduleConfigFileFlagName).NoOptDefVal = moduleConfigFileFlagDefault
 
 	cmd.Flags().StringVar(
-		&o.DefaultCRFile, defaultCRFlagName, "",
-		"Specifies the defaultCR in the generated module config. A blank defaultCR file is generated if it doesn't exist",
-	)
-	cmd.Flags().Lookup(defaultCRFlagName).NoOptDefVal = defaultCRFlagDefault
-
-	cmd.Flags().StringVar(
 		&o.ManifestFile, manifestFileFlagName, manifestFileFlagDefault,
 		"Specifies the manifest in the generated module config. A blank manifest file is generated if it doesn't exist",
 	)
 	cmd.Flags().Lookup(manifestFileFlagName).NoOptDefVal = manifestFileFlagDefault
+
+	cmd.Flags().StringVar(
+		&o.DefaultCRFile, defaultCRFlagName, "",
+		"Specifies the defaultCR in the generated module config. A blank defaultCR file is generated if it doesn't exist",
+	)
+	cmd.Flags().Lookup(defaultCRFlagName).NoOptDefVal = defaultCRFlagDefault
 
 	cmd.Flags().StringVar(
 		&o.SecurityConfigFile, securityConfigFlagName, "",
@@ -242,31 +242,23 @@ func (cmd *command) Run(_ context.Context) error {
 	return nil
 }
 
-/*
-func (cmd *command) generateYamlFileFromObject(obj interface{}, filePath string) error {
-	reflectValue := reflect.ValueOf(obj)
-	var yamlBuilder strings.Builder
-	generateYaml(&yamlBuilder, reflectValue, 0, "")
-	yamlString := yamlBuilder.String()
+func (cmd *command) scaffoldGeneratorFromOptions() *scaffgen.Generator {
 
-	err := os.WriteFile(filePath, []byte(yamlString), 0600)
-	if err != nil {
-		return fmt.Errorf("error writing file: %w", err)
+	toFullPath := func(file string) string {
+		if file == "" {
+			return ""
+		}
+		return cmd.opts.getCompleteFilePath(file)
 	}
 
-	return nil
-}
-*/
-
-func (cmd *command) scaffoldGeneratorFromOptions() *scaffgen.Generator {
 	res := scaffgen.Generator{
 		ModuleName:         cmd.opts.ModuleName,
 		ModuleVersion:      cmd.opts.ModuleVersion,
 		ModuleChannel:      cmd.opts.ModuleChannel,
-		ModuleConfigFile:   cmd.opts.getCompleteFilePath(cmd.opts.ModuleConfigFile),
-		ManifestFile:       cmd.opts.getCompleteFilePath(cmd.opts.ManifestFile),
-		SecurityConfigFile: cmd.opts.getCompleteFilePath(cmd.opts.SecurityConfigFile),
-		DefaultCRFile:      cmd.opts.getCompleteFilePath(cmd.opts.DefaultCRFile),
+		ModuleConfigFile:   toFullPath(cmd.opts.ModuleConfigFile),
+		ManifestFile:       toFullPath(cmd.opts.ManifestFile),
+		SecurityConfigFile: toFullPath(cmd.opts.SecurityConfigFile),
+		DefaultCRFile:      toFullPath(cmd.opts.DefaultCRFile),
 	}
 
 	return &res
