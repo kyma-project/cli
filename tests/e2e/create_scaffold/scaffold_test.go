@@ -26,21 +26,19 @@ var _ = Describe("Create Scaffold Command", func() {
 
 	BeforeEach(func() {
 		var err error
-		workDir, workDirCleanup = resolveWorkingDirectory()
 		initialDir, err = os.Getwd()
 		Expect(err).To(BeNil())
+		workDir, workDirCleanup = resolveWorkingDirectory()
 		err = os.Chdir(workDir)
 		Expect(err).To(BeNil())
 	})
 
 	AfterEach(func() {
-
 		err := os.Chdir(initialDir)
 		Expect(err).To(BeNil())
-		if workDirCleanup != nil {
-			fmt.Println("foo")
-		}
-		//workDir = ""
+		workDirCleanup()
+		workDir = ""
+		initialDir = ""
 	})
 
 	Context("Given an empty directory", func() {
@@ -48,15 +46,17 @@ var _ = Describe("Create Scaffold Command", func() {
 			cmd := CreateScaffoldCmd{}
 			Expect(cmd.execute()).To(Succeed())
 
-			By("Then the manifest file is generated")
+			By("Then two files are generated")
+			Expect(filesIn(workDir)).Should(HaveLen(2))
+
+			By("And the manifest file is generated")
 			Expect(filesIn(workDir)).Should(ContainElement("manifest.yaml"))
 
 			By("And the module config file is generated")
 			Expect(filesIn(workDir)).Should(ContainElement("scaffold-module-config.yaml"))
 
 			By("And module config contains expected entries")
-			actualModConf, err := moduleConfigFromFile(workDir, "scaffold-module-config.yaml")
-			Expect(err).To(BeNil())
+			actualModConf := moduleConfigFromFile(workDir, "scaffold-module-config.yaml")
 			expectedModConf := (&ModuleConfigBuilder{}).defaults().get()
 			Expect(actualModConf).To(BeEquivalentTo(expectedModConf))
 		})
@@ -92,6 +92,9 @@ var _ = Describe("Create Scaffold Command", func() {
 			By("Then the command should succeed")
 			Expect(cmd.execute()).To(Succeed())
 
+			By("And two files are generated")
+			Expect(filesIn(workDir)).Should(HaveLen(2))
+
 			By("And the manifest file is generated")
 			Expect(filesIn(workDir)).Should(ContainElement("manifest.yaml"))
 
@@ -99,9 +102,47 @@ var _ = Describe("Create Scaffold Command", func() {
 			Expect(filesIn(workDir)).Should(ContainElement("scaffold-module-config.yaml"))
 
 			By("And module config contains expected entries")
-			actualModConf, err := moduleConfigFromFile(workDir, "scaffold-module-config.yaml")
-			Expect(err).To(BeNil())
+			actualModConf := moduleConfigFromFile(workDir, "scaffold-module-config.yaml")
 			expectedModConf := (&ModuleConfigBuilder{}).defaults().get()
+			Expect(actualModConf).To(BeEquivalentTo(expectedModConf))
+		})
+	})
+
+	Context("Given an empty directory", func() {
+		It("When `kyma alpha create scaffold` command args override default names", func() {
+			cmd := CreateScaffoldCmd{
+				moduleConfigFileFlag:          "custom-module-config.yaml",
+				genManifestFlag:               "custom-manifest.yaml",
+				genDefaultCRFlag:              "custom-default-cr.yaml",
+				genSecurityScannersConfigFlag: "custom-security-scanners-config.yaml",
+			}
+
+			By("Then the command should succeed")
+			Expect(cmd.execute()).To(Succeed())
+
+			By("And four files are generated")
+			Expect(filesIn(workDir)).Should(HaveLen(4))
+
+			By("And the manifest file is generated")
+			Expect(filesIn(workDir)).Should(ContainElement("custom-manifest.yaml"))
+
+			By("And the defaultCR file is generated")
+			Expect(filesIn(workDir)).Should(ContainElement("custom-default-cr.yaml"))
+
+			By("And the security-scanners-config file is generated")
+			Expect(filesIn(workDir)).Should(ContainElement("custom-security-scanners-config.yaml"))
+
+			By("And the module config file is generated")
+			Expect(filesIn(workDir)).Should(ContainElement("custom-module-config.yaml"))
+
+			By("And module config contains expected entries")
+			actualModConf := moduleConfigFromFile(workDir, "custom-module-config.yaml")
+			expectedModConf := (&ModuleConfigBuilder{}).
+				defaults().
+				withManifestPath("custom-manifest.yaml").
+				withDefaultCRPath("custom-default-cr.yaml").
+				withSecurityScannersPath("custom-security-scanners-config.yaml").
+				get()
 			Expect(actualModConf).To(BeEquivalentTo(expectedModConf))
 		})
 	})
@@ -119,17 +160,14 @@ func createMarkerFile(name string) error {
 	return err
 }
 
-func moduleConfigFromFile(dir, fileName string) (*module.Config, error) {
+func moduleConfigFromFile(dir, fileName string) *module.Config {
 	filePath := path.Join(dir, fileName)
 	data, err := os.ReadFile(filePath)
-	if err != nil {
-		return nil, err
-	}
+	Expect(err).To(BeNil())
 	res := module.Config{}
-	if err = yaml.Unmarshal(data, &res); err != nil {
-		return nil, err
-	}
-	return &res, nil
+	err = yaml.Unmarshal(data, &res)
+	Expect(err).To(BeNil())
+	return &res
 }
 
 func filesIn(dir string) ([]string, error) {
@@ -166,7 +204,6 @@ func resolveWorkingDirectory() (path string, cleanup func()) {
 		if err != nil {
 			Fail(err.Error())
 		}
-		fmt.Printf("\nCreated temporary directory: %s\n", path)
 		cleanup = func() {
 			os.RemoveAll(path)
 		}
@@ -175,7 +212,11 @@ func resolveWorkingDirectory() (path string, cleanup func()) {
 }
 
 type CreateScaffoldCmd struct {
-	overwrite bool
+	overwrite                     bool
+	moduleConfigFileFlag          string
+	genDefaultCRFlag              string
+	genSecurityScannersConfigFlag string
+	genManifestFlag               string
 }
 
 func (cmd *CreateScaffoldCmd) execute() error {
@@ -185,6 +226,22 @@ func (cmd *CreateScaffoldCmd) execute() error {
 
 	if cmd.overwrite {
 		args = append(args, "--overwrite=true")
+	}
+
+	if cmd.moduleConfigFileFlag != "" {
+		args = append(args, fmt.Sprintf("--module-config=%s", cmd.moduleConfigFileFlag))
+	}
+
+	if cmd.genDefaultCRFlag != "" {
+		args = append(args, fmt.Sprintf("--gen-default-cr=%s", cmd.genDefaultCRFlag))
+	}
+
+	if cmd.genSecurityScannersConfigFlag != "" {
+		args = append(args, fmt.Sprintf("--gen-security-config=%s", cmd.genSecurityScannersConfigFlag))
+	}
+
+	if cmd.genManifestFlag != "" {
+		args = append(args, fmt.Sprintf("--gen-manifest=%s", cmd.genManifestFlag))
 	}
 
 	createScaffoldCmd = exec.Command("kyma", args...)
@@ -218,6 +275,14 @@ func (mcb *ModuleConfigBuilder) withChannel(val string) *ModuleConfigBuilder {
 }
 func (mcb *ModuleConfigBuilder) withManifestPath(val string) *ModuleConfigBuilder {
 	mcb.ManifestPath = val
+	return mcb
+}
+func (mcb *ModuleConfigBuilder) withDefaultCRPath(val string) *ModuleConfigBuilder {
+	mcb.DefaultCRPath = val
+	return mcb
+}
+func (mcb *ModuleConfigBuilder) withSecurityScannersPath(val string) *ModuleConfigBuilder {
+	mcb.Security = val
 	return mcb
 }
 func (mcb *ModuleConfigBuilder) defaults() *ModuleConfigBuilder {
