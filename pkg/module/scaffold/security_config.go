@@ -1,10 +1,7 @@
 package scaffold
 
 import (
-	"os"
-
 	"github.com/kyma-project/cli/pkg/module"
-	"github.com/pkg/errors"
 )
 
 func (g *Generator) SecurityConfigFilePath() string {
@@ -12,15 +9,7 @@ func (g *Generator) SecurityConfigFilePath() string {
 }
 
 func (g *Generator) SecurityConfigFileExists() (bool, error) {
-	if _, err := os.Stat(g.SecurityConfigFilePath()); err == nil {
-		return true, nil
-
-	} else if errors.Is(err, os.ErrNotExist) {
-		return false, nil
-
-	} else {
-		return false, err
-	}
+	return g.fileExists(g.SecurityConfigFilePath())
 }
 
 func (g *Generator) GenerateSecurityConfigFile() error {

@@ -3,8 +3,6 @@ package scaffold
 import (
 	"fmt"
 	"os"
-
-	"github.com/pkg/errors"
 )
 
 func (g *Generator) ManifestFilePath() string {
@@ -12,15 +10,7 @@ func (g *Generator) ManifestFilePath() string {
 }
 
 func (g *Generator) ManifestFileExists() (bool, error) {
-	if _, err := os.Stat(g.ManifestFilePath()); err == nil {
-		return true, nil
-
-	} else if errors.Is(err, os.ErrNotExist) {
-		return false, nil
-
-	} else {
-		return false, err
-	}
+	return g.fileExists(g.ManifestFilePath())
 }
 
 func (g *Generator) GenerateManifest() error {

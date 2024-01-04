@@ -1,10 +1,7 @@
 package scaffold
 
 import (
-	"os"
-
 	"github.com/kyma-project/cli/cmd/kyma/alpha/create/module"
-	"github.com/pkg/errors"
 )
 
 func (g *Generator) ModuleConfigFilePath() string {
@@ -12,15 +9,7 @@ func (g *Generator) ModuleConfigFilePath() string {
 }
 
 func (g *Generator) ModuleConfigFileExists() (bool, error) {
-	if _, err := os.Stat(g.ModuleConfigFilePath()); err == nil {
-		return true, nil
-
-	} else if errors.Is(err, os.ErrNotExist) {
-		return false, nil
-
-	} else {
-		return false, err
-	}
+	return g.fileExists(g.ModuleConfigFilePath())
 }
 
 func (g *Generator) GenerateModuleConfigFile() error {

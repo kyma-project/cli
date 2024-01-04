@@ -3,8 +3,6 @@ package scaffold
 import (
 	"fmt"
 	"os"
-
-	"github.com/pkg/errors"
 )
 
 func (g *Generator) DefaultCRFilePath() string {
@@ -12,15 +10,7 @@ func (g *Generator) DefaultCRFilePath() string {
 }
 
 func (g *Generator) DefaultCRFileExists() (bool, error) {
-	if _, err := os.Stat(g.DefaultCRFilePath()); err == nil {
-		return true, nil
-
-	} else if errors.Is(err, os.ErrNotExist) {
-		return false, nil
-
-	} else {
-		return false, err
-	}
+	return g.fileExists(g.DefaultCRFilePath())
 }
 
 func (g *Generator) GenerateDefaultCRFile() error {

@@ -43,12 +43,10 @@ var (
 	errModuleChannelEmpty           = errors.New("--module-channel flag must not be empty")
 	errManifestFileEmpty            = errors.New("--gen-manifest flag must not be empty")
 	errModuleConfigEmpty            = errors.New("--module-config flag must not be empty")
-	errInvalidManifestOptions       = errors.New("flag --gen-manifest cannot be set when argument --module-manifest-path provided")
 	errManifestCreationFailed       = errors.New("could not generate manifest")
-	errObjectsCreationFailed        = errors.New("could not generate webhook, rbac, and crd objects")
-	errSecurityConfigCreationFailed = errors.New("could not generate security config")
 	errDefaultCRCreationFailed      = errors.New("could not generate default CR")
 	errModuleConfigCreationFailed   = errors.New("could not generate module config")
+	errSecurityConfigCreationFailed = errors.New("could not generate security config")
 )
 
 // NewOptions creates options with default values

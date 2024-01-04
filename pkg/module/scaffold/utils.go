@@ -5,15 +5,20 @@ import (
 	"os"
 	"reflect"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
-func ensureDirExists(dir string) (string, error) {
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		if err := os.Mkdir(dir, os.ModePerm); err != nil {
-			return "", fmt.Errorf("error creating directory %s: %w", dir, err)
-		}
+func (g *Generator) fileExists(path string) (bool, error) {
+	if _, err := os.Stat(path); err == nil {
+		return true, nil
+
+	} else if errors.Is(err, os.ErrNotExist) {
+		return false, nil
+
+	} else {
+		return false, err
 	}
-	return dir, nil
 }
 
 func generateYaml(yamlBuilder *strings.Builder, reflectValue reflect.Value, indentLevel int, commentPrefix string) {
@@ -65,11 +70,4 @@ func getValueStr(value reflect.Value) string {
 		valueStr = fmt.Sprintf("%v", value.Interface())
 	}
 	return valueStr
-}
-
-func chooseValue(condition bool, trueValue, falseValue string) string {
-	if condition {
-		return trueValue
-	}
-	return falseValue
 }
