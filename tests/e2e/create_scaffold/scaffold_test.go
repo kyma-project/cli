@@ -69,7 +69,7 @@ var _ = Describe("Create Scaffold Command", func() {
 
 			By("Then the command should fail")
 			err := cmd.execute()
-			Expect(err.Error()).Should(ContainSubstring("scaffold module config file already exists"))
+			Expect(err.Error()).Should(ContainSubstring("module config file already exists"))
 
 			By("And no files should be generated")
 			Expect(filesIn(workDir)).Should(HaveLen(1))
@@ -320,6 +320,7 @@ func (cmd *CreateScaffoldCmd) toConfigBuilder() *ModuleConfigBuilder {
 	return res
 }
 
+// ModuleConfigBuilder is used to simplify module.Config creation for testing purposes
 type ModuleConfigBuilder struct {
 	module.Config
 }

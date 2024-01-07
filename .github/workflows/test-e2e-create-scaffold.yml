@@ -17,10 +17,6 @@ jobs:
   e2e:
     name: "Run E2E tests"
     runs-on: ubuntu-latest
-    env:
-      K3D_VERSION: v5.4.7
-      MODULE_TEMPLATE_VERSION: 0.1.0
-      OCI_REPOSITORY_URL: http://k3d-oci.localhost:5001
     steps:
       - name: Checkout Kyma CLI
         uses: actions/checkout@v3
@@ -36,29 +32,7 @@ jobs:
           ls -la ./bin
           mv ./bin/kyma-linux /usr/local/bin/kyma
         timeout-minutes: 10
-      - name: Prepare directory
+      - name: Run create scaffold test
         run: |
-          mkdir test-simple
-      - name: Run create scaffold
-        run: |
-          kyma alpha create scaffold \
-          --directory ./test-simple \
-          --module-name kyma-project.io/module/e2e \
-          --module-version 1.2.3 \
-          --module-channel regular \
-          --gen-default-cr
-          --gen-security-config
-      - name: Validate scaffold
-        run: |
-          cd ./template-operator
-          kyma alpha create module \
-          --path . \
-          --registry http://k3d-oci.localhost:5001 \
-          --insecure \
-          --module-config-file ./module-config.yaml \
-          --output /tmp/module-config-template.yaml 
-          echo "MODULE_TEMPLATE_PATH=/tmp/module-config-template.yaml" >> "$GITHUB_ENV"
-      - name: Verify module template
-        run: |
-          echo $MODULE_TEMPLATE_PATH
-          make -C tests/e2e test-module-creation
+          make -C tests/e2e create_scaffold_test
+        timeout-minutes: 3

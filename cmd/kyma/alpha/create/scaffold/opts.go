@@ -36,7 +36,7 @@ func (o *Options) generateDefaultCRFile() bool {
 
 var (
 	errInvalidDirectory             = errors.New("provided directory does not exist")
-	errModuleConfigExists           = errors.New("scaffold module config file already exists. use --overwrite flag to overwrite it")
+	errModuleConfigExists           = errors.New("module config file already exists. use --overwrite flag to overwrite it")
 	errModuleNameEmpty              = errors.New("--module-name flag must not be empty")
 	errModuleVersionEmpty           = errors.New("--module-version flag must not be empty")
 	errModuleChannelEmpty           = errors.New("--module-channel flag must not be empty")

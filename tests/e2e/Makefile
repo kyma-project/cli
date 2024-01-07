@@ -42,3 +42,7 @@ test-same-version-module-creation:
 .PHONY: test-module-enabling-disabling
 test-module-enabling-disabling:
 	go test -ginkgo.v -ginkgo.focus "Kyma CLI deploy, enable and disable commands usage"
+
+.PHONY: test-create-scaffold
+test-create-scaffold:
+	go test ./create_scaffold -ginkgo.v -ginkgo.focus "Create Scaffold Command"
