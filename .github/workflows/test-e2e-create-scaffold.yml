@@ -34,5 +34,5 @@ jobs:
         timeout-minutes: 10
       - name: Run create scaffold test
         run: |
-          make -C tests/e2e create_scaffold_test
+          make -C tests/e2e test-create-scaffold
         timeout-minutes: 3
