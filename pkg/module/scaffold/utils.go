@@ -2,24 +2,9 @@ package scaffold
 
 import (
 	"fmt"
-	"os"
 	"reflect"
 	"strings"
-
-	"github.com/pkg/errors"
 )
-
-func (g *Generator) fileExists(path string) (bool, error) {
-	if _, err := os.Stat(path); err == nil {
-		return true, nil
-
-	} else if errors.Is(err, os.ErrNotExist) {
-		return false, nil
-
-	} else {
-		return false, err
-	}
-}
 
 func generateYaml(yamlBuilder *strings.Builder, reflectValue reflect.Value, indentLevel int, commentPrefix string) {
 	t := reflectValue.Type()

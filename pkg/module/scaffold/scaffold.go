@@ -1,6 +1,7 @@
 package scaffold
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"reflect"
@@ -15,6 +16,18 @@ type Generator struct {
 	ManifestFile       string
 	SecurityConfigFile string
 	DefaultCRFile      string
+}
+
+func (g *Generator) fileExists(path string) (bool, error) {
+	if _, err := os.Stat(path); err == nil {
+		return true, nil
+
+	} else if errors.Is(err, os.ErrNotExist) {
+		return false, nil
+
+	} else {
+		return false, err
+	}
 }
 
 func (g *Generator) generateYamlFileFromObject(obj interface{}, filePath string) error {
