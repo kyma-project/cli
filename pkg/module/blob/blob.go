@@ -15,7 +15,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/mandelsoft/vfs/pkg/vfs"
-	"github.com/open-component-model/ocm/pkg/common/accessio"
+	"github.com/open-component-model/ocm/pkg/blobaccess"
 	"github.com/opencontainers/go-digest"
 )
 
@@ -62,6 +62,10 @@ func (o *Output) DigestKnown() bool {
 
 func (o *Output) Digest() digest.Digest {
 	return digest.FromString(o.digest)
+}
+
+func (o *Output) Dup() (blobaccess.BlobAccess, error) {
+	return o, nil
 }
 
 type InputType string
@@ -117,7 +121,7 @@ func (input *Input) SetMediaTypeIfNotDefined(mediaType string) {
 	input.MediaType = mediaType
 }
 
-func AccessForFileOrFolder(fs vfs.FileSystem, input *Input) (accessio.BlobAccess, error) {
+func AccessForFileOrFolder(fs vfs.FileSystem, input *Input) (blobaccess.BlobAccess, error) {
 	return input.Read(context.Background(), fs)
 }
 

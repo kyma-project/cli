@@ -25,14 +25,14 @@ type OciRepoAccess interface {
 type OciRepo struct{}
 
 func (r *OciRepo) ComponentVersionExists(archive *comparch.ComponentArchive, repo cpi.Repository) (bool, error) {
-	return repo.ExistsComponentVersion(archive.ComponentVersionAccess.GetName(),
-		archive.ComponentVersionAccess.GetVersion())
+	return repo.ExistsComponentVersion(archive.GetName(),
+		archive.GetVersion())
 }
 
 func (r *OciRepo) GetComponentVersion(archive *comparch.ComponentArchive,
 	repo cpi.Repository) (ocm.ComponentVersionAccess, error) {
-	return repo.LookupComponentVersion(archive.ComponentVersionAccess.GetName(),
-		archive.ComponentVersionAccess.GetVersion())
+	return repo.LookupComponentVersion(archive.GetName(),
+		archive.GetVersion())
 }
 
 func (r *OciRepo) PushComponentVersion(archive *comparch.ComponentArchive, repo cpi.Repository, overwrite bool) error {
@@ -42,7 +42,7 @@ func (r *OciRepo) PushComponentVersion(archive *comparch.ComponentArchive, repo 
 	}
 
 	if err = transfer.TransferVersion(
-		common.NewLoggingPrinter(archive.GetContext().Logger()), nil, archive.ComponentVersionAccess, repo,
+		common.NewLoggingPrinter(archive.GetContext().Logger()), nil, archive, repo,
 		&customTransferHandler{transferHandler},
 	); err != nil {
 		return fmt.Errorf("could not finish component transfer: %w", err)
@@ -88,7 +88,7 @@ func (r *OciRepo) DescriptorResourcesAreEquivalent(archive *comparch.ComponentAr
 			if remoteAccessLocalReference[7:] != localAccessObject.LocalReference[7:] {
 				return false
 			}
-		} else if !res.IsEquivalent(&localResource) {
+		} else if !res.Equivalent(&localResource).IsEquivalent() {
 			return false
 		}
 	}
