@@ -37,7 +37,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.13.3
 	istio.io/client-go v1.20.2
-	k8s.io/klog/v2 v2.110.1
+	k8s.io/klog/v2 v2.120.0
 	sigs.k8s.io/controller-runtime v0.16.3
 	sigs.k8s.io/kustomize/api v0.16.0
 	sigs.k8s.io/kustomize/kyaml v0.16.0
