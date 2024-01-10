@@ -35,7 +35,8 @@ func (o *Options) generateDefaultCRFile() bool {
 }
 
 var (
-	errInvalidDirectory             = errors.New("provided directory does not exist")
+	errDirNotExists                 = errors.New("provided directory does not exist")
+	errNotDirectory                 = errors.New("provided path is not a directory")
 	errModuleConfigExists           = errors.New("module config file already exists. use --overwrite flag to overwrite it")
 	errModuleNameEmpty              = errors.New("--module-name flag must not be empty")
 	errModuleVersionEmpty           = errors.New("--module-version flag must not be empty")
@@ -83,10 +84,19 @@ func (o *Options) Validate() error {
 }
 
 func (o *Options) validateDirectory() error {
-	_, err := os.Stat(o.Directory)
-	if errors.Is(err, os.ErrNotExist) {
-		return fmt.Errorf("%w: %s", errInvalidDirectory, o.Directory)
+	fi, err := os.Stat(o.Directory)
+
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("%w: %s", errDirNotExists, o.Directory)
+		}
+		return err
 	}
+
+	if !fi.IsDir() {
+		return fmt.Errorf("%w: %s", errNotDirectory, o.Directory)
+	}
+
 	return nil
 }
 
