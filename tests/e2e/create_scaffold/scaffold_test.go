@@ -239,7 +239,7 @@ func resolveWorkingDirectory() (path string, cleanup func()) {
 	return
 }
 
-type CreateScaffoldCmd struct {
+type createScaffoldCmd struct {
 	moduleName                    string
 	moduleVersion                 string
 	moduleChannel                 string
@@ -321,7 +321,7 @@ func (cmd *CreateScaffoldCmd) toConfigBuilder() *ModuleConfigBuilder {
 }
 
 // ModuleConfigBuilder is used to simplify module.Config creation for testing purposes
-type ModuleConfigBuilder struct {
+type moduleConfigBuilder struct {
 	module.Config
 }
 

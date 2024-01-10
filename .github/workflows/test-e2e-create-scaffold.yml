@@ -1,4 +1,4 @@
-name: TestSuite E2E - create scaffold
+name: TestSuite E2E. Scaffold Creation
 
 on:
   push:

@@ -42,7 +42,7 @@ var (
 	errModuleChannelEmpty           = errors.New("--module-channel flag must not be empty")
 	errManifestFileEmpty            = errors.New("--gen-manifest flag must not be empty")
 	errModuleConfigEmpty            = errors.New("--module-config flag must not be empty")
-	errManifestCreationFailed       = errors.New("could not generate manifest")
+	errManifestCreation       = errors.New("could not generate manifest")
 	errDefaultCRCreationFailed      = errors.New("could not generate default CR")
 	errModuleConfigCreationFailed   = errors.New("could not generate module config")
 	errSecurityConfigCreationFailed = errors.New("could not generate security config")
