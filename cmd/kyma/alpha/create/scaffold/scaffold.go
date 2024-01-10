@@ -189,7 +189,7 @@ func (cmd *command) Run(_ context.Context) error {
 		cmd.CurrentStep.Successf("Generated a blank manifest file: %s", sgen.ManifestFilePath())
 	}
 
-	if cmd.opts.generateDefaultCRFile() {
+	if cmd.opts.defaultCRFileConfigured() {
 		defaultCRFileExists, err := sgen.DefaultCRFileExists()
 		if err != nil {
 			return err
@@ -209,7 +209,7 @@ func (cmd *command) Run(_ context.Context) error {
 		}
 	}
 
-	if cmd.opts.generateSecurityConfigFile() {
+	if cmd.opts.securityConfigFileConfigured() {
 		secCfgFileExists, err := sgen.SecurityConfigFileExists()
 		if err != nil {
 			return err

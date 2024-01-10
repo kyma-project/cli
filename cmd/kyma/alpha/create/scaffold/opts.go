@@ -26,11 +26,11 @@ type Options struct {
 	ModuleChannel string
 }
 
-func (o *Options) generateSecurityConfigFile() bool {
+func (o *Options) securityConfigFileConfigured() bool {
 	return o.SecurityConfigFile != ""
 }
 
-func (o *Options) generateDefaultCRFile() bool {
+func (o *Options) defaultCRFileConfigured() bool {
 	return o.DefaultCRFile != ""
 }
 
