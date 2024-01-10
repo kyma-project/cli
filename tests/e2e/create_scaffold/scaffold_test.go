@@ -18,75 +18,39 @@ const (
 	markerFileData = "test-marker"
 )
 
-var _ = Describe("Create Scaffold Command", func() {
+var _ = Describe("Create Scaffold Command", Ordered, func() {
 	var initialDir string
 	var workDir string
 	var workDirCleanup func()
 
-	BeforeEach(func() {
+	setup := func() {
 		var err error
 		initialDir, err = os.Getwd()
 		Expect(err).To(BeNil())
 		workDir, workDirCleanup = resolveWorkingDirectory()
 		err = os.Chdir(workDir)
 		Expect(err).To(BeNil())
-	})
 
-	AfterEach(func() {
+	}
+	teardown := func() {
 		err := os.Chdir(initialDir)
 		Expect(err).To(BeNil())
 		workDirCleanup()
 		workDir = ""
 		initialDir = ""
-	})
+
+	}
 
 	Context("Given an empty directory", func() {
-		It("When `kyma alpha create scaffold` command is executed without any args", func() {
-			cmd := createScaffoldCmd{}
-			Expect(cmd.execute()).To(Succeed())
+		BeforeAll(func() { setup() })
+		AfterAll(func() { teardown() })
 
-			By("Then two files are generated")
-			Expect(filesIn(workDir)).Should(HaveLen(2))
-
-			By("And the manifest file is generated")
-			Expect(filesIn(workDir)).Should(ContainElement("manifest.yaml"))
-
-			By("And the module config file is generated")
-			Expect(filesIn(workDir)).Should(ContainElement("scaffold-module-config.yaml"))
-
-			By("And module config contains expected entries")
-			actualModConf := moduleConfigFromFile(workDir, "scaffold-module-config.yaml")
-			expectedModConf := (&moduleConfigBuilder{}).defaults().get()
-			Expect(actualModConf).To(BeEquivalentTo(expectedModConf))
+		var cmd createScaffoldCmd
+		It("When `kyma alpha create scaffold` command is invoked without any args", func() {
+			cmd = createScaffoldCmd{}
 		})
-	})
 
-	Context("Given a directory with an existing module configuration file", func() {
-		It("When `kyma alpha create scaffold` command is executed", func() {
-			Expect(createMarkerFile("scaffold-module-config.yaml")).To(Succeed())
-
-			cmd := createScaffoldCmd{}
-
-			By("Then the command should fail")
-			err := cmd.execute()
-			Expect(err.Error()).Should(ContainSubstring("module config file already exists"))
-
-			By("And no files should be generated")
-			Expect(filesIn(workDir)).Should(HaveLen(1))
-			Expect(filesIn(workDir)).Should(ContainElement("scaffold-module-config.yaml"))
-			Expect(getMarkerFileData("scaffold-module-config.yaml")).Should(Equal(markerFileData))
-		})
-	})
-
-	Context("Given a directory with an existing module configuration file", func() {
-		It("When `kyma alpha create scaffold` command is executed with --overwrite flag", func() {
-			Expect(createMarkerFile("scaffold-module-config.yaml")).To(Succeed())
-
-			cmd := createScaffoldCmd{
-				overwrite: true,
-			}
-
-			By("Then the command should succeed")
+		It("Then the command should succeed", func() {
 			Expect(cmd.execute()).To(Succeed())
 
 			By("And two files are generated")
@@ -98,7 +62,63 @@ var _ = Describe("Create Scaffold Command", func() {
 			By("And the module config file is generated")
 			Expect(filesIn(workDir)).Should(ContainElement("scaffold-module-config.yaml"))
 
-			By("And module config contains expected entries")
+			By("And the module config contains expected entries")
+			actualModConf := moduleConfigFromFile(workDir, "scaffold-module-config.yaml")
+			expectedModConf := (&moduleConfigBuilder{}).defaults().get()
+			Expect(actualModConf).To(BeEquivalentTo(expectedModConf))
+		})
+	})
+
+	Context("Given a directory with an existing module configuration file", func() {
+		BeforeAll(func() {
+			setup()
+			Expect(createMarkerFile("scaffold-module-config.yaml")).To(Succeed())
+		})
+		AfterAll(func() { teardown() })
+
+		var cmd createScaffoldCmd
+		It("When `kyma alpha create scaffold` command is invoked without any args", func() {
+			cmd = createScaffoldCmd{}
+		})
+		It("Then the command should fail", func() {
+			err := cmd.execute()
+			Expect(err).ShouldNot(BeNil())
+			Expect(err.Error()).Should(ContainSubstring("module config file already exists"))
+
+			By("And no files should be generated")
+			Expect(filesIn(workDir)).Should(HaveLen(1))
+			Expect(filesIn(workDir)).Should(ContainElement("scaffold-module-config.yaml"))
+			Expect(getMarkerFileData("scaffold-module-config.yaml")).Should(Equal(markerFileData))
+		})
+	})
+
+	Context("Given a directory with an existing module configuration file", func() {
+		BeforeAll(func() {
+			setup()
+			Expect(createMarkerFile("scaffold-module-config.yaml")).To(Succeed())
+		})
+		AfterAll(func() { teardown() })
+
+		var cmd createScaffoldCmd
+		It("When `kyma alpha create scaffold` command is invoked with --overwrite flag", func() {
+			cmd = createScaffoldCmd{
+				overwrite: true,
+			}
+		})
+
+		It("Then the command should succeed", func() {
+			Expect(cmd.execute()).To(Succeed())
+
+			By("And two files are generated")
+			Expect(filesIn(workDir)).Should(HaveLen(2))
+
+			By("And the manifest file is generated")
+			Expect(filesIn(workDir)).Should(ContainElement("manifest.yaml"))
+
+			By("And the module config file is generated")
+			Expect(filesIn(workDir)).Should(ContainElement("scaffold-module-config.yaml"))
+
+			By("And the module config contains expected entries")
 			actualModConf := moduleConfigFromFile(workDir, "scaffold-module-config.yaml")
 			expectedModConf := (&moduleConfigBuilder{}).defaults().get()
 			Expect(actualModConf).To(BeEquivalentTo(expectedModConf))
@@ -106,8 +126,12 @@ var _ = Describe("Create Scaffold Command", func() {
 	})
 
 	Context("Given an empty directory", func() {
+		BeforeAll(func() { setup() })
+		AfterAll(func() { teardown() })
+
+		var cmd createScaffoldCmd
 		It("When `kyma alpha create scaffold` command args override defaults", func() {
-			cmd := createScaffoldCmd{
+			cmd = createScaffoldCmd{
 				moduleName:                    "github.com/custom/module",
 				moduleVersion:                 "3.2.1",
 				moduleChannel:                 "custom",
@@ -116,8 +140,8 @@ var _ = Describe("Create Scaffold Command", func() {
 				genDefaultCRFlag:              "custom-default-cr.yaml",
 				genSecurityScannersConfigFlag: "custom-security-scanners-config.yaml",
 			}
-
-			By("Then the command should succeed")
+		})
+		It("Then the command should succeed", func() {
 			Expect(cmd.execute()).To(Succeed())
 
 			By("And four files are generated")
@@ -135,27 +159,32 @@ var _ = Describe("Create Scaffold Command", func() {
 			By("And the module config file is generated")
 			Expect(filesIn(workDir)).Should(ContainElement("custom-module-config.yaml"))
 
-			By("And module config contains expected entries")
+			By("And the module config contains expected entries")
 			actualModConf := moduleConfigFromFile(workDir, "custom-module-config.yaml")
 			expectedModConf := cmd.toConfigBuilder().get()
 			Expect(actualModConf).To(BeEquivalentTo(expectedModConf))
 		})
 	})
 
-	Context("Given directory with existing files", func() {
-		It("When `kyma alpha create scaffold` command is invoked with arguments that match file names", func() {
-
+	Context("Given a directory with existing files", func() {
+		BeforeAll(func() {
+			setup()
 			Expect(createMarkerFile("custom-manifest.yaml")).To(Succeed())
 			Expect(createMarkerFile("custom-default-cr.yaml")).To(Succeed())
 			Expect(createMarkerFile("custom-security-scanners-config.yaml")).To(Succeed())
 
-			cmd := createScaffoldCmd{
+		})
+		AfterAll(func() { teardown() })
+
+		var cmd createScaffoldCmd
+		It("When `kyma alpha create scaffold` command is invoked with arguments that match existing files names", func() {
+			cmd = createScaffoldCmd{
 				genManifestFlag:               "custom-manifest.yaml",
 				genDefaultCRFlag:              "custom-default-cr.yaml",
 				genSecurityScannersConfigFlag: "custom-security-scanners-config.yaml",
 			}
-
-			By("Then the command should succeed")
+		})
+		It("Then the command should succeed", func() {
 			Expect(cmd.execute()).To(Succeed())
 
 			By("And there should be four files in the directory")
@@ -179,7 +208,6 @@ var _ = Describe("Create Scaffold Command", func() {
 			Expect(actualModConf).To(BeEquivalentTo(expectedModConf))
 		})
 	})
-
 })
 
 func getMarkerFileData(name string) string {
