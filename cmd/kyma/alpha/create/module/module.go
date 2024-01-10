@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -253,6 +254,7 @@ func (cmd *command) Run(ctx context.Context) error {
 	}
 
 	modDef, modCnf, err := cmd.moduleDefinitionFromOptions()
+	defer module.DeleteTempFiles()
 
 	if err != nil {
 		return err
@@ -567,13 +569,28 @@ func (cmd *command) moduleDefinitionFromOptions() (*module.Definition, *Config, 
 
 	var defaultCRPath string
 	if moduleConfig.DefaultCRPath != "" {
+		if isUrl(moduleConfig.DefaultCRPath) {
+			moduleConfig.DefaultCRPath, err = module.DownloadRemoteFileToTempFile(moduleConfig.DefaultCRPath,
+				cmd.opts.Path, "kyma-module-default-cr-*.yaml")
+			if err != nil {
+				return nil, nil, fmt.Errorf("%w,  %w", ErrDefaultCRFetch, err)
+			}
+		}
 		defaultCRPath, err = resolveFilePath(moduleConfig.DefaultCRPath, cmd.opts.Path)
 		if err != nil {
 			return nil, nil, fmt.Errorf("%w,  %w", ErrDefaultCRPathValidation, err)
 		}
 	}
 
-	moduleManifestPath, err := resolveFilePath(moduleConfig.ManifestPath, cmd.opts.Path)
+	var moduleManifestPath string
+	if isUrl(moduleConfig.ManifestPath) {
+		moduleConfig.ManifestPath, err = module.DownloadRemoteFileToTempFile(moduleConfig.ManifestPath, cmd.opts.Path,
+			"kyma-module-manifest-*.yaml")
+		if err != nil {
+			return nil, nil, fmt.Errorf("%w,  %w", ErrManifestFetch, err)
+		}
+	}
+	moduleManifestPath, err = resolveFilePath(moduleConfig.ManifestPath, cmd.opts.Path)
 	if err != nil {
 		return nil, nil, fmt.Errorf("%w,  %w", ErrManifestPathValidation, err)
 	}
@@ -630,4 +647,9 @@ func isCrdClusterScoped(crdBytes []byte) bool {
 	}
 
 	return crd.Spec.Scope == apiextensions.ClusterScoped
+}
+
+func isUrl(s string) bool {
+	u, err := url.Parse(s)
+	return err == nil && u.Scheme != "" && u.Host != ""
 }

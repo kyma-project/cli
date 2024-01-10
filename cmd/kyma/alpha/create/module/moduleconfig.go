@@ -18,9 +18,9 @@ type Config struct {
 	Name              string                     `yaml:"name"`             // required, the name of the Module
 	Version           string                     `yaml:"version"`          // required, the version of the Module
 	Channel           string                     `yaml:"channel"`          // required, channel that should be used in the ModuleTemplate
-	ManifestPath      string                     `yaml:"manifest"`         // required, reference to the manifests, must be a relative file name.
+	ManifestPath      string                     `yaml:"manifest"`         // required, relative path or remote URL to the manifests.
 	Mandatory         bool                       `yaml:"mandatory"`        // optional, default=false, indicates whether the module is mandatory to be installed on all clusters.
-	DefaultCRPath     string                     `yaml:"defaultCR"`        // optional, reference to a YAML file containing the default CR for the module, must be a relative file name.
+	DefaultCRPath     string                     `yaml:"defaultCR"`        // optional, relative path or remote URL to a YAML file containing the default CR for the module.
 	ResourceName      string                     `yaml:"resourceName"`     // optional, default={NAME}-{CHANNEL}, the name for the ModuleTemplate that will be created
 	Namespace         string                     `yaml:"namespace"`        // optional, default=kcp-system, the namespace where the ModuleTemplate will be deployed
 	Security          string                     `yaml:"security"`         // optional, name of the security scanners config file
