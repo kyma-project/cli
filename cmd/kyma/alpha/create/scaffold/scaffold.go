@@ -182,8 +182,8 @@ func (cmd *command) Run(_ context.Context) error {
 		cmd.CurrentStep.Status("Generating the manifest file")
 		err := sgen.GenerateManifest()
 		if err != nil {
-			cmd.CurrentStep.Failuref("%s: %s", errManifestCreationFailed.Error(), err.Error())
-			return fmt.Errorf("%w: %s", errManifestCreationFailed, err.Error())
+			cmd.CurrentStep.Failuref("%s: %s", errManifestCreation.Error(), err.Error())
+			return fmt.Errorf("%w: %s", errManifestCreation, err.Error())
 		}
 
 		cmd.CurrentStep.Successf("Generated a blank manifest file: %s", sgen.ManifestFilePath())

@@ -42,7 +42,7 @@ var _ = Describe("Create Scaffold Command", func() {
 
 	Context("Given an empty directory", func() {
 		It("When `kyma alpha create scaffold` command is executed without any args", func() {
-			cmd := CreateScaffoldCmd{}
+			cmd := createScaffoldCmd{}
 			Expect(cmd.execute()).To(Succeed())
 
 			By("Then two files are generated")
@@ -56,7 +56,7 @@ var _ = Describe("Create Scaffold Command", func() {
 
 			By("And module config contains expected entries")
 			actualModConf := moduleConfigFromFile(workDir, "scaffold-module-config.yaml")
-			expectedModConf := (&ModuleConfigBuilder{}).defaults().get()
+			expectedModConf := (&moduleConfigBuilder{}).defaults().get()
 			Expect(actualModConf).To(BeEquivalentTo(expectedModConf))
 		})
 	})
@@ -65,7 +65,7 @@ var _ = Describe("Create Scaffold Command", func() {
 		It("When `kyma alpha create scaffold` command is executed", func() {
 			Expect(createMarkerFile("scaffold-module-config.yaml")).To(Succeed())
 
-			cmd := CreateScaffoldCmd{}
+			cmd := createScaffoldCmd{}
 
 			By("Then the command should fail")
 			err := cmd.execute()
@@ -82,7 +82,7 @@ var _ = Describe("Create Scaffold Command", func() {
 		It("When `kyma alpha create scaffold` command is executed with --overwrite flag", func() {
 			Expect(createMarkerFile("scaffold-module-config.yaml")).To(Succeed())
 
-			cmd := CreateScaffoldCmd{
+			cmd := createScaffoldCmd{
 				overwrite: true,
 			}
 
@@ -100,14 +100,14 @@ var _ = Describe("Create Scaffold Command", func() {
 
 			By("And module config contains expected entries")
 			actualModConf := moduleConfigFromFile(workDir, "scaffold-module-config.yaml")
-			expectedModConf := (&ModuleConfigBuilder{}).defaults().get()
+			expectedModConf := (&moduleConfigBuilder{}).defaults().get()
 			Expect(actualModConf).To(BeEquivalentTo(expectedModConf))
 		})
 	})
 
 	Context("Given an empty directory", func() {
 		It("When `kyma alpha create scaffold` command args override defaults", func() {
-			cmd := CreateScaffoldCmd{
+			cmd := createScaffoldCmd{
 				moduleName:                    "github.com/custom/module",
 				moduleVersion:                 "3.2.1",
 				moduleChannel:                 "custom",
@@ -149,7 +149,7 @@ var _ = Describe("Create Scaffold Command", func() {
 			Expect(createMarkerFile("custom-default-cr.yaml")).To(Succeed())
 			Expect(createMarkerFile("custom-security-scanners-config.yaml")).To(Succeed())
 
-			cmd := CreateScaffoldCmd{
+			cmd := createScaffoldCmd{
 				genManifestFlag:               "custom-manifest.yaml",
 				genDefaultCRFlag:              "custom-default-cr.yaml",
 				genSecurityScannersConfigFlag: "custom-security-scanners-config.yaml",
@@ -250,8 +250,8 @@ type createScaffoldCmd struct {
 	overwrite                     bool
 }
 
-func (cmd *CreateScaffoldCmd) execute() error {
-	var createScaffoldCmd *exec.Cmd
+func (cmd *createScaffoldCmd) execute() error {
+	var command *exec.Cmd
 
 	args := []string{"alpha", "create", "scaffold"}
 
@@ -287,8 +287,8 @@ func (cmd *CreateScaffoldCmd) execute() error {
 		args = append(args, "--overwrite=true")
 	}
 
-	createScaffoldCmd = exec.Command("kyma", args...)
-	cmdOut, err := createScaffoldCmd.CombinedOutput()
+	command = exec.Command("kyma", args...)
+	cmdOut, err := command.CombinedOutput()
 
 	if err != nil {
 		return fmt.Errorf("create scaffold command failed with output: %s and error: %w", cmdOut, err)
@@ -296,8 +296,8 @@ func (cmd *CreateScaffoldCmd) execute() error {
 	return nil
 }
 
-func (cmd *CreateScaffoldCmd) toConfigBuilder() *ModuleConfigBuilder {
-	res := &ModuleConfigBuilder{}
+func (cmd *createScaffoldCmd) toConfigBuilder() *moduleConfigBuilder {
+	res := &moduleConfigBuilder{}
 	res.defaults()
 	if cmd.moduleName != "" {
 		res.withName(cmd.moduleName)
@@ -320,40 +320,40 @@ func (cmd *CreateScaffoldCmd) toConfigBuilder() *ModuleConfigBuilder {
 	return res
 }
 
-// ModuleConfigBuilder is used to simplify module.Config creation for testing purposes
+// moduleConfigBuilder is used to simplify module.Config creation for testing purposes
 type moduleConfigBuilder struct {
 	module.Config
 }
 
-func (mcb *ModuleConfigBuilder) get() *module.Config {
+func (mcb *moduleConfigBuilder) get() *module.Config {
 	res := mcb.Config
 	return &res
 }
-func (mcb *ModuleConfigBuilder) withName(val string) *ModuleConfigBuilder {
+func (mcb *moduleConfigBuilder) withName(val string) *moduleConfigBuilder {
 	mcb.Name = val
 	return mcb
 }
-func (mcb *ModuleConfigBuilder) withVersion(val string) *ModuleConfigBuilder {
+func (mcb *moduleConfigBuilder) withVersion(val string) *moduleConfigBuilder {
 	mcb.Version = val
 	return mcb
 }
-func (mcb *ModuleConfigBuilder) withChannel(val string) *ModuleConfigBuilder {
+func (mcb *moduleConfigBuilder) withChannel(val string) *moduleConfigBuilder {
 	mcb.Channel = val
 	return mcb
 }
-func (mcb *ModuleConfigBuilder) withManifestPath(val string) *ModuleConfigBuilder {
+func (mcb *moduleConfigBuilder) withManifestPath(val string) *moduleConfigBuilder {
 	mcb.ManifestPath = val
 	return mcb
 }
-func (mcb *ModuleConfigBuilder) withDefaultCRPath(val string) *ModuleConfigBuilder {
+func (mcb *moduleConfigBuilder) withDefaultCRPath(val string) *moduleConfigBuilder {
 	mcb.DefaultCRPath = val
 	return mcb
 }
-func (mcb *ModuleConfigBuilder) withSecurityScannersPath(val string) *ModuleConfigBuilder {
+func (mcb *moduleConfigBuilder) withSecurityScannersPath(val string) *moduleConfigBuilder {
 	mcb.Security = val
 	return mcb
 }
-func (mcb *ModuleConfigBuilder) defaults() *ModuleConfigBuilder {
+func (mcb *moduleConfigBuilder) defaults() *moduleConfigBuilder {
 	return mcb.
 		withName("kyma-project.io/module/mymodule").
 		withVersion("0.0.1").
