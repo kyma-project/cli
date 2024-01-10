@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 )
 
 var tempFiles []*os.File
 
 func DownloadRemoteFileToTempFile(url, dir, filenamePattern string) (string, error) {
-	bytes, err := getBytesFromUrl(url)
+	bytes, err := getBytesFromURL(url)
 	if err != nil {
 		return "", fmt.Errorf("failed to download file from %s: %w", url, err)
 	}
@@ -39,8 +40,12 @@ func DeleteTempFiles() []error {
 	return errors
 }
 
-func getBytesFromUrl(url string) ([]byte, error) {
-	resp, err := http.Get(url)
+func getBytesFromURL(urlString string) ([]byte, error) {
+	url, err := url.Parse(urlString)
+	if err != nil {
+		return nil, fmt.Errorf("parseing url failed for %s: %w", urlString, err)
+	}
+	resp, err := http.Get(url.String())
 	if err != nil {
 		return nil, fmt.Errorf("http GET request failed for %s: %w", url, err)
 	}

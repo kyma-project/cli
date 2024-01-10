@@ -51,7 +51,7 @@ func TestDownloadRemoteFileToTempFile(t *testing.T) {
 			got, err := DownloadRemoteFileToTempFile(tt.args.url, os.TempDir(), tt.args.filename)
 
 			if err != nil && !tt.wantErr {
-				t.Errorf("unexpected error occured: %s", err.Error())
+				t.Errorf("unexpected error occurred: %s", err.Error())
 				return
 			}
 			if err != nil && tt.wantErr {

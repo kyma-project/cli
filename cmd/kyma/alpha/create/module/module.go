@@ -569,7 +569,7 @@ func (cmd *command) moduleDefinitionFromOptions() (*module.Definition, *Config, 
 
 	var defaultCRPath string
 	if moduleConfig.DefaultCRPath != "" {
-		if isUrl(moduleConfig.DefaultCRPath) {
+		if isURL(moduleConfig.DefaultCRPath) {
 			moduleConfig.DefaultCRPath, err = module.DownloadRemoteFileToTempFile(moduleConfig.DefaultCRPath,
 				cmd.opts.Path, "kyma-module-default-cr-*.yaml")
 			if err != nil {
@@ -583,7 +583,7 @@ func (cmd *command) moduleDefinitionFromOptions() (*module.Definition, *Config, 
 	}
 
 	var moduleManifestPath string
-	if isUrl(moduleConfig.ManifestPath) {
+	if isURL(moduleConfig.ManifestPath) {
 		moduleConfig.ManifestPath, err = module.DownloadRemoteFileToTempFile(moduleConfig.ManifestPath, cmd.opts.Path,
 			"kyma-module-manifest-*.yaml")
 		if err != nil {
@@ -649,7 +649,7 @@ func isCrdClusterScoped(crdBytes []byte) bool {
 	return crd.Spec.Scope == apiextensions.ClusterScoped
 }
 
-func isUrl(s string) bool {
+func isURL(s string) bool {
 	u, err := url.Parse(s)
 	return err == nil && u.Scheme != "" && u.Host != ""
 }
