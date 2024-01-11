@@ -65,6 +65,7 @@ The module config file is a YAML file used to configure the following attributes
 - name:             a string, required, the name of the module
 - version:          a string, required, the version of the module
 - channel:          a string, required, channel that should be used in the ModuleTemplate CR
+- mandatory:        a boolean, optional, default=false, indicates whether the module is mandatory to be installed on all clusters
 - manifest:         a string, required, reference to the manifest, must be a relative file name
 - defaultCR:        a string, optional, reference to a YAML file containing the default CR for the module, must be a relative file name
 - resourceName:     a string, optional, default={NAME}-{CHANNEL}, the name for the ModuleTemplate CR that will be created
