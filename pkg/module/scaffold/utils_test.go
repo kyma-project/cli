@@ -64,7 +64,7 @@ func TestMarshalFlatWithSomeRequiredCommentYaml(t *testing.T) {
 		Title: "Dr",
 	}
 
-	// note: "age" is rendered to yaml because of the word "required" in the comment
+	// note: "age" is rendered uncommented because of the word "required" in the comment tag
 	expected := stripLeadingNewline(`
 age: 0 # required, the age of the user
 name: "John" # required, the name of the user
