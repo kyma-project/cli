@@ -4,8 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"reflect"
-	"strings"
 )
 
 type Generator struct {
@@ -31,12 +29,9 @@ func (g *Generator) fileExists(path string) (bool, error) {
 }
 
 func (g *Generator) generateYamlFileFromObject(obj interface{}, filePath string) error {
-	reflectValue := reflect.ValueOf(obj)
-	var yamlBuilder strings.Builder
-	generateYaml(&yamlBuilder, reflectValue, 0, "")
-	yamlString := yamlBuilder.String()
+	yamlVal := generateYaml(obj)
 
-	err := os.WriteFile(filePath, []byte(yamlString), 0600)
+	err := os.WriteFile(filePath, []byte(yamlVal), 0600)
 	if err != nil {
 		return fmt.Errorf("error writing file: %w", err)
 	}

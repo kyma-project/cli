@@ -6,44 +6,67 @@ import (
 	"strings"
 )
 
-func generateYaml(yamlBuilder *strings.Builder, reflectValue reflect.Value, indentLevel int, commentPrefix string) {
-	t := reflectValue.Type()
+func generateYaml(obj interface{}) string {
+	reflectValue := reflect.ValueOf(obj)
+	var yamlBuilder strings.Builder
+	generateYamlWithComments(&yamlBuilder, reflectValue, 0, "")
+	return yamlBuilder.String()
+}
+
+// generateYamlWithComments uses a "comment" tag in the struct definition to generate YAML with comments on corresponding lines.
+// Note: Map support is missing!
+func generateYamlWithComments(yamlBuilder *strings.Builder, obj reflect.Value, indentLevel int, commentPrefix string) {
+	t := obj.Type()
 
 	indentPrefix := strings.Repeat("  ", indentLevel)
 	originalCommentPrefix := commentPrefix
 	for i := 0; i < t.NumField(); i++ {
+		commentPrefix = originalCommentPrefix
 		field := t.Field(i)
-		value := reflectValue.Field(i)
-		tag := field.Tag.Get("yaml")
-		comment := field.Tag.Get("comment")
+		value := obj.Field(i)
+		yamlTag := field.Tag.Get("yaml")
+		commentTag := field.Tag.Get("comment")
 
-		if value.IsZero() && !strings.Contains(comment, "required") {
+		// comment-out non-required empty attributes
+		if value.IsZero() && !strings.Contains(commentTag, "required") {
 			commentPrefix = "# "
 		}
 
 		if value.Kind() == reflect.Struct {
-			yamlBuilder.WriteString(fmt.Sprintf("%s%s%s: # %s\n", commentPrefix, indentPrefix, tag, comment))
-			generateYaml(yamlBuilder, value, indentLevel+1, commentPrefix)
+			if commentTag == "" {
+				yamlBuilder.WriteString(fmt.Sprintf("%s%s%s:\n", commentPrefix, indentPrefix, yamlTag))
+			} else {
+				yamlBuilder.WriteString(fmt.Sprintf("%s%s%s: # %s\n", commentPrefix, indentPrefix, yamlTag, commentTag))
+			}
+			generateYamlWithComments(yamlBuilder, value, indentLevel+1, commentPrefix)
 			continue
 		}
 
-		if value.Kind() == reflect.Slice || value.Kind() == reflect.Map {
-			yamlBuilder.WriteString(fmt.Sprintf("%s%s%s: # %s\n", commentPrefix, indentPrefix, tag, comment))
+		if value.Kind() == reflect.Slice {
+			if commentTag == "" {
+				yamlBuilder.WriteString(fmt.Sprintf("%s%s%s:\n", commentPrefix, indentPrefix, yamlTag))
+			} else {
+				yamlBuilder.WriteString(fmt.Sprintf("%s%s%s: # %s\n", commentPrefix, indentPrefix, yamlTag, commentTag))
+			}
+
+			if value.Len() == 0 {
+				yamlBuilder.WriteString(fmt.Sprintf("%s%s  -\n", commentPrefix, indentPrefix))
+			}
 			for j := 0; j < value.Len(); j++ {
 				valueStr := getValueStr(value.Index(j))
-				yamlBuilder.WriteString(fmt.Sprintf("%s%s  - %s\n", commentPrefix, indentPrefix, valueStr))
-			}
-			if value.Len() == 0 {
-				yamlBuilder.WriteString(fmt.Sprintf("%s%s  - \n", commentPrefix, indentPrefix))
+				yamlBuilder.WriteString(fmt.Sprintf("%s%s  - %s\n", "", indentPrefix, valueStr))
 			}
 			continue
 		}
 
 		valueStr := getValueStr(value)
-		yamlBuilder.WriteString(fmt.Sprintf("%s%s%s: %s # %s\n", commentPrefix, indentPrefix,
-			tag, valueStr, comment))
-
-		commentPrefix = originalCommentPrefix
+		if commentTag == "" {
+			yamlBuilder.WriteString(fmt.Sprintf("%s%s%s: %s\n", commentPrefix, indentPrefix,
+				yamlTag, valueStr))
+		} else {
+			yamlBuilder.WriteString(fmt.Sprintf("%s%s%s: %s # %s\n", commentPrefix, indentPrefix,
+				yamlTag, valueStr, commentTag))
+		}
 	}
 }
 
