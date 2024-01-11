@@ -210,12 +210,6 @@ func TestMarshalDoublyNestedSlice(t *testing.T) {
 				Friends:         []string{"Bob", "Alice"},
 				FavouriteColors: []string{"Red", "Green", "Blue"},
 			},
-			/*
-				Private: DoublyNested{
-					Nicknames:      []string{"LazyCoyote", "FunnyBunny"},
-					FavouriteFoods: []string{"Pizza", "Cola", "Nachos"},
-				},
-			*/
 		},
 	}
 
