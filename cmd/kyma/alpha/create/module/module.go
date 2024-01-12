@@ -1,7 +1,6 @@
 package module
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"maps"
@@ -112,7 +111,7 @@ Build a Kubebuilder module my-domain/modC in version 3.2.1 and push it to a loca
 		kyma alpha create module --name my-domain/modC --version 3.2.1 --path /path/to/module --registry http://localhost:5001/unsigned --insecure
 
 `,
-		RunE:    func(cobraCmd *cobra.Command, args []string) error { return c.Run(cobraCmd.Context()) },
+		RunE:    func(cobraCmd *cobra.Command, args []string) error { return c.Run() },
 		Aliases: []string{"mod"},
 	}
 
@@ -224,14 +223,9 @@ func configureLegacyFlags(cmd *cobra.Command, o *Options) *cobra.Command {
 	return cmd
 }
 
-type validator interface {
-	GetCrd() []byte
-	Run(ctx context.Context, log *zap.SugaredLogger) error
-}
-
 const kcpSystemNamespace = "kcp-system"
 
-func (cmd *command) Run(ctx context.Context) error {
+func (cmd *command) Run() error {
 	osFS := osfs.New()
 
 	if cmd.opts.CI {
@@ -274,11 +268,6 @@ func (cmd *command) Run(ctx context.Context) error {
 		}
 	}
 	cmd.CurrentStep.Successf("Module built")
-
-	var crValidator validator
-	if crValidator, err = cmd.validateDefaultCR(ctx, modDef, l); err != nil {
-		return err
-	}
 
 	var archiveFS vfs.FileSystem
 	if cmd.opts.PersistentArchive {
@@ -424,7 +413,11 @@ func (cmd *command) Run(ctx context.Context) error {
 	}
 
 	labels := cmd.getModuleTemplateLabels(modCnf)
-	annotations := cmd.getModuleTemplateAnnotations(modCnf, crValidator)
+	crd, err := module.GetCrdFromModuleDef(cmd.opts.KubebuilderProject, modDef)
+	if err != nil {
+		return nil
+	}
+	annotations := cmd.getModuleTemplateAnnotations(modCnf, crd)
 
 	template, err := module.Template(componentVersionAccess, resourceName, namespace,
 		channel, modDef.DefaultCR, labels, annotations, modDef.CustomStateChecks, mandatoryModule)
@@ -458,7 +451,7 @@ func (cmd *command) getModuleTemplateLabels(modCnf *Config) map[string]string {
 	return labels
 }
 
-func (cmd *command) getModuleTemplateAnnotations(modCnf *Config, crValidator validator) map[string]string {
+func (cmd *command) getModuleTemplateAnnotations(modCnf *Config, crd []byte) map[string]string {
 	annotations := map[string]string{}
 	moduleVersion := cmd.opts.Version
 	if modCnf != nil {
@@ -467,7 +460,7 @@ func (cmd *command) getModuleTemplateAnnotations(modCnf *Config, crValidator val
 		moduleVersion = modCnf.Version
 	}
 
-	isClusterScoped := isCrdClusterScoped(crValidator.GetCrd())
+	isClusterScoped := isCrdClusterScoped(crd)
 	if isClusterScoped {
 		annotations[shared.IsClusterScopedAnnotation] = shared.EnableLabelValue
 	} else {
@@ -475,28 +468,6 @@ func (cmd *command) getModuleTemplateAnnotations(modCnf *Config, crValidator val
 	}
 	annotations[shared.ModuleVersionAnnotation] = moduleVersion
 	return annotations
-}
-
-func (cmd *command) validateDefaultCR(ctx context.Context, modDef *module.Definition, l *zap.SugaredLogger) (validator,
-	error) {
-	cmd.NewStep("Validating Default CR")
-
-	var crValidator validator
-	if cmd.opts.KubebuilderProject {
-		crValidator = module.NewDefaultCRValidator(modDef.DefaultCR, modDef.Source)
-	} else {
-		crValidator = module.NewSingleManifestFileCRValidator(modDef.DefaultCR, modDef.SingleManifestPath)
-	}
-
-	if err := crValidator.Run(ctx, l); err != nil {
-		if errors.Is(err, module.ErrEmptyCR) {
-			cmd.CurrentStep.Successf("Default CR validation skipped - no default CR")
-			return crValidator, nil
-		}
-		return crValidator, err
-	}
-	cmd.CurrentStep.Successf("Default CR validation succeeded")
-	return crValidator, nil
 }
 
 func (cmd *command) getRemote(nameMapping module.NameMapping) (*module.Remote, error) {

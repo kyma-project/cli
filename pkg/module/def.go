@@ -3,7 +3,11 @@ package module
 import (
 	"errors"
 	"fmt"
+	"strings"
+
 	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
+
+	amv "k8s.io/apimachinery/pkg/util/validation"
 
 	"github.com/kyma-project/cli/pkg/module/oci"
 )
@@ -60,4 +64,22 @@ func ParseNameMapping(val string) (NameMapping, error) {
 	return "", fmt.Errorf(
 		"invalid mapping mode: %s, only %s or %s are allowed", val, URLPathNameMapping, DigestNameMapping,
 	)
+}
+
+// ValidateName checks if the name is at least three characters long and if it conforms to the "RFC 1035 Label Names" specification (K8s compatibility requirement)
+func ValidateName(name string) error {
+	if len(name) < 3 {
+		return errors.New("invalid module name: name must be at least three characters long")
+	}
+
+	violations := amv.IsDNS1035Label(name)
+	if len(violations) == 1 {
+		return fmt.Errorf("invalid module name: %s", violations[0])
+	}
+	if len(violations) > 1 {
+		vl := "\n - " + strings.Join(violations, "\n - ")
+		return fmt.Errorf("invalid module name: %s", vl)
+	}
+
+	return nil
 }
