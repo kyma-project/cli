@@ -34,7 +34,7 @@ type Definition struct {
 // validate checks that the configuration has all required data for a module to be valid.
 func (cfg *Definition) validate() error {
 	if cfg.Name == "" {
-		return errors.New("The module name cannot be empty")
+		return errors.New("the module name cannot be empty")
 	}
 
 	ref, err := oci.ParseRef(cfg.Name)
@@ -42,15 +42,15 @@ func (cfg *Definition) validate() error {
 		return err
 	}
 
-	if err := ValidateName(ref.ShortName()); err != nil {
+	if err := validateName(ref.ShortName()); err != nil {
 		return err
 	}
 
 	if cfg.Version == "" {
-		return errors.New("The module version cannot be empty")
+		return errors.New("the module version cannot be empty")
 	}
 	if cfg.Source == "" {
-		return errors.New("The module source path cannot be empty")
+		return errors.New("the module source path cannot be empty")
 	}
 	return nil
 }
@@ -67,7 +67,7 @@ func ParseNameMapping(val string) (NameMapping, error) {
 }
 
 // ValidateName checks if the name is at least three characters long and if it conforms to the "RFC 1035 Label Names" specification (K8s compatibility requirement)
-func ValidateName(name string) error {
+func validateName(name string) error {
 	if len(name) < 3 {
 		return errors.New("invalid module name: name must be at least three characters long")
 	}

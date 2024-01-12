@@ -269,6 +269,11 @@ func (cmd *command) Run() error {
 	}
 	cmd.CurrentStep.Successf("Module built")
 
+	crd, err := module.GetCrdFromModuleDef(cmd.opts.KubebuilderProject, modDef)
+	if err != nil {
+		return nil
+	}
+
 	var archiveFS vfs.FileSystem
 	if cmd.opts.PersistentArchive {
 		archiveFS = osFS
@@ -413,10 +418,6 @@ func (cmd *command) Run() error {
 	}
 
 	labels := cmd.getModuleTemplateLabels(modCnf)
-	crd, err := module.GetCrdFromModuleDef(cmd.opts.KubebuilderProject, modDef)
-	if err != nil {
-		return nil
-	}
 	annotations := cmd.getModuleTemplateAnnotations(modCnf, crd)
 
 	template, err := module.Template(componentVersionAccess, resourceName, namespace,
