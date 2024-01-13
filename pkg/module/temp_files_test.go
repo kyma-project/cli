@@ -4,14 +4,16 @@ import (
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
 	"os"
-	"sync"
 	"testing"
 )
 
-var httpmockMutex sync.Mutex
-
 func TestDownloadRemoteFileToTempFile(t *testing.T) {
 	t.Parallel()
+
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+	httpmock.RegisterResponder("GET", "https://example.com/manifest.yaml",
+		httpmock.NewBytesResponder(200, []byte("<file-contents>")))
 	defer DeleteTempFiles()
 
 	type args struct {
@@ -46,20 +48,6 @@ func TestDownloadRemoteFileToTempFile(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			httpmockMutex.Lock()
-			httpmock.Activate()
-			httpmockMutex.Unlock()
-			defer func() {
-				httpmockMutex.Lock()
-				httpmock.DeactivateAndReset()
-				httpmockMutex.Unlock()
-			}()
-
-			httpmock.RegisterResponder("GET", "https://example.com/manifest.yaml",
-				httpmock.NewBytesResponder(200, []byte("<file-contents>")))
-
 			got, err := DownloadRemoteFileToTempFile(tt.args.url, os.TempDir(), tt.args.filename)
 
 			if err != nil && !tt.wantErr {
