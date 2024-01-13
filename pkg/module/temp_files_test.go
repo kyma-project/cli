@@ -12,6 +12,8 @@ var httpmockMutex sync.Mutex
 
 func TestDownloadRemoteFileToTempFile(t *testing.T) {
 	t.Parallel()
+	defer DeleteTempFiles()
+
 	type args struct {
 		url      string
 		filename string
@@ -57,7 +59,6 @@ func TestDownloadRemoteFileToTempFile(t *testing.T) {
 
 			httpmock.RegisterResponder("GET", "https://example.com/manifest.yaml",
 				httpmock.NewBytesResponder(200, []byte("<file-contents>")))
-			defer DeleteTempFiles()
 
 			got, err := DownloadRemoteFileToTempFile(tt.args.url, os.TempDir(), tt.args.filename)
 

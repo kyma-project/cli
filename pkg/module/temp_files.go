@@ -37,6 +37,7 @@ func DeleteTempFiles() []error {
 			errors = append(errors, err)
 		}
 	}
+	tempFiles = []*os.File{}
 	return errors
 }
 
