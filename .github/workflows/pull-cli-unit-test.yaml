@@ -1,0 +1,21 @@
+name: pull-cli-unit-test
+on:
+  pull_request:
+    branches:
+      - main
+      - 'release-**'
+  workflow_dispatch:
+jobs:
+  unit-tests:
+    name: unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Kyma CLI
+        uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: 'go.mod'
+          cache-dependency-path: 'go.sum'
+      - name: Run Unit Tests
+        run: make test
