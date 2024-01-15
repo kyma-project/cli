@@ -23,4 +23,5 @@ Use this command to create resources on the Kyma cluster.
 
 * [kyma alpha](kyma_alpha.md)	 - Experimental commands
 * [kyma alpha create module](kyma_alpha_create_module.md)	 - Creates a module bundled as an OCI artifact
+* [kyma alpha create scaffold](kyma_alpha_create_scaffold.md)	 - Generates necessary files required for module creation
 
