@@ -8,7 +8,7 @@ Provisions a Kubernetes cluster using Gardener on Google Cloud Platform (GCP).
 
 Use this command to provision Kubernetes clusters with Gardener on GCP for Kyma installation. 
 To successfully provision a cluster on GCP, you must first create a service account to pass its details as one of the command parameters. 
-Check the roles and create a service account using instructions at https://gardener.cloud/050-tutorials/content/howto/gardener_gcp/.
+Check the roles and create a service account using instructions at https://gardener.cloud/docs/gardener/service-account-manager/.
 Use service account details to create a Secret and import it in Gardener.
 
 ```bash
@@ -27,7 +27,7 @@ kyma provision gardener gcp [flags]
       --hibernation-end string        Cron expression to configure when the cluster should stop hibernating
       --hibernation-location string   Timezone in which the hibernation schedule should be applied. (default "Europe/Berlin")
       --hibernation-start string      Cron expression to configure when the cluster should start hibernating (default "00 18 * * 1,2,3,4,5")
-  -k, --kube-version string           Kubernetes version of the cluster. (default "1.26")
+  -k, --kube-version string           Kubernetes version of the cluster. (default "1.27")
   -n, --name string                   Name of the cluster to provision. (required)
   -p, --project string                Name of the Gardener project where you provision the cluster. (required)
   -r, --region string                 Region of the cluster. (default "europe-west3")
