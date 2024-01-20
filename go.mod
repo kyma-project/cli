@@ -18,7 +18,6 @@ require (
 	github.com/go-logr/logr v1.4.1
 	github.com/go-logr/zapr v1.3.0
 	github.com/imdario/mergo v1.0.0
-	github.com/jarcoal/httpmock v1.3.1
 	github.com/kyma-incubator/reconciler v0.0.0-20231215092926-a44f7293b791
 	github.com/kyma-project/hydroform/function v0.0.0-20230831071441-f3501c89bace
 	github.com/kyma-project/hydroform/provision v0.0.0-20230831071441-f3501c89bace

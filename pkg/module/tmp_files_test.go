@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func testHandler(w http.ResponseWriter, r *http.Request) {
+func testHandler(w http.ResponseWriter, _ *http.Request) {
 	_, err := w.Write([]byte("<file-contents>"))
 	if err != nil {
 		return
