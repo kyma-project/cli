@@ -9,8 +9,10 @@ import (
 )
 
 func testHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("<file-contents>"))
+	_, err := w.Write([]byte("<file-contents>"))
+	if err != nil {
+		return
+	}
 }
 
 func TestDownloadRemoteFileToTempFile(t *testing.T) {
