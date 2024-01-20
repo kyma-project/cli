@@ -1,20 +1,24 @@
 package module
 
 import (
-	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"testing"
 )
 
+func testHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("<file-contents>"))
+}
+
 func TestDownloadRemoteFileToTempFile(t *testing.T) {
 	t.Parallel()
 
+	mockServer := httptest.NewServer(http.HandlerFunc(testHandler))
+	defer mockServer.Close()
 	tmpFiles := NewTmpFilesManager()
-	httpmock.Activate()
-	defer httpmock.DeactivateAndReset()
-	httpmock.RegisterResponder("GET", "https://example.com/manifest.yaml",
-		httpmock.NewBytesResponder(200, []byte("<file-contents>")))
 	defer tmpFiles.DeleteTmpFiles()
 
 	type args struct {
@@ -30,7 +34,7 @@ func TestDownloadRemoteFileToTempFile(t *testing.T) {
 		{
 			name: "file download successful",
 			args: args{
-				url:      "https://example.com/manifest.yaml",
+				url:      mockServer.URL,
 				filename: "manifest-*.yaml",
 			},
 			want:    []byte("<file-contents>"),
