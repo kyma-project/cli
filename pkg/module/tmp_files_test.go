@@ -10,11 +10,12 @@ import (
 func TestDownloadRemoteFileToTempFile(t *testing.T) {
 	t.Parallel()
 
+	tmpFiles := NewTmpFilesManager()
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 	httpmock.RegisterResponder("GET", "https://example.com/manifest.yaml",
 		httpmock.NewBytesResponder(200, []byte("<file-contents>")))
-	defer DeleteTempFiles()
+	defer tmpFiles.DeleteTmpFiles()
 
 	type args struct {
 		url      string
@@ -48,7 +49,7 @@ func TestDownloadRemoteFileToTempFile(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := DownloadRemoteFileToTempFile(tt.args.url, os.TempDir(), tt.args.filename)
+			got, err := tmpFiles.DownloadRemoteFileToTmpFile(tt.args.url, os.TempDir(), tt.args.filename)
 
 			if err != nil && !tt.wantErr {
 				t.Errorf("unexpected error occurred: %s", err.Error())
@@ -67,7 +68,7 @@ func TestDownloadRemoteFileToTempFile(t *testing.T) {
 				t.Errorf("created file could not be read: %s", err.Error())
 				return
 			}
-			assert.Equalf(t, tt.want, fileContent, "DownloadRemoteFileToTempFile(%v, %v, %v)",
+			assert.Equalf(t, tt.want, fileContent, "DownloadRemoteFileToTmpFile(%v, %v, %v)",
 				tt.args.url, "", tt.args.filename)
 		})
 	}

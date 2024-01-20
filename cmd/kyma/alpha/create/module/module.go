@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"maps"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -30,14 +29,16 @@ import (
 
 type command struct {
 	cli.Command
-	opts *Options
+	opts     *Options
+	tmpFiles *module.TmpFilesManager
 }
 
 // NewCmd creates a new Kyma CLI command
 func NewCmd(o *Options) *cobra.Command {
 	c := command{
-		Command: cli.Command{Options: o.Options},
-		opts:    o,
+		Command:  cli.Command{Options: o.Options},
+		opts:     o,
+		tmpFiles: module.NewTmpFilesManager(),
 	}
 
 	cmd := &cobra.Command{
@@ -249,7 +250,7 @@ func (cmd *command) Run() error {
 	}
 
 	modDef, modCnf, err := cmd.moduleDefinitionFromOptions()
-	defer module.DeleteTempFiles()
+	defer cmd.tmpFiles.DeleteTmpFiles()
 
 	if err != nil {
 		return err
@@ -542,8 +543,9 @@ func (cmd *command) moduleDefinitionFromOptions() (*module.Definition, *Config, 
 
 	var defaultCRPath string
 	if moduleConfig.DefaultCRPath != "" {
-		if isURL(moduleConfig.DefaultCRPath) {
-			moduleConfig.DefaultCRPath, err = module.DownloadRemoteFileToTempFile(moduleConfig.DefaultCRPath,
+		isURL, defaultCRURL := module.ParseURL(moduleConfig.DefaultCRPath)
+		if isURL {
+			moduleConfig.DefaultCRPath, err = cmd.tmpFiles.DownloadRemoteFileToTmpFile(defaultCRURL.String(),
 				cmd.opts.Path, "kyma-module-default-cr-*.yaml")
 			if err != nil {
 				return nil, nil, fmt.Errorf("%w,  %w", ErrDefaultCRFetch, err)
@@ -556,8 +558,9 @@ func (cmd *command) moduleDefinitionFromOptions() (*module.Definition, *Config, 
 	}
 
 	var moduleManifestPath string
-	if isURL(moduleConfig.ManifestPath) {
-		moduleConfig.ManifestPath, err = module.DownloadRemoteFileToTempFile(moduleConfig.ManifestPath, cmd.opts.Path,
+	isURL, manifestURL := module.ParseURL(moduleConfig.ManifestPath)
+	if isURL {
+		moduleConfig.ManifestPath, err = cmd.tmpFiles.DownloadRemoteFileToTmpFile(manifestURL.String(), cmd.opts.Path,
 			"kyma-module-manifest-*.yaml")
 		if err != nil {
 			return nil, nil, fmt.Errorf("%w,  %w", ErrManifestFetch, err)
@@ -620,9 +623,4 @@ func isCrdClusterScoped(crdBytes []byte) bool {
 	}
 
 	return crd.Spec.Scope == apiextensions.ClusterScoped
-}
-
-func isURL(s string) bool {
-	u, err := url.Parse(s)
-	return err == nil && u.Scheme != "" && u.Host != ""
 }
