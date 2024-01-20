@@ -2,6 +2,7 @@ package create
 
 import (
 	"github.com/kyma-project/cli/cmd/kyma/alpha/create/module"
+	"github.com/kyma-project/cli/cmd/kyma/alpha/create/scaffold"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/spf13/cobra"
 )
@@ -16,6 +17,7 @@ func NewCmd(o *cli.Options) *cobra.Command {
 	}
 
 	cmd.AddCommand(module.NewCmd(module.NewOptions(o)))
+	cmd.AddCommand(scaffold.NewCmd(scaffold.NewOptions(o)))
 
 	return cmd
 }

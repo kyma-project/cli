@@ -8,7 +8,6 @@ import (
 	"github.com/kyma-project/lifecycle-manager/api/shared"
 
 	"github.com/kyma-project/cli/internal/cli"
-	"github.com/kyma-project/cli/pkg/module"
 )
 
 //go:embed testdata/clusterScopedCRD.yaml
@@ -120,8 +119,8 @@ func Test_command_getModuleTemplateAnnotations(t *testing.T) {
 		opts    *Options
 	}
 	type args struct {
-		modCnf      *Config
-		crValidator validator
+		modCnf *Config
+		crd    []byte
 	}
 	tests := []struct {
 		name   string
@@ -143,9 +142,7 @@ func Test_command_getModuleTemplateAnnotations(t *testing.T) {
 					},
 					Version: "1.1.1",
 				},
-				crValidator: &module.SingleManifestFileCRValidator{
-					Crd: namespacedScopedCrd,
-				},
+				crd: namespacedScopedCrd,
 			},
 			want: map[string]string{
 				"annotation1":                    "value1",
@@ -167,9 +164,7 @@ func Test_command_getModuleTemplateAnnotations(t *testing.T) {
 					},
 					Version: "1.1.1",
 				},
-				crValidator: &module.SingleManifestFileCRValidator{
-					Crd: clusterScopedCrd,
-				},
+				crd: clusterScopedCrd,
 			},
 			want: map[string]string{
 				"annotation1":                    "value1",
@@ -184,9 +179,7 @@ func Test_command_getModuleTemplateAnnotations(t *testing.T) {
 				opts: &Options{Version: "1.0.0"},
 			},
 			args: args{
-				crValidator: &module.SingleManifestFileCRValidator{
-					Crd: namespacedScopedCrd,
-				},
+				crd: namespacedScopedCrd,
 			},
 			want: map[string]string{
 				shared.ModuleVersionAnnotation:   "1.0.0",
@@ -200,7 +193,7 @@ func Test_command_getModuleTemplateAnnotations(t *testing.T) {
 				Command: tt.fields.Command,
 				opts:    tt.fields.opts,
 			}
-			if got := cmd.getModuleTemplateAnnotations(tt.args.modCnf, tt.args.crValidator); !reflect.DeepEqual(got,
+			if got := cmd.getModuleTemplateAnnotations(tt.args.modCnf, tt.args.crd); !reflect.DeepEqual(got,
 				tt.want) {
 				t.Errorf("getModuleTemplateAnnotations() = %v, want %v", got, tt.want)
 			}
