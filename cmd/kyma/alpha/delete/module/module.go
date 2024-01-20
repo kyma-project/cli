@@ -29,8 +29,8 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "module [name] [flags]",
-		Short: "Disables a module in the cluster or in the given Kyma resource.",
-		Long: `Use this command to disable active Kyma modules in the cluster.
+		Short: "Deactivates a module in the cluster or in the given Kyma resource.",
+		Long: `Use this command to deactivate Kyma modules in the cluster.
 
 ### Detailed description
 
@@ -40,8 +40,8 @@ This command disables an active module in the cluster.
 `,
 
 		Example: `
-Disable "my-module" from the "alpha" channel in "default-kyma" in "kyma-system" Namespace
-		kyma alpha disable module my-module -c alpha -n kyma-system -k default-kyma
+Delete "my-module" from the "alpha" channel from "default-kyma" in "kyma-system" Namespace
+		kyma alpha delete module my-module -c alpha -n kyma-system -k default-kyma
 `,
 		RunE:    func(cmd *cobra.Command, args []string) error { return c.Run(cmd.Context(), args) },
 		Aliases: []string{"mod", "mods", "modules"},

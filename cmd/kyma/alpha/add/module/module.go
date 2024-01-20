@@ -31,8 +31,8 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "module [name] [flags]",
-		Short: "Enables a module in the cluster or in the given Kyma resource.",
-		Long: `Use this command to enable Kyma modules available in the cluster.
+		Short: "Activates a module in the cluster or in the given Kyma resource.",
+		Long: `Use this command to activate Kyma modules available in the cluster.
 
 ### Detailed description
 
@@ -43,8 +43,8 @@ A module is available when it is released with a ModuleTemplate. The ModuleTempl
 `,
 
 		Example: `
-Enable "my-module" from "alpha" channel in "default-kyma" in "kyma-system" Namespace
-		kyma alpha enable module my-module -c alpha -n kyma-system -k default-kyma
+Add "my-module" from "alpha" channel to "default-kyma" in "kyma-system" Namespace
+		kyma alpha add module my-module -c alpha -n kyma-system -k default-kyma
 `,
 		RunE:    func(cmd *cobra.Command, args []string) error { return c.Run(cmd.Context(), args) },
 		Aliases: []string{"mod", "mods", "modules"},

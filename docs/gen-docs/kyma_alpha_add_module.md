@@ -1,41 +1,40 @@
 ---
-title: kyma alpha disable module
+title: kyma alpha add module
 ---
 
-Disables a module in the cluster or in the given Kyma resource.
+Enables a module in the cluster or in the given Kyma resource.
 
 ## Synopsis
 
-Use this command to disable active Kyma modules in the cluster.
+Use this command to enable Kyma modules available in the cluster.
 
 ### Detailed description
 
 For more information on Kyma modules, see the 'create module' command.
 
-This command disables an active module in the cluster.
+This command enables an available module in the cluster. 
+A module is available when it is released with a ModuleTemplate. The ModuleTemplate is used for instantiating the module with proper default configuration.
 
 
 ```bash
-kyma alpha disable module [name] [flags]
+kyma alpha add module [name] [flags]
 ```
 
 ## Examples
-
+* Enable "my-module" from "alpha" channel in "default-kyma" in "kyma-system" Namespace
 ```bash
-
-Disable "my-module" from the "alpha" channel in "default-kyma" in "kyma-system" Namespace
-		kyma alpha disable module my-module -c alpha -n kyma-system -k default-kyma
-
+kyma alpha add module my-module -c alpha -n kyma-system -k default-kyma
 ```
 
 ## Flags
 
 ```bash
-  -c, --channel string     Module's channel to use.
+  -c, --channel string     Module's channel to enable.
   -f, --force-conflicts    Forces the patching of Kyma spec modules in case their managed field was edited by a source other than Kyma CLI.
   -k, --kyma-name string   Kyma resource to use. If empty, 'default-kyma' is used. (default "default-kyma")
   -n, --namespace string   Kyma Namespace to use. If empty, the default 'kyma-system' Namespace is used. (default "kyma-system")
-  -t, --timeout duration   Maximum time for the operation to disable a module. (default 1m0s)
+  -p, --policy string      Determines how the module is managed. Use 'CreateAndDelete' to install the default values provided in the module template or 'Ignore' to ignore them. (default "CreateAndDelete")
+  -t, --timeout duration   Maximum time for the operation to enable a module. (default 1m0s)
   -w, --wait               Wait until the given Kyma resource is ready.
 ```
 
@@ -51,5 +50,5 @@ Disable "my-module" from the "alpha" channel in "default-kyma" in "kyma-system" 
 
 ## See also
 
-* [kyma alpha disable](kyma_alpha_disable.md)	 - Disables a resource in the Kyma cluster.
+* [kyma alpha add](kyma_alpha_add.md)	 - Enables a resource in the Kyma cluster.
 

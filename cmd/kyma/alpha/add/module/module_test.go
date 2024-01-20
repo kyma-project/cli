@@ -7,7 +7,7 @@ import (
 	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/kyma-project/cli/cmd/kyma/alpha/enable/module/mock"
+	"github.com/kyma-project/cli/cmd/kyma/alpha/add/module/mock"
 	"github.com/kyma-project/cli/internal/cli/alpha/module"
 )
 

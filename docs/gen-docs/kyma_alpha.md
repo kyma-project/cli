@@ -22,10 +22,10 @@ Alpha commands are experimental, unreleased features that should only be used by
 ## See also
 
 * [kyma](kyma.md)	 - Controls a Kyma cluster.
+* [kyma alpha add](kyma_alpha_add.md)	 - Enables a resource in the Kyma cluster.
 * [kyma alpha create](kyma_alpha_create.md)	 - Creates resources on the Kyma cluster.
+* [kyma alpha delete](kyma_alpha_delete.md)	 - Disables a resource in the Kyma cluster.
 * [kyma alpha deploy](kyma_alpha_deploy.md)	 - Deploys Kyma on a running Kubernetes cluster.
-* [kyma alpha disable](kyma_alpha_disable.md)	 - Disables a resource in the Kyma cluster.
-* [kyma alpha enable](kyma_alpha_enable.md)	 - Enables a resource in the Kyma cluster.
 * [kyma alpha list](kyma_alpha_list.md)	 - Lists resources on the Kyma cluster.
 * [kyma alpha sign](kyma_alpha_sign.md)	 - Signs all module resources from an unsigned module component descriptor that's hosted in a remote OCI registry
 * [kyma alpha verify](kyma_alpha_verify.md)	 - Verifies all module resources from a signed module component descriptor that's hosted in a remote OCI registry

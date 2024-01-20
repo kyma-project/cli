@@ -1,12 +1,12 @@
 ---
-title: kyma alpha enable
+title: kyma alpha delete
 ---
 
-Enables a resource in the Kyma cluster.
+Disables a resource in the Kyma cluster.
 
 ## Synopsis
 
-Use this command to enable a resource in the Kyma cluster.
+Use this command to disable a resource in the Kyma cluster.
 
 
 ## Flags inherited from parent commands
@@ -22,5 +22,5 @@ Use this command to enable a resource in the Kyma cluster.
 ## See also
 
 * [kyma alpha](kyma_alpha.md)	 - Experimental commands
-* [kyma alpha enable module](kyma_alpha_enable_module.md)	 - Enables a module in the cluster or in the given Kyma resource.
+* [kyma alpha delete module](kyma_alpha_delete_module.md)	 - Disables a module in the cluster or in the given Kyma resource.
 
