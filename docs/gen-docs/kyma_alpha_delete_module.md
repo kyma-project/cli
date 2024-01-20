@@ -2,11 +2,11 @@
 title: kyma alpha delete module
 ---
 
-Disables a module in the cluster or in the given Kyma resource.
+Deactivates a module in the cluster or in the given Kyma resource.
 
 ## Synopsis
 
-Use this command to disable active Kyma modules in the cluster.
+Use this command to deactivate Kyma modules in the cluster.
 
 ### Detailed description
 
@@ -20,9 +20,12 @@ kyma alpha delete module [name] [flags]
 ```
 
 ## Examples
-* Delete "my-module" from the "alpha" channel in "default-kyma" in "kyma-system" Namespace
+
 ```bash
-kyma alpha delete module my-module -c alpha -n kyma-system -k default-kyma
+
+Delete "my-module" from the "alpha" channel from "default-kyma" in "kyma-system" Namespace
+		kyma alpha delete module my-module -c alpha -n kyma-system -k default-kyma
+
 ```
 
 ## Flags

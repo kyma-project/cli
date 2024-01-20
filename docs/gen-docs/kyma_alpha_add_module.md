@@ -2,11 +2,11 @@
 title: kyma alpha add module
 ---
 
-Enables a module in the cluster or in the given Kyma resource.
+Activates a module in the cluster or in the given Kyma resource.
 
 ## Synopsis
 
-Use this command to enable Kyma modules available in the cluster.
+Use this command to activate Kyma modules available in the cluster.
 
 ### Detailed description
 
@@ -21,9 +21,12 @@ kyma alpha add module [name] [flags]
 ```
 
 ## Examples
-* Enable "my-module" from "alpha" channel in "default-kyma" in "kyma-system" Namespace
+
 ```bash
-kyma alpha add module my-module -c alpha -n kyma-system -k default-kyma
+
+Add "my-module" from "alpha" channel to "default-kyma" in "kyma-system" Namespace
+		kyma alpha add module my-module -c alpha -n kyma-system -k default-kyma
+
 ```
 
 ## Flags

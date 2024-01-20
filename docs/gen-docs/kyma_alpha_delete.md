@@ -22,5 +22,5 @@ Use this command to disable a resource in the Kyma cluster.
 ## See also
 
 * [kyma alpha](kyma_alpha.md)	 - Experimental commands
-* [kyma alpha delete module](kyma_alpha_delete_module.md)	 - Disables a module in the cluster or in the given Kyma resource.
+* [kyma alpha delete module](kyma_alpha_delete_module.md)	 - Deactivates a module in the cluster or in the given Kyma resource.
 
