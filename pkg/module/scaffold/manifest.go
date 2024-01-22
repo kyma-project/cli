@@ -3,10 +3,11 @@ package scaffold
 import (
 	"fmt"
 	"os"
+	"path"
 )
 
 func (g *Generator) ManifestFilePath() string {
-	return g.ManifestFile
+	return path.Join(g.Directory, g.ManifestFile)
 }
 
 func (g *Generator) ManifestFileExists() (bool, error) {

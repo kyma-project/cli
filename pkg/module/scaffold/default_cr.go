@@ -3,10 +3,11 @@ package scaffold
 import (
 	"fmt"
 	"os"
+	"path"
 )
 
 func (g *Generator) DefaultCRFilePath() string {
-	return g.DefaultCRFile
+	return path.Join(g.Directory, g.DefaultCRFile)
 }
 
 func (g *Generator) DefaultCRFileExists() (bool, error) {

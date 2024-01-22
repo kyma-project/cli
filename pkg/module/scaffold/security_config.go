@@ -1,11 +1,13 @@
 package scaffold
 
 import (
+	"path"
+
 	"github.com/kyma-project/cli/pkg/module"
 )
 
 func (g *Generator) SecurityConfigFilePath() string {
-	return g.SecurityConfigFile
+	return path.Join(g.Directory, g.SecurityConfigFile)
 }
 
 func (g *Generator) SecurityConfigFileExists() (bool, error) {

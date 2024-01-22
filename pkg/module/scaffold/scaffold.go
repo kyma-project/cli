@@ -10,6 +10,7 @@ type Generator struct {
 	ModuleName         string
 	ModuleVersion      string
 	ModuleChannel      string
+	Directory          string
 	ModuleConfigFile   string
 	ManifestFile       string
 	SecurityConfigFile string
