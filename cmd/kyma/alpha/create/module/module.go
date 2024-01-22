@@ -29,14 +29,16 @@ import (
 
 type command struct {
 	cli.Command
-	opts *Options
+	opts     *Options
+	tmpFiles *module.TmpFilesManager
 }
 
 // NewCmd creates a new Kyma CLI command
 func NewCmd(o *Options) *cobra.Command {
 	c := command{
-		Command: cli.Command{Options: o.Options},
-		opts:    o,
+		Command:  cli.Command{Options: o.Options},
+		opts:     o,
+		tmpFiles: module.NewTmpFilesManager(),
 	}
 
 	cmd := &cobra.Command{
@@ -248,6 +250,7 @@ func (cmd *command) Run() error {
 	}
 
 	modDef, modCnf, err := cmd.moduleDefinitionFromOptions()
+	defer cmd.tmpFiles.DeleteTmpFiles()
 
 	if err != nil {
 		return err
@@ -540,13 +543,30 @@ func (cmd *command) moduleDefinitionFromOptions() (*module.Definition, *Config, 
 
 	var defaultCRPath string
 	if moduleConfig.DefaultCRPath != "" {
+		isURL, defaultCRURL := module.ParseURL(moduleConfig.DefaultCRPath)
+		if isURL {
+			moduleConfig.DefaultCRPath, err = cmd.tmpFiles.DownloadRemoteFileToTmpFile(defaultCRURL.String(),
+				cmd.opts.Path, "kyma-module-default-cr-*.yaml")
+			if err != nil {
+				return nil, nil, fmt.Errorf("%w,  %w", ErrDefaultCRFetch, err)
+			}
+		}
 		defaultCRPath, err = resolveFilePath(moduleConfig.DefaultCRPath, cmd.opts.Path)
 		if err != nil {
 			return nil, nil, fmt.Errorf("%w,  %w", ErrDefaultCRPathValidation, err)
 		}
 	}
 
-	moduleManifestPath, err := resolveFilePath(moduleConfig.ManifestPath, cmd.opts.Path)
+	var moduleManifestPath string
+	isURL, manifestURL := module.ParseURL(moduleConfig.ManifestPath)
+	if isURL {
+		moduleConfig.ManifestPath, err = cmd.tmpFiles.DownloadRemoteFileToTmpFile(manifestURL.String(), cmd.opts.Path,
+			"kyma-module-manifest-*.yaml")
+		if err != nil {
+			return nil, nil, fmt.Errorf("%w,  %w", ErrManifestFetch, err)
+		}
+	}
+	moduleManifestPath, err = resolveFilePath(moduleConfig.ManifestPath, cmd.opts.Path)
 	if err != nil {
 		return nil, nil, fmt.Errorf("%w,  %w", ErrManifestPathValidation, err)
 	}

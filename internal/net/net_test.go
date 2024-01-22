@@ -23,7 +23,7 @@ func TestDoGet(t *testing.T) {
 	require.Equal(t, 301, sc)
 
 	// Non existing URL
-	_, err = DoGet("http://fake-url.com")
+	_, err = DoGet("http://totally.fake.url")
 	require.Error(t, err)
 
 	// BAD URL
