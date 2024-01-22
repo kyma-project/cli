@@ -2,11 +2,11 @@
 title: kyma alpha add module
 ---
 
-Activates a module in the cluster or in the given Kyma resource.
+Add a module in the cluster or in the given Kyma resource.
 
 ## Synopsis
 
-Use this command to activate Kyma modules available in the cluster.
+Use this command to add Kyma modules available in the cluster.
 
 ### Detailed description
 

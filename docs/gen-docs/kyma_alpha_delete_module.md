@@ -2,11 +2,11 @@
 title: kyma alpha delete module
 ---
 
-Deactivates a module in the cluster or in the given Kyma resource.
+Delete a module in the cluster or in the given Kyma resource.
 
 ## Synopsis
 
-Use this command to deactivate Kyma modules in the cluster.
+Use this command to delete Kyma modules in the cluster.
 
 ### Detailed description
 

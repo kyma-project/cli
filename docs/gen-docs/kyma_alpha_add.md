@@ -22,5 +22,5 @@ Use this command to enable a resource in the Kyma cluster.
 ## See also
 
 * [kyma alpha](kyma_alpha.md)	 - Experimental commands
-* [kyma alpha add module](kyma_alpha_add_module.md)	 - Activates a module in the cluster or in the given Kyma resource.
+* [kyma alpha add module](kyma_alpha_add_module.md)	 - Add a module in the cluster or in the given Kyma resource.
 
