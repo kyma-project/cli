@@ -244,21 +244,15 @@ func (cmd *command) Run(_ context.Context) error {
 
 func (cmd *command) scaffoldGeneratorFromOptions() *scaffgen.Generator {
 
-	toFullPath := func(file string) string {
-		if file == "" {
-			return ""
-		}
-		return cmd.opts.getCompleteFilePath(file)
-	}
-
 	res := scaffgen.Generator{
 		ModuleName:         cmd.opts.ModuleName,
 		ModuleVersion:      cmd.opts.ModuleVersion,
 		ModuleChannel:      cmd.opts.ModuleChannel,
-		ModuleConfigFile:   toFullPath(cmd.opts.ModuleConfigFile),
-		ManifestFile:       toFullPath(cmd.opts.ManifestFile),
-		SecurityConfigFile: toFullPath(cmd.opts.SecurityConfigFile),
-		DefaultCRFile:      toFullPath(cmd.opts.DefaultCRFile),
+		Directory:          cmd.opts.Directory,
+		ModuleConfigFile:   cmd.opts.ModuleConfigFile,
+		ManifestFile:       cmd.opts.ManifestFile,
+		SecurityConfigFile: cmd.opts.SecurityConfigFile,
+		DefaultCRFile:      cmd.opts.DefaultCRFile,
 	}
 
 	return &res

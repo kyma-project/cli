@@ -1,11 +1,13 @@
 package scaffold
 
 import (
+	"path"
+
 	"github.com/kyma-project/cli/cmd/kyma/alpha/create/module"
 )
 
 func (g *Generator) ModuleConfigFilePath() string {
-	return g.ModuleConfigFile
+	return path.Join(g.Directory, g.ModuleConfigFile)
 }
 
 func (g *Generator) ModuleConfigFileExists() (bool, error) {

@@ -3,7 +3,6 @@ package scaffold
 import (
 	"fmt"
 	"os"
-	"path"
 
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/pkg/errors"
@@ -98,8 +97,4 @@ func (o *Options) validateDirectory() error {
 	}
 
 	return nil
-}
-
-func (o *Options) getCompleteFilePath(fileName string) string {
-	return path.Join(o.Directory, fileName)
 }
