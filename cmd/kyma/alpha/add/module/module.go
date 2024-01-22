@@ -31,8 +31,8 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "module [name] [flags]",
-		Short: "Activates a module in the cluster or in the given Kyma resource.",
-		Long: `Use this command to activate Kyma modules available in the cluster.
+		Short: "Add a module in the cluster or in the given Kyma resource.",
+		Long: `Use this command to add Kyma modules available in the cluster.
 
 ### Detailed description
 
