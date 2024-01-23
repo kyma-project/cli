@@ -2,7 +2,7 @@
 title: kyma alpha add module
 ---
 
-Adds a module to the cluster or the given Kyma resource.
+Adds a module in the cluster or in the given Kyma resource.
 
 ## Synopsis
 

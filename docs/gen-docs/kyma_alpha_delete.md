@@ -2,7 +2,7 @@
 title: kyma alpha delete
 ---
 
-Disables a resource in the Kyma cluster.
+Deletes a resource from the Kyma cluster.
 
 ## Synopsis
 
@@ -22,5 +22,5 @@ Use this command to disable a resource in the Kyma cluster.
 ## See also
 
 * [kyma alpha](kyma_alpha.md)	 - Experimental commands
-* [kyma alpha delete module](kyma_alpha_delete_module.md)	 - Deletes a module from the cluster or from the given Kyma resource.
+* [kyma alpha delete module](kyma_alpha_delete_module.md)	 - Deletes a module from the cluster or the given Kyma resource.
 

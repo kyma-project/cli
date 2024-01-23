@@ -2,7 +2,7 @@
 title: kyma alpha add
 ---
 
-Enables a resource in the Kyma cluster.
+Adds a resource to the Kyma cluster.
 
 ## Synopsis
 
@@ -22,5 +22,5 @@ Use this command to enable a resource in the Kyma cluster.
 ## See also
 
 * [kyma alpha](kyma_alpha.md)	 - Experimental commands
-* [kyma alpha add module](kyma_alpha_add_module.md)	 - Adds a module to the cluster or the given Kyma resource.
+* [kyma alpha add module](kyma_alpha_add_module.md)	 - Adds a module in the cluster or in the given Kyma resource.
 
