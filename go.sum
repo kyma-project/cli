@@ -1213,8 +1213,6 @@ github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 h1:BQSFePA1RWJOl
 github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99/go.mod h1:1lJo3i6rXxKeerYnT8Nvf0QmHCRC1n8sfWVwXF2Frvo=
 github.com/jedisct1/go-minisign v0.0.0-20230811132847-661be99b8267 h1:TMtDYDHKYY15rFihtRfck/bfFqNfvcabqvXAFQfAUpY=
 github.com/jedisct1/go-minisign v0.0.0-20230811132847-661be99b8267/go.mod h1:h1nSAbGFqGVzn6Jyl1R/iCcBUHN4g+gW1u9CoBTrb9E=
-github.com/jellydator/ttlcache/v3 v3.1.0 h1:0gPFG0IHHP6xyUyXq+JaD8fwkDCqgqwohXNJBcYE71g=
-github.com/jellydator/ttlcache/v3 v3.1.0/go.mod h1:hi7MGFdMAwZna5n2tuvh63DvFLzVKySzCVW6+0gA2n4=
 github.com/jellydator/ttlcache/v3 v3.1.1 h1:RCgYJqo3jgvhl+fEWvjNW8thxGWsgxi+TPhRir1Y9y8=
 github.com/jellydator/ttlcache/v3 v3.1.1/go.mod h1:hi7MGFdMAwZna5n2tuvh63DvFLzVKySzCVW6+0gA2n4=
 github.com/jinzhu/gorm v0.0.0-20170222002820-5409931a1bb8/go.mod h1:Vla75njaFJ8clLU1W44h34PjIkijhjHIYnZxMqCdxqo=
@@ -1308,8 +1306,6 @@ github.com/kr/text v0.2.0/go.mod h1:eLer722TekiGuMkidMxC/pM04lWEeraHUUmBw8l2grE=
 github.com/ktrysmt/go-bitbucket v0.6.4/go.mod h1:9u0v3hsd2rqCHRIpbir1oP7F58uo5dq19sBYvuMoyQ4=
 github.com/kylelemons/godebug v1.1.0 h1:RPNrshWIDI6G2gRW9EHilWtl7Z6Sb1BR0xunSBf0SNc=
 github.com/kylelemons/godebug v1.1.0/go.mod h1:9/0rRGxNHcop5bhtWyNeEfOS8JIWk580+fNqagV/RAw=
-github.com/kyma-incubator/reconciler v0.0.0-20231215092926-a44f7293b791 h1:pG9rc3gN7c9HO2dqY2arjc1ThdB4xz+ZU7SuAPIbsJg=
-github.com/kyma-incubator/reconciler v0.0.0-20231215092926-a44f7293b791/go.mod h1:3MslgRhxOBC4ndwrU2KotfMw0euVIF+pMoVRPnxrRMw=
 github.com/kyma-incubator/reconciler v0.0.0-20240122095942-4be5f11f106f h1:8sXZuYa2Ftfbprdcl49gGL8e33h3x6UdHEQ+cyd6wdo=
 github.com/kyma-incubator/reconciler v0.0.0-20240122095942-4be5f11f106f/go.mod h1:nN7iVzUnRnPHR600g7RalS0g8naLq5j86GoGmskr7qg=
 github.com/kyma-project/hydroform/function v0.0.0-20230831071441-f3501c89bace h1:ffL1aww9HEpYrzdc1nd9BbwcrLD6GB8qfYnJ3ikZy80=
