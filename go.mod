@@ -10,7 +10,7 @@ require (
 	github.com/briandowns/spinner v1.23.0
 	github.com/containerd/containerd v1.7.12
 	github.com/daviddengcn/go-colortext v1.0.0
-	github.com/docker/cli v24.0.7+incompatible
+	github.com/docker/cli v25.0.0+incompatible
 	github.com/docker/docker v24.0.7+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/fatih/color v1.16.0
