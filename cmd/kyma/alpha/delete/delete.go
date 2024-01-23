@@ -10,7 +10,7 @@ func NewCmd(o *cli.Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "delete",
 		Aliases: []string{"disable"},
-		Short:   "Disables a resource in the Kyma cluster.",
+		Short:   "Deletes a resource from the Kyma cluster.",
 		Long: `Use this command to disable a resource in the Kyma cluster.
 `,
 	}

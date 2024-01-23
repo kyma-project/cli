@@ -10,7 +10,7 @@ func NewCmd(o *cli.Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "add",
 		Aliases: []string{"enable"},
-		Short:   "Enables a resource in the Kyma cluster.",
+		Short:   "Adds a resource to the Kyma cluster.",
 		Long: `Use this command to enable a resource in the Kyma cluster.
 `,
 	}

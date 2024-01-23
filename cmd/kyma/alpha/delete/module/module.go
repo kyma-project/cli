@@ -29,8 +29,8 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "module [name] [flags]",
-		Short: "Delete a module in the cluster or in the given Kyma resource.",
-		Long: `Use this command to delete Kyma modules in the cluster.
+		Short: "Deletes a module from the cluster or the given Kyma resource.",
+		Long: `Use this command to delete Kyma modules from the cluster.
 
 ### Detailed description
 

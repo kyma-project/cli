@@ -2,7 +2,7 @@
 title: kyma alpha delete module
 ---
 
-Delete a module in the cluster or in the given Kyma resource.
+Deletes a module from the cluster or from the given Kyma resource.
 
 ## Synopsis
 
@@ -51,5 +51,5 @@ Delete "my-module" from the "alpha" channel from "default-kyma" in "kyma-system"
 
 ## See also
 
-* [kyma alpha delete](kyma_alpha_delete.md)	 - Disables a resource in the Kyma cluster.
+* [kyma alpha delete](kyma_alpha_delete.md)	 - Deletes a resource from the Kyma cluster.
 

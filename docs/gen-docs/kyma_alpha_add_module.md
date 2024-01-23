@@ -2,7 +2,7 @@
 title: kyma alpha add module
 ---
 
-Add a module in the cluster or in the given Kyma resource.
+Adds a module to the cluster or the given Kyma resource.
 
 ## Synopsis
 
@@ -53,5 +53,5 @@ Add "my-module" from "alpha" channel to "default-kyma" in "kyma-system" Namespac
 
 ## See also
 
-* [kyma alpha add](kyma_alpha_add.md)	 - Enables a resource in the Kyma cluster.
+* [kyma alpha add](kyma_alpha_add.md)	 - Adds a resource to the Kyma cluster.
 
