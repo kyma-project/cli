@@ -2,12 +2,13 @@ package module
 
 import (
 	"fmt"
-	"github.com/kyma-project/cli/internal/nice"
 	"os"
 	"path/filepath"
 	"regexp"
 
-	"github.com/blang/semver/v4"
+	"github.com/kyma-project/cli/internal/nice"
+
+	"github.com/Masterminds/semver/v3"
 	"github.com/pkg/errors"
 
 	"github.com/kyma-project/cli/internal/cli"
@@ -49,7 +50,9 @@ const (
 
 var (
 	ErrChannelValidation       = errors.New("channel validation failed")
+	ErrManifestFetch           = errors.New("remote YAML manifest fetch failed")
 	ErrManifestPathValidation  = errors.New("YAML manifest path validation failed")
+	ErrDefaultCRFetch          = errors.New("remote default CR fetch failed")
 	ErrDefaultCRPathValidation = errors.New("default CR path validation failed")
 	ErrNameValidation          = errors.New("name validation failed")
 	ErrNamespaceValidation     = errors.New("namespace validation failed")
@@ -62,7 +65,7 @@ func NewOptions(o *cli.Options) *Options {
 }
 
 func (o *Options) validateVersion() error {
-	sv, err := semver.ParseTolerant(o.Version)
+	sv, err := semver.NewVersion(o.Version)
 	if err != nil {
 		return err
 	}

@@ -18,7 +18,7 @@ kyma provision k3d [flags]
       --k3d-arg strings            One or more arguments passed to the k3d provisioning command (e.g. --k3d-arg='--no-rollback')
       --k3d-registry-arg strings   One or more arguments passed to the k3d registry create command (e.g. --k3d-registry-arg='--default-network podman')
   -s, --k3s-arg strings            One or more arguments passed from k3d to the k3s command (format: ARG@NODEFILTER[;@NODEFILTER])
-  -k, --kube-version string        Kubernetes version of the cluster (default "1.26.6")
+  -k, --kube-version string        Kubernetes version of the cluster (default "1.27.9")
       --name string                Name of the Kyma cluster (default "kyma")
   -p, --port strings               Map ports 80 and 443 of K3D loadbalancer (e.g. -p 80:80@loadbalancer -p 443:443@loadbalancer) (default [80:80@loadbalancer,443:443@loadbalancer])
       --registry-port string       Specify the port on which the k3d registry will be exposed (default "5001")

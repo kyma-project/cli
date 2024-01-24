@@ -3,7 +3,7 @@ package version
 import (
 	"fmt"
 
-	"github.com/blang/semver/v4"
+	"github.com/Masterminds/semver/v3"
 )
 
 var (
@@ -19,7 +19,8 @@ var (
 	}
 	nextVersionLowerError = versionCompareError{
 		msg: func(e *versionCompareError) string {
-			return fmt.Sprintf("Next semanticVersion (%s) is lower than current semanticVersion (%s)", e.nextVersion, e.currentVersion)
+			return fmt.Sprintf("Next semanticVersion (%s) is lower than current semanticVersion (%s)", e.nextVersion,
+				e.currentVersion)
 		},
 	}
 	nextVersionTooGreatError = versionCompareError{
@@ -47,8 +48,8 @@ func (e *versionCompareError) with(currentVersion, nextVersion string) *versionC
 }
 
 func checkCompatibility(current string, next string) error {
-	curVersion, curVersionErr := semver.Parse(current)
-	nxtVersion, nxtVersionErr := semver.Parse(next)
+	curVersion, curVersionErr := semver.StrictNewVersion(current)
+	nxtVersion, nxtVersionErr := semver.StrictNewVersion(next)
 
 	if curVersionErr != nil {
 		return currentVersionNoReleaseError.with(current, next)
@@ -56,10 +57,10 @@ func checkCompatibility(current string, next string) error {
 	if nxtVersionErr != nil {
 		return nextVersionNoReleaseError.with(current, next)
 	}
-	if nxtVersion.LT(curVersion) {
+	if nxtVersion.LessThan(curVersion) {
 		return nextVersionLowerError.with(current, next)
 	}
-	if nxtVersion.Major > curVersion.Major || (uint64(nxtVersion.Minor)-uint64(curVersion.Minor) > 1) { // only upgrade to the next minor version is guaranteed to work
+	if nxtVersion.Major() > curVersion.Major() || (nxtVersion.Minor()-curVersion.Minor() > 1) { // only upgrade to the next minor version is guaranteed to work
 		return nextVersionTooGreatError.with(current, next)
 	}
 	return nil

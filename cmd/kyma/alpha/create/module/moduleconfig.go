@@ -10,25 +10,25 @@ import (
 
 	"github.com/kyma-project/cli/pkg/module"
 
-	"github.com/blang/semver/v4"
+	"github.com/Masterminds/semver/v3"
 	"gopkg.in/yaml.v3"
 )
 
 type Config struct {
-	Name              string                     `yaml:"name"`             // required, the name of the Module
-	Version           string                     `yaml:"version"`          // required, the version of the Module
-	Channel           string                     `yaml:"channel"`          // required, channel that should be used in the ModuleTemplate
-	ManifestPath      string                     `yaml:"manifest"`         // required, reference to the manifests, must be a relative file name.
-	Mandatory         bool                       `yaml:"mandatory"`        // optional, default=false, indicates whether the module is mandatory to be installed on all clusters.
-	DefaultCRPath     string                     `yaml:"defaultCR"`        // optional, reference to a YAML file containing the default CR for the module, must be a relative file name.
-	ResourceName      string                     `yaml:"resourceName"`     // optional, default={NAME}-{CHANNEL}, the name for the ModuleTemplate that will be created
-	Namespace         string                     `yaml:"namespace"`        // optional, default=kcp-system, the namespace where the ModuleTemplate will be deployed
-	Security          string                     `yaml:"security"`         // optional, name of the security scanners config file
-	Internal          bool                       `yaml:"internal"`         // optional, default=false, determines whether the ModuleTemplate should have the internal flag or not
-	Beta              bool                       `yaml:"beta"`             // optional, default=false, determines whether the ModuleTemplate should have the beta flag or not
-	Labels            map[string]string          `yaml:"labels"`           // optional, additional labels for the ModuleTemplate
-	Annotations       map[string]string          `yaml:"annotations"`      // optional, additional annotations for the ModuleTemplate
-	CustomStateChecks []v1beta2.CustomStateCheck `yaml:"customStateCheck"` // optional, specifies custom state check for module
+	Name              string                     `yaml:"name" comment:"required, the name of the Module"`
+	Version           string                     `yaml:"version" comment:"required, the version of the Module"`
+	Channel           string                     `yaml:"channel" comment:"required, channel that should be used in the ModuleTemplate"`
+	ManifestPath      string                     `yaml:"manifest" comment:"required, relative path or remote URL to the manifests"`
+	Mandatory         bool                       `yaml:"mandatory" comment:"optional, default=false, indicates whether the module is mandatory to be installed on all clusters"`
+	DefaultCRPath     string                     `yaml:"defaultCR" comment:"optional, relative path or remote URL to a YAML file containing the default CR for the module"`
+	ResourceName      string                     `yaml:"resourceName" comment:"optional, default={NAME}-{CHANNEL}, the name for the ModuleTemplate that will be created"`
+	Namespace         string                     `yaml:"namespace" comment:"optional, default=kcp-system, the namespace where the ModuleTemplate will be deployed"`
+	Security          string                     `yaml:"security" comment:"optional, name of the security scanners config file"`
+	Internal          bool                       `yaml:"internal" comment:"optional, default=false, determines whether the ModuleTemplate should have the internal flag or not"`
+	Beta              bool                       `yaml:"beta" comment:"optional, default=false, determines whether the ModuleTemplate should have the beta flag or not"`
+	Labels            map[string]string          `yaml:"labels" comment:"optional, additional labels for the ModuleTemplate"`
+	Annotations       map[string]string          `yaml:"annotations" comment:"optional, additional annotations for the ModuleTemplate"`
+	CustomStateChecks []v1beta2.CustomStateCheck `yaml:"customStateCheck" comment:"optional, specifies custom state check for module"`
 }
 
 const (
@@ -142,7 +142,7 @@ func (cv *configValidator) validateVersion() *configValidator {
 			val = val[1:]
 		}
 
-		sv, err := semver.Parse(val)
+		sv, err := semver.StrictNewVersion(val)
 		if err != nil {
 			return fmt.Errorf("%w for input %q, %w", ErrVersionValidation, cv.config.Version, err)
 		}

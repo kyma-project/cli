@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/blang/semver/v4"
+	"github.com/Masterminds/semver/v3"
 	"github.com/pkg/errors"
 )
 
@@ -52,7 +52,8 @@ type client struct {
 }
 
 // NewClient creates a new instance of the Client interface.
-func NewClient(cmdRunner CmdRunner, pathLooker PathLooker, clusterName string, verbose bool, timeout time.Duration) Client {
+func NewClient(cmdRunner CmdRunner, pathLooker PathLooker, clusterName string, verbose bool,
+	timeout time.Duration) Client {
 	return &client{
 		cmdRunner:   cmdRunner,
 		pathLooker:  pathLooker,
@@ -70,13 +71,16 @@ func (c *client) runCmd(args ...string) (string, error) {
 
 	if err != nil {
 		if c.verbose {
-			fmt.Printf("Failing command:\n  %s %s\nwith output:\n  %s\nand error:\n  %s\n", binaryName, strings.Join(args, " "), out, err)
+			fmt.Printf("Failing command:\n  %s %s\nwith output:\n  %s\nand error:\n  %s\n", binaryName,
+				strings.Join(args, " "), out, err)
 		}
-		return out, errors.Wrapf(err, "Executing '%s %s' failed with output '%s'", binaryName, strings.Join(args, " "), out)
+		return out, errors.Wrapf(err, "Executing '%s %s' failed with output '%s'", binaryName, strings.Join(args, " "),
+			out)
 	}
 
 	if ctx.Err() == context.DeadlineExceeded {
-		return out, fmt.Errorf("Executing '%s %s' command with output '%s' timed out. Try running the command manually or increasing the timeout using the 'timeout' flag", binaryName, strings.Join(args, " "), out)
+		return out, fmt.Errorf("executing '%s %s' command with output '%s' timed out. Try running the command "+
+			"manually or increasing the timeout using the 'timeout' flag", binaryName, strings.Join(args, " "), out)
 	}
 
 	if c.verbose {
@@ -103,19 +107,19 @@ func (c *client) checkVersion() error {
 	if len(binaryVersion) < 2 {
 		return fmt.Errorf("Could not extract %s version from command output:\n%s", binaryName, binaryVersionOutput)
 	}
-	binarySemVersion, err := semver.Parse(binaryVersion[1])
+	binarySemVersion, err := semver.StrictNewVersion(binaryVersion[1])
 	if err != nil {
 		return err
 	}
 
-	minRequiredSemVersion, err := semver.Parse(minRequiredVersion)
+	minRequiredSemVersion, err := semver.StrictNewVersion(minRequiredVersion)
 	if err != nil {
 		return fmt.Errorf("failed to parse semantic version: %w", err)
 	}
-	if binarySemVersion.Major > minRequiredSemVersion.Major {
+	if binarySemVersion.Major() > minRequiredSemVersion.Major() {
 		incompatibleMajorVersionMsg := "You are using an unsupported k3d major version '%d'. The supported k3d major version for this command is '%d'."
 		return fmt.Errorf(incompatibleMajorVersionMsg, binarySemVersion.Major, minRequiredSemVersion.Major)
-	} else if binarySemVersion.LT(minRequiredSemVersion) {
+	} else if binarySemVersion.LessThan(minRequiredSemVersion) {
 		incompatibleVersionMsg := "You are using an unsupported k3d version '%s'. The supported k3d version for this command is >= '%s'."
 		return fmt.Errorf(incompatibleVersionMsg, binaryVersion, minRequiredSemVersion)
 	}
@@ -152,12 +156,13 @@ func (c *client) getRegistryByName(registryName string) (*Registry, error) {
 
 // VerifyStatus verifies whether the k3d CLI tool is properly installed
 func (c *client) VerifyStatus() error {
-	//ensure k3d is in PATH
+	// ensure k3d is in PATH
 	if _, err := c.pathLooker.Look(binaryName); err != nil {
 		if c.verbose {
 			fmt.Printf("Command '%s' not found in PATH", binaryName)
 		}
-		return fmt.Errorf("Command '%s' not found. Please install %s (see https://github.com/rancher/k3d#get)", binaryName, binaryName)
+		return fmt.Errorf("Command '%s' not found. Please install %s (see https://github.com/rancher/k3d#get)",
+			binaryName, binaryName)
 	}
 
 	if err := c.checkVersion(); err != nil {
@@ -225,7 +230,7 @@ func (c *client) CreateCluster(settings CreateClusterSettings) error {
 	cmdArgs = append(cmdArgs, getCreateClusterArgs(settings)...)
 
 	cmdArgs = append(cmdArgs, constructArgs("--port", settings.PortMapping)...)
-	//add further k3d args which are not offered by the Kyma CLI flags
+	// add further k3d args which are not offered by the Kyma CLI flags
 	cmdArgs = append(cmdArgs, settings.Args...)
 
 	_, err = c.runCmd(cmdArgs...)
@@ -247,7 +252,7 @@ func (c *client) CreateRegistry(registryPort string, args []string) (string, err
 		return fmt.Sprintf("%s:%s", registryNameMatch[1], registryPort), nil
 	}
 
-	//fallback to k3d convention if the regexp fails
+	// fallback to k3d convention if the regexp fails
 	return fmt.Sprintf("%s:%s", registryName, registryPort), nil
 }
 
@@ -278,7 +283,7 @@ func getCreateClusterArgs(settings CreateClusterSettings) []string {
 }
 
 func getK3sImage(kubernetesVersion string) (string, error) {
-	_, err := semver.Parse(kubernetesVersion)
+	_, err := semver.StrictNewVersion(kubernetesVersion)
 	if err != nil {
 		return "", fmt.Errorf("Invalid Kubernetes version %v: %v", kubernetesVersion, err)
 	}
