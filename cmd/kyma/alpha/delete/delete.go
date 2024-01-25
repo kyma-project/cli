@@ -1,15 +1,16 @@
-package disable
+package delete
 
 import (
-	"github.com/kyma-project/cli/cmd/kyma/alpha/disable/module"
+	"github.com/kyma-project/cli/cmd/kyma/alpha/delete/module"
 	"github.com/kyma-project/cli/internal/cli"
 	"github.com/spf13/cobra"
 )
 
 func NewCmd(o *cli.Options) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "disable",
-		Short: "Disables a resource in the Kyma cluster.",
+		Use:     "delete",
+		Aliases: []string{"disable"},
+		Short:   "Deletes a resource from the Kyma cluster.",
 		Long: `Use this command to disable a resource in the Kyma cluster.
 `,
 	}

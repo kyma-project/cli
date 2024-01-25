@@ -6,14 +6,16 @@ import (
 	"os"
 	"time"
 
-	"github.com/kyma-project/cli/internal/cli/alpha/module"
 	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/kyma-project/cli/internal/cli"
+	"github.com/kyma-project/cli/internal/cli/alpha/module"
+
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+
+	"github.com/kyma-project/cli/internal/cli"
 )
 
 type command struct {
@@ -29,30 +31,31 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "module [name] [flags]",
-		Short: "Disables a module in the cluster or in the given Kyma resource.",
-		Long: `Use this command to disable active Kyma modules in the cluster.
+		Short: "Adds a module in the cluster or in the given Kyma resource.",
+		Long: `Use this command to add Kyma modules available in the cluster.
 
 ### Detailed description
 
 For more information on Kyma modules, see the 'create module' command.
 
-This command disables an active module in the cluster.
+This command enables an available module in the cluster. 
+A module is available when it is released with a ModuleTemplate. The ModuleTemplate is used for instantiating the module with proper default configuration.
 `,
 
 		Example: `
-Disable "my-module" from the "alpha" channel in "default-kyma" in "kyma-system" Namespace
-		kyma alpha disable module my-module -c alpha -n kyma-system -k default-kyma
+Add "my-module" from "alpha" channel to "default-kyma" in "kyma-system" Namespace
+		kyma alpha add module my-module -c alpha -n kyma-system -k default-kyma
 `,
 		RunE:    func(cmd *cobra.Command, args []string) error { return c.Run(cmd.Context(), args) },
 		Aliases: []string{"mod", "mods", "modules"},
 	}
 
 	cmd.Flags().DurationVarP(
-		&o.Timeout, "timeout", "t", 1*time.Minute, "Maximum time for the operation to disable a module.",
+		&o.Timeout, "timeout", "t", 1*time.Minute, "Maximum time for the operation to enable a module.",
 	)
 	cmd.Flags().StringVarP(
 		&o.Channel, "channel", "c", "",
-		"Module's channel to use.",
+		"Module's channel to enable.",
 	)
 	cmd.Flags().StringVarP(
 		&o.Namespace, "namespace", "n", cli.KymaNamespaceDefault,
@@ -70,6 +73,10 @@ Disable "my-module" from the "alpha" channel in "default-kyma" in "kyma-system" 
 		&o.Wait, "wait", "w", false,
 		"Wait until the given Kyma resource is ready.",
 	)
+	cmd.Flags().StringVarP(
+		&o.Policy, "policy", "p", string(customResourcePolicyCreateAndDelete),
+		fmt.Sprintf("Determines how the module is managed. Use '%s' to install the default values provided in the module template or '%s' to ignore them.",
+			customResourcePolicyCreateAndDelete, customResourcePolicyIgnore))
 
 	return cmd
 }
@@ -97,7 +104,7 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 	}
 
 	if len(args) != 1 {
-		return errors.New("you must pass one Kyma module name to disable")
+		return errors.New("you must pass one Kyma module name to enable it")
 	}
 	moduleName := args[0]
 
@@ -121,14 +128,17 @@ func (cmd *command) run(ctx context.Context, l *zap.SugaredLogger, moduleName st
 
 	kyma := types.NamespacedName{Name: cmd.opts.KymaName, Namespace: cmd.opts.Namespace}
 	moduleInteractor := module.NewInteractor(l, cmd.K8s, kyma, cmd.opts.Timeout, cmd.opts.Force)
-	modules, _, err := moduleInteractor.Get(ctx)
+	modules, kymaChannel, err := moduleInteractor.Get(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get modules: %w", err)
 	}
-	desiredModules, err := disableModule(modules, moduleName, cmd.opts.Channel)
+
+	err = validateChannel(ctx, &moduleInteractor, moduleName, cmd.opts.Channel, kymaChannel)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to validate module channel: %w", err)
 	}
+
+	desiredModules := enableModule(modules, moduleName, cmd.opts.Channel, cmd.opts.Policy)
 
 	patchStep := cmd.NewStep("Patching modules for Kyma")
 	if err = moduleInteractor.Update(ctx, desiredModules); err != nil {
@@ -149,17 +159,56 @@ func (cmd *command) run(ctx context.Context, l *zap.SugaredLogger, moduleName st
 	return nil
 }
 
-func disableModule(modules []v1beta2.Module, name, channel string) ([]v1beta2.Module, error) {
-	for i, mod := range modules {
-		if mod.Name != name {
-			continue
-		}
-		if channel != "" {
-			if mod.Channel != "" && mod.Channel != channel {
-				continue
-			}
-		}
-		return append(modules[:i], modules[i+1:]...), nil
+func validateChannel(ctx context.Context, moduleInteractor module.Interactor,
+	moduleIdentifier string, channel string, kymaChannel string) error {
+	filteredModuleTemplates, err := moduleInteractor.GetFilteredModuleTemplates(ctx, moduleIdentifier)
+	if err != nil {
+		return fmt.Errorf("could not retrieve module templates in cluster to determine valid channels: %v", err)
 	}
-	return modules, fmt.Errorf("could not disable module as it was not found: %s in channel %s", name, channel)
+
+	if channel == "" {
+		channel = kymaChannel
+	}
+	if !doesChannelExist(filteredModuleTemplates, channel) {
+		return fmt.Errorf("the channel [%s] does not exist for the module template [%s]. "+
+			"choose from one of the available channels: %v",
+			channel, moduleIdentifier, mapTemplatesToChannels(filteredModuleTemplates))
+	}
+	return nil
+}
+
+func enableModule(modules []v1beta2.Module, name, channel string, customResourcePolicy string) []v1beta2.Module {
+	for idx := range modules {
+		if modules[idx].Name == name {
+			modules[idx].Channel = channel
+			modules[idx].CustomResourcePolicy = v1beta2.CustomResourcePolicy(customResourcePolicy)
+			return modules
+		}
+	}
+
+	newModule := v1beta2.Module{Name: name, CustomResourcePolicy: v1beta2.CustomResourcePolicy(customResourcePolicy)}
+	if channel != "" {
+		newModule.Channel = channel
+	}
+
+	modules = append(modules, newModule)
+
+	return modules
+}
+
+func doesChannelExist(templates []v1beta2.ModuleTemplate, channel string) bool {
+	for _, template := range templates {
+		if template.Spec.Channel == channel {
+			return true
+		}
+	}
+	return false
+}
+
+func mapTemplatesToChannels(templates []v1beta2.ModuleTemplate) []string {
+	mapped := make([]string, len(templates))
+	for i, e := range templates {
+		mapped[i] = e.Spec.Channel
+	}
+	return mapped
 }
