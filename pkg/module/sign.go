@@ -10,6 +10,7 @@ import (
 	"github.com/open-component-model/ocm/pkg/signing"
 	"github.com/open-component-model/ocm/pkg/signing/handlers/rsa"
 	"github.com/open-component-model/ocm/pkg/signing/hasher/sha512"
+	"github.com/open-component-model/ocm/pkg/signing/signutils"
 	"github.com/pkg/errors"
 )
 
@@ -112,7 +113,7 @@ func privateKey(pathToPrivateKey string) (interface{}, error) {
 		return nil, fmt.Errorf("unable to open key file: %w", err)
 	}
 
-	key, err := signing.ParsePrivateKey(privateKeyFile)
+	key, err := signutils.ParsePublicKey(privateKeyFile)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse private key: %w", err)
 	}
@@ -125,7 +126,7 @@ func publicKey(pathToPublicKey string) (interface{}, error) {
 		return nil, fmt.Errorf("unable to open key file: %w", err)
 	}
 
-	key, err := signing.ParsePublicKey(publicKeyFile)
+	key, err := signutils.ParsePublicKey(publicKeyFile)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse public key: %w", err)
 	}
