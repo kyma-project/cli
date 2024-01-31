@@ -217,13 +217,14 @@ func CreateModuleCommand(versionOverwrite bool,
 	if versionOverwrite {
 		createModuleCmd = exec.Command("kyma", "alpha", "create", "module",
 			"--path", path, "--registry", registry, "--insecure", "--module-config-file", configFilePath,
-			"--version", version, "--module-archive-version-overwrite", "--sec-scanners-config", secScannerConfig)
+			"--version", version, "--module-archive-version-overwrite", "--module-archive-persistence=true", "--sec-scanners-config", secScannerConfig)
 	} else {
 		createModuleCmd = exec.Command("kyma", "alpha", "create", "module",
 			"--path", path, "--registry", registry, "--insecure", "--module-config-file", configFilePath,
-			"--version", version, "--sec-scanners-config", secScannerConfig)
+			"--version", version, "--module-archive-persistence=true", "--sec-scanners-config", secScannerConfig)
 	}
 	createOut, err := createModuleCmd.CombinedOutput()
+	fmt.Println(string(createOut))
 
 	if err != nil {
 		if strings.Contains(string(createOut),

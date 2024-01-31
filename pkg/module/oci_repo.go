@@ -58,6 +58,7 @@ func (r *OciRepo) DescriptorResourcesAreEquivalent(archive *comparch.ComponentAr
 		return false
 	}
 
+	fmt.Println("foo1")
 	localResourcesMap := map[string]compdesc.Resource{}
 	for _, res := range localResources {
 		localResourcesMap[res.Name] = res
@@ -65,7 +66,9 @@ func (r *OciRepo) DescriptorResourcesAreEquivalent(archive *comparch.ComponentAr
 
 	for _, res := range remoteResources {
 		localResource := localResourcesMap[res.Name]
+		fmt.Println("res.Name: " + res.Name)
 		if res.Name == RawManifestLayerName {
+			fmt.Println("foo 2")
 			remoteAccess, ok := res.Access.(*runtime.UnstructuredVersionedTypedObject)
 			if !ok {
 				return false
@@ -89,6 +92,7 @@ func (r *OciRepo) DescriptorResourcesAreEquivalent(archive *comparch.ComponentAr
 				return false
 			}
 		} else if !res.Equivalent(&localResource).IsEquivalent() {
+			fmt.Println("foo 20")
 			return false
 		}
 	}
