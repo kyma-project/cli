@@ -3,6 +3,7 @@ package module
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 
 	"github.com/open-component-model/ocm/pkg/common"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm"
@@ -109,13 +110,38 @@ func (r *OciRepo) DescriptorResourcesAreEquivalent(archive *comparch.ComponentAr
 			if remoteAccessLocalReference[7:] != localAccessObject.LocalReference[7:] {
 				return false
 			}
-		} else if !res.Equivalent(&localResource).IsEquivalent() {
+		} else if !isEquivalent(&res, &localResource) {
 			fmt.Println("foo 20")
 			return false
 		}
 	}
 
 	return true
+}
+
+func isEquivalent(r *compdesc.Resource, e compdesc.ElementMetaAccessor) bool {
+	// Paranoid sanity checks
+	if r == nil && e == nil {
+		return true
+	}
+	if r == nil && e != nil || r != nil && e == nil {
+		return false
+	}
+
+	// Taken from OCM@v0.4.0 because the implementation in v0.6.0 looks flawed
+	if o, ok := e.(*compdesc.Resource); !ok {
+		return false
+	} else {
+		if !reflect.DeepEqual(&r.ElementMeta, &o.ElementMeta) {
+			return false
+		}
+		if !reflect.DeepEqual(&r.Access, &o.Access) {
+			return false
+		}
+		return r.Type == o.Type &&
+			r.Relation == o.Relation &&
+			reflect.DeepEqual(r.SourceRef, o.SourceRef)
+	}
 }
 
 func toJson(obj any) (string, error) {
