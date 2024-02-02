@@ -1,7 +1,6 @@
 package module
 
 import (
-	"encoding/json"
 	"fmt"
 	"reflect"
 
@@ -60,7 +59,6 @@ func (r *OciRepo) DescriptorResourcesAreEquivalent(archive *comparch.ComponentAr
 		return false
 	}
 
-	fmt.Println("foo1")
 	localResourcesMap := map[string]compdesc.Resource{}
 	for _, res := range localResources {
 		localResourcesMap[res.Name] = res
@@ -68,26 +66,7 @@ func (r *OciRepo) DescriptorResourcesAreEquivalent(archive *comparch.ComponentAr
 
 	for _, res := range remoteResources {
 		localResource := localResourcesMap[res.Name]
-		fmt.Println("res.Name: " + res.Name)
-		var resJson, localJson string
-		var err error
-		resJson, err = toJson(res)
-		if err == nil {
-			localJson, err = toJson(localResource)
-		}
-		fmt.Println("========================================")
-		if err != nil {
-			fmt.Printf("error during resource serialization: %s\n", err.Error())
-			return false
-		}
-		fmt.Println("remote:")
-		fmt.Println(resJson)
-		fmt.Println("----------------------------------------")
-		fmt.Println("local:")
-		fmt.Println(localJson)
-		fmt.Println("========================================")
 		if res.Name == RawManifestLayerName {
-			fmt.Println("foo 2")
 			remoteAccess, ok := res.Access.(*runtime.UnstructuredVersionedTypedObject)
 			if !ok {
 				return false
@@ -111,7 +90,6 @@ func (r *OciRepo) DescriptorResourcesAreEquivalent(archive *comparch.ComponentAr
 				return false
 			}
 		} else if !isEquivalent(&res, &localResource) {
-			fmt.Println("foo 20")
 			return false
 		}
 	}
@@ -142,12 +120,4 @@ func isEquivalent(r *compdesc.Resource, e compdesc.ElementMetaAccessor) bool {
 			r.Relation == o.Relation &&
 			reflect.DeepEqual(r.SourceRef, o.SourceRef)
 	}
-}
-
-func toJson(obj any) (string, error) {
-	out, err := json.MarshalIndent(obj, "=>", "    ")
-	if err != nil {
-		return "", err
-	}
-	return string(out), nil
 }

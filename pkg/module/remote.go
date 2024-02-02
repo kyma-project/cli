@@ -128,12 +128,7 @@ func NoSchemeURL(url string) string {
 func (r *Remote) ShouldPushArchive(repo cpi.Repository, archive *comparch.ComponentArchive, overwrite bool) (bool,
 	error) {
 	if !overwrite {
-		versionExists, err := r.ComponentVersionExists(archive, repo)
-		if err != nil {
-			fmt.Println("========================================")
-			fmt.Println(fmt.Errorf("could not check if the component version exists: %w", err))
-			fmt.Println("========================================")
-		}
+		versionExists, _ := r.ComponentVersionExists(archive, repo)
 
 		if versionExists {
 			versionAccess, err := r.GetComponentVersion(archive, repo)
