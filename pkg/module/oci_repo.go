@@ -64,7 +64,8 @@ func (r *OciRepo) DescriptorResourcesAreEquivalent(archive *comparch.ComponentAr
 		localResourcesMap[res.Name] = res
 	}
 
-	for _, res := range remoteResources {
+	for i := range remoteResources {
+		res := remoteResources[i]
 		localResource := localResourcesMap[res.Name]
 		if res.Name == RawManifestLayerName {
 			remoteAccess, ok := res.Access.(*runtime.UnstructuredVersionedTypedObject)
@@ -107,17 +108,18 @@ func isEquivalent(r *compdesc.Resource, e compdesc.ElementMetaAccessor) bool {
 	}
 
 	// Taken from OCM@v0.4.0 because the implementation in v0.6.0 looks flawed
-	if o, ok := e.(*compdesc.Resource); !ok {
+	o, ok := e.(*compdesc.Resource)
+	if !ok {
 		return false
-	} else {
-		if !reflect.DeepEqual(&r.ElementMeta, &o.ElementMeta) {
-			return false
-		}
-		if !reflect.DeepEqual(&r.Access, &o.Access) {
-			return false
-		}
-		return r.Type == o.Type &&
-			r.Relation == o.Relation &&
-			reflect.DeepEqual(r.SourceRef, o.SourceRef)
 	}
+	if !reflect.DeepEqual(&r.ElementMeta, &o.ElementMeta) {
+		return false
+	}
+	if !reflect.DeepEqual(&r.Access, &o.Access) {
+		return false
+	}
+	return r.Type == o.Type &&
+		r.Relation == o.Relation &&
+		reflect.DeepEqual(r.SourceRef, o.SourceRef)
+
 }
