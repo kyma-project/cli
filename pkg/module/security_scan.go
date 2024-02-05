@@ -97,7 +97,7 @@ func appendProtecodeImagesLayers(descriptor *ocm.ComponentDescriptor, config *Se
 					Labels:  []ocmv1.Label{*imageTypeLabel},
 					Version: imageTag,
 				},
-				Type:     itociartifact.LEGACY_TYPE, //#561
+				Type:     itociartifact.LEGACY_TYPE,
 				Relation: ocmv1.ExternalRelation,
 			},
 			Access: access,

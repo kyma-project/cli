@@ -113,7 +113,7 @@ func privateKey(pathToPrivateKey string) (interface{}, error) {
 		return nil, fmt.Errorf("unable to open key file: %w", err)
 	}
 
-	key, err := signutils.ParsePublicKey(privateKeyFile)
+	key, err := signutils.ParsePrivateKey(privateKeyFile)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse private key: %w", err)
 	}
