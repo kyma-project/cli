@@ -14,6 +14,7 @@ import (
 	"github.com/open-component-model/ocm/pkg/common/accessobj"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	ocmv1 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/meta/v1"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/cpi"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/comparch"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -117,7 +118,7 @@ func addBlob(fs vfs.FileSystem, archive *comparch.ComponentArchive, resource *Re
 		return err
 	}
 
-	return archive.SetResource(&resource.ResourceMeta, blobAccess)
+	return archive.SetResource(&resource.ResourceMeta, blobAccess, cpi.ModifyResource(true))
 }
 
 func (rd ResourceDescriptor) String() string {

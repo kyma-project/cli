@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/open-component-model/ocm/cmds/ocm/commands/ocmcmds/common/inputs/types/ociimage"
+	itociartifact "github.com/open-component-model/ocm/cmds/ocm/commands/ocmcmds/common/inputs/types/ociartifact"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/accessmethods/ociartifact"
 	ocm "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	ocmv1 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/meta/v1"
@@ -97,7 +97,7 @@ func appendProtecodeImagesLayers(descriptor *ocm.ComponentDescriptor, config *Se
 					Labels:  []ocmv1.Label{*imageTypeLabel},
 					Version: imageTag,
 				},
-				Type:     ociimage.TYPE,
+				Type:     itociartifact.LEGACY_TYPE,
 				Relation: ocmv1.ExternalRelation,
 			},
 			Access: access,
