@@ -141,7 +141,7 @@ func (r *Remote) ShouldPushArchive(repo cpi.Repository, archive *comparch.Compon
 			}
 			return false, fmt.Errorf("version %s already exists with different content, please use "+
 				"--module-archive-version-overwrite flag to overwrite it",
-				archive.ComponentVersionAccess.GetVersion())
+				archive.GetVersion())
 		}
 	}
 

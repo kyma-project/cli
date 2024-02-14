@@ -69,7 +69,7 @@ func Test_ModuleTemplate(t *testing.T) {
 		ociArtifactAccessSpec, ok := resourceAccessSpec.(*ociartifact.AccessSpec)
 		assert.True(t, ok)
 		assert.Equal(t, ociartifact.Type, ociArtifactAccessSpec.GetType())
-		assert.Equal(t, "europe-docker.pkg.dev/kyma-project/prod/template-operator:0.1.0",
+		assert.Equal(t, "europe-docker.pkg.dev/kyma-project/prod/template-operator:0.1.2",
 			ociArtifactAccessSpec.ImageReference)
 	})
 
@@ -102,7 +102,7 @@ func Test_ModuleTemplate(t *testing.T) {
 		flattened := e2e.Flatten(secScanLabels)
 		assert.Equal(t, map[string]string{
 			"git.kyma-project.io/ref":                   "refs/heads/main",
-			"scan.security.kyma-project.io/rc-tag":      "0.1.0",
+			"scan.security.kyma-project.io/rc-tag":      "0.1.2",
 			"scan.security.kyma-project.io/language":    "golang-mod",
 			"scan.security.kyma-project.io/dev-branch":  "main",
 			"scan.security.kyma-project.io/subprojects": "false",

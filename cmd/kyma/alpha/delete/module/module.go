@@ -6,16 +6,14 @@ import (
 	"os"
 	"time"
 
+	"github.com/kyma-project/cli/internal/cli/alpha/module"
 	"github.com/kyma-project/lifecycle-manager/api/v1beta2"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/kyma-project/cli/internal/cli/alpha/module"
-
+	"github.com/kyma-project/cli/internal/cli"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-
-	"github.com/kyma-project/cli/internal/cli"
 )
 
 type command struct {
@@ -31,31 +29,30 @@ func NewCmd(o *Options) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "module [name] [flags]",
-		Short: "Enables a module in the cluster or in the given Kyma resource.",
-		Long: `Use this command to enable Kyma modules available in the cluster.
+		Short: "Deletes a module from the cluster or the given Kyma resource.",
+		Long: `Use this command to delete Kyma modules from the cluster.
 
 ### Detailed description
 
 For more information on Kyma modules, see the 'create module' command.
 
-This command enables an available module in the cluster. 
-A module is available when it is released with a ModuleTemplate. The ModuleTemplate is used for instantiating the module with proper default configuration.
+This command disables an active module in the cluster.
 `,
 
 		Example: `
-Enable "my-module" from "alpha" channel in "default-kyma" in "kyma-system" Namespace
-		kyma alpha enable module my-module -c alpha -n kyma-system -k default-kyma
+Delete "my-module" from the "alpha" channel from "default-kyma" in "kyma-system" Namespace
+		kyma alpha delete module my-module -c alpha -n kyma-system -k default-kyma
 `,
 		RunE:    func(cmd *cobra.Command, args []string) error { return c.Run(cmd.Context(), args) },
 		Aliases: []string{"mod", "mods", "modules"},
 	}
 
 	cmd.Flags().DurationVarP(
-		&o.Timeout, "timeout", "t", 1*time.Minute, "Maximum time for the operation to enable a module.",
+		&o.Timeout, "timeout", "t", 1*time.Minute, "Maximum time for the operation to disable a module.",
 	)
 	cmd.Flags().StringVarP(
 		&o.Channel, "channel", "c", "",
-		"Module's channel to enable.",
+		"Module's channel to use.",
 	)
 	cmd.Flags().StringVarP(
 		&o.Namespace, "namespace", "n", cli.KymaNamespaceDefault,
@@ -73,10 +70,6 @@ Enable "my-module" from "alpha" channel in "default-kyma" in "kyma-system" Names
 		&o.Wait, "wait", "w", false,
 		"Wait until the given Kyma resource is ready.",
 	)
-	cmd.Flags().StringVarP(
-		&o.Policy, "policy", "p", string(customResourcePolicyCreateAndDelete),
-		fmt.Sprintf("Determines how the module is managed. Use '%s' to install the default values provided in the module template or '%s' to ignore them.",
-			customResourcePolicyCreateAndDelete, customResourcePolicyIgnore))
 
 	return cmd
 }
@@ -104,7 +97,7 @@ func (cmd *command) Run(ctx context.Context, args []string) error {
 	}
 
 	if len(args) != 1 {
-		return errors.New("you must pass one Kyma module name to enable it")
+		return errors.New("you must pass one Kyma module name to disable")
 	}
 	moduleName := args[0]
 
@@ -128,17 +121,14 @@ func (cmd *command) run(ctx context.Context, l *zap.SugaredLogger, moduleName st
 
 	kyma := types.NamespacedName{Name: cmd.opts.KymaName, Namespace: cmd.opts.Namespace}
 	moduleInteractor := module.NewInteractor(l, cmd.K8s, kyma, cmd.opts.Timeout, cmd.opts.Force)
-	modules, kymaChannel, err := moduleInteractor.Get(ctx)
+	modules, _, err := moduleInteractor.Get(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get modules: %w", err)
 	}
-
-	err = validateChannel(ctx, &moduleInteractor, moduleName, cmd.opts.Channel, kymaChannel)
+	desiredModules, err := disableModule(modules, moduleName, cmd.opts.Channel)
 	if err != nil {
-		return fmt.Errorf("failed to validate module channel: %w", err)
+		return err
 	}
-
-	desiredModules := enableModule(modules, moduleName, cmd.opts.Channel, cmd.opts.Policy)
 
 	patchStep := cmd.NewStep("Patching modules for Kyma")
 	if err = moduleInteractor.Update(ctx, desiredModules); err != nil {
@@ -159,56 +149,17 @@ func (cmd *command) run(ctx context.Context, l *zap.SugaredLogger, moduleName st
 	return nil
 }
 
-func validateChannel(ctx context.Context, moduleInteractor module.Interactor,
-	moduleIdentifier string, channel string, kymaChannel string) error {
-	filteredModuleTemplates, err := moduleInteractor.GetFilteredModuleTemplates(ctx, moduleIdentifier)
-	if err != nil {
-		return fmt.Errorf("could not retrieve module templates in cluster to determine valid channels: %v", err)
-	}
-
-	if channel == "" {
-		channel = kymaChannel
-	}
-	if !doesChannelExist(filteredModuleTemplates, channel) {
-		return fmt.Errorf("the channel [%s] does not exist for the module template [%s]. "+
-			"choose from one of the available channels: %v",
-			channel, moduleIdentifier, mapTemplatesToChannels(filteredModuleTemplates))
-	}
-	return nil
-}
-
-func enableModule(modules []v1beta2.Module, name, channel string, customResourcePolicy string) []v1beta2.Module {
-	for idx := range modules {
-		if modules[idx].Name == name {
-			modules[idx].Channel = channel
-			modules[idx].CustomResourcePolicy = v1beta2.CustomResourcePolicy(customResourcePolicy)
-			return modules
+func disableModule(modules []v1beta2.Module, name, channel string) ([]v1beta2.Module, error) {
+	for i, mod := range modules {
+		if mod.Name != name {
+			continue
 		}
-	}
-
-	newModule := v1beta2.Module{Name: name, CustomResourcePolicy: v1beta2.CustomResourcePolicy(customResourcePolicy)}
-	if channel != "" {
-		newModule.Channel = channel
-	}
-
-	modules = append(modules, newModule)
-
-	return modules
-}
-
-func doesChannelExist(templates []v1beta2.ModuleTemplate, channel string) bool {
-	for _, template := range templates {
-		if template.Spec.Channel == channel {
-			return true
+		if channel != "" {
+			if mod.Channel != "" && mod.Channel != channel {
+				continue
+			}
 		}
+		return append(modules[:i], modules[i+1:]...), nil
 	}
-	return false
-}
-
-func mapTemplatesToChannels(templates []v1beta2.ModuleTemplate) []string {
-	mapped := make([]string, len(templates))
-	for i, e := range templates {
-		mapped[i] = e.Spec.Channel
-	}
-	return mapped
+	return modules, fmt.Errorf("could not disable module as it was not found: %s in channel %s", name, channel)
 }

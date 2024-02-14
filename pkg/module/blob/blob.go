@@ -64,6 +64,10 @@ func (o *Output) Digest() digest.Digest {
 	return digest.FromString(o.digest)
 }
 
+func (o *Output) Dup() (accessio.BlobAccess, error) {
+	return o, nil
+}
+
 type InputType string
 
 const (
