@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       K3D_VERSION: v5.4.7
-      MODULE_TEMPLATE_VERSION: 0.1.0
+      MODULE_TEMPLATE_VERSION: 0.1.2
       OCI_REPOSITORY_URL: http://k3d-oci.localhost:5001
     steps:
       - name: Checkout Kyma CLI
