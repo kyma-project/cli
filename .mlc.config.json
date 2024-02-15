@@ -1,0 +1,14 @@
+{
+  "_comment": "This is a configuration file for the [Markdown link check](https://github.com/tcort/markdown-link-check).",
+  "_comment": "All `/kyma-project` repositories in GitHub use [Markdown link check](https://github.com/tcort/markdown-link-check) to check their Markdown files for broken links.",
+  "_comment": "Configuration and maintenance of the Markdown link check tool is the responsibility of a repository owner.",
+  "_comment": "See the following configuration example.",
+  "_comment": "For more details read the [repository guidelines](https://github.com/kyma-project/community/blob/main/docs/guidelines/repository-guidelines/01-new-repository-settings.md).",
+  "replacementPatterns": [
+    {
+      "_comment": "a replacement rule for all the in-repository references",
+      "pattern": "^/",
+      "replacement": "{{BASEURL}}/"
+    }
+  ]
+}
