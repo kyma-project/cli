@@ -1,0 +1,36 @@
+# Binaries for programs and plugins
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Tmp directory
+tmp/
+
+# Test binary, build with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Vendored dependencies
+vendor
+bin
+# IDEs
+.idea
+.vscode
+.run
+
+# OS temporary files
+.DS_Store
+
+# Changelog temporary directory
+.changelog/
+
+# Kyma workspace and crt-file (created by deploy cmd)
+workspace
+kyma.crt
+mod
+
+# Generated template files (generate by alpha module create)
+/template.yaml

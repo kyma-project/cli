@@ -1,0 +1,1 @@
+Use this file to create an unordered list of documents you want to display on the [Kyma website](https://kyma-project.io). The list serves to navigate through the user documentation. For more information, visit the [User documentation](https://github.com/kyma-project/community/blob/main/docs/guidelines/content-guidelines/01-user-docs.md) guide.
