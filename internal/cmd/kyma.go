@@ -1,6 +1,9 @@
 package cmd
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/kyma-project/cli.v3/internal/cmd/provision"
+	"github.com/spf13/cobra"
+)
 
 func NewKymaCMD() *cobra.Command {
 	cmd := &cobra.Command{
@@ -20,6 +23,8 @@ func NewKymaCMD() *cobra.Command {
 			}
 		},
 	}
+
+	cmd.AddCommand(provision.NewProvisionCMD())
 
 	return cmd
 }
