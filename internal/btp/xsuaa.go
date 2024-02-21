@@ -28,6 +28,7 @@ func GetOAuthToken(credentials *CISCredentials) (*XSUAAToken, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to build request: %s", err.Error())
 	}
+	defer request.Body.Close()
 
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	request.SetBasicAuth(
