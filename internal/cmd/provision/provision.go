@@ -24,7 +24,7 @@ func NewProvisionCMD() *cobra.Command {
 
 	cmd.PersistentFlags()
 	cmd.Flags().StringVar(&config.credentialsPath, "credentials-path", "", "Path to the CIS credentials file.")
-	cmd.MarkFlagRequired("credentials-path")
+	_ = cmd.MarkFlagRequired("credentials-path")
 
 	return cmd
 }
