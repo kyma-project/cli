@@ -105,6 +105,10 @@ func (o *Options) validateChannel() error {
 }
 
 func (o *Options) Validate() error {
+	if !o.NonInteractive {
+		cli.AlphaWarn()
+	}
+
 	if o.KubebuilderProject {
 		if err := o.validateVersion(); err != nil {
 			return err

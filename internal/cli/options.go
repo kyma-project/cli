@@ -19,3 +19,14 @@ func NewOptions() *Options {
 		Finalizers: NewFinalizer(),
 	}
 }
+
+// Synchronise the command options with the interactivity settings.
+func (o *Options) Synchronise() {
+	if o.CI {
+		o.Factory.NonInteractive = true
+	}
+
+	if o.Verbose {
+		o.Factory.UseLogger = true
+	}
+}

@@ -1,9 +1,10 @@
 package create
 
 import (
+	"github.com/spf13/cobra"
+
 	"github.com/kyma-project/cli/cmd/kyma/alpha/create/module"
 	"github.com/kyma-project/cli/internal/cli"
-	"github.com/spf13/cobra"
 )
 
 // NewCmd creates a new Kyma CLI command
@@ -15,7 +16,8 @@ func NewCmd(o *cli.Options) *cobra.Command {
 `,
 	}
 
-	cmd.AddCommand(module.NewCmd(module.NewOptions(o)))
+	c := module.NewCmd(module.NewOptions(o)).Command
+	cmd.AddCommand(&c)
 
 	return cmd
 }

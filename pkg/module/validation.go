@@ -34,6 +34,7 @@ func NewDefaultCRValidator(cr []byte, modulePath string) *DefaultCRValidator {
 	}
 }
 
+// It is too late to validate the crData in here.
 func (v *DefaultCRValidator) Run(ctx context.Context, log *zap.SugaredLogger) error {
 	// skip validation if no CR detected
 	if len(v.crData) == 0 {

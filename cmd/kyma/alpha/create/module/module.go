@@ -2,6 +2,7 @@ package module
 
 import (
 	"context"
+	_ "embed"
 	"errors"
 	"fmt"
 	"maps"
@@ -17,6 +18,7 @@ import (
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	compdescv2 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/versions/v2"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/cpi"
+	"github.com/open-component-model/ocm/pkg/contexts/ocm/repositories/comparch"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
@@ -28,10 +30,45 @@ import (
 	"github.com/kyma-project/cli/pkg/module"
 )
 
-type command struct {
-	cli.Command
-	opts *Options
-}
+//go:embed cmd_description.txt
+var description string
+
+//go:embed cmd_example.txt
+var example string
+
+type (
+	moduleBuilderService interface {
+		BuildModule() (*Config, *module.Definition, error)
+	}
+
+	componentDescriptorService interface {
+		Provision() error
+	}
+
+	imagePusherService interface {
+		Push() error
+	}
+
+	signerService interface {
+		SignModuleDefinition() error
+	}
+
+	templateGeneratorService interface {
+		GenerateModuleTemplate() error
+	}
+
+	command struct {
+		cli.Command
+		opts   *Options
+		logger *zap.SugaredLogger
+
+		moduleBuilder       moduleBuilderService
+		componentDescriptor componentDescriptorService
+		imagePusher         imagePusherService
+		signer              signerService
+		templateGenerator   templateGeneratorService
+	}
+)
 
 // NewCmd creates a new Kyma CLI command
 func NewCmd(o *Options) *cobra.Command {
@@ -41,77 +78,10 @@ func NewCmd(o *Options) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "module [--module-config-file MODULE_CONFIG_FILE | --name MODULE_NAME --version MODULE_VERSION] [--path MODULE_DIRECTORY] [--registry MODULE_REGISTRY] [flags]",
-		Short: "Creates a module bundled as an OCI artifact",
-		Long: `Use this command to create a Kyma module, bundle it as an OCI artifact and optionally push it to the OCI registry.
-
-### Detailed description
-
-This command allows you to create a Kyma module as an OCI artifact and optionally push it to the OCI registry of your choice.
-For more information about a Kyma module see the [documentation](https://github.com/kyma-project/lifecycle-manager).
-
-This command creates a module from an existing directory containing the module's source files.
-The directory must be a valid git project that is publicly available.
-The command supports two types of directory layouts for the module:
-- Simple: Just a directory with a valid git configuration. All the module's sources are defined in this directory.
-- Kubebuilder (DEPRECATED): A directory with a valid Kubebuilder project. Module operator(s) are created using the Kubebuilder toolset.
-Both simple and Kubebuilder projects require providing an explicit path to the module's project directory using the "--path" flag or invoking the command from within that directory.
-
-### Simple mode configuration
-
-To configure the simple mode, provide the "--module-config-file" flag with a config file path.
-The module config file is a YAML file used to configure the following attributes for the module:
-
-- name:             a string, required, the name of the module
-- version:          a string, required, the version of the module
-- channel:          a string, required, channel that should be used in the ModuleTemplate CR
-- mandatory:        a boolean, optional, default=false, indicates whether the module is mandatory to be installed on all clusters
-- manifest:         a string, required, reference to the manifest, must be a relative file name
-- defaultCR:        a string, optional, reference to a YAML file containing the default CR for the module, must be a relative file name
-- resourceName:     a string, optional, default={NAME}-{CHANNEL}, the name for the ModuleTemplate CR that will be created
-- security:         a string, optional, name of the security scanners config file
-- internal:         a boolean, optional, default=false, determines whether the ModuleTemplate CR should have the internal flag or not
-- beta:             a boolean, optional, default=false, determines whether the ModuleTemplate CR should have the beta flag or not
-- labels:           a map with string keys and values, optional, additional labels for the generated ModuleTemplate CR
-- annotations:      a map with string keys and values, optional, additional annotations for the generated ModuleTemplate CR
-- customStateCheck: a map with string keys and values, optional, define mapping between custom states to valid supported status
-                    see also https://github.com/kyma-project/lifecycle-manager/blob/main/docs/technical-reference/api/moduleTemplate-cr.md#speccustomstatecheck
-
-The **manifest** and **defaultCR** paths are resolved against the module's directory, as configured with the "--path" flag.
-The **manifest** file contains all the module's resources in a single, multi-document YAML file. These resources will be created in the Kyma cluster when the module is activated.
-The **defaultCR** file contains a default custom resource for the module that will be installed along with the module.
-The Default CR is additionally schema-validated against the Custom Resource Definition. The CRD used for the validation must exist in the set of the module's resources.
-
-### Kubebuilder mode configuration
-The Kubebuilder mode is DEPRECATED.
-The Kubebuilder mode is configured automatically if the "--module-config-file" flag is not provided.
-
-In this mode, you have to explicitly provide the module name and version using the "--name" and "--version" flags, respectively.
-Some defaults, like the module manifest file location and the default CR file location, are then resolved automatically, but you can override these with the available flags.
-
-### Modules as OCI artifacts
-Modules are built and distributed as OCI artifacts. 
-This command creates a component descriptor in the configured descriptor path (./mod as a default) and packages all the contents on the provided path as an OCI artifact.
-The internal structure of the artifact conforms to the [Open Component Model](https://ocm.software/) scheme version 3.
-
-If you configured the "--registry" flag, the created module is validated and pushed to the configured registry.
-During the validation the **defaultCR** resource, if defined, is validated against a corresponding CustomResourceDefinition.
-You can also trigger an on-demand **defaultCR** validation with "--validateCR=true", in case you don't push the module to the registry.
-
-#### Name Mapping
-To push the artifact into some registries, for example, the central docker.io registry, you have to change the OCM Component Name Mapping with the following flag: "--name-mapping=sha256-digest". This is necessary because the registry does not accept artifact URLs with more than two path segments, and such URLs are generated with the default name mapping: **urlPath**. In the case of the "sha256-digest" mapping, the artifact URL contains just a sha256 digest of the full Component Name and fits the path length restrictions. The downside of the "sha256-mapping" is that the module name is no longer visible in the artifact URL, as it contains the sha256 digest of the defined name.
-
-`,
-
-		Example: `Examples:
-Build a simple module and push it to a remote registry
-		kyma alpha create module --module-config-file=/path/to/module-config-file -path /path/to/module --registry http://localhost:5001/unsigned --insecure
-Build a Kubebuilder module my-domain/modB in version 1.2.3 and push it to a remote registry
-		kyma alpha create module --name my-domain/modB --version 1.2.3 --path /path/to/module --registry https://dockerhub.com
-Build a Kubebuilder module my-domain/modC in version 3.2.1 and push it to a local registry "unsigned" subfolder without tls
-		kyma alpha create module --name my-domain/modC --version 3.2.1 --path /path/to/module --registry http://localhost:5001/unsigned --insecure
-
-`,
+		Use:     "module [--module-config-file MODULE_CONFIG_FILE | --name MODULE_NAME --version MODULE_VERSION] [--path MODULE_DIRECTORY] [--registry MODULE_REGISTRY] [flags]",
+		Short:   "Creates a module bundled as an OCI artifact",
+		Long:    description,
+		Example: example,
 		RunE:    func(cobraCmd *cobra.Command, args []string) error { return c.Run(cobraCmd.Context()) },
 		Aliases: []string{"mod"},
 	}
@@ -131,8 +101,10 @@ Build a Kubebuilder module my-domain/modC in version 3.2.1 and push it to a loca
 		"Uses the host filesystem instead of in-memory archiving to build the module.",
 	)
 
-	cmd.Flags().BoolVar(&o.ArchiveVersionOverwrite, "module-archive-version-overwrite", false,
-		"Overwrites existing component's versions of the module. If set to false, the push is a No-Op.")
+	cmd.Flags().BoolVar(
+		&o.ArchiveVersionOverwrite, "module-archive-version-overwrite", false,
+		"Overwrites existing component's versions of the module. If set to false, the push is a No-Op.",
+	)
 
 	cmd.Flags().StringVar(
 		&o.GitRemote, "git-remote", "origin",
@@ -188,8 +160,10 @@ Build a Kubebuilder module my-domain/modC in version 3.2.1 and push it to a loca
 		&o.PrivateKeyPath, "key", "", "Specifies the path where a private key is used for signing.",
 	)
 
-	cmd.Flags().BoolVar(&o.KubebuilderProject, "kubebuilder-project", false,
-		"Specifies provided module is a Kubebuilder Project.")
+	cmd.Flags().BoolVar(
+		&o.KubebuilderProject, "kubebuilder-project", false,
+		"Specifies provided module is a Kubebuilder Project.",
+	)
 
 	configureLegacyFlags(cmd, o)
 
@@ -218,8 +192,10 @@ func configureLegacyFlags(cmd *cobra.Command, o *Options) *cobra.Command {
 
 	cmd.Flags().StringVar(&o.Channel, "channel", "regular", "Channel to use for the module template.")
 
-	cmd.Flags().StringVar(&o.Namespace, "namespace", kcpSystemNamespace,
-		"Specifies the namespace where the ModuleTemplate is deployed.")
+	cmd.Flags().StringVar(
+		&o.Namespace, "namespace", kcpSystemNamespace,
+		"Specifies the namespace where the ModuleTemplate is deployed.",
+	)
 
 	return cmd
 }
@@ -232,212 +208,223 @@ type validator interface {
 const kcpSystemNamespace = "kcp-system"
 
 func (cmd *command) Run(ctx context.Context) error {
-	osFS := osfs.New()
+	var (
+		modCnf                 *Config
+		modDef                 *module.Definition
+		crValidator            validator
+		componentVersionAccess ocm.ComponentVersionAccess
+		archive                *comparch.ComponentArchive
+		remote                 *module.Remote
+		err                    error
+		osFS                   = osfs.New()
+	)
 
-	if cmd.opts.CI {
-		cmd.Factory.NonInteractive = true
-	}
-	if cmd.opts.Verbose {
-		cmd.Factory.UseLogger = true
-	}
+	cmd.opts.Synchronise()
 
-	l := cli.NewLogger(cmd.opts.Verbose).Sugar()
-	undo := zap.RedirectStdLog(l.Desugar())
-	defer undo()
+	modCnf, modDef, err = cmd.moduleBuilder.BuildModule()
+	{
+		modDef, modCnf, err = cmd.moduleDefinitionFromOptions()
 
-	if !cmd.opts.NonInteractive {
-		cli.AlphaWarn()
-	}
-
-	if err := cmd.opts.Validate(); err != nil {
-		return err
-	}
-
-	modDef, modCnf, err := cmd.moduleDefinitionFromOptions()
-
-	if err != nil {
-		return err
-	}
-
-	cmd.NewStep("Parse and build module...")
-
-	// Create base resource defs with module root and its sub-layers
-	if cmd.opts.KubebuilderProject {
-		if err := module.InspectLegacy(modDef, cmd.opts.ResourcePaths, cmd.CurrentStep, l); err != nil {
-			cmd.CurrentStep.Failure()
+		if err != nil {
 			return err
 		}
-	} else {
-		if err := module.Inspect(modDef, l); err != nil {
-			cmd.CurrentStep.Failure()
-			return err
-		}
-	}
-	cmd.CurrentStep.Successf("Module built")
 
-	var crValidator validator
-	if crValidator, err = cmd.validateDefaultCR(ctx, modDef, l); err != nil {
-		return err
-	}
+		cmd.NewStep("Parse and build module...")
 
-	var archiveFS vfs.FileSystem
-	if cmd.opts.PersistentArchive {
-		archiveFS = osFS
-		l.Info("using host filesystem for archive")
-	} else {
-		archiveFS = memoryfs.New()
-		l.Info("using in-memory archive")
-	}
-
-	cmd.NewStep("Creating component descriptor")
-	componentDescriptor, err := module.InitComponentDescriptor(modDef)
-	if err != nil {
-		cmd.CurrentStep.Failure()
-		return err
-	}
-	cmd.CurrentStep.Successf("component descriptor created")
-
-	gitPath, err := files.SearchForTargetDirByName(modDef.Source, ".git")
-	if gitPath == "" || err != nil {
-		l.Warnf("could not find git repository root, using %s directory", modDef.Source)
-		n := nice.NewNice(cmd.opts.NonInteractive)
-		n.PrintImportant("\n! CAUTION: The target folder is not a git repository. The sources will be not added to the layer")
-		if files.IsFileExists(cmd.opts.SecurityScanConfig) {
-			n.PrintImportant("  The security scan configuration file has been provided, but it will be skipped due to the absence of repository information.")
-		}
-		if !cmd.avoidUserInteraction() {
-			if !cmd.CurrentStep.PromptYesNo("Do you want to continue? ") {
+		// Create base resource defs with module root and its sub-layers
+		if cmd.opts.KubebuilderProject {
+			if err := module.InspectLegacy(modDef, cmd.opts.ResourcePaths, cmd.CurrentStep, cmd.logger); err != nil {
 				cmd.CurrentStep.Failure()
-				return errors.New("command stopped by user")
+				return err
+			}
+		} else {
+			if err := module.Inspect(modDef, cmd.logger); err != nil {
+				cmd.CurrentStep.Failure()
+				return err
+			}
+		}
+		cmd.CurrentStep.Successf("Module built")
+
+		if crValidator, err = cmd.validateDefaultCR(ctx, modDef, cmd.logger); err != nil {
+			return err
+		}
+	}
+
+	err = cmd.componentDescriptor.Provision()
+	{
+		var archiveFS vfs.FileSystem
+		if cmd.opts.PersistentArchive {
+			archiveFS = osFS
+			cmd.logger.Info("using host filesystem for archive")
+		} else {
+			archiveFS = memoryfs.New()
+			cmd.logger.Info("using in-memory archive")
+		}
+
+		cmd.NewStep("Creating component descriptor")
+		componentDescriptor, err := module.InitComponentDescriptor(modDef)
+		if err != nil {
+			cmd.CurrentStep.Failure()
+			return err
+		}
+		cmd.CurrentStep.Successf("component descriptor created")
+
+		gitPath, err := files.SearchForTargetDirByName(modDef.Source, ".git")
+		if gitPath == "" || err != nil {
+			cmd.logger.Warnf("could not find git repository root, using %s directory", modDef.Source)
+			n := nice.NewNice(cmd.opts.NonInteractive)
+			n.PrintImportant("\n! CAUTION: The target folder is not a git repository. The sources will be not added to the layer")
+			if files.IsFileExists(cmd.opts.SecurityScanConfig) {
+				n.PrintImportant("  The security scan configuration file has been provided, but it will be skipped due to the absence of repository information.")
+			}
+			if !cmd.avoidUserInteraction() {
+				if !cmd.CurrentStep.PromptYesNo("Do you want to continue? ") {
+					cmd.CurrentStep.Failure()
+					return errors.New("command stopped by user")
+				}
+			}
+
+		} else {
+			cmd.logger.Infof("found git repository root at %s: adding git sources to the layer", gitPath)
+			modDef.Source = gitPath // set the source to the git root
+			if err := module.AddGitSources(componentDescriptor, modDef, cmd.opts.GitRemote); err != nil {
+				cmd.CurrentStep.Failure()
+				return err
 			}
 		}
 
-	} else {
-		l.Infof("found git repository root at %s: adding git sources to the layer", gitPath)
-		modDef.Source = gitPath // set the source to the git root
-		if err := module.AddGitSources(componentDescriptor, modDef, cmd.opts.GitRemote); err != nil {
+		// Security Scan
+		if cmd.opts.SecurityScanConfig != "" && gitPath != "" { // security scan is only supported for target git repositories
+			cmd.NewStep("Configuring security scanning...")
+			if files.IsFileExists(cmd.opts.SecurityScanConfig) {
+				err = module.AddSecurityScanningMetadata(componentDescriptor, cmd.opts.SecurityScanConfig)
+				if err != nil {
+					cmd.CurrentStep.Failure()
+					return err
+				}
+				cmd.CurrentStep.Successf("Security scanning configured")
+			} else {
+				cmd.logger.Warnf("Security scanning configuration was skipped")
+				cmd.CurrentStep.Failure()
+			}
+		}
+
+		cmd.NewStep("Creating module archive...")
+		archive, err = module.CreateArchive(archiveFS, cmd.opts.ModuleArchivePath, componentDescriptor)
+		if err != nil {
 			cmd.CurrentStep.Failure()
 			return err
 		}
+		cmd.CurrentStep.Successf("Module archive created")
+
+		cmd.NewStep("Adding layers to archive...")
+		if err = module.AddResources(archive, modDef, cmd.logger, osFS, cmd.opts.RegistryCredSelector); err != nil {
+			cmd.CurrentStep.Failure()
+			return err
+		}
+		cmd.CurrentStep.Successf("Layers successfully added to archive")
 	}
 
-	// Security Scan
-	if cmd.opts.SecurityScanConfig != "" && gitPath != "" { // security scan is only supported for target git repositories
-		cmd.NewStep("Configuring security scanning...")
-		if files.IsFileExists(cmd.opts.SecurityScanConfig) {
-			err = module.AddSecurityScanningMetadata(componentDescriptor, cmd.opts.SecurityScanConfig)
+	err = cmd.imagePusher.Push()
+	{
+		if cmd.opts.RegistryURL == "" {
+			return nil
+		}
+
+		cmd.NewStep(fmt.Sprintf("Pushing image to %q", cmd.opts.RegistryURL))
+		remote, err = cmd.getRemote(modDef.NameMappingMode)
+		if err != nil {
+			cmd.CurrentStep.Failure()
+			return err
+		}
+
+		repo, err := remote.GetRepository(cpi.DefaultContext())
+		if err != nil {
+			cmd.CurrentStep.Failure()
+			return err
+		}
+
+		shouldPushArchive, err := remote.ShouldPushArchive(repo, archive, cmd.opts.ArchiveVersionOverwrite)
+		if err != nil {
+			cmd.CurrentStep.Failure()
+			return err
+		}
+
+		if shouldPushArchive {
+			componentVersionAccess, err = remote.Push(repo, archive, cmd.opts.ArchiveVersionOverwrite)
 			if err != nil {
 				cmd.CurrentStep.Failure()
 				return err
 			}
-			cmd.CurrentStep.Successf("Security scanning configured")
+			cmd.CurrentStep.Successf("Module successfully pushed")
 		} else {
-			l.Warnf("Security scanning configuration was skipped")
-			cmd.CurrentStep.Failure()
+			componentVersionAccess, err = remote.GetComponentVersion(archive, repo)
+			if err != nil {
+				cmd.CurrentStep.Failure()
+				return err
+			}
+			cmd.CurrentStep.Successf(
+				fmt.Sprintf(
+					"Module already exists. Retrieved image from %q",
+					cmd.opts.RegistryURL,
+				),
+			)
 		}
 	}
 
-	cmd.NewStep("Creating module archive...")
-	archive, err := module.CreateArchive(archiveFS, cmd.opts.ModuleArchivePath, componentDescriptor)
-	if err != nil {
-		cmd.CurrentStep.Failure()
-		return err
-	}
-	cmd.CurrentStep.Successf("Module archive created")
-
-	cmd.NewStep("Adding layers to archive...")
-	if err = module.AddResources(archive, modDef, l, osFS, cmd.opts.RegistryCredSelector); err != nil {
-		cmd.CurrentStep.Failure()
-		return err
-	}
-	cmd.CurrentStep.Successf("Layers successfully added to archive")
-
-	if cmd.opts.RegistryURL == "" {
-		return nil
+	err = cmd.signer.SignModuleDefinition()
+	{
+		if cmd.opts.PrivateKeyPath != "" {
+			cmd.NewStep("Fetching and signing component descriptor...")
+			signConfig := &module.ComponentSignConfig{
+				Name:    modDef.Name,
+				Version: modDef.Version,
+				KeyPath: cmd.opts.PrivateKeyPath,
+			}
+			if err = module.Sign(signConfig, remote); err != nil {
+				cmd.CurrentStep.Failure()
+				return err
+			}
+			cmd.CurrentStep.Success()
+		}
 	}
 
-	cmd.NewStep(fmt.Sprintf("Pushing image to %q", cmd.opts.RegistryURL))
-	remote, err := cmd.getRemote(modDef.NameMappingMode)
-	if err != nil {
-		cmd.CurrentStep.Failure()
-		return err
-	}
+	err = cmd.templateGenerator.GenerateModuleTemplate()
+	{
+		cmd.NewStep("Generating module template...")
+		var resourceName = ""
+		mandatoryModule := false
+		var channel = cmd.opts.Channel
+		if modCnf != nil {
+			resourceName = modCnf.ResourceName
+			channel = modCnf.Channel
+			mandatoryModule = modCnf.Mandatory
+		}
 
-	repo, err := remote.GetRepository(cpi.DefaultContext())
-	if err != nil {
-		cmd.CurrentStep.Failure()
-		return err
-	}
+		var namespace = cmd.opts.Namespace
+		if modCnf != nil && modCnf.Namespace != "" {
+			namespace = modCnf.Namespace
 
-	var componentVersionAccess ocm.ComponentVersionAccess
-	shouldPushArchive, err := remote.ShouldPushArchive(repo, archive, cmd.opts.ArchiveVersionOverwrite)
-	if err != nil {
-		cmd.CurrentStep.Failure()
-		return err
-	}
+		}
 
-	if shouldPushArchive {
-		componentVersionAccess, err = remote.Push(repo, archive, cmd.opts.ArchiveVersionOverwrite)
+		labels := cmd.getModuleTemplateLabels(modCnf)
+		annotations := cmd.getModuleTemplateAnnotations(modCnf, crValidator)
+
+		template, err := module.Template(
+			componentVersionAccess, resourceName, namespace,
+			channel, modDef.DefaultCR, labels, annotations, modDef.CustomStateChecks, mandatoryModule,
+		)
 		if err != nil {
 			cmd.CurrentStep.Failure()
 			return err
 		}
-		cmd.CurrentStep.Successf("Module successfully pushed")
-	} else {
-		componentVersionAccess, err = remote.GetComponentVersion(archive, repo)
-		if err != nil {
+
+		if err := vfs.WriteFile(osFS, cmd.opts.TemplateOutput, template, os.ModePerm); err != nil {
 			cmd.CurrentStep.Failure()
 			return err
 		}
-		cmd.CurrentStep.Successf(fmt.Sprintf("Module already exists. Retrieved image from %q",
-			cmd.opts.RegistryURL))
+		cmd.CurrentStep.Successf("Template successfully generated at %s", cmd.opts.TemplateOutput)
 	}
-
-	if cmd.opts.PrivateKeyPath != "" {
-		cmd.NewStep("Fetching and signing component descriptor...")
-		signConfig := &module.ComponentSignConfig{
-			Name:    modDef.Name,
-			Version: modDef.Version,
-			KeyPath: cmd.opts.PrivateKeyPath,
-		}
-		if err = module.Sign(signConfig, remote); err != nil {
-			cmd.CurrentStep.Failure()
-			return err
-		}
-		cmd.CurrentStep.Success()
-	}
-
-	cmd.NewStep("Generating module template...")
-	var resourceName = ""
-	mandatoryModule := false
-	var channel = cmd.opts.Channel
-	if modCnf != nil {
-		resourceName = modCnf.ResourceName
-		channel = modCnf.Channel
-		mandatoryModule = modCnf.Mandatory
-	}
-
-	var namespace = cmd.opts.Namespace
-	if modCnf != nil && modCnf.Namespace != "" {
-		namespace = modCnf.Namespace
-
-	}
-
-	labels := cmd.getModuleTemplateLabels(modCnf)
-	annotations := cmd.getModuleTemplateAnnotations(modCnf, crValidator)
-
-	template, err := module.Template(componentVersionAccess, resourceName, namespace,
-		channel, modDef.DefaultCR, labels, annotations, modDef.CustomStateChecks, mandatoryModule)
-	if err != nil {
-		cmd.CurrentStep.Failure()
-		return err
-	}
-
-	if err := vfs.WriteFile(osFS, cmd.opts.TemplateOutput, template, os.ModePerm); err != nil {
-		cmd.CurrentStep.Failure()
-		return err
-	}
-	cmd.CurrentStep.Successf("Template successfully generated at %s", cmd.opts.TemplateOutput)
 
 	return nil
 }
@@ -528,6 +515,8 @@ func (cmd *command) getRemote(nameMapping module.NameMapping) (*module.Remote, e
 	return res, nil
 }
 
+// Does not belong to the command object.
+// Module definition creation can be used elsewhere.
 func (cmd *command) moduleDefinitionFromOptions() (*module.Definition, *Config, error) {
 	var def *module.Definition
 	var cnf *Config
