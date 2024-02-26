@@ -25,7 +25,7 @@ require (
 	github.com/mandelsoft/vfs v0.4.3
 	github.com/onsi/ginkgo/v2 v2.15.0
 	github.com/onsi/gomega v1.31.1
-	github.com/open-component-model/ocm v0.6.0
+	github.com/open-component-model/ocm v0.7.0
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.0
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
