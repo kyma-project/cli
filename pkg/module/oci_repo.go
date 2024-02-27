@@ -90,7 +90,7 @@ func (r *OciRepo) DescriptorResourcesAreEquivalent(archive *comparch.ComponentAr
 			if remoteAccessLocalReference[7:] != localAccessObject.LocalReference[7:] {
 				return false
 			}
-		} else if !isEquivalent(&res, &localResource) {
+		} else if res.Equivalent(&localResource).IsEquivalent() {
 			return false
 		}
 	}
@@ -120,6 +120,6 @@ func isEquivalent(r *compdesc.Resource, e compdesc.ElementMetaAccessor) bool {
 	}
 	return r.Type == o.Type &&
 		r.Relation == o.Relation &&
-		reflect.DeepEqual(r.SourceRef, o.SourceRef)
+		reflect.DeepEqual(r.SourceRefs, o.SourceRefs)
 
 }
