@@ -3,6 +3,7 @@ package btp
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -73,7 +74,7 @@ func TestGetOAuthToken(t *testing.T) {
 				},
 			},
 			want:        nil,
-			expectedErr: errors.New("error response: error: description"),
+			expectedErr: errors.New("error response: 401 Unauthorized: description"),
 		},
 	}
 	for _, tt := range tests {
@@ -91,7 +92,7 @@ func TestGetOAuthToken(t *testing.T) {
 
 func fixAuthenticationHandler(t *testing.T) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/oauth/token" {
+		if r.URL.Path != fmt.Sprintf("/%s", authorizationEndpoint) {
 			w.WriteHeader(404)
 			return
 		}
@@ -113,7 +114,7 @@ func fixAuthenticationHandler(t *testing.T) func(http.ResponseWriter, *http.Requ
 
 func fixAuthenticationErrorHandler(t *testing.T) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, _ *http.Request) {
-		data := errorResponse{
+		data := xsuaaErrorResponse{
 			Error:            "error",
 			ErrorDescription: "description",
 		}
