@@ -8,7 +8,9 @@ import (
 	"strings"
 )
 
-type errorResponse struct {
+const authorizationEndpoint = "oauth/token"
+
+type xsuaaErrorResponse struct {
 	Error            string `json:"error"`
 	ErrorDescription string `json:"error_description"`
 }
@@ -27,7 +29,7 @@ func GetOAuthToken(credentials *CISCredentials) (*XSUAAToken, error) {
 
 	request, err := http.NewRequest(
 		http.MethodPost,
-		fmt.Sprintf("%s/oauth/token", credentials.UAA.URL),
+		fmt.Sprintf("%s/%s", credentials.UAA.URL, authorizationEndpoint),
 		strings.NewReader(urlBody.Encode()),
 	)
 	if err != nil {
@@ -41,33 +43,34 @@ func GetOAuthToken(credentials *CISCredentials) (*XSUAAToken, error) {
 		credentials.UAA.ClientSecret,
 	)
 
-	resp, err := http.DefaultClient.Do(request)
+	response, err := http.DefaultClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get token from server: %s", err.Error())
 	}
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		return nil, decodeAuthErrorResponse(resp)
+	defer response.Body.Close()
+
+	if response.StatusCode != 200 {
+		return nil, decodeAuthErrorResponse(response)
 	}
 
-	return decodeAuthSuccessResponse(resp)
+	return decodeAuthSuccessResponse(response)
 }
 
-func decodeAuthSuccessResponse(resp *http.Response) (*XSUAAToken, error) {
+func decodeAuthSuccessResponse(response *http.Response) (*XSUAAToken, error) {
 	token := XSUAAToken{}
-	err := json.NewDecoder(resp.Body).Decode(&token)
+	err := json.NewDecoder(response.Body).Decode(&token)
 	if err != nil {
-		return nil, fmt.Errorf("failed to decode response: %s", err.Error())
+		return nil, fmt.Errorf("failed to decode response with Status '%s': %s", response.Status, err.Error())
 	}
 
 	return &token, nil
 }
 
-func decodeAuthErrorResponse(resp *http.Response) error {
-	errorData := errorResponse{}
-	err := json.NewDecoder(resp.Body).Decode(&errorData)
+func decodeAuthErrorResponse(response *http.Response) error {
+	errorData := xsuaaErrorResponse{}
+	err := json.NewDecoder(response.Body).Decode(&errorData)
 	if err != nil {
 		return fmt.Errorf("failed to decode error response: %s", err.Error())
 	}
-	return fmt.Errorf("error response: %s: %s", errorData.Error, errorData.ErrorDescription)
+	return fmt.Errorf("error response: %s: %s", response.Status, errorData.ErrorDescription)
 }
