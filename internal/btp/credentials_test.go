@@ -9,6 +9,7 @@ import (
 )
 
 const (
+	// nolint:gosec
 	correctCredentials = `{
 "grant_type": "test",
 "uaa": {
