@@ -18,7 +18,7 @@ type LocalClient struct {
 func NewLocalClient(credentials *CISCredentials, token *XSUAAToken) *LocalClient {
 	return &LocalClient{
 		credentials: credentials,
-		cis:         newHttpClient(token),
+		cis:         newHTTPClient(token),
 	}
 }
 
@@ -53,7 +53,7 @@ type httpClient struct {
 	client *http.Client
 }
 
-func newHttpClient(token *XSUAAToken) *httpClient {
+func newHTTPClient(token *XSUAAToken) *httpClient {
 	return &httpClient{
 		client: &http.Client{
 			Transport: &oauthTransport{
