@@ -120,6 +120,6 @@ func isEquivalent(r *compdesc.Resource, e compdesc.ElementMetaAccessor) bool {
 	}
 	return r.Type == o.Type &&
 		r.Relation == o.Relation &&
-		reflect.DeepEqual(r.SourceRef, o.SourceRef)
+		reflect.DeepEqual(r.SourceRefs, o.SourceRefs)
 
 }
