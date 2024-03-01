@@ -1,4 +1,4 @@
-package btp
+package cis
 
 import (
 	"errors"
@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/kyma-project/cli.v3/internal/btp/auth"
 	"github.com/stretchr/testify/require"
 )
 
@@ -24,7 +25,7 @@ func Test_oauthTransport_RoundTrip(t *testing.T) {
 		req, err := http.NewRequest(http.MethodPost, svr.URL, nil)
 		require.NoError(t, err)
 		clientTransport := oauthTransport{
-			token: &XSUAAToken{
+			token: &auth.XSUAAToken{
 				AccessToken: "token",
 			},
 		}

@@ -1,4 +1,4 @@
-package btp
+package cis
 
 import (
 	"encoding/json"
@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/kyma-project/cli.v3/internal/btp/auth"
 	"github.com/stretchr/testify/require"
 )
 
@@ -60,20 +61,20 @@ func TestCISClient_Provision(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		credentials    *CISCredentials
-		token          *XSUAAToken
+		credentials    *auth.CISCredentials
+		token          *auth.XSUAAToken
 		pe             *ProvisionEnvironment
 		wantedResponse *ProvisionResponse
 		expectedErr    error
 	}{
 		{
 			name: "Correct data",
-			credentials: &CISCredentials{
-				Endpoints: Endpoints{
+			credentials: &auth.CISCredentials{
+				Endpoints: auth.Endpoints{
 					ProvisioningServiceURL: svrGood.URL,
 				},
 			},
-			token: &XSUAAToken{},
+			token: &auth.XSUAAToken{},
 			pe: &ProvisionEnvironment{
 				Name: "name",
 			},
@@ -84,12 +85,12 @@ func TestCISClient_Provision(t *testing.T) {
 		},
 		{
 			name: "Incorrect URL",
-			credentials: &CISCredentials{
-				Endpoints: Endpoints{
+			credentials: &auth.CISCredentials{
+				Endpoints: auth.Endpoints{
 					ProvisioningServiceURL: "?\n?",
 				},
 			},
-			token: &XSUAAToken{},
+			token: &auth.XSUAAToken{},
 			pe: &ProvisionEnvironment{
 				Name: "name",
 			},
@@ -98,12 +99,12 @@ func TestCISClient_Provision(t *testing.T) {
 		},
 		{
 			name: "Wrong URL",
-			credentials: &CISCredentials{
-				Endpoints: Endpoints{
+			credentials: &auth.CISCredentials{
+				Endpoints: auth.Endpoints{
 					ProvisioningServiceURL: "http://doesnotexist",
 				},
 			},
-			token: &XSUAAToken{},
+			token: &auth.XSUAAToken{},
 			pe: &ProvisionEnvironment{
 				Name: "name",
 			},
@@ -112,12 +113,12 @@ func TestCISClient_Provision(t *testing.T) {
 		},
 		{
 			name: "Error response",
-			credentials: &CISCredentials{
-				Endpoints: Endpoints{
+			credentials: &auth.CISCredentials{
+				Endpoints: auth.Endpoints{
 					ProvisioningServiceURL: svrBad.URL,
 				},
 			},
-			token: &XSUAAToken{},
+			token: &auth.XSUAAToken{},
 			pe: &ProvisionEnvironment{
 				Name: "name",
 			},

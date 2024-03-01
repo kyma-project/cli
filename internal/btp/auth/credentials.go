@@ -1,4 +1,4 @@
-package btp
+package auth
 
 import (
 	"encoding/json"

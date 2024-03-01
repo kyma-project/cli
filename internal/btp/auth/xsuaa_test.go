@@ -1,4 +1,4 @@
-package btp
+package auth
 
 import (
 	"encoding/json"
@@ -83,7 +83,12 @@ func TestGetOAuthToken(t *testing.T) {
 		expectedErr := tt.expectedErr
 
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := GetOAuthToken(credentials)
+			got, err := GetOAuthToken(
+				credentials.GrantType,
+				credentials.UAA.URL,
+				credentials.UAA.ClientID,
+				credentials.UAA.ClientSecret,
+			)
 			require.Equal(t, expectedErr, err)
 			require.Equal(t, want, got)
 		})
