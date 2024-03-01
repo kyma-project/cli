@@ -1,4 +1,4 @@
-package btp
+package cis
 
 import (
 	"encoding/json"
@@ -8,14 +8,15 @@ import (
 	"net/http"
 
 	wwwAuthParser "github.com/gboddin/go-www-authenticate-parser"
+	"github.com/kyma-project/cli.v3/internal/btp/auth"
 )
 
 type LocalClient struct {
-	credentials *CISCredentials
+	credentials *auth.CISCredentials
 	cis         *httpClient
 }
 
-func NewLocalClient(credentials *CISCredentials, token *XSUAAToken) *LocalClient {
+func NewLocalClient(credentials *auth.CISCredentials, token *auth.XSUAAToken) *LocalClient {
 	return &LocalClient{
 		credentials: credentials,
 		cis:         newHTTPClient(token),
@@ -23,7 +24,7 @@ func NewLocalClient(credentials *CISCredentials, token *XSUAAToken) *LocalClient
 }
 
 type oauthTransport struct {
-	token *XSUAAToken
+	token *auth.XSUAAToken
 }
 
 func (t *oauthTransport) RoundTrip(r *http.Request) (*http.Response, error) {
@@ -53,7 +54,7 @@ type httpClient struct {
 	client *http.Client
 }
 
-func newHTTPClient(token *XSUAAToken) *httpClient {
+func newHTTPClient(token *auth.XSUAAToken) *httpClient {
 	return &httpClient{
 		client: &http.Client{
 			Transport: &oauthTransport{
