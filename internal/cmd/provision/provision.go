@@ -3,7 +3,8 @@ package provision
 import (
 	"fmt"
 
-	"github.com/kyma-project/cli.v3/internal/btp"
+	"github.com/kyma-project/cli.v3/internal/btp/auth"
+	"github.com/kyma-project/cli.v3/internal/btp/cis"
 	"github.com/spf13/cobra"
 )
 
@@ -42,24 +43,29 @@ func NewProvisionCMD() *cobra.Command {
 }
 
 func runProvision(config *provisionConfig) error {
-	credentials, err := btp.LoadCISCredentials(config.credentialsPath)
+	credentials, err := auth.LoadCISCredentials(config.credentialsPath)
 	if err != nil {
 		return fmt.Errorf("failed to load credentials from '%s' file: %s", config.credentialsPath, err.Error())
 	}
 
-	token, err := btp.GetOAuthToken(credentials)
+	token, err := auth.GetOAuthToken(
+		credentials.GrantType,
+		credentials.UAA.URL,
+		credentials.UAA.ClientID,
+		credentials.UAA.ClientSecret,
+	)
 	if err != nil {
 		return fmt.Errorf("failed to get access token: %s", err.Error())
 	}
 
-	localCISClient := btp.NewLocalClient(credentials, token)
+	localCISClient := cis.NewLocalClient(credentials, token)
 
-	ProvisionEnvironment := &btp.ProvisionEnvironment{
+	ProvisionEnvironment := &cis.ProvisionEnvironment{
 		EnvironmentType: "kyma",
 		PlanName:        config.plan,
 		Name:            config.environmentName,
 		User:            "kyma-cli",
-		Parameters: btp.KymaParameters{
+		Parameters: cis.KymaParameters{
 			Name:   config.clusterName,
 			Region: config.region,
 		},
