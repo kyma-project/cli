@@ -1,4 +1,4 @@
-package btp
+package auth
 
 import (
 	"encoding/json"
@@ -23,13 +23,13 @@ type XSUAAToken struct {
 	JTI         string `json:"jti"`
 }
 
-func GetOAuthToken(credentials *CISCredentials) (*XSUAAToken, error) {
+func GetOAuthToken(grantType, serverURL, username, password string) (*XSUAAToken, error) {
 	urlBody := url.Values{}
-	urlBody.Set("grant_type", credentials.GrantType)
+	urlBody.Set("grant_type", grantType)
 
 	request, err := http.NewRequest(
 		http.MethodPost,
-		fmt.Sprintf("%s/%s", credentials.UAA.URL, authorizationEndpoint),
+		fmt.Sprintf("%s/%s", serverURL, authorizationEndpoint),
 		strings.NewReader(urlBody.Encode()),
 	)
 	if err != nil {
@@ -38,10 +38,7 @@ func GetOAuthToken(credentials *CISCredentials) (*XSUAAToken, error) {
 	defer request.Body.Close()
 
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	request.SetBasicAuth(
-		credentials.UAA.ClientID,
-		credentials.UAA.ClientSecret,
-	)
+	request.SetBasicAuth(username, password)
 
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
