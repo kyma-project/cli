@@ -58,6 +58,7 @@ Use the flags to specify the initial configuration for your Function or to choos
 		`Flag used to define the environment for running your Function. Use one of these options:
 	- nodejs16 (deprecated)
 	- nodejs18 
+	- nodejs20
 	- python39 (deprecated)
 	- python312`,
 	)
