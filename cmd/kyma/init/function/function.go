@@ -24,6 +24,7 @@ const (
 var (
 	deprecatedRuntimes = map[string]struct{}{
 		"nodejs16": {},
+		"python39": {},
 	}
 )
 
@@ -57,7 +58,7 @@ Use the flags to specify the initial configuration for your Function or to choos
 		`Flag used to define the environment for running your Function. Use one of these options:
 	- nodejs16 (deprecated)
 	- nodejs18 
-	- python39
+	- python39 (deprecated)
 	- python312`,
 	)
 	cmd.Flags().StringVar(&o.SchemaVersion, "schema-version", string(workspace.SchemaVersionDefault), `Version of the config API.`)
