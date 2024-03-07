@@ -23,7 +23,6 @@ kyma init function [flags]
       --reference string                Commit hash or branch name (default "main")
       --repository-name string          The name of the Git repository to be created
   -r, --runtime string                  Flag used to define the environment for running your Function. Use one of these options:
-                                        	- nodejs16 (deprecated)
                                         	- nodejs18 
                                         	- python39 (deprecated)
                                         	- python312 (default "nodejs18")
