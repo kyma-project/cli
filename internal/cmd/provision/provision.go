@@ -1,10 +1,9 @@
 package provision
 
 import (
+	"encoding/json"
 	"fmt"
-
 	"github.com/kyma-project/cli.v3/internal/btp/auth"
-	"github.com/kyma-project/cli.v3/internal/btp/cis"
 	"github.com/spf13/cobra"
 )
 
@@ -58,24 +57,64 @@ func runProvision(config *provisionConfig) error {
 		return fmt.Errorf("failed to get access token: %s", err.Error())
 	}
 
-	localCISClient := cis.NewLocalClient(credentials, token)
-
-	ProvisionEnvironment := &cis.ProvisionEnvironment{
-		EnvironmentType: "kyma",
-		PlanName:        config.plan,
-		Name:            config.environmentName,
-		User:            "kyma-cli",
-		Parameters: cis.KymaParameters{
-			Name:   config.clusterName,
-			Region: config.region,
-		},
-	}
-	response, err := localCISClient.Provision(ProvisionEnvironment)
+	//TODO remove this
+	data, err := json.Marshal(token)
 	if err != nil {
-		return fmt.Errorf("failed to provision kyma runtime: %s", err.Error())
+		return fmt.Errorf("failed to marshal token: %s", err.Error())
 	}
+	fmt.Printf("%s\n", data)
+	//TODO remove this
 
-	fmt.Printf("Kyma environment provisioning, environment name: '%s', id: '%s'\n", response.Name, response.ID)
+	//
+	//if strings.Contains(credentials.UAA.XSMasterAppName, "cis-central") {
+	//	centralCISClient := cis.NewCentralClient(credentials, token)
+	//	SubaccountServicePlans := &cis.EntitlementsSubaccountServicePlans{
+	//		SubaccountServicePlans: cis.SubaccountServicePlans{
+	//			AssignmentInfo: cis.AssignmentInfo{
+	//				Enable:         true,
+	//				SubaccountGUID: credentials.UAA.SubAccountID,
+	//			},
+	//			ServiceName:     "cis",
+	//			ServicePlanName: "local",
+	//		},
+	//	}
+	//
+	//	response, err := centralCISClient.Entitlements(SubaccountServicePlans)
+	//	if err != nil {
+	//		return fmt.Errorf("failed to add local cis entitlement to subaccount: %s", err.Error())
+	//	}
+	//	if response.StatusCode == 200 {
+	//		ProvisionLocalEnvironment := &cis.ProvisionEnvironment{
+	//			EnvironmentType: "",
+	//			Name:            "",
+	//			Parameters: cis.KymaParameters{
+	//				Name:   "",
+	//				Region: "",
+	//			},
+	//			PlanName: "",
+	//			User:     "",
+	//		}
+	//	}
+	//}
+	//
+	//localCISClient := cis.NewLocalClient(credentials, token)
+	//
+	//ProvisionEnvironment := &cis.ProvisionEnvironment{
+	//	EnvironmentType: "kyma",
+	//	PlanName:        config.plan,
+	//	Name:            config.environmentName,
+	//	User:            "kyma-cli",
+	//	Parameters: cis.KymaParameters{
+	//		Name:   config.clusterName,
+	//		Region: config.region,
+	//	},
+	//}
+	//response, err := localCISClient.Provision(ProvisionEnvironment)
+	//if err != nil {
+	//	return fmt.Errorf("failed to provision kyma runtime: %s", err.Error())
+	//}
+	//
+	//fmt.Printf("Kyma environment provisioning, environment name: '%s', id: '%s'\n", response.Name, response.ID)
 
 	return nil
 }
