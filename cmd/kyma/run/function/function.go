@@ -122,7 +122,6 @@ func (c *command) workspaceConfig(path string) (workspace.Cfg, error) {
 	}
 
 	supportedRuntimes := map[string]struct{}{
-		"nodejs16":  {},
 		"nodejs18":  {},
 		"python39":  {},
 		"python312": {},
