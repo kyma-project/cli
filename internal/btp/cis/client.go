@@ -11,6 +11,18 @@ import (
 	"github.com/kyma-project/cli.v3/internal/btp/auth"
 )
 
+type CentralClient struct {
+	credentials *auth.CISCredentials
+	cis         *httpClient
+}
+
+func NewCentralClient(credentials *auth.CISCredentials, token *auth.XSUAAToken) *CentralClient {
+	return &CentralClient{
+		credentials: credentials,
+		cis:         newHTTPClient(token),
+	}
+}
+
 type LocalClient struct {
 	credentials *auth.CISCredentials
 	cis         *httpClient
