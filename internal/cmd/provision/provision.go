@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/kyma-project/cli.v3/internal/btp/auth"
+	"github.com/kyma-project/cli.v3/internal/btp/cis"
 	"github.com/spf13/cobra"
+	"strings"
 )
 
 type provisionConfig struct {
@@ -65,56 +67,46 @@ func runProvision(config *provisionConfig) error {
 	fmt.Printf("%s\n", data)
 	//TODO remove this
 
-	//
-	//if strings.Contains(credentials.UAA.XSMasterAppName, "cis-central") {
-	//	centralCISClient := cis.NewCentralClient(credentials, token)
-	//	SubaccountServicePlans := &cis.EntitlementsSubaccountServicePlans{
-	//		SubaccountServicePlans: cis.SubaccountServicePlans{
-	//			AssignmentInfo: cis.AssignmentInfo{
-	//				Enable:         true,
-	//				SubaccountGUID: credentials.UAA.SubAccountID,
-	//			},
-	//			ServiceName:     "cis",
-	//			ServicePlanName: "local",
-	//		},
-	//	}
-	//
-	//	response, err := centralCISClient.Entitlements(SubaccountServicePlans)
-	//	if err != nil {
-	//		return fmt.Errorf("failed to add local cis entitlement to subaccount: %s", err.Error())
-	//	}
-	//	if response.StatusCode == 200 {
-	//		ProvisionLocalEnvironment := &cis.ProvisionEnvironment{
-	//			EnvironmentType: "",
-	//			Name:            "",
-	//			Parameters: cis.KymaParameters{
-	//				Name:   "",
-	//				Region: "",
-	//			},
-	//			PlanName: "",
-	//			User:     "",
-	//		}
-	//	}
-	//}
-	//
-	//localCISClient := cis.NewLocalClient(credentials, token)
-	//
-	//ProvisionEnvironment := &cis.ProvisionEnvironment{
-	//	EnvironmentType: "kyma",
-	//	PlanName:        config.plan,
-	//	Name:            config.environmentName,
-	//	User:            "kyma-cli",
-	//	Parameters: cis.KymaParameters{
-	//		Name:   config.clusterName,
-	//		Region: config.region,
-	//	},
-	//}
-	//response, err := localCISClient.Provision(ProvisionEnvironment)
-	//if err != nil {
-	//	return fmt.Errorf("failed to provision kyma runtime: %s", err.Error())
-	//}
-	//
-	//fmt.Printf("Kyma environment provisioning, environment name: '%s', id: '%s'\n", response.Name, response.ID)
+	if strings.Contains(credentials.UAA.XSMasterAppName, "cis-central") {
+		centralCISClient := cis.NewCentralClient(credentials, token)
+		SubaccountServicePlans := &cis.EntitlementsSubaccountServicePlans{
+			SubaccountServicePlans: cis.SubaccountServicePlans{
+				AssignmentInfo: cis.AssignmentInfo{
+					Enable:         true,
+					SubaccountGUID: credentials.UAA.SubAccountID,
+				},
+				ServiceName:     "cis",
+				ServicePlanName: "local",
+			},
+		}
+
+		response, err := centralCISClient.Entitlements(SubaccountServicePlans)
+		if err != nil {
+			return fmt.Errorf("failed to add local cis entitlement to subaccount: %s", err.Error())
+		}
+		if response.StatusCode == 200 {
+			fmt.Printf("Local entitlement added to subaccount: '%s'\n", credentials.UAA.SubAccountID)
+		}
+	}
+
+	localCISClient := cis.NewLocalClient(credentials, token)
+
+	ProvisionEnvironment := &cis.ProvisionEnvironment{
+		EnvironmentType: "kyma",
+		PlanName:        config.plan,
+		Name:            config.environmentName,
+		User:            "kyma-cli",
+		Parameters: cis.KymaParameters{
+			Name:   config.clusterName,
+			Region: config.region,
+		},
+	}
+	response, err := localCISClient.Provision(ProvisionEnvironment)
+	if err != nil {
+		return fmt.Errorf("failed to provision kyma runtime: %s", err.Error())
+	}
+
+	fmt.Printf("Kyma environment provisioning, environment name: '%s', id: '%s'\n", response.Name, response.ID)
 
 	return nil
 }
