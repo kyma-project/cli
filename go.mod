@@ -8,7 +8,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/briandowns/spinner v1.23.0
-	github.com/containerd/containerd v1.7.13
+	github.com/containerd/containerd v1.7.14
 	github.com/daviddengcn/go-colortext v1.0.0
 	github.com/docker/cli v24.0.9+incompatible
 	github.com/docker/docker v24.0.9+incompatible
