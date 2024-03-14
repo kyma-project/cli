@@ -18,11 +18,13 @@ var (
 	NewRetryTransport = transport.NewRetry
 )
 
+// portforwardTransport forwards requests sent by the client to the port-forwarded pod from the cluster
 type portforwardTransport struct {
 	remoteConn httpstream.Connection
 	remotePort string
 }
 
+// NewPortforwardTransport creates http.RoundTripper implementation for given portforward connection and port
 func NewPortforwardTransport(remoteConn httpstream.Connection, remotePort string) http.RoundTripper {
 	return &portforwardTransport{
 		remoteConn: remoteConn,
@@ -34,6 +36,10 @@ func (pft *portforwardTransport) RoundTrip(req *http.Request) (*http.Response, e
 	return pft.dialRemote(req)
 }
 
+
+// dialRemote is forwarding any incoming request to the stream
+// the logic is mostly based on the k8s.io/client-go/tools/portforward package
+// https://github.com/kubernetes/client-go/blob/271d034e86108101a804541843d50abe3fea06ae/tools/portforward/portforward.go#L335
 func (pft *portforwardTransport) dialRemote(req *http.Request) (*http.Response, error) {
 	forwardID := rand.Int()
 

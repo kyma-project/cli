@@ -11,6 +11,7 @@ import (
 	"k8s.io/client-go/transport/spdy"
 )
 
+// NewDialFor opens connection to any pod defined in args. Connection is build based on cluster API rest.Config
 func NewDialFor(config *rest.Config, podName, podNamespace string) (httpstream.Connection, error) {
 	portforwardAddr := fmt.Sprintf("%s/api/v1/namespaces/%s/pods/%s/portforward",
 		config.Host,
