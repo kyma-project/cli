@@ -24,6 +24,7 @@ kyma init function [flags]
       --repository-name string          The name of the Git repository to be created
   -r, --runtime string                  Flag used to define the environment for running your Function. Use one of these options:
                                         	- nodejs18 
+                                        	- nodejs20
                                         	- python39 (deprecated)
                                         	- python312 (default "nodejs18")
       --runtime-image-override string   Set custom runtime image base.
