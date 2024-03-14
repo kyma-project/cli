@@ -1,6 +1,9 @@
 package kube
 
 import (
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
@@ -9,7 +12,7 @@ import (
 // restConfig loads the rest configuration needed by k8s clients to interact with clusters based on the kubeconfig.
 // Loading rules are based on standard defined kubernetes config loading.
 func restConfig(kubeconfig string) (*rest.Config, error) {
-	// Default PathOptions gets kubeconfig in this order: the explicit path given, KUBECONFIG current context, recommentded file path
+	// Default PathOptions gets kubeconfig in this order: the explicit path given, KUBECONFIG current context, recommended file path
 	po := clientcmd.NewDefaultPathOptions()
 	po.LoadingRules.ExplicitPath = kubeconfig
 
@@ -24,9 +27,26 @@ func restConfig(kubeconfig string) (*rest.Config, error) {
 // apiConfig loads a structured representation of the Kubeconfig.
 // Loading rules are based on standard defined kubernetes config loading.
 func apiConfig(kubeconfig string) (*api.Config, error) {
-	// Default PathOptions gets kubeconfig in this order: the explicit path given, KUBECONFIG current context, recommentded file path
+	// Default PathOptions gets kubeconfig in this order: the explicit path given, KUBECONFIG current context, recommended file path
 	po := clientcmd.NewDefaultPathOptions()
 	po.LoadingRules.ExplicitPath = kubeconfig
 
 	return po.GetStartingConfig()
+}
+
+// setKubernetesDefaults sets default values on the provided client config for accessing the
+// Kubernetes API or returns an error if any of the defaults are impossible or invalid.
+// TODO this isn't what we want.  Each clientset should be setting defaults as it sees fit.
+func setKubernetesDefaults(config *rest.Config) error {
+	config.GroupVersion = &schema.GroupVersion{Group: "", Version: "v1"}
+
+	if config.APIPath == "" {
+		config.APIPath = "/api"
+	}
+
+	if config.NegotiatedSerializer == nil {
+		config.NegotiatedSerializer = serializer.NewCodecFactory(runtime.NewScheme())
+	}
+
+	return rest.SetKubernetesDefaults(config)
 }
