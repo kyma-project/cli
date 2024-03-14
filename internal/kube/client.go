@@ -9,6 +9,7 @@ import (
 // Client interface contains all needed cluster-oriented clients to allow cluster-wide manipulations
 type Client interface {
 	Static() kubernetes.Interface
+	RestClient() *rest.RESTClient
 	RestConfig() *rest.Config
 	ApiConfig() *api.Config
 }
@@ -17,6 +18,7 @@ type client struct {
 	restConfig *rest.Config
 	apiConfig  *api.Config
 	kubeClient kubernetes.Interface
+	restClient *rest.RESTClient
 }
 
 func NewClient(kubeconfig string) (Client, error) {
@@ -35,15 +37,31 @@ func NewClient(kubeconfig string) (Client, error) {
 		return nil, err
 	}
 
+	restClientConfig := *restConfig
+	err = setKubernetesDefaults(&restClientConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	restClient, err := rest.RESTClientFor(&restClientConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	return &client{
 		restConfig: restConfig,
 		apiConfig:  apiConfig,
 		kubeClient: kubeClient,
+		restClient: restClient,
 	}, nil
 }
 
 func (c *client) Static() kubernetes.Interface {
 	return c.kubeClient
+}
+
+func (c *client) RestClient() *rest.RESTClient {
+	return c.restClient
 }
 
 func (c *client) RestConfig() *rest.Config {

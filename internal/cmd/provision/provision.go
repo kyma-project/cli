@@ -29,7 +29,7 @@ func NewProvisionCMD() *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags()
+	cmd.PersistentFlags() // TODO: do we need this?
 	cmd.Flags().StringVar(&config.credentialsPath, "credentials-path", "", "Path to the CIS credentials file.")
 
 	cmd.Flags().StringVar(&config.plan, "plan", "trial", "Name of the Kyma environment plan, e.g trial, azure, aws, gcp.")
@@ -43,6 +43,7 @@ func NewProvisionCMD() *cobra.Command {
 }
 
 func runProvision(config *provisionConfig) error {
+	// TODO: is the credentials a good name for this field? it contains much more than credentials only
 	credentials, err := auth.LoadCISCredentials(config.credentialsPath)
 	if err != nil {
 		return fmt.Errorf("failed to load credentials from '%s' file: %s", config.credentialsPath, err.Error())
@@ -58,6 +59,7 @@ func runProvision(config *provisionConfig) error {
 		return fmt.Errorf("failed to get access token: %s", err.Error())
 	}
 
+	// TODO: maybe we should pass only credentials.Endpoints?
 	localCISClient := cis.NewLocalClient(credentials, token)
 
 	ProvisionEnvironment := &cis.ProvisionEnvironment{
