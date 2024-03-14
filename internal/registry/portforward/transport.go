@@ -42,7 +42,8 @@ func (pft *portforwardTransport) dialRemote(req *http.Request) (*http.Response, 
 	if err != nil {
 		return nil, fmt.Errorf("error creating error stream for port %s: %v", pft.remotePort, err)
 	}
-	// we're not writing to this stream
+	// close stream to inform remote server that we are not going to send any data,
+	// and that we are ready to receive the errors
 	errorStream.Close()
 	defer pft.remoteConn.RemoveStreams(errorStream)
 

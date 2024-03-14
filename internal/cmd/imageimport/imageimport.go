@@ -66,6 +66,7 @@ func (pc *provisionConfig) complete(args []string) error {
 }
 
 func runImageImport(config *provisionConfig) error {
+	// TODO: Add "serverless is not installed" error message
 	registryConfig, err := registry.GetConfig(config.ctx, config.kubeClient.Static())
 	if err != nil {
 		return fmt.Errorf("failed to load in-cluster registry configuration: %s", err.Error())
@@ -82,7 +83,7 @@ func runImageImport(config *provisionConfig) error {
 
 	fmt.Println("Importing", config.image)
 
-	pushedImage, err := registry.Import(
+	pushedImage, err := registry.ImportImage(
 		config.ctx,
 		config.image,
 		registry.ImportOptions{
