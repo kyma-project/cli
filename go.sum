@@ -1318,8 +1318,8 @@ github.com/kylelemons/godebug v1.1.0 h1:RPNrshWIDI6G2gRW9EHilWtl7Z6Sb1BR0xunSBf0
 github.com/kylelemons/godebug v1.1.0/go.mod h1:9/0rRGxNHcop5bhtWyNeEfOS8JIWk580+fNqagV/RAw=
 github.com/kyma-incubator/reconciler v0.0.0-20240122095942-4be5f11f106f h1:8sXZuYa2Ftfbprdcl49gGL8e33h3x6UdHEQ+cyd6wdo=
 github.com/kyma-incubator/reconciler v0.0.0-20240122095942-4be5f11f106f/go.mod h1:nN7iVzUnRnPHR600g7RalS0g8naLq5j86GoGmskr7qg=
-github.com/kyma-project/hydroform/function v0.0.0-20230831071441-f3501c89bace h1:ffL1aww9HEpYrzdc1nd9BbwcrLD6GB8qfYnJ3ikZy80=
-github.com/kyma-project/hydroform/function v0.0.0-20230831071441-f3501c89bace/go.mod h1:9URbz36+qhEwa3aF8+DAFVCGrgQJHi87KAaJmrAYKVI=
+github.com/kyma-project/hydroform/function v0.0.0-20240315084549-c8d35ebba742 h1:GRAXm9wtXVSQLgDNQ0qSlkZIXBIm0gVRbtVFxE6As8I=
+github.com/kyma-project/hydroform/function v0.0.0-20240315084549-c8d35ebba742/go.mod h1:9URbz36+qhEwa3aF8+DAFVCGrgQJHi87KAaJmrAYKVI=
 github.com/kyma-project/hydroform/provision v0.0.0-20230831071441-f3501c89bace h1:0MkoaSa4KfIwJWMPcP8t92aGf3GH9TlFXU4WIYxQxAs=
 github.com/kyma-project/hydroform/provision v0.0.0-20230831071441-f3501c89bace/go.mod h1:l89i/K8RhjbxiC7UF72gJQRkyOhvZ3LV/qADHI0JDEk=
 github.com/kyma-project/lifecycle-manager/api v0.0.0-20231212124126-3539b2df72e0 h1:vdFBD4Pmmw2bNt9CKWbH5oiDcYttbzDAzpXYn/1iO2E=

@@ -4,6 +4,8 @@ go 1.21.1
 
 replace github.com/imdario/mergo => github.com/imdario/mergo v0.3.5
 
+replace github.com/kyma-project/hydroform/function => github.com/kyma-project/hydroform/function v0.0.0-20240315084549-c8d35ebba742
+
 require (
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/avast/retry-go v3.0.0+incompatible
