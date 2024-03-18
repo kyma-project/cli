@@ -1,10 +1,5 @@
 package registry
 
-//Write a test for GetConfig function from registry/config.go
-//The test should cover the happy path and the error path
-//The test should use a mock for the kubernetes.Interface
-//Try to use fake.NewSimpleClientset from k8s.io/client-go/kubernetes/fake
-
 import (
 	"context"
 	corev1 "k8s.io/api/core/v1"
