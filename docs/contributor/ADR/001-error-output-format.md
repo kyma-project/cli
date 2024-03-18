@@ -1,5 +1,7 @@
 # Output Error Format
 
+Creation date: 03.13.2024
+
 ## Description
 
 I would propose standard error format for any CLI command:
@@ -8,10 +10,10 @@ I would propose standard error format for any CLI command:
 kyma provision --credentials-path ~/Desktop/fs-binding.txt --plan aws --region northeurope
 
 Error:
-  failed to provision: User is unauthorized for this operation
-
-Description:
   failed to provision kyma runtime
+
+Raw Error:
+  failed to provision: User is unauthorized for this operation
 
 Hints:
   - make sure that the provided credentials are valid are represent the local CIS instance
@@ -20,8 +22,8 @@ Hints:
 
 Elements:
 
-* The `Error` contains raw error returned from the library/endpoint.
-* The `Description` contains information which operation caused the error.
+* The `Error` contains information which operation caused the error.
+* The `Raw Error` contains error returned from the library/endpoint.
 * The `Hints` contains suggestions, hints what user can do to avoid problem.
 
 ## Reasons
