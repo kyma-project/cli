@@ -235,11 +235,6 @@ func configureLegacyFlags(cmd *cobra.Command, o *Options) *cobra.Command {
 }
 
 func (cmd *command) Run(cobraCmd *cobra.Command) error {
-	fmt.Println("////////////////////////////////////////////////////////////////////////////////")
-	fmt.Println("FlagValue: ", cmd.opts.SecurityScanConfig)
-	fmt.Println("Changed: ", cobraCmd.Flags().Lookup(securityConfigFlagName).Changed)
-	fmt.Println("////////////////////////////////////////////////////////////////////////////////")
-
 	osFS := osfs.New()
 
 	if cmd.opts.CI {
@@ -620,16 +615,6 @@ func (cmd *command) avoidUserInteraction() bool {
 // isSecurityConfigFlagDefined returns true if the "sec-scanners-config" flag is set explicitly on the command line
 func (cmd *command) isSecurityConfigFlagDefined(cobraCmd *cobra.Command) bool {
 	return cobraCmd.Flags().Lookup(securityConfigFlagName).Changed
-}
-
-func (cmd *command) resolveSecurityScanConfigValue(modCnf *Config, cobraCmd *cobra.Command) string {
-	// keep the existing contract - respect the flag value if it's set
-	res := cmd.opts.SecurityScanConfig
-	if modCnf != nil && cmd.isSecurityConfigFlagDefined(cobraCmd) {
-		res = modCnf.Security
-	}
-
-	return res
 }
 
 // resolvePath resolves given path if it's absolute or uses the provided prefix to make it absolute.
