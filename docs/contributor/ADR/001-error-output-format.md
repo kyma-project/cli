@@ -12,7 +12,7 @@ kyma provision --credentials-path ~/Desktop/fs-binding.txt --plan aws --region n
 Error:
   failed to provision kyma runtime
 
-Raw Error:
+Error Details:
   failed to provision: User is unauthorized for this operation
 
 Hints:
@@ -23,7 +23,7 @@ Hints:
 Elements:
 
 * The `Error` contains information which operation caused the error.
-* The `Raw Error` contains error returned from the library/endpoint.
+* The `Error Details` contains error returned from the library/endpoint.
 * The `Hints` contains suggestions, hints what user can do to avoid problem.
 
 ## Reasons
@@ -36,9 +36,9 @@ Error: failed to provision kyma runtime: failed to provision: User is unauthoriz
 exit status 1
 ```
 
-In the `Description` section I proposed an error output standard that can help us improve error readability and allow us to print more details and hints to the user.
+In the `Error` section I proposed an error output standard that can help us improve error readability and allow us to print more details and hints to the user.
 
 Because we know which command code fails we can predict which caused the problem. In the example above we (from a code perspective) know that the code fails on the kyma instance provisioning so we know the operation context and it gets wrong after getting a token based on the given credentials so we know that the given token (by the XSUAA) is valid.
 Based on this information we can predict a few possible causes and print some tips and hints (for example prerequisites for the specific operation).
 
-Another important feature is control over stdout/stderr channels. We can decide that for example content of the `Error` section should go to the stderr but everything else should go to the stdout.
+Another important feature is control over stdout/stderr channels. We can decide that for example content of the `Error Description` section should go to the stderr but everything else should go to the stdout.
