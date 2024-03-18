@@ -27,10 +27,6 @@ import (
 	"github.com/kyma-project/cli/pkg/module"
 )
 
-var (
-	ErrSecurityConfigPathValidation = errors.New("security-scanners-config path validation failed")
-)
-
 const (
 	kcpSystemNamespace     = "kcp-system"
 	securityConfigFlagName = "sec-scanners-config"
