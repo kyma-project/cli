@@ -65,6 +65,16 @@ func (c *Config) Validate() error {
 		do()
 }
 
+func (c *Config) resolveSecurity(override string) string {
+	if len(override) > 0 {
+		return override
+	}
+	if c == nil {
+		return ""
+	}
+	return c.Security
+}
+
 type configValidationFunc func() error
 
 type configValidator struct {

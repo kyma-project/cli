@@ -333,3 +333,50 @@ func TestValidateCustomStateChecks(t *testing.T) {
 		})
 	}
 }
+
+// TestResolveSecurity tests Config.resolveSecurity method
+func TestResolveSecurity(t *testing.T) {
+	tests := []struct {
+		caseName string
+		config   *Config
+		override string
+		expected string
+	}{
+		{
+			caseName: "Config is nil and no overrride",
+			config:   nil,
+			override: "",
+			expected: "",
+		},
+		{
+			caseName: "Config is nil with an overrride",
+			config:   nil,
+			override: "foo.yaml",
+			expected: "foo.yaml",
+		},
+		{
+			caseName: "Config.Security is set and no override",
+			config: &Config{
+				Security: "bar.yaml",
+			},
+			override: "",
+			expected: "bar.yaml",
+		},
+		{
+			caseName: "Config.Security is set with an override",
+			config: &Config{
+				Security: "baz.yaml",
+			},
+			override: "acme.yaml",
+			expected: "acme.yaml",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.caseName, func(t *testing.T) {
+			actual := tt.config.resolveSecurity(tt.override)
+			if actual != tt.expected {
+				t.Errorf("resolveSecurity(\"%s\") = \"%v\", want \"%v\"", tt.override, actual, tt.expected)
+			}
+		})
+	}
+}

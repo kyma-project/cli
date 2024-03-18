@@ -319,10 +319,11 @@ func (cmd *command) Run() error {
 	}
 
 	// Security Scan
-	if cmd.opts.SecurityScanConfig != "" && gitPath != "" { // security scan is only supported for target git repositories
+	securityScanConfig := modCnf.resolveSecurity(cmd.opts.SecurityScanConfig)
+	if securityScanConfig != "" && gitPath != "" { // security scan is only supported for target git repositories
 		cmd.NewStep("Configuring security scanning...")
-		if files.IsFileExists(cmd.opts.SecurityScanConfig) {
-			err = module.AddSecurityScanningMetadata(componentDescriptor, cmd.opts.SecurityScanConfig)
+		if files.IsFileExists(securityScanConfig) {
+			err = module.AddSecurityScanningMetadata(componentDescriptor, securityScanConfig)
 			if err != nil {
 				cmd.CurrentStep.Failure()
 				return err
