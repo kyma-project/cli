@@ -26,7 +26,7 @@ kyma init function [flags]
                                         	- nodejs18 (deprecated) 
                                         	- nodejs20
                                         	- python39 (deprecated)
-                                        	- python312 (default "nodejs18")
+                                        	- python312 (default "nodejs20")
       --runtime-image-override string   Set custom runtime image base.
       --schema-version string           Version of the config API. (default "v0")
       --url string                      Git repository URL
