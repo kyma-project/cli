@@ -68,6 +68,7 @@ func imageFromInternalRegistry(ctx context.Context, userImage string, utils util
 		return nil, err
 	}
 
+	// check if user defined custom registry - what is not allowed
 	if tag.RegistryStr() != name.DefaultRegistry {
 		return nil, fmt.Errorf("image '%s' can't contain registry '%s' address", tag.String(), tag.RegistryStr())
 	}

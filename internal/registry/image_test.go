@@ -2,6 +2,7 @@ package registry
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"testing"
 	"time"
@@ -85,6 +86,98 @@ func Test_importImage(t *testing.T) {
 			},
 			wantErr: nil,
 			want:    "testhost:123/test:image",
+		},
+		{
+			name: "wrong image format error",
+			args: args{
+				imageName: ":::::::::",
+			},
+			wantErr: errors.New("failed to load image from local docker daemon: repository can only contain the characters `abcdefghijklmnopqrstuvwxyz0123456789_-./`: ::::::::"),
+		},
+		{
+			name: "image contains registry address error",
+			args: args{
+				imageName: "gcr.io/test:image",
+			},
+			wantErr: errors.New("failed to load image from local docker daemon: image 'gcr.io/test:image' can't contain registry 'gcr.io' address"),
+		},
+		{
+			name: "get image from local daemon error",
+			args: args{
+				ctx:       context.Background(),
+				imageName: "test:image",
+				utils: utils{
+					daemonImage: func(r name.Reference, o ...daemon.Option) (v1.Image, error) {
+						return nil, errors.New("test-error")
+					},
+				},
+			},
+			wantErr: errors.New("failed to load image from local docker daemon: test-error"),
+		},
+		{
+			name: "create new portforward dial error",
+			args: args{
+				ctx:       context.Background(),
+				imageName: "test:image",
+				utils: utils{
+					daemonImage: func(r name.Reference, o ...daemon.Option) (v1.Image, error) {
+						return &fake.FakeImage{}, nil
+					},
+					portforwardNewDial: func(config *rest.Config, podName, podNamespace string) (httpstream.Connection, error) {
+						return nil, errors.New("test-error")
+					},
+				},
+			},
+			wantErr: errors.New("failed to create registry portforward connection: test-error"),
+		},
+		{
+			name: "wrong PullHost format",
+			args: args{
+				ctx:       context.Background(),
+				imageName: "test:image",
+				opts: ImportOptions{
+					RegistryPullHost: "<    >",
+				},
+				utils: utils{
+					daemonImage: func(r name.Reference, o ...daemon.Option) (v1.Image, error) {
+						return &fake.FakeImage{}, nil
+					},
+					portforwardNewDial: func(config *rest.Config, podName, podNamespace string) (httpstream.Connection, error) {
+						return &connectionMock{}, nil
+					},
+				},
+			},
+			wantErr: errors.New("failed to push image to the in-cluster registry: registries must be valid RFC 3986 URI authorities: <    >"),
+		},
+		{
+			name: "import image",
+			args: args{
+				ctx:       context.Background(),
+				imageName: "test:image",
+				opts: ImportOptions{
+					ClusterAPIRestConfig: nil,
+					RegistryAuth: &basicAuth{
+						username: "username",
+						password: "password",
+					},
+					RegistryPullHost:     "testhost:123",
+					RegistryPodName:      "podname",
+					RegistryPodNamespace: "podnamespace",
+					RegistryPodPort:      "1234",
+				},
+				utils: utils{
+					daemonImage: func(r name.Reference, o ...daemon.Option) (v1.Image, error) {
+						return &fake.FakeImage{}, nil
+					},
+					portforwardNewDial: func(config *rest.Config, podName, podNamespace string) (httpstream.Connection, error) {
+						return &connectionMock{}, nil
+					},
+					remoteWrite: func(ref name.Reference, img v1.Image, o ...remote.Option) error {
+						return errors.New("test error")
+					},
+				},
+			},
+			wantErr: errors.New("failed to push image to the in-cluster registry: test error"),
 		},
 	}
 	for _, tt := range tests {
