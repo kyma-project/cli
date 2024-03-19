@@ -27,6 +27,11 @@ import (
 	"github.com/kyma-project/cli/pkg/module"
 )
 
+const (
+	kcpSystemNamespace     = "kcp-system"
+	securityConfigFlagName = "sec-scanners-config"
+)
+
 type command struct {
 	cli.Command
 	opts     *Options
@@ -113,7 +118,7 @@ Build a Kubebuilder module my-domain/modC in version 3.2.1 and push it to a loca
 		kyma alpha create module --name my-domain/modC --version 3.2.1 --path /path/to/module --registry http://localhost:5001/unsigned --insecure
 
 `,
-		RunE:    func(cobraCmd *cobra.Command, args []string) error { return c.Run() },
+		RunE:    func(cobraCmd *cobra.Command, args []string) error { return c.Run(cobraCmd) },
 		Aliases: []string{"mod"},
 	}
 
@@ -181,7 +186,7 @@ Build a Kubebuilder module my-domain/modC in version 3.2.1 and push it to a loca
 	cmd.Flags().BoolVar(&o.Insecure, "insecure", false, "Uses an insecure connection to access the registry.")
 
 	cmd.Flags().StringVar(
-		&o.SecurityScanConfig, "sec-scanners-config", "sec-scanners-config.yaml", "Path to the file holding "+
+		&o.SecurityScanConfig, securityConfigFlagName, "sec-scanners-config.yaml", "Path to the file holding "+
 			"the security scan configuration.",
 	)
 
@@ -225,9 +230,7 @@ func configureLegacyFlags(cmd *cobra.Command, o *Options) *cobra.Command {
 	return cmd
 }
 
-const kcpSystemNamespace = "kcp-system"
-
-func (cmd *command) Run() error {
+func (cmd *command) Run(cobraCmd *cobra.Command) error {
 	osFS := osfs.New()
 
 	if cmd.opts.CI {
@@ -319,10 +322,23 @@ func (cmd *command) Run() error {
 	}
 
 	// Security Scan
-	if cmd.opts.SecurityScanConfig != "" && gitPath != "" { // security scan is only supported for target git repositories
+	var securityScanConfigFile = ""
+
+	// if the flag is explicitly set, use it
+	if cmd.isSecurityConfigFlagDefined(cobraCmd) {
+		securityScanConfigFile = cmd.opts.SecurityScanConfig
+	} else if modCnf != nil && modCnf.Security != "" {
+		fPath, err := resolveFilePath(modCnf.Security, cmd.opts.Path)
+		//Supress the error to keep the existing contract: The non-existing file is ignored and the security scan is skipped
+		if err == nil {
+			securityScanConfigFile = fPath
+		}
+	}
+
+	if securityScanConfigFile != "" && gitPath != "" { // security scan is only supported for target git repositories
 		cmd.NewStep("Configuring security scanning...")
-		if files.IsFileExists(cmd.opts.SecurityScanConfig) {
-			err = module.AddSecurityScanningMetadata(componentDescriptor, cmd.opts.SecurityScanConfig)
+		if files.IsFileExists(securityScanConfigFile) {
+			err = module.AddSecurityScanningMetadata(componentDescriptor, securityScanConfigFile)
 			if err != nil {
 				cmd.CurrentStep.Failure()
 				return err
@@ -590,6 +606,11 @@ func (cmd *command) moduleDefinitionFromOptions() (*module.Definition, *Config, 
 // avoidUserInteraction returns true if user won't provide input
 func (cmd *command) avoidUserInteraction() bool {
 	return cmd.NonInteractive || cmd.CI
+}
+
+// isSecurityConfigFlagDefined returns true if the "sec-scanners-config" flag is set explicitly on the command line
+func (cmd *command) isSecurityConfigFlagDefined(cobraCmd *cobra.Command) bool {
+	return cobraCmd.Flags().Lookup(securityConfigFlagName).Changed
 }
 
 // resolvePath resolves given path if it's absolute or uses the provided prefix to make it absolute.
