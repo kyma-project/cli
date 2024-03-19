@@ -23,6 +23,7 @@ const (
 
 var (
 	deprecatedRuntimes = map[string]struct{}{
+		"nodejs18": {},
 		"python39": {},
 	}
 )
@@ -55,7 +56,7 @@ Use the flags to specify the initial configuration for your Function or to choos
 	cmd.Flags().StringVarP(
 		&o.Runtime, "runtime", "r", defaultRuntime,
 		`Flag used to define the environment for running your Function. Use one of these options:
-	- nodejs18 
+	- nodejs18 (deprecated) 
 	- nodejs20
 	- python39 (deprecated)
 	- python312`,
