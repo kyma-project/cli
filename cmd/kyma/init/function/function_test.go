@@ -17,7 +17,7 @@ func TestFunctionFlags(t *testing.T) {
 	require.Equal(t, "", o.Name, "Default value for the --name flag not as expected.")
 	require.Equal(t, "", o.Namespace, "Default value for the --namespace flag not as expected.")
 	require.Equal(t, "", o.Dir, "Default value for the --dir flag not as expected.")
-	require.Equal(t, "nodejs18", o.Runtime, "Default value for the --runtime flag not as expected.")
+	require.Equal(t, "nodejs20", o.Runtime, "Default value for the --runtime flag not as expected.")
 	require.Equal(t, "", o.RuntimeImageOverride, "The parsed value for the --runtime-image-override flag not as expected.")
 	require.Equal(t, "", o.URL, "The parsed value for the --url flag not as expected.")
 	require.Equal(t, "", o.RepositoryName, "The parsed value for the --repository-name flag not as expected.")
