@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	defaultRuntime   = "nodejs18"
+	defaultRuntime   = "nodejs20"
 	defaultReference = "main"
 	defaultBaseDir   = "/"
 )
