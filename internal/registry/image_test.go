@@ -3,34 +3,18 @@ package registry
 import (
 	"context"
 	"errors"
-	"net/http"
 	"testing"
-	"time"
 
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/daemon"
 	"github.com/google/go-containerregistry/pkg/v1/fake"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
+	"github.com/kyma-project/cli.v3/internal/registry/portforward/automock"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/util/httpstream"
 	"k8s.io/client-go/rest"
 )
-
-// empty struct that implements the httpstream.Connection interface
-type connectionMock struct{}
-
-func (cm *connectionMock) CreateStream(headers http.Header) (httpstream.Stream, error) {
-	return nil, nil
-}
-
-func (cm *connectionMock) Close() error { return nil }
-
-func (cm *connectionMock) CloseChan() <-chan bool { return make(<-chan bool) }
-
-func (cm *connectionMock) SetIdleTimeout(timeout time.Duration) {}
-
-func (cm *connectionMock) RemoveStreams(streams ...httpstream.Stream) {}
 
 func Test_importImage(t *testing.T) {
 	type args struct {
@@ -73,7 +57,9 @@ func Test_importImage(t *testing.T) {
 						require.Equal(t, "podname", podName)
 						require.Equal(t, "podnamespace", podNamespace)
 
-						return &connectionMock{}, nil
+						mock := automock.NewConnection(t)
+						mock.On("Close").Return(nil).Once()
+						return mock, nil
 					},
 					remoteWrite: func(ref name.Reference, img v1.Image, o ...remote.Option) error {
 						require.Equal(t, "testhost:123/test:image", ref.Name())
@@ -143,7 +129,9 @@ func Test_importImage(t *testing.T) {
 						return &fake.FakeImage{}, nil
 					},
 					portforwardNewDial: func(config *rest.Config, podName, podNamespace string) (httpstream.Connection, error) {
-						return &connectionMock{}, nil
+						mock := automock.NewConnection(t)
+						mock.On("Close").Return(nil).Once()
+						return mock, nil
 					},
 				},
 			},
@@ -170,7 +158,9 @@ func Test_importImage(t *testing.T) {
 						return &fake.FakeImage{}, nil
 					},
 					portforwardNewDial: func(config *rest.Config, podName, podNamespace string) (httpstream.Connection, error) {
-						return &connectionMock{}, nil
+						mock := automock.NewConnection(t)
+						mock.On("Close").Return(nil).Once()
+						return mock, nil
 					},
 					remoteWrite: func(ref name.Reference, img v1.Image, o ...remote.Option) error {
 						return errors.New("test error")
