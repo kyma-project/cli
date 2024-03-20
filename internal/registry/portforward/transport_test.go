@@ -58,7 +58,7 @@ func Test_portforwardTransport_dialRemote(t *testing.T) {
 
 		got, err := pft.dialRemote(testRequest)
 
-		require.Error(t, err)
+		require.EqualError(t, err, "error reading from error stream: test error")
 		require.Equal(t, 418, got.StatusCode)
 		require.Equal(t, "418 I'm a teapot", got.Status)
 	})
@@ -82,7 +82,7 @@ func Test_portforwardTransport_dialRemote(t *testing.T) {
 
 		got, err := pft.dialRemote(testRequest)
 
-		require.Error(t, err)
+		require.EqualError(t, err, "an error occurred while forwarding: test error message")
 		require.Equal(t, 418, got.StatusCode)
 		require.Equal(t, "418 I'm a teapot", got.Status)
 	})
@@ -101,7 +101,7 @@ func Test_portforwardTransport_dialRemote(t *testing.T) {
 
 		got, err := pft.dialRemote(testRequest)
 
-		require.Error(t, err)
+		require.EqualError(t, err, "error writing to remote stream: test error")
 		require.Nil(t, got)
 	})
 
@@ -119,7 +119,7 @@ func Test_portforwardTransport_dialRemote(t *testing.T) {
 
 		got, err := pft.dialRemote(testRequest)
 
-		require.Error(t, err)
+		require.EqualError(t, err, "error reading from remote stream: malformed HTTP response \"\\x00\"")
 		require.Nil(t, got)
 	})
 }
