@@ -42,6 +42,7 @@ func TestTemplate(t *testing.T) {
 		annotations        map[string]string
 		checks             []v1beta2.CustomStateCheck
 		mandatory          bool
+		enableModuleConfig bool
 	}
 	tests := []struct {
 		name    string
@@ -52,12 +53,13 @@ func TestTemplate(t *testing.T) {
 		{
 			name: "ModuleTemplate with default values",
 			args: args{
-				remote:      accessVersion,
-				channel:     "regular",
-				labels:      map[string]string{},
-				annotations: map[string]string{},
-				checks:      noCustomStateCheck,
-				mandatory:   false,
+				remote:             accessVersion,
+				channel:            "regular",
+				labels:             map[string]string{},
+				annotations:        map[string]string{},
+				checks:             noCustomStateCheck,
+				mandatory:          false,
+				enableModuleConfig: false,
 			},
 			want: getExpectedModuleTemplate(t, "",
 				map[string]string{
@@ -69,13 +71,14 @@ func TestTemplate(t *testing.T) {
 		{
 			name: "ModuleTemplate with custom namespace",
 			args: args{
-				remote:      accessVersion,
-				namespace:   "kyma-system",
-				channel:     "regular",
-				labels:      map[string]string{},
-				annotations: map[string]string{},
-				checks:      noCustomStateCheck,
-				mandatory:   false,
+				remote:             accessVersion,
+				namespace:          "kyma-system",
+				channel:            "regular",
+				labels:             map[string]string{},
+				annotations:        map[string]string{},
+				checks:             noCustomStateCheck,
+				mandatory:          false,
+				enableModuleConfig: false,
 			},
 			want: getExpectedModuleTemplate(t, "kyma-system",
 				map[string]string{
@@ -87,13 +90,14 @@ func TestTemplate(t *testing.T) {
 		{
 			name: "ModuleTemplate with extra labels",
 			args: args{
-				remote:      accessVersion,
-				namespace:   "kyma-system",
-				channel:     "regular",
-				labels:      map[string]string{"is-custom-label": "true"},
-				annotations: map[string]string{},
-				checks:      noCustomStateCheck,
-				mandatory:   false,
+				remote:             accessVersion,
+				namespace:          "kyma-system",
+				channel:            "regular",
+				labels:             map[string]string{"is-custom-label": "true"},
+				annotations:        map[string]string{},
+				checks:             noCustomStateCheck,
+				mandatory:          false,
+				enableModuleConfig: false,
 			},
 			want: getExpectedModuleTemplate(t, "kyma-system",
 				map[string]string{
@@ -105,13 +109,14 @@ func TestTemplate(t *testing.T) {
 		{
 			name: "ModuleTemplate with extra annotations",
 			args: args{
-				remote:      accessVersion,
-				namespace:   "kyma-system",
-				channel:     "regular",
-				labels:      map[string]string{},
-				annotations: map[string]string{"is-custom-annotation": "true"},
-				checks:      noCustomStateCheck,
-				mandatory:   false,
+				remote:             accessVersion,
+				namespace:          "kyma-system",
+				channel:            "regular",
+				labels:             map[string]string{},
+				annotations:        map[string]string{"is-custom-annotation": "true"},
+				checks:             noCustomStateCheck,
+				mandatory:          false,
+				enableModuleConfig: false,
 			},
 			want: getExpectedModuleTemplate(t, "kyma-system",
 				map[string]string{
@@ -123,11 +128,12 @@ func TestTemplate(t *testing.T) {
 		{
 			name: "ModuleTemplate with Custom State Check",
 			args: args{
-				remote:      accessVersion,
-				channel:     "regular",
-				labels:      map[string]string{},
-				annotations: map[string]string{},
-				checks:      defaultCustomStateCheck,
+				remote:             accessVersion,
+				channel:            "regular",
+				labels:             map[string]string{},
+				annotations:        map[string]string{},
+				checks:             defaultCustomStateCheck,
+				enableModuleConfig: false,
 			},
 			want: getExpectedModuleTemplate(t, "",
 				map[string]string{shared.ModuleName: "template-operator"}, map[string]string{},
@@ -137,13 +143,14 @@ func TestTemplate(t *testing.T) {
 		{
 			name: "Mandatory ModuleTemplate",
 			args: args{
-				remote:      accessVersion,
-				namespace:   "kyma-system",
-				channel:     "regular",
-				labels:      map[string]string{},
-				annotations: map[string]string{},
-				checks:      noCustomStateCheck,
-				mandatory:   true,
+				remote:             accessVersion,
+				namespace:          "kyma-system",
+				channel:            "regular",
+				labels:             map[string]string{},
+				annotations:        map[string]string{},
+				checks:             noCustomStateCheck,
+				mandatory:          true,
+				enableModuleConfig: false,
 			},
 			want: getExpectedModuleTemplate(t, "kyma-system",
 				map[string]string{shared.ModuleName: "template-operator"}, map[string]string{},
@@ -154,7 +161,7 @@ func TestTemplate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := Template(tt.args.remote, tt.args.moduleTemplateName, tt.args.namespace, tt.args.channel,
-				tt.args.data, tt.args.labels, tt.args.annotations, tt.args.checks, tt.args.mandatory)
+				tt.args.data, tt.args.labels, tt.args.annotations, tt.args.checks, tt.args.mandatory, tt.args.enableModuleConfig)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Template() error = %v, wantErr %v", err, tt.wantErr)
 				return
