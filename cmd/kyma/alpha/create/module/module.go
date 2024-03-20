@@ -423,11 +423,13 @@ func (cmd *command) Run(cobraCmd *cobra.Command) error {
 	cmd.NewStep("Generating module template...")
 	var resourceName = ""
 	mandatoryModule := false
+	enableModuleConfig := false
 	var channel = cmd.opts.Channel
 	if modCnf != nil {
 		resourceName = modCnf.ResourceName
 		channel = modCnf.Channel
 		mandatoryModule = modCnf.Mandatory
+		enableModuleConfig = modCnf.EnableModuleConfig
 	}
 
 	var namespace = cmd.opts.Namespace
@@ -440,7 +442,7 @@ func (cmd *command) Run(cobraCmd *cobra.Command) error {
 	annotations := cmd.getModuleTemplateAnnotations(modCnf, crd)
 
 	template, err := module.Template(componentVersionAccess, resourceName, namespace,
-		channel, modDef.DefaultCR, labels, annotations, modDef.CustomStateChecks, mandatoryModule)
+		channel, modDef.DefaultCR, labels, annotations, modDef.CustomStateChecks, mandatoryModule, enableModuleConfig)
 	if err != nil {
 		cmd.CurrentStep.Failure()
 		return err

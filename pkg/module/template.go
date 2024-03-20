@@ -88,15 +88,16 @@ func Template(remote ocm.ComponentVersionAccess, moduleTemplateName, namespace, 
 		resourceName = shortName + "-" + channel
 	}
 	td := moduleTemplateData{
-		ResourceName:      resourceName,
-		Namespace:         namespace,
-		Descriptor:        cva,
-		Channel:           channel,
-		Data:              string(data),
-		Labels:            labels,
-		Annotations:       annotations,
-		CustomStateChecks: customsStateChecks,
-		Mandatory:         mandatory,
+		ResourceName:       resourceName,
+		Namespace:          namespace,
+		Descriptor:         cva,
+		Channel:            channel,
+		Data:               string(data),
+		Labels:             labels,
+		Annotations:        annotations,
+		CustomStateChecks:  customsStateChecks,
+		Mandatory:          mandatory,
+		EnableModuleConfig: enableModuleConfig,
 	}
 
 	t, err := template.New("modTemplate").Funcs(template.FuncMap{
