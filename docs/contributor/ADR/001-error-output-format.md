@@ -1,6 +1,6 @@
 # Output Error Format
 
-Creation date: 03.13.2024
+Creation date: 2024.03.13
 
 ## Description
 
