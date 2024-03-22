@@ -138,7 +138,7 @@ func Test_importImage(t *testing.T) {
 			wantErr: errors.New("failed to push image to the in-cluster registry: registries must be valid RFC 3986 URI authorities: <    >"),
 		},
 		{
-			name: "import image",
+			name: "write image to in-cluster registry error",
 			args: args{
 				ctx:       context.Background(),
 				imageName: "test:image",

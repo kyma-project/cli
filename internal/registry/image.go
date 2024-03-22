@@ -28,7 +28,7 @@ type ImportOptions struct {
 type utils struct {
 	daemonImage        func(name.Reference, ...daemon.Option) (v1.Image, error)
 	portforwardNewDial func(config *rest.Config, podName, podNamespace string) (httpstream.Connection, error)
-	remoteWrite        func(ref name.Reference, img v1.Image, options ...remote.Option) (rerr error)
+	remoteWrite        func(ref name.Reference, img v1.Image, options ...remote.Option) error
 }
 
 func ImportImage(ctx context.Context, imageName string, opts ImportOptions) (string, error) {
