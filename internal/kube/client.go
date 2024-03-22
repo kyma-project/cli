@@ -1,6 +1,7 @@
 package kube
 
 import (
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd/api"
@@ -9,16 +10,18 @@ import (
 // Client interface contains all needed cluster-oriented clients to allow cluster-wide manipulations
 type Client interface {
 	Static() kubernetes.Interface
+	Dynamic() dynamic.Interface
 	RestClient() *rest.RESTClient
 	RestConfig() *rest.Config
 	ApiConfig() *api.Config
 }
 
 type client struct {
-	restConfig *rest.Config
-	apiConfig  *api.Config
-	kubeClient kubernetes.Interface
-	restClient *rest.RESTClient
+	restConfig    *rest.Config
+	apiConfig     *api.Config
+	kubeClient    kubernetes.Interface
+	dynamicClient dynamic.Interface
+	restClient    *rest.RESTClient
 }
 
 func NewClient(kubeconfig string) (Client, error) {
@@ -37,6 +40,11 @@ func NewClient(kubeconfig string) (Client, error) {
 		return nil, err
 	}
 
+	dynamicClient, err := dynamic.NewForConfig(restConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	restClientConfig := *restConfig
 	err = setKubernetesDefaults(&restClientConfig)
 	if err != nil {
@@ -49,15 +57,20 @@ func NewClient(kubeconfig string) (Client, error) {
 	}
 
 	return &client{
-		restConfig: restConfig,
-		apiConfig:  apiConfig,
-		kubeClient: kubeClient,
-		restClient: restClient,
+		restConfig:    restConfig,
+		apiConfig:     apiConfig,
+		kubeClient:    kubeClient,
+		dynamicClient: dynamicClient,
+		restClient:    restClient,
 	}, nil
 }
 
 func (c *client) Static() kubernetes.Interface {
 	return c.kubeClient
+}
+
+func (c *client) Dynamic() dynamic.Interface {
+	return c.dynamicClient
 }
 
 func (c *client) RestClient() *rest.RESTClient {

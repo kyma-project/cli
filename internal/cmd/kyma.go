@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/kyma-project/cli.v3/internal/cmd/hana"
 	"github.com/kyma-project/cli.v3/internal/cmd/imageimport"
 	"github.com/kyma-project/cli.v3/internal/cmd/provision"
 	"github.com/spf13/cobra"
@@ -22,6 +23,7 @@ func NewKymaCMD() *cobra.Command {
 
 	cmd.AddCommand(provision.NewProvisionCMD())
 	cmd.AddCommand(imageimport.NewImportCMD())
+	cmd.AddCommand(hana.NewHanaCMD())
 
 	return cmd
 }
