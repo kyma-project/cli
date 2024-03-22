@@ -65,7 +65,7 @@ func TestTemplate(t *testing.T) {
 				map[string]string{
 					shared.ModuleName: "template-operator",
 				}, map[string]string{},
-				noCustomStateCheck, false),
+				noCustomStateCheck, false, false),
 			wantErr: false,
 		},
 		{
@@ -84,7 +84,7 @@ func TestTemplate(t *testing.T) {
 				map[string]string{
 					shared.ModuleName: "template-operator",
 				}, map[string]string{},
-				noCustomStateCheck, false),
+				noCustomStateCheck, false, false),
 			wantErr: false,
 		},
 		{
@@ -103,7 +103,7 @@ func TestTemplate(t *testing.T) {
 				map[string]string{
 					shared.ModuleName: "template-operator", "is-custom-label": "true",
 				},
-				map[string]string{}, noCustomStateCheck, false),
+				map[string]string{}, noCustomStateCheck, false, false),
 			wantErr: false,
 		},
 		{
@@ -122,7 +122,7 @@ func TestTemplate(t *testing.T) {
 				map[string]string{
 					shared.ModuleName: "template-operator",
 				},
-				map[string]string{"is-custom-annotation": "true"}, []v1beta2.CustomStateCheck{}, false),
+				map[string]string{"is-custom-annotation": "true"}, []v1beta2.CustomStateCheck{}, false, false),
 			wantErr: false,
 		},
 		{
@@ -137,7 +137,7 @@ func TestTemplate(t *testing.T) {
 			},
 			want: getExpectedModuleTemplate(t, "",
 				map[string]string{shared.ModuleName: "template-operator"}, map[string]string{},
-				defaultCustomStateCheck, false),
+				defaultCustomStateCheck, false, false),
 			wantErr: false,
 		},
 		{
@@ -154,7 +154,24 @@ func TestTemplate(t *testing.T) {
 			},
 			want: getExpectedModuleTemplate(t, "kyma-system",
 				map[string]string{shared.ModuleName: "template-operator"}, map[string]string{},
-				[]v1beta2.CustomStateCheck{}, true),
+				[]v1beta2.CustomStateCheck{}, true, false),
+			wantErr: false,
+		},
+		{
+			name: "ModuleTemplate Enabling ModuleConfig Flag",
+			args: args{
+				remote:             accessVersion,
+				namespace:          "kyma-system",
+				channel:            "regular",
+				labels:             map[string]string{},
+				annotations:        map[string]string{},
+				checks:             noCustomStateCheck,
+				mandatory:          false,
+				enableModuleConfig: true,
+			},
+			want: getExpectedModuleTemplate(t, "kyma-system",
+				map[string]string{shared.ModuleName: "template-operator"}, map[string]string{},
+				[]v1beta2.CustomStateCheck{}, false, true),
 			wantErr: false,
 		},
 	}
@@ -191,7 +208,7 @@ func createOcmComponentVersionAccess(t *testing.T) ocm.ComponentVersionAccess {
 
 func getExpectedModuleTemplate(t *testing.T,
 	namespace string, labels map[string]string,
-	annotations map[string]string, checks []v1beta2.CustomStateCheck, mandatory bool) []byte {
+	annotations map[string]string, checks []v1beta2.CustomStateCheck, mandatory bool, enableModuleConfig bool) []byte {
 	cva, err := compdesc.Convert(accessVersion.GetDescriptor())
 	assert.Equal(t, nil, err)
 	temp, err := template.New("modTemplate").Funcs(template.FuncMap{
@@ -200,15 +217,16 @@ func getExpectedModuleTemplate(t *testing.T,
 	}).Parse(modTemplate)
 	assert.Equal(t, nil, err)
 	td := moduleTemplateData{
-		ResourceName:      "template-operator-regular",
-		Namespace:         namespace,
-		Channel:           "regular",
-		Annotations:       annotations,
-		Labels:            labels,
-		Data:              "",
-		Descriptor:        cva,
-		CustomStateChecks: checks,
-		Mandatory:         mandatory,
+		ResourceName:       "template-operator-regular",
+		Namespace:          namespace,
+		Channel:            "regular",
+		Annotations:        annotations,
+		Labels:             labels,
+		Data:               "",
+		Descriptor:         cva,
+		CustomStateChecks:  checks,
+		Mandatory:          mandatory,
+		EnableModuleConfig: enableModuleConfig,
 	}
 	w := &bytes.Buffer{}
 	err = temp.Execute(w, td)
