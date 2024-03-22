@@ -29,8 +29,7 @@ func NewHanaProvisionCMD() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "provision",
 		Short: "Provisions a Hana instance on the Kyma.",
-		Long: `Use this command to provision a Hana instance on the SAP Kyma platform.
-`,
+		Long:  "Use this command to provision a Hana instance on the SAP Kyma platform.",
 		PreRunE: func(_ *cobra.Command, args []string) error {
 			return config.complete()
 		},
@@ -42,11 +41,11 @@ func NewHanaProvisionCMD() *cobra.Command {
 	cmd.Flags().StringVar(&config.kubeconfig, "kubeconfig", "", "Path to the Kyma kubecongig file.")
 
 	cmd.Flags().StringVar(&config.name, "name", "", "Name of Hana instance.")
-	cmd.Flags().StringVar(&config.namespace, "namespace", "default", "Name of namespace.")
+	cmd.Flags().StringVar(&config.namespace, "namespace", "default", "Namespace for Hana instance.")
 	cmd.Flags().StringVar(&config.planName, "plan", "hana", "Name of the service plan.")
-	cmd.Flags().IntVar(&config.memory, "memory", 30, "??? memory")                                          //TODO: fulfill proper usage
-	cmd.Flags().IntVar(&config.cpu, "cpu", 2, "??? cpu")                                                    //TODO: fulfill proper usage
-	cmd.Flags().StringSliceVar(&config.whitelistIP, "whitelist-ip", []string{"0.0.0.0/0"}, "??? whitelist") //TODO: fulfill proper usage
+	cmd.Flags().IntVar(&config.memory, "memory", 30, "Memory size for Hana.")                                        //TODO: fulfill proper usage
+	cmd.Flags().IntVar(&config.cpu, "cpu", 2, "Number of CPUs for Hana.")                                            //TODO: fulfill proper usage
+	cmd.Flags().StringSliceVar(&config.whitelistIP, "whitelist-ip", []string{"0.0.0.0/0"}, "IP whitelist for Hana.") //TODO: fulfill proper usage
 
 	_ = cmd.MarkFlagRequired("kubeconfig")
 	_ = cmd.MarkFlagRequired("name")
