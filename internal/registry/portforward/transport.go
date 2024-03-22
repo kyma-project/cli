@@ -36,7 +36,6 @@ func (pft *portforwardTransport) RoundTrip(req *http.Request) (*http.Response, e
 	return pft.dialRemote(req)
 }
 
-
 // dialRemote is forwarding any incoming request to the stream
 // the logic is mostly based on the k8s.io/client-go/tools/portforward package
 // https://github.com/kubernetes/client-go/blob/271d034e86108101a804541843d50abe3fea06ae/tools/portforward/portforward.go#L335
