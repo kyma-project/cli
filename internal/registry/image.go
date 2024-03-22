@@ -11,6 +11,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/daemon"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/kyma-project/cli.v3/internal/registry/portforward"
+	"k8s.io/apimachinery/pkg/util/httpstream"
 	"k8s.io/client-go/rest"
 )
 
@@ -23,13 +24,28 @@ type ImportOptions struct {
 	RegistryPodPort      string
 }
 
+// for testing
+type utils struct {
+	daemonImage        func(name.Reference, ...daemon.Option) (v1.Image, error)
+	portforwardNewDial func(config *rest.Config, podName, podNamespace string) (httpstream.Connection, error)
+	remoteWrite        func(ref name.Reference, img v1.Image, options ...remote.Option) error
+}
+
 func ImportImage(ctx context.Context, imageName string, opts ImportOptions) (string, error) {
-	localImage, err := imageFromInternalRegistry(ctx, imageName)
+	return importImage(ctx, imageName, opts, utils{
+		daemonImage:        daemon.Image,
+		portforwardNewDial: portforward.NewDialFor,
+		remoteWrite:        remote.Write,
+	})
+}
+
+func importImage(ctx context.Context, imageName string, opts ImportOptions, utils utils) (string, error) {
+	localImage, err := imageFromInternalRegistry(ctx, imageName, utils)
 	if err != nil {
 		return "", fmt.Errorf("failed to load image from local docker daemon: %s", err.Error())
 	}
 
-	conn, err := portforward.NewDialFor(opts.ClusterAPIRestConfig, opts.RegistryPodName, opts.RegistryPodNamespace)
+	conn, err := utils.portforwardNewDial(opts.ClusterAPIRestConfig, opts.RegistryPodName, opts.RegistryPodNamespace)
 	if err != nil {
 		return "", fmt.Errorf("failed to create registry portforward connection: %s", err.Error())
 	}
@@ -38,7 +54,7 @@ func ImportImage(ctx context.Context, imageName string, opts ImportOptions) (str
 	localTr := portforward.NewPortforwardTransport(conn, opts.RegistryPodPort)
 	transport := portforward.NewRetryTransport(localTr)
 
-	pushedImage, err := imageToInClusterRegistry(ctx, localImage, transport, opts.RegistryAuth, opts.RegistryPullHost, imageName)
+	pushedImage, err := imageToInClusterRegistry(ctx, localImage, transport, opts.RegistryAuth, opts.RegistryPullHost, imageName, utils)
 	if err != nil {
 		return "", fmt.Errorf("failed to push image to the in-cluster registry: %s", err.Error())
 	}
@@ -46,20 +62,21 @@ func ImportImage(ctx context.Context, imageName string, opts ImportOptions) (str
 	return pushedImage, nil
 }
 
-func imageFromInternalRegistry(ctx context.Context, userImage string) (v1.Image, error) {
+func imageFromInternalRegistry(ctx context.Context, userImage string, utils utils) (v1.Image, error) {
 	tag, err := name.NewTag(userImage, name.WeakValidation)
 	if err != nil {
 		return nil, err
 	}
 
+	// check if user defined custom registry - what is not allowed
 	if tag.RegistryStr() != name.DefaultRegistry {
 		return nil, fmt.Errorf("image '%s' can't contain registry '%s' address", tag.String(), tag.RegistryStr())
 	}
 
-	return daemon.Image(tag, daemon.WithContext(ctx))
+	return utils.daemonImage(tag, daemon.WithContext(ctx))
 }
 
-func imageToInClusterRegistry(ctx context.Context, image v1.Image, transport http.RoundTripper, auth authn.Authenticator, pullHost, userImageName string) (string, error) {
+func imageToInClusterRegistry(ctx context.Context, image v1.Image, transport http.RoundTripper, auth authn.Authenticator, pullHost, userImageName string, utils utils) (string, error) {
 	tag, err := name.NewTag(userImageName, name.WeakValidation)
 	if err != nil {
 		return "", err
@@ -71,7 +88,7 @@ func imageToInClusterRegistry(ctx context.Context, image v1.Image, transport htt
 	}
 	tag.Registry = newReg
 
-	err = remote.Write(tag, image,
+	err = utils.remoteWrite(tag, image,
 		remote.WithTransport(transport),
 		remote.WithAuth(auth),
 		remote.WithContext(ctx),
