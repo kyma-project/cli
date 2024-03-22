@@ -3,11 +3,11 @@ package hana
 import (
 	"context"
 	"fmt"
+	"github.com/kyma-project/cli.v3/internal/btp/operator"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type hanaProvisionConfig struct {
@@ -66,13 +66,45 @@ func (pc *hanaProvisionConfig) complete() error {
 func runProvision(config *hanaProvisionConfig) error {
 	fmt.Printf("Provisioning Hana %s/%s.\n", config.namespace, config.name)
 
-	GVRServiceInstance := schema.GroupVersionResource{
-		Group:    "services.cloud.sap.com",
-		Version:  "v1",
-		Resource: "serviceinstances",
+	if _, err := createHanaInstance(config); err != nil {
+		return err
 	}
+	fmt.Println("Created Hana.")
 
-	serviceInstance := &unstructured.Unstructured{
+	if _, err := createHanaBinding(config); err != nil {
+		return err
+	}
+	fmt.Println("Created Hana binding.")
+
+	if _, err := createHanaBindingUrl(config); err != nil {
+		return err
+	}
+	fmt.Println("Created Hana URL binding.")
+	fmt.Println("Operation completed.")
+
+	return nil
+}
+
+func createHanaInstance(config *hanaProvisionConfig) (*unstructured.Unstructured, error) {
+	return config.kubeClient.Dynamic().Resource(operator.GVRServiceInstance).
+		Namespace(config.namespace).
+		Create(config.ctx, hanaInstance(config), metav1.CreateOptions{})
+}
+
+func createHanaBinding(config *hanaProvisionConfig) (*unstructured.Unstructured, error) {
+	return config.kubeClient.Dynamic().Resource(operator.GVRServiceBinding).
+		Namespace(config.namespace).
+		Create(config.ctx, hanaBinding(config), metav1.CreateOptions{})
+}
+
+func createHanaBindingUrl(config *hanaProvisionConfig) (*unstructured.Unstructured, error) {
+	return config.kubeClient.Dynamic().Resource(operator.GVRServiceBinding).
+		Namespace(config.namespace).
+		Create(config.ctx, hanaBindingUrl(config), metav1.CreateOptions{})
+}
+
+func hanaInstance(config *hanaProvisionConfig) *unstructured.Unstructured {
+	return &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": "services.cloud.sap.com/v1",
 			"kind":       "ServiceInstance",
@@ -95,13 +127,43 @@ func runProvision(config *hanaProvisionConfig) error {
 			},
 		},
 	}
+}
 
-	_, err := config.kubeClient.Dynamic().Resource(GVRServiceInstance).
-		Namespace(config.namespace).
-		Create(config.ctx, serviceInstance, metav1.CreateOptions{})
-	if err != nil {
-		return err
+func hanaBinding(config *hanaProvisionConfig) *unstructured.Unstructured {
+	return &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "services.cloud.sap.com/v1",
+			"kind":       "ServiceBinding",
+			"metadata": map[string]interface{}{
+				"name": config.name,
+			},
+			"spec": map[string]interface{}{
+				"serviceInstanceName": config.name,
+				"externalName":        config.name,
+				"secretName":          config.name,
+				"parameters": map[string]interface{}{
+					"scope":           "administration",     // fixed
+					"credential-type": "PASSWORD_GENERATED", // fixed
+				},
+			},
+		},
 	}
-	fmt.Println("Created Hana.")
-	return nil
+}
+
+func hanaBindingUrl(config *hanaProvisionConfig) *unstructured.Unstructured {
+	urlName := fmt.Sprintf("%s-url", config.name)
+	return &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "services.cloud.sap.com/v1",
+			"kind":       "ServiceBinding",
+			"metadata": map[string]interface{}{
+				"name": urlName,
+			},
+			"spec": map[string]interface{}{
+				"serviceInstanceName": config.name,
+				"externalName":        urlName,
+				"secretName":          urlName,
+			},
+		},
+	}
 }
