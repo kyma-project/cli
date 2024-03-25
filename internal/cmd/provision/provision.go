@@ -5,6 +5,7 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/btp/auth"
 	"github.com/kyma-project/cli.v3/internal/btp/cis"
+	"github.com/kyma-project/cli.v3/internal/cli_error"
 	"github.com/spf13/cobra"
 )
 
@@ -46,7 +47,11 @@ func runProvision(config *provisionConfig) error {
 	// TODO: is the credentials a good name for this field? it contains much more than credentials only
 	credentials, err := auth.LoadCISCredentials(config.credentialsPath)
 	if err != nil {
-		return fmt.Errorf("failed to load credentials from '%s' file: %s", config.credentialsPath, err.Error())
+		return cli_error.DetailedError{
+			Message: "failed to load credentials",
+			Details: fmt.Sprintf("failed to load credentials from '%s' file: %s", config.credentialsPath, err.Error()),
+			Hints:   []string{"Make sure the path to the credentials file is correct."},
+		}
 	}
 
 	token, err := auth.GetOAuthToken(
