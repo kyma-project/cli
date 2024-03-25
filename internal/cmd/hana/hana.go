@@ -13,6 +13,7 @@ func NewHanaCMD() *cobra.Command {
 	}
 
 	cmd.AddCommand(NewHanaProvisionCMD())
+	cmd.AddCommand(NewHanaCheckCMD())
 
 	return cmd
 }
