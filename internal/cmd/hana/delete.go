@@ -56,7 +56,7 @@ func (pc *hanaDeleteConfig) complete() error {
 }
 
 var (
-	deletions = []func(*hanaDeleteConfig) error{
+	deleteCommands = []func(*hanaDeleteConfig) error{
 		deleteHanaBinding,
 		deleteHanaBindingUrl,
 		deleteHanaInstance,
@@ -66,8 +66,8 @@ var (
 func runDelete(config *hanaDeleteConfig) error {
 	fmt.Printf("Deleting Hana (%s/%s).\n", config.namespace, config.name)
 
-	for _, deletion := range deletions {
-		err := deletion(config)
+	for _, command := range deleteCommands {
+		err := command(config)
 		if err != nil {
 			return err
 		}
@@ -80,25 +80,25 @@ func deleteHanaInstance(config *hanaDeleteConfig) error {
 	err := config.kubeClient.Dynamic().Resource(operator.GVRServiceInstance).
 		Namespace(config.namespace).
 		Delete(config.ctx, config.name, metav1.DeleteOptions{})
-	return handleError(err, "Hana instance", config.namespace, config.name)
+	return handleDeleteResponse(err, "Hana instance", config.namespace, config.name)
 }
 
 func deleteHanaBinding(config *hanaDeleteConfig) error {
 	err := config.kubeClient.Dynamic().Resource(operator.GVRServiceBinding).
 		Namespace(config.namespace).
 		Delete(config.ctx, config.name, metav1.DeleteOptions{})
-	return handleError(err, "Hana binding", config.namespace, config.name)
+	return handleDeleteResponse(err, "Hana binding", config.namespace, config.name)
 }
 
 func deleteHanaBindingUrl(config *hanaDeleteConfig) error {
-	urlName := fmt.Sprintf("%s-url", config.name)
+	urlName := hanaBindingUrlName(config.name)
 	err := config.kubeClient.Dynamic().Resource(operator.GVRServiceBinding).
 		Namespace(config.namespace).
 		Delete(config.ctx, urlName, metav1.DeleteOptions{})
-	return handleError(err, "Hana URL binding", config.namespace, urlName)
+	return handleDeleteResponse(err, "Hana URL binding", config.namespace, urlName)
 }
 
-func handleError(err error, printedName, namespace, name string) error {
+func handleDeleteResponse(err error, printedName, namespace, name string) error {
 	if err == nil {
 		fmt.Printf("Deleted %s (%s/%s).\n", printedName, namespace, name)
 		return nil
