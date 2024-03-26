@@ -9,24 +9,24 @@ import (
 func Test_CLIError_String(t *testing.T) {
 	tests := []struct {
 		name string
-		f    Error
+		err  Error
 		want string
 	}{
 		{
 			name: "empty",
-			f:    Error{},
+			err:  Error{},
 			want: "Error:\n  \n\n",
 		},
 		{
 			name: "error",
-			f: Error{
+			err: Error{
 				Message: "error",
 			},
 			want: "Error:\n  error\n\n",
 		},
 		{
 			name: "error and details",
-			f: Error{
+			err: Error{
 				Message: "error",
 				Details: "details",
 			},
@@ -34,7 +34,7 @@ func Test_CLIError_String(t *testing.T) {
 		},
 		{
 			name: "error, details and hints",
-			f: Error{
+			err: Error{
 				Message: "error",
 				Details: "details",
 				Hints:   []string{"hint1", "hint2"},
@@ -44,7 +44,7 @@ func Test_CLIError_String(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, tt.f.Error())
+			assert.Equal(t, tt.want, tt.err.Error())
 		})
 	}
 }
@@ -53,27 +53,27 @@ func Test_CLIError_String(t *testing.T) {
 func Test_CLIError_Wrap(t *testing.T) {
 	tests := []struct {
 		name    string
-		f       Error
+		err     Error
 		message string
 		hints   []string
 		want    string
 	}{
 		{
 			name:    "Add to empty error",
-			f:       Error{},
+			err:     Error{},
 			message: "error",
 			want:    "Error:\n  error\n\n",
 		},
 		{
 			name:    "Add with hints to empty error",
-			f:       Error{},
+			err:     Error{},
 			message: "error",
 			hints:   []string{"hint1", "hint2"},
 			want:    "Error:\n  error\n\nHints:\n  - hint1\n  - hint2\n",
 		},
 		{
 			name: "add to error",
-			f: Error{
+			err: Error{
 				Message: "error",
 			},
 			message: "error",
@@ -82,7 +82,7 @@ func Test_CLIError_Wrap(t *testing.T) {
 		},
 		{
 			name: "add to error with details",
-			f: Error{
+			err: Error{
 				Message: "previous",
 				Details: "details",
 			},
@@ -92,7 +92,7 @@ func Test_CLIError_Wrap(t *testing.T) {
 		},
 		{
 			name: "add to error with details and hints",
-			f: Error{
+			err: Error{
 				Message: "previous",
 				Details: "details",
 				Hints:   []string{"hint1", "hint2"},
@@ -104,8 +104,8 @@ func Test_CLIError_Wrap(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.f.Wrap(tt.message, tt.hints)
-			assert.Equal(t, tt.want, tt.f.Error())
+			tt.err.Wrap(tt.message, tt.hints)
+			assert.Equal(t, tt.want, tt.err.Error())
 		})
 	}
 }
