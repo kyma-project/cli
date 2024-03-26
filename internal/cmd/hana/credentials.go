@@ -59,7 +59,7 @@ func (pc *hanaCredentialsConfig) complete() error {
 }
 
 func runCredentials(config *hanaCredentialsConfig) error {
-	fmt.Printf("Getting Hana credentials %s/%s.\n", config.namespace, config.name)
+	fmt.Printf("Getting Hana credentials (%s/%s).\n", config.namespace, config.name)
 
 	credentials, err := getHanaCredentials(config)
 	if err != nil {
@@ -75,7 +75,6 @@ func getHanaCredentials(config *hanaCredentialsConfig) (credentials, error) {
 	if err != nil {
 		return credentials{}, err
 	}
-	fmt.Println()
 	return credentials{
 		username: string(secret.Data["username"]),
 		password: string(secret.Data["password"]),
