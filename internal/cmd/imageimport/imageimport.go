@@ -56,7 +56,7 @@ func (pc *provisionConfig) validate() error {
 func (pc *provisionConfig) complete(args []string) error {
 	pc.image = args[0]
 
-	// TODO: think about itmeout and moving context to persistent `kyma` command configuration
+	// TODO: think about timeout and moving context to persistent `kyma` command configuration
 	pc.ctx = context.Background()
 
 	var err error
