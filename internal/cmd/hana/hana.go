@@ -14,6 +14,7 @@ func NewHanaCMD() *cobra.Command {
 
 	cmd.AddCommand(NewHanaProvisionCMD())
 	cmd.AddCommand(NewHanaCheckCMD())
+	cmd.AddCommand(NewHanaCredentialsCMD())
 
 	return cmd
 }
