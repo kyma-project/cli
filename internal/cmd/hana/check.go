@@ -10,6 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"strings"
 )
 
 type hanaCheckConfig struct {
@@ -67,7 +68,7 @@ type status struct {
 }
 
 var (
-	checks = []func(config *hanaCheckConfig) error{
+	checkCommands = []func(config *hanaCheckConfig) error{
 		checkHanaInstance,
 		checkHanaBinding,
 		checkHanaBindingUrl,
@@ -75,10 +76,10 @@ var (
 )
 
 func runCheck(config *hanaCheckConfig) error {
-	fmt.Printf("Checkinging Hana %s/%s.\n", config.namespace, config.name)
+	fmt.Printf("Checkinging Hana (%s/%s).\n", config.namespace, config.name)
 
-	for _, check := range checks {
-		err := check(config)
+	for _, command := range checkCommands {
+		err := command(config)
 		if err != nil {
 			fmt.Println("Hana is not fully ready.")
 			return err
@@ -90,41 +91,21 @@ func runCheck(config *hanaCheckConfig) error {
 
 func checkHanaInstance(config *hanaCheckConfig) error {
 	u, err := getServiceInstance(config)
-	if err != nil {
-		return err
-	}
-
-	ready, err := isReady(u)
-	if err != nil {
-		return err
-	}
-	if !ready {
-		return fmt.Errorf("hana instance is not ready")
-	}
-	fmt.Println("Hana instance is ready.")
-	return nil
+	return handleCheckResponse(u, err, "Hana instance", config.namespace, config.name)
 }
 
 func checkHanaBinding(config *hanaCheckConfig) error {
 	u, err := getServiceBinding(config, config.name)
-	if err != nil {
-		return err
-	}
-
-	ready, err := isReady(u)
-	if err != nil {
-		return err
-	}
-	if !ready {
-		return fmt.Errorf("hana binding is not ready")
-	}
-	fmt.Println("Hana binding is ready.")
-	return nil
+	return handleCheckResponse(u, err, "Hana binding", config.namespace, config.name)
 }
 
 func checkHanaBindingUrl(config *hanaCheckConfig) error {
-	urlName := fmt.Sprintf("%s-url", config.name)
+	urlName := hanaBindingUrlName(config.name)
 	u, err := getServiceBinding(config, urlName)
+	return handleCheckResponse(u, err, "Hana URL binding", config.namespace, urlName)
+}
+
+func handleCheckResponse(u *unstructured.Unstructured, err error, printedName, namespace, name string) error {
 	if err != nil {
 		return err
 	}
@@ -134,9 +115,10 @@ func checkHanaBindingUrl(config *hanaCheckConfig) error {
 		return err
 	}
 	if !ready {
-		return fmt.Errorf("hana binding url is not ready")
+		fmt.Printf("%s is not ready (%s/%s).\n", printedName, namespace, name)
+		return fmt.Errorf("%s is not ready", strings.ToLower(printedName[:1])+printedName[1:])
 	}
-	fmt.Println("Hana binding url is ready.")
+	fmt.Printf("%s is ready (%s/%s).\n", printedName, namespace, name)
 	return nil
 }
 

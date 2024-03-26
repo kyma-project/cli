@@ -63,44 +63,54 @@ func (pc *hanaProvisionConfig) complete() error {
 	return err
 }
 
+var (
+	provisionCommands = []func(*hanaProvisionConfig) error{
+		createHanaInstance,
+		createHanaBinding,
+		createHanaBindingUrl,
+	}
+)
+
 func runProvision(config *hanaProvisionConfig) error {
-	fmt.Printf("Provisioning Hana %s/%s.\n", config.namespace, config.name)
+	fmt.Printf("Provisioning Hana (%s/%s).\n", config.namespace, config.name)
 
-	if _, err := createHanaInstance(config); err != nil {
-		return err
+	for _, command := range provisionCommands {
+		err := command(config)
+		if err != nil {
+			return err
+		}
 	}
-	fmt.Println("Created Hana.")
-
-	if _, err := createHanaBinding(config); err != nil {
-		return err
-	}
-	fmt.Println("Created Hana binding.")
-
-	if _, err := createHanaBindingUrl(config); err != nil {
-		return err
-	}
-	fmt.Println("Created Hana URL binding.")
 	fmt.Println("Operation completed.")
-
 	return nil
 }
 
-func createHanaInstance(config *hanaProvisionConfig) (*unstructured.Unstructured, error) {
-	return config.kubeClient.Dynamic().Resource(operator.GVRServiceInstance).
+func createHanaInstance(config *hanaProvisionConfig) error {
+	_, err := config.kubeClient.Dynamic().Resource(operator.GVRServiceInstance).
 		Namespace(config.namespace).
 		Create(config.ctx, hanaInstance(config), metav1.CreateOptions{})
+	return handleProvisionResponse(err, "Hana instance", config.namespace, config.name)
 }
 
-func createHanaBinding(config *hanaProvisionConfig) (*unstructured.Unstructured, error) {
-	return config.kubeClient.Dynamic().Resource(operator.GVRServiceBinding).
+func createHanaBinding(config *hanaProvisionConfig) error {
+	_, err := config.kubeClient.Dynamic().Resource(operator.GVRServiceBinding).
 		Namespace(config.namespace).
 		Create(config.ctx, hanaBinding(config), metav1.CreateOptions{})
+	return handleProvisionResponse(err, "Hana binding", config.namespace, config.name)
 }
 
-func createHanaBindingUrl(config *hanaProvisionConfig) (*unstructured.Unstructured, error) {
-	return config.kubeClient.Dynamic().Resource(operator.GVRServiceBinding).
+func createHanaBindingUrl(config *hanaProvisionConfig) error {
+	_, err := config.kubeClient.Dynamic().Resource(operator.GVRServiceBinding).
 		Namespace(config.namespace).
 		Create(config.ctx, hanaBindingUrl(config), metav1.CreateOptions{})
+	return handleProvisionResponse(err, "Hana URL binding", config.namespace, hanaBindingUrlName(config.name))
+}
+
+func handleProvisionResponse(err error, printedName, namespace, name string) error {
+	if err == nil {
+		fmt.Printf("Created %s (%s/%s).\n", printedName, namespace, name)
+		return nil
+	}
+	return err
 }
 
 func hanaInstance(config *hanaProvisionConfig) *unstructured.Unstructured {
@@ -151,7 +161,7 @@ func hanaBinding(config *hanaProvisionConfig) *unstructured.Unstructured {
 }
 
 func hanaBindingUrl(config *hanaProvisionConfig) *unstructured.Unstructured {
-	urlName := fmt.Sprintf("%s-url", config.name)
+	urlName := hanaBindingUrlName(config.name)
 	return &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": "services.cloud.sap.com/v1",
@@ -166,4 +176,8 @@ func hanaBindingUrl(config *hanaProvisionConfig) *unstructured.Unstructured {
 			},
 		},
 	}
+}
+
+func hanaBindingUrlName(name string) string {
+	return fmt.Sprintf("%s-url", name)
 }
