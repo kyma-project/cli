@@ -12,7 +12,7 @@ func NewKymaCMD() *cobra.Command {
 		Use: "kyma",
 
 		// Affects children as well
-		SilenceErrors: false,
+		SilenceErrors: true,
 		SilenceUsage:  true,
 		Run: func(cmd *cobra.Command, _ []string) {
 			if err := cmd.Help(); err != nil {

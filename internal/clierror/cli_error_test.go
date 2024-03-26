@@ -104,8 +104,8 @@ func Test_CLIError_Wrap(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.err.Wrap(tt.message, tt.hints)
-			assert.Equal(t, tt.want, tt.err.Error())
+			err := tt.err.Wrap(tt.message, tt.hints)
+			assert.Equal(t, tt.want, err.Error())
 		})
 	}
 }

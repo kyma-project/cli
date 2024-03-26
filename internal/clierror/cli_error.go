@@ -12,33 +12,37 @@ type Error struct {
 }
 
 // Wrap adds a new message and hints to the error
-func (f *Error) Wrap(message string, hints []string) {
-	if f.Details != "" {
-		f.Details = fmt.Sprintf("%s: %s", f.Message, f.Details)
-	} else {
-		f.Details = f.Message
+func (e *Error) Wrap(message string, hints []string) *Error {
+	newError := &Error{
+		Message: message,
+		Details: e.Message,
+		Hints:   append(hints, e.Hints...),
 	}
-	f.Message = message
-	f.Hints = append(hints, f.Hints...)
+
+	if e.Details != "" {
+		newError.Details = fmt.Sprintf("%s: %s", e.Message, e.Details)
+	}
+
+	return newError
 }
 
-func (f *Error) Print() {
-	fmt.Printf("%s\n", f.Error())
+func (e *Error) Print() {
+	fmt.Printf("%s\n", e.Error())
 }
 
-func (f *Error) PrintStderr() {
-	fmt.Fprintf(os.Stderr, "%s\n", f.Error())
+func (e *Error) PrintStderr() {
+	fmt.Fprintf(os.Stderr, "%s\n", e.Error())
 }
 
 // Error returns the error string, compatible with the error interface
-func (f Error) Error() string {
-	output := fmt.Sprintf("Error:\n  %s\n\n", f.Message)
-	if f.Details != "" {
-		output += fmt.Sprintf("Error Details:\n  %s\n\n", f.Details)
+func (e Error) Error() string {
+	output := fmt.Sprintf("Error:\n  %s\n\n", e.Message)
+	if e.Details != "" {
+		output += fmt.Sprintf("Error Details:\n  %s\n\n", e.Details)
 	}
-	if len(f.Hints) > 0 {
+	if len(e.Hints) > 0 {
 		output += "Hints:\n"
-		for _, hint := range f.Hints {
+		for _, hint := range e.Hints {
 			output += fmt.Sprintf("  - %s\n", hint)
 		}
 	}
