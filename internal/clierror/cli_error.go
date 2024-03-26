@@ -1,18 +1,18 @@
-package cli_error
+package clierror
 
 import (
 	"fmt"
 	"os"
 )
 
-type DetailedError struct {
+type Error struct {
 	Message string
 	Details string
 	Hints   []string
 }
 
 // Wrap adds a new message and hints to the error
-func (f *DetailedError) Wrap(message string, hints []string) {
+func (f *Error) Wrap(message string, hints []string) {
 	if f.Details != "" {
 		f.Details = fmt.Sprintf("%s: %s", f.Message, f.Details)
 	} else {
@@ -22,16 +22,16 @@ func (f *DetailedError) Wrap(message string, hints []string) {
 	f.Hints = append(hints, f.Hints...)
 }
 
-func (f *DetailedError) Print() {
+func (f *Error) Print() {
 	fmt.Printf("%s\n", f.Error())
 }
 
-func (f *DetailedError) PrintStderr() {
+func (f *Error) PrintStderr() {
 	fmt.Fprintf(os.Stderr, "%s\n", f.Error())
 }
 
 // Error returns the error string, compatible with the error interface
-func (f DetailedError) Error() string {
+func (f Error) Error() string {
 	output := fmt.Sprintf("Error:\n  %s\n\n", f.Message)
 	if f.Details != "" {
 		output += fmt.Sprintf("Error Details:\n  %s\n\n", f.Details)

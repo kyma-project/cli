@@ -1,4 +1,4 @@
-package cli_error
+package clierror
 
 import (
 	"testing"
@@ -9,24 +9,24 @@ import (
 func Test_CLIError_String(t *testing.T) {
 	tests := []struct {
 		name string
-		f    DetailedError
+		f    Error
 		want string
 	}{
 		{
 			name: "empty",
-			f:    DetailedError{},
+			f:    Error{},
 			want: "Error:\n  \n\n",
 		},
 		{
 			name: "error",
-			f: DetailedError{
+			f: Error{
 				Message: "error",
 			},
 			want: "Error:\n  error\n\n",
 		},
 		{
 			name: "error and details",
-			f: DetailedError{
+			f: Error{
 				Message: "error",
 				Details: "details",
 			},
@@ -34,7 +34,7 @@ func Test_CLIError_String(t *testing.T) {
 		},
 		{
 			name: "error, details and hints",
-			f: DetailedError{
+			f: Error{
 				Message: "error",
 				Details: "details",
 				Hints:   []string{"hint1", "hint2"},
@@ -53,27 +53,27 @@ func Test_CLIError_String(t *testing.T) {
 func Test_CLIError_Wrap(t *testing.T) {
 	tests := []struct {
 		name    string
-		f       DetailedError
+		f       Error
 		message string
 		hints   []string
 		want    string
 	}{
 		{
 			name:    "Add to empty error",
-			f:       DetailedError{},
+			f:       Error{},
 			message: "error",
 			want:    "Error:\n  error\n\n",
 		},
 		{
 			name:    "Add with hints to empty error",
-			f:       DetailedError{},
+			f:       Error{},
 			message: "error",
 			hints:   []string{"hint1", "hint2"},
 			want:    "Error:\n  error\n\nHints:\n  - hint1\n  - hint2\n",
 		},
 		{
 			name: "add to error",
-			f: DetailedError{
+			f: Error{
 				Message: "error",
 			},
 			message: "error",
@@ -82,7 +82,7 @@ func Test_CLIError_Wrap(t *testing.T) {
 		},
 		{
 			name: "add to error with details",
-			f: DetailedError{
+			f: Error{
 				Message: "previous",
 				Details: "details",
 			},
@@ -92,7 +92,7 @@ func Test_CLIError_Wrap(t *testing.T) {
 		},
 		{
 			name: "add to error with details and hints",
-			f: DetailedError{
+			f: Error{
 				Message: "previous",
 				Details: "details",
 				Hints:   []string{"hint1", "hint2"},
