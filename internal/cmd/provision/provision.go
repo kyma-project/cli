@@ -49,7 +49,7 @@ func runProvision(config *provisionConfig) error {
 	if err != nil {
 		return clierror.Error{
 			Message: "failed to load credentials",
-			Details: fmt.Sprintf("failed to load credentials from '%s' file: %s", config.credentialsPath, err.Error()),
+			Details: err.Error(),
 			Hints:   []string{"Make sure the path to the credentials file is correct."},
 		}
 	}
