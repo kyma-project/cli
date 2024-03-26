@@ -12,7 +12,8 @@ func NewKymaCMD() *cobra.Command {
 		Use: "kyma",
 
 		// Affects children as well
-		SilenceErrors: false,
+		// by default Cobra adds `Error:` to the front of the error message, we want to supress it
+		SilenceErrors: true,
 		SilenceUsage:  true,
 		Run: func(cmd *cobra.Command, _ []string) {
 			if err := cmd.Help(); err != nil {
