@@ -62,6 +62,12 @@ func Test_CLIError_Wrap(t *testing.T) {
 			name:    "Add to empty error",
 			f:       DetailedError{},
 			message: "error",
+			want:    "Error:\n  error\n\n",
+		},
+		{
+			name:    "Add with hints to empty error",
+			f:       DetailedError{},
+			message: "error",
 			hints:   []string{"hint1", "hint2"},
 			want:    "Error:\n  error\n\nHints:\n  - hint1\n  - hint2\n",
 		},
