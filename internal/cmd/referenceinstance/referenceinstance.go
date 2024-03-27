@@ -5,6 +5,10 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/spf13/cobra"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type referenceInstanceConfig struct {
@@ -25,14 +29,14 @@ func NewReferenceInstanceCMD() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "reference-instance",
-		Short: "Manage reference instances.",
-		Long: `Use this command to manage reference instances on the SAP BTP platform.
+		Short: "Add an instance reference to a shared service instance.",
+		Long: `Use this command to add an instance reference to a shared service instance on the SAP Kyma platform.
 `,
-		PreRunE: func(_ *cobra.Command, args []string) error {
+		PreRunE: func(_ *cobra.Command, _ []string) error {
 			return config.complete()
 		},
 		RunE: func(_ *cobra.Command, _ []string) error {
-			return nil
+			return runReferenceInstance(config)
 		},
 	}
 
@@ -50,8 +54,9 @@ func NewReferenceInstanceCMD() *cobra.Command {
 	cmd.MarkFlagsMutuallyExclusive("instance-id", "name-selector")
 	cmd.MarkFlagsMutuallyExclusive("instance-id", "plan-selector")
 
-	cmd.MarkFlagRequired("offering-name")
-	cmd.MarkFlagRequired("reference-name")
+	_ = cmd.MarkFlagRequired("kubeconfig")
+	_ = cmd.MarkFlagRequired("offering-name")
+	_ = cmd.MarkFlagRequired("reference-name")
 
 	return cmd
 }
@@ -63,5 +68,55 @@ func (pc *referenceInstanceConfig) complete() error {
 	var err error
 	pc.kubeClient, err = kube.NewClient(pc.kubeconfig)
 
+	return err
+}
+
+func runReferenceInstance(config referenceInstanceConfig) error {
+	requestData := KubernetesResource{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "services.cloud.sap.com/v1",
+			Kind:       "ServiceInstance",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      config.referenceName,
+			Namespace: "default",
+			Labels: map[string]string{
+				"app.kubernetes.io/name": config.referenceName,
+			},
+		},
+		Spec: KubernetesResourceSpec{
+			Parameters: KubernetesResourceSpecParameters{
+				InstanceID: config.instanceID,
+				Selectors: SpecSelectors{
+					InstanceLabelSelector: config.labelSelector,
+					InstanceNameSelector:  config.nameSelector,
+					PlanNameSelector:      config.planSelector,
+				},
+			},
+			OfferingName: config.offeringName,
+			PlanName:     "reference-instance",
+		},
+	}
+	u, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&requestData)
+	if err != nil {
+		return err
+	}
+
+	unstructuredObj := &unstructured.Unstructured{
+		Object: u,
+	}
+
+	unstructuredObj.SetGroupVersionKind(schema.GroupVersionKind{
+		Group:   "services.cloud.sap.com",
+		Version: "v1",
+		Kind:    "ServiceInstance",
+	})
+
+	resourceSchema := schema.GroupVersionResource{
+		Group:    "services.cloud.sap.com",
+		Version:  "v1",
+		Resource: "serviceinstances",
+	}
+	_, err = config.kubeClient.Dynamic().Resource(resourceSchema).Namespace("default").Create(config.ctx, unstructuredObj, metav1.CreateOptions{})
 	return err
 }
