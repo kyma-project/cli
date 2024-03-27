@@ -2,8 +2,9 @@ package auth
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
+
+	"github.com/kyma-project/cli.v3/internal/clierror"
 )
 
 type CISCredentials struct {
@@ -45,16 +46,16 @@ type UAA struct {
 	ZoneID            string `json:"zoneid"`
 }
 
-func LoadCISCredentials(path string) (*CISCredentials, error) {
+func LoadCISCredentials(path string) (*CISCredentials, *clierror.Error) {
 	credentialsBytes, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read credentials file: %s", err.Error())
+		return nil, &clierror.Error{Message: "failed to read credentials file", Details: err.Error(), Hints: []string{"Make sure the path to the credentials file is correct."}}
 	}
 
 	credentials := CISCredentials{}
 	err = json.Unmarshal(credentialsBytes, &credentials)
 	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal file data: %s", err.Error())
+		return nil, &clierror.Error{Message: "failed to unmarshal file data", Details: err.Error(), Hints: []string{"Make sure the credentials file is in the correct format."}}
 	}
 
 	return &credentials, nil
