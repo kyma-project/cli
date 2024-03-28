@@ -15,6 +15,8 @@ type hanaCredentialsConfig struct {
 	kubeconfig string
 	name       string
 	namespace  string
+	user       bool
+	password   bool
 }
 
 type credentials struct {
@@ -42,8 +44,12 @@ func NewHanaCredentialsCMD() *cobra.Command {
 	cmd.Flags().StringVar(&config.name, "name", "", "Name of Hana instance.")
 	cmd.Flags().StringVar(&config.namespace, "namespace", "default", "Namespace for Hana instance.")
 
+	cmd.Flags().BoolVar(&config.user, "user", false, "Print only user name")
+	cmd.Flags().BoolVar(&config.password, "password", false, "Print only password")
+
 	_ = cmd.MarkFlagRequired("kubeconfig")
 	_ = cmd.MarkFlagRequired("name")
+	cmd.MarkFlagsMutuallyExclusive("user", "password")
 
 	return cmd
 }
@@ -65,9 +71,18 @@ func runCredentials(config *hanaCredentialsConfig) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Credentials: %s / %s\n", credentials.username, credentials.password)
-
+	printCredentials(config, credentials)
 	return nil
+}
+
+func printCredentials(config *hanaCredentialsConfig, credentials credentials) {
+	if config.user {
+		fmt.Printf("%s", credentials.username)
+	} else if config.password {
+		fmt.Printf("%s", credentials.password)
+	} else {
+		fmt.Printf("Credentials: %s / %s\n", credentials.username, credentials.password)
+	}
 }
 
 func getHanaCredentials(config *hanaCredentialsConfig) (credentials, error) {
