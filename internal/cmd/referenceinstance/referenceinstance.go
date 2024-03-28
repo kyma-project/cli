@@ -72,6 +72,32 @@ func (pc *referenceInstanceConfig) complete() error {
 }
 
 func runReferenceInstance(config referenceInstanceConfig) error {
+	requestData := fillRequestData(config)
+	u, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&requestData)
+	if err != nil {
+		return err
+	}
+
+	unstructuredObj := &unstructured.Unstructured{
+		Object: u,
+	}
+
+	unstructuredObj.SetGroupVersionKind(schema.GroupVersionKind{
+		Group:   "services.cloud.sap.com",
+		Version: "v1",
+		Kind:    "ServiceInstance",
+	})
+
+	resourceSchema := schema.GroupVersionResource{
+		Group:    "services.cloud.sap.com",
+		Version:  "v1",
+		Resource: "serviceinstances",
+	}
+	_, err = config.kubeClient.Dynamic().Resource(resourceSchema).Namespace("default").Create(config.ctx, unstructuredObj, metav1.CreateOptions{})
+	return err
+}
+
+func fillRequestData(config referenceInstanceConfig) KubernetesResource {
 	requestData := KubernetesResource{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "services.cloud.sap.com/v1",
@@ -97,26 +123,5 @@ func runReferenceInstance(config referenceInstanceConfig) error {
 			PlanName:     "reference-instance",
 		},
 	}
-	u, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&requestData)
-	if err != nil {
-		return err
-	}
-
-	unstructuredObj := &unstructured.Unstructured{
-		Object: u,
-	}
-
-	unstructuredObj.SetGroupVersionKind(schema.GroupVersionKind{
-		Group:   "services.cloud.sap.com",
-		Version: "v1",
-		Kind:    "ServiceInstance",
-	})
-
-	resourceSchema := schema.GroupVersionResource{
-		Group:    "services.cloud.sap.com",
-		Version:  "v1",
-		Resource: "serviceinstances",
-	}
-	_, err = config.kubeClient.Dynamic().Resource(resourceSchema).Namespace("default").Create(config.ctx, unstructuredObj, metav1.CreateOptions{})
-	return err
+	return requestData
 }
