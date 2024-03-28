@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/kyma-project/cli.v3/internal/clierror"
 )
 
 const provisionEndpoint = "provisioning/v1/environments"
@@ -53,10 +55,10 @@ type ProvisionResponse struct {
 	PlanName        string `json:"planName"`
 }
 
-func (c *LocalClient) Provision(pe *ProvisionEnvironment) (*ProvisionResponse, error) {
+func (c *LocalClient) Provision(pe *ProvisionEnvironment) (*ProvisionResponse, *clierror.Error) {
 	reqData, err := json.Marshal(pe)
 	if err != nil {
-		return nil, err
+		return nil, &clierror.Error{Message: err.Error()}
 	}
 
 	provisionURL := fmt.Sprintf("%s/%s", c.credentials.Endpoints.ProvisioningServiceURL, provisionEndpoint)
@@ -69,18 +71,18 @@ func (c *LocalClient) Provision(pe *ProvisionEnvironment) (*ProvisionResponse, e
 
 	response, err := c.cis.post(provisionURL, options)
 	if err != nil {
-		return nil, fmt.Errorf("failed to provision: %s", err.Error())
+		return nil, &clierror.Error{Message: err.Error()}
 	}
 	defer response.Body.Close()
 
 	return decodeProvisionSuccessResponse(response)
 }
 
-func decodeProvisionSuccessResponse(response *http.Response) (*ProvisionResponse, error) {
+func decodeProvisionSuccessResponse(response *http.Response) (*ProvisionResponse, *clierror.Error) {
 	provisionResponse := ProvisionResponse{}
 	err := json.NewDecoder(response.Body).Decode(&provisionResponse)
 	if err != nil {
-		return nil, fmt.Errorf("failed to decode response: %s", err.Error())
+		return nil, &clierror.Error{Message: "failed to decode response", Details: err.Error()}
 	}
 
 	return &provisionResponse, nil
