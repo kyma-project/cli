@@ -3,12 +3,12 @@ package referenceinstance
 import (
 	"context"
 
+	"github.com/kyma-project/cli.v3/internal/btp/operator"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type referenceInstanceConfig struct {
@@ -73,27 +73,12 @@ func (pc *referenceInstanceConfig) complete() error {
 
 func runReferenceInstance(config referenceInstanceConfig) error {
 	requestData := fillRequestData(config)
-	u, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&requestData)
+	unstructuredObj, err := toUnstructured(requestData)
 	if err != nil {
 		return err
 	}
 
-	unstructuredObj := &unstructured.Unstructured{
-		Object: u,
-	}
-
-	unstructuredObj.SetGroupVersionKind(schema.GroupVersionKind{
-		Group:   "services.cloud.sap.com",
-		Version: "v1",
-		Kind:    "ServiceInstance",
-	})
-
-	resourceSchema := schema.GroupVersionResource{
-		Group:    "services.cloud.sap.com",
-		Version:  "v1",
-		Resource: "serviceinstances",
-	}
-	_, err = config.kubeClient.Dynamic().Resource(resourceSchema).Namespace("default").Create(config.ctx, unstructuredObj, metav1.CreateOptions{})
+	_, err = config.kubeClient.Dynamic().Resource(operator.GVRServiceInstance).Namespace("default").Create(config.ctx, unstructuredObj, metav1.CreateOptions{})
 	return err
 }
 
@@ -124,4 +109,16 @@ func fillRequestData(config referenceInstanceConfig) KubernetesResource {
 		},
 	}
 	return requestData
+}
+
+func toUnstructured(requestData KubernetesResource) (*unstructured.Unstructured, error) {
+	u, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&requestData)
+	if err != nil {
+		return nil, err
+	}
+
+	unstructuredObj := &unstructured.Unstructured{Object: u}
+	unstructuredObj.SetGroupVersionKind(operator.GVKServiceInstance)
+
+	return unstructuredObj, nil
 }
