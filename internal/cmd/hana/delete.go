@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/kyma-project/cli.v3/internal/btp/operator"
+	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -56,7 +57,7 @@ func (pc *hanaDeleteConfig) complete() error {
 }
 
 var (
-	deleteCommands = []func(*hanaDeleteConfig) error{
+	deleteCommands = []func(*hanaDeleteConfig) *clierror.Error{
 		deleteHanaBinding,
 		deleteHanaBindingUrl,
 		deleteHanaInstance,
@@ -76,21 +77,21 @@ func runDelete(config *hanaDeleteConfig) error {
 	return nil
 }
 
-func deleteHanaInstance(config *hanaDeleteConfig) error {
+func deleteHanaInstance(config *hanaDeleteConfig) *clierror.Error {
 	err := config.kubeClient.Dynamic().Resource(operator.GVRServiceInstance).
 		Namespace(config.namespace).
 		Delete(config.ctx, config.name, metav1.DeleteOptions{})
 	return handleDeleteResponse(err, "Hana instance", config.namespace, config.name)
 }
 
-func deleteHanaBinding(config *hanaDeleteConfig) error {
+func deleteHanaBinding(config *hanaDeleteConfig) *clierror.Error {
 	err := config.kubeClient.Dynamic().Resource(operator.GVRServiceBinding).
 		Namespace(config.namespace).
 		Delete(config.ctx, config.name, metav1.DeleteOptions{})
 	return handleDeleteResponse(err, "Hana binding", config.namespace, config.name)
 }
 
-func deleteHanaBindingUrl(config *hanaDeleteConfig) error {
+func deleteHanaBindingUrl(config *hanaDeleteConfig) *clierror.Error {
 	urlName := hanaBindingUrlName(config.name)
 	err := config.kubeClient.Dynamic().Resource(operator.GVRServiceBinding).
 		Namespace(config.namespace).
@@ -98,7 +99,7 @@ func deleteHanaBindingUrl(config *hanaDeleteConfig) error {
 	return handleDeleteResponse(err, "Hana URL binding", config.namespace, urlName)
 }
 
-func handleDeleteResponse(err error, printedName, namespace, name string) error {
+func handleDeleteResponse(err error, printedName, namespace, name string) *clierror.Error {
 	if err == nil {
 		fmt.Printf("Deleted %s (%s/%s).\n", printedName, namespace, name)
 		return nil
@@ -107,5 +108,8 @@ func handleDeleteResponse(err error, printedName, namespace, name string) error 
 		fmt.Printf("%s (%s/%s) not found.\n", printedName, namespace, name)
 		return nil
 	}
-	return err
+	return &clierror.Error{
+		Message: "failed to delete Hana resource.",
+		Details: err.Error(),
+	}
 }

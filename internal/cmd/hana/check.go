@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/kyma-project/cli.v3/internal/btp/operator"
+	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -68,7 +69,7 @@ type status struct {
 }
 
 var (
-	checkCommands = []func(config *hanaCheckConfig) error{
+	checkCommands = []func(config *hanaCheckConfig) *clierror.Error{
 		checkHanaInstance,
 		checkHanaBinding,
 		checkHanaBindingUrl,
@@ -89,34 +90,47 @@ func runCheck(config *hanaCheckConfig) error {
 	return nil
 }
 
-func checkHanaInstance(config *hanaCheckConfig) error {
+func checkHanaInstance(config *hanaCheckConfig) *clierror.Error {
 	u, err := getServiceInstance(config)
 	return handleCheckResponse(u, err, "Hana instance", config.namespace, config.name)
 }
 
-func checkHanaBinding(config *hanaCheckConfig) error {
+func checkHanaBinding(config *hanaCheckConfig) *clierror.Error {
 	u, err := getServiceBinding(config, config.name)
 	return handleCheckResponse(u, err, "Hana binding", config.namespace, config.name)
 }
 
-func checkHanaBindingUrl(config *hanaCheckConfig) error {
+func checkHanaBindingUrl(config *hanaCheckConfig) *clierror.Error {
 	urlName := hanaBindingUrlName(config.name)
 	u, err := getServiceBinding(config, urlName)
 	return handleCheckResponse(u, err, "Hana URL binding", config.namespace, urlName)
 }
 
-func handleCheckResponse(u *unstructured.Unstructured, err error, printedName, namespace, name string) error {
+func handleCheckResponse(u *unstructured.Unstructured, err error, printedName, namespace, name string) *clierror.Error {
 	if err != nil {
-		return err
+		return &clierror.Error{
+			Message: "failed to get resource data",
+			Details: err.Error(),
+			Hints: []string{
+				"Make sure that Hana was provisioned.",
+			},
+		}
 	}
 
-	ready, err := isReady(u)
-	if err != nil {
-		return err
+	ready, error := isReady(u)
+	if error != nil {
+		return error
 	}
 	if !ready {
 		fmt.Printf("%s is not ready (%s/%s).\n", printedName, namespace, name)
-		return fmt.Errorf("%s is not ready", strings.ToLower(printedName[:1])+printedName[1:])
+		return &clierror.Error{
+			Message: fmt.Sprintf("%s is not ready", strings.ToLower(printedName[:1])+printedName[1:]),
+			Hints: []string{
+				"Wait for provisioning of Hana resources.",
+				"Check if Hana resources started without errors.",
+			},
+		}
+
 	}
 	fmt.Printf("%s is ready (%s/%s).\n", printedName, namespace, name)
 	return nil
@@ -134,10 +148,13 @@ func getServiceBinding(config *hanaCheckConfig, name string) (*unstructured.Unst
 		Get(config.ctx, name, metav1.GetOptions{})
 }
 
-func isReady(u *unstructured.Unstructured) (bool, error) {
+func isReady(u *unstructured.Unstructured) (bool, *clierror.Error) {
 	instance := somethingWithStatus{}
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, &instance); err != nil {
-		return false, err
+		return false, &clierror.Error{
+			Message: "failed to read resource data",
+			Details: err.Error(),
+		}
 	}
 	status := instance.Status
 	ready := (status.Ready == "True") &&
