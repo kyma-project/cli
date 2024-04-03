@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	registrySecretName  = "serverless-registry-config-default"
+	RegistrySecretName  = "serverless-registry-config-default"
 	serverlessNamespace = "kyma-system"
 )
 
@@ -28,7 +28,7 @@ type RegistryConfig struct {
 
 func GetConfig(ctx context.Context, client kubernetes.Interface) (*RegistryConfig, error) {
 	registrySecret, err := client.CoreV1().Secrets(serverlessNamespace).
-		Get(ctx, registrySecretName, metav1.GetOptions{})
+		Get(ctx, RegistrySecretName, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
