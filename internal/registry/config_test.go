@@ -2,10 +2,11 @@ package registry
 
 import (
 	"context"
+	"testing"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"testing"
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/client-go/kubernetes/fake"
@@ -16,7 +17,7 @@ func TestGetConfig(t *testing.T) {
 		// given
 		client := fake.NewSimpleClientset(&corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      registrySecretName,
+				Name:      RegistrySecretName,
 				Namespace: serverlessNamespace,
 			},
 			Data: map[string][]byte{
