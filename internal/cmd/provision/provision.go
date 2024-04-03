@@ -14,6 +14,7 @@ type provisionConfig struct {
 	environmentName string
 	clusterName     string
 	region          string
+	owner           string
 }
 
 func NewProvisionCMD() *cobra.Command {
@@ -36,8 +37,10 @@ func NewProvisionCMD() *cobra.Command {
 	cmd.Flags().StringVar(&config.environmentName, "environment-name", "kyma", "Name of the environment in the BTP.")
 	cmd.Flags().StringVar(&config.clusterName, "cluster-name", "kyma", "Name of the Kyma cluster.")
 	cmd.Flags().StringVar(&config.region, "region", "", "Name of the region of the Kyma cluster.")
+	cmd.Flags().StringVar(&config.owner, "owner", "", "Email of the owner of the Kyma cluster.")
 
 	_ = cmd.MarkFlagRequired("credentials-path")
+	_ = cmd.MarkFlagRequired("owner")
 
 	return cmd
 }
@@ -66,7 +69,7 @@ func runProvision(config *provisionConfig) error {
 		EnvironmentType: "kyma",
 		PlanName:        config.plan,
 		Name:            config.environmentName,
-		User:            "kyma-cli",
+		User:            config.owner,
 		Parameters: cis.KymaParameters{
 			Name:   config.clusterName,
 			Region: config.region,
