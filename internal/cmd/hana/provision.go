@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/kyma-project/cli.v3/internal/btp/operator"
+	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -64,7 +65,7 @@ func (pc *hanaProvisionConfig) complete() error {
 }
 
 var (
-	provisionCommands = []func(*hanaProvisionConfig) error{
+	provisionCommands = []func(*hanaProvisionConfig) *clierror.Error{
 		createHanaInstance,
 		createHanaBinding,
 		createHanaBindingUrl,
@@ -84,33 +85,36 @@ func runProvision(config *hanaProvisionConfig) error {
 	return nil
 }
 
-func createHanaInstance(config *hanaProvisionConfig) error {
+func createHanaInstance(config *hanaProvisionConfig) *clierror.Error {
 	_, err := config.kubeClient.Dynamic().Resource(operator.GVRServiceInstance).
 		Namespace(config.namespace).
 		Create(config.ctx, hanaInstance(config), metav1.CreateOptions{})
 	return handleProvisionResponse(err, "Hana instance", config.namespace, config.name)
 }
 
-func createHanaBinding(config *hanaProvisionConfig) error {
+func createHanaBinding(config *hanaProvisionConfig) *clierror.Error {
 	_, err := config.kubeClient.Dynamic().Resource(operator.GVRServiceBinding).
 		Namespace(config.namespace).
 		Create(config.ctx, hanaBinding(config), metav1.CreateOptions{})
 	return handleProvisionResponse(err, "Hana binding", config.namespace, config.name)
 }
 
-func createHanaBindingUrl(config *hanaProvisionConfig) error {
+func createHanaBindingUrl(config *hanaProvisionConfig) *clierror.Error {
 	_, err := config.kubeClient.Dynamic().Resource(operator.GVRServiceBinding).
 		Namespace(config.namespace).
 		Create(config.ctx, hanaBindingUrl(config), metav1.CreateOptions{})
 	return handleProvisionResponse(err, "Hana URL binding", config.namespace, hanaBindingUrlName(config.name))
 }
 
-func handleProvisionResponse(err error, printedName, namespace, name string) error {
+func handleProvisionResponse(err error, printedName, namespace, name string) *clierror.Error {
 	if err == nil {
 		fmt.Printf("Created %s (%s/%s).\n", printedName, namespace, name)
 		return nil
 	}
-	return err
+	return &clierror.Error{
+		Message: "failed to provision Hana resource",
+		Details: err.Error(),
+	}
 }
 
 func hanaInstance(config *hanaProvisionConfig) *unstructured.Unstructured {

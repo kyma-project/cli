@@ -3,6 +3,7 @@ package hana
 import (
 	"context"
 	"fmt"
+	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -85,13 +86,29 @@ func printCredentials(config *hanaCredentialsConfig, credentials credentials) {
 	}
 }
 
-func getHanaCredentials(config *hanaCredentialsConfig) (credentials, error) {
+func getHanaCredentials(config *hanaCredentialsConfig) (credentials, *clierror.Error) {
 	secret, err := config.kubeClient.Static().CoreV1().Secrets(config.namespace).Get(config.ctx, config.name, metav1.GetOptions{})
 	if err != nil {
-		return credentials{}, err
+		return handleGetHanaCredentialsError(err)
 	}
 	return credentials{
 		username: string(secret.Data["username"]),
 		password: string(secret.Data["password"]),
 	}, nil
+}
+
+func handleGetHanaCredentialsError(err error) (credentials, *clierror.Error) {
+	error := &clierror.Error{
+		Message: "failed to get Hana credentails",
+		Details: err.Error(),
+		Hints: []string{
+			"Make sure that Hana is run and ready to use. You can use command 'kyma hana check'.",
+		},
+	}
+	if error.Details == "Unauthorized" {
+		error.Hints = []string{
+			"Make sure that your kubeconfig has access to kubernetes.",
+		}
+	}
+	return credentials{}, error
 }
