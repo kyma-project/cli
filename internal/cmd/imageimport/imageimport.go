@@ -100,8 +100,8 @@ func runImageImport(config *provisionConfig) error {
 	}
 
 	fmt.Println("\nSuccessfully imported image")
-	fmt.Printf("Use it as '%s' and use the serverless-registry-config secret.\n", pushedImage)
-	fmt.Printf("\nExample usage:\nkubectl run my-pod --image=%s --overrides='{ \"spec\": { \"imagePullSecrets\": [ { \"name\": \"serverless-registry-config\" } ] } }'\n", pushedImage)
+	fmt.Printf("Use it as '%s' and use the %s secret.\n", registry.RegistrySecretName, pushedImage)
+	fmt.Printf("\nExample usage:\nkubectl run my-pod --image=%s --overrides='{ \"spec\": { \"imagePullSecrets\": [ { \"name\": \"%s\" } ] } }'\n", pushedImage, registry.RegistrySecretName)
 
 	return nil
 }
