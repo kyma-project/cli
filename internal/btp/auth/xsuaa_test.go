@@ -2,12 +2,12 @@ package auth
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/stretchr/testify/require"
 )
 
@@ -30,7 +30,7 @@ func TestGetOAuthToken(t *testing.T) {
 		name        string
 		credentials *CISCredentials
 		want        *XSUAAToken
-		expectedErr error
+		expectedErr *clierror.Error
 	}{
 		{
 			name: "Correct credentials",
@@ -53,8 +53,12 @@ func TestGetOAuthToken(t *testing.T) {
 					URL: "?\n?",
 				},
 			},
-			want:        nil,
-			expectedErr: errors.New("failed to build request: parse \"?\\n?/oauth/token\": net/url: invalid control character in URL"),
+			want: nil,
+			expectedErr: &clierror.Error{
+				Message: "failed to build request",
+				Details: "parse \"?\\n?/oauth/token\": net/url: invalid control character in URL",
+				Hints:   []string{"Make sure the server URL in the config is correct."},
+			},
 		},
 		{
 			name: "Wrong URL",
@@ -63,8 +67,11 @@ func TestGetOAuthToken(t *testing.T) {
 					URL: "http://doesnotexist",
 				},
 			},
-			want:        nil,
-			expectedErr: errors.New("failed to get token from server: Post \"http://doesnotexist/oauth/token\": dial tcp: lookup doesnotexist: no such host"),
+			want: nil,
+			expectedErr: &clierror.Error{
+				Message: "failed to get token from server",
+				Details: "Post \"http://doesnotexist/oauth/token\": dial tcp: lookup doesnotexist: no such host",
+			},
 		},
 		{
 			name: "Error response",
@@ -73,8 +80,11 @@ func TestGetOAuthToken(t *testing.T) {
 					URL: svrBad.URL,
 				},
 			},
-			want:        nil,
-			expectedErr: errors.New("error response: 401 Unauthorized: description"),
+			want: nil,
+			expectedErr: &clierror.Error{
+				Message: "error response: 401 Unauthorized",
+				Details: "description",
+			},
 		},
 	}
 	for _, tt := range tests {

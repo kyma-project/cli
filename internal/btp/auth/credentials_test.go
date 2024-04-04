@@ -41,7 +41,7 @@ func TestLoadCISCredentials(t *testing.T) {
 		require.NoError(t, err)
 
 		credentials, err := LoadCISCredentials(filename)
-		require.NoError(t, err)
+		require.Nil(t, err)
 		require.Equal(t, correctCredentialsStruct, *credentials)
 	})
 
