@@ -2,13 +2,13 @@ package cis
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/kyma-project/cli.v3/internal/btp/auth"
+	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/stretchr/testify/require"
 )
 
@@ -65,7 +65,7 @@ func TestCISClient_Provision(t *testing.T) {
 		token          *auth.XSUAAToken
 		pe             *ProvisionEnvironment
 		wantedResponse *ProvisionResponse
-		expectedErr    error
+		expectedErr    *clierror.Error
 	}{
 		{
 			name: "Correct data",
@@ -95,7 +95,7 @@ func TestCISClient_Provision(t *testing.T) {
 				Name: "name",
 			},
 			wantedResponse: nil,
-			expectedErr:    errors.New("failed to provision: failed to build request: parse \"?\\n?/provisioning/v1/environments\": net/url: invalid control character in URL"),
+			expectedErr:    &clierror.Error{Message: "failed to build request: parse \"?\\n?/provisioning/v1/environments\": net/url: invalid control character in URL"},
 		},
 		{
 			name: "Wrong URL",
@@ -109,7 +109,7 @@ func TestCISClient_Provision(t *testing.T) {
 				Name: "name",
 			},
 			wantedResponse: nil,
-			expectedErr:    errors.New("failed to provision: failed to get data from server: Post \"http://doesnotexist/provisioning/v1/environments\": dial tcp: lookup doesnotexist: no such host"),
+			expectedErr:    &clierror.Error{Message: "failed to get data from server: Post \"http://doesnotexist/provisioning/v1/environments\": dial tcp: lookup doesnotexist: no such host"},
 		},
 		{
 			name: "Error response",
@@ -123,7 +123,7 @@ func TestCISClient_Provision(t *testing.T) {
 				Name: "name",
 			},
 			wantedResponse: nil,
-			expectedErr:    errors.New("failed to provision: error"),
+			expectedErr:    &clierror.Error{Message: "error"},
 		},
 	}
 	for _, tt := range tests {
