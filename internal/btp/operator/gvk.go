@@ -8,4 +8,9 @@ var (
 		Version: "v1",
 		Kind:    "ServiceInstance",
 	}
+	GVKServiceBinding = schema.GroupVersionKind{
+		Group:   "services.cloud.sap.com",
+		Version: "v1",
+		Kind:    "ServiceBinding",
+	}
 )

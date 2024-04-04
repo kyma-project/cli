@@ -3,6 +3,9 @@ package hana
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/kyma-project/cli.v3/internal/btp/operator"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/kube"
@@ -11,7 +14,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"strings"
 )
 
 type hanaCheckConfig struct {
@@ -21,6 +23,7 @@ type hanaCheckConfig struct {
 	kubeconfig string
 	name       string
 	namespace  string
+	timeout    time.Duration
 }
 
 func NewHanaCheckCMD() *cobra.Command {
@@ -66,6 +69,7 @@ type somethingWithStatus struct {
 type status struct {
 	Conditions []metav1.Condition
 	Ready      string
+	InstanceID string
 }
 
 var (
@@ -77,7 +81,7 @@ var (
 )
 
 func runCheck(config *hanaCheckConfig) error {
-	fmt.Printf("Checkinging Hana (%s/%s).\n", config.namespace, config.name)
+	fmt.Printf("Checking Hana (%s/%s).\n", config.namespace, config.name)
 
 	for _, command := range checkCommands {
 		err := command(config)
@@ -119,7 +123,10 @@ func handleCheckResponse(u *unstructured.Unstructured, err error, printedName, n
 
 	ready, error := isReady(u)
 	if error != nil {
-		return error
+		return &clierror.Error{
+			Message: "failed to check readiness of Hana resources",
+			Details: error.Error(),
+		}
 	}
 	if !ready {
 		fmt.Printf("%s is not ready (%s/%s).\n", printedName, namespace, name)
@@ -148,7 +155,7 @@ func getServiceBinding(config *hanaCheckConfig, name string) (*unstructured.Unst
 		Get(config.ctx, name, metav1.GetOptions{})
 }
 
-func isReady(u *unstructured.Unstructured) (bool, *clierror.Error) {
+func isReady(u *unstructured.Unstructured) (bool, error) {
 	instance := somethingWithStatus{}
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, &instance); err != nil {
 		return false, &clierror.Error{
