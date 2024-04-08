@@ -48,7 +48,7 @@ func MapHanaProvisionCMD() *cobra.Command {
 
 var (
 	mapCommands = []func(config *hanaCheckConfig) *clierror.Error{
-		creatHanaAPIInstance,
+		createHanaAPIInstance,
 		createHanaAPIBinding,
 		createHanaInstanceMapping,
 	}
@@ -65,7 +65,7 @@ func runMap(config *hanaCheckConfig) error {
 	return nil
 }
 
-func creatHanaAPIInstance(config *hanaCheckConfig) *clierror.Error {
+func createHanaAPIInstance(config *hanaCheckConfig) *clierror.Error {
 	data, err := hanaAPIInstance(config)
 	if err != nil {
 		return &clierror.Error{
@@ -237,7 +237,6 @@ func isHanaAPIBindingReady(config *hanaCheckConfig) wait.ConditionWithContextFun
 }
 
 func readHanaAPISecret(config *hanaCheckConfig) (string, *auth.UAA, *clierror.Error) {
-	// TODO wait until Hana API is ready
 	fmt.Print("waiting for Hana API binding to be ready... ")
 	err := wait.PollUntilContextTimeout(config.ctx, 5*time.Second, 2*time.Minute, true, isHanaAPIBindingReady(config))
 	if err != nil {
