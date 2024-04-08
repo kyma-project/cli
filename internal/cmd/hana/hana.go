@@ -16,6 +16,7 @@ func NewHanaCMD() *cobra.Command {
 	cmd.AddCommand(NewHanaCheckCMD())
 	cmd.AddCommand(NewHanaDeleteCMD())
 	cmd.AddCommand(NewHanaCredentialsCMD())
+	cmd.AddCommand(NewMapHanaCMD())
 
 	return cmd
 }
