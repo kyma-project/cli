@@ -7,8 +7,6 @@ import (
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 type referenceInstanceConfig struct {
@@ -73,7 +71,7 @@ func (pc *referenceInstanceConfig) complete() error {
 
 func runReferenceInstance(config referenceInstanceConfig) error {
 	requestData := fillRequestData(config)
-	unstructuredObj, err := toUnstructured(requestData)
+	unstructuredObj, err := kube.ToUnstructured(requestData, operator.GVKServiceInstance)
 	if err != nil {
 		return err
 	}
@@ -82,8 +80,8 @@ func runReferenceInstance(config referenceInstanceConfig) error {
 	return err
 }
 
-func fillRequestData(config referenceInstanceConfig) KubernetesResource {
-	requestData := KubernetesResource{
+func fillRequestData(config referenceInstanceConfig) kube.ServiceInstance {
+	requestData := kube.ServiceInstance{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "services.cloud.sap.com/v1",
 			Kind:       "ServiceInstance",
@@ -95,7 +93,7 @@ func fillRequestData(config referenceInstanceConfig) KubernetesResource {
 				"app.kubernetes.io/name": config.referenceName,
 			},
 		},
-		Spec: KubernetesResourceSpec{
+		Spec: kube.ServiceInstanceSpec{
 			Parameters: KubernetesResourceSpecParameters{
 				InstanceID: config.instanceID,
 				Selectors: SpecSelectors{
@@ -109,16 +107,4 @@ func fillRequestData(config referenceInstanceConfig) KubernetesResource {
 		},
 	}
 	return requestData
-}
-
-func toUnstructured(requestData KubernetesResource) (*unstructured.Unstructured, error) {
-	u, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&requestData)
-	if err != nil {
-		return nil, err
-	}
-
-	unstructuredObj := &unstructured.Unstructured{Object: u}
-	unstructuredObj.SetGroupVersionKind(operator.GVKServiceInstance)
-
-	return unstructuredObj, nil
 }
