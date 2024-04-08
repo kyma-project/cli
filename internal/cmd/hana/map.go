@@ -20,7 +20,7 @@ import (
 )
 
 // this command uses the same config as check command
-func MapHanaProvisionCMD() *cobra.Command {
+func NewMapHanaCMD() *cobra.Command {
 	config := hanaCheckConfig{}
 
 	cmd := &cobra.Command{
