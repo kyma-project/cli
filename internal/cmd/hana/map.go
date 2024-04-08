@@ -1,0 +1,310 @@
+package hana
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"time"
+
+	"github.com/kyma-project/cli.v3/internal/btp/auth"
+	"github.com/kyma-project/cli.v3/internal/btp/operator"
+	"github.com/kyma-project/cli.v3/internal/clierror"
+	"github.com/kyma-project/cli.v3/internal/kube"
+	"github.com/spf13/cobra"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/wait"
+)
+
+// this command uses the same config as check command
+func NewMapHanaCMD() *cobra.Command {
+	config := hanaCheckConfig{}
+
+	cmd := &cobra.Command{
+		Use:   "map",
+		Short: "Map the Hana instance to the Kyma cluster.",
+		Long:  "Use this command to map the Hana instance to the Kyma cluster.",
+		PreRunE: func(_ *cobra.Command, args []string) error {
+			return config.complete()
+		},
+		RunE: func(_ *cobra.Command, _ []string) error {
+			return runMap(&config)
+		},
+	}
+	cmd.Flags().StringVar(&config.kubeconfig, "kubeconfig", "", "Path to the Kyma kubecongig file.")
+
+	cmd.Flags().StringVar(&config.name, "name", "", "Name of Hana instance.")
+	cmd.Flags().StringVar(&config.namespace, "namespace", "default", "Namespace for Hana instance.")
+	cmd.Flags().DurationVar(&config.timeout, "timeout", 7*time.Minute, "Timeout for the command")
+
+	_ = cmd.MarkFlagRequired("kubeconfig")
+	_ = cmd.MarkFlagRequired("name")
+
+	return cmd
+}
+
+var (
+	mapCommands = []func(config *hanaCheckConfig) *clierror.Error{
+		createHanaAPIInstance,
+		createHanaAPIBinding,
+		createHanaInstanceMapping,
+	}
+)
+
+func runMap(config *hanaCheckConfig) error {
+	for _, command := range mapCommands {
+		err := command(config)
+		if err != nil {
+			return err
+		}
+	}
+	fmt.Println("Hana instance was succesfully mapped to the cluster")
+	return nil
+}
+
+func createHanaAPIInstance(config *hanaCheckConfig) *clierror.Error {
+	data, err := hanaAPIInstance(config)
+	if err != nil {
+		return &clierror.Error{
+			Message: "failed to create Hana API instance object",
+			Details: err.Error(),
+		}
+	}
+	_, err = config.kubeClient.Dynamic().Resource(operator.GVRServiceInstance).
+		Namespace(config.namespace).
+		Create(config.ctx, data, metav1.CreateOptions{})
+	return handleProvisionResponse(err, "Hana API instance", config.namespace, hanaBindingAPIName(config.name))
+}
+
+func createHanaAPIBinding(config *hanaCheckConfig) *clierror.Error {
+	data, err := hanaAPIBinding(config)
+	if err != nil {
+		return &clierror.Error{
+			Message: "failed to create Hana API binding object",
+			Details: err.Error(),
+		}
+	}
+	_, err = config.kubeClient.Dynamic().Resource(operator.GVRServiceBinding).
+		Namespace(config.namespace).
+		Create(config.ctx, data, metav1.CreateOptions{})
+	return handleProvisionResponse(err, "Hana API binding", config.namespace, hanaBindingAPIName(config.name))
+}
+
+func hanaAPIInstance(config *hanaCheckConfig) (*unstructured.Unstructured, error) {
+	requestData := kube.ServiceInstance{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: kube.ServicesAPIVersionV1,
+			Kind:       kube.KindServiceInstance,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      hanaBindingAPIName(config.name),
+			Namespace: config.namespace,
+			Labels: map[string]string{
+				"app.kubernetes.io/name": hanaBindingAPIName(config.name),
+			},
+		},
+		Spec: kube.ServiceInstanceSpec{
+			Parameters: HanaAPIParameters{
+				TechnicalUser: true,
+			},
+			OfferingName: "hana-cloud",
+			PlanName:     "admin-api-access",
+		},
+	}
+	return kube.ToUnstructured(requestData, operator.GVKServiceInstance)
+}
+
+func hanaAPIBinding(config *hanaCheckConfig) (*unstructured.Unstructured, error) {
+	instanceName := hanaBindingAPIName(config.name)
+	requestData := kube.ServiceBinding{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: kube.ServicesAPIVersionV1,
+			Kind:       kube.KindServiceBinding,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      instanceName,
+			Namespace: config.namespace,
+			Labels: map[string]string{
+				"app.kubernetes.io/name": hanaBindingAPIName(config.name),
+			},
+		},
+		Spec: kube.ServiceBindingSpec{
+			ServiceInstanceName: instanceName,
+			SecretName:          instanceName,
+		},
+	}
+	return kube.ToUnstructured(requestData, operator.GVKServiceBinding)
+}
+
+func hanaBindingAPIName(name string) string {
+	return fmt.Sprintf("%s-api", name)
+}
+
+func createHanaInstanceMapping(config *hanaCheckConfig) *clierror.Error {
+	clusterID, err := getClusterID(config)
+	if err != nil {
+		return err
+	}
+
+	hanaID, err := getHanaID(config)
+	if err != nil {
+		return err
+	}
+
+	// read secret
+	baseurl, uaa, err := readHanaAPISecret(config)
+	if err != nil {
+		return err
+	}
+
+	// authenticate
+	token, err := auth.GetOAuthToken("client_credentials", uaa.URL, uaa.ClientID, uaa.ClientSecret)
+	if err != nil {
+		return err
+	}
+	// create mapping
+	return hanaInstanceMapping(baseurl, clusterID, hanaID, token.AccessToken)
+}
+
+func getClusterID(config *hanaCheckConfig) (string, *clierror.Error) {
+	cm, err := config.kubeClient.Static().CoreV1().ConfigMaps("kyma-system").Get(config.ctx, "sap-btp-operator-config", metav1.GetOptions{})
+	if err != nil {
+		return "", &clierror.Error{
+			Message: "failed to get cluster ID",
+			Details: err.Error(),
+		}
+	}
+	return cm.Data["CLUSTER_ID"], nil
+}
+
+func isHanaReady(config *hanaCheckConfig) wait.ConditionWithContextFunc {
+	return func(_ context.Context) (bool, error) {
+		instance, err := getServiceInstance(config)
+		if err != nil {
+			return false, err
+		}
+
+		return isReady(instance)
+	}
+}
+
+func getHanaID(config *hanaCheckConfig) (string, *clierror.Error) {
+	instance := somethingWithStatus{}
+
+	// wait for until Hana instance is ready, for default setting it should take 5 minutes
+	fmt.Print("waiting for Hana instance to be ready... ")
+	err := wait.PollUntilContextTimeout(config.ctx, 10*time.Second, config.timeout, true, isHanaReady(config))
+	if err != nil {
+		return "", &clierror.Error{
+			Message: "timeout while waiting for Hana instance to be ready",
+			Details: err.Error(),
+		}
+	}
+	fmt.Println("done")
+
+	u, err := config.kubeClient.Dynamic().Resource(operator.GVRServiceInstance).
+		Namespace(config.namespace).
+		Get(config.ctx, config.name, metav1.GetOptions{})
+	if err != nil {
+		return "", &clierror.Error{
+			Message: "failed to get Hana instance",
+			Details: err.Error(),
+		}
+	}
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, &instance); err != nil {
+		return "", &clierror.Error{
+			Message: "failed to read resource data",
+			Details: err.Error(),
+		}
+	}
+	status := instance.Status
+
+	return status.InstanceID, nil
+}
+
+func isHanaAPIBindingReady(config *hanaCheckConfig) wait.ConditionWithContextFunc {
+	return func(_ context.Context) (bool, error) {
+		instance, err := getServiceBinding(config, hanaBindingAPIName(config.name))
+		if err != nil {
+			return false, err
+		}
+
+		return isReady(instance)
+	}
+}
+
+func readHanaAPISecret(config *hanaCheckConfig) (string, *auth.UAA, *clierror.Error) {
+	fmt.Print("waiting for Hana API binding to be ready... ")
+	err := wait.PollUntilContextTimeout(config.ctx, 5*time.Second, 2*time.Minute, true, isHanaAPIBindingReady(config))
+	if err != nil {
+		return "", nil, &clierror.Error{
+			Message: "timeout while waiting for Hana API binding",
+			Details: err.Error(),
+		}
+	}
+	fmt.Println("done")
+	secret, err := config.kubeClient.Static().CoreV1().Secrets(config.namespace).Get(config.ctx, hanaBindingAPIName(config.name), metav1.GetOptions{})
+	if err != nil {
+		return "", nil, &clierror.Error{
+			Message: "failed to get secret",
+			Details: err.Error(),
+		}
+	}
+	baseURL := secret.Data["baseurl"]
+	uaaData := secret.Data["uaa"]
+
+	uaa := &auth.UAA{}
+	err = json.Unmarshal(uaaData, uaa)
+	if err != nil {
+		return "", nil, &clierror.Error{
+			Message: "failed to decode UAA data",
+			Details: err.Error(),
+		}
+	}
+	return string(baseURL), uaa, nil
+}
+
+func hanaInstanceMapping(baseURL, clusterID, hanaID, token string) *clierror.Error {
+	client := &http.Client{}
+
+	requestData := HanaMapping{
+		Platform:  "kubernetes",
+		PrimaryID: clusterID,
+	}
+
+	requestString, err := json.Marshal(requestData)
+	if err != nil {
+		return &clierror.Error{
+			Message: "failed to create mapping request",
+			Details: err.Error(),
+		}
+	}
+
+	request, err := http.NewRequest("POST", fmt.Sprintf("https://%s/inventory/v2/serviceInstances/%s/instanceMappings", baseURL, hanaID), bytes.NewBuffer(requestString))
+	if err != nil {
+		return &clierror.Error{
+			Message: "failed to create mapping request",
+			Details: err.Error(),
+		}
+	}
+	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+
+	resp, err := client.Do(request)
+	if err != nil {
+		return &clierror.Error{
+			Message: "failed to create mapping",
+			Details: err.Error(),
+		}
+	}
+	if resp.StatusCode != http.StatusCreated {
+		return &clierror.Error{
+			Message: "failed to create mapping",
+			Details: fmt.Sprintf("status code: %d", resp.StatusCode),
+		}
+	}
+
+	return nil
+}
