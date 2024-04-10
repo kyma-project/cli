@@ -37,7 +37,7 @@ require (
 	go.uber.org/zap v1.27.0
 	golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb
 	gopkg.in/yaml.v3 v3.0.1
-	helm.sh/helm/v3 v3.14.2
+	helm.sh/helm/v3 v3.14.4
 	istio.io/client-go v1.20.2
 	k8s.io/klog/v2 v2.120.1
 	sigs.k8s.io/controller-runtime v0.17.2
@@ -365,7 +365,7 @@ require (
 	google.golang.org/genproto/googleapis/api v0.0.0-20231106174013-bbf56f31fb17 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20231211222908-989df2bf70f3 // indirect
 	google.golang.org/grpc v1.60.0 // indirect
-	google.golang.org/protobuf v1.31.0 // indirect
+	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/evanphx/json-patch.v5 v5.6.0 // indirect
 	gopkg.in/go-jose/go-jose.v2 v2.6.2 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
