@@ -16,7 +16,11 @@ func (inside *Error) wrap(outside *Error) *Error {
 	newError := &Error{
 		Message: outside.Message,
 		Details: inside.Details,
-		Hints:   append(outside.Hints, inside.Hints...),
+		Hints:   inside.Hints,
+	}
+
+	if outside.Hints != nil {
+		newError.Hints = append(outside.Hints, newError.Hints...)
 	}
 
 	if inside.Message != "" {
@@ -30,14 +34,14 @@ func (inside *Error) wrap(outside *Error) *Error {
 	return newError
 }
 
-func wrapDetails(left, right string) string {
-	if left == "" {
-		return right
+func wrapDetails(outside, inside string) string {
+	if outside == "" {
+		return inside
 	}
-	if right == "" {
-		return left
+	if inside == "" {
+		return outside
 	}
-	return fmt.Sprintf("%s: %s", left, right)
+	return fmt.Sprintf("%s: %s", outside, inside)
 }
 
 func Wrap(inside error, outside *Error) error {
