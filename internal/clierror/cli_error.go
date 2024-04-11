@@ -12,18 +12,48 @@ type Error struct {
 }
 
 // Wrap adds a new message and hints to the error
-func (e *Error) Wrap(message string, hints []string) *Error {
+func (inside *Error) wrap(outside *Error) *Error {
 	newError := &Error{
-		Message: message,
-		Details: e.Message,
-		Hints:   append(hints, e.Hints...),
+		Message: outside.Message,
+		Details: inside.Details,
+		Hints:   inside.Hints,
 	}
 
-	if e.Details != "" {
-		newError.Details = fmt.Sprintf("%s: %s", e.Message, e.Details)
+	if outside.Hints != nil {
+		newError.Hints = append(outside.Hints, newError.Hints...)
+	}
+
+	if inside.Message != "" {
+		newError.Details = wrapDetails(inside.Message, newError.Details)
+	}
+
+	if outside.Details != "" {
+		newError.Details = wrapDetails(outside.Details, newError.Details)
 	}
 
 	return newError
+}
+
+func wrapDetails(outside, inside string) string {
+	if outside == "" {
+		return inside
+	}
+	if inside == "" {
+		return outside
+	}
+	return fmt.Sprintf("%s: %s", outside, inside)
+}
+
+func Wrap(inside error, outside *Error) error {
+	if err, ok := inside.(*Error); ok {
+		return err.wrap(outside)
+	} else {
+		return &Error{
+			Message: outside.Message,
+			Details: wrapDetails(outside.Details, inside.Error()),
+			Hints:   outside.Hints,
+		}
+	}
 }
 
 func (e *Error) Print() {

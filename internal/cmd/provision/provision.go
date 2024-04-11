@@ -5,6 +5,7 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/btp/auth"
 	"github.com/kyma-project/cli.v3/internal/btp/cis"
+	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/spf13/cobra"
 )
 
@@ -49,7 +50,7 @@ func runProvision(config *provisionConfig) error {
 	// TODO: is the credentials a good name for this field? it contains much more than credentials only
 	credentials, err := auth.LoadCISCredentials(config.credentialsPath)
 	if err != nil {
-		return err.Wrap("failed to load credentials", []string{})
+		return clierror.Wrap(err, &clierror.Error{Message: "failed to load credentials"})
 	}
 
 	token, err := auth.GetOAuthToken(
@@ -59,7 +60,7 @@ func runProvision(config *provisionConfig) error {
 		credentials.UAA.ClientSecret,
 	)
 	if err != nil {
-		return err.Wrap("failed to get access token:", []string{})
+		return clierror.Wrap(err, &clierror.Error{Message: "failed to get access token:"})
 	}
 
 	// TODO: maybe we should pass only credentials.Endpoints?
@@ -77,7 +78,7 @@ func runProvision(config *provisionConfig) error {
 	}
 	response, err := localCISClient.Provision(ProvisionEnvironment)
 	if err != nil {
-		return err.Wrap("failed to provision kyma runtime", []string{})
+		return clierror.Wrap(err, &clierror.Error{Message: "failed to provision kyma runtime"})
 	}
 
 	fmt.Printf("Kyma environment provisioning, environment name: '%s', id: '%s'\n", response.Name, response.ID)
