@@ -3,6 +3,7 @@ package hana
 import (
 	"context"
 	"fmt"
+
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/spf13/cobra"
@@ -86,7 +87,7 @@ func printCredentials(config *hanaCredentialsConfig, credentials credentials) {
 	}
 }
 
-func getHanaCredentials(config *hanaCredentialsConfig) (credentials, *clierror.Error) {
+func getHanaCredentials(config *hanaCredentialsConfig) (credentials, error) {
 	secret, err := config.kubeClient.Static().CoreV1().Secrets(config.namespace).Get(config.ctx, config.name, metav1.GetOptions{})
 	if err != nil {
 		return handleGetHanaCredentialsError(err)
@@ -97,7 +98,7 @@ func getHanaCredentials(config *hanaCredentialsConfig) (credentials, *clierror.E
 	}, nil
 }
 
-func handleGetHanaCredentialsError(err error) (credentials, *clierror.Error) {
+func handleGetHanaCredentialsError(err error) (credentials, error) {
 	error := &clierror.Error{
 		Message: "failed to get Hana credentails",
 		Details: err.Error(),

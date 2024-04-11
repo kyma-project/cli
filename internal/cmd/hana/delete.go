@@ -3,6 +3,7 @@ package hana
 import (
 	"context"
 	"fmt"
+
 	"github.com/kyma-project/cli.v3/internal/btp/operator"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/kube"
@@ -57,7 +58,7 @@ func (pc *hanaDeleteConfig) complete() error {
 }
 
 var (
-	deleteCommands = []func(*hanaDeleteConfig) *clierror.Error{
+	deleteCommands = []func(*hanaDeleteConfig) error{
 		deleteHanaBinding,
 		deleteHanaBindingUrl,
 		deleteHanaInstance,
@@ -77,21 +78,21 @@ func runDelete(config *hanaDeleteConfig) error {
 	return nil
 }
 
-func deleteHanaInstance(config *hanaDeleteConfig) *clierror.Error {
+func deleteHanaInstance(config *hanaDeleteConfig) error {
 	err := config.kubeClient.Dynamic().Resource(operator.GVRServiceInstance).
 		Namespace(config.namespace).
 		Delete(config.ctx, config.name, metav1.DeleteOptions{})
 	return handleDeleteResponse(err, "Hana instance", config.namespace, config.name)
 }
 
-func deleteHanaBinding(config *hanaDeleteConfig) *clierror.Error {
+func deleteHanaBinding(config *hanaDeleteConfig) error {
 	err := config.kubeClient.Dynamic().Resource(operator.GVRServiceBinding).
 		Namespace(config.namespace).
 		Delete(config.ctx, config.name, metav1.DeleteOptions{})
 	return handleDeleteResponse(err, "Hana binding", config.namespace, config.name)
 }
 
-func deleteHanaBindingUrl(config *hanaDeleteConfig) *clierror.Error {
+func deleteHanaBindingUrl(config *hanaDeleteConfig) error {
 	urlName := hanaBindingUrlName(config.name)
 	err := config.kubeClient.Dynamic().Resource(operator.GVRServiceBinding).
 		Namespace(config.namespace).
@@ -99,7 +100,7 @@ func deleteHanaBindingUrl(config *hanaDeleteConfig) *clierror.Error {
 	return handleDeleteResponse(err, "Hana URL binding", config.namespace, urlName)
 }
 
-func handleDeleteResponse(err error, printedName, namespace, name string) *clierror.Error {
+func handleDeleteResponse(err error, printedName, namespace, name string) error {
 	if err == nil {
 		fmt.Printf("Deleted %s (%s/%s).\n", printedName, namespace, name)
 		return nil

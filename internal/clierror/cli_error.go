@@ -14,9 +14,13 @@ type Error struct {
 // Wrap adds a new message and hints to the error
 func (inside *Error) wrap(outside *Error) *Error {
 	newError := &Error{
-		Message: outside.Message,
+		Message: inside.Message,
 		Details: inside.Details,
 		Hints:   inside.Hints,
+	}
+
+	if outside.Message != "" {
+		newError.Message = outside.Message
 	}
 
 	if outside.Hints != nil {

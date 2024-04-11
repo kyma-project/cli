@@ -73,7 +73,7 @@ type status struct {
 }
 
 var (
-	checkCommands = []func(config *hanaCheckConfig) *clierror.Error{
+	checkCommands = []func(config *hanaCheckConfig) error{
 		checkHanaInstance,
 		checkHanaBinding,
 		checkHanaBindingUrl,
@@ -94,23 +94,23 @@ func runCheck(config *hanaCheckConfig) error {
 	return nil
 }
 
-func checkHanaInstance(config *hanaCheckConfig) *clierror.Error {
+func checkHanaInstance(config *hanaCheckConfig) error {
 	u, err := getServiceInstance(config)
 	return handleCheckResponse(u, err, "Hana instance", config.namespace, config.name)
 }
 
-func checkHanaBinding(config *hanaCheckConfig) *clierror.Error {
+func checkHanaBinding(config *hanaCheckConfig) error {
 	u, err := getServiceBinding(config, config.name)
 	return handleCheckResponse(u, err, "Hana binding", config.namespace, config.name)
 }
 
-func checkHanaBindingUrl(config *hanaCheckConfig) *clierror.Error {
+func checkHanaBindingUrl(config *hanaCheckConfig) error {
 	urlName := hanaBindingUrlName(config.name)
 	u, err := getServiceBinding(config, urlName)
 	return handleCheckResponse(u, err, "Hana URL binding", config.namespace, urlName)
 }
 
-func handleCheckResponse(u *unstructured.Unstructured, err error, printedName, namespace, name string) *clierror.Error {
+func handleCheckResponse(u *unstructured.Unstructured, err error, printedName, namespace, name string) error {
 	if err != nil {
 		return &clierror.Error{
 			Message: "failed to get resource data",

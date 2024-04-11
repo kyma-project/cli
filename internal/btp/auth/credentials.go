@@ -46,7 +46,7 @@ type UAA struct {
 	ZoneID            string `json:"zoneid"`
 }
 
-func LoadCISCredentials(path string) (*CISCredentials, *clierror.Error) {
+func LoadCISCredentials(path string) (*CISCredentials, error) {
 	credentialsBytes, err := os.ReadFile(path)
 	if err != nil {
 		return nil, &clierror.Error{Message: "failed to read credentials file", Details: err.Error(), Hints: []string{"Make sure the path to the credentials file is correct."}}
