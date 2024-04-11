@@ -123,6 +123,37 @@ func Test_CLIError_Wrap(t *testing.T) {
 			},
 			want: "Error:\n  error\n\nError Details:\n  moreDetails: previous: details\n\nHints:\n  - hint3\n  - hint4\n  - hint1\n  - hint2\n",
 		},
+		{
+			name: "empty wrap",
+			err: Error{
+				Message: "error",
+				Details: "details",
+				Hints:   []string{"hint1", "hint2"},
+			},
+			outside: &Error{},
+			want:    "Error:\n  error\n\nError Details:\n  details\n\nHints:\n  - hint1\n  - hint2\n",
+		},
+		{
+			name: "wrap with details",
+			err: Error{
+				Message: "error",
+				Details: "details",
+				Hints:   []string{"hint1", "hint2"},
+			},
+			outside: &Error{Details: "newDetails"},
+			want:    "Error:\n  error\n\nError Details:\n  newDetails: details\n\nHints:\n  - hint1\n  - hint2\n",
+		},
+
+		{
+			name: "wrap with hints",
+			err: Error{
+				Message: "error",
+				Details: "details",
+				Hints:   []string{"hint1", "hint2"},
+			},
+			outside: &Error{Hints: []string{"hint3", "hint4"}},
+			want:    "Error:\n  error\n\nError Details:\n  details\n\nHints:\n  - hint3\n  - hint4\n  - hint1\n  - hint2\n",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
