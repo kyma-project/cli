@@ -3,6 +3,7 @@ package hana
 import (
 	"context"
 	"fmt"
+
 	"github.com/kyma-project/cli.v3/internal/btp/operator"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/kube"
@@ -65,7 +66,7 @@ func (pc *hanaProvisionConfig) complete() error {
 }
 
 var (
-	provisionCommands = []func(*hanaProvisionConfig) *clierror.Error{
+	provisionCommands = []func(*hanaProvisionConfig) error{
 		createHanaInstance,
 		createHanaBinding,
 		createHanaBindingUrl,
@@ -85,28 +86,28 @@ func runProvision(config *hanaProvisionConfig) error {
 	return nil
 }
 
-func createHanaInstance(config *hanaProvisionConfig) *clierror.Error {
+func createHanaInstance(config *hanaProvisionConfig) error {
 	_, err := config.kubeClient.Dynamic().Resource(operator.GVRServiceInstance).
 		Namespace(config.namespace).
 		Create(config.ctx, hanaInstance(config), metav1.CreateOptions{})
 	return handleProvisionResponse(err, "Hana instance", config.namespace, config.name)
 }
 
-func createHanaBinding(config *hanaProvisionConfig) *clierror.Error {
+func createHanaBinding(config *hanaProvisionConfig) error {
 	_, err := config.kubeClient.Dynamic().Resource(operator.GVRServiceBinding).
 		Namespace(config.namespace).
 		Create(config.ctx, hanaBinding(config), metav1.CreateOptions{})
 	return handleProvisionResponse(err, "Hana binding", config.namespace, config.name)
 }
 
-func createHanaBindingUrl(config *hanaProvisionConfig) *clierror.Error {
+func createHanaBindingUrl(config *hanaProvisionConfig) error {
 	_, err := config.kubeClient.Dynamic().Resource(operator.GVRServiceBinding).
 		Namespace(config.namespace).
 		Create(config.ctx, hanaBindingUrl(config), metav1.CreateOptions{})
 	return handleProvisionResponse(err, "Hana URL binding", config.namespace, hanaBindingUrlName(config.name))
 }
 
-func handleProvisionResponse(err error, printedName, namespace, name string) *clierror.Error {
+func handleProvisionResponse(err error, printedName, namespace, name string) error {
 	if err == nil {
 		fmt.Printf("Created %s (%s/%s).\n", printedName, namespace, name)
 		return nil
