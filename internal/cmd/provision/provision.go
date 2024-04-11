@@ -2,6 +2,7 @@ package provision
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/kyma-project/cli.v3/internal/btp/auth"
 	"github.com/kyma-project/cli.v3/internal/btp/cis"
@@ -60,7 +61,11 @@ func runProvision(config *provisionConfig) error {
 		credentials.UAA.ClientSecret,
 	)
 	if err != nil {
-		return clierror.Wrap(err, &clierror.Error{Message: "failed to get access token:"})
+		retErr := clierror.Wrap(err, &clierror.Error{Message: "failed to get access token"})
+		if strings.Contains(retErr.(*clierror.Error).Details, "Internal Server Error") {
+			retErr.(*clierror.Error).Hints = append(retErr.(*clierror.Error).Hints, "check if CIS grant type is set to client credentials")
+		}
+		return retErr
 	}
 
 	// TODO: maybe we should pass only credentials.Endpoints?

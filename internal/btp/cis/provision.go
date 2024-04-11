@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 )
@@ -71,7 +72,19 @@ func (c *LocalClient) Provision(pe *ProvisionEnvironment) (*ProvisionResponse, e
 
 	response, err := c.cis.post(provisionURL, options)
 	if err != nil {
-		return nil, &clierror.Error{Message: err.Error()}
+		returnErr := &clierror.Error{
+			Message: err.Error(),
+		}
+		if strings.Contains(err.Error(), "404 Not Found") {
+			returnErr.Hints = append(returnErr.Hints, "check if the CIS config file contains correct provisioning_service_url endpoint")
+		}
+		if strings.Contains(err.Error(), "insufficient_scope") {
+			returnErr.Hints = append(returnErr.Hints, "check if the CIS instance plan is set to local")
+		}
+		if strings.Contains(err.Error(), "User is unauthorized for this operation") {
+			returnErr.Hints = append(returnErr.Hints, "check if subaccount have enabled Kyma entitlement with correct plan")
+		}
+		return nil, returnErr
 	}
 	defer response.Body.Close()
 
