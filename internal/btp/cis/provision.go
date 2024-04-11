@@ -55,7 +55,7 @@ type ProvisionResponse struct {
 	PlanName        string `json:"planName"`
 }
 
-func (c *LocalClient) Provision(pe *ProvisionEnvironment) (*ProvisionResponse, *clierror.Error) {
+func (c *LocalClient) Provision(pe *ProvisionEnvironment) (*ProvisionResponse, error) {
 	reqData, err := json.Marshal(pe)
 	if err != nil {
 		return nil, &clierror.Error{Message: err.Error()}
@@ -78,11 +78,14 @@ func (c *LocalClient) Provision(pe *ProvisionEnvironment) (*ProvisionResponse, *
 	return decodeProvisionSuccessResponse(response)
 }
 
-func decodeProvisionSuccessResponse(response *http.Response) (*ProvisionResponse, *clierror.Error) {
+func decodeProvisionSuccessResponse(response *http.Response) (*ProvisionResponse, error) {
 	provisionResponse := ProvisionResponse{}
 	err := json.NewDecoder(response.Body).Decode(&provisionResponse)
 	if err != nil {
-		return nil, &clierror.Error{Message: "failed to decode response", Details: err.Error()}
+		return nil, &clierror.Error{
+			Message: "failed to decode response",
+			Details: err.Error(),
+		}
 	}
 
 	return &provisionResponse, nil
