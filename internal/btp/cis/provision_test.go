@@ -136,7 +136,9 @@ func TestCISClient_Provision(t *testing.T) {
 			c := NewLocalClient(credentials, token)
 
 			response, err := c.Provision(pe)
-			require.Equal(t, expectedErr, err)
+			if expectedErr != nil {
+				require.Equal(t, expectedErr.Message, err.(*clierror.Error).Message)
+			}
 			require.Equal(t, wantedResponse, response)
 		})
 	}

@@ -2,7 +2,6 @@ package clierror
 
 import (
 	"fmt"
-	"os"
 )
 
 type Error struct {
@@ -14,16 +13,20 @@ type Error struct {
 // Wrap adds a new message and hints to the error
 func (inside *Error) wrap(outside *Error) *Error {
 	newError := &Error{
-		Message: outside.Message,
+		Message: inside.Message,
 		Details: inside.Details,
 		Hints:   inside.Hints,
+	}
+
+	if outside.Message != "" {
+		newError.Message = outside.Message
 	}
 
 	if outside.Hints != nil {
 		newError.Hints = append(outside.Hints, newError.Hints...)
 	}
 
-	if inside.Message != "" {
+	if outside.Message != "" {
 		newError.Details = wrapDetails(inside.Message, newError.Details)
 	}
 
@@ -54,14 +57,6 @@ func Wrap(inside error, outside *Error) error {
 			Hints:   outside.Hints,
 		}
 	}
-}
-
-func (e *Error) Print() {
-	fmt.Printf("%s\n", e.Error())
-}
-
-func (e *Error) PrintStderr() {
-	fmt.Fprintf(os.Stderr, "%s\n", e.Error())
 }
 
 // Error returns the error string, compatible with the error interface

@@ -47,7 +47,7 @@ func NewMapHanaCMD() *cobra.Command {
 }
 
 var (
-	mapCommands = []func(config *hanaCheckConfig) *clierror.Error{
+	mapCommands = []func(config *hanaCheckConfig) error{
 		createHanaAPIInstance,
 		createHanaAPIBinding,
 		createHanaInstanceMapping,
@@ -65,7 +65,7 @@ func runMap(config *hanaCheckConfig) error {
 	return nil
 }
 
-func createHanaAPIInstance(config *hanaCheckConfig) *clierror.Error {
+func createHanaAPIInstance(config *hanaCheckConfig) error {
 	data, err := hanaAPIInstance(config)
 	if err != nil {
 		return &clierror.Error{
@@ -79,7 +79,7 @@ func createHanaAPIInstance(config *hanaCheckConfig) *clierror.Error {
 	return handleProvisionResponse(err, "Hana API instance", config.namespace, hanaBindingAPIName(config.name))
 }
 
-func createHanaAPIBinding(config *hanaCheckConfig) *clierror.Error {
+func createHanaAPIBinding(config *hanaCheckConfig) error {
 	data, err := hanaAPIBinding(config)
 	if err != nil {
 		return &clierror.Error{
@@ -143,7 +143,7 @@ func hanaBindingAPIName(name string) string {
 	return fmt.Sprintf("%s-api", name)
 }
 
-func createHanaInstanceMapping(config *hanaCheckConfig) *clierror.Error {
+func createHanaInstanceMapping(config *hanaCheckConfig) error {
 	clusterID, err := getClusterID(config)
 	if err != nil {
 		return err
@@ -169,7 +169,7 @@ func createHanaInstanceMapping(config *hanaCheckConfig) *clierror.Error {
 	return hanaInstanceMapping(baseurl, clusterID, hanaID, token.AccessToken)
 }
 
-func getClusterID(config *hanaCheckConfig) (string, *clierror.Error) {
+func getClusterID(config *hanaCheckConfig) (string, error) {
 	cm, err := config.kubeClient.Static().CoreV1().ConfigMaps("kyma-system").Get(config.ctx, "sap-btp-operator-config", metav1.GetOptions{})
 	if err != nil {
 		return "", &clierror.Error{
@@ -191,7 +191,7 @@ func isHanaReady(config *hanaCheckConfig) wait.ConditionWithContextFunc {
 	}
 }
 
-func getHanaID(config *hanaCheckConfig) (string, *clierror.Error) {
+func getHanaID(config *hanaCheckConfig) (string, error) {
 	instance := somethingWithStatus{}
 
 	// wait for until Hana instance is ready, for default setting it should take 5 minutes
@@ -236,7 +236,7 @@ func isHanaAPIBindingReady(config *hanaCheckConfig) wait.ConditionWithContextFun
 	}
 }
 
-func readHanaAPISecret(config *hanaCheckConfig) (string, *auth.UAA, *clierror.Error) {
+func readHanaAPISecret(config *hanaCheckConfig) (string, *auth.UAA, error) {
 	fmt.Print("waiting for Hana API binding to be ready... ")
 	err := wait.PollUntilContextTimeout(config.ctx, 5*time.Second, 2*time.Minute, true, isHanaAPIBindingReady(config))
 	if err != nil {
@@ -267,7 +267,7 @@ func readHanaAPISecret(config *hanaCheckConfig) (string, *auth.UAA, *clierror.Er
 	return string(baseURL), uaa, nil
 }
 
-func hanaInstanceMapping(baseURL, clusterID, hanaID, token string) *clierror.Error {
+func hanaInstanceMapping(baseURL, clusterID, hanaID, token string) error {
 	client := &http.Client{}
 
 	requestData := HanaMapping{

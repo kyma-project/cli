@@ -25,7 +25,7 @@ type XSUAAToken struct {
 	JTI         string `json:"jti"`
 }
 
-func GetOAuthToken(grantType, serverURL, username, password string) (*XSUAAToken, *clierror.Error) {
+func GetOAuthToken(grantType, serverURL, username, password string) (*XSUAAToken, error) {
 	urlBody := url.Values{}
 	urlBody.Set("grant_type", grantType)
 
@@ -55,7 +55,7 @@ func GetOAuthToken(grantType, serverURL, username, password string) (*XSUAAToken
 	return decodeAuthSuccessResponse(response)
 }
 
-func decodeAuthSuccessResponse(response *http.Response) (*XSUAAToken, *clierror.Error) {
+func decodeAuthSuccessResponse(response *http.Response) (*XSUAAToken, error) {
 	token := XSUAAToken{}
 	err := json.NewDecoder(response.Body).Decode(&token)
 	if err != nil {
@@ -65,7 +65,7 @@ func decodeAuthSuccessResponse(response *http.Response) (*XSUAAToken, *clierror.
 	return &token, nil
 }
 
-func decodeAuthErrorResponse(response *http.Response) *clierror.Error {
+func decodeAuthErrorResponse(response *http.Response) error {
 	errorData := xsuaaErrorResponse{}
 	err := json.NewDecoder(response.Body).Decode(&errorData)
 	if err != nil {
