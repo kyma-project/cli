@@ -53,10 +53,10 @@ func NewHanaCheckCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 }
 
 type somethingWithStatus struct {
-	Status status
+	Status Status
 }
 
-type status struct {
+type Status struct {
 	Conditions []metav1.Condition
 	Ready      string
 	InstanceID string
@@ -85,7 +85,7 @@ func runCheck(config *hanaCheckConfig) error {
 }
 
 func checkHanaInstance(config *hanaCheckConfig) error {
-	u, err := getServiceInstance(config)
+	u, err := getServiceInstance(config, config.name)
 	return handleCheckResponse(u, err, "Hana instance", config.namespace, config.name)
 }
 
@@ -111,7 +111,7 @@ func handleCheckResponse(u *unstructured.Unstructured, err error, printedName, n
 		}
 	}
 
-	ready, error := isReady(u)
+	ready, _, error := isReady(u)
 	if error != nil {
 		return &clierror.Error{
 			Message: "failed to check readiness of Hana resources",
@@ -133,7 +133,7 @@ func handleCheckResponse(u *unstructured.Unstructured, err error, printedName, n
 	return nil
 }
 
-func getServiceInstance(config *hanaCheckConfig) (*unstructured.Unstructured, error) {
+func getServiceInstance(config *hanaCheckConfig, name string) (*unstructured.Unstructured, error) {
 	return config.KubeClient.Dynamic().Resource(operator.GVRServiceInstance).
 		Namespace(config.namespace).
 		Get(config.Ctx, config.name, metav1.GetOptions{})
@@ -145,25 +145,46 @@ func getServiceBinding(config *hanaCheckConfig, name string) (*unstructured.Unst
 		Get(config.Ctx, name, metav1.GetOptions{})
 }
 
-func isReady(u *unstructured.Unstructured) (bool, error) {
+func getServiceStatus(u *unstructured.Unstructured) (Status, error) {
 	instance := somethingWithStatus{}
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, &instance); err != nil {
-		return false, &clierror.Error{
+		return Status{}, &clierror.Error{
 			Message: "failed to read resource data",
 			Details: err.Error(),
 		}
 	}
-	status := instance.Status
+
+	return instance.Status, nil
+}
+
+// isReady returns readiness status, and failed status if at least one of the contitions has failed, or an error was returned
+func isReady(u *unstructured.Unstructured) (bool, bool, error) {
+	status, err := getServiceStatus(u)
+	if err != nil {
+		return false, true, err
+	}
+
+	failed := (status.Ready == "False") &&
+		isConditionTrue(status.Conditions, "Failed")
+	if failed {
+		return false, true, nil
+	}
+
 	ready := (status.Ready == "True") &&
 		isConditionTrue(status.Conditions, "Succeeded") &&
 		isConditionTrue(status.Conditions, "Ready")
-	if !ready {
-		return false, nil
-	}
-	return true, nil
+	return ready, false, nil
 }
 
 func isConditionTrue(conditions []metav1.Condition, conditionType string) bool {
 	condition := meta.FindStatusCondition(conditions, conditionType)
 	return condition != nil && condition.Status == metav1.ConditionTrue
+}
+
+func getConditionMessage(conditions []metav1.Condition, conditionType string) string {
+	condition := meta.FindStatusCondition(conditions, conditionType)
+	if condition == nil {
+		return ""
+	}
+	return condition.Message
 }

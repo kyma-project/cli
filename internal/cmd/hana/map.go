@@ -70,6 +70,13 @@ func runMap(config *hanaCheckConfig) error {
 }
 
 func createHanaAPIInstance(config *hanaCheckConfig) error {
+	//check if instance exists, skip API creation if it does
+	instance, err := getServiceInstance(config, hanaBindingAPIName(config.name))
+	if err == nil && instance != nil {
+		fmt.Printf("Hana API instance already exists (%s/%s)\n", config.namespace, hanaBindingAPIName(config.name))
+		return nil
+	}
+
 	data, err := hanaAPIInstance(config)
 	if err != nil {
 		return &clierror.Error{
@@ -84,6 +91,13 @@ func createHanaAPIInstance(config *hanaCheckConfig) error {
 }
 
 func createHanaAPIBinding(config *hanaCheckConfig) error {
+	//check if instance exists, skip API creation if it does
+	instance, err := getServiceBinding(config, hanaBindingAPIName(config.name))
+	if err == nil && instance != nil {
+		fmt.Printf("Hana API binding already exists (%s/%s)\n", config.namespace, hanaBindingAPIName(config.name))
+		return nil
+	}
+
 	data, err := hanaAPIBinding(config)
 	if err != nil {
 		return &clierror.Error{
@@ -186,12 +200,32 @@ func getClusterID(config *hanaCheckConfig) (string, error) {
 
 func isHanaReady(config *hanaCheckConfig) wait.ConditionWithContextFunc {
 	return func(_ context.Context) (bool, error) {
-		instance, err := getServiceInstance(config)
+		instance, err := getServiceInstance(config, config.name)
 		if err != nil {
 			return false, err
 		}
 
-		return isReady(instance)
+		ready, failed, err := isReady(instance)
+		if err != nil {
+			return ready, err
+		}
+
+		if failed {
+			status, err := getServiceStatus(instance)
+			if err != nil {
+				return false, err
+			}
+			failedMessage := getConditionMessage(status.Conditions, "Failed")
+
+			return false, &clierror.Error{
+				Message: "failed to create service instance",
+				Details: failedMessage,
+				Hints:   []string{"make sure the hana-cloud hana entitlement is enabled"},
+			}
+
+		}
+
+		return ready, nil
 	}
 }
 
@@ -229,6 +263,36 @@ func getHanaID(config *hanaCheckConfig) (string, error) {
 	return status.InstanceID, nil
 }
 
+func isHanaAPIInstanceReady(config *hanaCheckConfig) wait.ConditionWithContextFunc {
+	return func(_ context.Context) (bool, error) {
+		instance, err := getServiceInstance(config, hanaBindingAPIName(config.name))
+		if err != nil {
+			return false, err
+		}
+
+		ready, failed, err := isReady(instance)
+		if err != nil {
+			return ready, err
+		}
+
+		if failed {
+			status, err := getServiceStatus(instance)
+			if err != nil {
+				return false, err
+			}
+			failedMessage := getConditionMessage(status.Conditions, "Failed")
+
+			return false, &clierror.Error{
+				Message: "failed to create service instance",
+				Details: failedMessage,
+				Hints:   []string{"make sure the hana-cloud admin-api-access entitlement is enabled"},
+			}
+		}
+
+		return ready, nil
+	}
+}
+
 func isHanaAPIBindingReady(config *hanaCheckConfig) wait.ConditionWithContextFunc {
 	return func(_ context.Context) (bool, error) {
 		instance, err := getServiceBinding(config, hanaBindingAPIName(config.name))
@@ -236,13 +300,42 @@ func isHanaAPIBindingReady(config *hanaCheckConfig) wait.ConditionWithContextFun
 			return false, err
 		}
 
-		return isReady(instance)
+		ready, failed, err := isReady(instance)
+		if err != nil {
+			return ready, err
+		}
+
+		if failed {
+			status, err := getServiceStatus(instance)
+			if err != nil {
+				return false, err
+			}
+			failedMessage := getConditionMessage(status.Conditions, "Failed")
+
+			return false, &clierror.Error{
+				Message: "failed to create service instance",
+				Details: failedMessage,
+			}
+
+		}
+
+		return ready, nil
 	}
 }
 
 func readHanaAPISecret(config *hanaCheckConfig) (string, *auth.UAA, error) {
+	fmt.Print("waiting for Hana API instance to be ready... ")
+	err := wait.PollUntilContextTimeout(config.ctx, 5*time.Second, 2*time.Minute, true, isHanaAPIInstanceReady(config))
+	if err != nil {
+		return "", nil, &clierror.Error{
+			Message: "timeout while waiting for Hana API instance",
+			Details: err.Error(),
+		}
+	}
+	fmt.Println("done")
+
 	fmt.Print("waiting for Hana API binding to be ready... ")
-	err := wait.PollUntilContextTimeout(config.Ctx, 5*time.Second, 2*time.Minute, true, isHanaAPIBindingReady(config))
+	err = wait.PollUntilContextTimeout(config.Ctx, 5*time.Second, 2*time.Minute, true, isHanaAPIBindingReady(config))
 	if err != nil {
 		return "", nil, &clierror.Error{
 			Message: "timeout while waiting for Hana API binding",
@@ -303,7 +396,9 @@ func hanaInstanceMapping(baseURL, clusterID, hanaID, token string) error {
 			Details: err.Error(),
 		}
 	}
-	if resp.StatusCode != http.StatusCreated {
+
+	// server sends status Created when mapping is created, and 200 if it already exists
+	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
 		return &clierror.Error{
 			Message: "failed to create mapping",
 			Details: fmt.Sprintf("status code: %d", resp.StatusCode),
