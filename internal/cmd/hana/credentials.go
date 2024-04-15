@@ -5,20 +5,18 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
-	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type hanaCredentialsConfig struct {
 	*cmdcommon.KymaConfig
-	kubeClient kube.Client
+	cmdcommon.KubeClientConfig
 
-	kubeconfig string
-	name       string
-	namespace  string
-	user       bool
-	password   bool
+	name      string
+	namespace string
+	user      bool
+	password  bool
 }
 
 type credentials struct {
@@ -28,7 +26,8 @@ type credentials struct {
 
 func NewHanaCredentialsCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	config := hanaCredentialsConfig{
-		KymaConfig: kymaConfig,
+		KymaConfig:       kymaConfig,
+		KubeClientConfig: cmdcommon.KubeClientConfig{},
 	}
 
 	cmd := &cobra.Command{
@@ -36,14 +35,14 @@ func NewHanaCredentialsCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Short: "Print credentials of the Hana instance.",
 		Long:  "Use this command to print credentials of the Hana instance on the SAP Kyma platform.",
 		PreRunE: func(_ *cobra.Command, args []string) error {
-			return config.complete()
+			return config.KubeClientConfig.Complete()
 		},
 		RunE: func(_ *cobra.Command, _ []string) error {
 			return runCredentials(&config)
 		},
 	}
 
-	cmd.Flags().StringVar(&config.kubeconfig, "kubeconfig", "", "Path to the Kyma kubeconfig file.")
+	config.KubeClientConfig.AddFlag(cmd)
 
 	cmd.Flags().StringVar(&config.name, "name", "", "Name of Hana instance.")
 	cmd.Flags().StringVar(&config.namespace, "namespace", "default", "Namespace for Hana instance.")
@@ -56,13 +55,6 @@ func NewHanaCredentialsCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.MarkFlagsMutuallyExclusive("user", "password")
 
 	return cmd
-}
-
-func (pc *hanaCredentialsConfig) complete() error {
-	var err error
-	pc.kubeClient, err = kube.NewClient(pc.kubeconfig)
-
-	return err
 }
 
 func runCredentials(config *hanaCredentialsConfig) error {
@@ -87,7 +79,7 @@ func printCredentials(config *hanaCredentialsConfig, credentials credentials) {
 }
 
 func getHanaCredentials(config *hanaCredentialsConfig) (credentials, error) {
-	secret, err := config.kubeClient.Static().CoreV1().Secrets(config.namespace).Get(config.Ctx, config.name, metav1.GetOptions{})
+	secret, err := config.KubeClient.Static().CoreV1().Secrets(config.namespace).Get(config.Ctx, config.name, metav1.GetOptions{})
 	if err != nil {
 		return handleGetHanaCredentialsError(err)
 	}

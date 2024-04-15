@@ -10,9 +10,8 @@ import (
 
 type referenceInstanceConfig struct {
 	*cmdcommon.KymaConfig
-	kubeClient kube.Client
+	cmdcommon.KubeClientConfig
 
-	kubeconfig    string
 	offeringName  string
 	referenceName string
 	instanceID    string
@@ -23,7 +22,8 @@ type referenceInstanceConfig struct {
 
 func NewReferenceInstanceCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	config := referenceInstanceConfig{
-		KymaConfig: kymaConfig,
+		KymaConfig:       kymaConfig,
+		KubeClientConfig: cmdcommon.KubeClientConfig{},
 	}
 
 	cmd := &cobra.Command{
@@ -32,14 +32,15 @@ func NewReferenceInstanceCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Long: `Use this command to add an instance reference to a shared service instance on the SAP Kyma platform.
 `,
 		PreRunE: func(_ *cobra.Command, _ []string) error {
-			return config.complete()
+			return config.KubeClientConfig.Complete()
 		},
 		RunE: func(_ *cobra.Command, _ []string) error {
 			return runReferenceInstance(config)
 		},
 	}
 
-	cmd.Flags().StringVar(&config.kubeconfig, "kubeconfig", "", "Path to the Kyma kubecongig file.")
+	config.KubeClientConfig.AddFlag(cmd)
+
 	cmd.Flags().StringVar(&config.offeringName, "offering-name", "", "Offering name.")
 	cmd.Flags().StringVar(&config.referenceName, "reference-name", "", "Name of the reference.")
 	cmd.Flags().StringVar(&config.instanceID, "instance-id", "", "ID of the instance.")
@@ -60,13 +61,6 @@ func NewReferenceInstanceCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	return cmd
 }
 
-func (pc *referenceInstanceConfig) complete() error {
-	var err error
-	pc.kubeClient, err = kube.NewClient(pc.kubeconfig)
-
-	return err
-}
-
 func runReferenceInstance(config referenceInstanceConfig) error {
 	requestData := fillRequestData(config)
 	unstructuredObj, err := kube.ToUnstructured(requestData, operator.GVKServiceInstance)
@@ -74,7 +68,7 @@ func runReferenceInstance(config referenceInstanceConfig) error {
 		return err
 	}
 
-	_, err = config.kubeClient.Dynamic().Resource(operator.GVRServiceInstance).Namespace("default").Create(config.Ctx, unstructuredObj, metav1.CreateOptions{})
+	_, err = config.KubeClient.Dynamic().Resource(operator.GVRServiceInstance).Namespace("default").Create(config.Ctx, unstructuredObj, metav1.CreateOptions{})
 	return err
 }
 

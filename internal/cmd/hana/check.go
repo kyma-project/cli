@@ -8,7 +8,6 @@ import (
 	"github.com/kyma-project/cli.v3/internal/btp/operator"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
-	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,17 +17,17 @@ import (
 
 type hanaCheckConfig struct {
 	*cmdcommon.KymaConfig
-	kubeClient kube.Client
+	cmdcommon.KubeClientConfig
 
-	kubeconfig string
-	name       string
-	namespace  string
-	timeout    time.Duration
+	name      string
+	namespace string
+	timeout   time.Duration
 }
 
 func NewHanaCheckCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	config := hanaCheckConfig{
-		KymaConfig: kymaConfig,
+		KymaConfig:       kymaConfig,
+		KubeClientConfig: cmdcommon.KubeClientConfig{},
 	}
 
 	cmd := &cobra.Command{
@@ -36,14 +35,14 @@ func NewHanaCheckCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Short: "Check if the Hana instance is provisioned.",
 		Long:  "Use this command to check if the Hana instance is provisioned on the SAP Kyma platform.",
 		PreRunE: func(_ *cobra.Command, args []string) error {
-			return config.complete()
+			return config.KubeClientConfig.Complete()
 		},
 		RunE: func(_ *cobra.Command, _ []string) error {
 			return runCheck(&config)
 		},
 	}
 
-	cmd.Flags().StringVar(&config.kubeconfig, "kubeconfig", "", "Path to the Kyma kubecongig file.")
+	config.KubeClientConfig.AddFlag(cmd)
 
 	cmd.Flags().StringVar(&config.name, "name", "", "Name of Hana instance.")
 	cmd.Flags().StringVar(&config.namespace, "namespace", "default", "Namespace for Hana instance.")
@@ -52,13 +51,6 @@ func NewHanaCheckCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	_ = cmd.MarkFlagRequired("name")
 
 	return cmd
-}
-
-func (pc *hanaCheckConfig) complete() error {
-	var err error
-	pc.kubeClient, err = kube.NewClient(pc.kubeconfig)
-
-	return err
 }
 
 type somethingWithStatus struct {
@@ -143,13 +135,13 @@ func handleCheckResponse(u *unstructured.Unstructured, err error, printedName, n
 }
 
 func getServiceInstance(config *hanaCheckConfig) (*unstructured.Unstructured, error) {
-	return config.kubeClient.Dynamic().Resource(operator.GVRServiceInstance).
+	return config.KubeClient.Dynamic().Resource(operator.GVRServiceInstance).
 		Namespace(config.namespace).
 		Get(config.Ctx, config.name, metav1.GetOptions{})
 }
 
 func getServiceBinding(config *hanaCheckConfig, name string) (*unstructured.Unstructured, error) {
-	return config.kubeClient.Dynamic().Resource(operator.GVRServiceBinding).
+	return config.KubeClient.Dynamic().Resource(operator.GVRServiceBinding).
 		Namespace(config.namespace).
 		Get(config.Ctx, name, metav1.GetOptions{})
 }
