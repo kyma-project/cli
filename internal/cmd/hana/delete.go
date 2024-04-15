@@ -1,11 +1,11 @@
 package hana
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/kyma-project/cli.v3/internal/btp/operator"
 	"github.com/kyma-project/cli.v3/internal/clierror"
+	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -13,7 +13,7 @@ import (
 )
 
 type hanaDeleteConfig struct {
-	ctx        context.Context
+	*cmdcommon.KymaConfig
 	kubeClient kube.Client
 
 	kubeconfig string
@@ -21,8 +21,10 @@ type hanaDeleteConfig struct {
 	namespace  string
 }
 
-func NewHanaDeleteCMD() *cobra.Command {
-	config := hanaDeleteConfig{}
+func NewHanaDeleteCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
+	config := hanaDeleteConfig{
+		KymaConfig: kymaConfig,
+	}
 
 	cmd := &cobra.Command{
 		Use:   "delete",
@@ -48,9 +50,6 @@ func NewHanaDeleteCMD() *cobra.Command {
 }
 
 func (pc *hanaDeleteConfig) complete() error {
-	// TODO: think about timeout and moving context to persistent `kyma` command configuration
-	pc.ctx = context.Background()
-
 	var err error
 	pc.kubeClient, err = kube.NewClient(pc.kubeconfig)
 
@@ -81,14 +80,14 @@ func runDelete(config *hanaDeleteConfig) error {
 func deleteHanaInstance(config *hanaDeleteConfig) error {
 	err := config.kubeClient.Dynamic().Resource(operator.GVRServiceInstance).
 		Namespace(config.namespace).
-		Delete(config.ctx, config.name, metav1.DeleteOptions{})
+		Delete(config.Ctx, config.name, metav1.DeleteOptions{})
 	return handleDeleteResponse(err, "Hana instance", config.namespace, config.name)
 }
 
 func deleteHanaBinding(config *hanaDeleteConfig) error {
 	err := config.kubeClient.Dynamic().Resource(operator.GVRServiceBinding).
 		Namespace(config.namespace).
-		Delete(config.ctx, config.name, metav1.DeleteOptions{})
+		Delete(config.Ctx, config.name, metav1.DeleteOptions{})
 	return handleDeleteResponse(err, "Hana binding", config.namespace, config.name)
 }
 
@@ -96,7 +95,7 @@ func deleteHanaBindingUrl(config *hanaDeleteConfig) error {
 	urlName := hanaBindingUrlName(config.name)
 	err := config.kubeClient.Dynamic().Resource(operator.GVRServiceBinding).
 		Namespace(config.namespace).
-		Delete(config.ctx, urlName, metav1.DeleteOptions{})
+		Delete(config.Ctx, urlName, metav1.DeleteOptions{})
 	return handleDeleteResponse(err, "Hana URL binding", config.namespace, urlName)
 }
 

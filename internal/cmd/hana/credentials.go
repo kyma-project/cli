@@ -1,17 +1,17 @@
 package hana
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
+	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type hanaCredentialsConfig struct {
-	ctx        context.Context
+	*cmdcommon.KymaConfig
 	kubeClient kube.Client
 
 	kubeconfig string
@@ -26,8 +26,10 @@ type credentials struct {
 	password string
 }
 
-func NewHanaCredentialsCMD() *cobra.Command {
-	config := hanaCredentialsConfig{}
+func NewHanaCredentialsCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
+	config := hanaCredentialsConfig{
+		KymaConfig: kymaConfig,
+	}
 
 	cmd := &cobra.Command{
 		Use:   "credentials",
@@ -57,9 +59,6 @@ func NewHanaCredentialsCMD() *cobra.Command {
 }
 
 func (pc *hanaCredentialsConfig) complete() error {
-	// TODO: think about timeout and moving context to persistent `kyma` command configuration
-	pc.ctx = context.Background()
-
 	var err error
 	pc.kubeClient, err = kube.NewClient(pc.kubeconfig)
 
@@ -88,7 +87,7 @@ func printCredentials(config *hanaCredentialsConfig, credentials credentials) {
 }
 
 func getHanaCredentials(config *hanaCredentialsConfig) (credentials, error) {
-	secret, err := config.kubeClient.Static().CoreV1().Secrets(config.namespace).Get(config.ctx, config.name, metav1.GetOptions{})
+	secret, err := config.kubeClient.Static().CoreV1().Secrets(config.namespace).Get(config.Ctx, config.name, metav1.GetOptions{})
 	if err != nil {
 		return handleGetHanaCredentialsError(err)
 	}

@@ -1,13 +1,13 @@
 package hana
 
 import (
-	"context"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/kyma-project/cli.v3/internal/btp/operator"
 	"github.com/kyma-project/cli.v3/internal/clierror"
+	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -17,7 +17,7 @@ import (
 )
 
 type hanaCheckConfig struct {
-	ctx        context.Context
+	*cmdcommon.KymaConfig
 	kubeClient kube.Client
 
 	kubeconfig string
@@ -26,8 +26,10 @@ type hanaCheckConfig struct {
 	timeout    time.Duration
 }
 
-func NewHanaCheckCMD() *cobra.Command {
-	config := hanaCheckConfig{}
+func NewHanaCheckCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
+	config := hanaCheckConfig{
+		KymaConfig: kymaConfig,
+	}
 
 	cmd := &cobra.Command{
 		Use:   "check",
@@ -53,9 +55,6 @@ func NewHanaCheckCMD() *cobra.Command {
 }
 
 func (pc *hanaCheckConfig) complete() error {
-	// TODO: think about timeout and moving context to persistent `kyma` command configuration
-	pc.ctx = context.Background()
-
 	var err error
 	pc.kubeClient, err = kube.NewClient(pc.kubeconfig)
 
@@ -146,13 +145,13 @@ func handleCheckResponse(u *unstructured.Unstructured, err error, printedName, n
 func getServiceInstance(config *hanaCheckConfig) (*unstructured.Unstructured, error) {
 	return config.kubeClient.Dynamic().Resource(operator.GVRServiceInstance).
 		Namespace(config.namespace).
-		Get(config.ctx, config.name, metav1.GetOptions{})
+		Get(config.Ctx, config.name, metav1.GetOptions{})
 }
 
 func getServiceBinding(config *hanaCheckConfig, name string) (*unstructured.Unstructured, error) {
 	return config.kubeClient.Dynamic().Resource(operator.GVRServiceBinding).
 		Namespace(config.namespace).
-		Get(config.ctx, name, metav1.GetOptions{})
+		Get(config.Ctx, name, metav1.GetOptions{})
 }
 
 func isReady(u *unstructured.Unstructured) (bool, error) {

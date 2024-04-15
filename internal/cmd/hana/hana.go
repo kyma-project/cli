@@ -1,10 +1,11 @@
 package hana
 
 import (
+	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/spf13/cobra"
 )
 
-func NewHanaCMD() *cobra.Command {
+func NewHanaCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "hana",
 		Short:                 "Manage a Hana instance on the Kyma platform.",
@@ -12,11 +13,11 @@ func NewHanaCMD() *cobra.Command {
 		DisableFlagsInUseLine: true,
 	}
 
-	cmd.AddCommand(NewHanaProvisionCMD())
-	cmd.AddCommand(NewHanaCheckCMD())
-	cmd.AddCommand(NewHanaDeleteCMD())
-	cmd.AddCommand(NewHanaCredentialsCMD())
-	cmd.AddCommand(NewMapHanaCMD())
+	cmd.AddCommand(NewHanaProvisionCMD(kymaConfig))
+	cmd.AddCommand(NewHanaCheckCMD(kymaConfig))
+	cmd.AddCommand(NewHanaDeleteCMD(kymaConfig))
+	cmd.AddCommand(NewHanaCredentialsCMD(kymaConfig))
+	cmd.AddCommand(NewMapHanaCMD(kymaConfig))
 
 	return cmd
 }
