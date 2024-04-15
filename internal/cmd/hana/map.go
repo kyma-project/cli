@@ -48,38 +48,46 @@ func NewMapHanaCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	return cmd
 }
 
+var (
+	mapCommands = []func(config *hanaCheckConfig) error{
+		checkAndCreateHanaAPIInstance,
+		checkAndCreateHanaAPIBinding,
+		createHanaInstanceMapping,
+	}
+)
+
 func runMap(config *hanaCheckConfig) error {
-	//check if instance exists, skip API instance creation if it does
-	instance, err := kube.GetServiceInstance(config.kubeClient, config.ctx, config.namespace, hanaBindingAPIName(config.name))
-	if err == nil && instance != nil {
-		fmt.Printf("Hana API instance already exists (%s/%s)\n", config.namespace, hanaBindingAPIName(config.name))
-		return nil
-	} else {
-		err = createHanaAPIInstance(config)
+	for _, command := range mapCommands {
+		err := command(config)
 		if err != nil {
 			return err
 		}
-	}
-
-	//check if binding exists, skip API binding creation if it does
-	instance, err = kube.GetServiceBinding(config.kubeClient, config.ctx, config.namespace, hanaBindingAPIName(config.name))
-	if err == nil && instance != nil {
-		fmt.Printf("Hana API instance already exists (%s/%s)\n", config.namespace, hanaBindingAPIName(config.name))
-		return nil
-	} else {
-		err = createHanaAPIBinding(config)
-		if err != nil {
-			return err
-		}
-	}
-
-	err = createHanaInstanceMapping(config)
-	if err != nil {
-		return err
 	}
 
 	fmt.Println("Hana instance was succesfully mapped to the cluster")
 	return nil
+}
+
+func checkAndCreateHanaAPIInstance(config *hanaCheckConfig) error {
+	// check if instance exists, skip API instance creation if it does
+	instance, err := kube.GetServiceInstance(config.kubeClient, config.ctx, config.namespace, hanaBindingAPIName(config.name))
+	if err == nil && instance != nil {
+		fmt.Printf("Hana API instance already exists (%s/%s)\n", config.namespace, hanaBindingAPIName(config.name))
+		return nil
+	}
+	return createHanaAPIInstance(config)
+}
+
+func checkAndCreateHanaAPIBinding(config *hanaCheckConfig) error {
+	//check if binding exists, skip API binding creation if it does
+	instance, err := kube.GetServiceBinding(config.kubeClient, config.ctx, config.namespace, hanaBindingAPIName(config.name))
+	if err == nil && instance != nil {
+		fmt.Printf("Hana API instance already exists (%s/%s)\n", config.namespace, hanaBindingAPIName(config.name))
+		return nil
+	}
+
+	return createHanaAPIBinding(config)
+
 }
 
 func createHanaAPIInstance(config *hanaCheckConfig) error {
