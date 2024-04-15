@@ -5,14 +5,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kyma-project/cli.v3/internal/btp/operator"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/spf13/cobra"
-	"k8s.io/apimachinery/pkg/api/meta"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 type hanaCheckConfig struct {
@@ -52,16 +49,6 @@ func NewHanaCheckCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	return cmd
 }
 
-type somethingWithStatus struct {
-	Status Status
-}
-
-type Status struct {
-	Conditions []metav1.Condition
-	Ready      string
-	InstanceID string
-}
-
 var (
 	checkCommands = []func(config *hanaCheckConfig) error{
 		checkHanaInstance,
@@ -85,18 +72,18 @@ func runCheck(config *hanaCheckConfig) error {
 }
 
 func checkHanaInstance(config *hanaCheckConfig) error {
-	u, err := getServiceInstance(config, config.name)
+	u, err := kube.GetServiceInstance(config.kubeClient, config.ctx, config.namespace, config.name)
 	return handleCheckResponse(u, err, "Hana instance", config.namespace, config.name)
 }
 
 func checkHanaBinding(config *hanaCheckConfig) error {
-	u, err := getServiceBinding(config, config.name)
+	u, err := kube.GetServiceBinding(config.kubeClient, config.ctx, config.namespace, config.name)
 	return handleCheckResponse(u, err, "Hana binding", config.namespace, config.name)
 }
 
 func checkHanaBindingUrl(config *hanaCheckConfig) error {
 	urlName := hanaBindingUrlName(config.name)
-	u, err := getServiceBinding(config, urlName)
+	u, err := kube.GetServiceBinding(config.kubeClient, config.ctx, config.namespace, urlName)
 	return handleCheckResponse(u, err, "Hana URL binding", config.namespace, urlName)
 }
 
@@ -111,7 +98,7 @@ func handleCheckResponse(u *unstructured.Unstructured, err error, printedName, n
 		}
 	}
 
-	ready, _, error := isReady(u)
+	ready, error := kube.IsReady(u)
 	if error != nil {
 		return &clierror.Error{
 			Message: "failed to check readiness of Hana resources",
@@ -131,60 +118,4 @@ func handleCheckResponse(u *unstructured.Unstructured, err error, printedName, n
 	}
 	fmt.Printf("%s is ready (%s/%s).\n", printedName, namespace, name)
 	return nil
-}
-
-func getServiceInstance(config *hanaCheckConfig, name string) (*unstructured.Unstructured, error) {
-	return config.KubeClient.Dynamic().Resource(operator.GVRServiceInstance).
-		Namespace(config.namespace).
-		Get(config.Ctx, config.name, metav1.GetOptions{})
-}
-
-func getServiceBinding(config *hanaCheckConfig, name string) (*unstructured.Unstructured, error) {
-	return config.KubeClient.Dynamic().Resource(operator.GVRServiceBinding).
-		Namespace(config.namespace).
-		Get(config.Ctx, name, metav1.GetOptions{})
-}
-
-func getServiceStatus(u *unstructured.Unstructured) (Status, error) {
-	instance := somethingWithStatus{}
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, &instance); err != nil {
-		return Status{}, &clierror.Error{
-			Message: "failed to read resource data",
-			Details: err.Error(),
-		}
-	}
-
-	return instance.Status, nil
-}
-
-// isReady returns readiness status, and failed status if at least one of the contitions has failed, or an error was returned
-func isReady(u *unstructured.Unstructured) (bool, bool, error) {
-	status, err := getServiceStatus(u)
-	if err != nil {
-		return false, true, err
-	}
-
-	failed := (status.Ready == "False") &&
-		isConditionTrue(status.Conditions, "Failed")
-	if failed {
-		return false, true, nil
-	}
-
-	ready := (status.Ready == "True") &&
-		isConditionTrue(status.Conditions, "Succeeded") &&
-		isConditionTrue(status.Conditions, "Ready")
-	return ready, false, nil
-}
-
-func isConditionTrue(conditions []metav1.Condition, conditionType string) bool {
-	condition := meta.FindStatusCondition(conditions, conditionType)
-	return condition != nil && condition.Status == metav1.ConditionTrue
-}
-
-func getConditionMessage(conditions []metav1.Condition, conditionType string) string {
-	condition := meta.FindStatusCondition(conditions, conditionType)
-	if condition == nil {
-		return ""
-	}
-	return condition.Message
 }
