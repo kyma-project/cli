@@ -72,18 +72,18 @@ func runCheck(config *hanaCheckConfig) error {
 }
 
 func checkHanaInstance(config *hanaCheckConfig) error {
-	u, err := kube.GetServiceInstance(config.kubeClient, config.ctx, config.namespace, config.name)
+	u, err := kube.GetServiceInstance(config.KubeClient, config.Ctx, config.namespace, config.name)
 	return handleCheckResponse(u, err, "Hana instance", config.namespace, config.name)
 }
 
 func checkHanaBinding(config *hanaCheckConfig) error {
-	u, err := kube.GetServiceBinding(config.kubeClient, config.ctx, config.namespace, config.name)
+	u, err := kube.GetServiceBinding(config.KubeClient, config.Ctx, config.namespace, config.name)
 	return handleCheckResponse(u, err, "Hana binding", config.namespace, config.name)
 }
 
 func checkHanaBindingUrl(config *hanaCheckConfig) error {
 	urlName := hanaBindingUrlName(config.name)
-	u, err := kube.GetServiceBinding(config.kubeClient, config.ctx, config.namespace, urlName)
+	u, err := kube.GetServiceBinding(config.KubeClient, config.Ctx, config.namespace, urlName)
 	return handleCheckResponse(u, err, "Hana URL binding", config.namespace, urlName)
 }
 
