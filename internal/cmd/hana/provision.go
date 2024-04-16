@@ -6,7 +6,6 @@ import (
 	"github.com/kyma-project/cli.v3/internal/btp/operator"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
-	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -14,9 +13,8 @@ import (
 
 type hanaProvisionConfig struct {
 	*cmdcommon.KymaConfig
-	kubeClient kube.Client
+	cmdcommon.KubeClientConfig
 
-	kubeconfig  string
 	name        string
 	namespace   string
 	planName    string
@@ -27,7 +25,8 @@ type hanaProvisionConfig struct {
 
 func NewHanaProvisionCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	config := hanaProvisionConfig{
-		KymaConfig: kymaConfig,
+		KymaConfig:       kymaConfig,
+		KubeClientConfig: cmdcommon.KubeClientConfig{},
 	}
 
 	cmd := &cobra.Command{
@@ -35,14 +34,14 @@ func NewHanaProvisionCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Short: "Provisions a Hana instance on the Kyma.",
 		Long:  "Use this command to provision a Hana instance on the SAP Kyma platform.",
 		PreRunE: func(_ *cobra.Command, args []string) error {
-			return config.complete()
+			return config.KubeClientConfig.Complete()
 		},
 		RunE: func(_ *cobra.Command, _ []string) error {
 			return runProvision(&config)
 		},
 	}
 
-	cmd.Flags().StringVar(&config.kubeconfig, "kubeconfig", "", "Path to the Kyma kubecongig file.")
+	config.KubeClientConfig.AddFlag(cmd)
 
 	cmd.Flags().StringVar(&config.name, "name", "", "Name of Hana instance.")
 	cmd.Flags().StringVar(&config.namespace, "namespace", "default", "Namespace for Hana instance.")
@@ -51,17 +50,9 @@ func NewHanaProvisionCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().IntVar(&config.cpu, "cpu", 2, "Number of CPUs for Hana.")                                            //TODO: fulfill proper usage
 	cmd.Flags().StringSliceVar(&config.whitelistIP, "whitelist-ip", []string{"0.0.0.0/0"}, "IP whitelist for Hana.") //TODO: fulfill proper usage
 
-	_ = cmd.MarkFlagRequired("kubeconfig")
 	_ = cmd.MarkFlagRequired("name")
 
 	return cmd
-}
-
-func (pc *hanaProvisionConfig) complete() error {
-	var err error
-	pc.kubeClient, err = kube.NewClient(pc.kubeconfig)
-
-	return err
 }
 
 var (
@@ -86,21 +77,21 @@ func runProvision(config *hanaProvisionConfig) error {
 }
 
 func createHanaInstance(config *hanaProvisionConfig) error {
-	_, err := config.kubeClient.Dynamic().Resource(operator.GVRServiceInstance).
+	_, err := config.KubeClient.Dynamic().Resource(operator.GVRServiceInstance).
 		Namespace(config.namespace).
 		Create(config.Ctx, hanaInstance(config), metav1.CreateOptions{})
 	return handleProvisionResponse(err, "Hana instance", config.namespace, config.name)
 }
 
 func createHanaBinding(config *hanaProvisionConfig) error {
-	_, err := config.kubeClient.Dynamic().Resource(operator.GVRServiceBinding).
+	_, err := config.KubeClient.Dynamic().Resource(operator.GVRServiceBinding).
 		Namespace(config.namespace).
 		Create(config.Ctx, hanaBinding(config), metav1.CreateOptions{})
 	return handleProvisionResponse(err, "Hana binding", config.namespace, config.name)
 }
 
 func createHanaBindingUrl(config *hanaProvisionConfig) error {
-	_, err := config.kubeClient.Dynamic().Resource(operator.GVRServiceBinding).
+	_, err := config.KubeClient.Dynamic().Resource(operator.GVRServiceBinding).
 		Namespace(config.namespace).
 		Create(config.Ctx, hanaBindingUrl(config), metav1.CreateOptions{})
 	return handleProvisionResponse(err, "Hana URL binding", config.namespace, hanaBindingUrlName(config.name))

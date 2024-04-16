@@ -6,22 +6,21 @@ import (
 	"strings"
 
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
-	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/registry"
 	"github.com/spf13/cobra"
 )
 
 type provisionConfig struct {
 	*cmdcommon.KymaConfig
-	kubeClient kube.Client
+	cmdcommon.KubeClientConfig
 
-	image      string
-	kubeconfig string
+	image string
 }
 
 func NewImportCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	config := provisionConfig{
-		KymaConfig: kymaConfig,
+		KymaConfig:       kymaConfig,
+		KubeClientConfig: cmdcommon.KubeClientConfig{},
 	}
 
 	cmd := &cobra.Command{
@@ -41,7 +40,7 @@ func NewImportCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&config.kubeconfig, "kubeconfig", "", "Path to the kubeconfig file.")
+	config.KubeClientConfig.AddFlag(cmd)
 
 	return cmd
 }
@@ -58,15 +57,12 @@ func (pc *provisionConfig) validate() error {
 func (pc *provisionConfig) complete(args []string) error {
 	pc.image = args[0]
 
-	var err error
-	pc.kubeClient, err = kube.NewClient(pc.kubeconfig)
-
-	return err
+	return pc.KubeClientConfig.Complete()
 }
 
 func runImageImport(config *provisionConfig) error {
 	// TODO: Add "serverless is not installed" error message
-	registryConfig, err := registry.GetConfig(config.Ctx, config.kubeClient.Static())
+	registryConfig, err := registry.GetConfig(config.Ctx, config.KubeClient.Static())
 	if err != nil {
 		return fmt.Errorf("failed to load in-cluster registry configuration: %s", err.Error())
 	}
@@ -75,7 +71,7 @@ func runImageImport(config *provisionConfig) error {
 		return errors.New("this command does not work for external docker registry")
 	}
 
-	workloadMeta, err := registry.GetWorkloadMeta(config.Ctx, config.kubeClient.Static(), registryConfig)
+	workloadMeta, err := registry.GetWorkloadMeta(config.Ctx, config.KubeClient.Static(), registryConfig)
 	if err != nil {
 		return fmt.Errorf("failed to load in-cluster registry pod content: %s", err.Error())
 	}
@@ -86,7 +82,7 @@ func runImageImport(config *provisionConfig) error {
 		config.Ctx,
 		config.image,
 		registry.ImportOptions{
-			ClusterAPIRestConfig: config.kubeClient.RestConfig(),
+			ClusterAPIRestConfig: config.KubeClient.RestConfig(),
 			RegistryAuth:         registry.NewBasicAuth(registryConfig.Username, registryConfig.Password),
 			RegistryPullHost:     registryConfig.PullRegAddr,
 			RegistryPodName:      workloadMeta.Name,

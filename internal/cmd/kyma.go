@@ -3,11 +3,11 @@ package cmd
 import (
 	"context"
 
-	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/cmd/hana"
 	"github.com/kyma-project/cli.v3/internal/cmd/imageimport"
 	"github.com/kyma-project/cli.v3/internal/cmd/provision"
 	"github.com/kyma-project/cli.v3/internal/cmd/referenceinstance"
+	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/spf13/cobra"
 )
 
