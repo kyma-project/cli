@@ -50,7 +50,6 @@ func NewHanaCredentialsCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().BoolVar(&config.user, "user", false, "Print only user name")
 	cmd.Flags().BoolVar(&config.password, "password", false, "Print only password")
 
-	_ = cmd.MarkFlagRequired("kubeconfig")
 	_ = cmd.MarkFlagRequired("name")
 	cmd.MarkFlagsMutuallyExclusive("user", "password")
 

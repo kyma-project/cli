@@ -54,7 +54,6 @@ func NewReferenceInstanceCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.MarkFlagsMutuallyExclusive("instance-id", "name-selector")
 	cmd.MarkFlagsMutuallyExclusive("instance-id", "plan-selector")
 
-	_ = cmd.MarkFlagRequired("kubeconfig")
 	_ = cmd.MarkFlagRequired("offering-name")
 	_ = cmd.MarkFlagRequired("reference-name")
 

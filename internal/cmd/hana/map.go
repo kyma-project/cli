@@ -45,7 +45,6 @@ func NewMapHanaCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().StringVar(&config.namespace, "namespace", "default", "Namespace for Hana instance.")
 	cmd.Flags().DurationVar(&config.timeout, "timeout", 7*time.Minute, "Timeout for the command")
 
-	_ = cmd.MarkFlagRequired("kubeconfig")
 	_ = cmd.MarkFlagRequired("name")
 
 	return cmd

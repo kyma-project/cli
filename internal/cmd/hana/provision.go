@@ -50,7 +50,6 @@ func NewHanaProvisionCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().IntVar(&config.cpu, "cpu", 2, "Number of CPUs for Hana.")                                            //TODO: fulfill proper usage
 	cmd.Flags().StringSliceVar(&config.whitelistIP, "whitelist-ip", []string{"0.0.0.0/0"}, "IP whitelist for Hana.") //TODO: fulfill proper usage
 
-	_ = cmd.MarkFlagRequired("kubeconfig")
 	_ = cmd.MarkFlagRequired("name")
 
 	return cmd

@@ -42,7 +42,6 @@ func NewHanaDeleteCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().StringVar(&config.name, "name", "", "Name of Hana instance.")
 	cmd.Flags().StringVar(&config.namespace, "namespace", "default", "Namespace for Hana instance.")
 
-	_ = cmd.MarkFlagRequired("kubeconfig")
 	_ = cmd.MarkFlagRequired("name")
 
 	return cmd
