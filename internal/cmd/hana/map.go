@@ -23,7 +23,8 @@ import (
 // this command uses the same config as check command
 func NewMapHanaCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	config := hanaCheckConfig{
-		KymaConfig: kymaConfig,
+		KymaConfig:       kymaConfig,
+		KubeClientConfig: cmdcommon.KubeClientConfig{},
 	}
 
 	cmd := &cobra.Command{
@@ -31,19 +32,19 @@ func NewMapHanaCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Short: "Map the Hana instance to the Kyma cluster.",
 		Long:  "Use this command to map the Hana instance to the Kyma cluster.",
 		PreRunE: func(_ *cobra.Command, args []string) error {
-			return config.complete()
+			return config.KubeClientConfig.Complete()
 		},
 		RunE: func(_ *cobra.Command, _ []string) error {
 			return runMap(&config)
 		},
 	}
-	cmd.Flags().StringVar(&config.kubeconfig, "kubeconfig", "", "Path to the Kyma kubecongig file.")
+
+	config.KubeClientConfig.AddFlag(cmd)
 
 	cmd.Flags().StringVar(&config.name, "name", "", "Name of Hana instance.")
 	cmd.Flags().StringVar(&config.namespace, "namespace", "default", "Namespace for Hana instance.")
 	cmd.Flags().DurationVar(&config.timeout, "timeout", 7*time.Minute, "Timeout for the command")
 
-	_ = cmd.MarkFlagRequired("kubeconfig")
 	_ = cmd.MarkFlagRequired("name")
 
 	return cmd
@@ -76,7 +77,7 @@ func createHanaAPIInstance(config *hanaCheckConfig) error {
 			Details: err.Error(),
 		}
 	}
-	_, err = config.kubeClient.Dynamic().Resource(operator.GVRServiceInstance).
+	_, err = config.KubeClient.Dynamic().Resource(operator.GVRServiceInstance).
 		Namespace(config.namespace).
 		Create(config.Ctx, data, metav1.CreateOptions{})
 	return handleProvisionResponse(err, "Hana API instance", config.namespace, hanaBindingAPIName(config.name))
@@ -90,7 +91,7 @@ func createHanaAPIBinding(config *hanaCheckConfig) error {
 			Details: err.Error(),
 		}
 	}
-	_, err = config.kubeClient.Dynamic().Resource(operator.GVRServiceBinding).
+	_, err = config.KubeClient.Dynamic().Resource(operator.GVRServiceBinding).
 		Namespace(config.namespace).
 		Create(config.Ctx, data, metav1.CreateOptions{})
 	return handleProvisionResponse(err, "Hana API binding", config.namespace, hanaBindingAPIName(config.name))
@@ -173,7 +174,7 @@ func createHanaInstanceMapping(config *hanaCheckConfig) error {
 }
 
 func getClusterID(config *hanaCheckConfig) (string, error) {
-	cm, err := config.kubeClient.Static().CoreV1().ConfigMaps("kyma-system").Get(config.Ctx, "sap-btp-operator-config", metav1.GetOptions{})
+	cm, err := config.KubeClient.Static().CoreV1().ConfigMaps("kyma-system").Get(config.Ctx, "sap-btp-operator-config", metav1.GetOptions{})
 	if err != nil {
 		return "", &clierror.Error{
 			Message: "failed to get cluster ID",
@@ -208,7 +209,7 @@ func getHanaID(config *hanaCheckConfig) (string, error) {
 	}
 	fmt.Println("done")
 
-	u, err := config.kubeClient.Dynamic().Resource(operator.GVRServiceInstance).
+	u, err := config.KubeClient.Dynamic().Resource(operator.GVRServiceInstance).
 		Namespace(config.namespace).
 		Get(config.Ctx, config.name, metav1.GetOptions{})
 	if err != nil {
@@ -249,7 +250,7 @@ func readHanaAPISecret(config *hanaCheckConfig) (string, *auth.UAA, error) {
 		}
 	}
 	fmt.Println("done")
-	secret, err := config.kubeClient.Static().CoreV1().Secrets(config.namespace).Get(config.Ctx, hanaBindingAPIName(config.name), metav1.GetOptions{})
+	secret, err := config.KubeClient.Static().CoreV1().Secrets(config.namespace).Get(config.Ctx, hanaBindingAPIName(config.name), metav1.GetOptions{})
 	if err != nil {
 		return "", nil, &clierror.Error{
 			Message: "failed to get secret",
