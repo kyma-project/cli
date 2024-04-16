@@ -1,16 +1,15 @@
 package referenceinstance
 
 import (
-	"context"
-
 	"github.com/kyma-project/cli.v3/internal/btp/operator"
+	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type referenceInstanceConfig struct {
-	ctx        context.Context
+	*cmdcommon.KymaConfig
 	kubeClient kube.Client
 
 	kubeconfig    string
@@ -22,8 +21,10 @@ type referenceInstanceConfig struct {
 	planSelector  string
 }
 
-func NewReferenceInstanceCMD() *cobra.Command {
-	config := referenceInstanceConfig{}
+func NewReferenceInstanceCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
+	config := referenceInstanceConfig{
+		KymaConfig: kymaConfig,
+	}
 
 	cmd := &cobra.Command{
 		Use:   "reference-instance",
@@ -60,9 +61,6 @@ func NewReferenceInstanceCMD() *cobra.Command {
 }
 
 func (pc *referenceInstanceConfig) complete() error {
-	// TODO: think about timeout and moving context to persistent `kyma` command configuration
-	pc.ctx = context.Background()
-
 	var err error
 	pc.kubeClient, err = kube.NewClient(pc.kubeconfig)
 
@@ -76,7 +74,7 @@ func runReferenceInstance(config referenceInstanceConfig) error {
 		return err
 	}
 
-	_, err = config.kubeClient.Dynamic().Resource(operator.GVRServiceInstance).Namespace("default").Create(config.ctx, unstructuredObj, metav1.CreateOptions{})
+	_, err = config.kubeClient.Dynamic().Resource(operator.GVRServiceInstance).Namespace("default").Create(config.Ctx, unstructuredObj, metav1.CreateOptions{})
 	return err
 }
 

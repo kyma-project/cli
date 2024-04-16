@@ -11,6 +11,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/btp/auth"
 	"github.com/kyma-project/cli.v3/internal/btp/operator"
 	"github.com/kyma-project/cli.v3/internal/clierror"
+	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,8 +21,10 @@ import (
 )
 
 // this command uses the same config as check command
-func NewMapHanaCMD() *cobra.Command {
-	config := hanaCheckConfig{}
+func NewMapHanaCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
+	config := hanaCheckConfig{
+		KymaConfig: kymaConfig,
+	}
 
 	cmd := &cobra.Command{
 		Use:   "map",
@@ -75,7 +78,7 @@ func createHanaAPIInstance(config *hanaCheckConfig) error {
 	}
 	_, err = config.kubeClient.Dynamic().Resource(operator.GVRServiceInstance).
 		Namespace(config.namespace).
-		Create(config.ctx, data, metav1.CreateOptions{})
+		Create(config.Ctx, data, metav1.CreateOptions{})
 	return handleProvisionResponse(err, "Hana API instance", config.namespace, hanaBindingAPIName(config.name))
 }
 
@@ -89,7 +92,7 @@ func createHanaAPIBinding(config *hanaCheckConfig) error {
 	}
 	_, err = config.kubeClient.Dynamic().Resource(operator.GVRServiceBinding).
 		Namespace(config.namespace).
-		Create(config.ctx, data, metav1.CreateOptions{})
+		Create(config.Ctx, data, metav1.CreateOptions{})
 	return handleProvisionResponse(err, "Hana API binding", config.namespace, hanaBindingAPIName(config.name))
 }
 
@@ -170,7 +173,7 @@ func createHanaInstanceMapping(config *hanaCheckConfig) error {
 }
 
 func getClusterID(config *hanaCheckConfig) (string, error) {
-	cm, err := config.kubeClient.Static().CoreV1().ConfigMaps("kyma-system").Get(config.ctx, "sap-btp-operator-config", metav1.GetOptions{})
+	cm, err := config.kubeClient.Static().CoreV1().ConfigMaps("kyma-system").Get(config.Ctx, "sap-btp-operator-config", metav1.GetOptions{})
 	if err != nil {
 		return "", &clierror.Error{
 			Message: "failed to get cluster ID",
@@ -196,7 +199,7 @@ func getHanaID(config *hanaCheckConfig) (string, error) {
 
 	// wait for until Hana instance is ready, for default setting it should take 5 minutes
 	fmt.Print("waiting for Hana instance to be ready... ")
-	err := wait.PollUntilContextTimeout(config.ctx, 10*time.Second, config.timeout, true, isHanaReady(config))
+	err := wait.PollUntilContextTimeout(config.Ctx, 10*time.Second, config.timeout, true, isHanaReady(config))
 	if err != nil {
 		return "", &clierror.Error{
 			Message: "timeout while waiting for Hana instance to be ready",
@@ -207,7 +210,7 @@ func getHanaID(config *hanaCheckConfig) (string, error) {
 
 	u, err := config.kubeClient.Dynamic().Resource(operator.GVRServiceInstance).
 		Namespace(config.namespace).
-		Get(config.ctx, config.name, metav1.GetOptions{})
+		Get(config.Ctx, config.name, metav1.GetOptions{})
 	if err != nil {
 		return "", &clierror.Error{
 			Message: "failed to get Hana instance",
@@ -238,7 +241,7 @@ func isHanaAPIBindingReady(config *hanaCheckConfig) wait.ConditionWithContextFun
 
 func readHanaAPISecret(config *hanaCheckConfig) (string, *auth.UAA, error) {
 	fmt.Print("waiting for Hana API binding to be ready... ")
-	err := wait.PollUntilContextTimeout(config.ctx, 5*time.Second, 2*time.Minute, true, isHanaAPIBindingReady(config))
+	err := wait.PollUntilContextTimeout(config.Ctx, 5*time.Second, 2*time.Minute, true, isHanaAPIBindingReady(config))
 	if err != nil {
 		return "", nil, &clierror.Error{
 			Message: "timeout while waiting for Hana API binding",
@@ -246,7 +249,7 @@ func readHanaAPISecret(config *hanaCheckConfig) (string, *auth.UAA, error) {
 		}
 	}
 	fmt.Println("done")
-	secret, err := config.kubeClient.Static().CoreV1().Secrets(config.namespace).Get(config.ctx, hanaBindingAPIName(config.name), metav1.GetOptions{})
+	secret, err := config.kubeClient.Static().CoreV1().Secrets(config.namespace).Get(config.Ctx, hanaBindingAPIName(config.name), metav1.GetOptions{})
 	if err != nil {
 		return "", nil, &clierror.Error{
 			Message: "failed to get secret",

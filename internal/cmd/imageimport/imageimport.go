@@ -1,26 +1,28 @@
 package imageimport
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"strings"
 
+	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/registry"
 	"github.com/spf13/cobra"
 )
 
 type provisionConfig struct {
-	ctx        context.Context
+	*cmdcommon.KymaConfig
 	kubeClient kube.Client
 
 	image      string
 	kubeconfig string
 }
 
-func NewImportCMD() *cobra.Command {
-	config := provisionConfig{}
+func NewImportCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
+	config := provisionConfig{
+		KymaConfig: kymaConfig,
+	}
 
 	cmd := &cobra.Command{
 		Use:   "image-import",
@@ -56,9 +58,6 @@ func (pc *provisionConfig) validate() error {
 func (pc *provisionConfig) complete(args []string) error {
 	pc.image = args[0]
 
-	// TODO: think about timeout and moving context to persistent `kyma` command configuration
-	pc.ctx = context.Background()
-
 	var err error
 	pc.kubeClient, err = kube.NewClient(pc.kubeconfig)
 
@@ -67,7 +66,7 @@ func (pc *provisionConfig) complete(args []string) error {
 
 func runImageImport(config *provisionConfig) error {
 	// TODO: Add "serverless is not installed" error message
-	registryConfig, err := registry.GetConfig(config.ctx, config.kubeClient.Static())
+	registryConfig, err := registry.GetConfig(config.Ctx, config.kubeClient.Static())
 	if err != nil {
 		return fmt.Errorf("failed to load in-cluster registry configuration: %s", err.Error())
 	}
@@ -76,7 +75,7 @@ func runImageImport(config *provisionConfig) error {
 		return errors.New("this command does not work for external docker registry")
 	}
 
-	workloadMeta, err := registry.GetWorkloadMeta(config.ctx, config.kubeClient.Static(), registryConfig)
+	workloadMeta, err := registry.GetWorkloadMeta(config.Ctx, config.kubeClient.Static(), registryConfig)
 	if err != nil {
 		return fmt.Errorf("failed to load in-cluster registry pod content: %s", err.Error())
 	}
@@ -84,7 +83,7 @@ func runImageImport(config *provisionConfig) error {
 	fmt.Println("Importing", config.image)
 
 	pushedImage, err := registry.ImportImage(
-		config.ctx,
+		config.Ctx,
 		config.image,
 		registry.ImportOptions{
 			ClusterAPIRestConfig: config.kubeClient.RestConfig(),

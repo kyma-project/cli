@@ -1,11 +1,11 @@
 package hana
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/kyma-project/cli.v3/internal/btp/operator"
 	"github.com/kyma-project/cli.v3/internal/clierror"
+	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -13,7 +13,7 @@ import (
 )
 
 type hanaProvisionConfig struct {
-	ctx        context.Context
+	*cmdcommon.KymaConfig
 	kubeClient kube.Client
 
 	kubeconfig  string
@@ -25,8 +25,10 @@ type hanaProvisionConfig struct {
 	whitelistIP []string
 }
 
-func NewHanaProvisionCMD() *cobra.Command {
-	config := hanaProvisionConfig{}
+func NewHanaProvisionCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
+	config := hanaProvisionConfig{
+		KymaConfig: kymaConfig,
+	}
 
 	cmd := &cobra.Command{
 		Use:   "provision",
@@ -56,9 +58,6 @@ func NewHanaProvisionCMD() *cobra.Command {
 }
 
 func (pc *hanaProvisionConfig) complete() error {
-	// TODO: think about timeout and moving context to persistent `kyma` command configuration
-	pc.ctx = context.Background()
-
 	var err error
 	pc.kubeClient, err = kube.NewClient(pc.kubeconfig)
 
@@ -89,21 +88,21 @@ func runProvision(config *hanaProvisionConfig) error {
 func createHanaInstance(config *hanaProvisionConfig) error {
 	_, err := config.kubeClient.Dynamic().Resource(operator.GVRServiceInstance).
 		Namespace(config.namespace).
-		Create(config.ctx, hanaInstance(config), metav1.CreateOptions{})
+		Create(config.Ctx, hanaInstance(config), metav1.CreateOptions{})
 	return handleProvisionResponse(err, "Hana instance", config.namespace, config.name)
 }
 
 func createHanaBinding(config *hanaProvisionConfig) error {
 	_, err := config.kubeClient.Dynamic().Resource(operator.GVRServiceBinding).
 		Namespace(config.namespace).
-		Create(config.ctx, hanaBinding(config), metav1.CreateOptions{})
+		Create(config.Ctx, hanaBinding(config), metav1.CreateOptions{})
 	return handleProvisionResponse(err, "Hana binding", config.namespace, config.name)
 }
 
 func createHanaBindingUrl(config *hanaProvisionConfig) error {
 	_, err := config.kubeClient.Dynamic().Resource(operator.GVRServiceBinding).
 		Namespace(config.namespace).
-		Create(config.ctx, hanaBindingUrl(config), metav1.CreateOptions{})
+		Create(config.Ctx, hanaBindingUrl(config), metav1.CreateOptions{})
 	return handleProvisionResponse(err, "Hana URL binding", config.namespace, hanaBindingUrlName(config.name))
 }
 
