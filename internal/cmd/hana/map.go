@@ -50,8 +50,8 @@ func NewMapHanaCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 var (
 	mapCommands = []func(config *hanaCheckConfig) error{
-		checkAndCreateHanaAPIInstance,
-		checkAndCreateHanaAPIBinding,
+		createHanaAPIInstanceIfNeeded,
+		createHanaAPIBindingIfNeeded,
 		createHanaInstanceMapping,
 	}
 )
@@ -68,7 +68,7 @@ func runMap(config *hanaCheckConfig) error {
 	return nil
 }
 
-func checkAndCreateHanaAPIInstance(config *hanaCheckConfig) error {
+func createHanaAPIInstanceIfNeeded(config *hanaCheckConfig) error {
 	// check if instance exists, skip API instance creation if it does
 	instance, err := kube.GetServiceInstance(config.KubeClient, config.Ctx, config.namespace, hanaBindingAPIName(config.name))
 	if err == nil && instance != nil {
@@ -78,7 +78,7 @@ func checkAndCreateHanaAPIInstance(config *hanaCheckConfig) error {
 	return createHanaAPIInstance(config)
 }
 
-func checkAndCreateHanaAPIBinding(config *hanaCheckConfig) error {
+func createHanaAPIBindingIfNeeded(config *hanaCheckConfig) error {
 	//check if binding exists, skip API binding creation if it does
 	instance, err := kube.GetServiceBinding(config.KubeClient, config.Ctx, config.namespace, hanaBindingAPIName(config.name))
 	if err == nil && instance != nil {
@@ -208,8 +208,10 @@ func getClusterID(config *hanaCheckConfig) (string, error) {
 func getHanaID(config *hanaCheckConfig) (string, error) {
 	// wait for until Hana instance is ready, for default setting it should take 5 minutes
 	fmt.Print("waiting for Hana instance to be ready... ")
-	err := wait.PollUntilContextTimeout(config.Ctx, 10*time.Second, config.timeout, true, kube.IsInstanceReady(config.KubeClient, config.Ctx, config.namespace, config.name))
+	instanceReadyCheck := kube.IsInstanceReady(config.KubeClient, config.Ctx, config.namespace, config.name)
+	err := wait.PollUntilContextTimeout(config.Ctx, 10*time.Second, config.timeout, true, instanceReadyCheck)
 	if err != nil {
+		fmt.Println("Failed")
 		return "", clierror.Wrap(err, &clierror.Error{
 			Message: "timeout while waiting for Hana instance to be ready",
 			Hints:   []string{"make sure the hana-cloud hana entitlement is enabled"},
@@ -239,8 +241,10 @@ func getHanaID(config *hanaCheckConfig) (string, error) {
 
 func readHanaAPISecret(config *hanaCheckConfig) (string, *auth.UAA, error) {
 	fmt.Print("waiting for Hana API instance to be ready... ")
-	err := wait.PollUntilContextTimeout(config.Ctx, 5*time.Second, 2*time.Minute, true, kube.IsInstanceReady(config.KubeClient, config.Ctx, config.namespace, hanaBindingAPIName(config.name)))
+	instanceReadyCheck := kube.IsInstanceReady(config.KubeClient, config.Ctx, config.namespace, hanaBindingAPIName(config.name))
+	err := wait.PollUntilContextTimeout(config.Ctx, 5*time.Second, 2*time.Minute, true, instanceReadyCheck)
 	if err != nil {
+		fmt.Println("Failed")
 		return "", nil, clierror.Wrap(err, &clierror.Error{
 			Message: "timeout while waiting for Hana API instance",
 			Hints:   []string{"make sure the hana-cloud admin-api-access entitlement is enabled"},
@@ -249,8 +253,10 @@ func readHanaAPISecret(config *hanaCheckConfig) (string, *auth.UAA, error) {
 	fmt.Println("done")
 
 	fmt.Print("waiting for Hana API binding to be ready... ")
-	err = wait.PollUntilContextTimeout(config.Ctx, 5*time.Second, 2*time.Minute, true, kube.IsBindingReady(config.KubeClient, config.Ctx, config.namespace, hanaBindingAPIName(config.name)))
+	bindingReadyCheck := kube.IsBindingReady(config.KubeClient, config.Ctx, config.namespace, hanaBindingAPIName(config.name))
+	err = wait.PollUntilContextTimeout(config.Ctx, 5*time.Second, 2*time.Minute, true, bindingReadyCheck)
 	if err != nil {
+		fmt.Println("Failed")
 		return "", nil, clierror.Wrap(err, &clierror.Error{
 			Message: "timeout while waiting for Hana API binding",
 			Details: err.Error(),
