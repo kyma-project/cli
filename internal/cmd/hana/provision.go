@@ -73,7 +73,7 @@ func runProvision(config *hanaProvisionConfig) error {
 		}
 	}
 	fmt.Println("Operation completed.")
-	fmt.Println("You may want to map Hana instance to use it inside the cluster: see the 'kyma hana map' command.")
+	fmt.Println("You may want to map the Hana instance to use it inside the cluster: see the 'kyma hana map' command.")
 	return nil
 }
 
