@@ -65,6 +65,7 @@ func runMap(config *hanaCheckConfig) error {
 	}
 
 	fmt.Println("Hana instance was succesfully mapped to the cluster")
+	fmt.Println("You may want to create a Hana HDI container: see how to do it under https://help.sap.com/docs/hana-cloud/sap-hana-cloud-getting-started-guide/set-up-hdi-container-kyma")
 	return nil
 }
 
