@@ -13,8 +13,6 @@ type KubeClientConfig struct {
 
 func (kcc *KubeClientConfig) AddFlag(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&kcc.Kubeconfig, "kubeconfig", "", "Path to the Kyma kubecongig file.")
-
-	_ = cmd.MarkFlagRequired("kubeconfig")
 }
 
 func (kcc *KubeClientConfig) Complete() error {
