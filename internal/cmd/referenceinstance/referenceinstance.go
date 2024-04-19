@@ -18,6 +18,7 @@ type referenceInstanceConfig struct {
 	labelSelector []string
 	nameSelector  string
 	planSelector  string
+	btpSecretName string
 }
 
 func NewReferenceInstanceCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
@@ -47,6 +48,7 @@ func NewReferenceInstanceCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().StringSliceVar(&config.labelSelector, "label-selector", nil, "Label selector for filtering instances.")
 	cmd.Flags().StringVar(&config.nameSelector, "name-selector", "", "Instance name selector for filtering instances.")
 	cmd.Flags().StringVar(&config.planSelector, "plan-selector", "", "Plan name selector for filtering instances.")
+	cmd.Flags().StringVar(&config.btpSecretName, "btp-secret-name", "", "name of the BTP secret containing credentials to another subaccount Service Manager:\nhttps://github.com/SAP/sap-btp-service-operator/blob/main/README.md#working-with-multiple-subaccounts")
 
 	// either instance id or selectors can be used
 	cmd.MarkFlagsOneRequired("instance-id", "label-selector", "name-selector", "plan-selector")
@@ -93,8 +95,9 @@ func fillRequestData(config referenceInstanceConfig) kube.ServiceInstance {
 					PlanNameSelector:      config.planSelector,
 				},
 			},
-			OfferingName: config.offeringName,
-			PlanName:     "reference-instance",
+			OfferingName:         config.offeringName,
+			PlanName:             "reference-instance",
+			BTPCredentialsSecret: config.btpSecretName,
 		},
 	}
 	return requestData
