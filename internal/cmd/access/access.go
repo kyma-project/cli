@@ -58,7 +58,7 @@ func runAccess(cfg *accessConfig) error {
 	// Create objects
 	err := createObjects(cfg)
 	if err != nil {
-		fmt.Sprintf("Error creating objects: %v", err)
+		fmt.Printf("Error creating objects: %v", err)
 		return err
 	}
 
@@ -152,7 +152,7 @@ func createObjects(cfg *accessConfig) error {
 			}},
 
 		RoleRef: rbacv1.RoleRef{
-			Kind: "ClusterRole",
+			Kind: "ClusterRoleBinding",
 			Name: cfg.clusterrole,
 		},
 	}
