@@ -7,6 +7,8 @@ import (
 	v1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/clientcmd/api"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -16,7 +18,6 @@ type accessConfig struct {
 
 	name        string
 	clusterrole string
-	kubeconfig  string
 	output      string
 	namespace   string
 }
@@ -44,7 +45,7 @@ func NewAccessCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().StringVar(&cfg.name, "name", "", "Name of the Service Account to be created")
 	cmd.Flags().StringVar(&cfg.clusterrole, "clusterrole", "", "Name of the cluster role to bind the Service Account")
 	//cmd.Flags().StringVar(&opts.kubeconfig, "kubeconfig", "", "Path to the kubeconfig file")
-	cmd.Flags().StringVar(&cfg.output, "output", "???", "Path to the output kubeconfig file")
+	cmd.Flags().StringVar(&cfg.output, "output", "enriched-kubeconfig.yaml", "Path to the output kubeconfig file")
 	cmd.Flags().StringVar(&cfg.namespace, "namespace", "default", "Namespace ")
 
 	_ = cmd.MarkFlagRequired("name")
@@ -60,8 +61,58 @@ func runAccess(cfg *accessConfig) error {
 		fmt.Printf("Error creating objects: %v", err)
 		return err
 	}
+	secret, err := cfg.KubeClient.Static().CoreV1().Secrets(cfg.namespace).Get(cfg.Ctx, cfg.name, metav1.GetOptions{})
+	if err != nil {
+		fmt.Printf("Error getting secret: %v", err)
+		return err
+	}
 
-	return err
+	// Get cluster name
+	currentCtx := cfg.KubeClient.ApiConfig().CurrentContext
+	clusterName := cfg.KubeClient.ApiConfig().Contexts[currentCtx].Cluster
+
+	// Create a new kubeconfig
+	enrichedKubeconfig := api.Config{
+		Kind:       "Config",
+		APIVersion: "v1",
+		Clusters: map[string]*api.Cluster{
+			clusterName: {
+				Server:                   cfg.KubeClient.ApiConfig().Clusters[clusterName].Server,
+				CertificateAuthorityData: secret.Data["ca.crt"],
+			},
+		},
+		AuthInfos: map[string]*api.AuthInfo{
+			cfg.name: {
+				Token: string(secret.Data["token"]),
+			},
+		},
+		Contexts: map[string]*api.Context{
+			currentCtx: {
+				Cluster:   clusterName,
+				Namespace: cfg.namespace,
+				AuthInfo:  cfg.name,
+			},
+		},
+		CurrentContext: currentCtx,
+		Extensions:     nil,
+	}
+
+	if cfg.output != "" {
+		err = clientcmd.WriteToFile(enrichedKubeconfig, cfg.output)
+		if err != nil {
+			fmt.Printf("Error writing kubeconfig: %v", err)
+			return err
+		}
+	} else {
+		message, err := clientcmd.Write(enrichedKubeconfig)
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(message))
+
+	}
+
+	return nil
 }
 
 func createObjects(cfg *accessConfig) error {
