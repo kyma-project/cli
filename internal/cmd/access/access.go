@@ -2,6 +2,7 @@ package access
 
 import (
 	"fmt"
+
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
@@ -61,18 +62,41 @@ func runAccess(cfg *accessConfig) error {
 		fmt.Printf("Error creating objects: %v", err)
 		return err
 	}
-	secret, err := cfg.KubeClient.Static().CoreV1().Secrets(cfg.namespace).Get(cfg.Ctx, cfg.name, metav1.GetOptions{})
+	enrichedKubeconfig, err := prepareKubeconfig(cfg)
 	if err != nil {
-		fmt.Printf("Error getting secret: %v", err)
 		return err
 	}
 
-	// Get cluster name
+	if cfg.output != "" {
+		err = clientcmd.WriteToFile(*enrichedKubeconfig, cfg.output)
+		if err != nil {
+			fmt.Printf("Error writing kubeconfig: %v", err)
+			return err
+		}
+	} else {
+		message, err := clientcmd.Write(*enrichedKubeconfig)
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(message))
+
+	}
+
+	return nil
+}
+
+func prepareKubeconfig(cfg *accessConfig) (*api.Config, error) {
+	secret, err := cfg.KubeClient.Static().CoreV1().Secrets(cfg.namespace).Get(cfg.Ctx, cfg.name, metav1.GetOptions{})
+	if err != nil {
+		fmt.Printf("Error getting secret: %v", err)
+		return nil, err
+	}
+
 	currentCtx := cfg.KubeClient.ApiConfig().CurrentContext
 	clusterName := cfg.KubeClient.ApiConfig().Contexts[currentCtx].Cluster
 
 	// Create a new kubeconfig
-	enrichedKubeconfig := api.Config{
+	kubeconfig := &api.Config{
 		Kind:       "Config",
 		APIVersion: "v1",
 		Clusters: map[string]*api.Cluster{
@@ -96,28 +120,34 @@ func runAccess(cfg *accessConfig) error {
 		CurrentContext: currentCtx,
 		Extensions:     nil,
 	}
+	return kubeconfig, nil
+}
 
-	if cfg.output != "" {
-		err = clientcmd.WriteToFile(enrichedKubeconfig, cfg.output)
-		if err != nil {
-			fmt.Printf("Error writing kubeconfig: %v", err)
-			return err
-		}
-	} else {
-		message, err := clientcmd.Write(enrichedKubeconfig)
-		if err != nil {
-			return err
-		}
-		fmt.Println(string(message))
+func createObjects(cfg *accessConfig) error {
+	err := createServiceAccount(cfg)
+	if err != nil {
+		return err
+	}
 
+	err = createSecret(cfg)
+	if err != nil {
+		return err
+	}
+
+	err = createClusterRole(cfg)
+	if err != nil {
+		return err
+	}
+
+	err = createClusterRoleBinding(cfg)
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func createObjects(cfg *accessConfig) error {
-
-	// Create ServiceAccount
+func createServiceAccount(cfg *accessConfig) error {
 	sa := v1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      cfg.name,
@@ -128,8 +158,10 @@ func createObjects(cfg *accessConfig) error {
 	if client.IgnoreNotFound(err) == nil {
 		return err
 	}
+	return nil
+}
 
-	// Create Secret
+func createSecret(cfg *accessConfig) error {
 	secret := v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      cfg.name,
@@ -140,12 +172,14 @@ func createObjects(cfg *accessConfig) error {
 		},
 		Type: v1.SecretTypeServiceAccountToken,
 	}
-	_, err = cfg.KubeClient.Static().CoreV1().Secrets(cfg.namespace).Create(cfg.Ctx, &secret, metav1.CreateOptions{})
+	_, err := cfg.KubeClient.Static().CoreV1().Secrets(cfg.namespace).Create(cfg.Ctx, &secret, metav1.CreateOptions{})
 	if client.IgnoreNotFound(err) == nil {
 		return err
 	}
+	return nil
+}
 
-	// Create ClusterRole
+func createClusterRole(cfg *accessConfig) error {
 	cRole := rbacv1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      cfg.clusterrole,
@@ -159,12 +193,14 @@ func createObjects(cfg *accessConfig) error {
 			},
 		},
 	}
-	_, err = cfg.KubeClient.Static().RbacV1().ClusterRoles().Create(cfg.Ctx, &cRole, metav1.CreateOptions{})
+	_, err := cfg.KubeClient.Static().RbacV1().ClusterRoles().Create(cfg.Ctx, &cRole, metav1.CreateOptions{})
 	if client.IgnoreNotFound(err) == nil {
 		return err
 	}
+	return nil
+}
 
-	// Create ClusterRoleBinding
+func createClusterRoleBinding(cfg *accessConfig) error {
 	cRoleBinding := rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      cfg.name,
@@ -182,10 +218,9 @@ func createObjects(cfg *accessConfig) error {
 			Name: cfg.clusterrole,
 		},
 	}
-	_, err = cfg.KubeClient.Static().RbacV1().ClusterRoleBindings().Create(cfg.Ctx, &cRoleBinding, metav1.CreateOptions{})
+	_, err := cfg.KubeClient.Static().RbacV1().ClusterRoleBindings().Create(cfg.Ctx, &cRoleBinding, metav1.CreateOptions{})
 	if client.IgnoreNotFound(err) == nil {
 		return err
 	}
-
 	return nil
 }
