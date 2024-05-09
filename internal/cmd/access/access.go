@@ -3,12 +3,11 @@ package access
 import (
 	"fmt"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
-	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type accessConfig struct {
@@ -74,16 +73,8 @@ func createObjects(cfg *accessConfig) error {
 			Namespace: cfg.namespace,
 		},
 	}
-	unstructuredSA, err := kube.ToUnstructured(sa, v1.SchemeGroupVersion.WithKind("ServiceAccount"))
-	if err != nil {
-		return err
-	}
-	_, err = cfg.KubeClient.Dynamic().Resource(schema.GroupVersionResource{
-		Group:    "",
-		Version:  "v1",
-		Resource: "ServiceAccount",
-	}).Namespace("default").Create(cfg.Ctx, unstructuredSA, metav1.CreateOptions{})
-	if err != nil {
+	_, err := cfg.KubeClient.Static().CoreV1().ServiceAccounts(cfg.namespace).Create(cfg.Ctx, &sa, metav1.CreateOptions{})
+	if client.IgnoreNotFound(err) == nil {
 		return err
 	}
 
@@ -98,16 +89,8 @@ func createObjects(cfg *accessConfig) error {
 		},
 		Type: v1.SecretTypeServiceAccountToken,
 	}
-	unstructuredSecret, err := kube.ToUnstructured(secret, v1.SchemeGroupVersion.WithKind("Secret"))
-	if err != nil {
-		return err
-	}
-	_, err = cfg.KubeClient.Dynamic().Resource(schema.GroupVersionResource{
-		Group:    "",
-		Version:  "v1",
-		Resource: "Secret",
-	}).Namespace("default").Create(cfg.Ctx, unstructuredSecret, metav1.CreateOptions{})
-	if err != nil {
+	_, err = cfg.KubeClient.Static().CoreV1().Secrets(cfg.namespace).Create(cfg.Ctx, &secret, metav1.CreateOptions{})
+	if client.IgnoreNotFound(err) == nil {
 		return err
 	}
 
@@ -125,16 +108,8 @@ func createObjects(cfg *accessConfig) error {
 			},
 		},
 	}
-	unstructuredCRole, err := kube.ToUnstructured(cRole, rbacv1.SchemeGroupVersion.WithKind("ClusterRole"))
-	if err != nil {
-		return err
-	}
-	_, err = cfg.KubeClient.Dynamic().Resource(schema.GroupVersionResource{
-		Group:    "rbac.authorization.k8s.io",
-		Version:  "v1",
-		Resource: "ClusterRole",
-	}).Namespace("default").Create(cfg.Ctx, unstructuredCRole, metav1.CreateOptions{})
-	if err != nil {
+	_, err = cfg.KubeClient.Static().RbacV1().ClusterRoles().Create(cfg.Ctx, &cRole, metav1.CreateOptions{})
+	if client.IgnoreNotFound(err) == nil {
 		return err
 	}
 
@@ -152,20 +127,12 @@ func createObjects(cfg *accessConfig) error {
 			}},
 
 		RoleRef: rbacv1.RoleRef{
-			Kind: "ClusterRoleBinding",
+			Kind: "ClusterRole",
 			Name: cfg.clusterrole,
 		},
 	}
-	unstructuredCRoleBinding, err := kube.ToUnstructured(cRoleBinding, rbacv1.SchemeGroupVersion.WithKind("ClusterRoleBinding"))
-	if err != nil {
-		return err
-	}
-	_, err = cfg.KubeClient.Dynamic().Resource(schema.GroupVersionResource{
-		Group:    "rbac.authorization.k8s.io",
-		Version:  "v1",
-		Resource: "ClusterRoleBinding",
-	}).Namespace("default").Create(cfg.Ctx, unstructuredCRoleBinding, metav1.CreateOptions{})
-	if err != nil {
+	_, err = cfg.KubeClient.Static().RbacV1().ClusterRoleBindings().Create(cfg.Ctx, &cRoleBinding, metav1.CreateOptions{})
+	if client.IgnoreNotFound(err) == nil {
 		return err
 	}
 
