@@ -45,8 +45,7 @@ func NewAccessCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cmd.Flags().StringVar(&cfg.name, "name", "", "Name of the Service Account to be created")
 	cmd.Flags().StringVar(&cfg.clusterrole, "clusterrole", "", "Name of the cluster role to bind the Service Account")
-	//cmd.Flags().StringVar(&opts.kubeconfig, "kubeconfig", "", "Path to the kubeconfig file")
-	cmd.Flags().StringVar(&cfg.output, "output", "enriched-kubeconfig.yaml", "Path to the output kubeconfig file")
+	cmd.Flags().StringVar(&cfg.output, "output", "", "Path to the output kubeconfig file")
 	cmd.Flags().StringVar(&cfg.namespace, "namespace", "default", "Namespace ")
 
 	_ = cmd.MarkFlagRequired("name")
@@ -69,6 +68,7 @@ func runAccess(cfg *accessConfig) error {
 
 	if cfg.output != "" {
 		err = clientcmd.WriteToFile(*enrichedKubeconfig, cfg.output)
+		println("Kubeconfig saved to: " + cfg.output)
 		if err != nil {
 			fmt.Printf("Error writing kubeconfig: %v", err)
 			return err
@@ -203,7 +203,7 @@ func createClusterRole(cfg *accessConfig) error {
 func createClusterRoleBinding(cfg *accessConfig) error {
 	cRoleBinding := rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      cfg.name,
+			Name:      cfg.clusterrole + "-binding",
 			Namespace: cfg.namespace,
 		},
 		Subjects: []rbacv1.Subject{
