@@ -188,7 +188,7 @@ func createClusterRole(cfg *accessConfig) error {
 		Rules: []rbacv1.PolicyRule{
 			{
 				APIGroups: []string{"", "extensions", "batch", "apps", "gateway.kyma-project.io", "servicecatalog.k8s.io"},
-				Resources: []string{"deployments", "replicaset", "pods", "jobs", "configmaps", "apirules", "serviceinstances", "servicebindings", "services", "secrets"},
+				Resources: []string{"deployments", "replicasets", "pods", "jobs", "configmaps", "apirules", "serviceinstances", "servicebindings", "services", "secrets"},
 				Verbs:     []string{"create", "update", "patch", "delete", "get", "list"},
 			},
 		},
