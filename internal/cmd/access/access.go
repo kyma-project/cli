@@ -32,7 +32,7 @@ func NewAccessCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "access",
 		Short: "Enrich kubeconfig with access",
-		Long:  "xxxxxx",
+		Long:  "Enrich kubeconfig with Service Account based token and certificate",
 		PreRunE: func(_ *cobra.Command, args []string) error {
 			return cfg.KubeClientConfig.Complete()
 		},
