@@ -51,3 +51,8 @@ func ToUnstructured(requestData interface{}, gvk schema.GroupVersionKind) (*unst
 
 	return unstructuredObj, nil
 }
+
+// FromUnstructured converts the given Unstructured object to the given object
+func FromUnstructured(u *unstructured.Unstructured, obj interface{}) error {
+	return runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, obj)
+}

@@ -1,7 +1,6 @@
 package imageimport
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
@@ -62,18 +61,9 @@ func (pc *provisionConfig) complete(args []string) error {
 
 func runImageImport(config *provisionConfig) error {
 	// TODO: Add "serverless is not installed" error message
-	registryConfig, err := registry.GetConfig(config.Ctx, config.KubeClient.Static())
+	registryConfig, err := registry.GetConfig(config.Ctx, config.KubeClient)
 	if err != nil {
 		return fmt.Errorf("failed to load in-cluster registry configuration: %s", err.Error())
-	}
-
-	if !registryConfig.IsInternal {
-		return errors.New("this command does not work for external docker registry")
-	}
-
-	workloadMeta, err := registry.GetWorkloadMeta(config.Ctx, config.KubeClient.Static(), registryConfig)
-	if err != nil {
-		return fmt.Errorf("failed to load in-cluster registry pod content: %s", err.Error())
 	}
 
 	fmt.Println("Importing", config.image)
@@ -83,11 +73,11 @@ func runImageImport(config *provisionConfig) error {
 		config.image,
 		registry.ImportOptions{
 			ClusterAPIRestConfig: config.KubeClient.RestConfig(),
-			RegistryAuth:         registry.NewBasicAuth(registryConfig.Username, registryConfig.Password),
-			RegistryPullHost:     registryConfig.PullRegAddr,
-			RegistryPodName:      workloadMeta.Name,
-			RegistryPodNamespace: workloadMeta.Namespace,
-			RegistryPodPort:      workloadMeta.Port,
+			RegistryAuth:         registry.NewBasicAuth(registryConfig.SecretData.Username, registryConfig.SecretData.Password),
+			RegistryPullHost:     registryConfig.SecretData.PullRegAddr,
+			RegistryPodName:      registryConfig.PodMeta.Name,
+			RegistryPodNamespace: registryConfig.PodMeta.Namespace,
+			RegistryPodPort:      registryConfig.PodMeta.Port,
 		},
 	)
 	if err != nil {
@@ -95,8 +85,8 @@ func runImageImport(config *provisionConfig) error {
 	}
 
 	fmt.Println("\nSuccessfully imported image")
-	fmt.Printf("Use it as '%s' and use the %s secret.\n", registry.RegistrySecretName, pushedImage)
-	fmt.Printf("\nExample usage:\nkubectl run my-pod --image=%s --overrides='{ \"spec\": { \"imagePullSecrets\": [ { \"name\": \"%s\" } ] } }'\n", pushedImage, registry.RegistrySecretName)
+	fmt.Printf("Use it as '%s' and use the %s secret.\n", pushedImage, registryConfig.SecretName)
+	fmt.Printf("\nExample usage:\nkubectl run my-pod --image=%s --overrides='{ \"spec\": { \"imagePullSecrets\": [ { \"name\": \"%s\" } ] } }'\n", pushedImage, registryConfig.SecretName)
 
 	return nil
 }
