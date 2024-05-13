@@ -13,11 +13,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-const (
-	LegacyRegistrySecretName  = "serverless-registry-config-default"
-	LegacyServerlessNamespace = "kyma-system"
-)
-
 type RegistryConfig struct {
 	SecretName string
 	SecretData *SecretData
@@ -25,31 +20,14 @@ type RegistryConfig struct {
 }
 
 func GetConfig(ctx context.Context, client kube.Client) (*RegistryConfig, error) {
-	var secretConfig *SecretData
-	var secretName string
-
-	dockerRegistry, err := getServedDockerRegistry(ctx, client.Dynamic())
+	dockerRegistry, err := getDockerRegistry(ctx, client.Dynamic())
 	if err != nil {
-		// check if is serverless with enableInternal flag installed
-		secretName = LegacyRegistrySecretName
-		var legacySecretErr error
-		secretConfig, legacySecretErr = getRegistrySecretData(ctx, client.Static(), LegacyRegistrySecretName, LegacyServerlessNamespace)
-		if legacySecretErr != nil {
-			// return base error if legacy secret is found
-			// to not inform user about possible support for legacy solution
-			return nil, err
-		}
-	} else {
-		// get secret based on docker registry
-		secretName = dockerRegistry.Status.SecretName
-		if dockerRegistry.Status.State != "Ready" && dockerRegistry.Status.State != "Warning" {
-			return nil, fmt.Errorf("docker registry is in %s state", dockerRegistry.Status.State)
-		}
+		return nil, err
+	}
 
-		secretConfig, err = getRegistrySecretData(ctx, client.Static(), dockerRegistry.Status.SecretName, dockerRegistry.GetNamespace())
-		if err != nil {
-			return nil, err
-		}
+	secretConfig, err := getRegistrySecretData(ctx, client.Static(), dockerRegistry.Status.SecretName, dockerRegistry.GetNamespace())
+	if err != nil {
+		return nil, err
 	}
 
 	podMeta, err := getWorkloadMeta(ctx, client.Static(), secretConfig)
@@ -58,7 +36,7 @@ func GetConfig(ctx context.Context, client kube.Client) (*RegistryConfig, error)
 	}
 
 	return &RegistryConfig{
-		SecretName: secretName,
+		SecretName: dockerRegistry.Status.SecretName,
 		SecretData: secretConfig,
 		PodMeta:    podMeta,
 	}, nil
@@ -155,7 +133,7 @@ func isPodReady(pod corev1.Pod) bool {
 	return false
 }
 
-func getServedDockerRegistry(ctx context.Context, c dynamic.Interface) (*DockerRegistry, error) {
+func getDockerRegistry(ctx context.Context, c dynamic.Interface) (*DockerRegistry, error) {
 	list, err := c.Resource(DockerRegistryGVR).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
@@ -168,10 +146,10 @@ func getServedDockerRegistry(ctx context.Context, c dynamic.Interface) (*DockerR
 			return nil, err
 		}
 
-		if dockerRegistry.Status.Served == "True" {
+		if dockerRegistry.Status.State == "Ready" || dockerRegistry.Status.State == "Warning" {
 			return &dockerRegistry, nil
 		}
 	}
 
-	return nil, errors.New("no served docker registry found")
+	return nil, errors.New("no installed docker registry found")
 }
