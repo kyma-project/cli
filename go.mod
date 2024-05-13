@@ -1,8 +1,6 @@
 module github.com/kyma-project/cli.v3
 
-go 1.22.0
-
-toolchain go1.22.2
+go 1.22.2
 
 require (
 	github.com/gboddin/go-www-authenticate-parser v0.0.0-20230926203616-ec0b649bb077
