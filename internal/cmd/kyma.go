@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"github.com/kyma-project/cli.v3/internal/cmd/access"
 
 	"github.com/kyma-project/cli.v3/internal/cmd/hana"
 	"github.com/kyma-project/cli.v3/internal/cmd/imageimport"
@@ -34,6 +35,7 @@ func NewKymaCMD() *cobra.Command {
 	cmd.AddCommand(imageimport.NewImportCMD(config))
 	cmd.AddCommand(provision.NewProvisionCMD())
 	cmd.AddCommand(referenceinstance.NewReferenceInstanceCMD(config))
+	cmd.AddCommand(access.NewAccessCMD(config))
 
 	return cmd
 }
