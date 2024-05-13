@@ -4,21 +4,20 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-
-	"github.com/stretchr/testify/require"
 	"k8s.io/client-go/kubernetes/fake"
 )
 
-func TestGetConfig(t *testing.T) {
+func Test_getRegistrySecretConfig(t *testing.T) {
 	t.Run("Should return the RegistryConfig", func(t *testing.T) {
 		// given
 		client := fake.NewSimpleClientset(&corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      RegistrySecretName,
-				Namespace: serverlessNamespace,
+				Name:      "test-secret",
+				Namespace: "test-namespace",
 			},
 			Data: map[string][]byte{
 				".dockerconfigjson": []byte(`{"auths": {}}`),
@@ -26,20 +25,18 @@ func TestGetConfig(t *testing.T) {
 				"password":          []byte("testPassword"),
 				"pullRegAddr":       []byte("pullRegAddr"),
 				"pushRegAddr":       []byte("pushRegAddr"),
-				"isInternal":        []byte("true"),
 			},
 		})
-		expectedRegistryConfig := &RegistryConfig{
+		expectedRegistryConfig := &SecretData{
 			DockerConfigJson: `{"auths": {}}`,
 			Username:         "testUsername",
 			Password:         "testPassword",
 			PullRegAddr:      "pullRegAddr",
 			PushRegAddr:      "pushRegAddr",
-			IsInternal:       true,
 		}
 
 		// when
-		config, err := GetConfig(context.Background(), client)
+		config, err := getRegistrySecretData(context.Background(), client, "test-secret", "test-namespace")
 
 		// then
 		require.NoError(t, err)
@@ -49,10 +46,10 @@ func TestGetConfig(t *testing.T) {
 	t.Run("Should return an error when the secret does not exist", func(t *testing.T) {
 		// given
 		client := fake.NewSimpleClientset()
-		expectedErrorMsg := "secrets \"serverless-registry-config-default\" not found"
+		expectedErrorMsg := "secrets \"test-secret\" not found"
 
 		// when
-		config, err := GetConfig(context.Background(), client)
+		config, err := getRegistrySecretData(context.Background(), client, "test-secret", "test-namespace")
 
 		// then
 		require.Error(t, err)
@@ -61,7 +58,7 @@ func TestGetConfig(t *testing.T) {
 	})
 }
 
-func TestGetWorkloadMeta(t *testing.T) {
+func Test_getWorkloadMeta(t *testing.T) {
 	t.Run("Should return the RegistryPodMeta", func(t *testing.T) {
 		// given
 		client := fake.NewSimpleClientset(&corev1.Service{
@@ -96,7 +93,7 @@ func TestGetWorkloadMeta(t *testing.T) {
 				},
 			},
 		})
-		config := &RegistryConfig{
+		config := &SecretData{
 			PushRegAddr: "serverless-docker-registry.kyma-system.svc.cluster.local:5000",
 		}
 		expectedRegistryPodMeta := &RegistryPodMeta{
@@ -106,7 +103,7 @@ func TestGetWorkloadMeta(t *testing.T) {
 		}
 
 		// when
-		meta, err := GetWorkloadMeta(context.Background(), client, config)
+		meta, err := getWorkloadMeta(context.Background(), client, config)
 
 		// then
 		require.NoError(t, err)
@@ -130,16 +127,20 @@ func TestGetWorkloadMeta(t *testing.T) {
 				},
 			},
 		})
-		config := &RegistryConfig{
+		config := &SecretData{
 			PushRegAddr: "serverless-docker-registry.kyma-system.svc.cluster.local:5000",
 		}
 
 		// when
-		meta, err := GetWorkloadMeta(context.Background(), client, config)
+		meta, err := getWorkloadMeta(context.Background(), client, config)
 
 		// then
 		require.Error(t, err)
 		require.Nil(t, meta)
 		require.Contains(t, err.Error(), "no ready registry pod found")
 	})
+}
+
+func TestGetConfig(t *testing.T) {
+	// TODO: Add test cases in next PR.
 }
