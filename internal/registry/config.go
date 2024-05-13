@@ -4,47 +4,87 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
 	"strings"
 
+	"github.com/kyma-project/cli.v3/internal/kube"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 )
 
 const (
-	RegistrySecretName  = "serverless-registry-config-default"
-	serverlessNamespace = "kyma-system"
+	LegacyRegistrySecretName  = "serverless-registry-config-default"
+	LegacyServerlessNamespace = "kyma-system"
 )
 
 type RegistryConfig struct {
-	DockerConfigJson string
-	Username         string
-	Password         string
-	PullRegAddr      string
-	PushRegAddr      string
-	IsInternal       bool
+	SecretName string
+	SecretData *SecretData
+	PodMeta    *RegistryPodMeta
 }
 
-func GetConfig(ctx context.Context, client kubernetes.Interface) (*RegistryConfig, error) {
-	registrySecret, err := client.CoreV1().Secrets(serverlessNamespace).
-		Get(ctx, RegistrySecretName, metav1.GetOptions{})
+func GetConfig(ctx context.Context, client kube.Client) (*RegistryConfig, error) {
+	var secretConfig *SecretData
+	var secretName string
+
+	dockerRegistry, err := getServedDockerRegistry(ctx, client.Dynamic())
 	if err != nil {
-		return nil, err
+		// check if is serverless with enableInternal flag installed
+		secretName = LegacyRegistrySecretName
+		var legacySecretErr error
+		secretConfig, legacySecretErr = getRegistrySecretData(ctx, client.Static(), LegacyRegistrySecretName, LegacyServerlessNamespace)
+		if legacySecretErr != nil {
+			// return base error if legacy secret is found
+			// to not inform user about possible support for legacy solution
+			return nil, err
+		}
+	} else {
+		// get secret based on docker registry
+		secretName = dockerRegistry.Status.SecretName
+		if dockerRegistry.Status.State != "Ready" && dockerRegistry.Status.State != "Warning" {
+			return nil, fmt.Errorf("docker registry is in %s state", dockerRegistry.Status.State)
+		}
+
+		secretConfig, err = getRegistrySecretData(ctx, client.Static(), dockerRegistry.Status.SecretName, dockerRegistry.GetNamespace())
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	isInternal, err := strconv.ParseBool(string(registrySecret.Data["isInternal"]))
+	podMeta, err := getWorkloadMeta(ctx, client.Static(), secretConfig)
 	if err != nil {
 		return nil, err
 	}
 
 	return &RegistryConfig{
+		SecretName: secretName,
+		SecretData: secretConfig,
+		PodMeta:    podMeta,
+	}, nil
+}
+
+type SecretData struct {
+	DockerConfigJson string
+	Username         string
+	Password         string
+	PullRegAddr      string
+	PushRegAddr      string
+}
+
+func getRegistrySecretData(ctx context.Context, client kubernetes.Interface, secretName, secretNamespace string) (*SecretData, error) {
+	registrySecret, err := client.CoreV1().Secrets(secretNamespace).
+		Get(ctx, secretName, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	return &SecretData{
 		DockerConfigJson: string(registrySecret.Data[".dockerconfigjson"]),
 		Username:         string(registrySecret.Data["username"]),
 		Password:         string(registrySecret.Data["password"]),
 		PullRegAddr:      string(registrySecret.Data["pullRegAddr"]),
 		PushRegAddr:      string(registrySecret.Data["pushRegAddr"]),
-		IsInternal:       isInternal,
 	}, nil
 }
 
@@ -54,7 +94,7 @@ type RegistryPodMeta struct {
 	Port      string
 }
 
-func GetWorkloadMeta(ctx context.Context, client kubernetes.Interface, config *RegistryConfig) (*RegistryPodMeta, error) {
+func getWorkloadMeta(ctx context.Context, client kubernetes.Interface, config *SecretData) (*RegistryPodMeta, error) {
 	// expected pushRegAddr format - serverless-docker-registry.kyma-system.svc.cluster.local:5000
 	hostPort := strings.Split(config.PushRegAddr, ":")
 
@@ -113,4 +153,25 @@ func isPodReady(pod corev1.Pod) bool {
 	}
 
 	return false
+}
+
+func getServedDockerRegistry(ctx context.Context, c dynamic.Interface) (*DockerRegistry, error) {
+	list, err := c.Resource(DockerRegistryGVR).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, item := range list.Items {
+		var dockerRegistry DockerRegistry
+		err = kube.FromUnstructured(&item, &dockerRegistry)
+		if err != nil {
+			return nil, err
+		}
+
+		if dockerRegistry.Status.Served == "True" {
+			return &dockerRegistry, nil
+		}
+	}
+
+	return nil, errors.New("no served docker registry found")
 }
