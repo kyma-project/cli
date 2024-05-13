@@ -2,6 +2,7 @@ package access
 
 import (
 	"fmt"
+	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/spf13/cobra"
@@ -10,7 +11,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type accessConfig struct {
@@ -46,7 +46,7 @@ func NewAccessCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().StringVar(&cfg.name, "name", "", "Name of the Service Account to be created")
 	cmd.Flags().StringVar(&cfg.clusterrole, "clusterrole", "", "Name of the cluster role to bind the Service Account")
 	cmd.Flags().StringVar(&cfg.output, "output", "", "Path to the output kubeconfig file")
-	cmd.Flags().StringVar(&cfg.namespace, "namespace", "default", "Namespace ")
+	cmd.Flags().StringVar(&cfg.namespace, "namespace", "default", "Namespace to create the resources in")
 
 	_ = cmd.MarkFlagRequired("name")
 	_ = cmd.MarkFlagRequired("clusterrole")
@@ -155,7 +155,7 @@ func createServiceAccount(cfg *accessConfig) error {
 		},
 	}
 	_, err := cfg.KubeClient.Static().CoreV1().ServiceAccounts(cfg.namespace).Create(cfg.Ctx, &sa, metav1.CreateOptions{})
-	if client.IgnoreNotFound(err) == nil {
+	if errors.IsAlreadyExists(err) != true {
 		return err
 	}
 	return nil
@@ -173,7 +173,7 @@ func createSecret(cfg *accessConfig) error {
 		Type: v1.SecretTypeServiceAccountToken,
 	}
 	_, err := cfg.KubeClient.Static().CoreV1().Secrets(cfg.namespace).Create(cfg.Ctx, &secret, metav1.CreateOptions{})
-	if client.IgnoreNotFound(err) == nil {
+	if errors.IsAlreadyExists(err) != true {
 		return err
 	}
 	return nil
@@ -194,7 +194,7 @@ func createClusterRole(cfg *accessConfig) error {
 		},
 	}
 	_, err := cfg.KubeClient.Static().RbacV1().ClusterRoles().Create(cfg.Ctx, &cRole, metav1.CreateOptions{})
-	if client.IgnoreNotFound(err) == nil {
+	if errors.IsAlreadyExists(err) != true {
 		return err
 	}
 	return nil
@@ -219,7 +219,7 @@ func createClusterRoleBinding(cfg *accessConfig) error {
 		},
 	}
 	_, err := cfg.KubeClient.Static().RbacV1().ClusterRoleBindings().Create(cfg.Ctx, &cRoleBinding, metav1.CreateOptions{})
-	if client.IgnoreNotFound(err) == nil {
+	if errors.IsAlreadyExists(err) != true {
 		return err
 	}
 	return nil
