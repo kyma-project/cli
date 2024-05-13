@@ -2,6 +2,7 @@ package access
 
 import (
 	"fmt"
+	"github.com/kyma-project/cli.v3/internal/clierror"
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
@@ -156,7 +157,10 @@ func createServiceAccount(cfg *accessConfig) error {
 	}
 	_, err := cfg.KubeClient.Static().CoreV1().ServiceAccounts(cfg.namespace).Create(cfg.Ctx, &sa, metav1.CreateOptions{})
 	if errors.IsAlreadyExists(err) != true {
-		return err
+		return &clierror.Error{
+			Message: "failed to create ServiceAccount",
+			Details: err.Error(),
+		}
 	}
 	return nil
 }
@@ -174,7 +178,10 @@ func createSecret(cfg *accessConfig) error {
 	}
 	_, err := cfg.KubeClient.Static().CoreV1().Secrets(cfg.namespace).Create(cfg.Ctx, &secret, metav1.CreateOptions{})
 	if errors.IsAlreadyExists(err) != true {
-		return err
+		return &clierror.Error{
+			Message: "failed to create Secret",
+			Details: err.Error(),
+		}
 	}
 	return nil
 }
@@ -195,7 +202,10 @@ func createClusterRole(cfg *accessConfig) error {
 	}
 	_, err := cfg.KubeClient.Static().RbacV1().ClusterRoles().Create(cfg.Ctx, &cRole, metav1.CreateOptions{})
 	if errors.IsAlreadyExists(err) != true {
-		return err
+		return &clierror.Error{
+			Message: "failed to create ClusterRole",
+			Details: err.Error(),
+		}
 	}
 	return nil
 }
@@ -220,7 +230,10 @@ func createClusterRoleBinding(cfg *accessConfig) error {
 	}
 	_, err := cfg.KubeClient.Static().RbacV1().ClusterRoleBindings().Create(cfg.Ctx, &cRoleBinding, metav1.CreateOptions{})
 	if errors.IsAlreadyExists(err) != true {
-		return err
+		return &clierror.Error{
+			Message: "failed to create ClusterRoleBinding",
+			Details: err.Error(),
+		}
 	}
 	return nil
 }
