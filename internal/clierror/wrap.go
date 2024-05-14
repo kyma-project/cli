@@ -1,13 +1,9 @@
 package clierror
 
-func Wrap(inside error, outside *Error) error {
-	if err, ok := inside.(*Error); ok {
-		return err.wrap(outside)
-	} else {
-		return &Error{
-			Message: outside.Message,
-			Details: wrapDetails(outside.Details, inside.Error()),
-			Hints:   outside.Hints,
-		}
+func Wrap(inside error, modifiers ...modifier) error {
+	if err, ok := inside.(*clierror); ok {
+		return err.wrap(New(modifiers...))
 	}
+
+	return New(Message(inside.Error())).wrap(New(modifiers...))
 }

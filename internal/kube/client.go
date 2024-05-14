@@ -28,12 +28,10 @@ type client struct {
 func NewClient(kubeconfig string) (Client, error) {
 	client, err := newClient(kubeconfig)
 	if err != nil {
-		return nil, clierror.Wrap(err, &clierror.Error{
-			Message: "failed to initialise kubernetes client",
-			Hints: []string{
-				"Make sure that kubeconfig is proper.",
-			},
-		})
+		return nil, clierror.Wrap(err,
+			clierror.Message("failed to initialise kubernetes client"),
+			clierror.Hints("Make sure that kubeconfig is proper."),
+		)
 	}
 	return client, nil
 }

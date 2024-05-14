@@ -51,7 +51,7 @@ func runProvision(config *provisionConfig) error {
 	// TODO: is the credentials a good name for this field? it contains much more than credentials only
 	credentials, err := auth.LoadCISCredentials(config.credentialsPath)
 	if err != nil {
-		return clierror.Wrap(err, &clierror.Error{Message: "failed to load credentials"})
+		return clierror.Wrap(err, clierror.Message("failed to load credentials"))
 	}
 
 	token, err := auth.GetOAuthToken(
@@ -61,15 +61,15 @@ func runProvision(config *provisionConfig) error {
 		credentials.UAA.ClientSecret,
 	)
 	if err != nil {
-		hints := []string{}
+		var hints []string
 		if strings.Contains(err.Error(), "Internal Server Error") {
 			hints = append(hints, "check if CIS grant type is set to client credentials")
 		}
 
-		return clierror.Wrap(err, &clierror.Error{
-			Message: "failed to get access token",
-			Hints:   hints,
-		})
+		return clierror.Wrap(err,
+			clierror.Message("failed to get access token"),
+			clierror.Hints(hints...),
+		)
 	}
 
 	// TODO: maybe we should pass only credentials.Endpoints?
@@ -87,7 +87,7 @@ func runProvision(config *provisionConfig) error {
 	}
 	response, err := localCISClient.Provision(ProvisionEnvironment)
 	if err != nil {
-		return clierror.Wrap(err, &clierror.Error{Message: "failed to provision kyma runtime"})
+		return clierror.Wrap(err, clierror.Message("failed to provision kyma runtime"))
 	}
 
 	fmt.Printf("Kyma environment provisioning, environment name: '%s', id: '%s'\n", response.Name, response.ID)

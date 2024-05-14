@@ -2,6 +2,7 @@ package auth
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -54,11 +55,11 @@ func TestGetOAuthToken(t *testing.T) {
 				},
 			},
 			want: nil,
-			expectedErr: &clierror.Error{
-				Message: "failed to build request",
-				Details: "parse \"?\\n?/oauth/token\": net/url: invalid control character in URL",
-				Hints:   []string{"Make sure the server URL in the config is correct."},
-			},
+			expectedErr: clierror.Wrap(
+				errors.New("parse \"?\\n?/oauth/token\": net/url: invalid control character in URL"),
+				clierror.Message("failed to build request"),
+				clierror.Hints("Make sure the server URL in the config is correct."),
+			),
 		},
 		{
 			name: "Wrong URL",
@@ -68,10 +69,10 @@ func TestGetOAuthToken(t *testing.T) {
 				},
 			},
 			want: nil,
-			expectedErr: &clierror.Error{
-				Message: "failed to get token from server",
-				Details: "Post \"http://doesnotexist/oauth/token\": dial tcp: lookup doesnotexist: no such host",
-			},
+			expectedErr: clierror.Wrap(
+				errors.New("Post \"http://doesnotexist/oauth/token\": dial tcp: lookup doesnotexist: no such host"),
+				clierror.Message("failed to get token from server"),
+			),
 		},
 		{
 			name: "Error response",
@@ -81,10 +82,10 @@ func TestGetOAuthToken(t *testing.T) {
 				},
 			},
 			want: nil,
-			expectedErr: &clierror.Error{
-				Message: "error response: 401 Unauthorized",
-				Details: "description",
-			},
+			expectedErr: clierror.Wrap(
+				errors.New("description"),
+				clierror.Message("error response: 401 Unauthorized"),
+			),
 		},
 	}
 	for _, tt := range tests {
