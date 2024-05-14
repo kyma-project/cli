@@ -1,0 +1,26 @@
+# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  - package-ecosystem: "gomod"
+    directory: "/"
+    labels:
+      - "area/dependency"
+      - "kind/chore"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "gomod"
+      include: "scope"
+    ignore:
+      # ignore minor k8s updates, e.g. 1.27.x -> 1.28.x
+      - dependency-name: "k8s.io/*"
+        update-types: ["version-update:semver-minor"]
+      - dependency-name: "sigs.k8s.io/*"
+        update-types: ["version-update:semver-minor"]
+      - dependency-name: "helm.sh/helm/v3"
+        update-types: ["version-update:semver-minor"]
+    groups:
+      k8s-io:
+        patterns:
+          - "k8s.io/*"
