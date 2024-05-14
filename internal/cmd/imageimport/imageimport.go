@@ -82,7 +82,7 @@ func runImageImport(config *provisionConfig) error {
 		},
 	)
 	if err != nil {
-		return clierror.Wrap(err, &clierror.Error{Message: "faile to import image to in-cluster registry"})
+		return clierror.Wrap(err, &clierror.Error{Message: "failed to import image to in-cluster registry"})
 	}
 
 	fmt.Println("\nSuccessfully imported image")
