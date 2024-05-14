@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,6 +21,21 @@ type RegistryConfig struct {
 }
 
 func GetConfig(ctx context.Context, client kube.Client) (*RegistryConfig, error) {
+	config, err := getConfig(ctx, client)
+	if err != nil {
+		return nil, clierror.Wrap(err, &clierror.Error{
+			Message: "failed to load in-cluster registry configuration",
+			Hints: []string{
+				"make sure cluster is available and properly configured",
+				"make sure the Docker Registry is installed and in Ready/Warning state.",
+			},
+		})
+	}
+
+	return config, nil
+}
+
+func getConfig(ctx context.Context, client kube.Client) (*RegistryConfig, error) {
 	dockerRegistry, err := getDockerRegistry(ctx, client.Dynamic())
 	if err != nil {
 		return nil, err
