@@ -49,13 +49,13 @@ type UAA struct {
 func LoadCISCredentials(path string) (*CISCredentials, error) {
 	credentialsBytes, err := os.ReadFile(path)
 	if err != nil {
-		return nil, &clierror.Error{Message: "failed to read credentials file", Details: err.Error(), Hints: []string{"Make sure the path to the credentials file is correct."}}
+		return nil, clierror.Wrap(err, &clierror.Error{Message: "failed to read credentials file", Hints: []string{"Make sure the path to the credentials file is correct."}})
 	}
 
 	credentials := CISCredentials{}
 	err = json.Unmarshal(credentialsBytes, &credentials)
 	if err != nil {
-		return nil, &clierror.Error{Message: "failed to unmarshal file data", Details: err.Error(), Hints: []string{"Make sure the credentials file is in the correct format."}}
+		return nil, clierror.Wrap(err, &clierror.Error{Message: "failed to unmarshal file data", Hints: []string{"Make sure the credentials file is in the correct format."}})
 	}
 
 	return &credentials, nil

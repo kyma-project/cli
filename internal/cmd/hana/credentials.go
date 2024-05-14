@@ -89,17 +89,18 @@ func getHanaCredentials(config *hanaCredentialsConfig) (credentials, error) {
 }
 
 func handleGetHanaCredentialsError(err error) (credentials, error) {
-	error := &clierror.Error{
+	hints := []string{
+		"Make sure that Hana is run and ready to use. You can use command 'kyma hana check'.",
+	}
+
+	if err.Error() == "Unauthorized" {
+		hints = append(hints, "Make sure that your kubeconfig has access to kubernetes.")
+	}
+	
+	credErr := clierror.Wrap(err, &clierror.Error{
 		Message: "failed to get Hana credentails",
-		Details: err.Error(),
-		Hints: []string{
-			"Make sure that Hana is run and ready to use. You can use command 'kyma hana check'.",
-		},
-	}
-	if error.Details == "Unauthorized" {
-		error.Hints = []string{
-			"Make sure that your kubeconfig has access to kubernetes.",
-		}
-	}
-	return credentials{}, error
+		Hints: hints,
+	})
+
+	return credentials{}, credErr
 }

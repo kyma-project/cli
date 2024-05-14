@@ -103,10 +103,9 @@ func handleProvisionResponse(err error, printedName, namespace, name string) err
 		fmt.Printf("Created %s (%s/%s).\n", printedName, namespace, name)
 		return nil
 	}
-	return &clierror.Error{
+	return clierror.Wrap(err, &clierror.Error{
 		Message: "failed to provision Hana resource",
-		Details: err.Error(),
-	}
+	})
 }
 
 func hanaInstance(config *hanaProvisionConfig) *unstructured.Unstructured {

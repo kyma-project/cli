@@ -25,10 +25,9 @@ type Status struct {
 func GetServiceStatus(u *unstructured.Unstructured) (Status, error) {
 	instance := somethingWithStatus{}
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, &instance); err != nil {
-		return Status{}, &clierror.Error{
+		return Status{}, clierror.Wrap(err, &clierror.Error{
 			Message: "failed to read resource data",
-			Details: err.Error(),
-		}
+		})
 	}
 
 	return instance.Status, nil

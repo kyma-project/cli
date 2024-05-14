@@ -95,10 +95,7 @@ func decodeProvisionSuccessResponse(response *http.Response) (*ProvisionResponse
 	provisionResponse := ProvisionResponse{}
 	err := json.NewDecoder(response.Body).Decode(&provisionResponse)
 	if err != nil {
-		return nil, &clierror.Error{
-			Message: "failed to decode response",
-			Details: err.Error(),
-		}
+		return nil, clierror.Wrap(err, &clierror.Error{Message: "failed to decode response"})
 	}
 
 	return &provisionResponse, nil

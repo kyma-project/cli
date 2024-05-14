@@ -61,11 +61,15 @@ func runProvision(config *provisionConfig) error {
 		credentials.UAA.ClientSecret,
 	)
 	if err != nil {
-		retErr := clierror.Wrap(err, &clierror.Error{Message: "failed to get access token"})
-		if strings.Contains(retErr.(*clierror.Error).Details, "Internal Server Error") {
-			retErr.(*clierror.Error).Hints = append(retErr.(*clierror.Error).Hints, "check if CIS grant type is set to client credentials")
+		hints := []string{}
+		if strings.Contains(err.Error(), "Internal Server Error") {
+			hints = append(hints, "check if CIS grant type is set to client credentials")
 		}
-		return retErr
+
+		return clierror.Wrap(err, &clierror.Error{
+			Message: "failed to get access token",
+			Hints:   hints,
+		})
 	}
 
 	// TODO: maybe we should pass only credentials.Endpoints?
