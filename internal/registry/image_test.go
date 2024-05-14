@@ -10,6 +10,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/daemon"
 	"github.com/google/go-containerregistry/pkg/v1/fake"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
+	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/registry/portforward/automock"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/util/httpstream"
@@ -78,14 +79,22 @@ func Test_importImage(t *testing.T) {
 			args: args{
 				imageName: ":::::::::",
 			},
-			wantErr: errors.New("failed to load image from local docker daemon: repository can only contain the characters `abcdefghijklmnopqrstuvwxyz0123456789_-./`: ::::::::"),
+			wantErr: &clierror.Error{
+				Message: "failed to load image from local docker daemon",
+				Details: "repository can only contain the characters `abcdefghijklmnopqrstuvwxyz0123456789_-./`: ::::::::",
+				Hints:   []string{"make sure docker daemon is running", "make sure the image exists in the local docker daemon"},
+			},
 		},
 		{
 			name: "image contains registry address error",
 			args: args{
 				imageName: "gcr.io/test:image",
 			},
-			wantErr: errors.New("failed to load image from local docker daemon: image 'gcr.io/test:image' can't contain registry 'gcr.io' address"),
+			wantErr: &clierror.Error{
+				Message: "failed to load image from local docker daemon",
+				Details: "image 'gcr.io/test:image' can't contain registry 'gcr.io' address",
+				Hints:   []string{"make sure docker daemon is running", "make sure the image exists in the local docker daemon"},
+			},
 		},
 		{
 			name: "get image from local daemon error",
@@ -98,7 +107,11 @@ func Test_importImage(t *testing.T) {
 					},
 				},
 			},
-			wantErr: errors.New("failed to load image from local docker daemon: test-error"),
+			wantErr: &clierror.Error{
+				Message: "failed to load image from local docker daemon",
+				Details: "test-error",
+				Hints:   []string{"make sure docker daemon is running", "make sure the image exists in the local docker daemon"},
+			},
 		},
 		{
 			name: "create new portforward dial error",
@@ -114,7 +127,10 @@ func Test_importImage(t *testing.T) {
 					},
 				},
 			},
-			wantErr: errors.New("failed to create registry portforward connection: test-error"),
+			wantErr: &clierror.Error{
+				Message: "failed to create registry portforward connection",
+				Details: "test-error",
+			},
 		},
 		{
 			name: "wrong PullHost format",
@@ -135,7 +151,10 @@ func Test_importImage(t *testing.T) {
 					},
 				},
 			},
-			wantErr: errors.New("failed to push image to the in-cluster registry: registries must be valid RFC 3986 URI authorities: <    >"),
+			wantErr: &clierror.Error{
+				Message: "failed to push image to the in-cluster registry",
+				Details: "registries must be valid RFC 3986 URI authorities: <    >",
+			},
 		},
 		{
 			name: "write image to in-cluster registry error",
@@ -167,7 +186,10 @@ func Test_importImage(t *testing.T) {
 					},
 				},
 			},
-			wantErr: errors.New("failed to push image to the in-cluster registry: test error"),
+			wantErr: &clierror.Error{
+				Message: "failed to push image to the in-cluster registry",
+				Details: "test error",
+			},
 		},
 	}
 	for _, tt := range tests {
