@@ -10,6 +10,7 @@ import (
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/daemon"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
+	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/registry/portforward"
 	"k8s.io/apimachinery/pkg/util/httpstream"
 	"k8s.io/client-go/rest"
@@ -42,12 +43,20 @@ func ImportImage(ctx context.Context, imageName string, opts ImportOptions) (str
 func importImage(ctx context.Context, imageName string, opts ImportOptions, utils utils) (string, error) {
 	localImage, err := imageFromInternalRegistry(ctx, imageName, utils)
 	if err != nil {
-		return "", fmt.Errorf("failed to load image from local docker daemon: %s", err.Error())
+		return "", clierror.Wrap(err, &clierror.Error{
+			Message: "failed to load image from local docker daemon",
+			Hints: []string{
+				"make sure docker daemon is running",
+				"make sure the image exists in the local docker daemon",
+			},
+		})
 	}
 
 	conn, err := utils.portforwardNewDial(opts.ClusterAPIRestConfig, opts.RegistryPodName, opts.RegistryPodNamespace)
 	if err != nil {
-		return "", fmt.Errorf("failed to create registry portforward connection: %s", err.Error())
+		return "", clierror.Wrap(err, &clierror.Error{
+			Message: "failed to create registry portforward connection",
+		})
 	}
 	defer conn.Close()
 
@@ -56,7 +65,9 @@ func importImage(ctx context.Context, imageName string, opts ImportOptions, util
 
 	pushedImage, err := imageToInClusterRegistry(ctx, localImage, transport, opts.RegistryAuth, opts.RegistryPullHost, imageName, utils)
 	if err != nil {
-		return "", fmt.Errorf("failed to push image to the in-cluster registry: %s", err.Error())
+		return "", clierror.Wrap(err, &clierror.Error{
+			Message: "failed to push image to the in-cluster registry",
+		})
 	}
 
 	return pushedImage, nil

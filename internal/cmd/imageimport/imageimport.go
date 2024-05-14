@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/registry"
 	"github.com/spf13/cobra"
@@ -63,7 +64,7 @@ func runImageImport(config *provisionConfig) error {
 	// TODO: Add "serverless is not installed" error message
 	registryConfig, err := registry.GetConfig(config.Ctx, config.KubeClient)
 	if err != nil {
-		return fmt.Errorf("failed to load in-cluster registry configuration: %s", err.Error())
+		return clierror.Wrap(err, &clierror.Error{Message: "failed to load in-cluster registry configuration"})
 	}
 
 	fmt.Println("Importing", config.image)
@@ -81,7 +82,7 @@ func runImageImport(config *provisionConfig) error {
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("faile to import image to in-cluster registry: %s", err.Error())
+		return clierror.Wrap(err, &clierror.Error{Message: "failed to import image to in-cluster registry"})
 	}
 
 	fmt.Println("\nSuccessfully imported image")
