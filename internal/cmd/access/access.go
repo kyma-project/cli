@@ -59,25 +59,23 @@ func runAccess(cfg *accessConfig) error {
 	// Create objects
 	err := createObjects(cfg)
 	if err != nil {
-		fmt.Printf("Error creating objects: %v", err)
-		return err
+		return clierror.Wrap(err, &clierror.Error{Message: "failed to create objects"})
 	}
 	enrichedKubeconfig, err := prepareKubeconfig(cfg)
 	if err != nil {
-		return err
+		return clierror.Wrap(err, &clierror.Error{Message: "failed to prepare kubeconfig"})
 	}
 
 	if cfg.output != "" {
 		err = clientcmd.WriteToFile(*enrichedKubeconfig, cfg.output)
 		println("Kubeconfig saved to: " + cfg.output)
 		if err != nil {
-			fmt.Printf("Error writing kubeconfig: %v", err)
-			return err
+			return clierror.Wrap(err, &clierror.Error{Message: "failed to save kubeconfig to file"})
 		}
 	} else {
 		message, err := clientcmd.Write(*enrichedKubeconfig)
 		if err != nil {
-			return err
+			return clierror.Wrap(err, &clierror.Error{Message: "failed to print kubeconfig"})
 		}
 		fmt.Println(string(message))
 
@@ -89,7 +87,6 @@ func runAccess(cfg *accessConfig) error {
 func prepareKubeconfig(cfg *accessConfig) (*api.Config, error) {
 	secret, err := cfg.KubeClient.Static().CoreV1().Secrets(cfg.namespace).Get(cfg.Ctx, cfg.name, metav1.GetOptions{})
 	if err != nil {
-		fmt.Printf("Error getting secret: %v", err)
 		return nil, err
 	}
 
@@ -156,11 +153,8 @@ func createServiceAccount(cfg *accessConfig) error {
 		},
 	}
 	_, err := cfg.KubeClient.Static().CoreV1().ServiceAccounts(cfg.namespace).Create(cfg.Ctx, &sa, metav1.CreateOptions{})
-	if errors.IsAlreadyExists(err) != true {
-		return &clierror.Error{
-			Message: "failed to create ServiceAccount",
-			Details: err.Error(),
-		}
+	if errors.IsAlreadyExists(err) {
+		return err
 	}
 	return nil
 }
@@ -177,11 +171,8 @@ func createSecret(cfg *accessConfig) error {
 		Type: v1.SecretTypeServiceAccountToken,
 	}
 	_, err := cfg.KubeClient.Static().CoreV1().Secrets(cfg.namespace).Create(cfg.Ctx, &secret, metav1.CreateOptions{})
-	if errors.IsAlreadyExists(err) != true {
-		return &clierror.Error{
-			Message: "failed to create Secret",
-			Details: err.Error(),
-		}
+	if errors.IsAlreadyExists(err) {
+		return err
 	}
 	return nil
 }
@@ -201,11 +192,8 @@ func createClusterRole(cfg *accessConfig) error {
 		},
 	}
 	_, err := cfg.KubeClient.Static().RbacV1().ClusterRoles().Create(cfg.Ctx, &cRole, metav1.CreateOptions{})
-	if errors.IsAlreadyExists(err) != true {
-		return &clierror.Error{
-			Message: "failed to create ClusterRole",
-			Details: err.Error(),
-		}
+	if errors.IsAlreadyExists(err) {
+		return err
 	}
 	return nil
 }
@@ -229,11 +217,8 @@ func createClusterRoleBinding(cfg *accessConfig) error {
 		},
 	}
 	_, err := cfg.KubeClient.Static().RbacV1().ClusterRoleBindings().Create(cfg.Ctx, &cRoleBinding, metav1.CreateOptions{})
-	if errors.IsAlreadyExists(err) != true {
-		return &clierror.Error{
-			Message: "failed to create ClusterRoleBinding",
-			Details: err.Error(),
-		}
+	if errors.IsAlreadyExists(err) {
+		return err
 	}
 	return nil
 }
