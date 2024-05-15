@@ -2,6 +2,7 @@ package referenceinstance
 
 import (
 	"github.com/kyma-project/cli.v3/internal/btp/operator"
+	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/spf13/cobra"
@@ -32,8 +33,8 @@ func NewReferenceInstanceCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Short: "Add an instance reference to a shared service instance.",
 		Long: `Use this command to add an instance reference to a shared service instance on the SAP Kyma platform.
 `,
-		PreRunE: func(_ *cobra.Command, _ []string) error {
-			return config.KubeClientConfig.Complete()
+		PreRun: func(_ *cobra.Command, _ []string) {
+			clierror.Check(config.KubeClientConfig.Complete())
 		},
 		RunE: func(_ *cobra.Command, _ []string) error {
 			return runReferenceInstance(config)

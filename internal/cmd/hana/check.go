@@ -31,11 +31,11 @@ func NewHanaCheckCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Use:   "check",
 		Short: "Check if the Hana instance is provisioned.",
 		Long:  "Use this command to check if the Hana instance is provisioned on the SAP Kyma platform.",
-		PreRunE: func(_ *cobra.Command, args []string) error {
-			return config.KubeClientConfig.Complete()
+		PreRun: func(_ *cobra.Command, args []string) {
+			clierror.Check(config.KubeClientConfig.Complete())
 		},
-		RunE: func(_ *cobra.Command, _ []string) error {
-			return runCheck(&config)
+		Run: func(_ *cobra.Command, _ []string) {
+			clierror.Check(runCheck(&config))
 		},
 	}
 
@@ -50,14 +50,14 @@ func NewHanaCheckCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 }
 
 var (
-	checkCommands = []func(config *hanaCheckConfig) error{
+	checkCommands = []func(config *hanaCheckConfig) clierror.Error{
 		checkHanaInstance,
 		checkHanaBinding,
 		checkHanaBindingUrl,
 	}
 )
 
-func runCheck(config *hanaCheckConfig) error {
+func runCheck(config *hanaCheckConfig) clierror.Error {
 	fmt.Printf("Checking Hana (%s/%s).\n", config.namespace, config.name)
 
 	for _, command := range checkCommands {
@@ -71,45 +71,39 @@ func runCheck(config *hanaCheckConfig) error {
 	return nil
 }
 
-func checkHanaInstance(config *hanaCheckConfig) error {
+func checkHanaInstance(config *hanaCheckConfig) clierror.Error {
 	u, err := kube.GetServiceInstance(config.KubeClient, config.Ctx, config.namespace, config.name)
 	return handleCheckResponse(u, err, "Hana instance", config.namespace, config.name)
 }
 
-func checkHanaBinding(config *hanaCheckConfig) error {
+func checkHanaBinding(config *hanaCheckConfig) clierror.Error {
 	u, err := kube.GetServiceBinding(config.KubeClient, config.Ctx, config.namespace, config.name)
 	return handleCheckResponse(u, err, "Hana binding", config.namespace, config.name)
 }
 
-func checkHanaBindingUrl(config *hanaCheckConfig) error {
+func checkHanaBindingUrl(config *hanaCheckConfig) clierror.Error {
 	urlName := hanaBindingUrlName(config.name)
 	u, err := kube.GetServiceBinding(config.KubeClient, config.Ctx, config.namespace, urlName)
 	return handleCheckResponse(u, err, "Hana URL binding", config.namespace, urlName)
 }
 
-func handleCheckResponse(u *unstructured.Unstructured, err error, printedName, namespace, name string) error {
+func handleCheckResponse(u *unstructured.Unstructured, err error, printedName, namespace, name string) clierror.Error {
 	if err != nil {
 		return clierror.Wrap(err,
-			clierror.Message("failed to get resource data"),
-			clierror.Hints("Make sure that Hana was provisioned."),
+			clierror.New("failed to get resource data", "Make sure that Hana was provisioned."),
 		)
 	}
 
 	ready, error := kube.IsReady(u)
 	if error != nil {
 		return clierror.Wrap(err,
-			clierror.Message("failed to check readiness of Hana resources"),
+			clierror.New("failed to check readiness of Hana resources"),
 		)
 	}
 	if !ready {
 		fmt.Printf("%s is not ready (%s/%s).\n", printedName, namespace, name)
-		return clierror.New(
-			clierror.MessageF("%s is not ready", strings.ToLower(printedName[:1])+printedName[1:]),
-			clierror.Hints(
-				"Wait for provisioning of Hana resources.",
-				"Check if Hana resources started without errors.",
-			),
-		)
+		errMsg := fmt.Sprintf("%s is not ready", strings.ToLower(printedName[:1])+printedName[1:])
+		return clierror.New(errMsg, "Wait for provisioning of Hana resources.", "Check if Hana resources started without errors.")
 	}
 	fmt.Printf("%s is ready (%s/%s).\n", printedName, namespace, name)
 	return nil

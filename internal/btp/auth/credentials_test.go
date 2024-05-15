@@ -40,8 +40,8 @@ func TestLoadCISCredentials(t *testing.T) {
 		err := os.WriteFile(filename, []byte(correctCredentials), os.ModePerm)
 		require.NoError(t, err)
 
-		credentials, err := LoadCISCredentials(filename)
-		require.Nil(t, err)
+		credentials, cliError := LoadCISCredentials(filename)
+		require.Nil(t, cliError)
 		require.Equal(t, correctCredentialsStruct, *credentials)
 	})
 
@@ -51,16 +51,16 @@ func TestLoadCISCredentials(t *testing.T) {
 		err := os.WriteFile(filename, []byte("\n{\n"), os.ModePerm)
 		require.NoError(t, err)
 
-		credentials, err := LoadCISCredentials(filename)
-		require.Error(t, err)
+		credentials, cliError := LoadCISCredentials(filename)
+		require.NotNil(t, cliError)
 		require.Nil(t, credentials)
 	})
 
 	t.Run("incorrect credentials file error", func(t *testing.T) {
 		filename := fmt.Sprintf("%s/doesnotexist-creds.txt", tmpDirPath)
 
-		credentials, err := LoadCISCredentials(filename)
-		require.Error(t, err)
+		credentials, cliError := LoadCISCredentials(filename)
+		require.NotNil(t, cliError)
 		require.Nil(t, credentials)
 	})
 }

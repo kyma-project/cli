@@ -25,12 +25,11 @@ type client struct {
 	restClient    *rest.RESTClient
 }
 
-func NewClient(kubeconfig string) (Client, error) {
+func NewClient(kubeconfig string) (Client, clierror.Error) {
 	client, err := newClient(kubeconfig)
 	if err != nil {
 		return nil, clierror.Wrap(err,
-			clierror.Message("failed to initialise kubernetes client"),
-			clierror.Hints("Make sure that kubeconfig is proper."),
+			clierror.New("failed to initialise kubernetes client", "Make sure that kubeconfig is proper."),
 		)
 	}
 	return client, nil

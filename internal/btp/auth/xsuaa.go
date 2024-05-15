@@ -26,7 +26,7 @@ type XSUAAToken struct {
 	JTI         string `json:"jti"`
 }
 
-func GetOAuthToken(grantType, serverURL, username, password string) (*XSUAAToken, error) {
+func GetOAuthToken(grantType, serverURL, username, password string) (*XSUAAToken, clierror.Error) {
 	urlBody := url.Values{}
 	urlBody.Set("grant_type", grantType)
 
@@ -36,7 +36,7 @@ func GetOAuthToken(grantType, serverURL, username, password string) (*XSUAAToken
 		strings.NewReader(urlBody.Encode()),
 	)
 	if err != nil {
-		return nil, clierror.Wrap(err, clierror.Message("failed to build request"), clierror.Hints("Make sure the server URL in the config is correct."))
+		return nil, clierror.Wrap(err, clierror.New("failed to build request", "Make sure the server URL in the config is correct."))
 	}
 	defer request.Body.Close()
 
@@ -45,7 +45,7 @@ func GetOAuthToken(grantType, serverURL, username, password string) (*XSUAAToken
 
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
-		return nil, clierror.Wrap(err, clierror.Message("failed to get token from server"))
+		return nil, clierror.Wrap(err, clierror.New("failed to get token from server"))
 	}
 	defer response.Body.Close()
 
@@ -56,22 +56,24 @@ func GetOAuthToken(grantType, serverURL, username, password string) (*XSUAAToken
 	return decodeAuthSuccessResponse(response)
 }
 
-func decodeAuthSuccessResponse(response *http.Response) (*XSUAAToken, error) {
+func decodeAuthSuccessResponse(response *http.Response) (*XSUAAToken, clierror.Error) {
 	token := XSUAAToken{}
 	err := json.NewDecoder(response.Body).Decode(&token)
 	if err != nil {
-		return nil, clierror.Wrap(err, clierror.MessageF("failed to decode response with Status %s", response.Status))
+		errMsg := fmt.Sprintf("failed to decode response with Status %s", response.Status)
+		return nil, clierror.Wrap(err, clierror.New(errMsg))
 	}
 
 	return &token, nil
 }
 
-func decodeAuthErrorResponse(response *http.Response) error {
+func decodeAuthErrorResponse(response *http.Response) clierror.Error {
 	errorData := xsuaaErrorResponse{}
 	err := json.NewDecoder(response.Body).Decode(&errorData)
 	if err != nil {
-		return clierror.Wrap(err, clierror.Message("failed to decode error response"))
+		return clierror.Wrap(err, clierror.New("failed to decode error response"))
 	}
-	// TODO: replace it with New func
-	return clierror.Wrap(errors.New(errorData.ErrorDescription), clierror.MessageF("error response: %s", response.Status))
+
+	errMsg := fmt.Sprintf("error response: %s", response.Status)
+	return clierror.Wrap(errors.New(errorData.ErrorDescription), clierror.New(errMsg))
 }

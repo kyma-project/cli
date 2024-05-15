@@ -54,7 +54,7 @@ func TestGetConfig(t *testing.T) {
 		config, err := GetConfig(context.Background(), kubeClient)
 
 		// then
-		require.NoError(t, err)
+		require.Nil(t, err)
 		require.Equal(t, expectedRegistryConfig, config)
 	})
 }

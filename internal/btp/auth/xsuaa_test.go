@@ -31,7 +31,7 @@ func TestGetOAuthToken(t *testing.T) {
 		name        string
 		credentials *CISCredentials
 		want        *XSUAAToken
-		expectedErr error
+		expectedErr clierror.Error
 	}{
 		{
 			name: "Correct credentials",
@@ -57,8 +57,7 @@ func TestGetOAuthToken(t *testing.T) {
 			want: nil,
 			expectedErr: clierror.Wrap(
 				errors.New("parse \"?\\n?/oauth/token\": net/url: invalid control character in URL"),
-				clierror.Message("failed to build request"),
-				clierror.Hints("Make sure the server URL in the config is correct."),
+				clierror.New("failed to build request", "Make sure the server URL in the config is correct."),
 			),
 		},
 		{
@@ -71,7 +70,7 @@ func TestGetOAuthToken(t *testing.T) {
 			want: nil,
 			expectedErr: clierror.Wrap(
 				errors.New("Post \"http://doesnotexist/oauth/token\": dial tcp: lookup doesnotexist: no such host"),
-				clierror.Message("failed to get token from server"),
+				clierror.New("failed to get token from server"),
 			),
 		},
 		{
@@ -84,7 +83,7 @@ func TestGetOAuthToken(t *testing.T) {
 			want: nil,
 			expectedErr: clierror.Wrap(
 				errors.New("description"),
-				clierror.Message("error response: 401 Unauthorized"),
+				clierror.New("error response: 401 Unauthorized"),
 			),
 		},
 	}
