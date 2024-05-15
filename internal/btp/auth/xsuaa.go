@@ -35,7 +35,7 @@ func GetOAuthToken(grantType, serverURL, username, password string) (*XSUAAToken
 		strings.NewReader(urlBody.Encode()),
 	)
 	if err != nil {
-		return nil, &clierror.Error{Message: "failed to build request", Details: err.Error(), Hints: []string{"Make sure the server URL in the config is correct."}}
+		return nil, clierror.Wrap(err, &clierror.Error{Message: "failed to build request", Hints: []string{"Make sure the server URL in the config is correct."}})
 	}
 	defer request.Body.Close()
 
@@ -44,7 +44,7 @@ func GetOAuthToken(grantType, serverURL, username, password string) (*XSUAAToken
 
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
-		return nil, &clierror.Error{Message: "failed to get token from server", Details: err.Error()}
+		return nil, clierror.Wrap(err, &clierror.Error{Message: "failed to get token from server"})
 	}
 	defer response.Body.Close()
 
@@ -59,7 +59,7 @@ func decodeAuthSuccessResponse(response *http.Response) (*XSUAAToken, error) {
 	token := XSUAAToken{}
 	err := json.NewDecoder(response.Body).Decode(&token)
 	if err != nil {
-		return nil, &clierror.Error{Message: fmt.Sprintf("failed to decode response with Status %s", response.Status), Details: err.Error()}
+		return nil, clierror.Wrap(err, &clierror.Error{Message: fmt.Sprintf("failed to decode response with Status %s", response.Status)})
 	}
 
 	return &token, nil
@@ -69,7 +69,8 @@ func decodeAuthErrorResponse(response *http.Response) error {
 	errorData := xsuaaErrorResponse{}
 	err := json.NewDecoder(response.Body).Decode(&errorData)
 	if err != nil {
-		return &clierror.Error{Message: "failed to decode error response", Details: err.Error()}
+		return clierror.Wrap(err, &clierror.Error{Message: "failed to decode error response"})
 	}
+	// TODO: replace it with New func
 	return &clierror.Error{Message: fmt.Sprintf("error response: %s", response.Status), Details: errorData.ErrorDescription}
 }
