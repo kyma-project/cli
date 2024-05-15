@@ -28,7 +28,7 @@ func Test_importImage(t *testing.T) {
 		name    string
 		args    args
 		want    string
-		wantErr error
+		wantErr clierror.Error
 	}{
 		{
 			name: "import image",
@@ -79,22 +79,22 @@ func Test_importImage(t *testing.T) {
 			args: args{
 				imageName: ":::::::::",
 			},
-			wantErr: &clierror.Error{
-				Message: "failed to load image from local docker daemon",
-				Details: "repository can only contain the characters `abcdefghijklmnopqrstuvwxyz0123456789_-./`: ::::::::",
-				Hints:   []string{"make sure docker daemon is running", "make sure the image exists in the local docker daemon"},
-			},
+			wantErr: clierror.Wrap(errors.New("repository can only contain the characters `abcdefghijklmnopqrstuvwxyz0123456789_-./`: ::::::::"),
+				clierror.New("failed to load image from local docker daemon",
+					"make sure docker daemon is running",
+					"make sure the image exists in the local docker daemon"),
+			),
 		},
 		{
 			name: "image contains registry address error",
 			args: args{
 				imageName: "gcr.io/test:image",
 			},
-			wantErr: &clierror.Error{
-				Message: "failed to load image from local docker daemon",
-				Details: "image 'gcr.io/test:image' can't contain registry 'gcr.io' address",
-				Hints:   []string{"make sure docker daemon is running", "make sure the image exists in the local docker daemon"},
-			},
+			wantErr: clierror.Wrap(errors.New("image 'gcr.io/test:image' can't contain registry 'gcr.io' address"),
+				clierror.New("failed to load image from local docker daemon",
+					"make sure docker daemon is running",
+					"make sure the image exists in the local docker daemon"),
+			),
 		},
 		{
 			name: "get image from local daemon error",
@@ -107,11 +107,11 @@ func Test_importImage(t *testing.T) {
 					},
 				},
 			},
-			wantErr: &clierror.Error{
-				Message: "failed to load image from local docker daemon",
-				Details: "test-error",
-				Hints:   []string{"make sure docker daemon is running", "make sure the image exists in the local docker daemon"},
-			},
+			wantErr: clierror.Wrap(errors.New("test-error"),
+				clierror.New("failed to load image from local docker daemon",
+					"make sure docker daemon is running",
+					"make sure the image exists in the local docker daemon"),
+			),
 		},
 		{
 			name: "create new portforward dial error",
@@ -127,10 +127,9 @@ func Test_importImage(t *testing.T) {
 					},
 				},
 			},
-			wantErr: &clierror.Error{
-				Message: "failed to create registry portforward connection",
-				Details: "test-error",
-			},
+			wantErr: clierror.Wrap(errors.New("test-error"),
+				clierror.New("failed to create registry portforward connection"),
+			),
 		},
 		{
 			name: "wrong PullHost format",
@@ -151,10 +150,8 @@ func Test_importImage(t *testing.T) {
 					},
 				},
 			},
-			wantErr: &clierror.Error{
-				Message: "failed to push image to the in-cluster registry",
-				Details: "registries must be valid RFC 3986 URI authorities: <    >",
-			},
+			wantErr: clierror.Wrap(errors.New("registries must be valid RFC 3986 URI authorities: <    >"),
+				clierror.New("failed to push image to the in-cluster registry")),
 		},
 		{
 			name: "write image to in-cluster registry error",
@@ -186,10 +183,9 @@ func Test_importImage(t *testing.T) {
 					},
 				},
 			},
-			wantErr: &clierror.Error{
-				Message: "failed to push image to the in-cluster registry",
-				Details: "test error",
-			},
+			wantErr: clierror.Wrap(errors.New("test error"),
+				clierror.New("failed to push image to the in-cluster registry"),
+			),
 		},
 	}
 	for _, tt := range tests {

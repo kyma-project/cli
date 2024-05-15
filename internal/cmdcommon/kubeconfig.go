@@ -1,6 +1,7 @@
 package cmdcommon
 
 import (
+	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/spf13/cobra"
 )
@@ -15,8 +16,8 @@ func (kcc *KubeClientConfig) AddFlag(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&kcc.Kubeconfig, "kubeconfig", "", "Path to the Kyma kubecongig file.")
 }
 
-func (kcc *KubeClientConfig) Complete() error {
-	var err error
+func (kcc *KubeClientConfig) Complete() clierror.Error {
+	var err clierror.Error
 	kcc.KubeClient, err = kube.NewClient(kcc.Kubeconfig)
 
 	return err

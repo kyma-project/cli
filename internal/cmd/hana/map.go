@@ -29,11 +29,11 @@ func NewMapHanaCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Use:   "map",
 		Short: "Map the Hana instance to the Kyma cluster.",
 		Long:  "Use this command to map the Hana instance to the Kyma cluster.",
-		PreRunE: func(_ *cobra.Command, args []string) error {
-			return config.KubeClientConfig.Complete()
+		PreRun: func(_ *cobra.Command, args []string) {
+			clierror.Check(config.KubeClientConfig.Complete())
 		},
-		RunE: func(_ *cobra.Command, _ []string) error {
-			return runMap(&config)
+		Run: func(_ *cobra.Command, _ []string) {
+			clierror.Check(runMap(&config))
 		},
 	}
 
@@ -49,14 +49,14 @@ func NewMapHanaCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 }
 
 var (
-	mapCommands = []func(config *hanaCheckConfig) error{
+	mapCommands = []func(config *hanaCheckConfig) clierror.Error{
 		createHanaAPIInstanceIfNeeded,
 		createHanaAPIBindingIfNeeded,
 		createHanaInstanceMapping,
 	}
 )
 
-func runMap(config *hanaCheckConfig) error {
+func runMap(config *hanaCheckConfig) clierror.Error {
 	for _, command := range mapCommands {
 		err := command(config)
 		if err != nil {
@@ -69,7 +69,7 @@ func runMap(config *hanaCheckConfig) error {
 	return nil
 }
 
-func createHanaAPIInstanceIfNeeded(config *hanaCheckConfig) error {
+func createHanaAPIInstanceIfNeeded(config *hanaCheckConfig) clierror.Error {
 	// check if instance exists, skip API instance creation if it does
 	instance, err := kube.GetServiceInstance(config.KubeClient, config.Ctx, config.namespace, hanaBindingAPIName(config.name))
 	if err == nil && instance != nil {
@@ -79,7 +79,7 @@ func createHanaAPIInstanceIfNeeded(config *hanaCheckConfig) error {
 	return createHanaAPIInstance(config)
 }
 
-func createHanaAPIBindingIfNeeded(config *hanaCheckConfig) error {
+func createHanaAPIBindingIfNeeded(config *hanaCheckConfig) clierror.Error {
 	//check if binding exists, skip API binding creation if it does
 	instance, err := kube.GetServiceBinding(config.KubeClient, config.Ctx, config.namespace, hanaBindingAPIName(config.name))
 	if err == nil && instance != nil {
@@ -91,10 +91,10 @@ func createHanaAPIBindingIfNeeded(config *hanaCheckConfig) error {
 
 }
 
-func createHanaAPIInstance(config *hanaCheckConfig) error {
+func createHanaAPIInstance(config *hanaCheckConfig) clierror.Error {
 	data, err := hanaAPIInstance(config)
 	if err != nil {
-		return clierror.Wrap(err, clierror.Message("failed to create Hana API instance object"))
+		return clierror.Wrap(err, clierror.New("failed to create Hana API instance object"))
 	}
 
 	_, err = config.KubeClient.Dynamic().Resource(operator.GVRServiceInstance).
@@ -103,10 +103,10 @@ func createHanaAPIInstance(config *hanaCheckConfig) error {
 	return handleProvisionResponse(err, "Hana API instance", config.namespace, hanaBindingAPIName(config.name))
 }
 
-func createHanaAPIBinding(config *hanaCheckConfig) error {
+func createHanaAPIBinding(config *hanaCheckConfig) clierror.Error {
 	data, err := hanaAPIBinding(config)
 	if err != nil {
-		return clierror.Wrap(err, clierror.Message("failed to create Hana API binding object"))
+		return clierror.Wrap(err, clierror.New("failed to create Hana API binding object"))
 	}
 	_, err = config.KubeClient.Dynamic().Resource(operator.GVRServiceBinding).
 		Namespace(config.namespace).
@@ -164,7 +164,7 @@ func hanaBindingAPIName(name string) string {
 	return fmt.Sprintf("%s-api", name)
 }
 
-func createHanaInstanceMapping(config *hanaCheckConfig) error {
+func createHanaInstanceMapping(config *hanaCheckConfig) clierror.Error {
 	clusterID, err := getClusterID(config)
 	if err != nil {
 		return err
@@ -190,15 +190,15 @@ func createHanaInstanceMapping(config *hanaCheckConfig) error {
 	return hanaInstanceMapping(baseurl, clusterID, hanaID, token.AccessToken)
 }
 
-func getClusterID(config *hanaCheckConfig) (string, error) {
+func getClusterID(config *hanaCheckConfig) (string, clierror.Error) {
 	cm, err := config.KubeClient.Static().CoreV1().ConfigMaps("kyma-system").Get(config.Ctx, "sap-btp-operator-config", metav1.GetOptions{})
 	if err != nil {
-		return "", clierror.Wrap(err, clierror.Message("failed to get cluster ID"))
+		return "", clierror.Wrap(err, clierror.New("failed to get cluster ID"))
 	}
 	return cm.Data["CLUSTER_ID"], nil
 }
 
-func getHanaID(config *hanaCheckConfig) (string, error) {
+func getHanaID(config *hanaCheckConfig) (string, clierror.Error) {
 	// wait for until Hana instance is ready, for default setting it should take 5 minutes
 	fmt.Print("waiting for Hana instance to be ready... ")
 	instanceReadyCheck := kube.IsInstanceReady(config.KubeClient, config.Ctx, config.namespace, config.name)
@@ -206,8 +206,7 @@ func getHanaID(config *hanaCheckConfig) (string, error) {
 	if err != nil {
 		fmt.Println("Failed")
 		return "", clierror.Wrap(err,
-			clierror.Message("timeout while waiting for Hana instance to be ready"),
-			clierror.Hints("make sure the hana-cloud hana entitlement is enabled"),
+			clierror.New("timeout while waiting for Hana instance to be ready", "make sure the hana-cloud hana entitlement is enabled"),
 		)
 	}
 	fmt.Println("done")
@@ -216,25 +215,24 @@ func getHanaID(config *hanaCheckConfig) (string, error) {
 		Namespace(config.namespace).
 		Get(config.Ctx, config.name, metav1.GetOptions{})
 	if err != nil {
-		return "", clierror.Wrap(err, clierror.Message("failed to get Hana instance"))
+		return "", clierror.Wrap(err, clierror.New("failed to get Hana instance"))
 	}
 	status, err := kube.GetServiceStatus(u)
 	if err != nil {
-		return "", clierror.Wrap(err, clierror.Message("failed to read resource data"))
+		return "", clierror.Wrap(err, clierror.New("failed to read resource data"))
 	}
 
 	return status.InstanceID, nil
 }
 
-func readHanaAPISecret(config *hanaCheckConfig) (string, *auth.UAA, error) {
+func readHanaAPISecret(config *hanaCheckConfig) (string, *auth.UAA, clierror.Error) {
 	fmt.Print("waiting for Hana API instance to be ready... ")
 	instanceReadyCheck := kube.IsInstanceReady(config.KubeClient, config.Ctx, config.namespace, hanaBindingAPIName(config.name))
 	err := wait.PollUntilContextTimeout(config.Ctx, 5*time.Second, 2*time.Minute, true, instanceReadyCheck)
 	if err != nil {
 		fmt.Println("Failed")
 		return "", nil, clierror.Wrap(err,
-			clierror.Message("timeout while waiting for Hana API instance"),
-			clierror.Hints("make sure the hana-cloud admin-api-access entitlement is enabled"),
+			clierror.New("timeout while waiting for Hana API instance", "make sure the hana-cloud admin-api-access entitlement is enabled"),
 		)
 	}
 	fmt.Println("done")
@@ -244,12 +242,12 @@ func readHanaAPISecret(config *hanaCheckConfig) (string, *auth.UAA, error) {
 	err = wait.PollUntilContextTimeout(config.Ctx, 5*time.Second, 2*time.Minute, true, bindingReadyCheck)
 	if err != nil {
 		fmt.Println("Failed")
-		return "", nil, clierror.Wrap(err, clierror.Message("timeout while waiting for Hana API binding"))
+		return "", nil, clierror.Wrap(err, clierror.New("timeout while waiting for Hana API binding"))
 	}
 	fmt.Println("done")
 	secret, err := config.KubeClient.Static().CoreV1().Secrets(config.namespace).Get(config.Ctx, hanaBindingAPIName(config.name), metav1.GetOptions{})
 	if err != nil {
-		return "", nil, clierror.Wrap(err, clierror.Message("failed to get secret"))
+		return "", nil, clierror.Wrap(err, clierror.New("failed to get secret"))
 	}
 	baseURL := secret.Data["baseurl"]
 	uaaData := secret.Data["uaa"]
@@ -257,12 +255,12 @@ func readHanaAPISecret(config *hanaCheckConfig) (string, *auth.UAA, error) {
 	uaa := &auth.UAA{}
 	err = json.Unmarshal(uaaData, uaa)
 	if err != nil {
-		return "", nil, clierror.Wrap(err, clierror.Message("failed to decode UAA data"))
+		return "", nil, clierror.Wrap(err, clierror.New("failed to decode UAA data"))
 	}
 	return string(baseURL), uaa, nil
 }
 
-func hanaInstanceMapping(baseURL, clusterID, hanaID, token string) error {
+func hanaInstanceMapping(baseURL, clusterID, hanaID, token string) clierror.Error {
 	client := &http.Client{}
 
 	requestData := HanaMapping{
@@ -272,23 +270,23 @@ func hanaInstanceMapping(baseURL, clusterID, hanaID, token string) error {
 
 	requestString, err := json.Marshal(requestData)
 	if err != nil {
-		return clierror.Wrap(err, clierror.Message("failed to create mapping request"))
+		return clierror.Wrap(err, clierror.New("failed to create mapping request"))
 	}
 
 	request, err := http.NewRequest("POST", fmt.Sprintf("https://%s/inventory/v2/serviceInstances/%s/instanceMappings", baseURL, hanaID), bytes.NewBuffer(requestString))
 	if err != nil {
-		return clierror.Wrap(err, clierror.Message("failed to create mapping request"))
+		return clierror.Wrap(err, clierror.New("failed to create mapping request"))
 	}
 	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
 
 	resp, err := client.Do(request)
 	if err != nil {
-		return clierror.Wrap(err, clierror.Message("failed to create mapping"))
+		return clierror.Wrap(err, clierror.New("failed to create mapping"))
 	}
 
 	// server sends status Created when mapping is created, and 200 if it already exists
 	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
-		return clierror.Wrap(fmt.Errorf("status code: %d", resp.StatusCode), clierror.Message("failed to create mapping"))
+		return clierror.Wrap(fmt.Errorf("status code: %d", resp.StatusCode), clierror.New("failed to create mapping"))
 	}
 
 	return nil

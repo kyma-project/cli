@@ -34,11 +34,11 @@ func NewHanaCredentialsCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Use:   "credentials",
 		Short: "Print credentials of the Hana instance.",
 		Long:  "Use this command to print credentials of the Hana instance on the SAP Kyma platform.",
-		PreRunE: func(_ *cobra.Command, args []string) error {
-			return config.KubeClientConfig.Complete()
+		PreRun: func(_ *cobra.Command, args []string) {
+			clierror.Check(config.KubeClientConfig.Complete())
 		},
-		RunE: func(_ *cobra.Command, _ []string) error {
-			return runCredentials(&config)
+		Run: func(_ *cobra.Command, _ []string) {
+			clierror.Check(runCredentials(&config))
 		},
 	}
 
@@ -56,7 +56,7 @@ func NewHanaCredentialsCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	return cmd
 }
 
-func runCredentials(config *hanaCredentialsConfig) error {
+func runCredentials(config *hanaCredentialsConfig) clierror.Error {
 	fmt.Printf("Getting Hana credentials (%s/%s).\n", config.namespace, config.name)
 
 	credentials, err := getHanaCredentials(config)
@@ -77,7 +77,7 @@ func printCredentials(config *hanaCredentialsConfig, credentials credentials) {
 	}
 }
 
-func getHanaCredentials(config *hanaCredentialsConfig) (credentials, error) {
+func getHanaCredentials(config *hanaCredentialsConfig) (credentials, clierror.Error) {
 	secret, err := config.KubeClient.Static().CoreV1().Secrets(config.namespace).Get(config.Ctx, config.name, metav1.GetOptions{})
 	if err != nil {
 		return handleGetHanaCredentialsError(err)
@@ -88,7 +88,7 @@ func getHanaCredentials(config *hanaCredentialsConfig) (credentials, error) {
 	}, nil
 }
 
-func handleGetHanaCredentialsError(err error) (credentials, error) {
+func handleGetHanaCredentialsError(err error) (credentials, clierror.Error) {
 	hints := []string{
 		"Make sure that Hana is run and ready to use. You can use command 'kyma hana check'.",
 	}
@@ -98,8 +98,7 @@ func handleGetHanaCredentialsError(err error) (credentials, error) {
 	}
 
 	credErr := clierror.Wrap(err,
-		clierror.Message("failed to get Hana credentials"),
-		clierror.Hints(hints...),
+		clierror.New("failed to get Hana credentials", hints...),
 	)
 
 	return credentials{}, credErr

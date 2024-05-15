@@ -46,16 +46,16 @@ type UAA struct {
 	ZoneID            string `json:"zoneid"`
 }
 
-func LoadCISCredentials(path string) (*CISCredentials, error) {
+func LoadCISCredentials(path string) (*CISCredentials, clierror.Error) {
 	credentialsBytes, err := os.ReadFile(path)
 	if err != nil {
-		return nil, clierror.Wrap(err, clierror.Message("failed to read credentials file"), clierror.Hints("Make sure the path to the credentials file is correct."))
+		return nil, clierror.Wrap(err, clierror.New("failed to read credentials file", "Make sure the path to the credentials file is correct."))
 	}
 
 	credentials := CISCredentials{}
 	err = json.Unmarshal(credentialsBytes, &credentials)
 	if err != nil {
-		return nil, clierror.Wrap(err, clierror.Message("failed to unmarshal file data"), clierror.Hints("Make sure the credentials file is in the correct format."))
+		return nil, clierror.Wrap(err, clierror.New("failed to unmarshal file data", "Make sure the credentials file is in the correct format."))
 	}
 
 	return &credentials, nil
