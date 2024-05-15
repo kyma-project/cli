@@ -94,11 +94,11 @@ func createHanaAPIBindingIfNeeded(config *hanaCheckConfig) error {
 func createHanaAPIInstance(config *hanaCheckConfig) error {
 	data, err := hanaAPIInstance(config)
 	if err != nil {
-		return &clierror.Error{
+		return clierror.Wrap(err, &clierror.Error{
 			Message: "failed to create Hana API instance object",
-			Details: err.Error(),
-		}
+		})
 	}
+
 	_, err = config.KubeClient.Dynamic().Resource(operator.GVRServiceInstance).
 		Namespace(config.namespace).
 		Create(config.Ctx, data, metav1.CreateOptions{})
@@ -108,10 +108,9 @@ func createHanaAPIInstance(config *hanaCheckConfig) error {
 func createHanaAPIBinding(config *hanaCheckConfig) error {
 	data, err := hanaAPIBinding(config)
 	if err != nil {
-		return &clierror.Error{
+		return clierror.Wrap(err, &clierror.Error{
 			Message: "failed to create Hana API binding object",
-			Details: err.Error(),
-		}
+		})
 	}
 	_, err = config.KubeClient.Dynamic().Resource(operator.GVRServiceBinding).
 		Namespace(config.namespace).
@@ -198,10 +197,9 @@ func createHanaInstanceMapping(config *hanaCheckConfig) error {
 func getClusterID(config *hanaCheckConfig) (string, error) {
 	cm, err := config.KubeClient.Static().CoreV1().ConfigMaps("kyma-system").Get(config.Ctx, "sap-btp-operator-config", metav1.GetOptions{})
 	if err != nil {
-		return "", &clierror.Error{
+		return "", clierror.Wrap(err, &clierror.Error{
 			Message: "failed to get cluster ID",
-			Details: err.Error(),
-		}
+		})
 	}
 	return cm.Data["CLUSTER_ID"], nil
 }
@@ -224,17 +222,15 @@ func getHanaID(config *hanaCheckConfig) (string, error) {
 		Namespace(config.namespace).
 		Get(config.Ctx, config.name, metav1.GetOptions{})
 	if err != nil {
-		return "", &clierror.Error{
+		return "", clierror.Wrap(err, &clierror.Error{
 			Message: "failed to get Hana instance",
-			Details: err.Error(),
-		}
+		})
 	}
 	status, err := kube.GetServiceStatus(u)
 	if err != nil {
-		return "", &clierror.Error{
+		return "", clierror.Wrap(err, &clierror.Error{
 			Message: "failed to read resource data",
-			Details: err.Error(),
-		}
+		})
 	}
 
 	return status.InstanceID, nil
@@ -260,16 +256,14 @@ func readHanaAPISecret(config *hanaCheckConfig) (string, *auth.UAA, error) {
 		fmt.Println("Failed")
 		return "", nil, clierror.Wrap(err, &clierror.Error{
 			Message: "timeout while waiting for Hana API binding",
-			Details: err.Error(),
 		})
 	}
 	fmt.Println("done")
 	secret, err := config.KubeClient.Static().CoreV1().Secrets(config.namespace).Get(config.Ctx, hanaBindingAPIName(config.name), metav1.GetOptions{})
 	if err != nil {
-		return "", nil, &clierror.Error{
+		return "", nil, clierror.Wrap(err, &clierror.Error{
 			Message: "failed to get secret",
-			Details: err.Error(),
-		}
+		})
 	}
 	baseURL := secret.Data["baseurl"]
 	uaaData := secret.Data["uaa"]
@@ -277,10 +271,9 @@ func readHanaAPISecret(config *hanaCheckConfig) (string, *auth.UAA, error) {
 	uaa := &auth.UAA{}
 	err = json.Unmarshal(uaaData, uaa)
 	if err != nil {
-		return "", nil, &clierror.Error{
+		return "", nil, clierror.Wrap(err, &clierror.Error{
 			Message: "failed to decode UAA data",
-			Details: err.Error(),
-		}
+		})
 	}
 	return string(baseURL), uaa, nil
 }
@@ -295,27 +288,24 @@ func hanaInstanceMapping(baseURL, clusterID, hanaID, token string) error {
 
 	requestString, err := json.Marshal(requestData)
 	if err != nil {
-		return &clierror.Error{
+		return clierror.Wrap(err, &clierror.Error{
 			Message: "failed to create mapping request",
-			Details: err.Error(),
-		}
+		})
 	}
 
 	request, err := http.NewRequest("POST", fmt.Sprintf("https://%s/inventory/v2/serviceInstances/%s/instanceMappings", baseURL, hanaID), bytes.NewBuffer(requestString))
 	if err != nil {
-		return &clierror.Error{
+		return clierror.Wrap(err, &clierror.Error{
 			Message: "failed to create mapping request",
-			Details: err.Error(),
-		}
+		})
 	}
 	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
 
 	resp, err := client.Do(request)
 	if err != nil {
-		return &clierror.Error{
-			Message: "failed to create mapping",
-			Details: err.Error(),
-		}
+		return  clierror.Wrap(err, &clierror.Error{
+			Message:"failed to create mapping",
+		})
 	}
 
 	// server sends status Created when mapping is created, and 200 if it already exists
