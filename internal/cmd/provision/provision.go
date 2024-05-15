@@ -27,8 +27,8 @@ func NewProvisionCMD() *cobra.Command {
 		Short: "Provisions a Kyma cluster on the BTP.",
 		Long: `Use this command to provision a Kyma environment on the SAP BTP platform.
 `,
-		RunE: func(_ *cobra.Command, _ []string) error {
-			return runProvision(&config)
+		Run: func(_ *cobra.Command, _ []string) {
+			clierror.Check(runProvision(&config))
 		},
 	}
 
@@ -47,11 +47,11 @@ func NewProvisionCMD() *cobra.Command {
 	return cmd
 }
 
-func runProvision(config *provisionConfig) error {
+func runProvision(config *provisionConfig) clierror.Error {
 	// TODO: is the credentials a good name for this field? it contains much more than credentials only
 	credentials, err := auth.LoadCISCredentials(config.credentialsPath)
 	if err != nil {
-		return clierror.Wrap(err, clierror.Message("failed to load credentials"))
+		return clierror.WrapE(err, clierror.New("failed to load credentials"))
 	}
 
 	token, err := auth.GetOAuthToken(
@@ -62,14 +62,11 @@ func runProvision(config *provisionConfig) error {
 	)
 	if err != nil {
 		var hints []string
-		if strings.Contains(err.Error(), "Internal Server Error") {
+		if strings.Contains(err.String(), "Internal Server Error") {
 			hints = append(hints, "check if CIS grant type is set to client credentials")
 		}
 
-		return clierror.Wrap(err,
-			clierror.Message("failed to get access token"),
-			clierror.Hints(hints...),
-		)
+		return clierror.WrapE(err, clierror.New("failed to get access token", hints...))
 	}
 
 	// TODO: maybe we should pass only credentials.Endpoints?
@@ -87,7 +84,7 @@ func runProvision(config *provisionConfig) error {
 	}
 	response, err := localCISClient.Provision(ProvisionEnvironment)
 	if err != nil {
-		return clierror.Wrap(err, clierror.Message("failed to provision kyma runtime"))
+		return clierror.WrapE(err, clierror.New("failed to provision kyma runtime"))
 	}
 
 	fmt.Printf("Kyma environment provisioning, environment name: '%s', id: '%s'\n", response.Name, response.ID)

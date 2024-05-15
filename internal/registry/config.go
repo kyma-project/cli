@@ -20,16 +20,15 @@ type RegistryConfig struct {
 	PodMeta    *RegistryPodMeta
 }
 
-func GetConfig(ctx context.Context, client kube.Client) (*RegistryConfig, error) {
+func GetConfig(ctx context.Context, client kube.Client) (*RegistryConfig, clierror.Error) {
 	config, err := getConfig(ctx, client)
 	if err != nil {
-		return nil, clierror.Wrap(err, &clierror.Error{
-			Message: "failed to load in-cluster registry configuration",
-			Hints: []string{
+		return nil, clierror.Wrap(err,
+			clierror.New("failed to load in-cluster registry configuration",
 				"make sure cluster is available and properly configured",
 				"make sure the Docker Registry is installed and in Ready/Warning state.",
-			},
-		})
+			),
+		)
 	}
 
 	return config, nil

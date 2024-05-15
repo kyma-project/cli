@@ -44,7 +44,7 @@ func Test_CLIError_String(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, tt.err.Error())
+			assert.Equal(t, tt.want, tt.err.String())
 		})
 	}
 }
@@ -157,7 +157,7 @@ func Test_CLIError_Wrap(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.err.wrap(tt.outside)
-			assert.Equal(t, tt.want, err.Error())
+			assert.Equal(t, tt.want, err.String())
 		})
 	}
 }

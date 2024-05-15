@@ -29,14 +29,12 @@ func NewImportCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Long:  `Import image from daemon to in-cluster registry.`,
 		Args:  cobra.ExactArgs(1),
 
-		PreRunE: func(_ *cobra.Command, args []string) error {
-			if err := config.complete(args); err != nil {
-				return err
-			}
-			return config.validate()
+		PreRun: func(_ *cobra.Command, args []string) {
+			clierror.Check(config.complete(args))
+			clierror.Check(config.validate())
 		},
-		RunE: func(_ *cobra.Command, args []string) error {
-			return runImageImport(&config)
+		Run: func(_ *cobra.Command, args []string) {
+			clierror.Check(runImageImport(&config))
 		},
 	}
 
@@ -45,26 +43,26 @@ func NewImportCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	return cmd
 }
 
-func (pc *provisionConfig) validate() error {
+func (pc *provisionConfig) validate() clierror.Error {
 	imageElems := strings.Split(pc.image, ":")
 	if len(imageElems) != 2 {
-		return fmt.Errorf("image '%s' not in expected format 'image:tag'", pc.image)
+		return clierror.New(fmt.Sprintf("image '%s' not in expected format 'image:tag'", pc.image))
 	}
 
 	return nil
 }
 
-func (pc *provisionConfig) complete(args []string) error {
+func (pc *provisionConfig) complete(args []string) clierror.Error {
 	pc.image = args[0]
 
 	return pc.KubeClientConfig.Complete()
 }
 
-func runImageImport(config *provisionConfig) error {
+func runImageImport(config *provisionConfig) clierror.Error {
 	// TODO: Add "serverless is not installed" error message
 	registryConfig, err := registry.GetConfig(config.Ctx, config.KubeClient)
 	if err != nil {
-		return clierror.Wrap(err, clierror.Message("failed to load in-cluster registry configuration"))
+		return clierror.WrapE(err, clierror.New("failed to load in-cluster registry configuration"))
 	}
 
 	fmt.Println("Importing", config.image)
@@ -82,7 +80,7 @@ func runImageImport(config *provisionConfig) error {
 		},
 	)
 	if err != nil {
-		return clierror.Wrap(err, clierror.Message("failed to import image to in-cluster registry"))
+		return clierror.WrapE(err, clierror.New("failed to import image to in-cluster registry"))
 	}
 
 	fmt.Println("\nSuccessfully imported image")
