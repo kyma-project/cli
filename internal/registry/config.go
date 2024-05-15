@@ -24,8 +24,7 @@ func GetConfig(ctx context.Context, client kube.Client) (*RegistryConfig, clierr
 	config, err := getConfig(ctx, client)
 	if err != nil {
 		return nil, clierror.Wrap(err,
-			clierror.Message("failed to load in-cluster registry configuration"),
-			clierror.Hints(
+			clierror.New("failed to load in-cluster registry configuration",
 				"make sure cluster is available and properly configured",
 				"make sure the Docker Registry is installed and in Ready/Warning state.",
 			),

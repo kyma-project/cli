@@ -59,7 +59,7 @@ type ProvisionResponse struct {
 func (c *LocalClient) Provision(pe *ProvisionEnvironment) (*ProvisionResponse, clierror.Error) {
 	reqData, err := json.Marshal(pe)
 	if err != nil {
-		return nil, clierror.New(clierror.Message(err.Error()))
+		return nil, clierror.New(err.Error())
 	}
 
 	provisionURL := fmt.Sprintf("%s/%s", c.credentials.Endpoints.ProvisioningServiceURL, provisionEndpoint)
@@ -84,7 +84,7 @@ func (c *LocalClient) Provision(pe *ProvisionEnvironment) (*ProvisionResponse, c
 			hints = append(hints, "check if subaccount have enabled Kyma entitlement with correct plan")
 		}
 
-		return nil, clierror.New(clierror.Message(err.Error()), clierror.Hints(hints...))
+		return nil, clierror.New(err.Error(), hints...)
 	}
 	defer response.Body.Close()
 
@@ -95,7 +95,7 @@ func decodeProvisionSuccessResponse(response *http.Response) (*ProvisionResponse
 	provisionResponse := ProvisionResponse{}
 	err := json.NewDecoder(response.Body).Decode(&provisionResponse)
 	if err != nil {
-		return nil, clierror.Wrap(err, clierror.Message("failed to decode response"))
+		return nil, clierror.Wrap(err, clierror.New("failed to decode response"))
 	}
 
 	return &provisionResponse, nil

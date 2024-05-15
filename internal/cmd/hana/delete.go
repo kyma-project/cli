@@ -100,5 +100,5 @@ func handleDeleteResponse(err error, printedName, namespace, name string) clierr
 		return nil
 	}
 	return clierror.Wrap(err,
-		clierror.Message("failed to delete Hana resource."))
+		clierror.New("failed to delete Hana resource."))
 }

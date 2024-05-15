@@ -15,16 +15,15 @@ type clierror struct {
 }
 
 // New creates a new error with the given modifiers
-func New(modifiers ...modifier) Error {
-	return new(modifiers...)
+func New(message string, hints ...string) Error {
+	return new(message, hints...)
 }
 
-func new(modifiers ...modifier) *clierror {
-	err := &clierror{}
-	for _, m := range modifiers {
-		m(err)
+func new(message string, hints ...string) *clierror {
+	return &clierror{
+		message: message,
+		hints:   hints,
 	}
-	return err
 }
 
 // Error returns the error string, compatible with the error interface

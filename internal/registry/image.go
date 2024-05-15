@@ -44,8 +44,7 @@ func importImage(ctx context.Context, imageName string, opts ImportOptions, util
 	localImage, err := imageFromInternalRegistry(ctx, imageName, utils)
 	if err != nil {
 		return "", clierror.Wrap(err,
-			clierror.Message("failed to load image from local docker daemon"),
-			clierror.Hints(
+			clierror.New("failed to load image from local docker daemon",
 				"make sure docker daemon is running",
 				"make sure the image exists in the local docker daemon",
 			),
@@ -54,7 +53,7 @@ func importImage(ctx context.Context, imageName string, opts ImportOptions, util
 
 	conn, err := utils.portforwardNewDial(opts.ClusterAPIRestConfig, opts.RegistryPodName, opts.RegistryPodNamespace)
 	if err != nil {
-		return "", clierror.Wrap(err, clierror.Message("failed to create registry portforward connection"))
+		return "", clierror.Wrap(err, clierror.New("failed to create registry portforward connection"))
 	}
 	defer conn.Close()
 
@@ -63,7 +62,7 @@ func importImage(ctx context.Context, imageName string, opts ImportOptions, util
 
 	pushedImage, err := imageToInClusterRegistry(ctx, localImage, transport, opts.RegistryAuth, opts.RegistryPullHost, imageName, utils)
 	if err != nil {
-		return "", clierror.Wrap(err, clierror.Message("failed to push image to the in-cluster registry"))
+		return "", clierror.Wrap(err, clierror.New("failed to push image to the in-cluster registry"))
 	}
 
 	return pushedImage, nil

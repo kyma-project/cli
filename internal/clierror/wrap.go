@@ -1,10 +1,13 @@
 package clierror
 
-func Wrap(inside any, modifiers ...modifier) Error {
-	if err, ok := inside.(*clierror); ok {
-		return err.wrap(new(modifiers...))
-	}
+import "fmt"
 
-	// convert any type of inside error to a string
-	return new(MessageF("%v", inside)).wrap(new(modifiers...))
+// Wrap allows to cover and error with additional information
+func Wrap(inside error, outside Error) Error {
+	return WrapE(new(fmt.Sprintf("%v", inside)), outside)
+}
+
+// WrapE allows to cover clierror with additional information
+func WrapE(inside, outside Error) Error {
+	return inside.(*clierror).wrap(outside.(*clierror))
 }

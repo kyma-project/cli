@@ -46,7 +46,7 @@ func NewImportCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 func (pc *provisionConfig) validate() clierror.Error {
 	imageElems := strings.Split(pc.image, ":")
 	if len(imageElems) != 2 {
-		return clierror.New(clierror.MessageF("image '%s' not in expected format 'image:tag'", pc.image))
+		return clierror.New(fmt.Sprintf("image '%s' not in expected format 'image:tag'", pc.image))
 	}
 
 	return nil
@@ -62,7 +62,7 @@ func runImageImport(config *provisionConfig) clierror.Error {
 	// TODO: Add "serverless is not installed" error message
 	registryConfig, err := registry.GetConfig(config.Ctx, config.KubeClient)
 	if err != nil {
-		return clierror.Wrap(err, clierror.Message("failed to load in-cluster registry configuration"))
+		return clierror.WrapE(err, clierror.New("failed to load in-cluster registry configuration"))
 	}
 
 	fmt.Println("Importing", config.image)
@@ -80,7 +80,7 @@ func runImageImport(config *provisionConfig) clierror.Error {
 		},
 	)
 	if err != nil {
-		return clierror.Wrap(err, clierror.Message("failed to import image to in-cluster registry"))
+		return clierror.WrapE(err, clierror.New("failed to import image to in-cluster registry"))
 	}
 
 	fmt.Println("\nSuccessfully imported image")

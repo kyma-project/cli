@@ -98,8 +98,7 @@ func handleGetHanaCredentialsError(err error) (credentials, clierror.Error) {
 	}
 
 	credErr := clierror.Wrap(err,
-		clierror.Message("failed to get Hana credentials"),
-		clierror.Hints(hints...),
+		clierror.New("failed to get Hana credentials", hints...),
 	)
 
 	return credentials{}, credErr
