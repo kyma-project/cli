@@ -59,7 +59,7 @@ type ProvisionResponse struct {
 func (c *LocalClient) Provision(pe *ProvisionEnvironment) (*ProvisionResponse, error) {
 	reqData, err := json.Marshal(pe)
 	if err != nil {
-		return nil, &clierror.Error{Message: err.Error()}
+		return nil, clierror.New(clierror.Message(err.Error()))
 	}
 
 	provisionURL := fmt.Sprintf("%s/%s", c.credentials.Endpoints.ProvisioningServiceURL, provisionEndpoint)
@@ -72,19 +72,19 @@ func (c *LocalClient) Provision(pe *ProvisionEnvironment) (*ProvisionResponse, e
 
 	response, err := c.cis.post(provisionURL, options)
 	if err != nil {
-		returnErr := &clierror.Error{
-			Message: err.Error(),
-		}
+		var hints []string
+
 		if strings.Contains(err.Error(), "404 Not Found") {
-			returnErr.Hints = append(returnErr.Hints, "check if the CIS config file contains correct provisioning_service_url endpoint")
+			hints = append(hints, "check if the CIS config file contains correct provisioning_service_url endpoint")
 		}
 		if strings.Contains(err.Error(), "insufficient_scope") {
-			returnErr.Hints = append(returnErr.Hints, "check if the CIS instance plan is set to local")
+			hints = append(hints, "check if the CIS instance plan is set to local")
 		}
 		if strings.Contains(err.Error(), "User is unauthorized for this operation") {
-			returnErr.Hints = append(returnErr.Hints, "check if subaccount have enabled Kyma entitlement with correct plan")
+			hints = append(hints, "check if subaccount have enabled Kyma entitlement with correct plan")
 		}
-		return nil, returnErr
+
+		return nil, clierror.New(clierror.Message(err.Error()), clierror.Hints(hints...))
 	}
 	defer response.Body.Close()
 
@@ -95,7 +95,7 @@ func decodeProvisionSuccessResponse(response *http.Response) (*ProvisionResponse
 	provisionResponse := ProvisionResponse{}
 	err := json.NewDecoder(response.Body).Decode(&provisionResponse)
 	if err != nil {
-		return nil, clierror.Wrap(err, &clierror.Error{Message: "failed to decode response"})
+		return nil, clierror.Wrap(err, clierror.Message("failed to decode response"))
 	}
 
 	return &provisionResponse, nil
