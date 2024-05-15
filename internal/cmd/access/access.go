@@ -59,23 +59,23 @@ func runAccess(cfg *accessConfig) error {
 	// Create objects
 	err := createObjects(cfg)
 	if err != nil {
-		return clierror.Wrap(err, &clierror.Error{Message: "failed to create objects"})
+		return clierror.Wrap(err, clierror.Message("failed to create objects"))
 	}
 	enrichedKubeconfig, err := prepareKubeconfig(cfg)
 	if err != nil {
-		return clierror.Wrap(err, &clierror.Error{Message: "failed to prepare kubeconfig"})
+		return clierror.Wrap(err, clierror.Message("failed to prepare kubeconfig"))
 	}
 
 	if cfg.output != "" {
 		err = clientcmd.WriteToFile(*enrichedKubeconfig, cfg.output)
 		println("Kubeconfig saved to: " + cfg.output)
 		if err != nil {
-			return clierror.Wrap(err, &clierror.Error{Message: "failed to save kubeconfig to file"})
+			return clierror.Wrap(err, clierror.Message("failed to save kubeconfig to file"))
 		}
 	} else {
 		message, err := clientcmd.Write(*enrichedKubeconfig)
 		if err != nil {
-			return clierror.Wrap(err, &clierror.Error{Message: "failed to print kubeconfig"})
+			return clierror.Wrap(err, clierror.Message("failed to print kubeconfig"))
 		}
 		fmt.Println(string(message))
 

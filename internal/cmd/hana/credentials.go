@@ -96,11 +96,11 @@ func handleGetHanaCredentialsError(err error) (credentials, error) {
 	if err.Error() == "Unauthorized" {
 		hints = append(hints, "Make sure that your kubeconfig has access to kubernetes.")
 	}
-	
-	credErr := clierror.Wrap(err, &clierror.Error{
-		Message: "failed to get Hana credentails",
-		Hints: hints,
-	})
+
+	credErr := clierror.Wrap(err,
+		clierror.Message("failed to get Hana credentials"),
+		clierror.Hints(hints...),
+	)
 
 	return credentials{}, credErr
 }

@@ -4,21 +4,30 @@ import (
 	"fmt"
 )
 
-type Error struct {
-	Message string
-	Details string
-	Hints   []string
+type clierror struct {
+	message string
+	details string
+	hints   []string
+}
+
+// New creates a new error with the given modifiers
+func New(modifiers ...modifier) *clierror {
+	err := &clierror{}
+	for _, m := range modifiers {
+		m(err)
+	}
+	return err
 }
 
 // Error returns the error string, compatible with the error interface
-func (e Error) Error() string {
-	output := fmt.Sprintf("Error:\n  %s\n\n", e.Message)
-	if e.Details != "" {
-		output += fmt.Sprintf("Error Details:\n  %s\n\n", e.Details)
+func (e clierror) Error() string {
+	output := fmt.Sprintf("Error:\n  %s\n\n", e.message)
+	if e.details != "" {
+		output += fmt.Sprintf("Error Details:\n  %s\n\n", e.details)
 	}
-	if len(e.Hints) > 0 {
+	if len(e.hints) > 0 {
 		output += "Hints:\n"
-		for _, hint := range e.Hints {
+		for _, hint := range e.hints {
 			output += fmt.Sprintf("  - %s\n", hint)
 		}
 	}
@@ -26,27 +35,27 @@ func (e Error) Error() string {
 }
 
 // Wrap adds a new message and hints to the error
-func (inside *Error) wrap(outside *Error) *Error {
-	newError := &Error{
-		Message: inside.Message,
-		Details: inside.Details,
-		Hints:   inside.Hints,
+func (inside *clierror) wrap(outside *clierror) *clierror {
+	newError := &clierror{
+		message: inside.message,
+		details: inside.details,
+		hints:   inside.hints,
 	}
 
-	if outside.Message != "" {
-		newError.Message = outside.Message
+	if outside.message != "" {
+		newError.message = outside.message
 	}
 
-	if outside.Hints != nil {
-		newError.Hints = append(outside.Hints, newError.Hints...)
+	if outside.hints != nil {
+		newError.hints = append(outside.hints, newError.hints...)
 	}
 
-	if outside.Message != "" {
-		newError.Details = wrapDetails(inside.Message, newError.Details)
+	if outside.message != "" {
+		newError.details = wrapDetails(inside.message, newError.details)
 	}
 
-	if outside.Details != "" {
-		newError.Details = wrapDetails(outside.Details, newError.Details)
+	if outside.details != "" {
+		newError.details = wrapDetails(outside.details, newError.details)
 	}
 
 	return newError
