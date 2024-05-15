@@ -65,7 +65,7 @@ func TestCISClient_Provision(t *testing.T) {
 		token          *auth.XSUAAToken
 		pe             *ProvisionEnvironment
 		wantedResponse *ProvisionResponse
-		expectedErr    *clierror.Error
+		expectedErr    error
 	}{
 		{
 			name: "Correct data",
@@ -95,7 +95,7 @@ func TestCISClient_Provision(t *testing.T) {
 				Name: "name",
 			},
 			wantedResponse: nil,
-			expectedErr:    &clierror.Error{Message: "failed to build request: parse \"?\\n?/provisioning/v1/environments\": net/url: invalid control character in URL"},
+			expectedErr:    clierror.New(clierror.Message("failed to build request: parse \"?\\n?/provisioning/v1/environments\": net/url: invalid control character in URL")),
 		},
 		{
 			name: "Wrong URL",
@@ -109,7 +109,7 @@ func TestCISClient_Provision(t *testing.T) {
 				Name: "name",
 			},
 			wantedResponse: nil,
-			expectedErr:    &clierror.Error{Message: "failed to get data from server: Post \"http://doesnotexist/provisioning/v1/environments\": dial tcp: lookup doesnotexist: no such host"},
+			expectedErr:    clierror.New(clierror.Message("failed to get data from server: Post \"http://doesnotexist/provisioning/v1/environments\": dial tcp: lookup doesnotexist: no such host")),
 		},
 		{
 			name: "Error response",
@@ -123,7 +123,7 @@ func TestCISClient_Provision(t *testing.T) {
 				Name: "name",
 			},
 			wantedResponse: nil,
-			expectedErr:    &clierror.Error{Message: "error"},
+			expectedErr:    clierror.New(clierror.Message("error")),
 		},
 	}
 	for _, tt := range tests {
@@ -137,7 +137,7 @@ func TestCISClient_Provision(t *testing.T) {
 
 			response, err := c.Provision(pe)
 			if expectedErr != nil {
-				require.Equal(t, expectedErr.Message, err.(*clierror.Error).Message)
+				require.Equal(t, expectedErr, err)
 			}
 			require.Equal(t, wantedResponse, response)
 		})

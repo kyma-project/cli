@@ -99,7 +99,6 @@ func handleDeleteResponse(err error, printedName, namespace, name string) error 
 		fmt.Printf("%s (%s/%s) not found.\n", printedName, namespace, name)
 		return nil
 	}
-	return clierror.Wrap(err, &clierror.Error{
-		Message: "failed to delete Hana resource.",
-	})
+	return clierror.Wrap(err,
+		clierror.Message("failed to delete Hana resource."))
 }

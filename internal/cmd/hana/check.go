@@ -90,33 +90,26 @@ func checkHanaBindingUrl(config *hanaCheckConfig) error {
 func handleCheckResponse(u *unstructured.Unstructured, err error, printedName, namespace, name string) error {
 	if err != nil {
 		return clierror.Wrap(err,
-			&clierror.Error{
-				Message: "failed to get resource data",
-				Hints: []string{
-					"Make sure that Hana was provisioned.",
-				},
-			},
+			clierror.Message("failed to get resource data"),
+			clierror.Hints("Make sure that Hana was provisioned."),
 		)
 	}
 
 	ready, error := kube.IsReady(u)
 	if error != nil {
 		return clierror.Wrap(err,
-			&clierror.Error{
-				Message: "failed to check readiness of Hana resources",
-			},
+			clierror.Message("failed to check readiness of Hana resources"),
 		)
 	}
 	if !ready {
 		fmt.Printf("%s is not ready (%s/%s).\n", printedName, namespace, name)
-		return &clierror.Error{
-			Message: fmt.Sprintf("%s is not ready", strings.ToLower(printedName[:1])+printedName[1:]),
-			Hints: []string{
+		return clierror.New(
+			clierror.MessageF("%s is not ready", strings.ToLower(printedName[:1])+printedName[1:]),
+			clierror.Hints(
 				"Wait for provisioning of Hana resources.",
 				"Check if Hana resources started without errors.",
-			},
-		}
-
+			),
+		)
 	}
 	fmt.Printf("%s is ready (%s/%s).\n", printedName, namespace, name)
 	return nil
