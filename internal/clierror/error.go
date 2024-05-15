@@ -4,6 +4,10 @@ import (
 	"fmt"
 )
 
+type Error interface {
+	String() string
+}
+
 type clierror struct {
 	message string
 	details string
@@ -11,7 +15,11 @@ type clierror struct {
 }
 
 // New creates a new error with the given modifiers
-func New(modifiers ...modifier) *clierror {
+func New(modifiers ...modifier) Error {
+	return new(modifiers...)
+}
+
+func new(modifiers ...modifier) *clierror {
 	err := &clierror{}
 	for _, m := range modifiers {
 		m(err)
@@ -20,7 +28,7 @@ func New(modifiers ...modifier) *clierror {
 }
 
 // Error returns the error string, compatible with the error interface
-func (e clierror) Error() string {
+func (e *clierror) String() string {
 	output := fmt.Sprintf("Error:\n  %s\n\n", e.message)
 	if e.details != "" {
 		output += fmt.Sprintf("Error Details:\n  %s\n\n", e.details)

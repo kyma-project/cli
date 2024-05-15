@@ -65,7 +65,7 @@ func TestCISClient_Provision(t *testing.T) {
 		token          *auth.XSUAAToken
 		pe             *ProvisionEnvironment
 		wantedResponse *ProvisionResponse
-		expectedErr    error
+		expectedErr    clierror.Error
 	}{
 		{
 			name: "Correct data",

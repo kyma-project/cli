@@ -2,7 +2,6 @@ package auth
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -26,7 +25,7 @@ type XSUAAToken struct {
 	JTI         string `json:"jti"`
 }
 
-func GetOAuthToken(grantType, serverURL, username, password string) (*XSUAAToken, error) {
+func GetOAuthToken(grantType, serverURL, username, password string) (*XSUAAToken, clierror.Error) {
 	urlBody := url.Values{}
 	urlBody.Set("grant_type", grantType)
 
@@ -56,7 +55,7 @@ func GetOAuthToken(grantType, serverURL, username, password string) (*XSUAAToken
 	return decodeAuthSuccessResponse(response)
 }
 
-func decodeAuthSuccessResponse(response *http.Response) (*XSUAAToken, error) {
+func decodeAuthSuccessResponse(response *http.Response) (*XSUAAToken, clierror.Error) {
 	token := XSUAAToken{}
 	err := json.NewDecoder(response.Body).Decode(&token)
 	if err != nil {
@@ -66,12 +65,11 @@ func decodeAuthSuccessResponse(response *http.Response) (*XSUAAToken, error) {
 	return &token, nil
 }
 
-func decodeAuthErrorResponse(response *http.Response) error {
+func decodeAuthErrorResponse(response *http.Response) clierror.Error {
 	errorData := xsuaaErrorResponse{}
 	err := json.NewDecoder(response.Body).Decode(&errorData)
 	if err != nil {
 		return clierror.Wrap(err, clierror.Message("failed to decode error response"))
 	}
-	// TODO: replace it with New func
-	return clierror.Wrap(errors.New(errorData.ErrorDescription), clierror.MessageF("error response: %s", response.Status))
+	return clierror.Wrap(errorData.ErrorDescription, clierror.MessageF("error response: %s", response.Status))
 }

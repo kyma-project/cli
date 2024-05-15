@@ -2,9 +2,9 @@ package kube
 
 import (
 	"context"
+	"errors"
 
 	"github.com/kyma-project/cli.v3/internal/btp/operator"
-	"github.com/kyma-project/cli.v3/internal/clierror"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -25,7 +25,7 @@ type Status struct {
 func GetServiceStatus(u *unstructured.Unstructured) (Status, error) {
 	instance := somethingWithStatus{}
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, &instance); err != nil {
-		return Status{}, clierror.Wrap(err, clierror.Message("failed to read resource data"))
+		return Status{}, errors.New("failed to read resource data")
 	}
 
 	return instance.Status, nil
@@ -93,7 +93,7 @@ func isResourceReady(instance *unstructured.Unstructured) (bool, error) {
 		}
 		failedMessage := GetConditionMessage(status.Conditions, "Failed")
 
-		return false, clierror.New(clierror.Message(failedMessage))
+		return false, errors.New(failedMessage)
 	}
 
 	ready, err := IsReady(instance)

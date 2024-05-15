@@ -1,9 +1,10 @@
 package clierror
 
-func Wrap(inside error, modifiers ...modifier) error {
+func Wrap(inside any, modifiers ...modifier) Error {
 	if err, ok := inside.(*clierror); ok {
-		return err.wrap(New(modifiers...))
+		return err.wrap(new(modifiers...))
 	}
 
-	return New(Message(inside.Error())).wrap(New(modifiers...))
+	// convert any type of inside error to a string
+	return new(MessageF("%v", inside)).wrap(new(modifiers...))
 }

@@ -10,15 +10,21 @@ import (
 func Test_Wrap(t *testing.T) {
 	tests := []struct {
 		name    string
-		inside  error
+		inside  any
 		outside []modifier
 		want    string
 	}{
 		{
-			name:    "Wrap string error",
+			name:    "Wrap basic error",
 			inside:  fmt.Errorf("error"),
 			outside: []modifier{Message("outside"), Hints("hint1", "hint2")},
 			want:    "Error:\n  outside\n\nError Details:\n  error\n\nHints:\n  - hint1\n  - hint2\n",
+		},
+		{
+			name: "Wrap string error",
+			inside: "error",
+			outside: []modifier{Message("outside"), Hints("hint1", "hint2")},
+			want: "Error:\n  outside\n\nError Details:\n  error\n\nHints:\n  - hint1\n  - hint2\n",
 		},
 		{
 			name:    "Wrap Error",
@@ -54,7 +60,7 @@ func Test_Wrap(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := Wrap(tt.inside, tt.outside...)
-			assert.Equal(t, tt.want, err.Error())
+			assert.Equal(t, tt.want, err.String())
 		})
 	}
 }

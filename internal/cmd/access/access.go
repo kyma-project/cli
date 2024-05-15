@@ -2,13 +2,13 @@ package access
 
 import (
 	"fmt"
-	"github.com/kyma-project/cli.v3/internal/clierror"
-	"k8s.io/apimachinery/pkg/api/errors"
 
+	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
@@ -34,11 +34,11 @@ func NewAccessCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Use:   "access",
 		Short: "Enrich kubeconfig with access",
 		Long:  "Enrich kubeconfig with Service Account based token and certificate",
-		PreRunE: func(_ *cobra.Command, args []string) error {
-			return cfg.KubeClientConfig.Complete()
+		PreRun: func(_ *cobra.Command, args []string) {
+			clierror.Check(cfg.KubeClientConfig.Complete())
 		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return runAccess(&cfg)
+		Run: func(cmd *cobra.Command, args []string) {
+			clierror.Check(runAccess(&cfg))
 		},
 	}
 
@@ -55,7 +55,7 @@ func NewAccessCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	return cmd
 }
 
-func runAccess(cfg *accessConfig) error {
+func runAccess(cfg *accessConfig) clierror.Error {
 	// Create objects
 	err := createObjects(cfg)
 	if err != nil {

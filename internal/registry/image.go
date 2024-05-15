@@ -32,7 +32,7 @@ type utils struct {
 	remoteWrite        func(ref name.Reference, img v1.Image, options ...remote.Option) error
 }
 
-func ImportImage(ctx context.Context, imageName string, opts ImportOptions) (string, error) {
+func ImportImage(ctx context.Context, imageName string, opts ImportOptions) (string, clierror.Error) {
 	return importImage(ctx, imageName, opts, utils{
 		daemonImage:        daemon.Image,
 		portforwardNewDial: portforward.NewDialFor,
@@ -40,23 +40,21 @@ func ImportImage(ctx context.Context, imageName string, opts ImportOptions) (str
 	})
 }
 
-func importImage(ctx context.Context, imageName string, opts ImportOptions, utils utils) (string, error) {
+func importImage(ctx context.Context, imageName string, opts ImportOptions, utils utils) (string, clierror.Error) {
 	localImage, err := imageFromInternalRegistry(ctx, imageName, utils)
 	if err != nil {
-		return "", clierror.Wrap(err, &clierror.Error{
-			Message: "failed to load image from local docker daemon",
-			Hints: []string{
+		return "", clierror.Wrap(err,
+			clierror.Message("failed to load image from local docker daemon"),
+			clierror.Hints(
 				"make sure docker daemon is running",
 				"make sure the image exists in the local docker daemon",
-			},
-		})
+			),
+		)
 	}
 
 	conn, err := utils.portforwardNewDial(opts.ClusterAPIRestConfig, opts.RegistryPodName, opts.RegistryPodNamespace)
 	if err != nil {
-		return "", clierror.Wrap(err, &clierror.Error{
-			Message: "failed to create registry portforward connection",
-		})
+		return "", clierror.Wrap(err, clierror.Message("failed to create registry portforward connection"))
 	}
 	defer conn.Close()
 
@@ -65,9 +63,7 @@ func importImage(ctx context.Context, imageName string, opts ImportOptions, util
 
 	pushedImage, err := imageToInClusterRegistry(ctx, localImage, transport, opts.RegistryAuth, opts.RegistryPullHost, imageName, utils)
 	if err != nil {
-		return "", clierror.Wrap(err, &clierror.Error{
-			Message: "failed to push image to the in-cluster registry",
-		})
+		return "", clierror.Wrap(err, clierror.Message("failed to push image to the in-cluster registry"))
 	}
 
 	return pushedImage, nil

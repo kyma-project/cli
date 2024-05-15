@@ -31,7 +31,7 @@ func TestGetOAuthToken(t *testing.T) {
 		name        string
 		credentials *CISCredentials
 		want        *XSUAAToken
-		expectedErr error
+		expectedErr clierror.Error
 	}{
 		{
 			name: "Correct credentials",
