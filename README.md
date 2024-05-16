@@ -2,6 +2,9 @@
 
 # Kyma CLI
 
+> [!WARNING]
+> The kyme-cli in the version `2.x.x` is not anymore supported. Not all functionality will be moved to the kyma-cli in the `3.x.x` version. Read more [here](https://github.com/kyma-project/cli/issues/2051).
+
 ## Overview
 
 Kyma CLI is a command line tool which supports [Kyma](https://github.com/kyma-project/kyma) developers. It provides a set of commands and flags you can use to:

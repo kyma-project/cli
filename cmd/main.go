@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/kyma-project/cli/cmd/kyma"
@@ -8,6 +9,9 @@ import (
 )
 
 func main() {
+	// TODO: improve warning message
+	fmt.Println("WARNING: kyma command is deprecated and will be removed in the future")
+
 	command := kyma.NewCmd(cli.NewOptions())
 
 	err := command.Execute()
