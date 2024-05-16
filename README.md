@@ -3,7 +3,8 @@
 # Kyma CLI
 
 > [!WARNING]
-> The kyme-cli in the version `2.x.x` is not anymore supported. Not all functionality will be moved to the kyma-cli in the `3.x.x` version. Read more [here](https://github.com/kyma-project/cli/issues/2051).
+> All current commands are deprecated and new `v3` commands will be developed within `alpha` command group.
+> Read more about the decision [here](https://github.com/kyma-project/community/issues/872).
 
 ## Overview
 
