@@ -2,6 +2,10 @@
 
 # Kyma CLI
 
+> [!WARNING]
+> The Kyma CLI version `v2`, with all commands available within this version, is deprecated. We've started designing the `v3` commands that will be first released within the `alpha` command group.
+> Read more about the decision [here](https://github.com/kyma-project/community/issues/872).
+
 ## Overview
 
 Kyma CLI is a command line tool which supports [Kyma](https://github.com/kyma-project/kyma) developers. It provides a set of commands and flags you can use to:
