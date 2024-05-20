@@ -3,7 +3,7 @@
 # Kyma CLI
 
 > [!WARNING]
-> Version `v2` of kyma CLI is deprecated. This implies that all commands available within version `v2` are also deprecated. We started designing `v3` commands that will be first released within `alpha` command group.
+> The Kyma CLI version `v2`, with all commands available within this version, is deprecated. We've started designing the `v3` commands that will be first released within the `alpha` command group.
 > Read more about the decision [here](https://github.com/kyma-project/community/issues/872).
 
 ## Overview
