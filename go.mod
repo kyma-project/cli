@@ -16,7 +16,7 @@ require (
 	github.com/docker/docker v24.0.9+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/fatih/color v1.16.0
-	github.com/go-git/go-git/v5 v5.11.0
+	github.com/go-git/go-git/v5 v5.12.0
 	github.com/go-logr/logr v1.4.1
 	github.com/go-logr/zapr v1.3.0
 	github.com/imdario/mergo v1.0.0
@@ -81,7 +81,7 @@ require (
 	github.com/Masterminds/squirrel v1.5.4 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/Microsoft/hcsshim v0.11.4 // indirect
-	github.com/ProtonMail/go-crypto v0.0.0-20230923063757-afb1ddc0824c // indirect
+	github.com/ProtonMail/go-crypto v1.0.0 // indirect
 	github.com/ThalesIgnite/crypto11 v1.2.5 // indirect
 	github.com/alibabacloud-go/alibabacloud-gateway-spi v0.0.4 // indirect
 	github.com/alibabacloud-go/cr-20160607 v1.0.1 // indirect
@@ -297,7 +297,7 @@ require (
 	github.com/sassoftware/relic v7.2.1+incompatible // indirect
 	github.com/secure-systems-lab/go-securesystemslib v0.8.0 // indirect
 	github.com/segmentio/ksuid v1.0.4 // indirect
-	github.com/sergi/go-diff v1.3.1 // indirect
+	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
 	github.com/shibumi/go-pathspec v1.3.0 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/sigstore/cosign/v2 v2.2.4 // indirect
@@ -306,7 +306,7 @@ require (
 	github.com/sigstore/sigstore v1.8.3 // indirect
 	github.com/sigstore/timestamp-authority v1.2.2 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
-	github.com/skeema/knownhosts v1.2.1 // indirect
+	github.com/skeema/knownhosts v1.2.2 // indirect
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.11.0 // indirect
