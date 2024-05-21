@@ -1,0 +1,64 @@
+# TODO: refactor this file to be compatible with the new cli
+# release script is defined: here https://github.com/kyma-project/cli/blob/release-2.20/hack/release.sh
+
+# Documentation for how to configure goreleaser can be found at http://goreleaser.com
+project_name: kyma
+release:
+  github:
+    owner: kyma-project
+    name: cli
+  prerelease: auto
+before:
+  hooks:
+    - make resolve
+builds:
+  - env:
+      - CGO_ENABLED=0
+    ldflags: -s -w -X github.com/kyma-project/cli/cmd/kyma/version.Version={{.Version}}
+    main: ./cmd/
+    goos:
+      - darwin
+      - linux
+      - windows
+    ignore:
+      - goos: darwin
+        goarch: 386
+archives:
+  - id: foo
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+    format_overrides:
+      - goos: windows
+        format: zip
+checksum:
+  name_template: "checksums.txt"
+snapshot:
+  name_template: "{{ .Tag }}-next"
+changelog:
+  use: github
+  sort: asc
+  groups:
+    - title: Bug fixes
+      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
+      order: 1
+    - title: Dependencies
+      regexp: '^.*?deps(\([[:word:]]+\))??!?:.+$'
+      order: 2
+    - title: Documentation
+      regexp: '^.*?docs(\([[:word:]]+\))??!?:.+$'
+      order: 3
+    - title: Test suites
+      regexp: '^.*?test(\([[:word:]]+\))??!?:.+$'
+      order: 4
+    - title: Features
+      order: 0
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - '^(B|b)ump'
+      - '^.*?chore(\([[:word:]]+\))??!?:.+$'
