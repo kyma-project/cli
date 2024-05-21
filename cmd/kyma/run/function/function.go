@@ -122,9 +122,10 @@ func (c *command) workspaceConfig(path string) (workspace.Cfg, error) {
 	}
 
 	supportedRuntimes := map[string]struct{}{
-		"nodejs16": {},
-		"nodejs18": {},
-		"python39": {},
+		"nodejs18":  {},
+		"nodejs20":  {},
+		"python39":  {},
+		"python312": {},
 	}
 	if _, ok := supportedRuntimes[cfg.Runtime]; !ok {
 		return workspace.Cfg{}, fmt.Errorf("unsupported runtime: %s", cfg.Runtime)

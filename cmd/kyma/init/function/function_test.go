@@ -17,7 +17,7 @@ func TestFunctionFlags(t *testing.T) {
 	require.Equal(t, "", o.Name, "Default value for the --name flag not as expected.")
 	require.Equal(t, "", o.Namespace, "Default value for the --namespace flag not as expected.")
 	require.Equal(t, "", o.Dir, "Default value for the --dir flag not as expected.")
-	require.Equal(t, "nodejs18", o.Runtime, "Default value for the --runtime flag not as expected.")
+	require.Equal(t, "nodejs20", o.Runtime, "Default value for the --runtime flag not as expected.")
 	require.Equal(t, "", o.RuntimeImageOverride, "The parsed value for the --runtime-image-override flag not as expected.")
 	require.Equal(t, "", o.URL, "The parsed value for the --url flag not as expected.")
 	require.Equal(t, "", o.RepositoryName, "The parsed value for the --repository-name flag not as expected.")
@@ -31,7 +31,7 @@ func TestFunctionFlags(t *testing.T) {
 		"--name", "test-name",
 		"--namespace", "test-namespace",
 		"--runtime-image-override", "runtime-image-override",
-		"--runtime", "python39",
+		"--runtime", "python312",
 		"--url", "test-url",
 		"--repository-name", "test-repository-name",
 		"--reference", "test-reference",
@@ -42,7 +42,7 @@ func TestFunctionFlags(t *testing.T) {
 	require.Equal(t, "/fakepath", o.Dir, "The parsed value for the --dir flag not as expected.")
 	require.Equal(t, "test-name", o.Name, "The parsed value for the --name flag not as expected.")
 	require.Equal(t, "test-namespace", o.Namespace, "The parsed value for the --namespace flag not as expected.")
-	require.Equal(t, "python39", o.Runtime, "The parsed value for the --runtime flag not as expected.")
+	require.Equal(t, "python312", o.Runtime, "The parsed value for the --runtime flag not as expected.")
 	require.Equal(t, "runtime-image-override", o.RuntimeImageOverride, "The parsed value for the --runtime-image-override flag not as expected.")
 	require.Equal(t, "test-url", o.URL, "The parsed value for the --url flag not as expected.")
 	require.Equal(t, "test-repository-name", o.RepositoryName, "The parsed value for the --repository-name flag not as expected.")

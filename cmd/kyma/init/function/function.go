@@ -16,14 +16,15 @@ import (
 )
 
 const (
-	defaultRuntime   = "nodejs18"
+	defaultRuntime   = "nodejs20"
 	defaultReference = "main"
 	defaultBaseDir   = "/"
 )
 
 var (
 	deprecatedRuntimes = map[string]struct{}{
-		"nodejs16": {},
+		"nodejs18": {},
+		"python39": {},
 	}
 )
 
@@ -55,9 +56,10 @@ Use the flags to specify the initial configuration for your Function or to choos
 	cmd.Flags().StringVarP(
 		&o.Runtime, "runtime", "r", defaultRuntime,
 		`Flag used to define the environment for running your Function. Use one of these options:
-	- nodejs16 (deprecated)
-	- nodejs18 
-	- python39`,
+	- nodejs18 (deprecated) 
+	- nodejs20
+	- python39 (deprecated)
+	- python312`,
 	)
 	cmd.Flags().StringVar(&o.SchemaVersion, "schema-version", string(workspace.SchemaVersionDefault), `Version of the config API.`)
 
