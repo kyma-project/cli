@@ -1,7 +1,0 @@
-chart:
-  key1: value1yaml
-  key2:
-    key2-1: "intercepted"
-    key2-2: value2.2yaml
-  key3: value3yaml
-  key4: intercepted

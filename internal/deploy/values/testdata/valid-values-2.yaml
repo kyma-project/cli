@@ -1,5 +1,0 @@
-component:
-  outer:
-    inner:
-      key: "bzz"
-  key: "bzz"
