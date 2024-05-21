@@ -1,5 +1,0 @@
-config:
-  - name: some-chart
-    externalConfig: something
-  - name: some-other-chart
-    externalConfig: something-else

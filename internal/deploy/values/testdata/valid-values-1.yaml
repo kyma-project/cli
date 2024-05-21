@@ -1,5 +1,0 @@
-component:
-  outer:
-    inner:
-      key: "baz"
-  key: "baz"

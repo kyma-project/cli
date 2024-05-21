@@ -1,5 +1,0 @@
-kind: KCPModule
-resource: kcpmodules
-apiVersion: component.kyma-project.io/v1alpha1
-spec:
-  initKey: initValue

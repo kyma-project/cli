@@ -1,8 +1,0 @@
-chart:
-  key1: value1json
-  key2:
-    key2-1: value2.1yaml
-    key2-2: value2.2yaml
-  key3: value3json
-  key4: value4override1
-  key5: value5override2

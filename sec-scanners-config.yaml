@@ -1,8 +1,0 @@
-module-name: cli
-whitesource:
-  language: golang-mod
-  exclude:
-    - "**/test/**"
-    - "**/*_test.go"
-    - "**/mocks/**"
-  subprojects: false

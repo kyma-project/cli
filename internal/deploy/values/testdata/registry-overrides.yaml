@@ -1,7 +1,0 @@
-serverless:
-  dockerRegistry:
-    enableInternal: true
-    password: "secret password"
-    registryAddress: "external-push-address"
-    serverAddress: "external-address"
-    internalServerAddress: "internal-address"
