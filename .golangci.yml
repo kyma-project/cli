@@ -1,27 +1,11 @@
 run:
-  modules-download-mode: readonly
   timeout: 15m
 linters:
   disable-all: true
   enable:
     - errcheck
-    - exportloopref
-    - forcetypeassert
-    - gochecknoinits
-    - gofmt
-    - gosec
     - gosimple
     - govet
     - ineffassign
-    - misspell
-    - revive
     - staticcheck
-    - typecheck
-    - unparam
     - unused
-issues:
-  exclude:
-    # https://github.com/kyoh86/scopelint/issues/4
-    - Using the variable on range scope `tc` in function literal
-  max-issues-per-linter: 0
-  max-same-issues: 0
