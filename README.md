@@ -1,42 +1,29 @@
 <!-- markdown-link-check-disable-next-line -->
 [![REUSE status](https://api.reuse.software/badge/github.com/kyma-project/cli)](https://api.reuse.software/info/github.com/kyma-project/cli)
 
-> **NOTE:** This is a general template that you can use for a project README.md. Except for the mandatory sections, use only those sections that suit your use case but keep the proposed section order.
+> [!IMPORTANT]  
+> After introducing modular architecture in Kyma, we had to revisit the purpose of its CLI. 
+> 
+> We have released the last patch for the v2 version ([2.20.4](https://github.com/kyma-project/cli/releases/tag/2.20.4)) and deprecated all Kyma CLI v2 commands.
 >
-> Mandatory sections: 
-> - `Overview`
-> - `Prerequisites`, if there are any requirements regarding hard- or software
-> - `Installation`
-> - `Contributing` - do not change this!
-> - `Code of Conduct` - do not change this!
-> - `Licensing` - do not change this!
+> A new version (v3) with a whole new set of commands (targeting users of both open source and managed Kyma) will be developed and first introduced within an alpha command group.
 
-# CLI v3
-<!--- mandatory --->
-> Modify the title and insert the name of your project. Use Heading 1 (H1).
-
-## Overview
-<!--- mandatory section --->
-
-> Provide a description of the project's functionality.
->
-> If it is an example README.md, describe what the example illustrates.
-
-## Prerequisites
-
-> List the requirements to run the project or example.
-
-## Installation
-
-> Explain the steps to install your project. If there are multiple installation options, mention the recommended one and include others in a separate document. Create an ordered list for each installation task.
->
-> If it is an example README.md, describe how to build, run locally, and deploy the example. Format the example as code blocks and specify the language, highlighting where possible. Explain how you can validate that the example ran successfully. For example, define the expected output or commands to run which check a successful deployment.
->
-> Add subsections (H3) for better readability.
+# CLI (v3)
 
 ## Usage
 
-> Explain how to use the project. You can create multiple subsections (H3). Include the instructions or provide links to the related documentation.
+> The following usage examples will change after the first v3 release. Until then, you can execute commands from the code developed in the main branch.
+
+
+To build a kyma cli binary run:
+```
+go build -o kyma-cli  main.go
+```
+
+You can run a command directly from the go code. For example:
+```
+go run main.go provision --help
+```
 
 ## Development
 
