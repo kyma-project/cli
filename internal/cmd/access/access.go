@@ -2,10 +2,10 @@ package access
 
 import (
 	"fmt"
-
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/spf13/cobra"
+	authv1 "k8s.io/api/authentication/v1"
 	v1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -22,6 +22,7 @@ type accessConfig struct {
 	clusterrole string
 	output      string
 	namespace   string
+	time        string
 }
 
 func NewAccessCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
@@ -45,9 +46,10 @@ func NewAccessCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cfg.KubeClientConfig.AddFlag(cmd)
 
 	cmd.Flags().StringVar(&cfg.name, "name", "", "Name of the Service Account to be created")
-	cmd.Flags().StringVar(&cfg.clusterrole, "clusterrole", "", "Name of the cluster role to bind the Service Account")
+	cmd.Flags().StringVar(&cfg.clusterrole, "clusterrole", "", "Name of the cluster role to bind the Service Account to")
 	cmd.Flags().StringVar(&cfg.output, "output", "", "Path to the output kubeconfig file")
 	cmd.Flags().StringVar(&cfg.namespace, "namespace", "default", "Namespace to create the resources in")
+	cmd.Flags().StringVar(&cfg.time, "time", "", "How long should the token be valid for")
 
 	_ = cmd.MarkFlagRequired("name")
 	_ = cmd.MarkFlagRequired("clusterrole")
@@ -57,9 +59,9 @@ func NewAccessCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 func runAccess(cfg *accessConfig) clierror.Error {
 	// Create objects
-	err := createObjects(cfg)
-	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to create objects"))
+	clierr := createObjects(cfg)
+	if clierr != nil {
+		return clierror.WrapE(clierr, clierror.New("failed to create objects"))
 	}
 	enrichedKubeconfig, err := prepareKubeconfig(cfg)
 	if err != nil {
@@ -85,11 +87,6 @@ func runAccess(cfg *accessConfig) clierror.Error {
 }
 
 func prepareKubeconfig(cfg *accessConfig) (*api.Config, error) {
-	secret, err := cfg.KubeClient.Static().CoreV1().Secrets(cfg.namespace).Get(cfg.Ctx, cfg.name, metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-
 	currentCtx := cfg.KubeClient.ApiConfig().CurrentContext
 	clusterName := cfg.KubeClient.ApiConfig().Contexts[currentCtx].Cluster
 
@@ -99,13 +96,13 @@ func prepareKubeconfig(cfg *accessConfig) (*api.Config, error) {
 		APIVersion: "v1",
 		Clusters: map[string]*api.Cluster{
 			clusterName: {
-				Server:                   cfg.KubeClient.ApiConfig().Clusters[clusterName].Server,
-				CertificateAuthorityData: secret.Data["ca.crt"],
+				Server: cfg.KubeClient.ApiConfig().Clusters[clusterName].Server,
+				//CertificateAuthorityData: secret.Data["ca.crt"],
 			},
 		},
 		AuthInfos: map[string]*api.AuthInfo{
 			cfg.name: {
-				Token: string(secret.Data["token"]),
+				//Token: string(secret.Data["token"]),
 			},
 		},
 		Contexts: map[string]*api.Context{
@@ -121,25 +118,20 @@ func prepareKubeconfig(cfg *accessConfig) (*api.Config, error) {
 	return kubeconfig, nil
 }
 
-func createObjects(cfg *accessConfig) error {
+func createObjects(cfg *accessConfig) clierror.Error {
 	err := createServiceAccount(cfg)
 	if err != nil {
-		return err
+		return clierror.Wrap(err, clierror.New("failed to create Service Account"))
 	}
 
-	err = createSecret(cfg)
-	if err != nil {
-		return err
-	}
-
-	err = createClusterRole(cfg)
-	if err != nil {
-		return err
+	clierr := createSecret(cfg)
+	if clierr != nil {
+		return clierr
 	}
 
 	err = createClusterRoleBinding(cfg)
 	if err != nil {
-		return err
+		return clierror.Wrap(err, clierror.New("failed to create Cluster Role Binding"))
 	}
 
 	return nil
@@ -153,48 +145,21 @@ func createServiceAccount(cfg *accessConfig) error {
 		},
 	}
 	_, err := cfg.KubeClient.Static().CoreV1().ServiceAccounts(cfg.namespace).Create(cfg.Ctx, &sa, metav1.CreateOptions{})
-	if errors.IsAlreadyExists(err) {
+	if errors.IsAlreadyExists(err) != true {
 		return err
 	}
 	return nil
 }
 
-func createSecret(cfg *accessConfig) error {
-	secret := v1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      cfg.name,
-			Namespace: cfg.namespace,
-			Annotations: map[string]string{
-				"kubernetes.io/service-account.name": cfg.name,
-			},
-		},
-		Type: v1.SecretTypeServiceAccountToken,
-	}
-	_, err := cfg.KubeClient.Static().CoreV1().Secrets(cfg.namespace).Create(cfg.Ctx, &secret, metav1.CreateOptions{})
-	if errors.IsAlreadyExists(err) {
-		return err
-	}
-	return nil
-}
+func createSecret(cfg *accessConfig) clierror.Error {
+	tokenRequest := authv1.TokenRequest{}
 
-func createClusterRole(cfg *accessConfig) error {
-	cRole := rbacv1.ClusterRole{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      cfg.clusterrole,
-			Namespace: cfg.namespace,
-		},
-		Rules: []rbacv1.PolicyRule{
-			{
-				APIGroups: []string{"", "extensions", "batch", "apps", "gateway.kyma-project.io", "servicecatalog.k8s.io"},
-				Resources: []string{"deployments", "replicasets", "pods", "jobs", "configmaps", "apirules", "serviceinstances", "servicebindings", "services", "secrets"},
-				Verbs:     []string{"create", "update", "patch", "delete", "get", "list"},
-			},
-		},
+	tokenResponse, err := cfg.KubeClient.Static().CoreV1().ServiceAccounts(cfg.namespace).CreateToken(cfg.Ctx, cfg.name, &tokenRequest, metav1.CreateOptions{})
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to create token"))
+
 	}
-	_, err := cfg.KubeClient.Static().RbacV1().ClusterRoles().Create(cfg.Ctx, &cRole, metav1.CreateOptions{})
-	if errors.IsAlreadyExists(err) {
-		return err
-	}
+
 	return nil
 }
 
@@ -217,7 +182,7 @@ func createClusterRoleBinding(cfg *accessConfig) error {
 		},
 	}
 	_, err := cfg.KubeClient.Static().RbacV1().ClusterRoleBindings().Create(cfg.Ctx, &cRoleBinding, metav1.CreateOptions{})
-	if errors.IsAlreadyExists(err) {
+	if errors.IsAlreadyExists(err) != true {
 		return err
 	}
 	return nil

@@ -85,7 +85,7 @@ func (c *client) Dynamic() dynamic.Interface {
 }
 
 func (c *client) RestClient() *rest.RESTClient {
-	return c.restClient
+	return c.restClient // TODO: Update schema - can use kubeclient.Static().Corev1().RESTClient()
 }
 
 func (c *client) RestConfig() *rest.Config {
