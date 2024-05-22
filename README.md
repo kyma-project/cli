@@ -55,4 +55,4 @@ See the [Code of Conduct](CODE_OF_CONDUCT.md) document.
 ## Licensing
 <!--- mandatory section - do not change this! --->
 
-See the [license](./LICENSE) file.
+See the [license](LICENSE) file.
