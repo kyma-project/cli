@@ -2,4 +2,4 @@
 * @kyma-project/otters
 
 # All .md files
-# *.md @kyma-project/technical-writers
+*.md @kyma-project/technical-writers
