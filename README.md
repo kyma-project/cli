@@ -11,29 +11,29 @@ Kyma CLI is a command line tool which supports [Kyma](https://github.com/kyma-pr
 
 ## Usage
 
-### Import image into kyma's internal docker registry
+### Import Image Into Kyma's Internal Docker Registry
 
 > [!NOTE]
-> The following `image-import` command requires `docker-registry` module to be [installed](https://github.com/kyma-project/docker-registry?tab=readme-ov-file#install) on you kyma runtime
+> To use the following `image-import` command, you must [install the Docker Registry module](https://github.com/kyma-project/docker-registry?tab=readme-ov-file#install) on your Kyma runtime
 
 ```
 docker pull kennethreitz/httpbin
 
 go run main.go image-import kennethreitz/httpbin:latest
 ```
-Run a pod from locally hosted image
+Run a Pod from a locally hosted image
 ```
 kubectl run my-pod --image=localhost:32137/kennethreitz/httpbin:latest --overrides='{ "spec": { "imagePullSecrets": [ { "name": "dockerregistry-config" } ] } }'
 
 ```
 ## Development
 
-To build a kyma cli binary run:
+To build a Kyma CLI binary, run:
 ```
 go build -o kyma-cli  main.go
 ```
 
-You can run a command directly from the go code. For example:
+You can run the command directly from the go code. For example:
 ```
 go run main.go provision --help
 ```
