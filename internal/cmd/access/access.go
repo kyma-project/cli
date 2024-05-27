@@ -36,8 +36,8 @@ func NewAccessCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "access",
-		Short: "Enrich kubeconfig with access",
-		Long:  "Enrich kubeconfig with Service Account based token and certificate",
+		Short: "Create an enriched kubeconfig with Service Account based token and certificate",
+		Long:  "Create an enriched kubeconfig with Service Account based token and certificate that is valid for a specified time or indefinitely",
 		PreRun: func(_ *cobra.Command, args []string) {
 			clierror.Check(cfg.KubeClientConfig.Complete())
 		},
@@ -50,7 +50,7 @@ func NewAccessCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cmd.Flags().StringVar(&cfg.name, "name", "", "Name of the Service Account to be created")
 	cmd.Flags().StringVar(&cfg.clusterrole, "clusterrole", "", "Name of the cluster role to bind the Service Account to")
-	cmd.Flags().StringVar(&cfg.output, "output", "", "Path to the output kubeconfig file")
+	cmd.Flags().StringVar(&cfg.output, "output", "", "Path to output the kubeconfig file, if not provided the kubeconfig will be printed")
 	cmd.Flags().StringVar(&cfg.namespace, "namespace", "default", "Namespace to create the resources in")
 	cmd.Flags().StringVar(&cfg.time, "time", "1h", "How long should the token be valid for, by default 1h (use h for hours and d for days)")
 	cmd.Flags().BoolVar(&cfg.permanent, "permanent", false, "Should the token be valid indefinitely")
@@ -67,11 +67,14 @@ func runAccess(cfg *accessConfig) clierror.Error {
 	if clierr != nil {
 		return clierror.WrapE(clierr, clierror.New("failed to create objects"))
 	}
+
+	// Fill kubeconfig
 	enrichedKubeconfig, clierr := prepareKubeconfig(cfg)
 	if clierr != nil {
 		return clierr
 	}
 
+	// Print or write to file
 	if cfg.output != "" {
 		err := clientcmd.WriteToFile(*enrichedKubeconfig, cfg.output)
 		fmt.Println("Kubeconfig saved to: " + cfg.output)
@@ -79,38 +82,71 @@ func runAccess(cfg *accessConfig) clierror.Error {
 			return clierror.Wrap(err, clierror.New("failed to save kubeconfig to file"))
 		}
 	} else {
+		fmt.Println("Kubeconfig: \n")
 		message, err := clientcmd.Write(*enrichedKubeconfig)
 		if err != nil {
 			return clierror.Wrap(err, clierror.New("failed to print kubeconfig"))
 		}
 		fmt.Println(string(message))
-
 	}
+	return nil
+}
 
+func createObjects(cfg *accessConfig) clierror.Error {
+	// Create Service Account
+	err := createServiceAccount(cfg)
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to create Service Account"))
+	}
+	// Create Role Binding for the Service Account
+	err = createClusterRoleBinding(cfg)
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to create Cluster Role Binding"))
+	}
+	// Create a service-account-token type secret
+	if cfg.permanent {
+		secret := v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      cfg.name,
+				Namespace: cfg.namespace,
+				Annotations: map[string]string{
+					"kubernetes.io/service-account.name": cfg.name,
+				},
+			},
+			Type: v1.SecretTypeServiceAccountToken,
+		}
+
+		_, err := cfg.KubeClient.Static().CoreV1().Secrets(cfg.namespace).Create(cfg.Ctx, &secret, metav1.CreateOptions{})
+		if err != nil && !errors.IsAlreadyExists(err) {
+			return clierror.Wrap(err, clierror.New("failed to create secret"))
+		}
+	}
 	return nil
 }
 
 func prepareKubeconfig(cfg *accessConfig) (*api.Config, clierror.Error) {
 	currentCtx := cfg.KubeClient.ApiConfig().CurrentContext
 	clusterName := cfg.KubeClient.ApiConfig().Contexts[currentCtx].Cluster
-	token, duration, err := getServiceAccountToken(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	fmt.Println("Token will expire: " + duration)
-
+	var tokenData authv1.TokenRequestStatus
 	var certData []byte
-	if cfg.permanent == true {
+	var err clierror.Error
+	if cfg.permanent {
 		secret, err := cfg.KubeClient.Static().CoreV1().Secrets(cfg.namespace).Get(cfg.Ctx, cfg.name, metav1.GetOptions{})
 		if err != nil {
 			return nil, clierror.Wrap(err, clierror.New("failed to get secret"))
 		}
-		token = string(secret.Data["token"])
+		tokenData.Token = string(secret.Data["token"])
 		certData = secret.Data["ca.crt"]
+		fmt.Println("Token is valid permanently")
 	} else {
 		certData = cfg.KubeClient.ApiConfig().Clusters[clusterName].CertificateAuthorityData
+		tokenData, err = getServiceAccountToken(cfg)
+		if err != nil {
+			return nil, err
+		}
+		fmt.Println("Token will expire: " + tokenData.ExpirationTimestamp.String())
 	}
+
 	// Create a new kubeconfig
 	kubeconfig := &api.Config{
 		Kind:       "Config",
@@ -123,7 +159,7 @@ func prepareKubeconfig(cfg *accessConfig) (*api.Config, clierror.Error) {
 		},
 		AuthInfos: map[string]*api.AuthInfo{
 			cfg.name: {
-				Token: token,
+				Token: tokenData.Token,
 			},
 		},
 		Contexts: map[string]*api.Context{
@@ -137,20 +173,6 @@ func prepareKubeconfig(cfg *accessConfig) (*api.Config, clierror.Error) {
 		Extensions:     nil,
 	}
 	return kubeconfig, nil
-}
-
-func createObjects(cfg *accessConfig) clierror.Error {
-	err := createServiceAccount(cfg)
-	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to create Service Account"))
-	}
-
-	err = createClusterRoleBinding(cfg)
-	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to create Cluster Role Binding"))
-	}
-
-	return nil
 }
 
 func createServiceAccount(cfg *accessConfig) error {
@@ -167,69 +189,50 @@ func createServiceAccount(cfg *accessConfig) error {
 	return nil
 }
 
-func getServiceAccountToken(cfg *accessConfig) (string, string, clierror.Error) {
-
-	if cfg.permanent == true {
-		secret := v1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      cfg.name,
-				Namespace: cfg.namespace,
-				Annotations: map[string]string{
-					"kubernetes.io/service-account.name": cfg.name,
-				},
-			},
-			Type: v1.SecretTypeServiceAccountToken,
-		}
-
-		_, err := cfg.KubeClient.Static().CoreV1().Secrets(cfg.namespace).Create(cfg.Ctx, &secret, metav1.CreateOptions{})
-		if err != nil && !errors.IsAlreadyExists(err) {
-			return "", "", clierror.Wrap(err, clierror.New("failed to create secret"))
-		}
-
-		return "", "never", nil
-	} else {
-
-		var seconds int64
-		if strings.Contains(cfg.time, "h") {
-			// remove the "h" from the string
-			cfg.time = strings.TrimRight(cfg.time, "h")
-			// convert the string to an int
-			hours, err := strconv.Atoi(cfg.time)
-			if err != nil {
-				return "", "", clierror.Wrap(err, clierror.New("failed to convert time to seconds", "Make sure to use h for hours and d for days"))
-			}
-			// convert the hours to seconds
-			seconds = int64(hours * 3600)
-		}
-
-		if strings.Contains(cfg.time, "d") {
-			// remove the "d" from the string
-			cfg.time = strings.TrimRight(cfg.time, "d")
-			// convert the string to an int
-			days, err := strconv.Atoi(cfg.time)
-			if err != nil {
-				return "", "", clierror.Wrap(err, clierror.New("failed to convert time to seconds", "Make sure to use h for hours and d for days"))
-			}
-			// convert the days to seconds
-			seconds = int64(days * 86400)
-		}
-
-		if seconds == 0 {
-			return "", "", clierror.New("failed to convert the token duration", "Make sure to use h for hours and d for days")
-		}
-
-		tokenRequest := authv1.TokenRequest{
-			Spec: authv1.TokenRequestSpec{
-				ExpirationSeconds: &seconds,
-			},
-		}
-
-		tokenResponse, err := cfg.KubeClient.Static().CoreV1().ServiceAccounts(cfg.namespace).CreateToken(cfg.Ctx, cfg.name, &tokenRequest, metav1.CreateOptions{})
+func getServiceAccountToken(cfg *accessConfig) (authv1.TokenRequestStatus, clierror.Error) {
+	var seconds int64
+	var tokenData authv1.TokenRequestStatus
+	if strings.Contains(cfg.time, "h") {
+		// remove the "h" from the string
+		cfg.time = strings.TrimRight(cfg.time, "h")
+		// convert the string to an int
+		hours, err := strconv.Atoi(cfg.time)
 		if err != nil {
-			return "", "", clierror.Wrap(err, clierror.New("failed to create token"))
+			return tokenData, clierror.Wrap(err, clierror.New("failed to convert time to seconds", "Make sure to use h for hours and d for days"))
 		}
-		return tokenResponse.Status.Token, tokenResponse.Status.ExpirationTimestamp.String(), nil
+		// convert the hours to seconds
+		seconds = int64(hours * 3600)
 	}
+
+	if strings.Contains(cfg.time, "d") {
+		// remove the "d" from the string
+		cfg.time = strings.TrimRight(cfg.time, "d")
+		// convert the string to an int
+		days, err := strconv.Atoi(cfg.time)
+		if err != nil {
+			return tokenData, clierror.Wrap(err, clierror.New("failed to convert time to seconds", "Make sure to use h for hours and d for days"))
+		}
+		// convert the days to seconds
+		seconds = int64(days * 86400)
+	}
+
+	if seconds == 0 {
+		return tokenData, clierror.New("failed to convert the token duration", "Make sure to use h for hours and d for days")
+	}
+
+	tokenRequest := authv1.TokenRequest{
+		Spec: authv1.TokenRequestSpec{
+			ExpirationSeconds: &seconds,
+		},
+	}
+
+	tokenResponse, err := cfg.KubeClient.Static().CoreV1().ServiceAccounts(cfg.namespace).CreateToken(cfg.Ctx, cfg.name, &tokenRequest, metav1.CreateOptions{})
+	if err != nil {
+		return tokenData, clierror.Wrap(err, clierror.New("failed to create token"))
+	}
+	tokenData.Token = tokenResponse.Status.Token
+	tokenData.ExpirationTimestamp = tokenResponse.Status.ExpirationTimestamp
+	return tokenData, nil
 }
 
 func createClusterRoleBinding(cfg *accessConfig) error {
