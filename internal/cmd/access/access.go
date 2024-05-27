@@ -36,8 +36,8 @@ func NewAccessCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "access",
-		Short: "Create an enriched kubeconfig with Service Account based token and certificate",
-		Long:  "Create an enriched kubeconfig with Service Account based token and certificate that is valid for a specified time or indefinitely",
+		Short: "Produce a kubeconfig with Service Account based token and certificate",
+		Long:  "Produce a kubeconfig with Service Account based token and certificate that is valid for a specified time or indefinitely",
 		PreRun: func(_ *cobra.Command, args []string) {
 			clierror.Check(cfg.KubeClientConfig.Complete())
 		},
@@ -130,6 +130,8 @@ func prepareKubeconfig(cfg *accessConfig) (*api.Config, clierror.Error) {
 	var tokenData authv1.TokenRequestStatus
 	var certData []byte
 	var err clierror.Error
+
+	// Prepare the token and certificate data
 	if cfg.permanent {
 		secret, err := cfg.KubeClient.Static().CoreV1().Secrets(cfg.namespace).Get(cfg.Ctx, cfg.name, metav1.GetOptions{})
 		if err != nil {
@@ -192,6 +194,8 @@ func createServiceAccount(cfg *accessConfig) error {
 func getServiceAccountToken(cfg *accessConfig) (authv1.TokenRequestStatus, clierror.Error) {
 	var seconds int64
 	var tokenData authv1.TokenRequestStatus
+
+	// Convert the time passed in argument to seconds
 	if strings.Contains(cfg.time, "h") {
 		// remove the "h" from the string
 		cfg.time = strings.TrimRight(cfg.time, "h")
@@ -230,12 +234,16 @@ func getServiceAccountToken(cfg *accessConfig) (authv1.TokenRequestStatus, clier
 	if err != nil {
 		return tokenData, clierror.Wrap(err, clierror.New("failed to create token"))
 	}
-	tokenData.Token = tokenResponse.Status.Token
-	tokenData.ExpirationTimestamp = tokenResponse.Status.ExpirationTimestamp
-	return tokenData, nil
+	return tokenResponse.Status, nil
 }
 
 func createClusterRoleBinding(cfg *accessConfig) error {
+	// Check if the cluster role to bind to exists
+	_, err := cfg.KubeClient.Static().RbacV1().ClusterRoles().Get(cfg.Ctx, cfg.clusterrole, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	// Create clusterRoleBinding
 	cRoleBinding := rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      cfg.clusterrole + "-binding",
@@ -253,7 +261,7 @@ func createClusterRoleBinding(cfg *accessConfig) error {
 			Name: cfg.clusterrole,
 		},
 	}
-	_, err := cfg.KubeClient.Static().RbacV1().ClusterRoleBindings().Create(cfg.Ctx, &cRoleBinding, metav1.CreateOptions{})
+	_, err = cfg.KubeClient.Static().RbacV1().ClusterRoleBindings().Create(cfg.Ctx, &cRoleBinding, metav1.CreateOptions{})
 	if err != nil && !errors.IsAlreadyExists(err) {
 		return err
 	}
