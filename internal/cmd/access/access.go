@@ -246,7 +246,7 @@ func createClusterRoleBinding(cfg *accessConfig) error {
 	// Create clusterRoleBinding
 	cRoleBinding := rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      cfg.clusterrole + "-binding",
+			Name:      cfg.name + "-binding",
 			Namespace: cfg.namespace,
 		},
 		Subjects: []rbacv1.Subject{
