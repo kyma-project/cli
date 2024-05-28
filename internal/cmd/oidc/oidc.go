@@ -21,8 +21,8 @@ type oidcConfig struct {
 	caCertificate       string
 	clusterServer       string
 	audience            string
-	IDTokenRequestURL   string
-	IDTokenRequestToken string
+	idTokenRequestURL   string
+	idTokenRequestToken string
 }
 
 type TokenData struct {
@@ -52,7 +52,7 @@ func NewOIDCCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().StringVar(&cfg.caCertificate, "ca-certificate", "", "Path to the CA certificate file")
 	cmd.Flags().StringVar(&cfg.clusterServer, "cluster-server", "", "URL of the cluster server")
 	cmd.Flags().StringVar(&cfg.audience, "audience", "", "Audience of the token")
-	cmd.Flags().StringVar(&cfg.IDTokenRequestURL, "id-token-request-url", "", "URL to request the ID token")
+	cmd.Flags().StringVar(&cfg.idTokenRequestURL, "id-token-request-url", "", "URL to request the ID token, defaults to ACTIONS_ID_TOKEN_REQUEST_URL env variable")
 
 	_ = cmd.MarkFlagRequired("ca-certificate")
 	_ = cmd.MarkFlagRequired("cluster-server")
@@ -61,15 +61,15 @@ func NewOIDCCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 }
 
 func (cfg *oidcConfig) complete() clierror.Error {
-	if cfg.IDTokenRequestURL == "" {
-		cfg.IDTokenRequestURL = os.Getenv("ACTIONS_ID_TOKEN_REQUEST_URL")
+	if cfg.idTokenRequestURL == "" {
+		cfg.idTokenRequestURL = os.Getenv("ACTIONS_ID_TOKEN_REQUEST_URL")
 	}
-	cfg.IDTokenRequestToken = os.Getenv("ACTIONS_ID_TOKEN_REQUEST_TOKEN")
+	cfg.idTokenRequestToken = os.Getenv("ACTIONS_ID_TOKEN_REQUEST_TOKEN")
 	return nil
 }
 
 func (cfg *oidcConfig) validate() clierror.Error {
-	if cfg.IDTokenRequestURL == "" {
+	if cfg.idTokenRequestURL == "" {
 		return clierror.New(
 			"ID token request URL is required",
 			"make sure you're running the command in Github Actions environment",
@@ -77,7 +77,7 @@ func (cfg *oidcConfig) validate() clierror.Error {
 		)
 	}
 
-	if cfg.IDTokenRequestToken == "" {
+	if cfg.idTokenRequestToken == "" {
 		return clierror.New(
 			"ACTIONS_ID_TOKEN_REQUEST_TOKEN env variable is required",
 			"make sure you're running the command in Github Actions environment",
@@ -88,7 +88,7 @@ func (cfg *oidcConfig) validate() clierror.Error {
 
 func runOIDC(cfg *oidcConfig) clierror.Error {
 	// get Github token
-	token, err := getGithubToken(cfg.IDTokenRequestURL, cfg.IDTokenRequestToken, cfg.audience)
+	token, err := getGithubToken(cfg.idTokenRequestURL, cfg.idTokenRequestToken, cfg.audience)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to get token"))
 	}
