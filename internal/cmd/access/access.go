@@ -133,10 +133,15 @@ func prepareKubeconfig(cfg *accessConfig) (*api.Config, clierror.Error) {
 
 	// Prepare the token and certificate data
 	if cfg.permanent {
-		secret, err := cfg.KubeClient.Static().CoreV1().Secrets(cfg.namespace).Get(cfg.Ctx, cfg.name, metav1.GetOptions{})
-		if err != nil {
-			return nil, clierror.Wrap(err, clierror.New("failed to get secret"))
+		var secret *v1.Secret
+		for ok := true; ok; ok = string(secret.Data["token"]) == "" {
+			var loopErr error
+			secret, loopErr = cfg.KubeClient.Static().CoreV1().Secrets(cfg.namespace).Get(cfg.Ctx, cfg.name, metav1.GetOptions{})
+			if loopErr != nil {
+				return nil, clierror.Wrap(loopErr, clierror.New("failed to get secret"))
+			}
 		}
+
 		tokenData.Token = string(secret.Data["token"])
 		certData = secret.Data["ca.crt"]
 		fmt.Println("Token is valid permanently")
@@ -174,6 +179,7 @@ func prepareKubeconfig(cfg *accessConfig) (*api.Config, clierror.Error) {
 		CurrentContext: currentCtx,
 		Extensions:     nil,
 	}
+
 	return kubeconfig, nil
 }
 
