@@ -37,8 +37,8 @@ func NewOIDCCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "oidc",
-		Short: "Create kubeconfig with OIDC token",
-		Long:  "Create kubeconfig with OIDC token",
+		Short: "Create kubeconfig with an OIDC token",
+		Long:  "Create kubeconfig with an OIDC token generated with a Github Actions token",
 		PreRun: func(_ *cobra.Command, args []string) {
 			if cfg.IDTokenRequestURL == "" {
 				cfg.IDTokenRequestURL = os.Getenv("ACTIONS_ID_TOKEN_REQUEST_URL")
