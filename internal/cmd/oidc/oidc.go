@@ -9,8 +9,8 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/spf13/cobra"
-	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 )
 
@@ -98,18 +98,9 @@ func runOIDC(cfg *oidcConfig) clierror.Error {
 		return clierror.Wrap(err, clierror.New("failed to create kubeconfig"))
 	}
 
-	if cfg.output != "" {
-		err = clientcmd.WriteToFile(*enrichedKubeconfig, cfg.output)
-		println("Kubeconfig saved to: " + cfg.output)
-		if err != nil {
-			return clierror.Wrap(err, clierror.New("failed to save kubeconfig to file"))
-		}
-	} else {
-		message, err := clientcmd.Write(*enrichedKubeconfig)
-		if err != nil {
-			return clierror.Wrap(err, clierror.New("failed to print kubeconfig"))
-		}
-		fmt.Println(string(message))
+	err = kube.SaveConfig(enrichedKubeconfig, cfg.output)
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to save kubeconfig"))
 	}
 
 	return nil

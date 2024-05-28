@@ -5,6 +5,7 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -79,6 +80,10 @@ func runAccess(cfg *accessConfig) clierror.Error {
 		}
 		fmt.Println(string(message))
 
+	}
+	err = kube.SaveConfig(enrichedKubeconfig, cfg.output)
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to save kubeconfig"))
 	}
 
 	return nil
