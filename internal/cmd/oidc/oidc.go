@@ -74,7 +74,6 @@ func NewOIDCCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	_ = cmd.MarkFlagRequired("ca-certificate")
 	_ = cmd.MarkFlagRequired("cluster-server")
-	// _ = cmd.MarkFlagRequired("audience")
 
 	return cmd
 }
