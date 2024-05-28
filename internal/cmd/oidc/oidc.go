@@ -40,26 +40,8 @@ func NewOIDCCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Short: "Create kubeconfig with an OIDC token",
 		Long:  "Create kubeconfig with an OIDC token generated with a Github Actions token",
 		PreRun: func(_ *cobra.Command, args []string) {
-			if cfg.IDTokenRequestURL == "" {
-				cfg.IDTokenRequestURL = os.Getenv("ACTIONS_ID_TOKEN_REQUEST_URL")
-			}
-			if cfg.IDTokenRequestURL == "" {
-				fmt.Println(clierror.New(
-					"ID token request URL is required",
-					"make sure you're running the command in Github Actions environment",
-					"provide id-token-request-url flag or ACTIONS_ID_TOKEN_REQUEST_URL env variable",
-				).String())
-				os.Exit(1)
-			}
-
-			cfg.IDTokenRequestToken = os.Getenv("ACTIONS_ID_TOKEN_REQUEST_TOKEN")
-			if cfg.IDTokenRequestToken == "" {
-				fmt.Println(clierror.New(
-					"ACTIONS_ID_TOKEN_REQUEST_TOKEN env variable is required",
-					"make sure you're running the command in Github Actions environment",
-				).String())
-				os.Exit(1)
-			}
+			clierror.Check(cfg.complete())
+			clierror.Check(cfg.validate())
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			clierror.Check(runOIDC(&cfg))
@@ -76,6 +58,32 @@ func NewOIDCCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	_ = cmd.MarkFlagRequired("cluster-server")
 
 	return cmd
+}
+
+func (cfg *oidcConfig) complete() clierror.Error {
+	if cfg.IDTokenRequestURL == "" {
+		cfg.IDTokenRequestURL = os.Getenv("ACTIONS_ID_TOKEN_REQUEST_URL")
+	}
+	cfg.IDTokenRequestToken = os.Getenv("ACTIONS_ID_TOKEN_REQUEST_TOKEN")
+	return nil
+}
+
+func (cfg *oidcConfig) validate() clierror.Error {
+	if cfg.IDTokenRequestURL == "" {
+		return clierror.New(
+			"ID token request URL is required",
+			"make sure you're running the command in Github Actions environment",
+			"provide id-token-request-url flag or ACTIONS_ID_TOKEN_REQUEST_URL env variable",
+		)
+	}
+
+	if cfg.IDTokenRequestToken == "" {
+		return clierror.New(
+			"ACTIONS_ID_TOKEN_REQUEST_TOKEN env variable is required",
+			"make sure you're running the command in Github Actions environment",
+		)
+	}
+	return nil
 }
 
 func runOIDC(cfg *oidcConfig) clierror.Error {
