@@ -11,6 +11,7 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 	"strconv"
 	"strings"
@@ -69,22 +70,19 @@ func runAccess(cfg *accessConfig) clierror.Error {
 	}
 
 	// Fill kubeconfig
-	enrichedKubeconfig, clierr := prepareKubeconfig(cfg)
+	generatedKubeconfig, clierr := prepareKubeconfig(cfg)
 	if clierr != nil {
 		return clierr
 	}
 
 	// Print or write to file
 	if cfg.output != "" {
-		err = kube.SaveConfig(enrichedKubeconfig, cfg.output)
-	  if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to save kubeconfig"))
-    }
-		fmt.Println("Kubeconfig saved to: " + cfg.output)
+		err := kube.SaveConfig(generatedKubeconfig, cfg.output)
+		if err != nil {
+			return clierror.Wrap(err, clierror.New("failed to save kubeconfig"))
 		}
 	} else {
-		fmt.Println("Kubeconfig: \n")
-		message, err := clientcmd.Write(*enrichedKubeconfig)
+		message, err := clientcmd.Write(*generatedKubeconfig)
 		if err != nil {
 			return clierror.Wrap(err, clierror.New("failed to print kubeconfig"))
 		}
@@ -145,14 +143,18 @@ func prepareKubeconfig(cfg *accessConfig) (*api.Config, clierror.Error) {
 
 		tokenData.Token = string(secret.Data["token"])
 		certData = secret.Data["ca.crt"]
-		fmt.Println("Token is valid permanently")
+		if cfg.output != "" {
+			fmt.Println("Token is valid permanently")
+		}
 	} else {
 		certData = cfg.KubeClient.ApiConfig().Clusters[clusterName].CertificateAuthorityData
 		tokenData, err = getServiceAccountToken(cfg)
 		if err != nil {
 			return nil, err
 		}
-		fmt.Println("Token will expire: " + tokenData.ExpirationTimestamp.String())
+		if cfg.output != "" {
+			fmt.Println("Token will expire: " + tokenData.ExpirationTimestamp.String())
+		}
 	}
 
 	// Create a new kubeconfig
