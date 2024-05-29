@@ -21,6 +21,7 @@ type oidcConfig struct {
 	caCertificate       string
 	clusterServer       string
 	audience            string
+	token               string
 	idTokenRequestURL   string
 	idTokenRequestToken string
 }
@@ -51,11 +52,16 @@ func NewOIDCCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().StringVar(&cfg.output, "output", "", "Path to the output kubeconfig file")
 	cmd.Flags().StringVar(&cfg.caCertificate, "ca-certificate", "", "Path to the CA certificate file")
 	cmd.Flags().StringVar(&cfg.clusterServer, "cluster-server", "", "URL of the cluster server")
+
+	cmd.Flags().StringVar(&cfg.token, "token", "", "Token used in the kubeconfig")
 	cmd.Flags().StringVar(&cfg.audience, "audience", "", "Audience of the token")
 	cmd.Flags().StringVar(&cfg.idTokenRequestURL, "id-token-request-url", "", "URL to request the ID token, defaults to ACTIONS_ID_TOKEN_REQUEST_URL env variable")
 
 	_ = cmd.MarkFlagRequired("ca-certificate")
 	_ = cmd.MarkFlagRequired("cluster-server")
+
+	cmd.MarkFlagsMutuallyExclusive("token", "id-token-request-url")
+	cmd.MarkFlagsMutuallyExclusive("token", "audience")
 
 	return cmd
 }
@@ -69,6 +75,11 @@ func (cfg *oidcConfig) complete() clierror.Error {
 }
 
 func (cfg *oidcConfig) validate() clierror.Error {
+	// if user explicitly provides token we don't need to run rest of the checks
+	if cfg.token != "" {
+		return nil
+	}
+
 	if cfg.idTokenRequestURL == "" {
 		return clierror.New(
 			"ID token request URL is required",
@@ -87,10 +98,14 @@ func (cfg *oidcConfig) validate() clierror.Error {
 }
 
 func runOIDC(cfg *oidcConfig) clierror.Error {
-	// get Github token
-	token, err := getGithubToken(cfg.idTokenRequestURL, cfg.idTokenRequestToken, cfg.audience)
-	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to get token"))
+	var err error
+	token := cfg.token
+	if cfg.token != "" {
+		// get Github token
+		token, err = getGithubToken(cfg.idTokenRequestURL, cfg.idTokenRequestToken, cfg.audience)
+		if err != nil {
+			return clierror.Wrap(err, clierror.New("failed to get token"))
+		}
 	}
 
 	enrichedKubeconfig, err := createKubeconfig(cfg.caCertificate, cfg.clusterServer, token)
