@@ -1,6 +1,8 @@
 package kube
 
 import (
+	"fmt"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -49,4 +51,22 @@ func setKubernetesDefaults(config *rest.Config) error {
 	}
 
 	return rest.SetKubernetesDefaults(config)
+}
+
+// SaveConfig saves the kubeconfig to a file or prints it to the console.
+func SaveConfig(kubeconfig *api.Config, output string) error {
+	if output != "" {
+		err := clientcmd.WriteToFile(*kubeconfig, output)
+		if err != nil {
+			return err
+		}
+		println("Kubeconfig saved to: " + output)
+		return nil
+	}
+	message, err := clientcmd.Write(*kubeconfig)
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(message))
+	return nil
 }
