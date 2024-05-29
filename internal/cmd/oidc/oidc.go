@@ -16,7 +16,7 @@ import (
 
 type oidcConfig struct {
 	*cmdcommon.KymaConfig
-	*cmdcommon.KubeClientConfig
+	cmdcommon.KubeClientConfig
 
 	output              string
 	caCertificate       string
@@ -34,7 +34,8 @@ type TokenData struct {
 
 func NewOIDCCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cfg := oidcConfig{
-		KymaConfig: kymaConfig,
+		KymaConfig:       kymaConfig,
+		KubeClientConfig: cmdcommon.KubeClientConfig{},
 	}
 
 	cmd := &cobra.Command{
