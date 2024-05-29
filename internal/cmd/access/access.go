@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/spf13/cobra"
 	authv1 "k8s.io/api/authentication/v1"
 	v1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 	"strconv"
 	"strings"
@@ -76,10 +76,11 @@ func runAccess(cfg *accessConfig) clierror.Error {
 
 	// Print or write to file
 	if cfg.output != "" {
-		err := clientcmd.WriteToFile(*enrichedKubeconfig, cfg.output)
+		err = kube.SaveConfig(enrichedKubeconfig, cfg.output)
+	  if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to save kubeconfig"))
+    }
 		fmt.Println("Kubeconfig saved to: " + cfg.output)
-		if err != nil {
-			return clierror.Wrap(err, clierror.New("failed to save kubeconfig to file"))
 		}
 	} else {
 		fmt.Println("Kubeconfig: \n")
