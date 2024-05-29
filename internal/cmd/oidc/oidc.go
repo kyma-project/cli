@@ -16,6 +16,7 @@ import (
 
 type oidcConfig struct {
 	*cmdcommon.KymaConfig
+	*cmdcommon.KubeClientConfig
 
 	output              string
 	caCertificate       string
@@ -49,6 +50,8 @@ func NewOIDCCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		},
 	}
 
+	cfg.KubeClientConfig.AddFlag(cmd)
+
 	cmd.Flags().StringVar(&cfg.output, "output", "", "Path to the output kubeconfig file")
 	cmd.Flags().StringVar(&cfg.caCertificate, "ca-certificate", "", "Path to the CA certificate file")
 	cmd.Flags().StringVar(&cfg.clusterServer, "cluster-server", "", "URL of the cluster server")
@@ -57,8 +60,9 @@ func NewOIDCCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().StringVar(&cfg.audience, "audience", "", "Audience of the token")
 	cmd.Flags().StringVar(&cfg.idTokenRequestURL, "id-token-request-url", "", "URL to request the ID token, defaults to ACTIONS_ID_TOKEN_REQUEST_URL env variable")
 
-	_ = cmd.MarkFlagRequired("ca-certificate")
-	_ = cmd.MarkFlagRequired("cluster-server")
+	cmd.MarkFlagsOneRequired("kubeconfig", "ca-certificate")
+	cmd.MarkFlagsRequiredTogether("ca-certificate", "cluster-server")
+	cmd.MarkFlagsMutuallyExclusive("kubeconfig", "ca-certificate")
 
 	cmd.MarkFlagsMutuallyExclusive("token", "id-token-request-url")
 	cmd.MarkFlagsMutuallyExclusive("token", "audience")
@@ -71,6 +75,10 @@ func (cfg *oidcConfig) complete() clierror.Error {
 		cfg.idTokenRequestURL = os.Getenv("ACTIONS_ID_TOKEN_REQUEST_URL")
 	}
 	cfg.idTokenRequestToken = os.Getenv("ACTIONS_ID_TOKEN_REQUEST_TOKEN")
+
+	if cfg.KubeClientConfig.Kubeconfig != "" {
+		return cfg.KubeClientConfig.Complete()
+	}
 	return nil
 }
 
@@ -107,8 +115,15 @@ func runOIDC(cfg *oidcConfig) clierror.Error {
 			return clierror.Wrap(err, clierror.New("failed to get token"))
 		}
 	}
+	caCertificate := cfg.caCertificate
+	clusterServer := cfg.clusterServer
+	if cfg.KubeClientConfig.Kubeconfig != "" {
+		currentServer := cfg.KubeClient.ApiConfig().Clusters[cfg.KubeClient.ApiConfig().CurrentContext]
+		caCertificate = string(currentServer.CertificateAuthorityData)
+		clusterServer = currentServer.Server
+	}
 
-	enrichedKubeconfig, err := createKubeconfig(cfg.caCertificate, cfg.clusterServer, token)
+	enrichedKubeconfig, err := createKubeconfig(caCertificate, clusterServer, token)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to create kubeconfig"))
 	}
