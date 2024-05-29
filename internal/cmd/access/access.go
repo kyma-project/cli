@@ -164,7 +164,7 @@ func prepareKubeconfig(cfg *accessConfig) (*api.Config, clierror.Error) {
 		Clusters: map[string]*api.Cluster{
 			clusterName: {
 				Server:                   cfg.KubeClient.ApiConfig().Clusters[clusterName].Server,
-				CertificateAuthorityData: certData, //cfg.KubeClient.ApiConfig().Clusters[clusterName].CertificateAuthorityData,
+				CertificateAuthorityData: certData,
 			},
 		},
 		AuthInfos: map[string]*api.AuthInfo{
