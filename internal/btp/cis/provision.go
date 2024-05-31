@@ -54,6 +54,8 @@ type ProvisionResponse struct {
 	StateMessage    string `json:"stateMessage"`
 	ServiceName     string `json:"serviceName"`
 	PlanName        string `json:"planName"`
+	CreatedBy       string `json:"createdBy,omitempty"`
+	ModifiedBy      string `json:"modifiedBy,omitempty"`
 }
 
 func (c *LocalClient) Provision(pe *ProvisionEnvironment) (*ProvisionResponse, clierror.Error) {

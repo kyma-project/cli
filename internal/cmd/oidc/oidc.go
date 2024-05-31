@@ -6,7 +6,10 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 
+	"github.com/kyma-project/cli.v3/internal/btp/auth"
+	"github.com/kyma-project/cli.v3/internal/btp/cis"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/kube"
@@ -18,6 +21,7 @@ type oidcConfig struct {
 	*cmdcommon.KymaConfig
 	cmdcommon.KubeClientConfig
 
+	cisCredentialsPath  string
 	output              string
 	caCertificate       string
 	clusterServer       string
@@ -53,6 +57,7 @@ func NewOIDCCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cfg.KubeClientConfig.AddFlag(cmd)
 
+	cmd.Flags().StringVar(&cfg.cisCredentialsPath, "credentials-path", "", "Path to the CIS credentials file.")
 	cmd.Flags().StringVar(&cfg.output, "output", "", "Path to the output kubeconfig file")
 	cmd.Flags().StringVar(&cfg.caCertificate, "ca-certificate", "", "Path to the CA certificate file")
 	cmd.Flags().StringVar(&cfg.clusterServer, "cluster-server", "", "URL of the cluster server")
@@ -61,9 +66,10 @@ func NewOIDCCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().StringVar(&cfg.audience, "audience", "", "Audience of the token")
 	cmd.Flags().StringVar(&cfg.idTokenRequestURL, "id-token-request-url", "", "URL to request the ID token, defaults to ACTIONS_ID_TOKEN_REQUEST_URL env variable")
 
-	cmd.MarkFlagsOneRequired("kubeconfig", "ca-certificate")
+	cmd.MarkFlagsOneRequired("kubeconfig", "ca-certificate", "credentials-path")
 	cmd.MarkFlagsRequiredTogether("ca-certificate", "cluster-server")
 	cmd.MarkFlagsMutuallyExclusive("kubeconfig", "ca-certificate")
+	cmd.MarkFlagsMutuallyExclusive("kubeconfig", "credentials-path")
 
 	cmd.MarkFlagsMutuallyExclusive("token", "id-token-request-url")
 	cmd.MarkFlagsMutuallyExclusive("token", "audience")
@@ -118,7 +124,13 @@ func runOIDC(cfg *oidcConfig) clierror.Error {
 	}
 	caCertificate := cfg.caCertificate
 	clusterServer := cfg.clusterServer
-	if cfg.KubeClientConfig.Kubeconfig != "" {
+	if cfg.cisCredentialsPath != "" {
+		kubeconfig, err := getKubeconfigFromCIS(cfg)
+		if err != nil {
+			return clierror.WrapE(err, clierror.New("failed to get kubeconfig from CIS"))
+		}
+
+	} else if cfg.KubeClientConfig.Kubeconfig != "" {
 		currentServer := cfg.KubeClient.ApiConfig().Clusters[cfg.KubeClient.ApiConfig().CurrentContext]
 		caCertificate = string(currentServer.CertificateAuthorityData)
 		clusterServer = currentServer.Server
@@ -135,6 +147,30 @@ func runOIDC(cfg *oidcConfig) clierror.Error {
 	}
 
 	return nil
+}
+
+func getKubeconfigFromCIS(cfg *oidcConfig) (*api.Config, clierror.Error) {
+	credentials, err := auth.LoadCISCredentials(cfg.cisCredentialsPath)
+	if err != nil {
+		return nil, err
+	}
+	token, err := auth.GetOAuthToken(
+		credentials.GrantType,
+		credentials.UAA.URL,
+		credentials.UAA.ClientID,
+		credentials.UAA.ClientSecret,
+	)
+	if err != nil {
+		var hints []string
+		if strings.Contains(err.String(), "Internal Server Error") {
+			hints = append(hints, "check if CIS grant type is set to client credentials")
+		}
+
+		return nil, clierror.WrapE(err, clierror.New("failed to get access token", hints...))
+	}
+
+	localCISClient := cis.NewLocalClient(credentials, token)
+	localCISClient.GetKymaKubeconfig()
 }
 
 func getGithubToken(url, requestToken, audience string) (string, error) {
