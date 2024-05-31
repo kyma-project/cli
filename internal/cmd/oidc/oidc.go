@@ -15,6 +15,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/tools/clientcmd/api"
+	"sigs.k8s.io/yaml"
 )
 
 type oidcConfig struct {
@@ -129,6 +130,9 @@ func runOIDC(cfg *oidcConfig) clierror.Error {
 		if err != nil {
 			return clierror.WrapE(err, clierror.New("failed to get kubeconfig from CIS"))
 		}
+		currentServer := kubeconfig.Clusters[kubeconfig.CurrentContext]
+		caCertificate = string(currentServer.CertificateAuthorityData)
+		clusterServer = currentServer.Server
 
 	} else if cfg.KubeClientConfig.Kubeconfig != "" {
 		currentServer := cfg.KubeClient.ApiConfig().Clusters[cfg.KubeClient.ApiConfig().CurrentContext]
@@ -150,6 +154,7 @@ func runOIDC(cfg *oidcConfig) clierror.Error {
 }
 
 func getKubeconfigFromCIS(cfg *oidcConfig) (*api.Config, clierror.Error) {
+	// TODO: maybe refactor with provision command to not duplicate localCISClient provisioning
 	credentials, err := auth.LoadCISCredentials(cfg.cisCredentialsPath)
 	if err != nil {
 		return nil, err
@@ -170,7 +175,25 @@ func getKubeconfigFromCIS(cfg *oidcConfig) (*api.Config, clierror.Error) {
 	}
 
 	localCISClient := cis.NewLocalClient(credentials, token)
-	localCISClient.GetKymaKubeconfig()
+	kubeconfigString, err := localCISClient.GetKymaKubeconfig()
+	if err != nil {
+		return nil, clierror.WrapE(err, clierror.New("failed to get kubeconfig"))
+	}
+
+	kubeconfig, err := parseKubeconfig(kubeconfigString)
+	if err != nil {
+		return nil, clierror.WrapE(err, clierror.New("failed to parse kubeconfig"))
+	}
+	return kubeconfig, nil
+}
+
+func parseKubeconfig(kubeconfigString string) (*api.Config, clierror.Error) {
+	kubeconfig := api.Config{}
+	err := yaml.Unmarshal([]byte(kubeconfigString), &kubeconfig)
+	if err != nil {
+		return nil, clierror.Wrap(err, clierror.New("failed to parse kubeconfig string"))
+	}
+	return &kubeconfig, nil
 }
 
 func getGithubToken(url, requestToken, audience string) (string, error) {
