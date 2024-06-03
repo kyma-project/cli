@@ -108,7 +108,6 @@ func listAllModules() ([]string, clierror.Error) {
 }
 
 func listManagedModules(config *modulesConfig) ([]string, clierror.Error) {
-	trololo := config.KubeClient.Static().CoreV1().RESTClient().Get().AbsPath("kyma-project.io")
-	fmt.Println(trololo)
-	return nil, clierror.New("chleb")
+
+	return nil, clierror.New("")
 }
