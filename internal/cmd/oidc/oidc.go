@@ -116,14 +116,15 @@ func runOIDC(cfg *oidcConfig) clierror.Error {
 			return clierror.WrapE(clierr, clierror.New("failed to get token"))
 		}
 	}
-	kubeconfig := &api.Config{}
+
+	var kubeconfig *api.Config
 
 	if cfg.cisCredentialsPath != "" {
 		kubeconfig, clierr = getKubeconfigFromCIS(cfg)
 		if clierr != nil {
 			return clierror.WrapE(clierr, clierror.New("failed to get kubeconfig from CIS"))
 		}
-	} else if cfg.KubeClientConfig.Kubeconfig != "" {
+	} else {
 		kubeconfig = cfg.KubeClient.ApiConfig()
 	}
 
