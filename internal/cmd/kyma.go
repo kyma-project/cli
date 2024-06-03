@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"github.com/kyma-project/cli.v3/internal/cmd/modules"
 
 	"github.com/kyma-project/cli.v3/internal/cmd/access"
 
@@ -39,6 +40,7 @@ func NewKymaCMD() *cobra.Command {
 	cmd.AddCommand(referenceinstance.NewReferenceInstanceCMD(config))
 	cmd.AddCommand(access.NewAccessCMD(config))
 	cmd.AddCommand(oidc.NewOIDCCMD(config))
+	cmd.AddCommand(modules.NewModulesCMD())
 
 	return cmd
 }
