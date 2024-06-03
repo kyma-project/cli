@@ -16,7 +16,7 @@ type modulesConfig struct {
 	installed bool
 }
 
-func NewCatalogCMD() *cobra.Command {
+func NewModulesCMD() *cobra.Command {
 
 	config := modulesConfig{}
 
