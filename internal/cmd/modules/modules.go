@@ -29,8 +29,6 @@ func NewModulesCMD() *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags() // TODO: do we need this?
-
 	cmd.Flags().BoolVar(&config.catalog, "catalog", false, "List of al available Kyma modules.")
 	cmd.Flags().BoolVar(&config.managed, "managed", false, "List of all Kyma modules managed by central control-plane.")
 	cmd.Flags().BoolVar(&config.installed, "installed", false, "List of all currently installed Kyma modules.")
