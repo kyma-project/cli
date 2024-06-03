@@ -77,7 +77,7 @@ func (cfg *oidcConfig) complete() clierror.Error {
 	}
 	cfg.idTokenRequestToken = os.Getenv("ACTIONS_ID_TOKEN_REQUEST_TOKEN")
 
-	if cfg.KubeClientConfig.Kubeconfig != "" {
+	if cfg.cisCredentialsPath == "" {
 		return cfg.KubeClientConfig.Complete()
 	}
 	return nil
