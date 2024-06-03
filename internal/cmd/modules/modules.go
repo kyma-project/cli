@@ -3,6 +3,7 @@ package modules
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"io"
 	"net/http"
 
@@ -11,19 +12,28 @@ import (
 )
 
 type modulesConfig struct {
+	*cmdcommon.KymaConfig
+	cmdcommon.KubeClientConfig
+
 	catalog   bool
 	managed   bool
 	installed bool
 }
 
-func NewModulesCMD() *cobra.Command {
+func NewModulesCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
-	config := modulesConfig{}
+	config := modulesConfig{
+		KymaConfig:       kymaConfig,
+		KubeClientConfig: cmdcommon.KubeClientConfig{},
+	}
 
 	cmd := &cobra.Command{
 		Use:   "modules",
 		Short: "List modules.",
 		Long:  `List either installed, managed or available Kyma modules.`,
+		PreRun: func(_ *cobra.Command, args []string) {
+			clierror.Check(config.KubeClientConfig.Complete())
+		},
 		Run: func(_ *cobra.Command, _ []string) {
 			clierror.Check(runModules(&config))
 		},
@@ -55,10 +65,17 @@ func runModules(config *modulesConfig) clierror.Error {
 		return nil
 	}
 
-	if config.managed || config.installed {
-		clierror.Wrap(err, clierror.New("not implemented yet, please use the catalog flag"))
+	if config.managed {
+		_, err := listManagedModules(config)
+		clierror.WrapE(err, clierror.New("not implemented yet, please use the catalog flag"))
+		return nil
 	}
-	//TODO: installed and managed to implement
+
+	if config.installed {
+		clierror.Wrap(err, clierror.New("not implemented yet, please use the catalog flag"))
+		return nil
+	}
+	//TODO: installed to implement
 
 	return clierror.Wrap(err, clierror.New("failed to get modules", "please use one of: catalog, managed or installed flags"))
 }
@@ -88,4 +105,10 @@ func listAllModules() ([]string, clierror.Error) {
 		out = append(out, rec.Name)
 	}
 	return out, nil
+}
+
+func listManagedModules(config *modulesConfig) ([]string, clierror.Error) {
+	trololo := config.KubeClient.Static().CoreV1().RESTClient().Get().AbsPath("kyma-project.io")
+	fmt.Println(trololo)
+	return nil, clierror.New("chleb")
 }
