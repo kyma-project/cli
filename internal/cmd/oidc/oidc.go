@@ -23,8 +23,6 @@ type oidcConfig struct {
 
 	cisCredentialsPath  string
 	output              string
-	caCertificate       string
-	clusterServer       string
 	audience            string
 	token               string
 	idTokenRequestURL   string
@@ -59,16 +57,12 @@ func NewOIDCCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cmd.Flags().StringVar(&cfg.cisCredentialsPath, "credentials-path", "", "Path to the CIS credentials file.")
 	cmd.Flags().StringVar(&cfg.output, "output", "", "Path to the output kubeconfig file")
-	cmd.Flags().StringVar(&cfg.caCertificate, "ca-certificate", "", "Path to the CA certificate file")
-	cmd.Flags().StringVar(&cfg.clusterServer, "cluster-server", "", "URL of the cluster server")
 
 	cmd.Flags().StringVar(&cfg.token, "token", "", "Token used in the kubeconfig")
 	cmd.Flags().StringVar(&cfg.audience, "audience", "", "Audience of the token")
 	cmd.Flags().StringVar(&cfg.idTokenRequestURL, "id-token-request-url", "", "URL to request the ID token, defaults to ACTIONS_ID_TOKEN_REQUEST_URL env variable")
 
-	cmd.MarkFlagsOneRequired("kubeconfig", "ca-certificate", "credentials-path")
-	cmd.MarkFlagsRequiredTogether("ca-certificate", "cluster-server")
-	cmd.MarkFlagsMutuallyExclusive("kubeconfig", "ca-certificate")
+	cmd.MarkFlagsOneRequired("kubeconfig", "credentials-path")
 	cmd.MarkFlagsMutuallyExclusive("kubeconfig", "credentials-path")
 
 	cmd.MarkFlagsMutuallyExclusive("token", "id-token-request-url")
@@ -113,39 +107,29 @@ func (cfg *oidcConfig) validate() clierror.Error {
 }
 
 func runOIDC(cfg *oidcConfig) clierror.Error {
-	var err error
+	var clierr clierror.Error
 	token := cfg.token
 	if cfg.token == "" {
 		// get Github token
-		token, err = getGithubToken(cfg.idTokenRequestURL, cfg.idTokenRequestToken, cfg.audience)
-		if err != nil {
-			return clierror.Wrap(err, clierror.New("failed to get token"))
+		token, clierr = getGithubToken(cfg.idTokenRequestURL, cfg.idTokenRequestToken, cfg.audience)
+		if clierr != nil {
+			return clierror.WrapE(clierr, clierror.New("failed to get token"))
 		}
 	}
-	caCertificate := []byte(cfg.caCertificate)
-	clusterServer := cfg.clusterServer
+	kubeconfig := &api.Config{}
 
 	if cfg.cisCredentialsPath != "" {
-		kubeconfig, err := getKubeconfigFromCIS(cfg)
-		if err != nil {
-			return clierror.WrapE(err, clierror.New("failed to get kubeconfig from CIS"))
+		kubeconfig, clierr = getKubeconfigFromCIS(cfg)
+		if clierr != nil {
+			return clierror.WrapE(clierr, clierror.New("failed to get kubeconfig from CIS"))
 		}
-		currentServer := kubeconfig.Clusters[kubeconfig.CurrentContext]
-		caCertificate = currentServer.CertificateAuthorityData
-		clusterServer = currentServer.Server
-
 	} else if cfg.KubeClientConfig.Kubeconfig != "" {
-		currentServer := cfg.KubeClient.ApiConfig().Clusters[cfg.KubeClient.ApiConfig().CurrentContext]
-		caCertificate = currentServer.CertificateAuthorityData
-		clusterServer = currentServer.Server
+		kubeconfig = cfg.KubeClient.ApiConfig()
 	}
 
-	enrichedKubeconfig, err := createKubeconfig(caCertificate, clusterServer, token)
-	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to create kubeconfig"))
-	}
+	enrichedKubeconfig := createKubeconfig(kubeconfig, token)
 
-	err = kube.SaveConfig(enrichedKubeconfig, cfg.output)
+	err := kube.SaveConfig(enrichedKubeconfig, cfg.output)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to save kubeconfig"))
 	}
@@ -195,12 +179,12 @@ func parseKubeconfig(kubeconfigString string) (*api.Config, clierror.Error) {
 	return kubeconfig, nil
 }
 
-func getGithubToken(url, requestToken, audience string) (string, error) {
+func getGithubToken(url, requestToken, audience string) (string, clierror.Error) {
 	// create http client
 
 	request, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return "", err
+		return "", clierror.Wrap(err, clierror.New("failed to create request"))
 	}
 	if audience != "" {
 		q := request.URL.Query()
@@ -213,46 +197,38 @@ func getGithubToken(url, requestToken, audience string) (string, error) {
 
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
-		return "", err
+		return "", clierror.Wrap(err, clierror.New("failed to get token from Github"))
 	}
 	defer response.Body.Close()
 
 	if response.StatusCode != 200 {
-		return "", fmt.Errorf("failed to get token from server: %s", response.Status)
+		return "", clierror.New(fmt.Sprintf("Invalid server response: %d", response.StatusCode))
 	}
 
 	tokenData := TokenData{}
 	err = json.NewDecoder(response.Body).Decode(&tokenData)
 	if err != nil {
-		return "", err
+		return "", clierror.Wrap(err, clierror.New("failed to decode token response"))
 	}
 	return tokenData.Value, nil
 }
 
-func createKubeconfig(caCertificate []byte, clusterServer, token string) (*api.Config, error) {
+func createKubeconfig(kubeconfig *api.Config, token string) *api.Config {
+	currentUser := kubeconfig.Contexts[kubeconfig.CurrentContext].AuthInfo
 	config := &api.Config{
 		Kind:       "Config",
 		APIVersion: "v1",
-		Clusters: map[string]*api.Cluster{
-			"cluster": {
-				Server:                   clusterServer,
-				CertificateAuthorityData: caCertificate,
-			},
-		},
+		Clusters:   kubeconfig.Clusters,
 		AuthInfos: map[string]*api.AuthInfo{
-			"user": {
+			currentUser: {
 				Token: token,
 			},
 		},
-		Contexts: map[string]*api.Context{
-			"default": {
-				Cluster:  "cluster",
-				AuthInfo: "user",
-			},
-		},
-		CurrentContext: "default",
-		Extensions:     nil,
+		Contexts:       kubeconfig.Contexts,
+		CurrentContext: kubeconfig.CurrentContext,
+		Extensions:     kubeconfig.Extensions,
+		Preferences:    kubeconfig.Preferences,
 	}
 
-	return config, nil
+	return config
 }
