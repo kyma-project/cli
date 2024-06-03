@@ -48,7 +48,7 @@ func runModules(config *modulesConfig) clierror.Error {
 		if err != nil {
 			return clierror.WrapE(err, clierror.New("failed to list all Kyma modules"))
 		}
-		fmt.Println("Available modules:")
+		fmt.Println("Available modules:\n")
 		for _, rec := range modules {
 			fmt.Println(rec)
 		}
