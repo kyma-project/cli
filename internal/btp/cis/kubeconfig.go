@@ -26,17 +26,17 @@ func (c *LocalClient) GetKymaKubeconfig() (string, clierror.Error) {
 
 	response, err := c.cis.get(provisionURL, requestOptions{})
 	if err != nil {
-		// TODO: finish
+		// TODO: finish - error codes?
 		return "", clierror.New(err.Error())
 	}
 
 	defer response.Body.Close()
 
-	return decodeKubeconfig(response)
+	return decodeResponse(response)
 
 }
 
-func decodeKubeconfig(response *http.Response) (string, clierror.Error) {
+func decodeResponse(response *http.Response) (string, clierror.Error) {
 	envInstances := environmentInstances{}
 	err := json.NewDecoder(response.Body).Decode(&envInstances)
 	if err != nil {
@@ -53,7 +53,7 @@ func decodeKubeconfig(response *http.Response) (string, clierror.Error) {
 				return "", clierror.Wrap(err, clierror.New("failed to unmarshal labels"))
 			}
 
-			kubeconfig, err := getKubeconfig(labels.KubeconfigURL)
+			kubeconfig, err := downloadKubeconfig(labels.KubeconfigURL)
 			if err != nil {
 				return "", clierror.Wrap(err, clierror.New("failed to get kubeconfig"))
 			}
@@ -64,12 +64,11 @@ func decodeKubeconfig(response *http.Response) (string, clierror.Error) {
 	return "", clierror.New("no Kyma environment found")
 }
 
-func getKubeconfig(url string) (string, error) {
+func downloadKubeconfig(url string) (string, error) {
 	response, err := http.Get(url)
 	if err != nil {
 		return "", err
 	}
-
 	defer response.Body.Close()
 
 	kubeconfig, err := io.ReadAll(response.Body)

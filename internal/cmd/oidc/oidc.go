@@ -1,7 +1,6 @@
 package oidc
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -14,8 +13,8 @@ import (
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/spf13/cobra"
+	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
-	"sigs.k8s.io/yaml"
 )
 
 type oidcConfig struct {
@@ -98,7 +97,7 @@ func (cfg *oidcConfig) validate() clierror.Error {
 
 	if cfg.idTokenRequestURL == "" {
 		return clierror.New(
-			"ID token request URL is required",
+			"ID token request URL is required if --token is not provided",
 			"make sure you're running the command in Github Actions environment",
 			"provide id-token-request-url flag or ACTIONS_ID_TOKEN_REQUEST_URL env variable",
 		)
@@ -106,7 +105,7 @@ func (cfg *oidcConfig) validate() clierror.Error {
 
 	if cfg.idTokenRequestToken == "" {
 		return clierror.New(
-			"ACTIONS_ID_TOKEN_REQUEST_TOKEN env variable is required",
+			"ACTIONS_ID_TOKEN_REQUEST_TOKEN env variable is required if --token is not provided",
 			"make sure you're running the command in Github Actions environment",
 		)
 	}
@@ -116,27 +115,28 @@ func (cfg *oidcConfig) validate() clierror.Error {
 func runOIDC(cfg *oidcConfig) clierror.Error {
 	var err error
 	token := cfg.token
-	if cfg.token != "" {
+	if cfg.token == "" {
 		// get Github token
 		token, err = getGithubToken(cfg.idTokenRequestURL, cfg.idTokenRequestToken, cfg.audience)
 		if err != nil {
 			return clierror.Wrap(err, clierror.New("failed to get token"))
 		}
 	}
-	caCertificate := cfg.caCertificate
+	caCertificate := []byte(cfg.caCertificate)
 	clusterServer := cfg.clusterServer
+
 	if cfg.cisCredentialsPath != "" {
 		kubeconfig, err := getKubeconfigFromCIS(cfg)
 		if err != nil {
 			return clierror.WrapE(err, clierror.New("failed to get kubeconfig from CIS"))
 		}
 		currentServer := kubeconfig.Clusters[kubeconfig.CurrentContext]
-		caCertificate = string(currentServer.CertificateAuthorityData)
+		caCertificate = currentServer.CertificateAuthorityData
 		clusterServer = currentServer.Server
 
 	} else if cfg.KubeClientConfig.Kubeconfig != "" {
 		currentServer := cfg.KubeClient.ApiConfig().Clusters[cfg.KubeClient.ApiConfig().CurrentContext]
-		caCertificate = string(currentServer.CertificateAuthorityData)
+		caCertificate = currentServer.CertificateAuthorityData
 		clusterServer = currentServer.Server
 	}
 
@@ -188,12 +188,11 @@ func getKubeconfigFromCIS(cfg *oidcConfig) (*api.Config, clierror.Error) {
 }
 
 func parseKubeconfig(kubeconfigString string) (*api.Config, clierror.Error) {
-	kubeconfig := api.Config{}
-	err := yaml.Unmarshal([]byte(kubeconfigString), &kubeconfig)
+	kubeconfig, err := clientcmd.Load([]byte(kubeconfigString))
 	if err != nil {
 		return nil, clierror.Wrap(err, clierror.New("failed to parse kubeconfig string"))
 	}
-	return &kubeconfig, nil
+	return kubeconfig, nil
 }
 
 func getGithubToken(url, requestToken, audience string) (string, error) {
@@ -230,19 +229,14 @@ func getGithubToken(url, requestToken, audience string) (string, error) {
 	return tokenData.Value, nil
 }
 
-func createKubeconfig(caCertificate, clusterServer, token string) (*api.Config, error) {
-	certificate, err := base64.StdEncoding.DecodeString(caCertificate)
-	if err != nil {
-		return nil, err
-	}
-
+func createKubeconfig(caCertificate []byte, clusterServer, token string) (*api.Config, error) {
 	config := &api.Config{
 		Kind:       "Config",
 		APIVersion: "v1",
 		Clusters: map[string]*api.Cluster{
 			"cluster": {
 				Server:                   clusterServer,
-				CertificateAuthorityData: certificate,
+				CertificateAuthorityData: caCertificate,
 			},
 		},
 		AuthInfos: map[string]*api.AuthInfo{
