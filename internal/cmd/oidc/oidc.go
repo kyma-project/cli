@@ -1,16 +1,19 @@
 package oidc
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 
+	"github.com/kyma-project/cli.v3/internal/btp/auth"
+	"github.com/kyma-project/cli.v3/internal/btp/cis"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/spf13/cobra"
+	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 )
 
@@ -18,9 +21,8 @@ type oidcConfig struct {
 	*cmdcommon.KymaConfig
 	cmdcommon.KubeClientConfig
 
+	cisCredentialsPath  string
 	output              string
-	caCertificate       string
-	clusterServer       string
 	audience            string
 	token               string
 	idTokenRequestURL   string
@@ -53,17 +55,15 @@ func NewOIDCCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cfg.KubeClientConfig.AddFlag(cmd)
 
+	cmd.Flags().StringVar(&cfg.cisCredentialsPath, "credentials-path", "", "Path to the CIS credentials file.")
 	cmd.Flags().StringVar(&cfg.output, "output", "", "Path to the output kubeconfig file")
-	cmd.Flags().StringVar(&cfg.caCertificate, "ca-certificate", "", "Path to the CA certificate file")
-	cmd.Flags().StringVar(&cfg.clusterServer, "cluster-server", "", "URL of the cluster server")
 
 	cmd.Flags().StringVar(&cfg.token, "token", "", "Token used in the kubeconfig")
 	cmd.Flags().StringVar(&cfg.audience, "audience", "", "Audience of the token")
 	cmd.Flags().StringVar(&cfg.idTokenRequestURL, "id-token-request-url", "", "URL to request the ID token, defaults to ACTIONS_ID_TOKEN_REQUEST_URL env variable")
 
-	cmd.MarkFlagsOneRequired("kubeconfig", "ca-certificate")
-	cmd.MarkFlagsRequiredTogether("ca-certificate", "cluster-server")
-	cmd.MarkFlagsMutuallyExclusive("kubeconfig", "ca-certificate")
+	cmd.MarkFlagsOneRequired("kubeconfig", "credentials-path")
+	cmd.MarkFlagsMutuallyExclusive("kubeconfig", "credentials-path")
 
 	cmd.MarkFlagsMutuallyExclusive("token", "id-token-request-url")
 	cmd.MarkFlagsMutuallyExclusive("token", "audience")
@@ -77,7 +77,7 @@ func (cfg *oidcConfig) complete() clierror.Error {
 	}
 	cfg.idTokenRequestToken = os.Getenv("ACTIONS_ID_TOKEN_REQUEST_TOKEN")
 
-	if cfg.KubeClientConfig.Kubeconfig != "" {
+	if cfg.cisCredentialsPath == "" {
 		return cfg.KubeClientConfig.Complete()
 	}
 	return nil
@@ -91,7 +91,7 @@ func (cfg *oidcConfig) validate() clierror.Error {
 
 	if cfg.idTokenRequestURL == "" {
 		return clierror.New(
-			"ID token request URL is required",
+			"ID token request URL is required if --token is not provided",
 			"make sure you're running the command in Github Actions environment",
 			"provide id-token-request-url flag or ACTIONS_ID_TOKEN_REQUEST_URL env variable",
 		)
@@ -99,7 +99,7 @@ func (cfg *oidcConfig) validate() clierror.Error {
 
 	if cfg.idTokenRequestToken == "" {
 		return clierror.New(
-			"ACTIONS_ID_TOKEN_REQUEST_TOKEN env variable is required",
+			"ACTIONS_ID_TOKEN_REQUEST_TOKEN env variable is required if --token is not provided",
 			"make sure you're running the command in Github Actions environment",
 		)
 	}
@@ -107,29 +107,30 @@ func (cfg *oidcConfig) validate() clierror.Error {
 }
 
 func runOIDC(cfg *oidcConfig) clierror.Error {
-	var err error
+	var clierr clierror.Error
 	token := cfg.token
-	if cfg.token != "" {
+	if cfg.token == "" {
 		// get Github token
-		token, err = getGithubToken(cfg.idTokenRequestURL, cfg.idTokenRequestToken, cfg.audience)
-		if err != nil {
-			return clierror.Wrap(err, clierror.New("failed to get token"))
+		token, clierr = getGithubToken(cfg.idTokenRequestURL, cfg.idTokenRequestToken, cfg.audience)
+		if clierr != nil {
+			return clierror.WrapE(clierr, clierror.New("failed to get token"))
 		}
 	}
-	caCertificate := cfg.caCertificate
-	clusterServer := cfg.clusterServer
-	if cfg.KubeClientConfig.Kubeconfig != "" {
-		currentServer := cfg.KubeClient.ApiConfig().Clusters[cfg.KubeClient.ApiConfig().CurrentContext]
-		caCertificate = string(currentServer.CertificateAuthorityData)
-		clusterServer = currentServer.Server
+
+	var kubeconfig *api.Config
+
+	if cfg.cisCredentialsPath != "" {
+		kubeconfig, clierr = getKubeconfigFromCIS(cfg)
+		if clierr != nil {
+			return clierror.WrapE(clierr, clierror.New("failed to get kubeconfig from CIS"))
+		}
+	} else {
+		kubeconfig = cfg.KubeClient.ApiConfig()
 	}
 
-	enrichedKubeconfig, err := createKubeconfig(caCertificate, clusterServer, token)
-	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to create kubeconfig"))
-	}
+	enrichedKubeconfig := createKubeconfig(kubeconfig, token)
 
-	err = kube.SaveConfig(enrichedKubeconfig, cfg.output)
+	err := kube.SaveConfig(enrichedKubeconfig, cfg.output)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to save kubeconfig"))
 	}
@@ -137,12 +138,54 @@ func runOIDC(cfg *oidcConfig) clierror.Error {
 	return nil
 }
 
-func getGithubToken(url, requestToken, audience string) (string, error) {
+func getKubeconfigFromCIS(cfg *oidcConfig) (*api.Config, clierror.Error) {
+	// TODO: maybe refactor with provision command to not duplicate localCISClient provisioning
+	credentials, err := auth.LoadCISCredentials(cfg.cisCredentialsPath)
+	if err != nil {
+		return nil, err
+	}
+	token, err := auth.GetOAuthToken(
+		credentials.GrantType,
+		credentials.UAA.URL,
+		credentials.UAA.ClientID,
+		credentials.UAA.ClientSecret,
+	)
+	if err != nil {
+		var hints []string
+		if strings.Contains(err.String(), "Internal Server Error") {
+			hints = append(hints, "check if CIS grant type is set to client credentials")
+		}
+
+		return nil, clierror.WrapE(err, clierror.New("failed to get access token", hints...))
+	}
+
+	localCISClient := cis.NewLocalClient(credentials, token)
+	kubeconfigString, err := localCISClient.GetKymaKubeconfig()
+	if err != nil {
+		return nil, clierror.WrapE(err, clierror.New("failed to get kubeconfig"))
+	}
+
+	kubeconfig, err := parseKubeconfig(kubeconfigString)
+	if err != nil {
+		return nil, clierror.WrapE(err, clierror.New("failed to parse kubeconfig"))
+	}
+	return kubeconfig, nil
+}
+
+func parseKubeconfig(kubeconfigString string) (*api.Config, clierror.Error) {
+	kubeconfig, err := clientcmd.Load([]byte(kubeconfigString))
+	if err != nil {
+		return nil, clierror.Wrap(err, clierror.New("failed to parse kubeconfig string"))
+	}
+	return kubeconfig, nil
+}
+
+func getGithubToken(url, requestToken, audience string) (string, clierror.Error) {
 	// create http client
 
 	request, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return "", err
+		return "", clierror.Wrap(err, clierror.New("failed to create request"))
 	}
 	if audience != "" {
 		q := request.URL.Query()
@@ -155,51 +198,38 @@ func getGithubToken(url, requestToken, audience string) (string, error) {
 
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
-		return "", err
+		return "", clierror.Wrap(err, clierror.New("failed to get token from Github"))
 	}
 	defer response.Body.Close()
 
 	if response.StatusCode != 200 {
-		return "", fmt.Errorf("failed to get token from server: %s", response.Status)
+		return "", clierror.New(fmt.Sprintf("Invalid server response: %d", response.StatusCode))
 	}
 
 	tokenData := TokenData{}
 	err = json.NewDecoder(response.Body).Decode(&tokenData)
 	if err != nil {
-		return "", err
+		return "", clierror.Wrap(err, clierror.New("failed to decode token response"))
 	}
 	return tokenData.Value, nil
 }
 
-func createKubeconfig(caCertificate, clusterServer, token string) (*api.Config, error) {
-	certificate, err := base64.StdEncoding.DecodeString(caCertificate)
-	if err != nil {
-		return nil, err
-	}
-
+func createKubeconfig(kubeconfig *api.Config, token string) *api.Config {
+	currentUser := kubeconfig.Contexts[kubeconfig.CurrentContext].AuthInfo
 	config := &api.Config{
 		Kind:       "Config",
 		APIVersion: "v1",
-		Clusters: map[string]*api.Cluster{
-			"cluster": {
-				Server:                   clusterServer,
-				CertificateAuthorityData: certificate,
-			},
-		},
+		Clusters:   kubeconfig.Clusters,
 		AuthInfos: map[string]*api.AuthInfo{
-			"user": {
+			currentUser: {
 				Token: token,
 			},
 		},
-		Contexts: map[string]*api.Context{
-			"default": {
-				Cluster:  "cluster",
-				AuthInfo: "user",
-			},
-		},
-		CurrentContext: "default",
-		Extensions:     nil,
+		Contexts:       kubeconfig.Contexts,
+		CurrentContext: kubeconfig.CurrentContext,
+		Extensions:     kubeconfig.Extensions,
+		Preferences:    kubeconfig.Preferences,
 	}
 
-	return config, nil
+	return config
 }
