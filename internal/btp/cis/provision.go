@@ -26,8 +26,36 @@ type ProvisionEnvironment struct {
 }
 
 type KymaParameters struct {
-	Name   string `json:"name"`
-	Region string `json:"region"`
+	Administrators *[]string                 `json:"administrators,omitempty"`
+	AutoScalerMax  *int                      `json:"autoScalerMax,omitempty"`
+	AutoScalerMin  *int                      `json:"autoScalerMin,omitempty"`
+	MachineType    *string                   `json:"machineType,omitempty"`
+	Modules        *KymaParametersModules    `json:"modules,omitempty"`
+	Name           string                    `json:"name"`
+	Networking     *KymaParametersNetworking `json:"networking,omitempty"`
+	Oidc           *KymaParametersOidc       `json:"oidc,omitempty"`
+	Region         string                    `json:"region"`
+}
+
+type KymaParametersModules struct {
+	Default bool `json:"default,omitempty"`
+	List    []struct {
+		Name                 string `json:"name"`
+		Channel              string `json:"channel,omitempty"`
+		CustomResourcePolicy string `json:"customResourcePolicy,omitempty"`
+	} `json:"list,omitempty"`
+}
+
+type KymaParametersNetworking struct {
+	Nodes string `json:"nodes"`
+}
+
+type KymaParametersOidc struct {
+	ClientID      string   `json:"clientID"`
+	GroupsClaim   string   `json:"groupsClaim,omitempty"`
+	IssuerURL     string   `json:"issuerURL"`
+	SigningAlgs   []string `json:"signingAlgs,omitempty"`
+	UsernameClaim string   `json:"usernameClaim,omitempty"`
 }
 
 type ProvisionResponse struct {
