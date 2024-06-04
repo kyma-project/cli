@@ -1,0 +1,22 @@
+name: markdown
+run-name: ${{github.event.pull_request.title}}
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main", "release-*" ]
+  schedule:
+    - cron: "0 5 * * *" # Run everyday at 5:00 AM
+jobs:
+  link-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/rebase
+      - uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          use-quiet-mode: 'yes'
+          use-verbose-mode: 'yes'
+          config-file: '.mlc.config.json'
+          folder-path: '.'
+          max-depth: -1
+
