@@ -73,7 +73,10 @@ func runModules(cfg *modulesConfig) clierror.Error {
 		if err != nil {
 			return clierror.WrapE(err, clierror.New("failed to list managed Kyma modules"))
 		}
-		fmt.Println("Managed modules:\n", managed)
+		fmt.Println("Managed modules:\n")
+		for _, rec := range managed {
+			fmt.Println(rec)
+		}
 		return nil
 	}
 
