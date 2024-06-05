@@ -41,6 +41,7 @@ func NewModulesCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 			clierror.Check(runModules(&cfg))
 		},
 	}
+	cfg.KubeClientConfig.AddFlag(cmd)
 
 	cmd.Flags().BoolVar(&cfg.catalog, "catalog", false, "List of al available Kyma modules.")
 	cmd.Flags().BoolVar(&cfg.managed, "managed", false, "List of all Kyma modules managed by central control-plane.")
