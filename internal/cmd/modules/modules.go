@@ -69,10 +69,11 @@ func runModules(cfg *modulesConfig) clierror.Error {
 		return nil
 	}
 	if cfg.managed {
-		_, err := listManagedModules(cfg)
+		managed, err := listManagedModules(cfg)
 		if err != nil {
 			return clierror.WrapE(err, clierror.New("failed to list managed Kyma modules"))
 		}
+		fmt.Println("Managed modules:\n", managed)
 		return nil
 	}
 
@@ -80,7 +81,6 @@ func runModules(cfg *modulesConfig) clierror.Error {
 		clierror.Wrap(err, clierror.New("not implemented yet, please use the catalog or managed flag"))
 		return nil
 	}
-	//TODO: installed to implement
 
 	return clierror.Wrap(err, clierror.New("failed to get modules", "please use one of: catalog, managed or installed flags"))
 }
