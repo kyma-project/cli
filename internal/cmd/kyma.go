@@ -40,7 +40,7 @@ func NewKymaCMD() *cobra.Command {
 	cmd.AddCommand(referenceinstance.NewReferenceInstanceCMD(config))
 	cmd.AddCommand(access.NewAccessCMD(config))
 	cmd.AddCommand(oidc.NewOIDCCMD(config))
-	cmd.AddCommand(modules.NewModulesCMD())
+	cmd.AddCommand(modules.NewModulesCMD(config))
 
 	return cmd
 }
