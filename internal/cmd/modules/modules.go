@@ -57,6 +57,7 @@ func NewModulesCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 func runModules(cfg *modulesConfig) clierror.Error {
 	var err error
+
 	if cfg.catalog {
 		modules, err := listAllModules()
 		if err != nil {
@@ -81,7 +82,14 @@ func runModules(cfg *modulesConfig) clierror.Error {
 	}
 
 	if cfg.installed {
-		clierror.Wrap(err, clierror.New("not implemented yet, please use the catalog or managed flag"))
+		installed, err := listInstalledModules(cfg)
+		if err != nil {
+			return clierror.WrapE(err, clierror.New("failed to list installed Kyma modules"))
+		}
+		fmt.Println("Installed modules:\n")
+		for _, rec := range installed {
+			fmt.Println(rec)
+		}
 		return nil
 	}
 
@@ -133,6 +141,22 @@ func listManagedModules(cfg *modulesConfig) ([]string, clierror.Error) {
 	}
 
 	return moduleNames, nil
+}
+
+func listInstalledModules(cfg *modulesConfig) ([]string, clierror.Error) {
+
+	var out []string
+	deployments, err := cfg.KubeClient.Static().AppsV1().Deployments("kyma-system").List(cfg.Ctx, metav1.ListOptions{
+		LabelSelector: " kyma-project.io/module",
+		FieldSelector: "metadata.name=istio-controller-manager",
+	})
+
+	if err != nil {
+		return nil, clierror.Wrap(err, clierror.New("can't do this anymore"))
+	}
+	fmt.Println(deployments)
+
+	return out, nil
 }
 
 func getModuleNames(unstruct *unstructured.Unstructured) ([]string, error) {
