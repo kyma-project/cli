@@ -4,8 +4,6 @@ on:
   workflow_dispatch:
   push:
     branches: [ "main", "release-*" ]
-  schedule:
-    - cron: "0 5 * * *" # Run everyday at 5:00 AM
 jobs:
   link-check:
     runs-on: ubuntu-latest
