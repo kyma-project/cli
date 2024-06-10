@@ -6,6 +6,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/model"
 	"io"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -106,6 +107,19 @@ func listAllModules() ([]string, clierror.Error) {
 
 	var template model.Module
 
+	template, respErr := handleResponse(err, resp, template)
+	if respErr != nil {
+		return nil, clierror.WrapE(respErr, clierror.New("while handling response"))
+	}
+
+	var out []string
+	for _, rec := range template {
+		out = append(out, rec.Name)
+	}
+	return out, nil
+}
+
+func handleResponse(err error, resp *http.Response, template model.Module) (model.Module, clierror.Error) {
 	bodyText, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, clierror.Wrap(err, clierror.New("while reading http response"))
@@ -114,12 +128,7 @@ func listAllModules() ([]string, clierror.Error) {
 	if err != nil {
 		return nil, clierror.Wrap(err, clierror.New("while unmarshalling"))
 	}
-
-	var out []string
-	for _, rec := range template {
-		out = append(out, rec.Name)
-	}
-	return out, nil
+	return template, nil
 }
 
 func listManagedModules(cfg *modulesConfig) ([]string, clierror.Error) {
@@ -142,7 +151,6 @@ func listManagedModules(cfg *modulesConfig) ([]string, clierror.Error) {
 	return moduleNames, nil
 }
 
-
 func listInstalledModules(cfg *modulesConfig) ([]string, clierror.Error) {
 	resp, err := http.Get("https://raw.githubusercontent.com/kyma-project/community-modules/main/model.json")
 	if err != nil {
@@ -152,20 +160,30 @@ func listInstalledModules(cfg *modulesConfig) ([]string, clierror.Error) {
 
 	var template model.Module
 
-	bodyText, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, clierror.Wrap(err, clierror.New("while reading http response"))
-	}
-	err = json.Unmarshal(bodyText, &template)
-	if err != nil {
-		return nil, clierror.Wrap(err, clierror.New("while unmarshalling"))
+	template, respErr := handleResponse(err, resp, template)
+	if respErr != nil {
+		return nil, clierror.WrapE(respErr, clierror.New("while handling response"))
 	}
 
 	var out []string
 	for _, rec := range template {
 		short := strings.Split(rec.Versions[0].ManagerPath, "/")
-		fmt.Println(short[len(short)-1])
-		//cfg.KubeClient.Static().AppsV1().Deployments("kyma-system").Get(cfg.Ctx, short[len(short)-1], metav1.GetOptions{})
+		version := rec.Versions[0].Version
+		deployment, err := cfg.KubeClient.Static().AppsV1().Deployments("kyma-system").Get(cfg.Ctx, short[len(short)-1], metav1.GetOptions{})
+		if err != nil && !errors.IsNotFound(err) {
+			msg := "while getting the " + short[len(short)-1] + " deployment"
+			return nil, clierror.Wrap(err, clierror.New(msg))
+		}
+		if !errors.IsNotFound(err) {
+			depVersion := strings.Split(deployment.Spec.Template.Spec.Containers[0].Image, "/")
+			installedVersion := strings.Split(depVersion[len(depVersion)-1], ":")
+
+			if version == installedVersion[len(installedVersion)-1] {
+				out = append(out, rec.Name+" - "+installedVersion[len(installedVersion)-1])
+			} else {
+				out = append(out, rec.Name+" - "+"outdated version, latest version is "+version)
+			}
+		}
 	}
 	return out, nil
 }
