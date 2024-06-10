@@ -142,6 +142,7 @@ func listManagedModules(cfg *modulesConfig) ([]string, clierror.Error) {
 	return moduleNames, nil
 }
 
+
 func listInstalledModules(cfg *modulesConfig) ([]string, clierror.Error) {
 	resp, err := http.Get("https://raw.githubusercontent.com/kyma-project/community-modules/main/model.json")
 	if err != nil {
