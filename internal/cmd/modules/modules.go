@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/model"
 	"io"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -103,9 +104,7 @@ func listAllModules() ([]string, clierror.Error) {
 	}
 	defer resp.Body.Close()
 
-	var template []struct {
-		Name string `json:"name"`
-	}
+	var template model.Module
 
 	bodyText, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -144,18 +143,29 @@ func listManagedModules(cfg *modulesConfig) ([]string, clierror.Error) {
 }
 
 func listInstalledModules(cfg *modulesConfig) ([]string, clierror.Error) {
+	resp, err := http.Get("https://raw.githubusercontent.com/kyma-project/community-modules/main/model.json")
+	if err != nil {
+		return nil, clierror.Wrap(err, clierror.New("while getting modules list from github"))
+	}
+	defer resp.Body.Close()
+
+	var template model.Module
+
+	bodyText, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, clierror.Wrap(err, clierror.New("while reading http response"))
+	}
+	err = json.Unmarshal(bodyText, &template)
+	if err != nil {
+		return nil, clierror.Wrap(err, clierror.New("while unmarshalling"))
+	}
 
 	var out []string
-	deployments, err := cfg.KubeClient.Static().AppsV1().Deployments("kyma-system").List(cfg.Ctx, metav1.ListOptions{
-		LabelSelector: " kyma-project.io/module",
-		FieldSelector: "metadata.name=istio-controller-manager",
-	})
-
-	if err != nil {
-		return nil, clierror.Wrap(err, clierror.New("can't do this anymore"))
+	for _, rec := range template {
+		short := strings.Split(rec.Versions[0].ManagerPath, "/")
+		fmt.Println(short[len(short)-1])
+		//cfg.KubeClient.Static().AppsV1().Deployments("kyma-system").Get(cfg.Ctx, short[len(short)-1], metav1.GetOptions{})
 	}
-	fmt.Println(deployments)
-
 	return out, nil
 }
 
