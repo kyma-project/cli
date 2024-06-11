@@ -58,7 +58,7 @@ func importImage(ctx context.Context, imageName string, opts ImportOptions, util
 	defer conn.Close()
 
 	localTr := portforward.NewPortforwardTransport(conn, opts.RegistryPodPort)
-	transport := portforward.NewRetryTransport(localTr)
+	transport := portforward.NewOnErrRetryTransport(localTr)
 
 	pushedImage, err := imageToInClusterRegistry(ctx, localImage, transport, opts.RegistryAuth, opts.RegistryPullHost, imageName, utils)
 	if err != nil {
