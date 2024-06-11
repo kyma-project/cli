@@ -26,6 +26,8 @@ type modulesConfig struct {
 	installed bool
 }
 
+const URL = "https://raw.githubusercontent.com/kyma-project/community-modules/main/model.json"
+
 func NewModulesCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cfg := modulesConfig{
 		KymaConfig:       kymaConfig,
@@ -99,7 +101,7 @@ func runModules(cfg *modulesConfig) clierror.Error {
 }
 
 func listAllModules() ([]string, clierror.Error) {
-	resp, err := http.Get("https://raw.githubusercontent.com/kyma-project/community-modules/main/model.json")
+	resp, err := http.Get(URL)
 	if err != nil {
 		return nil, clierror.Wrap(err, clierror.New("while getting modules list from github"))
 	}
@@ -152,7 +154,7 @@ func listManagedModules(cfg *modulesConfig) ([]string, clierror.Error) {
 }
 
 func listInstalledModules(cfg *modulesConfig) ([]string, clierror.Error) {
-	resp, err := http.Get("https://raw.githubusercontent.com/kyma-project/community-modules/main/model.json")
+	resp, err := http.Get(URL)
 	if err != nil {
 		return nil, clierror.Wrap(err, clierror.New("while getting modules list from github"))
 	}
