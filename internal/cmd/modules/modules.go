@@ -169,8 +169,8 @@ func listInstalledModules(cfg *modulesConfig) ([]string, clierror.Error) {
 
 	var out []string
 	for _, rec := range template {
-		short := strings.Split(rec.Versions[0].ManagerPath, "/")
-		managerName := short[len(short)-1]
+		managerPath := strings.Split(rec.Versions[0].ManagerPath, "/")
+		managerName := managerPath[len(managerPath)-1]
 		version := rec.Versions[0].Version
 		deployment, err := cfg.KubeClient.Static().AppsV1().Deployments("kyma-system").Get(cfg.Ctx, managerName, metav1.GetOptions{})
 		if err != nil && !errors.IsNotFound(err) {
@@ -178,8 +178,8 @@ func listInstalledModules(cfg *modulesConfig) ([]string, clierror.Error) {
 			return nil, clierror.Wrap(err, clierror.New(msg))
 		}
 		if !errors.IsNotFound(err) {
-			depVersion := strings.Split(deployment.Spec.Template.Spec.Containers[0].Image, "/")
-			installedVersion := strings.Split(depVersion[len(depVersion)-1], ":")
+			deploymentImage := strings.Split(deployment.Spec.Template.Spec.Containers[0].Image, "/")
+			installedVersion := strings.Split(deploymentImage[len(deploymentImage)-1], ":")
 
 			if version == installedVersion[len(installedVersion)-1] {
 				out = append(out, rec.Name+" - "+installedVersion[len(installedVersion)-1])
