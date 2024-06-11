@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/model"
 	"io"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -23,6 +25,8 @@ type modulesConfig struct {
 	managed   bool
 	installed bool
 }
+
+const URL = "https://raw.githubusercontent.com/kyma-project/community-modules/main/model.json"
 
 func NewModulesCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cfg := modulesConfig{
@@ -57,6 +61,7 @@ func NewModulesCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 func runModules(cfg *modulesConfig) clierror.Error {
 	var err error
+
 	if cfg.catalog {
 		modules, err := listAllModules()
 		if err != nil {
@@ -81,7 +86,14 @@ func runModules(cfg *modulesConfig) clierror.Error {
 	}
 
 	if cfg.installed {
-		clierror.Wrap(err, clierror.New("not implemented yet, please use the catalog or managed flag"))
+		installed, err := listInstalledModules(cfg)
+		if err != nil {
+			return clierror.WrapE(err, clierror.New("failed to list installed Kyma modules"))
+		}
+		fmt.Println("Installed modules:\n")
+		for _, rec := range installed {
+			fmt.Println(rec)
+		}
 		return nil
 	}
 
@@ -89,16 +101,27 @@ func runModules(cfg *modulesConfig) clierror.Error {
 }
 
 func listAllModules() ([]string, clierror.Error) {
-	resp, err := http.Get("https://raw.githubusercontent.com/kyma-project/community-modules/main/model.json")
+	resp, err := http.Get(URL)
 	if err != nil {
 		return nil, clierror.Wrap(err, clierror.New("while getting modules list from github"))
 	}
 	defer resp.Body.Close()
 
-	var template []struct {
-		Name string `json:"name"`
+	var template model.Module
+
+	template, respErr := handleResponse(err, resp, template)
+	if respErr != nil {
+		return nil, clierror.WrapE(respErr, clierror.New("while handling response"))
 	}
 
+	var out []string
+	for _, rec := range template {
+		out = append(out, rec.Name)
+	}
+	return out, nil
+}
+
+func handleResponse(err error, resp *http.Response, template model.Module) (model.Module, clierror.Error) {
 	bodyText, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, clierror.Wrap(err, clierror.New("while reading http response"))
@@ -107,12 +130,7 @@ func listAllModules() ([]string, clierror.Error) {
 	if err != nil {
 		return nil, clierror.Wrap(err, clierror.New("while unmarshalling"))
 	}
-
-	var out []string
-	for _, rec := range template {
-		out = append(out, rec.Name)
-	}
-	return out, nil
+	return template, nil
 }
 
 func listManagedModules(cfg *modulesConfig) ([]string, clierror.Error) {
@@ -133,6 +151,44 @@ func listManagedModules(cfg *modulesConfig) ([]string, clierror.Error) {
 	}
 
 	return moduleNames, nil
+}
+
+func listInstalledModules(cfg *modulesConfig) ([]string, clierror.Error) {
+	resp, err := http.Get(URL)
+	if err != nil {
+		return nil, clierror.Wrap(err, clierror.New("while getting modules list from github"))
+	}
+	defer resp.Body.Close()
+
+	var template model.Module
+
+	template, respErr := handleResponse(err, resp, template)
+	if respErr != nil {
+		return nil, clierror.WrapE(respErr, clierror.New("while handling response"))
+	}
+
+	var out []string
+	for _, rec := range template {
+		managerPath := strings.Split(rec.Versions[0].ManagerPath, "/")
+		managerName := managerPath[len(managerPath)-1]
+		version := rec.Versions[0].Version
+		deployment, err := cfg.KubeClient.Static().AppsV1().Deployments("kyma-system").Get(cfg.Ctx, managerName, metav1.GetOptions{})
+		if err != nil && !errors.IsNotFound(err) {
+			msg := "while getting the " + managerName + " deployment"
+			return nil, clierror.Wrap(err, clierror.New(msg))
+		}
+		if !errors.IsNotFound(err) {
+			deploymentImage := strings.Split(deployment.Spec.Template.Spec.Containers[0].Image, "/")
+			installedVersion := strings.Split(deploymentImage[len(deploymentImage)-1], ":")
+
+			if version == installedVersion[len(installedVersion)-1] {
+				out = append(out, rec.Name+" - "+installedVersion[len(installedVersion)-1])
+			} else {
+				out = append(out, rec.Name+" - "+"outdated version, latest version is "+version)
+			}
+		}
+	}
+	return out, nil
 }
 
 func getModuleNames(unstruct *unstructured.Unstructured) ([]string, error) {
