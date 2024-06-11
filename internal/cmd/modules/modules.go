@@ -170,10 +170,11 @@ func listInstalledModules(cfg *modulesConfig) ([]string, clierror.Error) {
 	var out []string
 	for _, rec := range template {
 		short := strings.Split(rec.Versions[0].ManagerPath, "/")
+		managerName := short[len(short)-1]
 		version := rec.Versions[0].Version
-		deployment, err := cfg.KubeClient.Static().AppsV1().Deployments("kyma-system").Get(cfg.Ctx, short[len(short)-1], metav1.GetOptions{})
+		deployment, err := cfg.KubeClient.Static().AppsV1().Deployments("kyma-system").Get(cfg.Ctx, managerName, metav1.GetOptions{})
 		if err != nil && !errors.IsNotFound(err) {
-			msg := "while getting the " + short[len(short)-1] + " deployment"
+			msg := "while getting the " + managerName + " deployment"
 			return nil, clierror.Wrap(err, clierror.New(msg))
 		}
 		if !errors.IsNotFound(err) {
