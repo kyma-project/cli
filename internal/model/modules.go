@@ -29,11 +29,11 @@ func GetAllModules() ([]string, clierror.Error) {
 		return nil, clierror.WrapE(respErr, clierror.New("while handling response"))
 	}
 
-	var out []string
+	var modules []string
 	for _, rec := range template {
-		out = append(out, rec.Name)
+		modules = append(modules, rec.Name)
 	}
-	return out, nil
+	return modules, nil
 }
 
 func GetManagedModules(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) ([]string, clierror.Error) {
@@ -48,12 +48,12 @@ func GetManagedModules(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConf
 		return nil, clierror.Wrap(err, clierror.New("while getting Kyma CR"))
 	}
 
-	moduleNames, err := getModuleNames(unstruct)
+	managed, err := getModuleNames(unstruct)
 	if err != nil {
 		return nil, clierror.Wrap(err, clierror.New("while getting module names from CR"))
 	}
 
-	return moduleNames, nil
+	return managed, nil
 }
 
 func GetInstalledModules(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) ([]string, clierror.Error) {
@@ -70,7 +70,7 @@ func GetInstalledModules(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaCo
 		return nil, clierror.WrapE(respErr, clierror.New("while handling response"))
 	}
 
-	var out []string
+	var installed []string
 	for _, rec := range template {
 		managerPath := strings.Split(rec.Versions[0].ManagerPath, "/")
 		managerName := managerPath[len(managerPath)-1]
@@ -85,13 +85,13 @@ func GetInstalledModules(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaCo
 			installedVersion := strings.Split(deploymentImage[len(deploymentImage)-1], ":")
 
 			if version == installedVersion[len(installedVersion)-1] {
-				out = append(out, rec.Name+" - "+installedVersion[len(installedVersion)-1])
+				installed = append(installed, rec.Name+" - "+installedVersion[len(installedVersion)-1])
 			} else {
-				out = append(out, rec.Name+" - "+"outdated version, latest version is "+version)
+				installed = append(installed, rec.Name+" - "+"outdated version, latest version is "+version)
 			}
 		}
 	}
-	return out, nil
+	return installed, nil
 }
 
 func handleResponse(err error, resp *http.Response, template Module) (Module, clierror.Error) {
