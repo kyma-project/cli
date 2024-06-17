@@ -9,13 +9,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/httpstream"
-)
-
-var (
-	NewRetryTransport = transport.NewRetry
 )
 
 // portforwardTransport forwards requests sent by the client to the port-forwarded pod from the cluster
