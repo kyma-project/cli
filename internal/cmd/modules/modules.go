@@ -42,7 +42,7 @@ func NewModulesCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 			clierror.Check(cfg.KubeClientConfig.Complete())
 		},
 		Run: func(_ *cobra.Command, _ []string) {
-			clierror.Check(runModules(&cfg))
+			clierror.Check(listModules(&cfg))
 		},
 	}
 	cfg.KubeClientConfig.AddFlag(cmd)
@@ -59,48 +59,73 @@ func NewModulesCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	return cmd
 }
 
-func runModules(cfg *modulesConfig) clierror.Error {
-	var err error
+func listModules(cfg *modulesConfig) clierror.Error {
+	var err clierror.Error
 
 	if cfg.catalog {
-		modules, err := listAllModules()
+		err = listAllModules()
 		if err != nil {
 			return clierror.WrapE(err, clierror.New("failed to list all Kyma modules"))
 		}
-		fmt.Println("Available modules:\n")
-		for _, rec := range modules {
-			fmt.Println(rec)
-		}
 		return nil
 	}
+
 	if cfg.managed {
-		managed, err := listManagedModules(cfg)
+		err = listManagedModules(cfg)
 		if err != nil {
 			return clierror.WrapE(err, clierror.New("failed to list managed Kyma modules"))
-		}
-		fmt.Println("Managed modules:\n")
-		for _, rec := range managed {
-			fmt.Println(rec)
 		}
 		return nil
 	}
 
 	if cfg.installed {
-		installed, err := listInstalledModules(cfg)
+		err = listInstalledModules(cfg)
 		if err != nil {
 			return clierror.WrapE(err, clierror.New("failed to list installed Kyma modules"))
-		}
-		fmt.Println("Installed modules:\n")
-		for _, rec := range installed {
-			fmt.Println(rec)
 		}
 		return nil
 	}
 
-	return clierror.Wrap(err, clierror.New("failed to get modules", "please use one of: catalog, managed or installed flags"))
+	return clierror.WrapE(err, clierror.New("failed to get modules", "please use one of: catalog, managed or installed flags"))
 }
 
-func listAllModules() ([]string, clierror.Error) {
+func listInstalledModules(cfg *modulesConfig) clierror.Error {
+	installed, err := getInstalledModules(cfg)
+	if err != nil {
+		return clierror.WrapE(err, clierror.New("failed to get installed Kyma modules"))
+	}
+	fmt.Println("Installed modules:\n")
+	for _, rec := range installed {
+		fmt.Println(rec)
+	}
+	return nil
+}
+
+func listManagedModules(cfg *modulesConfig) clierror.Error {
+	managed, err := getManagedModules(cfg)
+	if err != nil {
+		return clierror.WrapE(err, clierror.New("failed to get managed Kyma modules"))
+	}
+	fmt.Println("Managed modules:\n")
+	for _, rec := range managed {
+		fmt.Println(rec)
+	}
+	return nil
+}
+
+func listAllModules() clierror.Error {
+	modules, err := getAllModules()
+	if err != nil {
+		return clierror.WrapE(err, clierror.New("failed to get all Kyma modules"))
+	}
+	fmt.Println("Available modules:\n")
+	for _, rec := range modules {
+		fmt.Println(rec)
+	}
+	return nil
+}
+
+func getAllModules() ([]string, clierror.Error) {
 	resp, err := http.Get(URL)
 	if err != nil {
 		return nil, clierror.Wrap(err, clierror.New("while getting modules list from github"))
@@ -133,7 +158,7 @@ func handleResponse(err error, resp *http.Response, template model.Module) (mode
 	return template, nil
 }
 
-func listManagedModules(cfg *modulesConfig) ([]string, clierror.Error) {
+func getManagedModules(cfg *modulesConfig) ([]string, clierror.Error) {
 	GVRKyma := schema.GroupVersionResource{
 		Group:    "operator.kyma-project.io",
 		Version:  "v1beta2",
@@ -153,7 +178,7 @@ func listManagedModules(cfg *modulesConfig) ([]string, clierror.Error) {
 	return moduleNames, nil
 }
 
-func listInstalledModules(cfg *modulesConfig) ([]string, clierror.Error) {
+func getInstalledModules(cfg *modulesConfig) ([]string, clierror.Error) {
 	resp, err := http.Get(URL)
 	if err != nil {
 		return nil, clierror.Wrap(err, clierror.New("while getting modules list from github"))
