@@ -11,6 +11,7 @@ type Versions struct {
 	Channels     []string    `json:"channels,omitempty"`
 	ManagerPath  string      `json:"managerPath,omitempty"`
 	ManagerImage string      `json:"managerImage,omitempty"`
+	Repository   string      `json:"repository,omitempty"`
 	Resources    []Resources `json:"resources,omitempty"`
 }
 

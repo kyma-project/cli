@@ -4,18 +4,20 @@ import (
 	"encoding/json"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/olekukonko/tablewriter"
 	"io"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"net/http"
+	"os"
 	"strings"
 )
 
 const URL = "https://raw.githubusercontent.com/kyma-project/community-modules/main/model.json"
 
-func GetAllModules() ([]string, clierror.Error) {
+func GetAllModules() (*tablewriter.Table, clierror.Error) {
 	resp, err := http.Get(URL)
 	if err != nil {
 		return nil, clierror.Wrap(err, clierror.New("while getting modules list from github"))
@@ -29,14 +31,17 @@ func GetAllModules() ([]string, clierror.Error) {
 		return nil, clierror.WrapE(respErr, clierror.New("while handling response"))
 	}
 
-	var modules []string
+	var modules [][]string
+
 	for _, rec := range template {
-		modules = append(modules, rec.Name)
+		var row []string
+		row = append(row, rec.Name, rec.Versions[0].Repository)
+		modules = append(modules, row)
 	}
-	return modules, nil
+	return SetTable(modules), nil
 }
 
-func GetManagedModules(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) ([]string, clierror.Error) {
+func GetManagedModules(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) (*tablewriter.Table, clierror.Error) {
 	GVRKyma := schema.GroupVersionResource{
 		Group:    "operator.kyma-project.io",
 		Version:  "v1beta2",
@@ -48,15 +53,31 @@ func GetManagedModules(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConf
 		return nil, clierror.Wrap(err, clierror.New("while getting Kyma CR"))
 	}
 
-	managed, err := getModuleNames(unstruct)
+	name, err := getModuleNames(unstruct)
+	var managed [][]string
+	for _, rec := range name {
+		var row []string
+		row = append(row, rec)
+		managed = append(managed, row)
+	}
 	if err != nil {
 		return nil, clierror.Wrap(err, clierror.New("while getting module names from CR"))
 	}
 
-	return managed, nil
+	return SetTable(managed), nil
 }
 
-func GetInstalledModules(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) ([]string, clierror.Error) {
+func SetTable(inTable [][]string) *tablewriter.Table {
+	table := tablewriter.NewWriter(os.Stdout)
+	table.AppendBulk(inTable)
+	table.SetRowLine(true)
+	table.SetAlignment(tablewriter.ALIGN_CENTER)
+	table.SetBorder(false)
+	return table
+
+}
+
+func GetInstalledModules(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) (*tablewriter.Table, clierror.Error) {
 	resp, err := http.Get(URL)
 	if err != nil {
 		return nil, clierror.Wrap(err, clierror.New("while getting modules list from github"))
@@ -70,7 +91,7 @@ func GetInstalledModules(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaCo
 		return nil, clierror.WrapE(respErr, clierror.New("while handling response"))
 	}
 
-	var installed []string
+	var installed [][]string
 	for _, rec := range template {
 		managerPath := strings.Split(rec.Versions[0].ManagerPath, "/")
 		managerName := managerPath[len(managerPath)-1]
@@ -83,15 +104,16 @@ func GetInstalledModules(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaCo
 		if !errors.IsNotFound(err) {
 			deploymentImage := strings.Split(deployment.Spec.Template.Spec.Containers[0].Image, "/")
 			installedVersion := strings.Split(deploymentImage[len(deploymentImage)-1], ":")
-
+			var row []string
 			if version == installedVersion[len(installedVersion)-1] {
-				installed = append(installed, rec.Name+" - "+installedVersion[len(installedVersion)-1])
+				row = append(row, rec.Name, installedVersion[len(installedVersion)-1])
 			} else {
-				installed = append(installed, rec.Name+" - "+"outdated version, latest version is "+version)
+				row = append(row, rec.Name, "outdated version,\n latest is "+version)
 			}
+			installed = append(installed, row)
 		}
 	}
-	return installed, nil
+	return SetTable(installed), nil
 }
 
 func handleResponse(err error, resp *http.Response, template Module) (Module, clierror.Error) {

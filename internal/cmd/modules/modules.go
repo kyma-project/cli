@@ -84,9 +84,9 @@ func listInstalledModules(cfg *modulesConfig) clierror.Error {
 		return clierror.WrapE(err, clierror.New("failed to get installed Kyma modules"))
 	}
 	fmt.Println("Installed modules:\n")
-	for _, rec := range installed {
-		fmt.Println(rec)
-	}
+
+	installed.SetHeader([]string{"NAME", "VERSION"})
+	installed.Render()
 	return nil
 }
 
@@ -96,20 +96,19 @@ func listManagedModules(cfg *modulesConfig) clierror.Error {
 		return clierror.WrapE(err, clierror.New("failed to get managed Kyma modules"))
 	}
 	fmt.Println("Managed modules:\n")
-	for _, rec := range managed {
-		fmt.Println(rec)
-	}
+	managed.SetHeader([]string{"NAME"})
+	managed.Render()
 	return nil
 }
 
 func listAllModules() clierror.Error {
-	modules, err := model.GetAllModules()
+	catalog, err := model.GetAllModules()
 	if err != nil {
-		return clierror.WrapE(err, clierror.New("failed to get all Kyma modules"))
+		return clierror.WrapE(err, clierror.New("failed to get all Kyma catalog"))
 	}
-	fmt.Println("Available modules:\n")
-	for _, rec := range modules {
-		fmt.Println(rec)
-	}
+	fmt.Println("Available catalog:\n")
+
+	catalog.SetHeader([]string{"NAME", "REPOSITORY"})
+	catalog.Render()
 	return nil
 }
