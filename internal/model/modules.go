@@ -17,7 +17,7 @@ import (
 
 const URL = "https://raw.githubusercontent.com/kyma-project/community-modules/main/model.json"
 
-func GetAllModules() (*tablewriter.Table, clierror.Error) {
+func GetAllModules() ([][]string, clierror.Error) {
 	resp, err := http.Get(URL)
 	if err != nil {
 		return nil, clierror.Wrap(err, clierror.New("while getting modules list from github"))
@@ -38,10 +38,10 @@ func GetAllModules() (*tablewriter.Table, clierror.Error) {
 		row = append(row, rec.Name, rec.Versions[0].Repository)
 		modules = append(modules, row)
 	}
-	return SetTable(modules), nil
+	return modules, nil
 }
 
-func GetManagedModules(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) (*tablewriter.Table, clierror.Error) {
+func GetManagedModules(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) ([][]string, clierror.Error) {
 	GVRKyma := schema.GroupVersionResource{
 		Group:    "operator.kyma-project.io",
 		Version:  "v1beta2",
@@ -64,7 +64,7 @@ func GetManagedModules(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConf
 		return nil, clierror.Wrap(err, clierror.New("while getting module names from CR"))
 	}
 
-	return SetTable(managed), nil
+	return managed, nil
 }
 
 func SetTable(inTable [][]string) *tablewriter.Table {
@@ -77,7 +77,7 @@ func SetTable(inTable [][]string) *tablewriter.Table {
 
 }
 
-func GetInstalledModules(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) (*tablewriter.Table, clierror.Error) {
+func GetInstalledModules(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) ([][]string, clierror.Error) {
 	resp, err := http.Get(URL)
 	if err != nil {
 		return nil, clierror.Wrap(err, clierror.New("while getting modules list from github"))
@@ -113,7 +113,7 @@ func GetInstalledModules(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaCo
 			installed = append(installed, row)
 		}
 	}
-	return SetTable(installed), nil
+	return installed, nil
 }
 
 func handleResponse(err error, resp *http.Response, template Module) (Module, clierror.Error) {

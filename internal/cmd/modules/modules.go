@@ -75,8 +75,31 @@ func listModules(cfg *modulesConfig) clierror.Error {
 		return nil
 	}
 
+	//err = defaultView(cfg)
+	//if err != nil {
+	//	return clierror.WrapE(err, clierror.New("failed to list modules"))
+	//}
+
 	return clierror.WrapE(err, clierror.New("failed to get modules", "please use one of: catalog, managed or installed flags"))
 }
+
+//
+//func defaultView(cfg *modulesConfig) clierror.Error {
+//	catalog, err := model.GetAllModules()
+//	if err != nil {
+//		return clierror.WrapE(err, clierror.New("failed to get all Kyma catalog"))
+//	}
+//	managed, err := model.GetManagedModules(cfg.KubeClientConfig, *cfg.KymaConfig)
+//	if err != nil {
+//		return clierror.WrapE(err, clierror.New("failed to get managed Kyma modules"))
+//	}
+//	installed, err := model.GetInstalledModules(cfg.KubeClientConfig, *cfg.KymaConfig)
+//	if err != nil {
+//		return clierror.WrapE(err, clierror.New("failed to get installed Kyma modules"))
+//	}
+//
+//	return nil
+//}
 
 func listInstalledModules(cfg *modulesConfig) clierror.Error {
 	installed, err := model.GetInstalledModules(cfg.KubeClientConfig, *cfg.KymaConfig)
@@ -85,8 +108,9 @@ func listInstalledModules(cfg *modulesConfig) clierror.Error {
 	}
 	fmt.Println("Installed modules:\n")
 
-	installed.SetHeader([]string{"NAME", "VERSION"})
-	installed.Render()
+	twTable := model.SetTable(installed)
+	twTable.SetHeader([]string{"NAME", "VERSION"})
+	twTable.Render()
 	return nil
 }
 
@@ -96,8 +120,10 @@ func listManagedModules(cfg *modulesConfig) clierror.Error {
 		return clierror.WrapE(err, clierror.New("failed to get managed Kyma modules"))
 	}
 	fmt.Println("Managed modules:\n")
-	managed.SetHeader([]string{"NAME"})
-	managed.Render()
+
+	twTable := model.SetTable(managed)
+	twTable.SetHeader([]string{"NAME"})
+	twTable.Render()
 	return nil
 }
 
@@ -108,7 +134,9 @@ func listAllModules() clierror.Error {
 	}
 	fmt.Println("Available catalog:\n")
 
-	catalog.SetHeader([]string{"NAME", "REPOSITORY"})
-	catalog.Render()
+	twTable := model.SetTable(catalog)
+	twTable.SetHeader([]string{"NAME", "REPOSITORY"})
+	twTable.Render()
+
 	return nil
 }
