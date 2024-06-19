@@ -4,12 +4,14 @@ import (
 	"encoding/json"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/olekukonko/tablewriter"
 	"io"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"net/http"
+	"os"
 	"strings"
 )
 
@@ -34,6 +36,7 @@ func GetAllModules(moduleMap map[string][]string) (map[string][]string, clierror
 	modules := make(map[string][]string)
 
 	for _, rec := range template {
+		modules[rec.Name] = append(modules[rec.Name], rec.Name)
 		modules[rec.Name] = append(modules[rec.Name], rec.Versions[0].Repository)
 	}
 
@@ -63,7 +66,7 @@ func GetManagedModules(moduleMap map[string][]string, client cmdcommon.KubeClien
 			return nil, clierror.WrapE(err, clierror.New("while getting managed modules"))
 		}
 		for _, rec := range name {
-			moduleMap[rec] = append(moduleMap[rec], "managed")
+			moduleMap[rec] = append(moduleMap[rec], "Managed")
 		}
 		return moduleMap, nil
 	}
@@ -75,7 +78,7 @@ func GetManagedModules(moduleMap map[string][]string, client cmdcommon.KubeClien
 	managed := make(map[string][]string)
 
 	for _, rec := range name {
-		managed[rec] = append(managed[rec], "managed")
+		managed[rec] = append(managed[rec], rec)
 	}
 
 	return managed, nil
@@ -100,15 +103,15 @@ func getManaged(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) ([]
 	return name, nil
 }
 
-//func SetTable(inTable [][]string) *tablewriter.Table {
-//	table := tablewriter.NewWriter(os.Stdout)
-//	table.AppendBulk(inTable)
-//	table.SetRowLine(true)
-//	table.SetAlignment(tablewriter.ALIGN_CENTER)
-//	table.SetBorder(false)
-//	return table
-//
-//}
+func SetTable(inTable [][]string) *tablewriter.Table {
+	table := tablewriter.NewWriter(os.Stdout)
+	table.AppendBulk(inTable)
+	table.SetRowLine(true)
+	table.SetAlignment(tablewriter.ALIGN_CENTER)
+	table.SetBorder(false)
+	return table
+
+}
 
 func GetInstalledModules(moduleMap map[string][]string, client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) (map[string][]string, clierror.Error) {
 	if moduleMap != nil {
@@ -158,9 +161,11 @@ func GetInstalledModules(moduleMap map[string][]string, client cmdcommon.KubeCli
 			deploymentImage := strings.Split(deployment.Spec.Template.Spec.Containers[0].Image, "/")
 			installedVersion := strings.Split(deploymentImage[len(deploymentImage)-1], ":")
 			if version == installedVersion[len(installedVersion)-1] {
+				installed[rec.Name] = append(installed[rec.Name], rec.Name)
 				installed[rec.Name] = append(installed[rec.Name], installedVersion[len(installedVersion)-1])
 			} else {
-				installed[rec.Name] = append(installed[rec.Name], "outdated version,\n latest is "+version)
+				installed[rec.Name] = append(installed[rec.Name], rec.Name)
+				installed[rec.Name] = append(installed[rec.Name], "outdated version, latest is "+version)
 			}
 		}
 	}

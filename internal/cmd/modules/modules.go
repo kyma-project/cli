@@ -87,17 +87,23 @@ func defaultView(cfg *modulesConfig) clierror.Error {
 	if err != nil {
 		return clierror.WrapE(err, clierror.New("failed to get all Kyma catalog"))
 	}
-	installed, err := model.GetInstalledModules(catalog, cfg.KubeClientConfig, *cfg.KymaConfig)
+	installedWith, err := model.GetInstalledModules(catalog, cfg.KubeClientConfig, *cfg.KymaConfig)
 	if err != nil {
 		return clierror.WrapE(err, clierror.New("failed to get installed Kyma modules"))
 	}
-	managed, err := model.GetManagedModules(installed, cfg.KubeClientConfig, *cfg.KymaConfig)
+	managedWith, err := model.GetManagedModules(installedWith, cfg.KubeClientConfig, *cfg.KymaConfig)
 	if err != nil {
 		return clierror.WrapE(err, clierror.New("failed to get managed Kyma modules"))
 	}
 
-	fmt.Println("Everything we know:\n")
-	fmt.Println(managed)
+	var table [][]string
+	for _, row := range managedWith {
+		table = append(table, row)
+	}
+
+	twTable := model.SetTable(table)
+	twTable.SetHeader([]string{"NAME", "REPOSITORY", "VERSION", "CONTROL-PLANE"})
+	twTable.Render()
 
 	return nil
 }
@@ -107,11 +113,15 @@ func listInstalledModules(cfg *modulesConfig) clierror.Error {
 	if err != nil {
 		return clierror.WrapE(err, clierror.New("failed to get installed Kyma modules"))
 	}
-	fmt.Println("Installed modules:\n")
-	fmt.Println(installed)
-	//twTable := model.SetTable(installed)
-	//twTable.SetHeader([]string{"NAME", "VERSION"})
-	//twTable.Render()
+
+	var table [][]string
+	for _, row := range installed {
+		table = append(table, row)
+	}
+
+	twTable := model.SetTable(table)
+	twTable.SetHeader([]string{"NAME", "VERSION"})
+	twTable.Render()
 
 	return nil
 }
@@ -123,9 +133,15 @@ func listManagedModules(cfg *modulesConfig) clierror.Error {
 	}
 	fmt.Println("Managed modules:\n")
 	fmt.Println(managed)
-	//twTable := model.SetTable(managed)
-	//twTable.SetHeader([]string{"NAME"})
-	//twTable.Render()
+
+	var table [][]string
+	for _, row := range managed {
+		table = append(table, row)
+	}
+
+	twTable := model.SetTable(table)
+	twTable.SetHeader([]string{"NAME"})
+	twTable.Render()
 
 	return nil
 }
@@ -135,12 +151,14 @@ func listAllModules() clierror.Error {
 	if err != nil {
 		return clierror.WrapE(err, clierror.New("failed to get all Kyma catalog"))
 	}
-	fmt.Println("Available catalog:\n")
-	fmt.Println(catalog)
 
-	//twTable := model.SetTable(catalog)
-	//twTable.SetHeader([]string{"NAME", "REPOSITORY"})
-	//twTable.Render()
+	var table [][]string
+	for _, row := range catalog {
+		table = append(table, row)
+	}
 
+	twTable := model.SetTable(table)
+	twTable.SetHeader([]string{"NAME", "REPOSITORY"})
+	twTable.Render()
 	return nil
 }
