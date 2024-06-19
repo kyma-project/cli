@@ -2,7 +2,9 @@ package registry
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/google/go-containerregistry/pkg/authn"
@@ -94,13 +96,24 @@ func imageToInClusterRegistry(ctx context.Context, image v1.Image, transport htt
 	}
 	tag.Registry = newReg
 
-	err = utils.remoteWrite(tag, image,
+	progress := make(chan v1.Update, 100)
+
+	go utils.remoteWrite(tag, image,
 		remote.WithTransport(transport),
 		remote.WithAuth(auth),
 		remote.WithContext(ctx),
+		remote.WithProgress(progress),
 	)
-	if err != nil {
-		return "", err
+
+	for u := range progress {
+		switch {
+		case u.Error != nil && errors.Is(u.Error, io.EOF):
+			return fmt.Sprintf("%s/%s:%s", tag.RegistryStr(), tag.RepositoryStr(), tag.TagStr()), nil
+		case u.Error != nil:
+			return "", fmt.Errorf("error pushing image: %w", u.Error)
+		default:
+			fmt.Printf("pushing image is in progress: %d/%d\n", u.Complete, u.Total)
+		}
 	}
 
 	return fmt.Sprintf("%s/%s:%s", tag.RegistryStr(), tag.RepositoryStr(), tag.TagStr()), nil
