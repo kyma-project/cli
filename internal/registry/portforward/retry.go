@@ -6,6 +6,17 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
+)
+
+var (
+	backoffSchedule = []time.Duration{
+		time.Millisecond,
+		time.Millisecond * 10,
+		time.Millisecond * 100,
+		time.Millisecond * 1000,
+		time.Millisecond * 2000,
+	}
 )
 
 // onErrorRetryTransport is a RoundTripper that retries requests on error
@@ -34,6 +45,7 @@ func (t *onErrorRetryTransport) RoundTrip(req *http.Request) (*http.Response, er
 		}
 
 		errList = append(errList, err)
+		time.Sleep(backoffSchedule[i])
 	}
 
 	return nil, errors.Join(errList...)
