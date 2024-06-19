@@ -83,7 +83,6 @@ func listModules(cfg *modulesConfig) clierror.Error {
 	return clierror.WrapE(err, clierror.New("failed to get modules", "please use one of: catalog, managed or installed flags"))
 }
 
-//
 //func defaultView(cfg *modulesConfig) clierror.Error {
 //	catalog, err := model.GetAllModules()
 //	if err != nil {
@@ -133,10 +132,10 @@ func listAllModules() clierror.Error {
 		return clierror.WrapE(err, clierror.New("failed to get all Kyma catalog"))
 	}
 	fmt.Println("Available catalog:\n")
-
-	twTable := model.SetTable(catalog)
-	twTable.SetHeader([]string{"NAME", "REPOSITORY"})
-	twTable.Render()
+	fmt.Println(catalog)
+	//twTable := model.SetTable(catalog)
+	//twTable.SetHeader([]string{"NAME", "REPOSITORY"})
+	//twTable.Render()
 
 	return nil
 }

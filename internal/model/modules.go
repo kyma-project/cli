@@ -17,7 +17,7 @@ import (
 
 const URL = "https://raw.githubusercontent.com/kyma-project/community-modules/main/model.json"
 
-func GetAllModules() ([][]string, clierror.Error) {
+func GetAllModules() (map[string][]string, clierror.Error) {
 	resp, err := http.Get(URL)
 	if err != nil {
 		return nil, clierror.Wrap(err, clierror.New("while getting modules list from github"))
@@ -31,13 +31,19 @@ func GetAllModules() ([][]string, clierror.Error) {
 		return nil, clierror.WrapE(respErr, clierror.New("while handling response"))
 	}
 
-	var modules [][]string
+	modules := make(map[string][]string)
 
 	for _, rec := range template {
-		var row []string
-		row = append(row, rec.Name, rec.Versions[0].Repository)
-		modules = append(modules, row)
+		modules[rec.Name] = append(modules[rec.Name], rec.Versions[0].Repository)
+		modules[rec.Name] = append(modules[rec.Name], rec.Versions[0].Version)
+
 	}
+
+	//for _, rec := range template {
+	//	var row []string
+	//	row = append(row, rec.Name, rec.Versions[0].Repository)
+	//	modules = append(modules, row)
+	//}
 	return modules, nil
 }
 
