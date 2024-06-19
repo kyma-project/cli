@@ -74,32 +74,8 @@ func listModules(cfg *modulesConfig) clierror.Error {
 		}
 		return nil
 	}
-
-	//err = defaultView(cfg)
-	//if err != nil {
-	//	return clierror.WrapE(err, clierror.New("failed to list modules"))
-	//}
-
 	return clierror.WrapE(err, clierror.New("failed to get modules", "please use one of: catalog, managed or installed flags"))
 }
-
-//
-//func defaultView(cfg *modulesConfig) clierror.Error {
-//	catalog, err := model.GetAllModules()
-//	if err != nil {
-//		return clierror.WrapE(err, clierror.New("failed to get all Kyma catalog"))
-//	}
-//	managed, err := model.GetManagedModules(cfg.KubeClientConfig, *cfg.KymaConfig)
-//	if err != nil {
-//		return clierror.WrapE(err, clierror.New("failed to get managed Kyma modules"))
-//	}
-//	installed, err := model.GetInstalledModules(cfg.KubeClientConfig, *cfg.KymaConfig)
-//	if err != nil {
-//		return clierror.WrapE(err, clierror.New("failed to get installed Kyma modules"))
-//	}
-//
-//	return nil
-//}
 
 func listInstalledModules(cfg *modulesConfig) clierror.Error {
 	installed, err := model.GetInstalledModules(cfg.KubeClientConfig, *cfg.KymaConfig)
