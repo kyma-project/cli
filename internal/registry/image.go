@@ -112,9 +112,10 @@ func imageToInClusterRegistry(ctx context.Context, image v1.Image, transport htt
 		case u.Error != nil:
 			return "", fmt.Errorf("error pushing image: %w", u.Error)
 		default:
-			fmt.Printf("pushing image is in progress: %d/%d\n", u.Complete, u.Total)
+			fmt.Printf("\rpushing image is in progress: %d/%d B", u.Complete, u.Total)
 		}
 	}
+	fmt.Println()
 
 	return fmt.Sprintf("%s/%s:%s", tag.RegistryStr(), tag.RepositoryStr(), tag.TagStr()), nil
 }
