@@ -1,14 +1,20 @@
-name: Lint Markdown Links
+name: markdown
 run-name: ${{github.event.pull_request.title}}
-on: [ pull_request ]
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main", "release-*" ]
 jobs:
-  markdown-link-check:
+  link-check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/rebase
       - uses: gaurav-nelson/github-action-markdown-link-check@v1
         with:
-          use-verbose-mode: 'no'
+          use-quiet-mode: 'yes'
+          use-verbose-mode: 'yes'
           config-file: '.mlc.config.json'
           folder-path: '.'
           max-depth: -1
+
