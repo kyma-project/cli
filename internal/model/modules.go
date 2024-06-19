@@ -4,46 +4,43 @@ import (
 	"encoding/json"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
-	"github.com/olekukonko/tablewriter"
 	"io"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"net/http"
-	"os"
 	"strings"
 )
 
 const URL = "https://raw.githubusercontent.com/kyma-project/community-modules/main/model.json"
 
-func GetAllModules(moduleMap map[string][]string) (map[string][]string, clierror.Error) {
-	if moduleMap != nil {
-		template, err := getCatalog()
-		if err != nil {
-			return nil, clierror.WrapE(err, clierror.New("while trying to get module catalog"))
-		}
-		for _, rec := range template {
-			moduleMap[rec.Name] = append(moduleMap[rec.Name], rec.Versions[0].Repository)
-		}
-		return moduleMap, nil
-	}
-	template, err := getCatalog()
+// ModulesCatalog returns a map of all available modules and their repositories, if the map is nil it will create a new one
+func ModulesCatalog(modulesMap map[string][]string) (map[string][]string, clierror.Error) {
+
+	template, err := getModel()
 	if err != nil {
-		return nil, clierror.WrapE(err, clierror.New("while trying to get module catalog"))
+		return nil, err
 	}
 
-	modules := make(map[string][]string)
+	catalog := make(map[string][]string)
+	if modulesMap != nil {
+		catalog = modulesMap
+	}
 
 	for _, rec := range template {
-		modules[rec.Name] = append(modules[rec.Name], rec.Name)
-		modules[rec.Name] = append(modules[rec.Name], rec.Versions[0].Repository)
+		if modulesMap != nil {
+			modulesMap[rec.Name] = append(modulesMap[rec.Name], rec.Versions[0].Repository)
+		} else {
+			catalog[rec.Name] = append(catalog[rec.Name], rec.Name)
+			catalog[rec.Name] = append(catalog[rec.Name], rec.Versions[0].Repository)
+		}
 	}
-
-	return modules, nil
+	return catalog, nil
 }
 
-func getCatalog() (Module, clierror.Error) {
+// getModel returns a list of all available modules from the community-modules repository
+func getModel() (Module, clierror.Error) {
 	resp, err := http.Get(URL)
 	if err != nil {
 		return nil, clierror.Wrap(err, clierror.New("while getting modules list from github"))
@@ -51,40 +48,39 @@ func getCatalog() (Module, clierror.Error) {
 	defer resp.Body.Close()
 
 	var template Module
-
-	template, respErr := handleResponse(err, resp, template)
+	template, respErr := handleHTTPResponse(err, resp, template)
 	if respErr != nil {
 		return nil, clierror.WrapE(respErr, clierror.New("while handling response"))
 	}
 	return template, nil
 }
 
-func GetManagedModules(moduleMap map[string][]string, client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) (map[string][]string, clierror.Error) {
-	if moduleMap != nil {
-		name, err := getManaged(client, cfg)
-		if err != nil {
-			return nil, clierror.WrapE(err, clierror.New("while getting managed modules"))
-		}
-		for _, rec := range name {
-			moduleMap[rec] = append(moduleMap[rec], "Managed")
-		}
-		return moduleMap, nil
-	}
-	name, err := getManaged(client, cfg)
+// ManagedModules returns a map of all managed modules from the cluster
+func ManagedModules(modulesMap map[string][]string, client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) (map[string][]string, clierror.Error) {
+
+	name, err := getManagedList(client, cfg)
 	if err != nil {
 		return nil, clierror.WrapE(err, clierror.New("while getting managed modules"))
 	}
 
 	managed := make(map[string][]string)
+	if modulesMap != nil {
+		managed = modulesMap
+	}
 
 	for _, rec := range name {
-		managed[rec] = append(managed[rec], rec)
+		if modulesMap != nil {
+			modulesMap[rec] = append(modulesMap[rec], "Managed")
+		} else {
+			managed[rec] = append(managed[rec], rec)
+		}
 	}
 
 	return managed, nil
 }
 
-func getManaged(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) ([]string, clierror.Error) {
+// getManagedList gets a list of all managed modules from the Kyma CR
+func getManagedList(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) ([]string, clierror.Error) {
 	GVRKyma := schema.GroupVersionResource{
 		Group:    "operator.kyma-project.io",
 		Version:  "v1beta2",
@@ -96,111 +92,15 @@ func getManaged(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) ([]
 		return nil, clierror.Wrap(err, clierror.New("while getting Kyma CR"))
 	}
 
-	name, err := getModuleNames(unstruct)
+	name, err := handleClusterResponse(unstruct)
 	if err != nil {
 		return nil, clierror.Wrap(err, clierror.New("while getting module names from CR"))
 	}
 	return name, nil
 }
 
-func SetTable(inTable [][]string) *tablewriter.Table {
-	table := tablewriter.NewWriter(os.Stdout)
-	table.AppendBulk(inTable)
-	table.SetRowLine(true)
-	table.SetAlignment(tablewriter.ALIGN_CENTER)
-	table.SetBorder(false)
-	return table
-
-}
-
-func GetInstalledModules(moduleMap map[string][]string, client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) (map[string][]string, clierror.Error) {
-	if moduleMap != nil {
-		template, err := getInstalled()
-		if err != nil {
-			return nil, clierror.WrapE(err, clierror.New("while getting installed modules"))
-		}
-		for _, rec := range template {
-			managerPath := strings.Split(rec.Versions[0].ManagerPath, "/")
-			managerName := managerPath[len(managerPath)-1]
-			version := rec.Versions[0].Version
-			deployment, err := client.KubeClient.Static().AppsV1().Deployments("kyma-system").Get(cfg.Ctx, managerName, metav1.GetOptions{})
-			if err != nil && !errors.IsNotFound(err) {
-				msg := "while getting the " + managerName + " deployment"
-				return nil, clierror.Wrap(err, clierror.New(msg))
-			}
-			if !errors.IsNotFound(err) {
-				deploymentImage := strings.Split(deployment.Spec.Template.Spec.Containers[0].Image, "/")
-				installedVersion := strings.Split(deploymentImage[len(deploymentImage)-1], ":")
-				if version == installedVersion[len(installedVersion)-1] {
-					moduleMap[rec.Name] = append(moduleMap[rec.Name], installedVersion[len(installedVersion)-1])
-				} else {
-					moduleMap[rec.Name] = append(moduleMap[rec.Name], "outdated version,\n latest is "+version)
-				}
-			}
-		}
-		return moduleMap, nil
-	}
-
-	template, err := getInstalled()
-	if err != nil {
-		return nil, clierror.WrapE(err, clierror.New("while getting installed modules"))
-	}
-
-	installed := make(map[string][]string)
-
-	for _, rec := range template {
-		managerPath := strings.Split(rec.Versions[0].ManagerPath, "/")
-		managerName := managerPath[len(managerPath)-1]
-		version := rec.Versions[0].Version
-		deployment, err := client.KubeClient.Static().AppsV1().Deployments("kyma-system").Get(cfg.Ctx, managerName, metav1.GetOptions{})
-		if err != nil && !errors.IsNotFound(err) {
-			msg := "while getting the " + managerName + " deployment"
-			return nil, clierror.Wrap(err, clierror.New(msg))
-		}
-		if !errors.IsNotFound(err) {
-			deploymentImage := strings.Split(deployment.Spec.Template.Spec.Containers[0].Image, "/")
-			installedVersion := strings.Split(deploymentImage[len(deploymentImage)-1], ":")
-			if version == installedVersion[len(installedVersion)-1] {
-				installed[rec.Name] = append(installed[rec.Name], rec.Name)
-				installed[rec.Name] = append(installed[rec.Name], installedVersion[len(installedVersion)-1])
-			} else {
-				installed[rec.Name] = append(installed[rec.Name], rec.Name)
-				installed[rec.Name] = append(installed[rec.Name], "outdated version, latest is "+version)
-			}
-		}
-	}
-	return installed, nil
-}
-
-func getInstalled() (Module, clierror.Error) {
-	resp, err := http.Get(URL)
-	if err != nil {
-		return nil, clierror.Wrap(err, clierror.New("while getting modules list from github"))
-	}
-	defer resp.Body.Close()
-
-	var template Module
-
-	template, respErr := handleResponse(err, resp, template)
-	if respErr != nil {
-		return nil, clierror.WrapE(respErr, clierror.New("while handling response"))
-	}
-	return template, nil
-}
-
-func handleResponse(err error, resp *http.Response, template Module) (Module, clierror.Error) {
-	bodyText, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, clierror.Wrap(err, clierror.New("while reading http response"))
-	}
-	err = json.Unmarshal(bodyText, &template)
-	if err != nil {
-		return nil, clierror.Wrap(err, clierror.New("while unmarshalling"))
-	}
-	return template, nil
-}
-
-func getModuleNames(unstruct *unstructured.Unstructured) ([]string, error) {
+// handleClusterResponse interprets the response and returns a list of managed modules names
+func handleClusterResponse(unstruct *unstructured.Unstructured) ([]string, error) {
 	var moduleNames []string
 	managedFields := unstruct.GetManagedFields()
 	for _, field := range managedFields {
@@ -229,4 +129,58 @@ func getModuleNames(unstruct *unstructured.Unstructured) ([]string, error) {
 		}
 	}
 	return moduleNames, nil
+}
+
+// InstalledModules returns a map of all installed modules from the cluster, regardless whether they are managed or not
+func InstalledModules(moduleMap map[string][]string, client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) (map[string][]string, clierror.Error) {
+	template, err := getModel()
+	if err != nil {
+		return nil, clierror.WrapE(err, clierror.New("while getting installed modules"))
+	}
+
+	installed := make(map[string][]string)
+	if moduleMap != nil {
+		installed = moduleMap
+	}
+
+	for _, rec := range template {
+		managerPath := strings.Split(rec.Versions[0].ManagerPath, "/")
+		managerName := managerPath[len(managerPath)-1]
+		version := rec.Versions[0].Version
+		deployment, kubeErr := client.KubeClient.Static().AppsV1().Deployments("kyma-system").Get(cfg.Ctx, managerName, metav1.GetOptions{})
+		if err != nil && !errors.IsNotFound(kubeErr) {
+			msg := "while getting the " + managerName + " deployment"
+			return nil, clierror.Wrap(kubeErr, clierror.New(msg))
+		}
+		if !errors.IsNotFound(kubeErr) {
+			deploymentImage := strings.Split(deployment.Spec.Template.Spec.Containers[0].Image, "/")
+			installedVersion := strings.Split(deploymentImage[len(deploymentImage)-1], ":")
+			if version == installedVersion[len(installedVersion)-1] {
+				if moduleMap == nil {
+					installed[rec.Name] = append(installed[rec.Name], rec.Name)
+				}
+				installed[rec.Name] = append(installed[rec.Name], installedVersion[len(installedVersion)-1])
+
+			} else {
+				if moduleMap == nil {
+					installed[rec.Name] = append(installed[rec.Name], rec.Name)
+				}
+				installed[rec.Name] = append(installed[rec.Name], "outdated version, latest is "+version)
+			}
+		}
+	}
+	return installed, nil
+}
+
+// handleHTTPResponse reads the response body and unmarshals it into the template
+func handleHTTPResponse(err error, resp *http.Response, template Module) (Module, clierror.Error) {
+	bodyText, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, clierror.Wrap(err, clierror.New("while reading http response"))
+	}
+	err = json.Unmarshal(bodyText, &template)
+	if err != nil {
+		return nil, clierror.Wrap(err, clierror.New("while unmarshalling"))
+	}
+	return template, nil
 }
