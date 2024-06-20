@@ -4,9 +4,9 @@ go 1.22.2
 
 require (
 	github.com/gboddin/go-www-authenticate-parser v0.0.0-20230926203616-ec0b649bb077
-	github.com/google/go-containerregistry v0.19.1
+	github.com/google/go-containerregistry v0.19.2
 	github.com/olekukonko/tablewriter v0.0.5
-	github.com/spf13/cobra v1.8.0
+	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.9.0
 	k8s.io/api v0.30.2
 	k8s.io/apimachinery v0.30.2
