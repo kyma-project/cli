@@ -143,33 +143,46 @@ func InstalledModules(moduleMap map[string][]string, client cmdcommon.KubeClient
 		installed = moduleMap
 	}
 
+	installed, err = getInstalledModules(moduleMap, installed, template, client, cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return installed, nil
+}
+
+func getInstalledModules(moduleMap, installed map[string][]string, template Module, client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) (map[string][]string, clierror.Error) {
 	for _, rec := range template {
 		managerPath := strings.Split(rec.Versions[0].ManagerPath, "/")
 		managerName := managerPath[len(managerPath)-1]
 		version := rec.Versions[0].Version
-		deployment, kubeErr := client.KubeClient.Static().AppsV1().Deployments("kyma-system").Get(cfg.Ctx, managerName, metav1.GetOptions{})
-		if err != nil && !errors.IsNotFound(kubeErr) {
+		deployment, err := client.KubeClient.Static().AppsV1().Deployments("kyma-system").Get(cfg.Ctx, managerName, metav1.GetOptions{})
+		if err != nil && !errors.IsNotFound(err) {
 			msg := "while getting the " + managerName + " deployment"
-			return nil, clierror.Wrap(kubeErr, clierror.New(msg))
+			return nil, clierror.Wrap(err, clierror.New(msg))
 		}
-		if !errors.IsNotFound(kubeErr) {
+		if !errors.IsNotFound(err) {
 			deploymentImage := strings.Split(deployment.Spec.Template.Spec.Containers[0].Image, "/")
 			installedVersion := strings.Split(deploymentImage[len(deploymentImage)-1], ":")
-			if version == installedVersion[len(installedVersion)-1] {
-				if moduleMap == nil {
-					installed[rec.Name] = append(installed[rec.Name], rec.Name)
-				}
-				installed[rec.Name] = append(installed[rec.Name], installedVersion[len(installedVersion)-1])
-
-			} else {
-				if moduleMap == nil {
-					installed[rec.Name] = append(installed[rec.Name], rec.Name)
-				}
-				installed[rec.Name] = append(installed[rec.Name], "outdated version, latest is "+version)
-			}
+			manageVersion(rec.Name, version, installedVersion, moduleMap, installed)
 		}
 	}
 	return installed, nil
+}
+
+func manageVersion(name, version string, installedVersion []string, moduleMap, installed map[string][]string) {
+	if version == installedVersion[len(installedVersion)-1] {
+		if moduleMap == nil {
+			installed[name] = append(installed[name], name)
+		}
+		installed[name] = append(installed[name], installedVersion[len(installedVersion)-1])
+
+	} else {
+		if moduleMap == nil {
+			installed[name] = append(installed[name], name)
+		}
+		installed[name] = append(installed[name], "outdated version, latest is "+version)
+	}
 }
 
 // handleHTTPResponse reads the response body and unmarshals it into the template
