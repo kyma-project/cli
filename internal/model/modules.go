@@ -120,15 +120,20 @@ func handleClusterResponse(unstruct *unstructured.Unstructured) ([]string, error
 			continue
 		}
 
-		for key := range modules {
-			if strings.Contains(key, "name") {
-				name := strings.TrimPrefix(key, "k:{\"name\":\"")
-				name = strings.Trim(name, "\"}")
-				moduleNames = append(moduleNames, name)
-			}
-		}
+		moduleNames = manageNames(moduleNames, modules)
 	}
 	return moduleNames, nil
+}
+
+func manageNames(moduleNames []string, modules map[string]interface{}) []string {
+	for key := range modules {
+		if strings.Contains(key, "name") {
+			name := strings.TrimPrefix(key, "k:{\"name\":\"")
+			name = strings.Trim(name, "\"}")
+			moduleNames = append(moduleNames, name)
+		}
+	}
+	return moduleNames
 }
 
 // InstalledModules returns a map of all installed modules from the cluster, regardless whether they are managed or not
