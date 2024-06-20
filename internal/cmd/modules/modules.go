@@ -4,10 +4,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/model"
-	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
-	"os"
-	"strings"
 )
 
 type modulesConfig struct {
@@ -102,7 +99,7 @@ func collectiveView(cfg *modulesConfig) clierror.Error {
 		return clierror.WrapE(err, clierror.New("failed to get managed Kyma modules"))
 	}
 
-	renderTable(cfg, managedWith, []string{"NAME", "REPOSITORY", "VERSION INSTALLED", "CONTROL-PLANE"})
+	model.RenderTable(cfg.raw, managedWith, []string{"NAME", "REPOSITORY", "VERSION INSTALLED", "CONTROL-PLANE"})
 
 	return nil
 }
@@ -114,7 +111,7 @@ func listInstalledModules(cfg *modulesConfig) clierror.Error {
 		return clierror.WrapE(err, clierror.New("failed to get installed Kyma modules"))
 	}
 
-	renderTable(cfg, installed, []string{"NAME", "VERSION"})
+	model.RenderTable(cfg.raw, installed, []string{"NAME", "VERSION"})
 
 	return nil
 }
@@ -126,7 +123,7 @@ func listManagedModules(cfg *modulesConfig) clierror.Error {
 		return clierror.WrapE(err, clierror.New("failed to get managed Kyma modules"))
 	}
 
-	renderTable(cfg, managed, []string{"NAME"})
+	model.RenderTable(cfg.raw, managed, []string{"NAME"})
 
 	return nil
 }
@@ -138,36 +135,6 @@ func listModulesCatalog(cfg *modulesConfig) clierror.Error {
 		return clierror.WrapE(err, clierror.New("failed to get all Kyma catalog"))
 	}
 
-	renderTable(cfg, catalog, []string{"NAME", "REPOSITORY"})
+	model.RenderTable(cfg.raw, catalog, []string{"NAME", "REPOSITORY"})
 	return nil
-}
-
-// renderTable renders the table with the provided headers
-func renderTable(cfg *modulesConfig, modulesMap map[string][]string, headers []string) {
-	if cfg.raw {
-		for _, row := range modulesMap {
-			println(strings.Join(row, "\t"))
-		}
-	} else {
-
-		var table [][]string
-		for _, row := range modulesMap {
-			table = append(table, row)
-		}
-
-		twTable := setTable(table)
-		twTable.SetHeader(headers)
-		twTable.Render()
-	}
-}
-
-// setTable sets the table settings for the tablewriter
-func setTable(inTable [][]string) *tablewriter.Table {
-	table := tablewriter.NewWriter(os.Stdout)
-	table.AppendBulk(inTable)
-	table.SetRowLine(true)
-	table.SetAlignment(tablewriter.ALIGN_CENTER)
-	table.SetColumnAlignment([]int{tablewriter.ALIGN_CENTER, tablewriter.ALIGN_LEFT, tablewriter.ALIGN_LEFT, tablewriter.ALIGN_LEFT})
-	table.SetBorder(false)
-	return table
 }

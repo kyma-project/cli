@@ -4,26 +4,32 @@ import (
 	"encoding/json"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/olekukonko/tablewriter"
 	"io"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"net/http"
+	"os"
 	"strings"
 )
 
 const URL = "https://raw.githubusercontent.com/kyma-project/community-modules/main/model.json"
 
+type row []string
+
+type moduleMap map[string]row
+
 // ModulesCatalog returns a map of all available modules and their repositories, if the map is nil it will create a new one
-func ModulesCatalog(modulesMap map[string][]string) (map[string][]string, clierror.Error) {
+func ModulesCatalog(modulesMap moduleMap) (moduleMap, clierror.Error) {
 
 	template, err := getModel()
 	if err != nil {
 		return nil, err
 	}
 
-	catalog := make(map[string][]string)
+	catalog := make(moduleMap)
 	if modulesMap != nil {
 		catalog = modulesMap
 	}
@@ -56,14 +62,14 @@ func getModel() (Module, clierror.Error) {
 }
 
 // ManagedModules returns a map of all managed modules from the cluster
-func ManagedModules(modulesMap map[string][]string, client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) (map[string][]string, clierror.Error) {
+func ManagedModules(modulesMap moduleMap, client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) (moduleMap, clierror.Error) {
 
 	name, err := getManagedList(client, cfg)
 	if err != nil {
 		return nil, clierror.WrapE(err, clierror.New("while getting managed modules"))
 	}
 
-	managed := make(map[string][]string)
+	managed := make(moduleMap)
 	if modulesMap != nil {
 		managed = modulesMap
 	}
@@ -80,7 +86,7 @@ func ManagedModules(modulesMap map[string][]string, client cmdcommon.KubeClientC
 }
 
 // getManagedList gets a list of all managed modules from the Kyma CR
-func getManagedList(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) ([]string, clierror.Error) {
+func getManagedList(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) (row, clierror.Error) {
 	GVRKyma := schema.GroupVersionResource{
 		Group:    "operator.kyma-project.io",
 		Version:  "v1beta2",
@@ -100,8 +106,8 @@ func getManagedList(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig)
 }
 
 // handleClusterResponse interprets the response and returns a list of managed modules names
-func handleClusterResponse(unstruct *unstructured.Unstructured) ([]string, error) {
-	var moduleNames []string
+func handleClusterResponse(unstruct *unstructured.Unstructured) (row, error) {
+	var moduleNames row
 	managedFields := unstruct.GetManagedFields()
 	for _, field := range managedFields {
 		var data map[string]interface{}
@@ -125,7 +131,7 @@ func handleClusterResponse(unstruct *unstructured.Unstructured) ([]string, error
 	return moduleNames, nil
 }
 
-func manageNames(moduleNames []string, modules map[string]interface{}) []string {
+func manageNames(moduleNames row, modules map[string]interface{}) row {
 	for key := range modules {
 		if strings.Contains(key, "name") {
 			name := strings.TrimPrefix(key, "k:{\"name\":\"")
@@ -137,18 +143,18 @@ func manageNames(moduleNames []string, modules map[string]interface{}) []string 
 }
 
 // InstalledModules returns a map of all installed modules from the cluster, regardless whether they are managed or not
-func InstalledModules(moduleMap map[string][]string, client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) (map[string][]string, clierror.Error) {
+func InstalledModules(partialMap moduleMap, client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) (moduleMap, clierror.Error) {
 	template, err := getModel()
 	if err != nil {
 		return nil, clierror.WrapE(err, clierror.New("while getting installed modules"))
 	}
 
-	installed := make(map[string][]string)
-	if moduleMap != nil {
-		installed = moduleMap
+	installed := make(moduleMap)
+	if partialMap != nil {
+		installed = partialMap
 	}
 
-	installed, err = getInstalledModules(moduleMap, installed, template, client, cfg)
+	installed, err = getInstalledModules(partialMap, installed, template, client, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +162,7 @@ func InstalledModules(moduleMap map[string][]string, client cmdcommon.KubeClient
 	return installed, nil
 }
 
-func getInstalledModules(moduleMap, installed map[string][]string, template Module, client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) (map[string][]string, clierror.Error) {
+func getInstalledModules(moduleMap, installed moduleMap, template Module, client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) (moduleMap, clierror.Error) {
 	for _, rec := range template {
 		managerPath := strings.Split(rec.Versions[0].ManagerPath, "/")
 		managerName := managerPath[len(managerPath)-1]
@@ -175,7 +181,7 @@ func getInstalledModules(moduleMap, installed map[string][]string, template Modu
 	return installed, nil
 }
 
-func manageVersion(name, version string, installedVersion []string, moduleMap, installed map[string][]string) {
+func manageVersion(name, version string, installedVersion row, moduleMap, installed moduleMap) {
 	if version == installedVersion[len(installedVersion)-1] {
 		if moduleMap == nil {
 			installed[name] = append(installed[name], name)
@@ -201,4 +207,34 @@ func handleHTTPResponse(err error, resp *http.Response, template Module) (Module
 		return nil, clierror.Wrap(err, clierror.New("while unmarshalling"))
 	}
 	return template, nil
+}
+
+// renderTable renders the table with the provided headers
+func RenderTable(raw bool, modulesMap moduleMap, headers []string) {
+	if raw {
+		for _, row := range modulesMap {
+			println(strings.Join(row, "\t"))
+		}
+	} else {
+
+		var table [][]string
+		for _, row := range modulesMap {
+			table = append(table, row)
+		}
+
+		twTable := setTable(table)
+		twTable.SetHeader(headers)
+		twTable.Render()
+	}
+}
+
+// setTable sets the table settings for the tablewriter
+func setTable(inTable [][]string) *tablewriter.Table {
+	table := tablewriter.NewWriter(os.Stdout)
+	table.AppendBulk(inTable)
+	table.SetRowLine(true)
+	table.SetAlignment(tablewriter.ALIGN_CENTER)
+	table.SetColumnAlignment([]int{tablewriter.ALIGN_CENTER, tablewriter.ALIGN_LEFT, tablewriter.ALIGN_LEFT, tablewriter.ALIGN_LEFT})
+	table.SetBorder(false)
+	return table
 }
