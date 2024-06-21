@@ -1,7 +1,6 @@
 package modules
 
 import (
-	"fmt"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/model"
@@ -15,6 +14,7 @@ type modulesConfig struct {
 	catalog   bool
 	managed   bool
 	installed bool
+	raw       bool
 }
 
 func NewModulesCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
@@ -39,20 +39,19 @@ func NewModulesCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().BoolVar(&cfg.catalog, "catalog", false, "List of al available Kyma modules.")
 	cmd.Flags().BoolVar(&cfg.managed, "managed", false, "List of all Kyma modules managed by central control-plane.")
 	cmd.Flags().BoolVar(&cfg.installed, "installed", false, "List of all currently installed Kyma modules.")
+	cmd.Flags().BoolVar(&cfg.raw, "raw", false, "Simple output format without table rendering.")
 
-	cmd.MarkFlagsOneRequired("catalog", "managed", "installed")
-	cmd.MarkFlagsMutuallyExclusive("catalog", "managed")
-	cmd.MarkFlagsMutuallyExclusive("catalog", "installed")
-	cmd.MarkFlagsMutuallyExclusive("managed", "installed")
+	cmd.MarkFlagsMutuallyExclusive("catalog", "managed", "installed")
 
 	return cmd
 }
 
+// listModules collects all the methods responsible for the command and its flags
 func listModules(cfg *modulesConfig) clierror.Error {
 	var err clierror.Error
 
 	if cfg.catalog {
-		err = listAllModules()
+		err = listModulesCatalog(cfg)
 		if err != nil {
 			return clierror.WrapE(err, clierror.New("failed to list all Kyma modules"))
 		}
@@ -75,41 +74,65 @@ func listModules(cfg *modulesConfig) clierror.Error {
 		return nil
 	}
 
-	return clierror.WrapE(err, clierror.New("failed to get modules", "please use one of: catalog, managed or installed flags"))
+	err = collectiveView(cfg)
+	if err != nil {
+		return clierror.WrapE(err, clierror.New("failed to list modules"))
+	}
+
+	return nil
 }
 
-func listInstalledModules(cfg *modulesConfig) clierror.Error {
-	installed, err := model.GetInstalledModules(cfg.KubeClientConfig, *cfg.KymaConfig)
+// collectiveView combines the list of all available, installed and managed modules
+func collectiveView(cfg *modulesConfig) clierror.Error {
+	catalog, err := model.ModulesCatalog(nil)
+	if err != nil {
+		return clierror.WrapE(err, clierror.New("failed to get all Kyma catalog"))
+	}
+	installedWith, err := model.InstalledModules(catalog, cfg.KubeClientConfig, *cfg.KymaConfig)
 	if err != nil {
 		return clierror.WrapE(err, clierror.New("failed to get installed Kyma modules"))
 	}
-	fmt.Println("Installed modules:\n")
-	for _, rec := range installed {
-		fmt.Println(rec)
-	}
-	return nil
-}
-
-func listManagedModules(cfg *modulesConfig) clierror.Error {
-	managed, err := model.GetManagedModules(cfg.KubeClientConfig, *cfg.KymaConfig)
+	managedWith, err := model.ManagedModules(installedWith, cfg.KubeClientConfig, *cfg.KymaConfig)
 	if err != nil {
 		return clierror.WrapE(err, clierror.New("failed to get managed Kyma modules"))
 	}
-	fmt.Println("Managed modules:\n")
-	for _, rec := range managed {
-		fmt.Println(rec)
-	}
+
+	model.RenderTable(cfg.raw, managedWith, []string{"NAME", "REPOSITORY", "VERSION INSTALLED", "CONTROL-PLANE"})
+
 	return nil
 }
 
-func listAllModules() clierror.Error {
-	modules, err := model.GetAllModules()
+// listInstalledModules lists all installed modules
+func listInstalledModules(cfg *modulesConfig) clierror.Error {
+	installed, err := model.InstalledModules(nil, cfg.KubeClientConfig, *cfg.KymaConfig)
 	if err != nil {
-		return clierror.WrapE(err, clierror.New("failed to get all Kyma modules"))
+		return clierror.WrapE(err, clierror.New("failed to get installed Kyma modules"))
 	}
-	fmt.Println("Available modules:\n")
-	for _, rec := range modules {
-		fmt.Println(rec)
+
+	model.RenderTable(cfg.raw, installed, []string{"NAME", "VERSION"})
+
+	return nil
+}
+
+// listManagedModules lists all managed modules
+func listManagedModules(cfg *modulesConfig) clierror.Error {
+	managed, err := model.ManagedModules(nil, cfg.KubeClientConfig, *cfg.KymaConfig)
+	if err != nil {
+		return clierror.WrapE(err, clierror.New("failed to get managed Kyma modules"))
 	}
+
+	model.RenderTable(cfg.raw, managed, []string{"NAME"})
+
+	return nil
+}
+
+// listModulesCatalog lists all available modules
+func listModulesCatalog(cfg *modulesConfig) clierror.Error {
+	catalog, err := model.ModulesCatalog(nil)
+	if err != nil {
+		return clierror.WrapE(err, clierror.New("failed to get all Kyma catalog"))
+	}
+
+	model.RenderTable(cfg.raw, catalog, []string{"NAME", "REPOSITORY"})
 	return nil
 }
