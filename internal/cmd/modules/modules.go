@@ -41,9 +41,7 @@ func NewModulesCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().BoolVar(&cfg.installed, "installed", false, "List of all currently installed Kyma modules.")
 	cmd.Flags().BoolVar(&cfg.raw, "raw", false, "Simple output format without table rendering.")
 
-	cmd.MarkFlagsMutuallyExclusive("catalog", "managed")
-	cmd.MarkFlagsMutuallyExclusive("catalog", "installed")
-	cmd.MarkFlagsMutuallyExclusive("managed", "installed")
+	cmd.MarkFlagsMutuallyExclusive("catalog", "managed", "installed")
 
 	return cmd
 }
