@@ -84,55 +84,54 @@ func listModules(cfg *modulesConfig) clierror.Error {
 
 // collectiveView combines the list of all available, installed and managed modules
 func collectiveView(cfg *modulesConfig) clierror.Error {
-	catalog, err := communitymodules.ModulesCatalog(nil)
+	catalog, err := communitymodules.ModulesCatalog()
 	if err != nil {
 		return clierror.WrapE(err, clierror.New("failed to get all Kyma catalog"))
 	}
-	installedWith, err := communitymodules.InstalledModules(catalog, cfg.KubeClientConfig, *cfg.KymaConfig)
+	installedWith, err := communitymodules.InstalledModules(cfg.KubeClientConfig, *cfg.KymaConfig)
 	if err != nil {
 		return clierror.WrapE(err, clierror.New("failed to get installed Kyma modules"))
 	}
-	managedWith, err := communitymodules.ManagedModules(installedWith, cfg.KubeClientConfig, *cfg.KymaConfig)
+	managedWith, err := communitymodules.ManagedModules(cfg.KubeClientConfig, *cfg.KymaConfig)
 	if err != nil {
 		return clierror.WrapE(err, clierror.New("failed to get managed Kyma modules"))
 	}
 
-	communitymodules.RenderTable(cfg.raw, managedWith, []string{"NAME", "REPOSITORY", "VERSION INSTALLED", "CONTROL-PLANE"})
+	combinedData := communitymodules.MergeRowMaps(catalog, installedWith, managedWith)
 
+	communitymodules.RenderTableForCollective(cfg.raw, combinedData)
 	return nil
 }
 
 // listInstalledModules lists all installed modules
 func listInstalledModules(cfg *modulesConfig) clierror.Error {
-	installed, err := communitymodules.InstalledModules(nil, cfg.KubeClientConfig, *cfg.KymaConfig)
+	installed, err := communitymodules.InstalledModules(cfg.KubeClientConfig, *cfg.KymaConfig)
 	if err != nil {
 		return clierror.WrapE(err, clierror.New("failed to get installed Kyma modules"))
 	}
 
-	communitymodules.RenderTable(cfg.raw, installed, []string{"NAME", "VERSION"})
-
+	communitymodules.RenderTableForInstalled(cfg.raw, installed)
 	return nil
 }
 
 // listManagedModules lists all managed modules
 func listManagedModules(cfg *modulesConfig) clierror.Error {
-	managed, err := communitymodules.ManagedModules(nil, cfg.KubeClientConfig, *cfg.KymaConfig)
+	managed, err := communitymodules.ManagedModules(cfg.KubeClientConfig, *cfg.KymaConfig)
 	if err != nil {
 		return clierror.WrapE(err, clierror.New("failed to get managed Kyma modules"))
 	}
 
-	communitymodules.RenderTable(cfg.raw, managed, []string{"NAME"})
-
+	communitymodules.RenderTableForManaged(cfg.raw, managed)
 	return nil
 }
 
 // listModulesCatalog lists all available modules
 func listModulesCatalog(cfg *modulesConfig) clierror.Error {
-	catalog, err := communitymodules.ModulesCatalog(nil)
+	catalog, err := communitymodules.ModulesCatalog()
 	if err != nil {
 		return clierror.WrapE(err, clierror.New("failed to get all Kyma catalog"))
 	}
 
-	communitymodules.RenderTable(cfg.raw, catalog, []string{"NAME", "REPOSITORY"})
+	communitymodules.RenderTableForCatalog(cfg.raw, catalog)
 	return nil
 }
