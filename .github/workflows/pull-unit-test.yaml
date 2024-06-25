@@ -1,0 +1,21 @@
+name: pull-unit-test
+on:
+  pull_request:
+    branches:
+      - main
+      - "release-**"
+  workflow_dispatch:
+jobs:
+  unit-tests:
+    name: unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod"
+          cache-dependency-path: "go.sum"
+      - name: Run unit tests
+        run: make test
