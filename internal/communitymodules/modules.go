@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
-	"github.com/olekukonko/tablewriter"
 	"io"
 	v1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -12,36 +11,32 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"net/http"
-	"os"
 	"strings"
 )
 
 const URL = "https://raw.githubusercontent.com/kyma-project/community-modules/main/model.json"
 
-type row []string
+type row struct {
+	Name       string
+	Repository string
+	Version    string
+	Managed    string
+}
 
 type moduleMap map[string]row
 
 // ModulesCatalog returns a map of all available modules and their repositories, if the map is nil it will create a new one
-func ModulesCatalog(partialMap moduleMap) (moduleMap, clierror.Error) {
-	// TODO: what is "model"? think about this name
+func ModulesCatalog() (moduleMap, clierror.Error) {
 	modules, err := getCommunityModules()
 	if err != nil {
 		return nil, err
 	}
 
 	catalog := make(moduleMap)
-	if partialMap != nil {
-		catalog = partialMap
-	}
-
 	for _, rec := range modules {
-		if partialMap != nil {
-			// TODO: IMO this code doesn't work! We don't read partialMap later.
-			partialMap[rec.Name] = append(partialMap[rec.Name], rec.Versions[0].Repository)
-		} else {
-			catalog[rec.Name] = append(catalog[rec.Name], rec.Name)
-			catalog[rec.Name] = append(catalog[rec.Name], rec.Versions[0].Repository)
+		catalog[rec.Name] = row{
+			Name:       rec.Name,
+			Repository: rec.Versions[0].Repository,
 		}
 	}
 	return catalog, nil
@@ -77,27 +72,19 @@ func decodeCommunityModulesResponse(err error, resp *http.Response, modules Modu
 }
 
 // ManagedModules returns a map of all managed modules from the cluster
-func ManagedModules(partialMap moduleMap, client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) (moduleMap, clierror.Error) {
-
+func ManagedModules(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) (moduleMap, clierror.Error) {
 	moduleNames, err := getManagedList(client, cfg)
 	if err != nil {
 		return nil, clierror.WrapE(err, clierror.New("while getting managed modules"))
 	}
 
 	managed := make(moduleMap)
-	if partialMap != nil {
-		managed = partialMap
-	}
-
 	for _, name := range moduleNames {
-		if partialMap != nil {
-			// TODO: IMO this code doesn't work! We don't read partialMap later.
-			partialMap[name] = append(partialMap[name], "Managed")
-		} else {
-			managed[name] = append(managed[name], name)
+		managed[name] = row{
+			Name:    name,
+			Managed: "Managed",
 		}
 	}
-
 	return managed, nil
 }
 
@@ -161,18 +148,13 @@ func extractNames(modules map[string]interface{}) []string {
 }
 
 // InstalledModules returns a map of all installed modules from the cluster, regardless whether they are managed or not
-func InstalledModules(partialMap moduleMap, client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) (moduleMap, clierror.Error) {
+func InstalledModules(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) (moduleMap, clierror.Error) {
 	modules, err := getCommunityModules()
 	if err != nil {
 		return nil, clierror.WrapE(err, clierror.New("while getting installed modules"))
 	}
 
-	installed := make(moduleMap)
-	if partialMap != nil {
-		installed = partialMap
-	}
-
-	installed, err = getInstalledModules(partialMap, installed, modules, client, cfg)
+	installed, err := getInstalledModules(modules, client, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -180,7 +162,8 @@ func InstalledModules(partialMap moduleMap, client cmdcommon.KubeClientConfig, c
 	return installed, nil
 }
 
-func getInstalledModules(partialMap, installed moduleMap, modules Modules, client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) (moduleMap, clierror.Error) {
+func getInstalledModules(modules Modules, client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) (moduleMap, clierror.Error) {
+	installed := make(moduleMap)
 	for _, module := range modules {
 		managerName := getManagerName(module)
 		deployment, err := client.KubeClient.Static().AppsV1().Deployments("kyma-system").
@@ -190,10 +173,14 @@ func getInstalledModules(partialMap, installed moduleMap, modules Modules, clien
 			return nil, clierror.Wrap(err, clierror.New(msg))
 		}
 		if !errors.IsNotFound(err) {
-			installedVersion := getInstalledVersion(deployment)
-			moduleVersion := module.Versions[0].Version
-			version := calculateVersion(moduleVersion, installedVersion)
-			addVersionColumn(module.Name, version, partialMap, installed)
+			continue
+		}
+
+		installedVersion := getInstalledVersion(deployment)
+		moduleVersion := module.Versions[0].Version
+		installed[module.Name] = row{
+			Name:    module.Name,
+			Version: calculateVersion(moduleVersion, installedVersion),
 		}
 	}
 	return installed, nil
@@ -210,46 +197,9 @@ func getManagerName(module Module) string {
 	return managerPath[len(managerPath)-1]
 }
 
-func addVersionColumn(name, version string, partialMap, installed moduleMap) {
-	if partialMap == nil {
-		installed[name] = append(installed[name], name)
-	}
-	installed[name] = append(installed[name], version)
-}
-
 func calculateVersion(moduleVersion string, installedVersion string) string {
 	if moduleVersion == installedVersion {
 		return installedVersion
 	}
 	return "outdated moduleVersion, latest is " + moduleVersion
-}
-
-// renderTable renders the table with the provided headers
-func RenderTable(raw bool, modulesMap moduleMap, headers row) {
-	if raw {
-		for _, row := range modulesMap {
-			println(strings.Join(row, "\t"))
-		}
-	} else {
-
-		var table [][]string
-		for _, row := range modulesMap {
-			table = append(table, row)
-		}
-
-		twTable := setTable(table)
-		twTable.SetHeader(headers)
-		twTable.Render()
-	}
-}
-
-// setTable sets the table settings for the tablewriter
-func setTable(inTable [][]string) *tablewriter.Table {
-	table := tablewriter.NewWriter(os.Stdout)
-	table.AppendBulk(inTable)
-	table.SetRowLine(true)
-	table.SetAlignment(tablewriter.ALIGN_CENTER)
-	table.SetColumnAlignment([]int{tablewriter.ALIGN_CENTER, tablewriter.ALIGN_LEFT, tablewriter.ALIGN_LEFT, tablewriter.ALIGN_LEFT})
-	table.SetBorder(false)
-	return table
 }
