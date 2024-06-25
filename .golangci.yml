@@ -1,11 +1,24 @@
 run:
+  modules-download-mode: readonly
   timeout: 15m
 linters:
   disable-all: true
   enable:
     - errcheck
+    - exportloopref
+    - forcetypeassert
+    - gochecknoinits
+    - gofmt
+    - gosec
     - gosimple
     - govet
     - ineffassign
+    - misspell
+    - revive
     - staticcheck
+    - typecheck
+    - unparam
     - unused
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
