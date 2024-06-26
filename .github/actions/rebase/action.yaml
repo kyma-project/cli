@@ -1,0 +1,37 @@
+name: 'Rebase'
+description: 'Action for rebasing to the main branch'
+
+runs:
+  using: 'composite'
+  steps:
+
+    # Setup identity to avoid errors when git is trying to rebase without identity set
+    - name: Setup git identity
+      run: |
+        git config --global user.email "rebase@action.com"
+        git config --global user.name "Rebase Action"
+      shell: bash
+
+    # Update origin/main branch locally to cover case when repo is not fully cloned
+    # for example when using `actions/checkout@v4` action with default `fetch-depth` value (1)
+    # read more: https://github.com/actions/checkout?tab=readme-ov-file#usage
+    - name: Update origin/main
+      run: |
+        git fetch origin main
+        git checkout origin/main
+        git checkout -B main
+        git pull --unshallow origin main
+
+        # go back to the HEAD commit
+        git switch --detach ${{ github.sha }}
+      shell: bash
+
+    - name: Rebase to main
+      run: |
+        git rebase main
+      shell: bash
+
+    - name: Print branch log
+      run: |
+        git log origin/main~1..
+      shell: bash
