@@ -2,6 +2,7 @@ package communitymodules
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"io"
@@ -27,7 +28,11 @@ type moduleMap map[string]row
 
 // ModulesCatalog returns a map of all available modules and their repositories, if the map is nil it will create a new one
 func ModulesCatalog() (moduleMap, clierror.Error) {
-	modules, err := getCommunityModules()
+	return modulesCatalog(URL)
+}
+
+func modulesCatalog(url string) (moduleMap, clierror.Error) {
+	modules, err := getCommunityModules(url)
 	if err != nil {
 		return nil, err
 	}
@@ -43,8 +48,8 @@ func ModulesCatalog() (moduleMap, clierror.Error) {
 }
 
 // getCommunityModules returns a list of all available modules from the community-modules repository
-func getCommunityModules() (Modules, clierror.Error) {
-	resp, err := http.Get(URL)
+func getCommunityModules(url string) (Modules, clierror.Error) {
+	resp, err := http.Get(url)
 	if err != nil {
 		return nil, clierror.Wrap(err, clierror.New("while getting modules list from github"))
 	}
@@ -60,10 +65,16 @@ func getCommunityModules() (Modules, clierror.Error) {
 
 // decodeCommunityModulesResponse reads the response body and unmarshals it into the template
 func decodeCommunityModulesResponse(err error, resp *http.Response, modules Modules) (Modules, clierror.Error) {
+	if resp.StatusCode != 200 {
+		errMsg := fmt.Sprintf("error response: %s", resp.Status)
+		return nil, clierror.Wrap(err, clierror.New(errMsg))
+	}
+
 	bodyText, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, clierror.Wrap(err, clierror.New("while reading http response"))
 	}
+
 	err = json.Unmarshal(bodyText, &modules)
 	if err != nil {
 		return nil, clierror.Wrap(err, clierror.New("while unmarshalling"))
@@ -149,7 +160,11 @@ func extractNames(modules map[string]interface{}) []string {
 
 // InstalledModules returns a map of all installed modules from the cluster, regardless whether they are managed or not
 func InstalledModules(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) (moduleMap, clierror.Error) {
-	modules, err := getCommunityModules()
+	return installedModules(URL, client, cfg)
+}
+
+func installedModules(url string, client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) (moduleMap, clierror.Error) {
+	modules, err := getCommunityModules(url)
 	if err != nil {
 		return nil, clierror.WrapE(err, clierror.New("while getting installed modules"))
 	}
