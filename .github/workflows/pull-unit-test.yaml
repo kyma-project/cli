@@ -1,9 +1,9 @@
 name: pull-unit-test
 on:
   pull_request:
-    branches:
-      - main
-      - "release-**"
+    paths-ignore:
+      - 'docs/**'
+    types: [opened, reopened, synchronize, ready_for_review, converted_to_draft]
   workflow_dispatch:
 jobs:
   unit-tests:
