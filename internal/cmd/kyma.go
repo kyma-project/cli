@@ -1,24 +1,11 @@
 package cmd
 
 import (
-	"context"
-	"github.com/kyma-project/cli.v3/internal/cmd/modules"
-
-	"github.com/kyma-project/cli.v3/internal/cmd/access"
-
-	"github.com/kyma-project/cli.v3/internal/cmd/hana"
-	"github.com/kyma-project/cli.v3/internal/cmd/imageimport"
-	"github.com/kyma-project/cli.v3/internal/cmd/oidc"
-	"github.com/kyma-project/cli.v3/internal/cmd/provision"
-	"github.com/kyma-project/cli.v3/internal/cmd/referenceinstance"
-	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/cmd/alpha"
 	"github.com/spf13/cobra"
 )
 
 func NewKymaCMD() *cobra.Command {
-	config := &cmdcommon.KymaConfig{
-		Ctx: context.Background(),
-	}
 
 	cmd := &cobra.Command{
 		Use: "kyma",
@@ -33,14 +20,6 @@ func NewKymaCMD() *cobra.Command {
 			}
 		},
 	}
-
-	cmd.AddCommand(hana.NewHanaCMD(config))
-	cmd.AddCommand(imageimport.NewImportCMD(config))
-	cmd.AddCommand(provision.NewProvisionCMD())
-	cmd.AddCommand(referenceinstance.NewReferenceInstanceCMD(config))
-	cmd.AddCommand(access.NewAccessCMD(config))
-	cmd.AddCommand(oidc.NewOIDCCMD(config))
-	cmd.AddCommand(modules.NewModulesCMD(config))
-
+	cmd.AddCommand(alpha.NewAlphaCMD())
 	return cmd
 }
