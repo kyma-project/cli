@@ -85,9 +85,9 @@ func Test_GenericRequest(t *testing.T) {
 	t.Run("cant reach server by URL error", func(t *testing.T) {
 		c := httpClient{client: http.DefaultClient}
 
-		response, err := c.genericRequest(http.MethodGet, "http://does-not-exist", requestOptions{})
+		response, err := c.genericRequest(http.MethodGet, "does-not-exist", requestOptions{})
 
-		require.Equal(t, errors.New("failed to get data from server: Get \"http://does-not-exist\": dial tcp: lookup does-not-exist: no such host"), err)
+		require.Equal(t, errors.New("failed to get data from server: Get \"does-not-exist\": unsupported protocol scheme \"\""), err)
 		require.Nil(t, response)
 	})
 
