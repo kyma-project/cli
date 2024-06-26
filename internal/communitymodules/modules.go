@@ -172,7 +172,7 @@ func getInstalledModules(modules Modules, client cmdcommon.KubeClientConfig, cfg
 			msg := "while getting the " + managerName + " deployment"
 			return nil, clierror.Wrap(err, clierror.New(msg))
 		}
-		if !errors.IsNotFound(err) {
+		if errors.IsNotFound(err) {
 			continue
 		}
 
