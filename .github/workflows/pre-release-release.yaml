@@ -1,0 +1,24 @@
+name: Create pre-release
+
+on:
+  push:
+    branches:
+      - v0.0.0-dev
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod"
+          cache-dependency-path: "go.sum"
+      - name: Install goreleaser
+        run: go install github.com/goreleaser/goreleaser/v2@latest
+      - name: Create pre-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          goreleaser release --clean --config .goreleaser-dev.yml
