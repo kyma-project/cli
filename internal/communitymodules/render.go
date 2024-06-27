@@ -50,13 +50,13 @@ func convertRowToManaged(moduleMap moduleMap) [][]string {
 func RenderTableForCatalog(raw bool, moduleMap moduleMap) {
 	renderTable(raw,
 		convertRowToCatalog(moduleMap),
-		[]string{"NAME", "REPOSITORY"})
+		[]string{"NAME", "REPOSITORY", "LATEST VERSION"})
 }
 
 func convertRowToCatalog(moduleMap moduleMap) [][]string {
 	var result [][]string
 	for _, row := range moduleMap {
-		result = append(result, []string{row.Name, row.Repository})
+		result = append(result, []string{row.Name, row.Repository, row.LatestVersion})
 	}
 	return result
 }

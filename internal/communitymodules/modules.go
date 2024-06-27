@@ -18,10 +18,11 @@ import (
 const URL = "https://raw.githubusercontent.com/kyma-project/community-modules/main/model.json"
 
 type row struct {
-	Name       string
-	Repository string
-	Version    string
-	Managed    string
+	Name          string
+	Repository    string
+	LatestVersion string
+	Version       string
+	Managed       string
 }
 
 type moduleMap map[string]row
@@ -40,8 +41,9 @@ func modulesCatalog(url string) (moduleMap, clierror.Error) {
 	catalog := make(moduleMap)
 	for _, rec := range modules {
 		catalog[rec.Name] = row{
-			Name:       rec.Name,
-			Repository: rec.Versions[0].Repository,
+			Name:          rec.Name,
+			Repository:    rec.Versions[0].Repository,
+			LatestVersion: rec.Versions[0].Version,
 		}
 	}
 	return catalog, nil
@@ -109,8 +111,11 @@ func getManagedList(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig)
 
 	resp, err := client.KubeClient.Dynamic().Resource(GVRKyma).Namespace("kyma-system").
 		Get(cfg.Ctx, "default", metav1.GetOptions{})
-	if err != nil {
+	if err != nil && !errors.IsNotFound(err) {
 		return nil, clierror.Wrap(err, clierror.New("while getting Kyma CR"))
+	}
+	if errors.IsNotFound(err) {
+		return nil, nil
 	}
 
 	moduleNames, err := decodeKymaCRResponse(resp)
