@@ -1,0 +1,20 @@
+name: unit test
+on:
+  pull_request:
+    paths-ignore:
+      - "docs/**"
+    types: [opened, reopened, synchronize, ready_for_review, converted_to_draft]
+  workflow_dispatch:
+jobs:
+  unit-tests:
+    name: unit test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/rebase
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod"
+          cache-dependency-path: "go.sum"
+      - name: Run unit tests
+        run: make test

@@ -101,7 +101,7 @@ func TestCISClient_Provision(t *testing.T) {
 			name: "Wrong URL",
 			credentials: &auth.CISCredentials{
 				Endpoints: auth.Endpoints{
-					ProvisioningServiceURL: "http://doesnotexist",
+					ProvisioningServiceURL: "doesnotexist",
 				},
 			},
 			token: &auth.XSUAAToken{},
@@ -109,7 +109,7 @@ func TestCISClient_Provision(t *testing.T) {
 				Name: "name",
 			},
 			wantedResponse: nil,
-			expectedErr:    clierror.New("failed to get data from server: Post \"http://doesnotexist/provisioning/v1/environments\": dial tcp: lookup doesnotexist: no such host"),
+			expectedErr:    clierror.New("failed to get data from server: Post \"doesnotexist/provisioning/v1/environments\": unsupported protocol scheme \"\""),
 		},
 		{
 			name: "Error response",

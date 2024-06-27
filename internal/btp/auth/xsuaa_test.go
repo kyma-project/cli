@@ -64,12 +64,12 @@ func TestGetOAuthToken(t *testing.T) {
 			name: "Wrong URL",
 			credentials: &CISCredentials{
 				UAA: UAA{
-					URL: "http://doesnotexist",
+					URL: "doesnotexist",
 				},
 			},
 			want: nil,
 			expectedErr: clierror.Wrap(
-				errors.New("Post \"http://doesnotexist/oauth/token\": dial tcp: lookup doesnotexist: no such host"),
+				errors.New("Post \"doesnotexist/oauth/token\": unsupported protocol scheme \"\""),
 				clierror.New("failed to get token from server"),
 			),
 		},
