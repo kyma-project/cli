@@ -12,6 +12,16 @@ func TestMergeRowMaps(t *testing.T) {
 			Repository: "github.com/kyma-project/serverless",
 		},
 	}
+	moduleMapCatalogWith := moduleMap{
+		"serverless": {
+			Name:       "serverless",
+			Repository: "github.com/kyma-project/serverless",
+		},
+		"istio": {
+			Name:       "istio",
+			Repository: "github.com/kyma-project/istio",
+		},
+	}
 	moduleMapManaged := moduleMap{
 		"serverless": {
 			Name:    "serverless",
@@ -33,9 +43,39 @@ func TestMergeRowMaps(t *testing.T) {
 		},
 	}
 
+	onlyIstio := moduleMap{
+		"istio": {
+			Name:       "istio",
+			Repository: "github.com/kyma-project/istio",
+		},
+	}
+
+	moduleMapCollectiveWith := moduleMap{
+		"serverless": {
+			Name:       "serverless",
+			Repository: "github.com/kyma-project/serverless",
+			Managed:    "Managed",
+			Version:    "1.0.0",
+		},
+		"istio": {
+			Name:       "istio",
+			Repository: "github.com/kyma-project/istio",
+			Managed:    "",
+			Version:    "",
+		},
+	}
+
 	t.Run("Create collective view", func(t *testing.T) {
 		result := MergeRowMaps(moduleMapCatalog, moduleMapManaged, moduleMapInstalled)
 		require.Equal(t, moduleMapCollective, result)
+	})
+	t.Run("Create collective view with additional catalog entry", func(t *testing.T) {
+		result := MergeRowMaps(moduleMapCatalogWith, moduleMapManaged, moduleMapInstalled)
+		require.Equal(t, moduleMapCollectiveWith, result)
+	})
+	t.Run("Create collective view with a map that has a single entry with diffrent key", func(t *testing.T) {
+		result := MergeRowMaps(moduleMapCatalog, moduleMapManaged, moduleMapInstalled, onlyIstio)
+		require.Equal(t, moduleMapCollectiveWith, result)
 	})
 }
 
