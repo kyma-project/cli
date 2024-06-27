@@ -93,8 +93,16 @@ func TestMergeTwoRows(t *testing.T) {
 		Repository: "github.com/kyma-project/serverless",
 		Managed:    "Managed",
 	}
+	var rowC = row{
+		Name:       "serverless",
+		Repository: "github.com/kyma-project/test",
+	}
 	t.Run("Merge two rows", func(t *testing.T) {
 		result := mergeTwoRows(rowA, rowB)
 		require.Equal(t, rowResult, result)
+	})
+	t.Run("Merge two rows with different repository", func(t *testing.T) {
+		result := mergeTwoRows(rowA, rowC)
+		require.Equal(t, rowA, result)
 	})
 }

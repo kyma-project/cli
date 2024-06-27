@@ -8,26 +8,29 @@ import (
 func TestRender(t *testing.T) {
 	var testMap = moduleMap{
 		"test": {
-			Name:       "testName",
-			Repository: "testRepo",
-			Version:    "testVer",
-			Managed:    "testMan",
+			Name:          "testName",
+			Repository:    "testRepo",
+			LatestVersion: "testLatest",
+			Version:       "testVer",
+			Managed:       "testMan",
 		},
 	}
 	var moduleMapEmpty = moduleMap{}
 
 	var testMapLong = moduleMap{
 		"test1": {
-			Name:       "testName1",
-			Repository: "testRepo1",
-			Version:    "testVer1",
-			Managed:    "testMan1",
+			Name:          "testName1",
+			Repository:    "testRepo1",
+			LatestVersion: "testLatest1",
+			Version:       "testVer1",
+			Managed:       "testMan1",
 		},
 		"test2": {
-			Name:       "testName2",
-			Repository: "testRepo2",
-			Version:    "testVer2",
-			Managed:    "testMan2",
+			Name:          "testName2",
+			Repository:    "testRepo2",
+			LatestVersion: "testLatest2",
+			Version:       "testVer2",
+			Managed:       "testMan2",
 		},
 	}
 
@@ -49,7 +52,7 @@ func TestRender(t *testing.T) {
 	})
 	t.Run("convertRowToCatalog", func(t *testing.T) {
 		result := convertRowToCatalog(testMap)
-		require.Equal(t, [][]string{{"testName", "testRepo"}}, result)
+		require.Equal(t, [][]string{{"testName", "testRepo", "testLatest"}}, result)
 	})
 	t.Run("convertRowToManaged", func(t *testing.T) {
 		result := convertRowToManaged(testMap)
@@ -65,6 +68,6 @@ func TestRender(t *testing.T) {
 	})
 	t.Run("for map with mutliple entries", func(t *testing.T) {
 		result := convertRowToCatalog(testMapLong)
-		require.Equal(t, [][]string{{"testName1", "testRepo1"}, {"testName2", "testRepo2"}}, result)
+		require.ElementsMatch(t, [][]string{{"testName1", "testRepo1", "testLatest1"}, {"testName2", "testRepo2", "testLatest2"}}, result)
 	})
 }
