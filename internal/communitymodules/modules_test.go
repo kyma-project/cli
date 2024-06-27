@@ -39,16 +39,18 @@ func Test_modulesCatalog(t *testing.T) {
 			]`
 		expectedResult := moduleMap{
 			"module1": row{
-				Name:       "module1",
-				Repository: "https://repo/path/module1.git",
-				Version:    "",
-				Managed:    "",
+				Name:          "module1",
+				Repository:    "https://repo/path/module1.git",
+				LatestVersion: "1.2.3",
+				Version:       "",
+				Managed:       "",
 			},
 			"module2": row{
-				Name:       "module2",
-				Repository: "https://repo/path/module2.git",
-				Version:    "",
-				Managed:    "",
+				Name:          "module2",
+				Repository:    "https://repo/path/module2.git",
+				LatestVersion: "4.5.6",
+				Version:       "",
+				Managed:       "",
 			},
 		}
 
