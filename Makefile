@@ -17,3 +17,9 @@ test: ## Run unit tests.
 	@echo "Total test coverage: $$(go tool cover -func=cover.out | grep total | awk '{print $$3}')"
 	@rm cover.out
 
+.PHONY: lint
+lint: golangci-lint # Run golangci-lint.
+	golangci-lint run -v
+
+golangci-lint: ## Download golangci-lint if necessary.
+	command -v golangci-lint || go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
