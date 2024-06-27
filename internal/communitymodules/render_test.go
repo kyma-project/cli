@@ -16,6 +16,21 @@ func TestRender(t *testing.T) {
 	}
 	var moduleMapEmpty = moduleMap{}
 
+	var testMapLong = moduleMap{
+		"test1": {
+			Name:       "testName1",
+			Repository: "testRepo1",
+			Version:    "testVer1",
+			Managed:    "testMan1",
+		},
+		"test2": {
+			Name:       "testName2",
+			Repository: "testRepo2",
+			Version:    "testVer2",
+			Managed:    "testMan2",
+		},
+	}
+
 	t.Run("RenderTable... doesn't panic for empty Map", func(t *testing.T) {
 		require.NotPanics(t, func() {
 			RenderTableForCatalog(false, moduleMapEmpty)
@@ -47,5 +62,9 @@ func TestRender(t *testing.T) {
 	t.Run("convertRowToCollective", func(t *testing.T) {
 		result := convertRowToCollective(testMap)
 		require.Equal(t, [][]string{{"testName", "testRepo", "testVer", "testMan"}}, result)
+	})
+	t.Run("for map with mutliple entries", func(t *testing.T) {
+		result := convertRowToCatalog(testMapLong)
+		require.Equal(t, [][]string{{"testName1", "testRepo1"}, {"testName2", "testRepo2"}}, result)
 	})
 }
