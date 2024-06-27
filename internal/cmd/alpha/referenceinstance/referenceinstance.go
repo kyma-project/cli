@@ -13,6 +13,7 @@ type referenceInstanceConfig struct {
 	*cmdcommon.KymaConfig
 	cmdcommon.KubeClientConfig
 
+	namespace     string
 	offeringName  string
 	referenceName string
 	instanceID    string
@@ -43,6 +44,7 @@ func NewReferenceInstanceCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	config.KubeClientConfig.AddFlag(cmd)
 
+	cmd.Flags().StringVar(&config.namespace, "namespace", "default", "Namespace of the reference instance.")
 	cmd.Flags().StringVar(&config.offeringName, "offering-name", "", "Offering name.")
 	cmd.Flags().StringVar(&config.referenceName, "reference-name", "", "Name of the reference.")
 	cmd.Flags().StringVar(&config.instanceID, "instance-id", "", "ID of the instance.")
@@ -70,7 +72,7 @@ func runReferenceInstance(config referenceInstanceConfig) error {
 		return err
 	}
 
-	_, err = config.KubeClient.Dynamic().Resource(operator.GVRServiceInstance).Namespace("default").Create(config.Ctx, unstructuredObj, metav1.CreateOptions{})
+	_, err = config.KubeClient.Dynamic().Resource(operator.GVRServiceInstance).Namespace(config.namespace).Create(config.Ctx, unstructuredObj, metav1.CreateOptions{})
 	return err
 }
 
@@ -82,7 +84,7 @@ func fillRequestData(config referenceInstanceConfig) kube.ServiceInstance {
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      config.referenceName,
-			Namespace: "default",
+			Namespace: config.namespace,
 			Labels: map[string]string{
 				"app.kubernetes.io/name": config.referenceName,
 			},
