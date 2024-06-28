@@ -43,7 +43,7 @@ func NewAccessCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		PreRun: func(_ *cobra.Command, _ []string) {
 			clierror.Check(cfg.KubeClientConfig.Complete())
 		},
-		Run: func(cmd *cobra.Command, _ []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			clierror.Check(runAccess(&cfg))
 		},
 	}
