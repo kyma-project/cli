@@ -2,6 +2,10 @@
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
+PROJECT_ROOT=.
+
+include ${PROJECT_ROOT}/hack/tools.mk
+
 
 ##@ General
 
@@ -19,7 +23,4 @@ test: ## Run unit tests.
 
 .PHONY: lint
 lint: golangci-lint # Run golangci-lint.
-	golangci-lint run -v
-
-golangci-lint: ## Download golangci-lint if necessary.
-	command -v golangci-lint || go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	$(GOLANGCI_LINT) run -v
