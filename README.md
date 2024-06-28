@@ -18,7 +18,7 @@ Download latest built from main branch from [v0.0.0-dev](https://github.com/kyma
 
 If you want to run kyma CLI on MacOS you can run the following script from the project's root folder:
 ```sh
- hack/get-kyma-v3-alpha.sh
+ ./hack/get-kyma-v3-alpha.sh
 ```
 
 The script above will also save a copy of the `darwin_x86_64` variant of kyma CLI v3 binary as `/usr/local/bin/kyma@v3`.
