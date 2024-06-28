@@ -14,7 +14,7 @@ type Client interface {
 	Dynamic() dynamic.Interface
 	RestClient() *rest.RESTClient
 	RestConfig() *rest.Config
-	ApiConfig() *api.Config
+	APIConfig() *api.Config
 }
 
 type client struct {
@@ -92,6 +92,6 @@ func (c *client) RestConfig() *rest.Config {
 	return c.restConfig
 }
 
-func (c *client) ApiConfig() *api.Config {
+func (c *client) APIConfig() *api.Config {
 	return c.apiConfig
 }

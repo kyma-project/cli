@@ -125,8 +125,8 @@ func createObjects(cfg *accessConfig) clierror.Error {
 }
 
 func prepareKubeconfig(cfg *accessConfig) (*api.Config, clierror.Error) {
-	currentCtx := cfg.KubeClient.ApiConfig().CurrentContext
-	clusterName := cfg.KubeClient.ApiConfig().Contexts[currentCtx].Cluster
+	currentCtx := cfg.KubeClient.APIConfig().CurrentContext
+	clusterName := cfg.KubeClient.APIConfig().Contexts[currentCtx].Cluster
 	var tokenData authv1.TokenRequestStatus
 	var certData []byte
 	var err clierror.Error
@@ -148,7 +148,7 @@ func prepareKubeconfig(cfg *accessConfig) (*api.Config, clierror.Error) {
 			fmt.Println("Token is valid permanently")
 		}
 	} else {
-		certData = cfg.KubeClient.ApiConfig().Clusters[clusterName].CertificateAuthorityData
+		certData = cfg.KubeClient.APIConfig().Clusters[clusterName].CertificateAuthorityData
 		tokenData, err = getServiceAccountToken(cfg)
 		if err != nil {
 			return nil, err
@@ -164,7 +164,7 @@ func prepareKubeconfig(cfg *accessConfig) (*api.Config, clierror.Error) {
 		APIVersion: "v1",
 		Clusters: map[string]*api.Cluster{
 			clusterName: {
-				Server:                   cfg.KubeClient.ApiConfig().Clusters[clusterName].Server,
+				Server:                   cfg.KubeClient.APIConfig().Clusters[clusterName].Server,
 				CertificateAuthorityData: certData,
 			},
 		},
