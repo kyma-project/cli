@@ -11,4 +11,4 @@ GOLANGCI_LINT ?= $(LOCALBIN)/golangci-lint
 
 .PHONY: golangci-lint
 golangci-lint: ## Download golangci-lint if necessary.
-	command -v $(LOCALBIN)/golangci-lint || GOBIN=$(LOCALBIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
+	command -v $(GOLANGCI_LINT) || GOBIN=$(LOCALBIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
