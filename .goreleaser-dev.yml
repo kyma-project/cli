@@ -18,7 +18,7 @@ release:
   make_latest: false
 
   header: |
-    This is an unstable version build on each commit to the main branch
+    This is a premature, unstable version built on each commit to the main branch. Use on your own risk.
 
 before:
   hooks:
