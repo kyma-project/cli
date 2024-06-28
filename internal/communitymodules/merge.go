@@ -22,6 +22,9 @@ func mergeTwoRows(a row, b row) row {
 	if result.Repository == "" {
 		result.Repository = b.Repository
 	}
+	if result.LatestVersion == "" {
+		result.LatestVersion = b.LatestVersion
+	}
 	if result.Version == "" {
 		result.Version = b.Version
 	}
