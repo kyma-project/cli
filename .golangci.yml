@@ -26,3 +26,4 @@ issues:
     - "^receiver-naming:"
     - "unexported-return:"
     - "context-as-argument:"
+    - "and that stutters"
