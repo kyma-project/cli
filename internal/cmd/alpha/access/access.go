@@ -2,6 +2,9 @@ package access
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
+
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/kube"
@@ -13,8 +16,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
-	"strconv"
-	"strings"
 )
 
 type accessConfig struct {
@@ -39,10 +40,10 @@ func NewAccessCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Use:   "access",
 		Short: "Produce a kubeconfig with Service Account based token and certificate",
 		Long:  "Produce a kubeconfig with Service Account based token and certificate that is valid for a specified time or indefinitely",
-		PreRun: func(_ *cobra.Command, args []string) {
+		PreRun: func(_ *cobra.Command, _ []string) {
 			clierror.Check(cfg.KubeClientConfig.Complete())
 		},
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(cmd *cobra.Command, _ []string) {
 			clierror.Check(runAccess(&cfg))
 		},
 	}

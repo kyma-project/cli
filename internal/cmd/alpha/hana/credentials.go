@@ -34,7 +34,7 @@ func NewHanaCredentialsCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Use:   "credentials",
 		Short: "Print credentials of the Hana instance.",
 		Long:  "Use this command to print credentials of the Hana instance on the SAP Kyma platform.",
-		PreRun: func(_ *cobra.Command, args []string) {
+		PreRun: func(_ *cobra.Command, _ []string) {
 			clierror.Check(config.KubeClientConfig.Complete())
 		},
 		Run: func(_ *cobra.Command, _ []string) {

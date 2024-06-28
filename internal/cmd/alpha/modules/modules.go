@@ -27,7 +27,7 @@ func NewModulesCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Use:   "modules",
 		Short: "List modules.",
 		Long:  `List either installed, managed or available Kyma modules.`,
-		PreRun: func(_ *cobra.Command, args []string) {
+		PreRun: func(_ *cobra.Command, _ []string) {
 			clierror.Check(cfg.KubeClientConfig.Complete())
 		},
 		Run: func(_ *cobra.Command, _ []string) {

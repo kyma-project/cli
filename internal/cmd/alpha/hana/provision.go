@@ -33,7 +33,7 @@ func NewHanaProvisionCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Use:   "provision",
 		Short: "Provisions a Hana instance on the Kyma.",
 		Long:  "Use this command to provision a Hana instance on the SAP Kyma platform.",
-		PreRun: func(_ *cobra.Command, args []string) {
+		PreRun: func(_ *cobra.Command, _ []string) {
 			clierror.Check(config.KubeClientConfig.Complete())
 		},
 		Run: func(_ *cobra.Command, _ []string) {

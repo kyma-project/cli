@@ -29,7 +29,7 @@ func NewHanaDeleteCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Use:   "delete",
 		Short: "Delete a Hana instance on the Kyma.",
 		Long:  "Use this command to delete a Hana instance on the SAP Kyma platform.",
-		PreRun: func(_ *cobra.Command, args []string) {
+		PreRun: func(_ *cobra.Command, _ []string) {
 			clierror.Check(config.KubeClientConfig.Complete())
 		},
 		Run: func(_ *cobra.Command, _ []string) {

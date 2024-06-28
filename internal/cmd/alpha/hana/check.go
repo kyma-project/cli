@@ -31,7 +31,7 @@ func NewHanaCheckCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Use:   "check",
 		Short: "Check if the Hana instance is provisioned.",
 		Long:  "Use this command to check if the Hana instance is provisioned on the SAP Kyma platform.",
-		PreRun: func(_ *cobra.Command, args []string) {
+		PreRun: func(_ *cobra.Command, _ []string) {
 			clierror.Check(config.KubeClientConfig.Complete())
 		},
 		Run: func(_ *cobra.Command, _ []string) {
