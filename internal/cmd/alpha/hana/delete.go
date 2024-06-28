@@ -50,7 +50,7 @@ func NewHanaDeleteCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 var (
 	deleteCommands = []func(*hanaDeleteConfig) clierror.Error{
 		deleteHanaBinding,
-		deleteHanaBindingUrl,
+		deleteHanaBindingURL,
 		deleteHanaInstance,
 	}
 )
@@ -82,7 +82,7 @@ func deleteHanaBinding(config *hanaDeleteConfig) clierror.Error {
 	return handleDeleteResponse(err, "Hana binding", config.namespace, config.name)
 }
 
-func deleteHanaBindingUrl(config *hanaDeleteConfig) clierror.Error {
+func deleteHanaBindingURL(config *hanaDeleteConfig) clierror.Error {
 	urlName := hanaBindingURLName(config.name)
 	err := config.KubeClient.Dynamic().Resource(operator.GVRServiceBinding).
 		Namespace(config.namespace).

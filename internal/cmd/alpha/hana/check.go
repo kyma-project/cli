@@ -53,7 +53,7 @@ var (
 	checkCommands = []func(config *hanaCheckConfig) clierror.Error{
 		checkHanaInstance,
 		checkHanaBinding,
-		checkHanaBindingUrl,
+		checkHanaBindingURL,
 	}
 )
 
@@ -81,7 +81,7 @@ func checkHanaBinding(config *hanaCheckConfig) clierror.Error {
 	return handleCheckResponse(u, err, "Hana binding", config.namespace, config.name)
 }
 
-func checkHanaBindingUrl(config *hanaCheckConfig) clierror.Error {
+func checkHanaBindingURL(config *hanaCheckConfig) clierror.Error {
 	urlName := hanaBindingURLName(config.name)
 	u, err := kube.GetServiceBinding(config.KubeClient, config.Ctx, config.namespace, urlName)
 	return handleCheckResponse(u, err, "Hana URL binding", config.namespace, urlName)
