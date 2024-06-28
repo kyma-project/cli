@@ -5,6 +5,10 @@ on:
     tags:
       - v0.0.0-dev
   workflow_dispatch: {}
+  workflow_run:
+    workflows: ["Pre-Release tag"]
+    types:
+      - completed
 
 jobs:
   build:
