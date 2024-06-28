@@ -2,6 +2,10 @@
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
+PROJECT_ROOT=.
+
+include ${PROJECT_ROOT}/hack/tools.mk
+
 
 ##@ General
 
@@ -17,3 +21,6 @@ test: ## Run unit tests.
 	@echo "Total test coverage: $$(go tool cover -func=cover.out | grep total | awk '{print $$3}')"
 	@rm cover.out
 
+.PHONY: lint
+lint: golangci-lint ## Run golangci-lint.
+	$(GOLANGCI_LINT) run -v

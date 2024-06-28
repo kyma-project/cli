@@ -1,11 +1,29 @@
 run:
+  modules-download-mode: readonly
   timeout: 15m
+  tests: false
 linters:
   disable-all: true
   enable:
     - errcheck
+    - exportloopref
+    - gochecknoinits
+    - gofmt
     - gosimple
     - govet
     - ineffassign
+    - misspell
+    - revive
     - staticcheck
+    - typecheck
+    - unparam
     - unused
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  exclude:
+    - "^redefines-builtin-id:"
+    - "^receiver-naming:"
+    - "unexported-return:"
+    - "context-as-argument:"
+    - "and that stutters"
