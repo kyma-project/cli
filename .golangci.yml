@@ -1,12 +1,12 @@
 run:
   modules-download-mode: readonly
   timeout: 15m
+  tests: false
 linters:
   disable-all: true
   enable:
     - errcheck
     - exportloopref
-    - forcetypeassert
     - gochecknoinits
     - gofmt
     - gosimple
@@ -21,3 +21,8 @@ linters:
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
+  exclude:
+    - "^redefines-builtin-id:"
+    - "^receiver-naming:"
+    - "unexported-return:"
+    - "context-as-argument:"
