@@ -9,6 +9,23 @@
 
 Kyma CLI is a command line tool which supports [Kyma](https://github.com/kyma-project/kyma) users.
 
+## Install 
+
+Download latest built from main branch from [v0.0.0-dev](https://github.com/kyma-project/cli/releases/tag/v0.0.0-dev) release assets.
+
+If you want to run kyma CLI on MacOS you can run the following script from the project's root folder:
+```sh
+ hack/get-kyma-v3-alpha.sh
+```
+
+The script above will also save a copy of the `darwin_x86_64` variant of kyma CLI v3 binary as `/usr/local/bin/kyma@v3`.
+
+Inspect new available alpha commands by calling `--help` option: 
+```sh
+ kyma@v3 alpha  --help
+```
+
+
 ## Usage
 
 ### Import Image Into Kyma's Internal Docker Registry
@@ -19,7 +36,7 @@ Kyma CLI is a command line tool which supports [Kyma](https://github.com/kyma-pr
 ```
 docker pull kennethreitz/httpbin
 
-go run main.go image-import kennethreitz/httpbin:latest
+kyma@v3 alpha image-import kennethreitz/httpbin:latest
 ```
 Run a Pod from a locally hosted image
 ```
