@@ -32,7 +32,7 @@ func TestGetConfig(t *testing.T) {
 		expectedRegistryConfig := &RegistryConfig{
 			SecretName: testRegistrySecret.GetName(),
 			SecretData: &SecretData{
-				DockerConfigJson: string(testRegistrySecret.Data[".dockerconfigjson"]),
+				DockerConfigJSON: string(testRegistrySecret.Data[".dockerconfigjson"]),
 				Username:         string(testRegistrySecret.Data["username"]),
 				Password:         string(testRegistrySecret.Data["password"]),
 				PullRegAddr:      string(testRegistrySecret.Data["pullRegAddr"]),
@@ -65,7 +65,7 @@ func Test_getRegistrySecretConfig(t *testing.T) {
 		testRegistrySecret := fixTestRegistrySecret()
 		client := k8s_fake.NewSimpleClientset(testRegistrySecret)
 		expectedRegistryConfig := &SecretData{
-			DockerConfigJson: string(testRegistrySecret.Data[".dockerconfigjson"]),
+			DockerConfigJSON: string(testRegistrySecret.Data[".dockerconfigjson"]),
 			Username:         string(testRegistrySecret.Data["username"]),
 			Password:         string(testRegistrySecret.Data["password"]),
 			PullRegAddr:      string(testRegistrySecret.Data["pullRegAddr"]),

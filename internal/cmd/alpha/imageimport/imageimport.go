@@ -33,7 +33,7 @@ func NewImportCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 			clierror.Check(config.complete(args))
 			clierror.Check(config.validate())
 		},
-		Run: func(_ *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			clierror.Check(runImageImport(&config))
 		},
 	}

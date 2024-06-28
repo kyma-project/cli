@@ -58,7 +58,7 @@ func getConfig(ctx context.Context, client kube.Client) (*RegistryConfig, error)
 }
 
 type SecretData struct {
-	DockerConfigJson string
+	DockerConfigJSON string
 	Username         string
 	Password         string
 	PullRegAddr      string
@@ -73,7 +73,7 @@ func getRegistrySecretData(ctx context.Context, client kubernetes.Interface, sec
 	}
 
 	return &SecretData{
-		DockerConfigJson: string(registrySecret.Data[".dockerconfigjson"]),
+		DockerConfigJSON: string(registrySecret.Data[".dockerconfigjson"]),
 		Username:         string(registrySecret.Data["username"]),
 		Password:         string(registrySecret.Data["password"]),
 		PullRegAddr:      string(registrySecret.Data["pullRegAddr"]),

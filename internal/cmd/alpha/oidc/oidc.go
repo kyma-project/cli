@@ -44,11 +44,11 @@ func NewOIDCCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Use:   "oidc",
 		Short: "Create kubeconfig with an OIDC token",
 		Long:  "Create kubeconfig with an OIDC token generated with a Github Actions token",
-		PreRun: func(_ *cobra.Command, args []string) {
+		PreRun: func(_ *cobra.Command, _ []string) {
 			clierror.Check(cfg.complete())
 			clierror.Check(cfg.validate())
 		},
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			clierror.Check(runOIDC(&cfg))
 		},
 	}
@@ -125,7 +125,7 @@ func runOIDC(cfg *oidcConfig) clierror.Error {
 			return clierror.WrapE(clierr, clierror.New("failed to get kubeconfig from CIS"))
 		}
 	} else {
-		kubeconfig = cfg.KubeClient.ApiConfig()
+		kubeconfig = cfg.KubeClient.APIConfig()
 	}
 
 	enrichedKubeconfig := createKubeconfig(kubeconfig, token)

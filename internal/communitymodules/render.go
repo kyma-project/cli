@@ -1,9 +1,10 @@
 package communitymodules
 
 import (
-	"github.com/olekukonko/tablewriter"
 	"os"
 	"strings"
+
+	"github.com/olekukonko/tablewriter"
 )
 
 func RenderTableForCollective(raw bool, moduleMap moduleMap) {
@@ -70,9 +71,7 @@ func renderTable(raw bool, modulesData [][]string, headers []string) {
 	} else {
 
 		var table [][]string
-		for _, row := range modulesData {
-			table = append(table, row)
-		}
+		table = append(table, modulesData...)
 
 		twTable := setTable(table)
 		twTable.SetHeader(headers)

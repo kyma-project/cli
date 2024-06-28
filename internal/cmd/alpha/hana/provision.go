@@ -33,7 +33,7 @@ func NewHanaProvisionCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Use:   "provision",
 		Short: "Provisions a Hana instance on the Kyma.",
 		Long:  "Use this command to provision a Hana instance on the SAP Kyma platform.",
-		PreRun: func(_ *cobra.Command, args []string) {
+		PreRun: func(_ *cobra.Command, _ []string) {
 			clierror.Check(config.KubeClientConfig.Complete())
 		},
 		Run: func(_ *cobra.Command, _ []string) {
@@ -59,7 +59,7 @@ var (
 	provisionCommands = []func(*hanaProvisionConfig) clierror.Error{
 		createHanaInstance,
 		createHanaBinding,
-		createHanaBindingUrl,
+		createHanaBindingURL,
 	}
 )
 
@@ -91,11 +91,11 @@ func createHanaBinding(config *hanaProvisionConfig) clierror.Error {
 	return handleProvisionResponse(err, "Hana binding", config.namespace, config.name)
 }
 
-func createHanaBindingUrl(config *hanaProvisionConfig) clierror.Error {
+func createHanaBindingURL(config *hanaProvisionConfig) clierror.Error {
 	_, err := config.KubeClient.Dynamic().Resource(operator.GVRServiceBinding).
 		Namespace(config.namespace).
-		Create(config.Ctx, hanaBindingUrl(config), metav1.CreateOptions{})
-	return handleProvisionResponse(err, "Hana URL binding", config.namespace, hanaBindingUrlName(config.name))
+		Create(config.Ctx, hanaBindingURL(config), metav1.CreateOptions{})
+	return handleProvisionResponse(err, "Hana URL binding", config.namespace, hanaBindingURLName(config.name))
 }
 
 func handleProvisionResponse(err error, printedName, namespace, name string) clierror.Error {
@@ -153,8 +153,8 @@ func hanaBinding(config *hanaProvisionConfig) *unstructured.Unstructured {
 	}
 }
 
-func hanaBindingUrl(config *hanaProvisionConfig) *unstructured.Unstructured {
-	urlName := hanaBindingUrlName(config.name)
+func hanaBindingURL(config *hanaProvisionConfig) *unstructured.Unstructured {
+	urlName := hanaBindingURLName(config.name)
 	return &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": "services.cloud.sap.com/v1",
@@ -171,6 +171,6 @@ func hanaBindingUrl(config *hanaProvisionConfig) *unstructured.Unstructured {
 	}
 }
 
-func hanaBindingUrlName(name string) string {
+func hanaBindingURLName(name string) string {
 	return fmt.Sprintf("%s-url", name)
 }

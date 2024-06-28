@@ -14,7 +14,7 @@ type FakeKubeClient struct {
 	TestDynamicInterface    dynamic.Interface
 	TestRestClient          *rest.RESTClient
 	TestRestConfig          *rest.Config
-	TestApiConfig           *api.Config
+	TestAPIConfig           *api.Config
 }
 
 func (f *FakeKubeClient) Static() kubernetes.Interface {
@@ -33,6 +33,6 @@ func (f *FakeKubeClient) RestConfig() *rest.Config {
 	return f.TestRestConfig
 }
 
-func (f *FakeKubeClient) ApiConfig() *api.Config {
-	return f.TestApiConfig
+func (f *FakeKubeClient) APIConfig() *api.Config {
+	return f.TestAPIConfig
 }

@@ -29,7 +29,7 @@ func NewMapHanaCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Use:   "map",
 		Short: "Map the Hana instance to the Kyma cluster.",
 		Long:  "Use this command to map the Hana instance to the Kyma cluster.",
-		PreRun: func(_ *cobra.Command, args []string) {
+		PreRun: func(_ *cobra.Command, _ []string) {
 			clierror.Check(config.KubeClientConfig.Complete())
 		},
 		Run: func(_ *cobra.Command, _ []string) {
@@ -64,7 +64,7 @@ func runMap(config *hanaCheckConfig) clierror.Error {
 		}
 	}
 
-	fmt.Println("Hana instance was succesfully mapped to the cluster")
+	fmt.Println("Hana instance was successfully mapped to the cluster")
 	fmt.Println("You may want to create a Hana HDI container: see how to do it under https://help.sap.com/docs/hana-cloud/sap-hana-cloud-getting-started-guide/set-up-hdi-container-kyma")
 	return nil
 }
