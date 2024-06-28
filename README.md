@@ -21,11 +21,12 @@ If you want to run kyma CLI on MacOS you can run the following script from the p
  ./hack/get-kyma-v3-alpha.sh
 ```
 
-The script above will also save a copy of the `darwin_x86_64` variant of kyma CLI v3 binary as `/usr/local/bin/kyma@v3`.
+The script above will download a Linux/MacOS variant of kyma CLI v3 binary into `bin/kyma@v3`.
 
 Inspect new available alpha commands by calling `--help` option: 
+
 ```sh
- kyma@v3 alpha  --help
+ bin/kyma@v3 alpha  --help
 ```
 
 
