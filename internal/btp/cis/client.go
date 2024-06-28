@@ -72,14 +72,6 @@ func (c *httpClient) post(url string, options requestOptions) (*http.Response, e
 	return c.genericRequest(http.MethodPost, url, options)
 }
 
-func (c *httpClient) put(url string, options requestOptions) (*http.Response, error) {
-	return c.genericRequest(http.MethodPut, url, options)
-}
-
-func (c *httpClient) patch(url string, options requestOptions) (*http.Response, error) {
-	return c.genericRequest(http.MethodPatch, url, options)
-}
-
 func (c *httpClient) genericRequest(method string, url string, options requestOptions) (*http.Response, error) {
 	request, err := http.NewRequest(method, url, options.Body)
 	if err != nil {
