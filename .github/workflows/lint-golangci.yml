@@ -1,9 +1,9 @@
 name: pull-lint
 on:
   pull_request:
-    branches:
-      - main
-      - "release-**"
+    paths-ignore:
+      - "docs/**"
+    types: [opened, reopened, synchronize, ready_for_review, converted_to_draft]
   workflow_dispatch:
 jobs:
   golangci:
@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: ./github/actions/rebase
       - uses: actions/setup-go@v5
         with:
           go-version-file: "go.mod"
