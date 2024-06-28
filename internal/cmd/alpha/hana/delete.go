@@ -83,7 +83,7 @@ func deleteHanaBinding(config *hanaDeleteConfig) clierror.Error {
 }
 
 func deleteHanaBindingUrl(config *hanaDeleteConfig) clierror.Error {
-	urlName := hanaBindingUrlName(config.name)
+	urlName := hanaBindingURLName(config.name)
 	err := config.KubeClient.Dynamic().Resource(operator.GVRServiceBinding).
 		Namespace(config.namespace).
 		Delete(config.Ctx, urlName, metav1.DeleteOptions{})

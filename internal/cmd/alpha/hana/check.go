@@ -82,7 +82,7 @@ func checkHanaBinding(config *hanaCheckConfig) clierror.Error {
 }
 
 func checkHanaBindingUrl(config *hanaCheckConfig) clierror.Error {
-	urlName := hanaBindingUrlName(config.name)
+	urlName := hanaBindingURLName(config.name)
 	u, err := kube.GetServiceBinding(config.KubeClient, config.Ctx, config.namespace, urlName)
 	return handleCheckResponse(u, err, "Hana URL binding", config.namespace, urlName)
 }
