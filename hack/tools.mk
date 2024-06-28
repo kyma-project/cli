@@ -6,6 +6,9 @@ LOCALBIN ?= $(realpath $(PROJECT_ROOT))/bin
 $(LOCALBIN):
 	mkdir -p $(LOCALBIN)
 
+##@ Tools
+
+
 GOLANGCI_LINT_VERSION ?= latest
 GOLANGCI_LINT ?= $(LOCALBIN)/golangci-lint
 

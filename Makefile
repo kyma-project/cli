@@ -22,5 +22,5 @@ test: ## Run unit tests.
 	@rm cover.out
 
 .PHONY: lint
-lint: golangci-lint # Run golangci-lint.
+lint: golangci-lint ## Run golangci-lint.
 	$(GOLANGCI_LINT) run -v
