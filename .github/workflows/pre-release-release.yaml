@@ -4,17 +4,19 @@ on:
   push:
     tags:
       - v0.0.0-dev
+    branches:
+      - main
   workflow_dispatch: {}
-  workflow_run:
-    workflows: ["Pre-Release tag"]
-    types:
-      - completed
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: push dev tag
+        run: |
+          git tag -f v0.0.0-dev
+          git push -f origin v0.0.0-dev
       - uses: actions/setup-go@v5
         with:
           go-version-file: "go.mod"
