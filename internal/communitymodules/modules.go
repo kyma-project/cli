@@ -10,7 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"net/http"
 	"strings"
 )
@@ -103,12 +102,6 @@ func ManagedModules(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig)
 
 // getManagedList gets a list of all managed modules from the Kyma CR
 func getManagedList(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) ([]string, clierror.Error) {
-	GVRKyma := schema.GroupVersionResource{
-		Group:    "operator.kyma-project.io",
-		Version:  "v1beta2",
-		Resource: "kymas",
-	}
-
 	resp, err := client.KubeClient.Dynamic().Resource(GVRKyma).Namespace("kyma-system").
 		Get(cfg.Ctx, "default", metav1.GetOptions{})
 	if err != nil && !errors.IsNotFound(err) {

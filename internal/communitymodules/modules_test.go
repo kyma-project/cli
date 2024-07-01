@@ -1,7 +1,15 @@
 package communitymodules
 
 import (
+	"context"
+	"encoding/json"
+	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	kube_fake "github.com/kyma-project/cli.v3/internal/kube/fake"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	dynamic_fake "k8s.io/client-go/dynamic/fake"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -86,9 +94,125 @@ func Test_modulesCatalog(t *testing.T) {
 	})
 }
 
+func Test_ManagedModules(t *testing.T) {
+	t.Run("ok", func(t *testing.T) {
+		expectedResult := moduleMap{
+			"module1": row{
+				Name:    "module1",
+				Managed: "True",
+			},
+			"module2": row{
+				Name:    "module2",
+				Managed: "True",
+			},
+			"module3": row{
+				Name:    "module3",
+				Managed: "True",
+			},
+		}
+
+		testKyma := fixTestKyma()
+
+		scheme := runtime.NewScheme()
+		scheme.AddKnownTypes(GVRKyma.GroupVersion(), testKyma)
+		dynamic := dynamic_fake.NewSimpleDynamicClient(scheme, testKyma)
+
+		kubeClient := &kube_fake.FakeKubeClient{
+			TestKubernetesInterface: nil,
+			TestDynamicInterface:    dynamic,
+		}
+
+		kymaConfig := cmdcommon.KymaConfig{
+			Ctx: context.Background(),
+		}
+
+		modules, err := ManagedModules(cmdcommon.KubeClientConfig{
+			Kubeconfig: "",
+			KubeClient: kubeClient,
+		}, kymaConfig)
+
+		assert.Equal(t, expectedResult, modules)
+		assert.Nil(t, err)
+	})
+	t.Run("kyma cr not found", func(t *testing.T) {
+		expectedResult := moduleMap{}
+
+		testKyma := fixTestKyma()
+
+		scheme := runtime.NewScheme()
+		scheme.AddKnownTypes(GVRKyma.GroupVersion(), testKyma)
+		dynamic := dynamic_fake.NewSimpleDynamicClient(scheme)
+
+		kubeClient := &kube_fake.FakeKubeClient{
+			TestKubernetesInterface: nil,
+			TestDynamicInterface:    dynamic,
+		}
+
+		kymaConfig := cmdcommon.KymaConfig{
+			Ctx: context.Background(),
+		}
+
+		modules, err := ManagedModules(cmdcommon.KubeClientConfig{
+			Kubeconfig: "",
+			KubeClient: kubeClient,
+		}, kymaConfig)
+
+		assert.Equal(t, expectedResult, modules)
+		assert.Nil(t, err)
+	})
+}
+
+func Test_installedModules(t *testing.T) {
+	t.Run("ok", func(t *testing.T) {
+	})
+}
+
 func fixHttpResponseHandler(status int, response string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(status)
 		w.Write([]byte(response))
 	}
+}
+
+func fixTestKyma() *unstructured.Unstructured {
+	b := []byte(`
+		{
+		  "apiVersion": "operator.kyma-project.io/v1beta2",
+		  "kind": "Kyma",
+		  "metadata": {
+			"managedFields": [
+			  {
+				"fieldsV1": {
+				  "f:spec": {
+					"f:modules": {
+					  ".": {},
+					  "k:{\"name\":\"module1\"}": {
+						".": {},
+						"f:customResourcePolicy": {},
+						"f:name": {}
+					  },
+					  "k:{\"name\":\"module3\"}": {
+						".": {},
+						"f:customResourcePolicy": {},
+						"f:name": {}
+					  },
+					  "k:{\"name\":\"module2\"}": {
+						".": {},
+						"f:customResourcePolicy": {},
+						"f:name": {}
+					  }
+					}
+				  }
+				}
+			  }
+			],
+			"name": "default",
+			"namespace": "kyma-system"
+		  }
+		}
+		`)
+	f := make(map[string]interface{})
+	_ = json.Unmarshal(b, &f)
+	u := &unstructured.Unstructured{Object: f}
+	return u
 }

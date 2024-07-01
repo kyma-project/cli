@@ -1,5 +1,7 @@
 package communitymodules
 
+import "k8s.io/apimachinery/pkg/runtime/schema"
+
 // This structure contains only the fields currently in use.
 type Modules []Module
 
@@ -13,3 +15,11 @@ type Version struct {
 	ManagerPath string `json:"managerPath,omitempty"`
 	Repository  string `json:"repository,omitempty"`
 }
+
+var (
+	GVRKyma = schema.GroupVersionResource{
+		Group:    "operator.kyma-project.io",
+		Version:  "v1beta2",
+		Resource: "kymas",
+	}
+)
