@@ -12,21 +12,21 @@ Kyma CLI is a command line tool which supports [Kyma](https://github.com/kyma-pr
 ## Install 
 
 > [!WARNING]
-> `v3` is still at prototyping stage. All comands are still considered alpha - use it at you own risk.
+> `v3` is still in the prototyping stage. All commands are still considered alpha - use it at your own risk.
 
-Download latest built from main branch from [v0.0.0-dev](https://github.com/kyma-project/cli/releases/tag/v0.0.0-dev) release assets.
+Download the latest build from the main branch from [v0.0.0-dev](https://github.com/kyma-project/cli/releases/tag/v0.0.0-dev) release assets.
 
-If you want to run kyma CLI on MacOS you can run the following script from the project's root folder:
+To run Kyma CLI on MacOS, run the following script from the project's root folder:
 ```sh
  ./hack/get-kyma-v3-alpha.sh
 ```
 
-The script above will download a Linux/MacOS variant of kyma CLI v3 binary into `bin/kyma@v3`.
+This script downloads a Linux/MacOS variant of Kyma CLI v3 binary into `bin/kyma@v3`.
 
-Inspect new available alpha commands by calling `--help` option: 
+Inspect the new available alpha commands by calling the `--help` option: 
 
 ```sh
- bin/kyma@v3 alpha  --help
+ ./bin/kyma@v3 alpha  --help
 ```
 
 
@@ -40,7 +40,7 @@ Inspect new available alpha commands by calling `--help` option:
 ```
 docker pull kennethreitz/httpbin
 
-kyma@v3 alpha image-import kennethreitz/httpbin:latest
+./bin/kyma@v3 alpha image-import kennethreitz/httpbin:latest
 ```
 Run a Pod from a locally hosted image
 ```

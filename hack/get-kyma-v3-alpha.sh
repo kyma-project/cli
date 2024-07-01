@@ -9,6 +9,7 @@ curl -Lo kymav3.tar.gz https://github.com/kyma-project/cli/releases/download/v0.
 
 
 tar zxvf kymav3.tar.gz 
+mkdir -p ../bin
 cp kyma ../bin/kyma@v3
 
 cd ..
