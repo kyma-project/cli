@@ -5,7 +5,6 @@ import (
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/kyma"
 	"github.com/spf13/cobra"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type managedConfig struct {
@@ -73,8 +72,6 @@ func runManagedDeploy(config *managedConfig) error {
 
 	spec["modules"] = modules
 
-	_, err = config.KubeClient.Dynamic().Resource(kyma.GVRKyma).
-		Namespace("kyma-system").
-		Update(config.Ctx, kymaCR, metav1.UpdateOptions{})
+	_, err = kyma.UpdateDefaultKyma(config.Ctx, config.KubeClient, kymaCR)
 	return err
 }

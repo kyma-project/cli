@@ -3,15 +3,17 @@ package communitymodules
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"strings"
+
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
-	"io"
+	"github.com/kyma-project/cli.v3/internal/kyma"
 	v1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"net/http"
-	"strings"
 )
 
 const URL = "https://raw.githubusercontent.com/kyma-project/community-modules/main/model.json"
@@ -102,7 +104,7 @@ func ManagedModules(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig)
 
 // getManagedList gets a list of all managed modules from the Kyma CR
 func getManagedList(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) ([]string, clierror.Error) {
-	resp, err := client.KubeClient.Dynamic().Resource(GVRKyma).Namespace("kyma-system").
+	resp, err := client.KubeClient.Dynamic().Resource(kyma.GVRKyma).Namespace("kyma-system").
 		Get(cfg.Ctx, "default", metav1.GetOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		return nil, clierror.Wrap(err, clierror.New("while getting Kyma CR"))
