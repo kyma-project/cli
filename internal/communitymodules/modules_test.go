@@ -3,13 +3,18 @@ package communitymodules
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	kube_fake "github.com/kyma-project/cli.v3/internal/kube/fake"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	v1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	dynamic_fake "k8s.io/client-go/dynamic/fake"
+	k8s_fake "k8s.io/client-go/kubernetes/fake"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -17,34 +22,6 @@ import (
 
 func Test_modulesCatalog(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
-		response := `
-			[
-			  {
-				"name": "module1",
-				"versions": [
-				  {
-					"version": "1.2.3",
-					"repository": "https://repo/path/module1.git",
-					"managerPath": "/some/path/module1-controller-manager"
-				  },
-				  {
-					"version": "1.7.0",
-					"repository": "https://other/repo/path/module1.git",
-					"managerPath": "/other/path/module1-controller-manager"
-				  }
-				]
-			  },
-			  {
-				"name": "module2",
-				"versions": [
-				  {
-					"version": "4.5.6",
-					"repository": "https://repo/path/module2.git",
-					"managerPath": "/some/path/module2-manager"
-				  }
-				]
-			  }
-			]`
 		expectedResult := moduleMap{
 			"module1": row{
 				Name:          "module1",
@@ -62,7 +39,8 @@ func Test_modulesCatalog(t *testing.T) {
 			},
 		}
 
-		httpServer := httptest.NewServer(http.HandlerFunc(fixHttpResponseHandler(200, response)))
+		httpServer := httptest.NewServer(http.HandlerFunc(
+			fixHttpResponseHandler(200, fixCommunityModulesResponse())))
 		defer httpServer.Close()
 		modules, err := modulesCatalog(httpServer.URL)
 		require.Nil(t, err)
@@ -70,9 +48,7 @@ func Test_modulesCatalog(t *testing.T) {
 	})
 
 	t.Run("invalid http response", func(t *testing.T) {
-		response := ""
-
-		httpServer := httptest.NewServer(http.HandlerFunc(fixHttpResponseHandler(500, response)))
+		httpServer := httptest.NewServer(http.HandlerFunc(fixHttpResponseHandler(500, "")))
 		defer httpServer.Close()
 		modules, err := modulesCatalog(httpServer.URL)
 		require.Nil(t, modules)
@@ -82,9 +58,7 @@ func Test_modulesCatalog(t *testing.T) {
 	})
 
 	t.Run("invalid json response", func(t *testing.T) {
-		response := "invalid json"
-
-		httpServer := httptest.NewServer(http.HandlerFunc(fixHttpResponseHandler(200, response)))
+		httpServer := httptest.NewServer(http.HandlerFunc(fixHttpResponseHandler(200, "invalid json")))
 		defer httpServer.Close()
 		modules, err := modulesCatalog(httpServer.URL)
 		require.Nil(t, modules)
@@ -112,11 +86,9 @@ func Test_ManagedModules(t *testing.T) {
 		}
 
 		testKyma := fixTestKyma()
-
 		scheme := runtime.NewScheme()
 		scheme.AddKnownTypes(GVRKyma.GroupVersion(), testKyma)
 		dynamic := dynamic_fake.NewSimpleDynamicClient(scheme, testKyma)
-
 		kubeClient := &kube_fake.FakeKubeClient{
 			TestKubernetesInterface: nil,
 			TestDynamicInterface:    dynamic,
@@ -138,11 +110,9 @@ func Test_ManagedModules(t *testing.T) {
 		expectedResult := moduleMap{}
 
 		testKyma := fixTestKyma()
-
 		scheme := runtime.NewScheme()
 		scheme.AddKnownTypes(GVRKyma.GroupVersion(), testKyma)
 		dynamic := dynamic_fake.NewSimpleDynamicClient(scheme)
-
 		kubeClient := &kube_fake.FakeKubeClient{
 			TestKubernetesInterface: nil,
 			TestDynamicInterface:    dynamic,
@@ -164,6 +134,77 @@ func Test_ManagedModules(t *testing.T) {
 
 func Test_installedModules(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
+		expectedResult := moduleMap{
+			"module1": row{
+				Name:    "module1",
+				Version: "1.2.3",
+			},
+			"module2": row{
+				Name:    "module2",
+				Version: "outdated moduleVersion, latest is 4.5.6",
+			},
+		}
+
+		httpServer := httptest.NewServer(http.HandlerFunc(
+			fixHttpResponseHandler(200, fixCommunityModulesResponse())))
+		defer httpServer.Close()
+
+		staticClient := k8s_fake.NewSimpleClientset(
+			fixTestDeployment("module1-controller-manager", "kyma-system", "1.2.3"),
+			fixTestDeployment("module2-manager", "kyma-system", "6.7.8"), // outdated
+			fixTestDeployment("other-deployment", "kyma-system", "1.2.3"))
+		kubeClient := &kube_fake.FakeKubeClient{
+			TestKubernetesInterface: staticClient,
+			TestDynamicInterface:    nil,
+		}
+
+		kymaConfig := cmdcommon.KymaConfig{
+			Ctx: context.Background(),
+		}
+
+		modules, err := installedModules(
+			httpServer.URL,
+			cmdcommon.KubeClientConfig{
+				Kubeconfig: "",
+				KubeClient: kubeClient,
+			}, kymaConfig)
+
+		assert.Equal(t, expectedResult, modules)
+		assert.Nil(t, err)
+	})
+	t.Run("only one installed", func(t *testing.T) {
+		expectedResult := moduleMap{
+			"module2": row{
+				Name:    "module2",
+				Version: "4.5.6",
+			},
+		}
+
+		httpServer := httptest.NewServer(http.HandlerFunc(
+			fixHttpResponseHandler(200, fixCommunityModulesResponse())))
+		defer httpServer.Close()
+
+		staticClient := k8s_fake.NewSimpleClientset(
+			fixTestDeployment("module2-manager", "kyma-system", "4.5.6"),
+			fixTestDeployment("other-deployment", "kyma-system", "1.2.3"))
+		kubeClient := &kube_fake.FakeKubeClient{
+			TestKubernetesInterface: staticClient,
+			TestDynamicInterface:    nil,
+		}
+
+		kymaConfig := cmdcommon.KymaConfig{
+			Ctx: context.Background(),
+		}
+
+		modules, err := installedModules(
+			httpServer.URL,
+			cmdcommon.KubeClientConfig{
+				Kubeconfig: "",
+				KubeClient: kubeClient,
+			}, kymaConfig)
+
+		assert.Equal(t, expectedResult, modules)
+		assert.Nil(t, err)
 	})
 }
 
@@ -215,4 +256,56 @@ func fixTestKyma() *unstructured.Unstructured {
 	_ = json.Unmarshal(b, &f)
 	u := &unstructured.Unstructured{Object: f}
 	return u
+}
+
+func fixTestDeployment(name, namespace, imageTag string) *v1.Deployment {
+	return &v1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Spec: v1.DeploymentSpec{
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Image: fmt.Sprintf("localhost:5000/some-project/some-image-name:%s", imageTag),
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func fixCommunityModulesResponse() string {
+	return `
+	[
+	  {
+		"name": "module1",
+		"versions": [
+		  {
+			"version": "1.2.3",
+			"repository": "https://repo/path/module1.git",
+			"managerPath": "/some/path/module1-controller-manager"
+		  },
+		  {
+			"version": "1.7.0",
+			"repository": "https://other/repo/path/module1.git",
+			"managerPath": "/other/path/module1-controller-manager"
+		  }
+		]
+	  },
+	  {
+		"name": "module2",
+		"versions": [
+		  {
+			"version": "4.5.6",
+			"repository": "https://repo/path/module2.git",
+			"managerPath": "/some/path/module2-manager"
+		  }
+		]
+	  }
+	]`
 }
