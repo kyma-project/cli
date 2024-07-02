@@ -10,7 +10,7 @@ import (
 func RenderTableForCollective(raw bool, moduleMap moduleMap) {
 	renderTable(raw,
 		convertRowToCollective(moduleMap),
-		[]string{"NAME", "REPOSITORY", "VERSION INSTALLED", "CONTROL-PLANE"})
+		[]string{"NAME", "REPOSITORY", "VERSION INSTALLED", "MANAGED"})
 }
 
 func convertRowToCollective(moduleMap moduleMap) [][]string {
