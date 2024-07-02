@@ -197,8 +197,10 @@ func fixTestDockerRegistry() *unstructured.Unstructured {
 				"namespace": "test-namespace",
 			},
 			"status": map[string]interface{}{
-				"secretName": "test-secret",
-				"state":      "Ready",
+				"internalAccess": map[string]interface{}{
+					"secretName": "test-secret",
+				},
+				"state": "Ready",
 			},
 		},
 	}
