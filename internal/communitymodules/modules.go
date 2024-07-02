@@ -95,7 +95,7 @@ func ManagedModules(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig)
 	for _, name := range moduleNames {
 		managed[name] = row{
 			Name:    name,
-			Managed: "Managed",
+			Managed: "True",
 		}
 	}
 	return managed, nil
