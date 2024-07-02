@@ -40,7 +40,7 @@ func getConfig(ctx context.Context, client kube.Client) (*RegistryConfig, error)
 		return nil, err
 	}
 
-	secretConfig, err := getRegistrySecretData(ctx, client.Static(), dockerRegistry.Status.SecretName, dockerRegistry.GetNamespace())
+	secretConfig, err := getRegistrySecretData(ctx, client.Static(), dockerRegistry.Status.InternalAccess.SecretName, dockerRegistry.GetNamespace())
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func getConfig(ctx context.Context, client kube.Client) (*RegistryConfig, error)
 	}
 
 	return &RegistryConfig{
-		SecretName: dockerRegistry.Status.SecretName,
+		SecretName: dockerRegistry.Status.InternalAccess.SecretName,
 		SecretData: secretConfig,
 		PodMeta:    podMeta,
 	}, nil
