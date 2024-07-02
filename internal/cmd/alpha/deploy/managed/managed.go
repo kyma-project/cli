@@ -43,23 +43,22 @@ func NewManagedCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 }
 
 func runManagedDeploy(config *managedConfig) error {
-	// get default Kyma CR from the cluster
-	u, err := kyma.GetDefaultKyma(config.Ctx, config.KubeClient)
+	kymaCR, err := kyma.GetDefaultKyma(config.Ctx, config.KubeClient)
 	if err != nil {
 		return err
 	}
 
-	spec := u.Object["spec"].(map[string]interface{})
+	spec := kymaCR.Object["spec"].(map[string]interface{})
 	modules := make([]kyma.Module, 0)
 	for _, m := range spec["modules"].([]interface{}) {
 		modules = append(modules, kyma.ModuleFromInterface(m.(map[string]interface{})))
 	}
 
 	moduleExists := false
-	for _, m := range modules {
+	for i, m := range modules {
 		if m.Name == config.module {
 			// module already exists, update channel
-			m.Channel = config.channel
+			modules[i].Channel = config.channel
 			moduleExists = true
 			break
 		}
@@ -76,6 +75,6 @@ func runManagedDeploy(config *managedConfig) error {
 
 	_, err = config.KubeClient.Dynamic().Resource(kyma.GVRKyma).
 		Namespace("kyma-system").
-		Update(config.Ctx, u, metav1.UpdateOptions{})
+		Update(config.Ctx, kymaCR, metav1.UpdateOptions{})
 	return err
 }
