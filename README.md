@@ -16,9 +16,9 @@ Kyma CLI is a command line tool which supports [Kyma](https://github.com/kyma-pr
 
 Download the latest build from the main branch from [v0.0.0-dev](https://github.com/kyma-project/cli/releases/tag/v0.0.0-dev) release assets.
 
-To run Kyma CLI on MacOS, run the following script from the project's root folder:
+To get Kyma CLI for MacOS or Linux, run the following script from the project's root folder:
 ```sh
- ./hack/get-kyma-v3-alpha.sh
+curl -L "https://github.com/kyma-project/cli/releases/download/v0.0.0-dev/kyma_$(uname -s)_$(uname -m).tar.gz" | tar -zxvf - -C bin kyma && mv bin/kyma bin/kyma@v3
 ```
 
 This script downloads a Linux/MacOS variant of Kyma CLI v3 binary into `bin/kyma@v3`.
