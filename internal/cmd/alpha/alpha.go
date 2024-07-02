@@ -4,12 +4,14 @@ import (
 	"context"
 
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/access"
+	"github.com/kyma-project/cli.v3/internal/cmd/alpha/deploy"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/hana"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/imageimport"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/modules"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/oidc"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/provision"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/referenceinstance"
+	"github.com/kyma-project/cli.v3/internal/cmd/alpha/undeploy"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/spf13/cobra"
 )
@@ -34,6 +36,8 @@ func NewAlphaCMD() *cobra.Command {
 	cmd.AddCommand(access.NewAccessCMD(config))
 	cmd.AddCommand(oidc.NewOIDCCMD(config))
 	cmd.AddCommand(modules.NewModulesCMD(config))
+	cmd.AddCommand(deploy.NewDeployCMD(config))
+	cmd.AddCommand(undeploy.NewUndeployCMD(config))
 
 	return cmd
 }
