@@ -19,8 +19,12 @@ type DockerRegistry struct {
 	Status            DockerRegistryStatus `json:"status,omitempty"`
 }
 
-type DockerRegistryStatus struct {
-	State      string `json:"state,omitempty"`
-	Served     string `json:"served"`
+type InternalAccess struct {
 	SecretName string `json:"secretName,omitempty"`
+}
+
+type DockerRegistryStatus struct {
+	State          string         `json:"state,omitempty"`
+	Served         string         `json:"served"`
+	InternalAccess InternalAccess `json:"internalAccess"`
 }
