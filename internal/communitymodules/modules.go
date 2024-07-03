@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/kyma"
+	"github.com/rogpeppe/go-internal/semver"
 	v1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -41,13 +43,28 @@ func modulesCatalog(url string) (moduleMap, clierror.Error) {
 
 	catalog := make(moduleMap)
 	for _, rec := range modules {
+		latestVersion := getLatestVersion(rec.Versions)
 		catalog[rec.Name] = row{
 			Name:          rec.Name,
-			Repository:    rec.Versions[0].Repository,
-			LatestVersion: rec.Versions[0].Version,
+			Repository:    latestVersion.Repository,
+			LatestVersion: latestVersion.Version,
 		}
 	}
 	return catalog, nil
+}
+
+func getLatestVersion(versions []Version) Version {
+	return slices.MaxFunc(versions, func(a, b Version) int {
+		cmpA := a.Version
+		if !semver.IsValid(cmpA) {
+			cmpA = fmt.Sprintf("v%s", cmpA)
+		}
+		cmpB := b.Version
+		if !semver.IsValid(cmpB) {
+			cmpB = fmt.Sprintf("v%s", cmpB)
+		}
+		return semver.Compare(cmpA, cmpB)
+	})
 }
 
 // getCommunityModules returns a list of all available modules from the community-modules repository
@@ -179,7 +196,8 @@ func installedModules(url string, client cmdcommon.KubeClientConfig, cfg cmdcomm
 func getInstalledModules(modules Modules, client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) (moduleMap, clierror.Error) {
 	installed := make(moduleMap)
 	for _, module := range modules {
-		managerName := getManagerName(module)
+		latestVersion := getLatestVersion(module.Versions)
+		managerName := getManagerName(latestVersion)
 		deployment, err := client.KubeClient.Static().AppsV1().Deployments("kyma-system").
 			Get(cfg.Ctx, managerName, metav1.GetOptions{})
 		if err != nil && !errors.IsNotFound(err) {
@@ -191,7 +209,7 @@ func getInstalledModules(modules Modules, client cmdcommon.KubeClientConfig, cfg
 		}
 
 		installedVersion := getInstalledVersion(deployment)
-		moduleVersion := module.Versions[0].Version
+		moduleVersion := latestVersion.Version
 		installed[module.Name] = row{
 			Name:    module.Name,
 			Version: calculateVersion(moduleVersion, installedVersion),
@@ -206,8 +224,8 @@ func getInstalledVersion(deployment *v1.Deployment) string {
 	return nameAndTag[len(nameAndTag)-1]
 }
 
-func getManagerName(module Module) string {
-	managerPath := strings.Split(module.Versions[0].ManagerPath, "/")
+func getManagerName(version Version) string {
+	managerPath := strings.Split(version.ManagerPath, "/")
 	return managerPath[len(managerPath)-1]
 }
 

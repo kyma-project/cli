@@ -25,8 +25,8 @@ func Test_modulesCatalog(t *testing.T) {
 		expectedResult := moduleMap{
 			"module1": row{
 				Name:          "module1",
-				Repository:    "https://repo/path/module1.git",
-				LatestVersion: "1.2.3",
+				Repository:    "https://repo2/path/module1.git",
+				LatestVersion: "1.7.0",
 				Version:       "",
 				Managed:       "",
 			},
@@ -65,6 +65,30 @@ func Test_modulesCatalog(t *testing.T) {
 		require.NotNil(t, err)
 		require.Contains(t, err.String(), "while handling response")
 		require.Contains(t, err.String(), "while unmarshalling")
+	})
+	t.Run("greatest version is latest", func(t *testing.T) {
+		expectedResult := moduleMap{
+			"module1": row{
+				Name:          "module1",
+				Repository:    "https://repo2/path/module1.git",
+				LatestVersion: "1.7.0",
+				Version:       "",
+				Managed:       "",
+			},
+			"module2": row{
+				Name:          "module2",
+				Repository:    "https://repo/path/module2.git",
+				LatestVersion: "4.5.6",
+				Version:       "",
+				Managed:       "",
+			},
+		}
+
+		httpServer := httptest.NewServer(http.HandlerFunc(fixHttpResponseHandler(200, fixCommunityModulesResponse())))
+		defer httpServer.Close()
+		modules, err := modulesCatalog(httpServer.URL)
+		require.Nil(t, err)
+		require.Equal(t, expectedResult, modules)
 	})
 }
 
@@ -137,7 +161,7 @@ func Test_installedModules(t *testing.T) {
 		expectedResult := moduleMap{
 			"module1": row{
 				Name:    "module1",
-				Version: "1.2.3",
+				Version: "1.7.0",
 			},
 			"module2": row{
 				Name:    "module2",
@@ -150,7 +174,7 @@ func Test_installedModules(t *testing.T) {
 		defer httpServer.Close()
 
 		staticClient := k8s_fake.NewSimpleClientset(
-			fixTestDeployment("module1-controller-manager", "kyma-system", "1.2.3"),
+			fixTestDeployment("module1-controller-manager", "kyma-system", "1.7.0"),
 			fixTestDeployment("module2-manager", "kyma-system", "6.7.8"), // outdated
 			fixTestDeployment("other-deployment", "kyma-system", "1.2.3"))
 		kubeClient := &kube_fake.FakeKubeClient{
@@ -286,14 +310,19 @@ func fixCommunityModulesResponse() string {
 		"name": "module1",
 		"versions": [
 		  {
-			"version": "1.2.3",
-			"repository": "https://repo/path/module1.git",
-			"managerPath": "/some/path/module1-controller-manager"
+			"version": "1.5.3",
+			"repository": "https://repo1/path/module1.git",
+			"managerPath": "/some/path1/module1-controller-manager"
 		  },
 		  {
 			"version": "1.7.0",
-			"repository": "https://other/repo/path/module1.git",
-			"managerPath": "/other/path/module1-controller-manager"
+			"repository": "https://repo2/path/module1.git",
+			"managerPath": "/other/path2/module1-controller-manager"
+		  },
+		  {
+			"version": "1.3.4",
+			"repository": "https://repo3/path/module1.git",
+			"managerPath": "/some/path3/module1-controller-manager"
 		  }
 		]
 	  },
@@ -308,4 +337,58 @@ func fixCommunityModulesResponse() string {
 		]
 	  }
 	]`
+}
+
+func Test_getLatestVersion(t *testing.T) {
+	t.Run("simple versions", func(t *testing.T) {
+		result := getLatestVersion([]Version{
+			{
+				Version: "1.5.3",
+			},
+			{
+				Version: "1.7.1",
+			},
+			{
+				Version: "1.4.3",
+			},
+		})
+		assert.Equal(t, Version{
+			Version: "1.7.1",
+		}, result)
+	})
+	t.Run("v prefix", func(t *testing.T) {
+		result := getLatestVersion([]Version{
+			{
+				Version: "v1.5.3",
+			},
+			{
+				Version: "v1.7.1",
+			},
+			{
+				Version: "1.4.3",
+			},
+		})
+		assert.Equal(t, Version{
+			Version: "v1.7.1",
+		}, result)
+	})
+	t.Run("with suffix", func(t *testing.T) {
+		result := getLatestVersion([]Version{
+			{
+				Version: "1.5.3-experimental",
+			},
+			{
+				Version: "1.7.1-dev",
+			},
+			{
+				Version: "1.7.1",
+			},
+			{
+				Version: "1.4.3",
+			},
+		})
+		assert.Equal(t, Version{
+			Version: "1.7.1",
+		}, result)
+	})
 }
