@@ -2,6 +2,7 @@ package managed
 
 import (
 	"encoding/json"
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -80,7 +81,16 @@ func Test_updateCR(t *testing.T) {
 			require.NoError(t, err)
 			wantBytes, err := json.Marshal(want)
 			require.NoError(t, err)
-			require.Equal(t, string(gotBytes), string(wantBytes))
+			var gotInterface map[string]interface{}
+			var wantInterface map[string]interface{}
+			err = json.Unmarshal(gotBytes, &gotInterface)
+			require.NoError(t, err)
+			err = json.Unmarshal(wantBytes, &wantInterface)
+
+			require.NoError(t, err)
+			if !reflect.DeepEqual(gotInterface, wantInterface) {
+				t.Errorf("updateCR() = %v, want %v", gotInterface, wantInterface)
+			}
 		})
 	}
 }
