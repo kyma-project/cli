@@ -99,7 +99,7 @@ func collectiveView(cfg *modulesConfig) clierror.Error {
 
 	combinedData := communitymodules.MergeRowMaps(catalog, installedWith, managedWith)
 
-	communitymodules.RenderTableForCollective(cfg.raw, combinedData)
+	communitymodules.RenderModules(cfg.raw, combinedData, communitymodules.CollectiveTableInfo)
 	return nil
 }
 
@@ -110,7 +110,7 @@ func listInstalledModules(cfg *modulesConfig) clierror.Error {
 		return clierror.WrapE(err, clierror.New("failed to get installed Kyma modules"))
 	}
 
-	communitymodules.RenderTableForInstalled(cfg.raw, installed)
+	communitymodules.RenderModules(cfg.raw, installed, communitymodules.InstalledTableInfo)
 	return nil
 }
 
@@ -121,7 +121,7 @@ func listManagedModules(cfg *modulesConfig) clierror.Error {
 		return clierror.WrapE(err, clierror.New("failed to get managed Kyma modules"))
 	}
 
-	communitymodules.RenderTableForManaged(cfg.raw, managed)
+	communitymodules.RenderModules(cfg.raw, managed, communitymodules.ManagedTableInfo)
 	return nil
 }
 
@@ -132,6 +132,6 @@ func listModulesCatalog(cfg *modulesConfig) clierror.Error {
 		return clierror.WrapE(err, clierror.New("failed to get all Kyma catalog"))
 	}
 
-	communitymodules.RenderTableForCatalog(cfg.raw, catalog)
+	communitymodules.RenderModules(cfg.raw, catalog, communitymodules.CatalogTableInfo)
 	return nil
 }

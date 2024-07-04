@@ -34,40 +34,17 @@ func TestRender(t *testing.T) {
 		},
 	}
 
-	t.Run("RenderTable... doesn't panic for empty Map", func(t *testing.T) {
+	t.Run("RenderModules doesn't panic for empty Map", func(t *testing.T) {
 		require.NotPanics(t, func() {
-			RenderTableForCatalog(false, moduleMapEmpty)
-			RenderTableForManaged(false, moduleMapEmpty)
-			RenderTableForInstalled(false, moduleMapEmpty)
-			RenderTableForCollective(false, moduleMapEmpty)
-		})
-	})
-	t.Run("convertRow... doesn't panic for empty Map", func(t *testing.T) {
-		require.NotPanics(t, func() {
-			convertRowToCollective(moduleMapEmpty)
-			convertRowToCatalog(moduleMapEmpty)
-			convertRowToManaged(moduleMapEmpty)
-			convertRowToInstalled(moduleMapEmpty)
+			RenderModules(false, moduleMapEmpty, CatalogTableInfo)
 		})
 	})
 	t.Run("convertRowToCatalog", func(t *testing.T) {
-		result := convertRowToCatalog(testMap)
-		require.Equal(t, [][]string{{"testName", "testRepo", "testLatest"}}, result)
+		result := convertModuleMapToTable(testMap, func(r row) []string { return []string{r.Name, r.LatestVersion, r.Version} })
+		require.Equal(t, [][]string{{"testName", "testLatest", "testVer"}}, result)
 	})
-	t.Run("convertRowToManaged", func(t *testing.T) {
-		result := convertRowToManaged(testMap)
-		require.Equal(t, [][]string{{"testName"}}, result)
-	})
-	t.Run("convertRowToInstalled", func(t *testing.T) {
-		result := convertRowToInstalled(testMap)
-		require.Equal(t, [][]string{{"testName", "testVer"}}, result)
-	})
-	t.Run("convertRowToCollective", func(t *testing.T) {
-		result := convertRowToCollective(testMap)
-		require.Equal(t, [][]string{{"testName", "testRepo", "testVer", "testMan"}}, result)
-	})
-	t.Run("for map with mutliple entries", func(t *testing.T) {
-		result := convertRowToCatalog(testMapLong)
-		require.ElementsMatch(t, [][]string{{"testName1", "testRepo1", "testLatest1"}, {"testName2", "testRepo2", "testLatest2"}}, result)
+	t.Run("convertRowToCatalog for map with mutliple entries", func(t *testing.T) {
+		result := convertModuleMapToTable(testMapLong, func(r row) []string { return []string{r.Repository, r.LatestVersion, r.Managed} })
+		require.ElementsMatch(t, [][]string{{"testRepo1", "testLatest1", "testMan1"}, {"testRepo2", "testLatest2", "testMan2"}}, result)
 	})
 }
