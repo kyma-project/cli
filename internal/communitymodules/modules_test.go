@@ -393,7 +393,7 @@ func Test_getLatestVersion(t *testing.T) {
 	})
 }
 
-func Test_assignRepository(t *testing.T) {
+func Test_chooseRepository(t *testing.T) {
 	t.Run("version has repository", func(t *testing.T) {
 		result := chooseRepository(Module{
 			Name:       "module1",
