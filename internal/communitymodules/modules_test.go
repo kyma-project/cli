@@ -392,3 +392,50 @@ func Test_getLatestVersion(t *testing.T) {
 		}, result)
 	})
 }
+
+func Test_assignRepository(t *testing.T) {
+	t.Run("version has repository", func(t *testing.T) {
+		result := assignRepository(Module{
+			Name:       "module1",
+			Repository: "https://repo1/path/module1.git",
+		}, Version{
+			Version:     "1.5.3",
+			Repository:  "https://repo2/path/module1.git",
+			ManagerPath: "/some/path1/module1-controller-manager",
+		})
+		assert.Equal(t, "https://repo2/path/module1.git", result)
+	})
+	t.Run("module has repository", func(t *testing.T) {
+		result := assignRepository(Module{
+			Name:       "module1",
+			Repository: "https://repo1/path/module1.git",
+		}, Version{
+			Version:     "1.5.3",
+			Repository:  "",
+			ManagerPath: "/some/path1/module1-controller-manager",
+		})
+		assert.Equal(t, "https://repo1/path/module1.git", result)
+	})
+	t.Run("Both have repository", func(t *testing.T) {
+		result := assignRepository(Module{
+			Name:       "module1",
+			Repository: "https://repo1/path/module1.git",
+		}, Version{
+			Version:     "1.5.3",
+			Repository:  "https://repo2/path/module1.git",
+			ManagerPath: "/some/path1/module1-controller-manager",
+		})
+		assert.Equal(t, "https://repo2/path/module1.git", result)
+	})
+	t.Run("no repository", func(t *testing.T) {
+		result := assignRepository(Module{
+			Name:       "module1",
+			Repository: "",
+		}, Version{
+			Version:     "1.5.3",
+			Repository:  "",
+			ManagerPath: "/some/path1/module1-controller-manager",
+		})
+		assert.Equal(t, "Unknown repository", result)
+	})
+}

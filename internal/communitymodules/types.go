@@ -6,8 +6,9 @@ import "k8s.io/apimachinery/pkg/runtime/schema"
 type Modules []Module
 
 type Module struct {
-	Name     string    `json:"name,omitempty"`
-	Versions []Version `json:"versions,omitempty"`
+	Name       string    `json:"name,omitempty"`
+	Versions   []Version `json:"versions,omitempty"`
+	Repository string    `json:"repository,omitempty"`
 }
 
 type Version struct {
