@@ -46,23 +46,23 @@ func modulesCatalog(url string) (moduleMap, clierror.Error) {
 		latestVersion := getLatestVersion(rec.Versions)
 		catalog[rec.Name] = row{
 			Name:          rec.Name,
-			Repository:    assignRepository(rec, latestVersion),
+			Repository:    chooseRepository(rec, latestVersion),
 			LatestVersion: latestVersion.Version,
 		}
 	}
 	return catalog, nil
 }
 
-// assignRepository returns the repository of the module for specific version if it is available, otherwise it returns the repository of the module.
+// chooseRepository returns the repository of the module for specific version if it is available, otherwise it returns the repository of the module.
 // Sometimes one of those values don't exist so this function makes sure that we provide the user with the most information possible.
-func assignRepository(module Module, version Version) string {
+func chooseRepository(module Module, version Version) string {
 	if version.Repository != "" {
 		return version.Repository
 	}
 	if module.Repository != "" {
 		return module.Repository
 	}
-	return "Unknown repository"
+	return "Unknown"
 }
 func getLatestVersion(versions []Version) Version {
 	return slices.MaxFunc(versions, func(a, b Version) int {
