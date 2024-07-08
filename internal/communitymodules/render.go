@@ -2,6 +2,7 @@ package communitymodules
 
 import (
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/olekukonko/tablewriter"
@@ -40,9 +41,14 @@ func RenderModules(raw bool, moduleMap moduleMap, tableInfo TableInfo) {
 }
 
 func convertModuleMapToTable(moduleMap moduleMap, rowConverter RowConverter) [][]string {
+	var moduleNames []string
+	for key := range moduleMap {
+		moduleNames = append(moduleNames, key)
+	}
+	sort.Strings(moduleNames)
 	var result [][]string
-	for _, row := range moduleMap {
-		result = append(result, rowConverter(row))
+	for _, key := range moduleNames {
+		result = append(result, rowConverter(moduleMap[key]))
 	}
 	return result
 }

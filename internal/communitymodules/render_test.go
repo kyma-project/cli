@@ -33,6 +33,24 @@ func TestRender(t *testing.T) {
 			Managed:       "testMan2",
 		},
 	}
+	var testMapSort = moduleMap{
+		"ghi": {
+			Name:    "ghi",
+			Version: "3",
+		},
+		"def": {
+			Name:    "def",
+			Version: "2",
+		},
+		"abc": {
+			Name:    "abc",
+			Version: "1",
+		},
+		"jkl": {
+			Name:    "jkl",
+			Version: "4",
+		},
+	}
 
 	t.Run("RenderModules doesn't panic for empty Map", func(t *testing.T) {
 		require.NotPanics(t, func() {
@@ -46,5 +64,9 @@ func TestRender(t *testing.T) {
 	t.Run("convertRowToCatalog for map with mutliple entries", func(t *testing.T) {
 		result := convertModuleMapToTable(testMapLong, func(r row) []string { return []string{r.Repository, r.LatestVersion, r.Managed} })
 		require.ElementsMatch(t, [][]string{{"testRepo1", "testLatest1", "testMan1"}, {"testRepo2", "testLatest2", "testMan2"}}, result)
+	})
+	t.Run("sort names", func(t *testing.T) {
+		result := convertModuleMapToTable(testMapSort, func(r row) []string { return []string{r.Name, r.Version} })
+		require.Equal(t, [][]string{{"abc", "1"}, {"def", "2"}, {"ghi", "3"}, {"jkl", "4"}}, result)
 	})
 }
