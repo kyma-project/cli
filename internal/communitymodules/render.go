@@ -2,62 +2,53 @@ package communitymodules
 
 import (
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/olekukonko/tablewriter"
 )
 
-func RenderTableForCollective(raw bool, moduleMap moduleMap) {
-	renderTable(raw,
-		convertRowToCollective(moduleMap),
-		[]string{"NAME", "REPOSITORY", "VERSION INSTALLED", "MANAGED"})
+type RowConverter func(row) []string
+type TableInfo struct {
+	Header       []string
+	RowConverter RowConverter
 }
 
-func convertRowToCollective(moduleMap moduleMap) [][]string {
-	var result [][]string
-	for _, row := range moduleMap {
-		result = append(result, []string{row.Name, row.Repository, row.Version, row.Managed})
+var (
+	CollectiveTableInfo = TableInfo{
+		Header:       []string{"NAME", "REPOSITORY", "VERSION INSTALLED", "MANAGED"},
+		RowConverter: func(r row) []string { return []string{r.Name, r.Repository, r.Version, r.Managed} },
 	}
-	return result
-}
-
-func RenderTableForInstalled(raw bool, moduleMap moduleMap) {
-	renderTable(raw,
-		convertRowToInstalled(moduleMap),
-		[]string{"NAME", "VERSION"})
-}
-
-func convertRowToInstalled(moduleMap moduleMap) [][]string {
-	var result [][]string
-	for _, row := range moduleMap {
-		result = append(result, []string{row.Name, row.Version})
+	InstalledTableInfo = TableInfo{
+		Header:       []string{"NAME", "VERSION"},
+		RowConverter: func(r row) []string { return []string{r.Name, r.Version} },
 	}
-	return result
-}
-
-func RenderTableForManaged(raw bool, moduleMap moduleMap) {
-	renderTable(raw,
-		convertRowToManaged(moduleMap),
-		[]string{"NAME"})
-}
-
-func convertRowToManaged(moduleMap moduleMap) [][]string {
-	var result [][]string
-	for _, row := range moduleMap {
-		result = append(result, []string{row.Name})
+	ManagedTableInfo = TableInfo{
+		Header:       []string{"NAME"},
+		RowConverter: func(r row) []string { return []string{r.Name} },
 	}
-	return result
-}
-func RenderTableForCatalog(raw bool, moduleMap moduleMap) {
-	renderTable(raw,
-		convertRowToCatalog(moduleMap),
-		[]string{"NAME", "REPOSITORY", "LATEST VERSION"})
+	CatalogTableInfo = TableInfo{
+		Header:       []string{"NAME", "REPOSITORY", "LATEST VERSION"},
+		RowConverter: func(r row) []string { return []string{r.Name, r.Repository, r.LatestVersion} },
+	}
+)
+
+func RenderModules(raw bool, moduleMap moduleMap, tableInfo TableInfo) {
+	renderTable(
+		raw,
+		convertModuleMapToTable(moduleMap, tableInfo.RowConverter),
+		tableInfo.Header)
 }
 
-func convertRowToCatalog(moduleMap moduleMap) [][]string {
+func convertModuleMapToTable(moduleMap moduleMap, rowConverter RowConverter) [][]string {
+	var moduleNames []string
+	for key := range moduleMap {
+		moduleNames = append(moduleNames, key)
+	}
+	sort.Strings(moduleNames)
 	var result [][]string
-	for _, row := range moduleMap {
-		result = append(result, []string{row.Name, row.Repository, row.LatestVersion})
+	for _, key := range moduleNames {
+		result = append(result, rowConverter(moduleMap[key]))
 	}
 	return result
 }
@@ -69,7 +60,6 @@ func renderTable(raw bool, modulesData [][]string, headers []string) {
 			println(strings.Join(row, "\t"))
 		}
 	} else {
-
 		var table [][]string
 		table = append(table, modulesData...)
 
