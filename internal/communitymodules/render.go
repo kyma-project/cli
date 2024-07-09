@@ -75,7 +75,7 @@ func setTable(inTable [][]string) *tablewriter.Table {
 	table.AppendBulk(inTable)
 	table.SetRowLine(false)
 	table.SetHeaderLine(false)
-	table.SetColumnSeparator(" ")
+	table.SetColumnSeparator("")
 	table.SetAlignment(tablewriter.ALIGN_CENTER)
 	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
 	table.SetColumnAlignment([]int{tablewriter.ALIGN_LEFT, tablewriter.ALIGN_LEFT, tablewriter.ALIGN_LEFT, tablewriter.ALIGN_LEFT})
