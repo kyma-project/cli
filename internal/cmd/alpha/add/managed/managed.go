@@ -1,8 +1,6 @@
 package managed
 
 import (
-	"slices"
-
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/kyma"
@@ -14,7 +12,8 @@ type managedConfig struct {
 	*cmdcommon.KymaConfig
 	cmdcommon.KubeClientConfig
 
-	module string
+	module  string
+	channel string
 }
 
 func NewManagedCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
@@ -25,47 +24,62 @@ func NewManagedCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "managed",
-		Short: "Undeploy Kyma module on a managed Kyma instance",
+		Short: "Add managed Kyma module in a managed Kyma instance",
 		PreRun: func(_ *cobra.Command, _ []string) {
 			clierror.Check(config.KubeClientConfig.Complete())
 		},
 		RunE: func(_ *cobra.Command, _ []string) error {
-			return runManagedUndeploy(config)
+			return runAddManaged(config)
 		},
 	}
 
 	config.KubeClientConfig.AddFlag(cmd)
-	cmd.Flags().StringVar(&config.module, "module", "", "Name of the module to undeploy")
+	cmd.Flags().StringVar(&config.module, "module", "", "Name of the module to add")
+	cmd.Flags().StringVar(&config.channel, "channel", "", "Name of the Kyma channel to use for the module")
 
 	_ = cmd.MarkFlagRequired("module")
 
 	return cmd
 }
 
-func runManagedUndeploy(config *managedConfig) error {
+func runAddManaged(config *managedConfig) error {
 	kymaCR, err := kyma.GetDefaultKyma(config.Ctx, config.KubeClient)
 	if err != nil {
 		return err
 	}
 
-	kymaCR = updateCR(kymaCR, config.module)
+	kymaCR = updateCR(kymaCR, config.module, config.channel)
 
 	_, err = kyma.UpdateDefaultKyma(config.Ctx, config.KubeClient, kymaCR)
 	return err
 }
 
-func updateCR(kymaCR *unstructured.Unstructured, moduleName string) *unstructured.Unstructured {
+func updateCR(kymaCR *unstructured.Unstructured, moduleName, moduleChannel string) *unstructured.Unstructured {
 	newCR := kymaCR.DeepCopy()
 	spec := newCR.Object["spec"].(map[string]interface{})
-	modules := []kyma.Module{}
+	modules := make([]kyma.Module, 0)
 	for _, m := range spec["modules"].([]interface{}) {
 		modules = append(modules, kyma.ModuleFromInterface(m.(map[string]interface{})))
 	}
 
-	modules = slices.DeleteFunc(modules, func(m kyma.Module) bool {
-		return m.Name == moduleName
-	})
+	moduleExists := false
+	for i, m := range modules {
+		if m.Name == moduleName {
+			// module already exists, update channel
+			modules[i].Channel = moduleChannel
+			moduleExists = true
+			break
+		}
+	}
+
+	if !moduleExists {
+		modules = append(modules, kyma.Module{
+			Name:    moduleName,
+			Channel: moduleChannel,
+		})
+	}
 
 	spec["modules"] = modules
+
 	return newCR
 }
