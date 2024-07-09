@@ -7,6 +7,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/kyma"
 	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 type managedConfig struct {
@@ -47,18 +48,24 @@ func runManagedUndeploy(config *managedConfig) error {
 		return err
 	}
 
-	spec := kymaCR.Object["spec"].(map[string]interface{})
-	modules := make([]kyma.Module, 0)
+	kymaCR = updateCR(kymaCR, config.module)
+
+	_, err = kyma.UpdateDefaultKyma(config.Ctx, config.KubeClient, kymaCR)
+	return err
+}
+
+func updateCR(kymaCR *unstructured.Unstructured, moduleName string) *unstructured.Unstructured {
+	newCR := kymaCR.DeepCopy()
+	spec := newCR.Object["spec"].(map[string]interface{})
+	modules := []kyma.Module{}
 	for _, m := range spec["modules"].([]interface{}) {
 		modules = append(modules, kyma.ModuleFromInterface(m.(map[string]interface{})))
 	}
 
 	modules = slices.DeleteFunc(modules, func(m kyma.Module) bool {
-		return m.Name == config.module
+		return m.Name == moduleName
 	})
 
 	spec["modules"] = modules
-
-	_, err = kyma.UpdateDefaultKyma(config.Ctx, config.KubeClient, kymaCR)
-	return err
+	return newCR
 }
