@@ -73,9 +73,12 @@ func renderTable(raw bool, modulesData [][]string, headers []string) {
 func setTable(inTable [][]string) *tablewriter.Table {
 	table := tablewriter.NewWriter(os.Stdout)
 	table.AppendBulk(inTable)
-	table.SetRowLine(true)
+	table.SetRowLine(false)
+	table.SetHeaderLine(false)
+	table.SetColumnSeparator(" ")
 	table.SetAlignment(tablewriter.ALIGN_CENTER)
-	table.SetColumnAlignment([]int{tablewriter.ALIGN_CENTER, tablewriter.ALIGN_LEFT, tablewriter.ALIGN_LEFT, tablewriter.ALIGN_LEFT})
+	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
+	table.SetColumnAlignment([]int{tablewriter.ALIGN_LEFT, tablewriter.ALIGN_LEFT, tablewriter.ALIGN_LEFT, tablewriter.ALIGN_LEFT})
 	table.SetBorder(false)
 	return table
 }
