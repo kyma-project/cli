@@ -1,8 +1,9 @@
 package communitymodules
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestMergeRowMaps(t *testing.T) {
@@ -25,7 +26,7 @@ func TestMergeRowMaps(t *testing.T) {
 	moduleMapManaged := moduleMap{
 		"serverless": {
 			Name:    "serverless",
-			Managed: "Managed",
+			Channel: "Managed",
 		},
 	}
 	moduleMapInstalled := moduleMap{
@@ -38,7 +39,7 @@ func TestMergeRowMaps(t *testing.T) {
 		"serverless": {
 			Name:       "serverless",
 			Repository: "github.com/kyma-project/serverless",
-			Managed:    "Managed",
+			Channel:    "Managed",
 			Version:    "1.0.0",
 		},
 	}
@@ -54,13 +55,13 @@ func TestMergeRowMaps(t *testing.T) {
 		"serverless": {
 			Name:       "serverless",
 			Repository: "github.com/kyma-project/serverless",
-			Managed:    "Managed",
+			Channel:    "Managed",
 			Version:    "1.0.0",
 		},
 		"istio": {
 			Name:       "istio",
 			Repository: "github.com/kyma-project/istio",
-			Managed:    "",
+			Channel:    "",
 			Version:    "",
 		},
 	}
@@ -86,12 +87,12 @@ func TestMergeTwoRows(t *testing.T) {
 	}
 	var rowB = row{
 		Name:    "serverless",
-		Managed: "Managed",
+		Channel: "Managed",
 	}
 	var rowResult = row{
 		Name:       "serverless",
 		Repository: "github.com/kyma-project/serverless",
-		Managed:    "Managed",
+		Channel:    "Managed",
 	}
 	var rowC = row{
 		Name:       "serverless",

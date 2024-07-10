@@ -16,8 +16,8 @@ type TableInfo struct {
 
 var (
 	CollectiveTableInfo = TableInfo{
-		Header:       []string{"NAME", "REPOSITORY", "VERSION INSTALLED", "MANAGED"},
-		RowConverter: func(r row) []string { return []string{r.Name, r.Repository, r.Version, r.Managed} },
+		Header:       []string{"NAME", "REPOSITORY", "VERSION INSTALLED", "CHANNEL"},
+		RowConverter: func(r row) []string { return []string{r.Name, r.Repository, r.Version, r.Channel} },
 	}
 	InstalledTableInfo = TableInfo{
 		Header:       []string{"NAME", "VERSION"},
