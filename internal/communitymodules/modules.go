@@ -3,7 +3,6 @@ package communitymodules
 import (
 	"encoding/json"
 	"fmt"
-	"golang.org/x/mod/semver"
 	"io"
 	"net/http"
 	"slices"
@@ -12,10 +11,12 @@ import (
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/kyma"
+	"golang.org/x/mod/semver"
 	v1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 const URL = "https://raw.githubusercontent.com/kyma-project/community-modules/main/model.json"
@@ -150,39 +151,17 @@ func getManagedList(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig)
 // decodeKymaCRResponse interprets the response and returns a list of managed modules names
 func decodeKymaCRResponse(unstruct *unstructured.Unstructured) ([]string, error) {
 	var moduleNames []string
-	managedFields := unstruct.GetManagedFields()
-	for _, field := range managedFields {
-		var data map[string]interface{}
-		err := json.Unmarshal(field.FieldsV1.Raw, &data)
-		if err != nil {
-			return nil, err
-		}
 
-		spec, ok := data["f:spec"].(map[string]interface{})
-		if !ok {
-			continue
-		}
+	kyma := &kyma.Kyma{}
+	err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstruct.Object, kyma)
+	if err != nil {
+		return nil, err
+	}
 
-		modules, ok := spec["f:modules"].(map[string]interface{})
-		if !ok {
-			continue
-		}
-
-		moduleNames = append(moduleNames, extractNames(modules)...)
+	for _, module := range kyma.Spec.Modules {
+		moduleNames = append(moduleNames, module.Name)
 	}
 	return moduleNames, nil
-}
-
-func extractNames(modules map[string]interface{}) []string {
-	var moduleNames []string
-	for key := range modules {
-		if strings.Contains(key, "name") {
-			name := strings.TrimPrefix(key, "k:{\"name\":\"")
-			name = strings.Trim(name, "\"}")
-			moduleNames = append(moduleNames, name)
-		}
-	}
-	return moduleNames
 }
 
 // InstalledModules returns a map of all installed modules from the cluster, regardless whether they are managed or not

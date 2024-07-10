@@ -4,6 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	kube_fake "github.com/kyma-project/cli.v3/internal/kube/fake"
 	"github.com/stretchr/testify/assert"
@@ -15,9 +19,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	dynamic_fake "k8s.io/client-go/dynamic/fake"
 	k8s_fake "k8s.io/client-go/kubernetes/fake"
-	"net/http"
-	"net/http/httptest"
-	"testing"
 )
 
 func Test_modulesCatalog(t *testing.T) {
@@ -245,34 +246,21 @@ func fixTestKyma() *unstructured.Unstructured {
 		  "apiVersion": "operator.kyma-project.io/v1beta2",
 		  "kind": "Kyma",
 		  "metadata": {
-			"managedFields": [
-			  {
-				"fieldsV1": {
-				  "f:spec": {
-					"f:modules": {
-					  ".": {},
-					  "k:{\"name\":\"module1\"}": {
-						".": {},
-						"f:customResourcePolicy": {},
-						"f:name": {}
-					  },
-					  "k:{\"name\":\"module3\"}": {
-						".": {},
-						"f:customResourcePolicy": {},
-						"f:name": {}
-					  },
-					  "k:{\"name\":\"module2\"}": {
-						".": {},
-						"f:customResourcePolicy": {},
-						"f:name": {}
-					  }
-					}
-				  }
-				}
-			  }
-			],
 			"name": "default",
 			"namespace": "kyma-system"
+		  },
+		  "spec": {
+			"modules": [
+			  {
+				"name": "module1"
+			  },
+			  {
+				"name": "module3"
+			  },
+			  {
+				"name": "module2"
+			  }
+			]
 		  }
 		}
 		`)
