@@ -28,8 +28,8 @@ func mergeTwoRows(a row, b row) row {
 	if result.Version == "" {
 		result.Version = b.Version
 	}
-	if result.Managed == "" {
-		result.Managed = b.Managed
+	if result.Channel == "" {
+		result.Channel = b.Channel
 	}
 	return result
 }

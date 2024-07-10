@@ -1,8 +1,9 @@
 package communitymodules
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestRender(t *testing.T) {
@@ -12,7 +13,7 @@ func TestRender(t *testing.T) {
 			Repository:    "testRepo",
 			LatestVersion: "testLatest",
 			Version:       "testVer",
-			Managed:       "testMan",
+			Channel:       "testMan",
 		},
 	}
 	var moduleMapEmpty = moduleMap{}
@@ -23,14 +24,14 @@ func TestRender(t *testing.T) {
 			Repository:    "testRepo1",
 			LatestVersion: "testLatest1",
 			Version:       "testVer1",
-			Managed:       "testMan1",
+			Channel:       "testMan1",
 		},
 		"test2": {
 			Name:          "testName2",
 			Repository:    "testRepo2",
 			LatestVersion: "testLatest2",
 			Version:       "testVer2",
-			Managed:       "testMan2",
+			Channel:       "testMan2",
 		},
 	}
 	var testMapSort = moduleMap{
@@ -62,7 +63,7 @@ func TestRender(t *testing.T) {
 		require.Equal(t, [][]string{{"testName", "testLatest", "testVer"}}, result)
 	})
 	t.Run("convertRowToCatalog for map with mutliple entries", func(t *testing.T) {
-		result := convertModuleMapToTable(testMapLong, func(r row) []string { return []string{r.Repository, r.LatestVersion, r.Managed} })
+		result := convertModuleMapToTable(testMapLong, func(r row) []string { return []string{r.Repository, r.LatestVersion, r.Channel} })
 		require.ElementsMatch(t, [][]string{{"testRepo1", "testLatest1", "testMan1"}, {"testRepo2", "testLatest2", "testMan2"}}, result)
 	})
 	t.Run("sort names", func(t *testing.T) {

@@ -29,14 +29,14 @@ func Test_modulesCatalog(t *testing.T) {
 				Repository:    "https://repo2/path/module1.git",
 				LatestVersion: "1.7.0",
 				Version:       "",
-				Managed:       "",
+				Channel:       "",
 			},
 			"module2": row{
 				Name:          "module2",
 				Repository:    "https://repo/path/module2.git",
 				LatestVersion: "4.5.6",
 				Version:       "",
-				Managed:       "",
+				Channel:       "",
 			},
 		}
 
@@ -74,14 +74,14 @@ func Test_modulesCatalog(t *testing.T) {
 				Repository:    "https://repo2/path/module1.git",
 				LatestVersion: "1.7.0",
 				Version:       "",
-				Managed:       "",
+				Channel:       "",
 			},
 			"module2": row{
 				Name:          "module2",
 				Repository:    "https://repo/path/module2.git",
 				LatestVersion: "4.5.6",
 				Version:       "",
-				Managed:       "",
+				Channel:       "",
 			},
 		}
 
@@ -98,15 +98,15 @@ func Test_ManagedModules(t *testing.T) {
 		expectedResult := moduleMap{
 			"module1": row{
 				Name:    "module1",
-				Managed: "True",
+				Channel: "fast",
 			},
 			"module2": row{
 				Name:    "module2",
-				Managed: "True",
+				Channel: "fast",
 			},
 			"module3": row{
 				Name:    "module3",
-				Managed: "True",
+				Channel: "regular",
 			},
 		}
 
@@ -249,16 +249,19 @@ func fixTestKyma() *unstructured.Unstructured {
 			"name": "default",
 			"namespace": "kyma-system"
 		  },
-		  "spec": {
+		  "status": {
 			"modules": [
 			  {
-				"name": "module1"
+				"name": "module1",
+				"channel": "fast"
 			  },
 			  {
-				"name": "module3"
+				"name": "module3",
+				"channel": "regular"
 			  },
 			  {
-				"name": "module2"
+				"name": "module2",
+				"channel": "fast"
 			  }
 			]
 		  }

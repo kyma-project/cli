@@ -26,7 +26,7 @@ type row struct {
 	Repository    string
 	LatestVersion string
 	Version       string
-	Managed       string
+	Channel       string
 }
 
 type moduleMap map[string]row
@@ -116,23 +116,24 @@ func decodeCommunityModulesResponse(err error, resp *http.Response, modules Modu
 
 // ManagedModules returns a map of all managed modules from the cluster
 func ManagedModules(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) (moduleMap, clierror.Error) {
-	moduleNames, err := getManagedList(client, cfg)
+	modules, err := getManagedList(client, cfg)
 	if err != nil {
 		return nil, clierror.WrapE(err, clierror.New("while getting managed modules"))
 	}
 
 	managed := make(moduleMap)
-	for _, name := range moduleNames {
-		managed[name] = row{
-			Name:    name,
-			Managed: "True",
+	for _, module := range modules {
+		managed[module.Name] = row{
+			Name:    module.Name,
+			Channel: module.Channel,
+			Version: module.Version,
 		}
 	}
 	return managed, nil
 }
 
 // getManagedList gets a list of all managed modules from the Kyma CR
-func getManagedList(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) ([]string, clierror.Error) {
+func getManagedList(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) ([]kyma.ModuleStatus, clierror.Error) {
 	resp, err := kyma.GetDefaultKyma(cfg.Ctx, client.KubeClient)
 	if err != nil && !errors.IsNotFound(err) {
 		return nil, clierror.Wrap(err, clierror.New("while getting Kyma CR"))
@@ -141,27 +142,22 @@ func getManagedList(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig)
 		return nil, nil
 	}
 
-	moduleNames, err := decodeKymaCRResponse(resp)
+	modules, err := decodeKymaCRResponse(resp)
 	if err != nil {
 		return nil, clierror.Wrap(err, clierror.New("while getting module names from CR"))
 	}
-	return moduleNames, nil
+	return modules, nil
 }
 
-// decodeKymaCRResponse interprets the response and returns a list of managed modules names
-func decodeKymaCRResponse(unstruct *unstructured.Unstructured) ([]string, error) {
-	var moduleNames []string
-
+// decodeKymaCRResponse interprets the response and returns a list of managed modules
+func decodeKymaCRResponse(unstruct *unstructured.Unstructured) ([]kyma.ModuleStatus, error) {
 	kyma := &kyma.Kyma{}
 	err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstruct.Object, kyma)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, module := range kyma.Spec.Modules {
-		moduleNames = append(moduleNames, module.Name)
-	}
-	return moduleNames, nil
+	return kyma.Status.Modules, nil
 }
 
 // InstalledModules returns a map of all installed modules from the cluster, regardless whether they are managed or not
