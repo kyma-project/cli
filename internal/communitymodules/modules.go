@@ -126,6 +126,7 @@ func ManagedModules(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig)
 		managed[module.Name] = row{
 			Name:    module.Name,
 			Channel: module.Channel,
+			Version: module.Version,
 		}
 	}
 	return managed, nil

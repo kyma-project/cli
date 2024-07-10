@@ -24,8 +24,8 @@ var (
 		RowConverter: func(r row) []string { return []string{r.Name, r.Version} },
 	}
 	ManagedTableInfo = TableInfo{
-		Header:       []string{"NAME"},
-		RowConverter: func(r row) []string { return []string{r.Name} },
+		Header:       []string{"NAME", "VERSION", "CHANNEL"},
+		RowConverter: func(r row) []string { return []string{r.Name, r.Version, r.Channel} },
 	}
 	CatalogTableInfo = TableInfo{
 		Header:       []string{"NAME", "REPOSITORY", "LATEST VERSION"},
