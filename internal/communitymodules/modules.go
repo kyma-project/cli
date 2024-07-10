@@ -8,6 +8,8 @@ import (
 	"slices"
 	"strings"
 
+	"golang.org/x/mod/semver"
+
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/kyma"
