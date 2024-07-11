@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/kyma-project/cli.v3/internal/kube"
 	kube_fake "github.com/kyma-project/cli.v3/internal/kube/fake"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -58,6 +57,84 @@ func TestGetDefaultKyma(t *testing.T) {
 	})
 }
 
+func TestUpdateDefaultKyma(t *testing.T) {
+	t.Run("update kyma", func(t *testing.T) {
+		scheme := runtime.NewScheme()
+		scheme.AddKnownTypes(GVRKyma.GroupVersion())
+		kubeClient := &kube_fake.FakeKubeClient{
+			TestDynamicInterface: dynamic_fake.NewSimpleDynamicClient(scheme, fixDefaultKyma()),
+		}
+
+		expectedKyma := &Kyma{
+			TypeMeta: v1.TypeMeta{
+				APIVersion: "operator.kyma-project.io/v1beta2",
+				Kind:       "Kyma",
+			},
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "default",
+				Namespace: "kyma-system",
+			},
+			Spec: KymaSpec{
+				Channel: "fast",
+				Modules: []Module{
+					{
+						Name:    "test-module",
+						Channel: "regular",
+					},
+					{
+						Name: "another-test-module",
+					},
+				},
+			},
+		}
+
+		err := UpdateDefaultKyma(context.Background(), kubeClient, expectedKyma)
+		require.NoError(t, err)
+
+		u, err := kubeClient.Dynamic().Resource(GVRKyma).Namespace("kyma-system").Get(context.Background(), "default", v1.GetOptions{})
+		require.NoError(t, err)
+
+		kyma := &Kyma{}
+		err = runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, kyma)
+		require.NoError(t, err)
+		require.Equal(t, expectedKyma, kyma)
+	})
+
+	t.Run("kyma not found", func(t *testing.T) {
+		scheme := runtime.NewScheme()
+		scheme.AddKnownTypes(GVRKyma.GroupVersion())
+		kubeClient := &kube_fake.FakeKubeClient{
+			TestDynamicInterface: dynamic_fake.NewSimpleDynamicClient(scheme),
+		}
+
+		expectedKyma := &Kyma{
+			TypeMeta: v1.TypeMeta{
+				APIVersion: "operator.kyma-project.io/v1beta2",
+				Kind:       "Kyma",
+			},
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "default",
+				Namespace: "kyma-system",
+			},
+			Spec: KymaSpec{
+				Channel: "fast",
+				Modules: []Module{
+					{
+						Name:    "test-module",
+						Channel: "regular",
+					},
+					{
+						Name: "another-test-module",
+					},
+				},
+			},
+		}
+
+		err := UpdateDefaultKyma(context.Background(), kubeClient, expectedKyma)
+		require.ErrorContains(t, err, "not found")
+	})
+}
+
 func fixDefaultKyma() *unstructured.Unstructured {
 	return &unstructured.Unstructured{
 		Object: map[string]interface{}{
@@ -76,27 +153,5 @@ func fixDefaultKyma() *unstructured.Unstructured {
 				},
 			},
 		},
-	}
-}
-
-func TestUpdateDefaultKyma(t *testing.T) {
-	type args struct {
-		ctx    context.Context
-		client kube.Client
-		obj    *Kyma
-	}
-	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := UpdateDefaultKyma(tt.args.ctx, tt.args.client, tt.args.obj); (err != nil) != tt.wantErr {
-				t.Errorf("UpdateDefaultKyma() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
 	}
 }
