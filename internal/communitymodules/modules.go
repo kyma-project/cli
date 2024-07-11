@@ -15,8 +15,6 @@ import (
 	v1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 const URL = "https://raw.githubusercontent.com/kyma-project/community-modules/main/model.json"
@@ -134,27 +132,12 @@ func ManagedModules(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig)
 
 // getManagedList gets a list of all managed modules from the Kyma CR
 func getManagedList(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) ([]kyma.ModuleStatus, clierror.Error) {
-	resp, err := kyma.GetDefaultKyma(cfg.Ctx, client.KubeClient)
+	kyma, err := kyma.GetDefaultKyma(cfg.Ctx, client.KubeClient)
 	if err != nil && !errors.IsNotFound(err) {
 		return nil, clierror.Wrap(err, clierror.New("while getting Kyma CR"))
 	}
 	if errors.IsNotFound(err) {
 		return nil, nil
-	}
-
-	modules, err := decodeKymaCRResponse(resp)
-	if err != nil {
-		return nil, clierror.Wrap(err, clierror.New("while getting module names from CR"))
-	}
-	return modules, nil
-}
-
-// decodeKymaCRResponse interprets the response and returns a list of managed modules
-func decodeKymaCRResponse(unstruct *unstructured.Unstructured) ([]kyma.ModuleStatus, error) {
-	kyma := &kyma.Kyma{}
-	err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstruct.Object, kyma)
-	if err != nil {
-		return nil, err
 	}
 
 	return kyma.Status.Modules, nil
