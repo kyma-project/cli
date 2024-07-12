@@ -41,12 +41,20 @@ type ServiceInstance struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 	Spec              ServiceInstanceSpec `json:"spec,omitempty"`
+	Status            CommonStatus        `json:"status"`
 }
 
 type ServiceBinding struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 	Spec              ServiceBindingSpec `json:"spec,omitempty"`
+	Status            CommonStatus       `json:"status"`
+}
+
+type CommonStatus struct {
+	Conditions []metav1.Condition
+	Ready      string
+	InstanceID string
 }
 
 type ServiceInstanceSpec struct {
