@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	kube_fake "github.com/kyma-project/cli.v3/internal/kube/fake"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -16,9 +15,7 @@ func TestGetDefaultKyma(t *testing.T) {
 	t.Run("get Kyma from the cluster", func(t *testing.T) {
 		scheme := runtime.NewScheme()
 		scheme.AddKnownTypes(GVRKyma.GroupVersion())
-		kubeClient := &kube_fake.FakeKubeClient{
-			TestDynamicInterface: dynamic_fake.NewSimpleDynamicClient(scheme, fixDefaultKyma()),
-		}
+		client := NewClient(dynamic_fake.NewSimpleDynamicClient(scheme, fixDefaultKyma()))
 
 		expectedKyma := &Kyma{
 			TypeMeta: v1.TypeMeta{
@@ -39,7 +36,7 @@ func TestGetDefaultKyma(t *testing.T) {
 			},
 		}
 
-		kyma, err := GetDefaultKyma(context.Background(), kubeClient)
+		kyma, err := client.GetDefaultKyma(context.Background())
 		require.NoError(t, err)
 		require.Equal(t, expectedKyma, kyma)
 	})
@@ -47,11 +44,9 @@ func TestGetDefaultKyma(t *testing.T) {
 	t.Run("kyma not found", func(t *testing.T) {
 		scheme := runtime.NewScheme()
 		scheme.AddKnownTypes(GVRKyma.GroupVersion())
-		kubeClient := &kube_fake.FakeKubeClient{
-			TestDynamicInterface: dynamic_fake.NewSimpleDynamicClient(scheme),
-		}
+		client := NewClient(dynamic_fake.NewSimpleDynamicClient(scheme))
 
-		kyma, err := GetDefaultKyma(context.Background(), kubeClient)
+		kyma, err := client.GetDefaultKyma(context.Background())
 		require.ErrorContains(t, err, "not found")
 		require.Nil(t, kyma)
 	})
@@ -61,9 +56,8 @@ func TestUpdateDefaultKyma(t *testing.T) {
 	t.Run("update kyma", func(t *testing.T) {
 		scheme := runtime.NewScheme()
 		scheme.AddKnownTypes(GVRKyma.GroupVersion())
-		kubeClient := &kube_fake.FakeKubeClient{
-			TestDynamicInterface: dynamic_fake.NewSimpleDynamicClient(scheme, fixDefaultKyma()),
-		}
+		dynamic := dynamic_fake.NewSimpleDynamicClient(scheme, fixDefaultKyma())
+		client := NewClient(dynamic)
 
 		expectedKyma := &Kyma{
 			TypeMeta: v1.TypeMeta{
@@ -88,10 +82,10 @@ func TestUpdateDefaultKyma(t *testing.T) {
 			},
 		}
 
-		err := UpdateDefaultKyma(context.Background(), kubeClient, expectedKyma)
+		err := client.UpdateDefaultKyma(context.Background(), expectedKyma)
 		require.NoError(t, err)
 
-		u, err := kubeClient.Dynamic().Resource(GVRKyma).Namespace("kyma-system").Get(context.Background(), "default", v1.GetOptions{})
+		u, err := dynamic.Resource(GVRKyma).Namespace("kyma-system").Get(context.Background(), "default", v1.GetOptions{})
 		require.NoError(t, err)
 
 		kyma := &Kyma{}
@@ -103,9 +97,7 @@ func TestUpdateDefaultKyma(t *testing.T) {
 	t.Run("kyma not found", func(t *testing.T) {
 		scheme := runtime.NewScheme()
 		scheme.AddKnownTypes(GVRKyma.GroupVersion())
-		kubeClient := &kube_fake.FakeKubeClient{
-			TestDynamicInterface: dynamic_fake.NewSimpleDynamicClient(scheme),
-		}
+		client := NewClient(dynamic_fake.NewSimpleDynamicClient(scheme))
 
 		expectedKyma := &Kyma{
 			TypeMeta: v1.TypeMeta{
@@ -130,7 +122,7 @@ func TestUpdateDefaultKyma(t *testing.T) {
 			},
 		}
 
-		err := UpdateDefaultKyma(context.Background(), kubeClient, expectedKyma)
+		err := client.UpdateDefaultKyma(context.Background(), expectedKyma)
 		require.ErrorContains(t, err, "not found")
 	})
 }

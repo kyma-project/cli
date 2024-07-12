@@ -42,14 +42,14 @@ func NewManagedCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 }
 
 func runRemoveManaged(config *managedConfig) error {
-	kymaCR, err := kyma.GetDefaultKyma(config.Ctx, config.KubeClient)
+	kymaCR, err := config.KubeClient.Kyma().GetDefaultKyma(config.Ctx)
 	if err != nil {
 		return err
 	}
 
 	kymaCR = disableModule(kymaCR, config.module)
 
-	return kyma.UpdateDefaultKyma(config.Ctx, config.KubeClient, kymaCR)
+	return config.KubeClient.Kyma().UpdateDefaultKyma(config.Ctx, kymaCR)
 }
 
 func disableModule(kymaCR *kyma.Kyma, moduleName string) *kyma.Kyma {

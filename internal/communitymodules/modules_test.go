@@ -10,6 +10,7 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	kube_fake "github.com/kyma-project/cli.v3/internal/kube/fake"
+	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/apps/v1"
@@ -116,7 +117,7 @@ func Test_ManagedModules(t *testing.T) {
 		dynamic := dynamic_fake.NewSimpleDynamicClient(scheme, testKyma)
 		kubeClient := &kube_fake.FakeKubeClient{
 			TestKubernetesInterface: nil,
-			TestDynamicInterface:    dynamic,
+			TestKymaInterface:       kyma.NewClient(dynamic),
 		}
 
 		kymaConfig := cmdcommon.KymaConfig{
@@ -140,7 +141,7 @@ func Test_ManagedModules(t *testing.T) {
 		dynamic := dynamic_fake.NewSimpleDynamicClient(scheme)
 		kubeClient := &kube_fake.FakeKubeClient{
 			TestKubernetesInterface: nil,
-			TestDynamicInterface:    dynamic,
+			TestKymaInterface:       kyma.NewClient(dynamic),
 		}
 
 		kymaConfig := cmdcommon.KymaConfig{

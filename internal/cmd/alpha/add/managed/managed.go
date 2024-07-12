@@ -42,14 +42,14 @@ func NewManagedCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 }
 
 func runAddManaged(config *managedConfig) error {
-	kymaCR, err := kyma.GetDefaultKyma(config.Ctx, config.KubeClient)
+	kymaCR, err := config.KubeClient.Kyma().GetDefaultKyma(config.Ctx)
 	if err != nil {
 		return err
 	}
 
 	kymaCR = enableModule(kymaCR, config.module, config.channel)
 
-	return kyma.UpdateDefaultKyma(config.Ctx, config.KubeClient, kymaCR)
+	return config.KubeClient.Kyma().UpdateDefaultKyma(config.Ctx, kymaCR)
 }
 
 func enableModule(kymaCR *kyma.Kyma, moduleName, moduleChannel string) *kyma.Kyma {

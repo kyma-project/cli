@@ -132,7 +132,7 @@ func ManagedModules(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig)
 
 // getManagedList gets a list of all managed modules from the Kyma CR
 func getManagedList(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) ([]kyma.ModuleStatus, clierror.Error) {
-	kyma, err := kyma.GetDefaultKyma(cfg.Ctx, client.KubeClient)
+	kyma, err := client.KubeClient.Kyma().GetDefaultKyma(cfg.Ctx)
 	if err != nil && !errors.IsNotFound(err) {
 		return nil, clierror.Wrap(err, clierror.New("while getting Kyma CR"))
 	}
