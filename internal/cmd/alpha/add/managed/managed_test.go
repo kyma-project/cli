@@ -5,41 +5,37 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/kyma-project/cli.v3/internal/kyma"
 	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 func Test_updateCR(t *testing.T) {
 	t.Parallel()
-	type args struct {
-	}
 	tests := []struct {
 		name       string
-		kymaCR     map[string]interface{}
+		kymaCR     *kyma.Kyma
 		moduleName string
 		channel    string
-		want       map[string]interface{}
+		want       *kyma.Kyma
 	}{
 		{
 			name:       "unchanged modules list",
 			moduleName: "module",
 			channel:    "",
-			kymaCR: map[string]interface{}{
-				"keep": "unchanged",
-				"spec": map[string]interface{}{
-					"modules": []interface{}{
-						map[string]interface{}{
-							"name": "module",
+			kymaCR: &kyma.Kyma{
+				Spec: kyma.KymaSpec{
+					Modules: []kyma.Module{
+						{
+							Name: "module",
 						},
 					},
 				},
 			},
-			want: map[string]interface{}{
-				"keep": "unchanged",
-				"spec": map[string]interface{}{
-					"modules": []interface{}{
-						map[string]interface{}{
-							"name": "module",
+			want: &kyma.Kyma{
+				Spec: kyma.KymaSpec{
+					Modules: []kyma.Module{
+						{
+							Name: "module",
 						},
 					},
 				},
@@ -49,25 +45,23 @@ func Test_updateCR(t *testing.T) {
 			name:       "added module",
 			moduleName: "module",
 			channel:    "",
-			kymaCR: map[string]interface{}{
-				"keep": "unchanged",
-				"spec": map[string]interface{}{
-					"modules": []interface{}{
-						map[string]interface{}{
-							"name": "istio",
+			kymaCR: &kyma.Kyma{
+				Spec: kyma.KymaSpec{
+					Modules: []kyma.Module{
+						{
+							Name: "istio",
 						},
 					},
 				},
 			},
-			want: map[string]interface{}{
-				"keep": "unchanged",
-				"spec": map[string]interface{}{
-					"modules": []interface{}{
-						map[string]interface{}{
-							"name": "istio",
+			want: &kyma.Kyma{
+				Spec: kyma.KymaSpec{
+					Modules: []kyma.Module{
+						{
+							Name: "istio",
 						},
-						map[string]interface{}{
-							"name": "module",
+						{
+							Name: "module",
 						},
 					},
 				},
@@ -77,26 +71,24 @@ func Test_updateCR(t *testing.T) {
 			name:       "added module with channel",
 			moduleName: "module",
 			channel:    "channel",
-			kymaCR: map[string]interface{}{
-				"keep": "unchanged",
-				"spec": map[string]interface{}{
-					"modules": []interface{}{
-						map[string]interface{}{
-							"name": "istio",
+			kymaCR: &kyma.Kyma{
+				Spec: kyma.KymaSpec{
+					Modules: []kyma.Module{
+						{
+							Name: "istio",
 						},
 					},
 				},
 			},
-			want: map[string]interface{}{
-				"keep": "unchanged",
-				"spec": map[string]interface{}{
-					"modules": []interface{}{
-						map[string]interface{}{
-							"name": "istio",
+			want: &kyma.Kyma{
+				Spec: kyma.KymaSpec{
+					Modules: []kyma.Module{
+						{
+							Name: "istio",
 						},
-						map[string]interface{}{
-							"name":    "module",
-							"channel": "channel",
+						{
+							Name:    "module",
+							Channel: "channel",
 						},
 					},
 				},
@@ -106,23 +98,21 @@ func Test_updateCR(t *testing.T) {
 			name:       "added channel to existing module",
 			moduleName: "module",
 			channel:    "channel",
-			kymaCR: map[string]interface{}{
-				"keep": "unchanged",
-				"spec": map[string]interface{}{
-					"modules": []interface{}{
-						map[string]interface{}{
-							"name": "module",
+			kymaCR: &kyma.Kyma{
+				Spec: kyma.KymaSpec{
+					Modules: []kyma.Module{
+						{
+							Name: "module",
 						},
 					},
 				},
 			},
-			want: map[string]interface{}{
-				"keep": "unchanged",
-				"spec": map[string]interface{}{
-					"modules": []interface{}{
-						map[string]interface{}{
-							"name":    "module",
-							"channel": "channel",
+			want: &kyma.Kyma{
+				Spec: kyma.KymaSpec{
+					Modules: []kyma.Module{
+						{
+							Name:    "module",
+							Channel: "channel",
 						},
 					},
 				},
@@ -132,23 +122,21 @@ func Test_updateCR(t *testing.T) {
 			name:       "removed channel from existing module",
 			moduleName: "module",
 			channel:    "",
-			kymaCR: map[string]interface{}{
-				"keep": "unchanged",
-				"spec": map[string]interface{}{
-					"modules": []interface{}{
-						map[string]interface{}{
-							"name":    "module",
-							"channel": "channel",
+			kymaCR: &kyma.Kyma{
+				Spec: kyma.KymaSpec{
+					Modules: []kyma.Module{
+						{
+							Name:    "module",
+							Channel: "channel",
 						},
 					},
 				},
 			},
-			want: map[string]interface{}{
-				"keep": "unchanged",
-				"spec": map[string]interface{}{
-					"modules": []interface{}{
-						map[string]interface{}{
-							"name": "module",
+			want: &kyma.Kyma{
+				Spec: kyma.KymaSpec{
+					Modules: []kyma.Module{
+						{
+							Name: "module",
 						},
 					},
 				},
@@ -156,12 +144,12 @@ func Test_updateCR(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		kymaCR := &unstructured.Unstructured{Object: tt.kymaCR}
+		kymaCR := tt.kymaCR
 		moduleName := tt.moduleName
 		moduleChannel := tt.channel
-		want := &unstructured.Unstructured{Object: tt.want}
+		want := tt.want
 		t.Run(tt.name, func(t *testing.T) {
-			got := updateCR(kymaCR, moduleName, moduleChannel)
+			got := enableModule(kymaCR, moduleName, moduleChannel)
 			gotBytes, err := json.Marshal(got)
 			require.NoError(t, err)
 			wantBytes, err := json.Marshal(want)

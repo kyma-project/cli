@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/kyma-project/cli.v3/internal/kyma"
 	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 func Test_updateCR(t *testing.T) {
@@ -15,29 +15,27 @@ func Test_updateCR(t *testing.T) {
 	}
 	tests := []struct {
 		name       string
-		kymaCR     map[string]interface{}
+		kymaCR     *kyma.Kyma
 		moduleName string
-		want       map[string]interface{}
+		want       *kyma.Kyma
 	}{
 		{
 			name: "unchanged modules list",
-			kymaCR: map[string]interface{}{
-				"keep": "unchanged",
-				"spec": map[string]interface{}{
-					"modules": []interface{}{
-						map[string]interface{}{
-							"name": "istio",
+			kymaCR: &kyma.Kyma{
+				Spec: kyma.KymaSpec{
+					Modules: []kyma.Module{
+						{
+							Name: "istio",
 						},
 					},
 				},
 			},
 			moduleName: "module",
-			want: map[string]interface{}{
-				"keep": "unchanged",
-				"spec": map[string]interface{}{
-					"modules": []interface{}{
-						map[string]interface{}{
-							"name": "istio",
+			want: &kyma.Kyma{
+				Spec: kyma.KymaSpec{
+					Modules: []kyma.Module{
+						{
+							Name: "istio",
 						},
 					},
 				},
@@ -45,26 +43,24 @@ func Test_updateCR(t *testing.T) {
 		},
 		{
 			name: "changed modules list",
-			kymaCR: map[string]interface{}{
-				"keep": "unchanged",
-				"spec": map[string]interface{}{
-					"modules": []interface{}{
-						map[string]interface{}{
-							"name": "istio",
+			kymaCR: &kyma.Kyma{
+				Spec: kyma.KymaSpec{
+					Modules: []kyma.Module{
+						{
+							Name: "istio",
 						},
-						map[string]interface{}{
-							"name": "module",
+						{
+							Name: "module",
 						},
 					},
 				},
 			},
 			moduleName: "module",
-			want: map[string]interface{}{
-				"keep": "unchanged",
-				"spec": map[string]interface{}{
-					"modules": []interface{}{
-						map[string]interface{}{
-							"name": "istio",
+			want: &kyma.Kyma{
+				Spec: kyma.KymaSpec{
+					Modules: []kyma.Module{
+						{
+							Name: "istio",
 						},
 					},
 				},
@@ -72,11 +68,11 @@ func Test_updateCR(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		kymaCR := &unstructured.Unstructured{Object: tt.kymaCR}
+		kymaCR := tt.kymaCR
 		moduleName := tt.moduleName
-		want := &unstructured.Unstructured{Object: tt.want}
+		want := tt.want
 		t.Run(tt.name, func(t *testing.T) {
-			got := updateCR(kymaCR, moduleName)
+			got := disableModule(kymaCR, moduleName)
 			gotBytes, err := json.Marshal(got)
 			require.NoError(t, err)
 			wantBytes, err := json.Marshal(want)

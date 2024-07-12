@@ -5,7 +5,6 @@ import (
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/kyma"
 	"github.com/spf13/cobra"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 type managedConfig struct {
@@ -48,38 +47,24 @@ func runAddManaged(config *managedConfig) error {
 		return err
 	}
 
-	kymaCR = updateCR(kymaCR, config.module, config.channel)
+	kymaCR = enableModule(kymaCR, config.module, config.channel)
 
-	_, err = kyma.UpdateDefaultKyma(config.Ctx, config.KubeClient, kymaCR)
-	return err
+	return kyma.UpdateDefaultKyma(config.Ctx, config.KubeClient, kymaCR)
 }
 
-func updateCR(kymaCR *unstructured.Unstructured, moduleName, moduleChannel string) *unstructured.Unstructured {
-	newCR := kymaCR.DeepCopy()
-	spec := newCR.Object["spec"].(map[string]interface{})
-	modules := make([]kyma.Module, 0)
-	for _, m := range spec["modules"].([]interface{}) {
-		modules = append(modules, kyma.ModuleFromInterface(m.(map[string]interface{})))
-	}
-
-	moduleExists := false
-	for i, m := range modules {
+func enableModule(kymaCR *kyma.Kyma, moduleName, moduleChannel string) *kyma.Kyma {
+	for i, m := range kymaCR.Spec.Modules {
 		if m.Name == moduleName {
 			// module already exists, update channel
-			modules[i].Channel = moduleChannel
-			moduleExists = true
-			break
+			kymaCR.Spec.Modules[i].Channel = moduleChannel
+			return kymaCR
 		}
 	}
 
-	if !moduleExists {
-		modules = append(modules, kyma.Module{
-			Name:    moduleName,
-			Channel: moduleChannel,
-		})
-	}
+	kymaCR.Spec.Modules = append(kymaCR.Spec.Modules, kyma.Module{
+		Name:    moduleName,
+		Channel: moduleChannel,
+	})
 
-	spec["modules"] = modules
-
-	return newCR
+	return kymaCR
 }
