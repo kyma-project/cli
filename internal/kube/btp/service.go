@@ -1,10 +1,10 @@
-package kube
+package btp
 
 import (
 	"context"
 	"errors"
 
-	"github.com/kyma-project/cli.v3/internal/btp/operator"
+	"github.com/kyma-project/cli.v3/internal/kube"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -61,14 +61,14 @@ func isConditionTrue(conditions []metav1.Condition, conditionType string) bool {
 	return condition != nil && condition.Status == metav1.ConditionTrue
 }
 
-func GetServiceInstance(kubeClient Client, ctx context.Context, namespace, name string) (*unstructured.Unstructured, error) {
-	return kubeClient.Dynamic().Resource(operator.GVRServiceInstance).
+func GetServiceInstance(kubeClient kube.Client, ctx context.Context, namespace, name string) (*unstructured.Unstructured, error) {
+	return kubeClient.Dynamic().Resource(GVRServiceInstance).
 		Namespace(namespace).
 		Get(ctx, name, metav1.GetOptions{})
 }
 
-func GetServiceBinding(kubeClient Client, ctx context.Context, namespace, name string) (*unstructured.Unstructured, error) {
-	return kubeClient.Dynamic().Resource(operator.GVRServiceBinding).
+func GetServiceBinding(kubeClient kube.Client, ctx context.Context, namespace, name string) (*unstructured.Unstructured, error) {
+	return kubeClient.Dynamic().Resource(GVRServiceBinding).
 		Namespace(namespace).
 		Get(ctx, name, metav1.GetOptions{})
 }
@@ -103,7 +103,7 @@ func isResourceReady(instance *unstructured.Unstructured) (bool, error) {
 	return ready, nil
 }
 
-func IsBindingReady(kubeClient Client, ctx context.Context, namespace, name string) wait.ConditionWithContextFunc {
+func IsBindingReady(kubeClient kube.Client, ctx context.Context, namespace, name string) wait.ConditionWithContextFunc {
 	return func(_ context.Context) (bool, error) {
 		instance, err := GetServiceBinding(kubeClient, ctx, namespace, name)
 		if err != nil {
@@ -113,7 +113,7 @@ func IsBindingReady(kubeClient Client, ctx context.Context, namespace, name stri
 	}
 }
 
-func IsInstanceReady(kubeClient Client, ctx context.Context, namespace, name string) wait.ConditionWithContextFunc {
+func IsInstanceReady(kubeClient kube.Client, ctx context.Context, namespace, name string) wait.ConditionWithContextFunc {
 	return func(_ context.Context) (bool, error) {
 		instance, err := GetServiceInstance(kubeClient, ctx, namespace, name)
 		if err != nil {

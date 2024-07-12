@@ -3,9 +3,9 @@ package hana
 import (
 	"fmt"
 
-	"github.com/kyma-project/cli.v3/internal/btp/operator"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/kube/btp"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -78,21 +78,21 @@ func runProvision(config *hanaProvisionConfig) clierror.Error {
 }
 
 func createHanaInstance(config *hanaProvisionConfig) clierror.Error {
-	_, err := config.KubeClient.Dynamic().Resource(operator.GVRServiceInstance).
+	_, err := config.KubeClient.Dynamic().Resource(btp.GVRServiceInstance).
 		Namespace(config.namespace).
 		Create(config.Ctx, hanaInstance(config), metav1.CreateOptions{})
 	return handleProvisionResponse(err, "Hana instance", config.namespace, config.name)
 }
 
 func createHanaBinding(config *hanaProvisionConfig) clierror.Error {
-	_, err := config.KubeClient.Dynamic().Resource(operator.GVRServiceBinding).
+	_, err := config.KubeClient.Dynamic().Resource(btp.GVRServiceBinding).
 		Namespace(config.namespace).
 		Create(config.Ctx, hanaBinding(config), metav1.CreateOptions{})
 	return handleProvisionResponse(err, "Hana binding", config.namespace, config.name)
 }
 
 func createHanaBindingURL(config *hanaProvisionConfig) clierror.Error {
-	_, err := config.KubeClient.Dynamic().Resource(operator.GVRServiceBinding).
+	_, err := config.KubeClient.Dynamic().Resource(btp.GVRServiceBinding).
 		Namespace(config.namespace).
 		Create(config.Ctx, hanaBindingURL(config), metav1.CreateOptions{})
 	return handleProvisionResponse(err, "Hana URL binding", config.namespace, hanaBindingURLName(config.name))

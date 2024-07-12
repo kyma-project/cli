@@ -3,7 +3,7 @@ package managed
 import (
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
-	"github.com/kyma-project/cli.v3/internal/kyma"
+	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"github.com/spf13/cobra"
 )
 

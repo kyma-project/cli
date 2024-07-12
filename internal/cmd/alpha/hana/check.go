@@ -7,7 +7,7 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
-	"github.com/kyma-project/cli.v3/internal/kube"
+	"github.com/kyma-project/cli.v3/internal/kube/btp"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -72,18 +72,18 @@ func runCheck(config *hanaCheckConfig) clierror.Error {
 }
 
 func checkHanaInstance(config *hanaCheckConfig) clierror.Error {
-	u, err := kube.GetServiceInstance(config.KubeClient, config.Ctx, config.namespace, config.name)
+	u, err := btp.GetServiceInstance(config.KubeClient, config.Ctx, config.namespace, config.name)
 	return handleCheckResponse(u, err, "Hana instance", config.namespace, config.name)
 }
 
 func checkHanaBinding(config *hanaCheckConfig) clierror.Error {
-	u, err := kube.GetServiceBinding(config.KubeClient, config.Ctx, config.namespace, config.name)
+	u, err := btp.GetServiceBinding(config.KubeClient, config.Ctx, config.namespace, config.name)
 	return handleCheckResponse(u, err, "Hana binding", config.namespace, config.name)
 }
 
 func checkHanaBindingURL(config *hanaCheckConfig) clierror.Error {
 	urlName := hanaBindingURLName(config.name)
-	u, err := kube.GetServiceBinding(config.KubeClient, config.Ctx, config.namespace, urlName)
+	u, err := btp.GetServiceBinding(config.KubeClient, config.Ctx, config.namespace, urlName)
 	return handleCheckResponse(u, err, "Hana URL binding", config.namespace, urlName)
 }
 
@@ -94,7 +94,7 @@ func handleCheckResponse(u *unstructured.Unstructured, err error, printedName, n
 		)
 	}
 
-	ready, error := kube.IsReady(u)
+	ready, error := btp.IsReady(u)
 	if error != nil {
 		return clierror.Wrap(err,
 			clierror.New("failed to check readiness of Hana resources"),

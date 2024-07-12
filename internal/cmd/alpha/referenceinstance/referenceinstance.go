@@ -1,10 +1,10 @@
 package referenceinstance
 
 import (
-	"github.com/kyma-project/cli.v3/internal/btp/operator"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/kube"
+	"github.com/kyma-project/cli.v3/internal/kube/btp"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -67,17 +67,17 @@ func NewReferenceInstanceCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 func runReferenceInstance(config referenceInstanceConfig) error {
 	requestData := fillRequestData(config)
-	unstructuredObj, err := kube.ToUnstructured(requestData, operator.GVKServiceInstance)
+	unstructuredObj, err := kube.ToUnstructured(requestData, btp.GVKServiceInstance)
 	if err != nil {
 		return err
 	}
 
-	_, err = config.KubeClient.Dynamic().Resource(operator.GVRServiceInstance).Namespace(config.namespace).Create(config.Ctx, unstructuredObj, metav1.CreateOptions{})
+	_, err = config.KubeClient.Dynamic().Resource(btp.GVRServiceInstance).Namespace(config.namespace).Create(config.Ctx, unstructuredObj, metav1.CreateOptions{})
 	return err
 }
 
-func fillRequestData(config referenceInstanceConfig) kube.ServiceInstance {
-	requestData := kube.ServiceInstance{
+func fillRequestData(config referenceInstanceConfig) btp.ServiceInstance {
+	requestData := btp.ServiceInstance{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "services.cloud.sap.com/v1",
 			Kind:       "ServiceInstance",
@@ -89,7 +89,7 @@ func fillRequestData(config referenceInstanceConfig) kube.ServiceInstance {
 				"app.kubernetes.io/name": config.referenceName,
 			},
 		},
-		Spec: kube.ServiceInstanceSpec{
+		Spec: btp.ServiceInstanceSpec{
 			Parameters: KubernetesResourceSpecParameters{
 				InstanceID: config.instanceID,
 				Selectors: SpecSelectors{
