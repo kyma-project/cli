@@ -50,10 +50,11 @@ type ServiceBinding struct {
 }
 
 type ServiceInstanceSpec struct {
-	Parameters           interface{} `json:"parameters,omitempty"`
-	OfferingName         string      `json:"serviceOfferingName,omitempty"`
-	PlanName             string      `json:"servicePlanName,omitempty"`
-	BTPCredentialsSecret string      `json:"btpAccessCredentialsSecret,omitempty"`
+	Parameters                 interface{} `json:"parameters,omitempty"`
+	ServiceOfferingName        string      `json:"serviceOfferingName,omitempty"`
+	ServicePlanName            string      `json:"servicePlanName,omitempty"`
+	BTPAccessCredentialsSecret string      `json:"btpAccessCredentialsSecret,omitempty"`
+	ExternalName               string      `json:"externalName,omitempty"`
 }
 
 type ServiceBindingSpec struct {
