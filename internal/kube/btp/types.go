@@ -42,7 +42,7 @@ type ServiceInstance struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 	Spec              ServiceInstanceSpec `json:"spec,omitempty"`
-	Status            CommonStatus        `json:"status"`
+	Status            CommonStatus        `json:"status,omitempty"`
 }
 
 type ServiceBinding struct {
@@ -53,9 +53,9 @@ type ServiceBinding struct {
 }
 
 type CommonStatus struct {
-	Conditions []metav1.Condition
-	Ready      string
-	InstanceID string
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
+	Ready      string             `json:"ready,omitempty"`
+	InstanceID string             `json:"instanceID,omitempty"`
 }
 
 type ServiceInstanceSpec struct {
