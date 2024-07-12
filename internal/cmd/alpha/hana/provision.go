@@ -5,6 +5,7 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/kube/btp"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -78,23 +79,38 @@ func runProvision(config *hanaProvisionConfig) clierror.Error {
 }
 
 func createHanaInstance(config *hanaProvisionConfig) clierror.Error {
-	_, err := config.KubeClient.Dynamic().Resource(btp.GVRServiceInstance).
+	hanaInstance, err := hanaInstance(config)
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to create Hana instance object"))
+	}
+
+	_, err = config.KubeClient.Dynamic().Resource(btp.GVRServiceInstance).
 		Namespace(config.namespace).
-		Create(config.Ctx, hanaInstance(config), metav1.CreateOptions{})
+		Create(config.Ctx, hanaInstance, metav1.CreateOptions{})
 	return handleProvisionResponse(err, "Hana instance", config.namespace, config.name)
 }
 
 func createHanaBinding(config *hanaProvisionConfig) clierror.Error {
-	_, err := config.KubeClient.Dynamic().Resource(btp.GVRServiceBinding).
+	hanaBinding, err := hanaBinding(config)
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to create Hana binding object"))
+	}
+
+	_, err = config.KubeClient.Dynamic().Resource(btp.GVRServiceBinding).
 		Namespace(config.namespace).
-		Create(config.Ctx, hanaBinding(config), metav1.CreateOptions{})
+		Create(config.Ctx, hanaBinding, metav1.CreateOptions{})
 	return handleProvisionResponse(err, "Hana binding", config.namespace, config.name)
 }
 
 func createHanaBindingURL(config *hanaProvisionConfig) clierror.Error {
-	_, err := config.KubeClient.Dynamic().Resource(btp.GVRServiceBinding).
+	hanaBindingURL, err := hanaBindingURL(config)
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to create Hana binding object"))
+	}
+
+	_, err = config.KubeClient.Dynamic().Resource(btp.GVRServiceBinding).
 		Namespace(config.namespace).
-		Create(config.Ctx, hanaBindingURL(config), metav1.CreateOptions{})
+		Create(config.Ctx, hanaBindingURL, metav1.CreateOptions{})
 	return handleProvisionResponse(err, "Hana URL binding", config.namespace, hanaBindingURLName(config.name))
 }
 
@@ -106,69 +122,75 @@ func handleProvisionResponse(err error, printedName, namespace, name string) cli
 	return clierror.Wrap(err, clierror.New("failed to provision Hana resource"))
 }
 
-func hanaInstance(config *hanaProvisionConfig) *unstructured.Unstructured {
-	return &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": "services.cloud.sap.com/v1",
-			"kind":       "ServiceInstance",
-			"metadata": map[string]interface{}{
-				"name": config.name,
-			},
-			"spec": map[string]interface{}{
-				"serviceOfferingName": "hana-cloud", // fixed
-				"servicePlanName":     config.planName,
-				"externalName":        config.name,
-				"parameters": map[string]interface{}{
-					"data": map[string]interface{}{
-						"memory":                 config.memory,
-						"vcpu":                   config.cpu,
-						"whitelistIPs":           config.whitelistIP,
-						"generateSystemPassword": true,    // TODO: manage it later
-						"edition":                "cloud", // TODO: is it necessary?
-					},
+func hanaInstance(config *hanaProvisionConfig) (*unstructured.Unstructured, error) {
+	serviceInstance := &btp.ServiceInstance{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: btp.ServicesAPIVersionV1,
+			Kind:       btp.KindServiceInstance,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: config.name,
+		},
+		Spec: btp.ServiceInstanceSpec{
+			ServiceOfferingName: "hana-cloud", // fixed
+			ServicePlanName:     config.planName,
+			ExternalName:        config.name,
+			Parameters: HanaInstanceParameters{
+				Data: HanaInstanceParametersData{
+					Memory:                 config.memory,
+					Vcpu:                   config.cpu,
+					WhitelistIPs:           config.whitelistIP,
+					GenerateSystemPassword: true,    // TODO: manage it later
+					Edition:                "cloud", // TODO: is it necessary?
 				},
 			},
 		},
 	}
+
+	return kube.ToUnstructured(serviceInstance, btp.GVKServiceInstance)
 }
 
-func hanaBinding(config *hanaProvisionConfig) *unstructured.Unstructured {
-	return &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": "services.cloud.sap.com/v1",
-			"kind":       "ServiceBinding",
-			"metadata": map[string]interface{}{
-				"name": config.name,
-			},
-			"spec": map[string]interface{}{
-				"serviceInstanceName": config.name,
-				"externalName":        config.name,
-				"secretName":          config.name,
-				"parameters": map[string]interface{}{
-					"scope":           "administration",     // fixed
-					"credential-type": "PASSWORD_GENERATED", // fixed
-				},
+func hanaBinding(config *hanaProvisionConfig) (*unstructured.Unstructured, error) {
+	serviceBinding := &btp.ServiceBinding{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: btp.ServicesAPIVersionV1,
+			Kind:       btp.KindServiceBinding,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: config.name,
+		},
+		Spec: btp.ServiceBindingSpec{
+			ServiceInstanceName: config.name,
+			ExternalName:        config.name,
+			SecretName:          config.name,
+			Parameters: HanaBindingParameters{
+				Scope:           "administration",     // fixed
+				CredentialsType: "PASSWORD_GENERATED", // fixed
 			},
 		},
 	}
+
+	return kube.ToUnstructured(serviceBinding, btp.GVKServiceBinding)
 }
 
-func hanaBindingURL(config *hanaProvisionConfig) *unstructured.Unstructured {
+func hanaBindingURL(config *hanaProvisionConfig) (*unstructured.Unstructured, error) {
 	urlName := hanaBindingURLName(config.name)
-	return &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": "services.cloud.sap.com/v1",
-			"kind":       "ServiceBinding",
-			"metadata": map[string]interface{}{
-				"name": urlName,
-			},
-			"spec": map[string]interface{}{
-				"serviceInstanceName": config.name,
-				"externalName":        urlName,
-				"secretName":          urlName,
-			},
+	serviceBinding := &btp.ServiceBinding{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: btp.ServicesAPIVersionV1,
+			Kind:       btp.KindServiceBinding,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: urlName,
+		},
+		Spec: btp.ServiceBindingSpec{
+			ServiceInstanceName: config.name,
+			ExternalName:        urlName,
+			SecretName:          urlName,
 		},
 	}
+
+	return kube.ToUnstructured(serviceBinding, btp.GVKServiceBinding)
 }
 
 func hanaBindingURLName(name string) string {

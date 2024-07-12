@@ -98,9 +98,9 @@ func fillRequestData(config referenceInstanceConfig) btp.ServiceInstance {
 					PlanNameSelector:      config.planSelector,
 				},
 			},
-			OfferingName:         config.offeringName,
-			PlanName:             "reference-instance",
-			BTPCredentialsSecret: config.btpSecretName,
+			ServiceOfferingName:        config.offeringName,
+			ServicePlanName:            "reference-instance",
+			BTPAccessCredentialsSecret: config.btpSecretName,
 		},
 	}
 	return requestData
