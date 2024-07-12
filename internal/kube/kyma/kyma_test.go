@@ -2,6 +2,8 @@ package kyma
 
 import (
 	"context"
+	"encoding/json"
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -125,6 +127,246 @@ func TestUpdateDefaultKyma(t *testing.T) {
 		err := client.UpdateDefaultKyma(context.Background(), expectedKyma)
 		require.ErrorContains(t, err, "not found")
 	})
+}
+
+func Test_disableModule(t *testing.T) {
+	t.Parallel()
+	type args struct {
+	}
+	tests := []struct {
+		name       string
+		kymaCR     *Kyma
+		moduleName string
+		want       *Kyma
+	}{
+		{
+			name: "unchanged modules list",
+			kymaCR: &Kyma{
+				Spec: KymaSpec{
+					Modules: []Module{
+						{
+							Name: "istio",
+						},
+					},
+				},
+			},
+			moduleName: "module",
+			want: &Kyma{
+				Spec: KymaSpec{
+					Modules: []Module{
+						{
+							Name: "istio",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "changed modules list",
+			kymaCR: &Kyma{
+				Spec: KymaSpec{
+					Modules: []Module{
+						{
+							Name: "istio",
+						},
+						{
+							Name: "module",
+						},
+					},
+				},
+			},
+			moduleName: "module",
+			want: &Kyma{
+				Spec: KymaSpec{
+					Modules: []Module{
+						{
+							Name: "istio",
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		kymaCR := tt.kymaCR
+		moduleName := tt.moduleName
+		want := tt.want
+		t.Run(tt.name, func(t *testing.T) {
+			got := disableModule(kymaCR, moduleName)
+			gotBytes, err := json.Marshal(got)
+			require.NoError(t, err)
+			wantBytes, err := json.Marshal(want)
+			require.NoError(t, err)
+			var gotInterface map[string]interface{}
+			var wantInterface map[string]interface{}
+			err = json.Unmarshal(gotBytes, &gotInterface)
+			require.NoError(t, err)
+			err = json.Unmarshal(wantBytes, &wantInterface)
+
+			require.NoError(t, err)
+			if !reflect.DeepEqual(gotInterface, wantInterface) {
+				t.Errorf("updateCR() = %v, want %v", gotInterface, wantInterface)
+			}
+		})
+	}
+}
+
+func Test_updateCR(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name       string
+		kymaCR     *Kyma
+		moduleName string
+		channel    string
+		want       *Kyma
+	}{
+		{
+			name:       "unchanged modules list",
+			moduleName: "module",
+			channel:    "",
+			kymaCR: &Kyma{
+				Spec: KymaSpec{
+					Modules: []Module{
+						{
+							Name: "module",
+						},
+					},
+				},
+			},
+			want: &Kyma{
+				Spec: KymaSpec{
+					Modules: []Module{
+						{
+							Name: "module",
+						},
+					},
+				},
+			},
+		},
+		{
+			name:       "added module",
+			moduleName: "module",
+			channel:    "",
+			kymaCR: &Kyma{
+				Spec: KymaSpec{
+					Modules: []Module{
+						{
+							Name: "istio",
+						},
+					},
+				},
+			},
+			want: &Kyma{
+				Spec: KymaSpec{
+					Modules: []Module{
+						{
+							Name: "istio",
+						},
+						{
+							Name: "module",
+						},
+					},
+				},
+			},
+		},
+		{
+			name:       "added module with channel",
+			moduleName: "module",
+			channel:    "channel",
+			kymaCR: &Kyma{
+				Spec: KymaSpec{
+					Modules: []Module{
+						{
+							Name: "istio",
+						},
+					},
+				},
+			},
+			want: &Kyma{
+				Spec: KymaSpec{
+					Modules: []Module{
+						{
+							Name: "istio",
+						},
+						{
+							Name:    "module",
+							Channel: "channel",
+						},
+					},
+				},
+			},
+		},
+		{
+			name:       "added channel to existing module",
+			moduleName: "module",
+			channel:    "channel",
+			kymaCR: &Kyma{
+				Spec: KymaSpec{
+					Modules: []Module{
+						{
+							Name: "module",
+						},
+					},
+				},
+			},
+			want: &Kyma{
+				Spec: KymaSpec{
+					Modules: []Module{
+						{
+							Name:    "module",
+							Channel: "channel",
+						},
+					},
+				},
+			},
+		},
+		{
+			name:       "removed channel from existing module",
+			moduleName: "module",
+			channel:    "",
+			kymaCR: &Kyma{
+				Spec: KymaSpec{
+					Modules: []Module{
+						{
+							Name:    "module",
+							Channel: "channel",
+						},
+					},
+				},
+			},
+			want: &Kyma{
+				Spec: KymaSpec{
+					Modules: []Module{
+						{
+							Name: "module",
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		kymaCR := tt.kymaCR
+		moduleName := tt.moduleName
+		moduleChannel := tt.channel
+		want := tt.want
+		t.Run(tt.name, func(t *testing.T) {
+			got := enableModule(kymaCR, moduleName, moduleChannel)
+			gotBytes, err := json.Marshal(got)
+			require.NoError(t, err)
+			wantBytes, err := json.Marshal(want)
+			require.NoError(t, err)
+			var gotInterface map[string]interface{}
+			var wantInterface map[string]interface{}
+			err = json.Unmarshal(gotBytes, &gotInterface)
+			require.NoError(t, err)
+			err = json.Unmarshal(wantBytes, &wantInterface)
+			require.NoError(t, err)
+			if !reflect.DeepEqual(gotInterface, wantInterface) {
+				t.Errorf("updateCR() = %v, want %v", gotInterface, wantInterface)
+			}
+		})
+	}
 }
 
 func fixDefaultKyma() *unstructured.Unstructured {

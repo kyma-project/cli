@@ -3,7 +3,6 @@ package managed
 import (
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
-	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"github.com/spf13/cobra"
 )
 
@@ -42,29 +41,5 @@ func NewManagedCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 }
 
 func runAddManaged(config *managedConfig) error {
-	kymaCR, err := config.KubeClient.Kyma().GetDefaultKyma(config.Ctx)
-	if err != nil {
-		return err
-	}
-
-	kymaCR = enableModule(kymaCR, config.module, config.channel)
-
-	return config.KubeClient.Kyma().UpdateDefaultKyma(config.Ctx, kymaCR)
-}
-
-func enableModule(kymaCR *kyma.Kyma, moduleName, moduleChannel string) *kyma.Kyma {
-	for i, m := range kymaCR.Spec.Modules {
-		if m.Name == moduleName {
-			// module already exists, update channel
-			kymaCR.Spec.Modules[i].Channel = moduleChannel
-			return kymaCR
-		}
-	}
-
-	kymaCR.Spec.Modules = append(kymaCR.Spec.Modules, kyma.Module{
-		Name:    moduleName,
-		Channel: moduleChannel,
-	})
-
-	return kymaCR
+	return config.KubeClient.Kyma().EnableModule(config.Ctx, config.module, config.channel)
 }
