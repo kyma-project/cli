@@ -10,7 +10,7 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
-	"github.com/kyma-project/cli.v3/internal/kyma"
+	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"golang.org/x/mod/semver"
 	v1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"

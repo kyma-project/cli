@@ -2,15 +2,16 @@ package hana
 
 import (
 	"context"
-	"github.com/kyma-project/cli.v3/internal/btp/operator"
+	"testing"
+
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/kube/btp"
 	kube_fake "github.com/kyma-project/cli.v3/internal/kube/fake"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	dynamic_fake "k8s.io/client-go/dynamic/fake"
-	"testing"
 )
 
 func Test_checkHanaInstance(t *testing.T) {
@@ -122,7 +123,7 @@ func Test_checkHanaBindingURL(t *testing.T) {
 
 func fixCheckConfig(name string, namespace string, objects ...runtime.Object) hanaCheckConfig {
 	scheme := runtime.NewScheme()
-	scheme.AddKnownTypes(operator.GVRServiceInstance.GroupVersion())
+	scheme.AddKnownTypes(btp.GVRServiceInstance.GroupVersion())
 	dynamic := dynamic_fake.NewSimpleDynamicClient(scheme, objects...)
 	config := hanaCheckConfig{
 		KymaConfig:       &cmdcommon.KymaConfig{Ctx: context.Background()},

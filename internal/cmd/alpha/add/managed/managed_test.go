@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/kyma-project/cli.v3/internal/kyma"
+	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"github.com/stretchr/testify/require"
 )
 
