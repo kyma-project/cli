@@ -10,6 +10,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/kube"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 )
@@ -156,7 +157,7 @@ func getDockerRegistry(ctx context.Context, c dynamic.Interface) (*DockerRegistr
 
 	for _, item := range list.Items {
 		var dockerRegistry DockerRegistry
-		err = kube.FromUnstructured(&item, &dockerRegistry)
+		err = runtime.DefaultUnstructuredConverter.FromUnstructured(item.Object, &dockerRegistry)
 		if err != nil {
 			return nil, err
 		}

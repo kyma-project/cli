@@ -122,7 +122,7 @@ func fixCheckConfig(name string, namespace string, objects ...runtime.Object) ha
 		KymaConfig: &cmdcommon.KymaConfig{Ctx: context.Background()},
 		KubeClientConfig: cmdcommon.KubeClientConfig{
 			KubeClient: &kube_fake.FakeKubeClient{
-				TestDynamicInterface: dynamic,
+				TestBtpInterface: btp.NewClient(dynamic),
 			},
 		},
 		name:      name,

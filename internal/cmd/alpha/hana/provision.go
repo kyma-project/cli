@@ -79,21 +79,21 @@ func runProvision(config *hanaProvisionConfig) clierror.Error {
 func createHanaInstance(config *hanaProvisionConfig) clierror.Error {
 	instance := hanaInstance(config)
 
-	err := btp.CreateServiceInstance(config.KubeClient, config.Ctx, instance)
+	err := config.KubeClient.Btp().CreateServiceInstance(config.Ctx, instance)
 	return handleProvisionResponse(err, "Hana instance", config.namespace, config.name)
 }
 
 func createHanaBinding(config *hanaProvisionConfig) clierror.Error {
 	binding := hanaBinding(config)
 
-	err := btp.CreateServiceBinding(config.KubeClient, config.Ctx, binding)
+	err := config.KubeClient.Btp().CreateServiceBinding(config.Ctx, binding)
 	return handleProvisionResponse(err, "Hana binding", config.namespace, config.name)
 }
 
 func createHanaBindingURL(config *hanaProvisionConfig) clierror.Error {
 	bindingURL := hanaBindingURL(config)
 
-	err := btp.CreateServiceBinding(config.KubeClient, config.Ctx, bindingURL)
+	err := config.KubeClient.Btp().CreateServiceBinding(config.Ctx, bindingURL)
 	return handleProvisionResponse(err, "Hana URL binding", config.namespace, hanaBindingURLName(config.name))
 }
 
