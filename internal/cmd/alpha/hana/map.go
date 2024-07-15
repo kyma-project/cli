@@ -131,8 +131,8 @@ func hanaAPIInstance(config *hanaCheckConfig) (*unstructured.Unstructured, error
 			Parameters: HanaAPIParameters{
 				TechnicalUser: true,
 			},
-			OfferingName: "hana-cloud",
-			PlanName:     "admin-api-access",
+			ServiceOfferingName: "hana-cloud",
+			ServicePlanName:     "admin-api-access",
 		},
 	}
 	return kube.ToUnstructured(requestData, btp.GVKServiceInstance)
