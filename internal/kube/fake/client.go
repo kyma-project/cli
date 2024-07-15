@@ -1,6 +1,7 @@
 package fake
 
 import (
+	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -12,6 +13,7 @@ import (
 type FakeKubeClient struct {
 	TestKubernetesInterface kubernetes.Interface
 	TestDynamicInterface    dynamic.Interface
+	TestKymaInterface       kyma.Interface
 	TestRestClient          *rest.RESTClient
 	TestRestConfig          *rest.Config
 	TestAPIConfig           *api.Config
@@ -35,4 +37,8 @@ func (f *FakeKubeClient) RestConfig() *rest.Config {
 
 func (f *FakeKubeClient) APIConfig() *api.Config {
 	return f.TestAPIConfig
+}
+
+func (f *FakeKubeClient) Kyma() kyma.Interface {
+	return f.TestKymaInterface
 }

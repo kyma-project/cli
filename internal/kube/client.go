@@ -2,6 +2,7 @@ package kube
 
 import (
 	"github.com/kyma-project/cli.v3/internal/clierror"
+	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -12,6 +13,7 @@ import (
 type Client interface {
 	Static() kubernetes.Interface
 	Dynamic() dynamic.Interface
+	Kyma() kyma.Interface
 	RestClient() *rest.RESTClient
 	RestConfig() *rest.Config
 	APIConfig() *api.Config
@@ -20,6 +22,7 @@ type Client interface {
 type client struct {
 	restConfig    *rest.Config
 	apiConfig     *api.Config
+	kymaClient    kyma.Interface
 	kubeClient    kubernetes.Interface
 	dynamicClient dynamic.Interface
 	restClient    *rest.RESTClient
@@ -56,6 +59,8 @@ func newClient(kubeconfig string) (Client, error) {
 		return nil, err
 	}
 
+	kymaClient := kyma.NewClient(dynamicClient)
+
 	restClientConfig := *restConfig
 	err = setKubernetesDefaults(&restClientConfig)
 	if err != nil {
@@ -71,6 +76,7 @@ func newClient(kubeconfig string) (Client, error) {
 		restConfig:    restConfig,
 		apiConfig:     apiConfig,
 		kubeClient:    kubeClient,
+		kymaClient:    kymaClient,
 		dynamicClient: dynamicClient,
 		restClient:    restClient,
 	}, nil
@@ -82,6 +88,10 @@ func (c *client) Static() kubernetes.Interface {
 
 func (c *client) Dynamic() dynamic.Interface {
 	return c.dynamicClient
+}
+
+func (c *client) Kyma() kyma.Interface {
+	return c.kymaClient
 }
 
 func (c *client) RestClient() *rest.RESTClient {

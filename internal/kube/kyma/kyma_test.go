@@ -2,9 +2,10 @@ package kyma
 
 import (
 	"context"
+	"encoding/json"
+	"reflect"
 	"testing"
 
-	kube_fake "github.com/kyma-project/cli.v3/internal/kube/fake"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -16,9 +17,7 @@ func TestGetDefaultKyma(t *testing.T) {
 	t.Run("get Kyma from the cluster", func(t *testing.T) {
 		scheme := runtime.NewScheme()
 		scheme.AddKnownTypes(GVRKyma.GroupVersion())
-		kubeClient := &kube_fake.FakeKubeClient{
-			TestDynamicInterface: dynamic_fake.NewSimpleDynamicClient(scheme, fixDefaultKyma()),
-		}
+		client := NewClient(dynamic_fake.NewSimpleDynamicClient(scheme, fixDefaultKyma()))
 
 		expectedKyma := &Kyma{
 			TypeMeta: v1.TypeMeta{
@@ -39,7 +38,7 @@ func TestGetDefaultKyma(t *testing.T) {
 			},
 		}
 
-		kyma, err := GetDefaultKyma(context.Background(), kubeClient)
+		kyma, err := client.GetDefaultKyma(context.Background())
 		require.NoError(t, err)
 		require.Equal(t, expectedKyma, kyma)
 	})
@@ -47,11 +46,9 @@ func TestGetDefaultKyma(t *testing.T) {
 	t.Run("kyma not found", func(t *testing.T) {
 		scheme := runtime.NewScheme()
 		scheme.AddKnownTypes(GVRKyma.GroupVersion())
-		kubeClient := &kube_fake.FakeKubeClient{
-			TestDynamicInterface: dynamic_fake.NewSimpleDynamicClient(scheme),
-		}
+		client := NewClient(dynamic_fake.NewSimpleDynamicClient(scheme))
 
-		kyma, err := GetDefaultKyma(context.Background(), kubeClient)
+		kyma, err := client.GetDefaultKyma(context.Background())
 		require.ErrorContains(t, err, "not found")
 		require.Nil(t, kyma)
 	})
@@ -61,9 +58,8 @@ func TestUpdateDefaultKyma(t *testing.T) {
 	t.Run("update kyma", func(t *testing.T) {
 		scheme := runtime.NewScheme()
 		scheme.AddKnownTypes(GVRKyma.GroupVersion())
-		kubeClient := &kube_fake.FakeKubeClient{
-			TestDynamicInterface: dynamic_fake.NewSimpleDynamicClient(scheme, fixDefaultKyma()),
-		}
+		dynamic := dynamic_fake.NewSimpleDynamicClient(scheme, fixDefaultKyma())
+		client := NewClient(dynamic)
 
 		expectedKyma := &Kyma{
 			TypeMeta: v1.TypeMeta{
@@ -88,10 +84,10 @@ func TestUpdateDefaultKyma(t *testing.T) {
 			},
 		}
 
-		err := UpdateDefaultKyma(context.Background(), kubeClient, expectedKyma)
+		err := client.UpdateDefaultKyma(context.Background(), expectedKyma)
 		require.NoError(t, err)
 
-		u, err := kubeClient.Dynamic().Resource(GVRKyma).Namespace("kyma-system").Get(context.Background(), "default", v1.GetOptions{})
+		u, err := dynamic.Resource(GVRKyma).Namespace("kyma-system").Get(context.Background(), "default", v1.GetOptions{})
 		require.NoError(t, err)
 
 		kyma := &Kyma{}
@@ -103,9 +99,7 @@ func TestUpdateDefaultKyma(t *testing.T) {
 	t.Run("kyma not found", func(t *testing.T) {
 		scheme := runtime.NewScheme()
 		scheme.AddKnownTypes(GVRKyma.GroupVersion())
-		kubeClient := &kube_fake.FakeKubeClient{
-			TestDynamicInterface: dynamic_fake.NewSimpleDynamicClient(scheme),
-		}
+		client := NewClient(dynamic_fake.NewSimpleDynamicClient(scheme))
 
 		expectedKyma := &Kyma{
 			TypeMeta: v1.TypeMeta{
@@ -130,9 +124,249 @@ func TestUpdateDefaultKyma(t *testing.T) {
 			},
 		}
 
-		err := UpdateDefaultKyma(context.Background(), kubeClient, expectedKyma)
+		err := client.UpdateDefaultKyma(context.Background(), expectedKyma)
 		require.ErrorContains(t, err, "not found")
 	})
+}
+
+func Test_disableModule(t *testing.T) {
+	t.Parallel()
+	type args struct {
+	}
+	tests := []struct {
+		name       string
+		kymaCR     *Kyma
+		moduleName string
+		want       *Kyma
+	}{
+		{
+			name: "unchanged modules list",
+			kymaCR: &Kyma{
+				Spec: KymaSpec{
+					Modules: []Module{
+						{
+							Name: "istio",
+						},
+					},
+				},
+			},
+			moduleName: "module",
+			want: &Kyma{
+				Spec: KymaSpec{
+					Modules: []Module{
+						{
+							Name: "istio",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "changed modules list",
+			kymaCR: &Kyma{
+				Spec: KymaSpec{
+					Modules: []Module{
+						{
+							Name: "istio",
+						},
+						{
+							Name: "module",
+						},
+					},
+				},
+			},
+			moduleName: "module",
+			want: &Kyma{
+				Spec: KymaSpec{
+					Modules: []Module{
+						{
+							Name: "istio",
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		kymaCR := tt.kymaCR
+		moduleName := tt.moduleName
+		want := tt.want
+		t.Run(tt.name, func(t *testing.T) {
+			got := disableModule(kymaCR, moduleName)
+			gotBytes, err := json.Marshal(got)
+			require.NoError(t, err)
+			wantBytes, err := json.Marshal(want)
+			require.NoError(t, err)
+			var gotInterface map[string]interface{}
+			var wantInterface map[string]interface{}
+			err = json.Unmarshal(gotBytes, &gotInterface)
+			require.NoError(t, err)
+			err = json.Unmarshal(wantBytes, &wantInterface)
+
+			require.NoError(t, err)
+			if !reflect.DeepEqual(gotInterface, wantInterface) {
+				t.Errorf("updateCR() = %v, want %v", gotInterface, wantInterface)
+			}
+		})
+	}
+}
+
+func Test_updateCR(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name       string
+		kymaCR     *Kyma
+		moduleName string
+		channel    string
+		want       *Kyma
+	}{
+		{
+			name:       "unchanged modules list",
+			moduleName: "module",
+			channel:    "",
+			kymaCR: &Kyma{
+				Spec: KymaSpec{
+					Modules: []Module{
+						{
+							Name: "module",
+						},
+					},
+				},
+			},
+			want: &Kyma{
+				Spec: KymaSpec{
+					Modules: []Module{
+						{
+							Name: "module",
+						},
+					},
+				},
+			},
+		},
+		{
+			name:       "added module",
+			moduleName: "module",
+			channel:    "",
+			kymaCR: &Kyma{
+				Spec: KymaSpec{
+					Modules: []Module{
+						{
+							Name: "istio",
+						},
+					},
+				},
+			},
+			want: &Kyma{
+				Spec: KymaSpec{
+					Modules: []Module{
+						{
+							Name: "istio",
+						},
+						{
+							Name: "module",
+						},
+					},
+				},
+			},
+		},
+		{
+			name:       "added module with channel",
+			moduleName: "module",
+			channel:    "channel",
+			kymaCR: &Kyma{
+				Spec: KymaSpec{
+					Modules: []Module{
+						{
+							Name: "istio",
+						},
+					},
+				},
+			},
+			want: &Kyma{
+				Spec: KymaSpec{
+					Modules: []Module{
+						{
+							Name: "istio",
+						},
+						{
+							Name:    "module",
+							Channel: "channel",
+						},
+					},
+				},
+			},
+		},
+		{
+			name:       "added channel to existing module",
+			moduleName: "module",
+			channel:    "channel",
+			kymaCR: &Kyma{
+				Spec: KymaSpec{
+					Modules: []Module{
+						{
+							Name: "module",
+						},
+					},
+				},
+			},
+			want: &Kyma{
+				Spec: KymaSpec{
+					Modules: []Module{
+						{
+							Name:    "module",
+							Channel: "channel",
+						},
+					},
+				},
+			},
+		},
+		{
+			name:       "removed channel from existing module",
+			moduleName: "module",
+			channel:    "",
+			kymaCR: &Kyma{
+				Spec: KymaSpec{
+					Modules: []Module{
+						{
+							Name:    "module",
+							Channel: "channel",
+						},
+					},
+				},
+			},
+			want: &Kyma{
+				Spec: KymaSpec{
+					Modules: []Module{
+						{
+							Name: "module",
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		kymaCR := tt.kymaCR
+		moduleName := tt.moduleName
+		moduleChannel := tt.channel
+		want := tt.want
+		t.Run(tt.name, func(t *testing.T) {
+			got := enableModule(kymaCR, moduleName, moduleChannel)
+			gotBytes, err := json.Marshal(got)
+			require.NoError(t, err)
+			wantBytes, err := json.Marshal(want)
+			require.NoError(t, err)
+			var gotInterface map[string]interface{}
+			var wantInterface map[string]interface{}
+			err = json.Unmarshal(gotBytes, &gotInterface)
+			require.NoError(t, err)
+			err = json.Unmarshal(wantBytes, &wantInterface)
+			require.NoError(t, err)
+			if !reflect.DeepEqual(gotInterface, wantInterface) {
+				t.Errorf("updateCR() = %v, want %v", gotInterface, wantInterface)
+			}
+		})
+	}
 }
 
 func fixDefaultKyma() *unstructured.Unstructured {

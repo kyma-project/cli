@@ -1,11 +1,8 @@
 package managed
 
 import (
-	"slices"
-
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
-	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"github.com/spf13/cobra"
 )
 
@@ -42,20 +39,5 @@ func NewManagedCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 }
 
 func runRemoveManaged(config *managedConfig) error {
-	kymaCR, err := kyma.GetDefaultKyma(config.Ctx, config.KubeClient)
-	if err != nil {
-		return err
-	}
-
-	kymaCR = disableModule(kymaCR, config.module)
-
-	return kyma.UpdateDefaultKyma(config.Ctx, config.KubeClient, kymaCR)
-}
-
-func disableModule(kymaCR *kyma.Kyma, moduleName string) *kyma.Kyma {
-	kymaCR.Spec.Modules = slices.DeleteFunc(kymaCR.Spec.Modules, func(m kyma.Module) bool {
-		return m.Name == moduleName
-	})
-
-	return kymaCR
+	return config.KubeClient.Kyma().DisableModule(config.Ctx, config.module)
 }
