@@ -1,9 +1,12 @@
 package hana
 
 import (
+	"bytes"
 	"context"
+	"io"
 	"testing"
 
+	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/kube/btp"
 	kube_fake "github.com/kyma-project/cli.v3/internal/kube/fake"
@@ -13,6 +16,63 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	dynamic_fake "k8s.io/client-go/dynamic/fake"
 )
+
+const (
+	hanaInstalledMessage = `Checking Hana (test-namespace/test-name).
+Hana is fully ready.
+`
+	hanaNotInstalledMessage = `Checking Hana (test-namespace/test-name).
+Hana is not fully ready.
+`
+)
+
+func Test_runCheck(t *testing.T) {
+	t.Run("hana is installed message", func(t *testing.T) {
+		checkCommandsIter := 0
+		testCheckCommand := func(config *hanaCheckConfig) clierror.Error {
+			checkCommandsIter++
+			return nil
+		}
+		buffer := bytes.NewBuffer([]byte{})
+		config := &hanaCheckConfig{
+			name:      "test-name",
+			namespace: "test-namespace",
+			stdout:    buffer,
+			checkCommands: []func(config *hanaCheckConfig) clierror.Error{
+				testCheckCommand,
+				testCheckCommand,
+				testCheckCommand,
+				testCheckCommand,
+			},
+		}
+
+		err := runCheck(config)
+		require.Nil(t, err)
+
+		require.Equal(t, buffer.String(), hanaInstalledMessage)
+		require.Equal(t, 4, checkCommandsIter)
+	})
+
+	t.Run("hana is NOT installed message", func(t *testing.T) {
+		testErrorCheckCommand := func(config *hanaCheckConfig) clierror.Error {
+			return clierror.New("test error")
+		}
+		buffer := bytes.NewBuffer([]byte{})
+		config := &hanaCheckConfig{
+			name:      "test-name",
+			namespace: "test-namespace",
+			stdout:    buffer,
+			checkCommands: []func(config *hanaCheckConfig) clierror.Error{
+				testErrorCheckCommand,
+			},
+		}
+
+		err := runCheck(config)
+		require.NotNil(t, err)
+
+		require.Equal(t, buffer.String(), hanaNotInstalledMessage)
+	})
+}
 
 func Test_checkHanaInstance(t *testing.T) {
 	t.Run("ready", func(t *testing.T) {
@@ -119,6 +179,7 @@ func fixCheckConfig(name string, namespace string, objects ...runtime.Object) ha
 	scheme.AddKnownTypes(btp.GVRServiceInstance.GroupVersion())
 	dynamic := dynamic_fake.NewSimpleDynamicClient(scheme, objects...)
 	config := hanaCheckConfig{
+		stdout:     io.Discard,
 		KymaConfig: &cmdcommon.KymaConfig{Ctx: context.Background()},
 		KubeClientConfig: cmdcommon.KubeClientConfig{
 			KubeClient: &kube_fake.FakeKubeClient{
