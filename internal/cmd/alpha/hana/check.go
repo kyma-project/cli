@@ -2,6 +2,8 @@ package hana
 
 import (
 	"fmt"
+	"io"
+	"os"
 	"strings"
 	"time"
 
@@ -18,12 +20,17 @@ type hanaCheckConfig struct {
 	name      string
 	namespace string
 	timeout   time.Duration
+
+	stdout        io.Writer
+	checkCommands []func(config *hanaCheckConfig) clierror.Error
 }
 
 func NewHanaCheckCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	config := hanaCheckConfig{
 		KymaConfig:       kymaConfig,
 		KubeClientConfig: cmdcommon.KubeClientConfig{},
+		stdout:           os.Stdout,
+		checkCommands:    checkCommands,
 	}
 
 	cmd := &cobra.Command{
@@ -57,16 +64,16 @@ var (
 )
 
 func runCheck(config *hanaCheckConfig) clierror.Error {
-	fmt.Printf("Checking Hana (%s/%s).\n", config.namespace, config.name)
+	fmt.Fprintf(config.stdout, "Checking Hana (%s/%s).\n", config.namespace, config.name)
 
-	for _, command := range checkCommands {
+	for _, command := range config.checkCommands {
 		err := command(config)
 		if err != nil {
-			fmt.Println("Hana is not fully ready.")
+			fmt.Fprintln(config.stdout, "Hana is not fully ready.")
 			return clierror.New("failed to get resource data", "Make sure that Hana was provisioned.")
 		}
 	}
-	fmt.Println("Hana is fully ready.")
+	fmt.Fprintln(config.stdout, "Hana is fully ready.")
 	return nil
 }
 
@@ -76,7 +83,7 @@ func checkHanaInstance(config *hanaCheckConfig) clierror.Error {
 		return clierror.New(err.Error())
 	}
 
-	return isResourceReady(instance.Status, "Hana instance", config.namespace, config.name)
+	return printResourceState(config.stdout, instance.Status, "Hana instance", config.namespace, config.name)
 }
 
 func checkHanaBinding(config *hanaCheckConfig) clierror.Error {
@@ -85,7 +92,7 @@ func checkHanaBinding(config *hanaCheckConfig) clierror.Error {
 		return clierror.New(err.Error())
 	}
 
-	return isResourceReady(binding.Status, "Hana binding", config.namespace, config.name)
+	return printResourceState(config.stdout, binding.Status, "Hana binding", config.namespace, config.name)
 }
 
 func checkHanaBindingURL(config *hanaCheckConfig) clierror.Error {
@@ -95,16 +102,16 @@ func checkHanaBindingURL(config *hanaCheckConfig) clierror.Error {
 		return clierror.New(err.Error())
 	}
 
-	return isResourceReady(binding.Status, "Hana URL binding", config.namespace, urlName)
+	return printResourceState(config.stdout, binding.Status, "Hana URL binding", config.namespace, urlName)
 }
 
-func isResourceReady(status btp.CommonStatus, printedName, namespace, name string) clierror.Error {
+func printResourceState(writer io.Writer, status btp.CommonStatus, printedName, namespace, name string) clierror.Error {
 	ready := status.IsReady()
 	if !ready {
-		fmt.Printf("%s is not ready (%s/%s).\n", printedName, namespace, name)
+		fmt.Fprintf(writer, "%s is not ready (%s/%s).\n", printedName, namespace, name)
 		errMsg := fmt.Sprintf("%s is not ready", strings.ToLower(printedName[:1])+printedName[1:])
 		return clierror.New(errMsg, "Wait for provisioning of Hana resources.", "Check if Hana resources started without errors.")
 	}
-	fmt.Printf("%s is ready (%s/%s).\n", printedName, namespace, name)
+	fmt.Fprintf(writer, "%s is ready (%s/%s).\n", printedName, namespace, name)
 	return nil
 }
