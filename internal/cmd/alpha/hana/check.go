@@ -71,7 +71,7 @@ func runCheck(config *hanaCheckConfig) clierror.Error {
 }
 
 func checkHanaInstance(config *hanaCheckConfig) clierror.Error {
-	instance, err := btp.GetServiceInstance(config.KubeClient, config.Ctx, config.namespace, config.name)
+	instance, err := config.KubeClient.Btp().GetServiceInstance(config.Ctx, config.namespace, config.name)
 	if err != nil {
 		return clierror.New(err.Error())
 	}
@@ -80,7 +80,7 @@ func checkHanaInstance(config *hanaCheckConfig) clierror.Error {
 }
 
 func checkHanaBinding(config *hanaCheckConfig) clierror.Error {
-	binding, err := btp.GetServiceBinding(config.KubeClient, config.Ctx, config.namespace, config.name)
+	binding, err := config.KubeClient.Btp().GetServiceBinding(config.Ctx, config.namespace, config.name)
 	if err != nil {
 		return clierror.New(err.Error())
 	}
@@ -90,7 +90,7 @@ func checkHanaBinding(config *hanaCheckConfig) clierror.Error {
 
 func checkHanaBindingURL(config *hanaCheckConfig) clierror.Error {
 	urlName := hanaBindingURLName(config.name)
-	binding, err := btp.GetServiceBinding(config.KubeClient, config.Ctx, config.namespace, urlName)
+	binding, err := config.KubeClient.Btp().GetServiceBinding(config.Ctx, config.namespace, urlName)
 	if err != nil {
 		return clierror.New(err.Error())
 	}
@@ -99,7 +99,7 @@ func checkHanaBindingURL(config *hanaCheckConfig) clierror.Error {
 }
 
 func isResourceReady(status btp.CommonStatus, printedName, namespace, name string) clierror.Error {
-	ready := btp.IsReady(status)
+	ready := status.IsReady()
 	if !ready {
 		fmt.Printf("%s is not ready (%s/%s).\n", printedName, namespace, name)
 		errMsg := fmt.Sprintf("%s is not ready", strings.ToLower(printedName[:1])+printedName[1:])

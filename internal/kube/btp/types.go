@@ -1,6 +1,7 @@
 package btp
 
 import (
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -70,4 +71,31 @@ type ServiceBindingSpec struct {
 	ServiceInstanceName string      `json:"serviceInstanceName,omitempty"`
 	ExternalName        string      `json:"externalName,omitempty"`
 	SecretName          string      `json:"secretName,omitempty"`
+}
+
+// IsReady returns readiness status
+func (s *CommonStatus) IsReady() bool {
+	return (s.Ready == "True") &&
+		isConditionTrue(s.Conditions, "Succeeded") &&
+		isConditionTrue(s.Conditions, "Ready")
+}
+
+// IsFailed returns if at least one condition has Failed status
+func (s *CommonStatus) IsFailed() bool {
+	return (s.Ready == "False") &&
+		isConditionTrue(s.Conditions, "Failed")
+}
+
+// GetConditionMessage returns message of condition in given type
+func (s *CommonStatus) GetConditionMessage(conditionType string) string {
+	condition := meta.FindStatusCondition(s.Conditions, conditionType)
+	if condition == nil {
+		return ""
+	}
+	return condition.Message
+}
+
+func isConditionTrue(conditions []metav1.Condition, conditionType string) bool {
+	condition := meta.FindStatusCondition(conditions, conditionType)
+	return condition != nil && condition.Status == metav1.ConditionTrue
 }

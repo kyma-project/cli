@@ -3,7 +3,6 @@ package referenceinstance
 import (
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
-	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/kube/btp"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -67,13 +66,8 @@ func NewReferenceInstanceCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 func runReferenceInstance(config referenceInstanceConfig) error {
 	requestData := fillRequestData(config)
-	unstructuredObj, err := kube.ToUnstructured(requestData, btp.GVKServiceInstance)
-	if err != nil {
-		return err
-	}
 
-	_, err = config.KubeClient.Dynamic().Resource(btp.GVRServiceInstance).Namespace(config.namespace).Create(config.Ctx, unstructuredObj, metav1.CreateOptions{})
-	return err
+	return config.KubeClient.Btp().CreateServiceInstance(config.Ctx, &requestData)
 }
 
 func fillRequestData(config referenceInstanceConfig) btp.ServiceInstance {

@@ -4,34 +4,34 @@ import (
 	"context"
 	"errors"
 
-	"github.com/kyma-project/cli.v3/internal/kube"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/dynamic"
 )
 
-// IsReady returns readiness status
-func IsReady(status CommonStatus) bool {
-	return (status.Ready == "True") &&
-		isConditionTrue(status.Conditions, "Succeeded") &&
-		isConditionTrue(status.Conditions, "Ready")
+type Interface interface {
+	GetServiceInstance(context.Context, string, string) (*ServiceInstance, error)
+	GetServiceBinding(context.Context, string, string) (*ServiceBinding, error)
+	CreateServiceInstance(context.Context, *ServiceInstance) error
+	CreateServiceBinding(context.Context, *ServiceBinding) error
+	IsBindingReady(context.Context, string, string) wait.ConditionWithContextFunc
+	IsInstanceReady(context.Context, string, string) wait.ConditionWithContextFunc
 }
 
-// IsFailed returns if at least one condition has Failed status
-func IsFailed(status CommonStatus) bool {
-	return (status.Ready == "False") &&
-		isConditionTrue(status.Conditions, "Failed")
+type btpClient struct {
+	dynamic dynamic.Interface
 }
 
-func isConditionTrue(conditions []metav1.Condition, conditionType string) bool {
-	condition := meta.FindStatusCondition(conditions, conditionType)
-	return condition != nil && condition.Status == metav1.ConditionTrue
+func NewClient(dynamic dynamic.Interface) Interface {
+	return &btpClient{
+		dynamic: dynamic,
+	}
 }
 
-func GetServiceInstance(kubeClient kube.Client, ctx context.Context, namespace, name string) (*ServiceInstance, error) {
-	obj, err := kubeClient.Dynamic().Resource(GVRServiceInstance).
+func (c *btpClient) GetServiceInstance(ctx context.Context, namespace, name string) (*ServiceInstance, error) {
+	obj, err := c.dynamic.Resource(GVRServiceInstance).
 		Namespace(namespace).
 		Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
@@ -39,25 +39,25 @@ func GetServiceInstance(kubeClient kube.Client, ctx context.Context, namespace, 
 	}
 
 	instance := &ServiceInstance{}
-	err = kube.FromUnstructured(obj, instance)
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, instance)
 
 	return instance, err
 }
 
-func CreateServiceInstance(kubeClient kube.Client, ctx context.Context, obj *ServiceInstance) error {
+func (c *btpClient) CreateServiceInstance(ctx context.Context, obj *ServiceInstance) error {
 	u, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
 	if err != nil {
 		return err
 	}
 
-	_, err = kubeClient.Dynamic().Resource(GVRServiceInstance).
+	_, err = c.dynamic.Resource(GVRServiceInstance).
 		Namespace(obj.GetNamespace()).
 		Create(ctx, &unstructured.Unstructured{Object: u}, metav1.CreateOptions{})
 	return err
 }
 
-func GetServiceBinding(kubeClient kube.Client, ctx context.Context, namespace, name string) (*ServiceBinding, error) {
-	obj, err := kubeClient.Dynamic().Resource(GVRServiceBinding).
+func (c *btpClient) GetServiceBinding(ctx context.Context, namespace, name string) (*ServiceBinding, error) {
+	obj, err := c.dynamic.Resource(GVRServiceBinding).
 		Namespace(namespace).
 		Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
@@ -65,58 +65,50 @@ func GetServiceBinding(kubeClient kube.Client, ctx context.Context, namespace, n
 	}
 
 	binding := &ServiceBinding{}
-	err = kube.FromUnstructured(obj, binding)
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, binding)
 
 	return binding, err
 }
 
-func CreateServiceBinding(kubeClient kube.Client, ctx context.Context, obj *ServiceBinding) error {
+func (c *btpClient) CreateServiceBinding(ctx context.Context, obj *ServiceBinding) error {
 	u, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
 	if err != nil {
 		return err
 	}
 
-	_, err = kubeClient.Dynamic().Resource(GVRServiceBinding).
+	_, err = c.dynamic.Resource(GVRServiceBinding).
 		Namespace(obj.GetNamespace()).
 		Create(ctx, &unstructured.Unstructured{Object: u}, metav1.CreateOptions{})
 	return err
 }
 
-func GetConditionMessage(conditions []metav1.Condition, conditionType string) string {
-	condition := meta.FindStatusCondition(conditions, conditionType)
-	if condition == nil {
-		return ""
+func (c *btpClient) IsBindingReady(ctx context.Context, namespace, name string) wait.ConditionWithContextFunc {
+	return func(_ context.Context) (bool, error) {
+		instance, err := c.GetServiceBinding(ctx, namespace, name)
+		if err != nil {
+			return false, err
+		}
+		return isResourceReady(instance.Status)
 	}
-	return condition.Message
+}
+
+func (c *btpClient) IsInstanceReady(ctx context.Context, namespace, name string) wait.ConditionWithContextFunc {
+	return func(_ context.Context) (bool, error) {
+		instance, err := c.GetServiceInstance(ctx, namespace, name)
+		if err != nil {
+			return false, err
+		}
+		return isResourceReady(instance.Status)
+	}
 }
 
 func isResourceReady(status CommonStatus) (bool, error) {
-	failed := IsFailed(status)
+	failed := status.IsFailed()
 	if failed {
-		failedMessage := GetConditionMessage(status.Conditions, "Failed")
+		failedMessage := status.GetConditionMessage("Failed")
 
 		return false, errors.New(failedMessage)
 	}
 
-	return IsReady(status), nil
-}
-
-func IsBindingReady(kubeClient kube.Client, ctx context.Context, namespace, name string) wait.ConditionWithContextFunc {
-	return func(_ context.Context) (bool, error) {
-		instance, err := GetServiceBinding(kubeClient, ctx, namespace, name)
-		if err != nil {
-			return false, err
-		}
-		return isResourceReady(instance.Status)
-	}
-}
-
-func IsInstanceReady(kubeClient kube.Client, ctx context.Context, namespace, name string) wait.ConditionWithContextFunc {
-	return func(_ context.Context) (bool, error) {
-		instance, err := GetServiceInstance(kubeClient, ctx, namespace, name)
-		if err != nil {
-			return false, err
-		}
-		return isResourceReady(instance.Status)
-	}
+	return status.IsReady(), nil
 }

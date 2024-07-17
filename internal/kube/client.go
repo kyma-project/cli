@@ -2,6 +2,7 @@ package kube
 
 import (
 	"github.com/kyma-project/cli.v3/internal/clierror"
+	"github.com/kyma-project/cli.v3/internal/kube/btp"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
@@ -14,6 +15,7 @@ type Client interface {
 	Static() kubernetes.Interface
 	Dynamic() dynamic.Interface
 	Kyma() kyma.Interface
+	Btp() btp.Interface
 	RestClient() *rest.RESTClient
 	RestConfig() *rest.Config
 	APIConfig() *api.Config
@@ -25,6 +27,7 @@ type client struct {
 	kymaClient    kyma.Interface
 	kubeClient    kubernetes.Interface
 	dynamicClient dynamic.Interface
+	btpClient     btp.Interface
 	restClient    *rest.RESTClient
 }
 
@@ -61,6 +64,8 @@ func newClient(kubeconfig string) (Client, error) {
 
 	kymaClient := kyma.NewClient(dynamicClient)
 
+	btpClient := btp.NewClient(dynamicClient)
+
 	restClientConfig := *restConfig
 	err = setKubernetesDefaults(&restClientConfig)
 	if err != nil {
@@ -78,6 +83,7 @@ func newClient(kubeconfig string) (Client, error) {
 		kubeClient:    kubeClient,
 		kymaClient:    kymaClient,
 		dynamicClient: dynamicClient,
+		btpClient:     btpClient,
 		restClient:    restClient,
 	}, nil
 }
@@ -92,6 +98,10 @@ func (c *client) Dynamic() dynamic.Interface {
 
 func (c *client) Kyma() kyma.Interface {
 	return c.kymaClient
+}
+
+func (c *client) Btp() btp.Interface {
+	return c.btpClient
 }
 
 func (c *client) RestClient() *rest.RESTClient {
