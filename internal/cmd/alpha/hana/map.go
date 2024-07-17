@@ -10,11 +10,9 @@ import (
 	"github.com/kyma-project/cli.v3/internal/btp/auth"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
-	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/kube/btp"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -92,30 +90,21 @@ func createHanaAPIBindingIfNeeded(config *hanaCheckConfig) clierror.Error {
 }
 
 func createHanaAPIInstance(config *hanaCheckConfig) clierror.Error {
-	data, err := hanaAPIInstance(config)
-	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to create Hana API instance object"))
-	}
+	instance := hanaAPIInstance(config)
 
-	_, err = config.KubeClient.Dynamic().Resource(btp.GVRServiceInstance).
-		Namespace(config.namespace).
-		Create(config.Ctx, data, metav1.CreateOptions{})
+	err := btp.CreateServiceInstance(config.KubeClient, config.Ctx, instance)
 	return handleProvisionResponse(err, "Hana API instance", config.namespace, hanaBindingAPIName(config.name))
 }
 
 func createHanaAPIBinding(config *hanaCheckConfig) clierror.Error {
-	data, err := hanaAPIBinding(config)
-	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to create Hana API binding object"))
-	}
-	_, err = config.KubeClient.Dynamic().Resource(btp.GVRServiceBinding).
-		Namespace(config.namespace).
-		Create(config.Ctx, data, metav1.CreateOptions{})
+	binding := hanaAPIBinding(config)
+
+	err := btp.CreateServiceBinding(config.KubeClient, config.Ctx, binding)
 	return handleProvisionResponse(err, "Hana API binding", config.namespace, hanaBindingAPIName(config.name))
 }
 
-func hanaAPIInstance(config *hanaCheckConfig) (*unstructured.Unstructured, error) {
-	requestData := btp.ServiceInstance{
+func hanaAPIInstance(config *hanaCheckConfig) *btp.ServiceInstance {
+	return &btp.ServiceInstance{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: btp.ServicesAPIVersionV1,
 			Kind:       btp.KindServiceInstance,
@@ -135,12 +124,11 @@ func hanaAPIInstance(config *hanaCheckConfig) (*unstructured.Unstructured, error
 			ServicePlanName:     "admin-api-access",
 		},
 	}
-	return kube.ToUnstructured(requestData, btp.GVKServiceInstance)
 }
 
-func hanaAPIBinding(config *hanaCheckConfig) (*unstructured.Unstructured, error) {
+func hanaAPIBinding(config *hanaCheckConfig) *btp.ServiceBinding {
 	instanceName := hanaBindingAPIName(config.name)
-	requestData := btp.ServiceBinding{
+	return &btp.ServiceBinding{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: btp.ServicesAPIVersionV1,
 			Kind:       btp.KindServiceBinding,
@@ -157,7 +145,6 @@ func hanaAPIBinding(config *hanaCheckConfig) (*unstructured.Unstructured, error)
 			SecretName:          instanceName,
 		},
 	}
-	return kube.ToUnstructured(requestData, btp.GVKServiceBinding)
 }
 
 func hanaBindingAPIName(name string) string {
@@ -211,18 +198,12 @@ func getHanaID(config *hanaCheckConfig) (string, clierror.Error) {
 	}
 	fmt.Println("done")
 
-	u, err := config.KubeClient.Dynamic().Resource(btp.GVRServiceInstance).
-		Namespace(config.namespace).
-		Get(config.Ctx, config.name, metav1.GetOptions{})
+	instance, err := btp.GetServiceInstance(config.KubeClient, config.Ctx, config.namespace, config.name)
 	if err != nil {
 		return "", clierror.Wrap(err, clierror.New("failed to get Hana instance"))
 	}
-	status, err := btp.GetServiceStatus(u)
-	if err != nil {
-		return "", clierror.Wrap(err, clierror.New("failed to read resource data"))
-	}
 
-	return status.InstanceID, nil
+	return instance.Status.InstanceID, nil
 }
 
 func readHanaAPISecret(config *hanaCheckConfig) (string, *auth.UAA, clierror.Error) {

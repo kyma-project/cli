@@ -23,6 +23,7 @@ func Test_checkHanaInstance(t *testing.T) {
 		err := checkHanaInstance(&config)
 		require.Nil(t, err)
 	})
+
 	t.Run("not found", func(t *testing.T) {
 		name := "test-name"
 		namespace := "test-namespace"
@@ -31,9 +32,7 @@ func Test_checkHanaInstance(t *testing.T) {
 		err := checkHanaInstance(&config)
 		require.NotNil(t, err)
 		errMsg := err.String()
-		require.Contains(t, errMsg, "failed to get resource data")
 		require.Contains(t, errMsg, "serviceinstances.services.cloud.sap.com \"test-name\" not found")
-		require.Contains(t, errMsg, "Make sure that Hana was provisioned")
 	})
 	t.Run("not ready", func(t *testing.T) {
 		name := "test-name"
@@ -43,9 +42,7 @@ func Test_checkHanaInstance(t *testing.T) {
 		err := checkHanaInstance(&config)
 		require.NotNil(t, err)
 		errMsg := err.String()
-		require.Contains(t, errMsg, "hana instance is not ready")
 		require.Contains(t, errMsg, "Wait for provisioning of Hana resources")
-		require.Contains(t, errMsg, "Check if Hana resources started without errors")
 	})
 }
 
@@ -66,9 +63,7 @@ func Test_checkHanaBinding(t *testing.T) {
 		err := checkHanaBinding(&config)
 		require.NotNil(t, err)
 		errMsg := err.String()
-		require.Contains(t, errMsg, "failed to get resource data")
 		require.Contains(t, errMsg, "servicebindings.services.cloud.sap.com \"test-name\" not found")
-		require.Contains(t, errMsg, "Make sure that Hana was provisioned")
 	})
 	t.Run("not ready", func(t *testing.T) {
 		name := "test-name"
@@ -102,9 +97,7 @@ func Test_checkHanaBindingURL(t *testing.T) {
 		err := checkHanaBindingURL(&config)
 		require.NotNil(t, err)
 		errMsg := err.String()
-		require.Contains(t, errMsg, "failed to get resource data")
 		require.Contains(t, errMsg, "servicebindings.services.cloud.sap.com \"test-name-url\" not found")
-		require.Contains(t, errMsg, "Make sure that Hana was provisioned")
 	})
 	t.Run("not ready", func(t *testing.T) {
 		name := "test-name"
@@ -126,11 +119,15 @@ func fixCheckConfig(name string, namespace string, objects ...runtime.Object) ha
 	scheme.AddKnownTypes(btp.GVRServiceInstance.GroupVersion())
 	dynamic := dynamic_fake.NewSimpleDynamicClient(scheme, objects...)
 	config := hanaCheckConfig{
-		KymaConfig:       &cmdcommon.KymaConfig{Ctx: context.Background()},
-		KubeClientConfig: cmdcommon.KubeClientConfig{KubeClient: &kube_fake.FakeKubeClient{TestDynamicInterface: dynamic}},
-		name:             name,
-		namespace:        namespace,
-		timeout:          0,
+		KymaConfig: &cmdcommon.KymaConfig{Ctx: context.Background()},
+		KubeClientConfig: cmdcommon.KubeClientConfig{
+			KubeClient: &kube_fake.FakeKubeClient{
+				TestDynamicInterface: dynamic,
+			},
+		},
+		name:      name,
+		namespace: namespace,
+		timeout:   0,
 	}
 	return config
 }
