@@ -15,11 +15,13 @@ func Test_btpClient_GetServiceInstance(t *testing.T) {
 	t.Run("get ServiceInstance", func(t *testing.T) {
 		scheme := runtime.NewScheme()
 		scheme.AddKnownTypes(GVRServiceInstance.GroupVersion())
+		givenInstance := fixServiceInstance()
 		btpClient := NewClient(
-			dynamic_fake.NewSimpleDynamicClient(scheme, fixUnstructuredServiceInstance()),
+			dynamic_fake.NewSimpleDynamicClient(scheme, givenInstance),
 		)
 
-		expectedInstance := fixServiceInstance()
+		expectedInstance := &ServiceInstance{}
+		toStructured(t, givenInstance, expectedInstance)
 
 		serviceInstance, err := btpClient.GetServiceInstance(context.Background(), "test-namespace", "test-name")
 		require.NoError(t, err)
@@ -40,7 +42,7 @@ func Test_btpClient_GetServiceInstance(t *testing.T) {
 }
 
 func Test_btpClient_CreateServiceInstance(t *testing.T) {
-	t.Run("get ServiceInstance", func(t *testing.T) {
+	t.Run("create ServiceInstance", func(t *testing.T) {
 		scheme := runtime.NewScheme()
 		scheme.AddKnownTypes(GVRServiceInstance.GroupVersion())
 		dynamic := dynamic_fake.NewSimpleDynamicClient(scheme)
@@ -48,9 +50,12 @@ func Test_btpClient_CreateServiceInstance(t *testing.T) {
 			dynamic,
 		)
 
-		expectedInstance := fixUnstructuredServiceInstance()
+		expectedInstance := fixServiceInstance()
 
-		err := btpClient.CreateServiceInstance(context.Background(), fixServiceInstance())
+		givenInstance := &ServiceInstance{}
+		toStructured(t, expectedInstance, givenInstance)
+
+		err := btpClient.CreateServiceInstance(context.Background(), givenInstance)
 		require.NoError(t, err)
 
 		serviceInstance, err := dynamic.Resource(GVRServiceInstance).
@@ -63,20 +68,24 @@ func Test_btpClient_CreateServiceInstance(t *testing.T) {
 	t.Run("already exists error", func(t *testing.T) {
 		scheme := runtime.NewScheme()
 		scheme.AddKnownTypes(GVRServiceInstance.GroupVersion())
-		expectedInstance := fixUnstructuredServiceInstance()
-		dynamic := dynamic_fake.NewSimpleDynamicClient(scheme, expectedInstance)
+		givenInstance := fixServiceInstance()
+		dynamic := dynamic_fake.NewSimpleDynamicClient(scheme, givenInstance)
 		btpClient := NewClient(
 			dynamic,
 		)
 
-		err := btpClient.CreateServiceInstance(context.Background(), fixServiceInstance())
+		expectedInstance := &ServiceInstance{}
+		toStructured(t, givenInstance, expectedInstance)
+
+		err := btpClient.CreateServiceInstance(context.Background(), expectedInstance)
 		require.ErrorContains(t, err, "serviceinstances.services.cloud.sap.com \"test-name\" already exists")
 	})
 
 	t.Run("converter error", func(t *testing.T) {
 		btpClient := NewClient(nil)
 
-		instance := fixServiceInstance()
+		instance := &ServiceInstance{}
+		toStructured(t, fixServiceInstance(), instance)
 
 		// add func parameter that is highly not supported and will cause error
 		instance.Spec.Parameters = func() {}
@@ -90,11 +99,13 @@ func Test_btpClient_GetServiceBinding(t *testing.T) {
 	t.Run("get ServiceBinding", func(t *testing.T) {
 		scheme := runtime.NewScheme()
 		scheme.AddKnownTypes(GVRServiceBinding.GroupVersion())
+		givenBinding := fixServiceBinding()
 		btpClient := NewClient(
-			dynamic_fake.NewSimpleDynamicClient(scheme, fixUnstructuredServiceBinding()),
+			dynamic_fake.NewSimpleDynamicClient(scheme, givenBinding),
 		)
 
-		expectedBinding := fixServiceBinding()
+		expectedBinding := &ServiceBinding{}
+		toStructured(t, givenBinding, expectedBinding)
 
 		serviceBinding, err := btpClient.GetServiceBinding(context.Background(), "test-namespace", "test-name")
 		require.NoError(t, err)
@@ -115,7 +126,7 @@ func Test_btpClient_GetServiceBinding(t *testing.T) {
 }
 
 func Test_btpClient_CreateServiceBinding(t *testing.T) {
-	t.Run("get ServiceBinding", func(t *testing.T) {
+	t.Run("create ServiceBinding", func(t *testing.T) {
 		scheme := runtime.NewScheme()
 		scheme.AddKnownTypes(GVRServiceBinding.GroupVersion())
 		dynamic := dynamic_fake.NewSimpleDynamicClient(scheme)
@@ -123,35 +134,42 @@ func Test_btpClient_CreateServiceBinding(t *testing.T) {
 			dynamic,
 		)
 
-		expectedBinding := fixUnstructuredServiceBinding()
+		givenBinding := fixServiceBinding()
 
-		err := btpClient.CreateServiceBinding(context.Background(), fixServiceBinding())
+		expectedBinding := &ServiceBinding{}
+		toStructured(t, givenBinding, expectedBinding)
+
+		err := btpClient.CreateServiceBinding(context.Background(), expectedBinding)
 		require.NoError(t, err)
 
 		serviceBinding, err := dynamic.Resource(GVRServiceBinding).
 			Namespace("test-namespace").
 			Get(context.Background(), "test-name", v1.GetOptions{})
 		require.NoError(t, err)
-		require.Equal(t, expectedBinding, serviceBinding)
+		require.Equal(t, givenBinding, serviceBinding)
 	})
 
 	t.Run("already exists error", func(t *testing.T) {
 		scheme := runtime.NewScheme()
 		scheme.AddKnownTypes(GVRServiceBinding.GroupVersion())
-		expectedBinding := fixUnstructuredServiceBinding()
-		dynamic := dynamic_fake.NewSimpleDynamicClient(scheme, expectedBinding)
+		givenBinding := fixServiceBinding()
+		dynamic := dynamic_fake.NewSimpleDynamicClient(scheme, givenBinding)
 		btpClient := NewClient(
 			dynamic,
 		)
 
-		err := btpClient.CreateServiceBinding(context.Background(), fixServiceBinding())
+		expectedBinding := &ServiceBinding{}
+		toStructured(t, givenBinding, expectedBinding)
+
+		err := btpClient.CreateServiceBinding(context.Background(), expectedBinding)
 		require.ErrorContains(t, err, "servicebindings.services.cloud.sap.com \"test-name\" already exists")
 	})
 
 	t.Run("converter error", func(t *testing.T) {
 		btpClient := NewClient(nil)
 
-		binding := fixServiceBinding()
+		binding := &ServiceBinding{}
+		toStructured(t, fixServiceBinding(), binding)
 
 		// add func parameter that is highly not supported and will cause error
 		binding.Spec.Parameters = func() {}
@@ -165,8 +183,8 @@ func Test_btpClient_IsBindingReadyFunc(t *testing.T) {
 	t.Run("ready binding", func(t *testing.T) {
 		scheme := runtime.NewScheme()
 		scheme.AddKnownTypes(GVRServiceBinding.GroupVersion())
-		givenBinding := fixUnstructuredServiceBinding()
-		givenBinding.Object["status"] = fixUnstructuredReadyCommonStatus()
+		givenBinding := fixServiceBinding()
+		givenBinding.Object["status"] = fixReadyCommonStatus()
 
 		dynamic := dynamic_fake.NewSimpleDynamicClient(scheme, givenBinding)
 		btpClient := NewClient(
@@ -182,8 +200,8 @@ func Test_btpClient_IsBindingReadyFunc(t *testing.T) {
 	t.Run("failed binding", func(t *testing.T) {
 		scheme := runtime.NewScheme()
 		scheme.AddKnownTypes(GVRServiceBinding.GroupVersion())
-		givenBinding := fixUnstructuredServiceBinding()
-		givenBinding.Object["status"] = fixUnstructuredFailedCommonStatus()
+		givenBinding := fixServiceBinding()
+		givenBinding.Object["status"] = fixFailedCommonStatus()
 
 		dynamic := dynamic_fake.NewSimpleDynamicClient(scheme, givenBinding)
 		btpClient := NewClient(
@@ -192,7 +210,7 @@ func Test_btpClient_IsBindingReadyFunc(t *testing.T) {
 
 		readyFn := btpClient.IsBindingReady(context.Background(), "test-namespace", "test-name")
 		done, err := readyFn(context.Background())
-		require.Error(t, err)
+		require.ErrorContains(t, err, "test message")
 		require.False(t, done)
 	})
 
@@ -216,8 +234,8 @@ func Test_btpClient_IsInstanceReadyFunc(t *testing.T) {
 	t.Run("ready instance", func(t *testing.T) {
 		scheme := runtime.NewScheme()
 		scheme.AddKnownTypes(GVRServiceInstance.GroupVersion())
-		givenInstance := fixUnstructuredServiceInstance()
-		givenInstance.Object["status"] = fixUnstructuredReadyCommonStatus()
+		givenInstance := fixServiceInstance()
+		givenInstance.Object["status"] = fixReadyCommonStatus()
 
 		dynamic := dynamic_fake.NewSimpleDynamicClient(scheme, givenInstance)
 		btpClient := NewClient(
@@ -233,8 +251,8 @@ func Test_btpClient_IsInstanceReadyFunc(t *testing.T) {
 	t.Run("failed instance", func(t *testing.T) {
 		scheme := runtime.NewScheme()
 		scheme.AddKnownTypes(GVRServiceInstance.GroupVersion())
-		givenInstance := fixUnstructuredServiceInstance()
-		givenInstance.Object["status"] = fixUnstructuredFailedCommonStatus()
+		givenInstance := fixServiceInstance()
+		givenInstance.Object["status"] = fixFailedCommonStatus()
 
 		dynamic := dynamic_fake.NewSimpleDynamicClient(scheme, givenInstance)
 		btpClient := NewClient(
@@ -243,7 +261,7 @@ func Test_btpClient_IsInstanceReadyFunc(t *testing.T) {
 
 		readyFn := btpClient.IsInstanceReady(context.Background(), "test-namespace", "test-name")
 		done, err := readyFn(context.Background())
-		require.Error(t, err)
+		require.ErrorContains(t, err, "test message")
 		require.False(t, done)
 	})
 
@@ -263,23 +281,7 @@ func Test_btpClient_IsInstanceReadyFunc(t *testing.T) {
 	})
 }
 
-func fixServiceInstance() *ServiceInstance {
-	return &ServiceInstance{
-		TypeMeta: v1.TypeMeta{
-			APIVersion: "services.cloud.sap.com/v1",
-			Kind:       "ServiceInstance",
-		},
-		ObjectMeta: v1.ObjectMeta{
-			Name:      "test-name",
-			Namespace: "test-namespace",
-		},
-		Spec: ServiceInstanceSpec{
-			ExternalName: "test",
-		},
-	}
-}
-
-func fixUnstructuredServiceInstance() *unstructured.Unstructured {
+func fixServiceInstance() *unstructured.Unstructured {
 	return &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": "services.cloud.sap.com/v1",
@@ -297,23 +299,7 @@ func fixUnstructuredServiceInstance() *unstructured.Unstructured {
 	}
 }
 
-func fixServiceBinding() *ServiceBinding {
-	return &ServiceBinding{
-		TypeMeta: v1.TypeMeta{
-			APIVersion: "services.cloud.sap.com/v1",
-			Kind:       "ServiceBinding",
-		},
-		ObjectMeta: v1.ObjectMeta{
-			Name:      "test-name",
-			Namespace: "test-namespace",
-		},
-		Spec: ServiceBindingSpec{
-			ExternalName: "test",
-		},
-	}
-}
-
-func fixUnstructuredServiceBinding() *unstructured.Unstructured {
+func fixServiceBinding() *unstructured.Unstructured {
 	return &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": "services.cloud.sap.com/v1",
@@ -331,7 +317,7 @@ func fixUnstructuredServiceBinding() *unstructured.Unstructured {
 	}
 }
 
-func fixUnstructuredReadyCommonStatus() map[string]interface{} {
+func fixReadyCommonStatus() map[string]interface{} {
 	return map[string]interface{}{
 		"ready": "True",
 		"conditions": []interface{}{
@@ -347,14 +333,20 @@ func fixUnstructuredReadyCommonStatus() map[string]interface{} {
 	}
 }
 
-func fixUnstructuredFailedCommonStatus() map[string]interface{} {
+func fixFailedCommonStatus() map[string]interface{} {
 	return map[string]interface{}{
 		"ready": "False",
 		"conditions": []interface{}{
 			map[string]interface{}{
-				"type":   "Failed",
-				"status": "True",
+				"type":    "Failed",
+				"status":  "True",
+				"message": "test message",
 			},
 		},
 	}
+}
+
+func toStructured(t *testing.T, u *unstructured.Unstructured, obj interface{}) {
+	err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, obj)
+	require.NoError(t, err)
 }
