@@ -16,11 +16,8 @@ type Client interface {
 	Static() kubernetes.Interface
 	Dynamic() dynamic.Interface
 	Kyma() kyma.Interface
-<<<<<<< HEAD
 	Btp() btp.Interface
-=======
 	RootlessDynamic() rootlessdynamic.Interface
->>>>>>> eae1faa (add_cmd_early_version)
 	RestClient() *rest.RESTClient
 	RestConfig() *rest.Config
 	APIConfig() *api.Config
@@ -70,10 +67,17 @@ func newClient(kubeconfig string) (Client, error) {
 
 	kymaClient := kyma.NewClient(dynamicClient)
 
+<<<<<<< HEAD
 	btpClient := btp.NewClient(dynamicClient)
 
 	rootlessClient := rootlessdynamic.NewClient(dynamicClient)
 
+=======
+	rootlessClient := rootlessdynamic.NewClient(dynamicClient)
+
+	btpClient := btp.NewClient(dynamicClient)
+
+>>>>>>> 9d260a4 (cleanup_after_merge)
 	restClientConfig := *restConfig
 	err = setKubernetesDefaults(&restClientConfig)
 	if err != nil {
@@ -92,7 +96,11 @@ func newClient(kubeconfig string) (Client, error) {
 		kymaClient:     kymaClient,
 		rootlessClient: rootlessClient,
 		dynamicClient:  dynamicClient,
+<<<<<<< HEAD
 		btpClient:     btpClient,
+=======
+		btpClient:      btpClient,
+>>>>>>> 9d260a4 (cleanup_after_merge)
 		restClient:     restClient,
 	}, nil
 }
@@ -109,12 +117,22 @@ func (c *client) Kyma() kyma.Interface {
 	return c.kymaClient
 }
 
+<<<<<<< HEAD
 func (c *client) Btp() btp.Interface {
 	return c.btpClient
 }
 
 func (c *client) RootlessDynamic() rootlessdynamic.Interface {
 	return c.rootlessClient
+=======
+func (c *client) RootlessDynamic() rootlessdynamic.Interface {
+	return c.rootlessClient
+}
+
+func (c *client) Btp() btp.Interface {
+	return c.btpClient
+
+>>>>>>> 9d260a4 (cleanup_after_merge)
 }
 
 func (c *client) RestClient() *rest.RESTClient {
