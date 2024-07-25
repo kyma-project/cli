@@ -42,7 +42,7 @@ func modulesCatalog(url string) (moduleMap, clierror.Error) {
 
 	catalog := make(moduleMap)
 	for _, rec := range modules {
-		latestVersion := getLatestVersion(rec.Versions)
+		latestVersion := GetLatestVersion(rec.Versions)
 		catalog[rec.Name] = row{
 			Name:          rec.Name,
 			Repository:    chooseRepository(rec, latestVersion),
@@ -63,7 +63,7 @@ func chooseRepository(module Module, version Version) string {
 	}
 	return "Unknown"
 }
-func getLatestVersion(versions []Version) Version {
+func GetLatestVersion(versions []Version) Version {
 	return slices.MaxFunc(versions, func(a, b Version) int {
 		cmpA := a.Version
 		if !semver.IsValid(cmpA) {
@@ -86,18 +86,18 @@ func getCommunityModules(url string) (Modules, clierror.Error) {
 	defer resp.Body.Close()
 
 	var modules Modules
-	modules, respErr := decodeCommunityModulesResponse(err, resp, modules)
+	modules, respErr := DecodeCommunityModulesResponse(resp, modules)
 	if respErr != nil {
 		return nil, clierror.WrapE(respErr, clierror.New("while handling response"))
 	}
 	return modules, nil
 }
 
-// decodeCommunityModulesResponse reads the response body and unmarshals it into the template
-func decodeCommunityModulesResponse(err error, resp *http.Response, modules Modules) (Modules, clierror.Error) {
+// DecodeCommunityModulesResponse reads the response body and unmarshals it into the template
+func DecodeCommunityModulesResponse(resp *http.Response, modules Modules) (Modules, clierror.Error) {
 	if resp.StatusCode != 200 {
 		errMsg := fmt.Sprintf("error response: %s", resp.Status)
-		return nil, clierror.Wrap(err, clierror.New(errMsg))
+		return nil, clierror.New(errMsg)
 	}
 
 	bodyText, err := io.ReadAll(resp.Body)
@@ -165,7 +165,7 @@ func installedModules(url string, client cmdcommon.KubeClientConfig, cfg cmdcomm
 func getInstalledModules(modules Modules, client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) (moduleMap, clierror.Error) {
 	installed := make(moduleMap)
 	for _, module := range modules {
-		latestVersion := getLatestVersion(module.Versions)
+		latestVersion := GetLatestVersion(module.Versions)
 		managerName := getManagerName(latestVersion)
 		deployment, err := client.KubeClient.Static().AppsV1().Deployments("kyma-system").
 			Get(cfg.Ctx, managerName, metav1.GetOptions{})

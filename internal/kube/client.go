@@ -4,6 +4,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/kube/btp"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
+	"github.com/kyma-project/cli.v3/internal/kube/rootlessdynamic"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -15,20 +16,25 @@ type Client interface {
 	Static() kubernetes.Interface
 	Dynamic() dynamic.Interface
 	Kyma() kyma.Interface
+<<<<<<< HEAD
 	Btp() btp.Interface
+=======
+	RootlessDynamic() rootlessdynamic.Interface
+>>>>>>> eae1faa (add_cmd_early_version)
 	RestClient() *rest.RESTClient
 	RestConfig() *rest.Config
 	APIConfig() *api.Config
 }
 
 type client struct {
-	restConfig    *rest.Config
-	apiConfig     *api.Config
-	kymaClient    kyma.Interface
-	kubeClient    kubernetes.Interface
-	dynamicClient dynamic.Interface
+	restConfig     *rest.Config
+	apiConfig      *api.Config
+	kymaClient     kyma.Interface
+	rootlessClient rootlessdynamic.Interface
+	kubeClient     kubernetes.Interface
+	dynamicClient  dynamic.Interface
 	btpClient     btp.Interface
-	restClient    *rest.RESTClient
+	restClient     *rest.RESTClient
 }
 
 func NewClient(kubeconfig string) (Client, clierror.Error) {
@@ -66,6 +72,8 @@ func newClient(kubeconfig string) (Client, error) {
 
 	btpClient := btp.NewClient(dynamicClient)
 
+	rootlessClient := rootlessdynamic.NewClient(dynamicClient)
+
 	restClientConfig := *restConfig
 	err = setKubernetesDefaults(&restClientConfig)
 	if err != nil {
@@ -78,13 +86,14 @@ func newClient(kubeconfig string) (Client, error) {
 	}
 
 	return &client{
-		restConfig:    restConfig,
-		apiConfig:     apiConfig,
-		kubeClient:    kubeClient,
-		kymaClient:    kymaClient,
-		dynamicClient: dynamicClient,
+		restConfig:     restConfig,
+		apiConfig:      apiConfig,
+		kubeClient:     kubeClient,
+		kymaClient:     kymaClient,
+		rootlessClient: rootlessClient,
+		dynamicClient:  dynamicClient,
 		btpClient:     btpClient,
-		restClient:    restClient,
+		restClient:     restClient,
 	}, nil
 }
 
@@ -102,6 +111,10 @@ func (c *client) Kyma() kyma.Interface {
 
 func (c *client) Btp() btp.Interface {
 	return c.btpClient
+}
+
+func (c *client) RootlessDynamic() rootlessdynamic.Interface {
+	return c.rootlessClient
 }
 
 func (c *client) RestClient() *rest.RESTClient {
