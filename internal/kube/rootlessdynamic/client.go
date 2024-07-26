@@ -69,26 +69,22 @@ func (c *client) discoverGVR(apiVersion, kind string) (*schema.GroupVersionResou
 	group, version := groupVersion(apiVersion)
 	groupVersion := schema.GroupVersion{Group: group, Version: version}
 
-	text, err := c.discovery.ServerResourcesForGroupVersion(groupVersion.String())
+	apiResourceList, err := c.discovery.ServerResourcesForGroupVersion(groupVersion.String())
 	if err != nil {
 		return nil, err
 	}
 
-	var gvr *schema.GroupVersionResource
-	for _, resourceList := range text.APIResources {
-		if resourceList.Kind == kind {
-			gvr = &schema.GroupVersionResource{
+	for _, apiResource := range apiResourceList.APIResources {
+		if apiResource.Kind == kind {
+			return &schema.GroupVersionResource{
 				Group:    group,
 				Version:  version,
-				Resource: resourceList.Name,
-			}
-			break
+				Resource: apiResource.Name,
+			}, nil
+
 		}
 	}
-	if gvr == nil {
-		return nil, errors.New("Resource " + kind + " in apiVersion " + apiVersion + " not registered on cluster")
-	}
-	return gvr, nil
+	return nil, errors.New("Resource " + kind + " in apiVersion " + apiVersion + " not registered on cluster")
 }
 
 func groupVersion(version string) (string, string) {
