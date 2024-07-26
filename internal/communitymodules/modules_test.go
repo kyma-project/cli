@@ -331,9 +331,9 @@ func fixCommunityModulesResponse() string {
 	]`
 }
 
-func Test_getLatestVersion(t *testing.T) {
+func Test_GetLatestVersion(t *testing.T) {
 	t.Run("simple versions", func(t *testing.T) {
-		result := getLatestVersion([]Version{
+		result := GetLatestVersion([]Version{
 			{
 				Version: "1.5.3",
 			},
@@ -349,7 +349,7 @@ func Test_getLatestVersion(t *testing.T) {
 		}, result)
 	})
 	t.Run("v prefix", func(t *testing.T) {
-		result := getLatestVersion([]Version{
+		result := GetLatestVersion([]Version{
 			{
 				Version: "v1.5.3",
 			},
@@ -365,7 +365,7 @@ func Test_getLatestVersion(t *testing.T) {
 		}, result)
 	})
 	t.Run("with suffix", func(t *testing.T) {
-		result := getLatestVersion([]Version{
+		result := GetLatestVersion([]Version{
 			{
 				Version: "1.5.3-experimental",
 			},
