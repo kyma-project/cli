@@ -62,18 +62,9 @@ func runAdd(cfg *addConfig) clierror.Error {
 	}
 
 	if cfg.custom != "" {
-		err = applyCustomConfiguration(cfg)
-		if err != nil {
-			return err
-		}
-	} else {
-		err = applySpecifiedModules(cfg)
-		if err != nil {
-			return err
-		}
+		return applyCustomConfiguration(cfg)
 	}
-
-	return nil
+	return applySpecifiedModules(cfg)
 }
 
 func applySpecifiedModules(cfg *addConfig) clierror.Error {
@@ -82,33 +73,35 @@ func applySpecifiedModules(cfg *addConfig) clierror.Error {
 		return err
 	}
 	for _, rec := range modules {
-		if containsModule(rec.Name, cfg.wantedModules) {
+		if !containsModule(rec.Name, cfg.wantedModules) {
+			continue
+		}
+		fmt.Printf("Found matching module for %s\n", rec.Name)
+		latestVersion := communitymodules.GetLatestVersion(rec.Versions)
 
-			fmt.Printf("Found matching module for %s\n", rec.Name)
-			latestVersion := communitymodules.GetLatestVersion(rec.Versions)
+		deploymentYaml, err := http.Get(latestVersion.DeploymentYaml)
+		if err != nil {
+			return clierror.Wrap(err, clierror.New("failed to get deployment YAML"))
+		}
+		defer deploymentYaml.Body.Close()
 
-			deploymentYaml, err := http.Get(latestVersion.DeploymentYaml)
-			if err != nil {
-				return clierror.Wrap(err, clierror.New("failed to get deployment YAML"))
-			}
-			defer deploymentYaml.Body.Close()
+		yamlContent, err := io.ReadAll(deploymentYaml.Body)
+		if err != nil {
+			return clierror.Wrap(err, clierror.New("failed to read deployment YAML"))
+		}
 
-			yamlContent, err := io.ReadAll(deploymentYaml.Body)
-			if err != nil {
-				return clierror.Wrap(err, clierror.New("failed to read deployment YAML"))
-			}
+		objects, err := decodeYaml(bytes.NewReader(yamlContent))
+		if err != nil {
+			return clierror.Wrap(err, clierror.New("failed to decode YAML"))
+		}
 
-			objects, err := decodeYaml(bytes.NewReader(yamlContent))
-			if err != nil {
-				return clierror.Wrap(err, clierror.New("failed to decode YAML"))
-			}
+		err = cfg.KubeClient.RootlessDynamic().ApplyMany(cfg.Ctx, objects)
+		if err != nil {
+			return clierror.Wrap(err, clierror.New("failed to apply module resources"))
 
-			err = cfg.KubeClient.RootlessDynamic().ApplyMany(cfg.Ctx, objects)
-			if err != nil {
-				return clierror.Wrap(err, clierror.New("failed to apply module resources"))
-			}
 		}
 	}
+
 	return nil
 }
 
@@ -146,15 +139,16 @@ func getAvailableModules() (communitymodules.Modules, clierror.Error) {
 
 func assureNamespace(namespace string, cfg *addConfig) clierror.Error {
 	_, err := cfg.KubeClientConfig.KubeClient.Static().CoreV1().Namespaces().Get(cfg.Ctx, namespace, metav1.GetOptions{})
-	if err != nil && errors.IsNotFound(err) {
-		_, err = cfg.KubeClientConfig.KubeClient.Static().CoreV1().Namespaces().Create(cfg.Ctx, &v1.Namespace{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: namespace,
-			},
-		}, metav1.CreateOptions{})
-		if err != nil {
-			return clierror.New("failed to create namespace")
-		}
+	if !errors.IsNotFound(err) {
+		return nil
+	}
+	_, err = cfg.KubeClientConfig.KubeClient.Static().CoreV1().Namespaces().Create(cfg.Ctx, &v1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: namespace,
+		},
+	}, metav1.CreateOptions{})
+	if err != nil {
+		return clierror.New("failed to create namespace")
 	}
 	return nil
 }

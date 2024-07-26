@@ -2,12 +2,16 @@ package rootlessdynamic
 
 import (
 	"context"
+	"errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/discovery/cached/memory"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
 	"strings"
 )
 
@@ -16,35 +20,41 @@ type Interface interface {
 }
 
 type client struct {
-	dynamic dynamic.Interface
+	dynamic   dynamic.Interface
+	discovery discovery.DiscoveryInterface
 }
 
-func NewClient(dynamic dynamic.Interface) Interface {
-	return &client{
-		dynamic: dynamic,
+func NewClient(dynamic dynamic.Interface, restConfig *rest.Config) (Interface, error) {
+	discovery, err := discovery.NewDiscoveryClientForConfig(restConfig)
+	if err != nil {
+		return nil, err
 	}
+
+	return &client{
+		dynamic:   dynamic,
+		discovery: memory.NewMemCacheClient(discovery),
+	}, nil
 }
 
+// TODO: Add a script to test applying default resources
 func (c *client) ApplyMany(ctx context.Context, objs []unstructured.Unstructured) error {
 	for _, resource := range objs {
-		group, version := groupVersion(resource.GetAPIVersion())
-		gvr := schema.GroupVersionResource{
-			Group:    group,
-			Version:  version,
-			Resource: kindToResource(resource.GetKind()),
+		gvr, err := c.discoverGVR(resource.GetAPIVersion(), resource.GetKind())
+		if err != nil {
+			return err
 		}
 
 		data, err := runtime.Encode(unstructured.UnstructuredJSONScheme, &resource)
 
 		if kind := resource.GetKind(); kind == "CustomResourceDefinition" || kind == "ClusterRole" || kind == "ClusterRoleBinding" {
-			_, err = c.dynamic.Resource(gvr).Patch(ctx, resource.GetName(), types.ApplyPatchType, data, metav1.PatchOptions{
+			_, err = c.dynamic.Resource(*gvr).Patch(ctx, resource.GetName(), types.ApplyPatchType, data, metav1.PatchOptions{
 				FieldManager: "cli",
 			})
 			if err != nil {
 				return err
 			}
 		} else {
-			_, err = c.dynamic.Resource(gvr).Namespace(resource.GetNamespace()).Patch(ctx, resource.GetName(), types.ApplyPatchType, data, metav1.PatchOptions{
+			_, err = c.dynamic.Resource(*gvr).Namespace(resource.GetNamespace()).Patch(ctx, resource.GetName(), types.ApplyPatchType, data, metav1.PatchOptions{
 				FieldManager: "cli",
 			})
 			if err != nil {
@@ -55,6 +65,32 @@ func (c *client) ApplyMany(ctx context.Context, objs []unstructured.Unstructured
 	return nil
 }
 
+func (c *client) discoverGVR(apiVersion, kind string) (*schema.GroupVersionResource, error) {
+	group, version := groupVersion(apiVersion)
+	groupVersion := schema.GroupVersion{Group: group, Version: version}
+
+	text, err := c.discovery.ServerResourcesForGroupVersion(groupVersion.String())
+	if err != nil {
+		return nil, err
+	}
+
+	var gvr *schema.GroupVersionResource
+	for _, resourceList := range text.APIResources {
+		if resourceList.Kind == kind {
+			gvr = &schema.GroupVersionResource{
+				Group:    group,
+				Version:  version,
+				Resource: resourceList.Name,
+			}
+			break
+		}
+	}
+	if gvr == nil {
+		return nil, errors.New("Resource " + kind + " in apiVersion " + apiVersion + " not registered on cluster")
+	}
+	return gvr, nil
+}
+
 func groupVersion(version string) (string, string) {
 	split := strings.Split(version, "/")
 	if len(split) > 1 {
@@ -62,33 +98,4 @@ func groupVersion(version string) (string, string) {
 		return split[0], split[1]
 	}
 	return "", split[0]
-}
-
-func kindToResource(kind string) string {
-	return makePlural(strings.ToLower(kind))
-}
-
-func makePlural(singular string) string {
-	if strings.HasSuffix(singular, "y") {
-		return strings.TrimSuffix(singular, "y") + "ies"
-	}
-	if strings.HasSuffix(singular, "fe") {
-		return strings.TrimSuffix(singular, "fe") + "ves"
-	}
-	if strings.HasSuffix(singular, "s") {
-		return singular + "es"
-	}
-	if strings.HasSuffix(singular, "ss") {
-		return singular + "es"
-	}
-	if strings.HasSuffix(singular, "ch") {
-		return singular + "es"
-	}
-	if strings.HasSuffix(singular, "sh") {
-		return singular + "es"
-	}
-	if strings.HasSuffix(singular, "x") {
-		return singular + "es"
-	}
-	return singular + "s"
 }
