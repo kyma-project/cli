@@ -46,7 +46,7 @@ func NewAddCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.AddCommand(managed.NewManagedCMD(kymaConfig))
 
 	cfg.KubeClientConfig.AddFlag(cmd)
-	cmd.Flags().StringSliceVar(&cfg.wantedModules, "module", []string{}, "Name of the modules to add")
+	cmd.Flags().StringSliceVar(&cfg.wantedModules, "module", []string{}, "Name and version of the modules to add. Example: --module serverless,keda:1.1.1,etc...")
 	//cmd.Flags().StringVar(&cfg.custom, "custom", "", "Path to the custom file")
 
 	return cmd
@@ -70,32 +70,42 @@ func applySpecifiedModules(cfg *addConfig) clierror.Error {
 		if !containsModule(rec.Name, cfg.wantedModules) {
 			continue
 		}
+
 		fmt.Printf("Found matching module for %s\n", rec.Name)
 		latestVersion := communitymodules.GetLatestVersion(rec.Versions)
 
-		deploymentYaml, err := http.Get(latestVersion.DeploymentYaml)
+		err = applyGivenObjects(cfg, latestVersion.DeploymentYaml)
 		if err != nil {
-			return clierror.Wrap(err, clierror.New("failed to get deployment YAML"))
+			return err
 		}
-		defer deploymentYaml.Body.Close()
-
-		yamlContent, err := io.ReadAll(deploymentYaml.Body)
-		if err != nil {
-			return clierror.Wrap(err, clierror.New("failed to read deployment YAML"))
-		}
-
-		objects, err := decodeYaml(bytes.NewReader(yamlContent))
-		if err != nil {
-			return clierror.Wrap(err, clierror.New("failed to decode YAML"))
-		}
-
-		err = cfg.KubeClient.RootlessDynamic().ApplyMany(cfg.Ctx, objects)
-		if err != nil {
-			return clierror.Wrap(err, clierror.New("failed to apply module resources"))
-
-		}
+		err = applyGivenObjects(cfg, latestVersion.CrYaml)
 	}
 
+	return nil
+}
+
+func applyGivenObjects(cfg *addConfig, url string) clierror.Error {
+	givenYaml, err := http.Get(url)
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to get YAML from URL"))
+	}
+	defer givenYaml.Body.Close()
+
+	yamlContent, err := io.ReadAll(givenYaml.Body)
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to read  YAML"))
+	}
+
+	objects, err := decodeYaml(bytes.NewReader(yamlContent))
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to decode YAML"))
+	}
+
+	err = cfg.KubeClient.RootlessDynamic().ApplyMany(cfg.Ctx, objects)
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to apply module resources"))
+
+	}
 	return nil
 }
 
