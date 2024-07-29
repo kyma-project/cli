@@ -57,7 +57,7 @@ func (c *client) ApplyMany(ctx context.Context, objs []unstructured.Unstructured
 				return err
 			}
 		} else {
-			_, err = c.dynamic.Resource(*gvr).Namespace(resource.GetNamespace()).Patch(ctx, resource.GetName(), types.ApplyPatchType, data, metav1.PatchOptions{
+			_, err = c.dynamic.Resource(*gvr).Namespace("kyma-system").Patch(ctx, resource.GetName(), types.ApplyPatchType, data, metav1.PatchOptions{
 				FieldManager: "cli",
 			})
 			if err != nil {

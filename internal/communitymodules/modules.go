@@ -93,7 +93,7 @@ func getCommunityModules(url string) (Modules, clierror.Error) {
 	return modules, nil
 }
 
-// DecodeCommunityModulesResponse reads the response body and unmarshals it into the template
+// decodeCommunityModulesResponse reads the response body and unmarshals it into the template
 func decodeCommunityModulesResponse(resp *http.Response, modules Modules) (Modules, clierror.Error) {
 	if resp.StatusCode != 200 {
 		errMsg := fmt.Sprintf("error response: %s", resp.Status)
