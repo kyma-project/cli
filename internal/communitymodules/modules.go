@@ -86,7 +86,7 @@ func getCommunityModules(url string) (Modules, clierror.Error) {
 	defer resp.Body.Close()
 
 	var modules Modules
-	modules, respErr := DecodeCommunityModulesResponse(resp, modules)
+	modules, respErr := decodeCommunityModulesResponse(resp, modules)
 	if respErr != nil {
 		return nil, clierror.WrapE(respErr, clierror.New("while handling response"))
 	}
@@ -94,7 +94,7 @@ func getCommunityModules(url string) (Modules, clierror.Error) {
 }
 
 // DecodeCommunityModulesResponse reads the response body and unmarshals it into the template
-func DecodeCommunityModulesResponse(resp *http.Response, modules Modules) (Modules, clierror.Error) {
+func decodeCommunityModulesResponse(resp *http.Response, modules Modules) (Modules, clierror.Error) {
 	if resp.StatusCode != 200 {
 		errMsg := fmt.Sprintf("error response: %s", resp.Status)
 		return nil, clierror.New(errMsg)
@@ -213,5 +213,5 @@ func GetAvailableModules() (Modules, clierror.Error) {
 	defer resp.Body.Close()
 
 	var modules Modules
-	return DecodeCommunityModulesResponse(resp, modules)
+	return decodeCommunityModulesResponse(resp, modules)
 }
