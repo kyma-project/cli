@@ -45,6 +45,9 @@ func (c *client) ApplyMany(ctx context.Context, objs []unstructured.Unstructured
 		}
 
 		data, err := runtime.Encode(unstructured.UnstructuredJSONScheme, &resource)
+		if err != nil {
+			return err
+		}
 
 		if kind := resource.GetKind(); kind == "CustomResourceDefinition" || kind == "ClusterRole" || kind == "ClusterRoleBinding" {
 			_, err = c.dynamic.Resource(*gvr).Patch(ctx, resource.GetName(), types.ApplyPatchType, data, metav1.PatchOptions{
