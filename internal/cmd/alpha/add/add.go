@@ -79,6 +79,9 @@ func applySpecifiedModules(cfg *addConfig) clierror.Error {
 			return err
 		}
 		err = applyGivenObjects(cfg, latestVersion.CrYaml)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
