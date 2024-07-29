@@ -22,7 +22,7 @@ type addConfig struct {
 	cmdcommon.KubeClientConfig
 
 	wantedModules []string
-	custom        string
+	//custom        string
 }
 
 func NewAddCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
@@ -47,7 +47,7 @@ func NewAddCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cfg.KubeClientConfig.AddFlag(cmd)
 	cmd.Flags().StringSliceVar(&cfg.wantedModules, "module", []string{}, "Name and version of the modules to add. Example: --module serverless,keda:1.1.1,etc...")
-	cmd.Flags().StringVar(&cfg.custom, "custom", "", "Path to the custom file")
+	//cmd.Flags().StringVar(&cfg.custom, "custom", "", "Path to the custom file")
 
 	return cmd
 }
