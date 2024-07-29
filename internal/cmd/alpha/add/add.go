@@ -14,7 +14,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"net/http"
-	"os"
 	yaml "sigs.k8s.io/yaml/goyaml.v3"
 )
 
@@ -23,7 +22,7 @@ type addConfig struct {
 	cmdcommon.KubeClientConfig
 
 	wantedModules []string
-	custom        string
+	//custom        string
 }
 
 func NewAddCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
@@ -48,9 +47,7 @@ func NewAddCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cfg.KubeClientConfig.AddFlag(cmd)
 	cmd.Flags().StringSliceVar(&cfg.wantedModules, "module", []string{}, "Name of the modules to add")
-	cmd.Flags().StringVar(&cfg.custom, "custom", "", "Path to the custom file")
-
-	cmd.MarkFlagsMutuallyExclusive("module", "custom")
+	//cmd.Flags().StringVar(&cfg.custom, "custom", "", "Path to the custom file")
 
 	return cmd
 }
@@ -61,9 +58,6 @@ func runAdd(cfg *addConfig) clierror.Error {
 		return err
 	}
 
-	if cfg.custom != "" {
-		return applyCustomConfiguration(cfg)
-	}
 	return applySpecifiedModules(cfg)
 }
 
@@ -105,26 +99,26 @@ func applySpecifiedModules(cfg *addConfig) clierror.Error {
 	return nil
 }
 
-func applyCustomConfiguration(cfg *addConfig) clierror.Error {
-	fmt.Println("Applying custom configuration from " + cfg.custom)
-
-	customYaml, err := os.ReadFile(cfg.custom)
-	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to read custom file"))
-	}
-
-	objects, err := decodeYaml(bytes.NewReader(customYaml))
-	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to decode YAML"))
-	}
-
-	err = cfg.KubeClient.RootlessDynamic().ApplyMany(cfg.Ctx, objects)
-	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to apply module resources"))
-	}
-
-	return nil
-}
+//func applyCustomConfiguration(cfg *addConfig) clierror.Error {
+//	fmt.Println("Applying custom configuration from " + cfg.custom)
+//
+//	customYaml, err := os.ReadFile(cfg.custom)
+//	if err != nil {
+//		return clierror.Wrap(err, clierror.New("failed to read custom file"))
+//	}
+//
+//	objects, err := decodeYaml(bytes.NewReader(customYaml))
+//	if err != nil {
+//		return clierror.Wrap(err, clierror.New("failed to decode YAML"))
+//	}
+//
+//	err = cfg.KubeClient.RootlessDynamic().ApplyMany(cfg.Ctx, objects)
+//	if err != nil {
+//		return clierror.Wrap(err, clierror.New("failed to apply module resources"))
+//	}
+//
+//	return nil
+//}
 
 func getAvailableModules() (communitymodules.Modules, clierror.Error) {
 	resp, err := http.Get(communitymodules.URL)
