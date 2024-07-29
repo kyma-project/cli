@@ -4,6 +4,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/kube/btp"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
+	"github.com/kyma-project/cli.v3/internal/kube/rootlessdynamic"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -16,19 +17,21 @@ type Client interface {
 	Dynamic() dynamic.Interface
 	Kyma() kyma.Interface
 	Btp() btp.Interface
+	RootlessDynamic() rootlessdynamic.Interface
 	RestClient() *rest.RESTClient
 	RestConfig() *rest.Config
 	APIConfig() *api.Config
 }
 
 type client struct {
-	restConfig    *rest.Config
-	apiConfig     *api.Config
-	kymaClient    kyma.Interface
-	kubeClient    kubernetes.Interface
-	dynamicClient dynamic.Interface
-	btpClient     btp.Interface
-	restClient    *rest.RESTClient
+	restConfig     *rest.Config
+	apiConfig      *api.Config
+	kymaClient     kyma.Interface
+	rootlessClient rootlessdynamic.Interface
+	kubeClient     kubernetes.Interface
+	dynamicClient  dynamic.Interface
+	btpClient      btp.Interface
+	restClient     *rest.RESTClient
 }
 
 func NewClient(kubeconfig string) (Client, clierror.Error) {
@@ -64,6 +67,11 @@ func newClient(kubeconfig string) (Client, error) {
 
 	kymaClient := kyma.NewClient(dynamicClient)
 
+	rootlessClient, err := rootlessdynamic.NewClient(dynamicClient, restConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	btpClient := btp.NewClient(dynamicClient)
 
 	restClientConfig := *restConfig
@@ -78,13 +86,14 @@ func newClient(kubeconfig string) (Client, error) {
 	}
 
 	return &client{
-		restConfig:    restConfig,
-		apiConfig:     apiConfig,
-		kubeClient:    kubeClient,
-		kymaClient:    kymaClient,
-		dynamicClient: dynamicClient,
-		btpClient:     btpClient,
-		restClient:    restClient,
+		restConfig:     restConfig,
+		apiConfig:      apiConfig,
+		kubeClient:     kubeClient,
+		kymaClient:     kymaClient,
+		rootlessClient: rootlessClient,
+		dynamicClient:  dynamicClient,
+		btpClient:      btpClient,
+		restClient:     restClient,
 	}, nil
 }
 
@@ -104,10 +113,13 @@ func (c *client) Btp() btp.Interface {
 	return c.btpClient
 }
 
+func (c *client) RootlessDynamic() rootlessdynamic.Interface {
+	return c.rootlessClient
+}
+
 func (c *client) RestClient() *rest.RESTClient {
 	return c.restClient // TODO: Update schema - meanwhile can use kubeclient.Static().Corev1().RESTClient()
 }
-
 func (c *client) RestConfig() *rest.Config {
 	return c.restConfig
 }

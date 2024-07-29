@@ -6,15 +6,19 @@ import "k8s.io/apimachinery/pkg/runtime/schema"
 type Modules []Module
 
 type Module struct {
-	Name       string    `json:"name,omitempty"`
-	Versions   []Version `json:"versions,omitempty"`
-	Repository string    `json:"repository,omitempty"`
+	Name             string    `json:"name,omitempty"`
+	Versions         []Version `json:"versions,omitempty"`
+	Repository       string    `json:"repository,omitempty"`
+	ManagedResources []string  `json:"managedResources,omitempty"`
 }
 
 type Version struct {
 	Version     string `json:"version,omitempty"`
 	ManagerPath string `json:"managerPath,omitempty"`
 	Repository  string `json:"repository,omitempty"`
+	//CrPath string `json:"crPath,omitempty"`
+	DeploymentYaml string `json:"deploymentYaml,omitempty"`
+	CrYaml         string `json:"crYaml,omitempty"`
 }
 
 var (

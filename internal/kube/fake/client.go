@@ -3,6 +3,7 @@ package fake
 import (
 	"github.com/kyma-project/cli.v3/internal/kube/btp"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
+	"github.com/kyma-project/cli.v3/internal/kube/rootlessdynamic"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -12,13 +13,14 @@ import (
 // Fake client for testing purposes
 // It implements the Client interface and returns given values only
 type FakeKubeClient struct {
-	TestKubernetesInterface kubernetes.Interface
-	TestDynamicInterface    dynamic.Interface
-	TestKymaInterface       kyma.Interface
-	TestBtpInterface        btp.Interface
-	TestRestClient          *rest.RESTClient
-	TestRestConfig          *rest.Config
-	TestAPIConfig           *api.Config
+	TestKubernetesInterface      kubernetes.Interface
+	TestDynamicInterface         dynamic.Interface
+	TestKymaInterface            kyma.Interface
+	TestBtpInterface             btp.Interface
+	TestRestClient               *rest.RESTClient
+	TestRestConfig               *rest.Config
+	TestAPIConfig                *api.Config
+	TestRootlessDynamicInterface rootlessdynamic.Interface
 }
 
 func (f *FakeKubeClient) Static() kubernetes.Interface {
@@ -47,4 +49,8 @@ func (f *FakeKubeClient) APIConfig() *api.Config {
 
 func (f *FakeKubeClient) Kyma() kyma.Interface {
 	return f.TestKymaInterface
+}
+
+func (f *FakeKubeClient) RootlessDynamic() rootlessdynamic.Interface {
+	return f.TestRootlessDynamicInterface
 }
