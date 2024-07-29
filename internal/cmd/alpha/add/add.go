@@ -22,7 +22,7 @@ type addConfig struct {
 	cmdcommon.KubeClientConfig
 
 	wantedModules []string
-	//custom        string
+	custom        string
 }
 
 func NewAddCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
@@ -47,7 +47,7 @@ func NewAddCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cfg.KubeClientConfig.AddFlag(cmd)
 	cmd.Flags().StringSliceVar(&cfg.wantedModules, "module", []string{}, "Name and version of the modules to add. Example: --module serverless,keda:1.1.1,etc...")
-	//cmd.Flags().StringVar(&cfg.custom, "custom", "", "Path to the custom file")
+	cmd.Flags().StringVar(&cfg.custom, "custom", "", "Path to the custom file")
 
 	return cmd
 }
@@ -62,7 +62,7 @@ func runAdd(cfg *addConfig) clierror.Error {
 }
 
 func applySpecifiedModules(cfg *addConfig) clierror.Error {
-	modules, err := getAvailableModules()
+	modules, err := communitymodules.GetAvailableModules()
 	if err != nil {
 		return err
 	}
@@ -96,7 +96,7 @@ func applyGivenObjects(cfg *addConfig, url string) clierror.Error {
 
 	yamlContent, err := io.ReadAll(givenYaml.Body)
 	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to read  YAML"))
+		return clierror.Wrap(err, clierror.New("failed to read YAML"))
 	}
 
 	objects, err := decodeYaml(bytes.NewReader(yamlContent))
@@ -132,17 +132,6 @@ func applyGivenObjects(cfg *addConfig, url string) clierror.Error {
 //
 //	return nil
 //}
-
-func getAvailableModules() (communitymodules.Modules, clierror.Error) {
-	resp, err := http.Get(communitymodules.URL)
-	if err != nil {
-		return nil, clierror.Wrap(err, clierror.New("failed to get available modules"))
-	}
-	defer resp.Body.Close()
-
-	var modules communitymodules.Modules
-	return communitymodules.DecodeCommunityModulesResponse(resp, modules)
-}
 
 func assureNamespace(namespace string, cfg *addConfig) clierror.Error {
 	_, err := cfg.KubeClientConfig.KubeClient.Static().CoreV1().Namespaces().Get(cfg.Ctx, namespace, metav1.GetOptions{})

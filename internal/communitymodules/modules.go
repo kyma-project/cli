@@ -204,3 +204,14 @@ func calculateVersion(moduleVersion string, installedVersion string) string {
 	}
 	return "outdated moduleVersion, latest is " + moduleVersion
 }
+
+func GetAvailableModules() (Modules, clierror.Error) {
+	resp, err := http.Get(URL)
+	if err != nil {
+		return nil, clierror.Wrap(err, clierror.New("failed to get available modules"))
+	}
+	defer resp.Body.Close()
+
+	var modules Modules
+	return DecodeCommunityModulesResponse(resp, modules)
+}
