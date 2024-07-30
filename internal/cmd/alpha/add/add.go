@@ -3,17 +3,18 @@ package add
 import (
 	"bytes"
 	"fmt"
+	"io"
+	"net/http"
+
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/remove/managed"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/communitymodules"
 	"github.com/spf13/cobra"
-	"io"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"net/http"
 	yaml "sigs.k8s.io/yaml/goyaml.v3"
 )
 
