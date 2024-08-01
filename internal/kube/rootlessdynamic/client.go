@@ -3,7 +3,6 @@ package rootlessdynamic
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -50,7 +49,6 @@ func (c *client) Apply(ctx context.Context, resource unstructured.Unstructured) 
 		Version:  version,
 		Resource: apiResource.Name,
 	}
-	fmt.Println(resource.GetKind())
 	data, err := runtime.Encode(unstructured.UnstructuredJSONScheme, &resource)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("Failed to encode resource"))

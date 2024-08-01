@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"net/http"
 	"os"
-	yaml "sigs.k8s.io/yaml/goyaml.v2"
+	yaml "sigs.k8s.io/yaml/goyaml.v3"
 	"strings"
 )
 
@@ -27,7 +27,7 @@ func ApplySpecifiedModules(ctx context.Context, client rootlessdynamic.Interface
 	}
 
 	for _, rec := range available {
-		versionedName := containsModule(rec.Name, modules)
+		versionedName := containsModule(rec.Name, modules) //TODO move splitting to earlier
 		if versionedName == nil {
 			continue
 		}
