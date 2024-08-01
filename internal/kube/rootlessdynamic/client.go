@@ -3,21 +3,22 @@ package rootlessdynamic
 import (
 	"context"
 	"errors"
-	"strings"
-
+	"fmt"
+	"github.com/kyma-project/cli.v3/internal/clierror"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/discovery"
-	"k8s.io/client-go/discovery/cached/memory"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
+	"strings"
 )
 
 type Interface interface {
-	ApplyMany(context.Context, []unstructured.Unstructured) error
+	Apply(context.Context, unstructured.Unstructured) clierror.Error
+	ApplyMany(context.Context, []unstructured.Unstructured) clierror.Error
 }
 
 type client struct {
@@ -33,44 +34,52 @@ func NewClient(dynamic dynamic.Interface, restConfig *rest.Config) (Interface, e
 
 	return &client{
 		dynamic:   dynamic,
-		discovery: memory.NewMemCacheClient(discovery),
+		discovery: discovery,
 	}, nil
 }
 
+func (c *client) Apply(ctx context.Context, resource unstructured.Unstructured) clierror.Error {
+	group, version := groupVersion(resource.GetAPIVersion())
+	apiResource, err := c.discoverAPIResource(group, version, resource.GetKind())
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("Failed to discover API resource using discovery client"))
+	}
+
+	gvr := &schema.GroupVersionResource{
+		Group:    group,
+		Version:  version,
+		Resource: apiResource.Name,
+	}
+	fmt.Println(resource.GetKind())
+	data, err := runtime.Encode(unstructured.UnstructuredJSONScheme, &resource)
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("Failed to encode resource"))
+	}
+
+	if apiResource.Namespaced {
+		_, err = c.dynamic.Resource(*gvr).Namespace("kyma-system").Patch(ctx, resource.GetName(), types.ApplyPatchType, data, metav1.PatchOptions{
+			FieldManager: "cli",
+		})
+		if err != nil {
+			return clierror.Wrap(err, clierror.New("Failed to apply namespaced resource"))
+		}
+	} else {
+		_, err = c.dynamic.Resource(*gvr).Patch(ctx, resource.GetName(), types.ApplyPatchType, data, metav1.PatchOptions{
+			FieldManager: "cli",
+		})
+		if err != nil {
+			return clierror.Wrap(err, clierror.New("Failed to apply cluster-scoped resource"))
+		}
+	}
+	return nil
+}
+
 // TODO: Add a script to test applying default resources
-func (c *client) ApplyMany(ctx context.Context, objs []unstructured.Unstructured) error {
+func (c *client) ApplyMany(ctx context.Context, objs []unstructured.Unstructured) clierror.Error {
 	for _, resource := range objs {
-		group, version := groupVersion(resource.GetAPIVersion())
-		apiResource, err := c.discoverAPIResource(group, version, resource.GetKind())
+		err := c.Apply(ctx, resource)
 		if err != nil {
 			return err
-		}
-
-		gvr := &schema.GroupVersionResource{
-			Group:    group,
-			Version:  version,
-			Resource: apiResource.Name,
-		}
-
-		data, err := runtime.Encode(unstructured.UnstructuredJSONScheme, &resource)
-		if err != nil {
-			return err
-		}
-
-		if apiResource.Namespaced {
-			_, err = c.dynamic.Resource(*gvr).Namespace("kyma-system").Patch(ctx, resource.GetName(), types.ApplyPatchType, data, metav1.PatchOptions{
-				FieldManager: "cli",
-			})
-			if err != nil {
-				return err
-			}
-		} else {
-			_, err = c.dynamic.Resource(*gvr).Patch(ctx, resource.GetName(), types.ApplyPatchType, data, metav1.PatchOptions{
-				FieldManager: "cli",
-			})
-			if err != nil {
-				return err
-			}
 		}
 	}
 	return nil
