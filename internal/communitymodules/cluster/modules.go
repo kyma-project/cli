@@ -4,15 +4,16 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"strings"
+
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/communitymodules"
 	"github.com/kyma-project/cli.v3/internal/kube/rootlessdynamic"
-	"io"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"net/http"
-	"os"
 	yaml "sigs.k8s.io/yaml/goyaml.v3"
-	"strings"
 )
 
 func ApplySpecifiedModules(ctx context.Context, client rootlessdynamic.Interface, modules, crs []string) clierror.Error {
@@ -100,7 +101,7 @@ func verifyVersion(name []string, rec communitymodules.Module) communitymodules.
 func applyGivenCustomCR(ctx context.Context, client rootlessdynamic.Interface, rec communitymodules.Module, config []unstructured.Unstructured) bool {
 	for _, obj := range config {
 		if strings.ToLower(obj.GetKind()) == strings.ToLower(rec.Name) {
-			client.Apply(ctx, obj)
+			client.Apply(ctx, &obj)
 			return true
 		}
 	}
