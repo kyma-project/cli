@@ -100,7 +100,7 @@ func verifyVersion(name []string, rec communitymodules.Module) communitymodules.
 // applyGivenCustomCR applies custom CR if it exists
 func applyGivenCustomCR(ctx context.Context, client rootlessdynamic.Interface, rec communitymodules.Module, config []unstructured.Unstructured) bool {
 	for _, obj := range config {
-		if strings.ToLower(obj.GetKind()) == strings.ToLower(rec.Name) {
+		if strings.EqualFold(obj.GetKind(), strings.ToLower(rec.Name)) {
 			client.Apply(ctx, &obj)
 			return true
 		}
