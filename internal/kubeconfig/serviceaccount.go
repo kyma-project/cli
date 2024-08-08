@@ -58,8 +58,7 @@ func CreateClusterRoleBinding(ctx context.Context, client kube.Client, name, nam
 	// Create clusterRoleBinding
 	cRoleBinding := rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name + "-binding",
-			Namespace: namespace,
+			Name: name + "-binding",
 		},
 		Subjects: []rbacv1.Subject{
 			{
@@ -152,6 +151,10 @@ func getServiceAccountToken(ctx context.Context, client kube.Client, name, names
 	}
 
 	tokenRequest := authv1.TokenRequest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
 		Spec: authv1.TokenRequestSpec{
 			ExpirationSeconds: &seconds,
 		},
