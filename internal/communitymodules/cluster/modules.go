@@ -93,7 +93,7 @@ func verifyVersion(name []string, rec communitymodules.Module) communitymodules.
 		}
 	}
 
-	fmt.Printf("Using latest version for for %s\n", rec.Name)
+	fmt.Printf("Using latest version for %s\n", rec.Name)
 	return communitymodules.GetLatestVersion(rec.Versions)
 }
 
