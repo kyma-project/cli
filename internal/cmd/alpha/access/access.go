@@ -6,6 +6,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/kube"
+	"github.com/kyma-project/cli.v3/internal/kube/resources"
 	"github.com/kyma-project/cli.v3/internal/kubeconfig"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/tools/clientcmd"
@@ -64,7 +65,7 @@ func runAccess(cfg *accessConfig) clierror.Error {
 	}
 
 	// Fill kubeconfig
-	generatedKubeconfig, clierr := kubeconfig.PrepareKubeconfig(cfg.Ctx, cfg.KubeClient, cfg.name, cfg.namespace, cfg.time, cfg.output, cfg.permanent)
+	generatedKubeconfig, clierr := kubeconfig.Prepare(cfg.Ctx, cfg.KubeClient, cfg.name, cfg.namespace, cfg.time, cfg.output, cfg.permanent)
 	if clierr != nil {
 		return clierr
 	}
@@ -87,18 +88,18 @@ func runAccess(cfg *accessConfig) clierror.Error {
 
 func createObjects(cfg *accessConfig) clierror.Error {
 	// Create Service Account
-	err := kubeconfig.CreateServiceAccount(cfg.Ctx, cfg.KubeClient, cfg.name, cfg.namespace)
+	err := resources.CreateServiceAccount(cfg.Ctx, cfg.KubeClient, cfg.name, cfg.namespace)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to create Service Account"))
 	}
 	// Create Role Binding for the Service Account
-	err = kubeconfig.CreateClusterRoleBinding(cfg.Ctx, cfg.KubeClient, cfg.name, cfg.namespace, cfg.clusterrole)
+	err = resources.CreateClusterRoleBinding(cfg.Ctx, cfg.KubeClient, cfg.name, cfg.namespace, cfg.clusterrole)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to create Cluster Role Binding"))
 	}
 	// Create a service-account-token type secret
 	if cfg.permanent {
-		err = kubeconfig.CreateServiceAccountToken(cfg.Ctx, cfg.KubeClient, cfg.name, cfg.namespace)
+		err = resources.CreateServiceAccountToken(cfg.Ctx, cfg.KubeClient, cfg.name, cfg.namespace)
 		if err != nil {
 			return clierror.Wrap(err, clierror.New("failed to create secret"))
 		}
