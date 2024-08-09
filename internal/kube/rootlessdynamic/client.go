@@ -12,7 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/rest"
 )
 
 type Interface interface {
@@ -25,16 +24,11 @@ type client struct {
 	discovery discovery.DiscoveryInterface
 }
 
-func NewClient(dynamic dynamic.Interface, restConfig *rest.Config) (Interface, error) {
-	discovery, err := discovery.NewDiscoveryClientForConfig(restConfig)
-	if err != nil {
-		return nil, err
-	}
-
+func NewClient(dynamic dynamic.Interface, discovery discovery.DiscoveryInterface) Interface {
 	return &client{
 		dynamic:   dynamic,
 		discovery: discovery,
-	}, nil
+	}
 }
 
 func (c *client) Apply(ctx context.Context, resource *unstructured.Unstructured) clierror.Error {

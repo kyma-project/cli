@@ -1,10 +1,33 @@
 package cluster
 
 import (
-	"bytes"
-	"github.com/kyma-project/cli.v3/internal/communitymodules"
 	"testing"
+
+	"github.com/kyma-project/cli.v3/internal/communitymodules"
+	"github.com/kyma-project/cli.v3/internal/kube/rootlessdynamic"
+	"github.com/stretchr/testify/require"
+	discovery_fake "k8s.io/client-go/discovery/fake"
+	dynamic_fake "k8s.io/client-go/dynamic/fake"
+	"k8s.io/client-go/kubernetes/scheme"
 )
+
+func TestParseModules(t *testing.T) {
+	t.Run("parse input", func(t *testing.T) {
+		input := []string{"test", "", "test2:1.2.3"}
+
+		moduleInfoList := ParseModules(input)
+		require.Len(t, moduleInfoList, 2)
+		require.Contains(t, moduleInfoList, ModuleInfo{"test", ""})
+		require.Contains(t, moduleInfoList, ModuleInfo{"test2", "1.2.3"})
+	})
+}
+
+func fixTestRootlessDynamicClient() rootlessdynamic.Interface {
+	return rootlessdynamic.NewClient(
+		dynamic_fake.NewSimpleDynamicClient(scheme.Scheme),
+		&discovery_fake.FakeDiscovery{},
+	)
+}
 
 func Test_verifyVersion(t *testing.T) {
 	t.Run("Version found", func(t *testing.T) {
@@ -19,11 +42,12 @@ func Test_verifyVersion(t *testing.T) {
 				},
 			},
 		}
-		var versionedName []string
-		versionedName = append(versionedName, "test")
-		versionedName = append(versionedName, "1.0.0")
+		moduleInfo := ModuleInfo{
+			Name:    "test",
+			Version: "1.0.0",
+		}
 
-		got := verifyVersion(versionedName, rec)
+		got := verifyVersion(moduleInfo, rec)
 		if got != rec.Versions[0] {
 			t.Errorf("verifyVersion() got = %v, want %v", got, rec.Versions[0])
 		}
@@ -40,11 +64,12 @@ func Test_verifyVersion(t *testing.T) {
 				},
 			},
 		}
-		var versionedName []string
-		versionedName = append(versionedName, "test")
-		versionedName = append(versionedName, "1.0.2")
+		moduleInfo := ModuleInfo{
+			Name:    "test",
+			Version: "1.0.2",
+		}
 
-		got := verifyVersion(versionedName, rec)
+		got := verifyVersion(moduleInfo, rec)
 		if got != rec.Versions[1] {
 			t.Errorf("verifyVersion() got = %v, want %v", got, nil)
 		}
@@ -54,16 +79,22 @@ func Test_verifyVersion(t *testing.T) {
 func Test_containsModule(t *testing.T) {
 	t.Run("Module found", func(t *testing.T) {
 		have := "serverless"
-		want := []string{"serverless:1.0.0", "keda:1.0.1"}
+		want := []ModuleInfo{
+			{"serverless", "1.0.0"},
+			{"keda", "1.0.1"},
+		}
 
 		got := containsModule(have, want)
-		if got[0] != "serverless" {
+		if got.Name != "serverless" {
 			t.Errorf("containsModule() got = %v, want %v", got, "test:1.0.0")
 		}
 	})
 	t.Run("Module not found", func(t *testing.T) {
 		have := "test"
-		want := []string{"serverless:1.0.0", "keda:1.0.1"}
+		want := []ModuleInfo{
+			{"Serverless", "1.0.0"},
+			{"Keda", "1.0.1"},
+		}
 
 		got := containsModule(have, want)
 		if got != nil {
@@ -71,18 +102,3 @@ func Test_containsModule(t *testing.T) {
 		}
 	})
 }
-
-func Test_decodeYaml(t *testing.T) {
-	t.Run("Decode YAML", func(t *testing.T) {
-		yaml := []byte("apiVersion: v1\nkind: Pod\nmetadata:\n  name: test\nspec:\n  containers:\n  - name: test\n    image: test")
-		unstructured, err := decodeYaml(bytes.NewReader(yaml))
-		if unstructured[0].GetKind() != "Pod" {
-			t.Errorf("decodeYaml() got = %v, want %v", unstructured[0].GetKind(), "Pod")
-		}
-		if err != nil {
-			t.Errorf("decodeYaml() got = %v, want %v", err, nil)
-		}
-	})
-}
-
-// func Test_readCustomConfig(t *testing.T)
