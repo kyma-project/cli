@@ -5,6 +5,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/remove/managed"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/communitymodules/cluster"
+	"github.com/kyma-project/cli.v3/internal/kube/resources"
 	"github.com/spf13/cobra"
 )
 
@@ -44,10 +45,17 @@ func NewAddCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 }
 
 func runAdd(cfg *addConfig) clierror.Error {
-	err := cluster.AssureNamespace(cfg.Ctx, cfg.KubeClient.Static(), "kyma-system")
-	if err != nil {
-		return err
+	cliErr := cluster.AssureNamespace(cfg.Ctx, cfg.KubeClient.Static(), "kyma-system")
+	if cliErr != nil {
+		return cliErr
 	}
 
-	return cluster.ApplySpecifiedModules(cfg.Ctx, cfg.KubeClient.RootlessDynamic(), cfg.modules, cfg.crs)
+	crs, err := resources.ReadFromFiles(cfg.crs...)
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to read CRs from input paths"))
+	}
+
+	modules := cluster.ParseModules(cfg.modules)
+
+	return cluster.ApplySpecifiedModules(cfg.Ctx, cfg.KubeClient.RootlessDynamic(), modules, crs)
 }
