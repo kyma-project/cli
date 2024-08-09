@@ -5,6 +5,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/kube/btp"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"github.com/kyma-project/cli.v3/internal/kube/rootlessdynamic"
+	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -67,10 +68,12 @@ func newClient(kubeconfig string) (Client, error) {
 
 	kymaClient := kyma.NewClient(dynamicClient)
 
-	rootlessClient, err := rootlessdynamic.NewClient(dynamicClient, restConfig)
+	discovery, err := discovery.NewDiscoveryClientForConfig(restConfig)
 	if err != nil {
 		return nil, err
 	}
+
+	rootlessClient := rootlessdynamic.NewClient(dynamicClient, discovery)
 
 	btpClient := btp.NewClient(dynamicClient)
 

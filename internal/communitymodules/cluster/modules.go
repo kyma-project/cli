@@ -121,6 +121,7 @@ func applyGivenCustomCR(ctx context.Context, client rootlessdynamic.Interface, r
 }
 
 func applyGivenObjects(ctx context.Context, client rootlessdynamic.Interface, url string) clierror.Error {
+	// TODO: do we really need to call github to get module resources? community modules json contains resources - maybe we can apply them?
 	givenYaml, err := http.Get(url)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to get YAML from URL"))
