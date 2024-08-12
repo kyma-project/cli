@@ -206,7 +206,11 @@ func calculateVersion(moduleVersion string, installedVersion string) string {
 }
 
 func GetAvailableModules() (Modules, clierror.Error) {
-	resp, err := http.Get(URL)
+	return getAvailableModules(URL)
+}
+
+func getAvailableModules(url string) (Modules, clierror.Error) {
+	resp, err := http.Get(url)
 	if err != nil {
 		return nil, clierror.Wrap(err, clierror.New("failed to get available modules"))
 	}

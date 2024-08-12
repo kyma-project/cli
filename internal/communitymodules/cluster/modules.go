@@ -6,41 +6,72 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/communitymodules"
+	"github.com/kyma-project/cli.v3/internal/kube/resources"
 	"github.com/kyma-project/cli.v3/internal/kube/rootlessdynamic"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	yaml "sigs.k8s.io/yaml/goyaml.v3"
 )
 
-func ApplySpecifiedModules(ctx context.Context, client rootlessdynamic.Interface, modules, crs []string) clierror.Error {
+type ModuleInfo struct {
+	Name    string
+	Version string
+}
+
+// ParseModules returns ModuleInfo struct based on the string input.
+// Can convert 'name' or 'name:version' into struct
+func ParseModules(modules []string) []ModuleInfo {
+	// TODO: I can't find better place for this function (move it)
+	var moduleInfo []ModuleInfo
+	for _, module := range modules {
+		if module == "" {
+			// skip empty strings
+			continue
+		}
+
+		elems := strings.Split(module, ":")
+		info := ModuleInfo{
+			Name: elems[0],
+		}
+
+		if len(elems) > 1 {
+			info.Version = elems[1]
+		}
+
+		moduleInfo = append(moduleInfo, info)
+	}
+
+	return moduleInfo
+}
+
+// ApplySpecifiedModules applies modules to the cluster based on the resources from the community module json (Github)
+// if module cr is in the given crs list then it will be applied instead of one from the community module json
+func ApplySpecifiedModules(ctx context.Context, client rootlessdynamic.Interface, modules []ModuleInfo, crs []unstructured.Unstructured) clierror.Error {
 	available, err := communitymodules.GetAvailableModules()
 	if err != nil {
 		return err
 	}
 
-	customConfig, err := readCustomConfig(crs)
-	if err != nil {
-		return err
-	}
+	return applySpecifiedModules(ctx, client, modules, crs, available)
+}
 
-	for _, rec := range available {
-		versionedName := containsModule(rec.Name, modules) //TODO move splitting to earlier
-		if versionedName == nil {
+func applySpecifiedModules(ctx context.Context, client rootlessdynamic.Interface, modules []ModuleInfo, crs []unstructured.Unstructured, availableModules communitymodules.Modules) clierror.Error {
+	for _, rec := range availableModules {
+		moduleInfo := containsModule(rec.Name, modules)
+		if moduleInfo == nil {
 			continue
 		}
 
-		wantedVersion := verifyVersion(versionedName, rec)
+		wantedVersion := verifyVersion(*moduleInfo, rec)
 		fmt.Printf("Applying %s module manifest\n", rec.Name)
-		err = applyGivenObjects(ctx, client, wantedVersion.DeploymentYaml)
+		err := applyGivenObjects(ctx, client, wantedVersion.DeploymentYaml)
 		if err != nil {
 			return err
 		}
 
-		if applyGivenCustomCR(ctx, client, rec, customConfig) {
+		if applyGivenCustomCR(ctx, client, rec, crs) {
 			fmt.Println("Applying custom CR")
 			continue
 		}
@@ -54,39 +85,19 @@ func ApplySpecifiedModules(ctx context.Context, client rootlessdynamic.Interface
 	return nil
 }
 
-func readCustomConfig(cr []string) ([]unstructured.Unstructured, clierror.Error) {
-	if len(cr) == 0 {
-		return nil, nil
-	}
-	var objects []unstructured.Unstructured
-	for _, rec := range cr {
-		yaml, err := os.ReadFile(rec)
-		if err != nil {
-			return nil, clierror.Wrap(err, clierror.New("failed to read custom file"))
-		}
-		currentObjects, err := decodeYaml(bytes.NewReader(yaml))
-		if err != nil {
-			return nil, clierror.Wrap(err, clierror.New("failed to decode custom YAML"))
-		}
-		objects = append(objects, currentObjects...)
-	}
-	return objects, nil
-}
-
-func containsModule(have string, want []string) []string {
+func containsModule(have string, want []ModuleInfo) *ModuleInfo {
 	for _, rec := range want {
-		name := strings.Split(rec, ":")
-		if name[0] == have {
-			return name
+		if have == rec.Name {
+			return &rec
 		}
 	}
 	return nil
 }
 
-func verifyVersion(name []string, rec communitymodules.Module) communitymodules.Version {
-	if len(name) != 1 {
+func verifyVersion(moduleInfo ModuleInfo, rec communitymodules.Module) communitymodules.Version {
+	if moduleInfo.Version != "" {
 		for _, version := range rec.Versions {
-			if version.Version == name[1] {
+			if version.Version == moduleInfo.Version {
 				fmt.Printf("Version %s found for %s\n", version.Version, rec.Name)
 				return version
 			}
@@ -110,6 +121,7 @@ func applyGivenCustomCR(ctx context.Context, client rootlessdynamic.Interface, r
 }
 
 func applyGivenObjects(ctx context.Context, client rootlessdynamic.Interface, url string) clierror.Error {
+	// TODO: do we really need to call github to get module resources? community modules json contains resources - maybe we can apply them?
 	givenYaml, err := http.Get(url)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to get YAML from URL"))
@@ -121,7 +133,7 @@ func applyGivenObjects(ctx context.Context, client rootlessdynamic.Interface, ur
 		return clierror.Wrap(err, clierror.New("failed to read YAML"))
 	}
 
-	objects, err := decodeYaml(bytes.NewReader(yamlContent))
+	objects, err := resources.DecodeYaml(bytes.NewReader(yamlContent))
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to decode YAML"))
 	}
@@ -132,31 +144,4 @@ func applyGivenObjects(ctx context.Context, client rootlessdynamic.Interface, ur
 
 	}
 	return nil
-}
-
-func decodeYaml(r io.Reader) ([]unstructured.Unstructured, error) {
-	results := make([]unstructured.Unstructured, 0)
-	decoder := yaml.NewDecoder(r)
-
-	for {
-		var obj map[string]interface{}
-		err := decoder.Decode(&obj)
-
-		if err == io.EOF {
-			break
-		}
-
-		if err != nil {
-			return nil, err
-		}
-
-		u := unstructured.Unstructured{Object: obj}
-		if u.GetObjectKind().GroupVersionKind().Kind == "CustomResourceDefinition" {
-			results = append([]unstructured.Unstructured{u}, results...)
-			continue
-		}
-		results = append(results, u)
-	}
-
-	return results, nil
 }
