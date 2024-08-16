@@ -6,13 +6,14 @@ import (
 	"strings"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
-	apimachinery_errors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 )
+
+type applyFunc func(context.Context, dynamic.ResourceInterface, *unstructured.Unstructured) error
 
 type Interface interface {
 	Apply(context.Context, *unstructured.Unstructured) clierror.Error
@@ -22,12 +23,20 @@ type Interface interface {
 type client struct {
 	dynamic   dynamic.Interface
 	discovery discovery.DiscoveryInterface
+
+	// for testing purposes
+	applyFunc applyFunc
 }
 
 func NewClient(dynamic dynamic.Interface, discovery discovery.DiscoveryInterface) Interface {
+	return NewClientWithApplyFunc(dynamic, discovery, applyResource)
+}
+
+func NewClientWithApplyFunc(dynamic dynamic.Interface, discovery discovery.DiscoveryInterface, applyFunc applyFunc) Interface {
 	return &client{
 		dynamic:   dynamic,
 		discovery: discovery,
+		applyFunc: applyFunc,
 	}
 }
 
@@ -46,12 +55,12 @@ func (c *client) Apply(ctx context.Context, resource *unstructured.Unstructured)
 
 	if apiResource.Namespaced {
 		// we should not expect here for all resources to be installed in the kyma-system namespace. passed resources should be defaulted and validated out of the Apply func
-		err = applyResource(ctx, c.dynamic.Resource(*gvr).Namespace("kyma-system"), resource)
+		err = c.applyFunc(ctx, c.dynamic.Resource(*gvr).Namespace("kyma-system"), resource)
 		if err != nil {
 			return clierror.Wrap(err, clierror.New("failed to apply namespaced resource"))
 		}
 	} else {
-		err = applyResource(ctx, c.dynamic.Resource(*gvr), resource)
+		err = c.applyFunc(ctx, c.dynamic.Resource(*gvr), resource)
 		if err != nil {
 			return clierror.Wrap(err, clierror.New("failed to apply cluster-scoped resource"))
 		}
@@ -71,14 +80,11 @@ func (c *client) ApplyMany(ctx context.Context, objs []unstructured.Unstructured
 
 // applyResource creates or updates given object
 func applyResource(ctx context.Context, resourceInterface dynamic.ResourceInterface, resource *unstructured.Unstructured) error {
-	_, err := resourceInterface.Create(ctx, resource, metav1.CreateOptions{
+	// this function can't be tested because of dynamic.FakeDynamicClient limitations
+	_, err := resourceInterface.Apply(ctx, resource.GetName(), resource, metav1.ApplyOptions{
 		FieldManager: "cli",
+		Force:        true,
 	})
-	if apimachinery_errors.IsAlreadyExists(err) {
-		_, err = resourceInterface.Update(ctx, resource, metav1.UpdateOptions{
-			FieldManager: "cli",
-		})
-	}
 
 	return err
 }

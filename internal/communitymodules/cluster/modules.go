@@ -1,16 +1,12 @@
 package cluster
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"io"
-	"net/http"
 	"strings"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/communitymodules"
-	"github.com/kyma-project/cli.v3/internal/kube/resources"
 	"github.com/kyma-project/cli.v3/internal/kube/rootlessdynamic"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -66,7 +62,8 @@ func applySpecifiedModules(ctx context.Context, client rootlessdynamic.Interface
 
 		wantedVersion := verifyVersion(*moduleInfo, rec)
 		fmt.Printf("Applying %s module manifest\n", rec.Name)
-		err := applyGivenObjects(ctx, client, wantedVersion.DeploymentYaml)
+
+		err := applyGivenObjects(ctx, client, wantedVersion.Resources...)
 		if err != nil {
 			return err
 		}
@@ -77,7 +74,7 @@ func applySpecifiedModules(ctx context.Context, client rootlessdynamic.Interface
 		}
 
 		fmt.Println("Applying CR")
-		err = applyGivenObjects(ctx, client, wantedVersion.CrYaml)
+		err = applyGivenObjects(ctx, client, wantedVersion.CR)
 		if err != nil {
 			return err
 		}
@@ -98,6 +95,8 @@ func verifyVersion(moduleInfo ModuleInfo, rec communitymodules.Module) community
 	if moduleInfo.Version != "" {
 		for _, version := range rec.Versions {
 			if version.Version == moduleInfo.Version {
+				// TODO: what if the user passes a version that does not exist?
+				// shall we for sure install the latest version?
 				fmt.Printf("Version %s found for %s\n", version.Version, rec.Name)
 				return version
 			}
@@ -120,27 +119,17 @@ func applyGivenCustomCR(ctx context.Context, client rootlessdynamic.Interface, r
 
 }
 
-func applyGivenObjects(ctx context.Context, client rootlessdynamic.Interface, url string) clierror.Error {
-	// TODO: do we really need to call github to get module resources? community modules json contains resources - maybe we can apply them?
-	givenYaml, err := http.Get(url)
-	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to get YAML from URL"))
-	}
-	defer givenYaml.Body.Close()
-
-	yamlContent, err := io.ReadAll(givenYaml.Body)
-	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to read YAML"))
+func applyGivenObjects(ctx context.Context, client rootlessdynamic.Interface, resources ...communitymodules.Resource) clierror.Error {
+	objects := []unstructured.Unstructured{}
+	for _, res := range resources {
+		objects = append(objects, unstructured.Unstructured{
+			Object: res,
+		})
 	}
 
-	objects, err := resources.DecodeYaml(bytes.NewReader(yamlContent))
+	err := client.ApplyMany(ctx, objects)
 	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to decode YAML"))
-	}
-
-	cliErr := client.ApplyMany(ctx, objects)
-	if cliErr != nil {
-		return clierror.WrapE(cliErr, clierror.New("failed to apply module resources"))
+		return clierror.WrapE(err, clierror.New("failed to apply module resources"))
 
 	}
 	return nil

@@ -12,13 +12,15 @@ type Module struct {
 	ManagedResources []string  `json:"managedResources,omitempty"`
 }
 
+type Resource map[string]interface{}
+
 type Version struct {
 	Version     string `json:"version,omitempty"`
 	ManagerPath string `json:"managerPath,omitempty"`
 	Repository  string `json:"repository,omitempty"`
-	//CrPath string `json:"crPath,omitempty"`
-	DeploymentYaml string `json:"deploymentYaml,omitempty"`
-	CrYaml         string `json:"crYaml,omitempty"`
+
+	Resources []Resource `json:"resources,omitempty"`
+	CR        Resource   `json:"cr,omitempty"`
 }
 
 var (
