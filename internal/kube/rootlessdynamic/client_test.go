@@ -7,6 +7,7 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/stretchr/testify/require"
+	apimachinery_errors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -238,13 +239,28 @@ func fixClusterRoleObjectAndApiResource() (*unstructured.Unstructured, *metav1.A
 		}
 }
 
-func fixRootlessDynamic(dynamic dynamic.Interface, apiResources []*metav1.APIResourceList) *client {
-	return &client{
-		dynamic: dynamic,
-		discovery: &clientgo_fake.FakeDiscovery{
+func fixRootlessDynamic(dynamic dynamic.Interface, apiResources []*metav1.APIResourceList) Interface {
+	return NewClientWithApplyFunc(
+		dynamic,
+		&clientgo_fake.FakeDiscovery{
 			Fake: &clientgo_testing.Fake{
 				Resources: apiResources,
 			},
 		},
+		fixApplyFunc,
+	)
+}
+
+// this func is a testing version of the Apply func that can't be used in tests because of dynamic.FakeDynamicClient limitations
+func fixApplyFunc(ctx context.Context, ri dynamic.ResourceInterface, u *unstructured.Unstructured) error {
+	_, err := ri.Create(ctx, u, metav1.CreateOptions{
+		FieldManager: "cli",
+	})
+	if apimachinery_errors.IsAlreadyExists(err) {
+		_, err = ri.Update(ctx, u, metav1.UpdateOptions{
+			FieldManager: "cli",
+		})
 	}
+
+	return err
 }
