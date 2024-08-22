@@ -3,10 +3,13 @@ package cluster
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/communitymodules"
+	"github.com/kyma-project/cli.v3/internal/kube/resources"
 	"github.com/kyma-project/cli.v3/internal/kube/rootlessdynamic"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -44,39 +47,95 @@ func ParseModules(modules []string) []ModuleInfo {
 
 // ApplySpecifiedModules applies modules to the cluster based on the resources from the community module json (Github)
 // if module cr is in the given crs list then it will be applied instead of one from the community module json
-func ApplySpecifiedModules(ctx context.Context, client rootlessdynamic.Interface, modules []ModuleInfo, crs []unstructured.Unstructured) clierror.Error {
+func ApplySpecifiedModules(ctx context.Context, client rootlessdynamic.Interface, desiredModules []ModuleInfo, crs []unstructured.Unstructured) clierror.Error {
 	available, err := communitymodules.GetAvailableModules()
 	if err != nil {
 		return err
 	}
 
-	return applySpecifiedModules(ctx, client, modules, crs, available)
+	modules, err := downloadSpecifiedModules(desiredModules, available)
+	if err != nil {
+		return err
+	}
+
+	return applySpecifiedModules(ctx, client, modules, crs)
 }
 
-func applySpecifiedModules(ctx context.Context, client rootlessdynamic.Interface, modules []ModuleInfo, crs []unstructured.Unstructured, availableModules communitymodules.Modules) clierror.Error {
-	for _, rec := range availableModules {
-		moduleInfo := containsModule(rec.Name, modules)
+type moduleDetails struct {
+	name      string
+	version   string
+	cr        unstructured.Unstructured
+	resources []unstructured.Unstructured
+}
+
+func downloadSpecifiedModules(desiredModules []ModuleInfo, availableModules communitymodules.Modules) ([]moduleDetails, clierror.Error) {
+	modules := []moduleDetails{}
+	for _, module := range availableModules {
+		moduleInfo := containsModule(module.Name, desiredModules)
 		if moduleInfo == nil {
+			// module is not specified
 			continue
 		}
 
-		wantedVersion := verifyVersion(*moduleInfo, rec)
-		fmt.Printf("Applying %s module manifest\n", rec.Name)
+		desiredVersion := getDesiredVersion(*moduleInfo, module.Versions)
 
-		err := applyGivenObjects(ctx, client, wantedVersion.Resources...)
+		crURL := desiredVersion.CrYaml
+		cr, err := downloadUnstructuredList(crURL)
 		if err != nil {
-			return err
+			return nil, clierror.Wrap(err, clierror.New(fmt.Sprintf("failed to download cr from '%s' url", crURL)))
 		}
 
-		if applyGivenCustomCR(ctx, client, rec, crs) {
-			fmt.Println("Applying custom CR")
-			continue
+		manifestURL := desiredVersion.DeploymentYaml
+		resources, err := downloadUnstructuredList(manifestURL)
+		if err != nil {
+			return nil, clierror.Wrap(err, clierror.New(fmt.Sprintf("failed to download manifest from '%s' url", manifestURL)))
+		}
+
+		modules = append(modules, moduleDetails{
+			name:      module.Name,
+			version:   desiredVersion.Version,
+			cr:        cr[0], // its expected that cr will always have len==1
+			resources: resources,
+		})
+	}
+
+	return modules, nil
+}
+
+func downloadUnstructuredList(url string) ([]unstructured.Unstructured, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("unexpected status code '%d'", resp.StatusCode)
+	}
+
+	return resources.DecodeYaml(resp.Body)
+}
+
+func applySpecifiedModules(ctx context.Context, client rootlessdynamic.Interface, desiredModules []moduleDetails, customConfig []unstructured.Unstructured) clierror.Error {
+	for _, module := range desiredModules {
+		fmt.Printf("Applying %s module\n", module.name)
+		err := client.ApplyMany(ctx, module.resources)
+		if err != nil {
+			return clierror.WrapE(err, clierror.New("failed to apply module resources"))
 		}
 
 		fmt.Println("Applying CR")
-		err = applyGivenObjects(ctx, client, wantedVersion.CR)
+		cr := &module.cr
+		customCRIndex := slices.IndexFunc(customConfig, func(u unstructured.Unstructured) bool {
+			return u.GetKind() == module.cr.GetKind() && u.GetAPIVersion() == module.cr.GetAPIVersion()
+		})
+
+		if customCRIndex >= 0 {
+			cr = &customConfig[customCRIndex]
+		}
+
+		err = client.Apply(ctx, cr)
 		if err != nil {
-			return err
+			return clierror.WrapE(err, clierror.New("failed to apply module cr"))
 		}
 	}
 	return nil
@@ -91,46 +150,18 @@ func containsModule(have string, want []ModuleInfo) *ModuleInfo {
 	return nil
 }
 
-func verifyVersion(moduleInfo ModuleInfo, rec communitymodules.Module) communitymodules.Version {
+func getDesiredVersion(moduleInfo ModuleInfo, versions []communitymodules.Version) communitymodules.Version {
 	if moduleInfo.Version != "" {
-		for _, version := range rec.Versions {
+		for _, version := range versions {
 			if version.Version == moduleInfo.Version {
 				// TODO: what if the user passes a version that does not exist?
 				// shall we for sure install the latest version?
-				fmt.Printf("Version %s found for %s\n", version.Version, rec.Name)
+				fmt.Printf("Version %s found for %s\n", version.Version, moduleInfo.Name)
 				return version
 			}
 		}
 	}
 
-	fmt.Printf("Using latest version for %s\n", rec.Name)
-	return communitymodules.GetLatestVersion(rec.Versions)
-}
-
-// applyGivenCustomCR applies custom CR if it exists
-func applyGivenCustomCR(ctx context.Context, client rootlessdynamic.Interface, rec communitymodules.Module, config []unstructured.Unstructured) bool {
-	for _, obj := range config {
-		if strings.EqualFold(obj.GetKind(), strings.ToLower(rec.Name)) {
-			client.Apply(ctx, &obj)
-			return true
-		}
-	}
-	return false
-
-}
-
-func applyGivenObjects(ctx context.Context, client rootlessdynamic.Interface, resources ...communitymodules.Resource) clierror.Error {
-	objects := []unstructured.Unstructured{}
-	for _, res := range resources {
-		objects = append(objects, unstructured.Unstructured{
-			Object: res,
-		})
-	}
-
-	err := client.ApplyMany(ctx, objects)
-	if err != nil {
-		return clierror.WrapE(err, clierror.New("failed to apply module resources"))
-
-	}
-	return nil
+	fmt.Printf("Using latest version for %s\n", moduleInfo.Name)
+	return communitymodules.GetLatestVersion(versions)
 }
