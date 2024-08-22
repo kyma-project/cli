@@ -124,21 +124,26 @@ func applySpecifiedModules(ctx context.Context, client rootlessdynamic.Interface
 		}
 
 		fmt.Println("Applying CR")
-		cr := &module.cr
-		customCRIndex := slices.IndexFunc(customConfig, func(u unstructured.Unstructured) bool {
-			return u.GetKind() == module.cr.GetKind() && u.GetAPIVersion() == module.cr.GetAPIVersion()
-		})
+		cr := chooseModuleCR(module, customConfig)
 
-		if customCRIndex >= 0 {
-			cr = &customConfig[customCRIndex]
-		}
-
-		err = client.Apply(ctx, cr)
+		err = client.Apply(ctx, &cr)
 		if err != nil {
 			return clierror.WrapE(err, clierror.New("failed to apply module cr"))
 		}
 	}
 	return nil
+}
+
+func chooseModuleCR(module moduleDetails, customConfig []unstructured.Unstructured) unstructured.Unstructured {
+	customCRIndex := slices.IndexFunc(customConfig, func(u unstructured.Unstructured) bool {
+		return u.GetKind() == module.cr.GetKind() && u.GetAPIVersion() == module.cr.GetAPIVersion()
+	})
+
+	if customCRIndex >= 0 {
+		return customConfig[customCRIndex]
+	}
+
+	return module.cr
 }
 
 func containsModule(have string, want []ModuleInfo) *ModuleInfo {
