@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/communitymodules"
@@ -59,6 +60,20 @@ func ApplySpecifiedModules(ctx context.Context, client rootlessdynamic.Interface
 	}
 
 	return applySpecifiedModules(ctx, client, modules, crs)
+}
+
+func RemoveSpecifiedModules(ctx context.Context, client rootlessdynamic.Interface, desiredModules []ModuleInfo) clierror.Error {
+	available, err := communitymodules.GetAvailableModules()
+	if err != nil {
+		return err
+	}
+
+	modules, err := downloadSpecifiedModules(desiredModules, available)
+	if err != nil {
+		return err
+	}
+
+	return removeSpecifiedModules(ctx, client, modules)
 }
 
 type moduleDetails struct {
@@ -169,4 +184,26 @@ func getDesiredVersion(moduleInfo ModuleInfo, versions []communitymodules.Versio
 
 	fmt.Printf("Using latest version for %s\n", moduleInfo.Name)
 	return communitymodules.GetLatestVersion(versions)
+}
+
+func removeSpecifiedModules(ctx context.Context, client rootlessdynamic.Interface, desiredModules []moduleDetails) clierror.Error {
+	for _, module := range desiredModules {
+		fmt.Printf("Removing CR\n")
+		err := client.Remove(ctx, &module.cr)
+		if err != nil {
+			return clierror.WrapE(err, clierror.New("failed to remove module cr"))
+		}
+		// Get & if still exists retry
+		//	"github.com/avast/retry-go"
+		// If err == errors.IsnotFound
+
+		time.Sleep(5 * time.Second) // wait for the CR to be removed
+
+		fmt.Printf("Removing %s module\n", module.name)
+		err = client.RemoveMany(ctx, module.resources)
+		if err != nil {
+			return clierror.WrapE(err, clierror.New("failed to remove module resources"))
+		}
+	}
+	return nil
 }
