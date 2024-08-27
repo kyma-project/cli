@@ -2,7 +2,6 @@ package rootlessdynamic
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -111,8 +110,7 @@ func Test_Apply(t *testing.T) {
 		})
 
 		err := client.Apply(ctx, obj)
-		expectErr := errors.New("resource 'Secret' in group '', and version 'v1' not registered on cluster")
-		require.Equal(t, expectErr, err)
+		require.ErrorContains(t, err, "failed to discover API resource using discovery client: resource 'Secret' in group '', and version 'v1' not registered on cluster")
 	})
 }
 

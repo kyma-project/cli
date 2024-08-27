@@ -43,7 +43,7 @@ func (c *client) Apply(ctx context.Context, resource *unstructured.Unstructured)
 	group, version := groupVersion(resource.GetAPIVersion())
 	apiResource, err := c.discoverAPIResource(group, version, resource.GetKind())
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to discover API resource using discovery client: %w", err)
 	}
 
 	gvr := &schema.GroupVersionResource{
@@ -56,12 +56,12 @@ func (c *client) Apply(ctx context.Context, resource *unstructured.Unstructured)
 		// we should not expect here for all resources to be installed in the kyma-system namespace. passed resources should be defaulted and validated out of the Apply func
 		err = c.applyFunc(ctx, c.dynamic.Resource(*gvr).Namespace("kyma-system"), resource)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to apply namespaced resource: %w", err)
 		}
 	} else {
 		err = c.applyFunc(ctx, c.dynamic.Resource(*gvr), resource)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to apply cluster-scoped resource: %w", err)
 		}
 	}
 	return nil
