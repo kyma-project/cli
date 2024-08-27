@@ -5,7 +5,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/stretchr/testify/require"
 	apimachinery_errors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -112,9 +111,7 @@ func Test_Apply(t *testing.T) {
 		})
 
 		err := client.Apply(ctx, obj)
-		expectErr := clierror.Wrap(
-			errors.New("resource 'Secret' in group '', and version 'v1' not registered on cluster"),
-			clierror.New("failed to discover API resource using discovery client"))
+		expectErr := errors.New("resource 'Secret' in group '', and version 'v1' not registered on cluster")
 		require.Equal(t, expectErr, err)
 	})
 }
@@ -160,14 +157,10 @@ func Test_client_ApplyMany(t *testing.T) {
 			clusterRoleApiResource,
 		})
 
-		expectedErr := clierror.Wrap(errors.New(
-			"the server could not find the requested resource, GroupVersion \"v1\" not found"),
-			clierror.New("failed to discover API resource using discovery client"))
-
 		err := client.ApplyMany(ctx, []unstructured.Unstructured{
 			*clusterRole, *secret,
 		})
-		require.Equal(t, expectedErr, err)
+		require.ErrorContains(t, err, "the server could not find the requested resource, GroupVersion \"v1\" not found")
 
 		createdClusterRole, getErr := dynamic.Resource(schema.GroupVersionResource{
 			Group:    "rbac.authorization.k8s.io",
