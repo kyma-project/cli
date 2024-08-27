@@ -120,7 +120,7 @@ func applySpecifiedModules(ctx context.Context, client rootlessdynamic.Interface
 		fmt.Printf("Applying %s module\n", module.name)
 		err := client.ApplyMany(ctx, module.resources)
 		if err != nil {
-			return clierror.WrapE(err, clierror.New("failed to apply module resources"))
+			return clierror.Wrap(err, clierror.New("failed to apply module resources"))
 		}
 
 		fmt.Println("Applying CR")
@@ -128,7 +128,7 @@ func applySpecifiedModules(ctx context.Context, client rootlessdynamic.Interface
 
 		err = client.Apply(ctx, &cr)
 		if err != nil {
-			return clierror.WrapE(err, clierror.New("failed to apply module cr"))
+			return clierror.Wrap(err, clierror.New("failed to apply module cr"))
 		}
 	}
 	return nil

@@ -183,7 +183,7 @@ func Test_applySpecifiedModules(t *testing.T) {
 
 	t.Run("Apply client error", func(t *testing.T) {
 		fakerootlessdynamic := &rootlessdynamicMock{
-			returnErr: clierror.New("test error"),
+			returnErr: errors.New("test error"),
 		}
 
 		err := applySpecifiedModules(context.Background(),
@@ -312,16 +312,16 @@ func fixFakeAvailableDetails(istioCRURL, istioResourcesURL string) communitymodu
 }
 
 type rootlessdynamicMock struct {
-	returnErr      clierror.Error
+	returnErr      error
 	appliedObjects []unstructured.Unstructured
 }
 
-func (m *rootlessdynamicMock) Apply(_ context.Context, obj *unstructured.Unstructured) clierror.Error {
+func (m *rootlessdynamicMock) Apply(_ context.Context, obj *unstructured.Unstructured) error {
 	m.appliedObjects = append(m.appliedObjects, *obj)
 	return m.returnErr
 }
 
-func (m *rootlessdynamicMock) ApplyMany(_ context.Context, objs []unstructured.Unstructured) clierror.Error {
+func (m *rootlessdynamicMock) ApplyMany(_ context.Context, objs []unstructured.Unstructured) error {
 	m.appliedObjects = append(m.appliedObjects, objs...)
 	return m.returnErr
 }
