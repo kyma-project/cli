@@ -11,12 +11,8 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/communitymodules"
-	"github.com/kyma-project/cli.v3/internal/kube/rootlessdynamic"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	discovery_fake "k8s.io/client-go/discovery/fake"
-	dynamic_fake "k8s.io/client-go/dynamic/fake"
-	"k8s.io/client-go/kubernetes/scheme"
 )
 
 var (
@@ -206,13 +202,6 @@ func TestParseModules(t *testing.T) {
 	})
 }
 
-func fixFakeRootlessDynamicClient() rootlessdynamic.Interface {
-	return rootlessdynamic.NewClient(
-		dynamic_fake.NewSimpleDynamicClient(scheme.Scheme),
-		&discovery_fake.FakeDiscovery{},
-	)
-}
-
 func Test_verifyVersion(t *testing.T) {
 	t.Run("Version found", func(t *testing.T) {
 		versions := []communitymodules.Version{
@@ -277,6 +266,57 @@ func Test_containsModule(t *testing.T) {
 	})
 }
 
+func Test_removeSpecifiedModules(t *testing.T) {
+	t.Run("Remove module", func(t *testing.T) {
+		fakerootlessdynamic := &rootlessdynamicMock{
+			appliedObjects: []unstructured.Unstructured{fakeServerlessCR},
+		}
+
+		err := removeSpecifiedModules(context.Background(), fakerootlessdynamic, fakeModuleDetails)
+		require.Nil(t, err)
+		require.Len(t, fakerootlessdynamic.appliedObjects, 0)
+	})
+
+	t.Run("Remove module cr error", func(t *testing.T) {
+		fakerootlessdynamic := &rootlessdynamicMock{
+			returnErr: errors.New("test error"),
+		}
+
+		err := removeSpecifiedModules(context.Background(), fakerootlessdynamic, fakeModuleDetails)
+		require.Equal(t, clierror.Wrap(
+			errors.New("test error"),
+			clierror.New("failed to remove module cr"),
+		), err)
+	})
+}
+
+func Test_retryUntilRemoved(t *testing.T) {
+	t.Run("Object removed", func(t *testing.T) {
+		fakerootlessdynamic := &rootlessdynamicMock{}
+
+		err := retryUntilRemoved(context.Background(), fakerootlessdynamic, fakeModuleDetails[0], 1)
+		require.Nil(t, err)
+	})
+
+	t.Run("Failed to remove object", func(t *testing.T) {
+		fakerootlessdynamic := &rootlessdynamicMock{
+			returnErr: errors.New("test error"),
+		}
+
+		err := retryUntilRemoved(context.Background(), fakerootlessdynamic, fakeModuleDetails[0], 1)
+		require.Contains(t, err.String(), "failed to remove module cr")
+	})
+
+	t.Run("Object still exists", func(t *testing.T) {
+		fakerootlessdynamic := &rootlessdynamicMock{
+			appliedObjects: []unstructured.Unstructured{fakeServerlessCR},
+		}
+
+		err := retryUntilRemoved(context.Background(), fakerootlessdynamic, fakeModuleDetails[0], 1)
+		require.Contains(t, err.String(), "object still exists")
+	})
+}
+
 func fixFakeAvailableDetails(istioCRURL, istioResourcesURL string) communitymodules.Modules {
 	return communitymodules.Modules{
 		{
@@ -323,5 +363,22 @@ func (m *rootlessdynamicMock) Apply(_ context.Context, obj *unstructured.Unstruc
 
 func (m *rootlessdynamicMock) ApplyMany(_ context.Context, objs []unstructured.Unstructured) error {
 	m.appliedObjects = append(m.appliedObjects, objs...)
+	return m.returnErr
+}
+
+func (m *rootlessdynamicMock) Get(_ context.Context, obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+	if len(m.appliedObjects) == 0 {
+		return nil, m.returnErr
+	}
+	return obj, m.returnErr
+}
+
+func (m *rootlessdynamicMock) Remove(_ context.Context, _ *unstructured.Unstructured) error {
+	m.appliedObjects = nil
+	return m.returnErr
+}
+
+func (m *rootlessdynamicMock) RemoveMany(_ context.Context, _ []unstructured.Unstructured) error {
+	m.appliedObjects = nil
 	return m.returnErr
 }

@@ -3,9 +3,9 @@ package rootlessdynamic
 import (
 	"context"
 	"fmt"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"strings"
 
-	"github.com/kyma-project/cli.v3/internal/clierror"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -16,10 +16,11 @@ import (
 type applyFunc func(context.Context, dynamic.ResourceInterface, *unstructured.Unstructured) error
 
 type Interface interface {
+	Get(context.Context, *unstructured.Unstructured) (*unstructured.Unstructured, error)
 	Apply(context.Context, *unstructured.Unstructured) error
 	ApplyMany(context.Context, []unstructured.Unstructured) error
-	Remove(context.Context, *unstructured.Unstructured) clierror.Error
-	RemoveMany(context.Context, []unstructured.Unstructured) clierror.Error
+	Remove(context.Context, *unstructured.Unstructured) error
+	RemoveMany(context.Context, []unstructured.Unstructured) error
 }
 
 type client struct {
@@ -40,6 +41,25 @@ func NewClientWithApplyFunc(dynamic dynamic.Interface, discovery discovery.Disco
 		discovery: discovery,
 		applyFunc: applyFunc,
 	}
+}
+
+func (c *client) Get(ctx context.Context, resource *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+	group, version := groupVersion(resource.GetAPIVersion())
+	apiResource, err := c.discoverAPIResource(group, version, resource.GetKind())
+	if err != nil {
+		return nil, fmt.Errorf("failed to discover API resource using discovery client: %w", err)
+	}
+
+	gvr := &schema.GroupVersionResource{
+		Group:    group,
+		Version:  version,
+		Resource: apiResource.Name,
+	}
+
+	if apiResource.Namespaced {
+		return c.dynamic.Resource(*gvr).Namespace("kyma-system").Get(ctx, resource.GetName(), metav1.GetOptions{})
+	}
+	return c.dynamic.Resource(*gvr).Get(ctx, resource.GetName(), metav1.GetOptions{})
 }
 
 func (c *client) Apply(ctx context.Context, resource *unstructured.Unstructured) error {
@@ -80,11 +100,11 @@ func (c *client) ApplyMany(ctx context.Context, objs []unstructured.Unstructured
 	return nil
 }
 
-func (c *client) Remove(ctx context.Context, resource *unstructured.Unstructured) clierror.Error {
+func (c *client) Remove(ctx context.Context, resource *unstructured.Unstructured) error {
 	group, version := groupVersion(resource.GetAPIVersion())
 	apiResource, err := c.discoverAPIResource(group, version, resource.GetKind())
 	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to discover API resource using discovery client"))
+		return fmt.Errorf("failed to discover API resource using discovery client: %w", err)
 	}
 
 	gvr := &schema.GroupVersionResource{
@@ -93,24 +113,21 @@ func (c *client) Remove(ctx context.Context, resource *unstructured.Unstructured
 		Resource: apiResource.Name,
 	}
 
-	fmt.Printf("Removing %s\n", resource.GetName())
 	if apiResource.Namespaced {
-		fmt.Printf("Removing namespaced resource %s and kind %s \n", resource.GetName(), resource.GetKind())
 		err = c.dynamic.Resource(*gvr).Namespace("kyma-system").Delete(ctx, resource.GetName(), metav1.DeleteOptions{})
 		if err != nil && !errors.IsNotFound(err) {
-			return clierror.Wrap(err, clierror.New("failed to delete namespaced resource"))
+			return fmt.Errorf("failed to delete namespaced resource %w", err)
 		}
 	} else {
-		fmt.Printf("Removing cluster-scoped resource  %s and kind %s \n", resource.GetName(), resource.GetKind())
 		err = c.dynamic.Resource(*gvr).Delete(ctx, resource.GetName(), metav1.DeleteOptions{})
 		if err != nil && !errors.IsNotFound(err) {
-			return clierror.Wrap(err, clierror.New("failed to delete cluster-scoped resource"))
+			return fmt.Errorf("failed to delete cluster-scoped resource %w", err)
 		}
 	}
 	return nil
 }
 
-func (c *client) RemoveMany(ctx context.Context, objs []unstructured.Unstructured) clierror.Error {
+func (c *client) RemoveMany(ctx context.Context, objs []unstructured.Unstructured) error {
 	for _, resource := range objs {
 		err := c.Remove(ctx, &resource)
 		if err != nil {

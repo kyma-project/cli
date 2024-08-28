@@ -3,16 +3,17 @@ package cluster
 import (
 	"context"
 	"fmt"
-	"net/http"
-	"slices"
-	"strings"
-	"time"
-
+	"github.com/avast/retry-go"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/communitymodules"
 	"github.com/kyma-project/cli.v3/internal/kube/resources"
 	"github.com/kyma-project/cli.v3/internal/kube/rootlessdynamic"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"net/http"
+	"slices"
+	"strings"
+	"time"
 )
 
 type ModuleInfo struct {
@@ -191,19 +192,46 @@ func removeSpecifiedModules(ctx context.Context, client rootlessdynamic.Interfac
 		fmt.Printf("Removing CR\n")
 		err := client.Remove(ctx, &module.cr)
 		if err != nil {
-			return clierror.WrapE(err, clierror.New("failed to remove module cr"))
+			return clierror.Wrap(err, clierror.New("failed to remove module cr"))
 		}
-		// Get & if still exists retry
-		//	"github.com/avast/retry-go"
-		// If err == errors.IsnotFound
 
-		time.Sleep(5 * time.Second) // wait for the CR to be removed
+		cliErr := RetryUntilRemoved(ctx, client, module)
+		if cliErr != nil {
+			return cliErr
+		}
 
 		fmt.Printf("Removing %s module\n", module.name)
 		err = client.RemoveMany(ctx, module.resources)
 		if err != nil {
-			return clierror.WrapE(err, clierror.New("failed to remove module resources"))
+			return clierror.Wrap(err, clierror.New("failed to remove module resources"))
 		}
+	}
+	return nil
+}
+
+func RetryUntilRemoved(ctx context.Context, client rootlessdynamic.Interface, module moduleDetails) clierror.Error {
+	return retryUntilRemoved(ctx, client, module, 50)
+}
+
+func retryUntilRemoved(ctx context.Context, client rootlessdynamic.Interface, module moduleDetails, attempts uint) clierror.Error {
+	retryErr := retry.Do(func() error {
+		object, err := client.Get(ctx, &module.cr)
+		if object != nil {
+			return fmt.Errorf("object still exists")
+		}
+		if errors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	},
+		retry.Delay(1*time.Second),
+		retry.DelayType(retry.FixedDelay),
+		retry.Attempts(attempts),
+		retry.LastErrorOnly(true),
+		retry.Context(ctx),
+	)
+	if retryErr != nil {
+		return clierror.Wrap(retryErr, clierror.New("failed to remove module cr"))
 	}
 	return nil
 }
