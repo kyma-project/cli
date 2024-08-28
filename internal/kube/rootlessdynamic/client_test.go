@@ -178,6 +178,44 @@ func Test_client_ApplyMany(t *testing.T) {
 	})
 }
 
+func Test_Get(t *testing.T) {
+	t.Run("get namespaced resource", func(t *testing.T) {
+		obj, apiResource := fixSecretObjectAndApiResource()
+		ctx := context.Background()
+		dynamic := dynamic_fake.NewSimpleDynamicClient(scheme.Scheme, obj)
+		client := fixRootlessDynamic(dynamic, []*metav1.APIResourceList{apiResource})
+
+		result, err := client.Get(ctx, obj)
+		require.NoError(t, err)
+		require.Equal(t, obj, result)
+	})
+
+	t.Run("get cluster-scoped resource", func(t *testing.T) {
+		obj, apiResource := fixClusterRoleObjectAndApiResource()
+		ctx := context.Background()
+		dynamic := dynamic_fake.NewSimpleDynamicClient(scheme.Scheme, obj)
+		client := fixRootlessDynamic(dynamic, []*metav1.APIResourceList{apiResource})
+
+		result, err := client.Get(ctx, obj)
+		require.NoError(t, err)
+		require.Equal(t, obj, result)
+	})
+
+	t.Run("get resource error because can't be discovered", func(t *testing.T) {
+		obj, _ := fixSecretObjectAndApiResource()
+		ctx := context.Background()
+		dynamic := dynamic_fake.NewSimpleDynamicClient(scheme.Scheme)
+		client := fixRootlessDynamic(dynamic, []*metav1.APIResourceList{
+			{
+				GroupVersion: "v1",
+			},
+		})
+
+		_, err := client.Get(ctx, obj)
+		require.ErrorContains(t, err, "failed to discover API resource using discovery client: resource 'Secret' in group '', and version 'v1' not registered on cluster")
+	})
+}
+
 func Test_Remove(t *testing.T) {
 	t.Run("remove namespaced resource", func(t *testing.T) {
 		obj, apiResource := fixSecretObjectAndApiResource()
