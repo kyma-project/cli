@@ -268,13 +268,13 @@ func Test_containsModule(t *testing.T) {
 
 func Test_removeSpecifiedModules(t *testing.T) {
 	t.Run("Remove module", func(t *testing.T) {
-		fakerootlessdynamic := &rootlessdynamicMock{
-			appliedObjects: []unstructured.Unstructured{fakeServerlessCR},
-		}
+		fakerootlessdynamic := &rootlessdynamicMock{}
 
 		err := removeSpecifiedModules(context.Background(), fakerootlessdynamic, fakeModuleDetails)
 		require.Nil(t, err)
-		require.Len(t, fakerootlessdynamic.appliedObjects, 0)
+		require.Len(t, fakerootlessdynamic.removedObjects, 7)
+		require.Contains(t, fakerootlessdynamic.removedObjects, fakeServerlessCR)
+		require.Contains(t, fakerootlessdynamic.removedObjects, fakeIstioCR)
 	})
 
 	t.Run("Remove module cr error", func(t *testing.T) {
@@ -354,6 +354,7 @@ func fixFakeAvailableDetails(istioCRURL, istioResourcesURL string) communitymodu
 type rootlessdynamicMock struct {
 	returnErr      error
 	appliedObjects []unstructured.Unstructured
+	removedObjects []unstructured.Unstructured
 }
 
 func (m *rootlessdynamicMock) Apply(_ context.Context, obj *unstructured.Unstructured) error {
@@ -373,12 +374,12 @@ func (m *rootlessdynamicMock) Get(_ context.Context, obj *unstructured.Unstructu
 	return obj, m.returnErr
 }
 
-func (m *rootlessdynamicMock) Remove(_ context.Context, _ *unstructured.Unstructured) error {
-	m.appliedObjects = nil
+func (m *rootlessdynamicMock) Remove(_ context.Context, obj *unstructured.Unstructured) error {
+	m.removedObjects = append(m.removedObjects, *obj)
 	return m.returnErr
 }
 
-func (m *rootlessdynamicMock) RemoveMany(_ context.Context, _ []unstructured.Unstructured) error {
-	m.appliedObjects = nil
+func (m *rootlessdynamicMock) RemoveMany(_ context.Context, objs []unstructured.Unstructured) error {
+	m.removedObjects = append(m.removedObjects, objs...)
 	return m.returnErr
 }
