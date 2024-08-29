@@ -36,6 +36,7 @@ func NewRemoveCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cmd.AddCommand(managed.NewManagedCMD(kymaConfig))
 	cmd.Flags().StringSliceVar(&cfg.modules, "module", []string{}, "Name and version of the modules to remove. Example: --module serverless,keda:1.1.1,etc...")
+	_ = cmd.MarkFlagRequired("module")
 
 	return cmd
 }
