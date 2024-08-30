@@ -3,15 +3,17 @@ package cluster
 import (
 	"context"
 	"fmt"
-	"net/http"
-	"slices"
-	"strings"
-
+	"github.com/avast/retry-go"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/communitymodules"
 	"github.com/kyma-project/cli.v3/internal/kube/resources"
 	"github.com/kyma-project/cli.v3/internal/kube/rootlessdynamic"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"net/http"
+	"slices"
+	"strings"
+	"time"
 )
 
 type ModuleInfo struct {
@@ -59,6 +61,20 @@ func ApplySpecifiedModules(ctx context.Context, client rootlessdynamic.Interface
 	}
 
 	return applySpecifiedModules(ctx, client, modules, crs)
+}
+
+func RemoveSpecifiedModules(ctx context.Context, client rootlessdynamic.Interface, desiredModules []ModuleInfo) clierror.Error {
+	available, err := communitymodules.GetAvailableModules()
+	if err != nil {
+		return err
+	}
+
+	modules, err := downloadSpecifiedModules(desiredModules, available)
+	if err != nil {
+		return err
+	}
+
+	return removeSpecifiedModules(ctx, client, modules)
 }
 
 type moduleDetails struct {
@@ -169,4 +185,53 @@ func getDesiredVersion(moduleInfo ModuleInfo, versions []communitymodules.Versio
 
 	fmt.Printf("Using latest version for %s\n", moduleInfo.Name)
 	return communitymodules.GetLatestVersion(versions)
+}
+
+func removeSpecifiedModules(ctx context.Context, client rootlessdynamic.Interface, desiredModules []moduleDetails) clierror.Error {
+	for _, module := range desiredModules {
+		fmt.Printf("Removing CR\n")
+		err := client.Remove(ctx, &module.cr)
+		if err != nil {
+			return clierror.Wrap(err, clierror.New("failed to remove module cr"))
+		}
+
+		cliErr := RetryUntilRemoved(ctx, client, module)
+		if cliErr != nil {
+			return cliErr
+		}
+
+		fmt.Printf("Removing %s module\n", module.name)
+		err = client.RemoveMany(ctx, module.resources)
+		if err != nil {
+			return clierror.Wrap(err, clierror.New("failed to remove module resources"))
+		}
+	}
+	return nil
+}
+
+func RetryUntilRemoved(ctx context.Context, client rootlessdynamic.Interface, module moduleDetails) clierror.Error {
+	return retryUntilRemoved(ctx, client, module, 50)
+}
+
+func retryUntilRemoved(ctx context.Context, client rootlessdynamic.Interface, module moduleDetails, attempts uint) clierror.Error {
+	retryErr := retry.Do(func() error {
+		object, err := client.Get(ctx, &module.cr)
+		if object != nil {
+			return fmt.Errorf("object still exists")
+		}
+		if errors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	},
+		retry.Delay(1*time.Second),
+		retry.DelayType(retry.FixedDelay),
+		retry.Attempts(attempts),
+		retry.LastErrorOnly(true),
+		retry.Context(ctx),
+	)
+	if retryErr != nil {
+		return clierror.Wrap(retryErr, clierror.New("failed to remove module cr"))
+	}
+	return nil
 }

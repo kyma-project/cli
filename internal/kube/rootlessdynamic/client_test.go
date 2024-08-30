@@ -178,6 +178,129 @@ func Test_client_ApplyMany(t *testing.T) {
 	})
 }
 
+func Test_Get(t *testing.T) {
+	t.Run("get namespaced resource", func(t *testing.T) {
+		obj, apiResource := fixSecretObjectAndApiResource()
+		ctx := context.Background()
+		dynamic := dynamic_fake.NewSimpleDynamicClient(scheme.Scheme, obj)
+		client := fixRootlessDynamic(dynamic, []*metav1.APIResourceList{apiResource})
+
+		result, err := client.Get(ctx, obj)
+		require.NoError(t, err)
+		require.Equal(t, obj, result)
+	})
+
+	t.Run("get cluster-scoped resource", func(t *testing.T) {
+		obj, apiResource := fixClusterRoleObjectAndApiResource()
+		ctx := context.Background()
+		dynamic := dynamic_fake.NewSimpleDynamicClient(scheme.Scheme, obj)
+		client := fixRootlessDynamic(dynamic, []*metav1.APIResourceList{apiResource})
+
+		result, err := client.Get(ctx, obj)
+		require.NoError(t, err)
+		require.Equal(t, obj, result)
+	})
+
+	t.Run("get resource error because can't be discovered", func(t *testing.T) {
+		obj, _ := fixSecretObjectAndApiResource()
+		ctx := context.Background()
+		dynamic := dynamic_fake.NewSimpleDynamicClient(scheme.Scheme)
+		client := fixRootlessDynamic(dynamic, []*metav1.APIResourceList{
+			{
+				GroupVersion: "v1",
+			},
+		})
+
+		_, err := client.Get(ctx, obj)
+		require.ErrorContains(t, err, "failed to discover API resource using discovery client: resource 'Secret' in group '', and version 'v1' not registered on cluster")
+	})
+}
+
+func Test_Remove(t *testing.T) {
+	t.Run("remove namespaced resource", func(t *testing.T) {
+		obj, apiResource := fixSecretObjectAndApiResource()
+		ctx := context.Background()
+		dynamic := dynamic_fake.NewSimpleDynamicClient(scheme.Scheme, obj)
+		client := fixRootlessDynamic(dynamic, []*metav1.APIResourceList{apiResource})
+
+		err := client.Remove(ctx, obj)
+		require.Nil(t, err)
+
+		_, getErr := dynamic.Resource(schema.GroupVersionResource{
+			Group:    "",
+			Version:  "v1",
+			Resource: "secrets",
+		}).Namespace("kyma-system").Get(ctx, "test", metav1.GetOptions{})
+		require.Error(t, getErr)
+		require.ErrorContains(t, getErr, "secrets \"test\" not found")
+	})
+
+	t.Run("remove cluster-scoped resource", func(t *testing.T) {
+		obj, apiResource := fixClusterRoleObjectAndApiResource()
+		ctx := context.Background()
+		dynamic := dynamic_fake.NewSimpleDynamicClient(scheme.Scheme, obj)
+		client := fixRootlessDynamic(dynamic, []*metav1.APIResourceList{apiResource})
+
+		err := client.Remove(ctx, obj)
+		require.Nil(t, err)
+
+		_, getErr := dynamic.Resource(schema.GroupVersionResource{
+			Group:    "rbac.authorization.k8s.io",
+			Version:  "v1",
+			Resource: "clusterroles",
+		}).Get(ctx, "test", metav1.GetOptions{})
+		require.Error(t, getErr)
+		require.ErrorContains(t, getErr, "clusterroles.rbac.authorization.k8s.io \"test\" not found")
+	})
+
+	t.Run("remove namespaced resource error because can't be discovered", func(t *testing.T) {
+		obj, _ := fixSecretObjectAndApiResource()
+		ctx := context.Background()
+		dynamic := dynamic_fake.NewSimpleDynamicClient(scheme.Scheme)
+		client := fixRootlessDynamic(dynamic, []*metav1.APIResourceList{
+			{
+				GroupVersion: "v1",
+			},
+		})
+
+		err := client.Remove(ctx, obj)
+		require.ErrorContains(t, err, "failed to discover API resource using discovery client: resource 'Secret' in group '', and version 'v1' not registered on cluster")
+	})
+}
+
+func Test_RemoveMany(t *testing.T) {
+	t.Run("Remove many resources", func(t *testing.T) {
+		clusterRole, clusterRoleApiResource := fixClusterRoleObjectAndApiResource()
+		secret, secretApiResource := fixSecretObjectAndApiResource()
+		ctx := context.Background()
+		dynamic := dynamic_fake.NewSimpleDynamicClient(scheme.Scheme, clusterRole, secret)
+		client := fixRootlessDynamic(dynamic, []*metav1.APIResourceList{
+			clusterRoleApiResource, secretApiResource,
+		})
+
+		err := client.RemoveMany(ctx, []unstructured.Unstructured{
+			*clusterRole, *secret,
+		})
+		require.Nil(t, err)
+
+		_, getErr := dynamic.Resource(schema.GroupVersionResource{
+			Group:    "rbac.authorization.k8s.io",
+			Version:  "v1",
+			Resource: "clusterroles",
+		}).Get(ctx, "test", metav1.GetOptions{})
+		require.Error(t, getErr)
+		require.ErrorContains(t, getErr, "clusterroles.rbac.authorization.k8s.io \"test\" not found")
+
+		_, getErr = dynamic.Resource(schema.GroupVersionResource{
+			Group:    "",
+			Version:  "v1",
+			Resource: "secrets",
+		}).Namespace("kyma-system").Get(ctx, "test", metav1.GetOptions{})
+		require.Error(t, getErr)
+		require.ErrorContains(t, getErr, "secrets \"test\" not found")
+	})
+}
+
 func fixSecretObjectAndApiResource() (*unstructured.Unstructured, *metav1.APIResourceList) {
 	return &unstructured.Unstructured{
 			Object: map[string]interface{}{
