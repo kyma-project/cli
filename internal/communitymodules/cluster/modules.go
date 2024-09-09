@@ -3,6 +3,11 @@ package cluster
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"slices"
+	"strings"
+	"time"
+
 	"github.com/avast/retry-go"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/communitymodules"
@@ -10,10 +15,6 @@ import (
 	"github.com/kyma-project/cli.v3/internal/kube/rootlessdynamic"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"net/http"
-	"slices"
-	"strings"
-	"time"
 )
 
 type ModuleInfo struct {
@@ -123,6 +124,7 @@ func downloadUnstructuredList(url string) ([]unstructured.Unstructured, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
 		return nil, fmt.Errorf("unexpected status code '%d'", resp.StatusCode)
