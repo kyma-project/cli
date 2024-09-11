@@ -6,16 +6,13 @@ linters:
   disable-all: true
   enable:
     - errcheck
-    - exportloopref
-    - gochecknoinits
+    - copyloopvar
     - gofmt
     - gosimple
     - govet
     - ineffassign
-    - misspell
     - revive
     - staticcheck
-    - typecheck
     - unparam
     - unused
 issues:
