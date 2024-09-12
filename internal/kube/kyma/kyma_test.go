@@ -131,8 +131,6 @@ func TestUpdateDefaultKyma(t *testing.T) {
 
 func Test_disableModule(t *testing.T) {
 	t.Parallel()
-	type args struct {
-	}
 	tests := []struct {
 		name       string
 		kymaCR     *Kyma

@@ -178,7 +178,7 @@ func fixDataStreamMock(t *testing.T, req *http.Request, resp *http.Response) htt
 	reqBytes := reqBuf.Bytes()
 
 	responseBuf := bytes.NewBuffer([]byte{})
-	resp.Write(responseBuf)
+	_ = resp.Write(responseBuf)
 
 	dataStreamMock := automock.NewStream(t)
 	dataStreamMock.On("Close").Return(nil).Twice()
