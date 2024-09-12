@@ -1,7 +1,6 @@
 run:
   modules-download-mode: readonly
   timeout: 15m
-  tests: false
 linters:
   disable-all: true
   enable:
@@ -23,3 +22,7 @@ issues:
     - "unexported-return:"
     - "context-as-argument:"
     - "and that stutters"
+    - '`fixTestDeployment` - `namespace` always receives `"kyma-system"'
+    - "`fixCheckConfig` - `name` always receives `name`"
+    - "`fixCheckConfig` - `namespace` always receives `namespace`"
+    - "`fixTestHanaServiceBinding` - `namespace` always receives `namespace"

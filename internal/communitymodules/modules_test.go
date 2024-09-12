@@ -237,7 +237,7 @@ func Test_installedModules(t *testing.T) {
 func fixHttpResponseHandler(status int, response string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(status)
-		w.Write([]byte(response))
+		_, _ = w.Write([]byte(response))
 	}
 }
 
