@@ -24,6 +24,8 @@ Hana is fully ready.
 	hanaNotInstalledMessage = `Checking Hana (test-namespace/test-name).
 Hana is not fully ready.
 `
+	testName      = "test-name"
+	testNamespace = "test-namespace"
 )
 
 func Test_runCheck(t *testing.T) {
@@ -77,18 +79,15 @@ func Test_runCheck(t *testing.T) {
 func Test_checkHanaInstance(t *testing.T) {
 	t.Run("ready", func(t *testing.T) {
 		name := "test-name"
-		namespace := "test-namespace"
-		testHana := fixTestHanaServiceInstance(name, namespace, nil)
-		config := fixCheckConfig(name, namespace, testHana)
+		testHana := fixTestHanaServiceInstance(name, nil)
+		config := fixCheckConfig(testHana)
 		err := checkHanaInstance(&config)
 		require.Nil(t, err)
 	})
 
 	t.Run("not found", func(t *testing.T) {
-		name := "test-name"
-		namespace := "test-namespace"
-		testHana := fixTestHanaServiceInstance("other-name", namespace, nil)
-		config := fixCheckConfig(name, namespace, testHana)
+		testHana := fixTestHanaServiceInstance("other-name", nil)
+		config := fixCheckConfig(testHana)
 		err := checkHanaInstance(&config)
 		require.NotNil(t, err)
 		errMsg := err.String()
@@ -96,9 +95,8 @@ func Test_checkHanaInstance(t *testing.T) {
 	})
 	t.Run("not ready", func(t *testing.T) {
 		name := "test-name"
-		namespace := "test-namespace"
-		testHana := fixTestHanaServiceInstance(name, namespace, &map[string]interface{}{})
-		config := fixCheckConfig(name, namespace, testHana)
+		testHana := fixTestHanaServiceInstance(name, &map[string]interface{}{})
+		config := fixCheckConfig(testHana)
 		err := checkHanaInstance(&config)
 		require.NotNil(t, err)
 		errMsg := err.String()
@@ -109,17 +107,14 @@ func Test_checkHanaInstance(t *testing.T) {
 func Test_checkHanaBinding(t *testing.T) {
 	t.Run("ready", func(t *testing.T) {
 		name := "test-name"
-		namespace := "test-namespace"
-		testHanaBinding := fixTestHanaServiceBinding(name, namespace, nil)
-		config := fixCheckConfig(name, namespace, testHanaBinding)
+		testHanaBinding := fixTestHanaServiceBinding(name, nil)
+		config := fixCheckConfig(testHanaBinding)
 		err := checkHanaBinding(&config)
 		require.Nil(t, err)
 	})
 	t.Run("not found", func(t *testing.T) {
-		name := "test-name"
-		namespace := "test-namespace"
-		testHanaBinding := fixTestHanaServiceBinding("other-name", namespace, nil)
-		config := fixCheckConfig(name, namespace, testHanaBinding)
+		testHanaBinding := fixTestHanaServiceBinding("other-name", nil)
+		config := fixCheckConfig(testHanaBinding)
 		err := checkHanaBinding(&config)
 		require.NotNil(t, err)
 		errMsg := err.String()
@@ -127,9 +122,8 @@ func Test_checkHanaBinding(t *testing.T) {
 	})
 	t.Run("not ready", func(t *testing.T) {
 		name := "test-name"
-		namespace := "test-namespace"
-		testHanaBinding := fixTestHanaServiceBinding(name, namespace, &map[string]interface{}{})
-		config := fixCheckConfig(name, namespace, testHanaBinding)
+		testHanaBinding := fixTestHanaServiceBinding(name, &map[string]interface{}{})
+		config := fixCheckConfig(testHanaBinding)
 		err := checkHanaBinding(&config)
 		require.NotNil(t, err)
 		errMsg := err.String()
@@ -141,30 +135,24 @@ func Test_checkHanaBinding(t *testing.T) {
 
 func Test_checkHanaBindingURL(t *testing.T) {
 	t.Run("ready", func(t *testing.T) {
-		name := "test-name"
-		urlName := name + "-url"
-		namespace := "test-namespace"
-		testHanaBinding := fixTestHanaServiceBinding(urlName, namespace, nil)
-		config := fixCheckConfig(name, namespace, testHanaBinding)
+		urlName := testName + "-url"
+		testHanaBinding := fixTestHanaServiceBinding(urlName, nil)
+		config := fixCheckConfig(testHanaBinding)
 		err := checkHanaBindingURL(&config)
 		require.Nil(t, err)
 	})
 	t.Run("not found", func(t *testing.T) {
-		name := "test-name"
-		namespace := "test-namespace"
-		testHanaBinding := fixTestHanaServiceBinding("other-name", namespace, nil)
-		config := fixCheckConfig(name, namespace, testHanaBinding)
+		testHanaBinding := fixTestHanaServiceBinding("other-name", nil)
+		config := fixCheckConfig(testHanaBinding)
 		err := checkHanaBindingURL(&config)
 		require.NotNil(t, err)
 		errMsg := err.String()
 		require.Contains(t, errMsg, "servicebindings.services.cloud.sap.com \"test-name-url\" not found")
 	})
 	t.Run("not ready", func(t *testing.T) {
-		name := "test-name"
-		urlName := name + "-url"
-		namespace := "test-namespace"
-		testHanaBinding := fixTestHanaServiceBinding(urlName, namespace, &map[string]interface{}{})
-		config := fixCheckConfig(name, namespace, testHanaBinding)
+		urlName := testName + "-url"
+		testHanaBinding := fixTestHanaServiceBinding(urlName, &map[string]interface{}{})
+		config := fixCheckConfig(testHanaBinding)
 		err := checkHanaBindingURL(&config)
 		require.NotNil(t, err)
 		errMsg := err.String()
@@ -174,7 +162,7 @@ func Test_checkHanaBindingURL(t *testing.T) {
 	})
 }
 
-func fixCheckConfig(name string, namespace string, objects ...runtime.Object) hanaCheckConfig {
+func fixCheckConfig(objects ...runtime.Object) hanaCheckConfig {
 	scheme := runtime.NewScheme()
 	scheme.AddKnownTypes(btp.GVRServiceInstance.GroupVersion())
 	dynamic := dynamic_fake.NewSimpleDynamicClient(scheme, objects...)
@@ -186,19 +174,19 @@ func fixCheckConfig(name string, namespace string, objects ...runtime.Object) ha
 				TestBtpInterface: btp.NewClient(dynamic),
 			},
 		},
-		name:      name,
-		namespace: namespace,
+		name:      testName,
+		namespace: testNamespace,
 		timeout:   0,
 	}
 	return config
 }
 
-func fixTestHanaServiceInstance(name, namespace string, status *map[string]interface{}) *unstructured.Unstructured {
-	return fixTestHanaService("ServiceInstance", name, namespace, status)
+func fixTestHanaServiceInstance(name string, status *map[string]interface{}) *unstructured.Unstructured {
+	return fixTestHanaService("ServiceInstance", name, testNamespace, status)
 }
 
-func fixTestHanaServiceBinding(name, namespace string, status *map[string]interface{}) *unstructured.Unstructured {
-	return fixTestHanaService("ServiceBinding", name, namespace, status)
+func fixTestHanaServiceBinding(name string, status *map[string]interface{}) *unstructured.Unstructured {
+	return fixTestHanaService("ServiceBinding", name, testNamespace, status)
 }
 
 func fixTestHanaService(kind, name, namespace string, status *map[string]interface{}) *unstructured.Unstructured {

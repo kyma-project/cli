@@ -16,13 +16,3 @@ linters:
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
-  exclude:
-    - "^redefines-builtin-id:"
-    - "^receiver-naming:"
-    - "unexported-return:"
-    - "context-as-argument:"
-    - "and that stutters"
-    - '`fixTestDeployment` - `namespace` always receives `"kyma-system"'
-    - "`fixCheckConfig` - `name` always receives `name`"
-    - "`fixCheckConfig` - `namespace` always receives `namespace`"
-    - "`fixTestHanaServiceBinding` - `namespace` always receives `namespace"

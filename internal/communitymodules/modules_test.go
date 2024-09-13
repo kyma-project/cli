@@ -22,6 +22,10 @@ import (
 	k8s_fake "k8s.io/client-go/kubernetes/fake"
 )
 
+const (
+	kymaNamespace = "kyma-system"
+)
+
 func Test_modulesCatalog(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
 		expectedResult := moduleMap{
@@ -176,9 +180,9 @@ func Test_installedModules(t *testing.T) {
 		defer httpServer.Close()
 
 		staticClient := k8s_fake.NewSimpleClientset(
-			fixTestDeployment("module1-controller-manager", "kyma-system", "1.7.0"),
-			fixTestDeployment("module2-manager", "kyma-system", "6.7.8"), // outdated
-			fixTestDeployment("other-deployment", "kyma-system", "1.2.3"))
+			fixTestDeployment("module1-controller-manager", "1.7.0"),
+			fixTestDeployment("module2-manager", "6.7.8"), // outdated
+			fixTestDeployment("other-deployment", "1.2.3"))
 		kubeClient := &kube_fake.FakeKubeClient{
 			TestKubernetesInterface: staticClient,
 			TestDynamicInterface:    nil,
@@ -211,8 +215,8 @@ func Test_installedModules(t *testing.T) {
 		defer httpServer.Close()
 
 		staticClient := k8s_fake.NewSimpleClientset(
-			fixTestDeployment("module2-manager", "kyma-system", "4.5.6"),
-			fixTestDeployment("other-deployment", "kyma-system", "1.2.3"))
+			fixTestDeployment("module2-manager", "4.5.6"),
+			fixTestDeployment("other-deployment", "1.2.3"))
 		kubeClient := &kube_fake.FakeKubeClient{
 			TestKubernetesInterface: staticClient,
 			TestDynamicInterface:    nil,
@@ -274,11 +278,11 @@ func fixTestKyma() *unstructured.Unstructured {
 	return u
 }
 
-func fixTestDeployment(name, namespace, imageTag string) *v1.Deployment {
+func fixTestDeployment(name, imageTag string) *v1.Deployment {
 	return &v1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
-			Namespace: namespace,
+			Namespace: kymaNamespace,
 		},
 		Spec: v1.DeploymentSpec{
 			Template: corev1.PodTemplateSpec{
