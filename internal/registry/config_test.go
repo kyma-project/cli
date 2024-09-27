@@ -16,7 +16,7 @@ import (
 )
 
 func TestGetConfig(t *testing.T) {
-	t.Run("Should return the RegistryConfig", func(t *testing.T) {
+	t.Run("Should return the InternalRegistryConfig", func(t *testing.T) {
 		// given
 		testRegistrySvc := fixTestRegistrySvc()
 		testRegistryPod := fixTestRegistryPod()
@@ -29,7 +29,7 @@ func TestGetConfig(t *testing.T) {
 		scheme.AddKnownTypes(DockerRegistryGVR.GroupVersion(), testDockerRegistry)
 		dynamic := dynamic_fake.NewSimpleDynamicClient(scheme, testDockerRegistry)
 
-		expectedRegistryConfig := &RegistryConfig{
+		expectedRegistryConfig := &InternalRegistryConfig{
 			SecretName: testRegistrySecret.GetName(),
 			SecretData: &SecretData{
 				DockerConfigJSON: string(testRegistrySecret.Data[".dockerconfigjson"]),
@@ -51,7 +51,7 @@ func TestGetConfig(t *testing.T) {
 		}
 
 		// when
-		config, err := GetConfig(context.Background(), kubeClient)
+		config, err := GetInternalConfig(context.Background(), kubeClient)
 
 		// then
 		require.Nil(t, err)
@@ -60,7 +60,7 @@ func TestGetConfig(t *testing.T) {
 }
 
 func Test_getRegistrySecretConfig(t *testing.T) {
-	t.Run("Should return the RegistryConfig", func(t *testing.T) {
+	t.Run("Should return the InternalRegistryConfig", func(t *testing.T) {
 		// given
 		testRegistrySecret := fixTestRegistrySecret()
 		client := k8s_fake.NewSimpleClientset(testRegistrySecret)

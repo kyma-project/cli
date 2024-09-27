@@ -13,9 +13,8 @@ type cfgConfig struct {
 	*cmdcommon.KymaConfig
 	cmdcommon.KubeClientConfig
 
-	dockerconfig bool
-	externalurl  bool
-	output       string
+	externalurl bool
+	output      string
 }
 
 func NewConfigCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
@@ -37,20 +36,34 @@ func NewConfigCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	}
 
 	cfg.KubeClientConfig.AddFlag(cmd)
-	cmd.Flags().BoolVar(&cfg.dockerconfig, "dockerconfig", false, "Generate a docker config.json file for the Kyma registry")
-	cmd.Flags().BoolVar(&cfg.externalurl, "externalurl", false, "External URL for the Kyma registry")
-	cmd.Flags().StringVar(&cfg.output, "output", "config.json", "Path where the output file should be saved to")
+	cmd.Flags().BoolVar(&cfg.externalurl, "externalurl", false, "External URL for the Kyma registry.")
+	cmd.Flags().StringVar(&cfg.output, "output", "", "Path where the output file should be saved to. NOTE: docker expects the file to be named `config.json`.")
 
 	return cmd
 }
 
 func runConfig(cfg *cfgConfig) clierror.Error {
-	registryConfig, err := registry.GetConfig(cfg.Ctx, cfg.KubeClient)
+	registryConfig, err := registry.GetExternalConfig(cfg.Ctx, cfg.KubeClient)
 	if err != nil {
 		return clierror.WrapE(err, clierror.New("failed to load in-cluster registry configuration"))
 	}
 
-	if cfg.dockerconfig {
+	if cfg.externalurl && cfg.output == "" {
+		fmt.Print(registryConfig.SecretData.PushRegAddr)
+		return nil
+	}
+
+	if cfg.externalurl && cfg.output != "" {
+		writeErr := os.WriteFile(cfg.output, []byte(registryConfig.SecretData.PushRegAddr), os.ModePerm)
+		if writeErr != nil {
+			return clierror.New("failed to write docker config to file")
+		}
+		return nil
+	}
+
+	if cfg.output == "" {
+		fmt.Print(registryConfig.SecretData.DockerConfigJSON)
+	} else {
 		writeErr := os.WriteFile(cfg.output, []byte(registryConfig.SecretData.DockerConfigJSON), os.ModePerm)
 		if writeErr != nil {
 			return clierror.New("failed to write docker config to file")
@@ -58,8 +71,5 @@ func runConfig(cfg *cfgConfig) clierror.Error {
 		fmt.Print("Docker config saved to ", cfg.output)
 	}
 
-	if cfg.externalurl {
-		fmt.Print(registryConfig.SecretData.PushRegAddr)
-	}
 	return nil
 }

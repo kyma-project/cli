@@ -23,8 +23,14 @@ type InternalAccess struct {
 	SecretName string `json:"secretName,omitempty"`
 }
 
+type ExternalAccess struct {
+	SecretName string `json:"secretName,omitempty"`
+	Enabled    string `json:"enabled,omitempty"`
+}
+
 type DockerRegistryStatus struct {
 	State          string         `json:"state,omitempty"`
 	Served         string         `json:"served"`
 	InternalAccess InternalAccess `json:"internalAccess"`
+	ExternalAccess ExternalAccess `json:"externalAccess"`
 }
