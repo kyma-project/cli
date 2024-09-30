@@ -15,14 +15,33 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-type RegistryConfig struct {
+type ExternalRegistryConfig struct {
+	SecretName string
+	SecretData *SecretData
+}
+
+type InternalRegistryConfig struct {
 	SecretName string
 	SecretData *SecretData
 	PodMeta    *RegistryPodMeta
 }
 
-func GetConfig(ctx context.Context, client kube.Client) (*RegistryConfig, clierror.Error) {
-	config, err := getConfig(ctx, client)
+func GetExternalConfig(ctx context.Context, client kube.Client) (*ExternalRegistryConfig, clierror.Error) {
+	config, err := getExternalConfig(ctx, client)
+	if err != nil {
+		return nil, clierror.Wrap(err,
+			clierror.New("failed to get external registry configuration",
+				"make sure cluster is available and properly configured",
+				"make sure the Docker Registry is installed and in Ready/Warning state.",
+			),
+		)
+	}
+
+	return config, nil
+}
+
+func GetInternalConfig(ctx context.Context, client kube.Client) (*InternalRegistryConfig, clierror.Error) {
+	config, err := getInternalConfig(ctx, client)
 	if err != nil {
 		return nil, clierror.Wrap(err,
 			clierror.New("failed to load in-cluster registry configuration",
@@ -35,12 +54,30 @@ func GetConfig(ctx context.Context, client kube.Client) (*RegistryConfig, clierr
 	return config, nil
 }
 
-func getConfig(ctx context.Context, client kube.Client) (*RegistryConfig, error) {
+func getExternalConfig(ctx context.Context, client kube.Client) (*ExternalRegistryConfig, error) {
 	dockerRegistry, err := getDockerRegistry(ctx, client.Dynamic())
 	if err != nil {
 		return nil, err
 	}
+	if dockerRegistry.Status.ExternalAccess.Enabled == "false" {
+		return nil, errors.New("external access is not enabled")
+	}
+	secretConfig, err := getRegistrySecretData(ctx, client.Static(), dockerRegistry.Status.ExternalAccess.SecretName, dockerRegistry.GetNamespace())
+	if err != nil {
+		return nil, err
+	}
 
+	return &ExternalRegistryConfig{
+		SecretName: dockerRegistry.Status.ExternalAccess.SecretName,
+		SecretData: secretConfig,
+	}, nil
+}
+
+func getInternalConfig(ctx context.Context, client kube.Client) (*InternalRegistryConfig, error) {
+	dockerRegistry, err := getDockerRegistry(ctx, client.Dynamic())
+	if err != nil {
+		return nil, err
+	}
 	secretConfig, err := getRegistrySecretData(ctx, client.Static(), dockerRegistry.Status.InternalAccess.SecretName, dockerRegistry.GetNamespace())
 	if err != nil {
 		return nil, err
@@ -51,7 +88,7 @@ func getConfig(ctx context.Context, client kube.Client) (*RegistryConfig, error)
 		return nil, err
 	}
 
-	return &RegistryConfig{
+	return &InternalRegistryConfig{
 		SecretName: dockerRegistry.Status.InternalAccess.SecretName,
 		SecretData: secretConfig,
 		PodMeta:    podMeta,

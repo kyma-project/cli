@@ -2,6 +2,7 @@ package alpha
 
 import (
 	"context"
+	"github.com/kyma-project/cli.v3/internal/cmd/alpha/registry"
 
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/access"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/add"
@@ -38,6 +39,7 @@ func NewAlphaCMD() *cobra.Command {
 	cmd.AddCommand(modules.NewModulesCMD(config))
 	cmd.AddCommand(add.NewAddCMD(config))
 	cmd.AddCommand(remove.NewRemoveCMD(config))
+	cmd.AddCommand(registry.NewRegistryCMD(config))
 
 	return cmd
 }
