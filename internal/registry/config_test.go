@@ -15,7 +15,42 @@ import (
 	k8s_fake "k8s.io/client-go/kubernetes/fake"
 )
 
-func TestGetConfig(t *testing.T) {
+func TestGetExternalConfig(t *testing.T) {
+	t.Run("Should return the ExternalRegistryConfig", func(t *testing.T) {
+		// given
+		testDockerRegistry := fixTestDockerRegistry()
+		testRegistrySecret := fixTestRegistrySecret()
+		client := k8s_fake.NewSimpleClientset(testRegistrySecret)
+		scheme := runtime.NewScheme()
+		scheme.AddKnownTypes(DockerRegistryGVR.GroupVersion(), testDockerRegistry)
+		dynamic := dynamic_fake.NewSimpleDynamicClient(scheme, testDockerRegistry)
+
+		expectedRegistryConfig := &ExternalRegistryConfig{
+			SecretName: testRegistrySecret.GetName(),
+			SecretData: &SecretData{
+				DockerConfigJSON: string(testRegistrySecret.Data[".dockerconfigjson"]),
+				Username:         string(testRegistrySecret.Data["username"]),
+				Password:         string(testRegistrySecret.Data["password"]),
+				PullRegAddr:      string(testRegistrySecret.Data["pullRegAddr"]),
+				PushRegAddr:      string(testRegistrySecret.Data["pushRegAddr"]),
+			},
+		}
+
+		kubeClient := &kube_fake.FakeKubeClient{
+			TestKubernetesInterface: client,
+			TestDynamicInterface:    dynamic,
+		}
+
+		// when
+		config, err := GetExternalConfig(context.Background(), kubeClient)
+
+		// then
+		require.Nil(t, err)
+		require.Equal(t, expectedRegistryConfig, config)
+	})
+}
+
+func TestGetInternalConfig(t *testing.T) {
 	t.Run("Should return the InternalRegistryConfig", func(t *testing.T) {
 		// given
 		testRegistrySvc := fixTestRegistrySvc()
@@ -199,6 +234,10 @@ func fixTestDockerRegistry() *unstructured.Unstructured {
 			"status": map[string]interface{}{
 				"internalAccess": map[string]interface{}{
 					"secretName": "test-secret",
+				},
+				"externalAccess": map[string]interface{}{
+					"secretName": "test-secret",
+					"enabled":    "true",
 				},
 				"state": "Ready",
 			},
