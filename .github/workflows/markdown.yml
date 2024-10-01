@@ -3,18 +3,17 @@ run-name: ${{github.event.pull_request.title}}
 on:
   workflow_dispatch:
   push:
-    branches: [ "main", "release-*" ]
+    branches: ["main", "release-*"]
 jobs:
   link-check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/rebase
-      - uses: gaurav-nelson/github-action-markdown-link-check@v1
+      - uses: gaurav-nelson/github-action-markdown-link-check@d53a906aa6b22b8979d33bc86170567e619495ec
         with:
-          use-quiet-mode: 'yes'
-          use-verbose-mode: 'yes'
-          config-file: '.mlc.config.json'
-          folder-path: '.'
+          use-quiet-mode: "yes"
+          use-verbose-mode: "yes"
+          config-file: ".mlc.config.json"
+          folder-path: "."
           max-depth: -1
-
