@@ -18,7 +18,7 @@ release:
   make_latest: false
 
   header: |
-    This is a premature, unstable version nightly built from the main branch. Use on your own risk.
+    This is a premature, unstable version built nightly from the main branch. Use on your own risk.
 
 before:
   hooks:
