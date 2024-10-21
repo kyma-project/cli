@@ -14,7 +14,6 @@ import (
 
 type accessConfig struct {
 	*cmdcommon.KymaConfig
-	cmdcommon.KubeClientConfig
 
 	name        string
 	clusterrole string
@@ -26,23 +25,17 @@ type accessConfig struct {
 
 func NewAccessCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cfg := accessConfig{
-		KymaConfig:       kymaConfig,
-		KubeClientConfig: cmdcommon.KubeClientConfig{},
+		KymaConfig: kymaConfig,
 	}
 
 	cmd := &cobra.Command{
 		Use:   "access",
 		Short: "Produce a kubeconfig with Service Account based token and certificate",
 		Long:  "Produce a kubeconfig with Service Account based token and certificate that is valid for a specified time or indefinitely",
-		PreRun: func(_ *cobra.Command, _ []string) {
-			clierror.Check(cfg.KubeClientConfig.Complete())
-		},
 		Run: func(_ *cobra.Command, _ []string) {
 			clierror.Check(runAccess(&cfg))
 		},
 	}
-
-	cfg.KubeClientConfig.AddFlag(cmd)
 
 	cmd.Flags().StringVar(&cfg.name, "name", "", "Name of the Service Account to be created")
 	cmd.Flags().StringVar(&cfg.clusterrole, "clusterrole", "", "Name of the cluster role to bind the Service Account to")

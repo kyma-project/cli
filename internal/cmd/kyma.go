@@ -1,12 +1,12 @@
 package cmd
 
 import (
+	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha"
 	"github.com/spf13/cobra"
 )
 
-func NewKymaCMD() *cobra.Command {
-
+func NewKymaCMD() (*cobra.Command, clierror.Error) {
 	cmd := &cobra.Command{
 		Use: "kyma",
 
@@ -20,6 +20,12 @@ func NewKymaCMD() *cobra.Command {
 			}
 		},
 	}
-	cmd.AddCommand(alpha.NewAlphaCMD())
-	return cmd
+
+	alpha, err := alpha.NewAlphaCMD()
+	if err != nil {
+		return nil, err
+	}
+	cmd.AddCommand(alpha)
+
+	return cmd, nil
 }

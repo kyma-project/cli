@@ -11,7 +11,6 @@ import (
 
 type hanaCredentialsConfig struct {
 	*cmdcommon.KymaConfig
-	cmdcommon.KubeClientConfig
 
 	name      string
 	namespace string
@@ -26,23 +25,17 @@ type credentials struct {
 
 func NewHanaCredentialsCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	config := hanaCredentialsConfig{
-		KymaConfig:       kymaConfig,
-		KubeClientConfig: cmdcommon.KubeClientConfig{},
+		KymaConfig: kymaConfig,
 	}
 
 	cmd := &cobra.Command{
 		Use:   "credentials",
 		Short: "Print credentials of the Hana instance.",
 		Long:  "Use this command to print credentials of the Hana instance on the SAP Kyma platform.",
-		PreRun: func(_ *cobra.Command, _ []string) {
-			clierror.Check(config.KubeClientConfig.Complete())
-		},
 		Run: func(_ *cobra.Command, _ []string) {
 			clierror.Check(runCredentials(&config))
 		},
 	}
-
-	config.KubeClientConfig.AddFlag(cmd)
 
 	cmd.Flags().StringVar(&config.name, "name", "", "Name of Hana instance.")
 	cmd.Flags().StringVar(&config.namespace, "namespace", "default", "Namespace for Hana instance.")

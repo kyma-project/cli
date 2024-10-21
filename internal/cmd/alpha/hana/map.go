@@ -19,23 +19,17 @@ import (
 // this command uses the same config as check command
 func NewMapHanaCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	config := hanaCheckConfig{
-		KymaConfig:       kymaConfig,
-		KubeClientConfig: cmdcommon.KubeClientConfig{},
+		KymaConfig: kymaConfig,
 	}
 
 	cmd := &cobra.Command{
 		Use:   "map",
 		Short: "Map the Hana instance to the Kyma cluster.",
 		Long:  "Use this command to map the Hana instance to the Kyma cluster.",
-		PreRun: func(_ *cobra.Command, _ []string) {
-			clierror.Check(config.KubeClientConfig.Complete())
-		},
 		Run: func(_ *cobra.Command, _ []string) {
 			clierror.Check(runMap(&config))
 		},
 	}
-
-	config.KubeClientConfig.AddFlag(cmd)
 
 	cmd.Flags().StringVar(&config.name, "name", "", "Name of Hana instance.")
 	cmd.Flags().StringVar(&config.namespace, "namespace", "default", "Namespace for Hana instance.")

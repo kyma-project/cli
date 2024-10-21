@@ -10,24 +10,19 @@ import (
 
 type removeConfig struct {
 	*cmdcommon.KymaConfig
-	cmdcommon.KubeClientConfig
 
 	modules []string
 }
 
 func NewRemoveCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cfg := removeConfig{
-		KymaConfig:       kymaConfig,
-		KubeClientConfig: cmdcommon.KubeClientConfig{},
+		KymaConfig: kymaConfig,
 	}
 
 	cmd := &cobra.Command{
 		Use:   "remove",
 		Short: "Remove Kyma modules.",
 		Long:  `Use this command to remove Kyma modules`,
-		PreRun: func(_ *cobra.Command, _ []string) {
-			clierror.Check(cfg.KubeClientConfig.Complete())
-		},
 		Run: func(_ *cobra.Command, _ []string) {
 			clierror.Check(runRemove(&cfg))
 		},

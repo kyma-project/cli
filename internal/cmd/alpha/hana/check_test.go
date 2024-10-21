@@ -167,11 +167,13 @@ func fixCheckConfig(objects ...runtime.Object) hanaCheckConfig {
 	scheme.AddKnownTypes(btp.GVRServiceInstance.GroupVersion())
 	dynamic := dynamic_fake.NewSimpleDynamicClient(scheme, objects...)
 	config := hanaCheckConfig{
-		stdout:     io.Discard,
-		KymaConfig: &cmdcommon.KymaConfig{Ctx: context.Background()},
-		KubeClientConfig: cmdcommon.KubeClientConfig{
-			KubeClient: &kube_fake.FakeKubeClient{
-				TestBtpInterface: btp.NewClient(dynamic),
+		stdout: io.Discard,
+		KymaConfig: &cmdcommon.KymaConfig{
+			Ctx: context.Background(),
+			KubeClientConfig: &cmdcommon.KubeClientConfig{
+				KubeClient: &kube_fake.FakeKubeClient{
+					TestBtpInterface: btp.NewClient(dynamic),
+				},
 			},
 		},
 		name:      testName,

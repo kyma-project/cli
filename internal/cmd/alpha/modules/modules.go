@@ -9,7 +9,6 @@ import (
 
 type modulesConfig struct {
 	*cmdcommon.KymaConfig
-	cmdcommon.KubeClientConfig
 
 	catalog   bool
 	managed   bool
@@ -19,22 +18,17 @@ type modulesConfig struct {
 
 func NewModulesCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cfg := modulesConfig{
-		KymaConfig:       kymaConfig,
-		KubeClientConfig: cmdcommon.KubeClientConfig{},
+		KymaConfig: kymaConfig,
 	}
 
 	cmd := &cobra.Command{
 		Use:   "modules",
 		Short: "List modules.",
 		Long:  `List either installed, managed or available Kyma modules.`,
-		PreRun: func(_ *cobra.Command, _ []string) {
-			clierror.Check(cfg.KubeClientConfig.Complete())
-		},
 		Run: func(_ *cobra.Command, _ []string) {
 			clierror.Check(listModules(&cfg))
 		},
 	}
-	cfg.KubeClientConfig.AddFlag(cmd)
 
 	cmd.Flags().BoolVar(&cfg.catalog, "catalog", false, "List of al available Kyma modules.")
 	cmd.Flags().BoolVar(&cfg.managed, "managed", false, "List of all Kyma modules managed by central control-plane.")
@@ -88,11 +82,11 @@ func collectiveView(cfg *modulesConfig) clierror.Error {
 	if err != nil {
 		return clierror.WrapE(err, clierror.New("failed to get all Kyma catalog"))
 	}
-	installedWith, err := communitymodules.InstalledModules(cfg.KubeClientConfig, *cfg.KymaConfig)
+	installedWith, err := communitymodules.InstalledModules(cfg.Ctx, cfg.KubeClient)
 	if err != nil {
 		return clierror.WrapE(err, clierror.New("failed to get installed Kyma modules"))
 	}
-	managedWith, err := communitymodules.ManagedModules(cfg.KubeClientConfig, *cfg.KymaConfig)
+	managedWith, err := communitymodules.ManagedModules(cfg.Ctx, cfg.KubeClient)
 	if err != nil {
 		return clierror.WrapE(err, clierror.New("failed to get managed Kyma modules"))
 	}
@@ -105,7 +99,7 @@ func collectiveView(cfg *modulesConfig) clierror.Error {
 
 // listInstalledModules lists all installed modules
 func listInstalledModules(cfg *modulesConfig) clierror.Error {
-	installed, err := communitymodules.InstalledModules(cfg.KubeClientConfig, *cfg.KymaConfig)
+	installed, err := communitymodules.InstalledModules(cfg.Ctx, cfg.KubeClient)
 	if err != nil {
 		return clierror.WrapE(err, clierror.New("failed to get installed Kyma modules"))
 	}
@@ -116,7 +110,7 @@ func listInstalledModules(cfg *modulesConfig) clierror.Error {
 
 // listManagedModules lists all managed modules
 func listManagedModules(cfg *modulesConfig) clierror.Error {
-	managed, err := communitymodules.ManagedModules(cfg.KubeClientConfig, *cfg.KymaConfig)
+	managed, err := communitymodules.ManagedModules(cfg.Ctx, cfg.KubeClient)
 	if err != nil {
 		return clierror.WrapE(err, clierror.New("failed to get managed Kyma modules"))
 	}

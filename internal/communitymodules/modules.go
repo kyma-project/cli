@@ -1,6 +1,7 @@
 package communitymodules
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
-	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"golang.org/x/mod/semver"
 	v1 "k8s.io/api/apps/v1"
@@ -113,8 +114,8 @@ func decodeCommunityModulesResponse(resp *http.Response, modules Modules) (Modul
 }
 
 // ManagedModules returns a map of all managed modules from the cluster
-func ManagedModules(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) (moduleMap, clierror.Error) {
-	modules, err := getManagedList(client, cfg)
+func ManagedModules(ctx context.Context, client kube.Client) (moduleMap, clierror.Error) {
+	modules, err := getManagedList(ctx, client)
 	if err != nil {
 		return nil, clierror.WrapE(err, clierror.New("while getting managed modules"))
 	}
@@ -131,8 +132,8 @@ func ManagedModules(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig)
 }
 
 // getManagedList gets a list of all managed modules from the Kyma CR
-func getManagedList(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) ([]kyma.ModuleStatus, clierror.Error) {
-	kyma, err := client.KubeClient.Kyma().GetDefaultKyma(cfg.Ctx)
+func getManagedList(ctx context.Context, client kube.Client) ([]kyma.ModuleStatus, clierror.Error) {
+	kyma, err := client.Kyma().GetDefaultKyma(ctx)
 	if err != nil && !errors.IsNotFound(err) {
 		return nil, clierror.Wrap(err, clierror.New("while getting Kyma CR"))
 	}
@@ -144,17 +145,17 @@ func getManagedList(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig)
 }
 
 // InstalledModules returns a map of all installed modules from the cluster, regardless whether they are managed or not
-func InstalledModules(client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) (moduleMap, clierror.Error) {
-	return installedModules(URL, client, cfg)
+func InstalledModules(ctx context.Context, client kube.Client) (moduleMap, clierror.Error) {
+	return installedModules(ctx, URL, client)
 }
 
-func installedModules(url string, client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) (moduleMap, clierror.Error) {
+func installedModules(ctx context.Context, url string, client kube.Client) (moduleMap, clierror.Error) {
 	modules, err := getCommunityModules(url)
 	if err != nil {
 		return nil, clierror.WrapE(err, clierror.New("while getting installed modules"))
 	}
 
-	installed, err := getInstalledModules(modules, client, cfg)
+	installed, err := getInstalledModules(ctx, modules, client)
 	if err != nil {
 		return nil, err
 	}
@@ -162,13 +163,13 @@ func installedModules(url string, client cmdcommon.KubeClientConfig, cfg cmdcomm
 	return installed, nil
 }
 
-func getInstalledModules(modules Modules, client cmdcommon.KubeClientConfig, cfg cmdcommon.KymaConfig) (moduleMap, clierror.Error) {
+func getInstalledModules(ctx context.Context, modules Modules, client kube.Client) (moduleMap, clierror.Error) {
 	installed := make(moduleMap)
 	for _, module := range modules {
 		latestVersion := GetLatestVersion(module.Versions)
 		managerName := getManagerName(latestVersion)
-		deployment, err := client.KubeClient.Static().AppsV1().Deployments("kyma-system").
-			Get(cfg.Ctx, managerName, metav1.GetOptions{})
+		deployment, err := client.Static().AppsV1().Deployments("kyma-system").
+			Get(ctx, managerName, metav1.GetOptions{})
 		if err != nil && !errors.IsNotFound(err) {
 			msg := "while getting the " + managerName + " deployment"
 			return nil, clierror.Wrap(err, clierror.New(msg))
