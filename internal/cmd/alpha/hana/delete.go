@@ -13,7 +13,6 @@ import (
 
 type hanaDeleteConfig struct {
 	*cmdcommon.KymaConfig
-	cmdcommon.KubeClientConfig
 
 	name      string
 	namespace string
@@ -21,23 +20,17 @@ type hanaDeleteConfig struct {
 
 func NewHanaDeleteCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	config := hanaDeleteConfig{
-		KymaConfig:       kymaConfig,
-		KubeClientConfig: cmdcommon.KubeClientConfig{},
+		KymaConfig: kymaConfig,
 	}
 
 	cmd := &cobra.Command{
 		Use:   "delete",
 		Short: "Delete a Hana instance on the Kyma.",
 		Long:  "Use this command to delete a Hana instance on the SAP Kyma platform.",
-		PreRun: func(_ *cobra.Command, _ []string) {
-			clierror.Check(config.KubeClientConfig.Complete())
-		},
 		Run: func(_ *cobra.Command, _ []string) {
 			clierror.Check(runDelete(&config))
 		},
 	}
-
-	config.KubeClientConfig.AddFlag(cmd)
 
 	cmd.Flags().StringVar(&config.name, "name", "", "Name of Hana instance.")
 	cmd.Flags().StringVar(&config.namespace, "namespace", "default", "Namespace for Hana instance.")

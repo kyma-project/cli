@@ -19,7 +19,6 @@ import (
 
 type oidcConfig struct {
 	*cmdcommon.KymaConfig
-	cmdcommon.KubeClientConfig
 
 	cisCredentialsPath  string
 	output              string
@@ -36,8 +35,7 @@ type TokenData struct {
 
 func NewOIDCCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cfg := oidcConfig{
-		KymaConfig:       kymaConfig,
-		KubeClientConfig: cmdcommon.KubeClientConfig{},
+		KymaConfig: kymaConfig,
 	}
 
 	cmd := &cobra.Command{
@@ -45,15 +43,13 @@ func NewOIDCCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Short: "Create kubeconfig with an OIDC token",
 		Long:  "Create kubeconfig with an OIDC token generated with a Github Actions token",
 		PreRun: func(_ *cobra.Command, _ []string) {
-			clierror.Check(cfg.complete())
+			cfg.complete()
 			clierror.Check(cfg.validate())
 		},
 		Run: func(_ *cobra.Command, _ []string) {
 			clierror.Check(runOIDC(&cfg))
 		},
 	}
-
-	cfg.KubeClientConfig.AddFlag(cmd)
 
 	cmd.Flags().StringVar(&cfg.cisCredentialsPath, "credentials-path", "", "Path to the CIS credentials file.")
 	cmd.Flags().StringVar(&cfg.output, "output", "", "Path to the output kubeconfig file")
@@ -62,8 +58,9 @@ func NewOIDCCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().StringVar(&cfg.audience, "audience", "", "Audience of the token")
 	cmd.Flags().StringVar(&cfg.idTokenRequestURL, "id-token-request-url", "", "URL to request the ID token, defaults to ACTIONS_ID_TOKEN_REQUEST_URL env variable")
 
-	cmd.MarkFlagsOneRequired("kubeconfig", "credentials-path")
-	cmd.MarkFlagsMutuallyExclusive("kubeconfig", "credentials-path")
+	// TODO: rethink this
+	// cmd.MarkFlagsOneRequired("kubeconfig", "credentials-path")
+	// cmd.MarkFlagsMutuallyExclusive("kubeconfig", "credentials-path")
 
 	cmd.MarkFlagsMutuallyExclusive("token", "id-token-request-url")
 	cmd.MarkFlagsMutuallyExclusive("token", "audience")
@@ -71,16 +68,11 @@ func NewOIDCCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	return cmd
 }
 
-func (cfg *oidcConfig) complete() clierror.Error {
+func (cfg *oidcConfig) complete() {
 	if cfg.idTokenRequestURL == "" {
 		cfg.idTokenRequestURL = os.Getenv("ACTIONS_ID_TOKEN_REQUEST_URL")
 	}
 	cfg.idTokenRequestToken = os.Getenv("ACTIONS_ID_TOKEN_REQUEST_TOKEN")
-
-	if cfg.cisCredentialsPath == "" {
-		return cfg.KubeClientConfig.Complete()
-	}
-	return nil
 }
 
 func (cfg *oidcConfig) validate() clierror.Error {

@@ -12,15 +12,13 @@ import (
 
 type provisionConfig struct {
 	*cmdcommon.KymaConfig
-	cmdcommon.KubeClientConfig
 
 	image string
 }
 
 func NewImportCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	config := provisionConfig{
-		KymaConfig:       kymaConfig,
-		KubeClientConfig: cmdcommon.KubeClientConfig{},
+		KymaConfig: kymaConfig,
 	}
 
 	cmd := &cobra.Command{
@@ -30,15 +28,13 @@ func NewImportCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 
 		PreRun: func(_ *cobra.Command, args []string) {
-			clierror.Check(config.complete(args))
+			config.complete(args)
 			clierror.Check(config.validate())
 		},
 		Run: func(_ *cobra.Command, _ []string) {
 			clierror.Check(runImageImport(&config))
 		},
 	}
-
-	config.KubeClientConfig.AddFlag(cmd)
 
 	return cmd
 }
@@ -52,10 +48,8 @@ func (pc *provisionConfig) validate() clierror.Error {
 	return nil
 }
 
-func (pc *provisionConfig) complete(args []string) clierror.Error {
+func (pc *provisionConfig) complete(args []string) {
 	pc.image = args[0]
-
-	return pc.KubeClientConfig.Complete()
 }
 
 func runImageImport(config *provisionConfig) clierror.Error {

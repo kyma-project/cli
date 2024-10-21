@@ -1,7 +1,6 @@
 package referenceinstance
 
 import (
-	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/kube/btp"
 	"github.com/spf13/cobra"
@@ -10,7 +9,6 @@ import (
 
 type referenceInstanceConfig struct {
 	*cmdcommon.KymaConfig
-	cmdcommon.KubeClientConfig
 
 	namespace     string
 	offeringName  string
@@ -24,8 +22,7 @@ type referenceInstanceConfig struct {
 
 func NewReferenceInstanceCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	config := referenceInstanceConfig{
-		KymaConfig:       kymaConfig,
-		KubeClientConfig: cmdcommon.KubeClientConfig{},
+		KymaConfig: kymaConfig,
 	}
 
 	cmd := &cobra.Command{
@@ -33,15 +30,10 @@ func NewReferenceInstanceCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Short: "Add an instance reference to a shared service instance.",
 		Long: `Use this command to add an instance reference to a shared service instance on the SAP Kyma platform.
 `,
-		PreRun: func(_ *cobra.Command, _ []string) {
-			clierror.Check(config.KubeClientConfig.Complete())
-		},
 		RunE: func(_ *cobra.Command, _ []string) error {
 			return runReferenceInstance(config)
 		},
 	}
-
-	config.KubeClientConfig.AddFlag(cmd)
 
 	cmd.Flags().StringVar(&config.namespace, "namespace", "default", "Namespace of the reference instance.")
 	cmd.Flags().StringVar(&config.offeringName, "offering-name", "", "Offering name.")

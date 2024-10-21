@@ -15,7 +15,6 @@ import (
 
 type hanaCheckConfig struct {
 	*cmdcommon.KymaConfig
-	cmdcommon.KubeClientConfig
 
 	name      string
 	namespace string
@@ -27,25 +26,19 @@ type hanaCheckConfig struct {
 
 func NewHanaCheckCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	config := hanaCheckConfig{
-		KymaConfig:       kymaConfig,
-		KubeClientConfig: cmdcommon.KubeClientConfig{},
-		stdout:           os.Stdout,
-		checkCommands:    checkCommands,
+		KymaConfig:    kymaConfig,
+		stdout:        os.Stdout,
+		checkCommands: checkCommands,
 	}
 
 	cmd := &cobra.Command{
 		Use:   "check",
 		Short: "Check if the Hana instance is provisioned.",
 		Long:  "Use this command to check if the Hana instance is provisioned on the SAP Kyma platform.",
-		PreRun: func(_ *cobra.Command, _ []string) {
-			clierror.Check(config.KubeClientConfig.Complete())
-		},
 		Run: func(_ *cobra.Command, _ []string) {
 			clierror.Check(runCheck(&config))
 		},
 	}
-
-	config.KubeClientConfig.AddFlag(cmd)
 
 	cmd.Flags().StringVar(&config.name, "name", "", "Name of Hana instance.")
 	cmd.Flags().StringVar(&config.namespace, "namespace", "default", "Namespace for Hana instance.")

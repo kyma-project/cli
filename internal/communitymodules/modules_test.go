@@ -8,7 +8,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	kube_fake "github.com/kyma-project/cli.v3/internal/kube/fake"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"github.com/stretchr/testify/assert"
@@ -124,14 +123,7 @@ func Test_ManagedModules(t *testing.T) {
 			TestKymaInterface:       kyma.NewClient(dynamic),
 		}
 
-		kymaConfig := cmdcommon.KymaConfig{
-			Ctx: context.Background(),
-		}
-
-		modules, err := ManagedModules(cmdcommon.KubeClientConfig{
-			Kubeconfig: "",
-			KubeClient: kubeClient,
-		}, kymaConfig)
+		modules, err := ManagedModules(context.Background(), kubeClient)
 
 		assert.Equal(t, expectedResult, modules)
 		assert.Nil(t, err)
@@ -148,14 +140,7 @@ func Test_ManagedModules(t *testing.T) {
 			TestKymaInterface:       kyma.NewClient(dynamic),
 		}
 
-		kymaConfig := cmdcommon.KymaConfig{
-			Ctx: context.Background(),
-		}
-
-		modules, err := ManagedModules(cmdcommon.KubeClientConfig{
-			Kubeconfig: "",
-			KubeClient: kubeClient,
-		}, kymaConfig)
+		modules, err := ManagedModules(context.Background(), kubeClient)
 
 		assert.Equal(t, expectedResult, modules)
 		assert.Nil(t, err)
@@ -188,16 +173,7 @@ func Test_installedModules(t *testing.T) {
 			TestDynamicInterface:    nil,
 		}
 
-		kymaConfig := cmdcommon.KymaConfig{
-			Ctx: context.Background(),
-		}
-
-		modules, err := installedModules(
-			httpServer.URL,
-			cmdcommon.KubeClientConfig{
-				Kubeconfig: "",
-				KubeClient: kubeClient,
-			}, kymaConfig)
+		modules, err := installedModules(context.Background(), httpServer.URL, kubeClient)
 
 		assert.Equal(t, expectedResult, modules)
 		assert.Nil(t, err)
@@ -222,16 +198,7 @@ func Test_installedModules(t *testing.T) {
 			TestDynamicInterface:    nil,
 		}
 
-		kymaConfig := cmdcommon.KymaConfig{
-			Ctx: context.Background(),
-		}
-
-		modules, err := installedModules(
-			httpServer.URL,
-			cmdcommon.KubeClientConfig{
-				Kubeconfig: "",
-				KubeClient: kubeClient,
-			}, kymaConfig)
+		modules, err := installedModules(context.Background(), httpServer.URL, kubeClient)
 
 		assert.Equal(t, expectedResult, modules)
 		assert.Nil(t, err)

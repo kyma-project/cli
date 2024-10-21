@@ -11,7 +11,6 @@ import (
 
 type addConfig struct {
 	*cmdcommon.KymaConfig
-	cmdcommon.KubeClientConfig
 
 	modules []string
 	crs     []string
@@ -19,8 +18,7 @@ type addConfig struct {
 
 func NewAddCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cfg := addConfig{
-		KymaConfig:       kymaConfig,
-		KubeClientConfig: cmdcommon.KubeClientConfig{},
+		KymaConfig: kymaConfig,
 	}
 
 	cmd := &cobra.Command{
@@ -28,7 +26,6 @@ func NewAddCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Short: "Adds Kyma modules.",
 		Long:  `Use this command to add Kyma modules`,
 		PreRun: func(_ *cobra.Command, _ []string) {
-			clierror.Check(cfg.KubeClientConfig.Complete())
 		},
 		Run: func(_ *cobra.Command, _ []string) {
 			clierror.Check(runAdd(&cfg))
@@ -37,7 +34,6 @@ func NewAddCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cmd.AddCommand(managed.NewManagedCMD(kymaConfig))
 
-	cfg.KubeClientConfig.AddFlag(cmd)
 	cmd.Flags().StringSliceVar(&cfg.modules, "module", []string{}, "Name and version of the modules to add. Example: --module serverless,keda:1.1.1,etc...")
 	cmd.Flags().StringSliceVar(&cfg.crs, "cr", []string{}, "Path to the custom CR file")
 
