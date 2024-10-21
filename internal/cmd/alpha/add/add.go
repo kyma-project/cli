@@ -25,8 +25,6 @@ func NewAddCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Use:   "add",
 		Short: "Adds Kyma modules.",
 		Long:  `Use this command to add Kyma modules`,
-		PreRun: func(_ *cobra.Command, _ []string) {
-		},
 		Run: func(_ *cobra.Command, _ []string) {
 			clierror.Check(runAdd(&cfg))
 		},

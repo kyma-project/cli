@@ -20,8 +20,6 @@ func NewManagedCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "managed",
 		Short: "Add managed Kyma module in a managed Kyma instance",
-		PreRun: func(_ *cobra.Command, _ []string) {
-		},
 		RunE: func(_ *cobra.Command, _ []string) error {
 			return runAddManaged(config)
 		},
