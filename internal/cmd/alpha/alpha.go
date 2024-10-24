@@ -13,6 +13,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/registry"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/remove"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/extension"
 	"github.com/spf13/cobra"
 )
 
@@ -38,6 +39,9 @@ func NewAlphaCMD() (*cobra.Command, clierror.Error) {
 	cmd.AddCommand(add.NewAddCMD(config))
 	cmd.AddCommand(remove.NewRemoveCMD(config))
 	cmd.AddCommand(registry.NewRegistryCMD(config))
+
+	cmds := extension.BuildCommands(config.Extensions)
+	cmd.AddCommand(cmds...)
 
 	return cmd, nil
 }
