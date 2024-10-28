@@ -29,15 +29,18 @@ func NewAlphaCMD() (*cobra.Command, clierror.Error) {
 	}
 
 	cmd.AddCommand(hana.NewHanaCMD(config))
-	cmd.AddCommand(imageimport.NewImportCMD(config))
 	cmd.AddCommand(provision.NewProvisionCMD())
 	cmd.AddCommand(referenceinstance.NewReferenceInstanceCMD(config))
+	cmd.AddCommand(imageimport.NewImportCMD(config))
 	cmd.AddCommand(access.NewAccessCMD(config))
 	cmd.AddCommand(oidc.NewOIDCCMD(config))
 	cmd.AddCommand(modules.NewModulesCMD(config))
 	cmd.AddCommand(add.NewAddCMD(config))
 	cmd.AddCommand(remove.NewRemoveCMD(config))
 	cmd.AddCommand(registry.NewRegistryCMD(config))
+
+	cmds := cmdcommon.BuildExtensions(config)
+	cmd.AddCommand(cmds...)
 
 	return cmd, nil
 }
