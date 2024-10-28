@@ -111,6 +111,10 @@ explain:
   descriptionLong: test-description-long
   output: test-explain-output
 `,
+			ExtensionCoreCommandsKey: `
+- actionID: test-action-id-1
+- actionID: test-action-id-2
+`,
 		},
 	}
 }
@@ -135,6 +139,14 @@ func fixTestExtension(name string) Extension {
 				Description:     "test-description",
 				DescriptionLong: "test-description-long",
 				Output:          "test-explain-output",
+			},
+		},
+		CoreCommands: []CoreCommandInfo{
+			{
+				ActionID: "test-action-id-1",
+			},
+			{
+				ActionID: "test-action-id-2",
 			},
 		},
 	}
