@@ -51,7 +51,7 @@ type ExplainCommand struct {
 	Description string `yaml:"description"`
 	// long description of the command group
 	DescriptionLong string `yaml:"descriptionLong"`
-	// test that will be printed after running the `explain` command
+	// text that will be printed after running the `explain` command
 	Output string `yaml:"output"`
 }
 
