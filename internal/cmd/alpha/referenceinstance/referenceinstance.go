@@ -59,7 +59,12 @@ func NewReferenceInstanceCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 func runReferenceInstance(config referenceInstanceConfig) error {
 	requestData := fillRequestData(config)
 
-	return config.KubeClient.Btp().CreateServiceInstance(config.Ctx, &requestData)
+	client, err := config.GetKubeClient()
+	if err != nil {
+		return err
+	}
+
+	return client.Btp().CreateServiceInstance(config.Ctx, &requestData)
 }
 
 func fillRequestData(config referenceInstanceConfig) btp.ServiceInstance {

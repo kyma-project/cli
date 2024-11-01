@@ -71,7 +71,12 @@ func runCheck(config *hanaCheckConfig) clierror.Error {
 }
 
 func checkHanaInstance(config *hanaCheckConfig) clierror.Error {
-	instance, err := config.KubeClient.Btp().GetServiceInstance(config.Ctx, config.namespace, config.name)
+	client, clientErr := config.GetKubeClientWithClierr()
+	if clientErr != nil {
+		return clientErr
+	}
+
+	instance, err := client.Btp().GetServiceInstance(config.Ctx, config.namespace, config.name)
 	if err != nil {
 		return clierror.New(err.Error())
 	}
@@ -80,7 +85,12 @@ func checkHanaInstance(config *hanaCheckConfig) clierror.Error {
 }
 
 func checkHanaBinding(config *hanaCheckConfig) clierror.Error {
-	binding, err := config.KubeClient.Btp().GetServiceBinding(config.Ctx, config.namespace, config.name)
+	client, clientErr := config.GetKubeClientWithClierr()
+	if clientErr != nil {
+		return clientErr
+	}
+
+	binding, err := client.Btp().GetServiceBinding(config.Ctx, config.namespace, config.name)
 	if err != nil {
 		return clierror.New(err.Error())
 	}
@@ -89,8 +99,13 @@ func checkHanaBinding(config *hanaCheckConfig) clierror.Error {
 }
 
 func checkHanaBindingURL(config *hanaCheckConfig) clierror.Error {
+	client, clientErr := config.GetKubeClientWithClierr()
+	if clientErr != nil {
+		return clientErr
+	}
+
 	urlName := hanaBindingURLName(config.name)
-	binding, err := config.KubeClient.Btp().GetServiceBinding(config.Ctx, config.namespace, urlName)
+	binding, err := client.Btp().GetServiceBinding(config.Ctx, config.namespace, urlName)
 	if err != nil {
 		return clierror.New(err.Error())
 	}

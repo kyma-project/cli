@@ -38,5 +38,10 @@ func NewRemoveCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 func runRemove(cfg *removeConfig) clierror.Error {
 	modules := cluster.ParseModules(cfg.modules)
-	return cluster.RemoveSpecifiedModules(cfg.Ctx, cfg.KubeClient.RootlessDynamic(), modules)
+	client, err := cfg.GetKubeClientWithClierr()
+	if err != nil {
+		return err
+	}
+
+	return cluster.RemoveSpecifiedModules(cfg.Ctx, client.RootlessDynamic(), modules)
 }

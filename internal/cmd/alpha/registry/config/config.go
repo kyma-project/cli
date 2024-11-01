@@ -38,7 +38,12 @@ func NewConfigCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 }
 
 func runConfig(cfg *cfgConfig) clierror.Error {
-	registryConfig, err := registry.GetExternalConfig(cfg.Ctx, cfg.KubeClient)
+	client, err := cfg.GetKubeClientWithClierr()
+	if err != nil {
+		return err
+	}
+
+	registryConfig, err := registry.GetExternalConfig(cfg.Ctx, client)
 	if err != nil {
 		return clierror.WrapE(err, clierror.New("failed to load in-cluster registry configuration"))
 	}

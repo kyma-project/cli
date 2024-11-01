@@ -62,22 +62,37 @@ func runDelete(config *hanaDeleteConfig) clierror.Error {
 }
 
 func deleteHanaInstance(config *hanaDeleteConfig) clierror.Error {
-	err := config.KubeClient.Dynamic().Resource(btp.GVRServiceInstance).
+	client, clientErr := config.GetKubeClientWithClierr()
+	if clientErr != nil {
+		return clientErr
+	}
+
+	err := client.Dynamic().Resource(btp.GVRServiceInstance).
 		Namespace(config.namespace).
 		Delete(config.Ctx, config.name, metav1.DeleteOptions{})
 	return handleDeleteResponse(err, "Hana instance", config.namespace, config.name)
 }
 
 func deleteHanaBinding(config *hanaDeleteConfig) clierror.Error {
-	err := config.KubeClient.Dynamic().Resource(btp.GVRServiceBinding).
+	client, clientErr := config.GetKubeClientWithClierr()
+	if clientErr != nil {
+		return clientErr
+	}
+
+	err := client.Dynamic().Resource(btp.GVRServiceBinding).
 		Namespace(config.namespace).
 		Delete(config.Ctx, config.name, metav1.DeleteOptions{})
 	return handleDeleteResponse(err, "Hana binding", config.namespace, config.name)
 }
 
 func deleteHanaBindingURL(config *hanaDeleteConfig) clierror.Error {
+	client, clientErr := config.GetKubeClientWithClierr()
+	if clientErr != nil {
+		return clientErr
+	}
+
 	urlName := hanaBindingURLName(config.name)
-	err := config.KubeClient.Dynamic().Resource(btp.GVRServiceBinding).
+	err := client.Dynamic().Resource(btp.GVRServiceBinding).
 		Namespace(config.namespace).
 		Delete(config.Ctx, urlName, metav1.DeleteOptions{})
 	return handleDeleteResponse(err, "Hana URL binding", config.namespace, urlName)

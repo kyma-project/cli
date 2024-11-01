@@ -19,12 +19,9 @@ type KymaConfig struct {
 func NewKymaConfig(cmd *cobra.Command) (*KymaConfig, clierror.Error) {
 	ctx := context.Background()
 
-	kubeClient, kubeClientErr := newKubeClientConfig(cmd)
-	if kubeClientErr != nil {
-		return nil, kubeClientErr
-	}
+	kubeClient := newKubeClientConfig(cmd)
 
-	extensions, err := ListExtensions(ctx, kubeClient.KubeClient.Static())
+	extensions, err := listExtensions(ctx, kubeClient)
 	if err != nil {
 		fmt.Printf("DEBUG ERROR: %s\n", err.Error())
 		// TODO: think about handling error later

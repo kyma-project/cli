@@ -10,7 +10,6 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 )
 
 func BuildExtensions(config *KymaConfig, availableTemplateCommands *TemplateCommandsList, availableCoreCommands CoreCommandsMap) []*cobra.Command {
@@ -66,9 +65,15 @@ func addCoreCommands(cmd *cobra.Command, config *KymaConfig, extensionCoreComman
 	}
 }
 
-func ListExtensions(ctx context.Context, client kubernetes.Interface) (ExtensionList, error) {
+func listExtensions(ctx context.Context, clientConfig *KubeClientConfig) (ExtensionList, error) {
+	client, clientErr := clientConfig.GetKubeClient()
+	if clientErr != nil {
+		// skip becuase can't connect to the cluster
+		return nil, nil
+	}
+
 	labelSelector := fmt.Sprintf("%s==%s", ExtensionLabelKey, ExtensionResourceLabelValue)
-	cms, err := client.CoreV1().ConfigMaps("").List(ctx, metav1.ListOptions{
+	cms, err := client.Static().CoreV1().ConfigMaps("").List(ctx, metav1.ListOptions{
 		LabelSelector: labelSelector,
 	})
 	if err != nil {

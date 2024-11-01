@@ -62,8 +62,13 @@ func runMap(config *hanaCheckConfig) clierror.Error {
 }
 
 func createHanaAPIInstanceIfNeeded(config *hanaCheckConfig) clierror.Error {
+	client, clientErr := config.GetKubeClientWithClierr()
+	if clientErr != nil {
+		return clientErr
+	}
+
 	// check if instance exists, skip API instance creation if it does
-	instance, err := config.KubeClient.Btp().GetServiceInstance(config.Ctx, config.namespace, hanaBindingAPIName(config.name))
+	instance, err := client.Btp().GetServiceInstance(config.Ctx, config.namespace, hanaBindingAPIName(config.name))
 	if err == nil && instance != nil {
 		fmt.Printf("Hana API instance already exists (%s/%s)\n", config.namespace, hanaBindingAPIName(config.name))
 		return nil
@@ -72,8 +77,13 @@ func createHanaAPIInstanceIfNeeded(config *hanaCheckConfig) clierror.Error {
 }
 
 func createHanaAPIBindingIfNeeded(config *hanaCheckConfig) clierror.Error {
+	client, clientErr := config.GetKubeClientWithClierr()
+	if clientErr != nil {
+		return clientErr
+	}
+
 	//check if binding exists, skip API binding creation if it does
-	instance, err := config.KubeClient.Btp().GetServiceBinding(config.Ctx, config.namespace, hanaBindingAPIName(config.name))
+	instance, err := client.Btp().GetServiceBinding(config.Ctx, config.namespace, hanaBindingAPIName(config.name))
 	if err == nil && instance != nil {
 		fmt.Printf("Hana API instance already exists (%s/%s)\n", config.namespace, hanaBindingAPIName(config.name))
 		return nil
@@ -84,16 +94,26 @@ func createHanaAPIBindingIfNeeded(config *hanaCheckConfig) clierror.Error {
 }
 
 func createHanaAPIInstance(config *hanaCheckConfig) clierror.Error {
+	client, clientErr := config.GetKubeClientWithClierr()
+	if clientErr != nil {
+		return clientErr
+	}
+
 	instance := hanaAPIInstance(config)
 
-	err := config.KubeClient.Btp().CreateServiceInstance(config.Ctx, instance)
+	err := client.Btp().CreateServiceInstance(config.Ctx, instance)
 	return handleProvisionResponse(err, "Hana API instance", config.namespace, hanaBindingAPIName(config.name))
 }
 
 func createHanaAPIBinding(config *hanaCheckConfig) clierror.Error {
+	client, clientErr := config.GetKubeClientWithClierr()
+	if clientErr != nil {
+		return clientErr
+	}
+
 	binding := hanaAPIBinding(config)
 
-	err := config.KubeClient.Btp().CreateServiceBinding(config.Ctx, binding)
+	err := client.Btp().CreateServiceBinding(config.Ctx, binding)
 	return handleProvisionResponse(err, "Hana API binding", config.namespace, hanaBindingAPIName(config.name))
 }
 
@@ -172,7 +192,12 @@ func createHanaInstanceMapping(config *hanaCheckConfig) clierror.Error {
 }
 
 func getClusterID(config *hanaCheckConfig) (string, clierror.Error) {
-	cm, err := config.KubeClient.Static().CoreV1().ConfigMaps("kyma-system").Get(config.Ctx, "sap-btp-operator-config", metav1.GetOptions{})
+	client, clientErr := config.GetKubeClientWithClierr()
+	if clientErr != nil {
+		return "", clientErr
+	}
+
+	cm, err := client.Static().CoreV1().ConfigMaps("kyma-system").Get(config.Ctx, "sap-btp-operator-config", metav1.GetOptions{})
 	if err != nil {
 		return "", clierror.Wrap(err, clierror.New("failed to get cluster ID"))
 	}
@@ -180,9 +205,14 @@ func getClusterID(config *hanaCheckConfig) (string, clierror.Error) {
 }
 
 func getHanaID(config *hanaCheckConfig) (string, clierror.Error) {
+	client, clientErr := config.GetKubeClientWithClierr()
+	if clientErr != nil {
+		return "", clientErr
+	}
+
 	// wait for until Hana instance is ready, for default setting it should take 5 minutes
 	fmt.Print("waiting for Hana instance to be ready... ")
-	instanceReadyCheck := config.KubeClient.Btp().IsInstanceReady(config.Ctx, config.namespace, config.name)
+	instanceReadyCheck := client.Btp().IsInstanceReady(config.Ctx, config.namespace, config.name)
 	err := wait.PollUntilContextTimeout(config.Ctx, 10*time.Second, config.timeout, true, instanceReadyCheck)
 	if err != nil {
 		fmt.Println("Failed")
@@ -192,7 +222,7 @@ func getHanaID(config *hanaCheckConfig) (string, clierror.Error) {
 	}
 	fmt.Println("done")
 
-	instance, err := config.KubeClient.Btp().GetServiceInstance(config.Ctx, config.namespace, config.name)
+	instance, err := client.Btp().GetServiceInstance(config.Ctx, config.namespace, config.name)
 	if err != nil {
 		return "", clierror.Wrap(err, clierror.New("failed to get Hana instance"))
 	}
@@ -201,8 +231,13 @@ func getHanaID(config *hanaCheckConfig) (string, clierror.Error) {
 }
 
 func readHanaAPISecret(config *hanaCheckConfig) (string, *auth.UAA, clierror.Error) {
+	client, clientErr := config.GetKubeClientWithClierr()
+	if clientErr != nil {
+		return "", nil, clientErr
+	}
+
 	fmt.Print("waiting for Hana API instance to be ready... ")
-	instanceReadyCheck := config.KubeClient.Btp().IsInstanceReady(config.Ctx, config.namespace, hanaBindingAPIName(config.name))
+	instanceReadyCheck := client.Btp().IsInstanceReady(config.Ctx, config.namespace, hanaBindingAPIName(config.name))
 	err := wait.PollUntilContextTimeout(config.Ctx, 5*time.Second, 2*time.Minute, true, instanceReadyCheck)
 	if err != nil {
 		fmt.Println("Failed")
@@ -213,14 +248,14 @@ func readHanaAPISecret(config *hanaCheckConfig) (string, *auth.UAA, clierror.Err
 	fmt.Println("done")
 
 	fmt.Print("waiting for Hana API binding to be ready... ")
-	bindingReadyCheck := config.KubeClient.Btp().IsBindingReady(config.Ctx, config.namespace, hanaBindingAPIName(config.name))
+	bindingReadyCheck := client.Btp().IsBindingReady(config.Ctx, config.namespace, hanaBindingAPIName(config.name))
 	err = wait.PollUntilContextTimeout(config.Ctx, 5*time.Second, 2*time.Minute, true, bindingReadyCheck)
 	if err != nil {
 		fmt.Println("Failed")
 		return "", nil, clierror.Wrap(err, clierror.New("timeout while waiting for Hana API binding"))
 	}
 	fmt.Println("done")
-	secret, err := config.KubeClient.Static().CoreV1().Secrets(config.namespace).Get(config.Ctx, hanaBindingAPIName(config.name), metav1.GetOptions{})
+	secret, err := client.Static().CoreV1().Secrets(config.namespace).Get(config.Ctx, hanaBindingAPIName(config.name), metav1.GetOptions{})
 	if err != nil {
 		return "", nil, clierror.Wrap(err, clierror.New("failed to get secret"))
 	}
