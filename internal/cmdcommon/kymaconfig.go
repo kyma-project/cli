@@ -2,7 +2,6 @@ package cmdcommon
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/spf13/cobra"
@@ -11,27 +10,18 @@ import (
 // KymaConfig contains data common for all subcommands
 type KymaConfig struct {
 	*KubeClientConfig
+	*KymaExtensionsConfig
 
-	Ctx        context.Context
-	Extensions ExtensionList
+	Ctx context.Context
 }
 
 func NewKymaConfig(cmd *cobra.Command) (*KymaConfig, clierror.Error) {
 	ctx := context.Background()
 
-	kubeClient := newKubeClientConfig(cmd)
+	kymaConfig := &KymaConfig{}
+	kymaConfig.Ctx = ctx
+	kymaConfig.KubeClientConfig = newKubeClientConfig(cmd)
+	kymaConfig.KymaExtensionsConfig = newExtensionsConfig(kymaConfig, cmd)
 
-	extensions, err := listExtensions(ctx, kubeClient)
-	if err != nil {
-		fmt.Printf("DEBUG ERROR: %s\n", err.Error())
-		// TODO: think about handling error later
-		// this error should not stop program
-		// but I'm not sure what we should do with such information due to it's internal value
-	}
-
-	return &KymaConfig{
-		Ctx:              ctx,
-		KubeClientConfig: kubeClient,
-		Extensions:       extensions,
-	}, nil
+	return kymaConfig, nil
 }

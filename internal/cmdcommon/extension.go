@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"strconv"
+	"strings"
 
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/templates"
 	pkgerrors "github.com/pkg/errors"
@@ -12,64 +15,46 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func BuildExtensions(config *KymaConfig, availableTemplateCommands *TemplateCommandsList, availableCoreCommands CoreCommandsMap) []*cobra.Command {
-	cmds := make([]*cobra.Command, len(config.Extensions))
+type KymaExtensionsConfig struct {
+	kymaConfig *KymaConfig
+	extensions ExtensionList
+}
 
-	for i, extension := range config.Extensions {
-		cmds[i] = buildCommandFromExtension(config, &extension, availableTemplateCommands, availableCoreCommands)
+func newExtensionsConfig(config *KymaConfig, cmd *cobra.Command) *KymaExtensionsConfig {
+	extensions, err := loadExtensionsFromCluster(config.Ctx, config.KubeClientConfig)
+	if err != nil && shouldShowExtensionsError() {
+		// print error as warning if expected and continue
+		fmt.Printf("Extensions Warning:\n%s\n\n", err.Error())
+	}
+
+	extensionsConfig := &KymaExtensionsConfig{
+		kymaConfig: config,
+		extensions: extensions,
+	}
+	extensionsConfig.addFlag(cmd)
+
+	return extensionsConfig
+}
+
+func (kec *KymaExtensionsConfig) addFlag(cmd *cobra.Command) {
+	// this flag is not operational. it's only to print help description and help cobra with validation
+	_ = cmd.PersistentFlags().Bool("show-extensions-error", false, "Print possible error when fetching extensions failed.")
+}
+
+func (kec *KymaExtensionsConfig) BuildExtensions(availableTemplateCommands *TemplateCommandsList, availableCoreCommands CoreCommandsMap) []*cobra.Command {
+	cmds := make([]*cobra.Command, len(kec.kymaConfig.extensions))
+
+	for i, extension := range kec.kymaConfig.extensions {
+		cmds[i] = buildCommandFromExtension(kec.kymaConfig, &extension, availableTemplateCommands, availableCoreCommands)
 	}
 
 	return cmds
 }
 
-func buildCommandFromExtension(config *KymaConfig, extension *Extension, availableTemplateCommands *TemplateCommandsList, availableCoreCommands CoreCommandsMap) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   extension.RootCommand.Name,
-		Short: extension.RootCommand.Description,
-		Long:  extension.RootCommand.DescriptionLong,
-		Run: func(cmd *cobra.Command, _ []string) {
-			if err := cmd.Help(); err != nil {
-				_ = err
-			}
-		},
-	}
-
-	if extension.TemplateCommands != nil {
-		addGenericCommands(cmd, extension.TemplateCommands, availableTemplateCommands)
-	}
-
-	addCoreCommands(cmd, config, extension.CoreCommands, availableCoreCommands)
-
-	return cmd
-}
-
-func addGenericCommands(cmd *cobra.Command, genericCommands *TemplateCommands, availableTemplateCommands *TemplateCommandsList) {
-	if genericCommands.ExplainCommand != nil {
-		cmd.AddCommand(availableTemplateCommands.Explain(&templates.ExplainOptions{
-			Short:  genericCommands.ExplainCommand.Description,
-			Long:   genericCommands.ExplainCommand.DescriptionLong,
-			Output: genericCommands.ExplainCommand.Output,
-		}))
-	}
-}
-
-func addCoreCommands(cmd *cobra.Command, config *KymaConfig, extensionCoreCommands []CoreCommandInfo, availableCoreCommands CoreCommandsMap) {
-	for _, expectedCoreCommand := range extensionCoreCommands {
-		command, ok := availableCoreCommands[expectedCoreCommand.ActionID]
-		if !ok {
-			// commands doesn't exist in this version of cli and we will not process it
-			continue
-		}
-
-		cmd.AddCommand(command(config))
-	}
-}
-
-func listExtensions(ctx context.Context, clientConfig *KubeClientConfig) (ExtensionList, error) {
+func loadExtensionsFromCluster(ctx context.Context, clientConfig *KubeClientConfig) ([]Extension, error) {
 	client, clientErr := clientConfig.GetKubeClient()
 	if clientErr != nil {
-		// skip becuase can't connect to the cluster
-		return nil, nil
+		return nil, clientErr
 	}
 
 	labelSelector := fmt.Sprintf("%s==%s", ExtensionLabelKey, ExtensionResourceLabelValue)
@@ -150,4 +135,68 @@ func parseOptionalField[T any](cmData map[string]string, cmKey string) (T, error
 
 	err := yaml.Unmarshal([]byte(dataBytes), &data)
 	return data, err
+}
+
+func buildCommandFromExtension(config *KymaConfig, extension *Extension, availableTemplateCommands *TemplateCommandsList, availableCoreCommands CoreCommandsMap) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   extension.RootCommand.Name,
+		Short: extension.RootCommand.Description,
+		Long:  extension.RootCommand.DescriptionLong,
+		Run: func(cmd *cobra.Command, _ []string) {
+			if err := cmd.Help(); err != nil {
+				_ = err
+			}
+		},
+	}
+
+	if extension.TemplateCommands != nil {
+		addGenericCommands(cmd, extension.TemplateCommands, availableTemplateCommands)
+	}
+
+	addCoreCommands(cmd, config, extension.CoreCommands, availableCoreCommands)
+
+	return cmd
+}
+
+func addGenericCommands(cmd *cobra.Command, genericCommands *TemplateCommands, availableTemplateCommands *TemplateCommandsList) {
+	if genericCommands.ExplainCommand != nil {
+		cmd.AddCommand(availableTemplateCommands.Explain(&templates.ExplainOptions{
+			Short:  genericCommands.ExplainCommand.Description,
+			Long:   genericCommands.ExplainCommand.DescriptionLong,
+			Output: genericCommands.ExplainCommand.Output,
+		}))
+	}
+}
+
+func addCoreCommands(cmd *cobra.Command, config *KymaConfig, extensionCoreCommands []CoreCommandInfo, availableCoreCommands CoreCommandsMap) {
+	for _, expectedCoreCommand := range extensionCoreCommands {
+		command, ok := availableCoreCommands[expectedCoreCommand.ActionID]
+		if !ok {
+			// commands doesn't exist in this version of cli and we will not process it
+			continue
+		}
+
+		cmd.AddCommand(command(config))
+	}
+}
+
+// search os.Args manually to find if user pass --show-extensions-error and return its value
+func shouldShowExtensionsError() bool {
+	for i, arg := range os.Args {
+		//example: --show-extensions-error true
+		if arg == "--show-extensions-error" && len(os.Args) > i+1 {
+
+			value, err := strconv.ParseBool(os.Args[i+1])
+			if err == nil {
+				return value
+			}
+		}
+
+		// example: --show-extensions-error or --show-extensions-error=true
+		if strings.HasPrefix(arg, "--show-extensions-error") && !strings.Contains(arg, "false") {
+			return true
+		}
+	}
+
+	return false
 }
