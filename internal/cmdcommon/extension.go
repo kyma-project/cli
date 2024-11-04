@@ -13,17 +13,17 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func BuildExtensions(config *KymaConfig) []*cobra.Command {
+func BuildExtensions(config *KymaConfig, availableTemplateCommands *TemplateCommandsList, availableCoreCommands CoreCommandsMap) []*cobra.Command {
 	cmds := make([]*cobra.Command, len(config.Extensions))
 
 	for i, extension := range config.Extensions {
-		cmds[i] = buildCommandFromExtension(&extension)
+		cmds[i] = buildCommandFromExtension(config, &extension, availableTemplateCommands, availableCoreCommands)
 	}
 
 	return cmds
 }
 
-func buildCommandFromExtension(extension *Extension) *cobra.Command {
+func buildCommandFromExtension(config *KymaConfig, extension *Extension, availableTemplateCommands *TemplateCommandsList, availableCoreCommands CoreCommandsMap) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   extension.RootCommand.Name,
 		Short: extension.RootCommand.Description,
@@ -36,19 +36,33 @@ func buildCommandFromExtension(extension *Extension) *cobra.Command {
 	}
 
 	if extension.TemplateCommands != nil {
-		addGenericCommands(cmd, extension.TemplateCommands)
+		addGenericCommands(cmd, extension.TemplateCommands, availableTemplateCommands)
 	}
+
+	addCoreCommands(cmd, config, extension.CoreCommands, availableCoreCommands)
 
 	return cmd
 }
 
-func addGenericCommands(cmd *cobra.Command, genericCommands *TemplateCommands) {
+func addGenericCommands(cmd *cobra.Command, genericCommands *TemplateCommands, availableTemplateCommands *TemplateCommandsList) {
 	if genericCommands.ExplainCommand != nil {
-		cmd.AddCommand(templates.BuildExplainCommand(&templates.ExplainOptions{
+		cmd.AddCommand(availableTemplateCommands.Explain(&templates.ExplainOptions{
 			Short:  genericCommands.ExplainCommand.Description,
 			Long:   genericCommands.ExplainCommand.DescriptionLong,
 			Output: genericCommands.ExplainCommand.Output,
 		}))
+	}
+}
+
+func addCoreCommands(cmd *cobra.Command, config *KymaConfig, extensionCoreCommands []CoreCommandInfo, availableCoreCommands CoreCommandsMap) {
+	for _, expectedCoreCommand := range extensionCoreCommands {
+		command, ok := availableCoreCommands[expectedCoreCommand.ActionID]
+		if !ok {
+			// commands doesn't exist in this version of cli and we will not process it
+			continue
+		}
+
+		cmd.AddCommand(command(config))
 	}
 }
 
@@ -87,12 +101,17 @@ func parseResourceExtension(cmData map[string]string) (*Extension, error) {
 		return nil, err
 	}
 
-	resourceInfo, err := parseOptionalField[ResourceInfo](cmData, ExtensionResourceInfoKey)
+	resourceInfo, err := parseOptionalField[*ResourceInfo](cmData, ExtensionResourceInfoKey)
 	if err != nil {
 		return nil, err
 	}
 
-	genericCommands, err := parseOptionalField[TemplateCommands](cmData, ExtensionGenericCommandsKey)
+	genericCommands, err := parseOptionalField[*TemplateCommands](cmData, ExtensionGenericCommandsKey)
+	if err != nil {
+		return nil, err
+	}
+
+	coreCommands, err := parseOptionalField[[]CoreCommandInfo](cmData, ExtensionCoreCommandsKey)
 	if err != nil {
 		return nil, err
 	}
@@ -101,6 +120,7 @@ func parseResourceExtension(cmData map[string]string) (*Extension, error) {
 		RootCommand:      *rootCommand,
 		Resource:         resourceInfo,
 		TemplateCommands: genericCommands,
+		CoreCommands:     coreCommands,
 	}, nil
 }
 
@@ -115,14 +135,14 @@ func parseRequiredField[T any](cmData map[string]string, cmKey string) (*T, erro
 	return &data, err
 }
 
-func parseOptionalField[T any](cmData map[string]string, cmKey string) (*T, error) {
+func parseOptionalField[T any](cmData map[string]string, cmKey string) (T, error) {
+	var data T
 	dataBytes, ok := cmData[cmKey]
 	if !ok {
 		// skip because field is not required
-		return nil, nil
+		return data, nil
 	}
 
-	var data T
 	err := yaml.Unmarshal([]byte(dataBytes), &data)
-	return &data, err
+	return data, err
 }
