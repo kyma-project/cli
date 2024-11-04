@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/kyma-project/cli.v3/internal/kube/fake"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -13,11 +14,15 @@ import (
 
 func TestListFromCluster(t *testing.T) {
 	t.Run("list extensions from cluster", func(t *testing.T) {
-		client := k8s_fake.NewSimpleClientset(
-			fixTestExtensionConfigmap("test-1"),
-			fixTestExtensionConfigmap("test-2"),
-			fixTestExtensionConfigmap("test-3"),
-		)
+		client := &KubeClientConfig{
+			KubeClient: &fake.FakeKubeClient{
+				TestKubernetesInterface: k8s_fake.NewSimpleClientset(
+					fixTestExtensionConfigmap("test-1"),
+					fixTestExtensionConfigmap("test-2"),
+					fixTestExtensionConfigmap("test-3"),
+				),
+			},
+		}
 
 		want := ExtensionList{
 			fixTestExtension("test-1"),
@@ -25,47 +30,55 @@ func TestListFromCluster(t *testing.T) {
 			fixTestExtension("test-3"),
 		}
 
-		got, err := ListExtensions(context.Background(), client)
+		got, err := listExtensions(context.Background(), client)
 		require.NoError(t, err)
 		require.Equal(t, want, got)
 	})
 
 	t.Run("missing rootCommand error", func(t *testing.T) {
-		client := k8s_fake.NewSimpleClientset(
-			&corev1.ConfigMap{
-				ObjectMeta: v1.ObjectMeta{
-					Name: "bad-data",
-					Labels: map[string]string{
-						ExtensionLabelKey: ExtensionResourceLabelValue,
+		client := &KubeClientConfig{
+			KubeClient: &fake.FakeKubeClient{
+				TestKubernetesInterface: k8s_fake.NewSimpleClientset(
+					&corev1.ConfigMap{
+						ObjectMeta: v1.ObjectMeta{
+							Name: "bad-data",
+							Labels: map[string]string{
+								ExtensionLabelKey: ExtensionResourceLabelValue,
+							},
+						},
+						Data: map[string]string{},
 					},
-				},
-				Data: map[string]string{},
+				),
 			},
-		)
+		}
 
-		got, err := ListExtensions(context.Background(), client)
+		got, err := listExtensions(context.Background(), client)
 		require.ErrorContains(t, err, "failed to parse configmap '/bad-data': missing .data.rootCommand field")
 		require.Nil(t, got)
 	})
 
 	t.Run("skip optional fields", func(t *testing.T) {
-		client := k8s_fake.NewSimpleClientset(
-			&corev1.ConfigMap{
-				ObjectMeta: v1.ObjectMeta{
-					Name: "bad-data",
-					Labels: map[string]string{
-						ExtensionLabelKey: ExtensionResourceLabelValue,
-					},
-				},
-				Data: map[string]string{
-					ExtensionRootCommandKey: `
+		client := &KubeClientConfig{
+			KubeClient: &fake.FakeKubeClient{
+				TestKubernetesInterface: k8s_fake.NewSimpleClientset(
+					&corev1.ConfigMap{
+						ObjectMeta: v1.ObjectMeta{
+							Name: "bad-data",
+							Labels: map[string]string{
+								ExtensionLabelKey: ExtensionResourceLabelValue,
+							},
+						},
+						Data: map[string]string{
+							ExtensionRootCommandKey: `
 name: test-command
 description: test-description
 descriptionLong: test-description-long
 `,
-				},
+						},
+					},
+				),
 			},
-		)
+		}
 
 		want := ExtensionList{
 			{
@@ -77,7 +90,7 @@ descriptionLong: test-description-long
 			},
 		}
 
-		got, err := ListExtensions(context.Background(), client)
+		got, err := listExtensions(context.Background(), client)
 		require.NoError(t, err)
 		require.Equal(t, want, got)
 	})

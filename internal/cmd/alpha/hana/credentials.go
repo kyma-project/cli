@@ -71,7 +71,12 @@ func printCredentials(config *hanaCredentialsConfig, credentials credentials) {
 }
 
 func getHanaCredentials(config *hanaCredentialsConfig) (credentials, clierror.Error) {
-	secret, err := config.KubeClient.Static().CoreV1().Secrets(config.namespace).Get(config.Ctx, config.name, metav1.GetOptions{})
+	client, clientErr := config.GetKubeClientWithClierr()
+	if clientErr != nil {
+		return credentials{}, clientErr
+	}
+
+	secret, err := client.Static().CoreV1().Secrets(config.namespace).Get(config.Ctx, config.name, metav1.GetOptions{})
 	if err != nil {
 		return handleGetHanaCredentialsError(err)
 	}

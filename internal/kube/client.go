@@ -1,10 +1,10 @@
 package kube
 
 import (
-	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/kube/btp"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"github.com/kyma-project/cli.v3/internal/kube/rootlessdynamic"
+	"github.com/pkg/errors"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
@@ -35,12 +35,10 @@ type client struct {
 	restClient     *rest.RESTClient
 }
 
-func NewClient(kubeconfig string) (Client, clierror.Error) {
+func NewClient(kubeconfig string) (Client, error) {
 	client, err := newClient(kubeconfig)
 	if err != nil {
-		return nil, clierror.Wrap(err,
-			clierror.New("failed to initialise kubernetes client", "Make sure that kubeconfig is proper."),
-		)
+		return nil, errors.Wrap(err, "failed to initialise kubernetes client")
 	}
 	return client, nil
 }

@@ -32,5 +32,10 @@ func NewManagedCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 }
 
 func runRemoveManaged(config *managedConfig) error {
-	return config.KubeClient.Kyma().DisableModule(config.Ctx, config.module)
+	client, err := config.GetKubeClient()
+	if err != nil {
+		return err
+	}
+
+	return client.Kyma().DisableModule(config.Ctx, config.module)
 }

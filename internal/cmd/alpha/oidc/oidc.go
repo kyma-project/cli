@@ -117,7 +117,12 @@ func runOIDC(cfg *oidcConfig) clierror.Error {
 			return clierror.WrapE(clierr, clierror.New("failed to get kubeconfig from CIS"))
 		}
 	} else {
-		kubeconfig = cfg.KubeClient.APIConfig()
+		client, err := cfg.GetKubeClientWithClierr()
+		if err != nil {
+			return err
+		}
+
+		kubeconfig = client.APIConfig()
 	}
 
 	enrichedKubeconfig := createKubeconfig(kubeconfig, token)

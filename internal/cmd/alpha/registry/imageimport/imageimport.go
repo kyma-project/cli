@@ -53,8 +53,13 @@ func (pc *provisionConfig) complete(args []string) {
 }
 
 func runImageImport(config *provisionConfig) clierror.Error {
+	client, err := config.GetKubeClientWithClierr()
+	if err != nil {
+		return err
+	}
+
 	// TODO: Add "serverless is not installed" error message
-	registryConfig, err := registry.GetInternalConfig(config.Ctx, config.KubeClient)
+	registryConfig, err := registry.GetInternalConfig(config.Ctx, client)
 	if err != nil {
 		return clierror.WrapE(err, clierror.New("failed to load in-cluster registry configuration"))
 	}
@@ -65,7 +70,7 @@ func runImageImport(config *provisionConfig) clierror.Error {
 		config.Ctx,
 		config.image,
 		registry.ImportOptions{
-			ClusterAPIRestConfig: config.KubeClient.RestConfig(),
+			ClusterAPIRestConfig: client.RestConfig(),
 			RegistryAuth:         registry.NewBasicAuth(registryConfig.SecretData.Username, registryConfig.SecretData.Password),
 			RegistryPullHost:     registryConfig.SecretData.PullRegAddr,
 			RegistryPodName:      registryConfig.PodMeta.Name,
