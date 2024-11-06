@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/kyma-project/cli.v3/internal/kube/fake"
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -14,7 +15,7 @@ import (
 
 func TestListFromCluster(t *testing.T) {
 	t.Run("list extensions from cluster", func(t *testing.T) {
-		client := &KubeClientConfig{
+		kubeClientConfig := &KubeClientConfig{
 			KubeClient: &fake.FakeKubeClient{
 				TestKubernetesInterface: k8s_fake.NewSimpleClientset(
 					fixTestExtensionConfigmap("test-1"),
@@ -24,19 +25,26 @@ func TestListFromCluster(t *testing.T) {
 			},
 		}
 
+		cmd := &cobra.Command{}
+
 		want := ExtensionList{
 			fixTestExtension("test-1"),
 			fixTestExtension("test-2"),
 			fixTestExtension("test-3"),
 		}
 
-		got, err := listExtensions(context.Background(), client)
-		require.NoError(t, err)
-		require.Equal(t, want, got)
+		kymaConfig := &KymaConfig{
+			Ctx:              context.Background(),
+			KubeClientConfig: kubeClientConfig,
+		}
+
+		got := newExtensionsConfig(kymaConfig, cmd)
+		require.Equal(t, want, got.extensions)
+		require.True(t, cmd.PersistentFlags().HasFlags())
 	})
 
 	t.Run("missing rootCommand error", func(t *testing.T) {
-		client := &KubeClientConfig{
+		kubeClientConfig := &KubeClientConfig{
 			KubeClient: &fake.FakeKubeClient{
 				TestKubernetesInterface: k8s_fake.NewSimpleClientset(
 					&corev1.ConfigMap{
@@ -52,13 +60,17 @@ func TestListFromCluster(t *testing.T) {
 			},
 		}
 
-		got, err := listExtensions(context.Background(), client)
-		require.ErrorContains(t, err, "failed to parse configmap '/bad-data': missing .data.rootCommand field")
-		require.Nil(t, got)
+		kymaConfig := &KymaConfig{
+			Ctx:              context.Background(),
+			KubeClientConfig: kubeClientConfig,
+		}
+
+		got := newExtensionsConfig(kymaConfig, &cobra.Command{})
+		require.Empty(t, got.extensions)
 	})
 
 	t.Run("skip optional fields", func(t *testing.T) {
-		client := &KubeClientConfig{
+		kubeClientConfig := &KubeClientConfig{
 			KubeClient: &fake.FakeKubeClient{
 				TestKubernetesInterface: k8s_fake.NewSimpleClientset(
 					&corev1.ConfigMap{
@@ -90,9 +102,13 @@ descriptionLong: test-description-long
 			},
 		}
 
-		got, err := listExtensions(context.Background(), client)
-		require.NoError(t, err)
-		require.Equal(t, want, got)
+		kymaConfig := &KymaConfig{
+			Ctx:              context.Background(),
+			KubeClientConfig: kubeClientConfig,
+		}
+
+		got := newExtensionsConfig(kymaConfig, &cobra.Command{})
+		require.Equal(t, want, got.extensions)
 	})
 }
 

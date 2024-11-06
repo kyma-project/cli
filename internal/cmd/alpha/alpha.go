@@ -24,6 +24,7 @@ func NewAlphaCMD() (*cobra.Command, clierror.Error) {
 		Long:                  `A set of alpha prototypes that may still change. Use in automations on your own risk.`,
 		DisableFlagsInUseLine: true,
 	}
+
 	kymaConfig, err := cmdcommon.NewKymaConfig(cmd)
 	if err != nil {
 		return nil, err
@@ -38,7 +39,7 @@ func NewAlphaCMD() (*cobra.Command, clierror.Error) {
 	cmd.AddCommand(add.NewAddCMD(kymaConfig))
 	cmd.AddCommand(remove.NewRemoveCMD(kymaConfig))
 
-	cmds := cmdcommon.BuildExtensions(kymaConfig, &cmdcommon.TemplateCommandsList{
+	cmds := kymaConfig.BuildExtensions(&cmdcommon.TemplateCommandsList{
 		// list of template commands deffinitions
 		Explain: templates.BuildExplainCommand,
 	}, cmdcommon.CoreCommandsMap{

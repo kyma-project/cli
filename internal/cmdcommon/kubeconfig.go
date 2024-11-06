@@ -2,6 +2,7 @@ package cmdcommon
 
 import (
 	"os"
+	"strings"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/kube"
@@ -51,8 +52,15 @@ func (kcc *KubeClientConfig) complete() {
 func getKubeconfigPath() string {
 	path := ""
 	for i, arg := range os.Args {
+		// example: --kubeconfig /path/to/file
 		if arg == "--kubeconfig" && len(os.Args) > i+1 {
 			path = os.Args[i+1]
+		}
+
+		// example: --kubeconfig=/path/to/file
+		argFields := strings.Split(arg, "=")
+		if strings.HasPrefix(arg, "--kubeconfig=") && len(argFields) == 2 {
+			path = argFields[1]
 		}
 	}
 
