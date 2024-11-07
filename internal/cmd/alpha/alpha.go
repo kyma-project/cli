@@ -4,7 +4,6 @@ import (
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/access"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/add"
-	"github.com/kyma-project/cli.v3/internal/cmd/alpha/hana"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/modules"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/oidc"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/provision"
@@ -30,7 +29,6 @@ func NewAlphaCMD() (*cobra.Command, clierror.Error) {
 		return nil, err
 	}
 
-	cmd.AddCommand(hana.NewHanaCMD(kymaConfig))
 	cmd.AddCommand(provision.NewProvisionCMD())
 	cmd.AddCommand(referenceinstance.NewReferenceInstanceCMD(kymaConfig))
 	cmd.AddCommand(access.NewAccessCMD(kymaConfig))
