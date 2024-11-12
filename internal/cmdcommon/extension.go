@@ -25,6 +25,8 @@ func newExtensionsConfig(config *KymaConfig, cmd *cobra.Command) *KymaExtensions
 	if err != nil && shouldShowExtensionsError() {
 		// print error as warning if expected and continue
 		fmt.Printf("Extensions Warning:\n%s\n\n", err.Error())
+	} else if err != nil {
+		fmt.Print("Extensions Warning:\nfailed to fetch all extensions from the cluster. Use the '--show-extensions-error' flag to see more details.\n\n")
 	}
 
 	extensionsConfig := &KymaExtensionsConfig{
