@@ -80,8 +80,8 @@ func CreateDeployment(ctx context.Context, client kube.Client, name, namespace, 
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 			Labels: map[string]string{
-				"app.kubernetes.io/name":        name,
-				"app.kubernetes.io/created-by:": "kyma-cli",
+				"app.kubernetes.io/name":       name,
+				"app.kubernetes.io/created-by": "kyma-cli",
 			},
 		},
 		Spec: appsv1.DeploymentSpec{
