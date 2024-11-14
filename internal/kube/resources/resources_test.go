@@ -6,6 +6,7 @@ import (
 
 	kube_fake "github.com/kyma-project/cli.v3/internal/kube/fake"
 	"github.com/stretchr/testify/require"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -78,6 +79,62 @@ func Test_CreateClusterRoleBinding(t *testing.T) {
 				TestKubernetesInterface: staticClient,
 			}
 			err := CreateClusterRoleBinding(ctx, kubeClient, username, namespace, clusterRole)
+			if wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func Test_CreateDeployment(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name           string
+		deploymentName string
+		namespace      string
+		image          string
+		wantErr        bool
+	}{
+		{
+			name:           "create deployment",
+			deploymentName: "deployment",
+			namespace:      "default",
+			image:          "nginx",
+			wantErr:        false,
+		},
+		{
+			name:           "do not allow creating existing deployment",
+			deploymentName: "existing",
+			namespace:      "default",
+			image:          "nginx",
+			wantErr:        true,
+		},
+	}
+
+	ctx := context.Background()
+	for _, tt := range tests {
+		deploymentName := tt.deploymentName
+		namespace := tt.namespace
+		image := tt.image
+		wantErr := tt.wantErr
+
+		t.Run(tt.name, func(t *testing.T) {
+			existingDeployment := appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "existing",
+					Namespace: "default",
+				},
+			}
+			staticClient := k8s_fake.NewSimpleClientset(
+				&existingDeployment,
+			)
+			kubeClient := &kube_fake.FakeKubeClient{
+				TestKubernetesInterface: staticClient,
+			}
+
+			err := CreateDeployment(ctx, kubeClient, deploymentName, namespace, image)
 			if wantErr {
 				require.Error(t, err)
 			} else {

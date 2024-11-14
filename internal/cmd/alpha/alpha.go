@@ -4,6 +4,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/access"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/add"
+	"github.com/kyma-project/cli.v3/internal/cmd/alpha/app"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/hana"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/modules"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/oidc"
@@ -30,13 +31,14 @@ func NewAlphaCMD() (*cobra.Command, clierror.Error) {
 		return nil, err
 	}
 
+	cmd.AddCommand(access.NewAccessCMD(kymaConfig))
+	cmd.AddCommand(add.NewAddCMD(kymaConfig))
+	cmd.AddCommand(app.NewAppCMD(kymaConfig))
 	cmd.AddCommand(hana.NewHanaCMD(kymaConfig))
+	cmd.AddCommand(modules.NewModulesCMD(kymaConfig))
+	cmd.AddCommand(oidc.NewOIDCCMD(kymaConfig))
 	cmd.AddCommand(provision.NewProvisionCMD())
 	cmd.AddCommand(referenceinstance.NewReferenceInstanceCMD(kymaConfig))
-	cmd.AddCommand(access.NewAccessCMD(kymaConfig))
-	cmd.AddCommand(oidc.NewOIDCCMD(kymaConfig))
-	cmd.AddCommand(modules.NewModulesCMD(kymaConfig))
-	cmd.AddCommand(add.NewAddCMD(kymaConfig))
 	cmd.AddCommand(remove.NewRemoveCMD(kymaConfig))
 
 	cmds := kymaConfig.BuildExtensions(&cmdcommon.TemplateCommandsList{
