@@ -8,8 +8,8 @@ import (
 func NewAppCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "app",
-		Short:                 "Manage applications on the Kyma platform.",
-		Long:                  `Use this command to manage applications on the Kyma platform.`,
+		Short:                 "Manage applications on Kubernetes cluster.",
+		Long:                  `Use this command to manage applications on the Kubernetes cluster.`,
 		DisableFlagsInUseLine: true,
 	}
 
