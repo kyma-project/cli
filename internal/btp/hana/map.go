@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/kyma-project/cli.v3/internal/clierror"
 	"net/http"
+
+	"github.com/kyma-project/cli.v3/internal/clierror"
 )
 
 func MapInstance(baseURL, clusterID, hanaID, token string) clierror.Error {

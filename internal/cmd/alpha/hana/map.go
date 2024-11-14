@@ -2,6 +2,8 @@ package hana
 
 import (
 	"context"
+	"fmt"
+
 	"github.com/kyma-project/cli.v3/internal/btp/auth"
 	"github.com/kyma-project/cli.v3/internal/btp/hana"
 	"github.com/kyma-project/cli.v3/internal/clierror"
@@ -73,6 +75,8 @@ func runHanaMap(config *hanaMapConfig) clierror.Error {
 	if err != nil {
 		return clierror.WrapE(err, clierror.New("while mapping Hana instance"))
 	}
+
+	fmt.Printf("Hana with id '%s' is mapped to the cluster with id '%s'\n", hanaID, clusterID)
 	return nil
 }
 
