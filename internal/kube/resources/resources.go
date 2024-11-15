@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/kyma-project/cli.v3/internal/kube"
+	"github.com/kyma-project/cli.v3/internal/types"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -75,7 +76,7 @@ func CreateClusterRoleBinding(ctx context.Context, client kube.Client, name, nam
 	return nil
 }
 
-func CreateDeployment(ctx context.Context, client kube.Client, name, namespace, image string) error {
+func CreateDeployment(ctx context.Context, client kube.Client, name, namespace, image string, injectIstio types.NullableBool) error {
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
@@ -94,8 +95,7 @@ func CreateDeployment(ctx context.Context, client kube.Client, name, namespace, 
 				ObjectMeta: metav1.ObjectMeta{
 					Name: name,
 					Labels: map[string]string{
-						"app":                     name,
-						"sidecar.istio.io/inject": "false",
+						"app": name,
 					},
 				},
 				Spec: v1.PodSpec{
@@ -118,6 +118,9 @@ func CreateDeployment(ctx context.Context, client kube.Client, name, namespace, 
 				},
 			},
 		},
+	}
+	if injectIstio.Value != nil {
+		deployment.Spec.Template.ObjectMeta.Labels["sidecar.istio.io/inject"] = injectIstio.String()
 	}
 
 	_, err := client.Static().AppsV1().Deployments(namespace).Create(ctx, deployment, metav1.CreateOptions{})
