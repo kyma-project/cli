@@ -3,8 +3,8 @@ package app
 import (
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/cmdcommon/types"
 	"github.com/kyma-project/cli.v3/internal/kube/resources"
-	"github.com/kyma-project/cli.v3/internal/types"
 	"github.com/spf13/cobra"
 )
 

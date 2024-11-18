@@ -3,7 +3,7 @@ package types_test
 import (
 	"testing"
 
-	"github.com/kyma-project/cli.v3/internal/types"
+	"github.com/kyma-project/cli.v3/internal/cmdcommon/types"
 	"github.com/stretchr/testify/require"
 )
 

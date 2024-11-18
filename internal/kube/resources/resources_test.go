@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/kyma-project/cli.v3/internal/cmdcommon/types"
 	kube_fake "github.com/kyma-project/cli.v3/internal/kube/fake"
-	"github.com/kyma-project/cli.v3/internal/types"
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
