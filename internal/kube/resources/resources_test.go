@@ -146,7 +146,7 @@ func Test_CreateDeployment(t *testing.T) {
 				TestKubernetesInterface: staticClient,
 			}
 
-			err := CreateDeployment(ctx, kubeClient, deploymentName, namespace, image, types.NullableBool{Value: istioInject})
+			err := CreateDeployment(ctx, kubeClient, deploymentName, namespace, image, "", types.NullableBool{Value: istioInject})
 			if wantErr {
 				require.Error(t, err)
 			} else {
