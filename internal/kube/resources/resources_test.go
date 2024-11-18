@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/kyma-project/cli.v3/internal/cmdcommon/types"
 	kube_fake "github.com/kyma-project/cli.v3/internal/kube/fake"
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
@@ -90,11 +91,13 @@ func Test_CreateClusterRoleBinding(t *testing.T) {
 
 func Test_CreateDeployment(t *testing.T) {
 	t.Parallel()
+	trueValue := true
 	tests := []struct {
 		name           string
 		deploymentName string
 		namespace      string
 		image          string
+		istioInject    *bool
 		wantErr        bool
 	}{
 		{
@@ -102,6 +105,14 @@ func Test_CreateDeployment(t *testing.T) {
 			deploymentName: "deployment",
 			namespace:      "default",
 			image:          "nginx",
+			wantErr:        false,
+		},
+		{
+			name:           "create deployment with istio label",
+			deploymentName: "deployment",
+			namespace:      "default",
+			image:          "nginx",
+			istioInject:    &trueValue,
 			wantErr:        false,
 		},
 		{
@@ -118,6 +129,7 @@ func Test_CreateDeployment(t *testing.T) {
 		deploymentName := tt.deploymentName
 		namespace := tt.namespace
 		image := tt.image
+		istioInject := tt.istioInject
 		wantErr := tt.wantErr
 
 		t.Run(tt.name, func(t *testing.T) {
@@ -134,7 +146,7 @@ func Test_CreateDeployment(t *testing.T) {
 				TestKubernetesInterface: staticClient,
 			}
 
-			err := CreateDeployment(ctx, kubeClient, deploymentName, namespace, image)
+			err := CreateDeployment(ctx, kubeClient, deploymentName, namespace, image, types.NullableBool{Value: istioInject})
 			if wantErr {
 				require.Error(t, err)
 			} else {
