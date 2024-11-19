@@ -8,8 +8,8 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
-	"github.com/kyma-project/cli.v3/internal/dockerfile"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon/types"
+	"github.com/kyma-project/cli.v3/internal/dockerfile"
 	"github.com/kyma-project/cli.v3/internal/kube/resources"
 	"github.com/kyma-project/cli.v3/internal/registry"
 	"github.com/spf13/cobra"
@@ -23,7 +23,7 @@ type appPushConfig struct {
 	image                string
 	dockerfilePath       string
 	dockerfileSrcContext string
-	istioInject types.NullableBool
+	istioInject          types.NullableBool
 	// containerPort int
 }
 

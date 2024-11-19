@@ -76,7 +76,7 @@ func CreateClusterRoleBinding(ctx context.Context, client kube.Client, name, nam
 	return nil
 }
 
-func CreateDeployment(ctx context.Context, client kube.Client, name, namespace, image, imagePullSecret string, injectIstio types.NullableBool ) error {
+func CreateDeployment(ctx context.Context, client kube.Client, name, namespace, image, imagePullSecret string, injectIstio types.NullableBool) error {
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
