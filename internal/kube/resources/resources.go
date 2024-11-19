@@ -76,7 +76,7 @@ func CreateClusterRoleBinding(ctx context.Context, client kube.Client, name, nam
 	return nil
 }
 
-func CreateDeployment(ctx context.Context, client kube.Client, name, namespace, image string, injectIstio types.NullableBool) error {
+func CreateDeployment(ctx context.Context, client kube.Client, name, namespace, image, imagePullSecret string, injectIstio types.NullableBool) error {
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
@@ -121,6 +121,14 @@ func CreateDeployment(ctx context.Context, client kube.Client, name, namespace, 
 	}
 	if injectIstio.Value != nil {
 		deployment.Spec.Template.ObjectMeta.Labels["sidecar.istio.io/inject"] = injectIstio.String()
+	}
+
+	if imagePullSecret != "" {
+		deployment.Spec.Template.Spec.ImagePullSecrets = []v1.LocalObjectReference{
+			{
+				Name: imagePullSecret,
+			},
+		}
 	}
 
 	_, err := client.Static().AppsV1().Deployments(namespace).Create(ctx, deployment, metav1.CreateOptions{})
