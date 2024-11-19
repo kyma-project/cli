@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-
 	"github.com/kyma-project/cli.v3/internal/cmdcommon/types"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	appsv1 "k8s.io/api/apps/v1"
@@ -101,6 +100,11 @@ func CreateDeployment(ctx context.Context, client kube.Client, name, namespace, 
 				Spec: v1.PodSpec{
 					Containers: []v1.Container{
 						{
+							Ports: []v1.ContainerPort{
+								{
+									ContainerPort: 80,
+								},
+							},
 							Name:  name,
 							Image: image,
 							Resources: v1.ResourceRequirements{
@@ -132,5 +136,30 @@ func CreateDeployment(ctx context.Context, client kube.Client, name, namespace, 
 	}
 
 	_, err := client.Static().AppsV1().Deployments(namespace).Create(ctx, deployment, metav1.CreateOptions{})
+	return err
+}
+
+func CreateService(ctx context.Context, client kube.Client, name, namespace string, port int32) error {
+	service := &v1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+			Labels: map[string]string{
+				"app.kubernetes.io/name":       name,
+				"app.kubernetes.io/created-by": "kyma-cli",
+			},
+		},
+		Spec: v1.ServiceSpec{
+			Selector: map[string]string{
+				"app": name,
+			},
+			Ports: []v1.ServicePort{
+				{
+					Port: port,
+				},
+			},
+		},
+	}
+	_, err := client.Static().CoreV1().Services(namespace).Create(ctx, service, metav1.CreateOptions{})
 	return err
 }

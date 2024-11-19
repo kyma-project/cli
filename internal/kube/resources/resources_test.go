@@ -155,3 +155,59 @@ func Test_CreateDeployment(t *testing.T) {
 		})
 	}
 }
+
+func Test_CreateService(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name        string
+		serviceName string
+		namespace   string
+		port        int32
+		wantErr     bool
+	}{
+		{
+			name:        "create service",
+			serviceName: "service",
+			namespace:   "default",
+			port:        80,
+			wantErr:     false,
+		},
+		{
+			name:        "do not allow creating existing service",
+			serviceName: "existing",
+			namespace:   "default",
+			port:        80,
+			wantErr:     true,
+		},
+	}
+	ctx := context.Background()
+	for _, tt := range tests {
+		serviceName := tt.serviceName
+		namespace := tt.namespace
+		port := tt.port
+		wantErr := tt.wantErr
+
+		t.Run(tt.name, func(t *testing.T) {
+			existingService := corev1.Service{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "existing",
+					Namespace: "default",
+				},
+			}
+			staticClient := k8s_fake.NewSimpleClientset(
+				&existingService,
+			)
+			kubeClient := &kube_fake.FakeKubeClient{
+				TestKubernetesInterface: staticClient,
+			}
+
+			err := CreateService(ctx, kubeClient, serviceName, namespace, port)
+			if wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+
+}
