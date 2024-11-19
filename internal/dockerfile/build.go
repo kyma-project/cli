@@ -3,6 +3,7 @@ package dockerfile
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/docker/cli/cli/command/image/build"
@@ -23,12 +24,30 @@ type BuildOptions struct {
 	DockerfilePath string
 }
 
+type DockerClient interface {
+	ImageBuild(ctx context.Context, buildContext io.Reader, options types.ImageBuildOptions) (types.ImageBuildResponse, error)
+}
+
 func Build(ctx context.Context, opts *BuildOptions) error {
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return err
 	}
 
+	builder := imageBuilder{
+		dockerClient: cli,
+		out:          os.Stdout,
+	}
+
+	return builder.do(ctx, opts)
+}
+
+type imageBuilder struct {
+	dockerClient DockerClient
+	out          io.Writer
+}
+
+func (b *imageBuilder) do(ctx context.Context, opts *BuildOptions) error {
 	excludes, err := build.ReadDockerignore(opts.BuildContext)
 	if err != nil {
 		return err
@@ -58,10 +77,10 @@ func Build(ctx context.Context, opts *BuildOptions) error {
 		return err
 	}
 
-	progressOutput := streamformatter.NewProgressOutput(os.Stdout)
+	progressOutput := streamformatter.NewProgressOutput(b.out)
 	bodyProgressReader := progress.NewProgressReader(buildCtx, progressOutput, 0, "", "Sending build context to Docker daemon")
 
-	response, err := cli.ImageBuild(
+	response, err := b.dockerClient.ImageBuild(
 		ctx,
 		bodyProgressReader,
 		types.ImageBuildOptions{
@@ -76,9 +95,9 @@ func Build(ctx context.Context, opts *BuildOptions) error {
 	}
 	defer response.Body.Close()
 
-	fd, isTerm := term.GetFdInfo(os.Stdout)
+	fd, isTerm := term.GetFdInfo(b.out)
 
-	err = jsonmessage.DisplayJSONMessagesStream(response.Body, os.Stdout, fd, isTerm, nil)
+	err = jsonmessage.DisplayJSONMessagesStream(response.Body, b.out, fd, isTerm, nil)
 	if err != nil {
 		if jerr, ok := err.(*jsonmessage.JSONError); ok {
 			// If no error code is set, default to 1
