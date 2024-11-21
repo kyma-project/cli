@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 func CreateServiceAccount(ctx context.Context, client kube.Client, name, namespace string) error {
@@ -156,6 +157,10 @@ func CreateService(ctx context.Context, client kube.Client, name, namespace stri
 			Ports: []v1.ServicePort{
 				{
 					Port: port,
+					TargetPort: intstr.IntOrString{
+						Type:   0,
+						IntVal: port,
+					},
 				},
 			},
 		},
