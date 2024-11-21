@@ -156,11 +156,8 @@ func CreateService(ctx context.Context, client kube.Client, name, namespace stri
 			},
 			Ports: []v1.ServicePort{
 				{
-					Port: port,
-					TargetPort: intstr.IntOrString{
-						Type:   0,
-						IntVal: port,
-					},
+					Port:       port,
+					TargetPort: intstr.FromInt32(port),
 				},
 			},
 		},
