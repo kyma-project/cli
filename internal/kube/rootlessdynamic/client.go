@@ -76,8 +76,7 @@ func (c *client) Apply(ctx context.Context, resource *unstructured.Unstructured)
 	}
 
 	if apiResource.Namespaced {
-		// we should not expect here for all resources to be installed in the kyma-system namespace. passed resources should be defaulted and validated out of the Apply func
-		err = c.applyFunc(ctx, c.dynamic.Resource(*gvr).Namespace("kyma-system"), resource)
+		err = c.applyFunc(ctx, c.dynamic.Resource(*gvr).Namespace(resource.GetNamespace()), resource)
 		if err != nil {
 			return fmt.Errorf("failed to apply namespaced resource: %w", err)
 		}

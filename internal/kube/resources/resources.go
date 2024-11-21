@@ -2,8 +2,12 @@ package resources
 
 import (
 	"context"
+	"fmt"
+	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon/types"
 	"github.com/kyma-project/cli.v3/internal/kube"
+	"github.com/kyma-project/cli.v3/internal/kube/istio"
+	"github.com/kyma-project/cli.v3/internal/kube/rootlessdynamic"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -11,6 +15,9 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/ptr"
 )
 
 func CreateServiceAccount(ctx context.Context, client kube.Client, name, namespace string) error {
@@ -156,12 +163,52 @@ func CreateService(ctx context.Context, client kube.Client, name, namespace stri
 			},
 			Ports: []v1.ServicePort{
 				{
-					Port:       port,
-					TargetPort: intstr.FromInt32(port),
+					Port: port,
 				},
 			},
 		},
 	}
 	_, err := client.Static().CoreV1().Services(namespace).Create(ctx, service, metav1.CreateOptions{})
 	return err
+}
+
+func CreateAPIRule(ctx context.Context, client rootlessdynamic.Interface, name, namespace, domain string, port uint32) error {
+	apirule := v2alpha1.APIRule{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "gateway.kyma-project.io/v2alpha1",
+			Kind:       "APIRule",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+			Labels: map[string]string{
+				"app.kubernetes.io/name":       name,
+				"app.kubernetes.io/created-by": "kyma-cli",
+			},
+		},
+		Spec: v2alpha1.APIRuleSpec{
+			Hosts: []*v2alpha1.Host{
+				ptr.To(v2alpha1.Host(fmt.Sprintf("%s.%s", name, domain))),
+			},
+			Gateway: ptr.To(fmt.Sprintf("%s/%s", istio.GatewayNamespace, istio.GatewayName)),
+			Rules: []v2alpha1.Rule{
+				{
+					Path:    "/*",
+					Methods: []v2alpha1.HttpMethod{"GET", "POST", "PUT", "DELETE", "PATCH"},
+					NoAuth:  ptr.To(true),
+				},
+			},
+			Service: &v2alpha1.Service{
+				Name:      ptr.To(name),
+				Namespace: ptr.To(namespace),
+				Port:      &port,
+			},
+		},
+	}
+
+	uAPIRule, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&apirule)
+	if err != nil {
+		return err
+	}
+	return client.Apply(ctx, &unstructured.Unstructured{Object: uAPIRule})
 }
