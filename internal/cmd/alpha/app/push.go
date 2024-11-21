@@ -24,7 +24,7 @@ type appPushConfig struct {
 	dockerfilePath       string
 	dockerfileSrcContext string
 	istioInject          types.NullableBool
-	// containerPort int
+	containerPort        types.NullableInt64
 }
 
 func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
@@ -51,7 +51,7 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().Var(&config.istioInject, "istio-inject", "Enable Istio for the app")
 	cmd.Flags().StringVar(&config.dockerfilePath, "dockerfile", "", "Path to the dockerfile")
 	cmd.Flags().StringVar(&config.dockerfileSrcContext, "dockerfile-context", "", "Context path for building dockerfile")
-	// cmd.Flags().IntVar(&config.containerPort, "containerPort", 80, "")
+	cmd.Flags().Var(&config.containerPort, "container-port", "Port on which the application will be exposed")
 
 	_ = cmd.MarkFlagRequired("name")
 	cmd.MarkFlagsMutuallyExclusive("image", "dockerfile")
@@ -115,6 +115,14 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 	err := resources.CreateDeployment(cfg.Ctx, client, cfg.name, cfg.namespace, image, imagePullSecret, cfg.istioInject)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to create deployment"))
+	}
+
+	if cfg.containerPort.Value != nil {
+		fmt.Printf("\nCreating service %s/%s\n", cfg.namespace, cfg.name)
+		err = resources.CreateService(cfg.Ctx, client, cfg.name, cfg.namespace, int32(*cfg.containerPort.Value))
+		if err != nil {
+			return clierror.Wrap(err, clierror.New("failed to create service"))
+		}
 	}
 
 	return nil
