@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"fmt"
+
 	"github.com/kyma-project/api-gateway/apis/gateway/v2alpha1"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon/types"
 	"github.com/kyma-project/cli.v3/internal/kube"
@@ -14,9 +15,9 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/ptr"
 )
 
@@ -163,7 +164,8 @@ func CreateService(ctx context.Context, client kube.Client, name, namespace stri
 			},
 			Ports: []v1.ServicePort{
 				{
-					Port: port,
+					Port:       port,
+					TargetPort: intstr.FromInt32(port),
 				},
 			},
 		},
