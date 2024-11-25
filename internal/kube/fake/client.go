@@ -2,6 +2,7 @@ package fake
 
 import (
 	"github.com/kyma-project/cli.v3/internal/kube/btp"
+	"github.com/kyma-project/cli.v3/internal/kube/istio"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"github.com/kyma-project/cli.v3/internal/kube/rootlessdynamic"
 	"k8s.io/client-go/dynamic"
@@ -15,6 +16,7 @@ import (
 type FakeKubeClient struct {
 	TestKubernetesInterface      kubernetes.Interface
 	TestDynamicInterface         dynamic.Interface
+	TestIstioInterface           istio.Interface
 	TestKymaInterface            kyma.Interface
 	TestBtpInterface             btp.Interface
 	TestRestClient               *rest.RESTClient
@@ -29,6 +31,10 @@ func (f *FakeKubeClient) Static() kubernetes.Interface {
 
 func (f *FakeKubeClient) Dynamic() dynamic.Interface {
 	return f.TestDynamicInterface
+}
+
+func (f *FakeKubeClient) Istio() istio.Interface {
+	return f.TestIstioInterface
 }
 
 func (f *FakeKubeClient) Btp() btp.Interface {

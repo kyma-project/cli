@@ -2,6 +2,7 @@ package kube
 
 import (
 	"github.com/kyma-project/cli.v3/internal/kube/btp"
+	"github.com/kyma-project/cli.v3/internal/kube/istio"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"github.com/kyma-project/cli.v3/internal/kube/rootlessdynamic"
 	"github.com/pkg/errors"
@@ -18,6 +19,7 @@ type Client interface {
 	Dynamic() dynamic.Interface
 	Kyma() kyma.Interface
 	Btp() btp.Interface
+	Istio() istio.Interface
 	RootlessDynamic() rootlessdynamic.Interface
 	RestClient() *rest.RESTClient
 	RestConfig() *rest.Config
@@ -28,6 +30,7 @@ type client struct {
 	restConfig     *rest.Config
 	apiConfig      *api.Config
 	kymaClient     kyma.Interface
+	istioClient    istio.Interface
 	rootlessClient rootlessdynamic.Interface
 	kubeClient     kubernetes.Interface
 	dynamicClient  dynamic.Interface
@@ -75,6 +78,8 @@ func newClient(kubeconfig string) (Client, error) {
 
 	btpClient := btp.NewClient(dynamicClient)
 
+	istioClient := istio.NewClient(dynamicClient)
+
 	restClientConfig := *restConfig
 	err = setKubernetesDefaults(&restClientConfig)
 	if err != nil {
@@ -91,6 +96,7 @@ func newClient(kubeconfig string) (Client, error) {
 		apiConfig:      apiConfig,
 		kubeClient:     kubeClient,
 		kymaClient:     kymaClient,
+		istioClient:    istioClient,
 		rootlessClient: rootlessClient,
 		dynamicClient:  dynamicClient,
 		btpClient:      btpClient,
@@ -114,6 +120,10 @@ func (c *client) Btp() btp.Interface {
 	return c.btpClient
 }
 
+func (c *client) Istio() istio.Interface {
+	return c.istioClient
+}
+
 func (c *client) RootlessDynamic() rootlessdynamic.Interface {
 	return c.rootlessClient
 }
@@ -121,6 +131,7 @@ func (c *client) RootlessDynamic() rootlessdynamic.Interface {
 func (c *client) RestClient() *rest.RESTClient {
 	return c.restClient // TODO: Update schema - meanwhile can use kubeclient.Static().Corev1().RESTClient()
 }
+
 func (c *client) RestConfig() *rest.Config {
 	return c.restConfig
 }

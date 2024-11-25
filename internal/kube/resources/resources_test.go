@@ -2,6 +2,9 @@ package resources
 
 import (
 	"context"
+	"fmt"
+	"github.com/kyma-project/cli.v3/internal/kube/istio"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"testing"
 
 	"github.com/kyma-project/cli.v3/internal/cmdcommon/types"
@@ -210,4 +213,96 @@ func Test_CreateService(t *testing.T) {
 		})
 	}
 
+}
+
+func Test_CreateAPIRule(t *testing.T) {
+	t.Run("create apiRule", func(t *testing.T) {
+		ctx := context.Background()
+		rootlessdynamic := &rootlessdynamicMock{}
+		apiRuleName := "apiRule"
+		namespace := "default"
+		domain := "example.com"
+		port := uint32(80)
+
+		err := CreateAPIRule(ctx, rootlessdynamic, apiRuleName, namespace, domain, port)
+
+		require.NoError(t, err)
+		require.Equal(t, 1, len(rootlessdynamic.appliedObjects))
+		require.Equal(t, fixAPIRule(apiRuleName, namespace, domain, port), rootlessdynamic.appliedObjects[0])
+	})
+	t.Run("do not allow creating existing apiRule", func(t *testing.T) {
+		ctx := context.Background()
+		rootlessdynamic := &rootlessdynamicMock{
+			returnErr: fmt.Errorf("already exists"),
+		}
+		apiRuleName := "existing"
+		namespace := "default"
+		domain := "example.com"
+		port := uint32(80)
+		err := CreateAPIRule(ctx, rootlessdynamic, apiRuleName, namespace, domain, port)
+		require.Contains(t, err.Error(), "already exists")
+	})
+}
+
+func fixAPIRule(apiRuleName, namespace, domain string, port uint32) unstructured.Unstructured {
+	return unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "gateway.kyma-project.io/v2alpha1",
+			"kind":       "APIRule",
+			"metadata": map[string]interface{}{
+				"name":      apiRuleName,
+				"namespace": namespace,
+				"labels": map[string]interface{}{
+					"app.kubernetes.io/name":       apiRuleName,
+					"app.kubernetes.io/created-by": "kyma-cli",
+				},
+				"creationTimestamp": nil,
+			},
+			"spec": map[string]interface{}{
+				"hosts": []interface{}{
+					fmt.Sprintf("%s.%s", apiRuleName, domain),
+				},
+				"gateway": fmt.Sprintf("%s/%s", istio.GatewayNamespace, istio.GatewayName),
+				"rules": []interface{}{
+					map[string]interface{}{
+						"path":    "/*",
+						"methods": []interface{}{"GET", "POST", "PUT", "DELETE", "PATCH"},
+						"noAuth":  true,
+					},
+				},
+				"service": map[string]interface{}{
+					"name":      apiRuleName,
+					"namespace": namespace,
+					"port":      int64(port),
+				},
+			},
+			"status": map[string]interface{}{"lastProcessedTime": interface{}(nil), "state": ""},
+		},
+	}
+}
+
+type rootlessdynamicMock struct {
+	returnErr      error
+	appliedObjects []unstructured.Unstructured
+}
+
+func (m *rootlessdynamicMock) Apply(_ context.Context, obj *unstructured.Unstructured) error {
+	m.appliedObjects = append(m.appliedObjects, *obj)
+	return m.returnErr
+}
+
+func (m *rootlessdynamicMock) ApplyMany(_ context.Context, objs []unstructured.Unstructured) error {
+	return m.returnErr
+}
+
+func (m *rootlessdynamicMock) Get(_ context.Context, obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+	return obj, m.returnErr
+}
+
+func (m *rootlessdynamicMock) Remove(_ context.Context, obj *unstructured.Unstructured) error {
+	return m.returnErr
+}
+
+func (m *rootlessdynamicMock) RemoveMany(_ context.Context, objs []unstructured.Unstructured) error {
+	return m.returnErr
 }

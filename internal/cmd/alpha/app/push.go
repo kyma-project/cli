@@ -23,8 +23,9 @@ type appPushConfig struct {
 	image                string
 	dockerfilePath       string
 	dockerfileSrcContext string
-	istioInject          types.NullableBool
 	containerPort        types.NullableInt64
+	istioInject          types.NullableBool
+	expose               bool
 }
 
 func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
@@ -39,6 +40,7 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 		PreRun: func(_ *cobra.Command, args []string) {
 			clierror.Check(config.complete())
+			clierror.Check(config.validate())
 		},
 		Run: func(_ *cobra.Command, _ []string) {
 			clierror.Check(runAppPush(&config))
@@ -48,10 +50,11 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().StringVar(&config.name, "name", "", "Name of the app")
 	cmd.Flags().StringVar(&config.namespace, "namespace", "default", "Namespace where app should be deployed")
 	cmd.Flags().StringVar(&config.image, "image", "", "Name of the image to deploy")
-	cmd.Flags().Var(&config.istioInject, "istio-inject", "Enable Istio for the app")
 	cmd.Flags().StringVar(&config.dockerfilePath, "dockerfile", "", "Path to the dockerfile")
 	cmd.Flags().StringVar(&config.dockerfileSrcContext, "dockerfile-context", "", "Context path for building dockerfile")
 	cmd.Flags().Var(&config.containerPort, "container-port", "Port on which the application will be exposed")
+	cmd.Flags().Var(&config.istioInject, "istio-inject", "Enable Istio for the app")
+	cmd.Flags().BoolVar(&config.expose, "expose", false, "Creates an ApiRule for the app")
 
 	_ = cmd.MarkFlagRequired("name")
 	cmd.MarkFlagsMutuallyExclusive("image", "dockerfile")
@@ -85,6 +88,13 @@ func (apc *appPushConfig) complete() clierror.Error {
 		}
 	}
 
+	return nil
+}
+
+func (apc *appPushConfig) validate() clierror.Error {
+	if apc.expose && apc.containerPort.Value == nil {
+		return clierror.New("container-port is required when expose is enabled")
+	}
 	return nil
 }
 
@@ -122,6 +132,20 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 		err = resources.CreateService(cfg.Ctx, client, cfg.name, cfg.namespace, int32(*cfg.containerPort.Value))
 		if err != nil {
 			return clierror.Wrap(err, clierror.New("failed to create service"))
+		}
+	}
+
+	if cfg.expose {
+		fmt.Printf("\nCreating API Rule %s/%s\n", cfg.namespace, cfg.name)
+		var domain string
+		domain, clierr = client.Istio().GetClusterAddressFromGateway(cfg.Ctx)
+		if clierr != nil {
+			return clierror.WrapE(clierr, clierror.New("failed to get cluster address from gateway", "Make sure Istio module is installed"))
+		}
+
+		err = resources.CreateAPIRule(cfg.Ctx, client.RootlessDynamic(), cfg.name, cfg.namespace, domain, uint32(*cfg.containerPort.Value))
+		if err != nil {
+			return clierror.Wrap(err, clierror.New("failed to create API Rule", "Make sure API Gateway module is installed", "Make sure APIRule is available in v2alpha1 version"))
 		}
 	}
 
