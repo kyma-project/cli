@@ -16,7 +16,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.8.1
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	golang.org/x/mod v0.22.0
 	gopkg.in/yaml.v3 v3.0.1
 	istio.io/client-go v1.23.2
