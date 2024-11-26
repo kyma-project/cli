@@ -16,7 +16,7 @@ func TestRender(t *testing.T) {
 	t.Run("render table from modules", func(t *testing.T) {
 		buffer := bytes.NewBuffer([]byte{})
 
-		render(buffer, fixModuleList(), ModulesTableInfo, false)
+		render(buffer, fixModuleList(), ModulesTableInfo)
 
 		tableViewBytes, err := io.ReadAll(buffer)
 		require.NoError(t, err)

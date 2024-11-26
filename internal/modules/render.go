@@ -27,16 +27,15 @@ var (
 	}
 )
 
-func Render(modulesList ModulesList, tableInfo TableInfo, raw bool) {
-	render(os.Stdout, modulesList, tableInfo, raw)
+func Render(modulesList ModulesList, tableInfo TableInfo) {
+	render(os.Stdout, modulesList, tableInfo)
 }
 
-func render(writer io.Writer, modulesList ModulesList, tableInfo TableInfo, raw bool) {
+func render(writer io.Writer, modulesList ModulesList, tableInfo TableInfo) {
 	renderTable(
 		writer,
 		convertModuleListToTable(modulesList, tableInfo.RowConverter),
 		tableInfo.Header,
-		raw,
 	)
 }
 
@@ -53,19 +52,13 @@ func convertModuleListToTable(modulesList ModulesList, rowConverter RowConverter
 }
 
 // renderTable renders the table with the provided headers
-func renderTable(writer io.Writer, modulesData [][]string, headers []string, raw bool) {
-	if raw {
-		for _, row := range modulesData {
-			println(strings.Join(row, "\t"))
-		}
-	} else {
-		var table [][]string
-		table = append(table, modulesData...)
+func renderTable(writer io.Writer, modulesData [][]string, headers []string) {
+	var table [][]string
+	table = append(table, modulesData...)
 
-		twTable := setTable(writer, table)
-		twTable.SetHeader(headers)
-		twTable.Render()
-	}
+	twTable := setTable(writer, table)
+	twTable.SetHeader(headers)
+	twTable.Render()
 }
 
 // setTable sets the table settings for the tablewriter

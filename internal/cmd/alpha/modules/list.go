@@ -9,8 +9,6 @@ import (
 
 type modulesConfig struct {
 	*cmdcommon.KymaConfig
-
-	raw bool
 }
 
 func NewListCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
@@ -27,8 +25,6 @@ func NewListCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().BoolVar(&cfg.raw, "raw", false, "Simple output format without table rendering.")
-
 	return cmd
 }
 
@@ -44,6 +40,6 @@ func listModules(cfg *modulesConfig) clierror.Error {
 		return clierror.Wrap(err, clierror.New("failed to list available modules from the cluster"))
 	}
 
-	modules.Render(modulesList, modules.ModulesTableInfo, cfg.raw)
+	modules.Render(modulesList, modules.ModulesTableInfo)
 	return nil
 }
