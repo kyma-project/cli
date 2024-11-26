@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	defaultKymaName      = "default"
-	defaultKymaNamespace = "kyma-system"
+	DefaultKymaName      = "default"
+	DefaultKymaNamespace = "kyma-system"
 )
 
 type Interface interface {
@@ -35,31 +35,21 @@ func NewClient(dynamic dynamic.Interface) Interface {
 	}
 }
 
+// ListModuleReleaseMeta lists ModuleReleaseMeta resources from across the whole cluster
 func (c *client) ListModuleReleaseMeta(ctx context.Context) (*ModuleReleaseMetaList, error) {
 	return list[ModuleReleaseMetaList](ctx, c.dynamic, GVRModuleReleaseMeta)
 }
 
+// ListModuleTemplate lists ModuleTemplate resources from across the whole cluster
 func (c *client) ListModuleTemplate(ctx context.Context) (*ModuleTemplateList, error) {
 	return list[ModuleTemplateList](ctx, c.dynamic, GVRModuleTemplate)
-}
-
-func list[T any](ctx context.Context, client dynamic.Interface, gvr schema.GroupVersionResource) (*T, error) {
-	list, err := client.Resource(gvr).
-		List(ctx, metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	structuredList := new(T)
-	err = runtime.DefaultUnstructuredConverter.FromUnstructured(list.UnstructuredContent(), structuredList)
-	return structuredList, err
 }
 
 // GetDefaultKyma gets the default Kyma CR from the kyma-system namespace and cast it to the Kyma structure
 func (c *client) GetDefaultKyma(ctx context.Context) (*Kyma, error) {
 	u, err := c.dynamic.Resource(GVRKyma).
-		Namespace(defaultKymaNamespace).
-		Get(ctx, defaultKymaName, metav1.GetOptions{})
+		Namespace(DefaultKymaNamespace).
+		Get(ctx, DefaultKymaName, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +68,7 @@ func (c *client) UpdateDefaultKyma(ctx context.Context, obj *Kyma) error {
 	}
 
 	_, err = c.dynamic.Resource(GVRKyma).
-		Namespace(defaultKymaNamespace).
+		Namespace(DefaultKymaNamespace).
 		Update(ctx, &unstructured.Unstructured{Object: u}, metav1.UpdateOptions{})
 
 	return err
@@ -132,4 +122,16 @@ func disableModule(kymaCR *Kyma, moduleName string) *Kyma {
 	})
 
 	return kymaCR
+}
+
+func list[T any](ctx context.Context, client dynamic.Interface, gvr schema.GroupVersionResource) (*T, error) {
+	list, err := client.Resource(gvr).
+		List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	structuredList := new(T)
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(list.UnstructuredContent(), structuredList)
+	return structuredList, err
 }
