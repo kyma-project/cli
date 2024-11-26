@@ -7,6 +7,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 )
 
@@ -16,6 +17,8 @@ const (
 )
 
 type Interface interface {
+	ListModuleReleaseMeta(context.Context) (*ModuleReleaseMetaList, error)
+	ListModuleTemplate(context.Context) (*ModuleTemplateList, error)
 	GetDefaultKyma(context.Context) (*Kyma, error)
 	UpdateDefaultKyma(context.Context, *Kyma) error
 	EnableModule(context.Context, string, string) error
@@ -30,6 +33,26 @@ func NewClient(dynamic dynamic.Interface) Interface {
 	return &client{
 		dynamic: dynamic,
 	}
+}
+
+func (c *client) ListModuleReleaseMeta(ctx context.Context) (*ModuleReleaseMetaList, error) {
+	return list[ModuleReleaseMetaList](ctx, c.dynamic, GVRModuleReleaseMeta)
+}
+
+func (c *client) ListModuleTemplate(ctx context.Context) (*ModuleTemplateList, error) {
+	return list[ModuleTemplateList](ctx, c.dynamic, GVRModuleTemplate)
+}
+
+func list[T any](ctx context.Context, client dynamic.Interface, gvr schema.GroupVersionResource) (*T, error) {
+	list, err := client.Resource(gvr).
+		List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	structuredList := new(T)
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(list.UnstructuredContent(), structuredList)
+	return structuredList, err
 }
 
 // GetDefaultKyma gets the default Kyma CR from the kyma-system namespace and cast it to the Kyma structure

@@ -387,3 +387,127 @@ func fixDefaultKyma() *unstructured.Unstructured {
 		},
 	}
 }
+
+func Test_client_ListModuleReleaseMeta(t *testing.T) {
+	t.Run("list ModuleReleaseMeta", func(t *testing.T) {
+		scheme := runtime.NewScheme()
+		scheme.AddKnownTypes(GVRModuleReleaseMeta.GroupVersion())
+		client := NewClient(dynamic_fake.NewSimpleDynamicClient(scheme,
+			fixModuleReleaseMeta("test-1"),
+			fixModuleReleaseMeta("test-2"),
+		))
+
+		list, err := client.ListModuleReleaseMeta(context.Background())
+
+		require.NoError(t, err)
+		require.Len(t, list.Items, 2)
+		require.Contains(t, list.Items, fixModuleReleaseMetaStruct("test-1"))
+		require.Contains(t, list.Items, fixModuleReleaseMetaStruct("test-2"))
+
+	})
+}
+
+func Test_client_ListModuleTemplate(t *testing.T) {
+	t.Run("list ModuleReleaseMeta", func(t *testing.T) {
+		scheme := runtime.NewScheme()
+		scheme.AddKnownTypes(GVRModuleTemplate.GroupVersion())
+		client := NewClient(dynamic_fake.NewSimpleDynamicClient(scheme,
+			fixModuleTemplate("test-1"),
+			fixModuleTemplate("test-2"),
+		))
+
+		list, err := client.ListModuleTemplate(context.Background())
+
+		require.NoError(t, err)
+		require.Len(t, list.Items, 2)
+		require.Contains(t, list.Items, fixModuleTemplateStruct("test-1"))
+		require.Contains(t, list.Items, fixModuleTemplateStruct("test-2"))
+
+	})
+}
+
+func fixModuleReleaseMetaStruct(moduleName string) ModuleReleaseMeta {
+	return ModuleReleaseMeta{
+		TypeMeta: v1.TypeMeta{
+			APIVersion: "operator.kyma-project.io/v1beta2",
+			Kind:       "ModuleReleaseMeta",
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name:      moduleName,
+			Namespace: "kyma-system",
+		},
+		Spec: ModuleReleaseMetaSpec{
+			ModuleName: moduleName,
+			Channels: []ChannelVersionAssignment{
+				{
+					Version: "0.1",
+					Channel: "regular",
+				},
+				{
+					Version: "0.2",
+					Channel: "fast",
+				},
+			},
+		},
+	}
+}
+
+func fixModuleTemplateStruct(moduleName string) ModuleTemplate {
+	return ModuleTemplate{
+		TypeMeta: v1.TypeMeta{
+			APIVersion: "operator.kyma-project.io/v1beta2",
+			Kind:       "ModuleTemplate",
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name:      moduleName,
+			Namespace: "kyma-system",
+		},
+		Spec: ModuleTemplateSpec{
+			ModuleName: moduleName,
+			Version:    "0.1",
+		},
+	}
+}
+
+func fixModuleReleaseMeta(moduleName string) *unstructured.Unstructured {
+	return &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "operator.kyma-project.io/v1beta2",
+			"kind":       "ModuleReleaseMeta",
+			"metadata": map[string]interface{}{
+				"name":      moduleName,
+				"namespace": "kyma-system",
+			},
+			"spec": map[string]interface{}{
+				"moduleName": moduleName,
+				"channels": []interface{}{
+					map[string]interface{}{
+						"version": "0.1",
+						"channel": "regular",
+					},
+					map[string]interface{}{
+						"version": "0.2",
+						"channel": "fast",
+					},
+				},
+			},
+		},
+	}
+}
+
+func fixModuleTemplate(moduleName string) *unstructured.Unstructured {
+	return &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "operator.kyma-project.io/v1beta2",
+			"kind":       "ModuleTemplate",
+			"metadata": map[string]interface{}{
+				"name":      moduleName,
+				"namespace": "kyma-system",
+			},
+			"spec": map[string]interface{}{
+				"moduleName": moduleName,
+				"version":    "0.1",
+			},
+		},
+	}
+}
