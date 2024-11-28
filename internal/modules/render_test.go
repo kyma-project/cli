@@ -9,17 +9,28 @@ import (
 )
 
 const (
-	testModulesTableView = "NAME      \tREPOSITORY  \tVERSIONS                  \nkeda      \turl-3       \t0.1 (regular), 0.2 (fast)\t\nserverless\turl-1, url-2\t0.0.1 (fast), 0.0.2      \t\n"
+	testModulesTableView        = "NAME      \tVERSIONS               \tINSTALLED\tMANAGED \nkeda      \t0.1(regular), 0.2(fast)\t         \t       \t\nserverless\t0.0.1(fast), 0.0.2     \t         \t       \t\n"
+	testManagedModulesTableView = "NAME      \tVERSIONS               \tINSTALLED  \tMANAGED \nkeda      \t0.1(regular), 0.2(fast)\t0.2(fast)  \ttrue   \t\nserverless\t0.0.1(fast), 0.0.2     \t0.0.1(fast)\tfalse  \t\n"
 )
 
 func TestRender(t *testing.T) {
 	t.Run("render table from modules", func(t *testing.T) {
 		buffer := bytes.NewBuffer([]byte{})
 
-		render(buffer, fixModuleList(), ModulesTableInfo)
+		render(buffer, testModuleList, ModulesTableInfo)
 
 		tableViewBytes, err := io.ReadAll(buffer)
 		require.NoError(t, err)
 		require.Equal(t, testModulesTableView, string(tableViewBytes))
+	})
+
+	t.Run("render table from managed modules", func(t *testing.T) {
+		buffer := bytes.NewBuffer([]byte{})
+
+		render(buffer, testManagedModuleList, ModulesTableInfo)
+
+		tableViewBytes, err := io.ReadAll(buffer)
+		require.NoError(t, err)
+		require.Equal(t, testManagedModulesTableView, string(tableViewBytes))
 	})
 }

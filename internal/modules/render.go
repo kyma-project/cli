@@ -20,9 +20,14 @@ type TableInfo struct {
 
 var (
 	ModulesTableInfo = TableInfo{
-		Header: []string{"NAME", "REPOSITORY", "VERSIONS"},
+		Header: []string{"NAME", "VERSIONS", "INSTALLED", "MANAGED"},
 		RowConverter: func(m Module) []string {
-			return []string{m.Name, convertRepositories(m.Versions), convertVersions(m.Versions)}
+			return []string{
+				m.Name,
+				convertVersions(m.Versions),
+				convertInstall(m.InstallDetails),
+				string(m.InstallDetails.Managed),
+			}
 		},
 	}
 )
@@ -51,24 +56,21 @@ func convertModuleListToTable(modulesList ModulesList, rowConverter RowConverter
 	return result
 }
 
-// renderTable renders the table with the provided headers
+// renderTable renders the table with the provided headers and data
 func renderTable(writer io.Writer, modulesData [][]string, headers []string) {
-	var table [][]string
-	table = append(table, modulesData...)
-
-	twTable := setTable(writer, table)
+	twTable := setTable(writer)
+	twTable.AppendBulk(modulesData)
 	twTable.SetHeader(headers)
 	twTable.Render()
 }
 
 // setTable sets the table settings for the tablewriter
-func setTable(writer io.Writer, inTable [][]string) *tablewriter.Table {
+func setTable(writer io.Writer) *tablewriter.Table {
 	table := tablewriter.NewWriter(writer)
-	table.AppendBulk(inTable)
 	table.SetRowLine(false)
 	table.SetHeaderLine(false)
 	table.SetColumnSeparator("")
-	table.SetAlignment(tablewriter.ALIGN_CENTER)
+	table.SetAlignment(tablewriter.ALIGN_LEFT)
 	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
 	table.SetColumnAlignment([]int{tablewriter.ALIGN_LEFT, tablewriter.ALIGN_LEFT, tablewriter.ALIGN_LEFT, tablewriter.ALIGN_LEFT})
 	table.SetBorder(false)
@@ -77,31 +79,13 @@ func setTable(writer io.Writer, inTable [][]string) *tablewriter.Table {
 	return table
 }
 
-// convert versions to string containing links to repositories without duplicates separated by '\n'
-func convertRepositories(versions []ModuleVersion) string {
-	values := []string{}
-	for _, version := range versions {
-		if version.Repository == "" {
-			// ignore if repository is empty
-			continue
-		}
-
-		if !contains(values, version.Repository) {
-			values = append(values, version.Repository)
-		}
+// convert version and channel into field in format 'version (channel)' for core modules and 'version' for community ones
+func convertInstall(details ModuleInstallDetails) string {
+	if details.Channel != "" {
+		return fmt.Sprintf("%s(%s)", details.Version, details.Channel)
 	}
 
-	return strings.Join(values, ", ")
-}
-
-func contains(in []string, value string) bool {
-	for _, inValue := range in {
-		if inValue == value {
-			return true
-		}
-	}
-
-	return false
+	return details.Version
 }
 
 // convert versions to string containing values separated with '\n'
@@ -111,7 +95,7 @@ func convertVersions(versions []ModuleVersion) string {
 	for i, version := range versions {
 		value := version.Version
 		if version.Channel != "" {
-			value += fmt.Sprintf(" (%s)", version.Channel)
+			value += fmt.Sprintf("(%s)", version.Channel)
 		}
 
 		values[i] = value
