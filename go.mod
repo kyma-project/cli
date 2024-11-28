@@ -5,7 +5,6 @@ go 1.23.2
 toolchain go1.23.3
 
 require (
-	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/docker/cli v27.3.1+incompatible
 	github.com/docker/docker v27.3.1+incompatible
 	github.com/gboddin/go-www-authenticate-parser v0.0.0-20230926203616-ec0b649bb077
@@ -17,7 +16,6 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.10.0
-	golang.org/x/mod v0.22.0
 	gopkg.in/yaml.v3 v3.0.1
 	istio.io/client-go v1.24.0
 	k8s.io/api v0.31.3
