@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	testModulesTableView        = "NAME      \tREPOSITORY  \tVERSIONS                 \tINSTALLED\tMANAGED \n   keda   \t   url-3    \t0.1 (regular), 0.2 (fast)\t  false  \t false \t\nserverless\turl-1, url-2\t   0.0.1 (fast), 0.0.2   \t  false  \t false \t\n"
-	testManagedModulesTableView = "NAME      \tREPOSITORY  \tVERSIONS                 \tINSTALLED\tMANAGED \n   keda   \t   url-3    \t0.1 (regular), 0.2 (fast)\t  true   \t true  \t\nserverless\turl-1, url-2\t   0.0.1 (fast), 0.0.2   \t  true   \t true  \t\n"
+	testModulesTableView        = "NAME      \tVERSIONS               \tINSTALLED\tMANAGED \nkeda      \t0.1(regular), 0.2(fast)\t         \t       \t\nserverless\t0.0.1(fast), 0.0.2     \t         \t       \t\n"
+	testManagedModulesTableView = "NAME      \tVERSIONS               \tINSTALLED  \tMANAGED \nkeda      \t0.1(regular), 0.2(fast)\t0.2(fast)  \ttrue   \t\nserverless\t0.0.1(fast), 0.0.2     \t0.0.1(fast)\tfalse  \t\n"
 )
 
 func TestRender(t *testing.T) {

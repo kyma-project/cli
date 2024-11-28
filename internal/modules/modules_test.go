@@ -138,11 +138,23 @@ var (
 				"modules": []interface{}{
 					map[string]interface{}{
 						"name":    "serverless",
-						"channel": "regular",
+						"managed": false,
 					},
 					map[string]interface{}{
 						"name":    "keda",
-						"channel": "fast",
+						"managed": true,
+					},
+				},
+			},
+			"status": map[string]interface{}{
+				"modules": []interface{}{
+					map[string]interface{}{
+						"name":    "serverless",
+						"version": "0.0.1",
+					},
+					map[string]interface{}{
+						"name":    "keda",
+						"version": "0.2",
 					},
 				},
 			},
@@ -172,9 +184,9 @@ var (
 		{
 			Name: "serverless",
 			InstallDetails: ModuleInstallDetails{
-				Managed: ManagedTrue,
-				Channel: "regular",
-				Version: "0.0.2",
+				Managed: ManagedFalse,
+				Channel: "fast",
+				Version: "0.0.1",
 			},
 			Versions: []ModuleVersion{
 				{

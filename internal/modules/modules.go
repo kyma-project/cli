@@ -2,6 +2,7 @@ package modules
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -50,12 +51,6 @@ func List(ctx context.Context, client kyma.Interface) (ModulesList, error) {
 		return nil, err
 	}
 
-	// assign spec to another value to operate on nil-free value
-	defaultKymaSpec := kyma.KymaSpec{}
-	if defaultKyma != nil {
-		defaultKymaSpec = defaultKyma.Spec
-	}
-
 	modulesList := ModulesList{}
 	for _, moduleTemplate := range moduleTemplates.Items {
 		moduleName := moduleTemplate.Spec.ModuleName
@@ -76,7 +71,7 @@ func List(ctx context.Context, client kyma.Interface) (ModulesList, error) {
 			// otherwise create anew record in the list
 			modulesList = append(modulesList, Module{
 				Name:           moduleName,
-				InstallDetails: getInstallDetails(defaultKymaSpec, *modulereleasemetas, moduleName),
+				InstallDetails: getInstallDetails(defaultKyma, *modulereleasemetas, moduleName),
 				Versions: []ModuleVersion{
 					version,
 				},
@@ -87,18 +82,16 @@ func List(ctx context.Context, client kyma.Interface) (ModulesList, error) {
 	return modulesList, nil
 }
 
-func getInstallDetails(kymaSpec kyma.KymaSpec, releaseMetas kyma.ModuleReleaseMetaList, moduleName string) ModuleInstallDetails {
-	for _, module := range kymaSpec.Modules {
-		if module.Name == moduleName {
-			moduleChannel := kymaSpec.Channel
-			if module.Channel != "" {
-				moduleChannel = module.Channel
-			}
-
-			return ModuleInstallDetails{
-				Channel: moduleChannel,
-				Version: getAssignedVersion(releaseMetas, module.Name, moduleChannel),
-				Managed: ManagedTrue,
+func getInstallDetails(kyma *kyma.Kyma, releaseMetas kyma.ModuleReleaseMetaList, moduleName string) ModuleInstallDetails {
+	if kyma != nil {
+		for _, module := range kyma.Status.Modules {
+			if module.Name == moduleName {
+				moduleVersion := module.Version
+				return ModuleInstallDetails{
+					Channel: getAssignedChannel(releaseMetas, module.Name, moduleVersion),
+					Managed: getManaged(kyma.Spec.Modules, moduleName),
+					Version: moduleVersion,
+				}
 			}
 		}
 	}
@@ -107,6 +100,17 @@ func getInstallDetails(kymaSpec kyma.KymaSpec, releaseMetas kyma.ModuleReleaseMe
 
 	// return empty struct because module is not installed
 	return ModuleInstallDetails{}
+}
+
+// look for value of managed for specific moduleName
+func getManaged(specModules []kyma.Module, moduleName string) Managed {
+	for _, module := range specModules {
+		if module.Name == moduleName {
+			return Managed(strconv.FormatBool(module.Managed))
+		}
+	}
+
+	return ""
 }
 
 // look for channel assigned to version with specified moduleName
@@ -119,30 +123,10 @@ func getAssignedChannel(releaseMetas kyma.ModuleReleaseMetaList, moduleName, ver
 	return ""
 }
 
-// look for version assigned to channel with specified moduleName
-func getAssignedVersion(releaseMetas kyma.ModuleReleaseMetaList, moduleName, channel string) string {
-	for _, releaseMeta := range releaseMetas.Items {
-		if releaseMeta.Spec.ModuleName == moduleName {
-			return getVersionFromAssignments(releaseMeta.Spec.Channels, channel)
-		}
-	}
-	return ""
-}
-
 func getChannelFromAssignments(assignments []kyma.ChannelVersionAssignment, version string) string {
 	for _, assignment := range assignments {
 		if assignment.Version == version {
 			return assignment.Channel
-		}
-	}
-
-	return ""
-}
-
-func getVersionFromAssignments(assignments []kyma.ChannelVersionAssignment, channel string) string {
-	for _, assignment := range assignments {
-		if assignment.Channel == channel {
-			return assignment.Version
 		}
 	}
 
