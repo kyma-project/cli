@@ -20,7 +20,7 @@ type TableInfo struct {
 
 var (
 	ModulesTableInfo = TableInfo{
-		Header: []string{"NAME", "VERSIONS", "INSTALLED", "MANAGED"},
+		Header: []string{"NAME", "AVAILABLE VERSIONS", "INSTALLED", "MANAGED"},
 		RowConverter: func(m Module) []string {
 			return []string{
 				m.Name,

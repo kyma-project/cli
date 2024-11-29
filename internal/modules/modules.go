@@ -54,6 +54,11 @@ func List(ctx context.Context, client kyma.Interface) (ModulesList, error) {
 	modulesList := ModulesList{}
 	for _, moduleTemplate := range moduleTemplates.Items {
 		moduleName := moduleTemplate.Spec.ModuleName
+		if moduleName == "" {
+			// ignore incompatible/corrupted ModuleTemplates
+			continue
+		}
+
 		version := ModuleVersion{
 			Version:    moduleTemplate.Spec.Version,
 			Repository: moduleTemplate.Spec.Info.Repository,
