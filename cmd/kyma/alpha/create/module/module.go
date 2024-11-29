@@ -197,6 +197,8 @@ Build a Kubebuilder module my-domain/modC in version 3.2.1 and push it to a loca
 	cmd.Flags().BoolVar(&o.KubebuilderProject, "kubebuilder-project", false,
 		"Specifies provided module is a Kubebuilder Project.")
 
+	cmd.Flags().BoolVar(&o.DryRun, "dry-run", false, "Prevents pushing the module to the registry, signing and generating the module template.")
+
 	configureLegacyFlags(cmd, o)
 
 	return cmd
@@ -387,6 +389,11 @@ func (cmd *command) Run(cobraCmd *cobra.Command) error {
 	if err != nil {
 		cmd.CurrentStep.Failure()
 		return err
+	}
+
+	if cmd.opts.DryRun {
+		cmd.CurrentStep.Successf("Image not pushed to %q due to the dry-run flag", cmd.opts.RegistryURL)
+		return nil
 	}
 
 	if shouldPushArchive {
