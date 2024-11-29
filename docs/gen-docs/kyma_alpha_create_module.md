@@ -91,6 +91,7 @@ Build a Kubebuilder module my-domain/modC in version 3.2.1 and push it to a loca
   -c, --credentials string                 Basic authentication credentials for the given registry in the user:password format
       --default-cr string                  File containing the default custom resource of the module. If the module is a kubebuilder project, the default CR is automatically detected.
       --descriptor-version string          Schema version to use for the generated OCM descriptor. One of ocm.software/v3alpha1,v2 (default "v2")
+      --dry-run                            Prevents pushing the module to the registry, signing and generating the module template.
       --git-remote string                  Specifies the remote name of the wanted GitHub repository. For Example "origin" or "upstream" (default "origin")
       --insecure                           Uses an insecure connection to access the registry.
       --key string                         Specifies the path where a private key is used for signing.
