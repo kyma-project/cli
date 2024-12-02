@@ -7,9 +7,10 @@ import (
 
 func NewModulesCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "modules",
-		Short: "Manage kyma modules.",
-		Long:  `Use this command to manage modules on a kyma cluster.`,
+		Use:     "module",
+		Aliases: []string{"modules"},
+		Short:   "Manage kyma modules.",
+		Long:    `Use this command to manage modules on a kyma cluster.`,
 	}
 
 	cmd.AddCommand(NewListCMD(kymaConfig))

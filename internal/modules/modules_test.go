@@ -81,6 +81,18 @@ var (
 		},
 	}
 
+	// corrupted one - without spec
+	testModuleTemplate5 = unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "operator.kyma-project.io/v1beta2",
+			"kind":       "ModuleTemplate",
+			"metadata": map[string]interface{}{
+				"name":      "keda-3",
+				"namespace": "kyma-system",
+			},
+		},
+	}
+
 	testReleaseMeta1 = unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": "operator.kyma-project.io/v1beta2",
@@ -273,5 +285,25 @@ func TestList(t *testing.T) {
 
 		require.NoError(t, err)
 		require.Equal(t, ModulesList(testManagedModuleList), modules)
+	})
+
+	t.Run("ignore corrupted ModuleTemplate", func(t *testing.T) {
+		scheme := runtime.NewScheme()
+		scheme.AddKnownTypes(kyma.GVRModuleTemplate.GroupVersion())
+		scheme.AddKnownTypes(kyma.GVRModuleReleaseMeta.GroupVersion())
+		dynamicClient := dynamic_fake.NewSimpleDynamicClient(scheme,
+			&testModuleTemplate1,
+			&testModuleTemplate2,
+			&testModuleTemplate3,
+			&testModuleTemplate4,
+			&testModuleTemplate5, // corrupted ModuleTemplate
+			&testReleaseMeta1,
+			&testReleaseMeta2,
+		)
+
+		modules, err := List(context.Background(), kyma.NewClient(dynamicClient))
+
+		require.NoError(t, err)
+		require.Equal(t, ModulesList(testModuleList), modules)
 	})
 }
