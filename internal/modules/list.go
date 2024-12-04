@@ -2,23 +2,31 @@ package modules
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
+	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 type Module struct {
 	Name           string
 	Versions       []ModuleVersion
 	InstallDetails ModuleInstallDetails
+	Healthy        Healthy // #TODO Failsafe - remove when all modules are updated
 }
 
 type Managed string
+type Healthy string
 
 const (
-	ManagedTrue  Managed = "true"
-	ManagedFalse Managed = "false"
+	ManagedTrue    Managed = "true"
+	ManagedFalse   Managed = "false"
+	HealthyTrue    Healthy = "true"
+	HealthyFalse   Healthy = "false"
+	HealthyUnknown Healthy = "unknown" // #TODO Change to empty message
 )
 
 type ModuleInstallDetails struct {
@@ -37,18 +45,18 @@ type ModulesList []Module
 
 // List returns list of available module on a cluster
 // collects info about modules based on ModuleTemplates, ModuleReleaseMetas and the KymaCR
-func List(ctx context.Context, client kyma.Interface) (ModulesList, error) {
-	moduleTemplates, err := client.ListModuleTemplate(ctx)
+func List(ctx context.Context, client kube.Client) (ModulesList, error) {
+	moduleTemplates, err := client.Kyma().ListModuleTemplate(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	modulereleasemetas, err := client.ListModuleReleaseMeta(ctx)
+	modulereleasemetas, err := client.Kyma().ListModuleReleaseMeta(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	defaultKyma, err := client.GetDefaultKyma(ctx)
+	defaultKyma, err := client.Kyma().GetDefaultKyma(ctx)
 	if err != nil && !apierrors.IsNotFound(err) {
 		return nil, err
 	}
@@ -60,7 +68,6 @@ func List(ctx context.Context, client kyma.Interface) (ModulesList, error) {
 			// ignore incompatible/corrupted ModuleTemplates
 			continue
 		}
-
 		version := ModuleVersion{
 			Version:    moduleTemplate.Spec.Version,
 			Repository: moduleTemplate.Spec.Info.Repository,
@@ -71,22 +78,76 @@ func List(ctx context.Context, client kyma.Interface) (ModulesList, error) {
 			),
 		}
 
+		health, _ := getStateOrStatus(ctx, client, moduleName, moduleTemplate, modulereleasemetas, defaultKyma)
+
 		if i := getModuleIndex(modulesList, moduleName); i != -1 {
 			// append version if module with same name is in the list
 			modulesList[i].Versions = append(modulesList[i].Versions, version)
 		} else {
-			// otherwise create anew record in the list
+			// otherwise create a new record in the list
 			modulesList = append(modulesList, Module{
 				Name:           moduleName,
 				InstallDetails: getInstallDetails(defaultKyma, *modulereleasemetas, moduleName),
 				Versions: []ModuleVersion{
 					version,
 				},
+				Healthy: health,
 			})
 		}
 	}
 
 	return modulesList, nil
+}
+
+func getStateOrStatus(ctx context.Context, client kube.Client, moduleName string, moduleTemplate kyma.ModuleTemplate, modulereleasemetas *kyma.ModuleReleaseMetaList, kymaCR *kyma.Kyma) (Healthy, error) {
+	for _, module := range kymaCR.Status.Modules {
+		if module.Name == moduleName {
+			if module.State == "Ready" {
+				return HealthyTrue, nil
+			}
+			if module.State == "" {
+				break
+			}
+			return HealthyFalse, nil
+		}
+	}
+	if moduleTemplate.Spec.Data != nil {
+		//namespace := "kyma-system"
+		//if moduleTemplate.Spec.Data.Metadata.Namespace != "" {
+		//	namespace = moduleTemplate.Spec.Data.Metadata.Namespace
+		//}
+
+		unstruct := unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": moduleTemplate.Spec.Data.ApiVersion,
+				"kind":       moduleTemplate.Spec.Data.Kind,
+				"metadata": map[string]interface{}{
+					"name":      moduleName,
+					"namespace": "kyma-system",
+				},
+			},
+		}
+
+		result, err := client.RootlessDynamic().Get(ctx, &unstruct)
+		if err != nil {
+			fmt.Println(err)
+			return HealthyUnknown, err
+		}
+
+		//groupVersion := strings.Split(moduleTemplate.Spec.Data.ApiVersion, "/")
+		//unstructuredModule, err := client.Dynamic().Resource(schema.GroupVersionResource{
+		//	Group:    groupVersion[0],
+		//	Version:  groupVersion[1],
+		//	Resource: "samples",
+		//}).Namespace(namespace).Get(ctx, moduleTemplate.Spec.Data.Metadata.Name, metav1.GetOptions{})
+		//if err != nil {
+		//	fmt.Println(err)
+		//	return HealthyUnknown, err
+		//}
+		state := result.Object["status"].(map[string]interface{})["state"].(string)
+		fmt.Printf("Module %s state: %s", moduleName, state)
+	}
+	return HealthyUnknown, nil
 }
 
 func getInstallDetails(kyma *kyma.Kyma, releaseMetas kyma.ModuleReleaseMetaList, moduleName string) ModuleInstallDetails {
