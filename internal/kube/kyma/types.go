@@ -2,7 +2,6 @@ package kyma
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -55,7 +54,7 @@ type ModuleTemplateSpec struct {
 	Version             string                    `json:"version"`
 	ModuleName          string                    `json:"moduleName"`
 	Mandatory           bool                      `json:"mandatory"`
-	Data                unstructured.Unstructured `json:"data,omitempty"`
+	Data                *ModuleData               `json:"data,omitempty"`
 	Descriptor          runtime.RawExtension      `json:"descriptor"`
 	CustomStateCheck    []CustomStateCheck        `json:"customStateCheck,omitempty"`
 	Resources           []Resource                `json:"resources,omitempty"`
@@ -69,6 +68,12 @@ type Manager struct {
 	metav1.GroupVersionKind `json:",inline"`
 	Namespace               string `json:"namespace,omitempty"`
 	Name                    string `json:"name"`
+}
+
+type ModuleData struct {
+	ApiVersion string            `json:"apiVersion"`
+	Kind       string            `json:"kind"`
+	Metadata   metav1.ObjectMeta `json:"metadata,omitempty"`
 }
 
 type ModuleInfo struct {

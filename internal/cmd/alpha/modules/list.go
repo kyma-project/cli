@@ -35,7 +35,7 @@ func listModules(cfg *modulesConfig) clierror.Error {
 		return clierr
 	}
 
-	modulesList, err := modules.List(cfg.Ctx, client.Kyma())
+	modulesList, err := modules.List(cfg.Ctx, client)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to list available modules from the cluster"))
 	}

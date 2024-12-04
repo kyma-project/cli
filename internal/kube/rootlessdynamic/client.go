@@ -57,7 +57,7 @@ func (c *client) Get(ctx context.Context, resource *unstructured.Unstructured) (
 	}
 
 	if apiResource.Namespaced {
-		return c.dynamic.Resource(*gvr).Namespace("kyma-system").Get(ctx, resource.GetName(), metav1.GetOptions{})
+		return c.dynamic.Resource(*gvr).Namespace(resource.GetNamespace()).Get(ctx, resource.GetName(), metav1.GetOptions{})
 	}
 	return c.dynamic.Resource(*gvr).Get(ctx, resource.GetName(), metav1.GetOptions{})
 }
