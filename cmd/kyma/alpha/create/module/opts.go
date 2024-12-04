@@ -41,6 +41,7 @@ type Options struct {
 	ModuleConfigFile        string
 	KubebuilderProject      bool
 	Namespace               string
+	DryRun                  bool
 }
 
 const (
