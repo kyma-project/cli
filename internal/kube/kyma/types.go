@@ -60,7 +60,7 @@ type ModuleTemplateSpec struct {
 	Resources           []Resource                `json:"resources,omitempty"`
 	Info                ModuleInfo                `json:"info,omitempty"`
 	AssociatedResources []metav1.GroupVersionKind `json:"associatedResources,omitempty"`
-	Manager             Manager                   `json:"manager,omitempty"`
+	Manager             *Manager                  `json:"manager,omitempty"`
 }
 
 // Manager defines the structure for the manager field in ModuleTemplateSpec.

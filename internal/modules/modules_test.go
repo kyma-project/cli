@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/kyma-project/cli.v3/internal/kube/fake"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -12,6 +13,10 @@ import (
 )
 
 var (
+	defaultKyma = unstructured.Unstructured{
+		Object: map[string]interface{}{},
+	}
+
 	testModuleTemplate1 = unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": "operator.kyma-project.io/v1beta2",
@@ -260,7 +265,14 @@ func TestList(t *testing.T) {
 			&testReleaseMeta2,
 		)
 
-		modules, err := List(context.Background(), kyma.NewClient(dynamicClient))
+		fakeRootless := &fake.RootlessdynamicMock{}
+
+		fakeClient := &fake.FakeKubeClient{
+			TestKymaInterface:            kyma.NewClient(dynamicClient),
+			TestRootlessDynamicInterface: fakeRootless,
+		}
+
+		modules, err := List(context.Background(), fakeClient)
 
 		require.NoError(t, err)
 		require.Equal(t, ModulesList(testModuleList), modules)
@@ -281,7 +293,14 @@ func TestList(t *testing.T) {
 			&testKymaCR,
 		)
 
-		modules, err := List(context.Background(), kyma.NewClient(dynamicClient))
+		fakeRootless := &fake.RootlessdynamicMock{}
+
+		fakeClient := &fake.FakeKubeClient{
+			TestKymaInterface:            kyma.NewClient(dynamicClient),
+			TestRootlessDynamicInterface: fakeRootless,
+		}
+
+		modules, err := List(context.Background(), fakeClient)
 
 		require.NoError(t, err)
 		require.Equal(t, ModulesList(testManagedModuleList), modules)
@@ -301,7 +320,14 @@ func TestList(t *testing.T) {
 			&testReleaseMeta2,
 		)
 
-		modules, err := List(context.Background(), kyma.NewClient(dynamicClient))
+		fakeRootless := &fake.RootlessdynamicMock{}
+
+		fakeClient := &fake.FakeKubeClient{
+			TestKymaInterface:            kyma.NewClient(dynamicClient),
+			TestRootlessDynamicInterface: fakeRootless,
+		}
+
+		modules, err := List(context.Background(), fakeClient)
 
 		require.NoError(t, err)
 		require.Equal(t, ModulesList(testModuleList), modules)

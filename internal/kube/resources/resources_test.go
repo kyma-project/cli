@@ -3,9 +3,11 @@ package resources
 import (
 	"context"
 	"fmt"
+	"testing"
+
+	"github.com/kyma-project/cli.v3/internal/kube/fake"
 	"github.com/kyma-project/cli.v3/internal/kube/istio"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"testing"
 
 	"github.com/kyma-project/cli.v3/internal/cmdcommon/types"
 	kube_fake "github.com/kyma-project/cli.v3/internal/kube/fake"
@@ -218,7 +220,7 @@ func Test_CreateService(t *testing.T) {
 func Test_CreateAPIRule(t *testing.T) {
 	t.Run("create apiRule", func(t *testing.T) {
 		ctx := context.Background()
-		rootlessdynamic := &rootlessdynamicMock{}
+		rootlessdynamic := &fake.RootlessdynamicMock{}
 		apiRuleName := "apiRule"
 		namespace := "default"
 		domain := "example.com"
@@ -227,13 +229,13 @@ func Test_CreateAPIRule(t *testing.T) {
 		err := CreateAPIRule(ctx, rootlessdynamic, apiRuleName, namespace, domain, port)
 
 		require.NoError(t, err)
-		require.Equal(t, 1, len(rootlessdynamic.appliedObjects))
-		require.Equal(t, fixAPIRule(apiRuleName, namespace, domain, port), rootlessdynamic.appliedObjects[0])
+		require.Equal(t, 1, len(rootlessdynamic.AppliedObjects))
+		require.Equal(t, fixAPIRule(apiRuleName, namespace, domain, port), rootlessdynamic.AppliedObjects[0])
 	})
 	t.Run("do not allow creating existing apiRule", func(t *testing.T) {
 		ctx := context.Background()
-		rootlessdynamic := &rootlessdynamicMock{
-			returnErr: fmt.Errorf("already exists"),
+		rootlessdynamic := &fake.RootlessdynamicMock{
+			ReturnErr: fmt.Errorf("already exists"),
 		}
 		apiRuleName := "existing"
 		namespace := "default"
@@ -279,30 +281,4 @@ func fixAPIRule(apiRuleName, namespace, domain string, port uint32) unstructured
 			"status": map[string]interface{}{"lastProcessedTime": interface{}(nil), "state": ""},
 		},
 	}
-}
-
-type rootlessdynamicMock struct {
-	returnErr      error
-	appliedObjects []unstructured.Unstructured
-}
-
-func (m *rootlessdynamicMock) Apply(_ context.Context, obj *unstructured.Unstructured) error {
-	m.appliedObjects = append(m.appliedObjects, *obj)
-	return m.returnErr
-}
-
-func (m *rootlessdynamicMock) ApplyMany(_ context.Context, objs []unstructured.Unstructured) error {
-	return m.returnErr
-}
-
-func (m *rootlessdynamicMock) Get(_ context.Context, obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
-	return obj, m.returnErr
-}
-
-func (m *rootlessdynamicMock) Remove(_ context.Context, obj *unstructured.Unstructured) error {
-	return m.returnErr
-}
-
-func (m *rootlessdynamicMock) RemoveMany(_ context.Context, objs []unstructured.Unstructured) error {
-	return m.returnErr
 }
