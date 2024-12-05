@@ -25,6 +25,16 @@ type TemplateCommandsList struct {
 
 type ExtensionList []Extension
 
+func (el *ExtensionList) ContainResource(kind string) bool {
+	for _, extension := range *el {
+		if extension.Resource.Kind == kind {
+			return true
+		}
+	}
+
+	return false
+}
+
 type Extension struct {
 	// main command of the command group
 	RootCommand RootCommand

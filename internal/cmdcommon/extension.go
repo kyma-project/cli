@@ -43,6 +43,10 @@ func (kec *KymaExtensionsConfig) addFlag(cmd *cobra.Command) {
 	_ = cmd.PersistentFlags().Bool("show-extensions-error", false, "Print possible error when fetching extensions failed.")
 }
 
+func (kec *KymaExtensionsConfig) GetRawExtensions() ExtensionList {
+	return kec.extensions
+}
+
 func (kec *KymaExtensionsConfig) BuildExtensions(availableTemplateCommands *TemplateCommandsList, availableCoreCommands CoreCommandsMap) []*cobra.Command {
 	cmds := make([]*cobra.Command, len(kec.kymaConfig.extensions))
 

@@ -2,7 +2,6 @@ package app
 
 import (
 	"fmt"
-	"github.com/kyma-project/cli.v3/internal/kube"
 	"os"
 	"time"
 
@@ -10,7 +9,9 @@ import (
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon/types"
 	"github.com/kyma-project/cli.v3/internal/dockerfile"
+	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/kube/resources"
+	"github.com/kyma-project/cli.v3/internal/pack"
 	"github.com/kyma-project/cli.v3/internal/registry"
 	"github.com/spf13/cobra"
 )
@@ -23,6 +24,7 @@ type appPushConfig struct {
 	image                string
 	dockerfilePath       string
 	dockerfileSrcContext string
+	packAppPath          string
 	containerPort        types.NullableInt64
 	istioInject          types.NullableBool
 	expose               bool
@@ -47,19 +49,29 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		},
 	}
 
+	// common flags
 	cmd.Flags().StringVar(&config.name, "name", "", "Name of the app")
-	cmd.Flags().StringVar(&config.namespace, "namespace", "default", "Namespace where app should be deployed")
+
+	// image flags
 	cmd.Flags().StringVar(&config.image, "image", "", "Name of the image to deploy")
+
+	// dockerfile flags
 	cmd.Flags().StringVar(&config.dockerfilePath, "dockerfile", "", "Path to the dockerfile")
-	cmd.Flags().StringVar(&config.dockerfileSrcContext, "dockerfile-context", "", "Context path for building dockerfile")
+	cmd.Flags().StringVar(&config.dockerfileSrcContext, "dockerfile-context", "", "Context path for building dockerfile (defaults to current working directory)")
+
+	// pack flags
+	cmd.Flags().StringVar(&config.packAppPath, "code-path", "", "Path to the application source code directory")
+
+	// k8s flags
+	cmd.Flags().StringVar(&config.namespace, "namespace", "default", "Namespace where app should be deployed")
 	cmd.Flags().Var(&config.containerPort, "container-port", "Port on which the application will be exposed")
 	cmd.Flags().Var(&config.istioInject, "istio-inject", "Enable Istio for the app")
 	cmd.Flags().BoolVar(&config.expose, "expose", false, "Creates an ApiRule for the app")
 
 	_ = cmd.MarkFlagRequired("name")
-	cmd.MarkFlagsMutuallyExclusive("image", "dockerfile")
-	cmd.MarkFlagsMutuallyExclusive("image", "dockerfile-context")
-	cmd.MarkFlagsOneRequired("image", "dockerfile")
+	cmd.MarkFlagsMutuallyExclusive("image", "dockerfile", "code-path")
+	cmd.MarkFlagsMutuallyExclusive("image", "dockerfile-context", "code-path")
+	cmd.MarkFlagsOneRequired("image", "dockerfile", "code-path")
 
 	return cmd
 }
@@ -95,6 +107,17 @@ func (apc *appPushConfig) validate() clierror.Error {
 	if apc.expose && apc.containerPort.Value == nil {
 		return clierror.New("container-port is required when expose is enabled")
 	}
+
+	// TODO: enable this code when api-gateway provide its module configuration (ConfigMap)
+	// detect if ApiRule resource is installed on the cluster
+	// extensions := apc.GetRawExtensions()
+	// if apc.expose && !extensions.ContainResource("ApiRule") {
+	// 	return clierror.New(
+	// 		"application can't be exposed because ApiRule extension is not detected",
+	// 		"make sure api-gateway module is installed",
+	// 	)
+	// }
+
 	return nil
 }
 
@@ -107,7 +130,7 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 		return clierr
 	}
 
-	if cfg.dockerfilePath != "" {
+	if cfg.dockerfilePath != "" || cfg.packAppPath != "" {
 		registryConfig, cliErr := registry.GetInternalConfig(cfg.Ctx, client)
 		if cliErr != nil {
 			return clierror.WrapE(cliErr, clierror.New("failed to load in-cluster registry configuration"))
@@ -153,7 +176,7 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 }
 
 func buildAndImportImage(client kube.Client, cfg *appPushConfig, registryConfig *registry.InternalRegistryConfig) (string, clierror.Error) {
-	fmt.Println("Building image")
+	fmt.Print("Building image\n\n")
 	imageName, err := buildImage(cfg)
 	if err != nil {
 		return "", clierror.Wrap(err, clierror.New("failed to build image from dockerfile"))
@@ -183,14 +206,18 @@ func buildImage(cfg *appPushConfig) (string, error) {
 	imageTag := time.Now().Format("2006-01-02_15-04-05")
 	imageName := fmt.Sprintf("%s:%s", cfg.name, imageTag)
 
-	err := dockerfile.Build(cfg.Ctx, &dockerfile.BuildOptions{
-		ImageName:      imageName,
-		BuildContext:   cfg.dockerfileSrcContext,
-		DockerfilePath: cfg.dockerfilePath,
-	})
-	if err != nil {
-		return "", err
+	var err error
+	if cfg.packAppPath != "" {
+		// build application from sources
+		err = pack.Build(cfg.Ctx, imageName, cfg.packAppPath)
+	} else {
+		// build application from dockerfile
+		err = dockerfile.Build(cfg.Ctx, &dockerfile.BuildOptions{
+			ImageName:      imageName,
+			BuildContext:   cfg.dockerfileSrcContext,
+			DockerfilePath: cfg.dockerfilePath,
+		})
 	}
 
-	return imageName, nil
+	return imageName, err
 }
