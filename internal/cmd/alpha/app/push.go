@@ -24,6 +24,7 @@ type appPushConfig struct {
 	image                string
 	dockerfilePath       string
 	dockerfileSrcContext string
+	dockerfileArgs       types.Map
 	packAppPath          string
 	containerPort        types.NullableInt64
 	istioInject          types.NullableBool
@@ -58,6 +59,7 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	// dockerfile flags
 	cmd.Flags().StringVar(&config.dockerfilePath, "dockerfile", "", "Path to the dockerfile")
 	cmd.Flags().StringVar(&config.dockerfileSrcContext, "dockerfile-context", "", "Context path for building dockerfile (defaults to current working directory)")
+	cmd.Flags().Var(&config.dockerfileArgs, "dockerfile-build-arg", "Variables used while building application from dockerfile as args")
 
 	// pack flags
 	cmd.Flags().StringVar(&config.packAppPath, "code-path", "", "Path to the application source code directory")
@@ -71,6 +73,8 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	_ = cmd.MarkFlagRequired("name")
 	cmd.MarkFlagsMutuallyExclusive("image", "dockerfile", "code-path")
 	cmd.MarkFlagsMutuallyExclusive("image", "dockerfile-context", "code-path")
+	cmd.MarkFlagsMutuallyExclusive("dockerfile-build-arg", "image")
+	cmd.MarkFlagsMutuallyExclusive("dockerfile-build-arg", "code-path")
 	cmd.MarkFlagsOneRequired("image", "dockerfile", "code-path")
 
 	return cmd
@@ -216,6 +220,7 @@ func buildImage(cfg *appPushConfig) (string, error) {
 			ImageName:      imageName,
 			BuildContext:   cfg.dockerfileSrcContext,
 			DockerfilePath: cfg.dockerfilePath,
+			Args:           cfg.dockerfileArgs.GetNullableMap(),
 		})
 	}
 

@@ -22,6 +22,7 @@ type BuildOptions struct {
 	ImageName      string
 	BuildContext   string
 	DockerfilePath string
+	Args           map[string]*string
 }
 
 type DockerClient interface {
@@ -88,6 +89,7 @@ func (b *imageBuilder) do(ctx context.Context, opts *BuildOptions) error {
 			Dockerfile: dockerFile,
 			Tags:       []string{opts.ImageName},
 			Platform:   "linux/amd64",
+			BuildArgs:  opts.Args,
 		},
 	)
 	if err != nil {
