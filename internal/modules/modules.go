@@ -16,7 +16,6 @@ type Module struct {
 	Name           string
 	Versions       []ModuleVersion
 	InstallDetails ModuleInstallDetails
-	Healthy        Healthy // #TODO Failsafe - remove when all modules are updated
 }
 
 type Managed string
@@ -34,6 +33,7 @@ type ModuleInstallDetails struct {
 	Version string
 	Channel string
 	Managed Managed
+	Healthy Healthy // #TODO Failsafe - remove when all modules are updated
 }
 
 type ModuleVersion struct {
@@ -77,7 +77,7 @@ func List(ctx context.Context, client kube.Client) (ModulesList, error) {
 			),
 		}
 
-		health, err := getStateOrStatus(ctx, client, moduleName, moduleTemplate, defaultKyma)
+		health, err := getModuleDeploymentHealth(ctx, client, moduleName, moduleTemplate, defaultKyma)
 		if err != nil {
 			return nil, err
 		}
@@ -89,12 +89,10 @@ func List(ctx context.Context, client kube.Client) (ModulesList, error) {
 			// otherwise create a new record in the list
 			modulesList = append(modulesList, Module{
 				Name:           moduleName,
-				InstallDetails: getInstallDetails(defaultKyma, *modulereleasemetas, moduleName),
+				InstallDetails: getInstallDetails(defaultKyma, *modulereleasemetas, moduleName, health),
 				Versions: []ModuleVersion{
 					version,
 				},
-				// TODO: move to install details
-				Healthy: health,
 			})
 		}
 	}
@@ -102,7 +100,7 @@ func List(ctx context.Context, client kube.Client) (ModulesList, error) {
 	return modulesList, nil
 }
 
-func getStateOrStatus(ctx context.Context, client kube.Client, moduleName string, moduleTemplate kyma.ModuleTemplate, kymaCR *kyma.Kyma) (Healthy, error) {
+func getModuleDeploymentHealth(ctx context.Context, client kube.Client, moduleName string, moduleTemplate kyma.ModuleTemplate, kymaCR *kyma.Kyma) (Healthy, error) {
 	if kymaCR != nil {
 		for _, module := range kymaCR.Status.Modules {
 			if module.Name == moduleName {
@@ -210,7 +208,7 @@ func getResourceState(ctx context.Context, client kube.Client, apiVersion, kind,
 	return "Unknown", nil
 }
 
-func getInstallDetails(kyma *kyma.Kyma, releaseMetas kyma.ModuleReleaseMetaList, moduleName string) ModuleInstallDetails {
+func getInstallDetails(kyma *kyma.Kyma, releaseMetas kyma.ModuleReleaseMetaList, moduleName string, health Healthy) ModuleInstallDetails {
 	if kyma != nil {
 		for _, module := range kyma.Status.Modules {
 			if module.Name == moduleName {
@@ -219,6 +217,7 @@ func getInstallDetails(kyma *kyma.Kyma, releaseMetas kyma.ModuleReleaseMetaList,
 					Channel: getAssignedChannel(releaseMetas, module.Name, moduleVersion),
 					Managed: getManaged(kyma.Spec.Modules, moduleName),
 					Version: moduleVersion,
+					Healthy: health,
 				}
 			}
 		}
