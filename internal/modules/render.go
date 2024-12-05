@@ -27,7 +27,7 @@ var (
 				convertVersions(m.Versions),
 				convertInstall(m.InstallDetails),
 				string(m.InstallDetails.Managed),
-				string(m.Healthy),
+				string(m.InstallDetails.Healthy),
 			}
 		},
 	}
