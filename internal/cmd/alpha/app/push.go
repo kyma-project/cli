@@ -49,20 +49,29 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		},
 	}
 
+	// common flags
 	cmd.Flags().StringVar(&config.name, "name", "", "Name of the app")
-	cmd.Flags().StringVar(&config.namespace, "namespace", "default", "Namespace where app should be deployed")
+
+	// image flags
 	cmd.Flags().StringVar(&config.image, "image", "", "Name of the image to deploy")
+
+	// dockerfile flags
 	cmd.Flags().StringVar(&config.dockerfilePath, "dockerfile", "", "Path to the dockerfile")
-	cmd.Flags().StringVar(&config.dockerfileSrcContext, "dockerfile-context", "", "Context path for building dockerfile")
-	cmd.Flags().StringVar(&config.packAppPath, "app-path", "", "Path to the application source code")
+	cmd.Flags().StringVar(&config.dockerfileSrcContext, "dockerfile-context", "", "Context path for building dockerfile (defaults to current working directory)")
+
+	// pack flags
+	cmd.Flags().StringVar(&config.packAppPath, "code-path", "", "Path to the application source code directory")
+
+	// k8s flags
+	cmd.Flags().StringVar(&config.namespace, "namespace", "default", "Namespace where app should be deployed")
 	cmd.Flags().Var(&config.containerPort, "container-port", "Port on which the application will be exposed")
 	cmd.Flags().Var(&config.istioInject, "istio-inject", "Enable Istio for the app")
 	cmd.Flags().BoolVar(&config.expose, "expose", false, "Creates an ApiRule for the app")
 
 	_ = cmd.MarkFlagRequired("name")
-	cmd.MarkFlagsMutuallyExclusive("image", "dockerfile", "app-path")
-	cmd.MarkFlagsMutuallyExclusive("image", "dockerfile-context", "app-path")
-	cmd.MarkFlagsOneRequired("image", "dockerfile", "app-path")
+	cmd.MarkFlagsMutuallyExclusive("image", "dockerfile", "code-path")
+	cmd.MarkFlagsMutuallyExclusive("image", "dockerfile-context", "code-path")
+	cmd.MarkFlagsOneRequired("image", "dockerfile", "code-path")
 
 	return cmd
 }
@@ -98,6 +107,17 @@ func (apc *appPushConfig) validate() clierror.Error {
 	if apc.expose && apc.containerPort.Value == nil {
 		return clierror.New("container-port is required when expose is enabled")
 	}
+
+	// TODO: enable this code when api-gateway provide its module configuration (ConfigMap)
+	// detect if ApiRule resource is installed on the cluster
+	// extensions := apc.GetRawExtensions()
+	// if apc.expose && !extensions.ContainResource("ApiRule") {
+	// 	return clierror.New(
+	// 		"application can't be exposed because ApiRule extension is not detected",
+	// 		"make sure api-gateway module is installed",
+	// 	)
+	// }
+
 	return nil
 }
 
