@@ -564,20 +564,8 @@ func TestModuleHealth(t *testing.T) {
 		},
 	}
 
-	// func NewClient(dynamic dynamic.Interface) Interface {
-	// 	return &btpClient{
-	// 		dynamic: dynamic,
-	// 	}
-	// }
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// test
-			// fakeRootless := &fake.RootlessdynamicMock{}
-			// if tt.moduleOrManager != nil {
-			// 	fakeRootless.AppliedObjects = append(fakeRootless.AppliedObjects, *tt.moduleOrManager)
-			// }
-
 			scheme := runtime.NewScheme()
 			scheme.AddKnownTypes(GVRDeployment.GroupVersion())
 			scheme.AddKnownTypes(GVRServerless.GroupVersion())
