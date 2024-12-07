@@ -77,7 +77,7 @@ func List(ctx context.Context, client kube.Client) (ModulesList, error) {
 			),
 		}
 
-		health, err := getModuleDeploymentHealth(ctx, client, moduleName, moduleTemplate, defaultKyma)
+		health, err := getModuleDeploymentHealth(ctx, client, moduleTemplate, defaultKyma)
 		if err != nil {
 			return nil, err
 		}
@@ -100,14 +100,13 @@ func List(ctx context.Context, client kube.Client) (ModulesList, error) {
 	return modulesList, nil
 }
 
-func getModuleDeploymentHealth(ctx context.Context, client kube.Client, moduleName string, moduleTemplate kyma.ModuleTemplate, kymaCR *kyma.Kyma) (Healthy, error) {
+func getModuleDeploymentHealth(ctx context.Context, client kube.Client, moduleTemplate kyma.ModuleTemplate, kymaCR *kyma.Kyma) (Healthy, error) {
 	if kymaCR != nil {
 		for _, module := range kymaCR.Status.Modules {
-			if module.Name == moduleName {
+			if module.Name == moduleTemplate.Name {
 				if module.State == "Ready" {
 					return HealthyTrue, nil
-				}
-				if module.State == "" {
+				} else if module.State == "" {
 					break
 				}
 				return HealthyFalse, nil
@@ -124,7 +123,7 @@ func getModuleDeploymentHealth(ctx context.Context, client kube.Client, moduleNa
 
 		state, err := getResourceState(ctx, client, data.ApiVersion, data.Kind, namespace, data.Metadata.Name)
 		if err == nil {
-			fmt.Printf("Module %s state: %s\n", moduleName, state)
+			fmt.Printf("Module %s state: %s\n", moduleTemplate.Name, state)
 			if state == "Ready" {
 				return HealthyTrue, nil
 			} else {
@@ -199,7 +198,7 @@ func getResourceState(ctx context.Context, client kube.Client, apiVersion, kind,
 		}
 	}
 	if readyReplicas, ok := status["readyReplicas"]; ok {
-		if readyReplicas.(int) > 0 {
+		if readyReplicas.(int64) > 0 {
 			return "Ready", nil
 		} else {
 			return "NotReady", nil
