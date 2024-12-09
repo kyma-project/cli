@@ -353,7 +353,7 @@ func TestList(t *testing.T) {
 			&testReleaseMeta2,
 		)
 
-		fakeRootless := &fake.RootlessdynamicMock{}
+		fakeRootless := &fake.RootlessDynamicMock{}
 
 		fakeClient := &fake.FakeKubeClient{
 			TestKymaInterface:            kyma.NewClient(dynamicClient),
@@ -381,7 +381,7 @@ func TestList(t *testing.T) {
 			&testKymaCR,
 		)
 
-		fakeRootless := &fake.RootlessdynamicMock{}
+		fakeRootless := &fake.RootlessDynamicMock{}
 
 		fakeClient := &fake.FakeKubeClient{
 			TestKymaInterface:            kyma.NewClient(dynamicClient),
@@ -408,7 +408,7 @@ func TestList(t *testing.T) {
 			&testReleaseMeta2,
 		)
 
-		fakeRootless := &fake.RootlessdynamicMock{}
+		fakeRootless := &fake.RootlessDynamicMock{}
 
 		fakeClient := &fake.FakeKubeClient{
 			TestKymaInterface:            kyma.NewClient(dynamicClient),

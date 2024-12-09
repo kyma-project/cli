@@ -220,7 +220,7 @@ func Test_CreateService(t *testing.T) {
 func Test_CreateAPIRule(t *testing.T) {
 	t.Run("create apiRule", func(t *testing.T) {
 		ctx := context.Background()
-		rootlessdynamic := &fake.RootlessdynamicMock{}
+		rootlessdynamic := &fake.RootlessDynamicMock{}
 		apiRuleName := "apiRule"
 		namespace := "default"
 		domain := "example.com"
@@ -234,7 +234,7 @@ func Test_CreateAPIRule(t *testing.T) {
 	})
 	t.Run("do not allow creating existing apiRule", func(t *testing.T) {
 		ctx := context.Background()
-		rootlessdynamic := &fake.RootlessdynamicMock{
+		rootlessdynamic := &fake.RootlessDynamicMock{
 			ReturnErr: fmt.Errorf("already exists"),
 		}
 		apiRuleName := "existing"
