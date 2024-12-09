@@ -105,7 +105,7 @@ func List(ctx context.Context, client kube.Client) (ModulesList, error) {
 func getModuleDeploymentHealth(ctx context.Context, client kube.Client, moduleTemplate kyma.ModuleTemplate, kymaCR *kyma.Kyma) (Healthy, error) {
 	if kymaCR != nil {
 		for _, module := range kymaCR.Status.Modules {
-			if module.Name == moduleTemplate.Name {
+			if module.Name == moduleTemplate.Spec.ModuleName {
 				if module.State == "Ready" {
 					return HealthyTrue, nil
 				} else if module.State == "" {

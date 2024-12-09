@@ -172,6 +172,7 @@ var (
 					map[string]interface{}{
 						"name":    "serverless",
 						"version": "0.0.1",
+						"state":   "Ready",
 					},
 					map[string]interface{}{
 						"name":    "keda",
@@ -208,6 +209,7 @@ var (
 				Managed: ManagedFalse,
 				Channel: "fast",
 				Version: "0.0.1",
+				Healthy: HealthyTrue,
 			},
 			Versions: []ModuleVersion{
 				{
@@ -444,8 +446,8 @@ func TestModuleHealth(t *testing.T) {
 				},
 			},
 			moduleTemplate: kyma.ModuleTemplate{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "serverless",
+				Spec: kyma.ModuleTemplateSpec{
+					ModuleName: "serverless",
 				},
 			},
 			expectedHealth: HealthyTrue,
@@ -463,8 +465,8 @@ func TestModuleHealth(t *testing.T) {
 				},
 			},
 			moduleTemplate: kyma.ModuleTemplate{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "serverless",
+				Spec: kyma.ModuleTemplateSpec{
+					ModuleName: "serverless",
 				},
 			},
 			expectedHealth: HealthyFalse,

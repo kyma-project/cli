@@ -10,7 +10,7 @@ import (
 
 const (
 	testModulesTableView        = "NAME      \tAVAILABLE VERSIONS     \tINSTALLED\tMANAGED\tHEALTHY \nkeda      \t0.1(regular), 0.2(fast)\t         \t       \t       \t\nserverless\t0.0.1(fast), 0.0.2     \t         \t       \t       \t\n"
-	testManagedModulesTableView = "NAME      \tAVAILABLE VERSIONS     \tINSTALLED  \tMANAGED\tHEALTHY \nkeda      \t0.1(regular), 0.2(fast)\t0.2(fast)  \ttrue   \t       \t\nserverless\t0.0.1(fast), 0.0.2     \t0.0.1(fast)\tfalse  \t       \t\n"
+	testManagedModulesTableView = "NAME      \tAVAILABLE VERSIONS     \tINSTALLED  \tMANAGED\tHEALTHY \nkeda      \t0.1(regular), 0.2(fast)\t0.2(fast)  \ttrue   \t       \t\nserverless\t0.0.1(fast), 0.0.2     \t0.0.1(fast)\tfalse  \ttrue   \t\n"
 )
 
 func TestRender(t *testing.T) {
