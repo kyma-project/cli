@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/buildpacks/pack/pkg/cache"
 	"github.com/buildpacks/pack/pkg/client"
 	"github.com/buildpacks/pack/pkg/logging"
 	"github.com/pkg/errors"
@@ -16,11 +17,27 @@ func Build(ctx context.Context, appName, appPath string) error {
 		return errors.Wrap(err, "failed to create buildpack client")
 	}
 
+	tmpDir := os.TempDir()
+
 	err = pack.Build(ctx, client.BuildOptions{
 		Image:    appName,
 		AppPath:  appPath,
 		Platform: "linux/amd64",
 		Builder:  "paketobuildpacks/builder-jammy-base",
+		Cache: cache.CacheOpts{
+			Build: cache.CacheInfo{
+				Format: cache.CacheBind,
+				Source: fmt.Sprintf("%s/kyma-cache/app-push/build", tmpDir),
+			},
+			Launch: cache.CacheInfo{
+				Format: cache.CacheBind,
+				Source: fmt.Sprintf("%s/kyma-cache/app-push/launch", tmpDir),
+			},
+			Kaniko: cache.CacheInfo{
+				Format: cache.CacheBind,
+				Source: fmt.Sprintf("%s/kyma-cache/app-push/kaniko", tmpDir),
+			},
+		},
 	})
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("failed to build %s app from the %s dir", appName, appPath))
