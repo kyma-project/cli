@@ -216,6 +216,74 @@ func Test_Get(t *testing.T) {
 	})
 }
 
+var (
+	secretListObject = map[string]interface{}{
+		"apiVersion": "v1",
+		"kind":       "SecretList",
+		"metadata": map[string]interface{}{
+			"continue":        "",
+			"resourceVersion": "",
+		},
+	}
+
+	clusterRoleListObject = map[string]interface{}{
+		"apiVersion": "rbac.authorization.k8s.io/v1",
+		"kind":       "ClusterRoleList",
+		"metadata": map[string]interface{}{
+			"continue":        "",
+			"resourceVersion": "",
+		},
+	}
+)
+
+func Test_List(t *testing.T) {
+	t.Run("list namespaced resource", func(t *testing.T) {
+		obj, apiResource := fixSecretObjectAndApiResource()
+		ctx := context.Background()
+		dynamic := dynamic_fake.NewSimpleDynamicClient(scheme.Scheme, obj)
+		client := fixRootlessDynamic(dynamic, []*metav1.APIResourceList{apiResource})
+
+		expectedResult := &unstructured.UnstructuredList{
+			Object: secretListObject,
+			Items:  []unstructured.Unstructured{*obj},
+		}
+
+		result, err := client.List(ctx, obj)
+		require.NoError(t, err)
+		require.Equal(t, expectedResult, result)
+	})
+
+	t.Run("list cluster-scoped resource", func(t *testing.T) {
+		obj, apiResource := fixClusterRoleObjectAndApiResource()
+		ctx := context.Background()
+		dynamic := dynamic_fake.NewSimpleDynamicClient(scheme.Scheme, obj)
+		client := fixRootlessDynamic(dynamic, []*metav1.APIResourceList{apiResource})
+
+		expectedResult := &unstructured.UnstructuredList{
+			Object: clusterRoleListObject,
+			Items:  []unstructured.Unstructured{*obj},
+		}
+
+		result, err := client.List(ctx, obj)
+		require.NoError(t, err)
+		require.Equal(t, expectedResult, result)
+	})
+
+	t.Run("get resource error because can't be discovered", func(t *testing.T) {
+		obj, _ := fixSecretObjectAndApiResource()
+		ctx := context.Background()
+		dynamic := dynamic_fake.NewSimpleDynamicClient(scheme.Scheme)
+		client := fixRootlessDynamic(dynamic, []*metav1.APIResourceList{
+			{
+				GroupVersion: "v1",
+			},
+		})
+
+		_, err := client.List(ctx, obj)
+		require.ErrorContains(t, err, "failed to discover API resource using discovery client: resource 'Secret' in group '', and version 'v1' not registered on cluster")
+	})
+}
+
 func Test_Remove(t *testing.T) {
 	t.Run("remove namespaced resource", func(t *testing.T) {
 		obj, apiResource := fixSecretObjectAndApiResource()

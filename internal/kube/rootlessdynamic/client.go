@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"k8s.io/apimachinery/pkg/api/errors"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -18,6 +17,7 @@ type applyFunc func(context.Context, dynamic.ResourceInterface, *unstructured.Un
 
 type Interface interface {
 	Get(context.Context, *unstructured.Unstructured) (*unstructured.Unstructured, error)
+	List(context.Context, *unstructured.Unstructured) (*unstructured.UnstructuredList, error)
 	Apply(context.Context, *unstructured.Unstructured) error
 	ApplyMany(context.Context, []unstructured.Unstructured) error
 	Remove(context.Context, *unstructured.Unstructured) error
@@ -58,9 +58,25 @@ func (c *client) Get(ctx context.Context, resource *unstructured.Unstructured) (
 	}
 
 	if apiResource.Namespaced {
-		return c.dynamic.Resource(*gvr).Namespace("kyma-system").Get(ctx, resource.GetName(), metav1.GetOptions{})
+		return c.dynamic.Resource(*gvr).Namespace(resource.GetNamespace()).Get(ctx, resource.GetName(), metav1.GetOptions{})
 	}
 	return c.dynamic.Resource(*gvr).Get(ctx, resource.GetName(), metav1.GetOptions{})
+}
+
+func (c *client) List(ctx context.Context, resource *unstructured.Unstructured) (*unstructured.UnstructuredList, error) {
+	group, version := groupVersion(resource.GetAPIVersion())
+	apiResource, err := c.discoverAPIResource(group, version, resource.GetKind())
+	if err != nil {
+		return nil, fmt.Errorf("failed to discover API resource using discovery client: %w", err)
+	}
+
+	gvr := &schema.GroupVersionResource{
+		Group:    group,
+		Version:  version,
+		Resource: apiResource.Name,
+	}
+
+	return c.dynamic.Resource(*gvr).List(ctx, metav1.ListOptions{})
 }
 
 func (c *client) Apply(ctx context.Context, resource *unstructured.Unstructured) error {
