@@ -2,8 +2,11 @@ package kyma
 
 import (
 	"context"
+	"fmt"
 	"slices"
+	"time"
 
+	"github.com/avast/retry-go"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -12,8 +15,10 @@ import (
 )
 
 const (
-	DefaultKymaName      = "default"
-	DefaultKymaNamespace = "kyma-system"
+	DefaultKymaName                     = "default"
+	DefaultKymaNamespace                = "kyma-system"
+	CustomResourcePolicyIgnore          = "Ignore"
+	CustomResourcePolicyCreateAndDelete = "CreateAndDelete"
 )
 
 type Interface interface {
@@ -21,7 +26,9 @@ type Interface interface {
 	ListModuleTemplate(context.Context) (*ModuleTemplateList, error)
 	GetDefaultKyma(context.Context) (*Kyma, error)
 	UpdateDefaultKyma(context.Context, *Kyma) error
-	EnableModule(context.Context, string, string) error
+	WaitForModuleState(context.Context, string, ...string) error
+	GetModuleInfo(context.Context, string) (*KymaModuleInfo, error)
+	EnableModule(context.Context, string, string, string) error
 	DisableModule(context.Context, string) error
 }
 
@@ -60,6 +67,29 @@ func (c *client) GetDefaultKyma(ctx context.Context) (*Kyma, error) {
 	return kyma, err
 }
 
+// GetModuleState returns state of the specific module based on the default kyma on the cluster
+func (c *client) GetModuleInfo(ctx context.Context, moduleName string) (*KymaModuleInfo, error) {
+	kymaCR, err := c.GetDefaultKyma(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	info := KymaModuleInfo{}
+	for _, module := range kymaCR.Spec.Modules {
+		if module.Name == moduleName {
+			info.Spec = module
+		}
+	}
+
+	for _, module := range kymaCR.Status.Modules {
+		if module.Name == moduleName {
+			info.Status = module
+		}
+	}
+
+	return &info, nil
+}
+
 // UpdateDefaultKyma updates the default Kyma CR from the kyma-system namespace based on the Kyma CR from arguments
 func (c *client) UpdateDefaultKyma(ctx context.Context, obj *Kyma) error {
 	u, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
@@ -74,15 +104,28 @@ func (c *client) UpdateDefaultKyma(ctx context.Context, obj *Kyma) error {
 	return err
 }
 
+// WaitForModuleState waits until module is not in on of given expected states
+func (c *client) WaitForModuleState(ctx context.Context, moduleName string, expectedStates ...string) error {
+	return retry.Do(func() error {
+		return c.checkModuleState(ctx, moduleName, expectedStates...)
+	},
+		retry.Delay(time.Second),
+		retry.Context(ctx),
+		retry.LastErrorOnly(true),
+		retry.DelayType(retry.FixedDelay),
+		retry.Attempts(100),
+	)
+}
+
 // EnableModule adds module to the default Kyma CR in the kyma-system namespace
 // if moduleChannel is empty it uses default channel in the Kyma CR
-func (c *client) EnableModule(ctx context.Context, moduleName, moduleChannel string) error {
+func (c *client) EnableModule(ctx context.Context, moduleName, moduleChannel, customResourcePolicy string) error {
 	kymaCR, err := c.GetDefaultKyma(ctx)
 	if err != nil {
 		return err
 	}
 
-	kymaCR = enableModule(kymaCR, moduleName, moduleChannel)
+	kymaCR = enableModule(kymaCR, moduleName, moduleChannel, customResourcePolicy)
 
 	return c.UpdateDefaultKyma(ctx, kymaCR)
 }
@@ -99,18 +142,35 @@ func (c *client) DisableModule(ctx context.Context, moduleName string) error {
 	return c.UpdateDefaultKyma(ctx, kymaCR)
 }
 
-func enableModule(kymaCR *Kyma, moduleName, moduleChannel string) *Kyma {
+func (c *client) checkModuleState(ctx context.Context, moduleName string, expectedStates ...string) error {
+	info, err := c.GetModuleInfo(ctx, moduleName)
+	if err != nil {
+		return err
+	}
+
+	for _, expectedState := range expectedStates {
+		if info.Status.State == expectedState {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("module %s is in the %s state", moduleName, info.Status.State)
+}
+
+func enableModule(kymaCR *Kyma, moduleName, moduleChannel, customResourcePolicy string) *Kyma {
 	for i, m := range kymaCR.Spec.Modules {
 		if m.Name == moduleName {
 			// module already exists, update channel
 			kymaCR.Spec.Modules[i].Channel = moduleChannel
+			kymaCR.Spec.Modules[i].CustomResourcePolicy = customResourcePolicy
 			return kymaCR
 		}
 	}
 
 	kymaCR.Spec.Modules = append(kymaCR.Spec.Modules, Module{
-		Name:    moduleName,
-		Channel: moduleChannel,
+		Name:                 moduleName,
+		Channel:              moduleChannel,
+		CustomResourcePolicy: customResourcePolicy,
 	})
 
 	return kymaCR

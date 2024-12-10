@@ -16,7 +16,7 @@ import (
 func TestListFromCluster(t *testing.T) {
 	t.Run("list extensions from cluster", func(t *testing.T) {
 		kubeClientConfig := &KubeClientConfig{
-			KubeClient: &fake.FakeKubeClient{
+			KubeClient: &fake.KubeClient{
 				TestKubernetesInterface: k8s_fake.NewSimpleClientset(
 					fixTestExtensionConfigmap("test-1"),
 					fixTestExtensionConfigmap("test-2"),
@@ -45,7 +45,7 @@ func TestListFromCluster(t *testing.T) {
 
 	t.Run("missing rootCommand error", func(t *testing.T) {
 		kubeClientConfig := &KubeClientConfig{
-			KubeClient: &fake.FakeKubeClient{
+			KubeClient: &fake.KubeClient{
 				TestKubernetesInterface: k8s_fake.NewSimpleClientset(
 					&corev1.ConfigMap{
 						ObjectMeta: v1.ObjectMeta{
@@ -71,7 +71,7 @@ func TestListFromCluster(t *testing.T) {
 
 	t.Run("skip optional fields", func(t *testing.T) {
 		kubeClientConfig := &KubeClientConfig{
-			KubeClient: &fake.FakeKubeClient{
+			KubeClient: &fake.KubeClient{
 				TestKubernetesInterface: k8s_fake.NewSimpleClientset(
 					&corev1.ConfigMap{
 						ObjectMeta: v1.ObjectMeta{
