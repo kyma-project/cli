@@ -1,4 +1,4 @@
-package modules
+package module
 
 import (
 	"github.com/kyma-project/cli.v3/internal/clierror"

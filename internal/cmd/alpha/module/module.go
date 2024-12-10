@@ -1,11 +1,11 @@
-package modules
+package module
 
 import (
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/spf13/cobra"
 )
 
-func NewModulesCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
+func NewModuleCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "module",
 		Aliases: []string{"modules"},
