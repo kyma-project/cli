@@ -36,7 +36,7 @@ func TestGetExternalConfig(t *testing.T) {
 			},
 		}
 
-		kubeClient := &kube_fake.FakeKubeClient{
+		kubeClient := &kube_fake.KubeClient{
 			TestKubernetesInterface: client,
 			TestDynamicInterface:    dynamic,
 		}
@@ -80,7 +80,7 @@ func TestGetInternalConfig(t *testing.T) {
 			},
 		}
 
-		kubeClient := &kube_fake.FakeKubeClient{
+		kubeClient := &kube_fake.KubeClient{
 			TestKubernetesInterface: client,
 			TestDynamicInterface:    dynamic,
 		}

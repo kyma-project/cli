@@ -139,7 +139,7 @@ func Test_Prepare(t *testing.T) {
 				&serviceAccount,
 				&secret,
 			)
-			kubeClient := &kube_fake.FakeKubeClient{
+			kubeClient := &kube_fake.KubeClient{
 				TestAPIConfig:           apiConfig,
 				TestKubernetesInterface: staticClient,
 			}
@@ -204,7 +204,7 @@ func Test_getServiceAccountToken(t *testing.T) {
 			staticClient := k8s_fake.NewSimpleClientset(
 				&serviceAccount,
 			)
-			kubeClient := &kube_fake.FakeKubeClient{
+			kubeClient := &kube_fake.KubeClient{
 				TestKubernetesInterface: staticClient,
 			}
 

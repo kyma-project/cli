@@ -36,6 +36,15 @@ func TestGetDefaultKyma(t *testing.T) {
 					},
 				},
 			},
+			Status: KymaStatus{
+				Modules: []ModuleStatus{
+					{
+						Name:    "test-module",
+						Version: "1.2.3",
+						State:   "Ready",
+					},
+				},
+			},
 		}
 
 		kyma, err := client.GetDefaultKyma(context.Background())
@@ -209,19 +218,21 @@ func Test_disableModule(t *testing.T) {
 	}
 }
 
-func Test_updateCR(t *testing.T) {
+func Test_enableModule(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		name       string
-		kymaCR     *Kyma
-		moduleName string
-		channel    string
-		want       *Kyma
+		name                 string
+		kymaCR               *Kyma
+		moduleName           string
+		customResourcePolicy string
+		channel              string
+		want                 *Kyma
 	}{
 		{
-			name:       "unchanged modules list",
-			moduleName: "module",
-			channel:    "",
+			name:                 "unchanged modules list",
+			moduleName:           "module",
+			channel:              "",
+			customResourcePolicy: "",
 			kymaCR: &Kyma{
 				Spec: KymaSpec{
 					Modules: []Module{
@@ -268,9 +279,10 @@ func Test_updateCR(t *testing.T) {
 			},
 		},
 		{
-			name:       "added module with channel",
-			moduleName: "module",
-			channel:    "channel",
+			name:                 "added module with channel and customResourcePolicy",
+			moduleName:           "module",
+			channel:              "channel",
+			customResourcePolicy: "customResourcePolicy",
 			kymaCR: &Kyma{
 				Spec: KymaSpec{
 					Modules: []Module{
@@ -287,17 +299,19 @@ func Test_updateCR(t *testing.T) {
 							Name: "istio",
 						},
 						{
-							Name:    "module",
-							Channel: "channel",
+							Name:                 "module",
+							Channel:              "channel",
+							CustomResourcePolicy: "customResourcePolicy",
 						},
 					},
 				},
 			},
 		},
 		{
-			name:       "added channel to existing module",
-			moduleName: "module",
-			channel:    "channel",
+			name:                 "added channel and customResourcePolicy to existing module",
+			moduleName:           "module",
+			channel:              "channel",
+			customResourcePolicy: "customResourcePolicy",
 			kymaCR: &Kyma{
 				Spec: KymaSpec{
 					Modules: []Module{
@@ -311,8 +325,9 @@ func Test_updateCR(t *testing.T) {
 				Spec: KymaSpec{
 					Modules: []Module{
 						{
-							Name:    "module",
-							Channel: "channel",
+							Name:                 "module",
+							Channel:              "channel",
+							CustomResourcePolicy: "customResourcePolicy",
 						},
 					},
 				},
@@ -347,9 +362,10 @@ func Test_updateCR(t *testing.T) {
 		kymaCR := tt.kymaCR
 		moduleName := tt.moduleName
 		moduleChannel := tt.channel
+		customResourcePolicy := tt.customResourcePolicy
 		want := tt.want
 		t.Run(tt.name, func(t *testing.T) {
-			got := enableModule(kymaCR, moduleName, moduleChannel)
+			got := enableModule(kymaCR, moduleName, moduleChannel, customResourcePolicy)
 			gotBytes, err := json.Marshal(got)
 			require.NoError(t, err)
 			wantBytes, err := json.Marshal(want)
@@ -381,6 +397,15 @@ func fixDefaultKyma() *unstructured.Unstructured {
 				"modules": []interface{}{
 					map[string]interface{}{
 						"name": "test-module",
+					},
+				},
+			},
+			"status": map[string]interface{}{
+				"modules": []interface{}{
+					map[string]interface{}{
+						"name":    "test-module",
+						"version": "1.2.3",
+						"state":   "Ready",
 					},
 				},
 			},
@@ -423,6 +448,37 @@ func Test_client_ListModuleTemplate(t *testing.T) {
 		require.Contains(t, list.Items, fixModuleTemplateStruct("test-1"))
 		require.Contains(t, list.Items, fixModuleTemplateStruct("test-2"))
 
+	})
+}
+
+func Test_client_GetModuleInfo(t *testing.T) {
+	t.Run("get ModuleInfo", func(t *testing.T) {
+		scheme := runtime.NewScheme()
+		scheme.AddKnownTypes(GVRKyma.GroupVersion())
+		client := NewClient(dynamic_fake.NewSimpleDynamicClient(scheme, fixDefaultKyma()))
+
+		got, err := client.GetModuleInfo(context.Background(), "test-module")
+		require.NoError(t, err)
+		require.Equal(t, KymaModuleInfo{
+			Spec: Module{
+				Name: "test-module",
+			},
+			Status: ModuleStatus{
+				Name:    "test-module",
+				Version: "1.2.3",
+				State:   "Ready",
+			},
+		}, *got)
+	})
+
+	t.Run("get error", func(t *testing.T) {
+		scheme := runtime.NewScheme()
+		scheme.AddKnownTypes(GVRKyma.GroupVersion())
+		client := NewClient(dynamic_fake.NewSimpleDynamicClient(scheme))
+
+		got, err := client.GetModuleInfo(context.Background(), "test-module")
+		require.ErrorContains(t, err, "not found")
+		require.Nil(t, got)
 	})
 }
 

@@ -13,7 +13,8 @@ func NewModuleCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Long:    `Use this command to manage modules on a kyma cluster.`,
 	}
 
-	cmd.AddCommand(NewListCMD(kymaConfig))
+	cmd.AddCommand(newListCMD(kymaConfig))
+	cmd.AddCommand(newEnableCMD(kymaConfig))
 
 	return cmd
 }

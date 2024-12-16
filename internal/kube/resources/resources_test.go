@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	"github.com/kyma-project/cli.v3/internal/cmdcommon/types"
+	"github.com/kyma-project/cli.v3/internal/kube/fake"
 	kube_fake "github.com/kyma-project/cli.v3/internal/kube/fake"
 	"github.com/kyma-project/cli.v3/internal/kube/istio"
-	"github.com/kyma-project/cli.v3/internal/kube/rootlessdynamic"
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -80,7 +80,7 @@ func Test_CreateClusterRoleBinding(t *testing.T) {
 				&ClusterRoleBinding,
 				&existingClusterRole,
 			)
-			kubeClient := &kube_fake.FakeKubeClient{
+			kubeClient := &kube_fake.KubeClient{
 				TestKubernetesInterface: staticClient,
 			}
 			err := CreateClusterRoleBinding(ctx, kubeClient, username, namespace, clusterRole)
@@ -146,7 +146,7 @@ func Test_CreateDeployment(t *testing.T) {
 			staticClient := k8s_fake.NewSimpleClientset(
 				&existingDeployment,
 			)
-			kubeClient := &kube_fake.FakeKubeClient{
+			kubeClient := &kube_fake.KubeClient{
 				TestKubernetesInterface: staticClient,
 			}
 
@@ -201,7 +201,7 @@ func Test_CreateService(t *testing.T) {
 			staticClient := k8s_fake.NewSimpleClientset(
 				&existingService,
 			)
-			kubeClient := &kube_fake.FakeKubeClient{
+			kubeClient := &kube_fake.KubeClient{
 				TestKubernetesInterface: staticClient,
 			}
 
@@ -219,7 +219,7 @@ func Test_CreateService(t *testing.T) {
 func Test_CreateAPIRule(t *testing.T) {
 	t.Run("create apiRule", func(t *testing.T) {
 		ctx := context.Background()
-		rootlessdynamic := &rootlessdynamic.Fake{}
+		rootlessdynamic := &fake.RootlessDynamicClient{}
 		apiRuleName := "apiRule"
 		namespace := "default"
 		host := "example.com"
@@ -233,7 +233,7 @@ func Test_CreateAPIRule(t *testing.T) {
 	})
 	t.Run("do not allow creating existing apiRule", func(t *testing.T) {
 		ctx := context.Background()
-		rootlessdynamic := &rootlessdynamic.Fake{
+		rootlessdynamic := &fake.RootlessDynamicClient{
 			ReturnErr: fmt.Errorf("already exists"),
 		}
 		apiRuleName := "existing"

@@ -13,7 +13,7 @@ import (
 
 // Fake client for testing purposes
 // It implements the Client interface and returns given values only
-type FakeKubeClient struct {
+type KubeClient struct {
 	TestKubernetesInterface      kubernetes.Interface
 	TestDynamicInterface         dynamic.Interface
 	TestIstioInterface           istio.Interface
@@ -25,38 +25,38 @@ type FakeKubeClient struct {
 	TestRootlessDynamicInterface rootlessdynamic.Interface
 }
 
-func (f *FakeKubeClient) Static() kubernetes.Interface {
+func (f *KubeClient) Static() kubernetes.Interface {
 	return f.TestKubernetesInterface
 }
 
-func (f *FakeKubeClient) Dynamic() dynamic.Interface {
+func (f *KubeClient) Dynamic() dynamic.Interface {
 	return f.TestDynamicInterface
 }
 
-func (f *FakeKubeClient) Istio() istio.Interface {
+func (f *KubeClient) Istio() istio.Interface {
 	return f.TestIstioInterface
 }
 
-func (f *FakeKubeClient) Btp() btp.Interface {
+func (f *KubeClient) Btp() btp.Interface {
 	return f.TestBtpInterface
 }
 
-func (f *FakeKubeClient) RestClient() *rest.RESTClient {
+func (f *KubeClient) RestClient() *rest.RESTClient {
 	return f.TestRestClient
 }
 
-func (f *FakeKubeClient) RestConfig() *rest.Config {
+func (f *KubeClient) RestConfig() *rest.Config {
 	return f.TestRestConfig
 }
 
-func (f *FakeKubeClient) APIConfig() *api.Config {
+func (f *KubeClient) APIConfig() *api.Config {
 	return f.TestAPIConfig
 }
 
-func (f *FakeKubeClient) Kyma() kyma.Interface {
+func (f *KubeClient) Kyma() kyma.Interface {
 	return f.TestKymaInterface
 }
 
-func (f *FakeKubeClient) RootlessDynamic() rootlessdynamic.Interface {
+func (f *KubeClient) RootlessDynamic() rootlessdynamic.Interface {
 	return f.TestRootlessDynamicInterface
 }

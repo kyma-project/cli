@@ -11,7 +11,7 @@ type modulesConfig struct {
 	*cmdcommon.KymaConfig
 }
 
-func NewListCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
+func newListCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cfg := modulesConfig{
 		KymaConfig: kymaConfig,
 	}

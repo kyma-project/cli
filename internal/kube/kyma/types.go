@@ -129,6 +129,11 @@ type ModuleStatus struct {
 	State   string `json:"state,omitempty"`
 }
 
+type KymaModuleInfo struct {
+	Spec   Module
+	Status ModuleStatus
+}
+
 // ModuleFromInterface converts a map retrieved from the Unstructured kyma CR to a Module struct.
 func ModuleFromInterface(i map[string]interface{}) Module {
 	module := Module{Name: i["name"].(string)}
