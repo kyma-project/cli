@@ -222,14 +222,14 @@ func Test_CreateAPIRule(t *testing.T) {
 		rootlessdynamic := &rootlessdynamic.Fake{}
 		apiRuleName := "apiRule"
 		namespace := "default"
-		domain := "example.com"
+		host := "example.com"
 		port := uint32(80)
 
-		err := CreateAPIRule(ctx, rootlessdynamic, apiRuleName, namespace, domain, port)
+		err := CreateAPIRule(ctx, rootlessdynamic, apiRuleName, namespace, host, port)
 
 		require.NoError(t, err)
 		require.Equal(t, 1, len(rootlessdynamic.ApplyObjs))
-		require.Equal(t, fixAPIRule(apiRuleName, namespace, domain, port), rootlessdynamic.ApplyObjs[0])
+		require.Equal(t, fixAPIRule(apiRuleName, namespace, host, port), rootlessdynamic.ApplyObjs[0])
 	})
 	t.Run("do not allow creating existing apiRule", func(t *testing.T) {
 		ctx := context.Background()
@@ -245,7 +245,7 @@ func Test_CreateAPIRule(t *testing.T) {
 	})
 }
 
-func fixAPIRule(apiRuleName, namespace, domain string, port uint32) unstructured.Unstructured {
+func fixAPIRule(apiRuleName, namespace, host string, port uint32) unstructured.Unstructured {
 	return unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": "gateway.kyma-project.io/v2alpha1",
@@ -261,7 +261,7 @@ func fixAPIRule(apiRuleName, namespace, domain string, port uint32) unstructured
 			},
 			"spec": map[string]interface{}{
 				"hosts": []interface{}{
-					fmt.Sprintf("%s.%s", apiRuleName, domain),
+					host,
 				},
 				"gateway": fmt.Sprintf("%s/%s", istio.GatewayNamespace, istio.GatewayName),
 				"rules": []interface{}{
