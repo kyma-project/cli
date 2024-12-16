@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"time"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/kube"
@@ -45,6 +46,9 @@ func applyCustomCR(writer io.Writer, ctx context.Context, client kube.Client, mo
 		// skip if there is nothing to do
 		return nil
 	}
+
+	ctx, cancel := context.WithTimeout(ctx, time.Second*100)
+	defer cancel()
 
 	fmt.Fprintf(writer, "waiting for module to be ready\n")
 	err := client.Kyma().WaitForModuleState(ctx, module, "Ready", "Warning")
