@@ -35,6 +35,8 @@ type ModuleVersion struct {
 
 type ModulesList []Module
 
+// List returns list of available module on a cluster
+// collects info about modules based on ModuleTemplates, ModuleReleaseMetas and the KymaCR
 func List(ctx context.Context, client kyma.Interface) (ModulesList, error) {
 	moduleTemplates, err := client.ListModuleTemplate(ctx)
 	if err != nil {

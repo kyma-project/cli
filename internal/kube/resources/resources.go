@@ -174,7 +174,7 @@ func CreateService(ctx context.Context, client kube.Client, name, namespace stri
 	return err
 }
 
-func CreateAPIRule(ctx context.Context, client rootlessdynamic.Interface, name, namespace, domain string, port uint32) error {
+func CreateAPIRule(ctx context.Context, client rootlessdynamic.Interface, name, namespace, host string, port uint32) error {
 	apirule := v2alpha1.APIRule{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "gateway.kyma-project.io/v2alpha1",
@@ -190,7 +190,7 @@ func CreateAPIRule(ctx context.Context, client rootlessdynamic.Interface, name, 
 		},
 		Spec: v2alpha1.APIRuleSpec{
 			Hosts: []*v2alpha1.Host{
-				ptr.To(v2alpha1.Host(fmt.Sprintf("%s.%s", name, domain))),
+				ptr.To(v2alpha1.Host(host)),
 			},
 			Gateway: ptr.To(fmt.Sprintf("%s/%s", istio.GatewayNamespace, istio.GatewayName)),
 			Rules: []v2alpha1.Rule{

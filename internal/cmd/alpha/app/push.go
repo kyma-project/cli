@@ -170,10 +170,13 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 			return clierror.WrapE(clierr, clierror.New("failed to get cluster address from gateway", "Make sure Istio module is installed"))
 		}
 
-		err = resources.CreateAPIRule(cfg.Ctx, client.RootlessDynamic(), cfg.name, cfg.namespace, domain, uint32(*cfg.containerPort.Value))
+		host := fmt.Sprintf("%s.%s", cfg.name, domain)
+		err = resources.CreateAPIRule(cfg.Ctx, client.RootlessDynamic(), cfg.name, cfg.namespace, host, uint32(*cfg.containerPort.Value))
 		if err != nil {
 			return clierror.Wrap(err, clierror.New("failed to create API Rule", "Make sure API Gateway module is installed", "Make sure APIRule is available in v2alpha1 version"))
 		}
+
+		fmt.Printf("\nThe %s app is now available under the https://%s/ address\n", cfg.name, host)
 	}
 
 	return nil
