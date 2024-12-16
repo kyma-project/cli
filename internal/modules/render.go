@@ -32,6 +32,8 @@ var (
 	}
 )
 
+// Renders uses standard output to print ModuleList in table view
+// TODO: support other formats like YAML or JSON
 func Render(modulesList ModulesList, tableInfo TableInfo) {
 	render(os.Stdout, modulesList, tableInfo)
 }
