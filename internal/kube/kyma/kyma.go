@@ -4,9 +4,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
-	"time"
 
-	"github.com/avast/retry-go"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -74,20 +72,7 @@ func (c *client) GetModuleInfo(ctx context.Context, moduleName string) (*KymaMod
 		return nil, err
 	}
 
-	info := KymaModuleInfo{}
-	for _, module := range kymaCR.Spec.Modules {
-		if module.Name == moduleName {
-			info.Spec = module
-		}
-	}
-
-	for _, module := range kymaCR.Status.Modules {
-		if module.Name == moduleName {
-			info.Status = module
-		}
-	}
-
-	return &info, nil
+	return getmoduleInfo(kymaCR, moduleName), nil
 }
 
 // UpdateDefaultKyma updates the default Kyma CR from the kyma-system namespace based on the Kyma CR from arguments
@@ -106,15 +91,32 @@ func (c *client) UpdateDefaultKyma(ctx context.Context, obj *Kyma) error {
 
 // WaitForModuleState waits until module is not in on of given expected states
 func (c *client) WaitForModuleState(ctx context.Context, moduleName string, expectedStates ...string) error {
-	return retry.Do(func() error {
-		return c.checkModuleState(ctx, moduleName, expectedStates...)
-	},
-		retry.Delay(time.Second),
-		retry.Context(ctx),
-		retry.LastErrorOnly(true),
-		retry.DelayType(retry.FixedDelay),
-		retry.Attempts(100),
-	)
+	watcher, err := c.dynamic.Resource(GVRKyma).
+		Namespace(DefaultKymaNamespace).
+		Watch(ctx, metav1.ListOptions{
+			FieldSelector: fmt.Sprintf("metadata.name=%s", DefaultKymaName),
+		})
+	if err != nil {
+		return err
+	}
+	defer watcher.Stop()
+
+	var lastErr error
+	for {
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("%s with last error: %s", ctx.Err(), lastErr)
+		case event := <-watcher.ResultChan():
+			err = checkModuleState(event.Object, moduleName, expectedStates...)
+			if err != nil {
+				// set last error and try one more time
+				lastErr = err
+				continue
+			}
+
+			return nil
+		}
+	}
 }
 
 // EnableModule adds module to the default Kyma CR in the kyma-system namespace
@@ -142,19 +144,39 @@ func (c *client) DisableModule(ctx context.Context, moduleName string) error {
 	return c.UpdateDefaultKyma(ctx, kymaCR)
 }
 
-func (c *client) checkModuleState(ctx context.Context, moduleName string, expectedStates ...string) error {
-	info, err := c.GetModuleInfo(ctx, moduleName)
+func checkModuleState(kymaObj runtime.Object, moduleName string, expectedStates ...string) error {
+	kyma := &Kyma{}
+	err := runtime.DefaultUnstructuredConverter.FromUnstructured(kymaObj.(*unstructured.Unstructured).Object, kyma)
 	if err != nil {
 		return err
 	}
 
+	moduleInfo := getmoduleInfo(kyma, moduleName)
+
 	for _, expectedState := range expectedStates {
-		if info.Status.State == expectedState {
+		if moduleInfo.Status.State == expectedState {
 			return nil
 		}
 	}
 
-	return fmt.Errorf("module %s is in the %s state", moduleName, info.Status.State)
+	return fmt.Errorf("module %s is in the %s state", moduleName, moduleInfo.Status.State)
+}
+
+func getmoduleInfo(kymaCR *Kyma, moduleName string) *KymaModuleInfo {
+	info := KymaModuleInfo{}
+	for _, module := range kymaCR.Spec.Modules {
+		if module.Name == moduleName {
+			info.Spec = module
+		}
+	}
+
+	for _, module := range kymaCR.Status.Modules {
+		if module.Name == moduleName {
+			info.Status = module
+		}
+	}
+
+	return &info
 }
 
 func enableModule(kymaCR *Kyma, moduleName, moduleChannel, customResourcePolicy string) *Kyma {

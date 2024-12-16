@@ -3,8 +3,9 @@ package rootlessdynamic
 import (
 	"context"
 	"fmt"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"strings"
+
+	"k8s.io/apimachinery/pkg/api/errors"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -76,6 +77,11 @@ func (c *client) Apply(ctx context.Context, resource *unstructured.Unstructured)
 	}
 
 	if apiResource.Namespaced {
+		if resource.GetNamespace() == "" {
+			// make resource has namespace set
+			resource.SetNamespace("default")
+		}
+
 		err = c.applyFunc(ctx, c.dynamic.Resource(*gvr).Namespace(resource.GetNamespace()), resource)
 		if err != nil {
 			return fmt.Errorf("failed to apply namespaced resource: %w", err)

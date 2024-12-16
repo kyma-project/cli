@@ -68,12 +68,5 @@ func loadCustomCRs(crPath string) ([]unstructured.Unstructured, clierror.Error) 
 		return nil, clierror.Wrap(err, clierror.New("failed to read object from file"))
 	}
 
-	for i := range crs {
-		// make sure all resources have namespace set
-		if crs[i].GetNamespace() == "" {
-			crs[i].SetNamespace("default")
-		}
-	}
-
 	return crs, nil
 }

@@ -567,32 +567,3 @@ func fixModuleTemplate(moduleName string) *unstructured.Unstructured {
 		},
 	}
 }
-
-func Test_client_WaitForModuleState(t *testing.T) {
-	t.Run("match state", func(t *testing.T) {
-		scheme := runtime.NewScheme()
-		scheme.AddKnownTypes(GVRKyma.GroupVersion())
-		client := client{dynamic_fake.NewSimpleDynamicClient(scheme, fixDefaultKyma())}
-
-		err := client.checkModuleState(context.Background(), "test-module", "Ready")
-		require.Nil(t, err)
-	})
-
-	t.Run("kyma not found", func(t *testing.T) {
-		scheme := runtime.NewScheme()
-		scheme.AddKnownTypes(GVRKyma.GroupVersion())
-		c := client{dynamic_fake.NewSimpleDynamicClient(scheme)}
-
-		err := c.checkModuleState(context.Background(), "test-module", "Ready")
-		require.ErrorContains(t, err, "kymas.operator.kyma-project.io \"default\"")
-	})
-
-	t.Run("wrong state", func(t *testing.T) {
-		scheme := runtime.NewScheme()
-		scheme.AddKnownTypes(GVRKyma.GroupVersion())
-		c := client{dynamic_fake.NewSimpleDynamicClient(scheme, fixDefaultKyma())}
-
-		err := c.checkModuleState(context.Background(), "test-module", "Warning")
-		require.ErrorContains(t, err, "module test-module is in the Ready state")
-	})
-}

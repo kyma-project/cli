@@ -5,7 +5,6 @@ go 1.23.2
 toolchain go1.23.3
 
 require (
-	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/buildpacks/pack v0.36.0
 	github.com/docker/cli v27.3.1+incompatible
 	github.com/docker/docker v27.3.1+incompatible
