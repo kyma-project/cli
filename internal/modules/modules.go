@@ -139,7 +139,7 @@ func getStateFromData(ctx context.Context, client kube.Client, data kyma.ModuleD
 		namespace = data.Metadata.Namespace
 	}
 
-	unstruct := giveUnstruct(data.ApiVersion, data.Kind, data.Metadata.Name, namespace)
+	unstruct := generateUnstruct(data.ApiVersion, data.Kind, data.Metadata.Name, namespace)
 	result, err := client.RootlessDynamic().Get(ctx, &unstruct)
 	if err != nil {
 		return "", err
@@ -151,19 +151,6 @@ func getStateFromData(ctx context.Context, client kube.Client, data kyma.ModuleD
 	return "", nil
 }
 
-func giveUnstruct(apiVersion, kind, name, namespace string) unstructured.Unstructured {
-	return unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": apiVersion,
-			"kind":       kind,
-			"metadata": map[string]interface{}{
-				"name":      name,
-				"namespace": namespace,
-			},
-		},
-	}
-}
-
 func getResourceState(ctx context.Context, client kube.Client, manager kyma.Manager) (string, error) {
 	namespace := "kyma-system"
 	if manager.Namespace != "" {
@@ -172,7 +159,7 @@ func getResourceState(ctx context.Context, client kube.Client, manager kyma.Mana
 
 	apiVersion := fmt.Sprintf("%s/%s", manager.Group, manager.Version)
 
-	unstruct := giveUnstruct(apiVersion, manager.Kind, manager.Name, namespace)
+	unstruct := generateUnstruct(apiVersion, manager.Kind, manager.Name, namespace)
 
 	result, err := client.RootlessDynamic().Get(ctx, &unstruct)
 	if err != nil {
@@ -194,7 +181,7 @@ func getResourceState(ctx context.Context, client kube.Client, manager kyma.Mana
 	//check if readyreplicas and wantedreplicas exist
 	if readyReplicas, ok := status["readyReplicas"]; ok {
 		if wantedReplicas, ok := spec["replicas"]; ok {
-			state := resolveStateFromReplicas(readyReplicas.(int), wantedReplicas.(int))
+			state := resolveStateFromReplicas(readyReplicas.(int64), wantedReplicas.(int64))
 			if state != "" {
 				return state, nil
 			}
@@ -204,7 +191,20 @@ func getResourceState(ctx context.Context, client kube.Client, manager kyma.Mana
 	return "", nil
 }
 
-func resolveStateFromReplicas(ready, wanted int) string {
+func generateUnstruct(apiVersion, kind, name, namespace string) unstructured.Unstructured {
+	return unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": apiVersion,
+			"kind":       kind,
+			"metadata": map[string]interface{}{
+				"name":      name,
+				"namespace": namespace,
+			},
+		},
+	}
+}
+
+func resolveStateFromReplicas(ready, wanted int64) string {
 	if ready == wanted {
 		return "Ready"
 	}
@@ -225,7 +225,7 @@ func getStateFromConditions(conditions []interface{}) string {
 				return "Ready"
 			}
 		}
-		if conditionUnwrapped["type"] == "Progressing" {
+		if conditionUnwrapped["type"] == "Processing" {
 			if conditionUnwrapped["status"] == "True" {
 				return "Processing"
 			}
