@@ -107,7 +107,7 @@ func TestEnable(t *testing.T) {
 
 		err := enable(buffer, context.Background(), &client, "keda", "fast", false, testKedaCR)
 		require.Equal(t, expectedCliErr, err)
-		require.Equal(t, "adding keda module to the Kyma CR\nwaiting for module to be ready", buffer.String())
+		require.Equal(t, "adding keda module to the Kyma CR\nwaiting for module to be ready\n", buffer.String())
 	})
 
 	t.Run("failed to apply custom resource", func(t *testing.T) {
