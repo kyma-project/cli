@@ -46,7 +46,7 @@ func applyCustomCR(writer io.Writer, ctx context.Context, client kube.Client, mo
 		return nil
 	}
 
-	fmt.Fprintf(writer, "waiting for module to be ready")
+	fmt.Fprintf(writer, "waiting for module to be ready\n")
 	err := client.Kyma().WaitForModuleState(ctx, module, "Ready", "Warning")
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to check module state"))

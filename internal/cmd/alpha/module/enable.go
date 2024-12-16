@@ -24,9 +24,9 @@ func newEnableCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "enable",
+		Use:   "enable <module>",
 		Short: "Enable module.",
-		Long:  "Use this command to enabele module.",
+		Long:  "Use this command to enable module.",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			cfg.module = args[0]
