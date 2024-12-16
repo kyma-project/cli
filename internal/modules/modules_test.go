@@ -588,7 +588,7 @@ func TestModuleHealth(t *testing.T) {
 			fakeClient := &fake.FakeKubeClient{
 				TestRootlessDynamicInterface: fakeRootless,
 			}
-			health, err := getModuleDeploymentHealth(context.Background(), fakeClient, tt.moduleTemplate, tt.kyma)
+			health, err := getModuleState(context.Background(), fakeClient, tt.moduleTemplate, tt.kyma)
 			require.Equal(t, tt.wantedErr, err)
 			require.Equal(t, tt.expectedHealth, health)
 		})

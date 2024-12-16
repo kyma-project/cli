@@ -19,21 +19,17 @@ type Module struct {
 }
 
 type Managed string
-type Healthy string
 
 const (
-	ManagedTrue    Managed = "true"
-	ManagedFalse   Managed = "false"
-	HealthyTrue    Healthy = "true"
-	HealthyFalse   Healthy = "false"
-	HealthyUnknown Healthy = ""
+	ManagedTrue  Managed = "true"
+	ManagedFalse Managed = "false"
 )
 
 type ModuleInstallDetails struct {
 	Version string
 	Channel string
 	Managed Managed
-	Healthy Healthy // #TODO Failsafe - remove when all modules are updated
+	State   string
 }
 
 type ModuleVersion struct {
@@ -77,7 +73,7 @@ func List(ctx context.Context, client kube.Client) (ModulesList, error) {
 			),
 		}
 
-		health, err := getModuleDeploymentHealth(ctx, client, moduleTemplate, defaultKyma)
+		state, err := getModuleState(ctx, client, moduleTemplate, defaultKyma)
 		if err != nil {
 			return nil, err
 		}
@@ -89,7 +85,7 @@ func List(ctx context.Context, client kube.Client) (ModulesList, error) {
 			// otherwise create a new record in the list
 			modulesList = append(modulesList, Module{
 				Name:           moduleName,
-				InstallDetails: getInstallDetails(defaultKyma, *modulereleasemetas, moduleName, health),
+				InstallDetails: getInstallDetails(defaultKyma, *modulereleasemetas, moduleName, state),
 				Versions: []ModuleVersion{
 					version,
 				},
@@ -100,70 +96,63 @@ func List(ctx context.Context, client kube.Client) (ModulesList, error) {
 	return modulesList, nil
 }
 
-func getModuleDeploymentHealth(ctx context.Context, client kube.Client, moduleTemplate kyma.ModuleTemplate, kymaCR *kyma.Kyma) (Healthy, error) {
+func getModuleState(ctx context.Context, client kube.Client, moduleTemplate kyma.ModuleTemplate, kymaCR *kyma.Kyma) (string, error) {
+	// get state from Kyma CR if it exists
 	if kymaCR != nil {
 		for _, module := range kymaCR.Status.Modules {
 			if module.Name == moduleTemplate.Spec.ModuleName {
-				if module.State == "Ready" {
-					return HealthyTrue, nil
-				} else if module.State == "" {
-					break
+				if module.State != "" {
+					return module.State, nil
 				}
-				return HealthyFalse, nil
 			}
 		}
 	}
 
+	// get state from moduleTemplate.Spec.Data if it exists
 	if moduleTemplate.Spec.Data != nil {
-		data := moduleTemplate.Spec.Data
-		namespace := "kyma-system"
-		if data.Metadata.Namespace != "" {
-			namespace = data.Metadata.Namespace
-		}
-
-		state, err := getResourceState(ctx, client, data.ApiVersion, data.Kind, namespace, data.Metadata.Name)
+		state, err := getStateFromData(ctx, client, *moduleTemplate.Spec.Data)
 		if err == nil {
-			fmt.Printf("Module %s state: %s\n", moduleTemplate.Name, state)
-			if state == "Ready" {
-				return HealthyTrue, nil
-			} else {
-				return HealthyFalse, nil
-			}
+			return state, nil
 		}
 		if !errors.IsNotFound(err) {
-			return HealthyUnknown, err
+			return "", err
 		}
 	}
 
+	// get state from resource described in moduleTemplate.Spec.Manager if it exists
 	if moduleTemplate.Spec.Manager != nil {
-		manager := moduleTemplate.Spec.Manager
-		namespace := "kyma-system"
-		if manager.Namespace != "" {
-			namespace = manager.Namespace
-		}
-
-		apiVersion := fmt.Sprintf("%s/%s", manager.Group, manager.Version)
-
-		state, err := getResourceState(ctx, client, apiVersion, manager.Kind, namespace, manager.Name)
+		state, err := getResourceState(ctx, client, *moduleTemplate.Spec.Manager)
 		if err == nil {
-			if state == "Ready" {
-				return HealthyTrue, nil
-			} else if state == "Unknown" {
-				return HealthyUnknown, nil
-			} else {
-				return HealthyFalse, nil
-			}
+			return state, nil
 		}
 		if !errors.IsNotFound(err) {
-			return HealthyFalse, err
+			return "", err
 		}
 	}
 
-	return HealthyUnknown, nil
+	return "", nil
 }
 
-func getResourceState(ctx context.Context, client kube.Client, apiVersion, kind, namespace, name string) (string, error) {
-	unstruct := unstructured.Unstructured{
+func getStateFromData(ctx context.Context, client kube.Client, data kyma.ModuleData) (string, error) {
+	namespace := "kyma-system"
+	if data.Metadata.Namespace != "" {
+		namespace = data.Metadata.Namespace
+	}
+
+	unstruct := giveUnstruct(data.ApiVersion, data.Kind, data.Metadata.Name, namespace)
+	result, err := client.RootlessDynamic().Get(ctx, &unstruct)
+	if err != nil {
+		return "", err
+	}
+	status := result.Object["status"].(map[string]interface{})
+	if state, ok := status["state"]; ok {
+		return state.(string), nil
+	}
+	return "", nil
+}
+
+func giveUnstruct(apiVersion, kind, name, namespace string) unstructured.Unstructured {
+	return unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": apiVersion,
 			"kind":       kind,
@@ -173,41 +162,98 @@ func getResourceState(ctx context.Context, client kube.Client, apiVersion, kind,
 			},
 		},
 	}
+}
+
+func getResourceState(ctx context.Context, client kube.Client, manager kyma.Manager) (string, error) {
+	namespace := "kyma-system"
+	if manager.Namespace != "" {
+		namespace = manager.Namespace
+	}
+
+	apiVersion := fmt.Sprintf("%s/%s", manager.Group, manager.Version)
+
+	unstruct := giveUnstruct(apiVersion, manager.Kind, manager.Name, namespace)
 
 	result, err := client.RootlessDynamic().Get(ctx, &unstruct)
 	if err != nil {
 		return "", err
 	}
 
+	spec := result.Object["spec"].(map[string]interface{})
 	status := result.Object["status"].(map[string]interface{})
 	if state, ok := status["state"]; ok {
-		if state.(string) == "Ready" {
-			return "Ready", nil
+		return state.(string), nil
+	}
+
+	if conditions, ok := status["conditions"]; ok {
+		state := getStateFromConditions(conditions.([]interface{}))
+		if state != "" {
+			return state, nil
 		}
 	}
-	if conditions, ok := status["conditions"]; ok {
-		for _, condition := range conditions.([]interface{}) {
-			conditionUnwrapped := condition.(map[string]interface{})
-			if conditionUnwrapped["type"] == "Available" {
-				if conditionUnwrapped["status"] == "True" {
-					return "Ready", nil
-				} else {
-					return "NotReady", nil
-				}
+	//check if readyreplicas and wantedreplicas exist
+	if readyReplicas, ok := status["readyReplicas"]; ok {
+		if wantedReplicas, ok := spec["replicas"]; ok {
+			state := resolveStateFromReplicas(readyReplicas.(int), wantedReplicas.(int))
+			if state != "" {
+				return state, nil
 			}
 		}
 	}
-	if readyReplicas, ok := status["readyReplicas"]; ok {
-		if readyReplicas.(int64) > 0 {
-			return "Ready", nil
-		} else {
-			return "NotReady", nil
-		}
-	}
-	return "Unknown", nil
+
+	return "", nil
 }
 
-func getInstallDetails(kyma *kyma.Kyma, releaseMetas kyma.ModuleReleaseMetaList, moduleName string, health Healthy) ModuleInstallDetails {
+func resolveStateFromReplicas(ready, wanted int) string {
+	if ready == wanted {
+		return "Ready"
+	}
+	if ready < wanted {
+		return "Processing"
+	}
+	if ready > wanted {
+		return "Deleting"
+	}
+	return ""
+}
+
+func getStateFromConditions(conditions []interface{}) string {
+	for _, condition := range conditions {
+		conditionUnwrapped := condition.(map[string]interface{})
+		if conditionUnwrapped["type"] == "Available" {
+			if conditionUnwrapped["status"] == "True" {
+				return "Ready"
+			}
+		}
+		if conditionUnwrapped["type"] == "Progressing" {
+			if conditionUnwrapped["status"] == "True" {
+				return "Processing"
+			}
+		}
+		if conditionUnwrapped["Type"] == "Error" {
+			if conditionUnwrapped["status"] == "True" {
+				return "Error"
+			}
+		}
+		if conditionUnwrapped["Type"] == "Warning" {
+			if conditionUnwrapped["status"] == "True" {
+				return "Warning"
+			}
+		}
+	}
+	return ""
+}
+
+// Possible states
+//Processing
+//Deleting
+//Ready
+//Error
+//""
+//Warning
+//Unmanaged
+
+func getInstallDetails(kyma *kyma.Kyma, releaseMetas kyma.ModuleReleaseMetaList, moduleName, state string) ModuleInstallDetails {
 	if kyma != nil {
 		for _, module := range kyma.Status.Modules {
 			if module.Name == moduleName {
@@ -216,7 +262,7 @@ func getInstallDetails(kyma *kyma.Kyma, releaseMetas kyma.ModuleReleaseMetaList,
 					Channel: getAssignedChannel(releaseMetas, module.Name, moduleVersion),
 					Managed: getManaged(kyma.Spec.Modules, moduleName),
 					Version: moduleVersion,
-					Healthy: health,
+					State:   state,
 				}
 			}
 		}
