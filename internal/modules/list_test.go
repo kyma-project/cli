@@ -209,7 +209,7 @@ var (
 				Managed: ManagedFalse,
 				Channel: "fast",
 				Version: "0.0.1",
-				Healthy: HealthyTrue,
+				State:   "Ready",
 			},
 			Versions: []ModuleVersion{
 				{
@@ -315,6 +315,7 @@ var (
 				"name":      "serverless",
 				"namespace": "kyma-system",
 			},
+			"spec": map[string]interface{}{},
 			"status": map[string]interface{}{
 				"conditions": []interface{}{
 					map[string]interface{}{
@@ -325,7 +326,7 @@ var (
 			},
 		},
 	}
-	readyReplicasCount  int64 = 1
+	replicasCount       int64 = 1
 	testDeploymentData2       = unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": "apps/v1",
@@ -334,8 +335,11 @@ var (
 				"name":      "serverless-1",
 				"namespace": "kyma-system",
 			},
+			"spec": map[string]interface{}{
+				"replicas": replicasCount,
+			},
 			"status": map[string]interface{}{
-				"readyReplicas": readyReplicasCount,
+				"readyReplicas": replicasCount,
 			},
 		},
 	}
@@ -357,7 +361,7 @@ func TestList(t *testing.T) {
 
 		fakeRootless := &rootlessdynamic.Fake{}
 
-		fakeClient := &fake.FakeKubeClient{
+		fakeClient := &fake.KubeClient{
 			TestKymaInterface:            kyma.NewClient(dynamicClient),
 			TestRootlessDynamicInterface: fakeRootless,
 		}
@@ -385,7 +389,7 @@ func TestList(t *testing.T) {
 
 		fakeRootless := &rootlessdynamic.Fake{}
 
-		fakeClient := &fake.FakeKubeClient{
+		fakeClient := &fake.KubeClient{
 			TestKymaInterface:            kyma.NewClient(dynamicClient),
 			TestRootlessDynamicInterface: fakeRootless,
 		}
@@ -412,7 +416,7 @@ func TestList(t *testing.T) {
 
 		fakeRootless := &rootlessdynamic.Fake{}
 
-		fakeClient := &fake.FakeKubeClient{
+		fakeClient := &fake.KubeClient{
 			TestKymaInterface:            kyma.NewClient(dynamicClient),
 			TestRootlessDynamicInterface: fakeRootless,
 		}
@@ -424,17 +428,17 @@ func TestList(t *testing.T) {
 	})
 }
 
-func TestModuleHealth(t *testing.T) {
+func TestModuleStatus(t *testing.T) {
 	tests := []struct {
 		name            string
 		kyma            *kyma.Kyma
 		moduleTemplate  kyma.ModuleTemplate
 		moduleOrManager *unstructured.Unstructured
 		wantedErr       error
-		expectedHealth  Healthy
+		expectedStatus  string
 	}{
 		{
-			name: "module is healthy, from default Kyma",
+			name: "module is Ready, from default Kyma",
 			kyma: &kyma.Kyma{
 				Status: kyma.KymaStatus{
 					Modules: []kyma.ModuleStatus{
@@ -450,10 +454,10 @@ func TestModuleHealth(t *testing.T) {
 					ModuleName: "serverless",
 				},
 			},
-			expectedHealth: HealthyTrue,
+			expectedStatus: "Ready",
 			wantedErr:      nil,
 		}, {
-			name: "module is unhealthy, from Kyma",
+			name: "module is in Error state, from Kyma",
 			kyma: &kyma.Kyma{
 				Status: kyma.KymaStatus{
 					Modules: []kyma.ModuleStatus{
@@ -469,11 +473,11 @@ func TestModuleHealth(t *testing.T) {
 					ModuleName: "serverless",
 				},
 			},
-			expectedHealth: HealthyFalse,
+			expectedStatus: "Error",
 			wantedErr:      nil,
 		},
 		{
-			name: "module is healthy, from moduleTemplate.spec.data",
+			name: "module is Ready, from moduleTemplate.spec.data",
 			kyma: &kyma.Kyma{
 				Status: kyma.KymaStatus{
 					Modules: []kyma.ModuleStatus{
@@ -499,11 +503,11 @@ func TestModuleHealth(t *testing.T) {
 					},
 				},
 			},
-			expectedHealth: HealthyTrue,
+			expectedStatus: "Ready",
 			wantedErr:      nil,
 		},
 		{
-			name: "module is healthy, from moduleTemplate.spec.manager, conditions",
+			name: "module is Ready, from moduleTemplate.spec.manager, conditions",
 			kyma: &kyma.Kyma{
 				Status: kyma.KymaStatus{
 					Modules: []kyma.ModuleStatus{
@@ -530,11 +534,11 @@ func TestModuleHealth(t *testing.T) {
 					},
 				},
 			},
-			expectedHealth: HealthyTrue,
+			expectedStatus: "Ready",
 			wantedErr:      nil,
 		},
 		{
-			name: "module is healthy, from moduleTemplate.spec.manager, readyReplicas",
+			name: "module is Ready, from moduleTemplate.spec.manager, readyReplicas",
 			kyma: &kyma.Kyma{
 				Status: kyma.KymaStatus{
 					Modules: []kyma.ModuleStatus{
@@ -561,7 +565,7 @@ func TestModuleHealth(t *testing.T) {
 					},
 				},
 			},
-			expectedHealth: HealthyTrue,
+			expectedStatus: "Ready",
 			wantedErr:      nil,
 		},
 	}
@@ -585,12 +589,12 @@ func TestModuleHealth(t *testing.T) {
 				},
 			)
 
-			fakeClient := &fake.FakeKubeClient{
+			fakeClient := &fake.KubeClient{
 				TestRootlessDynamicInterface: fakeRootless,
 			}
-			health, err := getModuleState(context.Background(), fakeClient, tt.moduleTemplate, tt.kyma)
+			state, err := getModuleState(context.Background(), fakeClient, tt.moduleTemplate, tt.kyma)
 			require.Equal(t, tt.wantedErr, err)
-			require.Equal(t, tt.expectedHealth, health)
+			require.Equal(t, tt.expectedStatus, state)
 		})
 	}
 }
