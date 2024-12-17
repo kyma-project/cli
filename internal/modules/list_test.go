@@ -404,7 +404,7 @@ func TestList(t *testing.T) {
 			&testReleaseMeta2,
 		)
 
-		fakeRootless := &rootlessdynamic.Fake{}
+		fakeRootless := &fake.RootlessDynamicClient{}
 
 		fakeClient := &fake.KubeClient{
 			TestKymaInterface:            kyma.NewClient(dynamicClient),
@@ -432,7 +432,7 @@ func TestList(t *testing.T) {
 			&testKymaCR,
 		)
 
-		fakeRootless := &rootlessdynamic.Fake{}
+		fakeRootless := &fake.RootlessDynamicClient{}
 
 		fakeClient := &fake.KubeClient{
 			TestKymaInterface:            kyma.NewClient(dynamicClient),
@@ -459,7 +459,7 @@ func TestList(t *testing.T) {
 			&testReleaseMeta2,
 		)
 
-		fakeRootless := &rootlessdynamic.Fake{}
+		fakeRootless := &fake.RootlessDynamicClient{}
 
 		fakeClient := &fake.KubeClient{
 			TestKymaInterface:            kyma.NewClient(dynamicClient),
@@ -538,12 +538,14 @@ func TestModuleStatus(t *testing.T) {
 					Name: "serverless",
 				},
 				Spec: kyma.ModuleTemplateSpec{
-					Data: &kyma.ModuleData{
-						ApiVersion: "operator.kyma-project.io/v1alpha1",
-						Kind:       "Serverless",
-						Metadata: metav1.ObjectMeta{
-							Name:      "serverless-1",
-							Namespace: "kyma-system",
+					Data: unstructured.Unstructured{
+						Object: map[string]interface{}{
+							"apiVersion": "operator.kyma-project.io/v1alpha1",
+							"kind":       "Serverless",
+							"metadata": map[string]interface{}{
+								"name":      "serverless-1",
+								"namespace": "kyma-system",
+							},
 						},
 					},
 				},

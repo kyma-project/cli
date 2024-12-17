@@ -111,8 +111,8 @@ func getModuleState(ctx context.Context, client kube.Client, moduleTemplate kyma
 	}
 
 	// get state from moduleTemplate.Spec.Data if it exists
-	if moduleTemplate.Spec.Data != nil {
-		state, err := getStateFromData(ctx, client, *moduleTemplate.Spec.Data)
+	if len(moduleTemplate.Spec.Data.Object) != 0 {
+		state, err := getStateFromData(ctx, client, moduleTemplate.Spec.Data)
 		if err == nil {
 			return state, nil
 		}
@@ -135,13 +135,18 @@ func getModuleState(ctx context.Context, client kube.Client, moduleTemplate kyma
 	return "", nil
 }
 
-func getStateFromData(ctx context.Context, client kube.Client, data kyma.ModuleData) (string, error) {
+func getStateFromData(ctx context.Context, client kube.Client, data unstructured.Unstructured) (string, error) {
 	namespace := "kyma-system"
-	if data.Metadata.Namespace != "" {
-		namespace = data.Metadata.Namespace
+	metadata := data.Object["metadata"].(map[string]interface{})
+	if ns, ok := metadata["namespace"]; ok && ns.(string) != "" {
+		namespace = metadata["namespace"].(string)
 	}
 
-	unstruct := generateUnstruct(data.ApiVersion, data.Kind, data.Metadata.Name, namespace)
+	apiVersion := data.Object["apiVersion"].(string)
+	kind := data.Object["kind"].(string)
+	name := metadata["name"].(string)
+
+	unstruct := generateUnstruct(apiVersion, kind, name, namespace)
 	result, err := client.RootlessDynamic().Get(ctx, &unstruct)
 	if err != nil {
 		return "", err
