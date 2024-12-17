@@ -9,6 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 )
@@ -22,6 +23,7 @@ type Interface interface {
 	ApplyMany(context.Context, []unstructured.Unstructured) error
 	Remove(context.Context, *unstructured.Unstructured) error
 	RemoveMany(context.Context, []unstructured.Unstructured) error
+	WatchSingleResource(context.Context, *unstructured.Unstructured) (watch.Interface, error)
 }
 
 type client struct {
@@ -93,12 +95,7 @@ func (c *client) Apply(ctx context.Context, resource *unstructured.Unstructured)
 	}
 
 	if apiResource.Namespaced {
-		if resource.GetNamespace() == "" {
-			// make resource has namespace set
-			resource.SetNamespace("default")
-		}
-
-		err = c.applyFunc(ctx, c.dynamic.Resource(*gvr).Namespace(resource.GetNamespace()), resource)
+		err = c.applyFunc(ctx, c.dynamic.Resource(*gvr).Namespace(getResourceNamespace(resource)), resource)
 		if err != nil {
 			return fmt.Errorf("failed to apply namespaced resource: %w", err)
 		}
@@ -135,7 +132,7 @@ func (c *client) Remove(ctx context.Context, resource *unstructured.Unstructured
 	}
 
 	if apiResource.Namespaced {
-		err = c.dynamic.Resource(*gvr).Namespace("kyma-system").Delete(ctx, resource.GetName(), metav1.DeleteOptions{})
+		err = c.dynamic.Resource(*gvr).Namespace(getResourceNamespace(resource)).Delete(ctx, resource.GetName(), metav1.DeleteOptions{})
 		if err != nil && !errors.IsNotFound(err) {
 			return fmt.Errorf("failed to delete namespaced resource %w", err)
 		}
@@ -156,6 +153,31 @@ func (c *client) RemoveMany(ctx context.Context, objs []unstructured.Unstructure
 		}
 	}
 	return nil
+}
+
+func (c *client) WatchSingleResource(ctx context.Context, resource *unstructured.Unstructured) (watch.Interface, error) {
+	group, version := groupVersion(resource.GetAPIVersion())
+	apiResource, err := c.discoverAPIResource(group, version, resource.GetKind())
+	if err != nil {
+		return nil, fmt.Errorf("failed to discover API resource using discovery client: %w", err)
+	}
+
+	fieldSelector := fmt.Sprintf("metadata.name=%s", resource.GetName())
+	gvr := &schema.GroupVersionResource{
+		Group:    group,
+		Version:  version,
+		Resource: apiResource.Name,
+	}
+
+	if apiResource.Namespaced {
+		return c.dynamic.Resource(*gvr).Namespace(getResourceNamespace(resource)).Watch(ctx, metav1.ListOptions{
+			FieldSelector: fieldSelector,
+		})
+	}
+
+	return c.dynamic.Resource(*gvr).Watch(ctx, metav1.ListOptions{
+		FieldSelector: fieldSelector,
+	})
 }
 
 // applyResource creates or updates given object
@@ -192,4 +214,13 @@ func groupVersion(version string) (string, string) {
 		return split[0], split[1]
 	}
 	return "", split[0]
+}
+
+// returns resource namespace or kyma-system if empty
+func getResourceNamespace(resource *unstructured.Unstructured) string {
+	if resource.GetNamespace() != "" {
+		return resource.GetNamespace()
+	}
+
+	return "kyma-system"
 }

@@ -7,13 +7,13 @@ import (
 	"os"
 	"time"
 
-	"github.com/avast/retry-go"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"github.com/kyma-project/cli.v3/internal/kube/rootlessdynamic"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/watch"
 )
 
 // Disable takes care about disabling module whatever if CustomResourcePolicy is set to Ignore or CreateAndDelete
@@ -66,6 +66,17 @@ func removeModuleCR(writer io.Writer, ctx context.Context, client kube.Client, m
 		return clierror.Wrap(err, clierror.New("failed to list module CRs"))
 	}
 
+	watchers := make([]watch.Interface, len(list.Items))
+	for i, moduleCR := range list.Items {
+		watchers[i], err = client.RootlessDynamic().WatchSingleResource(ctx, &moduleCR)
+		if err != nil {
+			return clierror.Wrap(err, clierror.New(
+				fmt.Sprintf("failed to watch resource %s/%s", moduleCR.GetNamespace(), moduleCR.GetName()),
+			))
+		}
+		defer watchers[i].Stop()
+	}
+
 	for _, moduleCR := range list.Items {
 		fmt.Fprintf(writer, "removing %s/%s CR\n", moduleCR.GetNamespace(), moduleCR.GetName())
 		err = client.RootlessDynamic().Remove(ctx, &moduleCR)
@@ -76,9 +87,12 @@ func removeModuleCR(writer io.Writer, ctx context.Context, client kube.Client, m
 		}
 	}
 
-	for _, moduleCR := range list.Items {
+	for i, moduleCR := range list.Items {
 		fmt.Fprintf(writer, "waiting for %s/%s CR to be removed\n", moduleCR.GetNamespace(), moduleCR.GetName())
-		clierr := waitForDeletion(ctx, client.RootlessDynamic(), &moduleCR)
+		timeoutCtx, cancel := context.WithTimeout(ctx, time.Second*100)
+		defer cancel()
+
+		clierr := waitForDeletion(timeoutCtx, watchers[i])
 		if clierr != nil {
 			return clierr
 		}
@@ -87,23 +101,18 @@ func removeModuleCR(writer io.Writer, ctx context.Context, client kube.Client, m
 	return nil
 }
 
-func waitForDeletion(ctx context.Context, client rootlessdynamic.Interface, obj *unstructured.Unstructured) clierror.Error {
-	err := retry.Do(func() error {
-		return isObjDeleted(ctx, client, obj)
-	},
-		retry.Delay(time.Second),
-		retry.Context(ctx),
-		retry.LastErrorOnly(true),
-		retry.DelayType(retry.FixedDelay),
-		retry.Attempts(100),
-	)
-	if err != nil {
-		return clierror.Wrap(err, clierror.New(
-			fmt.Sprintf("failed to check if %s/%s cr is removed", obj.GetNamespace(), obj.GetName()),
-		))
+func waitForDeletion(ctx context.Context, watcher watch.Interface) clierror.Error {
+	for {
+		select {
+		case <-ctx.Done():
+			return clierror.Wrap(ctx.Err(), clierror.New("context timeout"))
+		case event := <-watcher.ResultChan():
+			fmt.Printf("event: %+v/n", event)
+			if event.Type == watch.Deleted {
+				return nil
+			}
+		}
 	}
-
-	return nil
 }
 
 func isObjDeleted(ctx context.Context, client rootlessdynamic.Interface, obj *unstructured.Unstructured) error {

@@ -19,7 +19,7 @@ func newDisableCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "disable",
+		Use:   "disable <module>",
 		Short: "Disable module",
 		Long:  "Use this command to disable module",
 		Args:  cobra.ExactArgs(1),

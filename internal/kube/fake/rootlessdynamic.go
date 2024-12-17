@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/watch"
 )
 
 type RootlessDynamicClient struct {
@@ -11,8 +12,10 @@ type RootlessDynamicClient struct {
 	ReturnErr       error
 	ReturnGetErr    error
 	ReturnRemoveErr error
+	ReturnWatchErr  error
 	ReturnGetObj    unstructured.Unstructured
 	ReturnListObjs  *unstructured.UnstructuredList
+	ReturnWatcher   watch.Interface
 
 	// inputs summary
 	GetObjs     []unstructured.Unstructured
@@ -49,4 +52,8 @@ func (m *RootlessDynamicClient) Remove(_ context.Context, obj *unstructured.Unst
 func (m *RootlessDynamicClient) RemoveMany(_ context.Context, objs []unstructured.Unstructured) error {
 	m.RemovedObjs = append(m.RemovedObjs, objs...)
 	return m.ReturnRemoveErr
+}
+
+func (m *RootlessDynamicClient) WatchSingleResource(_ context.Context, obj *unstructured.Unstructured) (watch.Interface, error) {
+	return m.ReturnWatcher, m.ReturnWatchErr
 }

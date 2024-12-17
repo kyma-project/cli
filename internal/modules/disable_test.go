@@ -13,6 +13,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/watch"
 )
 
 var (
@@ -96,14 +97,9 @@ func TestDisable(t *testing.T) {
 				},
 			},
 		}
+		fakeWatcher := watch.NewFakeWithChanSize(1, false)
 		fakeRootlessDynamicClient := fake.RootlessDynamicClient{
-			ReturnGetErr: &apierrors.StatusError{
-				ErrStatus: metav1.Status{
-					Status:  metav1.StatusFailure,
-					Reason:  metav1.StatusReasonNotFound,
-					Message: "not found",
-				},
-			},
+			ReturnWatcher: fakeWatcher,
 			ReturnListObjs: &unstructured.UnstructuredList{
 				Items: []unstructured.Unstructured{
 					testKedaCR,
@@ -114,6 +110,8 @@ func TestDisable(t *testing.T) {
 			TestKymaInterface:            &fakeKymaClient,
 			TestRootlessDynamicInterface: &fakeRootlessDynamicClient,
 		}
+
+		fakeWatcher.Delete(nil)
 
 		err := disable(buffer, context.Background(), &fakeKubeClient, "keda")
 		require.Nil(t, err)
@@ -206,6 +204,7 @@ func TestDisable(t *testing.T) {
 			},
 		}
 		fakeRootlessDynamicClient := fake.RootlessDynamicClient{
+			ReturnWatcher:   watch.NewFake(),
 			ReturnRemoveErr: errors.New("test error"),
 			ReturnListObjs: &unstructured.UnstructuredList{
 				Items: []unstructured.Unstructured{
@@ -227,6 +226,91 @@ func TestDisable(t *testing.T) {
 		require.Equal(t, expectedCliErr, err)
 		require.Empty(t, fakeKymaClient.DisabledModules)
 		require.Equal(t, "removing kyma-system/default CR\n", buffer.String())
+	})
+
+	t.Run("failed to watch resource", func(t *testing.T) {
+		buffer := bytes.NewBuffer([]byte{})
+		fakeKymaClient := fake.KymaClient{
+			ReturnErr: nil,
+			ReturnModuleInfo: kyma.KymaModuleInfo{
+				Spec: kyma.Module{
+					CustomResourcePolicy: kyma.CustomResourcePolicyIgnore,
+				},
+			},
+			ReturnModuleTemplate: kyma.ModuleTemplate{
+				Spec: kyma.ModuleTemplateSpec{
+					Data: testKedaTemplate,
+				},
+			},
+		}
+		fakeRootlessDynamicClient := fake.RootlessDynamicClient{
+			ReturnWatcher:  nil,
+			ReturnWatchErr: errors.New("test error"),
+			ReturnListObjs: &unstructured.UnstructuredList{
+				Items: []unstructured.Unstructured{
+					testKedaCR,
+				},
+			},
+		}
+		fakeKubeClient := fake.KubeClient{
+			TestKymaInterface:            &fakeKymaClient,
+			TestRootlessDynamicInterface: &fakeRootlessDynamicClient,
+		}
+
+		expectedCliErr := clierror.Wrap(
+			errors.New("test error"),
+			clierror.New("failed to watch resource kyma-system/default"),
+		)
+
+		err := disable(buffer, context.Background(), &fakeKubeClient, "keda")
+		require.Equal(t, expectedCliErr, err)
+		require.Empty(t, fakeKymaClient.DisabledModules)
+	})
+
+	t.Run("wait for resource ctx done error", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		buffer := bytes.NewBuffer([]byte{})
+		fakeKymaClient := fake.KymaClient{
+			ReturnErr: nil,
+			ReturnModuleInfo: kyma.KymaModuleInfo{
+				Spec: kyma.Module{
+					CustomResourcePolicy: kyma.CustomResourcePolicyIgnore,
+				},
+			},
+			ReturnModuleTemplate: kyma.ModuleTemplate{
+				Spec: kyma.ModuleTemplateSpec{
+					Data: testKedaTemplate,
+				},
+			},
+		}
+		fakeWatcher := watch.NewFake()
+		fakeRootlessDynamicClient := fake.RootlessDynamicClient{
+			ReturnWatcher: fakeWatcher,
+			ReturnListObjs: &unstructured.UnstructuredList{
+				Items: []unstructured.Unstructured{
+					testKedaCR,
+				},
+			},
+		}
+		fakeKubeClient := fake.KubeClient{
+			TestKymaInterface:            &fakeKymaClient,
+			TestRootlessDynamicInterface: &fakeRootlessDynamicClient,
+		}
+
+		expectedCliErr := clierror.Wrap(
+			errors.New("context canceled"),
+			clierror.New("context timeout"),
+		)
+
+		go func() {
+			fakeWatcher.Add(nil)
+			// emit any event and then cancel ctx to simluate timeout
+			cancel()
+		}()
+
+		err := disable(buffer, ctx, &fakeKubeClient, "keda")
+		require.Equal(t, expectedCliErr, err)
+		require.Equal(t, "removing kyma-system/default CR\nwaiting for kyma-system/default CR to be removed\n", buffer.String())
 	})
 }
 
