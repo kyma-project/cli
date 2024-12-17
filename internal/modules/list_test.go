@@ -307,12 +307,25 @@ var (
 		Version:  "v1",
 		Resource: "deployments",
 	}
-	testDeploymentData = unstructured.Unstructured{
+	testDeploymentDataState = unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": "apps/v1",
 			"kind":       "Deployment",
 			"metadata": map[string]interface{}{
-				"name":      "serverless",
+				"name":      "serverless-state",
+				"namespace": "kyma-system",
+			},
+			"status": map[string]interface{}{
+				"state": "Ready",
+			},
+		},
+	}
+	testDeploymentDataConditions = unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "apps/v1",
+			"kind":       "Deployment",
+			"metadata": map[string]interface{}{
+				"name":      "serverless-conditions",
 				"namespace": "kyma-system",
 			},
 			"status": map[string]interface{}{
@@ -325,20 +338,53 @@ var (
 			},
 		},
 	}
-	replicasCount       int64 = 1
-	testDeploymentData2       = unstructured.Unstructured{
+	replicasCountOne        int64 = 1
+	replicasCountTwo        int64 = 2
+	testDeploymentDataReady       = unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": "apps/v1",
 			"kind":       "Deployment",
 			"metadata": map[string]interface{}{
-				"name":      "serverless-1",
+				"name":      "serverless-replicas-ready",
 				"namespace": "kyma-system",
 			},
 			"spec": map[string]interface{}{
-				"replicas": replicasCount,
+				"replicas": replicasCountOne,
 			},
 			"status": map[string]interface{}{
-				"readyReplicas": replicasCount,
+				"readyReplicas": replicasCountOne,
+			},
+		},
+	}
+	testDeploymentDataProcessing = unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "apps/v1",
+			"kind":       "Deployment",
+			"metadata": map[string]interface{}{
+				"name":      "serverless-replicas-processing",
+				"namespace": "kyma-system",
+			},
+			"spec": map[string]interface{}{
+				"replicas": replicasCountTwo,
+			},
+			"status": map[string]interface{}{
+				"readyReplicas": replicasCountOne,
+			},
+		},
+	}
+	testDeploymentDataDeleting = unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "apps/v1",
+			"kind":       "Deployment",
+			"metadata": map[string]interface{}{
+				"name":      "serverless-replicas-deleting",
+				"namespace": "kyma-system",
+			},
+			"spec": map[string]interface{}{
+				"replicas": replicasCountOne,
+			},
+			"status": map[string]interface{}{
+				"readyReplicas": replicasCountTwo,
 			},
 		},
 	}
@@ -506,6 +552,37 @@ func TestModuleStatus(t *testing.T) {
 			wantedErr:      nil,
 		},
 		{
+			name: "module is Ready, from moduleTemplate.spec.manager, state",
+			kyma: &kyma.Kyma{
+				Status: kyma.KymaStatus{
+					Modules: []kyma.ModuleStatus{
+						{
+							Name:  "serverless-state",
+							State: "",
+						},
+					},
+				},
+			},
+			moduleTemplate: kyma.ModuleTemplate{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "serverless",
+				},
+				Spec: kyma.ModuleTemplateSpec{
+					Manager: &kyma.Manager{
+						GroupVersionKind: metav1.GroupVersionKind{
+							Group:   "apps",
+							Version: "v1",
+							Kind:    "Deployment",
+						},
+						Name:      "serverless-state",
+						Namespace: "kyma-system",
+					},
+				},
+			},
+			expectedStatus: "Ready",
+			wantedErr:      nil,
+		},
+		{
 			name: "module is Ready, from moduleTemplate.spec.manager, conditions",
 			kyma: &kyma.Kyma{
 				Status: kyma.KymaStatus{
@@ -528,7 +605,7 @@ func TestModuleStatus(t *testing.T) {
 							Version: "v1",
 							Kind:    "Deployment",
 						},
-						Name:      "serverless",
+						Name:      "serverless-conditions",
 						Namespace: "kyma-system",
 					},
 				},
@@ -559,12 +636,74 @@ func TestModuleStatus(t *testing.T) {
 							Version: "v1",
 							Kind:    "Deployment",
 						},
-						Name:      "serverless-1",
+						Name:      "serverless-replicas-ready",
 						Namespace: "kyma-system",
 					},
 				},
 			},
 			expectedStatus: "Ready",
+			wantedErr:      nil,
+		},
+		{
+			name: "module is Processing, from moduleTemplate.spec.manager, readyReplicas",
+			kyma: &kyma.Kyma{
+				Status: kyma.KymaStatus{
+					Modules: []kyma.ModuleStatus{
+						{
+							Name:  "serverless-2",
+							State: "",
+						},
+					},
+				},
+			},
+			moduleTemplate: kyma.ModuleTemplate{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "serverless",
+				},
+				Spec: kyma.ModuleTemplateSpec{
+					Manager: &kyma.Manager{
+						GroupVersionKind: metav1.GroupVersionKind{
+							Group:   "apps",
+							Version: "v1",
+							Kind:    "Deployment",
+						},
+						Name:      "serverless-replicas-processing",
+						Namespace: "kyma-system",
+					},
+				},
+			},
+			expectedStatus: "Processing",
+			wantedErr:      nil,
+		},
+		{
+			name: "module is Deleting, from moduleTemplate.spec.manager, readyReplicas",
+			kyma: &kyma.Kyma{
+				Status: kyma.KymaStatus{
+					Modules: []kyma.ModuleStatus{
+						{
+							Name:  "serverless",
+							State: "",
+						},
+					},
+				},
+			},
+			moduleTemplate: kyma.ModuleTemplate{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "serverless",
+				},
+				Spec: kyma.ModuleTemplateSpec{
+					Manager: &kyma.Manager{
+						GroupVersionKind: metav1.GroupVersionKind{
+							Group:   "apps",
+							Version: "v1",
+							Kind:    "Deployment",
+						},
+						Name:      "serverless-replicas-deleting",
+						Namespace: "kyma-system",
+					},
+				},
+			},
+			expectedStatus: "Deleting",
 			wantedErr:      nil,
 		},
 	}
@@ -577,7 +716,7 @@ func TestModuleStatus(t *testing.T) {
 			apiResources := []*metav1.APIResourceList{
 				testModuleDataResourceList, testModuleManagerResourceList,
 			}
-			dynamicFake := dynamic_fake.NewSimpleDynamicClient(scheme, &testServerless, &testDeploymentData, &testDeploymentData2)
+			dynamicFake := dynamic_fake.NewSimpleDynamicClient(scheme, &testServerless, &testDeploymentDataState, &testDeploymentDataConditions, &testDeploymentDataReady, &testDeploymentDataProcessing, &testDeploymentDataDeleting)
 
 			fakeRootless := rootlessdynamic.NewClient(
 				dynamicFake,
