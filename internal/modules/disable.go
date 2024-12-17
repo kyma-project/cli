@@ -107,7 +107,6 @@ func waitForDeletion(ctx context.Context, watcher watch.Interface) clierror.Erro
 		case <-ctx.Done():
 			return clierror.Wrap(ctx.Err(), clierror.New("context timeout"))
 		case event := <-watcher.ResultChan():
-			fmt.Printf("event: %+v/n", event)
 			if event.Type == watch.Deleted {
 				return nil
 			}
