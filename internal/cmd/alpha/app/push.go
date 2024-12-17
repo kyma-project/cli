@@ -176,7 +176,7 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 			return clierror.Wrap(err, clierror.New("failed to create API Rule", "Make sure API Gateway module is installed", "Make sure APIRule is available in v2alpha1 version"))
 		}
 
-		fmt.Printf("\nThe %s app is now available under the https://%s/ address\n", cfg.name, host)
+		fmt.Printf("\nThe %s app is available under the https://%s/ address\n", cfg.name, host)
 	}
 
 	return nil
