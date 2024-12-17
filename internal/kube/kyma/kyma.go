@@ -22,10 +22,12 @@ const (
 type Interface interface {
 	ListModuleReleaseMeta(context.Context) (*ModuleReleaseMetaList, error)
 	ListModuleTemplate(context.Context) (*ModuleTemplateList, error)
+	GetModuleReleaseMetaForModule(context.Context, string) (*ModuleReleaseMeta, error)
+	GetModuleTemplateForModule(context.Context, string, string) (*ModuleTemplate, error)
 	GetDefaultKyma(context.Context) (*Kyma, error)
 	UpdateDefaultKyma(context.Context, *Kyma) error
-	WaitForModuleState(context.Context, string, ...string) error
 	GetModuleInfo(context.Context, string) (*KymaModuleInfo, error)
+	WaitForModuleState(context.Context, string, ...string) error
 	EnableModule(context.Context, string, string, string) error
 	DisableModule(context.Context, string) error
 }
@@ -48,6 +50,39 @@ func (c *client) ListModuleReleaseMeta(ctx context.Context) (*ModuleReleaseMetaL
 // ListModuleTemplate lists ModuleTemplate resources from across the whole cluster
 func (c *client) ListModuleTemplate(ctx context.Context) (*ModuleTemplateList, error) {
 	return list[ModuleTemplateList](ctx, c.dynamic, GVRModuleTemplate)
+}
+
+// GetModuleReleaseMetaForModule returns right ModuleReleaseMeta CR corelated with given module name
+func (c *client) GetModuleReleaseMetaForModule(ctx context.Context, moduleName string) (*ModuleReleaseMeta, error) {
+	list, err := c.ListModuleReleaseMeta(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, releaseMeta := range list.Items {
+		if releaseMeta.Spec.ModuleName == moduleName {
+			return &releaseMeta, nil
+		}
+	}
+
+	return nil, fmt.Errorf("can't find ModuleReleaseMeta CR for module %s", moduleName)
+}
+
+// GetModuleTemplateForModule returns ModuleTemplate CR corelated with given module name in right version
+func (c *client) GetModuleTemplateForModule(ctx context.Context, moduleName, moduleVersion string) (*ModuleTemplate, error) {
+	moduleTemplates, err := c.ListModuleTemplate(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, moduleTemplate := range moduleTemplates.Items {
+		if moduleTemplate.Spec.ModuleName == moduleName &&
+			moduleTemplate.Spec.Version == moduleVersion {
+			return &moduleTemplate, nil
+		}
+	}
+
+	return nil, fmt.Errorf("can't find ModuleTemplate CR for module %s in version %s", moduleName, moduleVersion)
 }
 
 // GetDefaultKyma gets the default Kyma CR from the kyma-system namespace and cast it to the Kyma structure

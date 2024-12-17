@@ -1,6 +1,7 @@
 package types
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -23,7 +24,12 @@ func TestEnvMap(t *testing.T) {
 		}
 		require.Equal(t, expectedMap, envMap.Values)
 		require.Equal(t, expectedNullableMap, envMap.GetNullableMap())
-		require.Equal(t, "TEST1=1,TEST2=2", envMap.String())
+
+		// expect TEST1=1,TEST2=2 or TEST2=2,TEST1=1
+		stringElems := strings.Split(envMap.String(), ",")
+		require.Len(t, stringElems, 2)
+		require.Contains(t, stringElems, "TEST1=1")
+		require.Contains(t, stringElems, "TEST2=2")
 	})
 
 	t.Run("get type", func(t *testing.T) {

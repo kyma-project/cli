@@ -433,7 +433,7 @@ func Test_client_ListModuleReleaseMeta(t *testing.T) {
 }
 
 func Test_client_ListModuleTemplate(t *testing.T) {
-	t.Run("list ModuleReleaseMeta", func(t *testing.T) {
+	t.Run("list ModuleTemplate", func(t *testing.T) {
 		scheme := runtime.NewScheme()
 		scheme.AddKnownTypes(GVRModuleTemplate.GroupVersion())
 		client := NewClient(dynamic_fake.NewSimpleDynamicClient(scheme,
@@ -448,6 +448,66 @@ func Test_client_ListModuleTemplate(t *testing.T) {
 		require.Contains(t, list.Items, fixModuleTemplateStruct("test-1"))
 		require.Contains(t, list.Items, fixModuleTemplateStruct("test-2"))
 
+	})
+}
+
+func Test_client_GetModuleReleaseMetaForModule(t *testing.T) {
+	t.Run("get module ModuleReleaseMeta", func(t *testing.T) {
+		scheme := runtime.NewScheme()
+		scheme.AddKnownTypes(GVRModuleReleaseMeta.GroupVersion())
+		client := NewClient(dynamic_fake.NewSimpleDynamicClient(scheme,
+			fixModuleReleaseMeta("test-1"),
+			fixModuleReleaseMeta("test-2"),
+		))
+
+		got, err := client.GetModuleReleaseMetaForModule(context.Background(), "test-2")
+
+		require.NoError(t, err)
+		require.Equal(t, fixModuleReleaseMetaStruct("test-2"), *got)
+	})
+
+	t.Run("no ModuleReleaseMeta for module", func(t *testing.T) {
+		scheme := runtime.NewScheme()
+		scheme.AddKnownTypes(GVRModuleReleaseMeta.GroupVersion())
+		client := NewClient(dynamic_fake.NewSimpleDynamicClient(scheme,
+			fixModuleReleaseMeta("test-1"),
+			fixModuleReleaseMeta("test-2"),
+		))
+
+		got, err := client.GetModuleReleaseMetaForModule(context.Background(), "test-123")
+
+		require.ErrorContains(t, err, "can't find ModuleReleaseMeta CR for module test-123")
+		require.Nil(t, got)
+	})
+}
+
+func Test_client_GetModuleTemplateForModule(t *testing.T) {
+	t.Run("get module ModuleTemplate", func(t *testing.T) {
+		scheme := runtime.NewScheme()
+		scheme.AddKnownTypes(GVRModuleTemplate.GroupVersion())
+		client := NewClient(dynamic_fake.NewSimpleDynamicClient(scheme,
+			fixModuleTemplate("test-1"),
+			fixModuleTemplate("test-2"),
+		))
+
+		got, err := client.GetModuleTemplateForModule(context.Background(), "test-2", "0.1")
+
+		require.NoError(t, err)
+		require.Equal(t, fixModuleTemplateStruct("test-2"), *got)
+	})
+
+	t.Run("no ModuleReleaseMeta for module", func(t *testing.T) {
+		scheme := runtime.NewScheme()
+		scheme.AddKnownTypes(GVRModuleTemplate.GroupVersion())
+		client := NewClient(dynamic_fake.NewSimpleDynamicClient(scheme,
+			fixModuleTemplate("test-1"),
+			fixModuleTemplate("test-2"),
+		))
+
+		got, err := client.GetModuleTemplateForModule(context.Background(), "test-2", "0.2")
+
+		require.ErrorContains(t, err, "can't find ModuleTemplate CR for module test-2 in version 0.2")
+		require.Nil(t, got)
 	})
 }
 
