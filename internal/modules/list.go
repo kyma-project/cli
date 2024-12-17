@@ -168,7 +168,6 @@ func getResourceState(ctx context.Context, client kube.Client, manager kyma.Mana
 		return "", err
 	}
 
-	spec := result.Object["spec"].(map[string]interface{})
 	status := result.Object["status"].(map[string]interface{})
 	if state, ok := status["state"]; ok {
 		return state.(string), nil
@@ -182,6 +181,7 @@ func getResourceState(ctx context.Context, client kube.Client, manager kyma.Mana
 	}
 	//check if readyreplicas and wantedreplicas exist
 	if readyReplicas, ok := status["readyReplicas"]; ok {
+		spec := result.Object["spec"].(map[string]interface{})
 		if wantedReplicas, ok := spec["replicas"]; ok {
 			state := resolveStateFromReplicas(readyReplicas.(int64), wantedReplicas.(int64))
 			if state != "" {

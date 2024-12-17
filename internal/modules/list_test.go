@@ -315,7 +315,6 @@ var (
 				"name":      "serverless",
 				"namespace": "kyma-system",
 			},
-			"spec": map[string]interface{}{},
 			"status": map[string]interface{}{
 				"conditions": []interface{}{
 					map[string]interface{}{
