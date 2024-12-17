@@ -10,8 +10,6 @@ import (
 	"github.com/kyma-project/cli.v3/internal/kube/fake"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"github.com/stretchr/testify/require"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/watch"
 )
@@ -311,41 +309,5 @@ func TestDisable(t *testing.T) {
 		err := disable(buffer, ctx, &fakeKubeClient, "keda")
 		require.Equal(t, expectedCliErr, err)
 		require.Equal(t, "removing kyma-system/default CR\nwaiting for kyma-system/default CR to be removed\n", buffer.String())
-	})
-}
-
-func Test_isObjDeleted(t *testing.T) {
-	t.Run("return nil when obj is not found", func(t *testing.T) {
-		fakeClient := fake.RootlessDynamicClient{
-			ReturnGetErr: &apierrors.StatusError{
-				ErrStatus: metav1.Status{
-					Status:  metav1.StatusFailure,
-					Reason:  metav1.StatusReasonNotFound,
-					Message: "not found",
-				},
-			},
-		}
-
-		err := isObjDeleted(context.Background(), &fakeClient, testKedaCR.DeepCopy())
-		require.NoError(t, err)
-	})
-
-	t.Run("return error because of unexpected client error", func(t *testing.T) {
-		fakeClient := fake.RootlessDynamicClient{
-			ReturnGetErr: errors.New("test error"),
-		}
-
-		err := isObjDeleted(context.Background(), &fakeClient, testKedaCR.DeepCopy())
-		require.ErrorContains(t, err, "test error")
-	})
-
-	t.Run("return error because of client returne object", func(t *testing.T) {
-		fakeClient := fake.RootlessDynamicClient{
-			ReturnGetErr: nil,
-			ReturnGetObj: testKedaCR,
-		}
-
-		err := isObjDeleted(context.Background(), &fakeClient, testKedaCR.DeepCopy())
-		require.ErrorContains(t, err, "kyma-system/default exists on the cluster")
 	})
 }

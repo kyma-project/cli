@@ -10,9 +10,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
-	"github.com/kyma-project/cli.v3/internal/kube/rootlessdynamic"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/watch"
 )
 
@@ -112,18 +110,4 @@ func waitForDeletion(ctx context.Context, watcher watch.Interface) clierror.Erro
 			}
 		}
 	}
-}
-
-func isObjDeleted(ctx context.Context, client rootlessdynamic.Interface, obj *unstructured.Unstructured) error {
-	_, err := client.Get(ctx, obj)
-	if errors.IsNotFound(err) {
-		// expected ok
-		return nil
-	}
-
-	if err != nil {
-		return err
-	}
-
-	return fmt.Errorf("%s/%s exists on the cluster", obj.GetNamespace(), obj.GetName())
 }
