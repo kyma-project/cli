@@ -100,6 +100,7 @@ func List(ctx context.Context, client kube.Client) (ModulesList, error) {
 }
 
 func getModuleState(ctx context.Context, client kube.Client, moduleTemplate kyma.ModuleTemplate, kymaCR *kyma.Kyma) (string, error) {
+	// get state from Kyma CR if it exists
 	if state := getStateFromKymaCR(moduleTemplate, kymaCR); state != "" {
 		return state, nil
 	}
@@ -126,7 +127,6 @@ func getModuleState(ctx context.Context, client kube.Client, moduleTemplate kyma
 }
 
 func getStateFromKymaCR(moduleTemplate kyma.ModuleTemplate, kymaCR *kyma.Kyma) string {
-	// get state from Kyma CR if it exists
 	if kymaCR != nil {
 		for _, module := range kymaCR.Status.Modules {
 			if module.Name == moduleTemplate.Spec.ModuleName {
