@@ -119,10 +119,8 @@ func getModuleState(ctx context.Context, client kube.Client, moduleTemplate kyma
 func getStateFromKymaCR(moduleTemplate kyma.ModuleTemplate, kymaCR *kyma.Kyma) string {
 	if kymaCR != nil {
 		for _, module := range kymaCR.Status.Modules {
-			if module.Name == moduleTemplate.Spec.ModuleName {
-				if module.State != "" {
-					return module.State
-				}
+			if module.Name == moduleTemplate.Spec.ModuleName && module.State != "" {
+				return module.State
 			}
 		}
 	}
