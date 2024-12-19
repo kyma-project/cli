@@ -338,6 +338,24 @@ var (
 			},
 		},
 	}
+	testDeploymentDataConditionsProcessing = unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "apps/v1",
+			"kind":       "Deployment",
+			"metadata": map[string]interface{}{
+				"name":      "serverless-conditions-processing",
+				"namespace": "kyma-system",
+			},
+			"status": map[string]interface{}{
+				"conditions": []interface{}{
+					map[string]interface{}{
+						"type":   "Processing",
+						"status": "True",
+					},
+				},
+			},
+		},
+	}
 	replicasCountOne        int64 = 1
 	replicasCountTwo        int64 = 2
 	testDeploymentDataReady       = unstructured.Unstructured{
@@ -616,6 +634,37 @@ func TestModuleStatus(t *testing.T) {
 			wantedErr:      nil,
 		},
 		{
+			name: "module is Processing, from moduleTemplate.spec.manager, conditions",
+			kyma: &kyma.Kyma{
+				Status: kyma.KymaStatus{
+					Modules: []kyma.ModuleStatus{
+						{
+							Name:  "serverless-1",
+							State: "",
+						},
+					},
+				},
+			},
+			moduleTemplate: kyma.ModuleTemplate{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "serverless",
+				},
+				Spec: kyma.ModuleTemplateSpec{
+					Manager: &kyma.Manager{
+						GroupVersionKind: metav1.GroupVersionKind{
+							Group:   "apps",
+							Version: "v1",
+							Kind:    "Deployment",
+						},
+						Name:      "serverless-conditions-processing",
+						Namespace: "kyma-system",
+					},
+				},
+			},
+			expectedStatus: "Processing",
+			wantedErr:      nil,
+		},
+		{
 			name: "module is Ready, from moduleTemplate.spec.manager, readyReplicas",
 			kyma: &kyma.Kyma{
 				Status: kyma.KymaStatus{
@@ -718,7 +767,7 @@ func TestModuleStatus(t *testing.T) {
 			apiResources := []*metav1.APIResourceList{
 				testModuleDataResourceList, testModuleManagerResourceList,
 			}
-			dynamicFake := dynamic_fake.NewSimpleDynamicClient(scheme, &testServerless, &testDeploymentDataState, &testDeploymentDataConditions, &testDeploymentDataReady, &testDeploymentDataProcessing, &testDeploymentDataDeleting)
+			dynamicFake := dynamic_fake.NewSimpleDynamicClient(scheme, &testServerless, &testDeploymentDataState, &testDeploymentDataConditions, &testDeploymentDataConditionsProcessing, &testDeploymentDataReady, &testDeploymentDataProcessing, &testDeploymentDataDeleting)
 
 			fakeRootless := rootlessdynamic.NewClient(
 				dynamicFake,

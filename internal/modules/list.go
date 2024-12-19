@@ -29,7 +29,8 @@ type ModuleInstallDetails struct {
 	Version string
 	Channel string
 	Managed Managed
-	State   string
+	// Possible states: https://github.com/kyma-project/lifecycle-manager/blob/main/api/shared/state.go
+	State string
 }
 
 type ModuleVersion struct {
@@ -99,43 +100,49 @@ func List(ctx context.Context, client kube.Client) (ModulesList, error) {
 }
 
 func getModuleState(ctx context.Context, client kube.Client, moduleTemplate kyma.ModuleTemplate, kymaCR *kyma.Kyma) (string, error) {
-	// get state from Kyma CR if it exists
-	if kymaCR != nil {
-		for _, module := range kymaCR.Status.Modules {
-			if module.Name == moduleTemplate.Spec.ModuleName {
-				if module.State != "" {
-					return module.State, nil
-				}
-			}
-		}
+	if state := getStateFromKymaCR(moduleTemplate, kymaCR); state != "" {
+		return state, nil
 	}
 
 	// get state from moduleTemplate.Spec.Data if it exists
-	if len(moduleTemplate.Spec.Data.Object) != 0 {
-		state, err := getStateFromData(ctx, client, moduleTemplate.Spec.Data)
-		if err == nil {
-			return state, nil
-		}
-		if !errors.IsNotFound(err) {
-			return "", err
-		}
+	state, err := getStateFromData(ctx, client, moduleTemplate.Spec.Data)
+	if err != nil {
+		return "", err
+	}
+	if state != "" {
+		return state, nil
 	}
 
 	// get state from resource described in moduleTemplate.Spec.Manager if it exists
-	if moduleTemplate.Spec.Manager != nil {
-		state, err := getResourceState(ctx, client, *moduleTemplate.Spec.Manager)
-		if err == nil {
-			return state, nil
-		}
-		if !errors.IsNotFound(err) {
-			return "", err
-		}
+	state, err = getResourceState(ctx, client, moduleTemplate.Spec.Manager)
+	if err != nil {
+		return "", err
+	}
+	if state != "" {
+		return state, nil
 	}
 
 	return "", nil
 }
 
+func getStateFromKymaCR(moduleTemplate kyma.ModuleTemplate, kymaCR *kyma.Kyma) string {
+	// get state from Kyma CR if it exists
+	if kymaCR != nil {
+		for _, module := range kymaCR.Status.Modules {
+			if module.Name == moduleTemplate.Spec.ModuleName {
+				if module.State != "" {
+					return module.State
+				}
+			}
+		}
+	}
+	return ""
+}
+
 func getStateFromData(ctx context.Context, client kube.Client, data unstructured.Unstructured) (string, error) {
+	if len(data.Object) == 0 {
+		return "", nil
+	}
 	namespace := "kyma-system"
 	metadata := data.Object["metadata"].(map[string]interface{})
 	if ns, ok := metadata["namespace"]; ok && ns.(string) != "" {
@@ -149,7 +156,11 @@ func getStateFromData(ctx context.Context, client kube.Client, data unstructured
 	unstruct := generateUnstruct(apiVersion, kind, name, namespace)
 	result, err := client.RootlessDynamic().Get(ctx, &unstruct)
 	if err != nil {
-		return "", err
+		if !errors.IsNotFound(err) {
+			return "", err
+		} else {
+			return "", nil
+		}
 	}
 	status := result.Object["status"].(map[string]interface{})
 	if state, ok := status["state"]; ok {
@@ -158,7 +169,10 @@ func getStateFromData(ctx context.Context, client kube.Client, data unstructured
 	return "", nil
 }
 
-func getResourceState(ctx context.Context, client kube.Client, manager kyma.Manager) (string, error) {
+func getResourceState(ctx context.Context, client kube.Client, manager *kyma.Manager) (string, error) {
+	if manager == nil {
+		return "", nil
+	}
 	namespace := "kyma-system"
 	if manager.Namespace != "" {
 		namespace = manager.Namespace
@@ -170,7 +184,12 @@ func getResourceState(ctx context.Context, client kube.Client, manager kyma.Mana
 
 	result, err := client.RootlessDynamic().Get(ctx, &unstruct)
 	if err != nil {
-		return "", err
+		if !errors.IsNotFound(err) {
+			return "", err
+		} else {
+			return "", nil
+		}
+
 	}
 
 	status := result.Object["status"].(map[string]interface{})
@@ -218,47 +237,28 @@ func resolveStateFromReplicas(ready, wanted int64) string {
 	if ready < wanted {
 		return "Processing"
 	}
-	if ready > wanted {
-		return "Deleting"
-	}
-	return ""
+	// ready > wanted
+	return "Deleting"
 }
 
 func getStateFromConditions(conditions []interface{}) string {
 	for _, condition := range conditions {
 		conditionUnwrapped := condition.(map[string]interface{})
-		if conditionUnwrapped["type"] == "Available" {
-			if conditionUnwrapped["status"] == "True" {
-				return "Ready"
-			}
+		if conditionUnwrapped["status"] != "True" {
+			continue
 		}
-		if conditionUnwrapped["type"] == "Processing" {
-			if conditionUnwrapped["status"] == "True" {
-				return "Processing"
-			}
-		}
-		if conditionUnwrapped["Type"] == "Error" {
-			if conditionUnwrapped["status"] == "True" {
-				return "Error"
-			}
-		}
-		if conditionUnwrapped["Type"] == "Warning" {
-			if conditionUnwrapped["status"] == "True" {
-				return "Warning"
-			}
+
+		conditionType := conditionUnwrapped["type"].(string)
+
+		switch conditionType {
+		case "Available":
+			return "Ready"
+		case "Processing", "Error", "Warning":
+			return conditionType
 		}
 	}
 	return ""
 }
-
-// Possible states
-//Processing
-//Deleting
-//Ready
-//Error
-//""
-//Warning
-//Unmanaged
 
 func getInstallDetails(kyma *kyma.Kyma, releaseMetas kyma.ModuleReleaseMetaList, moduleName, state string) ModuleInstallDetails {
 	if kyma != nil {
