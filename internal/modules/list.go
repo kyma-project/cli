@@ -107,23 +107,13 @@ func getModuleState(ctx context.Context, client kube.Client, moduleTemplate kyma
 
 	// get state from moduleTemplate.Spec.Data if it exists
 	state, err := getStateFromData(ctx, client, moduleTemplate.Spec.Data)
-	if err != nil {
-		return "", err
-	}
-	if state != "" {
-		return state, nil
+	if err != nil || state != "" {
+		return state, err
 	}
 
 	// get state from resource described in moduleTemplate.Spec.Manager if it exists
 	state, err = getResourceState(ctx, client, moduleTemplate.Spec.Manager)
-	if err != nil {
-		return "", err
-	}
-	if state != "" {
-		return state, nil
-	}
-
-	return "", nil
+	return state, err
 }
 
 func getStateFromKymaCR(moduleTemplate kyma.ModuleTemplate, kymaCR *kyma.Kyma) string {
@@ -156,11 +146,10 @@ func getStateFromData(ctx context.Context, client kube.Client, data unstructured
 	unstruct := generateUnstruct(apiVersion, kind, name, namespace)
 	result, err := client.RootlessDynamic().Get(ctx, &unstruct)
 	if err != nil {
-		if !errors.IsNotFound(err) {
-			return "", err
-		} else {
+		if errors.IsNotFound(err) {
 			return "", nil
 		}
+		return "", err
 	}
 	status := result.Object["status"].(map[string]interface{})
 	if state, ok := status["state"]; ok {
@@ -184,12 +173,10 @@ func getResourceState(ctx context.Context, client kube.Client, manager *kyma.Man
 
 	result, err := client.RootlessDynamic().Get(ctx, &unstruct)
 	if err != nil {
-		if !errors.IsNotFound(err) {
-			return "", err
-		} else {
+		if errors.IsNotFound(err) {
 			return "", nil
 		}
-
+		return "", err
 	}
 
 	status := result.Object["status"].(map[string]interface{})
