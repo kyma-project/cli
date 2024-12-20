@@ -137,7 +137,7 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 	if cfg.dockerfilePath != "" || cfg.packAppPath != "" {
 		registryConfig, cliErr := registry.GetInternalConfig(cfg.Ctx, client)
 		if cliErr != nil {
-			return clierror.WrapE(cliErr, clierror.New("failed to load in-cluster registry configuration"))
+			return cliErr
 		}
 
 		image, clierr = buildAndImportImage(client, cfg, registryConfig)
@@ -203,11 +203,7 @@ func buildAndImportImage(client kube.Client, cfg *appPushConfig, registryConfig 
 		},
 	)
 	if cliErr != nil {
-		return "", clierror.WrapE(cliErr, clierror.New(
-			"failed to import image to in-cluster registry",
-			"make sure cluster is available and properly configured",
-			"enable docker registry module by calling `kyma alpha module enable docker-registry -c experimental`",
-		))
+		return "", clierror.WrapE(cliErr, clierror.New("failed to import image to in-cluster registry"))
 	}
 
 	return pushedImage, nil

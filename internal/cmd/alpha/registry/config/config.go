@@ -45,7 +45,7 @@ func runConfig(cfg *cfgConfig) clierror.Error {
 
 	registryConfig, err := registry.GetExternalConfig(cfg.Ctx, client)
 	if err != nil {
-		return clierror.WrapE(err, clierror.New("failed to load in-cluster registry configuration"))
+		return err
 	}
 
 	if cfg.externalurl && cfg.output == "" {
