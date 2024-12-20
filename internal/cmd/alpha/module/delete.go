@@ -7,32 +7,32 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type disableConfig struct {
+type deleteConfig struct {
 	*cmdcommon.KymaConfig
 
 	module string
 }
 
-func newDisableCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
-	cfg := disableConfig{
+func newDeleteCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
+	cfg := deleteConfig{
 		KymaConfig: kymaConfig,
 	}
 
 	cmd := &cobra.Command{
-		Use:   "disable <module>",
-		Short: "Disable module",
-		Long:  "Use this command to disable module",
+		Use:   "delete <module>",
+		Short: "Delete module",
+		Long:  "Use this command to delete module",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			cfg.module = args[0]
-			clierror.Check(runDisable(&cfg))
+			clierror.Check(runDelete(&cfg))
 		},
 	}
 
 	return cmd
 }
 
-func runDisable(cfg *disableConfig) clierror.Error {
+func runDelete(cfg *deleteConfig) clierror.Error {
 	client, clierr := cfg.GetKubeClientWithClierr()
 	if clierr != nil {
 		return clierr
