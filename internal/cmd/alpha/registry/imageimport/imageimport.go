@@ -61,7 +61,7 @@ func runImageImport(config *provisionConfig) clierror.Error {
 	// TODO: Add "serverless is not installed" error message
 	registryConfig, err := registry.GetInternalConfig(config.Ctx, client)
 	if err != nil {
-		return clierror.WrapE(err, clierror.New("failed to load in-cluster registry configuration"))
+		return err
 	}
 
 	fmt.Println("Importing", config.image)

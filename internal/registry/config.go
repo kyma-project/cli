@@ -32,7 +32,7 @@ func GetExternalConfig(ctx context.Context, client kube.Client) (*ExternalRegist
 		return nil, clierror.Wrap(err,
 			clierror.New("failed to get external registry configuration",
 				"make sure cluster is available and properly configured",
-				"make sure the Docker Registry is installed and in Ready/Warning state.",
+				"enable docker registry module by calling `kyma alpha module enable docker-registry -c experimental`",
 			),
 		)
 	}
@@ -46,7 +46,7 @@ func GetInternalConfig(ctx context.Context, client kube.Client) (*InternalRegist
 		return nil, clierror.Wrap(err,
 			clierror.New("failed to load in-cluster registry configuration",
 				"make sure cluster is available and properly configured",
-				"make sure the Docker Registry is installed and in Ready/Warning state.",
+				"enable docker registry module by calling `kyma alpha module enable docker-registry -c experimental`",
 			),
 		)
 	}
