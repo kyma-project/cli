@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-type enableConfig struct {
+type addConfig struct {
 	*cmdcommon.KymaConfig
 
 	module    string
@@ -18,19 +18,19 @@ type enableConfig struct {
 	defaultCR bool
 }
 
-func newEnableCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
-	cfg := enableConfig{
+func newAddCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
+	cfg := addConfig{
 		KymaConfig: kymaConfig,
 	}
 
 	cmd := &cobra.Command{
-		Use:   "enable <module>",
-		Short: "Enable module.",
-		Long:  "Use this command to enable module.",
+		Use:   "add <module>",
+		Short: "Add module.",
+		Long:  "Use this command to add module.",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			cfg.module = args[0]
-			clierror.Check(runEnable(&cfg))
+			clierror.Check(runAdd(&cfg))
 		},
 	}
 
@@ -43,7 +43,7 @@ func newEnableCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	return cmd
 }
 
-func runEnable(cfg *enableConfig) clierror.Error {
+func runAdd(cfg *addConfig) clierror.Error {
 	client, clierr := cfg.GetKubeClientWithClierr()
 	if clierr != nil {
 		return clierr
