@@ -34,7 +34,7 @@ func newAddCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&cfg.channel, "channel", "", "Name of the Kyma channel to use for the module")
+	cmd.Flags().StringVarP(&cfg.channel, "channel", "c", "", "Name of the Kyma channel to use for the module")
 	cmd.Flags().StringVar(&cfg.crPath, "cr-path", "", "Path to the custom resource file")
 	cmd.Flags().BoolVar(&cfg.defaultCR, "default-cr", false, "Use this flag to deploy module with default cr")
 
