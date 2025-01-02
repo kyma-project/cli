@@ -76,7 +76,7 @@ func List(ctx context.Context, client kube.Client) (ModulesList, error) {
 			),
 		}
 
-		moduleInstalled := getModuleInstalledState(defaultKyma, moduleName)
+		moduleInstalled := isModuleInstalled(defaultKyma, moduleName)
 
 		state := ""
 		if moduleInstalled {
@@ -249,7 +249,7 @@ func getStateFromConditions(conditions []interface{}) string {
 	return ""
 }
 
-func getModuleInstalledState(kyma *kyma.Kyma, moduleName string) bool {
+func isModuleInstalled(kyma *kyma.Kyma, moduleName string) bool {
 	if kyma != nil {
 		for _, module := range kyma.Status.Modules {
 			if module.Name == moduleName {
