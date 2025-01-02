@@ -76,11 +76,16 @@ func List(ctx context.Context, client kube.Client) (ModulesList, error) {
 			),
 		}
 
-		state, err := getModuleState(ctx, client, moduleTemplate, defaultKyma)
-		if err != nil {
-			return nil, err
-		}
+		moduleInstalled := isModuleInstalled(defaultKyma, moduleName)
 
+		state := ""
+		if moduleInstalled {
+			// only get state of installed modules
+			state, err = getModuleState(ctx, client, moduleTemplate, defaultKyma)
+			if err != nil {
+				return nil, err
+			}
+		}
 		if i := getModuleIndex(modulesList, moduleName); i != -1 {
 			// append version if module with same name is in the list
 			modulesList[i].Versions = append(modulesList[i].Versions, version)
@@ -168,7 +173,6 @@ func getResourceState(ctx context.Context, client kube.Client, manager *kyma.Man
 	apiVersion := fmt.Sprintf("%s/%s", manager.Group, manager.Version)
 
 	unstruct := generateUnstruct(apiVersion, manager.Kind, manager.Name, namespace)
-
 	result, err := client.RootlessDynamic().Get(ctx, &unstruct)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -243,6 +247,19 @@ func getStateFromConditions(conditions []interface{}) string {
 		}
 	}
 	return ""
+}
+
+func isModuleInstalled(kyma *kyma.Kyma, moduleName string) bool {
+	if kyma != nil {
+		for _, module := range kyma.Status.Modules {
+			if module.Name == moduleName {
+				return true
+			}
+		}
+	}
+
+	// module is not installed
+	return false
 }
 
 func getInstallDetails(kyma *kyma.Kyma, releaseMetas kyma.ModuleReleaseMetaList, moduleName, state string) ModuleInstallDetails {
