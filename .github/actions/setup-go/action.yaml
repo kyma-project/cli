@@ -1,0 +1,11 @@
+name: "Setup go"
+description: "Action for the go setup"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: "go.mod"
+        cache-dependency-path: "go.sum"

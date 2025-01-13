@@ -24,3 +24,10 @@ test: ## Run unit tests.
 .PHONY: lint
 lint: golangci-lint ## Run golangci-lint.
 	$(GOLANGCI_LINT) run -v
+
+.PHONY: build
+build:
+	go build -o bin/kyma@v3 main.go   
+
+
+
