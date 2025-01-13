@@ -2,6 +2,7 @@ package kyma
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 
@@ -30,6 +31,7 @@ type Interface interface {
 	WaitForModuleState(context.Context, string, ...string) error
 	EnableModule(context.Context, string, string, string) error
 	DisableModule(context.Context, string) error
+	ManageModule(context.Context, string, bool) error
 }
 
 type client struct {
@@ -179,6 +181,16 @@ func (c *client) DisableModule(ctx context.Context, moduleName string) error {
 	return c.UpdateDefaultKyma(ctx, kymaCR)
 }
 
+func (c *client) ManageModule(ctx context.Context, moduleName string, manage bool) error {
+	kymaCR, err := c.GetDefaultKyma(ctx)
+	if err != nil {
+		return err
+	}
+
+	kymaCR, err = updateManagedModule(kymaCR, moduleName, manage)
+
+	return nil
+}
 func checkModuleState(kymaObj runtime.Object, moduleName string, expectedStates ...string) error {
 	kyma := &Kyma{}
 	err := runtime.DefaultUnstructuredConverter.FromUnstructured(kymaObj.(*unstructured.Unstructured).Object, kyma)
@@ -239,6 +251,18 @@ func disableModule(kymaCR *Kyma, moduleName string) *Kyma {
 	})
 
 	return kymaCR
+}
+
+func updateManagedModule(kymaCR *Kyma, moduleName string, managed bool) (*Kyma, error) {
+	for i, m := range kymaCR.Spec.Modules {
+		if m.Name == moduleName {
+			// module exists, update managed
+			kymaCR.Spec.Modules[i].Managed = managed
+			return kymaCR, nil
+		}
+	}
+
+	return kymaCR, errors.New("module not found")
 }
 
 func list[T any](ctx context.Context, client dynamic.Interface, gvr schema.GroupVersionResource) (*T, error) {
