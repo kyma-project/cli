@@ -42,6 +42,6 @@ func runManage(cfg *manageConfig) clierror.Error {
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to set module as managed"))
 	}
-	client.Kyma().WaitForModuleState()
+	client.Kyma().WaitForModuleState(cfg.Ctx, cfg.module, "Ready", "Warning")
 	return nil
 }
