@@ -97,12 +97,14 @@ func Test_CreateDeployment(t *testing.T) {
 	t.Parallel()
 	trueValue := true
 	tests := []struct {
-		name           string
-		deploymentName string
-		namespace      string
-		image          string
-		istioInject    *bool
-		wantErr        bool
+		name            string
+		deploymentName  string
+		namespace       string
+		image           string
+		istioInject     *bool
+		secretMounts    []string
+		configmapMounts []string
+		wantErr         bool
 	}{
 		{
 			name:           "create deployment",
@@ -126,6 +128,22 @@ func Test_CreateDeployment(t *testing.T) {
 			image:          "nginx",
 			wantErr:        true,
 		},
+		{
+			name:           "create deployment with volumes",
+			deploymentName: "deployment",
+			namespace:      "default",
+			image:          "nginx",
+			secretMounts: []string{
+				"secret-1",
+				"secret-2",
+				"secret-3",
+			},
+			configmapMounts: []string{
+				"configmap-1",
+				"configmap-2",
+				"configmap-3",
+			},
+		},
 	}
 
 	ctx := context.Background()
@@ -135,6 +153,8 @@ func Test_CreateDeployment(t *testing.T) {
 		image := tt.image
 		istioInject := tt.istioInject
 		wantErr := tt.wantErr
+		secretMounts := tt.secretMounts
+		configmapMounts := tt.configmapMounts
 
 		t.Run(tt.name, func(t *testing.T) {
 			existingDeployment := appsv1.Deployment{
@@ -150,7 +170,15 @@ func Test_CreateDeployment(t *testing.T) {
 				TestKubernetesInterface: staticClient,
 			}
 
-			err := CreateDeployment(ctx, kubeClient, deploymentName, namespace, image, "", types.NullableBool{Value: istioInject})
+			err := CreateDeployment(ctx, kubeClient, CreateDeploymentOpts{
+				Name:            deploymentName,
+				Namespace:       namespace,
+				Image:           image,
+				ImagePullSecret: "",
+				InjectIstio:     types.NullableBool{Value: istioInject},
+				SecretMounts:    secretMounts,
+				ConfigmapMounts: configmapMounts,
+			})
 			if wantErr {
 				require.Error(t, err)
 			} else {
