@@ -7,7 +7,7 @@ toolchain go1.23.3
 require (
 	github.com/buildpacks/pack v0.36.2
 	github.com/docker/cli v27.4.1+incompatible
-	github.com/docker/docker v27.4.1+incompatible
+	github.com/docker/docker v27.5.0+incompatible
 	github.com/gboddin/go-www-authenticate-parser v0.0.0-20230926203616-ec0b649bb077
 	github.com/go-test/deep v1.1.1
 	github.com/google/go-containerregistry v0.20.2
