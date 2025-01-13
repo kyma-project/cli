@@ -189,7 +189,7 @@ func (c *client) ManageModule(ctx context.Context, moduleName string, manage boo
 
 	kymaCR, err = updateManagedModule(kymaCR, moduleName, manage)
 
-	return nil
+	return c.UpdateDefaultKyma(ctx, kymaCR)
 }
 func checkModuleState(kymaObj runtime.Object, moduleName string, expectedStates ...string) error {
 	kyma := &Kyma{}
@@ -253,11 +253,11 @@ func disableModule(kymaCR *Kyma, moduleName string) *Kyma {
 	return kymaCR
 }
 
-func updateManagedModule(kymaCR *Kyma, moduleName string, managed bool) (*Kyma, error) {
+func updateManagedModule(kymaCR *Kyma, moduleName string, want bool) (*Kyma, error) {
 	for i, m := range kymaCR.Spec.Modules {
 		if m.Name == moduleName {
 			// module exists, update managed
-			kymaCR.Spec.Modules[i].Managed = managed
+			kymaCR.Spec.Modules[i].Managed = want
 			return kymaCR, nil
 		}
 	}

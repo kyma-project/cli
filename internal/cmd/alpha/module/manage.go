@@ -21,15 +21,13 @@ func newManageCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Use:   "manage <module>",
 		Short: "Manage module.",
 		Long:  "Use this command to manage an existing module.",
-		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			cfg.module = args[0]
 			clierror.Check(runManage(&cfg))
 		},
 	}
 
 	cmd.Flags().StringVar(&cfg.module, "module", "", "Name of the module to manage")
-	cmd.MarkFlagRequired("module")
+	_ = cmd.MarkFlagRequired("module")
 	return cmd
 }
 
@@ -38,10 +36,15 @@ func runManage(cfg *manageConfig) clierror.Error {
 	if clierr != nil {
 		return clierr
 	}
+
+	// TODO : Sprawdzic czy trzeba update'owac resourcepolicy po managowaniu modulu "kymaCR.Spec.Modules[i].CustomResourcePolicy"
 	err := client.Kyma().ManageModule(cfg.Ctx, cfg.module, true)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to set module as managed"))
 	}
-	client.Kyma().WaitForModuleState(cfg.Ctx, cfg.module, "Ready", "Warning")
+	err = client.Kyma().WaitForModuleState(cfg.Ctx, cfg.module, "Ready", "Warning")
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to check module state"))
+	}
 	return nil
 }
