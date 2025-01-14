@@ -138,6 +138,9 @@ explain:
   description: test-description
   descriptionLong: test-description-long
   output: test-explain-output
+delete:
+  description: test-delete-description
+  descriptionLong: test-delete-description-long
 create:
   description: create test resource
   descriptionLong: use this command to create test resource
@@ -184,10 +187,14 @@ func fixTestExtension(name string) Extension {
 				DescriptionLong: "test-description-long",
 				Output:          "test-explain-output",
 			},
+			DeleteCommand: &types.DeleteCommand{
+				Description:     "test-delete-description",
+				DescriptionLong: "test-delete-description-long",
+			},
 			CreateCommand: &types.CreateCommand{
 				Description:     "create test resource",
 				DescriptionLong: "use this command to create test resource",
-				CustomFlags: []types.CreateCustomFlag{
+				CustomFlags: []types.CustomFlag{
 					{
 						Type:         types.StringCustomFlagType,
 						Name:         "test-flag",

@@ -117,7 +117,7 @@ func fixCreateOptions() *CreateOptions {
 		CreateCommand: types.CreateCommand{
 			Description:     "create test deploy",
 			DescriptionLong: "use this to create test deploy",
-			CustomFlags: []types.CreateCustomFlag{
+			CustomFlags: []types.CustomFlag{
 				{
 					Type:         types.IntCustomFlagType,
 					Name:         "replicas",
