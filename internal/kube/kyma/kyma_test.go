@@ -666,7 +666,7 @@ func Test_manageModule(t *testing.T) {
 			},
 		},
 		{
-			name:       "already managed, configuration unchanged",
+			name:       "already managed, configuration changed",
 			moduleName: "module",
 			policy:     "Ignore",
 			kymaCR: &Kyma{
@@ -686,7 +686,7 @@ func Test_manageModule(t *testing.T) {
 						{
 							Name:                 "module",
 							Managed:              pointer.Bool(true),
-							CustomResourcePolicy: "CreateAndDelete",
+							CustomResourcePolicy: "Ignore",
 						},
 					},
 				},
