@@ -29,6 +29,8 @@ type appPushConfig struct {
 	containerPort        types.NullableInt64
 	istioInject          types.NullableBool
 	expose               bool
+	mountSecrets         []string
+	mountConfigmaps      []string
 }
 
 func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
@@ -69,6 +71,8 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().Var(&config.containerPort, "container-port", "Port on which the application will be exposed")
 	cmd.Flags().Var(&config.istioInject, "istio-inject", "Enable Istio for the app")
 	cmd.Flags().BoolVar(&config.expose, "expose", false, "Creates an ApiRule for the app")
+	cmd.Flags().StringArrayVar(&config.mountSecrets, "mount-secret", []string{}, "Mount secret content to the "+resources.SecretMountPathPrefix+"<SECRET_NAME> path")
+	cmd.Flags().StringArrayVar(&config.mountConfigmaps, "mount-config", []string{}, "Mount configmap content to the "+resources.ConfigmapMountPathPrefix+"<CONFIGMAP_NAME> path")
 
 	_ = cmd.MarkFlagRequired("name")
 	cmd.MarkFlagsMutuallyExclusive("image", "dockerfile", "code-path")
@@ -149,7 +153,15 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 
 	fmt.Printf("\nCreating deployment %s/%s\n", cfg.namespace, cfg.name)
 
-	err := resources.CreateDeployment(cfg.Ctx, client, cfg.name, cfg.namespace, image, imagePullSecret, cfg.istioInject)
+	err := resources.CreateDeployment(cfg.Ctx, client, resources.CreateDeploymentOpts{
+		Name:            cfg.name,
+		Namespace:       cfg.namespace,
+		Image:           image,
+		ImagePullSecret: imagePullSecret,
+		InjectIstio:     cfg.istioInject,
+		SecretMounts:    cfg.mountSecrets,
+		ConfigmapMounts: cfg.mountConfigmaps,
+	})
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to create deployment"))
 	}

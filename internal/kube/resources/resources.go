@@ -84,29 +84,48 @@ func CreateClusterRoleBinding(ctx context.Context, client kube.Client, name, nam
 	return nil
 }
 
-func CreateDeployment(ctx context.Context, client kube.Client, name, namespace, image, imagePullSecret string, injectIstio types.NullableBool) error {
+const (
+	SecretMountPathPrefix    = "/bindings/secret-"
+	ConfigmapMountPathPrefix = "/bindings/configmap-"
+)
+
+type CreateDeploymentOpts struct {
+	Name            string
+	Namespace       string
+	Image           string
+	ImagePullSecret string
+	InjectIstio     types.NullableBool
+	SecretMounts    []string
+	ConfigmapMounts []string
+}
+
+func CreateDeployment(ctx context.Context, client kube.Client, opts CreateDeploymentOpts) error {
+	secretVolumes, secretVolumeMounts := buildSecretVolumes(opts.SecretMounts)
+	configVolumes, configVolumeMounts := buildConfigmapVolumes(opts.ConfigmapMounts)
+
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
+			Name: opts.Name,
 			Labels: map[string]string{
-				"app.kubernetes.io/name":       name,
+				"app.kubernetes.io/name":       opts.Name,
 				"app.kubernetes.io/created-by": "kyma-cli",
 			},
 		},
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
-					"app": name,
+					"app": opts.Name,
 				},
 			},
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: name,
+					Name: opts.Name,
 					Labels: map[string]string{
-						"app": name,
+						"app": opts.Name,
 					},
 				},
 				Spec: v1.PodSpec{
+					Volumes: append(secretVolumes, configVolumes...),
 					Containers: []v1.Container{
 						{
 							Ports: []v1.ContainerPort{
@@ -114,8 +133,15 @@ func CreateDeployment(ctx context.Context, client kube.Client, name, namespace, 
 									ContainerPort: 80,
 								},
 							},
-							Name:  name,
-							Image: image,
+							Name:  opts.Name,
+							Image: opts.Image,
+							Env: []v1.EnvVar{
+								{
+									Name:  "SERVICE_BINDING_ROOT",
+									Value: "/bindings",
+								},
+							},
+							VolumeMounts: append(secretVolumeMounts, configVolumeMounts...),
 							Resources: v1.ResourceRequirements{
 								Requests: v1.ResourceList{
 									v1.ResourceMemory: resource.MustParse("64Mi"),
@@ -132,20 +158,67 @@ func CreateDeployment(ctx context.Context, client kube.Client, name, namespace, 
 			},
 		},
 	}
-	if injectIstio.Value != nil {
-		deployment.Spec.Template.ObjectMeta.Labels["sidecar.istio.io/inject"] = injectIstio.String()
+	if opts.InjectIstio.Value != nil {
+		deployment.Spec.Template.ObjectMeta.Labels["sidecar.istio.io/inject"] = opts.InjectIstio.String()
 	}
 
-	if imagePullSecret != "" {
+	if opts.ImagePullSecret != "" {
 		deployment.Spec.Template.Spec.ImagePullSecrets = []v1.LocalObjectReference{
 			{
-				Name: imagePullSecret,
+				Name: opts.ImagePullSecret,
 			},
 		}
 	}
 
-	_, err := client.Static().AppsV1().Deployments(namespace).Create(ctx, deployment, metav1.CreateOptions{})
+	_, err := client.Static().AppsV1().Deployments(opts.Namespace).Create(ctx, deployment, metav1.CreateOptions{})
 	return err
+}
+
+func buildSecretVolumes(secretNames []string) ([]v1.Volume, []v1.VolumeMount) {
+	volumes := []v1.Volume{}
+	volumeMounts := []v1.VolumeMount{}
+	for _, secretName := range secretNames {
+		volumeName := fmt.Sprintf("secret-%s", secretName)
+		mountPath := fmt.Sprintf("%s%s", SecretMountPathPrefix, secretName)
+		volumes = append(volumes, v1.Volume{
+			Name: volumeName,
+			VolumeSource: v1.VolumeSource{
+				Secret: &v1.SecretVolumeSource{
+					SecretName: secretName,
+				},
+			},
+		})
+		volumeMounts = append(volumeMounts, v1.VolumeMount{
+			Name:      volumeName,
+			MountPath: mountPath,
+		})
+	}
+
+	return volumes, volumeMounts
+}
+
+func buildConfigmapVolumes(configmapsNames []string) ([]v1.Volume, []v1.VolumeMount) {
+	volumes := []v1.Volume{}
+	volumeMounts := []v1.VolumeMount{}
+	for _, configmapName := range configmapsNames {
+		volumeName := fmt.Sprintf("configmap-%s", configmapName)
+		mountPath := fmt.Sprintf("%s%s", ConfigmapMountPathPrefix, configmapName)
+		volumes = append(volumes, v1.Volume{
+			Name: volumeName,
+			VolumeSource: v1.VolumeSource{
+				ConfigMap: &v1.ConfigMapVolumeSource{
+					LocalObjectReference: v1.LocalObjectReference{
+						Name: configmapName,
+					},
+				},
+			},
+		})
+		volumeMounts = append(volumeMounts, v1.VolumeMount{
+			Name:      volumeName,
+			MountPath: mountPath,
+		})
+	}
+	return volumes, volumeMounts
 }
 
 func CreateService(ctx context.Context, client kube.Client, name, namespace string, port int32) error {
