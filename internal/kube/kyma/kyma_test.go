@@ -3,7 +3,7 @@ package kyma
 import (
 	"context"
 	"encoding/json"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	"reflect"
 	"testing"
 
@@ -647,7 +647,7 @@ func Test_manageModule(t *testing.T) {
 					Modules: []Module{
 						{
 							Name:                 "module",
-							Managed:              pointer.Bool(true),
+							Managed:              ptr.To(true),
 							CustomResourcePolicy: "CreateAndDelete",
 						},
 					},
@@ -658,7 +658,7 @@ func Test_manageModule(t *testing.T) {
 					Modules: []Module{
 						{
 							Name:                 "module",
-							Managed:              pointer.Bool(true),
+							Managed:              ptr.To(true),
 							CustomResourcePolicy: "CreateAndDelete",
 						},
 					},
@@ -674,7 +674,7 @@ func Test_manageModule(t *testing.T) {
 					Modules: []Module{
 						{
 							Name:                 "module",
-							Managed:              pointer.Bool(true),
+							Managed:              ptr.To(true),
 							CustomResourcePolicy: "CreateAndDelete",
 						},
 					},
@@ -685,7 +685,7 @@ func Test_manageModule(t *testing.T) {
 					Modules: []Module{
 						{
 							Name:                 "module",
-							Managed:              pointer.Bool(true),
+							Managed:              ptr.To(true),
 							CustomResourcePolicy: "Ignore",
 						},
 					},
@@ -701,7 +701,7 @@ func Test_manageModule(t *testing.T) {
 					Modules: []Module{
 						{
 							Name:                 "module",
-							Managed:              pointer.Bool(false),
+							Managed:              ptr.To(false),
 							CustomResourcePolicy: "Ignore",
 						},
 					},
@@ -712,7 +712,7 @@ func Test_manageModule(t *testing.T) {
 					Modules: []Module{
 						{
 							Name:                 "module",
-							Managed:              pointer.Bool(true),
+							Managed:              ptr.To(true),
 							CustomResourcePolicy: "CreateAndDelete",
 						},
 					},
@@ -761,7 +761,7 @@ func Test_unmanageModule(t *testing.T) {
 					Modules: []Module{
 						{
 							Name:    "module",
-							Managed: pointer.Bool(false),
+							Managed: ptr.To(false),
 						},
 					},
 				},
@@ -771,7 +771,7 @@ func Test_unmanageModule(t *testing.T) {
 					Modules: []Module{
 						{
 							Name:    "module",
-							Managed: pointer.Bool(false),
+							Managed: ptr.To(false),
 						},
 					},
 				},
@@ -785,7 +785,7 @@ func Test_unmanageModule(t *testing.T) {
 					Modules: []Module{
 						{
 							Name:    "module",
-							Managed: pointer.Bool(true),
+							Managed: ptr.To(true),
 						},
 					},
 				},
@@ -795,7 +795,7 @@ func Test_unmanageModule(t *testing.T) {
 					Modules: []Module{
 						{
 							Name:    "module",
-							Managed: pointer.Bool(false),
+							Managed: ptr.To(false),
 						},
 					},
 				},

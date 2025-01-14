@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	"slices"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -279,7 +279,7 @@ func manageModule(kymaCR *Kyma, moduleName, policy string) (*Kyma, error) {
 	for i, m := range kymaCR.Spec.Modules {
 		if m.Name == moduleName {
 			// module exists, update managed
-			kymaCR.Spec.Modules[i].Managed = pointer.Bool(true)
+			kymaCR.Spec.Modules[i].Managed = ptr.To(true)
 			kymaCR.Spec.Modules[i].CustomResourcePolicy = policy
 
 			return kymaCR, nil
@@ -293,7 +293,7 @@ func unmanageModule(kymaCR *Kyma, moduleName string) (*Kyma, error) {
 	for i, m := range kymaCR.Spec.Modules {
 		if m.Name == moduleName {
 			// module exists, update managed
-			kymaCR.Spec.Modules[i].Managed = pointer.Bool(false)
+			kymaCR.Spec.Modules[i].Managed = ptr.To(false)
 
 			return kymaCR, nil
 		}
