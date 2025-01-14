@@ -21,6 +21,7 @@ type CoreCommandsMap map[string]func(*KymaConfig) *cobra.Command
 // allowed template commands
 type TemplateCommandsList struct {
 	Explain func(*templates.ExplainOptions) *cobra.Command
+	Create  func(*templates.CreateOptions) *cobra.Command
 }
 
 type ExtensionList []Extension
@@ -82,10 +83,54 @@ type ExplainCommand struct {
 	Output string `yaml:"output"`
 }
 
+type CreateCommand struct {
+	// short description of the command
+	Description string `yaml:"description"`
+	// long description of the command group
+	DescriptionLong string `yaml:"descriptionLong"`
+	//
+	CustomFlags []CreateCustomFlag `yaml:"customFlags"`
+}
+
+type CreateCustomFlagType string
+
+var (
+	StringCustomFlagType CreateCustomFlagType = "string"
+	PathCustomFlagType   CreateCustomFlagType = "path"
+	IntCustomFlagType    CreateCustomFlagType = "int"
+)
+
+type CreateCustomFlag struct {
+	// type of the custom flag
+	Type CreateCustomFlagType `yaml:"type"`
+
+	// name of the custom flag
+	Name string `yaml:"name"`
+
+	// description of the custom flag
+	Description string `yaml:"descriptiomn"`
+
+	// optional shorthand of the custom flag
+	Shorthand string `yaml:"shorthand"`
+
+	// 
+	Path string `yaml:"path"`
+
+	//
+	Default string `yaml:"default"`
+
+	//
+	Required bool `yaml:"required"`
+}
+
 type TemplateCommands struct {
 	// allows to explaining command to the commands group in format:
 	// kyma <root_command> explain
 	ExplainCommand *ExplainCommand `yaml:"explain"`
+
+	// allows to create resource based on the ResourceInfo structure
+	// kyma <root_command> create
+	CreateCommand *CreateCommand `yaml:"create"`
 }
 
 type CoreCommandInfo struct {
