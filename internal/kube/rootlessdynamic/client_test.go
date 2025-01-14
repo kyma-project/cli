@@ -248,7 +248,31 @@ func Test_List(t *testing.T) {
 			Items:  []unstructured.Unstructured{*obj},
 		}
 
-		result, err := client.List(ctx, obj)
+		result, err := client.List(ctx, obj, &ListOptions{
+			AllNamespaces: false,
+		})
+		require.NoError(t, err)
+		require.Equal(t, expectedResult, result)
+	})
+
+	t.Run("list namespaced resources across all namespaces", func(t *testing.T) {
+		obj, apiResource := fixSecretObjectAndApiResource()
+		ctx := context.Background()
+		dynamic := dynamic_fake.NewSimpleDynamicClient(scheme.Scheme, obj)
+		client := fixRootlessDynamic(dynamic, []*metav1.APIResourceList{apiResource})
+
+		expectedResult := &unstructured.UnstructuredList{
+			Object: secretListObject,
+			Items:  []unstructured.Unstructured{*obj},
+		}
+
+		argObj := obj.DeepCopy()
+		// change the namespace to prove that in this scenario, the function is looking across all namespaces
+		argObj.SetNamespace("any")
+
+		result, err := client.List(ctx, obj, &ListOptions{
+			AllNamespaces: true,
+		})
 		require.NoError(t, err)
 		require.Equal(t, expectedResult, result)
 	})
@@ -264,7 +288,9 @@ func Test_List(t *testing.T) {
 			Items:  []unstructured.Unstructured{*obj},
 		}
 
-		result, err := client.List(ctx, obj)
+		result, err := client.List(ctx, obj, &ListOptions{
+			AllNamespaces: false,
+		})
 		require.NoError(t, err)
 		require.Equal(t, expectedResult, result)
 	})
@@ -279,7 +305,9 @@ func Test_List(t *testing.T) {
 			},
 		})
 
-		_, err := client.List(ctx, obj)
+		_, err := client.List(ctx, obj, &ListOptions{
+			AllNamespaces: false,
+		})
 		require.ErrorContains(t, err, "failed to discover API resource using discovery client: resource 'Secret' in group '', and version 'v1' not registered on cluster")
 	})
 }

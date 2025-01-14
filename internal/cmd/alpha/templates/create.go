@@ -24,28 +24,28 @@ type CreateOptions struct {
 	ResourceInfo types.ResourceInfo
 }
 
-func BuildCreateCommand(clientGetter KubeClientGetter, createOptions *CreateOptions) *cobra.Command {
-	return buildCreateCommand(os.Stdout, clientGetter, createOptions)
+func BuildCreateCommand(clientGetter KubeClientGetter, options *CreateOptions) *cobra.Command {
+	return buildCreateCommand(os.Stdout, clientGetter, options)
 }
 
-func buildCreateCommand(out io.Writer, clientGetter KubeClientGetter, createOptions *CreateOptions) *cobra.Command {
+func buildCreateCommand(out io.Writer, clientGetter KubeClientGetter, options *CreateOptions) *cobra.Command {
 	extraValues := []parameters.Value{}
 	cmd := &cobra.Command{
 		Use:   "create",
-		Short: createOptions.Description,
-		Long:  createOptions.DescriptionLong,
+		Short: options.Description,
+		Long:  options.DescriptionLong,
 		Run: func(cmd *cobra.Command, args []string) {
 			clierror.Check(createResource(&createArgs{
 				out:           out,
 				ctx:           cmd.Context(),
 				clientGetter:  clientGetter,
-				createOptions: createOptions,
+				createOptions: options,
 				extraValues:   extraValues,
 			}))
 		},
 	}
 
-	flags := append(createOptions.CustomFlags, commonResourceFlags(createOptions.ResourceInfo.Scope)...)
+	flags := append(options.CustomFlags, commonResourceFlags(options.ResourceInfo.Scope)...)
 	for _, flag := range flags {
 		value := parameters.NewTyped(flag.Type, flag.Path, flag.DefaultValue)
 		cmd.Flags().VarP(value, flag.Name, flag.Shorthand, flag.Description)

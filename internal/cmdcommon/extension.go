@@ -178,9 +178,23 @@ func addGenericCommands(cmd *cobra.Command, config *KymaConfig, extension *Exten
 		}))
 	}
 
+	if extension.Resource != nil && commands.GetCommand != nil {
+		cmd.AddCommand(availableTemplateCommands.Get(config, &templates.GetOptions{
+			GetCommand:   *commands.GetCommand,
+			ResourceInfo: *extension.Resource,
+		}))
+	}
+
 	if extension.Resource != nil && commands.CreateCommand != nil {
 		cmd.AddCommand(availableTemplateCommands.Create(config, &templates.CreateOptions{
 			CreateCommand: *commands.CreateCommand,
+			ResourceInfo:  *extension.Resource,
+		}))
+	}
+
+	if extension.Resource != nil && commands.DeleteCommand != nil {
+		cmd.AddCommand(availableTemplateCommands.Delete(config, &templates.DeleteOptions{
+			DeleteCommand: *commands.DeleteCommand,
 			ResourceInfo:  *extension.Resource,
 		}))
 	}

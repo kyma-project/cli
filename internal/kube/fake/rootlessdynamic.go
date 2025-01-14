@@ -3,6 +3,7 @@ package fake
 import (
 	"context"
 
+	"github.com/kyma-project/cli.v3/internal/kube/rootlessdynamic"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/watch"
 )
@@ -39,7 +40,7 @@ func (m *RootlessDynamicClient) Get(_ context.Context, obj *unstructured.Unstruc
 	return &m.ReturnGetObj, m.ReturnGetErr
 }
 
-func (m *RootlessDynamicClient) List(_ context.Context, obj *unstructured.Unstructured) (*unstructured.UnstructuredList, error) {
+func (m *RootlessDynamicClient) List(_ context.Context, obj *unstructured.Unstructured, _ *rootlessdynamic.ListOptions) (*unstructured.UnstructuredList, error) {
 	m.ListObjs = append(m.ListObjs, *obj)
 	return m.ReturnListObjs, m.ReturnErr
 }

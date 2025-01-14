@@ -134,6 +134,12 @@ group: test.group
 version: v1
 `,
 			ExtensionGenericCommandsKey: `
+get:
+  description: test-get-description
+  descriptionLong: test-get-description-long
+  parameters:
+  - path: ".metadata.generation"
+    name: "generation"
 explain:
   description: test-description
   descriptionLong: test-description-long
@@ -182,6 +188,16 @@ func fixTestExtension(name string) Extension {
 			Version: "v1",
 		},
 		TemplateCommands: &TemplateCommands{
+			GetCommand: &types.GetCommand{
+				Description:     "test-get-description",
+				DescriptionLong: "test-get-description-long",
+				Parameters: []types.Parameter{
+					{
+						Path: ".metadata.generation",
+						Name: "generation",
+					},
+				},
+			},
 			ExplainCommand: &types.ExplainCommand{
 				Description:     "test-description",
 				DescriptionLong: "test-description-long",

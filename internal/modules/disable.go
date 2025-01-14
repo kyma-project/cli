@@ -10,6 +10,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
+	"github.com/kyma-project/cli.v3/internal/kube/rootlessdynamic"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/watch"
 )
@@ -59,7 +60,9 @@ func removeModuleCR(writer io.Writer, ctx context.Context, client kube.Client, m
 		return nil
 	}
 
-	list, err := client.RootlessDynamic().List(ctx, &defaultCR)
+	list, err := client.RootlessDynamic().List(ctx, &defaultCR, &rootlessdynamic.ListOptions{
+		AllNamespaces: true,
+	})
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to list module CRs"))
 	}
