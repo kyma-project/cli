@@ -36,6 +36,7 @@ func NewAlphaCMD() (*cobra.Command, clierror.Error) {
 	cmd.AddCommand(oidc.NewOIDCCMD(kymaConfig))
 	cmd.AddCommand(provision.NewProvisionCMD())
 	cmd.AddCommand(referenceinstance.NewReferenceInstanceCMD(kymaConfig))
+
 	cmds := kymaConfig.BuildExtensions(&cmdcommon.TemplateCommandsList{
 		// list of template commands deffinitions
 		Explain: templates.BuildExplainCommand,
