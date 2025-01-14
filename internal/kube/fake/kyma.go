@@ -78,3 +78,11 @@ func (c *KymaClient) DisableModule(_ context.Context, module string) error {
 	c.DisabledModules = append(c.DisabledModules, module)
 	return c.ReturnDisableModuleErr
 }
+
+func (c *KymaClient) ManageModule(_ context.Context, _, _ string) error {
+	return c.ReturnWaitForModuleErr
+}
+
+func (c *KymaClient) UnmanageModule(_ context.Context, _ string) error {
+	return c.ReturnWaitForModuleErr
+}

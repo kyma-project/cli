@@ -114,7 +114,7 @@ type Module struct {
 	ControllerName       string `json:"controller,omitempty"`
 	Channel              string `json:"channel,omitempty"`
 	CustomResourcePolicy string `json:"customResourcePolicy,omitempty"`
-	Managed              bool   `json:"managed,omitempty"`
+	Managed              *bool  `json:"managed,omitempty"`
 }
 
 // KymaStatus defines the observed state of Kyma

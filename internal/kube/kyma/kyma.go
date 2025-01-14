@@ -2,7 +2,9 @@ package kyma
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"k8s.io/utils/ptr"
 	"slices"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -30,6 +32,8 @@ type Interface interface {
 	WaitForModuleState(context.Context, string, ...string) error
 	EnableModule(context.Context, string, string, string) error
 	DisableModule(context.Context, string) error
+	ManageModule(context.Context, string, string) error
+	UnmanageModule(context.Context, string) error
 }
 
 type client struct {
@@ -179,6 +183,36 @@ func (c *client) DisableModule(ctx context.Context, moduleName string) error {
 	return c.UpdateDefaultKyma(ctx, kymaCR)
 }
 
+// ManageModule configures given module as managed and updates Kyma CR in the kyma-system namespace with it
+func (c *client) ManageModule(ctx context.Context, moduleName, policy string) error {
+	kymaCR, err := c.GetDefaultKyma(ctx)
+	if err != nil {
+		return err
+	}
+
+	kymaCR, err = manageModule(kymaCR, moduleName, policy)
+	if err != nil {
+		return err
+	}
+
+	return c.UpdateDefaultKyma(ctx, kymaCR)
+}
+
+// UnmanageModule configures given module as unmanaged and updates Kyma CR in the kyma-system namespace with it
+func (c *client) UnmanageModule(ctx context.Context, moduleName string) error {
+	kymaCR, err := c.GetDefaultKyma(ctx)
+	if err != nil {
+		return err
+	}
+
+	kymaCR, err = unmanageModule(kymaCR, moduleName)
+	if err != nil {
+		return err
+	}
+
+	return c.UpdateDefaultKyma(ctx, kymaCR)
+}
+
 func checkModuleState(kymaObj runtime.Object, moduleName string, expectedStates ...string) error {
 	kyma := &Kyma{}
 	err := runtime.DefaultUnstructuredConverter.FromUnstructured(kymaObj.(*unstructured.Unstructured).Object, kyma)
@@ -239,6 +273,33 @@ func disableModule(kymaCR *Kyma, moduleName string) *Kyma {
 	})
 
 	return kymaCR
+}
+
+func manageModule(kymaCR *Kyma, moduleName, policy string) (*Kyma, error) {
+	for i, m := range kymaCR.Spec.Modules {
+		if m.Name == moduleName {
+			// module exists, update managed
+			kymaCR.Spec.Modules[i].Managed = ptr.To(true)
+			kymaCR.Spec.Modules[i].CustomResourcePolicy = policy
+
+			return kymaCR, nil
+		}
+	}
+
+	return kymaCR, errors.New("module not found")
+}
+
+func unmanageModule(kymaCR *Kyma, moduleName string) (*Kyma, error) {
+	for i, m := range kymaCR.Spec.Modules {
+		if m.Name == moduleName {
+			// module exists, update managed
+			kymaCR.Spec.Modules[i].Managed = ptr.To(false)
+
+			return kymaCR, nil
+		}
+	}
+
+	return kymaCR, errors.New("module not found")
 }
 
 func list[T any](ctx context.Context, client dynamic.Interface, gvr schema.GroupVersionResource) (*T, error) {

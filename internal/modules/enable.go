@@ -14,7 +14,7 @@ import (
 )
 
 // Enable takes care about enabling kyma module in order:
-// 1. add module to the Kyma CR with CustomResourcePolicy set to CreateAndDelete if defaultCR is true and to Ingnore in any other case
+// 1. add module to the Kyma CR with CustomResourcePolicy set to CreateAndDelete if defaultCR is true and to Ignore in any other case
 // 2. if crs array is not empty wait for the module to be ready and add crs to the cluster
 func Enable(ctx context.Context, client kube.Client, module, channel string, defaultCR bool, crs ...unstructured.Unstructured) clierror.Error {
 	return enable(os.Stdout, ctx, client, module, channel, defaultCR, crs...)
