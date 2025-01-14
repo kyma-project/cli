@@ -3,6 +3,7 @@ package kyma
 import (
 	"context"
 	"encoding/json"
+	"k8s.io/utils/pointer"
 	"reflect"
 	"testing"
 
@@ -625,5 +626,202 @@ func fixModuleTemplate(moduleName string) *unstructured.Unstructured {
 				"version":    "0.1",
 			},
 		},
+	}
+}
+
+func Test_manageModule(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name       string
+		kymaCR     *Kyma
+		moduleName string
+		policy     string
+		want       *Kyma
+	}{
+		{
+			name:       "unchanged module",
+			moduleName: "module",
+			policy:     "CreateAndDelete",
+			kymaCR: &Kyma{
+				Spec: KymaSpec{
+					Modules: []Module{
+						{
+							Name:                 "module",
+							Managed:              pointer.Bool(true),
+							CustomResourcePolicy: "CreateAndDelete",
+						},
+					},
+				},
+			},
+			want: &Kyma{
+				Spec: KymaSpec{
+					Modules: []Module{
+						{
+							Name:                 "module",
+							Managed:              pointer.Bool(true),
+							CustomResourcePolicy: "CreateAndDelete",
+						},
+					},
+				},
+			},
+		},
+		{
+			name:       "already managed, configuration unchanged",
+			moduleName: "module",
+			policy:     "Ignore",
+			kymaCR: &Kyma{
+				Spec: KymaSpec{
+					Modules: []Module{
+						{
+							Name:                 "module",
+							Managed:              pointer.Bool(true),
+							CustomResourcePolicy: "CreateAndDelete",
+						},
+					},
+				},
+			},
+			want: &Kyma{
+				Spec: KymaSpec{
+					Modules: []Module{
+						{
+							Name:                 "module",
+							Managed:              pointer.Bool(true),
+							CustomResourcePolicy: "CreateAndDelete",
+						},
+					},
+				},
+			},
+		},
+		{
+			name:       "module updated",
+			moduleName: "module",
+			policy:     "CreateAndDelete",
+			kymaCR: &Kyma{
+				Spec: KymaSpec{
+					Modules: []Module{
+						{
+							Name:                 "module",
+							Managed:              pointer.Bool(false),
+							CustomResourcePolicy: "Ignore",
+						},
+					},
+				},
+			},
+			want: &Kyma{
+				Spec: KymaSpec{
+					Modules: []Module{
+						{
+							Name:                 "module",
+							Managed:              pointer.Bool(true),
+							CustomResourcePolicy: "CreateAndDelete",
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		kymaCR := tt.kymaCR
+		moduleName := tt.moduleName
+		want := tt.want
+		policy := tt.policy
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := manageModule(kymaCR, moduleName, policy)
+			require.NoError(t, err)
+			gotBytes, err := json.Marshal(got)
+			require.NoError(t, err)
+			wantBytes, err := json.Marshal(want)
+			require.NoError(t, err)
+			var gotInterface map[string]interface{}
+			var wantInterface map[string]interface{}
+			err = json.Unmarshal(gotBytes, &gotInterface)
+			require.NoError(t, err)
+			err = json.Unmarshal(wantBytes, &wantInterface)
+			require.NoError(t, err)
+			if !reflect.DeepEqual(gotInterface, wantInterface) {
+				t.Errorf("updateCR() = %v, want %v", gotInterface, wantInterface)
+			}
+		})
+	}
+}
+
+func Test_unmanageModule(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name       string
+		kymaCR     *Kyma
+		moduleName string
+		want       *Kyma
+	}{
+		{
+			name:       "unchanged module",
+			moduleName: "module",
+			kymaCR: &Kyma{
+				Spec: KymaSpec{
+					Modules: []Module{
+						{
+							Name:    "module",
+							Managed: pointer.Bool(false),
+						},
+					},
+				},
+			},
+			want: &Kyma{
+				Spec: KymaSpec{
+					Modules: []Module{
+						{
+							Name:    "module",
+							Managed: pointer.Bool(false),
+						},
+					},
+				},
+			},
+		},
+		{
+			name:       "module updated",
+			moduleName: "module",
+			kymaCR: &Kyma{
+				Spec: KymaSpec{
+					Modules: []Module{
+						{
+							Name:    "module",
+							Managed: pointer.Bool(true),
+						},
+					},
+				},
+			},
+			want: &Kyma{
+				Spec: KymaSpec{
+					Modules: []Module{
+						{
+							Name:    "module",
+							Managed: pointer.Bool(false),
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		kymaCR := tt.kymaCR
+		moduleName := tt.moduleName
+		want := tt.want
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := unmanageModule(kymaCR, moduleName)
+			require.NoError(t, err)
+			gotBytes, err := json.Marshal(got)
+			require.NoError(t, err)
+			wantBytes, err := json.Marshal(want)
+			require.NoError(t, err)
+			var gotInterface map[string]interface{}
+			var wantInterface map[string]interface{}
+			err = json.Unmarshal(gotBytes, &gotInterface)
+			require.NoError(t, err)
+			err = json.Unmarshal(wantBytes, &wantInterface)
+			require.NoError(t, err)
+			if !reflect.DeepEqual(gotInterface, wantInterface) {
+				t.Errorf("updateCR() = %v, want %v", gotInterface, wantInterface)
+			}
+		})
 	}
 }

@@ -287,7 +287,9 @@ func getInstallDetails(kyma *kyma.Kyma, releaseMetas kyma.ModuleReleaseMetaList,
 func getManaged(specModules []kyma.Module, moduleName string) Managed {
 	for _, module := range specModules {
 		if module.Name == moduleName {
-			return Managed(strconv.FormatBool(module.Managed))
+			if module.Managed != nil {
+				return Managed(strconv.FormatBool(*module.Managed))
+			}
 		}
 	}
 
