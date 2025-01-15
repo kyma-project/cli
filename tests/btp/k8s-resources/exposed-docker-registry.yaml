@@ -1,0 +1,7 @@
+apiVersion: operator.kyma-project.io/v1alpha1
+kind: DockerRegistry
+metadata:
+  name: default
+spec:
+  externalAccess:
+    enabled: true

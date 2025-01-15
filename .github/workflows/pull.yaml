@@ -1,0 +1,26 @@
+name: pull
+
+on:
+  pull_request_target:
+    types: [ opened, edited, synchronize, reopened, ready_for_review ]
+
+jobs:
+  e2e-test-k3d:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+      - uses: ./.github/actions/setup-go
+      - name: ensure pack
+        run: |
+          if ! which pack; then
+            echo "Installing pack..."
+            (curl -sSL "https://github.com/buildpacks/pack/releases/download/v0.36.0/pack-v0.36.0-linux.tgz" | sudo tar -C /usr/local/bin/ --no-same-owner -xzv pack)
+          fi
+      - name: build kyma@v3 binary
+        run: make build
+      - uses: kyma-project/serverless/.github/actions/create-k3d-cluster@9e8c091842e5c884e1770ef0bcc5b4b4d2894b74
+      - name: test 
+        run: make -C tests/k3d e2e-test
