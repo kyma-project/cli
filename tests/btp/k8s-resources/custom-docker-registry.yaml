@@ -1,7 +1,8 @@
 apiVersion: operator.kyma-project.io/v1alpha1
 kind: DockerRegistry
 metadata:
-  name: default
+  name: custom-dr
+  namespace: kyma-system
 spec:
   externalAccess:
     enabled: true
