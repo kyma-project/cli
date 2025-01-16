@@ -1,0 +1,8 @@
+apiVersion: services.cloud.sap.com/v1
+kind: ServiceBinding
+metadata:
+  name: object-store-reference-binding
+spec:
+  serviceInstanceName: object-store-reference
+  externalName: object-store-reference-binding
+  secretName: object-store-reference-binding

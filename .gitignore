@@ -36,3 +36,4 @@ mod
 /template.yaml
 
 dist/
+tests/btp/sm.env
