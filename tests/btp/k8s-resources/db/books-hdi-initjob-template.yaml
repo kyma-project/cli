@@ -1,0 +1,42 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  creationTimestamp: null
+  name: hana-hdi-initjob
+spec:
+  completions: 1
+  manualSelector: false
+  parallelism: 1
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        sidecar.istio.io/inject: "false"
+    spec:
+      containers:
+      - env:
+        - name: SERVICE_BINDING_ROOT
+          value: /bindings
+        - name: EXIT
+          value: "true"
+        - name: EXIT_PROCESS_AFTER_UPLOAD
+          value: "true"
+        image: foo # this will be changed dynamically
+        imagePullPolicy: Always
+        name: bookstore-db
+        resources: {}
+        volumeMounts:
+        - name: hdi
+          mountPath: /bindings/hdi
+          readOnly: true
+      restartPolicy: OnFailure
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      volumes:
+      - name: hdi
+        secret:
+          secretName: hana-hdi-binding
+      imagePullSecrets:
+        - name: dockerregistry-config
+status: {}

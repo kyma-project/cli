@@ -1,0 +1,8 @@
+apiVersion: services.cloud.sap.com/v1
+kind: ServiceBinding
+metadata:
+  name: hana-hdi-binding
+spec:
+  serviceInstanceName: hana-hdi-instance
+  externalName: hana-hdi
+  secretName: hana-hdi-binding
