@@ -760,8 +760,9 @@ func Test_unmanageModule(t *testing.T) {
 				Spec: KymaSpec{
 					Modules: []Module{
 						{
-							Name:    "module",
-							Managed: ptr.To(false),
+							Name:                 "module",
+							Managed:              ptr.To(false),
+							CustomResourcePolicy: "Ignore",
 						},
 					},
 				},
@@ -770,8 +771,9 @@ func Test_unmanageModule(t *testing.T) {
 				Spec: KymaSpec{
 					Modules: []Module{
 						{
-							Name:    "module",
-							Managed: ptr.To(false),
+							Name:                 "module",
+							Managed:              ptr.To(false),
+							CustomResourcePolicy: "Ignore",
 						},
 					},
 				},
@@ -784,8 +786,9 @@ func Test_unmanageModule(t *testing.T) {
 				Spec: KymaSpec{
 					Modules: []Module{
 						{
-							Name:    "module",
-							Managed: ptr.To(true),
+							Name:                 "module",
+							Managed:              ptr.To(true),
+							CustomResourcePolicy: "CreateAndDelete",
 						},
 					},
 				},
@@ -794,8 +797,9 @@ func Test_unmanageModule(t *testing.T) {
 				Spec: KymaSpec{
 					Modules: []Module{
 						{
-							Name:    "module",
-							Managed: ptr.To(false),
+							Name:                 "module",
+							Managed:              ptr.To(false),
+							CustomResourcePolicy: "Ignore",
 						},
 					},
 				},

@@ -294,6 +294,7 @@ func unmanageModule(kymaCR *Kyma, moduleName string) (*Kyma, error) {
 		if m.Name == moduleName {
 			// module exists, update managed
 			kymaCR.Spec.Modules[i].Managed = ptr.To(false)
+			kymaCR.Spec.Modules[i].CustomResourcePolicy = "Ignore"
 
 			return kymaCR, nil
 		}
