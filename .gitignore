@@ -37,3 +37,5 @@ mod
 
 dist/
 tests/btp/sm.env
+tests/btp/hana-admin-api-binding.json
+tests/btp/config.json
