@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/kyma-project/cli.v3/internal/cmd/alpha/templates/types"
 	"github.com/kyma-project/cli.v3/internal/kube/fake"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
@@ -131,14 +132,30 @@ scope: namespace
 kind: TestKind
 group: test.group
 version: v1
-singular: testkind
-plural: testkinds
 `,
 			ExtensionGenericCommandsKey: `
 explain:
   description: test-description
   descriptionLong: test-description-long
   output: test-explain-output
+create:
+  description: create test resource
+  descriptionLong: use this command to create test resource
+  customFlags:
+  - type: "string"
+    name: "test-flag"
+    description: "test-flag description"
+    shorthand: "t"
+    path: ".spec.test.field"
+    default: "test-default"
+    required: true
+  - type: "path"
+    name: "test-flag-2"
+    description: "test-flag-2 description"
+    shorthand: "f"
+    path: ".spec.test.field2"
+    default: "test-default2"
+    required: false
 `,
 			ExtensionCoreCommandsKey: `
 - actionID: test-action-id-1
@@ -155,19 +172,41 @@ func fixTestExtension(name string) Extension {
 			Description:     "test-description",
 			DescriptionLong: "test-description-long",
 		},
-		Resource: &ResourceInfo{
-			Scope:    NamespacedScope,
-			Kind:     "TestKind",
-			Group:    "test.group",
-			Version:  "v1",
-			Singular: "testkind",
-			Plural:   "testkinds",
+		Resource: &types.ResourceInfo{
+			Scope:   types.NamespaceScope,
+			Kind:    "TestKind",
+			Group:   "test.group",
+			Version: "v1",
 		},
 		TemplateCommands: &TemplateCommands{
-			ExplainCommand: &ExplainCommand{
+			ExplainCommand: &types.ExplainCommand{
 				Description:     "test-description",
 				DescriptionLong: "test-description-long",
 				Output:          "test-explain-output",
+			},
+			CreateCommand: &types.CreateCommand{
+				Description:     "create test resource",
+				DescriptionLong: "use this command to create test resource",
+				CustomFlags: []types.CreateCustomFlag{
+					{
+						Type:         types.StringCustomFlagType,
+						Name:         "test-flag",
+						Description:  "test-flag description",
+						Shorthand:    "t",
+						Path:         ".spec.test.field",
+						DefaultValue: "test-default",
+						Required:     true,
+					},
+					{
+						Type:         types.PathCustomFlagType,
+						Name:         "test-flag-2",
+						Description:  "test-flag-2 description",
+						Shorthand:    "f",
+						Path:         ".spec.test.field2",
+						DefaultValue: "test-default2",
+						Required:     false,
+					},
+				},
 			},
 		},
 		CoreCommands: []CoreCommandInfo{
