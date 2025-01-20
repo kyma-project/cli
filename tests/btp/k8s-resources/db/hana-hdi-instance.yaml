@@ -1,0 +1,8 @@
+apiVersion: services.cloud.sap.com/v1
+kind: ServiceInstance
+metadata:
+  name: hana-hdi-instance
+spec:
+  externalName: hana-hdi
+  serviceOfferingName: hana
+  servicePlanName: hdi-shared
