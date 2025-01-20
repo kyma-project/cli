@@ -75,14 +75,14 @@ docker --config . push $dr_external_url/hdi-deploy:latest
 
 
 # -------------------------------------------------------------------------------------
-echo "Cleanup"
+# echo "Cleanup"
 
-kubectl delete dockerregistries.operator.kyma-project.io -n kyma-system custom-dr
+# kubectl delete dockerregistries.operator.kyma-project.io -n kyma-system custom-dr
 # ../../bin/kyma@v3 alpha module delete docker-registry
 
-kubectl delete servicebindings.services.cloud.sap.com -n kyma-system object-store-reference-binding
-kubectl delete serviceinstances.services.cloud.sap.com -n kyma-system object-store-reference
-kubectl delete secret -n kyma-system remote-service-manager-credentials 
+# kubectl delete servicebindings.services.cloud.sap.com -n kyma-system object-store-reference-binding
+# kubectl delete serviceinstances.services.cloud.sap.com -n kyma-system object-store-reference
+# kubectl delete secret -n kyma-system remote-service-manager-credentials 
 
 # TODO new command ?
 # ../../bin/kyma@v3 alpha hana unmap --credentials-path hana-admin-api-binding.json
