@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -133,12 +132,12 @@ func (c *client) Remove(ctx context.Context, resource *unstructured.Unstructured
 
 	if apiResource.Namespaced {
 		err = c.dynamic.Resource(*gvr).Namespace(getResourceNamespace(resource)).Delete(ctx, resource.GetName(), metav1.DeleteOptions{})
-		if err != nil && !errors.IsNotFound(err) {
+		if err != nil {
 			return fmt.Errorf("failed to delete namespaced resource %w", err)
 		}
 	} else {
 		err = c.dynamic.Resource(*gvr).Delete(ctx, resource.GetName(), metav1.DeleteOptions{})
-		if err != nil && !errors.IsNotFound(err) {
+		if err != nil {
 			return fmt.Errorf("failed to delete cluster-scoped resource %w", err)
 		}
 	}

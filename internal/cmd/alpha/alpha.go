@@ -40,6 +40,8 @@ func NewAlphaCMD() (*cobra.Command, clierror.Error) {
 	cmds := kymaConfig.BuildExtensions(&cmdcommon.TemplateCommandsList{
 		// list of template commands deffinitions
 		Explain: templates.BuildExplainCommand,
+		Create:  templates.BuildCreateCommand,
+		Delete:  templates.BuildDeleteCommand,
 	}, cmdcommon.CoreCommandsMap{
 		// map of available core commands
 		"registry_config":       config.NewConfigCMD,
