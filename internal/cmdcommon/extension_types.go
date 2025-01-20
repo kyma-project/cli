@@ -2,6 +2,7 @@ package cmdcommon
 
 import (
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/templates"
+	"github.com/kyma-project/cli.v3/internal/cmd/alpha/templates/types"
 	"github.com/spf13/cobra"
 )
 
@@ -21,6 +22,7 @@ type CoreCommandsMap map[string]func(*KymaConfig) *cobra.Command
 // allowed template commands
 type TemplateCommandsList struct {
 	Explain func(*templates.ExplainOptions) *cobra.Command
+	Create  func(templates.KubeClientGetter, *templates.CreateOptions) *cobra.Command
 }
 
 type ExtensionList []Extension
@@ -39,7 +41,7 @@ type Extension struct {
 	// main command of the command group
 	RootCommand RootCommand
 	// details about managed resource passed to every sub-command
-	Resource *ResourceInfo
+	Resource *types.ResourceInfo
 	// configuration of generic commands (like 'create', 'delete', 'get', ...) which implementation is provided by the cli
 	// most of these commands bases on the `Resource` field
 	TemplateCommands *TemplateCommands
@@ -47,13 +49,6 @@ type Extension struct {
 	// use this command to enable feature for a module
 	CoreCommands []CoreCommandInfo
 }
-
-type Scope string
-
-const (
-	ClusterScope    Scope = "cluster"
-	NamespacedScope Scope = "namespace"
-)
 
 type RootCommand struct {
 	// name of the command group
@@ -64,28 +59,13 @@ type RootCommand struct {
 	DescriptionLong string `yaml:"descriptionLong"`
 }
 
-type ResourceInfo struct {
-	Scope    Scope  `yaml:"scope"`
-	Kind     string `yaml:"kind"`
-	Group    string `yaml:"group"`
-	Version  string `yaml:"version"`
-	Singular string `yaml:"singular"`
-	Plural   string `yaml:"plural"`
-}
-
-type ExplainCommand struct {
-	// short description of the command
-	Description string `yaml:"description"`
-	// long description of the command group
-	DescriptionLong string `yaml:"descriptionLong"`
-	// text that will be printed after running the `explain` command
-	Output string `yaml:"output"`
-}
-
 type TemplateCommands struct {
 	// allows to explaining command to the commands group in format:
 	// kyma <root_command> explain
-	ExplainCommand *ExplainCommand `yaml:"explain"`
+	ExplainCommand *types.ExplainCommand `yaml:"explain"`
+	// allows to create resource based on the ResourceInfo structure
+	// kyma <root_command> create
+	CreateCommand *types.CreateCommand `yaml:"create"`
 }
 
 type CoreCommandInfo struct {
