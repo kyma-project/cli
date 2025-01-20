@@ -39,3 +39,5 @@ dist/
 tests/btp/sm.env
 tests/btp/hana-admin-api-binding.json
 tests/btp/config.json
+tests/**/node_modules/
+tests/btp/sample-http-db-nodejs/bookstore/package-lock.json
