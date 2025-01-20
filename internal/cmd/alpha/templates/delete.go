@@ -9,44 +9,38 @@ import (
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/templates/parameters"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/templates/types"
-	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-type KubeClientGetter interface {
-	GetKubeClientWithClierr() (kube.Client, clierror.Error)
-}
-
-type CreateOptions struct {
-	types.CreateCommand
+type DeleteOptions struct {
+	types.DeleteCommand
 	ResourceInfo types.ResourceInfo
 }
 
-func BuildCreateCommand(clientGetter KubeClientGetter, createOptions *CreateOptions) *cobra.Command {
-	return buildCreateCommand(os.Stdout, clientGetter, createOptions)
+func BuildDeleteCommand(clientGetter KubeClientGetter, options *DeleteOptions) *cobra.Command {
+	return buildDeleteCommand(os.Stdout, clientGetter, options)
 }
 
-func buildCreateCommand(out io.Writer, clientGetter KubeClientGetter, createOptions *CreateOptions) *cobra.Command {
+func buildDeleteCommand(out io.Writer, clientGetter KubeClientGetter, options *DeleteOptions) *cobra.Command {
 	extraValues := []parameters.Value{}
 	cmd := &cobra.Command{
-		Use:   "create",
-		Short: createOptions.Description,
-		Long:  createOptions.DescriptionLong,
+		Use:   "delete",
+		Short: options.Description,
+		Long:  options.DescriptionLong,
 		Run: func(cmd *cobra.Command, args []string) {
-			clierror.Check(createResource(&createArgs{
+			clierror.Check(deleteResource(&deleteArgs{
 				out:           out,
 				ctx:           cmd.Context(),
+				deleteOptions: options,
 				clientGetter:  clientGetter,
-				createOptions: createOptions,
 				extraValues:   extraValues,
 			}))
 		},
 	}
 
-	flags := append(createOptions.CustomFlags, commonResourceFlags(createOptions.ResourceInfo.Scope)...)
-	for _, flag := range flags {
+	for _, flag := range commonResourceFlags(options.ResourceInfo.Scope) {
 		value := parameters.NewTyped(flag.Type, flag.Path, flag.DefaultValue)
 		cmd.Flags().VarP(value, flag.Name, flag.Shorthand, flag.Description)
 		if flag.Required {
@@ -58,20 +52,20 @@ func buildCreateCommand(out io.Writer, clientGetter KubeClientGetter, createOpti
 	return cmd
 }
 
-type createArgs struct {
+type deleteArgs struct {
 	out           io.Writer
 	ctx           context.Context
+	deleteOptions *DeleteOptions
 	clientGetter  KubeClientGetter
-	createOptions *CreateOptions
 	extraValues   []parameters.Value
 }
 
-func createResource(args *createArgs) clierror.Error {
+func deleteResource(args *deleteArgs) clierror.Error {
 	u := &unstructured.Unstructured{}
 	u.SetGroupVersionKind(schema.GroupVersionKind{
-		Group:   args.createOptions.ResourceInfo.Group,
-		Version: args.createOptions.ResourceInfo.Version,
-		Kind:    args.createOptions.ResourceInfo.Kind,
+		Group:   args.deleteOptions.ResourceInfo.Group,
+		Version: args.deleteOptions.ResourceInfo.Version,
+		Kind:    args.deleteOptions.ResourceInfo.Kind,
 	})
 
 	client, clierr := args.clientGetter.GetKubeClientWithClierr()
@@ -84,11 +78,12 @@ func createResource(args *createArgs) clierror.Error {
 		return clierr
 	}
 
-	err := client.RootlessDynamic().Apply(args.ctx, u)
+	err := client.RootlessDynamic().Remove(args.ctx, u)
 	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to create resource"))
+		return clierror.Wrap(err, clierror.New("failed to delete resource"))
 	}
 
-	fmt.Fprintf(args.out, "resource %s applied\n", getResourceName(args.createOptions.ResourceInfo.Scope, u))
+	fmt.Fprintf(args.out, "resource %s deleted\n", getResourceName(args.deleteOptions.ResourceInfo.Scope, u))
+
 	return nil
 }

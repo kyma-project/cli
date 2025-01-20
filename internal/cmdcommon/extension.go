@@ -184,6 +184,13 @@ func addGenericCommands(cmd *cobra.Command, config *KymaConfig, extension *Exten
 			ResourceInfo:  *extension.Resource,
 		}))
 	}
+
+	if extension.Resource != nil && commands.DeleteCommand != nil {
+		cmd.AddCommand(availableTemplateCommands.Delete(config, &templates.DeleteOptions{
+			DeleteCommand: *commands.DeleteCommand,
+			ResourceInfo:  *extension.Resource,
+		}))
+	}
 }
 
 func addCoreCommands(cmd *cobra.Command, config *KymaConfig, extensionCoreCommands []CoreCommandInfo, availableCoreCommands CoreCommandsMap) {

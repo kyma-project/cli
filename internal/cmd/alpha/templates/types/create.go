@@ -6,7 +6,7 @@ type CreateCommand struct {
 	// long description of the command group
 	DescriptionLong string `yaml:"descriptionLong"`
 	// custom flags used to build command and set values for specific fields
-	CustomFlags []CreateCustomFlag `yaml:"customFlags"`
+	CustomFlags []CustomFlag `yaml:"customFlags"`
 }
 
 type CreateCustomFlagType string
@@ -17,7 +17,7 @@ var (
 	IntCustomFlagType    CreateCustomFlagType = "int64"
 )
 
-type CreateCustomFlag struct {
+type CustomFlag struct {
 	// type of the custom flag
 	Type CreateCustomFlagType `yaml:"type"`
 	// name of the custom flag
