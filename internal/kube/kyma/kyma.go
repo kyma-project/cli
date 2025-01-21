@@ -81,12 +81,11 @@ func (c *client) GetModuleTemplateForModule(ctx context.Context, moduleName, mod
 	}
 
 	for _, moduleTemplate := range moduleTemplates.Items {
+		// old module templates have name in fomat moduleName-moduleChannel
 		if moduleTemplate.ObjectMeta.Name == fmt.Sprintf("%s-%s", moduleName, moduleChannel) {
-			// old module template detected
-			// TODO: tests
 			return &moduleTemplate, nil
 		}
-		// in case this ever stops working we could get moduleReleaseMeta list and parse that
+		// in case this ever stops working for the new dmodules we could get moduleReleaseMeta list and parse that
 		// https://github.com/kyma-project/cli/issues/2319#issuecomment-2602751723
 		if moduleTemplate.Spec.ModuleName == moduleName &&
 			moduleTemplate.Spec.Version == moduleVersion {
