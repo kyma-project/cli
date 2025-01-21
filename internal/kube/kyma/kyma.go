@@ -85,7 +85,7 @@ func (c *client) GetModuleTemplateForModule(ctx context.Context, moduleName, mod
 		if moduleTemplate.ObjectMeta.Name == fmt.Sprintf("%s-%s", moduleName, moduleChannel) {
 			return &moduleTemplate, nil
 		}
-		// in case this ever stops working for the new dmodules we could get moduleReleaseMeta list and parse that
+		// in case this ever stops working for the new modules we could get moduleReleaseMeta list and parse that
 		// https://github.com/kyma-project/cli/issues/2319#issuecomment-2602751723
 		if moduleTemplate.Spec.ModuleName == moduleName &&
 			moduleTemplate.Spec.Version == moduleVersion {
