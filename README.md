@@ -40,7 +40,7 @@ Inspect the new available alpha commands by calling the `--help` option:
 ```
 docker pull kennethreitz/httpbin
 
-./bin/kyma@v3 alpha image-import kennethreitz/httpbin:latest
+./bin/kyma@v3 alpha registry image-import kennethreitz/httpbin:latest
 ```
 Run a Pod from a locally hosted image
 ```
