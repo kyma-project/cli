@@ -48,7 +48,7 @@ func removeModuleCR(writer io.Writer, ctx context.Context, client kube.Client, m
 		return nil
 	}
 
-	moduleTemplate, err := client.Kyma().GetModuleTemplateForModule(ctx, info.Status.Name, info.Status.Version)
+	moduleTemplate, err := client.Kyma().GetModuleTemplateForModule(ctx, info.Status.Name, info.Status.Version, info.Status.Channel)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to get ModuleTemplate CR for module"))
 	}

@@ -4,8 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"k8s.io/utils/ptr"
 	"slices"
+
+	"k8s.io/utils/ptr"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -25,7 +26,7 @@ type Interface interface {
 	ListModuleReleaseMeta(context.Context) (*ModuleReleaseMetaList, error)
 	ListModuleTemplate(context.Context) (*ModuleTemplateList, error)
 	GetModuleReleaseMetaForModule(context.Context, string) (*ModuleReleaseMeta, error)
-	GetModuleTemplateForModule(context.Context, string, string) (*ModuleTemplate, error)
+	GetModuleTemplateForModule(context.Context, string, string, string) (*ModuleTemplate, error)
 	GetDefaultKyma(context.Context) (*Kyma, error)
 	UpdateDefaultKyma(context.Context, *Kyma) error
 	GetModuleInfo(context.Context, string) (*KymaModuleInfo, error)
@@ -73,13 +74,20 @@ func (c *client) GetModuleReleaseMetaForModule(ctx context.Context, moduleName s
 }
 
 // GetModuleTemplateForModule returns ModuleTemplate CR corelated with given module name in right version
-func (c *client) GetModuleTemplateForModule(ctx context.Context, moduleName, moduleVersion string) (*ModuleTemplate, error) {
+func (c *client) GetModuleTemplateForModule(ctx context.Context, moduleName, moduleVersion, moduleChannel string) (*ModuleTemplate, error) {
 	moduleTemplates, err := c.ListModuleTemplate(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, moduleTemplate := range moduleTemplates.Items {
+		if moduleTemplate.ObjectMeta.Name == fmt.Sprintf("%s-%s", moduleName, moduleChannel) {
+			// old module template detected
+			// TODO: tests
+			return &moduleTemplate, nil
+		}
+		// in case this ever stops working we could get moduleReleaseMeta list and parse that
+		// https://github.com/kyma-project/cli/issues/2319#issuecomment-2602751723
 		if moduleTemplate.Spec.ModuleName == moduleName &&
 			moduleTemplate.Spec.Version == moduleVersion {
 			return &moduleTemplate, nil

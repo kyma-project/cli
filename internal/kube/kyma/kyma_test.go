@@ -3,9 +3,11 @@ package kyma
 import (
 	"context"
 	"encoding/json"
-	"k8s.io/utils/ptr"
+	"fmt"
 	"reflect"
 	"testing"
+
+	"k8s.io/utils/ptr"
 
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -438,16 +440,16 @@ func Test_client_ListModuleTemplate(t *testing.T) {
 		scheme := runtime.NewScheme()
 		scheme.AddKnownTypes(GVRModuleTemplate.GroupVersion())
 		client := NewClient(dynamic_fake.NewSimpleDynamicClient(scheme,
-			fixModuleTemplate("test-1"),
-			fixModuleTemplate("test-2"),
+			fixModuleTemplate("test-1", "0.1", ""),
+			fixModuleTemplate("test-2", "0.1", ""),
 		))
 
 		list, err := client.ListModuleTemplate(context.Background())
 
 		require.NoError(t, err)
 		require.Len(t, list.Items, 2)
-		require.Contains(t, list.Items, fixModuleTemplateStruct("test-1"))
-		require.Contains(t, list.Items, fixModuleTemplateStruct("test-2"))
+		require.Contains(t, list.Items, fixModuleTemplateStruct("test-1", "0.1", ""))
+		require.Contains(t, list.Items, fixModuleTemplateStruct("test-2", "0.1", ""))
 
 	})
 }
@@ -487,25 +489,40 @@ func Test_client_GetModuleTemplateForModule(t *testing.T) {
 		scheme := runtime.NewScheme()
 		scheme.AddKnownTypes(GVRModuleTemplate.GroupVersion())
 		client := NewClient(dynamic_fake.NewSimpleDynamicClient(scheme,
-			fixModuleTemplate("test-1"),
-			fixModuleTemplate("test-2"),
+			fixModuleTemplate("test-1", "0.1", ""),
+			fixModuleTemplate("test-2", "0.1", ""),
 		))
 
-		got, err := client.GetModuleTemplateForModule(context.Background(), "test-2", "0.1")
+		got, err := client.GetModuleTemplateForModule(context.Background(), "test-2", "0.1", "")
 
 		require.NoError(t, err)
-		require.Equal(t, fixModuleTemplateStruct("test-2"), *got)
+		require.Equal(t, fixModuleTemplateStruct("test-2", "0.1", ""), *got)
+	})
+
+	t.Run("get module ModuleTemplate for old module", func(t *testing.T) {
+		scheme := runtime.NewScheme()
+		scheme.AddKnownTypes(GVRModuleTemplate.GroupVersion())
+		client := NewClient(dynamic_fake.NewSimpleDynamicClient(scheme,
+			fixModuleTemplate("test-1", "0.1", ""),
+			fixModuleTemplate("test-2", "0.1", ""),
+			fixModuleTemplate("test", "", "fast"),
+		))
+
+		got, err := client.GetModuleTemplateForModule(context.Background(), "test", "0.1", "fast")
+
+		require.NoError(t, err)
+		require.Equal(t, fixModuleTemplateStruct("test", "", "fast"), *got)
 	})
 
 	t.Run("no ModuleReleaseMeta for module", func(t *testing.T) {
 		scheme := runtime.NewScheme()
 		scheme.AddKnownTypes(GVRModuleTemplate.GroupVersion())
 		client := NewClient(dynamic_fake.NewSimpleDynamicClient(scheme,
-			fixModuleTemplate("test-1"),
-			fixModuleTemplate("test-2"),
+			fixModuleTemplate("test-1", "0.1", ""),
+			fixModuleTemplate("test-2", "0.1", ""),
 		))
 
-		got, err := client.GetModuleTemplateForModule(context.Background(), "test-2", "0.2")
+		got, err := client.GetModuleTemplateForModule(context.Background(), "test-2", "0.2", "")
 
 		require.ErrorContains(t, err, "can't find ModuleTemplate CR for module test-2 in version 0.2")
 		require.Nil(t, got)
@@ -569,8 +586,8 @@ func fixModuleReleaseMetaStruct(moduleName string) ModuleReleaseMeta {
 	}
 }
 
-func fixModuleTemplateStruct(moduleName string) ModuleTemplate {
-	return ModuleTemplate{
+func fixModuleTemplateStruct(moduleName, moduleVersion, moduleChannel string) ModuleTemplate {
+	mt := ModuleTemplate{
 		TypeMeta: v1.TypeMeta{
 			APIVersion: "operator.kyma-project.io/v1beta2",
 			Kind:       "ModuleTemplate",
@@ -581,9 +598,17 @@ func fixModuleTemplateStruct(moduleName string) ModuleTemplate {
 		},
 		Spec: ModuleTemplateSpec{
 			ModuleName: moduleName,
-			Version:    "0.1",
 		},
 	}
+	if moduleVersion != "" {
+		mt.Spec.Version = moduleVersion
+	}
+	if moduleChannel != "" {
+		mt.ObjectMeta.Name = fmt.Sprintf("%s-%s", moduleName, moduleChannel)
+		mt.Spec.Channel = moduleChannel
+	}
+
+	return mt
 }
 
 func fixModuleReleaseMeta(moduleName string) *unstructured.Unstructured {
@@ -612,8 +637,8 @@ func fixModuleReleaseMeta(moduleName string) *unstructured.Unstructured {
 	}
 }
 
-func fixModuleTemplate(moduleName string) *unstructured.Unstructured {
-	return &unstructured.Unstructured{
+func fixModuleTemplate(moduleName, moduleVersion, moduleChannel string) *unstructured.Unstructured {
+	mt := &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": "operator.kyma-project.io/v1beta2",
 			"kind":       "ModuleTemplate",
@@ -623,10 +648,19 @@ func fixModuleTemplate(moduleName string) *unstructured.Unstructured {
 			},
 			"spec": map[string]interface{}{
 				"moduleName": moduleName,
-				"version":    "0.1",
 			},
 		},
 	}
+
+	if moduleVersion != "" {
+		mt.Object["spec"].(map[string]interface{})["version"] = moduleVersion
+	}
+	if moduleChannel != "" {
+		mt.Object["metadata"].(map[string]interface{})["name"] = fmt.Sprintf("%s-%s", moduleName, moduleChannel)
+		mt.Object["spec"].(map[string]interface{})["channel"] = moduleChannel
+	}
+
+	return mt
 }
 
 func Test_manageModule(t *testing.T) {
