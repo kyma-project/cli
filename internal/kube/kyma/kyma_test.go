@@ -653,11 +653,11 @@ func fixModuleTemplate(moduleName, moduleVersion, moduleChannel string) *unstruc
 	}
 
 	if moduleVersion != "" {
-		mt.Object["spec"].(map[string]interface{})["version"] = moduleVersion
+		_ = unstructured.SetNestedField(mt.Object, moduleVersion, "spec", "version")
 	}
 	if moduleChannel != "" {
-		mt.Object["metadata"].(map[string]interface{})["name"] = fmt.Sprintf("%s-%s", moduleName, moduleChannel)
-		mt.Object["spec"].(map[string]interface{})["channel"] = moduleChannel
+		_ = unstructured.SetNestedField(mt.Object, fmt.Sprintf("%s-%s", moduleName, moduleChannel), "metadata", "name")
+		_ = unstructured.SetNestedField(mt.Object, moduleChannel, "spec", "channel")
 	}
 
 	return mt
