@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/templates"
+	"github.com/kyma-project/cli.v3/internal/cmd/alpha/templates/types"
 	pkgerrors "github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
@@ -97,7 +98,7 @@ func parseResourceExtension(cmData map[string]string) (*Extension, error) {
 		return nil, err
 	}
 
-	resourceInfo, err := parseOptionalField[*ResourceInfo](cmData, ExtensionResourceInfoKey)
+	resourceInfo, err := parseOptionalField[*types.ResourceInfo](cmData, ExtensionResourceInfoKey)
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +157,7 @@ func buildCommandFromExtension(config *KymaConfig, extension *Extension, availab
 	}
 
 	if extension.TemplateCommands != nil {
-		addGenericCommands(cmd, extension.TemplateCommands, availableTemplateCommands)
+		addGenericCommands(cmd, config, extension, availableTemplateCommands)
 	}
 
 	addCoreCommands(cmd, config, extension.CoreCommands, availableCoreCommands)
@@ -164,12 +165,23 @@ func buildCommandFromExtension(config *KymaConfig, extension *Extension, availab
 	return cmd
 }
 
-func addGenericCommands(cmd *cobra.Command, genericCommands *TemplateCommands, availableTemplateCommands *TemplateCommandsList) {
-	if genericCommands.ExplainCommand != nil {
+func addGenericCommands(cmd *cobra.Command, config *KymaConfig, extension *Extension, availableTemplateCommands *TemplateCommandsList) {
+	if extension.TemplateCommands == nil {
+		// continue because there is no template command to build
+		return
+	}
+
+	commands := extension.TemplateCommands
+	if commands.ExplainCommand != nil {
 		cmd.AddCommand(availableTemplateCommands.Explain(&templates.ExplainOptions{
-			Short:  genericCommands.ExplainCommand.Description,
-			Long:   genericCommands.ExplainCommand.DescriptionLong,
-			Output: genericCommands.ExplainCommand.Output,
+			ExplainCommand: *commands.ExplainCommand,
+		}))
+	}
+
+	if extension.Resource != nil && commands.CreateCommand != nil {
+		cmd.AddCommand(availableTemplateCommands.Create(config, &templates.CreateOptions{
+			CreateCommand: *commands.CreateCommand,
+			ResourceInfo:  *extension.Resource,
 		}))
 	}
 }
