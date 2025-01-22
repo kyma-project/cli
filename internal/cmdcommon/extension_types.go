@@ -23,6 +23,7 @@ type CoreCommandsMap map[string]func(*KymaConfig) *cobra.Command
 type TemplateCommandsList struct {
 	Explain func(*templates.ExplainOptions) *cobra.Command
 	Create  func(templates.KubeClientGetter, *templates.CreateOptions) *cobra.Command
+	Delete  func(templates.KubeClientGetter, *templates.DeleteOptions) *cobra.Command
 }
 
 type ExtensionList []Extension
@@ -66,6 +67,9 @@ type TemplateCommands struct {
 	// allows to create resource based on the ResourceInfo structure
 	// kyma <root_command> create
 	CreateCommand *types.CreateCommand `yaml:"create"`
+	// allows to delete resource based on the ResourceInfo structure
+	// kyma <root_command> delete
+	DeleteCommand *types.DeleteCommand `yaml:"delete"`
 }
 
 type CoreCommandInfo struct {
