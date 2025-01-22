@@ -488,12 +488,14 @@ func Test_client_GetModuleTemplateForModule(t *testing.T) {
 	t.Run("get module ModuleTemplate", func(t *testing.T) {
 		scheme := runtime.NewScheme()
 		scheme.AddKnownTypes(GVRModuleTemplate.GroupVersion())
+		scheme.AddKnownTypes(GVRModuleReleaseMeta.GroupVersion())
 		client := NewClient(dynamic_fake.NewSimpleDynamicClient(scheme,
 			fixModuleTemplate("test-1", "0.1", ""),
 			fixModuleTemplate("test-2", "0.1", ""),
+			fixModuleReleaseMeta("test-2"),
 		))
-
-		got, err := client.GetModuleTemplateForModule(context.Background(), "test-2", "0.1", "")
+		// NewSimpleDynamicClientWithCustomListKinds
+		got, err := client.GetModuleTemplateForModule(context.Background(), "test-2", "regular")
 
 		require.NoError(t, err)
 		require.Equal(t, fixModuleTemplateStruct("test-2", "0.1", ""), *got)
@@ -506,9 +508,10 @@ func Test_client_GetModuleTemplateForModule(t *testing.T) {
 			fixModuleTemplate("test-1", "0.1", ""),
 			fixModuleTemplate("test-2", "0.1", ""),
 			fixModuleTemplate("test", "", "fast"),
+			fixModuleReleaseMeta("test-2"),
 		))
 
-		got, err := client.GetModuleTemplateForModule(context.Background(), "test", "0.1", "fast")
+		got, err := client.GetModuleTemplateForModule(context.Background(), "test", "fast")
 
 		require.NoError(t, err)
 		require.Equal(t, fixModuleTemplateStruct("test", "", "fast"), *got)
@@ -520,11 +523,12 @@ func Test_client_GetModuleTemplateForModule(t *testing.T) {
 		client := NewClient(dynamic_fake.NewSimpleDynamicClient(scheme,
 			fixModuleTemplate("test-1", "0.1", ""),
 			fixModuleTemplate("test-2", "0.1", ""),
+			fixModuleReleaseMeta("test-1"),
 		))
 
-		got, err := client.GetModuleTemplateForModule(context.Background(), "test-2", "0.2", "")
+		got, err := client.GetModuleTemplateForModule(context.Background(), "test-2", "fast")
 
-		require.ErrorContains(t, err, "can't find ModuleTemplate CR for module test-2 in version 0.2")
+		require.ErrorContains(t, err, "can't find neither ModuleReleaseMeta CR/CRD nor ModuleTemplate CR for module test-2 in channel fast")
 		require.Nil(t, got)
 	})
 }
@@ -601,6 +605,7 @@ func fixModuleTemplateStruct(moduleName, moduleVersion, moduleChannel string) Mo
 		},
 	}
 	if moduleVersion != "" {
+		mt.ObjectMeta.Name = fmt.Sprintf("%s-%s", moduleName, moduleVersion)
 		mt.Spec.Version = moduleVersion
 	}
 	if moduleChannel != "" {
@@ -653,6 +658,7 @@ func fixModuleTemplate(moduleName, moduleVersion, moduleChannel string) *unstruc
 	}
 
 	if moduleVersion != "" {
+		_ = unstructured.SetNestedField(mt.Object, fmt.Sprintf("%s-%s", moduleName, moduleVersion), "metadata", "name")
 		_ = unstructured.SetNestedField(mt.Object, moduleVersion, "spec", "version")
 	}
 	if moduleChannel != "" {

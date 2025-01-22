@@ -88,7 +88,7 @@ func (c *client) GetModuleTemplateForModule(ctx context.Context, moduleName, mod
 		if moduleTemplate != nil {
 			return moduleTemplate, nil
 		}
-		return nil, fmt.Errorf("can't find neither ModuleReleaseMeta CR/CRD nor ModuleTemplate CR %s in channel %s", moduleName, moduleChannel)
+		return nil, fmt.Errorf("can't find neither ModuleReleaseMeta CR/CRD nor ModuleTemplate CR for module %s in channel %s", moduleName, moduleChannel)
 	}
 
 	moduleVersion := getModuleVersionForChannel(moduleReleaseMeta, moduleChannel)
