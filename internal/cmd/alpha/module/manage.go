@@ -23,18 +23,17 @@ func newManageCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Use:   "manage <module>",
 		Short: "Manage module.",
 		Long:  "Use this command to manage an existing module.",
-
+		Args:  cobra.ExactArgs(1),
 		PreRun: func(_ *cobra.Command, args []string) {
 			clierror.Check(cfg.validate())
 		},
 		Run: func(cmd *cobra.Command, args []string) {
+			cfg.module = args[0]
 			clierror.Check(runManage(&cfg))
 		},
 	}
 
-	cmd.Flags().StringVar(&cfg.module, "module", "", "Name of the module to manage")
 	cmd.Flags().StringVar(&cfg.policy, "policy", "CreateAndDelete", "Set custom resource policy. (Possible values: CreateAndDelete, Ignore)")
-	_ = cmd.MarkFlagRequired("module")
 	return cmd
 }
 

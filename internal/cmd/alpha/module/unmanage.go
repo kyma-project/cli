@@ -21,13 +21,13 @@ func newUnmanageCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Use:   "unmanage <module>",
 		Short: "Unmanage module.",
 		Long:  "Use this command to unmanage an existing module.",
+		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			cfg.module = args[0]
 			clierror.Check(runUnmanage(&cfg))
 		},
 	}
 
-	cmd.Flags().StringVar(&cfg.module, "module", "", "Name of the module to unmanage")
-	_ = cmd.MarkFlagRequired("module")
 	return cmd
 }
 
