@@ -26,7 +26,7 @@ type Interface interface {
 	ListModuleReleaseMeta(context.Context) (*ModuleReleaseMetaList, error)
 	ListModuleTemplate(context.Context) (*ModuleTemplateList, error)
 	GetModuleReleaseMetaForModule(context.Context, string) (*ModuleReleaseMeta, error)
-	GetModuleTemplateForModule(context.Context, string, string, string) (*ModuleTemplate, error)
+	GetModuleTemplateForModule(context.Context, string, string) (*ModuleTemplate, error)
 	GetDefaultKyma(context.Context) (*Kyma, error)
 	UpdateDefaultKyma(context.Context, *Kyma) error
 	GetModuleInfo(context.Context, string) (*KymaModuleInfo, error)
@@ -74,26 +74,55 @@ func (c *client) GetModuleReleaseMetaForModule(ctx context.Context, moduleName s
 }
 
 // GetModuleTemplateForModule returns ModuleTemplate CR corelated with given module name in right version
-func (c *client) GetModuleTemplateForModule(ctx context.Context, moduleName, moduleVersion, moduleChannel string) (*ModuleTemplate, error) {
+func (c *client) GetModuleTemplateForModule(ctx context.Context, moduleName, moduleChannel string) (*ModuleTemplate, error) {
 	moduleTemplates, err := c.ListModuleTemplate(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, moduleTemplate := range moduleTemplates.Items {
-		// old module templates have name in fomat moduleName-moduleChannel
-		if moduleTemplate.ObjectMeta.Name == fmt.Sprintf("%s-%s", moduleName, moduleChannel) {
-			return &moduleTemplate, nil
+	// get ModuleReleaseMeta if the CRD exists
+	moduleReleaseMeta, err := c.GetModuleReleaseMetaForModule(ctx, moduleName)
+	if err != nil {
+		// new modules not detected, going old route
+		moduleTemplate := getOldModuleTemplate(moduleTemplates, moduleName, moduleChannel)
+		if moduleTemplate != nil {
+			return moduleTemplate, nil
 		}
-		// in case this ever stops working for the new modules we could get moduleReleaseMeta list and parse that
-		// https://github.com/kyma-project/cli/issues/2319#issuecomment-2602751723
-		if moduleTemplate.Spec.ModuleName == moduleName &&
-			moduleTemplate.Spec.Version == moduleVersion {
-			return &moduleTemplate, nil
-		}
+		return nil, fmt.Errorf("can't find neither ModuleReleaseMeta CR/CRD nor ModuleTemplate CR %s in channel %s", moduleName, moduleChannel)
 	}
 
-	return nil, fmt.Errorf("can't find ModuleTemplate CR for module %s in version %s", moduleName, moduleVersion)
+	moduleVersion := getModuleVersionForChannel(moduleReleaseMeta, moduleChannel)
+	if moduleVersion == "" {
+		return nil, fmt.Errorf("can't find ModuleReleaseMeta CR for module %s in channel %s", moduleName, moduleChannel)
+	}
+
+	ModuleTemplate := getModuleTemplate(moduleTemplates, moduleName, moduleVersion)
+	if ModuleTemplate != nil {
+		return ModuleTemplate, nil
+	}
+
+	return nil, fmt.Errorf("can't find ModuleTemplate CR for module %s in channel %s", moduleName, moduleChannel)
+}
+
+// getModuleVersionForChannel returns version of the module for given channel
+func getModuleVersionForChannel(moduleReleaseMeta *ModuleReleaseMeta, moduleChannel string) string {
+	for _, channel := range moduleReleaseMeta.Spec.Channels {
+		if channel.Channel == moduleChannel {
+			return channel.Version
+		}
+	}
+	return ""
+}
+
+// getModuleTemplate returns matching ModuleTemplate from list
+func getModuleTemplate(moduleTemplates *ModuleTemplateList, moduleName, moduleVersion string) *ModuleTemplate {
+	// we can either look for moduleTemplates named moduleName-moduleVersion or look for the same info in .Spec
+	for _, moduleTemplate := range moduleTemplates.Items {
+		if moduleTemplate.Spec.ModuleName == moduleName && moduleTemplate.Spec.Version == moduleVersion {
+			return &moduleTemplate
+		}
+	}
+	return nil
 }
 
 // GetDefaultKyma gets the default Kyma CR from the kyma-system namespace and cast it to the Kyma structure
