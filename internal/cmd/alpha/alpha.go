@@ -40,6 +40,7 @@ func NewAlphaCMD() (*cobra.Command, clierror.Error) {
 	cmds := kymaConfig.BuildExtensions(&cmdcommon.TemplateCommandsList{
 		// list of template commands deffinitions
 		Explain: templates.BuildExplainCommand,
+		Get:     templates.BuildGetCommand,
 		Create:  templates.BuildCreateCommand,
 		Delete:  templates.BuildDeleteCommand,
 	}, cmdcommon.CoreCommandsMap{

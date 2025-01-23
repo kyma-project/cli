@@ -22,6 +22,7 @@ type CoreCommandsMap map[string]func(*KymaConfig) *cobra.Command
 // allowed template commands
 type TemplateCommandsList struct {
 	Explain func(*templates.ExplainOptions) *cobra.Command
+	Get     func(templates.KubeClientGetter, *templates.GetOptions) *cobra.Command
 	Create  func(templates.KubeClientGetter, *templates.CreateOptions) *cobra.Command
 	Delete  func(templates.KubeClientGetter, *templates.DeleteOptions) *cobra.Command
 }
@@ -70,6 +71,9 @@ type TemplateCommands struct {
 	// allows to delete resource based on the ResourceInfo structure
 	// kyma <root_command> delete
 	DeleteCommand *types.DeleteCommand `yaml:"delete"`
+	// allows to get resources based on the ResourceInfo structure
+	// kyma <root_command> get
+	GetCommand *types.GetCommand `yaml:"get"`
 }
 
 type CoreCommandInfo struct {

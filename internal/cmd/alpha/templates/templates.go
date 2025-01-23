@@ -18,11 +18,7 @@ func setExtraValues(u *unstructured.Unstructured, extraValues []parameters.Value
 			continue
 		}
 
-		fields := strings.Split(
-			// remove optional dot at the beginning of the path
-			strings.TrimPrefix(extraValue.GetPath(), "."),
-			".",
-		)
+		fields := splitPath(extraValue.GetPath())
 
 		err := unstructured.SetNestedField(u.Object, value, fields...)
 		if err != nil {
@@ -56,6 +52,14 @@ func commonResourceFlags(resourceScope types.Scope) []types.CustomFlag {
 	}
 
 	return params
+}
+
+func splitPath(path string) []string {
+	return strings.Split(
+		// remove optional dot at the beginning of the path
+		strings.TrimPrefix(path, "."),
+		".",
+	)
 }
 
 func getResourceName(scope types.Scope, u *unstructured.Unstructured) string {

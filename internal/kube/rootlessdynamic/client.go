@@ -17,7 +17,7 @@ type applyFunc func(context.Context, dynamic.ResourceInterface, *unstructured.Un
 
 type Interface interface {
 	Get(context.Context, *unstructured.Unstructured) (*unstructured.Unstructured, error)
-	List(context.Context, *unstructured.Unstructured) (*unstructured.UnstructuredList, error)
+	List(context.Context, *unstructured.Unstructured, *ListOptions) (*unstructured.UnstructuredList, error)
 	Apply(context.Context, *unstructured.Unstructured) error
 	ApplyMany(context.Context, []unstructured.Unstructured) error
 	Remove(context.Context, *unstructured.Unstructured) error
@@ -64,7 +64,12 @@ func (c *client) Get(ctx context.Context, resource *unstructured.Unstructured) (
 	return c.dynamic.Resource(*gvr).Get(ctx, resource.GetName(), metav1.GetOptions{})
 }
 
-func (c *client) List(ctx context.Context, resource *unstructured.Unstructured) (*unstructured.UnstructuredList, error) {
+type ListOptions struct {
+	AllNamespaces bool
+	FieldSelector string
+}
+
+func (c *client) List(ctx context.Context, resource *unstructured.Unstructured, opts *ListOptions) (*unstructured.UnstructuredList, error) {
 	group, version := groupVersion(resource.GetAPIVersion())
 	apiResource, err := c.discoverAPIResource(group, version, resource.GetKind())
 	if err != nil {
@@ -77,7 +82,15 @@ func (c *client) List(ctx context.Context, resource *unstructured.Unstructured) 
 		Resource: apiResource.Name,
 	}
 
-	return c.dynamic.Resource(*gvr).List(ctx, metav1.ListOptions{})
+	if apiResource.Namespaced && !opts.AllNamespaces && resource.GetNamespace() != "" {
+		return c.dynamic.Resource(*gvr).Namespace(getResourceNamespace(resource)).List(ctx, metav1.ListOptions{
+			FieldSelector: opts.FieldSelector,
+		})
+	}
+
+	return c.dynamic.Resource(*gvr).List(ctx, metav1.ListOptions{
+		FieldSelector: opts.FieldSelector,
+	})
 }
 
 func (c *client) Apply(ctx context.Context, resource *unstructured.Unstructured) error {

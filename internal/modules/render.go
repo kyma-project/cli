@@ -8,7 +8,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/olekukonko/tablewriter"
+	"github.com/kyma-project/cli.v3/internal/render"
 )
 
 type RowConverter func(Module) []string
@@ -36,11 +36,11 @@ var (
 // Renders uses standard output to print ModuleList in table view
 // TODO: support other formats like YAML or JSON
 func Render(modulesList ModulesList, tableInfo TableInfo) {
-	render(os.Stdout, modulesList, tableInfo)
+	renderTable(os.Stdout, modulesList, tableInfo)
 }
 
-func render(writer io.Writer, modulesList ModulesList, tableInfo TableInfo) {
-	renderTable(
+func renderTable(writer io.Writer, modulesList ModulesList, tableInfo TableInfo) {
+	render.Table(
 		writer,
 		convertModuleListToTable(modulesList, tableInfo.RowConverter),
 		tableInfo.Header,
@@ -57,29 +57,6 @@ func convertModuleListToTable(modulesList ModulesList, rowConverter RowConverter
 		result = append(result, rowConverter(module))
 	}
 	return result
-}
-
-// renderTable renders the table with the provided headers and data
-func renderTable(writer io.Writer, modulesData [][]string, headers []string) {
-	twTable := setTable(writer)
-	twTable.AppendBulk(modulesData)
-	twTable.SetHeader(headers)
-	twTable.Render()
-}
-
-// setTable sets the table settings for the tablewriter
-func setTable(writer io.Writer) *tablewriter.Table {
-	table := tablewriter.NewWriter(writer)
-	table.SetRowLine(false)
-	table.SetHeaderLine(false)
-	table.SetColumnSeparator("")
-	table.SetAlignment(tablewriter.ALIGN_LEFT)
-	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-	table.SetColumnAlignment([]int{tablewriter.ALIGN_LEFT, tablewriter.ALIGN_LEFT, tablewriter.ALIGN_LEFT, tablewriter.ALIGN_LEFT})
-	table.SetBorder(false)
-	table.SetTablePadding("\t")
-	table.SetNoWhiteSpace(true)
-	return table
 }
 
 // convert version and channel into field in format 'version (channel)' for core modules and 'version' for community ones

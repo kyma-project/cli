@@ -17,13 +17,13 @@ func BuildExplainCommand(explainOptions *ExplainOptions) *cobra.Command {
 	return buildExplainCommand(os.Stdout, explainOptions)
 }
 
-func buildExplainCommand(out io.Writer, explainOptions *ExplainOptions) *cobra.Command {
+func buildExplainCommand(out io.Writer, options *ExplainOptions) *cobra.Command {
 	return &cobra.Command{
 		Use:   "explain",
-		Short: explainOptions.Description,
-		Long:  explainOptions.DescriptionLong,
+		Short: options.Description,
+		Long:  options.DescriptionLong,
 		Run: func(_ *cobra.Command, _ []string) {
-			fmt.Fprintln(out, explainOptions.Output)
+			fmt.Fprintln(out, options.Output)
 		},
 	}
 }
