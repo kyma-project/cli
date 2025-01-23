@@ -48,7 +48,7 @@ func runUnmanage(cfg *unmanageConfig) clierror.Error {
 		return clierror.Wrap(err, clierror.New("failed to check module state"))
 	}
 
-	fmt.Printf("Module %s set to unmanaged\n\n", cfg.module)
+	fmt.Printf("Module %s set to unmanaged\n", cfg.module)
 
 	return nil
 }

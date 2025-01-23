@@ -60,7 +60,7 @@ func runManage(cfg *manageConfig) clierror.Error {
 		return clierror.Wrap(err, clierror.New("failed to check module state"))
 	}
 
-	fmt.Printf("Module %s set to managed\n\n", cfg.module)
+	fmt.Printf("Module %s set to managed\n", cfg.module)
 
 	return nil
 }
