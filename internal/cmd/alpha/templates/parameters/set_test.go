@@ -33,7 +33,8 @@ func TestSet(t *testing.T) {
 					newStringValue(".metadata.namespace", "default"), // set with existing .metadata
 					newInt64Value(".spec.runtimes", 3),               // set new field
 					newInt64Value(".spec.elems[].iter", 1),           // set slice
-					newInt64Value(".spec.elems[].iter", 2),           // append slice
+					newInt64Value(".spec.elems[].iter", 2),           // overwrite slice
+					newInt64Value(".spec.elems[1].iter", 3),          // append another slice elem
 				},
 			},
 			want: map[string]interface{}{
@@ -46,6 +47,9 @@ func TestSet(t *testing.T) {
 					"elems": []interface{}{
 						map[string]interface{}{
 							"iter": int64(2),
+						},
+						map[string]interface{}{
+							"iter": int64(3),
 						},
 					},
 				},

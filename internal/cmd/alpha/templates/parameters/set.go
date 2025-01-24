@@ -3,6 +3,7 @@ package parameters
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
@@ -45,15 +46,22 @@ func buildExtraValuesObject(value interface{}, fields ...string) (map[string]int
 			return obj, unstructured.SetNestedField(obj, value, fields...)
 		}
 
-		if strings.HasSuffix(fields[i], "[]") {
+		if strings.HasSuffix(fields[i], "]") && strings.Contains(fields[i], "[") {
 			// is slice
-			fields[i] = strings.TrimSuffix(fields[i], "[]")
+			sliceIter, err := getSliceFieldIterator(fields[i])
+			if err != nil {
+				return nil, errors.Wrapf(err, "failed to get slice element number from field %s", fields[i])
+			}
+
+			fields[i] = trimSliceFieldSuffix(fields[i])
 			subObj, err := buildExtraValuesObject(value, fields[i+1:]...)
 			if err != nil {
 				return nil, err
 			}
 
-			err = unstructured.SetNestedSlice(obj, []interface{}{subObj}, fields[:i+1]...)
+			slice := make([]interface{}, sliceIter+1)
+			slice[sliceIter] = subObj
+			err = unstructured.SetNestedSlice(obj, slice, fields[:i+1]...)
 			if err != nil {
 				return nil, errors.Wrapf(err, "failed to set slice value for path .%s", strings.Join(fields[:i], "."))
 			}
@@ -67,6 +75,21 @@ func buildExtraValuesObject(value interface{}, fields ...string) (map[string]int
 	}
 
 	return obj, nil
+}
+
+func getSliceFieldIterator(field string) (int, error) {
+	stringIter := field[strings.Index(field, "[")+1 : len(field)-1]
+	if stringIter == "" {
+		// is []
+		return 0, nil
+	}
+
+	iter, err := strconv.ParseInt(stringIter, 10, 0)
+	return int(iter), err
+}
+
+func trimSliceFieldSuffix(field string) string {
+	return field[:strings.Index(field, "[")]
 }
 
 func mergeObjects(from map[string]interface{}, to map[string]interface{}) error {
@@ -117,6 +140,9 @@ func mergeSlices(from, to []interface{}) ([]interface{}, error) {
 			err = mergeObjects(from[i].(map[string]interface{}), dest[i].(map[string]interface{}))
 		case []interface{}:
 			dest[i], err = mergeSlices(from[i].([]interface{}), dest[i].([]interface{}))
+		case nil:
+			// in this case we want keep value from dest slice
+			continue
 		default:
 			// is simple type like int64, string, bool...
 			dest[i] = from[i]
