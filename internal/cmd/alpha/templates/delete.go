@@ -73,7 +73,7 @@ func deleteResource(args *deleteArgs) clierror.Error {
 		return clierr
 	}
 
-	clierr = setExtraValues(u, args.extraValues)
+	clierr = parameters.Set(u, args.extraValues)
 	if clierr != nil {
 		return clierr
 	}
