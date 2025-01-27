@@ -20,6 +20,7 @@ func setExtraValues(u *unstructured.Unstructured, extraValues []parameters.Value
 
 		fields := splitPath(extraValue.GetPath())
 
+		// TODO: support custom slices
 		err := unstructured.SetNestedField(u.Object, value, fields...)
 		if err != nil {
 			return clierror.Wrap(err, clierror.New(
