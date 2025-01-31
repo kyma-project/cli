@@ -7,7 +7,7 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
-	"k8s.io/apimachinery/pkg/api/errors"
+	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -46,17 +46,17 @@ type ModulesList []Module
 func List(ctx context.Context, client kube.Client) (ModulesList, error) {
 	moduleTemplates, err := client.Kyma().ListModuleTemplate(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to list all ModuleTemplate CRs from the cluster")
 	}
 
 	modulereleasemetas, err := client.Kyma().ListModuleReleaseMeta(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to list all ModuleReleaseMeta CRs from the cluster")
 	}
 
 	defaultKyma, err := client.Kyma().GetDefaultKyma(ctx)
 	if err != nil && !apierrors.IsNotFound(err) {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to get default Kyma CR from the cluster")
 	}
 
 	modulesList := ModulesList{}
@@ -83,7 +83,7 @@ func List(ctx context.Context, client kube.Client) (ModulesList, error) {
 			// only get state of installed modules
 			state, err = getModuleState(ctx, client, moduleTemplate, defaultKyma)
 			if err != nil {
-				return nil, err
+				return nil, errors.Wrapf(err, "failed to get module state from the %s ModuleTemplate", moduleTemplate.GetName())
 			}
 		}
 		if i := getModuleIndex(modulesList, moduleName); i != -1 {
@@ -149,7 +149,7 @@ func getStateFromData(ctx context.Context, client kube.Client, data unstructured
 	unstruct := generateUnstruct(apiVersion, kind, name, namespace)
 	result, err := client.RootlessDynamic().Get(ctx, &unstruct)
 	if err != nil {
-		if errors.IsNotFound(err) {
+		if apierrors.IsNotFound(err) {
 			return "", nil
 		}
 		return "", err
@@ -175,7 +175,7 @@ func getResourceState(ctx context.Context, client kube.Client, manager *kyma.Man
 	unstruct := generateUnstruct(apiVersion, manager.Kind, manager.Name, namespace)
 	result, err := client.RootlessDynamic().Get(ctx, &unstruct)
 	if err != nil {
-		if errors.IsNotFound(err) {
+		if apierrors.IsNotFound(err) {
 			return "", nil
 		}
 		return "", err
