@@ -17,9 +17,9 @@ func (g *Generator) SecurityConfigFileExists() (bool, error) {
 func (g *Generator) GenerateSecurityConfigFile() error {
 	cfg := module.SecurityScanCfg{
 		ModuleName: g.ModuleName,
-		Protecode: []string{"europe-docker.pkg.dev/kyma-project/prod/myimage:1.2.3",
+		Images: []string{"europe-docker.pkg.dev/kyma-project/prod/myimage:1.2.3",
 			"europe-docker.pkg.dev/kyma-project/prod/external/ghcr.io/mymodule/anotherimage:4.5.6"},
-		WhiteSource: module.WhiteSourceSecCfg{
+		Mend: module.WhiteSourceSecCfg{
 			Exclude: []string{"**/test/**", "**/*_test.go"},
 		},
 	}
