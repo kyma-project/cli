@@ -4,13 +4,14 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"reflect"
 	"strings"
 
 	itociartifact "github.com/open-component-model/ocm/cmds/ocm/commands/ocmcmds/common/inputs/types/ociartifact"
 	"github.com/open-component-model/ocm/pkg/contexts/ocm/accessmethods/ociartifact"
 	ocm "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc"
 	ocmv1 "github.com/open-component-model/ocm/pkg/contexts/ocm/compdesc/meta/v1"
-	"sigs.k8s.io/yaml"
+	"gopkg.in/yaml.v3"
 )
 
 var ErrFailedToParseImageURL = errors.New("error parsing protecode image URL")
@@ -30,7 +31,7 @@ func AddSecurityScanningMetadata(descriptor *ocm.ComponentDescriptor, securityCo
 	if err != nil {
 		return err
 	}
-	excludedWhitesourcePathPatterns := strings.Join(config.WhiteSource.Exclude, ",")
+	excludedWhitesourcePathPatterns := strings.Join(config.Mend.Exclude, ",")
 
 	// add security scan enabled global label
 	err = appendLabelToAccessor(descriptor, "scan", secScanEnabled, globalLabelTemplate)
@@ -48,7 +49,7 @@ func AddSecurityScanningMetadata(descriptor *ocm.ComponentDescriptor, securityCo
 		if err != nil {
 			return err
 		}
-		err = appendLabelToAccessor(src, "language", config.WhiteSource.Language, labelTemplate)
+		err = appendLabelToAccessor(src, "language", config.Mend.Language, labelTemplate)
 		if err != nil {
 			return err
 		}
@@ -57,7 +58,7 @@ func AddSecurityScanningMetadata(descriptor *ocm.ComponentDescriptor, securityCo
 			return err
 		}
 
-		err = appendLabelToAccessor(src, "subprojects", config.WhiteSource.SubProjects, labelTemplate)
+		err = appendLabelToAccessor(src, "subprojects", config.Mend.SubProjects, labelTemplate)
 		if err != nil {
 			return err
 		}
@@ -77,7 +78,7 @@ func AddSecurityScanningMetadata(descriptor *ocm.ComponentDescriptor, securityCo
 }
 
 func appendProtecodeImagesLayers(descriptor *ocm.ComponentDescriptor, config *SecurityScanCfg) error {
-	for _, imageURL := range config.Protecode {
+	for _, imageURL := range config.Images {
 		imageName, imageTag, err := getImageName(imageURL)
 		if err != nil {
 			return err
@@ -125,16 +126,48 @@ func getImageName(imageURL string) (string, string, error) {
 }
 
 type SecurityScanCfg struct {
-	ModuleName  string            `json:"module-name" yaml:"module-name" comment:"string, name of your module"`
-	Protecode   []string          `json:"protecode" yaml:"protecode" comment:"list, includes the images which must be scanned by the Protecode scanner (aka. Black Duck Binary Analysis)"`
-	WhiteSource WhiteSourceSecCfg `json:"whitesource" yaml:"whitesource" comment:"whitesource (aka. Mend) security scanner specific configuration"`
-	DevBranch   string            `json:"dev-branch" yaml:"dev-branch" comment:"string, name of the development branch"`
-	RcTag       string            `json:"rc-tag" yaml:"rc-tag" comment:"string, release candidate tag"`
+	ModuleName string            `json:"module-name" yaml:"module-name" comment:"string, name of your module"`
+	Images     []string          `json:"bdba" yaml:"bdba" comment:"list, includes the images which must be scanned by the Protecode scanner (aka. Black Duck Binary Analysis)"`
+	Mend       WhiteSourceSecCfg `json:"mend" yaml:"mend" comment:"whitesource (aka. Mend) security scanner specific configuration"`
+	DevBranch  string            `json:"dev-branch" yaml:"dev-branch" comment:"string, name of the development branch"`
+	RcTag      string            `json:"rc-tag" yaml:"rc-tag" comment:"string, release candidate tag"`
 }
 type WhiteSourceSecCfg struct {
 	Language    string   `json:"language" yaml:"language" comment:"string, indicating the programming language the scanner has to analyze"`
 	SubProjects string   `json:"subprojects" yaml:"subprojects" comment:"string, specifying any subprojects"`
 	Exclude     []string `json:"exclude" yaml:"exclude" comment:"list, directories within the repository which should not be scanned"`
+}
+
+func (config *SecurityScanCfg) UnmarshalYAML(value *yaml.Node) error {
+	// Cannot use inheritance due to infinite loop
+	var cfg struct {
+		ModuleName  string            `json:"module-name" yaml:"module-name" comment:"string, name of your module"`
+		Protecode   []string          `json:"protecode" yaml:"protecode" comment:"list, includes the images which must be scanned by the Protecode scanner (aka. Black Duck Binary Analysis)"`
+		Whitesource WhiteSourceSecCfg `json:"whitesource" yaml:"whitesource" comment:"whitesource (aka. Mend) security scanner specific configuration"`
+		DevBranch   string            `json:"dev-branch" yaml:"dev-branch" comment:"string, name of the development branch"`
+		RcTag       string            `json:"rc-tag" yaml:"rc-tag" comment:"string, release candidate tag"`
+		Images      []string          `json:"bdba" yaml:"bdba" comment:"list, includes the images which must be scanned by the Protecode scanner (aka. Black Duck Binary Analysis)"`
+		Mend        WhiteSourceSecCfg `json:"mend" yaml:"mend" comment:"whitesource (aka. Mend) security scanner specific configuration"`
+	}
+
+	if err := value.Decode(&cfg); err != nil {
+		return err
+	}
+
+	config.ModuleName = cfg.ModuleName
+	config.RcTag = cfg.RcTag
+	config.Images = cfg.Images
+	config.Mend = cfg.Mend
+
+	if len(cfg.Protecode) > 0 {
+		config.Images = cfg.Protecode
+	}
+
+	if !reflect.DeepEqual(cfg.Whitesource, WhiteSourceSecCfg{}) {
+		config.Mend = cfg.Whitesource
+	}
+
+	return nil
 }
 
 func parseSecurityScanConfig(securityConfigPath string) (*SecurityScanCfg, error) {
