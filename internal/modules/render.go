@@ -20,14 +20,24 @@ type TableInfo struct {
 
 var (
 	ModulesTableInfo = TableInfo{
-		Header: []string{"NAME", "AVAILABLE VERSIONS", "INSTALLED", "MANAGED", "STATUS"},
+		Header: []string{"NAME", "INSTALLED", "CR Policy", "MANAGED", "STATUS"},
+		RowConverter: func(m Module) []string {
+			return []string{
+				m.Name,
+				convertInstall(m.InstallDetails),
+				string(m.InstallDetails.CustomResourcePolicy),
+				string(m.InstallDetails.Managed),
+				m.InstallDetails.State,
+			}
+		},
+	}
+
+	CatalogTableInfo = TableInfo{
+		Header: []string{"NAME", "AVAILABLE VERSIONS"},
 		RowConverter: func(m Module) []string {
 			return []string{
 				m.Name,
 				convertVersions(m.Versions),
-				convertInstall(m.InstallDetails),
-				string(m.InstallDetails.Managed),
-				m.InstallDetails.State,
 			}
 		},
 	}
