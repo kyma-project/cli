@@ -26,9 +26,10 @@ const (
 )
 
 type ModuleInstallDetails struct {
-	Version string
-	Channel string
-	Managed Managed
+	Version              string
+	Channel              string
+	Managed              Managed
+	CustomResourcePolicy string
 	// Possible states: https://github.com/kyma-project/lifecycle-manager/blob/main/api/shared/state.go
 	State string
 }
@@ -43,63 +44,31 @@ type ModulesList []Module
 
 // List returns list of available module on a cluster
 // collects info about modules based on ModuleTemplates, ModuleReleaseMetas and the KymaCR
-// TODO: base this func of the Kyma CR only
 func List(ctx context.Context, client kube.Client) (ModulesList, error) {
-	moduleTemplates, err := client.Kyma().ListModuleTemplate(ctx)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to list all ModuleTemplate CRs from the cluster")
-	}
-
-	modulereleasemetas, err := client.Kyma().ListModuleReleaseMeta(ctx)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to list all ModuleReleaseMeta CRs from the cluster")
-	}
-
 	defaultKyma, err := client.Kyma().GetDefaultKyma(ctx)
 	if err != nil && !apierrors.IsNotFound(err) {
 		return nil, errors.Wrap(err, "failed to get default Kyma CR from the cluster")
 	}
 
 	modulesList := ModulesList{}
-	for _, moduleTemplate := range moduleTemplates.Items {
-		moduleName := moduleTemplate.Spec.ModuleName
-		if moduleName == "" {
-			// ignore incompatible/corrupted ModuleTemplates
-			continue
-		}
-		version := ModuleVersion{
-			Version:    moduleTemplate.Spec.Version,
-			Repository: moduleTemplate.Spec.Info.Repository,
-			Channel: getAssignedChannel(
-				*modulereleasemetas,
-				moduleName,
-				moduleTemplate.Spec.Version,
-			),
+	for _, moduleStatus := range defaultKyma.Status.Modules {
+		moduleSpec := getKymaModuleSpec(defaultKyma, moduleStatus.Name)
+
+		state, err := getModuleState(ctx, client, defaultKyma, moduleStatus, moduleSpec)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to get module state for module %s", moduleStatus.Name)
 		}
 
-		moduleInstalled := isModuleInstalled(defaultKyma, moduleName)
-
-		state := ""
-		if moduleInstalled {
-			// only get state of installed modules
-			state, err = getModuleState(ctx, client, moduleTemplate, defaultKyma)
-			if err != nil {
-				return nil, errors.Wrapf(err, "failed to get module state from the %s ModuleTemplate", moduleTemplate.GetName())
-			}
-		}
-		if i := getModuleIndex(modulesList, moduleName); i != -1 {
-			// append version if module with same name is in the list
-			modulesList[i].Versions = append(modulesList[i].Versions, version)
-		} else {
-			// otherwise create a new record in the list
-			modulesList = append(modulesList, Module{
-				Name:           moduleName,
-				InstallDetails: getInstallDetails(defaultKyma, *modulereleasemetas, moduleName, state),
-				Versions: []ModuleVersion{
-					version,
-				},
-			})
-		}
+		modulesList = append(modulesList, Module{
+			Name: moduleStatus.Name,
+			InstallDetails: ModuleInstallDetails{
+				Channel:              moduleStatus.Channel,
+				Managed:              getManaged(moduleSpec, moduleStatus.Name),
+				CustomResourcePolicy: moduleSpec.CustomResourcePolicy,
+				Version:              moduleStatus.Version,
+				State:                state,
+			},
+		})
 	}
 
 	return modulesList, nil
@@ -113,7 +82,7 @@ func ListCatalog(ctx context.Context, client kube.Client) (ModulesList, error) {
 		return nil, errors.Wrap(err, "failed to list all ModuleTemplate CRs from the cluster")
 	}
 
-	modulereleasemetas, err := client.Kyma().ListModuleReleaseMeta(ctx)
+	moduleReleaseMetas, err := client.Kyma().ListModuleReleaseMeta(ctx)
 	if err != nil {
 		moduleList := listOldModulesCatalog(moduleTemplates)
 		if len(moduleList) != 0 {
@@ -133,7 +102,7 @@ func ListCatalog(ctx context.Context, client kube.Client) (ModulesList, error) {
 			Version:    moduleTemplate.Spec.Version,
 			Repository: moduleTemplate.Spec.Info.Repository,
 			Channel: getAssignedChannel(
-				*modulereleasemetas,
+				*moduleReleaseMetas,
 				moduleName,
 				moduleTemplate.Spec.Version,
 			),
@@ -156,10 +125,27 @@ func ListCatalog(ctx context.Context, client kube.Client) (ModulesList, error) {
 	return modulesList, nil
 }
 
-func getModuleState(ctx context.Context, client kube.Client, moduleTemplate kyma.ModuleTemplate, kymaCR *kyma.Kyma) (string, error) {
-	// get state from Kyma CR if it exists
-	if state := getStateFromKymaCR(moduleTemplate, kymaCR); state != "" {
-		return state, nil
+func getModuleState(ctx context.Context, client kube.Client, kymaCR *kyma.Kyma, moduleStatus kyma.ModuleStatus, moduleSpec *kyma.Module) (string, error) {
+	if moduleSpec == nil {
+		// module is under deletion
+		return moduleStatus.State, nil
+	}
+
+	if moduleSpec.CustomResourcePolicy == "CreateAndDelete" {
+		// module CR is managed by klm
+		return moduleStatus.State, nil
+	}
+
+	if moduleSpec.Managed != nil && !*moduleSpec.Managed {
+		// module is unmanaged
+		return moduleStatus.State, nil
+	}
+
+	// TODO: replace with right namespace
+	// https://github.com/kyma-project/lifecycle-manager/issues/2232
+	moduleTemplate, err := client.Kyma().GetModuleTemplate(ctx, "kyma-system", moduleStatus.Template.GetName())
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to get ModuleTemplate %s/%s", "kyma-system/", moduleStatus.Template.GetName())
 	}
 
 	// get state from moduleTemplate.Spec.Data if it exists
@@ -169,19 +155,17 @@ func getModuleState(ctx context.Context, client kube.Client, moduleTemplate kyma
 	}
 
 	// get state from resource described in moduleTemplate.Spec.Manager if it exists
-	state, err = getResourceState(ctx, client, moduleTemplate.Spec.Manager)
-	return state, err
+	return getResourceState(ctx, client, moduleTemplate.Spec.Manager)
 }
 
-func getStateFromKymaCR(moduleTemplate kyma.ModuleTemplate, kymaCR *kyma.Kyma) string {
-	if kymaCR != nil {
-		for _, module := range kymaCR.Status.Modules {
-			if module.Name == moduleTemplate.Spec.ModuleName && module.State != "" {
-				return module.State
-			}
+func getKymaModuleSpec(kymaCR *kyma.Kyma, moduleName string) *kyma.Module {
+	for _, module := range kymaCR.Spec.Modules {
+		if module.Name == moduleName {
+			return &module
 		}
 	}
-	return ""
+
+	return nil
 }
 
 func getStateFromData(ctx context.Context, client kube.Client, data unstructured.Unstructured) (string, error) {
@@ -314,38 +298,13 @@ func isModuleInstalled(kyma *kyma.Kyma, moduleName string) bool {
 	return false
 }
 
-func getInstallDetails(kyma *kyma.Kyma, releaseMetas kyma.ModuleReleaseMetaList, moduleName, state string) ModuleInstallDetails {
-	if kyma != nil {
-		for _, module := range kyma.Status.Modules {
-			if module.Name == moduleName {
-				moduleVersion := module.Version
-				return ModuleInstallDetails{
-					Channel: getAssignedChannel(releaseMetas, module.Name, moduleVersion),
-					Managed: getManaged(kyma.Spec.Modules, moduleName),
-					Version: moduleVersion,
-					State:   state,
-				}
-			}
-		}
-	}
-
-	// TODO: support community modules
-
-	// return empty struct because module is not installed
-	return ModuleInstallDetails{}
-}
-
 // look for value of managed for specific moduleName
-func getManaged(specModules []kyma.Module, moduleName string) Managed {
-	for _, module := range specModules {
-		if module.Name == moduleName {
-			if module.Managed != nil {
-				return Managed(strconv.FormatBool(*module.Managed))
-			}
-		}
+func getManaged(module *kyma.Module, moduleName string) Managed {
+	if module != nil && module.Managed != nil {
+		return Managed(strconv.FormatBool(*module.Managed))
 	}
 
-	return ""
+	return "false"
 }
 
 // look for channel assigned to version with specified moduleName
