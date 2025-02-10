@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/templates/parameters"
@@ -22,6 +23,7 @@ type KubeClientGetter interface {
 type CreateOptions struct {
 	types.CreateCommand
 	ResourceInfo types.ResourceInfo
+	RootCommand  types.RootCommand
 }
 
 func BuildCreateCommand(clientGetter KubeClientGetter, options *CreateOptions) *cobra.Command {
@@ -31,9 +33,10 @@ func BuildCreateCommand(clientGetter KubeClientGetter, options *CreateOptions) *
 func buildCreateCommand(out io.Writer, clientGetter KubeClientGetter, options *CreateOptions) *cobra.Command {
 	extraValues := []parameters.Value{}
 	cmd := &cobra.Command{
-		Use:   "create",
-		Short: options.Description,
-		Long:  options.DescriptionLong,
+		Use:     "create",
+		Short:   options.Description,
+		Long:    options.DescriptionLong,
+		Example: buildCreateExample(options),
 		Run: func(cmd *cobra.Command, args []string) {
 			clierror.Check(createResource(&createArgs{
 				out:           out,
@@ -45,8 +48,19 @@ func buildCreateCommand(out io.Writer, clientGetter KubeClientGetter, options *C
 		},
 	}
 
-	flags := append(options.CustomFlags, commonResourceFlags(options.ResourceInfo.Scope)...)
-	for _, flag := range flags {
+	// define resource name as required args[0]
+	nameArgValue := parameters.NewTyped(resourceNameFlag.Type, resourceNameFlag.Path, resourceNameFlag.DefaultValue)
+	cmd.Args = AssignRequiredNameArg(nameArgValue)
+	extraValues = append(extraValues, nameArgValue)
+
+	// define --namespace/-n flag only is resource is namespace scoped
+	if options.ResourceInfo.Scope == types.NamespaceScope {
+		namespaceFlagValue := parameters.NewTyped(resourceNamespaceFlag.Type, resourceNamespaceFlag.Path, resourceNamespaceFlag.DefaultValue)
+		cmd.Flags().VarP(namespaceFlagValue, resourceNamespaceFlag.Name, resourceNamespaceFlag.Shorthand, resourceNamespaceFlag.Description)
+		extraValues = append(extraValues, namespaceFlagValue)
+	}
+
+	for _, flag := range options.CustomFlags {
 		value := parameters.NewTyped(flag.Type, flag.Path, flag.DefaultValue)
 		cmd.Flags().VarP(value, flag.Name, flag.Shorthand, flag.Description)
 		if flag.Required {
@@ -56,6 +70,33 @@ func buildCreateCommand(out io.Writer, clientGetter KubeClientGetter, options *C
 	}
 
 	return cmd
+}
+
+func buildCreateExample(options *CreateOptions) string {
+	requiredFlagsExample := strings.Join(buildRequiredFlagsExamples(options), " ")
+	template := "  # create ROOT_COMMAND resource\n" +
+		"  kyma alpha ROOT_COMMAND create <resource_name> " + requiredFlagsExample
+
+	if options.ResourceInfo.Scope == types.NamespaceScope {
+		template += "\n\n" +
+			"  # create ROOT_COMMAND resource in specific namespace\n" +
+			"  kyma alpha ROOT_COMMAND create <resource_name> --namespace <resource_namespace> " + requiredFlagsExample
+	}
+
+	return strings.ReplaceAll(template, "ROOT_COMMAND", options.RootCommand.Name)
+}
+
+func buildRequiredFlagsExamples(options *CreateOptions) []string {
+	requiredFlagsExamples := []string{}
+	for _, flag := range options.CustomFlags {
+		if flag.Required {
+			requiredFlagsExamples = append(requiredFlagsExamples,
+				fmt.Sprintf("--%s <value>", flag.Name),
+			)
+		}
+	}
+
+	return requiredFlagsExamples
 }
 
 type createArgs struct {
