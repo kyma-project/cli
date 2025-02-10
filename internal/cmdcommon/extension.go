@@ -93,7 +93,7 @@ func loadExtensionsFromCluster(ctx context.Context, clientConfig *KubeClientConf
 }
 
 func parseResourceExtension(cmData map[string]string) (*Extension, error) {
-	rootCommand, err := parseRequiredField[RootCommand](cmData, ExtensionRootCommandKey)
+	rootCommand, err := parseRequiredField[types.RootCommand](cmData, ExtensionRootCommandKey)
 	if err != nil {
 		return nil, err
 	}
@@ -181,6 +181,7 @@ func addGenericCommands(cmd *cobra.Command, config *KymaConfig, extension *Exten
 	if extension.Resource != nil && commands.GetCommand != nil {
 		cmd.AddCommand(availableTemplateCommands.Get(config, &templates.GetOptions{
 			GetCommand:   *commands.GetCommand,
+			RootCommand:  extension.RootCommand,
 			ResourceInfo: *extension.Resource,
 		}))
 	}

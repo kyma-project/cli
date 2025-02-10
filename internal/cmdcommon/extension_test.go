@@ -95,7 +95,7 @@ descriptionLong: test-description-long
 
 		want := ExtensionList{
 			{
-				RootCommand: RootCommand{
+				RootCommand: types.RootCommand{
 					Name:            "test-command",
 					Description:     "test-description",
 					DescriptionLong: "test-description-long",
@@ -176,7 +176,7 @@ create:
 
 func fixTestExtension(name string) Extension {
 	return Extension{
-		RootCommand: RootCommand{
+		RootCommand: types.RootCommand{
 			Name:            name,
 			Description:     "test-description",
 			DescriptionLong: "test-description-long",
