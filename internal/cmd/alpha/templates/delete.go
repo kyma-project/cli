@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/templates/parameters"
@@ -17,6 +18,7 @@ import (
 type DeleteOptions struct {
 	types.DeleteCommand
 	ResourceInfo types.ResourceInfo
+	RootCommand  types.RootCommand
 }
 
 func BuildDeleteCommand(clientGetter KubeClientGetter, options *DeleteOptions) *cobra.Command {
@@ -26,9 +28,10 @@ func BuildDeleteCommand(clientGetter KubeClientGetter, options *DeleteOptions) *
 func buildDeleteCommand(out io.Writer, clientGetter KubeClientGetter, options *DeleteOptions) *cobra.Command {
 	extraValues := []parameters.Value{}
 	cmd := &cobra.Command{
-		Use:   "delete",
-		Short: options.Description,
-		Long:  options.DescriptionLong,
+		Use:     "delete",
+		Short:   options.Description,
+		Long:    options.DescriptionLong,
+		Example: buildDeleteExample(options),
 		Run: func(cmd *cobra.Command, args []string) {
 			clierror.Check(deleteResource(&deleteArgs{
 				out:           out,
@@ -40,16 +43,32 @@ func buildDeleteCommand(out io.Writer, clientGetter KubeClientGetter, options *D
 		},
 	}
 
-	for _, flag := range commonResourceFlags(options.ResourceInfo.Scope) {
-		value := parameters.NewTyped(flag.Type, flag.Path, flag.DefaultValue)
-		cmd.Flags().VarP(value, flag.Name, flag.Shorthand, flag.Description)
-		if flag.Required {
-			_ = cmd.MarkFlagRequired(flag.Name)
-		}
-		extraValues = append(extraValues, value)
+	// define resource name as required args[0]
+	nameArgValue := parameters.NewTyped(resourceNameFlag.Type, resourceNameFlag.Path, resourceNameFlag.DefaultValue)
+	cmd.Args = AssignRequiredNameArg(nameArgValue)
+	extraValues = append(extraValues, nameArgValue)
+
+	// define --namespace/-n flag only is resource is namespace scoped
+	if options.ResourceInfo.Scope == types.NamespaceScope {
+		namespaceFlagValue := parameters.NewTyped(resourceNamespaceFlag.Type, resourceNamespaceFlag.Path, resourceNamespaceFlag.DefaultValue)
+		cmd.Flags().VarP(namespaceFlagValue, resourceNamespaceFlag.Name, resourceNamespaceFlag.Shorthand, resourceNamespaceFlag.Description)
+		extraValues = append(extraValues, namespaceFlagValue)
 	}
 
 	return cmd
+}
+
+func buildDeleteExample(options *DeleteOptions) string {
+	template := "  # delete resource\n" +
+		"  kyma alpha ROOT_COMMAND delete <resource_name>"
+
+	if options.ResourceInfo.Scope == types.NamespaceScope {
+		template += "\n\n" +
+			"  # delete resource from specific namespace\n" +
+			"  kyma alpha ROOT_COMMAND delete <resource_name> --namespace <resource_namespace> "
+	}
+
+	return strings.ReplaceAll(template, "ROOT_COMMAND", options.RootCommand.Name)
 }
 
 type deleteArgs struct {

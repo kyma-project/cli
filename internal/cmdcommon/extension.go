@@ -196,6 +196,7 @@ func addGenericCommands(cmd *cobra.Command, config *KymaConfig, extension *Exten
 	if extension.Resource != nil && commands.DeleteCommand != nil {
 		cmd.AddCommand(availableTemplateCommands.Delete(config, &templates.DeleteOptions{
 			DeleteCommand: *commands.DeleteCommand,
+			RootCommand:   extension.RootCommand,
 			ResourceInfo:  *extension.Resource,
 		}))
 	}

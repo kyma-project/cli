@@ -23,7 +23,7 @@ func Test_remove(t *testing.T) {
 		require.Equal(t, "delete test deploy", cmd.Short)
 		require.Equal(t, "use this to delete test deploy", cmd.Long)
 
-		require.NotNil(t, cmd.Flag("name"))
+		require.NoError(t, cmd.ValidateArgs([]string{"resource_name"}))
 		require.NotNil(t, cmd.Flag("namespace"))
 	})
 
@@ -38,7 +38,7 @@ func Test_remove(t *testing.T) {
 
 		cmd := fixDeleteCommand(buf, &mock)
 
-		cmd.SetArgs([]string{"--name", "test-deploy", "--namespace", "test-namespace"})
+		cmd.SetArgs([]string{"test-deploy", "--namespace", "test-namespace"})
 
 		err := cmd.Execute()
 		require.NoError(t, err)
