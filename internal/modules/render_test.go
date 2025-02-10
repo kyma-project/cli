@@ -9,8 +9,12 @@ import (
 )
 
 const (
-	testCatalogTableView          = "NAME      \tAVAILABLE VERSIONS      \nkeda      \t0.1(regular), 0.2(fast)\t\nserverless\t0.0.1(fast), 0.0.2     \t\n"
-	testInstalledModulesTableView = "NAME      \tVERSION    \tCR POLICY      \tMANAGED\tSTATUS    \nkeda      \t0.2(fast)  \tCreateAndDelete\tfalse  \tUnmanaged\t\nserverless\t0.0.1(fast)\tIgnore         \ttrue   \tReady    \t\n"
+	testCatalogTableView = "NAME         AVAILABLE VERSIONS        \n" +
+		"keda         0.1(regular), 0.2(fast)   \n" +
+		"serverless   0.0.1(fast), 0.0.2        \n"
+	testInstalledModulesTableView = "NAME         VERSION       CR POLICY         MANAGED   STATUS      \n" +
+		"keda         0.2(fast)     CreateAndDelete   false     Unmanaged   \n" +
+		"serverless   0.0.1(fast)   Ignore            true      Ready       \n"
 )
 
 func TestRender(t *testing.T) {

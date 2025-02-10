@@ -159,6 +159,8 @@ func getModuleState(ctx context.Context, client kube.Client, moduleStatus kyma.M
 		return moduleStatus.State, nil
 	}
 
+	// TODO: cover case when policy is set to Ingore and CR is not on the cluster
+
 	// TODO: replace with right namespace
 	// https://github.com/kyma-project/lifecycle-manager/issues/2232
 	moduleTemplate, err := client.Kyma().GetModuleTemplate(ctx, "kyma-system", moduleStatus.Template.GetName())

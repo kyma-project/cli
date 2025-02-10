@@ -65,11 +65,53 @@ func Test_get(t *testing.T) {
 		err := cmd.Execute()
 		require.NoError(t, err)
 
-		expectedOutput := "NAME  \tNAMESPACE\tGEN \n" +
-			"name-1\tkyma     \t1  \t\n" +
-			"name-2\tkyma     \t5  \t\n" +
-			"name-3\tkyma     \t12 \t\n" +
-			"name-4\tkyma     \t43 \t\n"
+		expectedOutput := "NAME     GEN   \n" +
+			"name-1   1     \n" +
+			"name-2   5     \n" +
+			"name-3   12    \n" +
+			"name-4   43    \n"
+		require.Equal(t, expectedOutput, buf.String())
+	})
+
+	t.Run("get resources with custom field for all namespaces", func(t *testing.T) {
+		buf := bytes.NewBuffer([]byte{})
+		fakeClient := &fake.RootlessDynamicClient{
+			ReturnListObjs: &unstructured.UnstructuredList{
+				Items: fixGetResources(),
+			},
+		}
+		mock := mockGetter{
+			client: &fake.KubeClient{
+				TestRootlessDynamicInterface: fakeClient,
+			},
+		}
+		cmd := buildGetCommand(buf, &mock, &GetOptions{
+			GetCommand: types.GetCommand{
+				Description:     "get test deploy",
+				DescriptionLong: "use this to get test deploy",
+				Parameters: []types.Parameter{
+					{
+						Path: ".metadata.generation",
+						Name: "gen",
+					},
+				},
+			},
+			ResourceInfo: types.ResourceInfo{
+				Scope: types.NamespaceScope,
+			},
+		})
+
+		// get from all namespaces
+		cmd.SetArgs([]string{"-A"})
+
+		err := cmd.Execute()
+		require.NoError(t, err)
+
+		expectedOutput := "NAMESPACE   NAME     GEN   \n" +
+			"kyma        name-1   1     \n" +
+			"kyma        name-2   5     \n" +
+			"kyma        name-3   12    \n" +
+			"kyma        name-4   43    \n"
 		require.Equal(t, expectedOutput, buf.String())
 	})
 
