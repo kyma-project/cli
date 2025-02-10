@@ -26,6 +26,7 @@ type Interface interface {
 	ListModuleReleaseMeta(context.Context) (*ModuleReleaseMetaList, error)
 	ListModuleTemplate(context.Context) (*ModuleTemplateList, error)
 	GetModuleReleaseMetaForModule(context.Context, string) (*ModuleReleaseMeta, error)
+	GetModuleTemplate(context.Context, string, string) (*ModuleTemplate, error)
 	GetModuleTemplateForModule(context.Context, string, string) (*ModuleTemplate, error)
 	GetDefaultKyma(context.Context) (*Kyma, error)
 	UpdateDefaultKyma(context.Context, *Kyma) error
@@ -71,6 +72,20 @@ func (c *client) GetModuleReleaseMetaForModule(ctx context.Context, moduleName s
 	}
 
 	return nil, fmt.Errorf("can't find ModuleReleaseMeta CR for module %s", moduleName)
+}
+
+func (c *client) GetModuleTemplate(ctx context.Context, namespace, name string) (*ModuleTemplate, error) {
+	u, err := c.dynamic.Resource(GVRModuleTemplate).
+		Namespace(namespace).
+		Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	moduleTemplate := &ModuleTemplate{}
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, moduleTemplate)
+
+	return moduleTemplate, err
 }
 
 // GetModuleTemplateForModule returns ModuleTemplate CR corelated with given module name in right version

@@ -44,6 +44,10 @@ func (c *KymaClient) GetModuleReleaseMetaForModule(_ context.Context, _ string) 
 	return &c.ReturnModuleReleaseMeta, c.ReturnErr
 }
 
+func (c *KymaClient) GetModuleTemplate(ctx context.Context, name, namespace string) (*kyma.ModuleTemplate, error) {
+	return &c.ReturnModuleTemplate, c.ReturnGetModuleTemplateErr
+}
+
 func (c *KymaClient) GetModuleTemplateForModule(_ context.Context, _, _ string) (*kyma.ModuleTemplate, error) {
 	return &c.ReturnModuleTemplate, c.ReturnGetModuleTemplateErr
 }
