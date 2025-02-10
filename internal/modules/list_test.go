@@ -408,6 +408,61 @@ var (
 	}
 )
 
+func TestListCatalog(t *testing.T) {
+	t.Run("list modules catalog from cluster", func(t *testing.T) {
+		scheme := runtime.NewScheme()
+		scheme.AddKnownTypes(kyma.GVRModuleTemplate.GroupVersion())
+		scheme.AddKnownTypes(kyma.GVRModuleReleaseMeta.GroupVersion())
+		dynamicClient := dynamic_fake.NewSimpleDynamicClient(scheme,
+			&testModuleTemplate1,
+			&testModuleTemplate2,
+			&testModuleTemplate3,
+			&testModuleTemplate4,
+			&testReleaseMeta1,
+			&testReleaseMeta2,
+		)
+
+		fakeRootless := &fake.RootlessDynamicClient{}
+
+		fakeClient := &fake.KubeClient{
+			TestKymaInterface:            kyma.NewClient(dynamicClient),
+			TestRootlessDynamicInterface: fakeRootless,
+		}
+
+		modules, err := ListCatalog(context.Background(), fakeClient)
+
+		require.NoError(t, err)
+		require.Equal(t, ModulesList(testModuleList), modules)
+	})
+
+	t.Run("ignore corrupted ModuleTemplate", func(t *testing.T) {
+		scheme := runtime.NewScheme()
+		scheme.AddKnownTypes(kyma.GVRModuleTemplate.GroupVersion())
+		scheme.AddKnownTypes(kyma.GVRModuleReleaseMeta.GroupVersion())
+		dynamicClient := dynamic_fake.NewSimpleDynamicClient(scheme,
+			&testModuleTemplate1,
+			&testModuleTemplate2,
+			&testModuleTemplate3,
+			&testModuleTemplate4,
+			&testModuleTemplate5, // corrupted ModuleTemplate
+			&testReleaseMeta1,
+			&testReleaseMeta2,
+		)
+
+		fakeRootless := &fake.RootlessDynamicClient{}
+
+		fakeClient := &fake.KubeClient{
+			TestKymaInterface:            kyma.NewClient(dynamicClient),
+			TestRootlessDynamicInterface: fakeRootless,
+		}
+
+		modules, err := ListCatalog(context.Background(), fakeClient)
+
+		require.NoError(t, err)
+		require.Equal(t, ModulesList(testModuleList), modules)
+	})
+}
+
 func TestList(t *testing.T) {
 	t.Run("list modules from cluster without Kyma CR", func(t *testing.T) {
 		scheme := runtime.NewScheme()

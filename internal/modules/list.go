@@ -43,6 +43,7 @@ type ModulesList []Module
 
 // List returns list of available module on a cluster
 // collects info about modules based on ModuleTemplates, ModuleReleaseMetas and the KymaCR
+// TODO: base this func of the Kyma CR only
 func List(ctx context.Context, client kube.Client) (ModulesList, error) {
 	moduleTemplates, err := client.Kyma().ListModuleTemplate(ctx)
 	if err != nil {
@@ -94,6 +95,57 @@ func List(ctx context.Context, client kube.Client) (ModulesList, error) {
 			modulesList = append(modulesList, Module{
 				Name:           moduleName,
 				InstallDetails: getInstallDetails(defaultKyma, *modulereleasemetas, moduleName, state),
+				Versions: []ModuleVersion{
+					version,
+				},
+			})
+		}
+	}
+
+	return modulesList, nil
+}
+
+// ListCatalog returns list of module catalog on a cluster
+// collects info about modules based on ModuleTemplates and ModuleReleaseMetas
+func ListCatalog(ctx context.Context, client kube.Client) (ModulesList, error) {
+	moduleTemplates, err := client.Kyma().ListModuleTemplate(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to list all ModuleTemplate CRs from the cluster")
+	}
+
+	modulereleasemetas, err := client.Kyma().ListModuleReleaseMeta(ctx)
+	if err != nil {
+		moduleList := listOldModulesCatalog(moduleTemplates)
+		if len(moduleList) != 0 {
+			return moduleList, nil
+		}
+		return nil, errors.New("failed to list modules catalog with and without ModuleRelease meta resource from the cluster")
+	}
+
+	modulesList := ModulesList{}
+	for _, moduleTemplate := range moduleTemplates.Items {
+		moduleName := moduleTemplate.Spec.ModuleName
+		if moduleName == "" {
+			// ignore incompatible/corrupted ModuleTemplates
+			continue
+		}
+		version := ModuleVersion{
+			Version:    moduleTemplate.Spec.Version,
+			Repository: moduleTemplate.Spec.Info.Repository,
+			Channel: getAssignedChannel(
+				*modulereleasemetas,
+				moduleName,
+				moduleTemplate.Spec.Version,
+			),
+		}
+
+		if i := getModuleIndex(modulesList, moduleName); i != -1 {
+			// append version if module with same name is in the list
+			modulesList[i].Versions = append(modulesList[i].Versions, version)
+		} else {
+			// otherwise create a new record in the list
+			modulesList = append(modulesList, Module{
+				Name: moduleName,
 				Versions: []ModuleVersion{
 					version,
 				},
