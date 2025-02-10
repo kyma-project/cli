@@ -31,6 +31,16 @@ var (
 			}
 		},
 	}
+
+	CatalogTableInfo = TableInfo{
+		Header: []string{"NAME", "AVAILABLE VERSIONS"},
+		RowConverter: func(m Module) []string {
+			return []string{
+				m.Name,
+				convertVersions(m.Versions),
+			}
+		},
+	}
 )
 
 // Renders uses standard output to print ModuleList in table view
