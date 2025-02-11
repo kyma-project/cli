@@ -2,19 +2,19 @@ package modules
 
 import (
 	"context"
+	"errors"
 	"testing"
 
+	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/kube/fake"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
-	"github.com/kyma-project/cli.v3/internal/kube/rootlessdynamic"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	clientgo_fake "k8s.io/client-go/discovery/fake"
 	dynamic_fake "k8s.io/client-go/dynamic/fake"
-	clientgo_testing "k8s.io/client-go/testing"
+	"k8s.io/utils/ptr"
 )
 
 var (
@@ -29,12 +29,10 @@ var (
 			"spec": map[string]interface{}{
 				"moduleName": "serverless",
 				"version":    "0.0.1",
+				"data":       testServerless.Object,
 				"info": map[string]interface{}{
 					"repository": "url-1",
 				},
-			},
-			"status": map[string]interface{}{
-				"state": "ready",
 			},
 		},
 	}
@@ -158,69 +156,55 @@ var (
 				"channel": "fast",
 				"modules": []interface{}{
 					map[string]interface{}{
-						"name":    "serverless",
-						"managed": false,
+						"name":                 "serverless",
+						"managed":              true,
+						"customResourcePolicy": "Ignore",
 					},
 					map[string]interface{}{
 						"name":    "keda",
-						"managed": true,
+						"managed": false,
 					},
 				},
 			},
 			"status": map[string]interface{}{
 				"modules": []interface{}{
 					map[string]interface{}{
-						"name":    "serverless",
-						"version": "0.0.1",
-						"state":   "Ready",
+						"name":     "serverless",
+						"version":  "0.0.1",
+						"channel":  "fast",
+						"state":    "Ready",
+						"template": testServerless.Object,
 					},
 					map[string]interface{}{
 						"name":    "keda",
 						"version": "0.2",
+						"channel": "fast",
+						"state":   "Unmanaged",
 					},
 				},
 			},
 		},
 	}
 
-	testManagedModuleList = []Module{
-		{
-			Name: "keda",
-			InstallDetails: ModuleInstallDetails{
-				Managed: ManagedTrue,
-				Channel: "fast",
-				Version: "0.2",
-			},
-			Versions: []ModuleVersion{
-				{
-					Repository: "url-3",
-					Version:    "0.1",
-					Channel:    "regular",
-				},
-				{
-					Version: "0.2",
-					Channel: "fast",
-				},
-			},
-		},
+	testInstalledModuleList = []Module{
 		{
 			Name: "serverless",
 			InstallDetails: ModuleInstallDetails{
-				Managed: ManagedFalse,
-				Channel: "fast",
-				Version: "0.0.1",
-				State:   "Ready",
+				Managed:              ManagedTrue,
+				Channel:              "fast",
+				Version:              "0.0.1",
+				State:                "Ready",
+				CustomResourcePolicy: "Ignore",
 			},
-			Versions: []ModuleVersion{
-				{
-					Repository: "url-1",
-					Version:    "0.0.1",
-					Channel:    "fast",
-				},
-				{
-					Repository: "url-2",
-					Version:    "0.0.2",
-				},
+		},
+		{
+			Name: "keda",
+			InstallDetails: ModuleInstallDetails{
+				Managed:              ManagedFalse,
+				Channel:              "fast",
+				Version:              "0.2",
+				State:                "Unmanaged",
+				CustomResourcePolicy: "CreateAndDelete",
 			},
 		},
 	}
@@ -256,24 +240,12 @@ var (
 		},
 	}
 
-	testModuleDataResourceList = &metav1.APIResourceList{
-		GroupVersion: "operator.kyma-project.io/v1alpha1",
-		APIResources: []metav1.APIResource{
-			{
-				Group:        "operator.kyma-project.io",
-				Version:      "v1alpha1",
-				Kind:         "Serverless",
-				SingularName: "serverless",
-				Name:         "serverlesses",
-				Namespaced:   true,
-			},
-		},
-	}
 	GVRServerless = schema.GroupVersionResource{
 		Group:    "operator.kyma-project.io",
 		Version:  "v1alpha1",
 		Resource: "serverlesses",
 	}
+
 	testServerless = unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": "operator.kyma-project.io/v1alpha1",
@@ -288,25 +260,12 @@ var (
 		},
 	}
 
-	testModuleManagerResourceList = &metav1.APIResourceList{
-		GroupVersion: "apps/v1",
-		APIResources: []metav1.APIResource{
-			{
-				Group:        "apps",
-				Version:      "v1",
-				Kind:         "Deployment",
-				SingularName: "deployment",
-				Name:         "deployments",
-				Namespaced:   true,
-			},
-		},
-	}
-
 	GVRDeployment = schema.GroupVersionResource{
 		Group:    "apps",
 		Version:  "v1",
 		Resource: "deployments",
 	}
+
 	testDeploymentDataState = unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": "apps/v1",
@@ -320,6 +279,7 @@ var (
 			},
 		},
 	}
+
 	testDeploymentDataConditions = unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": "apps/v1",
@@ -338,6 +298,7 @@ var (
 			},
 		},
 	}
+
 	testDeploymentDataConditionsProcessing = unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": "apps/v1",
@@ -356,9 +317,8 @@ var (
 			},
 		},
 	}
-	replicasCountOne        int64 = 1
-	replicasCountTwo        int64 = 2
-	testDeploymentDataReady       = unstructured.Unstructured{
+
+	testDeploymentDataReady = unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": "apps/v1",
 			"kind":       "Deployment",
@@ -367,13 +327,14 @@ var (
 				"namespace": "kyma-system",
 			},
 			"spec": map[string]interface{}{
-				"replicas": replicasCountOne,
+				"replicas": int64(1),
 			},
 			"status": map[string]interface{}{
-				"readyReplicas": replicasCountOne,
+				"readyReplicas": int64(1),
 			},
 		},
 	}
+
 	testDeploymentDataProcessing = unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": "apps/v1",
@@ -383,13 +344,14 @@ var (
 				"namespace": "kyma-system",
 			},
 			"spec": map[string]interface{}{
-				"replicas": replicasCountTwo,
+				"replicas": int64(2),
 			},
 			"status": map[string]interface{}{
-				"readyReplicas": replicasCountOne,
+				"readyReplicas": int64(1),
 			},
 		},
 	}
+
 	testDeploymentDataDeleting = unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": "apps/v1",
@@ -399,14 +361,41 @@ var (
 				"namespace": "kyma-system",
 			},
 			"spec": map[string]interface{}{
-				"replicas": replicasCountOne,
+				"replicas": int64(1),
 			},
 			"status": map[string]interface{}{
-				"readyReplicas": replicasCountTwo,
+				"readyReplicas": int64(2),
 			},
 		},
 	}
 )
+
+func TestListInstalled(t *testing.T) {
+	t.Run("list managed modules from cluster", func(t *testing.T) {
+		scheme := runtime.NewScheme()
+		scheme.AddKnownTypes(kyma.GVRModuleTemplate.GroupVersion())
+		scheme.AddKnownTypes(kyma.GVRModuleReleaseMeta.GroupVersion())
+		scheme.AddKnownTypes(kyma.GVRKyma.GroupVersion())
+		dynamicClient := dynamic_fake.NewSimpleDynamicClient(scheme,
+			&testModuleTemplate1,
+			&testKymaCR,
+		)
+
+		fakeRootless := &fake.RootlessDynamicClient{
+			ReturnGetObj: testServerless,
+		}
+
+		fakeClient := &fake.KubeClient{
+			TestKymaInterface:            kyma.NewClient(dynamicClient),
+			TestRootlessDynamicInterface: fakeRootless,
+		}
+
+		modules, err := ListInstalled(context.Background(), fakeClient)
+
+		require.NoError(t, err)
+		require.Equal(t, ModulesList(testInstalledModuleList), modules)
+	})
+}
 
 func TestListCatalog(t *testing.T) {
 	t.Run("list modules catalog from cluster", func(t *testing.T) {
@@ -463,382 +452,161 @@ func TestListCatalog(t *testing.T) {
 	})
 }
 
-func TestList(t *testing.T) {
-	t.Run("list modules from cluster without Kyma CR", func(t *testing.T) {
-		scheme := runtime.NewScheme()
-		scheme.AddKnownTypes(kyma.GVRModuleTemplate.GroupVersion())
-		scheme.AddKnownTypes(kyma.GVRModuleReleaseMeta.GroupVersion())
-		dynamicClient := dynamic_fake.NewSimpleDynamicClient(scheme,
-			&testModuleTemplate1,
-			&testModuleTemplate2,
-			&testModuleTemplate3,
-			&testModuleTemplate4,
-			&testReleaseMeta1,
-			&testReleaseMeta2,
-		)
-
-		fakeRootless := &fake.RootlessDynamicClient{}
-
-		fakeClient := &fake.KubeClient{
-			TestKymaInterface:            kyma.NewClient(dynamicClient),
-			TestRootlessDynamicInterface: fakeRootless,
-		}
-
-		modules, err := List(context.Background(), fakeClient)
-
-		require.NoError(t, err)
-		require.Equal(t, ModulesList(testModuleList), modules)
-	})
-
-	t.Run("list managed modules from cluster", func(t *testing.T) {
-		scheme := runtime.NewScheme()
-		scheme.AddKnownTypes(kyma.GVRModuleTemplate.GroupVersion())
-		scheme.AddKnownTypes(kyma.GVRModuleReleaseMeta.GroupVersion())
-		scheme.AddKnownTypes(kyma.GVRKyma.GroupVersion())
-		dynamicClient := dynamic_fake.NewSimpleDynamicClient(scheme,
-			&testModuleTemplate1,
-			&testModuleTemplate2,
-			&testModuleTemplate3,
-			&testModuleTemplate4,
-			&testReleaseMeta1,
-			&testReleaseMeta2,
-			&testKymaCR,
-		)
-
-		fakeRootless := &fake.RootlessDynamicClient{}
-
-		fakeClient := &fake.KubeClient{
-			TestKymaInterface:            kyma.NewClient(dynamicClient),
-			TestRootlessDynamicInterface: fakeRootless,
-		}
-
-		modules, err := List(context.Background(), fakeClient)
-
-		require.NoError(t, err)
-		require.Equal(t, ModulesList(testManagedModuleList), modules)
-	})
-
-	t.Run("ignore corrupted ModuleTemplate", func(t *testing.T) {
-		scheme := runtime.NewScheme()
-		scheme.AddKnownTypes(kyma.GVRModuleTemplate.GroupVersion())
-		scheme.AddKnownTypes(kyma.GVRModuleReleaseMeta.GroupVersion())
-		dynamicClient := dynamic_fake.NewSimpleDynamicClient(scheme,
-			&testModuleTemplate1,
-			&testModuleTemplate2,
-			&testModuleTemplate3,
-			&testModuleTemplate4,
-			&testModuleTemplate5, // corrupted ModuleTemplate
-			&testReleaseMeta1,
-			&testReleaseMeta2,
-		)
-
-		fakeRootless := &fake.RootlessDynamicClient{}
-
-		fakeClient := &fake.KubeClient{
-			TestKymaInterface:            kyma.NewClient(dynamicClient),
-			TestRootlessDynamicInterface: fakeRootless,
-		}
-
-		modules, err := List(context.Background(), fakeClient)
-
-		require.NoError(t, err)
-		require.Equal(t, ModulesList(testModuleList), modules)
-	})
-}
-
 func TestModuleStatus(t *testing.T) {
-	tests := []struct {
-		name            string
-		kyma            *kyma.Kyma
-		moduleTemplate  kyma.ModuleTemplate
-		moduleOrManager *unstructured.Unstructured
-		wantedErr       error
-		expectedStatus  string
+	for _, tt := range []struct {
+		name         string
+		moduleSpec   *kyma.Module
+		moduleStatus kyma.ModuleStatus
+		client       kube.Client
+
+		expectedState string
+		expectedError string
 	}{
 		{
-			name: "module is Ready, from default Kyma",
-			kyma: &kyma.Kyma{
-				Status: kyma.KymaStatus{
-					Modules: []kyma.ModuleStatus{
-						{
-							Name:  "serverless",
-							State: "Ready",
-						},
-					},
-				},
+			name:       "module is under deletion",
+			moduleSpec: nil,
+			moduleStatus: kyma.ModuleStatus{
+				State: "Deleting",
 			},
-			moduleTemplate: kyma.ModuleTemplate{
-				Spec: kyma.ModuleTemplateSpec{
-					ModuleName: "serverless",
-				},
-			},
-			expectedStatus: "Ready",
-			wantedErr:      nil,
-		}, {
-			name: "module is in Error state, from Kyma",
-			kyma: &kyma.Kyma{
-				Status: kyma.KymaStatus{
-					Modules: []kyma.ModuleStatus{
-						{
-							Name:  "serverless",
-							State: "Error",
-						},
-					},
-				},
-			},
-			moduleTemplate: kyma.ModuleTemplate{
-				Spec: kyma.ModuleTemplateSpec{
-					ModuleName: "serverless",
-				},
-			},
-			expectedStatus: "Error",
-			wantedErr:      nil,
+			expectedState: "Deleting",
 		},
 		{
-			name: "module is Ready, from moduleTemplate.spec.data",
-			kyma: &kyma.Kyma{
-				Status: kyma.KymaStatus{
-					Modules: []kyma.ModuleStatus{
-						{
-							Name:  "serverless-1",
-							State: "",
-						},
-					},
-				},
+			name: "module CR is managed by klm",
+			moduleSpec: &kyma.Module{
+				CustomResourcePolicy: "CreateAndDelete",
 			},
-			moduleTemplate: kyma.ModuleTemplate{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "serverless",
-				},
-				Spec: kyma.ModuleTemplateSpec{
-					Data: unstructured.Unstructured{
-						Object: map[string]interface{}{
-							"apiVersion": "operator.kyma-project.io/v1alpha1",
-							"kind":       "Serverless",
-							"metadata": map[string]interface{}{
-								"name":      "serverless-1",
-								"namespace": "kyma-system",
+			moduleStatus: kyma.ModuleStatus{
+				State: "Ready",
+			},
+			expectedState: "Ready",
+		},
+		{
+			name: "module in unmanaged",
+			moduleSpec: &kyma.Module{
+				Managed: ptr.To(false),
+			},
+			moduleStatus: kyma.ModuleStatus{
+				State: "Unmanaged",
+			},
+			expectedState: "Unmanaged",
+		},
+		{
+			name:       "ModuleTemplate not found error",
+			moduleSpec: &kyma.Module{},
+			moduleStatus: kyma.ModuleStatus{
+				Template: testModuleTemplate1,
+			},
+			client: func() kube.Client {
+				return &fake.KubeClient{
+					TestKymaInterface: &fake.KymaClient{
+						ReturnGetModuleTemplateErr: errors.New("not found"),
+					},
+				}
+			}(),
+			expectedError: "failed to get ModuleTemplate kyma-system/serverless-1: not found",
+		},
+		{
+			name:       "get state from module CR",
+			moduleSpec: &kyma.Module{},
+			moduleStatus: kyma.ModuleStatus{
+				Template: testModuleTemplate1,
+			},
+			client: func() kube.Client {
+				return &fake.KubeClient{
+					TestKymaInterface: &fake.KymaClient{
+						ReturnModuleTemplate: kyma.ModuleTemplate{
+							Spec: kyma.ModuleTemplateSpec{
+								Data: testServerless,
 							},
 						},
 					},
-				},
-			},
-			expectedStatus: "Ready",
-			wantedErr:      nil,
+					TestRootlessDynamicInterface: &fake.RootlessDynamicClient{
+						ReturnGetObj: testServerless,
+					},
+				}
+			}(),
+			expectedState: "Ready",
 		},
 		{
-			name: "module is Ready, from moduleTemplate.spec.manager, state",
-			kyma: &kyma.Kyma{
-				Status: kyma.KymaStatus{
-					Modules: []kyma.ModuleStatus{
-						{
-							Name:  "serverless-state",
-							State: "",
-						},
-					},
-				},
+			name:       "get ready state from module managers conditions",
+			moduleSpec: &kyma.Module{},
+			moduleStatus: kyma.ModuleStatus{
+				Template: testModuleTemplate1,
 			},
-			moduleTemplate: kyma.ModuleTemplate{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "serverless",
-				},
-				Spec: kyma.ModuleTemplateSpec{
-					Manager: &kyma.Manager{
-						GroupVersionKind: metav1.GroupVersionKind{
-							Group:   "apps",
-							Version: "v1",
-							Kind:    "Deployment",
-						},
-						Name:      "serverless-state",
-						Namespace: "kyma-system",
-					},
-				},
-			},
-			expectedStatus: "Ready",
-			wantedErr:      nil,
+			client:        fixKymaClientForManager(testDeploymentDataConditions),
+			expectedState: "Ready",
 		},
 		{
-			name: "module is Ready, from moduleTemplate.spec.manager, conditions",
-			kyma: &kyma.Kyma{
-				Status: kyma.KymaStatus{
-					Modules: []kyma.ModuleStatus{
-						{
-							Name:  "serverless-1",
-							State: "",
-						},
-					},
-				},
+			name:       "get ready state from module managers state",
+			moduleSpec: &kyma.Module{},
+			moduleStatus: kyma.ModuleStatus{
+				Template: testModuleTemplate1,
 			},
-			moduleTemplate: kyma.ModuleTemplate{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "serverless",
-				},
-				Spec: kyma.ModuleTemplateSpec{
-					Manager: &kyma.Manager{
-						GroupVersionKind: metav1.GroupVersionKind{
-							Group:   "apps",
-							Version: "v1",
-							Kind:    "Deployment",
-						},
-						Name:      "serverless-conditions",
-						Namespace: "kyma-system",
-					},
-				},
-			},
-			expectedStatus: "Ready",
-			wantedErr:      nil,
+			client:        fixKymaClientForManager(testDeploymentDataState),
+			expectedState: "Ready",
 		},
 		{
-			name: "module is Processing, from moduleTemplate.spec.manager, conditions",
-			kyma: &kyma.Kyma{
-				Status: kyma.KymaStatus{
-					Modules: []kyma.ModuleStatus{
-						{
-							Name:  "serverless-1",
-							State: "",
-						},
-					},
-				},
+			name:       "get processing state from module manager",
+			moduleSpec: &kyma.Module{},
+			moduleStatus: kyma.ModuleStatus{
+				Template: testModuleTemplate1,
 			},
-			moduleTemplate: kyma.ModuleTemplate{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "serverless",
-				},
-				Spec: kyma.ModuleTemplateSpec{
-					Manager: &kyma.Manager{
-						GroupVersionKind: metav1.GroupVersionKind{
-							Group:   "apps",
-							Version: "v1",
-							Kind:    "Deployment",
-						},
-						Name:      "serverless-conditions-processing",
-						Namespace: "kyma-system",
-					},
-				},
-			},
-			expectedStatus: "Processing",
-			wantedErr:      nil,
+			client:        fixKymaClientForManager(testDeploymentDataConditionsProcessing),
+			expectedState: "Processing",
 		},
 		{
-			name: "module is Ready, from moduleTemplate.spec.manager, readyReplicas",
-			kyma: &kyma.Kyma{
-				Status: kyma.KymaStatus{
-					Modules: []kyma.ModuleStatus{
-						{
-							Name:  "serverless-1",
-							State: "",
-						},
-					},
-				},
+			name:       "get processing state from module managers replicas",
+			moduleSpec: &kyma.Module{},
+			moduleStatus: kyma.ModuleStatus{
+				Template: testModuleTemplate1,
 			},
-			moduleTemplate: kyma.ModuleTemplate{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "serverless",
-				},
-				Spec: kyma.ModuleTemplateSpec{
-					Manager: &kyma.Manager{
-						GroupVersionKind: metav1.GroupVersionKind{
-							Group:   "apps",
-							Version: "v1",
-							Kind:    "Deployment",
-						},
-						Name:      "serverless-replicas-ready",
-						Namespace: "kyma-system",
-					},
-				},
-			},
-			expectedStatus: "Ready",
-			wantedErr:      nil,
+			client:        fixKymaClientForManager(testDeploymentDataProcessing),
+			expectedState: "Processing",
 		},
 		{
-			name: "module is Processing, from moduleTemplate.spec.manager, readyReplicas",
-			kyma: &kyma.Kyma{
-				Status: kyma.KymaStatus{
-					Modules: []kyma.ModuleStatus{
-						{
-							Name:  "serverless-2",
-							State: "",
-						},
-					},
-				},
+			name:       "get ready state from module managers replicas",
+			moduleSpec: &kyma.Module{},
+			moduleStatus: kyma.ModuleStatus{
+				Template: testModuleTemplate1,
 			},
-			moduleTemplate: kyma.ModuleTemplate{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "serverless",
-				},
-				Spec: kyma.ModuleTemplateSpec{
-					Manager: &kyma.Manager{
-						GroupVersionKind: metav1.GroupVersionKind{
-							Group:   "apps",
-							Version: "v1",
-							Kind:    "Deployment",
-						},
-						Name:      "serverless-replicas-processing",
-						Namespace: "kyma-system",
-					},
-				},
-			},
-			expectedStatus: "Processing",
-			wantedErr:      nil,
+			client:        fixKymaClientForManager(testDeploymentDataReady),
+			expectedState: "Ready",
 		},
 		{
-			name: "module is Deleting, from moduleTemplate.spec.manager, readyReplicas",
-			kyma: &kyma.Kyma{
-				Status: kyma.KymaStatus{
-					Modules: []kyma.ModuleStatus{
-						{
-							Name:  "serverless",
-							State: "",
-						},
-					},
-				},
+			name:       "get deleting state from module managers replicas",
+			moduleSpec: &kyma.Module{},
+			moduleStatus: kyma.ModuleStatus{
+				Template: testModuleTemplate1,
 			},
-			moduleTemplate: kyma.ModuleTemplate{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "serverless",
-				},
-				Spec: kyma.ModuleTemplateSpec{
-					Manager: &kyma.Manager{
-						GroupVersionKind: metav1.GroupVersionKind{
-							Group:   "apps",
-							Version: "v1",
-							Kind:    "Deployment",
-						},
-						Name:      "serverless-replicas-deleting",
-						Namespace: "kyma-system",
-					},
-				},
-			},
-			expectedStatus: "Deleting",
-			wantedErr:      nil,
+			client:        fixKymaClientForManager(testDeploymentDataDeleting),
+			expectedState: "Deleting",
 		},
-	}
-
-	for _, tt := range tests {
+	} {
 		t.Run(tt.name, func(t *testing.T) {
-			scheme := runtime.NewScheme()
-			scheme.AddKnownTypes(GVRDeployment.GroupVersion())
-			scheme.AddKnownTypes(GVRServerless.GroupVersion())
-			apiResources := []*metav1.APIResourceList{
-				testModuleDataResourceList, testModuleManagerResourceList,
+			state, err := getModuleState(context.Background(), tt.client, tt.moduleStatus, tt.moduleSpec)
+			if tt.expectedError != "" {
+				require.EqualError(t, err, tt.expectedError)
 			}
-			dynamicFake := dynamic_fake.NewSimpleDynamicClient(scheme, &testServerless, &testDeploymentDataState, &testDeploymentDataConditions, &testDeploymentDataConditionsProcessing, &testDeploymentDataReady, &testDeploymentDataProcessing, &testDeploymentDataDeleting)
+			require.Equal(t, tt.expectedState, state)
+		})
+	}
+}
 
-			fakeRootless := rootlessdynamic.NewClient(
-				dynamicFake,
-				&clientgo_fake.FakeDiscovery{
-					Fake: &clientgo_testing.Fake{
-						Resources: apiResources,
+func fixKymaClientForManager(manager unstructured.Unstructured) kube.Client {
+	return &fake.KubeClient{
+		TestKymaInterface: &fake.KymaClient{
+			ReturnModuleTemplate: kyma.ModuleTemplate{
+				Spec: kyma.ModuleTemplateSpec{
+					Manager: &kyma.Manager{
+						GroupVersionKind: metav1.GroupVersionKind(manager.GroupVersionKind()),
+						Namespace:        manager.GetNamespace(),
+						Name:             manager.GetName(),
 					},
 				},
-			)
-
-			fakeClient := &fake.KubeClient{
-				TestRootlessDynamicInterface: fakeRootless,
-			}
-			state, err := getModuleState(context.Background(), fakeClient, tt.moduleTemplate, tt.kyma)
-			require.Equal(t, tt.wantedErr, err)
-			require.Equal(t, tt.expectedStatus, state)
-		})
+			},
+		},
+		TestRootlessDynamicInterface: &fake.RootlessDynamicClient{
+			ReturnGetObj: manager,
+		},
 	}
 }

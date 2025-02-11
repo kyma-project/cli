@@ -42,9 +42,9 @@ type ModuleVersion struct {
 
 type ModulesList []Module
 
-// List returns list of available module on a cluster
-// collects info about modules based on ModuleTemplates, ModuleReleaseMetas and the KymaCR
-func List(ctx context.Context, client kube.Client) (ModulesList, error) {
+// ListInstalled returns list of installed module on a cluster
+// collects info about modules based on the KymaCR
+func ListInstalled(ctx context.Context, client kube.Client) (ModulesList, error) {
 	defaultKyma, err := client.Kyma().GetDefaultKyma(ctx)
 	if err != nil && !apierrors.IsNotFound(err) {
 		return nil, errors.Wrap(err, "failed to get default Kyma CR from the cluster")
@@ -54,7 +54,7 @@ func List(ctx context.Context, client kube.Client) (ModulesList, error) {
 	for _, moduleStatus := range defaultKyma.Status.Modules {
 		moduleSpec := getKymaModuleSpec(defaultKyma, moduleStatus.Name)
 
-		state, err := getModuleState(ctx, client, defaultKyma, moduleStatus, moduleSpec)
+		state, err := getModuleState(ctx, client, moduleStatus, moduleSpec)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to get module state for module %s", moduleStatus.Name)
 		}
@@ -63,8 +63,8 @@ func List(ctx context.Context, client kube.Client) (ModulesList, error) {
 			Name: moduleStatus.Name,
 			InstallDetails: ModuleInstallDetails{
 				Channel:              moduleStatus.Channel,
-				Managed:              getManaged(moduleSpec, moduleStatus.Name),
-				CustomResourcePolicy: moduleSpec.CustomResourcePolicy,
+				Managed:              getManaged(moduleSpec),
+				CustomResourcePolicy: getCustomResourcePolicy(moduleSpec),
 				Version:              moduleStatus.Version,
 				State:                state,
 			},
@@ -125,7 +125,25 @@ func ListCatalog(ctx context.Context, client kube.Client) (ModulesList, error) {
 	return modulesList, nil
 }
 
-func getModuleState(ctx context.Context, client kube.Client, kymaCR *kyma.Kyma, moduleStatus kyma.ModuleStatus, moduleSpec *kyma.Module) (string, error) {
+func getManaged(moduleSpec *kyma.Module) Managed {
+	if moduleSpec != nil && moduleSpec.Managed != nil {
+		return Managed(strconv.FormatBool(*moduleSpec.Managed))
+	}
+
+	// default value
+	return "true"
+}
+
+func getCustomResourcePolicy(moduleSpec *kyma.Module) string {
+	if moduleSpec != nil && moduleSpec.CustomResourcePolicy != "" {
+		return moduleSpec.CustomResourcePolicy
+	}
+
+	// default value
+	return "CreateAndDelete"
+}
+
+func getModuleState(ctx context.Context, client kube.Client, moduleStatus kyma.ModuleStatus, moduleSpec *kyma.Module) (string, error) {
 	if moduleSpec == nil {
 		// module is under deletion
 		return moduleStatus.State, nil
@@ -145,16 +163,16 @@ func getModuleState(ctx context.Context, client kube.Client, kymaCR *kyma.Kyma, 
 	// https://github.com/kyma-project/lifecycle-manager/issues/2232
 	moduleTemplate, err := client.Kyma().GetModuleTemplate(ctx, "kyma-system", moduleStatus.Template.GetName())
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to get ModuleTemplate %s/%s", "kyma-system/", moduleStatus.Template.GetName())
+		return "", errors.Wrapf(err, "failed to get ModuleTemplate %s/%s", "kyma-system", moduleStatus.Template.GetName())
 	}
 
-	// get state from moduleTemplate.Spec.Data if it exists
 	state, err := getStateFromData(ctx, client, moduleTemplate.Spec.Data)
 	if err != nil || state != "" {
+		// get state from moduleTemplate.Spec.Data (module CR) if it exists
 		return state, err
 	}
 
-	// get state from resource described in moduleTemplate.Spec.Manager if it exists
+	// get state from resource described in moduleTemplate.Spec.Manager (module operator) if it exists
 	return getResourceState(ctx, client, moduleTemplate.Spec.Manager)
 }
 
@@ -283,28 +301,6 @@ func getStateFromConditions(conditions []interface{}) string {
 		}
 	}
 	return ""
-}
-
-func isModuleInstalled(kyma *kyma.Kyma, moduleName string) bool {
-	if kyma != nil {
-		for _, module := range kyma.Status.Modules {
-			if module.Name == moduleName {
-				return true
-			}
-		}
-	}
-
-	// module is not installed
-	return false
-}
-
-// look for value of managed for specific moduleName
-func getManaged(module *kyma.Module, moduleName string) Managed {
-	if module != nil && module.Managed != nil {
-		return Managed(strconv.FormatBool(*module.Managed))
-	}
-
-	return "false"
 }
 
 // look for channel assigned to version with specified moduleName
