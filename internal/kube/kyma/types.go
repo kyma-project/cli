@@ -123,10 +123,11 @@ type KymaStatus struct {
 }
 
 type ModuleStatus struct {
-	Name    string `json:"name"`
-	Channel string `json:"channel,omitempty"`
-	Version string `json:"version,omitempty"`
-	State   string `json:"state,omitempty"`
+	Name     string                    `json:"name"`
+	Channel  string                    `json:"channel,omitempty"`
+	Version  string                    `json:"version,omitempty"`
+	State    string                    `json:"state,omitempty"`
+	Template unstructured.Unstructured `json:"template,omitempty"`
 }
 
 type KymaModuleInfo struct {

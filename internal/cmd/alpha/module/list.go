@@ -18,8 +18,8 @@ func newListCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "list",
-		Short: "List modules.",
-		Long:  `List either installed, managed or available Kyma modules.`,
+		Short: "List installed modules.",
+		Long:  `List installed Kyma modules.`,
 		Run: func(_ *cobra.Command, _ []string) {
 			clierror.Check(listModules(&cfg))
 		},
@@ -34,9 +34,9 @@ func listModules(cfg *modulesConfig) clierror.Error {
 		return clierr
 	}
 
-	modulesList, err := modules.List(cfg.Ctx, client)
+	modulesList, err := modules.ListInstalled(cfg.Ctx, client)
 	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to list available modules from the cluster"))
+		return clierror.Wrap(err, clierror.New("failed to list installed modules from the cluster"))
 	}
 
 	modules.Render(modulesList, modules.ModulesTableInfo)
