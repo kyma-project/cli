@@ -7,6 +7,25 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
+var (
+	resourceNameFlag = types.CustomFlag{
+		Name:        "name",
+		Type:        types.StringCustomFlagType,
+		Description: "name of the resource",
+		Path:        ".metadata.name",
+		Required:    true,
+	}
+
+	resourceNamespaceFlag = types.CustomFlag{
+		Name:         "namespace",
+		Type:         types.StringCustomFlagType,
+		Description:  "resource namespace",
+		Path:         ".metadata.namespace",
+		DefaultValue: "default",
+	}
+)
+
+// TODO: remove this func and use vars above
 func commonResourceFlags(resourceScope types.Scope) []types.CustomFlag {
 	params := []types.CustomFlag{
 		{
