@@ -29,7 +29,7 @@ func Test_get(t *testing.T) {
 		require.Equal(t, "get test deploy", cmd.Short)
 		require.Equal(t, "use this to get test deploy", cmd.Long)
 
-		require.NotNil(t, cmd.Flag("name"))
+		require.NoError(t, cmd.ValidateArgs([]string{"resource_name"}))
 		require.NotNil(t, cmd.Flag("namespace"))
 		require.NotNil(t, cmd.Flag("all-namespaces"))
 	})

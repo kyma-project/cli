@@ -22,6 +22,7 @@ import (
 type GetOptions struct {
 	types.GetCommand
 	ResourceInfo types.ResourceInfo
+	RootCommand  types.RootCommand
 }
 
 func BuildGetCommand(clientGetter KubeClientGetter, options *GetOptions) *cobra.Command {
@@ -31,9 +32,11 @@ func BuildGetCommand(clientGetter KubeClientGetter, options *GetOptions) *cobra.
 func buildGetCommand(out io.Writer, clientGetter KubeClientGetter, options *GetOptions) *cobra.Command {
 	flags := flags{}
 	cmd := &cobra.Command{
-		Use:   "get",
-		Short: options.Description,
-		Long:  options.DescriptionLong,
+		Use:     "get",
+		Example: buildGetExample(options),
+		Short:   options.Description,
+		Long:    options.DescriptionLong,
+		Args:    AssignOptionalNameArg(&flags.name),
 		Run: func(cmd *cobra.Command, args []string) {
 			clierror.Check(getResources(&getArgs{
 				out:          out,
@@ -45,14 +48,31 @@ func buildGetCommand(out io.Writer, clientGetter KubeClientGetter, options *GetO
 		},
 	}
 
-	cmd.Flags().StringVar(&flags.name, "name", "", "resource of the resource")
-
 	if options.ResourceInfo.Scope == types.NamespaceScope {
 		cmd.Flags().StringVarP(&flags.namespace, "namespace", "n", "default", "resource namespace")
 		cmd.Flags().BoolVarP(&flags.allNamespaces, "all-namespaces", "A", false, "get from all namespaces")
 	}
 
 	return cmd
+}
+
+func buildGetExample(options *GetOptions) string {
+	template := "  # list all resources\n" +
+		"  kyma alpha ROOT_COMMAND get\n" +
+		"\n" +
+		"  # get resource with a specific name\n" +
+		"  kyma alpha ROOT_COMMAND get resource_name"
+
+	if options.ResourceInfo.Scope == types.NamespaceScope {
+		template += "\n\n" +
+			"  # list all resources from the specific namespaces\n" +
+			"  kyma alpha ROOT_COMMAND get -n namespace_name\n" +
+			"\n" +
+			"  # list all resources from all namespaces\n" +
+			"  kyma alpha ROOT_COMMAND get -A"
+	}
+
+	return strings.ReplaceAll(template, "ROOT_COMMAND", options.RootCommand.Name)
 }
 
 type getArgs struct {

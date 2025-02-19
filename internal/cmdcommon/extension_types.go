@@ -41,7 +41,7 @@ func (el *ExtensionList) ContainResource(kind string) bool {
 
 type Extension struct {
 	// main command of the command group
-	RootCommand RootCommand
+	RootCommand types.RootCommand
 	// details about managed resource passed to every sub-command
 	Resource *types.ResourceInfo
 	// configuration of generic commands (like 'create', 'delete', 'get', ...) which implementation is provided by the cli
@@ -50,15 +50,6 @@ type Extension struct {
 	// configuration of buildin commands (like 'registry config') which implementation is provided by cli
 	// use this command to enable feature for a module
 	CoreCommands []CoreCommandInfo
-}
-
-type RootCommand struct {
-	// name of the command group
-	Name string `yaml:"name"`
-	// short description of the command group
-	Description string `yaml:"description"`
-	// long description of the command group
-	DescriptionLong string `yaml:"descriptionLong"`
 }
 
 type TemplateCommands struct {
