@@ -48,7 +48,7 @@ func buildGetCommand(out io.Writer, clientGetter KubeClientGetter, options *GetO
 	cmd.Flags().StringVar(&flags.name, "name", "", "resource of the resource")
 
 	if options.ResourceInfo.Scope == types.NamespaceScope {
-		cmd.Flags().StringVar(&flags.namespace, "namespace", "default", "resource namespace")
+		cmd.Flags().StringVarP(&flags.namespace, "namespace", "n", "default", "resource namespace")
 		cmd.Flags().BoolVarP(&flags.allNamespaces, "all-namespaces", "A", false, "get from all namespaces")
 	}
 
@@ -97,31 +97,32 @@ func getResources(args *getArgs) clierror.Error {
 		return clierror.Wrap(err, clierror.New("failed to get resource"))
 	}
 
-	tableInfo := buildTableInfo(args.getOptions)
+	tableInfo := buildTableInfo(args)
 	renderTable(args.out, resources.Items, tableInfo)
 	return nil
 }
 
-func buildTableInfo(opts *GetOptions) TableInfo {
-	Headers := []string{"NAME"}
-	fieldConverters := []FieldConverter{
-		genericFieldConverter(".metadata.name"),
-	}
+func buildTableInfo(opts *getArgs) TableInfo {
+	Headers := []interface{}{}
+	fieldConverters := []FieldConverter{}
 
-	if opts.ResourceInfo.Scope == types.NamespaceScope {
+	if opts.flags.allNamespaces {
 		Headers = append(Headers, "NAMESPACE")
 		fieldConverters = append(fieldConverters, genericFieldConverter(".metadata.namespace"))
 	}
 
-	for _, param := range opts.Parameters {
+	Headers = append(Headers, "NAME")
+	fieldConverters = append(fieldConverters, genericFieldConverter(".metadata.name"))
+
+	for _, param := range opts.getOptions.Parameters {
 		Headers = append(Headers, strings.ToUpper(param.Name))
 		fieldConverters = append(fieldConverters, genericFieldConverter(param.Path))
 	}
 
 	return TableInfo{
 		Header: Headers,
-		RowConverter: func(u unstructured.Unstructured) []string {
-			row := make([]string, len(fieldConverters))
+		RowConverter: func(u unstructured.Unstructured) []interface{} {
+			row := make([]interface{}, len(fieldConverters))
 			for i := range fieldConverters {
 				row[i] = fieldConverters[i](u)
 			}
@@ -153,26 +154,26 @@ func genericFieldConverter(path string) func(u unstructured.Unstructured) string
 func renderTable(writer io.Writer, resources []unstructured.Unstructured, tableInfo TableInfo) {
 	render.Table(
 		writer,
-		convertResourcesToTable(resources, tableInfo.RowConverter),
 		tableInfo.Header,
+		convertResourcesToTable(resources, tableInfo.RowConverter),
 	)
 }
 
 type FieldConverter func(u unstructured.Unstructured) string
 
-type RowConverter func(unstructured.Unstructured) []string
+type RowConverter func(unstructured.Unstructured) []interface{}
 
 type TableInfo struct {
-	Header       []string
+	Header       []interface{}
 	RowConverter RowConverter
 }
 
-func convertResourcesToTable(resources []unstructured.Unstructured, rowConverter RowConverter) [][]string {
+func convertResourcesToTable(resources []unstructured.Unstructured, rowConverter RowConverter) [][]interface{} {
 	slices.SortFunc(resources, func(a, b unstructured.Unstructured) int {
 		return cmp.Compare(a.GetNamespace(), b.GetNamespace())
 	})
 
-	var result [][]string
+	var result [][]interface{}
 	for _, resource := range resources {
 		result = append(result, rowConverter(resource))
 	}

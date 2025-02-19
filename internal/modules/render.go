@@ -11,18 +11,18 @@ import (
 	"github.com/kyma-project/cli.v3/internal/render"
 )
 
-type RowConverter func(Module) []string
+type RowConverter func(Module) []interface{}
 
 type TableInfo struct {
-	Header       []string
+	Header       []interface{}
 	RowConverter RowConverter
 }
 
 var (
 	ModulesTableInfo = TableInfo{
-		Header: []string{"NAME", "VERSION", "CR POLICY", "MANAGED", "STATUS"},
-		RowConverter: func(m Module) []string {
-			return []string{
+		Header: []interface{}{"NAME", "VERSION", "CR POLICY", "MANAGED", "STATUS"},
+		RowConverter: func(m Module) []interface{} {
+			return []interface{}{
 				m.Name,
 				convertInstall(m.InstallDetails),
 				string(m.InstallDetails.CustomResourcePolicy),
@@ -33,9 +33,9 @@ var (
 	}
 
 	CatalogTableInfo = TableInfo{
-		Header: []string{"NAME", "AVAILABLE VERSIONS"},
-		RowConverter: func(m Module) []string {
-			return []string{
+		Header: []interface{}{"NAME", "AVAILABLE VERSIONS"},
+		RowConverter: func(m Module) []interface{} {
+			return []interface{}{
 				m.Name,
 				convertVersions(m.Versions),
 			}
@@ -52,17 +52,17 @@ func Render(modulesList ModulesList, tableInfo TableInfo) {
 func renderTable(writer io.Writer, modulesList ModulesList, tableInfo TableInfo) {
 	render.Table(
 		writer,
-		convertModuleListToTable(modulesList, tableInfo.RowConverter),
 		tableInfo.Header,
+		convertModuleListToTable(modulesList, tableInfo.RowConverter),
 	)
 }
 
-func convertModuleListToTable(modulesList ModulesList, rowConverter RowConverter) [][]string {
+func convertModuleListToTable(modulesList ModulesList, rowConverter RowConverter) [][]interface{} {
 	slices.SortFunc(modulesList, func(a, b Module) int {
 		return cmp.Compare(a.Name, b.Name)
 	})
 
-	var result [][]string
+	var result [][]interface{}
 	for _, module := range modulesList {
 		result = append(result, rowConverter(module))
 	}
