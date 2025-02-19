@@ -25,7 +25,7 @@ func Test_create(t *testing.T) {
 		require.Equal(t, "create test deploy", cmd.Short)
 		require.Equal(t, "use this to create test deploy", cmd.Long)
 
-		require.NotNil(t, cmd.Flag("name"))
+		require.NoError(t, cmd.ValidateArgs([]string{"resource_name"}))
 		require.NotNil(t, cmd.Flag("namespace"))
 		require.NotNil(t, cmd.Flag("replicas"))
 
@@ -41,7 +41,7 @@ func Test_create(t *testing.T) {
 		}
 		cmd := fixCreateCommand(buf, &mock)
 
-		cmd.SetArgs([]string{"--name", "test-deploy", "--namespace", "test-namespace", "--replicas", "2"})
+		cmd.SetArgs([]string{"test-deploy", "--namespace", "test-namespace", "--replicas", "2"})
 		err := cmd.Execute()
 		require.NoError(t, err)
 

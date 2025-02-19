@@ -189,6 +189,7 @@ func addGenericCommands(cmd *cobra.Command, config *KymaConfig, extension *Exten
 	if extension.Resource != nil && commands.CreateCommand != nil {
 		cmd.AddCommand(availableTemplateCommands.Create(config, &templates.CreateOptions{
 			CreateCommand: *commands.CreateCommand,
+			RootCommand:   extension.RootCommand,
 			ResourceInfo:  *extension.Resource,
 		}))
 	}
