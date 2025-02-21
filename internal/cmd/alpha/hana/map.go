@@ -27,15 +27,15 @@ func NewMapHanaCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "map",
-		Short: "Map the Hana instance to the Kyma cluster.",
-		Long:  "Use this command to map the Hana instance to the Kyma cluster.",
+		Short: "Map the Hana instance to the Kyma cluster",
+		Long:  "Use this command to map the Hana instance to the Kyma cluster",
 		Run: func(_ *cobra.Command, _ []string) {
 			clierror.Check(runHanaMap(&config))
 		},
 	}
 
-	cmd.Flags().StringVar(&config.credentialsPath, "credentials-path", "", "Path to the credentials json file.")
-	cmd.Flags().StringVar(&config.hanaID, "hana-id", "", "Hana instance ID.")
+	cmd.Flags().StringVar(&config.credentialsPath, "credentials-path", "", "Path to the credentials json file")
+	cmd.Flags().StringVar(&config.hanaID, "hana-id", "", "Hana instance ID")
 	_ = cmd.MarkFlagRequired("credentials-path")
 
 	return cmd

@@ -41,7 +41,7 @@ func newExtensionsConfig(config *KymaConfig, cmd *cobra.Command) *KymaExtensions
 
 func (kec *KymaExtensionsConfig) addFlag(cmd *cobra.Command) {
 	// this flag is not operational. it's only to print help description and help cobra with validation
-	_ = cmd.PersistentFlags().Bool("show-extensions-error", false, "Print possible error when fetching extensions failed.")
+	_ = cmd.PersistentFlags().Bool("show-extensions-error", false, "Print possible error when fetching extensions failed")
 }
 
 func (kec *KymaExtensionsConfig) GetRawExtensions() ExtensionList {

@@ -18,8 +18,8 @@ func newCatalogCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "catalog",
-		Short: "List modules catalog.",
-		Long:  `List available Kyma modules.`,
+		Short: "List modules catalog",
+		Long:  `List available Kyma modules`,
 		Run: func(_ *cobra.Command, _ []string) {
 			clierror.Check(catalogModules(&cfg))
 		},

@@ -21,7 +21,7 @@ func Test_create(t *testing.T) {
 	t.Run("build proper command", func(t *testing.T) {
 		cmd := fixCreateCommand(bytes.NewBuffer([]byte{}), &mockGetter{})
 
-		require.Equal(t, "create", cmd.Use)
+		require.Equal(t, "create <resource_name>", cmd.Use)
 		require.Equal(t, "create test deploy", cmd.Short)
 		require.Equal(t, "use this to create test deploy", cmd.Long)
 

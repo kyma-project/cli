@@ -25,7 +25,7 @@ func Test_get(t *testing.T) {
 			},
 		})
 
-		require.Equal(t, "get", cmd.Use)
+		require.Equal(t, "get [<resource_name>]", cmd.Use)
 		require.Equal(t, "get test deploy", cmd.Short)
 		require.Equal(t, "use this to get test deploy", cmd.Long)
 

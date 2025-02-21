@@ -27,21 +27,20 @@ func NewReferenceInstanceCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "reference-instance",
-		Short: "Add an instance reference to a shared service instance.",
-		Long: `Use this command to add an instance reference to a shared service instance on the SAP Kyma platform.
-`,
+		Short: "Add an instance reference to a shared service instance",
+		Long:  `Use this command to add an instance reference to a shared service instance on the SAP Kyma platform`,
 		RunE: func(_ *cobra.Command, _ []string) error {
 			return runReferenceInstance(config)
 		},
 	}
 
-	cmd.Flags().StringVar(&config.namespace, "namespace", "default", "Namespace of the reference instance.")
-	cmd.Flags().StringVar(&config.offeringName, "offering-name", "", "Offering name.")
-	cmd.Flags().StringVar(&config.referenceName, "reference-name", "", "Name of the reference.")
-	cmd.Flags().StringVar(&config.instanceID, "instance-id", "", "ID of the instance.")
-	cmd.Flags().StringSliceVar(&config.labelSelector, "label-selector", nil, "Label selector for filtering instances.")
-	cmd.Flags().StringVar(&config.nameSelector, "name-selector", "", "Instance name selector for filtering instances.")
-	cmd.Flags().StringVar(&config.planSelector, "plan-selector", "", "Plan name selector for filtering instances.")
+	cmd.Flags().StringVar(&config.namespace, "namespace", "default", "Namespace of the reference instance")
+	cmd.Flags().StringVar(&config.offeringName, "offering-name", "", "Offering name")
+	cmd.Flags().StringVar(&config.referenceName, "reference-name", "", "Name of the reference")
+	cmd.Flags().StringVar(&config.instanceID, "instance-id", "", "ID of the instance")
+	cmd.Flags().StringSliceVar(&config.labelSelector, "label-selector", nil, "Label selector for filtering instances")
+	cmd.Flags().StringVar(&config.nameSelector, "name-selector", "", "Instance name selector for filtering instances")
+	cmd.Flags().StringVar(&config.planSelector, "plan-selector", "", "Plan name selector for filtering instances")
 	cmd.Flags().StringVar(&config.btpSecretName, "btp-secret-name", "", "name of the BTP secret containing credentials to another subaccount Service Manager:\nhttps://github.com/SAP/sap-btp-service-operator/blob/main/README.md#working-with-multiple-subaccounts")
 
 	// either instance id or selectors can be used

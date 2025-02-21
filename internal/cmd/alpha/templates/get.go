@@ -32,7 +32,7 @@ func BuildGetCommand(clientGetter KubeClientGetter, options *GetOptions) *cobra.
 func buildGetCommand(out io.Writer, clientGetter KubeClientGetter, options *GetOptions) *cobra.Command {
 	flags := flags{}
 	cmd := &cobra.Command{
-		Use:     "get",
+		Use:     "get [<resource_name>]",
 		Example: buildGetExample(options),
 		Short:   options.Description,
 		Long:    options.DescriptionLong,
@@ -61,7 +61,7 @@ func buildGetExample(options *GetOptions) string {
 		"  kyma alpha ROOT_COMMAND get\n" +
 		"\n" +
 		"  # get resource with a specific name\n" +
-		"  kyma alpha ROOT_COMMAND get resource_name"
+		"  kyma alpha ROOT_COMMAND get <resource_name>"
 
 	if options.ResourceInfo.Scope == types.NamespaceScope {
 		template += "\n\n" +

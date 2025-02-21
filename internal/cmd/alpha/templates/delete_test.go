@@ -19,7 +19,7 @@ func Test_remove(t *testing.T) {
 	t.Run("build proper command", func(t *testing.T) {
 		cmd := fixDeleteCommand(bytes.NewBuffer([]byte{}), &mockGetter{})
 
-		require.Equal(t, "delete", cmd.Use)
+		require.Equal(t, "delete <resource_name>", cmd.Use)
 		require.Equal(t, "delete test deploy", cmd.Short)
 		require.Equal(t, "use this to delete test deploy", cmd.Long)
 
