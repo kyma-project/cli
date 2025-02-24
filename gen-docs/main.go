@@ -59,6 +59,7 @@ func genMarkdownTree(cmd *cobra.Command, dir string) error {
 func genMarkdown(cmd *cobra.Command, w io.Writer) error {
 	cmd.InitDefaultHelpCmd()
 	cmd.InitDefaultHelpFlag()
+	cmd.InitDefaultCompletionCmd()
 
 	buf := new(bytes.Buffer)
 
