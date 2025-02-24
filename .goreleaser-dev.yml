@@ -53,7 +53,5 @@ archives:
 
 checksum:
   name_template: "checksums.txt"
-snapshot:
-  name_template: "v0.0.0-dev"
 changelog:
   disable: true
