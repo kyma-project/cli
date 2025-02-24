@@ -40,8 +40,8 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "push",
-		Short: "Push the application to the Kubernetes cluster.",
-		Long:  "Use this command to push the application to the Kubernetes cluster.",
+		Short: "Push the application to the Kubernetes cluster",
+		Long:  "Use this command to push the application to the Kubernetes cluster",
 
 		PreRun: func(_ *cobra.Command, args []string) {
 			clierror.Check(config.complete())

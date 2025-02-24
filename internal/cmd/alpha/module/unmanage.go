@@ -2,6 +2,7 @@ package module
 
 import (
 	"fmt"
+
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/spf13/cobra"
@@ -20,8 +21,8 @@ func newUnmanageCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "unmanage <module>",
-		Short: "Unmanage module.",
-		Long:  "Use this command to unmanage an existing module.",
+		Short: "Unmanage module",
+		Long:  "Use this command to unmanage an existing module",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			cfg.module = args[0]

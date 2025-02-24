@@ -39,7 +39,7 @@ func (kcc *KubeClientConfig) GetKubeClientWithClierr() (kube.Client, clierror.Er
 
 func (kcc *KubeClientConfig) addFlag(cmd *cobra.Command) {
 	// this flag is not operational. it's only to print help description and help cobra with validation
-	_ = cmd.PersistentFlags().String("kubeconfig", "", "Path to the Kyma kubeconfig file.")
+	_ = cmd.PersistentFlags().String("kubeconfig", "", "Path to the Kyma kubeconfig file")
 }
 
 func (kcc *KubeClientConfig) complete() {

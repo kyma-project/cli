@@ -8,8 +8,8 @@ import (
 func NewHanaCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "hana",
-		Short:                 "Manage a Hana instance on the Kyma platform.",
-		Long:                  `Use this command to manage a Hana instance on the SAP Kyma platform.`,
+		Short:                 "Manage a Hana instance on the Kyma platform",
+		Long:                  `Use this command to manage a Hana instance on the SAP Kyma platform`,
 		DisableFlagsInUseLine: true,
 	}
 

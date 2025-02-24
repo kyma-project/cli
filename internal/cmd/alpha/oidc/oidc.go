@@ -51,7 +51,7 @@ func NewOIDCCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&cfg.cisCredentialsPath, "credentials-path", "", "Path to the CIS credentials file.")
+	cmd.Flags().StringVar(&cfg.cisCredentialsPath, "credentials-path", "", "Path to the CIS credentials file")
 	cmd.Flags().StringVar(&cfg.output, "output", "", "Path to the output kubeconfig file")
 
 	cmd.Flags().StringVar(&cfg.token, "token", "", "Token used in the kubeconfig")

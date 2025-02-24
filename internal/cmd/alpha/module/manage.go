@@ -2,6 +2,7 @@ package module
 
 import (
 	"fmt"
+
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/spf13/cobra"
@@ -21,8 +22,8 @@ func newManageCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "manage <module>",
-		Short: "Manage module.",
-		Long:  "Use this command to manage an existing module.",
+		Short: "Manage module",
+		Long:  "Use this command to manage an existing module",
 		Args:  cobra.ExactArgs(1),
 		PreRun: func(_ *cobra.Command, args []string) {
 			clierror.Check(cfg.validate())
@@ -33,7 +34,7 @@ func newManageCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&cfg.policy, "policy", "CreateAndDelete", "Set custom resource policy. (Possible values: CreateAndDelete, Ignore)")
+	cmd.Flags().StringVar(&cfg.policy, "policy", "CreateAndDelete", "Set custom resource policy (Possible values: CreateAndDelete, Ignore)")
 	return cmd
 }
 

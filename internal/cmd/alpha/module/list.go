@@ -18,8 +18,8 @@ func newListCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "list",
-		Short: "List installed modules.",
-		Long:  `List installed Kyma modules.`,
+		Short: "List installed modules",
+		Long:  `List installed Kyma modules`,
 		Run: func(_ *cobra.Command, _ []string) {
 			clierror.Check(listModules(&cfg))
 		},
