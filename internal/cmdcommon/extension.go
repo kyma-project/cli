@@ -149,11 +149,6 @@ func buildCommandFromExtension(config *KymaConfig, extension *Extension, availab
 		Use:   extension.RootCommand.Name,
 		Short: extension.RootCommand.Description,
 		Long:  extension.RootCommand.DescriptionLong,
-		Run: func(cmd *cobra.Command, _ []string) {
-			if err := cmd.Help(); err != nil {
-				_ = err
-			}
-		},
 	}
 
 	if extension.TemplateCommands != nil {

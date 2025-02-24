@@ -20,6 +20,7 @@ func main() {
 	clierror.Check(clierr)
 
 	docsTargetDir := "./docs/user/gen-docs"
+	command.InitDefaultCompletionCmd()
 	err := genMarkdownTree(command, docsTargetDir)
 	if err != nil {
 		fmt.Println("unable to generate docs", err.Error())
@@ -34,6 +35,16 @@ func main() {
 // but in the kyma-project.io format
 // most of the code is copied the package
 func genMarkdownTree(cmd *cobra.Command, dir string) error {
+	// gen file for the root command
+	basename := getNewMarkdownPrefix() + strings.Replace(cmd.CommandPath(), " ", "_", -1) + ".md"
+	filename := filepath.Join(dir, basename)
+	f, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	// gen files for all sub-commands
 	for _, c := range cmd.Commands() {
 		if !c.IsAvailableCommand() || c.IsAdditionalHelpTopicCommand() {
 			continue
@@ -43,17 +54,6 @@ func genMarkdownTree(cmd *cobra.Command, dir string) error {
 		}
 	}
 
-	basename := strings.Replace(cmd.CommandPath(), " ", "_", -1) + ".md"
-	filename := filepath.Join(dir, basename)
-	f, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	if _, err := io.WriteString(f, filePrepender(cmd)); err != nil {
-		return err
-	}
 	return genMarkdown(cmd, f)
 }
 
@@ -70,6 +70,8 @@ func genMarkdown(cmd *cobra.Command, w io.Writer) error {
 		buf.WriteString(fmt.Sprintf("```bash\n%s\n```\n\n", cmd.UseLine()))
 	}
 
+	printAvailableCommands(buf, cmd)
+
 	if len(cmd.Example) > 0 {
 		buf.WriteString("## Examples\n\n")
 		buf.WriteString(fmt.Sprintf("```bash\n%s\n```\n\n", cmd.Example))
@@ -85,8 +87,20 @@ func genMarkdown(cmd *cobra.Command, w io.Writer) error {
 	return err
 }
 
+var (
+	fileOrderNumber = 1
+)
+
+func getNewMarkdownPrefix() string {
+	prefix := fmt.Sprintf("01-%d0-", fileOrderNumber)
+	fileOrderNumber++
+	return prefix
+}
+
 func printShort(buf *bytes.Buffer, cmd *cobra.Command) {
 	short := cmd.Short
+
+	buf.WriteString("# " + cmd.CommandPath() + "\n\n")
 	if short != "" {
 		buf.WriteString(short + "\n\n")
 	}
@@ -103,6 +117,35 @@ func printSynopsis(buf *bytes.Buffer, cmd *cobra.Command) {
 	if long != "" {
 		buf.WriteString(long + "\n\n")
 	}
+}
+
+func printAvailableCommands(buf *bytes.Buffer, cmd *cobra.Command) {
+	subCommands := cmd.Commands()
+	if len(subCommands) == 0 {
+		return
+	}
+
+	elems := []printElem{}
+	maxNameLen := 0
+	for i := range subCommands {
+		subCmd := subCommands[i]
+		subCmdName := subCmd.Name()
+		if len(subCmdName) > maxNameLen {
+			maxNameLen = len(subCmdName)
+		}
+		elems = append(elems, printElem{
+			name:        subCmdName,
+			description: subCmd.Short,
+		})
+	}
+
+	buf.WriteString("## Available Commands\n\n")
+	buf.WriteString("```bash\n")
+	for i := range elems {
+		separatorLen := maxNameLen - len(elems[i].name)
+		buf.WriteString(fmt.Sprintf("  %s%s - %s\n", elems[i].name, strings.Repeat(" ", separatorLen), elems[i].description))
+	}
+	buf.WriteString("```\n\n")
 }
 
 func printOptions(buf *bytes.Buffer, cmd *cobra.Command) error {
@@ -125,7 +168,7 @@ func printOptions(buf *bytes.Buffer, cmd *cobra.Command) error {
 	return nil
 }
 
-type seeAlsoElem struct {
+type printElem struct {
 	name        string
 	description string
 }
@@ -135,7 +178,7 @@ func printSeeAlso(buf *bytes.Buffer, cmd *cobra.Command) {
 		return
 	}
 
-	elems := []seeAlsoElem{}
+	elems := []printElem{}
 	maxNameLen := 0
 	name := cmd.CommandPath()
 
@@ -143,7 +186,7 @@ func printSeeAlso(buf *bytes.Buffer, cmd *cobra.Command) {
 	if cmd.HasParent() {
 		parent := cmd.Parent()
 		pname := parent.CommandPath()
-		elem := seeAlsoElem{
+		elem := printElem{
 			name:        fmt.Sprintf("[%s](%s)", pname, linkHandler(parent)),
 			description: parent.Short,
 		}
@@ -164,7 +207,7 @@ func printSeeAlso(buf *bytes.Buffer, cmd *cobra.Command) {
 			continue
 		}
 		cname := name + " " + child.Name()
-		elem := seeAlsoElem{
+		elem := printElem{
 			name:        fmt.Sprintf("[%s](%s)", cname, linkHandler(child)),
 			description: child.Short,
 		}
@@ -179,11 +222,6 @@ func printSeeAlso(buf *bytes.Buffer, cmd *cobra.Command) {
 		separatorLen := maxNameLen - len(elems[i].name)
 		buf.WriteString(fmt.Sprintf("* %s%s - %s\n", elems[i].name, strings.Repeat(" ", separatorLen), elems[i].description))
 	}
-}
-
-func filePrepender(cmd *cobra.Command) string {
-	name := cmd.CommandPath()
-	return fmt.Sprintf("---\ntitle: %s\n---\n\n", name)
 }
 
 func linkHandler(cmd *cobra.Command) string {
