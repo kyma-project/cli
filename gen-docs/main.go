@@ -20,6 +20,7 @@ func main() {
 	clierror.Check(clierr)
 
 	docsTargetDir := "./docs/user/gen-docs"
+	command.InitDefaultCompletionCmd()
 	err := genMarkdownTree(command, docsTargetDir)
 	if err != nil {
 		fmt.Println("unable to generate docs", err.Error())
@@ -59,7 +60,6 @@ func genMarkdownTree(cmd *cobra.Command, dir string) error {
 func genMarkdown(cmd *cobra.Command, w io.Writer) error {
 	cmd.InitDefaultHelpCmd()
 	cmd.InitDefaultHelpFlag()
-	cmd.InitDefaultCompletionCmd()
 
 	buf := new(bytes.Buffer)
 
