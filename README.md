@@ -18,7 +18,8 @@ Download the latest build from the main branch from [v0.0.0-dev](https://github.
 
 To get Kyma CLI for MacOS or Linux, run the following script from the project's root folder:
 ```sh
-curl -L "https://github.com/kyma-project/cli/releases/download/v0.0.0-dev/kyma_$(uname -s)_$(uname -m).tar.gz" | tar -zxvf - -C bin kyma && mv bin/kyma bin/kyma@v3
+curl -sL "https://raw.githubusercontent.com/kyma-project/cli/refs/heads/main/hack/install_cli_nightly.sh" | sh -
+kyma@v3
 ```
 
 This script downloads a Linux/MacOS variant of Kyma CLI v3 binary into `bin/kyma@v3`.
