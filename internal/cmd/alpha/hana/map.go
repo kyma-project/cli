@@ -35,7 +35,7 @@ func NewMapHanaCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&config.credentialsPath, "credentials-path", "", "Path to the credentials json file")
-	cmd.Flags().StringVar(&config.hanaID, "hana-id", "", "Hana instance ID")
+	cmd.Flags().StringVar(&config.hanaID, "hana-id", "", "SAP HANA instance ID")
 	_ = cmd.MarkFlagRequired("credentials-path")
 
 	return cmd

@@ -60,7 +60,7 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	// dockerfile flags
 	cmd.Flags().StringVar(&config.dockerfilePath, "dockerfile", "", "Path to the Dockerfile")
-	cmd.Flags().StringVar(&config.dockerfileSrcContext, "dockerfile-context", "", "Context path for building Dockerfile (defaults to current working directory)")
+	cmd.Flags().StringVar(&config.dockerfileSrcContext, "dockerfile-context", "", "Context path for building Dockerfile (defaults to the current working directory)")
 	cmd.Flags().Var(&config.dockerfileArgs, "dockerfile-build-arg", "Variables used while building an application from Dockerfile as args")
 
 	// pack flags

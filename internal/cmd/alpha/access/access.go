@@ -39,10 +39,10 @@ func NewAccessCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cmd.Flags().StringVar(&cfg.name, "name", "", "Name of the Service Account to be created")
 	cmd.Flags().StringVar(&cfg.clusterrole, "clusterrole", "", "Name of the cluster role to bind the Service Account to")
-	cmd.Flags().StringVar(&cfg.output, "output", "", "Path to output the kubeconfig file, if not provided the kubeconfig will be printed")
-	cmd.Flags().StringVar(&cfg.namespace, "namespace", "default", "Namespace to create the resources in")
+	cmd.Flags().StringVar(&cfg.output, "output", "", "Path to the kubeconfig file output. If not provided, the kubeconfig will be printed")
+	cmd.Flags().StringVar(&cfg.namespace, "namespace", "default", "Namespace in which the resource is created")
 	cmd.Flags().StringVar(&cfg.time, "time", "1h", "Determines how long the token should be valid, by default 1h (use h for hours and d for days)")
-	cmd.Flags().BoolVar(&cfg.permanent, "permanent", false, "Determines if the token be valid indefinitely")
+	cmd.Flags().BoolVar(&cfg.permanent, "permanent", false, "Determines if the token is valid indefinitely")
 
 	_ = cmd.MarkFlagRequired("name")
 	_ = cmd.MarkFlagRequired("clusterrole")

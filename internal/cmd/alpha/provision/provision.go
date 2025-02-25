@@ -37,10 +37,10 @@ func NewProvisionCMD() *cobra.Command {
 	cmd.Flags().StringVar(&config.credentialsPath, "credentials-path", "", "Path to the CIS credentials file")
 
 	cmd.Flags().StringVar(&config.plan, "plan", "trial", "Name of the Kyma environment plan, e.g trial, azure, aws, gcp")
-	cmd.Flags().StringVar(&config.environmentName, "environment-name", "kyma", "Name of the environment in the BTP")
+	cmd.Flags().StringVar(&config.environmentName, "environment-name", "kyma", "Name of the SAP BTP environment")
 	cmd.Flags().StringVar(&config.clusterName, "cluster-name", "kyma", "Name of the Kyma cluster")
 	cmd.Flags().StringVar(&config.region, "region", "", "Name of the region of the Kyma cluster")
-	cmd.Flags().StringVar(&config.owner, "owner", "", "Email of the owner of the Kyma cluster")
+	cmd.Flags().StringVar(&config.owner, "owner", "", "Email of the Kyma cluster owner")
 	cmd.Flags().StringVar(&config.parametersPath, "parameters", "", "Path to the JSON file with Kyma configuration")
 
 	_ = cmd.MarkFlagRequired("credentials-path")
