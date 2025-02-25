@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmd"
@@ -177,24 +178,68 @@ func printAvailableCommands(buf *bytes.Buffer, cmd *cobra.Command) {
 	buf.WriteString("```\n\n")
 }
 
-func printFlags(buf *bytes.Buffer, cmd *cobra.Command) {
-	flags := cmd.NonInheritedFlags()
-	flags.SetOutput(buf)
-
-	parentFlags := cmd.InheritedFlags()
-	parentFlags.SetOutput(buf)
-
-	if flags.HasAvailableFlags() || parentFlags.HasAvailableFlags() {
-		buf.WriteString("## Flags\n\n```text\n")
-		flags.PrintDefaults()
-		parentFlags.PrintDefaults()
-		buf.WriteString("```\n\n")
-	}
-}
-
 type printElem struct {
 	name        string
 	description string
+}
+
+func printFlags(buf *bytes.Buffer, cmd *cobra.Command) {
+	flags := cmd.NonInheritedFlags()
+	parentFlags := cmd.InheritedFlags()
+
+	if !flags.HasAvailableFlags() && !parentFlags.HasAvailableFlags() {
+		return
+	}
+
+	elems := []printElem{}
+	maxNameLen := 0
+
+	// collect flags
+	flags.VisitAll(func(f *pflag.Flag) {
+		elem := getFlagPrinElem(f)
+		elems = append(elems, elem)
+		if len(elem.name) > maxNameLen {
+			maxNameLen = len(elem.name)
+		}
+	})
+
+	// collect parent flags
+	parentFlags.VisitAll(func(f *pflag.Flag) {
+		elem := getFlagPrinElem(f)
+		elems = append(elems, elem)
+		if len(elem.name) > maxNameLen {
+			maxNameLen = len(elem.name)
+		}
+	})
+
+	// print flags
+	buf.WriteString("## Flags\n\n```text\n")
+	for _, elem := range elems {
+		// flag section with shorthand and separators
+		nameSection := fmt.Sprintf("  %s%s   ", elem.name, strings.Repeat(" ", maxNameLen-len(elem.name)))
+		// description section with optional multilines
+		descriptionSection := strings.Replace(elem.description, "\n", "\n"+strings.Repeat(" ", len(nameSection)), -1)
+		// print
+		buf.WriteString(fmt.Sprintf("%s%s\n", nameSection, descriptionSection))
+	}
+	buf.WriteString("```\n\n")
+}
+
+func getFlagPrinElem(f *pflag.Flag) printElem {
+	shorthandSection := "    "
+	if f.Shorthand != "" {
+		shorthandSection = fmt.Sprintf("-%s, ", f.Shorthand)
+	}
+
+	descriptionSection := f.Usage
+	if f.DefValue != "" {
+		descriptionSection += fmt.Sprintf(" (default %s)", f.DefValue)
+	}
+
+	return printElem{
+		name:        fmt.Sprintf("%s--%s", shorthandSection, f.Name),
+		description: descriptionSection,
+	}
 }
 
 func printSeeAlso(buf *bytes.Buffer, cmd *cobra.Command) {
