@@ -1,8 +1,6 @@
 name: unit test
 on:
   pull_request:
-    paths-ignore:
-      - "docs/**"
     types: [opened, reopened, synchronize, ready_for_review, converted_to_draft]
   workflow_dispatch:
 jobs:
