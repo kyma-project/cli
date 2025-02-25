@@ -19,7 +19,7 @@ func Test_explain(t *testing.T) {
 			},
 		})
 
-		require.Equal(t, "explain", cmd.Use)
+		require.Equal(t, "explain [flags]", cmd.Use)
 		require.Equal(t, "test explain command", cmd.Short)
 		require.Equal(t, "this is test explain command", cmd.Long)
 

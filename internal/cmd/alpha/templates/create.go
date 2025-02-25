@@ -33,7 +33,7 @@ func BuildCreateCommand(clientGetter KubeClientGetter, options *CreateOptions) *
 func buildCreateCommand(out io.Writer, clientGetter KubeClientGetter, options *CreateOptions) *cobra.Command {
 	extraValues := []parameters.Value{}
 	cmd := &cobra.Command{
-		Use:     "create <resource_name>",
+		Use:     "create <resource_name> [flags]",
 		Short:   options.Description,
 		Long:    options.DescriptionLong,
 		Example: buildCreateExample(options),

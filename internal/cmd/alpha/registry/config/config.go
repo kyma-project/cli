@@ -23,9 +23,9 @@ func NewConfigCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "config",
+		Use:   "config [flags]",
 		Short: "Saves Kyma registry dockerconfig to a file",
-		Long:  "Use this command to save Kyma registry dockerconfig to a file",
+		Long:  "Use this command to save Kyma registry dockerconfig to a file.",
 		Run: func(_ *cobra.Command, _ []string) {
 			clierror.Check(runConfig(&cfg))
 		},

@@ -39,9 +39,9 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "push",
+		Use:   "push [flags]",
 		Short: "Push the application to the Kubernetes cluster",
-		Long:  "Use this command to push the application to the Kubernetes cluster",
+		Long:  "Use this command to push the application to the Kubernetes cluster.",
 
 		PreRun: func(_ *cobra.Command, args []string) {
 			clierror.Check(config.complete())
@@ -59,20 +59,20 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().StringVar(&config.image, "image", "", "Name of the image to deploy")
 
 	// dockerfile flags
-	cmd.Flags().StringVar(&config.dockerfilePath, "dockerfile", "", "Path to the dockerfile")
-	cmd.Flags().StringVar(&config.dockerfileSrcContext, "dockerfile-context", "", "Context path for building dockerfile (defaults to current working directory)")
-	cmd.Flags().Var(&config.dockerfileArgs, "dockerfile-build-arg", "Variables used while building application from dockerfile as args")
+	cmd.Flags().StringVar(&config.dockerfilePath, "dockerfile", "", "Path to the Dockerfile")
+	cmd.Flags().StringVar(&config.dockerfileSrcContext, "dockerfile-context", "", "Context path for building Dockerfile (defaults to current working directory)")
+	cmd.Flags().Var(&config.dockerfileArgs, "dockerfile-build-arg", "Variables used while building an application from Dockerfile as args")
 
 	// pack flags
 	cmd.Flags().StringVar(&config.packAppPath, "code-path", "", "Path to the application source code directory")
 
 	// k8s flags
-	cmd.Flags().StringVar(&config.namespace, "namespace", "default", "Namespace where app should be deployed")
-	cmd.Flags().Var(&config.containerPort, "container-port", "Port on which the application will be exposed")
-	cmd.Flags().Var(&config.istioInject, "istio-inject", "Enable Istio for the app")
-	cmd.Flags().BoolVar(&config.expose, "expose", false, "Creates an ApiRule for the app")
-	cmd.Flags().StringArrayVar(&config.mountSecrets, "mount-secret", []string{}, "Mount secret content to the "+resources.SecretMountPathPrefix+"<SECRET_NAME> path")
-	cmd.Flags().StringArrayVar(&config.mountConfigmaps, "mount-config", []string{}, "Mount configmap content to the "+resources.ConfigmapMountPathPrefix+"<CONFIGMAP_NAME> path")
+	cmd.Flags().StringVar(&config.namespace, "namespace", "default", "Namespace where the app is deployed")
+	cmd.Flags().Var(&config.containerPort, "container-port", "Port on which the application is exposed")
+	cmd.Flags().Var(&config.istioInject, "istio-inject", "Enables Istio for the app")
+	cmd.Flags().BoolVar(&config.expose, "expose", false, "Creates an APIRule for the app")
+	cmd.Flags().StringArrayVar(&config.mountSecrets, "mount-secret", []string{}, "Mounts Secret content to the "+resources.SecretMountPathPrefix+"<SECRET_NAME> path")
+	cmd.Flags().StringArrayVar(&config.mountConfigmaps, "mount-config", []string{}, "Mounts ConfigMap content to the "+resources.ConfigmapMountPathPrefix+"<CONFIGMAP_NAME> path")
 
 	_ = cmd.MarkFlagRequired("name")
 	cmd.MarkFlagsMutuallyExclusive("image", "dockerfile", "code-path")

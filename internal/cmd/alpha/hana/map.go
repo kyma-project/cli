@@ -27,8 +27,8 @@ func NewMapHanaCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "map",
-		Short: "Map the Hana instance to the Kyma cluster",
-		Long:  "Use this command to map the Hana instance to the Kyma cluster",
+		Short: "Maps an SAP HANA instance to the Kyma cluster",
+		Long:  "Use this command to map an SAP HANA instance to the Kyma cluster.",
 		Run: func(_ *cobra.Command, _ []string) {
 			clierror.Check(runHanaMap(&config))
 		},

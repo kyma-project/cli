@@ -39,9 +39,9 @@ func NewOIDCCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "oidc",
-		Short: "Create kubeconfig with an OIDC token",
-		Long:  "Create kubeconfig with an OIDC token generated with a Github Actions token",
+		Use:   "oidc [flags]",
+		Short: "Creates kubeconfig with an OIDC token",
+		Long:  "Use this command to create kubeconfig with an OIDC token generated with a GitHub Actions token.",
 		PreRun: func(_ *cobra.Command, _ []string) {
 			cfg.complete()
 			clierror.Check(cfg.validate())

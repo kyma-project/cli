@@ -146,7 +146,7 @@ func parseOptionalField[T any](cmData map[string]string, cmKey string) (T, error
 
 func buildCommandFromExtension(config *KymaConfig, extension *Extension, availableTemplateCommands *TemplateCommandsList, availableCoreCommands CoreCommandsMap) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   extension.RootCommand.Name,
+		Use:   fmt.Sprintf("%s <command> [flags]", extension.RootCommand.Name),
 		Short: extension.RootCommand.Description,
 		Long:  extension.RootCommand.DescriptionLong,
 	}

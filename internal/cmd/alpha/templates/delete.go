@@ -28,7 +28,7 @@ func BuildDeleteCommand(clientGetter KubeClientGetter, options *DeleteOptions) *
 func buildDeleteCommand(out io.Writer, clientGetter KubeClientGetter, options *DeleteOptions) *cobra.Command {
 	extraValues := []parameters.Value{}
 	cmd := &cobra.Command{
-		Use:     "delete <resource_name>",
+		Use:     "delete <resource_name> [flags]",
 		Short:   options.Description,
 		Long:    options.DescriptionLong,
 		Example: buildDeleteExample(options),

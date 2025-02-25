@@ -22,9 +22,9 @@ func NewImportCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "image-import <image>",
+		Use:   "image-import <image> [flags]",
 		Short: "Import image to in-cluster registry",
-		Long:  `Import image from daemon to in-cluster registry`,
+		Long:  `Import image from daemon to in-cluster registry.`,
 		Args:  cobra.ExactArgs(1),
 
 		PreRun: func(_ *cobra.Command, args []string) {

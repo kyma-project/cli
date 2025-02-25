@@ -24,9 +24,9 @@ func newAddCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "add <module>",
-		Short: "Add module",
-		Long:  "Use this command to add module",
+		Use:   "add <module> [flags]",
+		Short: "Add a module",
+		Long:  "Use this command to add a module.",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			cfg.module = args[0]

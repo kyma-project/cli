@@ -26,9 +26,9 @@ func NewProvisionCMD() *cobra.Command {
 	config := provisionConfig{}
 
 	cmd := &cobra.Command{
-		Use:   "provision",
-		Short: "Provisions a Kyma cluster on the BTP",
-		Long:  `Use this command to provision a Kyma environment on the SAP BTP platform`,
+		Use:   "provision [flags]",
+		Short: "Provisions a Kyma cluster on SAP BTP",
+		Long:  `Use this command to provision a Kyma environment on SAP BTP.`,
 		Run: func(_ *cobra.Command, _ []string) {
 			clierror.Check(runProvision(&config))
 		},
