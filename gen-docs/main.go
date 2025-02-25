@@ -233,7 +233,7 @@ func getFlagPrinElem(f *pflag.Flag) printElem {
 
 	typeSection := ""
 	if f.Value.Type() != "bool" {
-		typeSection = fmt.Sprintf(" %s ", f.Value.Type())
+		typeSection = fmt.Sprintf(" %s")
 	}
 
 	descriptionSection := f.Usage
