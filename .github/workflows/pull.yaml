@@ -5,6 +5,17 @@ on:
     types: [ opened, edited, synchronize, reopened, ready_for_review ]
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+      - name: build
+        run: |
+          make build
+
   e2e-test-k3d:
     runs-on: ubuntu-latest
     steps:
