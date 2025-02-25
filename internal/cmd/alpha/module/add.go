@@ -24,9 +24,9 @@ func newAddCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "add <module>",
-		Short: "Add module",
-		Long:  "Use this command to add module",
+		Use:   "add <module> [flags]",
+		Short: "Add a module",
+		Long:  "Use this command to add a module.",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			cfg.module = args[0]
@@ -36,7 +36,7 @@ func newAddCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cmd.Flags().StringVarP(&cfg.channel, "channel", "c", "", "Name of the Kyma channel to use for the module")
 	cmd.Flags().StringVar(&cfg.crPath, "cr-path", "", "Path to the custom resource file")
-	cmd.Flags().BoolVar(&cfg.defaultCR, "default-cr", false, "Use this flag to deploy module with default cr")
+	cmd.Flags().BoolVar(&cfg.defaultCR, "default-cr", false, "Deploys the module with the default CR")
 
 	cmd.MarkFlagsMutuallyExclusive("cr-path", "default-cr")
 

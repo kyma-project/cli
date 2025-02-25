@@ -20,7 +20,9 @@ func main() {
 	clierror.Check(clierr)
 
 	docsTargetDir := "./docs/user/gen-docs"
+
 	command.InitDefaultCompletionCmd()
+
 	err := genMarkdownTree(command, docsTargetDir)
 	if err != nil {
 		fmt.Println("unable to generate docs", err.Error())
@@ -65,22 +67,9 @@ func genMarkdown(cmd *cobra.Command, w io.Writer) error {
 
 	printShort(buf, cmd)
 	printSynopsis(buf, cmd)
-
-	if cmd.Runnable() {
-		buf.WriteString(fmt.Sprintf("```bash\n%s\n```\n\n", cmd.UseLine()))
-	}
-
 	printAvailableCommands(buf, cmd)
-
-	if len(cmd.Example) > 0 {
-		buf.WriteString("## Examples\n\n")
-		buf.WriteString(fmt.Sprintf("```bash\n%s\n```\n\n", cmd.Example))
-	}
-
-	if err := printOptions(buf, cmd); err != nil {
-		return err
-	}
-
+	printExamples(buf, cmd)
+	printFlags(buf, cmd)
 	printSeeAlso(buf, cmd)
 
 	_, err := buf.WriteTo(w)
@@ -97,10 +86,25 @@ func getNewMarkdownPrefix() string {
 	return prefix
 }
 
+func printExamples(buf *bytes.Buffer, cmd *cobra.Command) {
+	if len(cmd.Example) == 0 {
+		return
+	}
+
+	buf.WriteString("## Examples\n\n")
+	buf.WriteString(fmt.Sprintf("```bash\n%s\n```\n\n", cmd.Example))
+}
+
 func printShort(buf *bytes.Buffer, cmd *cobra.Command) {
 	short := cmd.Short
 
 	buf.WriteString("# " + cmd.CommandPath() + "\n\n")
+
+	// add '.' at the end of the description
+	if short[len(short)-1] != '.' {
+		short += "."
+	}
+
 	if short != "" {
 		buf.WriteString(short + "\n\n")
 	}
@@ -117,6 +121,8 @@ func printSynopsis(buf *bytes.Buffer, cmd *cobra.Command) {
 	if long != "" {
 		buf.WriteString(long + "\n\n")
 	}
+
+	buf.WriteString(fmt.Sprintf("```bash\n%s\n```\n\n", cmd.UseLine()))
 }
 
 func printAvailableCommands(buf *bytes.Buffer, cmd *cobra.Command) {
@@ -140,7 +146,7 @@ func printAvailableCommands(buf *bytes.Buffer, cmd *cobra.Command) {
 	}
 
 	buf.WriteString("## Available Commands\n\n")
-	buf.WriteString("```bash\n")
+	buf.WriteString("```text\n")
 	for i := range elems {
 		separatorLen := maxNameLen - len(elems[i].name)
 		buf.WriteString(fmt.Sprintf("  %s%s - %s\n", elems[i].name, strings.Repeat(" ", separatorLen), elems[i].description))
@@ -148,24 +154,19 @@ func printAvailableCommands(buf *bytes.Buffer, cmd *cobra.Command) {
 	buf.WriteString("```\n\n")
 }
 
-func printOptions(buf *bytes.Buffer, cmd *cobra.Command) error {
+func printFlags(buf *bytes.Buffer, cmd *cobra.Command) {
 	flags := cmd.NonInheritedFlags()
 	flags.SetOutput(buf)
-	if flags.HasAvailableFlags() {
-		buf.WriteString("## Flags\n\n```bash\n")
-		flags.PrintDefaults()
-		buf.WriteString("```\n\n")
-	}
 
 	parentFlags := cmd.InheritedFlags()
 	parentFlags.SetOutput(buf)
-	if parentFlags.HasAvailableFlags() {
-		buf.WriteString("## Flags inherited from parent commands\n\n```bash\n")
+
+	if flags.HasAvailableFlags() || parentFlags.HasAvailableFlags() {
+		buf.WriteString("## Flags\n\n```text\n")
+		flags.PrintDefaults()
 		parentFlags.PrintDefaults()
 		buf.WriteString("```\n\n")
 	}
-
-	return nil
 }
 
 type printElem struct {

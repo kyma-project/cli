@@ -32,7 +32,7 @@ func BuildGetCommand(clientGetter KubeClientGetter, options *GetOptions) *cobra.
 func buildGetCommand(out io.Writer, clientGetter KubeClientGetter, options *GetOptions) *cobra.Command {
 	flags := flags{}
 	cmd := &cobra.Command{
-		Use:     "get [<resource_name>]",
+		Use:     "get [<resource_name>] [flags]",
 		Example: buildGetExample(options),
 		Short:   options.Description,
 		Long:    options.DescriptionLong,

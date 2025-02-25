@@ -19,7 +19,7 @@ func BuildExplainCommand(explainOptions *ExplainOptions) *cobra.Command {
 
 func buildExplainCommand(out io.Writer, options *ExplainOptions) *cobra.Command {
 	return &cobra.Command{
-		Use:   "explain",
+		Use:   "explain [flags]",
 		Short: options.Description,
 		Long:  options.DescriptionLong,
 		Run: func(_ *cobra.Command, _ []string) {

@@ -26,9 +26,9 @@ func NewProvisionCMD() *cobra.Command {
 	config := provisionConfig{}
 
 	cmd := &cobra.Command{
-		Use:   "provision",
-		Short: "Provisions a Kyma cluster on the BTP",
-		Long:  `Use this command to provision a Kyma environment on the SAP BTP platform`,
+		Use:   "provision [flags]",
+		Short: "Provisions a Kyma cluster on SAP BTP",
+		Long:  `Use this command to provision a Kyma environment on SAP BTP.`,
 		Run: func(_ *cobra.Command, _ []string) {
 			clierror.Check(runProvision(&config))
 		},
@@ -37,10 +37,10 @@ func NewProvisionCMD() *cobra.Command {
 	cmd.Flags().StringVar(&config.credentialsPath, "credentials-path", "", "Path to the CIS credentials file")
 
 	cmd.Flags().StringVar(&config.plan, "plan", "trial", "Name of the Kyma environment plan, e.g trial, azure, aws, gcp")
-	cmd.Flags().StringVar(&config.environmentName, "environment-name", "kyma", "Name of the environment in the BTP")
+	cmd.Flags().StringVar(&config.environmentName, "environment-name", "kyma", "Name of the SAP BTP environment")
 	cmd.Flags().StringVar(&config.clusterName, "cluster-name", "kyma", "Name of the Kyma cluster")
 	cmd.Flags().StringVar(&config.region, "region", "", "Name of the region of the Kyma cluster")
-	cmd.Flags().StringVar(&config.owner, "owner", "", "Email of the owner of the Kyma cluster")
+	cmd.Flags().StringVar(&config.owner, "owner", "", "Email of the Kyma cluster owner")
 	cmd.Flags().StringVar(&config.parametersPath, "parameters", "", "Path to the JSON file with Kyma configuration")
 
 	_ = cmd.MarkFlagRequired("credentials-path")

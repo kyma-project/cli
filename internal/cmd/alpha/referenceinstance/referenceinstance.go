@@ -26,9 +26,9 @@ func NewReferenceInstanceCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "reference-instance",
-		Short: "Add an instance reference to a shared service instance",
-		Long:  `Use this command to add an instance reference to a shared service instance on the SAP Kyma platform`,
+		Use:   "reference-instance [flags]",
+		Short: "Adds an instance reference to a shared service instance",
+		Long:  `Use this command to add an instance reference to a shared service instance in the Kyma cluster.`,
 		RunE: func(_ *cobra.Command, _ []string) error {
 			return runReferenceInstance(config)
 		},

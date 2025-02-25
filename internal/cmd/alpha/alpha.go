@@ -18,9 +18,9 @@ import (
 
 func NewAlphaCMD() (*cobra.Command, clierror.Error) {
 	cmd := &cobra.Command{
-		Use:                   "alpha",
-		Short:                 "Groups command prototypes the API for which may still change",
-		Long:                  `A set of alpha prototypes that may still change. Use in automations on your own risk`,
+		Use:                   "alpha <command> [flags]",
+		Short:                 "Groups command prototypes for which the API may still change",
+		Long:                  `A set of alpha prototypes that may still change. Use them in automation at your own risk.`,
 		DisableFlagsInUseLine: true,
 	}
 
