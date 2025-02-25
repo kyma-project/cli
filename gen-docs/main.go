@@ -231,13 +231,18 @@ func getFlagPrinElem(f *pflag.Flag) printElem {
 		shorthandSection = fmt.Sprintf("-%s, ", f.Shorthand)
 	}
 
+	typeSection := ""
+	if f.Value.Type() != "bool" {
+		typeSection = fmt.Sprintf(" %s ", f.Value.Type())
+	}
+
 	descriptionSection := f.Usage
-	if f.DefValue != "" {
+	if f.DefValue != "" && f.Value.Type() != "bool" {
 		descriptionSection += fmt.Sprintf(" (default \"%s\")", f.DefValue)
 	}
 
 	return printElem{
-		name:        fmt.Sprintf("%s--%s", shorthandSection, f.Name),
+		name:        fmt.Sprintf("%s--%s%s", shorthandSection, f.Name, typeSection),
 		description: descriptionSection,
 	}
 }
