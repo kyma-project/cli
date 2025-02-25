@@ -233,7 +233,7 @@ func getFlagPrinElem(f *pflag.Flag) printElem {
 
 	descriptionSection := f.Usage
 	if f.DefValue != "" {
-		descriptionSection += fmt.Sprintf(" (default %s)", f.DefValue)
+		descriptionSection += fmt.Sprintf(" (default \"%s\")", f.DefValue)
 	}
 
 	return printElem{
