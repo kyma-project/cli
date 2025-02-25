@@ -29,6 +29,12 @@ func main() {
 		os.Exit(1)
 	}
 
+	err = genSidebarTree(command, docsTargetDir)
+	if err != nil {
+		fmt.Println("unable to create _sidebar.md file", err.Error())
+		os.Exit(1)
+	}
+
 	fmt.Println("Docs successfully generated to the following dir", docsTargetDir)
 	os.Exit(0)
 }
@@ -38,7 +44,7 @@ func main() {
 // most of the code is copied the package
 func genMarkdownTree(cmd *cobra.Command, dir string) error {
 	// gen file for the root command
-	basename := getNewMarkdownPrefix() + strings.Replace(cmd.CommandPath(), " ", "_", -1) + ".md"
+	basename := cmdFileBasename(cmd)
 	filename := filepath.Join(dir, basename)
 	f, err := os.Create(filename)
 	if err != nil {
@@ -76,14 +82,31 @@ func genMarkdown(cmd *cobra.Command, w io.Writer) error {
 	return err
 }
 
-var (
-	fileOrderNumber = 1
-)
+// generates the _sidebar.md file that orders .md files with documentation on the dashboard
+func genSidebarTree(cmd *cobra.Command, dir string) error {
+	buf := bytes.NewBuffer([]byte{})
 
-func getNewMarkdownPrefix() string {
-	prefix := fmt.Sprintf("01-%d0-", fileOrderNumber)
-	fileOrderNumber++
-	return prefix
+	sidebarFile, err := os.Create(filepath.Join(dir, "_sidebar.md"))
+	if err != nil {
+		return err
+	}
+	defer sidebarFile.Close()
+
+	buf.WriteString("<!-- markdown-link-check-disable -->\n")
+	genSidebar(cmd, buf, 0)
+	buf.WriteString("<!-- markdown-link-check-enable -->")
+
+	_, err = buf.WriteTo(sidebarFile)
+	return err
+}
+
+func genSidebar(cmd *cobra.Command, buf *bytes.Buffer, indentMultiplier int) {
+	indent := strings.Repeat("  ", indentMultiplier)
+	buf.WriteString(fmt.Sprintf("%s* [%s](/cli/user/gen-docs/%s)\n", indent, cmd.CommandPath(), cmdFileBasename(cmd)))
+
+	for _, subCmd := range cmd.Commands() {
+		genSidebar(subCmd, buf, indentMultiplier+1)
+	}
 }
 
 func printExamples(buf *bytes.Buffer, cmd *cobra.Command) {
@@ -223,6 +246,10 @@ func printSeeAlso(buf *bytes.Buffer, cmd *cobra.Command) {
 		separatorLen := maxNameLen - len(elems[i].name)
 		buf.WriteString(fmt.Sprintf("* %s%s - %s\n", elems[i].name, strings.Repeat(" ", separatorLen), elems[i].description))
 	}
+}
+
+func cmdFileBasename(cmd *cobra.Command) string {
+	return strings.Replace(cmd.CommandPath(), " ", "_", -1) + ".md"
 }
 
 func linkHandler(cmd *cobra.Command) string {
