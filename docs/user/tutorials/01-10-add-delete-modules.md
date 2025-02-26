@@ -19,3 +19,10 @@ Keep in mind that Modules added without any specified form of CR have the policy
     ```
     kyma alpha module add {MODULE-NAME} -c {CHANNEL-NAME} --default-cr
     ```
+### Deleting an existing module
+
+1. To delete an existing module, use the command below:
+
+    ```
+    kyma alpha module delete {MODULE-NAME} 
+    ```
