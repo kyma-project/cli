@@ -1,9 +1,4 @@
-# Documentation for how to configure goreleaser can be found at http://goreleaser.com
-
-# The lines below are called `modelines`. See `:help modeline`
-# Feel free to remove those if you don't want/need to use them.
-# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
-# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+# Documentation for how to configure goreleaser can be found at https://goreleaser.com/customization/release/
 
 version: 2
 project_name: kyma
@@ -13,12 +8,11 @@ release:
     owner: kyma-project
     name: cli
   mode: replace
-  prerelease: "false"
+  prerelease: auto
   replace_existing_artifacts: true
-  make_latest: true
-
-  header: |
-    This is a premature, unstable version built nightly from the main branch. Use on your own risk.
+  replace_existing_draft: true
+  name_template: '{{.Tag}}'
+  make_latest: '{{ not contains .Tag "rc" }}'
 
 before:
   hooks:
@@ -53,5 +47,3 @@ archives:
 
 checksum:
   name_template: "checksums.txt"
-changelog:
-  disable: true
