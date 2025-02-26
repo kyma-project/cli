@@ -13,12 +13,9 @@ release:
     owner: kyma-project
     name: cli
   mode: replace
-  prerelease: "false"
+  prerelease: "true"
   replace_existing_artifacts: true
-  make_latest: true
-
-  header: |
-    This is a premature, unstable version built nightly from the main branch. Use on your own risk.
+  make_latest: false
 
 before:
   hooks:
