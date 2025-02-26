@@ -9,7 +9,7 @@ func NewModuleCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "module <command> [flags]",
 		Aliases: []string{"modules"},
-		Short:   "Manages kyma modules",
+		Short:   "Manages Kyma modules",
 		Long:    `Use this command to manage modules in the Kyma cluster.`,
 	}
 
