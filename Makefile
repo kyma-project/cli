@@ -30,4 +30,6 @@ build:
 
 .PHONY: docs
 docs:
+	rm -r ${PROJECT_ROOT}/docs/user/gen-docs
+	mkdir ${PROJECT_ROOT}/docs/user/gen-docs
 	go run gen-docs/main.go
