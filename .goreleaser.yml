@@ -12,7 +12,7 @@ release:
   replace_existing_artifacts: true
   replace_existing_draft: true
   name_template: '{{.Tag}}'
-  make_latest: '{{ not contains .Tag "rc" }}'
+  make_latest: '{{ not ( contains .Tag "rc" ) }}'
 
 before:
   hooks:
