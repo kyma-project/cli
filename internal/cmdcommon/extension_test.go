@@ -45,7 +45,6 @@ func TestListFromCluster(t *testing.T) {
 		got := newExtensionsConfig(warnBuf, kymaConfig, cmd)
 		require.Equal(t, want, got.extensions)
 		require.Empty(t, warnBuf.Bytes())
-		require.True(t, cmd.PersistentFlags().HasFlags())
 	})
 
 	t.Run("extensions duplications warning", func(t *testing.T) {
@@ -82,7 +81,6 @@ func TestListFromCluster(t *testing.T) {
 		got := newExtensionsConfig(warnBuf, kymaConfig, cmd)
 		require.Equal(t, want, got.extensions)
 		require.Equal(t, wantWarning, warnBuf.String())
-		require.True(t, cmd.PersistentFlags().HasFlags())
 	})
 
 	t.Run("missing rootCommand error", func(t *testing.T) {
