@@ -57,7 +57,7 @@ kyma@v3 alpha --help
 ```sh
 docker pull kennethreitz/httpbin
 
-./bin/kyma@v3 alpha registry image-import kennethreitz/httpbin:latest
+kyma@v3 alpha registry image-import kennethreitz/httpbin:latest
 ```
 
 Run a Pod from a locally hosted image
