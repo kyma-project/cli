@@ -13,16 +13,16 @@ To modify Kubernetes objects directly without them being reverted, you must set 
 ### Setting a Module to the Managed State
 
 
-1. To set a module to the managed state, use the following command:
+To set a module to the managed state, use the following command:
 
     ```
     kyma alpha module manage {MODULE-NAME}
     ```
-2. Even if the module is already in the managed state, you can change its policy by adding the optional flag ``--policy {POLICY-NAME}``. The default policy is ``CreateAndDelete``.
+Even if the module is already in the managed state, you can change its policy by adding the optional flag ``--policy {POLICY-NAME}``. The default policy is ``CreateAndDelete``.
 
 ### Setting a Module to the Unmanaged State
 
-1. To set a module to the unmanaged state, use the following command::
+To set a module to the unmanaged state, use the following command:
 
     ```
     kyma alpha module unmanage {MODULE-NAME}

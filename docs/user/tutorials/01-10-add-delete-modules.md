@@ -1,5 +1,5 @@
 # Adding and Deleting a Kyma Module Using Kyma CLI
-This tutorial shows how you can add a new module using Kyma CLI. 
+This tutorial shows how you can add and delete a new module using Kyma CLI. 
 
 > [!WARNING]
 > Modules added without any specified form of the custom resource have the policy field set to `Ignore`.
@@ -7,22 +7,23 @@ This tutorial shows how you can add a new module using Kyma CLI.
 
 ### Adding a New Module
 
-1. To add a new module with the default policy set to `CreateAndDelete`, use the following command:
+To add a new module with the default policy set to `CreateAndDelete`, use the following command:
 
     ```
     kyma alpha module add {MODULE-NAME} --default-cr
     ```
-2. To add a module with a different CR, use the `--cr-path={CR-FILEPATH}` flag:
+To add a module with a different CR, use the `--cr-path={CR-FILEPATH}` flag:
     ```
     kyma alpha module add {MODULE-NAME} --cr-path={CR-PATH-FILEPATH}
     ```
-3. You can also specify which channel the module should use with the `-c {CHANNEL-NAME}` flag:
+
+You can also specify which channel the module should use with the `-c {CHANNEL-NAME}` flag:
     ```
     kyma alpha module add {MODULE-NAME} -c {CHANNEL-NAME} --default-cr
     ```
 ### Deleting an existing module
 
-1. To delete an existing module, use the following command:
+To delete an existing module, use the following command:
 
     ```
     kyma alpha module delete {MODULE-NAME} 
