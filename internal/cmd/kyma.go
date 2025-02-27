@@ -3,6 +3,7 @@ package cmd
 import (
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha"
+	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/spf13/cobra"
 )
 
@@ -16,6 +17,7 @@ func NewKymaCMD() (*cobra.Command, clierror.Error) {
 		SilenceErrors: true,
 		SilenceUsage:  true,
 	}
+	cmdcommon.AddShowExtensionsErrorFlag(cmd)
 	cmd.PersistentFlags().BoolP("help", "h", false, "Help for the command")
 
 	alpha, err := alpha.NewAlphaCMD()

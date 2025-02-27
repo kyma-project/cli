@@ -25,7 +25,8 @@ kyma completion [flags]
 ## Flags
 
 ```text
-  -h, --help   Help for the command
+  -h, --help                    Help for the command
+      --show-extensions-error   Prints a possible error when fetching extensions fails
 ```
 
 ## See also

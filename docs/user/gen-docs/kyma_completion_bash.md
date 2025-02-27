@@ -33,8 +33,9 @@ kyma completion bash
 ## Flags
 
 ```text
-      --no-descriptions   disable completion descriptions
-  -h, --help              Help for the command
+      --no-descriptions         disable completion descriptions
+  -h, --help                    Help for the command
+      --show-extensions-error   Prints a possible error when fetching extensions fails
 ```
 
 ## See also
