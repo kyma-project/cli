@@ -39,7 +39,7 @@ kyma@v3
 
 ### Stable release
 
-The Kyma CLI had no stable release yet. To test it before final stage use nightly or the latest.
+The Kyma CLI has not yet been stable released. To test it before the final stage use nightly or the latest.
 
 ## Usage
 
