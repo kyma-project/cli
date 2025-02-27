@@ -47,22 +47,6 @@ func main() {
 	os.Exit(0)
 }
 
-func genReadme(dir string) error {
-	buf := bytes.NewBuffer([]byte{})
-
-	f, err := os.Create(filepath.Join(dir, "README.md"))
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	buf.WriteString("# Commands\n\n")
-	buf.WriteString("In this section, you can find the available Kyma CLI commands.\n")
-
-	_, err = buf.WriteTo(f)
-	return err
-}
-
 // does the same as doc.GenMarkdownTree from the "github.com/spf13/cobra/doc" package
 // but in the kyma-project.io format
 // most of the code is copied the package
@@ -86,20 +70,6 @@ func genMarkdownTree(cmd *cobra.Command, dir string) error {
 	return genMarkdown(cmd, f)
 }
 
-func genMarkdown(cmd *cobra.Command, w io.Writer) error {
-	buf := new(bytes.Buffer)
-
-	printShort(buf, cmd)
-	printSynopsis(buf, cmd)
-	printAvailableCommands(buf, cmd)
-	printExamples(buf, cmd)
-	printFlags(buf, cmd)
-	printSeeAlso(buf, cmd)
-
-	_, err := buf.WriteTo(w)
-	return err
-}
-
 // generates the _sidebar.md file that orders .md files with documentation on the dashboard
 func genSidebarTree(cmd *cobra.Command, dir string) error {
 	buf := bytes.NewBuffer([]byte{})
@@ -116,6 +86,37 @@ func genSidebarTree(cmd *cobra.Command, dir string) error {
 	buf.WriteString("<!-- markdown-link-check-enable -->")
 
 	_, err = buf.WriteTo(sidebarFile)
+	return err
+}
+
+// generates README.md in the gen-docs dir that helps with rendering of the _sidebar for the kyma-project.io
+func genReadme(dir string) error {
+	buf := bytes.NewBuffer([]byte{})
+
+	f, err := os.Create(filepath.Join(dir, "README.md"))
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	buf.WriteString("# Commands\n\n")
+	buf.WriteString("In this section, you can find the available Kyma CLI commands.\n")
+
+	_, err = buf.WriteTo(f)
+	return err
+}
+
+func genMarkdown(cmd *cobra.Command, w io.Writer) error {
+	buf := new(bytes.Buffer)
+
+	printShort(buf, cmd)
+	printSynopsis(buf, cmd)
+	printAvailableCommands(buf, cmd)
+	printExamples(buf, cmd)
+	printFlags(buf, cmd)
+	printSeeAlso(buf, cmd)
+
+	_, err := buf.WriteTo(w)
 	return err
 }
 
