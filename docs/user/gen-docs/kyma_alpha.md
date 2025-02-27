@@ -27,8 +27,8 @@ kyma alpha <command> [flags]
 
 ```text
       --kubeconfig string       Path to the Kyma kubeconfig file
-      --show-extensions-error   Prints a possible error when fetching extensions fails
   -h, --help                    Help for the command
+      --show-extensions-error   Prints a possible error when fetching extensions fails
 ```
 
 ## See also
