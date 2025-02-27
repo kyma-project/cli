@@ -16,7 +16,6 @@ kyma alpha module <command> [flags]
   add      - Add a module
   catalog  - Lists modules catalog
   delete   - Deletes a module
-  help     - Help about any command
   list     - Lists the installed modules
   manage   - Sets the module to the managed state
   unmanage - Sets a module to the unmanaged state

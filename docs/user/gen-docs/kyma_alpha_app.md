@@ -13,7 +13,6 @@ kyma alpha app <command> [flags]
 ## Available Commands
 
 ```text
-  help - Help about any command
   push - Push the application to the Kubernetes cluster
 ```
 

@@ -9,7 +9,7 @@ See each sub-command's help for details on how to use the generated script.
 
 
 ```bash
-kyma completion [flags]
+kyma completion
 ```
 
 ## Available Commands
@@ -17,7 +17,6 @@ kyma completion [flags]
 ```text
   bash       - Generate the autocompletion script for bash
   fish       - Generate the autocompletion script for fish
-  help       - Help about any command
   powershell - Generate the autocompletion script for powershell
   zsh        - Generate the autocompletion script for zsh
 ```

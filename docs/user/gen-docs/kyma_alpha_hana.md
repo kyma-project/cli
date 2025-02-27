@@ -13,8 +13,7 @@ kyma alpha hana <command> [flags]
 ## Available Commands
 
 ```text
-  help - Help about any command
-  map  - Maps an SAP HANA instance to the Kyma cluster
+  map - Maps an SAP HANA instance to the Kyma cluster
 ```
 
 ## Flags
