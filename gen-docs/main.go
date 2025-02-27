@@ -23,6 +23,7 @@ func main() {
 	docsTargetDir := "./docs/user/gen-docs"
 
 	command.InitDefaultCompletionCmd()
+	command.InitDefaultHelpCmd()
 
 	err := genMarkdownTree(command, docsTargetDir)
 	if err != nil {
@@ -77,9 +78,6 @@ func genMarkdownTree(cmd *cobra.Command, dir string) error {
 
 	// gen files for all sub-commands
 	for _, c := range cmd.Commands() {
-		if !c.IsAvailableCommand() || c.IsAdditionalHelpTopicCommand() {
-			continue
-		}
 		if err := genMarkdownTree(c, dir); err != nil {
 			return err
 		}

@@ -22,4 +22,5 @@
 * [kyma completion fish](/cli/user/gen-docs/kyma_completion_fish.md)
 * [kyma completion powershell](/cli/user/gen-docs/kyma_completion_powershell.md)
 * [kyma completion zsh](/cli/user/gen-docs/kyma_completion_zsh.md)
+* [kyma help](/cli/user/gen-docs/kyma_help.md)
 <!-- markdown-link-check-enable -->
