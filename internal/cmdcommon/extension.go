@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -21,13 +23,13 @@ type KymaExtensionsConfig struct {
 	extensions ExtensionList
 }
 
-func newExtensionsConfig(config *KymaConfig, cmd *cobra.Command) *KymaExtensionsConfig {
+func newExtensionsConfig(warningWriter io.Writer, config *KymaConfig, cmd *cobra.Command) *KymaExtensionsConfig {
 	extensions, err := loadExtensionsFromCluster(config.Ctx, config.KubeClientConfig)
 	if err != nil && shouldShowExtensionsError() {
 		// print error as warning if expected and continue
-		fmt.Printf("Extensions Warning:\n%s\n\n", err.Error())
+		fmt.Fprintf(warningWriter, "Extensions Warning:\n%s\n\n", err.Error())
 	} else if err != nil {
-		fmt.Print("Extensions Warning:\nfailed to fetch all extensions from the cluster. Use the '--show-extensions-error' flag to see more details.\n\n")
+		fmt.Fprintf(warningWriter, "Extensions Warning:\nfailed to fetch all extensions from the cluster. Use the '--show-extensions-error' flag to see more details.\n\n")
 	}
 
 	extensionsConfig := &KymaExtensionsConfig{
@@ -82,6 +84,17 @@ func loadExtensionsFromCluster(ctx context.Context, clientConfig *KubeClientConf
 			parseErr = errors.Join(
 				parseErr,
 				pkgerrors.Wrapf(err, "failed to parse configmap '%s/%s'", cm.GetNamespace(), cm.GetName()),
+			)
+			continue
+		}
+
+		if slices.ContainsFunc(extensions, func(e Extension) bool {
+			return e.RootCommand.Name == extension.RootCommand.Name
+		}) {
+			parseErr = errors.Join(
+				parseErr,
+				fmt.Errorf("failed to validate configmap '%s/%s': extension with rootCommand.name='%s' already exists",
+					cm.GetNamespace(), cm.GetName(), extension.RootCommand.Name),
 			)
 			continue
 		}
