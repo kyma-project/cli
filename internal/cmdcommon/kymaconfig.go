@@ -21,7 +21,7 @@ func NewKymaConfig(cmd *cobra.Command) (*KymaConfig, clierror.Error) {
 	kymaConfig := &KymaConfig{}
 	kymaConfig.Ctx = ctx
 	kymaConfig.KubeClientConfig = newKubeClientConfig(cmd)
-	kymaConfig.KymaExtensionsConfig = newExtensionsConfig(kymaConfig, cmd)
+	kymaConfig.KymaExtensionsConfig = newExtensionsConfig(cmd.OutOrStderr(), kymaConfig, cmd)
 
 	return kymaConfig, nil
 }

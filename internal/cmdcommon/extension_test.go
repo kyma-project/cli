@@ -1,8 +1,10 @@
 package cmdcommon
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/templates/types"
@@ -16,6 +18,7 @@ import (
 
 func TestListFromCluster(t *testing.T) {
 	t.Run("list extensions from cluster", func(t *testing.T) {
+		warnBuf := bytes.NewBuffer([]byte{})
 		kubeClientConfig := &KubeClientConfig{
 			KubeClient: &fake.KubeClient{
 				TestKubernetesInterface: k8s_fake.NewSimpleClientset(
@@ -39,12 +42,51 @@ func TestListFromCluster(t *testing.T) {
 			KubeClientConfig: kubeClientConfig,
 		}
 
-		got := newExtensionsConfig(kymaConfig, cmd)
+		got := newExtensionsConfig(warnBuf, kymaConfig, cmd)
 		require.Equal(t, want, got.extensions)
+		require.Empty(t, warnBuf.Bytes())
+		require.True(t, cmd.PersistentFlags().HasFlags())
+	})
+
+	t.Run("extensions duplications warning", func(t *testing.T) {
+		oldArgs := os.Args
+		os.Args = append(os.Args, "--show-extensions-error")
+		defer func() { os.Args = oldArgs }()
+
+		warnBuf := bytes.NewBuffer([]byte{})
+		kubeClientConfig := &KubeClientConfig{
+			KubeClient: &fake.KubeClient{
+				TestKubernetesInterface: k8s_fake.NewSimpleClientset(
+					fixTestExtensionConfigmapWithCMName("test-1", "test-1"),
+					fixTestExtensionConfigmapWithCMName("test-2", "test-1"),
+					fixTestExtensionConfigmapWithCMName("test-3", "test-1"),
+				),
+			},
+		}
+
+		cmd := &cobra.Command{}
+
+		want := ExtensionList{
+			fixTestExtension("test-1"),
+		}
+
+		kymaConfig := &KymaConfig{
+			Ctx:              context.Background(),
+			KubeClientConfig: kubeClientConfig,
+		}
+
+		wantWarning := "Extensions Warning:\n" +
+			"failed to validate configmap '/test-2': extension with rootCommand.name='test-1' already exists\n" +
+			"failed to validate configmap '/test-3': extension with rootCommand.name='test-1' already exists\n\n"
+
+		got := newExtensionsConfig(warnBuf, kymaConfig, cmd)
+		require.Equal(t, want, got.extensions)
+		require.Equal(t, wantWarning, warnBuf.String())
 		require.True(t, cmd.PersistentFlags().HasFlags())
 	})
 
 	t.Run("missing rootCommand error", func(t *testing.T) {
+		warnBuf := bytes.NewBuffer([]byte{})
 		kubeClientConfig := &KubeClientConfig{
 			KubeClient: &fake.KubeClient{
 				TestKubernetesInterface: k8s_fake.NewSimpleClientset(
@@ -61,16 +103,21 @@ func TestListFromCluster(t *testing.T) {
 			},
 		}
 
+		wantWarning := "Extensions Warning:\n" +
+			"failed to fetch all extensions from the cluster. Use the '--show-extensions-error' flag to see more details.\n\n"
+
 		kymaConfig := &KymaConfig{
 			Ctx:              context.Background(),
 			KubeClientConfig: kubeClientConfig,
 		}
 
-		got := newExtensionsConfig(kymaConfig, &cobra.Command{})
+		got := newExtensionsConfig(warnBuf, kymaConfig, &cobra.Command{})
+		require.Equal(t, wantWarning, warnBuf.String())
 		require.Empty(t, got.extensions)
 	})
 
 	t.Run("skip optional fields", func(t *testing.T) {
+		warnBuf := bytes.NewBuffer([]byte{})
 		kubeClientConfig := &KubeClientConfig{
 			KubeClient: &fake.KubeClient{
 				TestKubernetesInterface: k8s_fake.NewSimpleClientset(
@@ -108,15 +155,20 @@ descriptionLong: test-description-long
 			KubeClientConfig: kubeClientConfig,
 		}
 
-		got := newExtensionsConfig(kymaConfig, &cobra.Command{})
+		got := newExtensionsConfig(warnBuf, kymaConfig, &cobra.Command{})
+		require.Empty(t, warnBuf.Bytes())
 		require.Equal(t, want, got.extensions)
 	})
 }
 
 func fixTestExtensionConfigmap(name string) *corev1.ConfigMap {
+	return fixTestExtensionConfigmapWithCMName(name, name)
+}
+
+func fixTestExtensionConfigmapWithCMName(cmName, name string) *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		ObjectMeta: v1.ObjectMeta{
-			Name: name,
+			Name: cmName,
 			Labels: map[string]string{
 				ExtensionLabelKey: ExtensionResourceLabelValue,
 			},
