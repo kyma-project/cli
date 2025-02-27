@@ -1,5 +1,5 @@
 # Adding a new Module using Kyma CLI
-This tutorial shows how you can create a new Module using Kyma CLI. 
+This tutorial shows how you can add a new Module using Kyma CLI. 
 
 Keep in mind that Modules added without any specified form of CR have the policy field set to Ignore.
 ## Steps
