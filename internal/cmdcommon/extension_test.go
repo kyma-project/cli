@@ -9,7 +9,6 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/templates/types"
 	"github.com/kyma-project/cli.v3/internal/kube/fake"
-	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,8 +28,6 @@ func TestListFromCluster(t *testing.T) {
 			},
 		}
 
-		cmd := &cobra.Command{}
-
 		want := ExtensionList{
 			fixTestExtension("test-1"),
 			fixTestExtension("test-2"),
@@ -42,7 +39,7 @@ func TestListFromCluster(t *testing.T) {
 			KubeClientConfig: kubeClientConfig,
 		}
 
-		got := newExtensionsConfig(warnBuf, kymaConfig, cmd)
+		got := newExtensionsConfig(warnBuf, kymaConfig)
 		require.Equal(t, want, got.extensions)
 		require.Empty(t, warnBuf.Bytes())
 	})
@@ -63,8 +60,6 @@ func TestListFromCluster(t *testing.T) {
 			},
 		}
 
-		cmd := &cobra.Command{}
-
 		want := ExtensionList{
 			fixTestExtension("test-1"),
 		}
@@ -78,7 +73,7 @@ func TestListFromCluster(t *testing.T) {
 			"failed to validate configmap '/test-2': extension with rootCommand.name='test-1' already exists\n" +
 			"failed to validate configmap '/test-3': extension with rootCommand.name='test-1' already exists\n\n"
 
-		got := newExtensionsConfig(warnBuf, kymaConfig, cmd)
+		got := newExtensionsConfig(warnBuf, kymaConfig)
 		require.Equal(t, want, got.extensions)
 		require.Equal(t, wantWarning, warnBuf.String())
 	})
@@ -109,7 +104,7 @@ func TestListFromCluster(t *testing.T) {
 			KubeClientConfig: kubeClientConfig,
 		}
 
-		got := newExtensionsConfig(warnBuf, kymaConfig, &cobra.Command{})
+		got := newExtensionsConfig(warnBuf, kymaConfig)
 		require.Equal(t, wantWarning, warnBuf.String())
 		require.Empty(t, got.extensions)
 	})
@@ -153,7 +148,7 @@ descriptionLong: test-description-long
 			KubeClientConfig: kubeClientConfig,
 		}
 
-		got := newExtensionsConfig(warnBuf, kymaConfig, &cobra.Command{})
+		got := newExtensionsConfig(warnBuf, kymaConfig)
 		require.Empty(t, warnBuf.Bytes())
 		require.Equal(t, want, got.extensions)
 	})

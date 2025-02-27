@@ -23,7 +23,7 @@ type KymaExtensionsConfig struct {
 	extensions ExtensionList
 }
 
-func newExtensionsConfig(warningWriter io.Writer, config *KymaConfig, cmd *cobra.Command) *KymaExtensionsConfig {
+func newExtensionsConfig(warningWriter io.Writer, config *KymaConfig) *KymaExtensionsConfig {
 	extensions, err := loadExtensionsFromCluster(config.Ctx, config.KubeClientConfig)
 	if err != nil && shouldShowExtensionsError() {
 		// print error as warning if expected and continue
