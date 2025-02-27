@@ -15,24 +15,39 @@ Kyma CLI is a command line tool which supports [Kyma](https://github.com/kyma-pr
 > [!WARNING]
 > `v3` is still in the prototyping stage. All commands are still considered alpha - use it at your own risk.
 
+### Nightly build
+
 Download the latest build from the main branch from [0.0.0-dev](https://github.com/kyma-project/cli/releases/tag/0.0.0-dev) release assets.
 
-To get Kyma CLI for MacOS or Linux, run the following script from the project's root folder:
+To get Kyma CLI for MacOS or Linux, run the following script from the command line:
 
 ```sh
 curl -sL "https://raw.githubusercontent.com/kyma-project/cli/refs/heads/main/hack/install_cli_nightly.sh" | sh -
 kyma@v3
 ```
 
-This script downloads a Linux/MacOS variant of Kyma CLI v3 binary into `bin/kyma@v3`.
+### Latest build
+
+Download latest (stable or unstable) v3 build from the [releases](https://github.com/kyma-project/cli/releases) assets.
+
+To get latest Kyma CLI for MacOS or Linux, run the following script from the command line:
+
+```sh
+curl -sL "https://raw.githubusercontent.com/kyma-project/cli/refs/heads/main/hack/install_cli_latest.sh" | sh -
+kyma@v3
+```
+
+### Stable release
+
+The Kyma CLI had no stable release yet. To test it before final stage use nightly or the latest.
+
+## Usage
 
 Inspect the new available alpha commands by calling the `--help` option:
 
 ```sh
- ./bin/kyma@v3 alpha --help
+kyma@v3 alpha --help
 ```
-
-## Usage
 
 ### Import Image Into Kyma's Internal Docker Registry
 
