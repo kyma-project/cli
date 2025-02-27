@@ -16,7 +16,6 @@ kyma alpha <command> [flags]
   access             - Produces a kubeconfig with a Service Account-based token and certificate
   app                - Manages applications on the Kubernetes cluster
   hana               - Manages an SAP HANA instance in the Kyma cluster
-  help               - Help about any command
   module             - Manages Kyma modules
   oidc               - Creates kubeconfig with an OIDC token
   provision          - Provisions a Kyma cluster on SAP BTP

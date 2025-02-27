@@ -15,7 +15,6 @@ kyma <command> [flags]
 ```text
   alpha      - Groups command prototypes for which the API may still change
   completion - Generate the autocompletion script for the specified shell
-  help       - Help about any command
 ```
 
 ## Flags

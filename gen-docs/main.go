@@ -36,8 +36,30 @@ func main() {
 		os.Exit(1)
 	}
 
+	err = genReadme(docsTargetDir)
+	if err != nil {
+		fmt.Println("unable to create README.md file", err.Error())
+		os.Exit(1)
+	}
+
 	fmt.Println("Docs successfully generated to the following dir", docsTargetDir)
 	os.Exit(0)
+}
+
+func genReadme(dir string) error {
+	buf := bytes.NewBuffer([]byte{})
+
+	f, err := os.Create(filepath.Join(dir, "README.md"))
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	buf.WriteString("# Commands\n\n")
+	buf.WriteString("In this section, you can find the available Kyma CLI commands.\n")
+
+	_, err = buf.WriteTo(f)
+	return err
 }
 
 // does the same as doc.GenMarkdownTree from the "github.com/spf13/cobra/doc" package
@@ -67,9 +89,6 @@ func genMarkdownTree(cmd *cobra.Command, dir string) error {
 }
 
 func genMarkdown(cmd *cobra.Command, w io.Writer) error {
-	cmd.InitDefaultHelpCmd()
-	cmd.InitDefaultHelpFlag()
-
 	buf := new(bytes.Buffer)
 
 	printShort(buf, cmd)
@@ -94,6 +113,7 @@ func genSidebarTree(cmd *cobra.Command, dir string) error {
 	defer sidebarFile.Close()
 
 	buf.WriteString("<!-- markdown-link-check-disable -->\n")
+	buf.WriteString("* [Back to Kyma CLI](/cli/user/README.md)\n")
 	genSidebar(cmd, buf, 0)
 	buf.WriteString("<!-- markdown-link-check-enable -->")
 
@@ -102,8 +122,7 @@ func genSidebarTree(cmd *cobra.Command, dir string) error {
 }
 
 func genSidebar(cmd *cobra.Command, buf *bytes.Buffer, indentMultiplier int) {
-	indent := strings.Repeat("  ", indentMultiplier)
-	buf.WriteString(fmt.Sprintf("%s* [%s](/cli/user/gen-docs/%s)\n", indent, cmd.CommandPath(), cmdFileBasename(cmd)))
+	buf.WriteString(fmt.Sprintf("* [%s](/cli/user/gen-docs/%s)\n", cmd.CommandPath(), cmdFileBasename(cmd)))
 
 	for _, subCmd := range cmd.Commands() {
 		genSidebar(subCmd, buf, indentMultiplier+1)
