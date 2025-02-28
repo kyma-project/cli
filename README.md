@@ -12,7 +12,7 @@ Kyma CLI is a command line tool which supports [Kyma](https://github.com/kyma-pr
 
 ## Install
 
-For the installation instructions follow steps in [this article](./docs/user/README.md#how-to-install).
+For the installation instructions, see [How to Install](./docs/user/README.md#how-to-install).
 
 ## Usage
 
