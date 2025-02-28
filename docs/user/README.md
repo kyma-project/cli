@@ -1,14 +1,21 @@
-> **TIP:** Apart from the {Module Name} heading, you can use your own titles for the remaining sections. You can also add more module-specific sections.
+# Kyma CLI
 
-# {Module Name}
-> Modify the title and insert the name of your module. Use Heading 1 (H1).
+## What is Kyma CLI?
 
-## Overview
-> Provide a description of your module and its components. Describe its features and functionalities. Mention the scope and add information on the CustomResourceDefinitions (CRDs).
-> You can divide this section to the relevant subsections.
+The Kyma CLI is a command-line interface tool designed to simplify the use of the Kyma ecosystem. It allows you to manage Kyma modules and applications, deploy simple applications, and more. With Kyma CLI, you can perform complex tasks with simple commands, accelerating development cycles.
 
-## Useful Links (Optional)
-> Provide links to the most relevant module documentation (tutorials, technical references, resources, etc.).
+In addition, you can build, push, and deploy an application to a Kyma cluster with a single command. It automatically detects the Dockerfile in the current directory, builds and pushes the image to the in-cluster registry, and applies the necessary Kubernetes resources.
 
-## Feedback (Optional)
-> Describe how users can provide feedback.
+Kyma CLI also provides a set of commands to manage Kyma modules efficiently. You can manage, deploy, and configure modules seamlessly. With Kyma CLI module commands, you can list available and installed modules, add or delete them, and configure their settings. Modules can be deployed with the default or custom configuration. 
+## Features
+The Kyma CLI provides the following features:
+
+- Simplified module management.
+- Automated deployments.
+- Built-in extensibility.
+- Integrated service management.
+- Commands providing useful automation.
+
+## Related Information
+
+- [Kyma CLI tutorials](tutorials/README.md)
