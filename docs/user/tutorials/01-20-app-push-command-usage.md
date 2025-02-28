@@ -10,7 +10,7 @@ As a prerequisite to use `kyma alpha app push` you need to add necessary modules
 
     ```
     kyma alpha module add istio --default-cr
-    kyma alpha module add docker-registry --default-cr
+    kyma alpha module add docker-registry -c experimental --default-cr
     kyma alpha module add api-gateway --default-cr
     ```
 
@@ -47,7 +47,7 @@ After fulfilling all the prerequisites you can now deploy your application using
 You can also use the `--container-port` flag to deploy an application with own service, with exposed right port.
 
     ```
-    kyma alpha app push --name={APPLICATION-NAME} --code-path={SOURCE-CODE-PATHFILE} --container-port{PORT-TO-EXPOSE-APPLICATION-ON}
+    kyma alpha app push --name={APPLICATION-NAME} --code-path={SOURCE-CODE-PATHFILE} --container-port={PORT-TO-EXPOSE-APPLICATION-ON}
     ```
 
 ### Run application Deployment with APIRule allowing outside access, on a cluster 
@@ -55,14 +55,30 @@ You can also use the `--container-port` flag to deploy an application with own s
 You can also use the `--expose` flag to deploy an application with own APIRule allowing access from outside the cluster. Note that when using `--expose` flag, you need to also provide `--container-port`.
 
     ```
-    kyma alpha app push --name={APPLICATION-NAME} --code-path={SOURCE-CODE-PATHFILE} --container-port{PORT-TO-EXPOSE-APPLICATION-ON} --expose
+    kyma alpha app push --name={APPLICATION-NAME} --code-path={SOURCE-CODE-PATHFILE} --container-port={PORT-TO-EXPOSE-APPLICATION-ON} --expose
     ```
 
 ### Check deployed application connection
 
 
-To check if deployed application connection is working properly, you can perform a curl request on the adress that is returned after using `kyma alpha app push` with exposed APIRule.
+To check if deployed application connection is working properly, you can perform a curl request. The procedure differs depending on how did you deploy your application.
+
+#### Application deployed without the --container-port flag
 
     ```
-    curl {DEPLOYMENT-URL}
+    kubectl port-forward deployment/{APPLICATION-NAME} {PORT}:{PORT}
+    curl localhost:{PORT}/{ENDPOINT}
+    ```
+
+#### Application deployed with the --container-port flag
+
+    ```
+    kubectl port-forward svc/{SVC_NAME} {PORT}:{PORT}
+    curl localhost:{PORT}/{ENDPOINT}
+    ```
+
+#### Application deployed with the --exposed flag
+
+    ```
+    curl {ADDRESS-RETURNED-FROM-THE-APP-PUSH}:{PORT}/{ENDPOINT}
     ```
