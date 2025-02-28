@@ -71,13 +71,13 @@ kubectl run my-pod --image=localhost:32137/kennethreitz/httpbin:latest --overrid
 To build a Kyma CLI binary, run:
 
 ```sh
-go build -o kyma-cli  main.go
+go build -o kyma@v3 main.go
 ```
 
 You can run the command directly from the go code. For example:
 
 ```sh
-go run main.go provision --help
+go run main.go alpha module list
 ```
 
 ## Contributing
