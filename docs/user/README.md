@@ -16,6 +16,38 @@ The Kyma CLI provides the following features:
 - Integrated service management.
 - Commands providing useful automation.
 
+## How-to-install
+
+> [!WARNING]
+> `v3` is still in the prototyping stage. All commands are still considered alpha - use it at your own risk.
+
+### Stable release
+
+> [!WARNING]
+> The Kyma CLI has not yet been stable released. To test it before the final stage use nightly or the latest.
+
+### Latest build
+
+Download latest (stable release or unstable prerelease) v3 build from the [releases](https://github.com/kyma-project/cli/releases) assets.
+
+To get latest Kyma CLI for MacOS or Linux, run the following script from the command line:
+
+```sh
+curl -sL "https://raw.githubusercontent.com/kyma-project/cli/refs/heads/main/hack/install_cli_latest.sh" | sh -
+kyma@v3
+```
+
+### Nightly build
+
+Download the latest build from the main branch from [0.0.0-dev](https://github.com/kyma-project/cli/releases/tag/0.0.0-dev) release assets.
+
+To get Kyma CLI for MacOS or Linux, run the following script from the command line:
+
+```sh
+curl -sL "https://raw.githubusercontent.com/kyma-project/cli/refs/heads/main/hack/install_cli_nightly.sh" | sh -
+kyma@v3
+```
+
 ## Related Information
 
 - [Kyma CLI tutorials](tutorials/README.md)

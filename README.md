@@ -12,34 +12,7 @@ Kyma CLI is a command line tool which supports [Kyma](https://github.com/kyma-pr
 
 ## Install
 
-> [!WARNING]
-> `v3` is still in the prototyping stage. All commands are still considered alpha - use it at your own risk.
-
-### Nightly build
-
-Download the latest build from the main branch from [0.0.0-dev](https://github.com/kyma-project/cli/releases/tag/0.0.0-dev) release assets.
-
-To get Kyma CLI for MacOS or Linux, run the following script from the command line:
-
-```sh
-curl -sL "https://raw.githubusercontent.com/kyma-project/cli/refs/heads/main/hack/install_cli_nightly.sh" | sh -
-kyma@v3
-```
-
-### Latest build
-
-Download latest (stable or unstable) v3 build from the [releases](https://github.com/kyma-project/cli/releases) assets.
-
-To get latest Kyma CLI for MacOS or Linux, run the following script from the command line:
-
-```sh
-curl -sL "https://raw.githubusercontent.com/kyma-project/cli/refs/heads/main/hack/install_cli_latest.sh" | sh -
-kyma@v3
-```
-
-### Stable release
-
-The Kyma CLI has not yet been stable released. To test it before the final stage use nightly or the latest.
+For the installation instructions follow steps in [this article](./docs/user/README.md#how-to-install).
 
 ## Usage
 
