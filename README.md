@@ -12,27 +12,15 @@ Kyma CLI is a command line tool which supports [Kyma](https://github.com/kyma-pr
 
 ## Install
 
-> [!WARNING]
-> `v3` is still in the prototyping stage. All commands are still considered alpha - use it at your own risk.
+For the installation instructions, see [How to Install](./docs/user/README.md#how-to-install).
 
-Download the latest build from the main branch from [0.0.0-dev](https://github.com/kyma-project/cli/releases/tag/0.0.0-dev) release assets.
-
-To get Kyma CLI for MacOS or Linux, run the following script from the project's root folder:
-
-```sh
-curl -sL "https://raw.githubusercontent.com/kyma-project/cli/refs/heads/main/hack/install_cli_nightly.sh" | sh -
-kyma@v3
-```
-
-This script downloads a Linux/MacOS variant of Kyma CLI v3 binary into `bin/kyma@v3`.
+## Usage
 
 Inspect the new available alpha commands by calling the `--help` option:
 
 ```sh
- ./bin/kyma@v3 alpha --help
+kyma@v3 alpha --help
 ```
-
-## Usage
 
 ### Import Image Into Kyma's Internal Docker Registry
 
@@ -42,7 +30,7 @@ Inspect the new available alpha commands by calling the `--help` option:
 ```sh
 docker pull kennethreitz/httpbin
 
-./bin/kyma@v3 alpha registry image-import kennethreitz/httpbin:latest
+kyma@v3 alpha registry image-import kennethreitz/httpbin:latest
 ```
 
 Run a Pod from a locally hosted image
@@ -56,13 +44,13 @@ kubectl run my-pod --image=localhost:32137/kennethreitz/httpbin:latest --overrid
 To build a Kyma CLI binary, run:
 
 ```sh
-go build -o kyma-cli  main.go
+go build -o kyma@v3 main.go
 ```
 
 You can run the command directly from the go code. For example:
 
 ```sh
-go run main.go provision --help
+go run main.go alpha module list
 ```
 
 ## Contributing
