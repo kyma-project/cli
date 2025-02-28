@@ -21,7 +21,7 @@ You can also specify which channel the module should use with the `-c {CHANNEL-N
     ```
     kyma alpha module add {MODULE-NAME} -c {CHANNEL-NAME} --default-cr
     ```
-### Deleting an existing module
+### Deleting an Existing Module
 
 To delete an existing module, use the following command:
 
