@@ -1,7 +1,7 @@
 # Kyma CLI
 
 > [!WARNING]
-> This documentation is related with the Kyma CLI in version `v3` that is still in the prototyping stage. All commands are still considered alpha. Use it at your own risk.
+> This documentation applies to Kyma CLI version `v3`, which is still in the prototyping stage. All commands are still considered alpha. Use it at your own risk.
 > Read more about the decision [here](https://github.com/kyma-project/community/issues/872).
 
 ## What is Kyma CLI?
