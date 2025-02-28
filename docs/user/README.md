@@ -24,13 +24,13 @@ The Kyma CLI provides the following features:
 ### Stable release
 
 > [!WARNING]
-> The Kyma CLI has not yet been stable released. To test it before the final stage use nightly or the latest.
+> The Kyma CLI has not yet been released as a stable version. To test it before the final stage, use nightly or the latest.
 
 ### Latest build
 
 Download latest (stable release or unstable prerelease) v3 build from the [releases](https://github.com/kyma-project/cli/releases) assets.
 
-To get latest Kyma CLI for MacOS or Linux, run the following script from the command line:
+To get the latest Kyma CLI for MacOS or Linux, run the following script from the command line:
 
 ```sh
 curl -sL "https://raw.githubusercontent.com/kyma-project/cli/refs/heads/main/hack/install_cli_latest.sh" | sh -
