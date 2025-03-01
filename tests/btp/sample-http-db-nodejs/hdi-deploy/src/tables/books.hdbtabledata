@@ -1,0 +1,24 @@
+{
+    "format_version": 1,
+    "imports": [
+    {
+        "target_table": "bookstore.db::books",
+        "source_data": {
+        "data_type": "CSV",
+        "file_name": "bookstore.db::books.csv",
+        "has_header": true,
+        "type_config": {
+            "delimiter": ",",
+            "do_quote": true
+        }
+        },
+        "import_settings": {
+        "import_columns": [
+            "id",
+            "title",
+            "author"
+        ]
+        }
+    }
+    ]
+}
