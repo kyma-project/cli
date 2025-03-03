@@ -3,6 +3,7 @@ package cmd
 import (
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha"
+	"github.com/kyma-project/cli.v3/internal/cmd/version"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/spf13/cobra"
 )
@@ -24,7 +25,9 @@ func NewKymaCMD() (*cobra.Command, clierror.Error) {
 	if err != nil {
 		return nil, err
 	}
+
 	cmd.AddCommand(alpha)
+	cmd.AddCommand(version.NewCmd())
 
 	return cmd, nil
 }

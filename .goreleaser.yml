@@ -8,11 +8,14 @@ release:
     owner: kyma-project
     name: cli
   mode: replace
-  prerelease: auto
+  # label as prerelease for prereleases and nightly builds
+  prerelease: '{{ or ( contains .Tag "rc" ) ( contains .Tag "dev" ) }}'
+  use_existing_draft: true
   replace_existing_artifacts: true
   replace_existing_draft: true
   name_template: '{{.Tag}}'
-  make_latest: '{{ not ( contains .Tag "rc" ) }}'
+  # make latest on stable release
+  make_latest: '{{ not ( or ( contains .Tag "rc" ) ( contains .Tag "dev" ) ) }}'
 
 before:
   hooks:
@@ -22,6 +25,9 @@ builds:
   - env:
       - CGO_ENABLED=0
     main: ./main.go
+    ldflags:
+      # use .Tag for release/prereleases and nightly-<SHA> for nightly builds
+      - -X github.com/kyma-project/cli.v3/internal/cmd/version.version={{ if contains .Tag "dev" }}nightly-{{.ShortCommit}}{{else}}{{.Tag}}{{end}}
     goos:
       - darwin
       - linux
@@ -47,3 +53,6 @@ archives:
 
 checksum:
   name_template: "checksums.txt"
+changelog:
+  # disable on nightly builds
+  disable: '{{ contains .Tag "dev" }}'
