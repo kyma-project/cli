@@ -6,6 +6,7 @@ PROJECT_ROOT=.
 
 include ${PROJECT_ROOT}/hack/tools.mk
 
+CLI_VERSION?=local
 
 ##@ General
 
@@ -26,7 +27,7 @@ lint: golangci-lint ## Run golangci-lint.
 
 .PHONY: build
 build:
-	go build -o bin/kyma@v3 main.go   
+	go build -ldflags="-X github.com/kyma-project/cli.v3/internal/cmd/version.version=$(CLI_VERSION)" -o bin/kyma@v3 main.go
 
 .PHONY: docs
 docs:
