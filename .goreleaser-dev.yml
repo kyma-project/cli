@@ -23,6 +23,8 @@ builds:
   - env:
       - CGO_ENABLED=0
     main: ./main.go
+    ldflags:
+      - -X github.com/kyma-project/cli.v3/internal/cmd/version.version=nightly-{{.ShortCommit}}
     goos:
       - darwin
       - linux

@@ -11,7 +11,7 @@ release:
   prerelease: auto
   replace_existing_artifacts: true
   name_template: '{{.Tag}}'
-  make_latest: '{{ not ( contains .Tag "rc" ) }}'
+  make_latest: '{{ not ( or ( contains .Tag "rc" ) ( contains .Tag "dev" ) ) }}'
 
 before:
   hooks:
@@ -21,6 +21,8 @@ builds:
   - env:
       - CGO_ENABLED=0
     main: ./main.go
+    ldflags:
+      - -X github.com/kyma-project/cli.v3/internal/cmd/version.version=v{{.Tag}}
     goos:
       - darwin
       - linux
