@@ -10,6 +10,7 @@ release:
   mode: replace
   prerelease: auto
   replace_existing_artifacts: true
+  replace_existing_draft: true
   name_template: '{{.Tag}}'
   make_latest: '{{ not ( or ( contains .Tag "rc" ) ( contains .Tag "dev" ) ) }}'
 

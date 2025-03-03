@@ -9,7 +9,9 @@ release:
     name: cli
   mode: replace
   prerelease: "true"
+  use_existing_draft: true
   replace_existing_artifacts: true
+  replace_existing_draft: true
   make_latest: false
 
   header: |
