@@ -1,8 +1,14 @@
 module-name: cli
-whitesource:
+kind: kyma
+mend:
   language: golang-mod
   exclude:
     - "**/test/**"
     - "**/*_test.go"
     - "**/mocks/**"
-  subprojects: false
+checkmarx-one:
+  preset: go-default
+  exclude:
+    - "**/test/**"
+    - "**/*_test.go"
+    - "**/mocks/**"
