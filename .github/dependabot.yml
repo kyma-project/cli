@@ -24,3 +24,6 @@ updates:
       k8s-io:
         patterns:
           - "k8s.io/*"
+      docker:
+        patterns:
+          - "github.com/docker/*"
