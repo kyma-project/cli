@@ -1,0 +1,14 @@
+{
+  "name": "bookstore-service",
+  "version": "0.0.1",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js"
+  },
+  "dependencies": {
+    "express": "^4.18.3",
+    "@sap/hana-client": "^2.19.21",
+    "@sap/xsenv": "^4.2.0",
+    "uuid": "^9.0.1"
+  }
+}
