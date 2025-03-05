@@ -8,12 +8,10 @@ release:
     owner: kyma-project
     name: cli
   mode: replace
-  # label as prerelease for prereleases and nightly builds
-  prerelease: '{{ or ( contains .Tag "rc" ) ( contains .Tag "dev" ) }}'
+  prerelease: auto
   replace_existing_artifacts: true
   name_template: '{{.Tag}}'
-  # make latest on stable release
-  make_latest: '{{ not ( or ( contains .Tag "rc" ) ( contains .Tag "dev" ) ) }}'
+  make_latest: false
 
 before:
   hooks:
@@ -52,5 +50,4 @@ archives:
 checksum:
   name_template: "checksums.txt"
 changelog:
-  # disable on nightly builds
-  disable: '{{ contains .Tag "dev" }}'
+  disable: false
