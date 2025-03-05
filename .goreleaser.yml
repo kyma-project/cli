@@ -10,9 +10,7 @@ release:
   mode: replace
   # label as prerelease for prereleases and nightly builds
   prerelease: '{{ or ( contains .Tag "rc" ) ( contains .Tag "dev" ) }}'
-  use_existing_draft: true
   replace_existing_artifacts: true
-  replace_existing_draft: true
   name_template: '{{.Tag}}'
   # make latest on stable release
   make_latest: '{{ not ( or ( contains .Tag "rc" ) ( contains .Tag "dev" ) ) }}'
