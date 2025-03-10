@@ -29,14 +29,17 @@ while ! kubectl get crd btpoperators.operator.kyma-project.io; do echo "Waiting 
 kubectl wait --for condition=established crd/btpoperators.operator.kyma-project.io
 while ! kubectl get btpoperators.operator.kyma-project.io btpoperator --namespace kyma-system; do echo "Waiting for btpoperator..."; sleep 1; done
 kubectl wait --for condition=Ready btpoperators.operator.kyma-project.io/btpoperator -n kyma-system --timeout=180s
+
+
+# TODO - change after btp operator commands are extracted as btp module cli extension
 ../../bin/kyma@v3 alpha reference-instance \
     --btp-secret-name remote-service-manager-credentials \
     --namespace kyma-system \
     --offering-name objectstore \
     --plan-selector standard \
     --reference-name object-store-reference
-
 kubectl apply -n kyma-system -f ./k8s-resources/object-store-binding.yaml
+
 while ! kubectl get secret object-store-reference-binding --namespace kyma-system; do echo "Waiting for object-store-reference-binding secret..."; sleep 5; done
 
 # -------------------------------------------------------------------------------------
@@ -49,7 +52,7 @@ kubectl wait --for condition=Installed dockerregistries.operator.kyma-project.io
 
 dr_external_url=$(../../bin/kyma@v3 alpha registry config --externalurl)
 
-#TODO new cli command
+# TODO new cli command, for example
 # dr_internal_pull_url=$(../../bin/kyma@v3 alpha registry config --internalurl)
 dr_internal_pull_url=$(kubectl get dockerregistries.operator.kyma-project.io -n kyma-system custom-dr -ojsonpath={.status.internalAccess.pullAddress})
 
