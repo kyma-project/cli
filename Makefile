@@ -6,7 +6,6 @@ PROJECT_ROOT=.
 
 include ${PROJECT_ROOT}/hack/tools.mk
 
-
 ##@ General
 
 .PHONY: help
@@ -26,7 +25,7 @@ lint: golangci-lint ## Run golangci-lint.
 
 .PHONY: build
 build:
-	go build -o bin/kyma@v3 main.go   
+	go build -o bin/kyma@v3 main.go
 
 .PHONY: docs
 docs:

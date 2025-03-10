@@ -7,14 +7,18 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: ["darwin", "linux", "windows"]
+        goarch: ["amd64", "arm64"]
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.ref }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
-      - name: build
+      - name: build ${{ matrix.goos }} ${{ matrix.goarch }}
         run: |
-          make build
+          GOARCH=${{ matrix.goarch }} GOOS=${{ matrix.goos }} make build
 
   e2e-test-k3d:
     runs-on: ubuntu-latest
