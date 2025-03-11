@@ -35,7 +35,13 @@ func newGenerateCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "generate",
 		Example: `# generate a kubeconfig with a ServiceAccount-based token and certificate
-  kyma@v3 alpha kubeconfig generate --serviceaccount <sa_name> --clusterrole <cr_name> --namespace <ns_name> --permanent`,
+  kyma@v3 alpha kubeconfig generate --serviceaccount <sa_name> --clusterrole <cr_name> --namespace <ns_name> --permanent
+
+# generate a kubeconfig with an OIDC token
+  kyma@v3 alpha kubeconfig generate --token <token>
+
+# generate a kubeconfig with an requested OIDC token
+  kyma@v3 alpha kubeconfig generate --id-token-request-url <url>`,
 		Short: "Generate kubeconfig with a Service Account-based or oidc tokens",
 		Long:  "Use this command to generate kubeconfig file with a Service Account-based or oidc tokens",
 		Run: func(cmd *cobra.Command, args []string) {

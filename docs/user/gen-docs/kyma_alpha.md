@@ -13,9 +13,9 @@ kyma alpha <command> [flags]
 ## Available Commands
 
 ```text
-  access             - Produces a kubeconfig with a Service Account-based token and certificate
   app                - Manages applications on the Kubernetes cluster
   hana               - Manages an SAP HANA instance in the Kyma cluster
+  kubeconfig         - Manage access to the Kyma cluster
   module             - Manages Kyma modules
   oidc               - Creates kubeconfig with an OIDC token
   provision          - Provisions a Kyma cluster on SAP BTP
@@ -33,9 +33,9 @@ kyma alpha <command> [flags]
 ## See also
 
 * [kyma](kyma.md)                                                   - A simple set of commands to manage a Kyma cluster
-* [kyma alpha access](kyma_alpha_access.md)                         - Produces a kubeconfig with a Service Account-based token and certificate
 * [kyma alpha app](kyma_alpha_app.md)                               - Manages applications on the Kubernetes cluster
 * [kyma alpha hana](kyma_alpha_hana.md)                             - Manages an SAP HANA instance in the Kyma cluster
+* [kyma alpha kubeconfig](kyma_alpha_kubeconfig.md)                 - Manage access to the Kyma cluster
 * [kyma alpha module](kyma_alpha_module.md)                         - Manages Kyma modules
 * [kyma alpha oidc](kyma_alpha_oidc.md)                             - Creates kubeconfig with an OIDC token
 * [kyma alpha provision](kyma_alpha_provision.md)                   - Provisions a Kyma cluster on SAP BTP
