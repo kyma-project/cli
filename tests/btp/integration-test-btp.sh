@@ -18,7 +18,9 @@ echo "Step2: List modules"
 
 # -------------------------------------------------------------------------------------
 echo "Step3: Connecting to a service manager from remote BTP subaccount"
+# fetch cred.json for remote SM access vie tf resource 
 
+# TODO replace with https://help.sap.com/docs/btp/sap-business-technology-platform/namespace-level-mapping?locale=en-US
 kubectl create secret generic remote-service-manager-credentials --namespace kyma-system --from-env-file sm.env
 
 # -------------------------------------------------------------------------------------
@@ -32,6 +34,7 @@ kubectl wait --for condition=Ready btpoperators.operator.kyma-project.io/btpoper
 
 
 # TODO - change after btp operator commands are extracted as btp module cli extension
+# Do not pass secret (benefit from namespace-level mapping for kyma-system)
 ../../bin/kyma@v3 alpha reference-instance \
     --btp-secret-name remote-service-manager-credentials \
     --namespace kyma-system \
