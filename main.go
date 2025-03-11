@@ -1,9 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmd"
 )
@@ -13,7 +10,6 @@ func main() {
 	clierror.Check(err)
 
 	if err := cmd.Execute(); err != nil {
-		fmt.Println(err.Error())
-		os.Exit(1)
+		clierror.Check(clierror.Wrap(err, clierror.New("failed to execute command")))
 	}
 }
