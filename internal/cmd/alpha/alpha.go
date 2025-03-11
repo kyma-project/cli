@@ -2,7 +2,6 @@ package alpha
 
 import (
 	"github.com/kyma-project/cli.v3/internal/clierror"
-	"github.com/kyma-project/cli.v3/internal/cmd/alpha/access"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/app"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/hana"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/kubeconfig"
@@ -30,7 +29,6 @@ func NewAlphaCMD() (*cobra.Command, clierror.Error) {
 		return nil, err
 	}
 
-	cmd.AddCommand(access.NewAccessCMD(kymaConfig))
 	cmd.AddCommand(app.NewAppCMD(kymaConfig))
 	cmd.AddCommand(hana.NewHanaCMD(kymaConfig))
 	cmd.AddCommand(module.NewModuleCMD(kymaConfig))
