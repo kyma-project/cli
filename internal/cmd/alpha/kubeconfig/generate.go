@@ -10,6 +10,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/kubeconfig"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/clientcmd/api"
 )
 
 type generateConfig struct {
@@ -34,13 +35,7 @@ func newGenerateCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "generate",
 		Example: `# generate a kubeconfig with a ServiceAccount-based token and certificate
-  kyma@v3 alpha kubeconfig generate --serviceaccount <sa_name> --clusterrole <cr_name> --namespace <ns_name> --permanent
-
-# generate a kubeconfig with an OIDC token
-  kyma@v3 alpha kubeconfig generate --token <token>
-
-# generate a kubeconfig with an requested OIDC token
-  kyma@v3 alpha kubeconfig generate --id-token-request-url <url>`,
+  kyma@v3 alpha kubeconfig generate --serviceaccount <sa_name> --clusterrole <cr_name> --namespace <ns_name> --permanent`,
 		Short: "Generate kubeconfig with a Service Account-based or oidc tokens",
 		Long:  "Use this command to generate kubeconfig file with a Service Account-based or oidc tokens",
 		Run: func(cmd *cobra.Command, args []string) {
@@ -53,12 +48,10 @@ func newGenerateCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	// ServiceAccount-based flow
 	cmd.Flags().StringVar(&cfg.serviceAccount, "serviceaccount", "", "Name of the Service Account to be created")
-	cmd.Flags().StringVar(&cfg.clusterRole, "clusterrole", "", "Name of the cluster role to bind the Service Account to")
+	cmd.Flags().StringVar(&cfg.clusterRole, "clusterrole", "", "Name of the Cluster Role to bind the Service Account to")
 	cmd.Flags().StringVar(&cfg.namespace, "namespace", "default", "Namespace in which the resource is created")
 	cmd.Flags().StringVar(&cfg.time, "time", "1h", "Determines how long the token should be valid, by default 1h (use h for hours and d for days)")
 	cmd.Flags().BoolVar(&cfg.permanent, "permanent", false, "Determines if the token is valid indefinitely")
-
-	// TODO: OIDC flow
 
 	_ = cmd.MarkFlagRequired("name")
 	_ = cmd.MarkFlagRequired("clusterrole")
@@ -67,35 +60,50 @@ func newGenerateCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 }
 
 func runGenerate(cfg *generateConfig) clierror.Error {
-	// Create objects
-	clierr := createObjects(cfg)
-	if clierr != nil {
-		return clierror.WrapE(clierr, clierror.New("failed to create objects"))
+	if cfg.serviceAccount != "" {
+		// ServiceAccount-based flow
+		kubeconfig, clierr := generateWithServiceAccount(cfg)
+		if clierr != nil {
+			return clierr
+		}
+
+		return returnKubeconfig(cfg, kubeconfig)
 	}
 
-	// Fill kubeconfig
-	generatedKubeconfig, clierr := kubeconfig.Prepare(cfg.Ctx, cfg.KubeClient, cfg.serviceAccount, cfg.namespace, cfg.time, cfg.output, cfg.permanent)
-	if clierr != nil {
-		return clierr
-	}
+	// TODO: OIDC flow
+	return nil
+}
 
-	// Print or write to file
+func returnKubeconfig(cfg *generateConfig, kubeconfig *api.Config) clierror.Error {
 	if cfg.output != "" {
-		err := kube.SaveConfig(generatedKubeconfig, cfg.output)
+		// Print or write to file
+		err := kube.SaveConfig(kubeconfig, cfg.output)
 		if err != nil {
 			return clierror.Wrap(err, clierror.New("failed to save kubeconfig"))
 		}
 	} else {
-		message, err := clientcmd.Write(*generatedKubeconfig)
+		message, err := clientcmd.Write(*kubeconfig)
 		if err != nil {
 			return clierror.Wrap(err, clierror.New("failed to print kubeconfig"))
 		}
 		fmt.Println(string(message))
 	}
+
 	return nil
 }
 
-func createObjects(cfg *generateConfig) clierror.Error {
+func generateWithServiceAccount(cfg *generateConfig) (*api.Config, clierror.Error) {
+	// Create ServiceAccount, ClusterRoleBinding and secret with token
+	clierr := registerServiceAccount(cfg)
+	if clierr != nil {
+		return nil, clierror.WrapE(clierr, clierror.New("failed to create objects"))
+	}
+
+	// Fill kubeconfig
+	return kubeconfig.Prepare(cfg.Ctx, cfg.KubeClient, cfg.serviceAccount, cfg.namespace, cfg.time, cfg.output, cfg.permanent)
+}
+
+func registerServiceAccount(cfg *generateConfig) clierror.Error {
 	// Create Service Account
 	err := resources.CreateServiceAccount(cfg.Ctx, cfg.KubeClient, cfg.serviceAccount, cfg.namespace)
 	if err != nil {
