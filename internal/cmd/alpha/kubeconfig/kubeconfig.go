@@ -8,7 +8,7 @@ import (
 func NewKubeconfigCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "kubeconfig <command> [flags]",
-		Short: "Manage access to the Kyma cluster",
+		Short: "Manages access to the Kyma cluster",
 		Long:  "Use this command to manage access to the Kyma cluster",
 	}
 

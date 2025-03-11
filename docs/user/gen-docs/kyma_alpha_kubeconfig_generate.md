@@ -39,4 +39,4 @@ kyma alpha kubeconfig generate [flags]
 
 ## See also
 
-* [kyma alpha kubeconfig](kyma_alpha_kubeconfig.md) - Manage access to the Kyma cluster
+* [kyma alpha kubeconfig](kyma_alpha_kubeconfig.md) - Manages access to the Kyma cluster

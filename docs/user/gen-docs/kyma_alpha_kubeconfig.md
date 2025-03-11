@@ -1,6 +1,6 @@
 # kyma alpha kubeconfig
 
-Manage access to the Kyma cluster.
+Manages access to the Kyma cluster.
 
 ## Synopsis
 
