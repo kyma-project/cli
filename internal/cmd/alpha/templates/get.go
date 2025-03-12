@@ -30,7 +30,7 @@ func BuildGetCommand(clientGetter KubeClientGetter, options *GetOptions) *cobra.
 }
 
 func buildGetCommand(out io.Writer, clientGetter KubeClientGetter, options *GetOptions) *cobra.Command {
-	flags := flags{}
+	flags := flagsFields{}
 	cmd := &cobra.Command{
 		Use:     "get [<resource_name>] [flags]",
 		Example: buildGetExample(options),
@@ -80,10 +80,10 @@ type getArgs struct {
 	ctx          context.Context
 	getOptions   *GetOptions
 	clientGetter KubeClientGetter
-	flags        flags
+	flags        flagsFields
 }
 
-type flags struct {
+type flagsFields struct {
 	allNamespaces bool
 	name          string
 	namespace     string

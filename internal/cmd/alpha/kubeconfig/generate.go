@@ -11,6 +11,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/btp/cis"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/cmdcommon/flags"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/kube/resources"
 	"github.com/kyma-project/cli.v3/internal/kubeconfig"
@@ -67,8 +68,15 @@ func newGenerateCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Short:   "Generate kubeconfig with a Service Account-based or oidc tokens",
 		Long:    "Use this command to generate kubeconfig file with a Service Account-based or oidc tokens",
 		Aliases: []string{"gen"},
+		PreRun: func(cmd *cobra.Command, _ []string) {
+			cfg.complete(cmd)
+			clierror.Check(flags.Validate(cmd.Flags(),
+				flags.MarkOneRequired("serviceaccount", "token", "id-token-request-url"),
+				flags.MarkRequiredTogether("serviceaccount", "clusterrole"),
+				flags.MarkExclusive("token", "id-token-request-url", "audience"),
+			))
+		},
 		Run: func(_ *cobra.Command, _ []string) {
-			cfg.complete()
 			clierror.Check(cfg.validate())
 			clierror.Check(runGenerate(cfg))
 		},
@@ -90,32 +98,19 @@ func newGenerateCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().StringVar(&cfg.audience, "audience", "", "Audience of the token")
 	cmd.Flags().StringVar(&cfg.idTokenRequestURL, "id-token-request-url", "", "URL to request the ID token, defaults to ACTIONS_ID_TOKEN_REQUEST_URL env variable")
 
-	cmd.MarkFlagsRequiredTogether("serviceaccount", "clusterrole")
-	cmd.MarkFlagsMutuallyExclusive("token", "id-token-request-url")
-	cmd.MarkFlagsMutuallyExclusive("token", "audience")
-
 	return cmd
 }
 
-func (cfg *generateConfig) complete() {
+func (cfg *generateConfig) complete(cmd *cobra.Command) {
 	// complete for OIDC flow
-	if cfg.idTokenRequestURL == "" {
-		cfg.idTokenRequestURL = os.Getenv("ACTIONS_ID_TOKEN_REQUEST_URL")
+	requestUrlEnv := os.Getenv("ACTIONS_ID_TOKEN_REQUEST_URL")
+	if cfg.idTokenRequestURL == "" && requestUrlEnv != "" {
+		_ = cmd.Flags().Set("id-token-request-url", requestUrlEnv)
 	}
 	cfg.idTokenRequestToken = os.Getenv("ACTIONS_ID_TOKEN_REQUEST_TOKEN")
 }
 
 func (cfg *generateConfig) validate() clierror.Error {
-	if cfg.serviceAccount == "" && cfg.token == "" && cfg.idTokenRequestURL == "" {
-		// check if at least one required flag is set
-		return clierror.New(
-			"one of --token, --id-token-request-url or --serviceaccount flags need to be provided",
-			"make sure one of the following flags were provided",
-			"provide id-token-request-url flag or ACTIONS_ID_TOKEN_REQUEST_URL env variable",
-			"make sure you're running the command in Github Actions environment if expected",
-		)
-	}
-
 	if cfg.idTokenRequestURL != "" && cfg.idTokenRequestToken == "" {
 		// check if request token is provided
 		return clierror.New(

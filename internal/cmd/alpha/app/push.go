@@ -7,6 +7,7 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/cmdcommon/flags"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon/types"
 	"github.com/kyma-project/cli.v3/internal/dockerfile"
 	"github.com/kyma-project/cli.v3/internal/kube"
@@ -43,8 +44,15 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Short: "Push the application to the Kubernetes cluster",
 		Long:  "Use this command to push the application to the Kubernetes cluster.",
 
-		PreRun: func(_ *cobra.Command, args []string) {
+		PreRun: func(cmd *cobra.Command, args []string) {
 			clierror.Check(config.complete())
+			clierror.Check(flags.Validate(cmd.Flags(),
+				flags.MarkRequired("name"),
+				flags.MarkExactlyOneRequired("image", "dockerfile", "code-path"),
+				flags.MarkExclusive("dockerfile-context", "image", "code-path"),
+				flags.MarkExclusive("dockerfile-build-arg", "image", "code-path"),
+				flags.MarkPrerequisites("expose", "container-port"),
+			))
 			clierror.Check(config.validate())
 		},
 		Run: func(_ *cobra.Command, _ []string) {
@@ -73,13 +81,6 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().BoolVar(&config.expose, "expose", false, "Creates an APIRule for the app")
 	cmd.Flags().StringArrayVar(&config.mountSecrets, "mount-secret", []string{}, "Mounts Secret content to the "+resources.SecretMountPathPrefix+"<SECRET_NAME> path")
 	cmd.Flags().StringArrayVar(&config.mountConfigmaps, "mount-config", []string{}, "Mounts ConfigMap content to the "+resources.ConfigmapMountPathPrefix+"<CONFIGMAP_NAME> path")
-
-	_ = cmd.MarkFlagRequired("name")
-	cmd.MarkFlagsMutuallyExclusive("image", "dockerfile", "code-path")
-	cmd.MarkFlagsMutuallyExclusive("image", "dockerfile-context", "code-path")
-	cmd.MarkFlagsMutuallyExclusive("dockerfile-build-arg", "image")
-	cmd.MarkFlagsMutuallyExclusive("dockerfile-build-arg", "code-path")
-	cmd.MarkFlagsOneRequired("image", "dockerfile", "code-path")
 
 	return cmd
 }
@@ -112,10 +113,6 @@ func (apc *appPushConfig) complete() clierror.Error {
 }
 
 func (apc *appPushConfig) validate() clierror.Error {
-	if apc.expose && apc.containerPort.Value == nil {
-		return clierror.New("container-port is required when expose is enabled")
-	}
-
 	// TODO: enable this code when api-gateway provide its module configuration (ConfigMap)
 	// detect if ApiRule resource is installed on the cluster
 	// extensions := apc.GetRawExtensions()

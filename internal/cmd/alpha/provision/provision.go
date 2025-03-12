@@ -9,6 +9,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/btp/auth"
 	"github.com/kyma-project/cli.v3/internal/btp/cis"
 	"github.com/kyma-project/cli.v3/internal/clierror"
+	"github.com/kyma-project/cli.v3/internal/cmdcommon/flags"
 	"github.com/spf13/cobra"
 )
 
@@ -29,6 +30,12 @@ func NewProvisionCMD() *cobra.Command {
 		Use:   "provision [flags]",
 		Short: "Provisions a Kyma cluster on SAP BTP",
 		Long:  `Use this command to provision a Kyma environment on SAP BTP.`,
+		PreRun: func(cmd *cobra.Command, _ []string) {
+			clierror.Check(flags.Validate(cmd.Flags(),
+				flags.MarkRequired("credentials-path", "owner"),
+				flags.MarkExclusive("parameters", "cluster-name", "region"),
+			))
+		},
 		Run: func(_ *cobra.Command, _ []string) {
 			clierror.Check(runProvision(&config))
 		},
@@ -42,12 +49,6 @@ func NewProvisionCMD() *cobra.Command {
 	cmd.Flags().StringVar(&config.region, "region", "", "Name of the region of the Kyma cluster")
 	cmd.Flags().StringVar(&config.owner, "owner", "", "Email of the Kyma cluster owner")
 	cmd.Flags().StringVar(&config.parametersPath, "parameters", "", "Path to the JSON file with Kyma configuration")
-
-	_ = cmd.MarkFlagRequired("credentials-path")
-	_ = cmd.MarkFlagRequired("owner")
-	// mark flag parameters exclusive to clusterName and region
-	cmd.MarkFlagsMutuallyExclusive("parameters", "cluster-name")
-	cmd.MarkFlagsMutuallyExclusive("parameters", "region")
 
 	return cmd
 }
