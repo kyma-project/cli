@@ -41,3 +41,8 @@ tests/btp/hana-admin-api-binding.json
 tests/btp/config.json
 tests/**/node_modules/
 tests/btp/sample-http-db-nodejs/bookstore/package-lock.json
+tests/btp/tf/*.tfvars
+tests/btp/tf/.terraform*
+tests/btp/tf/terraform.tfstate*
+tests/btp/tf/creds.json
+tests/btp/tf/btp-access-credentials-secret.yaml
