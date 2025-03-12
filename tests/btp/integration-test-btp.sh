@@ -89,21 +89,39 @@ echo "Waiting for hana-init-job to complete..."
 kubectl wait --for condition=Complete jobs/hana-hdi-initjob --timeout=360s 
 echo "Bookstore db initialised" 
 
+# -------------------------------------------------------------------------------------
+echo "Step9: Pushing bookstore app"
 
+../../bin/kyma@v3 alpha app push --dockerfile-context sample-http-db-nodejs/bookstore  --dockerfile sample-http-db-nodejs/bookstore/Dockerfile --name bookstore --expose --container-port 3000 --mount-secret hana-hdi-binding
+kubectl wait --for condition=Available deployment bookstore --timeout=60s
+
+# -------------------------------------------------------------------------------------
+echo "Step10: Verify bookstore app"
+
+response=$(curl https://bookstore.$DOMAIN/v1/books)
+echo "HTTP response from sample app: $response"
+
+if [[ $response != '[{"id":1,"title":"Dune","author":"Frank Herbert"},{"id":2,"title":"Pippi Goes on Board","author":"Astrid Lindgren"}]' ]]; then
+    exit 1
+fi
 
 # -------------------------------------------------------------------------------------
 echo "Cleanup"
 
+kubectl delete apirules.gateway.kyma-project.io  bookstore
+kubectl delete deployments.apps bookstore
+kubectl delete svc bookstore
+
+kubectl delete job hana-hdi-initjob
+
 kubectl delete dockerregistries.operator.kyma-project.io -n kyma-system custom-dr
 ../../bin/kyma@v3 alpha module delete docker-registry
-
 kubectl delete servicebindings.services.cloud.sap.com -n kyma-system object-store-reference-binding
 kubectl delete serviceinstances.services.cloud.sap.com -n kyma-system object-store-reference
-kubectl delete secret -n kyma-system remote-service-manager-credentials 
+kubectl delete secret -n kyma-system remote-service-manager-credentials
 
 # TODO new command ?
 # ../../bin/kyma@v3 alpha hana unmap --credentials-path hana-admin-api-binding.json
 # -------------------------------------------------------------------------------------
-
 
 exit 0
