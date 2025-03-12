@@ -64,27 +64,35 @@ dr_internal_pull_url=$(kubectl get dockerregistries.operator.kyma-project.io -n 
 
 ../../bin/kyma@v3 alpha registry config --output config.json
 
-echo "Docker Registry enabled \n\t(URLs: $dr_external_url, $dr_internal_pull_url)"
-echo "\t config.json for docker CLI access generated"
+echo "Docker Registry enabled (URLs: $dr_external_url, $dr_internal_pull_url)"
+echo "config.json for docker CLI access generated"
 # -------------------------------------------------------------------------------------
-# echo "Step6: Map SAP Hana DB instance with Kyma runtime"
+echo "Step6: Map SAP Hana DB instance with Kyma runtime"
 
-# ../../bin/kyma@v3 alpha hana map --credentials-path hana-admin-api-binding.json
+../../bin/kyma@v3 alpha hana map --credentials-path tf/hana-admin-creds.json
 
 # -------------------------------------------------------------------------------------
-# echo "Step7: Push bookstore application (w/o Dockerfile)"
+echo "Step7: Pack & push hdi-deploy image"
 
 # build hdi-deploy via pack and push it via docker CLI (external url)
 pack build hdi-deploy:latest -p sample-http-db-nodejs/hdi-deploy -B paketobuildpacks/builder:base
 docker tag hdi-deploy:latest $dr_external_url/hdi-deploy:latest
 docker --config . push $dr_external_url/hdi-deploy:latest
 
-# continue
+# -------------------------------------------------------------------------------------
+echo "Step8: Deploy hdi-deploy (hdi instance & binding, run db initialisation)"
+
+echo "Initialising db binding..."
+kubectl set image -f ./k8s-resources/db/books-hdi-initjob-template.yaml bookstore-db=$dr_internal_pull_url/hdi-deploy:latest --local -o yaml > ./k8s-resources/db/books-hdi-initjob.yaml
+kubectl apply -k ./k8s-resources/db
+echo "Waiting for hana-init-job to complete..."
+kubectl wait --for condition=Complete jobs/hana-hdi-initjob --timeout=360s 
+echo "Bookstore db initialised" 
 
 
 
 # -------------------------------------------------------------------------------------
-# echo "Cleanup"
+echo "Cleanup"
 
 kubectl delete dockerregistries.operator.kyma-project.io -n kyma-system custom-dr
 ../../bin/kyma@v3 alpha module delete docker-registry

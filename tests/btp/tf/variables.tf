@@ -28,3 +28,18 @@ variable "BTP_CUSTOM_IAS_TENANT" {
   description = "Custom IAS tenant"
   default     = "custom-tenant"
 }
+
+variable "BTP_KYMA_SUBACCOUNT_ID" {
+  type        = string
+  description = "Subaccount ID"
+}
+
+variable "BTP_OBJECTSTORE_SUBACCOUNT_ID" {
+  type        = string
+  description = "Subaccount ID"
+}
+
+variable "BTP_HANA_SUBACCOUNT_ID" {
+  type        = string
+  description = "Subaccount ID"
+}
