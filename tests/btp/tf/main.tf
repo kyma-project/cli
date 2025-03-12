@@ -15,12 +15,30 @@ provider "btp" {
   password = var.BTP_BOT_PASSWORD
 }
 
-data "btp_subaccount_service_binding" "kyma-cli-e2e-test" {
-  subaccount_id = "ad8a3201-39b4-4c6e-a67a-9a29a2099d2d"
+resource "btp_subaccount_entitlement" "hana-hdi" {
+  subaccount_id = var.BTP_KYMA_SUBACCOUNT_ID
+  service_name  = "hana"
+  plan_name     = "hdi-shared"
+}
+
+# Existing binding for service manager in subaccount where shared objectstore instance is provided
+data "btp_subaccount_service_binding" "remote-sm" {
+  subaccount_id = var.BTP_OBJECTSTORE_SUBACCOUNT_ID
   name          = "kyma-cli-e2e-test"
 }
 
-resource "local_sensitive_file" "creds" {
+# Existing binding for hana admin api in subaccount where SAP Hana Cloud instance is provided
+data "btp_subaccount_service_binding" "remote-hana-admin" {
+  subaccount_id = var.BTP_HANA_SUBACCOUNT_ID
+  name          = "kyma-cli-e2e-test"
+}
+
+resource "local_sensitive_file" "service-manager-creds" {
   filename = "creds.json"
-  content  = data.btp_subaccount_service_binding.kyma-cli-e2e-test.credentials
+  content  = data.btp_subaccount_service_binding.remote-sm.credentials
+}
+
+resource "local_sensitive_file" "hana-admin-api-creds" {
+  filename = "hana-admin-creds.json"
+  content  = data.btp_subaccount_service_binding.remote-hana-admin.credentials
 }

@@ -21,7 +21,7 @@ spec:
           value: "true"
         - name: EXIT_PROCESS_AFTER_UPLOAD
           value: "true"
-        image: localhost:32137/hdi-deploy:latest # this will be changed dynamically
+        image: foo # this will be changed dynamically
         imagePullPolicy: Always
         name: bookstore-db
         resources: {}
