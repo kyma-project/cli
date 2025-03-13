@@ -1,0 +1,58 @@
+name: integration tests
+
+on:
+  workflow_dispatch:
+
+jobs:
+  e2e-test-k3d:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+      - uses: ./.github/actions/setup-go
+      - uses: ./.github/actions/ensure-pack
+      - name: build kyma@v3 binary
+        run: make build
+      - uses: kyma-project/serverless/.github/actions/create-k3d-cluster@9e8c091842e5c884e1770ef0bcc5b4b4d2894b74
+      - name: test 
+        run: make -C tests/k3d e2e-test
+
+  e2e-test-btp:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+      - uses: ./.github/actions/setup-go
+      - uses: ./.github/actions/ensure-pack
+      - name: build kyma@v3 binary
+        run: make build
+      - uses: kyma-project/terraform-module/.github/actions/create-sap-btp-kyma@2edb264e0f701fc93af4fb35eaeb7b8b3c05e493
+        id: create-btp-resources
+        with:
+          btp_subaccount_name: cli-test-${{ steps.vars.outputs.sha_short }}-${{ github.run_attempt }}
+          btp_backend_url: '${{ secrets.BTP_BACKEND_URL}}'
+          btp_user: '${{ secrets.BTP_BOT_USER}}'
+          btp_password: '${{ secrets.BTP_BOT_PASSWORD}}'
+          btp_global_account: '${{ secrets.BTP_GLOBAL_ACCOUNT }}'
+          btp_idp_tenant: '${{ secrets.BTP_CUSTOM_IAS_TENANT }}'
+          btp_subaccount_region: '${{ secrets.BTP_SUBACCOUNT_REGION }}'
+          btp_kyma_region: '${{ secrets.BTP_KYMA_REGION }}'
+          btp_kyma_plan: '${{ secrets.BTP_KYMA_PLAN }}'
+      - name: compute domain
+        id: domain
+        run: echo "domain=$(kubectl get cm -n kube-system shoot-info -ojsonpath='{.data.domain}')" >> $GITHUB_OUTPUT
+      - name: test 
+        run: DOMAIN=${{ steps.domain.outputs.domain }} make -C tests/btp e2e-test
+      - uses: kyma-project/terraform-module/.github/actions/force-delete-sap-btp-subaccount@2edb264e0f701fc93af4fb35eaeb7b8b3c05e493
+        if: always()
+        with:
+          btp_subaccount_id: ${{ steps.create-btp-resources.outputs.subaccount_id }}
+          btp_backend_url: ${{ secrets.BTP_BACKEND_URL}}
+          btp_user: ${{ secrets.BTP_BOT_USER}}
+          btp_password: ${{ secrets.BTP_BOT_PASSWORD}}
+          btp_global_account: ${{ secrets.BTP_GLOBAL_ACCOUNT }}
+          btp_idp_tenant: ${{ secrets.BTP_CUSTOM_IAS_TENANT }}

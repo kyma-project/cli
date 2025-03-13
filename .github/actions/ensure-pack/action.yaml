@@ -1,0 +1,13 @@
+name: 'Ensure pack'
+description: 'Action for ensuring pack CLI is installed on the agent'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: ensure pack
+      run: |
+        if ! which pack; then
+          echo "Installing pack..."
+          (curl -sSL "https://github.com/buildpacks/pack/releases/download/v0.36.0/pack-v0.36.0-linux.tgz" | sudo tar -C /usr/local/bin/ --no-same-owner -xzv pack)
+        fi
+      shell: bash
