@@ -30,7 +30,7 @@ jobs:
       - uses: ./.github/actions/ensure-pack
       - name: build kyma@v3 binary
         run: make build
-      - uses: kyma-project/terraform-module/.github/actions/create-sap-btp-kyma@2edb264e0f701fc93af4fb35eaeb7b8b3c05e493
+      - uses: kyma-project/terraform-module/.github/actions/create-sap-btp-kyma@0635a02ed7c63944f2e544d27603f3d2c72fee2b
         id: create-btp-resources
         with:
           btp_subaccount_name: cli-test-${{ steps.vars.outputs.sha_short }}-${{ github.run_attempt }}
@@ -42,20 +42,17 @@ jobs:
           btp_subaccount_region: '${{ secrets.BTP_SUBACCOUNT_REGION }}'
           btp_kyma_region: '${{ secrets.BTP_KYMA_REGION }}'
           btp_kyma_plan: '${{ secrets.BTP_KYMA_PLAN }}'
-      - name: compute domain
-        id: domain
-        run: echo "domain=$(kubectl get cm -n kube-system shoot-info -ojsonpath='{.data.domain}')" >> $GITHUB_OUTPUT
       - name: test 
         run: |
-          TF_VAR_BTP_BACKEND_URL=$(TF_VAR_BTP_BACKEND_URL) \
-          TF_VAR_BTP_BOT_USER=$(TF_VAR_BTP_BOT_USER) \
-          TF_VAR_BTP_BOT_PASSWORD=$(TF_VAR_BTP_BOT_PASSWORD) \
-          TF_VAR_BTP_CUSTOM_IAS_TENANT=$(TF_VAR_BTP_CUSTOM_IAS_TENANT) \
-          TF_VAR_BTP_GLOBAL_ACCOUNT=$(TF_VAR_BTP_GLOBAL_ACCOUNT) \
-          TF_VAR_BTP_KYMA_SUBACCOUNT_ID=$(TF_VAR_BTP_KYMA_SUBACCOUNT_ID) \
-          TF_VAR_BTP_OBJECTSTORE_SUBACCOUNT_ID=$(TF_VAR_BTP_OBJECTSTORE_SUBACCOUNT_ID) \
-          TF_VAR_BTP_HANA_SUBACCOUNT_ID=$(TF_VAR_BTP_HANA_SUBACCOUNT_ID) \
-          DOMAIN=$(DOMAIN) \
+          TF_VAR_BTP_BACKEND_URL=$TF_VAR_BTP_BACKEND_URL \
+          TF_VAR_BTP_BOT_USER=$TF_VAR_BTP_BOT_USER \
+          TF_VAR_BTP_BOT_PASSWORD=$TF_VAR_BTP_BOT_PASSWORD \
+          TF_VAR_BTP_CUSTOM_IAS_TENANT=$TF_VAR_BTP_CUSTOM_IAS_TENANT \
+          TF_VAR_BTP_GLOBAL_ACCOUNT=$TF_VAR_BTP_GLOBAL_ACCOUNT \
+          TF_VAR_BTP_KYMA_SUBACCOUNT_ID=$TF_VAR_BTP_KYMA_SUBACCOUNT_ID \
+          TF_VAR_BTP_OBJECTSTORE_SUBACCOUNT_ID=$TF_VAR_BTP_OBJECTSTORE_SUBACCOUNT_ID \
+          TF_VAR_BTP_HANA_SUBACCOUNT_ID=$TF_VAR_BTP_HANA_SUBACCOUNT_ID \
+          DOMAIN=$DOMAIN \
           make -C tests/btp e2e-test
         env:
           TF_VAR_BTP_BACKEND_URL: ${{ secrets.BTP_BACKEND_URL}}
@@ -66,8 +63,8 @@ jobs:
           TF_VAR_BTP_KYMA_SUBACCOUNT_ID: ${{ steps.create-btp-resources.outputs.subaccount_id }}
           TF_VAR_BTP_OBJECTSTORE_SUBACCOUNT_ID: ${{ secrets.BTP_OBJECTSTORE_SUBACCOUNT_ID }}
           TF_VAR_BTP_HANA_SUBACCOUNT_ID: ${{ secrets.BTP_HANA_SUBACCOUNT_ID }}
-          DOMAIN: ${{ steps.domain.outputs.domain }}
-      - uses: kyma-project/terraform-module/.github/actions/force-delete-sap-btp-subaccount@2edb264e0f701fc93af4fb35eaeb7b8b3c05e493
+          DOMAIN: ${{ steps.create-btp-resources.outputs.domain }}
+      - uses: kyma-project/terraform-module/.github/actions/force-delete-sap-btp-subaccount@0635a02ed7c63944f2e544d27603f3d2c72fee2b
         if: always()
         with:
           btp_subaccount_id: ${{ steps.create-btp-resources.outputs.subaccount_id }}
