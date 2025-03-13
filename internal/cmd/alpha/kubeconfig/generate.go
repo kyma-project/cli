@@ -1,17 +1,13 @@
 package kubeconfig
 
 import (
-	"encoding/json"
 	"fmt"
-	"net/http"
 	"os"
-	"strings"
 
-	"github.com/kyma-project/cli.v3/internal/btp/auth"
-	"github.com/kyma-project/cli.v3/internal/btp/cis"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon/flags"
+	"github.com/kyma-project/cli.v3/internal/github"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/kube/resources"
 	"github.com/kyma-project/cli.v3/internal/kubeconfig"
@@ -133,12 +129,12 @@ func runGenerate(cfg *generateConfig) clierror.Error {
 		return clierr
 	}
 
+	// Print or write to file
 	return returnKubeconfig(cfg, kubeconfig)
 }
 
 func returnKubeconfig(cfg *generateConfig, kubeconfig *api.Config) clierror.Error {
 	if cfg.output != "" {
-		// Print or write to file
 		err := kube.SaveConfig(kubeconfig, cfg.output)
 		if err != nil {
 			return clierror.Wrap(err, clierror.New("failed to save kubeconfig"))
@@ -158,129 +154,32 @@ func generateWithToken(cfg *generateConfig) (*api.Config, clierror.Error) {
 	var clierr clierror.Error
 	token := cfg.token
 	if cfg.token == "" {
-		// get Github token
-		token, clierr = getGithubToken(cfg.idTokenRequestURL, cfg.idTokenRequestToken, cfg.audience)
+		// Get Github token if not provided
+		token, clierr = github.GetToken(cfg.idTokenRequestURL, cfg.idTokenRequestToken, cfg.audience)
 		if clierr != nil {
 			return nil, clierror.WrapE(clierr, clierror.New("failed to get token"))
 		}
 	}
 
-	var kubeconfig *api.Config
-
+	var kubeconfigTemplate *api.Config
 	if cfg.cisCredentialsPath != "" {
-		kubeconfig, clierr = getKubeconfigFromCIS(cfg)
+		// Get cluster kubeconfig from CIS
+		kubeconfigTemplate, clierr = kubeconfig.GetFromCIS(cfg.cisCredentialsPath)
 		if clierr != nil {
 			return nil, clierror.WrapE(clierr, clierror.New("failed to get kubeconfig from CIS"))
 		}
 	} else {
+		// Get cluster kubeconfig from cluster
 		client, err := cfg.GetKubeClientWithClierr()
 		if err != nil {
 			return nil, err
 		}
 
-		kubeconfig = client.APIConfig()
+		kubeconfigTemplate = client.APIConfig()
 	}
 
-	return createKubeconfigWithToken(kubeconfig, token), nil
-}
-
-func getKubeconfigFromCIS(cfg *generateConfig) (*api.Config, clierror.Error) {
-	// TODO: maybe refactor with provision command to not duplicate localCISClient provisioning
-	credentials, err := auth.LoadCISCredentials(cfg.cisCredentialsPath)
-	if err != nil {
-		return nil, err
-	}
-	token, err := auth.GetOAuthToken(
-		credentials.GrantType,
-		credentials.UAA.URL,
-		credentials.UAA.ClientID,
-		credentials.UAA.ClientSecret,
-	)
-	if err != nil {
-		var hints []string
-		if strings.Contains(err.String(), "Internal Server Error") {
-			hints = append(hints, "check if CIS grant type is set to client credentials")
-		}
-
-		return nil, clierror.WrapE(err, clierror.New("failed to get access token", hints...))
-	}
-
-	localCISClient := cis.NewLocalClient(credentials, token)
-	kubeconfigString, err := localCISClient.GetKymaKubeconfig()
-	if err != nil {
-		return nil, clierror.WrapE(err, clierror.New("failed to get kubeconfig"))
-	}
-
-	kubeconfig, err := parseKubeconfig(kubeconfigString)
-	if err != nil {
-		return nil, clierror.WrapE(err, clierror.New("failed to parse kubeconfig"))
-	}
-	return kubeconfig, nil
-}
-
-func parseKubeconfig(kubeconfigString string) (*api.Config, clierror.Error) {
-	kubeconfig, err := clientcmd.Load([]byte(kubeconfigString))
-	if err != nil {
-		return nil, clierror.Wrap(err, clierror.New("failed to parse kubeconfig string"))
-	}
-	return kubeconfig, nil
-}
-
-func getGithubToken(url, requestToken, audience string) (string, clierror.Error) {
-	// create http client
-
-	request, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		return "", clierror.Wrap(err, clierror.New("failed to create request"))
-	}
-	if audience != "" {
-		q := request.URL.Query()
-		q.Add("audience", audience)
-		request.URL.RawQuery = q.Encode()
-	}
-
-	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", requestToken))
-	request.Header.Add("Accept", "application/json; api-version=2.0")
-
-	response, err := http.DefaultClient.Do(request)
-	if err != nil {
-		return "", clierror.Wrap(err, clierror.New("failed to get token from Github"))
-	}
-	defer response.Body.Close()
-
-	if response.StatusCode != 200 {
-		return "", clierror.New(fmt.Sprintf("Invalid server response: %d", response.StatusCode))
-	}
-
-	tokenData := struct {
-		Count int    `json:"count"`
-		Value string `json:"value"`
-	}{}
-	err = json.NewDecoder(response.Body).Decode(&tokenData)
-	if err != nil {
-		return "", clierror.Wrap(err, clierror.New("failed to decode token response"))
-	}
-	return tokenData.Value, nil
-}
-
-func createKubeconfigWithToken(kubeconfigBase *api.Config, token string) *api.Config {
-	currentUser := kubeconfigBase.Contexts[kubeconfigBase.CurrentContext].AuthInfo
-	config := &api.Config{
-		Kind:       "Config",
-		APIVersion: "v1",
-		Clusters:   kubeconfigBase.Clusters,
-		AuthInfos: map[string]*api.AuthInfo{
-			currentUser: {
-				Token: token,
-			},
-		},
-		Contexts:       kubeconfigBase.Contexts,
-		CurrentContext: kubeconfigBase.CurrentContext,
-		Extensions:     kubeconfigBase.Extensions,
-		Preferences:    kubeconfigBase.Preferences,
-	}
-
-	return config
+	// Prepare kubeconfig based on template and token
+	return kubeconfig.PrepareWithToken(kubeconfigTemplate, token), nil
 }
 
 func generateWithServiceAccount(cfg *generateConfig) (*api.Config, clierror.Error) {
