@@ -92,7 +92,7 @@ echo "Bookstore db initialised"
 # -------------------------------------------------------------------------------------
 echo "Step9: Pushing bookstore app"
 
-../../bin/kyma@v3 alpha app push --dockerfile-context sample-http-db-nodejs/bookstore  --dockerfile sample-http-db-nodejs/bookstore/Dockerfile --name bookstore --expose --container-port 3000 --mount-secret hana-hdi-binding
+../../bin/kyma@v3 alpha app push --name bookstore --expose --container-port 3000 --mount-secret hana-hdi-binding --code-path sample-http-db-nodejs/bookstore
 kubectl wait --for condition=Available deployment bookstore --timeout=60s
 
 # -------------------------------------------------------------------------------------
