@@ -28,6 +28,9 @@ jobs:
           repository: ${{ github.event.pull_request.head.repo.full_name }}
       - uses: ./.github/actions/setup-go
       - uses: ./.github/actions/ensure-pack
+      - name: compute github commit sha
+        id: vars
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
       - name: build kyma@v3 binary
         run: make build
       - uses: kyma-project/terraform-module/.github/actions/create-sap-btp-kyma@0635a02ed7c63944f2e544d27603f3d2c72fee2b
