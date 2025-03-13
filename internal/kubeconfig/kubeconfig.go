@@ -14,6 +14,26 @@ import (
 	"k8s.io/client-go/tools/clientcmd/api"
 )
 
+func PrepareWithToken(apiBase *api.Config, token string) *api.Config {
+	currentUser := apiBase.Contexts[apiBase.CurrentContext].AuthInfo
+	config := &api.Config{
+		Kind:       "Config",
+		APIVersion: "v1",
+		Clusters:   apiBase.Clusters,
+		AuthInfos: map[string]*api.AuthInfo{
+			currentUser: {
+				Token: token,
+			},
+		},
+		Contexts:       apiBase.Contexts,
+		CurrentContext: apiBase.CurrentContext,
+		Extensions:     apiBase.Extensions,
+		Preferences:    apiBase.Preferences,
+	}
+
+	return config
+}
+
 func Prepare(ctx context.Context, client kube.Client, name, namespace, time, output string, permanent bool) (*api.Config, clierror.Error) {
 	currentCtx := client.APIConfig().CurrentContext
 	clusterName := client.APIConfig().Contexts[currentCtx].Cluster
