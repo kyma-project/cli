@@ -46,7 +46,27 @@ jobs:
         id: domain
         run: echo "domain=$(kubectl get cm -n kube-system shoot-info -ojsonpath='{.data.domain}')" >> $GITHUB_OUTPUT
       - name: test 
-        run: DOMAIN=${{ steps.domain.outputs.domain }} make -C tests/btp e2e-test
+        run: |
+          TF_VAR_BTP_BACKEND_URL=$(TF_VAR_BTP_BACKEND_URL) \
+          TF_VAR_BTP_BOT_USER=$(TF_VAR_BTP_BOT_USER) \
+          TF_VAR_BTP_BOT_PASSWORD=$(TF_VAR_BTP_BOT_PASSWORD) \
+          TF_VAR_BTP_CUSTOM_IAS_TENANT=$(TF_VAR_BTP_CUSTOM_IAS_TENANT) \
+          TF_VAR_BTP_GLOBAL_ACCOUNT=$(TF_VAR_BTP_GLOBAL_ACCOUNT) \
+          TF_VAR_BTP_KYMA_SUBACCOUNT_ID=$(TF_VAR_BTP_KYMA_SUBACCOUNT_ID) \
+          TF_VAR_BTP_OBJECTSTORE_SUBACCOUNT_ID=$(TF_VAR_BTP_OBJECTSTORE_SUBACCOUNT_ID) \
+          TF_VAR_BTP_HANA_SUBACCOUNT_ID=$(TF_VAR_BTP_HANA_SUBACCOUNT_ID) \
+          DOMAIN=$(DOMAIN) \
+          make -C tests/btp e2e-test
+        env:
+          TF_VAR_BTP_BACKEND_URL: ${{ secrets.BTP_BACKEND_URL}}
+          TF_VAR_BTP_BOT_USER: ${{ secrets.BTP_BOT_USER}}
+          TF_VAR_BTP_BOT_PASSWORD: ${{ secrets.BTP_BOT_PASSWORD}}
+          TF_VAR_BTP_CUSTOM_IAS_TENANT: ${{ secrets.BTP_CUSTOM_IAS_TENANT }}
+          TF_VAR_BTP_GLOBAL_ACCOUNT: ${{ secrets.BTP_GLOBAL_ACCOUNT }}
+          TF_VAR_BTP_KYMA_SUBACCOUNT_ID: ${{ steps.create-btp-resources.outputs.subaccount_id }}
+          TF_VAR_BTP_OBJECTSTORE_SUBACCOUNT_ID: ${{ secrets.BTP_OBJECTSTORE_SUBACCOUNT_ID }}
+          TF_VAR_BTP_HANA_SUBACCOUNT_ID: ${{ secrets.BTP_HANA_SUBACCOUNT_ID }}
+          DOMAIN: ${{ steps.domain.outputs.domain }}
       - uses: kyma-project/terraform-module/.github/actions/force-delete-sap-btp-subaccount@2edb264e0f701fc93af4fb35eaeb7b8b3c05e493
         if: always()
         with:

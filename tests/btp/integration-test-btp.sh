@@ -21,7 +21,7 @@ echo "Step3: Connecting to a service manager from remote BTP subaccount"
 
 # fetch SM binding (cred.json) via terraform  
 terraform -chdir=tf init
-terraform -chdir=tf apply -var-file=.tfvars --auto-approve 
+terraform -chdir=tf apply --auto-approve 
 
 # https://help.sap.com/docs/btp/sap-business-technology-platform/namespace-level-mapping?locale=en-US
 ( cd tf ; curl https://raw.githubusercontent.com/kyma-project/btp-manager/main/hack/create-secret-file.sh | bash -s operator remote-service-manager-credentials )
