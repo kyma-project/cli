@@ -36,3 +36,15 @@ mod
 /template.yaml
 
 dist/
+tests/btp/sm.env
+tests/btp/hana-admin-api-binding.json
+tests/btp/config.json
+tests/**/node_modules/
+tests/btp/sample-http-db-nodejs/bookstore/package-lock.json
+tests/btp/tf/*.tfvars
+tests/btp/tf/.terraform*
+tests/btp/tf/terraform.tfstate*
+tests/btp/tf/creds.json
+tests/btp/tf/btp-access-credentials-secret.yaml
+tests/btp/tf/hana-admin-creds.json
+tests/btp/k8s-resources/db/books-hdi-initjob.yaml
