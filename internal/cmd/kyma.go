@@ -18,7 +18,7 @@ func NewKymaCMD() (*cobra.Command, clierror.Error) {
 		SilenceErrors: true,
 		SilenceUsage:  true,
 	}
-	cmdcommon.AddShowExtensionsErrorFlag(cmd)
+	cmdcommon.AddExtensionsFlags(cmd)
 	cmd.PersistentFlags().BoolP("help", "h", false, "Help for the command")
 
 	alpha, err := alpha.NewAlphaCMD()

@@ -8,6 +8,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/btp/hana"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/cmdcommon/flags"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -29,6 +30,11 @@ func NewMapHanaCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Use:   "map",
 		Short: "Maps an SAP HANA instance to the Kyma cluster",
 		Long:  "Use this command to map an SAP HANA instance to the Kyma cluster.",
+		PreRun: func(cmd *cobra.Command, _ []string) {
+			clierror.Check(flags.Validate(cmd.Flags(),
+				flags.MarkRequired("credentials-path"),
+			))
+		},
 		Run: func(_ *cobra.Command, _ []string) {
 			clierror.Check(runHanaMap(&config))
 		},
@@ -36,7 +42,6 @@ func NewMapHanaCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cmd.Flags().StringVar(&config.credentialsPath, "credentials-path", "", "Path to the credentials json file")
 	cmd.Flags().StringVar(&config.hanaID, "hana-id", "", "SAP HANA instance ID")
-	_ = cmd.MarkFlagRequired("credentials-path")
 
 	return cmd
 }

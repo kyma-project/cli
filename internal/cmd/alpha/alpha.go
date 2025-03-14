@@ -2,11 +2,10 @@ package alpha
 
 import (
 	"github.com/kyma-project/cli.v3/internal/clierror"
-	"github.com/kyma-project/cli.v3/internal/cmd/alpha/access"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/app"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/hana"
+	"github.com/kyma-project/cli.v3/internal/cmd/alpha/kubeconfig"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/module"
-	"github.com/kyma-project/cli.v3/internal/cmd/alpha/oidc"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/provision"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/referenceinstance"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/registry/config"
@@ -29,13 +28,12 @@ func NewAlphaCMD() (*cobra.Command, clierror.Error) {
 		return nil, err
 	}
 
-	cmd.AddCommand(access.NewAccessCMD(kymaConfig))
 	cmd.AddCommand(app.NewAppCMD(kymaConfig))
 	cmd.AddCommand(hana.NewHanaCMD(kymaConfig))
 	cmd.AddCommand(module.NewModuleCMD(kymaConfig))
-	cmd.AddCommand(oidc.NewOIDCCMD(kymaConfig))
 	cmd.AddCommand(provision.NewProvisionCMD())
 	cmd.AddCommand(referenceinstance.NewReferenceInstanceCMD(kymaConfig))
+	cmd.AddCommand(kubeconfig.NewKubeconfigCMD(kymaConfig))
 
 	cmds := kymaConfig.BuildExtensions(&cmdcommon.TemplateCommandsList{
 		// list of template commands deffinitions

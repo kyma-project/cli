@@ -6,7 +6,7 @@ echo "Running basic test scenario for kyma@v3 CLI on k3d runtime"
 # Generate kubeconfig for service account
 
 echo "Step1: Generating temporary access for new service account"
-../../bin/kyma@v3 alpha access --clusterrole cluster-admin --name test-sa --output /tmp/kubeconfig.yaml --time 2h
+../../bin/kyma@v3 alpha kubeconfig generate --clusterrole cluster-admin --serviceaccount test-sa --output /tmp/kubeconfig.yaml --time 2h
 export KUBECONFIG="/tmp/kubeconfig.yaml"
 if [[ $(kubectl config view --minify --raw | yq '.users[0].name') != 'test-sa' ]]; then
     exit 1

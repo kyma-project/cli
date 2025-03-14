@@ -25,10 +25,10 @@ lint: golangci-lint ## Run golangci-lint.
 
 .PHONY: build
 build:
-	go build -o bin/kyma@v3 main.go
+	go build -ldflags="-X github.com/kyma-project/cli.v3/internal/cmd/version.version=local-$(shell git rev-parse --short HEAD)" -o bin/kyma@v3 main.go
 
 .PHONY: docs
 docs:
 	rm -r ${PROJECT_ROOT}/docs/user/gen-docs
 	mkdir ${PROJECT_ROOT}/docs/user/gen-docs
-	go run gen-docs/main.go
+	go run gen-docs/main.go --skip-extensions
