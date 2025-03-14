@@ -21,7 +21,7 @@ echo "Step3: Connecting to a service manager from remote BTP subaccount"
 
 # fetch SM binding (cred.json) via terraform  
 terraform -chdir=tf init
-terraform -chdir=tf apply --auto-approve 
+terraform -chdir=tf apply --auto-approve
 
 # https://help.sap.com/docs/btp/sap-business-technology-platform/namespace-level-mapping?locale=en-US
 ( cd tf ; curl https://raw.githubusercontent.com/kyma-project/btp-manager/main/hack/create-secret-file.sh | bash -s operator remote-service-manager-credentials )
@@ -92,12 +92,31 @@ echo "Bookstore db initialised"
 # -------------------------------------------------------------------------------------
 echo "Step9: Pushing bookstore app"
 
-../../bin/kyma@v3 alpha app push --name bookstore --expose --container-port 3000 --mount-secret hana-hdi-binding --code-path sample-http-db-nodejs/bookstore
+# build hdi-deploy via pack and push it via docker CLI (external url)
+pack build bookstore:latest -p sample-http-db-nodejs/bookstore -B paketobuildpacks/builder:base
+docker tag bookstore:latest $dr_external_url/bookstore:latest
+docker --config . push $dr_external_url/bookstore:latest
+
+# TODO check why this fails on GH action with 
+# Importing bookstore:2025-03-13_16-06-26
+# Error:
+#   failed to import image to in-cluster registry
+
+# Error Details:
+#   failed to push image to the in-cluster registry: PUT https://localhost:32137/v2/bookstore/blobs/uploads/c0ae3d32-c861-4ed5-a796-43bf9434b954?_state=REDACTED&digest=sha256%3Acb4197092ed16fbdd56eafda1c0995d527ca3a0621d3b1787a1376e8478d751c: BLOB_UPLOAD_UNKNOWN: blob upload unknown to registry; map[]
+
+
+#../../bin/kyma@v3 alpha app push --name bookstore --expose --container-port 3000 --mount-secret hana-hdi-binding --code-path sample-http-db-nodejs/bookstore
+
+../../bin/kyma@v3 alpha app push --name bookstore --expose --container-port 3000 --mount-secret hana-hdi-binding --image $dr_internal_pull_url/bookstore:latest
+
+#TODO replace with --image-pull-secret after https://github.com/kyma-project/cli/issues/2411
+kubectl patch deployment bookstore --type='merge' -p '{"spec":{"template":{"spec":{"imagePullSecrets":[{"name":"dockerregistry-config"}]}}}}'
 kubectl wait --for condition=Available deployment bookstore --timeout=60s
 
 # -------------------------------------------------------------------------------------
 echo "Step10: Verify bookstore app"
-
+sleep 5
 response=$(curl https://bookstore.$DOMAIN/v1/books)
 echo "HTTP response from sample app: $response"
 
@@ -105,23 +124,5 @@ if [[ $response != '[{"id":1,"title":"Dune","author":"Frank Herbert"},{"id":2,"t
     exit 1
 fi
 
-# -------------------------------------------------------------------------------------
-echo "Cleanup"
-
-kubectl delete apirules.gateway.kyma-project.io  bookstore
-kubectl delete deployments.apps bookstore
-kubectl delete svc bookstore
-
-kubectl delete job hana-hdi-initjob
-
-kubectl delete dockerregistries.operator.kyma-project.io -n kyma-system custom-dr
-../../bin/kyma@v3 alpha module delete docker-registry
-kubectl delete servicebindings.services.cloud.sap.com -n kyma-system object-store-reference-binding
-kubectl delete serviceinstances.services.cloud.sap.com -n kyma-system object-store-reference
-kubectl delete secret -n kyma-system remote-service-manager-credentials
-
-# TODO new command ?
-# ../../bin/kyma@v3 alpha hana unmap --credentials-path hana-admin-api-binding.json
-# -------------------------------------------------------------------------------------
 
 exit 0

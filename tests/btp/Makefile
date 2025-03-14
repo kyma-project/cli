@@ -10,3 +10,7 @@ e2e-test: |
     TF_VAR_BTP_HANA_SUBACCOUNT_ID=${TF_VAR_BTP_HANA_SUBACCOUNT_ID} \
     DOMAIN=${DOMAIN} \
 	./integration-test-btp.sh
+
+.PHONY: cleanup
+cleanup:
+	./kyma-cleanup.sh
