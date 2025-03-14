@@ -57,6 +57,8 @@ echo -e "Step5: Enable Docker Registry from experimental channel (with persisten
 echo "..waiting for docker registry"
 kubectl wait --for condition=Installed dockerregistries.operator.kyma-project.io/custom-dr -n kyma-system --timeout=360s
 
+sleep 5
+
 dr_external_url=$(../../bin/kyma@v3 alpha registry config --externalurl)
 
 # TODO new cli command, for example
