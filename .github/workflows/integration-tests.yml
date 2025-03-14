@@ -57,6 +57,7 @@ jobs:
           TF_VAR_BTP_HANA_SUBACCOUNT_ID=$TF_VAR_BTP_HANA_SUBACCOUNT_ID \
           DOMAIN=$DOMAIN \
           make -C tests/btp e2e-test
+          make -C tests/btp cleanup
         env:
           TF_VAR_BTP_BACKEND_URL: '${{ secrets.BTP_BACKEND_URL}}'
           TF_VAR_BTP_BOT_USER: '${{ secrets.BTP_BOT_USER}}'
