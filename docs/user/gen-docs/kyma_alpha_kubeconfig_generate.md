@@ -19,22 +19,35 @@ kyma alpha kubeconfig generate [flags]
 # generate a kubeconfig with an OIDC token
   kyma@v3 alpha kubeconfig generate --token <token>
 
-# generate a kubeconfig with an requested OIDC token
-  kyma@v3 alpha kubeconfig generate --id-token-request-url <url>
+# generate a kubeconfig with an OIDC token based on a kubeconfig from the CIS
+  kyma@v3 alpha kubeconfig generate --token <token> --credentials-path <cis_credentials>
+
+# generate a kubeconfig with an requested OIDC token with audience option
+  export ACTIONS_ID_TOKEN_REQUEST_TOKEN=<token>
+  kyma@v3 alpha kubeconfig generate --id-token-request-url <url> --audience <audience>
+
+# generate a kubeconfig with an requested OIDC token with url from env
+  export ACTIONS_ID_TOKEN_REQUEST_URL=<url>
+  export ACTIONS_ID_TOKEN_REQUEST_TOKEN=<token>
+  kyma@v3 alpha kubeconfig generate
 ```
 
 ## Flags
 
 ```text
-      --clusterrole string      Name of the Cluster Role to bind the Service Account to
-      --namespace string        Namespace in which the resource is created (default "default")
-      --output string           Path to the kubeconfig file output. If not provided, the kubeconfig will be printed
-      --permanent               Determines if the token is valid indefinitely
-      --serviceaccount string   Name of the Service Account to be created
-      --time string             Determines how long the token should be valid, by default 1h (use h for hours and d for days) (default "1h")
-  -h, --help                    Help for the command
-      --kubeconfig string       Path to the Kyma kubeconfig file
-      --show-extensions-error   Prints a possible error when fetching extensions fails
+      --audience string               Audience of the token
+      --clusterrole string            Name of the Cluster Role to bind the Service Account to
+      --credentials-path string       Path to the CIS credentials file
+      --id-token-request-url string   URL to request the ID token, defaults to ACTIONS_ID_TOKEN_REQUEST_URL env variable
+      --namespace string              Namespace in which the resource is created (default "default")
+      --output string                 Path to the kubeconfig file output. If not provided, the kubeconfig will be printed
+      --permanent                     Determines if the token is valid indefinitely
+      --serviceaccount string         Name of the Service Account to be created
+      --time string                   Determines how long the token should be valid, by default 1h (use h for hours and d for days) (default "1h")
+      --token string                  Token used in the kubeconfig
+  -h, --help                          Help for the command
+      --kubeconfig string             Path to the Kyma kubeconfig file
+      --show-extensions-error         Prints a possible error when fetching extensions fails
 ```
 
 ## See also

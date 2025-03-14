@@ -17,7 +17,6 @@ kyma alpha <command> [flags]
   hana               - Manages an SAP HANA instance in the Kyma cluster
   kubeconfig         - Manages access to the Kyma cluster
   module             - Manages Kyma modules
-  oidc               - Creates kubeconfig with an OIDC token
   provision          - Provisions a Kyma cluster on SAP BTP
   reference-instance - Adds an instance reference to a shared service instance
 ```
@@ -37,6 +36,5 @@ kyma alpha <command> [flags]
 * [kyma alpha hana](kyma_alpha_hana.md)                             - Manages an SAP HANA instance in the Kyma cluster
 * [kyma alpha kubeconfig](kyma_alpha_kubeconfig.md)                 - Manages access to the Kyma cluster
 * [kyma alpha module](kyma_alpha_module.md)                         - Manages Kyma modules
-* [kyma alpha oidc](kyma_alpha_oidc.md)                             - Creates kubeconfig with an OIDC token
 * [kyma alpha provision](kyma_alpha_provision.md)                   - Provisions a Kyma cluster on SAP BTP
 * [kyma alpha reference-instance](kyma_alpha_reference-instance.md) - Adds an instance reference to a shared service instance

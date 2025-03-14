@@ -15,7 +15,6 @@
 * [kyma alpha module list](/cli/user/gen-docs/kyma_alpha_module_list.md)
 * [kyma alpha module manage](/cli/user/gen-docs/kyma_alpha_module_manage.md)
 * [kyma alpha module unmanage](/cli/user/gen-docs/kyma_alpha_module_unmanage.md)
-* [kyma alpha oidc](/cli/user/gen-docs/kyma_alpha_oidc.md)
 * [kyma alpha provision](/cli/user/gen-docs/kyma_alpha_provision.md)
 * [kyma alpha reference-instance](/cli/user/gen-docs/kyma_alpha_reference-instance.md)
 * [kyma completion](/cli/user/gen-docs/kyma_completion.md)
