@@ -16,7 +16,7 @@ kyma help [command]
 ```text
   -h, --help                    Help for the command
       --show-extensions-error   Prints a possible error when fetching extensions fails
-      --skip-extensions         Skip fetching extenskions from the cluster
+      --skip-extensions         Skip fetching extensions from the cluster
 ```
 
 ## See also

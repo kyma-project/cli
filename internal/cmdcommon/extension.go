@@ -49,7 +49,7 @@ func newExtensionsConfig(warningWriter io.Writer, config *KymaConfig) *KymaExten
 
 func AddShowExtensionsErrorFlag(cmd *cobra.Command) {
 	// this flag is not operational. it's only to print help description and help cobra with validation
-	_ = cmd.PersistentFlags().Bool("skip-extensions", false, "Skip fetching extenskions from the cluster")
+	_ = cmd.PersistentFlags().Bool("skip-extensions", false, "Skip fetching extensions from the cluster")
 	_ = cmd.PersistentFlags().Bool("show-extensions-error", false, "Prints a possible error when fetching extensions fails")
 }
 
