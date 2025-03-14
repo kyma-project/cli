@@ -24,24 +24,32 @@ type KymaExtensionsConfig struct {
 }
 
 func newExtensionsConfig(warningWriter io.Writer, config *KymaConfig) *KymaExtensionsConfig {
+	extensionsConfig := &KymaExtensionsConfig{
+		kymaConfig: config,
+	}
+
+	if getBoolFlagValue("--skip-extensions") {
+		// skip extensions fetching
+		return &KymaExtensionsConfig{
+			kymaConfig: config,
+		}
+	}
+
 	extensions, err := loadExtensionsFromCluster(config.Ctx, config.KubeClientConfig)
-	if err != nil && shouldShowExtensionsError() {
+	if err != nil && getBoolFlagValue("--show-extensions-error") {
 		// print error as warning if expected and continue
 		fmt.Fprintf(warningWriter, "Extensions Warning:\n%s\n\n", err.Error())
 	} else if err != nil {
 		fmt.Fprintf(warningWriter, "Extensions Warning:\nfailed to fetch all extensions from the cluster. Use the '--show-extensions-error' flag to see more details.\n\n")
 	}
 
-	extensionsConfig := &KymaExtensionsConfig{
-		kymaConfig: config,
-		extensions: extensions,
-	}
-
+	extensionsConfig.extensions = extensions
 	return extensionsConfig
 }
 
 func AddShowExtensionsErrorFlag(cmd *cobra.Command) {
 	// this flag is not operational. it's only to print help description and help cobra with validation
+	_ = cmd.PersistentFlags().Bool("skip-extensions", false, "Skip fetching extenskions from the cluster")
 	_ = cmd.PersistentFlags().Bool("show-extensions-error", false, "Prints a possible error when fetching extensions fails")
 }
 
@@ -222,11 +230,11 @@ func addCoreCommands(cmd *cobra.Command, config *KymaConfig, extensionCoreComman
 	}
 }
 
-// search os.Args manually to find if user pass --show-extensions-error and return its value
-func shouldShowExtensionsError() bool {
+// search os.Args manually to find if user pass given flag and return its value
+func getBoolFlagValue(flag string) bool {
 	for i, arg := range os.Args {
 		//example: --show-extensions-error true
-		if arg == "--show-extensions-error" && len(os.Args) > i+1 {
+		if arg == flag && len(os.Args) > i+1 {
 
 			value, err := strconv.ParseBool(os.Args[i+1])
 			if err == nil {
@@ -235,7 +243,7 @@ func shouldShowExtensionsError() bool {
 		}
 
 		// example: --show-extensions-error or --show-extensions-error=true
-		if strings.HasPrefix(arg, "--show-extensions-error") && !strings.Contains(arg, "false") {
+		if strings.HasPrefix(arg, flag) && !strings.Contains(arg, "false") {
 			return true
 		}
 	}
