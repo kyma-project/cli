@@ -1,7 +1,9 @@
 package referenceinstance
 
 import (
+	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/cmdcommon/flags"
 	"github.com/kyma-project/cli.v3/internal/kube/btp"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,6 +31,14 @@ func NewReferenceInstanceCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Use:   "reference-instance [flags]",
 		Short: "Adds an instance reference to a shared service instance",
 		Long:  `Use this command to add an instance reference to a shared service instance in the Kyma cluster.`,
+		PreRun: func(cmd *cobra.Command, _ []string) {
+			clierror.Check(flags.Validate(cmd.Flags(),
+				flags.MarkRequired("offering-name", "reference-name"),
+				// either instance id or selectors can be used
+				flags.MarkOneRequired("instance-id", "label-selector", "name-selector", "plan-selector"),
+				flags.MarkExclusive("instance-id", "label-selector", "name-selector", "plan-selector"),
+			))
+		},
 		RunE: func(_ *cobra.Command, _ []string) error {
 			return runReferenceInstance(config)
 		},
@@ -42,15 +52,6 @@ func NewReferenceInstanceCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().StringVar(&config.nameSelector, "name-selector", "", "Instance name selector for filtering instances")
 	cmd.Flags().StringVar(&config.planSelector, "plan-selector", "", "Plan name selector for filtering instances")
 	cmd.Flags().StringVar(&config.btpSecretName, "btp-secret-name", "", "name of the BTP secret containing credentials to another subaccount Service Manager:\nhttps://github.com/SAP/sap-btp-service-operator/blob/main/README.md#working-with-multiple-subaccounts")
-
-	// either instance id or selectors can be used
-	cmd.MarkFlagsOneRequired("instance-id", "label-selector", "name-selector", "plan-selector")
-	cmd.MarkFlagsMutuallyExclusive("instance-id", "label-selector")
-	cmd.MarkFlagsMutuallyExclusive("instance-id", "name-selector")
-	cmd.MarkFlagsMutuallyExclusive("instance-id", "plan-selector")
-
-	_ = cmd.MarkFlagRequired("offering-name")
-	_ = cmd.MarkFlagRequired("reference-name")
 
 	return cmd
 }

@@ -35,6 +35,7 @@ func newManageCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&cfg.policy, "policy", "CreateAndDelete", "Sets a custom resource policy (Possible values: CreateAndDelete, Ignore)")
+
 	return cmd
 }
 

@@ -10,6 +10,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/templates/parameters"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/templates/types"
+	"github.com/kyma-project/cli.v3/internal/cmdcommon/flags"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -32,12 +33,18 @@ func BuildCreateCommand(clientGetter KubeClientGetter, options *CreateOptions) *
 
 func buildCreateCommand(out io.Writer, clientGetter KubeClientGetter, options *CreateOptions) *cobra.Command {
 	extraValues := []parameters.Value{}
+	requiredFlags := []string{}
 	cmd := &cobra.Command{
 		Use:     "create <resource_name> [flags]",
 		Short:   options.Description,
 		Long:    options.DescriptionLong,
 		Example: buildCreateExample(options),
-		Run: func(cmd *cobra.Command, args []string) {
+		PreRun: func(cmd *cobra.Command, _ []string) {
+			flags.Validate(cmd.Flags(),
+				flags.MarkRequired(requiredFlags...),
+			)
+		},
+		Run: func(cmd *cobra.Command, _ []string) {
 			clierror.Check(createResource(&createArgs{
 				out:           out,
 				ctx:           cmd.Context(),
@@ -64,7 +71,7 @@ func buildCreateCommand(out io.Writer, clientGetter KubeClientGetter, options *C
 		value := parameters.NewTyped(flag.Type, flag.Path, flag.DefaultValue)
 		cmd.Flags().VarP(value, flag.Name, flag.Shorthand, flag.Description)
 		if flag.Required {
-			_ = cmd.MarkFlagRequired(flag.Name)
+			requiredFlags = append(requiredFlags, flag.Name)
 		}
 		extraValues = append(extraValues, value)
 	}

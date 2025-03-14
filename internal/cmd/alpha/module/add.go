@@ -3,6 +3,7 @@ package module
 import (
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/cmdcommon/flags"
 	"github.com/kyma-project/cli.v3/internal/kube/resources"
 	"github.com/kyma-project/cli.v3/internal/modules"
 	"github.com/spf13/cobra"
@@ -28,6 +29,11 @@ func newAddCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Short: "Add a module",
 		Long:  "Use this command to add a module.",
 		Args:  cobra.ExactArgs(1),
+		PreRun: func(cmd *cobra.Command, _ []string) {
+			clierror.Check(flags.Validate(cmd.Flags(),
+				flags.MarkMutuallyExclusive("cr-path", "default-cr"),
+			))
+		},
 		Run: func(cmd *cobra.Command, args []string) {
 			cfg.module = args[0]
 			clierror.Check(runAdd(&cfg))
@@ -37,8 +43,6 @@ func newAddCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().StringVarP(&cfg.channel, "channel", "c", "", "Name of the Kyma channel to use for the module")
 	cmd.Flags().StringVar(&cfg.crPath, "cr-path", "", "Path to the custom resource file")
 	cmd.Flags().BoolVar(&cfg.defaultCR, "default-cr", false, "Deploys the module with the default CR")
-
-	cmd.MarkFlagsMutuallyExclusive("cr-path", "default-cr")
 
 	return cmd
 }
