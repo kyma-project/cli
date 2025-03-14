@@ -1,24 +1,12 @@
-name: integration tests
+name: btp integration tests
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - 'release-*'
 
 jobs:
-  e2e-test-k3d:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
-      - uses: ./.github/actions/setup-go
-      - uses: ./.github/actions/ensure-pack
-      - name: build kyma@v3 binary
-        run: make build
-      - uses: kyma-project/serverless/.github/actions/create-k3d-cluster@9e8c091842e5c884e1770ef0bcc5b4b4d2894b74
-      - name: test 
-        run: make -C tests/k3d e2e-test
-
   e2e-test-btp:
     runs-on: ubuntu-latest
     steps:
