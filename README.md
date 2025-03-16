@@ -19,7 +19,7 @@ For the installation instructions, see [How to Install](./docs/user/README.md#ho
 Inspect the new available alpha commands by calling the `--help` option:
 
 ```sh
-kyma@v3 alpha --help
+kyma alpha --help
 ```
 
 ### Import Image Into Kyma's Internal Docker Registry
@@ -30,7 +30,7 @@ kyma@v3 alpha --help
 ```sh
 docker pull kennethreitz/httpbin
 
-kyma@v3 alpha registry image-import kennethreitz/httpbin:latest
+kyma alpha registry image-import kennethreitz/httpbin:latest
 ```
 
 Run a Pod from a locally hosted image
@@ -44,7 +44,7 @@ kubectl run my-pod --image=localhost:32137/kennethreitz/httpbin:latest --overrid
 To build a Kyma CLI binary, run:
 
 ```sh
-go build -o kyma@v3 main.go
+go build -o kyma main.go
 ```
 
 You can run the command directly from the go code. For example:

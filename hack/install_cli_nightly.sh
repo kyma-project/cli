@@ -19,13 +19,13 @@ tar -zxvf ${CLI_TMPDIR}/cli.tar.gz kyma
 set +e
 
 echo "moving kyma binary to the /usr/local/bin directory..."
-cp ${CLI_TMPDIR}/kyma /usr/local/bin/kyma@v3
+cp ${CLI_TMPDIR}/kyma /usr/local/bin/kyma
 
 if [ $? -gt 0 ]; then
     set -e
 
     echo "failed to copy, trying with sudo..."
-    sudo cp ${CLI_TMPDIR}/kyma /usr/local/bin/kyma@v3
+    sudo cp ${CLI_TMPDIR}/kyma /usr/local/bin/kyma
 fi
 
 echo "removing tmp dir..."

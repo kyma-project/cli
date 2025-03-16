@@ -40,7 +40,7 @@ To get the latest Kyma CLI for MacOS or Linux, run the following script from the
 
 ```sh
 curl -sL "https://raw.githubusercontent.com/kyma-project/cli/refs/heads/main/hack/install_cli_latest.sh" | sh -
-kyma@v3
+kyma
 ```
 
 ### Nightly Build
@@ -51,7 +51,7 @@ To get Kyma CLI for MacOS or Linux, run the following script from the command li
 
 ```sh
 curl -sL "https://raw.githubusercontent.com/kyma-project/cli/refs/heads/main/hack/install_cli_nightly.sh" | sh -
-kyma@v3
+kyma
 ```
 
 ## Related Information

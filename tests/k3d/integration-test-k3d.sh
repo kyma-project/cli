@@ -1,12 +1,12 @@
 #!/bin/bash
 
-echo "Running basic test scenario for kyma@v3 CLI on k3d runtime"
+echo "Running basic test scenario for kyma CLI on k3d runtime"
 
 # -------------------------------------------------------------------------------------
 # Generate kubeconfig for service account
 
 echo "Step1: Generating temporary access for new service account"
-../../bin/kyma@v3 alpha kubeconfig generate --clusterrole cluster-admin --serviceaccount test-sa --output /tmp/kubeconfig.yaml --time 2h
+../../bin/kyma alpha kubeconfig generate --clusterrole cluster-admin --serviceaccount test-sa --output /tmp/kubeconfig.yaml --time 2h
 export KUBECONFIG="/tmp/kubeconfig.yaml"
 if [[ $(kubectl config view --minify --raw | yq '.users[0].name') != 'test-sa' ]]; then
     exit 1
@@ -27,7 +27,7 @@ kubectl wait --for condition=Installed dockerregistries.operator.kyma-project.io
 # Push sample go app
 
 echo "Step3: Push sample Go application (tests/k3d/sample-go)"
-../../bin/kyma@v3 alpha app push --name test-app --code-path sample-go
+../../bin/kyma alpha app push --name test-app --code-path sample-go
 kubectl wait --for condition=Available deployment test-app --timeout=60s
 kubectl port-forward deployments/test-app 8080:8080 &
 sleep 3 # wait for ports to get forwarded

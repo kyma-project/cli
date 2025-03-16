@@ -25,7 +25,7 @@ lint: golangci-lint ## Run golangci-lint.
 
 .PHONY: build
 build:
-	go build -ldflags="-X github.com/kyma-project/cli.v3/internal/cmd/version.version=local-$(shell git rev-parse --short HEAD)" -o bin/kyma@v3 main.go
+	go build -ldflags="-X github.com/kyma-project/cli.v3/internal/cmd/version.version=local-$(shell git rev-parse --short HEAD)" -o bin/kyma main.go
 
 .PHONY: docs
 docs:
