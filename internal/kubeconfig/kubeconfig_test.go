@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/go-test/deep"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	kube_fake "github.com/kyma-project/cli.v3/internal/kube/fake"
 	"github.com/stretchr/testify/require"
@@ -13,6 +14,68 @@ import (
 	k8s_fake "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/tools/clientcmd/api"
 )
+
+func Test_PrepareWithToken(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name       string
+		kubeconfig *api.Config
+		token      string
+		want       *api.Config
+	}{
+		{
+			name: "change kubeconfig authInfo",
+			kubeconfig: &api.Config{
+				Clusters: map[string]*api.Cluster{
+					"cluster": {},
+				},
+				AuthInfos: map[string]*api.AuthInfo{
+					"user": {
+						Username:  "user",
+						ClientKey: "remove",
+					},
+				},
+				Contexts: map[string]*api.Context{
+					"context": {
+						AuthInfo: "user",
+					},
+				},
+				CurrentContext: "context",
+			},
+			token: "token",
+			want: &api.Config{
+				Kind:       "Config",
+				APIVersion: "v1",
+				Clusters: map[string]*api.Cluster{
+					"cluster": {},
+				},
+				AuthInfos: map[string]*api.AuthInfo{
+					"user": {
+						Token: "token",
+					},
+				},
+				Contexts: map[string]*api.Context{
+					"context": {
+						AuthInfo: "user",
+					},
+				},
+				CurrentContext: "context",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		kubeconfig := tt.kubeconfig
+		token := tt.token
+		want := tt.want
+		t.Run(tt.name, func(t *testing.T) {
+			got := PrepareWithToken(kubeconfig, token)
+			if diff := deep.Equal(got, want); diff != nil {
+				t.Errorf("createKubeconfig() = %s", diff)
+			}
+		})
+	}
+}
 
 func Test_Prepare(t *testing.T) {
 	t.Parallel()
