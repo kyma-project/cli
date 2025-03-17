@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewAlphaCMD() (*cobra.Command, clierror.Error) {
+func NewAlphaCMD() (*cobra.Command, error) {
 	cmd := &cobra.Command{
 		Use:                   "alpha <command> [flags]",
 		Short:                 "Groups command prototypes for which the API may still change",
@@ -23,10 +23,7 @@ func NewAlphaCMD() (*cobra.Command, clierror.Error) {
 		DisableFlagsInUseLine: true,
 	}
 
-	kymaConfig, err := cmdcommon.NewKymaConfig(cmd)
-	if err != nil {
-		return nil, err
-	}
+	kymaConfig := cmdcommon.NewKymaConfig(cmd)
 
 	cmd.AddCommand(app.NewAppCMD(kymaConfig))
 	cmd.AddCommand(hana.NewHanaCMD(kymaConfig))
@@ -35,7 +32,7 @@ func NewAlphaCMD() (*cobra.Command, clierror.Error) {
 	cmd.AddCommand(referenceinstance.NewReferenceInstanceCMD(kymaConfig))
 	cmd.AddCommand(kubeconfig.NewKubeconfigCMD(kymaConfig))
 
-	cmds := kymaConfig.BuildExtensions(&cmdcommon.TemplateCommandsList{
+	cmds, err := kymaConfig.BuildExtensions(&cmdcommon.TemplateCommandsList{
 		// list of template commands deffinitions
 		Explain: templates.BuildExplainCommand,
 		Get:     templates.BuildGetCommand,
@@ -45,7 +42,13 @@ func NewAlphaCMD() (*cobra.Command, clierror.Error) {
 		// map of available core commands
 		"registry_config":       config.NewConfigCMD,
 		"registry_image-import": imageimport.NewImportCMD,
-	})
+	}, cmd, kymaConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	kymaConfig.DisplayExtensionsErrors(cmd.OutOrStderr())
+
 	cmd.AddCommand(cmds...)
 
 	return cmd, nil

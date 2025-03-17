@@ -23,7 +23,7 @@ func NewKymaCMD() (*cobra.Command, clierror.Error) {
 
 	alpha, err := alpha.NewAlphaCMD()
 	if err != nil {
-		return nil, err
+		return nil, clierror.New(err.Error())
 	}
 
 	cmd.AddCommand(alpha)
