@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewAlphaCMD() (*cobra.Command, error) {
+func NewAlphaCMD() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "alpha <command> [flags]",
 		Short:                 "Groups command prototypes for which the API may still change",
@@ -47,5 +47,5 @@ func NewAlphaCMD() (*cobra.Command, error) {
 
 	cmd.AddCommand(cmds...)
 
-	return cmd, nil
+	return cmd
 }

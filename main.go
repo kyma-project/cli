@@ -6,8 +6,7 @@ import (
 )
 
 func main() {
-	cmd, err := cmd.NewKymaCMD()
-	clierror.Check(err)
+	cmd := cmd.NewKymaCMD()
 
 	if err := cmd.Execute(); err != nil {
 		clierror.Check(clierror.Wrap(err, clierror.New("failed to execute command")))

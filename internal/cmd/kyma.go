@@ -1,14 +1,13 @@
 package cmd
 
 import (
-	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha"
 	"github.com/kyma-project/cli.v3/internal/cmd/version"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/spf13/cobra"
 )
 
-func NewKymaCMD() (*cobra.Command, clierror.Error) {
+func NewKymaCMD() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "kyma <command> [flags]",
 		Short: "A simple set of commands to manage a Kyma cluster",
@@ -21,13 +20,10 @@ func NewKymaCMD() (*cobra.Command, clierror.Error) {
 	cmdcommon.AddExtensionsFlags(cmd)
 	cmd.PersistentFlags().BoolP("help", "h", false, "Help for the command")
 
-	alpha, err := alpha.NewAlphaCMD()
-	if err != nil {
-		return nil, clierror.New(err.Error())
-	}
+	alpha := alpha.NewAlphaCMD()
 
 	cmd.AddCommand(alpha)
 	cmd.AddCommand(version.NewCmd())
 
-	return cmd, nil
+	return cmd
 }
