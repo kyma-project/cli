@@ -1,7 +1,6 @@
 package alpha
 
 import (
-	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/app"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/hana"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/kubeconfig"
@@ -32,7 +31,7 @@ func NewAlphaCMD() (*cobra.Command, error) {
 	cmd.AddCommand(referenceinstance.NewReferenceInstanceCMD(kymaConfig))
 	cmd.AddCommand(kubeconfig.NewKubeconfigCMD(kymaConfig))
 
-	cmds, err := kymaConfig.BuildExtensions(&cmdcommon.TemplateCommandsList{
+	cmds := kymaConfig.BuildExtensions(&cmdcommon.TemplateCommandsList{
 		// list of template commands deffinitions
 		Explain: templates.BuildExplainCommand,
 		Get:     templates.BuildGetCommand,
@@ -43,11 +42,8 @@ func NewAlphaCMD() (*cobra.Command, error) {
 		"registry_config":       config.NewConfigCMD,
 		"registry_image-import": imageimport.NewImportCMD,
 	}, cmd, kymaConfig)
-	if err != nil {
-		return nil, err
-	}
 
-	kymaConfig.DisplayExtensionsErrors(cmd.OutOrStderr())
+	kymaConfig.DisplayExtensionsErrors(cmd.ErrOrStderr())
 
 	cmd.AddCommand(cmds...)
 

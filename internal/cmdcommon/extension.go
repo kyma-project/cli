@@ -25,7 +25,7 @@ type KymaExtensionsConfig struct {
 	parseErrors error
 }
 
-func newExtensionsConfig(warningWriter io.Writer, config *KymaConfig) *KymaExtensionsConfig {
+func newExtensionsConfig(config *KymaConfig) *KymaExtensionsConfig {
 	extensionsConfig := &KymaExtensionsConfig{
 		kymaConfig: config,
 	}
@@ -37,11 +37,7 @@ func newExtensionsConfig(warningWriter io.Writer, config *KymaConfig) *KymaExten
 		}
 	}
 
-	extensions, err := loadExtensionsFromCluster(config.Ctx, config.KubeClientConfig)
-
-
-	extensionsConfig.extensions = extensions
-	extensionsConfig.parseErrors = err
+	extensionsConfig.extensions, extensionsConfig.parseErrors = loadExtensionsFromCluster(config.Ctx, config.KubeClientConfig)
 
 	return extensionsConfig
 }
@@ -56,12 +52,13 @@ func (kec *KymaExtensionsConfig) GetRawExtensions() ExtensionList {
 	return kec.extensions
 }
 
-func (kec *KymaExtensionsConfig) BuildExtensions(availableTemplateCommands *TemplateCommandsList, availableCoreCommands CoreCommandsMap, cmd *cobra.Command, config *KymaConfig) ([]*cobra.Command, error) {
+func (kec *KymaExtensionsConfig) BuildExtensions(availableTemplateCommands *TemplateCommandsList, availableCoreCommands CoreCommandsMap, cmd *cobra.Command, config *KymaConfig) []*cobra.Command {
 	var cmds []*cobra.Command
 
 	var cms, cmsError = getExtensionConfigMaps(config.Ctx, config.KubeClientConfig)
 	if cmsError != nil {
-		return nil, cmsError
+		kec.parseErrors = cmsError
+		return nil
 	}
 
 	existingCommands := make(map[string]bool)
@@ -83,11 +80,11 @@ func (kec *KymaExtensionsConfig) BuildExtensions(availableTemplateCommands *Temp
 		cmds = append(cmds, buildCommandFromExtension(kec.kymaConfig, extension, availableTemplateCommands, availableCoreCommands))
 	}
 
-	return cmds, nil
+	return cmds
 }
 
 func (kec *KymaExtensionsConfig) DisplayExtensionsErrors(warningWriter io.Writer) {
-	if kec.parseErrors != nil && shouldShowExtensionsError() {
+	if kec.parseErrors != nil && getBoolFlagValue("--show-extensions-error") {
 		// print error as warning if expected and continue
 		fmt.Fprintf(warningWriter, "Extensions Warning:\n%s\n\n", kec.parseErrors.Error())
 	} else if kec.parseErrors != nil {
