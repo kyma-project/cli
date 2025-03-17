@@ -20,6 +20,7 @@ kyma alpha app push [flags]
       --dockerfile-context string          Context path for building Dockerfile (defaults to the current working directory)
       --expose                             Creates an APIRule for the app
       --image string                       Name of the image to deploy
+      --image-pull-secret string           Name of the secret with credentials for a Kuberentes to pull image
       --istio-inject                       Enables Istio for the app
       --mount-config stringArray           Mounts ConfigMap content to the /bindings/configmap-<CONFIGMAP_NAME> path (default "[]")
       --mount-secret stringArray           Mounts Secret content to the /bindings/secret-<SECRET_NAME> path (default "[]")

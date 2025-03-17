@@ -23,6 +23,7 @@ type appPushConfig struct {
 	name                 string
 	namespace            string
 	image                string
+	imagePullSecretName  string
 	dockerfilePath       string
 	dockerfileSrcContext string
 	dockerfileArgs       types.Map
@@ -52,6 +53,7 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 				flags.MarkExclusive("dockerfile-context", "image", "code-path"),
 				flags.MarkExclusive("dockerfile-build-arg", "image", "code-path"),
 				flags.MarkPrerequisites("expose", "container-port"),
+				flags.MarkPrerequisites("image-pull-secret", "image"),
 			))
 			clierror.Check(config.validate())
 		},
@@ -65,6 +67,7 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	// image flags
 	cmd.Flags().StringVar(&config.image, "image", "", "Name of the image to deploy")
+	cmd.Flags().StringVar(&config.imagePullSecretName, "image-pull-secret", "", "Name of the secret with credentials for a Kuberentes to pull image")
 
 	// dockerfile flags
 	cmd.Flags().StringVar(&config.dockerfilePath, "dockerfile", "", "Path to the Dockerfile")
@@ -128,7 +131,7 @@ func (apc *appPushConfig) validate() clierror.Error {
 
 func runAppPush(cfg *appPushConfig) clierror.Error {
 	image := cfg.image
-	imagePullSecret := ""
+	imagePullSecret := cfg.imagePullSecretName
 
 	client, clierr := cfg.GetKubeClientWithClierr()
 	if clierr != nil {
