@@ -12,13 +12,11 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
-	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmd"
 )
 
 func main() {
-	command, clierr := cmd.NewKymaCMD()
-	clierror.Check(clierr)
+	command := cmd.NewKymaCMD()
 
 	docsTargetDir := "./docs/user/gen-docs"
 
