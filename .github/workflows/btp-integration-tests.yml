@@ -33,7 +33,7 @@ jobs:
           btp_subaccount_region: '${{ secrets.BTP_SUBACCOUNT_REGION }}'
           btp_kyma_region: '${{ secrets.BTP_KYMA_REGION }}'
           btp_kyma_plan: '${{ secrets.BTP_KYMA_PLAN }}'
-      - name: test 
+      - name: ensure btp prerequisites 
         run: |
           BTP_BACKEND_URL=$BTP_BACKEND_URL \
           BTP_BOT_USER=$BTP_BOT_USER \
@@ -44,9 +44,6 @@ jobs:
           BTP_OBJECTSTORE_SUBACCOUNT_ID=$BTP_OBJECTSTORE_SUBACCOUNT_ID \
           BTP_HANA_SUBACCOUNT_ID=$BTP_HANA_SUBACCOUNT_ID \
           make -C tests/btp prerequisites
-          DOMAIN=$DOMAIN \
-          make -C tests/btp e2e-test
-          make -C tests/btp cleanup
         env:
           BTP_BACKEND_URL: '${{ secrets.BTP_BACKEND_URL}}'
           BTP_BOT_USER: '${{ secrets.BTP_BOT_USER}}'
@@ -56,7 +53,15 @@ jobs:
           BTP_KYMA_SUBACCOUNT_ID: '${{ steps.create-btp-resources.outputs.subaccount_id }}'
           BTP_OBJECTSTORE_SUBACCOUNT_ID: '${{ secrets.BTP_OBJECTSTORE_SUBACCOUNT_ID }}'
           BTP_HANA_SUBACCOUNT_ID: '${{ secrets.BTP_HANA_SUBACCOUNT_ID }}'
+      - name: test 
+        run: |
+          DOMAIN=$DOMAIN \
+          make -C tests/btp e2e-test
+        env:
           DOMAIN: '${{ steps.create-btp-resources.outputs.domain }}'
+      - name: cleanup
+        run: |
+          make -C tests/btp cleanup
       - uses: kyma-project/terraform-module/.github/actions/force-delete-sap-btp-subaccount@0635a02ed7c63944f2e544d27603f3d2c72fee2b
         if: always()
         with:
