@@ -1,7 +1,6 @@
 package alpha
 
 import (
-	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/app"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/hana"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/kubeconfig"
@@ -15,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewAlphaCMD() (*cobra.Command, clierror.Error) {
+func NewAlphaCMD() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "alpha <command> [flags]",
 		Short:                 "Groups command prototypes for which the API may still change",
@@ -23,10 +22,7 @@ func NewAlphaCMD() (*cobra.Command, clierror.Error) {
 		DisableFlagsInUseLine: true,
 	}
 
-	kymaConfig, err := cmdcommon.NewKymaConfig(cmd)
-	if err != nil {
-		return nil, err
-	}
+	kymaConfig := cmdcommon.NewKymaConfig(cmd)
 
 	cmd.AddCommand(app.NewAppCMD(kymaConfig))
 	cmd.AddCommand(hana.NewHanaCMD(kymaConfig))
@@ -45,8 +41,11 @@ func NewAlphaCMD() (*cobra.Command, clierror.Error) {
 		// map of available core commands
 		"registry_config":       config.NewConfigCMD,
 		"registry_image-import": imageimport.NewImportCMD,
-	})
+	}, cmd, kymaConfig)
+
+	kymaConfig.DisplayExtensionsErrors(cmd.ErrOrStderr())
+
 	cmd.AddCommand(cmds...)
 
-	return cmd, nil
+	return cmd
 }

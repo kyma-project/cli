@@ -3,6 +3,7 @@ package cmdcommon
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"testing"
@@ -17,7 +18,6 @@ import (
 
 func TestListFromCluster(t *testing.T) {
 	t.Run("list extensions from cluster", func(t *testing.T) {
-		warnBuf := bytes.NewBuffer([]byte{})
 		kubeClientConfig := &KubeClientConfig{
 			KubeClient: &fake.KubeClient{
 				TestKubernetesInterface: k8s_fake.NewSimpleClientset(
@@ -39,17 +39,12 @@ func TestListFromCluster(t *testing.T) {
 			KubeClientConfig: kubeClientConfig,
 		}
 
-		got := newExtensionsConfig(warnBuf, kymaConfig)
+		got := newExtensionsConfig(kymaConfig)
 		require.Equal(t, want, got.extensions)
-		require.Empty(t, warnBuf.Bytes())
+		require.Empty(t, got.parseErrors)
 	})
 
 	t.Run("extensions duplications warning", func(t *testing.T) {
-		oldArgs := os.Args
-		os.Args = append(os.Args, "--show-extensions-error")
-		defer func() { os.Args = oldArgs }()
-
-		warnBuf := bytes.NewBuffer([]byte{})
 		kubeClientConfig := &KubeClientConfig{
 			KubeClient: &fake.KubeClient{
 				TestKubernetesInterface: k8s_fake.NewSimpleClientset(
@@ -69,17 +64,17 @@ func TestListFromCluster(t *testing.T) {
 			KubeClientConfig: kubeClientConfig,
 		}
 
-		wantWarning := "Extensions Warning:\n" +
+		wantWarning :=
 			"failed to validate configmap '/test-2': extension with rootCommand.name='test-1' already exists\n" +
-			"failed to validate configmap '/test-3': extension with rootCommand.name='test-1' already exists\n\n"
+				"failed to validate configmap '/test-3': extension with rootCommand.name='test-1' already exists"
 
-		got := newExtensionsConfig(warnBuf, kymaConfig)
+		got := newExtensionsConfig(kymaConfig)
+
 		require.Equal(t, want, got.extensions)
-		require.Equal(t, wantWarning, warnBuf.String())
+		require.Equal(t, wantWarning, got.parseErrors.Error())
 	})
 
 	t.Run("missing rootCommand error", func(t *testing.T) {
-		warnBuf := bytes.NewBuffer([]byte{})
 		kubeClientConfig := &KubeClientConfig{
 			KubeClient: &fake.KubeClient{
 				TestKubernetesInterface: k8s_fake.NewSimpleClientset(
@@ -96,21 +91,20 @@ func TestListFromCluster(t *testing.T) {
 			},
 		}
 
-		wantWarning := "Extensions Warning:\n" +
-			"failed to fetch all extensions from the cluster. Use the '--show-extensions-error' flag to see more details.\n\n"
+		wantWarning :=
+			"failed to parse configmap '/bad-data': missing .data.rootCommand field"
 
 		kymaConfig := &KymaConfig{
 			Ctx:              context.Background(),
 			KubeClientConfig: kubeClientConfig,
 		}
 
-		got := newExtensionsConfig(warnBuf, kymaConfig)
-		require.Equal(t, wantWarning, warnBuf.String())
+		got := newExtensionsConfig(kymaConfig)
+		require.Equal(t, wantWarning, got.parseErrors.Error())
 		require.Empty(t, got.extensions)
 	})
 
 	t.Run("skip optional fields", func(t *testing.T) {
-		warnBuf := bytes.NewBuffer([]byte{})
 		kubeClientConfig := &KubeClientConfig{
 			KubeClient: &fake.KubeClient{
 				TestKubernetesInterface: k8s_fake.NewSimpleClientset(
@@ -148,9 +142,47 @@ descriptionLong: test-description-long
 			KubeClientConfig: kubeClientConfig,
 		}
 
-		got := newExtensionsConfig(warnBuf, kymaConfig)
-		require.Empty(t, warnBuf.Bytes())
+		got := newExtensionsConfig(kymaConfig)
+		require.Empty(t, got.parseErrors)
 		require.Equal(t, want, got.extensions)
+	})
+}
+
+func TestDisplayExtensionsErrors(t *testing.T) {
+	t.Run("extensions warning message display without '--show-extensions-error' flag", func(t *testing.T) {
+		warnBuf := bytes.NewBuffer([]byte{})
+
+		wantWarning :=
+			"Extensions Warning:\nfailed to fetch all extensions from the cluster. Use the '--show-extensions-error' flag to see more details.\n\n"
+
+		kymaExtensionsConfig := &KymaExtensionsConfig{
+			kymaConfig:  &KymaConfig{Ctx: nil, KubeClientConfig: nil},
+			extensions:  ExtensionList{},
+			parseErrors: errors.New("failed to parse configmap '/bad-data': missing .data.rootCommand field"),
+		}
+
+		kymaExtensionsConfig.DisplayExtensionsErrors(warnBuf)
+		require.Equal(t, wantWarning, warnBuf.String())
+	})
+
+	t.Run("extensions warning message display with '--show-extensions-error' flag", func(t *testing.T) {
+		oldArgs := os.Args
+		os.Args = append(os.Args, "--show-extensions-error")
+		defer func() { os.Args = oldArgs }()
+
+		warnBuf := bytes.NewBuffer([]byte{})
+
+		wantWarning :=
+			"Extensions Warning:\nfailed to parse configmap '/bad-data': missing .data.rootCommand field\n\n"
+
+		kymaExtensionsConfig := &KymaExtensionsConfig{
+			kymaConfig:  &KymaConfig{Ctx: nil, KubeClientConfig: nil},
+			extensions:  ExtensionList{},
+			parseErrors: errors.New("failed to parse configmap '/bad-data': missing .data.rootCommand field"),
+		}
+
+		kymaExtensionsConfig.DisplayExtensionsErrors(warnBuf)
+		require.Equal(t, wantWarning, warnBuf.String())
 	})
 }
 
