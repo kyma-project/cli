@@ -112,10 +112,8 @@ docker --config . push $dr_external_url/bookstore:latest
 
 #../../bin/kyma alpha app push --name bookstore --expose --container-port 3000 --mount-secret hana-hdi-binding --code-path sample-http-db-nodejs/bookstore
 
-../../bin/kyma alpha app push --name bookstore --expose --container-port 3000 --mount-secret hana-hdi-binding --image $dr_internal_pull_url/bookstore:latest
+../../bin/kyma alpha app push --name bookstore --expose --container-port 3000 --mount-secret hana-hdi-binding --image $dr_internal_pull_url/bookstore:latest --image-pull-secret dockerregistry-config
 
-#TODO replace with --image-pull-secret after https://github.com/kyma-project/cli/issues/2411
-kubectl patch deployment bookstore --type='merge' -p '{"spec":{"template":{"spec":{"imagePullSecrets":[{"name":"dockerregistry-config"}]}}}}'
 kubectl wait --for condition=Available deployment bookstore --timeout=60s
 kubectl wait --for='jsonpath={.status.state}=Ready' apirules.gateway.kyma-project.io/bookstore
 
