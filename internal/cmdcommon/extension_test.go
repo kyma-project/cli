@@ -44,10 +44,6 @@ func TestListFromCluster(t *testing.T) {
 	})
 
 	t.Run("extensions duplications warning", func(t *testing.T) {
-		oldArgs := os.Args
-		os.Args = append(os.Args, "--show-extensions-error")
-		defer func() { os.Args = oldArgs }()
-
 		kubeClientConfig := &KubeClientConfig{
 			KubeClient: &fake.KubeClient{
 				TestKubernetesInterface: k8s_fake.NewSimpleClientset(
@@ -149,8 +145,10 @@ descriptionLong: test-description-long
 		require.Empty(t, got.parseErrors)
 		require.Equal(t, want, got.extensions)
 	})
+}
 
-	t.Run("extensions warning message display", func(t *testing.T) {
+func TestDisplayExtensionsErrors(t *testing.T) {
+	t.Run("extensions warning message display without '--show-extensions-error' flag", func(t *testing.T) {
 		kubeClientConfig := &KubeClientConfig{
 			KubeClient: &fake.KubeClient{
 				TestKubernetesInterface: k8s_fake.NewSimpleClientset(
@@ -170,6 +168,41 @@ descriptionLong: test-description-long
 
 		wantWarning :=
 			"Extensions Warning:\nfailed to fetch all extensions from the cluster. Use the '--show-extensions-error' flag to see more details.\n\n"
+
+		kymaConfig := &KymaConfig{
+			Ctx:              context.Background(),
+			KubeClientConfig: kubeClientConfig,
+		}
+		kymaExtensionsConfig := newExtensionsConfig(kymaConfig)
+
+		kymaExtensionsConfig.DisplayExtensionsErrors(warnBuf)
+		require.Equal(t, wantWarning, warnBuf.String())
+	})
+
+	t.Run("extensions warning message display with '--show-extensions-error' flag", func(t *testing.T) {
+		oldArgs := os.Args
+		os.Args = append(os.Args, "--show-extensions-error")
+		defer func() { os.Args = oldArgs }()
+
+		kubeClientConfig := &KubeClientConfig{
+			KubeClient: &fake.KubeClient{
+				TestKubernetesInterface: k8s_fake.NewSimpleClientset(
+					&corev1.ConfigMap{
+						ObjectMeta: v1.ObjectMeta{
+							Name: "bad-data",
+							Labels: map[string]string{
+								ExtensionLabelKey: ExtensionResourceLabelValue,
+							},
+						},
+						Data: map[string]string{},
+					},
+				),
+			},
+		}
+		warnBuf := bytes.NewBuffer([]byte{})
+
+		wantWarning :=
+			"Extensions Warning:\nfailed to parse configmap '/bad-data': missing .data.rootCommand field\n\n"
 
 		kymaConfig := &KymaConfig{
 			Ctx:              context.Background(),

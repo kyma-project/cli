@@ -71,7 +71,7 @@ func (kec *KymaExtensionsConfig) BuildExtensions(availableTemplateCommands *Temp
 		if existingCommands[extension.RootCommand.Name] {
 			kec.parseErrors = errors.Join(
 				kec.parseErrors,
-				fmt.Errorf("failed to validate configmap '%s/%s': base command with rootCommand.name'%s' already exists",
+				fmt.Errorf("failed to validate configmap '%s/%s': base command with name='%s' already exists",
 					cm.GetNamespace(), cm.GetName(), extension.RootCommand.Name),
 			)
 			continue
