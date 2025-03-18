@@ -3,6 +3,7 @@ package cmdcommon
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"testing"
@@ -149,31 +150,16 @@ descriptionLong: test-description-long
 
 func TestDisplayExtensionsErrors(t *testing.T) {
 	t.Run("extensions warning message display without '--show-extensions-error' flag", func(t *testing.T) {
-		kubeClientConfig := &KubeClientConfig{
-			KubeClient: &fake.KubeClient{
-				TestKubernetesInterface: k8s_fake.NewSimpleClientset(
-					&corev1.ConfigMap{
-						ObjectMeta: v1.ObjectMeta{
-							Name: "bad-data",
-							Labels: map[string]string{
-								ExtensionLabelKey: ExtensionResourceLabelValue,
-							},
-						},
-						Data: map[string]string{},
-					},
-				),
-			},
-		}
 		warnBuf := bytes.NewBuffer([]byte{})
 
 		wantWarning :=
 			"Extensions Warning:\nfailed to fetch all extensions from the cluster. Use the '--show-extensions-error' flag to see more details.\n\n"
 
-		kymaConfig := &KymaConfig{
-			Ctx:              context.Background(),
-			KubeClientConfig: kubeClientConfig,
+		kymaExtensionsConfig := &KymaExtensionsConfig{
+			kymaConfig:  &KymaConfig{Ctx: nil, KubeClientConfig: nil},
+			extensions:  ExtensionList{},
+			parseErrors: errors.New("failed to parse configmap '/bad-data': missing .data.rootCommand field"),
 		}
-		kymaExtensionsConfig := newExtensionsConfig(kymaConfig)
 
 		kymaExtensionsConfig.DisplayExtensionsErrors(warnBuf)
 		require.Equal(t, wantWarning, warnBuf.String())
@@ -184,31 +170,16 @@ func TestDisplayExtensionsErrors(t *testing.T) {
 		os.Args = append(os.Args, "--show-extensions-error")
 		defer func() { os.Args = oldArgs }()
 
-		kubeClientConfig := &KubeClientConfig{
-			KubeClient: &fake.KubeClient{
-				TestKubernetesInterface: k8s_fake.NewSimpleClientset(
-					&corev1.ConfigMap{
-						ObjectMeta: v1.ObjectMeta{
-							Name: "bad-data",
-							Labels: map[string]string{
-								ExtensionLabelKey: ExtensionResourceLabelValue,
-							},
-						},
-						Data: map[string]string{},
-					},
-				),
-			},
-		}
 		warnBuf := bytes.NewBuffer([]byte{})
 
 		wantWarning :=
 			"Extensions Warning:\nfailed to parse configmap '/bad-data': missing .data.rootCommand field\n\n"
 
-		kymaConfig := &KymaConfig{
-			Ctx:              context.Background(),
-			KubeClientConfig: kubeClientConfig,
+		kymaExtensionsConfig := &KymaExtensionsConfig{
+			kymaConfig:  &KymaConfig{Ctx: nil, KubeClientConfig: nil},
+			extensions:  ExtensionList{},
+			parseErrors: errors.New("failed to parse configmap '/bad-data': missing .data.rootCommand field"),
 		}
-		kymaExtensionsConfig := newExtensionsConfig(kymaConfig)
 
 		kymaExtensionsConfig.DisplayExtensionsErrors(warnBuf)
 		require.Equal(t, wantWarning, warnBuf.String())
