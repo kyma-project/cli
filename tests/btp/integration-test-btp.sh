@@ -38,7 +38,7 @@ kubectl wait --for condition=Ready btpoperators.operator.kyma-project.io/btpoper
 
 
 # TODO - change after btp operator commands are extracted as btp module cli extension
-../../bin/kyma@v3 alpha reference-instance \
+../../bin/kyma alpha reference-instance \
     --btp-secret-name remote-service-manager-credentials \
     --namespace kyma-system \
     --offering-name objectstore \
@@ -59,13 +59,13 @@ kubectl wait --for condition=Installed dockerregistries.operator.kyma-project.io
 
 sleep 5
 
-dr_external_url=$(../../bin/kyma@v3 alpha registry config --externalurl)
+dr_external_url=$(../../bin/kyma alpha registry config --externalurl)
 
 # TODO new cli command, for example
-# dr_internal_pull_url=$(../../bin/kyma@v3 alpha registry config --internalurl)
+# dr_internal_pull_url=$(../../bin/kyma alpha registry config --internalurl)
 dr_internal_pull_url=$(kubectl get dockerregistries.operator.kyma-project.io -n kyma-system custom-dr -ojsonpath={.status.internalAccess.pullAddress})
 
-../../bin/kyma@v3 alpha registry config --output config.json
+../../bin/kyma alpha registry config --output config.json
 
 echo "Docker Registry enabled (URLs: $dr_external_url, $dr_internal_pull_url)"
 echo "config.json for docker CLI access generated"
@@ -73,7 +73,7 @@ echo "config.json for docker CLI access generated"
 echo -e "\n--------------------------------------------------------------------------------------\n"
 echo -e "Step6: Map SAP Hana DB instance with Kyma runtime\n"
 
-../../bin/kyma@v3 alpha hana map --credentials-path tf/hana-admin-creds.json
+../../bin/kyma alpha hana map --credentials-path tf/hana-admin-creds.json
 
 echo -e "\n--------------------------------------------------------------------------------------\n"
 echo -e "Step7: Pack & push hdi-deploy image\n"
@@ -110,9 +110,9 @@ docker --config . push $dr_external_url/bookstore:latest
 #   failed to push image to the in-cluster registry: PUT https://localhost:32137/v2/bookstore/blobs/uploads/c0ae3d32-c861-4ed5-a796-43bf9434b954?_state=REDACTED&digest=sha256%3Acb4197092ed16fbdd56eafda1c0995d527ca3a0621d3b1787a1376e8478d751c: BLOB_UPLOAD_UNKNOWN: blob upload unknown to registry; map[]
 
 
-#../../bin/kyma@v3 alpha app push --name bookstore --expose --container-port 3000 --mount-secret hana-hdi-binding --code-path sample-http-db-nodejs/bookstore
+#../../bin/kyma alpha app push --name bookstore --expose --container-port 3000 --mount-secret hana-hdi-binding --code-path sample-http-db-nodejs/bookstore
 
-../../bin/kyma@v3 alpha app push --name bookstore --expose --container-port 3000 --mount-secret hana-hdi-binding --image $dr_internal_pull_url/bookstore:latest
+../../bin/kyma alpha app push --name bookstore --expose --container-port 3000 --mount-secret hana-hdi-binding --image $dr_internal_pull_url/bookstore:latest
 
 #TODO replace with --image-pull-secret after https://github.com/kyma-project/cli/issues/2411
 kubectl patch deployment bookstore --type='merge' -p '{"spec":{"template":{"spec":{"imagePullSecrets":[{"name":"dockerregistry-config"}]}}}}'
