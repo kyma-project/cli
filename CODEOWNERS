@@ -1,4 +1,10 @@
 # Repo owners list
 
+## Devs
+
 * @kyma-project/otters-dev
+
+## Docs
+
 *.md @kyma-project/technical-writers
+/docs/ @kyma-project/technical-writers
