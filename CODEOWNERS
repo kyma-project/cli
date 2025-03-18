@@ -1,5 +1,5 @@
 # These are the default owners for the whole content of the repository. The default owners are automatically added as reviewers when you open a pull request, unless different owners are specified in the file.
-* @kyma-project/otters
+* @kyma-project/otters-dev
 
 # All .md files
 *.md @kyma-project/technical-writers
