@@ -14,7 +14,7 @@ To modify Kubernetes objects directly without them being reverted, you must set 
 To set a module to the managed state, use the following command:
 
 ```bash
-kyma@v3 alpha module manage {MODULE-NAME}
+kyma alpha module manage {MODULE-NAME}
 ```
 
 Even if the module is already in the managed state, you can change its policy by adding the optional flag ``--policy {POLICY-NAME}``. The default policy is ``CreateAndDelete``.
@@ -24,7 +24,7 @@ Even if the module is already in the managed state, you can change its policy by
 To set a module to the unmanaged state, use the following command:
 
 ```bash
-kyma@v3 alpha module unmanage {MODULE-NAME}
+kyma alpha module unmanage {MODULE-NAME}
 ```
 
 > [!WARNING]

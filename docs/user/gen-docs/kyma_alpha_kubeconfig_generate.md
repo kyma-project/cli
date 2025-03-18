@@ -14,22 +14,22 @@ kyma alpha kubeconfig generate [flags]
 
 ```bash
 # generate a kubeconfig with a ServiceAccount-based token and certificate
-  kyma@v3 alpha kubeconfig generate --serviceaccount <sa_name> --clusterrole <cr_name> --namespace <ns_name> --permanent
+  kyma alpha kubeconfig generate --serviceaccount <sa_name> --clusterrole <cr_name> --namespace <ns_name> --permanent
 
 # generate a kubeconfig with an OIDC token
-  kyma@v3 alpha kubeconfig generate --token <token>
+  kyma alpha kubeconfig generate --token <token>
 
 # generate a kubeconfig with an OIDC token based on a kubeconfig from the CIS
-  kyma@v3 alpha kubeconfig generate --token <token> --credentials-path <cis_credentials>
+  kyma alpha kubeconfig generate --token <token> --credentials-path <cis_credentials>
 
 # generate a kubeconfig with an requested OIDC token with audience option
   export ACTIONS_ID_TOKEN_REQUEST_TOKEN=<token>
-  kyma@v3 alpha kubeconfig generate --id-token-request-url <url> --audience <audience>
+  kyma alpha kubeconfig generate --id-token-request-url <url> --audience <audience>
 
 # generate a kubeconfig with an requested OIDC token with url from env
   export ACTIONS_ID_TOKEN_REQUEST_URL=<url>
   export ACTIONS_ID_TOKEN_REQUEST_TOKEN=<token>
-  kyma@v3 alpha kubeconfig generate
+  kyma alpha kubeconfig generate
 ```
 
 ## Flags
