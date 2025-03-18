@@ -3,7 +3,6 @@ package cmdcommon
 import (
 	"context"
 
-	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/spf13/cobra"
 )
 
@@ -15,13 +14,13 @@ type KymaConfig struct {
 	Ctx context.Context
 }
 
-func NewKymaConfig(cmd *cobra.Command) (*KymaConfig, clierror.Error) {
+func NewKymaConfig(cmd *cobra.Command) *KymaConfig {
 	ctx := context.Background()
 
 	kymaConfig := &KymaConfig{}
 	kymaConfig.Ctx = ctx
 	kymaConfig.KubeClientConfig = newKubeClientConfig(cmd)
-	kymaConfig.KymaExtensionsConfig = newExtensionsConfig(cmd.OutOrStderr(), kymaConfig)
+	kymaConfig.KymaExtensionsConfig = newExtensionsConfig(kymaConfig)
 
-	return kymaConfig, nil
+	return kymaConfig
 }
