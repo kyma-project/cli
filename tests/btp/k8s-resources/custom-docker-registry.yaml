@@ -1,0 +1,11 @@
+apiVersion: operator.kyma-project.io/v1alpha1
+kind: DockerRegistry
+metadata:
+  name: custom-dr
+  namespace: kyma-system
+spec:
+  externalAccess:
+    enabled: true
+  storage:
+    btpObjectStore:
+      secretName: object-store-reference-binding
