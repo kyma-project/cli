@@ -12,12 +12,11 @@ jobs:
     steps:
       - name: quick test
         run: |
-          echo 'FOO = "${FOO}"' 
-          echo 'FOO = "${{FOO}}"' 
-          echo 'FOO = "$(FOO)"' 
-          echo 'FOO = "$FOO"' 
+          echo -e "FOO = \"${FOO}\"" 
+          echo -e "FOO = \"$(FOO)\""
+          echo -e "FOO = \"$FOO\"" 
         env:
-          FOO: 'BAR'
+          FOO: 'sdfsdf()/dfgdfgd#$^$%&%^&'
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.ref }}
