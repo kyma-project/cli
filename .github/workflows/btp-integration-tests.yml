@@ -10,6 +10,14 @@ jobs:
   e2e-test-btp:
     runs-on: ubuntu-latest
     steps:
+      - name: quick test
+        run: |
+          echo 'FOO = "${FOO}"' 
+          echo 'FOO = "${{FOO}}"' 
+          echo 'FOO = "$(FOO)"' 
+          echo 'FOO = "$FOO"' 
+        env:
+          FOO: 'BAR'
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.ref }}
