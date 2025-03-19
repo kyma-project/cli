@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	v1 "k8s.io/api/core/v1"
 	"os"
 	"slices"
 	"strconv"
@@ -16,6 +15,7 @@ import (
 	pkgerrors "github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -260,7 +260,7 @@ func addCoreCommands(cmd *cobra.Command, config *KymaConfig, extensionCoreComman
 			continue
 		}
 
-		cmd.AddCommand(command(config))
+		cmd.AddCommand(command(config, expectedCoreCommand.Config))
 	}
 }
 

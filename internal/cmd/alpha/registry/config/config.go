@@ -17,7 +17,7 @@ type cfgConfig struct {
 	output      string
 }
 
-func NewConfigCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
+func NewConfigCMD(kymaConfig *cmdcommon.KymaConfig, _ interface{}) *cobra.Command {
 	cfg := cfgConfig{
 		KymaConfig: kymaConfig,
 	}
