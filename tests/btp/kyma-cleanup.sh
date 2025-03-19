@@ -10,7 +10,7 @@ kubectl delete svc bookstore
 kubectl delete job hana-hdi-initjob
 
 kubectl delete dockerregistries.operator.kyma-project.io -n kyma-system custom-dr
-../../bin/kyma@v3 alpha module delete docker-registry
+../../bin/kyma alpha module delete docker-registry
 kubectl delete servicebindings.services.cloud.sap.com -A --all
 kubectl delete serviceinstances.services.cloud.sap.com -A --all
 kubectl delete secret -n kyma-system remote-service-manager-credentials
@@ -25,7 +25,7 @@ rm config.json || true
 
 
 # TODO new command ?
-# ../../bin/kyma@v3 alpha hana unmap --credentials-path hana-admin-api-binding.json
+# ../../bin/kyma alpha hana unmap --credentials-path hana-admin-api-binding.json
 # -------------------------------------------------------------------------------------
 
 exit 0
