@@ -38,7 +38,7 @@ func NewInitCmd(kymaConfig *cmdcommon.KymaConfig, cmdConfig interface{}) *cobra.
 
 	cmd := &cobra.Command{
 		Use:   "init",
-		Short: "init source and dependencies files locally",
+		Short: "Init source and dependencies files locally",
 		Long:  "Use this command to initialise source and dependencies files for a Function.",
 		PreRun: func(cmd *cobra.Command, _ []string) {
 			clierror.Check(flags.Validate(cmd.Flags(), flags.MarkRequired("runtime")))
