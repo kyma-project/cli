@@ -50,7 +50,7 @@ func NewInitCmd(kymaConfig *cmdcommon.KymaConfig, cmdConfig interface{}) *cobra.
 		},
 	}
 
-	cmd.Flags().StringVar(&cfg.runtime, "runtime", "", "Runtime for which to generate files ")
+	cmd.Flags().StringVar(&cfg.runtime, "runtime", "", "Runtime for which the files are generated")
 	cmd.Flags().StringVar(&cfg.dir, "dir", ".", "Path to the directory where files must be created")
 
 	return cmd
