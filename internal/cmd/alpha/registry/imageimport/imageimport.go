@@ -16,7 +16,7 @@ type provisionConfig struct {
 	image string
 }
 
-func NewImportCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
+func NewImportCMD(kymaConfig *cmdcommon.KymaConfig, _ interface{}) *cobra.Command {
 	config := provisionConfig{
 		KymaConfig: kymaConfig,
 	}
