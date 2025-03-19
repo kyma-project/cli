@@ -1,0 +1,11 @@
+{
+    "name": "deploy",
+    "dependencies": {
+      "@sap/hdi-deploy": "5.3.2",
+      "@sap/hana-client": "2.19.20",
+      "hdb": "0.19.3"
+    },
+    "scripts": {
+      "start": "node node_modules/@sap/hdi-deploy/"
+    }
+  }
