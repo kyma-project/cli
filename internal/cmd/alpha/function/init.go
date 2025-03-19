@@ -39,7 +39,7 @@ func NewInitCmd(kymaConfig *cmdcommon.KymaConfig, cmdConfig interface{}) *cobra.
 	cmd := &cobra.Command{
 		Use:   "init",
 		Short: "Init source and dependencies files locally",
-		Long:  "Use this command to initialise source and dependencies files for a Function.",
+		Long:  "Use this command to initialize source and dependencies files for a Function.",
 		PreRun: func(cmd *cobra.Command, _ []string) {
 			clierror.Check(flags.Validate(cmd.Flags(), flags.MarkRequired("runtime")))
 			clierror.Check(cfg.complete(cmdConfig))
@@ -115,7 +115,7 @@ func runInit(cfg *initConfig, out io.Writer) clierror.Error {
 		outDir = cfg.dir
 	}
 
-	fmt.Fprintf(out, "Functions files initialised to dir %s\n", outDir)
+	fmt.Fprintf(out, "Functions files initialized to dir %s\n", outDir)
 	fmt.Fprint(out, "\nExample usage:\n")
 	fmt.Fprintf(out, "kyma alpha function create %s --runtime %s --source %s --dependencies %s\n", cfg.runtime, cfg.runtime, handlerPath, depsPath)
 	return nil
