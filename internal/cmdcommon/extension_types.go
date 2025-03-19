@@ -17,7 +17,7 @@ const (
 )
 
 // map of allowed core commands in format ID: FUNC
-type CoreCommandsMap map[string]func(*KymaConfig) *cobra.Command
+type CoreCommandsMap map[string]func(*KymaConfig, interface{}) *cobra.Command
 
 // allowed template commands
 type TemplateCommandsList struct {
@@ -70,4 +70,6 @@ type TemplateCommands struct {
 type CoreCommandInfo struct {
 	// id of the functionality that cli will run when user use this command
 	ActionID string `yaml:"actionID"`
+	// additional config pass to the command
+	Config interface{} `yaml:"config"`
 }
