@@ -35,15 +35,15 @@ jobs:
           btp_kyma_plan: '${{ secrets.BTP_KYMA_PLAN }}'
       - name: ensure btp prerequisites 
         run: |
-          echo 'BTP_GLOBAL_ACCOUNT = "${BTP_GLOBAL_ACCOUNT}"' >> tf/.tfvars
-          echo 'BTP_BOT_USER = "${BTP_BOT_USER}"' >> tf/.tfvars
-          echo 'BTP_BOT_PASSWORD = "${BTP_BOT_PASSWORD}"' >> tf/.tfvars
-          echo 'BTP_BACKEND_URL = "${BTP_BACKEND_URL}"' >> tf/.tfvars
-          echo 'BTP_CUSTOM_IAS_TENANT = "${BTP_CUSTOM_IAS_TENANT}"' >> tf/.tfvars
-          echo 'BTP_KYMA_SUBACCOUNT_ID = "${BTP_KYMA_SUBACCOUNT_ID}"' >> tf/.tfvars
-          echo 'BTP_OBJECTSTORE_SUBACCOUNT_ID = "${BTP_OBJECTSTORE_SUBACCOUNT_ID}"' >> tf/.tfvars
-          echo 'BTP_HANA_SUBACCOUNT_ID = "${BTP_HANA_SUBACCOUNT_ID}"' >> tf/.tfvars
-          cat tf/.tfvars
+          echo 'BTP_GLOBAL_ACCOUNT = "${BTP_GLOBAL_ACCOUNT}"' >> tests/btp/tf/.tfvars
+          echo 'BTP_BOT_USER = "${BTP_BOT_USER}"' >> tests/btp/tf/.tfvars
+          echo 'BTP_BOT_PASSWORD = "${BTP_BOT_PASSWORD}"' >> tests/btp/tf/.tfvars
+          echo 'BTP_BACKEND_URL = "${BTP_BACKEND_URL}"' >> tests/btp/tf/.tfvars
+          echo 'BTP_CUSTOM_IAS_TENANT = "${BTP_CUSTOM_IAS_TENANT}"' >> tests/btp/tf/.tfvars
+          echo 'BTP_KYMA_SUBACCOUNT_ID = "${BTP_KYMA_SUBACCOUNT_ID}"' >> tests/btp/tf/.tfvars
+          echo 'BTP_OBJECTSTORE_SUBACCOUNT_ID = "${BTP_OBJECTSTORE_SUBACCOUNT_ID}"' >> tests/btp/tf/.tfvars
+          echo 'BTP_HANA_SUBACCOUNT_ID = "${BTP_HANA_SUBACCOUNT_ID}"' >> tests/btp/tf/.tfvars
+          cat tests/btp/tf/.tfvars
           make -C tests/btp prerequisites
         env:
           BTP_BACKEND_URL: '${{ secrets.BTP_BACKEND_URL}}'
