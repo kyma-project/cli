@@ -32,9 +32,7 @@ func newExtensionsConfig(config *KymaConfig) *KymaExtensionsConfig {
 
 	if getBoolFlagValue("--skip-extensions") {
 		// skip extensions fetching
-		return &KymaExtensionsConfig{
-			kymaConfig: config,
-		}
+		return extensionsConfig
 	}
 
 	extensionsConfig.extensions, extensionsConfig.parseErrors = loadExtensionsFromCluster(config.Ctx, config.KubeClientConfig)
@@ -52,10 +50,15 @@ func (kec *KymaExtensionsConfig) GetRawExtensions() ExtensionList {
 	return kec.extensions
 }
 
-func (kec *KymaExtensionsConfig) BuildExtensions(availableTemplateCommands *TemplateCommandsList, availableCoreCommands CoreCommandsMap, cmd *cobra.Command, config *KymaConfig) []*cobra.Command {
+func (kec *KymaExtensionsConfig) BuildExtensions(availableTemplateCommands *TemplateCommandsList, availableCoreCommands CoreCommandsMap, cmd *cobra.Command) []*cobra.Command {
 	var cmds []*cobra.Command
 
-	var cms, cmsError = getExtensionConfigMaps(config.Ctx, config.KubeClientConfig)
+	if getBoolFlagValue("--skip-extensions") {
+		// skip extensions fetching
+		return nil
+	}
+
+	var cms, cmsError = getExtensionConfigMaps(kec.kymaConfig.Ctx, kec.kymaConfig.KubeClientConfig)
 	if cmsError != nil {
 		kec.parseErrors = cmsError
 		return nil

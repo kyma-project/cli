@@ -43,7 +43,7 @@ func NewAlphaCMD() *cobra.Command {
 		"registry_config":       config.NewConfigCMD,
 		"registry_image-import": imageimport.NewImportCMD,
 		"function_init":         function.NewInitCmd,
-	}, cmd, kymaConfig)
+	}, cmd)
 
 	kymaConfig.DisplayExtensionsErrors(cmd.ErrOrStderr())
 
