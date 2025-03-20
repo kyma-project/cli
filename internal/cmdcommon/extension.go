@@ -87,6 +87,11 @@ func (kec *KymaExtensionsConfig) BuildExtensions(availableTemplateCommands *Temp
 }
 
 func (kec *KymaExtensionsConfig) DisplayExtensionsErrors(warningWriter io.Writer) {
+	if isSubRootCommandUsed("help", "completion", "version") {
+		// skip if one of restricted flags is used
+		return
+	}
+
 	if kec.parseErrors != nil && getBoolFlagValue("--show-extensions-error") {
 		// print error as warning if expected and continue
 		fmt.Fprintf(warningWriter, "Extensions Warning:\n%s\n\n", kec.parseErrors.Error())
@@ -281,6 +286,17 @@ func getBoolFlagValue(flag string) bool {
 
 		// example: --show-extensions-error or --show-extensions-error=true
 		if strings.HasPrefix(arg, flag) && !strings.Contains(arg, "false") {
+			return true
+		}
+	}
+
+	return false
+}
+
+// checks if one of given args is on the 2 possition of os.Args (first sub-command)
+func isSubRootCommandUsed(args ...string) bool {
+	for _, arg := range args {
+		if slices.Contains(os.Args, arg) {
 			return true
 		}
 	}
