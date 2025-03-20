@@ -41,7 +41,7 @@ func NewAlphaCMD() *cobra.Command {
 		// map of available core commands
 		"registry_config":       config.NewConfigCMD,
 		"registry_image-import": imageimport.NewImportCMD,
-	}, cmd, kymaConfig)
+	}, cmd)
 
 	kymaConfig.DisplayExtensionsErrors(cmd.ErrOrStderr())
 
