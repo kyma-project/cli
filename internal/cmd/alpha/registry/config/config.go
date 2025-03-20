@@ -17,7 +17,7 @@ type cfgConfig struct {
 	output      string
 }
 
-func NewConfigCMD(kymaConfig *cmdcommon.KymaConfig, _ interface{}) *cobra.Command {
+func NewConfigCMD(kymaConfig *cmdcommon.KymaConfig, _ interface{}) (*cobra.Command, error) {
 	cfg := cfgConfig{
 		KymaConfig: kymaConfig,
 	}
@@ -34,7 +34,7 @@ func NewConfigCMD(kymaConfig *cmdcommon.KymaConfig, _ interface{}) *cobra.Comman
 	cmd.Flags().BoolVar(&cfg.externalurl, "externalurl", false, "External URL for the Kyma registry")
 	cmd.Flags().StringVar(&cfg.output, "output", "", "Path where the output file should be saved to. NOTE: docker expects the file to be named `config.json`")
 
-	return cmd
+	return cmd, nil
 }
 
 func runConfig(cfg *cfgConfig) clierror.Error {

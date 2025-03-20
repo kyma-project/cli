@@ -17,7 +17,7 @@ const (
 )
 
 // map of allowed core commands in format ID: FUNC
-type CoreCommandsMap map[string]func(*KymaConfig, interface{}) *cobra.Command
+type CoreCommandsMap map[string]func(*KymaConfig, interface{}) (*cobra.Command, error)
 
 // allowed template commands
 type TemplateCommandsList struct {
