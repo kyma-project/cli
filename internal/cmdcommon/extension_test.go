@@ -129,10 +129,14 @@ descriptionLong: test-description-long
 
 		want := ExtensionList{
 			{
-				RootCommand: types.RootCommand{
-					Name:            "test-command",
-					Description:     "test-description",
-					DescriptionLong: "test-description-long",
+				ConfigMapName:      "bad-data",
+				ConfigMapNamespace: "",
+				Extension: Extension{
+					RootCommand: types.RootCommand{
+						Name:            "test-command",
+						Description:     "test-description",
+						DescriptionLong: "test-description-long",
+					},
 				},
 			},
 		}
@@ -251,70 +255,74 @@ create:
 	}
 }
 
-func fixTestExtension(name string) Extension {
-	return Extension{
-		RootCommand: types.RootCommand{
-			Name:            name,
-			Description:     "test-description",
-			DescriptionLong: "test-description-long",
-		},
-		Resource: &types.ResourceInfo{
-			Scope:   types.NamespaceScope,
-			Kind:    "TestKind",
-			Group:   "test.group",
-			Version: "v1",
-		},
-		TemplateCommands: &TemplateCommands{
-			GetCommand: &types.GetCommand{
-				Description:     "test-get-description",
-				DescriptionLong: "test-get-description-long",
-				Parameters: []types.Parameter{
-					{
-						Path: ".metadata.generation",
-						Name: "generation",
-					},
-				},
-			},
-			ExplainCommand: &types.ExplainCommand{
+func fixTestExtension(name string) ExtensionItem {
+	return ExtensionItem{
+		ConfigMapName:      name,
+		ConfigMapNamespace: "",
+		Extension: Extension{
+			RootCommand: types.RootCommand{
+				Name:            name,
 				Description:     "test-description",
 				DescriptionLong: "test-description-long",
-				Output:          "test-explain-output",
 			},
-			DeleteCommand: &types.DeleteCommand{
-				Description:     "test-delete-description",
-				DescriptionLong: "test-delete-description-long",
+			Resource: &types.ResourceInfo{
+				Scope:   types.NamespaceScope,
+				Kind:    "TestKind",
+				Group:   "test.group",
+				Version: "v1",
 			},
-			CreateCommand: &types.CreateCommand{
-				Description:     "create test resource",
-				DescriptionLong: "use this command to create test resource",
-				CustomFlags: []types.CustomFlag{
-					{
-						Type:         types.StringCustomFlagType,
-						Name:         "test-flag",
-						Description:  "test-flag description",
-						Shorthand:    "t",
-						Path:         ".spec.test.field",
-						DefaultValue: "test-default",
-						Required:     true,
+			TemplateCommands: &TemplateCommands{
+				GetCommand: &types.GetCommand{
+					Description:     "test-get-description",
+					DescriptionLong: "test-get-description-long",
+					Parameters: []types.Parameter{
+						{
+							Path: ".metadata.generation",
+							Name: "generation",
+						},
 					},
-					{
-						Type:         types.PathCustomFlagType,
-						Name:         "test-flag-2",
-						Description:  "test-flag-2 description",
-						Shorthand:    "f",
-						Path:         ".spec.test.field2",
-						DefaultValue: "test-default2",
-						Required:     false,
+				},
+				ExplainCommand: &types.ExplainCommand{
+					Description:     "test-description",
+					DescriptionLong: "test-description-long",
+					Output:          "test-explain-output",
+				},
+				DeleteCommand: &types.DeleteCommand{
+					Description:     "test-delete-description",
+					DescriptionLong: "test-delete-description-long",
+				},
+				CreateCommand: &types.CreateCommand{
+					Description:     "create test resource",
+					DescriptionLong: "use this command to create test resource",
+					CustomFlags: []types.CustomFlag{
+						{
+							Type:         types.StringCustomFlagType,
+							Name:         "test-flag",
+							Description:  "test-flag description",
+							Shorthand:    "t",
+							Path:         ".spec.test.field",
+							DefaultValue: "test-default",
+							Required:     true,
+						},
+						{
+							Type:         types.PathCustomFlagType,
+							Name:         "test-flag-2",
+							Description:  "test-flag-2 description",
+							Shorthand:    "f",
+							Path:         ".spec.test.field2",
+							DefaultValue: "test-default2",
+							Required:     false,
+						},
 					},
 				},
 			},
-		},
-		CoreCommands: []CoreCommandInfo{
-			{
-				ActionID: "test-action-id-1",
-			},
-			{
-				ActionID: "test-action-id-2",
+			CoreCommands: []CoreCommandInfo{
+				{
+					ActionID: "test-action-id-1",
+				},
+				{
+					ActionID: "test-action-id-2",
+				},
 			},
 		},
 	}

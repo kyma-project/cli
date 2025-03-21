@@ -53,39 +53,28 @@ func (kec *KymaExtensionsConfig) GetRawExtensions() ExtensionList {
 func (kec *KymaExtensionsConfig) BuildExtensions(availableTemplateCommands *TemplateCommandsList, availableCoreCommands CoreCommandsMap, cmd *cobra.Command) []*cobra.Command {
 	var cmds []*cobra.Command
 
-	if getBoolFlagValue("--skip-extensions") {
-		// skip extensions fetching
-		return nil
-	}
-
-	var cms, cmsError = getExtensionConfigMaps(kec.kymaConfig.Ctx, kec.kymaConfig.KubeClientConfig)
-	if cmsError != nil {
-		kec.parseErrors = cmsError
-		return nil
-	}
-
 	existingCommands := make(map[string]bool)
 	for _, baseCmd := range cmd.Commands() {
 		existingCommands[baseCmd.Name()] = true
 	}
 
-	for _, cm := range cms.Items {
-		extension, _ := parseResourceExtension(cm.Data)
+	for _, extensionItem := range kec.extensions {
+		extension := extensionItem.Extension
 		if existingCommands[extension.RootCommand.Name] {
 			kec.parseErrors = errors.Join(
 				kec.parseErrors,
 				fmt.Errorf("failed to validate configmap '%s/%s': base command with name='%s' already exists",
-					cm.GetNamespace(), cm.GetName(), extension.RootCommand.Name),
+					extensionItem.ConfigMapNamespace, extensionItem.ConfigMapName, extension.RootCommand.Name),
 			)
 			continue
 		}
 
-		extensionCommands, err := buildCommandFromExtension(kec.kymaConfig, extension, availableTemplateCommands, availableCoreCommands)
+		extensionCommands, err := buildCommandFromExtension(kec.kymaConfig, &extension, availableTemplateCommands, availableCoreCommands)
 		if err != nil {
 			kec.parseErrors = errors.Join(
 				kec.parseErrors,
 				fmt.Errorf("failed to build extensions from configmap '%s/%s': %s",
-					cm.GetNamespace(), cm.GetName(), err.Error()),
+					extensionItem.ConfigMapNamespace, extensionItem.ConfigMapName, err.Error()),
 			)
 			continue
 		}
@@ -127,13 +116,13 @@ func getExtensionConfigMaps(ctx context.Context, clientConfig *KubeClientConfig)
 	return cms, nil
 }
 
-func loadExtensionsFromCluster(ctx context.Context, clientConfig *KubeClientConfig) ([]Extension, error) {
+func loadExtensionsFromCluster(ctx context.Context, clientConfig *KubeClientConfig) (ExtensionList, error) {
 	var cms, cmsError = getExtensionConfigMaps(ctx, clientConfig)
 	if cmsError != nil {
 		return nil, cmsError
 	}
 
-	var extensions []Extension
+	var extensionsItems ExtensionList
 	var parseErrors error
 	for _, cm := range cms.Items {
 		extension, err := parseResourceExtension(cm.Data)
@@ -147,8 +136,8 @@ func loadExtensionsFromCluster(ctx context.Context, clientConfig *KubeClientConf
 			continue
 		}
 
-		if slices.ContainsFunc(extensions, func(e Extension) bool {
-			return e.RootCommand.Name == extension.RootCommand.Name
+		if slices.ContainsFunc(extensionsItems, func(e ExtensionItem) bool {
+			return e.Extension.RootCommand.Name == extension.RootCommand.Name
 		}) {
 			parseErrors = errors.Join(
 				parseErrors,
@@ -158,10 +147,14 @@ func loadExtensionsFromCluster(ctx context.Context, clientConfig *KubeClientConf
 			continue
 		}
 
-		extensions = append(extensions, *extension)
+		extensionsItems = append(extensionsItems, ExtensionItem{
+			ConfigMapName:      cm.GetName(),
+			ConfigMapNamespace: cm.GetNamespace(),
+			Extension:          *extension,
+		})
 	}
 
-	return extensions, parseErrors
+	return extensionsItems, parseErrors
 }
 
 func parseResourceExtension(cmData map[string]string) (*Extension, error) {
