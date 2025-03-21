@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
@@ -59,7 +60,7 @@ func NewInitCmd(kymaConfig *cmdcommon.KymaConfig, cmdConfig interface{}) (*cobra
 		},
 	}
 
-	cmd.Flags().StringVar(&cfg.runtime, "runtime", cfg.extensionConfig.DefaultRuntime, fmt.Sprintf("Runtime for which the files are generated [ %s ]", strings.Join(mapKeys(cfg.extensionConfig.Runtimes), ", ")))
+	cmd.Flags().StringVar(&cfg.runtime, "runtime", cfg.extensionConfig.DefaultRuntime, fmt.Sprintf("Runtime for which the files are generated [ %s ]", sortedRuntimesString(cfg.extensionConfig.Runtimes)))
 	cmd.Flags().StringVar(&cfg.dir, "dir", ".", "Path to the directory where files must be created")
 
 	return cmd, nil
@@ -93,20 +94,11 @@ func (c *initConfig) validate() clierror.Error {
 	if _, ok := c.extensionConfig.Runtimes[c.runtime]; !ok {
 		return clierror.New(
 			fmt.Sprintf("unsupported runtime %s", c.runtime),
-			fmt.Sprintf("use on the allowed runtimes on this cluster [ %s ]", strings.Join(mapKeys(c.extensionConfig.Runtimes), ", ")),
+			fmt.Sprintf("use on the allowed runtimes on this cluster [ %s ]", sortedRuntimesString(c.extensionConfig.Runtimes)),
 		)
 	}
 
 	return nil
-}
-
-func mapKeys(m map[string]runtimeConfig) []string {
-	keys := []string{}
-	for key := range m {
-		keys = append(keys, key)
-	}
-
-	return keys
 }
 
 func runInit(cfg *initConfig, out io.Writer) clierror.Error {
@@ -136,4 +128,14 @@ func runInit(cfg *initConfig, out io.Writer) clierror.Error {
 	fmt.Fprintf(out, "* create Function, for example:\n")
 	fmt.Fprintf(out, "  kyma alpha function create %s --runtime %s --source %s --dependencies %s\n", cfg.runtime, cfg.runtime, handlerPath, depsPath)
 	return nil
+}
+
+func sortedRuntimesString(m map[string]runtimeConfig) string {
+	keys := []string{}
+	for key := range m {
+		keys = append(keys, key)
+	}
+
+	sort.Strings(sort.StringSlice(keys))
+	return strings.Join(keys, ", ")
 }
