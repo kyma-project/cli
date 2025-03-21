@@ -77,7 +77,17 @@ func (kec *KymaExtensionsConfig) BuildExtensions(availableTemplateCommands *Temp
 			continue
 		}
 
-		cmds = append(cmds, buildCommandFromExtension(kec.kymaConfig, extension, availableTemplateCommands, availableCoreCommands))
+		extensionCommands, err := buildCommandFromExtension(kec.kymaConfig, extension, availableTemplateCommands, availableCoreCommands)
+		if err != nil {
+			kec.parseErrors = errors.Join(
+				kec.parseErrors,
+				fmt.Errorf("failed to build extensions from configmap '%s/%s': %s",
+					cm.GetNamespace(), cm.GetName(), err.Error()),
+			)
+			continue
+		}
+
+		cmds = append(cmds, extensionCommands)
 	}
 
 	return cmds
@@ -203,7 +213,7 @@ func parseOptionalField[T any](cmData map[string]string, cmKey string) (T, error
 	return data, err
 }
 
-func buildCommandFromExtension(config *KymaConfig, extension *Extension, availableTemplateCommands *TemplateCommandsList, availableCoreCommands CoreCommandsMap) *cobra.Command {
+func buildCommandFromExtension(config *KymaConfig, extension *Extension, availableTemplateCommands *TemplateCommandsList, availableCoreCommands CoreCommandsMap) (*cobra.Command, error) {
 	cmd := &cobra.Command{
 		Use:   fmt.Sprintf("%s <command> [flags]", extension.RootCommand.Name),
 		Short: extension.RootCommand.Description,
@@ -214,9 +224,8 @@ func buildCommandFromExtension(config *KymaConfig, extension *Extension, availab
 		addGenericCommands(cmd, config, extension, availableTemplateCommands)
 	}
 
-	addCoreCommands(cmd, config, extension.CoreCommands, availableCoreCommands)
-
-	return cmd
+	err := addCoreCommands(cmd, config, extension.CoreCommands, availableCoreCommands)
+	return cmd, err
 }
 
 func addGenericCommands(cmd *cobra.Command, config *KymaConfig, extension *Extension, availableTemplateCommands *TemplateCommandsList) {
@@ -257,7 +266,8 @@ func addGenericCommands(cmd *cobra.Command, config *KymaConfig, extension *Exten
 	}
 }
 
-func addCoreCommands(cmd *cobra.Command, config *KymaConfig, extensionCoreCommands []CoreCommandInfo, availableCoreCommands CoreCommandsMap) {
+func addCoreCommands(cmd *cobra.Command, config *KymaConfig, extensionCoreCommands []CoreCommandInfo, availableCoreCommands CoreCommandsMap) error {
+	var cmdErr error
 	for _, expectedCoreCommand := range extensionCoreCommands {
 		command, ok := availableCoreCommands[expectedCoreCommand.ActionID]
 		if !ok {
@@ -265,8 +275,17 @@ func addCoreCommands(cmd *cobra.Command, config *KymaConfig, extensionCoreComman
 			continue
 		}
 
-		cmd.AddCommand(command(config, expectedCoreCommand.Config))
+		coreCmd, err := command(config, expectedCoreCommand.Config)
+		if err != nil {
+			// add error and continue to check next commands
+			cmdErr = errors.Join(cmdErr, err)
+			continue
+		}
+
+		cmd.AddCommand(coreCmd)
 	}
+
+	return cmdErr
 }
 
 // search os.Args manually to find if user pass given flag and return its value
