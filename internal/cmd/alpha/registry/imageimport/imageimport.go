@@ -16,7 +16,7 @@ type provisionConfig struct {
 	image string
 }
 
-func NewImportCMD(kymaConfig *cmdcommon.KymaConfig, _ interface{}) *cobra.Command {
+func NewImportCMD(kymaConfig *cmdcommon.KymaConfig, _ interface{}) (*cobra.Command, error) {
 	config := provisionConfig{
 		KymaConfig: kymaConfig,
 	}
@@ -36,7 +36,7 @@ func NewImportCMD(kymaConfig *cmdcommon.KymaConfig, _ interface{}) *cobra.Comman
 		},
 	}
 
-	return cmd
+	return cmd, nil
 }
 
 func (pc *provisionConfig) validate() clierror.Error {

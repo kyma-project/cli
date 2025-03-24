@@ -17,7 +17,7 @@ const (
 )
 
 // map of allowed core commands in format ID: FUNC
-type CoreCommandsMap map[string]func(*KymaConfig, interface{}) *cobra.Command
+type CoreCommandsMap map[string]func(*KymaConfig, interface{}) (*cobra.Command, error)
 
 // allowed template commands
 type TemplateCommandsList struct {
@@ -27,11 +27,17 @@ type TemplateCommandsList struct {
 	Delete  func(templates.KubeClientGetter, *templates.DeleteOptions) *cobra.Command
 }
 
-type ExtensionList []Extension
+type ExtensionList []ExtensionItem
+
+type ExtensionItem struct {
+	ConfigMapName      string
+	ConfigMapNamespace string
+	Extension          Extension
+}
 
 func (el *ExtensionList) ContainResource(kind string) bool {
-	for _, extension := range *el {
-		if extension.Resource.Kind == kind {
+	for _, item := range *el {
+		if item.Extension.Resource.Kind == kind {
 			return true
 		}
 	}

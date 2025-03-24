@@ -32,9 +32,7 @@ func newExtensionsConfig(config *KymaConfig) *KymaExtensionsConfig {
 
 	if getBoolFlagValue("--skip-extensions") {
 		// skip extensions fetching
-		return &KymaExtensionsConfig{
-			kymaConfig: config,
-		}
+		return extensionsConfig
 	}
 
 	extensionsConfig.extensions, extensionsConfig.parseErrors = loadExtensionsFromCluster(config.Ctx, config.KubeClientConfig)
@@ -52,32 +50,36 @@ func (kec *KymaExtensionsConfig) GetRawExtensions() ExtensionList {
 	return kec.extensions
 }
 
-func (kec *KymaExtensionsConfig) BuildExtensions(availableTemplateCommands *TemplateCommandsList, availableCoreCommands CoreCommandsMap, cmd *cobra.Command, config *KymaConfig) []*cobra.Command {
+func (kec *KymaExtensionsConfig) BuildExtensions(availableTemplateCommands *TemplateCommandsList, availableCoreCommands CoreCommandsMap, cmd *cobra.Command) []*cobra.Command {
 	var cmds []*cobra.Command
-
-	var cms, cmsError = getExtensionConfigMaps(config.Ctx, config.KubeClientConfig)
-	if cmsError != nil {
-		kec.parseErrors = cmsError
-		return nil
-	}
 
 	existingCommands := make(map[string]bool)
 	for _, baseCmd := range cmd.Commands() {
 		existingCommands[baseCmd.Name()] = true
 	}
 
-	for _, cm := range cms.Items {
-		extension, _ := parseResourceExtension(cm.Data)
+	for _, extensionItem := range kec.extensions {
+		extension := extensionItem.Extension
 		if existingCommands[extension.RootCommand.Name] {
 			kec.parseErrors = errors.Join(
 				kec.parseErrors,
 				fmt.Errorf("failed to validate configmap '%s/%s': base command with name='%s' already exists",
-					cm.GetNamespace(), cm.GetName(), extension.RootCommand.Name),
+					extensionItem.ConfigMapNamespace, extensionItem.ConfigMapName, extension.RootCommand.Name),
 			)
 			continue
 		}
 
-		cmds = append(cmds, buildCommandFromExtension(kec.kymaConfig, extension, availableTemplateCommands, availableCoreCommands))
+		extensionCommands, err := buildCommandFromExtension(kec.kymaConfig, &extension, availableTemplateCommands, availableCoreCommands)
+		if err != nil {
+			kec.parseErrors = errors.Join(
+				kec.parseErrors,
+				fmt.Errorf("failed to build extensions from configmap '%s/%s': %s",
+					extensionItem.ConfigMapNamespace, extensionItem.ConfigMapName, err.Error()),
+			)
+			continue
+		}
+
+		cmds = append(cmds, extensionCommands)
 	}
 
 	return cmds
@@ -114,13 +116,13 @@ func getExtensionConfigMaps(ctx context.Context, clientConfig *KubeClientConfig)
 	return cms, nil
 }
 
-func loadExtensionsFromCluster(ctx context.Context, clientConfig *KubeClientConfig) ([]Extension, error) {
+func loadExtensionsFromCluster(ctx context.Context, clientConfig *KubeClientConfig) (ExtensionList, error) {
 	var cms, cmsError = getExtensionConfigMaps(ctx, clientConfig)
 	if cmsError != nil {
 		return nil, cmsError
 	}
 
-	var extensions []Extension
+	var extensionsItems ExtensionList
 	var parseErrors error
 	for _, cm := range cms.Items {
 		extension, err := parseResourceExtension(cm.Data)
@@ -134,8 +136,8 @@ func loadExtensionsFromCluster(ctx context.Context, clientConfig *KubeClientConf
 			continue
 		}
 
-		if slices.ContainsFunc(extensions, func(e Extension) bool {
-			return e.RootCommand.Name == extension.RootCommand.Name
+		if slices.ContainsFunc(extensionsItems, func(e ExtensionItem) bool {
+			return e.Extension.RootCommand.Name == extension.RootCommand.Name
 		}) {
 			parseErrors = errors.Join(
 				parseErrors,
@@ -145,10 +147,14 @@ func loadExtensionsFromCluster(ctx context.Context, clientConfig *KubeClientConf
 			continue
 		}
 
-		extensions = append(extensions, *extension)
+		extensionsItems = append(extensionsItems, ExtensionItem{
+			ConfigMapName:      cm.GetName(),
+			ConfigMapNamespace: cm.GetNamespace(),
+			Extension:          *extension,
+		})
 	}
 
-	return extensions, parseErrors
+	return extensionsItems, parseErrors
 }
 
 func parseResourceExtension(cmData map[string]string) (*Extension, error) {
@@ -203,7 +209,7 @@ func parseOptionalField[T any](cmData map[string]string, cmKey string) (T, error
 	return data, err
 }
 
-func buildCommandFromExtension(config *KymaConfig, extension *Extension, availableTemplateCommands *TemplateCommandsList, availableCoreCommands CoreCommandsMap) *cobra.Command {
+func buildCommandFromExtension(config *KymaConfig, extension *Extension, availableTemplateCommands *TemplateCommandsList, availableCoreCommands CoreCommandsMap) (*cobra.Command, error) {
 	cmd := &cobra.Command{
 		Use:   fmt.Sprintf("%s <command> [flags]", extension.RootCommand.Name),
 		Short: extension.RootCommand.Description,
@@ -214,9 +220,8 @@ func buildCommandFromExtension(config *KymaConfig, extension *Extension, availab
 		addGenericCommands(cmd, config, extension, availableTemplateCommands)
 	}
 
-	addCoreCommands(cmd, config, extension.CoreCommands, availableCoreCommands)
-
-	return cmd
+	err := addCoreCommands(cmd, config, extension.CoreCommands, availableCoreCommands)
+	return cmd, err
 }
 
 func addGenericCommands(cmd *cobra.Command, config *KymaConfig, extension *Extension, availableTemplateCommands *TemplateCommandsList) {
@@ -257,7 +262,8 @@ func addGenericCommands(cmd *cobra.Command, config *KymaConfig, extension *Exten
 	}
 }
 
-func addCoreCommands(cmd *cobra.Command, config *KymaConfig, extensionCoreCommands []CoreCommandInfo, availableCoreCommands CoreCommandsMap) {
+func addCoreCommands(cmd *cobra.Command, config *KymaConfig, extensionCoreCommands []CoreCommandInfo, availableCoreCommands CoreCommandsMap) error {
+	var cmdErr error
 	for _, expectedCoreCommand := range extensionCoreCommands {
 		command, ok := availableCoreCommands[expectedCoreCommand.ActionID]
 		if !ok {
@@ -265,8 +271,17 @@ func addCoreCommands(cmd *cobra.Command, config *KymaConfig, extensionCoreComman
 			continue
 		}
 
-		cmd.AddCommand(command(config, expectedCoreCommand.Config))
+		coreCmd, err := command(config, expectedCoreCommand.Config)
+		if err != nil {
+			// add error and continue to check next commands
+			cmdErr = errors.Join(cmdErr, err)
+			continue
+		}
+
+		cmd.AddCommand(coreCmd)
 	}
+
+	return cmdErr
 }
 
 // search os.Args manually to find if user pass given flag and return its value
