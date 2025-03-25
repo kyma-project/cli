@@ -1,8 +1,7 @@
 # Kyma CLI
 
 > [!WARNING]
-> This documentation applies to Kyma CLI version `v3`, which is still in the prototyping stage. All commands are still considered alpha. Use it at your own risk.
-> Read more about the decision [here](https://github.com/kyma-project/community/issues/872).
+> All commands in the `alpha` group are still in prototyping stage and its API can slightly change. Use on your own risk.
 
 ## What is Kyma CLI?
 
@@ -23,9 +22,6 @@ The Kyma CLI provides the following features:
 - Commands providing useful automation.
 
 ## How to Install
-
-> [!WARNING]
-> `v3` is still in the prototyping stage. All commands are still considered alpha. Use it at your own risk.
 
 ### Stable Release
 
