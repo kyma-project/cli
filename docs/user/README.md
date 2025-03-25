@@ -1,7 +1,7 @@
 # Kyma CLI
 
 > [!WARNING]
-> All commands in the `alpha` group are still in prototyping stage and its API can slightly change. Use on your own risk.
+> All commands in the `alpha` group are still in the prototyping stage, and their API can change. Use them at your own risk.
 
 ## What is Kyma CLI?
 
