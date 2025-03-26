@@ -22,7 +22,7 @@ Inspect the new available alpha commands by calling the `--help` option:
 kyma alpha --help
 ```
 
-Run a simple app from image on kyma by calling:
+Run a simple app from the image on Kyma by calling:
 
 ```sh
 kyma alpha app push --name my-first-kyma-app --image kennethreitz/httpbin --expose --container-port 80
@@ -34,7 +34,7 @@ Creating service default/my-first-kyma-app
 
 Creating API Rule default/my-first-kyma-app
 
-The my-first-kyma-app app is available under the https://my-first-kyma-app.{CLUSTER_DOMAIN}/ address
+The `my-first-kyma-app` application is available under the https://my-first-kyma-app.{CLUSTER_DOMAIN}/ address
 ```
 
 For more usage scenarios, see [user documentation](./docs/user/README.md).
