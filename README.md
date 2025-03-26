@@ -22,22 +22,23 @@ Inspect the new available alpha commands by calling the `--help` option:
 kyma alpha --help
 ```
 
-### Import Image Into Kyma's Internal Docker Registry
-
-> [!NOTE]
-> To use the following `image-import` command, you must [install the Docker Registry module](https://github.com/kyma-project/docker-registry?tab=readme-ov-file#install) on your Kyma runtime
+Run a simple app from image on kyma by calling:
 
 ```sh
-docker pull kennethreitz/httpbin
+kyma alpha app push --name my-first-kyma-app --image kennethreitz/httpbin --expose --container-port 80
 
-kyma alpha registry image-import kennethreitz/httpbin:latest
+
+Creating deployment default/my-first-kyma-app
+
+Creating service default/my-first-kyma-app
+
+Creating API Rule default/my-first-kyma-app
+
+The my-first-kyma-app app is available under the https://my-first-kyma-app.{CLUSTER_DOMAIN}/ address
 ```
 
-Run a Pod from a locally hosted image
+For more usage scenarios, see [user documentation](./docs/user/README.md).
 
-```sh
-kubectl run my-pod --image=localhost:32137/kennethreitz/httpbin:latest --overrides='{ "spec": { "imagePullSecrets": [ { "name": "dockerregistry-config" } ] } }'
-```
 
 ## Development
 
