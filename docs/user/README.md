@@ -1,8 +1,7 @@
 # Kyma CLI
 
 > [!WARNING]
-> This documentation applies to Kyma CLI version `v3`, which is still in the prototyping stage. All commands are still considered alpha. Use it at your own risk.
-> Read more about the decision [here](https://github.com/kyma-project/community/issues/872).
+> All commands in the `alpha` group are still in the prototyping stage, and their API can change. Use them at your own risk.
 
 ## What is Kyma CLI?
 
@@ -24,17 +23,18 @@ The Kyma CLI provides the following features:
 
 ## How to Install
 
-> [!WARNING]
-> `v3` is still in the prototyping stage. All commands are still considered alpha. Use it at your own risk.
-
 ### Stable Release
 
-> [!WARNING]
-> The Kyma CLI has not yet been released as a stable version. To test it before the final stage, use the nightly or the latest build.
+To get the latest stable Kyma CLI for MacOS or Linux, run the following script from the command line:
+
+```sh
+curl -sL "https://raw.githubusercontent.com/kyma-project/cli/refs/heads/main/hack/install_cli_stable.sh" | sh -
+kyma
+```
 
 ### Latest Build
 
-Download the latest (unstable pre-release) v3 build from the [releases](https://github.com/kyma-project/cli/releases) assets.
+Download the latest (stable or unstable pre-release) v3 build from the [releases](https://github.com/kyma-project/cli/releases) assets.
 
 To get the latest Kyma CLI for MacOS or Linux, run the following script from the command line:
 
