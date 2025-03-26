@@ -10,7 +10,7 @@ echo "creating tmp dir..."
 mkdir ${CLI_TMPDIR}
 cd ${CLI_TMPDIR}
 
-VERSION=$(curl -sL https://api.github.com/repos/kyma-project/cli/releases/latest | jq '.tag_name')
+VERSION=$(curl -sL https://api.github.com/repos/kyma-project/cli/releases/latest | jq -r '.tag_name')
 
 echo "downloading ${VERSION} release..."
 curl -sL "https://github.com/kyma-project/cli/releases/download/${VERSION}/kyma_$(uname -s)_$(uname -m).tar.gz" -o ${CLI_TMPDIR}/cli.tar.gz
