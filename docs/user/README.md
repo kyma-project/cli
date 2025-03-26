@@ -58,7 +58,7 @@ kyma
 
 > [!TIP]
 > Before you use Kyma CLI, we strongly recommend adding the autocomplete formula to your shell (`bash`, `fish`, `PowerShell`, or `zsh`)
-> Run the following command to import the Kyma CLI autocomplete formula for the `zsh` shell and enable autocomplete on the `tab` button hit:
+> Run the following command to import the Kyma CLI autocomplete formula for the `zsh` shell and enable autocomplete with the tab key hit:
 > `source <(kyma completion zsh)`
 
 - [Kyma CLI tutorials](tutorials/README.md)
