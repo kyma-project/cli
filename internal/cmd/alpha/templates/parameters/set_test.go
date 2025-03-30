@@ -141,7 +141,7 @@ func TestSet(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			u := &unstructured.Unstructured{Object: tt.args.obj}
-			err := Set(u, tt.args.values)
+			err := Set(u.Object, tt.args.values)
 			require.Equal(t, tt.wantErr, err)
 			require.Equal(t, tt.want, u.Object)
 		})

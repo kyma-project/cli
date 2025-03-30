@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-func Set(u *unstructured.Unstructured, values []Value) clierror.Error {
+func Set(obj map[string]interface{}, values []Value) clierror.Error {
 	for _, extraValue := range values {
 		value := extraValue.GetValue()
 		if value == nil {
@@ -27,7 +27,7 @@ func Set(u *unstructured.Unstructured, values []Value) clierror.Error {
 			))
 		}
 
-		err = mergeObjects(subObj, u.Object)
+		err = mergeObjects(subObj, obj)
 		if err != nil {
 			return clierror.Wrap(err, clierror.New(
 				fmt.Sprintf("failed to set value %v for path %s", value, extraValue.GetPath()),

@@ -92,7 +92,7 @@ func deleteResource(args *deleteArgs) clierror.Error {
 		return clierr
 	}
 
-	clierr = parameters.Set(u, args.extraValues)
+	clierr = parameters.Set(u.Object, args.extraValues)
 	if clierr != nil {
 		return clierr
 	}
