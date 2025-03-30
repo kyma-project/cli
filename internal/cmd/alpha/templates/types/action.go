@@ -1,5 +1,7 @@
 package types
 
+type ActionConfig = map[string]interface{}
+
 type ActionCommand struct {
 	// name of the command group
 	Name string `yaml:"name"`
@@ -17,5 +19,5 @@ type Action struct {
 	// custom flags used to build command and set values for specific fields
 	CustomFlags []CustomFlag `yaml:"customFlags"`
 	// additional config pass to the command
-	Config interface{} `yaml:"config"`
+	Config ActionConfig `yaml:"config"`
 }

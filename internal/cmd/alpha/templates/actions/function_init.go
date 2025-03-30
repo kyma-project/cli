@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
+	"github.com/kyma-project/cli.v3/internal/cmd/alpha/templates/types"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
@@ -28,7 +29,7 @@ type runtimeConfig struct {
 	HandlerData     string `yaml:"handlerData"`
 }
 
-func NewFunctionInit(_ *cmdcommon.KymaConfig, actionConfig any) (*cobra.Command, error) {
+func NewFunctionInit(_ *cmdcommon.KymaConfig, actionConfig types.ActionConfig) (*cobra.Command, error) {
 	cmd := &cobra.Command{
 		Run: func(cmd *cobra.Command, _ []string) {
 			cfg, clierr := parseActionConfig(actionConfig)
@@ -41,7 +42,7 @@ func NewFunctionInit(_ *cmdcommon.KymaConfig, actionConfig any) (*cobra.Command,
 	return cmd, nil
 }
 
-func parseActionConfig(actionConfig any) (*functionInitActionConfig, clierror.Error) {
+func parseActionConfig(actionConfig types.ActionConfig) (*functionInitActionConfig, clierror.Error) {
 	if actionConfig == nil {
 		return nil, clierror.New("empty config object")
 	}

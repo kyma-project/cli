@@ -10,8 +10,11 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/templates"
+	"github.com/kyma-project/cli.v3/internal/cmd/alpha/templates/parameters"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/templates/types"
+	"github.com/kyma-project/cli.v3/internal/cmdcommon/flags"
 	pkgerrors "github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
@@ -270,7 +273,7 @@ func addGenericCommands(cmd *cobra.Command, config *KymaConfig, extension *Exten
 	}
 }
 
-func addActionCommands(cmd *cobra.Command, config *KymaConfig, extensionActionCommands []types.ActionCommand, availableActionCommands ActionCommandsMap) error {
+func addActionCommands(parentCmd *cobra.Command, config *KymaConfig, extensionActionCommands []types.ActionCommand, availableActionCommands ActionCommandsMap) error {
 	var cmdErr error
 	for _, actionCommand := range extensionActionCommands {
 		newCmdFunc, ok := availableActionCommands[actionCommand.Action.FunctionID]
@@ -290,7 +293,27 @@ func addActionCommands(cmd *cobra.Command, config *KymaConfig, extensionActionCo
 		newCmd.Short = actionCommand.Description
 		newCmd.Long = actionCommand.DescriptionLong
 
-		cmd.AddCommand(newCmd)
+		extraValues := []parameters.Value{}
+		requiredFlags := []string{}
+		for _, flag := range actionCommand.Action.CustomFlags {
+			value := parameters.NewTyped(flag.Type, flag.Path, flag.DefaultValue)
+			newCmd.Flags().VarP(value, flag.Name, flag.Shorthand, flag.Description)
+			if flag.Required {
+				requiredFlags = append(requiredFlags, flag.Name)
+			}
+			extraValues = append(extraValues, value)
+		}
+
+		newCmd.PreRun = func(_ *cobra.Command, _ []string) {
+			// check required flags
+			clierror.Check(flags.Validate(newCmd.Flags(),
+				flags.MarkRequired(requiredFlags...),
+			))
+			// set parameters from flag
+			clierror.Check(parameters.Set(actionCommand.Action.Config, extraValues))
+		}
+
+		parentCmd.AddCommand(newCmd)
 	}
 
 	return cmdErr
