@@ -40,9 +40,9 @@ func buildCreateCommand(out io.Writer, clientGetter KubeClientGetter, options *C
 		Long:    options.DescriptionLong,
 		Example: buildCreateExample(options),
 		PreRun: func(cmd *cobra.Command, _ []string) {
-			flags.Validate(cmd.Flags(),
+			clierror.Check(flags.Validate(cmd.Flags(),
 				flags.MarkRequired(requiredFlags...),
-			)
+			))
 		},
 		Run: func(cmd *cobra.Command, _ []string) {
 			clierror.Check(createResource(&createArgs{
@@ -127,7 +127,7 @@ func createResource(args *createArgs) clierror.Error {
 		return clierr
 	}
 
-	clierr = parameters.Set(u, args.extraValues)
+	clierr = parameters.Set(u.Object, args.extraValues)
 	if clierr != nil {
 		return clierr
 	}
