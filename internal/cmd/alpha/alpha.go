@@ -2,7 +2,6 @@ package alpha
 
 import (
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/app"
-	"github.com/kyma-project/cli.v3/internal/cmd/alpha/function"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/hana"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/kubeconfig"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/module"
@@ -11,6 +10,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/registry/config"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/registry/imageimport"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/templates"
+	"github.com/kyma-project/cli.v3/internal/cmd/alpha/templates/actions"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/spf13/cobra"
 )
@@ -42,8 +42,10 @@ func NewAlphaCMD() *cobra.Command {
 		// map of available core commands
 		"registry_config":       config.NewConfigCMD,
 		"registry_image-import": imageimport.NewImportCMD,
-		"function_init":         function.NewInitCmd,
-	}, cmd)
+	}, cmdcommon.ActionCommandsMap{
+		"function_init": actions.NewFunctionInit,
+	},
+		cmd)
 
 	kymaConfig.DisplayExtensionsErrors(cmd.ErrOrStderr())
 
