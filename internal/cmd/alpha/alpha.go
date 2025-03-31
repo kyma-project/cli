@@ -36,7 +36,7 @@ func NewAlphaCMD() *cobra.Command {
 		Get:     templates.BuildGetCommand,
 		Create:  templates.BuildCreateCommand,
 		Delete:  templates.BuildDeleteCommand,
-	}, cmdcommon.CoreCommandsMap{}, cmdcommon.ActionCommandsMap{
+	}, cmdcommon.ActionCommandsMap{
 		"function_init":         actions.NewFunctionInit,
 		"registry_config":       actions.NewRegistryConfig,
 		"registry_image-import": actions.NewRegistryImageImport,

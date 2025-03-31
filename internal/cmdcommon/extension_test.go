@@ -247,10 +247,6 @@ create:
     default: "test-default2"
     required: false
 `,
-			ExtensionCoreCommandsKey: `
-- actionID: test-action-id-1
-- actionID: test-action-id-2
-`,
 		},
 	}
 }
@@ -314,14 +310,6 @@ func fixTestExtension(name string) ExtensionItem {
 							Required:     false,
 						},
 					},
-				},
-			},
-			CoreCommands: []CoreCommandInfo{
-				{
-					ActionID: "test-action-id-1",
-				},
-				{
-					ActionID: "test-action-id-2",
 				},
 			},
 		},

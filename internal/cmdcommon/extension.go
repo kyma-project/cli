@@ -53,7 +53,7 @@ func (kec *KymaExtensionsConfig) GetRawExtensions() ExtensionList {
 	return kec.extensions
 }
 
-func (kec *KymaExtensionsConfig) BuildExtensions(availableTemplateCommands *TemplateCommandsList, availableCoreCommands CoreCommandsMap, availableActionCommands ActionCommandsMap, cmd *cobra.Command) []*cobra.Command {
+func (kec *KymaExtensionsConfig) BuildExtensions(availableTemplateCommands *TemplateCommandsList, availableActionCommands ActionCommandsMap, cmd *cobra.Command) []*cobra.Command {
 	var cmds []*cobra.Command
 
 	existingCommands := make(map[string]bool)
@@ -72,15 +72,7 @@ func (kec *KymaExtensionsConfig) BuildExtensions(availableTemplateCommands *Temp
 			continue
 		}
 
-		extensionCommands, err := buildCommandFromExtension(kec.kymaConfig, &extension, availableTemplateCommands, availableCoreCommands, availableActionCommands)
-		if err != nil {
-			kec.parseErrors = errors.Join(
-				kec.parseErrors,
-				fmt.Errorf("failed to build extensions from configmap '%s/%s': %s",
-					extensionItem.ConfigMapNamespace, extensionItem.ConfigMapName, err.Error()),
-			)
-			continue
-		}
+		extensionCommands := buildCommandFromExtension(kec.kymaConfig, &extension, availableTemplateCommands, availableActionCommands)
 
 		cmds = append(cmds, extensionCommands)
 	}
@@ -176,11 +168,6 @@ func parseResourceExtension(cmData map[string]string) (*Extension, error) {
 		return nil, err
 	}
 
-	coreCommands, err := parseOptionalField[[]CoreCommandInfo](cmData, ExtensionCoreCommandsKey)
-	if err != nil {
-		return nil, err
-	}
-
 	actionCommands, err := parseOptionalField[[]types.ActionCommand](cmData, ExtensionActionCommandsKey)
 	if err != nil {
 		return nil, err
@@ -190,7 +177,6 @@ func parseResourceExtension(cmData map[string]string) (*Extension, error) {
 		RootCommand:      *rootCommand,
 		Resource:         resourceInfo,
 		TemplateCommands: genericCommands,
-		CoreCommands:     coreCommands,
 		ActionCommands:   actionCommands,
 	}, nil
 }
@@ -218,7 +204,7 @@ func parseOptionalField[T any](cmData map[string]string, cmKey string) (T, error
 	return data, err
 }
 
-func buildCommandFromExtension(config *KymaConfig, extension *Extension, availableTemplateCommands *TemplateCommandsList, availableCoreCommands CoreCommandsMap, availableActionCommands ActionCommandsMap) (*cobra.Command, error) {
+func buildCommandFromExtension(config *KymaConfig, extension *Extension, availableTemplateCommands *TemplateCommandsList, availableActionCommands ActionCommandsMap) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   fmt.Sprintf("%s <command> [flags]", extension.RootCommand.Name),
 		Short: extension.RootCommand.Description,
@@ -230,9 +216,8 @@ func buildCommandFromExtension(config *KymaConfig, extension *Extension, availab
 	}
 
 	addActionCommands(cmd, config, extension.ActionCommands, availableActionCommands)
-	err := addCoreCommands(cmd, config, extension.CoreCommands, availableCoreCommands)
 
-	return cmd, err
+	return cmd
 }
 
 func addGenericCommands(cmd *cobra.Command, config *KymaConfig, extension *Extension, availableTemplateCommands *TemplateCommandsList) {
@@ -312,28 +297,6 @@ func addActionCommands(parentCmd *cobra.Command, config *KymaConfig, extensionAc
 
 		parentCmd.AddCommand(newCmd)
 	}
-}
-
-func addCoreCommands(cmd *cobra.Command, config *KymaConfig, extensionCoreCommands []CoreCommandInfo, availableCoreCommands CoreCommandsMap) error {
-	var cmdErr error
-	for _, expectedCoreCommand := range extensionCoreCommands {
-		command, ok := availableCoreCommands[expectedCoreCommand.ActionID]
-		if !ok {
-			// commands doesn't exist in this version of cli and we will not process it
-			continue
-		}
-
-		coreCmd, err := command(config, expectedCoreCommand.Config)
-		if err != nil {
-			// add error and continue to check next commands
-			cmdErr = errors.Join(cmdErr, err)
-			continue
-		}
-
-		cmd.AddCommand(coreCmd)
-	}
-
-	return cmdErr
 }
 
 // search os.Args manually to find if user pass given flag and return its value
