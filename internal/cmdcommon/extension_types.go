@@ -14,10 +14,14 @@ const (
 	ExtensionRootCommandKey     = "rootCommand"
 	ExtensionGenericCommandsKey = "templateCommands"
 	ExtensionCoreCommandsKey    = "coreCommands"
+	ExtensionActionCommandsKey  = "actionCommands"
 )
 
 // map of allowed core commands in format ID: FUNC
 type CoreCommandsMap map[string]func(*KymaConfig, interface{}) (*cobra.Command, error)
+
+// map of allowed action commands in format ID: FUNC
+type ActionCommandsMap map[string]func(*KymaConfig, types.ActionConfig) (*cobra.Command, error)
 
 // allowed template commands
 type TemplateCommandsList struct {
@@ -55,7 +59,11 @@ type Extension struct {
 	TemplateCommands *TemplateCommands
 	// configuration of buildin commands (like 'registry config') which implementation is provided by cli
 	// use this command to enable feature for a module
+	// DEPRECATED: use actionCommands
 	CoreCommands []CoreCommandInfo
+	// configuration of buildin commands (like 'registry config') which implementation is provided by cli
+	// use this command to enable feature for a module
+	ActionCommands []types.ActionCommand
 }
 
 type TemplateCommands struct {
