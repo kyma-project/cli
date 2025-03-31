@@ -229,10 +229,10 @@ func buildCommandFromExtension(config *KymaConfig, extension *Extension, availab
 		addGenericCommands(cmd, config, extension, availableTemplateCommands)
 	}
 
-	actionCmdsErr := addActionCommands(cmd, config, extension.ActionCommands, availableActionCommands)
-	coreCmdsErr := addCoreCommands(cmd, config, extension.CoreCommands, availableCoreCommands)
+	addActionCommands(cmd, config, extension.ActionCommands, availableActionCommands)
+	err := addCoreCommands(cmd, config, extension.CoreCommands, availableCoreCommands)
 
-	return cmd, errors.Join(actionCmdsErr, coreCmdsErr)
+	return cmd, err
 }
 
 func addGenericCommands(cmd *cobra.Command, config *KymaConfig, extension *Extension, availableTemplateCommands *TemplateCommandsList) {
@@ -273,8 +273,7 @@ func addGenericCommands(cmd *cobra.Command, config *KymaConfig, extension *Exten
 	}
 }
 
-func addActionCommands(parentCmd *cobra.Command, config *KymaConfig, extensionActionCommands []types.ActionCommand, availableActionCommands ActionCommandsMap) error {
-	var cmdErr error
+func addActionCommands(parentCmd *cobra.Command, config *KymaConfig, extensionActionCommands []types.ActionCommand, availableActionCommands ActionCommandsMap) {
 	for _, actionCommand := range extensionActionCommands {
 		newCmdFunc, ok := availableActionCommands[actionCommand.Action.FunctionID]
 		if !ok {
@@ -282,13 +281,7 @@ func addActionCommands(parentCmd *cobra.Command, config *KymaConfig, extensionAc
 			continue
 		}
 
-		newCmd, err := newCmdFunc(config, actionCommand.Action.Config)
-		if err != nil {
-			// add error and continue to check next commands
-			cmdErr = errors.Join(cmdErr, err)
-			continue
-		}
-
+		newCmd := newCmdFunc(config, actionCommand.Action.Config)
 		newCmd.Use = actionCommand.Name
 		newCmd.Short = actionCommand.Description
 		newCmd.Long = actionCommand.DescriptionLong
@@ -297,7 +290,11 @@ func addActionCommands(parentCmd *cobra.Command, config *KymaConfig, extensionAc
 		requiredFlags := []string{}
 		for _, flag := range actionCommand.Action.CustomFlags {
 			value := parameters.NewTyped(flag.Type, flag.Path, flag.DefaultValue)
-			newCmd.Flags().VarP(value, flag.Name, flag.Shorthand, flag.Description)
+			cmdFlag := newCmd.Flags().VarPF(value, flag.Name, flag.Shorthand, flag.Description)
+			if flag.Type == types.BoolCustomFlagType {
+				// set default value for bool flag used without value (for example "--flag" instead of "--flag value")
+				cmdFlag.NoOptDefVal = "true"
+			}
 			if flag.Required {
 				requiredFlags = append(requiredFlags, flag.Name)
 			}
@@ -315,8 +312,6 @@ func addActionCommands(parentCmd *cobra.Command, config *KymaConfig, extensionAc
 
 		parentCmd.AddCommand(newCmd)
 	}
-
-	return cmdErr
 }
 
 func addCoreCommands(cmd *cobra.Command, config *KymaConfig, extensionCoreCommands []CoreCommandInfo, availableCoreCommands CoreCommandsMap) error {

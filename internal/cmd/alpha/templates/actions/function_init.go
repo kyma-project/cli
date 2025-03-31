@@ -13,7 +13,6 @@ import (
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/templates/types"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
 )
 
 type functionInitActionConfig struct {
@@ -29,36 +28,15 @@ type runtimeConfig struct {
 	HandlerData     string `yaml:"handlerData"`
 }
 
-func NewFunctionInit(_ *cmdcommon.KymaConfig, actionConfig types.ActionConfig) (*cobra.Command, error) {
-	cmd := &cobra.Command{
+func NewFunctionInit(_ *cmdcommon.KymaConfig, actionConfig types.ActionConfig) *cobra.Command {
+	return &cobra.Command{
 		Run: func(cmd *cobra.Command, _ []string) {
-			cfg, clierr := parseActionConfig(actionConfig)
-			clierror.Check(clierr)
+			cfg := functionInitActionConfig{}
+			clierror.Check(parseActionConfig(actionConfig, &cfg))
 			clierror.Check(validate(cfg.Runtimes, cfg.UseRuntime))
-			clierror.Check(runInit(cfg, cmd.OutOrStdout()))
+			clierror.Check(runInit(&cfg, cmd.OutOrStdout()))
 		},
 	}
-
-	return cmd, nil
-}
-
-func parseActionConfig(actionConfig types.ActionConfig) (*functionInitActionConfig, clierror.Error) {
-	if actionConfig == nil {
-		return nil, clierror.New("empty config object")
-	}
-
-	configBytes, err := yaml.Marshal(actionConfig)
-	if err != nil {
-		return nil, clierror.Wrap(err, clierror.New("failed to marshal config"))
-	}
-
-	actCfg := functionInitActionConfig{}
-	err = yaml.Unmarshal(configBytes, &actCfg)
-	if err != nil {
-		return nil, clierror.Wrap(err, clierror.New("failed to unmarshal config"))
-	}
-
-	return &actCfg, nil
 }
 
 func validate(runtimes map[string]runtimeConfig, runtime string) clierror.Error {
