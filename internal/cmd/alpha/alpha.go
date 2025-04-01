@@ -40,6 +40,10 @@ func NewAlphaCMD() *cobra.Command {
 		"function_init":         actions.NewFunctionInit,
 		"registry_config":       actions.NewRegistryConfig,
 		"registry_image-import": actions.NewRegistryImageImport,
+		"resource_create":       actions.NewResourceCreate,
+		"resource_get":          actions.NewResourceGet,
+		"resource_delete":       actions.NewResourceDelete,
+		"resource_explain":      actions.NewResourceExplain,
 	},
 		cmd)
 
