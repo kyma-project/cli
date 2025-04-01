@@ -1,74 +1,52 @@
-package imageimport
+package actions
 
 import (
 	"fmt"
 	"strings"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
+	"github.com/kyma-project/cli.v3/internal/cmd/alpha/templates/types"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/registry"
 	"github.com/spf13/cobra"
 )
 
-type provisionConfig struct {
-	*cmdcommon.KymaConfig
-
-	image string
-}
-
-func NewImportCMD(kymaConfig *cmdcommon.KymaConfig, _ interface{}) (*cobra.Command, error) {
-	config := provisionConfig{
-		KymaConfig: kymaConfig,
-	}
-
-	cmd := &cobra.Command{
-		Use:   "image-import <image> [flags]",
-		Short: "Import image to in-cluster registry",
-		Long:  `Import image from daemon to in-cluster registry.`,
-		Args:  cobra.ExactArgs(1),
-
-		PreRun: func(_ *cobra.Command, args []string) {
-			config.complete(args)
-			clierror.Check(config.validate())
-		},
-		Run: func(_ *cobra.Command, _ []string) {
-			clierror.Check(runImageImport(&config))
+func NewRegistryImageImport(kymaConfig *cmdcommon.KymaConfig, _ types.ActionConfig) *cobra.Command {
+	return &cobra.Command{
+		Args: cobra.ExactArgs(1),
+		Run: func(_ *cobra.Command, args []string) {
+			image := args[0]
+			clierror.Check(validateImage(image))
+			clierror.Check(runImageImport(kymaConfig, image))
 		},
 	}
-
-	return cmd, nil
 }
 
-func (pc *provisionConfig) validate() clierror.Error {
-	imageElems := strings.Split(pc.image, ":")
+func validateImage(image string) clierror.Error {
+	imageElems := strings.Split(image, ":")
 	if len(imageElems) != 2 {
-		return clierror.New(fmt.Sprintf("image '%s' not in expected format 'image:tag'", pc.image))
+		return clierror.New(fmt.Sprintf("image '%s' not in expected format 'image:tag'", image))
 	}
 
 	return nil
 }
 
-func (pc *provisionConfig) complete(args []string) {
-	pc.image = args[0]
-}
-
-func runImageImport(config *provisionConfig) clierror.Error {
-	client, err := config.GetKubeClientWithClierr()
+func runImageImport(kymaConfig *cmdcommon.KymaConfig, image string) clierror.Error {
+	client, err := kymaConfig.GetKubeClientWithClierr()
 	if err != nil {
 		return err
 	}
 
-	// TODO: Add "serverless is not installed" error message
-	registryConfig, err := registry.GetInternalConfig(config.Ctx, client)
+	registryConfig, err := registry.GetInternalConfig(kymaConfig.Ctx, client)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("Importing", config.image)
+	fmt.Println("Importing", image)
 
 	pushedImage, err := registry.ImportImage(
-		config.Ctx,
-		config.image,
+		kymaConfig.Ctx,
+		image,
 		registry.ImportOptions{
 			ClusterAPIRestConfig: client.RestConfig(),
 			RegistryAuth:         registry.NewBasicAuth(registryConfig.SecretData.Username, registryConfig.SecretData.Password),

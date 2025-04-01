@@ -16,6 +16,8 @@ func sanitizeDefaultValue(defaultValue interface{}) interface{} {
 		return value
 	case int:
 		return int64(value)
+	case bool:
+		return value
 	case string:
 		return value
 	case []byte:

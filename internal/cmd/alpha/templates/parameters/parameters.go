@@ -16,16 +16,44 @@ type Value interface {
 
 func NewTyped(paramType templates_types.CreateCustomFlagType, resourcepath string, defaultValue interface{}) Value {
 	switch paramType {
-	case templates_types.StringCustomFlagType:
-		return newStringValue(resourcepath, defaultValue)
 	case templates_types.PathCustomFlagType:
 		return newPathValue(resourcepath, defaultValue)
 	case templates_types.IntCustomFlagType:
 		return newInt64Value(resourcepath, defaultValue)
+	case templates_types.BoolCustomFlagType:
+		return newBoolValue(resourcepath, defaultValue)
 	default:
-		// flag type is not supported
+		return newStringValue(resourcepath, defaultValue)
+	}
+}
+
+type boolValue struct {
+	*cmdcommon_types.NullableBool
+	path string
+}
+
+func newBoolValue(path string, defaultValue interface{}) *boolValue {
+	value := cmdcommon_types.NullableBool{}
+	defaultBool, ok := sanitizeDefaultValue(defaultValue).(bool)
+	if ok {
+		value.Value = &defaultBool
+	}
+	return &boolValue{
+		NullableBool: &value,
+		path:         path,
+	}
+}
+
+func (v *boolValue) GetValue() interface{} {
+	if v.Value == nil {
 		return nil
 	}
+
+	return *v.Value
+}
+
+func (sv *boolValue) GetPath() string {
+	return sv.path
 }
 
 type int64Value struct {

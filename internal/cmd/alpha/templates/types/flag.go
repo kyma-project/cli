@@ -6,7 +6,8 @@ var (
 	StringCustomFlagType CreateCustomFlagType = "string"
 	PathCustomFlagType   CreateCustomFlagType = "path"
 	IntCustomFlagType    CreateCustomFlagType = "int64"
-	// TODO: support other types e.g. bool, float and stringArray
+	BoolCustomFlagType   CreateCustomFlagType = "bool"
+	// TODO: support other types e.g. float and stringArray
 )
 
 type CustomFlag struct {

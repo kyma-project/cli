@@ -7,8 +7,6 @@ import (
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/module"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/provision"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/referenceinstance"
-	"github.com/kyma-project/cli.v3/internal/cmd/alpha/registry/config"
-	"github.com/kyma-project/cli.v3/internal/cmd/alpha/registry/imageimport"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/templates"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/templates/actions"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
@@ -38,12 +36,10 @@ func NewAlphaCMD() *cobra.Command {
 		Get:     templates.BuildGetCommand,
 		Create:  templates.BuildCreateCommand,
 		Delete:  templates.BuildDeleteCommand,
-	}, cmdcommon.CoreCommandsMap{
-		// map of available core commands
-		"registry_config":       config.NewConfigCMD,
-		"registry_image-import": imageimport.NewImportCMD,
-	}, cmdcommon.ActionCommandsMap{
-		"function_init": actions.NewFunctionInit,
+	}, cmdcommon.CoreCommandsMap{}, cmdcommon.ActionCommandsMap{
+		"function_init":         actions.NewFunctionInit,
+		"registry_config":       actions.NewRegistryConfig,
+		"registry_image-import": actions.NewRegistryImageImport,
 	},
 		cmd)
 
