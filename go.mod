@@ -2,7 +2,7 @@ module github.com/kyma-project/cli.v3
 
 go 1.23.2
 
-toolchain go1.23.3
+toolchain go1.24.1
 
 require (
 	github.com/buildpacks/pack v0.36.4
@@ -20,7 +20,7 @@ require (
 	github.com/spf13/pflag v1.0.6
 	github.com/stretchr/testify v1.10.0
 	gopkg.in/yaml.v3 v3.0.1
-	istio.io/client-go v1.25.0
+	istio.io/client-go v1.25.1
 	k8s.io/api v0.32.2
 	k8s.io/apimachinery v0.32.2
 	k8s.io/client-go v0.32.2
@@ -184,7 +184,7 @@ require (
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gotest.tools/v3 v3.5.1 // indirect
-	istio.io/api v1.25.0-alpha.0.0.20250212060243-76cd29bc906f // indirect
+	istio.io/api v1.25.1-0.20250321204246-eb3f2673759c // indirect
 	k8s.io/apiextensions-apiserver v0.31.2 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20241105132330-32ad38e42d3f // indirect
