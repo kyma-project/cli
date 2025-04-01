@@ -6,8 +6,8 @@ toolchain go1.24.1
 
 require (
 	github.com/buildpacks/pack v0.37.0
-	github.com/docker/cli v27.5.1+incompatible
-	github.com/docker/docker v27.5.1+incompatible
+	github.com/docker/cli v28.0.4+incompatible
+	github.com/docker/docker v28.0.4+incompatible
 	github.com/gboddin/go-www-authenticate-parser v0.0.0-20230926203616-ec0b649bb077
 	github.com/go-test/deep v1.1.1
 	github.com/google/go-containerregistry v0.20.3
@@ -182,7 +182,6 @@ require (
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gotest.tools/v3 v3.5.1 // indirect
 	istio.io/api v1.25.1-0.20250321204246-eb3f2673759c // indirect
 	k8s.io/apiextensions-apiserver v0.31.2 // indirect
