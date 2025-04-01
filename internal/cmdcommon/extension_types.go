@@ -8,12 +8,14 @@ import (
 
 const (
 	ExtensionLabelKey           = "kyma-cli/extension"
+	ExtensionCommandsLabelValue = "commands"
 	ExtensionResourceLabelValue = "resource"
 
 	ExtensionResourceInfoKey    = "resource"
 	ExtensionRootCommandKey     = "rootCommand"
 	ExtensionGenericCommandsKey = "templateCommands"
 	ExtensionActionCommandsKey  = "actionCommands"
+	ExtensionCommandsKey        = "kyma-commands-extension.yaml"
 )
 
 // map of allowed action commands in format ID: FUNC
@@ -43,6 +45,69 @@ func (el *ExtensionList) ContainResource(kind string) bool {
 	}
 
 	return false
+}
+
+// TODO: add config validation
+
+type CommandConfig = map[string]interface{}
+
+type ConfigFieldType string
+
+var (
+	StringCustomFlagType ConfigFieldType = "string"
+	PathCustomFlagType   ConfigFieldType = "path"
+	IntCustomFlagType    ConfigFieldType = "int64"
+	BoolCustomFlagType   ConfigFieldType = "bool"
+	// TODO: support other types e.g. float and stringArray
+)
+
+type CommandMetadata struct {
+	// name of the command group
+	Name string `yaml:"name"`
+	// short description of the command group
+	Description string `yaml:"description"`
+	// long description of the command group
+	DescriptionLong string `yaml:"descriptionLong"`
+}
+
+type CommandArgs struct {
+	// type of the argument and config field
+	// TODO: support many args by adding new type, like `stringArray`
+	Type ConfigFieldType `yaml:"type"`
+	// mark if args are required to run command
+	Optional bool `yaml:"optional"`
+	// path to the config fild that will be updated with value from args
+	ConfigPath string `yaml:"configPath"`
+}
+
+type CommandFlags struct {
+	// type of the flag and config field
+	Type ConfigFieldType `yaml:"type"`
+	// name of the flag
+	Name string `yaml:"name"`
+	// description of the flag
+	Description string `yaml:"description"`
+	// optional shorthand of the flag
+	Shorthand string `yaml:"shorthand"`
+	// path to the config fild that will be updated with value from the flag
+	ConfigPath string `yaml:"configPath"`
+	// default value for the flag
+	DefaultValue interface{} `yaml:"default"`
+	// mark if flag is required
+	Required bool `yaml:"required"`
+}
+
+type CommandExtension struct {
+	// metadata (name, descriptions) for the command
+	Metadata CommandMetadata `yaml:"metadata"`
+	// id of the functionality that cli will run when user use this command
+	Uses string `yaml:"uses"`
+	// custom flags used to build command and set values for specific fields in config
+	Flags []CommandFlags `yaml:"flags"`
+	// additional config pass to the command
+	Config CommandConfig `yaml:"config"`
+	// list of sub commands
+	SubCommands []CommandExtension `yaml:"subCommands"`
 }
 
 type Extension struct {
