@@ -13,12 +13,8 @@ const (
 	ExtensionResourceInfoKey    = "resource"
 	ExtensionRootCommandKey     = "rootCommand"
 	ExtensionGenericCommandsKey = "templateCommands"
-	ExtensionCoreCommandsKey    = "coreCommands"
 	ExtensionActionCommandsKey  = "actionCommands"
 )
-
-// map of allowed core commands in format ID: FUNC
-type CoreCommandsMap map[string]func(*KymaConfig, interface{}) (*cobra.Command, error)
 
 // map of allowed action commands in format ID: FUNC
 type ActionCommandsMap map[string]func(*KymaConfig, types.ActionConfig) *cobra.Command
@@ -59,10 +55,6 @@ type Extension struct {
 	TemplateCommands *TemplateCommands
 	// configuration of buildin commands (like 'registry config') which implementation is provided by cli
 	// use this command to enable feature for a module
-	// DEPRECATED: use actionCommands
-	CoreCommands []CoreCommandInfo
-	// configuration of buildin commands (like 'registry config') which implementation is provided by cli
-	// use this command to enable feature for a module
 	ActionCommands []types.ActionCommand
 }
 
@@ -79,11 +71,4 @@ type TemplateCommands struct {
 	// allows to get resources based on the ResourceInfo structure
 	// kyma <root_command> get
 	GetCommand *types.GetCommand `yaml:"get"`
-}
-
-type CoreCommandInfo struct {
-	// id of the functionality that cli will run when user use this command
-	ActionID string `yaml:"actionID"`
-	// additional config pass to the command
-	Config interface{} `yaml:"config"`
 }
