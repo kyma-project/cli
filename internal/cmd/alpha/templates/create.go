@@ -10,7 +10,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/templates/parameters"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/templates/types"
-	"github.com/kyma-project/cli.v3/internal/cmdcommon/flags"
+	"github.com/kyma-project/cli.v3/internal/flags"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"

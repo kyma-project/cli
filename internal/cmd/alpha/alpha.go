@@ -21,7 +21,7 @@ func NewAlphaCMD() *cobra.Command {
 		DisableFlagsInUseLine: true,
 	}
 
-	kymaConfig := cmdcommon.NewKymaConfig(cmd)
+	kymaConfig := cmdcommon.NewKymaConfig()
 
 	cmd.AddCommand(app.NewAppCMD(kymaConfig))
 	cmd.AddCommand(hana.NewHanaCMD(kymaConfig))

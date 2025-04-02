@@ -9,7 +9,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/btp/auth"
 	"github.com/kyma-project/cli.v3/internal/btp/cis"
 	"github.com/kyma-project/cli.v3/internal/clierror"
-	"github.com/kyma-project/cli.v3/internal/cmdcommon/flags"
+	"github.com/kyma-project/cli.v3/internal/flags"
 	"github.com/spf13/cobra"
 )
 
