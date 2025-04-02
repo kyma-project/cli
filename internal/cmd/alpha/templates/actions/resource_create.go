@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
-	"github.com/kyma-project/cli.v3/internal/cmd/alpha/templates/types"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -14,7 +13,7 @@ type resourceCreateActionConfig struct {
 	Resource map[string]interface{} `yaml:"resource"`
 }
 
-func NewResourceCreate(kymaConfig *cmdcommon.KymaConfig, actionConfig types.ActionConfig) *cobra.Command {
+func NewResourceCreate(kymaConfig *cmdcommon.KymaConfig, actionConfig map[string]interface{}) *cobra.Command {
 	return &cobra.Command{
 		Run: func(cmd *cobra.Command, _ []string) {
 			cfg := resourceCreateActionConfig{}

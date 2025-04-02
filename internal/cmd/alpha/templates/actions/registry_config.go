@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
-	"github.com/kyma-project/cli.v3/internal/cmd/alpha/templates/types"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/registry"
@@ -20,7 +19,7 @@ type registryConfigActionConfig struct {
 	UseExternal     bool   `yaml:"useExternal"`
 }
 
-func NewRegistryConfig(kymaConfig *cmdcommon.KymaConfig, actionConfig types.ActionConfig) *cobra.Command {
+func NewRegistryConfig(kymaConfig *cmdcommon.KymaConfig, actionConfig map[string]interface{}) *cobra.Command {
 	return &cobra.Command{
 		Run: func(_ *cobra.Command, _ []string) {
 			cfg := registryConfigActionConfig{}

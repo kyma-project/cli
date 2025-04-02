@@ -5,13 +5,12 @@ import (
 	"strings"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
-	"github.com/kyma-project/cli.v3/internal/cmd/alpha/templates/types"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/registry"
 	"github.com/spf13/cobra"
 )
 
-func NewRegistryImageImport(kymaConfig *cmdcommon.KymaConfig, _ types.ActionConfig) *cobra.Command {
+func NewRegistryImageImport(kymaConfig *cmdcommon.KymaConfig, _ map[string]interface{}) *cobra.Command {
 	return &cobra.Command{
 		Args: cobra.ExactArgs(1),
 		Run: func(_ *cobra.Command, args []string) {
