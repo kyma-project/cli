@@ -176,6 +176,10 @@ func (v *fakeValue) GetPath() string {
 	return v.path
 }
 
+func (v *fakeValue) SetValue(_ string) error {
+	return nil
+}
+
 func (v *fakeValue) Set(_ string) error {
 	return nil
 }

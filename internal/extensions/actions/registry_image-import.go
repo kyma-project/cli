@@ -6,18 +6,21 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/extensions/types"
 	"github.com/kyma-project/cli.v3/internal/registry"
 	"github.com/spf13/cobra"
 )
 
-func NewRegistryImageImport(kymaConfig *cmdcommon.KymaConfig, _ map[string]interface{}) *cobra.Command {
-	return &cobra.Command{
-		Args: cobra.ExactArgs(1),
-		Run: func(_ *cobra.Command, args []string) {
-			image := args[0]
-			clierror.Check(validateImage(image))
-			clierror.Check(runImageImport(kymaConfig, image))
-		},
+type registryImageImportActionConfig struct {
+	Image string `yaml:"image"`
+}
+
+func NewRegistryImageImport(kymaConfig *cmdcommon.KymaConfig, actionConfig types.ActionConfig) types.CmdRun {
+	return func(_ *cobra.Command, args []string) {
+		cfg := registryImageImportActionConfig{}
+		clierror.Check(parseActionConfig(actionConfig, &cfg))
+		clierror.Check(validateImage(cfg.Image))
+		clierror.Check(runImageImport(kymaConfig, cfg.Image))
 	}
 }
 

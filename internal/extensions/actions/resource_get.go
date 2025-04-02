@@ -11,6 +11,7 @@ import (
 	"github.com/itchyny/gojq"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/extensions/types"
 	"github.com/kyma-project/cli.v3/internal/kube/rootlessdynamic"
 	"github.com/kyma-project/cli.v3/internal/render"
 	"github.com/spf13/cobra"
@@ -28,13 +29,11 @@ type resourceGetActionConfig struct {
 	OutputParameters  []outputParameter      `yaml:"outputParameters"`
 }
 
-func NewResourceGet(kymaConfig *cmdcommon.KymaConfig, actionConfig map[string]interface{}) *cobra.Command {
-	return &cobra.Command{
-		Run: func(cmd *cobra.Command, args []string) {
-			cfg := resourceGetActionConfig{}
-			clierror.Check(parseActionConfig(actionConfig, &cfg))
-			clierror.Check(getResources(kymaConfig, &cfg))
-		},
+func NewResourceGet(kymaConfig *cmdcommon.KymaConfig, actionConfig types.ActionConfig) types.CmdRun {
+	return func(cmd *cobra.Command, args []string) {
+		cfg := resourceGetActionConfig{}
+		clierror.Check(parseActionConfig(actionConfig, &cfg))
+		clierror.Check(getResources(kymaConfig, &cfg))
 	}
 }
 

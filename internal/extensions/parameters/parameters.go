@@ -8,11 +8,36 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/pkg/errors"
+	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
+type Value interface {
+	pflag.Value
+	SetValue(string) error
+	GetValue() interface{}
+	GetPath() string
+}
+
+func NewTyped(paramType ConfigFieldType, resourcepath string) Value {
+	switch paramType {
+	case PathCustomType:
+		return &pathValue{stringValue: stringValue{path: resourcepath}}
+	case IntCustomType:
+		return &int64Value{path: resourcepath}
+	case BoolCustomType:
+		return &boolValue{path: resourcepath}
+	default:
+		return &stringValue{path: resourcepath}
+	}
+}
+
 func Set(obj map[string]interface{}, values []Value) clierror.Error {
 	for _, extraValue := range values {
+		if extraValue == nil {
+			continue
+		}
+
 		value := extraValue.GetValue()
 		if value == nil {
 			// value is not set and has no default value
@@ -27,7 +52,7 @@ func Set(obj map[string]interface{}, values []Value) clierror.Error {
 			))
 		}
 
-		err = mergeObjects(subObj, obj)
+		err = MergeMaps(subObj, obj)
 		if err != nil {
 			return clierror.Wrap(err, clierror.New(
 				fmt.Sprintf("failed to set value %v for path %s", value, extraValue.GetPath()),
@@ -35,6 +60,39 @@ func Set(obj map[string]interface{}, values []Value) clierror.Error {
 		}
 	}
 
+	return nil
+}
+
+func MergeMaps(from map[string]interface{}, to map[string]interface{}) error {
+	for key, val := range from {
+		toVal, ok := to[key]
+		if !ok {
+			// key not found
+			// insert whole map
+			to[key] = val
+			return nil
+		}
+
+		err := hasSameTypes(val, toVal)
+		if err != nil {
+			// existing field in other type than expeced one
+			return errors.Wrapf(err, "fields have different types for key %s", key)
+		}
+
+		switch val.(type) {
+		case map[string]interface{}:
+			return MergeMaps(val.(map[string]interface{}), to[key].(map[string]interface{}))
+		case []interface{}:
+			var err error
+			to[key], err = mergeSlices(val.([]interface{}), to[key].([]interface{}))
+			return err
+		default:
+			// is simple type like int64, string, bool...
+			to[key] = val
+
+			return nil
+		}
+	}
 	return nil
 }
 
@@ -92,39 +150,6 @@ func trimSliceFieldSuffix(field string) string {
 	return field[:strings.Index(field, "[")]
 }
 
-func mergeObjects(from map[string]interface{}, to map[string]interface{}) error {
-	for key, val := range from {
-		toVal, ok := to[key]
-		if !ok {
-			// key not found
-			// insert whole map
-			to[key] = val
-			return nil
-		}
-
-		err := hasSameTypes(val, toVal)
-		if err != nil {
-			// existing field in other type than expeced one
-			return errors.Wrapf(err, "fields have different types for key %s", key)
-		}
-
-		switch val.(type) {
-		case map[string]interface{}:
-			return mergeObjects(val.(map[string]interface{}), to[key].(map[string]interface{}))
-		case []interface{}:
-			var err error
-			to[key], err = mergeSlices(val.([]interface{}), to[key].([]interface{}))
-			return err
-		default:
-			// is simple type like int64, string, bool...
-			to[key] = val
-
-			return nil
-		}
-	}
-	return nil
-}
-
 func mergeSlices(from, to []interface{}) ([]interface{}, error) {
 	dest := to
 	for i := range from {
@@ -137,7 +162,7 @@ func mergeSlices(from, to []interface{}) ([]interface{}, error) {
 		var err error
 		switch from[i].(type) {
 		case map[string]interface{}:
-			err = mergeObjects(from[i].(map[string]interface{}), dest[i].(map[string]interface{}))
+			err = MergeMaps(from[i].(map[string]interface{}), dest[i].(map[string]interface{}))
 		case []interface{}:
 			dest[i], err = mergeSlices(from[i].([]interface{}), dest[i].([]interface{}))
 		case nil:

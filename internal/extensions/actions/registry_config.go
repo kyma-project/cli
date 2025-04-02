@@ -7,6 +7,7 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/extensions/types"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/registry"
 	"github.com/spf13/cobra"
@@ -19,13 +20,11 @@ type registryConfigActionConfig struct {
 	UseExternal     bool   `yaml:"useExternal"`
 }
 
-func NewRegistryConfig(kymaConfig *cmdcommon.KymaConfig, actionConfig map[string]interface{}) *cobra.Command {
-	return &cobra.Command{
-		Run: func(_ *cobra.Command, _ []string) {
-			cfg := registryConfigActionConfig{}
-			clierror.Check(parseActionConfig(actionConfig, &cfg))
-			clierror.Check(runConfig(kymaConfig, &cfg))
-		},
+func NewRegistryConfig(kymaConfig *cmdcommon.KymaConfig, actionConfig types.ActionConfig) types.CmdRun {
+	return func(_ *cobra.Command, _ []string) {
+		cfg := registryConfigActionConfig{}
+		clierror.Check(parseActionConfig(actionConfig, &cfg))
+		clierror.Check(runConfig(kymaConfig, &cfg))
 	}
 }
 

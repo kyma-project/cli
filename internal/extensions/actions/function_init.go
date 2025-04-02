@@ -11,6 +11,7 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/extensions/types"
 	"github.com/spf13/cobra"
 )
 
@@ -27,14 +28,12 @@ type runtimeConfig struct {
 	HandlerData     string `yaml:"handlerData"`
 }
 
-func NewFunctionInit(_ *cmdcommon.KymaConfig, actionConfig map[string]interface{}) *cobra.Command {
-	return &cobra.Command{
-		Run: func(cmd *cobra.Command, _ []string) {
-			cfg := functionInitActionConfig{}
-			clierror.Check(parseActionConfig(actionConfig, &cfg))
-			clierror.Check(validate(cfg.Runtimes, cfg.UseRuntime))
-			clierror.Check(runInit(&cfg, cmd.OutOrStdout()))
-		},
+func NewFunctionInit(_ *cmdcommon.KymaConfig, actionConfig types.ActionConfig) types.CmdRun {
+	return func(cmd *cobra.Command, _ []string) {
+		cfg := functionInitActionConfig{}
+		clierror.Check(parseActionConfig(actionConfig, &cfg))
+		clierror.Check(validate(cfg.Runtimes, cfg.UseRuntime))
+		clierror.Check(runInit(&cfg, cmd.OutOrStdout()))
 	}
 }
 

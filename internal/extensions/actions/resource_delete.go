@@ -5,6 +5,7 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/extensions/types"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -13,16 +14,12 @@ type resourceDeleteActionConfig struct {
 	Resource map[string]interface{} `yaml:"resource"`
 }
 
-func NewResourceDelete(kymaConfig *cmdcommon.KymaConfig, actionConfig map[string]interface{}) *cobra.Command {
-	cmd := &cobra.Command{
-		Run: func(cmd *cobra.Command, args []string) {
-			cfg := resourceDeleteActionConfig{}
-			clierror.Check(parseActionConfig(actionConfig, &cfg))
-			clierror.Check(deleteResource(kymaConfig, &cfg))
-		},
+func NewResourceDelete(kymaConfig *cmdcommon.KymaConfig, actionConfig types.ActionConfig) types.CmdRun {
+	return func(cmd *cobra.Command, args []string) {
+		cfg := resourceDeleteActionConfig{}
+		clierror.Check(parseActionConfig(actionConfig, &cfg))
+		clierror.Check(deleteResource(kymaConfig, &cfg))
 	}
-
-	return cmd
 }
 
 func deleteResource(kymaConfig *cmdcommon.KymaConfig, cfg *resourceDeleteActionConfig) clierror.Error {
