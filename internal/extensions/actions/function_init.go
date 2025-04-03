@@ -2,7 +2,6 @@ package actions
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"path"
 	"path/filepath"
@@ -27,54 +26,60 @@ type runtimeConfig struct {
 	HandlerData     string `yaml:"handlerData"`
 }
 
-func NewFunctionInit(_ *cmdcommon.KymaConfig, actionConfig map[string]interface{}) *cobra.Command {
-	return &cobra.Command{
-		Run: func(cmd *cobra.Command, _ []string) {
-			cfg := functionInitActionConfig{}
-			clierror.Check(parseActionConfig(actionConfig, &cfg))
-			clierror.Check(validate(cfg.Runtimes, cfg.UseRuntime))
-			clierror.Check(runInit(&cfg, cmd.OutOrStdout()))
-		},
-	}
-}
-
-func validate(runtimes map[string]runtimeConfig, runtime string) clierror.Error {
-	if _, ok := runtimes[runtime]; !ok {
+func (c *functionInitActionConfig) validate() clierror.Error {
+	if _, ok := c.Runtimes[c.UseRuntime]; !ok {
 		return clierror.New(
-			fmt.Sprintf("unsupported runtime %s", runtime),
-			fmt.Sprintf("use on the allowed runtimes on this cluster [ %s ]", sortedRuntimesString(runtimes)),
+			fmt.Sprintf("unsupported runtime %s", c.UseRuntime),
+			fmt.Sprintf("use on the allowed runtimes on this cluster [ %s ]", sortedRuntimesString(c.Runtimes)),
 		)
+	}
+
+	if c.OutputDir == "" {
+		return clierror.New("empty output directory path")
 	}
 
 	return nil
 }
 
-func runInit(cfg *functionInitActionConfig, out io.Writer) clierror.Error {
-	runtimeCfg := cfg.Runtimes[cfg.UseRuntime]
+type functionInitAction struct {
+	configurator[functionInitActionConfig]
+}
 
-	handlerPath := path.Join(cfg.OutputDir, runtimeCfg.HandlerFilename)
+func NewFunctionInit(*cmdcommon.KymaConfig) Action {
+	return &functionInitAction{}
+}
+
+func (fi *functionInitAction) Run(cmd *cobra.Command, _ []string) clierror.Error {
+	clierr := fi.cfg.validate()
+	if clierr != nil {
+		return clierr
+	}
+
+	runtimeCfg := fi.cfg.Runtimes[fi.cfg.UseRuntime]
+	handlerPath := path.Join(fi.cfg.OutputDir, runtimeCfg.HandlerFilename)
 	err := os.WriteFile(handlerPath, []byte(runtimeCfg.HandlerData), os.ModePerm)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New(fmt.Sprintf("failed to write sources file to %s", handlerPath)))
 	}
 
-	depsPath := path.Join(cfg.OutputDir, runtimeCfg.DepsFilename)
+	depsPath := path.Join(fi.cfg.OutputDir, runtimeCfg.DepsFilename)
 	err = os.WriteFile(depsPath, []byte(runtimeCfg.DepsData), os.ModePerm)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New(fmt.Sprintf("failed to write deps file to %s", depsPath)))
 	}
 
-	outDir, err := filepath.Abs(cfg.OutputDir)
+	outDir, err := filepath.Abs(fi.cfg.OutputDir)
 	if err != nil {
 		// undexpected error, use realtive path
-		outDir = cfg.OutputDir
+		outDir = fi.cfg.OutputDir
 	}
 
-	fmt.Fprintf(out, "Functions files of runtime %s initialized to dir %s\n", cfg.UseRuntime, outDir)
+	out := cmd.OutOrStdout()
+	fmt.Fprintf(out, "Functions files of runtime %s initialized to dir %s\n", fi.cfg.UseRuntime, outDir)
 	fmt.Fprint(out, "\nNext steps:\n")
 	fmt.Fprint(out, "* update output files in your favorite IDE\n")
 	fmt.Fprintf(out, "* create Function, for example:\n")
-	fmt.Fprintf(out, "  kyma alpha function create %s --runtime %s --source %s --dependencies %s\n", cfg.UseRuntime, cfg.UseRuntime, handlerPath, depsPath)
+	fmt.Fprintf(out, "  kyma alpha function create %s --runtime %s --source %s --dependencies %s\n", fi.cfg.UseRuntime, fi.cfg.UseRuntime, handlerPath, depsPath)
 	return nil
 }
 
