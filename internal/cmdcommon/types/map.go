@@ -22,6 +22,10 @@ func (em *Map) String() string {
 }
 
 func (em *Map) Set(value string) error {
+	if value == "" {
+		return nil
+	}
+
 	elems := strings.Split(value, "=")
 	if len(elems) != 2 {
 		return fmt.Errorf("failed to parse value '%s', should be in format KEY=VALUE", value)

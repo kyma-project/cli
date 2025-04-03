@@ -14,7 +14,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/templates"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/templates/parameters"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/templates/types"
-	"github.com/kyma-project/cli.v3/internal/cmdcommon/flags"
+	"github.com/kyma-project/cli.v3/internal/flags"
 	pkgerrors "github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"

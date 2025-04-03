@@ -8,7 +8,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/btp/hana"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
-	"github.com/kyma-project/cli.v3/internal/cmdcommon/flags"
+	"github.com/kyma-project/cli.v3/internal/flags"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"

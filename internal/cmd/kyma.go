@@ -18,6 +18,7 @@ func NewKymaCMD() *cobra.Command {
 		SilenceUsage:  true,
 	}
 	cmdcommon.AddExtensionsFlags(cmd)
+	cmdcommon.AddCmdPersistentKubeconfigFlag(cmd)
 	cmd.PersistentFlags().BoolP("help", "h", false, "Help for the command")
 
 	alpha := alpha.NewAlphaCMD()

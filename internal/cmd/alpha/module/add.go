@@ -3,7 +3,7 @@ package module
 import (
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
-	"github.com/kyma-project/cli.v3/internal/cmdcommon/flags"
+	"github.com/kyma-project/cli.v3/internal/flags"
 	"github.com/kyma-project/cli.v3/internal/kube/resources"
 	"github.com/kyma-project/cli.v3/internal/modules"
 	"github.com/spf13/cobra"
