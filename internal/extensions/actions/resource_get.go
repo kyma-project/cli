@@ -4,7 +4,6 @@ import (
 	"cmp"
 	"fmt"
 	"io"
-	"os"
 	"slices"
 	"strings"
 
@@ -17,33 +16,35 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-type outputParameter struct {
-	Name         string `yaml:"name"`
-	ResourcePath string `yaml:"resourcePath"`
-}
-
 type resourceGetActionConfig struct {
 	FromAllNamespaces bool                   `yaml:"fromAllNamespaces"`
 	Resource          map[string]interface{} `yaml:"resource"`
 	OutputParameters  []outputParameter      `yaml:"outputParameters"`
 }
 
-func NewResourceGet(kymaConfig *cmdcommon.KymaConfig, actionConfig map[string]interface{}) *cobra.Command {
-	return &cobra.Command{
-		Run: func(cmd *cobra.Command, args []string) {
-			cfg := resourceGetActionConfig{}
-			clierror.Check(parseActionConfig(actionConfig, &cfg))
-			clierror.Check(getResources(kymaConfig, &cfg))
-		},
+type outputParameter struct {
+	Name         string `yaml:"name"`
+	ResourcePath string `yaml:"resourcePath"`
+}
+
+type resourceGetAction struct {
+	configurator[resourceGetActionConfig]
+
+	kymaConfig *cmdcommon.KymaConfig
+}
+
+func NewResourceGet(kymaConfig *cmdcommon.KymaConfig) Action {
+	return &resourceGetAction{
+		kymaConfig: kymaConfig,
 	}
 }
 
-func getResources(kymaConfig *cmdcommon.KymaConfig, cfg *resourceGetActionConfig) clierror.Error {
+func (a *resourceGetAction) Run(cmd *cobra.Command, _ []string) clierror.Error {
 	u := &unstructured.Unstructured{
-		Object: cfg.Resource,
+		Object: a.cfg.Resource,
 	}
 
-	client, clierr := kymaConfig.GetKubeClientWithClierr()
+	client, clierr := a.kymaConfig.GetKubeClientWithClierr()
 	if clierr != nil {
 		return clierr
 	}
@@ -54,16 +55,16 @@ func getResources(kymaConfig *cmdcommon.KymaConfig, cfg *resourceGetActionConfig
 		nameSelector = fmt.Sprintf("metadata.name==%s", u.GetName())
 	}
 
-	resources, err := client.RootlessDynamic().List(kymaConfig.Ctx, u, &rootlessdynamic.ListOptions{
-		AllNamespaces: cfg.FromAllNamespaces,
+	resources, err := client.RootlessDynamic().List(a.kymaConfig.Ctx, u, &rootlessdynamic.ListOptions{
+		AllNamespaces: a.cfg.FromAllNamespaces,
 		FieldSelector: nameSelector,
 	})
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to get resource"))
 	}
 
-	tableInfo := buildTableInfo(cfg)
-	renderTable(os.Stdout, resources.Items, tableInfo)
+	tableInfo := buildTableInfo(&a.cfg)
+	renderTable(cmd.OutOrStdout(), resources.Items, tableInfo)
 	return nil
 }
 
