@@ -4,14 +4,26 @@ import (
 	"os"
 
 	cmdcommon_types "github.com/kyma-project/cli.v3/internal/cmdcommon/types"
-	"github.com/spf13/pflag"
 )
 
-type Value interface {
-	pflag.Value
-	GetValue() interface{}
-	GetPath() string
-}
+type ConfigFieldType string
+
+const (
+	StringCustomType ConfigFieldType = "string"
+	PathCustomType   ConfigFieldType = "path"
+	IntCustomType    ConfigFieldType = "int"
+	BoolCustomType   ConfigFieldType = "bool"
+	// TODO: support other types e.g. float and stringArray
+)
+
+var (
+	ValidTypes = []ConfigFieldType{
+		StringCustomType,
+		PathCustomType,
+		IntCustomType,
+		BoolCustomType,
+	}
+)
 
 type boolValue struct {
 	cmdcommon_types.NullableBool
@@ -26,8 +38,12 @@ func (v *boolValue) GetValue() interface{} {
 	return *v.Value
 }
 
-func (sv *boolValue) GetPath() string {
-	return sv.path
+func (v *boolValue) GetPath() string {
+	return v.path
+}
+
+func (v *boolValue) SetValue(value string) error {
+	return v.Set(value)
 }
 
 type int64Value struct {
@@ -47,6 +63,10 @@ func (v *int64Value) GetPath() string {
 	return v.path
 }
 
+func (v *int64Value) SetValue(value string) error {
+	return v.Set(value)
+}
+
 type stringValue struct {
 	cmdcommon_types.NullableString
 	path string
@@ -64,6 +84,10 @@ func (sv *stringValue) GetPath() string {
 	return sv.path
 }
 
+func (sv *stringValue) SetValue(value string) error {
+	return sv.Set(value)
+}
+
 type pathValue struct {
 	stringValue
 }
@@ -74,5 +98,9 @@ func (pv *pathValue) Set(value string) error {
 		return err
 	}
 
-	return pv.stringValue.Set(string(bytes))
+	return pv.SetValue(string(bytes))
+}
+
+func (pv *pathValue) SetValue(value string) error {
+	return pv.stringValue.Set(value)
 }
