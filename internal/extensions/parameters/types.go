@@ -3,7 +3,7 @@ package parameters
 import (
 	"os"
 
-	cmdcommon_types "github.com/kyma-project/cli.v3/internal/cmdcommon/types"
+	cmdcommontypes "github.com/kyma-project/cli.v3/internal/cmdcommon/types"
 )
 
 type ConfigFieldType string
@@ -26,7 +26,7 @@ var (
 )
 
 type boolValue struct {
-	cmdcommon_types.NullableBool
+	cmdcommontypes.NullableBool
 	path string
 }
 
@@ -47,7 +47,7 @@ func (v *boolValue) SetValue(value string) error {
 }
 
 type int64Value struct {
-	cmdcommon_types.NullableInt64
+	cmdcommontypes.NullableInt64
 	path string
 }
 
@@ -68,7 +68,7 @@ func (v *int64Value) SetValue(value string) error {
 }
 
 type stringValue struct {
-	cmdcommon_types.NullableString
+	cmdcommontypes.NullableString
 	path string
 }
 

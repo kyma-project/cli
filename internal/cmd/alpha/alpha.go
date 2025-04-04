@@ -10,7 +10,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/extensions"
 	"github.com/kyma-project/cli.v3/internal/extensions/actions"
-	extensions_types "github.com/kyma-project/cli.v3/internal/extensions/types"
+	extensionstypes "github.com/kyma-project/cli.v3/internal/extensions/types"
 	"github.com/spf13/cobra"
 )
 
@@ -32,10 +32,10 @@ func NewAlphaCMD() *cobra.Command {
 	cmd.AddCommand(kubeconfig.NewKubeconfigCMD(kymaConfig))
 
 	builder := extensions.NewBuilder()
-	cmds := builder.Build(kymaConfig, extensions_types.ActionsMap{
+	cmds := builder.Build(kymaConfig, extensionstypes.ActionsMap{
 		"function_init":         actions.NewFunctionInit(kymaConfig),
 		"registry_config":       actions.NewRegistryConfig(kymaConfig),
-		"registry_image-import": actions.NewRegistryImageImport(kymaConfig),
+		"registry_image_import": actions.NewRegistryImageImport(kymaConfig),
 		"resource_create":       actions.NewResourceCreate(kymaConfig),
 		"resource_get":          actions.NewResourceGet(kymaConfig),
 		"resource_delete":       actions.NewResourceDelete(kymaConfig),
