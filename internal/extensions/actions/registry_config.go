@@ -7,6 +7,7 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/extensions/types"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/registry"
 	"github.com/spf13/cobra"
@@ -25,7 +26,7 @@ type registryConfigAction struct {
 	kymaConfig *cmdcommon.KymaConfig
 }
 
-func NewRegistryConfig(kymaConfig *cmdcommon.KymaConfig) Action {
+func NewRegistryConfig(kymaConfig *cmdcommon.KymaConfig) types.Action {
 	return &registryConfigAction{
 		kymaConfig: kymaConfig,
 	}

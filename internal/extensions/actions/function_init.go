@@ -10,6 +10,7 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/extensions/types"
 	"github.com/spf13/cobra"
 )
 
@@ -45,7 +46,7 @@ type functionInitAction struct {
 	configurator[functionInitActionConfig]
 }
 
-func NewFunctionInit(*cmdcommon.KymaConfig) Action {
+func NewFunctionInit(*cmdcommon.KymaConfig) types.Action {
 	return &functionInitAction{}
 }
 

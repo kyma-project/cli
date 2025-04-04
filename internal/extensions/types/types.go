@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/extensions/parameters"
 	"github.com/spf13/cobra"
 )
@@ -16,11 +16,13 @@ const (
 	ExtensionCMDataKey    = "kyma-commands.yaml"
 )
 
-// represents the *cobra.Command{}.Run() func type
-type CmdRun func(*cobra.Command, []string)
+type Action interface {
+	Configure(map[string]interface{}) clierror.Error
+	Run(*cobra.Command, []string) clierror.Error
+}
 
-// map of allowed action commands in format ID: FUNC
-type ActionsMap map[string]func(*cmdcommon.KymaConfig, ActionConfig) CmdRun
+// map of allowed action commands in format ID: ACTION
+type ActionsMap map[string]Action
 
 type ActionConfig = map[string]interface{}
 

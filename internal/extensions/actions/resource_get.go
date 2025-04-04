@@ -10,6 +10,7 @@ import (
 	"github.com/itchyny/gojq"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/extensions/types"
 	"github.com/kyma-project/cli.v3/internal/kube/rootlessdynamic"
 	"github.com/kyma-project/cli.v3/internal/render"
 	"github.com/spf13/cobra"
@@ -33,7 +34,7 @@ type resourceGetAction struct {
 	kymaConfig *cmdcommon.KymaConfig
 }
 
-func NewResourceGet(kymaConfig *cmdcommon.KymaConfig) Action {
+func NewResourceGet(kymaConfig *cmdcommon.KymaConfig) types.Action {
 	return &resourceGetAction{
 		kymaConfig: kymaConfig,
 	}
