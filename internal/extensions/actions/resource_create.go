@@ -5,6 +5,7 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/extensions/types"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -19,7 +20,7 @@ type resourceCreateAction struct {
 	kymaConfig *cmdcommon.KymaConfig
 }
 
-func NewResourceCreate(kymaConfig *cmdcommon.KymaConfig) Action {
+func NewResourceCreate(kymaConfig *cmdcommon.KymaConfig) types.Action {
 	return &resourceCreateAction{
 		kymaConfig: kymaConfig,
 	}

@@ -6,6 +6,7 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/extensions/types"
 	"github.com/kyma-project/cli.v3/internal/registry"
 	"github.com/spf13/cobra"
 )
@@ -29,7 +30,7 @@ type registryImageImportAction struct {
 	kymaConfig *cmdcommon.KymaConfig
 }
 
-func NewRegistryImageImport(kymaConfig *cmdcommon.KymaConfig) Action {
+func NewRegistryImageImport(kymaConfig *cmdcommon.KymaConfig) types.Action {
 	return &registryImageImportAction{
 		kymaConfig: kymaConfig,
 	}

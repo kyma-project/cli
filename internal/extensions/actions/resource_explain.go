@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
+	"github.com/kyma-project/cli.v3/internal/extensions/types"
 	"github.com/spf13/cobra"
 )
 
@@ -15,7 +16,7 @@ type resourceExplainAction struct {
 	configurator[resourceExplainActionConfig]
 }
 
-func NewResourceExplain() Action {
+func NewResourceExplain() types.Action {
 	return &resourceExplainAction{}
 }
 

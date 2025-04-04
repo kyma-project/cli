@@ -5,6 +5,7 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/extensions/types"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -19,7 +20,7 @@ type resourceDeleteAction struct {
 	kymaConfig *cmdcommon.KymaConfig
 }
 
-func NewResourceDelete(kymaConfig *cmdcommon.KymaConfig) Action {
+func NewResourceDelete(kymaConfig *cmdcommon.KymaConfig) types.Action {
 	return &resourceDeleteAction{
 		kymaConfig: kymaConfig,
 	}
