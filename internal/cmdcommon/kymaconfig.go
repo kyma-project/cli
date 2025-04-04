@@ -7,7 +7,6 @@ import (
 // KymaConfig contains data common for all subcommands
 type KymaConfig struct {
 	*KubeClientConfig
-	*KymaExtensionsConfig
 
 	Ctx context.Context
 }
@@ -18,7 +17,6 @@ func NewKymaConfig() *KymaConfig {
 	kymaConfig := &KymaConfig{}
 	kymaConfig.Ctx = ctx
 	kymaConfig.KubeClientConfig = newKubeClientConfig()
-	kymaConfig.KymaExtensionsConfig = newExtensionsConfig(kymaConfig)
 
 	return kymaConfig
 }

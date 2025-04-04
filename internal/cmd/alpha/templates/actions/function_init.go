@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
-	"github.com/kyma-project/cli.v3/internal/cmd/alpha/templates/types"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/spf13/cobra"
 )
@@ -28,7 +27,7 @@ type runtimeConfig struct {
 	HandlerData     string `yaml:"handlerData"`
 }
 
-func NewFunctionInit(_ *cmdcommon.KymaConfig, actionConfig types.ActionConfig) *cobra.Command {
+func NewFunctionInit(_ *cmdcommon.KymaConfig, actionConfig map[string]interface{}) *cobra.Command {
 	return &cobra.Command{
 		Run: func(cmd *cobra.Command, _ []string) {
 			cfg := functionInitActionConfig{}
