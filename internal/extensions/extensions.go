@@ -2,7 +2,6 @@ package extensions
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -11,8 +10,8 @@ import (
 	"strings"
 
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/extensions/errors"
 	"github.com/kyma-project/cli.v3/internal/extensions/types"
-	pkgerrors "github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 	v1 "k8s.io/api/core/v1"
@@ -20,7 +19,7 @@ import (
 )
 
 type KymaExtensionsConfig struct {
-	extensionsError error
+	extensionsErrors []error
 }
 
 func NewBuilder() *KymaExtensionsConfig {
@@ -39,30 +38,29 @@ func (kec *KymaExtensionsConfig) DisplayWarnings(warningWriter io.Writer) {
 		return
 	}
 
-	if kec.extensionsError != nil && getBoolFlagValue("--show-extensions-error") {
+	if len(kec.extensionsErrors) > 0 && getBoolFlagValue("--show-extensions-error") {
 		// print error as warning if expected and continue
-		fmt.Fprintf(warningWriter, "Extensions Warning:\n%s\n\n", kec.extensionsError.Error())
-	} else if kec.extensionsError != nil {
+		fmt.Fprintf(warningWriter, "Extensions Warning:\n%s\n\n", errors.NewList(kec.extensionsErrors...).Error())
+	} else if len(kec.extensionsErrors) > 0 {
 		fmt.Fprintf(warningWriter, "Extensions Warning:\nfailed to fetch all extensions from the cluster. Use the '--show-extensions-error' flag to see more details.\n\n")
 	}
 }
 
 // build extensions based on extensions configmaps from a cluster
 // any errors can be displayed by using the DisplayExtensionsErrors func
-func (kec *KymaExtensionsConfig) Build(kymaConfig *cmdcommon.KymaConfig, availableActions types.ActionsMap) []*cobra.Command {
+func (kec *KymaExtensionsConfig) Build(parentCmd *cobra.Command, kymaConfig *cmdcommon.KymaConfig, availableActions types.ActionsMap) {
 	if getBoolFlagValue("--skip-extensions") {
 		// skip extensions fetching
-		return nil
+		return
 	}
 
-	var configmapExtensions []types.ConfigmapCommandExtension
-	configmapExtensions, kec.extensionsError = loadCommandExtensionsFromCluster(kymaConfig.Ctx, kymaConfig.KubeClientConfig)
-	if kec.extensionsError != nil {
+	configmapExtensions, err := loadCommandExtensionsFromCluster(kymaConfig.Ctx, kymaConfig.KubeClientConfig)
+	if err != nil {
 		// set extensionsError and stop
-		return nil
+		kec.extensionsErrors = append(kec.extensionsErrors, err)
+		return
 	}
 
-	extensions := []*cobra.Command{}
 	for _, cmExt := range configmapExtensions {
 		// default
 		cmExt.Extension.Default()
@@ -70,27 +68,41 @@ func (kec *KymaExtensionsConfig) Build(kymaConfig *cmdcommon.KymaConfig, availab
 		// validate
 		err := cmExt.Extension.Validate(availableActions)
 		if err != nil {
-			kec.extensionsError = errors.Join(
-				kec.extensionsError,
-				pkgerrors.Wrapf(err, "failed to validate extension from configmap '%s/%s'", cmExt.ConfigMapName, cmExt.ConfigMapNamespace),
-			)
+			kec.extensionsErrors = append(kec.extensionsErrors,
+				errors.Wrapf(err, "failed to validate extension from configmap '%s/%s'", cmExt.ConfigMapNamespace, cmExt.ConfigMapName))
 			continue
 		}
 
 		// build final commands tree
 		command, err := buildCommand(kymaConfig, cmExt.Extension, availableActions)
 		if err != nil {
-			kec.extensionsError = errors.Join(
-				kec.extensionsError,
-				pkgerrors.Wrapf(err, "failed to build extension from configmap '%s/%s'", cmExt.ConfigMapName, cmExt.ConfigMapNamespace),
-			)
+			kec.extensionsErrors = append(kec.extensionsErrors,
+				errors.Wrapf(err, "failed to build extension from configmap '%s/%s'", cmExt.ConfigMapNamespace, cmExt.ConfigMapName))
 			continue
 		}
 
-		extensions = append(extensions, command)
+		// check command duplicates
+		if hasCommand(parentCmd, command) {
+			kec.extensionsErrors = append(kec.extensionsErrors,
+				errors.Newf("failed to add extension from configmap '%s/%s': base command with name='%s' already exists",
+					cmExt.ConfigMapNamespace, cmExt.ConfigMapName, command.Name()))
+			continue
+		}
+
+		// append extension command
+		parentCmd.AddCommand(command)
+	}
+}
+
+func hasCommand(base *cobra.Command, cmd *cobra.Command) bool {
+	cmds := base.Commands()
+	for i := range cmds {
+		if cmds[i].Name() == cmd.Name() {
+			return true
+		}
 	}
 
-	return extensions
+	return false
 }
 
 func loadCommandExtensionsFromCluster(ctx context.Context, clientConfig *cmdcommon.KubeClientConfig) ([]types.ConfigmapCommandExtension, error) {
@@ -100,25 +112,21 @@ func loadCommandExtensionsFromCluster(ctx context.Context, clientConfig *cmdcomm
 	}
 
 	extensions := []types.ConfigmapCommandExtension{}
-	var parseErrors error
+	var parseErrors []error
 	for _, cm := range cms.Items {
 		commandExtension, err := parseRequiredField[types.Extension](cm.Data, types.ExtensionCMDataKey)
 		if err != nil {
-			parseErrors = errors.Join(
-				parseErrors,
-				pkgerrors.Wrapf(err, "failed to parse configmap '%s/%s'", cm.GetNamespace(), cm.GetName()),
-			)
+			parseErrors = append(parseErrors,
+				errors.Wrapf(err, "failed to parse configmap '%s/%s'", cm.GetNamespace(), cm.GetName()))
 			continue
 		}
 
 		if slices.ContainsFunc(extensions, func(e types.ConfigmapCommandExtension) bool {
 			return e.Extension.Metadata.Name == commandExtension.Metadata.Name
 		}) {
-			parseErrors = errors.Join(
-				parseErrors,
-				fmt.Errorf("failed to validate configmap '%s/%s': extension with rootCommand.name='%s' already exists",
-					cm.GetNamespace(), cm.GetName(), commandExtension.Metadata.Name),
-			)
+			parseErrors = append(parseErrors,
+				errors.Newf("failed to validate configmap '%s/%s': extension with name='%s' already exists",
+					cm.GetNamespace(), cm.GetName(), commandExtension.Metadata.Name))
 			continue
 		}
 
@@ -129,7 +137,7 @@ func loadCommandExtensionsFromCluster(ctx context.Context, clientConfig *cmdcomm
 		})
 	}
 
-	return extensions, parseErrors
+	return extensions, errors.NewList(parseErrors...)
 }
 
 func listCommandExtenionConfigMaps(ctx context.Context, clientConfig *cmdcommon.KubeClientConfig) (*v1.ConfigMapList, error) {
@@ -143,7 +151,7 @@ func listCommandExtenionConfigMaps(ctx context.Context, clientConfig *cmdcommon.
 		LabelSelector: labelSelector,
 	})
 	if err != nil {
-		return nil, pkgerrors.Wrapf(err, "failed to load ConfigMaps from cluster with label %s", labelSelector)
+		return nil, errors.Wrapf(err, "failed to load ConfigMaps from cluster with label %s", labelSelector)
 	}
 
 	return cms, nil
@@ -152,7 +160,7 @@ func listCommandExtenionConfigMaps(ctx context.Context, clientConfig *cmdcommon.
 func parseRequiredField[T any](cmData map[string]string, cmKey string) (*T, error) {
 	dataBytes, ok := cmData[cmKey]
 	if !ok {
-		return nil, fmt.Errorf("missing .data.%s field", cmKey)
+		return nil, errors.Newf("missing .data.%s field", cmKey)
 	}
 
 	var data T

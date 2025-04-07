@@ -32,7 +32,7 @@ func NewAlphaCMD() *cobra.Command {
 	cmd.AddCommand(kubeconfig.NewKubeconfigCMD(kymaConfig))
 
 	builder := extensions.NewBuilder()
-	cmds := builder.Build(kymaConfig, extensionstypes.ActionsMap{
+	builder.Build(cmd, kymaConfig, extensionstypes.ActionsMap{
 		"function_init":         actions.NewFunctionInit(kymaConfig),
 		"registry_config":       actions.NewRegistryConfig(kymaConfig),
 		"registry_image_import": actions.NewRegistryImageImport(kymaConfig),
@@ -43,8 +43,6 @@ func NewAlphaCMD() *cobra.Command {
 	})
 
 	builder.DisplayWarnings(cmd.ErrOrStderr())
-
-	cmd.AddCommand(cmds...)
 
 	return cmd
 }
