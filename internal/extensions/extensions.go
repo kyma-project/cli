@@ -78,7 +78,7 @@ func (kec *KymaExtensionsConfig) Build(kymaConfig *cmdcommon.KymaConfig, availab
 		}
 
 		// build final commands tree
-		command, err := buildCommand(kymaConfig, cmExt.Extension, availableActions)
+		command, err := buildCommand(cmExt.Extension, availableActions)
 		if err != nil {
 			kec.extensionsError = errors.Join(
 				kec.extensionsError,
