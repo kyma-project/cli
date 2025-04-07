@@ -57,9 +57,9 @@ func TestExtension_Validate(t *testing.T) {
 		},
 		{
 			name: "validation error - broken flag",
-			wantErr: "wrong .uses: unsupported value 'wrong-action';\n" +
-				"wrong .flags: empty name, unknown type '', empty configPath;\n" +
-				"wrong .subCommands[0].metadata: empty name;\n" +
+			wantErr: "wrong .uses: unsupported value 'wrong-action'\n" +
+				"wrong .flags: empty name, unknown type '', empty configPath\n" +
+				"wrong .subCommands[0].metadata: empty name\n" +
 				"wrong .subCommands[0].subCommands[1].args: unknown type '', empty ConfigPath",
 			extension: Extension{
 				Metadata: Metadata{

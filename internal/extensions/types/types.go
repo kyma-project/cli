@@ -3,11 +3,10 @@ package types
 import (
 	"fmt"
 	"slices"
-	"strings"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
+	"github.com/kyma-project/cli.v3/internal/extensions/errors"
 	"github.com/kyma-project/cli.v3/internal/extensions/parameters"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -61,16 +60,17 @@ type Args struct {
 }
 
 func (a *Args) Validate() error {
-	var err error
+	var errs []error
 	if !slices.Contains(parameters.ValidTypes, a.Type) {
-		err = appendRulef(err, "unknown type '%s'", a.Type)
+		errs = append(errs,
+			errors.New(fmt.Sprintf("unknown type '%s'", a.Type)))
 	}
 
 	if a.ConfigPath == "" {
-		err = appendRulef(err, "empty ConfigPath")
+		errs = append(errs, errors.New("empty ConfigPath"))
 	}
 
-	return err
+	return errors.JoinWithSeparator(", ", errs...)
 }
 
 type Flag struct {
@@ -91,20 +91,20 @@ type Flag struct {
 }
 
 func (f *Flag) Validate() error {
-	var err error
+	var errs []error
 	if f.Name == "" {
-		err = appendRulef(err, "empty name")
+		errs = append(errs, errors.New("empty name"))
 	}
 
 	if !slices.Contains(parameters.ValidTypes, f.Type) {
-		err = appendRulef(err, "unknown type '%s'", f.Type)
+		errs = append(errs, errors.Newf("unknown type '%s'", f.Type))
 	}
 
 	if f.ConfigPath == "" {
-		err = appendRulef(err, "empty configPath")
+		errs = append(errs, errors.New("empty configPath"))
 	}
 
-	return err
+	return errors.JoinWithSeparator(", ", errs...)
 }
 
 type Extension struct {
@@ -140,22 +140,22 @@ func (e *Extension) Validate(availableActions ActionsMap) error {
 func (e *Extension) validateWithPath(path string, availableActions ActionsMap) error {
 	var errs []error
 	if _, ok := availableActions[e.Action]; e.Action != "" && !ok {
-		errs = append(errs, fmt.Errorf("wrong %suses: unsupported value '%s'", path, e.Action))
+		errs = append(errs, errors.Newf("wrong %suses: unsupported value '%s'", path, e.Action))
 	}
 
 	if metaErr := e.Metadata.Validate(); metaErr != nil {
-		errs = append(errs, fmt.Errorf("wrong %smetadata: %s", path, metaErr.Error()))
+		errs = append(errs, errors.Newf("wrong %smetadata: %s", path, metaErr.Error()))
 	}
 
 	if e.Args != nil {
 		if argsErr := e.Args.Validate(); argsErr != nil {
-			errs = append(errs, fmt.Errorf("wrong %sargs: %s", path, argsErr.Error()))
+			errs = append(errs, errors.Newf("wrong %sargs: %s", path, argsErr.Error()))
 		}
 	}
 
 	for i := range e.Flags {
 		if flagErr := e.Flags[i].Validate(); flagErr != nil {
-			errs = append(errs, fmt.Errorf("wrong %sflags: %s", path, flagErr))
+			errs = append(errs, errors.Newf("wrong %sflags: %s", path, flagErr))
 		}
 	}
 
@@ -166,29 +166,5 @@ func (e *Extension) validateWithPath(path string, availableActions ActionsMap) e
 		}
 	}
 
-	return joinErrors(errs...)
-}
-
-func appendRulef(base error, format string, args ...any) error {
-	return joinErrorsWithSeparator(", ", base, fmt.Errorf(format, args...))
-}
-
-func joinErrors(errs ...error) error {
-	return joinErrorsWithSeparator(";\n", errs...)
-}
-
-func joinErrorsWithSeparator(separator string, errs ...error) error {
-	errMsgs := []string{}
-	for i := range errs {
-		if errs[i] != nil {
-			errMsgs = append(errMsgs, errs[i].Error())
-		}
-	}
-
-	if len(errMsgs) == 0 {
-		// no valid error found
-		return nil
-	}
-
-	return errors.New(strings.Join(errMsgs, separator))
+	return errors.NewList(errs...)
 }
