@@ -1,8 +1,7 @@
 package extensions
 
 import (
-	"fmt"
-
+	"github.com/kyma-project/cli.v3/internal/extensions/errors"
 	"github.com/kyma-project/cli.v3/internal/extensions/parameters"
 	"github.com/kyma-project/cli.v3/internal/extensions/types"
 	"github.com/spf13/cobra"
@@ -32,7 +31,7 @@ func buildArgs(extensionArgs *types.Args) args {
 
 func setOptionalArg(value parameters.Value, args []string) error {
 	if len(args) > 1 {
-		return fmt.Errorf("accepts at most one argument, received %d", len(args))
+		return errors.Newf("accepts at most one argument, received %d", len(args))
 	}
 
 	if len(args) != 0 {
@@ -44,7 +43,7 @@ func setOptionalArg(value parameters.Value, args []string) error {
 
 func setRequiredArg(value parameters.Value, args []string) error {
 	if len(args) != 1 {
-		return fmt.Errorf("requires exactly one argument, received %d", len(args))
+		return errors.Newf("requires exactly one argument, received %d", len(args))
 	}
 
 	return value.Set(args[0])
