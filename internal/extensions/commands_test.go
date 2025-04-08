@@ -36,7 +36,7 @@ func Test_buildCommand(t *testing.T) {
 		cmd, err := buildCommand(fixTestExtension(), types.ActionsMap{
 			// no actions defined
 		})
-		require.ErrorContains(t, err, "failed to build command 'cmd2': \n"+
+		require.ErrorContains(t, err, "failed to build command 'cmd2':\n"+
 			"  action 'action1' not found")
 		require.NotNil(t, cmd)
 	})
@@ -61,9 +61,9 @@ func Test_buildCommand(t *testing.T) {
 			// no actions defined
 		})
 		require.ErrorContains(t, err,
-			"failed to build command 'cmd1': \n"+
+			"failed to build command 'cmd1':\n"+
 				"  action 'action2' not found\n"+
-				"failed to build command 'cmd2': \n"+
+				"failed to build command 'cmd2':\n"+
 				"  flag 'flag1' error: strconv.ParseBool: parsing \"WRONG VALUE\": invalid syntax\n"+
 				"  flag 'flag2' error: strconv.ParseInt: parsing \"WRONG VALUE\": invalid syntax\n"+
 				"  action 'action1' not found")
