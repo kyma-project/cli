@@ -39,7 +39,7 @@ func (l *ErrorList) Error() string {
 // use to wrap error with another, more detailed
 func Wrap(inner error, message string) error {
 	if isErrorList(inner) {
-		inner = addPrefix(inner)
+		return JoinWithSeparator(":", New(message), addPrefix(inner))
 	}
 
 	return JoinWithSeparator(": ", New(message), inner)
@@ -47,11 +47,7 @@ func Wrap(inner error, message string) error {
 
 // use to wrap error with another, more detailed with format
 func Wrapf(inner error, format string, args ...any) error {
-	if isErrorList(inner) {
-		inner = addPrefix(inner)
-	}
-
-	return JoinWithSeparator(": ", Newf(format, args...), inner)
+	return Wrap(inner, fmt.Sprintf(format, args...))
 }
 
 // use to join errors with given separator
