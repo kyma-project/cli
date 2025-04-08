@@ -1,19 +1,47 @@
 package extensions
 
 import (
-	"errors"
-	"fmt"
-
 	"github.com/kyma-project/cli.v3/internal/clierror"
-	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/extensions/errors"
 	"github.com/kyma-project/cli.v3/internal/extensions/parameters"
 	"github.com/kyma-project/cli.v3/internal/extensions/types"
 	"github.com/kyma-project/cli.v3/internal/flags"
 	"github.com/spf13/cobra"
 )
 
-func buildCommand(kymaConfig *cmdcommon.KymaConfig, extension types.Extension, availableActions types.ActionsMap) (*cobra.Command, error) {
-	var buildError error
+func buildCommand(extension types.Extension, availableActions types.ActionsMap) (*cobra.Command, error) {
+	var errs []error
+
+	// build command
+	cmd, err := buildSingleCommand(extension, availableActions)
+	if err != nil {
+		errs = append(errs, errors.Wrapf(err, "failed to build command '%s'", extension.Metadata.Name))
+	}
+
+	// build sub-commands
+	for _, subExtension := range extension.SubCommands {
+		subCmd, err := buildSubCommand(subExtension, availableActions, extension.Config)
+		if err != nil {
+			errs = append(errs, err)
+		}
+
+		cmd.AddCommand(subCmd)
+	}
+
+	return cmd, errors.NewList(errs...)
+}
+
+func buildSubCommand(subCommand types.Extension, availableActions types.ActionsMap, parentConfig types.ActionConfig) (*cobra.Command, error) {
+	err := parameters.MergeMaps(parentConfig, subCommand.Config)
+	if err != nil {
+		return nil, err
+	}
+
+	return buildCommand(subCommand, availableActions)
+}
+
+func buildSingleCommand(extension types.Extension, availableActions types.ActionsMap) (*cobra.Command, error) {
+	var errs []error
 
 	cmd := &cobra.Command{
 		Use:   extension.Metadata.Name,
@@ -21,37 +49,25 @@ func buildCommand(kymaConfig *cmdcommon.KymaConfig, extension types.Extension, a
 		Long:  extension.Metadata.DescriptionLong,
 	}
 
-	// build sub-commands
-	for _, subCommand := range extension.SubCommands {
-		subCmd, subErr := buildSubCommand(kymaConfig, subCommand, availableActions, extension.Config)
-		if subErr != nil {
-			buildError = errors.Join(buildError,
-				fmt.Errorf("failed to build sub-command '%s': %s", subCommand.Metadata.Name, subErr.Error()))
-		}
-
-		cmd.AddCommand(subCmd)
-	}
-
 	if extension.Action == "" {
-		return cmd, buildError
+		return cmd, errors.NewList(errs...)
 	}
 
 	// set flags
 	values := []parameters.Value{}
 	requiredFlags := []string{}
 	for _, extensionFlag := range extension.Flags {
-		flag := buildFlag(extensionFlag)
-		if flag.warning != nil {
-			buildError = errors.Join(buildError,
-				fmt.Errorf("failed to build flag '%s' for '%s' command: %s", extensionFlag.Name, extension.Metadata.Name, flag.warning.Error()))
+		cmdFlag := buildFlag(extensionFlag)
+		if cmdFlag.warning != nil {
+			errs = append(errs, errors.Newf("flag '%s' error: %s", extensionFlag.Name, cmdFlag.warning.Error()))
 		}
 
 		if extensionFlag.Required {
 			requiredFlags = append(requiredFlags, extensionFlag.Name)
 		}
 
-		cmd.Flags().AddFlag(flag.pflag)
-		values = append(values, flag.value)
+		cmd.Flags().AddFlag(cmdFlag.pflag)
+		values = append(values, cmdFlag.value)
 	}
 
 	// set args
@@ -63,7 +79,8 @@ func buildCommand(kymaConfig *cmdcommon.KymaConfig, extension types.Extension, a
 	action, ok := availableActions[extension.Action]
 	if !ok {
 		// unexpected behavior because actions list is validated and should be filled only with available data
-		return cmd, buildError
+		errs = append(errs, errors.Newf("action '%s' not found", extension.Action))
+		return cmd, errors.NewList(errs...)
 	}
 
 	cmd.PreRun = func(_ *cobra.Command, _ []string) {
@@ -83,14 +100,5 @@ func buildCommand(kymaConfig *cmdcommon.KymaConfig, extension types.Extension, a
 		clierror.Check(action.Run(cmd, args))
 	}
 
-	return cmd, buildError
-}
-
-func buildSubCommand(kymaConfig *cmdcommon.KymaConfig, subCommand types.Extension, availableActions types.ActionsMap, parentConfig types.ActionConfig) (*cobra.Command, error) {
-	err := parameters.MergeMaps(parentConfig, subCommand.Config)
-	if err != nil {
-		return nil, err
-	}
-
-	return buildCommand(kymaConfig, subCommand, availableActions)
+	return cmd, errors.NewList(errs...)
 }

@@ -74,7 +74,7 @@ func (kec *KymaExtensionsConfig) Build(parentCmd *cobra.Command, kymaConfig *cmd
 		}
 
 		// build final commands tree
-		command, err := buildCommand(kymaConfig, cmExt.Extension, availableActions)
+		command, err := buildCommand(cmExt.Extension, availableActions)
 		if err != nil {
 			kec.extensionsErrors = append(kec.extensionsErrors,
 				errors.Wrapf(err, "failed to build extension from configmap '%s/%s'", cmExt.ConfigMapNamespace, cmExt.ConfigMapName))
