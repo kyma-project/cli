@@ -31,8 +31,8 @@ func NewAlphaCMD() *cobra.Command {
 	cmd.AddCommand(referenceinstance.NewReferenceInstanceCMD(kymaConfig))
 	cmd.AddCommand(kubeconfig.NewKubeconfigCMD(kymaConfig))
 
-	builder := extensions.NewBuilder()
-	builder.Build(cmd, kymaConfig, extensionstypes.ActionsMap{
+	builder := extensions.NewBuilder(kymaConfig)
+	builder.Build(cmd, extensionstypes.ActionsMap{
 		"function_init":         actions.NewFunctionInit(kymaConfig),
 		"registry_config":       actions.NewRegistryConfig(kymaConfig),
 		"registry_image_import": actions.NewRegistryImageImport(kymaConfig),
@@ -41,7 +41,6 @@ func NewAlphaCMD() *cobra.Command {
 		"resource_delete":       actions.NewResourceDelete(kymaConfig),
 		"resource_explain":      actions.NewResourceExplain(),
 	})
-
 	builder.DisplayWarnings(cmd.ErrOrStderr())
 
 	return cmd

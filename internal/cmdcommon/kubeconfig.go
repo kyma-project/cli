@@ -9,14 +9,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type KubeClientConfig interface {
+	GetKubeClient() (kube.Client, error)
+	GetKubeClientWithClierr() (kube.Client, clierror.Error)
+}
+
 // KubeClientConfig allows to setup kubeconfig flag and use it to create kube.Client
-type KubeClientConfig struct {
+type kubeClientConfig struct {
 	kubeClient    kube.Client
 	kubeClientErr error
 }
 
-func newKubeClientConfig() *KubeClientConfig {
-	cfg := &KubeClientConfig{}
+func newKubeClientConfig() KubeClientConfig {
+	cfg := &kubeClientConfig{}
 	cfg.complete()
 
 	return cfg
@@ -27,11 +32,11 @@ func AddCmdPersistentKubeconfigFlag(cmd *cobra.Command) {
 	_ = cmd.PersistentFlags().String("kubeconfig", "", "Path to the Kyma kubeconfig file")
 }
 
-func (kcc *KubeClientConfig) GetKubeClient() (kube.Client, error) {
+func (kcc *kubeClientConfig) GetKubeClient() (kube.Client, error) {
 	return kcc.kubeClient, kcc.kubeClientErr
 }
 
-func (kcc *KubeClientConfig) GetKubeClientWithClierr() (kube.Client, clierror.Error) {
+func (kcc *kubeClientConfig) GetKubeClientWithClierr() (kube.Client, clierror.Error) {
 	if kcc.kubeClientErr != nil {
 		return nil, clierror.Wrap(kcc.kubeClientErr,
 			clierror.New("failed to create cluster connection", "Make sure that kubeconfig is proper."),
@@ -41,7 +46,7 @@ func (kcc *KubeClientConfig) GetKubeClientWithClierr() (kube.Client, clierror.Er
 	return kcc.kubeClient, nil
 }
 
-func (kcc *KubeClientConfig) complete() {
+func (kcc *kubeClientConfig) complete() {
 	kubeconfigPath := getKubeconfigPath()
 
 	kcc.kubeClient, kcc.kubeClientErr = kube.NewClient(kubeconfigPath)

@@ -6,7 +6,7 @@ import (
 
 // KymaConfig contains data common for all subcommands
 type KymaConfig struct {
-	*KubeClientConfig
+	KubeClientConfig
 
 	Ctx context.Context
 }
