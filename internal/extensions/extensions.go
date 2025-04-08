@@ -18,12 +18,26 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type KymaExtensionsConfig struct {
+type Builder struct {
+	extensions       []types.ConfigmapCommandExtension
 	extensionsErrors []error
 }
 
-func NewBuilder() *KymaExtensionsConfig {
-	return &KymaExtensionsConfig{}
+func NewBuilder(kymaConfig *cmdcommon.KymaConfig) *Builder {
+	config := &Builder{}
+
+	if getBoolFlagValue("--skip-extensions") {
+		// skip extensions fetching
+		return config
+	}
+
+	var err error
+	config.extensions, err = loadCommandExtensionsFromCluster(kymaConfig.Ctx, kymaConfig.KubeClientConfig)
+	if err != nil {
+		config.extensionsErrors = append(config.extensionsErrors, err)
+	}
+
+	return config
 }
 
 func AddCmdPersistentFlags(cmd *cobra.Command) {
@@ -32,43 +46,31 @@ func AddCmdPersistentFlags(cmd *cobra.Command) {
 	_ = cmd.PersistentFlags().Bool("show-extensions-error", false, "Prints a possible error when fetching extensions fails")
 }
 
-func (kec *KymaExtensionsConfig) DisplayWarnings(warningWriter io.Writer) {
+func (b *Builder) DisplayWarnings(warningWriter io.Writer) {
 	if isSubRootCommandUsed("help", "completion", "version") {
 		// skip if one of restricted flags is used
 		return
 	}
 
-	if len(kec.extensionsErrors) > 0 && getBoolFlagValue("--show-extensions-error") {
+	if len(b.extensionsErrors) > 0 && getBoolFlagValue("--show-extensions-error") {
 		// print error as warning if expected and continue
-		fmt.Fprintf(warningWriter, "Extensions Warning:\n%s\n\n", errors.NewList(kec.extensionsErrors...).Error())
-	} else if len(kec.extensionsErrors) > 0 {
+		fmt.Fprintf(warningWriter, "Extensions Warning:\n%s\n\n", errors.NewList(b.extensionsErrors...).Error())
+	} else if len(b.extensionsErrors) > 0 {
 		fmt.Fprintf(warningWriter, "Extensions Warning:\nfailed to fetch all extensions from the cluster. Use the '--show-extensions-error' flag to see more details.\n\n")
 	}
 }
 
 // build extensions based on extensions configmaps from a cluster
 // any errors can be displayed by using the DisplayExtensionsErrors func
-func (kec *KymaExtensionsConfig) Build(parentCmd *cobra.Command, kymaConfig *cmdcommon.KymaConfig, availableActions types.ActionsMap) {
-	if getBoolFlagValue("--skip-extensions") {
-		// skip extensions fetching
-		return
-	}
-
-	configmapExtensions, err := loadCommandExtensionsFromCluster(kymaConfig.Ctx, kymaConfig.KubeClientConfig)
-	if err != nil {
-		// set extensionsError and stop
-		kec.extensionsErrors = append(kec.extensionsErrors, err)
-		return
-	}
-
-	for _, cmExt := range configmapExtensions {
+func (b *Builder) Build(parentCmd *cobra.Command, availableActions types.ActionsMap) {
+	for _, cmExt := range b.extensions {
 		// default
 		cmExt.Extension.Default()
 
 		// validate
 		err := cmExt.Extension.Validate(availableActions)
 		if err != nil {
-			kec.extensionsErrors = append(kec.extensionsErrors,
+			b.extensionsErrors = append(b.extensionsErrors,
 				errors.Wrapf(err, "failed to validate extension from configmap '%s/%s'", cmExt.ConfigMapNamespace, cmExt.ConfigMapName))
 			continue
 		}
@@ -76,15 +78,15 @@ func (kec *KymaExtensionsConfig) Build(parentCmd *cobra.Command, kymaConfig *cmd
 		// build final commands tree
 		command, err := buildCommand(cmExt.Extension, availableActions)
 		if err != nil {
-			kec.extensionsErrors = append(kec.extensionsErrors,
+			b.extensionsErrors = append(b.extensionsErrors,
 				errors.Wrapf(err, "failed to build extension from configmap '%s/%s'", cmExt.ConfigMapNamespace, cmExt.ConfigMapName))
 			continue
 		}
 
 		// check command duplicates
 		if hasCommand(parentCmd, command) {
-			kec.extensionsErrors = append(kec.extensionsErrors,
-				errors.Newf("failed to add extension from configmap '%s/%s': base command with name='%s' already exists",
+			b.extensionsErrors = append(b.extensionsErrors,
+				errors.Newf("failed to add extension from configmap '%s/%s': base command with name '%s' already exists",
 					cmExt.ConfigMapNamespace, cmExt.ConfigMapName, command.Name()))
 			continue
 		}
@@ -105,7 +107,7 @@ func hasCommand(base *cobra.Command, cmd *cobra.Command) bool {
 	return false
 }
 
-func loadCommandExtensionsFromCluster(ctx context.Context, clientConfig *cmdcommon.KubeClientConfig) ([]types.ConfigmapCommandExtension, error) {
+func loadCommandExtensionsFromCluster(ctx context.Context, clientConfig cmdcommon.KubeClientConfig) ([]types.ConfigmapCommandExtension, error) {
 	var cms, cmsError = listCommandExtenionConfigMaps(ctx, clientConfig)
 	if cmsError != nil {
 		return nil, cmsError
@@ -125,7 +127,7 @@ func loadCommandExtensionsFromCluster(ctx context.Context, clientConfig *cmdcomm
 			return e.Extension.Metadata.Name == commandExtension.Metadata.Name
 		}) {
 			parseErrors = append(parseErrors,
-				errors.Newf("failed to validate configmap '%s/%s': extension with name='%s' already exists",
+				errors.Newf("failed to validate configmap '%s/%s': extension with name '%s' already exists",
 					cm.GetNamespace(), cm.GetName(), commandExtension.Metadata.Name))
 			continue
 		}
@@ -140,7 +142,7 @@ func loadCommandExtensionsFromCluster(ctx context.Context, clientConfig *cmdcomm
 	return extensions, errors.NewList(parseErrors...)
 }
 
-func listCommandExtenionConfigMaps(ctx context.Context, clientConfig *cmdcommon.KubeClientConfig) (*v1.ConfigMapList, error) {
+func listCommandExtenionConfigMaps(ctx context.Context, clientConfig cmdcommon.KubeClientConfig) (*v1.ConfigMapList, error) {
 	client, clientErr := clientConfig.GetKubeClient()
 	if clientErr != nil {
 		return nil, clientErr
