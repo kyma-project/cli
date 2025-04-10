@@ -17,7 +17,7 @@ func buildArgs(extensionArgs *types.Args) args {
 		return args{}
 	}
 
-	value := parameters.NewTyped(extensionArgs.Type, extensionArgs.ConfigPath)
+	value := parameters.NewTyped(extensionArgs.Type, ".args")
 	return args{
 		value: value,
 		run: func(_ *cobra.Command, args []string) error {

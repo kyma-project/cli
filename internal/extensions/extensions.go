@@ -64,9 +64,6 @@ func (b *Builder) DisplayWarnings(warningWriter io.Writer) {
 // any errors can be displayed by using the DisplayExtensionsErrors func
 func (b *Builder) Build(parentCmd *cobra.Command, availableActions types.ActionsMap) {
 	for _, cmExt := range b.extensions {
-		// default
-		cmExt.Extension.Default()
-
 		// validate
 		err := cmExt.Extension.Validate(availableActions)
 		if err != nil {

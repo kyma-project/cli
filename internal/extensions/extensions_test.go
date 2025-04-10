@@ -22,7 +22,7 @@ import (
 
 const (
 	testExtensionString = `
-with:
+with: |-
   resource:
     apiVersion: v1
     kind: ConfigMap
@@ -34,22 +34,17 @@ subCommands:
 - metadata:
     name: create
   uses: action-1
-  with: {}
 - metadata:
     name: delete
   uses: action-2
-  with: {}
 `
 )
 
 var (
 	testExtension = types.Extension{
-		Config: map[string]interface{}{
-			"resource": map[string]interface{}{
-				"apiVersion": "v1",
-				"kind":       "ConfigMap",
-			},
-		},
+		ConfigTmpl: `resource:
+  apiVersion: v1
+  kind: ConfigMap`,
 		Metadata: types.Metadata{
 			Name:            "resource",
 			Description:     "manage resources",
@@ -57,14 +52,14 @@ var (
 		},
 		SubCommands: []types.Extension{
 			{
-				Config: map[string]interface{}{},
+				ConfigTmpl: "",
 				Metadata: types.Metadata{
 					Name: "create",
 				},
 				Action: "action-1",
 			},
 			{
-				Config: map[string]interface{}{},
+				ConfigTmpl: "",
 				Metadata: types.Metadata{
 					Name: "delete",
 				},
@@ -324,7 +319,6 @@ func Test_Build(t *testing.T) {
 						Flags: []types.Flag{
 							{
 								Name:         "test-flag",
-								ConfigPath:   ".test",
 								Type:         parameters.IntCustomType,
 								DefaultValue: "WRONG VALUE",
 							},

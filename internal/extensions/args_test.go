@@ -16,22 +16,21 @@ func Test_buildArgs(t *testing.T) {
 
 	t.Run("set arg value", func(t *testing.T) {
 		testArgs := buildArgs(&types.Args{
-			Type:       parameters.StringCustomType,
-			Optional:   false,
-			ConfigPath: ".test",
+			Type:     parameters.StringCustomType,
+			Optional: false,
 		})
 
 		err := testArgs.run(&cobra.Command{}, []string{"test"})
 
 		require.NoError(t, err)
 		require.Equal(t, "test", testArgs.value.GetValue())
+		require.Equal(t, ".args", testArgs.value.GetPath())
 	})
 
 	t.Run("too many given args", func(t *testing.T) {
 		testArgs := buildArgs(&types.Args{
-			Type:       parameters.StringCustomType,
-			Optional:   false,
-			ConfigPath: ".test",
+			Type:     parameters.StringCustomType,
+			Optional: false,
 		})
 
 		err := testArgs.run(&cobra.Command{}, []string{"test", "another, not expected arg"})
@@ -41,9 +40,8 @@ func Test_buildArgs(t *testing.T) {
 
 	t.Run("not enough args", func(t *testing.T) {
 		testArgs := buildArgs(&types.Args{
-			Type:       parameters.IntCustomType,
-			Optional:   false,
-			ConfigPath: ".test",
+			Type:     parameters.IntCustomType,
+			Optional: false,
 		})
 
 		err := testArgs.run(&cobra.Command{}, []string{})
@@ -53,9 +51,8 @@ func Test_buildArgs(t *testing.T) {
 
 	t.Run("wrong arg type", func(t *testing.T) {
 		testArgs := buildArgs(&types.Args{
-			Type:       parameters.IntCustomType,
-			Optional:   false,
-			ConfigPath: ".test",
+			Type:     parameters.IntCustomType,
+			Optional: false,
 		})
 
 		err := testArgs.run(&cobra.Command{}, []string{"WRONG TYPE"})
@@ -65,9 +62,8 @@ func Test_buildArgs(t *testing.T) {
 
 	t.Run("optional args with no given values", func(t *testing.T) {
 		testArgs := buildArgs(&types.Args{
-			Type:       parameters.IntCustomType,
-			Optional:   true,
-			ConfigPath: ".test",
+			Type:     parameters.IntCustomType,
+			Optional: true,
 		})
 
 		err := testArgs.run(&cobra.Command{}, []string{})
@@ -78,9 +74,8 @@ func Test_buildArgs(t *testing.T) {
 
 	t.Run("optional args with one given values", func(t *testing.T) {
 		testArgs := buildArgs(&types.Args{
-			Type:       parameters.IntCustomType,
-			Optional:   true,
-			ConfigPath: ".test",
+			Type:     parameters.IntCustomType,
+			Optional: true,
 		})
 
 		err := testArgs.run(&cobra.Command{}, []string{"2"})
@@ -91,9 +86,8 @@ func Test_buildArgs(t *testing.T) {
 
 	t.Run("optional args with too much args", func(t *testing.T) {
 		testArgs := buildArgs(&types.Args{
-			Type:       parameters.IntCustomType,
-			Optional:   true,
-			ConfigPath: ".test",
+			Type:     parameters.IntCustomType,
+			Optional: true,
 		})
 
 		err := testArgs.run(&cobra.Command{}, []string{"2", "3", "4", "6"})

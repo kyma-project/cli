@@ -1,6 +1,9 @@
 package extensions
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/kyma-project/cli.v3/internal/extensions/parameters"
 	"github.com/kyma-project/cli.v3/internal/extensions/types"
 	"github.com/spf13/pflag"
@@ -13,7 +16,8 @@ type flag struct {
 }
 
 func buildFlag(commandFlag types.Flag) flag {
-	value := parameters.NewTyped(commandFlag.Type, commandFlag.ConfigPath)
+	valuePath := fmt.Sprintf(".flags.%s", strings.ReplaceAll(commandFlag.Name, "-", ""))
+	value := parameters.NewTyped(commandFlag.Type, valuePath)
 	warning := value.SetValue(commandFlag.DefaultValue)
 
 	pflag := &pflag.Flag{

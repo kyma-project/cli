@@ -11,7 +11,7 @@ import (
 
 func Test_buildFlag(t *testing.T) {
 	t.Run("build string flag", func(t *testing.T) {
-		expectedValue := parameters.NewTyped(parameters.StringCustomType, ".test.path")
+		expectedValue := parameters.NewTyped(parameters.StringCustomType, ".flags.testname")
 		_ = expectedValue.SetValue("defval")
 		expectedFlag := flag{
 			value:   expectedValue,
@@ -30,7 +30,6 @@ func Test_buildFlag(t *testing.T) {
 			Name:         "test-name",
 			Description:  "test description",
 			Shorthand:    "t",
-			ConfigPath:   ".test.path",
 			DefaultValue: "defval",
 			Required:     true,
 		})
@@ -38,7 +37,7 @@ func Test_buildFlag(t *testing.T) {
 	})
 
 	t.Run("build bool flag", func(t *testing.T) {
-		expectedValue := parameters.NewTyped(parameters.BoolCustomType, ".test.path")
+		expectedValue := parameters.NewTyped(parameters.BoolCustomType, ".flags.testname")
 		_ = expectedValue.SetValue("true")
 		expectedFlag := flag{
 			value:   expectedValue,
@@ -58,7 +57,6 @@ func Test_buildFlag(t *testing.T) {
 			Name:         "test-name",
 			Description:  "test description",
 			Shorthand:    "t",
-			ConfigPath:   ".test.path",
 			DefaultValue: "true",
 			Required:     true,
 		})
