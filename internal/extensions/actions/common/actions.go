@@ -1,15 +1,15 @@
-package actions
+package common
 
 import (
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"gopkg.in/yaml.v3"
 )
 
-type configurator[T any] struct {
-	cfg T
+type TemplateConfigurator[T any] struct {
+	Cfg T
 }
 
-func (c *configurator[T]) Configure(in map[string]interface{}) clierror.Error {
+func (c *TemplateConfigurator[T]) Configure(in map[string]interface{}) clierror.Error {
 	if in == nil {
 		return clierror.New("empty config object")
 	}
@@ -19,7 +19,7 @@ func (c *configurator[T]) Configure(in map[string]interface{}) clierror.Error {
 		return clierror.Wrap(err, clierror.New("failed to marshal config"))
 	}
 
-	err = yaml.Unmarshal(configBytes, &c.cfg)
+	err = yaml.Unmarshal(configBytes, &c.Cfg)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to unmarshal config"))
 	}

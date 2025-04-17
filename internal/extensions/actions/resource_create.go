@@ -5,6 +5,7 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/extensions/actions/common"
 	"github.com/kyma-project/cli.v3/internal/extensions/types"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -15,7 +16,7 @@ type resourceCreateActionConfig struct {
 }
 
 type resourceCreateAction struct {
-	configurator[resourceCreateActionConfig]
+	common.TemplateConfigurator[resourceCreateActionConfig]
 
 	kymaConfig *cmdcommon.KymaConfig
 }
@@ -28,7 +29,7 @@ func NewResourceCreate(kymaConfig *cmdcommon.KymaConfig) types.Action {
 
 func (a *resourceCreateAction) Run(cmd *cobra.Command, _ []string) clierror.Error {
 	u := &unstructured.Unstructured{
-		Object: a.cfg.Resource,
+		Object: a.Cfg.Resource,
 	}
 
 	client, clierr := a.kymaConfig.GetKubeClientWithClierr()

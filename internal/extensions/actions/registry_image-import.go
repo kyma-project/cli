@@ -6,6 +6,7 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/extensions/actions/common"
 	"github.com/kyma-project/cli.v3/internal/extensions/types"
 	"github.com/kyma-project/cli.v3/internal/registry"
 	"github.com/spf13/cobra"
@@ -25,7 +26,7 @@ func (c *registryImageImportActionConfig) validate() clierror.Error {
 }
 
 type registryImageImportAction struct {
-	configurator[registryImageImportActionConfig]
+	common.TemplateConfigurator[registryImageImportActionConfig]
 
 	kymaConfig *cmdcommon.KymaConfig
 }
@@ -37,7 +38,7 @@ func NewRegistryImageImport(kymaConfig *cmdcommon.KymaConfig) types.Action {
 }
 
 func (a *registryImageImportAction) Run(cmd *cobra.Command, _ []string) clierror.Error {
-	err := a.cfg.validate()
+	err := a.Cfg.validate()
 	if err != nil {
 		return err
 	}
@@ -53,11 +54,11 @@ func (a *registryImageImportAction) Run(cmd *cobra.Command, _ []string) clierror
 	}
 
 	out := cmd.OutOrStdout()
-	fmt.Fprintln(out, "Importing", a.cfg.Image)
+	fmt.Fprintln(out, "Importing", a.Cfg.Image)
 
 	pushedImage, err := registry.ImportImage(
 		a.kymaConfig.Ctx,
-		a.cfg.Image,
+		a.Cfg.Image,
 		registry.ImportOptions{
 			ClusterAPIRestConfig: client.RestConfig(),
 			RegistryAuth:         registry.NewBasicAuth(registryConfig.SecretData.Username, registryConfig.SecretData.Password),
