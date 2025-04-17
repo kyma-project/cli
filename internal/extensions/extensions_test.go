@@ -55,14 +55,12 @@ var (
 		},
 		SubCommands: []types.Extension{
 			{
-				// Config: "",
 				Metadata: types.Metadata{
 					Name: "create",
 				},
 				Action: "action-1",
 			},
 			{
-				// Config: "",
 				Metadata: types.Metadata{
 					Name: "delete",
 				},
