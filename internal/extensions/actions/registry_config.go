@@ -7,6 +7,7 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/extensions/actions/common"
 	"github.com/kyma-project/cli.v3/internal/extensions/types"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/registry"
@@ -21,7 +22,7 @@ type registryConfigActionConfig struct {
 }
 
 type registryConfigAction struct {
-	configurator[registryConfigActionConfig]
+	common.TemplateConfigurator[registryConfigActionConfig]
 
 	kymaConfig *cmdcommon.KymaConfig
 }
@@ -38,22 +39,22 @@ func (a *registryConfigAction) Run(cmd *cobra.Command, _ []string) clierror.Erro
 		return err
 	}
 
-	secretData, err := getRegistrySecretData(a.kymaConfig.Ctx, client, a.cfg.UseExternal)
+	secretData, err := getRegistrySecretData(a.kymaConfig.Ctx, client, a.Cfg.UseExternal)
 	if err != nil {
 		return err
 	}
 
 	outputString := ""
-	if a.cfg.PushRegAddrOnly {
+	if a.Cfg.PushRegAddrOnly {
 		outputString = secretData.PushRegAddr
-	} else if a.cfg.PullRegAddrOnly {
+	} else if a.Cfg.PullRegAddrOnly {
 		outputString = secretData.PullRegAddr
 	} else {
 		outputString = secretData.DockerConfigJSON
 	}
 
-	if a.cfg.Output != "" {
-		writeErr := os.WriteFile(a.cfg.Output, []byte(outputString), os.ModePerm)
+	if a.Cfg.Output != "" {
+		writeErr := os.WriteFile(a.Cfg.Output, []byte(outputString), os.ModePerm)
 		if writeErr != nil {
 			return clierror.New("failed to write docker config to file")
 		}

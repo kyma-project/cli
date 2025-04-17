@@ -10,6 +10,7 @@ import (
 	"github.com/itchyny/gojq"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/extensions/actions/common"
 	"github.com/kyma-project/cli.v3/internal/extensions/types"
 	"github.com/kyma-project/cli.v3/internal/kube/rootlessdynamic"
 	"github.com/kyma-project/cli.v3/internal/render"
@@ -29,7 +30,7 @@ type outputParameter struct {
 }
 
 type resourceGetAction struct {
-	configurator[resourceGetActionConfig]
+	common.TemplateConfigurator[resourceGetActionConfig]
 
 	kymaConfig *cmdcommon.KymaConfig
 }
@@ -42,7 +43,7 @@ func NewResourceGet(kymaConfig *cmdcommon.KymaConfig) types.Action {
 
 func (a *resourceGetAction) Run(cmd *cobra.Command, _ []string) clierror.Error {
 	u := &unstructured.Unstructured{
-		Object: a.cfg.Resource,
+		Object: a.Cfg.Resource,
 	}
 
 	client, clierr := a.kymaConfig.GetKubeClientWithClierr()
@@ -57,14 +58,14 @@ func (a *resourceGetAction) Run(cmd *cobra.Command, _ []string) clierror.Error {
 	}
 
 	resources, err := client.RootlessDynamic().List(a.kymaConfig.Ctx, u, &rootlessdynamic.ListOptions{
-		AllNamespaces: a.cfg.FromAllNamespaces,
+		AllNamespaces: a.Cfg.FromAllNamespaces,
 		FieldSelector: nameSelector,
 	})
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to get resource"))
 	}
 
-	tableInfo := buildTableInfo(&a.cfg)
+	tableInfo := buildTableInfo(&a.Cfg)
 	renderTable(cmd.OutOrStdout(), resources.Items, tableInfo)
 	return nil
 }

@@ -10,6 +10,7 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/extensions/actions/common"
 	"github.com/kyma-project/cli.v3/internal/extensions/types"
 	"github.com/spf13/cobra"
 )
@@ -43,7 +44,7 @@ func (c *functionInitActionConfig) validate() clierror.Error {
 }
 
 type functionInitAction struct {
-	configurator[functionInitActionConfig]
+	common.TemplateConfigurator[functionInitActionConfig]
 }
 
 func NewFunctionInit(*cmdcommon.KymaConfig) types.Action {
@@ -51,36 +52,36 @@ func NewFunctionInit(*cmdcommon.KymaConfig) types.Action {
 }
 
 func (fi *functionInitAction) Run(cmd *cobra.Command, _ []string) clierror.Error {
-	clierr := fi.cfg.validate()
+	clierr := fi.Cfg.validate()
 	if clierr != nil {
 		return clierr
 	}
 
-	runtimeCfg := fi.cfg.Runtimes[fi.cfg.UseRuntime]
-	handlerPath := path.Join(fi.cfg.OutputDir, runtimeCfg.HandlerFilename)
+	runtimeCfg := fi.Cfg.Runtimes[fi.Cfg.UseRuntime]
+	handlerPath := path.Join(fi.Cfg.OutputDir, runtimeCfg.HandlerFilename)
 	err := os.WriteFile(handlerPath, []byte(runtimeCfg.HandlerData), os.ModePerm)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New(fmt.Sprintf("failed to write sources file to %s", handlerPath)))
 	}
 
-	depsPath := path.Join(fi.cfg.OutputDir, runtimeCfg.DepsFilename)
+	depsPath := path.Join(fi.Cfg.OutputDir, runtimeCfg.DepsFilename)
 	err = os.WriteFile(depsPath, []byte(runtimeCfg.DepsData), os.ModePerm)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New(fmt.Sprintf("failed to write deps file to %s", depsPath)))
 	}
 
-	outDir, err := filepath.Abs(fi.cfg.OutputDir)
+	outDir, err := filepath.Abs(fi.Cfg.OutputDir)
 	if err != nil {
 		// undexpected error, use realtive path
-		outDir = fi.cfg.OutputDir
+		outDir = fi.Cfg.OutputDir
 	}
 
 	out := cmd.OutOrStdout()
-	fmt.Fprintf(out, "Functions files of runtime %s initialized to dir %s\n", fi.cfg.UseRuntime, outDir)
+	fmt.Fprintf(out, "Functions files of runtime %s initialized to dir %s\n", fi.Cfg.UseRuntime, outDir)
 	fmt.Fprint(out, "\nNext steps:\n")
 	fmt.Fprint(out, "* update output files in your favorite IDE\n")
 	fmt.Fprintf(out, "* create Function, for example:\n")
-	fmt.Fprintf(out, "  kyma alpha function create %s --runtime %s --source %s --dependencies %s\n", fi.cfg.UseRuntime, fi.cfg.UseRuntime, handlerPath, depsPath)
+	fmt.Fprintf(out, "  kyma alpha function create %s --runtime %s --source %s --dependencies %s\n", fi.Cfg.UseRuntime, fi.Cfg.UseRuntime, handlerPath, depsPath)
 	return nil
 }
 
