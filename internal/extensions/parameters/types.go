@@ -30,14 +30,6 @@ type boolValue struct {
 	path string
 }
 
-func (v *boolValue) GetValue() interface{} {
-	if v.Value == nil {
-		return nil
-	}
-
-	return *v.Value
-}
-
 func (v *boolValue) GetPath() string {
 	return v.path
 }
@@ -51,14 +43,6 @@ type int64Value struct {
 	path string
 }
 
-func (v *int64Value) GetValue() interface{} {
-	if v.Value == nil {
-		return nil
-	}
-
-	return *v.Value
-}
-
 func (v *int64Value) GetPath() string {
 	return v.path
 }
@@ -70,14 +54,6 @@ func (v *int64Value) SetValue(value string) error {
 type stringValue struct {
 	cmdcommontypes.NullableString
 	path string
-}
-
-func (v *stringValue) GetValue() interface{} {
-	if v.Value == nil {
-		return nil
-	}
-
-	return *v.Value
 }
 
 func (sv *stringValue) GetPath() string {

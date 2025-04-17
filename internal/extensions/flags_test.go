@@ -41,6 +41,7 @@ func Test_buildFlag(t *testing.T) {
 			"shorthand":   "t",
 			"description": "test description",
 			"default":     expectedValue.String(),
+			"value":       "",
 		})
 	})
 

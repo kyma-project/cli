@@ -17,13 +17,15 @@ func buildArgs(extensionArgs *types.Args, overwrites map[string]interface{}) arg
 		return args{}
 	}
 
+	value := parameters.NewTyped(extensionArgs.Type, ".args.value")
+
 	// append args to overwrites
 	overwrites["args"] = map[string]interface{}{
 		"type":     extensionArgs.Type,
 		"optional": extensionArgs.Optional,
+		"value":    "",
 	}
 
-	value := parameters.NewTyped(extensionArgs.Type, ".args.value")
 	return args{
 		value: value,
 		run: func(_ *cobra.Command, args []string) error {

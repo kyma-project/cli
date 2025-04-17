@@ -30,7 +30,7 @@ func Test_buildCommand(t *testing.T) {
 			"args": map[string]interface{}{
 				"optional": false,
 				"type":     parameters.BoolCustomType,
-				"value":    true},
+				"value":    "true"},
 			"flags": map[string]interface{}{
 				"flag1": map[string]interface{}{
 					"default":     "5",
@@ -38,7 +38,7 @@ func Test_buildCommand(t *testing.T) {
 					"name":        "flag1",
 					"shorthand":   "f",
 					"type":        parameters.IntCustomType,
-					"value":       int64(20),
+					"value":       "20",
 				},
 			},
 		}, actionMock.configureOverwritesArg)

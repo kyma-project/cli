@@ -3,7 +3,8 @@ package common
 import (
 	"bytes"
 	"fmt"
-	"html/template"
+	"strings"
+	"text/template"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/extensions/types"
@@ -16,29 +17,40 @@ type TemplateConfigurator[T any] struct {
 	Cfg T
 }
 
+var funcMap = template.FuncMap{
+	"newLineIndent": newLineIndent,
+}
+
 func (c *TemplateConfigurator[T]) Configure(cfgTmpl types.ActionConfig, overwrites types.ActionConfigOverwrites) clierror.Error {
 	tmplBytes, err := yaml.Marshal(cfgTmpl)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to marshal config template"))
 	}
 
-	tmplBytes = bytes.ReplaceAll(tmplBytes, []byte("${{"), []byte("{{"))
-	configTmpl, err := template.New("config").Parse(string(tmplBytes))
+	configTmpl, err := template.
+		New("config").
+		Option("missingkey=zero").
+		Delims("${{", "}}").Funcs(funcMap).
+		Parse(string(tmplBytes))
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to parse config template"))
 	}
 
 	templatedConfig := bytes.NewBuffer([]byte{})
-	err = configTmpl.Option("missingkey=zero").Execute(templatedConfig, overwrites)
+	err = configTmpl.
+		Execute(templatedConfig, overwrites)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to template config"))
 	}
 
-	fmt.Println("templated config:", templatedConfig.String())
 	err = yaml.Unmarshal(templatedConfig.Bytes(), &c.Cfg)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to unmarshal config"))
 	}
 
 	return nil
+}
+
+func newLineIndent(n int, s string) string {
+	return strings.ReplaceAll(s, "\n", fmt.Sprintf("\n%s", strings.Repeat(" ", n)))
 }
