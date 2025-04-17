@@ -11,7 +11,8 @@ import (
 
 func Test_buildFlag(t *testing.T) {
 	t.Run("build string flag", func(t *testing.T) {
-		expectedValue := parameters.NewTyped(parameters.StringCustomType, ".flags.testname")
+		overwrites := fixEmptyOverwrites()
+		expectedValue := parameters.NewTyped(parameters.StringCustomType, ".flags.testname.value")
 		_ = expectedValue.SetValue("defval")
 		expectedFlag := flag{
 			value:   expectedValue,
@@ -32,12 +33,19 @@ func Test_buildFlag(t *testing.T) {
 			Shorthand:    "t",
 			DefaultValue: "defval",
 			Required:     true,
-		})
+		}, overwrites)
 		require.Equal(t, expectedFlag, givenFlag)
+		require.Equal(t, overwrites["flags"].(map[string]interface{})["testname"], map[string]interface{}{
+			"type":        parameters.StringCustomType,
+			"name":        "test-name",
+			"shorthand":   "t",
+			"description": "test description",
+			"default":     expectedValue.String(),
+		})
 	})
 
 	t.Run("build bool flag", func(t *testing.T) {
-		expectedValue := parameters.NewTyped(parameters.BoolCustomType, ".flags.testname")
+		expectedValue := parameters.NewTyped(parameters.BoolCustomType, ".flags.testname.value")
 		_ = expectedValue.SetValue("true")
 		expectedFlag := flag{
 			value:   expectedValue,
@@ -59,7 +67,7 @@ func Test_buildFlag(t *testing.T) {
 			Shorthand:    "t",
 			DefaultValue: "true",
 			Required:     true,
-		})
+		}, fixEmptyOverwrites())
 		require.Equal(t, expectedFlag, givenFlag)
 	})
 
@@ -67,7 +75,13 @@ func Test_buildFlag(t *testing.T) {
 		givenFlag := buildFlag(types.Flag{
 			Type:         parameters.IntCustomType,
 			DefaultValue: "WRONG VALUE",
-		})
+		}, fixEmptyOverwrites())
 		require.ErrorContains(t, givenFlag.warning, "parsing \"WRONG VALUE\": invalid syntax")
 	})
+}
+
+func fixEmptyOverwrites() map[string]interface{} {
+	return map[string]interface{}{
+		"flags": map[string]interface{}{},
+	}
 }

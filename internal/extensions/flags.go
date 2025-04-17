@@ -15,8 +15,9 @@ type flag struct {
 	warning error
 }
 
-func buildFlag(commandFlag types.Flag) flag {
-	valuePath := fmt.Sprintf(".flags.%s", strings.ReplaceAll(commandFlag.Name, "-", ""))
+func buildFlag(commandFlag types.Flag, overwrites map[string]interface{}) flag {
+	flagOverwriteName := strings.ReplaceAll(commandFlag.Name, "-", "")
+	valuePath := fmt.Sprintf(".flags.%s.value", flagOverwriteName)
 	value := parameters.NewTyped(commandFlag.Type, valuePath)
 	warning := value.SetValue(commandFlag.DefaultValue)
 
@@ -32,6 +33,17 @@ func buildFlag(commandFlag types.Flag) flag {
 		// set default value for bool flag used without value (for example "--flag" instead of "--flag value")
 		pflag.NoOptDefVal = "true"
 	}
+
+	// append flag to overwrites
+	flagsOverwrites := overwrites["flags"].(map[string]interface{})
+	flagsOverwrites[flagOverwriteName] = map[string]interface{}{
+		"type":        commandFlag.Type,
+		"name":        pflag.Name,
+		"shorthand":   pflag.Shorthand,
+		"description": pflag.Usage,
+		"default":     pflag.DefValue,
+	}
+	overwrites["flags"] = flagsOverwrites
 
 	return flag{
 		pflag:   pflag,

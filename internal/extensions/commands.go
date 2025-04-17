@@ -45,10 +45,13 @@ func buildSingleCommand(extension types.Extension, availableActions types.Action
 	}
 
 	// set flags
+	overwrites := types.ActionConfigOverwrites{
+		"flags": map[string]interface{}{},
+	}
 	values := []parameters.Value{}
 	requiredFlags := []string{}
 	for _, extensionFlag := range extension.Flags {
-		cmdFlag := buildFlag(extensionFlag)
+		cmdFlag := buildFlag(extensionFlag, overwrites)
 		if cmdFlag.warning != nil {
 			errs = append(errs, errors.Newf("flag '%s' error: %s", extensionFlag.Name, cmdFlag.warning.Error()))
 		}
@@ -62,7 +65,7 @@ func buildSingleCommand(extension types.Extension, availableActions types.Action
 	}
 
 	// set args
-	cmdArgs := buildArgs(extension.Args)
+	cmdArgs := buildArgs(extension.Args, overwrites)
 	cmd.Args = cmdArgs.run
 	values = append(values, cmdArgs.value)
 
@@ -80,7 +83,6 @@ func buildSingleCommand(extension types.Extension, availableActions types.Action
 			flags.MarkRequired(requiredFlags...),
 		))
 		// set parameters from flag and args as overwrites
-		overwrites := types.ActionConfigOverwrites{}
 		clierror.Check(parameters.Set(overwrites, values))
 
 		// configure action
