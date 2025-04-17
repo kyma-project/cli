@@ -86,7 +86,7 @@ func buildSingleCommand(extension types.Extension, availableActions types.Action
 		clierror.Check(parameters.Set(overwrites, values))
 
 		// configure action
-		clierror.Check(action.Configure(extension.ConfigTmpl, overwrites))
+		clierror.Check(action.Configure(extension.Config, overwrites))
 	}
 
 	cmd.Run = func(cmd *cobra.Command, args []string) {

@@ -17,14 +17,14 @@ const (
 )
 
 type Action interface {
-	Configure(ActionConfigTmpl, ActionConfigOverwrites) clierror.Error
+	Configure(ActionConfig, ActionConfigOverwrites) clierror.Error
 	Run(*cobra.Command, []string) clierror.Error
 }
 
 // map of allowed action commands in format ID: ACTION
 type ActionsMap map[string]Action
 
-type ActionConfigTmpl = string
+type ActionConfig = map[string]interface{}
 
 type ActionConfigOverwrites = map[string]interface{}
 
@@ -105,7 +105,7 @@ type Extension struct {
 	// args used to set specific fields in config
 	Args *Args `yaml:"args"`
 	// additional config pass to the command
-	ConfigTmpl ActionConfigTmpl `yaml:"with"`
+	Config ActionConfig `yaml:"with"`
 	// list of sub commands
 	SubCommands []Extension `yaml:"subCommands"`
 }

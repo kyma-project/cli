@@ -2,6 +2,7 @@ package common
 
 import (
 	"bytes"
+	"fmt"
 	"html/template"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
@@ -15,8 +16,14 @@ type TemplateConfigurator[T any] struct {
 	Cfg T
 }
 
-func (c *TemplateConfigurator[T]) Configure(cfgTmpl types.ActionConfigTmpl, overwrites types.ActionConfigOverwrites) clierror.Error {
-	configTmpl, err := template.New("config").Parse(cfgTmpl)
+func (c *TemplateConfigurator[T]) Configure(cfgTmpl types.ActionConfig, overwrites types.ActionConfigOverwrites) clierror.Error {
+	tmplBytes, err := yaml.Marshal(cfgTmpl)
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to marshal config template"))
+	}
+
+	tmplBytes = bytes.ReplaceAll(tmplBytes, []byte("${{"), []byte("{{"))
+	configTmpl, err := template.New("config").Parse(string(tmplBytes))
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to parse config template"))
 	}
@@ -27,6 +34,7 @@ func (c *TemplateConfigurator[T]) Configure(cfgTmpl types.ActionConfigTmpl, over
 		return clierror.Wrap(err, clierror.New("failed to template config"))
 	}
 
+	fmt.Println("templated config:", templatedConfig.String())
 	err = yaml.Unmarshal(templatedConfig.Bytes(), &c.Cfg)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to unmarshal config"))

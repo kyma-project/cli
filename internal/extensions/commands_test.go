@@ -23,12 +23,23 @@ func Test_buildCommand(t *testing.T) {
 		err = cmd.Execute()
 		require.NoError(t, err)
 
-		expectedConfig := "\"cmd2\": true"
-		require.Equal(t, expectedConfig, actionMock.configureArg)
+		require.Equal(t, map[string]interface{}{
+			"cmd2": true,
+		}, actionMock.configureArg)
 		require.Equal(t, types.ActionConfigOverwrites{
-			"args": true,
+			"args": map[string]interface{}{
+				"optional": false,
+				"type":     parameters.BoolCustomType,
+				"value":    true},
 			"flags": map[string]interface{}{
-				"flag1": int64(20),
+				"flag1": map[string]interface{}{
+					"default":     "5",
+					"description": "flag-desc1",
+					"name":        "flag1",
+					"shorthand":   "f",
+					"type":        parameters.IntCustomType,
+					"value":       int64(20),
+				},
 			},
 		}, actionMock.configureOverwritesArg)
 	})
@@ -79,7 +90,9 @@ func fixTestExtension() types.Extension {
 			Description:     "desc1",
 			DescriptionLong: "desc-long1",
 		},
-		ConfigTmpl: `"cmd1": true`,
+		Config: map[string]interface{}{
+			"cmd1": true,
+		},
 		SubCommands: []types.Extension{
 			{
 				Metadata: types.Metadata{
@@ -102,7 +115,9 @@ func fixTestExtension() types.Extension {
 					Type:     parameters.BoolCustomType,
 					Optional: false,
 				},
-				ConfigTmpl: `"cmd2": true`,
+				Config: map[string]interface{}{
+					"cmd2": true,
+				},
 			},
 		},
 	}
@@ -112,12 +127,12 @@ type mockAction struct {
 	configureError clierror.Error
 	runError       clierror.Error
 
-	configureArg           types.ActionConfigTmpl
+	configureArg           types.ActionConfig
 	configureOverwritesArg types.ActionConfigOverwrites
 	runArgs                []string
 }
 
-func (m *mockAction) Configure(arg types.ActionConfigTmpl, overwritesArg types.ActionConfigOverwrites) clierror.Error {
+func (m *mockAction) Configure(arg types.ActionConfig, overwritesArg types.ActionConfigOverwrites) clierror.Error {
 	m.configureArg = arg
 	m.configureOverwritesArg = overwritesArg
 	return m.configureError

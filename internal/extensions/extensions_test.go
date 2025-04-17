@@ -22,7 +22,7 @@ import (
 
 const (
 	testExtensionString = `
-with: |-
+with:
   resource:
     apiVersion: v1
     kind: ConfigMap
@@ -42,9 +42,12 @@ subCommands:
 
 var (
 	testExtension = types.Extension{
-		ConfigTmpl: `resource:
-  apiVersion: v1
-  kind: ConfigMap`,
+		Config: map[string]interface{}{
+			"resource": map[string]interface{}{
+				"apiVersion": "v1",
+				"kind":       "ConfigMap",
+			},
+		},
 		Metadata: types.Metadata{
 			Name:            "resource",
 			Description:     "manage resources",
@@ -52,14 +55,14 @@ var (
 		},
 		SubCommands: []types.Extension{
 			{
-				ConfigTmpl: "",
+				// Config: "",
 				Metadata: types.Metadata{
 					Name: "create",
 				},
 				Action: "action-1",
 			},
 			{
-				ConfigTmpl: "",
+				// Config: "",
 				Metadata: types.Metadata{
 					Name: "delete",
 				},
