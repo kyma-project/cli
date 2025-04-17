@@ -35,19 +35,19 @@ func Test_buildFlag(t *testing.T) {
 			Required:     true,
 		}, overwrites)
 		require.Equal(t, expectedFlag, givenFlag)
-		require.Equal(t, overwrites["flags"].(map[string]interface{})["testname"], map[string]interface{}{
+		require.Equal(t, map[string]interface{}{
 			"type":        parameters.StringCustomType,
 			"name":        "test-name",
 			"shorthand":   "t",
 			"description": "test description",
-			"default":     expectedValue.String(),
-			"value":       "",
-		})
+			"default":     "defval",
+			"value":       "defval",
+		}, overwrites["flags"].(map[string]interface{})["testname"])
 	})
 
 	t.Run("build bool flag", func(t *testing.T) {
+		overwrites := fixEmptyOverwrites()
 		expectedValue := parameters.NewTyped(parameters.BoolCustomType, ".flags.testname.value")
-		_ = expectedValue.SetValue("true")
 		expectedFlag := flag{
 			value:   expectedValue,
 			warning: nil,
@@ -62,14 +62,21 @@ func Test_buildFlag(t *testing.T) {
 		}
 
 		givenFlag := buildFlag(types.Flag{
-			Type:         parameters.BoolCustomType,
-			Name:         "test-name",
-			Description:  "test description",
-			Shorthand:    "t",
-			DefaultValue: "true",
-			Required:     true,
-		}, fixEmptyOverwrites())
+			Type:        parameters.BoolCustomType,
+			Name:        "test-name",
+			Description: "test description",
+			Shorthand:   "t",
+			Required:    true,
+		}, overwrites)
 		require.Equal(t, expectedFlag, givenFlag)
+		require.Equal(t, map[string]interface{}{
+			"type":        parameters.BoolCustomType,
+			"name":        "test-name",
+			"shorthand":   "t",
+			"description": "test description",
+			"default":     "",
+			"value":       false,
+		}, overwrites["flags"].(map[string]interface{})["testname"])
 	})
 
 	t.Run("build warning", func(t *testing.T) {

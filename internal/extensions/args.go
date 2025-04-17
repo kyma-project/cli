@@ -23,7 +23,7 @@ func buildArgs(extensionArgs *types.Args, overwrites map[string]interface{}) arg
 	overwrites["args"] = map[string]interface{}{
 		"type":     extensionArgs.Type,
 		"optional": extensionArgs.Optional,
-		"value":    "",
+		"value":    value.GetValue(),
 	}
 
 	return args{

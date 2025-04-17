@@ -42,7 +42,7 @@ func buildFlag(commandFlag types.Flag, overwrites map[string]interface{}) flag {
 		"shorthand":   pflag.Shorthand,
 		"description": pflag.Usage,
 		"default":     pflag.DefValue,
-		"value":       "",
+		"value":       value.GetValue(),
 	}
 	overwrites["flags"] = flagsOverwrites
 

@@ -15,6 +15,7 @@ import (
 type Value interface {
 	pflag.Value
 	SetValue(string) error
+	GetValue() interface{}
 	GetPath() string
 }
 
@@ -37,7 +38,11 @@ func Set(obj map[string]interface{}, values []Value) clierror.Error {
 			continue
 		}
 
-		value := extraValue.String()
+		value := extraValue.GetValue()
+		if value == nil {
+			// value is not set and has no default value
+			continue
+		}
 
 		fields := splitPath(extraValue.GetPath())
 		subObj, err := buildExtraValuesObject(value, fields...)
