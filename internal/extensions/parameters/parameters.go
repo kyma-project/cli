@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
+	cmdcommontypes "github.com/kyma-project/cli.v3/internal/cmdcommon/types"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -27,6 +28,8 @@ func NewTyped(paramType ConfigFieldType, resourcepath string) Value {
 		return &int64Value{path: resourcepath}
 	case BoolCustomType:
 		return &boolValue{path: resourcepath}
+	case MapCustomType:
+		return &mapValue{path: resourcepath, Map: cmdcommontypes.Map{Values: map[string]interface{}{}}}
 	default:
 		return &stringValue{path: resourcepath}
 	}

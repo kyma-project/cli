@@ -14,7 +14,7 @@ func TestEnvMap(t *testing.T) {
 		require.NoError(t, envMap.Set("TEST1=1"))
 		require.NoError(t, envMap.Set("TEST2=2"))
 
-		expectedMap := map[string]string{
+		expectedMap := map[string]interface{}{
 			"TEST1": "1",
 			"TEST2": "2",
 		}
