@@ -24,7 +24,7 @@ func Test_buildArgs(t *testing.T) {
 		err := testArgs.run(&cobra.Command{}, []string{"test"})
 
 		require.NoError(t, err)
-		require.Equal(t, "test", testArgs.value.String())
+		require.Equal(t, "test", testArgs.value.GetValue())
 		require.Equal(t, ".args.value", testArgs.value.GetPath())
 		require.Equal(t, overwrites["args"].(map[string]interface{}), map[string]interface{}{
 			"type":     parameters.StringCustomType,
@@ -75,7 +75,7 @@ func Test_buildArgs(t *testing.T) {
 		err := testArgs.run(&cobra.Command{}, []string{})
 
 		require.NoError(t, err)
-		require.Empty(t, testArgs.value.String())
+		require.Empty(t, testArgs.value.GetValue())
 	})
 
 	t.Run("optional args with one given values", func(t *testing.T) {
@@ -87,7 +87,7 @@ func Test_buildArgs(t *testing.T) {
 		err := testArgs.run(&cobra.Command{}, []string{"2"})
 
 		require.NoError(t, err)
-		require.Equal(t, "2", testArgs.value.String())
+		require.Equal(t, int64(2), testArgs.value.GetValue())
 	})
 
 	t.Run("optional args with too much args", func(t *testing.T) {
