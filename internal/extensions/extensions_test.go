@@ -34,11 +34,9 @@ subCommands:
 - metadata:
     name: create
   uses: action-1
-  with: {}
 - metadata:
     name: delete
   uses: action-2
-  with: {}
 `
 )
 
@@ -57,14 +55,12 @@ var (
 		},
 		SubCommands: []types.Extension{
 			{
-				Config: map[string]interface{}{},
 				Metadata: types.Metadata{
 					Name: "create",
 				},
 				Action: "action-1",
 			},
 			{
-				Config: map[string]interface{}{},
 				Metadata: types.Metadata{
 					Name: "delete",
 				},
@@ -324,7 +320,6 @@ func Test_Build(t *testing.T) {
 						Flags: []types.Flag{
 							{
 								Name:         "test-flag",
-								ConfigPath:   ".test",
 								Type:         parameters.IntCustomType,
 								DefaultValue: "WRONG VALUE",
 							},

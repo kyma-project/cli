@@ -23,13 +23,26 @@ func Test_buildCommand(t *testing.T) {
 		err = cmd.Execute()
 		require.NoError(t, err)
 
-		expectedConfig := map[string]interface{}{
-			"cmd1":  true,
-			"cmd2":  true,
-			"args1": true,
-			"flag1": int64(20),
-		}
-		require.Equal(t, expectedConfig, actionMock.configureArg)
+		require.Equal(t, map[string]interface{}{
+			"cmd2": true,
+		}, actionMock.configureArg)
+		require.Equal(t, types.ActionConfigOverwrites{
+			"args": map[string]interface{}{
+				"optional": false,
+				"type":     parameters.BoolCustomType,
+				"value":    true,
+			},
+			"flags": map[string]interface{}{
+				"flag1": map[string]interface{}{
+					"default":     "5",
+					"description": "flag-desc1",
+					"name":        "flag1",
+					"shorthand":   "f",
+					"type":        parameters.IntCustomType,
+					"value":       int64(20),
+				},
+			},
+		}, actionMock.configureOverwritesArg)
 	})
 
 	t.Run("action not found", func(t *testing.T) {
@@ -95,15 +108,13 @@ func fixTestExtension() types.Extension {
 						Name:         "flag1",
 						Description:  "flag-desc1",
 						Shorthand:    "f",
-						ConfigPath:   ".flag1",
 						DefaultValue: "5",
 						Required:     true,
 					},
 				},
 				Args: &types.Args{
-					Type:       parameters.BoolCustomType,
-					Optional:   false,
-					ConfigPath: ".args1",
+					Type:     parameters.BoolCustomType,
+					Optional: false,
 				},
 				Config: map[string]interface{}{
 					"cmd2": true,
@@ -117,12 +128,14 @@ type mockAction struct {
 	configureError clierror.Error
 	runError       clierror.Error
 
-	configureArg map[string]interface{}
-	runArgs      []string
+	configureArg           types.ActionConfig
+	configureOverwritesArg types.ActionConfigOverwrites
+	runArgs                []string
 }
 
-func (m *mockAction) Configure(arg map[string]interface{}) clierror.Error {
+func (m *mockAction) Configure(arg types.ActionConfig, overwritesArg types.ActionConfigOverwrites) clierror.Error {
 	m.configureArg = arg
+	m.configureOverwritesArg = overwritesArg
 	return m.configureError
 }
 

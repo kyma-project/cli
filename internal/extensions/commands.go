@@ -20,7 +20,7 @@ func buildCommand(extension types.Extension, availableActions types.ActionsMap) 
 
 	// build sub-commands
 	for _, subExtension := range extension.SubCommands {
-		subCmd, err := buildSubCommand(subExtension, availableActions, extension.Config)
+		subCmd, err := buildCommand(subExtension, availableActions)
 		if err != nil {
 			errs = append(errs, err)
 		}
@@ -29,15 +29,6 @@ func buildCommand(extension types.Extension, availableActions types.ActionsMap) 
 	}
 
 	return cmd, errors.NewList(errs...)
-}
-
-func buildSubCommand(subCommand types.Extension, availableActions types.ActionsMap, parentConfig types.ActionConfig) (*cobra.Command, error) {
-	err := parameters.MergeMaps(parentConfig, subCommand.Config)
-	if err != nil {
-		return nil, err
-	}
-
-	return buildCommand(subCommand, availableActions)
 }
 
 func buildSingleCommand(extension types.Extension, availableActions types.ActionsMap) (*cobra.Command, error) {
@@ -54,10 +45,13 @@ func buildSingleCommand(extension types.Extension, availableActions types.Action
 	}
 
 	// set flags
+	overwrites := types.ActionConfigOverwrites{
+		"flags": map[string]interface{}{},
+	}
 	values := []parameters.Value{}
 	requiredFlags := []string{}
 	for _, extensionFlag := range extension.Flags {
-		cmdFlag := buildFlag(extensionFlag)
+		cmdFlag := buildFlag(extensionFlag, overwrites)
 		if cmdFlag.warning != nil {
 			errs = append(errs, errors.Newf("flag '%s' error: %s", extensionFlag.Name, cmdFlag.warning.Error()))
 		}
@@ -71,9 +65,9 @@ func buildSingleCommand(extension types.Extension, availableActions types.Action
 	}
 
 	// set args
-	args := buildArgs(extension.Args)
-	cmd.Args = args.run
-	values = append(values, args.value)
+	cmdArgs := buildArgs(extension.Args, overwrites)
+	cmd.Args = cmdArgs.run
+	values = append(values, cmdArgs.value)
 
 	// set action runs
 	action, ok := availableActions[extension.Action]
@@ -88,11 +82,11 @@ func buildSingleCommand(extension types.Extension, availableActions types.Action
 		clierror.Check(flags.Validate(cmd.Flags(),
 			flags.MarkRequired(requiredFlags...),
 		))
-		// set parameters from flag
-		clierror.Check(parameters.Set(extension.Config, values))
+		// set parameters from flag and args as overwrites
+		clierror.Check(parameters.Set(overwrites, values))
 
 		// configure action
-		clierror.Check(action.Configure(extension.Config))
+		clierror.Check(action.Configure(extension.Config, overwrites))
 	}
 
 	cmd.Run = func(cmd *cobra.Command, args []string) {

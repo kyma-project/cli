@@ -34,9 +34,8 @@ func TestExtension_Validate(t *testing.T) {
 						Action: "create",
 						Flags: []Flag{
 							{
-								Type:       "string",
-								Name:       "test-flag",
-								ConfigPath: ".test",
+								Type: "string",
+								Name: "test-flag",
 							},
 						},
 						SubCommands: []Extension{
@@ -46,8 +45,7 @@ func TestExtension_Validate(t *testing.T) {
 								},
 								Action: "demo",
 								Args: &Args{
-									Type:       "bool",
-									ConfigPath: ".test",
+									Type: "bool",
 								},
 							},
 						},
@@ -58,9 +56,9 @@ func TestExtension_Validate(t *testing.T) {
 		{
 			name: "validation error - broken flag",
 			wantErr: "wrong .uses: unsupported value 'wrong-action'\n" +
-				"wrong .flags: empty name, unknown type '', empty configPath\n" +
+				"wrong .flags: empty name, unknown type ''\n" +
 				"wrong .subCommands[0].metadata: empty name\n" +
-				"wrong .subCommands[0].subCommands[1].args: unknown type '', empty ConfigPath",
+				"wrong .subCommands[0].subCommands[1].args: unknown type ''",
 			extension: Extension{
 				Metadata: Metadata{
 					Name: "function",
@@ -99,7 +97,6 @@ func TestExtension_Validate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.extension.Default()
 			err := tt.extension.Validate(testActionsMap)
 			if tt.wantErr != "" {
 				require.EqualError(t, err, tt.wantErr)

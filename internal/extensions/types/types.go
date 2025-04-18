@@ -17,7 +17,7 @@ const (
 )
 
 type Action interface {
-	Configure(map[string]interface{}) clierror.Error
+	Configure(ActionConfig, ActionConfigOverwrites) clierror.Error
 	Run(*cobra.Command, []string) clierror.Error
 }
 
@@ -25,6 +25,8 @@ type Action interface {
 type ActionsMap map[string]Action
 
 type ActionConfig = map[string]interface{}
+
+type ActionConfigOverwrites = map[string]interface{}
 
 type ConfigmapCommandExtension struct {
 	ConfigMapName      string
@@ -55,22 +57,14 @@ type Args struct {
 	Type parameters.ConfigFieldType `yaml:"type"`
 	// mark if args are required to run command
 	Optional bool `yaml:"optional"`
-	// path to the config fild that will be updated with value from args
-	ConfigPath string `yaml:"configPath"`
 }
 
 func (a *Args) Validate() error {
-	var errs []error
 	if !slices.Contains(parameters.ValidTypes, a.Type) {
-		errs = append(errs,
-			errors.New(fmt.Sprintf("unknown type '%s'", a.Type)))
+		return errors.New(fmt.Sprintf("unknown type '%s'", a.Type))
 	}
 
-	if a.ConfigPath == "" {
-		errs = append(errs, errors.New("empty ConfigPath"))
-	}
-
-	return errors.JoinWithSeparator(", ", errs...)
+	return nil
 }
 
 type Flag struct {
@@ -82,8 +76,6 @@ type Flag struct {
 	Description string `yaml:"description"`
 	// optional shorthand of the flag
 	Shorthand string `yaml:"shorthand"`
-	// path to the config fild that will be updated with value from the flag
-	ConfigPath string `yaml:"configPath"`
 	// default value for the flag
 	DefaultValue string `yaml:"default"`
 	// mark if flag is required
@@ -98,10 +90,6 @@ func (f *Flag) Validate() error {
 
 	if !slices.Contains(parameters.ValidTypes, f.Type) {
 		errs = append(errs, errors.Newf("unknown type '%s'", f.Type))
-	}
-
-	if f.ConfigPath == "" {
-		errs = append(errs, errors.New("empty configPath"))
 	}
 
 	return errors.JoinWithSeparator(", ", errs...)
@@ -120,17 +108,6 @@ type Extension struct {
 	Config ActionConfig `yaml:"with"`
 	// list of sub commands
 	SubCommands []Extension `yaml:"subCommands"`
-}
-
-func (e *Extension) Default() {
-	if e.Config == nil {
-		// default action config to empty (not nil) value
-		e.Config = ActionConfig{}
-	}
-
-	for i := range e.SubCommands {
-		e.SubCommands[i].Default()
-	}
 }
 
 func (e *Extension) Validate(availableActions ActionsMap) error {

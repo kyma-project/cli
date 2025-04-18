@@ -12,12 +12,20 @@ type args struct {
 	value parameters.Value
 }
 
-func buildArgs(extensionArgs *types.Args) args {
+func buildArgs(extensionArgs *types.Args, overwrites map[string]interface{}) args {
 	if extensionArgs == nil {
 		return args{}
 	}
 
-	value := parameters.NewTyped(extensionArgs.Type, extensionArgs.ConfigPath)
+	value := parameters.NewTyped(extensionArgs.Type, ".args.value")
+
+	// append args to overwrites
+	overwrites["args"] = map[string]interface{}{
+		"type":     extensionArgs.Type,
+		"optional": extensionArgs.Optional,
+		"value":    value.GetValue(),
+	}
+
 	return args{
 		value: value,
 		run: func(_ *cobra.Command, args []string) error {
