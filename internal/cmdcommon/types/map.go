@@ -6,7 +6,7 @@ import (
 )
 
 type Map struct {
-	Values map[string]string
+	Values map[string]interface{}
 }
 
 func (em *Map) String() string {
@@ -32,7 +32,7 @@ func (em *Map) Set(value string) error {
 	}
 
 	if em.Values == nil {
-		em.Values = map[string]string{}
+		em.Values = map[string]interface{}{}
 	}
 
 	em.Values[elems[0]] = elems[1]
@@ -46,7 +46,7 @@ func (em *Map) Type() string {
 func (em *Map) GetNullableMap() map[string]*string {
 	nullableMap := map[string]*string{}
 	for key, value := range em.Values {
-		v := value
+		v, _ := value.(string)
 		nullableMap[key] = &v
 	}
 

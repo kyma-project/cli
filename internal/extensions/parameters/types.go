@@ -13,7 +13,7 @@ const (
 	PathCustomType   ConfigFieldType = "path"
 	IntCustomType    ConfigFieldType = "int"
 	BoolCustomType   ConfigFieldType = "bool"
-	// TODO: support other types e.g. float and stringArray
+	MapCustomType    ConfigFieldType = "map"
 )
 
 var (
@@ -22,8 +22,26 @@ var (
 		PathCustomType,
 		IntCustomType,
 		BoolCustomType,
+		MapCustomType,
 	}
 )
+
+type mapValue struct {
+	cmdcommontypes.Map
+	path string
+}
+
+func (v *mapValue) GetValue() interface{} {
+	return v.Values
+}
+
+func (v *mapValue) GetPath() string {
+	return v.path
+}
+
+func (v *mapValue) SetValue(value string) error {
+	return v.Set(value)
+}
 
 type boolValue struct {
 	cmdcommontypes.NullableBool
