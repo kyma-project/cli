@@ -1,24 +1,24 @@
-# Extensibility
+# Extensibility in Kyma CLI
 
 ## Overview
 
-The Kyma CLI acts like any other CLI, it means that it compiles every functionality into its binary. With the extensibility, you can create module-oriented functionality versioned and kept together with the module on a cluster. This feature may be used to extend the CLI with resource-oriented commands, allowing module resource management, or module-oriented commands allowing interaction with a module.
+Like any other CLI, Kyma CLI compiles every functionality into its binary. With the Kyma CLI extensibility feature, you can create module-oriented functionality that is versioned and kept together with the module on a cluster. With this feature, you can extend the CLI with resource-oriented commands to manage your module resources or with module-oriented commands that allow for interaction with a module.
 
-Extensions can be added by creating a ConfigMap with the expected label and data in the expected format. The CLI binary with access to listing ConfigMaps on a cluster will fetch all extensions from it when run and build additional commands based on them.
+Extensions can be added by creating a ConfigMap with the expected label and data in the expected format (see [ConfigMap](#configmap)). The CLI binary with access to listing ConfigMaps on a cluster fetches all extensions from it when run and builds additional commands based on them.
 
-All commands build from extensions can be accessed under the `kyma alpha` commands group.
+All commands built from extensions can be accessed under the `kyma alpha` commands group.
 
 ## Concept
 
-The main goal of CLI extensibility is to support the basic resources and modules of Kyma so that the end user can intuitively use Kyma and CLI. After creating a cluster, the CLI should contain only the necessary and basic functionality, but with the installation of additional modules, the CLI should be extended with additional commands, built based on extensions provided with the modules.
+The main goal of the Kyma CLI extensibility is to support the basic Kyma resources and modules so that you can intuitively use Kyma and the CLI. After creating a cluster, Kyma CLI must contain only the necessary and basic functionality. Still, when additional modules are installed, the CLI must be extended with additional commands, built based on extensions provided with the modules.
 
-Such a solution provides control over the interaction with the module on the side of the team responsible for the team, but maintaining a uniform standard defined on the CLI side.
+Such a solution provides control over the interaction with the module on the side of the team responsible for the module, but maintains a uniform CLI standard.
 
-An additional advantage is that there is no need to migrate extensions on the CLI code side. If the team wants to introduce a change in the definition of a command/group of commands, the only thing that needs to be done is to release a new version of the module containing the updated version of the extension. For example, if the team responsible for the APIRule resource in version v2alpha1 created an extension that allows adding and removing APIRule resources and wants to release a new version of the resource, all they need to do is, along with adding a new version to the module, update the extension and release a new version of the module. Also possible is having different versions of the extension for every component version and/or on every release channel.
+In addition, you don't need to migrate extensions on the CLI code side. If the team wants to introduce a change in the definition of a command or group of commands, they must only release a new version of the module containing the updated version of the extension. For example, the team responsible for the APIRule resource in version `v2alpha1` created an extension that allows adding and removing APIRule resources and wants to release a new version of the resource. In that case, the only thing they must do, along with adding a new version to the module, is update the extension and release a new version of the module. Also, it is possible to have different extension versions for every component and release channel.
 
 ## ConfigMap
 
-The extension is defined and enabled by right prepared ConfigMap deployed on a cluster that CLI has access to (for example by exporting the `KUBECONFIG` env or passing right argument to the `--kubeconfig` flag). The ConfigMap can has any name and be located in any namespace but should contains the `kyma-cli/extension: commands` and `kyma-cli/extension-version: v1` labels, and the `kyma-commands.yaml` data key with right the extension configuration. An example ConfigMap:
+The extension is defined and enabled with the proper ConfigMap deployed on a cluster that CLI has access to (for example, by exporting the `KUBECONFIG` env or passing the correct argument to the `--kubeconfig` flag). The ConfigMap can have any name and be located in any namespace, but must contain the `kyma-cli/extension: commands` and `kyma-cli/extension-version: v1` labels, and the `kyma-commands.yaml` data key with the correct extension configuration. For example:
 
 ```yaml
 apiVersion: v1
@@ -34,11 +34,11 @@ data:
       name: my-command
 ```
 
-[Here](https://github.com/kyma-project/serverless/blob/main/config/serverless/templates/cli-extension.yaml) is the example of the Serverless module extension ConfigMap.
+For the example of the Serverless module extension ConfigMap, see [cli-extension.yaml](https://github.com/kyma-project/serverless/blob/main/config/serverless/templates/cli-extension.yaml).
 
 ## kyma-commands.yaml
 
-The extension definition is represented by the YAML file put iside the `kyma-commands.yaml` key in ConfigMap. The given file needs to be in proper format describing commands tree:
+The extension definition is represented by the YAML file inside the `kyma-commands.yaml` key in the ConfigMap. The given file must be in the proper format describing the command tree:
 
 ```yaml
 metadata: {}
@@ -53,19 +53,19 @@ subCommands: []
 
 | Name | Type | Description |
 | --- | --- | --- |
-| **metadata** | object | Basic information about command like name or description |
-| **uses** | string | Action that will be run on command execution |
-| **with** | object | Configuration pass to the run action |
+| **metadata** | object | Basic information about the command, for example, name or description |
+| **uses** | string | Action that is run on the command execution |
+| **with** | object | Configuration passed to the run action |
 | **args** | object | Command arguments definition used to overwrite values in the config |
 | **flags** | array | Command flags definition used to overwrite values in the config |
 | **subCommands** | array | List of sub-commands. Every sub-command has the same schema as its parent |
 
-[Here](https://github.com/kyma-project/serverless/blob/main/config/serverless/files/kyma-commands.yaml) is the example of the Serverless module extension `kyma-commands.yaml`.
-[Here](https://github.com/kyma-project/cli/blob/main/internal/extensions/types/types.go) is in-code definition of types.
+For the example of the Serverless module extension, see [kyma-commands.yaml](https://github.com/kyma-project/serverless/blob/main/config/serverless/files/kyma-commands.yaml).
+For the in-code definition of types, see [types.go](https://github.com/kyma-project/cli/blob/main/internal/extensions/types/types.go).
 
 ### metadata
 
-This is the only required field and contains basic informations about built command:
+This is the only required field and contains basic information about the built command:
 
 ```yaml
 metadata:
@@ -79,22 +79,22 @@ metadata:
 | Name | Type | Description |
 | --- | --- | --- |
 | **name** | string | The name of the command |
-| **description** | string | Short description displayd in the parent's command help |
+| **description** | string | Short description displayed in the parent's command help |
 | **description** | string | Description displayed in the command's help |
 
 ### uses
 
-The `uses` field is based on GitHub Actions nomenclature and represents ID of the action that will be run on every command execution. This field is not required and if it's empty, then command works as command grouping all sub-commands (non executable parent of all sub-commands):
+The `uses` field is based on GitHub Actions nomenclature and represents the ID of the action that is run on every command execution. This field is not required. If it's empty, then the command works as a command grouping all sub-commands (non-executable parent of all sub-commands):
 
 ```yaml
 uses: resource_get
 ```
 
-All available actions descriptions can be found [here](actions.md).
+For all available action descriptions, see [Actions](actions.md).
 
 ### with
 
-This field contains action specific configuration. This field supports [go templates](https://pkg.go.dev/text/template), with the `$` prefix, that can be used to dynamicly pass right values from args or flags. The example:
+This field contains action-specific configuration. This field supports [Go templates](https://pkg.go.dev/text/template), with the `$` prefix, that can be used to dynamically pass the right values from args or flags. For example:
 
 ```yaml
 uses: resource_delete
@@ -107,17 +107,17 @@ with:
       namespace: ${{ .flags.namespace.value }}
 ```
 
-Configuration under the `with` field is action specific and its scheme depends on the used action.
+Configuration under the `with` field is action-specific, and its scheme depends on the used action.
 
 ### flags & args
 
 Arguments and flags are the only way to get inputs from the end user and pass them to the config under the `with` field.
 
-More information about flags and arguments can be found [here](inputs.md).
+For more information about flags and arguments, see [Inputs](inputs.md).
 
 ### subCommands
 
-Kyma extensions has tree structure and it means that every command can work as node or leaf. The `subCommands` array contains full list of child commands. Every sub-command is in the same format as its parent and has own `subCommands`:
+Kyma extension has a tree structure, which means that every command can work as a node or a leaf. The `subCommands` array contains a full list of child commands. Every sub-command is in the same format as its parent and has its own `subCommands`:
 
 ```yaml
 metadata:
@@ -132,7 +132,7 @@ subCommands:
   - name: cmd6
 ```
 
-The yaml abouve will build extension with the following commands tree:
+This yaml example builds the extension with the following command tree:
 
 ```text
 ─ cmd1
@@ -143,9 +143,9 @@ The yaml abouve will build extension with the following commands tree:
     └ cmd6
 ```
 
-## Extension standards
+## Extension Standards
 
-Kyma CLI provides basic fields validation only but extension owner is responsible for its quality. Here is list of standards every well preprared extension should meet:
+Kyma CLI provides basic field validation only. The extension owner is responsible for its quality. The following list provides standards every well-prepared extension must meet:
 
 - the `.metadata` should have field all `.metadata.name`, `.metadata.description` and `.metadata.descriptionLong` fields
 - the `.metadata.name` should describes possible argument and flags. For example:

@@ -2,42 +2,42 @@
 
 ## Overview
 
-Actions are base functionality of every executable command. It determines procedure command run on execution. Every Action expects specific configuration under the `.with` field. All of them are designed to cover most common and generic cases like CRUD operations (create, read, update, delete) and module oriented operations (like importing images to the in-cluster registry for the `docker-registry` module).
+Actions are the base functionality of every executable command. They determine the procedure that the command runs on execution. Every action expects a specific configuration under the `.with` field. They are designed to cover most common and generic cases, such as CRUD operations (create, read, update, delete) and module-oriented operations (like importing images to the in-cluster registry for the `docker-registry` module).
 
->NOTE: in-code definition can be found [here](https://github.com/kyma-project/cli/blob/main/internal/cmd/alpha/alpha.go#L35).
+> [!NOTE] 
+> For the in-code definition, see [alpha.go](https://github.com/kyma-project/cli/blob/main/internal/cmd/alpha/alpha.go#L35).
 
-## Go-Templates
+## Go Templates
 
-Any field in the `with` object supports [go-templates](https://pkg.go.dev/text/template) with all build-in features like [functions](https://pkg.go.dev/text/template#hdr-Functions) or to perform [actions](https://pkg.go.dev/text/template#hdr-Actions). This allows to access values from args and flags (read more [here](./inputs.md#go-templates)).
+Any field in the `with` object supports [go-templates](https://pkg.go.dev/text/template) with all built-in features like [functions](https://pkg.go.dev/text/template#hdr-Functions) or [actions](https://pkg.go.dev/text/template#hdr-Actions). This allows access to values from args and flags. For more information, see  [Inputs](./inputs.md#go-templates).
 
-All templates starts with the `${{` prefix and ends with the `}}` suffix. For example:
+All templates start with the `${{` prefix and end with the `}}` suffix. For example:
 
 ```yaml
 name: ${{ .flags.name.value }}
 ```
 
-### Custom functions
+### Custom Functions
 
-It's possible to call custom CLI function allowing to make some things easier:
 
 | Function | Description | Example |
 | --- | --- | --- |
 | **newLineIndent** | Adds given indent to string if it's multiline | `source: ${{ .flags.source.value \| newLineIndent 20 }}` |
-| **toEnvs** | Converts map of input data to array of kubernetes-like envs | `envs: ${{ .flags.env.value \| toEnvs }}` |
-| **toArray** | Converts map of input data to array in given format. Use `{{.key}}` and `{{.value}}` to access map data | `secretMounts: ${{ .flags.secretmount.value \| toArray "{'secretName':'{{.key}}','mountPath':'{{.value}}'}" }}` |
+| **toEnvs** | Converts the input data map to array of Kubernetes-like envs | `envs: ${{ .flags.env.value \| toEnvs }}` |
+| **toArray** | Converts the input data map to an array in a given format. Use `{{.key}}` and `{{.value}}` to access map data | `secretMounts: ${{ .flags.secretmount.value \| toArray "{'secretName':'{{.key}}','mountPath':'{{.value}}'}" }}` |
 
-## Available resource oriented actions
+## Available Resource-Oriented Actions
 
 | Name | Description |
 | --- | --- |
-| **resource_create** | Create resource on a cluster |
-| **resource_get** | Get resource/s on a cluster |
-| **resource_delete** | Delete resource on a cluster |
-| **resource_explain** | Explain resource by displaying info aboit it |
+| **resource_create** | Creates a resource on a cluster |
+| **resource_get** | Gets a resource from a cluster |
+| **resource_delete** | Deletes a resource from a cluster |
+| **resource_explain** | Explains a resource by displaying info about it |
 
 ### resource_create
 
-This action can be used to create any resource on the cluster.
+Use this action to create any resource on the cluster.
 
 **Action configuration:**
 
@@ -49,13 +49,14 @@ resource: {}
 
 | Name | Type | Description |
 | --- | --- | --- |
-| **resource** | object | Raw object that should be applied to the cluster |
+| **resource** | object | Raw object that must be applied to the cluster |
 
->NOTE: [example](https://github.com/kyma-project/serverless/blob/98b03d4d5f721564ade3e22a446c737aed17d0bf/config/serverless/files/kyma-commands.yaml#L81-L149) usage of the action
+> [!NOTE]
+> For the action usage example, see [kyma-commands.yaml](https://github.com/kyma-project/serverless/blob/98b03d4d5f721564ade3e22a446c737aed17d0bf/config/serverless/files/kyma-commands.yaml#L81-L149).
 
 ### resource_get
 
-This action can be used to get/list resources in one kind from the clsuter. Output resources are displayed as kubectl-like table.
+Use this action to get or list resources of one kind from the cluster. Output resources are displayed as a kubectl-like table.
 
 **Action configuration:**
 
@@ -76,20 +77,21 @@ outputParameters:
 
 | Name | Type | Description |
 | --- | --- | --- |
-| **fromAllNamespaces** | bool | Determine if resources should be get from all namespaces |
+| **fromAllNamespaces** | bool | Determines if resources must be taken from all namespaces |
 | **resource.apiVersion** | string | Output resources ApiVersion |
 | **resource.kind** | string | Output resources Kind |
-| **resource.metadata.name** | string | Name of the resource to get. Gets all resources in the namespace if empty |
-| **resource.metadata.namespace** | string | Namespace from which resources will be obtained |
+| **resource.metadata.name** | string | Name of the resource to get. If empty, it gets all resources in the namespace. |
+| **resource.metadata.namespace** | string | Namespace from which resources are obtained |
 | **outputParameters[]** | array | List of additional parameters displayed in the table view |
 | **outputParameters[].name** | string | Additional column name |
-| **outputParameters[].resourcePath** | string | Path in the resource from which the value will be obtained. Supports [JQ](https://jqlang.org/) language |
+| **outputParameters[].resourcePath** | string | Path in the resource from which the value is obtained. Supports the [JQ](https://jqlang.org/) language |
 
->NOTE: [example](https://github.com/kyma-project/serverless/blob/98b03d4d5f721564ade3e22a446c737aed17d0bf/config/serverless/files/kyma-commands.yaml#L7-L43) usage of the action
+> [!NOTE]
+> For the action usage example, see [kyma-commands.yaml](https://github.com/kyma-project/serverless/blob/98b03d4d5f721564ade3e22a446c737aed17d0bf/config/serverless/files/kyma-commands.yaml#L7-L43).
 
 ### resource_delete
 
-This action can be used to delete resource from the clsuter.
+Use this action to delete a resource from the cluster.
 
 **Action configuration:**
 
@@ -111,11 +113,12 @@ resource:
 | **resource.metadata.name** | string | Name of the resource to delete |
 | **resource.metadata.namespace** | string | Namespace of the resource to delete |
 
->NOTE: [example](https://github.com/kyma-project/serverless/blob/98b03d4d5f721564ade3e22a446c737aed17d0bf/config/serverless/files/kyma-commands.yaml#L61-L79) usage of the action
+> [!NOTE]
+> For the action usage example, see [kyma-commands.yaml](https://github.com/kyma-project/serverless/blob/98b03d4d5f721564ade3e22a446c737aed17d0bf/config/serverless/files/kyma-commands.yaml#L61-L79).
 
 ### resource_explain
 
-Display explanation note about the resource.
+Use this action to display an explanatory note about the resource.
 
 **Action configuration:**
 
@@ -129,13 +132,14 @@ output: "..."
 | --- | --- | --- |
 | **output** | string | Note to display |
 
->NOTE: [example](https://github.com/kyma-project/serverless/blob/98b03d4d5f721564ade3e22a446c737aed17d0bf/config/serverless/files/kyma-commands.yaml#L45-L58) usage of the action
+> [!NOTE]
+> For the action usage example, see [kyma-commands.yaml](https://github.com/kyma-project/serverless/blob/98b03d4d5f721564ade3e22a446c737aed17d0bf/config/serverless/files/kyma-commands.yaml#L45-L58).
 
-## Available module oriented actions
+## Available Module-Oriented Actions
 
 | Name | Module | Description |
 | --- | --- | --- |
-| **registry_image_import** | `docker-registry` | Import image from local registry to in-cluster docker registry |
+| **registry_image_import** | `docker-registry` | Import image from local registry to in-cluster Docker registry |
 | **registry_config** | `docker-registry` | Get in-cluster registry configuration |
 | **function_init** | `serverless` | Generate Function's source and dependencies locally |
 

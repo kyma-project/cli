@@ -32,7 +32,7 @@ flags:
 | Name | Type | Description |
 | --- | --- | --- |
 | **type** | string | Flag input type |
-| **optional** | bool | Can be set to true if argument is not required |
+| **optional** | bool | Set to `true` if argument is not required |
 
 The `type` field is the only required one to configure arguments.
 
@@ -45,13 +45,13 @@ The `type` field is the only required one to configure arguments.
 | **shorthand** | string | One letter shorthand of the flag |
 | **description** | string | Description of the flags |
 | **default** | string | Default value of the flag |
-| **required** | bool | Can be set to true if flag is required |
+| **required** | bool | Set to `true` if flag is required |
 
 The `type` and the `name` fields are the only ones required.
 
 ## type
 
-The `.type` field defines variable type of argument or flags. Using type resulted in input validation, so CLI will validate that user pass int value for the `int` type.
+The `.type` field defines the variable type of argument or flags. Using `type` results in input validation, so Kyma CLI validates if the user passes the int value for the `int` type.
 
 **Possible types:**
 
@@ -60,12 +60,12 @@ The `.type` field defines variable type of argument or flags. Using type resulte
 | string | Flag in string type |
 | int | Flag in int64 type |
 | bool | Flag in bool type. Using flag without value results in changing its value to `true` (for example `--enable` instead of `--enable=true`) |
-| path | Flag in string type which value is taken from the file pointed using the flag. The `.default` field defines default value for the flag, not default path to file |
-| map | Flags in map type allowing user to pass many flags in format KEY=VALUE. This type can be used for example to collect envs from user by passing following input `command --env MY_ENV=MY_VALUE --env MY_ENV_2=MY_VALUE_2` |
+| path | Flag in string type whose value is taken from the file pointed to by the flag. The `.default` field defines the default value for the flag, not the default path to the file |
+| map | Flags in map type allowing user to pass many flags in format KEY=VALUE. Use this type, for example, to collect envs from the user by passing the following input `command --env MY_ENV=MY_VALUE --env MY_ENV_2=MY_VALUE_2` |
 
-## go templates
+## Go Templates
 
-Flags and args values can be in the `with` field using go-templates. Afer command execution CLI will collect all inputs ald build the following data structure:
+Flags and args values can be in the `with` field using Go templates. After the command execution, Kyma CLI collects all inputs and builds the following data structure:
 
 ```yaml
 args:
@@ -90,17 +90,17 @@ flags:
 | **args.type** | string | Type of the arguments taken from the extension definition |
 | **args.optional** | bool | Determines if argument can be omitted. It's taken from the extension definition |
 | **args.value** | string | Value of the argument |
-| **flags** | map | Map of the commands flags. Map keys are build based on flag's name but without `-` signs (for example flag `--all-namespaces` will be represented in map as `.flags.allnamespaces` field) |
+| **flags** | map | Map of the commands flags. Map keys are built based on the flag's name but without `-` signs (for example, flag `--all-namespaces` are represented in the map as `.flags.allnamespaces` field) |
 | **flags[\<flagname\>].type** | string | Type of the flag taken from the extension definition |
 | **flags[\<flagname\>].name** | string | Name of the flag taken from the extension definition |
 | **flags[\<flagname\>].shorthand** | string | Shorthand of the flag taken from the extension definition |
 | **flags[\<flagname\>].description** | string | Description of the flag taken from the extension definition |
 | **flags[\<flagname\>].default** | string | Default value of the flag taken from the extension definition |
-| **flags[\<flagname\>].value** | string | Value of the flag. If flag was not set it contains default value |
+| **flags[\<flagname\>].value** | string | Value of the flag. If the flag was not set, it contains the default value |
 
 ### example
 
-Flags and arguments can be used by calling right value from the structure in format described above. For example for the `resource_create` action we can overwrite configuration:
+Flags and arguments can be used by calling the right value from the structure in the previously described format. For example, for the `resource_create` action, you can overwrite the configuration:
 
 ```yaml
 metadata:
