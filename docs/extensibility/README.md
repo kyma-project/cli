@@ -147,13 +147,12 @@ This yaml example builds the extension with the following command tree:
 
 Kyma CLI provides basic field validation only. The extension owner is responsible for its quality. The following list provides standards every well-prepared extension must meet:
 
-- the `.metadata` should have field all `.metadata.name`, `.metadata.description` and `.metadata.descriptionLong` fields
-- the `.metadata.name` should describes possible argument and flags. For example:
-  - `name: "get [<resource_name>] [flags]"` - optional resource name argument and possible flags
-  - `name: "get <resource_name> [flags]"` - required resource name argument and possible flags
-  - `name: "get [flags]"` - possible flags and no args
-- the `.metadata.description` should start with a capital letter
-- the `.metadata.descriptionLong` should start with a capital letter and end with a dot
-- every `.flag[].name` should be one word or multiple words split by the `-` sign
-- every `.flag[].description` should not be empty and starts with capital letter
-- the `.flag[].shorthand` is optional and should be used only for the essential flags and should follow be intuitive, like shorthand `r` for `replicas` or `f` for `file`
+| Field | Rule |
+| --- | --- |
+| **metadata** | should have field all `.metadata.name`, `.metadata.description` and `.metadata.descriptionLong` fields |
+| **metadata.name** | should describes possible argument and flags. For example `name: "get [<resource_name>] [flags]"`, `name: "delete <resource_name> [flags]"` or `name: "explain [flags]"` |
+| **metadata.description** | should start with a capital letter |
+| **metadata.descriptionLong** | should start with a capital letter and end with a dot |
+| **flag[].name** | should be one word or multiple words split by the `-` sign |
+| **flag[].description** | should not be empty and starts with capital letter |
+| **flag[].shorthand** | is optional and should be used only for the essential flags and should follow be intuitive, like shorthand `r` for `replicas` or `f` for `file` |
