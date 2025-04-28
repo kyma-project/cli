@@ -16,7 +16,16 @@ Such a solution provides control over the interaction with the module on the sid
 
 In addition, you don't need to migrate extensions on the CLI code side. If the team wants to introduce a change in the definition of a command or group of commands, they must only release a new version of the module containing the updated version of the extension. For example, the team responsible for the APIRule resource in version `v2alpha1` created an extension that allows adding and removing APIRule resources and wants to release a new version of the resource. In that case, the only thing they must do, along with adding a new version to the module, is update the extension and release a new version of the module. Also, it is possible to have different extension versions for every component and release channel.
 
+### Concept diagram
+
 ![cli-extensibility.svg](./assets/cli-extensibility.svg)
+
+Steps:
+
+1. Run the CLI binary (for example `kyma alpha function create new-function`)
+2. Load all extensions ConfigMaps from the cluster
+3. Build new commands based on ConfigMaps
+4. Execute desired command
 
 ## ConfigMap
 
