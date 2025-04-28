@@ -29,23 +29,23 @@ flags:
 
 **args fields:**
 
-| Name | Type | Description |
-| --- | --- | --- |
-| **type** | string | Flag input type |
-| **optional** | bool | Set to `true` if argument is not required |
+| Name | Required | Type | Description |
+| --- | --- | --- | --- |
+| **type** | yes | string | Flag input type |
+| **optional** | no | bool | Set to `true` if argument is not required |
 
 The `type` field is the only required one to configure arguments.
 
 **flags fields:**
 
-| Name | Type | Description |
-| --- | --- | --- |
-| **type** | string | Flag input type |
-| **name** | string | Name of the flag |
-| **shorthand** | string | One letter shorthand of the flag |
-| **description** | string | Description of the flags |
-| **default** | string | Default value of the flag |
-| **required** | bool | Set to `true` if flag is required |
+| Name | Required | Type | Description |
+| --- | --- | --- | --- |
+| **type** | yes | string | Flag input type |
+| **name** | yes | string | Name of the flag |
+| **shorthand** | no | string | One letter shorthand of the flag |
+| **description** | no | string | Description of the flags |
+| **default** | no | string | Default value of the flag |
+| **required** | no | bool | Set to `true` if flag is required |
 
 The `type` and the `name` fields are the only ones required.
 

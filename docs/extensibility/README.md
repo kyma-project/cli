@@ -4,7 +4,7 @@
 
 Like any other CLI, Kyma CLI compiles every functionality into its binary. With the Kyma CLI extensibility feature, you can create module-oriented functionality that is versioned and kept together with the module on a cluster. With this feature, you can extend the CLI with resource-oriented commands to manage your module resources or with module-oriented commands that allow for interaction with a module.
 
-Extensions can be added by creating a ConfigMap with the expected label and data in the expected format (see [ConfigMap](#configmap)). The CLI binary with access to listing ConfigMaps on a cluster fetches all extensions from it when run and builds additional commands based on them.
+Extensions can be added by creating a ConfigMap with the expected label and data in the expected format (see [ConfigMap](./README.md#configmap)). The CLI binary with access to listing ConfigMaps on a cluster fetches all extensions from it when run and builds additional commands based on them.
 
 All commands built from extensions can be accessed under the `kyma alpha` commands group.
 
@@ -53,14 +53,14 @@ subCommands: []
 
 **fields:**
 
-| Name | Type | Description |
-| --- | --- | --- |
-| **metadata** | object | Basic information about the command, for example, name or description |
-| **uses** | string | Action that is run on the command execution |
-| **with** | object | Configuration passed to the run action |
-| **args** | object | Command arguments definition used to overwrite values in the config |
-| **flags** | array | Command flags definition used to overwrite values in the config |
-| **subCommands** | array | List of sub-commands. Every sub-command has the same schema as its parent |
+| Name | Required | Type | Description |
+| --- | --- | --- | --- |
+| **metadata** | yes | object | Basic information about the command, for example, name or description |
+| **uses** | no | string | Action that is run on the command execution |
+| **with** | no | object | Configuration passed to the run action |
+| **args** | no | object | Command arguments definition used to overwrite values in the config |
+| **flags** | no | array | Command flags definition used to overwrite values in the config |
+| **subCommands** | no | array | List of sub-commands. Every sub-command has the same schema as its parent |
 
 For the example of the Serverless module extension, see [kyma-commands.yaml](https://github.com/kyma-project/serverless/blob/main/config/serverless/files/kyma-commands.yaml).
 For the in-code definition of types, see [types.go](https://github.com/kyma-project/cli/blob/main/internal/extensions/types/types.go).
@@ -78,11 +78,11 @@ metadata:
 
 **fields:**
 
-| Name | Type | Description |
-| --- | --- | --- |
-| **name** | string | The name of the command |
-| **description** | string | Short description displayed in the parent's command help |
-| **description** | string | Description displayed in the command's help |
+| Name | Required | Type | Description |
+| --- | --- | --- | --- |
+| **name** | yes | string | The name of the command |
+| **description** | no | string | Short description displayed in the parent's command help |
+| **description** | no | string | Description displayed in the command's help |
 
 ### uses
 
