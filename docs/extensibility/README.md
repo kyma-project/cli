@@ -18,7 +18,7 @@ In addition, you don't need to migrate extensions on the CLI code side. If the t
 
 ![cli-extensibility.svg](./assets/cli-extensibility.svg)
 
-## Extensions are ConfigMaps
+## ConfigMap
 
 The extension is defined and enabled with the proper ConfigMap deployed on a cluster that CLI has access to (for example, by exporting the `KUBECONFIG` env or passing the correct argument to the `--kubeconfig` flag). The ConfigMap can have any name and be located in any namespace, but must contain the `kyma-cli/extension: commands` and `kyma-cli/extension-version: v1` labels, and the `kyma-commands.yaml` data key with the correct extension configuration. For example:
 
@@ -96,7 +96,7 @@ For all available action descriptions, see [Actions](actions.md).
 
 ### with
 
-This field contains action-specific configuration. This field supports [Go templates](https://pkg.go.dev/text/template), with the `$` prefix, that can be used to dynamically pass the right values from args or flags. For example:
+This field contains action-specific configuration. It supports [Go templates](https://pkg.go.dev/text/template), with the `$` prefix, that can be used to dynamically pass the right values from args or flags. For example:
 
 ```yaml
 uses: resource_delete
@@ -151,10 +151,10 @@ Kyma CLI provides basic field validation only. The extension owner is responsibl
 
 | Field | Rule |
 | --- | --- |
-| **metadata** | should have field all `.metadata.name`, `.metadata.description` and `.metadata.descriptionLong` fields |
-| **metadata.name** | should describes possible argument and flags. For example `name: "get [<resource_name>] [flags]"`, `name: "delete <resource_name> [flags]"` or `name: "explain [flags]"` |
-| **metadata.description** | should start with a capital letter |
-| **metadata.descriptionLong** | should start with a capital letter and end with a dot |
-| **flag[].name** | should be one word or multiple words split by the `-` sign |
-| **flag[].description** | should not be empty and starts with capital letter |
-| **flag[].shorthand** | is optional and should be used only for the essential flags and should follow be intuitive, like shorthand `r` for `replicas` or `f` for `file` |
+| **metadata** | It must have the `.metadata.name`, `.metadata.description`, and `.metadata.descriptionLong` fields |
+| **metadata.name** | It describes possible arguments and flags. For example, `name: "get [<resource_name>] [flags]"`, `name: "delete <resource_name> [flags]"` or `name: "explain [flags]"` |
+| **metadata.description** | It must start with a capital letter |
+| **metadata.descriptionLong** | It must start with a capital letter and end with a dot |
+| **flag[].name** | It must be one word or multiple words split by the `-` sign |
+| **flag[].description** | It must not be empty and start with capital letter |
+| **flag[].shorthand** | It is optional and must be used only for the essential flags. It must be intuitive, like shorthand `r` for `replicas` or `f` for `file`, etc. |

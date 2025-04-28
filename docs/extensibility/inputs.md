@@ -61,7 +61,7 @@ The `.type` field defines the variable type of argument or flags. Using `type` r
 | int | Flag in int64 type |
 | bool | Flag in bool type. Using flag without value results in changing its value to `true` (for example `--enable` instead of `--enable=true`) |
 | path | Flag in string type whose value is taken from the file pointed to by the flag. The `.default` field defines the default value for the flag, not the default path to the file |
-| map | Flags in map type allowing user to pass many flags in format KEY=VALUE. Use this type, for example, to collect envs from the user by passing the following input `command --env MY_ENV=MY_VALUE --env MY_ENV_2=MY_VALUE_2` |
+| map | Flags in map type allowing user to pass many flags in the `KEY=VALUE` format. Use this type, for example, to collect envs from the user by passing the following input `command --env MY_ENV=MY_VALUE --env MY_ENV_2=MY_VALUE_2` |
 
 ## Go Templates
 
