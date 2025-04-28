@@ -10,7 +10,7 @@ All commands built from extensions can be accessed under the `kyma alpha` comman
 
 ## Concept
 
-The main goal of the Kyma CLI extensibility is to support the basic Kyma resources and modules so that you can intuitively use Kyma and the CLI. After creating a cluster, Kyma CLI must contain only the necessary and basic functionality. Still, when additional modules are installed, the CLI must be extended with additional commands, built based on extensions provided with the modules.
+The main goal of the Kyma CLI extensibility is to support the basic Kyma resources and modules so that you can intuitively use Kyma and the CLI. Basically, Kyma CLI is designed to keep module-oriented commands as extensions. This means that the CLI that is not connected to the cluster or connected to the cluster without any module installed will contain only an essential, minimalistic list of commands.
 
 Such a solution provides control over the interaction with the module on the side of the team responsible for the module, but maintains a uniform CLI standard.
 
