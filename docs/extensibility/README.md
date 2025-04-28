@@ -16,6 +16,8 @@ Such a solution provides control over the interaction with the module on the sid
 
 In addition, you don't need to migrate extensions on the CLI code side. If the team wants to introduce a change in the definition of a command or group of commands, they must only release a new version of the module containing the updated version of the extension. For example, the team responsible for the APIRule resource in version `v2alpha1` created an extension that allows adding and removing APIRule resources and wants to release a new version of the resource. In that case, the only thing they must do, along with adding a new version to the module, is update the extension and release a new version of the module. Also, it is possible to have different extension versions for every component and release channel.
 
+![cli-extensibility.svg](./assets/cli-extensibility.svg)
+
 ## Extensions are ConfigMaps
 
 The extension is defined and enabled with the proper ConfigMap deployed on a cluster that CLI has access to (for example, by exporting the `KUBECONFIG` env or passing the correct argument to the `--kubeconfig` flag). The ConfigMap can have any name and be located in any namespace, but must contain the `kyma-cli/extension: commands` and `kyma-cli/extension-version: v1` labels, and the `kyma-commands.yaml` data key with the correct extension configuration. For example:
