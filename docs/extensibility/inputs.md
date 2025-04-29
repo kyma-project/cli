@@ -31,7 +31,7 @@ flags:
 
 | Name | Required | Type | Description |
 | --- | --- | --- | --- |
-| **type** | yes | string | Flag input type |
+| **type** | yes | enum | Arguments input [type](./inputs.md#type) |
 | **optional** | no | bool | Set to `true` if argument is not required |
 
 The `type` field is the only required one to configure arguments.
@@ -40,7 +40,7 @@ The `type` field is the only required one to configure arguments.
 
 | Name | Required | Type | Description |
 | --- | --- | --- | --- |
-| **type** | yes | string | Flag input type |
+| **type** | yes | enum | Flag input [type](./inputs.md#type) |
 | **name** | yes | string | Name of the flag |
 | **shorthand** | no | string | One letter shorthand of the flag |
 | **description** | no | string | Description of the flags |
@@ -51,17 +51,17 @@ The `type` and the `name` fields are the only ones required.
 
 ## type
 
-The `.type` field defines the variable type of argument or flags. Using `type` results in input validation, so Kyma CLI validates if the user passes the integer value for the `int` type.
+The `.type` field defines the variable type of arguments or flags. Using `type` results in input validation, so Kyma CLI validates if the user passes the integer value for the `int` type.
 
 **Possible types:**
 
 | Name | Description |
 | --- | --- |
-| string | Flag in string type |
-| int | Flag in int64 type |
-| bool | Flag in bool type. Using flag without value results in changing its value to `true` (for example `--enable` instead of `--enable=true`) |
-| path | Flag in string type whose value is taken from the file pointed to by the flag. The `.default` field defines the default value for the flag, not the default path to the file |
-| map | Flags in map type allowing user to pass many flags in the `KEY=VALUE` format. Use this type, for example, to collect envs from the user by passing the following input `command --env MY_ENV=MY_VALUE --env MY_ENV_2=MY_VALUE_2` |
+| string | Flag or argument in string type |
+| int | Flag or argument in int64 type |
+| bool | Flag or argument in bool type. Using flag without value results in changing its value to `true` (for example `--enable` instead of `--enable=true`) |
+| path | Flag or argument in string type whose value is taken from the file pointed to by the flag. The `.default` field defines the default value for the flag, not the default path to the file |
+| map | Flag or argument in map type allowing user to pass many flags in the `KEY=VALUE` format. Use this type, for example, to collect envs from the user by passing the following input `command --env MY_ENV=MY_VALUE --env MY_ENV_2=MY_VALUE_2` |
 
 ## Go Templates
 
