@@ -10,7 +10,7 @@ All commands built from extensions can be accessed under the `kyma alpha` comman
 
 ## Concept
 
-The main goal of the Kyma CLI extensibility is to support the basic Kyma resources and modules so that you can intuitively use Kyma and the CLI. Basically, Kyma CLI is designed to keep module-oriented commands as extensions. This means that the CLI that is not connected to the cluster or connected to the cluster without any module installed contains only an essential, minimalistic list of commands.
+The main goal of the Kyma CLI extensibility feature is to allow module providers to bring new commands associated with the custom resources and capabilities the module brings. This ensures that users have a unified hands-on experience when interacting with Kyma modules.
 
 Such a solution provides control over the interaction with the module on the side of the team responsible for the module, but maintains a uniform CLI standard.
 
@@ -22,7 +22,7 @@ In addition, you don't need to migrate extensions on the CLI code side. If the t
 
 Steps:
 
-1. Run the CLI binary (for example `kyma alpha function create new-function`)
+1. Run the CLI binary (for example `kyma alpha function create`)
 2. Load all extensions ConfigMaps from the cluster
 3. Build new commands based on ConfigMaps
 4. Execute desired command
@@ -160,10 +160,10 @@ Kyma CLI provides basic field validation only. The extension owner is responsibl
 
 | Field | Rule |
 | --- | --- |
-| **metadata** | It must have the `.metadata.name`, `.metadata.description`, and `.metadata.descriptionLong` fields |
+| **metadata** | It has the `.metadata.name`, `.metadata.description`, and `.metadata.descriptionLong` fields |
 | **metadata.name** | It describes possible arguments and flags. For example, `name: "get [<resource_name>] [flags]"`, `name: "delete <resource_name> [flags]"` or `name: "explain [flags]"` |
-| **metadata.description** | It must start with a capital letter |
-| **metadata.descriptionLong** | It must start with a capital letter and end with a dot |
-| **flag[].name** | It must be one word or multiple words split by the `-` sign |
-| **flag[].description** | It must not be empty and start with capital letter |
-| **flag[].shorthand** | It is optional and must be used only for the essential flags. It must be intuitive, like shorthand `r` for `replicas` or `f` for `file`, etc. |
+| **metadata.description** | It starts with a capital letter |
+| **metadata.descriptionLong** | It starts with a capital letter and end with a dot |
+| **flag[].name** | It is one word or multiple words split by the `-` sign |
+| **flag[].description** | It is not empty and start with capital letter |
+| **flag[].shorthand** | It is optional field and is used for the essential flags only. It should be intuitive, like shorthand `r` for `replicas` or `f` for `file`, etc. |
