@@ -67,8 +67,8 @@ subCommands: []
 | **metadata** | yes | object | Basic information about the command, for example, name or description |
 | **uses** | no | string | Action that is run on the command execution |
 | **with** | no | object | Configuration passed to the run action |
-| **args** | no | object | Command arguments definition used to overwrite values in the config |
-| **flags** | no | array | Command flags definition used to overwrite values in the config |
+| **args** | no | object | Command arguments definition used to overwrite values in the configuration under the `with` field |
+| **flags** | no | array | Command flags definition used to overwrite values in the configuration under the `with` field |
 | **subCommands** | no | array | List of sub-commands. Every sub-command has the same schema as its parent |
 
 For the example of the Serverless module extension, see [kyma-commands.yaml](https://github.com/kyma-project/serverless/blob/main/config/serverless/files/kyma-commands.yaml).
