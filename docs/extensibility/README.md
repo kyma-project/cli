@@ -52,12 +52,12 @@ For the example of the Serverless module extension ConfigMap, see [cli-extension
 The extension definition is represented by the YAML file inside the `kyma-commands.yaml` key in the ConfigMap. The given file must be in the proper format describing the command tree:
 
 ```yaml
-metadata: {}
+metadata: {...}
 uses: "..."
-with: {}
-args: {}
-flags: []
-subCommands: []
+with: {...}
+args: {...}
+flags: [...]
+subCommands: [...]
 ```
 
 **fields:**

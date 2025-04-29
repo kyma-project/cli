@@ -4,9 +4,6 @@
 
 Actions are the base functionality of every executable command. They determine the procedure that the command runs on execution. Every action expects a specific configuration under the `.with` field. They are designed to cover most common and generic cases, such as CRUD operations (create, read, update, delete) and module-oriented operations (like importing images to the in-cluster registry for the `docker-registry` module).
 
-> [!NOTE]
-> For the in-code definition, see [alpha.go](https://github.com/kyma-project/cli/blob/main/internal/cmd/alpha/alpha.go#L35).
-
 ## Go Templates
 
 Any field in the `with` object supports [go-templates](https://pkg.go.dev/text/template) with all built-in features like [functions](https://pkg.go.dev/text/template#hdr-Functions) or [actions](https://pkg.go.dev/text/template#hdr-Actions). This allows access to values from args and flags. For more information, see  [Inputs](./inputs.md#go-templates).
@@ -41,7 +38,7 @@ Use this action to create any resource on the cluster.
 **Action configuration:**
 
 ```yaml
-resource: {}
+resource: {...}
 ```
 
 **Fields:**
