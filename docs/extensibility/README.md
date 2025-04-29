@@ -95,7 +95,7 @@ metadata:
 
 ### uses
 
-The `uses` field is based on GitHub Actions nomenclature and represents the ID of the action that is run on every command execution. This field is not required. If it's empty, then the command works as a command grouping all sub-commands (non-executable parent of all sub-commands):
+The `uses` field is based on GitHub Actions nomenclature and represents the ID of the action that is run on every command execution. If it's empty, then the command works as a command grouping all sub-commands (non-executable parent of all sub-commands):
 
 ```yaml
 uses: resource_get

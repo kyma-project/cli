@@ -51,7 +51,7 @@ The `type` and the `name` fields are the only ones required.
 
 ## type
 
-The `.type` field defines the variable type of argument or flags. Using `type` results in input validation, so Kyma CLI validates if the user passes the int value for the `int` type.
+The `.type` field defines the variable type of argument or flags. Using `type` results in input validation, so Kyma CLI validates if the user passes the integer value for the `int` type.
 
 **Possible types:**
 

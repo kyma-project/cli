@@ -79,7 +79,7 @@ outputParameters:
 | **fromAllNamespaces** | bool | Determines if resources must be taken from all namespaces |
 | **resource.apiVersion** | string | Output resources ApiVersion |
 | **resource.kind** | string | Output resources Kind |
-| **resource.metadata.name** | string | Name of the resource to get. If empty, it gets all resources in the namespace. |
+| **resource.metadata.name** | string | Name of the resource to get. If empty, it gets all resources in the namespace |
 | **resource.metadata.namespace** | string | Namespace from which resources are obtained |
 | **outputParameters[]** | array | List of additional parameters displayed in the table view |
 | **outputParameters[].name** | string | Additional column name |
