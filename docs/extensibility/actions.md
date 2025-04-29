@@ -26,14 +26,14 @@ name: ${{ .flags.name.value }}
 
 | Name | Description |
 | --- | --- |
-| **resource_create** | Creates a resource on a cluster |
+| **resource_create** | Creates a resource in a cluster |
 | **resource_get** | Gets a resource from a cluster |
 | **resource_delete** | Deletes a resource from a cluster |
 | **resource_explain** | Explains a resource by displaying info about it |
 
 ### resource_create
 
-Use this action to create any resource on the cluster.
+Use this action to create any cluster resource.
 
 **Action configuration:**
 
@@ -45,7 +45,7 @@ resource: {...}
 
 | Name | Type | Description |
 | --- | --- | --- |
-| **resource** | object | Raw object that must be applied to the cluster |
+| **resource** | object | Raw object applied to a cluster |
 
 > [!NOTE]
 > For the action usage example, see [kyma-commands.yaml](https://github.com/kyma-project/serverless/blob/98b03d4d5f721564ade3e22a446c737aed17d0bf/config/serverless/files/kyma-commands.yaml#L81-L149).
@@ -174,8 +174,8 @@ useExternal: false
 | --- | --- | --- |
 | **pushRegAddrOnly** | bool | Return the push registry address only |
 | **pullRegAddrOnly** | bool | Return the pull registry address only |
-| **output** | string | Path to the file to write output to insead of printing it on the terminal |
-| **useExternal** | bool | Use extenal configuration instead of internal one |
+| **output** | string | Path to the file to write output to instead of printing it in the terminal |
+| **useExternal** | bool | Use external configuration instead of internal one |
 
 ### function_init
 

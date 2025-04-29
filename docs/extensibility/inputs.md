@@ -90,7 +90,7 @@ flags:
 | **args.type** | string | Type of the arguments taken from the extension definition |
 | **args.optional** | bool | Determines if argument can be omitted. It's taken from the extension definition |
 | **args.value** | string | Value of the argument |
-| **flags** | map | Map of the commands flags. Map keys are built based on the flag's name but without `-` signs (for example, flag `--all-namespaces` are represented in the map as `.flags.allnamespaces` field) |
+| **flags** | map | Map of the commands flags. Map keys are built based on the flag's name but without the `-` sign (for example, the `--all-namespaces` flag is represented in the map as `.flags.allnamespaces` field) |
 | **flags[\<flagname\>].type** | string | Type of the flag taken from the extension definition |
 | **flags[\<flagname\>].name** | string | Name of the flag taken from the extension definition |
 | **flags[\<flagname\>].shorthand** | string | Shorthand of the flag taken from the extension definition |
@@ -106,7 +106,7 @@ Flags and arguments can be used by calling the right value from the structure in
 metadata:
   name: create <resource_name> [flags]
   description: "Create resources"
-  descriptionLong: "Use this command to create resources on a cluster."
+  descriptionLong: "Use this command to create resources in a cluster."
 uses: resource_create
 args:
   type: string

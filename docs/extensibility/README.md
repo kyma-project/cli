@@ -2,9 +2,9 @@
 
 ## Overview
 
-Like any other CLI, Kyma CLI compiles every functionality into its binary. With the Kyma CLI extensibility feature, you can create module-oriented functionality that is versioned and kept together with the module on a cluster. With this feature, you can extend the CLI with resource-oriented commands to manage your module resources or with module-oriented commands that allow for interaction with a module.
+Like any other CLI, Kyma CLI compiles every functionality into its binary. With the Kyma CLI extensibility feature, you can create module-oriented functionality that is versioned and kept together with the module in a cluster. With this feature, you can extend the CLI with resource-oriented commands to manage your module resources or with module-oriented commands that allow for interaction with a module.
 
-Extensions can be added by creating a ConfigMap with the expected label and data in the expected format (see [ConfigMap](./README.md#configmap)). The CLI binary with access to listing ConfigMaps on a cluster fetches all extensions from it when run and builds additional commands based on them.
+Extensions can be added by creating a ConfigMap with the expected label and data in the expected format (see [ConfigMap](./README.md#configmap)). The CLI binary with access to listing ConfigMaps in a cluster fetches all extensions from it when run and builds additional commands based on them.
 
 All commands built from extensions can be accessed under the `kyma alpha` commands group.
 
@@ -23,13 +23,13 @@ In addition, you don't need to migrate extensions on the CLI code side. If the t
 Steps:
 
 1. Run the CLI binary (for example `kyma alpha function create`)
-2. Load all extensions ConfigMaps from the cluster
+2. Load all ConfigMaps extensions from the cluster
 3. Build new commands based on ConfigMaps
-4. Execute desired command
+4. Execute the desired command
 
 ## ConfigMap
 
-The extension is defined and enabled with the proper ConfigMap deployed on a cluster that CLI has access to (for example, by exporting the `KUBECONFIG` env or passing the correct argument to the `--kubeconfig` flag). The ConfigMap can have any name and be located in any namespace, but must contain the `kyma-cli/extension: commands` and `kyma-cli/extension-version: v1` labels, and the `kyma-commands.yaml` data key with the correct extension configuration. For example:
+The extension is defined and enabled with the proper ConfigMap deployed in a cluster that CLI has access to (for example, by exporting the `KUBECONFIG` env or passing the correct argument to the `--kubeconfig` flag). The ConfigMap can have any name and be located in any namespace, but must contain the `kyma-cli/extension: commands` and `kyma-cli/extension-version: v1` labels, and the `kyma-commands.yaml` data key with the correct extension configuration. For example:
 
 ```yaml
 apiVersion: v1
@@ -163,7 +163,7 @@ Kyma CLI provides basic field validation only. The extension owner is responsibl
 | **metadata** | It has the `.metadata.name`, `.metadata.description`, and `.metadata.descriptionLong` fields |
 | **metadata.name** | It describes possible arguments and flags. For example, `name: "get [<resource_name>] [flags]"`, `name: "delete <resource_name> [flags]"` or `name: "explain [flags]"` |
 | **metadata.description** | It starts with a capital letter |
-| **metadata.descriptionLong** | It starts with a capital letter and end with a dot |
+| **metadata.descriptionLong** | It starts with a capital letter and ends with a dot |
 | **flag[].name** | It is one word or multiple words split by the `-` sign |
-| **flag[].description** | It is not empty and start with capital letter |
-| **flag[].shorthand** | It is optional field and is used for the essential flags only. It should be intuitive, like shorthand `r` for `replicas` or `f` for `file`, etc. |
+| **flag[].description** | It is not empty and starts with a capital letter |
+| **flag[].shorthand** | It is an optional field and is used for the essential flags only. It should be intuitive, like shorthand `r` for `replicas` or `f` for `file`, etc. |
