@@ -91,7 +91,7 @@ metadata:
 | --- | --- | --- | --- |
 | **name** | yes | string | The name of the command |
 | **description** | no | string | Short description displayed in the parent's command help |
-| **description** | no | string | Description displayed in the command's help |
+| **descriptionLong** | no | string | Description displayed in the command's help |
 
 ### uses
 
@@ -128,7 +128,7 @@ For more information about flags and arguments, see [Inputs](inputs.md).
 
 ### subCommands
 
-Kyma extension has a tree structure, which means that every command can work as a node or a leaf. The `subCommands` array contains a full list of child commands. Every sub-command is in the same format as its parent and has its own `subCommands`:
+Kyma extension has a tree structure, which means that every command can work as a node or a leaf. The `subCommands` array contains a full list of child commands. Every sub-command is in the same format as its parent and may have its own `subCommands`:
 
 ```yaml
 metadata:
