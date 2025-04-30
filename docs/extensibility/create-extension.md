@@ -266,7 +266,7 @@ The extension provides the main command (command group) `configmap`, which print
 
     You should see the following result:
 
-   ```bash
+    ```bash
     NAME                    DATA LENGTH
     cm-from-extension       2
     my-extension            1
