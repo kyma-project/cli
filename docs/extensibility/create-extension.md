@@ -51,9 +51,8 @@ The extension provides the main command (command group) `configmap`, which print
         --skip-extensions         Skip fetching extensions from the cluster
     ```
 
-3. Support the ConfigMap `create` command.
+3. Update your extension with the `create` command. With it, you can create an empty ConfigMap with no data field using [the resource_create action](./actions.md#resource_create) and define its configuration under the `with` field:
 
-    Create an empty ConfigMap with no data field using [the resource_create action](./actions.md#resource_create) and define its configuration under the `with` field:
 
     ```yaml
     apiVersion: v1
