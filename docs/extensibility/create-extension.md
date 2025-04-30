@@ -374,7 +374,7 @@ The extension provides the main command (command group) `configmap`, which print
 
     You should see the following result:
 
-   ```bash
+    ```bash
     resource cm-from-extension deleted
     ```
 
