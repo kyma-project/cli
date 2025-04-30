@@ -1,18 +1,18 @@
 # Create Extension
 
-This article provides you through process of preparing own extension responsible for ConfigMap management. This show-case extension will provide following functionalities:
+Learn how to prepare your own extension for ConfigMap management. This showcase extension provides the following functionalities:
 
-* Get ConfigMap from a cluster
-* Create ConfigMap with given name, namespace and data
-* Delete ConfigMap based on its name and namespace
+* Getting ConfigMap from a cluster
+* Creating ConfigMap with the given name, namespace, and data
+* Deleting ConfigMap based on its name and namespace
 
-The extension will provides main command (command group) `configmap` that will do nothing instead of printing the `help` on execution, but will has three sub-commands (`create`, `get`, `delete`) with resource-oriented actions described in the list above.
+The extension provides the main command (command group) `configmap`, which prints `help` on execution. It has three subcommands (`create`, `get`, `delete`) with resource-oriented actions described in the list above.
 
 ## Steps
 
-1. Prepare ConfigMap with root command
+1. Prepare ConfigMap with the root command
 
-    The very first step will be preparing [a ConfigMap](./README.md#configmap) with required labels and data. For this usecase we would like to have root command `configmap` without any action performed on execution. Let's create ConfigMap with such command and description, following [extensions standards](./README.md#extension-standards), what this command will do:
+    With this step, you create [ConfigMap](./README.md#configmap) with required labels and data. For this use case, you need the root command `configmap` without any action performed on execution. Create ConfigMap with such a command and description, following [extensions standards](./README.md#extension-standards):
 
     ```yaml
     apiVersion: v1
@@ -30,11 +30,13 @@ The extension will provides main command (command group) `configmap` that will d
           descriptionLong: "Use this command to manage ConfigMap resources."
     ```
 
-    After applying ConfigMap on a cluster we can use the Kyma CLI to validate that extension is visible:
+2. Use Kyma CLI to validate that the extension is applied:
 
     ```bash
     $ kyma alpha configmap
-
+    ```
+You should see the following result:
+   ```bash
     Use this command to manage ConfigMap resources.
 
     Usage:
@@ -47,11 +49,10 @@ The extension will provides main command (command group) `configmap` that will d
         --skip-extensions         Skip fetching extensions from the cluster
     ```
 
-2. Support the ConfigMap `create` command
+3. Support the ConfigMap `create` command
 
-    Now, when the extension base is working we can focus on preparing first functionality of creating ConfigMap. In the very first step we will create empty ConfigMap with no data field.
+    Create an empty ConfigMap with no data field using [the resource_create action](./actions.md#resource_create) and define its configuration under the `with` field:
 
-    To do so we need to use [the resource_create action](./actions.md#resource_create) and define its configuration under the `with` field:
 
     ```yaml
     apiVersion: v1
@@ -82,7 +83,7 @@ The extension will provides main command (command group) `configmap` that will d
                 namespace: default
     ```
 
-    We can apply new extension version and check if it works:
+4. Apply the new extension version and check if it works:
 
     ```bash
     $ kyma alpha configmap create
@@ -90,9 +91,9 @@ The extension will provides main command (command group) `configmap` that will d
     resource cm-from-extension applied
     ```
 
-3. Extend the `create` command with resource-oriented features
+5. Extend the `create` command with resource-oriented features
 
-    It would be much easier for an end-user to create ConfigMap with defined name, namespace and data. In this section we will use [flags and args](./inputs.md#arguments-and-flags) to collect these data from user and pass them to the `resource_create` action using configuration under the `with` field using the [go tempaltes](./inputs.md#go-templates) and it's available [custom functions](./actions.md#custom-functions):
+Use [flags and args](./inputs.md#arguments-and-flags) to collect the defined name, namespace, and data from the user and pass them to the `resource_create` action using configuration under the `with` field using [Go templates](./inputs.md#go-templates) and the available [custom functions](./actions.md#custom-functions):
 
     ```yaml
     apiVersion: v1
@@ -118,7 +119,7 @@ The extension will provides main command (command group) `configmap` that will d
             type: string
           flags:
           - name: "namespace"
-            description: "ConfigMap's namespace"
+            description: "ConfigMap namespace"
             shorthand: "n"
             type: string
             default: "default"
@@ -135,19 +136,22 @@ The extension will provides main command (command group) `configmap` that will d
               data: ${{ .flags.fromliteral.value | toYaml }}
     ```
 
-    Important thing is that in this case we are building the `--from-literal` flag that has `map` type. This allows to set this flag many times to collect more than one data, but it needs additional conversion to array using [the toYaml function](./actions.md#custom-functions). Also the `.metadata.name` is updated because command got new flags and args (following [quality standards](./README.md#extension-standards)). Let's apply new version and then test it:
-
+> [!NOTE]
+> In this case, we are building the `--from-literal` flag with the `map` type. With this, you can set this flag many times to collect more than one piece of data, but it requires additional conversion to an array using the [toYaml function](./actions.md#custom-functions). Also, the `.metadata.name` is updated because the command got new flags and args (following [quality standards](./README.md#extension-standards)).
+6. Apply the new version and test it:
     ```bash
     $ kyma alpha configmap create cm-from-extension --namespace default --from-literal data1=value1 --from-literal data2=value2
 
     resource cm-from-extension applied
     ```
 
-    Using the `kubectl` we can check if ConfigMap has all expected fields:
+7. Use kubectl to check if the ConfigMap has all expected fields:
 
     ```bash
     $ kubectl get configmap cm-from-extension -oyaml
-
+    ```
+You should see the following result:
+   ```bash
     apiVersion: v1
     data:
       data1: value1
@@ -161,15 +165,15 @@ The extension will provides main command (command group) `configmap` that will d
       uid: 0ace84cc-a057-4141-b0da-bc6d3f1249a7
     ```
 
-4. Add the kubectl-like `get` command
+8. Add the kubectl-like `get` command
 
-    [The resource_get action](./actions.md#resource_get) allows to display requested resources in a kubectl-like table view with one custom column that counts the data length (using the JQ expression). Our command will work in a few modes depending on the given argument/flags:
+    With the [resource_get action](./actions.md#resource_get), you can display requested resources in a kubectl-like table view with one custom column that counts the data length (using the JQ expression). Our command works in a few modes depending on the given argument or flags:
 
-    * `kyma alpha configmap get` - get all ConfigMaps from the default namepsace (default value for the `namespace` flag)
-    * `kyma alpha configmap get <resource_name>` - get only the ConfigMap with the given name
-    * `kyma alpha configMap get --all-namespaces` - get all ConfigMaps from all namespaces
+    * `kyma alpha configmap get` - Gets all ConfigMaps from the default namespace (default value for the `namespace` flag)
+    * `kyma alpha configmap get <resource_name>` - Gets only the ConfigMap with the given name
+    * `kyma alpha configMap get --all-namespaces` - Gets all ConfigMaps from all namespaces
 
-    Let's add another sub-command with such functionality:
+9. Add another subcommand with such functionality:
 
     ```yaml
     apiVersion: v1
@@ -195,7 +199,7 @@ The extension will provides main command (command group) `configmap` that will d
             type: string
           flags:
           - name: "namespace"
-            description: "ConfigMap's namespace"
+            description: "ConfigMap namespace"
             shorthand: "n"
             type: string
             default: "default"
@@ -220,7 +224,7 @@ The extension will provides main command (command group) `configmap` that will d
             optional: true
           flags:
           - name: "namespace"
-            description: "ConfigMap's namespace"
+            description: "ConfigMap namespace"
             shorthand: "n"
             type: string
             default: "default"
@@ -241,19 +245,21 @@ The extension will provides main command (command group) `configmap` that will d
               name: "data length"
     ```
 
-    After applying the Extension ConfigMap we can test it using:
+10. Use Kyma CLI to test the extension:
 
     ```bash
     $ kyma alpha configmap get
-    
+    ```
+    You should see the following result:
+   ```bash
     NAME                    DATA LENGTH
     cm-from-extension       2
     my-extension            1
     ```
 
-5. Allow ConfigMap deletion
+11. Provide the deletion functionality to the ConfigMap:
 
-    To cover all basic operations on a ConfigMap resource we would like to implement [the resource_delete action](./actions.md#resource_delete) allowing end-users to delete ConfigMap resources. Such command will receive one required argument (resource name) and one optional flag (`--namespace`):
+Implement [the resource_delete action](./actions.md#resource_delete) to cover all basic operations on the ConfigMap resource, allowing end-users to delete ConfigMap resources. Such a command receives one required argument (resource name) and one optional flag (`--namespace`):
 
     ```yaml
     apiVersion: v1
@@ -279,7 +285,7 @@ The extension will provides main command (command group) `configmap` that will d
             type: string
           flags:
           - name: "namespace"
-            description: "ConfigMap's namespace"
+            description: "ConfigMap namespace"
             shorthand: "n"
             type: string
             default: "default"
@@ -304,7 +310,7 @@ The extension will provides main command (command group) `configmap` that will d
             optional: true
           flags:
           - name: "namespace"
-            description: "ConfigMap's namespace"
+            description: "ConfigMap namespace"
             shorthand: "n"
             type: string
             default: "default"
@@ -332,7 +338,7 @@ The extension will provides main command (command group) `configmap` that will d
             type: string
           flags:
           - name: "namespace"
-            description: "ConfigMap's namespace"
+            description: "ConfigMap namespace"
             shorthand: "n"
             type: string
             default: "default"
@@ -345,15 +351,17 @@ The extension will provides main command (command group) `configmap` that will d
                 namespace: ${{ .flags.namespace.value }}
     ```
 
-    The new applyed extension version allows us to delete previously created ConfigMap:
+12. Now you can delete the previously created ConfigMap:
 
     ```bash
     $ kyma alpha configmap delete cm-from-extension
-
+    ```
+You should see the following result:
+   ```bash
     resource cm-from-extension deleted
     ```
 
-    To verify that ConfigMap is removed we can use the `kyma alpha configmap get` command:
+13. To verify that the ConfigMap is deleted, use the `kyma alpha configmap get` command:
 
     ```bash
     $ kyma alpha configmap get
