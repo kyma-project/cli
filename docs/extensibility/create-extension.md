@@ -10,7 +10,7 @@ The extension provides the main command (command group) `configmap`, which print
 
 ## Steps
 
-1. Prepare ConfigMap with the root command.
+1. Prepare ConfigMap with the root command and apply it to your cluster.
 
     With this step, you create [ConfigMap](./README.md#configmap) with required labels and data. For this use case, you need the root command `configmap` without any action performed on execution. Create ConfigMap with such a command and description, following [extensions standards](./README.md#extension-standards):
 
