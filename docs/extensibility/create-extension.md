@@ -10,7 +10,7 @@ The extension provides the main command (command group) `configmap`, which print
 
 ## Steps
 
-1. Prepare ConfigMap with the root command
+1. Prepare ConfigMap with the root command.
 
     With this step, you create [ConfigMap](./README.md#configmap) with required labels and data. For this use case, you need the root command `configmap` without any action performed on execution. Create ConfigMap with such a command and description, following [extensions standards](./README.md#extension-standards):
 
@@ -51,7 +51,7 @@ The extension provides the main command (command group) `configmap`, which print
         --skip-extensions         Skip fetching extensions from the cluster
     ```
 
-3. Support the ConfigMap `create` command
+3. Support the ConfigMap `create` command.
 
     Create an empty ConfigMap with no data field using [the resource_create action](./actions.md#resource_create) and define its configuration under the `with` field:
 
@@ -96,7 +96,7 @@ The extension provides the main command (command group) `configmap`, which print
     resource cm-from-extension applied
     ```
 
-5. Extend the `create` command with resource-oriented features
+5. Extend the `create` command with resource-oriented features.
 
     Use [flags and args](./inputs.md#arguments-and-flags) to collect the defined name, namespace, and data from the user and pass them to the `resource_create` action using configuration under the `with` field using [Go templates](./inputs.md#go-templates) and the available [custom functions](./actions.md#custom-functions):
 
@@ -142,7 +142,7 @@ The extension provides the main command (command group) `configmap`, which print
     ```
 
     > [!NOTE]
-    > In this case, we are building the `--from-literal` flag with the `map` type. With this, you can set this flag many times to collect more than one piece of data, but it requires additional conversion to an array using the [toYaml function](./actions.md#custom-functions). Also, the `.metadata.name` is updated because the command got new flags and args (following [quality standards](./README.md#extension-standards)).
+    > In this case, we are building the `--from-literal` flag with the `map` type. With this, you can set this flag many times to collect more than one piece of data, but it requires additional conversion to an array using the [toYaml function](./actions.md#custom-functions). Also, the `.metadata.name` is updated because the command got new flags and args, following [quality standards](./README.md#extension-standards).
 
 6. Apply the new version and test it:
 
@@ -178,15 +178,15 @@ The extension provides the main command (command group) `configmap`, which print
       uid: 0ace84cc-a057-4141-b0da-bc6d3f1249a7
     ```
 
-8. Add the kubectl-like `get` command
+8. Add the kubectl-like `get` command.
 
-    With the [resource_get action](./actions.md#resource_get), you can display requested resources in a kubectl-like table view with one custom column that counts the data length (using the JQ expression). Our command works in a few modes depending on the given argument or flags:
+    With the [resource_get action](./actions.md#resource_get), you can display requested resources in a kubectl-like table view with one custom column that counts the data length, using the JQ expression. The command works in a few modes depending on the given argument or flags:
 
     * `kyma alpha configmap get` - Gets all ConfigMaps from the default namespace (default value for the `namespace` flag)
     * `kyma alpha configmap get <resource_name>` - Gets only the ConfigMap with the given name
     * `kyma alpha configMap get --all-namespaces` - Gets all ConfigMaps from all namespaces
 
-9. Add another subcommand with such functionality:
+9. Add another subcommand with the following functionality:
 
     ```yaml
     apiVersion: v1
