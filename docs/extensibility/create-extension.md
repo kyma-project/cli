@@ -250,7 +250,9 @@ You should see the following result:
     ```bash
     $ kyma alpha configmap get
     ```
+    ```
     You should see the following result:
+   ```bash
    ```bash
     NAME                    DATA LENGTH
     cm-from-extension       2
@@ -356,7 +358,9 @@ Implement [the resource_delete action](./actions.md#resource_delete) to cover al
     ```bash
     $ kyma alpha configmap delete cm-from-extension
     ```
+    ```
 You should see the following result:
+   ```bash
    ```bash
     resource cm-from-extension deleted
     ```
