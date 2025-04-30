@@ -25,7 +25,7 @@ The extension provides the main command (command group) `configmap`, which print
     data:
       kyma-commands.yaml: |-
         metadata:
-          name: configmap
+          name: configmap [flags]
           description: "Manage ConfigMap resources"
           descriptionLong: "Use this command to manage ConfigMap resources."
     ```
@@ -66,12 +66,12 @@ The extension provides the main command (command group) `configmap`, which print
     data:
       kyma-commands.yaml: |-
         metadata:
-          name: configmap
+          name: configmap [flags]
           description: "Manage ConfigMap resources"
           descriptionLong: "Use this command to manage ConfigMap resources."
         subCommands:
         - metadata:
-            name: create
+            name: create [flags]
             description: "Create ConfigMap resource"
             descriptionLong: "Use this command to create ConfigMap resource."
           uses: resource_create
@@ -111,7 +111,7 @@ The extension provides the main command (command group) `configmap`, which print
     data:
       kyma-commands.yaml: |-
         metadata:
-          name: configmap
+          name: configmap [flags]
           description: "Manage ConfigMap resources"
           descriptionLong: "Use this command to manage ConfigMap resources."
         subCommands:
@@ -199,7 +199,7 @@ The extension provides the main command (command group) `configmap`, which print
     data:
       kyma-commands.yaml: |-
         metadata:
-          name: configmap
+          name: configmap [flags]
           description: "Manage ConfigMap resources"
           descriptionLong: "Use this command to manage ConfigMap resources."
         subCommands:
@@ -287,7 +287,7 @@ The extension provides the main command (command group) `configmap`, which print
     data:
       kyma-commands.yaml: |-
         metadata:
-          name: configmap
+          name: configmap [flags]
           description: "Manage ConfigMap resources"
           descriptionLong: "Use this command to manage ConfigMap resources."
         subCommands:
