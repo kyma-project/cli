@@ -33,10 +33,12 @@ The extension provides the main command (command group) `configmap`, which print
 2. Use Kyma CLI to validate that the extension is applied:
 
     ```bash
-    $ kyma alpha configmap
+    kyma alpha configmap
     ```
-You should see the following result:
-   ```bash
+
+    You should see the following result:
+
+    ```bash
     Use this command to manage ConfigMap resources.
 
     Usage:
@@ -52,7 +54,6 @@ You should see the following result:
 3. Support the ConfigMap `create` command
 
     Create an empty ConfigMap with no data field using [the resource_create action](./actions.md#resource_create) and define its configuration under the `with` field:
-
 
     ```yaml
     apiVersion: v1
@@ -86,14 +87,18 @@ You should see the following result:
 4. Apply the new extension version and check if it works:
 
     ```bash
-    $ kyma alpha configmap create
+    kyma alpha configmap create
+    ```
 
+    You should see the following result:
+
+    ```bash
     resource cm-from-extension applied
     ```
 
 5. Extend the `create` command with resource-oriented features
 
-Use [flags and args](./inputs.md#arguments-and-flags) to collect the defined name, namespace, and data from the user and pass them to the `resource_create` action using configuration under the `with` field using [Go templates](./inputs.md#go-templates) and the available [custom functions](./actions.md#custom-functions):
+    Use [flags and args](./inputs.md#arguments-and-flags) to collect the defined name, namespace, and data from the user and pass them to the `resource_create` action using configuration under the `with` field using [Go templates](./inputs.md#go-templates) and the available [custom functions](./actions.md#custom-functions):
 
     ```yaml
     apiVersion: v1
@@ -136,22 +141,30 @@ Use [flags and args](./inputs.md#arguments-and-flags) to collect the defined nam
               data: ${{ .flags.fromliteral.value | toYaml }}
     ```
 
-> [!NOTE]
-> In this case, we are building the `--from-literal` flag with the `map` type. With this, you can set this flag many times to collect more than one piece of data, but it requires additional conversion to an array using the [toYaml function](./actions.md#custom-functions). Also, the `.metadata.name` is updated because the command got new flags and args (following [quality standards](./README.md#extension-standards)).
-6. Apply the new version and test it:
-    ```bash
-    $ kyma alpha configmap create cm-from-extension --namespace default --from-literal data1=value1 --from-literal data2=value2
+    > [!NOTE]
+    > In this case, we are building the `--from-literal` flag with the `map` type. With this, you can set this flag many times to collect more than one piece of data, but it requires additional conversion to an array using the [toYaml function](./actions.md#custom-functions). Also, the `.metadata.name` is updated because the command got new flags and args (following [quality standards](./README.md#extension-standards)).
 
+6. Apply the new version and test it:
+
+    ```bash
+    kyma alpha configmap create cm-from-extension --namespace default --from-literal data1=value1 --from-literal data2=value2
+    ```
+
+    You should see the following result:
+
+    ```bash
     resource cm-from-extension applied
     ```
 
 7. Use kubectl to check if the ConfigMap has all expected fields:
 
     ```bash
-    $ kubectl get configmap cm-from-extension -oyaml
+    kubectl get configmap cm-from-extension -oyaml
     ```
-You should see the following result:
-   ```bash
+
+    You should see the following result:
+
+    ```bash
     apiVersion: v1
     data:
       data1: value1
@@ -248,11 +261,11 @@ You should see the following result:
 10. Use Kyma CLI to test the extension:
 
     ```bash
-    $ kyma alpha configmap get
+    kyma alpha configmap get
     ```
-    ```
+
     You should see the following result:
-   ```bash
+
    ```bash
     NAME                    DATA LENGTH
     cm-from-extension       2
@@ -261,7 +274,7 @@ You should see the following result:
 
 11. Provide the deletion functionality to the ConfigMap:
 
-Implement [the resource_delete action](./actions.md#resource_delete) to cover all basic operations on the ConfigMap resource, allowing end-users to delete ConfigMap resources. Such a command receives one required argument (resource name) and one optional flag (`--namespace`):
+  Implement [the resource_delete action](./actions.md#resource_delete) to cover all basic operations on the ConfigMap resource, allowing end-users to delete ConfigMap resources. Such a command receives one required argument (resource name) and one optional flag (`--namespace`):
 
     ```yaml
     apiVersion: v1
@@ -356,11 +369,11 @@ Implement [the resource_delete action](./actions.md#resource_delete) to cover al
 12. Now you can delete the previously created ConfigMap:
 
     ```bash
-    $ kyma alpha configmap delete cm-from-extension
+    kyma alpha configmap delete cm-from-extension
     ```
-    ```
-You should see the following result:
-   ```bash
+
+    You should see the following result:
+
    ```bash
     resource cm-from-extension deleted
     ```
@@ -368,8 +381,12 @@ You should see the following result:
 13. To verify that the ConfigMap is deleted, use the `kyma alpha configmap get` command:
 
     ```bash
-    $ kyma alpha configmap get
-    
+    kyma alpha configmap get
+    ```
+
+    You should see the following result:
+
+    ```bash
     NAME                    DATA LENGTH
     my-extension            1
     ```
