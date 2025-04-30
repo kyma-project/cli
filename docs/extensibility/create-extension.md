@@ -274,7 +274,7 @@ The extension provides the main command (command group) `configmap`, which print
 
 11. Provide the deletion functionality to the ConfigMap:
 
-  Implement [the resource_delete action](./actions.md#resource_delete) to cover all basic operations on the ConfigMap resource, allowing end-users to delete ConfigMap resources. Such a command receives one required argument (resource name) and one optional flag (`--namespace`):
+    Implement [the resource_delete action](./actions.md#resource_delete) to cover all basic operations on the ConfigMap resource, allowing end-users to delete ConfigMap resources. Such a command receives one required argument (resource name) and one optional flag (`--namespace`):
 
     ```yaml
     apiVersion: v1
