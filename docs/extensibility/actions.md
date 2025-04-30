@@ -19,8 +19,9 @@ name: ${{ .flags.name.value }}
 | Function | For Type | Description | Example |
 | --- | --- | --- | --- |
 | **newLineIndent** | string | Adds given indent to string if it's multiline | `source: ${{ .flags.source.value \| newLineIndent 20 }}` |
-| **toEnvs** | map | Converts the input data map to array of Kubernetes-like envs | `envs: ${{ .flags.env.value \| toEnvs }}` |
+| **toEnvs** | map | Converts the input data map to an array of Kubernetes-like envs | `envs: ${{ .flags.env.value \| toEnvs }}` |
 | **toArray** | map | Converts the input data map to an array in a given format. Use `{{.key}}` and `{{.value}}` to access map data | `secretMounts: ${{ .flags.secretmount.value \| toArray "{'secretName':'{{.key}}','mountPath':'{{.value}}'}" }}` |
+| **toYaml** | map | Converts the input data map to an YAML object | `data: ${{ .flags.configmapdata.value \| toYaml }}` |
 
 ## Available Resource-Oriented Actions
 

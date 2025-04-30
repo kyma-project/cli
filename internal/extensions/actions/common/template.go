@@ -15,6 +15,7 @@ var funcMap = template.FuncMap{
 	"newLineIndent": newLineIndent,
 	"toEnvs":        toEnvs,
 	"toArray":       toArray,
+	"toYaml":        toYaml,
 }
 
 // templateConfig parses the given template and executes it with the provided overwrites
@@ -71,4 +72,13 @@ func toArray(format string, val map[string]interface{}) (string, error) {
 	}
 
 	return fmt.Sprintf(`[%s]`, strings.Join(fields, ",")), nil
+}
+
+// toYaml converts a map to a YAML object string
+func toYaml(val map[string]interface{}) string {
+	fields := []string{}
+	for k, v := range val {
+		fields = append(fields, fmt.Sprintf(`"%s":"%s"`, k, v))
+	}
+	return fmt.Sprintf("{%s}", strings.Join(fields, ","))
 }

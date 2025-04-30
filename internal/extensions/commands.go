@@ -9,6 +9,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	emptyActionRun = func(cmd *cobra.Command, _ []string) error { return cmd.Help() }
+)
+
 func buildCommand(extension types.Extension, availableActions types.ActionsMap) (*cobra.Command, error) {
 	var errs []error
 
@@ -41,6 +45,9 @@ func buildSingleCommand(extension types.Extension, availableActions types.Action
 	}
 
 	if extension.Action == "" {
+		// no action provided
+		// set help command as default run
+		cmd.RunE = emptyActionRun
 		return cmd, errors.NewList(errs...)
 	}
 
