@@ -1,5 +1,8 @@
 # Create Extension
 
+> [!NOTE]
+> This feature is experimental and works only with the [Kyma CLI niglty build](../user/README.md#nightly-build)
+
 Learn how to prepare your own extension for ConfigMap management. This showcase extension provides the following functionalities:
 
 * Getting ConfigMap from a cluster
@@ -53,7 +56,6 @@ The extension provides the main command (command group) `configmap`, which print
 
 3. Update your extension with the `create` command. With it, you can create an empty ConfigMap with no data field using [the resource_create action](./actions.md#resource_create) and define its configuration under the `with` field:
 
-
     ```yaml
     apiVersion: v1
     kind: ConfigMap
@@ -97,7 +99,7 @@ The extension provides the main command (command group) `configmap`, which print
 
 5. Extend the `create` command with resource-oriented features.
 
-    Use [flags and args](./inputs.md#arguments-and-flags) to collect the defined name, namespace, and data from the user and pass them to the `resource_create` action using configuration under the `with` field using [Go templates](./inputs.md#go-templates) and the available [custom functions](./actions.md#custom-functions):
+    With this step, you extend the `create` command with [flags and args](./inputs.md#arguments-and-flags) allowing to collect name, namespace, and data from the user and pass them to the `resource_create` action using configuration under the `with` field using [Go templates](./inputs.md#go-templates) and the available [custom functions](./actions.md#custom-functions):
 
     ```yaml
     apiVersion: v1
@@ -179,7 +181,7 @@ The extension provides the main command (command group) `configmap`, which print
 
 8. Add the kubectl-like `get` command.
 
-    With the [resource_get action](./actions.md#resource_get), you can display requested resources in a kubectl-like table view with one custom column that counts the data length, using the JQ expression. The command works in a few modes depending on the given argument or flags:
+    With this step, you add the `get` command that executes the [resource_get action](./actions.md#resource_get). This can display requested resources in a kubectl-like table view with one custom column that counts the data length, using the JQ expression. The command works in a few modes depending on the given argument or flags:
 
     * `kyma alpha configmap get` - Gets all ConfigMaps from the default namespace (default value for the `namespace` flag)
     * `kyma alpha configmap get <resource_name>` - Gets only the ConfigMap with the given name
@@ -257,7 +259,7 @@ The extension provides the main command (command group) `configmap`, which print
               name: "data length"
     ```
 
-10. Use Kyma CLI to test the extension:
+9. Use Kyma CLI to test the extension:
 
     ```bash
     kyma alpha configmap get
@@ -271,7 +273,7 @@ The extension provides the main command (command group) `configmap`, which print
     my-extension            1
     ```
 
-11. Provide the deletion functionality to the ConfigMap:
+10. Provide the deletion functionality to the ConfigMap:
 
     Implement [the resource_delete action](./actions.md#resource_delete) to cover all basic operations on the ConfigMap resource, allowing end-users to delete ConfigMap resources. Such a command receives one required argument (resource name) and one optional flag (`--namespace`):
 
@@ -365,7 +367,7 @@ The extension provides the main command (command group) `configmap`, which print
                 namespace: ${{ .flags.namespace.value }}
     ```
 
-12. Now you can delete the previously created ConfigMap:
+11. Now you can delete the previously created ConfigMap:
 
     ```bash
     kyma alpha configmap delete cm-from-extension
@@ -377,7 +379,7 @@ The extension provides the main command (command group) `configmap`, which print
     resource cm-from-extension deleted
     ```
 
-13. To verify that the ConfigMap is deleted, use the `kyma alpha configmap get` command:
+12. To verify that the ConfigMap is deleted, use the `kyma alpha configmap get` command:
 
     ```bash
     kyma alpha configmap get
