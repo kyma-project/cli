@@ -167,3 +167,7 @@ Kyma CLI provides basic field validation only. The extension owner is responsibl
 | **flag[].name** | It is one word or multiple words split by the `-` sign |
 | **flag[].description** | It is not empty and starts with a capital letter |
 | **flag[].shorthand** | It is an optional field and is used for the essential flags only. It should be intuitive, like shorthand `r` for `replicas` or `f` for `file`, etc. |
+
+## Related Information
+
+* [Create Extension](./create-extension.md)
