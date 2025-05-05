@@ -187,8 +187,6 @@ The extension provides the main command (command group) `configmap`, which print
     * `kyma alpha configmap get <resource_name>` - Gets only the ConfigMap with the given name
     * `kyma alpha configMap get --all-namespaces` - Gets all ConfigMaps from all namespaces
 
-9. Add another subcommand with the following functionality:
-
     ```yaml
     apiVersion: v1
     kind: ConfigMap
