@@ -57,6 +57,29 @@ The extension provides the main command (command group) `configmap`, which print
 3. Update your extension with the `create` command. With it, you can create an empty ConfigMap with no data field using [the resource_create action](./actions.md#resource_create) and define its configuration under the `with` field:
 
     ```yaml
+    ...
+    data:
+      kyma-commands.yaml: |-
+        ...
+        subCommands:
+        - metadata:
+            name: create [flags]
+            description: "Create ConfigMap resource"
+            descriptionLong: "Use this command to create ConfigMap resource."
+          uses: resource_create
+          with:
+            resource:
+              apiVersion: v1
+              kind: ConfigMap
+              metadata:
+                name: cm-from-extension
+                namespace: default
+    ```
+
+    <details>
+    <summary>Extension with the create command</summary>
+
+    ```yaml
     apiVersion: v1
     kind: ConfigMap
     metadata:
@@ -85,6 +108,8 @@ The extension provides the main command (command group) `configmap`, which print
                 namespace: default
     ```
 
+    </details>
+
 4. Apply the new extension version and check if it works:
 
     ```bash
@@ -100,6 +125,41 @@ The extension provides the main command (command group) `configmap`, which print
 5. Extend the `create` command with resource-oriented features.
 
     With this step, you extend the `create` command with [flags and args](./inputs.md#arguments-and-flags), allowing you to collect name, namespace, and data from the user and pass them to the `resource_create` action using configuration under the `with` field using [Go templates](./inputs.md#go-templates) and the available [custom functions](./actions.md#custom-functions):
+
+    ```yaml
+    ...
+    data:
+      kyma-commands.yaml: |-
+        ...
+        subCommands:
+        - metadata:
+            name: create <resource_name> [flags]
+            description: "Create ConfigMap resource"
+            descriptionLong: "Use this command to create ConfigMap resource."
+          uses: resource_create
+          args:
+            type: string
+          flags:
+          - name: "namespace"
+            description: "ConfigMap namespace"
+            shorthand: "n"
+            type: string
+            default: "default"
+          - name: "from-literal"
+            description: "Data element in format <KEY>=<VALUE>"
+            type: map
+          with:
+            resource:
+              apiVersion: v1
+              kind: ConfigMap
+              metadata:
+                name: ${{ .args.value }}
+                namespace: ${{ .flags.namespace.value }}
+              data: ${{ .flags.fromliteral.value | toYaml }}
+    ```
+
+    <details>
+    <summary>Extension with the updated create command</summary>
 
     ```yaml
     apiVersion: v1
@@ -141,6 +201,8 @@ The extension provides the main command (command group) `configmap`, which print
                 namespace: ${{ .flags.namespace.value }}
               data: ${{ .flags.fromliteral.value | toYaml }}
     ```
+
+    </details>
 
     > [!NOTE]
     > In this case, we are building the `--from-literal` flag with the `map` type. With this, you can set this flag many times to collect more than one piece of data, but it requires additional conversion to an array using the [toYaml function](./actions.md#custom-functions). Also, the `.metadata.name` is updated because the command got new flags and args, following [quality standards](./README.md#extension-standards).
@@ -186,6 +248,46 @@ The extension provides the main command (command group) `configmap`, which print
     * `kyma alpha configmap get` - Gets all ConfigMaps from the default namespace (default value for the `namespace` flag)
     * `kyma alpha configmap get <resource_name>` - Gets only the ConfigMap with the given name
     * `kyma alpha configMap get --all-namespaces` - Gets all ConfigMaps from all namespaces
+
+    ```yaml
+    ...
+    data:
+      kyma-commands.yaml: |-
+        ...
+        subCommands:
+        - metadata:
+            name: get [<resource_name>] [flags]
+            description: "Get ConfigMap resource"
+            descriptionLong: "Use this command to get ConfigMap resource."
+          uses: resource_get
+          args:
+            type: string
+            optional: true
+          flags:
+          - name: "namespace"
+            description: "ConfigMap namespace"
+            shorthand: "n"
+            type: string
+            default: "default"
+          - name: "all-namespaces"
+            description: "Get resources from all namespaces"
+            type: bool
+            shorthand: "A"
+          with:
+            fromAllNamespaces: ${{.flags.allnamespaces.value}}
+            resource:
+              apiVersion: v1
+              kind: ConfigMap
+              metadata:
+                name: ${{.args.value}}
+                namespace: ${{.flags.namespace.value}}
+            outputParameters:
+            - resourcePath: '.data | length'
+              name: "data length"
+    ```
+
+    <details>
+    <summary>Extension with the get command</summary>
 
     ```yaml
     apiVersion: v1
@@ -257,6 +359,8 @@ The extension provides the main command (command group) `configmap`, which print
               name: "data length"
     ```
 
+    </details>
+
 9. Use Kyma CLI to test the extension:
 
     ```bash
@@ -274,6 +378,37 @@ The extension provides the main command (command group) `configmap`, which print
 10. Provide the deletion functionality to the ConfigMap:
 
     Implement [the resource_delete action](./actions.md#resource_delete) to cover all basic operations on the ConfigMap resource, allowing end-users to delete ConfigMap resources. Such a command receives one required argument (resource name) and one optional flag (`--namespace`):
+
+    ```yaml
+    ...
+    data:
+      kyma-commands.yaml: |-
+        ...
+        subCommands:
+        - metadata:
+            name: delete <resource_name> [flags]
+            description: "Delete ConfigMap resource"
+            descriptionLong: "Use this command to delete ConfigMap resource."
+          uses: resource_delete
+          args:
+            type: string
+          flags:
+          - name: "namespace"
+            description: "ConfigMap namespace"
+            shorthand: "n"
+            type: string
+            default: "default"
+          with:
+            resource:
+              apiVersion: v1
+              kind: ConfigMap
+              metadata:
+                name: ${{ .args.value }}
+                namespace: ${{ .flags.namespace.value }}
+    ```
+
+    <details>
+    <summary>Extension with the delete command</summary>
 
     ```yaml
     apiVersion: v1
@@ -364,6 +499,8 @@ The extension provides the main command (command group) `configmap`, which print
                 name: ${{ .args.value }}
                 namespace: ${{ .flags.namespace.value }}
     ```
+
+    </details>
 
 11. Now you can delete the previously created ConfigMap:
 
