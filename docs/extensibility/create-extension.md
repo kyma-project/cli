@@ -1,7 +1,7 @@
 # Create Extension
 
 > [!NOTE]
-> This feature is experimental and works only with the [Kyma CLI niglty build](../user/README.md#nightly-build)
+> This feature is experimental and works only with the [Kyma CLI nightly build](../user/README.md#nightly-build)
 
 Learn how to prepare your own extension for ConfigMap management. This showcase extension provides the following functionalities:
 
@@ -99,7 +99,7 @@ The extension provides the main command (command group) `configmap`, which print
 
 5. Extend the `create` command with resource-oriented features.
 
-    With this step, you extend the `create` command with [flags and args](./inputs.md#arguments-and-flags) allowing to collect name, namespace, and data from the user and pass them to the `resource_create` action using configuration under the `with` field using [Go templates](./inputs.md#go-templates) and the available [custom functions](./actions.md#custom-functions):
+    With this step, you extend the `create` command with [flags and args](./inputs.md#arguments-and-flags), allowing you to collect name, namespace, and data from the user and pass them to the `resource_create` action using configuration under the `with` field using [Go templates](./inputs.md#go-templates) and the available [custom functions](./actions.md#custom-functions):
 
     ```yaml
     apiVersion: v1
