@@ -100,7 +100,7 @@ func newGenerateCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 func (cfg *generateConfig) complete(cmd *cobra.Command) {
 	// complete for OIDC flow
 	requestUrlEnv := os.Getenv("ACTIONS_ID_TOKEN_REQUEST_URL")
-	if cfg.idTokenRequestURL == "" && requestUrlEnv != "" {
+	if cfg.idTokenRequestURL == "" && requestUrlEnv != "" && cfg.token == "" {
 		_ = cmd.Flags().Set("id-token-request-url", requestUrlEnv)
 	}
 	cfg.idTokenRequestToken = os.Getenv("ACTIONS_ID_TOKEN_REQUEST_TOKEN")
