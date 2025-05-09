@@ -36,12 +36,22 @@ jobs:
       - name: test gh oidc trust
         run: |
           echo -e "Testing access generating for github as trusted OIDC \n"
+
+          AUDIENCE="gh-oidc-test"
+          OIDC_URL_WITH_AUDIENCE="$ACTIONS_ID_TOKEN_REQUEST_URL&audience=$AUDIENCE"
+          IDTOKEN=$(curl \
+            -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            -H "Accept: application/json; api-version=2.0" \
+            "$OIDC_URL_WITH_AUDIENCE" | jq -r .value)
+
+          echo $IDTOKEN | jq -R 'split(".") | .[1] | @base64d | fromjson'
+
           
           //WHEN
           kubectl apply -f tests/btp/k8s-resources/github-oidc-trust
           
           //AND
-          bin/kyma alpha kubeconfig generate --audience gh-oidc-test --output /tmp/kubeconfig-gh-token.yaml 
+          bin/kyma alpha kubeconfig generate --audience $AUDIENCE --output /tmp/kubeconfig-gh-token.yaml 
           
           //THEN
           kubectl config view --minify --raw | yq '.users[0].name' --kubeconfig /tmp/kubeconfig-gh-token.yaml
