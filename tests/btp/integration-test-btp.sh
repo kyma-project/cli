@@ -115,6 +115,8 @@ echo "Bookstore db initialised"
 echo -e "\n--------------------------------------------------------------------------------------\n"
 echo -e "Step9: Pushing bookstore app\n"
 
+kubectl label namespace default istio-injection=enabled --overwrite
+
 # build hdi-deploy via pack and push it via docker CLI (external url)
 pack build bookstore:latest -p sample-http-db-nodejs/bookstore -B paketobuildpacks/builder:base
 docker tag bookstore:latest $dr_external_url/bookstore:latest
