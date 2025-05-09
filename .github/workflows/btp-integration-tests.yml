@@ -38,25 +38,17 @@ jobs:
           btp_kyma_plan: '${{ secrets.BTP_KYMA_PLAN }}'
       - name: test gh oidc trust
         run: |
-          echo -e "Testing access generating for github as trusted OIDC \n"
+          echo -e "Testing access generated for github as trusted OIDC \n"
 
           AUDIENCE="gh-oidc-test"
-          OIDC_URL_WITH_AUDIENCE="$ACTIONS_ID_TOKEN_REQUEST_URL&audience=$AUDIENCE"
-          IDTOKEN=$(curl \
-            -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            -H "Accept: application/json; api-version=2.0" \
-            "$OIDC_URL_WITH_AUDIENCE" | jq -r .value)
 
-          echo $IDTOKEN | jq -R 'split(".") | .[1] | @base64d | fromjson'
-
-          # WHEN
+          # GIVEN
           kubectl apply -f tests/btp/k8s-resources/github-oidc-trust
           
-          # AND
+          # WHEN
           bin/kyma alpha kubeconfig generate --audience $AUDIENCE --output /tmp/kubeconfig-gh-token.yaml 
           
           # THEN
-          kubectl config view --minify --raw --kubeconfig /tmp/kubeconfig-gh-token.yaml | yq '.users[0].name' 
           kubectl auth can-i update kymas --kubeconfig /tmp/kubeconfig-gh-token.yaml
           kubectl get kymas -A -oyaml --kubeconfig /tmp/kubeconfig-gh-token.yaml
       - name: ensure btp prerequisites 

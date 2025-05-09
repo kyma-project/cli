@@ -8,4 +8,4 @@ spec:
   usernameClaim: repository
   usernamePrefix: "gh-oidc:"
   requiredClaims:
-    repository: kwiatekus/cli
+    repository: kyma-project/cli
