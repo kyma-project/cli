@@ -4,6 +4,25 @@ echo -e "\n---------------------------------------------------------------------
 echo "Running kyma integration tests uing connected managed kyma runtime"
 
 
+
+AUDIENCE="gh-oidc-test"
+
+echo -e "\n--------------------------------------------------------------------------------------\n"
+echo -e "Step0: Generating access for github as trusted OIDC \n"
+
+
+kubectl apply -f ./k8s-resources/github-oidc-trust
+
+../../bin/kyma alpha kubeconfig generate --audience $AUDIENCE --id-token-request-url $ACTIONS_ID_TOKEN_REQUEST_URL --output /tmp/kubeconfig-gh-token.yaml 
+
+# if [[ $(kubectl config view --minify --raw | yq '.users[0].name') != 'test-sa' ]]; then
+#     exit 1
+# fi
+
+kubectl config view --minify --raw | yq '.users[0].name' --kubeconfig /tmp/kubeconfig-gh-token.yaml
+kubectl auth can-i update kymas --kubeconfig /tmp/kubeconfig-gh-token.yaml
+
+
 echo -e "\n--------------------------------------------------------------------------------------\n"
 echo -e "Step1: Generating temporary access for new service account\n"
 

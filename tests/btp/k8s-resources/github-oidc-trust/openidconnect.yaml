@@ -1,0 +1,12 @@
+apiVersion: authentication.gardener.cloud/v1alpha1
+kind: OpenIDConnect
+metadata:
+  name: actions-oidc
+spec:
+  issuerURL: https://token.actions.githubusercontent.com
+  clientID: gh-oidc-test
+  usernameClaim: sub
+  usernamePrefix: "gh-oidc:"
+  requiredClaims:
+    repository: kwiatekus/cli
+    # ref: refs/heads/main

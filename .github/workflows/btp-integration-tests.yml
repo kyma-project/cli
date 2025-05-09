@@ -56,6 +56,7 @@ jobs:
       - name: test 
         run: |
           DOMAIN=$DOMAIN \
+          ACTIONS_ID_TOKEN_REQUEST_URL=$ACTIONS_ID_TOKEN_REQUEST_URL \
           make -C tests/btp e2e-test
         env:
           DOMAIN: '${{ steps.create-btp-resources.outputs.domain }}'
