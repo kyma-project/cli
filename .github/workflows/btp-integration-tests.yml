@@ -33,6 +33,20 @@ jobs:
           btp_subaccount_region: '${{ secrets.BTP_SUBACCOUNT_REGION }}'
           btp_kyma_region: '${{ secrets.BTP_KYMA_REGION }}'
           btp_kyma_plan: '${{ secrets.BTP_KYMA_PLAN }}'
+      - name: test gh oidc trust
+        run: |
+          echo -e "Testing access generating for github as trusted OIDC \n"
+          
+          //WHEN
+          kubectl apply -f tests/btp/k8s-resources/github-oidc-trust
+          
+          //AND
+          bin/kyma alpha kubeconfig generate --audience gh-oidc-test --output /tmp/kubeconfig-gh-token.yaml 
+          
+          //THEN
+          kubectl config view --minify --raw | yq '.users[0].name' --kubeconfig /tmp/kubeconfig-gh-token.yaml
+          kubectl auth can-i update kymas --kubeconfig /tmp/kubeconfig-gh-token.yaml
+          kubectl get kymas -A -oyaml --kubeconfig /tmp/kubeconfig-gh-token.yaml
       - name: ensure btp prerequisites 
         run: |
           echo -e "BTP_GLOBAL_ACCOUNT = \"$BTP_GLOBAL_ACCOUNT\"" >> tests/btp/tf/.tfvars
@@ -56,8 +70,6 @@ jobs:
       - name: test 
         run: |
           DOMAIN=$DOMAIN \
-          ACTIONS_ID_TOKEN_REQUEST_URL=$ACTIONS_ID_TOKEN_REQUEST_URL \
-          ACTIONS_ID_TOKEN_REQUEST_TOKEN=$ACTIONS_ID_TOKEN_REQUEST_TOKEN \
           make -C tests/btp e2e-test
         env:
           DOMAIN: '${{ steps.create-btp-resources.outputs.domain }}'
