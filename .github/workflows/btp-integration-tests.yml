@@ -56,7 +56,7 @@ jobs:
           bin/kyma alpha kubeconfig generate --audience $AUDIENCE --output /tmp/kubeconfig-gh-token.yaml 
           
           # THEN
-          kubectl config view --minify --raw | yq '.users[0].name' --kubeconfig /tmp/kubeconfig-gh-token.yaml
+          kubectl config view --minify --raw --kubeconfig /tmp/kubeconfig-gh-token.yaml | yq '.users[0].name' 
           kubectl auth can-i update kymas --kubeconfig /tmp/kubeconfig-gh-token.yaml
           kubectl get kymas -A -oyaml --kubeconfig /tmp/kubeconfig-gh-token.yaml
       - name: ensure btp prerequisites 
