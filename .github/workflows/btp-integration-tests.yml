@@ -46,14 +46,13 @@ jobs:
 
           echo $IDTOKEN | jq -R 'split(".") | .[1] | @base64d | fromjson'
 
-          
-          //WHEN
+          # WHEN
           kubectl apply -f tests/btp/k8s-resources/github-oidc-trust
           
-          //AND
+          # AND
           bin/kyma alpha kubeconfig generate --audience $AUDIENCE --output /tmp/kubeconfig-gh-token.yaml 
           
-          //THEN
+          # THEN
           kubectl config view --minify --raw | yq '.users[0].name' --kubeconfig /tmp/kubeconfig-gh-token.yaml
           kubectl auth can-i update kymas --kubeconfig /tmp/kubeconfig-gh-token.yaml
           kubectl get kymas -A -oyaml --kubeconfig /tmp/kubeconfig-gh-token.yaml
