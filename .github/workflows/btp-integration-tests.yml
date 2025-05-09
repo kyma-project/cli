@@ -1,5 +1,8 @@
 name: btp integration tests
 
+permissions:
+  id-token: write # Required to receive OIDC tokens
+
 on:
   workflow_dispatch:
   push:
