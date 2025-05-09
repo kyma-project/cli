@@ -1,5 +1,8 @@
 name: btp integration tests
 
+permissions:
+  id-token: write # Required to receive OIDC tokens
+
 on:
   workflow_dispatch:
   push:
@@ -33,6 +36,21 @@ jobs:
           btp_subaccount_region: '${{ secrets.BTP_SUBACCOUNT_REGION }}'
           btp_kyma_region: '${{ secrets.BTP_KYMA_REGION }}'
           btp_kyma_plan: '${{ secrets.BTP_KYMA_PLAN }}'
+      - name: test gh oidc trust
+        run: |
+          echo -e "Testing access generated for github as trusted OIDC \n"
+
+          AUDIENCE="gh-oidc-test"
+
+          # GIVEN
+          kubectl apply -f tests/btp/k8s-resources/github-oidc-trust
+          
+          # WHEN
+          bin/kyma alpha kubeconfig generate --audience $AUDIENCE --output /tmp/kubeconfig-gh-token.yaml 
+          
+          # THEN
+          kubectl auth can-i update kymas --kubeconfig /tmp/kubeconfig-gh-token.yaml
+          kubectl get kymas -A -oyaml --kubeconfig /tmp/kubeconfig-gh-token.yaml
       - name: ensure btp prerequisites 
         run: |
           echo -e "BTP_GLOBAL_ACCOUNT = \"$BTP_GLOBAL_ACCOUNT\"" >> tests/btp/tf/.tfvars

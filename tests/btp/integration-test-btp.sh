@@ -3,7 +3,6 @@
 echo -e "\n--------------------------------------------------------------------------------------\n"
 echo "Running kyma integration tests uing connected managed kyma runtime"
 
-
 echo -e "\n--------------------------------------------------------------------------------------\n"
 echo -e "Step1: Generating temporary access for new service account\n"
 
@@ -95,6 +94,8 @@ echo "Bookstore db initialised"
 
 echo -e "\n--------------------------------------------------------------------------------------\n"
 echo -e "Step9: Pushing bookstore app\n"
+
+kubectl label namespace default istio-injection=enabled --overwrite
 
 # build hdi-deploy via pack and push it via docker CLI (external url)
 pack build bookstore:latest -p sample-http-db-nodejs/bookstore -B paketobuildpacks/builder:base
