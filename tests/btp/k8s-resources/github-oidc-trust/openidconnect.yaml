@@ -5,8 +5,7 @@ metadata:
 spec:
   issuerURL: https://token.actions.githubusercontent.com
   clientID: gh-oidc-test
-  usernameClaim: sub
+  usernameClaim: repository
   usernamePrefix: "gh-oidc:"
   requiredClaims:
     repository: kwiatekus/cli
-    # ref: refs/heads/main

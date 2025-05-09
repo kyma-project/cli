@@ -8,5 +8,5 @@ roleRef:
   name: cluster-admin
 subjects:
   - kind: User
-    name: gh-oidc:repo:kwiatekus/cli
+    name: gh-oidc:kwiatekus/cli
     apiGroup: rbac.authorization.k8s.io
