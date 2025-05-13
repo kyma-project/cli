@@ -12,6 +12,7 @@ import (
 )
 
 type resourceCreateActionConfig struct {
+	DryRun   bool                   `yaml:"dryRun"`
 	Resource map[string]interface{} `yaml:"resource"`
 }
 
@@ -37,11 +38,16 @@ func (a *resourceCreateAction) Run(cmd *cobra.Command, _ []string) clierror.Erro
 		return clierr
 	}
 
-	err := client.RootlessDynamic().Apply(a.kymaConfig.Ctx, u)
+	err := client.RootlessDynamic().Apply(a.kymaConfig.Ctx, u, a.Cfg.DryRun)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to create resource"))
 	}
 
-	fmt.Fprintf(cmd.OutOrStdout(), "resource %s applied\n", u.GetName())
+	messageSuffix := ""
+	if a.Cfg.DryRun {
+		messageSuffix = " (dry run)"
+	}
+
+	fmt.Fprintf(cmd.OutOrStdout(), "resource %s applied%s\n", u.GetName(), messageSuffix)
 	return nil
 }

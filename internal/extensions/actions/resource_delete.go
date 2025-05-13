@@ -12,6 +12,7 @@ import (
 )
 
 type resourceDeleteActionConfig struct {
+	DryRun   bool                   `yaml:"dryRun"`
 	Resource map[string]interface{} `yaml:"resource"`
 }
 
@@ -37,12 +38,17 @@ func (a *resourceDeleteAction) Run(cmd *cobra.Command, _ []string) clierror.Erro
 		return clierr
 	}
 
-	err := client.RootlessDynamic().Remove(a.kymaConfig.Ctx, u)
+	err := client.RootlessDynamic().Remove(a.kymaConfig.Ctx, u, a.Cfg.DryRun)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to delete resource"))
 	}
 
-	fmt.Fprintf(cmd.OutOrStdout(), "resource %s deleted\n", u.GetName())
+	messageSuffix := ""
+	if a.Cfg.DryRun {
+		messageSuffix = " (dry run)"
+	}
+
+	fmt.Fprintf(cmd.OutOrStdout(), "resource %s deleted%s\n", u.GetName(), messageSuffix)
 
 	return nil
 }

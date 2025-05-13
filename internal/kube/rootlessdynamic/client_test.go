@@ -23,7 +23,7 @@ func Test_Apply(t *testing.T) {
 		dynamic := dynamic_fake.NewSimpleDynamicClient(scheme.Scheme)
 		client := fixRootlessDynamic(dynamic, []*metav1.APIResourceList{apiResource})
 
-		err := client.Apply(ctx, obj)
+		err := client.Apply(ctx, obj, false)
 		require.Nil(t, err)
 
 		clusterObj, clusterErr := dynamic.Resource(schema.GroupVersionResource{
@@ -41,7 +41,7 @@ func Test_Apply(t *testing.T) {
 		dynamic := dynamic_fake.NewSimpleDynamicClient(scheme.Scheme)
 		client := fixRootlessDynamic(dynamic, []*metav1.APIResourceList{apiResource})
 
-		err := client.Apply(ctx, obj)
+		err := client.Apply(ctx, obj, false)
 		require.Nil(t, err)
 
 		clusterObj, clusterErr := dynamic.Resource(schema.GroupVersionResource{
@@ -63,7 +63,7 @@ func Test_Apply(t *testing.T) {
 			"key": "value2",
 		}
 
-		err := client.Apply(ctx, obj)
+		err := client.Apply(ctx, obj, false)
 		require.Nil(t, err)
 
 		clusterObj, clusterErr := dynamic.Resource(schema.GroupVersionResource{
@@ -87,7 +87,7 @@ func Test_Apply(t *testing.T) {
 			},
 		}
 
-		err := client.Apply(ctx, obj)
+		err := client.Apply(ctx, obj, false)
 		require.Nil(t, err)
 
 		clusterObj, clusterErr := dynamic.Resource(schema.GroupVersionResource{
@@ -109,7 +109,7 @@ func Test_Apply(t *testing.T) {
 			},
 		})
 
-		err := client.Apply(ctx, obj)
+		err := client.Apply(ctx, obj, false)
 		require.ErrorContains(t, err, "failed to discover API resource using discovery client: resource 'Secret' in group '', and version 'v1' not registered on cluster")
 	})
 }
@@ -319,7 +319,7 @@ func Test_Remove(t *testing.T) {
 		dynamic := dynamic_fake.NewSimpleDynamicClient(scheme.Scheme, obj)
 		client := fixRootlessDynamic(dynamic, []*metav1.APIResourceList{apiResource})
 
-		err := client.Remove(ctx, obj)
+		err := client.Remove(ctx, obj, false)
 		require.Nil(t, err)
 
 		_, getErr := dynamic.Resource(schema.GroupVersionResource{
@@ -337,7 +337,7 @@ func Test_Remove(t *testing.T) {
 		dynamic := dynamic_fake.NewSimpleDynamicClient(scheme.Scheme, obj)
 		client := fixRootlessDynamic(dynamic, []*metav1.APIResourceList{apiResource})
 
-		err := client.Remove(ctx, obj)
+		err := client.Remove(ctx, obj, false)
 		require.Nil(t, err)
 
 		_, getErr := dynamic.Resource(schema.GroupVersionResource{
@@ -359,7 +359,7 @@ func Test_Remove(t *testing.T) {
 			},
 		})
 
-		err := client.Remove(ctx, obj)
+		err := client.Remove(ctx, obj, false)
 		require.ErrorContains(t, err, "failed to discover API resource using discovery client: resource 'Secret' in group '', and version 'v1' not registered on cluster")
 	})
 }
@@ -462,7 +462,7 @@ func fixRootlessDynamic(dynamic dynamic.Interface, apiResources []*metav1.APIRes
 }
 
 // this func is a testing version of the Apply func that can't be used in tests because of dynamic.FakeDynamicClient limitations
-func fixApplyFunc(ctx context.Context, ri dynamic.ResourceInterface, u *unstructured.Unstructured) error {
+func fixApplyFunc(ctx context.Context, ri dynamic.ResourceInterface, u *unstructured.Unstructured, _ bool) error {
 	_, err := ri.Create(ctx, u, metav1.CreateOptions{
 		FieldManager: "cli",
 	})
