@@ -47,7 +47,7 @@ resource: {...}
 
 | Name | Type | Description |
 | --- | --- | --- |
-| **dryRun** | bool | Simulate resource deletion if set to `true` |
+| **dryRun** | bool | Simulates resource deletion if set to `true` |
 | **resource** | object | Raw object applied to a cluster |
 
 > [!NOTE]
@@ -108,7 +108,7 @@ resource:
 
 | Name | Type | Description |
 | --- | --- | --- |
-| **dryRun** | bool | Simulate resource deletion if set to `true` |
+| **dryRun** | bool | Simulates resource deletion if set to `true` |
 | **resource.apiVersion** | string | Resources ApiVersion |
 | **resource.kind** | string | Resources Kind |
 | **resource.metadata.name** | string | Name of the resource to delete |
