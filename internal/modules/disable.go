@@ -80,7 +80,7 @@ func removeModuleCR(writer io.Writer, ctx context.Context, client kube.Client, m
 
 	for _, moduleCR := range list.Items {
 		fmt.Fprintf(writer, "removing %s/%s CR\n", moduleCR.GetNamespace(), moduleCR.GetName())
-		err = client.RootlessDynamic().Remove(ctx, &moduleCR)
+		err = client.RootlessDynamic().Remove(ctx, &moduleCR, false)
 		if err != nil && !errors.IsNotFound(err) {
 			return clierror.Wrap(err, clierror.New(
 				fmt.Sprintf("failed to remove %s/%s cr", moduleCR.GetNamespace(), moduleCR.GetName()),

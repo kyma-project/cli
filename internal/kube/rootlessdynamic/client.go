@@ -13,14 +13,14 @@ import (
 	"k8s.io/client-go/dynamic"
 )
 
-type applyFunc func(context.Context, dynamic.ResourceInterface, *unstructured.Unstructured) error
+type applyFunc func(context.Context, dynamic.ResourceInterface, *unstructured.Unstructured, bool) error
 
 type Interface interface {
 	Get(context.Context, *unstructured.Unstructured) (*unstructured.Unstructured, error)
 	List(context.Context, *unstructured.Unstructured, *ListOptions) (*unstructured.UnstructuredList, error)
-	Apply(context.Context, *unstructured.Unstructured) error
+	Apply(context.Context, *unstructured.Unstructured, bool) error
 	ApplyMany(context.Context, []unstructured.Unstructured) error
-	Remove(context.Context, *unstructured.Unstructured) error
+	Remove(context.Context, *unstructured.Unstructured, bool) error
 	RemoveMany(context.Context, []unstructured.Unstructured) error
 	WatchSingleResource(context.Context, *unstructured.Unstructured) (watch.Interface, error)
 }
@@ -93,7 +93,7 @@ func (c *client) List(ctx context.Context, resource *unstructured.Unstructured, 
 	})
 }
 
-func (c *client) Apply(ctx context.Context, resource *unstructured.Unstructured) error {
+func (c *client) Apply(ctx context.Context, resource *unstructured.Unstructured, druRun bool) error {
 	group, version := groupVersion(resource.GetAPIVersion())
 	apiResource, err := c.discoverAPIResource(group, version, resource.GetKind())
 	if err != nil {
@@ -107,12 +107,12 @@ func (c *client) Apply(ctx context.Context, resource *unstructured.Unstructured)
 	}
 
 	if apiResource.Namespaced {
-		err = c.applyFunc(ctx, c.dynamic.Resource(*gvr).Namespace(getResourceNamespace(resource)), resource)
+		err = c.applyFunc(ctx, c.dynamic.Resource(*gvr).Namespace(getResourceNamespace(resource)), resource, druRun)
 		if err != nil {
 			return fmt.Errorf("failed to apply namespaced resource: %w", err)
 		}
 	} else {
-		err = c.applyFunc(ctx, c.dynamic.Resource(*gvr), resource)
+		err = c.applyFunc(ctx, c.dynamic.Resource(*gvr), resource, druRun)
 		if err != nil {
 			return fmt.Errorf("failed to apply cluster-scoped resource: %w", err)
 		}
@@ -122,7 +122,8 @@ func (c *client) Apply(ctx context.Context, resource *unstructured.Unstructured)
 
 func (c *client) ApplyMany(ctx context.Context, objs []unstructured.Unstructured) error {
 	for _, resource := range objs {
-		err := c.Apply(ctx, &resource)
+		// TODO: add dryRun support
+		err := c.Apply(ctx, &resource, false)
 		if err != nil {
 			return err
 		}
@@ -130,7 +131,7 @@ func (c *client) ApplyMany(ctx context.Context, objs []unstructured.Unstructured
 	return nil
 }
 
-func (c *client) Remove(ctx context.Context, resource *unstructured.Unstructured) error {
+func (c *client) Remove(ctx context.Context, resource *unstructured.Unstructured, dryRun bool) error {
 	group, version := groupVersion(resource.GetAPIVersion())
 	apiResource, err := c.discoverAPIResource(group, version, resource.GetKind())
 	if err != nil {
@@ -143,13 +144,22 @@ func (c *client) Remove(ctx context.Context, resource *unstructured.Unstructured
 		Resource: apiResource.Name,
 	}
 
+	dryRunOpts := []string{}
+	if dryRun {
+		dryRunOpts = append(dryRunOpts, "All")
+	}
+
 	if apiResource.Namespaced {
-		err = c.dynamic.Resource(*gvr).Namespace(getResourceNamespace(resource)).Delete(ctx, resource.GetName(), metav1.DeleteOptions{})
+		err = c.dynamic.Resource(*gvr).Namespace(getResourceNamespace(resource)).Delete(ctx, resource.GetName(), metav1.DeleteOptions{
+			DryRun: dryRunOpts,
+		})
 		if err != nil {
 			return fmt.Errorf("failed to delete namespaced resource %w", err)
 		}
 	} else {
-		err = c.dynamic.Resource(*gvr).Delete(ctx, resource.GetName(), metav1.DeleteOptions{})
+		err = c.dynamic.Resource(*gvr).Delete(ctx, resource.GetName(), metav1.DeleteOptions{
+			DryRun: dryRunOpts,
+		})
 		if err != nil {
 			return fmt.Errorf("failed to delete cluster-scoped resource %w", err)
 		}
@@ -159,7 +169,8 @@ func (c *client) Remove(ctx context.Context, resource *unstructured.Unstructured
 
 func (c *client) RemoveMany(ctx context.Context, objs []unstructured.Unstructured) error {
 	for _, resource := range objs {
-		err := c.Remove(ctx, &resource)
+		// TODO: add dryRun support
+		err := c.Remove(ctx, &resource, false)
 		if err != nil {
 			return err
 		}
@@ -193,11 +204,17 @@ func (c *client) WatchSingleResource(ctx context.Context, resource *unstructured
 }
 
 // applyResource creates or updates given object
-func applyResource(ctx context.Context, resourceInterface dynamic.ResourceInterface, resource *unstructured.Unstructured) error {
+func applyResource(ctx context.Context, resourceInterface dynamic.ResourceInterface, resource *unstructured.Unstructured, dryRun bool) error {
+	dryRunOpts := []string{}
+	if dryRun {
+		dryRunOpts = append(dryRunOpts, "All")
+	}
+
 	// this function can't be tested because of dynamic.FakeDynamicClient limitations
 	_, err := resourceInterface.Apply(ctx, resource.GetName(), resource, metav1.ApplyOptions{
 		FieldManager: "cli",
 		Force:        true,
+		DryRun:       dryRunOpts,
 	})
 
 	return err
