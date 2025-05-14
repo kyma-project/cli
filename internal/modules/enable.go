@@ -58,7 +58,7 @@ func applyCustomCR(writer io.Writer, ctx context.Context, client kube.Client, mo
 
 	for _, cr := range crs {
 		fmt.Fprintf(writer, "applying %s/%s cr\n", cr.GetNamespace(), cr.GetName())
-		err = client.RootlessDynamic().Apply(ctx, &cr)
+		err = client.RootlessDynamic().Apply(ctx, &cr, false)
 		if err != nil {
 			return clierror.Wrap(err, clierror.New("failed to apply custom cr from path"))
 		}

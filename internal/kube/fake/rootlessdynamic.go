@@ -25,7 +25,7 @@ type RootlessDynamicClient struct {
 	ApplyObjs   []unstructured.Unstructured
 }
 
-func (m *RootlessDynamicClient) Apply(_ context.Context, obj *unstructured.Unstructured) error {
+func (m *RootlessDynamicClient) Apply(_ context.Context, obj *unstructured.Unstructured, _ bool) error {
 	m.ApplyObjs = append(m.ApplyObjs, *obj)
 	return m.ReturnErr
 }
@@ -45,7 +45,7 @@ func (m *RootlessDynamicClient) List(_ context.Context, obj *unstructured.Unstru
 	return m.ReturnListObjs, m.ReturnErr
 }
 
-func (m *RootlessDynamicClient) Remove(_ context.Context, obj *unstructured.Unstructured) error {
+func (m *RootlessDynamicClient) Remove(_ context.Context, obj *unstructured.Unstructured, _ bool) error {
 	m.RemovedObjs = append(m.RemovedObjs, *obj)
 	return m.ReturnRemoveErr
 }

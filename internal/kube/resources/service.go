@@ -28,7 +28,7 @@ func CreateAPIRule(ctx context.Context, client rootlessdynamic.Interface, name, 
 	if err != nil {
 		return err
 	}
-	return client.Apply(ctx, &unstructured.Unstructured{Object: uAPIRule})
+	return client.Apply(ctx, &unstructured.Unstructured{Object: uAPIRule}, false)
 }
 
 func buildService(name, namespace string, port int32) *corev1.Service {
