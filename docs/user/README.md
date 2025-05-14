@@ -1,15 +1,17 @@
 # Kyma CLI
 
+Kyma CLI is an essential tool for application developers who want to get started quickly and efficiently with SAP BTP, Kyma runtime. Designed to streamline workflows, it simplifies complex tasks, enabling developers to deploy and manage applications easily.
+
 > [!WARNING]
-> All commands in the `alpha` group are still in the prototyping stage, and their API can change. Use them at your own risk.
+> The alpha group commands are still in development, which means their functions and API may be modified over time. We encourage you to explore them, but keep in mind that changes may occur.
 
 ## What is Kyma CLI?
 
-The Kyma CLI is a command-line interface tool designed to simplify the use of the Kyma ecosystem. It allows you to manage Kyma modules and applications, deploy simple applications, and more. With Kyma CLI, you can perform complex tasks with simple commands, accelerating development cycles.
+With a single command, you can push a simple application to a Kyma cluster. Kyma CLI builds the container image from source code or Dockerfile, pushes it to the in-cluster registry, and applies the necessary Kubernetes resources, eliminating the manual setup process and accelerating your development.
 
-In addition, you can build, push, and deploy an application to a Kyma cluster with a single command. It automatically detects the Dockerfile in the current directory, builds and pushes the image to the in-cluster registry, and applies the necessary Kubernetes resources.
+Kyma CLI provides a hands-on experience when interacting with Kyma’s extensions to Kubernetes API, making it easier to explore, test, and fine-tune Kyma's custom resources directly from the command line.
 
-Kyma CLI also provides a set of commands to manage Kyma modules efficiently. You can manage, deploy, and configure modules seamlessly. With Kyma CLI module commands, you can list available and installed modules, add or delete them, and configure their settings. Modules can be deployed with the default or custom configuration.
+Kyma CLI also provides a set of commands to manage Kyma modules efficiently. You can manage, deploy, and configure modules seamlessly. With the Kyma CLI module commands, you can list available and installed modules, and add or delete them. Modules can be deployed with the default or custom configuration.
 
 ## Features
 
@@ -17,28 +19,31 @@ The Kyma CLI provides the following features:
 
 - Simplified module management.
 - Automated deployments.
-- Built-in extensibility.
-- Integrated service management.
+- Simplified SAP BTP service instance bindings.
 - Commands providing useful automation.
 
-## How to Install
+## Install Kyma CLI
 
 ### Stable Release
 
 To get the latest stable Kyma CLI for MacOS or Linux, run the following script from the command line:
 
-### Homebrew
+<!-- tabs:start -->
+
+#### **Homebrew**
 
 ```sh
 brew install kyma-cli
 ```
 
-### Github releases
+#### **GitHub releases**
 
 ```sh
 curl -sL "https://raw.githubusercontent.com/kyma-project/cli/refs/heads/main/hack/install_cli_stable.sh" | sh -
 kyma
 ```
+
+<!-- tabs:end -->
 
 ### Latest Build
 
@@ -62,11 +67,11 @@ curl -sL "https://raw.githubusercontent.com/kyma-project/cli/refs/heads/main/hac
 kyma
 ```
 
-## Related Information
-
 > [!TIP]
-> Before you use Kyma CLI, we strongly recommend adding the autocomplete formula to your shell (`bash`, `fish`, `PowerShell`, or `zsh`)
+> Before you use Kyma CLI, we strongly recommend adding the autocomplete formula to your shell (`bash`, `fish`, `PowerShell`, or `zsh`).
 > Run the following command to import the Kyma CLI autocomplete formula for the `zsh` shell and enable autocomplete with the tab key hit:
 > `source <(kyma completion zsh)`
+
+## Related Information
 
 - [Kyma CLI tutorials](tutorials/README.md)
