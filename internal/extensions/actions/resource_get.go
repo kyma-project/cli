@@ -1,27 +1,31 @@
 package actions
 
 import (
+	"bytes"
 	"cmp"
+	"encoding/json"
 	"fmt"
 	"io"
 	"slices"
-	"strings"
 
 	"github.com/itchyny/gojq"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/extensions/actions/common"
+	actionstypes "github.com/kyma-project/cli.v3/internal/extensions/actions/types"
 	"github.com/kyma-project/cli.v3/internal/extensions/types"
 	"github.com/kyma-project/cli.v3/internal/kube/rootlessdynamic"
 	"github.com/kyma-project/cli.v3/internal/render"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 type resourceGetActionConfig struct {
-	FromAllNamespaces bool                   `yaml:"fromAllNamespaces"`
-	Resource          map[string]interface{} `yaml:"resource"`
-	OutputParameters  []outputParameter      `yaml:"outputParameters"`
+	OutputFormat      actionstypes.OutputFormat `yaml:"output"`
+	FromAllNamespaces bool                      `yaml:"fromAllNamespaces"`
+	Resource          map[string]interface{}    `yaml:"resource"`
+	OutputParameters  []outputParameter         `yaml:"outputParameters"`
 }
 
 type outputParameter struct {
@@ -65,9 +69,32 @@ func (a *resourceGetAction) Run(cmd *cobra.Command, _ []string) clierror.Error {
 		return clierror.Wrap(err, clierror.New("failed to get resource"))
 	}
 
-	tableInfo := buildTableInfo(&a.Cfg)
-	renderTable(cmd.OutOrStdout(), resources.Items, tableInfo)
+	output, err := a.formatOutput(resources)
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to format output"))
+	}
+
+	fmt.Fprint(cmd.OutOrStdout(), output)
 	return nil
+}
+
+func (a *resourceGetAction) formatOutput(resources *unstructured.UnstructuredList) (string, error) {
+	tableInfo := buildTableInfo(&a.Cfg)
+	outputParameters := convertResourcesToParameters(resources.Items, tableInfo)
+
+	if a.Cfg.OutputFormat == actionstypes.OutputFormatJSON {
+		obj, err := json.MarshalIndent(outputParameters, "", "  ")
+		return string(obj), err
+	}
+
+	if a.Cfg.OutputFormat == actionstypes.OutputFormatYAML {
+		obj, err := yaml.Marshal(outputParameters)
+		return string(obj), err
+	}
+
+	buf := bytes.NewBuffer([]byte{})
+	renderTable(buf, resources.Items, tableInfo)
+	return buf.String(), nil
 }
 
 func buildTableInfo(cfg *resourceGetActionConfig) TableInfo {
@@ -75,20 +102,20 @@ func buildTableInfo(cfg *resourceGetActionConfig) TableInfo {
 	fieldConverters := []FieldConverter{}
 
 	if cfg.FromAllNamespaces {
-		Headers = append(Headers, "NAMESPACE")
+		Headers = append(Headers, "namespace")
 		fieldConverters = append(fieldConverters, genericFieldConverter(".metadata.namespace"))
 	}
 
-	Headers = append(Headers, "NAME")
+	Headers = append(Headers, "namespace")
 	fieldConverters = append(fieldConverters, genericFieldConverter(".metadata.name"))
 
 	for _, param := range cfg.OutputParameters {
-		Headers = append(Headers, strings.ToUpper(param.Name))
+		Headers = append(Headers, param.Name)
 		fieldConverters = append(fieldConverters, genericFieldConverter(param.ResourcePath))
 	}
 
 	return TableInfo{
-		Header: Headers,
+		Headers: Headers,
 		RowConverter: func(u unstructured.Unstructured) []interface{} {
 			row := make([]interface{}, len(fieldConverters))
 			for i := range fieldConverters {
@@ -122,7 +149,7 @@ func genericFieldConverter(path string) func(u unstructured.Unstructured) string
 func renderTable(writer io.Writer, resources []unstructured.Unstructured, tableInfo TableInfo) {
 	render.Table(
 		writer,
-		tableInfo.Header,
+		tableInfo.Headers,
 		convertResourcesToTable(resources, tableInfo.RowConverter),
 	)
 }
@@ -132,7 +159,7 @@ type FieldConverter func(u unstructured.Unstructured) string
 type RowConverter func(unstructured.Unstructured) []interface{}
 
 type TableInfo struct {
-	Header       []interface{}
+	Headers      []interface{}
 	RowConverter RowConverter
 }
 
@@ -145,5 +172,18 @@ func convertResourcesToTable(resources []unstructured.Unstructured, rowConverter
 	for _, resource := range resources {
 		result = append(result, rowConverter(resource))
 	}
+	return result
+}
+
+func convertResourcesToParameters(resources []unstructured.Unstructured, tableInfo TableInfo) []map[string]interface{} {
+	result := make([]map[string]interface{}, len(resources))
+	for i, resource := range resources {
+		result[i] = make(map[string]interface{}, len(tableInfo.Headers))
+		row := tableInfo.RowConverter(resource)
+		for fieldIter, fieldName := range tableInfo.Headers {
+			result[i][fieldName.(string)] = row[fieldIter]
+		}
+	}
+
 	return result
 }

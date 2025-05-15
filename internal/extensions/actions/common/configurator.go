@@ -25,7 +25,7 @@ func (c *TemplateConfigurator[T]) Configure(cfgTmpl types.ActionConfig, overwrit
 
 	err = yaml.Unmarshal(configBytes, &c.Cfg)
 	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to unmarshal config"))
+		return clierror.Wrap(err, clierror.New("failed to configure action"))
 	}
 
 	return nil
