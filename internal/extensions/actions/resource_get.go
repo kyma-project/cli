@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"slices"
-	"strings"
 
 	"github.com/itchyny/gojq"
 	"github.com/kyma-project/cli.v3/internal/clierror"
@@ -103,20 +102,20 @@ func buildTableInfo(cfg *resourceGetActionConfig) TableInfo {
 	fieldConverters := []FieldConverter{}
 
 	if cfg.FromAllNamespaces {
-		Headers = append(Headers, "NAMESPACE")
+		Headers = append(Headers, "namespace")
 		fieldConverters = append(fieldConverters, genericFieldConverter(".metadata.namespace"))
 	}
 
-	Headers = append(Headers, "NAME")
+	Headers = append(Headers, "namespace")
 	fieldConverters = append(fieldConverters, genericFieldConverter(".metadata.name"))
 
 	for _, param := range cfg.OutputParameters {
-		Headers = append(Headers, strings.ToUpper(param.Name))
+		Headers = append(Headers, param.Name)
 		fieldConverters = append(fieldConverters, genericFieldConverter(param.ResourcePath))
 	}
 
 	return TableInfo{
-		Header: Headers,
+		Headers: Headers,
 		RowConverter: func(u unstructured.Unstructured) []interface{} {
 			row := make([]interface{}, len(fieldConverters))
 			for i := range fieldConverters {
@@ -150,7 +149,7 @@ func genericFieldConverter(path string) func(u unstructured.Unstructured) string
 func renderTable(writer io.Writer, resources []unstructured.Unstructured, tableInfo TableInfo) {
 	render.Table(
 		writer,
-		tableInfo.Header,
+		tableInfo.Headers,
 		convertResourcesToTable(resources, tableInfo.RowConverter),
 	)
 }
@@ -160,7 +159,7 @@ type FieldConverter func(u unstructured.Unstructured) string
 type RowConverter func(unstructured.Unstructured) []interface{}
 
 type TableInfo struct {
-	Header       []interface{}
+	Headers      []interface{}
 	RowConverter RowConverter
 }
 
@@ -178,11 +177,11 @@ func convertResourcesToTable(resources []unstructured.Unstructured, rowConverter
 
 func convertResourcesToParameters(resources []unstructured.Unstructured, tableInfo TableInfo) []map[string]interface{} {
 	result := make([]map[string]interface{}, len(resources))
-	for _, resource := range resources {
-		param := map[string]interface{}{}
+	for i, resource := range resources {
+		result[i] = make(map[string]interface{}, len(tableInfo.Headers))
 		row := tableInfo.RowConverter(resource)
-		for fieldIter, fieldName := range tableInfo.Header {
-			param[fieldName.(string)] = row[fieldIter]
+		for fieldIter, fieldName := range tableInfo.Headers {
+			result[i][fieldName.(string)] = row[fieldIter]
 		}
 	}
 
