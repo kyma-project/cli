@@ -49,7 +49,7 @@ resource: {...}
 | Name | Type | Description |
 | --- | --- | --- |
 | **dryRun** | bool | Simulates resource deletion if set to `true` |
-| **output** | enum | Changes the output format if not empty. One of `yaml` or `json` |
+| **output** | enum | Changes the output format if not empty. It can be `yaml` or `json` |
 | **resource** | object | Raw object applied to a cluster |
 
 > [!NOTE]
@@ -79,7 +79,7 @@ outputParameters:
 
 | Name | Type | Description |
 | --- | --- | --- |
-| **output** | enum | Changes the output format if not empty. One of `yaml` or `json` |
+| **output** | enum | Changes the output format if not empty. It can be `yaml` or `json` |
 | **fromAllNamespaces** | bool | Determines if resources must be taken from all namespaces |
 | **resource.apiVersion** | string | Output resources ApiVersion |
 | **resource.kind** | string | Output resources Kind |
