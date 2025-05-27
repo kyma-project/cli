@@ -13,6 +13,7 @@ kyma alpha module catalog [flags]
 ## Flags
 
 ```text
+  -o, --output string           Output format (Possible values: table, json, yaml)
   -h, --help                    Help for the command
       --kubeconfig string       Path to the Kyma kubeconfig file
       --show-extensions-error   Prints a possible error when fetching extensions fails
