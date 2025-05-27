@@ -6,6 +6,8 @@ import (
 	"github.com/kyma-project/cli.v3/internal/cmd/version"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/extensions"
+	"github.com/kyma-project/cli.v3/internal/extensions/actions"
+	extensionstypes "github.com/kyma-project/cli.v3/internal/extensions/types"
 	"github.com/spf13/cobra"
 )
 
@@ -30,6 +32,18 @@ func NewKymaCMD() *cobra.Command {
 	cmd.AddCommand(alpha)
 	cmd.AddCommand(version.NewCmd())
 	cmd.AddCommand(module.NewModuleCMD(kymaConfig))
+
+	builder := extensions.NewBuilder(kymaConfig)
+	builder.Build(cmd, extensionstypes.ActionsMap{
+		"function_init":         actions.NewFunctionInit(kymaConfig),
+		"registry_config":       actions.NewRegistryConfig(kymaConfig),
+		"registry_image_import": actions.NewRegistryImageImport(kymaConfig),
+		"resource_create":       actions.NewResourceCreate(kymaConfig),
+		"resource_get":          actions.NewResourceGet(kymaConfig),
+		"resource_delete":       actions.NewResourceDelete(kymaConfig),
+		"resource_explain":      actions.NewResourceExplain(),
+	})
+	builder.DisplayWarnings(cmd.ErrOrStderr())
 
 	return cmd
 }
