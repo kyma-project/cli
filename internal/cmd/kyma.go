@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha"
+	"github.com/kyma-project/cli.v3/internal/cmd/module"
 	"github.com/kyma-project/cli.v3/internal/cmd/version"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/extensions"
@@ -22,10 +23,13 @@ func NewKymaCMD() *cobra.Command {
 	cmdcommon.AddCmdPersistentKubeconfigFlag(cmd)
 	cmd.PersistentFlags().BoolP("help", "h", false, "Help for the command")
 
-	alpha := alpha.NewAlphaCMD()
+	kymaConfig := cmdcommon.NewKymaConfig()
+
+	alpha := alpha.NewAlphaCMD(kymaConfig)
 
 	cmd.AddCommand(alpha)
 	cmd.AddCommand(version.NewCmd())
+	cmd.AddCommand(module.NewModuleCMD(kymaConfig))
 
 	return cmd
 }
