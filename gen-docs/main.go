@@ -119,7 +119,7 @@ func genMarkdown(cmd *cobra.Command, w io.Writer) error {
 }
 
 func genSidebar(cmd *cobra.Command, buf *bytes.Buffer, indentMultiplier int) {
-	buf.WriteString(fmt.Sprintf("* [%s](/cli/user/gen-docs/%s)\n", cmd.CommandPath(), cmdFileBasename(cmd)))
+	fmt.Fprintf(buf, "* [%s](/cli/user/gen-docs/%s)\n", cmd.CommandPath(), cmdFileBasename(cmd))
 
 	for _, subCmd := range cmd.Commands() {
 		genSidebar(subCmd, buf, indentMultiplier+1)
@@ -131,8 +131,8 @@ func printExamples(buf *bytes.Buffer, cmd *cobra.Command) {
 		return
 	}
 
-	buf.WriteString("## Examples\n\n")
-	buf.WriteString(fmt.Sprintf("```bash\n%s\n```\n\n", cmd.Example))
+	fmt.Fprint(buf, "## Examples\n\n")
+	fmt.Fprintf(buf, "```bash\n%s\n```\n\n", cmd.Example)
 }
 
 func printShort(buf *bytes.Buffer, cmd *cobra.Command) {
@@ -162,7 +162,7 @@ func printSynopsis(buf *bytes.Buffer, cmd *cobra.Command) {
 		buf.WriteString(long + "\n\n")
 	}
 
-	buf.WriteString(fmt.Sprintf("```bash\n%s\n```\n\n", cmd.UseLine()))
+	fmt.Fprintf(buf, "```bash\n%s\n```\n\n", cmd.UseLine())
 }
 
 func printAvailableCommands(buf *bytes.Buffer, cmd *cobra.Command) {
@@ -189,7 +189,7 @@ func printAvailableCommands(buf *bytes.Buffer, cmd *cobra.Command) {
 	buf.WriteString("```text\n")
 	for i := range elems {
 		separatorLen := maxNameLen - len(elems[i].name)
-		buf.WriteString(fmt.Sprintf("  %s%s - %s\n", elems[i].name, strings.Repeat(" ", separatorLen), elems[i].description))
+		fmt.Fprintf(buf, "  %s%s - %s\n", elems[i].name, strings.Repeat(" ", separatorLen), elems[i].description)
 	}
 	buf.WriteString("```\n\n")
 }
@@ -234,9 +234,9 @@ func printFlags(buf *bytes.Buffer, cmd *cobra.Command) {
 		// flag section with shorthand and separators
 		nameSection := fmt.Sprintf("  %s%s   ", elem.name, strings.Repeat(" ", maxNameLen-len(elem.name)))
 		// description section with optional multilines
-		descriptionSection := strings.Replace(elem.description, "\n", "\n"+strings.Repeat(" ", len(nameSection)), -1)
+		descriptionSection := strings.ReplaceAll(elem.description, "\n", "\n"+strings.Repeat(" ", len(nameSection)))
 		// print
-		buf.WriteString(fmt.Sprintf("%s%s\n", nameSection, descriptionSection))
+		fmt.Fprintf(buf, "%s%s\n", nameSection, descriptionSection)
 	}
 	buf.WriteString("```\n\n")
 }
@@ -310,12 +310,12 @@ func printSeeAlso(buf *bytes.Buffer, cmd *cobra.Command) {
 	// print see also
 	for i := range elems {
 		separatorLen := maxNameLen - len(elems[i].name)
-		buf.WriteString(fmt.Sprintf("* %s%s - %s\n", elems[i].name, strings.Repeat(" ", separatorLen), elems[i].description))
+		fmt.Fprintf(buf, "* %s%s - %s\n", elems[i].name, strings.Repeat(" ", separatorLen), elems[i].description)
 	}
 }
 
 func cmdFileBasename(cmd *cobra.Command) string {
-	return strings.Replace(cmd.CommandPath(), " ", "_", -1) + ".md"
+	return strings.ReplaceAll(cmd.CommandPath(), " ", "_") + ".md"
 }
 
 func linkHandler(cmd *cobra.Command) string {
