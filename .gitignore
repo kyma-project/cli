@@ -32,7 +32,7 @@ workspace
 kyma.crt
 mod
 
-# Generated template files (generate by alpha module create)
+# Generated template files (generate by module create)
 /template.yaml
 
 dist/
