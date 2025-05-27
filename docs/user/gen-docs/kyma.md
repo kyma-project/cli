@@ -16,6 +16,7 @@ kyma <command> [flags]
   alpha      - Groups command prototypes for which the API may still change
   completion - Generate the autocompletion script for the specified shell
   help       - Help about any command
+  module     - Manages Kyma modules
   version    - Displays the version of Kyma CLI
 ```
 
@@ -32,4 +33,5 @@ kyma <command> [flags]
 
 * [kyma alpha](kyma_alpha.md)           - Groups command prototypes for which the API may still change
 * [kyma completion](kyma_completion.md) - Generate the autocompletion script for the specified shell
+* [kyma module](kyma_module.md)         - Manages Kyma modules
 * [kyma version](kyma_version.md)       - Displays the version of Kyma CLI

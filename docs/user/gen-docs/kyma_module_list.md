@@ -1,13 +1,13 @@
-# kyma alpha module catalog
+# kyma module list
 
-Lists modules catalog.
+Lists the installed modules.
 
 ## Synopsis
 
-Use this command to list all available Kyma modules.
+Use this command to list the installed Kyma modules.
 
 ```bash
-kyma alpha module catalog [flags]
+kyma module list [flags]
 ```
 
 ## Flags
@@ -22,4 +22,4 @@ kyma alpha module catalog [flags]
 
 ## See also
 
-* [kyma alpha module](kyma_alpha_module.md) - Manages Kyma modules
+* [kyma module](kyma_module.md) - Manages Kyma modules

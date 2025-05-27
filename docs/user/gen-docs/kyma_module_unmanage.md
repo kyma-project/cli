@@ -1,4 +1,4 @@
-# kyma alpha module unmanage
+# kyma module unmanage
 
 Sets a module to the unmanaged state.
 
@@ -7,7 +7,7 @@ Sets a module to the unmanaged state.
 Use this command to set an existing module to the unmanaged state.
 
 ```bash
-kyma alpha module unmanage <module> [flags]
+kyma module unmanage <module> [flags]
 ```
 
 ## Flags
@@ -21,4 +21,4 @@ kyma alpha module unmanage <module> [flags]
 
 ## See also
 
-* [kyma alpha module](kyma_alpha_module.md) - Manages Kyma modules
+* [kyma module](kyma_module.md) - Manages Kyma modules
