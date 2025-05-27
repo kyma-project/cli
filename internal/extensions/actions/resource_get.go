@@ -12,9 +12,9 @@ import (
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/extensions/actions/common"
-	actionstypes "github.com/kyma-project/cli.v3/internal/extensions/actions/types"
 	"github.com/kyma-project/cli.v3/internal/extensions/types"
 	"github.com/kyma-project/cli.v3/internal/kube/rootlessdynamic"
+	"github.com/kyma-project/cli.v3/internal/output"
 	"github.com/kyma-project/cli.v3/internal/render"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
@@ -22,10 +22,10 @@ import (
 )
 
 type resourceGetActionConfig struct {
-	OutputFormat      actionstypes.OutputFormat `yaml:"output"`
-	FromAllNamespaces bool                      `yaml:"fromAllNamespaces"`
-	Resource          map[string]interface{}    `yaml:"resource"`
-	OutputParameters  []outputParameter         `yaml:"outputParameters"`
+	OutputFormat      output.Format          `yaml:"output"`
+	FromAllNamespaces bool                   `yaml:"fromAllNamespaces"`
+	Resource          map[string]interface{} `yaml:"resource"`
+	OutputParameters  []outputParameter      `yaml:"outputParameters"`
 }
 
 type outputParameter struct {
@@ -82,12 +82,12 @@ func (a *resourceGetAction) formatOutput(resources *unstructured.UnstructuredLis
 	tableInfo := buildTableInfo(&a.Cfg)
 	outputParameters := convertResourcesToParameters(resources.Items, tableInfo)
 
-	if a.Cfg.OutputFormat == actionstypes.OutputFormatJSON {
+	if a.Cfg.OutputFormat == output.JSONFormat {
 		obj, err := json.MarshalIndent(outputParameters, "", "  ")
 		return string(obj), err
 	}
 
-	if a.Cfg.OutputFormat == actionstypes.OutputFormatYAML {
+	if a.Cfg.OutputFormat == output.YAMLFormat {
 		obj, err := yaml.Marshal(outputParameters)
 		return string(obj), err
 	}

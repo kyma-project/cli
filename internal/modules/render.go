@@ -2,25 +2,28 @@ package modules
 
 import (
 	"cmp"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"slices"
 	"strings"
 
+	"github.com/kyma-project/cli.v3/internal/output"
 	"github.com/kyma-project/cli.v3/internal/render"
+	"gopkg.in/yaml.v3"
 )
 
 type RowConverter func(Module) []interface{}
 
 type TableInfo struct {
-	Header       []interface{}
+	Headers      []interface{}
 	RowConverter RowConverter
 }
 
 var (
 	ModulesTableInfo = TableInfo{
-		Header: []interface{}{"NAME", "VERSION", "CR POLICY", "MANAGED", "STATUS"},
+		Headers: []interface{}{"NAME", "VERSION", "CR POLICY", "MANAGED", "STATUS"},
 		RowConverter: func(m Module) []interface{} {
 			return []interface{}{
 				m.Name,
@@ -33,7 +36,7 @@ var (
 	}
 
 	CatalogTableInfo = TableInfo{
-		Header: []interface{}{"NAME", "AVAILABLE VERSIONS"},
+		Headers: []interface{}{"NAME", "AVAILABLE VERSIONS"},
 		RowConverter: func(m Module) []interface{} {
 			return []interface{}{
 				m.Name,
@@ -44,20 +47,60 @@ var (
 )
 
 // Renders uses standard output to print ModuleList in table view
-// TODO: support other formats like YAML or JSON
-func Render(modulesList ModulesList, tableInfo TableInfo) {
-	renderTable(os.Stdout, modulesList, tableInfo)
+func Render(modulesList ModulesList, tableInfo TableInfo, format output.Format) error {
+	switch format {
+	case output.JSONFormat:
+		return renderJSON(os.Stdout, modulesList, tableInfo)
+	case output.YAMLFormat:
+		return renderYAML(os.Stdout, modulesList, tableInfo)
+	default:
+		return renderTable(os.Stdout, modulesList, tableInfo)
+	}
 }
 
-func renderTable(writer io.Writer, modulesList ModulesList, tableInfo TableInfo) {
+func renderJSON(writer io.Writer, modulesList ModulesList, tableInfo TableInfo) error {
+	obj, err := json.MarshalIndent(convertToOutputParameters(modulesList, tableInfo), "", "  ")
+	if err != nil {
+		return err
+	}
+
+	_, err = fmt.Fprintln(writer, string(obj))
+	return err
+}
+
+func renderYAML(writer io.Writer, modulesList ModulesList, tableInfo TableInfo) error {
+	obj, err := yaml.Marshal(convertToOutputParameters(modulesList, tableInfo))
+	if err != nil {
+		return err
+	}
+
+	_, err = fmt.Fprintln(writer, string(obj))
+	return err
+}
+
+func renderTable(writer io.Writer, modulesList ModulesList, tableInfo TableInfo) error {
 	render.Table(
 		writer,
-		tableInfo.Header,
-		convertModuleListToTable(modulesList, tableInfo.RowConverter),
+		tableInfo.Headers,
+		convertModuleListToRows(modulesList, tableInfo.RowConverter),
 	)
+	return nil
 }
 
-func convertModuleListToTable(modulesList ModulesList, rowConverter RowConverter) [][]interface{} {
+func convertToOutputParameters(modulesList ModulesList, tableInfo TableInfo) []map[string]interface{} {
+	result := make([]map[string]interface{}, len(modulesList))
+	for i, resource := range modulesList {
+		result[i] = make(map[string]interface{}, len(tableInfo.Headers))
+		row := tableInfo.RowConverter(resource)
+		for fieldIter, fieldName := range tableInfo.Headers {
+			result[i][fieldName.(string)] = row[fieldIter]
+		}
+	}
+
+	return result
+}
+
+func convertModuleListToRows(modulesList ModulesList, rowConverter RowConverter) [][]interface{} {
 	slices.SortFunc(modulesList, func(a, b Module) int {
 		return cmp.Compare(a.Name, b.Name)
 	})
