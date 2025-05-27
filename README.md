@@ -5,7 +5,7 @@
 # Kyma CLI
 
 > [!WARNING]
-> The Kyma CLI version `v2`, with all commands available within this version, is deprecated. Please start using commands available as part of `v3` and please contribute with usecase ideas and general feedback.
+> The Kyma CLI version `v2`, with all commands available within this version, is deprecated. Use the commands available as part of `v3` and contribute with use case ideas and general feedback.
 
 Kyma CLI is a command-line interface tool designed to simplify the use of [Kyma](https://github.com/kyma-project/kyma) for application developers. It helps to manage Kyma modules and deploy simple applications, automating complex tasks with simple commands and accelerating development cycles.
 
