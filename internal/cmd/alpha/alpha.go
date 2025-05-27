@@ -4,7 +4,6 @@ import (
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/app"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/hana"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/kubeconfig"
-	"github.com/kyma-project/cli.v3/internal/cmd/alpha/module"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/provision"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/referenceinstance"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
@@ -14,7 +13,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewAlphaCMD() *cobra.Command {
+func NewAlphaCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "alpha <command> [flags]",
 		Short:                 "Groups command prototypes for which the API may still change",
@@ -22,11 +21,8 @@ func NewAlphaCMD() *cobra.Command {
 		DisableFlagsInUseLine: true,
 	}
 
-	kymaConfig := cmdcommon.NewKymaConfig()
-
 	cmd.AddCommand(app.NewAppCMD(kymaConfig))
 	cmd.AddCommand(hana.NewHanaCMD(kymaConfig))
-	cmd.AddCommand(module.NewModuleCMD(kymaConfig))
 	cmd.AddCommand(provision.NewProvisionCMD())
 	cmd.AddCommand(referenceinstance.NewReferenceInstanceCMD(kymaConfig))
 	cmd.AddCommand(kubeconfig.NewKubeconfigCMD(kymaConfig))
