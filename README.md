@@ -5,7 +5,7 @@
 # Kyma CLI
 
 > [!WARNING]
-> The Kyma CLI version `v2`, with all commands available within this version, is deprecated. Please start using alpha commands available as part of `v3` and please contribute with usecase ideas and general feedback.
+> The Kyma CLI version `v2`, with all commands available within this version, is deprecated. Please start using commands available as part of `v3` and please contribute with usecase ideas and general feedback.
 
 Kyma CLI is a command-line interface tool designed to simplify the use of [Kyma](https://github.com/kyma-project/kyma) for application developers. It helps to manage Kyma modules and deploy simple applications, automating complex tasks with simple commands and accelerating development cycles.
 
@@ -15,10 +15,10 @@ For the installation instructions, see [How to Install](./docs/user/README.md#ho
 
 ## Usage
 
-Inspect the new available alpha commands by calling the `--help` option:
+Inspect the new available commands by calling the `--help` option:
 
 ```sh
-kyma alpha --help
+kyma --help
 ```
 
 Run a simple app from the image on Kyma by calling:
@@ -38,7 +38,6 @@ The `my-first-kyma-app` application is available under the https://my-first-kyma
 
 For more usage scenarios, see [user documentation](./docs/user/README.md).
 
-
 ## Development
 
 To build a Kyma CLI binary, run:
@@ -50,7 +49,7 @@ go build -o kyma main.go
 You can run the command directly from the go code. For example:
 
 ```sh
-go run main.go alpha module list
+go run main.go module list
 ```
 
 ## Contributing
