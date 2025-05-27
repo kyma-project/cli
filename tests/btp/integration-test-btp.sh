@@ -16,7 +16,7 @@ echo "Running test in user context of: $(kubectl config view --minify --raw | yq
 
 echo -e "\n--------------------------------------------------------------------------------------\n"
 echo -e "Step2: List modules\n"
-../../bin/kyma alpha module list
+../../bin/kyma module list
 
 
 echo -e "\n--------------------------------------------------------------------------------------\n"
@@ -51,20 +51,20 @@ while ! kubectl get secret object-store-reference-binding --namespace kyma-syste
 # Enable Docker Registry
 echo -e "\n--------------------------------------------------------------------------------------\n"
 echo -e "Step5: Enable Docker Registry from experimental channel (with persistent BTP based storage)\n"
-../../bin/kyma alpha module add docker-registry --channel experimental --cr-path k8s-resources/custom-docker-registry.yaml
+../../bin/kyma module add docker-registry --channel experimental --cr-path k8s-resources/custom-docker-registry.yaml
 
 echo "..waiting for docker registry"
 kubectl wait --for condition=Installed dockerregistries.operator.kyma-project.io/custom-dr -n kyma-system --timeout=360s
 
 sleep 5
 
-dr_external_url=$(../../bin/kyma alpha registry config --externalurl)
+dr_external_url=$(../../bin/kyma registry config --externalurl)
 
 # TODO new cli command, for example
-# dr_internal_pull_url=$(../../bin/kyma alpha registry config --internalurl)
+# dr_internal_pull_url=$(../../bin/kyma registry config --internalurl)
 dr_internal_pull_url=$(kubectl get dockerregistries.operator.kyma-project.io -n kyma-system custom-dr -ojsonpath={.status.internalAccess.pullAddress})
 
-../../bin/kyma alpha registry config --output config.json
+../../bin/kyma registry config --output config.json
 
 echo "Docker Registry enabled (URLs: $dr_external_url, $dr_internal_pull_url)"
 echo "config.json for docker CLI access generated"

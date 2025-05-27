@@ -81,7 +81,7 @@ func (fi *functionInitAction) Run(cmd *cobra.Command, _ []string) clierror.Error
 	fmt.Fprint(out, "\nNext steps:\n")
 	fmt.Fprint(out, "* update output files in your favorite IDE\n")
 	fmt.Fprintf(out, "* create Function, for example:\n")
-	fmt.Fprintf(out, "  kyma alpha function create %s --runtime %s --source %s --dependencies %s\n", fi.Cfg.UseRuntime, fi.Cfg.UseRuntime, handlerPath, depsPath)
+	fmt.Fprintf(out, "  kyma function create %s --runtime %s --source %s --dependencies %s\n", fi.Cfg.UseRuntime, fi.Cfg.UseRuntime, handlerPath, depsPath)
 	return nil
 }
 
