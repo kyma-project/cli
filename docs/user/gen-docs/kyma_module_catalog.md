@@ -1,18 +1,19 @@
-# kyma alpha module delete
+# kyma module catalog
 
-Deletes a module.
+Lists modules catalog.
 
 ## Synopsis
 
-Use this command to delete a module.
+Use this command to list all available Kyma modules.
 
 ```bash
-kyma alpha module delete <module> [flags]
+kyma module catalog [flags]
 ```
 
 ## Flags
 
 ```text
+  -o, --output string           Output format (Possible values: table, json, yaml)
   -h, --help                    Help for the command
       --kubeconfig string       Path to the Kyma kubeconfig file
       --show-extensions-error   Prints a possible error when fetching extensions fails
@@ -21,4 +22,4 @@ kyma alpha module delete <module> [flags]
 
 ## See also
 
-* [kyma alpha module](kyma_alpha_module.md) - Manages Kyma modules
+* [kyma module](kyma_module.md) - Manages Kyma modules

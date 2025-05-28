@@ -15,8 +15,8 @@ jobs:
           go-version-file: "go.mod"
           cache: false
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@aaa42aa0628b4ae2578232a66b541047968fac86
+        uses: golangci/golangci-lint-action@v8
         with:
-          version: latest
+          version: v2.1
           args: --verbose
           working-directory: "."

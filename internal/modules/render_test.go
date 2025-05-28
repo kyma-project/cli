@@ -21,7 +21,8 @@ func TestRender(t *testing.T) {
 	t.Run("render table from modules catalog", func(t *testing.T) {
 		buffer := bytes.NewBuffer([]byte{})
 
-		renderTable(buffer, testModuleList, CatalogTableInfo)
+		err := renderTable(buffer, testModuleList, CatalogTableInfo)
+		require.NoError(t, err)
 
 		tableViewBytes, err := io.ReadAll(buffer)
 		require.NoError(t, err)
@@ -31,7 +32,8 @@ func TestRender(t *testing.T) {
 	t.Run("render table from installed modules", func(t *testing.T) {
 		buffer := bytes.NewBuffer([]byte{})
 
-		renderTable(buffer, testInstalledModuleList, ModulesTableInfo)
+		err := renderTable(buffer, testInstalledModuleList, ModulesTableInfo)
+		require.NoError(t, err)
 
 		tableViewBytes, err := io.ReadAll(buffer)
 		require.NoError(t, err)

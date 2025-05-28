@@ -4,11 +4,13 @@ import (
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/modules"
+	"github.com/kyma-project/cli.v3/internal/output"
 	"github.com/spf13/cobra"
 )
 
 type modulesConfig struct {
 	*cmdcommon.KymaConfig
+	outputFormat output.Format
 }
 
 func newListCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
@@ -25,6 +27,8 @@ func newListCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		},
 	}
 
+	cmd.Flags().VarP(&cfg.outputFormat, "output", "o", "Output format (Possible values: table, json, yaml)")
+
 	return cmd
 }
 
@@ -39,6 +43,10 @@ func listModules(cfg *modulesConfig) clierror.Error {
 		return clierror.Wrap(err, clierror.New("failed to list installed modules from the cluster"))
 	}
 
-	modules.Render(modulesList, modules.ModulesTableInfo)
+	err = modules.Render(modulesList, modules.ModulesTableInfo, cfg.outputFormat)
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to render modules catalog"))
+	}
+
 	return nil
 }

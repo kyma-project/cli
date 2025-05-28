@@ -1,4 +1,4 @@
-# kyma alpha module add
+# kyma module add
 
 Add a module.
 
@@ -7,7 +7,7 @@ Add a module.
 Use this command to add a module.
 
 ```bash
-kyma alpha module add <module> [flags]
+kyma module add <module> [flags]
 ```
 
 ## Flags
@@ -24,4 +24,4 @@ kyma alpha module add <module> [flags]
 
 ## See also
 
-* [kyma alpha module](kyma_alpha_module.md) - Manages Kyma modules
+* [kyma module](kyma_module.md) - Manages Kyma modules

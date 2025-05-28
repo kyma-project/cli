@@ -1,4 +1,4 @@
-# kyma alpha module manage
+# kyma module manage
 
 Sets the module to the managed state.
 
@@ -7,7 +7,7 @@ Sets the module to the managed state.
 Use this command to set an existing module to the managed state.
 
 ```bash
-kyma alpha module manage <module> [flags]
+kyma module manage <module> [flags]
 ```
 
 ## Flags
@@ -22,4 +22,4 @@ kyma alpha module manage <module> [flags]
 
 ## See also
 
-* [kyma alpha module](kyma_alpha_module.md) - Manages Kyma modules
+* [kyma module](kyma_module.md) - Manages Kyma modules
