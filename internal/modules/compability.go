@@ -20,7 +20,12 @@ func listOldModulesCatalog(moduleTemplates *kyma.ModuleTemplateList) ModulesList
 			Channel:    moduleTemplate.Spec.Channel,
 		}
 
-		if version.Version == "" || version.Channel == "" {
+		if isCommunityModule(&moduleTemplate) && version.Version == "" {
+			// ingore corrupted community ModuleTemplate (without a channel)
+			continue
+		}
+
+		if !isCommunityModule(&moduleTemplate) && (version.Version == "" || version.Channel == "") {
 			// ignore corrupted ModuleTemplates (without version or channel)
 			continue
 		}
@@ -40,6 +45,11 @@ func listOldModulesCatalog(moduleTemplates *kyma.ModuleTemplateList) ModulesList
 	}
 
 	return modulesList
+}
+
+func isCommunityModule(moduleTemplate *kyma.ModuleTemplate) bool {
+	managedBy, exist := moduleTemplate.ObjectMeta.Labels["operator.kyma-project.io/managed-by"]
+	return !(exist && managedBy == "kyma")
 }
 
 type descriptor struct {
