@@ -2,13 +2,11 @@
 
 set -e
 
-cd ${TMPDIR}
-
-CLI_TMPDIR=${TMPDIR}cli-$(date "+%Y-%m-%d_%H:%M:%S")
+TMPDIR=${TMPDIR:-/tmp}
+CLI_TMPDIR=${TMPDIR}/cli-$(date "+%Y-%m-%d_%H:%M:%S")
 
 echo "creating tmp dir..."
-mkdir ${CLI_TMPDIR}
-cd ${CLI_TMPDIR}
+mkdir -p ${CLI_TMPDIR}
 
 DIST=$(uname -s)
 ARCH=$(uname -m)
@@ -22,7 +20,7 @@ echo "downloading nightly release..."
 curl -sL "https://github.com/kyma-project/cli/releases/download/0.0.0-dev/kyma_${DIST}_${ARCH}.tar.gz" -o ${CLI_TMPDIR}/cli.tar.gz
 
 echo "untaring..."
-tar -zxvf ${CLI_TMPDIR}/cli.tar.gz kyma
+tar -zxvf ${CLI_TMPDIR}/cli.tar.gz --directory ${CLI_TMPDIR} kyma
 
 set +e
 

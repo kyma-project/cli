@@ -2,13 +2,11 @@
 
 set -e
 
-cd ${TMPDIR}
-
-CLI_TMPDIR=${TMPDIR}cli-$(date "+%Y-%m-%d_%H:%M:%S")
+TMPDIR=${TMPDIR:-/tmp}
+CLI_TMPDIR=${TMPDIR}/cli-$(date "+%Y-%m-%d_%H:%M:%S")
 
 echo "creating tmp dir..."
-mkdir ${CLI_TMPDIR}
-cd ${CLI_TMPDIR}
+mkdir -p ${CLI_TMPDIR}
 
 VERSION=$(curl -sL https://api.github.com/repos/kyma-project/cli/releases | jq -r 'map(select(.tag_name!="0.0.0-dev")) | first | .tag_name')
 
@@ -24,7 +22,7 @@ echo "downloading ${VERSION} release..."
 curl -sL "https://github.com/kyma-project/cli/releases/download/${VERSION}/kyma_${DIST}_${ARCH}.tar.gz" -o ${CLI_TMPDIR}/cli.tar.gz
 
 echo "untaring..."
-tar -zxvf ${CLI_TMPDIR}/cli.tar.gz kyma
+tar -zxvf ${CLI_TMPDIR}/cli.tar.gz --directory ${CLI_TMPDIR} kyma
 
 set +e
 
