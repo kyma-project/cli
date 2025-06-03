@@ -6,7 +6,7 @@ Like any other CLI, Kyma CLI compiles every functionality into its binary. With 
 
 Extensions can be added by creating a ConfigMap with the expected label and data in the expected format (see [ConfigMap](./README.md#configmap)). The CLI binary with access to listing ConfigMaps in a cluster fetches all extensions from it when run and builds additional commands based on them.
 
-All commands built from extensions can be accessed under the `kyma alpha` commands group.
+All commands built from extensions can be accessed under the `kyma` commands group.
 
 ## Concept
 
@@ -22,7 +22,7 @@ In addition, you don't need to migrate extensions on the CLI code side. If the t
 
 Steps:
 
-1. Run the CLI binary (for example `kyma alpha function create`)
+1. Run the CLI binary (for example `kyma function create`)
 2. Load all ConfigMaps extensions from the cluster
 3. Build new commands based on ConfigMaps
 4. Execute the desired command
