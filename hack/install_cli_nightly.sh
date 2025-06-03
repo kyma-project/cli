@@ -10,8 +10,16 @@ echo "creating tmp dir..."
 mkdir ${CLI_TMPDIR}
 cd ${CLI_TMPDIR}
 
+DIST=$(uname -s)
+ARCH=$(uname -m)
+if [ "${ARCH}" = "amd64" ]; then
+    ARCH="x86_64"
+elif [ "${ARCH}" = "aarch64" ]; then
+    ARCH="arm64"
+fi
+
 echo "downloading nightly release..."
-curl -sL "https://github.com/kyma-project/cli/releases/download/0.0.0-dev/kyma_$(uname -s)_$(uname -m).tar.gz" -o ${CLI_TMPDIR}/cli.tar.gz
+curl -sL "https://github.com/kyma-project/cli/releases/download/0.0.0-dev/kyma_${DIST}_${ARCH}.tar.gz" -o ${CLI_TMPDIR}/cli.tar.gz
 
 echo "untaring..."
 tar -zxvf ${CLI_TMPDIR}/cli.tar.gz kyma

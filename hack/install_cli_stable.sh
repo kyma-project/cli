@@ -12,8 +12,16 @@ cd ${CLI_TMPDIR}
 
 VERSION=$(curl -sL https://api.github.com/repos/kyma-project/cli/releases/latest | jq -r '.tag_name')
 
+DIST=$(uname -s)
+ARCH=$(uname -m)
+if [ "${ARCH}" = "amd64" ]; then
+    ARCH="x86_64"
+elif [ "${ARCH}" = "aarch64" ]; then
+    ARCH="arm64"
+fi
+
 echo "downloading ${VERSION} release..."
-curl -sL "https://github.com/kyma-project/cli/releases/download/${VERSION}/kyma_$(uname -s)_$(uname -m).tar.gz" -o ${CLI_TMPDIR}/cli.tar.gz
+curl -sL "https://github.com/kyma-project/cli/releases/download/${VERSION}/kyma_${DIST}_${ARCH}.tar.gz" -o ${CLI_TMPDIR}/cli.tar.gz
 
 echo "untaring..."
 tar -zxvf ${CLI_TMPDIR}/cli.tar.gz kyma
