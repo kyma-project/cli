@@ -2,6 +2,7 @@
 
 set -e
 
+TMPDIR=${TMPDIR:-/tmp}
 cd ${TMPDIR}
 
 CLI_TMPDIR=${TMPDIR}cli-$(date "+%Y-%m-%d_%H:%M:%S")
