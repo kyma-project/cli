@@ -13,9 +13,10 @@ import (
 )
 
 type Module struct {
-	Name           string
-	Versions       []ModuleVersion
-	InstallDetails ModuleInstallDetails
+	Name            string
+	Versions        []ModuleVersion
+	InstallDetails  ModuleInstallDetails
+	CommunityModule bool
 }
 
 type Managed string
@@ -108,7 +109,7 @@ func ListCatalog(ctx context.Context, client kube.Client) (ModulesList, error) {
 			),
 		}
 
-		if i := getModuleIndex(modulesList, moduleName); i != -1 {
+		if i := getModuleIndex(modulesList, moduleName, isCommunityModule(&moduleTemplate)); i != -1 {
 			// append version if module with same name is in the list
 			modulesList[i].Versions = append(modulesList[i].Versions, version)
 		} else {
@@ -118,11 +119,17 @@ func ListCatalog(ctx context.Context, client kube.Client) (ModulesList, error) {
 				Versions: []ModuleVersion{
 					version,
 				},
+				CommunityModule: isCommunityModule(&moduleTemplate),
 			})
 		}
 	}
 
 	return modulesList, nil
+}
+
+func isCommunityModule(moduleTemplate *kyma.ModuleTemplate) bool {
+	managedBy, exist := moduleTemplate.ObjectMeta.Labels["operator.kyma-project.io/managed-by"]
+	return !exist || managedBy != "kyma"
 }
 
 func getManaged(moduleSpec *kyma.Module) Managed {
@@ -326,9 +333,9 @@ func getChannelFromAssignments(assignments []kyma.ChannelVersionAssignment, vers
 }
 
 // return index of module with given name. if not exists return -1
-func getModuleIndex(list ModulesList, name string) int {
+func getModuleIndex(list ModulesList, name string, isCommunityModule bool) int {
 	for i := range list {
-		if list[i].Name == name {
+		if list[i].Name == name && list[i].CommunityModule == isCommunityModule {
 			return i
 		}
 	}

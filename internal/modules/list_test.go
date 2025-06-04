@@ -25,6 +25,9 @@ var (
 			"metadata": map[string]interface{}{
 				"name":      "serverless-1",
 				"namespace": "kyma-system",
+				"labels": map[string]interface{}{
+					"operator.kyma-project.io/managed-by": "kyma",
+				},
 			},
 			"spec": map[string]interface{}{
 				"moduleName": "serverless",
@@ -44,6 +47,9 @@ var (
 			"metadata": map[string]interface{}{
 				"name":      "serverless-2",
 				"namespace": "kyma-system",
+				"labels": map[string]interface{}{
+					"operator.kyma-project.io/managed-by": "kyma",
+				},
 			},
 			"spec": map[string]interface{}{
 				"moduleName": "serverless",
@@ -62,6 +68,9 @@ var (
 			"metadata": map[string]interface{}{
 				"name":      "keda-1",
 				"namespace": "kyma-system",
+				"labels": map[string]interface{}{
+					"operator.kyma-project.io/managed-by": "kyma",
+				},
 			},
 			"spec": map[string]interface{}{
 				"moduleName": "keda",
@@ -80,6 +89,9 @@ var (
 			"metadata": map[string]interface{}{
 				"name":      "keda-2",
 				"namespace": "kyma-system",
+				"labels": map[string]interface{}{
+					"operator.kyma-project.io/managed-by": "kyma",
+				},
 			},
 			"spec": map[string]interface{}{
 				"moduleName": "keda",
@@ -96,6 +108,9 @@ var (
 			"metadata": map[string]interface{}{
 				"name":      "keda-3",
 				"namespace": "kyma-system",
+				"labels": map[string]interface{}{
+					"operator.kyma-project.io/managed-by": "kyma",
+				},
 			},
 		},
 	}
@@ -223,6 +238,7 @@ var (
 					Channel: "fast",
 				},
 			},
+			CommunityModule: false,
 		},
 		{
 			Name: "serverless",
@@ -237,6 +253,7 @@ var (
 					Version:    "0.0.2",
 				},
 			},
+			CommunityModule: false,
 		},
 	}
 

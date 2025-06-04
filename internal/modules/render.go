@@ -1,12 +1,11 @@
 package modules
 
 import (
-	"cmp"
 	"encoding/json"
 	"fmt"
 	"io"
 	"os"
-	"slices"
+	"sort"
 	"strings"
 
 	"github.com/kyma-project/cli.v3/internal/output"
@@ -36,11 +35,12 @@ var (
 	}
 
 	CatalogTableInfo = TableInfo{
-		Headers: []interface{}{"NAME", "AVAILABLE VERSIONS"},
+		Headers: []interface{}{"NAME", "AVAILABLE VERSIONS", "COMMUNITY"},
 		RowConverter: func(m Module) []interface{} {
 			return []interface{}{
 				m.Name,
 				convertVersions(m.Versions),
+				m.CommunityModule,
 			}
 		},
 	}
@@ -101,8 +101,11 @@ func convertToOutputParameters(modulesList ModulesList, tableInfo TableInfo) []m
 }
 
 func convertModuleListToRows(modulesList ModulesList, rowConverter RowConverter) [][]interface{} {
-	slices.SortFunc(modulesList, func(a, b Module) int {
-		return cmp.Compare(a.Name, b.Name)
+	sort.Slice(modulesList, func(i, j int) bool {
+		if modulesList[i].CommunityModule == modulesList[j].CommunityModule {
+			return modulesList[i].Name < modulesList[j].Name
+		}
+		return !modulesList[i].CommunityModule && modulesList[j].CommunityModule
 	})
 
 	var result [][]interface{}

@@ -25,7 +25,7 @@ func listOldModulesCatalog(moduleTemplates *kyma.ModuleTemplateList) ModulesList
 			continue
 		}
 
-		if i := getModuleIndex(modulesList, componentInfo.Name); i != -1 {
+		if i := getModuleIndex(modulesList, componentInfo.Name, false); i != -1 {
 			// append version if module with same name is in the list
 			modulesList[i].Versions = append(modulesList[i].Versions, version)
 		} else {
