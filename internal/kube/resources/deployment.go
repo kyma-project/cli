@@ -55,7 +55,8 @@ func buildDeployment(opts *CreateDeploymentOpts) *appsv1.Deployment {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: opts.Name,
 					Labels: map[string]string{
-						"app": opts.Name,
+						"app":                     opts.Name,
+						"sidecar.istio.io/inject": "true",
 					},
 				},
 				Spec: corev1.PodSpec{
