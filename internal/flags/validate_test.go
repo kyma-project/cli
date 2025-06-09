@@ -42,7 +42,7 @@ func TestValidate(t *testing.T) {
 			expectedCliErr := fixValidationErr(
 				"all flags in group [var1 var2] must be set, missing [var1]",
 				"all flags in group [var1 var2] must be set if any is used, missing [var1]",
-				"only one flag from groud [var2 var3] can be used at the same time, used [var2 var3]",
+				"only one flag from group [var2 var3] can be used at the same time, used [var2 var3]",
 				"all flags in group [var1] must be set when [var2] flag is used, missing [var1]",
 				"flags in group [var3] can't be used together with [var2], used [var3]",
 			)
@@ -276,7 +276,7 @@ func TestValidate(t *testing.T) {
 			require.NoError(t, flagSet.Set("var4", "value"))
 			require.NoError(t, flagSet.Set("var5", "value"))
 
-			expectedCliErr := fixValidationErr("only one flag from groud [var1 var2 var3] can be used at the same time, used [var2 var3]")
+			expectedCliErr := fixValidationErr("only one flag from group [var1 var2 var3] can be used at the same time, used [var2 var3]")
 
 			clierr := Validate(flagSet, MarkMutuallyExclusive("var1", "var2", "var3"))
 			require.Equal(t, expectedCliErr, clierr)
