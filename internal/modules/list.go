@@ -127,6 +127,29 @@ func ListCatalog(ctx context.Context, client kube.Client) (ModulesList, error) {
 	return modulesList, nil
 }
 
+func ListAvailableVersions(ctx context.Context, client kube.Client, moduleName string, isCommunity bool) ([]string, error) {
+	catalog, err := ListCatalog(ctx, client)
+	if err != nil {
+		return nil, err
+	}
+
+	var module Module
+
+	for _, m := range catalog {
+		if m.CommunityModule == isCommunity {
+			module = m
+		}
+	}
+
+	var moduleVersions []string
+
+	for _, mv := range module.Versions {
+		moduleVersions = append(moduleVersions, mv.Version)
+	}
+
+	return moduleVersions, nil
+}
+
 func isCommunityModule(moduleTemplate *kyma.ModuleTemplate) bool {
 	managedBy, exist := moduleTemplate.ObjectMeta.Labels["operator.kyma-project.io/managed-by"]
 	return !exist || managedBy != "kyma"
