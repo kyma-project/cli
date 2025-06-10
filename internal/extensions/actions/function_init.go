@@ -77,7 +77,7 @@ func (fi *functionInitAction) Run(cmd *cobra.Command, _ []string) clierror.Error
 
 	if !filepath.IsLocal(fi.Cfg.OutputDir) {
 		// output dir is not a local path, ask user for confirmation
-		clierr = getUserAcceptance(cmd.InOrStdin(), cmd.OutOrStdout())
+		clierr = getUserAcceptance(cmd.InOrStdin(), cmd.OutOrStdout(), fi.Cfg.OutputDir)
 		if clierr != nil {
 			return clierr
 		}
@@ -121,8 +121,8 @@ func sortedRuntimesString(m map[string]runtimeConfig) string {
 	return strings.Join(keys, ", ")
 }
 
-func getUserAcceptance(in io.Reader, out io.Writer) clierror.Error {
-	fmt.Fprint(out, "The provided output directory looks to be outside the current working directory.\n")
+func getUserAcceptance(in io.Reader, out io.Writer, path string) clierror.Error {
+	fmt.Fprintf(out, "The output path ( %s ) seems to be outside the current working directory.\n", path)
 	fmt.Fprint(out, "Do you want to proceed? (y/n): ")
 
 	input, err := bufio.NewReader(in).ReadString('\n') // wait for user to press enter
