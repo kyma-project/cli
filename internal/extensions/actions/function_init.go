@@ -1,7 +1,9 @@
 package actions
 
 import (
+	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"path"
 	"path/filepath"
@@ -36,6 +38,22 @@ func (c *functionInitActionConfig) validate() clierror.Error {
 		)
 	}
 
+	for runtimeName, runtimeCfg := range c.Runtimes {
+		if !filepath.IsLocal(runtimeCfg.DepsFilename) {
+			return clierror.New(
+				fmt.Sprintf("invalid deps filename %s for runtime %s", runtimeCfg.DepsFilename, runtimeName),
+				"deps filename must be a local path or single file name",
+			)
+		}
+
+		if !filepath.IsLocal(runtimeCfg.HandlerFilename) {
+			return clierror.New(
+				fmt.Sprintf("invalid handler filename %s for runtime %s", runtimeCfg.HandlerFilename, runtimeName),
+				"handler filename must be a local path or single file name",
+			)
+		}
+	}
+
 	if c.OutputDir == "" {
 		return clierror.New("empty output directory path")
 	}
@@ -55,6 +73,14 @@ func (fi *functionInitAction) Run(cmd *cobra.Command, _ []string) clierror.Error
 	clierr := fi.Cfg.validate()
 	if clierr != nil {
 		return clierr
+	}
+
+	if !filepath.IsLocal(fi.Cfg.OutputDir) {
+		// output dir is not a local path, ask user for confirmation
+		clierr = getUserAcceptance(cmd.InOrStdin(), cmd.OutOrStdout())
+		if clierr != nil {
+			return clierr
+		}
 	}
 
 	runtimeCfg := fi.Cfg.Runtimes[fi.Cfg.UseRuntime]
@@ -93,4 +119,27 @@ func sortedRuntimesString(m map[string]runtimeConfig) string {
 
 	sort.Strings(sort.StringSlice(keys))
 	return strings.Join(keys, ", ")
+}
+
+func getUserAcceptance(in io.Reader, out io.Writer) clierror.Error {
+	fmt.Fprint(out, "The provided output directory looks to be outside the current working directory.\n")
+	fmt.Fprint(out, "Do you want to proceed? (y/n): ")
+
+	input, err := bufio.NewReader(in).ReadString('\n') // wait for user to press enter
+	fmt.Fprintln(out)
+
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to read user input"))
+	}
+
+	lowerInput := strings.ToLower(input)
+	if lowerInput == "y\n" || lowerInput == "yes\n" {
+		// user accepted, continue
+		return nil
+	}
+
+	return clierror.New(
+		"function init aborted",
+		"you must provide a local path for the output directory or accept the default one by typing 'y' and pressing enter",
+	)
 }
