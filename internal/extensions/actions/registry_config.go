@@ -54,7 +54,7 @@ func (a *registryConfigAction) Run(cmd *cobra.Command, _ []string) clierror.Erro
 	}
 
 	if a.Cfg.Output != "" {
-		writeErr := os.WriteFile(a.Cfg.Output, []byte(outputString), os.ModePerm)
+		writeErr := os.WriteFile(a.Cfg.Output, []byte(outputString), 0600)
 		if writeErr != nil {
 			return clierror.New("failed to write docker config to file")
 		}
