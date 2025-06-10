@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 
-	wwwAuthParser "github.com/gboddin/go-www-authenticate-parser"
 	"github.com/kyma-project/cli.v3/internal/btp/auth"
 )
 
@@ -127,6 +126,6 @@ func (c *httpClient) buildErrorFromHeaders(response *http.Response) error {
 		return fmt.Errorf("failed to parse http error for status: %s", response.Status)
 	}
 
-	wwwAuthHeader := wwwAuthParser.Parse(wwwAuthHeaderString)
+	wwwAuthHeader := ParseAuthSettings(wwwAuthHeaderString)
 	return fmt.Errorf("%s: %s", wwwAuthHeader.Params["error"], wwwAuthHeader.Params["error_description"])
 }
