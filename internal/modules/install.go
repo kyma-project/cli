@@ -45,7 +45,7 @@ func Install(ctx context.Context, client kube.Client, data InstallCommunityModul
 		return clierror.Wrap(err, clierror.New("failed to apply custom resource files"))
 	}
 
-	fmt.Printf("%s module enabled\n", data.ModuleName)
+	fmt.Printf("%s community module enabled\n", data.ModuleName)
 	return nil
 }
 
@@ -90,22 +90,27 @@ func installModuleResources(ctx context.Context, client kube.Client, existingMod
 	return nil
 }
 
-// TODO: Rollback already installed resources when error happens in the meantime
 func applyResourcesFromURL(ctx context.Context, client kube.Client, url string) error {
 	resourceYamlStrings, err := getResourceYamlStringsFromURL(url)
 	if err != nil {
 		return err
 	}
 
+	var installedResources []map[string]any
+
 	for _, resourceYamlStr := range resourceYamlStrings {
 		var obj map[string]any
 		if err := yaml.Unmarshal([]byte(resourceYamlStr), &obj); err != nil {
+			rollback(ctx, client, installedResources)
 			return fmt.Errorf("failed to parse module resource: %w", err)
 		}
 
 		if err := client.RootlessDynamic().Apply(ctx, &unstructured.Unstructured{Object: obj}, false); err != nil {
+			rollback(ctx, client, installedResources)
 			return fmt.Errorf("failed to apply resource: %w", err)
 		}
+
+		installedResources = append(installedResources, obj)
 	}
 	return nil
 }
@@ -153,6 +158,18 @@ func applyCustomResourcesFromFile(ctx context.Context, client kube.Client, custo
 		if err != nil {
 			return fmt.Errorf("failed to apply custom resource from path")
 		}
+	}
+
+	return nil
+}
+
+func rollback(ctx context.Context, client kube.Client, resources []map[string]any) error {
+	if len(resources) == 0 {
+		return nil
+	}
+
+	for _, resource := range resources {
+		client.RootlessDynamic().Remove(ctx, &unstructured.Unstructured{Object: resource}, false)
 	}
 
 	return nil

@@ -104,27 +104,14 @@ func installCommunityModule(cfg *addConfig, client *kube.Client, crs ...unstruct
 		if err != nil {
 			return clierror.Wrap(err, clierror.New("failed to install a community module"))
 		}
-
 		if !proceedWithInstallation {
 			return nil
 		}
 	}
 
-	var versionToInstall string
-
-	if strings.TrimSpace(cfg.version) == "" {
-		availableVersions, err := modules.ListAvailableVersions(cfg.Ctx, *client, cfg.module, cfg.community)
-		if err != nil {
-			return clierror.Wrap(err, clierror.New("failed to install a community module"))
-		}
-
-		versionPrompt := prompt.NewList("Choose one of the available versions:", availableVersions)
-		versionToInstall, err = versionPrompt.Prompt()
-		if err != nil {
-			return clierror.Wrap(err, clierror.New("failed to install a community module"))
-		}
-	} else {
-		versionToInstall = cfg.version
+	versionToInstall, err := selectCommunityModuleVersion(cfg, client)
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to install a community module"))
 	}
 
 	installData := modules.InstallCommunityModuleData{
@@ -135,4 +122,22 @@ func installCommunityModule(cfg *addConfig, client *kube.Client, crs ...unstruct
 	}
 
 	return modules.Install(cfg.Ctx, *client, installData)
+}
+
+func selectCommunityModuleVersion(cfg *addConfig, client *kube.Client) (string, error) {
+	if strings.TrimSpace(cfg.version) != "" {
+		return cfg.version, nil
+	}
+
+	availableVersions, err := modules.ListAvailableVersions(cfg.Ctx, *client, cfg.module, cfg.community)
+	if err != nil {
+		return "", err
+	}
+
+	if len(availableVersions) == 1 {
+		return availableVersions[0], nil
+	}
+
+	versionPrompt := prompt.NewList("Choose one of the available versions:", availableVersions)
+	return versionPrompt.Prompt()
 }
