@@ -20,9 +20,9 @@ require (
 	github.com/stretchr/testify v1.10.0
 	gopkg.in/yaml.v3 v3.0.1
 	istio.io/client-go v1.26.1
-	k8s.io/api v0.32.3
-	k8s.io/apimachinery v0.32.3
-	k8s.io/client-go v0.32.3
+	k8s.io/api v0.32.5
+	k8s.io/apimachinery v0.32.5
+	k8s.io/client-go v0.32.5
 	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738
 )
 
