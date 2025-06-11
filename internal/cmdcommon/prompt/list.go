@@ -22,7 +22,10 @@ func (l *List) Prompt() (string, error) {
 	var userInput string
 
 	fmt.Printf("%s\n%s\n\nType your choice: ", l.message, l.valuesListString())
-	fmt.Scanln(&userInput)
+	_, err := fmt.Scanln(&userInput)
+	if err != nil {
+		return "", err
+	}
 
 	validatedUserInput, err := l.validateUserInput(userInput)
 	if err != nil {

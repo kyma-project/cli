@@ -99,20 +99,34 @@ func applyResourcesFromURL(ctx context.Context, client kube.Client, url string) 
 	var installedResources []map[string]any
 
 	for _, resourceYamlStr := range resourceYamlStrings {
-		var obj map[string]any
-		if err := yaml.Unmarshal([]byte(resourceYamlStr), &obj); err != nil {
-			rollback(ctx, client, installedResources)
-			return fmt.Errorf("failed to parse module resource: %w", err)
+		installedResource, err := applyResourceWithRollback(ctx, client, resourceYamlStr, installedResources)
+		if err != nil {
+			return err
 		}
-
-		if err := client.RootlessDynamic().Apply(ctx, &unstructured.Unstructured{Object: obj}, false); err != nil {
-			rollback(ctx, client, installedResources)
-			return fmt.Errorf("failed to apply resource: %w", err)
-		}
-
-		installedResources = append(installedResources, obj)
+		installedResources = append(installedResources, installedResource)
 	}
 	return nil
+}
+
+func applyResourceWithRollback(ctx context.Context, client kube.Client, resourceYamlStr string, installedResources []map[string]any) (map[string]any, error) {
+	var obj map[string]any
+	if err := yaml.Unmarshal([]byte(resourceYamlStr), &obj); err != nil {
+		rollbackErr := rollback(ctx, client, installedResources)
+		if rollbackErr != nil {
+			return nil, fmt.Errorf("failed to parse module resource: %w; rollback also failed: %v", err, rollbackErr)
+		}
+		return nil, fmt.Errorf("failed to parse module resource: %w", err)
+	}
+
+	if err := client.RootlessDynamic().Apply(ctx, &unstructured.Unstructured{Object: obj}, false); err != nil {
+		rollbackErr := rollback(ctx, client, installedResources)
+		if rollbackErr != nil {
+			return nil, fmt.Errorf("failed to apply resource: %w; rollback also failed: %v", err, rollbackErr)
+		}
+		return nil, fmt.Errorf("failed to apply resource: %w", err)
+	}
+
+	return obj, nil
 }
 
 func getResourceYamlStringsFromURL(url string) ([]string, error) {
@@ -130,8 +144,7 @@ func getResourceYamlStringsFromURL(url string) ([]string, error) {
 	return strings.Split(string(body), "---"), nil
 }
 
-func applyDefaultCustomResource(ctx context.Context, client kube.Client,
-	existingModule *kyma.ModuleTemplate, isDefaultCRApplicable bool) error {
+func applyDefaultCustomResource(ctx context.Context, client kube.Client, existingModule *kyma.ModuleTemplate, isDefaultCRApplicable bool) error {
 	if !isDefaultCRApplicable {
 		return nil
 	}
@@ -169,7 +182,10 @@ func rollback(ctx context.Context, client kube.Client, resources []map[string]an
 	}
 
 	for _, resource := range resources {
-		client.RootlessDynamic().Remove(ctx, &unstructured.Unstructured{Object: resource}, false)
+		err := client.RootlessDynamic().Remove(ctx, &unstructured.Unstructured{Object: resource}, false)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

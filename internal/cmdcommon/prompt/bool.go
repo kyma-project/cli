@@ -20,7 +20,16 @@ func NewBool(message string, defaultValue bool) *Bool {
 func (b *Bool) Prompt() (bool, error) {
 	var userInput string
 	fmt.Printf("%s %s: ", b.message, b.defaultValueDisplay())
-	fmt.Scanln(&userInput)
+	_, err := fmt.Scanln(&userInput)
+
+	// If the user just presses Enter, Scanln returns an error, but userInput remains empty.
+	if err != nil && userInput == "" {
+		// Treat as empty input, use default value
+		return b.defaultValue, nil
+	}
+	if err != nil {
+		return false, err
+	}
 
 	parsedUserInput, err := b.validateUserInput(userInput)
 	if err != nil {

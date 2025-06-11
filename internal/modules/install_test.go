@@ -226,7 +226,7 @@ func TestInstall_ModuleSuccessfullyInstalledWithCustomCR(t *testing.T) {
 
 func getTestHttpServerWithResponse(response string) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(response))
+		_, _ = w.Write([]byte(response))
 		w.WriteHeader(http.StatusOK)
 	}))
 }
