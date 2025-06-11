@@ -1,6 +1,7 @@
 package prompt_test
 
 import (
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -76,8 +77,13 @@ func TestBoolPrompt_Invalid(t *testing.T) {
 func withInput(input string, fn func()) {
 	old := os.Stdin
 	r, w, _ := os.Pipe()
-	w.Write([]byte(input))
+	_, err := w.Write([]byte(input))
 	w.Close()
+	if err != nil {
+		fmt.Println("writing error")
+		return
+	}
+
 	os.Stdin = r
 	defer func() { os.Stdin = old }()
 	fn()
