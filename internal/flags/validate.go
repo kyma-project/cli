@@ -135,7 +135,7 @@ func MarkMutuallyExclusive(flags ...string) Rule {
 		})
 
 		if len(listChangedFlags(flagSet, flags...)) > 1 {
-			return fmt.Errorf("only one flag from groud [%s] can be used at the same time, used [%s]",
+			return fmt.Errorf("only one flag from group [%s] can be used at the same time, used [%s]",
 				strings.Join(flags, " "), strings.Join(usedFlags, " "))
 		}
 
