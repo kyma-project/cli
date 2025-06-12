@@ -39,6 +39,7 @@ func newAddCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		PreRun: func(cmd *cobra.Command, _ []string) {
 			clierror.Check(flags.Validate(cmd.Flags(),
 				flags.MarkMutuallyExclusive("cr-path", "default-cr"),
+				flags.MarkPrerequisites("auto-approve", "community"),
 			))
 		},
 		Run: func(cmd *cobra.Command, args []string) {
@@ -94,12 +95,12 @@ func addModule(cfg *addConfig, client *kube.Client, crs ...unstructured.Unstruct
 }
 
 func installCommunityModule(cfg *addConfig, client *kube.Client, crs ...unstructured.Unstructured) clierror.Error {
-	fmt.Println("Warning: You are about to install a community module. " +
-		"Community modules are not officially supported and come with no binding Service Level Agreement (SLA). " +
-		"There is no guarantee of support, maintenance, or compatibility.")
+	fmt.Println("Warning:\n  You are about to install a community module.\n" +
+		"  Community modules are not officially supported and come with no binding Service Level Agreement (SLA).\n" +
+		"  There is no guarantee of support, maintenance, or compatibility.")
 
 	if !cfg.autoApprove {
-		proceedPrompt := prompt.NewBool("Are you sure you want to proceed with installing this community module?", true)
+		proceedPrompt := prompt.NewBool("Are you sure you want to proceed with the installation?", true)
 		proceedWithInstallation, err := proceedPrompt.Prompt()
 		if err != nil {
 			return clierror.Wrap(err, clierror.New("failed to install a community module"))
@@ -138,6 +139,6 @@ func selectCommunityModuleVersion(cfg *addConfig, client *kube.Client) (string, 
 		return availableVersions[0], nil
 	}
 
-	versionPrompt := prompt.NewList("Choose one of the available versions:", availableVersions)
+	versionPrompt := prompt.NewOneOfStringList("Choose one of the available versions:", availableVersions)
 	return versionPrompt.Prompt()
 }
