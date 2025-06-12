@@ -136,8 +136,9 @@ func ListAvailableVersions(ctx context.Context, client kube.Client, moduleName s
 	var module Module
 
 	for _, m := range catalog {
-		if m.CommunityModule == isCommunity {
+		if m.CommunityModule == isCommunity && m.Name == moduleName {
 			module = m
+			break
 		}
 	}
 

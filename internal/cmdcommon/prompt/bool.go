@@ -2,16 +2,22 @@ package prompt
 
 import (
 	"fmt"
+	"io"
+	"os"
 	"strings"
 )
 
 type Bool struct {
+	reader       io.Reader
+	writer       io.Writer
 	message      string
 	defaultValue bool
 }
 
 func NewBool(message string, defaultValue bool) *Bool {
 	return &Bool{
+		reader:       os.Stdin,
+		writer:       os.Stdout,
 		message:      message,
 		defaultValue: defaultValue,
 	}
@@ -19,16 +25,13 @@ func NewBool(message string, defaultValue bool) *Bool {
 
 func (b *Bool) Prompt() (bool, error) {
 	var userInput string
-	fmt.Printf("%s %s: ", b.message, b.defaultValueDisplay())
-	_, err := fmt.Scanln(&userInput)
+	fmt.Fprintf(b.writer, "%s %s: ", b.message, b.defaultValueDisplay())
+	_, err := fmt.Fscan(b.reader, &userInput)
 
-	// If the user just presses Enter, Scanln returns an error, but userInput remains empty.
-	if err != nil && userInput == "" {
+	// If the user just presses Enter, Fscan returns the EOF error
+	if err != nil && err == io.EOF {
 		// Treat as empty input, use default value
 		return b.defaultValue, nil
-	}
-	if err != nil {
-		return false, err
 	}
 
 	parsedUserInput, err := b.validateUserInput(userInput)
@@ -48,9 +51,9 @@ func (b *Bool) defaultValueDisplay() string {
 
 func (b *Bool) validateUserInput(userInput string) (bool, error) {
 	switch strings.TrimSpace(strings.ToLower(userInput)) {
-	case "y":
+	case "y", "yes":
 		return true, nil
-	case "n":
+	case "n", "no":
 		return false, nil
 	case "":
 		return b.defaultValue, nil
