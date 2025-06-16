@@ -1,4 +1,4 @@
-# kyma alpha app
+# kyma app
 
 Manages applications on the Kubernetes cluster.
 
@@ -7,7 +7,7 @@ Manages applications on the Kubernetes cluster.
 Use this command to manage applications on the Kubernetes cluster.
 
 ```bash
-kyma alpha app <command> [flags]
+kyma app <command> [flags]
 ```
 
 ## Available Commands
@@ -27,5 +27,5 @@ kyma alpha app <command> [flags]
 
 ## See also
 
-* [kyma alpha](kyma_alpha.md)                   - Groups command prototypes for which the API may still change
-* [kyma alpha app push](kyma_alpha_app_push.md) - Push the application to the Kubernetes cluster
+* [kyma](kyma.md)                   - A simple set of commands to manage a Kyma cluster
+* [kyma app push](kyma_app_push.md) - Push the application to the Kubernetes cluster
