@@ -138,10 +138,7 @@ func applyResourcesFromURL(ctx context.Context, client kube.Client, url string) 
 
 func applyResourceWithRollback(ctx context.Context, client kube.Client, parsedResource map[string]any, installedResources []map[string]any) (map[string]any, error) {
 	if err := client.RootlessDynamic().Apply(ctx, &unstructured.Unstructured{Object: parsedResource}, false); err != nil {
-		rollbackErr := rollback(ctx, client, installedResources)
-		if rollbackErr != nil {
-			fmt.Printf("failed to apply resource: %v; rollback also failed: %v", err, rollbackErr)
-		}
+		rollback(ctx, client, installedResources)
 		return nil, fmt.Errorf("failed to apply resource: %w", err)
 	}
 
@@ -191,9 +188,9 @@ func applyCustomResourcesFromFile(ctx context.Context, client kube.Client, custo
 	return nil
 }
 
-func rollback(ctx context.Context, client kube.Client, resources []map[string]any) error {
+func rollback(ctx context.Context, client kube.Client, resources []map[string]any) {
 	if len(resources) == 0 {
-		return nil
+		return
 	}
 
 	for _, resource := range resources {
@@ -202,6 +199,4 @@ func rollback(ctx context.Context, client kube.Client, resources []map[string]an
 			fmt.Printf("err: %v\nfailed to rollback resource: %v\n", err, resource)
 		}
 	}
-
-	return nil
 }

@@ -139,6 +139,6 @@ func selectCommunityModuleVersion(cfg *addConfig, client *kube.Client) (string, 
 		return availableVersions[0], nil
 	}
 
-	versionPrompt := prompt.NewOneOfStringList("Choose one of the available versions:", availableVersions)
+	versionPrompt := prompt.NewOneOfStringList("Choose one of the available versions:", "Type the version number: ", availableVersions)
 	return versionPrompt.Prompt()
 }

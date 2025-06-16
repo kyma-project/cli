@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestListPrompt_Table(t *testing.T) {
+func TestOneOfStringListPrompt_Table(t *testing.T) {
 	tests := []struct {
 		name       string
 		input      string
@@ -22,28 +22,25 @@ func TestListPrompt_Table(t *testing.T) {
 			name:       "Valid input",
 			input:      "banana\n",
 			values:     []string{"apple", "banana", "orange"},
-			parseFunc:  func(s string) (string, error) { return s, nil },
 			want:       "banana",
 			wantErr:    "",
-			wantOutput: "Select a fruit:\n - apple\n - banana\n - orange\n\nType your choice: ",
+			wantOutput: "Select a fruit:\n - apple\n - banana\n - orange\n\nType the version number: ",
 		},
 		{
 			name:       "Invalid input",
 			input:      "Faraon Ramzes XIII\n",
 			values:     []string{"apple", "banana", "orange"},
-			parseFunc:  func(s string) (string, error) { return s, nil },
 			want:       "",
 			wantErr:    "provided value is not present on the list: Faraon",
-			wantOutput: "Select a fruit:\n - apple\n - banana\n - orange\n\nType your choice: ",
+			wantOutput: "Select a fruit:\n - apple\n - banana\n - orange\n\nType the version number: ",
 		},
 		{
 			name:       "Empty input",
 			input:      "\n",
 			values:     []string{"apple", "banana", "orange"},
-			parseFunc:  func(s string) (string, error) { return s, nil },
 			want:       "",
 			wantErr:    "no value was selected",
-			wantOutput: "Select a fruit:\n - apple\n - banana\n - orange\n\nType your choice: ",
+			wantOutput: "Select a fruit:\n - apple\n - banana\n - orange\n\nType the version number: ",
 		},
 	}
 
@@ -51,12 +48,12 @@ func TestListPrompt_Table(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			input := bytes.NewBufferString(tc.input)
 			output := bytes.NewBuffer([]byte{})
-			listPrompt := prompt.NewOneOfList(
+			listPrompt := prompt.NewCustomOneOfStringList(
 				input,
 				output,
 				"Select a fruit:",
+				"Type the version number: ",
 				tc.values,
-				tc.parseFunc,
 			)
 
 			got, err := listPrompt.Prompt()
