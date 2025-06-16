@@ -2,7 +2,10 @@ package prompt
 
 import (
 	"bytes"
+	"errors"
+	"io"
 	"testing"
+	"testing/iotest"
 
 	"github.com/stretchr/testify/require"
 )
@@ -10,68 +13,75 @@ import (
 func TestBoolPrompt_Table(t *testing.T) {
 	tests := []struct {
 		name         string
-		input        string
+		inputReader  io.Reader
 		defaultValue bool
 		expectResult bool
 		expectErr    string
 	}{
 		{
 			name:         "Yes short",
-			input:        "y\n",
+			inputReader:  bytes.NewBufferString("y\n"),
 			defaultValue: true,
 			expectResult: true,
 		},
 		{
 			name:         "Yes long",
-			input:        "yes\n",
+			inputReader:  bytes.NewBufferString("yes\n"),
 			defaultValue: false,
 			expectResult: true,
 		},
 		{
 			name:         "No short",
-			input:        "n\n",
+			inputReader:  bytes.NewBufferString("n\n"),
 			defaultValue: true,
 			expectResult: false,
 		},
 		{
 			name:         "No long",
-			input:        "no\n",
+			inputReader:  bytes.NewBufferString("no\n"),
 			defaultValue: true,
 			expectResult: false,
 		},
 		{
 			name:         "Default true with empty input",
-			input:        "\n",
+			inputReader:  bytes.NewBufferString(""),
 			defaultValue: true,
 			expectResult: true,
 		},
 		{
 			name:         "Default true with whitespaces",
-			input:        "  \t\n",
+			inputReader:  bytes.NewBufferString("  \t\n"),
 			defaultValue: true,
-			expectResult: true,
+			expectResult: false,
+			expectErr:    "unexpected newline",
 		},
 		{
 			name:         "Default false with empty input",
-			input:        "\n",
+			inputReader:  bytes.NewBufferString(""),
 			defaultValue: false,
 			expectResult: false,
 		},
 		{
 			name:         "Invalid input",
-			input:        "maybe\n",
+			inputReader:  bytes.NewBufferString("maybe\n"),
 			defaultValue: false,
 			expectResult: false,
 			expectErr:    "invalid input, please enter 'y' or 'n'",
+		},
+		{
+			name:         "Erroneous input",
+			inputReader:  iotest.ErrReader(errors.New("test error")),
+			defaultValue: true,
+			expectResult: false,
+			expectErr:    "test error",
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			input := bytes.NewBufferString(tc.input)
 			output := bytes.NewBuffer([]byte{})
 			b := Bool{
-				reader:       input,
+				reader:       tc.inputReader,
 				writer:       output,
 				message:      "Proceed?",
 				defaultValue: tc.defaultValue,

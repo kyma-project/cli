@@ -39,9 +39,13 @@ func NewCustomOneOfStringList(reader io.Reader, writer io.Writer, message, promp
 func (l *OneOfStringList) Prompt() (string, error) {
 	var userInput string
 	fmt.Fprintf(l.writer, "%s\n%s\n\n%s", l.message, l.valuesListString(), l.promptText)
-	_, err := fmt.Fscan(l.reader, &userInput)
+	_, err := fmt.Fscanln(l.reader, &userInput)
 	if err != nil && err == io.EOF {
 		return "", fmt.Errorf("no value was selected")
+	}
+
+	if err != nil {
+		return "", err
 	}
 
 	validatedUserInput, err := l.validateUserInput(userInput)

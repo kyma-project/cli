@@ -2,7 +2,10 @@ package prompt_test
 
 import (
 	"bytes"
+	"errors"
+	"io"
 	"testing"
+	"testing/iotest"
 
 	"github.com/kyma-project/cli.v3/internal/cmdcommon/prompt"
 	"github.com/stretchr/testify/require"
@@ -10,46 +13,54 @@ import (
 
 func TestOneOfStringListPrompt_Table(t *testing.T) {
 	tests := []struct {
-		name       string
-		input      string
-		values     []string
-		parseFunc  func(string) (string, error)
-		want       string
-		wantErr    string
-		wantOutput string
+		name        string
+		inputReader io.Reader
+		values      []string
+		parseFunc   func(string) (string, error)
+		want        string
+		wantErr     string
+		wantOutput  string
 	}{
 		{
-			name:       "Valid input",
-			input:      "banana\n",
-			values:     []string{"apple", "banana", "orange"},
-			want:       "banana",
-			wantErr:    "",
-			wantOutput: "Select a fruit:\n - apple\n - banana\n - orange\n\nType the version number: ",
+			name:        "Valid input",
+			inputReader: bytes.NewBufferString("banana"),
+			values:      []string{"apple", "banana", "orange"},
+			want:        "banana",
+			wantErr:     "",
+			wantOutput:  "Select a fruit:\n - apple\n - banana\n - orange\n\nType the version number: ",
 		},
 		{
-			name:       "Invalid input",
-			input:      "Faraon Ramzes XIII\n",
-			values:     []string{"apple", "banana", "orange"},
-			want:       "",
-			wantErr:    "provided value is not present on the list: Faraon",
-			wantOutput: "Select a fruit:\n - apple\n - banana\n - orange\n\nType the version number: ",
+			name:        "Invalid input",
+			inputReader: bytes.NewBufferString("Faraon"),
+			values:      []string{"apple", "banana", "orange"},
+			want:        "",
+			wantErr:     "provided value is not present on the list: Faraon",
+			wantOutput:  "Select a fruit:\n - apple\n - banana\n - orange\n\nType the version number: ",
 		},
 		{
-			name:       "Empty input",
-			input:      "\n",
-			values:     []string{"apple", "banana", "orange"},
-			want:       "",
-			wantErr:    "no value was selected",
-			wantOutput: "Select a fruit:\n - apple\n - banana\n - orange\n\nType the version number: ",
+			name:        "Empty input",
+			inputReader: bytes.NewBufferString(""),
+			values:      []string{"apple", "banana", "orange"},
+			want:        "",
+			wantErr:     "no value was selected",
+			wantOutput:  "Select a fruit:\n - apple\n - banana\n - orange\n\nType the version number: ",
+		},
+		{
+			name:        "Invalid reader",
+			inputReader: iotest.ErrReader(errors.New("test error")),
+			values:      []string{"apple", "banana", "orange"},
+			want:        "",
+			wantErr:     "test error",
+			wantOutput:  "Select a fruit:\n - apple\n - banana\n - orange\n\nType the version number: ",
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			input := bytes.NewBufferString(tc.input)
+
 			output := bytes.NewBuffer([]byte{})
 			listPrompt := prompt.NewCustomOneOfStringList(
-				input,
+				tc.inputReader,
 				output,
 				"Select a fruit:",
 				"Type the version number: ",

@@ -26,12 +26,16 @@ func NewBool(message string, defaultValue bool) *Bool {
 func (b *Bool) Prompt() (bool, error) {
 	var userInput string
 	fmt.Fprintf(b.writer, "%s %s: ", b.message, b.defaultValueDisplay())
-	_, err := fmt.Fscan(b.reader, &userInput)
+	_, err := fmt.Fscanln(b.reader, &userInput)
 
 	// If the user just presses Enter, Fscan returns the EOF error
 	if err != nil && err == io.EOF {
 		// Treat as empty input, use default value
 		return b.defaultValue, nil
+	}
+
+	if err != nil {
+		return false, err
 	}
 
 	parsedUserInput, err := b.validateUserInput(userInput)
