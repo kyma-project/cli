@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha"
+	"github.com/kyma-project/cli.v3/internal/cmd/app"
 	"github.com/kyma-project/cli.v3/internal/cmd/module"
 	"github.com/kyma-project/cli.v3/internal/cmd/version"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
@@ -32,6 +33,7 @@ func NewKymaCMD() *cobra.Command {
 	cmd.AddCommand(alpha)
 	cmd.AddCommand(version.NewCmd())
 	cmd.AddCommand(module.NewModuleCMD(kymaConfig))
+	cmd.AddCommand(app.NewAppCMD(kymaConfig))
 
 	builder := extensions.NewBuilder(kymaConfig)
 	builder.Build(cmd, extensionstypes.ActionsMap{

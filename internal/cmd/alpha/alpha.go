@@ -1,7 +1,6 @@
 package alpha
 
 import (
-	"github.com/kyma-project/cli.v3/internal/cmd/alpha/app"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/hana"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/kubeconfig"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/provision"
@@ -18,7 +17,6 @@ func NewAlphaCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		DisableFlagsInUseLine: true,
 	}
 
-	cmd.AddCommand(app.NewAppCMD(kymaConfig))
 	cmd.AddCommand(hana.NewHanaCMD(kymaConfig))
 	cmd.AddCommand(provision.NewProvisionCMD())
 	cmd.AddCommand(referenceinstance.NewReferenceInstanceCMD(kymaConfig))
