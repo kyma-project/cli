@@ -1,9 +1,7 @@
 package actions
 
 import (
-	"bufio"
 	"fmt"
-	"io"
 	"os"
 	"path"
 	"path/filepath"
@@ -12,6 +10,7 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/cmdcommon/prompt"
 	"github.com/kyma-project/cli.v3/internal/extensions/actions/common"
 	"github.com/kyma-project/cli.v3/internal/extensions/types"
 	"github.com/spf13/cobra"
@@ -77,7 +76,7 @@ func (fi *functionInitAction) Run(cmd *cobra.Command, _ []string) clierror.Error
 
 	if !filepath.IsLocal(fi.Cfg.OutputDir) {
 		// output dir is not a local path, ask user for confirmation
-		clierr = getUserAcceptance(cmd.InOrStdin(), cmd.OutOrStdout(), fi.Cfg.OutputDir)
+		clierr = getUserAcceptance(fi.Cfg.OutputDir)
 		if clierr != nil {
 			return clierr
 		}
@@ -121,19 +120,20 @@ func sortedRuntimesString(m map[string]runtimeConfig) string {
 	return strings.Join(keys, ", ")
 }
 
-func getUserAcceptance(in io.Reader, out io.Writer, path string) clierror.Error {
-	fmt.Fprintf(out, "The output path ( %s ) seems to be outside of the current working directory.\n", path)
-	fmt.Fprint(out, "Do you want to proceed? (y/n): ")
+func getUserAcceptance(path string) clierror.Error {
+	promptValue, err := prompt.NewBool(
+		fmt.Sprintf("The output path ( %s ) seems to be outside of the current working directory.\nDo you want to proceed?", path),
+		true,
+	).Prompt()
 
-	input, err := bufio.NewReader(in).ReadString('\n') // wait for user to press enter
-	fmt.Fprintln(out)
+	// add empty line for better readability
+	fmt.Println()
 
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to read user input"))
 	}
 
-	lowerInput := strings.ToLower(input)
-	if lowerInput == "y\n" || lowerInput == "yes\n" {
+	if promptValue {
 		// user accepted, continue
 		return nil
 	}
