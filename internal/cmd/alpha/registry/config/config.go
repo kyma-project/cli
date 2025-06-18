@@ -54,7 +54,7 @@ func runConfig(cfg *cfgConfig) clierror.Error {
 	}
 
 	if cfg.externalurl && cfg.output != "" {
-		writeErr := os.WriteFile(cfg.output, []byte(registryConfig.SecretData.PushRegAddr), os.ModePerm)
+		writeErr := os.WriteFile(cfg.output, []byte(registryConfig.SecretData.PushRegAddr), 0600)
 		if writeErr != nil {
 			return clierror.New("failed to write docker config to file")
 		}
@@ -64,7 +64,7 @@ func runConfig(cfg *cfgConfig) clierror.Error {
 	if cfg.output == "" {
 		fmt.Print(registryConfig.SecretData.DockerConfigJSON)
 	} else {
-		writeErr := os.WriteFile(cfg.output, []byte(registryConfig.SecretData.DockerConfigJSON), os.ModePerm)
+		writeErr := os.WriteFile(cfg.output, []byte(registryConfig.SecretData.DockerConfigJSON), 0600)
 		if writeErr != nil {
 			return clierror.New("failed to write docker config to file")
 		}
