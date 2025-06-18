@@ -2,10 +2,11 @@ package hana
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestMapInstance(t *testing.T) {
@@ -15,7 +16,6 @@ func TestMapInstance(t *testing.T) {
 			require.Equal(t, fmt.Sprintf("Bearer %s", "test-token"), r.Header.Get("Authorization"))
 			require.Equal(t, http.MethodPost, r.Method)
 
-			w.WriteHeader(http.StatusCreated)
 			w.WriteHeader(http.StatusOK)
 		}))
 		defer testServer.Close()
