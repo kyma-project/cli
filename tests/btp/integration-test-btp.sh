@@ -111,9 +111,9 @@ docker --config . push $dr_external_url/bookstore:latest
 #   failed to push image to the in-cluster registry: PUT https://localhost:32137/v2/bookstore/blobs/uploads/c0ae3d32-c861-4ed5-a796-43bf9434b954?_state=REDACTED&digest=sha256%3Acb4197092ed16fbdd56eafda1c0995d527ca3a0621d3b1787a1376e8478d751c: BLOB_UPLOAD_UNKNOWN: blob upload unknown to registry; map[]
 
 
-#../../bin/kyma alpha app push --name bookstore --expose --container-port 3000 --mount-secret hana-hdi-binding --code-path sample-http-db-nodejs/bookstore
+#../../bin/kyma app push --name bookstore --expose --container-port 3000 --mount-secret hana-hdi-binding --code-path sample-http-db-nodejs/bookstore
 
-../../bin/kyma alpha app push --name bookstore --expose --container-port 3000 --mount-secret hana-hdi-binding --image $dr_internal_pull_url/bookstore:latest --image-pull-secret dockerregistry-config
+../../bin/kyma app push --name bookstore --expose --container-port 3000 --mount-secret hana-hdi-binding --image $dr_internal_pull_url/bookstore:latest --image-pull-secret dockerregistry-config
 
 kubectl wait --for condition=Available deployment bookstore --timeout=60s
 kubectl wait --for='jsonpath={.status.state}=Ready' apirules.gateway.kyma-project.io/bookstore
