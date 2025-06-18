@@ -1,6 +1,7 @@
 package function
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"os"
@@ -56,7 +57,7 @@ func NewInitCmd(kymaConfig *cmdcommon.KymaConfig, cmdConfig interface{}) (*cobra
 			clierror.Check(cfg.validate())
 		},
 		Run: func(cmd *cobra.Command, _ []string) {
-			clierror.Check(runInit(cfg, cmd.OutOrStdout()))
+			clierror.Check(runInit(cfg, cmd.InOrStdin(), cmd.OutOrStdout()))
 		},
 	}
 
@@ -87,6 +88,16 @@ func parseExtensionConfig(cmdConfig interface{}) (*extensionConfig, error) {
 		return nil, errors.New("unexpected extension error, empty config data")
 	}
 
+	for runtimeName, runtimeCfg := range extCfg.Runtimes {
+		if !filepath.IsLocal(runtimeCfg.DepsFilename) {
+			return nil, errors.New(fmt.Sprintf("deps filename %s for runtime %s is not a single file name", runtimeCfg.DepsFilename, runtimeName))
+		}
+
+		if !filepath.IsLocal(runtimeCfg.HandlerFilename) {
+			return nil, errors.New(fmt.Sprintf("handler filename %s for runtime %s is not a single file name", runtimeCfg.HandlerFilename, runtimeName))
+		}
+	}
+
 	return &extCfg, nil
 }
 
@@ -101,8 +112,16 @@ func (c *initConfig) validate() clierror.Error {
 	return nil
 }
 
-func runInit(cfg *initConfig, out io.Writer) clierror.Error {
+func runInit(cfg *initConfig, in io.Reader, out io.Writer) clierror.Error {
 	runtimeCfg := cfg.extensionConfig.Runtimes[cfg.runtime]
+
+	if !filepath.IsLocal(cfg.dir) {
+		// output dir is not a local path, ask user for confirmation
+		clierr := getUserAcceptance(in, out, cfg.dir)
+		if clierr != nil {
+			return clierr
+		}
+	}
 
 	handlerPath := path.Join(cfg.dir, runtimeCfg.HandlerFilename)
 	err := os.WriteFile(handlerPath, []byte(runtimeCfg.HandlerData), os.ModePerm)
@@ -138,4 +157,27 @@ func sortedRuntimesString(m map[string]runtimeConfig) string {
 
 	sort.Strings(sort.StringSlice(keys))
 	return strings.Join(keys, ", ")
+}
+
+func getUserAcceptance(in io.Reader, out io.Writer, path string) clierror.Error {
+	fmt.Fprintf(out, "The output path ( %s ) seems to be outside of the current working directory.\n", path)
+	fmt.Fprint(out, "Do you want to proceed? (y/n): ")
+
+	input, err := bufio.NewReader(in).ReadString('\n') // wait for user to press enter
+	fmt.Fprintln(out)
+
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to read user input"))
+	}
+
+	lowerInput := strings.ToLower(input)
+	if lowerInput == "y\n" || lowerInput == "yes\n" {
+		// user accepted, continue
+		return nil
+	}
+
+	return clierror.New(
+		"function init aborted",
+		"you must provide a local path for the output directory or accept the default one by typing 'y' and pressing enter",
+	)
 }
