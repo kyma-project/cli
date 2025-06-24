@@ -1,6 +1,7 @@
 package prompt
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"os"
@@ -37,12 +38,11 @@ func NewCustomOneOfStringList(reader io.Reader, writer io.Writer, message, promp
 }
 
 func (l *OneOfStringList) Prompt() (string, error) {
-	var userInput string
 	fmt.Fprintf(l.writer, "%s\n%s\n\n%s", l.message, l.valuesListString(), l.promptText)
-	_, err := fmt.Fscanln(l.reader, &userInput)
-	if err != nil && err == io.EOF {
-		return "", fmt.Errorf("no value was selected")
-	}
+	scanner := bufio.NewScanner(l.reader)
+	scanner.Scan()
+	err := scanner.Err()
+	userInput := scanner.Text()
 
 	if err != nil {
 		return "", err
@@ -65,10 +65,14 @@ func (l *OneOfStringList) valuesListString() string {
 }
 
 func (l *OneOfStringList) validateUserInput(userInput string) (string, error) {
-	if l.isUserInputPresentInValuesList(userInput) {
-		return userInput, nil
+	if strings.TrimSpace(userInput) == "" {
+		return "", fmt.Errorf("no value was selected")
 	}
-	return "", fmt.Errorf("provided value is not present on the list: %v", userInput)
+	if !l.isUserInputPresentInValuesList(userInput) {
+		return "", fmt.Errorf("provided value is not present on the list: %v", userInput)
+	}
+
+	return userInput, nil
 }
 
 func (l *OneOfStringList) isUserInputPresentInValuesList(userInput string) bool {
