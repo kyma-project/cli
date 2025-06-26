@@ -98,13 +98,17 @@ type pathValue struct {
 	stringValue
 }
 
-func (pv *pathValue) Set(value string) error {
-	bytes, err := os.ReadFile(value)
+func (pv *pathValue) Set(path string) error {
+	bytes, err := os.ReadFile(path)
 	if err != nil {
 		return err
 	}
 
-	return pv.SetValue(string(bytes))
+	// set value even when file is empty
+	newValue := string(bytes)
+	pv.Value = &newValue
+
+	return nil
 }
 
 func (pv *pathValue) SetValue(value string) error {
