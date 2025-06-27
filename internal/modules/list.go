@@ -201,13 +201,7 @@ func listCommunityInstalled(ctx context.Context, client kube.Client) (ModulesLis
 			continue
 		}
 
-		customResourceDefinitionFromResources, err := getFirstModuleTemplatesResourceOfKind(moduleResources, "CustomResourceDefinition")
-		if err != nil {
-			fmt.Printf("failed to retrieve CR info from: %v - %v\n", moduleTemplate, err)
-			continue
-		}
-
-		status := getModuleStatus(ctx, client, customResourceDefinitionFromResources)
+		status := getModuleStatus(ctx, client, moduleTemplate.Spec.Data)
 		version, err := getManagerVersion(ctx, client, managerFromResources)
 		if err != nil {
 			fmt.Printf("failed to get managers version: %v\n", err)
@@ -293,41 +287,29 @@ func extractModuleVersion(metadata map[string]any, unstructRes *unstructured.Uns
 	return UnknownValue
 }
 
-func getModuleStatus(ctx context.Context, client kube.Client, customResourceDefinition map[string]any) string {
-	crdPluralName, crdApiVersion, crdKind := extractCRDInfo(customResourceDefinition)
+func getModuleStatus(ctx context.Context, client kube.Client, data unstructured.Unstructured) string {
+	apiVersion, ok := data.Object["apiVersion"].(string)
+	if !ok {
+		fmt.Println("failed to get apiVersion from data: ", data)
+		return UnknownValue
+	}
 
-	resourceList, err := listCRDResources(ctx, client, crdApiVersion, crdKind)
+	kind, ok := data.Object["kind"].(string)
+	if !ok {
+		fmt.Println("failed to get kind from data: ", data)
+		return UnknownValue
+	}
+
+	resourceList, err := listResourcesByVersionKind(ctx, client, apiVersion, kind)
 	if err != nil {
-		fmt.Printf("failed to list resources for CRD %s: %v\n", crdPluralName, err)
+		fmt.Printf("failed to list resources for version: %s and kind %s: %v\n", apiVersion, kind, err)
 		return UnknownValue
 	}
 
 	return determineModuleStatus(resourceList)
 }
 
-func extractCRDInfo(customResourceDefinition map[string]any) (string, string, string) {
-	var plural, apiVersion, kind string
-	spec, _ := customResourceDefinition["spec"].(map[string]any)
-	if names, ok := spec["names"].(map[string]any); ok {
-		if p, ok := names["plural"].(string); ok {
-			plural = p
-		}
-		if k, ok := names["kind"].(string); ok {
-			kind = k
-		}
-	}
-	group, _ := spec["group"].(string)
-	if versions, ok := spec["versions"].([]any); ok && len(versions) > 0 {
-		if versionMap, ok := versions[0].(map[string]any); ok {
-			if versionName, ok := versionMap["name"].(string); ok {
-				apiVersion = group + "/" + versionName
-			}
-		}
-	}
-	return plural, apiVersion, kind
-}
-
-func listCRDResources(ctx context.Context, client kube.Client, apiVersion, kind string) ([]unstructured.Unstructured, error) {
+func listResourcesByVersionKind(ctx context.Context, client kube.Client, apiVersion, kind string) ([]unstructured.Unstructured, error) {
 	resourceList, err := client.RootlessDynamic().List(ctx, &unstructured.Unstructured{
 		Object: map[string]any{
 			"apiVersion": apiVersion,
@@ -372,7 +354,7 @@ func getModuleResources(moduleTemplate kyma.ModuleTemplate) ([]map[string]any, e
 		for _, yamlStr := range resourceYamls {
 			var res map[string]any
 			if err := yaml.Unmarshal([]byte(yamlStr), &res); err != nil {
-				return nil, fmt.Errorf("failed to parse module resource YAML: %w", err)
+				return nil, fmt.Errorf("failed to parse module resource YAML for %s:%s - %w", moduleTemplate.Spec.ModuleName, moduleTemplate.Spec.Version, err)
 			}
 			parsedResources = append(parsedResources, res)
 		}
@@ -392,16 +374,6 @@ func getManagerFromResources(moduleTemplate kyma.ModuleTemplate, moduleResources
 	}
 
 	return nil, fmt.Errorf("manager not found in resources")
-}
-
-func getFirstModuleTemplatesResourceOfKind(moduleResources []map[string]any, kind string) (map[string]any, error) {
-	for _, moduleResource := range moduleResources {
-		if moduleResource["kind"] == kind {
-			return moduleResource, nil
-		}
-	}
-
-	return nil, fmt.Errorf("resource of type %v not found", kind)
 }
 
 func isCommunityModule(moduleTemplate *kyma.ModuleTemplate) bool {
@@ -522,8 +494,8 @@ func getResourceState(ctx context.Context, client kube.Client, manager *kyma.Man
 	}
 
 	status := result.Object["status"].(map[string]interface{})
-	if state, ok := status["state"].(string); ok {
-		return state, nil
+	if state, ok := status["state"]; ok {
+		return state.(string), nil
 	}
 
 	if conditions, ok := status["conditions"]; ok {

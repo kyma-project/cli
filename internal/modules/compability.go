@@ -20,13 +20,8 @@ func listOldModulesCatalog(moduleTemplates *kyma.ModuleTemplateList) ModulesList
 			Channel:    moduleTemplate.Spec.Channel,
 		}
 
-		if isCommunityModule(&moduleTemplate) && version.Version == "" {
+		if version.Version == "" || version.Channel == "" {
 			// ignore corrupted community ModuleTemplate (without a channel)
-			continue
-		}
-
-		if !isCommunityModule(&moduleTemplate) && (version.Version == "" || version.Channel == "") {
-			// ignore corrupted ModuleTemplates (without version or channel)
 			continue
 		}
 
