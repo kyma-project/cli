@@ -4,10 +4,13 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
+	"github.com/kyma-project/cli.v3/internal/kube/rootlessdynamic"
 	"github.com/pkg/errors"
+	"gopkg.in/yaml.v3"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -22,8 +25,10 @@ type Module struct {
 type Managed string
 
 const (
-	ManagedTrue  Managed = "true"
-	ManagedFalse Managed = "false"
+	ManagedTrue     Managed = "true"
+	ManagedFalse    Managed = "false"
+	UnknownValue            = "Unknown"
+	NotRunningValue         = "NotRunning"
 )
 
 type ModuleInstallDetails struct {
@@ -46,6 +51,22 @@ type ModulesList []Module
 // ListInstalled returns list of installed module on a cluster
 // collects info about modules based on the KymaCR
 func ListInstalled(ctx context.Context, client kube.Client) (ModulesList, error) {
+	installedCoreModules, err := listCoreInstalled(ctx, client)
+	if err != nil {
+		return nil, err
+	}
+
+	installedCommunityModules, err := listCommunityInstalled(ctx, client)
+	if err != nil {
+		return nil, err
+	}
+
+	allInstalled := append(installedCoreModules, installedCommunityModules...)
+
+	return allInstalled, nil
+}
+
+func listCoreInstalled(ctx context.Context, client kube.Client) (ModulesList, error) {
 	defaultKyma, err := client.Kyma().GetDefaultKyma(ctx)
 	if err != nil && !apierrors.IsNotFound(err) {
 		return nil, errors.Wrap(err, "failed to get default Kyma CR from the cluster")
@@ -149,6 +170,210 @@ func ListAvailableVersions(ctx context.Context, client kube.Client, moduleName s
 	}
 
 	return moduleVersions, nil
+}
+
+func listCommunityInstalled(ctx context.Context, client kube.Client) (ModulesList, error) {
+	moduleTemplates, err := client.Kyma().ListModuleTemplate(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list module templates: %v", err)
+	}
+
+	communityModuleTemplates := []kyma.ModuleTemplate{}
+
+	for _, moduleTemplate := range moduleTemplates.Items {
+		if isCommunityModule(&moduleTemplate) {
+			communityModuleTemplates = append(communityModuleTemplates, moduleTemplate)
+		}
+	}
+
+	communityModules := ModulesList{}
+
+	for _, moduleTemplate := range communityModuleTemplates {
+		moduleResources, err := getModuleResources(moduleTemplate)
+		if err != nil {
+			fmt.Printf("failed to get resources for module %v: %v\n", moduleTemplate.Spec.ModuleName, err)
+			continue
+		}
+
+		managerFromResources, err := getManagerFromResources(moduleTemplate, moduleResources)
+		if err != nil {
+			fmt.Printf("failed to retrieve manager info from %s: %v\n", moduleTemplate.Spec.ModuleName, err)
+			continue
+		}
+
+		status := getModuleStatus(ctx, client, moduleTemplate.Spec.Data)
+		version, err := getManagerVersion(ctx, client, managerFromResources)
+		if err != nil {
+			fmt.Printf("failed to get managers version: %v\n", err)
+			continue
+		}
+
+		communityModules = append(communityModules, Module{
+			Name: moduleTemplate.Spec.ModuleName,
+			InstallDetails: ModuleInstallDetails{
+				Channel:              "",
+				Managed:              ManagedFalse,
+				CustomResourcePolicy: "N/A",
+				Version:              version,
+				State:                status,
+			},
+		})
+	}
+
+	return communityModules, nil
+}
+
+func getManagerVersion(ctx context.Context, client kube.Client, managerFromResources map[string]any) (string, error) {
+	metadata, ok := managerFromResources["metadata"].(map[string]any)
+	if !ok {
+		return "", fmt.Errorf("metadata not found in unstructured object")
+	}
+
+	unstructManager := generateUnstruct(
+		managerFromResources["apiVersion"].(string),
+		managerFromResources["kind"].(string),
+		metadata["name"].(string),
+		metadata["namespace"].(string),
+	)
+
+	unstructRes, err := client.RootlessDynamic().Get(ctx, &unstructManager)
+	if err != nil {
+		return "", fmt.Errorf("failed to get resource: %v", err)
+	}
+
+	resMetadata, ok := unstructRes.Object["metadata"].(map[string]any)
+	if !ok {
+		return "", fmt.Errorf("metadata not found in unstructured object")
+	}
+
+	version := extractModuleVersion(resMetadata, unstructRes)
+	return version, nil
+}
+
+func extractModuleVersion(metadata map[string]any, unstructRes *unstructured.Unstructured) string {
+	labels, _ := metadata["labels"].(map[string]any)
+	if labels != nil {
+		if v, ok := labels["app.kubernetes.io/version"].(string); ok && v != "" {
+			return v
+		}
+	}
+	spec, ok := unstructRes.Object["spec"].(map[string]any)
+	if !ok {
+		return UnknownValue
+	}
+	template, ok := spec["template"].(map[string]any)
+	if !ok {
+		return UnknownValue
+	}
+	templateSpec, ok := template["spec"].(map[string]any)
+	if !ok {
+		return UnknownValue
+	}
+	containers, ok := templateSpec["containers"].([]any)
+	if !ok {
+		return UnknownValue
+	}
+	for _, c := range containers {
+		container, _ := c.(map[string]any)
+		if cname, ok := container["name"].(string); ok && strings.Contains(cname, "manager") {
+			if image, ok := container["image"].(string); ok && image != "" {
+				parts := strings.Split(image, ":")
+				if len(parts) > 1 {
+					return parts[len(parts)-1]
+				}
+			}
+		}
+	}
+	return UnknownValue
+}
+
+func getModuleStatus(ctx context.Context, client kube.Client, data unstructured.Unstructured) string {
+	apiVersion, ok := data.Object["apiVersion"].(string)
+	if !ok {
+		fmt.Println("failed to get apiVersion from data: ", data)
+		return UnknownValue
+	}
+
+	kind, ok := data.Object["kind"].(string)
+	if !ok {
+		fmt.Println("failed to get kind from data: ", data)
+		return UnknownValue
+	}
+
+	resourceList, err := listResourcesByVersionKind(ctx, client, apiVersion, kind)
+	if err != nil {
+		fmt.Printf("failed to list resources for version: %s and kind %s: %v\n", apiVersion, kind, err)
+		return UnknownValue
+	}
+
+	return determineModuleStatus(resourceList)
+}
+
+func listResourcesByVersionKind(ctx context.Context, client kube.Client, apiVersion, kind string) ([]unstructured.Unstructured, error) {
+	resourceList, err := client.RootlessDynamic().List(ctx, &unstructured.Unstructured{
+		Object: map[string]any{
+			"apiVersion": apiVersion,
+			"kind":       kind,
+		},
+	}, &rootlessdynamic.ListOptions{
+		AllNamespaces: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return resourceList.Items, nil
+}
+
+func determineModuleStatus(resources []unstructured.Unstructured) string {
+	switch len(resources) {
+	case 0:
+		return NotRunningValue
+	case 1:
+		item := resources[0]
+		if statusMap, ok := item.Object["status"].(map[string]any); ok {
+			if state, ok := statusMap["state"].(string); ok {
+				return state
+			}
+		}
+		return UnknownValue
+	default:
+		return UnknownValue
+	}
+}
+
+func getModuleResources(moduleTemplate kyma.ModuleTemplate) ([]map[string]any, error) {
+	var parsedResources []map[string]any
+
+	for _, resource := range moduleTemplate.Spec.Resources {
+		resourceYamls, err := getResourceYamlStringsFromURL(resource.Link)
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch resource YAMLs from %s: %w", resource.Link, err)
+		}
+
+		for _, yamlStr := range resourceYamls {
+			var res map[string]any
+			if err := yaml.Unmarshal([]byte(yamlStr), &res); err != nil {
+				return nil, fmt.Errorf("failed to parse module resource YAML for %s:%s - %w", moduleTemplate.Spec.ModuleName, moduleTemplate.Spec.Version, err)
+			}
+			parsedResources = append(parsedResources, res)
+		}
+	}
+
+	return parsedResources, nil
+}
+
+func getManagerFromResources(moduleTemplate kyma.ModuleTemplate, moduleResources []map[string]any) (map[string]any, error) {
+	managerFromSpec := moduleTemplate.Spec.Manager
+
+	for _, moduleResource := range moduleResources {
+		metadata, ok := moduleResource["metadata"].(map[string]any)
+		if ok && managerFromSpec.GroupVersionKind.Kind == moduleResource["kind"] && managerFromSpec.Name == metadata["name"] {
+			return moduleResource, nil
+		}
+	}
+
+	return nil, fmt.Errorf("manager not found in resources")
 }
 
 func isCommunityModule(moduleTemplate *kyma.ModuleTemplate) bool {

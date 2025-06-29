@@ -6,6 +6,8 @@ import (
 	"errors"
 	"testing"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/kube/fake"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
@@ -24,6 +26,17 @@ var (
 			},
 		},
 	}
+	testKedaModuleTemplate = kyma.ModuleTemplate{
+		ObjectMeta: metav1.ObjectMeta{
+			Labels: map[string]string{
+				"operator.kyma-project.io/managed-by": "kyma",
+			},
+		},
+		Spec: kyma.ModuleTemplateSpec{
+			ModuleName: "keda",
+			Version:    "1.0.0",
+		},
+	}
 )
 
 func TestEnable(t *testing.T) {
@@ -31,6 +44,9 @@ func TestEnable(t *testing.T) {
 		buffer := bytes.NewBuffer([]byte{})
 		kymaClient := fake.KymaClient{
 			ReturnErr: nil,
+			ReturnModuleTemplateList: kyma.ModuleTemplateList{
+				Items: []kyma.ModuleTemplate{testKedaModuleTemplate},
+			},
 		}
 		client := fake.KubeClient{
 			TestKymaInterface: &kymaClient,
@@ -52,6 +68,9 @@ func TestEnable(t *testing.T) {
 		buffer := bytes.NewBuffer([]byte{})
 		kymaClient := fake.KymaClient{
 			ReturnErr: nil,
+			ReturnModuleTemplateList: kyma.ModuleTemplateList{
+				Items: []kyma.ModuleTemplate{testKedaModuleTemplate},
+			},
 		}
 		rootlessDynamicClient := fake.RootlessDynamicClient{}
 		client := fake.KubeClient{
@@ -72,29 +91,56 @@ func TestEnable(t *testing.T) {
 		require.Equal(t, []unstructured.Unstructured{testKedaCR}, rootlessDynamicClient.ApplyObjs)
 	})
 
-	t.Run("failed to enable module", func(t *testing.T) {
+	t.Run("failed to get module from catalog", func(t *testing.T) {
 		buffer := bytes.NewBuffer([]byte{})
 		kymaClient := fake.KymaClient{
 			ReturnErr: errors.New("test error"),
+			ReturnModuleTemplateList: kyma.ModuleTemplateList{
+				Items: []kyma.ModuleTemplate{testKedaModuleTemplate},
+			},
 		}
 		client := fake.KubeClient{
 			TestKymaInterface: &kymaClient,
 		}
 
 		expectedCliErr := clierror.Wrap(
-			errors.New("test error"),
-			clierror.New("failed to enable module"),
+			errors.New("failed to list all ModuleTemplate CRs from the cluster: test error"),
+			clierror.New("module invalid"),
 		)
 
 		err := enable(buffer, context.Background(), &client, "keda", "fast", true)
 		require.Equal(t, expectedCliErr, err)
-		require.Equal(t, "adding keda module to the Kyma CR\n", buffer.String())
+	})
+
+	t.Run("failed to get module that is not available", func(t *testing.T) {
+		buffer := bytes.NewBuffer([]byte{})
+		kymaClient := fake.KymaClient{
+			ReturnErr: nil,
+			ReturnModuleTemplateList: kyma.ModuleTemplateList{
+				Items: []kyma.ModuleTemplate{},
+			},
+		}
+
+		client := fake.KubeClient{
+			TestKymaInterface: &kymaClient,
+		}
+
+		expectedCliErr := clierror.Wrap(
+			errors.New("module is not available"),
+			clierror.New("module invalid"),
+		)
+
+		err := enable(buffer, context.Background(), &client, "keda", "fast", true)
+		require.Equal(t, expectedCliErr, err)
 	})
 
 	t.Run("failed to wait for module to be ready", func(t *testing.T) {
 		buffer := bytes.NewBuffer([]byte{})
 		kymaClient := fake.KymaClient{
 			ReturnWaitForModuleErr: errors.New("test error"),
+			ReturnModuleTemplateList: kyma.ModuleTemplateList{
+				Items: []kyma.ModuleTemplate{testKedaModuleTemplate},
+			},
 		}
 		client := fake.KubeClient{
 			TestKymaInterface: &kymaClient,
@@ -114,6 +160,9 @@ func TestEnable(t *testing.T) {
 		buffer := bytes.NewBuffer([]byte{})
 		kymaClient := fake.KymaClient{
 			ReturnErr: nil,
+			ReturnModuleTemplateList: kyma.ModuleTemplateList{
+				Items: []kyma.ModuleTemplate{testKedaModuleTemplate},
+			},
 		}
 		rootlessDynamicClient := fake.RootlessDynamicClient{
 			ReturnErr: errors.New("test error"),

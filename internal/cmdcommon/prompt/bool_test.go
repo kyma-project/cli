@@ -52,8 +52,7 @@ func TestBoolPrompt_Table(t *testing.T) {
 			name:         "Default true with whitespaces",
 			inputReader:  bytes.NewBufferString("  \t\n"),
 			defaultValue: true,
-			expectResult: false,
-			expectErr:    "unexpected newline",
+			expectResult: true,
 		},
 		{
 			name:         "Default false with empty input",

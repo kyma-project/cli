@@ -21,6 +21,10 @@ func Enable(ctx context.Context, client kube.Client, module, channel string, def
 }
 
 func enable(writer io.Writer, ctx context.Context, client kube.Client, module, channel string, defaultCR bool, crs ...unstructured.Unstructured) clierror.Error {
+	if err := validateModuleAvailability(ctx, client, module); err != nil {
+		return clierror.Wrap(err, clierror.New("module invalid"))
+	}
+
 	crPolicy := kyma.CustomResourcePolicyIgnore
 	if defaultCR {
 		crPolicy = kyma.CustomResourcePolicyCreateAndDelete
@@ -62,6 +66,19 @@ func applyCustomCR(writer io.Writer, ctx context.Context, client kube.Client, mo
 		if err != nil {
 			return clierror.Wrap(err, clierror.New("failed to apply custom cr from path"))
 		}
+	}
+
+	return nil
+}
+
+func validateModuleAvailability(ctx context.Context, client kube.Client, module string) error {
+	availableCoreVersions, err := ListAvailableVersions(ctx, client, module, false)
+	if err != nil {
+		return err
+	}
+
+	if len(availableCoreVersions) == 0 {
+		return fmt.Errorf("module is not available")
 	}
 
 	return nil
