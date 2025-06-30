@@ -55,7 +55,7 @@ func GetInternalConfig(ctx context.Context, client kube.Client) (*InternalRegist
 }
 
 func getExternalConfig(ctx context.Context, client kube.Client) (*ExternalRegistryConfig, error) {
-	dockerRegistry, err := getDockerRegistry(ctx, client.Dynamic())
+	dockerRegistry, err := getServedDockerRegistry(ctx, client.Dynamic())
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func getExternalConfig(ctx context.Context, client kube.Client) (*ExternalRegist
 }
 
 func getInternalConfig(ctx context.Context, client kube.Client) (*InternalRegistryConfig, error) {
-	dockerRegistry, err := getDockerRegistry(ctx, client.Dynamic())
+	dockerRegistry, err := getServedDockerRegistry(ctx, client.Dynamic())
 	if err != nil {
 		return nil, err
 	}
@@ -186,7 +186,7 @@ func isPodReady(pod corev1.Pod) bool {
 	return false
 }
 
-func getDockerRegistry(ctx context.Context, c dynamic.Interface) (*DockerRegistry, error) {
+func getServedDockerRegistry(ctx context.Context, c dynamic.Interface) (*DockerRegistry, error) {
 	list, err := c.Resource(DockerRegistryGVR).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
@@ -197,6 +197,11 @@ func getDockerRegistry(ctx context.Context, c dynamic.Interface) (*DockerRegistr
 		err = runtime.DefaultUnstructuredConverter.FromUnstructured(item.Object, &dockerRegistry)
 		if err != nil {
 			return nil, err
+		}
+
+		if dockerRegistry.Status.Served == "False" {
+			//ignore cr's that are not served
+			continue
 		}
 
 		if dockerRegistry.Status.State == "Ready" || dockerRegistry.Status.State == "Warning" {
