@@ -58,14 +58,14 @@ func TestInstall_ListModuleTemplateError(t *testing.T) {
 		IsDefaultCRApplicable: false,
 	}
 
-	expectedClieErr := clierror.Wrap(
+	expectedCliErr := clierror.Wrap(
 		errors.New("failed to get module template"),
 		clierror.New("failed to retrieve community module from catalog"),
 	)
 
 	clierr := Install(ctx, &client, data)
 	require.NotNil(t, clierr)
-	require.Equal(t, expectedClieErr, clierr)
+	require.Equal(t, expectedCliErr, clierr)
 }
 
 func TestInstall_ModuleNotFound(t *testing.T) {
@@ -84,14 +84,14 @@ func TestInstall_ModuleNotFound(t *testing.T) {
 		IsDefaultCRApplicable: false,
 	}
 
-	expectedClieErr := clierror.Wrap(
+	expectedCliErr := clierror.Wrap(
 		errors.New("module not found"),
 		clierror.New("failed to retrieve community module from catalog"),
 	)
 
 	clierr := Install(ctx, &client, data)
 	require.NotNil(t, clierr)
-	require.Equal(t, expectedClieErr, clierr)
+	require.Equal(t, expectedCliErr, clierr)
 }
 
 func TestInstall_InstallModuleError(t *testing.T) {
@@ -118,7 +118,7 @@ func TestInstall_InstallModuleError(t *testing.T) {
 		IsDefaultCRApplicable: false,
 	}
 
-	expectedClieErr := clierror.Wrap(
+	expectedCliErr := clierror.Wrap(
 		errors.New("failed to apply resources from link: "+
 			"failed to parse module resource: yaml: "+
 			"line 2: found a tab character that violates indentation"),
@@ -127,7 +127,7 @@ func TestInstall_InstallModuleError(t *testing.T) {
 
 	clierr := Install(ctx, &client, data)
 	require.NotNil(t, clierr)
-	require.Equal(t, expectedClieErr, clierr)
+	require.Equal(t, expectedCliErr, clierr)
 }
 
 func TestInstall_ModuleSuccessfullyInstalled(t *testing.T) {

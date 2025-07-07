@@ -100,10 +100,10 @@ func installCommunityModule(cfg *addConfig, client *kube.Client, crs ...unstruct
 		"  There is no guarantee of support, maintenance, or compatibility.")
 
 	if !cfg.autoApprove {
-		proceedPrompt := prompt.NewBool("Are you sure you want to proceed with the installation?", true)
+		proceedPrompt := prompt.NewBool("\nAre you sure you want to proceed with the installation?", true)
 		proceedWithInstallation, err := proceedPrompt.Prompt()
 		if err != nil {
-			return clierror.Wrap(err, clierror.New("failed to install a community module"))
+			return clierror.Wrap(err, clierror.New("failed to prompt for the user confirmation"))
 		}
 		if !proceedWithInstallation {
 			return nil
@@ -112,7 +112,7 @@ func installCommunityModule(cfg *addConfig, client *kube.Client, crs ...unstruct
 
 	versionToInstall, err := selectCommunityModuleVersion(cfg, client)
 	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to install a community module"))
+		return clierror.Wrap(err, clierror.New("failed to prompt for module version"))
 	}
 
 	installData := modules.InstallCommunityModuleData{
