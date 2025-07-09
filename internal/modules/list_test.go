@@ -208,7 +208,8 @@ var (
 				Managed:              ManagedTrue,
 				Channel:              "fast",
 				Version:              "0.0.1",
-				State:                "Ready",
+				ModuleState:          "Ready",
+				InstallationState:    "Ready",
 				CustomResourcePolicy: "Ignore",
 			},
 		},
@@ -218,7 +219,8 @@ var (
 				Managed:              ManagedFalse,
 				Channel:              "fast",
 				Version:              "0.2",
-				State:                "Unmanaged",
+				ModuleState:          "Unmanaged",
+				InstallationState:    "Unmanaged",
 				CustomResourcePolicy: "CreateAndDelete",
 			},
 		},
@@ -469,7 +471,7 @@ func TestListCatalog(t *testing.T) {
 	})
 }
 
-func TestModuleStatus(t *testing.T) {
+func TestModuleInstallationStatus(t *testing.T) {
 	for _, tt := range []struct {
 		name         string
 		moduleSpec   *kyma.Module
@@ -600,7 +602,7 @@ func TestModuleStatus(t *testing.T) {
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			state, err := getModuleState(context.Background(), tt.client, tt.moduleStatus, tt.moduleSpec)
+			state, err := getModuleInstallationState(context.Background(), tt.client, tt.moduleStatus, tt.moduleSpec)
 			if tt.expectedError != "" {
 				require.EqualError(t, err, tt.expectedError)
 			}

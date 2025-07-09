@@ -135,6 +135,16 @@ spec:
 					},
 				},
 			},
+			"status": map[string]any{
+				"conditions": []any{
+					map[string]any{
+						"type": "Ready",
+					},
+					map[string]any{
+						"type": "Processing",
+					},
+				},
+			},
 		},
 	}
 
@@ -160,6 +170,16 @@ spec:
 								"image": "http://repo.url/manager:0.0.2",
 							},
 						},
+					},
+				},
+			},
+			"status": map[string]any{
+				"conditions": []map[string]any{
+					{
+						"type": "Ready",
+					},
+					{
+						"type": "Processing",
 					},
 				},
 			},
@@ -245,7 +265,8 @@ func TestListInstalled_CommunityModuleInstalledNotRunning(t *testing.T) {
 	require.Len(t, modules, 1)
 	require.Equal(t, "communitymodule", modules[0].Name)
 	require.Equal(t, "0.0.1", modules[0].InstallDetails.Version)
-	require.Equal(t, "NotRunning", modules[0].InstallDetails.State)
+	require.Equal(t, "NotRunning", modules[0].InstallDetails.ModuleState)
+	require.Equal(t, "Ready", modules[0].InstallDetails.InstallationState)
 }
 
 func TestListInstalled_CommunityModuleInstalledRunning(t *testing.T) {
@@ -291,7 +312,8 @@ func TestListInstalled_CommunityModuleInstalledRunning(t *testing.T) {
 	require.Len(t, modules, 1)
 	require.Equal(t, "communitymodule", modules[0].Name)
 	require.Equal(t, "0.0.1", modules[0].InstallDetails.Version)
-	require.Equal(t, "Ready", modules[0].InstallDetails.State)
+	require.Equal(t, "Ready", modules[0].InstallDetails.ModuleState)
+	require.Equal(t, "Ready", modules[0].InstallDetails.InstallationState)
 }
 
 func TestListInstalled_CommunityModuleVersionFromImage(t *testing.T) {
@@ -337,7 +359,7 @@ func TestListInstalled_CommunityModuleVersionFromImage(t *testing.T) {
 	require.Len(t, modules, 1)
 	require.Equal(t, "communitymodule", modules[0].Name)
 	require.Equal(t, "0.0.2", modules[0].InstallDetails.Version)
-	require.Equal(t, "Ready", modules[0].InstallDetails.State)
+	require.Equal(t, "Ready", modules[0].InstallDetails.ModuleState)
 }
 
 func getResourcesUrlResponseYaml(parts ...string) string {

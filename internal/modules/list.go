@@ -37,7 +37,8 @@ type ModuleInstallDetails struct {
 	Managed              Managed
 	CustomResourcePolicy string
 	// Possible states: https://github.com/kyma-project/lifecycle-manager/blob/main/api/shared/state.go
-	State string
+	ModuleState       string
+	InstallationState string
 }
 
 type ModuleVersion struct {
@@ -76,7 +77,7 @@ func listCoreInstalled(ctx context.Context, client kube.Client) (ModulesList, er
 	for _, moduleStatus := range defaultKyma.Status.Modules {
 		moduleSpec := getKymaModuleSpec(defaultKyma, moduleStatus.Name)
 
-		state, err := getModuleState(ctx, client, moduleStatus, moduleSpec)
+		installationState, err := getModuleInstallationState(ctx, client, moduleStatus, moduleSpec)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to get module state for module %s", moduleStatus.Name)
 		}
@@ -88,7 +89,8 @@ func listCoreInstalled(ctx context.Context, client kube.Client) (ModulesList, er
 				Managed:              getManaged(moduleSpec),
 				CustomResourcePolicy: getCustomResourcePolicy(moduleSpec),
 				Version:              moduleStatus.Version,
-				State:                state,
+				ModuleState:          moduleStatus.State,
+				InstallationState:    installationState,
 			},
 		})
 	}
@@ -211,7 +213,8 @@ func listCommunityInstalled(ctx context.Context, client kube.Client) (ModulesLis
 			continue
 		}
 
-		status := getModuleStatus(ctx, client, moduleTemplate.Spec.Data)
+		moduleStatus := getModuleStatus(ctx, client, moduleTemplate.Spec.Data)
+		installationStatus := getManagerStatus(installedManager) // TODO: Should this value be transformed to shared/state value?
 		version, err := getManagerVersion(installedManager)
 		if err != nil {
 			fmt.Printf("failed to get managers version: %v\n", err)
@@ -225,13 +228,35 @@ func listCommunityInstalled(ctx context.Context, client kube.Client) (ModulesLis
 				Managed:              ManagedFalse,
 				CustomResourcePolicy: "N/A",
 				Version:              version,
-				State:                status,
+				ModuleState:          moduleStatus,
+				InstallationState:    installationStatus,
 			},
 			CommunityModule: true,
 		})
 	}
 
 	return communityModules, nil
+}
+
+func getManagerStatus(installedManager *unstructured.Unstructured) string {
+	status, ok := installedManager.Object["status"].(map[string]any)
+	if !ok {
+		return UnknownValue
+	}
+	conditions, ok := status["conditions"].([]any)
+	if !ok {
+		return UnknownValue
+	}
+	latestCondition, ok := conditions[0].(map[string]any)
+	if !ok {
+		return UnknownValue
+	}
+	conditionType, ok := latestCondition["type"].(string)
+	if !ok {
+		return UnknownValue
+	}
+
+	return conditionType
 }
 
 func getInstalledManager(ctx context.Context, client kube.Client, managerFromResources map[string]any) (*unstructured.Unstructured, error) {
@@ -414,7 +439,7 @@ func getCustomResourcePolicy(moduleSpec *kyma.Module) string {
 	return "CreateAndDelete"
 }
 
-func getModuleState(ctx context.Context, client kube.Client, moduleStatus kyma.ModuleStatus, moduleSpec *kyma.Module) (string, error) {
+func getModuleInstallationState(ctx context.Context, client kube.Client, moduleStatus kyma.ModuleStatus, moduleSpec *kyma.Module) (string, error) {
 	if moduleSpec == nil {
 		// module is under deletion
 		return moduleStatus.State, nil
