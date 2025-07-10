@@ -201,8 +201,18 @@ func listCommunityInstalled(ctx context.Context, client kube.Client) (ModulesLis
 			continue
 		}
 
+		installedManager, err := getInstalledManager(ctx, client, managerFromResources)
+		if err != nil {
+			fmt.Printf("failed to retrieve installed manager from the cluster %v\n", err)
+			continue
+		}
+		if installedManager == nil {
+			// skip modules which moduletemplates exist but are not installed
+			continue
+		}
+
 		status := getModuleStatus(ctx, client, moduleTemplate.Spec.Data)
-		version, err := getManagerVersion(ctx, client, managerFromResources)
+		version, err := getManagerVersion(installedManager)
 		if err != nil {
 			fmt.Printf("failed to get managers version: %v\n", err)
 			continue
@@ -217,16 +227,17 @@ func listCommunityInstalled(ctx context.Context, client kube.Client) (ModulesLis
 				Version:              version,
 				State:                status,
 			},
+			CommunityModule: true,
 		})
 	}
 
 	return communityModules, nil
 }
 
-func getManagerVersion(ctx context.Context, client kube.Client, managerFromResources map[string]any) (string, error) {
+func getInstalledManager(ctx context.Context, client kube.Client, managerFromResources map[string]any) (*unstructured.Unstructured, error) {
 	metadata, ok := managerFromResources["metadata"].(map[string]any)
 	if !ok {
-		return "", fmt.Errorf("metadata not found in unstructured object")
+		return nil, fmt.Errorf("metadata not found in unstructured object")
 	}
 
 	unstructManager := generateUnstruct(
@@ -237,27 +248,31 @@ func getManagerVersion(ctx context.Context, client kube.Client, managerFromResou
 	)
 
 	unstructRes, err := client.RootlessDynamic().Get(ctx, &unstructManager)
-	if err != nil {
-		return "", fmt.Errorf("failed to get resource: %v", err)
+	if err != nil && !apierrors.IsNotFound(err) {
+		return nil, fmt.Errorf("failed to get resource: %v", err)
 	}
 
-	resMetadata, ok := unstructRes.Object["metadata"].(map[string]any)
+	return unstructRes, nil
+}
+
+func getManagerVersion(installedManager *unstructured.Unstructured) (string, error) {
+	resMetadata, ok := installedManager.Object["metadata"].(map[string]any)
 	if !ok {
 		return "", fmt.Errorf("metadata not found in unstructured object")
 	}
 
-	version := extractModuleVersion(resMetadata, unstructRes)
+	version := extractModuleVersion(resMetadata, installedManager)
 	return version, nil
 }
 
-func extractModuleVersion(metadata map[string]any, unstructRes *unstructured.Unstructured) string {
+func extractModuleVersion(metadata map[string]any, installedManager *unstructured.Unstructured) string {
 	labels, _ := metadata["labels"].(map[string]any)
 	if labels != nil {
 		if v, ok := labels["app.kubernetes.io/version"].(string); ok && v != "" {
 			return v
 		}
 	}
-	spec, ok := unstructRes.Object["spec"].(map[string]any)
+	spec, ok := installedManager.Object["spec"].(map[string]any)
 	if !ok {
 		return UnknownValue
 	}
