@@ -61,9 +61,10 @@ const (
 		"keda         0.1(regular), 0.2(fast)   false       \n" +
 		"serverless   0.0.1(fast), 0.0.2        false       \n" +
 		"cluster-ip   0.1.1, 0.1.2              true        \n"
-	testInstalledModulesTableView = "NAME         VERSION       CR POLICY         MANAGED   STATUS      \n" +
-		"keda         0.2(fast)     CreateAndDelete   false     Unmanaged   \n" +
-		"serverless   0.0.1(fast)   Ignore            true      Ready       \n"
+	testInstalledModulesTableView = "NAME         VERSION       CR POLICY         MANAGED   MODULE STATUS   INSTALLATION STATUS   \n" +
+		"keda         0.2(fast)     CreateAndDelete   false     Unmanaged       Unmanaged             \n" +
+		"serverless   0.0.1(fast)   Ignore            true      Ready           Ready                 \n"
+
 	testCatalogJSONView = `[
   {
     "availableVersions": "0.1(regular), 0.2(fast)",

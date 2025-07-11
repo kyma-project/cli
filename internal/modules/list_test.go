@@ -8,6 +8,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/kube/fake"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
+	modulesfake "github.com/kyma-project/cli.v3/internal/modules/fake"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -408,8 +409,9 @@ func TestListInstalled(t *testing.T) {
 			TestKymaInterface:            kyma.NewClient(dynamicClient),
 			TestRootlessDynamicInterface: fakeRootless,
 		}
+		fakeModuleTemplatesRepo := &modulesfake.ModuleTemplatesRepo{}
 
-		modules, err := ListInstalled(context.Background(), fakeClient)
+		modules, err := ListInstalled(context.Background(), fakeClient, fakeModuleTemplatesRepo)
 
 		require.NoError(t, err)
 		require.Equal(t, ModulesList(testInstalledModuleList), modules)

@@ -7,43 +7,46 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/kube/fake"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
+	modulesfake "github.com/kyma-project/cli.v3/internal/modules/fake"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	dynamic_fake "k8s.io/client-go/dynamic/fake"
 )
 
-func getTestCommunityModuleTemplateWithResourcesLink(link string) unstructured.Unstructured {
-	return unstructured.Unstructured{
-		Object: map[string]any{
-			"apiVersion": "operator.kyma-project.io/v1beta2",
-			"kind":       "ModuleTemplate",
-			"metadata": map[string]any{
-				"name":      "communitymodule-001",
-				"namespace": "kyma-system",
-			},
-			"spec": map[string]any{
-				"moduleName": "communitymodule",
-				"version":    "0.0.1",
-				"data": map[string]any{
+func getTestCommunityModuleTemplateWithResourcesLink(link string) kyma.ModuleTemplate {
+	return kyma.ModuleTemplate{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "operator.kyma-project.io/v1beta2",
+			Kind:       "ModuleTemplate",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "communitymodule-001",
+			Namespace: "kyma-system",
+		},
+		Spec: kyma.ModuleTemplateSpec{
+			ModuleName: "communitymodule",
+			Version:    "0.0.1",
+			Data: unstructured.Unstructured{
+				Object: map[string]any{
 					"apiVersion": "operator.kyma-project.io/v1alpha1",
 					"kind":       "CommunityModule",
 					"metadata": map[string]any{
 						"name": "community-module-test",
 					},
 				},
-				"manager": map[string]any{
-					"name":    "community-module-controller-manager",
-					"group":   "apps",
-					"version": "v1",
-					"kind":    "Deployment",
+			},
+			Manager: &kyma.Manager{
+				Name: "community-module-controller-manager",
+				GroupVersionKind: metav1.GroupVersionKind{
+					Group:   "apps",
+					Version: "v1",
+					Kind:    "Deployment",
 				},
-				"resources": []any{
-					map[string]any{
-						"name": "rawManifest",
-						"link": link,
-					},
+			},
+			Resources: []kyma.Resource{
+				{
+					Name: "rawManifest",
+					Link: link,
 				},
 			},
 		},
@@ -95,19 +98,6 @@ spec:
       image: http://repo.url/manager:0.0.1
       name: manager`
 
-	emptyKymaCustomResource = unstructured.Unstructured{
-		Object: map[string]any{
-			"apiVersion": "operator.kyma-project.io/v1beta2",
-			"kind":       "Kyma",
-			"metadata": map[string]any{
-				"name":      kyma.DefaultKymaName,
-				"namespace": kyma.DefaultKymaNamespace,
-			},
-			"spec":   map[string]any{},
-			"status": map[string]any{},
-		},
-	}
-
 	runningManagerMock = unstructured.Unstructured{
 		Object: map[string]any{
 			"apiVersion": "apps/v1",
@@ -138,10 +128,12 @@ spec:
 			"status": map[string]any{
 				"conditions": []any{
 					map[string]any{
-						"type": "Ready",
+						"type":   "Available",
+						"status": "True",
 					},
 					map[string]any{
-						"type": "Processing",
+						"type":   "Progressing",
+						"status": "True",
 					},
 				},
 			},
@@ -174,12 +166,14 @@ spec:
 				},
 			},
 			"status": map[string]any{
-				"conditions": []map[string]any{
-					{
-						"type": "Ready",
+				"conditions": []any{
+					map[string]any{
+						"type":   "Available",
+						"status": "True",
 					},
-					{
-						"type": "Processing",
+					map[string]any{
+						"type":   "Progressing",
+						"status": "True",
 					},
 				},
 			},
@@ -196,58 +190,23 @@ spec:
 )
 
 func TestListInstalled_NoCommunityModules(t *testing.T) {
-	scheme := runtime.NewScheme()
-	scheme.AddKnownTypes(kyma.GVRKyma.GroupVersion())
-	scheme.AddKnownTypes(kyma.GVRModuleTemplate.GroupVersion())
-	scheme.AddKnownTypes(kyma.GVRModuleReleaseMeta.GroupVersion())
+	fakeClient := &fake.KubeClient{}
 
-	gvrToListKind := map[schema.GroupVersionResource]string{
-		kyma.GVRModuleTemplate:    "ModuleTemplateList",
-		kyma.GVRKyma:              "KymaList",
-		kyma.GVRModuleReleaseMeta: "ModuleReleaseMetaList",
+	fakeModuleTemplatesRepo := &modulesfake.ModuleTemplatesRepo{
+		ReturnCommunity: []kyma.ModuleTemplate{},
 	}
 
-	dynamicClient := dynamic_fake.NewSimpleDynamicClientWithCustomListKinds(
-		scheme,
-		gvrToListKind,
-		&emptyKymaCustomResource,
-	)
-
-	fakeRootless := &fake.RootlessDynamicClient{}
-	fakeClient := &fake.KubeClient{
-		TestKymaInterface:            kyma.NewClient(dynamicClient),
-		TestRootlessDynamicInterface: fakeRootless,
-	}
-
-	modules, err := ListInstalled(context.Background(), fakeClient)
+	modules, err := listCommunityInstalled(context.Background(), fakeClient, fakeModuleTemplatesRepo)
 	require.NoError(t, err)
 	require.Len(t, modules, 0)
 }
 
 func TestListInstalled_CommunityModuleInstalledNotRunning(t *testing.T) {
-	scheme := runtime.NewScheme()
-	scheme.AddKnownTypes(kyma.GVRKyma.GroupVersion())
-	scheme.AddKnownTypes(kyma.GVRModuleTemplate.GroupVersion())
-	scheme.AddKnownTypes(kyma.GVRModuleReleaseMeta.GroupVersion())
-	gvrToListKind := map[schema.GroupVersionResource]string{
-		kyma.GVRModuleTemplate:    "ModuleTemplateList",
-		kyma.GVRKyma:              "KymaList",
-		kyma.GVRModuleReleaseMeta: "ModuleReleaseMetaList",
-	}
-
 	testServer := getTestHttpServerWithResponse(
 		getResourcesUrlResponseYaml(resourcesNamespace, resourcesCRD, resourcesDeployment),
 	)
 	defer testServer.Close()
-
 	template := getTestCommunityModuleTemplateWithResourcesLink(testServer.URL)
-
-	dynamicClient := dynamic_fake.NewSimpleDynamicClientWithCustomListKinds(
-		scheme,
-		gvrToListKind,
-		&emptyKymaCustomResource,
-		&template,
-	)
 
 	fakeRootless := &fake.RootlessDynamicClient{
 		ReturnGetObj: runningManagerMock,
@@ -256,11 +215,15 @@ func TestListInstalled_CommunityModuleInstalledNotRunning(t *testing.T) {
 		},
 	}
 	fakeClient := &fake.KubeClient{
-		TestKymaInterface:            kyma.NewClient(dynamicClient),
 		TestRootlessDynamicInterface: fakeRootless,
 	}
+	fakeModuleTemplatesRepo := &modulesfake.ModuleTemplatesRepo{
+		ReturnCommunity:        []kyma.ModuleTemplate{template},
+		ReturnInstalledManager: &runningManagerMock,
+	}
 
-	modules, err := ListInstalled(context.Background(), fakeClient)
+	modules, err := listCommunityInstalled(context.Background(), fakeClient, fakeModuleTemplatesRepo)
+
 	require.NoError(t, err)
 	require.Len(t, modules, 1)
 	require.Equal(t, "communitymodule", modules[0].Name)
@@ -270,29 +233,12 @@ func TestListInstalled_CommunityModuleInstalledNotRunning(t *testing.T) {
 }
 
 func TestListInstalled_CommunityModuleInstalledRunning(t *testing.T) {
-	scheme := runtime.NewScheme()
-	scheme.AddKnownTypes(kyma.GVRKyma.GroupVersion())
-	scheme.AddKnownTypes(kyma.GVRModuleTemplate.GroupVersion())
-	scheme.AddKnownTypes(kyma.GVRModuleReleaseMeta.GroupVersion())
-	gvrToListKind := map[schema.GroupVersionResource]string{
-		kyma.GVRModuleTemplate:    "ModuleTemplateList",
-		kyma.GVRKyma:              "KymaList",
-		kyma.GVRModuleReleaseMeta: "ModuleReleaseMetaList",
-	}
-
 	testServer := getTestHttpServerWithResponse(
 		getResourcesUrlResponseYaml(resourcesNamespace, resourcesCRD, resourcesDeployment),
 	)
 	defer testServer.Close()
 
 	template := getTestCommunityModuleTemplateWithResourcesLink(testServer.URL)
-
-	dynamicClient := dynamic_fake.NewSimpleDynamicClientWithCustomListKinds(
-		scheme,
-		gvrToListKind,
-		&emptyKymaCustomResource,
-		&template,
-	)
 
 	fakeRootless := &fake.RootlessDynamicClient{
 		ReturnGetObj: runningManagerMock,
@@ -303,11 +249,15 @@ func TestListInstalled_CommunityModuleInstalledRunning(t *testing.T) {
 		},
 	}
 	fakeClient := &fake.KubeClient{
-		TestKymaInterface:            kyma.NewClient(dynamicClient),
 		TestRootlessDynamicInterface: fakeRootless,
 	}
+	fakeModuleTemplatesRepo := &modulesfake.ModuleTemplatesRepo{
+		ReturnCommunity:        []kyma.ModuleTemplate{template},
+		ReturnInstalledManager: &runningManagerMock,
+	}
 
-	modules, err := ListInstalled(context.Background(), fakeClient)
+	modules, err := listCommunityInstalled(context.Background(), fakeClient, fakeModuleTemplatesRepo)
+
 	require.NoError(t, err)
 	require.Len(t, modules, 1)
 	require.Equal(t, "communitymodule", modules[0].Name)
@@ -317,29 +267,12 @@ func TestListInstalled_CommunityModuleInstalledRunning(t *testing.T) {
 }
 
 func TestListInstalled_CommunityModuleVersionFromImage(t *testing.T) {
-	scheme := runtime.NewScheme()
-	scheme.AddKnownTypes(kyma.GVRKyma.GroupVersion())
-	scheme.AddKnownTypes(kyma.GVRModuleTemplate.GroupVersion())
-	scheme.AddKnownTypes(kyma.GVRModuleReleaseMeta.GroupVersion())
-	gvrToListKind := map[schema.GroupVersionResource]string{
-		kyma.GVRModuleTemplate:    "ModuleTemplateList",
-		kyma.GVRKyma:              "KymaList",
-		kyma.GVRModuleReleaseMeta: "ModuleReleaseMetaList",
-	}
-
 	testServer := getTestHttpServerWithResponse(
 		getResourcesUrlResponseYaml(resourcesNamespace, resourcesCRD, resourcesDeployment),
 	)
 	defer testServer.Close()
 
 	template := getTestCommunityModuleTemplateWithResourcesLink(testServer.URL)
-
-	dynamicClient := dynamic_fake.NewSimpleDynamicClientWithCustomListKinds(
-		scheme,
-		gvrToListKind,
-		&emptyKymaCustomResource,
-		&template,
-	)
 
 	fakeRootless := &fake.RootlessDynamicClient{
 		ReturnGetObj: runningManagerMockWithoutVersionLabel,
@@ -350,11 +283,15 @@ func TestListInstalled_CommunityModuleVersionFromImage(t *testing.T) {
 		},
 	}
 	fakeClient := &fake.KubeClient{
-		TestKymaInterface:            kyma.NewClient(dynamicClient),
 		TestRootlessDynamicInterface: fakeRootless,
 	}
+	fakeModuleTemplatesRepo := &modulesfake.ModuleTemplatesRepo{
+		ReturnCommunity:        []kyma.ModuleTemplate{template},
+		ReturnInstalledManager: &runningManagerMockWithoutVersionLabel,
+	}
 
-	modules, err := ListInstalled(context.Background(), fakeClient)
+	modules, err := listCommunityInstalled(context.Background(), fakeClient, fakeModuleTemplatesRepo)
+
 	require.NoError(t, err)
 	require.Len(t, modules, 1)
 	require.Equal(t, "communitymodule", modules[0].Name)

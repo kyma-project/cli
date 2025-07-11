@@ -9,8 +9,8 @@ import (
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"github.com/kyma-project/cli.v3/internal/kube/rootlessdynamic"
+	"github.com/kyma-project/cli.v3/internal/modules/repo"
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v3"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -51,13 +51,13 @@ type ModulesList []Module
 
 // ListInstalled returns list of installed module on a cluster
 // collects info about modules based on the KymaCR
-func ListInstalled(ctx context.Context, client kube.Client) (ModulesList, error) {
+func ListInstalled(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository) (ModulesList, error) {
 	installedCoreModules, err := listCoreInstalled(ctx, client)
 	if err != nil {
 		return nil, err
 	}
 
-	installedCommunityModules, err := listCommunityInstalled(ctx, client)
+	installedCommunityModules, err := listCommunityInstalled(ctx, client, repo)
 	if err != nil {
 		return nil, err
 	}
@@ -174,38 +174,18 @@ func ListAvailableVersions(ctx context.Context, client kube.Client, moduleName s
 	return moduleVersions, nil
 }
 
-func listCommunityInstalled(ctx context.Context, client kube.Client) (ModulesList, error) {
-	moduleTemplates, err := client.Kyma().ListModuleTemplate(ctx)
+func listCommunityInstalled(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository) (ModulesList, error) {
+	communityModuleTemplates, err := repo.Community(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list module templates: %v", err)
-	}
-
-	communityModuleTemplates := []kyma.ModuleTemplate{}
-
-	for _, moduleTemplate := range moduleTemplates.Items {
-		if isCommunityModule(&moduleTemplate) {
-			communityModuleTemplates = append(communityModuleTemplates, moduleTemplate)
-		}
+		return nil, fmt.Errorf("failed to list community module templates: %v", err)
 	}
 
 	communityModules := ModulesList{}
 
 	for _, moduleTemplate := range communityModuleTemplates {
-		moduleResources, err := getModuleResources(moduleTemplate)
+		installedManager, err := repo.InstalledManager(ctx, moduleTemplate)
 		if err != nil {
-			fmt.Printf("failed to get resources for module %v: %v\n", moduleTemplate.Spec.ModuleName, err)
-			continue
-		}
-
-		managerFromResources, err := getManagerFromResources(moduleTemplate, moduleResources)
-		if err != nil {
-			fmt.Printf("failed to retrieve manager info from %s: %v\n", moduleTemplate.Spec.ModuleName, err)
-			continue
-		}
-
-		installedManager, err := getInstalledManager(ctx, client, managerFromResources)
-		if err != nil {
-			fmt.Printf("failed to retrieve installed manager from the cluster %v\n", err)
+			fmt.Printf("failed to get installed manager: %v\n", err)
 			continue
 		}
 		if installedManager == nil {
@@ -214,7 +194,7 @@ func listCommunityInstalled(ctx context.Context, client kube.Client) (ModulesLis
 		}
 
 		moduleStatus := getModuleStatus(ctx, client, moduleTemplate.Spec.Data)
-		installationStatus := getManagerStatus(installedManager) // TODO: Should this value be transformed to shared/state value?
+		installationStatus := getManagerStatus(installedManager)
 		version, err := getManagerVersion(installedManager)
 		if err != nil {
 			fmt.Printf("failed to get managers version: %v\n", err)
@@ -243,41 +223,25 @@ func getManagerStatus(installedManager *unstructured.Unstructured) string {
 	if !ok {
 		return UnknownValue
 	}
-	conditions, ok := status["conditions"].([]any)
-	if !ok {
-		return UnknownValue
-	}
-	latestCondition, ok := conditions[0].(map[string]any)
-	if !ok {
-		return UnknownValue
-	}
-	conditionType, ok := latestCondition["type"].(string)
-	if !ok {
-		return UnknownValue
+
+	if conditions, ok := status["conditions"]; ok {
+		state := getStateFromConditions(conditions.([]any))
+		if state != "" {
+			return state
+		}
 	}
 
-	return conditionType
-}
-
-func getInstalledManager(ctx context.Context, client kube.Client, managerFromResources map[string]any) (*unstructured.Unstructured, error) {
-	metadata, ok := managerFromResources["metadata"].(map[string]any)
-	if !ok {
-		return nil, fmt.Errorf("metadata not found in unstructured object")
+	if readyReplicas, ok := status["readyReplicas"]; ok {
+		spec := installedManager.Object["spec"].(map[string]any)
+		if wantedReplicas, ok := spec["replicas"]; ok {
+			state := resolveStateFromReplicas(readyReplicas.(int64), wantedReplicas.(int64))
+			if state != "" {
+				return state
+			}
+		}
 	}
 
-	unstructManager := generateUnstruct(
-		managerFromResources["apiVersion"].(string),
-		managerFromResources["kind"].(string),
-		metadata["name"].(string),
-		metadata["namespace"].(string),
-	)
-
-	unstructRes, err := client.RootlessDynamic().Get(ctx, &unstructManager)
-	if err != nil && !apierrors.IsNotFound(err) {
-		return nil, fmt.Errorf("failed to get resource: %v", err)
-	}
-
-	return unstructRes, nil
+	return UnknownValue
 }
 
 func getManagerVersion(installedManager *unstructured.Unstructured) (string, error) {
@@ -380,40 +344,6 @@ func determineModuleStatus(resources []unstructured.Unstructured) string {
 	default:
 		return UnknownValue
 	}
-}
-
-func getModuleResources(moduleTemplate kyma.ModuleTemplate) ([]map[string]any, error) {
-	var parsedResources []map[string]any
-
-	for _, resource := range moduleTemplate.Spec.Resources {
-		resourceYamls, err := getResourceYamlStringsFromURL(resource.Link)
-		if err != nil {
-			return nil, fmt.Errorf("failed to fetch resource YAMLs from %s: %w", resource.Link, err)
-		}
-
-		for _, yamlStr := range resourceYamls {
-			var res map[string]any
-			if err := yaml.Unmarshal([]byte(yamlStr), &res); err != nil {
-				return nil, fmt.Errorf("failed to parse module resource YAML for %s:%s - %w", moduleTemplate.Spec.ModuleName, moduleTemplate.Spec.Version, err)
-			}
-			parsedResources = append(parsedResources, res)
-		}
-	}
-
-	return parsedResources, nil
-}
-
-func getManagerFromResources(moduleTemplate kyma.ModuleTemplate, moduleResources []map[string]any) (map[string]any, error) {
-	managerFromSpec := moduleTemplate.Spec.Manager
-
-	for _, moduleResource := range moduleResources {
-		metadata, ok := moduleResource["metadata"].(map[string]any)
-		if ok && managerFromSpec.GroupVersionKind.Kind == moduleResource["kind"] && managerFromSpec.Name == metadata["name"] {
-			return moduleResource, nil
-		}
-	}
-
-	return nil, fmt.Errorf("manager not found in resources")
 }
 
 func isCommunityModule(moduleTemplate *kyma.ModuleTemplate) bool {
