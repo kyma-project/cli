@@ -393,6 +393,7 @@ func TestGetRunningResourcesOfCommunityModule(t *testing.T) {
 						"metadata": map[string]any{
 							"name": "resource-1",
 						},
+						"kind": "CustomResource",
 					},
 				},
 				{
@@ -400,6 +401,7 @@ func TestGetRunningResourcesOfCommunityModule(t *testing.T) {
 						"metadata": map[string]any{
 							"name": "resource-2",
 						},
+						"kind": "CustomResource",
 					},
 				},
 			},
@@ -408,7 +410,7 @@ func TestGetRunningResourcesOfCommunityModule(t *testing.T) {
 		res, err := GetRunningResourcesOfCommunityModule(ctx, &fakeModuleTemplatesRepo, "test")
 		require.Nil(t, err)
 		require.NotNil(t, res)
-		require.Equal(t, []string{"resource-1", "resource-2"}, res)
+		require.Equal(t, []string{"resource-1 (CustomResource)", "resource-2 (CustomResource)"}, res)
 	})
 }
 
