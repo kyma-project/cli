@@ -64,9 +64,38 @@ const (
 	testInstalledModulesTableView = "NAME         VERSION       CR POLICY         MANAGED   STATUS      \n" +
 		"keda         0.2(fast)     CreateAndDelete   false     Unmanaged   \n" +
 		"serverless   0.0.1(fast)   Ignore            true      Ready       \n"
+	testCatalogJSONView = `[
+  {
+    "availableVersions": "0.1(regular), 0.2(fast)",
+    "community": false,
+    "name": "keda"
+  },
+  {
+    "availableVersions": "0.0.1(fast), 0.0.2",
+    "community": false,
+    "name": "serverless"
+  },
+  {
+    "availableVersions": "0.1.1, 0.1.2",
+    "community": true,
+    "name": "cluster-ip"
+  }
+]
+`
+	testCatalogYAMLView = `- availableVersions: 0.1(regular), 0.2(fast)
+  community: false
+  name: keda
+- availableVersions: 0.0.1(fast), 0.0.2
+  community: false
+  name: serverless
+- availableVersions: 0.1.1, 0.1.2
+  community: true
+  name: cluster-ip
+
+`
 )
 
-func TestRender(t *testing.T) {
+func TestRender_renderTable(t *testing.T) {
 	t.Run("render table from modules catalog", func(t *testing.T) {
 		buffer := bytes.NewBuffer([]byte{})
 
@@ -87,5 +116,31 @@ func TestRender(t *testing.T) {
 		tableViewBytes, err := io.ReadAll(buffer)
 		require.NoError(t, err)
 		require.Equal(t, testInstalledModulesTableView, string(tableViewBytes))
+	})
+}
+
+func TestRender_renderJSON(t *testing.T) {
+	t.Run("render table from modules catalog", func(t *testing.T) {
+		buffer := bytes.NewBuffer([]byte{})
+
+		err := renderJSON(buffer, testModules, CatalogTableInfo)
+		require.NoError(t, err)
+
+		jsonViewBytes, err := io.ReadAll(buffer)
+		require.NoError(t, err)
+		require.Equal(t, testCatalogJSONView, string(jsonViewBytes))
+	})
+}
+
+func TestRender_renderYAML(t *testing.T) {
+	t.Run("render table from modules catalog", func(t *testing.T) {
+		buffer := bytes.NewBuffer([]byte{})
+
+		err := renderYAML(buffer, testModules, CatalogTableInfo)
+		require.NoError(t, err)
+
+		yamlViewBytes, err := io.ReadAll(buffer)
+		require.NoError(t, err)
+		require.Equal(t, testCatalogYAMLView, string(yamlViewBytes))
 	})
 }

@@ -74,9 +74,16 @@ func (r *moduleTemplatesRepo) CommunityInstalledByName(ctx context.Context, modu
 
 func (r *moduleTemplatesRepo) RunningAssociatedResourcesOfModule(ctx context.Context, moduleTemplate kyma.ModuleTemplate) ([]unstructured.Unstructured, error) {
 	associatedResources := moduleTemplate.Spec.AssociatedResources
+	operator := moduleTemplate.Spec.Data
+
 	var runningResources []unstructured.Unstructured
 
 	for _, associatedResource := range associatedResources {
+		associatedResourceApiVersion := associatedResource.Group + "/" + associatedResource.Version
+		if associatedResource.Kind == operator.GetKind() && associatedResourceApiVersion == operator.GetAPIVersion() {
+			continue
+		}
+
 		list, err := r.client.RootlessDynamic().List(ctx, &unstructured.Unstructured{
 			Object: map[string]any{
 				"apiVersion": associatedResource.Group + "/" + associatedResource.Version,

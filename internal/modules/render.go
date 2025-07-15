@@ -93,7 +93,8 @@ func convertToOutputParameters(modulesList ModulesList, tableInfo TableInfo) []m
 		result[i] = make(map[string]interface{}, len(tableInfo.Headers))
 		row := tableInfo.RowConverter(resource)
 		for fieldIter, fieldName := range tableInfo.Headers {
-			result[i][fieldName.(string)] = row[fieldIter]
+			formattedFieldName := toCamelCase(fieldName.(string))
+			result[i][formattedFieldName] = row[fieldIter]
 		}
 	}
 
@@ -138,4 +139,18 @@ func convertVersions(versions []ModuleVersion) string {
 	}
 
 	return strings.Join(values, ", ")
+}
+
+func toCamelCase(s string) string {
+	words := strings.Fields(strings.ToLower(s))
+	if len(words) == 0 {
+		return ""
+	}
+	camel := words[0]
+	for _, w := range words[1:] {
+		if len(w) > 0 {
+			camel += strings.ToUpper(w[:1]) + w[1:]
+		}
+	}
+	return camel
 }

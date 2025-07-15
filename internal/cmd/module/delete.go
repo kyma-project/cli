@@ -59,7 +59,7 @@ func runDelete(cfg *deleteConfig) clierror.Error {
 			confirmationPrompt := prompt.NewBool(prepareMessageContent(runningResources), false)
 			confirmation, err := confirmationPrompt.Prompt()
 			if err != nil {
-				return clierror.Wrap(err, clierror.New("failed to prompt for user input"))
+				return clierror.Wrap(err, clierror.New("failed to prompt for user input", "if error repeats, consider running the command with --auto-approve flag"))
 			}
 
 			if !confirmation {

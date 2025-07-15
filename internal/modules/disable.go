@@ -41,7 +41,7 @@ func GetRunningResourcesOfCommunityModule(ctx context.Context, repo repo.ModuleT
 	var runningResourcesNames []string
 
 	for _, resource := range runningResources {
-		runningResourcesNames = append(runningResourcesNames, resource.GetName())
+		runningResourcesNames = append(runningResourcesNames, fmt.Sprintf("%s (%s)", resource.GetName(), resource.GetKind()))
 	}
 
 	return runningResourcesNames, nil
