@@ -211,6 +211,50 @@ func TestModuleTemplatesRepo_All(t *testing.T) {
 	})
 }
 
+func TestModuleTemplatesRepo_Community(t *testing.T) {
+	t.Run("failed to list module templates", func(t *testing.T) {
+		fakeKymaClient := fake.KymaClient{
+			ReturnErr: errors.New("test-error"),
+			ReturnModuleTemplateList: kyma.ModuleTemplateList{
+				Items: []kyma.ModuleTemplate{},
+			},
+		}
+		fakeKubeClient := fake.KubeClient{
+			TestKymaInterface: &fakeKymaClient,
+		}
+		repo := NewModuleTemplatesRepo(&fakeKubeClient)
+
+		result, err := repo.Community(context.Background())
+
+		require.Len(t, result, 0)
+		require.Error(t, err)
+		require.Equal(t, err.Error(), "failed to list module templates: test-error")
+	})
+
+	t.Run("lists community module templates", func(t *testing.T) {
+		fakeKymaClient := fake.KymaClient{
+			ReturnErr: nil,
+			ReturnModuleTemplateList: kyma.ModuleTemplateList{
+				Items: []kyma.ModuleTemplate{
+					testCoreModuleTemplate,
+					testCommunityModuleTemplate,
+				},
+			},
+		}
+		fakeKubeClient := fake.KubeClient{
+			TestKymaInterface: &fakeKymaClient,
+		}
+		repo := NewModuleTemplatesRepo(&fakeKubeClient)
+
+		result, err := repo.Community(context.Background())
+
+		require.NoError(t, err)
+		require.Len(t, result, 1)
+		require.Equal(t, "test-module", result[0].Spec.ModuleName)
+		require.Empty(t, result[0].ObjectMeta.Labels["operator.kyma-project.io/managed-by"])
+	})
+}
+
 func TestModuleTemplatesRepo_CommunityByName(t *testing.T) {
 	t.Run("failed to list module templates", func(t *testing.T) {
 		fakeKymaClient := fake.KymaClient{
@@ -231,7 +275,7 @@ func TestModuleTemplatesRepo_CommunityByName(t *testing.T) {
 		require.Equal(t, err.Error(), "failed to list module templates: test-error")
 	})
 
-	t.Run("returns only community modules", func(t *testing.T) {
+	t.Run("returns only community modules with specific name", func(t *testing.T) {
 		fakeKymaClient := fake.KymaClient{
 			ReturnErr: nil,
 			ReturnModuleTemplateList: kyma.ModuleTemplateList{
@@ -252,6 +296,27 @@ func TestModuleTemplatesRepo_CommunityByName(t *testing.T) {
 		require.Len(t, result, 1)
 		require.Equal(t, "test-module", result[0].Spec.ModuleName)
 		require.Empty(t, result[0].ObjectMeta.Labels["operator.kyma-project.io/managed-by"])
+	})
+
+	t.Run("does not return community modules with different names", func(t *testing.T) {
+		fakeKymaClient := fake.KymaClient{
+			ReturnErr: nil,
+			ReturnModuleTemplateList: kyma.ModuleTemplateList{
+				Items: []kyma.ModuleTemplate{
+					testCoreModuleTemplate,
+					testCommunityModuleTemplate,
+				},
+			},
+		}
+		fakeKubeClient := fake.KubeClient{
+			TestKymaInterface: &fakeKymaClient,
+		}
+		repo := NewModuleTemplatesRepo(&fakeKubeClient)
+
+		result, err := repo.CommunityByName(context.Background(), "non-existing-name")
+
+		require.NoError(t, err)
+		require.Len(t, result, 0)
 	})
 }
 

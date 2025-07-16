@@ -18,11 +18,13 @@ import (
 
 type ModuleTemplatesRepository interface {
 	All(ctx context.Context) ([]kyma.ModuleTemplate, error)
+	Community(ctx context.Context) ([]kyma.ModuleTemplate, error)
 	CommunityByName(ctx context.Context, moduleName string) ([]kyma.ModuleTemplate, error)
 	CommunityInstalledByName(ctx context.Context, moduleName string) ([]kyma.ModuleTemplate, error)
 	RunningAssociatedResourcesOfModule(ctx context.Context, moduleTemplate kyma.ModuleTemplate) ([]unstructured.Unstructured, error)
 	Resources(ctx context.Context, moduleTemplate kyma.ModuleTemplate) ([]map[string]any, error)
 	DeleteResourceReturnWatcher(ctx context.Context, resource map[string]any) (watch.Interface, error)
+	InstalledManager(ctx context.Context, moduleTemplate kyma.ModuleTemplate) (*unstructured.Unstructured, error)
 }
 
 type moduleTemplatesRepo struct {
@@ -42,6 +44,23 @@ func (r *moduleTemplatesRepo) All(ctx context.Context) ([]kyma.ModuleTemplate, e
 	}
 
 	return moduleTemplates.Items, nil
+}
+
+func (r *moduleTemplatesRepo) Community(ctx context.Context) ([]kyma.ModuleTemplate, error) {
+	allModuleTemplates, err := r.All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	communityModules := []kyma.ModuleTemplate{}
+
+	for _, moduleTemplate := range allModuleTemplates {
+		if isCommunityModule(&moduleTemplate) {
+			communityModules = append(communityModules, moduleTemplate)
+		}
+	}
+
+	return communityModules, nil
 }
 
 func (r *moduleTemplatesRepo) CommunityByName(ctx context.Context, moduleName string) ([]kyma.ModuleTemplate, error) {
@@ -142,29 +161,36 @@ func (r *moduleTemplatesRepo) DeleteResourceReturnWatcher(ctx context.Context, r
 	return watcher, nil
 }
 
+func (r *moduleTemplatesRepo) InstalledManager(ctx context.Context, moduleTemplate kyma.ModuleTemplate) (*unstructured.Unstructured, error) {
+	moduleResources, err := r.Resources(ctx, moduleTemplate)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get resources for module %v: %v", moduleTemplate.Spec.ModuleName, err)
+	}
+
+	managerFromResources, err := getManagerFromResources(moduleTemplate, moduleResources)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve manager info from %s: %v", moduleTemplate.Spec.ModuleName, err)
+	}
+
+	installedManager, err := r.getInstalledManager(ctx, managerFromResources)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve installed manager from the cluster %v", err)
+	}
+
+	return installedManager, nil
+}
+
 func (r *moduleTemplatesRepo) selectInstalled(ctx context.Context, moduleTemplates []kyma.ModuleTemplate) []kyma.ModuleTemplate {
 	installedModules := []kyma.ModuleTemplate{}
 
 	for _, moduleTemplate := range moduleTemplates {
-		moduleResources, err := r.Resources(ctx, moduleTemplate)
+		installedManager, err := r.InstalledManager(ctx, moduleTemplate)
 		if err != nil {
-			fmt.Printf("failed to get resources for module %v: %v\n", moduleTemplate.Spec.ModuleName, err)
+			fmt.Printf("failed to request for installed manager: %v", err)
 			continue
 		}
 
-		managerFromResources, err := getManagerFromResources(moduleTemplate, moduleResources)
-		if err != nil {
-			fmt.Printf("failed to retrieve manager info from %s: %v\n", moduleTemplate.Spec.ModuleName, err)
-			continue
-		}
-
-		installedManager, err := r.getInstalledManager(ctx, managerFromResources)
-		if err != nil {
-			fmt.Printf("failed to retrieve installed manager from the cluster %v\n", err)
-			continue
-		}
 		if installedManager == nil {
-			// skip modules which moduletemplates exist but are not installed
 			continue
 		}
 
