@@ -22,14 +22,15 @@ type TableInfo struct {
 
 var (
 	ModulesTableInfo = TableInfo{
-		Headers: []interface{}{"NAME", "VERSION", "CR POLICY", "MANAGED", "STATUS"},
+		Headers: []interface{}{"NAME", "VERSION", "CR POLICY", "MANAGED", "MODULE STATUS", "INSTALLATION STATUS"},
 		RowConverter: func(m Module) []interface{} {
 			return []interface{}{
 				m.Name,
 				convertInstall(m.InstallDetails),
 				string(m.InstallDetails.CustomResourcePolicy),
 				string(m.InstallDetails.Managed),
-				m.InstallDetails.State,
+				m.InstallDetails.ModuleState,
+				m.InstallDetails.InstallationState,
 			}
 		},
 	}
@@ -109,7 +110,7 @@ func convertModuleListToRows(modulesList ModulesList, rowConverter RowConverter)
 		return !modulesList[i].CommunityModule && modulesList[j].CommunityModule
 	})
 
-	var result [][]interface{}
+	var result [][]any
 	for _, module := range modulesList {
 		result = append(result, rowConverter(module))
 	}
