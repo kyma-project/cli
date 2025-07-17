@@ -82,6 +82,11 @@ func listCoreInstalled(ctx context.Context, client kube.Client) (ModulesList, er
 			return nil, errors.Wrapf(err, "failed to get module state for module %s", moduleStatus.Name)
 		}
 
+		moduleCRState, err := getModuleCustomResourceStatus(ctx, client, moduleStatus, moduleSpec)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to get modules custom resource state %s", moduleStatus.Name)
+		}
+
 		modulesList = append(modulesList, Module{
 			Name: moduleStatus.Name,
 			InstallDetails: ModuleInstallDetails{
@@ -89,7 +94,7 @@ func listCoreInstalled(ctx context.Context, client kube.Client) (ModulesList, er
 				Managed:              getManaged(moduleSpec),
 				CustomResourcePolicy: getCustomResourcePolicy(moduleSpec),
 				Version:              moduleStatus.Version,
-				ModuleState:          moduleStatus.State,
+				ModuleState:          moduleCRState,
 				InstallationState:    installationState,
 			},
 		})
@@ -387,21 +392,41 @@ func getModuleInstallationState(ctx context.Context, client kube.Client, moduleS
 
 	// TODO: cover case when policy is set to Ingore and CR is not on the cluster
 
-	// TODO: replace with right namespace
-	// https://github.com/kyma-project/lifecycle-manager/issues/2232
-	moduleTemplate, err := client.Kyma().GetModuleTemplate(ctx, "kyma-system", moduleStatus.Template.GetName())
+	moduleTemplate, err := client.Kyma().GetModuleTemplate(ctx, moduleStatus.Template.GetNamespace(), moduleStatus.Template.GetName())
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to get ModuleTemplate %s/%s", "kyma-system", moduleStatus.Template.GetName())
+		return "", errors.Wrapf(err, "failed to get ModuleTemplate %s/%s", moduleStatus.Template.GetNamespace(), moduleStatus.Template.GetName())
+	}
+
+	return getResourceState(ctx, client, moduleTemplate.Spec.Manager)
+}
+
+func getModuleCustomResourceStatus(ctx context.Context, client kube.Client, moduleStatus kyma.ModuleStatus, moduleSpec *kyma.Module) (string, error) {
+	if moduleSpec.Managed != nil && !*moduleSpec.Managed {
+		// module is unmanaged
+		return moduleStatus.State, nil
+	}
+
+	moduleTemplate, err := client.Kyma().GetModuleTemplate(ctx, moduleStatus.Template.GetNamespace(), moduleStatus.Template.GetName())
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return UnknownValue, nil
+		}
+		return "", errors.Wrapf(err, "failed to get ModuleTemplate %s/%s", moduleStatus.Template.GetNamespace(), moduleStatus.Template.GetName())
 	}
 
 	state, err := getStateFromData(ctx, client, moduleTemplate.Spec.Data)
-	if err != nil || state != "" {
-		// get state from moduleTemplate.Spec.Data (module CR) if it exists
-		return state, err
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return NotRunningValue, nil
+		}
+		return "", err
 	}
 
-	// get state from resource described in moduleTemplate.Spec.Manager (module operator) if it exists
-	return getResourceState(ctx, client, moduleTemplate.Spec.Manager)
+	if state != "" {
+		return state, nil
+	}
+
+	return UnknownValue, nil
 }
 
 func getKymaModuleSpec(kymaCR *kyma.Kyma, moduleName string) *kyma.Module {
@@ -431,9 +456,6 @@ func getStateFromData(ctx context.Context, client kube.Client, data unstructured
 	unstruct := generateUnstruct(apiVersion, kind, name, namespace)
 	result, err := client.RootlessDynamic().Get(ctx, &unstruct)
 	if err != nil {
-		if apierrors.IsNotFound(err) {
-			return "", nil
-		}
 		return "", err
 	}
 	status := result.Object["status"].(map[string]interface{})

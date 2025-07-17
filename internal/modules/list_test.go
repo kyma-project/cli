@@ -34,6 +34,7 @@ var (
 				"moduleName": "serverless",
 				"version":    "0.0.1",
 				"data":       testServerless.Object,
+				"manager":    testDeploymentDataReady.Object,
 				"info": map[string]interface{}{
 					"repository": "url-1",
 				},
@@ -538,6 +539,11 @@ func TestModuleInstallationStatus(t *testing.T) {
 						ReturnModuleTemplate: kyma.ModuleTemplate{
 							Spec: kyma.ModuleTemplateSpec{
 								Data: testServerless,
+								Manager: &kyma.Manager{
+									GroupVersionKind: metav1.GroupVersionKind(testDeploymentDataReady.GroupVersionKind()),
+									Namespace:        testDeploymentDataReady.GetNamespace(),
+									Name:             testDeploymentDataReady.GetName(),
+								},
 							},
 						},
 					},
