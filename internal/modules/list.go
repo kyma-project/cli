@@ -72,6 +72,10 @@ func listCoreInstalled(ctx context.Context, client kube.Client) (ModulesList, er
 	if err != nil && !apierrors.IsNotFound(err) {
 		return nil, errors.Wrap(err, "failed to get default Kyma CR from the cluster")
 	}
+	if err != nil && apierrors.IsNotFound(err) {
+		// if cluster is not managed by KLM we won't be looking into Kyma CR spec
+		return ModulesList{}, nil
+	}
 
 	modulesList := ModulesList{}
 	for _, moduleStatus := range defaultKyma.Status.Modules {
@@ -111,6 +115,19 @@ func ListCatalog(ctx context.Context, client kube.Client) (ModulesList, error) {
 		return nil, errors.Wrap(err, "failed to list all ModuleTemplate CRs from the cluster")
 	}
 
+	if isClusterManagedByKLM(ctx, client) {
+		modulesList, err := listAllModulesCatalog(ctx, client, moduleTemplates)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list modules catalog: %v", err)
+		}
+
+		return modulesList, nil
+	}
+
+	return listCommunityModulesCatalog(moduleTemplates), nil
+}
+
+func listAllModulesCatalog(ctx context.Context, client kube.Client, moduleTemplates *kyma.ModuleTemplateList) (ModulesList, error) {
 	moduleReleaseMetas, err := client.Kyma().ListModuleReleaseMeta(ctx)
 	if err != nil {
 		moduleList := listOldModulesCatalog(moduleTemplates)
@@ -153,6 +170,42 @@ func ListCatalog(ctx context.Context, client kube.Client) (ModulesList, error) {
 	}
 
 	return modulesList, nil
+}
+
+func listCommunityModulesCatalog(moduleTemplates *kyma.ModuleTemplateList) ModulesList {
+	modulesList := ModulesList{}
+
+	for _, moduleTemplate := range moduleTemplates.Items {
+		moduleName := moduleTemplate.Spec.ModuleName
+		if moduleName == "" || !isCommunityModule(&moduleTemplate) {
+			// ignore incompatible/corrupted ModuleTemplates + ignore core modules
+			continue
+		}
+
+		version := ModuleVersion{
+			Version:    moduleTemplate.Spec.Version,
+			Repository: moduleTemplate.Spec.Info.Repository,
+		}
+
+		if i := getModuleIndex(modulesList, moduleName, isCommunityModule(&moduleTemplate)); i != -1 {
+			modulesList[i].Versions = append(modulesList[i].Versions, version)
+		} else {
+			modulesList = append(modulesList, Module{
+				Name: moduleName,
+				Versions: []ModuleVersion{
+					version,
+				},
+				CommunityModule: isCommunityModule(&moduleTemplate), // always true
+			})
+		}
+	}
+
+	return modulesList
+}
+
+func isClusterManagedByKLM(ctx context.Context, client kube.Client) bool {
+	_, err := client.Kyma().GetDefaultKyma(ctx)
+	return err == nil
 }
 
 func ListAvailableVersions(ctx context.Context, client kube.Client, moduleName string, isCommunity bool) ([]string, error) {
@@ -401,7 +454,7 @@ func getModuleInstallationState(ctx context.Context, client kube.Client, moduleS
 }
 
 func getModuleCustomResourceStatus(ctx context.Context, client kube.Client, moduleStatus kyma.ModuleStatus, moduleSpec *kyma.Module) (string, error) {
-	if moduleSpec.Managed != nil && !*moduleSpec.Managed {
+	if moduleSpec != nil && moduleSpec.Managed != nil && !*moduleSpec.Managed {
 		// module is unmanaged
 		return moduleStatus.State, nil
 	}
