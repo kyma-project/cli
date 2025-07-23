@@ -50,6 +50,7 @@ func runDelete(cfg *deleteConfig) clierror.Error {
 	}
 	moduleTemplatesRepo := repo.NewModuleTemplatesRepo(client)
 
+	communityDeletionApproved := false
 	if cfg.community && !cfg.autoApprove {
 		runningResources, clierr := modules.GetRunningResourcesOfCommunityModule(cfg.Ctx, moduleTemplatesRepo, cfg.module)
 		if clierr != nil {
@@ -65,10 +66,12 @@ func runDelete(cfg *deleteConfig) clierror.Error {
 			if !confirmation {
 				return nil
 			}
+
+			communityDeletionApproved = true
 		}
 	}
 
-	if !cfg.community && !cfg.autoApprove {
+	if !communityDeletionApproved && !cfg.autoApprove {
 		confirmationPrompt := prompt.NewBool(prepareCorePromptMessage(cfg.module), false)
 		confirmation, err := confirmationPrompt.Prompt()
 		if err != nil {
