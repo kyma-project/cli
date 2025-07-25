@@ -83,12 +83,12 @@ func listCoreInstalled(ctx context.Context, client kube.Client) (ModulesList, er
 
 		installationState, err := getModuleInstallationState(ctx, client, moduleStatus, moduleSpec)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to get module state for module %s", moduleStatus.Name)
+			fmt.Printf("error occured during %s module installation status check: %v\n", moduleStatus.Name, err)
 		}
 
 		moduleCRState, err := getModuleCustomResourceStatus(ctx, client, moduleStatus, moduleSpec)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to get modules custom resource state %s", moduleStatus.Name)
+			fmt.Printf("error occured during %s custom resource status check: %v\n", moduleStatus.Name, err)
 		}
 
 		modulesList = append(modulesList, Module{
@@ -454,7 +454,12 @@ func getModuleInstallationState(ctx context.Context, client kube.Client, moduleS
 }
 
 func getModuleCustomResourceStatus(ctx context.Context, client kube.Client, moduleStatus kyma.ModuleStatus, moduleSpec *kyma.Module) (string, error) {
-	if moduleSpec != nil && moduleSpec.Managed != nil && !*moduleSpec.Managed {
+	if moduleSpec == nil {
+		// module is under deletion
+		return moduleStatus.State, nil
+	}
+
+	if moduleSpec.Managed != nil && !*moduleSpec.Managed {
 		// module is unmanaged
 		return moduleStatus.State, nil
 	}
