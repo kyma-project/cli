@@ -2,6 +2,7 @@ package kubeconfig
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -95,6 +96,69 @@ func Prepare(ctx context.Context, client kube.Client, name, namespace, time, out
 	}
 
 	return kubeconfig, nil
+}
+
+func PrepareFromOpenIDConnectorResource(ctx context.Context, client kube.Client, name string) (*api.Config, clierror.Error) {
+	currentCtx := client.APIConfig().CurrentContext
+	clusterName := client.APIConfig().Contexts[currentCtx].Cluster
+
+	oidcResUnstruct, err := client.Dynamic().Resource(OpenIdConnectGVR).Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		return nil, clierror.Wrap(err, clierror.New(fmt.Sprintf("failed to get %s oidc resource", name)))
+	}
+
+	var oidc OpenIDConnect
+	if oidc, err = unmarshalOIDCResource(oidcResUnstruct.Object); err != nil {
+		return nil, clierror.Wrap(err, clierror.New("failed to unmarshal OIDC resource"))
+	}
+
+	kubeconfig := &api.Config{
+		Kind:       "Config",
+		APIVersion: "v1",
+		Clusters: map[string]*api.Cluster{
+			clusterName: {
+				Server:                   client.APIConfig().Clusters[clusterName].Server,
+				CertificateAuthorityData: client.APIConfig().Clusters[clusterName].CertificateAuthorityData,
+			},
+		},
+		AuthInfos: map[string]*api.AuthInfo{
+			name: {
+				Exec: &api.ExecConfig{
+					APIVersion: "client.authentication.k8s.io/v1beta1",
+					Command:    "kubectl-oidc_login",
+					Args: []string{
+						"get-token",
+						"--oidc-issuer-url=" + oidc.Spec.IssuerURL,
+						"--oidc-client-id=" + oidc.Spec.ClientID,
+						"--oidc-extra-scope=email",
+						"--oidc-extra-scope=openid",
+					},
+				},
+			},
+		},
+		Contexts: map[string]*api.Context{
+			currentCtx: {
+				Cluster:  clusterName,
+				AuthInfo: name,
+			},
+		},
+		CurrentContext: currentCtx,
+		Extensions:     nil,
+	}
+
+	return kubeconfig, nil
+}
+
+func unmarshalOIDCResource(obj map[string]any) (OpenIDConnect, error) {
+	var oidc OpenIDConnect
+	b, err := json.Marshal(obj)
+	if err != nil {
+		return oidc, err
+	}
+	if err := json.Unmarshal(b, &oidc); err != nil {
+		return oidc, err
+	}
+	return oidc, nil
 }
 
 func getServiceAccountToken(ctx context.Context, client kube.Client, name, namespace, time string) (authv1.TokenRequestStatus, clierror.Error) {

@@ -35,6 +35,9 @@ type generateConfig struct {
 	audience            string
 	idTokenRequestURL   string
 	idTokenRequestToken string
+
+	// OIDC CR
+	oidcName string
 }
 
 func newGenerateCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
@@ -67,7 +70,7 @@ func newGenerateCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		PreRun: func(cmd *cobra.Command, _ []string) {
 			cfg.complete(cmd)
 			clierror.Check(flags.Validate(cmd.Flags(),
-				flags.MarkOneRequired("serviceaccount", "token", "id-token-request-url"),
+				flags.MarkOneRequired("serviceaccount", "token", "id-token-request-url", "oidc-name"),
 				flags.MarkRequiredTogether("serviceaccount", "clusterrole"),
 				flags.MarkExclusive("token", "id-token-request-url", "audience"),
 			))
@@ -94,6 +97,8 @@ func newGenerateCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().StringVar(&cfg.audience, "audience", "", "Audience of the token")
 	cmd.Flags().StringVar(&cfg.idTokenRequestURL, "id-token-request-url", "", "URL to request the ID token, defaults to ACTIONS_ID_TOKEN_REQUEST_URL env variable")
 
+	// generate from OIDC custom resource
+	cmd.Flags().StringVar(&cfg.oidcName, "oidc-name", "", "Name of the OIDC Custom Resource from which the kubeconfig will be generated")
 	return cmd
 }
 
@@ -118,9 +123,13 @@ func (cfg *generateConfig) validate() clierror.Error {
 }
 
 func runGenerate(cfg *generateConfig) clierror.Error {
-	generateFunc := generateWithServiceAccount
-	if cfg.serviceAccount == "" {
-		// change to OIDC flow if serviceaccount flag is not set
+	var generateFunc func(*generateConfig) (*api.Config, clierror.Error)
+
+	if cfg.serviceAccount != "" {
+		generateFunc = generateWithServiceAccount
+	} else if cfg.oidcName != "" {
+		generateFunc = generateWithOpenIDConnectorCustomResource
+	} else {
 		generateFunc = generateWithToken
 	}
 
@@ -196,6 +205,15 @@ func generateWithServiceAccount(cfg *generateConfig) (*api.Config, clierror.Erro
 
 	// Fill kubeconfig
 	return kubeconfig.Prepare(cfg.Ctx, kubeClient, cfg.serviceAccount, cfg.namespace, cfg.time, cfg.output, cfg.permanent)
+}
+
+func generateWithOpenIDConnectorCustomResource(cfg *generateConfig) (*api.Config, clierror.Error) {
+	kubeClient, clierr := cfg.GetKubeClientWithClierr()
+	if clierr != nil {
+		return nil, clierr
+	}
+
+	return kubeconfig.PrepareFromOpenIDConnectorResource(cfg.Ctx, kubeClient, cfg.oidcName)
 }
 
 func registerServiceAccount(cfg *generateConfig, kubeClient kube.Client) clierror.Error {
