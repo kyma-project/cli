@@ -455,21 +455,27 @@ func getModuleInstallationState(ctx context.Context, client kube.Client, moduleS
 
 func getModuleCustomResourceStatus(ctx context.Context, client kube.Client, moduleStatus kyma.ModuleStatus, moduleSpec *kyma.Module) (string, error) {
 	if moduleSpec == nil {
-		// module is under deletion
+		// module is under deletion = module cr is under deletion
 		return moduleStatus.State, nil
 	}
+
+	var moduleTemplate *kyma.ModuleTemplate
+	var err error
 
 	if moduleSpec.Managed != nil && !*moduleSpec.Managed {
-		// module is unmanaged
-		return moduleStatus.State, nil
-	}
+		moduleTemplate, err = findMatchingModuleTemplate(ctx, client, moduleStatus)
+		if err != nil {
+			return "", errors.Wrapf(err, "failed to get ModuleTemplate for module %s", moduleStatus.Name)
 
-	moduleTemplate, err := client.Kyma().GetModuleTemplate(ctx, moduleStatus.Template.GetNamespace(), moduleStatus.Template.GetName())
-	if err != nil {
-		if apierrors.IsNotFound(err) {
-			return UnknownValue, nil
 		}
-		return "", errors.Wrapf(err, "failed to get ModuleTemplate %s/%s", moduleStatus.Template.GetNamespace(), moduleStatus.Template.GetName())
+	} else {
+		moduleTemplate, err = client.Kyma().GetModuleTemplate(ctx, moduleStatus.Template.GetNamespace(), moduleStatus.Template.GetName())
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				return UnknownValue, nil
+			}
+			return "", errors.Wrapf(err, "failed to get ModuleTemplate %s/%s", moduleStatus.Template.GetNamespace(), moduleStatus.Template.GetName())
+		}
 	}
 
 	state, err := getStateFromData(ctx, client, moduleTemplate.Spec.Data)
@@ -640,4 +646,18 @@ func getModuleIndex(list ModulesList, name string, isCommunityModule bool) int {
 	}
 
 	return -1
+}
+
+func findMatchingModuleTemplate(ctx context.Context, client kube.Client, moduleStatus kyma.ModuleStatus) (*kyma.ModuleTemplate, error) {
+	moduleTemplates, err := client.Kyma().ListModuleTemplate(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to list ModuleTemplates")
+	}
+	for _, mt := range moduleTemplates.Items {
+		if mt.Spec.ModuleName == moduleStatus.Name && mt.Spec.Version == moduleStatus.Version {
+			return &mt, nil
+		}
+	}
+
+	return nil, errors.Errorf("no matching ModuleTemplate found for module: %s, version: %s", moduleStatus.Name, moduleStatus.Version)
 }

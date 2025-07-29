@@ -117,6 +117,24 @@ var (
 		},
 	}
 
+	testModuleTemplate6 = unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "operator.kyma-project.io/v1beta2",
+			"kind":       "ModuleTemplate",
+			"metadata": map[string]interface{}{
+				"name":      "keda-1",
+				"namespace": "kyma-system",
+			},
+			"spec": map[string]interface{}{
+				"moduleName": "keda",
+				"version":    "0.2",
+				"info": map[string]interface{}{
+					"repository": "url-3",
+				},
+			},
+		},
+	}
+
 	testCommunityModuleTemplate = unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": "operator.kyma-project.io/v1beta2",
@@ -236,7 +254,7 @@ var (
 				Managed:              ManagedFalse,
 				Channel:              "fast",
 				Version:              "0.2",
-				ModuleState:          "Unmanaged",
+				ModuleState:          "Unknown",
 				InstallationState:    "Unmanaged",
 				CustomResourcePolicy: "CreateAndDelete",
 			},
@@ -414,6 +432,7 @@ func TestListInstalled(t *testing.T) {
 		scheme.AddKnownTypes(kyma.GVRKyma.GroupVersion())
 		dynamicClient := dynamic_fake.NewSimpleDynamicClient(scheme,
 			&testModuleTemplate1,
+			&testModuleTemplate6,
 			&testKymaCR,
 		)
 
