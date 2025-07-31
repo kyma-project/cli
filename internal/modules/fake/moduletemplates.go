@@ -10,6 +10,7 @@ import (
 
 type ModuleTemplatesRepo struct {
 	ReturnAll                                []kyma.ModuleTemplate
+	ReturnCore                               []kyma.ModuleTemplate
 	ReturnCommunity                          []kyma.ModuleTemplate
 	ReturnCommunityByName                    []kyma.ModuleTemplate
 	ReturnCommunityInstalledByName           []kyma.ModuleTemplate
@@ -19,6 +20,7 @@ type ModuleTemplatesRepo struct {
 	ReturnDeleteResourceReturnWatcher        watch.Interface
 
 	AllErr                                error
+	CoreErr                               error
 	CommunityErr                          error
 	CommunityByNameErr                    error
 	CommunityInstalledByNameErr           error
@@ -30,6 +32,10 @@ type ModuleTemplatesRepo struct {
 
 func (r *ModuleTemplatesRepo) All(_ context.Context) ([]kyma.ModuleTemplate, error) {
 	return r.ReturnAll, r.AllErr
+}
+
+func (r *ModuleTemplatesRepo) Core(_ context.Context) ([]kyma.ModuleTemplate, error) {
+	return r.ReturnCore, r.CoreErr
 }
 
 func (r *ModuleTemplatesRepo) Community(_ context.Context) ([]kyma.ModuleTemplate, error) {
