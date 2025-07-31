@@ -18,6 +18,7 @@ import (
 
 type ModuleTemplatesRepository interface {
 	All(ctx context.Context) ([]kyma.ModuleTemplate, error)
+	Core(ctx context.Context) ([]kyma.ModuleTemplate, error)
 	Community(ctx context.Context) ([]kyma.ModuleTemplate, error)
 	CommunityByName(ctx context.Context, moduleName string) ([]kyma.ModuleTemplate, error)
 	CommunityInstalledByName(ctx context.Context, moduleName string) ([]kyma.ModuleTemplate, error)
@@ -61,6 +62,23 @@ func (r *moduleTemplatesRepo) Community(ctx context.Context) ([]kyma.ModuleTempl
 	}
 
 	return communityModules, nil
+}
+
+func (r *moduleTemplatesRepo) Core(ctx context.Context) ([]kyma.ModuleTemplate, error) {
+	allModuleTemplates, err := r.All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	coreModules := []kyma.ModuleTemplate{}
+
+	for _, moduleTemplate := range allModuleTemplates {
+		if !isCommunityModule(&moduleTemplate) {
+			coreModules = append(coreModules, moduleTemplate)
+		}
+	}
+
+	return coreModules, nil
 }
 
 func (r *moduleTemplatesRepo) CommunityByName(ctx context.Context, moduleName string) ([]kyma.ModuleTemplate, error) {

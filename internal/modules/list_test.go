@@ -236,6 +236,19 @@ var (
 		},
 	}
 
+	testEmptyKymaCR = unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "operator.kyma-project.io/v1beta2",
+			"kind":       "Kyma",
+			"metadata": map[string]interface{}{
+				"name":      kyma.DefaultKymaName,
+				"namespace": kyma.DefaultKymaNamespace,
+			},
+			"spec":   map[string]any{},
+			"status": map[string]any{},
+		},
+	}
+
 	testInstalledModuleList = []Module{
 		{
 			Name: "serverless",
@@ -425,7 +438,7 @@ var (
 )
 
 func TestListInstalled(t *testing.T) {
-	t.Run("list managed modules from cluster", func(t *testing.T) {
+	t.Run("list managed and unmanaged modules from cluster (all present in Kyma CR)", func(t *testing.T) {
 		scheme := runtime.NewScheme()
 		scheme.AddKnownTypes(kyma.GVRModuleTemplate.GroupVersion())
 		scheme.AddKnownTypes(kyma.GVRModuleReleaseMeta.GroupVersion())
@@ -450,6 +463,55 @@ func TestListInstalled(t *testing.T) {
 
 		require.NoError(t, err)
 		require.Equal(t, ModulesList(testInstalledModuleList), modules)
+	})
+
+	t.Run("list unmanaged modules from cluster (missing in Kyma CR)", func(t *testing.T) {
+		scheme := runtime.NewScheme()
+		scheme.AddKnownTypes(kyma.GVRKyma.GroupVersion())
+		dynamicClient := dynamic_fake.NewSimpleDynamicClient(scheme,
+			&testEmptyKymaCR,
+		)
+
+		fakeRootless := &fake.RootlessDynamicClient{
+			ReturnListObjs: &unstructured.UnstructuredList{
+				Items: []unstructured.Unstructured{},
+			},
+		}
+
+		fakeClient := &fake.KubeClient{
+			TestKymaInterface:            kyma.NewClient(dynamicClient),
+			TestRootlessDynamicInterface: fakeRootless,
+		}
+
+		fakeModuleTemplatesRepo := &modulesfake.ModuleTemplatesRepo{
+			ReturnCore: []kyma.ModuleTemplate{
+				{
+					Spec: kyma.ModuleTemplateSpec{
+						ModuleName: "unmanagedmodule",
+						Version:    "1.0.0",
+						Data: unstructured.Unstructured{
+							Object: map[string]any{
+								"apiVersion": "apps/v1",
+								"kind":       "Deployment",
+								"metadata": map[string]any{
+									"name": "unmanaged-module-cr",
+								},
+							},
+						},
+					},
+				},
+			},
+			ReturnInstalledManager: &runningManagerMock,
+		}
+
+		modules, err := ListInstalled(context.Background(), fakeClient, fakeModuleTemplatesRepo)
+
+		require.NoError(t, err)
+		require.Len(t, modules, 1)
+		require.Equal(t, "unmanagedmodule", modules[0].Name)
+		require.Equal(t, ManagedFalse, modules[0].InstallDetails.Managed)
+		require.Equal(t, "NotRunning", modules[0].InstallDetails.ModuleState)
+		require.Equal(t, "Unmanaged", modules[0].InstallDetails.InstallationState)
 	})
 }
 
