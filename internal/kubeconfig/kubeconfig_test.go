@@ -11,6 +11,9 @@ import (
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	dynamic_fake "k8s.io/client-go/dynamic/fake"
 	k8s_fake "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/tools/clientcmd/api"
 )
@@ -326,4 +329,100 @@ func Test_parseExpirationTime(t *testing.T) {
 			require.Equal(t, expectedSeconds, seconds)
 		})
 	}
+}
+
+func Test_PrepareFromOpenIDConnectorResource(t *testing.T) {
+	newFakeClient := func(oidcRes *unstructured.Unstructured) *kube_fake.KubeClient {
+		scheme := runtime.NewScheme()
+		scheme.AddKnownTypes(OpenIdConnectGVR.GroupVersion())
+		dynamicClient := dynamic_fake.NewSimpleDynamicClient(scheme, oidcRes)
+		apiConfig := &api.Config{
+			Clusters: map[string]*api.Cluster{
+				"cluster": {
+					Server:                   "https://localhost:8080",
+					CertificateAuthorityData: []byte("certificate"),
+				},
+			},
+			Contexts: map[string]*api.Context{
+				"context": {
+					Cluster: "cluster",
+				},
+			},
+			CurrentContext: "context",
+		}
+		return &kube_fake.KubeClient{
+			TestDynamicInterface: dynamicClient,
+			TestAPIConfig:        apiConfig,
+		}
+	}
+
+	baseOIDCRes := &unstructured.Unstructured{
+		Object: map[string]any{
+			"apiVersion": "authentication.gardener.cloud/v1alpha1",
+			"kind":       "OpenIDConnect",
+			"metadata": map[string]any{
+				"labels": map[string]any{
+					"operator.kyma-project.io/managed-by": "infrastructure-manager",
+				},
+				"name": "kyma-oidc",
+			},
+			"spec": map[string]any{
+				"issuerURL": "http://super.issuer.com",
+				"clientID":  "10033344-6d08-46cd-80b9-37e18cd856c1",
+			},
+		},
+	}
+
+	t.Run("OIDC resource is missing", func(t *testing.T) {
+		fakeClient := newFakeClient(baseOIDCRes)
+		result, clierr := PrepareFromOpenIDConnectorResource(context.Background(), fakeClient, "invalid-oidc-name")
+		require.Nil(t, result)
+		require.NotNil(t, clierr)
+		require.Equal(
+			t,
+			"Error:\n  failed to get invalid-oidc-name oidc resource\n\nError Details:\n  openidconnects.authentication.gardener.cloud \"invalid-oidc-name\" not found\n\n",
+			clierr.String(),
+		)
+	})
+
+	t.Run("returns kubeconfig", func(t *testing.T) {
+		fakeClient := newFakeClient(baseOIDCRes)
+		result, clierr := PrepareFromOpenIDConnectorResource(context.Background(), fakeClient, "kyma-oidc")
+		require.Nil(t, clierr)
+
+		expected := &api.Config{
+			Kind:       "Config",
+			APIVersion: "v1",
+			Clusters: map[string]*api.Cluster{
+				"cluster": {
+					Server:                   "https://localhost:8080",
+					CertificateAuthorityData: []byte("certificate"),
+				},
+			},
+			AuthInfos: map[string]*api.AuthInfo{
+				"kyma-oidc": {
+					Exec: &api.ExecConfig{
+						APIVersion: "client.authentication.k8s.io/v1beta1",
+						Command:    "kubectl-oidc_login",
+						Args: []string{
+							"get-token",
+							"--oidc-issuer-url=http://super.issuer.com",
+							"--oidc-client-id=10033344-6d08-46cd-80b9-37e18cd856c1",
+							"--oidc-extra-scope=email",
+							"--oidc-extra-scope=openid",
+						},
+					},
+				},
+			},
+			Contexts: map[string]*api.Context{
+				"context": {
+					Cluster:  "cluster",
+					AuthInfo: "kyma-oidc",
+				},
+			},
+			CurrentContext: "context",
+			Extensions:     nil,
+		}
+		require.Equal(t, expected, result)
+	})
 }
