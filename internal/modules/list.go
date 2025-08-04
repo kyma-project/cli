@@ -51,8 +51,8 @@ type ModulesList []Module
 
 // ListInstalled returns list of installed module on a cluster
 // collects info about modules based on the KymaCR
-func ListInstalled(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository) (ModulesList, error) {
-	installedCoreModules, err := listCoreInstalled(ctx, client, repo)
+func ListInstalled(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository, showErrors bool) (ModulesList, error) {
+	installedCoreModules, err := listCoreInstalled(ctx, client, repo, showErrors)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ func ListInstalled(ctx context.Context, client kube.Client, repo repo.ModuleTemp
 	return allInstalled, nil
 }
 
-func listCoreInstalled(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository) (ModulesList, error) {
+func listCoreInstalled(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository, showErrors bool) (ModulesList, error) {
 	defaultKyma, err := client.Kyma().GetDefaultKyma(ctx)
 	if err != nil && !apierrors.IsNotFound(err) {
 		return nil, errors.Wrap(err, "failed to get default Kyma CR from the cluster")
@@ -79,7 +79,7 @@ func listCoreInstalled(ctx context.Context, client kube.Client, repo repo.Module
 
 	modulesList := ModulesList{}
 	modulesList = append(modulesList, collectModulesFromKymaCR(ctx, client, defaultKyma)...)
-	modulesList = append(modulesList, collectUnmanagedCoreModules(ctx, client, repo, defaultKyma)...)
+	modulesList = append(modulesList, collectUnmanagedCoreModules(ctx, client, repo, defaultKyma, showErrors)...)
 
 	return modulesList, nil
 }
@@ -115,7 +115,7 @@ func collectModulesFromKymaCR(ctx context.Context, client kube.Client, defaultKy
 	return modulesList
 }
 
-func collectUnmanagedCoreModules(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository, defaultKyma *kyma.Kyma) ModulesList {
+func collectUnmanagedCoreModules(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository, defaultKyma *kyma.Kyma, showErrors bool) ModulesList {
 	modulesList := ModulesList{}
 	coreModuleTemplates, err := repo.Core(ctx)
 	if err != nil {
@@ -133,11 +133,9 @@ func collectUnmanagedCoreModules(ctx context.Context, client kube.Client, repo r
 
 		installedManager, err := repo.InstalledManager(ctx, coreModuleTemplate)
 		if err != nil {
-			// TODO:
-			// I'm wondering if this error should be printed when some flag is enabled like --debug or --show-errors
-			// Those errors might be potentially very useful but the end-user might also not be interested in getting info
-			// about some modules with incorrect configuration
-			fmt.Printf("failed to get installed manager: %v\n", err)
+			if showErrors {
+				fmt.Printf("failed to get installed manager: %v\n", err)
+			}
 			continue
 		}
 		if installedManager == nil {

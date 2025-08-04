@@ -459,7 +459,7 @@ func TestListInstalled(t *testing.T) {
 		}
 		fakeModuleTemplatesRepo := &modulesfake.ModuleTemplatesRepo{}
 
-		modules, err := ListInstalled(context.Background(), fakeClient, fakeModuleTemplatesRepo)
+		modules, err := ListInstalled(context.Background(), fakeClient, fakeModuleTemplatesRepo, true)
 
 		require.NoError(t, err)
 		require.Equal(t, ModulesList(testInstalledModuleList), modules)
@@ -504,7 +504,7 @@ func TestListInstalled(t *testing.T) {
 			ReturnInstalledManager: &runningManagerMock,
 		}
 
-		modules, err := ListInstalled(context.Background(), fakeClient, fakeModuleTemplatesRepo)
+		modules, err := ListInstalled(context.Background(), fakeClient, fakeModuleTemplatesRepo, true)
 
 		require.NoError(t, err)
 		require.Len(t, modules, 1)
