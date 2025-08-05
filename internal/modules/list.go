@@ -51,8 +51,8 @@ type ModulesList []Module
 
 // ListInstalled returns list of installed module on a cluster
 // collects info about modules based on the KymaCR
-func ListInstalled(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository) (ModulesList, error) {
-	installedCoreModules, err := listCoreInstalled(ctx, client)
+func ListInstalled(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository, showErrors bool) (ModulesList, error) {
+	installedCoreModules, err := listCoreInstalled(ctx, client, repo, showErrors)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ func ListInstalled(ctx context.Context, client kube.Client, repo repo.ModuleTemp
 	return allInstalled, nil
 }
 
-func listCoreInstalled(ctx context.Context, client kube.Client) (ModulesList, error) {
+func listCoreInstalled(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository, showErrors bool) (ModulesList, error) {
 	defaultKyma, err := client.Kyma().GetDefaultKyma(ctx)
 	if err != nil && !apierrors.IsNotFound(err) {
 		return nil, errors.Wrap(err, "failed to get default Kyma CR from the cluster")
@@ -77,6 +77,14 @@ func listCoreInstalled(ctx context.Context, client kube.Client) (ModulesList, er
 		return ModulesList{}, nil
 	}
 
+	modulesList := ModulesList{}
+	modulesList = append(modulesList, collectModulesFromKymaCR(ctx, client, defaultKyma)...)
+	modulesList = append(modulesList, collectUnmanagedCoreModules(ctx, client, repo, defaultKyma, showErrors)...)
+
+	return modulesList, nil
+}
+
+func collectModulesFromKymaCR(ctx context.Context, client kube.Client, defaultKyma *kyma.Kyma) ModulesList {
 	modulesList := ModulesList{}
 	for _, moduleStatus := range defaultKyma.Status.Modules {
 		moduleSpec := getKymaModuleSpec(defaultKyma, moduleStatus.Name)
@@ -104,7 +112,69 @@ func listCoreInstalled(ctx context.Context, client kube.Client) (ModulesList, er
 		})
 	}
 
-	return modulesList, nil
+	return modulesList
+}
+
+func collectUnmanagedCoreModules(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository, defaultKyma *kyma.Kyma, showErrors bool) ModulesList {
+	modulesList := ModulesList{}
+	coreModuleTemplates, err := repo.Core(ctx)
+	if err != nil {
+		fmt.Printf("failed to get unmanaged core modules: %v\n", err)
+		return modulesList
+	}
+
+	for _, coreModuleTemplate := range coreModuleTemplates {
+		if coreModuleTemplate.Spec.Version == "" {
+			continue
+		}
+		if moduleExistsInKymaCR(coreModuleTemplate, defaultKyma.Status.Modules) {
+			continue
+		}
+
+		installedManager, err := repo.InstalledManager(ctx, coreModuleTemplate)
+		if err != nil {
+			if showErrors {
+				fmt.Printf("failed to get installed manager: %v\n", err)
+			}
+			continue
+		}
+		if installedManager == nil {
+			// skip modules which moduletemplates exist but are not installed
+			continue
+		}
+
+		moduleStatus := getModuleStatus(ctx, client, coreModuleTemplate.Spec.Data)
+		version, err := getManagerVersion(installedManager)
+		if err != nil {
+			fmt.Printf("failed to get managers version: %v\n", err)
+			continue
+		}
+
+		modulesList = append(modulesList, Module{
+			Name: coreModuleTemplate.Spec.ModuleName,
+			InstallDetails: ModuleInstallDetails{
+				Channel:              "",
+				Managed:              ManagedFalse,
+				CustomResourcePolicy: "N/A",
+				Version:              version,
+				ModuleState:          moduleStatus,
+				InstallationState:    "Unmanaged",
+			},
+			CommunityModule: true,
+		})
+	}
+
+	return modulesList
+}
+
+func moduleExistsInKymaCR(coreModuleTemplate kyma.ModuleTemplate, moduleStatuses []kyma.ModuleStatus) bool {
+	for _, moduleStatus := range moduleStatuses {
+		if moduleStatus.Name == coreModuleTemplate.Spec.ModuleName {
+			return true
+		}
+	}
+
+	return false
 }
 
 // ListCatalog returns list of module catalog on a cluster
@@ -522,7 +592,11 @@ func getStateFromData(ctx context.Context, client kube.Client, data unstructured
 	if err != nil {
 		return "", err
 	}
-	status := result.Object["status"].(map[string]interface{})
+	statusRaw, ok := result.Object["status"]
+	if !ok || statusRaw == nil {
+		return "", nil
+	}
+	status := statusRaw.(map[string]any)
 	if state, ok := status["state"]; ok {
 		return state.(string), nil
 	}
@@ -549,20 +623,24 @@ func getResourceState(ctx context.Context, client kube.Client, manager *kyma.Man
 		return "", err
 	}
 
-	status := result.Object["status"].(map[string]interface{})
+	statusRaw, ok := result.Object["status"]
+	if !ok || statusRaw == nil {
+		return "", nil
+	}
+	status := statusRaw.(map[string]any)
 	if state, ok := status["state"]; ok {
 		return state.(string), nil
 	}
 
 	if conditions, ok := status["conditions"]; ok {
-		state := getStateFromConditions(conditions.([]interface{}))
+		state := getStateFromConditions(conditions.([]any))
 		if state != "" {
 			return state, nil
 		}
 	}
 	//check if readyreplicas and wantedreplicas exist
 	if readyReplicas, ok := status["readyReplicas"]; ok {
-		spec := result.Object["spec"].(map[string]interface{})
+		spec := result.Object["spec"].(map[string]any)
 		if wantedReplicas, ok := spec["replicas"]; ok {
 			state := resolveStateFromReplicas(readyReplicas.(int64), wantedReplicas.(int64))
 			if state != "" {

@@ -12,6 +12,7 @@ import (
 type modulesConfig struct {
 	*cmdcommon.KymaConfig
 	outputFormat output.Format
+	showErrors   bool
 }
 
 func newListCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
@@ -29,6 +30,7 @@ func newListCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	}
 
 	cmd.Flags().VarP(&cfg.outputFormat, "output", "o", "Output format (Possible values: table, json, yaml)")
+	cmd.Flags().BoolVar(&cfg.showErrors, "show-errors", false, "Indicates whether to show errors outputted by misconfigured modules")
 
 	return cmd
 }
@@ -40,7 +42,7 @@ func listModules(cfg *modulesConfig) clierror.Error {
 	}
 	moduleTemplatesRepo := repo.NewModuleTemplatesRepo(client)
 
-	modulesList, err := modules.ListInstalled(cfg.Ctx, client, moduleTemplatesRepo)
+	modulesList, err := modules.ListInstalled(cfg.Ctx, client, moduleTemplatesRepo, cfg.showErrors)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to list installed modules from the cluster"))
 	}
