@@ -1,11 +1,18 @@
 package module
 
 import (
+	"errors"
 	"fmt"
+	"maps"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/cmdcommon/prompt"
+	"github.com/kyma-project/cli.v3/internal/kube"
+	"github.com/kyma-project/cli.v3/internal/modules"
+	"github.com/kyma-project/cli.v3/internal/modules/repo"
 	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 type manageConfig struct {
@@ -53,16 +60,83 @@ func runManage(cfg *manageConfig) clierror.Error {
 		return clierr
 	}
 
-	err := client.Kyma().ManageModule(cfg.Ctx, cfg.module, cfg.policy)
+	exists, err := modules.ModuleExistsInKymaCR(cfg.Ctx, client, cfg.module)
 	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to set module as managed"))
-	}
-	err = client.Kyma().WaitForModuleState(cfg.Ctx, cfg.module, "Ready", "Warning")
-	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to check module state"))
+		return clierror.Wrap(err, clierror.New("failed to check if module exists in Kyma CR"))
 	}
 
+	if exists {
+		return manageModuleInKyma(cfg, client)
+	}
+
+	if clierr = manageModuleMissingInKyma(cfg, client); clierr != nil {
+		return clierr
+	}
+
+	return nil
+}
+
+func manageModuleInKyma(cfg *manageConfig, client kube.Client) clierror.Error {
+	err := modules.ManageModuleInKymaCR(cfg.Ctx, client, cfg.module, cfg.policy)
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to manage module in Kyma CR"))
+	}
 	fmt.Printf("Module %s set to managed\n", cfg.module)
 
 	return nil
+}
+
+func manageModuleMissingInKyma(cfg *manageConfig, client kube.Client) clierror.Error {
+	moduleTemplatesRepo := repo.NewModuleTemplatesRepo(client)
+
+	err := modules.ManageModuleMissingInKyma(cfg.Ctx, client, moduleTemplatesRepo, cfg.module, cfg.policy)
+	if err == nil {
+		fmt.Printf("Module %s set to managed\n", cfg.module)
+		return nil
+	}
+	if !errors.Is(err, modules.ErrModuleInstalledVersionNotInKymaChannel) {
+		return clierror.Wrap(err, clierror.New("failed to mark module as managed"))
+	}
+
+	// If not found, prompt for alternative channel
+	channelsAndVersions, err := modules.GetAvailableChannelsAndVersions(cfg.Ctx, client, moduleTemplatesRepo, cfg.module)
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to get available channels and versions"))
+	}
+	if len(channelsAndVersions) == 0 {
+		return clierror.New("no available channels found for the module")
+	}
+
+	selectedChannel, clierr := promptForAlternativeChannel(channelsAndVersions)
+	if clierr != nil {
+		return clierr
+	}
+
+	clierr = modules.Enable(cfg.Ctx, client, cfg.module, selectedChannel, false, []unstructured.Unstructured{}...)
+	if clierr != nil {
+		return clierr
+	}
+
+	fmt.Printf("Module %s set to managed (channel: %s)\n", cfg.module, selectedChannel)
+	return nil
+}
+
+func promptForAlternativeChannel(channelsAndVersions map[string]string) (string, clierror.Error) {
+	channelsIterator := maps.Keys(channelsAndVersions)
+	var channelOpts []prompt.EnumValueWithDescription
+	for channel := range channelsIterator {
+		valWithDesc := prompt.NewEnumValWithDesc(channel, channelsAndVersions[channel])
+		channelOpts = append(channelOpts, *valWithDesc)
+	}
+
+	fmt.Println("There is a mismatch between the default channel configured for your Kyma cluster and the channel where the installed module version is available.")
+	fmt.Println("To proceed, please select one of the available channels below to manage the module with the desired version.")
+
+	channelPrompt := prompt.NewOneOfEnumList("Available versions:\n", "Type the option number: ", channelOpts)
+	selectedChannel, err := channelPrompt.Prompt()
+	if err != nil {
+		return "", clierror.Wrap(err, clierror.New("failed to prompt for channel"))
+	}
+
+	return selectedChannel, nil
 }
