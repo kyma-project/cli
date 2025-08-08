@@ -22,6 +22,8 @@ const (
 	CustomResourcePolicyCreateAndDelete = "CreateAndDelete"
 )
 
+var ErrModuleNotFound = errors.New("module not found")
+
 type Interface interface {
 	ListModuleReleaseMeta(context.Context) (*ModuleReleaseMetaList, error)
 	ListModuleTemplate(context.Context) (*ModuleTemplateList, error)
@@ -337,7 +339,7 @@ func manageModule(kymaCR *Kyma, moduleName, policy string) (*Kyma, error) {
 		}
 	}
 
-	return kymaCR, errors.New("module not found")
+	return kymaCR, ErrModuleNotFound
 }
 
 func unmanageModule(kymaCR *Kyma, moduleName string) (*Kyma, error) {
@@ -351,7 +353,7 @@ func unmanageModule(kymaCR *Kyma, moduleName string) (*Kyma, error) {
 		}
 	}
 
-	return kymaCR, errors.New("module not found")
+	return kymaCR, ErrModuleNotFound
 }
 
 func list[T any](ctx context.Context, client dynamic.Interface, gvr schema.GroupVersionResource) (*T, error) {
