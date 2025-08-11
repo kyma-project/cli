@@ -11,7 +11,7 @@ require (
 	github.com/go-test/deep v1.1.1
 	github.com/google/go-containerregistry v0.20.3
 	github.com/itchyny/gojq v0.12.17
-	github.com/jedib0t/go-pretty/v6 v6.6.7
+	github.com/jedib0t/go-pretty/v6 v6.6.8
 	github.com/kyma-project/api-gateway v0.0.0-20241120132533-7d29d687f9f0
 	github.com/moby/term v0.5.2
 	github.com/pkg/errors v0.9.1
@@ -20,9 +20,9 @@ require (
 	github.com/stretchr/testify v1.10.0
 	gopkg.in/yaml.v3 v3.0.1
 	istio.io/client-go v1.26.2
-	k8s.io/api v0.32.6
-	k8s.io/apimachinery v0.32.6
-	k8s.io/client-go v0.32.6
+	k8s.io/api v0.32.7
+	k8s.io/apimachinery v0.32.7
+	k8s.io/client-go v0.32.7
 	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738
 )
 
