@@ -4,6 +4,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/modules"
+	"github.com/kyma-project/cli.v3/internal/modules/repo"
 	"github.com/kyma-project/cli.v3/internal/output"
 	"github.com/spf13/cobra"
 )
@@ -37,8 +38,9 @@ func catalogModules(cfg *catalogConfig) clierror.Error {
 	if clierr != nil {
 		return clierr
 	}
+	moduleTemplatesRepo := repo.NewModuleTemplatesRepo(client)
 
-	modulesList, err := modules.ListCatalog(cfg.Ctx, client)
+	modulesList, err := modules.ListCatalog(cfg.Ctx, client, moduleTemplatesRepo)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to list available modules from the cluster"))
 	}

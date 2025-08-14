@@ -196,7 +196,7 @@ func TestListInstalled_NoCommunityModules(t *testing.T) {
 		ReturnCommunity: []kyma.ModuleTemplate{},
 	}
 
-	modules, err := listCommunityInstalled(context.Background(), fakeClient, fakeModuleTemplatesRepo)
+	modules, err := listCommunityInstalled(context.Background(), fakeClient, fakeModuleTemplatesRepo, ModulesList{})
 	require.NoError(t, err)
 	require.Len(t, modules, 0)
 }
@@ -222,7 +222,7 @@ func TestListInstalled_CommunityModuleInstalledNotRunning(t *testing.T) {
 		ReturnInstalledManager: &runningManagerMock,
 	}
 
-	modules, err := listCommunityInstalled(context.Background(), fakeClient, fakeModuleTemplatesRepo)
+	modules, err := listCommunityInstalled(context.Background(), fakeClient, fakeModuleTemplatesRepo, ModulesList{})
 
 	require.NoError(t, err)
 	require.Len(t, modules, 1)
@@ -256,7 +256,7 @@ func TestListInstalled_CommunityModuleInstalledRunning(t *testing.T) {
 		ReturnInstalledManager: &runningManagerMock,
 	}
 
-	modules, err := listCommunityInstalled(context.Background(), fakeClient, fakeModuleTemplatesRepo)
+	modules, err := listCommunityInstalled(context.Background(), fakeClient, fakeModuleTemplatesRepo, ModulesList{})
 
 	require.NoError(t, err)
 	require.Len(t, modules, 1)
@@ -290,7 +290,7 @@ func TestListInstalled_CommunityModuleVersionFromImage(t *testing.T) {
 		ReturnInstalledManager: &runningManagerMockWithoutVersionLabel,
 	}
 
-	modules, err := listCommunityInstalled(context.Background(), fakeClient, fakeModuleTemplatesRepo)
+	modules, err := listCommunityInstalled(context.Background(), fakeClient, fakeModuleTemplatesRepo, ModulesList{})
 
 	require.NoError(t, err)
 	require.Len(t, modules, 1)
