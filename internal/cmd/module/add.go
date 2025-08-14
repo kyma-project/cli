@@ -11,6 +11,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/kube/resources"
 	"github.com/kyma-project/cli.v3/internal/modules"
+	"github.com/kyma-project/cli.v3/internal/modules/repo"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -87,14 +88,15 @@ func loadCustomCRs(crPath string) ([]unstructured.Unstructured, clierror.Error) 
 }
 
 func addModule(cfg *addConfig, client *kube.Client, crs ...unstructured.Unstructured) clierror.Error {
+	moduleTemplatesRepo := repo.NewModuleTemplatesRepo(*client)
 	if cfg.community {
-		return installCommunityModule(cfg, client, crs...)
+		return installCommunityModule(cfg, client, moduleTemplatesRepo, crs...)
 	}
 
-	return modules.Enable(cfg.Ctx, *client, cfg.module, cfg.channel, cfg.defaultCR, crs...)
+	return modules.Enable(cfg.Ctx, *client, moduleTemplatesRepo, cfg.module, cfg.channel, cfg.defaultCR, crs...)
 }
 
-func installCommunityModule(cfg *addConfig, client *kube.Client, crs ...unstructured.Unstructured) clierror.Error {
+func installCommunityModule(cfg *addConfig, client *kube.Client, repo repo.ModuleTemplatesRepository, crs ...unstructured.Unstructured) clierror.Error {
 	fmt.Println("Warning:\n  You are about to install a community module.\n" +
 		"  Community modules are not officially supported and come with no binding Service Level Agreement (SLA).\n" +
 		"  There is no guarantee of support, maintenance, or compatibility.")
@@ -110,7 +112,7 @@ func installCommunityModule(cfg *addConfig, client *kube.Client, crs ...unstruct
 		}
 	}
 
-	versionToInstall, err := selectCommunityModuleVersion(cfg, client)
+	versionToInstall, err := selectCommunityModuleVersion(cfg, client, repo)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to prompt for module version", "if error repeats, consider running the command with --version flag"))
 	}
@@ -122,15 +124,15 @@ func installCommunityModule(cfg *addConfig, client *kube.Client, crs ...unstruct
 		CustomResources:       crs,
 	}
 
-	return modules.Install(cfg.Ctx, *client, installData)
+	return modules.Install(cfg.Ctx, *client, repo, installData)
 }
 
-func selectCommunityModuleVersion(cfg *addConfig, client *kube.Client) (string, error) {
+func selectCommunityModuleVersion(cfg *addConfig, client *kube.Client, repo repo.ModuleTemplatesRepository) (string, error) {
 	if strings.TrimSpace(cfg.version) != "" {
 		return cfg.version, nil
 	}
 
-	availableVersions, err := modules.ListAvailableVersions(cfg.Ctx, *client, cfg.module, cfg.community)
+	availableVersions, err := modules.ListAvailableVersions(cfg.Ctx, *client, repo, cfg.module, cfg.community)
 	if err != nil {
 		return "", err
 	}

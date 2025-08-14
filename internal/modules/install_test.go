@@ -10,6 +10,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/kube/fake"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
+	modulesfake "github.com/kyma-project/cli.v3/internal/modules/fake"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -57,13 +58,16 @@ func TestInstall_ListModuleTemplateError(t *testing.T) {
 		Version:               "v0.0.1",
 		IsDefaultCRApplicable: false,
 	}
+	repo := &modulesfake.ModuleTemplatesRepo{
+		ReturnCore: []kyma.ModuleTemplate{},
+	}
 
 	expectedCliErr := clierror.Wrap(
-		errors.New("failed to get module template"),
+		errors.New("failed to find community module: module not found; failed to get module template: ListModuleTemplateError"),
 		clierror.New("failed to retrieve community module from catalog"),
 	)
 
-	clierr := Install(ctx, &client, data)
+	clierr := Install(ctx, &client, repo, data)
 	require.NotNil(t, clierr)
 	require.Equal(t, expectedCliErr, clierr)
 }
@@ -83,13 +87,16 @@ func TestInstall_ModuleNotFound(t *testing.T) {
 		Version:               "v0.0.1",
 		IsDefaultCRApplicable: false,
 	}
+	repo := &modulesfake.ModuleTemplatesRepo{
+		ReturnCore: []kyma.ModuleTemplate{},
+	}
 
 	expectedCliErr := clierror.Wrap(
-		errors.New("module not found"),
+		errors.New("failed to find community module: module not found; module not found"),
 		clierror.New("failed to retrieve community module from catalog"),
 	)
 
-	clierr := Install(ctx, &client, data)
+	clierr := Install(ctx, &client, repo, data)
 	require.NotNil(t, clierr)
 	require.Equal(t, expectedCliErr, clierr)
 }
@@ -102,14 +109,11 @@ func TestInstall_InstallModuleError(t *testing.T) {
 
 	testModuleTemplate := getModuleTemplateSpecWithResourceLink(testHttpServer.URL)
 
-	kymaClient := fake.KymaClient{
-		ReturnModuleTemplateList: kyma.ModuleTemplateList{
-			Items: []kyma.ModuleTemplate{testModuleTemplate},
-		},
-		ReturnErr: nil,
-	}
-	client := fake.KubeClient{
-		TestKymaInterface: &kymaClient,
+	client := fake.KubeClient{}
+
+	repo := &modulesfake.ModuleTemplatesRepo{
+		ReturnCommunityByName: []kyma.ModuleTemplate{testModuleTemplate},
+		CommunityByNameErr:    nil,
 	}
 
 	data := InstallCommunityModuleData{
@@ -125,12 +129,12 @@ func TestInstall_InstallModuleError(t *testing.T) {
 		clierror.New("failed to install community module"),
 	)
 
-	clierr := Install(ctx, &client, data)
+	clierr := Install(ctx, &client, repo, data)
 	require.NotNil(t, clierr)
 	require.Equal(t, expectedCliErr, clierr)
 }
 
-func TestInstall_ModuleSuccessfullyInstalled(t *testing.T) {
+func TestInstall_ModuleSuccessfullyInstalledFromRemote(t *testing.T) {
 	ctx := context.Background()
 
 	testHttpServer := getTestHttpServerWithResponse(validResourceYaml)
@@ -138,17 +142,15 @@ func TestInstall_ModuleSuccessfullyInstalled(t *testing.T) {
 
 	testModuleTemplate := getModuleTemplateSpecWithResourceLink(testHttpServer.URL)
 
-	kymaClient := fake.KymaClient{
-		ReturnModuleTemplateList: kyma.ModuleTemplateList{
-			Items: []kyma.ModuleTemplate{testModuleTemplate},
-		},
-		ReturnErr: nil,
-	}
 	rootlessDynamicClient := fake.RootlessDynamicClient{}
 
 	client := fake.KubeClient{
-		TestKymaInterface:            &kymaClient,
 		TestRootlessDynamicInterface: &rootlessDynamicClient,
+	}
+
+	repo := &modulesfake.ModuleTemplatesRepo{
+		ReturnCommunityByName: []kyma.ModuleTemplate{testModuleTemplate},
+		CommunityByNameErr:    nil,
 	}
 
 	data := InstallCommunityModuleData{
@@ -157,7 +159,43 @@ func TestInstall_ModuleSuccessfullyInstalled(t *testing.T) {
 		IsDefaultCRApplicable: false,
 	}
 
-	clierr := Install(ctx, &client, data)
+	clierr := Install(ctx, &client, repo, data)
+	require.Nil(t, clierr)
+}
+
+func TestInstall_ModuleSuccessfullyInstalledFromLocal(t *testing.T) {
+	ctx := context.Background()
+
+	testHttpServer := getTestHttpServerWithResponse(validResourceYaml)
+	defer testHttpServer.Close()
+
+	testModuleTemplate := getModuleTemplateSpecWithResourceLink(testHttpServer.URL)
+
+	rootlessDynamicClient := fake.RootlessDynamicClient{}
+
+	fakeKyma := fake.KymaClient{
+		ReturnModuleTemplateList: kyma.ModuleTemplateList{
+			Items: []kyma.ModuleTemplate{testModuleTemplate},
+		},
+	}
+
+	client := fake.KubeClient{
+		TestKymaInterface:            &fakeKyma,
+		TestRootlessDynamicInterface: &rootlessDynamicClient,
+	}
+
+	repo := &modulesfake.ModuleTemplatesRepo{
+		ReturnCommunityByName: []kyma.ModuleTemplate{},
+		CommunityByNameErr:    nil,
+	}
+
+	data := InstallCommunityModuleData{
+		ModuleName:            "serverless",
+		Version:               "0.0.1",
+		IsDefaultCRApplicable: false,
+	}
+
+	clierr := Install(ctx, &client, repo, data)
 	require.Nil(t, clierr)
 }
 
@@ -169,17 +207,15 @@ func TestInstall_ModuleSuccessfullyInstalledWithDefaultCR(t *testing.T) {
 
 	testModuleTemplate := getModuleTemplateSpecWithResourceLink(testHttpServer.URL)
 
-	kymaClient := fake.KymaClient{
-		ReturnModuleTemplateList: kyma.ModuleTemplateList{
-			Items: []kyma.ModuleTemplate{testModuleTemplate},
-		},
-		ReturnErr: nil,
-	}
 	rootlessDynamicClient := fake.RootlessDynamicClient{}
 
 	client := fake.KubeClient{
-		TestKymaInterface:            &kymaClient,
 		TestRootlessDynamicInterface: &rootlessDynamicClient,
+	}
+
+	repo := &modulesfake.ModuleTemplatesRepo{
+		ReturnCommunityByName: []kyma.ModuleTemplate{testModuleTemplate},
+		CommunityByNameErr:    nil,
 	}
 
 	data := InstallCommunityModuleData{
@@ -188,7 +224,7 @@ func TestInstall_ModuleSuccessfullyInstalledWithDefaultCR(t *testing.T) {
 		IsDefaultCRApplicable: true,
 	}
 
-	clierr := Install(ctx, &client, data)
+	clierr := Install(ctx, &client, repo, data)
 	require.Nil(t, clierr)
 }
 
@@ -200,17 +236,15 @@ func TestInstall_ModuleSuccessfullyInstalledWithCustomCR(t *testing.T) {
 
 	testModuleTemplate := getModuleTemplateSpecWithResourceLink(testHttpServer.URL)
 
-	kymaClient := fake.KymaClient{
-		ReturnModuleTemplateList: kyma.ModuleTemplateList{
-			Items: []kyma.ModuleTemplate{testModuleTemplate},
-		},
-		ReturnErr: nil,
-	}
 	rootlessDynamicClient := fake.RootlessDynamicClient{}
 
 	client := fake.KubeClient{
-		TestKymaInterface:            &kymaClient,
 		TestRootlessDynamicInterface: &rootlessDynamicClient,
+	}
+
+	repo := &modulesfake.ModuleTemplatesRepo{
+		ReturnCommunityByName: []kyma.ModuleTemplate{testModuleTemplate},
+		CommunityByNameErr:    nil,
 	}
 
 	data := InstallCommunityModuleData{
@@ -220,7 +254,7 @@ func TestInstall_ModuleSuccessfullyInstalledWithCustomCR(t *testing.T) {
 		CustomResources:       []unstructured.Unstructured{},
 	}
 
-	clierr := Install(ctx, &client, data)
+	clierr := Install(ctx, &client, repo, data)
 	require.Nil(t, clierr)
 }
 

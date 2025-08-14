@@ -62,7 +62,7 @@ func ManageModuleMissingInKyma(ctx context.Context, client kube.Client, repo rep
 		return ErrModuleInstalledVersionNotInKymaChannel
 	}
 
-	clierr := Enable(ctx, client, moduleName, channelAssignedToModuleVersion, enableDefaultCr(policy), []unstructured.Unstructured{}...)
+	clierr := Enable(ctx, client, repo, moduleName, channelAssignedToModuleVersion, enableDefaultCr(policy), []unstructured.Unstructured{}...)
 	if clierr != nil {
 		return fmt.Errorf("failed to manage module: %v", clierr)
 	}
