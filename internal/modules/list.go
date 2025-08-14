@@ -57,7 +57,7 @@ func ListInstalled(ctx context.Context, client kube.Client, repo repo.ModuleTemp
 		return nil, err
 	}
 
-	installedCommunityModules, err := listCommunityInstalled(ctx, client, repo)
+	installedCommunityModules, err := listCommunityInstalled(ctx, client, repo, installedCoreModules)
 	if err != nil {
 		return nil, err
 	}
@@ -179,25 +179,34 @@ func moduleExistsInKymaCR(coreModuleTemplate kyma.ModuleTemplate, moduleStatuses
 
 // ListCatalog returns list of module catalog on a cluster
 // collects info about modules based on ModuleTemplates and ModuleReleaseMetas
-func ListCatalog(ctx context.Context, client kube.Client) (ModulesList, error) {
+func ListCatalog(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository) (ModulesList, error) {
+	var coreModulesList ModulesList
+	var communityModulesList ModulesList
+	var err error
+
+	if isClusterManagedByKLM(ctx, client) {
+		coreModulesList, err = listCoreModulesCatalog(ctx, client)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list modules catalog: %v", err)
+		}
+	}
+
+	communityModulesList, err = listCommunityModulesCatalog(ctx, repo)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list modules catalog: %v", err)
+	}
+
+	allModules := append(coreModulesList, communityModulesList...)
+
+	return allModules, nil
+}
+
+func listCoreModulesCatalog(ctx context.Context, client kube.Client) (ModulesList, error) {
 	moduleTemplates, err := client.Kyma().ListModuleTemplate(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to list all ModuleTemplate CRs from the cluster")
 	}
 
-	if isClusterManagedByKLM(ctx, client) {
-		modulesList, err := listAllModulesCatalog(ctx, client, moduleTemplates)
-		if err != nil {
-			return nil, fmt.Errorf("failed to list modules catalog: %v", err)
-		}
-
-		return modulesList, nil
-	}
-
-	return listCommunityModulesCatalog(moduleTemplates), nil
-}
-
-func listAllModulesCatalog(ctx context.Context, client kube.Client, moduleTemplates *kyma.ModuleTemplateList) (ModulesList, error) {
 	moduleReleaseMetas, err := client.Kyma().ListModuleReleaseMeta(ctx)
 	if err != nil {
 		moduleList := listOldModulesCatalog(moduleTemplates)
@@ -210,7 +219,7 @@ func listAllModulesCatalog(ctx context.Context, client kube.Client, moduleTempla
 	modulesList := ModulesList{}
 	for _, moduleTemplate := range moduleTemplates.Items {
 		moduleName := moduleTemplate.Spec.ModuleName
-		if moduleName == "" {
+		if moduleName == "" || isCommunityModule(&moduleTemplate) {
 			// ignore incompatible/corrupted ModuleTemplates
 			continue
 		}
@@ -224,7 +233,7 @@ func listAllModulesCatalog(ctx context.Context, client kube.Client, moduleTempla
 			),
 		}
 
-		if i := getModuleIndex(modulesList, moduleName, isCommunityModule(&moduleTemplate)); i != -1 {
+		if i := getModuleIndex(modulesList, moduleName, false); i != -1 {
 			// append version if module with same name is in the list
 			modulesList[i].Versions = append(modulesList[i].Versions, version)
 		} else {
@@ -234,7 +243,7 @@ func listAllModulesCatalog(ctx context.Context, client kube.Client, moduleTempla
 				Versions: []ModuleVersion{
 					version,
 				},
-				CommunityModule: isCommunityModule(&moduleTemplate),
+				CommunityModule: false,
 			})
 		}
 	}
@@ -242,22 +251,22 @@ func listAllModulesCatalog(ctx context.Context, client kube.Client, moduleTempla
 	return modulesList, nil
 }
 
-func listCommunityModulesCatalog(moduleTemplates *kyma.ModuleTemplateList) ModulesList {
+func listCommunityModulesCatalog(ctx context.Context, repo repo.ModuleTemplatesRepository) (ModulesList, error) {
+	communityModules, err := repo.Community(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query community modules: %v", err)
+	}
+
 	modulesList := ModulesList{}
 
-	for _, moduleTemplate := range moduleTemplates.Items {
-		moduleName := moduleTemplate.Spec.ModuleName
-		if moduleName == "" || !isCommunityModule(&moduleTemplate) {
-			// ignore incompatible/corrupted ModuleTemplates + ignore core modules
-			continue
-		}
-
+	for _, communityModule := range communityModules {
+		moduleName := communityModule.Spec.ModuleName
 		version := ModuleVersion{
-			Version:    moduleTemplate.Spec.Version,
-			Repository: moduleTemplate.Spec.Info.Repository,
+			Version:    communityModule.Spec.Version,
+			Repository: communityModule.Spec.Info.Repository,
 		}
 
-		if i := getModuleIndex(modulesList, moduleName, isCommunityModule(&moduleTemplate)); i != -1 {
+		if i := getModuleIndex(modulesList, moduleName, true); i != -1 {
 			modulesList[i].Versions = append(modulesList[i].Versions, version)
 		} else {
 			modulesList = append(modulesList, Module{
@@ -265,12 +274,12 @@ func listCommunityModulesCatalog(moduleTemplates *kyma.ModuleTemplateList) Modul
 				Versions: []ModuleVersion{
 					version,
 				},
-				CommunityModule: isCommunityModule(&moduleTemplate), // always true
+				CommunityModule: true,
 			})
 		}
 	}
 
-	return modulesList
+	return modulesList, nil
 }
 
 func isClusterManagedByKLM(ctx context.Context, client kube.Client) bool {
@@ -278,8 +287,8 @@ func isClusterManagedByKLM(ctx context.Context, client kube.Client) bool {
 	return err == nil
 }
 
-func ListAvailableVersions(ctx context.Context, client kube.Client, moduleName string, isCommunity bool) ([]string, error) {
-	catalog, err := ListCatalog(ctx, client)
+func ListAvailableVersions(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository, moduleName string, isCommunity bool) ([]string, error) {
+	catalog, err := ListCatalog(ctx, client, repo)
 	if err != nil {
 		return nil, err
 	}
@@ -302,7 +311,7 @@ func ListAvailableVersions(ctx context.Context, client kube.Client, moduleName s
 	return moduleVersions, nil
 }
 
-func listCommunityInstalled(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository) (ModulesList, error) {
+func listCommunityInstalled(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository, installedCoreModules ModulesList) (ModulesList, error) {
 	communityModuleTemplates, err := repo.Community(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list community module templates: %v", err)
@@ -311,6 +320,9 @@ func listCommunityInstalled(ctx context.Context, client kube.Client, repo repo.M
 	communityModules := ModulesList{}
 
 	for _, moduleTemplate := range communityModuleTemplates {
+		if moduleAlreadyInstalledAsCoreModule(installedCoreModules, moduleTemplate) {
+			continue
+		}
 		installedManager, err := repo.InstalledManager(ctx, moduleTemplate)
 		if err != nil {
 			fmt.Printf("failed to get installed manager: %v\n", err)
@@ -344,6 +356,16 @@ func listCommunityInstalled(ctx context.Context, client kube.Client, repo repo.M
 	}
 
 	return communityModules, nil
+}
+
+func moduleAlreadyInstalledAsCoreModule(installedCoreModules ModulesList, moduleTemplate kyma.ModuleTemplate) bool {
+	for _, installedModule := range installedCoreModules {
+		if installedModule.Name == moduleTemplate.Spec.ModuleName {
+			return true
+		}
+	}
+
+	return false
 }
 
 func getManagerStatus(installedManager *unstructured.Unstructured) string {

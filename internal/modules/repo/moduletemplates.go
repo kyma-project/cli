@@ -17,7 +17,6 @@ import (
 )
 
 type ModuleTemplatesRepository interface {
-	All(ctx context.Context) ([]kyma.ModuleTemplate, error)
 	Core(ctx context.Context) ([]kyma.ModuleTemplate, error)
 	Community(ctx context.Context) ([]kyma.ModuleTemplate, error)
 	CommunityByName(ctx context.Context, moduleName string) ([]kyma.ModuleTemplate, error)
@@ -29,16 +28,25 @@ type ModuleTemplatesRepository interface {
 }
 
 type moduleTemplatesRepo struct {
-	client kube.Client
+	client            kube.Client
+	remoteModulesRepo ModuleTemplatesRemoteRepository
+}
+
+func NewModuleTemplatesRepoForTests(client kube.Client, remoteRepo ModuleTemplatesRemoteRepository) *moduleTemplatesRepo {
+	return &moduleTemplatesRepo{
+		client:            client,
+		remoteModulesRepo: remoteRepo,
+	}
 }
 
 func NewModuleTemplatesRepo(client kube.Client) *moduleTemplatesRepo {
 	return &moduleTemplatesRepo{
-		client: client,
+		client:            client,
+		remoteModulesRepo: newModuleTemplatesRemoteRepo(),
 	}
 }
 
-func (r *moduleTemplatesRepo) All(ctx context.Context) ([]kyma.ModuleTemplate, error) {
+func (r *moduleTemplatesRepo) local(ctx context.Context) ([]kyma.ModuleTemplate, error) {
 	moduleTemplates, err := r.client.Kyma().ListModuleTemplate(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list module templates: %v", err)
@@ -48,31 +56,18 @@ func (r *moduleTemplatesRepo) All(ctx context.Context) ([]kyma.ModuleTemplate, e
 }
 
 func (r *moduleTemplatesRepo) Community(ctx context.Context) ([]kyma.ModuleTemplate, error) {
-	allModuleTemplates, err := r.All(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	communityModules := []kyma.ModuleTemplate{}
-
-	for _, moduleTemplate := range allModuleTemplates {
-		if isCommunityModule(&moduleTemplate) {
-			communityModules = append(communityModules, moduleTemplate)
-		}
-	}
-
-	return communityModules, nil
+	return r.remoteModulesRepo.Community()
 }
 
 func (r *moduleTemplatesRepo) Core(ctx context.Context) ([]kyma.ModuleTemplate, error) {
-	allModuleTemplates, err := r.All(ctx)
+	localModuleTemplates, err := r.local(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	coreModules := []kyma.ModuleTemplate{}
 
-	for _, moduleTemplate := range allModuleTemplates {
+	for _, moduleTemplate := range localModuleTemplates {
 		if !isCommunityModule(&moduleTemplate) {
 			coreModules = append(coreModules, moduleTemplate)
 		}
@@ -82,15 +77,15 @@ func (r *moduleTemplatesRepo) Core(ctx context.Context) ([]kyma.ModuleTemplate, 
 }
 
 func (r *moduleTemplatesRepo) CommunityByName(ctx context.Context, moduleName string) ([]kyma.ModuleTemplate, error) {
-	allModuleTemplates, err := r.All(ctx)
+	communityModuleTemplates, err := r.Community(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	communityModulesWithName := []kyma.ModuleTemplate{}
 
-	for _, moduleTemplate := range allModuleTemplates {
-		if isCommunityModule(&moduleTemplate) && moduleTemplate.Spec.ModuleName == moduleName {
+	for _, moduleTemplate := range communityModuleTemplates {
+		if moduleTemplate.Spec.ModuleName == moduleName {
 			communityModulesWithName = append(communityModulesWithName, moduleTemplate)
 		}
 	}
@@ -147,12 +142,13 @@ func (r *moduleTemplatesRepo) Resources(ctx context.Context, moduleTemplate kyma
 	var parsedResources []map[string]any
 
 	for _, resource := range moduleTemplate.Spec.Resources {
-		resourceYamls, err := getResourceYamlStringsFromURL(resource.Link)
+		resourceYamls, err := getFileFromURL(resource.Link)
+		resourceYamlsArr := strings.Split(string(resourceYamls), "---")
 		if err != nil {
 			return nil, fmt.Errorf("failed to fetch resource YAMLs from %s: %w", resource.Link, err)
 		}
 
-		for _, yamlStr := range resourceYamls {
+		for _, yamlStr := range resourceYamlsArr {
 			var res map[string]any
 			if err := yaml.Unmarshal([]byte(yamlStr), &res); err != nil {
 				return nil, fmt.Errorf("failed to parse module resource YAML for %s:%s - %w", moduleTemplate.Spec.ModuleName, moduleTemplate.Spec.Version, err)
@@ -257,7 +253,7 @@ func getManagerFromResources(moduleTemplate kyma.ModuleTemplate, moduleResources
 	return nil, fmt.Errorf("manager not found in resources")
 }
 
-func getResourceYamlStringsFromURL(url string) ([]string, error) {
+func getFileFromURL(url string) ([]byte, error) {
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to download resource from %s: %w", url, err)
@@ -269,7 +265,7 @@ func getResourceYamlStringsFromURL(url string) ([]string, error) {
 		return nil, fmt.Errorf("failed to read resource body: %w", err)
 	}
 
-	return strings.Split(string(body), "---"), nil
+	return body, nil
 }
 
 func generateUnstruct(apiVersion, kind, name, namespace string) unstructured.Unstructured {

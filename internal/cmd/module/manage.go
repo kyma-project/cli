@@ -9,6 +9,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon/prompt"
 	"github.com/kyma-project/cli.v3/internal/kube"
+	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"github.com/kyma-project/cli.v3/internal/modules"
 	"github.com/kyma-project/cli.v3/internal/modules/repo"
 	"github.com/spf13/cobra"
@@ -112,7 +113,9 @@ func manageModuleMissingInKyma(cfg *manageConfig, client kube.Client) clierror.E
 		return clierr
 	}
 
-	clierr = modules.Enable(cfg.Ctx, client, cfg.module, selectedChannel, false, []unstructured.Unstructured{}...)
+	defaultCrFlag := cfg.policy == kyma.CustomResourcePolicyCreateAndDelete
+
+	clierr = modules.Enable(cfg.Ctx, client, moduleTemplatesRepo, cfg.module, selectedChannel, defaultCrFlag, []unstructured.Unstructured{}...)
 	if clierr != nil {
 		return clierr
 	}
@@ -129,7 +132,7 @@ func promptForAlternativeChannel(channelsAndVersions map[string]string) (string,
 		channelOpts = append(channelOpts, *valWithDesc)
 	}
 
-	fmt.Println("There is a mismatch between the default channel configured for your Kyma cluster and the channel where the installed module version is available.")
+	fmt.Println("The version of the module you have installed is not available in the default Kyma channel.")
 	fmt.Println("To proceed, please select one of the available channels below to manage the module with the desired version.")
 
 	channelPrompt := prompt.NewOneOfEnumList("Available versions:\n", "Type the option number: ", channelOpts)

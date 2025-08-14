@@ -10,18 +10,19 @@ import (
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
+	"github.com/kyma-project/cli.v3/internal/modules/repo"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 // Enable takes care about enabling kyma module in order:
 // 1. add module to the Kyma CR with CustomResourcePolicy set to CreateAndDelete if defaultCR is true and to Ignore in any other case
 // 2. if crs array is not empty wait for the module to be ready and add crs to the cluster
-func Enable(ctx context.Context, client kube.Client, module, channel string, defaultCR bool, crs ...unstructured.Unstructured) clierror.Error {
-	return enable(os.Stdout, ctx, client, module, channel, defaultCR, crs...)
+func Enable(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository, module, channel string, defaultCR bool, crs ...unstructured.Unstructured) clierror.Error {
+	return enable(os.Stdout, ctx, client, repo, module, channel, defaultCR, crs...)
 }
 
-func enable(writer io.Writer, ctx context.Context, client kube.Client, module, channel string, defaultCR bool, crs ...unstructured.Unstructured) clierror.Error {
-	if err := validateModuleAvailability(ctx, client, module); err != nil {
+func enable(writer io.Writer, ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository, module, channel string, defaultCR bool, crs ...unstructured.Unstructured) clierror.Error {
+	if err := validateModuleAvailability(ctx, client, repo, module); err != nil {
 		return clierror.Wrap(err, clierror.New("module invalid"))
 	}
 
@@ -71,8 +72,8 @@ func applyCustomCR(writer io.Writer, ctx context.Context, client kube.Client, mo
 	return nil
 }
 
-func validateModuleAvailability(ctx context.Context, client kube.Client, module string) error {
-	availableCoreVersions, err := ListAvailableVersions(ctx, client, module, false)
+func validateModuleAvailability(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository, module string) error {
+	availableCoreVersions, err := ListAvailableVersions(ctx, client, repo, module, false)
 	if err != nil {
 		return err
 	}

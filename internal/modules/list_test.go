@@ -135,21 +135,6 @@ var (
 		},
 	}
 
-	testCommunityModuleTemplate = unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": "operator.kyma-project.io/v1beta2",
-			"kind":       "ModuleTemplate",
-			"metadata": map[string]interface{}{
-				"name":      "cluster-ip-02",
-				"namespace": "kyma-system",
-			},
-			"spec": map[string]interface{}{
-				"moduleName": "cluster-ip",
-				"version":    "0.2",
-			},
-		},
-	}
-
 	testReleaseMeta1 = unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": "operator.kyma-project.io/v1beta2",
@@ -535,8 +520,9 @@ func TestListCatalog(t *testing.T) {
 			TestKymaInterface:            kyma.NewClient(dynamicClient),
 			TestRootlessDynamicInterface: fakeRootless,
 		}
+		repo := &modulesfake.ModuleTemplatesRepo{}
 
-		modules, err := ListCatalog(context.Background(), fakeClient)
+		modules, err := ListCatalog(context.Background(), fakeClient, repo)
 
 		require.NoError(t, err)
 		require.Equal(t, ModulesList(testModuleList), modules)
@@ -563,8 +549,9 @@ func TestListCatalog(t *testing.T) {
 			TestKymaInterface:            kyma.NewClient(dynamicClient),
 			TestRootlessDynamicInterface: fakeRootless,
 		}
+		repo := &modulesfake.ModuleTemplatesRepo{}
 
-		modules, err := ListCatalog(context.Background(), fakeClient)
+		modules, err := ListCatalog(context.Background(), fakeClient, repo)
 
 		require.NoError(t, err)
 		require.Equal(t, ModulesList(testModuleList), modules)
@@ -574,9 +561,7 @@ func TestListCatalog(t *testing.T) {
 		scheme := runtime.NewScheme()
 		scheme.AddKnownTypes(kyma.GVRModuleTemplate.GroupVersion())
 		scheme.AddKnownTypes(kyma.GVRModuleReleaseMeta.GroupVersion())
-		dynamicClient := dynamic_fake.NewSimpleDynamicClient(scheme,
-			&testCommunityModuleTemplate,
-		)
+		dynamicClient := dynamic_fake.NewSimpleDynamicClient(scheme)
 
 		fakeRootless := &fake.RootlessDynamicClient{}
 
@@ -584,8 +569,17 @@ func TestListCatalog(t *testing.T) {
 			TestKymaInterface:            kyma.NewClient(dynamicClient),
 			TestRootlessDynamicInterface: fakeRootless,
 		}
+		repo := &modulesfake.ModuleTemplatesRepo{
+			ReturnCommunity: []kyma.ModuleTemplate{
+				{
+					Spec: kyma.ModuleTemplateSpec{
+						ModuleName: "cluster-ip",
+					},
+				},
+			},
+		}
 
-		modules, err := ListCatalog(context.Background(), fakeClient)
+		modules, err := ListCatalog(context.Background(), fakeClient, repo)
 
 		require.NoError(t, err)
 		require.Equal(t, 1, len(modules))
