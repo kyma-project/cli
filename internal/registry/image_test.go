@@ -65,7 +65,7 @@ func Test_importImage(t *testing.T) {
 				},
 			},
 			wantErr: nil,
-			want:    "testhost:123/test:image",
+			want:    "test:image",
 		},
 		{
 			name: "wrong image format error",
@@ -143,7 +143,10 @@ func Test_importImage(t *testing.T) {
 				},
 			},
 			wantErr: clierror.Wrap(errors.New("registries must be valid RFC 3986 URI authorities: <    >"),
-				clierror.New("failed to push image to the in-cluster registry")),
+				clierror.New(
+					"failed to push image to the in-cluster registry",
+					"pushing through portforward may be unstable, try exposing the registry in the Registr CR",
+				)),
 		},
 		{
 			name: "write image to in-cluster registry error",
@@ -169,7 +172,10 @@ func Test_importImage(t *testing.T) {
 				},
 			},
 			wantErr: clierror.Wrap(errors.New("test error"),
-				clierror.New("failed to push image to the in-cluster registry"),
+				clierror.New(
+					"failed to push image to the in-cluster registry",
+					"pushing through portforward may be unstable, try exposing the registry in the Registr CR",
+				),
 			),
 		},
 	}
