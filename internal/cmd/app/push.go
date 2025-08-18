@@ -144,10 +144,11 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 			return cliErr
 		}
 
-		image, clierr = buildAndImportImage(client, cfg, registryConfig)
+		pushedImage, clierr := buildAndImportImage(client, cfg, registryConfig)
 		if clierr != nil {
 			return clierr
 		}
+		image = fmt.Sprintf("%s/%s", registryConfig.SecretData.PullRegAddr, pushedImage)
 		imagePullSecret = registryConfig.SecretName
 	}
 
@@ -210,8 +211,10 @@ func buildAndImportImage(client kube.Client, cfg *appPushConfig, registryConfig 
 		registry.NewBasicAuth(registryConfig.SecretData.Username, registryConfig.SecretData.Password),
 	)
 
+	fmt.Println("\nImporting", imageName)
 	externalRegistryConfig, cliErr := registry.GetExternalConfig(cfg.Ctx, client)
 	if cliErr == nil {
+		fmt.Println("  Using registry external endpoint")
 		// if external connection exists, use it
 		pushFunc = registry.NewPushFunc(
 			externalRegistryConfig.SecretData.PushRegAddr,
@@ -219,7 +222,6 @@ func buildAndImportImage(client kube.Client, cfg *appPushConfig, registryConfig 
 		)
 	}
 
-	fmt.Println("\nImporting", imageName)
 	pushedImage, cliErr := registry.ImportImage(
 		cfg.Ctx,
 		imageName,

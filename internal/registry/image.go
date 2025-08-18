@@ -94,7 +94,7 @@ func NewPushWithPortforwardFunc(clusterAPIRestConfig *rest.Config, registryPodNa
 
 		pushedImage, err := imageToInClusterRegistry(ctx, localImage, transport, registryAuth, registryPullHost, imageName, utils)
 		if err != nil {
-			return "", clierror.Wrap(err, clierror.New("failed to push image to the in-cluster registry"))
+			return "", clierror.Wrap(err, clierror.New("failed to push image to the in-cluster registry", "pushing through portforward may be unstable, try exposing the registry in the Registr CR"))
 		}
 
 		return pushedImage, nil
@@ -122,5 +122,5 @@ func imageToInClusterRegistry(ctx context.Context, image v1.Image, transport htt
 		return "", err
 	}
 
-	return fmt.Sprintf("%s/%s:%s", tag.RegistryStr(), tag.RepositoryStr(), tag.TagStr()), nil
+	return fmt.Sprintf("%s:%s", tag.RepositoryStr(), tag.TagStr()), nil
 }
