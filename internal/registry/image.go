@@ -32,15 +32,15 @@ type utils struct {
 	remoteWrite        func(ref name.Reference, img v1.Image, options ...remote.Option) error
 }
 
-func ImportImage(ctx context.Context, imageName string, opts ImportOptions) (string, clierror.Error) {
-	return importImage(ctx, imageName, opts, utils{
+func ImportImage(ctx context.Context, imageName string, pushFunc PushFunc) (string, clierror.Error) {
+	return importImage(ctx, imageName, pushFunc, utils{
 		daemonImage:        daemon.Image,
 		portforwardNewDial: portforward.NewDialFor,
 		remoteWrite:        remote.Write,
 	})
 }
 
-func importImage(ctx context.Context, imageName string, opts ImportOptions, utils utils) (string, clierror.Error) {
+func importImage(ctx context.Context, imageName string, pushFunc PushFunc, utils utils) (string, clierror.Error) {
 	localImage, err := imageFromInternalRegistry(ctx, imageName, utils)
 	if err != nil {
 		return "", clierror.Wrap(err,
@@ -51,21 +51,7 @@ func importImage(ctx context.Context, imageName string, opts ImportOptions, util
 		)
 	}
 
-	conn, err := utils.portforwardNewDial(opts.ClusterAPIRestConfig, opts.RegistryPodName, opts.RegistryPodNamespace)
-	if err != nil {
-		return "", clierror.Wrap(err, clierror.New("failed to create registry portforward connection"))
-	}
-	defer conn.Close()
-
-	localTr := portforward.NewPortforwardTransport(conn, opts.RegistryPodPort)
-	transport := portforward.NewOnErrRetryTransport(localTr)
-
-	pushedImage, err := imageToInClusterRegistry(ctx, localImage, transport, opts.RegistryAuth, opts.RegistryPullHost, imageName, utils)
-	if err != nil {
-		return "", clierror.Wrap(err, clierror.New("failed to push image to the in-cluster registry"))
-	}
-
-	return pushedImage, nil
+	return pushFunc(ctx, imageName, localImage, utils)
 }
 
 func imageFromInternalRegistry(ctx context.Context, userImage string, utils utils) (v1.Image, error) {
@@ -80,6 +66,39 @@ func imageFromInternalRegistry(ctx context.Context, userImage string, utils util
 	}
 
 	return utils.daemonImage(tag, daemon.WithContext(ctx))
+}
+
+type PushFunc func(context.Context, string, v1.Image, utils) (string, clierror.Error)
+
+func NewPushFunc(registryAddress string, registryAuth authn.Authenticator) PushFunc {
+	return func(ctx context.Context, imageName string, localImage v1.Image, utils utils) (string, clierror.Error) {
+		pushedImage, err := imageToInClusterRegistry(ctx, localImage, remote.DefaultTransport, registryAuth, registryAddress, imageName, utils)
+		if err != nil {
+			return "", clierror.Wrap(err, clierror.New("failed to push image to the in-cluster registry"))
+		}
+
+		return pushedImage, nil
+	}
+}
+
+func NewPushWithPortforwardFunc(clusterAPIRestConfig *rest.Config, registryPodName, registryPodNamespace, registryPodPort, registryPullHost string, registryAuth authn.Authenticator) PushFunc {
+	return func(ctx context.Context, imageName string, localImage v1.Image, utils utils) (string, clierror.Error) {
+		conn, err := utils.portforwardNewDial(clusterAPIRestConfig, registryPodName, registryPodNamespace)
+		if err != nil {
+			return "", clierror.Wrap(err, clierror.New("failed to create registry portforward connection"))
+		}
+		defer conn.Close()
+
+		localTr := portforward.NewPortforwardTransport(conn, registryPodPort)
+		transport := portforward.NewOnErrRetryTransport(localTr)
+
+		pushedImage, err := imageToInClusterRegistry(ctx, localImage, transport, registryAuth, registryPullHost, imageName, utils)
+		if err != nil {
+			return "", clierror.Wrap(err, clierror.New("failed to push image to the in-cluster registry"))
+		}
+
+		return pushedImage, nil
+	}
 }
 
 func imageToInClusterRegistry(ctx context.Context, image v1.Image, transport http.RoundTripper, auth authn.Authenticator, pullHost, userImageName string, utils utils) (string, error) {

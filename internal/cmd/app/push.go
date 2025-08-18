@@ -201,18 +201,29 @@ func buildAndImportImage(client kube.Client, cfg *appPushConfig, registryConfig 
 		return "", clierror.Wrap(err, clierror.New("failed to build image from dockerfile"))
 	}
 
+	pushFunc := registry.NewPushWithPortforwardFunc(
+		client.RestConfig(),
+		registryConfig.PodMeta.Name,
+		registryConfig.PodMeta.Namespace,
+		registryConfig.PodMeta.Port,
+		registryConfig.SecretData.PullRegAddr,
+		registry.NewBasicAuth(registryConfig.SecretData.Username, registryConfig.SecretData.Password),
+	)
+
+	externalRegistryConfig, cliErr := registry.GetExternalConfig(cfg.Ctx, client)
+	if cliErr == nil {
+		// if external connection exists, use it
+		pushFunc = registry.NewPushFunc(
+			externalRegistryConfig.SecretData.PushRegAddr,
+			registry.NewBasicAuth(externalRegistryConfig.SecretData.Username, externalRegistryConfig.SecretData.Password),
+		)
+	}
+
 	fmt.Println("\nImporting", imageName)
 	pushedImage, cliErr := registry.ImportImage(
 		cfg.Ctx,
 		imageName,
-		registry.ImportOptions{
-			ClusterAPIRestConfig: client.RestConfig(),
-			RegistryAuth:         registry.NewBasicAuth(registryConfig.SecretData.Username, registryConfig.SecretData.Password),
-			RegistryPullHost:     registryConfig.SecretData.PullRegAddr,
-			RegistryPodName:      registryConfig.PodMeta.Name,
-			RegistryPodNamespace: registryConfig.PodMeta.Namespace,
-			RegistryPodPort:      registryConfig.PodMeta.Port,
-		},
+		pushFunc,
 	)
 	if cliErr != nil {
 		return "", clierror.WrapE(cliErr, clierror.New("failed to import image to in-cluster registry"))
