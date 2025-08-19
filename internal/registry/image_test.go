@@ -21,7 +21,7 @@ func Test_importImage(t *testing.T) {
 	type args struct {
 		ctx       context.Context
 		imageName string
-		opts      ImportOptions
+		pushFunc  PushFunc
 		utils     utils
 	}
 	tests := []struct {
@@ -35,17 +35,10 @@ func Test_importImage(t *testing.T) {
 			args: args{
 				ctx:       context.Background(),
 				imageName: "test:image",
-				opts: ImportOptions{
-					ClusterAPIRestConfig: nil,
-					RegistryAuth: &basicAuth{
-						username: "username",
-						password: "password",
-					},
-					RegistryPullHost:     "testhost:123",
-					RegistryPodName:      "podname",
-					RegistryPodNamespace: "podnamespace",
-					RegistryPodPort:      "1234",
-				},
+				pushFunc: NewPushWithPortforwardFunc(nil, "podname", "podnamespace", "1234", "testhost:123", &basicAuth{
+					username: "username",
+					password: "password",
+				}),
 				utils: utils{
 					daemonImage: func(r name.Reference, o ...daemon.Option) (v1.Image, error) {
 						require.Equal(t, "index.docker.io/library/test:image", r.Name())
@@ -72,7 +65,7 @@ func Test_importImage(t *testing.T) {
 				},
 			},
 			wantErr: nil,
-			want:    "testhost:123/test:image",
+			want:    "test:image",
 		},
 		{
 			name: "wrong image format error",
@@ -118,6 +111,7 @@ func Test_importImage(t *testing.T) {
 			args: args{
 				ctx:       context.Background(),
 				imageName: "test:image",
+				pushFunc:  NewPushWithPortforwardFunc(nil, "", "", "", "", nil),
 				utils: utils{
 					daemonImage: func(r name.Reference, o ...daemon.Option) (v1.Image, error) {
 						return &fake.FakeImage{}, nil
@@ -136,9 +130,7 @@ func Test_importImage(t *testing.T) {
 			args: args{
 				ctx:       context.Background(),
 				imageName: "test:image",
-				opts: ImportOptions{
-					RegistryPullHost: "<    >",
-				},
+				pushFunc:  NewPushWithPortforwardFunc(nil, "", "", "", "<    >", nil),
 				utils: utils{
 					daemonImage: func(r name.Reference, o ...daemon.Option) (v1.Image, error) {
 						return &fake.FakeImage{}, nil
@@ -151,24 +143,20 @@ func Test_importImage(t *testing.T) {
 				},
 			},
 			wantErr: clierror.Wrap(errors.New("registries must be valid RFC 3986 URI authorities: <    >"),
-				clierror.New("failed to push image to the in-cluster registry")),
+				clierror.New(
+					"failed to push image to the in-cluster registry",
+					"pushing through portforward may be unstable, try exposing the registry in the Registr CR",
+				)),
 		},
 		{
 			name: "write image to in-cluster registry error",
 			args: args{
 				ctx:       context.Background(),
 				imageName: "test:image",
-				opts: ImportOptions{
-					ClusterAPIRestConfig: nil,
-					RegistryAuth: &basicAuth{
-						username: "username",
-						password: "password",
-					},
-					RegistryPullHost:     "testhost:123",
-					RegistryPodName:      "podname",
-					RegistryPodNamespace: "podnamespace",
-					RegistryPodPort:      "1234",
-				},
+				pushFunc: NewPushWithPortforwardFunc(nil, "podname", "podnamespace", "1234", "testhost:123", &basicAuth{
+					username: "username",
+					password: "password",
+				}),
 				utils: utils{
 					daemonImage: func(r name.Reference, o ...daemon.Option) (v1.Image, error) {
 						return &fake.FakeImage{}, nil
@@ -184,13 +172,16 @@ func Test_importImage(t *testing.T) {
 				},
 			},
 			wantErr: clierror.Wrap(errors.New("test error"),
-				clierror.New("failed to push image to the in-cluster registry"),
+				clierror.New(
+					"failed to push image to the in-cluster registry",
+					"pushing through portforward may be unstable, try exposing the registry in the Registr CR",
+				),
 			),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := importImage(tt.args.ctx, tt.args.imageName, tt.args.opts, tt.args.utils)
+			got, err := importImage(tt.args.ctx, tt.args.imageName, tt.args.pushFunc, tt.args.utils)
 
 			require.Equal(t, tt.wantErr, err)
 			require.Equal(t, tt.want, got)

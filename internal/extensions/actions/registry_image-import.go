@@ -53,28 +53,41 @@ func (a *registryImageImportAction) Run(cmd *cobra.Command, _ []string) clierror
 		return err
 	}
 
+	pushFunc := registry.NewPushWithPortforwardFunc(
+		client.RestConfig(),
+		registryConfig.PodMeta.Name,
+		registryConfig.PodMeta.Namespace,
+		registryConfig.PodMeta.Port,
+		registryConfig.SecretData.PullRegAddr,
+		registry.NewBasicAuth(registryConfig.SecretData.Username, registryConfig.SecretData.Password),
+	)
+
 	out := cmd.OutOrStdout()
 	fmt.Fprintln(out, "Importing", a.Cfg.Image)
+
+	externalRegistryConfig, err := registry.GetExternalConfig(a.kymaConfig.Ctx, client)
+	if err == nil {
+		fmt.Println("  Using registry external endpoint")
+		// if external connection exists, use it
+		pushFunc = registry.NewPushFunc(
+			externalRegistryConfig.SecretData.PushRegAddr,
+			registry.NewBasicAuth(externalRegistryConfig.SecretData.Username, externalRegistryConfig.SecretData.Password),
+		)
+	}
 
 	pushedImage, err := registry.ImportImage(
 		a.kymaConfig.Ctx,
 		a.Cfg.Image,
-		registry.ImportOptions{
-			ClusterAPIRestConfig: client.RestConfig(),
-			RegistryAuth:         registry.NewBasicAuth(registryConfig.SecretData.Username, registryConfig.SecretData.Password),
-			RegistryPullHost:     registryConfig.SecretData.PullRegAddr,
-			RegistryPodName:      registryConfig.PodMeta.Name,
-			RegistryPodNamespace: registryConfig.PodMeta.Namespace,
-			RegistryPodPort:      registryConfig.PodMeta.Port,
-		},
+		pushFunc,
 	)
 	if err != nil {
 		return clierror.WrapE(err, clierror.New("failed to import image to in-cluster registry"))
 	}
 
+	pullImageName := fmt.Sprintf("%s/%s", registryConfig.SecretData.PullRegAddr, pushedImage)
 	fmt.Fprintln(out, "\nSuccessfully imported image")
-	fmt.Fprintf(out, "Use it as '%s' and use the %s secret.\n", pushedImage, registryConfig.SecretName)
-	fmt.Fprintf(out, "\nExample usage:\nkubectl run my-pod --image=%s --overrides='{ \"spec\": { \"imagePullSecrets\": [ { \"name\": \"%s\" } ] } }'\n", pushedImage, registryConfig.SecretName)
+	fmt.Fprintf(out, "Use it as '%s' and use the %s secret.\n", pullImageName, registryConfig.SecretName)
+	fmt.Fprintf(out, "\nExample usage:\nkubectl run my-pod --image=%s --overrides='{ \"spec\": { \"imagePullSecrets\": [ { \"name\": \"%s\" } ] } }'\n", pullImageName, registryConfig.SecretName)
 
 	return nil
 }
