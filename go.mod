@@ -7,7 +7,7 @@ toolchain go1.24.1
 require (
 	github.com/buildpacks/pack v0.37.0
 	github.com/docker/cli v27.5.1+incompatible
-	github.com/docker/docker v27.5.1+incompatible
+	github.com/docker/docker v28.0.0+incompatible
 	github.com/go-test/deep v1.1.1
 	github.com/google/go-containerregistry v0.20.3
 	github.com/itchyny/gojq v0.12.17
