@@ -4,7 +4,7 @@ This tutorial shows how you can deploy your application using Kyma CLI.
 
 ## Deploy Your Application From the Source Code
 
-To use `kyma alpha app push`, you must also provide either a Dockerfile, Docker image or the application's source code. In this tutorial, we use the application source code. For example, you can use one of the code samples from the [Paketo Buildpacks code examples](https://github.com/paketo-buildpacks/samples/tree/main), but in this tutorial we work on the [Paketo Buildpacks java maven app](https://github.com/paketo-buildpacks/samples/tree/main/java/maven).
+To use `kyma app push`, you must also provide either a Dockerfile, Docker image or the application's source code. In this tutorial, we use the application source code. For example, you can use one of the code samples from the [Paketo Buildpacks code examples](https://github.com/paketo-buildpacks/samples/tree/main), but in this tutorial we work on the [Paketo Buildpacks java maven app](https://github.com/paketo-buildpacks/samples/tree/main/java/maven).
 
 1. Add the Istio, Docker Registry, and API Gateway modules:
 
@@ -34,7 +34,7 @@ To use `kyma alpha app push`, you must also provide either a Dockerfile, Docker 
    To deploy your application on a cluster with its own APIRule allowing outside access, run the following command in the current directory:
 
    ```bash
-   kyma alpha app push --name=Test-App --code-path=. --container-port=8888 --expose
+   kyma app push --name=Test-App --code-path=. --container-port=8888 --expose
    ```
 
    > [!NOTE]
