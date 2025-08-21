@@ -36,7 +36,7 @@ The extension provides the main command (command group) `configmap`, which print
 2. Use Kyma CLI to validate that the extension is applied:
 
     ```bash
-    kyma alpha configmap
+    kyma configmap
     ```
 
     You should see the following result:
@@ -45,7 +45,7 @@ The extension provides the main command (command group) `configmap`, which print
     Use this command to manage ConfigMap resources.
 
     Usage:
-    kyma alpha configmap [flags]
+    kyma configmap [flags]
 
     Global Flags:
     -h, --help                    Help for the command
@@ -113,7 +113,7 @@ The extension provides the main command (command group) `configmap`, which print
 4. Apply the new extension version and check if it works:
 
     ```bash
-    kyma alpha configmap create
+    kyma configmap create
     ```
 
     You should see the following result:
@@ -210,7 +210,7 @@ The extension provides the main command (command group) `configmap`, which print
 6. Apply the new version and test it:
 
     ```bash
-    kyma alpha configmap create cm-from-extension --namespace default --from-literal data1=value1 --from-literal data2=value2
+    kyma configmap create cm-from-extension --namespace default --from-literal data1=value1 --from-literal data2=value2
     ```
 
     You should see the following result:
@@ -245,9 +245,9 @@ The extension provides the main command (command group) `configmap`, which print
 
     With this step, you add the `get` command that executes the [resource_get action](./actions.md#resource_get). This can display requested resources in a kubectl-like table view with one custom column that counts the data length, using the JQ expression. The command works in a few modes depending on the given argument or flags:
 
-    * `kyma alpha configmap get` - Gets all ConfigMaps from the default namespace (default value for the `namespace` flag)
-    * `kyma alpha configmap get <resource_name>` - Gets only the ConfigMap with the given name
-    * `kyma alpha configMap get --all-namespaces` - Gets all ConfigMaps from all namespaces
+    * `kyma configmap get` - Gets all ConfigMaps from the default namespace (default value for the `namespace` flag)
+    * `kyma configmap get <resource_name>` - Gets only the ConfigMap with the given name
+    * `kyma configMap get --all-namespaces` - Gets all ConfigMaps from all namespaces
 
     ```yaml
     ...
@@ -364,7 +364,7 @@ The extension provides the main command (command group) `configmap`, which print
 9. Use Kyma CLI to test the extension:
 
     ```bash
-    kyma alpha configmap get
+    kyma configmap get
     ```
 
     You should see the following result:
@@ -505,7 +505,7 @@ The extension provides the main command (command group) `configmap`, which print
 11. Now you can delete the previously created ConfigMap:
 
     ```bash
-    kyma alpha configmap delete cm-from-extension
+    kyma configmap delete cm-from-extension
     ```
 
     You should see the following result:
@@ -514,10 +514,10 @@ The extension provides the main command (command group) `configmap`, which print
     resource cm-from-extension deleted
     ```
 
-12. To verify that the ConfigMap is deleted, use the `kyma alpha configmap get` command:
+12. To verify that the ConfigMap is deleted, use the `kyma configmap get` command:
 
     ```bash
-    kyma alpha configmap get
+    kyma configmap get
     ```
 
     You should see the following result:
