@@ -7,13 +7,12 @@ import (
 	"os"
 
 	"github.com/docker/cli/cli/command/image/build"
-	"github.com/docker/docker/api/types"
+	dockerbuild "github.com/docker/docker/api/types/build"
 	"github.com/docker/docker/client"
-	"github.com/docker/docker/pkg/archive"
-	"github.com/docker/docker/pkg/idtools"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/pkg/progress"
 	"github.com/docker/docker/pkg/streamformatter"
+	"github.com/moby/go-archive"
 	"github.com/moby/term"
 	"github.com/pkg/errors"
 )
@@ -26,7 +25,7 @@ type BuildOptions struct {
 }
 
 type DockerClient interface {
-	ImageBuild(ctx context.Context, buildContext io.Reader, options types.ImageBuildOptions) (types.ImageBuildResponse, error)
+	ImageBuild(ctx context.Context, buildContext io.Reader, options dockerbuild.ImageBuildOptions) (dockerbuild.ImageBuildResponse, error)
 }
 
 func Build(ctx context.Context, opts *BuildOptions) error {
@@ -61,7 +60,7 @@ func (b *imageBuilder) do(ctx context.Context, opts *BuildOptions) error {
 
 	buildCtx, err := archive.TarWithOptions(opts.BuildContext, &archive.TarOptions{
 		ExcludePatterns: excludes,
-		ChownOpts:       &idtools.Identity{UID: 0, GID: 0},
+		ChownOpts:       &archive.ChownOpts{UID: 0, GID: 0},
 	})
 	if err != nil {
 		return err
@@ -84,7 +83,7 @@ func (b *imageBuilder) do(ctx context.Context, opts *BuildOptions) error {
 	response, err := b.dockerClient.ImageBuild(
 		ctx,
 		bodyProgressReader,
-		types.ImageBuildOptions{
+		dockerbuild.ImageBuildOptions{
 			Context:    buildCtx,
 			Dockerfile: dockerFile,
 			Tags:       []string{opts.ImageName},
