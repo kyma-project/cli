@@ -9,7 +9,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/docker/docker/api/types"
+	dockerbuild "github.com/docker/docker/api/types/build"
 	"github.com/stretchr/testify/require"
 )
 
@@ -125,8 +125,8 @@ type dockerClientMock struct {
 	bodyData []byte
 }
 
-func (m *dockerClientMock) ImageBuild(ctx context.Context, buildContext io.Reader, options types.ImageBuildOptions) (types.ImageBuildResponse, error) {
-	return types.ImageBuildResponse{
+func (m *dockerClientMock) ImageBuild(ctx context.Context, buildContext io.Reader, options dockerbuild.ImageBuildOptions) (dockerbuild.ImageBuildResponse, error) {
+	return dockerbuild.ImageBuildResponse{
 		Body: io.NopCloser(bytes.NewReader(m.bodyData)),
 	}, m.err
 }
