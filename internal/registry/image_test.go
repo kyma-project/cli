@@ -72,7 +72,7 @@ func Test_importImage(t *testing.T) {
 			args: args{
 				imageName: ":::::::::",
 			},
-			wantErr: clierror.Wrap(errors.New("repository can only contain the characters `abcdefghijklmnopqrstuvwxyz0123456789_-./`: ::::::::"),
+			wantErr: clierror.Wrap(errors.New("::::::::: must specify a tag name after the colon"),
 				clierror.New("failed to load image from local docker daemon",
 					"make sure docker daemon is running",
 					"make sure the image exists in the local docker daemon"),
