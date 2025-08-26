@@ -11,6 +11,7 @@ require (
 	github.com/itchyny/gojq v0.12.17
 	github.com/jedib0t/go-pretty/v6 v6.6.8
 	github.com/kyma-project/api-gateway v0.0.0-20250814120053-7d617def4106
+	github.com/moby/go-archive v0.1.0
 	github.com/moby/term v0.5.2
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.9.1
@@ -18,9 +19,9 @@ require (
 	github.com/stretchr/testify v1.11.0
 	gopkg.in/yaml.v3 v3.0.1
 	istio.io/client-go v1.27.0
-	k8s.io/api v0.33.3
-	k8s.io/apimachinery v0.33.3
-	k8s.io/client-go v0.33.3
+	k8s.io/api v0.33.4
+	k8s.io/apimachinery v0.33.4
+	k8s.io/client-go v0.33.4
 	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397
 )
 
@@ -125,7 +126,6 @@ require (
 	github.com/mitchellh/ioprogress v0.0.0-20180201004757-6a23b12fa88e // indirect
 	github.com/moby/buildkit v0.22.0 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
-	github.com/moby/go-archive v0.1.0 // indirect
 	github.com/moby/patternmatcher v0.6.0 // indirect
 	github.com/moby/spdystream v0.5.0 // indirect
 	github.com/moby/sys/atomicwriter v0.1.0 // indirect
