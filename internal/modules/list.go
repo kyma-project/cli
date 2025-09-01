@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/kyma-project/cli.v3/internal/kube"
@@ -55,16 +56,37 @@ var startingTime = time.Now()
 // ListInstalled returns list of installed module on a cluster
 // collects info about modules based on the KymaCR
 func ListInstalled(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository, showErrors bool) (ModulesList, error) {
-	fmt.Printf("%s: start linting installed core modules\n", time.Until(startingTime).String())
-	installedCoreModules, err := listCoreInstalled(ctx, client, repo, showErrors)
-	if err != nil {
-		return nil, err
+	var wg sync.WaitGroup
+	wg.Add(2)
+	var listCoreErr error
+	var listCommunityInstalledErr error
+	var installedCoreModules ModulesList
+	var installedCommunityModules ModulesList
+	go func() {
+		fmt.Printf("%s: start linting installed core modules\n", time.Until(startingTime).String())
+		installedCoreModules, listCoreErr = listCoreInstalled(ctx, client, repo, showErrors)
+		fmt.Printf("%s: done for core modules\n", time.Until(startingTime).String())
+		wg.Done()
+	}()
+
+	go func() {
+		fmt.Printf("%s: start linting installed community modules\n", time.Until(startingTime).String())
+		installedCommunityModules, listCommunityInstalledErr = listCommunityInstalled(ctx, client, repo, installedCoreModules)
+		fmt.Printf("%s: done for community modules\n", time.Until(startingTime).String())
+		wg.Done()
+	}()
+
+	wg.Wait()
+
+	// TODO: redesign error handling to not cover error with another one
+	// TODO: warn user about error (do not stop the process)
+
+	if listCoreErr != nil {
+		return nil, listCoreErr
 	}
 
-	fmt.Printf("%s: start linting installed community modules\n", time.Until(startingTime).String())
-	installedCommunityModules, err := listCommunityInstalled(ctx, client, repo, installedCoreModules)
-	if err != nil {
-		return nil, err
+	if listCommunityInstalledErr != nil {
+		return nil, listCommunityInstalledErr
 	}
 
 	allInstalled := append(installedCoreModules, installedCommunityModules...)
@@ -95,40 +117,54 @@ func listCoreInstalled(ctx context.Context, client kube.Client, repo repo.Module
 }
 
 func collectModulesFromKymaCR(ctx context.Context, client kube.Client, defaultKyma *kyma.Kyma) ModulesList {
+	var wg sync.WaitGroup
+	l := sync.Mutex{}
 	modulesList := ModulesList{}
 	for _, moduleStatus := range defaultKyma.Status.Modules {
-		fmt.Printf("%s: collect installation state for %s\n", time.Until(startingTime).String(), moduleStatus.Name)
-		moduleSpec := getKymaModuleSpec(defaultKyma, moduleStatus.Name)
+		wg.Add(1)
+		go func(ms kyma.ModuleStatus) {
+			defer wg.Done()
+			fmt.Printf("%s: collect installation state for %s\n", time.Until(startingTime).String(), ms.Name)
+			moduleSpec := getKymaModuleSpec(defaultKyma, ms.Name)
 
-		installationState, err := getModuleInstallationState(ctx, client, moduleStatus, moduleSpec)
-		if err != nil {
-			fmt.Printf("error occured during %s module installation status check: %v\n", moduleStatus.Name, err)
-		}
+			installationState, err := getModuleInstallationState(ctx, client, ms, moduleSpec)
+			if err != nil {
+				fmt.Printf("error occured during %s module installation status check: %v\n", ms.Name, err)
+				// TODO: should we stop here?
+			}
 
-		fmt.Printf("\t%s: get module custom resource status for %s\n", time.Until(startingTime).String(), moduleStatus.Name)
-		moduleCRState, err := getModuleCustomResourceStatus(ctx, client, moduleStatus, moduleSpec)
-		if err != nil {
-			fmt.Printf("error occured during %s custom resource status check: %v\n", moduleStatus.Name, err)
-		}
+			fmt.Printf("\t%s: get module custom resource status for %s\n", time.Until(startingTime).String(), ms.Name)
+			moduleCRState, err := getModuleCustomResourceStatus(ctx, client, ms, moduleSpec)
+			if err != nil {
+				fmt.Printf("error occured during %s custom resource status check: %v\n", ms.Name, err)
+				// TODO: should we stop here?
+			}
 
-		modulesList = append(modulesList, Module{
-			Name: moduleStatus.Name,
-			InstallDetails: ModuleInstallDetails{
-				Channel:              moduleStatus.Channel,
-				Managed:              getManaged(moduleSpec),
-				CustomResourcePolicy: getCustomResourcePolicy(moduleSpec),
-				Version:              moduleStatus.Version,
-				ModuleState:          moduleCRState,
-				InstallationState:    installationState,
-			},
-		})
+			l.Lock()
+			defer l.Unlock()
+
+			modulesList = append(modulesList, Module{
+				Name: ms.Name,
+				InstallDetails: ModuleInstallDetails{
+					Channel:              ms.Channel,
+					Managed:              getManaged(moduleSpec),
+					CustomResourcePolicy: getCustomResourcePolicy(moduleSpec),
+					Version:              ms.Version,
+					ModuleState:          moduleCRState,
+					InstallationState:    installationState,
+				},
+			})
+		}(moduleStatus)
 	}
 
+	wg.Wait()
 	fmt.Printf("%s: done collecting\n", time.Until(startingTime).String())
 	return modulesList
 }
 
 func collectUnmanagedCoreModules(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository, defaultKyma *kyma.Kyma, showErrors bool) ModulesList {
+	var wg sync.WaitGroup
+	l := sync.Mutex{}
 	modulesList := ModulesList{}
 	coreModuleTemplates, err := repo.Core(ctx)
 	if err != nil {
@@ -137,49 +173,57 @@ func collectUnmanagedCoreModules(ctx context.Context, client kube.Client, repo r
 	}
 
 	for _, coreModuleTemplate := range coreModuleTemplates {
-		fmt.Printf("\t%s: collect core module template for %s\n", time.Until(startingTime).String(), coreModuleTemplate.Spec.ModuleName)
-		if coreModuleTemplate.Spec.Version == "" {
-			continue
-		}
-		if moduleExistsInKymaCR(coreModuleTemplate, defaultKyma.Status.Modules) {
-			continue
-		}
-
-		fmt.Printf("\t\t%s: installed managed\n", time.Until(startingTime).String())
-		installedManager, err := repo.InstalledManager(ctx, coreModuleTemplate)
-		if err != nil {
-			if showErrors {
-				fmt.Printf("failed to get installed manager: %v\n", err)
+		wg.Add(1)
+		go func(mt kyma.ModuleTemplate) {
+			defer wg.Done()
+			fmt.Printf("\t%s: collect core module template for %s\n", time.Until(startingTime).String(), mt.Spec.ModuleName)
+			if mt.Spec.Version == "" {
+				return
 			}
-			continue
-		}
-		if installedManager == nil {
-			// skip modules which moduletemplates exist but are not installed
-			continue
-		}
+			if moduleExistsInKymaCR(mt, defaultKyma.Status.Modules) {
+				return
+			}
 
-		fmt.Printf("\t\t%s: start interpretation of module template\n", time.Until(startingTime).String())
-		moduleStatus := getModuleStatus(ctx, client, coreModuleTemplate.Spec.Data)
-		version, err := getManagerVersion(installedManager)
-		if err != nil {
-			fmt.Printf("failed to get managers version: %v\n", err)
-			continue
-		}
+			fmt.Printf("\t\t%s: installed managed\n", time.Until(startingTime).String())
+			installedManager, err := repo.InstalledManager(ctx, mt)
+			if err != nil {
+				if showErrors {
+					fmt.Printf("failed to get installed manager: %v\n", err)
+				}
+				return
+			}
+			if installedManager == nil {
+				// skip modules which moduletemplates exist but are not installed
+				return
+			}
 
-		modulesList = append(modulesList, Module{
-			Name: coreModuleTemplate.Spec.ModuleName,
-			InstallDetails: ModuleInstallDetails{
-				Channel:              "",
-				Managed:              ManagedFalse,
-				CustomResourcePolicy: "N/A",
-				Version:              version,
-				ModuleState:          moduleStatus,
-				InstallationState:    "Unmanaged",
-			},
-			CommunityModule: true,
-		})
+			fmt.Printf("\t\t%s: start interpretation of module template\n", time.Until(startingTime).String())
+			moduleStatus := getModuleStatus(ctx, client, mt.Spec.Data)
+			version, err := getManagerVersion(installedManager)
+			if err != nil {
+				fmt.Printf("failed to get managers version: %v\n", err)
+				return
+			}
+
+			l.Lock()
+			defer l.Unlock()
+
+			modulesList = append(modulesList, Module{
+				Name: mt.Spec.ModuleName,
+				InstallDetails: ModuleInstallDetails{
+					Channel:              "",
+					Managed:              ManagedFalse,
+					CustomResourcePolicy: "N/A",
+					Version:              version,
+					ModuleState:          moduleStatus,
+					InstallationState:    "Unmanaged",
+				},
+				CommunityModule: true,
+			})
+		}(coreModuleTemplate)
 	}
 
+	wg.Wait()
 	fmt.Printf("\t%s: resources collected\n", time.Until(startingTime).String())
 	return modulesList
 }
@@ -334,44 +378,54 @@ func listCommunityInstalled(ctx context.Context, client kube.Client, repo repo.M
 		return nil, fmt.Errorf("failed to list community module templates: %v", err)
 	}
 
+	var wg sync.WaitGroup
+	l := sync.Mutex{}
 	communityModules := ModulesList{}
 
 	for _, moduleTemplate := range communityModuleTemplates {
-		if moduleAlreadyInstalledAsCoreModule(installedCoreModules, moduleTemplate) {
-			continue
-		}
-		installedManager, err := repo.InstalledManager(ctx, moduleTemplate)
-		if err != nil {
-			fmt.Printf("failed to get installed manager: %v\n", err)
-			continue
-		}
-		if installedManager == nil {
-			// skip modules which moduletemplates exist but are not installed
-			continue
-		}
+		wg.Add(1)
+		go func(mt kyma.ModuleTemplate) {
+			defer wg.Done()
+			if moduleAlreadyInstalledAsCoreModule(installedCoreModules, mt) {
+				return
+			}
+			installedManager, err := repo.InstalledManager(ctx, mt)
+			if err != nil {
+				fmt.Printf("failed to get installed manager: %v\n", err)
+				return
+			}
+			if installedManager == nil {
+				// skip modules which moduletemplates exist but are not installed
+				return
+			}
 
-		moduleStatus := getModuleStatus(ctx, client, moduleTemplate.Spec.Data)
-		installationStatus := getManagerStatus(installedManager)
-		version, err := getManagerVersion(installedManager)
-		if err != nil {
-			fmt.Printf("failed to get managers version: %v\n", err)
-			continue
-		}
+			moduleStatus := getModuleStatus(ctx, client, mt.Spec.Data)
+			installationStatus := getManagerStatus(installedManager)
+			version, err := getManagerVersion(installedManager)
+			if err != nil {
+				fmt.Printf("failed to get managers version: %v\n", err)
+				return
+			}
 
-		communityModules = append(communityModules, Module{
-			Name: moduleTemplate.Spec.ModuleName,
-			InstallDetails: ModuleInstallDetails{
-				Channel:              "",
-				Managed:              ManagedFalse,
-				CustomResourcePolicy: "N/A",
-				Version:              version,
-				ModuleState:          moduleStatus,
-				InstallationState:    installationStatus,
-			},
-			CommunityModule: true,
-		})
+			l.Lock()
+			defer l.Unlock()
+
+			communityModules = append(communityModules, Module{
+				Name: mt.Spec.ModuleName,
+				InstallDetails: ModuleInstallDetails{
+					Channel:              "",
+					Managed:              ManagedFalse,
+					CustomResourcePolicy: "N/A",
+					Version:              version,
+					ModuleState:          moduleStatus,
+					InstallationState:    installationStatus,
+				},
+				CommunityModule: true,
+			})
+		}(moduleTemplate)
 	}
 
+	wg.Wait()
 	return communityModules, nil
 }
 
