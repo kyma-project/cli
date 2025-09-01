@@ -53,37 +53,17 @@ type ModulesList []Module
 // ListInstalled returns list of installed module on a cluster
 // collects info about modules based on the KymaCR
 func ListInstalled(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository, showErrors bool) (ModulesList, error) {
-	var wg sync.WaitGroup
-	wg.Add(2)
-	var listCoreErr error
-	var listCommunityInstalledErr error
-	var installedCoreModules ModulesList
-	var installedCommunityModules ModulesList
-	go func() {
-		installedCoreModules, listCoreErr = listCoreInstalled(ctx, client, repo, showErrors)
-		wg.Done()
-	}()
-
-	go func() {
-		installedCommunityModules, listCommunityInstalledErr = listCommunityInstalled(ctx, client, repo, installedCoreModules)
-		wg.Done()
-	}()
-
-	wg.Wait()
-
-	// TODO: redesign error handling to not cover error with another one
-	// TODO: warn user about error (do not stop the process)
-
-	if listCoreErr != nil {
-		return nil, listCoreErr
+	installedCoreModules, err := listCoreInstalled(ctx, client, repo, showErrors)
+	if err != nil {
+		return nil, err
 	}
 
-	if listCommunityInstalledErr != nil {
-		return nil, listCommunityInstalledErr
+	installedCommunityModules, err := listCommunityInstalled(ctx, client, repo, installedCoreModules)
+	if err != nil {
+		return nil, err
 	}
 
 	allInstalled := append(installedCoreModules, installedCommunityModules...)
-
 	return allInstalled, nil
 }
 
@@ -98,18 +78,18 @@ func listCoreInstalled(ctx context.Context, client kube.Client, repo repo.Module
 	}
 
 	modulesList := ModulesList{}
-
 	modulesList = append(modulesList, collectModulesFromKymaCR(ctx, client, defaultKyma)...)
-
 	modulesList = append(modulesList, collectUnmanagedCoreModules(ctx, client, repo, defaultKyma, showErrors)...)
 
 	return modulesList, nil
 }
 
 func collectModulesFromKymaCR(ctx context.Context, client kube.Client, defaultKyma *kyma.Kyma) ModulesList {
-	var wg sync.WaitGroup
-	l := sync.Mutex{}
 	modulesList := ModulesList{}
+	modulesLen := len(defaultKyma.Status.Modules)
+	results := make(chan Module, modulesLen)
+	var wg sync.WaitGroup
+
 	for _, moduleStatus := range defaultKyma.Status.Modules {
 		wg.Add(1)
 		go func(ms kyma.ModuleStatus) {
@@ -119,19 +99,14 @@ func collectModulesFromKymaCR(ctx context.Context, client kube.Client, defaultKy
 			installationState, err := getModuleInstallationState(ctx, client, ms, moduleSpec)
 			if err != nil {
 				fmt.Printf("error occured during %s module installation status check: %v\n", ms.Name, err)
-				// TODO: should we stop here?
 			}
 
 			moduleCRState, err := getModuleCustomResourceStatus(ctx, client, ms, moduleSpec)
 			if err != nil {
 				fmt.Printf("error occured during %s custom resource status check: %v\n", ms.Name, err)
-				// TODO: should we stop here?
 			}
 
-			l.Lock()
-			defer l.Unlock()
-
-			modulesList = append(modulesList, Module{
+			results <- Module{
 				Name: ms.Name,
 				InstallDetails: ModuleInstallDetails{
 					Channel:              ms.Channel,
@@ -141,32 +116,38 @@ func collectModulesFromKymaCR(ctx context.Context, client kube.Client, defaultKy
 					ModuleState:          moduleCRState,
 					InstallationState:    installationState,
 				},
-			})
+			}
 		}(moduleStatus)
 	}
 
 	wg.Wait()
+	close(results)
+
+	for m := range results {
+		modulesList = append(modulesList, m)
+	}
+
 	return modulesList
 }
 
 func collectUnmanagedCoreModules(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository, defaultKyma *kyma.Kyma, showErrors bool) ModulesList {
-	var wg sync.WaitGroup
-	l := sync.Mutex{}
-	modulesList := ModulesList{}
 	coreModuleTemplates, err := repo.Core(ctx)
 	if err != nil {
-		fmt.Printf("failed to get unmanaged core modules: %v\n", err)
-		return modulesList
+		if showErrors {
+			fmt.Printf("failed to get unmanaged core modules: %v\n", err)
+		}
+		return ModulesList{}
 	}
+
+	modulesLen := len(coreModuleTemplates)
+	results := make(chan Module, modulesLen)
+	var wg sync.WaitGroup
 
 	for _, coreModuleTemplate := range coreModuleTemplates {
 		wg.Add(1)
 		go func(mt kyma.ModuleTemplate) {
 			defer wg.Done()
-			if mt.Spec.Version == "" {
-				return
-			}
-			if moduleExistsInKymaCR(mt, defaultKyma.Status.Modules) {
+			if mt.Spec.Version == "" || moduleExistsInKymaCR(mt, defaultKyma.Status.Modules) {
 				return
 			}
 
@@ -178,21 +159,19 @@ func collectUnmanagedCoreModules(ctx context.Context, client kube.Client, repo r
 				return
 			}
 			if installedManager == nil {
-				// skip modules which moduletemplates exist but are not installed
 				return
 			}
 
 			moduleStatus := getModuleStatus(ctx, client, mt.Spec.Data)
 			version, err := getManagerVersion(installedManager)
 			if err != nil {
-				fmt.Printf("failed to get managers version: %v\n", err)
+				if showErrors {
+					fmt.Printf("failed to get managers version: %v\n", err)
+				}
 				return
 			}
 
-			l.Lock()
-			defer l.Unlock()
-
-			modulesList = append(modulesList, Module{
+			results <- Module{
 				Name: mt.Spec.ModuleName,
 				InstallDetails: ModuleInstallDetails{
 					Channel:              "",
@@ -203,11 +182,17 @@ func collectUnmanagedCoreModules(ctx context.Context, client kube.Client, repo r
 					InstallationState:    "Unmanaged",
 				},
 				CommunityModule: true,
-			})
+			}
 		}(coreModuleTemplate)
 	}
 
 	wg.Wait()
+	close(results)
+
+	modulesList := ModulesList{}
+	for m := range results {
+		modulesList = append(modulesList, m)
+	}
 	return modulesList
 }
 
@@ -361,9 +346,9 @@ func listCommunityInstalled(ctx context.Context, client kube.Client, repo repo.M
 		return nil, fmt.Errorf("failed to list community module templates: %v", err)
 	}
 
+	modulesLen := len(communityModuleTemplates)
+	results := make(chan Module, modulesLen)
 	var wg sync.WaitGroup
-	l := sync.Mutex{}
-	communityModules := ModulesList{}
 
 	for _, moduleTemplate := range communityModuleTemplates {
 		wg.Add(1)
@@ -390,10 +375,7 @@ func listCommunityInstalled(ctx context.Context, client kube.Client, repo repo.M
 				return
 			}
 
-			l.Lock()
-			defer l.Unlock()
-
-			communityModules = append(communityModules, Module{
+			results <- Module{
 				Name: mt.Spec.ModuleName,
 				InstallDetails: ModuleInstallDetails{
 					Channel:              "",
@@ -404,11 +386,17 @@ func listCommunityInstalled(ctx context.Context, client kube.Client, repo repo.M
 					InstallationState:    installationStatus,
 				},
 				CommunityModule: true,
-			})
+			}
 		}(moduleTemplate)
 	}
 
 	wg.Wait()
+	close(results)
+
+	communityModules := ModulesList{}
+	for m := range results {
+		communityModules = append(communityModules, m)
+	}
 	return communityModules, nil
 }
 

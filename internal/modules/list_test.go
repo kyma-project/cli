@@ -447,7 +447,7 @@ func TestListInstalled(t *testing.T) {
 		modules, err := ListInstalled(context.Background(), fakeClient, fakeModuleTemplatesRepo, true)
 
 		require.NoError(t, err)
-		require.Equal(t, ModulesList(testInstalledModuleList), modules)
+		require.ElementsMatch(t, modules, testInstalledModuleList)
 	})
 
 	t.Run("list unmanaged modules from cluster (missing in Kyma CR)", func(t *testing.T) {
