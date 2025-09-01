@@ -104,6 +104,8 @@ kubectl wait --for='jsonpath={.status.state}=Ready' apirules.gateway.kyma-projec
 echo -e "\n--------------------------------------------------------------------------------------\n"
 echo -e "Step10: Verify bookstore app\n"
 sleep 5
+
+DOMAIN=$(kubectl get configmaps -n kube-system shoot-info -o=jsonpath='{.data.domain}')
 response=$(curl https://bookstore.$DOMAIN/v1/books)
 echo "HTTP response from sample app: $response"
 

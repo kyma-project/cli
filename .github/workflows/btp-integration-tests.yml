@@ -73,10 +73,7 @@ jobs:
           BTP_HANA_SUBACCOUNT_ID: '${{ secrets.BTP_HANA_SUBACCOUNT_ID }}'
       - name: test 
         run: |
-          DOMAIN=$DOMAIN \
           make -C tests/btp e2e-test
-        env:
-          DOMAIN: '${{ steps.create-btp-resources.outputs.domain }}'
       - name: cleanup
         run: |
           make -C tests/btp cleanup
