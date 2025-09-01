@@ -24,7 +24,7 @@ jobs:
         run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
       - name: build kyma CLI binary
         run: make build
-      - uses: kyma-project/terraform-module/.github/actions/create-sap-btp-kyma@0635a02ed7c63944f2e544d27603f3d2c72fee2b
+      - uses: kyma-project/terraform-module/.github/actions/create-sap-btp-kyma@1.0.0
         id: create-btp-resources
         with:
           btp_subaccount_name: cli-test-${{ steps.vars.outputs.sha_short }}-${{ github.run_attempt }}
@@ -80,7 +80,7 @@ jobs:
       - name: cleanup
         run: |
           make -C tests/btp cleanup
-      - uses: kyma-project/terraform-module/.github/actions/force-delete-sap-btp-subaccount@0635a02ed7c63944f2e544d27603f3d2c72fee2b
+      - uses: kyma-project/terraform-module/.github/actions/force-delete-sap-btp-subaccount@1.0.0
         if: always()
         with:
           btp_subaccount_id: ${{ steps.create-btp-resources.outputs.subaccount_id }}
