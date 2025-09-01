@@ -58,13 +58,10 @@ kubectl wait --for condition=Installed dockerregistries.operator.kyma-project.io
 
 sleep 5
 
-dr_external_url=$(../../bin/kyma registry config --externalurl)
+dr_external_url=$(../../bin/kyma registry config-external --push-reg-addr)
+dr_internal_pull_url=$(../../bin/kyma registry config-internal --pull-reg-addr)
 
-# TODO new cli command, for example
-# dr_internal_pull_url=$(../../bin/kyma registry config --internalurl)
-dr_internal_pull_url=$(kubectl get dockerregistries.operator.kyma-project.io -n kyma-system custom-dr -ojsonpath={.status.internalAccess.pullAddress})
-
-../../bin/kyma registry config --output config.json
+../../bin/kyma registry config-external --output config.json
 
 echo "Docker Registry enabled (URLs: $dr_external_url, $dr_internal_pull_url)"
 echo "config.json for docker CLI access generated"
@@ -97,23 +94,9 @@ echo -e "Step9: Pushing bookstore app\n"
 
 kubectl label namespace default istio-injection=enabled --overwrite
 
-# build hdi-deploy via pack and push it via docker CLI (external url)
-pack build bookstore:latest -p sample-http-db-nodejs/bookstore -B paketobuildpacks/builder:base
-docker tag bookstore:latest $dr_external_url/bookstore:latest
-docker --config . push $dr_external_url/bookstore:latest
+# deploy bookstore app via kyma push
 
-# TODO check why this fails on GH action with 
-# Importing bookstore:2025-03-13_16-06-26
-# Error:
-#   failed to import image to in-cluster registry
-
-# Error Details:
-#   failed to push image to the in-cluster registry: PUT https://localhost:32137/v2/bookstore/blobs/uploads/c0ae3d32-c861-4ed5-a796-43bf9434b954?_state=REDACTED&digest=sha256%3Acb4197092ed16fbdd56eafda1c0995d527ca3a0621d3b1787a1376e8478d751c: BLOB_UPLOAD_UNKNOWN: blob upload unknown to registry; map[]
-
-
-#../../bin/kyma app push --name bookstore --expose --container-port 3000 --mount-secret hana-hdi-binding --code-path sample-http-db-nodejs/bookstore
-
-../../bin/kyma app push --name bookstore --expose --container-port 3000 --mount-secret hana-hdi-binding --image $dr_internal_pull_url/bookstore:latest --image-pull-secret dockerregistry-config
+../../bin/kyma app push --name bookstore --expose --container-port 3000 --mount-secret hana-hdi-binding --code-path sample-http-db-nodejs/bookstore
 
 kubectl wait --for condition=Available deployment bookstore --timeout=60s
 kubectl wait --for='jsonpath={.status.state}=Ready' apirules.gateway.kyma-project.io/bookstore
