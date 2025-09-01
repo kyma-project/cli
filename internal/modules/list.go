@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
@@ -51,8 +50,6 @@ type ModuleVersion struct {
 
 type ModulesList []Module
 
-var startingTime = time.Now()
-
 // ListInstalled returns list of installed module on a cluster
 // collects info about modules based on the KymaCR
 func ListInstalled(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository, showErrors bool) (ModulesList, error) {
@@ -63,16 +60,12 @@ func ListInstalled(ctx context.Context, client kube.Client, repo repo.ModuleTemp
 	var installedCoreModules ModulesList
 	var installedCommunityModules ModulesList
 	go func() {
-		fmt.Printf("%s: start linting installed core modules\n", time.Until(startingTime).String())
 		installedCoreModules, listCoreErr = listCoreInstalled(ctx, client, repo, showErrors)
-		fmt.Printf("%s: done for core modules\n", time.Until(startingTime).String())
 		wg.Done()
 	}()
 
 	go func() {
-		fmt.Printf("%s: start linting installed community modules\n", time.Until(startingTime).String())
 		installedCommunityModules, listCommunityInstalledErr = listCommunityInstalled(ctx, client, repo, installedCoreModules)
-		fmt.Printf("%s: done for community modules\n", time.Until(startingTime).String())
 		wg.Done()
 	}()
 
@@ -91,7 +84,6 @@ func ListInstalled(ctx context.Context, client kube.Client, repo repo.ModuleTemp
 
 	allInstalled := append(installedCoreModules, installedCommunityModules...)
 
-	fmt.Printf("%s: done\n", time.Until(startingTime).String())
 	return allInstalled, nil
 }
 
@@ -107,10 +99,8 @@ func listCoreInstalled(ctx context.Context, client kube.Client, repo repo.Module
 
 	modulesList := ModulesList{}
 
-	fmt.Printf("%s: collect modules from Kyma CR\n", time.Until(startingTime).String())
 	modulesList = append(modulesList, collectModulesFromKymaCR(ctx, client, defaultKyma)...)
 
-	fmt.Printf("%s: collect unmanaged core modules\n", time.Until(startingTime).String())
 	modulesList = append(modulesList, collectUnmanagedCoreModules(ctx, client, repo, defaultKyma, showErrors)...)
 
 	return modulesList, nil
@@ -124,7 +114,6 @@ func collectModulesFromKymaCR(ctx context.Context, client kube.Client, defaultKy
 		wg.Add(1)
 		go func(ms kyma.ModuleStatus) {
 			defer wg.Done()
-			fmt.Printf("%s: collect installation state for %s\n", time.Until(startingTime).String(), ms.Name)
 			moduleSpec := getKymaModuleSpec(defaultKyma, ms.Name)
 
 			installationState, err := getModuleInstallationState(ctx, client, ms, moduleSpec)
@@ -133,7 +122,6 @@ func collectModulesFromKymaCR(ctx context.Context, client kube.Client, defaultKy
 				// TODO: should we stop here?
 			}
 
-			fmt.Printf("\t%s: get module custom resource status for %s\n", time.Until(startingTime).String(), ms.Name)
 			moduleCRState, err := getModuleCustomResourceStatus(ctx, client, ms, moduleSpec)
 			if err != nil {
 				fmt.Printf("error occured during %s custom resource status check: %v\n", ms.Name, err)
@@ -158,7 +146,6 @@ func collectModulesFromKymaCR(ctx context.Context, client kube.Client, defaultKy
 	}
 
 	wg.Wait()
-	fmt.Printf("%s: done collecting\n", time.Until(startingTime).String())
 	return modulesList
 }
 
@@ -176,7 +163,6 @@ func collectUnmanagedCoreModules(ctx context.Context, client kube.Client, repo r
 		wg.Add(1)
 		go func(mt kyma.ModuleTemplate) {
 			defer wg.Done()
-			fmt.Printf("\t%s: collect core module template for %s\n", time.Until(startingTime).String(), mt.Spec.ModuleName)
 			if mt.Spec.Version == "" {
 				return
 			}
@@ -184,7 +170,6 @@ func collectUnmanagedCoreModules(ctx context.Context, client kube.Client, repo r
 				return
 			}
 
-			fmt.Printf("\t\t%s: installed managed\n", time.Until(startingTime).String())
 			installedManager, err := repo.InstalledManager(ctx, mt)
 			if err != nil {
 				if showErrors {
@@ -197,7 +182,6 @@ func collectUnmanagedCoreModules(ctx context.Context, client kube.Client, repo r
 				return
 			}
 
-			fmt.Printf("\t\t%s: start interpretation of module template\n", time.Until(startingTime).String())
 			moduleStatus := getModuleStatus(ctx, client, mt.Spec.Data)
 			version, err := getManagerVersion(installedManager)
 			if err != nil {
@@ -224,7 +208,6 @@ func collectUnmanagedCoreModules(ctx context.Context, client kube.Client, repo r
 	}
 
 	wg.Wait()
-	fmt.Printf("\t%s: resources collected\n", time.Until(startingTime).String())
 	return modulesList
 }
 
