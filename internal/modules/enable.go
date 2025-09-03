@@ -23,7 +23,12 @@ func Enable(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRe
 
 func enable(writer io.Writer, ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository, module, channel string, defaultCR bool, crs ...unstructured.Unstructured) clierror.Error {
 	if err := validateModuleAvailability(ctx, client, repo, module); err != nil {
-		return clierror.Wrap(err, clierror.New("invalid module name or version"))
+		hints := []string{
+			"make sure you provide valid module name and channel (or version)",
+			"list available modules by calling `kyma module catalog`",
+			"if you want to add a community module, use `--community` flag",
+		}
+		return clierror.Wrap(err, clierror.New("unknown module name", hints...))
 	}
 
 	crPolicy := kyma.CustomResourcePolicyIgnore
@@ -79,7 +84,7 @@ func validateModuleAvailability(ctx context.Context, client kube.Client, repo re
 	}
 
 	if len(availableCoreVersions) == 0 {
-		return fmt.Errorf("module is not available")
+		return fmt.Errorf("%s not found in the catalog of available modules", module)
 	}
 
 	return nil
