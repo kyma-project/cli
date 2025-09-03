@@ -2,10 +2,11 @@ package hana
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetID(t *testing.T) {
@@ -38,17 +39,17 @@ func TestGetID(t *testing.T) {
 		defer testServer.Close()
 
 		id, err := getID(testServer.URL, authToken)
-		require.Contains(t, err.String(), "no Hana instances found in the response")
+		require.Contains(t, err.String(), "no SAP Hana instances found in the response")
 		require.Empty(t, id)
 	})
 	t.Run("can't create new GET request", func(t *testing.T) {
 		id, err := getID(":		", authToken)
-		require.Contains(t, err.String(), "failed to create a get Hana instances request")
+		require.Contains(t, err.String(), "failed to create a get SAP Hana instances request")
 		require.Empty(t, id)
 	})
 	t.Run("can't send GET request", func(t *testing.T) {
 		id, err := getID("https://localhost", authToken)
-		require.Contains(t, err.String(), "failed to get Hana instances")
+		require.Contains(t, err.String(), "failed to get SAP Hana instances")
 		require.Empty(t, id)
 	})
 	t.Run("response status not OK", func(t *testing.T) {
@@ -70,7 +71,7 @@ func TestGetID(t *testing.T) {
 		defer testServer.Close()
 
 		id, err := getID(testServer.URL, authToken)
-		require.Contains(t, err.String(), "failed to parse Hana instances from the response")
+		require.Contains(t, err.String(), "failed to parse SAP Hana instances from the response")
 		require.Empty(t, id)
 	})
 }

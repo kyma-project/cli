@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-var ErrModuleInstalledVersionNotInKymaChannel = errors.New("version of the installed module don't exist in default kyma channel")
+var ErrModuleInstalledVersionNotInKymaChannel = errors.New("version of the installed module doesn't exist in the configured release channel")
 
 func ModuleExistsInKymaCR(ctx context.Context, client kube.Client, moduleName string) (bool, error) {
 	defaultKyma, err := client.Kyma().GetDefaultKyma(ctx)

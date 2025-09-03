@@ -115,7 +115,7 @@ func Test_DisplayWarnings(t *testing.T) {
 		b.DisplayWarnings(buffer)
 
 		require.Equal(t, "Extensions Warning:\n"+
-			"failed to fetch all extensions from the cluster. Use the '--show-extensions-error' flag to see more details.\n\n", buffer.String())
+			"failed to fetch all extensions from the target Kyma environment. Use the '--show-extensions-error' flag to see more details.\n\n", buffer.String())
 	})
 
 	t.Run("display warning details", func(t *testing.T) {

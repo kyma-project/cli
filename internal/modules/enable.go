@@ -23,7 +23,7 @@ func Enable(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRe
 
 func enable(writer io.Writer, ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository, module, channel string, defaultCR bool, crs ...unstructured.Unstructured) clierror.Error {
 	if err := validateModuleAvailability(ctx, client, repo, module); err != nil {
-		return clierror.Wrap(err, clierror.New("module invalid"))
+		return clierror.Wrap(err, clierror.New("invalid module name or version"))
 	}
 
 	crPolicy := kyma.CustomResourcePolicyIgnore

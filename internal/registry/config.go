@@ -60,7 +60,7 @@ func getExternalConfig(ctx context.Context, client kube.Client) (*ExternalRegist
 		return nil, err
 	}
 	if dockerRegistry.Status.ExternalAccess.Enabled == "false" {
-		return nil, errors.New("external access is not enabled")
+		return nil, errors.New("docker registry is not configured for external access")
 	}
 	secretConfig, err := getRegistrySecretData(ctx, client.Static(), dockerRegistry.Status.ExternalAccess.SecretName, dockerRegistry.GetNamespace())
 	if err != nil {
@@ -173,7 +173,7 @@ func getReadyPod(pods []corev1.Pod) (*corev1.Pod, error) {
 		}
 	}
 
-	return nil, errors.New("no ready registry pod found")
+	return nil, errors.New("no running registry pod found")
 }
 
 func isPodReady(pod corev1.Pod) bool {

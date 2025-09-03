@@ -42,12 +42,12 @@ func catalogModules(cfg *catalogConfig) clierror.Error {
 
 	modulesList, err := modules.ListCatalog(cfg.Ctx, client, moduleTemplatesRepo)
 	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to list available modules from the cluster"))
+		return clierror.Wrap(err, clierror.New("failed to list available modules from the target Kyma environment"))
 	}
 
 	err = modules.Render(modulesList, modules.CatalogTableInfo, cfg.outputFormat)
 	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to render modules catalog"))
+		return clierror.Wrap(err, clierror.New("failed to list module catalog"))
 	}
 
 	return nil

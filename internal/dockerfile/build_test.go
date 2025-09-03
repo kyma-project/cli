@@ -97,7 +97,7 @@ func TestBuild(t *testing.T) {
 			BuildContext:   tmpDir,
 			DockerfilePath: dockerfilePath,
 		})
-		require.ErrorContains(t, err, "error checking context: syntax error in pattern")
+		require.ErrorContains(t, err, "error validating docker context: syntax error in pattern")
 	})
 
 	t.Run("dockerfile not found error", func(t *testing.T) {

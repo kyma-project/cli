@@ -55,7 +55,7 @@ func (b *imageBuilder) do(ctx context.Context, opts *BuildOptions) error {
 
 	err = build.ValidateContextDirectory(opts.BuildContext, excludes)
 	if err != nil {
-		return errors.Wrap(err, "error checking context")
+		return errors.Wrap(err, "error validating docker context")
 	}
 
 	buildCtx, err := archive.TarWithOptions(opts.BuildContext, &archive.TarOptions{

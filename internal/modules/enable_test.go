@@ -110,7 +110,7 @@ func TestEnable(t *testing.T) {
 
 		expectedCliErr := clierror.Wrap(
 			errors.New("module is not available"),
-			clierror.New("module invalid"),
+			clierror.New("invalid module name or version"),
 		)
 
 		err := enable(buffer, context.Background(), &client, repo, "keda", "fast", true)
@@ -133,7 +133,7 @@ func TestEnable(t *testing.T) {
 
 		expectedCliErr := clierror.Wrap(
 			errors.New("module is not available"),
-			clierror.New("module invalid"),
+			clierror.New("invalid module name or version"),
 		)
 
 		err := enable(buffer, context.Background(), &client, repo, "keda", "fast", true)
