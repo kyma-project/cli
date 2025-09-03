@@ -77,11 +77,17 @@ func listCoreInstalled(ctx context.Context, client kube.Client, repo repo.Module
 		return ModulesList{}, nil
 	}
 
-	modulesList := ModulesList{}
-	modulesList = append(modulesList, collectModulesFromKymaCR(ctx, client, defaultKyma)...)
-	modulesList = append(modulesList, collectUnmanagedCoreModules(ctx, client, repo, defaultKyma, showErrors)...)
+	kymaCRModules := make(chan ModulesList)
+	unmanagedModules := make(chan ModulesList)
 
-	return modulesList, nil
+	go func() {
+		kymaCRModules <- collectModulesFromKymaCR(ctx, client, defaultKyma)
+	}()
+	go func() {
+		unmanagedModules <- collectUnmanagedCoreModules(ctx, client, repo, defaultKyma, showErrors)
+	}()
+
+	return append(<-kymaCRModules, <-unmanagedModules...), nil
 }
 
 func collectModulesFromKymaCR(ctx context.Context, client kube.Client, defaultKyma *kyma.Kyma) ModulesList {
