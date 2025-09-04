@@ -197,8 +197,19 @@ func collectUnmanagedCoreModules(ctx context.Context, client kube.Client, repo r
 
 	modulesList := ModulesList{}
 	for m := range results {
-		modulesList = append(modulesList, m)
+		var moduleAlreadyExists bool
+		for _, module := range modulesList {
+			if module.Name == m.Name && module.InstallDetails.Version == m.InstallDetails.Version {
+				moduleAlreadyExists = true
+				break
+			}
+		}
+
+		if !moduleAlreadyExists {
+			modulesList = append(modulesList, m)
+		}
 	}
+
 	return modulesList
 }
 
