@@ -20,7 +20,7 @@ import (
 
 // Disable takes care about disabling module whatever if CustomResourcePolicy is set to Ignore or CreateAndDelete
 // if CustomResourcePolicy is Ignore then it first deletes module CR and waits for removal
-// at the end removes module from the Kyma CR
+// at the end removes module from the target Kyma environment
 func Disable(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository, module string, community bool) clierror.Error {
 	if community {
 		return disableCommunity(os.Stdout, ctx, repo, module)
@@ -48,7 +48,7 @@ func GetRunningResourcesOfCommunityModule(ctx context.Context, repo repo.ModuleT
 }
 
 func disableCommunity(writer io.Writer, ctx context.Context, repo repo.ModuleTemplatesRepository, module string) clierror.Error {
-	fmt.Fprintf(writer, "removing %s community module from the cluster\n", module)
+	fmt.Fprintf(writer, "removing %s community module from the target Kyma environment\n", module)
 
 	moduleTemplateToDelete, err := getModuleTemplateToDelete(ctx, repo, module)
 	if err != nil {
@@ -112,7 +112,7 @@ func disableCore(writer io.Writer, ctx context.Context, client kube.Client, modu
 		return clierr
 	}
 
-	fmt.Fprintf(writer, "removing %s module from the Kyma CR\n", module)
+	fmt.Fprintf(writer, "removing %s module from the target Kyma environment\n", module)
 	err := client.Kyma().DisableModule(ctx, module)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to disable module"))
@@ -125,7 +125,7 @@ func disableCore(writer io.Writer, ctx context.Context, client kube.Client, modu
 func removeModuleCR(writer io.Writer, ctx context.Context, client kube.Client, module string) clierror.Error {
 	info, err := client.Kyma().GetModuleInfo(ctx, module)
 	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to get module info from the Kyma CR"))
+		return clierror.Wrap(err, clierror.New("failed to get module info from the target Kyma environment"))
 	}
 
 	if info.Spec.CustomResourcePolicy == kyma.CustomResourcePolicyCreateAndDelete {

@@ -51,7 +51,7 @@ func TestDisableCore(t *testing.T) {
 		err := disableCore(buffer, context.Background(), &fakeKubeClient, "keda")
 		require.Nil(t, err)
 		require.Equal(t, []string{"keda"}, fakeKymaClient.DisabledModules)
-		require.Equal(t, "removing keda module from the Kyma CR\nkeda module disabled\n", buffer.String())
+		require.Equal(t, "removing keda module from the target Kyma environment\nkeda module disabled\n", buffer.String())
 	})
 
 	t.Run("disable module with Ignore policy for module with no CR", func(t *testing.T) {
@@ -78,7 +78,7 @@ func TestDisableCore(t *testing.T) {
 		err := disableCore(buffer, context.Background(), &fakeKubeClient, "keda")
 		require.Nil(t, err)
 		require.Equal(t, []string{"keda"}, fakeKymaClient.DisabledModules)
-		require.Equal(t, "removing keda module from the Kyma CR\nkeda module disabled\n", buffer.String())
+		require.Equal(t, "removing keda module from the target Kyma environment\nkeda module disabled\n", buffer.String())
 	})
 
 	t.Run("disable module with Ignore policy for module", func(t *testing.T) {
@@ -115,7 +115,7 @@ func TestDisableCore(t *testing.T) {
 		err := disableCore(buffer, context.Background(), &fakeKubeClient, "keda")
 		require.Nil(t, err)
 		require.Equal(t, []string{"keda"}, fakeKymaClient.DisabledModules)
-		require.Equal(t, "removing kyma-system/default CR\nwaiting for kyma-system/default CR to be removed\nremoving keda module from the Kyma CR\nkeda module disabled\n", buffer.String())
+		require.Equal(t, "removing kyma-system/default CR\nwaiting for kyma-system/default CR to be removed\nremoving keda module from the target Kyma environment\nkeda module disabled\n", buffer.String())
 	})
 
 	t.Run("failed to disable module", func(t *testing.T) {
@@ -139,7 +139,7 @@ func TestDisableCore(t *testing.T) {
 
 		err := disableCore(buffer, context.Background(), &fakeKubeClient, "keda")
 		require.Equal(t, expectedCliErr, err)
-		require.Equal(t, "removing keda module from the Kyma CR\n", buffer.String())
+		require.Equal(t, "removing keda module from the target Kyma environment\n", buffer.String())
 	})
 
 	t.Run("failed to get module info", func(t *testing.T) {
@@ -153,7 +153,7 @@ func TestDisableCore(t *testing.T) {
 
 		expectedCliErr := clierror.Wrap(
 			errors.New("test error"),
-			clierror.New("failed to get module info from the Kyma CR"),
+			clierror.New("failed to get module info from the target Kyma environment"),
 		)
 
 		err := disableCore(buffer, context.Background(), &fakeKubeClient, "keda")
@@ -431,7 +431,7 @@ func TestDisableCommunity(t *testing.T) {
 
 		require.NotNil(t, err)
 		require.Equal(t, expectedCliErr, err)
-		require.Equal(t, "removing test community module from the cluster\n", buffer.String())
+		require.Equal(t, "removing test community module from the target Kyma environment\n", buffer.String())
 	})
 
 	t.Run("fails to find any version for the module", func(t *testing.T) {
@@ -450,7 +450,7 @@ func TestDisableCommunity(t *testing.T) {
 
 		require.NotNil(t, err)
 		require.Equal(t, expectedCliErr, err)
-		require.Equal(t, "removing test community module from the cluster\n", buffer.String())
+		require.Equal(t, "removing test community module from the target Kyma environment\n", buffer.String())
 	})
 
 	t.Run("fails to determine version to remove", func(t *testing.T) {
@@ -482,7 +482,7 @@ func TestDisableCommunity(t *testing.T) {
 
 		require.NotNil(t, err)
 		require.Equal(t, expectedCliErr, err)
-		require.Equal(t, "removing test community module from the cluster\n", buffer.String())
+		require.Equal(t, "removing test community module from the target Kyma environment\n", buffer.String())
 	})
 
 	t.Run("fails to get modules resources", func(t *testing.T) {
@@ -549,7 +549,7 @@ func TestDisableCommunity(t *testing.T) {
 		err := disableCommunity(buffer, ctx, &fakeModuleTemplatesRepo, "test")
 
 		require.Nil(t, err)
-		require.Equal(t, "removing test community module from the cluster\nfailed to delete resource test-secret (Secret): DeleteResourceReturnWatcherError\nfailed to delete resource test-namespace (Namespace): DeleteResourceReturnWatcherError\nsome errors occured during the test community module removal\n", buffer.String())
+		require.Equal(t, "removing test community module from the target Kyma environment\nfailed to delete resource test-secret (Secret): DeleteResourceReturnWatcherError\nfailed to delete resource test-namespace (Namespace): DeleteResourceReturnWatcherError\nsome errors occured during the test community module removal\n", buffer.String())
 	})
 
 	t.Run("timeouts waiting for the resource removal", func(t *testing.T) {
@@ -603,7 +603,7 @@ func TestDisableCommunity(t *testing.T) {
 
 		require.NotNil(t, err)
 		require.Equal(t, expectedCliErr, err)
-		require.Equal(t, buffer.String(), "removing test community module from the cluster\nwaiting for resource deletion: test-secret (Secret)\n")
+		require.Equal(t, buffer.String(), "removing test community module from the target Kyma environment\nwaiting for resource deletion: test-secret (Secret)\n")
 	})
 
 	t.Run("successfully removes the module", func(t *testing.T) {
@@ -651,6 +651,6 @@ func TestDisableCommunity(t *testing.T) {
 		err := disableCommunity(buffer, ctx, &fakeModuleTemplatesRepo, "test")
 
 		require.Nil(t, err)
-		require.Equal(t, buffer.String(), "removing test community module from the cluster\nwaiting for resource deletion: test-secret (Secret)\nwaiting for resource deletion: test-namespace (Namespace)\ntest community module successfully removed\n")
+		require.Equal(t, buffer.String(), "removing test community module from the target Kyma environment\nwaiting for resource deletion: test-secret (Secret)\nwaiting for resource deletion: test-namespace (Namespace)\ntest community module successfully removed\n")
 	})
 }

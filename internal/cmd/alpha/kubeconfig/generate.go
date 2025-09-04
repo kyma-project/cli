@@ -175,7 +175,7 @@ func generateWithToken(cfg *generateConfig) (*api.Config, clierror.Error) {
 		// Get cluster kubeconfig from CIS
 		kubeconfigTemplate, clierr = kubeconfig.GetFromCIS(cfg.cisCredentialsPath)
 		if clierr != nil {
-			return nil, clierror.WrapE(clierr, clierror.New("failed to get kubeconfig from CIS"))
+			return nil, clierror.WrapE(clierr, clierror.New("failed to get kubeconfig template for Kyma environment"))
 		}
 	} else {
 		// Get cluster kubeconfig from cluster
@@ -200,7 +200,7 @@ func generateWithServiceAccount(cfg *generateConfig) (*api.Config, clierror.Erro
 	// Create ServiceAccount, ClusterRoleBinding and secret with token
 	clierr = registerServiceAccount(cfg, kubeClient)
 	if clierr != nil {
-		return nil, clierror.WrapE(clierr, clierror.New("failed to create objects"))
+		return nil, clierror.WrapE(clierr, clierror.New("failed to create k8s resources"))
 	}
 
 	// Fill kubeconfig

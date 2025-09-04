@@ -63,7 +63,7 @@ func runManage(cfg *manageConfig) clierror.Error {
 
 	exists, err := modules.ModuleExistsInKymaCR(cfg.Ctx, client, cfg.module)
 	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to check if module exists in Kyma CR"))
+		return clierror.Wrap(err, clierror.New("failed to check if module exists in the target Kyma environment"))
 	}
 
 	if exists {
@@ -80,7 +80,7 @@ func runManage(cfg *manageConfig) clierror.Error {
 func manageModuleInKyma(cfg *manageConfig, client kube.Client) clierror.Error {
 	err := modules.ManageModuleInKymaCR(cfg.Ctx, client, cfg.module, cfg.policy)
 	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to manage module in Kyma CR"))
+		return clierror.Wrap(err, clierror.New("failed to manage module in the target Kyma environment"))
 	}
 	fmt.Printf("Module %s set to managed\n", cfg.module)
 
@@ -96,7 +96,7 @@ func manageModuleMissingInKyma(cfg *manageConfig, client kube.Client) clierror.E
 		return nil
 	}
 	if !errors.Is(err, modules.ErrModuleInstalledVersionNotInKymaChannel) {
-		return clierror.Wrap(err, clierror.New("failed to mark module as managed"))
+		return clierror.Wrap(err, clierror.New("failed to set module as managed"))
 	}
 
 	// If not found, prompt for alternative channel

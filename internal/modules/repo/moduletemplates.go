@@ -188,7 +188,7 @@ func (r *moduleTemplatesRepo) InstalledManager(ctx context.Context, moduleTempla
 
 	installedManager, err := r.getInstalledManager(ctx, managerFromResources)
 	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve installed manager from the cluster %v", err)
+		return nil, fmt.Errorf("failed to retrieve installed manager from the target Kyma environment %v", err)
 	}
 
 	return installedManager, nil
