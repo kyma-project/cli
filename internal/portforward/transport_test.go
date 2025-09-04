@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/kyma-project/cli.v3/internal/registry/portforward/automock"
+	"github.com/kyma-project/cli.v3/internal/portforward/automock"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/core/v1"
