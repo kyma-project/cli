@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 
@@ -43,6 +44,40 @@ func Install(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesR
 	}
 
 	fmt.Printf("%s community module enabled\n", data.ModuleName)
+	return nil
+}
+
+func VerifyModuleExistence(ctx context.Context, moduleName, version string, repo repo.ModuleTemplatesRepository) error {
+	communityModules, err := repo.Community(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to retrieve community modules: %v", err)
+	}
+
+	var existingModules []kyma.ModuleTemplate
+
+	for _, communityModule := range communityModules {
+		if communityModule.Spec.ModuleName == moduleName {
+			existingModules = append(existingModules, communityModule)
+		}
+	}
+
+	if len(existingModules) == 0 {
+		return fmt.Errorf("community module %s is not available in the catalog", moduleName)
+	}
+
+	if version == "" {
+		return nil
+	}
+
+	var availableVersions []string
+	for _, module := range existingModules {
+		availableVersions = append(availableVersions, module.Spec.Version)
+	}
+
+	if !slices.Contains(availableVersions, version) {
+		return fmt.Errorf("community module %s in version %s does not exist. Available versions: %s", moduleName, version, strings.Join(availableVersions, ", "))
+	}
+
 	return nil
 }
 

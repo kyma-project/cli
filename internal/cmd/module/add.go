@@ -89,6 +89,7 @@ func loadCustomCRs(crPath string) ([]unstructured.Unstructured, clierror.Error) 
 
 func addModule(cfg *addConfig, client *kube.Client, crs ...unstructured.Unstructured) clierror.Error {
 	moduleTemplatesRepo := repo.NewModuleTemplatesRepo(*client)
+
 	if cfg.community {
 		return installCommunityModule(cfg, client, moduleTemplatesRepo, crs...)
 	}
@@ -97,6 +98,11 @@ func addModule(cfg *addConfig, client *kube.Client, crs ...unstructured.Unstruct
 }
 
 func installCommunityModule(cfg *addConfig, client *kube.Client, repo repo.ModuleTemplatesRepository, crs ...unstructured.Unstructured) clierror.Error {
+	err := modules.VerifyModuleExistence(cfg.Ctx, cfg.module, cfg.version, repo)
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to install the community module"))
+	}
+
 	fmt.Println("Warning:\n  You are about to install a community module.\n" +
 		"  Community modules are not officially supported and come with no binding Service Level Agreement (SLA).\n" +
 		"  There is no guarantee of support, maintenance, or compatibility.")

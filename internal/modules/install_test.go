@@ -258,6 +258,61 @@ func TestInstall_ModuleSuccessfullyInstalledWithCustomCR(t *testing.T) {
 	require.Nil(t, clierr)
 }
 
+func TestVerifyModuleExistence(t *testing.T) {
+	ctx := context.Background()
+	moduleName := "test-module"
+	version := "1.0.0"
+
+	t.Run("module not found", func(t *testing.T) {
+		repo := modulesfake.ModuleTemplatesRepo{
+			ReturnCommunity: []kyma.ModuleTemplate{},
+		}
+		err := VerifyModuleExistence(ctx, moduleName, version, &repo)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "module test-module is not available in the catalog")
+	})
+
+	t.Run("version not found", func(t *testing.T) {
+		repo := modulesfake.ModuleTemplatesRepo{
+			ReturnCommunity: []kyma.ModuleTemplate{
+				{Spec: kyma.ModuleTemplateSpec{ModuleName: moduleName, Version: "2.0.0"}},
+			},
+		}
+		err := VerifyModuleExistence(ctx, moduleName, version, &repo)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "community module test-module in version 1.0.0 does not exist. Available versions: 2.0.0")
+	})
+
+	t.Run("version found", func(t *testing.T) {
+		repo := modulesfake.ModuleTemplatesRepo{
+			ReturnCommunity: []kyma.ModuleTemplate{
+				{Spec: kyma.ModuleTemplateSpec{ModuleName: moduleName, Version: version}},
+			},
+		}
+		err := VerifyModuleExistence(ctx, moduleName, version, &repo)
+		require.NoError(t, err)
+	})
+
+	t.Run("version empty (any version is valid)", func(t *testing.T) {
+		repo := modulesfake.ModuleTemplatesRepo{
+			ReturnCommunity: []kyma.ModuleTemplate{
+				{Spec: kyma.ModuleTemplateSpec{ModuleName: moduleName, Version: "2.0.0"}},
+			},
+		}
+		err := VerifyModuleExistence(ctx, moduleName, "", &repo)
+		require.NoError(t, err)
+	})
+
+	t.Run("repo error", func(t *testing.T) {
+		repo := modulesfake.ModuleTemplatesRepo{
+			CommunityErr: errors.New("repo error"),
+		}
+		err := VerifyModuleExistence(ctx, moduleName, version, &repo)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "failed to retrieve community modules: repo error")
+	})
+}
+
 func getTestHttpServerWithResponse(response string) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte(response))
