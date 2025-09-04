@@ -163,7 +163,7 @@ func Test_getWorkloadMeta(t *testing.T) {
 		// then
 		require.Error(t, err)
 		require.Nil(t, meta)
-		require.Contains(t, err.Error(), "no ready registry pod found")
+		require.Contains(t, err.Error(), "no running registry pod found")
 	})
 }
 

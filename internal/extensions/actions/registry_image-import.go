@@ -81,7 +81,7 @@ func (a *registryImageImportAction) Run(cmd *cobra.Command, _ []string) clierror
 		pushFunc,
 	)
 	if err != nil {
-		return clierror.WrapE(err, clierror.New("failed to import image to in-cluster registry"))
+		return clierror.WrapE(err, clierror.New("failed to import image to in-cluster docker registry"))
 	}
 
 	pullImageName := fmt.Sprintf("%s/%s", registryConfig.SecretData.PullRegAddr, pushedImage)

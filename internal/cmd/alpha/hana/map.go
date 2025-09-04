@@ -54,12 +54,12 @@ func runHanaMap(config *hanaMapConfig) clierror.Error {
 
 	clusterID, err := getClusterID(config.Ctx, client.Static())
 	if err != nil {
-		return clierror.WrapE(err, clierror.New("while getting cluster ID"))
+		return clierror.WrapE(err, clierror.New("while getting Kyma cluster ID"))
 	}
 
 	credentials, err := hana.ReadCredentialsFromFile(config.credentialsPath)
 	if err != nil {
-		return clierror.WrapE(err, clierror.New("while reading Hana credentials from file"))
+		return clierror.WrapE(err, clierror.New("while reading SAP Hana credentials from file"))
 	}
 
 	token, err := auth.GetOAuthToken("client_credentials", credentials.UAA.URL, credentials.UAA.ClientID, credentials.UAA.ClientSecret)
@@ -72,13 +72,13 @@ func runHanaMap(config *hanaMapConfig) clierror.Error {
 	if hanaID == "" {
 		hanaID, err = hana.GetID(credentials.BaseURL, token.AccessToken)
 		if err != nil {
-			return clierror.WrapE(err, clierror.New("while getting hana ID"))
+			return clierror.WrapE(err, clierror.New("while getting SAP Hana ID"))
 
 		}
 	}
 	err = hana.MapInstance(credentials.BaseURL, clusterID, hanaID, token.AccessToken)
 	if err != nil {
-		return clierror.WrapE(err, clierror.New("while mapping Hana instance"))
+		return clierror.WrapE(err, clierror.New("while mapping Kyma environment instance with SAP Hana instance"))
 	}
 
 	fmt.Printf("Hana with id '%s' is mapped to the cluster with id '%s'\n", hanaID, clusterID)

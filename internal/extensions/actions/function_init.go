@@ -33,15 +33,15 @@ func (c *functionInitActionConfig) validate() clierror.Error {
 	if _, ok := c.Runtimes[c.UseRuntime]; !ok {
 		return clierror.New(
 			fmt.Sprintf("unsupported runtime %s", c.UseRuntime),
-			fmt.Sprintf("use on the allowed runtimes on this cluster [ %s ]", sortedRuntimesString(c.Runtimes)),
+			fmt.Sprintf("allowed runtimes on this Kyma environment [ %s ]", sortedRuntimesString(c.Runtimes)),
 		)
 	}
 
 	for runtimeName, runtimeCfg := range c.Runtimes {
 		if !filepath.IsLocal(runtimeCfg.DepsFilename) {
 			return clierror.New(
-				fmt.Sprintf("invalid deps filename %s for runtime %s", runtimeCfg.DepsFilename, runtimeName),
-				"deps filename must be a local path or single file name",
+				fmt.Sprintf("invalid dependency filename %s for runtime %s", runtimeCfg.DepsFilename, runtimeName),
+				"dependency filename must be a local path or single file name",
 			)
 		}
 

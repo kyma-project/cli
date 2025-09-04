@@ -42,7 +42,7 @@ func NewBuilder(kymaConfig *cmdcommon.KymaConfig) *Builder {
 
 func AddCmdPersistentFlags(cmd *cobra.Command) {
 	// these flags are not operational. it's only to print the help description, and the help cobra with validation
-	_ = cmd.PersistentFlags().Bool("skip-extensions", false, "Skip fetching extensions from the cluster")
+	_ = cmd.PersistentFlags().Bool("skip-extensions", false, "Skip fetching extensions from the target Kyma environment")
 	_ = cmd.PersistentFlags().Bool("show-extensions-error", false, "Prints a possible error when fetching extensions fails")
 }
 
@@ -56,7 +56,7 @@ func (b *Builder) DisplayWarnings(warningWriter io.Writer) {
 		// print error as warning if expected and continue
 		fmt.Fprintf(warningWriter, "Extensions Warning:\n%s\n\n", errors.NewList(b.extensionsErrors...).Error())
 	} else if len(b.extensionsErrors) > 0 {
-		fmt.Fprintf(warningWriter, "Extensions Warning:\nfailed to fetch all extensions from the cluster. Use the '--show-extensions-error' flag to see more details.\n\n")
+		fmt.Fprintf(warningWriter, "Extensions Warning:\nfailed to fetch all extensions from the target Kyma environment. Use the '--show-extensions-error' flag to see more details.\n\n")
 	}
 }
 

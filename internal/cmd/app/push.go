@@ -180,13 +180,13 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 		var domain string
 		domain, clierr = client.Istio().GetClusterAddressFromGateway(cfg.Ctx)
 		if clierr != nil {
-			return clierror.WrapE(clierr, clierror.New("failed to get cluster address from gateway", "Make sure Istio module is installed"))
+			return clierror.WrapE(clierr, clierror.New("failed to domain address of the Kyma environment from gateway", "Make sure Istio module is installed"))
 		}
 
 		host := fmt.Sprintf("%s.%s", cfg.name, domain)
 		err = resources.CreateAPIRule(cfg.Ctx, client.RootlessDynamic(), cfg.name, cfg.namespace, host, uint32(*cfg.containerPort.Value))
 		if err != nil {
-			return clierror.Wrap(err, clierror.New("failed to create API Rule", "Make sure API Gateway module is installed", "Make sure APIRule is available in v2alpha1 version"))
+			return clierror.Wrap(err, clierror.New("failed to create API Rule resource", "Make sure API Gateway module is installed", "Make sure APIRule CRD is available in v2 version"))
 		}
 
 		fmt.Printf("\nThe %s app is available under the https://%s/ address\n", cfg.name, host)
@@ -228,7 +228,7 @@ func buildAndImportImage(client kube.Client, cfg *appPushConfig, registryConfig 
 		pushFunc,
 	)
 	if cliErr != nil {
-		return "", clierror.WrapE(cliErr, clierror.New("failed to import image to in-cluster registry"))
+		return "", clierror.WrapE(cliErr, clierror.New("failed to import image to in-cluster docker registry"))
 	}
 
 	return pushedImage, nil

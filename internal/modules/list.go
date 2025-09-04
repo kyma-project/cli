@@ -70,7 +70,7 @@ func ListInstalled(ctx context.Context, client kube.Client, repo repo.ModuleTemp
 func listCoreInstalled(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository, showErrors bool) (ModulesList, error) {
 	defaultKyma, err := client.Kyma().GetDefaultKyma(ctx)
 	if err != nil && !apierrors.IsNotFound(err) {
-		return nil, errors.Wrap(err, "failed to get default Kyma CR from the cluster")
+		return nil, errors.Wrap(err, "failed to get default Kyma CR from the target Kyma environment")
 	}
 	if err != nil && apierrors.IsNotFound(err) {
 		// if cluster is not managed by KLM we won't be looking into Kyma CR spec
@@ -239,7 +239,7 @@ func ListCatalog(ctx context.Context, client kube.Client, repo repo.ModuleTempla
 func listCoreModulesCatalog(ctx context.Context, client kube.Client) (ModulesList, error) {
 	moduleTemplates, err := client.Kyma().ListModuleTemplate(ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to list all ModuleTemplate CRs from the cluster")
+		return nil, errors.Wrap(err, "failed to list all ModuleTemplate resources from the target Kyma environment")
 	}
 
 	moduleReleaseMetas, err := client.Kyma().ListModuleReleaseMeta(ctx)
@@ -248,7 +248,7 @@ func listCoreModulesCatalog(ctx context.Context, client kube.Client) (ModulesLis
 		if len(moduleList) != 0 {
 			return moduleList, nil
 		}
-		return nil, errors.New("failed to list modules catalog with and without ModuleRelease meta resource from the cluster")
+		return nil, errors.New("failed to list module catalog from the target Kyma environment")
 	}
 
 	modulesList := ModulesList{}
@@ -799,7 +799,7 @@ func getModuleIndex(list ModulesList, name string, isCommunityModule bool) int {
 func findMatchingModuleTemplate(ctx context.Context, client kube.Client, moduleStatus kyma.ModuleStatus) (*kyma.ModuleTemplate, error) {
 	moduleTemplates, err := client.Kyma().ListModuleTemplate(ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to list ModuleTemplates")
+		return nil, errors.Wrap(err, "failed to list modules available on the target Kyma environment")
 	}
 	for _, mt := range moduleTemplates.Items {
 		if mt.Spec.ModuleName == moduleStatus.Name && mt.Spec.Version == moduleStatus.Version {
@@ -807,5 +807,5 @@ func findMatchingModuleTemplate(ctx context.Context, client kube.Client, moduleS
 		}
 	}
 
-	return nil, errors.Errorf("no matching ModuleTemplate found for module: %s, version: %s", moduleStatus.Name, moduleStatus.Version)
+	return nil, errors.Errorf("no matching module version found for module: %s, version: %s", moduleStatus.Name, moduleStatus.Version)
 }
