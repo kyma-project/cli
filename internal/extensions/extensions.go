@@ -65,7 +65,7 @@ func (b *Builder) DisplayWarnings(warningWriter io.Writer) {
 func (b *Builder) Build(parentCmd *cobra.Command, availableActions types.ActionsMap) {
 	for _, cmExt := range b.extensions {
 		// validate
-		err := cmExt.Extension.Validate(availableActions)
+		err := cmExt.Extension.Validate()
 		if err != nil {
 			b.extensionsErrors = append(b.extensionsErrors,
 				errors.Wrapf(err, "failed to validate extension from configmap '%s/%s'", cmExt.ConfigMapNamespace, cmExt.ConfigMapName))
