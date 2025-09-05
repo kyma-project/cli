@@ -3,12 +3,11 @@ package registry
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/kube"
-	corev1 "k8s.io/api/core/v1"
+	"github.com/kyma-project/cli.v3/internal/kube/resources"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/dynamic"
@@ -138,14 +137,7 @@ func getWorkloadMeta(ctx context.Context, client kubernetes.Interface, config *S
 		return nil, err
 	}
 
-	registryPods, err := client.CoreV1().Pods(svcNamespace).List(ctx, metav1.ListOptions{
-		LabelSelector: labelSelectorFor(registrySvc.Spec.Selector),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	readyRegistryPod, err := getReadyPod(registryPods.Items)
+	readyRegistryPod, err := resources.GetPodForSelector(ctx, client, svcNamespace, registrySvc.Spec.Selector)
 	if err != nil {
 		return nil, err
 	}
@@ -155,35 +147,6 @@ func getWorkloadMeta(ctx context.Context, client kubernetes.Interface, config *S
 		Namespace: readyRegistryPod.GetNamespace(),
 		Port:      registrySvc.Spec.Ports[0].TargetPort.String(),
 	}, nil
-}
-
-func labelSelectorFor(labels map[string]string) string {
-	labelSelectors := []string{}
-	for key, value := range labels {
-		labelSelectors = append(labelSelectors, fmt.Sprintf("%s=%s", key, value))
-	}
-
-	return strings.Join(labelSelectors, ",")
-}
-
-func getReadyPod(pods []corev1.Pod) (*corev1.Pod, error) {
-	for _, registryPod := range pods {
-		if isPodReady(registryPod) {
-			return &registryPod, nil
-		}
-	}
-
-	return nil, errors.New("no running registry pod found")
-}
-
-func isPodReady(pod corev1.Pod) bool {
-	for _, condition := range pod.Status.Conditions {
-		if condition.Type == corev1.ContainersReady && condition.Status == corev1.ConditionTrue {
-			return true
-		}
-	}
-
-	return false
 }
 
 func getServedDockerRegistry(ctx context.Context, c dynamic.Interface) (*DockerRegistry, error) {
