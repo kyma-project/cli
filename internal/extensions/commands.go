@@ -44,8 +44,9 @@ func buildSingleCommand(extension types.Extension, availableActions types.Action
 		Long:  extension.Metadata.DescriptionLong,
 	}
 
-	if extension.Action == "" {
-		// no action provided
+	action, ok := availableActions[extension.Action]
+	if extension.Action == "" || !ok {
+		// no action provided or action not found
 		// set help command as default run
 		cmd.RunE = emptyActionRun
 		return cmd, errors.NewList(errs...)
@@ -77,13 +78,6 @@ func buildSingleCommand(extension types.Extension, availableActions types.Action
 	values = append(values, cmdArgs.value)
 
 	// set action runs
-	action, ok := availableActions[extension.Action]
-	if !ok {
-		// unexpected behavior because actions list is validated and should be filled only with available data
-		errs = append(errs, errors.Newf("action '%s' not found", extension.Action))
-		return cmd, errors.NewList(errs...)
-	}
-
 	cmd.PreRun = func(_ *cobra.Command, _ []string) {
 		// check required flags
 		clierror.Check(flags.Validate(cmd.Flags(),
