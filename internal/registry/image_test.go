@@ -11,7 +11,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/fake"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/kyma-project/cli.v3/internal/clierror"
-	"github.com/kyma-project/cli.v3/internal/registry/portforward/automock"
+	"github.com/kyma-project/cli.v3/internal/portforward/automock"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/util/httpstream"
 	"k8s.io/client-go/rest"
