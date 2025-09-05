@@ -116,10 +116,6 @@ func (e *Extension) Validate(availableActions ActionsMap) error {
 
 func (e *Extension) validateWithPath(path string, availableActions ActionsMap) error {
 	var errs []error
-	if _, ok := availableActions[e.Action]; e.Action != "" && !ok {
-		errs = append(errs, errors.Newf("wrong %suses: unsupported value '%s'", path, e.Action))
-	}
-
 	if metaErr := e.Metadata.Validate(); metaErr != nil {
 		errs = append(errs, errors.Newf("wrong %smetadata: %s", path, metaErr.Error()))
 	}
