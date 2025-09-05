@@ -24,7 +24,7 @@ kyma --help
 Run a simple app from the image on Kyma by calling:
 
 ```sh
-kyma alpha app push --name my-first-kyma-app --image kennethreitz/httpbin --expose --container-port 80
+kyma app push --name my-first-kyma-app --image kennethreitz/httpbin --expose --container-port 80
 
 
 Creating deployment default/my-first-kyma-app

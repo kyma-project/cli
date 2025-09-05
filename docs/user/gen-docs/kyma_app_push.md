@@ -1,4 +1,4 @@
-# kyma alpha app push
+# kyma app push
 
 Push the application to the Kubernetes cluster.
 
@@ -7,7 +7,7 @@ Push the application to the Kubernetes cluster.
 Use this command to push the application to the Kubernetes cluster.
 
 ```bash
-kyma alpha app push [flags]
+kyma app push [flags]
 ```
 
 ## Flags
@@ -34,4 +34,4 @@ kyma alpha app push [flags]
 
 ## See also
 
-* [kyma alpha app](kyma_alpha_app.md) - Manages applications on the Kubernetes cluster
+* [kyma app](kyma_app.md) - Manages applications on the Kubernetes cluster

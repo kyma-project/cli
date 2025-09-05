@@ -14,6 +14,7 @@ kyma <command> [flags]
 
 ```text
   alpha      - Groups command prototypes for which the API may still change
+  app        - Manages applications on the Kubernetes cluster
   completion - Generate the autocompletion script for the specified shell
   help       - Help about any command
   module     - Manages Kyma modules
@@ -32,6 +33,7 @@ kyma <command> [flags]
 ## See also
 
 * [kyma alpha](kyma_alpha.md)           - Groups command prototypes for which the API may still change
+* [kyma app](kyma_app.md)               - Manages applications on the Kubernetes cluster
 * [kyma completion](kyma_completion.md) - Generate the autocompletion script for the specified shell
 * [kyma module](kyma_module.md)         - Manages Kyma modules
 * [kyma version](kyma_version.md)       - Displays the version of Kyma CLI
