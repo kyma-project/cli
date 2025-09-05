@@ -110,11 +110,11 @@ type Extension struct {
 	SubCommands []Extension `yaml:"subCommands"`
 }
 
-func (e *Extension) Validate(availableActions ActionsMap) error {
-	return e.validateWithPath(".", availableActions)
+func (e *Extension) Validate() error {
+	return e.validateWithPath(".")
 }
 
-func (e *Extension) validateWithPath(path string, availableActions ActionsMap) error {
+func (e *Extension) validateWithPath(path string) error {
 	var errs []error
 	if metaErr := e.Metadata.Validate(); metaErr != nil {
 		errs = append(errs, errors.Newf("wrong %smetadata: %s", path, metaErr.Error()))
@@ -133,7 +133,7 @@ func (e *Extension) validateWithPath(path string, availableActions ActionsMap) e
 	}
 
 	for i := range e.SubCommands {
-		subCmdErr := e.SubCommands[i].validateWithPath(fmt.Sprintf("%ssubCommands[%d].", path, i), availableActions)
+		subCmdErr := e.SubCommands[i].validateWithPath(fmt.Sprintf("%ssubCommands[%d].", path, i))
 		if subCmdErr != nil {
 			errs = append(errs, subCmdErr)
 		}
