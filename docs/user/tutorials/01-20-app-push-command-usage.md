@@ -9,9 +9,9 @@ To use `kyma alpha app push`, you must also provide either a Dockerfile, Docker 
 1. Add the Istio, Docker Registry, and API Gateway modules:
 
    ```bash
-   kyma alpha module add istio --default-cr
-   kyma alpha module add docker-registry -c experimental --default-cr
-   kyma alpha module add api-gateway --default-cr
+   kyma module add istio --default-cr
+   kyma module add docker-registry -c experimental --default-cr
+   kyma module add api-gateway --default-cr
    ```
 
 2. Clone the [Paketo code examples](https://github.com/paketo-buildpacks/samples/tree/main) repository into the desired folder:
