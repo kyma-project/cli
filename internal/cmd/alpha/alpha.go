@@ -1,6 +1,7 @@
 package alpha
 
 import (
+	"github.com/kyma-project/cli.v3/internal/cmd/alpha/diagnose"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/hana"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/kubeconfig"
 	"github.com/kyma-project/cli.v3/internal/cmd/alpha/provision"
@@ -21,6 +22,7 @@ func NewAlphaCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.AddCommand(provision.NewProvisionCMD())
 	cmd.AddCommand(referenceinstance.NewReferenceInstanceCMD(kymaConfig))
 	cmd.AddCommand(kubeconfig.NewKubeconfigCMD(kymaConfig))
+	cmd.AddCommand(diagnose.NewDiagnoseCMD(kymaConfig))
 
 	return cmd
 }
