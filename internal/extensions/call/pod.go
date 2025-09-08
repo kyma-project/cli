@@ -12,14 +12,16 @@ import (
 )
 
 type PodCaller struct {
+	ctx          context.Context
 	client       kube.Client
 	podSelector  map[string]string
 	podNamespace string
 	podPort      string
 }
 
-func NewPodCaller(client kube.Client, podNamespace string, podSelector map[string]string, podPort string) *PodCaller {
+func NewPodCaller(ctx context.Context, client kube.Client, podNamespace string, podSelector map[string]string, podPort string) *PodCaller {
 	return &PodCaller{
+		ctx:          ctx,
 		client:       client,
 		podSelector:  podSelector,
 		podNamespace: podNamespace,
@@ -27,9 +29,9 @@ func NewPodCaller(client kube.Client, podNamespace string, podSelector map[strin
 	}
 }
 
-func (c *PodCaller) Get(ctx context.Context, path string, parameters map[string]string) ([]byte, clierror.Error) {
+func (c *PodCaller) Call(method, path string, parameters map[string]string) ([]byte, clierror.Error) {
 	targetPod, err := resources.GetPodForSelector(
-		ctx,
+		c.ctx,
 		c.client.Static(),
 		c.podNamespace,
 		c.podSelector,
@@ -38,7 +40,7 @@ func (c *PodCaller) Get(ctx context.Context, path string, parameters map[string]
 		return nil, clierror.Wrap(err, clierror.New("failed to get target pod"))
 	}
 
-	req, err := buildRequest("GET", targetPod.GetName(), targetPod.GetNamespace(), c.podPort, path, parameters)
+	req, err := buildRequest(method, targetPod.GetName(), targetPod.GetNamespace(), c.podPort, path, parameters)
 	if err != nil {
 		return nil, clierror.Wrap(err, clierror.New("failed to build request"))
 	}

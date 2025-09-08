@@ -4,6 +4,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
@@ -70,35 +72,70 @@ func (a *clusterCallFilesToSaveAction) Run(cmd *cobra.Command, _ []string) clier
 		return clierror.WrapE(clierr, clierror.New("invalid action configuration"))
 	}
 
+	if !filepath.IsLocal(a.Cfg.OutputDir) {
+		// output dir is not a local path, ask user for confirmation
+		clierr = getUserAcceptance(a.Cfg.OutputDir)
+		if clierr != nil {
+			return clierr
+		}
+	}
+
 	client, clierr := a.kymaConfig.GetKubeClientWithClierr()
 	if clierr != nil {
 		return clierr
 	}
 
 	podCaller := call.NewPodCaller(
+		a.kymaConfig.Ctx,
 		client,
 		a.Cfg.TargetPod.Namespace,
 		a.Cfg.TargetPod.Selector,
 		a.Cfg.TargetPod.Port,
 	)
 
-	bytesResp, clierr := podCaller.Get(a.kymaConfig.Ctx, a.Cfg.Request.Path, a.Cfg.Request.Parameters)
+	bytesResp, clierr := podCaller.Call("GET", a.Cfg.Request.Path, a.Cfg.Request.Parameters)
 	if clierr != nil {
-		return clierror.WrapE(clierr, clierror.New("failed to call target pod"))
+		return clierror.WrapE(clierr, clierror.New("failed to call server"))
 	}
 
-	// Process the response
 	var filesResp call.FilesListResponse
 	if err := json.Unmarshal(bytesResp, &filesResp); err != nil {
-		return clierror.Wrap(err, clierror.New("failed to decode response"))
+		return clierror.Wrap(err, clierror.New("failed to decode server response"))
 	}
 
-	data, err := base64.StdEncoding.DecodeString(filesResp.Files[0].Data)
+	outDir, err := filepath.Abs(a.Cfg.OutputDir)
 	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to decode file data"))
+		// undexpected error, use realtive path
+		outDir = a.Cfg.OutputDir
 	}
 
-	fmt.Println(string(data))
+	clierr = writeFilesResponse(outDir, filesResp)
+	if clierr != nil {
+		return clierror.WrapE(clierr, clierror.New("failed to write files to output directory"))
+	}
+
+	fmt.Fprintf(cmd.OutOrStdout(), "Files saved to %s\n", outDir)
+	return nil
+}
+
+func writeFilesResponse(outputDir string, filesResp call.FilesListResponse) clierror.Error {
+	for _, file := range filesResp.Files {
+		filePath := filepath.Join(outputDir, file.Name)
+		err := os.MkdirAll(filepath.Dir(filePath), os.ModePerm)
+		if err != nil {
+			return clierror.Wrap(err, clierror.New(fmt.Sprintf("failed to create directory for file %s", filePath)))
+		}
+
+		data, err := base64.StdEncoding.DecodeString(file.Data)
+		if err != nil {
+			return clierror.Wrap(err, clierror.New(fmt.Sprintf("failed to decode data for file %s", filePath)))
+		}
+
+		err = os.WriteFile(filePath, data, os.ModePerm)
+		if err != nil {
+			return clierror.Wrap(err, clierror.New(fmt.Sprintf("failed to write file %s", filePath)))
+		}
+	}
 
 	return nil
 }
