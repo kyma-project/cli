@@ -9,7 +9,13 @@ This tutorial shows how you can add and delete a new module using Kyma CLI.
 
 ### Adding a New Module
 
-To add a new module with the default policy set to `CreateAndDelete`, use the following command:
+1. Check the list of modules that can be added:
+
+```bash
+kyma module catalog
+```
+
+2. To add a new module with the default policy set to `CreateAndDelete`, use the following command:
 
 ```bash
 kyma module add {MODULE-NAME} --default-cr
@@ -25,6 +31,11 @@ You can also specify which channel the module should use with the `-c {CHANNEL-N
 
 ```bash
 kyma module add {MODULE-NAME} -c {CHANNEL-NAME} --default-cr
+```
+3. To see if your module is added, run the following command:
+
+```bash
+kyma module list
 ```
 
 ### Deleting an Existing Module

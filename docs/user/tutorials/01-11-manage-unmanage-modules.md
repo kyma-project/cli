@@ -17,7 +17,8 @@ To set a module to the managed state, use the following command:
 kyma module manage {MODULE-NAME}
 ```
 
-Even if the module is already in the managed state, you can change its policy by adding the optional flag ``--policy {POLICY-NAME}``. The default policy is ``CreateAndDelete``.
+> [!TIP]
+> Even if the module is already in the managed state, you can change its policy by adding the optional flag ``--policy {POLICY-NAME}``. The default policy is ``CreateAndDelete``.
 
 ### Setting a Module to the Unmanaged State
 
