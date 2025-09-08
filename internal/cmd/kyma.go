@@ -37,13 +37,14 @@ func NewKymaCMD() *cobra.Command {
 
 	builder := extensions.NewBuilder(kymaConfig)
 	builder.Build(cmd, extensionstypes.ActionsMap{
-		"function_init":         actions.NewFunctionInit(kymaConfig),
-		"registry_config":       actions.NewRegistryConfig(kymaConfig),
-		"registry_image_import": actions.NewRegistryImageImport(kymaConfig),
-		"resource_create":       actions.NewResourceCreate(kymaConfig),
-		"resource_get":          actions.NewResourceGet(kymaConfig),
-		"resource_delete":       actions.NewResourceDelete(kymaConfig),
-		"resource_explain":      actions.NewResourceExplain(),
+		"function_init":              actions.NewFunctionInit(kymaConfig),
+		"registry_config":            actions.NewRegistryConfig(kymaConfig),
+		"registry_image_import":      actions.NewRegistryImageImport(kymaConfig),
+		"resource_create":            actions.NewResourceCreate(kymaConfig),
+		"resource_get":               actions.NewResourceGet(kymaConfig),
+		"resource_delete":            actions.NewResourceDelete(kymaConfig),
+		"resource_explain":           actions.NewResourceExplain(),
+		"cluster_call_files_to_save": actions.NewClusterCallFilesToSaveAction(kymaConfig),
 	})
 	builder.DisplayWarnings(cmd.ErrOrStderr())
 
