@@ -28,7 +28,15 @@ func buildArgs(extensionArgs *types.Args, overwrites map[string]interface{}) arg
 
 	return args{
 		value: value,
-		run: func(_ *cobra.Command, args []string) error {
+		run: func(cmd *cobra.Command, args []string) error {
+			if len(args) > 0 {
+				for _, sub := range cmd.Commands() {
+					if sub.Name() == args[0] {
+						return nil
+					}
+				}
+			}
+
 			if extensionArgs.Optional {
 				return setOptionalArg(value, args)
 			}
