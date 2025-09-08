@@ -6,14 +6,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var (
-	testActionsMap = map[string]Action{
-		"create": nil,
-		"debug":  nil,
-		"demo":   nil,
-	}
-)
-
 func TestExtension_Validate(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -55,8 +47,7 @@ func TestExtension_Validate(t *testing.T) {
 		},
 		{
 			name: "validation error - broken flag",
-			wantErr: "wrong .uses: unsupported value 'wrong-action'\n" +
-				"wrong .flags: empty name, unknown type ''\n" +
+			wantErr: "wrong .flags: empty name, unknown type ''\n" +
 				"wrong .subCommands[0].metadata: empty name\n" +
 				"wrong .subCommands[0].subCommands[1].args: unknown type ''",
 			extension: Extension{
@@ -97,7 +88,7 @@ func TestExtension_Validate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.extension.Validate(testActionsMap)
+			err := tt.extension.Validate()
 			if tt.wantErr != "" {
 				require.EqualError(t, err, tt.wantErr)
 			} else {
