@@ -74,7 +74,7 @@ func (a *callFilesToSaveAction) Run(cmd *cobra.Command, _ []string) clierror.Err
 
 	if !filepath.IsLocal(a.Cfg.OutputDir) {
 		// output dir is not a local path, ask user for confirmation
-		clierr = getUserAcceptance(a.Cfg.OutputDir)
+		clierr = getOutputDirAcceptance(a.Cfg.OutputDir)
 		if clierr != nil {
 			return clierr
 		}
