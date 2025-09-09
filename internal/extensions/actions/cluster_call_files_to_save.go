@@ -19,12 +19,12 @@ type targetPodConfig struct {
 	Selector  map[string]string `yaml:"selector"`
 	Namespace string            `yaml:"namespace"`
 	Port      string            `yaml:"port"`
+	Path      string            `yaml:"path"`
 }
 
 type requestConfig struct {
 	// TODO: support other HTTP methods
 	// Method    string            `yaml:"method"`
-	Path       string            `yaml:"path"`
 	Parameters map[string]string `yaml:"parameters"`
 }
 
@@ -44,8 +44,8 @@ func (c *clusterCallFilesToSaveConfig) validate() clierror.Error {
 	if c.TargetPod.Port == "" {
 		return clierror.New("empty target pod port")
 	}
-	if c.Request.Path == "" {
-		return clierror.New("empty request path")
+	if c.TargetPod.Path == "" {
+		return clierror.New("empty target pod path")
 	}
 	if c.OutputDir == "" {
 		return clierror.New("empty output directory path")
@@ -93,7 +93,7 @@ func (a *clusterCallFilesToSaveAction) Run(cmd *cobra.Command, _ []string) clier
 		a.Cfg.TargetPod.Port,
 	)
 
-	bytesResp, clierr := podCaller.Call("GET", a.Cfg.Request.Path, a.Cfg.Request.Parameters)
+	bytesResp, clierr := podCaller.Call("GET", a.Cfg.TargetPod.Path, a.Cfg.Request.Parameters)
 	if clierr != nil {
 		return clierror.WrapE(clierr, clierror.New("failed to call server"))
 	}
