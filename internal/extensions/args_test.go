@@ -100,4 +100,28 @@ func Test_buildArgs(t *testing.T) {
 
 		require.ErrorContains(t, err, "accepts at most one argument, received 4")
 	})
+
+	t.Run("subcommand not treated as argument", func(t *testing.T) {
+		testArgs := buildArgs(&types.Args{
+			Type:     parameters.StringCustomType,
+			Optional: false,
+		}, fixEmptyOverwrites())
+
+		root := &cobra.Command{
+			Use: "root",
+		}
+
+		subcmd := &cobra.Command{
+			Use: "subcmd",
+			Run: func(cmd *cobra.Command, args []string) {
+				// subcommand logic
+			},
+		}
+		root.AddCommand(subcmd)
+
+		err := testArgs.run(root, []string{"subcmd"})
+
+		require.NoError(t, err)
+		require.Empty(t, testArgs.value.GetValue())
+	})
 }
