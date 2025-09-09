@@ -88,7 +88,7 @@ func buildSingleCommand(extension types.Extension, availableActions types.Action
 		cmd.Run = unsupportedActionRun
 		return cmd, errors.NewList(errs...)
 	}
-	
+
 	cmd.PreRun = func(_ *cobra.Command, _ []string) {
 		// check required flags
 		clierror.Check(flags.Validate(cmd.Flags(),
