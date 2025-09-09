@@ -44,6 +44,7 @@ func NewKymaCMD() *cobra.Command {
 		"resource_get":          actions.NewResourceGet(kymaConfig),
 		"resource_delete":       actions.NewResourceDelete(kymaConfig),
 		"resource_explain":      actions.NewResourceExplain(),
+		"call_files_to_save":    actions.NewCallFilesToSaveAction(kymaConfig),
 	})
 	builder.DisplayWarnings(cmd.ErrOrStderr())
 
