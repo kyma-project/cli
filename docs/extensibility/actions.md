@@ -2,7 +2,7 @@
 
 ## Overview
 
-Actions are the base functionality of every executable command. They determine the procedure that the command runs on execution. Every action expects a specific configuration under the `.with` field. They are designed to cover most common and generic cases, such as CRUD operations (create, read, update, delete) and module-oriented operations (like importing images to the in-cluster registry for the `docker-registry` module).
+Actions are the base functionality of every executable command. They determine the procedure that the command runs on execution. Every action expects a specific configuration under the `.with` field. They are designed to cover most common and generic cases, such as [CRUD operations](#available-resource-oriented-actions) (create, read, update, delete), [module-oriented operations](#available-module-oriented-actions) (like importing images to the in-cluster registry for the `docker-registry` module), and [cluster call operations](#available-cluster-call-actions) allowing to run script remotely on a cluster.
 
 ## Go Templates
 
@@ -190,6 +190,8 @@ useExternal: false
 
 Action designed for the `serverless` module to init local workspace with hello world Functions files with handler and dependencies.
 
+**Action configuration:**
+
 ```yaml
 useRuntime: "..."
 outputDir: "..."
@@ -212,3 +214,71 @@ runtimes:
 | **runtimes[\<runtime\>].depsData** | string | The output dependencies file content  |
 | **runtimes[\<runtime\>].handlerFilename** | string | The filename of the handler file |
 | **runtimes[\<runtime\>].handlerData** | string | The output handler file content |
+
+## Available Cluster-Call Actions
+
+Some functionality implemented by the resource and module oriented actions may be not enought for some more complex cases. To cover such cases it is possible to define own procedures/scripts on the module controller level, open endpoint allowing to run script and call it using the Kyma CLI.
+
+| Name | Description |
+| --- | --- |
+| **cluster_call_files_to_save** | Call the container for a list of files and save them on a machine |
+
+**Server error handling:**
+
+Every server can return two types of responses: error or data. Data is something expected and specific to the action. An error is a JSON response with the `error` field, which is allowed for every cluster-call action and is expected when the response status is greater than 400. Error response structure:
+
+```json
+{
+  "error": "..."
+}
+```
+
+### cluster_call_files_to_save
+
+This action sends request to the server on a cluster for a list of files and next saves them locally on a machine.
+
+**Action configuration:**
+
+```yaml
+outputDir: "..."
+request:
+  parameters: {...}
+target:
+  path: "..."
+  port: "..."
+  namespace: "..."
+  selector: {...}
+```
+
+**Fields:**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| **outputDir** | string | Path to the output directory where the workspace is generated |
+| **request.parameters** | string | Additional parameters passed to the request |
+| **target.path** | string | Target server path |
+| **target.port** | string | Target server port |
+| **target.namespace** | string | Target pod namespace |
+| **target.selector** | string | Target pod label selector (same as k8s [selector concept](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors)) |
+
+### Server Response
+
+Action expects that data response will contain the status code `204` and JSON data type in format:
+
+```json
+{
+  "files": [
+    {
+      "name": "...",
+      "data": "..."
+    },
+    ...
+  ]
+}
+```
+
+| Name | Description |
+| --- | --- |
+| **files** | List of the output files to write on a machine |
+| **files[].name** | Name of the file (may contain directories like `bin/readme.md`) |
+| **files[].data** | Encoded by base64 file content |
