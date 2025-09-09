@@ -243,7 +243,7 @@ This action sends request to the server on a cluster for a list of files and nex
 outputDir: "..."
 request:
   parameters: {...}
-target:
+targetPod:
   path: "..."
   port: "..."
   namespace: "..."
@@ -256,10 +256,10 @@ target:
 | --- | --- | --- |
 | **outputDir** | string | Path to the output directory where the workspace is generated |
 | **request.parameters** | string | Additional parameters passed to the request |
-| **target.path** | string | Target server path |
-| **target.port** | string | Target server port |
-| **target.namespace** | string | Target pod namespace |
-| **target.selector** | string | Target pod label selector (same as k8s [selector concept](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors)) |
+| **targetPod.path** | string | Target server path |
+| **targetPod.port** | string | Target server port |
+| **targetPod.namespace** | string | Target pod namespace |
+| **targetPod.selector** | string | Target pod label selector (same as k8s [selector concept](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors)) |
 
 ### Server Response
 
