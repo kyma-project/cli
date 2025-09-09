@@ -49,7 +49,7 @@ type boolValue struct {
 }
 
 func (v *boolValue) GetValue() interface{} {
-	return getValue(v.Value)
+	return getValueOrNil(v.Value)
 }
 
 func (v *boolValue) GetPath() string {
@@ -122,4 +122,12 @@ func getValue[T any](value *T) interface{} {
 
 	var emptyValue T
 	return emptyValue
+}
+
+func getValueOrNil[T any](value *T) interface{} {
+	if value != nil {
+		return *value
+	}
+
+	return nil
 }

@@ -16,6 +16,7 @@ var funcMap = template.FuncMap{
 	"toEnvs":        toEnvs,
 	"toArray":       toArray,
 	"toYaml":        toYaml,
+	"ifBool":        ifBool,
 }
 
 // templateConfig parses the given template and executes it with the provided overwrites
@@ -82,3 +83,24 @@ func toYaml(val map[string]interface{}) string {
 	}
 	return fmt.Sprintf("{%s}", strings.Join(fields, ","))
 }
+
+// ifBool returns the trueStr if the condition is true, falseStr if false and nilStr if nil
+func ifBool(trueStr, falseStr, nilStr string, condition interface{}) (string, error) {
+	if condition == nil {
+		return nilStr, nil
+	}
+	conditionBool, ok := condition.(bool)
+	if !ok {
+		return "", errors.New("condition must be of type bool")
+	}
+	if conditionBool {
+		return trueStr, nil
+	}
+	return falseStr, nil
+}
+
+// TODO: zamienic wszystkie typy (string, int, bool, map, path) na ich nullable wersje i zrobic uniwersalna funkcje ifNil
+
+// TODO: 2 Zobaczyc czy nic sie nie wyjebie (potestowac)
+
+// TODO: 3 Przerobic wszystkie inne "to" funkcje zeby supportowaly nil jak obecny ifBool
