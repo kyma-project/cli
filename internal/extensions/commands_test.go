@@ -53,7 +53,7 @@ func Test_buildCommand(t *testing.T) {
 		require.NotNil(t, cmd)
 	})
 
-	t.Run("no error with wrong flags when action is not defined (flags are not built)", func(t *testing.T) {
+	t.Run("error with wrong flags when action not defined", func(t *testing.T) {
 		extension := fixTestExtension()
 		extension.Action = "action2"
 		extension.SubCommands[0].Flags = []types.Flag{
@@ -72,7 +72,9 @@ func Test_buildCommand(t *testing.T) {
 		cmd, err := buildCommand(extension, types.ActionsMap{
 			// no actions defined
 		})
-		require.NoError(t, err)
+		require.EqualError(t, err, "failed to build command 'cmd2':\n"+
+			"  flag 'flag1' error: strconv.ParseBool: parsing \"WRONG VALUE\": invalid syntax\n"+
+			"  flag 'flag2' error: strconv.ParseInt: parsing \"WRONG VALUE\": invalid syntax")
 		require.NotNil(t, cmd)
 	})
 }

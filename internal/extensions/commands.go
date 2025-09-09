@@ -10,7 +10,11 @@ import (
 )
 
 var (
-	emptyActionRun = func(cmd *cobra.Command, _ []string) error { return cmd.Help() }
+	emptyActionRun       = func(cmd *cobra.Command, _ []string) error { return cmd.Help() }
+	unsupportedActionRun = func(_ *cobra.Command, _ []string) {
+		clierror.Check(clierror.New("unsupported action",
+			"make sure the cli version is compatible with the extension"))
+	}
 )
 
 func buildCommand(extension types.Extension, availableActions types.ActionsMap) (*cobra.Command, error) {
@@ -44,9 +48,8 @@ func buildSingleCommand(extension types.Extension, availableActions types.Action
 		Long:  extension.Metadata.DescriptionLong,
 	}
 
-	action, ok := availableActions[extension.Action]
-	if extension.Action == "" || !ok {
-		// no action provided or action not found
+	if extension.Action == "" {
+		// no action provided
 		// set help command as default run
 		cmd.RunE = emptyActionRun
 		return cmd, errors.NewList(errs...)
@@ -78,6 +81,14 @@ func buildSingleCommand(extension types.Extension, availableActions types.Action
 	values = append(values, cmdArgs.value)
 
 	// set action runs
+	action, ok := availableActions[extension.Action]
+	if !ok {
+		// action not found
+		// set unsupported action run to inform user
+		cmd.Run = unsupportedActionRun
+		return cmd, errors.NewList(errs...)
+	}
+	
 	cmd.PreRun = func(_ *cobra.Command, _ []string) {
 		// check required flags
 		clierror.Check(flags.Validate(cmd.Flags(),
