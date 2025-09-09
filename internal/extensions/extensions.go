@@ -60,7 +60,7 @@ func (b *Builder) DisplayWarnings(warningWriter io.Writer) {
 	}
 }
 
-// build extensions based on extensions configmaps from a cluster
+// Build - compose extensions based on extensions configmaps from a cluster
 // any errors can be displayed by using the DisplayExtensionsErrors func
 func (b *Builder) Build(parentCmd *cobra.Command, availableActions types.ActionsMap) {
 	for _, cmExt := range b.extensions {
