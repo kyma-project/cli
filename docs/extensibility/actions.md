@@ -221,7 +221,7 @@ Some functionality implemented by the resource and module oriented actions may b
 
 | Name | Description |
 | --- | --- |
-| **cluster_call_files_to_save** | Call the container for a list of files and save them on a machine |
+| **call_files_to_save** | Call the container for a list of files and save them on a machine |
 
 **Server error handling:**
 
@@ -233,7 +233,7 @@ Every server can return two types of responses: error or data. Data is something
 }
 ```
 
-### cluster_call_files_to_save
+### call_files_to_save
 
 This action sends request to the server on a cluster for a list of files and next saves them locally on a machine.
 
