@@ -28,13 +28,13 @@ type requestConfig struct {
 	Parameters map[string]string `yaml:"parameters"`
 }
 
-type clusterCallFilesToSaveConfig struct {
+type callFilesToSaveConfig struct {
 	Request   requestConfig   `yaml:"request"`
 	TargetPod targetPodConfig `yaml:"targetPod"`
 	OutputDir string          `yaml:"outputDir"`
 }
 
-func (c *clusterCallFilesToSaveConfig) validate() clierror.Error {
+func (c *callFilesToSaveConfig) validate() clierror.Error {
 	if c.TargetPod.Namespace == "" {
 		return clierror.New("empty target pod namespace")
 	}
@@ -54,19 +54,19 @@ func (c *clusterCallFilesToSaveConfig) validate() clierror.Error {
 	return nil
 }
 
-type clusterCallFilesToSaveAction struct {
-	common.TemplateConfigurator[clusterCallFilesToSaveConfig]
+type callFilesToSaveAction struct {
+	common.TemplateConfigurator[callFilesToSaveConfig]
 
 	kymaConfig *cmdcommon.KymaConfig
 }
 
-func NewClusterCallFilesToSaveAction(kymaConfig *cmdcommon.KymaConfig) types.Action {
-	return &clusterCallFilesToSaveAction{
+func NewCallFilesToSaveAction(kymaConfig *cmdcommon.KymaConfig) types.Action {
+	return &callFilesToSaveAction{
 		kymaConfig: kymaConfig,
 	}
 }
 
-func (a *clusterCallFilesToSaveAction) Run(cmd *cobra.Command, _ []string) clierror.Error {
+func (a *callFilesToSaveAction) Run(cmd *cobra.Command, _ []string) clierror.Error {
 	clierr := a.Cfg.validate()
 	if clierr != nil {
 		return clierror.WrapE(clierr, clierror.New("invalid action configuration"))
