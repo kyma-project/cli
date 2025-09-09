@@ -30,7 +30,7 @@ type requestConfig struct {
 
 type clusterCallFilesToSaveConfig struct {
 	Request   requestConfig   `yaml:"request"`
-	TargetPod targetPodConfig `yaml:"target"`
+	TargetPod targetPodConfig `yaml:"targetPod"`
 	OutputDir string          `yaml:"outputDir"`
 }
 
