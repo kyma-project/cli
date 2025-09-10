@@ -106,7 +106,7 @@ func buildTableInfo(cfg *resourceGetActionConfig) TableInfo {
 		fieldConverters = append(fieldConverters, genericFieldConverter(".metadata.namespace"))
 	}
 
-	Headers = append(Headers, "namespace")
+	Headers = append(Headers, "name")
 	fieldConverters = append(fieldConverters, genericFieldConverter(".metadata.name"))
 
 	for _, param := range cfg.OutputParameters {
