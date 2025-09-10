@@ -9,7 +9,7 @@ This tutorial shows how you can add and delete a new module using Kyma CLI.
 
 ### Adding a New Module
 
-1. Check the list of modules that can be added:
+1. Check the list of modules that you can add:
 
    ```bash
    kyma module catalog
