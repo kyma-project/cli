@@ -13,6 +13,16 @@ type TemplateConfigurator[T any] struct {
 }
 
 func (c *TemplateConfigurator[T]) Configure(cfgTmpl types.ActionConfig, overwrites types.ActionConfigOverwrites) clierror.Error {
+	clierr := c.configure(cfgTmpl, overwrites)
+	if clierr != nil {
+		return clierror.WrapE(clierr, clierror.New("failed to configure action",
+			"make sure the cli version is compatible with the extension"))
+	}
+
+	return nil
+}
+
+func (c *TemplateConfigurator[T]) configure(cfgTmpl types.ActionConfig, overwrites types.ActionConfigOverwrites) clierror.Error {
 	tmplBytes, err := yaml.Marshal(cfgTmpl)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to marshal config template"))
