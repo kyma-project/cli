@@ -2,7 +2,7 @@
 
 ## Overview
 
-Actions are the base functionality of every executable command. They determine the procedure that the command runs on execution. Every action expects a specific configuration under the `.with` field. They are designed to cover most common and generic cases, such as [CRUD operations](#available-resource-oriented-actions) (create, read, update, delete), [module-oriented operations](#available-module-oriented-actions) (like importing images to the in-cluster registry for the `docker-registry` module), and [cluster call operations](#available-cluster-call-actions) allowing to run script remotely on a cluster.
+Actions are the base functionality of every executable command. They determine the procedure that the command runs on execution. Every action expects a specific configuration under the `.with` field. They are designed to cover most common and generic cases, such as [CRUD operations](#available-resource-oriented-actions) (create, read, update, delete), [module-oriented operations](#available-module-oriented-actions) (like importing images to the in-cluster registry for the `docker-registry` module), and [cluster call operations](#available-cluster-call-actions) allowing to run a script remotely on a cluster.
 
 ## Go Templates
 
@@ -217,7 +217,7 @@ runtimes:
 
 ## Available Cluster-Call Actions
 
-Some functionality implemented by the resource and module oriented actions may be not enought for some more complex cases. To cover such cases it is possible to define own procedures/scripts on the module controller level, open endpoint allowing to run script and call it using the Kyma CLI.
+Some functionality implemented by the resource and module-oriented actions may not be enough for some more complex cases. To cover such cases, it is possible to define your own procedures/scripts on the module controller level or an open endpoint allowing you to run the script and call it using the Kyma CLI.
 
 | Name | Description |
 | --- | --- |
@@ -235,7 +235,7 @@ Every server can return two types of responses: error or data. Data is something
 
 ### call_files_to_save
 
-This action sends request to the server on a cluster for a list of files and next saves them locally on a machine.
+This action sends a request to the server on a cluster for a list of files and then saves them locally on a machine.
 
 **Action configuration:**
 
@@ -258,12 +258,12 @@ targetPod:
 | **request.parameters** | string | Additional parameters passed to the request |
 | **targetPod.path** | string | Target server path |
 | **targetPod.port** | string | Target server port |
-| **targetPod.namespace** | string | Target pod namespace |
-| **targetPod.selector** | string | Target pod label selector (same as k8s [selector concept](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors)) |
+| **targetPod.namespace** | string | Target Pod namespace |
+| **targetPod.selector** | string | Target Pod label selector (same as Kubernetes [selector concept](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors)) |
 
 ### Server Response
 
-Action expects that data response will contain the status code `204` and JSON data type in format:
+Action expects that the data response will contain the status code `204` and JSON data type in format:
 
 ```json
 {
@@ -279,6 +279,6 @@ Action expects that data response will contain the status code `204` and JSON da
 
 | Name | Description |
 | --- | --- |
-| **files** | List of the output files to write on a machine |
+| **files** | List of the output files to save on a machine |
 | **files[].name** | Name of the file (may contain directories like `bin/readme.md`) |
 | **files[].data** | Encoded by base64 file content |
