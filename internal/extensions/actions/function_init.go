@@ -17,9 +17,10 @@ import (
 )
 
 type functionInitActionConfig struct {
-	UseRuntime string                   `yaml:"useRuntime"`
-	OutputDir  string                   `yaml:"outputDir"`
-	Runtimes   map[string]runtimeConfig `yaml:"runtimes"`
+	UseRuntime            string                   `yaml:"useRuntime"`
+	OutputDir             string                   `yaml:"outputDir"`
+	Runtimes              map[string]runtimeConfig `yaml:"runtimes"`
+	NextStepsInstructions string                   `yaml:"nextStepsInstructions"`
 }
 
 type runtimeConfig struct {
@@ -103,10 +104,7 @@ func (fi *functionInitAction) Run(cmd *cobra.Command, _ []string) clierror.Error
 
 	out := cmd.OutOrStdout()
 	fmt.Fprintf(out, "Functions files of runtime %s initialized to dir %s\n", fi.Cfg.UseRuntime, outDir)
-	fmt.Fprint(out, "\nNext steps:\n")
-	fmt.Fprint(out, "* update output files in your favorite IDE\n")
-	fmt.Fprintf(out, "* create Function, for example:\n")
-	fmt.Fprintf(out, "  kyma function create %s --runtime %s --source %s --dependencies %s\n", fi.Cfg.UseRuntime, fi.Cfg.UseRuntime, handlerPath, depsPath)
+	fmt.Fprintf(out, "\n%s\n", fi.Cfg.NextStepsInstructions)
 	return nil
 }
 
