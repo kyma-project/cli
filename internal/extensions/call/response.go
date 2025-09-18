@@ -39,5 +39,6 @@ type FileResponse struct {
 }
 
 type FilesListResponse struct {
-	Files []FileResponse `json:"files"`
+	OutputMessage string         `json:"outputMessage"`
+	Files         []FileResponse `json:"files"`
 }
