@@ -115,6 +115,8 @@ func (a *callFilesToSaveAction) Run(cmd *cobra.Command, _ []string) clierror.Err
 	}
 
 	fmt.Fprintf(cmd.OutOrStdout(), "Files saved to %s\n", outDir)
+	fmt.Fprintf(cmd.OutOrStdout(), "%s", filesResp.OutputMessage)
+
 	return nil
 }
 

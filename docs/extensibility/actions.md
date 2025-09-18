@@ -267,6 +267,7 @@ Action expects that the data response will contain the status code `204` and JSO
 
 ```json
 {
+  "outputMessage": "...",
   "files": [
     {
       "name": "...",
@@ -279,6 +280,7 @@ Action expects that the data response will contain the status code `204` and JSO
 
 | Name | Description |
 | --- | --- |
+| **outputMessage** | Message that is printed to the terminal after saving all files |
 | **files** | List of the output files to save on a machine |
 | **files[].name** | Name of the file (may contain directories like `bin/readme.md`) |
 | **files[].data** | Encoded by base64 file content |
