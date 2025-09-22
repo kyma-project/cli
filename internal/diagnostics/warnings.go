@@ -31,7 +31,7 @@ func NewKymaSystemWarningsCollector(client kube.Client, writer io.Writer, verbos
 func (wc *KymaSystemWarningsCollector) Run(ctx context.Context) KymaSystemWarnings {
 	warnings, err := wc.getKymaSystemWarnings(ctx)
 	if err != nil {
-
+		wc.WriteVerboseError(err, "Failed to get system warnings from the cluster")
 	}
 
 	return KymaSystemWarnings{
