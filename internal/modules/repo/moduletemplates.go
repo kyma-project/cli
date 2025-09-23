@@ -18,9 +18,7 @@ import (
 
 type ModuleTemplatesRepository interface {
 	Core(ctx context.Context) ([]kyma.ModuleTemplate, error)
-	CoreInstalled(ctx context.Context) ([]kyma.ModuleTemplate, error)
 	Community(ctx context.Context) ([]kyma.ModuleTemplate, error)
-	CommunityInstalled(ctx context.Context) ([]kyma.ModuleTemplate, error)
 	CommunityByName(ctx context.Context, moduleName string) ([]kyma.ModuleTemplate, error)
 	CommunityInstalledByName(ctx context.Context, moduleName string) ([]kyma.ModuleTemplate, error)
 	RunningAssociatedResourcesOfModule(ctx context.Context, moduleTemplate kyma.ModuleTemplate) ([]unstructured.Unstructured, error)
@@ -61,17 +59,6 @@ func (r *moduleTemplatesRepo) Community(ctx context.Context) ([]kyma.ModuleTempl
 	return r.remoteModulesRepo.Community()
 }
 
-func (r *moduleTemplatesRepo) CommunityInstalled(ctx context.Context) ([]kyma.ModuleTemplate, error) {
-	communityModules, err := r.remoteModulesRepo.Community()
-	if err != nil {
-		return nil, err
-	}
-
-	installedModules := r.selectInstalled(ctx, communityModules)
-
-	return installedModules, nil
-}
-
 func (r *moduleTemplatesRepo) Core(ctx context.Context) ([]kyma.ModuleTemplate, error) {
 	localModuleTemplates, err := r.local(ctx)
 	if err != nil {
@@ -87,17 +74,6 @@ func (r *moduleTemplatesRepo) Core(ctx context.Context) ([]kyma.ModuleTemplate, 
 	}
 
 	return coreModules, nil
-}
-
-func (r *moduleTemplatesRepo) CoreInstalled(ctx context.Context) ([]kyma.ModuleTemplate, error) {
-	coreModules, err := r.Core(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	installedModules := r.selectInstalled(ctx, coreModules)
-
-	return installedModules, nil
 }
 
 func (r *moduleTemplatesRepo) CommunityByName(ctx context.Context, moduleName string) ([]kyma.ModuleTemplate, error) {
@@ -223,12 +199,12 @@ func (r *moduleTemplatesRepo) selectInstalled(ctx context.Context, moduleTemplat
 
 	for _, moduleTemplate := range moduleTemplates {
 		installedManager, err := r.InstalledManager(ctx, moduleTemplate)
-		if err != nil {
-			fmt.Printf("failed to request for installed manager: %v", err)
+		if installedManager == nil && err == nil {
 			continue
 		}
 
-		if installedManager == nil {
+		if err != nil {
+			fmt.Printf("failed to request for installed manager: %v", err)
 			continue
 		}
 

@@ -1,4 +1,4 @@
-package diagnostics
+package diagnostics_test
 
 import (
 	"bytes"
@@ -6,6 +6,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/kyma-project/cli.v3/internal/diagnostics"
 	kube_fake "github.com/kyma-project/cli.v3/internal/kube/fake"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,13 +24,10 @@ func TestNewMetadataCollector(t *testing.T) {
 	verbose := true
 
 	// When
-	collector := NewMetadataCollector(kubeClient, &writer, verbose)
+	collector := diagnostics.NewMetadataCollector(kubeClient, &writer, verbose)
 
 	// Then
 	assert.NotNil(t, collector)
-	assert.Equal(t, kubeClient, collector.client)
-	assert.Equal(t, &writer, collector.writer)
-	assert.Equal(t, verbose, collector.verbose)
 }
 
 func TestWriteVerboseError(t *testing.T) {
@@ -67,7 +65,7 @@ func TestWriteVerboseError(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// Given
 			var writer bytes.Buffer
-			collector := NewMetadataCollector(nil, &writer, tc.verbose)
+			collector := diagnostics.NewMetadataCollector(nil, &writer, tc.verbose)
 
 			// When
 			collector.WriteVerboseError(tc.err, tc.message)
@@ -128,7 +126,7 @@ func TestEnrichMetadataWithShootInfo(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			collector := NewMetadataCollector(kubeClient, &writer, tc.verbose)
+			collector := diagnostics.NewMetadataCollector(kubeClient, &writer, tc.verbose)
 
 			// When
 			metadata := collector.Run(context.TODO())
@@ -201,7 +199,7 @@ func TestEnrichMetadataWithKymaInfo(t *testing.T) {
 			}
 
 			// When
-			collector := NewMetadataCollector(kubeClient, &writer, tc.verbose)
+			collector := diagnostics.NewMetadataCollector(kubeClient, &writer, tc.verbose)
 			metadata := collector.Run(context.TODO())
 
 			// Then
@@ -281,7 +279,7 @@ func TestEnrichMetadataWithKymaProvisioningInfo(t *testing.T) {
 			}
 
 			// When
-			collector := NewMetadataCollector(kubeClient, &writer, tc.verbose)
+			collector := diagnostics.NewMetadataCollector(kubeClient, &writer, tc.verbose)
 			metadata := collector.Run(context.TODO())
 
 			// Then

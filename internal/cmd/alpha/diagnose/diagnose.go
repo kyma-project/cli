@@ -18,6 +18,7 @@ type diagnoseConfig struct {
 	*cmdcommon.KymaConfig
 	outputFormat output.Format
 	outputPath   string
+	verbose      bool
 }
 
 func NewDiagnoseCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
@@ -36,6 +37,7 @@ func NewDiagnoseCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cmd.Flags().VarP(&cfg.outputFormat, "format", "f", "Output format (possible values: json, yaml)")
 	cmd.Flags().StringVarP(&cfg.outputPath, "output", "o", "", "Path to the diagnostic output file. If not provided the output will be printed to stdout")
+	cmd.Flags().BoolVar(&cfg.verbose, "verbose", false, "Display verbose output including error details during diagnostics collection")
 
 	return cmd
 }
@@ -46,12 +48,16 @@ func diagnose(cfg *diagnoseConfig) clierror.Error {
 		return clierr
 	}
 
-	diagnosticData := diagnostics.GetData(cfg.Ctx, client)
+	fmt.Println("Collecting diagnostics data...")
+
+	diagnosticData := diagnostics.GetData(cfg.Ctx, client, cfg.verbose)
 	err := render(&diagnosticData, cfg.outputPath, cfg.outputFormat)
 
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to get diagnostic data"))
 	}
+
+	fmt.Println("Done.")
 
 	return nil
 }

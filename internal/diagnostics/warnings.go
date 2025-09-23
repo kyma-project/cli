@@ -2,7 +2,6 @@ package diagnostics
 
 import (
 	"context"
-	"fmt"
 	"io"
 
 	"github.com/kyma-project/cli.v3/internal/kube"
@@ -15,16 +14,14 @@ type KymaSystemWarnings struct {
 }
 
 type KymaSystemWarningsCollector struct {
-	client  kube.Client
-	writer  io.Writer
-	verbose bool
+	client kube.Client
+	VerboseLogger
 }
 
 func NewKymaSystemWarningsCollector(client kube.Client, writer io.Writer, verbose bool) *KymaSystemWarningsCollector {
 	return &KymaSystemWarningsCollector{
-		client:  client,
-		writer:  writer,
-		verbose: verbose,
+		client:        client,
+		VerboseLogger: NewVerboseLogger(writer, verbose),
 	}
 }
 
@@ -65,12 +62,4 @@ func (wc *KymaSystemWarningsCollector) getKymaSystemEvents(ctx context.Context) 
 	}
 
 	return eventList.Items, nil
-}
-
-func (wc *KymaSystemWarningsCollector) WriteVerboseError(err error, message string) {
-	if !wc.verbose || err == nil {
-		return
-	}
-
-	fmt.Fprintf(wc.writer, "%s: %s\n", message, err.Error())
 }

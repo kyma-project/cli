@@ -18,19 +18,18 @@ type Metadata struct {
 	Provider          string
 	KubernetesVersion string
 	NATGatewayIPs     []string
+	KubeAPIServer     string
 }
 
 type MetadataCollector struct {
-	client  kube.Client
-	writer  io.Writer
-	verbose bool
+	client kube.Client
+	VerboseLogger
 }
 
 func NewMetadataCollector(client kube.Client, writer io.Writer, verbose bool) *MetadataCollector {
 	return &MetadataCollector{
-		client:  client,
-		writer:  writer,
-		verbose: verbose,
+		client:        client,
+		VerboseLogger: NewVerboseLogger(writer, verbose),
 	}
 }
 
@@ -40,8 +39,39 @@ func (mc *MetadataCollector) Run(ctx context.Context) Metadata {
 	mc.enrichMetadataWithShootInfo(ctx, &metadata)
 	mc.enrichMetadataWithKymaInfo(ctx, &metadata)
 	mc.enrichMetadataWithKymaProvisioningInfo(ctx, &metadata)
+	mc.enrichMetadataWithClusterConfigInfo(ctx, &metadata)
 
 	return metadata
+}
+
+func (mc *MetadataCollector) enrichMetadataWithClusterConfigInfo(ctx context.Context, metadata *Metadata) {
+	networkProblemDetectorConfigMap, err := mc.client.Static().CoreV1().
+		ConfigMaps("kube-system").
+		Get(ctx, "network-problem-detector-cluster-config", metav1.GetOptions{})
+
+	if err != nil {
+		mc.WriteVerboseError(err, "Failed to get network-problem-detector-cluster-config ConfigMap from kube-system namespace")
+		return
+	}
+
+	if clusterConfigYAML, exists := networkProblemDetectorConfigMap.Data["cluster-config.yaml"]; exists {
+		type KubeAPIServer struct {
+			Hostname string `yaml:"hostname"`
+		}
+
+		type ClusterConfig struct {
+			KubeAPIServer KubeAPIServer `yaml:"kubeAPIServer"`
+		}
+
+		var cc ClusterConfig
+		err := yaml.Unmarshal([]byte(clusterConfigYAML), &cc)
+		if err != nil {
+			mc.WriteVerboseError(err, "Failed to unmarshal provisioning details YAML")
+			return
+		}
+
+		metadata.KubeAPIServer = fmt.Sprintf("https://%s", cc.KubeAPIServer.Hostname)
+	}
 }
 
 func (mc *MetadataCollector) enrichMetadataWithShootInfo(ctx context.Context, metadata *Metadata) {
@@ -105,12 +135,4 @@ func (mc *MetadataCollector) enrichMetadataWithKymaProvisioningInfo(ctx context.
 		metadata.GlobalAccountID = details.GlobalAccountID
 		metadata.SubaccountID = details.SubaccountID
 	}
-}
-
-func (mc *MetadataCollector) WriteVerboseError(err error, message string) {
-	if !mc.verbose || err == nil {
-		return
-	}
-
-	fmt.Fprintf(mc.writer, "%s: %s\n", message, err.Error())
 }

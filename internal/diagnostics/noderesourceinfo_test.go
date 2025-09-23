@@ -1,4 +1,4 @@
-package diagnostics
+package diagnostics_test
 
 import (
 	"bytes"
@@ -6,6 +6,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/kyma-project/cli.v3/internal/diagnostics"
 	"github.com/kyma-project/cli.v3/internal/kube/fake"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
@@ -24,13 +25,10 @@ func TestNewNodeResourceInfoCollector(t *testing.T) {
 	verbose := true
 
 	// When
-	collector := NewNodeResourceInfoCollector(fakeClient, &writer, verbose)
+	collector := diagnostics.NewNodeResourceInfoCollector(fakeClient, &writer, verbose)
 
 	// Then
 	assert.NotNil(t, collector)
-	assert.Equal(t, fakeClient, collector.client)
-	assert.Equal(t, &writer, collector.writer)
-	assert.Equal(t, verbose, collector.verbose)
 }
 
 func TestNodeResourceInfoWriteVerboseError(t *testing.T) {
@@ -68,7 +66,7 @@ func TestNodeResourceInfoWriteVerboseError(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// Given
 			var writer bytes.Buffer
-			collector := NewNodeResourceInfoCollector(nil, &writer, tc.verbose)
+			collector := diagnostics.NewNodeResourceInfoCollector(nil, &writer, tc.verbose)
 
 			// When
 			collector.WriteVerboseError(tc.err, tc.message)
@@ -114,6 +112,15 @@ func TestRun(t *testing.T) {
 			expectedResults: 3,
 			verbose:         false,
 		},
+		{
+			name: "Should calculate usage correctly with running pods",
+			nodes: []corev1.Node{
+				createTestNode("node-with-pods", "amd64", "5.4.0-generic", "Ubuntu 20.04.3 LTS", "containerd://1.5.9", "v1.26.0"),
+			},
+			expectError:     false,
+			expectedResults: 1,
+			verbose:         false,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -131,7 +138,14 @@ func TestRun(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			collector := NewNodeResourceInfoCollector(mockClient, &writer, tc.verbose)
+			// Create test pods for the usage calculation test
+			if tc.name == "Should calculate usage correctly with running pods" && len(tc.nodes) > 0 {
+				testPod := createTestPodWithResources("test-pod", tc.nodes[0].Name)
+				_, err := fakeKubeClient.CoreV1().Pods("default").Create(context.TODO(), &testPod, metav1.CreateOptions{})
+				assert.NoError(t, err)
+			}
+
+			collector := diagnostics.NewNodeResourceInfoCollector(mockClient, &writer, tc.verbose)
 
 			// When
 			results := collector.Run(context.TODO())
@@ -143,23 +157,59 @@ func TestRun(t *testing.T) {
 			if len(tc.nodes) > 0 {
 				for i, result := range results {
 					expectedNode := tc.nodes[i]
-					assert.Equal(t, expectedNode.Name, result.Name)
-					assert.Equal(t, expectedNode.Status.NodeInfo.Architecture, result.Architecture)
-					assert.Equal(t, expectedNode.Status.NodeInfo.KernelVersion, result.KernelVersion)
-					assert.Equal(t, expectedNode.Status.NodeInfo.OSImage, result.OSImage)
-					assert.Equal(t, expectedNode.Status.NodeInfo.ContainerRuntimeVersion, result.ContainerRuntime)
-					assert.Equal(t, expectedNode.Status.NodeInfo.KubeletVersion, result.KubeletVersion)
 
-					// Check capacity and allocatable resources
+					// Check MachineInfo
+					assert.Equal(t, expectedNode.Name, result.MachineInfo.Name)
+					assert.Equal(t, expectedNode.Status.NodeInfo.Architecture, result.MachineInfo.Architecture)
+					assert.Equal(t, expectedNode.Status.NodeInfo.KernelVersion, result.MachineInfo.KernelVersion)
+					assert.Equal(t, expectedNode.Status.NodeInfo.OSImage, result.MachineInfo.OSImage)
+					assert.Equal(t, expectedNode.Status.NodeInfo.ContainerRuntimeVersion, result.MachineInfo.ContainerRuntime)
+					assert.Equal(t, expectedNode.Status.NodeInfo.KubeletVersion, result.MachineInfo.KubeletVersion)
+					assert.Equal(t, expectedNode.Status.NodeInfo.OperatingSystem, result.MachineInfo.OperatingSystem)
+
+					// Check capacity resources
 					assert.Equal(t, expectedNode.Status.Capacity.Cpu().String(), result.Capacity.CPU)
 					assert.Equal(t, expectedNode.Status.Capacity.Memory().String(), result.Capacity.Memory)
 					assert.Equal(t, expectedNode.Status.Capacity.StorageEphemeral().String(), result.Capacity.EphemeralStorage)
 					assert.Equal(t, expectedNode.Status.Capacity.Pods().String(), result.Capacity.Pods)
 
-					assert.Equal(t, expectedNode.Status.Allocatable.Cpu().String(), result.Allocatable.CPU)
-					assert.Equal(t, expectedNode.Status.Allocatable.Memory().String(), result.Allocatable.Memory)
-					assert.Equal(t, expectedNode.Status.Allocatable.StorageEphemeral().String(), result.Allocatable.EphemeralStorage)
-					assert.Equal(t, expectedNode.Status.Allocatable.Pods().String(), result.Allocatable.Pods)
+					// Check merged usage information (includes availability)
+					if tc.name == "Should calculate usage correctly with running pods" {
+						// Resource totals
+						assert.Equal(t, "100m", result.Usage.CPURequests)
+						assert.Equal(t, "128Mi", result.Usage.MemoryRequests)
+						assert.Equal(t, "200m", result.Usage.CPULimits)
+						assert.Equal(t, "256Mi", result.Usage.MemoryLimits)
+
+						// Available resources (allocatable - requests)
+						assert.Equal(t, "3800m", result.Usage.CPUAvailable) // 3900m - 100m
+						assert.Equal(t, "109", result.Usage.PodsAvailable)  // 110 - 1
+						assert.Equal(t, expectedNode.Status.Allocatable.StorageEphemeral().String(), result.Usage.EphemeralStorageAvailable)
+
+						// Percentage calculations
+						assert.Equal(t, "2.6%", result.Usage.CPURequestedPercent) // 100m / 3900m * 100
+
+						// Pod count
+						assert.Equal(t, 1, result.Usage.PodCount)
+					} else {
+						// No pods scenarios
+						assert.Equal(t, "0", result.Usage.CPURequests)
+						assert.Equal(t, "0", result.Usage.MemoryRequests)
+						assert.Equal(t, "0", result.Usage.CPULimits)
+						assert.Equal(t, "0", result.Usage.MemoryLimits)
+
+						// Available should equal allocatable when no pods
+						assert.Equal(t, expectedNode.Status.Allocatable.Cpu().String(), result.Usage.CPUAvailable)
+						assert.Equal(t, expectedNode.Status.Allocatable.Memory().String(), result.Usage.MemoryAvailable)
+						assert.Equal(t, expectedNode.Status.Allocatable.Pods().String(), result.Usage.PodsAvailable)
+
+						// Percentages should be 0%
+						assert.Equal(t, "0.0%", result.Usage.CPURequestedPercent)
+						assert.Equal(t, "0.0%", result.Usage.MemoryRequestedPercent)
+
+						// Pod count should be 0
+						assert.Equal(t, 0, result.Usage.PodCount)
+					}
 				}
 			}
 
@@ -196,7 +246,39 @@ func createTestNode(name, arch, kernelVersion, osImage, containerRuntime, kubele
 				OSImage:                 osImage,
 				ContainerRuntimeVersion: containerRuntime,
 				KubeletVersion:          kubeletVersion,
+				OperatingSystem:         "linux",
 			},
+		},
+	}
+}
+
+func createTestPodWithResources(name, nodeName string) corev1.Pod {
+	return corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: "default",
+		},
+		Spec: corev1.PodSpec{
+			NodeName: nodeName,
+			Containers: []corev1.Container{
+				{
+					Name:  "test-container",
+					Image: "nginx",
+					Resources: corev1.ResourceRequirements{
+						Requests: corev1.ResourceList{
+							corev1.ResourceCPU:    resource.MustParse("100m"),
+							corev1.ResourceMemory: resource.MustParse("128Mi"),
+						},
+						Limits: corev1.ResourceList{
+							corev1.ResourceCPU:    resource.MustParse("200m"),
+							corev1.ResourceMemory: resource.MustParse("256Mi"),
+						},
+					},
+				},
+			},
+		},
+		Status: corev1.PodStatus{
+			Phase: corev1.PodRunning,
 		},
 	}
 }
