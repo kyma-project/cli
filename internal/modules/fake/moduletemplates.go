@@ -10,9 +10,7 @@ import (
 
 type ModuleTemplatesRepo struct {
 	ReturnCore                               []kyma.ModuleTemplate
-	ReturnCoreInstalled                      []kyma.ModuleTemplate
 	ReturnCommunity                          []kyma.ModuleTemplate
-	ReturnCommunityInstalled                 []kyma.ModuleTemplate
 	ReturnCommunityByName                    []kyma.ModuleTemplate
 	ReturnCommunityInstalledByName           []kyma.ModuleTemplate
 	ReturnRunningAssociatedResourcesOfModule []unstructured.Unstructured
@@ -21,9 +19,7 @@ type ModuleTemplatesRepo struct {
 	ReturnDeleteResourceReturnWatcher        watch.Interface
 
 	CoreErr                               error
-	CoreInstalledErr                      error
 	CommunityErr                          error
-	CommunityInstalledErr                 error
 	CommunityByNameErr                    error
 	CommunityInstalledByNameErr           error
 	RunningAssociatedResourcesOfModuleErr error
@@ -36,16 +32,8 @@ func (r *ModuleTemplatesRepo) Core(_ context.Context) ([]kyma.ModuleTemplate, er
 	return r.ReturnCore, r.CoreErr
 }
 
-func (r *ModuleTemplatesRepo) CoreInstalled(_ context.Context) ([]kyma.ModuleTemplate, error) {
-	return r.ReturnCoreInstalled, r.CoreInstalledErr
-}
-
 func (r *ModuleTemplatesRepo) Community(_ context.Context) ([]kyma.ModuleTemplate, error) {
 	return r.ReturnCommunity, r.CommunityErr
-}
-
-func (r *ModuleTemplatesRepo) CommunityInstalled(_ context.Context) ([]kyma.ModuleTemplate, error) {
-	return r.ReturnCommunityInstalled, r.CommunityInstalledErr
 }
 
 func (r *ModuleTemplatesRepo) CommunityByName(_ context.Context, _ string) ([]kyma.ModuleTemplate, error) {

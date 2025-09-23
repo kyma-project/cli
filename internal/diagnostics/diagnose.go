@@ -8,22 +8,19 @@ import (
 )
 
 type DiagnosticData struct {
-	Metadata       Metadata
-	Warnings       KymaSystemWarnings
-	NodeResources  []NodeResourceInfo
-	ModuleStatuses []ModuleCustomResourceState
+	Metadata      Metadata
+	Warnings      KymaSystemWarnings
+	NodeResources []NodeResourceInfo
 }
 
-func GetData(ctx context.Context, client kube.Client) DiagnosticData {
-	metadataCollector := NewMetadataCollector(client, os.Stdin, true)
-	kymaSystemWarningsCollector := NewKymaSystemWarningsCollector(client, os.Stdin, true)
-	nodeResourceInfoCollector := NewNodeResourceInfoCollector(client, os.Stdin, true)
-	moduleCustomResourceStateCollector := NewModuleCustomResourceStateCollector(client, os.Stdin, true)
+func GetData(ctx context.Context, client kube.Client, verbose bool) DiagnosticData {
+	metadataCollector := NewMetadataCollector(client, os.Stdout, verbose)
+	kymaSystemWarningsCollector := NewKymaSystemWarningsCollector(client, os.Stdout, verbose)
+	nodeResourceInfoCollector := NewNodeResourceInfoCollector(client, os.Stdout, verbose)
 
 	return DiagnosticData{
-		Metadata:       metadataCollector.Run(ctx),
-		Warnings:       kymaSystemWarningsCollector.Run(ctx),
-		NodeResources:  nodeResourceInfoCollector.Run(ctx),
-		ModuleStatuses: moduleCustomResourceStateCollector.Run(ctx),
+		Metadata:      metadataCollector.Run(ctx),
+		Warnings:      kymaSystemWarningsCollector.Run(ctx),
+		NodeResources: nodeResourceInfoCollector.Run(ctx),
 	}
 }
