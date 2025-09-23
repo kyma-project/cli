@@ -16,7 +16,7 @@ var funcMap = template.FuncMap{
 	"toEnvs":        toEnvs,
 	"toArray":       toArray,
 	"toYaml":        toYaml,
-	"ifBool":        ifBool,
+	"ifNil":         ifNil,
 }
 
 // templateConfig parses the given template and executes it with the provided overwrites
@@ -84,23 +84,30 @@ func toYaml(val map[string]interface{}) string {
 	return fmt.Sprintf("{%s}", strings.Join(fields, ","))
 }
 
-// ifBool returns the trueStr if the condition is true, falseStr if false and nilStr if nil
-func ifBool(trueStr, falseStr, nilStr string, condition interface{}) (string, error) {
-	if condition == nil {
-		return nilStr, nil
+// ifNil checks if the last argument (flag) is nil (was used) and returns appropriate value.
+func ifNil(args ...interface{}) (interface{}, error) {
+	if len(args) < 2 {
+		return "", errors.New("ifNil requires at least two arguments")
 	}
-	conditionBool, ok := condition.(bool)
-	if !ok {
-		return "", errors.New("condition must be of type bool")
+	// last argument is the flag used and semi-last is the value to return if nil
+	if args[len(args)-1] == nil {
+		return fmt.Sprint(args[len(args)-2]), nil
 	}
-	if conditionBool {
-		return trueStr, nil
+
+	flagValue := args[len(args)-1]
+	// if last argument(flag) is not nil
+	switch v := flagValue.(type) {
+	case bool:
+		if len(args) == 3 { // notNil, nil, flag
+			return args[0], nil // nil handled by ifNilBool func
+		} else if len(args) == 4 { // true, false, nil, flag
+			return args[1], nil
+		}
+	default: // covers string, int, map and path flag types
+		if len(args) != 2 {
+			return "", errors.New(fmt.Sprintf("ifNil requires exactly two arguments for type %T", v))
+		}
+		return args[0], nil
 	}
-	return falseStr, nil
+	return "", errors.New("ifNil requires at least three arguments for type bool")
 }
-
-// TODO: zamienic wszystkie typy (string, int, bool, map, path) na ich nullable wersje i zrobic uniwersalna funkcje ifNil
-
-// TODO: 2 Zobaczyc czy nic sie nie wyjebie (potestowac)
-
-// TODO: 3 Przerobic wszystkie inne "to" funkcje zeby supportowaly nil jak obecny ifBool

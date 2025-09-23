@@ -66,7 +66,7 @@ type int64Value struct {
 }
 
 func (v *int64Value) GetValue() interface{} {
-	return getValue(v.Value)
+	return getValueOrNil(v.Value)
 }
 
 func (v *int64Value) GetPath() string {
@@ -83,7 +83,7 @@ type stringValue struct {
 }
 
 func (v *stringValue) GetValue() interface{} {
-	return getValue(v.Value)
+	return getValueOrNil(v.Value)
 }
 
 func (sv *stringValue) GetPath() string {
