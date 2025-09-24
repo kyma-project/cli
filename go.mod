@@ -4,8 +4,8 @@ go 1.24.4
 
 require (
 	github.com/buildpacks/pack v0.38.2
-	github.com/docker/cli v28.3.3+incompatible
-	github.com/docker/docker v28.3.3+incompatible
+	github.com/docker/cli v28.4.0+incompatible
+	github.com/docker/docker v28.4.0+incompatible
 	github.com/go-test/deep v1.1.1
 	github.com/google/go-containerregistry v0.20.6
 	github.com/itchyny/gojq v0.12.17
@@ -18,10 +18,10 @@ require (
 	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.11.1
 	gopkg.in/yaml.v3 v3.0.1
-	istio.io/client-go v1.27.0
-	k8s.io/api v0.33.4
-	k8s.io/apimachinery v0.33.4
-	k8s.io/client-go v0.33.4
+	istio.io/client-go v1.27.1
+	k8s.io/api v0.33.5
+	k8s.io/apimachinery v0.33.5
+	k8s.io/client-go v0.33.5
 	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397
 )
 
@@ -186,7 +186,7 @@ require (
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
-	istio.io/api v1.27.0 // indirect
+	istio.io/api v1.27.1-0.20250820125923-f5a5d3a605a9 // indirect
 	k8s.io/apiextensions-apiserver v0.33.3 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20250701173324-9bd5c66d9911 // indirect

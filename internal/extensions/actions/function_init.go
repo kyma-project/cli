@@ -17,9 +17,10 @@ import (
 )
 
 type functionInitActionConfig struct {
-	UseRuntime string                   `yaml:"useRuntime"`
-	OutputDir  string                   `yaml:"outputDir"`
-	Runtimes   map[string]runtimeConfig `yaml:"runtimes"`
+	UseRuntime            string                   `yaml:"useRuntime"`
+	OutputDir             string                   `yaml:"outputDir"`
+	Runtimes              map[string]runtimeConfig `yaml:"runtimes"`
+	NextStepsInstructions string                   `yaml:"nextStepsInstructions"`
 }
 
 type runtimeConfig struct {
@@ -76,7 +77,7 @@ func (fi *functionInitAction) Run(cmd *cobra.Command, _ []string) clierror.Error
 
 	if !filepath.IsLocal(fi.Cfg.OutputDir) {
 		// output dir is not a local path, ask user for confirmation
-		clierr = getUserAcceptance(fi.Cfg.OutputDir)
+		clierr = getOutputDirAcceptance(fi.Cfg.OutputDir)
 		if clierr != nil {
 			return clierr
 		}
@@ -103,10 +104,7 @@ func (fi *functionInitAction) Run(cmd *cobra.Command, _ []string) clierror.Error
 
 	out := cmd.OutOrStdout()
 	fmt.Fprintf(out, "Functions files of runtime %s initialized to dir %s\n", fi.Cfg.UseRuntime, outDir)
-	fmt.Fprint(out, "\nNext steps:\n")
-	fmt.Fprint(out, "* update output files in your favorite IDE\n")
-	fmt.Fprintf(out, "* create Function, for example:\n")
-	fmt.Fprintf(out, "  kyma function create %s --runtime %s --source %s --dependencies %s\n", fi.Cfg.UseRuntime, fi.Cfg.UseRuntime, handlerPath, depsPath)
+	fmt.Fprintf(out, "\n%s\n", fi.Cfg.NextStepsInstructions)
 	return nil
 }
 
@@ -120,7 +118,7 @@ func sortedRuntimesString(m map[string]runtimeConfig) string {
 	return strings.Join(keys, ", ")
 }
 
-func getUserAcceptance(path string) clierror.Error {
+func getOutputDirAcceptance(path string) clierror.Error {
 	promptValue, err := prompt.NewBool(
 		fmt.Sprintf("The output path ( %s ) seems to be outside of the current working directory.\nDo you want to proceed?", path),
 		true,
@@ -139,7 +137,7 @@ func getUserAcceptance(path string) clierror.Error {
 	}
 
 	return clierror.New(
-		"function init aborted",
+		"command execution aborted",
 		"you must provide a local path for the output directory or accept the default one by typing 'y' and pressing enter",
 	)
 }

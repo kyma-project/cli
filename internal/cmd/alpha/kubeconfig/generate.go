@@ -25,9 +25,11 @@ type generateConfig struct {
 	// ServiceAccount-based flow flags
 	serviceAccount string
 	clusterRole    string
+	role           string
 	namespace      string
 	time           string
 	permanent      bool
+	clusterWide    bool
 
 	// OIDC flow options
 	cisCredentialsPath  string
@@ -47,9 +49,18 @@ func newGenerateCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use: "generate",
-		Example: `# generate a kubeconfig with a ServiceAccount-based token and certificate
-  kyma alpha kubeconfig generate --serviceaccount <sa_name> --clusterrole <cr_name> --namespace <ns_name> --permanent
+		Example: `# generate a permanent access (kubeconfig) for a new or existing ServiceAccount 
+  kyma alpha kubeconfig generate --serviceaccount <sa_name> --namespace <ns_name> --permanent
 
+# generate a permanent access (kubeconfig) for a new or existing ServiceAccount in a given namespace with a namespaced binding to a given ClusterRole
+  kyma alpha kubeconfig generate --serviceaccount <sa_name> --namespace <ns_name> --clusterrole <cr_name> --permanent
+
+# generate a permanent access (kubeconfig) for a new or existing ServiceAccount in a given namespace with a namespaced binding to a given Role
+  kyma alpha kubeconfig generate --serviceaccount <sa_name> --namespace <ns_name> --role <r_name> --permanent
+
+# generate time-constrained access (kubeconfig) for a new or existing ServiceAccount in a given namespace with a cluster-wide binding to a given ClusterRole
+  kyma alpha kubeconfig generate --serviceaccount <sa_name> --namespace <ns_name> --clusterrole <cr_name> --cluster-wide --time 2h
+  
 # generate a kubeconfig with an OIDC token
   kyma alpha kubeconfig generate --token <token>
 
@@ -71,9 +82,11 @@ func newGenerateCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 			cfg.complete(cmd)
 			clierror.Check(flags.Validate(cmd.Flags(),
 				flags.MarkOneRequired("serviceaccount", "token", "id-token-request-url", "oidc-name"),
-				flags.MarkRequiredTogether("serviceaccount", "clusterrole"),
 				flags.MarkExclusive("token", "id-token-request-url", "audience"),
+				flags.MarkExclusive("permanent", "time"),
+				flags.MarkExclusive("cluster-wide", "role"),
 			))
+			clierror.Check(cfg.validate())
 		},
 		Run: func(_ *cobra.Command, _ []string) {
 			clierror.Check(cfg.validate())
@@ -85,11 +98,14 @@ func newGenerateCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().StringVar(&cfg.output, "output", "", "Path to the kubeconfig file output. If not provided, the kubeconfig will be printed")
 
 	// ServiceAccount-based flow
-	cmd.Flags().StringVar(&cfg.serviceAccount, "serviceaccount", "", "Name of the Service Account to be created")
-	cmd.Flags().StringVar(&cfg.clusterRole, "clusterrole", "", "Name of the Cluster Role to bind the Service Account to")
-	cmd.Flags().StringVar(&cfg.namespace, "namespace", "default", "Namespace in which the resource is created")
+	cmd.Flags().StringVar(&cfg.serviceAccount, "serviceaccount", "", "Name of the Service Account (in the given Namespace) to be used as a subject of the generated kubeconfig. If the Service Account does not exist, it will be created")
+	cmd.Flags().StringVar(&cfg.clusterRole, "clusterrole", "", "Name of the Cluster Role to bind the Service Account to (optional)")
+	cmd.Flags().StringVar(&cfg.role, "role", "", "Name of the Role in the given Namespace to bind the Service Account to (optional)")
+	cmd.Flags().StringVar(&cfg.namespace, "namespace", "default", "Namespace in which the subject Service Account is to be found or will be created")
 	cmd.Flags().StringVar(&cfg.time, "time", "1h", "Determines how long the token should be valid, by default 1h (use h for hours and d for days)")
+
 	cmd.Flags().BoolVar(&cfg.permanent, "permanent", false, "Determines if the token is valid indefinitely")
+	cmd.Flags().BoolVar(&cfg.clusterWide, "cluster-wide", false, "Determines if the binding to the ClusterRole is cluster-wide")
 
 	// OIDC flow
 	cmd.Flags().StringVar(&cfg.cisCredentialsPath, "credentials-path", "", "Path to the CIS credentials file")
@@ -197,8 +213,8 @@ func generateWithServiceAccount(cfg *generateConfig) (*api.Config, clierror.Erro
 		return nil, clierr
 	}
 
-	// Create ServiceAccount, ClusterRoleBinding and secret with token
-	clierr = registerServiceAccount(cfg, kubeClient)
+	// Ensure ServiceAccount, Bindings and secret with token
+	clierr = setupServiceAccountWithBindings(cfg, kubeClient)
 	if clierr != nil {
 		return nil, clierror.WrapE(clierr, clierror.New("failed to create k8s resources"))
 	}
@@ -216,17 +232,38 @@ func generateWithOpenIDConnectorCustomResource(cfg *generateConfig) (*api.Config
 	return kubeconfig.PrepareFromOpenIDConnectorResource(cfg.Ctx, kubeClient, cfg.oidcName)
 }
 
-func registerServiceAccount(cfg *generateConfig, kubeClient kube.Client) clierror.Error {
-	// Create Service Account
-	err := resources.CreateServiceAccount(cfg.Ctx, kubeClient, cfg.serviceAccount, cfg.namespace)
+func setupServiceAccountWithBindings(cfg *generateConfig, kubeClient kube.Client) clierror.Error {
+	// Get or Create Service Account
+	err := resources.EnsureServiceAccount(cfg.Ctx, kubeClient, cfg.serviceAccount, cfg.namespace)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to create Service Account"))
 	}
-	// Create Role Binding for the Service Account
-	err = resources.CreateClusterRoleBinding(cfg.Ctx, kubeClient, cfg.serviceAccount, cfg.namespace, cfg.clusterRole)
-	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to create Cluster Role Binding"))
+
+	// Create Role or ClusterRole Binding for the Service Account
+	if cfg.clusterWide && cfg.clusterRole != "" {
+		// Create ClusterRoleBinding for the Service Account
+		err = resources.CreateClusterRoleBinding(cfg.Ctx, kubeClient, cfg.serviceAccount, cfg.namespace, cfg.clusterRole)
+		if err != nil {
+			return clierror.Wrap(err, clierror.New("failed to create Cluster Role Binding"))
+		}
 	}
+
+	if !cfg.clusterWide && cfg.role != "" {
+		// Create Role Binding to Role for the Service Account
+		err = resources.CreateRoleBindingToRole(cfg.Ctx, kubeClient, cfg.serviceAccount, cfg.namespace, cfg.role)
+		if err != nil {
+			return clierror.Wrap(err, clierror.New("failed to create Role Binding"))
+		}
+	}
+
+	if !cfg.clusterWide && cfg.clusterRole != "" {
+		// Create Role Binding to Cluster Role for the Service Account
+		err = resources.CreateRoleBindingToClusterRole(cfg.Ctx, kubeClient, cfg.serviceAccount, cfg.namespace, cfg.clusterRole)
+		if err != nil {
+			return clierror.Wrap(err, clierror.New("failed to create Role Binding"))
+		}
+	}
+
 	// Create a service-account-token type secret
 	if cfg.permanent {
 		err = resources.CreateServiceAccountToken(cfg.Ctx, kubeClient, cfg.serviceAccount, cfg.namespace)

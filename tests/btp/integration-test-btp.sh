@@ -6,7 +6,7 @@ echo "Running kyma integration tests uing connected managed kyma runtime"
 echo -e "\n--------------------------------------------------------------------------------------\n"
 echo -e "Step1: Generating temporary access for new service account\n"
 
-../../bin/kyma alpha kubeconfig generate --clusterrole cluster-admin --serviceaccount test-sa --output /tmp/kubeconfig.yaml --time 2h
+../../bin/kyma alpha kubeconfig generate --clusterrole cluster-admin --serviceaccount test-sa --output /tmp/kubeconfig.yaml --time 2h --cluster-wide --namespace default
 
 export KUBECONFIG="/tmp/kubeconfig.yaml"
 if [[ $(kubectl config view --minify --raw | yq '.users[0].name') != 'test-sa' ]]; then
