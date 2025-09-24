@@ -115,15 +115,6 @@ func (pv *pathValue) SetValue(value string) error {
 	return pv.stringValue.Set(value)
 }
 
-func getValue[T any](value *T) interface{} {
-	if value != nil {
-		return *value
-	}
-
-	var emptyValue T
-	return emptyValue
-}
-
 func getValueOrNil[T any](value *T) interface{} {
 	if value != nil {
 		return *value
