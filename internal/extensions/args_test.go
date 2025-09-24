@@ -29,7 +29,7 @@ func Test_buildArgs(t *testing.T) {
 		require.Equal(t, overwrites["args"].(map[string]interface{}), map[string]interface{}{
 			"type":     parameters.StringCustomType,
 			"optional": false,
-			"value":    "",
+			"value":    interface{}(nil),
 		})
 	})
 
