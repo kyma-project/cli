@@ -34,7 +34,7 @@ func TestWasUsed(t *testing.T) {
 	t.Run("four arguments, last is bool true", func(t *testing.T) {
 		result, err := wasUsed("true", "false", "nil", true)
 		assert.NoError(t, err)
-		assert.Equal(t, "false", result)
+		assert.Equal(t, "true", result)
 	})
 	t.Run("four arguments, last is bool false", func(t *testing.T) {
 		result, err := wasUsed("true", "false", "nil", false)
