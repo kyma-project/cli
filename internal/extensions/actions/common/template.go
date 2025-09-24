@@ -84,7 +84,7 @@ func toYaml(val map[string]interface{}) string {
 	return fmt.Sprintf("{%s}", strings.Join(fields, ","))
 }
 
-// wasUsed checks if the last argument (flag) is nil (was used) and returns appropriate value.
+// wasUsed checks if the last argument (flag) isn't nil (was used) and returns appropriate value.
 func wasUsed(args ...interface{}) (interface{}, error) {
 	if len(args) < 2 {
 		return "", errors.New("ifNil requires at least two arguments")
