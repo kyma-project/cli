@@ -26,7 +26,19 @@ func Test_CreateClusterRoleBinding(t *testing.T) {
 		require.Equal(t, fixClusterRoleBinding(), binding)
 	})
 
-	t.Run("ClusterRole not found error", func(t *testing.T) {
+	t.Run("create RoleBinding", func(t *testing.T) {
+		kubeClient := &kube_fake.KubeClient{
+			TestKubernetesInterface: k8s_fake.NewSimpleClientset(fixClusterRole()),
+		}
+		err := CreateRoleBinding(context.Background(), kubeClient, "test-name", "default", "clusterRole")
+		require.NoError(t, err)
+
+		binding, err := kubeClient.Static().RbacV1().RoleBindings("default").Get(context.Background(), "test-name-binding", metav1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, fixRoleBinding(), binding)
+	})
+
+	t.Run("ClusterRole not found error for ClusterRoleBinding creation", func(t *testing.T) {
 		kubeClient := &kube_fake.KubeClient{
 			TestKubernetesInterface: k8s_fake.NewSimpleClientset(),
 		}
@@ -34,9 +46,17 @@ func Test_CreateClusterRoleBinding(t *testing.T) {
 		require.ErrorContains(t, err, `clusterroles.rbac.authorization.k8s.io "clusterRole" not found`)
 	})
 
+	t.Run("ClusterRole not found error for RoleBinding creation", func(t *testing.T) {
+		kubeClient := &kube_fake.KubeClient{
+			TestKubernetesInterface: k8s_fake.NewSimpleClientset(),
+		}
+		err := CreateRoleBinding(context.Background(), kubeClient, "test-name", "default", "clusterRole")
+		require.ErrorContains(t, err, `clusterroles.rbac.authorization.k8s.io "clusterRole" not found`)
+	})
+
 	t.Run("ignore already exists error", func(t *testing.T) {
 		kubeClient := &kube_fake.KubeClient{
-			TestKubernetesInterface: k8s_fake.NewSimpleClientset(fixClusterRole(), fixClusterRoleBinding()),
+			TestKubernetesInterface: k8s_fake.NewSimpleClientset(fixClusterRole(), fixRoleBinding()),
 		}
 		err := CreateClusterRoleBinding(context.Background(), kubeClient, "test-name", "default", "clusterRole")
 		require.NoError(t, err)
@@ -105,6 +125,26 @@ func fixClusterRoleBinding() *rbacv1.ClusterRoleBinding {
 	return &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-name-binding",
+		},
+		Subjects: []rbacv1.Subject{
+			{
+				Kind:      "ServiceAccount",
+				Name:      "test-name",
+				Namespace: "default",
+			}},
+
+		RoleRef: rbacv1.RoleRef{
+			Kind: "ClusterRole",
+			Name: "clusterRole",
+		},
+	}
+}
+
+func fixRoleBinding() *rbacv1.RoleBinding {
+	return &rbacv1.RoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-name-binding",
+			Namespace: "default",
 		},
 		Subjects: []rbacv1.Subject{
 			{
