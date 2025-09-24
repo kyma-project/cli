@@ -49,7 +49,7 @@ type boolValue struct {
 }
 
 func (v *boolValue) GetValue() interface{} {
-	return getValue(v.Value)
+	return getValueOrNil(v.Value)
 }
 
 func (v *boolValue) GetPath() string {
@@ -66,7 +66,7 @@ type int64Value struct {
 }
 
 func (v *int64Value) GetValue() interface{} {
-	return getValue(v.Value)
+	return getValueOrNil(v.Value)
 }
 
 func (v *int64Value) GetPath() string {
@@ -83,7 +83,7 @@ type stringValue struct {
 }
 
 func (v *stringValue) GetValue() interface{} {
-	return getValue(v.Value)
+	return getValueOrNil(v.Value)
 }
 
 func (sv *stringValue) GetPath() string {
@@ -115,11 +115,10 @@ func (pv *pathValue) SetValue(value string) error {
 	return pv.stringValue.Set(value)
 }
 
-func getValue[T any](value *T) interface{} {
+func getValueOrNil[T any](value *T) interface{} {
 	if value != nil {
 		return *value
 	}
 
-	var emptyValue T
-	return emptyValue
+	return nil
 }

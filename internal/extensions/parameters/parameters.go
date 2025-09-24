@@ -185,6 +185,9 @@ func mergeSlices(from, to []interface{}) ([]interface{}, error) {
 }
 
 func hasSameTypes(a, b interface{}) error {
+	if a == nil || b == nil {
+		return nil
+	}
 	aKind := reflect.TypeOf(a).Kind()
 	bKind := reflect.TypeOf(b).Kind()
 	if aKind != bKind {

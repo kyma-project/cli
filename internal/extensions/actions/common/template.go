@@ -16,6 +16,7 @@ var funcMap = template.FuncMap{
 	"toEnvs":        toEnvs,
 	"toArray":       toArray,
 	"toYaml":        toYaml,
+	"wasUsed":       wasUsed,
 }
 
 // templateConfig parses the given template and executes it with the provided overwrites
@@ -81,4 +82,35 @@ func toYaml(val map[string]interface{}) string {
 		fields = append(fields, fmt.Sprintf(`"%s":"%s"`, k, v))
 	}
 	return fmt.Sprintf("{%s}", strings.Join(fields, ","))
+}
+
+// wasUsed checks if the last argument (flag) isn't nil (was used) and returns appropriate value.
+func wasUsed(args ...interface{}) (interface{}, error) {
+	if len(args) < 2 {
+		return "", errors.New("ifNil requires at least two arguments")
+	}
+	// last argument is the flag used and semi-last is the value to return if nil
+	if args[len(args)-1] == nil {
+		return args[len(args)-2], nil
+	}
+
+	flagValue := args[len(args)-1]
+	// if last argument(flag) is not nil
+	switch v := flagValue.(type) {
+	case bool:
+		if len(args) == 3 { // notNil, nil, flag
+			return args[0], nil // nil handled by ifNilBool func
+		} else if len(args) == 4 { // true, false, nil, flag
+			if v {
+				return args[0], nil
+			}
+			return args[1], nil
+		}
+	default: // covers string, int, map and path flag types
+		if len(args) != 2 {
+			return "", errors.New(fmt.Sprintf("ifNil requires exactly two arguments for type %T", v))
+		}
+		return args[0], nil
+	}
+	return "", errors.New("ifNil requires at least three arguments for type bool")
 }
