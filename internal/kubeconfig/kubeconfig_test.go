@@ -113,13 +113,13 @@ func Test_Prepare(t *testing.T) {
 					},
 				},
 				Contexts: map[string]*api.Context{
-					"context": {
+					"cluster": {
 						Cluster:   "cluster",
 						AuthInfo:  "username",
 						Namespace: "default",
 					},
 				},
-				CurrentContext: "context",
+				CurrentContext: "cluster",
 			},
 			expectedErr: nil,
 		},
@@ -146,13 +146,13 @@ func Test_Prepare(t *testing.T) {
 					},
 				},
 				Contexts: map[string]*api.Context{
-					"context": {
+					"cluster": {
 						Cluster:   "cluster",
 						AuthInfo:  "username",
 						Namespace: "default",
 					},
 				},
-				CurrentContext: "context",
+				CurrentContext: "cluster",
 			},
 			expectedErr: nil,
 		},
@@ -194,11 +194,11 @@ func Test_Prepare(t *testing.T) {
 					},
 				},
 				Contexts: map[string]*api.Context{
-					"context": {
+					"cluster": {
 						Cluster: "cluster",
 					},
 				},
-				CurrentContext: "context",
+				CurrentContext: "cluster",
 			}
 
 			staticClient := k8s_fake.NewSimpleClientset(
@@ -415,12 +415,69 @@ func Test_PrepareFromOpenIDConnectorResource(t *testing.T) {
 				},
 			},
 			Contexts: map[string]*api.Context{
-				"context": {
+				"cluster": {
 					Cluster:  "cluster",
 					AuthInfo: "kyma-oidc",
 				},
 			},
-			CurrentContext: "context",
+			CurrentContext: "cluster",
+			Extensions:     nil,
+		}
+		require.Equal(t, expected, result)
+	})
+
+	t.Run("kubeconfig without current context", func(t *testing.T) {
+		apiConfig := &api.Config{
+			Clusters: map[string]*api.Cluster{
+				"cluster": {
+					Server:                   "https://localhost:8080",
+					CertificateAuthorityData: []byte("certificate"),
+				},
+			},
+			Contexts: map[string]*api.Context{
+				"context": {
+					Cluster: "cluster",
+				},
+			},
+			CurrentContext: "",
+		}
+		fakeClient := newFakeClient(baseOIDCRes)
+		fakeClient.TestAPIConfig = apiConfig
+
+		result, clierr := PrepareFromOpenIDConnectorResource(context.Background(), fakeClient, "kyma-oidc")
+		require.Nil(t, clierr)
+
+		expected := &api.Config{
+			Kind:       "Config",
+			APIVersion: "v1",
+			Clusters: map[string]*api.Cluster{
+				"cluster": {
+					Server:                   "https://localhost:8080",
+					CertificateAuthorityData: []byte("certificate"),
+				},
+			},
+			AuthInfos: map[string]*api.AuthInfo{
+				"kyma-oidc": {
+					Exec: &api.ExecConfig{
+						APIVersion: "client.authentication.k8s.io/v1beta1",
+						Command:    "kubectl-oidc_login",
+						Args: []string{
+							"get-token",
+							"--oidc-issuer-url=http://super.issuer.com",
+							"--oidc-client-id=10033344-6d08-46cd-80b9-37e18cd856c1",
+							"--oidc-extra-scope=email",
+							"--oidc-extra-scope=openid",
+						},
+					},
+				},
+			},
+			Contexts: map[string]*api.Context{
+				"cluster": {
+					Cluster:  "cluster",
+					AuthInfo: "kyma-oidc",
+				},
+			},
+			CurrentContext: "cluster",
 			Extensions:     nil,
 		}
 		require.Equal(t, expected, result)

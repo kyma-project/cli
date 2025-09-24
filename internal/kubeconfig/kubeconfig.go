@@ -36,8 +36,7 @@ func PrepareWithToken(apiBase *api.Config, token string) *api.Config {
 }
 
 func Prepare(ctx context.Context, client kube.Client, name, namespace, time, output string, permanent bool) (*api.Config, clierror.Error) {
-	currentCtx := client.APIConfig().CurrentContext
-	clusterName := client.APIConfig().Contexts[currentCtx].Cluster
+	clusterName := getKubeconfigCurrentClusterName(client.APIConfig())
 	var tokenData authv1.TokenRequestStatus
 	var certData []byte
 	var err clierror.Error
@@ -85,13 +84,13 @@ func Prepare(ctx context.Context, client kube.Client, name, namespace, time, out
 			},
 		},
 		Contexts: map[string]*api.Context{
-			currentCtx: {
+			clusterName: {
 				Cluster:   clusterName,
 				Namespace: namespace,
 				AuthInfo:  name,
 			},
 		},
-		CurrentContext: currentCtx,
+		CurrentContext: clusterName,
 		Extensions:     nil,
 	}
 
@@ -99,8 +98,7 @@ func Prepare(ctx context.Context, client kube.Client, name, namespace, time, out
 }
 
 func PrepareFromOpenIDConnectorResource(ctx context.Context, client kube.Client, name string) (*api.Config, clierror.Error) {
-	currentCtx := client.APIConfig().CurrentContext
-	clusterName := client.APIConfig().Contexts[currentCtx].Cluster
+	clusterName := getKubeconfigCurrentClusterName(client.APIConfig())
 
 	oidcResUnstruct, err := client.Dynamic().Resource(OpenIdConnectGVR).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
@@ -137,16 +135,31 @@ func PrepareFromOpenIDConnectorResource(ctx context.Context, client kube.Client,
 			},
 		},
 		Contexts: map[string]*api.Context{
-			currentCtx: {
+			clusterName: {
 				Cluster:  clusterName,
 				AuthInfo: name,
 			},
 		},
-		CurrentContext: currentCtx,
+		CurrentContext: clusterName,
 		Extensions:     nil,
 	}
 
 	return kubeconfig, nil
+}
+
+func getKubeconfigCurrentClusterName(kubeconfig *api.Config) string {
+	clusterName := kubeconfig.CurrentContext
+	if clusterName != "" {
+		// current context exists
+		return kubeconfig.Contexts[kubeconfig.CurrentContext].Cluster
+	}
+
+	// get first cluster from map
+	for clusterName = range kubeconfig.Clusters {
+		break
+	}
+
+	return clusterName
 }
 
 func unmarshalOIDCResource(obj map[string]any) (OpenIDConnect, error) {
