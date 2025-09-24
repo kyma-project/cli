@@ -13,11 +13,17 @@ kyma alpha kubeconfig generate [flags]
 ## Examples
 
 ```bash
-# generate a permanent access (kubeconfig) for a new or existing ServiceAccount and a namespaced binding to a given ClusterRole
-  kyma alpha kubeconfig generate --serviceaccount <sa_name> --clusterrole <cr_name> --namespace <ns_name> --permanent
+# generate a permanent access (kubeconfig) for a new or existing ServiceAccount 
+  kyma alpha kubeconfig generate --serviceaccount <sa_name> --namespace <ns_name> --permanent
 
-# generate time-constrained access (kubeconfig) for a new or existing ServiceAccount and a cluster-wide binding to a given ClusterRole
-  kyma alpha kubeconfig generate --serviceaccount <sa_name> --clusterrole <cr_name> --namespace <ns_name> --cluster-wide --time 2h
+# generate a permanent access (kubeconfig) for a new or existing ServiceAccount in a given namespace with a namespaced binding to a given ClusterRole
+  kyma alpha kubeconfig generate --serviceaccount <sa_name> --namespace <ns_name> --clusterrole <cr_name> --permanent
+
+# generate a permanent access (kubeconfig) for a new or existing ServiceAccount in a given namespace with a namespaced binding to a given Role
+  kyma alpha kubeconfig generate --serviceaccount <sa_name> --namespace <ns_name> --role <r_name> --permanent
+
+# generate time-constrained access (kubeconfig) for a new or existing ServiceAccount in a given namespace with a cluster-wide binding to a given ClusterRole
+  kyma alpha kubeconfig generate --serviceaccount <sa_name> --namespace <ns_name> --clusterrole <cr_name> --cluster-wide --time 2h
   
 # generate a kubeconfig with an OIDC token
   kyma alpha kubeconfig generate --token <token>
@@ -40,14 +46,15 @@ kyma alpha kubeconfig generate [flags]
 ```text
       --audience string               Audience of the token
       --cluster-wide                  Determines if the binding to the ClusterRole is cluster-wide
-      --clusterrole string            Name of the Cluster Role to bind the Service Account to
+      --clusterrole string            Name of the Cluster Role to bind the Service Account to (optional)
       --credentials-path string       Path to the CIS credentials file
       --id-token-request-url string   URL to request the ID token, defaults to ACTIONS_ID_TOKEN_REQUEST_URL env variable
-      --namespace string              Namespace in which the service account exists or will be created
+      --namespace string              Namespace in which the subject Service Account is to be found or will be created (default: "default") (default "default")
       --oidc-name string              Name of the OIDC Custom Resource from which the kubeconfig will be generated
       --output string                 Path to the kubeconfig file output. If not provided, the kubeconfig will be printed
       --permanent                     Determines if the token is valid indefinitely
-      --serviceaccount string         Name of the Service Account to be used or created
+      --role string                   Name of the Role in the given Namespace to bind the Service Account to (optional)
+      --serviceaccount string         Name of the Service Account (in the given Namespace) to be used as a subject of the generated kubeconfig. If the Service Account does not exist, it will be created
       --time string                   Determines how long the token should be valid, by default 1h (use h for hours and d for days) (default "1h")
       --token string                  Token used in the kubeconfig
   -h, --help                          Help for the command

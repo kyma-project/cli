@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"strings"
 
 	"github.com/kyma-project/cli.v3/internal/kube"
 	corev1 "k8s.io/api/core/v1"
@@ -10,7 +11,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func CreateServiceAccount(ctx context.Context, client kube.Client, name, namespace string) error {
+const (
+	RoleKind        string = "Role"
+	ClusterRoleKind string = "ClusterRole"
+)
+
+func EnsureServiceAccount(ctx context.Context, client kube.Client, name, namespace string) error {
 	sa := buildServiceAccount(name, namespace)
 	_, err := client.Static().CoreV1().ServiceAccounts(namespace).Create(ctx, sa, metav1.CreateOptions{})
 	if err != nil && !errors.IsAlreadyExists(err) {
@@ -43,7 +49,7 @@ func CreateClusterRoleBinding(ctx context.Context, client kube.Client, name, nam
 	return nil
 }
 
-func CreateRoleBinding(ctx context.Context, client kube.Client, name, namespace, clusterRole string) error {
+func CreateRoleBindingToClusterRole(ctx context.Context, client kube.Client, name, namespace, clusterRole string) error {
 
 	// Check if the cluster role to bind to exists
 	_, err := client.Static().RbacV1().ClusterRoles().Get(ctx, clusterRole, metav1.GetOptions{})
@@ -51,7 +57,23 @@ func CreateRoleBinding(ctx context.Context, client kube.Client, name, namespace,
 		return err
 	}
 	// Create roleBinding
-	roleBinding := buildRoleBinding(name, namespace, clusterRole)
+	roleBinding := buildRoleBinding(name, namespace, clusterRole, ClusterRoleKind)
+	_, err = client.Static().RbacV1().RoleBindings(namespace).Create(ctx, roleBinding, metav1.CreateOptions{})
+	if err != nil && !errors.IsAlreadyExists(err) {
+		return err
+	}
+	return nil
+}
+
+func CreateRoleBindingToRole(ctx context.Context, client kube.Client, name, namespace, role string) error {
+
+	// Check if the role to bind to exists
+	_, err := client.Static().RbacV1().Roles(namespace).Get(ctx, role, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	// Create roleBinding
+	roleBinding := buildRoleBinding(name, namespace, role, RoleKind)
 	_, err = client.Static().RbacV1().RoleBindings(namespace).Create(ctx, roleBinding, metav1.CreateOptions{})
 	if err != nil && !errors.IsAlreadyExists(err) {
 		return err
@@ -75,7 +97,7 @@ func buildServiceAccountToken(name, namespace string) *corev1.Secret {
 func buildClusterRoleBinding(name, namespace, clusterRole string) *rbacv1.ClusterRoleBinding {
 	return &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: name + "-binding",
+			Name: name + "-clusterrole-" + clusterRole + "-binding",
 		},
 		Subjects: []rbacv1.Subject{
 			{
@@ -91,10 +113,10 @@ func buildClusterRoleBinding(name, namespace, clusterRole string) *rbacv1.Cluste
 	}
 }
 
-func buildRoleBinding(name, namespace, clusterRole string) *rbacv1.RoleBinding {
+func buildRoleBinding(name, namespace, role, roleKind string) *rbacv1.RoleBinding {
 	return &rbacv1.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name + "-binding",
+			Name:      name + "-" + strings.ToLower(roleKind) + "-" + role + "-binding",
 			Namespace: namespace,
 		},
 		Subjects: []rbacv1.Subject{
@@ -105,8 +127,8 @@ func buildRoleBinding(name, namespace, clusterRole string) *rbacv1.RoleBinding {
 			}},
 
 		RoleRef: rbacv1.RoleRef{
-			Kind: "ClusterRole",
-			Name: clusterRole,
+			Kind: roleKind,
+			Name: role,
 		},
 	}
 }
