@@ -1,0 +1,296 @@
+package diagnostics_test
+
+import (
+	"bytes"
+	"context"
+	"errors"
+	"testing"
+
+	"github.com/kyma-project/cli.v3/internal/diagnostics"
+	kube_fake "github.com/kyma-project/cli.v3/internal/kube/fake"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/stretchr/testify/assert"
+	"k8s.io/client-go/kubernetes/fake"
+)
+
+func TestNewMetadataCollector(t *testing.T) {
+	// Given
+	kubeClient := &kube_fake.KubeClient{
+		TestKubernetesInterface: fake.NewSimpleClientset(),
+	}
+	var writer bytes.Buffer
+	verbose := true
+
+	// When
+	collector := diagnostics.NewMetadataCollector(kubeClient, &writer, verbose)
+
+	// Then
+	assert.NotNil(t, collector)
+}
+
+func TestWriteVerboseError(t *testing.T) {
+	testCases := []struct {
+		name           string
+		verbose        bool
+		err            error
+		message        string
+		expectedOutput string
+	}{
+		{
+			name:           "Should write error when verbose is true",
+			verbose:        true,
+			err:            errors.New("test error"),
+			message:        "Test error message",
+			expectedOutput: "Test error message: test error\n",
+		},
+		{
+			name:           "Should not write error when verbose is false",
+			verbose:        false,
+			err:            errors.New("test error"),
+			message:        "Test error message",
+			expectedOutput: "",
+		},
+		{
+			name:           "Should not write error when error is nil",
+			verbose:        true,
+			err:            nil,
+			message:        "Test error message",
+			expectedOutput: "",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Given
+			var writer bytes.Buffer
+			collector := diagnostics.NewMetadataCollector(nil, &writer, tc.verbose)
+
+			// When
+			collector.WriteVerboseError(tc.err, tc.message)
+
+			// Then
+			assert.Equal(t, tc.expectedOutput, writer.String())
+		})
+	}
+}
+
+func TestEnrichMetadataWithShootInfo(t *testing.T) {
+	// Test cases
+	testCases := []struct {
+		name              string
+		shootInfoExists   bool
+		provider          string
+		kubernetesVersion string
+		verbose           bool
+	}{
+		{
+			name:              "Should enrich metadata when shoot-info ConfigMap exists",
+			shootInfoExists:   true,
+			provider:          "azure",
+			kubernetesVersion: "1.26.0",
+			verbose:           false,
+		},
+		{
+			name:              "Should not enrich metadata when shoot-info ConfigMap does not exist",
+			shootInfoExists:   false,
+			provider:          "",
+			kubernetesVersion: "",
+			verbose:           true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Given
+			var writer bytes.Buffer
+			fakeClient := fake.NewSimpleClientset()
+			kubeClient := &kube_fake.KubeClient{
+				TestKubernetesInterface: fakeClient,
+			}
+
+			// Create the ConfigMap if needed for the test case
+			if tc.shootInfoExists {
+				shootInfoCM := &corev1.ConfigMap{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "shoot-info",
+						Namespace: "kube-system",
+					},
+					Data: map[string]string{
+						"provider":          tc.provider,
+						"kubernetesVersion": tc.kubernetesVersion,
+					},
+				}
+				_, err := fakeClient.CoreV1().ConfigMaps("kube-system").Create(context.TODO(), shootInfoCM, metav1.CreateOptions{})
+				assert.NoError(t, err)
+			}
+
+			collector := diagnostics.NewMetadataCollector(kubeClient, &writer, tc.verbose)
+
+			// When
+			metadata := collector.Run(context.TODO())
+
+			// Then
+			if tc.shootInfoExists {
+				assert.Equal(t, tc.provider, metadata.Provider)
+				assert.Equal(t, tc.kubernetesVersion, metadata.KubernetesVersion)
+				assert.Empty(t, writer.String()) // No errors should be written
+			} else {
+				assert.Empty(t, metadata.Provider)
+				assert.Empty(t, metadata.KubernetesVersion)
+				if tc.verbose {
+					assert.Contains(t, writer.String(), "Failed to get shoot-info ConfigMap")
+				} else {
+					assert.Empty(t, writer.String())
+				}
+			}
+		})
+	}
+}
+
+func TestEnrichMetadataWithKymaInfo(t *testing.T) {
+	// Test cases
+	testCases := []struct {
+		name           string
+		kymaInfoExists bool
+		natGatewayIPs  string
+		expectedIPs    []string
+		verbose        bool
+	}{
+		{
+			name:           "Should enrich metadata when kyma-info ConfigMap exists",
+			kymaInfoExists: true,
+			natGatewayIPs:  "192.168.0.1 192.168.0.2",
+			expectedIPs:    []string{"192.168.0.1", "192.168.0.2"},
+			verbose:        false,
+		},
+		{
+			name:           "Should not enrich metadata when kyma-info ConfigMap does not exist",
+			kymaInfoExists: false,
+			natGatewayIPs:  "",
+			expectedIPs:    nil,
+			verbose:        true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Given
+			var writer bytes.Buffer
+			fakeClient := fake.NewSimpleClientset()
+			kubeClient := &kube_fake.KubeClient{
+				TestKubernetesInterface: fakeClient,
+			}
+
+			// Create the ConfigMap if needed for the test case
+			if tc.kymaInfoExists {
+				kymaInfoCM := &corev1.ConfigMap{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "kyma-info",
+						Namespace: "kyma-system",
+					},
+					Data: map[string]string{
+						"cloud.natGatewayIps": tc.natGatewayIPs,
+					},
+				}
+				_, err := fakeClient.CoreV1().ConfigMaps("kyma-system").Create(context.TODO(), kymaInfoCM, metav1.CreateOptions{})
+				assert.NoError(t, err)
+			}
+
+			// When
+			collector := diagnostics.NewMetadataCollector(kubeClient, &writer, tc.verbose)
+			metadata := collector.Run(context.TODO())
+
+			// Then
+			if tc.kymaInfoExists {
+				assert.Equal(t, tc.expectedIPs, metadata.NATGatewayIPs)
+				assert.Empty(t, writer.String()) // No errors should be written
+			} else {
+				assert.Empty(t, metadata.NATGatewayIPs)
+				if tc.verbose {
+					assert.Contains(t, writer.String(), "Failed to get kyma-info ConfigMap")
+				} else {
+					assert.Empty(t, writer.String())
+				}
+			}
+		})
+	}
+}
+
+func TestEnrichMetadataWithKymaProvisioningInfo(t *testing.T) {
+	// Test cases
+	testCases := []struct {
+		name                    string
+		provisioningInfoExists  bool
+		detailsYAML             string
+		expectedGlobalAccountID string
+		expectedSubaccountID    string
+		verbose                 bool
+	}{
+		{
+			name:                    "Should enrich metadata when kyma-provisioning-info ConfigMap exists with valid YAML",
+			provisioningInfoExists:  true,
+			detailsYAML:             "globalAccountID: ga-12345\nsubaccountID: sa-67890",
+			expectedGlobalAccountID: "ga-12345",
+			expectedSubaccountID:    "sa-67890",
+			verbose:                 false,
+		},
+		{
+			name:                    "Should not enrich metadata when kyma-provisioning-info ConfigMap does not exist",
+			provisioningInfoExists:  false,
+			detailsYAML:             "",
+			expectedGlobalAccountID: "",
+			expectedSubaccountID:    "",
+			verbose:                 true,
+		},
+		{
+			name:                    "Should handle invalid YAML in details field",
+			provisioningInfoExists:  true,
+			detailsYAML:             "invalid: yaml: :",
+			expectedGlobalAccountID: "",
+			expectedSubaccountID:    "",
+			verbose:                 true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Given
+			var writer bytes.Buffer
+			fakeClient := fake.NewSimpleClientset()
+			kubeClient := &kube_fake.KubeClient{
+				TestKubernetesInterface: fakeClient,
+			}
+
+			// Create the ConfigMap if needed for the test case
+			if tc.provisioningInfoExists {
+				provisioningInfoCM := &corev1.ConfigMap{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "kyma-provisioning-info",
+						Namespace: "kyma-system",
+					},
+					Data: map[string]string{
+						"details": tc.detailsYAML,
+					},
+				}
+				_, err := fakeClient.CoreV1().ConfigMaps("kyma-system").Create(context.TODO(), provisioningInfoCM, metav1.CreateOptions{})
+				assert.NoError(t, err)
+			}
+
+			// When
+			collector := diagnostics.NewMetadataCollector(kubeClient, &writer, tc.verbose)
+			metadata := collector.Run(context.TODO())
+
+			// Then
+			assert.Equal(t, tc.expectedGlobalAccountID, metadata.GlobalAccountID)
+			assert.Equal(t, tc.expectedSubaccountID, metadata.SubaccountID)
+
+			if !tc.provisioningInfoExists && tc.verbose {
+				assert.Contains(t, writer.String(), "Failed to get kyma-provisioning-info ConfigMap")
+			} else if tc.provisioningInfoExists && tc.detailsYAML == "invalid: yaml: :" && tc.verbose {
+				assert.Contains(t, writer.String(), "Failed to unmarshal provisioning details YAML")
+			}
+		})
+	}
+}
