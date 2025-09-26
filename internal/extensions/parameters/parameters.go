@@ -15,7 +15,7 @@ import (
 
 type Value interface {
 	pflag.Value
-	SetValue(string) error
+	SetValue(*string) error
 	GetValue() interface{}
 	GetPath() string
 }

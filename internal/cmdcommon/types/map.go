@@ -21,22 +21,35 @@ func (em *Map) String() string {
 	return strings.Join(values, ",")
 }
 
-func (em *Map) Set(value string) error {
-	if value == "" {
+func (em *Map) SetValue(value *string) error {
+	if value == nil {
 		return nil
-	}
-
-	elems := strings.Split(value, "=")
-	if len(elems) != 2 {
-		return fmt.Errorf("failed to parse value '%s', should be in format KEY=VALUE", value)
 	}
 
 	if em.Values == nil {
 		em.Values = map[string]interface{}{}
 	}
 
+	if *value == "" {
+		// input is empty, do nothing
+		return nil
+	}
+
+	elems := strings.Split(*value, "=")
+	if len(elems) != 2 {
+		return fmt.Errorf("failed to parse value '%s', should be in format KEY=VALUE", *value)
+	}
+
 	em.Values[elems[0]] = elems[1]
 	return nil
+}
+
+func (em *Map) Set(value string) error {
+	if value == "" {
+		return nil
+	}
+
+	return em.SetValue(&value)
 }
 
 func (em *Map) Type() string {
