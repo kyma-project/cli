@@ -13,48 +13,48 @@ import (
 )
 
 type MachineInfo struct {
-	Name             string
-	Architecture     string
-	KernelVersion    string
-	OSImage          string
-	ContainerRuntime string
-	KubeletVersion   string
-	OperatingSystem  string
+	Name             string `json:"name" yaml:"name"`
+	Architecture     string `json:"architecture" yaml:"architecture"`
+	KernelVersion    string `json:"kernelVersion" yaml:"kernelVersion"`
+	OSImage          string `json:"osImage" yaml:"osImage"`
+	ContainerRuntime string `json:"containerRuntime" yaml:"containerRuntime"`
+	KubeletVersion   string `json:"kubeletVersion" yaml:"kubeletVersion"`
+	OperatingSystem  string `json:"operatingSystem" yaml:"operatingSystem"`
 }
 
 type Capacity struct {
-	CPU              string
-	Memory           string
-	EphemeralStorage string
-	Pods             string
+	CPU              string `json:"cpu" yaml:"cpu"`
+	Memory           string `json:"memory" yaml:"memory"`
+	EphemeralStorage string `json:"ephemeralStorage" yaml:"ephemeralStorage"`
+	Pods             string `json:"pods" yaml:"pods"`
 }
 
 // Usage represents comprehensive resource information for the node
 type Usage struct {
 	// Raw resource totals
-	CPURequests    string // Total CPU requests from all pods (e.g., "1200m")
-	CPULimits      string // Total CPU limits from all pods (e.g., "2400m")
-	MemoryRequests string // Total memory requests from all pods (e.g., "2.5Gi")
-	MemoryLimits   string // Total memory limits from all pods (e.g., "4Gi")
+	CPURequests    string `json:"cpuRequests" yaml:"cpuRequests"`       // Total CPU requests from all pods (e.g., "1200m")
+	CPULimits      string `json:"cpuLimits" yaml:"cpuLimits"`           // Total CPU limits from all pods (e.g., "2400m")
+	MemoryRequests string `json:"memoryRequests" yaml:"memoryRequests"` // Total memory requests from all pods (e.g., "2.5Gi")
+	MemoryLimits   string `json:"memoryLimits" yaml:"memoryLimits"`     // Total memory limits from all pods (e.g., "4Gi")
 
 	// Available resources (what's left for new workloads)
-	CPUAvailable              string // Available CPU for new pods (Allocatable - Requests)
-	MemoryAvailable           string // Available memory for new pods (Allocatable - Requests)
-	EphemeralStorageAvailable string // Available storage (typically equals allocatable)
-	PodsAvailable             string // Available pod slots (e.g., "89" if 110 max - 21 running)
+	CPUAvailable              string `json:"cpuAvailable" yaml:"cpuAvailable"`                           // Available CPU for new pods (Allocatable - Requests)
+	MemoryAvailable           string `json:"memoryAvailable" yaml:"memoryAvailable"`                     // Available memory for new pods (Allocatable - Requests)
+	EphemeralStorageAvailable string `json:"ephemeralStorageAvailable" yaml:"ephemeralStorageAvailable"` // Available storage (typically equals allocatable)
+	PodsAvailable             string `json:"podsAvailable" yaml:"podsAvailable"`                         // Available pod slots (e.g., "89" if 110 max - 21 running)
 
 	// Usage percentages (how much of allocatable capacity is used)
-	CPURequestedPercent    string // Percentage of allocatable CPU requested
-	MemoryRequestedPercent string // Percentage of allocatable memory requested
+	CPURequestedPercent    string `json:"cpuRequestedPercent" yaml:"cpuRequestedPercent"`       // Percentage of allocatable CPU requested
+	MemoryRequestedPercent string `json:"memoryRequestedPercent" yaml:"memoryRequestedPercent"` // Percentage of allocatable memory requested
 
 	// Pod information
-	PodCount int // Number of running/pending pods on this node
+	PodCount int `json:"podCount" yaml:"podCount"` // Number of running/pending pods on this node
 }
 
 type NodeResourceInfo struct {
-	MachineInfo MachineInfo
-	Capacity    Capacity
-	Usage       Usage
+	MachineInfo MachineInfo `json:"machineInfo" yaml:"machineInfo"`
+	Capacity    Capacity    `json:"capacity" yaml:"capacity"`
+	Usage       Usage       `json:"usage" yaml:"usage"`
 }
 
 type NodeResourceInfoCollector struct {

@@ -13,12 +13,12 @@ import (
 
 // Data returned by the collector
 type Metadata struct {
-	GlobalAccountID   string
-	SubaccountID      string
-	Provider          string
-	KubernetesVersion string
-	NATGatewayIPs     []string
-	KubeAPIServer     string
+	GlobalAccountID   string   `json:"globalAccountID" yaml:"globalAccountID"`
+	SubaccountID      string   `json:"subaccountID" yaml:"subaccountID"`
+	Provider          string   `json:"provider" yaml:"provider"`
+	KubernetesVersion string   `json:"kubernetesVersion" yaml:"kubernetesVersion"`
+	NATGatewayIPs     []string `json:"natGatewayIPs" yaml:"natGatewayIPs"`
+	KubeAPIServer     string   `json:"kubeAPIServer" yaml:"kubeAPIServer"`
 }
 
 type MetadataCollector struct {
