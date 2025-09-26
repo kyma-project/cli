@@ -39,10 +39,6 @@ func (v *mapValue) GetPath() string {
 	return v.path
 }
 
-func (v *mapValue) SetValue(value string) error {
-	return v.Set(value)
-}
-
 type boolValue struct {
 	cmdcommontypes.NullableBool
 	path string
@@ -54,10 +50,6 @@ func (v *boolValue) GetValue() interface{} {
 
 func (v *boolValue) GetPath() string {
 	return v.path
-}
-
-func (v *boolValue) SetValue(value string) error {
-	return v.Set(value)
 }
 
 type int64Value struct {
@@ -73,10 +65,6 @@ func (v *int64Value) GetPath() string {
 	return v.path
 }
 
-func (v *int64Value) SetValue(value string) error {
-	return v.Set(value)
-}
-
 type stringValue struct {
 	cmdcommontypes.NullableString
 	path string
@@ -88,10 +76,6 @@ func (v *stringValue) GetValue() interface{} {
 
 func (sv *stringValue) GetPath() string {
 	return sv.path
-}
-
-func (sv *stringValue) SetValue(value string) error {
-	return sv.Set(value)
 }
 
 type pathValue struct {
@@ -109,10 +93,6 @@ func (pv *pathValue) Set(path string) error {
 	pv.Value = &newValue
 
 	return nil
-}
-
-func (pv *pathValue) SetValue(value string) error {
-	return pv.stringValue.Set(value)
 }
 
 func getValueOrNil[T any](value *T) interface{} {

@@ -60,12 +60,12 @@ func Test_buildCommand(t *testing.T) {
 			{
 				Name:         "flag1",
 				Type:         parameters.BoolCustomType,
-				DefaultValue: "WRONG VALUE",
+				DefaultValue: toPtr("WRONG VALUE"),
 			},
 			{
 				Name:         "flag2",
 				Type:         parameters.IntCustomType,
-				DefaultValue: "WRONG VALUE",
+				DefaultValue: toPtr("WRONG VALUE"),
 			},
 		}
 
@@ -103,7 +103,7 @@ func fixTestExtension() types.Extension {
 						Name:         "flag1",
 						Description:  "flag-desc1",
 						Shorthand:    "f",
-						DefaultValue: "5",
+						DefaultValue: toPtr("5"),
 						Required:     true,
 					},
 				},
