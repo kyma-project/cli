@@ -77,7 +77,7 @@ type Flag struct {
 	// optional shorthand of the flag
 	Shorthand string `yaml:"shorthand"`
 	// default value for the flag
-	DefaultValue string `yaml:"default"`
+	DefaultValue *string `yaml:"default"`
 	// mark if flag is required
 	Required bool `yaml:"required"`
 }
