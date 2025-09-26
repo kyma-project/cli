@@ -11,12 +11,17 @@ import (
 	"github.com/kyma-project/cli.v3/internal/extensions/types"
 )
 
-var funcMap = template.FuncMap{
-	"newLineIndent": newLineIndent,
-	"toEnvs":        toEnvs,
-	"toArray":       toArray,
-	"toYaml":        toYaml,
-	"wasUsed":       wasUsed,
+// newFuncMap creates a template.FuncMap used in config templating
+func newFuncMap(overwrites types.ActionConfigOverwrites) template.FuncMap {
+	funcMap := make(template.FuncMap)
+	funcMap = template.FuncMap{
+		"newLineIndent": newLineIndent,
+		"toEnvs":        toEnvs,
+		"toArray":       toArray,
+		"toYaml":        toYaml,
+		"ifNil":         newIfNil(overwrites, &funcMap),
+	}
+	return funcMap
 }
 
 // templateConfig parses the given template and executes it with the provided overwrites
@@ -24,7 +29,7 @@ func templateConfig(tmpl []byte, overwrites types.ActionConfigOverwrites) ([]byt
 	configTmpl, err := template.
 		New("config").
 		Option("missingkey=zero").
-		Delims("${{", "}}").Funcs(funcMap).
+		Delims("${{", "}}").Funcs(newFuncMap(overwrites)).
 		Parse(string(tmpl))
 	if err != nil {
 		return nil, clierror.Wrap(err, clierror.New("failed to parse config template"))
@@ -84,33 +89,30 @@ func toYaml(val map[string]interface{}) string {
 	return fmt.Sprintf("{%s}", strings.Join(fields, ","))
 }
 
-// wasUsed checks if the last argument (flag) isn't nil (was used) and returns appropriate value.
-func wasUsed(args ...interface{}) (interface{}, error) {
-	if len(args) < 2 {
-		return "", errors.New("ifNil requires at least two arguments")
-	}
-	// last argument is the flag used and semi-last is the value to return if nil
-	if args[len(args)-1] == nil {
-		return args[len(args)-2], nil
-	}
-
-	flagValue := args[len(args)-1]
-	// if last argument(flag) is not nil
-	switch v := flagValue.(type) {
-	case bool:
-		if len(args) == 3 { // notNil, nil, flag
-			return args[0], nil // nil handled by ifNilBool func
-		} else if len(args) == 4 { // true, false, nil, flag
-			if v {
-				return args[0], nil
-			}
-			return args[1], nil
+func newIfNil(overwrites types.ActionConfigOverwrites, availFuncs *template.FuncMap) any {
+	return func(value, valueForNil, flag interface{}) (interface{}, error) {
+		usedValue := value
+		if flag == nil {
+			usedValue = valueForNil
 		}
-	default: // covers string, int, map and path flag types
-		if len(args) != 2 {
-			return "", errors.New(fmt.Sprintf("ifNil requires exactly two arguments for type %T", v))
+		tmpl, ok := usedValue.(string)
+		if !ok {
+			return usedValue, nil // not a string, return as is
 		}
-		return args[0], nil
+		valueTmpl, err := template.
+			New("config").
+			Option("missingkey=zero").
+			Delims("${{", "}}").Funcs(*availFuncs).
+			Parse(tmpl)
+		if err != nil {
+			return nil, errors.Wrap(err, "couldn't parse ifNil template argument")
+		}
+		templatedValue := bytes.NewBuffer([]byte{})
+		err = valueTmpl.
+			Execute(templatedValue, overwrites)
+		if err != nil {
+			return nil, errors.Wrap(err, "couldn't execute ifNil template")
+		}
+		return templatedValue.String(), nil
 	}
-	return "", errors.New("ifNil requires at least three arguments for type bool")
 }

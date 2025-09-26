@@ -7,7 +7,7 @@ import (
 )
 
 // TemplateConfigurator is a struct that implements the Configure for the types.Action interface.
-// It is used to configure an action using go tempaltes.
+// It is used to configure an action using go templates.
 type TemplateConfigurator[T any] struct {
 	Cfg T
 }
