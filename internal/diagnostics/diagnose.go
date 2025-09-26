@@ -3,7 +3,6 @@ package diagnostics
 import (
 	"context"
 	"io"
-	"os"
 
 	"github.com/kyma-project/cli.v3/internal/kube"
 )
@@ -19,7 +18,7 @@ func GetData(ctx context.Context, client kube.Client, output io.Writer, verbose 
 	metadataCollector := NewMetadataCollector(client, output, verbose)
 	kymaSystemWarningsCollector := NewKymaSystemWarningsCollector(client, output, verbose)
 	nodeResourceInfoCollector := NewNodeResourceInfoCollector(client, output, verbose)
-	modulesCustomResourceStates := NewModuleCustomResourceStateCollector(client, os.Stdout, verbose)
+	modulesCustomResourceStates := NewModuleCustomResourceStateCollector(client, output, verbose)
 
 	return DiagnosticData{
 		Metadata:                  metadataCollector.Run(ctx),

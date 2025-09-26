@@ -2,8 +2,10 @@ package diagnostics
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
+	"strconv"
 
 	"github.com/kyma-project/cli.v3/internal/kube"
 	corev1 "k8s.io/api/core/v1"
@@ -11,6 +13,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 )
+
+type NodeMetrics struct {
+	Usage struct {
+		CPU    string `json:"cpu"`
+		Memory string `json:"memory"`
+	} `json:"usage"`
+}
 
 type MachineInfo struct {
 	Name             string `json:"name" yaml:"name"`
@@ -31,21 +40,29 @@ type Capacity struct {
 
 // Usage represents comprehensive resource information for the node
 type Usage struct {
-	// Raw resource totals
-	CPURequests    string `json:"cpuRequests" yaml:"cpuRequests"`       // Total CPU requests from all pods (e.g., "1200m")
-	CPULimits      string `json:"cpuLimits" yaml:"cpuLimits"`           // Total CPU limits from all pods (e.g., "2400m")
-	MemoryRequests string `json:"memoryRequests" yaml:"memoryRequests"` // Total memory requests from all pods (e.g., "2.5Gi")
-	MemoryLimits   string `json:"memoryLimits" yaml:"memoryLimits"`     // Total memory limits from all pods (e.g., "4Gi")
+	// Actual usage data from the metrics server
+	CPUUsage           string `json:"cpuUsage" yaml:"cpuUsage"`
+	MemoryUsage        string `json:"memoryUsage" yaml:"memoryUsage"`
+	CPUUsagePercent    string `json:"cpuUsagePercent" yaml:"cpuUsagePercent"`       // Percentage of allocatable CPU currently being used
+	MemoryUsagePercent string `json:"memoryUsagePercent" yaml:"memoryUsagePercent"` // Percentage of allocatable memory currently being used
+
+	// Resource requests
+	CPURequests            string `json:"cpuRequests" yaml:"cpuRequests"`                       // Total CPU requests from all pods (e.g., "1200m")
+	MemoryRequests         string `json:"memoryRequests" yaml:"memoryRequests"`                 // Total memory requests from all pods (e.g., "2.5Gi")
+	CPURequestedPercent    string `json:"cpuRequestedPercent" yaml:"cpuRequestedPercent"`       // Percentage of allocatable CPU requested
+	MemoryRequestedPercent string `json:"memoryRequestedPercent" yaml:"memoryRequestedPercent"` // Percentage of allocatable memory requested
+
+	// Resource limits
+	CPULimits          string `json:"cpuLimits" yaml:"cpuLimits"`                   // Total CPU limits from all pods (e.g., "2400m")
+	MemoryLimits       string `json:"memoryLimits" yaml:"memoryLimits"`             // Total memory limits from all pods (e.g., "4Gi")
+	CPULimitPercent    string `json:"cpuLimitPercent" yaml:"cpuLimitPercent"`       // Percentage of allocatable CPU limited
+	MemoryLimitPercent string `json:"memoryLimitPercent" yaml:"memoryLimitPercent"` // Percentage of allocatable memory limited
 
 	// Available resources (what's left for new workloads)
 	CPUAvailable              string `json:"cpuAvailable" yaml:"cpuAvailable"`                           // Available CPU for new pods (Allocatable - Requests)
 	MemoryAvailable           string `json:"memoryAvailable" yaml:"memoryAvailable"`                     // Available memory for new pods (Allocatable - Requests)
 	EphemeralStorageAvailable string `json:"ephemeralStorageAvailable" yaml:"ephemeralStorageAvailable"` // Available storage (typically equals allocatable)
 	PodsAvailable             string `json:"podsAvailable" yaml:"podsAvailable"`                         // Available pod slots (e.g., "89" if 110 max - 21 running)
-
-	// Usage percentages (how much of allocatable capacity is used)
-	CPURequestedPercent    string `json:"cpuRequestedPercent" yaml:"cpuRequestedPercent"`       // Percentage of allocatable CPU requested
-	MemoryRequestedPercent string `json:"memoryRequestedPercent" yaml:"memoryRequestedPercent"` // Percentage of allocatable memory requested
 
 	// Pod information
 	PodCount int `json:"podCount" yaml:"podCount"` // Number of running/pending pods on this node
@@ -88,7 +105,7 @@ func (c *NodeResourceInfoCollector) Run(ctx context.Context) []NodeResourceInfo 
 			c.WriteVerboseError(err, "Failed to get pods for node "+node.Name)
 		}
 
-		usage := c.calculateUsage(node, pods)
+		usage := c.calculateUsage(ctx, node, pods)
 
 		nodeInfo := NodeResourceInfo{
 			MachineInfo: MachineInfo{
@@ -138,30 +155,42 @@ func (c *NodeResourceInfoCollector) getPodsOnNode(ctx context.Context, nodeName 
 	return runningPods, nil
 }
 
-func (c *NodeResourceInfoCollector) calculateUsage(node corev1.Node, pods []corev1.Pod) Usage {
+func (c *NodeResourceInfoCollector) calculateUsage(ctx context.Context, node corev1.Node, pods []corev1.Pod) Usage {
 	cpuRequests, memoryRequests, cpuLimits, memoryLimits :=
 		c.calculateRequestsAndLimits(pods)
 	cpuAvailable, memoryAvailable, ephemeralStorageAvailable, podsAvailable :=
 		c.calculateAvailableResources(node, cpuRequests, memoryRequests, len(pods))
 	cpuRequestedPercent, memoryRequestedPercent :=
 		c.calculateRequestedPercentages(node, cpuRequests, memoryRequests)
+	cpuUsage, memoryUsage, cpuUsagePercent, memoryUsagePercent :=
+		c.calculateActualUsage(ctx, node.Name, node)
+	cpuLimitPercent, memoryLimitPercent :=
+		c.calculateLimitPercentages(node, cpuLimits, memoryLimits)
 
 	return Usage{
-		// Raw totals
-		CPURequests:    cpuRequests.String(),
-		CPULimits:      cpuLimits.String(),
-		MemoryRequests: memoryRequests.String(),
-		MemoryLimits:   memoryLimits.String(),
+		// Actual usage data
+		CPUUsage:           cpuUsage,
+		MemoryUsage:        memoryUsage,
+		CPUUsagePercent:    cpuUsagePercent,
+		MemoryUsagePercent: memoryUsagePercent,
+
+		// Requests
+		CPURequests:            cpuRequests.String(),
+		MemoryRequests:         memoryRequests.String(),
+		CPURequestedPercent:    cpuRequestedPercent,
+		MemoryRequestedPercent: memoryRequestedPercent,
+
+		// Limits
+		CPULimits:          cpuLimits.String(),
+		MemoryLimits:       memoryLimits.String(),
+		CPULimitPercent:    cpuLimitPercent,
+		MemoryLimitPercent: memoryLimitPercent,
 
 		// Available resources
 		CPUAvailable:              cpuAvailable,
 		MemoryAvailable:           memoryAvailable,
 		EphemeralStorageAvailable: ephemeralStorageAvailable,
 		PodsAvailable:             podsAvailable,
-
-		// Percentages
-		CPURequestedPercent:    cpuRequestedPercent,
-		MemoryRequestedPercent: memoryRequestedPercent,
 
 		// Pod count
 		PodCount: len(pods),
@@ -217,7 +246,6 @@ func (c *NodeResourceInfoCollector) calculateAvailableResources(node corev1.Node
 	return cpuAvailable.String(), memoryAvailable.String(), storageAllocatable.String(), podsAvailable.String()
 }
 
-// calculateRequestedPercentages calculates what percentage of allocatable resources are requested
 func (c *NodeResourceInfoCollector) calculateRequestedPercentages(node corev1.Node, cpuRequests, memoryRequests resource.Quantity) (string, string) {
 	cpuAllocatable := node.Status.Allocatable.Cpu()
 	memoryAllocatable := node.Status.Allocatable.Memory()
@@ -233,7 +261,6 @@ func (c *NodeResourceInfoCollector) calculateRequestedPercentages(node corev1.No
 	return cpuRequestedPercent, memoryRequestedPercent
 }
 
-// calculatePercentage calculates the percentage of used vs available resources
 func calculatePercentage(used, available resource.Quantity) string {
 	if available.IsZero() {
 		return "0%"
@@ -248,4 +275,139 @@ func calculatePercentage(used, available resource.Quantity) string {
 
 	percentage := (usedFloat / availableFloat) * 100
 	return fmt.Sprintf("%.1f%%", percentage)
+}
+
+func (c *NodeResourceInfoCollector) getNodeMetrics(ctx context.Context, nodeName string) (*NodeMetrics, error) {
+	restClient := c.client.RestClient()
+	if restClient == nil {
+		return nil, fmt.Errorf("REST client is not available")
+	}
+
+	result := restClient.Get().
+		AbsPath("/apis/metrics.k8s.io/v1beta1/nodes/" + nodeName).
+		Do(ctx)
+
+	if result.Error() != nil {
+		return nil, fmt.Errorf("failed to get metrics for node %s: %w", nodeName, result.Error())
+	}
+
+	rawData, err := result.Raw()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get raw response: %w", err)
+	}
+
+	var nodeMetrics NodeMetrics
+	if err := json.Unmarshal(rawData, &nodeMetrics); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal metrics response: %w", err)
+	}
+
+	return &nodeMetrics, nil
+}
+
+func formatMemoryToMiBFromString(memStr string) string {
+	quantity, err := resource.ParseQuantity(memStr)
+	if err != nil {
+		return memStr
+	}
+	return formatMemoryToMiB(quantity)
+}
+
+func formatMemoryToMiB(quantity resource.Quantity) string {
+	bytes := quantity.Value()
+	mib := float64(bytes) / (1024 * 1024)
+	return fmt.Sprintf("%.1fMi", mib)
+}
+
+// convertCPUNanosToMillicores converts CPU nanoseconds string to millicores
+// Returns the millicores value and whether the conversion was successful
+func convertCPUNanosToMillicores(cpuStr string) (int64, bool) {
+	// Remove the 'n' suffix if present
+	if len(cpuStr) > 0 && cpuStr[len(cpuStr)-1] == 'n' {
+		nanosStr := cpuStr[:len(cpuStr)-1]
+
+		// Parse nanoseconds
+		nanos, err := strconv.ParseInt(nanosStr, 10, 64)
+		if err != nil {
+			return 0, false
+		}
+
+		// Convert nanoseconds to millicores
+		// 1 CPU core = 1,000,000,000 nanoseconds per second
+		// 1 millicore = 1,000,000 nanoseconds per second
+		millicores := nanos / 1000000
+		return millicores, true
+	}
+
+	return 0, false
+}
+
+func formatCPUNanos(cpuStr string) string {
+	if millicores, ok := convertCPUNanosToMillicores(cpuStr); ok {
+		return fmt.Sprintf("%.1fm", float64(millicores))
+	}
+	return cpuStr
+}
+
+func (c *NodeResourceInfoCollector) calculateLimitPercentages(node corev1.Node, cpuLimits, memoryLimits resource.Quantity) (string, string) {
+	cpuAllocatable := node.Status.Allocatable.Cpu()
+	memoryAllocatable := node.Status.Allocatable.Memory()
+
+	var cpuLimitPercent, memoryLimitPercent string
+	if !cpuAllocatable.IsZero() {
+		cpuLimitPercent = calculatePercentage(cpuLimits, *cpuAllocatable)
+	}
+	if !memoryAllocatable.IsZero() {
+		memoryLimitPercent = calculatePercentage(memoryLimits, *memoryAllocatable)
+	}
+
+	return cpuLimitPercent, memoryLimitPercent
+}
+
+func (c *NodeResourceInfoCollector) calculateActualUsage(ctx context.Context, nodeName string, node corev1.Node) (string, string, string, string) {
+	metrics, err := c.getNodeMetrics(ctx, nodeName)
+	if err != nil {
+		c.WriteVerboseError(err, fmt.Sprintf("Failed to get metrics for node %s", nodeName))
+		return "N/A", "N/A", "N/A", "N/A"
+	}
+
+	cpuUsage := formatCPUNanos(metrics.Usage.CPU)
+	memoryUsage := formatMemoryToMiBFromString(metrics.Usage.Memory)
+
+	cpuUsagePercent, memoryUsagePercent := c.calculateUsagePercentages(metrics, node)
+
+	return cpuUsage, memoryUsage, cpuUsagePercent, memoryUsagePercent
+}
+
+func (c *NodeResourceInfoCollector) calculateUsagePercentages(metrics *NodeMetrics, node corev1.Node) (string, string) {
+	cpuAllocatable := node.Status.Allocatable.Cpu()
+	memoryAllocatable := node.Status.Allocatable.Memory()
+
+	var cpuUsagePercent, memoryUsagePercent string
+
+	if !cpuAllocatable.IsZero() {
+		if cpuUsage, err := parseActualCPUUsage(metrics.Usage.CPU); err == nil {
+			cpuUsagePercent = calculatePercentage(cpuUsage, *cpuAllocatable)
+		} else {
+			cpuUsagePercent = "N/A"
+		}
+	}
+
+	if !memoryAllocatable.IsZero() {
+		if memoryUsage, err := resource.ParseQuantity(metrics.Usage.Memory); err == nil {
+			memoryUsagePercent = calculatePercentage(memoryUsage, *memoryAllocatable)
+		} else {
+			memoryUsagePercent = "N/A"
+		}
+	}
+
+	return cpuUsagePercent, memoryUsagePercent
+}
+
+func parseActualCPUUsage(cpuStr string) (resource.Quantity, error) {
+	if millicores, ok := convertCPUNanosToMillicores(cpuStr); ok {
+		return *resource.NewMilliQuantity(millicores, resource.DecimalSI), nil
+	}
+
+	// Fall back to standard quantity parsing
+	return resource.ParseQuantity(cpuStr)
 }
