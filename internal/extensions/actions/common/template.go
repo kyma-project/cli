@@ -110,6 +110,9 @@ func newIfNil(overwrites types.ActionConfigOverwrites, availFuncs *template.Func
 		templatedValue := bytes.NewBuffer([]byte{})
 		err = valueTmpl.
 			Execute(templatedValue, overwrites)
+		if err != nil {
+			return nil, errors.Wrap(err, "couldn't execute ifNil template")
+		}
 		return templatedValue.String(), nil
 	}
 }
