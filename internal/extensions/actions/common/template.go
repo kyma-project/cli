@@ -11,6 +11,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/extensions/types"
 )
 
+// newFuncMap creates a template.FuncMap used in config templating
 func newFuncMap(overwrites types.ActionConfigOverwrites) template.FuncMap {
 	funcMap := make(template.FuncMap)
 	funcMap = template.FuncMap{
