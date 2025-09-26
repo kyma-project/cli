@@ -2,21 +2,21 @@ package diagnostics
 
 import (
 	"context"
-	"os"
+	"io"
 
 	"github.com/kyma-project/cli.v3/internal/kube"
 )
 
 type DiagnosticData struct {
-	Metadata      Metadata
-	Warnings      KymaSystemWarnings
-	NodeResources []NodeResourceInfo
+	Metadata      Metadata           `json:"metadata" yaml:"metadata"`
+	Warnings      KymaSystemWarnings `json:"warnings" yaml:"warnings"`
+	NodeResources []NodeResourceInfo `json:"nodes" yaml:"nodes"`
 }
 
-func GetData(ctx context.Context, client kube.Client, verbose bool) DiagnosticData {
-	metadataCollector := NewMetadataCollector(client, os.Stdout, verbose)
-	kymaSystemWarningsCollector := NewKymaSystemWarningsCollector(client, os.Stdout, verbose)
-	nodeResourceInfoCollector := NewNodeResourceInfoCollector(client, os.Stdout, verbose)
+func GetData(ctx context.Context, client kube.Client, output io.Writer, verbose bool) DiagnosticData {
+	metadataCollector := NewMetadataCollector(client, output, verbose)
+	kymaSystemWarningsCollector := NewKymaSystemWarningsCollector(client, output, verbose)
+	nodeResourceInfoCollector := NewNodeResourceInfoCollector(client, output, verbose)
 
 	return DiagnosticData{
 		Metadata:      metadataCollector.Run(ctx),

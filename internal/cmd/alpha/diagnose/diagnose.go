@@ -31,7 +31,8 @@ func NewDiagnoseCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Short: "Diagnose cluster health and configuration",
 		Long:  "Use this command to quickly assess the health, configuration, and potential issues in your cluster for troubleshooting and support purposes",
 		Run: func(cmd *cobra.Command, args []string) {
-			clierror.Check(diagnose(&cfg))
+			output := cmd.OutOrStderr()
+			clierror.Check(diagnose(&cfg, output))
 		},
 	}
 
@@ -42,22 +43,26 @@ func NewDiagnoseCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	return cmd
 }
 
-func diagnose(cfg *diagnoseConfig) clierror.Error {
+func diagnose(cfg *diagnoseConfig, output io.Writer) clierror.Error {
 	client, clierr := cfg.GetKubeClientWithClierr()
 	if clierr != nil {
 		return clierr
 	}
 
-	fmt.Println("Collecting diagnostics data...")
+	if cfg.outputPath != "" {
+		fmt.Println("Collecting diagnostics data...")
+	}
 
-	diagnosticData := diagnostics.GetData(cfg.Ctx, client, cfg.verbose)
+	diagnosticData := diagnostics.GetData(cfg.Ctx, client, output, cfg.verbose)
 	err := render(&diagnosticData, cfg.outputPath, cfg.outputFormat)
 
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to get diagnostic data"))
 	}
 
-	fmt.Println("Done.")
+	if cfg.outputPath != "" {
+		fmt.Println("Done.")
+	}
 
 	return nil
 }
@@ -89,7 +94,7 @@ func render(diagData *diagnostics.DiagnosticData, outputFilepath string, outputF
 }
 
 func renderJSON(writer io.Writer, data *diagnostics.DiagnosticData) error {
-	obj, err := json.Marshal(data)
+	obj, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
 		return err
 	}
