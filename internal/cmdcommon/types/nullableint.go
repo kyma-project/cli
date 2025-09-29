@@ -13,6 +13,7 @@ func (n *NullableInt64) String() string {
 	return strconv.FormatInt(*n.Value, 10)
 }
 
+// SetValue sets the value of the NullableInt64 from a string
 func (n *NullableInt64) SetValue(value *string) error {
 	if value == nil {
 		return nil
@@ -26,6 +27,7 @@ func (n *NullableInt64) SetValue(value *string) error {
 	return nil
 }
 
+// Set implements the flag.Value interface
 func (n *NullableInt64) Set(value string) error {
 	if value == "" {
 		return nil

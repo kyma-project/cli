@@ -21,6 +21,7 @@ func (em *Map) String() string {
 	return strings.Join(values, ",")
 }
 
+// SetValue sets the value of the map from a string in the format KEY=VALUE
 func (em *Map) SetValue(value *string) error {
 	if value == nil {
 		return nil
@@ -44,6 +45,7 @@ func (em *Map) SetValue(value *string) error {
 	return nil
 }
 
+// Set implements the flag.Value interface
 func (em *Map) Set(value string) error {
 	if value == "" {
 		return nil

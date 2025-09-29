@@ -13,6 +13,7 @@ func (n *NullableBool) String() string {
 	return strconv.FormatBool(*n.Value)
 }
 
+// SetValue sets the value of the NullableBool from a string
 func (n *NullableBool) SetValue(value *string) error {
 	if value == nil {
 		return nil
@@ -26,6 +27,7 @@ func (n *NullableBool) SetValue(value *string) error {
 	return nil
 }
 
+// Set implements the flag.Value interface
 func (n *NullableBool) Set(value string) error {
 	if value == "" {
 		return nil
