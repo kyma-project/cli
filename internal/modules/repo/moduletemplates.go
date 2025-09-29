@@ -199,12 +199,12 @@ func (r *moduleTemplatesRepo) selectInstalled(ctx context.Context, moduleTemplat
 
 	for _, moduleTemplate := range moduleTemplates {
 		installedManager, err := r.InstalledManager(ctx, moduleTemplate)
-		if err != nil {
-			fmt.Printf("failed to request for installed manager: %v", err)
+		if installedManager == nil && err == nil {
 			continue
 		}
 
-		if installedManager == nil {
+		if err != nil {
+			fmt.Printf("failed to request for installed manager: %v", err)
 			continue
 		}
 
