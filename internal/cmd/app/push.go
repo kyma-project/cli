@@ -177,19 +177,27 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 
 	if cfg.expose {
 		fmt.Printf("\nCreating API Rule %s/%s\n", cfg.namespace, cfg.name)
-		var domain string
-		domain, clierr = client.Istio().GetClusterAddressFromGateway(cfg.Ctx)
-		if clierr != nil {
-			return clierror.WrapE(clierr, clierror.New("failed to domain address of the Kyma environment from gateway", "Make sure Istio module is installed"))
+		domain := "<CLUSTER_DOMAIN>"
+		// try to get domain from istio gateway
+		// Check if the user can get gateways in kyma-system namespace
+		authRes, authErr := resources.CreateSelfSubjectAccessReview(cfg.Ctx, client, "get", "gateways", "kyma-system", "networking.istio.io")
+
+		if authErr != nil {
+			return clierror.Wrap(authErr, clierror.New("failed to check permissions for getting gateways in kyma-system"))
+		}
+		if authRes.Status.Allowed {
+			domain, clierr = client.Istio().GetClusterAddressFromGateway(cfg.Ctx)
+			if clierr != nil {
+				return clierror.WrapE(clierr, clierror.New("failed to domain address of the Kyma environment from gateway", "Make sure Istio module is installed"))
+			}
 		}
 
-		host := fmt.Sprintf("%s.%s", cfg.name, domain)
-		err = resources.CreateAPIRule(cfg.Ctx, client.RootlessDynamic(), cfg.name, cfg.namespace, host, uint32(*cfg.containerPort.Value))
+		err = resources.CreateAPIRule(cfg.Ctx, client.RootlessDynamic(), cfg.name, cfg.namespace, cfg.name, uint32(*cfg.containerPort.Value))
 		if err != nil {
 			return clierror.Wrap(err, clierror.New("failed to create API Rule resource", "Make sure API Gateway module is installed", "Make sure APIRule CRD is available in v2 version"))
 		}
 
-		fmt.Printf("\nThe %s app is available under the https://%s/ address\n", cfg.name, host)
+		fmt.Printf("\nThe %s app is available under the https://%s/ address\n", cfg.name, fmt.Sprintf("%s.%s", cfg.name, domain))
 	}
 
 	return nil
