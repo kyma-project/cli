@@ -321,7 +321,7 @@ func Test_Build(t *testing.T) {
 							{
 								Name:         "test-flag",
 								Type:         parameters.IntCustomType,
-								DefaultValue: "WRONG VALUE",
+								DefaultValue: toPtr("WRONG VALUE"),
 							},
 						},
 					},
@@ -373,4 +373,8 @@ func (f *fakeKubeClientConfig) GetKubeClient() (kube.Client, error) {
 func (f *fakeKubeClientConfig) GetKubeClientWithClierr() (kube.Client, clierror.Error) {
 	// not implemented
 	return nil, nil
+}
+
+func toPtr[T any](v T) *T {
+	return &v
 }

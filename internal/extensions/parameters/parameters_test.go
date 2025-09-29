@@ -176,7 +176,7 @@ func (v *fakeValue) GetPath() string {
 	return v.path
 }
 
-func (v *fakeValue) SetValue(_ string) error {
+func (v *fakeValue) SetValue(_ *string) error {
 	return nil
 }
 
