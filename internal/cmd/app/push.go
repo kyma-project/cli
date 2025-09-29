@@ -177,7 +177,7 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 
 	if cfg.expose {
 		fmt.Printf("\nCreating API Rule %s/%s\n", cfg.namespace, cfg.name)
-		var domain string
+		domain := "<CLUSTER_DOMAIN>"
 		// try to get domain from istio gateway
 		// Check if the user can get gateways in kyma-system namespace
 		authRes, authErr := resources.CreateSelfSubjectAccessReview(cfg.Ctx, client, "get", "gateways", "kyma-system", "networking.istio.io")
@@ -197,9 +197,7 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 			return clierror.Wrap(err, clierror.New("failed to create API Rule resource", "Make sure API Gateway module is installed", "Make sure APIRule CRD is available in v2 version"))
 		}
 
-		if domain == "" {
-			fmt.Printf("\nThe %s app is available under the https://%s/ address\n", cfg.name, fmt.Sprintf("%s.%s", cfg.name, domain))
-		}
+		fmt.Printf("\nThe %s app is available under the https://%s/ address\n", cfg.name, fmt.Sprintf("%s.%s", cfg.name, domain))
 	}
 
 	return nil
