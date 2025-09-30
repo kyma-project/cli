@@ -11,7 +11,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// Data returned by the collector
 type Metadata struct {
 	GlobalAccountID   string   `json:"globalAccountID" yaml:"globalAccountID"`
 	SubaccountID      string   `json:"subaccountID" yaml:"subaccountID"`
