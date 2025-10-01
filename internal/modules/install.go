@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"slices"
 	"strings"
 	"time"
 
@@ -19,10 +18,9 @@ import (
 )
 
 type InstallCommunityModuleData struct {
-	ModuleName            string
-	Version               string
-	IsDefaultCRApplicable bool
-	CustomResources       []unstructured.Unstructured
+	CommunityModuleTemplate *kyma.ModuleTemplate
+	IsDefaultCRApplicable   bool
+	CustomResources         []unstructured.Unstructured
 }
 
 // Install takes care of enabling the community module on the cluster.
@@ -30,55 +28,42 @@ type InstallCommunityModuleData struct {
 // 2. if default custom resource should be applied then it's applied from the installed module template
 // 3. if custom resource from file is present, the file is read and resources are applied
 func Install(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository, data InstallCommunityModuleData) clierror.Error {
-	existingModule, err := findCommunityModuleInCatalog(ctx, client, repo, data.ModuleName, data.Version)
-	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to retrieve community module from catalog"))
+	if data.CommunityModuleTemplate == nil {
+		return clierror.New("cannot install non-existing module")
 	}
 
-	if err := installModuleResources(ctx, client, existingModule); err != nil {
+	if err := installModuleResources(ctx, client, data.CommunityModuleTemplate); err != nil {
 		return clierror.Wrap(err, clierror.New("failed to install community module"))
 	}
 
-	if err := applyCustomResources(ctx, client, existingModule, data); err != nil {
+	if err := applyCustomResources(ctx, client, data.CommunityModuleTemplate, data); err != nil {
 		return clierror.Wrap(err, clierror.New("failed to apply custom resources"))
 	}
 
-	fmt.Printf("%s community module enabled\n", data.ModuleName)
+	fmt.Printf("%s community module enabled\n", data.CommunityModuleTemplate.Name)
 	return nil
 }
 
-func VerifyModuleExistence(ctx context.Context, moduleName, version string, repo repo.ModuleTemplatesRepository) error {
+func FindCommunityModuleTemplate(ctx context.Context, namespace, moduleTemplate string, repo repo.ModuleTemplatesRepository) (*kyma.ModuleTemplate, error) {
 	communityModules, err := repo.Community(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to retrieve community modules: %v", err)
+		return nil, fmt.Errorf("failed to retrieve community modules: %v", err)
 	}
 
-	var existingModules []kyma.ModuleTemplate
+	var existingModule *kyma.ModuleTemplate
 
-	for _, communityModule := range communityModules {
-		if communityModule.Spec.ModuleName == moduleName {
-			existingModules = append(existingModules, communityModule)
+	for _, module := range communityModules {
+		if module.Namespace == namespace && module.ObjectMeta.Name == moduleTemplate {
+			existingModule = &module
+			break
 		}
 	}
 
-	if len(existingModules) == 0 {
-		return fmt.Errorf("community module %s is not available in the catalog", moduleName)
+	if existingModule == nil {
+		return nil, fmt.Errorf("module of the provided origin does not exist")
 	}
 
-	if version == "" {
-		return nil
-	}
-
-	var availableVersions []string
-	for _, module := range existingModules {
-		availableVersions = append(availableVersions, module.Spec.Version)
-	}
-
-	if !slices.Contains(availableVersions, version) {
-		return fmt.Errorf("community module %s in version %s does not exist. Available versions: %s", moduleName, version, strings.Join(availableVersions, ", "))
-	}
-
-	return nil
+	return existingModule, nil
 }
 
 func applyCustomResources(ctx context.Context, client kube.Client, existingModule *kyma.ModuleTemplate, data InstallCommunityModuleData) error {
@@ -101,71 +86,6 @@ func applyCustomResources(ctx context.Context, client kube.Client, existingModul
 	}
 
 	return nil
-}
-
-func findCommunityModuleInCatalog(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository, moduleName string, version string) (*kyma.ModuleTemplate, error) {
-	officialModule, officialErr := findCommunityModuleInOfficialCatalog(ctx, repo, moduleName, version)
-	if officialErr == nil {
-		return officialModule, nil
-	}
-
-	localModule, localErr := findCommunityModuleInLocalCatalog(ctx, client, moduleName, version)
-	if localErr == nil {
-		return localModule, nil
-	}
-
-	return nil, fmt.Errorf("failed to find community module: %v; %v", officialErr, localErr)
-}
-
-func findCommunityModuleInOfficialCatalog(ctx context.Context, repo repo.ModuleTemplatesRepository, moduleName string, version string) (*kyma.ModuleTemplate, error) {
-	moduleTemplates, err := repo.CommunityByName(ctx, moduleName)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get module template: %v", err)
-	}
-
-	var foundModule *kyma.ModuleTemplate
-
-	for _, moduleTemplate := range moduleTemplates {
-		if moduleTemplate.Spec.Version == version {
-			foundModule = &moduleTemplate
-			break
-		}
-	}
-
-	if foundModule == nil {
-		return nil, fmt.Errorf("module not found")
-	}
-
-	return foundModule, nil
-}
-
-func findCommunityModuleInLocalCatalog(ctx context.Context, client kube.Client, moduleName string, version string) (*kyma.ModuleTemplate, error) {
-	moduleTemplates, err := client.Kyma().ListModuleTemplate(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get module template: %v", err)
-	}
-
-	var foundModule *kyma.ModuleTemplate
-
-	for _, moduleTemplate := range moduleTemplates.Items {
-		currModuleName := moduleTemplate.Spec.ModuleName
-		currVersion := moduleTemplate.Spec.Version
-		currCommunityModule := isCommunityModule(&moduleTemplate)
-
-		moduleNameMatched := currModuleName == moduleName
-		versionMatched := currVersion == version
-
-		if moduleNameMatched && versionMatched && currCommunityModule {
-			foundModule = &moduleTemplate
-			break
-		}
-	}
-
-	if foundModule == nil {
-		return nil, fmt.Errorf("module not found")
-	}
-
-	return foundModule, nil
 }
 
 func installModuleResources(ctx context.Context, client kube.Client, existingModule *kyma.ModuleTemplate) error {
