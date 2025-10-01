@@ -9,35 +9,35 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type KymaSystemWarnings struct {
+type ClusterWarnings struct {
 	Warnings []corev1.Event
 }
 
-type KymaSystemWarningsCollector struct {
+type ClusterWarningsCollector struct {
 	client kube.Client
 	VerboseLogger
 }
 
-func NewKymaSystemWarningsCollector(client kube.Client, writer io.Writer, verbose bool) *KymaSystemWarningsCollector {
-	return &KymaSystemWarningsCollector{
+func NewClusterWarningsCollector(client kube.Client, writer io.Writer, verbose bool) *ClusterWarningsCollector {
+	return &ClusterWarningsCollector{
 		client:        client,
 		VerboseLogger: NewVerboseLogger(writer, verbose),
 	}
 }
 
-func (wc *KymaSystemWarningsCollector) Run(ctx context.Context) KymaSystemWarnings {
-	warnings, err := wc.getKymaSystemWarnings(ctx)
+func (wc *ClusterWarningsCollector) Run(ctx context.Context) ClusterWarnings {
+	warnings, err := wc.getClusterWarnings(ctx)
 	if err != nil {
 		wc.WriteVerboseError(err, "Failed to get system warnings from the cluster")
 	}
 
-	return KymaSystemWarnings{
+	return ClusterWarnings{
 		Warnings: warnings,
 	}
 }
 
-func (wc *KymaSystemWarningsCollector) getKymaSystemWarnings(ctx context.Context) ([]corev1.Event, error) {
-	allEvents, err := wc.getKymaSystemEvents(ctx)
+func (wc *ClusterWarningsCollector) getClusterWarnings(ctx context.Context) ([]corev1.Event, error) {
+	allEvents, err := wc.getClusterEvents(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -52,9 +52,9 @@ func (wc *KymaSystemWarningsCollector) getKymaSystemWarnings(ctx context.Context
 	return warnings, nil
 }
 
-func (wc *KymaSystemWarningsCollector) getKymaSystemEvents(ctx context.Context) ([]corev1.Event, error) {
+func (wc *ClusterWarningsCollector) getClusterEvents(ctx context.Context) ([]corev1.Event, error) {
 	eventList, err := wc.client.Static().CoreV1().
-		Events("kyma-system").
+		Events("").
 		List(ctx, metav1.ListOptions{})
 
 	if err != nil {

@@ -17,20 +17,20 @@ import (
 	k8sfake "k8s.io/client-go/kubernetes/fake"
 )
 
-func TestNewKymaSystemWarningsCollector(t *testing.T) {
+func TestNewClusterWarningsCollector(t *testing.T) {
 	// Given
 	fakeClient := &fake.KubeClient{}
 	var writer bytes.Buffer
 	verbose := true
 
 	// When
-	collector := diagnostics.NewKymaSystemWarningsCollector(fakeClient, &writer, verbose)
+	collector := diagnostics.NewClusterWarningsCollector(fakeClient, &writer, verbose)
 
 	// Then
 	assert.NotNil(t, collector)
 }
 
-func TestKymaSystemWarningsCollector_WriteVerboseError(t *testing.T) {
+func TestClusterWarningsCollector_WriteVerboseError(t *testing.T) {
 	testCases := []struct {
 		name           string
 		verbose        bool
@@ -65,7 +65,7 @@ func TestKymaSystemWarningsCollector_WriteVerboseError(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// Given
 			var writer bytes.Buffer
-			collector := diagnostics.NewKymaSystemWarningsCollector(nil, &writer, tc.verbose)
+			collector := diagnostics.NewClusterWarningsCollector(nil, &writer, tc.verbose)
 
 			// When
 			collector.WriteVerboseError(tc.err, tc.message)
@@ -76,7 +76,7 @@ func TestKymaSystemWarningsCollector_WriteVerboseError(t *testing.T) {
 	}
 }
 
-func TestKymaSystemWarningsCollector_Run(t *testing.T) {
+func TestClusterWarningsCollector_Run(t *testing.T) {
 	testCases := []struct {
 		name                  string
 		mockEvents            []corev1.Event
@@ -169,7 +169,7 @@ func TestKymaSystemWarningsCollector_Run(t *testing.T) {
 				TestKubernetesInterface: fakeK8sClient,
 			}
 
-			collector := diagnostics.NewKymaSystemWarningsCollector(fakeClient, &writer, tc.verbose)
+			collector := diagnostics.NewClusterWarningsCollector(fakeClient, &writer, tc.verbose)
 
 			// When
 			result := collector.Run(context.Background())
