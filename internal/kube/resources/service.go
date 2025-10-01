@@ -73,7 +73,7 @@ func buildAPIRule(name, namespace, host string, port uint32) *v2alpha1.APIRule {
 			Hosts: []*v2alpha1.Host{
 				ptr.To(v2alpha1.Host(host)),
 			},
-			Gateway: ptr.To(fmt.Sprintf("%s/%s", istio.GatewayNamespace, istio.GatewayName)),
+			Gateway: ptr.To(fmt.Sprintf("%s/%s", istio.DefaultGatewayNamespace, istio.DefaultGatewayName)),
 			Rules: []v2alpha1.Rule{
 				{
 					Path:    "/*",

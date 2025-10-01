@@ -3,8 +3,10 @@ package istio
 import (
 	"context"
 	"fmt"
+
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -13,12 +15,12 @@ import (
 )
 
 const (
-	GatewayName      = "kyma-gateway"
-	GatewayNamespace = "kyma-system"
+	DefaultGatewayName      = "kyma-gateway"
+	DefaultGatewayNamespace = "kyma-system"
 )
 
 type Interface interface {
-	GetClusterAddressFromGateway(ctx context.Context) (string, clierror.Error)
+	GetHostFromVirtualServiceByApiruleName(ctx context.Context, name, namespace string) (string, clierror.Error)
 }
 
 type client struct {
@@ -31,30 +33,44 @@ func NewClient(dynamic dynamic.Interface) Interface {
 	}
 }
 
-func (c *client) GetClusterAddressFromGateway(ctx context.Context) (string, clierror.Error) {
+func (c *client) GetHostFromVirtualServiceByApiruleName(ctx context.Context, name, namespace string) (string, clierror.Error) {
+	//TODO: rework after https://github.com/kyma-project/api-gateway/issues/2264 is resolved
+
+	//Wait for the virtual service to be created
 	gvr := schema.GroupVersionResource{
 		Group:    "networking.istio.io",
-		Version:  "v1beta1",
-		Resource: "gateways",
+		Version:  "v1",
+		Resource: "virtualservices",
 	}
-	u, err := c.dynamic.Resource(gvr).Namespace(GatewayNamespace).Get(ctx, GatewayName, metav1.GetOptions{})
+	u, err := c.dynamic.Resource(gvr).Namespace(namespace).Watch(ctx, metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("apirule.gateway.kyma-project.io/v1beta1=%s.%s", name, namespace),
+	})
 	if err != nil {
-		return "", clierror.Wrap(err, clierror.New("while getting Gateway %s in namespace %s", GatewayName, GatewayNamespace))
+		return "", clierror.Wrap(err, clierror.New("while watching VirtualServices in namespace %s", namespace))
 	}
-	var gateway v1beta1.Gateway
-	err = runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, &gateway)
-	if err != nil {
-		return "", clierror.Wrap(err, clierror.New("Failed to convert unstructured object to Gateway"))
+	defer u.Stop()
+
+	ch := u.ResultChan()
+	for {
+		select {
+		case event, ok := <-ch:
+			if !ok {
+				return "", clierror.New("watch channel closed before VirtualService was created")
+			}
+			if event.Type == "ADDED" || event.Type == "MODIFIED" {
+				obj := event.Object.(*unstructured.Unstructured)
+				var vs v1beta1.VirtualService
+				err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, &vs)
+				if err != nil {
+					return "", clierror.Wrap(err, clierror.New("Failed to convert unstructured object to VirtualService"))
+				}
+				if len(vs.Spec.Hosts) < 1 {
+					return "", clierror.New("the VirtualService does not have any hosts defined")
+				}
+				return vs.Spec.Hosts[0], nil
+			}
+		case <-ctx.Done():
+			return "", clierror.New("timed out waiting for VirtualService to be created")
+		}
 	}
-
-	// kyma gateway can't be modified by the user so we can assume that it has at least one server and host
-	// this `if` should protect us when this situation changes
-	if len(gateway.Spec.Servers) < 1 || len(gateway.Spec.Servers[0].Hosts) < 1 {
-		return "", clierror.New(fmt.Sprintf("the Gateway %s in namespace %s does not have any hosts defined", GatewayName, GatewayNamespace))
-	}
-
-	host := gateway.Spec.Servers[0].Hosts[0]
-
-	// host is always in format '*.<address>' so we need to remove the first two characters
-	return host[2:], nil
 }

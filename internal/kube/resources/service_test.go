@@ -87,7 +87,7 @@ func fixAPIRule(apiRuleName, namespace, host string, port uint32) unstructured.U
 				"hosts": []interface{}{
 					host,
 				},
-				"gateway": fmt.Sprintf("%s/%s", istio.GatewayNamespace, istio.GatewayName),
+				"gateway": fmt.Sprintf("%s/%s", istio.DefaultGatewayNamespace, istio.DefaultGatewayName),
 				"rules": []interface{}{
 					map[string]interface{}{
 						"path":    "/*",
