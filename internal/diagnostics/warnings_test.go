@@ -176,11 +176,6 @@ func TestClusterWarningsCollector_Run(t *testing.T) {
 
 			// Then
 			assert.Equal(t, tc.expectedWarningsCount, len(result.Warnings))
-
-			// Verify that all returned events are warnings
-			for _, warning := range result.Warnings {
-				assert.Equal(t, "Warning", warning.Type)
-			}
 		})
 	}
 }

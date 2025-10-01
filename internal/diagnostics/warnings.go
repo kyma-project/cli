@@ -9,8 +9,17 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type EventInfo struct {
+	InvolvedObject corev1.ObjectReference `json:"involvedObject" yaml:"involvedObject"`
+	Reason         string                 `json:"reason" yaml:"reason"`
+	Message        string                 `json:"message" yaml:"message"`
+	Count          int32                  `json:"count" yaml:"count"`
+	EventTime      metav1.MicroTime       `json:"eventTime" yaml:"eventTime"`
+	Namespace      string                 `json:"namespace" yaml:"namespace"`
+}
+
 type ClusterWarnings struct {
-	Warnings []corev1.Event
+	Warnings []EventInfo `json:"warnings" yaml:"warnings"`
 }
 
 type ClusterWarningsCollector struct {
@@ -36,16 +45,24 @@ func (wc *ClusterWarningsCollector) Run(ctx context.Context) ClusterWarnings {
 	}
 }
 
-func (wc *ClusterWarningsCollector) getClusterWarnings(ctx context.Context) ([]corev1.Event, error) {
+func (wc *ClusterWarningsCollector) getClusterWarnings(ctx context.Context) ([]EventInfo, error) {
 	allEvents, err := wc.getClusterEvents(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	var warnings []corev1.Event
+	var warnings []EventInfo
 	for _, event := range allEvents {
 		if event.Type == "Warning" {
-			warnings = append(warnings, event)
+			eventInfo := EventInfo{
+				InvolvedObject: event.InvolvedObject,
+				Reason:         event.Reason,
+				Message:        event.Message,
+				Count:          event.Count,
+				EventTime:      event.EventTime,
+				Namespace:      event.Namespace,
+			}
+			warnings = append(warnings, eventInfo)
 		}
 	}
 
