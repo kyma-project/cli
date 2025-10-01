@@ -11,7 +11,7 @@ Kyma CLI is a command-line interface tool designed to simplify the use of [Kyma]
 
 ## Install
 
-For the installation instructions, see [How to Install](./docs/user/README.md#how-to-install).
+For the installation instructions, see [How to Install](./docs/user/README.md#install-kyma-cli).
 
 ## Usage
 
