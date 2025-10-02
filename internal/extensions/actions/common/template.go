@@ -21,7 +21,7 @@ func newFuncMap(overwrites types.ActionConfigOverwrites) template.FuncMap {
 	delete(funcMap, "env")
 	delete(funcMap, "expandenv")
 
-	// Add custom functions specific to your application
+	// Add custom functions specific extensions
 	extra := template.FuncMap{
 		"newLineIndent": newLineIndent,
 		"toEnvs":        toEnvs,
