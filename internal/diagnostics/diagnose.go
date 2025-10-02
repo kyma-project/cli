@@ -9,14 +9,14 @@ import (
 
 type DiagnosticData struct {
 	Metadata                  Metadata                    `json:"metadata" yaml:"metadata"`
-	Warnings                  KymaSystemWarnings          `json:"warnings" yaml:"warnings"`
+	Warnings                  []EventInfo                 `json:"warnings" yaml:"warnings"`
 	NodeResources             []NodeResourceInfo          `json:"nodes" yaml:"nodes"`
-	ModuleCustomResourceState []ModuleCustomResourceState `json:"moduleCustomResourceStates" yaml:"moduleCustomResourceStates"`
+	ModuleCustomResourceState []ModuleCustomResourceState `json:"kymaModulesErrors" yaml:"kymaModulesErrors"`
 }
 
 func GetData(ctx context.Context, client kube.Client, output io.Writer, verbose bool) DiagnosticData {
 	metadataCollector := NewMetadataCollector(client, output, verbose)
-	kymaSystemWarningsCollector := NewKymaSystemWarningsCollector(client, output, verbose)
+	kymaSystemWarningsCollector := NewClusterWarningsCollector(client, output, verbose)
 	nodeResourceInfoCollector := NewNodeResourceInfoCollector(client, output, verbose)
 	modulesCustomResourceStates := NewModuleCustomResourceStateCollector(client, output, verbose)
 
