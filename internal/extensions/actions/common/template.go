@@ -6,6 +6,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/Masterminds/sprig/v3"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/extensions/errors"
 	"github.com/kyma-project/cli.v3/internal/extensions/types"
@@ -13,14 +14,27 @@ import (
 
 // newFuncMap creates a template.FuncMap used in config templating
 func newFuncMap(overwrites types.ActionConfigOverwrites) template.FuncMap {
-	funcMap := make(template.FuncMap)
-	funcMap = template.FuncMap{
+	// Start with sprig's text template functions
+	funcMap := sprig.TxtFuncMap()
+
+	// Remove potentially unsafe functions (following Helm's pattern)
+	delete(funcMap, "env")
+	delete(funcMap, "expandenv")
+
+	// Add custom functions specific to your application
+	extra := template.FuncMap{
 		"newLineIndent": newLineIndent,
 		"toEnvs":        toEnvs,
 		"toArray":       toArray,
 		"toYaml":        toYaml,
 		"ifNil":         newIfNil(overwrites, &funcMap),
 	}
+
+	// Merge extra functions into the sprig function map
+	for name, fn := range extra {
+		funcMap[name] = fn
+	}
+
 	return funcMap
 }
 

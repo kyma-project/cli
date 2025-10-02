@@ -3,6 +3,7 @@ module github.com/kyma-project/cli.v3
 go 1.24.4
 
 require (
+	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/buildpacks/pack v0.38.2
 	github.com/docker/cli v28.4.0+incompatible
 	github.com/docker/docker v28.4.0+incompatible
@@ -39,7 +40,9 @@ require (
 	github.com/Azure/go-autorest/tracing v0.6.1 // indirect
 	github.com/BurntSushi/toml v1.5.0 // indirect
 	github.com/GoogleContainerTools/kaniko v1.24.0 // indirect
+	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
+	github.com/Masterminds/semver/v3 v3.3.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProtonMail/go-crypto v1.2.0 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
@@ -110,6 +113,7 @@ require (
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // indirect
 	github.com/heroku/color v0.0.6 // indirect
+	github.com/huandu/xstrings v1.5.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/itchyny/timefmt-go v0.1.6 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
@@ -122,8 +126,10 @@ require (
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
+	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/ioprogress v0.0.0-20180201004757-6a23b12fa88e // indirect
+	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/moby/buildkit v0.22.0 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/patternmatcher v0.6.0 // indirect
@@ -152,8 +158,10 @@ require (
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/sabhiram/go-gitignore v0.0.0-20210923224102-525f6e181f06 // indirect
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
+	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/skeema/knownhosts v1.3.1 // indirect
+	github.com/spf13/cast v1.7.0 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/thoas/go-funk v0.9.3 // indirect
 	github.com/tonistiigi/go-csvvalue v0.0.0-20240814133006-030d3b2625d0 // indirect
