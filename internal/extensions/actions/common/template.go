@@ -21,7 +21,7 @@ func newFuncMap(overwrites types.ActionConfigOverwrites) template.FuncMap {
 	delete(funcMap, "env")
 	delete(funcMap, "expandenv")
 
-	// Add custom functions specific extensions
+	// Add custom functions specific to extensions
 	extra := template.FuncMap{
 		"newLineIndent": newLineIndent,
 		"toEnvs":        toEnvs,
@@ -30,7 +30,7 @@ func newFuncMap(overwrites types.ActionConfigOverwrites) template.FuncMap {
 		"ifNil":         newIfNil(overwrites, &funcMap),
 	}
 
-	// Merge extra functions into the sprig function map
+	// Merge custom functions into the sprig function map
 	for name, fn := range extra {
 		funcMap[name] = fn
 	}
