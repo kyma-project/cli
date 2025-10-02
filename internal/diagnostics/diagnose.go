@@ -9,7 +9,7 @@ import (
 
 type DiagnosticData struct {
 	Metadata                  Metadata                    `json:"metadata" yaml:"metadata"`
-	Warnings                  ClusterWarnings             `json:"warnings" yaml:"warnings"`
+	Warnings                  []EventInfo                 `json:"warnings" yaml:"warnings"`
 	NodeResources             []NodeResourceInfo          `json:"nodes" yaml:"nodes"`
 	ModuleCustomResourceState []ModuleCustomResourceState `json:"kymaModulesErrors" yaml:"kymaModulesErrors"`
 }

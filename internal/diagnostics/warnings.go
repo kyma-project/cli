@@ -14,12 +14,9 @@ type EventInfo struct {
 	Reason         string                 `json:"reason" yaml:"reason"`
 	Message        string                 `json:"message" yaml:"message"`
 	Count          int32                  `json:"count" yaml:"count"`
+	Source         corev1.EventSource     `json:"source" yaml:"source"`
 	EventTime      metav1.MicroTime       `json:"eventTime" yaml:"eventTime"`
 	Namespace      string                 `json:"namespace" yaml:"namespace"`
-}
-
-type ClusterWarnings struct {
-	Warnings []EventInfo `json:"warnings" yaml:"warnings"`
 }
 
 type ClusterWarningsCollector struct {
@@ -34,15 +31,13 @@ func NewClusterWarningsCollector(client kube.Client, writer io.Writer, verbose b
 	}
 }
 
-func (wc *ClusterWarningsCollector) Run(ctx context.Context) ClusterWarnings {
+func (wc *ClusterWarningsCollector) Run(ctx context.Context) []EventInfo {
 	warnings, err := wc.getClusterWarnings(ctx)
 	if err != nil {
 		wc.WriteVerboseError(err, "Failed to get system warnings from the cluster")
 	}
 
-	return ClusterWarnings{
-		Warnings: warnings,
-	}
+	return warnings
 }
 
 func (wc *ClusterWarningsCollector) getClusterWarnings(ctx context.Context) ([]EventInfo, error) {
@@ -59,6 +54,7 @@ func (wc *ClusterWarningsCollector) getClusterWarnings(ctx context.Context) ([]E
 				Reason:         event.Reason,
 				Message:        event.Message,
 				Count:          event.Count,
+				Source:         event.Source,
 				EventTime:      event.EventTime,
 				Namespace:      event.Namespace,
 			}

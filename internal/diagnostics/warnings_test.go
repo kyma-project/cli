@@ -175,7 +175,7 @@ func TestClusterWarningsCollector_Run(t *testing.T) {
 			result := collector.Run(context.Background())
 
 			// Then
-			assert.Equal(t, tc.expectedWarningsCount, len(result.Warnings))
+			assert.Equal(t, tc.expectedWarningsCount, len(result))
 		})
 	}
 }
