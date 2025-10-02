@@ -14,7 +14,67 @@ All templates start with the `${{` prefix and end with the `}}` suffix. For exam
 name: ${{ .flags.name.value }}
 ```
 
+### Sprig Functions
+
+The template system includes all [Sprig functions](https://masterminds.github.io/sprig/), providing 100+ utility functions for string manipulation, encoding, math, dates, and more. Common examples below:
+
+#### String Functions
+| Function | Description | Example |
+|----------|-------------|---------|
+| `lower` | Convert to lowercase | `${{ .flags.name.value \| lower }}` |
+| `upper` | Convert to uppercase | `${{ .flags.name.value \| upper }}` |
+| `title` | Convert to title case | `${{ .flags.name.value \| title }}` |
+| `trim` | Remove whitespace | `${{ .flags.name.value \| trim }}` |
+| `replace` | Replace substring | `${{ .flags.name.value \| replace " " "-" }}` |
+| `contains` | Check if string contains substring | `${{ .flags.name.value \| contains "test" }}` |
+| `hasPrefix` | Check if string has prefix | `${{ .flags.name.value \| hasPrefix "kyma" }}` |
+| `hasSuffix` | Check if string has suffix | `${{ .flags.name.value \| hasSuffix ".yaml" }}` |
+| `repeat` | Repeat string n times | `${{ "=" \| repeat 10 }}` |
+| `indent` | Indent text by n spaces | `${{ .config \| indent 4 }}` |
+| `nindent` | Newline + indent by n spaces | `${{ .config \| nindent 2 }}` |
+
+#### Encoding Functions
+| Function | Description | Example |
+|----------|-------------|---------|
+| `b64enc` | Base64 encode | `${{ .flags.secret.value \| b64enc }}` |
+| `b64dec` | Base64 decode | `${{ .flags.encoded.value \| b64dec }}` |
+| `quote` | Add quotes around string | `${{ .flags.name.value \| quote }}` |
+| `squote` | Add single quotes | `${{ .flags.name.value \| squote }}` |
+
+#### Random Functions
+| Function | Description | Example |
+|----------|-------------|---------|
+| `randAlpha` | Random alphabetic string | `${{ randAlpha 10 }}` |
+| `randAlphaNum` | Random alphanumeric string | `${{ randAlphaNum 16 }}` |
+| `randNumeric` | Random numeric string | `${{ randNumeric 8 }}` |
+| `randAscii` | Random ASCII string | `${{ randAscii 12 }}` |
+
+#### Math Functions
+| Function | Description | Example |
+|----------|-------------|---------|
+| `add` | Addition | `${{ add 1 2 3 }}` |
+| `sub` | Subtraction | `${{ sub 10 5 }}` |
+| `mul` | Multiplication | `${{ mul 4 5 }}` |
+| `div` | Division | `${{ div 20 4 }}` |
+| `max` | Maximum value | `${{ max 1 5 3 }}` |
+| `min` | Minimum value | `${{ min 1 5 3 }}` |
+
+#### Date Functions
+| Function | Description | Example |
+|----------|-------------|---------|
+| `now` | Current timestamp | `${{ now }}` |
+| `date` | Format date | `${{ now \| date "2006-01-02" }}` |
+| `dateInZone` | Format date in timezone | `${{ now \| dateInZone "2006-01-02" "UTC" }}` |
+
+#### Type Conversion
+| Function | Description | Example |
+|----------|-------------|---------|
+| `toString` | Convert to string | `${{ .flags.port.value \| toString }}` |
+| `toInt` | Convert to integer | `${{ .flags.count.value \| toInt }}` |
+| `toBool` | Convert to boolean | `${{ .flags.enabled.value \| toBool }}` |
+
 ### Custom Functions
+The template system also supports custom functions specific to the Kyma CLI extensions:
 
 | Function          | For Type                     | Description                                                                                                                                                                                                                                                                                                             | Example                                                                                                                        |
 |-------------------|------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------|
