@@ -9,52 +9,65 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type KymaSystemWarnings struct {
-	Warnings []corev1.Event
+type EventInfo struct {
+	InvolvedObject corev1.ObjectReference `json:"involvedObject" yaml:"involvedObject"`
+	Reason         string                 `json:"reason" yaml:"reason"`
+	Message        string                 `json:"message" yaml:"message"`
+	Count          int32                  `json:"count" yaml:"count"`
+	Source         corev1.EventSource     `json:"source" yaml:"source"`
+	EventTime      metav1.MicroTime       `json:"eventTime" yaml:"eventTime"`
+	Namespace      string                 `json:"namespace" yaml:"namespace"`
 }
 
-type KymaSystemWarningsCollector struct {
+type ClusterWarningsCollector struct {
 	client kube.Client
 	VerboseLogger
 }
 
-func NewKymaSystemWarningsCollector(client kube.Client, writer io.Writer, verbose bool) *KymaSystemWarningsCollector {
-	return &KymaSystemWarningsCollector{
+func NewClusterWarningsCollector(client kube.Client, writer io.Writer, verbose bool) *ClusterWarningsCollector {
+	return &ClusterWarningsCollector{
 		client:        client,
 		VerboseLogger: NewVerboseLogger(writer, verbose),
 	}
 }
 
-func (wc *KymaSystemWarningsCollector) Run(ctx context.Context) KymaSystemWarnings {
-	warnings, err := wc.getKymaSystemWarnings(ctx)
+func (wc *ClusterWarningsCollector) Run(ctx context.Context) []EventInfo {
+	warnings, err := wc.getClusterWarnings(ctx)
 	if err != nil {
 		wc.WriteVerboseError(err, "Failed to get system warnings from the cluster")
 	}
 
-	return KymaSystemWarnings{
-		Warnings: warnings,
-	}
+	return warnings
 }
 
-func (wc *KymaSystemWarningsCollector) getKymaSystemWarnings(ctx context.Context) ([]corev1.Event, error) {
-	allEvents, err := wc.getKymaSystemEvents(ctx)
+func (wc *ClusterWarningsCollector) getClusterWarnings(ctx context.Context) ([]EventInfo, error) {
+	allEvents, err := wc.getClusterEvents(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	var warnings []corev1.Event
+	var warnings []EventInfo
 	for _, event := range allEvents {
 		if event.Type == "Warning" {
-			warnings = append(warnings, event)
+			eventInfo := EventInfo{
+				InvolvedObject: event.InvolvedObject,
+				Reason:         event.Reason,
+				Message:        event.Message,
+				Count:          event.Count,
+				Source:         event.Source,
+				EventTime:      event.EventTime,
+				Namespace:      event.Namespace,
+			}
+			warnings = append(warnings, eventInfo)
 		}
 	}
 
 	return warnings, nil
 }
 
-func (wc *KymaSystemWarningsCollector) getKymaSystemEvents(ctx context.Context) ([]corev1.Event, error) {
+func (wc *ClusterWarningsCollector) getClusterEvents(ctx context.Context) ([]corev1.Event, error) {
 	eventList, err := wc.client.Static().CoreV1().
-		Events("kyma-system").
+		Events("").
 		List(ctx, metav1.ListOptions{})
 
 	if err != nil {
