@@ -101,7 +101,7 @@ func newGenerateCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().StringVar(&cfg.serviceAccount, "serviceaccount", "", "Name of the Service Account (in the given Namespace) to be used as a subject of the generated kubeconfig. If the Service Account does not exist, it will be created")
 	cmd.Flags().StringVar(&cfg.clusterRole, "clusterrole", "", "Name of the Cluster Role to bind the Service Account to (optional)")
 	cmd.Flags().StringVar(&cfg.role, "role", "", "Name of the Role in the given Namespace to bind the Service Account to (optional)")
-	cmd.Flags().StringVar(&cfg.namespace, "namespace", "default", "Namespace in which the subject Service Account is to be found or will be created")
+	cmd.Flags().StringVarP(&cfg.namespace, "namespace", "n", "default", "Namespace in which the subject Service Account is to be found or will be created")
 	cmd.Flags().StringVar(&cfg.time, "time", "1h", "Determines how long the token should be valid, by default 1h (use h for hours and d for days)")
 
 	cmd.Flags().BoolVar(&cfg.permanent, "permanent", false, "Determines if the token is valid indefinitely")
