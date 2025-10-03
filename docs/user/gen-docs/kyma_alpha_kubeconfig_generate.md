@@ -49,7 +49,7 @@ kyma alpha kubeconfig generate [flags]
       --clusterrole string            Name of the Cluster Role to bind the Service Account to (optional)
       --credentials-path string       Path to the CIS credentials file
       --id-token-request-url string   URL to request the ID token, defaults to ACTIONS_ID_TOKEN_REQUEST_URL env variable
-      --namespace string              Namespace in which the subject Service Account is to be found or will be created (default "default")
+  -n, --namespace string              Namespace in which the subject Service Account is to be found or will be created (default "default")
       --oidc-name string              Name of the OIDC Custom Resource from which the kubeconfig will be generated
       --output string                 Path to the kubeconfig file output. If not provided, the kubeconfig will be printed
       --permanent                     Determines if the token is valid indefinitely
