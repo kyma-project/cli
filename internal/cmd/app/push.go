@@ -130,6 +130,7 @@ func (apc *appPushConfig) validate() clierror.Error {
 }
 
 func runAppPush(cfg *appPushConfig) clierror.Error {
+	quietMode := flags.GetBoolFlagValue("--quiet") || flags.GetBoolFlagValue("-q")
 	image := cfg.image
 	imagePullSecret := cfg.imagePullSecretName
 
@@ -152,7 +153,9 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 		imagePullSecret = registryConfig.SecretName
 	}
 
-	fmt.Printf("\nCreating deployment %s/%s\n", cfg.namespace, cfg.name)
+	if !quietMode {
+		fmt.Printf("\nCreating deployment %s/%s\n", cfg.namespace, cfg.name)
+	}
 
 	err := resources.CreateDeployment(cfg.Ctx, client, resources.CreateDeploymentOpts{
 		Name:            cfg.name,
@@ -168,7 +171,9 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 	}
 
 	if cfg.containerPort.Value != nil {
-		fmt.Printf("\nCreating service %s/%s\n", cfg.namespace, cfg.name)
+		if !quietMode {
+			fmt.Printf("\nCreating service %s/%s\n", cfg.namespace, cfg.name)
+		}
 		err = resources.CreateService(cfg.Ctx, client, cfg.name, cfg.namespace, int32(*cfg.containerPort.Value))
 		if err != nil {
 			return clierror.Wrap(err, clierror.New("failed to create service"))
@@ -176,7 +181,9 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 	}
 
 	if cfg.expose {
-		fmt.Printf("\nCreating API Rule %s/%s\n", cfg.namespace, cfg.name)
+		if !quietMode {
+			fmt.Printf("\nCreating API Rule %s/%s\n", cfg.namespace, cfg.name)
+		}
 		url := fmt.Sprintf("%s.<CLUSTER_DOMAIN>", cfg.name)
 
 		err = resources.CreateAPIRule(cfg.Ctx, client.RootlessDynamic(), cfg.name, cfg.namespace, cfg.name, uint32(*cfg.containerPort.Value))
@@ -197,8 +204,11 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 				return clierror.WrapE(clierr, clierror.New("failed to get host address of ApiRule's Virtual Service"))
 			}
 		}
-
-		fmt.Printf("\nThe %s app is available under the https://%s/ address\n", cfg.name, url)
+		if !quietMode {
+			fmt.Printf("\nThe %s app is available under the https://%s/ address\n", cfg.name, url)
+		} else {
+			fmt.Fprint(os.Stdout, url)
+		}
 	}
 
 	return nil

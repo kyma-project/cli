@@ -25,6 +25,7 @@ func NewKymaCMD() *cobra.Command {
 	extensions.AddCmdPersistentFlags(cmd)
 	cmdcommon.AddCmdPersistentKubeconfigFlag(cmd)
 	cmd.PersistentFlags().BoolP("help", "h", false, "Help for the command")
+	cmd.PersistentFlags().BoolP("quiet", "q", false, "Suppress non-essential output")
 
 	kymaConfig := cmdcommon.NewKymaConfig()
 

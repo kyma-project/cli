@@ -17,6 +17,7 @@ kyma module list [flags]
       --show-errors             Indicates whether to show errors outputted by misconfigured modules
   -h, --help                    Help for the command
       --kubeconfig string       Path to the Kyma kubeconfig file
+  -q, --quiet                   Suppress non-essential output
       --show-extensions-error   Prints a possible error when fetching extensions fails
       --skip-extensions         Skip fetching extensions from the target Kyma environment
 ```
