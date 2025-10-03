@@ -22,6 +22,7 @@ kyma alpha provision [flags]
       --region string             Name of the region of the Kyma cluster
   -h, --help                      Help for the command
       --kubeconfig string         Path to the Kyma kubeconfig file
+  -q, --quiet                     Suppress non-essential output
       --show-extensions-error     Prints a possible error when fetching extensions fails
       --skip-extensions           Skip fetching extensions from the target Kyma environment
 ```

@@ -13,6 +13,7 @@ kyma alpha <command> [flags]
 ## Available Commands
 
 ```text
+  diagnose           - Diagnose cluster health and configuration
   hana               - Manages an SAP HANA instance in the Kyma cluster
   kubeconfig         - Manages access to the Kyma cluster
   provision          - Provisions a Kyma cluster on SAP BTP
@@ -24,6 +25,7 @@ kyma alpha <command> [flags]
 ```text
   -h, --help                    Help for the command
       --kubeconfig string       Path to the Kyma kubeconfig file
+  -q, --quiet                   Suppress non-essential output
       --show-extensions-error   Prints a possible error when fetching extensions fails
       --skip-extensions         Skip fetching extensions from the target Kyma environment
 ```
@@ -31,6 +33,7 @@ kyma alpha <command> [flags]
 ## See also
 
 * [kyma](kyma.md)                                                   - A simple set of commands to manage a Kyma cluster
+* [kyma alpha diagnose](kyma_alpha_diagnose.md)                     - Diagnose cluster health and configuration
 * [kyma alpha hana](kyma_alpha_hana.md)                             - Manages an SAP HANA instance in the Kyma cluster
 * [kyma alpha kubeconfig](kyma_alpha_kubeconfig.md)                 - Manages access to the Kyma cluster
 * [kyma alpha provision](kyma_alpha_provision.md)                   - Provisions a Kyma cluster on SAP BTP
