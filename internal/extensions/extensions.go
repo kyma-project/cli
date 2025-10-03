@@ -6,12 +6,11 @@ import (
 	"io"
 	"os"
 	"slices"
-	"strconv"
-	"strings"
 
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/extensions/errors"
 	"github.com/kyma-project/cli.v3/internal/extensions/types"
+	flags "github.com/kyma-project/cli.v3/internal/flags"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 	v1 "k8s.io/api/core/v1"
@@ -26,7 +25,7 @@ type Builder struct {
 func NewBuilder(kymaConfig *cmdcommon.KymaConfig) *Builder {
 	config := &Builder{}
 
-	if getBoolFlagValue("--skip-extensions") {
+	if flags.GetBoolFlagValue("--skip-extensions") {
 		// skip extensions fetching
 		return config
 	}
@@ -52,7 +51,7 @@ func (b *Builder) DisplayWarnings(warningWriter io.Writer) {
 		return
 	}
 
-	if len(b.extensionsErrors) > 0 && getBoolFlagValue("--show-extensions-error") {
+	if len(b.extensionsErrors) > 0 && flags.GetBoolFlagValue("--show-extensions-error") {
 		// print error as warning if expected and continue
 		fmt.Fprintf(warningWriter, "Extensions Warning:\n%s\n\n", errors.NewList(b.extensionsErrors...).Error())
 	} else if len(b.extensionsErrors) > 0 {
@@ -165,27 +164,6 @@ func parseRequiredField[T any](cmData map[string]string, cmKey string) (*T, erro
 	var data T
 	err := yaml.Unmarshal([]byte(dataBytes), &data)
 	return &data, err
-}
-
-// search os.Args manually to find if user pass given flag and return its value
-func getBoolFlagValue(flag string) bool {
-	for i, arg := range os.Args {
-		//example: --show-extensions-error true
-		if arg == flag && len(os.Args) > i+1 {
-
-			value, err := strconv.ParseBool(os.Args[i+1])
-			if err == nil {
-				return value
-			}
-		}
-
-		// example: --show-extensions-error or --show-extensions-error=true
-		if strings.HasPrefix(arg, flag) && !strings.Contains(arg, "false") {
-			return true
-		}
-	}
-
-	return false
 }
 
 // checks if one of given args is on the 2 possition of os.Args (first sub-command)
