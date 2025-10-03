@@ -78,7 +78,7 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().StringVar(&config.packAppPath, "code-path", "", "Path to the application source code directory")
 
 	// k8s flags
-	cmd.Flags().StringVar(&config.namespace, "namespace", "default", "Namespace where the app is deployed")
+	cmd.Flags().StringVarP(&config.namespace, "namespace", "n", "default", "Namespace where the app is deployed")
 	cmd.Flags().Var(&config.containerPort, "container-port", "Port on which the application is exposed")
 	cmd.Flags().Var(&config.istioInject, "istio-inject", "Enables Istio for the app")
 	cmd.Flags().BoolVar(&config.expose, "expose", false, "Creates an APIRule for the app")

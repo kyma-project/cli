@@ -44,7 +44,7 @@ func NewReferenceInstanceCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&config.namespace, "namespace", "default", "Namespace of the reference instance")
+	cmd.Flags().StringVarP(&config.namespace, "namespace", "n", "default", "Namespace of the reference instance")
 	cmd.Flags().StringVar(&config.offeringName, "offering-name", "", "Offering name")
 	cmd.Flags().StringVar(&config.referenceName, "reference-name", "", "Name of the reference")
 	cmd.Flags().StringVar(&config.instanceID, "instance-id", "", "ID of the instance")
