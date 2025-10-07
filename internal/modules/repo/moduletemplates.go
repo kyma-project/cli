@@ -25,6 +25,7 @@ type ModuleTemplatesRepository interface {
 	Resources(ctx context.Context, moduleTemplate kyma.ModuleTemplate) ([]map[string]any, error)
 	DeleteResourceReturnWatcher(ctx context.Context, resource map[string]any) (watch.Interface, error)
 	InstalledManager(ctx context.Context, moduleTemplate kyma.ModuleTemplate) (*unstructured.Unstructured, error)
+	ExternalCommunity(ctx context.Context) ([]kyma.ModuleTemplate, error)
 }
 
 type moduleTemplatesRepo struct {
@@ -56,7 +57,20 @@ func (r *moduleTemplatesRepo) local(ctx context.Context) ([]kyma.ModuleTemplate,
 }
 
 func (r *moduleTemplatesRepo) Community(ctx context.Context) ([]kyma.ModuleTemplate, error) {
-	return r.remoteModulesRepo.Community()
+	localModuleTemplates, err := r.local(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	communityModules := []kyma.ModuleTemplate{}
+
+	for _, moduleTemplate := range localModuleTemplates {
+		if isCommunityModule(&moduleTemplate) {
+			communityModules = append(communityModules, moduleTemplate)
+		}
+	}
+
+	return communityModules, nil
 }
 
 func (r *moduleTemplatesRepo) Core(ctx context.Context) ([]kyma.ModuleTemplate, error) {
@@ -235,9 +249,19 @@ func (r *moduleTemplatesRepo) getInstalledManager(ctx context.Context, managerFr
 	return unstructRes, nil
 }
 
+func (r *moduleTemplatesRepo) ExternalCommunity(ctx context.Context) ([]kyma.ModuleTemplate, error) {
+	externalModuleTemplates, err := r.remoteModulesRepo.Community()
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch external module templates: %v", err)
+	}
+
+	return externalModuleTemplates, nil
+}
+
 func isCommunityModule(moduleTemplate *kyma.ModuleTemplate) bool {
 	managedBy, exist := moduleTemplate.ObjectMeta.Labels["operator.kyma-project.io/managed-by"]
-	return !exist || managedBy != "kyma"
+	return !(exist && managedBy == "kyma" && moduleTemplate.Namespace == "kyma-system")
 }
 
 func getManagerFromResources(moduleTemplate kyma.ModuleTemplate, moduleResources []map[string]any) (map[string]any, error) {

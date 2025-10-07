@@ -245,6 +245,7 @@ var (
 				InstallationState:    "Ready",
 				CustomResourcePolicy: "Ignore",
 			},
+			Origin: "kyma",
 		},
 		{
 			Name: "keda",
@@ -256,6 +257,7 @@ var (
 				InstallationState:    "Unmanaged",
 				CustomResourcePolicy: "CreateAndDelete",
 			},
+			Origin: "kyma",
 		},
 	}
 
@@ -274,6 +276,7 @@ var (
 				},
 			},
 			CommunityModule: false,
+			Origin:          "kyma",
 		},
 		{
 			Name: "serverless",
@@ -289,6 +292,7 @@ var (
 				},
 			},
 			CommunityModule: false,
+			Origin:          "kyma",
 		},
 	}
 

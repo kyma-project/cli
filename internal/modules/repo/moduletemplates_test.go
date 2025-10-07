@@ -214,7 +214,17 @@ func TestModuleTemplatesRepo_local(t *testing.T) {
 
 func TestModuleTemplatesRepo_Community(t *testing.T) {
 	t.Run("failed to list module templates", func(t *testing.T) {
-		fakeKubeClient := &fake.KubeClient{}
+
+		fakeKymaClient := fake.KymaClient{
+			ReturnErr: errors.New("test-error"),
+			ReturnModuleTemplateList: kyma.ModuleTemplateList{
+				Items: []kyma.ModuleTemplate{},
+			},
+		}
+		fakeKubeClient := &fake.KubeClient{
+			TestKymaInterface: &fakeKymaClient,
+		}
+		//fakeKubeClient := &fake.KubeClient{}
 		fakeRemoteRepo := &modulesfake.ModuleTemplatesRemoteRepo{
 			ReturnCommunity: nil,
 			CommunityErr:    errors.New("test-error"),
@@ -226,18 +236,22 @@ func TestModuleTemplatesRepo_Community(t *testing.T) {
 
 		require.Len(t, result, 0)
 		require.Error(t, err)
-		require.Equal(t, "test-error", err.Error())
+		require.Equal(t, "failed to list module templates: test-error", err.Error())
 	})
 
-	t.Run("lists community module templates from remote", func(t *testing.T) {
-		fakeKubeClient := &fake.KubeClient{}
-		fakeRemoteRepo := &modulesfake.ModuleTemplatesRemoteRepo{
-			ReturnCommunity: []kyma.ModuleTemplate{
-				testCommunityModuleTemplate,
+	t.Run("lists community module templates from the cluster", func(t *testing.T) {
+		fakeKymaClient := fake.KymaClient{
+			ReturnModuleTemplateList: kyma.ModuleTemplateList{
+				Items: []kyma.ModuleTemplate{
+					testCommunityModuleTemplate,
+				},
 			},
 		}
+		fakeKubeClient := &fake.KubeClient{
+			TestKymaInterface: &fakeKymaClient,
+		}
 
-		repo := NewModuleTemplatesRepoForTests(fakeKubeClient, fakeRemoteRepo)
+		repo := NewModuleTemplatesRepo(fakeKubeClient)
 
 		result, err := repo.Community(context.Background())
 
@@ -250,29 +264,37 @@ func TestModuleTemplatesRepo_Community(t *testing.T) {
 
 func TestModuleTemplatesRepo_CommunityByName(t *testing.T) {
 	t.Run("failed to list module templates", func(t *testing.T) {
-		fakeKubeClient := &fake.KubeClient{}
-		fakeRemoteRepo := &modulesfake.ModuleTemplatesRemoteRepo{
-			ReturnCommunity: nil,
-			CommunityErr:    errors.New("test-error"),
+		fakeKymaClient := fake.KymaClient{
+			ReturnErr: errors.New("test-error"),
+			ReturnModuleTemplateList: kyma.ModuleTemplateList{
+				Items: []kyma.ModuleTemplate{},
+			},
+		}
+		fakeKubeClient := &fake.KubeClient{
+			TestKymaInterface: &fakeKymaClient,
 		}
 
-		repo := NewModuleTemplatesRepoForTests(fakeKubeClient, fakeRemoteRepo)
+		repo := NewModuleTemplatesRepo(fakeKubeClient)
 
 		result, err := repo.CommunityByName(context.Background(), "test")
 
 		require.Len(t, result, 0)
 		require.Error(t, err)
-		require.Equal(t, "test-error", err.Error())
+		require.Equal(t, "failed to list module templates: test-error", err.Error())
 	})
 
 	t.Run("returns only community modules with specific name", func(t *testing.T) {
-		fakeKubeClient := &fake.KubeClient{}
-		fakeRemoteRepo := &modulesfake.ModuleTemplatesRemoteRepo{
-			ReturnCommunity: []kyma.ModuleTemplate{
-				testCommunityModuleTemplate,
+		fakeKymaClient := fake.KymaClient{
+			ReturnModuleTemplateList: kyma.ModuleTemplateList{
+				Items: []kyma.ModuleTemplate{
+					testCommunityModuleTemplate,
+				},
 			},
 		}
-		repo := NewModuleTemplatesRepoForTests(fakeKubeClient, fakeRemoteRepo)
+		fakeKubeClient := &fake.KubeClient{
+			TestKymaInterface: &fakeKymaClient,
+		}
+		repo := NewModuleTemplatesRepo(fakeKubeClient)
 
 		result, err := repo.CommunityByName(context.Background(), "test-module")
 
@@ -283,13 +305,17 @@ func TestModuleTemplatesRepo_CommunityByName(t *testing.T) {
 	})
 
 	t.Run("does not return community modules with different names", func(t *testing.T) {
-		fakeKubeClient := &fake.KubeClient{}
-		fakeRemoteRepo := &modulesfake.ModuleTemplatesRemoteRepo{
-			ReturnCommunity: []kyma.ModuleTemplate{
-				testCommunityModuleTemplate,
+		fakeKymaClient := fake.KymaClient{
+			ReturnModuleTemplateList: kyma.ModuleTemplateList{
+				Items: []kyma.ModuleTemplate{
+					testCommunityModuleTemplate,
+				},
 			},
 		}
-		repo := NewModuleTemplatesRepoForTests(fakeKubeClient, fakeRemoteRepo)
+		fakeKubeClient := &fake.KubeClient{
+			TestKymaInterface: &fakeKymaClient,
+		}
+		repo := NewModuleTemplatesRepo(fakeKubeClient)
 
 		result, err := repo.CommunityByName(context.Background(), "non-existing-name")
 
@@ -300,19 +326,25 @@ func TestModuleTemplatesRepo_CommunityByName(t *testing.T) {
 
 func TestModuleTemplatesRepo_CommunityInstalledByName(t *testing.T) {
 	t.Run("failed to list module templates", func(t *testing.T) {
-		fakeKubeClient := &fake.KubeClient{}
-		fakeRemoteRepo := &modulesfake.ModuleTemplatesRemoteRepo{
-			ReturnCommunity: nil,
-			CommunityErr:    errors.New("test-error"),
+		fakeKymaClient := fake.KymaClient{
+			ReturnErr: errors.New("test-error"),
+			ReturnModuleTemplateList: kyma.ModuleTemplateList{
+				Items: []kyma.ModuleTemplate{
+					testCoreModuleTemplate,
+				},
+			},
+		}
+		fakeKubeClient := &fake.KubeClient{
+			TestKymaInterface: &fakeKymaClient,
 		}
 
-		repo := NewModuleTemplatesRepoForTests(fakeKubeClient, fakeRemoteRepo)
+		repo := NewModuleTemplatesRepo(fakeKubeClient)
 
 		result, err := repo.CommunityInstalledByName(context.Background(), "test-module")
 
 		require.Len(t, result, 0)
 		require.Error(t, err)
-		require.Equal(t, "test-error", err.Error())
+		require.Equal(t, "failed to list module templates: test-error", err.Error())
 	})
 
 	t.Run("lists only installed community modules", func(t *testing.T) {
@@ -329,6 +361,7 @@ func TestModuleTemplatesRepo_CommunityInstalledByName(t *testing.T) {
 			ReturnModuleTemplateList: kyma.ModuleTemplateList{
 				Items: []kyma.ModuleTemplate{
 					testCoreModuleTemplate,
+					testInstalledCommunityModuleTemplate,
 				},
 			},
 		}
@@ -342,14 +375,7 @@ func TestModuleTemplatesRepo_CommunityInstalledByName(t *testing.T) {
 			TestRootlessDynamicInterface: fakeRootless,
 		}
 
-		fakeRemoteRepo := &modulesfake.ModuleTemplatesRemoteRepo{
-			ReturnCommunity: []kyma.ModuleTemplate{
-				testCommunityModuleTemplate,
-				testInstalledCommunityModuleTemplate,
-			},
-		}
-
-		repo := NewModuleTemplatesRepoForTests(fakeKubeClient, fakeRemoteRepo)
+		repo := NewModuleTemplatesRepo(fakeKubeClient)
 
 		result, err := repo.CommunityInstalledByName(context.Background(), "test-module")
 
