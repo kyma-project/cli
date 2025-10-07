@@ -261,7 +261,7 @@ func (r *moduleTemplatesRepo) ExternalCommunity(ctx context.Context) ([]kyma.Mod
 
 func isCommunityModule(moduleTemplate *kyma.ModuleTemplate) bool {
 	managedBy, exist := moduleTemplate.ObjectMeta.Labels["operator.kyma-project.io/managed-by"]
-	return !(exist && managedBy == "kyma" && moduleTemplate.Namespace == "kyma-system")
+	return !exist || managedBy != "kyma" || moduleTemplate.Namespace != "kyma-system"
 }
 
 func getManagerFromResources(moduleTemplate kyma.ModuleTemplate, moduleResources []map[string]any) (map[string]any, error) {
