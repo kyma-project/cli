@@ -17,6 +17,7 @@ type ModuleTemplatesRepo struct {
 	ReturnResources                          []map[string]any
 	ReturnInstalledManager                   *unstructured.Unstructured
 	ReturnDeleteResourceReturnWatcher        watch.Interface
+	ReturnExternalCommunity                  []kyma.ModuleTemplate
 
 	CoreErr                               error
 	CommunityErr                          error
@@ -26,6 +27,7 @@ type ModuleTemplatesRepo struct {
 	ResourcesErr                          error
 	DeleteResourceReturnWatcherErr        error
 	InstalledManagerErr                   error
+	ExternalCommunityErr                  error
 }
 
 func (r *ModuleTemplatesRepo) Core(_ context.Context) ([]kyma.ModuleTemplate, error) {
@@ -58,4 +60,8 @@ func (r *ModuleTemplatesRepo) DeleteResourceReturnWatcher(_ context.Context, _ m
 
 func (r *ModuleTemplatesRepo) InstalledManager(_ context.Context, _ kyma.ModuleTemplate) (*unstructured.Unstructured, error) {
 	return r.ReturnInstalledManager, r.InstalledManagerErr
+}
+
+func (r *ModuleTemplatesRepo) ExternalCommunity(_ context.Context) ([]kyma.ModuleTemplate, error) {
+	return r.ReturnExternalCommunity, r.ExternalCommunityErr
 }

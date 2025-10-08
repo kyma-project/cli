@@ -3,6 +3,7 @@ package modules
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -21,6 +22,7 @@ type Module struct {
 	Versions        []ModuleVersion
 	InstallDetails  ModuleInstallDetails
 	CommunityModule bool
+	Origin          string
 }
 
 type Managed string
@@ -122,6 +124,7 @@ func collectModulesFromKymaCR(ctx context.Context, client kube.Client, defaultKy
 					ModuleState:          moduleCRState,
 					InstallationState:    installationState,
 				},
+				Origin: "kyma",
 			}
 		}(moduleStatus)
 	}
@@ -187,6 +190,7 @@ func collectUnmanagedCoreModules(ctx context.Context, client kube.Client, repo r
 					ModuleState:          moduleStatus,
 					InstallationState:    "Unmanaged",
 				},
+				Origin:          "kyma",
 				CommunityModule: true,
 			}
 		}(coreModuleTemplate)
@@ -228,6 +232,7 @@ func moduleExistsInKymaCR(coreModuleTemplate kyma.ModuleTemplate, moduleStatuses
 func ListCatalog(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository) (ModulesList, error) {
 	var coreModulesList ModulesList
 	var communityModulesList ModulesList
+	var externalModulesList ModulesList
 	var err error
 
 	if isClusterManagedByKLM(ctx, client) {
@@ -242,7 +247,12 @@ func ListCatalog(ctx context.Context, client kube.Client, repo repo.ModuleTempla
 		return nil, fmt.Errorf("failed to list modules catalog: %v", err)
 	}
 
-	allModules := append(coreModulesList, communityModulesList...)
+	externalModulesList, err = listExternalModulesCatalog(ctx, repo)
+	if err != nil {
+		fmt.Printf("failed to list external modules catalog: %v", err)
+	}
+
+	allModules := slices.Concat(coreModulesList, communityModulesList, externalModulesList)
 
 	return allModules, nil
 }
@@ -289,6 +299,7 @@ func listCoreModulesCatalog(ctx context.Context, client kube.Client) (ModulesLis
 				Versions: []ModuleVersion{
 					version,
 				},
+				Origin:          "kyma",
 				CommunityModule: false,
 			})
 		}
@@ -320,6 +331,39 @@ func listCommunityModulesCatalog(ctx context.Context, repo repo.ModuleTemplatesR
 				Versions: []ModuleVersion{
 					version,
 				},
+				Origin:          communityModule.Namespace + "/" + communityModule.Name,
+				CommunityModule: true,
+			})
+		}
+	}
+
+	return modulesList, nil
+}
+
+func listExternalModulesCatalog(ctx context.Context, repo repo.ModuleTemplatesRepository) (ModulesList, error) {
+	externalModules, err := repo.ExternalCommunity(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query external modules catalog: %v", err)
+	}
+
+	modulesList := ModulesList{}
+
+	for _, communityModule := range externalModules {
+		moduleName := communityModule.Spec.ModuleName
+		version := ModuleVersion{
+			Version:    communityModule.Spec.Version,
+			Repository: communityModule.Spec.Info.Repository,
+		}
+
+		if i := getModuleIndex(modulesList, moduleName, true); i != -1 {
+			modulesList[i].Versions = append(modulesList[i].Versions, version)
+		} else {
+			modulesList = append(modulesList, Module{
+				Name: moduleName,
+				Versions: []ModuleVersion{
+					version,
+				},
+				Origin:          "community",
 				CommunityModule: true,
 			})
 		}
@@ -402,6 +446,7 @@ func listCommunityInstalled(ctx context.Context, client kube.Client, repo repo.M
 					ModuleState:          moduleStatus,
 					InstallationState:    installationStatus,
 				},
+				Origin:          mt.Namespace + "/" + mt.Name,
 				CommunityModule: true,
 			}
 		}(moduleTemplate)

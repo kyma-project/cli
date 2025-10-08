@@ -36,12 +36,12 @@ var (
 	}
 
 	CatalogTableInfo = TableInfo{
-		Headers: []interface{}{"NAME", "AVAILABLE VERSIONS", "COMMUNITY"},
+		Headers: []interface{}{"NAME", "AVAILABLE VERSIONS", "ORIGIN"},
 		RowConverter: func(m Module) []interface{} {
 			return []interface{}{
 				m.Name,
 				convertVersions(m.Versions),
-				m.CommunityModule,
+				m.Origin,
 			}
 		},
 	}
