@@ -32,6 +32,8 @@ const (
 	ManagedFalse    Managed = "false"
 	UnknownValue            = "Unknown"
 	NotRunningValue         = "NotRunning"
+	OriginKyma              = "kyma"
+	OriginCommunity         = "community"
 )
 
 type ModuleInstallDetails struct {
@@ -124,7 +126,7 @@ func collectModulesFromKymaCR(ctx context.Context, client kube.Client, defaultKy
 					ModuleState:          moduleCRState,
 					InstallationState:    installationState,
 				},
-				Origin: "kyma",
+				Origin: OriginKyma,
 			}
 		}(moduleStatus)
 	}
@@ -190,7 +192,7 @@ func collectUnmanagedCoreModules(ctx context.Context, client kube.Client, repo r
 					ModuleState:          moduleStatus,
 					InstallationState:    "Unmanaged",
 				},
-				Origin:          "kyma",
+				Origin:          OriginKyma,
 				CommunityModule: true,
 			}
 		}(coreModuleTemplate)
@@ -299,7 +301,7 @@ func listCoreModulesCatalog(ctx context.Context, client kube.Client) (ModulesLis
 				Versions: []ModuleVersion{
 					version,
 				},
-				Origin:          "kyma",
+				Origin:          OriginKyma,
 				CommunityModule: false,
 			})
 		}
@@ -323,7 +325,7 @@ func listCommunityModulesCatalog(ctx context.Context, repo repo.ModuleTemplatesR
 			Repository: communityModule.Spec.Info.Repository,
 		}
 
-		if i := getModuleIndex(modulesList, moduleName, true); i != -1 {
+		if i := getModuleIndexWithOrigin(modulesList, moduleName, getModulesOrigin(&communityModule), true); i != -1 {
 			modulesList[i].Versions = append(modulesList[i].Versions, version)
 		} else {
 			modulesList = append(modulesList, Module{
@@ -331,13 +333,17 @@ func listCommunityModulesCatalog(ctx context.Context, repo repo.ModuleTemplatesR
 				Versions: []ModuleVersion{
 					version,
 				},
-				Origin:          communityModule.Namespace + "/" + communityModule.Name,
+				Origin:          getModulesOrigin(&communityModule),
 				CommunityModule: true,
 			})
 		}
 	}
 
 	return modulesList, nil
+}
+
+func getModulesOrigin(module *kyma.ModuleTemplate) string {
+	return module.Namespace + "/" + module.Name
 }
 
 func listExternalModulesCatalog(ctx context.Context, repo repo.ModuleTemplatesRepository) (ModulesList, error) {
@@ -363,7 +369,7 @@ func listExternalModulesCatalog(ctx context.Context, repo repo.ModuleTemplatesRe
 				Versions: []ModuleVersion{
 					version,
 				},
-				Origin:          "community",
+				Origin:          OriginCommunity,
 				CommunityModule: true,
 			})
 		}
@@ -446,7 +452,7 @@ func listCommunityInstalled(ctx context.Context, client kube.Client, repo repo.M
 					ModuleState:          moduleStatus,
 					InstallationState:    installationStatus,
 				},
-				Origin:          mt.Namespace + "/" + mt.Name,
+				Origin:          getModulesOrigin(&mt),
 				CommunityModule: true,
 			}
 		}(moduleTemplate)
@@ -845,6 +851,16 @@ func getChannelFromAssignments(assignments []kyma.ChannelVersionAssignment, vers
 func getModuleIndex(list ModulesList, name string, isCommunityModule bool) int {
 	for i := range list {
 		if list[i].Name == name && list[i].CommunityModule == isCommunityModule {
+			return i
+		}
+	}
+
+	return -1
+}
+
+func getModuleIndexWithOrigin(list ModulesList, name, origin string, isCommunityModule bool) int {
+	for i := range list {
+		if list[i].Name == name && list[i].CommunityModule == isCommunityModule && list[i].Origin == origin {
 			return i
 		}
 	}

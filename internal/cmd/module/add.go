@@ -104,7 +104,6 @@ func addModule(cfg *addConfig, client *kube.Client, crs ...unstructured.Unstruct
 		return installCommunityModule(cfg, client, moduleTemplatesRepo, crs...)
 	}
 
-	// if cfg.origin == "" || cfg.origin == "kyma"
 	return modules.Enable(cfg.Ctx, *client, moduleTemplatesRepo, cfg.module, cfg.channel, cfg.defaultCR, crs...)
 }
 

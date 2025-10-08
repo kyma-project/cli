@@ -104,10 +104,27 @@ func convertToOutputParameters(modulesList ModulesList, tableInfo TableInfo) []m
 
 func convertModuleListToRows(modulesList ModulesList, rowConverter RowConverter) [][]interface{} {
 	sort.Slice(modulesList, func(i, j int) bool {
-		if modulesList[i].CommunityModule == modulesList[j].CommunityModule {
-			return modulesList[i].Name < modulesList[j].Name
+		// First: Core modules (CommunityModule == false)
+		if !modulesList[i].CommunityModule && modulesList[j].CommunityModule {
+			return true
 		}
-		return !modulesList[i].CommunityModule && modulesList[j].CommunityModule
+		if modulesList[i].CommunityModule && !modulesList[j].CommunityModule {
+			return false
+		}
+
+		// Both are community modules, sort by origin
+		if modulesList[i].CommunityModule && modulesList[j].CommunityModule {
+			// Second: Community modules with origin != "community"
+			if modulesList[i].Origin != OriginCommunity && modulesList[j].Origin == OriginCommunity {
+				return true
+			}
+			if modulesList[i].Origin == OriginCommunity && modulesList[j].Origin != OriginCommunity {
+				return false
+			}
+		}
+
+		// Within the same category, sort by name
+		return modulesList[i].Name < modulesList[j].Name
 	})
 
 	var result [][]any
