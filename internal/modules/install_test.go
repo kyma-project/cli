@@ -54,47 +54,14 @@ func TestInstall_ListModuleTemplateError(t *testing.T) {
 	}
 
 	data := InstallCommunityModuleData{
-		ModuleName:            "non-existing-module",
-		Version:               "v0.0.1",
-		IsDefaultCRApplicable: false,
+		CommunityModuleTemplate: nil,
+		IsDefaultCRApplicable:   false,
 	}
 	repo := &modulesfake.ModuleTemplatesRepo{
 		ReturnCore: []kyma.ModuleTemplate{},
 	}
 
-	expectedCliErr := clierror.Wrap(
-		errors.New("failed to find community module: module not found; failed to get module template: ListModuleTemplateError"),
-		clierror.New("failed to retrieve community module from catalog"),
-	)
-
-	clierr := Install(ctx, &client, repo, data)
-	require.NotNil(t, clierr)
-	require.Equal(t, expectedCliErr, clierr)
-}
-
-func TestInstall_ModuleNotFound(t *testing.T) {
-	ctx := context.Background()
-	kymaClient := fake.KymaClient{
-		ReturnModuleTemplateList: kyma.ModuleTemplateList{},
-		ReturnErr:                nil,
-	}
-	client := fake.KubeClient{
-		TestKymaInterface: &kymaClient,
-	}
-
-	data := InstallCommunityModuleData{
-		ModuleName:            "non-existing-module",
-		Version:               "v0.0.1",
-		IsDefaultCRApplicable: false,
-	}
-	repo := &modulesfake.ModuleTemplatesRepo{
-		ReturnCore: []kyma.ModuleTemplate{},
-	}
-
-	expectedCliErr := clierror.Wrap(
-		errors.New("failed to find community module: module not found; module not found"),
-		clierror.New("failed to retrieve community module from catalog"),
-	)
+	expectedCliErr := clierror.New("cannot install non-existing module")
 
 	clierr := Install(ctx, &client, repo, data)
 	require.NotNil(t, clierr)
@@ -117,9 +84,8 @@ func TestInstall_InstallModuleError(t *testing.T) {
 	}
 
 	data := InstallCommunityModuleData{
-		ModuleName:            "serverless",
-		Version:               "0.0.1",
-		IsDefaultCRApplicable: false,
+		CommunityModuleTemplate: &testModuleTemplate,
+		IsDefaultCRApplicable:   false,
 	}
 
 	expectedCliErr := clierror.Wrap(
@@ -154,9 +120,8 @@ func TestInstall_ModuleSuccessfullyInstalledFromRemote(t *testing.T) {
 	}
 
 	data := InstallCommunityModuleData{
-		ModuleName:            "serverless",
-		Version:               "0.0.1",
-		IsDefaultCRApplicable: false,
+		CommunityModuleTemplate: &testModuleTemplate,
+		IsDefaultCRApplicable:   false,
 	}
 
 	clierr := Install(ctx, &client, repo, data)
@@ -190,9 +155,8 @@ func TestInstall_ModuleSuccessfullyInstalledFromLocal(t *testing.T) {
 	}
 
 	data := InstallCommunityModuleData{
-		ModuleName:            "serverless",
-		Version:               "0.0.1",
-		IsDefaultCRApplicable: false,
+		CommunityModuleTemplate: &testModuleTemplate,
+		IsDefaultCRApplicable:   false,
 	}
 
 	clierr := Install(ctx, &client, repo, data)
@@ -219,9 +183,8 @@ func TestInstall_ModuleSuccessfullyInstalledWithDefaultCR(t *testing.T) {
 	}
 
 	data := InstallCommunityModuleData{
-		ModuleName:            "serverless",
-		Version:               "0.0.1",
-		IsDefaultCRApplicable: true,
+		CommunityModuleTemplate: &testModuleTemplate,
+		IsDefaultCRApplicable:   true,
 	}
 
 	clierr := Install(ctx, &client, repo, data)
@@ -248,67 +211,39 @@ func TestInstall_ModuleSuccessfullyInstalledWithCustomCR(t *testing.T) {
 	}
 
 	data := InstallCommunityModuleData{
-		ModuleName:            "serverless",
-		Version:               "0.0.1",
-		IsDefaultCRApplicable: false,
-		CustomResources:       []unstructured.Unstructured{},
+		CommunityModuleTemplate: &testModuleTemplate,
+		IsDefaultCRApplicable:   false,
+		CustomResources:         []unstructured.Unstructured{},
 	}
 
 	clierr := Install(ctx, &client, repo, data)
 	require.Nil(t, clierr)
 }
 
-func TestVerifyModuleExistence(t *testing.T) {
+func TestFindCommunityModuleTemplate(t *testing.T) {
 	ctx := context.Background()
-	moduleName := "test-module"
-	version := "1.0.0"
+	namespace := "my-system"
+	communityModuleTemplateName := "community-module-0.1.0"
 
 	t.Run("module not found", func(t *testing.T) {
 		repo := modulesfake.ModuleTemplatesRepo{
 			ReturnCommunity: []kyma.ModuleTemplate{},
 		}
-		err := VerifyModuleExistence(ctx, moduleName, version, &repo)
+		foundModule, err := FindCommunityModuleTemplate(ctx, namespace, communityModuleTemplateName, &repo)
+
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "module test-module is not available in the catalog")
-	})
-
-	t.Run("version not found", func(t *testing.T) {
-		repo := modulesfake.ModuleTemplatesRepo{
-			ReturnCommunity: []kyma.ModuleTemplate{
-				{Spec: kyma.ModuleTemplateSpec{ModuleName: moduleName, Version: "2.0.0"}},
-			},
-		}
-		err := VerifyModuleExistence(ctx, moduleName, version, &repo)
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "community module test-module in version 1.0.0 does not exist. Available versions: 2.0.0")
-	})
-
-	t.Run("version found", func(t *testing.T) {
-		repo := modulesfake.ModuleTemplatesRepo{
-			ReturnCommunity: []kyma.ModuleTemplate{
-				{Spec: kyma.ModuleTemplateSpec{ModuleName: moduleName, Version: version}},
-			},
-		}
-		err := VerifyModuleExistence(ctx, moduleName, version, &repo)
-		require.NoError(t, err)
-	})
-
-	t.Run("version empty (any version is valid)", func(t *testing.T) {
-		repo := modulesfake.ModuleTemplatesRepo{
-			ReturnCommunity: []kyma.ModuleTemplate{
-				{Spec: kyma.ModuleTemplateSpec{ModuleName: moduleName, Version: "2.0.0"}},
-			},
-		}
-		err := VerifyModuleExistence(ctx, moduleName, "", &repo)
-		require.NoError(t, err)
+		require.Nil(t, foundModule)
+		require.Contains(t, err.Error(), "module of the provided origin does not exist")
 	})
 
 	t.Run("repo error", func(t *testing.T) {
 		repo := modulesfake.ModuleTemplatesRepo{
 			CommunityErr: errors.New("repo error"),
 		}
-		err := VerifyModuleExistence(ctx, moduleName, version, &repo)
+		foundModule, err := FindCommunityModuleTemplate(ctx, namespace, communityModuleTemplateName, &repo)
+
 		require.Error(t, err)
+		require.Nil(t, foundModule)
 		require.Contains(t, err.Error(), "failed to retrieve community modules: repo error")
 	})
 }

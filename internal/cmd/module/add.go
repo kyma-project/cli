@@ -25,6 +25,7 @@ type addConfig struct {
 	autoApprove bool
 	community   bool
 	version     string
+	origin      string
 }
 
 func newAddCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
@@ -40,7 +41,7 @@ func newAddCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		PreRun: func(cmd *cobra.Command, _ []string) {
 			clierror.Check(flags.Validate(cmd.Flags(),
 				flags.MarkMutuallyExclusive("cr-path", "default-cr"),
-				flags.MarkPrerequisites("auto-approve", "community"),
+				flags.MarkPrerequisites("auto-approve", "origin"),
 			))
 		},
 		Run: func(cmd *cobra.Command, args []string) {
@@ -54,6 +55,7 @@ func newAddCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().BoolVar(&cfg.defaultCR, "default-cr", false, "Deploys the module with the default CR")
 	cmd.Flags().BoolVar(&cfg.autoApprove, "auto-approve", false, "Automatically approve community module installation")
 	cmd.Flags().StringVar(&cfg.version, "version", "", "Specify version of the community module to install")
+	cmd.Flags().StringVar(&cfg.origin, "origin", "", "Specify the source of the module (kyma or custom name)")
 	cmd.Flags().BoolVar(&cfg.community, "community", false, "Install a community module (no official support, no binding SLA)")
 
 	return cmd
@@ -91,6 +93,14 @@ func addModule(cfg *addConfig, client *kube.Client, crs ...unstructured.Unstruct
 	moduleTemplatesRepo := repo.NewModuleTemplatesRepo(*client)
 
 	if cfg.community {
+		return clierror.New("The --community flag is no longer supported. Community modules need to be pulled first using 'kyma module pull' command, then installed. For help, use 'kyma module pull --help'")
+	}
+
+	if cfg.origin == "community" {
+		return clierror.New("Community modules cannot be installed directly. Please use 'kyma module pull' command to download the module first, then install it. For help, use 'kyma module pull --help'")
+	}
+
+	if cfg.origin != "" && cfg.origin != "kyma" {
 		return installCommunityModule(cfg, client, moduleTemplatesRepo, crs...)
 	}
 
@@ -98,7 +108,12 @@ func addModule(cfg *addConfig, client *kube.Client, crs ...unstructured.Unstruct
 }
 
 func installCommunityModule(cfg *addConfig, client *kube.Client, repo repo.ModuleTemplatesRepository, crs ...unstructured.Unstructured) clierror.Error {
-	err := modules.VerifyModuleExistence(cfg.Ctx, cfg.module, cfg.version, repo)
+	namespace, moduleTemplateName, err := validateOrigin(cfg.origin)
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to identify the community module"))
+	}
+
+	communityModuleTemplate, err := modules.FindCommunityModuleTemplate(cfg.Ctx, namespace, moduleTemplateName, repo)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to install the community module"))
 	}
@@ -118,35 +133,27 @@ func installCommunityModule(cfg *addConfig, client *kube.Client, repo repo.Modul
 		}
 	}
 
-	versionToInstall, err := selectCommunityModuleVersion(cfg, client, repo)
-	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to prompt for module version", "if error repeats, consider running the command with --version flag"))
-	}
-
 	installData := modules.InstallCommunityModuleData{
-		ModuleName:            cfg.module,
-		Version:               versionToInstall,
-		IsDefaultCRApplicable: cfg.defaultCR,
-		CustomResources:       crs,
+		CommunityModuleTemplate: communityModuleTemplate,
+		IsDefaultCRApplicable:   cfg.defaultCR,
+		CustomResources:         crs,
 	}
 
 	return modules.Install(cfg.Ctx, *client, repo, installData)
 }
 
-func selectCommunityModuleVersion(cfg *addConfig, client *kube.Client, repo repo.ModuleTemplatesRepository) (string, error) {
-	if strings.TrimSpace(cfg.version) != "" {
-		return cfg.version, nil
+func validateOrigin(origin string) (string, string, error) {
+	if !strings.Contains(origin, "/") {
+		return "", "", fmt.Errorf("invalid origin format - expected <namespace>/<module-template-name>")
 	}
 
-	availableVersions, err := modules.ListAvailableVersions(cfg.Ctx, *client, repo, cfg.module, cfg.community)
-	if err != nil {
-		return "", err
+	splitOrigin := strings.Split(origin, "/")
+	if len(splitOrigin) != 2 {
+		return "", "", fmt.Errorf("invalid origin format - expected <namespace>/<module-template-name>")
 	}
 
-	if len(availableVersions) == 1 {
-		return availableVersions[0], nil
-	}
+	namespace := splitOrigin[0]
+	moduleTemplateName := splitOrigin[1]
 
-	versionPrompt := prompt.NewOneOfStringList("Choose one of the available versions:", "Type the version number: ", availableVersions)
-	return versionPrompt.Prompt()
+	return namespace, moduleTemplateName, nil
 }

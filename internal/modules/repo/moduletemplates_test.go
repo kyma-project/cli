@@ -214,7 +214,6 @@ func TestModuleTemplatesRepo_local(t *testing.T) {
 
 func TestModuleTemplatesRepo_Community(t *testing.T) {
 	t.Run("failed to list module templates", func(t *testing.T) {
-
 		fakeKymaClient := fake.KymaClient{
 			ReturnErr: errors.New("test-error"),
 			ReturnModuleTemplateList: kyma.ModuleTemplateList{
@@ -224,7 +223,6 @@ func TestModuleTemplatesRepo_Community(t *testing.T) {
 		fakeKubeClient := &fake.KubeClient{
 			TestKymaInterface: &fakeKymaClient,
 		}
-		//fakeKubeClient := &fake.KubeClient{}
 		fakeRemoteRepo := &modulesfake.ModuleTemplatesRemoteRepo{
 			ReturnCommunity: nil,
 			CommunityErr:    errors.New("test-error"),
