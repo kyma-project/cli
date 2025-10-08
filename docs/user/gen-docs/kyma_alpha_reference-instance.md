@@ -18,7 +18,7 @@ kyma alpha reference-instance [flags]
       --instance-id string           ID of the instance
       --label-selector stringSlice   Label selector for filtering instances (default "[]")
       --name-selector string         Instance name selector for filtering instances
-      --namespace string             Namespace of the reference instance (default "default")
+  -n, --namespace string             Namespace of the reference instance (default "default")
       --offering-name string         Offering name
       --plan-selector string         Plan name selector for filtering instances
       --reference-name string        Name of the reference
