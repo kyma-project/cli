@@ -30,7 +30,7 @@ func (e *Env) String() string {
 
 func ParseEnv(value string) (Env, error) {
 	values := strings.Split(value, ",")
-	if len(values) > 0 {
+	if len(values) > 1 {
 		// strict format (like 'name=<NAME>,path=<PATH>')
 		return parseStrictEnv(values)
 	}
