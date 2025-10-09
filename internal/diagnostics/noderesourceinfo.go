@@ -68,10 +68,16 @@ type Usage struct {
 	PodCount int `json:"podCount" yaml:"podCount"` // Number of running/pending pods on this node
 }
 
+type Topology struct {
+	Region string `json:"region" yaml:"region"`
+	Zone   string `json:"zone" yaml:"zone"`
+}
+
 type NodeResourceInfo struct {
 	MachineInfo MachineInfo `json:"machineInfo" yaml:"machineInfo"`
 	Capacity    Capacity    `json:"capacity" yaml:"capacity"`
 	Usage       Usage       `json:"usage" yaml:"usage"`
+	Topology    Topology    `json:"topology" yaml:"topology"`
 }
 
 type NodeResourceInfoCollector struct {
@@ -106,6 +112,7 @@ func (c *NodeResourceInfoCollector) Run(ctx context.Context) []NodeResourceInfo 
 		}
 
 		usage := c.calculateUsage(ctx, node, pods)
+		topology := c.getTopologyData(node)
 
 		nodeInfo := NodeResourceInfo{
 			MachineInfo: MachineInfo{
@@ -123,13 +130,21 @@ func (c *NodeResourceInfoCollector) Run(ctx context.Context) []NodeResourceInfo 
 				EphemeralStorage: node.Status.Capacity.StorageEphemeral().String(),
 				Pods:             node.Status.Capacity.Pods().String(),
 			},
-			Usage: usage,
+			Usage:    usage,
+			Topology: topology,
 		}
 
 		nodeResources = append(nodeResources, nodeInfo)
 	}
 
 	return nodeResources
+}
+
+func (c *NodeResourceInfoCollector) getTopologyData(node corev1.Node) Topology {
+	return Topology{
+		Region: node.ObjectMeta.Labels["topology.kubernetes.io/region"],
+		Zone:   node.ObjectMeta.Labels["topology.kubernetes.io/zone"],
+	}
 }
 
 func (c *NodeResourceInfoCollector) getPodsOnNode(ctx context.Context, nodeName string) ([]corev1.Pod, error) {

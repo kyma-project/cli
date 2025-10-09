@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/kyma-project/cli.v3/internal/diagnostics"
@@ -79,25 +80,35 @@ func TestWriteVerboseError(t *testing.T) {
 func TestEnrichMetadataWithShootInfo(t *testing.T) {
 	// Test cases
 	testCases := []struct {
-		name              string
-		shootInfoExists   bool
-		provider          string
-		kubernetesVersion string
-		verbose           bool
+		name               string
+		shootInfoExists    bool
+		shootInfoConfigMap *corev1.ConfigMap
+		verbose            bool
 	}{
 		{
-			name:              "Should enrich metadata when shoot-info ConfigMap exists",
-			shootInfoExists:   true,
-			provider:          "azure",
-			kubernetesVersion: "1.26.0",
-			verbose:           false,
+			name:            "Should enrich metadata when shoot-info ConfigMap exists",
+			shootInfoExists: true,
+			shootInfoConfigMap: &corev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "shoot-info",
+					Namespace: "kube-system",
+				},
+				Data: map[string]string{
+					"provider":          "azure",
+					"kubernetesVersion": "1.26.0",
+					"domain":            "c-513b462.sample-domain.com",
+					"region":            "westeurope",
+					"shootName":         "c-513b462",
+					"extensions":        "extension-1,extension-2,extension-3",
+				},
+			},
+			verbose: false,
 		},
 		{
-			name:              "Should not enrich metadata when shoot-info ConfigMap does not exist",
-			shootInfoExists:   false,
-			provider:          "",
-			kubernetesVersion: "",
-			verbose:           true,
+			name:               "Should not enrich metadata when shoot-info ConfigMap does not exist",
+			shootInfoExists:    false,
+			shootInfoConfigMap: &corev1.ConfigMap{},
+			verbose:            true,
 		},
 	}
 
@@ -112,17 +123,10 @@ func TestEnrichMetadataWithShootInfo(t *testing.T) {
 
 			// Create the ConfigMap if needed for the test case
 			if tc.shootInfoExists {
-				shootInfoCM := &corev1.ConfigMap{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "shoot-info",
-						Namespace: "kube-system",
-					},
-					Data: map[string]string{
-						"provider":          tc.provider,
-						"kubernetesVersion": tc.kubernetesVersion,
-					},
-				}
-				_, err := fakeClient.CoreV1().ConfigMaps("kube-system").Create(context.TODO(), shootInfoCM, metav1.CreateOptions{})
+				_, err := fakeClient.
+					CoreV1().
+					ConfigMaps("kube-system").
+					Create(context.TODO(), tc.shootInfoConfigMap, metav1.CreateOptions{})
 				assert.NoError(t, err)
 			}
 
@@ -133,8 +137,12 @@ func TestEnrichMetadataWithShootInfo(t *testing.T) {
 
 			// Then
 			if tc.shootInfoExists {
-				assert.Equal(t, tc.provider, metadata.Provider)
-				assert.Equal(t, tc.kubernetesVersion, metadata.KubernetesVersion)
+				assert.Equal(t, tc.shootInfoConfigMap.Data["provider"], metadata.Provider)
+				assert.Equal(t, tc.shootInfoConfigMap.Data["kubernetesVersion"], metadata.KubernetesVersion)
+				assert.Equal(t, tc.shootInfoConfigMap.Data["domain"], metadata.ClusterDomain)
+				assert.Equal(t, tc.shootInfoConfigMap.Data["region"], metadata.Region)
+				assert.Equal(t, tc.shootInfoConfigMap.Data["shootName"], metadata.ShootName)
+				assert.Equal(t, tc.shootInfoConfigMap.Data["extensions"], strings.Join(metadata.GardenerExtensions, ","))
 				assert.Empty(t, writer.String()) // No errors should be written
 			} else {
 				assert.Empty(t, metadata.Provider)
@@ -290,6 +298,101 @@ func TestEnrichMetadataWithKymaProvisioningInfo(t *testing.T) {
 				assert.Contains(t, writer.String(), "Failed to get kyma-provisioning-info ConfigMap")
 			} else if tc.provisioningInfoExists && tc.detailsYAML == "invalid: yaml: :" && tc.verbose {
 				assert.Contains(t, writer.String(), "Failed to unmarshal provisioning details YAML")
+			}
+		})
+	}
+}
+
+func TestEnrichMetadataWithSapBtpManagerSecret(t *testing.T) {
+	testCases := []struct {
+		name                string
+		secretExists        bool
+		secret              *corev1.Secret
+		expectedClusterID   string
+		verbose             bool
+		expectedErrorOutput string
+	}{
+		{
+			name:         "Should enrich metadata when sap-btp-manager secret exists with cluster_id",
+			secretExists: true,
+			secret: &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "sap-btp-manager",
+					Namespace: "kyma-system",
+				},
+				Data: map[string][]byte{
+					"cluster_id": []byte("test-cluster-123"),
+				},
+			},
+			expectedClusterID: "test-cluster-123",
+			verbose:           false,
+		},
+		{
+			name:         "Should not enrich metadata when sap-btp-manager secret exists but cluster_id is missing",
+			secretExists: true,
+			secret: &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "sap-btp-manager",
+					Namespace: "kyma-system",
+				},
+				Data: map[string][]byte{
+					"other_data": []byte("some-value"),
+				},
+			},
+			expectedClusterID: "",
+			verbose:           false,
+		},
+		{
+			name:                "Should handle missing sap-btp-manager secret gracefully",
+			secretExists:        false,
+			secret:              nil,
+			expectedClusterID:   "",
+			verbose:             true,
+			expectedErrorOutput: "Failed to get sap-btp-manager secret",
+		},
+		{
+			name:         "Should handle empty cluster_id data",
+			secretExists: true,
+			secret: &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "sap-btp-manager",
+					Namespace: "kyma-system",
+				},
+				Data: map[string][]byte{
+					"cluster_id": []byte(""),
+				},
+			},
+			expectedClusterID: "",
+			verbose:           false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Given
+			var writer bytes.Buffer
+			fakeClient := fake.NewSimpleClientset()
+			kubeClient := &kube_fake.KubeClient{
+				TestKubernetesInterface: fakeClient,
+			}
+
+			if tc.secretExists {
+				_, err := fakeClient.CoreV1().Secrets("kyma-system").Create(context.TODO(), tc.secret, metav1.CreateOptions{})
+				assert.NoError(t, err)
+			}
+
+			collector := diagnostics.NewMetadataCollector(kubeClient, &writer, tc.verbose)
+
+			// When
+			metadata := collector.Run(context.TODO())
+
+			// Then
+			assert.Equal(t, tc.expectedClusterID, metadata.ClusterID)
+
+			if tc.expectedErrorOutput != "" && tc.verbose {
+				assert.Contains(t, writer.String(), tc.expectedErrorOutput)
+			} else if !tc.verbose {
+				assert.Empty(t, writer.String())
 			}
 		})
 	}

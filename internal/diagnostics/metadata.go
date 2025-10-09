@@ -12,12 +12,17 @@ import (
 )
 
 type Metadata struct {
-	GlobalAccountID   string   `json:"globalAccountID" yaml:"globalAccountID"`
-	SubaccountID      string   `json:"subaccountID" yaml:"subaccountID"`
-	Provider          string   `json:"provider" yaml:"provider"`
-	KubernetesVersion string   `json:"kubernetesVersion" yaml:"kubernetesVersion"`
-	NATGatewayIPs     []string `json:"natGatewayIPs" yaml:"natGatewayIPs"`
-	KubeAPIServer     string   `json:"kubeAPIServer" yaml:"kubeAPIServer"`
+	GlobalAccountID    string   `json:"globalAccountID" yaml:"globalAccountID"`
+	SubaccountID       string   `json:"subaccountID" yaml:"subaccountID"`
+	ClusterID          string   `json:"clusterID" yaml:"clusterID"`
+	ClusterDomain      string   `json:"clusterDomain" yaml:"clusterDomain"`
+	Region             string   `json:"region" yaml:"region"`
+	ShootName          string   `json:"shootName" yaml:"shootName"`
+	Provider           string   `json:"provider" yaml:"provider"`
+	KubernetesVersion  string   `json:"kubernetesVersion" yaml:"kubernetesVersion"`
+	NATGatewayIPs      []string `json:"natGatewayIPs" yaml:"natGatewayIPs"`
+	GardenerExtensions []string `json:"gardenerExtensions" yaml:"gardenerExtensions"`
+	KubeAPIServer      string   `json:"kubeAPIServer" yaml:"kubeAPIServer"`
 }
 
 type MetadataCollector struct {
@@ -35,12 +40,27 @@ func NewMetadataCollector(client kube.Client, writer io.Writer, verbose bool) *M
 func (mc *MetadataCollector) Run(ctx context.Context) Metadata {
 	var metadata Metadata
 
+	mc.enrichMetadataWithSapBtpManagerSecret(ctx, &metadata)
 	mc.enrichMetadataWithShootInfo(ctx, &metadata)
 	mc.enrichMetadataWithKymaInfo(ctx, &metadata)
 	mc.enrichMetadataWithKymaProvisioningInfo(ctx, &metadata)
 	mc.enrichMetadataWithClusterConfigInfo(ctx, &metadata)
 
 	return metadata
+}
+
+func (mc *MetadataCollector) enrichMetadataWithSapBtpManagerSecret(ctx context.Context, metadata *Metadata) {
+	secret, err := mc.client.Static().CoreV1().Secrets("kyma-system").Get(ctx, "sap-btp-manager", metav1.GetOptions{})
+	if err != nil {
+		mc.WriteVerboseError(err, "Failed to get sap-btp-manager secret")
+		return
+	}
+
+	if secret.Data["cluster_id"] == nil {
+		return
+	}
+
+	metadata.ClusterID = string(secret.Data["cluster_id"])
 }
 
 func (mc *MetadataCollector) enrichMetadataWithClusterConfigInfo(ctx context.Context, metadata *Metadata) {
@@ -89,6 +109,23 @@ func (mc *MetadataCollector) enrichMetadataWithShootInfo(ctx context.Context, me
 
 	if k8sVersion, exists := shootInfoConfigMap.Data["kubernetesVersion"]; exists {
 		metadata.KubernetesVersion = k8sVersion
+	}
+
+	if domain, exists := shootInfoConfigMap.Data["domain"]; exists {
+		metadata.ClusterDomain = domain
+	}
+
+	if region, exists := shootInfoConfigMap.Data["region"]; exists {
+		metadata.Region = region
+	}
+
+	if shootName, exists := shootInfoConfigMap.Data["shootName"]; exists {
+		metadata.ShootName = shootName
+	}
+
+	if extensions, exists := shootInfoConfigMap.Data["extensions"]; exists {
+		splitExtensions := strings.Split(extensions, ",")
+		metadata.GardenerExtensions = append(metadata.GardenerExtensions, splitExtensions...)
 	}
 }
 
