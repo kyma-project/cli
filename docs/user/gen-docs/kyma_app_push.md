@@ -26,6 +26,7 @@ kyma app push [flags]
       --mount-secret stringArray           Mounts Secret content to the /bindings/secret-<SECRET_NAME> path (default "[]")
       --name string                        Name of the app
   -n, --namespace string                   Namespace where the app is deployed (default "default")
+  -q, --quiet                              Suppresses non-essential output (prints only the URL of the pushed app, if exposed)
   -h, --help                               Help for the command
       --kubeconfig string                  Path to the Kyma kubeconfig file
       --show-extensions-error              Prints a possible error when fetching extensions fails
