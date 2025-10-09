@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"time"
 
@@ -33,6 +34,7 @@ type appPushConfig struct {
 	expose               bool
 	mountSecrets         []string
 	mountConfigmaps      []string
+	quiet                bool
 }
 
 func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
@@ -64,6 +66,7 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	// common flags
 	cmd.Flags().StringVar(&config.name, "name", "", "Name of the app")
+	cmd.Flags().BoolVarP(&config.quiet, "quiet", "q", false, "Suppresses non-essential output (prints only the URL of the pushed app, if exposed)")
 
 	// image flags
 	cmd.Flags().StringVar(&config.image, "image", "", "Name of the image to deploy")
@@ -78,7 +81,7 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().StringVar(&config.packAppPath, "code-path", "", "Path to the application source code directory")
 
 	// k8s flags
-	cmd.Flags().StringVar(&config.namespace, "namespace", "default", "Namespace where the app is deployed")
+	cmd.Flags().StringVarP(&config.namespace, "namespace", "n", "default", "Namespace where the app is deployed")
 	cmd.Flags().Var(&config.containerPort, "container-port", "Port on which the application is exposed")
 	cmd.Flags().Var(&config.istioInject, "istio-inject", "Enables Istio for the app")
 	cmd.Flags().BoolVar(&config.expose, "expose", false, "Creates an APIRule for the app")
@@ -130,6 +133,12 @@ func (apc *appPushConfig) validate() clierror.Error {
 }
 
 func runAppPush(cfg *appPushConfig) clierror.Error {
+
+	writer := io.Writer(os.Stdout)
+	if cfg.quiet {
+		writer = io.Discard
+	}
+
 	image := cfg.image
 	imagePullSecret := cfg.imagePullSecretName
 
@@ -152,7 +161,7 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 		imagePullSecret = registryConfig.SecretName
 	}
 
-	fmt.Printf("\nCreating deployment %s/%s\n", cfg.namespace, cfg.name)
+	fmt.Fprintf(writer, "\nCreating deployment %s/%s\n", cfg.namespace, cfg.name)
 
 	err := resources.CreateDeployment(cfg.Ctx, client, resources.CreateDeploymentOpts{
 		Name:            cfg.name,
@@ -168,7 +177,7 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 	}
 
 	if cfg.containerPort.Value != nil {
-		fmt.Printf("\nCreating service %s/%s\n", cfg.namespace, cfg.name)
+		fmt.Fprintf(writer, "\nCreating service %s/%s\n", cfg.namespace, cfg.name)
 		err = resources.CreateService(cfg.Ctx, client, cfg.name, cfg.namespace, int32(*cfg.containerPort.Value))
 		if err != nil {
 			return clierror.Wrap(err, clierror.New("failed to create service"))
@@ -176,7 +185,7 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 	}
 
 	if cfg.expose {
-		fmt.Printf("\nCreating API Rule %s/%s\n", cfg.namespace, cfg.name)
+		fmt.Fprintf(writer, "\nCreating API Rule %s/%s\n", cfg.namespace, cfg.name)
 		url := fmt.Sprintf("%s.<CLUSTER_DOMAIN>", cfg.name)
 
 		err = resources.CreateAPIRule(cfg.Ctx, client.RootlessDynamic(), cfg.name, cfg.namespace, cfg.name, uint32(*cfg.containerPort.Value))
@@ -198,7 +207,10 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 			}
 		}
 
-		fmt.Printf("\nThe %s app is available under the https://%s/ address\n", cfg.name, url)
+		fmt.Fprintf(writer, "\nThe %s app is available under the \n", cfg.name)
+		// print the URL regardless if in quiet mode
+		fmt.Print(url)
+
 	}
 
 	return nil

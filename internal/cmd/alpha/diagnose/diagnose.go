@@ -29,7 +29,7 @@ func NewDiagnoseCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "diagnose [flags]",
 		Short: "Diagnose cluster health and configuration",
-		Long:  "Use this command to quickly assess the health, configuration, and potential issues in your cluster for troubleshooting and support purposes",
+		Long:  "Use this command to quickly assess the health, configuration, and potential issues in your cluster for troubleshooting and support purposes.",
 		Run: func(cmd *cobra.Command, args []string) {
 			output := cmd.OutOrStderr()
 			clierror.Check(diagnose(&cfg, output))
@@ -37,8 +37,8 @@ func NewDiagnoseCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	}
 
 	cmd.Flags().VarP(&cfg.outputFormat, "format", "f", "Output format (possible values: json, yaml)")
-	cmd.Flags().StringVarP(&cfg.outputPath, "output", "o", "", "Path to the diagnostic output file. If not provided the output will be printed to stdout")
-	cmd.Flags().BoolVar(&cfg.verbose, "verbose", false, "Display verbose output including error details during diagnostics collection")
+	cmd.Flags().StringVarP(&cfg.outputPath, "output", "o", "", "Path to the diagnostic output file. If not provided the output is printed to stdout")
+	cmd.Flags().BoolVar(&cfg.verbose, "verbose", false, "Display verbose output, including error details during diagnostics collection")
 
 	return cmd
 }
