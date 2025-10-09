@@ -66,7 +66,7 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	// common flags
 	cmd.Flags().StringVar(&config.name, "name", "", "Name of the app")
-	cmd.Flags().BoolVarP(&config.quiet, "quiet", "q", false, "Suppress non-essential output (prints only URL of the pushed app, if exposed)")
+	cmd.Flags().BoolVarP(&config.quiet, "quiet", "q", false, "Suppresses non-essential output (prints only the URL of the pushed app, if exposed)")
 
 	// image flags
 	cmd.Flags().StringVar(&config.image, "image", "", "Name of the image to deploy")
