@@ -192,7 +192,7 @@ func TestBuildEnvsFromSecret(t *testing.T) {
 					},
 				},
 			},
-			wantErr: "while reading configmap 'missing-secret': secrets \"missing-secret\" not found",
+			wantErr: "while reading secret 'missing-secret': secrets \"missing-secret\" not found",
 		},
 	}
 	for _, tt := range tests {

@@ -40,7 +40,7 @@ func BuildEnvsFromSecret(ctx context.Context, client kube.Client, namespace stri
 		// multi env vars from secret
 		data, err := getSecretData(ctx, client, namespace, e.Location)
 		if err != nil {
-			return nil, fmt.Errorf("while reading configmap '%s': %w", e.Location, err)
+			return nil, fmt.Errorf("while reading secret '%s': %w", e.Location, err)
 		}
 
 		cmEnvs := buildSecretAllKeyEnvs(data, e.Location, e.LocationKeysPrefix)
