@@ -5,6 +5,11 @@ import (
 	"strings"
 )
 
+var (
+	ErrInvalidEnvFormat = errors.New("invalid env format, should be in format '<FIELD_NAME>=<VALUE>,<FIELD_NAME>=<VALUE>,...'")
+	ErrUnknownEnvField  = errors.New("unknown env field, supported fields are 'name', 'path', 'resource', 'key' or 'prefix'")
+)
+
 type Env struct {
 	// Env var Name
 	Name string
@@ -25,12 +30,16 @@ func (e *Env) String() string {
 		return e.Name + "=" + fullLocation
 	}
 
-	return strings.Join([]string{e.Location, e.LocationKeysPrefix}, ":")
+	if e.LocationKeysPrefix != "" {
+		return strings.Join([]string{e.Location, e.LocationKeysPrefix}, ":")
+	}
+
+	return e.Location
 }
 
 func ParseEnv(value string) (Env, error) {
 	values := strings.Split(value, ",")
-	if len(values) > 1 {
+	if len(values) > 1 || strings.HasPrefix(values[0], "path=") {
 		// strict format (like 'name=<NAME>,path=<PATH>')
 		return parseStrictEnv(values)
 	}
@@ -62,7 +71,7 @@ func parseStrictEnv(values []string) (Env, error) {
 		leftV, rightV := splitOnce(v, "=")
 		if rightV == "" {
 			// invalid format, '=' not found
-			return Env{}, errors.New("invalid env format, should be in format '<FIELD_NAME>=<VALUE>,<FIELD_NAME>=<VALUE>,...'")
+			return Env{}, ErrInvalidEnvFormat
 		}
 
 		switch leftV {
@@ -75,7 +84,7 @@ func parseStrictEnv(values []string) (Env, error) {
 		case "key":
 			env.LocationKey = rightV
 		default:
-			return Env{}, errors.New("invalid env format, should be in format '<FIELD_NAME>=<VALUE>,<FIELD_NAME>=<VALUE>,...'")
+			return Env{}, ErrUnknownEnvField
 		}
 	}
 

@@ -16,7 +16,7 @@ func (e *SourcedEnvArray) String() string {
 		values[i] = v.String()
 	}
 
-	return strings.Join(values, ",")
+	return strings.Join(values, ";")
 }
 
 // SetValue sets the value of the NullableString from a string

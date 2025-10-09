@@ -14,13 +14,13 @@ func BuildEnvsFromConfigmap(ctx context.Context, client kube.Client, namespace s
 	var result []corev1.EnvVar
 	for _, e := range envs.Values {
 		if e.Location == "" {
-			return nil, fmt.Errorf("missing configmap name in env: %s", e.String())
+			return nil, fmt.Errorf("missing configmap name in env: '%s'", e.String())
 		}
 
 		if e.Name != "" {
 			// single env var from configmap
 			if e.LocationKey == "" {
-				return nil, fmt.Errorf("missing configmap key in env: %s", e.String())
+				return nil, fmt.Errorf("missing configmap key in env: '%s'", e.String())
 			}
 
 			result = append(result, corev1.EnvVar{
@@ -40,7 +40,7 @@ func BuildEnvsFromConfigmap(ctx context.Context, client kube.Client, namespace s
 		// multi env vars from configmap
 		data, err := getConfigmapData(ctx, client, namespace, e.Location)
 		if err != nil {
-			return nil, fmt.Errorf("while reading configmap %s: %w", e.Location, err)
+			return nil, fmt.Errorf("while reading configmap '%s': %w", e.Location, err)
 		}
 
 		cmEnvs := buildConfigmapAllKeyEnvs(data, e.Location, e.LocationKeysPrefix)

@@ -14,13 +14,13 @@ func BuildEnvsFromSecret(ctx context.Context, client kube.Client, namespace stri
 	var result []corev1.EnvVar
 	for _, e := range envs.Values {
 		if e.Location == "" {
-			return nil, fmt.Errorf("missing secret name in env: %s", e.String())
+			return nil, fmt.Errorf("missing secret name in env: '%s'", e.String())
 		}
 
 		if e.Name != "" {
 			// single env var from secret
 			if e.LocationKey == "" {
-				return nil, fmt.Errorf("missing secret key in env: %s", e.String())
+				return nil, fmt.Errorf("missing secret key in env: '%s'", e.String())
 			}
 
 			result = append(result, corev1.EnvVar{
@@ -40,7 +40,7 @@ func BuildEnvsFromSecret(ctx context.Context, client kube.Client, namespace stri
 		// multi env vars from secret
 		data, err := getSecretData(ctx, client, namespace, e.Location)
 		if err != nil {
-			return nil, fmt.Errorf("while reading configmap %s: %w", e.Location, err)
+			return nil, fmt.Errorf("while reading configmap '%s': %w", e.Location, err)
 		}
 
 		cmEnvs := buildSecretAllKeyEnvs(data, e.Location, e.LocationKeysPrefix)
@@ -65,7 +65,7 @@ func buildSecretAllKeyEnvs(data map[string][]byte, resName string, prefix string
 		result = append(result, corev1.EnvVar{
 			Name: fmt.Sprintf("%s%s", prefix, k),
 			ValueFrom: &corev1.EnvVarSource{
-				ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+				SecretKeyRef: &corev1.SecretKeySelector{
 					Key: k,
 					LocalObjectReference: corev1.LocalObjectReference{
 						Name: resName,
