@@ -18,7 +18,7 @@ func TestBuildEnvsFromFile(t *testing.T) {
 	filePath := tmpDir + "/file.env"
 	err := os.WriteFile(filePath, []byte("KEY1=VALUE1\nKEY2=VALUE2\nKEY3=VALUE3\n"), 0600)
 	require.NoError(t, err)
-	defer os.ReadDir(tmpDir)
+	defer os.RemoveAll(tmpDir)
 
 	tests := []struct {
 		name    string
