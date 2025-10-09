@@ -25,6 +25,7 @@ type CreateDeploymentOpts struct {
 	InjectIstio     types.NullableBool
 	SecretMounts    []string
 	ConfigmapMounts []string
+	Envs            []corev1.EnvVar
 }
 
 func CreateDeployment(ctx context.Context, client kube.Client, opts CreateDeploymentOpts) error {
@@ -69,12 +70,10 @@ func buildDeployment(opts *CreateDeploymentOpts) *appsv1.Deployment {
 							},
 							Name:  opts.Name,
 							Image: opts.Image,
-							Env: []corev1.EnvVar{
-								{
-									Name:  "SERVICE_BINDING_ROOT",
-									Value: "/bindings",
-								},
-							},
+							Env: append(opts.Envs, corev1.EnvVar{
+								Name:  "SERVICE_BINDING_ROOT",
+								Value: "/bindings",
+							}),
 							VolumeMounts: append(secretVolumeMounts, configVolumeMounts...),
 							Resources: corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
