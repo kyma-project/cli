@@ -1,4 +1,4 @@
-package env
+package envs
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-func BuildEnvsFromFile(envs types.SourcedEnvArray) ([]corev1.EnvVar, error) {
+func BuildFromFile(envs types.SourcedEnvArray) ([]corev1.EnvVar, error) {
 	var result []corev1.EnvVar
 	for _, e := range envs.Values {
 		if e.Location == "" {

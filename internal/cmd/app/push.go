@@ -8,7 +8,7 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
-	"github.com/kyma-project/cli.v3/internal/cmdcommon/env"
+	"github.com/kyma-project/cli.v3/internal/cmdcommon/envs"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon/types"
 	"github.com/kyma-project/cli.v3/internal/dockerfile"
 	"github.com/kyma-project/cli.v3/internal/flags"
@@ -124,7 +124,8 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	// k8s flags
 	cmd.Flags().StringVarP(&config.namespace, "namespace", "n", "default", "Namespace where the app is deployed")
 	cmd.Flags().Var(&config.containerPort, "container-port", "Port on which the application is exposed")
-	cmd.Flags().Var(&config.istioInject, "istio-inject", "Enables Istio for the app")
+	istioInjectFlag := cmd.Flags().VarPF(&config.istioInject, "istio-inject", "", "Enables Istio for the app")
+	istioInjectFlag.NoOptDefVal = "true" // default value when flag is provided without value
 	cmd.Flags().BoolVar(&config.expose, "expose", false, "Creates an APIRule for the app")
 	cmd.Flags().StringArrayVar(&config.mountSecrets, "mount-secret", []string{}, "Mounts Secret content to the "+resources.SecretMountPathPrefix+"<SECRET_NAME> path")
 	cmd.Flags().StringArrayVar(&config.mountConfigmaps, "mount-config", []string{}, "Mounts ConfigMap content to the "+resources.ConfigmapMountPathPrefix+"<CONFIGMAP_NAME> path")
@@ -250,23 +251,29 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 }
 
 func createDeployment(cfg *appPushConfig, client kube.Client, image, imagePullSecret string) clierror.Error {
-	fileEnvs, err := env.BuildEnvsFromFile(cfg.fileEnvs)
-	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to build envs from file"))
-	}
-
-	secretEnvs, err := env.BuildEnvsFromSecret(cfg.Ctx, client, cfg.namespace, cfg.secretEnvs)
-	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to build envs from secret"))
-	}
-
-	configmapEnvs, err := env.BuildEnvsFromConfigmap(cfg.Ctx, client, cfg.namespace, cfg.configmapEnvs)
+	configmapEnvs, err := envs.BuildFromConfigmap(cfg.Ctx, client, cfg.namespace, cfg.configmapEnvs)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to build envs from configmap"))
 	}
 
-	envs := append(fileEnvs, secretEnvs...)
-	envs = append(envs, configmapEnvs...)
+	secretEnvs, err := envs.BuildFromSecret(cfg.Ctx, client, cfg.namespace, cfg.secretEnvs)
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to build envs from secret"))
+	}
+
+	fileEnvs, err := envs.BuildFromFile(cfg.fileEnvs)
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to build envs from file"))
+	}
+
+	plainEnvs := envs.Build(cfg.envs)
+
+	// append envs in order to have correct precedence
+	// plain envs > file envs > secret envs > configmap envs
+	envs := configmapEnvs
+	envs = append(envs, secretEnvs...)
+	envs = append(envs, fileEnvs...)
+	envs = append(envs, plainEnvs...)
 
 	err = resources.CreateDeployment(cfg.Ctx, client, resources.CreateDeploymentOpts{
 		Name:            cfg.name,
