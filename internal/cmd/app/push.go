@@ -8,7 +8,7 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
-	"github.com/kyma-project/cli.v3/internal/cmdcommon/env"
+	"github.com/kyma-project/cli.v3/internal/cmdcommon/envs"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon/types"
 	"github.com/kyma-project/cli.v3/internal/dockerfile"
 	"github.com/kyma-project/cli.v3/internal/flags"
@@ -32,7 +32,7 @@ type appPushConfig struct {
 	packAppPath          string
 	containerPort        types.NullableInt64
 	istioInject          types.NullableBool
-	envs                 types.Map
+	envs                 types.EnvMap
 	fileEnvs             types.SourcedEnvArray
 	configmapEnvs        types.SourcedEnvArray
 	secretEnvs           types.SourcedEnvArray
@@ -45,13 +45,45 @@ type appPushConfig struct {
 func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	config := appPushConfig{
 		KymaConfig: kymaConfig,
-		envs:       types.Map{Values: map[string]interface{}{}},
+		envs:       types.EnvMap{Map: &types.Map{Values: map[string]interface{}{}}},
 	}
 
 	cmd := &cobra.Command{
 		Use:   "push [flags]",
 		Short: "Push the application to the Kubernetes cluster",
 		Long:  "Use this command to push the application to the Kubernetes cluster.",
+		Example: `## Push an application based on its source code located in the current directory:
+# The application will be built using Cloud Native Buildpacks:
+  kyma app push --name my-app --code-path .
+
+## Push an application based on a Dockerfile located in the current directory:
+  kyma app push --name my-app --dockerfile ./Dockerfile --dockerfile-context .
+
+## Push an application based on a pre-built image:
+  kyma app push --name my-app --image eu.gcr.io/my-project/my-app:latest
+
+## Push an application and expose it using an APIRule:
+  kyma app push --name my-app --code-path . --container-port 8080 --expose --istio-inject=true
+
+## Push an application and set environment variables:
+# This flag overrides existing environment variables with the same name from other sources (file, ConfigMap, Secret).
+# To set an environment variable, use the format 'NAME=VALUE' or 'name=<NAME>,value=<VALUE>'.
+  kyma app push --name my-app --code-path . --env NAME1=VALUE --env NAME2=VALUE2
+
+## Push an application and set environment variables from different sources:
+# You can set environment variables using --env-from-file, --env-from-configmap, and --env-from-secret flags
+# depending on your needs. You can use these flags multiple times to set more than one environment variable
+# or use the '--env' flag to override existing environment variables with the same name.
+# To get a single key from source or load all keys, use one of the following formats:
+# - To get a single key, use: 'ENV_NAME=RESOURCE:RESOURCE_KEY' or 'name=ENV_NAME,resource=RESOURCE,key=RESOURCE_KEY'
+# - To fetch all keys, use: 'RESOURCE[:ENVS_PREFIX]' or 'resource=RESOURCE,prefix=ENVS_PREFIX'
+  kyma app push --name my-app --code-path . \
+	--env-from-file ./my-env-file \ 
+	--env-from-file MY_ENV=./my-env-file:key1 \ 
+	--env-from-configmap my-configmap:CONFIG_ \
+	--env-from-configmap MY_ENV2=my-configmap:key2 \
+	--env-from-secret my-secret:SECRET_ \
+	--env-from-secret MY_ENV3=my-secret:key3`,
 
 		PreRun: func(cmd *cobra.Command, args []string) {
 			clierror.Check(config.complete())
@@ -73,10 +105,10 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	// common flags
 	cmd.Flags().StringVar(&config.name, "name", "", "Name of the app")
 	cmd.Flags().BoolVarP(&config.quiet, "quiet", "q", false, "Suppresses non-essential output (prints only the URL of the pushed app, if exposed)")
-	cmd.Flags().Var(&config.envs, "env", "Environment variables for the app in format KEY=VALUE")
-	cmd.Flags().Var(&config.fileEnvs, "env-from-file", "Environment variables for the app loaded from a file in format KEY=PATH:KEY for single key or PATH[:PREFIX] to fetch all keys")
-	cmd.Flags().Var(&config.configmapEnvs, "env-from-configmap", "Environment variables for the app loaded from a ConfigMap in format KEY=PATH:KEY for single key or PATH[:PREFIX] to fetch all keys")
-	cmd.Flags().Var(&config.secretEnvs, "env-from-secret", "Environment variables for the app loaded from a Secret in format KEY=PATH:KEY for single key or PATH[:PREFIX] to fetch all keys")
+	cmd.Flags().Var(&config.envs, "env", "Environment variables for the app in format NAME=VALUE")
+	cmd.Flags().Var(&config.fileEnvs, "env-from-file", "Environment variables for the app loaded from a file in format ENV_NAME=FILE_PATH:FILE_KEY for a single key or FILE_PATH[:ENVS_PREFIX] to fetch all keys")
+	cmd.Flags().Var(&config.configmapEnvs, "env-from-configmap", "Environment variables for the app loaded from a ConfigMap in format ENV_NAME=RESOURCE:RESOURCE_KEY for a single key or RESOURCE[:ENVS_PREFIX] to fetch all keys")
+	cmd.Flags().Var(&config.secretEnvs, "env-from-secret", "Environment variables for the app loaded from a Secret in format ENV_NAME=RESOURCE:RESOURCE_KEY for a single key or RESOURCE[:ENVS_PREFIX] to fetch all keys")
 
 	// image flags
 	cmd.Flags().StringVar(&config.image, "image", "", "Name of the image to deploy")
@@ -93,7 +125,8 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	// k8s flags
 	cmd.Flags().StringVarP(&config.namespace, "namespace", "n", "default", "Namespace where the app is deployed")
 	cmd.Flags().Var(&config.containerPort, "container-port", "Port on which the application is exposed")
-	cmd.Flags().Var(&config.istioInject, "istio-inject", "Enables Istio for the app")
+	istioInjectFlag := cmd.Flags().VarPF(&config.istioInject, "istio-inject", "", "Enables Istio for the app")
+	istioInjectFlag.NoOptDefVal = "true" // default value when flag is provided without value
 	cmd.Flags().BoolVar(&config.expose, "expose", false, "Creates an APIRule for the app")
 	cmd.Flags().StringArrayVar(&config.mountSecrets, "mount-secret", []string{}, "Mounts Secret content to the "+resources.SecretMountPathPrefix+"<SECRET_NAME> path")
 	cmd.Flags().StringArrayVar(&config.mountConfigmaps, "mount-config", []string{}, "Mounts ConfigMap content to the "+resources.ConfigmapMountPathPrefix+"<CONFIGMAP_NAME> path")
@@ -219,23 +252,29 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 }
 
 func createDeployment(cfg *appPushConfig, client kube.Client, image, imagePullSecret string) clierror.Error {
-	fileEnvs, err := env.BuildEnvsFromFile(cfg.fileEnvs)
-	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to build envs from file"))
-	}
-
-	secretEnvs, err := env.BuildEnvsFromSecret(cfg.Ctx, client, cfg.namespace, cfg.secretEnvs)
-	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to build envs from secret"))
-	}
-
-	configmapEnvs, err := env.BuildEnvsFromConfigmap(cfg.Ctx, client, cfg.namespace, cfg.configmapEnvs)
+	configmapEnvs, err := envs.BuildFromConfigmap(cfg.Ctx, client, cfg.namespace, cfg.configmapEnvs)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to build envs from configmap"))
 	}
 
-	envs := append(fileEnvs, secretEnvs...)
-	envs = append(envs, configmapEnvs...)
+	secretEnvs, err := envs.BuildFromSecret(cfg.Ctx, client, cfg.namespace, cfg.secretEnvs)
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to build envs from secret"))
+	}
+
+	fileEnvs, err := envs.BuildFromFile(cfg.fileEnvs)
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to build envs from file"))
+	}
+
+	plainEnvs := envs.Build(cfg.envs)
+
+	// append envs in order to have correct precedence
+	// plain envs > file envs > secret envs > configmap envs
+	envs := configmapEnvs
+	envs = append(envs, secretEnvs...)
+	envs = append(envs, fileEnvs...)
+	envs = append(envs, plainEnvs...)
 
 	err = resources.CreateDeployment(cfg.Ctx, client, resources.CreateDeploymentOpts{
 		Name:            cfg.name,

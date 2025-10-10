@@ -11,7 +11,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"github.com/kyma-project/cli.v3/internal/kube/rootlessdynamic"
 	"gopkg.in/yaml.v3"
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/watch"
 )
@@ -26,6 +26,7 @@ type ModuleTemplatesRepository interface {
 	DeleteResourceReturnWatcher(ctx context.Context, resource map[string]any) (watch.Interface, error)
 	InstalledManager(ctx context.Context, moduleTemplate kyma.ModuleTemplate) (*unstructured.Unstructured, error)
 	ExternalCommunity(ctx context.Context) ([]kyma.ModuleTemplate, error)
+	ExternalCommunityByNameAndVersion(ctx context.Context, moduleName, version string) ([]kyma.ModuleTemplate, error)
 }
 
 type moduleTemplatesRepo struct {
@@ -138,11 +139,11 @@ func (r *moduleTemplatesRepo) RunningAssociatedResourcesOfModule(ctx context.Con
 		}, &rootlessdynamic.ListOptions{
 			AllNamespaces: true,
 		})
-		if err != nil && !errors.IsNotFound(err) {
+		if err != nil && !apierrors.IsNotFound(err) {
 			fmt.Printf("failed to list resources %v: %v", associatedResource, err)
 			continue
 		}
-		if err != nil && errors.IsNotFound(err) {
+		if err != nil && apierrors.IsNotFound(err) {
 			continue
 		}
 
@@ -242,7 +243,7 @@ func (r *moduleTemplatesRepo) getInstalledManager(ctx context.Context, managerFr
 	)
 
 	unstructRes, err := r.client.RootlessDynamic().Get(ctx, &unstructManager)
-	if err != nil && !errors.IsNotFound(err) {
+	if err != nil && !apierrors.IsNotFound(err) {
 		return nil, fmt.Errorf("failed to get resource: %v", err)
 	}
 
@@ -257,6 +258,23 @@ func (r *moduleTemplatesRepo) ExternalCommunity(ctx context.Context) ([]kyma.Mod
 	}
 
 	return externalModuleTemplates, nil
+}
+
+func (r *moduleTemplatesRepo) ExternalCommunityByNameAndVersion(ctx context.Context, moduleName, version string) ([]kyma.ModuleTemplate, error) {
+	remoteModules, err := r.ExternalCommunity(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	externalModules := []kyma.ModuleTemplate{}
+
+	for _, module := range remoteModules {
+		if module.Spec.ModuleName == moduleName && module.Spec.Version == version {
+			externalModules = append(externalModules, module)
+		}
+	}
+
+	return externalModules, nil
 }
 
 func isCommunityModule(moduleTemplate *kyma.ModuleTemplate) bool {

@@ -1,4 +1,4 @@
-package env_test
+package envs
 
 import (
 	"errors"
@@ -6,7 +6,6 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/kyma-project/cli.v3/internal/cmdcommon/env"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon/types"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon/types/sourced"
 	"github.com/stretchr/testify/require"
@@ -131,7 +130,7 @@ func TestBuildEnvsFromFile(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, gotErr := env.BuildEnvsFromFile(tt.envs)
+			got, gotErr := BuildFromFile(tt.envs)
 			require.Equal(t, tt.wantErr, gotErr)
 			require.ElementsMatch(t, tt.want, got)
 		})
