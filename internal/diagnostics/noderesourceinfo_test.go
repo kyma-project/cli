@@ -179,6 +179,10 @@ func TestRunWithMultipleNodesWithoutPods(t *testing.T) {
 		assert.Equal(t, "1024.0Mi", result.Usage.MemoryUsage)
 		assert.Equal(t, "5.5%", result.Usage.CPUUsagePercent)
 		assert.Equal(t, "14.3%", result.Usage.MemoryUsagePercent)
+
+		// Should have topology labels
+		assert.Equal(t, "region", result.Topology.Region)
+		assert.Equal(t, "zone", result.Topology.Zone)
 	}
 
 	assert.Empty(t, writer.String())
@@ -281,6 +285,10 @@ func createTestNode(name, arch, kernelVersion, osImage, containerRuntime, kubele
 	return corev1.Node{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
+			Labels: map[string]string{
+				"topology.kubernetes.io/region": "region",
+				"topology.kubernetes.io/zone":   "zone",
+			},
 		},
 		Status: corev1.NodeStatus{
 			Capacity: corev1.ResourceList{
