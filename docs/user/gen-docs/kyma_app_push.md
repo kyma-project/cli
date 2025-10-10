@@ -28,6 +28,7 @@ kyma app push [flags]
 
 ## Push an application and set environment variables:
 # This flag overrides existing environment variables with the same name from other sources (file, ConfigMap, Secret).
+# To set an environment variable, use the format 'NAME=VALUE' or 'name=<NAME>,value=<VALUE>'.
   kyma app push --name my-app --code-path . --env NAME1=VALUE --env NAME2=VALUE2
 
 ## Push an application and set environment variables from different sources:

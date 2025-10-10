@@ -7,7 +7,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-func Build(envs types.Map) []corev1.EnvVar {
+func Build(envs types.EnvMap) []corev1.EnvVar {
 	var result []corev1.EnvVar
 	for k, v := range envs.Values {
 		result = append(result, corev1.EnvVar{

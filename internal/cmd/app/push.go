@@ -32,7 +32,7 @@ type appPushConfig struct {
 	packAppPath          string
 	containerPort        types.NullableInt64
 	istioInject          types.NullableBool
-	envs                 types.Map
+	envs                 types.EnvMap
 	fileEnvs             types.SourcedEnvArray
 	configmapEnvs        types.SourcedEnvArray
 	secretEnvs           types.SourcedEnvArray
@@ -45,7 +45,7 @@ type appPushConfig struct {
 func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	config := appPushConfig{
 		KymaConfig: kymaConfig,
-		envs:       types.Map{Values: map[string]interface{}{}},
+		envs:       types.EnvMap{Map: &types.Map{Values: map[string]interface{}{}}},
 	}
 
 	cmd := &cobra.Command{
@@ -67,6 +67,7 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 ## Push an application and set environment variables:
 # This flag overrides existing environment variables with the same name from other sources (file, ConfigMap, Secret).
+# To set an environment variable, use the format 'NAME=VALUE' or 'name=<NAME>,value=<VALUE>'.
   kyma app push --name my-app --code-path . --env NAME1=VALUE --env NAME2=VALUE2
 
 ## Push an application and set environment variables from different sources:

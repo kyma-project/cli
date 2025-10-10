@@ -18,6 +18,7 @@ kyma module <command> [flags]
   delete   - Deletes a module
   list     - Lists the installed modules
   manage   - Sets the module to the managed state
+  pull     - Pull a module from remote repository
   unmanage - Sets a module to the unmanaged state
 ```
 
@@ -38,4 +39,5 @@ kyma module <command> [flags]
 * [kyma module delete](kyma_module_delete.md)     - Deletes a module
 * [kyma module list](kyma_module_list.md)         - Lists the installed modules
 * [kyma module manage](kyma_module_manage.md)     - Sets the module to the managed state
+* [kyma module pull](kyma_module_pull.md)         - Pull a module from remote repository
 * [kyma module unmanage](kyma_module_unmanage.md) - Sets a module to the unmanaged state
