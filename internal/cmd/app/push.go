@@ -125,7 +125,7 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().StringVarP(&config.namespace, "namespace", "n", "default", "Namespace where the app is deployed")
 	cmd.Flags().Var(&config.containerPort, "container-port", "Port on which the application is exposed")
 	istioInjectFlag := cmd.Flags().VarPF(&config.istioInject, "istio-inject", "", "Enables Istio for the app")
-	istioInjectFlag.DefValue = "true" // default value when flag is provided without value
+	istioInjectFlag.NoOptDefVal = "true" // default value when flag is provided without value
 	cmd.Flags().BoolVar(&config.expose, "expose", false, "Creates an APIRule for the app")
 	cmd.Flags().StringArrayVar(&config.mountSecrets, "mount-secret", []string{}, "Mounts Secret content to the "+resources.SecretMountPathPrefix+"<SECRET_NAME> path")
 	cmd.Flags().StringArrayVar(&config.mountConfigmaps, "mount-config", []string{}, "Mounts ConfigMap content to the "+resources.ConfigmapMountPathPrefix+"<CONFIGMAP_NAME> path")
