@@ -54,8 +54,8 @@ func newAddCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().StringVar(&cfg.crPath, "cr-path", "", "Path to the custom resource file")
 	cmd.Flags().BoolVar(&cfg.defaultCR, "default-cr", false, "Deploys the module with the default CR")
 	cmd.Flags().BoolVar(&cfg.autoApprove, "auto-approve", false, "Automatically approve community module installation")
-	cmd.Flags().StringVar(&cfg.version, "version", "", "Specify version of the community module to install")
-	cmd.Flags().StringVar(&cfg.origin, "origin", "", "Specify the source of the module (kyma or custom name)")
+	cmd.Flags().StringVar(&cfg.version, "version", "", "Specifies version of the community module to install")
+	cmd.Flags().StringVar(&cfg.origin, "origin", "", "Specifies the source of the module (kyma or custom name)")
 	cmd.Flags().BoolVar(&cfg.community, "community", false, "Install a community module (no official support, no binding SLA)")
 
 	return cmd

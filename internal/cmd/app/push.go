@@ -52,6 +52,37 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Use:   "push [flags]",
 		Short: "Push the application to the Kubernetes cluster",
 		Long:  "Use this command to push the application to the Kubernetes cluster.",
+		Example: `## Push an application based on its source code located in the current directory:
+# The application will be built using Cloud Native Buildpacks:
+  kyma app push --name my-app --code-path .
+
+## Push an application based on a Dockerfile located in the current directory:
+  kyma app push --name my-app --dockerfile ./Dockerfile --dockerfile-context .
+
+## Push an application based on a pre-built image:
+  kyma app push --name my-app --image eu.gcr.io/my-project/my-app:latest
+
+## Push an application and expose it using an APIRule:
+  kyma app push --name my-app --code-path . --container-port 8080 --expose --istio-inject=true
+
+## Push an application and set environment variables:
+# This flag overrides existing environment variables with the same name from other sources (file, ConfigMap, Secret).
+  kyma app push --name my-app --code-path . --env NAME1=VALUE --env NAME2=VALUE2
+
+## Push an application and set environment variables from different sources:
+# You can set environment variables using --env-from-file, --env-from-configmap, and --env-from-secret flags
+# depending on your needs. You can use these flags multiple times to set more than one environment variable
+# or use the '--env' flag to override existing environment variables with the same name.
+# To get a single key from source or load all keys, use one of the following formats:
+# - To get a single key, use: 'ENV_NAME=RESOURCE:RESOURCE_KEY' or 'name=ENV_NAME,resource=RESOURCE,key=RESOURCE_KEY'
+# - To fetch all keys, use: 'RESOURCE[:ENVS_PREFIX]' or 'resource=RESOURCE,prefix=ENVS_PREFIX'
+  kyma app push --name my-app --code-path . \
+	--env-from-file ./my-env-file \ 
+	--env-from-file MY_ENV=./my-env-file:key1 \ 
+	--env-from-configmap my-configmap:CONFIG_ \
+	--env-from-configmap MY_ENV2=my-configmap:key2 \
+	--env-from-secret my-secret:SECRET_ \
+	--env-from-secret MY_ENV3=my-secret:key3`,
 
 		PreRun: func(cmd *cobra.Command, args []string) {
 			clierror.Check(config.complete())
@@ -73,10 +104,10 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	// common flags
 	cmd.Flags().StringVar(&config.name, "name", "", "Name of the app")
 	cmd.Flags().BoolVarP(&config.quiet, "quiet", "q", false, "Suppresses non-essential output (prints only the URL of the pushed app, if exposed)")
-	cmd.Flags().Var(&config.envs, "env", "Environment variables for the app in format KEY=VALUE")
-	cmd.Flags().Var(&config.fileEnvs, "env-from-file", "Environment variables for the app loaded from a file in format KEY=PATH:KEY for single key or PATH[:PREFIX] to fetch all keys")
-	cmd.Flags().Var(&config.configmapEnvs, "env-from-configmap", "Environment variables for the app loaded from a ConfigMap in format KEY=PATH:KEY for single key or PATH[:PREFIX] to fetch all keys")
-	cmd.Flags().Var(&config.secretEnvs, "env-from-secret", "Environment variables for the app loaded from a Secret in format KEY=PATH:KEY for single key or PATH[:PREFIX] to fetch all keys")
+	cmd.Flags().Var(&config.envs, "env", "Environment variables for the app in format NAME=VALUE")
+	cmd.Flags().Var(&config.fileEnvs, "env-from-file", "Environment variables for the app loaded from a file in format ENV_NAME=FILE_PATH:FILE_KEY for a single key or FILE_PATH[:ENVS_PREFIX] to fetch all keys")
+	cmd.Flags().Var(&config.configmapEnvs, "env-from-configmap", "Environment variables for the app loaded from a ConfigMap in format ENV_NAME=RESOURCE:RESOURCE_KEY for a single key or RESOURCE[:ENVS_PREFIX] to fetch all keys")
+	cmd.Flags().Var(&config.secretEnvs, "env-from-secret", "Environment variables for the app loaded from a Secret in format ENV_NAME=RESOURCE:RESOURCE_KEY for a single key or RESOURCE[:ENVS_PREFIX] to fetch all keys")
 
 	// image flags
 	cmd.Flags().StringVar(&config.image, "image", "", "Name of the image to deploy")
