@@ -8,6 +8,7 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/cmdcommon/env"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon/types"
 	"github.com/kyma-project/cli.v3/internal/dockerfile"
 	"github.com/kyma-project/cli.v3/internal/flags"
@@ -31,6 +32,10 @@ type appPushConfig struct {
 	packAppPath          string
 	containerPort        types.NullableInt64
 	istioInject          types.NullableBool
+	envs                 types.Map
+	fileEnvs             types.SourcedEnvArray
+	configmapEnvs        types.SourcedEnvArray
+	secretEnvs           types.SourcedEnvArray
 	expose               bool
 	mountSecrets         []string
 	mountConfigmaps      []string
@@ -40,6 +45,7 @@ type appPushConfig struct {
 func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	config := appPushConfig{
 		KymaConfig: kymaConfig,
+		envs:       types.Map{Values: map[string]interface{}{}},
 	}
 
 	cmd := &cobra.Command{
@@ -67,6 +73,10 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	// common flags
 	cmd.Flags().StringVar(&config.name, "name", "", "Name of the app")
 	cmd.Flags().BoolVarP(&config.quiet, "quiet", "q", false, "Suppresses non-essential output (prints only the URL of the pushed app, if exposed)")
+	cmd.Flags().Var(&config.envs, "env", "Environment variables for the app in format KEY=VALUE")
+	cmd.Flags().Var(&config.fileEnvs, "env-from-file", "Environment variables for the app loaded from a file in format KEY=PATH:KEY for single key or PATH[:PREFIX] to fetch all keys")
+	cmd.Flags().Var(&config.configmapEnvs, "env-from-configmap", "Environment variables for the app loaded from a ConfigMap in format KEY=PATH:KEY for single key or PATH[:PREFIX] to fetch all keys")
+	cmd.Flags().Var(&config.secretEnvs, "env-from-secret", "Environment variables for the app loaded from a Secret in format KEY=PATH:KEY for single key or PATH[:PREFIX] to fetch all keys")
 
 	// image flags
 	cmd.Flags().StringVar(&config.image, "image", "", "Name of the image to deploy")
@@ -163,22 +173,14 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 
 	fmt.Fprintf(writer, "\nCreating deployment %s/%s\n", cfg.namespace, cfg.name)
 
-	err := resources.CreateDeployment(cfg.Ctx, client, resources.CreateDeploymentOpts{
-		Name:            cfg.name,
-		Namespace:       cfg.namespace,
-		Image:           image,
-		ImagePullSecret: imagePullSecret,
-		InjectIstio:     cfg.istioInject,
-		SecretMounts:    cfg.mountSecrets,
-		ConfigmapMounts: cfg.mountConfigmaps,
-	})
-	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to create deployment"))
+	clierr = createDeployment(cfg, client, image, imagePullSecret)
+	if clierr != nil {
+		return clierr
 	}
 
 	if cfg.containerPort.Value != nil {
 		fmt.Fprintf(writer, "\nCreating service %s/%s\n", cfg.namespace, cfg.name)
-		err = resources.CreateService(cfg.Ctx, client, cfg.name, cfg.namespace, int32(*cfg.containerPort.Value))
+		err := resources.CreateService(cfg.Ctx, client, cfg.name, cfg.namespace, int32(*cfg.containerPort.Value))
 		if err != nil {
 			return clierror.Wrap(err, clierror.New("failed to create service"))
 		}
@@ -188,7 +190,7 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 		fmt.Fprintf(writer, "\nCreating API Rule %s/%s\n", cfg.namespace, cfg.name)
 		url := fmt.Sprintf("%s.<CLUSTER_DOMAIN>", cfg.name)
 
-		err = resources.CreateAPIRule(cfg.Ctx, client.RootlessDynamic(), cfg.name, cfg.namespace, cfg.name, uint32(*cfg.containerPort.Value))
+		err := resources.CreateAPIRule(cfg.Ctx, client.RootlessDynamic(), cfg.name, cfg.namespace, cfg.name, uint32(*cfg.containerPort.Value))
 		if err != nil {
 			return clierror.Wrap(err, clierror.New("failed to create API Rule resource", "Make sure API Gateway module is installed", "Make sure APIRule CRD is available in v2 version"))
 		}
@@ -211,6 +213,42 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 		// print the URL regardless if in quiet mode
 		fmt.Print(url)
 
+	}
+
+	return nil
+}
+
+func createDeployment(cfg *appPushConfig, client kube.Client, image, imagePullSecret string) clierror.Error {
+	fileEnvs, err := env.BuildEnvsFromFile(cfg.fileEnvs)
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to build envs from file"))
+	}
+
+	secretEnvs, err := env.BuildEnvsFromSecret(cfg.Ctx, client, cfg.namespace, cfg.secretEnvs)
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to build envs from secret"))
+	}
+
+	configmapEnvs, err := env.BuildEnvsFromConfigmap(cfg.Ctx, client, cfg.namespace, cfg.configmapEnvs)
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to build envs from configmap"))
+	}
+
+	envs := append(fileEnvs, secretEnvs...)
+	envs = append(envs, configmapEnvs...)
+
+	err = resources.CreateDeployment(cfg.Ctx, client, resources.CreateDeploymentOpts{
+		Name:            cfg.name,
+		Namespace:       cfg.namespace,
+		Image:           image,
+		ImagePullSecret: imagePullSecret,
+		InjectIstio:     cfg.istioInject,
+		SecretMounts:    cfg.mountSecrets,
+		ConfigmapMounts: cfg.mountConfigmaps,
+		Envs:            envs,
+	})
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to create deployment"))
 	}
 
 	return nil

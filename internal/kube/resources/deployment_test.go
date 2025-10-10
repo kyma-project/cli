@@ -29,6 +29,7 @@ func Test_CreateDeployment(t *testing.T) {
 			InjectIstio:     types.NullableBool{Value: &trueValue},
 			SecretMounts:    []string{"test-name"},
 			ConfigmapMounts: []string{"test-name"},
+			Envs:            fixDeploymentCustomEnvs(),
 		})
 		require.NoError(t, err)
 
@@ -50,9 +51,41 @@ func Test_CreateDeployment(t *testing.T) {
 			InjectIstio:     types.NullableBool{Value: &trueValue},
 			SecretMounts:    []string{"test-name"},
 			ConfigmapMounts: []string{"test-name"},
+			Envs:            fixDeploymentCustomEnvs(),
 		})
 		require.ErrorContains(t, err, `deployments.apps "test-name" already exists`)
 	})
+}
+
+func fixDeploymentCustomEnvs() []corev1.EnvVar {
+	return []corev1.EnvVar{
+		{
+			Name: "PREFIX_username",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					Key: "username",
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: "my-secret",
+					},
+				},
+			},
+		},
+		{
+			Name: "PREFIX_password",
+			ValueFrom: &corev1.EnvVarSource{
+				ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+					Key: "password",
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: "my-cm",
+					},
+				},
+			},
+		},
+		{
+			Name:  "test",
+			Value: "value",
+		},
+	}
 }
 
 func fixDeployment() *appsv1.Deployment {
@@ -114,12 +147,10 @@ func fixDeployment() *appsv1.Deployment {
 							},
 							Name:  "test-name",
 							Image: "test:image",
-							Env: []corev1.EnvVar{
-								{
-									Name:  "SERVICE_BINDING_ROOT",
-									Value: "/bindings",
-								},
-							},
+							Env: append(fixDeploymentCustomEnvs(), corev1.EnvVar{
+								Name:  "SERVICE_BINDING_ROOT",
+								Value: "/bindings",
+							}),
 							VolumeMounts: []corev1.VolumeMount{
 								{
 									Name:      "secret-test-name",
