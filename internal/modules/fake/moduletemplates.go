@@ -10,6 +10,8 @@ import (
 
 type ModuleTemplatesRepo struct {
 	ReturnCore                               []kyma.ModuleTemplate
+	ReturnExternalCommunity                  []kyma.ModuleTemplate
+	ReturnExternalCommunityByNameAndVersion  []kyma.ModuleTemplate
 	ReturnCommunity                          []kyma.ModuleTemplate
 	ReturnCommunityByName                    []kyma.ModuleTemplate
 	ReturnCommunityInstalledByName           []kyma.ModuleTemplate
@@ -17,9 +19,10 @@ type ModuleTemplatesRepo struct {
 	ReturnResources                          []map[string]any
 	ReturnInstalledManager                   *unstructured.Unstructured
 	ReturnDeleteResourceReturnWatcher        watch.Interface
-	ReturnExternalCommunity                  []kyma.ModuleTemplate
 
 	CoreErr                               error
+	ExternalCommunityErr                  error
+	ExternalCommunityByNameAndVersionErr  error
 	CommunityErr                          error
 	CommunityByNameErr                    error
 	CommunityInstalledByNameErr           error
@@ -27,11 +30,18 @@ type ModuleTemplatesRepo struct {
 	ResourcesErr                          error
 	DeleteResourceReturnWatcherErr        error
 	InstalledManagerErr                   error
-	ExternalCommunityErr                  error
 }
 
 func (r *ModuleTemplatesRepo) Core(_ context.Context) ([]kyma.ModuleTemplate, error) {
 	return r.ReturnCore, r.CoreErr
+}
+
+func (r *ModuleTemplatesRepo) ExternalCommunity(_ context.Context) ([]kyma.ModuleTemplate, error) {
+	return r.ReturnExternalCommunity, r.ExternalCommunityErr
+}
+
+func (r *ModuleTemplatesRepo) ExternalCommunityByNameAndVersion(_ context.Context, _, _ string) ([]kyma.ModuleTemplate, error) {
+	return r.ReturnExternalCommunityByNameAndVersion, r.ExternalCommunityByNameAndVersionErr
 }
 
 func (r *ModuleTemplatesRepo) Community(_ context.Context) ([]kyma.ModuleTemplate, error) {
@@ -60,8 +70,4 @@ func (r *ModuleTemplatesRepo) DeleteResourceReturnWatcher(_ context.Context, _ m
 
 func (r *ModuleTemplatesRepo) InstalledManager(_ context.Context, _ kyma.ModuleTemplate) (*unstructured.Unstructured, error) {
 	return r.ReturnInstalledManager, r.InstalledManagerErr
-}
-
-func (r *ModuleTemplatesRepo) ExternalCommunity(_ context.Context) ([]kyma.ModuleTemplate, error) {
-	return r.ReturnExternalCommunity, r.ExternalCommunityErr
 }

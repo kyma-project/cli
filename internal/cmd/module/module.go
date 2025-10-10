@@ -19,6 +19,7 @@ func NewModuleCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.AddCommand(newDeleteCMD(kymaConfig))
 	cmd.AddCommand(newManageCMD(kymaConfig))
 	cmd.AddCommand(newUnmanageCMD(kymaConfig))
+	cmd.AddCommand(newPullCMD(kymaConfig))
 
 	return cmd
 }
