@@ -18,6 +18,10 @@ kyma app push [flags]
       --dockerfile string                  Path to the Dockerfile
       --dockerfile-build-arg stringArray   Variables used while building an application from Dockerfile as args
       --dockerfile-context string          Context path for building Dockerfile (defaults to the current working directory)
+      --env stringArray                    Environment variables for the app in format KEY=VALUE
+      --env-from-configmap stringArray     Environment variables for the app loaded from a ConfigMap in format KEY=PATH:KEY for single key or PATH[:PREFIX] to fetch all keys
+      --env-from-file stringArray          Environment variables for the app loaded from a file in format KEY=PATH:KEY for single key or PATH[:PREFIX] to fetch all keys
+      --env-from-secret stringArray        Environment variables for the app loaded from a Secret in format KEY=PATH:KEY for single key or PATH[:PREFIX] to fetch all keys
       --expose                             Creates an APIRule for the app
       --image string                       Name of the image to deploy
       --image-pull-secret string           Name of the Kubernetes Secret with credentials to pull the image
