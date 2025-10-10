@@ -39,7 +39,9 @@ func (e *Env) String() string {
 
 func ParseEnv(value string) (Env, error) {
 	values := strings.Split(value, ",")
-	if len(values) > 1 || strings.HasPrefix(values[0], "path=") {
+	if len(values) > 1 ||
+		strings.HasPrefix(values[0], "resource=") ||
+		strings.HasPrefix(values[0], "path=") {
 		// strict format (like 'name=<NAME>,path=<PATH>')
 		return parseStrictEnv(values)
 	}
