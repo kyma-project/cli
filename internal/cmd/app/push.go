@@ -73,9 +73,9 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 # You can set environment variables using --env-from-file, --env-from-configmap, and --env-from-secret flags
 # depending on your needs. You can use these flags multiple times to set more than one environment variable
 # or use the '--env' flag to override existing environment variables with the same name.
-# To get single key from source or load all keys, use one of the following formats:
-# - To get single key use: 'ENV_NAME=RESOURCE:RESOURCE_KEY' or 'name=ENV_NAME,resource=RESOURCE,key=RESOURCE_KEY'
-# - To fetch all keys use: 'RESOURCE[:ENVS_PREFIX]' or 'resource=RESOURCE,prefix=ENVS_PREFIX'
+# To get a single key from source or load all keys, use one of the following formats:
+# - To get a single key, use: 'ENV_NAME=RESOURCE:RESOURCE_KEY' or 'name=ENV_NAME,resource=RESOURCE,key=RESOURCE_KEY'
+# - To fetch all keys, use: 'RESOURCE[:ENVS_PREFIX]' or 'resource=RESOURCE,prefix=ENVS_PREFIX'
   kyma app push --name my-app --code-path . \
 	--env-from-file ./my-env-file \ 
 	--env-from-file MY_ENV=./my-env-file:key1 \ 
