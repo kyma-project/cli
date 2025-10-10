@@ -23,7 +23,6 @@
 * [kyma module delete](/cli/user/gen-docs/kyma_module_delete.md)
 * [kyma module list](/cli/user/gen-docs/kyma_module_list.md)
 * [kyma module manage](/cli/user/gen-docs/kyma_module_manage.md)
-* [kyma module pull](/cli/user/gen-docs/kyma_module_pull.md)
 * [kyma module unmanage](/cli/user/gen-docs/kyma_module_unmanage.md)
 * [kyma version](/cli/user/gen-docs/kyma_version.md)
 <!-- markdown-link-check-enable -->
