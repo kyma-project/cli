@@ -1,10 +1,9 @@
-package env_test
+package envs
 
 import (
 	"context"
 	"testing"
 
-	"github.com/kyma-project/cli.v3/internal/cmdcommon/env"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon/types"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon/types/sourced"
 	"github.com/kyma-project/cli.v3/internal/kube"
@@ -15,10 +14,9 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 )
 
-func TestBuildEnvsFromConfigmap(t *testing.T) {
+func TestBuildEnvsFromSecret(t *testing.T) {
 	tests := []struct {
-		name string // description of this test case
-		// Named input parameters for target function.
+		name      string
 		client    kube.Client
 		namespace string
 		envs      types.SourcedEnvArray
@@ -26,23 +24,23 @@ func TestBuildEnvsFromConfigmap(t *testing.T) {
 		wantErr   string
 	}{
 		{
-			name:      "get single env var from cm",
+			name:      "get single env var from secret",
 			namespace: "default",
 			envs: types.SourcedEnvArray{
 				Values: []sourced.Env{
 					{
 						Name:        "DB_USERNAME",
-						Location:    "my-cm",
+						Location:    "my-secret",
 						LocationKey: "username",
 					},
 					{
 						Name:        "DB_USERNAME_2",
-						Location:    "my-cm",
+						Location:    "my-secret",
 						LocationKey: "username",
 					},
 					{
 						Name:        "DB_PASSWORD",
-						Location:    "my-cm",
+						Location:    "my-secret",
 						LocationKey: "password",
 					},
 				},
@@ -51,10 +49,10 @@ func TestBuildEnvsFromConfigmap(t *testing.T) {
 				{
 					Name: "DB_USERNAME",
 					ValueFrom: &corev1.EnvVarSource{
-						ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+						SecretKeyRef: &corev1.SecretKeySelector{
 							Key: "username",
 							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "my-cm",
+								Name: "my-secret",
 							},
 						},
 					},
@@ -62,10 +60,10 @@ func TestBuildEnvsFromConfigmap(t *testing.T) {
 				{
 					Name: "DB_USERNAME_2",
 					ValueFrom: &corev1.EnvVarSource{
-						ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+						SecretKeyRef: &corev1.SecretKeySelector{
 							Key: "username",
 							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "my-cm",
+								Name: "my-secret",
 							},
 						},
 					},
@@ -73,10 +71,10 @@ func TestBuildEnvsFromConfigmap(t *testing.T) {
 				{
 					Name: "DB_PASSWORD",
 					ValueFrom: &corev1.EnvVarSource{
-						ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+						SecretKeyRef: &corev1.SecretKeySelector{
 							Key: "password",
 							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "my-cm",
+								Name: "my-secret",
 							},
 						},
 					},
@@ -84,7 +82,7 @@ func TestBuildEnvsFromConfigmap(t *testing.T) {
 			},
 		},
 		{
-			name: "missing cm name",
+			name: "missing secret name",
 			envs: types.SourcedEnvArray{
 				Values: []sourced.Env{
 					{
@@ -93,31 +91,31 @@ func TestBuildEnvsFromConfigmap(t *testing.T) {
 					},
 				},
 			},
-			wantErr: "missing configmap name in env: 'DB_USERNAME=:username'",
+			wantErr: "missing secret name in env: 'DB_USERNAME=:username'",
 		},
 		{
-			name: "missing cm key",
+			name: "missing secret key",
 			envs: types.SourcedEnvArray{
 				Values: []sourced.Env{
 					{
 						Name:     "DB_USERNAME",
-						Location: "cm-name",
+						Location: "secret-name",
 					},
 				},
 			},
-			wantErr: "missing configmap key in env: 'DB_USERNAME=cm-name:'",
+			wantErr: "missing secret key in env: 'DB_USERNAME=secret-name:'",
 		},
 		{
-			name: "multi env vars from cm",
+			name: "multi env vars from secret",
 			client: &kube_fake.KubeClient{
-				TestKubernetesInterface: fake.NewClientset(&corev1.ConfigMap{
+				TestKubernetesInterface: fake.NewClientset(&corev1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "my-cm",
+						Name:      "my-secret",
 						Namespace: "default",
 					},
-					Data: map[string]string{
-						"username": "admin",
-						"password": "cm",
+					Data: map[string][]byte{
+						"username": []byte("admin"),
+						"password": []byte("secret"),
 					},
 				}),
 			},
@@ -125,11 +123,11 @@ func TestBuildEnvsFromConfigmap(t *testing.T) {
 			envs: types.SourcedEnvArray{
 				Values: []sourced.Env{
 					{
-						Location:           "my-cm",
+						Location:           "my-secret",
 						LocationKeysPrefix: "PREFIX_",
 					},
 					{
-						Location: "my-cm",
+						Location: "my-secret",
 					},
 				},
 			},
@@ -137,10 +135,10 @@ func TestBuildEnvsFromConfigmap(t *testing.T) {
 				{
 					Name: "PREFIX_username",
 					ValueFrom: &corev1.EnvVarSource{
-						ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+						SecretKeyRef: &corev1.SecretKeySelector{
 							Key: "username",
 							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "my-cm",
+								Name: "my-secret",
 							},
 						},
 					},
@@ -148,10 +146,10 @@ func TestBuildEnvsFromConfigmap(t *testing.T) {
 				{
 					Name: "PREFIX_password",
 					ValueFrom: &corev1.EnvVarSource{
-						ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+						SecretKeyRef: &corev1.SecretKeySelector{
 							Key: "password",
 							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "my-cm",
+								Name: "my-secret",
 							},
 						},
 					},
@@ -159,10 +157,10 @@ func TestBuildEnvsFromConfigmap(t *testing.T) {
 				{
 					Name: "username",
 					ValueFrom: &corev1.EnvVarSource{
-						ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+						SecretKeyRef: &corev1.SecretKeySelector{
 							Key: "username",
 							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "my-cm",
+								Name: "my-secret",
 							},
 						},
 					},
@@ -170,10 +168,10 @@ func TestBuildEnvsFromConfigmap(t *testing.T) {
 				{
 					Name: "password",
 					ValueFrom: &corev1.EnvVarSource{
-						ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+						SecretKeyRef: &corev1.SecretKeySelector{
 							Key: "password",
 							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "my-cm",
+								Name: "my-secret",
 							},
 						},
 					},
@@ -181,7 +179,7 @@ func TestBuildEnvsFromConfigmap(t *testing.T) {
 			},
 		},
 		{
-			name: "cm not found",
+			name: "secret not found",
 			client: &kube_fake.KubeClient{
 				TestKubernetesInterface: fake.NewClientset(),
 			},
@@ -189,16 +187,16 @@ func TestBuildEnvsFromConfigmap(t *testing.T) {
 			envs: types.SourcedEnvArray{
 				Values: []sourced.Env{
 					{
-						Location: "missing-cm",
+						Location: "missing-secret",
 					},
 				},
 			},
-			wantErr: "while reading configmap 'missing-cm': configmaps \"missing-cm\" not found",
+			wantErr: "while reading secret 'missing-secret': secrets \"missing-secret\" not found",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, gotErr := env.BuildEnvsFromConfigmap(context.Background(), tt.client, tt.namespace, tt.envs)
+			got, gotErr := BuildFromSecret(context.Background(), tt.client, tt.namespace, tt.envs)
 			if tt.wantErr != "" {
 				require.ErrorContains(t, gotErr, tt.wantErr)
 			}
