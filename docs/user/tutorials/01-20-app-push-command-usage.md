@@ -4,7 +4,7 @@ This tutorial shows how you can deploy your application using Kyma CLI.
 
 ## Deploy Your Application From the Source Code
 
-To use `kyma app push`, you must also provide either a Dockerfile, Docker image or the application's source code. The command offers more functionality, such as mounting ConfigMap or Secret, and adding inline system environments or from source (ConfigMap, Secret, or file). More detailed descriptions and examples can be found while executing the `kyma app push --help` command. In this tutorial, we use the application source code with no additional system environments or mounts. For example, you can use one of the code samples from the [Paketo Buildpacks code examples](https://github.com/paketo-buildpacks/samples/tree/main), but in this tutorial we work on the [Paketo Buildpacks java maven app](https://github.com/paketo-buildpacks/samples/tree/main/java/maven).
+To use `kyma app push`, you must also provide either a Dockerfile, Docker image, or the application's source code. The command offers more functionality, such as mounting ConfigMap or Secret, and adding system environments - inline or from a source (ConfigMap, Secret, or a file). More detailed descriptions and examples can be found while executing the `kyma app push --help` command. This tutorial uses the application source code with no additional system environments or mounts. For example, you can use one of the code samples from the [Paketo Buildpacks code examples](https://github.com/paketo-buildpacks/samples/tree/main), but in this tutorial, we work on the [Paketo Buildpacks Java Maven app](https://github.com/paketo-buildpacks/samples/tree/main/java/maven).
 
 1. Add the Istio, Docker Registry, and API Gateway modules:
 
