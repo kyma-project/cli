@@ -10,7 +10,7 @@ release:
   mode: replace
   prerelease: auto
   replace_existing_artifacts: true
-  name_template: '{{.Tag}}'
+  name_template: "{{.Tag}}"
   make_latest: false
 
 before:
@@ -20,6 +20,7 @@ before:
 builds:
   - env:
       - CGO_ENABLED=0
+      - GOFIPS140=v1.0.0
     main: ./main.go
     ldflags:
       # use .Tag for release/prereleases and nightly-<SHA> for nightly builds

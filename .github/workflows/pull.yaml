@@ -2,7 +2,7 @@ name: pull
 
 on:
   pull_request:
-    types: [ opened, edited, synchronize, reopened, ready_for_review ]
+    types: [opened, edited, synchronize, reopened, ready_for_review]
 
 jobs:
   build:
@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: build ${{ matrix.goos }} ${{ matrix.goarch }}
         run: |
-          GOARCH=${{ matrix.goarch }} GOOS=${{ matrix.goos }} make build
+          GOARCH=${{ matrix.goarch }} GOOS=${{ matrix.goos }} GOFIPS140=v1.0.0 make build
 
   e2e-test-k3d:
     runs-on: ubuntu-latest
@@ -26,5 +26,5 @@ jobs:
       - name: build kyma binary
         run: make build
       - uses: kyma-project/serverless/.github/actions/create-k3d-cluster@9e8c091842e5c884e1770ef0bcc5b4b4d2894b74
-      - name: test 
+      - name: test
         run: make -C tests/k3d e2e-test
