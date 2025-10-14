@@ -22,24 +22,25 @@ import (
 type appPushConfig struct {
 	*cmdcommon.KymaConfig
 
-	name                 string
-	namespace            string
-	image                string
-	imagePullSecretName  string
-	dockerfilePath       string
-	dockerfileSrcContext string
-	dockerfileArgs       types.Map
-	packAppPath          string
-	containerPort        types.NullableInt64
-	istioInject          types.NullableBool
-	envs                 types.EnvMap
-	fileEnvs             types.SourcedEnvArray
-	configmapEnvs        types.SourcedEnvArray
-	secretEnvs           types.SourcedEnvArray
-	expose               bool
-	mountSecrets         []string
-	mountConfigmaps      []string
-	quiet                bool
+	name                       string
+	namespace                  string
+	image                      string
+	imagePullSecretName        string
+	dockerfilePath             string
+	dockerfileSrcContext       string
+	dockerfileArgs             types.Map
+	packAppPath                string
+	containerPort              types.NullableInt64
+	istioInject                types.NullableBool
+	envs                       types.EnvMap
+	fileEnvs                   types.SourcedEnvArray
+	configmapEnvs              types.SourcedEnvArray
+	secretEnvs                 types.SourcedEnvArray
+	expose                     bool
+	mountSecrets               types.MountArray
+	mountConfigmaps            types.MountArray
+	mountServiceBindingSecrets types.ServiceBindingSecretArray
+	quiet                      bool
 }
 
 func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
@@ -83,7 +84,22 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	--env-from-configmap my-configmap:CONFIG_ \
 	--env-from-configmap MY_ENV2=my-configmap:key2 \
 	--env-from-secret my-secret:SECRET_ \
-	--env-from-secret MY_ENV3=my-secret:key3`,
+	--env-from-secret MY_ENV3=my-secret:key3
+
+## Push an application and mount a Secret, ConfigMap or Service Binding Secret:
+# Depending on your needs, you can mount specific keys or the whole resource.
+# You can use these flags multiple times to mount more than one resource.
+# Flags --mount-secret and --mount-config support below formats:
+# - Normal format: 'name=NAME,path=MOUNT_PATH,key=KEY,ro=READ_ONLY' (key and ro are optional)
+# - Shorthand format: 'NAME:KEY=MOUNT_PATH:ro' (ro is optional)
+# - Legacy format: 'NAME' (mounts the whole secret at /bindings/secret-<NAME> or configmap at /bindings/configmap-<NAME>) 
+  kyma app push --name my-app --code-path . \
+	--mount-secret name=my-secret,path=/app/secret,key=secret-key,ro=true \
+    --mount-secret my-secret:secret-key=/app/secret:ro \
+	--mount-secret my-secret 
+	--mount-config name=my-configmap,path=/app/config,key=config-key \
+	--mount-config my-configmap:config-key=/app/config:ro \
+	--mount-service-binding-secret my-service-binding-secret`,
 
 		PreRun: func(cmd *cobra.Command, args []string) {
 			clierror.Check(config.complete())
@@ -128,8 +144,9 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	istioInjectFlag := cmd.Flags().VarPF(&config.istioInject, "istio-inject", "", "Enables Istio for the app")
 	istioInjectFlag.NoOptDefVal = "true" // default value when flag is provided without value
 	cmd.Flags().BoolVar(&config.expose, "expose", false, "Creates an APIRule for the app")
-	cmd.Flags().StringArrayVar(&config.mountSecrets, "mount-secret", []string{}, "Mounts Secret content to the "+resources.SecretMountPathPrefix+"<SECRET_NAME> path")
-	cmd.Flags().StringArrayVar(&config.mountConfigmaps, "mount-config", []string{}, "Mounts ConfigMap content to the "+resources.ConfigmapMountPathPrefix+"<CONFIGMAP_NAME> path")
+	cmd.Flags().Var(&config.mountSecrets, "mount-secret", "Mounts Secret content. Format: 'name=secret,path=/app/config,key=key,ro=true' or shorthand 'secret:key=/app/config:ro'. Path traversal (..) is prohibited.")
+	cmd.Flags().Var(&config.mountConfigmaps, "mount-config", "Mounts ConfigMap content. Format: 'name=configmap,path=/app/config,key=key,ro=false' or shorthand 'configmap:key=/app/config'. Path traversal (..) is prohibited.")
+	cmd.Flags().Var(&config.mountServiceBindingSecrets, "mount-service-binding-secret", "Mounts Secret as service binding at /bindings/secret-<NAME> (readOnly)")
 
 	return cmd
 }
@@ -277,14 +294,15 @@ func createDeployment(cfg *appPushConfig, client kube.Client, image, imagePullSe
 	envs = append(envs, plainEnvs...)
 
 	err = resources.CreateDeployment(cfg.Ctx, client, resources.CreateDeploymentOpts{
-		Name:            cfg.name,
-		Namespace:       cfg.namespace,
-		Image:           image,
-		ImagePullSecret: imagePullSecret,
-		InjectIstio:     cfg.istioInject,
-		SecretMounts:    cfg.mountSecrets,
-		ConfigmapMounts: cfg.mountConfigmaps,
-		Envs:            envs,
+		Name:                       cfg.name,
+		Namespace:                  cfg.namespace,
+		Image:                      image,
+		ImagePullSecret:            imagePullSecret,
+		InjectIstio:                cfg.istioInject,
+		SecretMounts:               cfg.mountSecrets,
+		ConfigmapMounts:            cfg.mountConfigmaps,
+		ServiceBindingSecretMounts: cfg.mountServiceBindingSecrets,
+		Envs:                       envs,
 	})
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to create deployment"))

@@ -45,33 +45,49 @@ kyma app push [flags]
 	--env-from-configmap MY_ENV2=my-configmap:key2 \
 	--env-from-secret my-secret:SECRET_ \
 	--env-from-secret MY_ENV3=my-secret:key3
+
+## Push an application and mount a Secret, ConfigMap or Service Binding Secret:
+# Depending on your needs, you can mount specific keys or the whole resource.
+# You can use these flags multiple times to mount more than one resource.
+# Flags --mount-secret and --mount-config support below formats:
+# - Normal format: 'name=NAME,path=MOUNT_PATH,key=KEY,ro=READ_ONLY' (key and ro are optional)
+# - Shorthand format: 'NAME:KEY=MOUNT_PATH:ro' (ro is optional)
+# - Legacy format: 'NAME' (mounts the whole secret at /bindings/secret-<NAME> or configmap at /bindings/configmap-<NAME>) 
+  kyma app push --name my-app --code-path . \
+	--mount-secret name=my-secret,path=/app/secret,key=secret-key,ro=true \
+    --mount-secret my-secret:secret-key=/app/secret:ro \
+	--mount-secret my-secret 
+	--mount-config name=my-configmap,path=/app/config,key=config-key \
+	--mount-config my-configmap:config-key=/app/config:ro \
+	--mount-service-binding-secret my-service-binding-secret
 ```
 
 ## Flags
 
 ```text
-      --code-path string                   Path to the application source code directory
-      --container-port int                 Port on which the application is exposed
-      --dockerfile string                  Path to the Dockerfile
-      --dockerfile-build-arg stringArray   Variables used while building an application from Dockerfile as args
-      --dockerfile-context string          Context path for building Dockerfile (defaults to the current working directory)
-      --env stringArray                    Environment variables for the app in format NAME=VALUE
-      --env-from-configmap stringArray     Environment variables for the app loaded from a ConfigMap in format ENV_NAME=RESOURCE:RESOURCE_KEY for a single key or RESOURCE[:ENVS_PREFIX] to fetch all keys
-      --env-from-file stringArray          Environment variables for the app loaded from a file in format ENV_NAME=FILE_PATH:FILE_KEY for a single key or FILE_PATH[:ENVS_PREFIX] to fetch all keys
-      --env-from-secret stringArray        Environment variables for the app loaded from a Secret in format ENV_NAME=RESOURCE:RESOURCE_KEY for a single key or RESOURCE[:ENVS_PREFIX] to fetch all keys
-      --expose                             Creates an APIRule for the app
-      --image string                       Name of the image to deploy
-      --image-pull-secret string           Name of the Kubernetes Secret with credentials to pull the image
-      --istio-inject                       Enables Istio for the app
-      --mount-config stringArray           Mounts ConfigMap content to the /bindings/configmap-<CONFIGMAP_NAME> path (default "[]")
-      --mount-secret stringArray           Mounts Secret content to the /bindings/secret-<SECRET_NAME> path (default "[]")
-      --name string                        Name of the app
-  -n, --namespace string                   Namespace where the app is deployed (default "default")
-  -q, --quiet                              Suppresses non-essential output (prints only the URL of the pushed app, if exposed)
-  -h, --help                               Help for the command
-      --kubeconfig string                  Path to the Kyma kubeconfig file
-      --show-extensions-error              Prints a possible error when fetching extensions fails
-      --skip-extensions                    Skip fetching extensions from the target Kyma environment
+      --code-path string                                      Path to the application source code directory
+      --container-port int                                    Port on which the application is exposed
+      --dockerfile string                                     Path to the Dockerfile
+      --dockerfile-build-arg stringArray                      Variables used while building an application from Dockerfile as args
+      --dockerfile-context string                             Context path for building Dockerfile (defaults to the current working directory)
+      --env stringArray                                       Environment variables for the app in format NAME=VALUE
+      --env-from-configmap stringArray                        Environment variables for the app loaded from a ConfigMap in format ENV_NAME=RESOURCE:RESOURCE_KEY for a single key or RESOURCE[:ENVS_PREFIX] to fetch all keys
+      --env-from-file stringArray                             Environment variables for the app loaded from a file in format ENV_NAME=FILE_PATH:FILE_KEY for a single key or FILE_PATH[:ENVS_PREFIX] to fetch all keys
+      --env-from-secret stringArray                           Environment variables for the app loaded from a Secret in format ENV_NAME=RESOURCE:RESOURCE_KEY for a single key or RESOURCE[:ENVS_PREFIX] to fetch all keys
+      --expose                                                Creates an APIRule for the app
+      --image string                                          Name of the image to deploy
+      --image-pull-secret string                              Name of the Kubernetes Secret with credentials to pull the image
+      --istio-inject                                          Enables Istio for the app
+      --mount-config stringArray                              Mounts ConfigMap content. Format: 'name=configmap,path=/app/config,key=key,ro=false' or shorthand 'configmap:key=/app/config'. Path traversal (..) is prohibited.
+      --mount-secret stringArray                              Mounts Secret content. Format: 'name=secret,path=/app/config,key=key,ro=true' or shorthand 'secret:key=/app/config:ro'. Path traversal (..) is prohibited.
+      --mount-service-binding-secret service-binding-secret   Mounts Secret as service binding at /bindings/secret-<NAME> (readOnly)
+      --name string                                           Name of the app
+  -n, --namespace string                                      Namespace where the app is deployed (default "default")
+  -q, --quiet                                                 Suppresses non-essential output (prints only the URL of the pushed app, if exposed)
+  -h, --help                                                  Help for the command
+      --kubeconfig string                                     Path to the Kyma kubeconfig file
+      --show-extensions-error                                 Prints a possible error when fetching extensions fails
+      --skip-extensions                                       Skip fetching extensions from the target Kyma environment
 ```
 
 ## See also

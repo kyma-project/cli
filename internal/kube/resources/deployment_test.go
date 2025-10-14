@@ -21,15 +21,25 @@ func Test_CreateDeployment(t *testing.T) {
 			TestKubernetesInterface: k8s_fake.NewSimpleClientset(),
 		}
 		trueValue := true
+
+		// Create MountArray for secrets (backward compatibility - just names)
+		secretMounts := types.MountArray{}
+		_ = secretMounts.Set("test-name")
+
+		// Create MountArray for configmaps (backward compatibility - just names)
+		configMounts := types.MountArray{}
+		_ = configMounts.Set("test-name")
+
 		err := CreateDeployment(context.Background(), kubeClient, CreateDeploymentOpts{
-			Name:            "test-name",
-			Namespace:       "default",
-			Image:           "test:image",
-			ImagePullSecret: "test-image-pull-secret",
-			InjectIstio:     types.NullableBool{Value: &trueValue},
-			SecretMounts:    []string{"test-name"},
-			ConfigmapMounts: []string{"test-name"},
-			Envs:            fixDeploymentCustomEnvs(),
+			Name:                       "test-name",
+			Namespace:                  "default",
+			Image:                      "test:image",
+			ImagePullSecret:            "test-image-pull-secret",
+			InjectIstio:                types.NullableBool{Value: &trueValue},
+			SecretMounts:               secretMounts,
+			ConfigmapMounts:            configMounts,
+			ServiceBindingSecretMounts: types.ServiceBindingSecretArray{}, // empty
+			Envs:                       fixDeploymentCustomEnvs(),
 		})
 		require.NoError(t, err)
 
@@ -43,15 +53,25 @@ func Test_CreateDeployment(t *testing.T) {
 			TestKubernetesInterface: k8s_fake.NewSimpleClientset(fixDeployment()),
 		}
 		trueValue := true
+
+		// Create MountArray for secrets (backward compatibility - just names)
+		secretMounts := types.MountArray{}
+		_ = secretMounts.Set("test-name")
+
+		// Create MountArray for configmaps (backward compatibility - just names)
+		configMounts := types.MountArray{}
+		_ = configMounts.Set("test-name")
+
 		err := CreateDeployment(context.Background(), kubeClient, CreateDeploymentOpts{
-			Name:            "test-name",
-			Namespace:       "default",
-			Image:           "test:image",
-			ImagePullSecret: "test-image-pull-secret",
-			InjectIstio:     types.NullableBool{Value: &trueValue},
-			SecretMounts:    []string{"test-name"},
-			ConfigmapMounts: []string{"test-name"},
-			Envs:            fixDeploymentCustomEnvs(),
+			Name:                       "test-name",
+			Namespace:                  "default",
+			Image:                      "test:image",
+			ImagePullSecret:            "test-image-pull-secret",
+			InjectIstio:                types.NullableBool{Value: &trueValue},
+			SecretMounts:               secretMounts,
+			ConfigmapMounts:            configMounts,
+			ServiceBindingSecretMounts: types.ServiceBindingSecretArray{}, // empty
+			Envs:                       fixDeploymentCustomEnvs(),
 		})
 		require.ErrorContains(t, err, `deployments.apps "test-name" already exists`)
 	})
@@ -115,7 +135,7 @@ func fixDeployment() *appsv1.Deployment {
 				Spec: corev1.PodSpec{
 					Volumes: []corev1.Volume{
 						{
-							Name: "secret-test-name",
+							Name: "secret-test-name-0",
 							VolumeSource: corev1.VolumeSource{
 								Secret: &corev1.SecretVolumeSource{
 									SecretName: "test-name",
@@ -123,7 +143,7 @@ func fixDeployment() *appsv1.Deployment {
 							},
 						},
 						{
-							Name: "configmap-test-name",
+							Name: "configmap-test-name-0",
 							VolumeSource: corev1.VolumeSource{
 								ConfigMap: &corev1.ConfigMapVolumeSource{
 									LocalObjectReference: corev1.LocalObjectReference{
@@ -153,12 +173,14 @@ func fixDeployment() *appsv1.Deployment {
 							}),
 							VolumeMounts: []corev1.VolumeMount{
 								{
-									Name:      "secret-test-name",
+									Name:      "secret-test-name-0",
 									MountPath: "/bindings/secret-test-name",
+									ReadOnly:  false,
 								},
 								{
-									Name:      "configmap-test-name",
+									Name:      "configmap-test-name-0",
 									MountPath: "/bindings/configmap-test-name",
+									ReadOnly:  false,
 								},
 							},
 							Resources: corev1.ResourceRequirements{
