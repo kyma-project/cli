@@ -103,9 +103,5 @@ func (b *OIDCBuilder) validate() error {
 
 func repositoryFormatValid(repository string) bool {
 	repoNameParts := strings.Split(repository, "/")
-	if len(repoNameParts) != 2 {
-		return false
-	}
-
-	return true
+	return len(repoNameParts) == 2
 }
