@@ -148,7 +148,16 @@ func getResourceYamlStringsFromURL(url string) ([]string, error) {
 		return nil, fmt.Errorf("failed to read resource body: %w", err)
 	}
 
-	return strings.Split(string(body), "---"), nil
+	parts := strings.Split(string(body), "---")
+	var result []string
+	for _, part := range parts {
+		trimmed := strings.TrimSpace(part)
+		if trimmed != "" {
+			result = append(result, trimmed)
+		}
+	}
+
+	return result, nil
 }
 
 func applyDefaultCustomResource(ctx context.Context, client kube.Client, existingModule *kyma.ModuleTemplate) error {
