@@ -9,7 +9,7 @@ import (
 )
 
 func TestNewOIDCBuilder(t *testing.T) {
-	builder := authorization.NewOIDCBuilder()
+	builder := authorization.NewOIDCBuilder("client-id", "issuer-url")
 
 	assert.NotNil(t, builder)
 }
@@ -23,10 +23,8 @@ func TestOIDCBuilder_Build_Success(t *testing.T) {
 		{
 			name: "minimal valid configuration",
 			setup: func() *authorization.OIDCBuilder {
-				return authorization.NewOIDCBuilder().
-					ForRepository("kyma-project/cli").
-					ForClientID("test-client").
-					ForIssuerURL("https://token.actions.githubusercontent.com")
+				return authorization.NewOIDCBuilder("test-client", "https://token.actions.githubusercontent.com").
+					ForRepository("kyma-project/cli")
 			},
 			expected: map[string]any{
 				"apiVersion": "authentication.gardener.cloud/v1alpha1",
@@ -47,10 +45,8 @@ func TestOIDCBuilder_Build_Success(t *testing.T) {
 		{
 			name: "with custom name",
 			setup: func() *authorization.OIDCBuilder {
-				return authorization.NewOIDCBuilder().
+				return authorization.NewOIDCBuilder("client-123", "https://issuer.example.com").
 					ForRepository("owner/repo").
-					ForClientID("client-123").
-					ForIssuerURL("https://issuer.example.com").
 					ForName("custom-oidc-name")
 			},
 			expected: map[string]any{
@@ -72,10 +68,8 @@ func TestOIDCBuilder_Build_Success(t *testing.T) {
 		{
 			name: "with username prefix",
 			setup: func() *authorization.OIDCBuilder {
-				return authorization.NewOIDCBuilder().
+				return authorization.NewOIDCBuilder("prefix-client", "https://auth.example.com").
 					ForRepository("test/project").
-					ForClientID("prefix-client").
-					ForIssuerURL("https://auth.example.com").
 					ForPrefix("gh-oidc:")
 			},
 			expected: map[string]any{
@@ -98,10 +92,8 @@ func TestOIDCBuilder_Build_Success(t *testing.T) {
 		{
 			name: "full configuration",
 			setup: func() *authorization.OIDCBuilder {
-				return authorization.NewOIDCBuilder().
+				return authorization.NewOIDCBuilder("full-client-id", "https://full.issuer.com").
 					ForRepository("full/example").
-					ForClientID("full-client-id").
-					ForIssuerURL("https://full.issuer.com").
 					ForName("full-custom-name").
 					ForPrefix("full-prefix:")
 			},
@@ -146,57 +138,47 @@ func TestOIDCBuilder_Build_ValidationErrors(t *testing.T) {
 		{
 			name: "missing repository",
 			setup: func() *authorization.OIDCBuilder {
-				return authorization.NewOIDCBuilder().
-					ForClientID("test-client").
-					ForIssuerURL("https://example.com")
+				return authorization.NewOIDCBuilder("test-client", "https://example.com")
 			},
 			expectedError: "repository can't be blank",
 		},
 		{
 			name: "missing clientID",
 			setup: func() *authorization.OIDCBuilder {
-				return authorization.NewOIDCBuilder().
-					ForRepository("owner/repo").
-					ForIssuerURL("https://example.com")
+				return authorization.NewOIDCBuilder("", "https://example.com").
+					ForRepository("owner/repo")
 			},
 			expectedError: "clientID can't be blank",
 		},
 		{
 			name: "missing issuerURL",
 			setup: func() *authorization.OIDCBuilder {
-				return authorization.NewOIDCBuilder().
-					ForRepository("owner/repo").
-					ForClientID("test-client")
+				return authorization.NewOIDCBuilder("test-client", "").
+					ForRepository("owner/repo")
 			},
 			expectedError: "issuerURL can't be blank",
 		},
 		{
 			name: "invalid repository format - no slash",
 			setup: func() *authorization.OIDCBuilder {
-				return authorization.NewOIDCBuilder().
-					ForRepository("invalid-repo-name").
-					ForClientID("test-client").
-					ForIssuerURL("https://example.com")
+				return authorization.NewOIDCBuilder("test-client", "https://example.com").
+					ForRepository("invalid-repo-name")
 			},
 			expectedError: "repository must be in owner/name format (e.g., kyma-project/cli)",
 		},
 		{
 			name: "invalid repository format - multiple slashes",
 			setup: func() *authorization.OIDCBuilder {
-				return authorization.NewOIDCBuilder().
-					ForRepository("owner/repo/extra").
-					ForClientID("test-client").
-					ForIssuerURL("https://example.com")
+				return authorization.NewOIDCBuilder("test-client", "https://example.com").
+					ForRepository("owner/repo/extra")
 			},
 			expectedError: "repository must be in owner/name format (e.g., kyma-project/cli)",
 		},
 		{
 			name: "invalid repository format - empty string",
 			setup: func() *authorization.OIDCBuilder {
-				return authorization.NewOIDCBuilder().
-					ForRepository("").
-					ForClientID("test-client").
-					ForIssuerURL("https://example.com")
+				return authorization.NewOIDCBuilder("test-client", "https://example.com").
+					ForRepository("")
 			},
 			expectedError: "repository can't be blank",
 		},

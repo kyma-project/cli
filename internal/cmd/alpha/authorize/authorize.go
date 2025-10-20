@@ -92,11 +92,9 @@ func authorize(cfg *authorizeConfig) clierror.Error {
 }
 
 func buildOIDCResource(cfg *authorizeConfig) (*unstructured.Unstructured, error) {
-	repositoryOIDCBuilder := authorization.NewOIDCBuilder()
+	repositoryOIDCBuilder := authorization.NewOIDCBuilder(cfg.clientId, cfg.issuerURL)
 	oidcResource, err := repositoryOIDCBuilder.
 		ForRepository(cfg.repository).
-		ForClientID(cfg.clientId).
-		ForIssuerURL(cfg.issuerURL).
 		ForName(cfg.name).
 		Build()
 

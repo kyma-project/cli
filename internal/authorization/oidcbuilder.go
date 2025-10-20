@@ -15,8 +15,11 @@ type OIDCBuilder struct {
 	prefix     string
 }
 
-func NewOIDCBuilder() *OIDCBuilder {
-	return &OIDCBuilder{}
+func NewOIDCBuilder(clientID, issuerURL string) *OIDCBuilder {
+	return &OIDCBuilder{
+		clientID:  clientID,
+		issuerURL: issuerURL,
+	}
 }
 
 func (b *OIDCBuilder) ForRepository(repository string) *OIDCBuilder {
