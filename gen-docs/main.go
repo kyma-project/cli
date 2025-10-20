@@ -29,6 +29,13 @@ func main() {
 		os.Exit(1)
 	}
 
+	err = genTSSidebarFile(command, docsTargetDir)
+	if err != nil {
+		fmt.Println("unable to create _sidebar.ts file", err.Error())
+		os.Exit(1)
+	}
+
+	// TODO: remove when kyma-project.io migrates to _sidebar.ts
 	err = genSidebarTree(command, docsTargetDir)
 	if err != nil {
 		fmt.Println("unable to create _sidebar.md file", err.Error())
@@ -66,6 +73,35 @@ func genMarkdownTree(cmd *cobra.Command, dir string) error {
 	}
 
 	return genMarkdown(cmd, f)
+}
+
+func genTSSidebarFile(cmd *cobra.Command, dir string) error {
+	buf := bytes.NewBuffer([]byte{})
+
+	buf.WriteString("export default [\n")
+	genTSSidebarTree(cmd, buf)
+	buf.WriteString("];\n")
+
+	err := os.WriteFile(
+		filepath.Join(dir, "_sidebar.ts"),
+		buf.Bytes(),
+		os.ModePerm,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// generates the _sidebar.ts file that orders .md files with documentation on the dashboard
+func genTSSidebarTree(cmd *cobra.Command, buf *bytes.Buffer) {
+	buf.WriteString(fmt.Sprintf("  { text: '%s', link: '%s' },\n", cmd.CommandPath(), strings.ReplaceAll(cmd.CommandPath(), " ", "_")))
+
+	for _, subCmd := range cmd.Commands() {
+		// generate sidebar for sub-command
+		genTSSidebarTree(subCmd, buf)
+	}
 }
 
 // generates the _sidebar.md file that orders .md files with documentation on the dashboard
