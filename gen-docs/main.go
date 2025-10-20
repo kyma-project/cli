@@ -96,7 +96,7 @@ func genTSSidebarFile(cmd *cobra.Command, dir string) error {
 
 // generates the _sidebar.ts file that orders .md files with documentation on the dashboard
 func genTSSidebarTree(cmd *cobra.Command, buf *bytes.Buffer) {
-	buf.WriteString(fmt.Sprintf("  { text: '%s', link: '%s' },\n", cmd.CommandPath(), strings.ReplaceAll(cmd.CommandPath(), " ", "_")))
+	buf.WriteString(fmt.Sprintf("  { text: '%s', link: './gen-docs/%s' },\n", cmd.CommandPath(), strings.ReplaceAll(cmd.CommandPath(), " ", "_")))
 
 	for _, subCmd := range cmd.Commands() {
 		// generate sidebar for sub-command
