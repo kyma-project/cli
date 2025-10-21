@@ -10,6 +10,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 )
 
 const (
@@ -69,7 +70,19 @@ func buildDeployment(opts *CreateDeploymentOpts) *appsv1.Deployment {
 					},
 				},
 				Spec: corev1.PodSpec{
-					Volumes: allVolumes,
+					Volumes:                      allVolumes,
+					AutomountServiceAccountToken: ptr.To(false),
+					SecurityContext: &corev1.PodSecurityContext{
+						RunAsUser:    ptr.To(int64(1000)),
+						RunAsGroup:   ptr.To(int64(3000)),
+						RunAsNonRoot: ptr.To(true),
+						SeccompProfile: &corev1.SeccompProfile{
+							Type: corev1.SeccompProfileTypeRuntimeDefault,
+						},
+						AppArmorProfile: &corev1.AppArmorProfile{
+							Type: corev1.AppArmorProfileTypeRuntimeDefault,
+						},
+					},
 					Containers: []corev1.Container{
 						{
 							Ports: []corev1.ContainerPort{
@@ -84,6 +97,17 @@ func buildDeployment(opts *CreateDeploymentOpts) *appsv1.Deployment {
 								Value: "/bindings",
 							}),
 							VolumeMounts: allVolumeMounts,
+							SecurityContext: &corev1.SecurityContext{
+								Privileged:               ptr.To(false),
+								AllowPrivilegeEscalation: ptr.To(false),
+								RunAsNonRoot:             ptr.To(true),
+								Capabilities: &corev1.Capabilities{
+									Drop: []corev1.Capability{
+										"All",
+									},
+								},
+								ReadOnlyRootFilesystem: ptr.To(true),
+							},
 							Resources: corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
 									corev1.ResourceMemory: resource.MustParse("64Mi"),
