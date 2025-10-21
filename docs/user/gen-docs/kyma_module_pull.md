@@ -1,6 +1,6 @@
 # kyma module pull
 
-Pull a module from remote repository.
+Pull a module from a remote repository.
 
 ## Synopsis
 
@@ -12,10 +12,10 @@ must be pulled before they can be installed using the 'kyma module add' command.
 
 Examples:
   # Pull a specific community module
-  kyma module pull my-community-module
+  kyma module pull `{YOUR_COMMUNITY_MODULE}`
 
   # Pull a module with a specific version into specific namespace
-  kyma module pull my-module --version v1.0.0 --namespace my-namespace
+  kyma module pull `{YOUR_COMMUNITY_MODULE}` --version `{YOUR_MODULE_VERSION}` --namespace `{YOUR_MODULE_NAMESPACE}`
 
 ```bash
 kyma module pull <module-name> [flags]
@@ -24,7 +24,7 @@ kyma module pull <module-name> [flags]
 ## Flags
 
 ```text
-  -n, --namespace string        Destination namespace where module will be stored (default "default")
+  -n, --namespace string        Destination namespace where the module is stored (default "default")
   -v, --version string          Specify version of the community module to pull
   -h, --help                    Help for the command
       --kubeconfig string       Path to the Kyma kubeconfig file
