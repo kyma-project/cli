@@ -18,14 +18,15 @@ const (
 )
 
 type CreateDeploymentOpts struct {
-	Name            string
-	Namespace       string
-	Image           string
-	ImagePullSecret string
-	InjectIstio     types.NullableBool
-	SecretMounts    []string
-	ConfigmapMounts []string
-	Envs            []corev1.EnvVar
+	Name                       string
+	Namespace                  string
+	Image                      string
+	ImagePullSecret            string
+	InjectIstio                types.NullableBool
+	SecretMounts               types.MountArray
+	ConfigmapMounts            types.MountArray
+	ServiceBindingSecretMounts types.ServiceBindingSecretArray
+	Envs                       []corev1.EnvVar
 }
 
 func CreateDeployment(ctx context.Context, client kube.Client, opts CreateDeploymentOpts) error {
@@ -37,6 +38,14 @@ func CreateDeployment(ctx context.Context, client kube.Client, opts CreateDeploy
 func buildDeployment(opts *CreateDeploymentOpts) *appsv1.Deployment {
 	secretVolumes, secretVolumeMounts := buildSecretVolumes(opts.SecretMounts)
 	configVolumes, configVolumeMounts := buildConfigmapVolumes(opts.ConfigmapMounts)
+	serviceBindingVolumes, serviceBindingVolumeMounts := buildServiceBindingSecretVolumes(opts.ServiceBindingSecretMounts)
+
+	// Combine all volumes
+	allVolumes := append(secretVolumes, configVolumes...)
+	allVolumes = append(allVolumes, serviceBindingVolumes...)
+
+	allVolumeMounts := append(secretVolumeMounts, configVolumeMounts...)
+	allVolumeMounts = append(allVolumeMounts, serviceBindingVolumeMounts...)
 
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -60,7 +69,7 @@ func buildDeployment(opts *CreateDeploymentOpts) *appsv1.Deployment {
 					},
 				},
 				Spec: corev1.PodSpec{
-					Volumes: append(secretVolumes, configVolumes...),
+					Volumes: allVolumes,
 					Containers: []corev1.Container{
 						{
 							Ports: []corev1.ContainerPort{
@@ -74,7 +83,7 @@ func buildDeployment(opts *CreateDeploymentOpts) *appsv1.Deployment {
 								Name:  "SERVICE_BINDING_ROOT",
 								Value: "/bindings",
 							}),
-							VolumeMounts: append(secretVolumeMounts, configVolumeMounts...),
+							VolumeMounts: allVolumeMounts,
 							Resources: corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
 									corev1.ResourceMemory: resource.MustParse("64Mi"),
@@ -106,12 +115,107 @@ func buildDeployment(opts *CreateDeploymentOpts) *appsv1.Deployment {
 	return deployment
 }
 
-func buildSecretVolumes(secretNames []string) ([]corev1.Volume, []corev1.VolumeMount) {
+// buildSecretVolumes builds volumes and volume mounts for secrets using the MountArray type
+func buildSecretVolumes(mountArray types.MountArray) ([]corev1.Volume, []corev1.VolumeMount) {
 	volumes := []corev1.Volume{}
 	volumeMounts := []corev1.VolumeMount{}
-	for _, secretName := range secretNames {
-		volumeName := fmt.Sprintf("secret-%s", secretName)
-		mountPath := fmt.Sprintf("%s%s", SecretMountPathPrefix, secretName)
+
+	for i, mount := range mountArray.Mounts {
+		volumeName := fmt.Sprintf("secret-%s-%d", mount.Name, i)
+
+		// Use custom path if specified, otherwise use default path
+		mountPath := mount.Path
+		if mountPath == "" {
+			mountPath = fmt.Sprintf("%s%s", SecretMountPathPrefix, mount.Name)
+		}
+
+		secretVolumeSource := &corev1.SecretVolumeSource{
+			SecretName: mount.Name,
+		}
+
+		// If a specific key is used, mount only that key
+		if mount.Key != "" {
+			secretVolumeSource.Items = []corev1.KeyToPath{
+				{
+					Key:  mount.Key,
+					Path: mount.Key,
+				},
+			}
+		}
+
+		volumes = append(volumes, corev1.Volume{
+			Name: volumeName,
+			VolumeSource: corev1.VolumeSource{
+				Secret: secretVolumeSource,
+			},
+		})
+
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      volumeName,
+			MountPath: mountPath,
+			ReadOnly:  mount.ReadOnly,
+		})
+	}
+
+	return volumes, volumeMounts
+}
+
+// buildConfigmapVolumes builds volumes and volume mounts for configmaps using the MountArray type
+func buildConfigmapVolumes(mountArray types.MountArray) ([]corev1.Volume, []corev1.VolumeMount) {
+	volumes := []corev1.Volume{}
+	volumeMounts := []corev1.VolumeMount{}
+
+	for i, mount := range mountArray.Mounts {
+		volumeName := fmt.Sprintf("configmap-%s-%d", mount.Name, i)
+
+		// Use custom path if specified, otherwise use default path
+		mountPath := mount.Path
+		if mountPath == "" {
+			mountPath = fmt.Sprintf("%s%s", ConfigmapMountPathPrefix, mount.Name)
+		}
+
+		configMapVolumeSource := &corev1.ConfigMapVolumeSource{
+			LocalObjectReference: corev1.LocalObjectReference{
+				Name: mount.Name,
+			},
+		}
+
+		// If a specific key is requested, mount only that key
+		if mount.Key != "" {
+			configMapVolumeSource.Items = []corev1.KeyToPath{
+				{
+					Key:  mount.Key,
+					Path: mount.Key,
+				},
+			}
+		}
+
+		volumes = append(volumes, corev1.Volume{
+			Name: volumeName,
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: configMapVolumeSource,
+			},
+		})
+
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      volumeName,
+			MountPath: mountPath,
+			ReadOnly:  mount.ReadOnly,
+		})
+	}
+
+	return volumes, volumeMounts
+}
+
+// buildServiceBindingSecretVolumes builds volumes and volume mounts for service binding secrets
+func buildServiceBindingSecretVolumes(serviceBindingSecrets types.ServiceBindingSecretArray) ([]corev1.Volume, []corev1.VolumeMount) {
+	volumes := []corev1.Volume{}
+	volumeMounts := []corev1.VolumeMount{}
+
+	for _, secretName := range serviceBindingSecrets.Names {
+		volumeName := fmt.Sprintf("service-binding-secret-%s", secretName)
+		mountPath := fmt.Sprintf("/bindings/secret-%s", secretName)
+
 		volumes = append(volumes, corev1.Volume{
 			Name: volumeName,
 			VolumeSource: corev1.VolumeSource{
@@ -120,35 +224,13 @@ func buildSecretVolumes(secretNames []string) ([]corev1.Volume, []corev1.VolumeM
 				},
 			},
 		})
+
 		volumeMounts = append(volumeMounts, corev1.VolumeMount{
 			Name:      volumeName,
 			MountPath: mountPath,
+			ReadOnly:  true, // Service binding secrets are always read-only
 		})
 	}
 
-	return volumes, volumeMounts
-}
-
-func buildConfigmapVolumes(configmapsNames []string) ([]corev1.Volume, []corev1.VolumeMount) {
-	volumes := []corev1.Volume{}
-	volumeMounts := []corev1.VolumeMount{}
-	for _, configmapName := range configmapsNames {
-		volumeName := fmt.Sprintf("configmap-%s", configmapName)
-		mountPath := fmt.Sprintf("%s%s", ConfigmapMountPathPrefix, configmapName)
-		volumes = append(volumes, corev1.Volume{
-			Name: volumeName,
-			VolumeSource: corev1.VolumeSource{
-				ConfigMap: &corev1.ConfigMapVolumeSource{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: configmapName,
-					},
-				},
-			},
-		})
-		volumeMounts = append(volumeMounts, corev1.VolumeMount{
-			Name:      volumeName,
-			MountPath: mountPath,
-		})
-	}
 	return volumes, volumeMounts
 }

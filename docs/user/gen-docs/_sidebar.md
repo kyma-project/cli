@@ -2,6 +2,7 @@
 * [Back to Kyma CLI](/cli/user/README.md)
 * [kyma](/cli/user/gen-docs/kyma.md)
 * [kyma alpha](/cli/user/gen-docs/kyma_alpha.md)
+* [kyma alpha authorize](/cli/user/gen-docs/kyma_alpha_authorize.md)
 * [kyma alpha diagnose](/cli/user/gen-docs/kyma_alpha_diagnose.md)
 * [kyma alpha hana](/cli/user/gen-docs/kyma_alpha_hana.md)
 * [kyma alpha hana map](/cli/user/gen-docs/kyma_alpha_hana_map.md)
