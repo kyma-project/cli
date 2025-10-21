@@ -705,34 +705,66 @@ func getKymaModuleSpec(kymaCR *kyma.Kyma, moduleName string) *kyma.Module {
 	return nil
 }
 
+// knownStates is a list of known states, sorted by precedence
+var knownStates = []string{
+	"Ready",
+	"Processing",
+	"Deleting",
+	"Error",
+	"Warning",
+}
+
+func getHighestState(oldState, newState string) string {
+	// return highest known state
+	for _, state := range knownStates {
+		if oldState == state {
+			return oldState
+		}
+		if newState == state {
+			return newState
+		}
+	}
+
+	// return first non-empty unknown state, or empty state otherwise
+	if oldState == "" {
+		return newState
+	} else {
+		return oldState
+	}
+}
+
+// getStateFromData gets list of all CRs and retrieves the best possible state
 func getStateFromData(ctx context.Context, client kube.Client, data unstructured.Unstructured) (string, error) {
 	if len(data.Object) == 0 {
 		return "", nil
 	}
 	namespace := "kyma-system"
-	metadata := data.Object["metadata"].(map[string]interface{})
-	if ns, ok := metadata["namespace"]; ok && ns.(string) != "" {
-		namespace = metadata["namespace"].(string)
+	if ns := data.GetNamespace(); ns != "" {
+		namespace = ns
 	}
 
-	apiVersion := data.Object["apiVersion"].(string)
-	kind := data.Object["kind"].(string)
-	name := metadata["name"].(string)
+	apiVersion := data.GetAPIVersion()
+	kind := data.GetKind()
 
-	unstruct := generateUnstruct(apiVersion, kind, name, namespace)
-	result, err := client.RootlessDynamic().Get(ctx, &unstruct)
+	unstruct := generateUnstruct(apiVersion, kind, "", namespace)
+	allCRs, err := client.RootlessDynamic().List(ctx, &unstruct, &rootlessdynamic.ListOptions{AllNamespaces: true})
 	if err != nil {
 		return "", err
 	}
-	statusRaw, ok := result.Object["status"]
-	if !ok || statusRaw == nil {
-		return "", nil
+	state := ""
+
+	for _, cr := range allCRs.Items {
+		statusRaw, ok := cr.Object["status"]
+		if !ok || statusRaw == nil {
+			continue
+		}
+		status := statusRaw.(map[string]any)
+		if crState, ok := status["state"]; ok {
+			// compare state of current CR with the highest known state in the list of all CRs
+			state = getHighestState(state, crState.(string))
+		}
 	}
-	status := statusRaw.(map[string]any)
-	if state, ok := status["state"]; ok {
-		return state.(string), nil
-	}
-	return "", nil
+	return state, nil
 }
 
 func getResourceState(ctx context.Context, client kube.Client, manager *kyma.Manager) (string, error) {
@@ -785,16 +817,20 @@ func getResourceState(ctx context.Context, client kube.Client, manager *kyma.Man
 }
 
 func generateUnstruct(apiVersion, kind, name, namespace string) unstructured.Unstructured {
-	return unstructured.Unstructured{
+	un := unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": apiVersion,
 			"kind":       kind,
 			"metadata": map[string]interface{}{
-				"name":      name,
 				"namespace": namespace,
 			},
 		},
 	}
+	if name != "" {
+		un.Object["metadata"].(map[string]interface{})["name"] = name
+	}
+
+	return un
 }
 
 func resolveStateFromReplicas(ready, wanted int64) string {

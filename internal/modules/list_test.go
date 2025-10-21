@@ -316,6 +316,16 @@ var (
 		},
 	}
 
+	testServerlessList = unstructured.UnstructuredList{
+		Object: map[string]interface{}{
+			"apiVersion": "v1",
+			"kind":       "List",
+		},
+		Items: []unstructured.Unstructured{
+			testServerless,
+		},
+	}
+
 	GVRDeployment = schema.GroupVersionResource{
 		Group:    "apps",
 		Version:  "v1",
@@ -439,7 +449,8 @@ func TestListInstalled(t *testing.T) {
 		)
 
 		fakeRootless := &fake.RootlessDynamicClient{
-			ReturnGetObj: testServerless,
+			ReturnGetObj:   testServerless,
+			ReturnListObjs: &testServerlessList,
 		}
 
 		fakeClient := &fake.KubeClient{
@@ -752,5 +763,44 @@ func fixKymaClientForManager(manager unstructured.Unstructured) kube.Client {
 		TestRootlessDynamicInterface: &fake.RootlessDynamicClient{
 			ReturnGetObj: manager,
 		},
+	}
+}
+
+func TestGetHighestState(t *testing.T) {
+	for _, tt := range []struct {
+		name     string
+		state1   string
+		state2   string
+		expected string
+	}{
+		{
+			name:     "one Ready CR",
+			state1:   "Warning",
+			state2:   "Ready",
+			expected: "Ready",
+		},
+		{
+			name:     "one Processing CR",
+			state1:   "Processing",
+			state2:   "Warning",
+			expected: "Processing",
+		},
+		{
+			name:     "one Unknown CR",
+			state1:   "Unknown",
+			state2:   "",
+			expected: "Unknown",
+		},
+		{
+			name:     "empty state",
+			state1:   "",
+			state2:   "",
+			expected: "",
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			result := getHighestState(tt.state1, tt.state2)
+			require.Equal(t, tt.expected, result)
+		})
 	}
 }
