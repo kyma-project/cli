@@ -15,6 +15,7 @@ kyma alpha hana map [flags]
 ```text
       --credentials-path string   Path to the credentials json file
       --hana-id string            SAP HANA instance ID
+      --context string            The name of the kubeconfig context to use
   -h, --help                      Help for the command
       --kubeconfig string         Path to the Kyma kubeconfig file
       --show-extensions-error     Prints a possible error when fetching extensions fails

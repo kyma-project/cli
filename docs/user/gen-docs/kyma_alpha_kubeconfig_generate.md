@@ -57,6 +57,7 @@ kyma alpha kubeconfig generate [flags]
       --serviceaccount string         Name of the Service Account (in the given Namespace) to be used as a subject of the generated kubeconfig. If the Service Account does not exist, it will be created
       --time string                   Determines how long the token should be valid, by default 1h (use h for hours and d for days) (default "1h")
       --token string                  Token used in the kubeconfig
+      --context string                The name of the kubeconfig context to use
   -h, --help                          Help for the command
       --kubeconfig string             Path to the Kyma kubeconfig file
       --show-extensions-error         Prints a possible error when fetching extensions fails

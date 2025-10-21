@@ -24,6 +24,7 @@ kyma alpha authorize repository [flags]
       --prefix string           Username prefix for the repository claim (e.g., gh-oidc:)
       --repository string       GitHub repo in owner/name format (e.g., kyma-project/cli) (required)
       --role string             Role name to bind (namespaced)
+      --context string          The name of the kubeconfig context to use
   -h, --help                    Help for the command
       --kubeconfig string       Path to the Kyma kubeconfig file
       --show-extensions-error   Prints a possible error when fetching extensions fails

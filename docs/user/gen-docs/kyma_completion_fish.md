@@ -25,6 +25,7 @@ kyma completion fish [flags]
 
 ```text
       --no-descriptions         disable completion descriptions
+      --context string          The name of the kubeconfig context to use
   -h, --help                    Help for the command
       --kubeconfig string       Path to the Kyma kubeconfig file
       --show-extensions-error   Prints a possible error when fetching extensions fails
