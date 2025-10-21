@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8s_fake "k8s.io/client-go/kubernetes/fake"
+	"k8s.io/utils/ptr"
 )
 
 func Test_CreateDeployment(t *testing.T) {
@@ -133,6 +134,18 @@ func fixDeployment() *appsv1.Deployment {
 					},
 				},
 				Spec: corev1.PodSpec{
+					AutomountServiceAccountToken: ptr.To(false),
+					SecurityContext: &corev1.PodSecurityContext{
+						RunAsUser:    ptr.To(int64(1000)),
+						RunAsGroup:   ptr.To(int64(3000)),
+						RunAsNonRoot: ptr.To(true),
+						SeccompProfile: &corev1.SeccompProfile{
+							Type: corev1.SeccompProfileTypeRuntimeDefault,
+						},
+						AppArmorProfile: &corev1.AppArmorProfile{
+							Type: corev1.AppArmorProfileTypeRuntimeDefault,
+						},
+					},
 					Volumes: []corev1.Volume{
 						{
 							Name: "secret-test-name-0",
@@ -182,6 +195,17 @@ func fixDeployment() *appsv1.Deployment {
 									MountPath: "/bindings/configmap-test-name",
 									ReadOnly:  false,
 								},
+							},
+							SecurityContext: &corev1.SecurityContext{
+								Privileged:               ptr.To(false),
+								AllowPrivilegeEscalation: ptr.To(false),
+								RunAsNonRoot:             ptr.To(true),
+								Capabilities: &corev1.Capabilities{
+									Drop: []corev1.Capability{
+										"All",
+									},
+								},
+								ReadOnlyRootFilesystem: ptr.To(true),
 							},
 							Resources: corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
