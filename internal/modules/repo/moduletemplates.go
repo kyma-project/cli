@@ -164,6 +164,9 @@ func (r *moduleTemplatesRepo) Resources(ctx context.Context, moduleTemplate kyma
 		}
 
 		for _, yamlStr := range resourceYamlsArr {
+			if strings.TrimSpace(yamlStr) == "" {
+				continue
+			}
 			var res map[string]any
 			if err := yaml.Unmarshal([]byte(yamlStr), &res); err != nil {
 				return nil, fmt.Errorf("failed to parse module resource YAML for %s:%s - %w", moduleTemplate.Spec.ModuleName, moduleTemplate.Spec.Version, err)

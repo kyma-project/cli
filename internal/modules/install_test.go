@@ -31,10 +31,17 @@ func getModuleTemplateSpecWithResourceLink(link string) kyma.ModuleTemplate {
 	}
 }
 
-var validResourceYaml = `apiVersion: v1
+var validResourceYaml = `---
+apiVersion: v1
 kind: Namespace
 metadata:
   name: cluster-ip-system
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cluster-ip-system-2
+---
 `
 
 var invalidResourceYaml = `apiVersion: v1
