@@ -148,6 +148,12 @@ func fixDeployment() *appsv1.Deployment {
 					},
 					Volumes: []corev1.Volume{
 						{
+							Name: "tmp",
+							VolumeSource: corev1.VolumeSource{
+								EmptyDir: &corev1.EmptyDirVolumeSource{},
+							},
+						},
+						{
 							Name: "secret-test-name-0",
 							VolumeSource: corev1.VolumeSource{
 								Secret: &corev1.SecretVolumeSource{
@@ -185,6 +191,10 @@ func fixDeployment() *appsv1.Deployment {
 								Value: "/bindings",
 							}),
 							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      "tmp",
+									MountPath: "/tmp",
+								},
 								{
 									Name:      "secret-test-name-0",
 									MountPath: "/bindings/secret-test-name",

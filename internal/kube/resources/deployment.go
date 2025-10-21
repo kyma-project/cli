@@ -41,12 +41,27 @@ func buildDeployment(opts *CreateDeploymentOpts) *appsv1.Deployment {
 	configVolumes, configVolumeMounts := buildConfigmapVolumes(opts.ConfigmapMounts)
 	serviceBindingVolumes, serviceBindingVolumeMounts := buildServiceBindingSecretVolumes(opts.ServiceBindingSecretMounts)
 
-	// Combine all volumes
-	allVolumes := append(secretVolumes, configVolumes...)
-	allVolumes = append(allVolumes, serviceBindingVolumes...)
+	volumes := []corev1.Volume{
+		{
+			Name: "tmp",
+			VolumeSource: corev1.VolumeSource{
+				EmptyDir: &corev1.EmptyDirVolumeSource{},
+			},
+		},
+	}
+	volumes = append(volumes, secretVolumes...)
+	volumes = append(volumes, configVolumes...)
+	volumes = append(volumes, serviceBindingVolumes...)
 
-	allVolumeMounts := append(secretVolumeMounts, configVolumeMounts...)
-	allVolumeMounts = append(allVolumeMounts, serviceBindingVolumeMounts...)
+	volumeMounts := []corev1.VolumeMount{
+		{
+			Name:      "tmp",
+			MountPath: "/tmp",
+		},
+	}
+	volumeMounts = append(volumeMounts, secretVolumeMounts...)
+	volumeMounts = append(volumeMounts, configVolumeMounts...)
+	volumeMounts = append(volumeMounts, serviceBindingVolumeMounts...)
 
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -70,7 +85,7 @@ func buildDeployment(opts *CreateDeploymentOpts) *appsv1.Deployment {
 					},
 				},
 				Spec: corev1.PodSpec{
-					Volumes:                      allVolumes,
+					Volumes:                      volumes,
 					AutomountServiceAccountToken: ptr.To(false),
 					SecurityContext: &corev1.PodSecurityContext{
 						RunAsUser:    ptr.To(int64(1000)),
@@ -96,7 +111,7 @@ func buildDeployment(opts *CreateDeploymentOpts) *appsv1.Deployment {
 								Name:  "SERVICE_BINDING_ROOT",
 								Value: "/bindings",
 							}),
-							VolumeMounts: allVolumeMounts,
+							VolumeMounts: volumeMounts,
 							SecurityContext: &corev1.SecurityContext{
 								Privileged:               ptr.To(false),
 								AllowPrivilegeEscalation: ptr.To(false),
