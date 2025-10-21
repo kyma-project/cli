@@ -71,8 +71,7 @@ func (b *RBACBuilder) validateForClusterRoleBinding() error {
 		return fmt.Errorf("repository is required")
 	}
 
-	repoNameParts := strings.Split(b.repository, "/")
-	if len(repoNameParts) != 2 {
+	if !b.isRepoNameValid() {
 		return fmt.Errorf("repository must be in owner/name format (e.g., kyma-project/cli)")
 	}
 
@@ -88,8 +87,7 @@ func (b *RBACBuilder) validateForRoleBinding() error {
 		return fmt.Errorf("repository is required")
 	}
 
-	repoNameParts := strings.Split(b.repository, "/")
-	if len(repoNameParts) != 2 {
+	if !b.isRepoNameValid() {
 		return fmt.Errorf("repository must be in owner/name format (e.g., kyma-project/cli)")
 	}
 
@@ -106,12 +104,13 @@ func (b *RBACBuilder) validateForRoleBinding() error {
 	return nil
 }
 
+func (b *RBACBuilder) isRepoNameValid() bool {
+	repoNameParts := strings.Split(b.repository, "/")
+	return len(repoNameParts) == 2
+}
+
 func (b *RBACBuilder) getSubjectName() string {
-	subjectName := b.repository
-	if b.prefix != "" {
-		subjectName = b.prefix + b.repository
-	}
-	return subjectName
+	return b.prefix + b.repository
 }
 
 func (b *RBACBuilder) getClusterRoleBindingName() string {
