@@ -26,7 +26,7 @@ func newPullCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "pull <module-name> [flags]",
-		Short: "Pull a module from remote repository",
+		Short: "Pull a module from a remote repository",
 		Long: `Pull a module from a remote repository to make it available for installation on the cluster.
 
 This command downloads module templates and resources from remote repositories,
@@ -35,10 +35,10 @@ must be pulled before they can be installed using the 'kyma module add' command.
 
 Examples:
   # Pull a specific community module
-  kyma module pull my-community-module
+  kyma module pull community-module-name
 
   # Pull a module with a specific version into specific namespace
-  kyma module pull my-module --version v1.0.0 --namespace my-namespace`,
+  kyma module pull community-module-name --version v1.0.0 --namespace module-namespace`,
 		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			cfg.moduleName = args[0]
@@ -46,7 +46,7 @@ Examples:
 		},
 	}
 
-	cmd.Flags().StringVarP(&cfg.namespace, "namespace", "n", "default", "Destination namespace where module will be stored")
+	cmd.Flags().StringVarP(&cfg.namespace, "namespace", "n", "default", "Destination namespace where the module is stored")
 	cmd.Flags().StringVarP(&cfg.version, "version", "v", "", "Specify version of the community module to pull")
 
 	return cmd
