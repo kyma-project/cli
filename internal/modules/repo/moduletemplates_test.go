@@ -56,7 +56,7 @@ var (
 			"metadata": map[string]any{
 				"namespace": "community-module-system",
 				"labels": map[string]any{
-					"app.kubernetes.io/version": "0.0.1",
+					"app.kubernetes.io/version": "0.0.3",
 				},
 				"name": "community-module-controller-manager3",
 			},
@@ -70,7 +70,7 @@ var (
 							},
 							map[string]any{
 								"name":  "manager",
-								"image": "http://repo.url/manager:0.0.1",
+								"image": "http://repo.url/manager:0.0.3",
 							},
 						},
 					},
