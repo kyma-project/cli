@@ -38,17 +38,16 @@ jobs:
           btp_kyma_plan: '${{ secrets.BTP_KYMA_PLAN }}'
       - name: test gh oidc trust
         run: |
-          echo -e "Testing access generated for github as trusted OIDC \n"
+          echo -e "Testing access generated for github as trusted OIDC using alpha authorize repository command \n"
 
           AUDIENCE="gh-oidc-test"
+          REPOSITORY="kyma-project/cli"
 
-          # GIVEN
-          kubectl apply -f tests/btp/k8s-resources/github-oidc-trust
+          # WHEN - Use the new alpha authorize repository command to establish trust
+          bin/kyma alpha authorize repository $REPOSITORY --client-id $AUDIENCE --cluster-wide --clusterrole cluster-admin
           
-          # WHEN
+          # THEN - Generate kubeconfig and test access
           bin/kyma alpha kubeconfig generate --audience $AUDIENCE --output /tmp/kubeconfig-gh-token.yaml 
-          
-          # THEN
           kubectl auth can-i update kymas --kubeconfig /tmp/kubeconfig-gh-token.yaml
           kubectl get kymas -A -oyaml --kubeconfig /tmp/kubeconfig-gh-token.yaml
       - name: ensure btp prerequisites 
