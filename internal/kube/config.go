@@ -13,32 +13,34 @@ import (
 
 // restConfig loads the rest configuration needed by k8s clients to interact with clusters based on the kubeconfig.
 // Loading rules are based on standard defined kubernetes config loading.
-func restConfig(kubeconfig string) (*rest.Config, error) {
-	// Default PathOptions gets kubeconfig in this order: the explicit path given, KUBECONFIG current context, recommended file path
-	po := clientcmd.NewDefaultPathOptions()
-	po.LoadingRules.ExplicitPath = kubeconfig
-
-	cfg, err := clientcmd.BuildConfigFromKubeconfigGetter("", po.GetStartingConfig)
+func restConfig(apiConfig *api.Config) (*rest.Config, error) {
+	cfg, err := clientcmd.NewDefaultClientConfig(*apiConfig, nil).ClientConfig()
 	if err != nil {
 		return nil, err
 	}
+
 	cfg.WarningHandler = rest.NoWarnings{}
 	return cfg, nil
 }
 
 // apiConfig loads a structured representation of the Kubeconfig.
 // Loading rules are based on standard defined kubernetes config loading.
-func apiConfig(kubeconfig string) (*api.Config, error) {
+func apiConfig(kubeconfig, context string) (*api.Config, error) {
 	// Default PathOptions gets kubeconfig in this order: the explicit path given, KUBECONFIG current context, recommended file path
 	po := clientcmd.NewDefaultPathOptions()
 	po.LoadingRules.ExplicitPath = kubeconfig
 
-	return po.GetStartingConfig()
+	api, err := po.GetStartingConfig()
+
+	if context != "" {
+		api.CurrentContext = context
+	}
+
+	return api, err
 }
 
 // setKubernetesDefaults sets default values on the provided client config for accessing the
 // Kubernetes API or returns an error if any of the defaults are impossible or invalid.
-// TODO this isn't what we want.  Each clientset should be setting defaults as it sees fit.
 func setKubernetesDefaults(config *rest.Config) error {
 	config.GroupVersion = &schema.GroupVersion{Group: "", Version: "v1"}
 
