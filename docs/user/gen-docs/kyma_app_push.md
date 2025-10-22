@@ -77,6 +77,7 @@ kyma app push [flags]
       --expose                                                Creates an APIRule for the app
       --image string                                          Name of the image to deploy
       --image-pull-secret string                              Name of the Kubernetes Secret with credentials to pull the image
+      --insecure                                              Disables SecurityContext configuration for the app deployment
       --istio-inject                                          Enables Istio for the app
       --mount-config stringArray                              Mounts ConfigMap content. Format: 'name=configmap,path=/app/config,key=key,ro=false' or shorthand 'configmap:key=/app/config'. Path traversal (..) is prohibited.
       --mount-secret stringArray                              Mounts Secret content. Format: 'name=secret,path=/app/config,key=key,ro=true' or shorthand 'secret:key=/app/config:ro'. Path traversal (..) is prohibited.
