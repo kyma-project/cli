@@ -209,6 +209,17 @@ func (r *moduleTemplatesRepo) InstalledManager(ctx context.Context, moduleTempla
 		return nil, fmt.Errorf("failed to retrieve installed manager from the target Kyma environment %v", err)
 	}
 
+	if installedManager != nil {
+		managerVersion, err := getManagerVersion(installedManager)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get managers version: %v", err)
+		}
+
+		if moduleTemplate.Spec.Version != managerVersion {
+			return nil, nil
+		}
+	}
+
 	return installedManager, nil
 }
 
@@ -223,6 +234,10 @@ func (r *moduleTemplatesRepo) selectInstalled(ctx context.Context, moduleTemplat
 
 		if err != nil {
 			fmt.Printf("failed to request for installed manager: %v", err)
+			continue
+		}
+
+		if moduleTemplateAlreadyExists(installedModules, moduleTemplate) {
 			continue
 		}
 
@@ -324,4 +339,62 @@ func generateUnstruct(apiVersion, kind, name, namespace string) unstructured.Uns
 			},
 		},
 	}
+}
+
+func getManagerVersion(installedManager *unstructured.Unstructured) (string, error) {
+	resMetadata, ok := installedManager.Object["metadata"].(map[string]any)
+	if !ok {
+		return "", fmt.Errorf("metadata not found in unstructured object")
+	}
+
+	version := extractModuleVersion(resMetadata, installedManager)
+	return version, nil
+}
+
+func extractModuleVersion(metadata map[string]any, installedManager *unstructured.Unstructured) string {
+	labels, _ := metadata["labels"].(map[string]any)
+	if labels != nil {
+		if v, ok := labels["app.kubernetes.io/version"].(string); ok && v != "" {
+			return v
+		}
+	}
+	spec, ok := installedManager.Object["spec"].(map[string]any)
+	if !ok {
+		return ""
+	}
+	template, ok := spec["template"].(map[string]any)
+	if !ok {
+		return ""
+	}
+	templateSpec, ok := template["spec"].(map[string]any)
+	if !ok {
+		return ""
+	}
+	containers, ok := templateSpec["containers"].([]any)
+	if !ok {
+		return ""
+	}
+	for _, c := range containers {
+		container, _ := c.(map[string]any)
+		if cname, ok := container["name"].(string); ok && strings.Contains(cname, "manager") {
+			if image, ok := container["image"].(string); ok && image != "" {
+				parts := strings.Split(image, ":")
+				if len(parts) > 1 {
+					return parts[len(parts)-1]
+				}
+			}
+		}
+	}
+	return ""
+}
+
+func moduleTemplateAlreadyExists(installedModules []kyma.ModuleTemplate, moduleTemplate kyma.ModuleTemplate) bool {
+	for _, installed := range installedModules {
+		if installed.Name == moduleTemplate.Name &&
+			installed.Spec.Version == moduleTemplate.Spec.Version &&
+			installed.Spec.ModuleName == moduleTemplate.Spec.ModuleName {
+			return true
+		}
+	}
+	return false
 }

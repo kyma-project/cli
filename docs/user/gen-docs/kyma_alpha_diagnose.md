@@ -16,6 +16,7 @@ kyma alpha diagnose [flags]
   -f, --format string           Output format (possible values: json, yaml)
   -o, --output string           Path to the diagnostic output file. If not provided the output is printed to stdout
       --verbose                 Display verbose output, including error details during diagnostics collection
+      --context string          The name of the kubeconfig context to use
   -h, --help                    Help for the command
       --kubeconfig string       Path to the Kyma kubeconfig file
       --show-extensions-error   Prints a possible error when fetching extensions fails

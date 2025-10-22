@@ -20,6 +20,7 @@ kyma module add <module> [flags]
       --default-cr              Deploys the module with the default CR
       --origin string           Specifies the source of the module (kyma or custom name)
       --version string          Specifies version of the community module to install
+      --context string          The name of the kubeconfig context to use
   -h, --help                    Help for the command
       --kubeconfig string       Path to the Kyma kubeconfig file
       --show-extensions-error   Prints a possible error when fetching extensions fails

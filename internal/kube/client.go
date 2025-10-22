@@ -38,21 +38,21 @@ type client struct {
 	restClient     *rest.RESTClient
 }
 
-func NewClient(kubeconfig string) (Client, error) {
-	client, err := newClient(kubeconfig)
+func NewClient(kubeconfig, kubeconfigContext string) (Client, error) {
+	client, err := newClient(kubeconfig, kubeconfigContext)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to initialise kubernetes client")
 	}
 	return client, nil
 }
 
-func newClient(kubeconfig string) (Client, error) {
-	restConfig, err := restConfig(kubeconfig)
+func newClient(kubeconfig, kubeconfigContext string) (Client, error) {
+	apiConfig, err := apiConfig(kubeconfig, kubeconfigContext)
 	if err != nil {
 		return nil, err
 	}
 
-	apiConfig, err := apiConfig(kubeconfig)
+	restConfig, err := restConfig(apiConfig)
 	if err != nil {
 		return nil, err
 	}

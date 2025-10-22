@@ -463,8 +463,20 @@ func listCommunityInstalled(ctx context.Context, client kube.Client, repo repo.M
 
 	communityModules := ModulesList{}
 	for m := range results {
+		isDuplicated := false
+		for _, cm := range communityModules {
+			if cm.Name == m.Name && cm.InstallDetails.Version == m.InstallDetails.Version {
+				isDuplicated = true
+			}
+		}
+
+		if isDuplicated {
+			continue
+		}
+
 		communityModules = append(communityModules, m)
 	}
+
 	return communityModules, nil
 }
 

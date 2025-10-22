@@ -1,6 +1,7 @@
 package cmdcommon
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
@@ -30,6 +31,7 @@ func newKubeClientConfig() KubeClientConfig {
 func AddCmdPersistentKubeconfigFlag(cmd *cobra.Command) {
 	// this flag is not operational. it's only to print help description and help cobra with validation
 	_ = cmd.PersistentFlags().String("kubeconfig", "", "Path to the Kyma kubeconfig file")
+	_ = cmd.PersistentFlags().String("context", "", "The name of the kubeconfig context to use")
 }
 
 func (kcc *kubeClientConfig) GetKubeClient() (kube.Client, error) {
@@ -47,26 +49,27 @@ func (kcc *kubeClientConfig) GetKubeClientWithClierr() (kube.Client, clierror.Er
 }
 
 func (kcc *kubeClientConfig) complete() {
-	kubeconfigPath := getKubeconfigPath()
+	kubeconfigPath := getStringFlagValue("--kubeconfig")
+	context := getStringFlagValue("--context")
 
-	kcc.kubeClient, kcc.kubeClientErr = kube.NewClient(kubeconfigPath)
+	kcc.kubeClient, kcc.kubeClientErr = kube.NewClient(kubeconfigPath, context)
 }
 
-// search os.Args manually to find if user pass --kubeconfig path and return its value
-func getKubeconfigPath() string {
-	path := ""
+// search os.Args manually to find if user pass --<flag_name> path and return its value
+func getStringFlagValue(flag string) string {
+	value := ""
 	for i, arg := range os.Args {
 		// example: --kubeconfig /path/to/file
-		if arg == "--kubeconfig" && len(os.Args) > i+1 {
-			path = os.Args[i+1]
+		if arg == flag && len(os.Args) > i+1 {
+			value = os.Args[i+1]
 		}
 
 		// example: --kubeconfig=/path/to/file
 		argFields := strings.Split(arg, "=")
-		if strings.HasPrefix(arg, "--kubeconfig=") && len(argFields) == 2 {
-			path = argFields[1]
+		if strings.HasPrefix(arg, fmt.Sprintf("%s=", flag)) && len(argFields) == 2 {
+			value = argFields[1]
 		}
 	}
 
-	return path
+	return value
 }
