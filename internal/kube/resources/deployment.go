@@ -28,6 +28,7 @@ type CreateDeploymentOpts struct {
 	ConfigmapMounts            types.MountArray
 	ServiceBindingSecretMounts types.ServiceBindingSecretArray
 	Envs                       []corev1.EnvVar
+	Insecure                   bool
 }
 
 func CreateDeployment(ctx context.Context, client kube.Client, opts CreateDeploymentOpts) error {
@@ -63,6 +64,8 @@ func buildDeployment(opts *CreateDeploymentOpts) *appsv1.Deployment {
 	volumeMounts = append(volumeMounts, configVolumeMounts...)
 	volumeMounts = append(volumeMounts, serviceBindingVolumeMounts...)
 
+	podSecCtx, secCtx := buildSecurityContext(opts.Insecure)
+
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: opts.Name,
@@ -87,17 +90,7 @@ func buildDeployment(opts *CreateDeploymentOpts) *appsv1.Deployment {
 				Spec: corev1.PodSpec{
 					Volumes:                      volumes,
 					AutomountServiceAccountToken: ptr.To(false),
-					SecurityContext: &corev1.PodSecurityContext{
-						RunAsUser:    ptr.To(int64(1000)),
-						RunAsGroup:   ptr.To(int64(3000)),
-						RunAsNonRoot: ptr.To(true),
-						SeccompProfile: &corev1.SeccompProfile{
-							Type: corev1.SeccompProfileTypeRuntimeDefault,
-						},
-						AppArmorProfile: &corev1.AppArmorProfile{
-							Type: corev1.AppArmorProfileTypeRuntimeDefault,
-						},
-					},
+					SecurityContext:              podSecCtx,
 					Containers: []corev1.Container{
 						{
 							Ports: []corev1.ContainerPort{
@@ -111,18 +104,8 @@ func buildDeployment(opts *CreateDeploymentOpts) *appsv1.Deployment {
 								Name:  "SERVICE_BINDING_ROOT",
 								Value: "/bindings",
 							}),
-							VolumeMounts: volumeMounts,
-							SecurityContext: &corev1.SecurityContext{
-								Privileged:               ptr.To(false),
-								AllowPrivilegeEscalation: ptr.To(false),
-								RunAsNonRoot:             ptr.To(true),
-								Capabilities: &corev1.Capabilities{
-									Drop: []corev1.Capability{
-										"All",
-									},
-								},
-								ReadOnlyRootFilesystem: ptr.To(true),
-							},
+							VolumeMounts:    volumeMounts,
+							SecurityContext: secCtx,
 							Resources: corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
 									corev1.ResourceMemory: resource.MustParse("64Mi"),
@@ -197,6 +180,38 @@ func buildSecretVolumes(mountArray types.MountArray) ([]corev1.Volume, []corev1.
 	}
 
 	return volumes, volumeMounts
+}
+
+func buildSecurityContext(insecure bool) (*corev1.PodSecurityContext, *corev1.SecurityContext) {
+	if insecure {
+		return nil, nil
+	}
+
+	secCtx := &corev1.SecurityContext{
+		Privileged:               ptr.To(false),
+		AllowPrivilegeEscalation: ptr.To(false),
+		RunAsNonRoot:             ptr.To(true),
+		Capabilities: &corev1.Capabilities{
+			Drop: []corev1.Capability{
+				"All",
+			},
+		},
+		ReadOnlyRootFilesystem: ptr.To(true),
+	}
+
+	podSecCtx := &corev1.PodSecurityContext{
+		RunAsUser:    ptr.To(int64(1000)),
+		RunAsGroup:   ptr.To(int64(3000)),
+		RunAsNonRoot: ptr.To(true),
+		SeccompProfile: &corev1.SeccompProfile{
+			Type: corev1.SeccompProfileTypeRuntimeDefault,
+		},
+		AppArmorProfile: &corev1.AppArmorProfile{
+			Type: corev1.AppArmorProfileTypeRuntimeDefault,
+		},
+	}
+
+	return podSecCtx, secCtx
 }
 
 // buildConfigmapVolumes builds volumes and volume mounts for configmaps using the MountArray type
