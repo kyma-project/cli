@@ -41,6 +41,7 @@ type appPushConfig struct {
 	mountConfigmaps            types.MountArray
 	mountServiceBindingSecrets types.ServiceBindingSecretArray
 	quiet                      bool
+	insecure                   bool
 }
 
 func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
@@ -120,6 +121,7 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	// common flags
 	cmd.Flags().StringVar(&config.name, "name", "", "Name of the app")
+	cmd.Flags().BoolVar(&config.insecure, "insecure", false, "Disables SecurityContext configuration for the app deployment")
 	cmd.Flags().BoolVarP(&config.quiet, "quiet", "q", false, "Suppresses non-essential output (prints only the URL of the pushed app, if exposed)")
 	cmd.Flags().Var(&config.envs, "env", "Environment variables for the app in format NAME=VALUE")
 	cmd.Flags().Var(&config.fileEnvs, "env-from-file", "Environment variables for the app loaded from a file in format ENV_NAME=FILE_PATH:FILE_KEY for a single key or FILE_PATH[:ENVS_PREFIX] to fetch all keys")
@@ -303,6 +305,7 @@ func createDeployment(cfg *appPushConfig, client kube.Client, image, imagePullSe
 		ConfigmapMounts:            cfg.mountConfigmaps,
 		ServiceBindingSecretMounts: cfg.mountServiceBindingSecrets,
 		Envs:                       envs,
+		Insecure:                   cfg.insecure,
 	})
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to create deployment"))

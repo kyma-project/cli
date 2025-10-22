@@ -27,7 +27,7 @@ kubectl wait --for condition=Installed dockerregistries.operator.kyma-project.io
 # Push sample go app
 
 echo "Step3: Push sample Go application (tests/k3d/sample-go)"
-../../bin/kyma app push --name test-app --code-path sample-go
+../../bin/kyma app push --name test-app --code-path sample-go --insecure
 kubectl wait --for condition=Available deployment test-app --timeout=60s
 kubectl port-forward deployments/test-app 8080:8080 &
 sleep 3 # wait for ports to get forwarded

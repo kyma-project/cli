@@ -5,3 +5,7 @@ e2e-test:
 .PHONY: mount-test
 mount-test:
 	./test-mount-flags-simple.sh
+
+.PHONY: cluster-info
+cluster-info:
+	./cluster_info.sh

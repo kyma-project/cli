@@ -28,3 +28,6 @@ jobs:
       - uses: kyma-project/serverless/.github/actions/create-k3d-cluster@9e8c091842e5c884e1770ef0bcc5b4b4d2894b74
       - name: test
         run: make -C tests/k3d e2e-test
+      - name: collect cluster info
+        if: ${{ failure() }}
+        run: make -C tests/k3d cluster-info
