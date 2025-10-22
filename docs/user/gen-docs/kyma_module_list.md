@@ -15,6 +15,7 @@ kyma module list [flags]
 ```text
   -o, --output string           Output format (Possible values: table, json, yaml)
       --show-errors             Indicates whether to show errors outputted by misconfigured modules
+      --context string          The name of the kubeconfig context to use
   -h, --help                    Help for the command
       --kubeconfig string       Path to the Kyma kubeconfig file
       --show-extensions-error   Prints a possible error when fetching extensions fails
