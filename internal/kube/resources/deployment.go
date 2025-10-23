@@ -66,6 +66,15 @@ func buildDeployment(opts *CreateDeploymentOpts) *appsv1.Deployment {
 
 	podSecCtx, secCtx := buildSecurityContext(opts.Insecure)
 
+	// Build environment variables - only add SERVICE_BINDING_ROOT if service binding secrets are mounted
+	envVars := opts.Envs
+	if len(opts.ServiceBindingSecretMounts.Names) > 0 {
+		envVars = append(envVars, corev1.EnvVar{
+			Name:  "SERVICE_BINDING_ROOT",
+			Value: "/bindings",
+		})
+	}
+
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: opts.Name,
@@ -98,12 +107,9 @@ func buildDeployment(opts *CreateDeploymentOpts) *appsv1.Deployment {
 									ContainerPort: 80,
 								},
 							},
-							Name:  opts.Name,
-							Image: opts.Image,
-							Env: append(opts.Envs, corev1.EnvVar{
-								Name:  "SERVICE_BINDING_ROOT",
-								Value: "/bindings",
-							}),
+							Name:            opts.Name,
+							Image:           opts.Image,
+							Env:             envVars,
 							VolumeMounts:    volumeMounts,
 							SecurityContext: secCtx,
 							Resources: corev1.ResourceRequirements{

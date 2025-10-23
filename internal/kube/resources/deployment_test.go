@@ -76,6 +76,48 @@ func Test_CreateDeployment(t *testing.T) {
 		})
 		require.ErrorContains(t, err, `deployments.apps "test-name" already exists`)
 	})
+
+	t.Run("SERVICE_BINDING_ROOT env var behavior", func(t *testing.T) {
+		t.Run("should not add SERVICE_BINDING_ROOT when no service binding secrets", func(t *testing.T) {
+			deployment := buildDeployment(&CreateDeploymentOpts{
+				Name:                       "test-app",
+				Namespace:                  "default",
+				Image:                      "test:image",
+				ServiceBindingSecretMounts: types.ServiceBindingSecretArray{}, // empty
+				Envs:                       []corev1.EnvVar{},
+			})
+
+			envVars := deployment.Spec.Template.Spec.Containers[0].Env
+			for _, env := range envVars {
+				require.NotEqual(t, "SERVICE_BINDING_ROOT", env.Name,
+					"SERVICE_BINDING_ROOT should not be present when no service binding secrets are used")
+			}
+		})
+
+		t.Run("should add SERVICE_BINDING_ROOT when service binding secrets are used", func(t *testing.T) {
+			serviceBindingSecrets := types.ServiceBindingSecretArray{}
+			_ = serviceBindingSecrets.Set("my-service-binding-secret")
+
+			deployment := buildDeployment(&CreateDeploymentOpts{
+				Name:                       "test-app",
+				Namespace:                  "default",
+				Image:                      "test:image",
+				ServiceBindingSecretMounts: serviceBindingSecrets,
+				Envs:                       []corev1.EnvVar{},
+			})
+
+			envVars := deployment.Spec.Template.Spec.Containers[0].Env
+			found := false
+			for _, env := range envVars {
+				if env.Name == "SERVICE_BINDING_ROOT" {
+					found = true
+					require.Equal(t, "/bindings", env.Value)
+					break
+				}
+			}
+			require.True(t, found, "SERVICE_BINDING_ROOT should be present when service binding secrets are used")
+		})
+	})
 }
 
 func fixDeploymentCustomEnvs() []corev1.EnvVar {
@@ -186,10 +228,7 @@ func fixDeployment() *appsv1.Deployment {
 							},
 							Name:  "test-name",
 							Image: "test:image",
-							Env: append(fixDeploymentCustomEnvs(), corev1.EnvVar{
-								Name:  "SERVICE_BINDING_ROOT",
-								Value: "/bindings",
-							}),
+							Env:   fixDeploymentCustomEnvs(),
 							VolumeMounts: []corev1.VolumeMount{
 								{
 									Name:      "tmp",

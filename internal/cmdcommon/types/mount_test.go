@@ -314,12 +314,11 @@ func TestMountArray_Set_MixedFormats(t *testing.T) {
 					break
 				}
 			}
-
-			if tt.expectError && err == nil {
-				t.Errorf("expected error but got none")
-			}
 			if !tt.expectError && err != nil {
 				t.Errorf("unexpected error: %v", err)
+			}
+			if tt.expectError && err == nil {
+				t.Errorf("expected error but got none")
 			}
 		})
 	}
