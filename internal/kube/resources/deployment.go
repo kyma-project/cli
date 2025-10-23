@@ -10,6 +10,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 )
 
 const (
@@ -106,10 +107,10 @@ func buildDeployment(opts *CreateDeploymentOpts) *appsv1.Deployment {
 									ContainerPort: 80,
 								},
 							},
-							Name:         opts.Name,
-							Image:        opts.Image,
-							Env:          envVars,
-							VolumeMounts: allVolumeMounts,
+							Name:            opts.Name,
+							Image:           opts.Image,
+							Env:             envVars,
+							VolumeMounts:    volumeMounts,
 							SecurityContext: secCtx,
 							Resources: corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
