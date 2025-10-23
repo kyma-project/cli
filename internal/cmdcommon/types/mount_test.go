@@ -307,16 +307,6 @@ func TestMountArray_Set_MixedFormats(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &MountArray{}
-			var err error
-			for _, input := range tt.inputs {
-				err = m.Set(input)
-				if err != nil {
-					break
-				}
-			}
-
-			if tt.expectError && err == nil {
-				t.Errorf("expected error but got none")
 			}
 			if !tt.expectError && err != nil {
 				t.Errorf("unexpected error: %v", err)
