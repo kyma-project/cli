@@ -8,15 +8,15 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/cmdcommon/types"
 	"github.com/kyma-project/cli.v3/internal/diagnostics"
-	"github.com/kyma-project/cli.v3/internal/output"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
 
 type diagnoseConfig struct {
 	*cmdcommon.KymaConfig
-	outputFormat output.Format
+	outputFormat types.Format
 	outputPath   string
 	verbose      bool
 }
@@ -67,7 +67,7 @@ func diagnose(cfg *diagnoseConfig, output io.Writer) clierror.Error {
 	return nil
 }
 
-func render(diagData *diagnostics.DiagnosticData, outputFilepath string, outputFormat output.Format) error {
+func render(diagData *diagnostics.DiagnosticData, outputFilepath string, outputFormat types.Format) error {
 	var outputWriter io.Writer
 
 	if outputFilepath == "" {
@@ -82,11 +82,11 @@ func render(diagData *diagnostics.DiagnosticData, outputFilepath string, outputF
 	}
 
 	switch outputFormat {
-	case output.JSONFormat:
+	case types.JSONFormat:
 		return renderJSON(outputWriter, diagData)
-	case output.YAMLFormat:
+	case types.YAMLFormat:
 		return renderYAML(outputWriter, diagData)
-	case output.DefaultFormat:
+	case types.DefaultFormat:
 		return renderYAML(outputWriter, diagData)
 	default:
 		return fmt.Errorf("unexpected output.Format: %#v", outputFormat)

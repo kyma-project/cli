@@ -6,9 +6,9 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	cmd_types "github.com/kyma-project/cli.v3/internal/cmdcommon/types"
 	"github.com/kyma-project/cli.v3/internal/extensions/actions/common"
 	"github.com/kyma-project/cli.v3/internal/extensions/types"
-	"github.com/kyma-project/cli.v3/internal/output"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -16,7 +16,7 @@ import (
 
 type resourceCreateActionConfig struct {
 	DryRun   bool                   `yaml:"dryRun"`
-	Output   output.Format          `yaml:"output"`
+	Output   cmd_types.Format       `yaml:"output"`
 	Resource map[string]interface{} `yaml:"resource"`
 }
 
@@ -57,12 +57,12 @@ func (a *resourceCreateAction) Run(cmd *cobra.Command, _ []string) clierror.Erro
 }
 
 func (a *resourceCreateAction) formatOutput(u *unstructured.Unstructured) (string, error) {
-	if a.Cfg.Output == output.JSONFormat {
+	if a.Cfg.Output == cmd_types.JSONFormat {
 		obj, err := json.MarshalIndent(u.Object, "", "  ")
 		return string(obj), err
 	}
 
-	if a.Cfg.Output == output.YAMLFormat {
+	if a.Cfg.Output == cmd_types.YAMLFormat {
 		obj, err := yaml.Marshal(u.Object)
 		return string(obj), err
 	}
