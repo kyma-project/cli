@@ -11,10 +11,10 @@ import (
 	"github.com/itchyny/gojq"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	cmd_types "github.com/kyma-project/cli.v3/internal/cmdcommon/types"
 	"github.com/kyma-project/cli.v3/internal/extensions/actions/common"
 	"github.com/kyma-project/cli.v3/internal/extensions/types"
 	"github.com/kyma-project/cli.v3/internal/kube/rootlessdynamic"
-	"github.com/kyma-project/cli.v3/internal/output"
 	"github.com/kyma-project/cli.v3/internal/render"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
@@ -22,7 +22,7 @@ import (
 )
 
 type resourceGetActionConfig struct {
-	OutputFormat      output.Format          `yaml:"output"`
+	OutputFormat      cmd_types.Format       `yaml:"output"`
 	FromAllNamespaces bool                   `yaml:"fromAllNamespaces"`
 	Resource          map[string]interface{} `yaml:"resource"`
 	OutputParameters  []outputParameter      `yaml:"outputParameters"`
@@ -82,12 +82,12 @@ func (a *resourceGetAction) formatOutput(resources *unstructured.UnstructuredLis
 	tableInfo := buildTableInfo(&a.Cfg)
 	outputParameters := convertResourcesToParameters(resources.Items, tableInfo)
 
-	if a.Cfg.OutputFormat == output.JSONFormat {
+	if a.Cfg.OutputFormat == cmd_types.JSONFormat {
 		obj, err := json.MarshalIndent(outputParameters, "", "  ")
 		return string(obj), err
 	}
 
-	if a.Cfg.OutputFormat == output.YAMLFormat {
+	if a.Cfg.OutputFormat == cmd_types.YAMLFormat {
 		obj, err := yaml.Marshal(outputParameters)
 		return string(obj), err
 	}

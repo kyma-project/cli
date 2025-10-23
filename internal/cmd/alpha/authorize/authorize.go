@@ -9,8 +9,8 @@ import (
 	"github.com/kyma-project/cli.v3/internal/authorization"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/cmdcommon/types"
 	"github.com/kyma-project/cli.v3/internal/flags"
-	"github.com/kyma-project/cli.v3/internal/output"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -28,7 +28,7 @@ type authorizeConfig struct {
 	clusterrole  string
 	name         string
 	dryRun       bool
-	outputFormat output.Format
+	outputFormat types.Format
 }
 
 func NewAuthorizeCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
@@ -145,9 +145,9 @@ func outputResources(cfg *authorizeConfig, oidcResource *unstructured.Unstructur
 	var writer io.Writer = os.Stdout
 
 	switch cfg.outputFormat {
-	case output.JSONFormat:
+	case types.JSONFormat:
 		return outputJSON(writer, oidcResource, rbacResource)
-	case output.YAMLFormat, output.DefaultFormat:
+	case types.YAMLFormat, types.DefaultFormat:
 		return outputYAML(writer, oidcResource, rbacResource)
 	default:
 		return outputYAML(writer, oidcResource, rbacResource)

@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/kyma-project/cli.v3/internal/output"
+	"github.com/kyma-project/cli.v3/internal/cmdcommon/types"
 	"github.com/kyma-project/cli.v3/internal/render"
 	"gopkg.in/yaml.v3"
 )
@@ -48,11 +48,11 @@ var (
 )
 
 // Renders uses standard output to print ModuleList in table view
-func Render(modulesList ModulesList, tableInfo TableInfo, format output.Format) error {
+func Render(modulesList ModulesList, tableInfo TableInfo, format types.Format) error {
 	switch format {
-	case output.JSONFormat:
+	case types.JSONFormat:
 		return renderJSON(os.Stdout, modulesList, tableInfo)
-	case output.YAMLFormat:
+	case types.YAMLFormat:
 		return renderYAML(os.Stdout, modulesList, tableInfo)
 	default:
 		return renderTable(os.Stdout, modulesList, tableInfo)
