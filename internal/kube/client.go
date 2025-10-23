@@ -129,7 +129,7 @@ func (c *client) RootlessDynamic() rootlessdynamic.Interface {
 }
 
 func (c *client) RestClient() *rest.RESTClient {
-	return c.restClient // TODO: Update schema - meanwhile can use kubeclient.Static().Corev1().RESTClient()
+	return c.restClient
 }
 
 func (c *client) RestConfig() *rest.Config {

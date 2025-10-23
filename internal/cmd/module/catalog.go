@@ -3,15 +3,15 @@ package module
 import (
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/cmdcommon/types"
 	"github.com/kyma-project/cli.v3/internal/modules"
 	"github.com/kyma-project/cli.v3/internal/modules/repo"
-	"github.com/kyma-project/cli.v3/internal/output"
 	"github.com/spf13/cobra"
 )
 
 type catalogConfig struct {
 	*cmdcommon.KymaConfig
-	outputFormat output.Format
+	outputFormat types.Format
 }
 
 func newCatalogCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
