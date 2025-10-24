@@ -2,7 +2,6 @@ package app
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"time"
 
@@ -14,6 +13,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/flags"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/kube/resources"
+	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/kyma-project/cli.v3/internal/pack"
 	"github.com/kyma-project/cli.v3/internal/registry"
 	"github.com/spf13/cobra"
@@ -195,10 +195,8 @@ func (apc *appPushConfig) validate() clierror.Error {
 }
 
 func runAppPush(cfg *appPushConfig) clierror.Error {
-
-	writer := io.Writer(os.Stdout)
 	if cfg.quiet {
-		writer = io.Discard
+		out.DisableMsg()
 	}
 
 	image := cfg.image
@@ -223,7 +221,7 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 		imagePullSecret = registryConfig.SecretName
 	}
 
-	fmt.Fprintf(writer, "\nCreating deployment %s/%s\n", cfg.namespace, cfg.name)
+	out.Msgfln("\nCreating deployment %s/%s", cfg.namespace, cfg.name)
 
 	clierr = createDeployment(cfg, client, image, imagePullSecret)
 	if clierr != nil {
@@ -231,7 +229,7 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 	}
 
 	if cfg.containerPort.Value != nil {
-		fmt.Fprintf(writer, "\nCreating service %s/%s\n", cfg.namespace, cfg.name)
+		out.Msgfln("\nCreating service %s/%s", cfg.namespace, cfg.name)
 		err := resources.CreateService(cfg.Ctx, client, cfg.name, cfg.namespace, int32(*cfg.containerPort.Value))
 		if err != nil {
 			return clierror.Wrap(err, clierror.New("failed to create service"))
@@ -239,7 +237,7 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 	}
 
 	if cfg.expose {
-		fmt.Fprintf(writer, "\nCreating API Rule %s/%s\n", cfg.namespace, cfg.name)
+		out.Msgfln("\nCreating API Rule %s/%s", cfg.namespace, cfg.name)
 		url := fmt.Sprintf("%s.<CLUSTER_DOMAIN>", cfg.name)
 
 		err := resources.CreateAPIRule(cfg.Ctx, client.RootlessDynamic(), cfg.name, cfg.namespace, cfg.name, uint32(*cfg.containerPort.Value))
@@ -261,9 +259,9 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 			}
 		}
 
-		fmt.Fprintf(writer, "\nThe %s app is available under the \n", cfg.name)
+		out.Msgfln("\nThe %s app is available under the", cfg.name)
 		// print the URL regardless if in quiet mode
-		fmt.Print(url)
+		out.Prio(url)
 
 	}
 
@@ -315,7 +313,7 @@ func createDeployment(cfg *appPushConfig, client kube.Client, image, imagePullSe
 }
 
 func buildAndImportImage(client kube.Client, cfg *appPushConfig, registryConfig *registry.InternalRegistryConfig) (string, clierror.Error) {
-	fmt.Print("Building image\n\n")
+	out.Msgln("Building image\n")
 	imageName, err := buildImage(cfg)
 	if err != nil {
 		return "", clierror.Wrap(err, clierror.New("failed to build image from dockerfile"))
@@ -330,10 +328,10 @@ func buildAndImportImage(client kube.Client, cfg *appPushConfig, registryConfig 
 		registry.NewBasicAuth(registryConfig.SecretData.Username, registryConfig.SecretData.Password),
 	)
 
-	fmt.Println("\nImporting", imageName)
+	out.Msgfln("\nImporting %s", imageName)
 	externalRegistryConfig, cliErr := registry.GetExternalConfig(cfg.Ctx, client)
 	if cliErr == nil {
-		fmt.Println("  Using registry external endpoint")
+		out.Msgln("  Using registry external endpoint")
 		// if external connection exists, use it
 		pushFunc = registry.NewPushFunc(
 			externalRegistryConfig.SecretData.PushRegAddr,

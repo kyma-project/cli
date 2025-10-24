@@ -1,7 +1,6 @@
 package kubeconfig
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
@@ -11,6 +10,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/kube/resources"
 	"github.com/kyma-project/cli.v3/internal/kubeconfig"
+	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
@@ -169,7 +169,7 @@ func returnKubeconfig(cfg *generateConfig, kubeconfig *api.Config) clierror.Erro
 		if err != nil {
 			return clierror.Wrap(err, clierror.New("failed to print kubeconfig"))
 		}
-		fmt.Println(string(message))
+		out.Msgln(string(message))
 	}
 
 	return nil

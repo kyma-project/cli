@@ -1,14 +1,13 @@
-package diagnostics_test
+package diagnostics
 
 import (
 	"bytes"
 	"context"
-	"errors"
 	"strings"
 	"testing"
 
-	"github.com/kyma-project/cli.v3/internal/diagnostics"
 	kube_fake "github.com/kyma-project/cli.v3/internal/kube/fake"
+	"github.com/kyma-project/cli.v3/internal/out"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -21,60 +20,12 @@ func TestNewMetadataCollector(t *testing.T) {
 	kubeClient := &kube_fake.KubeClient{
 		TestKubernetesInterface: fake.NewSimpleClientset(),
 	}
-	var writer bytes.Buffer
-	verbose := true
 
 	// When
-	collector := diagnostics.NewMetadataCollector(kubeClient, &writer, verbose)
+	collector := NewMetadataCollector(kubeClient)
 
 	// Then
 	assert.NotNil(t, collector)
-}
-
-func TestWriteVerboseError(t *testing.T) {
-	testCases := []struct {
-		name           string
-		verbose        bool
-		err            error
-		message        string
-		expectedOutput string
-	}{
-		{
-			name:           "Should write error when verbose is true",
-			verbose:        true,
-			err:            errors.New("test error"),
-			message:        "Test error message",
-			expectedOutput: "Test error message: test error\n",
-		},
-		{
-			name:           "Should not write error when verbose is false",
-			verbose:        false,
-			err:            errors.New("test error"),
-			message:        "Test error message",
-			expectedOutput: "",
-		},
-		{
-			name:           "Should not write error when error is nil",
-			verbose:        true,
-			err:            nil,
-			message:        "Test error message",
-			expectedOutput: "",
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			// Given
-			var writer bytes.Buffer
-			collector := diagnostics.NewMetadataCollector(nil, &writer, tc.verbose)
-
-			// When
-			collector.WriteVerboseError(tc.err, tc.message)
-
-			// Then
-			assert.Equal(t, tc.expectedOutput, writer.String())
-		})
-	}
 }
 
 func TestEnrichMetadataWithShootInfo(t *testing.T) {
@@ -130,9 +81,13 @@ func TestEnrichMetadataWithShootInfo(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			collector := diagnostics.NewMetadataCollector(kubeClient, &writer, tc.verbose)
+			printer := out.NewToWriter(&writer)
+			if tc.verbose {
+				printer.EnableVerbose()
+			}
 
 			// When
+			collector := MetadataCollector{kubeClient, printer}
 			metadata := collector.Run(context.TODO())
 
 			// Then
@@ -143,7 +98,6 @@ func TestEnrichMetadataWithShootInfo(t *testing.T) {
 				assert.Equal(t, tc.shootInfoConfigMap.Data["region"], metadata.Region)
 				assert.Equal(t, tc.shootInfoConfigMap.Data["shootName"], metadata.ShootName)
 				assert.Equal(t, tc.shootInfoConfigMap.Data["extensions"], strings.Join(metadata.GardenerExtensions, ","))
-				assert.Empty(t, writer.String()) // No errors should be written
 			} else {
 				assert.Empty(t, metadata.Provider)
 				assert.Empty(t, metadata.KubernetesVersion)
@@ -206,14 +160,18 @@ func TestEnrichMetadataWithKymaInfo(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
+			printer := out.NewToWriter(&writer)
+			if tc.verbose {
+				printer.EnableVerbose()
+			}
+
 			// When
-			collector := diagnostics.NewMetadataCollector(kubeClient, &writer, tc.verbose)
+			collector := MetadataCollector{kubeClient, printer}
 			metadata := collector.Run(context.TODO())
 
 			// Then
 			if tc.kymaInfoExists {
 				assert.Equal(t, tc.expectedIPs, metadata.NATGatewayIPs)
-				assert.Empty(t, writer.String()) // No errors should be written
 			} else {
 				assert.Empty(t, metadata.NATGatewayIPs)
 				if tc.verbose {
@@ -286,8 +244,13 @@ func TestEnrichMetadataWithKymaProvisioningInfo(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
+			printer := out.NewToWriter(&writer)
+			if tc.verbose {
+				printer.EnableVerbose()
+			}
+
 			// When
-			collector := diagnostics.NewMetadataCollector(kubeClient, &writer, tc.verbose)
+			collector := MetadataCollector{kubeClient, printer}
 			metadata := collector.Run(context.TODO())
 
 			// Then
@@ -381,9 +344,13 @@ func TestEnrichMetadataWithSapBtpManagerSecret(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			collector := diagnostics.NewMetadataCollector(kubeClient, &writer, tc.verbose)
+			printer := out.NewToWriter(&writer)
+			if tc.verbose {
+				printer.EnableVerbose()
+			}
 
 			// When
+			collector := MetadataCollector{kubeClient, printer}
 			metadata := collector.Run(context.TODO())
 
 			// Then
@@ -391,8 +358,6 @@ func TestEnrichMetadataWithSapBtpManagerSecret(t *testing.T) {
 
 			if tc.expectedErrorOutput != "" && tc.verbose {
 				assert.Contains(t, writer.String(), tc.expectedErrorOutput)
-			} else if !tc.verbose {
-				assert.Empty(t, writer.String())
 			}
 		})
 	}

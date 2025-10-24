@@ -3,13 +3,13 @@ package diagnose
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon/types"
 	"github.com/kyma-project/cli.v3/internal/diagnostics"
+	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
@@ -31,8 +31,7 @@ func NewDiagnoseCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Short: "Diagnose cluster health and configuration",
 		Long:  "Use this command to quickly assess the health, configuration, and potential issues in your cluster for troubleshooting and support purposes.",
 		Run: func(cmd *cobra.Command, args []string) {
-			output := cmd.OutOrStderr()
-			clierror.Check(diagnose(&cfg, output))
+			clierror.Check(diagnose(&cfg))
 		},
 	}
 
@@ -43,17 +42,21 @@ func NewDiagnoseCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	return cmd
 }
 
-func diagnose(cfg *diagnoseConfig, output io.Writer) clierror.Error {
+func diagnose(cfg *diagnoseConfig) clierror.Error {
+	if cfg.verbose {
+		out.EnableDebug()
+	}
+
 	client, clierr := cfg.GetKubeClientWithClierr()
 	if clierr != nil {
 		return clierr
 	}
 
 	if cfg.outputPath != "" {
-		fmt.Println("Collecting diagnostics data...")
+		out.Msgln("Collecting diagnostics data...")
 	}
 
-	diagnosticData := diagnostics.GetData(cfg.Ctx, client, output, cfg.verbose)
+	diagnosticData := diagnostics.GetData(cfg.Ctx, client)
 	err := render(&diagnosticData, cfg.outputPath, cfg.outputFormat)
 
 	if err != nil {
@@ -61,54 +64,53 @@ func diagnose(cfg *diagnoseConfig, output io.Writer) clierror.Error {
 	}
 
 	if cfg.outputPath != "" {
-		fmt.Println("Done.")
+		out.Msgln("Done.")
 	}
 
 	return nil
 }
 
 func render(diagData *diagnostics.DiagnosticData, outputFilepath string, outputFormat types.Format) error {
-	var outputWriter io.Writer
+	printer := out.Default
 
-	if outputFilepath == "" {
-		outputWriter = os.Stdout
-	} else {
+	if outputFilepath != "" {
 		file, err := os.Create(outputFilepath)
 		if err != nil {
 			return fmt.Errorf("failed to create output file: %w", err)
 		}
 		defer file.Close()
-		outputWriter = file
+
+		printer = out.NewToWriter(file)
 	}
 
 	switch outputFormat {
 	case types.JSONFormat:
-		return renderJSON(outputWriter, diagData)
+		return renderJSON(printer, diagData)
 	case types.YAMLFormat:
-		return renderYAML(outputWriter, diagData)
+		return renderYAML(printer, diagData)
 	case types.DefaultFormat:
-		return renderYAML(outputWriter, diagData)
+		return renderYAML(printer, diagData)
 	default:
 		return fmt.Errorf("unexpected output.Format: %#v", outputFormat)
 	}
 }
 
-func renderJSON(writer io.Writer, data *diagnostics.DiagnosticData) error {
+func renderJSON(printer *out.Printer, data *diagnostics.DiagnosticData) error {
 	obj, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
 		return err
 	}
 
-	_, err = fmt.Fprintln(writer, string(obj))
-	return err
+	printer.Msg(string(obj))
+	return nil
 }
 
-func renderYAML(writer io.Writer, data *diagnostics.DiagnosticData) error {
+func renderYAML(printer *out.Printer, data *diagnostics.DiagnosticData) error {
 	obj, err := yaml.Marshal(data)
 	if err != nil {
 		return err
 	}
 
-	_, err = fmt.Fprintln(writer, string(obj))
-	return err
+	printer.Msg(string(obj))
+	return nil
 }

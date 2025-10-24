@@ -1,4 +1,4 @@
-package diagnostics_test
+package diagnostics
 
 import (
 	"bytes"
@@ -7,10 +7,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/kyma-project/cli.v3/internal/diagnostics"
 	"github.com/kyma-project/cli.v3/internal/kube/fake"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	modulesfake "github.com/kyma-project/cli.v3/internal/modules/fake"
+	"github.com/kyma-project/cli.v3/internal/out"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	k8sfake "k8s.io/client-go/kubernetes/fake"
@@ -19,11 +19,9 @@ import (
 func TestNewModuleCustomResourceStateCollector(t *testing.T) {
 	// Given
 	fakeClient := &fake.KubeClient{}
-	var writer bytes.Buffer
-	verbose := true
 
 	// When
-	collector := diagnostics.NewModuleCustomResourceStateCollector(fakeClient, &writer, verbose)
+	collector := NewModuleCustomResourceStateCollector(fakeClient)
 
 	// Then
 	assert.NotNil(t, collector)
@@ -33,11 +31,9 @@ func TestNewModuleCustomResourceStateCollectorWithRepo(t *testing.T) {
 	// Given
 	fakeClient := &fake.KubeClient{}
 	fakeRepo := &modulesfake.ModuleTemplatesRepo{}
-	var writer bytes.Buffer
-	verbose := true
 
 	// When
-	collector := diagnostics.NewModuleCustomResourceStateCollectorWithRepo(fakeClient, fakeRepo, &writer, verbose)
+	collector := NewModuleCustomResourceStateCollectorWithRepo(fakeClient, fakeRepo)
 
 	// Then
 	assert.NotNil(t, collector)
@@ -108,12 +104,10 @@ func TestModuleCustomResourceStateCollector_HandleInvalidData(t *testing.T) {
 				ReturnCommunity: []kyma.ModuleTemplate{},
 			}
 
-			collector := diagnostics.NewModuleCustomResourceStateCollectorWithRepo(
-				fakeClient,
-				fakeModuleRepo,
-				&writer,
-				true, // verbose enabled
-			)
+			printer := out.NewToWriter(&writer)
+			printer.EnableVerbose()
+
+			collector := ModuleCustomResourceStateCollector{fakeClient, fakeModuleRepo, printer}
 
 			// When
 			result := collector.Run(context.Background())
@@ -286,12 +280,12 @@ func TestModuleCustomResourceStateCollector_Run(t *testing.T) {
 				ReturnCommunity: tc.communityModules,
 			}
 
-			collector := diagnostics.NewModuleCustomResourceStateCollectorWithRepo(
-				fakeClient,
-				fakeModuleRepo,
-				&writer,
-				tc.enableVerboseLogging,
-			)
+			printer := out.NewToWriter(&writer)
+			if tc.enableVerboseLogging {
+				printer.EnableVerbose()
+			}
+
+			collector := ModuleCustomResourceStateCollector{fakeClient, fakeModuleRepo, printer}
 
 			// When
 			result := collector.Run(context.Background())

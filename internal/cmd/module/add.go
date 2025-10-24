@@ -12,6 +12,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/kube/resources"
 	"github.com/kyma-project/cli.v3/internal/modules"
 	"github.com/kyma-project/cli.v3/internal/modules/repo"
+	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -118,7 +119,7 @@ func installCommunityModule(cfg *addConfig, client *kube.Client, repo repo.Modul
 		return clierror.Wrap(err, clierror.New("failed to install the community module"))
 	}
 
-	fmt.Println("Warning:\n  You are about to install a community module.\n" +
+	out.Msgln("Warning:\n  You are about to install a community module.\n" +
 		"  Community modules are not officially supported and come with no binding Service Level Agreement (SLA).\n" +
 		"  There is no guarantee of support, maintenance, or compatibility.")
 

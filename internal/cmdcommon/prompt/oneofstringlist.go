@@ -7,11 +7,13 @@ import (
 	"os"
 	"slices"
 	"strings"
+
+	"github.com/kyma-project/cli.v3/internal/out"
 )
 
 type OneOfStringList struct {
 	reader     io.Reader
-	writer     io.Writer
+	printer    *out.Printer
 	message    string
 	promptText string
 	values     []string
@@ -20,17 +22,7 @@ type OneOfStringList struct {
 func NewOneOfStringList(message, promptText string, values []string) *OneOfStringList {
 	return &OneOfStringList{
 		reader:     os.Stdin,
-		writer:     os.Stdout,
-		message:    message,
-		promptText: promptText,
-		values:     values,
-	}
-}
-
-func NewCustomOneOfStringList(reader io.Reader, writer io.Writer, message, promptText string, values []string) *OneOfStringList {
-	return &OneOfStringList{
-		reader:     reader,
-		writer:     writer,
+		printer:    out.Default,
 		message:    message,
 		promptText: promptText,
 		values:     values,
@@ -38,7 +30,7 @@ func NewCustomOneOfStringList(reader io.Reader, writer io.Writer, message, promp
 }
 
 func (l *OneOfStringList) Prompt() (string, error) {
-	fmt.Fprintf(l.writer, "%s\n%s\n\n%s", l.message, l.valuesListString(), l.promptText)
+	l.printer.Msgf("%s\n%s\n\n%s", l.message, l.valuesListString(), l.promptText)
 	scanner := bufio.NewScanner(l.reader)
 	scanner.Scan()
 	err := scanner.Err()

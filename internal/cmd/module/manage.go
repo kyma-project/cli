@@ -12,6 +12,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"github.com/kyma-project/cli.v3/internal/modules"
 	"github.com/kyma-project/cli.v3/internal/modules/repo"
+	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -82,7 +83,7 @@ func manageModuleInKyma(cfg *manageConfig, client kube.Client) clierror.Error {
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to manage module in the target Kyma environment"))
 	}
-	fmt.Printf("Module %s set to managed\n", cfg.module)
+	out.Msgfln("Module %s set to managed", cfg.module)
 
 	return nil
 }
@@ -92,7 +93,7 @@ func manageModuleMissingInKyma(cfg *manageConfig, client kube.Client) clierror.E
 
 	err := modules.ManageModuleMissingInKyma(cfg.Ctx, client, moduleTemplatesRepo, cfg.module, cfg.policy)
 	if err == nil {
-		fmt.Printf("Module %s set to managed\n", cfg.module)
+		out.Msgfln("Module %s set to managed", cfg.module)
 		return nil
 	}
 	if !errors.Is(err, modules.ErrModuleInstalledVersionNotInKymaChannel) {
@@ -120,7 +121,7 @@ func manageModuleMissingInKyma(cfg *manageConfig, client kube.Client) clierror.E
 		return clierr
 	}
 
-	fmt.Printf("Module %s set to managed (channel: %s)\n", cfg.module, selectedChannel)
+	out.Msgfln("Module %s set to managed (channel: %s)", cfg.module, selectedChannel)
 	return nil
 }
 
@@ -132,8 +133,8 @@ func promptForAlternativeChannel(channelsAndVersions map[string]string) (string,
 		channelOpts = append(channelOpts, *valWithDesc)
 	}
 
-	fmt.Println("The version of the module you have installed is not available in the default Kyma channel.")
-	fmt.Println("To proceed, please select one of the available channels below to manage the module with the desired version.")
+	out.Msgln("The version of the module you have installed is not available in the default Kyma channel.")
+	out.Msgln("To proceed, please select one of the available channels below to manage the module with the desired version.")
 
 	channelPrompt := prompt.NewOneOfEnumList("Available versions:\n", "Type the option number: ", channelOpts)
 	selectedChannel, err := channelPrompt.Prompt()

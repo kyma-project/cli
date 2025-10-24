@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"testing"
 
+	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/stretchr/testify/require"
 )
 
@@ -51,7 +52,13 @@ func TestOneOfEnumList_Prompt_Table(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			input := bytes.NewBufferString(tc.input)
 			output := &bytes.Buffer{}
-			prompt := NewCustomOneOfEnumList(input, output, "Choose:", "Your choice:", values)
+			prompt := OneOfEnumList{
+				reader:                 input,
+				printer:                out.NewToWriter(output),
+				message:                "Choose:",
+				promptText:             "Your choice:",
+				valuesWithDescriptions: values,
+			}
 
 			selected, err := prompt.Prompt()
 			if tc.expectError {

@@ -10,6 +10,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"github.com/kyma-project/cli.v3/internal/kube/rootlessdynamic"
+	"github.com/kyma-project/cli.v3/internal/out"
 	"gopkg.in/yaml.v3"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -140,7 +141,7 @@ func (r *moduleTemplatesRepo) RunningAssociatedResourcesOfModule(ctx context.Con
 			AllNamespaces: true,
 		})
 		if err != nil && !apierrors.IsNotFound(err) {
-			fmt.Printf("failed to list resources %v: %v", associatedResource, err)
+			out.Errfln("failed to list resources %v: %v", associatedResource, err)
 			continue
 		}
 		if err != nil && apierrors.IsNotFound(err) {
@@ -233,7 +234,7 @@ func (r *moduleTemplatesRepo) selectInstalled(ctx context.Context, moduleTemplat
 		}
 
 		if err != nil {
-			fmt.Printf("failed to request for installed manager: %v", err)
+			out.Errfln("failed to request for installed manager: %v", err)
 			continue
 		}
 

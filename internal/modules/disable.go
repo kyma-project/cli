@@ -3,8 +3,6 @@ package modules
 import (
 	"context"
 	"fmt"
-	"io"
-	"os"
 	"slices"
 	"time"
 
@@ -13,6 +11,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"github.com/kyma-project/cli.v3/internal/kube/rootlessdynamic"
 	"github.com/kyma-project/cli.v3/internal/modules/repo"
+	"github.com/kyma-project/cli.v3/internal/out"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/watch"
@@ -23,9 +22,9 @@ import (
 // at the end removes module from the target Kyma environment
 func Disable(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository, module string, community bool) clierror.Error {
 	if community {
-		return disableCommunity(os.Stdout, ctx, repo, module)
+		return disableCommunity(out.Default, ctx, repo, module)
 	}
-	return disableCore(os.Stdout, ctx, client, module)
+	return disableCore(out.Default, ctx, client, module)
 }
 
 func GetRunningResourcesOfCommunityModule(ctx context.Context, repo repo.ModuleTemplatesRepository, module string) ([]string, clierror.Error) {
@@ -47,8 +46,8 @@ func GetRunningResourcesOfCommunityModule(ctx context.Context, repo repo.ModuleT
 	return runningResourcesNames, nil
 }
 
-func disableCommunity(writer io.Writer, ctx context.Context, repo repo.ModuleTemplatesRepository, module string) clierror.Error {
-	fmt.Fprintf(writer, "removing %s community module from the target Kyma environment\n", module)
+func disableCommunity(printer *out.Printer, ctx context.Context, repo repo.ModuleTemplatesRepository, module string) clierror.Error {
+	printer.Msgfln("removing %s community module from the target Kyma environment", module)
 
 	moduleTemplateToDelete, err := getModuleTemplateToDelete(ctx, repo, module)
 	if err != nil {
@@ -69,10 +68,10 @@ func disableCommunity(writer io.Writer, ctx context.Context, repo repo.ModuleTem
 		r := unstructured.Unstructured{Object: resource}
 		if err != nil {
 			removedSuccessfully = false
-			fmt.Fprintf(writer, "failed to delete resource %s (%s): %v\n", r.GetName(), r.GetKind(), err)
+			printer.Msgfln("failed to delete resource %s (%s): %v", r.GetName(), r.GetKind(), err)
 			continue
 		}
-		fmt.Fprintf(writer, "waiting for resource deletion: %s (%s)\n", r.GetName(), r.GetKind())
+		printer.Msgfln("waiting for resource deletion: %s (%s)", r.GetName(), r.GetKind())
 		timeoutCtx, cancel := context.WithTimeout(ctx, time.Second*100)
 		defer cancel()
 
@@ -83,9 +82,9 @@ func disableCommunity(writer io.Writer, ctx context.Context, repo repo.ModuleTem
 	}
 
 	if removedSuccessfully {
-		fmt.Fprintf(writer, "%s community module successfully removed\n", module)
+		printer.Msgfln("%s community module successfully removed", module)
 	} else {
-		fmt.Fprintf(writer, "some errors occured during the %s community module removal\n", module)
+		printer.Msgfln("some errors occured during the %s community module removal", module)
 	}
 
 	return nil
@@ -106,23 +105,23 @@ func getModuleTemplateToDelete(ctx context.Context, repo repo.ModuleTemplatesRep
 	return &installedModulesWithName[0], nil
 }
 
-func disableCore(writer io.Writer, ctx context.Context, client kube.Client, module string) clierror.Error {
-	clierr := removeModuleCR(writer, ctx, client, module)
+func disableCore(printer *out.Printer, ctx context.Context, client kube.Client, module string) clierror.Error {
+	clierr := removeModuleCR(printer, ctx, client, module)
 	if clierr != nil {
 		return clierr
 	}
 
-	fmt.Fprintf(writer, "removing %s module from the target Kyma environment\n", module)
+	printer.Msgfln("removing %s module from the target Kyma environment", module)
 	err := client.Kyma().DisableModule(ctx, module)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to disable module"))
 	}
 
-	fmt.Fprintf(writer, "%s module disabled\n", module)
+	printer.Msgfln("%s module disabled", module)
 	return nil
 }
 
-func removeModuleCR(writer io.Writer, ctx context.Context, client kube.Client, module string) clierror.Error {
+func removeModuleCR(printer *out.Printer, ctx context.Context, client kube.Client, module string) clierror.Error {
 	info, err := client.Kyma().GetModuleInfo(ctx, module)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to get module info from the target Kyma environment"))
@@ -163,7 +162,7 @@ func removeModuleCR(writer io.Writer, ctx context.Context, client kube.Client, m
 	}
 
 	for _, moduleCR := range list.Items {
-		fmt.Fprintf(writer, "removing %s/%s CR\n", moduleCR.GetNamespace(), moduleCR.GetName())
+		printer.Msgfln("removing %s/%s CR", moduleCR.GetNamespace(), moduleCR.GetName())
 		err = client.RootlessDynamic().Remove(ctx, &moduleCR, false)
 		if err != nil && !errors.IsNotFound(err) {
 			return clierror.Wrap(err, clierror.New(
@@ -173,7 +172,7 @@ func removeModuleCR(writer io.Writer, ctx context.Context, client kube.Client, m
 	}
 
 	for i, moduleCR := range list.Items {
-		fmt.Fprintf(writer, "waiting for %s/%s CR to be removed\n", moduleCR.GetNamespace(), moduleCR.GetName())
+		printer.Msgfln("waiting for %s/%s CR to be removed", moduleCR.GetNamespace(), moduleCR.GetName())
 		timeoutCtx, cancel := context.WithTimeout(ctx, time.Second*100)
 		defer cancel()
 
