@@ -49,7 +49,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	out.Errfln("Docs successfully generated to the following dir: %s", docsTargetDir)
+	out.Msgfln("Docs successfully generated to the following dir: %s", docsTargetDir)
 	os.Exit(0)
 }
 
