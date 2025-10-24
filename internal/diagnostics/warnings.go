@@ -2,9 +2,9 @@ package diagnostics
 
 import (
 	"context"
-	"io"
 
 	"github.com/kyma-project/cli.v3/internal/kube"
+	"github.com/kyma-project/cli.v3/internal/out"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -21,20 +21,20 @@ type EventInfo struct {
 
 type ClusterWarningsCollector struct {
 	client kube.Client
-	VerboseLogger
+	*out.Printer
 }
 
-func NewClusterWarningsCollector(client kube.Client, writer io.Writer, verbose bool) *ClusterWarningsCollector {
+func NewClusterWarningsCollector(client kube.Client) *ClusterWarningsCollector {
 	return &ClusterWarningsCollector{
-		client:        client,
-		VerboseLogger: NewVerboseLogger(writer, verbose),
+		client:  client,
+		Printer: out.Default,
 	}
 }
 
 func (wc *ClusterWarningsCollector) Run(ctx context.Context) []EventInfo {
 	warnings, err := wc.getClusterWarnings(ctx)
 	if err != nil {
-		wc.WriteVerboseError(err, "Failed to get system warnings from the cluster")
+		wc.Verbosefln("Failed to get system warnings from the cluster: %v", err)
 	}
 
 	return warnings

@@ -7,6 +7,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/kyma-project/cli.v3/internal/out"
 )
 
 type EnumValueWithDescription struct {
@@ -23,7 +25,7 @@ func NewEnumValWithDesc(val, desc string) *EnumValueWithDescription {
 
 type OneOfEnumList struct {
 	reader                 io.Reader
-	writer                 io.Writer
+	printer                *out.Printer
 	message                string
 	promptText             string
 	valuesWithDescriptions []EnumValueWithDescription
@@ -32,17 +34,7 @@ type OneOfEnumList struct {
 func NewOneOfEnumList(message, promptText string, valuesWithDescriptions []EnumValueWithDescription) *OneOfEnumList {
 	return &OneOfEnumList{
 		reader:                 os.Stdin,
-		writer:                 os.Stdout,
-		message:                message,
-		promptText:             promptText,
-		valuesWithDescriptions: valuesWithDescriptions,
-	}
-}
-
-func NewCustomOneOfEnumList(reader io.Reader, writer io.Writer, message, promptText string, valuesWithDescriptions []EnumValueWithDescription) *OneOfEnumList {
-	return &OneOfEnumList{
-		reader:                 reader,
-		writer:                 writer,
+		printer:                out.Default,
 		message:                message,
 		promptText:             promptText,
 		valuesWithDescriptions: valuesWithDescriptions,
@@ -50,7 +42,7 @@ func NewCustomOneOfEnumList(reader io.Reader, writer io.Writer, message, promptT
 }
 
 func (l *OneOfEnumList) Prompt() (string, error) {
-	fmt.Fprintf(l.writer, "%s\n%s\n\n%s", l.message, l.valuesListString(), l.promptText)
+	l.printer.Msgf("%s\n%s\n\n%s", l.message, l.valuesListString(), l.promptText)
 	scanner := bufio.NewScanner(l.reader)
 	scanner.Scan()
 	err := scanner.Err()

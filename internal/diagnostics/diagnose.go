@@ -2,7 +2,6 @@ package diagnostics
 
 import (
 	"context"
-	"io"
 
 	"github.com/kyma-project/cli.v3/internal/kube"
 )
@@ -14,11 +13,11 @@ type DiagnosticData struct {
 	ModuleCustomResourceState []ModuleCustomResourceState `json:"kymaModulesErrors" yaml:"kymaModulesErrors"`
 }
 
-func GetData(ctx context.Context, client kube.Client, output io.Writer, verbose bool) DiagnosticData {
-	metadataCollector := NewMetadataCollector(client, output, verbose)
-	kymaSystemWarningsCollector := NewClusterWarningsCollector(client, output, verbose)
-	nodeResourceInfoCollector := NewNodeResourceInfoCollector(client, output, verbose)
-	modulesCustomResourceStates := NewModuleCustomResourceStateCollector(client, output, verbose)
+func GetData(ctx context.Context, client kube.Client) DiagnosticData {
+	metadataCollector := NewMetadataCollector(client)
+	kymaSystemWarningsCollector := NewClusterWarningsCollector(client)
+	nodeResourceInfoCollector := NewNodeResourceInfoCollector(client)
+	modulesCustomResourceStates := NewModuleCustomResourceStateCollector(client)
 
 	return DiagnosticData{
 		Metadata:                  metadataCollector.Run(ctx),

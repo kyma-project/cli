@@ -5,6 +5,7 @@ import (
 	"io"
 	"testing"
 
+	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/stretchr/testify/require"
 )
 
@@ -103,7 +104,7 @@ func TestRender_renderTable(t *testing.T) {
 	t.Run("render table from modules catalog", func(t *testing.T) {
 		buffer := bytes.NewBuffer([]byte{})
 
-		err := renderTable(buffer, testModules, CatalogTableInfo)
+		err := renderTable(out.NewToWriter(buffer), testModules, CatalogTableInfo)
 		require.NoError(t, err)
 
 		tableViewBytes, err := io.ReadAll(buffer)
@@ -114,7 +115,7 @@ func TestRender_renderTable(t *testing.T) {
 	t.Run("render table from installed modules", func(t *testing.T) {
 		buffer := bytes.NewBuffer([]byte{})
 
-		err := renderTable(buffer, testInstalledModuleList, ModulesTableInfo)
+		err := renderTable(out.NewToWriter(buffer), testInstalledModuleList, ModulesTableInfo)
 		require.NoError(t, err)
 
 		tableViewBytes, err := io.ReadAll(buffer)
@@ -127,7 +128,7 @@ func TestRender_renderJSON(t *testing.T) {
 	t.Run("render table from modules catalog", func(t *testing.T) {
 		buffer := bytes.NewBuffer([]byte{})
 
-		err := renderJSON(buffer, testModules, CatalogTableInfo)
+		err := renderJSON(out.NewToWriter(buffer), testModules, CatalogTableInfo)
 		require.NoError(t, err)
 
 		jsonViewBytes, err := io.ReadAll(buffer)
@@ -140,7 +141,7 @@ func TestRender_renderYAML(t *testing.T) {
 	t.Run("render table from modules catalog", func(t *testing.T) {
 		buffer := bytes.NewBuffer([]byte{})
 
-		err := renderYAML(buffer, testModules, CatalogTableInfo)
+		err := renderYAML(out.NewToWriter(buffer), testModules, CatalogTableInfo)
 		require.NoError(t, err)
 
 		yamlViewBytes, err := io.ReadAll(buffer)

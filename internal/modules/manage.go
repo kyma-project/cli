@@ -8,6 +8,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"github.com/kyma-project/cli.v3/internal/modules/repo"
+	"github.com/kyma-project/cli.v3/internal/out"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
@@ -91,7 +92,7 @@ func findInstalledModuleTemplate(ctx context.Context, client kube.Client, repo r
 
 		installedManager, err := repo.InstalledManager(ctx, coreModuleTemplate)
 		if err != nil {
-			fmt.Printf("failed to get installed manager: %v\n", err)
+			out.Msgfln("failed to get installed manager: %v", err)
 			continue
 		}
 
@@ -101,7 +102,7 @@ func findInstalledModuleTemplate(ctx context.Context, client kube.Client, repo r
 
 		installedManagerVersion, err := getManagerVersion(installedManager)
 		if err != nil {
-			fmt.Printf("failed to determine installed manager version: %v\n", err)
+			out.Msgfln("failed to determine installed manager version: %v", err)
 			continue
 		}
 
@@ -144,12 +145,12 @@ func GetAvailableChannelsAndVersions(ctx context.Context, client kube.Client, re
 func alreadyExistsInKymaCr(ctx context.Context, client kube.Client, moduleName string) bool {
 	defaultKyma, err := client.Kyma().GetDefaultKyma(ctx)
 	if err != nil {
-		fmt.Printf("failed to get kyma cr %v", err)
+		out.Msgfln("failed to get kyma cr %v", err)
 	}
 
 	for _, m := range defaultKyma.Spec.Modules {
 		if moduleName == m.Name {
-			fmt.Printf("module %s already exists in kyma cr\n", moduleName)
+			out.Msgfln("module %s already exists in kyma cr", moduleName)
 			return true
 		}
 	}

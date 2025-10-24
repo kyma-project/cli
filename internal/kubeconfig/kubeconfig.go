@@ -9,6 +9,7 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/kube"
+	"github.com/kyma-project/cli.v3/internal/out"
 	authv1 "k8s.io/api/authentication/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -55,7 +56,7 @@ func Prepare(ctx context.Context, client kube.Client, name, namespace, time, out
 		tokenData.Token = string(secret.Data["token"])
 		certData = secret.Data["ca.crt"]
 		if output != "" {
-			fmt.Println("Token is valid permanently")
+			out.Msgln("Token is valid permanently")
 		}
 	} else {
 		certData = client.APIConfig().Clusters[clusterName].CertificateAuthorityData
@@ -64,7 +65,7 @@ func Prepare(ctx context.Context, client kube.Client, name, namespace, time, out
 			return nil, err
 		}
 		if output != "" {
-			fmt.Println("Token will expire: " + tokenData.ExpirationTimestamp.String())
+			out.Msgln("Token will expire: " + tokenData.ExpirationTimestamp.String())
 		}
 	}
 

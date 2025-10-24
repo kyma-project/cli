@@ -12,6 +12,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/kube/fake"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	modulesfake "github.com/kyma-project/cli.v3/internal/modules/fake"
+	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -61,7 +62,7 @@ func TestEnable(t *testing.T) {
 
 		repo := &modulesfake.ModuleTemplatesRepo{}
 
-		err := enable(buffer, context.Background(), &client, repo, "keda", "fast", true)
+		err := enable(out.NewToWriter(buffer), context.Background(), &client, repo, "keda", "fast", true)
 		require.Nil(t, err)
 		require.Equal(t, "adding keda module to the Kyma CR\nkeda module enabled\n", buffer.String())
 		require.Equal(t, []fake.FakeEnabledModule{expectedEnabledModule}, kymaClient.EnabledModules)
@@ -88,7 +89,7 @@ func TestEnable(t *testing.T) {
 		}
 		repo := &modulesfake.ModuleTemplatesRepo{}
 
-		err := enable(buffer, context.Background(), &client, repo, "keda", "fast", false, testKedaCR)
+		err := enable(out.NewToWriter(buffer), context.Background(), &client, repo, "keda", "fast", false, testKedaCR)
 		require.Nil(t, err)
 		require.Equal(t, "adding keda module to the Kyma CR\nwaiting for module to be ready\napplying kyma-system/default cr\nkeda module enabled\n", buffer.String())
 		require.Equal(t, []fake.FakeEnabledModule{expectedEnabledModule}, kymaClient.EnabledModules)
@@ -115,7 +116,7 @@ func TestEnable(t *testing.T) {
 			clierror.New("unknown module name", hints...),
 		)
 
-		err := enable(buffer, context.Background(), &client, repo, "keda", "fast", true)
+		err := enable(out.NewToWriter(buffer), context.Background(), &client, repo, "keda", "fast", true)
 		require.Equal(t, expectedCliErr, err)
 	})
 
@@ -140,7 +141,7 @@ func TestEnable(t *testing.T) {
 			clierror.New("unknown module name", hints...),
 		)
 
-		err := enable(buffer, context.Background(), &client, repo, "keda", "fast", true)
+		err := enable(out.NewToWriter(buffer), context.Background(), &client, repo, "keda", "fast", true)
 		require.Equal(t, expectedCliErr, err)
 	})
 
@@ -162,7 +163,7 @@ func TestEnable(t *testing.T) {
 			clierror.New("failed to check module state"),
 		)
 
-		err := enable(buffer, context.Background(), &client, repo, "keda", "fast", false, testKedaCR)
+		err := enable(out.NewToWriter(buffer), context.Background(), &client, repo, "keda", "fast", false, testKedaCR)
 		require.Equal(t, expectedCliErr, err)
 		require.Equal(t, "adding keda module to the Kyma CR\nwaiting for module to be ready\n", buffer.String())
 	})
@@ -189,7 +190,7 @@ func TestEnable(t *testing.T) {
 			clierror.New("failed to apply custom cr from path"),
 		)
 
-		err := enable(buffer, context.Background(), &client, repo, "keda", "fast", false, testKedaCR)
+		err := enable(out.NewToWriter(buffer), context.Background(), &client, repo, "keda", "fast", false, testKedaCR)
 		require.Equal(t, expectedCliErr, err)
 		require.Equal(t, "adding keda module to the Kyma CR\nwaiting for module to be ready\napplying kyma-system/default cr\n", buffer.String())
 	})

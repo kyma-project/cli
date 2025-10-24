@@ -3,14 +3,13 @@ package authorize
 import (
 	"encoding/json"
 	"fmt"
-	"io"
-	"os"
 
 	"github.com/kyma-project/cli.v3/internal/authorization"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon/types"
 	"github.com/kyma-project/cli.v3/internal/flags"
+	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -142,19 +141,19 @@ func buildRoleBinding(builder *authorization.RBACBuilder, cfg *authorizeConfig) 
 }
 
 func outputResources(cfg *authorizeConfig, oidcResource *unstructured.Unstructured, rbacResource *unstructured.Unstructured) clierror.Error {
-	var writer io.Writer = os.Stdout
+	printer := out.Default
 
 	switch cfg.outputFormat {
 	case types.JSONFormat:
-		return outputJSON(writer, oidcResource, rbacResource)
+		return outputJSON(printer, oidcResource, rbacResource)
 	case types.YAMLFormat, types.DefaultFormat:
-		return outputYAML(writer, oidcResource, rbacResource)
+		return outputYAML(printer, oidcResource, rbacResource)
 	default:
-		return outputYAML(writer, oidcResource, rbacResource)
+		return outputYAML(printer, oidcResource, rbacResource)
 	}
 }
 
-func outputJSON(writer io.Writer, oidcResource *unstructured.Unstructured, rbacResource *unstructured.Unstructured) clierror.Error {
+func outputJSON(printer *out.Printer, oidcResource *unstructured.Unstructured, rbacResource *unstructured.Unstructured) clierror.Error {
 	resources := []any{oidcResource.Object, rbacResource.Object}
 
 	obj, err := json.MarshalIndent(resources, "", "  ")
@@ -162,31 +161,21 @@ func outputJSON(writer io.Writer, oidcResource *unstructured.Unstructured, rbacR
 		return clierror.Wrap(err, clierror.New("failed to marshal resources to JSON"))
 	}
 
-	_, err = fmt.Fprintln(writer, string(obj))
-	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to write JSON output"))
-	}
-
+	printer.Msgln(string(obj))
 	return nil
 }
 
-func outputYAML(writer io.Writer, oidcResource *unstructured.Unstructured, rbacResource *unstructured.Unstructured) clierror.Error {
+func outputYAML(printer *out.Printer, oidcResource *unstructured.Unstructured, rbacResource *unstructured.Unstructured) clierror.Error {
 	// Output OpenIDConnect resource
 	oidcBytes, err := yaml.Marshal(oidcResource.Object)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to marshal OpenIDConnect resource to YAML"))
 	}
 
-	_, err = fmt.Fprint(writer, string(oidcBytes))
-	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to write YAML output"))
-	}
+	printer.Msgln(string(oidcBytes))
 
 	// Add separator
-	_, err = fmt.Fprintln(writer, "---")
-	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to write YAML separator"))
-	}
+	printer.Msgln("---")
 
 	// Output RBAC resource directly (already clean unstructured format)
 	rbacBytes, err := yaml.Marshal(rbacResource.Object)
@@ -194,10 +183,7 @@ func outputYAML(writer io.Writer, oidcResource *unstructured.Unstructured, rbacR
 		return clierror.Wrap(err, clierror.New("failed to marshal RBAC resource to YAML"))
 	}
 
-	_, err = fmt.Fprint(writer, string(rbacBytes))
-	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to write YAML output"))
-	}
+	printer.Msgln(string(rbacBytes))
 
 	return nil
 }

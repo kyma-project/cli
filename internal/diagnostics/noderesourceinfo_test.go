@@ -1,16 +1,15 @@
-package diagnostics_test
+package diagnostics
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/kyma-project/cli.v3/internal/diagnostics"
 	"github.com/kyma-project/cli.v3/internal/kube/fake"
+	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -25,7 +24,7 @@ func mockMetricsHandler(nodeNames []string) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		for _, nodeName := range nodeNames {
 			if r.URL.Path == "/apis/metrics.k8s.io/v1beta1/nodes/"+nodeName {
-				metrics := diagnostics.NodeMetrics{
+				metrics := NodeMetrics{
 					Usage: struct {
 						CPU    string `json:"cpu"`
 						Memory string `json:"memory"`
@@ -62,7 +61,7 @@ func createMockKubeClientWithRESTClient(nodeNames []string) *fake.KubeClient {
 
 	restClient, err := rest.RESTClientFor(restConfig)
 	if err != nil {
-		fmt.Printf("Error creating REST client: %v\n", err)
+		out.Errfln("Error creating REST client: %v", err)
 		return nil
 	}
 
@@ -104,17 +103,15 @@ func TestNewNodeResourceInfoCollector(t *testing.T) {
 	fakeClient := &fake.KubeClient{
 		TestKubernetesInterface: fakeKubeClient,
 	}
-	var writer bytes.Buffer
-	verbose := true
 
 	// When
-	collector := diagnostics.NewNodeResourceInfoCollector(fakeClient, &writer, verbose)
+	collector := NewNodeResourceInfoCollector(fakeClient)
 
 	// Then
 	assert.NotNil(t, collector)
 }
 
-func assertNodeBasicInfo(t *testing.T, result diagnostics.NodeResourceInfo, expectedNode corev1.Node) {
+func assertNodeBasicInfo(t *testing.T, result NodeResourceInfo, expectedNode corev1.Node) {
 	// Check MachineInfo
 	assert.Equal(t, expectedNode.Name, result.MachineInfo.Name)
 	assert.Equal(t, expectedNode.Status.NodeInfo.Architecture, result.MachineInfo.Architecture)
@@ -136,7 +133,8 @@ func TestRunWithNoNodes(t *testing.T) {
 	var writer bytes.Buffer
 	nodes := []corev1.Node{}
 	mockClient := setupMockClient(nodes)
-	collector := diagnostics.NewNodeResourceInfoCollector(mockClient, &writer, false)
+	printer := out.NewToWriter(&writer)
+	collector := NodeResourceInfoCollector{mockClient, printer}
 
 	// When
 	results := collector.Run(context.TODO())
@@ -155,7 +153,8 @@ func TestRunWithMultipleNodesWithoutPods(t *testing.T) {
 		createTestNode("node3", "amd64", "5.8.0-generic", "Ubuntu 22.04.1 LTS", "containerd://1.6.2", "v1.26.2"),
 	}
 	mockClient := setupMockClient(nodes)
-	collector := diagnostics.NewNodeResourceInfoCollector(mockClient, &writer, false)
+	printer := out.NewToWriter(&writer)
+	collector := NodeResourceInfoCollector{mockClient, printer}
 
 	// When
 	results := collector.Run(context.TODO())
@@ -200,8 +199,8 @@ func TestRunWithRunningPods(t *testing.T) {
 	_, err := mockClient.TestKubernetesInterface.CoreV1().Pods("default").Create(context.TODO(), &testPod, metav1.CreateOptions{})
 	assert.NoError(t, err)
 
-	collector := diagnostics.NewNodeResourceInfoCollector(mockClient, &writer, false)
-
+	printer := out.NewToWriter(&writer)
+	collector := NodeResourceInfoCollector{mockClient, printer}
 	// When
 	results := collector.Run(context.TODO())
 
@@ -254,8 +253,9 @@ func TestRunWithMetricsUnavailable(t *testing.T) {
 	_, err := mockClient.TestKubernetesInterface.CoreV1().Nodes().Create(context.TODO(), &node, metav1.CreateOptions{})
 	assert.NoError(t, err)
 
-	collector := diagnostics.NewNodeResourceInfoCollector(mockClient, &writer, true)
-
+	printer := out.NewToWriter(&writer)
+	printer.EnableVerbose()
+	collector := NodeResourceInfoCollector{mockClient, printer}
 	// When
 	results := collector.Run(context.TODO())
 

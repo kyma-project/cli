@@ -6,11 +6,13 @@ import (
 	"io"
 	"os"
 	"strings"
+
+	"github.com/kyma-project/cli.v3/internal/out"
 )
 
 type Bool struct {
 	reader       io.Reader
-	writer       io.Writer
+	printer      *out.Printer
 	message      string
 	defaultValue bool
 }
@@ -18,14 +20,14 @@ type Bool struct {
 func NewBool(message string, defaultValue bool) *Bool {
 	return &Bool{
 		reader:       os.Stdin,
-		writer:       os.Stdout,
+		printer:      out.Default,
 		message:      message,
 		defaultValue: defaultValue,
 	}
 }
 
 func (b *Bool) Prompt() (bool, error) {
-	fmt.Fprintf(b.writer, "%s %s: ", b.message, b.defaultValueDisplay())
+	b.printer.Msgf("%s %s: ", b.message, b.defaultValueDisplay())
 
 	scanner := bufio.NewScanner(b.reader)
 	scanner.Scan()

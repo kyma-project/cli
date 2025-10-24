@@ -1,8 +1,7 @@
 package version
 
 import (
-	"fmt"
-
+	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/spf13/cobra"
 )
 
@@ -16,7 +15,7 @@ func NewCmd() *cobra.Command {
 		Short: "Displays the version of Kyma CLI",
 		Long:  "Use this command to print the version of Kyma CLI.",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("Kyma-CLI Version: %s\n", version)
+			out.Msgfln("Kyma-CLI Version: %s", version)
 		},
 	}
 }
