@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/pflag"
 
 	"github.com/kyma-project/cli.v3/internal/cmd"
+	"github.com/kyma-project/cli.v3/internal/out"
 )
 
 func main() {
@@ -25,30 +26,30 @@ func main() {
 
 	err := genMarkdownTree(command, docsTargetDir)
 	if err != nil {
-		fmt.Println("unable to generate docs", err.Error())
+		out.Errfln("unable to generate docs: %s", err.Error())
 		os.Exit(1)
 	}
 
 	err = genTSSidebarFile(command, docsTargetDir)
 	if err != nil {
-		fmt.Println("unable to create _sidebar.ts file", err.Error())
+		out.Errfln("unable to create _sidebar.ts file: %s", err.Error())
 		os.Exit(1)
 	}
 
 	// TODO: remove when kyma-project.io migrates to _sidebar.ts
 	err = genSidebarTree(command, docsTargetDir)
 	if err != nil {
-		fmt.Println("unable to create _sidebar.md file", err.Error())
+		out.Errfln("unable to create _sidebar.md file: %s", err.Error())
 		os.Exit(1)
 	}
 
 	err = genReadme(docsTargetDir)
 	if err != nil {
-		fmt.Println("unable to create README.md file", err.Error())
+		out.Errfln("unable to create README.md file: %s", err.Error())
 		os.Exit(1)
 	}
 
-	fmt.Println("Docs successfully generated to the following dir", docsTargetDir)
+	out.Msgfln("Docs successfully generated to the following dir: %s", docsTargetDir)
 	os.Exit(0)
 }
 
