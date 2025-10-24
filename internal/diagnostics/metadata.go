@@ -3,10 +3,10 @@ package diagnostics
 import (
 	"context"
 	"fmt"
-	"io"
 	"strings"
 
 	"github.com/kyma-project/cli.v3/internal/kube"
+	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/stretchr/testify/assert/yaml"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -27,13 +27,13 @@ type Metadata struct {
 
 type MetadataCollector struct {
 	client kube.Client
-	VerboseLogger
+	*out.Printer
 }
 
-func NewMetadataCollector(client kube.Client, writer io.Writer, verbose bool) *MetadataCollector {
+func NewMetadataCollector(client kube.Client) *MetadataCollector {
 	return &MetadataCollector{
-		client:        client,
-		VerboseLogger: NewVerboseLogger(writer, verbose),
+		client:  client,
+		Printer: out.Default,
 	}
 }
 
@@ -52,7 +52,7 @@ func (mc *MetadataCollector) Run(ctx context.Context) Metadata {
 func (mc *MetadataCollector) enrichMetadataWithSapBtpManagerSecret(ctx context.Context, metadata *Metadata) {
 	secret, err := mc.client.Static().CoreV1().Secrets("kyma-system").Get(ctx, "sap-btp-manager", metav1.GetOptions{})
 	if err != nil {
-		mc.WriteVerboseError(err, "Failed to get sap-btp-manager secret")
+		mc.Verbosefln("Failed to get sap-btp-manager secret: %v", err)
 		return
 	}
 
@@ -69,7 +69,7 @@ func (mc *MetadataCollector) enrichMetadataWithClusterConfigInfo(ctx context.Con
 		Get(ctx, "network-problem-detector-cluster-config", metav1.GetOptions{})
 
 	if err != nil {
-		mc.WriteVerboseError(err, "Failed to get network-problem-detector-cluster-config ConfigMap from kube-system namespace")
+		mc.Verbosefln("Failed to get network-problem-detector-cluster-config ConfigMap from kube-system namespace: %v", err)
 		return
 	}
 
@@ -85,7 +85,7 @@ func (mc *MetadataCollector) enrichMetadataWithClusterConfigInfo(ctx context.Con
 		var cc ClusterConfig
 		err := yaml.Unmarshal([]byte(clusterConfigYAML), &cc)
 		if err != nil {
-			mc.WriteVerboseError(err, "Failed to unmarshal provisioning details YAML")
+			mc.Verbosefln("Failed to unmarshal provisioning details YAML: %v", err)
 			return
 		}
 
@@ -99,7 +99,7 @@ func (mc *MetadataCollector) enrichMetadataWithShootInfo(ctx context.Context, me
 		Get(ctx, "shoot-info", metav1.GetOptions{})
 
 	if err != nil {
-		mc.WriteVerboseError(err, "Failed to get shoot-info ConfigMap from kube-system namespace")
+		mc.Verbosefln("Failed to get shoot-info ConfigMap from kube-system namespace: %v", err)
 		return
 	}
 
@@ -135,7 +135,7 @@ func (mc *MetadataCollector) enrichMetadataWithKymaInfo(ctx context.Context, met
 		Get(ctx, "kyma-info", metav1.GetOptions{})
 
 	if err != nil {
-		mc.WriteVerboseError(err, "Failed to get kyma-info ConfigMap from kyma-system namespace")
+		mc.Verbosefln("Failed to get kyma-info ConfigMap from kyma-system namespace: %v", err)
 		return
 	}
 
@@ -151,7 +151,7 @@ func (mc *MetadataCollector) enrichMetadataWithKymaProvisioningInfo(ctx context.
 		Get(ctx, "kyma-provisioning-info", metav1.GetOptions{})
 
 	if err != nil {
-		mc.WriteVerboseError(err, "Failed to get kyma-provisioning-info ConfigMap from kyma-system namespace")
+		mc.Verbosefln("Failed to get kyma-provisioning-info ConfigMap from kyma-system namespace: %v", err)
 		return
 	}
 
@@ -164,7 +164,7 @@ func (mc *MetadataCollector) enrichMetadataWithKymaProvisioningInfo(ctx context.
 		var details ProvisioningDetails
 		err := yaml.Unmarshal([]byte(detailsYAML), &details)
 		if err != nil {
-			mc.WriteVerboseError(err, "Failed to unmarshal provisioning details YAML")
+			mc.Verbosefln("Failed to unmarshal provisioning details YAML: %v", err)
 			return
 		}
 

@@ -12,6 +12,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"github.com/kyma-project/cli.v3/internal/modules/repo"
+	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -40,7 +41,7 @@ func Install(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesR
 		return clierror.Wrap(err, clierror.New("failed to apply custom resources"))
 	}
 
-	fmt.Printf("%s community module enabled\n", data.CommunityModuleTemplate.Name)
+	out.Msgfln("%s community module enabled", data.CommunityModuleTemplate.Name)
 	return nil
 }
 
@@ -196,7 +197,7 @@ func rollback(ctx context.Context, client kube.Client, resources []map[string]an
 	for _, resource := range resources {
 		err := client.RootlessDynamic().Remove(ctx, &unstructured.Unstructured{Object: resource}, false)
 		if err != nil {
-			fmt.Printf("err: %v\nfailed to rollback resource: %v\n", err, resource)
+			out.Errfln("err: %v\nfailed to rollback resource: %v", err, resource)
 		}
 	}
 }

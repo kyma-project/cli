@@ -1,10 +1,9 @@
 package module
 
 import (
-	"fmt"
-
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/spf13/cobra"
 )
 
@@ -49,7 +48,7 @@ func runUnmanage(cfg *unmanageConfig) clierror.Error {
 		return clierror.Wrap(err, clierror.New("failed to check module state"))
 	}
 
-	fmt.Printf("Module %s set to unmanaged\n", cfg.module)
+	out.Msgfln("Module %s set to unmanaged", cfg.module)
 
 	return nil
 }

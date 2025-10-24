@@ -1,17 +1,16 @@
-package diagnostics_test
+package diagnostics
 
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/kyma-project/cli.v3/internal/diagnostics"
 	"github.com/kyma-project/cli.v3/internal/kube/fake"
+	"github.com/kyma-project/cli.v3/internal/out"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sfake "k8s.io/client-go/kubernetes/fake"
@@ -20,60 +19,12 @@ import (
 func TestNewClusterWarningsCollector(t *testing.T) {
 	// Given
 	fakeClient := &fake.KubeClient{}
-	var writer bytes.Buffer
-	verbose := true
 
 	// When
-	collector := diagnostics.NewClusterWarningsCollector(fakeClient, &writer, verbose)
+	collector := NewClusterWarningsCollector(fakeClient)
 
 	// Then
 	assert.NotNil(t, collector)
-}
-
-func TestClusterWarningsCollector_WriteVerboseError(t *testing.T) {
-	testCases := []struct {
-		name           string
-		verbose        bool
-		err            error
-		message        string
-		expectedOutput string
-	}{
-		{
-			name:           "Should write error when verbose is true",
-			verbose:        true,
-			err:            fmt.Errorf("test error"),
-			message:        "Test error message",
-			expectedOutput: "Test error message: test error\n",
-		},
-		{
-			name:           "Should not write error when verbose is false",
-			verbose:        false,
-			err:            fmt.Errorf("test error"),
-			message:        "Test error message",
-			expectedOutput: "",
-		},
-		{
-			name:           "Should not write error when error is nil",
-			verbose:        true,
-			err:            nil,
-			message:        "Test error message",
-			expectedOutput: "",
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			// Given
-			var writer bytes.Buffer
-			collector := diagnostics.NewClusterWarningsCollector(nil, &writer, tc.verbose)
-
-			// When
-			collector.WriteVerboseError(tc.err, tc.message)
-
-			// Then
-			assert.Equal(t, tc.expectedOutput, writer.String())
-		})
-	}
 }
 
 func TestClusterWarningsCollector_Run(t *testing.T) {
@@ -169,7 +120,12 @@ func TestClusterWarningsCollector_Run(t *testing.T) {
 				TestKubernetesInterface: fakeK8sClient,
 			}
 
-			collector := diagnostics.NewClusterWarningsCollector(fakeClient, &writer, tc.verbose)
+			printer := out.NewToWriter(&writer)
+			if tc.verbose {
+				printer.EnableVerbose()
+			}
+
+			collector := ClusterWarningsCollector{fakeClient, printer}
 
 			// When
 			result := collector.Run(context.Background())

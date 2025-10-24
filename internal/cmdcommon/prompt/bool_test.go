@@ -7,6 +7,7 @@ import (
 	"testing"
 	"testing/iotest"
 
+	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/stretchr/testify/require"
 )
 
@@ -81,7 +82,7 @@ func TestBoolPrompt_Table(t *testing.T) {
 			output := bytes.NewBuffer([]byte{})
 			b := Bool{
 				reader:       tc.inputReader,
-				writer:       output,
+				printer:      out.NewToWriter(output),
 				message:      "Proceed?",
 				defaultValue: tc.defaultValue,
 			}

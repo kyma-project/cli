@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"strconv"
 
 	"github.com/kyma-project/cli.v3/internal/kube"
+	"github.com/kyma-project/cli.v3/internal/out"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -82,13 +82,13 @@ type NodeResourceInfo struct {
 
 type NodeResourceInfoCollector struct {
 	client kube.Client
-	VerboseLogger
+	*out.Printer
 }
 
-func NewNodeResourceInfoCollector(client kube.Client, writer io.Writer, verbose bool) *NodeResourceInfoCollector {
+func NewNodeResourceInfoCollector(client kube.Client) *NodeResourceInfoCollector {
 	return &NodeResourceInfoCollector{
-		client:        client,
-		VerboseLogger: NewVerboseLogger(writer, verbose),
+		client:  client,
+		Printer: out.Default,
 	}
 }
 
@@ -98,7 +98,7 @@ func (c *NodeResourceInfoCollector) Run(ctx context.Context) []NodeResourceInfo 
 		List(ctx, metav1.ListOptions{})
 
 	if err != nil {
-		c.WriteVerboseError(err, "Failed to list nodes from the cluster")
+		c.Verbosefln("Failed to list nodes from the cluster: %v", err)
 		return []NodeResourceInfo{}
 	}
 
@@ -108,7 +108,7 @@ func (c *NodeResourceInfoCollector) Run(ctx context.Context) []NodeResourceInfo 
 		// Get pods running on this node
 		pods, err := c.getPodsOnNode(ctx, node.Name)
 		if err != nil {
-			c.WriteVerboseError(err, "Failed to get pods for node "+node.Name)
+			c.Verbosefln("Failed to get pods for node %s: %v", node.Name, err)
 		}
 
 		usage := c.calculateUsage(ctx, node, pods)
@@ -381,7 +381,7 @@ func (c *NodeResourceInfoCollector) calculateLimitPercentages(node corev1.Node, 
 func (c *NodeResourceInfoCollector) calculateActualUsage(ctx context.Context, nodeName string, node corev1.Node) (string, string, string, string) {
 	metrics, err := c.getNodeMetrics(ctx, nodeName)
 	if err != nil {
-		c.WriteVerboseError(err, fmt.Sprintf("Failed to get metrics for node %s", nodeName))
+		c.Verbosefln("Failed to get metrics for node %s: %v", nodeName, err)
 		return "N/A", "N/A", "N/A", "N/A"
 	}
 
