@@ -97,6 +97,9 @@ func (b *RBACBuilder) validateForRoleBinding() error {
 	if b.role != "" && b.clusterrole != "" {
 		return fmt.Errorf("cannot specify both role and clusterrole for RoleBinding")
 	}
+	if b.namespace == "" && b.clusterrole != "" {
+		return fmt.Errorf("when using clusterrole '%s' for RoleBinding, either specify a namespace or enable cluster-wide flag for ClusterRoleBinding", b.clusterrole)
+	}
 	if b.namespace == "" {
 		return fmt.Errorf("namespace is required for RoleBinding")
 	}
