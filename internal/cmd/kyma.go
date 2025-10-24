@@ -24,6 +24,9 @@ func NewKymaCMD() *cobra.Command {
 	}
 	extensions.AddCmdPersistentFlags(cmd)
 	cmdcommon.AddCmdPersistentKubeconfigFlag(cmd)
+	cmdcommon.AddPersistentDebugFlag(cmd)
+	cmdcommon.SetupOutput(cmd)
+
 	cmd.PersistentFlags().BoolP("help", "h", false, "Help for the command")
 
 	kymaConfig := cmdcommon.NewKymaConfig()
@@ -46,7 +49,7 @@ func NewKymaCMD() *cobra.Command {
 		"resource_explain":      actions.NewResourceExplain(),
 		"call_files_to_save":    actions.NewCallFilesToSaveAction(kymaConfig),
 	})
-	builder.DisplayWarnings(cmd.ErrOrStderr())
+	builder.DisplayWarnings()
 
 	return cmd
 }

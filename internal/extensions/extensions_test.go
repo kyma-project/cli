@@ -13,6 +13,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/extensions/types"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	kubefake "github.com/kyma-project/cli.v3/internal/kube/fake"
+	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
@@ -77,12 +78,13 @@ var (
 
 func Test_DisplayWarnings(t *testing.T) {
 	t.Run("skip on no errors", func(t *testing.T) {
+		buffer := bytes.NewBuffer([]byte{})
 		b := Builder{
+			printer:          out.NewToWriter(buffer),
 			extensionsErrors: []error{},
 		}
-		buffer := bytes.NewBuffer([]byte{})
 
-		b.DisplayWarnings(buffer)
+		b.DisplayWarnings()
 
 		require.Equal(t, "", buffer.String())
 	})
@@ -92,27 +94,29 @@ func Test_DisplayWarnings(t *testing.T) {
 		os.Args = append(os.Args, "help")
 		defer func() { os.Args = oldArgs }()
 
+		buffer := bytes.NewBuffer([]byte{})
 		b := Builder{
+			printer: out.NewToWriter(buffer),
 			extensionsErrors: []error{
 				errors.New("test error"),
 			},
 		}
-		buffer := bytes.NewBuffer([]byte{})
 
-		b.DisplayWarnings(buffer)
+		b.DisplayWarnings()
 
 		require.Equal(t, "", buffer.String())
 	})
 
 	t.Run("display general warning", func(t *testing.T) {
+		buffer := bytes.NewBuffer([]byte{})
 		b := Builder{
+			printer: out.NewToWriter(buffer),
 			extensionsErrors: []error{
 				errors.New("test error"),
 			},
 		}
-		buffer := bytes.NewBuffer([]byte{})
 
-		b.DisplayWarnings(buffer)
+		b.DisplayWarnings()
 
 		require.Equal(t, "Extensions Warning:\n"+
 			"failed to fetch all extensions from the target Kyma environment. Use the '--show-extensions-error' flag to see more details.\n\n", buffer.String())
@@ -123,14 +127,15 @@ func Test_DisplayWarnings(t *testing.T) {
 		os.Args = append(os.Args, "--show-extensions-error", "true")
 		defer func() { os.Args = oldArgs }()
 
+		buffer := bytes.NewBuffer([]byte{})
 		b := Builder{
+			printer: out.NewToWriter(buffer),
 			extensionsErrors: []error{
 				errors.New("test error"),
 			},
 		}
-		buffer := bytes.NewBuffer([]byte{})
 
-		b.DisplayWarnings(buffer)
+		b.DisplayWarnings()
 
 		require.Equal(t, "Extensions Warning:\ntest error\n\n", buffer.String())
 	})
@@ -143,7 +148,7 @@ func Test_NewBuilder(t *testing.T) {
 		defer func() { os.Args = oldArgs }()
 
 		b := NewBuilder(&cmdcommon.KymaConfig{})
-		require.Equal(t, Builder{}, *b)
+		require.Equal(t, Builder{printer: out.Default}, *b)
 	})
 
 	t.Run("handle client error", func(t *testing.T) {

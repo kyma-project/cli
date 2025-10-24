@@ -13,6 +13,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/cmdcommon/prompt"
 	"github.com/kyma-project/cli.v3/internal/extensions/actions/common"
 	"github.com/kyma-project/cli.v3/internal/extensions/types"
+	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/spf13/cobra"
 )
 
@@ -102,9 +103,8 @@ func (fi *functionInitAction) Run(cmd *cobra.Command, _ []string) clierror.Error
 		outDir = fi.Cfg.OutputDir
 	}
 
-	out := cmd.OutOrStdout()
-	fmt.Fprintf(out, "Functions files of runtime %s initialized to dir %s\n", fi.Cfg.UseRuntime, outDir)
-	fmt.Fprintf(out, "\n%s\n", fi.Cfg.NextStepsInstructions)
+	out.Msgfln("Function files of runtime %s initialized to dir %s\n", fi.Cfg.UseRuntime, outDir)
+	out.Msgln(fi.Cfg.NextStepsInstructions)
 	return nil
 }
 
@@ -125,7 +125,7 @@ func getOutputDirAcceptance(path string) clierror.Error {
 	).Prompt()
 
 	// add empty line for better readability
-	fmt.Println()
+	out.Msgln("")
 
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to read user input"))

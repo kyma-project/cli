@@ -8,6 +8,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/extensions/actions/common"
 	"github.com/kyma-project/cli.v3/internal/extensions/types"
+	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/kyma-project/cli.v3/internal/registry"
 	"github.com/spf13/cobra"
 )
@@ -62,12 +63,11 @@ func (a *registryImageImportAction) Run(cmd *cobra.Command, _ []string) clierror
 		registry.NewBasicAuth(registryConfig.SecretData.Username, registryConfig.SecretData.Password),
 	)
 
-	out := cmd.OutOrStdout()
-	fmt.Fprintln(out, "Importing", a.Cfg.Image)
+	out.Msgfln("Importing %s", a.Cfg.Image)
 
 	externalRegistryConfig, err := registry.GetExternalConfig(a.kymaConfig.Ctx, client)
 	if err == nil {
-		fmt.Println("  Using registry external endpoint")
+		out.Msgln("  Using registry external endpoint")
 		// if external connection exists, use it
 		pushFunc = registry.NewPushFunc(
 			externalRegistryConfig.SecretData.PushRegAddr,
@@ -85,9 +85,9 @@ func (a *registryImageImportAction) Run(cmd *cobra.Command, _ []string) clierror
 	}
 
 	pullImageName := fmt.Sprintf("%s/%s", registryConfig.SecretData.PullRegAddr, pushedImage)
-	fmt.Fprintln(out, "\nSuccessfully imported image")
-	fmt.Fprintf(out, "Use it as '%s' and use the %s secret.\n", pullImageName, registryConfig.SecretName)
-	fmt.Fprintf(out, "\nExample usage:\nkubectl run my-pod --image=%s --overrides='{ \"spec\": { \"imagePullSecrets\": [ { \"name\": \"%s\" } ] } }'\n", pullImageName, registryConfig.SecretName)
+	out.Msgln("\nSuccessfully imported image")
+	out.Msgfln("Use it as '%s' and use the %s secret.", pullImageName, registryConfig.SecretName)
+	out.Msgfln("\nExample usage:\nkubectl run my-pod --image=%s --overrides='{ \"spec\": { \"imagePullSecrets\": [ { \"name\": \"%s\" } ] } }'", pullImageName, registryConfig.SecretName)
 
 	return nil
 }

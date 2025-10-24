@@ -2,7 +2,6 @@ package actions
 
 import (
 	"context"
-	"fmt"
 	"os"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
@@ -10,6 +9,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/extensions/actions/common"
 	"github.com/kyma-project/cli.v3/internal/extensions/types"
 	"github.com/kyma-project/cli.v3/internal/kube"
+	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/kyma-project/cli.v3/internal/registry"
 	"github.com/spf13/cobra"
 )
@@ -60,7 +60,7 @@ func (a *registryConfigAction) Run(cmd *cobra.Command, _ []string) clierror.Erro
 		}
 		return nil
 	}
-	fmt.Fprintln(cmd.OutOrStdout(), outputString)
+	out.Msgln(outputString)
 	return nil
 }
 

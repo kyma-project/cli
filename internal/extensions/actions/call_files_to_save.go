@@ -12,6 +12,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/extensions/actions/common"
 	"github.com/kyma-project/cli.v3/internal/extensions/call"
 	"github.com/kyma-project/cli.v3/internal/extensions/types"
+	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/spf13/cobra"
 )
 
@@ -114,8 +115,8 @@ func (a *callFilesToSaveAction) Run(cmd *cobra.Command, _ []string) clierror.Err
 		return clierror.WrapE(clierr, clierror.New("failed to write files to output directory"))
 	}
 
-	fmt.Fprintf(cmd.OutOrStdout(), "Files saved to %s\n", outDir)
-	fmt.Fprintf(cmd.OutOrStdout(), "%s", filesResp.OutputMessage)
+	out.Msgfln("Files successfully saved to %s", outDir)
+	out.Msgln(filesResp.OutputMessage)
 
 	return nil
 }
