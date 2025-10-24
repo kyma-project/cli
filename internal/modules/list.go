@@ -602,20 +602,18 @@ func listResourcesByVersionKind(ctx context.Context, client kube.Client, apiVers
 }
 
 func determineModuleStatus(resources []unstructured.Unstructured) string {
-	switch len(resources) {
-	case 0:
+	if len(resources) == 0 {
 		return NotRunningValue
-	case 1:
-		item := resources[0]
+	}
+	state := ""
+	for _, item := range resources {
 		if statusMap, ok := item.Object["status"].(map[string]any); ok {
-			if state, ok := statusMap["state"].(string); ok {
-				return state
+			if newState, ok := statusMap["state"].(string); ok {
+				state = getHighestState(state, newState)
 			}
 		}
-		return UnknownValue
-	default:
-		return UnknownValue
 	}
+	return state
 }
 
 func isCommunityModule(moduleTemplate *kyma.ModuleTemplate) bool {
