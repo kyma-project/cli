@@ -47,7 +47,7 @@ func GetRunningResourcesOfCommunityModule(ctx context.Context, repo repo.ModuleT
 }
 
 func disableCommunity(printer *out.Printer, ctx context.Context, repo repo.ModuleTemplatesRepository, module string) clierror.Error {
-	printer.Msgfln("removing %s community module from the target Kyma environment\n", module)
+	printer.Msgfln("removing %s community module from the target Kyma environment", module)
 
 	moduleTemplateToDelete, err := getModuleTemplateToDelete(ctx, repo, module)
 	if err != nil {
