@@ -64,7 +64,7 @@ func renderJSON(printer *out.Printer, modulesList ModulesList, tableInfo TableIn
 		return err
 	}
 
-	printer.Msg(string(obj))
+	printer.Msgln(string(obj))
 	return nil
 }
 
@@ -74,7 +74,7 @@ func renderYAML(printer *out.Printer, modulesList ModulesList, tableInfo TableIn
 		return err
 	}
 
-	printer.Msg(string(obj))
+	printer.Msgln(string(obj))
 	return nil
 }
 
