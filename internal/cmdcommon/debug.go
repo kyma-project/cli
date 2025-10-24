@@ -13,7 +13,7 @@ import (
 func AddPersistentDebugFlag(cmd *cobra.Command) {
 	// set hidden flag to allow its usage
 	_ = cmd.PersistentFlags().Bool("debug", false, "")
-	cmd.PersistentFlags().MarkHidden("debug")
+	_ = cmd.PersistentFlags().MarkHidden("debug")
 }
 
 func SetupOutput(cmd *cobra.Command) {
@@ -43,9 +43,11 @@ func getBoolFlagValue(flag string) bool {
 		// example: --flag=true
 		argFields := strings.Split(arg, "=")
 		if strings.HasPrefix(arg, fmt.Sprintf("%s=", flag)) && len(argFields) == 2 {
-			strconv.ParseBool(argFields[1]) // ignore error and use default false
-			value, _ := strconv.ParseBool(argFields[1])
-			return value
+			// ignore error and use default false
+			value, err := strconv.ParseBool(argFields[1])
+			if err == nil {
+				return value
+			}
 		}
 	}
 
