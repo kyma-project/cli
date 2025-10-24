@@ -3,7 +3,6 @@ package extensions
 import (
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"slices"
 	"strconv"
@@ -12,6 +11,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/extensions/errors"
 	"github.com/kyma-project/cli.v3/internal/extensions/types"
+	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 	v1 "k8s.io/api/core/v1"
@@ -21,10 +21,13 @@ import (
 type Builder struct {
 	extensions       []types.ConfigmapCommandExtension
 	extensionsErrors []error
+	printer          *out.Printer
 }
 
 func NewBuilder(kymaConfig *cmdcommon.KymaConfig) *Builder {
-	config := &Builder{}
+	config := &Builder{
+		printer: out.Default,
+	}
 
 	if getBoolFlagValue("--skip-extensions") {
 		// skip extensions fetching
@@ -46,7 +49,7 @@ func AddCmdPersistentFlags(cmd *cobra.Command) {
 	_ = cmd.PersistentFlags().Bool("show-extensions-error", false, "Prints a possible error when fetching extensions fails")
 }
 
-func (b *Builder) DisplayWarnings(warningWriter io.Writer) {
+func (b *Builder) DisplayWarnings() {
 	if isSubRootCommandUsed("help", "completion", "version") {
 		// skip if one of restricted flags is used
 		return
@@ -54,9 +57,9 @@ func (b *Builder) DisplayWarnings(warningWriter io.Writer) {
 
 	if len(b.extensionsErrors) > 0 && getBoolFlagValue("--show-extensions-error") {
 		// print error as warning if expected and continue
-		fmt.Fprintf(warningWriter, "Extensions Warning:\n%s\n\n", errors.NewList(b.extensionsErrors...).Error())
+		b.printer.Errfln("Extensions Warning:\n%s\n", errors.NewList(b.extensionsErrors...).Error())
 	} else if len(b.extensionsErrors) > 0 {
-		fmt.Fprintf(warningWriter, "Extensions Warning:\nfailed to fetch all extensions from the target Kyma environment. Use the '--show-extensions-error' flag to see more details.\n\n")
+		b.printer.Errln("Extensions Warning:\nfailed to fetch all extensions from the target Kyma environment. Use the '--show-extensions-error' flag to see more details.\n")
 	}
 }
 

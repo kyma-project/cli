@@ -15,6 +15,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/extensions/actions/common"
 	"github.com/kyma-project/cli.v3/internal/extensions/types"
 	"github.com/kyma-project/cli.v3/internal/kube/rootlessdynamic"
+	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/kyma-project/cli.v3/internal/render"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
@@ -74,7 +75,7 @@ func (a *resourceGetAction) Run(cmd *cobra.Command, _ []string) clierror.Error {
 		return clierror.Wrap(err, clierror.New("failed to format output"))
 	}
 
-	fmt.Fprint(cmd.OutOrStdout(), output)
+	out.Msgln(output)
 	return nil
 }
 
