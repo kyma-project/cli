@@ -284,15 +284,54 @@ func (r *moduleTemplatesRepo) ExternalCommunityByNameAndVersion(ctx context.Cont
 		return nil, err
 	}
 
-	externalModules := []kyma.ModuleTemplate{}
-
+	//by name
+	modulesByName := []kyma.ModuleTemplate{}
 	for _, module := range remoteModules {
-		if module.Spec.ModuleName == moduleName && module.Spec.Version == version {
+		if module.Spec.ModuleName == moduleName {
+			modulesByName = append(modulesByName, module)
+		}
+	}
+
+	//if version empty
+	if version == "" {
+		latestModule := findLatestVersion(modulesByName)
+		return []kyma.ModuleTemplate{latestModule}, nil
+	}
+
+	externalModules := []kyma.ModuleTemplate{}
+	for _, module := range modulesByName {
+		if module.Spec.Version == version {
 			externalModules = append(externalModules, module)
 		}
 	}
 
 	return externalModules, nil
+}
+
+func findLatestVersion(modules []kyma.ModuleTemplate) kyma.ModuleTemplate {
+	if len(modules) == 0 {
+		return kyma.ModuleTemplate{}
+	}
+
+	latest := modules[0]
+	for _, module := range modules[1:] {
+		if isNewerVersion(module.Spec.Version, latest.Spec.Version) {
+			latest = module
+		}
+	}
+	return latest
+}
+
+func isNewerVersion(version1, version2 string) bool {
+	// Skip pre-release versions (containing -rc, -alpha, -beta)
+	if strings.Contains(version1, "-") {
+		return false
+	}
+	if strings.Contains(version2, "-") && !strings.Contains(version1, "-") {
+		return true
+	}
+
+	return version1 > version2
 }
 
 func isCommunityModule(moduleTemplate *kyma.ModuleTemplate) bool {

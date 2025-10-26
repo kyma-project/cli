@@ -549,6 +549,53 @@ func TestModuleTemplatesRepo_DeleteResourceReturnWatcher(t *testing.T) {
 	})
 }
 
+func TestFindLatestVersion(t *testing.T) {
+	t.Run("returns empty module when no modules provided", func(t *testing.T) {
+		result := findLatestVersion([]kyma.ModuleTemplate{})
+
+		require.Equal(t, kyma.ModuleTemplate{}, result)
+	})
+
+	t.Run("returns single module when only one provided", func(t *testing.T) {
+		module := kyma.ModuleTemplate{
+			Spec: kyma.ModuleTemplateSpec{Version: "v1.0.0"},
+		}
+
+		result := findLatestVersion([]kyma.ModuleTemplate{module})
+
+		require.Equal(t, module, result)
+	})
+
+	t.Run("finds latest version among multiple modules", func(t *testing.T) {
+		olderModule := kyma.ModuleTemplate{
+			Spec: kyma.ModuleTemplateSpec{Version: "v1.5.0"},
+		}
+		newerModule := kyma.ModuleTemplate{
+			Spec: kyma.ModuleTemplateSpec{Version: "v2.0.0"},
+		}
+
+		result := findLatestVersion([]kyma.ModuleTemplate{olderModule, newerModule})
+
+		require.Equal(t, newerModule, result)
+	})
+
+	t.Run("skips pre-release versions when finding latest", func(t *testing.T) {
+		stableModule := kyma.ModuleTemplate{
+			Spec: kyma.ModuleTemplateSpec{Version: "v2.0.0"},
+		}
+		preReleaseModule := kyma.ModuleTemplate{
+			Spec: kyma.ModuleTemplateSpec{Version: "v2.1.0-rc1"},
+		}
+		olderStableModule := kyma.ModuleTemplate{
+			Spec: kyma.ModuleTemplateSpec{Version: "v1.5.0"},
+		}
+
+		result := findLatestVersion([]kyma.ModuleTemplate{olderStableModule, preReleaseModule, stableModule})
+
+		require.Equal(t, stableModule, result)
+	})
+}
+
 func getTestHttpServerWithResponse(httpStatus int, response string) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte(response))
