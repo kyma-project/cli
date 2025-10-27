@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"github.com/kyma-project/cli.v3/internal/kube/rootlessdynamic"
@@ -323,16 +324,27 @@ func findLatestVersion(modules []kyma.ModuleTemplate) kyma.ModuleTemplate {
 	return latest
 }
 
-func isNewerVersion(version1, version2 string) bool {
-	// Skip pre-release versions (containing -rc, -alpha, -beta)
-	if strings.Contains(version1, "-") {
+func isNewerVersion(newVersion, oldVersion string) bool {
+	newV, err := semver.NewVersion(newVersion)
+	if err != nil {
 		return false
 	}
-	if strings.Contains(version2, "-") && !strings.Contains(version1, "-") {
+
+	oldV, err := semver.NewVersion(oldVersion)
+	if err != nil {
 		return true
 	}
 
-	return version1 > version2
+	if newV.Prerelease() != "" {
+		return false
+	}
+
+	// If old version is pre-release but version1 is stable, version1 is newer
+	if oldV.Prerelease() != "" && newV.Prerelease() == "" {
+		return true
+	}
+
+	return newV.GreaterThan(oldV)
 }
 
 func isCommunityModule(moduleTemplate *kyma.ModuleTemplate) bool {
