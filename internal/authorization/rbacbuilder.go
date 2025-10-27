@@ -13,6 +13,7 @@ type RBACBuilder struct {
 	namespace   string
 	role        string
 	clusterrole string
+	oidcName    string
 }
 
 func NewRBACBuilder() *RBACBuilder {
@@ -41,6 +42,11 @@ func (b *RBACBuilder) ForRole(role string) *RBACBuilder {
 
 func (b *RBACBuilder) ForClusterRole(clusterRole string) *RBACBuilder {
 	b.clusterrole = clusterRole
+	return b
+}
+
+func (b *RBACBuilder) ForOIDCName(oidcName string) *RBACBuilder {
+	b.oidcName = oidcName
 	return b
 }
 
@@ -97,6 +103,9 @@ func (b *RBACBuilder) validateForRoleBinding() error {
 	if b.role != "" && b.clusterrole != "" {
 		return fmt.Errorf("cannot specify both role and clusterrole for RoleBinding")
 	}
+	if b.namespace == "" && b.clusterrole != "" {
+		return fmt.Errorf("when using clusterrole '%s' for RoleBinding, either specify a namespace or enable cluster-wide flag for ClusterRoleBinding", b.clusterrole)
+	}
 	if b.namespace == "" {
 		return fmt.Errorf("namespace is required for RoleBinding")
 	}
@@ -110,6 +119,10 @@ func (b *RBACBuilder) isRepoNameValid() bool {
 }
 
 func (b *RBACBuilder) getSubjectName() string {
+	if b.oidcName != "" {
+		return b.prefix + b.oidcName + "/" + b.repository
+	}
+
 	return b.prefix + b.repository
 }
 

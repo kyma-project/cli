@@ -57,7 +57,7 @@ func (b *OIDCBuilder) Build() (*unstructured.Unstructured, error) {
 			"apiVersion": "authentication.gardener.cloud/v1alpha1",
 			"kind":       "OpenIDConnect",
 			"metadata": map[string]any{
-				"name": b.getOpenIDConnectResourceName(),
+				"name": b.GetOpenIDConnectResourceName(),
 			},
 			"spec": map[string]any{
 				"issuerURL":     b.issuerURL,
@@ -79,7 +79,7 @@ func (b *OIDCBuilder) Build() (*unstructured.Unstructured, error) {
 	return oidc, nil
 }
 
-func (b *OIDCBuilder) getOpenIDConnectResourceName() string {
+func (b *OIDCBuilder) GetOpenIDConnectResourceName() string {
 	if b.name != "" {
 		return b.name
 	}
