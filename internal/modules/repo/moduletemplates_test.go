@@ -558,7 +558,7 @@ func TestFindLatestVersion(t *testing.T) {
 
 	t.Run("returns single module when only one provided", func(t *testing.T) {
 		module := kyma.ModuleTemplate{
-			Spec: kyma.ModuleTemplateSpec{Version: "v1.0.0"},
+			Spec: kyma.ModuleTemplateSpec{Version: "1.0.0"},
 		}
 
 		result := findLatestVersion([]kyma.ModuleTemplate{module})
@@ -568,10 +568,10 @@ func TestFindLatestVersion(t *testing.T) {
 
 	t.Run("finds latest version among multiple modules", func(t *testing.T) {
 		olderModule := kyma.ModuleTemplate{
-			Spec: kyma.ModuleTemplateSpec{Version: "v1.5.0"},
+			Spec: kyma.ModuleTemplateSpec{Version: "1.5.0"},
 		}
 		newerModule := kyma.ModuleTemplate{
-			Spec: kyma.ModuleTemplateSpec{Version: "v2.0.0"},
+			Spec: kyma.ModuleTemplateSpec{Version: "2.0.0"},
 		}
 
 		result := findLatestVersion([]kyma.ModuleTemplate{olderModule, newerModule})
@@ -581,13 +581,13 @@ func TestFindLatestVersion(t *testing.T) {
 
 	t.Run("skips pre-release versions when finding latest", func(t *testing.T) {
 		stableModule := kyma.ModuleTemplate{
-			Spec: kyma.ModuleTemplateSpec{Version: "v2.0.0"},
+			Spec: kyma.ModuleTemplateSpec{Version: "2.0.0"},
 		}
 		preReleaseModule := kyma.ModuleTemplate{
-			Spec: kyma.ModuleTemplateSpec{Version: "v2.1.0-rc1"},
+			Spec: kyma.ModuleTemplateSpec{Version: "2.1.0-rc1"},
 		}
 		olderStableModule := kyma.ModuleTemplate{
-			Spec: kyma.ModuleTemplateSpec{Version: "v1.5.0"},
+			Spec: kyma.ModuleTemplateSpec{Version: "1.5.0"},
 		}
 
 		result := findLatestVersion([]kyma.ModuleTemplate{olderStableModule, preReleaseModule, stableModule})
