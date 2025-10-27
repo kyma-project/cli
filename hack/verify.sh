@@ -24,7 +24,7 @@ echo "OK"
 echo ""
 
 echo "### Verify code standard output usage ###"
-code_std_out_usage=$(grep -r -e 'fmt.Print' -e 'os.Stdout' -e 'os.Stderr' ./internal | grep --invert-match '^./internal/out')
+code_std_out_usage=$(grep -r -E 'fmt\.Print|os\.Stdout|os\.Stderr' ./internal | grep --invert-match '^./internal/out')
 if [ -n "$code_std_out_usage" ]; then
   echo "Found usage of os.Stdout, os.Stderr or fmt.Print:"
   echo "$code_std_out_usage"

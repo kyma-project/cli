@@ -1,0 +1,16 @@
+name: 'Comment PR'
+description: 'Action for adding comment to current PR about violated standards'
+
+inputs:
+  github_token:
+    description: 'GitHub token'
+    default: ${{ secrets.GITHUB_TOKEN }}
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: comment
+      run: |
+        gh pr comment ${{ github.event.pull_request.number }} -R kyma-project/cli --body-file .github/actions/pr-comment/comment.md
+      shell: bash
