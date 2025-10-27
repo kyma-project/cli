@@ -139,6 +139,7 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	// pack flags
 	cmd.Flags().StringVar(&config.packAppPath, "code-path", "", "Path to the application source code directory")
+	cmd.Flags().String("test-new-flag", "", "New test flag")
 
 	// k8s flags
 	cmd.Flags().StringVarP(&config.namespace, "namespace", "n", "default", "Namespace where the app is deployed")
@@ -155,6 +156,7 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 func (apc *appPushConfig) complete() clierror.Error {
 	var err error
+
 	var info os.FileInfo
 
 	if apc.dockerfilePath != "" {
