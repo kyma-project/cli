@@ -58,6 +58,7 @@ func TestRBACBuilder_BuildClusterRoleBinding(t *testing.T) {
 				return authorization.NewRBACBuilder().
 					ForRepository("owner/repo").
 					ForClusterRole("reader").
+					ForOIDCName("REPO_OIDC").
 					ForPrefix("github:")
 			},
 			validateResult: func(t *testing.T, result *unstructured.Unstructured) {
@@ -70,7 +71,7 @@ func TestRBACBuilder_BuildClusterRoleBinding(t *testing.T) {
 				require.Len(t, subjectsSlice, 1)
 
 				subject := subjectsSlice[0]
-				assert.Equal(t, "github:owner/repo", subject["name"])
+				assert.Equal(t, "github:REPO_OIDC/owner/repo", subject["name"])
 			},
 		},
 		{
