@@ -325,26 +325,26 @@ func findLatestVersion(modules []kyma.ModuleTemplate) kyma.ModuleTemplate {
 }
 
 func isNewerVersion(newVersion, oldVersion string) bool {
-	v1, err := semver.NewVersion(newVersion)
+	newV, err := semver.NewVersion(newVersion)
 	if err != nil {
 		return false
 	}
 
-	v2, err := semver.NewVersion(oldVersion)
+	oldV, err := semver.NewVersion(oldVersion)
 	if err != nil {
 		return true
 	}
 
-	if v1.Prerelease() != "" {
+	if newV.Prerelease() != "" {
 		return false
 	}
 
 	// If old version is pre-release but version1 is stable, version1 is newer
-	if v2.Prerelease() != "" && v1.Prerelease() == "" {
+	if oldV.Prerelease() != "" && newV.Prerelease() == "" {
 		return true
 	}
 
-	return v1.GreaterThan(v2)
+	return newV.GreaterThan(oldV)
 }
 
 func isCommunityModule(moduleTemplate *kyma.ModuleTemplate) bool {
