@@ -71,43 +71,32 @@ func NewAuthorizeCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 }
 
 func authorize(cfg *authorizeConfig) clierror.Error {
-	oidcResource, err := buildOIDCResource(cfg)
+	repositoryOIDCBuilder := authorization.NewOIDCBuilder(cfg.clientId, cfg.issuerURL).
+		ForRepository(cfg.repository).
+		ForName(cfg.name)
+	oidcResource, err := repositoryOIDCBuilder.Build()
+
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to build OIDC resource"))
 	}
 
-	rbacResource, err := buildRBACResource(cfg)
+	rbacResource, err := buildRBACResource(cfg, repositoryOIDCBuilder.GetOpenIDConnectResourceName())
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to build RBAC resource"))
 	}
 
-	// Handle dry-run output
 	if cfg.dryRun {
 		return outputResources(cfg, oidcResource, rbacResource)
 	}
 
-	// Apply resources to cluster
 	return applyResources(cfg, oidcResource, rbacResource)
 }
 
-func buildOIDCResource(cfg *authorizeConfig) (*unstructured.Unstructured, error) {
-	repositoryOIDCBuilder := authorization.NewOIDCBuilder(cfg.clientId, cfg.issuerURL)
-	oidcResource, err := repositoryOIDCBuilder.
-		ForRepository(cfg.repository).
-		ForName(cfg.name).
-		Build()
-
-	if err != nil {
-		return nil, err
-	}
-
-	return oidcResource, nil
-}
-
-func buildRBACResource(cfg *authorizeConfig) (*unstructured.Unstructured, error) {
+func buildRBACResource(cfg *authorizeConfig, oidcResourceName string) (*unstructured.Unstructured, error) {
 	builder := authorization.NewRBACBuilder().
 		ForRepository(cfg.repository).
-		ForPrefix(cfg.prefix)
+		ForPrefix(cfg.prefix).
+		ForOIDCName(oidcResourceName)
 
 	if cfg.clusterWide {
 		return buildClusterRoleBinding(builder, cfg.clusterrole)
@@ -166,7 +155,6 @@ func outputJSON(printer *out.Printer, oidcResource *unstructured.Unstructured, r
 }
 
 func outputYAML(printer *out.Printer, oidcResource *unstructured.Unstructured, rbacResource *unstructured.Unstructured) clierror.Error {
-	// Output OpenIDConnect resource
 	oidcBytes, err := yaml.Marshal(oidcResource.Object)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to marshal OpenIDConnect resource to YAML"))
@@ -174,10 +162,8 @@ func outputYAML(printer *out.Printer, oidcResource *unstructured.Unstructured, r
 
 	printer.Msgln(string(oidcBytes))
 
-	// Add separator
 	printer.Msgln("---")
 
-	// Output RBAC resource directly (already clean unstructured format)
 	rbacBytes, err := yaml.Marshal(rbacResource.Object)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to marshal RBAC resource to YAML"))

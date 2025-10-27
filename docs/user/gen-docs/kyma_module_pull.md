@@ -14,6 +14,9 @@ Examples:
   # Pull a specific community module
   kyma module pull community-module-name
 
+  # Pull the latest version of a module into specific namespace
+  kyma module pull community-module-name --namespace module-namespace
+
   # Pull a module with a specific version into specific namespace
   kyma module pull community-module-name --version v1.0.0 --namespace module-namespace
 
@@ -25,7 +28,7 @@ kyma module pull <module-name> [flags]
 
 ```text
   -n, --namespace string        Destination namespace where the module is stored (default "default")
-  -v, --version string          Specify version of the community module to pull
+  -v, --version string          Specify version of the community module to pull (optional, default "latest")
       --context string          The name of the kubeconfig context to use
   -h, --help                    Help for the command
       --kubeconfig string       Path to the Kyma kubeconfig file

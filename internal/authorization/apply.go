@@ -2,6 +2,7 @@ package authorization
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/kube"
@@ -104,15 +105,81 @@ func (ra *ResourceApplier) compareOIDCSpecs(existing, new map[string]any) bool {
 }
 
 func (ra *ResourceApplier) applyRBACResource(ctx context.Context, rbacResource *unstructured.Unstructured) clierror.Error {
-	resourceName := rbacResource.GetName()
-	resourceKind := rbacResource.GetKind()
+	if err := ra.validateRoleReference(ctx, rbacResource); err != nil {
+		return err
+	}
 
 	err := ra.kubeClient.RootlessDynamic().Apply(ctx, rbacResource, false)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to apply RBAC resource"))
 	}
 
-	out.Msgfln("%s '%s' applied successfully.", resourceKind, resourceName)
+	out.Msgfln("%s '%s' applied successfully.", rbacResource.GetKind(), rbacResource.GetName())
 
+	return nil
+}
+
+// validateRoleReference checks if the Role or ClusterRole referenced in the RoleBinding/ClusterRoleBinding exists
+func (ra *ResourceApplier) validateRoleReference(ctx context.Context, rbacResource *unstructured.Unstructured) clierror.Error {
+	roleKind, roleName, err := ra.getRoleRefData(rbacResource)
+	if err != nil {
+		return err
+	}
+
+	switch roleKind {
+	case "ClusterRole":
+		return ra.validateClusterRoleExists(ctx, roleName)
+	case "Role":
+		namespace := rbacResource.GetNamespace()
+		if namespace == "" {
+			return clierror.New("namespace is required for Role validation")
+		}
+		return ra.validateRoleExists(ctx, roleName, namespace)
+	default:
+		return clierror.New(fmt.Sprintf("unsupported roleRef kind: %s", roleKind))
+	}
+}
+
+func (ra *ResourceApplier) getRoleRefData(rbacResource *unstructured.Unstructured) (string, string, clierror.Error) {
+	roleRef, found, err := unstructured.NestedMap(rbacResource.Object, "roleRef")
+	if err != nil {
+		return "", "", clierror.Wrap(err, clierror.New("failed to get roleRef from RBAC resource"))
+	}
+	if !found {
+		return "", "", clierror.New("roleRef not found in RBAC resource")
+	}
+
+	roleKind, found := roleRef["kind"].(string)
+	if !found {
+		return "", "", clierror.New("roleRef kind not found")
+	}
+
+	roleName, found := roleRef["name"].(string)
+	if !found {
+		return "", "", clierror.New("roleRef name not found")
+	}
+
+	return roleKind, roleName, nil
+}
+
+func (ra *ResourceApplier) validateClusterRoleExists(ctx context.Context, clusterRoleName string) clierror.Error {
+	_, err := ra.kubeClient.Static().RbacV1().ClusterRoles().Get(ctx, clusterRoleName, metav1.GetOptions{})
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return clierror.New(fmt.Sprintf("ClusterRole '%s' does not exist", clusterRoleName))
+		}
+		return clierror.Wrap(err, clierror.New(fmt.Sprintf("failed to check if ClusterRole '%s' exists", clusterRoleName)))
+	}
+	return nil
+}
+
+func (ra *ResourceApplier) validateRoleExists(ctx context.Context, roleName, namespace string) clierror.Error {
+	_, err := ra.kubeClient.Static().RbacV1().Roles(namespace).Get(ctx, roleName, metav1.GetOptions{})
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return clierror.New(fmt.Sprintf("Role '%s' does not exist in namespace '%s'", roleName, namespace))
+		}
+		return clierror.Wrap(err, clierror.New(fmt.Sprintf("failed to check if Role '%s' exists in namespace '%s'", roleName, namespace)))
+	}
 	return nil
 }

@@ -1,0 +1,19 @@
+name: verify
+
+on:
+  pull_request_target:
+    types: [ opened, edited, synchronize, reopened, ready_for_review ]
+
+jobs:
+  standards:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify
+        run: |
+          make verify
+      - name: Comment PR on violated standards
+        if: failure()
+        uses: ./.github/actions/standards-violation-info
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
