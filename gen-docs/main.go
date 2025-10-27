@@ -22,6 +22,7 @@ func main() {
 	docsTargetDir := "./docs/user/gen-docs"
 
 	command.InitDefaultCompletionCmd()
+
 	command.InitDefaultHelpCmd()
 
 	err := genMarkdownTree(command, docsTargetDir)
