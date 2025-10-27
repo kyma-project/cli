@@ -5,6 +5,14 @@ on:
     types: [opened, edited, synchronize, reopened, ready_for_review]
 
 jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: verify
+        run: |
+          make verify
+
   build:
     runs-on: ubuntu-latest
     strategy:
