@@ -37,6 +37,9 @@ Examples:
   # Pull a specific community module
   kyma module pull community-module-name
 
+  # Pull the latest version of a module into specific namespace
+  kyma module pull community-module-name --namespace module-namespace
+
   # Pull a module with a specific version into specific namespace
   kyma module pull community-module-name --version v1.0.0 --namespace module-namespace`,
 		Args: cobra.ExactArgs(1),
@@ -47,7 +50,7 @@ Examples:
 	}
 
 	cmd.Flags().StringVarP(&cfg.namespace, "namespace", "n", "default", "Destination namespace where the module is stored")
-	cmd.Flags().StringVarP(&cfg.version, "version", "v", "", "Specify version of the community module to pull")
+	cmd.Flags().StringVarP(&cfg.version, "version", "v", "", "Specify version of the community module to pull (optional, default \"latest\")")
 
 	return cmd
 }
