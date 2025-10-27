@@ -151,6 +151,8 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().Var(&config.mountConfigmaps, "mount-config", "Mounts ConfigMap content. Format: 'name=configmap,path=/app/config,key=key,ro=false' or shorthand 'configmap:key=/app/config'. Path traversal (..) is prohibited.")
 	cmd.Flags().Var(&config.mountServiceBindingSecrets, "mount-service-binding-secret", "Mounts Secret as service binding at /bindings/secret-<NAME> (readOnly)")
 
+	fmt.Println("Debug: Added new test flag to app push command")
+
 	return cmd
 }
 
