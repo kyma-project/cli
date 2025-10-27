@@ -13,7 +13,7 @@ runs:
   using: 'composite'
   steps:
     - name: comment standards violation
-      if: ${{ inputs.validation_failed == 'false' }}
+      if: ${{ inputs.validation_failed == 'true' }}
       run: |
        echo "Standards violation detected"
         gh pr comment ${{ github.event.pull_request.number }} --edit-last -R kyma-project/cli \
@@ -22,9 +22,11 @@ runs:
         GITHUB_TOKEN: ${{ inputs.github_token }}
       shell: bash
     - name: No standards violation
-      if: ${{ inputs.validation_failed == 'true' }}
+      if: ${{ inputs.validation_failed == 'false' }}
       run: |
         echo "No standards violation detected"
         gh pr comment ${{ github.event.pull_request.number }} --edit-last -R kyma-project/cli \
           --body-file .github/actions/standards-violation-info/no-violation-message.md
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
       shell: bash
