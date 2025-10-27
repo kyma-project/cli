@@ -249,6 +249,10 @@ func printFlags(buf *bytes.Buffer, cmd *cobra.Command) {
 
 	// collect flags
 	flags.VisitAll(func(f *pflag.Flag) {
+		if f.Hidden {
+			// skip hidden flags
+			return
+		}
 		elem := getFlagPrinElem(f)
 		elems = append(elems, elem)
 		if len(elem.name) > maxNameLen {
@@ -258,6 +262,10 @@ func printFlags(buf *bytes.Buffer, cmd *cobra.Command) {
 
 	// collect parent flags
 	parentFlags.VisitAll(func(f *pflag.Flag) {
+		if f.Hidden {
+			// skip hidden flags
+			return
+		}
 		elem := getFlagPrinElem(f)
 		elems = append(elems, elem)
 		if len(elem.name) > maxNameLen {
