@@ -12,6 +12,11 @@ jobs:
       - name: verify
         run: |
           make verify
+      - name: Comment PR on violated standards
+        if: failure()
+        uses: ./.github/actions/pr-comment-violated-standards
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
   build:
     runs-on: ubuntu-latest

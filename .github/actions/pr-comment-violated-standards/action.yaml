@@ -13,4 +13,6 @@ runs:
     - name: comment
       run: |
         gh pr comment ${{ github.event.pull_request.number }} -R kyma-project/cli --body-file .github/actions/pr-comment/comment.md
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
       shell: bash
