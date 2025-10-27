@@ -6,4 +6,4 @@ Make sure to follow the requirements:
 * Generate documentation using `make docs` spell
 * Do not use `os.Stdout`, `os.Stderr`, and `fmt.Print` functions (use the `out` package)
 
-Find more detailed info in the `pull / verify (pull_request)` action.
+Find more detailed info in the `verify / standards (pull_request_target)` action.

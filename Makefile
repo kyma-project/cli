@@ -25,7 +25,7 @@ lint: golangci-lint ## Run golangci-lint.
 
 .PHONY: verify
 verify: ## Run all verification checks.
-	./hack/verify.sh
+	@./hack/verify.sh
 
 .PHONY: build
 build: ## Build the kyma CLI binary.
