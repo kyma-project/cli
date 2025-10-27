@@ -2,6 +2,9 @@ name: 'Standards Violation Info'
 description: 'Action for adding comment to current PR about violated standards'
 
 inputs:
+  validation_failed:
+    description: 'Whether the validation has passed'
+    required: true
   github_token:
     description: 'GitHub token'
     required: true
@@ -9,9 +12,19 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - name: comment
+    - name: comment standards violation
+      if: ${{ inputs.validation_failed == 'false' }}
       run: |
-        gh pr comment ${{ github.event.pull_request.number }} -R kyma-project/cli --body-file .github/actions/standards-violation-info/message.md
+       echo "Standards violation detected"
+        gh pr comment ${{ github.event.pull_request.number }} --edit-last -R kyma-project/cli \
+          --body-file .github/actions/standards-violation-info/violation-message.md
       env:
         GITHUB_TOKEN: ${{ inputs.github_token }}
+      shell: bash
+    - name: No standards violation
+      if: ${{ inputs.validation_failed == 'true' }}
+      run: |
+        echo "No standards violation detected"
+        gh pr comment ${{ github.event.pull_request.number }} --edit-last -R kyma-project/cli \
+          --body-file .github/actions/standards-violation-info/no-violation-message.md
       shell: bash
