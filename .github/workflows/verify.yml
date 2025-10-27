@@ -17,10 +17,12 @@ jobs:
           ref: ${{ github.event.pull_request.head.ref }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
       - name: Verify
+        id: verify
         run: |
           make verify
       - name: Comment PR on violated standards
-        if: failure()
+        if: always()
         uses: ./.github/actions/standards-violation-info
         with:
+          validation_failed: ${{ steps.verify.outcome == 'failure' }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
