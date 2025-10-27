@@ -85,6 +85,7 @@ kyma app push [flags]
       --name string                                           Name of the app
   -n, --namespace string                                      Namespace where the app is deployed (default "default")
   -q, --quiet                                                 Suppresses non-essential output (prints only the URL of the pushed app, if exposed)
+      --test-new-flag string                                  New test flag
       --context string                                        The name of the kubeconfig context to use
   -h, --help                                                  Help for the command
       --kubeconfig string                                     Path to the Kyma kubeconfig file
