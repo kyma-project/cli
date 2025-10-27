@@ -12,6 +12,7 @@ import (
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/pkg/progress"
 	"github.com/docker/docker/pkg/streamformatter"
+	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/moby/go-archive"
 	"github.com/moby/term"
 	"github.com/pkg/errors"
@@ -36,7 +37,7 @@ func Build(ctx context.Context, opts *BuildOptions) error {
 
 	builder := imageBuilder{
 		dockerClient: cli,
-		out:          os.Stdout,
+		out:          out.Default.MsgWriter(),
 	}
 
 	return builder.do(ctx, opts)
