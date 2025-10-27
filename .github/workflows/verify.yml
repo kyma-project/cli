@@ -4,6 +4,10 @@ on:
   pull_request_target:
     types: [ opened, edited, synchronize, reopened, ready_for_review ]
 
+permissions:
+  # Permission to post comments on pull requests
+  pull-requests: write
+
 jobs:
   standards:
     runs-on: ubuntu-latest
