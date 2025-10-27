@@ -23,12 +23,16 @@ test: ## Run unit tests.
 lint: golangci-lint ## Run golangci-lint.
 	$(GOLANGCI_LINT) run -v
 
+.PHONY: verify
+verify: ## Run all verification checks.
+	@./hack/verify.sh
+
 .PHONY: build
-build:
+build: ## Build the kyma CLI binary.
 	GOFIPS140=v1.0.0 go build -ldflags="-X github.com/kyma-project/cli.v3/internal/cmd/version.version=local-$(shell git rev-parse --short HEAD)" -o bin/kyma main.go
 
 .PHONY: docs
-docs:
+docs: ## Generate CLI documentation.
 	rm -r ${PROJECT_ROOT}/docs/user/gen-docs
 	mkdir ${PROJECT_ROOT}/docs/user/gen-docs
 	go run gen-docs/main.go --skip-extensions

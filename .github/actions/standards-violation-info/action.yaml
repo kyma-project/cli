@@ -1,0 +1,17 @@
+name: 'Standards Violation Info'
+description: 'Action for adding comment to current PR about violated standards'
+
+inputs:
+  github_token:
+    description: 'GitHub token'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: comment
+      run: |
+        gh pr comment ${{ github.event.pull_request.number }} -R kyma-project/cli --body-file .github/actions/standards-violation-info/message.md
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+      shell: bash
