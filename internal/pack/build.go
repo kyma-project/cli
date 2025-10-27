@@ -8,11 +8,12 @@ import (
 	"github.com/buildpacks/pack/pkg/cache"
 	"github.com/buildpacks/pack/pkg/client"
 	"github.com/buildpacks/pack/pkg/logging"
+	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/pkg/errors"
 )
 
 func Build(ctx context.Context, appName, appPath string) error {
-	pack, err := client.NewClient(client.WithLogger(logging.NewLogWithWriters(os.Stdout, os.Stderr)))
+	pack, err := client.NewClient(client.WithLogger(logging.NewLogWithWriters(out.Default.MsgWriter(), out.Default.ErrWriter())))
 	if err != nil {
 		return errors.Wrap(err, "failed to create buildpack client")
 	}

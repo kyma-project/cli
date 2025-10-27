@@ -227,7 +227,20 @@ func (p *Printer) Errfln(format string, a ...interface{}) {
 // Write implements the io.Writer interface for Printer
 // it allows using Printer as an io.Writer
 func (p *Printer) Write(b []byte) (n int, err error) {
-	return p.outWriter.Write(b)
+	return p.MsgWriter().Write(b)
+}
+
+// MsgWriter returns the output writer
+// for passing it to functions that require an io.Writer
+// in this way the output can be muted using DisableMsg()
+func (p *Printer) MsgWriter() io.Writer {
+	return p.outWriter
+}
+
+// ErrWriter returns the error output writer
+// for passing it to functions that require an io.Writer
+func (p *Printer) ErrWriter() io.Writer {
+	return p.errWriter
 }
 
 func write(writer io.Writer, format string, a ...interface{}) {
