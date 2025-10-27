@@ -1,4 +1,4 @@
-package prompt_test
+package prompt
 
 import (
 	"bytes"
@@ -7,7 +7,7 @@ import (
 	"testing"
 	"testing/iotest"
 
-	"github.com/kyma-project/cli.v3/internal/cmdcommon/prompt"
+	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/stretchr/testify/require"
 )
 
@@ -59,13 +59,13 @@ func TestOneOfStringListPrompt_Table(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 
 			output := bytes.NewBuffer([]byte{})
-			listPrompt := prompt.NewCustomOneOfStringList(
-				tc.inputReader,
-				output,
-				"Select a fruit:",
-				"Type the version number: ",
-				tc.values,
-			)
+			listPrompt := OneOfStringList{
+				reader:     tc.inputReader,
+				printer:    out.NewToWriter(output),
+				message:    "Select a fruit:",
+				promptText: "Type the version number: ",
+				values:     tc.values,
+			}
 
 			got, err := listPrompt.Prompt()
 

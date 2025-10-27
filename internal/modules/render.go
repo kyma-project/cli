@@ -3,12 +3,11 @@ package modules
 import (
 	"encoding/json"
 	"fmt"
-	"io"
-	"os"
 	"sort"
 	"strings"
 
 	"github.com/kyma-project/cli.v3/internal/cmdcommon/types"
+	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/kyma-project/cli.v3/internal/render"
 	"gopkg.in/yaml.v3"
 )
@@ -47,41 +46,41 @@ var (
 	}
 )
 
-// Renders uses standard output to print ModuleList in table view
+// Render uses standard output to print ModuleList in table view
 func Render(modulesList ModulesList, tableInfo TableInfo, format types.Format) error {
 	switch format {
 	case types.JSONFormat:
-		return renderJSON(os.Stdout, modulesList, tableInfo)
+		return renderJSON(out.Default, modulesList, tableInfo)
 	case types.YAMLFormat:
-		return renderYAML(os.Stdout, modulesList, tableInfo)
+		return renderYAML(out.Default, modulesList, tableInfo)
 	default:
-		return renderTable(os.Stdout, modulesList, tableInfo)
+		return renderTable(out.Default, modulesList, tableInfo)
 	}
 }
 
-func renderJSON(writer io.Writer, modulesList ModulesList, tableInfo TableInfo) error {
+func renderJSON(printer *out.Printer, modulesList ModulesList, tableInfo TableInfo) error {
 	obj, err := json.MarshalIndent(convertToOutputParameters(modulesList, tableInfo), "", "  ")
 	if err != nil {
 		return err
 	}
 
-	_, err = fmt.Fprintln(writer, string(obj))
-	return err
+	printer.Msgln(string(obj))
+	return nil
 }
 
-func renderYAML(writer io.Writer, modulesList ModulesList, tableInfo TableInfo) error {
+func renderYAML(printer *out.Printer, modulesList ModulesList, tableInfo TableInfo) error {
 	obj, err := yaml.Marshal(convertToOutputParameters(modulesList, tableInfo))
 	if err != nil {
 		return err
 	}
 
-	_, err = fmt.Fprintln(writer, string(obj))
-	return err
+	printer.Msgln(string(obj))
+	return nil
 }
 
-func renderTable(writer io.Writer, modulesList ModulesList, tableInfo TableInfo) error {
+func renderTable(printer *out.Printer, modulesList ModulesList, tableInfo TableInfo) error {
 	render.Table(
-		writer,
+		printer,
 		tableInfo.Headers,
 		convertModuleListToRows(modulesList, tableInfo.RowConverter),
 	)

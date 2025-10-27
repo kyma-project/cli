@@ -1,8 +1,7 @@
 package kube
 
 import (
-	"fmt"
-
+	"github.com/kyma-project/cli.v3/internal/out"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -69,6 +68,6 @@ func SaveConfig(kubeconfig *api.Config, output string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(string(message))
+	out.Msgln(string(message))
 	return nil
 }

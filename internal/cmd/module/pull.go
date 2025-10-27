@@ -8,6 +8,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"github.com/kyma-project/cli.v3/internal/modules"
 	"github.com/kyma-project/cli.v3/internal/modules/repo"
+	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/spf13/cobra"
 )
 
@@ -77,8 +78,8 @@ func pullModule(cfg *pullConfig) clierror.Error {
 		return clierror.Wrap(err, clierror.New("failed to store module in the provided namespace"))
 	}
 
-	fmt.Printf("Module %s pulled successfully into namespace '%s'\n\n", cfg.moduleName, cfg.namespace)
-	fmt.Printf("%s", getWarningTextForCommunityModuleUsage(moduleTemplate))
+	out.Msgfln("Module %s pulled successfully into namespace '%s'\n", cfg.moduleName, cfg.namespace)
+	out.Msgf("%s", getWarningTextForCommunityModuleUsage(moduleTemplate))
 
 	return nil
 }

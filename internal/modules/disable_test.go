@@ -10,6 +10,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/kube/fake"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	modulesfake "github.com/kyma-project/cli.v3/internal/modules/fake"
+	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/watch"
@@ -48,7 +49,7 @@ func TestDisableCore(t *testing.T) {
 			TestKymaInterface: &fakeKymaClient,
 		}
 
-		err := disableCore(buffer, context.Background(), &fakeKubeClient, "keda")
+		err := disableCore(out.NewToWriter(buffer), context.Background(), &fakeKubeClient, "keda")
 		require.Nil(t, err)
 		require.Equal(t, []string{"keda"}, fakeKymaClient.DisabledModules)
 		require.Equal(t, "removing keda module from the target Kyma environment\nkeda module disabled\n", buffer.String())
@@ -75,7 +76,7 @@ func TestDisableCore(t *testing.T) {
 			TestKymaInterface: &fakeKymaClient,
 		}
 
-		err := disableCore(buffer, context.Background(), &fakeKubeClient, "keda")
+		err := disableCore(out.NewToWriter(buffer), context.Background(), &fakeKubeClient, "keda")
 		require.Nil(t, err)
 		require.Equal(t, []string{"keda"}, fakeKymaClient.DisabledModules)
 		require.Equal(t, "removing keda module from the target Kyma environment\nkeda module disabled\n", buffer.String())
@@ -112,7 +113,7 @@ func TestDisableCore(t *testing.T) {
 
 		fakeWatcher.Delete(nil)
 
-		err := disableCore(buffer, context.Background(), &fakeKubeClient, "keda")
+		err := disableCore(out.NewToWriter(buffer), context.Background(), &fakeKubeClient, "keda")
 		require.Nil(t, err)
 		require.Equal(t, []string{"keda"}, fakeKymaClient.DisabledModules)
 		require.Equal(t, "removing kyma-system/default CR\nwaiting for kyma-system/default CR to be removed\nremoving keda module from the target Kyma environment\nkeda module disabled\n", buffer.String())
@@ -137,7 +138,7 @@ func TestDisableCore(t *testing.T) {
 			clierror.New("failed to disable module"),
 		)
 
-		err := disableCore(buffer, context.Background(), &fakeKubeClient, "keda")
+		err := disableCore(out.NewToWriter(buffer), context.Background(), &fakeKubeClient, "keda")
 		require.Equal(t, expectedCliErr, err)
 		require.Equal(t, "removing keda module from the target Kyma environment\n", buffer.String())
 	})
@@ -156,7 +157,7 @@ func TestDisableCore(t *testing.T) {
 			clierror.New("failed to get module info from the target Kyma environment"),
 		)
 
-		err := disableCore(buffer, context.Background(), &fakeKubeClient, "keda")
+		err := disableCore(out.NewToWriter(buffer), context.Background(), &fakeKubeClient, "keda")
 		require.Equal(t, expectedCliErr, err)
 		require.Empty(t, fakeKymaClient.DisabledModules)
 		require.Empty(t, buffer.String())
@@ -181,7 +182,7 @@ func TestDisableCore(t *testing.T) {
 			clierror.New("failed to get ModuleTemplate CR for module"),
 		)
 
-		err := disableCore(buffer, context.Background(), &fakeKubeClient, "keda")
+		err := disableCore(out.NewToWriter(buffer), context.Background(), &fakeKubeClient, "keda")
 		require.Equal(t, expectedCliErr, err)
 		require.Empty(t, fakeKymaClient.DisabledModules)
 		require.Empty(t, buffer.String())
@@ -221,7 +222,7 @@ func TestDisableCore(t *testing.T) {
 			clierror.New("failed to remove kyma-system/default cr"),
 		)
 
-		err := disableCore(buffer, context.Background(), &fakeKubeClient, "keda")
+		err := disableCore(out.NewToWriter(buffer), context.Background(), &fakeKubeClient, "keda")
 		require.Equal(t, expectedCliErr, err)
 		require.Empty(t, fakeKymaClient.DisabledModules)
 		require.Equal(t, "removing kyma-system/default CR\n", buffer.String())
@@ -261,7 +262,7 @@ func TestDisableCore(t *testing.T) {
 			clierror.New("failed to watch resource kyma-system/default"),
 		)
 
-		err := disableCore(buffer, context.Background(), &fakeKubeClient, "keda")
+		err := disableCore(out.NewToWriter(buffer), context.Background(), &fakeKubeClient, "keda")
 		require.Equal(t, expectedCliErr, err)
 		require.Empty(t, fakeKymaClient.DisabledModules)
 	})
@@ -307,7 +308,7 @@ func TestDisableCore(t *testing.T) {
 			cancel()
 		}()
 
-		err := disableCore(buffer, ctx, &fakeKubeClient, "keda")
+		err := disableCore(out.NewToWriter(buffer), ctx, &fakeKubeClient, "keda")
 		require.Equal(t, expectedCliErr, err)
 		require.Equal(t, "removing kyma-system/default CR\nwaiting for kyma-system/default CR to be removed\n", buffer.String())
 	})
@@ -422,7 +423,7 @@ func TestDisableCommunity(t *testing.T) {
 			CommunityInstalledByNameErr: errors.New("CommunityInstalledErr"),
 		}
 
-		err := disableCommunity(buffer, ctx, &fakeModuleTemplatesRepo, "test")
+		err := disableCommunity(out.NewToWriter(buffer), ctx, &fakeModuleTemplatesRepo, "test")
 
 		expectedCliErr := clierror.Wrap(
 			errors.New("failed to retrieve a list of installed community modules: CommunityInstalledErr"),
@@ -441,7 +442,7 @@ func TestDisableCommunity(t *testing.T) {
 			ReturnCommunityInstalledByName: []kyma.ModuleTemplate{},
 		}
 
-		err := disableCommunity(buffer, ctx, &fakeModuleTemplatesRepo, "test")
+		err := disableCommunity(out.NewToWriter(buffer), ctx, &fakeModuleTemplatesRepo, "test")
 
 		expectedCliErr := clierror.Wrap(
 			errors.New("failed to find any version of the module test"),
@@ -473,7 +474,7 @@ func TestDisableCommunity(t *testing.T) {
 			},
 		}
 
-		err := disableCommunity(buffer, ctx, &fakeModuleTemplatesRepo, "test")
+		err := disableCommunity(out.NewToWriter(buffer), ctx, &fakeModuleTemplatesRepo, "test")
 
 		expectedCliErr := clierror.Wrap(
 			errors.New("failed to determine module version for test"),
@@ -500,7 +501,7 @@ func TestDisableCommunity(t *testing.T) {
 			ResourcesErr: errors.New("ResourcesError"),
 		}
 
-		err := disableCommunity(buffer, ctx, &fakeModuleTemplatesRepo, "test")
+		err := disableCommunity(out.NewToWriter(buffer), ctx, &fakeModuleTemplatesRepo, "test")
 
 		expectedCliErr := clierror.Wrap(
 			errors.New("ResourcesError"),
@@ -546,7 +547,7 @@ func TestDisableCommunity(t *testing.T) {
 			DeleteResourceReturnWatcherErr: errors.New("DeleteResourceReturnWatcherError"),
 		}
 
-		err := disableCommunity(buffer, ctx, &fakeModuleTemplatesRepo, "test")
+		err := disableCommunity(out.NewToWriter(buffer), ctx, &fakeModuleTemplatesRepo, "test")
 
 		require.Nil(t, err)
 		require.Equal(t, "removing test community module from the target Kyma environment\nfailed to delete resource test-secret (Secret): DeleteResourceReturnWatcherError\nfailed to delete resource test-namespace (Namespace): DeleteResourceReturnWatcherError\nsome errors occured during the test community module removal\n", buffer.String())
@@ -594,7 +595,7 @@ func TestDisableCommunity(t *testing.T) {
 			cancel()
 		}()
 
-		err := disableCommunity(buffer, ctx, &fakeModuleTemplatesRepo, "test")
+		err := disableCommunity(out.NewToWriter(buffer), ctx, &fakeModuleTemplatesRepo, "test")
 
 		expectedCliErr := clierror.Wrap(
 			errors.New("context canceled"),
@@ -648,7 +649,7 @@ func TestDisableCommunity(t *testing.T) {
 			fakeWatcher.Delete(nil)
 		}()
 
-		err := disableCommunity(buffer, ctx, &fakeModuleTemplatesRepo, "test")
+		err := disableCommunity(out.NewToWriter(buffer), ctx, &fakeModuleTemplatesRepo, "test")
 
 		require.Nil(t, err)
 		require.Equal(t, buffer.String(), "removing test community module from the target Kyma environment\nwaiting for resource deletion: test-secret (Secret)\nwaiting for resource deletion: test-namespace (Namespace)\ntest community module successfully removed\n")

@@ -2,12 +2,11 @@ package authorization
 
 import (
 	"context"
-	"fmt"
-	"os"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/kubeconfig"
+	"github.com/kyma-project/cli.v3/internal/out"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -55,7 +54,7 @@ func (ra *ResourceApplier) applyOIDCResource(ctx context.Context, oidcResource *
 		return clierror.Wrap(err, clierror.New("failed to apply OpenIDConnect resource"))
 	}
 
-	fmt.Printf("OpenIDConnect resource '%s' applied successfully.\n", resourceName)
+	out.Msgfln("OpenIDConnect resource '%s' applied successfully.", resourceName)
 	return nil
 }
 
@@ -63,7 +62,7 @@ func (ra *ResourceApplier) applyOIDCResource(ctx context.Context, oidcResource *
 func (ra *ResourceApplier) checkOIDCConflicts(existing, new *unstructured.Unstructured) clierror.Error {
 	resourceName := new.GetName()
 
-	fmt.Fprintf(os.Stderr, "Warning: OpenIDConnect resource '%s' already exists.\n", resourceName)
+	out.Errfln("Warning: OpenIDConnect resource '%s' already exists.", resourceName)
 
 	existingSpec, existingOk := existing.Object["spec"].(map[string]any)
 	newSpec, newOk := new.Object["spec"].(map[string]any)
@@ -73,11 +72,11 @@ func (ra *ResourceApplier) checkOIDCConflicts(existing, new *unstructured.Unstru
 	}
 
 	if !ra.compareOIDCSpecs(existingSpec, newSpec) {
-		fmt.Fprintf(os.Stderr, "Error: The existing OpenIDConnect resource has different configuration. Please resolve the conflict manually or use a different name.\n")
+		out.Errln("Error: The existing OpenIDConnect resource has different configuration. Please resolve the conflict manually or use a different name.")
 		return clierror.New("configuration conflict detected - operation aborted")
 	}
 
-	fmt.Printf("OpenIDConnect resource '%s' has identical configuration - proceeding with update.\n", resourceName)
+	out.Msgfln("OpenIDConnect resource '%s' has identical configuration - proceeding with update.", resourceName)
 	return nil
 }
 
@@ -113,7 +112,7 @@ func (ra *ResourceApplier) applyRBACResource(ctx context.Context, rbacResource *
 		return clierror.Wrap(err, clierror.New("failed to apply RBAC resource"))
 	}
 
-	fmt.Printf("%s '%s' applied successfully.\n", resourceKind, resourceName)
+	out.Msgfln("%s '%s' applied successfully.", resourceKind, resourceName)
 
 	return nil
 }

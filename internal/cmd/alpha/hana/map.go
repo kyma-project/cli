@@ -2,13 +2,13 @@ package hana
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/kyma-project/cli.v3/internal/btp/auth"
 	"github.com/kyma-project/cli.v3/internal/btp/hana"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/flags"
+	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -81,7 +81,7 @@ func runHanaMap(config *hanaMapConfig) clierror.Error {
 		return clierror.WrapE(err, clierror.New("while mapping Kyma environment instance with SAP Hana instance"))
 	}
 
-	fmt.Printf("Hana with id '%s' is mapped to the cluster with id '%s'\n", hanaID, clusterID)
+	out.Msgfln("Hana with id '%s' is mapped to the cluster with id '%s'", hanaID, clusterID)
 	return nil
 }
 

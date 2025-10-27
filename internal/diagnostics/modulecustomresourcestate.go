@@ -3,13 +3,13 @@ package diagnostics
 import (
 	"context"
 	"fmt"
-	"io"
 	"time"
 
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/kube/kyma"
 	"github.com/kyma-project/cli.v3/internal/kube/rootlessdynamic"
 	"github.com/kyma-project/cli.v3/internal/modules/repo"
+	"github.com/kyma-project/cli.v3/internal/out"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -24,7 +24,7 @@ type ModuleCustomResourceState struct {
 type ModuleCustomResourceStateCollector struct {
 	client              kube.Client
 	moduleTemplatesRepo repo.ModuleTemplatesRepository
-	VerboseLogger
+	*out.Printer
 }
 
 type moduleTemplatesDataResource struct {
@@ -34,19 +34,15 @@ type moduleTemplatesDataResource struct {
 	Namespace  string
 }
 
-func NewModuleCustomResourceStateCollector(client kube.Client, writer io.Writer, verbose bool) *ModuleCustomResourceStateCollector {
-	return &ModuleCustomResourceStateCollector{
-		client:              client,
-		moduleTemplatesRepo: repo.NewModuleTemplatesRepo(client),
-		VerboseLogger:       NewVerboseLogger(writer, verbose),
-	}
+func NewModuleCustomResourceStateCollector(client kube.Client) *ModuleCustomResourceStateCollector {
+	return NewModuleCustomResourceStateCollectorWithRepo(client, nil)
 }
 
-func NewModuleCustomResourceStateCollectorWithRepo(client kube.Client, repo repo.ModuleTemplatesRepository, writer io.Writer, verbose bool) *ModuleCustomResourceStateCollector {
+func NewModuleCustomResourceStateCollectorWithRepo(client kube.Client, repo repo.ModuleTemplatesRepository) *ModuleCustomResourceStateCollector {
 	return &ModuleCustomResourceStateCollector{
 		client:              client,
 		moduleTemplatesRepo: repo,
-		VerboseLogger:       NewVerboseLogger(writer, verbose),
+		Printer:             out.Default,
 	}
 }
 
@@ -55,13 +51,13 @@ func (c *ModuleCustomResourceStateCollector) Run(ctx context.Context) []ModuleCu
 
 	coreModules, err := c.moduleTemplatesRepo.Core(ctx)
 	if err != nil {
-		c.WriteVerboseError(err, "Failed to list core modules")
+		c.Verbosefln("Failed to list core modules: %v", err)
 		coreModules = []kyma.ModuleTemplate{}
 	}
 
 	communityModules, err := c.moduleTemplatesRepo.Community(ctx)
 	if err != nil {
-		c.WriteVerboseError(err, "Failed to list community modules")
+		c.Verbosefln("Failed to list community modules: %v", err)
 		communityModules = []kyma.ModuleTemplate{}
 	}
 
@@ -72,7 +68,7 @@ func (c *ModuleCustomResourceStateCollector) Run(ctx context.Context) []ModuleCu
 	for _, module := range allModules {
 		moduleData, err := c.toModuleTemplatesData(module.Spec.Data)
 		if err != nil {
-			c.WriteVerboseError(err, fmt.Sprintf("Failed to get data resource for %s module", module.Spec.ModuleName))
+			c.Verbosefln("Failed to get data resource for %s module: %v", module.Spec.ModuleName, err)
 			continue
 		}
 
@@ -82,7 +78,7 @@ func (c *ModuleCustomResourceStateCollector) Run(ctx context.Context) []ModuleCu
 
 		resourcesList, err := c.queryModulesDataResource(ctx, *moduleData)
 		if err != nil {
-			c.WriteVerboseError(err, fmt.Sprintf("Failed to get data resource for %s module", module.Spec.ModuleName))
+			c.Verbosefln("Failed to get data resource for %s module: %v", module.Spec.ModuleName, err)
 			continue
 		}
 
@@ -145,12 +141,12 @@ func collectNonReadyModulesStates(resourcesList *unstructured.UnstructuredList) 
 	for _, resource := range resourcesList.Items {
 		statusMap, ok := resource.Object["status"].(map[string]any)
 		if !ok {
-			fmt.Println("failed to read status from resource", resource)
+			out.Errfln("failed to read status from resource %s", resource)
 		}
 
 		state, ok := statusMap["state"].(string)
 		if !ok {
-			fmt.Println("failed to read state from statusMap", statusMap)
+			out.Errfln("failed to read state from statusMap %s", statusMap)
 		}
 
 		if state == "Ready" {

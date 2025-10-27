@@ -2,7 +2,6 @@ package provision
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"strings"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/btp/cis"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/flags"
+	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/spf13/cobra"
 )
 
@@ -96,7 +96,7 @@ func runProvision(config *provisionConfig) clierror.Error {
 		return clierror.WrapE(err, clierror.New("failed to provision kyma runtime"))
 	}
 
-	fmt.Printf("Kyma environment provisioning, environment name: '%s', id: '%s'\n", response.Name, response.ID)
+	out.Msgfln("Kyma environment provisioning, environment name: '%s', id: '%s'", response.Name, response.ID)
 
 	return nil
 }
