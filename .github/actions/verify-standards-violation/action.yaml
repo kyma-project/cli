@@ -37,6 +37,7 @@ runs:
     - name: Verify Code Standards
       if: always()
       run: |
+        set +e
         echo "Verifying code standard output usage..."
         CODE_STD_OUT_USAGE=$(grep -r -E 'fmt\.Print|os\.Stdout|os\.Stderr' ./internal | grep --invert-match '^./internal/out')
         
