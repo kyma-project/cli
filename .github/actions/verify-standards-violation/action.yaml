@@ -9,8 +9,7 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - name: Verify Standards
-      id: verify-standards
+    - name: Verify Docs
       run: |
         set -e
 
@@ -19,28 +18,34 @@ runs:
         echo "Verifying documentation..."
         make docs 1>/dev/null
         DOCS_CHANGES=$(git status --porcelain)
+        
         if [ -n "$DOCS_CHANGES" ]; then
-          FAIL_REASON="${FAIL_REASON}\n"
-          FAIL_REASON="${FAIL_REASON}* ❌ Documentation is out of date:\n"
-          FAIL_REASON="${FAIL_REASON}  \`\`\`bash\n"
-          FAIL_REASON="${FAIL_REASON}$(echo -e "$DOCS_CHANGES" | sed 's/^/  /')\n"
-          FAIL_REASON="${FAIL_REASON}  \`\`\`\n"
-          FAIL_REASON="${FAIL_REASON}  Please run \`make docs\` and commit the changes.\n"
+          cat >> ${REASON_FILE} << EOF
+          * ❌ Documentation is out of date:
+            \`\`\`bash
+          $(echo -e "$DOCS_CHANGES" | sed 's/^/  /')
+            \`\`\`
+            Please run \`make docs\` and commit the changes.
+          EOF
         fi
+      env:
+        REASON_FILE: ${{ runner.temp }}/failed_reason.txt
+      shell: bash
 
+    - name: Verify Code Standards
+      run: |
         echo "Verifying code standard output usage..."
         CODE_STD_OUT_USAGE=$(grep -r -E 'fmt\.Print|os\.Stdout|os\.Stderr' ./internal | grep --invert-match '^./internal/out')
+        
         if [ -n "$CODE_STD_OUT_USAGE" ]; then
-          FAIL_REASON="${FAIL_REASON}\n"
-          FAIL_REASON="${FAIL_REASON}* ❌  Found usage of \`os.Stdout\`, \`os.Stderr\` or \`fmt.Print\` in code:\n"
-          FAIL_REASON="${FAIL_REASON}  \`\`\`bash\n"
-          FAIL_REASON="${FAIL_REASON}$(echo -e "$CODE_STD_OUT_USAGE" | sed 's/^/  /')\n"
-          FAIL_REASON="${FAIL_REASON}  \`\`\`\n"
-          FAIL_REASON="${FAIL_REASON}  Please use the \`internal/out\` package for output handling instead.\n"
+          cat >> ${REASON_FILE} << EOF
+          * ❌  Found usage of \`os.Stdout\`, \`os.Stderr\` or \`fmt.Print\` in code:
+            \`\`\`bash
+          $(echo -e "$CODE_STD_OUT_USAGE" | sed 's/^/  /')
+            \`\`\`
+            Please use the \`internal/out\` package for output handling instead.
+          EOF
         fi
-
-        echo -e "${FAIL_REASON}"
-        echo -e "${FAIL_REASON}" > ${REASON_FILE}
       env:
         REASON_FILE: ${{ runner.temp }}/failed_reason.txt
       shell: bash
