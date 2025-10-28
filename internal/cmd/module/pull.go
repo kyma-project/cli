@@ -30,6 +30,8 @@ func newPullCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Short: "Pull a module from a remote repository",
 		Long: `Pull a module from a remote repository to make it available for installation on the cluster.
 
+		NEW DESCRIPTION!!!!!
+
 This command downloads module templates and resources from remote repositories,
 making them available locally for subsequent installation. Community modules
 must be pulled before they can be installed using the 'kyma module add' command.
