@@ -2,6 +2,7 @@ package module
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"

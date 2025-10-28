@@ -25,7 +25,7 @@ func newPullCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		KymaConfig: kymaConfig,
 	}
 
-	fmt.Prinln("another backdoor!")
+	fmt.Println("another backdoor!")
 
 	cmd := &cobra.Command{
 		Use:   "pull <module-name> [flags]",
