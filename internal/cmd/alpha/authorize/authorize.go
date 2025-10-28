@@ -54,10 +54,10 @@ func NewAuthorizeCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	// Required flags
 	cmd.Flags().StringVar(&cfg.repository, "repository", "", "GitHub repo in owner/name format (e.g., kyma-project/cli) (required)")
-	cmd.Flags().StringVar(&cfg.clientId, "clientId", "", "OIDC client ID (audience) expected in the token (required)")
+	cmd.Flags().StringVar(&cfg.clientId, "client-id", "", "OIDC client ID (audience) expected in the token (required)")
 
 	// Optional flags with defaults
-	cmd.Flags().StringVar(&cfg.issuerURL, "issuerURL", "https://token.actions.githubusercontent.com", "OIDC issuer")
+	cmd.Flags().StringVar(&cfg.issuerURL, "issuer-url", "https://token.actions.githubusercontent.com", "OIDC issuer")
 	cmd.Flags().StringVar(&cfg.prefix, "prefix", "", "Username prefix for the repository claim (e.g., gh-oidc:)")
 	cmd.Flags().StringVar(&cfg.namespace, "namespace", "", "Namespace for RoleBinding (required if not cluster-wide and binding a Role or namespaced ClusterRole)")
 	cmd.Flags().BoolVar(&cfg.clusterWide, "cluster-wide", false, "If true, create a ClusterRoleBinding; otherwise, a RoleBinding")
@@ -73,14 +73,15 @@ func NewAuthorizeCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 func authorize(cfg *authorizeConfig) clierror.Error {
 	repositoryOIDCBuilder := authorization.NewOIDCBuilder(cfg.clientId, cfg.issuerURL).
 		ForRepository(cfg.repository).
-		ForName(cfg.name)
+		ForName(cfg.name).
+		ForPrefix(cfg.prefix)
 	oidcResource, err := repositoryOIDCBuilder.Build()
 
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to build OIDC resource"))
 	}
 
-	rbacResource, err := buildRBACResource(cfg, repositoryOIDCBuilder.GetOpenIDConnectResourceName())
+	rbacResource, err := buildRBACResource(cfg, repositoryOIDCBuilder.GetUsernamePrefix())
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to build RBAC resource"))
 	}
@@ -92,11 +93,10 @@ func authorize(cfg *authorizeConfig) clierror.Error {
 	return applyResources(cfg, oidcResource, rbacResource)
 }
 
-func buildRBACResource(cfg *authorizeConfig, oidcResourceName string) (*unstructured.Unstructured, error) {
+func buildRBACResource(cfg *authorizeConfig, bindingPrefix string) (*unstructured.Unstructured, error) {
 	builder := authorization.NewRBACBuilder().
 		ForRepository(cfg.repository).
-		ForPrefix(cfg.prefix).
-		ForOIDCName(oidcResourceName)
+		ForPrefix(bindingPrefix)
 
 	if cfg.clusterWide {
 		return buildClusterRoleBinding(builder, cfg.clusterrole)

@@ -13,7 +13,6 @@ type RBACBuilder struct {
 	namespace   string
 	role        string
 	clusterrole string
-	oidcName    string
 }
 
 func NewRBACBuilder() *RBACBuilder {
@@ -42,11 +41,6 @@ func (b *RBACBuilder) ForRole(role string) *RBACBuilder {
 
 func (b *RBACBuilder) ForClusterRole(clusterRole string) *RBACBuilder {
 	b.clusterrole = clusterRole
-	return b
-}
-
-func (b *RBACBuilder) ForOIDCName(oidcName string) *RBACBuilder {
-	b.oidcName = oidcName
 	return b
 }
 
@@ -119,10 +113,6 @@ func (b *RBACBuilder) isRepoNameValid() bool {
 }
 
 func (b *RBACBuilder) getSubjectName() string {
-	if b.oidcName != "" {
-		return b.prefix + b.oidcName + "/" + b.repository
-	}
-
 	return b.prefix + b.repository
 }
 
