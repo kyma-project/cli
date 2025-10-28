@@ -10,6 +10,7 @@ runs:
   using: 'composite'
   steps:
     - name: Verify Docs
+      if: always()
       run: |
         set -e
 
@@ -27,12 +28,14 @@ runs:
             \`\`\`
             Please run \`make docs\` and commit the changes.
           EOF
+          exit 1
         fi
       env:
         REASON_FILE: ${{ runner.temp }}/failed_reason.txt
       shell: bash
 
     - name: Verify Code Standards
+      if: always()
       run: |
         echo "Verifying code standard output usage..."
         CODE_STD_OUT_USAGE=$(grep -r -E 'fmt\.Print|os\.Stdout|os\.Stderr' ./internal | grep --invert-match '^./internal/out')
@@ -45,12 +48,14 @@ runs:
             \`\`\`
             Please use the \`internal/out\` package for output handling instead.
           EOF
+          exit 1
         fi
       env:
         REASON_FILE: ${{ runner.temp }}/failed_reason.txt
       shell: bash
 
     - name: Comment
+      if: always()
       run: |
         FLAGS=""
 
