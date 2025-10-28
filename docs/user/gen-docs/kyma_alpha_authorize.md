@@ -13,11 +13,11 @@ kyma alpha authorize repository [flags]
 ## Flags
 
 ```text
-      --clientId string         OIDC client ID (audience) expected in the token (required)
+      --client-id string        OIDC client ID (audience) expected in the token (required)
       --cluster-wide            If true, create a ClusterRoleBinding; otherwise, a RoleBinding
       --clusterrole string      ClusterRole name to bind (usable for RoleBinding or ClusterRoleBinding)
       --dry-run                 Print resources without applying
-      --issuerURL string        OIDC issuer (default "https://token.actions.githubusercontent.com")
+      --issuer-url string       OIDC issuer (default "https://token.actions.githubusercontent.com")
       --name string             Name for the OpenIDConnect resource (optional; default derives from clientId)
       --namespace string        Namespace for RoleBinding (required if not cluster-wide and binding a Role or namespaced ClusterRole)
   -o, --output string           Output format (yaml or json)

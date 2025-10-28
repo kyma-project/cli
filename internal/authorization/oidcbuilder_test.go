@@ -30,7 +30,7 @@ func TestOIDCBuilder_Build_Success(t *testing.T) {
 				"apiVersion": "authentication.gardener.cloud/v1alpha1",
 				"kind":       "OpenIDConnect",
 				"metadata": map[string]any{
-					"name": "test-client-oidc",
+					"name": "test-client",
 				},
 				"spec": map[string]any{
 					"issuerURL":     "https://token.actions.githubusercontent.com",
@@ -39,6 +39,7 @@ func TestOIDCBuilder_Build_Success(t *testing.T) {
 					"requiredClaims": map[string]any{
 						"repository": "kyma-project/cli",
 					},
+					"usernamePrefix": "test-client/",
 				},
 			},
 		},
@@ -62,6 +63,7 @@ func TestOIDCBuilder_Build_Success(t *testing.T) {
 					"requiredClaims": map[string]any{
 						"repository": "owner/repo",
 					},
+					"usernamePrefix": "custom-oidc-name/",
 				},
 			},
 		},
@@ -76,7 +78,7 @@ func TestOIDCBuilder_Build_Success(t *testing.T) {
 				"apiVersion": "authentication.gardener.cloud/v1alpha1",
 				"kind":       "OpenIDConnect",
 				"metadata": map[string]any{
-					"name": "prefix-client-oidc",
+					"name": "prefix-client",
 				},
 				"spec": map[string]any{
 					"issuerURL":      "https://auth.example.com",

@@ -44,7 +44,7 @@ func NewDiagnoseCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 func diagnose(cfg *diagnoseConfig) clierror.Error {
 	if cfg.verbose {
-		out.EnableDebug()
+		out.EnableVerbose()
 	}
 
 	client, clierr := cfg.GetKubeClientWithClierr()

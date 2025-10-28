@@ -35,7 +35,7 @@ type moduleTemplatesDataResource struct {
 }
 
 func NewModuleCustomResourceStateCollector(client kube.Client) *ModuleCustomResourceStateCollector {
-	return NewModuleCustomResourceStateCollectorWithRepo(client, nil)
+	return NewModuleCustomResourceStateCollectorWithRepo(client, repo.NewModuleTemplatesRepo(client))
 }
 
 func NewModuleCustomResourceStateCollectorWithRepo(client kube.Client, repo repo.ModuleTemplatesRepository) *ModuleCustomResourceStateCollector {

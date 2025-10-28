@@ -57,7 +57,7 @@ func (b *OIDCBuilder) Build() (*unstructured.Unstructured, error) {
 			"apiVersion": "authentication.gardener.cloud/v1alpha1",
 			"kind":       "OpenIDConnect",
 			"metadata": map[string]any{
-				"name": b.GetOpenIDConnectResourceName(),
+				"name": b.getOpenIDConnectResourceName(),
 			},
 			"spec": map[string]any{
 				"issuerURL":     b.issuerURL,
@@ -66,25 +66,28 @@ func (b *OIDCBuilder) Build() (*unstructured.Unstructured, error) {
 				"requiredClaims": map[string]any{
 					"repository": b.repository,
 				},
+				"usernamePrefix": b.GetUsernamePrefix(),
 			},
 		},
-	}
-
-	// Add usernamePrefix if provided
-	if b.prefix != "" {
-		spec := oidc.Object["spec"].(map[string]any)
-		spec["usernamePrefix"] = b.prefix
 	}
 
 	return oidc, nil
 }
 
-func (b *OIDCBuilder) GetOpenIDConnectResourceName() string {
+func (b *OIDCBuilder) getOpenIDConnectResourceName() string {
 	if b.name != "" {
 		return b.name
 	}
 
-	return fmt.Sprintf("%s-%s", b.clientID, "oidc")
+	return b.clientID
+}
+
+func (b *OIDCBuilder) GetUsernamePrefix() string {
+	if b.prefix == "" {
+		return b.getOpenIDConnectResourceName() + "/"
+	}
+
+	return b.prefix
 }
 
 func (b *OIDCBuilder) validate() error {
