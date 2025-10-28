@@ -3,7 +3,7 @@ module github.com/kyma-project/cli.v3
 go 1.24.4
 
 require (
-	github.com/Masterminds/semver/v3 v3.3.0
+	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/buildpacks/pack v0.38.2
 	github.com/docker/cli v28.5.1+incompatible
