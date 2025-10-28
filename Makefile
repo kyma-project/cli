@@ -33,6 +33,7 @@ build: ## Build the kyma CLI binary.
 
 .PHONY: docs
 docs: ## Generate CLI documentation.
+	go mod tidy
 	rm -r ${PROJECT_ROOT}/docs/user/gen-docs
 	mkdir ${PROJECT_ROOT}/docs/user/gen-docs
 	go run gen-docs/main.go --skip-extensions

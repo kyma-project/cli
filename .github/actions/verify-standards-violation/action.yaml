@@ -8,43 +8,55 @@ inputs:
 
 runs:
   using: 'composite'
-  steps:        
-    - name: Comment
+  steps:
+    - name: Verify Standards
+      id: verify-standards
       run: |
+        set -e
+
         FAIL_REASON=""
 
-        echo "### Verify documentation ###"
+        echo "Verifying documentation..."
         make docs 1>/dev/null
         DOCS_CHANGES=$(git status --porcelain)
         if [ -n "$DOCS_CHANGES" ]; then
           FAIL_REASON="${FAIL_REASON}\n"
-          FAIL_REASON="${FAIL_REASON}Documentation is out of date:\n"
-          FAIL_REASON="${FAIL_REASON}${DOCS_CHANGES}\n\n"
-          FAIL_REASON="${FAIL_REASON}Please run 'make docs' and commit the changes.\n"
+          FAIL_REASON="${FAIL_REASON}* ❌ Documentation is out of date:\n"
+          FAIL_REASON="${FAIL_REASON}  \`\`\`bash\n"
+          FAIL_REASON="${FAIL_REASON}$(echo -e "$DOCS_CHANGES" | sed 's/^/  /')\n"
+          FAIL_REASON="${FAIL_REASON}  \`\`\`\n"
+          FAIL_REASON="${FAIL_REASON}  Please run \`make docs\` and commit the changes.\n"
         fi
 
-        echo "### Verify code standard output usage ###"
+        echo "Verifying code standard output usage..."
         CODE_STD_OUT_USAGE=$(grep -r -E 'fmt\.Print|os\.Stdout|os\.Stderr' ./internal | grep --invert-match '^./internal/out')
         if [ -n "$CODE_STD_OUT_USAGE" ]; then
           FAIL_REASON="${FAIL_REASON}\n"
-          FAIL_REASON="${FAIL_REASON}Found usage of os.Stdout, os.Stderr or fmt.Print in code:\n"
-          FAIL_REASON="${FAIL_REASON}$CODE_STD_OUT_USAGE\n\n"
-          FAIL_REASON="${FAIL_REASON}Please use the internal/out package for output handling instead.\n"
+          FAIL_REASON="${FAIL_REASON}* ❌  Found usage of \`os.Stdout\`, \`os.Stderr\` or \`fmt.Print\` in code:\n"
+          FAIL_REASON="${FAIL_REASON}  \`\`\`bash\n"
+          FAIL_REASON="${FAIL_REASON}$(echo -e "$CODE_STD_OUT_USAGE" | sed 's/^/  /')\n"
+          FAIL_REASON="${FAIL_REASON}  \`\`\`\n"
+          FAIL_REASON="${FAIL_REASON}  Please use the \`internal/out\` package for output handling instead.\n"
         fi
 
         echo -e "${FAIL_REASON}"
+        echo -e "FAIL_REASON=${FAIL_REASON}" >> $GITHUB_OUTPUT
+      shell: bash
 
+    - name: Comment
+      run: |
         FLAGS=""
 
         # Determine which message to post based on validation result
         if [ -n "$FAIL_REASON" ]; then
           echo "Standards violation detected"
-          MSG_TMPL=$(cat .github/actions/standards-violation-info/violation-message.md.tmpl)
-          MSG=$(eval "echo ${MSG_TMPL}")
-          FLAGS="${FLAGS} --body ${MSG"}
+          TMP_FILE=$(mktemp)
+          MSG_TMPL=$(cat .github/actions/verify-standards-violation/violation-message_tmpl.md)
+          eval "echo -e \"${MSG_TMPL}\"" > $TMP_FILE
+          FLAGS="${FLAGS} --body-file ${TMP_FILE}"
         else
           echo "No standards violation detected"
-          FLAGS="${FLAGS} --body-file .github/actions/standards-violation-info/no-violation-message.md"
+          FLAGS="${FLAGS} --body-file .github/actions/verify-standards-violation/no-violation-message.md"
         fi
 
         # Check for existing comment by github-actions and edit if found
@@ -58,4 +70,5 @@ runs:
         gh pr comment ${{ github.event.pull_request.number }} -R kyma-project/cli $FLAGS
       env:
         GITHUB_TOKEN: ${{ inputs.github_token }}
+        FAIL_REASON: ${{ steps.verify-standards.outputs.FAIL_REASON }}
       shell: bash
