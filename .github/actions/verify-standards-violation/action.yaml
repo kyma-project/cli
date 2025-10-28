@@ -40,7 +40,7 @@ runs:
         fi
 
         echo -e "${FAIL_REASON}"
-        echo -e "FAIL_REASON=${FAIL_REASON}" >> $GITHUB_OUTPUT
+        echo "FAIL_REASON=${FAIL_REASON}" >> $GITHUB_OUTPUT
       shell: bash
 
     - name: Comment
