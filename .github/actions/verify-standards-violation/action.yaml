@@ -22,12 +22,12 @@ runs:
         
         if [ -n "$DOCS_CHANGES" ]; then
           cat >> ${REASON_FILE} << EOF
-          * ❌ Documentation is out of date:
-            \`\`\`bash
-          $(echo -e "$DOCS_CHANGES" | sed 's/^/  /')
-            \`\`\`
-            Please run \`make docs\` and commit the changes.
-          EOF
+        * ❌ Documentation is out of date:
+          \`\`\`bash
+        $(echo -e "$DOCS_CHANGES" | sed 's/^/  /')
+          \`\`\`
+          Please run \`make docs\` and commit the changes.
+        EOF
           exit 1
         fi
       env:
@@ -42,12 +42,12 @@ runs:
         
         if [ -n "$CODE_STD_OUT_USAGE" ]; then
           cat >> ${REASON_FILE} << EOF
-          * ❌  Found usage of \`os.Stdout\`, \`os.Stderr\` or \`fmt.Print\` in code:
-            \`\`\`bash
-          $(echo -e "$CODE_STD_OUT_USAGE" | sed 's/^/  /')
-            \`\`\`
-            Please use the \`internal/out\` package for output handling instead.
-          EOF
+        * ❌  Found usage of \`os.Stdout\`, \`os.Stderr\` or \`fmt.Print\` in code:
+          \`\`\`bash
+        $(echo -e "$CODE_STD_OUT_USAGE" | sed 's/^/  /')
+          \`\`\`
+          Please use the \`internal/out\` package for output handling instead.
+        EOF
           exit 1
         fi
       env:
