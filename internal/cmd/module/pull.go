@@ -25,6 +25,8 @@ func newPullCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		KymaConfig: kymaConfig,
 	}
 
+	out.Msg("Initializing pull command...") // Debug line to trace execution
+
 	cmd := &cobra.Command{
 		Use:   "pull <module-name> [flags]",
 		Short: "Pull a module from a remote repository",
