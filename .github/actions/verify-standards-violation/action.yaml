@@ -40,7 +40,9 @@ runs:
         fi
 
         echo -e "${FAIL_REASON}"
-        echo "FAIL_REASON=\"${FAIL_REASON}\"" >> $GITHUB_OUTPUT
+        echo -e "${FAIL_REASON}" > ${REASON_FILE}
+      env:
+        REASON_FILE: ${{ runner.temp }}/failed_reason.txt
       shell: bash
 
     - name: Comment
@@ -48,6 +50,7 @@ runs:
         FLAGS=""
 
         # Determine which message to post based on validation result
+        FAIL_REASON=$(cat ${REASON_FILE})
         if [ -n "$FAIL_REASON" ]; then
           echo "Standards violation detected"
           TMP_FILE=$(mktemp)
@@ -70,5 +73,5 @@ runs:
         gh pr comment ${{ github.event.pull_request.number }} -R kyma-project/cli $FLAGS
       env:
         GITHUB_TOKEN: ${{ inputs.github_token }}
-        FAIL_REASON: ${{ steps.verify-standards.outputs.FAIL_REASON }}
+        REASON_FILE: ${{ runner.temp }}/failed_reason.txt
       shell: bash
