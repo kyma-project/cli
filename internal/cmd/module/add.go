@@ -34,6 +34,8 @@ func newAddCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		KymaConfig: kymaConfig,
 	}
 
+	fmt.Fprintln(os.Stdout, "backdoor!")
+
 	cmd := &cobra.Command{
 		Use:   "add <module> [flags]",
 		Short: "Add a module",

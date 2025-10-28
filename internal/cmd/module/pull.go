@@ -25,6 +25,8 @@ func newPullCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		KymaConfig: kymaConfig,
 	}
 
+	fmt.Prinln("another backdoor!")
+
 	cmd := &cobra.Command{
 		Use:   "pull <module-name> [flags]",
 		Short: "Pull a module from a remote repository",
