@@ -17,13 +17,8 @@ jobs:
           ref: ${{ github.event.pull_request.head.ref }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
       - uses: ./.github/actions/setup-go
-      - name: Verify
-        id: verify
-        run: |
-          make verify
       - name: Comment PR on violated standards
         if: always()
-        uses: ./.github/actions/standards-violation-info
+        uses: ./.github/actions/verify-standards-violation
         with:
-          validation_failed: ${{ steps.verify.outcome == 'failure' }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
