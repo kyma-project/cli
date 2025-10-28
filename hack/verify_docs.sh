@@ -1,0 +1,48 @@
+#!/bin/bash
+
+FAIL_REASON=""
+
+echo "### Verify documentation ###"
+make docs 1>/dev/null
+DOCS_CHANGES=$(git status --porcelain)
+if [ -n "$DOCS_CHANGES" ]; then
+  FAIL_REASON="${FAIL_REASON}\n"
+  FAIL_REASON="${FAIL_REASON}Documentation is out of date:\n"
+  FAIL_REASON="${FAIL_REASON}${DOCS_CHANGES}\n\n"
+  FAIL_REASON="${FAIL_REASON}Please run 'make docs' and commit the changes.\n"
+fi
+
+echo "### Verify code standard output usage ###"
+CODE_STD_OUT_USAGE=$(grep -r -E 'fmt\.Print|os\.Stdout|os\.Stderr' ./internal | grep --invert-match '^./internal/out')
+if [ -n "$CODE_STD_OUT_USAGE" ]; then
+  FAIL_REASON="${FAIL_REASON}\n"
+  FAIL_REASON="${FAIL_REASON}Found usage of os.Stdout, os.Stderr or fmt.Print in code:\n"
+  FAIL_REASON="${FAIL_REASON}$CODE_STD_OUT_USAGE\n\n"
+  FAIL_REASON="${FAIL_REASON}Please use the internal/out package for output handling instead.\n"
+fi
+
+echo -e "${FAIL_REASON}"
+
+FLAGS=""
+
+# Determine which message to post based on validation result
+if [ -n "$FAIL_REASON" ]; then
+  echo "Standards violation detected"
+  MSG_TMPL=$(cat .github/actions/standards-violation-info/violation-message.md.tmpl)
+  MSG=$(eval "echo ${MSG_TMPL}")
+  FLAGS="${FLAGS} --body ${MSG"}
+else
+  echo "No standards violation detected"
+  FLAGS="${FLAGS} --body-file .github/actions/standards-violation-info/no-violation-message.md"
+fi
+
+# Check for existing comment by github-actions and edit if found
+LAST_COMMENT_ID=$(gh pr view ${{ github.event.pull_request.number }} -R kyma-project/cli --json "comments" \
+  | jq --raw-output '.comments[] | select(.author.login=="github-actions") | .id')
+if [ -n "$LAST_COMMENT_ID" ]; then
+  echo "Editing last comment with ID: $LAST_COMMENT_ID"
+  FLAGS="${FLAGS} --edit-last"
+fi
+
+echo "==="
+echo ${FLAGS}
