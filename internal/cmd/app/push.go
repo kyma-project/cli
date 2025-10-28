@@ -52,7 +52,7 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "push [flags]",
-		Short: "Push the application to the Kubernetes cluster",
+		Short: "Push the application.    to the Kubernetes cluster",
 		Long:  "Use this command to push the application to the Kubernetes cluster.",
 		Example: `## Push an application based on its source code located in the current directory:
 # The application will be built using Cloud Native Buildpacks:
@@ -118,7 +118,7 @@ func NewAppPushCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 			clierror.Check(runAppPush(&config))
 		},
 	}
-
+ fmt.Println("test")
 	// common flags
 	cmd.Flags().StringVar(&config.name, "name", "", "Name of the app")
 	cmd.Flags().BoolVar(&config.insecure, "insecure", false, "Disables SecurityContext configuration for the app deployment")
