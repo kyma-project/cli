@@ -58,6 +58,7 @@ runs:
     - name: Comment
       if: always()
       run: |
+        set +e
         FLAGS=""
 
         # Determine which message to post based on validation result
