@@ -3,6 +3,7 @@ package diagnostics
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
@@ -13,13 +14,13 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/kube/resources"
+	"github.com/kyma-project/cli.v3/internal/out"
 )
 
 type ModuleLogs struct {
-	Logs []string
+	Logs map[string][]string
 }
 
-// LogOptions defines the configuration for log collection
 type LogOptions struct {
 	Since time.Duration
 	Lines int64
@@ -27,13 +28,13 @@ type LogOptions struct {
 
 type ModuleLogsCollector struct {
 	client kube.Client
-	VerboseLogger
+	*out.Printer
 }
 
-func NewModuleLogsCollector(client kube.Client, writer io.Writer, verbose bool) *ModuleLogsCollector {
+func NewModuleLogsCollector(client kube.Client) *ModuleLogsCollector {
 	return &ModuleLogsCollector{
-		client:        client,
-		VerboseLogger: NewVerboseLogger(writer, verbose),
+		client:  client,
+		Printer: out.Default,
 	}
 }
 
@@ -51,31 +52,25 @@ func (c *ModuleLogsCollector) RunLast(ctx context.Context, modules []string, las
 
 // collectLogs is the generic method that handles both since and last scenarios
 func (c *ModuleLogsCollector) collectLogs(ctx context.Context, modules []string, options LogOptions) ModuleLogs {
-	var allLogs []string
+	var allLogs map[string][]string = make(map[string][]string)
 
 	for _, module := range modules {
-		moduleLogs := c.collectModuleLogs(ctx, module, options)
-		allLogs = append(allLogs, moduleLogs...)
+		c.collectModuleLogs(ctx, module, options, allLogs)
 	}
 
 	return ModuleLogs{Logs: allLogs}
 }
 
 // collectModuleLogs collects error logs from a single module
-func (c *ModuleLogsCollector) collectModuleLogs(ctx context.Context, moduleName string, options LogOptions) []string {
+func (c *ModuleLogsCollector) collectModuleLogs(ctx context.Context, moduleName string, options LogOptions, allLogs map[string][]string) {
 	pods, err := c.getPodsForModule(ctx, moduleName)
 	if err != nil {
-		c.WriteVerboseError(err, fmt.Sprintf("Failed to get pods for module %s", moduleName))
-		return []string{}
+		out.Verbosefln("Failed to get pods for module %s: %v", moduleName, err)
 	}
 
-	var logs []string
 	for _, pod := range pods {
-		podLogs := c.collectPodLogs(ctx, &pod, options)
-		logs = append(logs, podLogs...)
+		c.collectPodLogs(ctx, &pod, options, allLogs)
 	}
-
-	return logs
 }
 
 // getPodsForModule gets all pods for a specific module in kyma-system namespace
@@ -84,27 +79,39 @@ func (c *ModuleLogsCollector) getPodsForModule(ctx context.Context, moduleName s
 		"kyma-project.io/module": moduleName,
 	}
 
-	podList, err := c.client.Static().CoreV1().Pods("kyma-system").List(ctx, metav1.ListOptions{
+	deploymentsList, err := c.client.Static().AppsV1().Deployments("kyma-system").List(ctx, metav1.ListOptions{
 		LabelSelector: resources.LabelSelectorFor(labelSelector),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to list pods for module %s: %w", moduleName, err)
+		return nil, fmt.Errorf("failed to list deployments for module %s: %w", moduleName, err)
 	}
 
-	return podList.Items, nil
+	var podsList []corev1.Pod = make([]corev1.Pod, 0)
+
+	for _, deployment := range deploymentsList.Items {
+		matchLabels := deployment.Spec.Selector.MatchLabels
+		pods, err := c.client.Static().CoreV1().Pods("kyma-system").List(ctx, metav1.ListOptions{
+			LabelSelector: resources.LabelSelectorFor(matchLabels),
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to list pods for deployment %s: %w", deployment.Name, err)
+		}
+
+		podsList = append(podsList, pods.Items...)
+	}
+
+	return podsList, nil
 }
 
 // collectPodLogs collects error logs from a pod
-func (c *ModuleLogsCollector) collectPodLogs(ctx context.Context, pod *corev1.Pod, options LogOptions) []string {
+func (c *ModuleLogsCollector) collectPodLogs(ctx context.Context, pod *corev1.Pod, options LogOptions, allLogs map[string][]string) {
 	containers := append(pod.Spec.Containers, pod.Spec.InitContainers...)
-	var logs []string
 
 	for _, container := range containers {
 		containerLogs := c.collectContainerLogs(ctx, pod, container.Name, options)
-		logs = append(logs, containerLogs...)
+		key := fmt.Sprintf("%s/%s", pod.Name, container.Name)
+		allLogs[key] = append(allLogs[key], containerLogs...)
 	}
-
-	return logs
 }
 
 // collectContainerLogs collects and filters error logs from a container
@@ -115,12 +122,47 @@ func (c *ModuleLogsCollector) collectContainerLogs(ctx context.Context, pod *cor
 
 	logStream, err := req.Stream(ctx)
 	if err != nil {
-		c.WriteVerboseError(err, fmt.Sprintf("Failed to get log stream for container %s in pod %s", containerName, pod.Name))
+		out.Verbosefln("Failed to get log stream for container %s in pod %s: %v", containerName, pod.Name, err)
 		return []string{}
 	}
 	defer logStream.Close()
 
-	return c.filterErrorLogs(logStream, pod.Name, containerName)
+	// Attempt structured JSON parsing; fallback to error token filtering
+	return c.extractStructuredOrErrorLogs(logStream, pod.Name, containerName)
+}
+
+// extractStructuredOrErrorLogs parses each log line strictly as JSON and only keeps lines
+// that contain the keys: level, msg, and ts. Non-JSON lines or JSON without these keys are ignored.
+// Only entries whose level is one of error, fatal, panic are returned.
+func (c *ModuleLogsCollector) extractStructuredOrErrorLogs(logStream io.ReadCloser, podName, containerName string) []string {
+	scanner := bufio.NewScanner(logStream)
+	var collected []string
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		var obj map[string]any
+		if err := json.Unmarshal([]byte(line), &obj); err != nil {
+			// Not JSON -> ignore
+			continue
+		}
+		lvlRaw, hasLevel := obj["level"]
+		_, hasMsg := obj["msg"]
+		_, hasTs := obj["ts"]
+		if !hasLevel && !hasMsg && !hasTs {
+			continue
+		}
+		lvl := fmt.Sprintf("%v", lvlRaw)
+		if !(strings.EqualFold(lvl, "error") || strings.EqualFold(lvl, "fatal") || strings.EqualFold(lvl, "panic")) {
+			continue
+		}
+		collected = append(collected, line)
+	}
+
+	if err := scanner.Err(); err != nil {
+		out.Verbosefln("Error reading logs from pod %s container %s: %v", podName, containerName, err)
+	}
+
+	return collected
 }
 
 // buildPodLogOptions creates PodLogOptions based on the LogOptions configuration
@@ -139,38 +181,4 @@ func (c *ModuleLogsCollector) buildPodLogOptions(containerName string, options L
 	}
 
 	return logOptions
-}
-
-// filterErrorLogs filters log lines for error content and returns them as strings
-func (c *ModuleLogsCollector) filterErrorLogs(logStream io.ReadCloser, podName, containerName string) []string {
-	scanner := bufio.NewScanner(logStream)
-	var errorLogs []string
-
-	// Error tokens to look for (case-insensitive)
-	errorTokens := []string{"error", "level=error"}
-
-	for scanner.Scan() {
-		line := scanner.Text()
-		lineLower := strings.ToLower(line)
-
-		// Check if line contains any error tokens
-		hasError := false
-		for _, token := range errorTokens {
-			if strings.Contains(lineLower, token) {
-				hasError = true
-				break
-			}
-		}
-
-		if hasError {
-			formattedLog := fmt.Sprintf("[%s/%s] %s", podName, containerName, line)
-			errorLogs = append(errorLogs, formattedLog)
-		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		c.WriteVerboseError(err, fmt.Sprintf("Error reading logs from pod %s container %s", podName, containerName))
-	}
-
-	return errorLogs
 }

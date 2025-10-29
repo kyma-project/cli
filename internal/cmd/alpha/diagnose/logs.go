@@ -3,7 +3,6 @@ package diagnose
 import (
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"time"
 
@@ -11,16 +10,17 @@ import (
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/cmdcommon/types"
 	"github.com/kyma-project/cli.v3/internal/diagnostics"
 	"github.com/kyma-project/cli.v3/internal/flags"
 	"github.com/kyma-project/cli.v3/internal/kube"
-	"github.com/kyma-project/cli.v3/internal/output"
+	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/spf13/cobra"
 )
 
 type diagnoseLogsConfig struct {
 	*cmdcommon.KymaConfig
-	outputFormat output.Format
+	outputFormat types.Format
 	outputPath   string
 	verbose      bool
 	modules      []string
@@ -44,8 +44,7 @@ func NewDiagnoseLogsCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 			))
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			output := cmd.OutOrStderr()
-			clierror.Check(diagnoseLogs(&cfg, output))
+			clierror.Check(diagnoseLogs(&cfg))
 		},
 	}
 
@@ -60,7 +59,11 @@ func NewDiagnoseLogsCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	return cmd
 }
 
-func diagnoseLogs(cfg *diagnoseLogsConfig, output io.Writer) clierror.Error {
+func diagnoseLogs(cfg *diagnoseLogsConfig) clierror.Error {
+	if cfg.verbose {
+		out.EnableVerbose()
+	}
+
 	kubeClient, clierr := cfg.GetKubeClientWithClierr()
 	if clierr != nil {
 		return clierr
@@ -74,7 +77,7 @@ func diagnoseLogs(cfg *diagnoseLogsConfig, output io.Writer) clierror.Error {
 		return clierror.Wrap(err, clierror.New("failed to select modules for log collection"))
 	}
 
-	logsCollector := diagnostics.NewModuleLogsCollector(kubeClient, output, cfg.verbose)
+	logsCollector := diagnostics.NewModuleLogsCollector(kubeClient)
 
 	var moduleLogs diagnostics.ModuleLogs
 
@@ -86,7 +89,7 @@ func diagnoseLogs(cfg *diagnoseLogsConfig, output io.Writer) clierror.Error {
 		return clierror.New("either --since or --lines flag must be specified")
 	}
 
-	if err := renderLogs(moduleLogs, cfg.outputPath); err != nil {
+	if err := renderLogs(moduleLogs.Logs, cfg.outputPath, cfg.outputFormat); err != nil {
 		return clierror.Wrap(err, clierror.New("failed to render logs to output"))
 	}
 
@@ -115,23 +118,27 @@ func selectModules(ctx context.Context, client kube.Client, modules []string) ([
 	return kymaModules, nil
 }
 
-func renderLogs(moduleLogs diagnostics.ModuleLogs, outputPath string) error {
-	var outputWriter io.Writer
+func renderLogs(moduleLogs any, outputPath string, outputFormat types.Format) error {
+	printer := out.Default
 
-	if outputPath == "" {
-		outputWriter = os.Stdout
-	} else {
+	if outputPath != "" {
 		file, err := os.Create(outputPath)
 		if err != nil {
 			return fmt.Errorf("failed to create output file")
 		}
 		defer file.Close()
-		outputWriter = file
+
+		printer = out.NewToWriter(file)
 	}
 
-	for _, log := range moduleLogs.Logs {
-		fmt.Fprintln(outputWriter, log)
+	switch outputFormat {
+	case types.JSONFormat:
+		return renderJSON(printer, moduleLogs)
+	case types.YAMLFormat:
+		return renderYAML(printer, moduleLogs)
+	case types.DefaultFormat:
+		return renderYAML(printer, moduleLogs)
+	default:
+		return fmt.Errorf("unexpected output.Format: %#v", outputFormat)
 	}
-
-	return nil
 }
