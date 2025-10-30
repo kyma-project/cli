@@ -2,7 +2,6 @@ package authorize
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/kyma-project/cli.v3/internal/authorization"
 	"github.com/kyma-project/cli.v3/internal/clierror"
@@ -81,9 +80,9 @@ func authorize(cfg *authorizeConfig) clierror.Error {
 		return clierror.Wrap(err, clierror.New("failed to build OIDC resource"))
 	}
 
-	rbacResource, err := buildRBACResource(cfg, repositoryOIDCBuilder.GetUsernamePrefix())
-	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to build RBAC resource"))
+	rbacResource, rbacErr := buildRBACResource(cfg, repositoryOIDCBuilder.GetUsernamePrefix())
+	if rbacErr != nil {
+		return rbacErr
 	}
 
 	if cfg.dryRun {
@@ -93,7 +92,7 @@ func authorize(cfg *authorizeConfig) clierror.Error {
 	return applyResources(cfg, oidcResource, rbacResource)
 }
 
-func buildRBACResource(cfg *authorizeConfig, bindingPrefix string) (*unstructured.Unstructured, error) {
+func buildRBACResource(cfg *authorizeConfig, bindingPrefix string) (*unstructured.Unstructured, clierror.Error) {
 	builder := authorization.NewRBACBuilder().
 		ForRepository(cfg.repository).
 		ForPrefix(bindingPrefix)
@@ -105,15 +104,15 @@ func buildRBACResource(cfg *authorizeConfig, bindingPrefix string) (*unstructure
 	return buildRoleBinding(builder, cfg)
 }
 
-func buildClusterRoleBinding(builder *authorization.RBACBuilder, clusterrole string) (*unstructured.Unstructured, error) {
+func buildClusterRoleBinding(builder *authorization.RBACBuilder, clusterrole string) (*unstructured.Unstructured, clierror.Error) {
 	rbacResource, err := builder.ForClusterRole(clusterrole).BuildClusterRoleBinding()
 	if err != nil {
-		return nil, fmt.Errorf("failed to build ClusterRoleBinding: %w", err)
+		return nil, err
 	}
 	return rbacResource, nil
 }
 
-func buildRoleBinding(builder *authorization.RBACBuilder, cfg *authorizeConfig) (*unstructured.Unstructured, error) {
+func buildRoleBinding(builder *authorization.RBACBuilder, cfg *authorizeConfig) (*unstructured.Unstructured, clierror.Error) {
 	builder = builder.ForNamespace(cfg.namespace)
 
 	if cfg.role != "" {
@@ -124,7 +123,7 @@ func buildRoleBinding(builder *authorization.RBACBuilder, cfg *authorizeConfig) 
 
 	rbacResource, err := builder.BuildRoleBinding()
 	if err != nil {
-		return nil, fmt.Errorf("failed to build RoleBinding: %w", err)
+		return nil, err
 	}
 	return rbacResource, nil
 }
