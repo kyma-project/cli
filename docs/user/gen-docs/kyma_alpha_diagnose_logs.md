@@ -1,26 +1,24 @@
-# kyma alpha diagnose
+# kyma alpha diagnose logs
 
-Diagnose cluster health and configuration.
+Aggregate error logs from pods belonging to enabled Kyma Modules.
 
 ## Synopsis
 
-Use this command to quickly assess the health, configuration, and potential issues in your cluster for troubleshooting and support purposes.
+Some better long description
 
 ```bash
-kyma alpha diagnose [flags]
-```
-
-## Available Commands
-
-```text
-  logs - Aggregate error logs from pods belonging to enabled Kyma Modules
+kyma alpha diagnose logs [flags]
 ```
 
 ## Flags
 
 ```text
   -f, --format string           Output format (possible values: json, yaml)
+      --lines int64             Max lines per container (default "200")
+      --module stringSlice      Restrict to specific module(s). Can be used multiple times (default "[]")
   -o, --output string           Path to the diagnostic output file. If not provided the output is printed to stdout
+      --since duration          Log time range (e.g., 10m, 1h, 30s) (default "0s")
+      --timeout duration        Timeout for log collection operations (default "30s")
       --verbose                 Display verbose output, including error details during diagnostics collection
       --context string          The name of the kubeconfig context to use
   -h, --help                    Help for the command
@@ -31,5 +29,4 @@ kyma alpha diagnose [flags]
 
 ## See also
 
-* [kyma alpha](kyma_alpha.md)                             - Groups command prototypes for which the API may still change
-* [kyma alpha diagnose logs](kyma_alpha_diagnose_logs.md) - Aggregate error logs from pods belonging to enabled Kyma Modules
+* [kyma alpha diagnose](kyma_alpha_diagnose.md) - Diagnose cluster health and configuration
