@@ -104,11 +104,11 @@ func TestRBACBuilder_BuildClusterRoleBinding(t *testing.T) {
 			result, err := builder.BuildClusterRoleBinding()
 
 			if tt.expectedError != "" {
-				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tt.expectedError)
+				assert.NotNil(t, err)
+				assert.Contains(t, err.String(), tt.expectedError)
 				assert.Nil(t, result)
 			} else {
-				assert.NoError(t, err)
+				assert.Nil(t, err)
 				require.NotNil(t, result)
 				tt.validateResult(t, result)
 			}
@@ -250,11 +250,11 @@ func TestRBACBuilder_BuildRoleBinding(t *testing.T) {
 			result, err := builder.BuildRoleBinding()
 
 			if tt.expectedError != "" {
-				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tt.expectedError)
+				assert.NotNil(t, err)
+				assert.Contains(t, err.String(), tt.expectedError)
 				assert.Nil(t, result)
 			} else {
-				assert.NoError(t, err)
+				assert.Nil(t, err)
 				require.NotNil(t, result)
 				tt.validateResult(t, result)
 			}
