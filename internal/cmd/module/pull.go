@@ -51,7 +51,7 @@ Examples:
 	}
 
 	cmd.Flags().StringVarP(&cfg.namespace, "namespace", "n", "default", "Destination namespace where the module is stored")
-	cmd.Flags().StringVarP(&cfg.version, "version", "v", "", "Specify version of the community module to pull (optional, default \"latest\")")
+	cmd.Flags().StringVarP(&cfg.version, "version", "v", "", "Specify version of the community module to pull")
 
 	return cmd
 }
