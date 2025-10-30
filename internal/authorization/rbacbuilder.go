@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/kyma-project/cli.v3/internal/clierror"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
@@ -44,7 +45,7 @@ func (b *RBACBuilder) ForClusterRole(clusterRole string) *RBACBuilder {
 	return b
 }
 
-func (b *RBACBuilder) BuildClusterRoleBinding() (*unstructured.Unstructured, error) {
+func (b *RBACBuilder) BuildClusterRoleBinding() (*unstructured.Unstructured, clierror.Error) {
 	if err := b.validateForClusterRoleBinding(); err != nil {
 		return nil, err
 	}
@@ -55,7 +56,7 @@ func (b *RBACBuilder) BuildClusterRoleBinding() (*unstructured.Unstructured, err
 	return b.buildClusterRoleBinding(bindingName, subjectName), nil
 }
 
-func (b *RBACBuilder) BuildRoleBinding() (*unstructured.Unstructured, error) {
+func (b *RBACBuilder) BuildRoleBinding() (*unstructured.Unstructured, clierror.Error) {
 	if err := b.validateForRoleBinding(); err != nil {
 		return nil, err
 	}
@@ -66,42 +67,45 @@ func (b *RBACBuilder) BuildRoleBinding() (*unstructured.Unstructured, error) {
 	return b.buildRoleBinding(bindingName, subjectName), nil
 }
 
-func (b *RBACBuilder) validateForClusterRoleBinding() error {
+func (b *RBACBuilder) validateForClusterRoleBinding() clierror.Error {
 	if b.repository == "" {
-		return fmt.Errorf("repository is required")
+		return clierror.New("repository is required")
 	}
 
 	if !b.isRepoNameValid() {
-		return fmt.Errorf("repository must be in owner/name format (e.g., kyma-project/cli)")
+		return clierror.New("repository must be in owner/name format (e.g., kyma-project/cli)")
 	}
 
 	if b.clusterrole == "" {
-		return fmt.Errorf("clusterrole is required for ClusterRoleBinding")
+		return clierror.New("clusterrole is required for ClusterRoleBinding")
 	}
 
 	return nil
 }
 
-func (b *RBACBuilder) validateForRoleBinding() error {
+func (b *RBACBuilder) validateForRoleBinding() clierror.Error {
 	if b.repository == "" {
-		return fmt.Errorf("repository is required")
+		return clierror.New("repository is required")
 	}
 
 	if !b.isRepoNameValid() {
-		return fmt.Errorf("repository must be in owner/name format (e.g., kyma-project/cli)")
+		return clierror.New("repository must be in owner/name format (e.g., kyma-project/cli)")
 	}
 
 	if b.role == "" && b.clusterrole == "" {
-		return fmt.Errorf("either role or clusterrole must be specified for RoleBinding")
+		return clierror.New("either role or clusterrole must be specified for RoleBinding")
 	}
 	if b.role != "" && b.clusterrole != "" {
-		return fmt.Errorf("cannot specify both role and clusterrole for RoleBinding")
+		return clierror.New("cannot specify both role and clusterrole for RoleBinding")
 	}
 	if b.namespace == "" && b.clusterrole != "" {
-		return fmt.Errorf("when using clusterrole '%s' for RoleBinding, either specify a namespace or enable cluster-wide flag for ClusterRoleBinding", b.clusterrole)
+		return clierror.New(
+			fmt.Sprintf("failed to apply binding for the '%s' ClusterRole", b.clusterrole),
+			"either specify a namespace or enable cluster-wide flag for ClusterRoleBinding",
+		)
 	}
 	if b.namespace == "" {
-		return fmt.Errorf("namespace is required for RoleBinding")
+		return clierror.New("namespace is required for RoleBinding")
 	}
 
 	return nil
