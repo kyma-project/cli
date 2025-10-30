@@ -4,6 +4,7 @@
 * [kyma alpha](/cli/user/gen-docs/kyma_alpha.md)
 * [kyma alpha authorize](/cli/user/gen-docs/kyma_alpha_authorize.md)
 * [kyma alpha diagnose](/cli/user/gen-docs/kyma_alpha_diagnose.md)
+* [kyma alpha diagnose logs](/cli/user/gen-docs/kyma_alpha_diagnose_logs.md)
 * [kyma alpha hana](/cli/user/gen-docs/kyma_alpha_hana.md)
 * [kyma alpha hana map](/cli/user/gen-docs/kyma_alpha_hana_map.md)
 * [kyma alpha kubeconfig](/cli/user/gen-docs/kyma_alpha_kubeconfig.md)
