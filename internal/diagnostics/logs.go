@@ -52,7 +52,7 @@ func (c *ModuleLogsCollector) RunLast(ctx context.Context, modules []string, las
 
 // collectLogs is the generic method that handles both since and last scenarios
 func (c *ModuleLogsCollector) collectLogs(ctx context.Context, modules []string, options LogOptions) ModuleLogs {
-	var allLogs map[string][]string = make(map[string][]string)
+	allLogs := make(map[string][]string)
 
 	for _, module := range modules {
 		c.collectModuleLogs(ctx, module, options, allLogs)
@@ -86,7 +86,7 @@ func (c *ModuleLogsCollector) getPodsForModule(ctx context.Context, moduleName s
 		return nil, fmt.Errorf("failed to list deployments for module %s: %w", moduleName, err)
 	}
 
-	var podsList []corev1.Pod = make([]corev1.Pod, 0)
+	podsList := make([]corev1.Pod, 0)
 
 	for _, deployment := range deploymentsList.Items {
 		matchLabels := deployment.Spec.Selector.MatchLabels
@@ -152,7 +152,7 @@ func (c *ModuleLogsCollector) extractStructuredOrErrorLogs(logStream io.ReadClos
 			continue
 		}
 		lvl := fmt.Sprintf("%v", lvlRaw)
-		if !(strings.EqualFold(lvl, "error") || strings.EqualFold(lvl, "fatal") || strings.EqualFold(lvl, "panic")) {
+		if !strings.EqualFold(lvl, "error") && !strings.EqualFold(lvl, "fatal") && !strings.EqualFold(lvl, "panic") {
 			continue
 		}
 		collected = append(collected, line)
