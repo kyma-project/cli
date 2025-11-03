@@ -29,51 +29,60 @@ type LogOptions struct {
 type ModuleLogsCollector struct {
 	client kube.Client
 	*out.Printer
+	modules        []string
+	podLogTemplate *corev1.PodLogOptions // immutable template for each container
 }
 
-func NewModuleLogsCollector(client kube.Client) *ModuleLogsCollector {
+func NewModuleLogsCollector(client kube.Client, modules []string, options LogOptions) *ModuleLogsCollector {
+	// precedence: Since > Lines
+	podOpts := &corev1.PodLogOptions{}
+	if options.Since > 0 {
+		since := metav1.NewTime(time.Now().Add(-options.Since))
+		podOpts.SinceTime = &since
+	} else if options.Lines > 0 {
+		lines := options.Lines
+		podOpts.TailLines = &lines
+	}
 	return &ModuleLogsCollector{
-		client:  client,
-		Printer: out.Default,
+		client:         client,
+		Printer:        out.Default,
+		modules:        modules,
+		podLogTemplate: podOpts,
 	}
 }
 
-// RunSince collects error logs from specified modules for a given time duration
-func (c *ModuleLogsCollector) RunSince(ctx context.Context, modules []string, since time.Duration) ModuleLogs {
-	logOptions := LogOptions{Since: since}
-	return c.collectLogs(ctx, modules, logOptions)
-}
+func (c *ModuleLogsCollector) Run(ctx context.Context) ModuleLogs {
+	logs := make(map[string][]string)
 
-// RunLast collects the last N lines of error logs from specified modules
-func (c *ModuleLogsCollector) RunLast(ctx context.Context, modules []string, last int64) ModuleLogs {
-	logOptions := LogOptions{Lines: last}
-	return c.collectLogs(ctx, modules, logOptions)
-}
-
-// collectLogs is the generic method that handles both since and last scenarios
-func (c *ModuleLogsCollector) collectLogs(ctx context.Context, modules []string, options LogOptions) ModuleLogs {
-	allLogs := make(map[string][]string)
-
-	for _, module := range modules {
-		c.collectModuleLogs(ctx, module, options, allLogs)
+	for _, module := range c.modules {
+		moduleLogs := c.collectModuleLogs(ctx, module)
+		// merge moduleLogs into result
+		for k, v := range moduleLogs {
+			logs[k] = append(logs[k], v...)
+		}
 	}
-
-	return ModuleLogs{Logs: allLogs}
+	return ModuleLogs{Logs: logs}
 }
 
-// collectModuleLogs collects error logs from a single module
-func (c *ModuleLogsCollector) collectModuleLogs(ctx context.Context, moduleName string, options LogOptions, allLogs map[string][]string) {
+// collectModuleLogs collects error logs from a single module and returns its map
+func (c *ModuleLogsCollector) collectModuleLogs(ctx context.Context, moduleName string) map[string][]string {
+	collected := make(map[string][]string)
 	pods, err := c.getPodsForModule(ctx, moduleName)
 	if err != nil {
 		out.Verbosefln("Failed to get pods for module %s: %v", moduleName, err)
+		return collected
 	}
 
-	for _, pod := range pods {
-		c.collectPodLogs(ctx, &pod, options, allLogs)
+	for i := range pods {
+		podLogs := c.collectPodLogs(ctx, &pods[i])
+		for k, v := range podLogs {
+			collected[k] = append(collected[k], v...)
+		}
 	}
+
+	return collected
 }
 
-// getPodsForModule gets all pods for a specific module in kyma-system namespace
 func (c *ModuleLogsCollector) getPodsForModule(ctx context.Context, moduleName string) ([]corev1.Pod, error) {
 	labelSelector := map[string]string{
 		"kyma-project.io/module": moduleName,
@@ -103,20 +112,21 @@ func (c *ModuleLogsCollector) getPodsForModule(ctx context.Context, moduleName s
 	return podsList, nil
 }
 
-// collectPodLogs collects error logs from a pod
-func (c *ModuleLogsCollector) collectPodLogs(ctx context.Context, pod *corev1.Pod, options LogOptions, allLogs map[string][]string) {
+func (c *ModuleLogsCollector) collectPodLogs(ctx context.Context, pod *corev1.Pod) map[string][]string {
 	containers := append(pod.Spec.Containers, pod.Spec.InitContainers...)
+	collected := make(map[string][]string)
 
 	for _, container := range containers {
-		containerLogs := c.collectContainerLogs(ctx, pod, container.Name, options)
+		containerLogs := c.collectContainerLogs(ctx, pod, container.Name)
 		key := fmt.Sprintf("%s/%s", pod.Name, container.Name)
-		allLogs[key] = append(allLogs[key], containerLogs...)
+		collected[key] = append(collected[key], containerLogs...)
 	}
+
+	return collected
 }
 
-// collectContainerLogs collects and filters error logs from a container
-func (c *ModuleLogsCollector) collectContainerLogs(ctx context.Context, pod *corev1.Pod, containerName string, options LogOptions) []string {
-	logOptions := c.buildPodLogOptions(containerName, options)
+func (c *ModuleLogsCollector) collectContainerLogs(ctx context.Context, pod *corev1.Pod, containerName string) []string {
+	logOptions := c.buildPodLogOptions(containerName)
 
 	req := c.client.Static().CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, logOptions)
 
@@ -127,7 +137,6 @@ func (c *ModuleLogsCollector) collectContainerLogs(ctx context.Context, pod *cor
 	}
 	defer logStream.Close()
 
-	// Attempt structured JSON parsing; fallback to error token filtering
 	return c.extractStructuredOrErrorLogs(logStream, pod.Name, containerName)
 }
 
@@ -146,13 +155,13 @@ func (c *ModuleLogsCollector) extractStructuredOrErrorLogs(logStream io.ReadClos
 			continue
 		}
 		lvlRaw, hasLevel := obj["level"]
-		_, hasMsg := obj["msg"]
-		_, hasTs := obj["ts"]
-		if !hasLevel && !hasMsg && !hasTs {
+		_, hasMsg := obj["message"]
+		_, hasTs := obj["timestamp"]
+		if !hasLevel || (!hasMsg && !hasTs) {
 			continue
 		}
 		lvl := fmt.Sprintf("%v", lvlRaw)
-		if !strings.EqualFold(lvl, "error") && !strings.EqualFold(lvl, "fatal") && !strings.EqualFold(lvl, "panic") {
+		if !strings.EqualFold(lvl, "error") && !strings.EqualFold(lvl, "warning") {
 			continue
 		}
 		collected = append(collected, line)
@@ -165,20 +174,8 @@ func (c *ModuleLogsCollector) extractStructuredOrErrorLogs(logStream io.ReadClos
 	return collected
 }
 
-// buildPodLogOptions creates PodLogOptions based on the LogOptions configuration
-func (c *ModuleLogsCollector) buildPodLogOptions(containerName string, options LogOptions) *corev1.PodLogOptions {
-	logOptions := &corev1.PodLogOptions{
-		Container: containerName,
-	}
-
-	// Configure based on options - Since takes precedence over Lines
-	if options.Since > 0 {
-		sinceTime := metav1.NewTime(time.Now().Add(-options.Since))
-		logOptions.SinceTime = &sinceTime
-	} else if options.Lines > 0 {
-		lines := options.Lines
-		logOptions.TailLines = &lines
-	}
-
-	return logOptions
+func (c *ModuleLogsCollector) buildPodLogOptions(containerName string) *corev1.PodLogOptions {
+	clone := *c.podLogTemplate
+	clone.Container = containerName
+	return &clone
 }

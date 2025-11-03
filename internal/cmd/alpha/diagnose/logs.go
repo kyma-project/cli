@@ -36,8 +36,22 @@ func NewDiagnoseLogsCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "logs [flags]",
-		Short: "Aggregate error logs from pods belonging to enabled Kyma Modules",
-		Long:  "Some better long description",
+		Short: "Aggregates error logs from Pods belonging to the added Kyma modules",
+		Long: "Collects and aggregates recent error-level container logs for Kyma modules to help with rapid troubleshooting.\n\n" +
+			"EXAMPLES:\n" +
+			"  # Collect last 200 lines (default) from all enabled modules\n" +
+			"  kyma alpha diagnose logs --lines 200\n\n" +
+			"  # Collect error logs from the last 15 minutes for all enabled modules\n" +
+			"  kyma alpha diagnose logs --since 15m\n\n" +
+			"  # Restrict to specific modules (repeat --module) and increase line count\n" +
+			"  kyma alpha diagnose logs --module serverless --module api-gateway --lines 500\n\n" +
+			"  # Time-based collection for one module, output as JSON to a file\n" +
+			"  kyma alpha diagnose logs --module serverless --since 30m --format json --output serverless-errors.json\n\n" +
+			"  # Collect with verbose output and shorter timeout (useful in CI)\n" +
+			"  kyma alpha diagnose logs --since 10m --timeout 10s --verbose\n\n" +
+			"  # Use lines as a deterministic cap when time window would be too large\n" +
+			"  kyma alpha diagnose logs --lines 1000\n\n" +
+			"NOTE: --since takes precedence over --lines when both are provided; use only one for clarity.",
 		PreRun: func(cmd *cobra.Command, args []string) {
 			clierror.Check(flags.Validate(cmd.Flags(),
 				flags.MarkExclusive("lines", "since"),
@@ -51,7 +65,7 @@ func NewDiagnoseLogsCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().VarP(&cfg.outputFormat, "format", "f", "Output format (possible values: json, yaml)")
 	cmd.Flags().StringVarP(&cfg.outputPath, "output", "o", "", "Path to the diagnostic output file. If not provided the output is printed to stdout")
 	cmd.Flags().BoolVar(&cfg.verbose, "verbose", false, "Display verbose output, including error details during diagnostics collection")
-	cmd.Flags().StringSliceVar(&cfg.modules, "module", []string{}, "Restrict to specific module(s). Can be used multiple times")
+	cmd.Flags().StringSliceVar(&cfg.modules, "module", []string{}, "Restrict to specific module(s). Can be used multiple times. When no value is present then logs from all Kyma CR modules are gathered")
 	cmd.Flags().DurationVar(&cfg.since, "since", 0, "Log time range (e.g., 10m, 1h, 30s)")
 	cmd.Flags().Int64Var(&cfg.lines, "lines", 200, "Max lines per container")
 	cmd.Flags().DurationVar(&cfg.timeout, "timeout", 30*time.Second, "Timeout for log collection operations")
@@ -77,17 +91,9 @@ func diagnoseLogs(cfg *diagnoseLogsConfig) clierror.Error {
 		return clierror.Wrap(err, clierror.New("failed to select modules for log collection"))
 	}
 
-	logsCollector := diagnostics.NewModuleLogsCollector(kubeClient)
-
-	var moduleLogs diagnostics.ModuleLogs
-
-	if cfg.since > 0 {
-		moduleLogs = logsCollector.RunSince(ctx, modules, cfg.since)
-	} else if cfg.lines > 0 {
-		moduleLogs = logsCollector.RunLast(ctx, modules, cfg.lines)
-	} else {
-		return clierror.New("either --since or --lines flag must be specified")
-	}
+	logOpts := diagnostics.LogOptions{Since: cfg.since, Lines: cfg.lines}
+	collector := diagnostics.NewModuleLogsCollector(kubeClient, modules, logOpts)
+	moduleLogs := collector.Run(ctx)
 
 	if err := renderLogs(moduleLogs.Logs, cfg.outputPath, cfg.outputFormat); err != nil {
 		return clierror.Wrap(err, clierror.New("failed to render logs to output"))
@@ -124,7 +130,7 @@ func renderLogs(moduleLogs any, outputPath string, outputFormat types.Format) er
 	if outputPath != "" {
 		file, err := os.Create(outputPath)
 		if err != nil {
-			return fmt.Errorf("failed to create output file")
+			return fmt.Errorf("failed to create output file: %w", err)
 		}
 		defer file.Close()
 
@@ -134,11 +140,9 @@ func renderLogs(moduleLogs any, outputPath string, outputFormat types.Format) er
 	switch outputFormat {
 	case types.JSONFormat:
 		return renderJSON(printer, moduleLogs)
-	case types.YAMLFormat:
-		return renderYAML(printer, moduleLogs)
-	case types.DefaultFormat:
+	case types.YAMLFormat, types.DefaultFormat:
 		return renderYAML(printer, moduleLogs)
 	default:
-		return fmt.Errorf("unexpected output.Format: %#v", outputFormat)
+		return fmt.Errorf("unexpected output.Format: %v", outputFormat)
 	}
 }

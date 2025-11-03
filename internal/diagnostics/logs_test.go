@@ -16,67 +16,31 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 
 	kube_fake "github.com/kyma-project/cli.v3/internal/kube/fake"
-	"github.com/kyma-project/cli.v3/internal/out"
 )
 
 func TestNewModuleLogsCollector(t *testing.T) {
-	// Given
-	kubeClient := &kube_fake.KubeClient{
-		TestKubernetesInterface: fake.NewSimpleClientset(),
-	}
-
-	// When
-	collector := NewModuleLogsCollector(kubeClient)
-
-	// Then
+	kubeClient := &kube_fake.KubeClient{TestKubernetesInterface: fake.NewSimpleClientset()}
+	collector := NewModuleLogsCollector(kubeClient, []string{}, LogOptions{})
 	assert.NotNil(t, collector)
 }
 
-func TestRunSince_EmptyModules(t *testing.T) {
-	// Given
-	kubeClient := &kube_fake.KubeClient{
-		TestKubernetesInterface: fake.NewSimpleClientset(),
-	}
-	var writer bytes.Buffer
-	printer := out.NewToWriter(&writer)
-
-	collector := ModuleLogsCollector{kubeClient, printer}
-
-	ctx := context.Background()
-	modules := []string{}
-	since := 10 * time.Minute
-
-	// When
-	result := collector.RunSince(ctx, modules, since)
-
-	// Then
+func TestRun_EmptyModules(t *testing.T) {
+	kubeClient := &kube_fake.KubeClient{TestKubernetesInterface: fake.NewSimpleClientset()}
+	collector := NewModuleLogsCollector(kubeClient, []string{}, LogOptions{Since: 10 * time.Minute})
+	result := collector.Run(context.Background())
 	assert.NotNil(t, result)
 	assert.Empty(t, result.Logs)
 }
 
-func TestRunLast_EmptyModules(t *testing.T) {
-	// Given
-	kubeClient := &kube_fake.KubeClient{
-		TestKubernetesInterface: fake.NewSimpleClientset(),
-	}
-	var writer bytes.Buffer
-	printer := out.NewToWriter(&writer)
-
-	collector := ModuleLogsCollector{kubeClient, printer}
-
-	ctx := context.Background()
-	modules := []string{}
-	lines := int64(100)
-
-	// When
-	result := collector.RunLast(ctx, modules, lines)
-
-	// Then
+func TestRun_EmptyModulesLines(t *testing.T) {
+	kubeClient := &kube_fake.KubeClient{TestKubernetesInterface: fake.NewSimpleClientset()}
+	collector := NewModuleLogsCollector(kubeClient, []string{}, LogOptions{Lines: 100})
+	result := collector.Run(context.Background())
 	assert.NotNil(t, result)
 	assert.Empty(t, result.Logs)
 }
 
-func TestRunSince_MultipleModules_WithMatchingDeployments(t *testing.T) {
+func TestRun_MultipleModules_WithMatchingDeployments(t *testing.T) {
 	dep1 := createTestDeployment("deployment-module-1", "kyma-system", "module-1")
 	dep2 := createTestDeployment("deployment-module-2", "kyma-system", "module-2")
 
@@ -84,16 +48,8 @@ func TestRunSince_MultipleModules_WithMatchingDeployments(t *testing.T) {
 	pod2 := createTestPod("test-pod-2", "kyma-system", "module-2")
 
 	kubeClient := createMockKubeClient([]runtime.Object{&pod1, &pod2, dep1, dep2})
-	var writer bytes.Buffer
-	printer := out.NewToWriter(&writer)
-	collector := ModuleLogsCollector{kubeClient, printer}
-
-	ctx := context.Background()
-	modules := []string{"module-1", "module-2"}
-	since := 1 * time.Minute
-
-	// When
-	result := collector.RunSince(ctx, modules, since)
+	collector := NewModuleLogsCollector(kubeClient, []string{"module-1", "module-2"}, LogOptions{Since: 1 * time.Minute})
+	result := collector.Run(context.Background())
 
 	// Then: deployments exist so collector should try pods; fake log stream returns empty -> keys present but slices empty
 	assert.NotNil(t, result)
@@ -109,24 +65,20 @@ func TestRunSince_MultipleModules_WithMatchingDeployments(t *testing.T) {
 
 func TestExtractStructuredOrErrorLogs_Filters(t *testing.T) {
 	kubeClient := createMockKubeClient([]runtime.Object{})
-	var writer bytes.Buffer
-	printer := out.NewToWriter(&writer)
-	collector := ModuleLogsCollector{kubeClient, printer}
+	collector := NewModuleLogsCollector(kubeClient, []string{}, LogOptions{})
 
 	// Build a fake log stream matching mockLogsHandler output
 	logData := "" +
-		"{\"level\":\"info\",\"msg\":\"startup\",\"ts\":\"1\"}\n" +
-		"{\"level\":\"error\",\"msg\":\"failed A\",\"ts\":\"2\"}\n" +
-		"{\"level\":\"panic\",\"msg\":\"boom\",\"ts\":\"3\"}\n" +
-		"not json\n" +
-		"{\"level\":\"fatal\",\"msg\":\"dead\",\"ts\":\"4\"}\n"
+		"{\"level\":\"info\",\"message\":\"startup\",\"timestamp\":\"1\"}\n" +
+		"{\"level\":\"error\",\"message\":\"failed A\",\"timestamp\":\"2\"}\n" +
+		"{\"level\":\"warning\",\"message\":\"boom\",\"timestamp\":\"3\"}\n" +
+		"not json\n"
 	rc := io.NopCloser(bytes.NewBufferString(logData))
 
 	filtered := collector.extractStructuredOrErrorLogs(rc, "pod-x", "container-y")
-	assert.Equal(t, 3, len(filtered))
+	assert.Equal(t, 2, len(filtered))
 	assert.Contains(t, filtered[0], `"level":"error"`)
-	assert.Contains(t, filtered[1], `"level":"panic"`)
-	assert.Contains(t, filtered[2], `"level":"fatal"`)
+	assert.Contains(t, filtered[1], `"level":"warning"`)
 }
 
 // Helper functions
