@@ -25,9 +25,12 @@ func TestRBACBuilder_BuildClusterRoleBinding(t *testing.T) {
 		{
 			name: "successful build with minimal configuration",
 			setupBuilder: func() *authorization.RBACBuilder {
+				userSubjectKind, _ := authorization.NewSubjectKindFrom("User")
 				return authorization.NewRBACBuilder().
-					ForRepository("kyma-project/cli").
-					ForClusterRole("cluster-admin")
+					ForSubjectKind(userSubjectKind).
+					ForSubjectName("kyma-project/cli").
+					ForClusterRole("cluster-admin").
+					ForBindingName("kyma-project-cli-cluster-admin-binding")
 			},
 			validateResult: func(t *testing.T, result *unstructured.Unstructured) {
 				assert.Equal(t, "rbac.authorization.k8s.io/v1", result.GetAPIVersion())
@@ -55,10 +58,13 @@ func TestRBACBuilder_BuildClusterRoleBinding(t *testing.T) {
 		{
 			name: "successful build with prefix",
 			setupBuilder: func() *authorization.RBACBuilder {
+				userSubjectKind, _ := authorization.NewSubjectKindFrom("User")
 				return authorization.NewRBACBuilder().
-					ForRepository("owner/repo").
+					ForSubjectKind(userSubjectKind).
+					ForSubjectName("owner/repo").
 					ForClusterRole("reader").
-					ForPrefix("github:")
+					ForPrefix("github:").
+					ForBindingName("owner-repo-reader-binding")
 			},
 			validateResult: func(t *testing.T, result *unstructured.Unstructured) {
 				assert.Equal(t, "owner-repo-reader-binding", result.GetName())
@@ -74,25 +80,29 @@ func TestRBACBuilder_BuildClusterRoleBinding(t *testing.T) {
 			},
 		},
 		{
-			name: "error when repository is missing",
+			name: "error when subjectKind is missing",
 			setupBuilder: func() *authorization.RBACBuilder {
 				return authorization.NewRBACBuilder().ForClusterRole("cluster-admin")
 			},
-			expectedError: "repository is required",
+			expectedError: "subjectKind is required",
 		},
 		{
-			name: "error when repository format is invalid",
+			name: "error when subjectName is missing",
 			setupBuilder: func() *authorization.RBACBuilder {
+				subjectKind, _ := authorization.NewSubjectKindFrom("User")
 				return authorization.NewRBACBuilder().
-					ForRepository("invalid-repo-format").
-					ForClusterRole("cluster-admin")
+					ForClusterRole("cluster-admin").
+					ForSubjectKind(subjectKind)
 			},
-			expectedError: "repository must be in owner/name format (e.g., kyma-project/cli)",
+			expectedError: "subjectName is required",
 		},
 		{
 			name: "error when clusterrole is missing",
 			setupBuilder: func() *authorization.RBACBuilder {
-				return authorization.NewRBACBuilder().ForRepository("owner/repo")
+				subjectKind, _ := authorization.NewSubjectKindFrom("User")
+				return authorization.NewRBACBuilder().
+					ForSubjectKind(subjectKind).
+					ForSubjectName("some-subject-name")
 			},
 			expectedError: "clusterrole is required for ClusterRoleBinding",
 		},
@@ -126,10 +136,13 @@ func TestRBACBuilder_BuildRoleBinding(t *testing.T) {
 		{
 			name: "successful build with Role",
 			setupBuilder: func() *authorization.RBACBuilder {
+				userSubjectKind, _ := authorization.NewSubjectKindFrom("User")
 				return authorization.NewRBACBuilder().
-					ForRepository("kyma-project/cli").
+					ForSubjectKind(userSubjectKind).
+					ForSubjectName("kyma-project/cli").
 					ForRole("reader").
-					ForNamespace("default")
+					ForNamespace("default").
+					ForBindingName("kyma-project-cli-reader-binding")
 			},
 			validateResult: func(t *testing.T, result *unstructured.Unstructured) {
 				assert.Equal(t, "rbac.authorization.k8s.io/v1", result.GetAPIVersion())
@@ -158,10 +171,13 @@ func TestRBACBuilder_BuildRoleBinding(t *testing.T) {
 		{
 			name: "successful build with ClusterRole",
 			setupBuilder: func() *authorization.RBACBuilder {
+				userSubjectKind, _ := authorization.NewSubjectKindFrom("User")
 				return authorization.NewRBACBuilder().
-					ForRepository("owner/repo").
+					ForSubjectKind(userSubjectKind).
+					ForSubjectName("owner/repo").
 					ForClusterRole("cluster-admin").
-					ForNamespace("kube-system")
+					ForNamespace("kube-system").
+					ForBindingName("owner-repo-cluster-admin-binding")
 			},
 			validateResult: func(t *testing.T, result *unstructured.Unstructured) {
 				assert.Equal(t, "owner-repo-cluster-admin-binding", result.GetName())
@@ -177,8 +193,10 @@ func TestRBACBuilder_BuildRoleBinding(t *testing.T) {
 		{
 			name: "successful build with prefix",
 			setupBuilder: func() *authorization.RBACBuilder {
+				userSubjectKind, _ := authorization.NewSubjectKindFrom("User")
 				return authorization.NewRBACBuilder().
-					ForRepository("test/repo").
+					ForSubjectKind(userSubjectKind).
+					ForSubjectName("test/repo").
 					ForRole("editor").
 					ForNamespace("test-ns").
 					ForPrefix("system:")
@@ -195,29 +213,21 @@ func TestRBACBuilder_BuildRoleBinding(t *testing.T) {
 			},
 		},
 		{
-			name: "error when repository is missing",
+			name: "error when subjectKind is missing",
 			setupBuilder: func() *authorization.RBACBuilder {
 				return authorization.NewRBACBuilder().
 					ForRole("reader").
 					ForNamespace("default")
 			},
-			expectedError: "repository is required",
-		},
-		{
-			name: "error when repository format is invalid",
-			setupBuilder: func() *authorization.RBACBuilder {
-				return authorization.NewRBACBuilder().
-					ForRepository("invalid").
-					ForRole("reader").
-					ForNamespace("default")
-			},
-			expectedError: "repository must be in owner/name format (e.g., kyma-project/cli)",
+			expectedError: "subjectKind is required",
 		},
 		{
 			name: "error when neither role nor clusterrole is specified",
 			setupBuilder: func() *authorization.RBACBuilder {
+				userSubjectKind, _ := authorization.NewSubjectKindFrom("User")
 				return authorization.NewRBACBuilder().
-					ForRepository("owner/repo").
+					ForSubjectKind(userSubjectKind).
+					ForSubjectName("owner/repo").
 					ForNamespace("default")
 			},
 			expectedError: "either role or clusterrole must be specified for RoleBinding",
@@ -225,8 +235,10 @@ func TestRBACBuilder_BuildRoleBinding(t *testing.T) {
 		{
 			name: "error when both role and clusterrole are specified",
 			setupBuilder: func() *authorization.RBACBuilder {
+				userSubjectKind, _ := authorization.NewSubjectKindFrom("User")
 				return authorization.NewRBACBuilder().
-					ForRepository("owner/repo").
+					ForSubjectKind(userSubjectKind).
+					ForSubjectName("owner/repo").
 					ForRole("reader").
 					ForClusterRole("cluster-admin").
 					ForNamespace("default")
@@ -236,8 +248,10 @@ func TestRBACBuilder_BuildRoleBinding(t *testing.T) {
 		{
 			name: "error when namespace is missing",
 			setupBuilder: func() *authorization.RBACBuilder {
+				userSubjectKind, _ := authorization.NewSubjectKindFrom("User")
 				return authorization.NewRBACBuilder().
-					ForRepository("owner/repo").
+					ForSubjectKind(userSubjectKind).
+					ForSubjectName("owner/repo").
 					ForRole("reader")
 			},
 			expectedError: "namespace is required for RoleBinding",

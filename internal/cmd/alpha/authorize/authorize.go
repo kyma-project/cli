@@ -1,30 +1,26 @@
 package authorize
 
 import (
-	"encoding/json"
+	"fmt"
 
 	"github.com/kyma-project/cli.v3/internal/authorization"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon/types"
 	"github.com/kyma-project/cli.v3/internal/flags"
-	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 type authorizeConfig struct {
 	*cmdcommon.KymaConfig
-	repository   string
-	clientId     string
-	issuerURL    string
-	prefix       string
+
+	authTarget   string // user, group, serviceaccount
+	name         string
 	namespace    string
 	clusterWide  bool
 	role         string
 	clusterrole  string
-	name         string
 	dryRun       bool
 	outputFormat types.Format
 }
@@ -34,14 +30,32 @@ func NewAuthorizeCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		KymaConfig: kymaConfig,
 	}
 
+	validAuthTargets := []string{"user", "group", "serviceaccount"}
+
 	cmd := &cobra.Command{
-		Use:   "authorize repository [flags]",
-		Short: "Configure trust between a Kyma cluster and a GitHub repository",
-		Long:  "Configure trust between a Kyma cluster and a GitHub repository by creating an OpenIDConnect resource and RoleBinding or ClusterRoleBinding",
+		Use:   "authorize <authTarget> [flags]",
+		Short: "Authorize a subject (user, group, or service account) with Kyma RBAC resources",
+		Long:  "Create RoleBinding or ClusterRoleBinding granting access to a Kyma role / cluster role for a user, group, or service account.",
+		Example: `  # Bind a user to a namespaced Role (RoleBinding)
+  kyma alpha authorize user --name alice --role view --namespace dev
+
+  # Bind a group cluster-wide to a ClusterRole (ClusterRoleBinding)
+  kyma alpha authorize group --name team-observability --clusterrole kyma-read-all --cluster-wide
+
+  # Bind a service account to a ClusterRole within a namespace (RoleBinding referencing a ClusterRole)
+  kyma alpha authorize serviceaccount --name deployer-sa --clusterrole edit --namespace staging
+
+  # Preview (dry-run) the YAML for a RoleBinding without applying
+  kyma alpha authorize user --name bob --role operator --namespace ops --dry-run -o yaml
+
+  # Generate JSON for a cluster-wide binding
+  kyma alpha authorize user --name ci-bot --clusterrole kyma-admin --cluster-wide -o json`,
+		Args:      cobra.ExactArgs(1),
+		ValidArgs: validAuthTargets,
 		PreRun: func(cmd *cobra.Command, args []string) {
+			cfg.authTarget = args[0]
 			clierror.Check(flags.Validate(cmd.Flags(),
-				flags.MarkRequired("repository"),
-				flags.MarkRequired("clientId"),
+				flags.MarkRequired("name"),
 				flags.MarkExactlyOneRequired("role", "clusterrole"),
 				flags.MarkPrerequisites("role", "namespace"),
 			))
@@ -51,14 +65,7 @@ func NewAuthorizeCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		},
 	}
 
-	// Required flags
-	cmd.Flags().StringVar(&cfg.repository, "repository", "", "GitHub repo in owner/name format (e.g., kyma-project/cli) (required)")
-	cmd.Flags().StringVar(&cfg.clientId, "client-id", "", "OIDC client ID (audience) expected in the token (required)")
-
-	// Optional flags with defaults
-	cmd.Flags().StringVar(&cfg.issuerURL, "issuer-url", "https://token.actions.githubusercontent.com", "OIDC issuer")
-	cmd.Flags().StringVar(&cfg.prefix, "prefix", "", "Username prefix for the repository claim (e.g., gh-oidc:)")
-	cmd.Flags().StringVar(&cfg.namespace, "namespace", "", "Namespace for RoleBinding (required if not cluster-wide and binding a Role or namespaced ClusterRole)")
+	cmd.Flags().StringVar(&cfg.namespace, "namespace", "", "Namespace for RoleBinding (required unless --cluster-wide)")
 	cmd.Flags().BoolVar(&cfg.clusterWide, "cluster-wide", false, "If true, create a ClusterRoleBinding; otherwise, a RoleBinding")
 	cmd.Flags().StringVar(&cfg.role, "role", "", "Role name to bind (namespaced)")
 	cmd.Flags().StringVar(&cfg.clusterrole, "clusterrole", "", "ClusterRole name to bind (usable for RoleBinding or ClusterRoleBinding)")
@@ -66,46 +73,47 @@ func NewAuthorizeCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().BoolVar(&cfg.dryRun, "dry-run", false, "Print resources without applying")
 	cmd.Flags().VarP(&cfg.outputFormat, "output", "o", "Output format (yaml or json)")
 
+	cmd.AddCommand(NewAuthorizeRepositoryCMD(kymaConfig))
+
 	return cmd
 }
 
 func authorize(cfg *authorizeConfig) clierror.Error {
-	repositoryOIDCBuilder := authorization.NewOIDCBuilder(cfg.clientId, cfg.issuerURL).
-		ForRepository(cfg.repository).
-		ForName(cfg.name).
-		ForPrefix(cfg.prefix)
-	oidcResource, err := repositoryOIDCBuilder.Build()
-
+	rbacResource, err := buildRBACResource(cfg)
 	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to build OIDC resource"))
-	}
-
-	rbacResource, rbacErr := buildRBACResource(cfg, repositoryOIDCBuilder.GetUsernamePrefix())
-	if rbacErr != nil {
-		return rbacErr
+		return err
 	}
 
 	if cfg.dryRun {
-		return outputResources(cfg, oidcResource, rbacResource)
+		return outputResources(cfg.outputFormat, []*unstructured.Unstructured{rbacResource})
 	}
 
-	return applyResources(cfg, oidcResource, rbacResource)
+	return applyRBAC(cfg, rbacResource)
 }
 
-func buildRBACResource(cfg *authorizeConfig, bindingPrefix string) (*unstructured.Unstructured, clierror.Error) {
+func buildRBACResource(cfg *authorizeConfig) (*unstructured.Unstructured, clierror.Error) {
+	subjectKind, err := authorization.NewSubjectKindFrom(cfg.authTarget)
+	if err != nil {
+		return nil, clierror.Wrap(err, clierror.New("invalid authorization target"))
+	}
+
 	builder := authorization.NewRBACBuilder().
-		ForRepository(cfg.repository).
-		ForPrefix(bindingPrefix)
+		ForSubjectKind(subjectKind).
+		ForSubjectName(cfg.name)
 
 	if cfg.clusterWide {
-		return buildClusterRoleBinding(builder, cfg.clusterrole)
+		return buildClusterRoleBinding(builder, cfg)
 	}
 
 	return buildRoleBinding(builder, cfg)
 }
 
-func buildClusterRoleBinding(builder *authorization.RBACBuilder, clusterrole string) (*unstructured.Unstructured, clierror.Error) {
-	rbacResource, err := builder.ForClusterRole(clusterrole).BuildClusterRoleBinding()
+func buildClusterRoleBinding(builder *authorization.RBACBuilder, cfg *authorizeConfig) (*unstructured.Unstructured, clierror.Error) {
+	rbacResource, err := builder.
+		ForClusterRole(cfg.clusterrole).
+		ForBindingName(fmt.Sprintf("%s-%s-binding", cfg.clusterrole, cfg.name)).
+		BuildClusterRoleBinding()
+
 	if err != nil {
 		return nil, err
 	}
@@ -116,9 +124,13 @@ func buildRoleBinding(builder *authorization.RBACBuilder, cfg *authorizeConfig) 
 	builder = builder.ForNamespace(cfg.namespace)
 
 	if cfg.role != "" {
-		builder = builder.ForRole(cfg.role)
+		builder = builder.
+			ForRole(cfg.role).
+			ForBindingName(fmt.Sprintf("%s-%s-binding", cfg.role, cfg.name))
 	} else {
-		builder = builder.ForClusterRole(cfg.clusterrole)
+		builder = builder.
+			ForClusterRole(cfg.clusterrole).
+			ForBindingName(fmt.Sprintf("%s-%s-binding", cfg.clusterrole, cfg.name))
 	}
 
 	rbacResource, err := builder.BuildRoleBinding()
@@ -128,57 +140,13 @@ func buildRoleBinding(builder *authorization.RBACBuilder, cfg *authorizeConfig) 
 	return rbacResource, nil
 }
 
-func outputResources(cfg *authorizeConfig, oidcResource *unstructured.Unstructured, rbacResource *unstructured.Unstructured) clierror.Error {
-	printer := out.Default
-
-	switch cfg.outputFormat {
-	case types.JSONFormat:
-		return outputJSON(printer, oidcResource, rbacResource)
-	case types.YAMLFormat, types.DefaultFormat:
-		return outputYAML(printer, oidcResource, rbacResource)
-	default:
-		return outputYAML(printer, oidcResource, rbacResource)
-	}
-}
-
-func outputJSON(printer *out.Printer, oidcResource *unstructured.Unstructured, rbacResource *unstructured.Unstructured) clierror.Error {
-	resources := []any{oidcResource.Object, rbacResource.Object}
-
-	obj, err := json.MarshalIndent(resources, "", "  ")
-	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to marshal resources to JSON"))
-	}
-
-	printer.Msgln(string(obj))
-	return nil
-}
-
-func outputYAML(printer *out.Printer, oidcResource *unstructured.Unstructured, rbacResource *unstructured.Unstructured) clierror.Error {
-	oidcBytes, err := yaml.Marshal(oidcResource.Object)
-	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to marshal OpenIDConnect resource to YAML"))
-	}
-
-	printer.Msgln(string(oidcBytes))
-
-	printer.Msgln("---")
-
-	rbacBytes, err := yaml.Marshal(rbacResource.Object)
-	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to marshal RBAC resource to YAML"))
-	}
-
-	printer.Msgln(string(rbacBytes))
-
-	return nil
-}
-
-func applyResources(cfg *authorizeConfig, oidcResource *unstructured.Unstructured, rbacResource *unstructured.Unstructured) clierror.Error {
+func applyRBAC(cfg *authorizeConfig, rbacResource *unstructured.Unstructured) clierror.Error {
 	kubeClient, clierr := cfg.GetKubeClientWithClierr()
 	if clierr != nil {
 		return clierr
 	}
 
 	applier := authorization.NewResourceApplier(kubeClient)
-	return applier.ApplyResources(cfg.Ctx, oidcResource, rbacResource)
+
+	return applier.ApplyRBAC(cfg.Ctx, rbacResource)
 }
