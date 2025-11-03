@@ -46,12 +46,24 @@ func NewClient(kubeconfig, kubeconfigContext string) (Client, error) {
 	return client, nil
 }
 
+func NewClientForConfig(apiConfig *api.Config) (Client, error) {
+	client, err := newClientForConfig(apiConfig)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to initialise kubernetes client")
+	}
+	return client, nil
+}
+
 func newClient(kubeconfig, kubeconfigContext string) (Client, error) {
 	apiConfig, err := apiConfig(kubeconfig, kubeconfigContext)
 	if err != nil {
 		return nil, err
 	}
 
+	return newClientForConfig(apiConfig)
+}
+
+func newClientForConfig(apiConfig *api.Config) (Client, error) {
 	restConfig, err := restConfig(apiConfig)
 	if err != nil {
 		return nil, err
