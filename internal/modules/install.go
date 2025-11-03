@@ -75,14 +75,14 @@ func applyCustomResources(ctx context.Context, client kube.Client, existingModul
 	if data.IsDefaultCRApplicable {
 		err := applyDefaultCustomResource(ctx, client, existingModule)
 		if err != nil {
-			return fmt.Errorf("failed to apply default custom resource")
+			return fmt.Errorf("failed to apply default custom resource: %w", err)
 		}
 	}
 
 	if len(data.CustomResources) > 0 {
-		err := applyCustomResourcesFromFile(ctx, client, data.CustomResources)
+		err := applyCustomResourcesFromFile(ctx, client, data.CustomResources, existingModule)
 		if err != nil {
-			return fmt.Errorf("failed to apply custom resource files")
+			return fmt.Errorf("failed to apply custom resource files: %w", err)
 		}
 	}
 
@@ -91,6 +91,9 @@ func applyCustomResources(ctx context.Context, client kube.Client, existingModul
 
 func installModuleResources(ctx context.Context, client kube.Client, existingModule *kyma.ModuleTemplate) error {
 	for _, res := range existingModule.Spec.Resources {
+		if res.Name != "rawManifest" {
+			continue
+		}
 		url := res.Link
 		if err := applyResourcesFromURL(ctx, client, url); err != nil {
 			return errors.Wrap(err, "failed to apply resources from link")
@@ -171,7 +174,7 @@ func applyDefaultCustomResource(ctx context.Context, client kube.Client, existin
 	return nil
 }
 
-func applyCustomResourcesFromFile(ctx context.Context, client kube.Client, customResources []unstructured.Unstructured) error {
+func applyCustomResourcesFromFile(ctx context.Context, client kube.Client, customResources []unstructured.Unstructured, existingModule *kyma.ModuleTemplate) error {
 	if len(customResources) == 0 {
 		return nil
 	}
