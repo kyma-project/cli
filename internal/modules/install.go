@@ -80,7 +80,7 @@ func applyCustomResources(ctx context.Context, client kube.Client, existingModul
 	}
 
 	if len(data.CustomResources) > 0 {
-		err := applyCustomResourcesFromFile(ctx, client, data.CustomResources, existingModule)
+		err := applyCustomResourcesFromFile(ctx, client, data.CustomResources)
 		if err != nil {
 			return fmt.Errorf("failed to apply custom resource files: %w", err)
 		}
@@ -174,7 +174,7 @@ func applyDefaultCustomResource(ctx context.Context, client kube.Client, existin
 	return nil
 }
 
-func applyCustomResourcesFromFile(ctx context.Context, client kube.Client, customResources []unstructured.Unstructured, existingModule *kyma.ModuleTemplate) error {
+func applyCustomResourcesFromFile(ctx context.Context, client kube.Client, customResources []unstructured.Unstructured) error {
 	if len(customResources) == 0 {
 		return nil
 	}
