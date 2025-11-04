@@ -22,6 +22,9 @@ kyma alpha authorize <authTarget> [flags]
   # Bind a user to a namespaced Role (RoleBinding)
   kyma alpha authorize user --name alice --role view --namespace dev
 
+  # Bind multiple users to a namespaced Role (RoleBinding)
+  kyma alpha authorize user --name alice,bob,james --role view --namespace dev
+
   # Bind a group cluster-wide to a ClusterRole (ClusterRoleBinding)
   kyma alpha authorize group --name team-observability --clusterrole kyma-read-all --cluster-wide
 
@@ -41,7 +44,7 @@ kyma alpha authorize <authTarget> [flags]
       --cluster-wide            If true, create a ClusterRoleBinding; otherwise, a RoleBinding
       --clusterrole string      ClusterRole name to bind (usable for RoleBinding or ClusterRoleBinding)
       --dry-run                 Print resources without applying
-      --name string             Name for the OpenIDConnect resource (optional; default derives from clientId)
+      --name stringSlice        Name of the authorized subject(s) (default "[]")
       --namespace string        Namespace for RoleBinding (required unless --cluster-wide)
   -o, --output string           Output format (yaml or json)
       --role string             Role name to bind (namespaced)

@@ -16,7 +16,7 @@ type authorizeConfig struct {
 	*cmdcommon.KymaConfig
 
 	authTarget   string // user, group, serviceaccount
-	name         string
+	name         []string
 	namespace    string
 	clusterWide  bool
 	role         string
@@ -38,6 +38,9 @@ func NewAuthorizeCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Long:  "Create RoleBinding or ClusterRoleBinding granting access to a Kyma role / cluster role for a user, group, or service account.",
 		Example: `  # Bind a user to a namespaced Role (RoleBinding)
   kyma alpha authorize user --name alice --role view --namespace dev
+
+  # Bind multiple users to a namespaced Role (RoleBinding)
+  kyma alpha authorize user --name alice,bob,james --role view --namespace dev
 
   # Bind a group cluster-wide to a ClusterRole (ClusterRoleBinding)
   kyma alpha authorize group --name team-observability --clusterrole kyma-read-all --cluster-wide
@@ -69,7 +72,7 @@ func NewAuthorizeCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().BoolVar(&cfg.clusterWide, "cluster-wide", false, "If true, create a ClusterRoleBinding; otherwise, a RoleBinding")
 	cmd.Flags().StringVar(&cfg.role, "role", "", "Role name to bind (namespaced)")
 	cmd.Flags().StringVar(&cfg.clusterrole, "clusterrole", "", "ClusterRole name to bind (usable for RoleBinding or ClusterRoleBinding)")
-	cmd.Flags().StringVar(&cfg.name, "name", "", "Name for the OpenIDConnect resource (optional; default derives from clientId)")
+	cmd.Flags().StringSliceVar(&cfg.name, "name", []string{}, "Name of the authorized subject(s)")
 	cmd.Flags().BoolVar(&cfg.dryRun, "dry-run", false, "Print resources without applying")
 	cmd.Flags().VarP(&cfg.outputFormat, "output", "o", "Output format (yaml or json)")
 
@@ -79,39 +82,62 @@ func NewAuthorizeCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 }
 
 func authorize(cfg *authorizeConfig) clierror.Error {
-	rbacResource, err := buildRBACResource(cfg)
+	rbacResources, err := buildRBACResources(cfg)
 	if err != nil {
 		return err
 	}
 
 	if cfg.dryRun {
-		return outputResources(cfg.outputFormat, []*unstructured.Unstructured{rbacResource})
+		return outputResources(cfg.outputFormat, rbacResources)
 	}
 
-	return applyRBAC(cfg, rbacResource)
+	for _, res := range rbacResources {
+		if applyErr := applyRBAC(cfg, res); applyErr != nil {
+			return applyErr
+		}
+	}
+
+	return nil
 }
 
-func buildRBACResource(cfg *authorizeConfig) (*unstructured.Unstructured, clierror.Error) {
-	subjectKind, err := authorization.NewSubjectKindFrom(cfg.authTarget)
-	if err != nil {
-		return nil, clierror.Wrap(err, clierror.New("invalid authorization target"))
+func buildRBACResources(cfg *authorizeConfig) ([]*unstructured.Unstructured, clierror.Error) {
+	var rbacResources []*unstructured.Unstructured
+
+	for _, subjectName := range cfg.name {
+		subjectKind, err := authorization.NewSubjectKindFrom(cfg.authTarget)
+		if err != nil {
+			return nil, clierror.Wrap(err, clierror.New("invalid authorization target"))
+		}
+
+		builder := authorization.NewRBACBuilder().
+			ForSubjectKind(subjectKind).
+			ForSubjectName(subjectName)
+
+		var (
+			rbac     *unstructured.Unstructured
+			errBuild clierror.Error
+		)
+
+		if cfg.clusterWide {
+			rbac, errBuild = buildClusterRoleBinding(builder, cfg, subjectName)
+		} else {
+			rbac, errBuild = buildRoleBinding(builder, cfg, subjectName)
+		}
+
+		if errBuild != nil {
+			return nil, errBuild
+		}
+
+		rbacResources = append(rbacResources, rbac)
 	}
 
-	builder := authorization.NewRBACBuilder().
-		ForSubjectKind(subjectKind).
-		ForSubjectName(cfg.name)
-
-	if cfg.clusterWide {
-		return buildClusterRoleBinding(builder, cfg)
-	}
-
-	return buildRoleBinding(builder, cfg)
+	return rbacResources, nil
 }
 
-func buildClusterRoleBinding(builder *authorization.RBACBuilder, cfg *authorizeConfig) (*unstructured.Unstructured, clierror.Error) {
+func buildClusterRoleBinding(builder *authorization.RBACBuilder, cfg *authorizeConfig, subjectName string) (*unstructured.Unstructured, clierror.Error) {
 	rbacResource, err := builder.
 		ForClusterRole(cfg.clusterrole).
-		ForBindingName(fmt.Sprintf("%s-%s-binding", cfg.clusterrole, cfg.name)).
+		ForBindingName(fmt.Sprintf("%s-%s-binding", cfg.clusterrole, subjectName)).
 		BuildClusterRoleBinding()
 
 	if err != nil {
@@ -120,17 +146,17 @@ func buildClusterRoleBinding(builder *authorization.RBACBuilder, cfg *authorizeC
 	return rbacResource, nil
 }
 
-func buildRoleBinding(builder *authorization.RBACBuilder, cfg *authorizeConfig) (*unstructured.Unstructured, clierror.Error) {
+func buildRoleBinding(builder *authorization.RBACBuilder, cfg *authorizeConfig, subjectName string) (*unstructured.Unstructured, clierror.Error) {
 	builder = builder.ForNamespace(cfg.namespace)
 
 	if cfg.role != "" {
 		builder = builder.
 			ForRole(cfg.role).
-			ForBindingName(fmt.Sprintf("%s-%s-binding", cfg.role, cfg.name))
+			ForBindingName(fmt.Sprintf("%s-%s-binding", cfg.role, subjectName))
 	} else {
 		builder = builder.
 			ForClusterRole(cfg.clusterrole).
-			ForBindingName(fmt.Sprintf("%s-%s-binding", cfg.clusterrole, cfg.name))
+			ForBindingName(fmt.Sprintf("%s-%s-binding", cfg.clusterrole, subjectName))
 	}
 
 	rbacResource, err := builder.BuildRoleBinding()
