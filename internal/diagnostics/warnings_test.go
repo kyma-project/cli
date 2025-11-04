@@ -110,7 +110,7 @@ func TestClusterWarningsCollector_Run(t *testing.T) {
 					Type:           "Warning",
 					Reason:         "FailedMount",
 					Message:        "Volume mount failed",
-					EventTime:      metav1.MicroTime{}, // zero value
+					EventTime:      metav1.MicroTime{},
 					FirstTimestamp: metav1.NewTime(time.Now().Add(-30 * time.Second)),
 					LastTimestamp:  metav1.NewTime(time.Now().Add(-10 * time.Second)),
 					Count:          1,
@@ -160,7 +160,7 @@ func TestHumanizeEventTime(t *testing.T) {
 	testCases := []struct {
 		name          string
 		event         corev1.Event
-		expectedMatch string // partial match for the format
+		expectedMatch string
 	}{
 		{
 			name: "Should use EventTime when available and return seconds format",
@@ -174,7 +174,7 @@ func TestHumanizeEventTime(t *testing.T) {
 		{
 			name: "Should fallback to LastTimestamp when EventTime is zero and return minutes format",
 			event: corev1.Event{
-				EventTime:      metav1.MicroTime{}, // zero value
+				EventTime:      metav1.MicroTime{},
 				LastTimestamp:  metav1.NewTime(time.Now().Add(-2 * time.Minute)),
 				FirstTimestamp: metav1.NewTime(time.Now().Add(-5 * time.Minute)),
 			},
@@ -183,8 +183,8 @@ func TestHumanizeEventTime(t *testing.T) {
 		{
 			name: "Should fallback to FirstTimestamp when EventTime and LastTimestamp are zero and return hours format",
 			event: corev1.Event{
-				EventTime:      metav1.MicroTime{}, // zero value
-				LastTimestamp:  metav1.Time{},      // zero value
+				EventTime:      metav1.MicroTime{},
+				LastTimestamp:  metav1.Time{},
 				FirstTimestamp: metav1.NewTime(time.Now().Add(-3 * time.Hour)),
 			},
 			expectedMatch: "h", // should show hours
@@ -192,11 +192,11 @@ func TestHumanizeEventTime(t *testing.T) {
 		{
 			name: "Should handle all timestamps being zero",
 			event: corev1.Event{
-				EventTime:      metav1.MicroTime{}, // zero value
-				LastTimestamp:  metav1.Time{},      // zero value
-				FirstTimestamp: metav1.Time{},      // zero value
+				EventTime:      metav1.MicroTime{},
+				LastTimestamp:  metav1.Time{},
+				FirstTimestamp: metav1.Time{},
 			},
-			expectedMatch: "<unknown>", // should show 0s for zero time
+			expectedMatch: "<unknown>",
 		},
 	}
 
