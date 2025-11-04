@@ -2,11 +2,13 @@ package diagnostics
 
 import (
 	"context"
+	"time"
 
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/out"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/duration"
 )
 
 type EventInfo struct {
@@ -15,7 +17,7 @@ type EventInfo struct {
 	Message        string                 `json:"message" yaml:"message"`
 	Count          int32                  `json:"count" yaml:"count"`
 	Source         corev1.EventSource     `json:"source" yaml:"source"`
-	EventTime      metav1.MicroTime       `json:"eventTime" yaml:"eventTime"`
+	EventTime      string                 `json:"eventTime" yaml:"eventTime"`
 	Namespace      string                 `json:"namespace" yaml:"namespace"`
 }
 
@@ -55,7 +57,7 @@ func (wc *ClusterWarningsCollector) getClusterWarnings(ctx context.Context) ([]E
 				Message:        event.Message,
 				Count:          event.Count,
 				Source:         event.Source,
-				EventTime:      event.EventTime,
+				EventTime:      humanizeEventTime(event),
 				Namespace:      event.Namespace,
 			}
 			warnings = append(warnings, eventInfo)
@@ -75,4 +77,22 @@ func (wc *ClusterWarningsCollector) getClusterEvents(ctx context.Context) ([]cor
 	}
 
 	return eventList.Items, nil
+}
+
+func humanizeEventTime(event corev1.Event) string {
+	var eventTime time.Time
+
+	if !event.EventTime.IsZero() {
+		eventTime = event.EventTime.Time
+	} else if !event.LastTimestamp.IsZero() {
+		eventTime = event.LastTimestamp.Time
+	} else {
+		eventTime = event.FirstTimestamp.Time
+	}
+
+	if eventTime.IsZero() {
+		return "<unknown>"
+	}
+
+	return duration.HumanDuration(time.Since(eventTime))
 }

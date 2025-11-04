@@ -99,6 +99,26 @@ func TestClusterWarningsCollector_Run(t *testing.T) {
 			verbose:               false,
 			expectedWarningsCount: 0,
 		},
+		{
+			name: "Should handle events with zero EventTime",
+			mockEvents: []corev1.Event{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "warning-with-zero-eventtime",
+						Namespace: "kyma-system",
+					},
+					Type:           "Warning",
+					Reason:         "FailedMount",
+					Message:        "Volume mount failed",
+					EventTime:      metav1.MicroTime{},
+					FirstTimestamp: metav1.NewTime(time.Now().Add(-30 * time.Second)),
+					LastTimestamp:  metav1.NewTime(time.Now().Add(-10 * time.Second)),
+					Count:          1,
+				},
+			},
+			verbose:               false,
+			expectedWarningsCount: 1,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -132,6 +152,62 @@ func TestClusterWarningsCollector_Run(t *testing.T) {
 
 			// Then
 			assert.Equal(t, tc.expectedWarningsCount, len(result))
+		})
+	}
+}
+
+func TestHumanizeEventTime(t *testing.T) {
+	testCases := []struct {
+		name          string
+		event         corev1.Event
+		expectedMatch string
+	}{
+		{
+			name: "Should use EventTime when available and return seconds format",
+			event: corev1.Event{
+				EventTime:      metav1.NewMicroTime(time.Now().Add(-5 * time.Second)),
+				LastTimestamp:  metav1.NewTime(time.Now().Add(-10 * time.Second)),
+				FirstTimestamp: metav1.NewTime(time.Now().Add(-15 * time.Second)),
+			},
+			expectedMatch: "s", // should show seconds
+		},
+		{
+			name: "Should fallback to LastTimestamp when EventTime is zero and return minutes format",
+			event: corev1.Event{
+				EventTime:      metav1.MicroTime{},
+				LastTimestamp:  metav1.NewTime(time.Now().Add(-2 * time.Minute)),
+				FirstTimestamp: metav1.NewTime(time.Now().Add(-5 * time.Minute)),
+			},
+			expectedMatch: "m", // should show minutes
+		},
+		{
+			name: "Should fallback to FirstTimestamp when EventTime and LastTimestamp are zero and return hours format",
+			event: corev1.Event{
+				EventTime:      metav1.MicroTime{},
+				LastTimestamp:  metav1.Time{},
+				FirstTimestamp: metav1.NewTime(time.Now().Add(-3 * time.Hour)),
+			},
+			expectedMatch: "h", // should show hours
+		},
+		{
+			name: "Should handle all timestamps being zero",
+			event: corev1.Event{
+				EventTime:      metav1.MicroTime{},
+				LastTimestamp:  metav1.Time{},
+				FirstTimestamp: metav1.Time{},
+			},
+			expectedMatch: "<unknown>",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// When
+			result := humanizeEventTime(tc.event)
+
+			// Then
+			assert.Contains(t, result, tc.expectedMatch)
+			assert.NotEqual(t, "0001-01-01T00:00:00Z", result) // ensure no invalid timestamp
 		})
 	}
 }
