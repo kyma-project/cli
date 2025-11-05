@@ -10,6 +10,12 @@ Use this command to quickly assess the health, configuration, and potential issu
 kyma alpha diagnose [flags]
 ```
 
+## Available Commands
+
+```text
+  logs - Aggregates error logs from Pods belonging to the added Kyma modules
+```
+
 ## Flags
 
 ```text
@@ -25,4 +31,5 @@ kyma alpha diagnose [flags]
 
 ## See also
 
-* [kyma alpha](kyma_alpha.md) - Groups command prototypes for which the API may still change
+* [kyma alpha](kyma_alpha.md)                             - Groups command prototypes for which the API may still change
+* [kyma alpha diagnose logs](kyma_alpha_diagnose_logs.md) - Aggregates error logs from Pods belonging to the added Kyma modules
