@@ -35,7 +35,7 @@ func NewAuthorizeCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "authorize <authTarget> [flags]",
 		Short: "Authorize a subject (user, group, or service account) with Kyma RBAC resources",
-		Long:  "Create RoleBinding or ClusterRoleBinding granting access to a Kyma role / cluster role for a user, group, or service account.",
+		Long:  "Create a RoleBinding or ClusterRoleBinding that grants access to a Kyma role or cluster role for a user, group, or service account.",
 		Example: `  # Bind a user to a namespaced Role (RoleBinding)
   kyma alpha authorize user --name alice --role view --namespace dev
 

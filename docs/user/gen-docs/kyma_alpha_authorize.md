@@ -4,7 +4,7 @@ Authorize a subject (user, group, or service account) with Kyma RBAC resources.
 
 ## Synopsis
 
-Create RoleBinding or ClusterRoleBinding granting access to a Kyma role / cluster role for a user, group, or service account.
+Create a RoleBinding or ClusterRoleBinding that grants access to a Kyma role or cluster role for a user, group, or service account.
 
 ```bash
 kyma alpha authorize <authTarget> [flags]
