@@ -114,10 +114,19 @@ func buildRBACResourceForRepository(cfg *authorizeRepositoryConfig, bindingPrefi
 		return nil, clierror.Wrap(err, clierror.New("failed to generate binding"))
 	}
 
+	sanitizedRepoName := strings.ReplaceAll(cfg.repository, "/", "-")
+	var bindingName string
+	if cfg.role != "" {
+		bindingName = fmt.Sprintf("%s-%s-binding", sanitizedRepoName, cfg.role)
+	} else {
+		bindingName = fmt.Sprintf("%s-%s-binding", sanitizedRepoName, cfg.clusterrole)
+	}
+
 	builder := authorization.NewRBACBuilder().
 		ForPrefix(bindingPrefix).
 		ForSubjectKind(subjectKind).
-		ForSubjectName(cfg.repository)
+		ForSubjectName(cfg.repository).
+		ForBindingName(bindingName)
 
 	if cfg.clusterWide {
 		return buildClusterRoleBindingForRepository(builder, cfg.clusterrole)
@@ -136,16 +145,11 @@ func buildClusterRoleBindingForRepository(builder *authorization.RBACBuilder, cl
 
 func buildRoleBindingForRepository(builder *authorization.RBACBuilder, cfg *authorizeRepositoryConfig) (*unstructured.Unstructured, clierror.Error) {
 	builder = builder.ForNamespace(cfg.namespace)
-	sanitizedRepoName := strings.ReplaceAll(cfg.repository, "/", "-")
 
 	if cfg.role != "" {
-		builder = builder.
-			ForRole(cfg.role).
-			ForBindingName(fmt.Sprintf("%s-%s-binding", sanitizedRepoName, cfg.role))
+		builder = builder.ForRole(cfg.role)
 	} else {
-		builder = builder.
-			ForClusterRole(cfg.clusterrole).
-			ForBindingName(fmt.Sprintf("%s-%s-binding", sanitizedRepoName, cfg.clusterrole))
+		builder = builder.ForClusterRole(cfg.clusterrole)
 	}
 
 	rbacResource, err := builder.BuildRoleBinding()
