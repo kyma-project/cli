@@ -8,20 +8,57 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
+const (
+	USER            = "User"
+	GROUP           = "Group"
+	SERVICE_ACCOUNT = "ServiceAccount"
+)
+
+type SubjectKind struct {
+	name string
+}
+
+func NewSubjectKindFrom(name string) (*SubjectKind, error) {
+	if strings.EqualFold(name, USER) {
+		return &SubjectKind{USER}, nil
+	}
+	if strings.EqualFold(name, GROUP) {
+		return &SubjectKind{GROUP}, nil
+	}
+	if strings.EqualFold(name, SERVICE_ACCOUNT) {
+		return &SubjectKind{SERVICE_ACCOUNT}, nil
+	}
+
+	return nil, fmt.Errorf("invalid subjectKind: %s", name)
+}
+
 type RBACBuilder struct {
-	repository  string
 	prefix      string
 	namespace   string
 	role        string
 	clusterrole string
+
+	subjectKind *SubjectKind
+	subjectName string
+	bindingName string
 }
 
 func NewRBACBuilder() *RBACBuilder {
 	return &RBACBuilder{}
 }
 
-func (b *RBACBuilder) ForRepository(repository string) *RBACBuilder {
-	b.repository = repository
+func (b *RBACBuilder) ForSubjectKind(subjectKind *SubjectKind) *RBACBuilder {
+	b.subjectKind = subjectKind
+	return b
+}
+
+func (b *RBACBuilder) ForSubjectName(subjectName string) *RBACBuilder {
+	b.subjectName = subjectName
+	return b
+}
+
+func (b *RBACBuilder) ForBindingName(bindingName string) *RBACBuilder {
+	b.bindingName = bindingName
 	return b
 }
 
@@ -50,10 +87,7 @@ func (b *RBACBuilder) BuildClusterRoleBinding() (*unstructured.Unstructured, cli
 		return nil, err
 	}
 
-	subjectName := b.getSubjectName()
-	bindingName := b.getClusterRoleBindingName()
-
-	return b.buildClusterRoleBinding(bindingName, subjectName), nil
+	return b.buildClusterRoleBinding(), nil
 }
 
 func (b *RBACBuilder) BuildRoleBinding() (*unstructured.Unstructured, clierror.Error) {
@@ -61,19 +95,16 @@ func (b *RBACBuilder) BuildRoleBinding() (*unstructured.Unstructured, clierror.E
 		return nil, err
 	}
 
-	subjectName := b.getSubjectName()
-	bindingName := b.getRoleBindingName()
-
-	return b.buildRoleBinding(bindingName, subjectName), nil
+	return b.buildRoleBinding(), nil
 }
 
 func (b *RBACBuilder) validateForClusterRoleBinding() clierror.Error {
-	if b.repository == "" {
-		return clierror.New("repository is required")
+	if b.subjectKind == nil {
+		return clierror.New("subjectKind is required")
 	}
 
-	if !b.isRepoNameValid() {
-		return clierror.New("repository must be in owner/name format (e.g., kyma-project/cli)")
+	if b.subjectName == "" {
+		return clierror.New("subjectName is required")
 	}
 
 	if b.clusterrole == "" {
@@ -84,14 +115,12 @@ func (b *RBACBuilder) validateForClusterRoleBinding() clierror.Error {
 }
 
 func (b *RBACBuilder) validateForRoleBinding() clierror.Error {
-	if b.repository == "" {
-		return clierror.New("repository is required")
+	if b.subjectKind == nil {
+		return clierror.New("subjectKind is required")
 	}
-
-	if !b.isRepoNameValid() {
-		return clierror.New("repository must be in owner/name format (e.g., kyma-project/cli)")
+	if b.subjectName == "" {
+		return clierror.New("subjectName is required")
 	}
-
 	if b.role == "" && b.clusterrole == "" {
 		return clierror.New("either role or clusterrole must be specified for RoleBinding")
 	}
@@ -111,45 +140,18 @@ func (b *RBACBuilder) validateForRoleBinding() clierror.Error {
 	return nil
 }
 
-func (b *RBACBuilder) isRepoNameValid() bool {
-	repoNameParts := strings.Split(b.repository, "/")
-	return len(repoNameParts) == 2
-}
-
-func (b *RBACBuilder) getSubjectName() string {
-	return b.prefix + b.repository
-}
-
-func (b *RBACBuilder) getClusterRoleBindingName() string {
-	sanitizedRepo := strings.ReplaceAll(b.repository, "/", "-")
-	return fmt.Sprintf("%s-%s-binding", sanitizedRepo, b.clusterrole)
-}
-
-func (b *RBACBuilder) getRoleBindingName() string {
-	sanitizedRepo := strings.ReplaceAll(b.repository, "/", "-")
-
-	var roleName string
-	if b.role != "" {
-		roleName = b.role
-	} else {
-		roleName = b.clusterrole
-	}
-
-	return fmt.Sprintf("%s-%s-binding", sanitizedRepo, roleName)
-}
-
-func (b *RBACBuilder) buildClusterRoleBinding(bindingName, subjectName string) *unstructured.Unstructured {
+func (b *RBACBuilder) buildClusterRoleBinding() *unstructured.Unstructured {
 	return &unstructured.Unstructured{
 		Object: map[string]any{
 			"apiVersion": "rbac.authorization.k8s.io/v1",
 			"kind":       "ClusterRoleBinding",
 			"metadata": map[string]any{
-				"name": bindingName,
+				"name": b.bindingName,
 			},
 			"subjects": []map[string]any{
 				{
-					"kind": "User",
-					"name": subjectName,
+					"kind": b.subjectKind.name,
+					"name": b.prefix + b.subjectName,
 				},
 			},
 			"roleRef": map[string]any{
@@ -161,7 +163,7 @@ func (b *RBACBuilder) buildClusterRoleBinding(bindingName, subjectName string) *
 	}
 }
 
-func (b *RBACBuilder) buildRoleBinding(bindingName, subjectName string) *unstructured.Unstructured {
+func (b *RBACBuilder) buildRoleBinding() *unstructured.Unstructured {
 	roleKind := "Role"
 	roleName := b.role
 	if b.clusterrole != "" {
@@ -174,13 +176,13 @@ func (b *RBACBuilder) buildRoleBinding(bindingName, subjectName string) *unstruc
 			"apiVersion": "rbac.authorization.k8s.io/v1",
 			"kind":       "RoleBinding",
 			"metadata": map[string]any{
-				"name":      bindingName,
+				"name":      b.bindingName,
 				"namespace": b.namespace,
 			},
 			"subjects": []map[string]any{
 				{
-					"kind": "User",
-					"name": subjectName,
+					"kind": b.subjectKind.name,
+					"name": b.prefix + b.subjectName,
 				},
 			},
 			"roleRef": map[string]any{

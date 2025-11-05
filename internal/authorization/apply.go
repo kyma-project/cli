@@ -23,11 +23,14 @@ func NewResourceApplier(kubeClient kube.Client) *ResourceApplier {
 	}
 }
 
-func (ra *ResourceApplier) ApplyResources(ctx context.Context, oidcResource *unstructured.Unstructured, rbacResource *unstructured.Unstructured) clierror.Error {
+func (ra *ResourceApplier) ApplyOIDC(ctx context.Context, oidcResource *unstructured.Unstructured) clierror.Error {
 	if err := ra.applyOIDCResource(ctx, oidcResource); err != nil {
 		return err
 	}
+	return nil
+}
 
+func (ra *ResourceApplier) ApplyRBAC(ctx context.Context, rbacResource *unstructured.Unstructured) clierror.Error {
 	if err := ra.applyRBACResource(ctx, rbacResource); err != nil {
 		return err
 	}

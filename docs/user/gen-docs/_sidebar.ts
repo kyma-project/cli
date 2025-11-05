@@ -2,6 +2,7 @@ export default [
   { text: 'kyma', link: './gen-docs/kyma' },
   { text: 'kyma alpha', link: './gen-docs/kyma_alpha' },
   { text: 'kyma alpha authorize', link: './gen-docs/kyma_alpha_authorize' },
+  { text: 'kyma alpha authorize repository', link: './gen-docs/kyma_alpha_authorize_repository' },
   { text: 'kyma alpha diagnose', link: './gen-docs/kyma_alpha_diagnose' },
   { text: 'kyma alpha diagnose logs', link: './gen-docs/kyma_alpha_diagnose_logs' },
   { text: 'kyma alpha hana', link: './gen-docs/kyma_alpha_hana' },

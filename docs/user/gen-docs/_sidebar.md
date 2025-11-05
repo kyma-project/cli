@@ -3,6 +3,7 @@
 * [kyma](/cli/user/gen-docs/kyma.md)
 * [kyma alpha](/cli/user/gen-docs/kyma_alpha.md)
 * [kyma alpha authorize](/cli/user/gen-docs/kyma_alpha_authorize.md)
+* [kyma alpha authorize repository](/cli/user/gen-docs/kyma_alpha_authorize_repository.md)
 * [kyma alpha diagnose](/cli/user/gen-docs/kyma_alpha_diagnose.md)
 * [kyma alpha diagnose logs](/cli/user/gen-docs/kyma_alpha_diagnose_logs.md)
 * [kyma alpha hana](/cli/user/gen-docs/kyma_alpha_hana.md)
