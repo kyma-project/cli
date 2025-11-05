@@ -39,6 +39,8 @@ func NewDiagnoseCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().StringVarP(&cfg.outputPath, "output", "o", "", "Path to the diagnostic output file. If not provided the output is printed to stdout")
 	cmd.Flags().BoolVar(&cfg.verbose, "verbose", false, "Display verbose output, including error details during diagnostics collection")
 
+	cmd.AddCommand(NewDiagnoseLogsCMD(kymaConfig))
+
 	return cmd
 }
 
@@ -95,7 +97,7 @@ func render(diagData *diagnostics.DiagnosticData, outputFilepath string, outputF
 	}
 }
 
-func renderJSON(printer *out.Printer, data *diagnostics.DiagnosticData) error {
+func renderJSON(printer *out.Printer, data any) error {
 	obj, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
 		return err
@@ -105,7 +107,7 @@ func renderJSON(printer *out.Printer, data *diagnostics.DiagnosticData) error {
 	return nil
 }
 
-func renderYAML(printer *out.Printer, data *diagnostics.DiagnosticData) error {
+func renderYAML(printer *out.Printer, data any) error {
 	obj, err := yaml.Marshal(data)
 	if err != nil {
 		return err
