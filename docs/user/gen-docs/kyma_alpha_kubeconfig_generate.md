@@ -48,16 +48,16 @@ kyma alpha kubeconfig generate [flags]
       --certificate-authority string        Path to a cert file for the certificate authority
       --certificate-authority-data string   Base64 encoded certificate authority data
       --cluster-wide                        Determines if the binding to the ClusterRole is cluster-wide
-      --clusterrole string                  Name of the Cluster Role to bind the Service Account to (optional)
+      --clusterrole string                  Name of the ClusterRole to bind the Service Account to (optional)
       --id-token-request-url string         URL to request the ID token, defaults to ACTIONS_ID_TOKEN_REQUEST_URL env variable
-  -n, --namespace string                    Namespace in which the subject Service Account is to be found or will be created (default "default")
-      --oidc-name string                    Name of the OIDC Custom Resource from which the kubeconfig will be generated
-      --output string                       Path to the kubeconfig file output. If not provided, the kubeconfig will be printed
+  -n, --namespace string                    Namespace in which the subject Service Account is to be found or is created (default "default")
+      --oidc-name string                    Name of the OIDC custom resource from which the kubeconfig is generated
+      --output string                       Path to the kubeconfig file output. If not provided, the kubeconfig is printed
       --permanent                           Determines if the token is valid indefinitely
-      --role string                         Name of the Role in the given Namespace to bind the Service Account to (optional)
+      --role string                         Name of the Role in the given namespace to bind the Service Account to (optional)
   -s, --server string                       The address and port of the Kubernetes API server
-      --serviceaccount string               Name of the Service Account (in the given Namespace) to be used as a subject of the generated kubeconfig. If the Service Account does not exist, it will be created
-      --time string                         Determines how long the token should be valid, by default 1h (use h for hours and d for days) (default "1h")
+      --serviceaccount string               Name of the Service Account (in the given namespace) to be used as a subject of the generated kubeconfig. If the Service Account does not exist, it is created
+      --time string                         Determines how long the token is valid, by default 1h (use h for hours and d for days) (default "1h")
       --token string                        Token used in the kubeconfig
       --context string                      The name of the kubeconfig context to use
   -h, --help                                Help for the command
