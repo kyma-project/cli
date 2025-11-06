@@ -136,7 +136,6 @@ func newGenerateCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	// generate from OIDC custom resource
 	cmd.Flags().StringVar(&cfg.oidcName, "oidc-name", "", "Name of the OIDC custom resource from which the kubeconfig is generated")
-	// ku, err := cmd.PersistentFlags().GetString("kubeconfig")
 	return cmd
 }
 
