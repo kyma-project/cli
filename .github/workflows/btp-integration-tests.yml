@@ -44,7 +44,7 @@ jobs:
           REPOSITORY="kyma-project/cli"
 
           # WHEN - Use the new alpha authorize repository command to establish trust
-          bin/kyma alpha authorize repository $REPOSITORY --client-id $AUDIENCE --cluster-wide --clusterrole cluster-admin
+          bin/kyma alpha authorize repository --repository $REPOSITORY --client-id $AUDIENCE --cluster-wide --clusterrole cluster-admin
           
           # THEN - Generate kubeconfig and test access
           bin/kyma alpha kubeconfig generate --audience $AUDIENCE --output /tmp/kubeconfig-gh-token.yaml 
