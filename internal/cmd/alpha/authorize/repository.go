@@ -60,6 +60,7 @@ func NewAuthorizeRepositoryCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command 
 				flags.MarkRequired("client-id"),
 				flags.MarkExactlyOneRequired("role", "clusterrole"),
 				flags.MarkPrerequisites("role", "namespace"),
+				flags.MarkPrerequisites("cluster-wide", "clusterrole"),
 			))
 		},
 		Run: func(cmd *cobra.Command, args []string) {
