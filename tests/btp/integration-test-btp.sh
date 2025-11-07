@@ -96,7 +96,7 @@ kubectl label namespace default istio-injection=enabled --overwrite
 
 # deploy bookstore app via kyma push
 
-../../bin/kyma app push --name bookstore --expose --container-port 3000 --mount-secret hana-hdi-binding --code-path sample-http-db-nodejs/bookstore
+../../bin/kyma app push --name bookstore --expose --container-port 3000 --mount-service-binding-secret hana-hdi-binding --code-path sample-http-db-nodejs/bookstore
 
 kubectl wait --for condition=Available deployment bookstore --timeout=60s
 kubectl wait --for='jsonpath={.status.state}=Ready' apirules.gateway.kyma-project.io/bookstore
