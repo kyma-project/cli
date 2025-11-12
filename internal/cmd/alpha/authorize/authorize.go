@@ -8,6 +8,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon/types"
 	"github.com/kyma-project/cli.v3/internal/flags"
+	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -69,13 +70,13 @@ func NewAuthorizeCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&cfg.namespace, "namespace", "", "Namespace for RoleBinding (required unless --cluster-wide)")
-	cmd.Flags().BoolVar(&cfg.clusterWide, "cluster-wide", false, "If true, create a ClusterRoleBinding; otherwise, a RoleBinding")
-	cmd.Flags().StringVar(&cfg.role, "role", "", "Role name to bind (namespaced)")
-	cmd.Flags().StringVar(&cfg.clusterrole, "clusterrole", "", "ClusterRole name to bind (usable for RoleBinding or ClusterRoleBinding)")
-	cmd.Flags().StringSliceVar(&cfg.name, "name", []string{}, "Name of the authorized subject(s)")
-	cmd.Flags().BoolVar(&cfg.dryRun, "dry-run", false, "Print resources without applying")
-	cmd.Flags().VarP(&cfg.outputFormat, "output", "o", "Output format (yaml or json)")
+	cmd.Flags().StringVar(&cfg.namespace, "namespace", "", "Namespace for RoleBinding (required when binding a Role or binding a ClusterRole to a specific namespace)")
+	cmd.Flags().BoolVar(&cfg.clusterWide, "cluster-wide", false, "Create a ClusterRoleBinding for cluster-wide access (requires --clusterrole)")
+	cmd.Flags().StringVar(&cfg.role, "role", "", "Role name to bind (creates RoleBinding in specified namespace)")
+	cmd.Flags().StringVar(&cfg.clusterrole, "clusterrole", "", "ClusterRole name to bind (for ClusterRoleBinding with --cluster-wide, or RoleBinding in namespace)")
+	cmd.Flags().StringSliceVar(&cfg.name, "name", []string{}, "Name(s) of the subject(s) to authorize (required)")
+	cmd.Flags().BoolVar(&cfg.dryRun, "dry-run", false, "Preview the YAML/JSON output without applying resources to the cluster")
+	cmd.Flags().VarP(&cfg.outputFormat, "output", "o", "Output format for dry-run (yaml or json)")
 
 	cmd.AddCommand(NewAuthorizeRepositoryCMD(kymaConfig))
 
@@ -88,13 +89,23 @@ func authorize(cfg *authorizeConfig) clierror.Error {
 		return err
 	}
 
-	if cfg.dryRun {
-		return outputResources(cfg.outputFormat, rbacResources)
-	}
-
 	for _, res := range rbacResources {
-		if applyErr := applyRBAC(cfg, res); applyErr != nil {
-			return applyErr
+		msgSuffix := ""
+		if cfg.dryRun {
+			msgSuffix = " (dry run)"
+		} else {
+			if applyErr := applyRBAC(cfg, res); applyErr != nil {
+				return applyErr
+			}
+		}
+
+		if cfg.outputFormat == "" {
+			out.Msgfln("%s '%s' applied successfully.%s", res.GetKind(), res.GetName(), msgSuffix)
+		} else {
+			clierr := outputResources(cfg.outputFormat, rbacResources)
+			if clierr != nil {
+				return clierr
+			}
 		}
 	}
 
@@ -174,6 +185,10 @@ func applyRBAC(cfg *authorizeConfig, rbacResource *unstructured.Unstructured) cl
 	}
 
 	applier := authorization.NewResourceApplier(kubeClient)
+	clierr = applier.ApplyRBAC(cfg.Ctx, rbacResource)
+	if clierr != nil {
+		return clierr
+	}
 
-	return applier.ApplyRBAC(cfg.Ctx, rbacResource)
+	return nil
 }

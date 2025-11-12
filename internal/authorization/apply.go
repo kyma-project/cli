@@ -58,7 +58,6 @@ func (ra *ResourceApplier) applyOIDCResource(ctx context.Context, oidcResource *
 		return clierror.Wrap(err, clierror.New("failed to apply OpenIDConnect resource"))
 	}
 
-	out.Msgfln("OpenIDConnect resource '%s' applied successfully.", resourceName)
 	return nil
 }
 
@@ -116,8 +115,6 @@ func (ra *ResourceApplier) applyRBACResource(ctx context.Context, rbacResource *
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to apply RBAC resource"))
 	}
-
-	out.Msgfln("%s '%s' applied successfully.", rbacResource.GetKind(), rbacResource.GetName())
 
 	return nil
 }

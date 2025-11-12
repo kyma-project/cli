@@ -41,13 +41,13 @@ kyma alpha authorize <authTarget> [flags]
 ## Flags
 
 ```text
-      --cluster-wide            If true, create a ClusterRoleBinding; otherwise, a RoleBinding
-      --clusterrole string      ClusterRole name to bind (usable for RoleBinding or ClusterRoleBinding)
-      --dry-run                 Print resources without applying
-      --name stringSlice        Name of the authorized subject(s) (default "[]")
-      --namespace string        Namespace for RoleBinding (required unless --cluster-wide)
-  -o, --output string           Output format (yaml or json)
-      --role string             Role name to bind (namespaced)
+      --cluster-wide            Create a ClusterRoleBinding for cluster-wide access (requires --clusterrole)
+      --clusterrole string      ClusterRole name to bind (for ClusterRoleBinding with --cluster-wide, or RoleBinding in namespace)
+      --dry-run                 Preview the YAML/JSON output without applying resources to the cluster
+      --name stringSlice        Name(s) of the subject(s) to authorize (required) (default "[]")
+      --namespace string        Namespace for RoleBinding (required when binding a Role or binding a ClusterRole to a specific namespace)
+  -o, --output string           Output format for dry-run (yaml or json)
+      --role string             Role name to bind (creates RoleBinding in specified namespace)
       --context string          The name of the kubeconfig context to use
   -h, --help                    Help for the command
       --kubeconfig string       Path to the Kyma kubeconfig file
