@@ -109,7 +109,12 @@ func TestEnable(t *testing.T) {
 		}
 		repo := &modulesfake.ModuleTemplatesRepo{}
 
-		hints := []string{"make sure you provide valid module name and channel (or version)", "list available modules by calling `kyma module catalog`", "if you want to add a community module, use `--community` flag"}
+		hints := []string{
+			"make sure you provide valid module name and channel (or version)",
+			"list available modules by calling the `kyma module catalog` command",
+			"pull available modules by calling the `kyma module pull` command",
+			"if you want to add a community module, use the `--origin` flag",
+		}
 
 		expectedCliErr := clierror.Wrap(
 			errors.New("keda not found in the catalog of available modules"),
@@ -134,7 +139,12 @@ func TestEnable(t *testing.T) {
 		}
 		repo := &modulesfake.ModuleTemplatesRepo{}
 
-		hints := []string{"make sure you provide valid module name and channel (or version)", "list available modules by calling `kyma module catalog`", "if you want to add a community module, use `--community` flag"}
+		hints := []string{
+			"make sure you provide valid module name and channel (or version)",
+			"list available modules by calling the `kyma module catalog` command",
+			"pull available modules by calling the `kyma module pull` command",
+			"if you want to add a community module, use the `--origin` flag",
+		}
 
 		expectedCliErr := clierror.Wrap(
 			errors.New("keda not found in the catalog of available modules"),
