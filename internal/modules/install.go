@@ -185,7 +185,7 @@ func applyCustomResourcesFromFile(ctx context.Context, client kube.Client, custo
 	for _, customResource := range customResources {
 		err := client.RootlessDynamic().Apply(timeoutCtx, &customResource, false)
 		if err != nil {
-			return fmt.Errorf("failed to apply custom resource from path")
+			return fmt.Errorf("failed to apply custom resource from path: %w", err)
 		}
 	}
 

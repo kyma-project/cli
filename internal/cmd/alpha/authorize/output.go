@@ -17,10 +17,12 @@ func outputResources(outputFormat types.Format, resources []*unstructured.Unstru
 	switch outputFormat {
 	case types.JSONFormat:
 		return outputJSON(printer, resources)
-	case types.YAMLFormat, types.DefaultFormat:
+	case types.YAMLFormat:
 		return outputYAML(printer, resources)
+	case types.DefaultFormat:
+		return nil
 	default:
-		return outputYAML(printer, resources)
+		return nil
 	}
 }
 
