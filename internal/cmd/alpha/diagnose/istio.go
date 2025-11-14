@@ -2,7 +2,7 @@ package diagnose
 
 import (
 	"context"
-	"os"
+	"time"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
@@ -10,6 +10,8 @@ import (
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/spf13/cobra"
+	"istio.io/istio/istioctl/pkg/util/formatting"
+
 	//istioclient "istio.io/client-go/pkg/clientset/versioned"
 	istioanalysisanalyzers "istio.io/istio/pkg/config/analysis/analyzers"
 	istioanalysislocal "istio.io/istio/pkg/config/analysis/local"
@@ -81,48 +83,27 @@ func diagnoseIstio(cfg *diagnoseIstioConfig) clierror.Error {
 }
 
 func getIstioData(ctx context.Context, client kube.Client, cfg *diagnoseIstioConfig) {
-	//cs := istioclient.New(client.RestClient())
 	combinedAnalyzers := istioanalysisanalyzers.AllCombined()
 	sa := istioanalysislocal.NewSourceAnalyzer(
 		combinedAnalyzers,
-		"default",
+		"", //"default",
 		"istio-system",
 		nil)
 
-	//err := sa.AddDefaultResources()
-	//if err != nil {
-	//	out.Errf("Istio analysis error (adding default resources): %v", err)
-	//	return
-	//}
-	//
-	//readers := []istioanalysislocal.ReaderSource{}
-	//for _, fileName := range []string{"istio-resources.yaml", "k8s-resources.yaml"} {
-	//	file, err := os.Open(fileName)
-	//	if err != nil {
-	//		out.Errf("Istio analysis error (reading file): %v", err)
-	//		return
-	//	}
-	//	readers = append(readers,
-	//		istioanalysislocal.ReaderSource{
-	//			Name:   fileName,
-	//			Reader: file,
-	//		})
-	//}
-	//
-	//if err = sa.AddReaderKubeSource(readers); err != nil {
-	//	out.Errf("Istio analysis error (adding files): %v", err)
-	//	return
-	//}
-
-	client, err := istiokube.NewClient(istiokube.NewClientConfigForRestConfig(client.RestConfig()))
+	istioclient, err := istiokube.NewCLIClient(
+		istiokube.NewClientConfigForRestConfig(client.RestConfig()),
+		istiokube.WithRevision(""),
+		istiokube.WithCluster(""),
+		istiokube.WithTimeout(time.Second*100),
+	)
 	if err != nil {
 		out.Errf("Istio analysis error (creating kube client): %v", err)
 	}
 
-	if err := sa.AddRunningKubeSource(); err != nil {
-		out.Errf("Istio analysis error (adding kube source): %v", err)
-		return
-	}
+	k := istiokube.EnableCrdWatcher(istioclient)
+	sa.AddRunningKubeSource(k)
+
+	sa.AddRunningKubeSource(istioclient)
 
 	cancel := make(chan struct{})
 	result, err := sa.Analyze(cancel)
@@ -130,5 +111,11 @@ func getIstioData(ctx context.Context, client kube.Client, cfg *diagnoseIstioCon
 		out.Errf("Istio analysis error: %v", err)
 		return
 	}
-	out.Msgfln("Istio analysis result: %v", result)
+
+	output, err := formatting.Print(result.Messages, "json", false)
+	if err != nil {
+		out.Errf("Istio analysis error (printing result): %v", err)
+		return
+	}
+	out.Msgfln(output)
 }
