@@ -83,7 +83,11 @@ func runDelete(cfg *deleteConfig) clierror.Error {
 		}
 	}
 
-	return modules.Disable(cfg.Ctx, client, moduleTemplatesRepo, cfg.module, cfg.community)
+	if cfg.community {
+		return modules.Uninstall(cfg.Ctx, moduleTemplatesRepo, cfg.module)
+	}
+
+	return modules.Disable(cfg.Ctx, client, cfg.module)
 }
 
 func prepareCommunityPromptMessage(resourcesNames []string) string {
