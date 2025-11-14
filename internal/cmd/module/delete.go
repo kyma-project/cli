@@ -7,6 +7,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon/prompt"
+	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/modules"
 	"github.com/kyma-project/cli.v3/internal/modules/repo"
 	"github.com/spf13/cobra"
@@ -48,11 +49,19 @@ func runDelete(cfg *deleteConfig) clierror.Error {
 	if clierr != nil {
 		return clierr
 	}
-	moduleTemplatesRepo := repo.NewModuleTemplatesRepo(client)
 
-	communityDeletionApproved := false
-	if cfg.community && !cfg.autoApprove {
-		runningResources, clierr := modules.GetRunningResourcesOfCommunityModule(cfg.Ctx, moduleTemplatesRepo, cfg.module)
+	if cfg.community {
+		return uninstallCommunityModule(cfg, client)
+	}
+
+	return disableModule(cfg, client)
+}
+
+func uninstallCommunityModule(cfg *deleteConfig, client kube.Client) clierror.Error {
+	repo := repo.NewModuleTemplatesRepo(client)
+
+	if !cfg.autoApprove {
+		runningResources, clierr := modules.GetRunningResourcesOfCommunityModule(cfg.Ctx, repo, cfg.module)
 		if clierr != nil {
 			return clierr
 		}
@@ -66,12 +75,14 @@ func runDelete(cfg *deleteConfig) clierror.Error {
 			if !confirmation {
 				return nil
 			}
-
-			communityDeletionApproved = true
 		}
 	}
 
-	if !communityDeletionApproved && !cfg.autoApprove {
+	return modules.Uninstall(cfg.Ctx, repo, cfg.module)
+}
+
+func disableModule(cfg *deleteConfig, client kube.Client) clierror.Error {
+	if !cfg.autoApprove {
 		confirmationPrompt := prompt.NewBool(prepareCorePromptMessage(cfg.module), false)
 		confirmation, err := confirmationPrompt.Prompt()
 		if err != nil {
@@ -83,7 +94,7 @@ func runDelete(cfg *deleteConfig) clierror.Error {
 		}
 	}
 
-	return modules.Disable(cfg.Ctx, client, moduleTemplatesRepo, cfg.module, cfg.community)
+	return modules.Disable(cfg.Ctx, client, cfg.module)
 }
 
 func prepareCommunityPromptMessage(resourcesNames []string) string {
