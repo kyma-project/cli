@@ -11,8 +11,8 @@ import (
 	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/spf13/cobra"
 	//istioclient "istio.io/client-go/pkg/clientset/versioned"
+	istioanalysisanalyzers "istio.io/istio/pkg/config/analysis/analyzers"
 	istioanalysislocal "istio.io/istio/pkg/config/analysis/local"
-	istioanalysisanalyzers "istio.io/istio/pkg/qqconfig/analysis/analyzers"
 	//	istioresource "istio.io/istio/pkg/config/resource"
 	istiokube "istio.io/istio/pkg/kube"
 )
