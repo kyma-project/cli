@@ -9,6 +9,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon/types"
 	"github.com/kyma-project/cli.v3/internal/flags"
+	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -60,6 +61,7 @@ func NewAuthorizeRepositoryCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command 
 				flags.MarkRequired("client-id"),
 				flags.MarkExactlyOneRequired("role", "clusterrole"),
 				flags.MarkPrerequisites("role", "namespace"),
+				flags.MarkPrerequisites("cluster-wide", "clusterrole"),
 			))
 		},
 		Run: func(cmd *cobra.Command, args []string) {
@@ -101,11 +103,23 @@ func authorizeRepository(cfg *authorizeRepositoryConfig) clierror.Error {
 		return rbacErr
 	}
 
+	msgSuffix := ""
 	if cfg.dryRun {
+		msgSuffix = " (dry run)"
+	} else {
+		if err := applyRepositoryAuthResources(cfg, oidcResource, rbacResource); err != nil {
+			return err
+		}
+	}
+
+	if cfg.outputFormat == "" {
+		out.Msgfln("OpenIDConnect resource '%s' applied successfully.%s", oidcResource.GetName(), msgSuffix)
+		out.Msgfln("%s '%s' applied successfully.%s", rbacResource.GetKind(), rbacResource.GetName(), msgSuffix)
+	} else {
 		return outputResources(cfg.outputFormat, []*unstructured.Unstructured{oidcResource, rbacResource})
 	}
 
-	return applyRepositoryAuthResources(cfg, oidcResource, rbacResource)
+	return nil
 }
 
 func buildRBACResourceForRepository(cfg *authorizeRepositoryConfig, bindingPrefix string) (*unstructured.Unstructured, clierror.Error) {
