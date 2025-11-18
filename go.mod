@@ -21,8 +21,8 @@ require (
 	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.11.1
 	gopkg.in/yaml.v3 v3.0.1
-	istio.io/client-go v1.28.0
-	istio.io/istio v0.0.0-20251112193656-63ac41cbd7af
+	istio.io/client-go v1.28.0-alpha.0.0.20251117135800-816e95cb1f4d
+	istio.io/istio v0.0.0-20251118002659-9d049551c3db
 	k8s.io/api v0.34.1
 	k8s.io/apimachinery v0.34.1
 	k8s.io/client-go v0.34.1
@@ -242,7 +242,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
-	istio.io/api v1.28.0-beta.1.0.20251027181303-a5aa715c1e32 // indirect
+	istio.io/api v1.28.0-alpha.0.0.20251117135402-88704492c308 // indirect
 	k8s.io/apiextensions-apiserver v0.34.1 // indirect
 	k8s.io/apiserver v0.34.1 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
