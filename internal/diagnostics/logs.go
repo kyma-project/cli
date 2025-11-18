@@ -69,7 +69,7 @@ func (c *ModuleLogsCollector) collectModuleLogs(ctx context.Context, moduleName 
 	collected := make(map[string][]string)
 	pods, err := c.getPodsForModule(ctx, moduleName)
 	if err != nil {
-		out.Verbosefln("Failed to get pods for module %s: %v", moduleName, err)
+		out.Errfln("Failed to get pods for module %s: %v", moduleName, err)
 		return collected
 	}
 
@@ -132,7 +132,7 @@ func (c *ModuleLogsCollector) collectContainerLogs(ctx context.Context, pod *cor
 
 	logStream, err := req.Stream(ctx)
 	if err != nil {
-		out.Verbosefln("Failed to get log stream for container %s in pod %s: %v", containerName, pod.Name, err)
+		out.Errfln("Failed to get log stream for container %s in pod %s: %v", containerName, pod.Name, err)
 		return []string{}
 	}
 	defer logStream.Close()
@@ -168,7 +168,7 @@ func (c *ModuleLogsCollector) extractStructuredOrErrorLogs(logStream io.ReadClos
 	}
 
 	if err := scanner.Err(); err != nil {
-		out.Verbosefln("Error reading logs from pod %s container %s: %v", podName, containerName, err)
+		out.Errfln("Error reading logs from pod %s container %s: %v", podName, containerName, err)
 	}
 
 	return collected
