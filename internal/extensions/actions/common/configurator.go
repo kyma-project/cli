@@ -3,6 +3,7 @@ package common
 import (
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/extensions/types"
+	"github.com/kyma-project/cli.v3/internal/out"
 	"gopkg.in/yaml.v3"
 )
 
@@ -32,6 +33,8 @@ func (c *TemplateConfigurator[T]) configure(cfgTmpl types.ActionConfig, overwrit
 	if clierr != nil {
 		return clierror.WrapE(clierr, clierror.New("failed to template config"))
 	}
+
+	out.Debugfln("Templated action config:\n%s\n", string(configBytes))
 
 	err = yaml.Unmarshal(configBytes, &c.Cfg)
 	if err != nil {
