@@ -20,13 +20,13 @@ import (
 type addConfig struct {
 	*cmdcommon.KymaConfig
 	module      string
+	modulePath  string
 	channel     string
 	crPath      string
 	defaultCR   bool
 	autoApprove bool
 	community   bool
 	version     string
-	origin      string
 }
 
 func newAddCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
@@ -39,14 +39,15 @@ func newAddCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Short: "Add a module",
 		Long:  "Use this command to add a module.",
 		Args:  cobra.ExactArgs(1),
-		PreRun: func(cmd *cobra.Command, _ []string) {
+		PreRun: func(cmd *cobra.Command, args []string) {
 			clierror.Check(flags.Validate(cmd.Flags(),
 				flags.MarkMutuallyExclusive("cr-path", "default-cr"),
-				flags.MarkPrerequisites("auto-approve", "origin"),
+				flags.MarkUnsupported("community", "the --community flag is no longer supported - community modules need to be pulled first using 'kyma module pull' command, then installed"),
+				flags.MarkUnsupported("origin", "the --origin flag is no longer supported - use commands argument instead"),
 			))
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			cfg.module = args[0]
+			cfg.completeAdd(args)
 			clierror.Check(runAdd(&cfg))
 		},
 	}
@@ -56,10 +57,23 @@ func newAddCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().BoolVar(&cfg.defaultCR, "default-cr", false, "Deploys the module with the default CR")
 	cmd.Flags().BoolVar(&cfg.autoApprove, "auto-approve", false, "Automatically approve community module installation")
 	cmd.Flags().StringVar(&cfg.version, "version", "", "Specifies version of the community module to install")
-	cmd.Flags().StringVar(&cfg.origin, "origin", "", "Specifies the source of the module (kyma or custom name)")
+	cmd.Flags().StringVar(&cfg.modulePath, "origin", "", "Specifies the source of the module (kyma or custom name)")
+	_ = cmd.Flags().MarkHidden("origin")
 	cmd.Flags().BoolVar(&cfg.community, "community", false, "Install a community module (no official support, no binding SLA)")
+	_ = cmd.Flags().MarkHidden("community")
 
 	return cmd
+}
+
+func (c *addConfig) completeAdd(args []string) {
+	if strings.Contains(args[0], "/") {
+		// arg is module location in format <namespace>/<module-template-name>
+		c.modulePath = args[0]
+		return
+	}
+
+	// arg is module name
+	c.module = args[0]
 }
 
 func runAdd(cfg *addConfig) clierror.Error {
@@ -93,15 +107,7 @@ func loadCustomCRs(crPath string) ([]unstructured.Unstructured, clierror.Error) 
 func addModule(cfg *addConfig, client *kube.Client, crs ...unstructured.Unstructured) clierror.Error {
 	moduleTemplatesRepo := repo.NewModuleTemplatesRepo(*client)
 
-	if cfg.community {
-		return clierror.New("The --community flag is no longer supported. Community modules need to be pulled first using 'kyma module pull' command, then installed. For help, use 'kyma module pull --help'")
-	}
-
-	if cfg.origin == "community" {
-		return clierror.New("Community modules cannot be installed directly. Please use 'kyma module pull' command to download the module first, then install it. For help, use 'kyma module pull --help'")
-	}
-
-	if cfg.origin != "" && cfg.origin != "kyma" {
+	if cfg.modulePath != "" {
 		return installCommunityModule(cfg, client, moduleTemplatesRepo, crs...)
 	}
 
@@ -109,7 +115,7 @@ func addModule(cfg *addConfig, client *kube.Client, crs ...unstructured.Unstruct
 }
 
 func installCommunityModule(cfg *addConfig, client *kube.Client, repo repo.ModuleTemplatesRepository, crs ...unstructured.Unstructured) clierror.Error {
-	namespace, moduleTemplateName, err := validateOrigin(cfg.origin)
+	namespace, moduleTemplateName, err := validateOrigin(cfg.modulePath)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to identify the community module"))
 	}
