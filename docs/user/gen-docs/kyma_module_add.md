@@ -15,10 +15,10 @@ kyma module add <module> [flags]
 ```text
       --auto-approve            Automatically approve community module installation
   -c, --channel string          Name of the Kyma channel to use for the module
-      --community               Install a community module (no official support, no binding SLA)
+      --community               Install a community module (no official support, no binding SLA) (NO LONGER SUPPORTED)
       --cr-path string          Path to the custom resource file
       --default-cr              Deploys the module with the default CR
-      --origin string           Specifies the source of the module (kyma or custom name)
+      --origin string           Specifies the source of the module (kyma or custom name) (NO LONGER SUPPORTED)
       --version string          Specifies version of the community module to install
       --context string          The name of the kubeconfig context to use
   -h, --help                    Help for the command
