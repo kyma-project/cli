@@ -3,10 +3,12 @@ package module
 import (
 	"bytes"
 	"fmt"
+	"strings"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon/prompt"
+	"github.com/kyma-project/cli.v3/internal/flags"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/modules"
 	"github.com/kyma-project/cli.v3/internal/modules/repo"
@@ -18,7 +20,8 @@ type deleteConfig struct {
 	autoApprove bool
 	community   bool
 
-	module string
+	module     string
+	modulePath string
 }
 
 func newDeleteCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
@@ -32,16 +35,33 @@ func newDeleteCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Long:    "Use this command to delete a module.",
 		Aliases: []string{"del"},
 		Args:    cobra.ExactArgs(1),
+		PreRun: func(cmd *cobra.Command, _ []string) {
+			clierror.Check(flags.Validate(cmd.Flags(),
+				flags.MarkUnsupported("community", "the --community flag is no longer supported - specify community module to delete using argument"),
+			))
+		},
 		Run: func(cmd *cobra.Command, args []string) {
-			cfg.module = args[0]
+			cfg.complete(args)
 			clierror.Check(runDelete(&cfg))
 		},
 	}
 
 	cmd.Flags().BoolVar(&cfg.autoApprove, "auto-approve", false, "Automatically approves module removal")
 	cmd.Flags().BoolVar(&cfg.community, "community", false, "Delete the community module (if set, the operation targets a community module instead of a core module)")
+	_ = cmd.Flags().MarkHidden("community")
 
 	return cmd
+}
+
+func (c *deleteConfig) complete(args []string) {
+	if strings.Contains(args[0], "/") {
+		// arg is module location in format <namespace>/<module-template-name>
+		c.modulePath = args[0]
+		return
+	}
+
+	// arg is module name
+	c.module = args[0]
 }
 
 func runDelete(cfg *deleteConfig) clierror.Error {
@@ -50,7 +70,7 @@ func runDelete(cfg *deleteConfig) clierror.Error {
 		return clierr
 	}
 
-	if cfg.community {
+	if cfg.modulePath != "" {
 		return uninstallCommunityModule(cfg, client)
 	}
 
@@ -59,9 +79,18 @@ func runDelete(cfg *deleteConfig) clierror.Error {
 
 func uninstallCommunityModule(cfg *deleteConfig, client kube.Client) clierror.Error {
 	repo := repo.NewModuleTemplatesRepo(client)
+	namespace, moduleTemplateName, err := validateOrigin(cfg.modulePath)
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to identify the community module"))
+	}
+
+	communityModuleTemplate, err := modules.FindCommunityModuleTemplate(cfg.Ctx, namespace, moduleTemplateName, repo)
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to retrieve the module '%s/%s'", namespace, moduleTemplateName))
+	}
 
 	if !cfg.autoApprove {
-		runningResources, clierr := modules.GetRunningResourcesOfCommunityModule(cfg.Ctx, repo, cfg.module)
+		runningResources, clierr := modules.GetRunningResourcesOfCommunityModule(cfg.Ctx, repo, *communityModuleTemplate)
 		if clierr != nil {
 			return clierr
 		}
@@ -78,7 +107,7 @@ func uninstallCommunityModule(cfg *deleteConfig, client kube.Client) clierror.Er
 		}
 	}
 
-	return modules.Uninstall(cfg.Ctx, repo, cfg.module)
+	return modules.Uninstall(cfg.Ctx, repo, communityModuleTemplate)
 }
 
 func disableModule(cfg *deleteConfig, client kube.Client) clierror.Error {

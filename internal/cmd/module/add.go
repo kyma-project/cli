@@ -39,7 +39,7 @@ func newAddCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Short: "Add a module",
 		Long:  "Use this command to add a module.",
 		Args:  cobra.ExactArgs(1),
-		PreRun: func(cmd *cobra.Command, args []string) {
+		PreRun: func(cmd *cobra.Command, _ []string) {
 			clierror.Check(flags.Validate(cmd.Flags(),
 				flags.MarkMutuallyExclusive("cr-path", "default-cr"),
 				flags.MarkUnsupported("community", "the --community flag is no longer supported - community modules need to be pulled first using 'kyma module pull' command, then installed"),
@@ -47,7 +47,7 @@ func newAddCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 			))
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			cfg.completeAdd(args)
+			cfg.complete(args)
 			clierror.Check(runAdd(&cfg))
 		},
 	}
@@ -65,7 +65,7 @@ func newAddCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	return cmd
 }
 
-func (c *addConfig) completeAdd(args []string) {
+func (c *addConfig) complete(args []string) {
 	if strings.Contains(args[0], "/") {
 		// arg is module location in format <namespace>/<module-template-name>
 		c.modulePath = args[0]
