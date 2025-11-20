@@ -58,9 +58,9 @@ func newAddCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().BoolVar(&cfg.autoApprove, "auto-approve", false, "Automatically approve community module installation")
 	cmd.Flags().StringVar(&cfg.version, "version", "", "Specifies version of the community module to install")
 	cmd.Flags().StringVar(&cfg.modulePath, "origin", "", "Specifies the source of the module (kyma or custom name)")
-	cmd.Flags().MarkHidden("origin")
+	_ = cmd.Flags().MarkHidden("origin")
 	cmd.Flags().BoolVar(&cfg.community, "community", false, "Install a community module (no official support, no binding SLA)")
-	cmd.Flags().MarkHidden("community")
+	_ = cmd.Flags().MarkHidden("community")
 
 	return cmd
 }
