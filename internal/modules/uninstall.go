@@ -15,20 +15,17 @@ import (
 
 // Uninstall takes care of removing the community module from the target Kyma environment.
 // It retrieves the module template, gets all associated resources, and deletes them in reverse order.
-func Uninstall(ctx context.Context, repo repo.ModuleTemplatesRepository, module string) clierror.Error {
-	return uninstall(out.Default, ctx, repo, module)
+func Uninstall(ctx context.Context, repo repo.ModuleTemplatesRepository, moduleTemplate *kyma.ModuleTemplate) clierror.Error {
+	return uninstall(out.Default, ctx, repo, moduleTemplate)
 }
 
-func uninstall(printer *out.Printer, ctx context.Context, repo repo.ModuleTemplatesRepository, module string) clierror.Error {
-	printer.Msgfln("removing %s community module from the target Kyma environment", module)
+func uninstall(printer *out.Printer, ctx context.Context, repo repo.ModuleTemplatesRepository, moduleTemplate *kyma.ModuleTemplate) clierror.Error {
+	moduleName := moduleTemplate.Spec.ModuleName
+	printer.Msgfln("removing %s community module from the target Kyma environment", moduleName)
 
-	moduleTemplateToDelete, err := getModuleTemplateToDelete(ctx, repo, module)
+	moduleResources, err := repo.Resources(ctx, *moduleTemplate)
 	if err != nil {
-		return clierror.Wrap(err, clierror.New(fmt.Sprintf("failed to retrieve the module %v", module)))
-	}
-	moduleResources, err := repo.Resources(ctx, *moduleTemplateToDelete)
-	if err != nil {
-		return clierror.Wrap(err, clierror.New(fmt.Sprintf("failed to get resources for module %v", moduleTemplateToDelete.Spec.ModuleName)))
+		return clierror.Wrap(err, clierror.New(fmt.Sprintf("failed to get resources for module %v", moduleName)))
 	}
 
 	// We want to remove resources in the reversed order
@@ -55,22 +52,18 @@ func uninstall(printer *out.Printer, ctx context.Context, repo repo.ModuleTempla
 	}
 
 	if removedSuccessfully {
-		printer.Msgfln("%s community module successfully removed", module)
+		printer.Msgfln("%s community module successfully removed", moduleName)
 	} else {
-		printer.Msgfln("some errors occured during the %s community module removal", module)
+		printer.Msgfln("some errors occured during the %s community module removal", moduleName)
 	}
 
 	return nil
 }
 
-func GetRunningResourcesOfCommunityModule(ctx context.Context, repo repo.ModuleTemplatesRepository, module string) ([]string, clierror.Error) {
-	moduleTemplateToDelete, err := getModuleTemplateToDelete(ctx, repo, module)
+func GetRunningResourcesOfCommunityModule(ctx context.Context, repo repo.ModuleTemplatesRepository, moduleTemplate kyma.ModuleTemplate) ([]string, clierror.Error) {
+	runningResources, err := repo.RunningAssociatedResourcesOfModule(ctx, moduleTemplate)
 	if err != nil {
-		return nil, clierror.Wrap(err, clierror.New(fmt.Sprintf("failed to retrieve the module %v", module)))
-	}
-	runningResources, err := repo.RunningAssociatedResourcesOfModule(ctx, *moduleTemplateToDelete)
-	if err != nil {
-		return nil, clierror.Wrap(err, clierror.New(fmt.Sprintf("failed to retrieve running resources of the %s module", module)))
+		return nil, clierror.Wrap(err, clierror.New(fmt.Sprintf("failed to retrieve running resources of the %s module", moduleTemplate.Spec.ModuleName)))
 	}
 
 	var runningResourcesNames []string
@@ -80,19 +73,4 @@ func GetRunningResourcesOfCommunityModule(ctx context.Context, repo repo.ModuleT
 	}
 
 	return runningResourcesNames, nil
-}
-
-func getModuleTemplateToDelete(ctx context.Context, repo repo.ModuleTemplatesRepository, module string) (*kyma.ModuleTemplate, error) {
-	installedModulesWithName, err := repo.CommunityInstalledByName(ctx, module)
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve a list of installed community modules: %v", err)
-	}
-	if len(installedModulesWithName) == 0 {
-		return nil, fmt.Errorf("failed to find any version of the module %s", module)
-	}
-	if len(installedModulesWithName) > 1 {
-		return nil, fmt.Errorf("failed to determine module version for %s", module)
-	}
-
-	return &installedModulesWithName[0], nil
 }

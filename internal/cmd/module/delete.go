@@ -16,6 +16,7 @@ import (
 type deleteConfig struct {
 	*cmdcommon.KymaConfig
 	autoApprove bool
+	origin      string
 	community   bool
 
 	module string
@@ -39,18 +40,27 @@ func newDeleteCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	}
 
 	cmd.Flags().BoolVar(&cfg.autoApprove, "auto-approve", false, "Automatically approves module removal")
+	cmd.Flags().StringVar(&cfg.origin, "origin", "", "Specifies the source of the module (kyma or custom name)")
 	cmd.Flags().BoolVar(&cfg.community, "community", false, "Delete the community module (if set, the operation targets a community module instead of a core module)")
 
 	return cmd
 }
 
 func runDelete(cfg *deleteConfig) clierror.Error {
+	if cfg.community {
+		return clierror.New("The --community flag is no longer supported. Community modules need to be pulled first using 'kyma module pull' command, then installed. For help, use 'kyma module pull --help'")
+	}
+
 	client, clierr := cfg.GetKubeClientWithClierr()
 	if clierr != nil {
 		return clierr
 	}
 
-	if cfg.community {
+	if cfg.origin == "community" {
+		return clierror.New("Community modules can't be removed directly from remote repository. Specify ModuleTemplate in format '--origin <namespace>/<name>' to proceed")
+	}
+
+	if cfg.origin != "" && cfg.origin != "kyma" {
 		return uninstallCommunityModule(cfg, client)
 	}
 
@@ -59,9 +69,18 @@ func runDelete(cfg *deleteConfig) clierror.Error {
 
 func uninstallCommunityModule(cfg *deleteConfig, client kube.Client) clierror.Error {
 	repo := repo.NewModuleTemplatesRepo(client)
+	namespace, moduleTemplateName, err := validateOrigin(cfg.origin)
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to identify the community module"))
+	}
+
+	communityModuleTemplate, err := modules.FindCommunityModuleTemplate(cfg.Ctx, namespace, moduleTemplateName, repo)
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to retrieve the module '%s/%s'", namespace, moduleTemplateName))
+	}
 
 	if !cfg.autoApprove {
-		runningResources, clierr := modules.GetRunningResourcesOfCommunityModule(cfg.Ctx, repo, cfg.module)
+		runningResources, clierr := modules.GetRunningResourcesOfCommunityModule(cfg.Ctx, repo, *communityModuleTemplate)
 		if clierr != nil {
 			return clierr
 		}
@@ -78,7 +97,7 @@ func uninstallCommunityModule(cfg *deleteConfig, client kube.Client) clierror.Er
 		}
 	}
 
-	return modules.Uninstall(cfg.Ctx, repo, cfg.module)
+	return modules.Uninstall(cfg.Ctx, repo, communityModuleTemplate)
 }
 
 func disableModule(cfg *deleteConfig, client kube.Client) clierror.Error {

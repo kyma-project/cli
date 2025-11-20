@@ -11,62 +11,25 @@ import (
 	modulesfake "github.com/kyma-project/cli.v3/internal/modules/fake"
 	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/watch"
 )
 
+var (
+	testModuleTemplate = kyma.ModuleTemplate{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-1.0.1",
+			Namespace: "kyma-system",
+		},
+		Spec: kyma.ModuleTemplateSpec{
+			ModuleName: "test",
+			Version:    "1.0.1",
+		},
+	}
+)
+
 func TestGetRunningResourcesOfCommunityModule(t *testing.T) {
-	t.Run("fails to list installed community modules with provided name", func(t *testing.T) {
-		ctx := context.Background()
-		fakeModuleTemplatesRepo := modulesfake.ModuleTemplatesRepo{
-			CommunityInstalledByNameErr: errors.New("CommunityInstallByNameError"),
-		}
-
-		_, err := GetRunningResourcesOfCommunityModule(ctx, &fakeModuleTemplatesRepo, "module")
-
-		expectedCliErr := clierror.Wrap(
-			errors.New("failed to retrieve a list of installed community modules: CommunityInstallByNameError"),
-			clierror.New("failed to retrieve the module module"),
-		)
-
-		require.NotNil(t, err)
-		require.Equal(t, expectedCliErr, err)
-	})
-
-	t.Run("fails to find installed module", func(t *testing.T) {
-		ctx := context.Background()
-		fakeModuleTemplatesRepo := modulesfake.ModuleTemplatesRepo{
-			ReturnCommunityInstalledByName: []kyma.ModuleTemplate{},
-		}
-
-		_, err := GetRunningResourcesOfCommunityModule(ctx, &fakeModuleTemplatesRepo, "test")
-
-		expectedCliErr := clierror.Wrap(
-			errors.New("failed to find any version of the module test"),
-			clierror.New("failed to retrieve the module test"),
-		)
-
-		require.NotNil(t, err)
-		require.Equal(t, expectedCliErr, err)
-	})
-
-	t.Run("fails to determine module when multiple versions installed", func(t *testing.T) {
-		ctx := context.Background()
-		fakeModuleTemplatesRepo := modulesfake.ModuleTemplatesRepo{
-			ReturnCommunityInstalledByName: []kyma.ModuleTemplate{{}, {}},
-		}
-
-		_, err := GetRunningResourcesOfCommunityModule(ctx, &fakeModuleTemplatesRepo, "test")
-
-		expectedCliErr := clierror.Wrap(
-			errors.New("failed to determine module version for test"),
-			clierror.New("failed to retrieve the module test"),
-		)
-
-		require.NotNil(t, err)
-		require.Equal(t, expectedCliErr, err)
-	})
-
 	t.Run("fails to retrieve running resources", func(t *testing.T) {
 		ctx := context.Background()
 		fakeModuleTemplatesRepo := modulesfake.ModuleTemplatesRepo{
@@ -74,7 +37,7 @@ func TestGetRunningResourcesOfCommunityModule(t *testing.T) {
 			RunningAssociatedResourcesOfModuleErr: errors.New("RunningAssociatedResourcesOfModuleError"),
 		}
 
-		_, err := GetRunningResourcesOfCommunityModule(ctx, &fakeModuleTemplatesRepo, "test")
+		_, err := GetRunningResourcesOfCommunityModule(ctx, &fakeModuleTemplatesRepo, testModuleTemplate)
 
 		expectedCliErr := clierror.Wrap(
 			errors.New("RunningAssociatedResourcesOfModuleError"),
@@ -109,7 +72,7 @@ func TestGetRunningResourcesOfCommunityModule(t *testing.T) {
 			},
 		}
 
-		res, err := GetRunningResourcesOfCommunityModule(ctx, &fakeModuleTemplatesRepo, "test")
+		res, err := GetRunningResourcesOfCommunityModule(ctx, &fakeModuleTemplatesRepo, testModuleTemplate)
 		require.Nil(t, err)
 		require.NotNil(t, res)
 		require.Equal(t, []string{"resource-1 (CustomResource)", "resource-2 (CustomResource)"}, res)
@@ -117,76 +80,6 @@ func TestGetRunningResourcesOfCommunityModule(t *testing.T) {
 }
 
 func TestDisableCommunity(t *testing.T) {
-	t.Run("fails to list installed community modules", func(t *testing.T) {
-		buffer := bytes.NewBuffer([]byte{})
-		ctx := context.Background()
-		fakeModuleTemplatesRepo := modulesfake.ModuleTemplatesRepo{
-			CommunityInstalledByNameErr: errors.New("CommunityInstalledErr"),
-		}
-
-		err := uninstall(out.NewToWriter(buffer), ctx, &fakeModuleTemplatesRepo, "test")
-
-		expectedCliErr := clierror.Wrap(
-			errors.New("failed to retrieve a list of installed community modules: CommunityInstalledErr"),
-			clierror.New("failed to retrieve the module test"),
-		)
-
-		require.NotNil(t, err)
-		require.Equal(t, expectedCliErr, err)
-		require.Equal(t, "removing test community module from the target Kyma environment\n", buffer.String())
-	})
-
-	t.Run("fails to find any version for the module", func(t *testing.T) {
-		buffer := bytes.NewBuffer([]byte{})
-		ctx := context.Background()
-		fakeModuleTemplatesRepo := modulesfake.ModuleTemplatesRepo{
-			ReturnCommunityInstalledByName: []kyma.ModuleTemplate{},
-		}
-
-		err := uninstall(out.NewToWriter(buffer), ctx, &fakeModuleTemplatesRepo, "test")
-
-		expectedCliErr := clierror.Wrap(
-			errors.New("failed to find any version of the module test"),
-			clierror.New("failed to retrieve the module test"),
-		)
-
-		require.NotNil(t, err)
-		require.Equal(t, expectedCliErr, err)
-		require.Equal(t, "removing test community module from the target Kyma environment\n", buffer.String())
-	})
-
-	t.Run("fails to determine version to remove", func(t *testing.T) {
-		buffer := bytes.NewBuffer([]byte{})
-		ctx := context.Background()
-		fakeModuleTemplatesRepo := modulesfake.ModuleTemplatesRepo{
-			ReturnCommunityInstalledByName: []kyma.ModuleTemplate{
-				{
-					Spec: kyma.ModuleTemplateSpec{
-						ModuleName: "test",
-						Version:    "1.0.1",
-					},
-				},
-				{
-					Spec: kyma.ModuleTemplateSpec{
-						ModuleName: "test",
-						Version:    "1.0.2",
-					},
-				},
-			},
-		}
-
-		err := uninstall(out.NewToWriter(buffer), ctx, &fakeModuleTemplatesRepo, "test")
-
-		expectedCliErr := clierror.Wrap(
-			errors.New("failed to determine module version for test"),
-			clierror.New("failed to retrieve the module test"),
-		)
-
-		require.NotNil(t, err)
-		require.Equal(t, expectedCliErr, err)
-		require.Equal(t, "removing test community module from the target Kyma environment\n", buffer.String())
-	})
-
 	t.Run("fails to get modules resources", func(t *testing.T) {
 		buffer := bytes.NewBuffer([]byte{})
 		ctx := context.Background()
@@ -202,7 +95,7 @@ func TestDisableCommunity(t *testing.T) {
 			ResourcesErr: errors.New("ResourcesError"),
 		}
 
-		err := uninstall(out.NewToWriter(buffer), ctx, &fakeModuleTemplatesRepo, "test")
+		err := uninstall(out.NewToWriter(buffer), ctx, &fakeModuleTemplatesRepo, &testModuleTemplate)
 
 		expectedCliErr := clierror.Wrap(
 			errors.New("ResourcesError"),
@@ -248,7 +141,7 @@ func TestDisableCommunity(t *testing.T) {
 			DeleteResourceReturnWatcherErr: errors.New("DeleteResourceReturnWatcherError"),
 		}
 
-		err := uninstall(out.NewToWriter(buffer), ctx, &fakeModuleTemplatesRepo, "test")
+		err := uninstall(out.NewToWriter(buffer), ctx, &fakeModuleTemplatesRepo, &testModuleTemplate)
 
 		require.Nil(t, err)
 		require.Equal(t, "removing test community module from the target Kyma environment\nfailed to delete resource test-secret (Secret): DeleteResourceReturnWatcherError\nfailed to delete resource test-namespace (Namespace): DeleteResourceReturnWatcherError\nsome errors occured during the test community module removal\n", buffer.String())
@@ -296,7 +189,7 @@ func TestDisableCommunity(t *testing.T) {
 			cancel()
 		}()
 
-		err := uninstall(out.NewToWriter(buffer), ctx, &fakeModuleTemplatesRepo, "test")
+		err := uninstall(out.NewToWriter(buffer), ctx, &fakeModuleTemplatesRepo, &testModuleTemplate)
 
 		expectedCliErr := clierror.Wrap(
 			errors.New("context canceled"),
@@ -350,7 +243,7 @@ func TestDisableCommunity(t *testing.T) {
 			fakeWatcher.Delete(nil)
 		}()
 
-		err := uninstall(out.NewToWriter(buffer), ctx, &fakeModuleTemplatesRepo, "test")
+		err := uninstall(out.NewToWriter(buffer), ctx, &fakeModuleTemplatesRepo, &testModuleTemplate)
 
 		require.Nil(t, err)
 		require.Equal(t, buffer.String(), "removing test community module from the target Kyma environment\nwaiting for resource deletion: test-secret (Secret)\nwaiting for resource deletion: test-namespace (Namespace)\ntest community module successfully removed\n")
