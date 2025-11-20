@@ -10,6 +10,16 @@ Use this command to delete a module.
 kyma module delete <module> [flags]
 ```
 
+## Examples
+
+```bash
+  # Delete kyma module and auto-approve the deletion
+  kyma module delete serverless --auto-approve
+
+  # Delete community module
+  kyma module delete my-namespace/my-community-module-1.0.0
+```
+
 ## Flags
 
 ```text

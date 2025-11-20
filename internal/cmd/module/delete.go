@@ -30,9 +30,15 @@ func newDeleteCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:     "delete <module> [flags]",
-		Short:   "Deletes a module",
-		Long:    "Use this command to delete a module.",
+		Use:   "delete <module> [flags]",
+		Short: "Deletes a module",
+		Long:  "Use this command to delete a module.",
+		Example: `  # Delete kyma module and auto-approve the deletion
+  kyma module delete serverless --auto-approve
+
+  # Delete community module
+  kyma module delete my-namespace/my-community-module-1.0.0`,
+
 		Aliases: []string{"del"},
 		Args:    cobra.ExactArgs(1),
 		PreRun: func(cmd *cobra.Command, _ []string) {
