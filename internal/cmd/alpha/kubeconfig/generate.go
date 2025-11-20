@@ -55,29 +55,29 @@ func newGenerateCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use: "generate",
-		Example: `## Generate a permanent access (kubeconfig) for a new or existing ServiceAccount 
+		Example: `  # Generate a permanent access (kubeconfig) for a new or existing ServiceAccount 
   kyma alpha kubeconfig generate --serviceaccount <sa_name> --namespace <ns_name> --permanent
 
-## Generate a permanent access (kubeconfig) for a new or existing ServiceAccount in a given namespace with a namespaced binding to a given ClusterRole
+  # Generate a permanent access (kubeconfig) for a new or existing ServiceAccount in a given namespace with a namespaced binding to a given ClusterRole
   kyma alpha kubeconfig generate --serviceaccount <sa_name> --namespace <ns_name> --clusterrole <cr_name> --permanent
 
-## Generate a permanent access (kubeconfig) for a new or existing ServiceAccount in a given namespace with a namespaced binding to a given Role
+  # Generate a permanent access (kubeconfig) for a new or existing ServiceAccount in a given namespace with a namespaced binding to a given Role
   kyma alpha kubeconfig generate --serviceaccount <sa_name> --namespace <ns_name> --role <r_name> --permanent
 
-## Generate time-constrained access (kubeconfig) for a new or existing ServiceAccount in a given namespace with a cluster-wide binding to a given ClusterRole
+  # Generate time-constrained access (kubeconfig) for a new or existing ServiceAccount in a given namespace with a cluster-wide binding to a given ClusterRole
   kyma alpha kubeconfig generate --serviceaccount <sa_name> --namespace <ns_name> --clusterrole <cr_name> --cluster-wide --time 2h
   
-## Generate a kubeconfig with an OIDC token
+  # Generate a kubeconfig with an OIDC token
   kyma alpha kubeconfig generate --token <token>
 
-## Generate a kubeconfig with an OIDC token based on a kubeconfig from the CIS
+  # Generate a kubeconfig with an OIDC token based on a kubeconfig from the CIS
   kyma alpha kubeconfig generate --token <token> --credentials-path <cis_credentials>
 
-## Generate a kubeconfig with an requested OIDC token with audience option
+  # Generate a kubeconfig with an requested OIDC token with audience option
   export ACTIONS_ID_TOKEN_REQUEST_TOKEN=<token>
   kyma alpha kubeconfig generate --id-token-request-url <url> --audience <audience>
 
-## Generate a kubeconfig with an requested OIDC token with url from env
+  # Generate a kubeconfig with an requested OIDC token with url from env
   export ACTIONS_ID_TOKEN_REQUEST_URL=<url>
   export ACTIONS_ID_TOKEN_REQUEST_TOKEN=<token>
   kyma alpha kubeconfig generate`,

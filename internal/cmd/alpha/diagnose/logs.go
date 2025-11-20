@@ -37,23 +37,24 @@ func NewDiagnoseLogsCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "logs [flags]",
 		Short: "Aggregates error logs from Pods belonging to the added Kyma modules",
-		Example: `## Collect last 200 lines (default) from all enabled modules
-kyma alpha diagnose logs --lines 200
+		Example: `  # Collect last 200 lines (default) from all enabled modules
+  kyma alpha diagnose logs --lines 200
 
-## Collect error logs from the last 15 minutes for all enabled modules
-kyma alpha diagnose logs --since 15m
+  # Collect error logs from the last 15 minutes for all enabled modules
+  kyma alpha diagnose logs --since 15m
 
-## Restrict to specific modules (repeat --module) and increase line count
-kyma alpha diagnose logs --module serverless --module api-gateway --lines 500
+  # Restrict to specific modules (repeat --module) and increase line count
+  kyma alpha diagnose logs --module serverless --module api-gateway --lines 500
 
-## Time-based collection for one module, output as JSON to a file
-kyma alpha diagnose logs --module serverless --since 30m --format json --output serverless-errors.json
+  # Time-based collection for one module, output as JSON to a file
+  kyma alpha diagnose logs --module serverless --since 30m --format json --output serverless-errors.json
 
-## Collect with verbose output and shorter timeout (useful in CI)
-kyma alpha diagnose logs --since 10m --timeout 10s --verbose
+  # Collect with verbose output and shorter timeout (useful in CI)
+  kyma alpha diagnose logs --since 10m --timeout 10s --verbose
 
-## Use lines as a deterministic cap when time window would be too large
-kyma alpha diagnose logs --lines 1000`,
+  # Use lines as a deterministic cap when time window would be too large
+  kyma alpha diagnose logs --lines 1000`,
+
 		Long: "Collects and aggregates recent error-level container logs for Kyma modules to help with rapid troubleshooting.",
 		PreRun: func(cmd *cobra.Command, args []string) {
 			clierror.Check(flags.Validate(cmd.Flags(),
