@@ -10,6 +10,13 @@ Use this command to map an SAP HANA instance to the Kyma cluster.
 kyma alpha hana map [flags]
 ```
 
+## Examples
+
+```bash
+  # Map SAP Hana DB instance with Kyma runtime
+  kyma alpha hana map --credentials-path hana-admin-creds.json
+```
+
 ## Flags
 
 ```text
