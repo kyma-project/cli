@@ -1,6 +1,7 @@
 package flags
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -102,6 +103,15 @@ func MarkPrerequisites(flag string, prerequisiteFlags ...string) Rule {
 				strings.Join(prerequisiteFlags, " "), flag, strings.Join(missingFlags, " "))
 		}
 
+		return nil
+	}
+}
+
+func MarkUnsupported(flag string, message string) Rule {
+	return func(flagSet *pflag.FlagSet) error {
+		if anyOfFlagsChanges(flagSet, flag) {
+			return errors.New(message)
+		}
 		return nil
 	}
 }
