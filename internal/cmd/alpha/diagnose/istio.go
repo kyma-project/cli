@@ -41,8 +41,17 @@ func NewDiagnoseIstioCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "istio [flags]",
 		Short: "Diagnose Istio configuration",
-		// TODO: add examples
-		//Example: ""
+		Example: `  # Analyze Istio configuration across all namespaces
+  kyma alpha diagnose istio
+  or
+  kyma alpha diagnose istio --all-namespaces
+
+  # Analyze Istio configuration in a specific namespace
+  kyma alpha diagnose istio --namespace my-namespace
+
+  # Output as JSON to a file
+  kyma alpha diagnose istio --format json --output istio-diagnostics.json`,
+
 		Long: "Use this command to quickly assess potential Istio configuration issues in your cluster for troubleshooting and support purposes.",
 		PreRun: func(cmd *cobra.Command, args []string) {
 			clierror.Check(flags.Validate(cmd.Flags(),
@@ -66,7 +75,7 @@ func NewDiagnoseIstioCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 func diagnoseIstio(cfg *diagnoseIstioConfig) clierror.Error {
 	if cfg.verbose {
-		out.EnableDebug()
+		out.EnableVerbose()
 	}
 
 	client, clierr := cfg.GetKubeClientWithClierr()
@@ -125,7 +134,7 @@ func getIstioData(ctx context.Context, client kube.Client, namespace string) (*i
 		istiokube.WithTimeout(time.Second*100),
 	)
 	if err != nil {
-		return nil, clierror.Wrap(err, clierror.New("failed to create istio kube client"))
+		return nil, clierror.Wrap(err, clierror.New("failed to create Istio kube client"))
 	}
 
 	k := istiokube.EnableCrdWatcher(istioClient)
@@ -137,11 +146,11 @@ func getIstioData(ctx context.Context, client kube.Client, namespace string) (*i
 	go func() {
 		<-ctx.Done()
 		close(cancel)
-		out.Errfln("istio analysis cancelled because of timeout")
+		out.Errfln("Istio analysis cancelled because of timeout")
 	}()
 	result, err := sa.Analyze(cancel)
 	if err != nil {
-		return nil, clierror.Wrap(err, clierror.New("failed to analyze istio configuration"))
+		return nil, clierror.Wrap(err, clierror.New("failed to analyze Istio configuration"))
 	}
 	return &result, nil
 }
@@ -169,8 +178,11 @@ func printIstioOutput(analysisResult *istioanalysislocal.AnalysisResult, format 
 		printer = out.NewToWriter(file)
 	}
 
+	// Special behavior for no messages
 	if len(analysisResult.Messages) == 0 {
-		out.Msgfln("no istio configuration issues found")
+		if format == types.JSONFormat {
+			printer.Msgfln("{}")
+		}
 		return nil
 	}
 
