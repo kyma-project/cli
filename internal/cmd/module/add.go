@@ -38,7 +38,17 @@ func newAddCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Use:   "add <module> [flags]",
 		Short: "Add a module",
 		Long:  "Use this command to add a module.",
-		Args:  cobra.ExactArgs(1),
+		Example: `  # Add a Kyma module with the default CR
+  kyma module add kyma-module --default-cr
+
+  # Add a Kyma module with a custom CR from a file
+  kyma module add kyma-module --cr-path ./kyma-module-cr.yaml
+
+  ## Add a community module with a default CR and auto-approve the SLA
+  #  passed argument must be in the format <namespace>/<module-template-name>
+  kyma module add my-namespace/my-module-template-name --default-cr --auto-approve`,
+
+		Args: cobra.ExactArgs(1),
 		PreRun: func(cmd *cobra.Command, _ []string) {
 			clierror.Check(flags.Validate(cmd.Flags(),
 				flags.MarkMutuallyExclusive("cr-path", "default-cr"),

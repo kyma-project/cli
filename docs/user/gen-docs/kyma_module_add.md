@@ -10,6 +10,20 @@ Use this command to add a module.
 kyma module add <module> [flags]
 ```
 
+## Examples
+
+```bash
+  # Add a Kyma module with the default CR
+  kyma module add kyma-module --default-cr
+
+  # Add a Kyma module with a custom CR from a file
+  kyma module add kyma-module --cr-path ./kyma-module-cr.yaml
+
+  ## Add a community module with a default CR and auto-approve the SLA
+  #  passed argument must be in the format <namespace>/<module-template-name>
+  kyma module add my-namespace/my-module-template-name --default-cr --auto-approve
+```
+
 ## Flags
 
 ```text
