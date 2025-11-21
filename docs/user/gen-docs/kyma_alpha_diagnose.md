@@ -13,7 +13,8 @@ kyma alpha diagnose [flags]
 ## Available Commands
 
 ```text
-  logs - Aggregates error logs from Pods belonging to the added Kyma modules (requires JSON log format)
+  istio - Diagnose Istio configuration
+  logs  - Aggregates error logs from Pods belonging to the added Kyma modules (requires JSON log format)
 ```
 
 ## Flags
@@ -31,5 +32,6 @@ kyma alpha diagnose [flags]
 
 ## See also
 
-* [kyma alpha](kyma_alpha.md)                             - Groups command prototypes for which the API may still change
-* [kyma alpha diagnose logs](kyma_alpha_diagnose_logs.md) - Aggregates error logs from Pods belonging to the added Kyma modules (requires JSON log format)
+* [kyma alpha](kyma_alpha.md)                               - Groups command prototypes for which the API may still change
+* [kyma alpha diagnose istio](kyma_alpha_diagnose_istio.md) - Diagnose Istio configuration
+* [kyma alpha diagnose logs](kyma_alpha_diagnose_logs.md)   - Aggregates error logs from Pods belonging to the added Kyma modules (requires JSON log format)
