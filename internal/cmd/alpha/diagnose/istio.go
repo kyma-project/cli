@@ -2,28 +2,35 @@ package diagnose
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"time"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon/types"
+	"github.com/kyma-project/cli.v3/internal/flags"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/spf13/cobra"
-	"istio.io/istio/istioctl/pkg/util/formatting"
+	istioformatting "istio.io/istio/istioctl/pkg/util/formatting"
+	istioresource "istio.io/istio/pkg/config/resource"
+	istiolog "istio.io/istio/pkg/log"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	//istioclient "istio.io/client-go/pkg/clientset/versioned"
 	istioanalysisanalyzers "istio.io/istio/pkg/config/analysis/analyzers"
 	istioanalysislocal "istio.io/istio/pkg/config/analysis/local"
-	//	istioresource "istio.io/istio/pkg/config/resource"
 	istiokube "istio.io/istio/pkg/kube"
 )
 
 type diagnoseIstioConfig struct {
 	*cmdcommon.KymaConfig
-	outputFormat types.Format
-	outputPath   string
-	verbose      bool
+	namespace     string
+	allNamespaces bool
+	outputFormat  types.Format
+	outputPath    string
+	verbose       bool
+	timeout       time.Duration
 }
 
 func NewDiagnoseIstioCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
@@ -34,23 +41,26 @@ func NewDiagnoseIstioCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "istio [flags]",
 		Short: "Diagnose Istio configuration",
-		Long:  "Use this command to quickly assess potential Istio configuration issues in your cluster for troubleshooting and support purposes.",
+		// TODO: add examples
+		//Example: ""
+		Long: "Use this command to quickly assess potential Istio configuration issues in your cluster for troubleshooting and support purposes.",
+		PreRun: func(cmd *cobra.Command, args []string) {
+			clierror.Check(flags.Validate(cmd.Flags(),
+				flags.MarkExclusive("all-namespaces", "namespace"),
+			))
+		},
 		Run: func(cmd *cobra.Command, args []string) {
 			clierror.Check(diagnoseIstio(&cfg))
 		},
 	}
 
+	cmd.Flags().BoolVarP(&cfg.allNamespaces, "all-namespaces", "A", false, "Analyze all namespaces")
+	cmd.Flags().StringVarP(&cfg.namespace, "namespace", "n", "", "The namespace that the workload instances will belong to")
 	cmd.Flags().VarP(&cfg.outputFormat, "format", "f", "Output format (possible values: json, yaml)")
 	cmd.Flags().StringVarP(&cfg.outputPath, "output", "o", "", "Path to the diagnostic output file. If not provided the output is printed to stdout")
 	cmd.Flags().BoolVar(&cfg.verbose, "verbose", false, "Display verbose output, including error details during diagnostics collection")
+	cmd.Flags().DurationVar(&cfg.timeout, "timeout", 30*time.Second, "Timeout for diagnosis")
 
-	//TODO:
-	// --namespace/-n <ns>: Limit analysis to a namespace (default: all).
-	// --all-namespaces/-A: Explicitly analyze all namespaces (mutually exclusive with --namespace).
-	// --format: Output format (possible values: json, yaml)
-	// --output: Path to the diagnostic output file. If not provided the output is printed to stdout
-	// --verbose: Display verbose output, including error details during diagnostics collection
-	// --timeout : Timeout for analysis
 	return cmd
 }
 
@@ -64,58 +74,110 @@ func diagnoseIstio(cfg *diagnoseIstioConfig) clierror.Error {
 		return clierr
 	}
 
-	if cfg.outputPath != "" {
-		out.Msgln("Collecting diagnostics data...")
+	muteIstioLogger()
+
+	namespace := calculateNamespace(cfg.allNamespaces, cfg.namespace)
+
+	ctx, cancel := context.WithTimeout(cfg.Ctx, cfg.timeout)
+	defer cancel()
+
+	diagnosticData, err := getIstioData(ctx, client, namespace)
+	if err != nil {
+		return err
 	}
 
-	/*diagnosticData :=*/
-	getIstioData(cfg.Ctx, client, cfg)
-
-	//if err != nil {
-	//	return clierror.Wrap(err, clierror.New("failed to get diagnostic data"))
-	//}
-
-	if cfg.outputPath != "" {
-		out.Msgln("Done.")
+	err = printIstioOutput(diagnosticData, cfg.outputFormat, cfg.outputPath)
+	if err != nil {
+		return err
 	}
-
 	return nil
 }
 
-func getIstioData(ctx context.Context, client kube.Client, cfg *diagnoseIstioConfig) {
+func calculateNamespace(allNamespaces bool, namespace string) string {
+	if allNamespaces {
+		return metav1.NamespaceAll
+	} else if namespace == "" {
+		return metav1.NamespaceAll
+	}
+	return namespace
+}
+
+func muteIstioLogger() {
+	for _, s := range istiolog.Scopes() {
+		s.SetOutputLevel(istiolog.NoneLevel)
+		s.SetStackTraceLevel(istiolog.NoneLevel)
+		s.SetLogCallers(false)
+	}
+}
+
+func getIstioData(ctx context.Context, client kube.Client, namespace string) (*istioanalysislocal.AnalysisResult, clierror.Error) {
 	combinedAnalyzers := istioanalysisanalyzers.AllCombined()
 	sa := istioanalysislocal.NewSourceAnalyzer(
 		combinedAnalyzers,
-		"", //"default",
+		istioresource.Namespace(namespace),
 		"istio-system",
 		nil)
 
-	istioclient, err := istiokube.NewCLIClient(
+	istioClient, err := istiokube.NewCLIClient(
 		istiokube.NewClientConfigForRestConfig(client.RestConfig()),
 		istiokube.WithRevision(""),
 		istiokube.WithCluster(""),
 		istiokube.WithTimeout(time.Second*100),
 	)
 	if err != nil {
-		out.Errf("Istio analysis error (creating kube client): %v", err)
+		return nil, clierror.Wrap(err, clierror.New("failed to create istio kube client"))
 	}
 
-	k := istiokube.EnableCrdWatcher(istioclient)
+	k := istiokube.EnableCrdWatcher(istioClient)
 	sa.AddRunningKubeSource(k)
 
-	sa.AddRunningKubeSource(istioclient)
+	sa.AddRunningKubeSource(istioClient)
 
 	cancel := make(chan struct{})
+	go func() {
+		<-ctx.Done()
+		close(cancel)
+		out.Errfln("istio analysis cancelled because of timeout")
+	}()
 	result, err := sa.Analyze(cancel)
 	if err != nil {
-		out.Errf("Istio analysis error: %v", err)
-		return
+		return nil, clierror.Wrap(err, clierror.New("failed to analyze istio configuration"))
+	}
+	return &result, nil
+}
+
+func printIstioOutput(analysisResult *istioanalysislocal.AnalysisResult, format types.Format, path string) clierror.Error {
+	istioFormat := istioformatting.YAMLFormat
+	switch format {
+	case types.JSONFormat:
+		istioFormat = istioformatting.JSONFormat
+	case types.YAMLFormat, types.DefaultFormat:
+		istioFormat = istioformatting.YAMLFormat
+	default:
+		return clierror.New(fmt.Sprintf("unexpected output.Format: %v", format))
 	}
 
-	output, err := formatting.Print(result.Messages, "json", false)
-	if err != nil {
-		out.Errf("Istio analysis error (printing result): %v", err)
-		return
+	printer := out.Default
+
+	if path != "" {
+		file, err := os.Create(path)
+		if err != nil {
+			return clierror.Wrap(err, clierror.New("failed to create output file: %w"))
+		}
+		defer file.Close()
+
+		printer = out.NewToWriter(file)
 	}
-	out.Msgfln(output)
+
+	if len(analysisResult.Messages) == 0 {
+		out.Msgfln("no istio configuration issues found")
+		return nil
+	}
+
+	output, err := istioformatting.Print(analysisResult.Messages, istioFormat, false)
+	if err != nil {
+		return clierror.Wrap(err, clierror.New("failed to format output"))
+	}
+	printer.Msgfln(output)
+	return nil
 }

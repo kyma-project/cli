@@ -30,9 +30,9 @@ func NewDiagnoseCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Use:   "diagnose [flags]",
 		Short: "Diagnose cluster health and configuration",
 		Long:  "Use this command to quickly assess the health, configuration, and potential issues in your cluster for troubleshooting and support purposes.",
-		//Run: func(cmd *cobra.Command, args []string) {
-		//	clierror.Check(diagnose(&cfg))
-		//},
+		Run: func(cmd *cobra.Command, args []string) {
+			clierror.Check(diagnose(&cfg))
+		},
 	}
 
 	cmd.Flags().VarP(&cfg.outputFormat, "format", "f", "Output format (possible values: json, yaml)")
