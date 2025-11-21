@@ -30,6 +30,9 @@ func NewMapHanaCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Use:   "map",
 		Short: "Maps an SAP HANA instance to the Kyma cluster",
 		Long:  "Use this command to map an SAP HANA instance to the Kyma cluster.",
+		Example: `  # Map SAP Hana DB instance with Kyma runtime
+  kyma alpha hana map --credentials-path hana-admin-creds.json`,
+
 		PreRun: func(cmd *cobra.Command, _ []string) {
 			clierror.Check(flags.Validate(cmd.Flags(),
 				flags.MarkRequired("credentials-path"),
