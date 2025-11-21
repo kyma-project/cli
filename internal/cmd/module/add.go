@@ -38,10 +38,10 @@ func newAddCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Use:   "add <module> [flags]",
 		Short: "Add a module",
 		Long:  "Use this command to add a module.",
-		Example: `  # Add a kyma module with the default CR
+		Example: `  # Add a Kyma module with the default CR
   kyma module add kyma-module --default-cr
 
-  # Add a kyma module with a custom CR from a file
+  # Add a Kyma module with a custom CR from a file
   kyma module add kyma-module --cr-path ./kyma-module-cr.yaml
 
   ## Add a community module with a default CR and auto-approve the SLA
