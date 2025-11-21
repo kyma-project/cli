@@ -156,7 +156,7 @@ func getIstioData(ctx context.Context, client kube.Client, namespace string) (*i
 }
 
 func printIstioOutput(analysisResult *istioanalysislocal.AnalysisResult, format types.Format, path string) clierror.Error {
-	istioFormat := istioformatting.YAMLFormat
+	var istioFormat string
 	switch format {
 	case types.JSONFormat:
 		istioFormat = istioformatting.JSONFormat
