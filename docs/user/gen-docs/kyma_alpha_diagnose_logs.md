@@ -1,10 +1,20 @@
 # kyma alpha diagnose logs
 
-Aggregates error logs from Pods belonging to the added Kyma modules.
+Aggregates error logs from Pods belonging to the added Kyma modules (requires JSON log format).
 
 ## Synopsis
 
 Collects and aggregates recent error-level container logs for Kyma modules to help with rapid troubleshooting.
+
+This command analyzes JSON-formatted logs and filters for error entries. The expected JSON log format includes:
+- "level": "error" (to identify error-level entries)
+- "timestamp": RFC3339 format timestamp 
+- "message": log message content
+
+Example log entry:
+{"level":"error","timestamp":"2023-11-18T10:30:45Z","message":"Failed to process request"}
+
+Logs that don't match this JSON structure are ignored during error detection.
 
 ```bash
 kyma alpha diagnose logs [flags]
@@ -13,7 +23,7 @@ kyma alpha diagnose logs [flags]
 ## Examples
 
 ```bash
-  # Collect last 200 lines (default) from all enabled modules
+  # Analyze last 200 lines per container (default) and extract error logs from all enabled modules
   kyma alpha diagnose logs --lines 200
 
   # Collect error logs from the last 15 minutes for all enabled modules
@@ -36,12 +46,11 @@ kyma alpha diagnose logs [flags]
 
 ```text
   -f, --format string           Output format (possible values: json, yaml)
-      --lines int64             Max lines per container (default "200")
+      --lines int64             Number of recent log lines to analyze per container (filters for error-level entries from these lines) (default "200")
       --module stringSlice      Restrict to specific module(s). Can be used multiple times. When no value is present then logs from all Kyma CR modules are gathered (default "[]")
   -o, --output string           Path to the diagnostic output file. If not provided the output is printed to stdout
       --since duration          Log time range (e.g., 10m, 1h, 30s) (default "0s")
       --timeout duration        Timeout for log collection operations (default "30s")
-      --verbose                 Display verbose output, including error details during diagnostics collection
       --context string          The name of the kubeconfig context to use
   -h, --help                    Help for the command
       --kubeconfig string       Path to the Kyma kubeconfig file

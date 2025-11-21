@@ -22,7 +22,6 @@ type diagnoseLogsConfig struct {
 	*cmdcommon.KymaConfig
 	outputFormat types.Format
 	outputPath   string
-	verbose      bool
 	modules      []string
 	since        time.Duration
 	lines        int64
@@ -36,8 +35,8 @@ func NewDiagnoseLogsCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "logs [flags]",
-		Short: "Aggregates error logs from Pods belonging to the added Kyma modules",
-		Example: `  # Collect last 200 lines (default) from all enabled modules
+		Short: "Aggregates error logs from Pods belonging to the added Kyma modules (requires JSON log format)",
+		Example: `  # Analyze last 200 lines per container (default) and extract error logs from all enabled modules
   kyma alpha diagnose logs --lines 200
 
   # Collect error logs from the last 15 minutes for all enabled modules
@@ -54,8 +53,17 @@ func NewDiagnoseLogsCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
   # Use lines as a deterministic cap when time window would be too large
   kyma alpha diagnose logs --lines 1000`,
+		Long: `Collects and aggregates recent error-level container logs for Kyma modules to help with rapid troubleshooting.
 
-		Long: "Collects and aggregates recent error-level container logs for Kyma modules to help with rapid troubleshooting.",
+This command analyzes JSON-formatted logs and filters for error entries. The expected JSON log format includes:
+- "level": "error" (to identify error-level entries)
+- "timestamp": RFC3339 format timestamp 
+- "message": log message content
+
+Example log entry:
+{"level":"error","timestamp":"2023-11-18T10:30:45Z","message":"Failed to process request"}
+
+Logs that don't match this JSON structure are ignored during error detection.`,
 		PreRun: func(cmd *cobra.Command, args []string) {
 			clierror.Check(flags.Validate(cmd.Flags(),
 				flags.MarkExclusive("lines", "since"),
@@ -68,20 +76,15 @@ func NewDiagnoseLogsCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cmd.Flags().VarP(&cfg.outputFormat, "format", "f", "Output format (possible values: json, yaml)")
 	cmd.Flags().StringVarP(&cfg.outputPath, "output", "o", "", "Path to the diagnostic output file. If not provided the output is printed to stdout")
-	cmd.Flags().BoolVar(&cfg.verbose, "verbose", false, "Display verbose output, including error details during diagnostics collection")
 	cmd.Flags().StringSliceVar(&cfg.modules, "module", []string{}, "Restrict to specific module(s). Can be used multiple times. When no value is present then logs from all Kyma CR modules are gathered")
 	cmd.Flags().DurationVar(&cfg.since, "since", 0, "Log time range (e.g., 10m, 1h, 30s)")
-	cmd.Flags().Int64Var(&cfg.lines, "lines", 200, "Max lines per container")
+	cmd.Flags().Int64Var(&cfg.lines, "lines", 200, "Number of recent log lines to analyze per container (filters for error-level entries from these lines)")
 	cmd.Flags().DurationVar(&cfg.timeout, "timeout", 30*time.Second, "Timeout for log collection operations")
 
 	return cmd
 }
 
 func diagnoseLogs(cfg *diagnoseLogsConfig) clierror.Error {
-	if cfg.verbose {
-		out.EnableVerbose()
-	}
-
 	kubeClient, clierr := cfg.GetKubeClientWithClierr()
 	if clierr != nil {
 		return clierr
