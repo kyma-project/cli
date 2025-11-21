@@ -14,13 +14,14 @@ kyma module add <module> [flags]
 
 ```bash
   # Add a kyma module with the default CR
-  kyma module add serverless --default-cr
+  kyma module add kyma-module --default-cr
 
-  # Add a kyma module with a custom CR
-  kyma module add serverless --cr-path ./serverless-cr.yaml
+  # Add a kyma module with a custom CR from a file
+  kyma module add kyma-module --cr-path ./kyma-module-cr.yaml
 
-  # Add a community module with a default CR and auto-approve the SLA
-  kyma module add my-namespace/my-community-module-1.0.0 --default-cr --auto-approve
+  ## Add a community module with a default CR and auto-approve the SLA
+  #  passed argument must be in the format <namespace>/<module-template-name>
+  kyma module add my-namespace/my-module-template-name --default-cr --auto-approve
 ```
 
 ## Flags
