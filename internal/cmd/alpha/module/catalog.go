@@ -14,7 +14,7 @@ type catalogV2Config struct {
 	outputFormat types.Format
 }
 
-func newCatalogV2CMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
+func NewCatalogV2CMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cfg := catalogV2Config{
 		KymaConfig: kymaConfig,
 	}
@@ -24,7 +24,7 @@ func newCatalogV2CMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Short: "Lists modules catalog",
 		Long:  `Use this command to list all available Kyma modules.`,
 		Run: func(_ *cobra.Command, _ []string) {
-			clierror.Check(catalogV2Modules(&cfg))
+			clierror.Check(catalogModules(&cfg))
 		},
 	}
 
@@ -33,7 +33,7 @@ func newCatalogV2CMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	return cmd
 }
 
-func catalogV2Modules(cfg *catalogV2Config) clierror.Error {
+func catalogModules(cfg *catalogV2Config) clierror.Error {
 	c, err := modulesv2.SetupDIContainer(cfg.KymaConfig)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to configure command dependencies"))
