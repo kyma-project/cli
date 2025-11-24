@@ -81,7 +81,6 @@ func fixAPIRule(apiRuleName, namespace, host string, port uint32) unstructured.U
 					"app.kubernetes.io/name":       apiRuleName,
 					"app.kubernetes.io/created-by": "kyma-cli",
 				},
-				"creationTimestamp": nil,
 			},
 			"spec": map[string]interface{}{
 				"hosts": []interface{}{
