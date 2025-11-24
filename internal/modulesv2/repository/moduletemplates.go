@@ -52,6 +52,9 @@ func (r *moduleTemplatesRepository) ListCore(ctx context.Context) ([]entities.Co
 	rawModulesReleaseMeta, err := r.client.Kyma().ListModuleReleaseMeta(ctx)
 	if err != nil {
 		// TODO: add support for legacy catalog
+		// for _, moduleTemplate := range coreModuleTemplates {
+		// }
+
 		return nil, err
 	}
 
