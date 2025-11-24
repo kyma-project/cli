@@ -40,7 +40,7 @@ func NewDiagnoseIstioCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "istio [flags]",
-		Short: "Diagnose Istio configuration",
+		Short: "Checks Istio configuration",
 		Example: `  # Analyze Istio configuration across all namespaces
   kyma alpha diagnose istio
   or
@@ -63,11 +63,11 @@ func NewDiagnoseIstioCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().BoolVarP(&cfg.allNamespaces, "all-namespaces", "A", false, "Analyze all namespaces")
-	cmd.Flags().StringVarP(&cfg.namespace, "namespace", "n", "", "The namespace that the workload instances will belong to")
+	cmd.Flags().BoolVarP(&cfg.allNamespaces, "all-namespaces", "A", false, "Analyzes all namespaces")
+	cmd.Flags().StringVarP(&cfg.namespace, "namespace", "n", "", "The namespace that the workload instances belongs to")
 	cmd.Flags().VarP(&cfg.outputFormat, "format", "f", "Output format (possible values: json, yaml)")
 	cmd.Flags().StringVarP(&cfg.outputPath, "output", "o", "", "Path to the diagnostic output file. If not provided the output is printed to stdout")
-	cmd.Flags().BoolVar(&cfg.verbose, "verbose", false, "Display verbose output, including error details during diagnostics collection")
+	cmd.Flags().BoolVar(&cfg.verbose, "verbose", false, "Displays verbose output, including error details during diagnostics collection")
 	cmd.Flags().DurationVar(&cfg.timeout, "timeout", 30*time.Second, "Timeout for diagnosis")
 
 	return cmd

@@ -1,6 +1,6 @@
 # kyma alpha diagnose istio
 
-Diagnose Istio configuration.
+Checks Istio configuration.
 
 ## Synopsis
 
@@ -28,12 +28,12 @@ kyma alpha diagnose istio [flags]
 ## Flags
 
 ```text
-  -A, --all-namespaces          Analyze all namespaces
+  -A, --all-namespaces          Analyzes all namespaces
   -f, --format string           Output format (possible values: json, yaml)
-  -n, --namespace string        The namespace that the workload instances will belong to
+  -n, --namespace string        The namespace that the workload instances belongs to
   -o, --output string           Path to the diagnostic output file. If not provided the output is printed to stdout
       --timeout duration        Timeout for diagnosis (default "30s")
-      --verbose                 Display verbose output, including error details during diagnostics collection
+      --verbose                 Displays verbose output, including error details during diagnostics collection
       --context string          The name of the kubeconfig context to use
   -h, --help                    Help for the command
       --kubeconfig string       Path to the Kyma kubeconfig file
