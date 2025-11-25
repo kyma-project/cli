@@ -15,7 +15,7 @@ kyma alpha diagnose istio [flags]
 ```bash
   # Analyze Istio configuration across all namespaces
   kyma alpha diagnose istio
-  or
+  # or
   kyma alpha diagnose istio --all-namespaces
 
   # Analyze Istio configuration in a specific namespace
