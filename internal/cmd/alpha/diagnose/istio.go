@@ -43,7 +43,7 @@ func NewDiagnoseIstioCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Short: "Checks Istio configuration",
 		Example: `  # Analyze Istio configuration across all namespaces
   kyma alpha diagnose istio
-  or
+  # or
   kyma alpha diagnose istio --all-namespaces
 
   # Analyze Istio configuration in a specific namespace
