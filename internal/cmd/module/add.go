@@ -38,15 +38,15 @@ func newAddCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Use:   "add <module> [flags]",
 		Short: "Add a module",
 		Long:  "Use this command to add a module.",
-		Example: `  # Add the keda module with the default CR
+		Example: `  # Add the Keda module with the default CR
   kyma module add keda --default-cr
 
-  # Add the keda module with a custom CR from a file
+  # Add the Keda module with a custom CR from a file
   kyma module add keda --cr-path ./keda-cr.yaml
 
   ## Add a community module with a default CR and auto-approve the SLA
   #  passed argument must be in the format <namespace>/<module-template-name>
-  #  module must be pulled from the catalog first using 'kyma module pull' command
+  #  the module must be pulled from the catalog first using the 'kyma module pull' command
   kyma module add my-namespace/my-module-template-name --default-cr --auto-approve`,
 
 		Args: cobra.ExactArgs(1),

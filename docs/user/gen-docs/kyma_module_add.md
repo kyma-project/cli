@@ -13,15 +13,15 @@ kyma module add <module> [flags]
 ## Examples
 
 ```bash
-  # Add the keda module with the default CR
+  # Add the Keda module with the default CR
   kyma module add keda --default-cr
 
-  # Add the keda module with a custom CR from a file
+  # Add the Keda module with a custom CR from a file
   kyma module add keda --cr-path ./keda-cr.yaml
 
   ## Add a community module with a default CR and auto-approve the SLA
   #  passed argument must be in the format <namespace>/<module-template-name>
-  #  module must be pulled from the catalog first using 'kyma module pull' command
+  #  the module must be pulled from the catalog first using the 'kyma module pull' command
   kyma module add my-namespace/my-module-template-name --default-cr --auto-approve
 ```
 

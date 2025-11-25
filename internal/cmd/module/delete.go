@@ -33,12 +33,12 @@ func newDeleteCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 		Use:   "delete <module> [flags]",
 		Short: "Deletes a module",
 		Long:  "Use this command to delete a module.",
-		Example: `  # Delete the keda module
+		Example: `  # Delete the Keda module
   kyma module delete keda
 
   ## Delete a community module and auto-approve the deletion
   #  passed argument must be in the format <namespace>/<module-template-name>
-  #  module must be pulled from the catalog first using 'kyma module pull' command
+  #  the module must be pulled from the catalog first using the 'kyma module pull' command
   kyma module delete my-namespace/my-community-module-1.0.0 --auto-approve`,
 
 		Aliases: []string{"del"},
