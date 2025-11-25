@@ -287,9 +287,8 @@ func fixServiceInstance() *unstructured.Unstructured {
 			"apiVersion": "services.cloud.sap.com/v1",
 			"kind":       "ServiceInstance",
 			"metadata": map[string]interface{}{
-				"creationTimestamp": interface{}(nil),
-				"name":              "test-name",
-				"namespace":         "test-namespace",
+				"name":      "test-name",
+				"namespace": "test-namespace",
 			},
 			"spec": map[string]interface{}{
 				"externalName": "test",
@@ -305,9 +304,8 @@ func fixServiceBinding() *unstructured.Unstructured {
 			"apiVersion": "services.cloud.sap.com/v1",
 			"kind":       "ServiceBinding",
 			"metadata": map[string]interface{}{
-				"creationTimestamp": interface{}(nil),
-				"name":              "test-name",
-				"namespace":         "test-namespace",
+				"name":      "test-name",
+				"namespace": "test-namespace",
 			},
 			"spec": map[string]interface{}{
 				"externalName": "test",
