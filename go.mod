@@ -6,7 +6,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/buildpacks/pack v0.38.2
-	github.com/docker/cli v29.0.2+incompatible
+	github.com/docker/cli v29.0.3+incompatible
 	github.com/docker/docker v28.5.2+incompatible
 	github.com/go-test/deep v1.1.1
 	github.com/google/go-containerregistry v0.20.6
