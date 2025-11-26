@@ -384,28 +384,28 @@ func isClusterManagedByKLM(ctx context.Context, client kube.Client) bool {
 	return err == nil
 }
 
-func ListAvailableVersions(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository, moduleName string, isCommunity bool) ([]string, error) {
-	catalog, err := ListCatalog(ctx, client, repo)
+func ListAvailableVersions(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository, moduleName string, isCommunity bool) ([]ModuleVersion, error) {
+	var catalog ModulesList
+	var err error
+	if !isCommunity {
+		catalog, err = listCoreModulesCatalog(ctx, client)
+	} else {
+		catalog, err = listCommunityModulesCatalog(ctx, repo)
+	}
+
 	if err != nil {
 		return nil, err
 	}
 
 	var module Module
-
 	for _, m := range catalog {
-		if m.CommunityModule == isCommunity && m.Name == moduleName {
+		if m.Name == moduleName {
 			module = m
 			break
 		}
 	}
 
-	var moduleVersions []string
-
-	for _, mv := range module.Versions {
-		moduleVersions = append(moduleVersions, mv.Version)
-	}
-
-	return moduleVersions, nil
+	return module.Versions, nil
 }
 
 func listCommunityInstalled(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository, installedCoreModules ModulesList) (ModulesList, error) {
