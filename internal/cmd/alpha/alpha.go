@@ -26,7 +26,7 @@ func NewAlphaCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.AddCommand(referenceinstance.NewReferenceInstanceCMD(kymaConfig))
 	cmd.AddCommand(kubeconfig.NewKubeconfigCMD(kymaConfig))
 	cmd.AddCommand(diagnose.NewDiagnoseCMD(kymaConfig))
-	cmd.AddCommand(module.NewCatalogV2CMD(kymaConfig))
+	cmd.AddCommand(module.NewModuleCMD(kymaConfig))
 
 	return cmd
 }

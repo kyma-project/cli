@@ -1,26 +1,57 @@
 package modulesv2
 
 import (
+	"errors"
+
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/di"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/modulesv2/repository"
 )
 
-func SetupDIContainer(kymaConfig *cmdcommon.KymaConfig) (*di.DIContainer, error) {
+type ModuleOperations interface {
+	Catalog() (*CatalogService, error)
+
+	// TODO
+	// Add() (*AddService, error)
+	// Install() (*InstallService, error)
+	// Pull() (*PullService, error)
+	// etc.
+}
+
+type moduleOperations struct {
+	kymaConfig *cmdcommon.KymaConfig
+}
+
+func NewModuleOperations(kymaConfig *cmdcommon.KymaConfig) *moduleOperations {
+	return &moduleOperations{kymaConfig: kymaConfig}
+}
+
+func (m *moduleOperations) Catalog() (*CatalogService, error) {
+	c, err := setupDIContainer(m.kymaConfig)
+	if err != nil {
+		return nil, errors.New("failed to configure command dependencies")
+	}
+
+	catalogService, err := di.GetTyped[*CatalogService](c)
+	if err != nil {
+		return nil, errors.New("failed to execute the catalog command")
+	}
+
+	return catalogService, nil
+}
+
+func setupDIContainer(kymaConfig *cmdcommon.KymaConfig) (*di.DIContainer, error) {
 	container := di.NewDIContainer()
 
-	// 1. Register kube.Client - the foundation dependency
 	di.RegisterTyped(container, func(c *di.DIContainer) (kube.Client, error) {
 		return kymaConfig.GetKubeClient()
 	})
 
-	// 2. Register ExternalModuleTemplateRepository - has no dependencies
 	di.RegisterTyped(container, func(c *di.DIContainer) (repository.ExternalModuleTemplateRepository, error) {
 		return repository.NewExternalModuleTemplateRepository(), nil
 	})
 
-	// 3. Register ModuleTemplatesRepository - depends on kube.Client and ExternalModuleTemplateRepository
 	di.RegisterTyped(container, func(c *di.DIContainer) (repository.ModuleTemplatesRepository, error) {
 		kubeClient, err := di.GetTyped[kube.Client](c)
 		if err != nil {
@@ -44,7 +75,6 @@ func SetupDIContainer(kymaConfig *cmdcommon.KymaConfig) (*di.DIContainer, error)
 		return repository.NewClusterMetadataRepository(kubeClient), nil
 	})
 
-	// 4. Register Catalog - depends on ModuleTemplatesRepository
 	di.RegisterTyped(container, func(c *di.DIContainer) (*CatalogService, error) {
 		moduleRepo, err := di.GetTyped[repository.ModuleTemplatesRepository](c)
 		if err != nil {
