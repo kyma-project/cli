@@ -16,7 +16,7 @@ type BaseModuleTemplate struct {
 	// manager   *kyma.Manager
 }
 
-func MapModuleTemplateFromRaw(rawModuleTemplate *kyma.ModuleTemplate) BaseModuleTemplate {
+func MapBaseModuleTemplateFromRaw(rawModuleTemplate *kyma.ModuleTemplate) *BaseModuleTemplate {
 	entity := BaseModuleTemplate{}
 
 	entity.ModuleName = rawModuleTemplate.Spec.ModuleName
@@ -25,5 +25,14 @@ func MapModuleTemplateFromRaw(rawModuleTemplate *kyma.ModuleTemplate) BaseModule
 	entity.name = rawModuleTemplate.GetName()
 	entity.namespace = rawModuleTemplate.GetNamespace()
 
-	return entity
+	return &entity
+}
+
+func MapBaseModuleTemplateFromParams(templateName, moduleName, version, namespace string) *BaseModuleTemplate {
+	return &BaseModuleTemplate{
+		ModuleName: moduleName,
+		Version:    version,
+		name:       templateName,
+		namespace:  namespace,
+	}
 }

@@ -11,7 +11,7 @@ type CatalogResult struct {
 	Origin            string
 }
 
-func CatalogResultFromCoreModuleTemplates(coreModuleTemplates []entities.CoreModuleTemplate) []CatalogResult {
+func CatalogResultFromCoreModuleTemplates(coreModuleTemplates []*entities.CoreModuleTemplate) []CatalogResult {
 	results := []CatalogResult{}
 
 	// Cache to quickly get an index of module that's already present in the result set
@@ -34,7 +34,7 @@ func CatalogResultFromCoreModuleTemplates(coreModuleTemplates []entities.CoreMod
 	return results
 }
 
-func CatalogResultFromCommunityModuleTemplates(communityModuleTemplates []entities.CommunityModuleTemplate) []CatalogResult {
+func CatalogResultFromCommunityModuleTemplates(communityModuleTemplates []*entities.CommunityModuleTemplate) []CatalogResult {
 	results := []CatalogResult{}
 
 	// Cache key: moduleName + origin
@@ -60,7 +60,7 @@ func CatalogResultFromCommunityModuleTemplates(communityModuleTemplates []entiti
 	return results
 }
 
-func getOriginFor(communityModuleTemplate entities.CommunityModuleTemplate) string {
+func getOriginFor(communityModuleTemplate *entities.CommunityModuleTemplate) string {
 	if communityModuleTemplate.IsExternal() {
 		return COMMUNITY_ORIGIN
 	}
