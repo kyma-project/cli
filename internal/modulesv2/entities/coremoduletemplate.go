@@ -14,6 +14,15 @@ func NewCoreModuleTemplate(base *BaseModuleTemplate, channel string) *CoreModule
 	}
 }
 
+func NewCoreModuleTemplateFromParams(templateName, moduleName, version, channel, namespace string) *CoreModuleTemplate {
+	base := MapBaseModuleTemplateFromParams(templateName, moduleName, version, namespace)
+
+	return &CoreModuleTemplate{
+		*base,
+		channel,
+	}
+}
+
 func (m *CoreModuleTemplate) GetVersionWithChannel() string {
 	return fmt.Sprintf("%s(%s)", m.Version, m.Channel)
 }
