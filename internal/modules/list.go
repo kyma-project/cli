@@ -109,12 +109,12 @@ func collectModulesFromKymaCR(ctx context.Context, client kube.Client, defaultKy
 
 			installationState, err := getModuleInstallationState(ctx, client, ms, moduleSpec)
 			if err != nil {
-				out.Errfln("error occured during %s module installation status check: %v", ms.Name, err)
+				out.Debugfln("error occured during %s module installation status check: %v", ms.Name, err)
 			}
 
 			moduleCRState, err := getModuleCustomResourceStatus(ctx, client, ms, moduleSpec)
 			if err != nil {
-				out.Errfln("error occured during %s custom resource status check: %v", ms.Name, err)
+				out.Debugfln("error occured during %s custom resource status check: %v", ms.Name, err)
 			}
 
 			results <- Module{
@@ -567,19 +567,19 @@ func extractModuleVersion(metadata map[string]any, installedManager *unstructure
 func getModuleStatus(ctx context.Context, client kube.Client, data unstructured.Unstructured) string {
 	apiVersion, ok := data.Object["apiVersion"].(string)
 	if !ok {
-		out.Errfln("failed to get apiVersion from data: %v", data)
+		out.Debugfln("failed to get apiVersion from data: %v", data)
 		return UnknownValue
 	}
 
 	kind, ok := data.Object["kind"].(string)
 	if !ok {
-		out.Errfln("failed to get kind from data: %v", data)
+		out.Debugfln("failed to get kind from data: %v", data)
 		return UnknownValue
 	}
 
 	resourceList, err := listResourcesByVersionKind(ctx, client, apiVersion, kind)
 	if err != nil {
-		out.Errfln("failed to list resources for version: %s and kind %s: %v", apiVersion, kind, err)
+		out.Debugfln("failed to list resources for version: %s and kind %s: %v", apiVersion, kind, err)
 		return UnknownValue
 	}
 

@@ -141,12 +141,12 @@ func collectNonReadyModulesStates(resourcesList *unstructured.UnstructuredList) 
 	for _, resource := range resourcesList.Items {
 		statusMap, ok := resource.Object["status"].(map[string]any)
 		if !ok {
-			out.Errfln("failed to read status from resource %s", resource)
+			out.Debugfln("failed to read status from resource %s", resource)
 		}
 
 		state, ok := statusMap["state"].(string)
 		if !ok {
-			out.Errfln("failed to read state from statusMap %s", statusMap)
+			out.Debugfln("failed to read state from statusMap %s", statusMap)
 		}
 
 		if state == "Ready" {
