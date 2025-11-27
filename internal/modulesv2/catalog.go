@@ -23,10 +23,10 @@ func NewCatalogService(
 	}
 }
 
-func (c *CatalogService) Run(ctx context.Context, urls []string) ([]dtos.CatalogResult, error) {
+func (c *CatalogService) Run(ctx context.Context, catalogConfig *dtos.CatalogConfig) ([]dtos.CatalogResult, error) {
 	results := []dtos.CatalogResult{}
 
-	if c.isClusterManagedByKLM(ctx) {
+	if c.isClusterManagedByKLM(ctx) && catalogConfig.ListKyma {
 		coreModules, err := c.moduleTemplatesRepository.ListCore(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("failed to list core modules: %v", err)
@@ -34,13 +34,15 @@ func (c *CatalogService) Run(ctx context.Context, urls []string) ([]dtos.Catalog
 		results = append(results, dtos.CatalogResultFromCoreModuleTemplates(coreModules)...)
 	}
 
-	localCommunityModules, err := c.moduleTemplatesRepository.ListLocalCommunity(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list local community modules: %v", err)
+	if catalogConfig.ListCluster {
+		localCommunityModules, err := c.moduleTemplatesRepository.ListLocalCommunity(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list local community modules: %v", err)
+		}
+		results = append(results, dtos.CatalogResultFromCommunityModuleTemplates(localCommunityModules)...)
 	}
-	results = append(results, dtos.CatalogResultFromCommunityModuleTemplates(localCommunityModules)...)
 
-	externalCommunityModules, err := c.moduleTemplatesRepository.ListExternalCommunity(ctx, urls)
+	externalCommunityModules, err := c.moduleTemplatesRepository.ListExternalCommunity(ctx, catalogConfig.ExternalUrls)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list external community modules: %v", err)
 	}

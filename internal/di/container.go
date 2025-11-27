@@ -25,17 +25,11 @@ func NewDIContainer() *DIContainer {
 // Get retrieves or creates a singleton instance of the specified type
 func (c *DIContainer) Get(targetType reflect.Type) (interface{}, error) {
 	// Fast path: check if instance already exists
-	c.mu.RLock()
 	if instance, exists := c.instances[targetType]; exists {
-		c.mu.RUnlock()
 		return instance, nil
 	}
-	c.mu.RUnlock()
 
-	// Get factory
-	c.mu.RLock()
 	factory, exists := c.factories[targetType]
-	c.mu.RUnlock()
 
 	if !exists {
 		return nil, fmt.Errorf("no registration found for type %s", targetType.String())
@@ -47,15 +41,11 @@ func (c *DIContainer) Get(targetType reflect.Type) (interface{}, error) {
 		return nil, fmt.Errorf("failed to create instance of type %s: %w", targetType.String(), err)
 	}
 
-	// Store the created instance
-	c.mu.Lock()
 	// Check if another goroutine created it while we were creating ours
 	if existing, exists := c.instances[targetType]; exists {
-		c.mu.Unlock()
 		return existing, nil
 	}
 	c.instances[targetType] = instance
-	c.mu.Unlock()
 
 	return instance, nil
 }
@@ -81,9 +71,6 @@ func GetTyped[T any](c *DIContainer) (T, error) {
 // RegisterTyped is a generic helper to register a factory with type safety
 // Usage: RegisterTyped[MyInterface](container, func(c *DIContainer) (MyInterface, error) { ... })
 func RegisterTyped[T any](c *DIContainer, factory func(*DIContainer) (T, error)) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
 	targetType := reflect.TypeOf((*T)(nil)).Elem()
 	c.factories[targetType] = func(container *DIContainer) (interface{}, error) {
 		return factory(container)
