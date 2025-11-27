@@ -29,8 +29,11 @@ type DockerClient interface {
 	ImageBuild(ctx context.Context, buildContext io.Reader, options dockerbuild.ImageBuildOptions) (dockerbuild.ImageBuildResponse, error)
 }
 
+// tworzenie klienta!
+// możliwosc połączenia z folderem docker
+// pakiety: dockerfile / docker (generyczność, np. new client?) / dashboard (korzysta z dockera)
 func Build(ctx context.Context, opts *BuildOptions) error {
-	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation()) //tworzenie clienta z docekra
 	if err != nil {
 		return err
 	}
@@ -40,7 +43,7 @@ func Build(ctx context.Context, opts *BuildOptions) error {
 		out:          out.Default.MsgWriter(),
 	}
 
-	return builder.do(ctx, opts)
+	return builder.do(ctx, opts) //wywolanie na clientnie
 }
 
 type imageBuilder struct {

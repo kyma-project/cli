@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	mydocker "github.com/kyma-project/cli.v3/internal/cmd/docker"
-	"github.com/kyma-project/cli.v3/internal/cmd/os"
 	"github.com/pkg/browser"
 )
 
@@ -43,7 +42,7 @@ func (c *Container) Start() error {
 	}
 
 	var envs []string
-	if dockerDesktop, err := c.docker.IsDockerDesktopOS(context.Background()); err != nil {
+	/*if dockerDesktop, err := c.docker.IsDockerDesktopOS(context.Background()); err != nil {
 		return fmt.Errorf("failed to interact with docker: %w", err)
 	} else if dockerDesktop {
 		dockerEnv := "DOCKER_DESKTOP_CLUSTER=true"
@@ -61,7 +60,7 @@ func (c *Container) Start() error {
 	}
 	if err != nil {
 		return fmt.Errorf("failed to interact with docker: %w", err)
-	}
+	}*/
 
 	opts := c.containerOpts(envs)
 	fmt.Print("\n")
@@ -81,7 +80,7 @@ func (c *Container) Open(path string) error {
 
 	err := browser.OpenURL(url)
 	if err != nil {
-		return fmt.Errorf("Dashboard at %q could not be opened: %w", url, err)
+		return fmt.Errorf("dashboard at %q could not be opened: %w", url, err)
 	}
 	return nil
 }
@@ -106,12 +105,12 @@ func (c *Container) containerOpts(envs []string) mydocker.ContainerRunOpts {
 		},
 	}
 
-	if os.IsLinux() {
+	/*if os.IsLinux() {
 		if c.verbose {
 			fmt.Printf("Operating system seems to be Linux. Changing the Docker network mode to 'host'")
 		}
 		containerRunOpts.NetworkMode = "host"
-	}
+	}*/
 
 	return containerRunOpts
 }

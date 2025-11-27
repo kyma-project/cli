@@ -78,7 +78,8 @@ type ContainerRunOpts struct {
 
 // NewClient creates docker client using docker environment of the OS
 func NewClient() (Client, error) {
-	dClient, err := docker.NewClientWithOpts(docker.FromEnv)
+	dClient, err := docker.NewClientWithOpts(docker.FromEnv, docker.WithAPIVersionNegotiation())
+
 	if err != nil {
 		return nil, err
 	}
@@ -113,6 +114,7 @@ func (w *dockerWrapper) PullImageAndStartContainer(ctx context.Context, opts Con
 	}
 
 	var r io.ReadCloser
+	//mozliwosc dlugiego pullowania, wskazanie writera do streams out
 	r, err := w.Docker.ImagePull(ctx, config.Image, image.PullOptions{})
 	if err != nil {
 		return "", err
@@ -172,6 +174,7 @@ func (w *dockerWrapper) Stop(ctx context.Context, containerID string, log func(.
 
 func (w *dockerWrapper) IsDockerDesktopOS(ctx context.Context) (bool, error) {
 	info, err := w.Docker.Info(ctx)
+
 	if err != nil {
 		return false, err
 	}
