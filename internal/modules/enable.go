@@ -23,10 +23,10 @@ func Enable(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRe
 func enable(printer *out.Printer, ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository, module, channel string, defaultCR bool, crs ...unstructured.Unstructured) clierror.Error {
 	if err := validateModuleAvailability(ctx, client, repo, module, channel); err != nil {
 		hints := []string{
-			"make sure you provide valid module name and channel (or version)",
-			"list available modules by calling the `kyma module catalog` command",
-			"pull available modules by calling the `kyma module pull` command",
-			"if you want to add a community module, use the `--origin` flag",
+			"make sure you provide a valid module name and channel (or version)",
+			"to list available modules, call the `kyma module catalog` command",
+			"to pull available modules, call the `kyma module pull` command",
+			"to add a community module, use the `--origin` flag",
 		}
 		return clierror.Wrap(err, clierror.New("unknown module name or channel", hints...))
 	}
