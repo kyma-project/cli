@@ -128,8 +128,8 @@ func (r *moduleTemplatesRepo) RunningAssociatedResourcesOfModule(ctx context.Con
 	var runningResources []unstructured.Unstructured
 
 	for _, associatedResource := range associatedResources {
-		associatedResourceApiVersion := associatedResource.Group + "/" + associatedResource.Version
-		if associatedResource.Kind == operator.GetKind() && associatedResourceApiVersion == operator.GetAPIVersion() {
+		associatedResourceAPIVersion := associatedResource.Group + "/" + associatedResource.Version
+		if associatedResource.Kind == operator.GetKind() && associatedResourceAPIVersion == operator.GetAPIVersion() {
 			continue
 		}
 
@@ -142,7 +142,7 @@ func (r *moduleTemplatesRepo) RunningAssociatedResourcesOfModule(ctx context.Con
 			AllNamespaces: true,
 		})
 		if err != nil && !apierrors.IsNotFound(err) {
-			out.Errfln("failed to list resources %v: %v", associatedResource, err)
+			out.Debugfln("failed to list resources %v: %v", associatedResource, err)
 			continue
 		}
 		if err != nil && apierrors.IsNotFound(err) {
@@ -235,7 +235,7 @@ func (r *moduleTemplatesRepo) selectInstalled(ctx context.Context, moduleTemplat
 		}
 
 		if err != nil {
-			out.Errfln("failed to request for installed manager: %v", err)
+			out.Debugfln("failed to request for installed manager: %v", err)
 			continue
 		}
 
