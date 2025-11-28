@@ -256,6 +256,30 @@ func TestRBACBuilder_BuildRoleBinding(t *testing.T) {
 			},
 			expectedError: "namespace is required for RoleBinding",
 		},
+		{
+			name: "successful build for ServiceAccount",
+			setupBuilder: func() *authorization.RBACBuilder {
+				saSubjectKind, _ := authorization.NewSubjectKindFrom("ServiceAccount")
+				return authorization.NewRBACBuilder().
+					ForSubjectKind(saSubjectKind).
+					ForSubjectName("sa-test-binding").
+					ForRole("reader").
+					ForNamespace("default").
+					ForServiceAccountNamespace("sa-default")
+			},
+			validateResult: func(t *testing.T, result *unstructured.Unstructured) {
+				subjects, found, err := unstructured.NestedFieldNoCopy(result.Object, "subjects")
+				require.NoError(t, err)
+				require.True(t, found)
+				subjectsSlice := subjects.([]map[string]any)
+				require.Len(t, subjectsSlice, 1)
+
+				subject := subjectsSlice[0]
+				assert.Equal(t, "sa-test-binding", subject["name"])
+				assert.Equal(t, "ServiceAccount", subject["kind"])
+				assert.Equal(t, "sa-default", subject["namespace"])
+			},
+		},
 	}
 
 	for _, tt := range tests {

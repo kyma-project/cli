@@ -48,6 +48,7 @@ kyma alpha authorize <authTarget> [flags]
       --namespace string        Namespace for RoleBinding (required when binding a Role or binding a ClusterRole to a specific namespace)
   -o, --output string           Output format for dry-run (yaml or json)
       --role string             Role name to bind (creates RoleBinding in specified namespace)
+      --sa-namespace string     Namespace for the service account subject. Defaults to the RoleBinding namespace when not specified.
       --context string          The name of the kubeconfig context to use
   -h, --help                    Help for the command
       --kubeconfig string       Path to the Kyma kubeconfig file
