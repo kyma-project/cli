@@ -9,6 +9,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon/envs"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon/types"
+	"github.com/kyma-project/cli.v3/internal/docker"
 	"github.com/kyma-project/cli.v3/internal/dockerfile"
 	"github.com/kyma-project/cli.v3/internal/flags"
 	"github.com/kyma-project/cli.v3/internal/kube"
@@ -361,7 +362,7 @@ func buildImage(cfg *appPushConfig) (string, error) {
 		err = pack.Build(cfg.Ctx, imageName, cfg.packAppPath)
 	} else {
 		// build application from dockerfile
-		err = dockerfile.Build(cfg.Ctx, &dockerfile.BuildOptions{
+		err = dockerfile.Build(cfg.Ctx, docker.BuildOptions{
 			ImageName:      imageName,
 			BuildContext:   cfg.dockerfileSrcContext,
 			DockerfilePath: cfg.dockerfilePath,
