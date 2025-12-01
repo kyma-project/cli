@@ -1,4 +1,4 @@
-package dockerfile
+package docker
 
 import (
 	"bytes"
@@ -11,7 +11,6 @@ import (
 
 	dockerbuild "github.com/docker/docker/api/types/build"
 	"github.com/docker/docker/client"
-	"github.com/kyma-project/cli.v3/internal/docker"
 	"github.com/stretchr/testify/require"
 )
 
@@ -28,9 +27,9 @@ func TestBuild(t *testing.T) {
 		require.NoError(t, os.WriteFile(dockerfilePath, []byte(testDockerfile), os.ModePerm))
 
 		mock := &dockerClientMock{}
-		cli := docker.NewTestClient(mock)
+		cli := NewTestClient(mock)
 
-		err := cli.Build(context.Background(), docker.BuildOptions{
+		err := cli.Build(context.Background(), BuildOptions{
 			ImageName:      "test-name",
 			BuildContext:   tmpDir,
 			DockerfilePath: dockerfilePath,
@@ -45,9 +44,9 @@ func TestBuild(t *testing.T) {
 		require.NoError(t, os.WriteFile(dockerfilePath, []byte(testDockerfile), os.ModePerm))
 
 		mock := &dockerClientMock{err: errors.New("test error")}
-		cli := docker.NewTestClient(mock)
+		cli := NewTestClient(mock)
 
-		err := cli.Build(context.Background(), docker.BuildOptions{
+		err := cli.Build(context.Background(), BuildOptions{
 			ImageName:      "test-name",
 			BuildContext:   tmpDir,
 			DockerfilePath: dockerfilePath,
@@ -64,9 +63,9 @@ func TestBuild(t *testing.T) {
 		mock := &dockerClientMock{
 			bodyData: []byte{'}'},
 		}
-		cli := docker.NewTestClient(mock)
+		cli := NewTestClient(mock)
 
-		err := cli.Build(context.Background(), docker.BuildOptions{
+		err := cli.Build(context.Background(), BuildOptions{
 			ImageName:      "test-name",
 			BuildContext:   tmpDir,
 			DockerfilePath: dockerfilePath,
@@ -85,9 +84,9 @@ func TestBuild(t *testing.T) {
 		require.NoError(t, os.WriteFile(dockerignorePath, []byte(testWrongDockerignore), os.ModePerm))
 
 		mock := &dockerClientMock{}
-		cli := docker.NewTestClient(mock)
+		cli := NewTestClient(mock)
 
-		err := cli.Build(context.Background(), docker.BuildOptions{
+		err := cli.Build(context.Background(), BuildOptions{
 			ImageName:      "test-name",
 			BuildContext:   tmpDir,
 			DockerfilePath: dockerfilePath,
@@ -101,9 +100,9 @@ func TestBuild(t *testing.T) {
 		dockerfilePath := fmt.Sprintf("%s/Dockerfile", tmpDir)
 
 		mock := &dockerClientMock{}
-		cli := docker.NewTestClient(mock)
+		cli := NewTestClient(mock)
 
-		err := cli.Build(context.Background(), docker.BuildOptions{
+		err := cli.Build(context.Background(), BuildOptions{
 			ImageName:      "test-name",
 			BuildContext:   tmpDir,
 			DockerfilePath: dockerfilePath,

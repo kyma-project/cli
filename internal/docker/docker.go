@@ -40,6 +40,8 @@ func NewTestClient(mock client.APIClient) *Client {
 	return &Client{client: mock}
 }
 
+// Build validates the build context, creates a tar archive of it, builds the image,
+// and sets up progress reporting to the standard output.
 func (c *Client) Build(ctx context.Context, opts BuildOptions) error {
 	excludes, err := build.ReadDockerignore(opts.BuildContext)
 	if err != nil {
