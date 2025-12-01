@@ -40,6 +40,7 @@ func NewDiagnoseCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().BoolVar(&cfg.verbose, "verbose", false, "Display verbose output, including error details during diagnostics collection")
 
 	cmd.AddCommand(NewDiagnoseLogsCMD(kymaConfig))
+	cmd.AddCommand(NewDiagnoseIstioCMD(kymaConfig))
 
 	return cmd
 }

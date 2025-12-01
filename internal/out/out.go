@@ -29,9 +29,10 @@ func Msgln(msg string)                       { Default.Msgln(msg) }
 func Msgf(format string, a ...interface{})   { Default.Msgf(format, a...) }
 func Msgfln(format string, a ...interface{}) { Default.Msgfln(format, a...) }
 
-func Prio(msg string)                       { Default.Prio(msg) }
-func Prioln(msg string)                     { Default.Prioln(msg) }
-func Priof(format string, a ...interface{}) { Default.Priof(format, a...) }
+func Prio(msg string)                         { Default.Prio(msg) }
+func Prioln(msg string)                       { Default.Prioln(msg) }
+func Priof(format string, a ...interface{})   { Default.Priof(format, a...) }
+func Priofln(format string, a ...interface{}) { Default.Priofln(format, a...) }
 
 func Verbose(msg string)                         { Default.Verbose(msg) }
 func Verboseln(msg string)                       { Default.Verboseln(msg) }

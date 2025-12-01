@@ -21,14 +21,14 @@ func Enable(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRe
 }
 
 func enable(printer *out.Printer, ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository, module, channel string, defaultCR bool, crs ...unstructured.Unstructured) clierror.Error {
-	if err := validateModuleAvailability(ctx, client, repo, module); err != nil {
+	if err := validateModuleAvailability(ctx, client, repo, module, channel); err != nil {
 		hints := []string{
 			"make sure you provide a valid module name and channel (or version)",
 			"to list available modules, call the `kyma module catalog` command",
 			"to pull available modules, call the `kyma module pull` command",
 			"to add a community module, use the `--origin` flag",
 		}
-		return clierror.Wrap(err, clierror.New("unknown module name", hints...))
+		return clierror.Wrap(err, clierror.New("unknown module name or channel", hints...))
 	}
 
 	crPolicy := kyma.CustomResourcePolicyIgnore
@@ -77,15 +77,32 @@ func applyCustomCR(printer *out.Printer, ctx context.Context, client kube.Client
 	return nil
 }
 
-func validateModuleAvailability(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository, module string) error {
+func validateModuleAvailability(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository, module, moduleChannel string) error {
 	availableCoreVersions, err := ListAvailableVersions(ctx, client, repo, module, false)
 	if err != nil {
 		return err
 	}
 
 	if len(availableCoreVersions) == 0 {
-		return fmt.Errorf("%s not found in the catalog of available modules", module)
+		return fmt.Errorf("the %s module is not available in the catalog", module)
 	}
 
-	return nil
+	channel := moduleChannel
+	if channel == "" {
+		// looking for default channel in Kyma CR
+		kyma, err := client.Kyma().GetDefaultKyma(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to get Kyma CR: %w", err)
+		}
+
+		channel = kyma.Spec.Channel
+	}
+
+	for _, v := range availableCoreVersions {
+		if v.Channel == channel || channel == "" {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("the %s module is not available in the %s channel", module, channel)
 }

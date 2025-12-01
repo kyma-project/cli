@@ -109,12 +109,12 @@ func collectModulesFromKymaCR(ctx context.Context, client kube.Client, defaultKy
 
 			installationState, err := getModuleInstallationState(ctx, client, ms, moduleSpec)
 			if err != nil {
-				out.Errfln("error occured during %s module installation status check: %v", ms.Name, err)
+				out.Debugfln("error occured during %s module installation status check: %v", ms.Name, err)
 			}
 
 			moduleCRState, err := getModuleCustomResourceStatus(ctx, client, ms, moduleSpec)
 			if err != nil {
-				out.Errfln("error occured during %s custom resource status check: %v", ms.Name, err)
+				out.Debugfln("error occured during %s custom resource status check: %v", ms.Name, err)
 			}
 
 			results <- Module{
@@ -384,28 +384,28 @@ func isClusterManagedByKLM(ctx context.Context, client kube.Client) bool {
 	return err == nil
 }
 
-func ListAvailableVersions(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository, moduleName string, isCommunity bool) ([]string, error) {
-	catalog, err := ListCatalog(ctx, client, repo)
+func ListAvailableVersions(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository, moduleName string, isCommunity bool) ([]ModuleVersion, error) {
+	var catalog ModulesList
+	var err error
+	if !isCommunity {
+		catalog, err = listCoreModulesCatalog(ctx, client)
+	} else {
+		catalog, err = listCommunityModulesCatalog(ctx, repo)
+	}
+
 	if err != nil {
 		return nil, err
 	}
 
 	var module Module
-
 	for _, m := range catalog {
-		if m.CommunityModule == isCommunity && m.Name == moduleName {
+		if m.Name == moduleName {
 			module = m
 			break
 		}
 	}
 
-	var moduleVersions []string
-
-	for _, mv := range module.Versions {
-		moduleVersions = append(moduleVersions, mv.Version)
-	}
-
-	return moduleVersions, nil
+	return module.Versions, nil
 }
 
 func listCommunityInstalled(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository, installedCoreModules ModulesList) (ModulesList, error) {
@@ -567,19 +567,19 @@ func extractModuleVersion(metadata map[string]any, installedManager *unstructure
 func getModuleStatus(ctx context.Context, client kube.Client, data unstructured.Unstructured) string {
 	apiVersion, ok := data.Object["apiVersion"].(string)
 	if !ok {
-		out.Errfln("failed to get apiVersion from data: %v", data)
+		out.Debugfln("failed to get apiVersion from data: %v", data)
 		return UnknownValue
 	}
 
 	kind, ok := data.Object["kind"].(string)
 	if !ok {
-		out.Errfln("failed to get kind from data: %v", data)
+		out.Debugfln("failed to get kind from data: %v", data)
 		return UnknownValue
 	}
 
 	resourceList, err := listResourcesByVersionKind(ctx, client, apiVersion, kind)
 	if err != nil {
-		out.Errfln("failed to list resources for version: %s and kind %s: %v", apiVersion, kind, err)
+		out.Debugfln("failed to list resources for version: %s and kind %s: %v", apiVersion, kind, err)
 		return UnknownValue
 	}
 

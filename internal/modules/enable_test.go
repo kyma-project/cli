@@ -39,6 +39,17 @@ var (
 			Version:    "1.0.0",
 		},
 	}
+	testKedaModuleReleaseMeta = kyma.ModuleReleaseMeta{
+		Spec: kyma.ModuleReleaseMetaSpec{
+			ModuleName: "keda",
+			Channels: []kyma.ChannelVersionAssignment{
+				{
+					Channel: "fast",
+					Version: "1.0.0",
+				},
+			},
+		},
+	}
 )
 
 func TestEnable(t *testing.T) {
@@ -48,6 +59,9 @@ func TestEnable(t *testing.T) {
 			ReturnErr: nil,
 			ReturnModuleTemplateList: kyma.ModuleTemplateList{
 				Items: []kyma.ModuleTemplate{testKedaModuleTemplate},
+			},
+			ReturnModuleReleaseMetaList: kyma.ModuleReleaseMetaList{
+				Items: []kyma.ModuleReleaseMeta{testKedaModuleReleaseMeta},
 			},
 		}
 		client := fake.KubeClient{
@@ -68,12 +82,49 @@ func TestEnable(t *testing.T) {
 		require.Equal(t, []fake.FakeEnabledModule{expectedEnabledModule}, kymaClient.EnabledModules)
 	})
 
+	t.Run("enable module for default channel", func(t *testing.T) {
+		buffer := bytes.NewBuffer([]byte{})
+		kymaClient := fake.KymaClient{
+			ReturnErr: nil,
+			ReturnDefaultKyma: kyma.Kyma{
+				Spec: kyma.KymaSpec{
+					Channel: "fast",
+				},
+			},
+			ReturnModuleTemplateList: kyma.ModuleTemplateList{
+				Items: []kyma.ModuleTemplate{testKedaModuleTemplate},
+			},
+			ReturnModuleReleaseMetaList: kyma.ModuleReleaseMetaList{
+				Items: []kyma.ModuleReleaseMeta{testKedaModuleReleaseMeta},
+			},
+		}
+		client := fake.KubeClient{
+			TestKymaInterface: &kymaClient,
+		}
+
+		expectedEnabledModule := fake.FakeEnabledModule{
+			Name:                 "keda",
+			Channel:              "",
+			CustomResourcePolicy: kyma.CustomResourcePolicyCreateAndDelete,
+		}
+
+		repo := &modulesfake.ModuleTemplatesRepo{}
+
+		err := enable(out.NewToWriter(buffer), context.Background(), &client, repo, "keda", "", true)
+		require.Nil(t, err)
+		require.Equal(t, "adding keda module to the Kyma CR\nkeda module enabled\n", buffer.String())
+		require.Equal(t, []fake.FakeEnabledModule{expectedEnabledModule}, kymaClient.EnabledModules)
+	})
+
 	t.Run("enable module and add custom cr", func(t *testing.T) {
 		buffer := bytes.NewBuffer([]byte{})
 		kymaClient := fake.KymaClient{
 			ReturnErr: nil,
 			ReturnModuleTemplateList: kyma.ModuleTemplateList{
 				Items: []kyma.ModuleTemplate{testKedaModuleTemplate},
+			},
+			ReturnModuleReleaseMetaList: kyma.ModuleReleaseMetaList{
+				Items: []kyma.ModuleReleaseMeta{testKedaModuleReleaseMeta},
 			},
 		}
 		rootlessDynamicClient := fake.RootlessDynamicClient{}
@@ -117,8 +168,8 @@ func TestEnable(t *testing.T) {
 		}
 
 		expectedCliErr := clierror.Wrap(
-			errors.New("keda not found in the catalog of available modules"),
-			clierror.New("unknown module name", hints...),
+			errors.New("failed to list all ModuleTemplate resources from the target Kyma environment: test error"),
+			clierror.New("unknown module name or channel", hints...),
 		)
 
 		err := enable(out.NewToWriter(buffer), context.Background(), &client, repo, "keda", "fast", true)
@@ -147,11 +198,44 @@ func TestEnable(t *testing.T) {
 		}
 
 		expectedCliErr := clierror.Wrap(
-			errors.New("keda not found in the catalog of available modules"),
-			clierror.New("unknown module name", hints...),
+			errors.New("the keda module is not available in the catalog"),
+			clierror.New("unknown module name or channel", hints...),
 		)
 
 		err := enable(out.NewToWriter(buffer), context.Background(), &client, repo, "keda", "fast", true)
+		require.Equal(t, expectedCliErr, err)
+	})
+
+	t.Run("failed to get module in given channel", func(t *testing.T) {
+		buffer := bytes.NewBuffer([]byte{})
+		kymaClient := fake.KymaClient{
+			ReturnErr: nil,
+			ReturnModuleTemplateList: kyma.ModuleTemplateList{
+				Items: []kyma.ModuleTemplate{testKedaModuleTemplate},
+			},
+			ReturnModuleReleaseMetaList: kyma.ModuleReleaseMetaList{
+				Items: []kyma.ModuleReleaseMeta{testKedaModuleReleaseMeta},
+			},
+		}
+
+		client := fake.KubeClient{
+			TestKymaInterface: &kymaClient,
+		}
+		repo := &modulesfake.ModuleTemplatesRepo{}
+
+		hints := []string{
+			"make sure you provide valid module name and channel (or version)",
+			"list available modules by calling the `kyma module catalog` command",
+			"pull available modules by calling the `kyma module pull` command",
+			"if you want to add a community module, use the `--origin` flag",
+		}
+
+		expectedCliErr := clierror.Wrap(
+			errors.New("the keda module is not available in the regular channel"),
+			clierror.New("unknown module name or channel", hints...),
+		)
+
+		err := enable(out.NewToWriter(buffer), context.Background(), &client, repo, "keda", "regular", true)
 		require.Equal(t, expectedCliErr, err)
 	})
 
@@ -161,6 +245,9 @@ func TestEnable(t *testing.T) {
 			ReturnWaitForModuleErr: errors.New("test error"),
 			ReturnModuleTemplateList: kyma.ModuleTemplateList{
 				Items: []kyma.ModuleTemplate{testKedaModuleTemplate},
+			},
+			ReturnModuleReleaseMetaList: kyma.ModuleReleaseMetaList{
+				Items: []kyma.ModuleReleaseMeta{testKedaModuleReleaseMeta},
 			},
 		}
 		client := fake.KubeClient{
@@ -184,6 +271,9 @@ func TestEnable(t *testing.T) {
 			ReturnErr: nil,
 			ReturnModuleTemplateList: kyma.ModuleTemplateList{
 				Items: []kyma.ModuleTemplate{testKedaModuleTemplate},
+			},
+			ReturnModuleReleaseMetaList: kyma.ModuleReleaseMetaList{
+				Items: []kyma.ModuleReleaseMeta{testKedaModuleReleaseMeta},
 			},
 		}
 		rootlessDynamicClient := fake.RootlessDynamicClient{
