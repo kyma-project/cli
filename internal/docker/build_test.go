@@ -1,4 +1,4 @@
-package dockerfile
+package docker
 
 import (
 	"bytes"
@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	dockerbuild "github.com/docker/docker/api/types/build"
+	"github.com/docker/docker/client"
 	"github.com/stretchr/testify/require"
 )
 
@@ -19,108 +20,100 @@ var (
 )
 
 func TestBuild(t *testing.T) {
+
 	t.Run("build image", func(t *testing.T) {
 		tmpDir := t.TempDir()
 		dockerfilePath := fmt.Sprintf("%s/Dockerfile", tmpDir)
-		err := os.WriteFile(dockerfilePath, []byte(testDockerfile), os.ModePerm)
-		require.NoError(t, err)
+		require.NoError(t, os.WriteFile(dockerfilePath, []byte(testDockerfile), os.ModePerm))
 
-		builder := &imageBuilder{
-			dockerClient: &dockerClientMock{},
-			out:          io.Discard,
-		}
+		mock := &dockerClientMock{}
+		cli := NewTestClient(mock)
 
-		err = builder.do(context.Background(), &BuildOptions{
+		err := cli.Build(context.Background(), BuildOptions{
 			ImageName:      "test-name",
 			BuildContext:   tmpDir,
 			DockerfilePath: dockerfilePath,
 		})
+
 		require.NoError(t, err)
 	})
 
 	t.Run("image build error", func(t *testing.T) {
 		tmpDir := t.TempDir()
 		dockerfilePath := fmt.Sprintf("%s/Dockerfile", tmpDir)
-		err := os.WriteFile(dockerfilePath, []byte(testDockerfile), os.ModePerm)
-		require.NoError(t, err)
+		require.NoError(t, os.WriteFile(dockerfilePath, []byte(testDockerfile), os.ModePerm))
 
-		builder := &imageBuilder{
-			dockerClient: &dockerClientMock{
-				err: errors.New("test error"),
-			},
-			out: io.Discard,
-		}
+		mock := &dockerClientMock{err: errors.New("test error")}
+		cli := NewTestClient(mock)
 
-		err = builder.do(context.Background(), &BuildOptions{
+		err := cli.Build(context.Background(), BuildOptions{
 			ImageName:      "test-name",
 			BuildContext:   tmpDir,
 			DockerfilePath: dockerfilePath,
 		})
+
 		require.ErrorContains(t, err, "test error")
 	})
 
 	t.Run("wrong build response", func(t *testing.T) {
 		tmpDir := t.TempDir()
 		dockerfilePath := fmt.Sprintf("%s/Dockerfile", tmpDir)
-		err := os.WriteFile(dockerfilePath, []byte(testDockerfile), os.ModePerm)
-		require.NoError(t, err)
+		require.NoError(t, os.WriteFile(dockerfilePath, []byte(testDockerfile), os.ModePerm))
 
-		builder := &imageBuilder{
-			dockerClient: &dockerClientMock{
-				bodyData: []byte{'}'},
-			},
-			out: io.Discard,
+		mock := &dockerClientMock{
+			bodyData: []byte{'}'},
 		}
+		cli := NewTestClient(mock)
 
-		err = builder.do(context.Background(), &BuildOptions{
+		err := cli.Build(context.Background(), BuildOptions{
 			ImageName:      "test-name",
 			BuildContext:   tmpDir,
 			DockerfilePath: dockerfilePath,
 		})
-		require.ErrorContains(t, err, "invalid character '}' looking for beginning of value")
+
+		require.ErrorContains(t, err, "invalid character '}'")
 	})
 
 	t.Run("wrong context error", func(t *testing.T) {
 		tmpDir := t.TempDir()
+
 		dockerfilePath := fmt.Sprintf("%s/Dockerfile", tmpDir)
+		require.NoError(t, os.WriteFile(dockerfilePath, []byte(testDockerfile), os.ModePerm))
+
 		dockerignorePath := fmt.Sprintf("%s/.dockerignore", tmpDir)
-		err := os.WriteFile(dockerignorePath, []byte(testWrongDockerignore), os.ModePerm)
-		require.NoError(t, err)
+		require.NoError(t, os.WriteFile(dockerignorePath, []byte(testWrongDockerignore), os.ModePerm))
 
-		builder := &imageBuilder{
-			dockerClient: &dockerClientMock{},
-			out:          io.Discard,
-		}
+		mock := &dockerClientMock{}
+		cli := NewTestClient(mock)
 
-		err = builder.do(context.Background(), &BuildOptions{
+		err := cli.Build(context.Background(), BuildOptions{
 			ImageName:      "test-name",
 			BuildContext:   tmpDir,
 			DockerfilePath: dockerfilePath,
 		})
-		require.ErrorContains(t, err, "error validating docker context: syntax error in pattern")
+
+		require.ErrorContains(t, err, "error validating docker context")
 	})
 
-	t.Run("dockerfile not found error", func(t *testing.T) {
+	t.Run("dockerfile not found", func(t *testing.T) {
 		tmpDir := t.TempDir()
 		dockerfilePath := fmt.Sprintf("%s/Dockerfile", tmpDir)
 
-		builder := &imageBuilder{
-			dockerClient: &dockerClientMock{
-				bodyData: []byte{'}'},
-			},
-			out: io.Discard,
-		}
+		mock := &dockerClientMock{}
+		cli := NewTestClient(mock)
 
-		err := builder.do(context.Background(), &BuildOptions{
+		err := cli.Build(context.Background(), BuildOptions{
 			ImageName:      "test-name",
 			BuildContext:   tmpDir,
 			DockerfilePath: dockerfilePath,
 		})
+
 		require.ErrorContains(t, err, "no such file or directory")
 	})
 }
 
 type dockerClientMock struct {
+	client.Client
 	err      error
 	bodyData []byte
 }
