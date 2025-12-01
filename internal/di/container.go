@@ -3,12 +3,10 @@ package di
 import (
 	"fmt"
 	"reflect"
-	"sync"
 )
 
 // DIContainer is a simple dependency injection container for singleton instances
 type DIContainer struct {
-	mu        sync.RWMutex
 	instances map[reflect.Type]interface{}
 	factories map[reflect.Type]Factory
 }

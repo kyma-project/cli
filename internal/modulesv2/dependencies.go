@@ -28,10 +28,7 @@ func NewModuleOperations(kymaConfig *cmdcommon.KymaConfig) *moduleOperations {
 }
 
 func (m *moduleOperations) Catalog() (*CatalogService, error) {
-	c, err := setupDIContainer(m.kymaConfig)
-	if err != nil {
-		return nil, errors.New("failed to configure command dependencies")
-	}
+	c := setupDIContainer(m.kymaConfig)
 
 	catalogService, err := di.GetTyped[*CatalogService](c)
 	if err != nil {
@@ -41,7 +38,7 @@ func (m *moduleOperations) Catalog() (*CatalogService, error) {
 	return catalogService, nil
 }
 
-func setupDIContainer(kymaConfig *cmdcommon.KymaConfig) (*di.DIContainer, error) {
+func setupDIContainer(kymaConfig *cmdcommon.KymaConfig) *di.DIContainer {
 	container := di.NewDIContainer()
 
 	di.RegisterTyped(container, func(c *di.DIContainer) (kube.Client, error) {
@@ -89,5 +86,5 @@ func setupDIContainer(kymaConfig *cmdcommon.KymaConfig) (*di.DIContainer, error)
 		return NewCatalogService(moduleRepo, metadataRepo), nil
 	})
 
-	return container, nil
+	return container
 }
