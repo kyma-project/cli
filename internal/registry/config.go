@@ -30,7 +30,7 @@ func GetExternalConfig(ctx context.Context, client kube.Client) (*ExternalRegist
 	if err != nil {
 		return nil, clierror.Wrap(err,
 			clierror.New("failed to get external registry configuration",
-				"make sure the docker-registry module is configured for external access; see https://kyma-project.io/#/docker-registry/user/tutorials/01-20-expose-registry",
+				"make sure the Docker registry module is configured for external access; see https://kyma-project.io/#/docker-registry/user/tutorials/01-20-expose-registry",
 			),
 		)
 	}
@@ -42,9 +42,9 @@ func GetInternalConfig(ctx context.Context, client kube.Client) (*InternalRegist
 	config, err := getInternalConfig(ctx, client)
 	if err != nil {
 		return nil, clierror.Wrap(err,
-			clierror.New("failed to load in-cluster registry configuration",
+			clierror.New("failed to load the in-cluster registry configuration",
 				"make sure cluster is available and properly configured",
-				"enable docker registry module by calling `kyma module add docker-registry -c experimental --default-cr`",
+				"add the Docker registry module by calling `kyma module add docker-registry -c experimental --default-cr`",
 			),
 		)
 	}

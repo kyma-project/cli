@@ -24,7 +24,7 @@ func GetToken(url, requestToken, audience string) (string, clierror.Error) {
 
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
-		return "", clierror.Wrap(err, clierror.New("failed to get token from Github"))
+		return "", clierror.Wrap(err, clierror.New("failed to get token from GitHub"))
 	}
 	defer response.Body.Close()
 

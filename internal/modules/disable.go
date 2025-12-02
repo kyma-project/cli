@@ -30,7 +30,7 @@ func disable(printer *out.Printer, ctx context.Context, client kube.Client, modu
 	printer.Msgfln("removing %s module from the target Kyma environment", module)
 	err := client.Kyma().DisableModule(ctx, module)
 	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to disable module"))
+		return clierror.Wrap(err, clierror.New("failed to disable the module"))
 	}
 
 	printer.Msgfln("%s module disabled", module)

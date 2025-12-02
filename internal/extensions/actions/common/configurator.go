@@ -17,7 +17,7 @@ func (c *TemplateConfigurator[T]) Configure(cfgTmpl types.ActionConfig, overwrit
 	clierr := c.configure(cfgTmpl, overwrites)
 	if clierr != nil {
 		return clierror.WrapE(clierr, clierror.New("failed to configure action",
-			"make sure the cli version is compatible with the extension"))
+			"make sure the CLI version is compatible with the extension"))
 	}
 
 	return nil

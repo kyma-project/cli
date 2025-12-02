@@ -198,7 +198,7 @@ func TestEnable(t *testing.T) {
 		}
 
 		expectedCliErr := clierror.Wrap(
-			errors.New("the keda module is not available in the catalog"),
+			errors.New("the Keda module is not available in the catalog"),
 			clierror.New("unknown module name or channel", hints...),
 		)
 
@@ -231,7 +231,7 @@ func TestEnable(t *testing.T) {
 		}
 
 		expectedCliErr := clierror.Wrap(
-			errors.New("the keda module is not available in the regular channel"),
+			errors.New("the Keda module is not available in the regular channel"),
 			clierror.New("unknown module name or channel", hints...),
 		)
 
@@ -262,7 +262,7 @@ func TestEnable(t *testing.T) {
 
 		err := enable(out.NewToWriter(buffer), context.Background(), &client, repo, "keda", "fast", false, testKedaCR)
 		require.Equal(t, expectedCliErr, err)
-		require.Equal(t, "adding keda module to the Kyma CR\nwaiting for module to be ready\n", buffer.String())
+		require.Equal(t, "adding the Keda module to the Kyma CR\nwaiting for module to be ready\n", buffer.String())
 	})
 
 	t.Run("failed to apply custom resource", func(t *testing.T) {
@@ -287,11 +287,11 @@ func TestEnable(t *testing.T) {
 
 		expectedCliErr := clierror.Wrap(
 			errors.New("test error"),
-			clierror.New("failed to apply custom cr from path"),
+			clierror.New("failed to apply a custom CR from path"),
 		)
 
 		err := enable(out.NewToWriter(buffer), context.Background(), &client, repo, "keda", "fast", false, testKedaCR)
 		require.Equal(t, expectedCliErr, err)
-		require.Equal(t, "adding keda module to the Kyma CR\nwaiting for module to be ready\napplying kyma-system/default cr\n", buffer.String())
+		require.Equal(t, "adding Keda module to the Kyma CR\nwaiting for module to be ready\napplying kyma-system/default cr\n", buffer.String())
 	})
 }

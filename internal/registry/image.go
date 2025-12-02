@@ -44,9 +44,9 @@ func importImage(ctx context.Context, imageName string, pushFunc PushFunc, utils
 	localImage, err := imageFromInternalRegistry(ctx, imageName, utils)
 	if err != nil {
 		return "", clierror.Wrap(err,
-			clierror.New("failed to load image from local docker daemon",
-				"make sure docker daemon is running",
-				"make sure the image exists in the local docker daemon",
+			clierror.New("failed to load image from the local Docker daemon",
+				"make sure Docker daemon is running",
+				"make sure the image exists in the local Docker daemon",
 			),
 		)
 	}
@@ -94,7 +94,7 @@ func NewPushWithPortforwardFunc(clusterAPIRestConfig *rest.Config, registryPodNa
 
 		pushedImage, err := imageToInClusterRegistry(ctx, localImage, transport, registryAuth, registryPullHost, imageName, utils)
 		if err != nil {
-			return "", clierror.Wrap(err, clierror.New("failed to push image to the in-cluster registry", "pushing through portforward may be unstable, try exposing the registry in the Registr CR"))
+			return "", clierror.Wrap(err, clierror.New("failed to push image to the in-cluster registry", "pushing through portforward may be unstable, expose the registry in the Registry CR"))
 		}
 
 		return pushedImage, nil
