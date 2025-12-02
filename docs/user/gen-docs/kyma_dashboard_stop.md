@@ -22,4 +22,4 @@ kyma dashboard stop [flags]
 
 ## See also
 
-* [kyma dashboard](kyma_dashboard.md) - Manage Kyma dashboard locally
+* [kyma dashboard](kyma_dashboard.md) - Manages Kyma dashboard locally

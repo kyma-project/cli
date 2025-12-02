@@ -1,6 +1,6 @@
 # kyma dashboard
 
-Manage Kyma dashboard locally.
+Manages Kyma dashboard locally.
 
 ## Synopsis
 
