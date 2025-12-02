@@ -80,7 +80,7 @@ func runProvision(config *provisionConfig) clierror.Error {
 
 	kymaParameters, err := buildParameters(config)
 	if err != nil {
-		return clierror.WrapE(err, clierror.New("failed to prepare kyma parameters"))
+		return clierror.WrapE(err, clierror.New("failed to prepare Kyma parameters"))
 	}
 
 	ProvisionEnvironment := &cis.ProvisionEnvironment{
@@ -93,7 +93,7 @@ func runProvision(config *provisionConfig) clierror.Error {
 
 	response, err := localCISClient.Provision(ProvisionEnvironment)
 	if err != nil {
-		return clierror.WrapE(err, clierror.New("failed to provision kyma runtime"))
+		return clierror.WrapE(err, clierror.New("failed to provision Kyma runtime"))
 	}
 
 	out.Msgfln("Kyma environment provisioning, environment name: '%s', id: '%s'", response.Name, response.ID)

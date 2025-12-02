@@ -51,10 +51,10 @@ func TestDisableCore(t *testing.T) {
 		err := disable(out.NewToWriter(buffer), context.Background(), &fakeKubeClient, "keda")
 		require.Nil(t, err)
 		require.Equal(t, []string{"keda"}, fakeKymaClient.DisabledModules)
-		require.Equal(t, "removing keda module from the target Kyma environment\nkeda module disabled\n", buffer.String())
+		require.Equal(t, "removing the Keda module from the target Kyma environment\nkeda module disabled\n", buffer.String())
 	})
 
-	t.Run("disable module with Ignore policy for module with no CR", func(t *testing.T) {
+	t.Run("disable the module with Ignore policy for module with no CR", func(t *testing.T) {
 		buffer := bytes.NewBuffer([]byte{})
 		fakeKymaClient := fake.KymaClient{
 			ReturnErr: nil,
@@ -78,10 +78,10 @@ func TestDisableCore(t *testing.T) {
 		err := disable(out.NewToWriter(buffer), context.Background(), &fakeKubeClient, "keda")
 		require.Nil(t, err)
 		require.Equal(t, []string{"keda"}, fakeKymaClient.DisabledModules)
-		require.Equal(t, "removing keda module from the target Kyma environment\nkeda module disabled\n", buffer.String())
+		require.Equal(t, "removing the Keda module from the target Kyma environment\nkeda module disabled\n", buffer.String())
 	})
 
-	t.Run("disable module with Ignore policy for module", func(t *testing.T) {
+	t.Run("disable the module with Ignore policy for module", func(t *testing.T) {
 		buffer := bytes.NewBuffer([]byte{})
 		fakeKymaClient := fake.KymaClient{
 			ReturnErr: nil,
@@ -118,7 +118,7 @@ func TestDisableCore(t *testing.T) {
 		require.Equal(t, "removing kyma-system/default CR\nwaiting for kyma-system/default CR to be removed\nremoving keda module from the target Kyma environment\nkeda module disabled\n", buffer.String())
 	})
 
-	t.Run("failed to disable module", func(t *testing.T) {
+	t.Run("failed to disable the module", func(t *testing.T) {
 		buffer := bytes.NewBuffer([]byte{})
 		fakeKymaClient := fake.KymaClient{
 			ReturnDisableModuleErr: errors.New("test error"),
@@ -134,12 +134,12 @@ func TestDisableCore(t *testing.T) {
 
 		expectedCliErr := clierror.Wrap(
 			errors.New("test error"),
-			clierror.New("failed to disable module"),
+			clierror.New("failed to disable the module"),
 		)
 
 		err := disable(out.NewToWriter(buffer), context.Background(), &fakeKubeClient, "keda")
 		require.Equal(t, expectedCliErr, err)
-		require.Equal(t, "removing keda module from the target Kyma environment\n", buffer.String())
+		require.Equal(t, "removing the Keda module from the target Kyma environment\n", buffer.String())
 	})
 
 	t.Run("failed to get module info", func(t *testing.T) {
@@ -153,7 +153,7 @@ func TestDisableCore(t *testing.T) {
 
 		expectedCliErr := clierror.Wrap(
 			errors.New("test error"),
-			clierror.New("failed to get module info from the target Kyma environment"),
+			clierror.New("failed to get the module info from the target Kyma environment"),
 		)
 
 		err := disable(out.NewToWriter(buffer), context.Background(), &fakeKubeClient, "keda")
