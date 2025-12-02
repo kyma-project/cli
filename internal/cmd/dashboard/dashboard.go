@@ -8,7 +8,7 @@ import (
 func NewDashboardCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "dashboard <command> [flags]",
-		Short: "Manage Kyma dashboard locally",
+		Short: "Manages Kyma dashboard locally",
 		Long:  `Use this command to manage running the Kyma dashboard locally in a docker container.`,
 	}
 
