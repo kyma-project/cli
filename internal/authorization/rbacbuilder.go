@@ -41,6 +41,8 @@ type RBACBuilder struct {
 	subjectKind *SubjectKind
 	subjectName string
 	bindingName string
+
+	serviceAccountNamespace string
 }
 
 func NewRBACBuilder() *RBACBuilder {
@@ -82,6 +84,11 @@ func (b *RBACBuilder) ForClusterRole(clusterRole string) *RBACBuilder {
 	return b
 }
 
+func (b *RBACBuilder) ForServiceAccountNamespace(saNamespace string) *RBACBuilder {
+	b.serviceAccountNamespace = saNamespace
+	return b
+}
+
 func (b *RBACBuilder) BuildClusterRoleBinding() (*unstructured.Unstructured, clierror.Error) {
 	if err := b.validateForClusterRoleBinding(); err != nil {
 		return nil, err
@@ -111,6 +118,10 @@ func (b *RBACBuilder) validateForClusterRoleBinding() clierror.Error {
 		return clierror.New("clusterrole is required for ClusterRoleBinding")
 	}
 
+	if b.subjectKind != nil && b.subjectKind.name == SERVICE_ACCOUNT && b.namespace == "" && b.serviceAccountNamespace == "" {
+		return clierror.New("namespace is required for service account subject", "Make use of '--sa-namespace' flag to define namespace for ServiceAccount")
+	}
+
 	return nil
 }
 
@@ -136,6 +147,9 @@ func (b *RBACBuilder) validateForRoleBinding() clierror.Error {
 	if b.namespace == "" {
 		return clierror.New("provide namespace for RoleBinding")
 	}
+	if b.subjectKind != nil && b.subjectKind.name == SERVICE_ACCOUNT && b.namespace == "" && b.serviceAccountNamespace == "" {
+		return clierror.New("namespace is required for ServiceAccount subject")
+	}
 
 	return nil
 }
@@ -148,12 +162,7 @@ func (b *RBACBuilder) buildClusterRoleBinding() *unstructured.Unstructured {
 			"metadata": map[string]any{
 				"name": b.bindingName,
 			},
-			"subjects": []map[string]any{
-				{
-					"kind": b.subjectKind.name,
-					"name": b.prefix + b.subjectName,
-				},
-			},
+			"subjects": b.buildRoleBindingSubject(),
 			"roleRef": map[string]any{
 				"kind":     "ClusterRole",
 				"name":     b.clusterrole,
@@ -179,17 +188,36 @@ func (b *RBACBuilder) buildRoleBinding() *unstructured.Unstructured {
 				"name":      b.bindingName,
 				"namespace": b.namespace,
 			},
-			"subjects": []map[string]any{
-				{
-					"kind": b.subjectKind.name,
-					"name": b.prefix + b.subjectName,
-				},
-			},
+			"subjects": b.buildRoleBindingSubject(),
 			"roleRef": map[string]any{
 				"kind":     roleKind,
 				"name":     roleName,
 				"apiGroup": "rbac.authorization.k8s.io",
 			},
+		},
+	}
+}
+
+func (b *RBACBuilder) buildRoleBindingSubject() []map[string]any {
+	if b.subjectKind.name == SERVICE_ACCOUNT {
+		saNamespace := b.serviceAccountNamespace
+		if saNamespace == "" {
+			saNamespace = b.namespace
+		}
+
+		return []map[string]any{
+			{
+				"kind":      b.subjectKind.name,
+				"name":      b.prefix + b.subjectName,
+				"namespace": saNamespace,
+			},
+		}
+	}
+
+	return []map[string]any{
+		{
+			"kind": b.subjectKind.name,
+			"name": b.prefix + b.subjectName,
 		},
 	}
 }

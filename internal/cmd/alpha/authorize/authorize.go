@@ -16,14 +16,15 @@ import (
 type authorizeConfig struct {
 	*cmdcommon.KymaConfig
 
-	authTarget   string // user, group, serviceaccount
-	name         []string
-	namespace    string
-	clusterWide  bool
-	role         string
-	clusterrole  string
-	dryRun       bool
-	outputFormat types.Format
+	authTarget              string // user, group, serviceaccount
+	name                    []string
+	namespace               string
+	clusterWide             bool
+	role                    string
+	clusterrole             string
+	serviceAccountNamespace string
+	dryRun                  bool
+	outputFormat            types.Format
 }
 
 func NewAuthorizeCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
@@ -75,6 +76,7 @@ func NewAuthorizeCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().StringVar(&cfg.role, "role", "", "Role name to bind (creates RoleBinding in specified namespace)")
 	cmd.Flags().StringVar(&cfg.clusterrole, "clusterrole", "", "ClusterRole name to bind (for ClusterRoleBinding with --cluster-wide, or RoleBinding in namespace)")
 	cmd.Flags().StringSliceVar(&cfg.name, "name", []string{}, "Name(s) of the subject(s) to authorize (required)")
+	cmd.Flags().StringVar(&cfg.serviceAccountNamespace, "sa-namespace", "", "Namespace for the service account subject. Defaults to the RoleBinding namespace when not specified.")
 	cmd.Flags().BoolVar(&cfg.dryRun, "dry-run", false, "Preview the YAML/JSON output without applying resources to the cluster")
 	cmd.Flags().VarP(&cfg.outputFormat, "output", "o", "Output format for dry-run (yaml or json)")
 
@@ -101,11 +103,13 @@ func authorize(cfg *authorizeConfig) clierror.Error {
 
 		if cfg.outputFormat == "" {
 			out.Msgfln("%s '%s' applied successfully.%s", res.GetKind(), res.GetName(), msgSuffix)
-		} else {
-			clierr := outputResources(cfg.outputFormat, rbacResources)
-			if clierr != nil {
-				return clierr
-			}
+		}
+	}
+
+	if cfg.outputFormat != "" {
+		clierr := outputResources(cfg.outputFormat, rbacResources)
+		if clierr != nil {
+			return clierr
 		}
 	}
 
@@ -150,6 +154,7 @@ func buildClusterRoleBinding(builder *authorization.RBACBuilder, cfg *authorizeC
 	rbacResource, err := builder.
 		ForClusterRole(cfg.clusterrole).
 		ForBindingName(fmt.Sprintf("%s-%s-binding", cfg.clusterrole, subjectName)).
+		ForServiceAccountNamespace(cfg.serviceAccountNamespace).
 		BuildClusterRoleBinding()
 
 	if err != nil {
@@ -159,7 +164,9 @@ func buildClusterRoleBinding(builder *authorization.RBACBuilder, cfg *authorizeC
 }
 
 func buildRoleBinding(builder *authorization.RBACBuilder, cfg *authorizeConfig, subjectName string) (*unstructured.Unstructured, clierror.Error) {
-	builder = builder.ForNamespace(cfg.namespace)
+	builder = builder.
+		ForNamespace(cfg.namespace).
+		ForServiceAccountNamespace(cfg.serviceAccountNamespace)
 
 	if cfg.role != "" {
 		builder = builder.
