@@ -99,7 +99,7 @@ func TestDisableCommunity(t *testing.T) {
 
 		expectedCliErr := clierror.Wrap(
 			errors.New("ResourcesError"),
-			clierror.New("failed to get resources for module test"),
+			clierror.New("failed to get resources for the module test"),
 		)
 
 		require.NotNil(t, err)
