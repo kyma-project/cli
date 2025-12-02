@@ -11,6 +11,8 @@
 * [kyma alpha hana map](/cli/user/gen-docs/kyma_alpha_hana_map.md)
 * [kyma alpha kubeconfig](/cli/user/gen-docs/kyma_alpha_kubeconfig.md)
 * [kyma alpha kubeconfig generate](/cli/user/gen-docs/kyma_alpha_kubeconfig_generate.md)
+* [kyma alpha module](/cli/user/gen-docs/kyma_alpha_module.md)
+* [kyma alpha module catalog](/cli/user/gen-docs/kyma_alpha_module_catalog.md)
 * [kyma alpha provision](/cli/user/gen-docs/kyma_alpha_provision.md)
 * [kyma alpha reference-instance](/cli/user/gen-docs/kyma_alpha_reference-instance.md)
 * [kyma app](/cli/user/gen-docs/kyma_app.md)
