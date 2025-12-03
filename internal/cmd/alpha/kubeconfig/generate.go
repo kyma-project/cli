@@ -153,7 +153,7 @@ func (cfg *generateConfig) validate() clierror.Error {
 		// check if request token is provided
 		return clierror.New(
 			"ACTIONS_ID_TOKEN_REQUEST_TOKEN env variable is required if --id-token-request-url flag or ACTIONS_ID_TOKEN_REQUEST_URL env were provided",
-			"make sure you're running the command in Github Actions environment",
+			"make sure you're running the command in GitHub Actions environment",
 		)
 	}
 	if cfg.server != "" && (cfg.ca == "" && cfg.caData == "") {
@@ -324,7 +324,7 @@ func setupServiceAccountWithBindings(cfg *generateConfig, kubeClient kube.Client
 	if cfg.permanent {
 		err = resources.CreateServiceAccountToken(cfg.Ctx, kubeClient, cfg.serviceAccount, cfg.namespace)
 		if err != nil {
-			return clierror.Wrap(err, clierror.New("failed to create secret"))
+			return clierror.Wrap(err, clierror.New("failed to create Secret"))
 		}
 	}
 	return nil

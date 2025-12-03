@@ -51,7 +51,7 @@ func TestDisableCore(t *testing.T) {
 		err := disable(out.NewToWriter(buffer), context.Background(), &fakeKubeClient, "keda")
 		require.Nil(t, err)
 		require.Equal(t, []string{"keda"}, fakeKymaClient.DisabledModules)
-		require.Equal(t, "removing keda module from the target Kyma environment\nkeda module disabled\n", buffer.String())
+		require.Equal(t, "removing the keda module from the target Kyma environment\nkeda module disabled\n", buffer.String())
 	})
 
 	t.Run("disable module with Ignore policy for module with no CR", func(t *testing.T) {
@@ -78,7 +78,7 @@ func TestDisableCore(t *testing.T) {
 		err := disable(out.NewToWriter(buffer), context.Background(), &fakeKubeClient, "keda")
 		require.Nil(t, err)
 		require.Equal(t, []string{"keda"}, fakeKymaClient.DisabledModules)
-		require.Equal(t, "removing keda module from the target Kyma environment\nkeda module disabled\n", buffer.String())
+		require.Equal(t, "removing the keda module from the target Kyma environment\nkeda module disabled\n", buffer.String())
 	})
 
 	t.Run("disable module with Ignore policy for module", func(t *testing.T) {
@@ -134,12 +134,12 @@ func TestDisableCore(t *testing.T) {
 
 		expectedCliErr := clierror.Wrap(
 			errors.New("test error"),
-			clierror.New("failed to disable module"),
+			clierror.New("failed to disable the module"),
 		)
 
 		err := disable(out.NewToWriter(buffer), context.Background(), &fakeKubeClient, "keda")
 		require.Equal(t, expectedCliErr, err)
-		require.Equal(t, "removing keda module from the target Kyma environment\n", buffer.String())
+		require.Equal(t, "removing the keda module from the target Kyma environment\n", buffer.String())
 	})
 
 	t.Run("failed to get module info", func(t *testing.T) {
@@ -153,7 +153,7 @@ func TestDisableCore(t *testing.T) {
 
 		expectedCliErr := clierror.Wrap(
 			errors.New("test error"),
-			clierror.New("failed to get module info from the target Kyma environment"),
+			clierror.New("failed to get the module info from the target Kyma environment"),
 		)
 
 		err := disable(out.NewToWriter(buffer), context.Background(), &fakeKubeClient, "keda")

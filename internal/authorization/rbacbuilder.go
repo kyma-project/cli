@@ -133,22 +133,22 @@ func (b *RBACBuilder) validateForRoleBinding() clierror.Error {
 		return clierror.New("subjectName is required")
 	}
 	if b.role == "" && b.clusterrole == "" {
-		return clierror.New("either role or clusterrole must be specified for RoleBinding")
+		return clierror.New("pecify either Role or ClusterRole for RoleBinding")
 	}
 	if b.role != "" && b.clusterrole != "" {
-		return clierror.New("cannot specify both role and clusterrole for RoleBinding")
+		return clierror.New("cannot specify both Role and ClusterRole for RoleBinding")
 	}
 	if b.namespace == "" && b.clusterrole != "" {
 		return clierror.New(
 			fmt.Sprintf("failed to apply binding for the '%s' ClusterRole", b.clusterrole),
-			"either specify a namespace or enable cluster-wide flag for ClusterRoleBinding",
+			"either specify a namespace or enable the cluster-wide flag for ClusterRoleBinding",
 		)
 	}
 	if b.namespace == "" {
-		return clierror.New("namespace is required for RoleBinding")
+		return clierror.New("provide namespace for RoleBinding")
 	}
 	if b.subjectKind != nil && b.subjectKind.name == SERVICE_ACCOUNT && b.namespace == "" && b.serviceAccountNamespace == "" {
-		return clierror.New("namespace is required for ServiceAccount subject")
+		return clierror.New("provide namespace for ServiceAccount subject")
 	}
 
 	return nil

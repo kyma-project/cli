@@ -43,14 +43,14 @@ func (c *functionInitActionConfig) validate() clierror.Error {
 		if !filepath.IsLocal(runtimeCfg.DepsFilename) {
 			return clierror.New(
 				fmt.Sprintf("invalid dependency filename %s for runtime %s", runtimeCfg.DepsFilename, runtimeName),
-				"dependency filename must be a local path or single file name",
+				"dependency filename must be a local path or a single file name",
 			)
 		}
 
 		if !filepath.IsLocal(runtimeCfg.HandlerFilename) {
 			return clierror.New(
 				fmt.Sprintf("invalid handler filename %s for runtime %s", runtimeCfg.HandlerFilename, runtimeName),
-				"handler filename must be a local path or single file name",
+				"handler filename must be a local path or a single file name",
 			)
 		}
 	}
@@ -138,6 +138,6 @@ func getOutputDirAcceptance(path string) clierror.Error {
 
 	return clierror.New(
 		"command execution aborted",
-		"you must provide a local path for the output directory or accept the default one by typing 'y' and pressing enter",
+		"provide a local path for the output directory or accept the default one by typing 'y' and pressing enter",
 	)
 }
