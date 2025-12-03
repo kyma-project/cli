@@ -51,7 +51,7 @@ func TestDisableCore(t *testing.T) {
 		err := disable(out.NewToWriter(buffer), context.Background(), &fakeKubeClient, "keda")
 		require.Nil(t, err)
 		require.Equal(t, []string{"keda"}, fakeKymaClient.DisabledModules)
-		require.Equal(t, "removing the Keda module from the target Kyma environment\nkeda module disabled\n", buffer.String())
+		require.Equal(t, "removing the keda module from the target Kyma environment\nkeda module disabled\n", buffer.String())
 	})
 
 	t.Run("disable the module with Ignore policy for module with no CR", func(t *testing.T) {
@@ -78,7 +78,7 @@ func TestDisableCore(t *testing.T) {
 		err := disable(out.NewToWriter(buffer), context.Background(), &fakeKubeClient, "keda")
 		require.Nil(t, err)
 		require.Equal(t, []string{"keda"}, fakeKymaClient.DisabledModules)
-		require.Equal(t, "removing the Keda module from the target Kyma environment\nkeda module disabled\n", buffer.String())
+		require.Equal(t, "removing the keda module from the target Kyma environment\nkeda module disabled\n", buffer.String())
 	})
 
 	t.Run("disable the module with Ignore policy for module", func(t *testing.T) {
