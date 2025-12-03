@@ -22,13 +22,13 @@ type clusterConfig struct {
 }
 
 func NewDiagnoseClusterCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
-	cfg := diagnoseConfig{
+	cfg := clusterConfig{
 		KymaConfig: kymaConfig,
 	}
 
 	cmd := &cobra.Command{
 		Use:   "cluster [flags]",
-		Short: "Diagnose cluster health and configuration",
+		Short: "Diagnoses cluster health and configuration",
 		Long:  "Use this command to quickly assess the health, configuration, and potential issues in your cluster for troubleshooting and support purposes.",
 		Run: func(cmd *cobra.Command, args []string) {
 			clierror.Check(diagnoseCluster(&cfg))
@@ -42,7 +42,7 @@ func NewDiagnoseClusterCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	return cmd
 }
 
-func diagnoseCluster(cfg *diagnoseConfig) clierror.Error {
+func diagnoseCluster(cfg *clusterConfig) clierror.Error {
 	if cfg.verbose {
 		out.EnableVerbose()
 	}
