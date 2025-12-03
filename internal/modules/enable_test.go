@@ -164,7 +164,6 @@ func TestEnable(t *testing.T) {
 			"make sure you provide a valid module name and channel (or version)",
 			"to list available modules, call the `kyma module catalog` command",
 			"to pull available modules, call the `kyma module pull` command",
-			"to add a community module, use the `--origin` flag",
 		}
 
 		expectedCliErr := clierror.Wrap(
@@ -194,7 +193,6 @@ func TestEnable(t *testing.T) {
 			"make sure you provide a valid module name and channel (or version)",
 			"to list available modules, call the `kyma module catalog` command",
 			"to pull available modules, call the `kyma module pull` command",
-			"to add a community module, use the `--origin` flag",
 		}
 
 		expectedCliErr := clierror.Wrap(
@@ -227,7 +225,6 @@ func TestEnable(t *testing.T) {
 			"make sure you provide valid module name and channel (or version)",
 			"list available modules by calling the `kyma module catalog` command",
 			"pull available modules by calling the `kyma module pull` command",
-			"if you want to add a community module, use the `--origin` flag",
 		}
 
 		expectedCliErr := clierror.Wrap(
