@@ -22,8 +22,9 @@ type ModuleLogs struct {
 }
 
 type LogOptions struct {
-	Since time.Duration
-	Lines int64
+	Since  time.Duration
+	Lines  int64
+	Strict bool
 }
 
 type ModuleLogsCollector struct {
@@ -31,6 +32,7 @@ type ModuleLogsCollector struct {
 	*out.Printer
 	modules        []string
 	podLogTemplate *corev1.PodLogOptions // immutable template for each container
+	strict         bool
 }
 
 func NewModuleLogsCollector(client kube.Client, modules []string, options LogOptions) *ModuleLogsCollector {
@@ -48,6 +50,7 @@ func NewModuleLogsCollector(client kube.Client, modules []string, options LogOpt
 		Printer:        out.Default,
 		modules:        modules,
 		podLogTemplate: podOpts,
+		strict:         options.Strict,
 	}
 }
 
@@ -69,7 +72,11 @@ func (c *ModuleLogsCollector) collectModuleLogs(ctx context.Context, moduleName 
 	collected := make(map[string][]string)
 	pods, err := c.getPodsForModule(ctx, moduleName)
 	if err != nil {
-		out.Errfln("Failed to get pods for module %s: %v", moduleName, err)
+		if ctx.Err() == context.DeadlineExceeded {
+			out.Errfln("Logs collection for module %s cancelled due to timeout", moduleName)
+		} else {
+			out.Errfln("Failed to get pods for module %s: %v", moduleName, err)
+		}
 		return collected
 	}
 
@@ -132,6 +139,9 @@ func (c *ModuleLogsCollector) collectContainerLogs(ctx context.Context, pod *cor
 
 	logStream, err := req.Stream(ctx)
 	if err != nil {
+		if ctx.Err() == context.DeadlineExceeded {
+			out.Errfln("Logs collection cancelled due to timeout for target: %v", fmt.Sprintf("%s/%s", pod.Name, containerName))
+		}
 		out.Errfln("Failed to get log stream for container %s in pod %s: %v", containerName, pod.Name, err)
 		return []string{}
 	}
@@ -147,24 +157,13 @@ func (c *ModuleLogsCollector) extractStructuredOrErrorLogs(logStream io.ReadClos
 	scanner := bufio.NewScanner(logStream)
 	var collected []string
 
+	isErrorOrWarning := c.getParseStrategy()
+
 	for scanner.Scan() {
 		line := scanner.Text()
-		var obj map[string]any
-		if err := json.Unmarshal([]byte(line), &obj); err != nil {
-			// Not JSON -> ignore
-			continue
+		if isErrorOrWarning(line) {
+			collected = append(collected, line)
 		}
-		lvlRaw, hasLevel := obj["level"]
-		_, hasMsg := obj["message"]
-		_, hasTs := obj["timestamp"]
-		if !hasLevel || (!hasMsg && !hasTs) {
-			continue
-		}
-		lvl := fmt.Sprintf("%v", lvlRaw)
-		if !strings.EqualFold(lvl, "error") && !strings.EqualFold(lvl, "warning") {
-			continue
-		}
-		collected = append(collected, line)
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -174,8 +173,66 @@ func (c *ModuleLogsCollector) extractStructuredOrErrorLogs(logStream io.ReadClos
 	return collected
 }
 
+func (c *ModuleLogsCollector) getParseStrategy() func(string) bool {
+	if c.strict {
+		return c.parseLogsStrict
+	}
+	return c.parseLogsDefault
+}
+
 func (c *ModuleLogsCollector) buildPodLogOptions(containerName string) *corev1.PodLogOptions {
 	clone := *c.podLogTemplate
 	clone.Container = containerName
 	return &clone
+}
+
+func (c *ModuleLogsCollector) parseLogsStrict(line string) bool {
+	var obj map[string]any
+
+	if err := json.Unmarshal([]byte(line), &obj); err != nil {
+		// Not JSON -> ignore
+		return false
+	}
+	lvlRaw, hasLevel := obj["level"]
+	_, hasMessage := obj["message"]
+	_, hasTimestamp := obj["timestamp"]
+	if !hasLevel || (!hasMessage && !hasTimestamp) {
+		return false
+	}
+	lvl := fmt.Sprintf("%v", lvlRaw)
+	if !strings.EqualFold(lvl, "error") && !strings.EqualFold(lvl, "warn") && !strings.EqualFold(lvl, "warning") {
+		return false
+	}
+
+	return true
+}
+
+func (c *ModuleLogsCollector) parseLogsDefault(line string) bool {
+	lineLower := strings.ToLower(line)
+
+	errorKeywords := []string{
+		"error", "exception", "fatal", "panic", "fail", "failed", "failure", "warning", "warn",
+	}
+
+	for _, keyword := range errorKeywords {
+		if strings.Contains(lineLower, keyword) && !containsFalsePositives(lineLower) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func containsFalsePositives(line string) bool {
+	falsePositives := []string{
+		"\"error\": null", "\"error\":null",
+	}
+
+	for _, fp := range falsePositives {
+		if strings.Contains(line, fp) {
+			return true
+		}
+	}
+
+	return false
 }
