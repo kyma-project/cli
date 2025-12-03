@@ -91,11 +91,11 @@ func runHanaMap(config *hanaMapConfig) clierror.Error {
 func getClusterID(ctx context.Context, client kubernetes.Interface) (string, clierror.Error) {
 	secret, geterr := client.CoreV1().Secrets("kyma-system").Get(ctx, "sap-btp-manager", metav1.GetOptions{})
 	if geterr != nil {
-		return "", clierror.Wrap(geterr, clierror.New("failed to get secret kyma-system/sap-btp-manager"))
+		return "", clierror.Wrap(geterr, clierror.New("failed to get Secret kyma-system/sap-btp-manager"))
 	}
 
 	if secret.Data["cluster_id"] == nil {
-		return "", clierror.New("cluster_id not found in the secret kyma-system/sap-btp-manager")
+		return "", clierror.New("cluster_id not found in the Secret kyma-system/sap-btp-manager")
 	}
 
 	return string(secret.Data["cluster_id"]), nil

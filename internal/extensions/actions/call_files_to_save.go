@@ -37,16 +37,16 @@ type callFilesToSaveConfig struct {
 
 func (c *callFilesToSaveConfig) validate() clierror.Error {
 	if c.TargetPod.Namespace == "" {
-		return clierror.New("empty target pod namespace")
+		return clierror.New("empty target Pod namespace")
 	}
 	if c.TargetPod.Selector == nil {
-		return clierror.New("empty target pod selector")
+		return clierror.New("empty target Pod selector")
 	}
 	if c.TargetPod.Port == "" {
-		return clierror.New("empty target pod port")
+		return clierror.New("empty target Pod port")
 	}
 	if c.TargetPod.Path == "" {
-		return clierror.New("empty target pod path")
+		return clierror.New("empty target Pod path")
 	}
 	if c.OutputDir == "" {
 		return clierror.New("empty output directory path")
