@@ -18,7 +18,7 @@ kyma module delete <module> [flags]
 
   ## Delete a community module and auto-approve the deletion
   #  passed argument must be in the format <namespace>/<module-template-name>
-  #  the module must be pulled from the catalog first using the 'kyma module pull' command
+  #  the format of the passed argument can be read from the 'kyma module catalog' command from the 'origin' column
   kyma module delete my-namespace/my-community-module-1.0.0 --auto-approve
 ```
 
