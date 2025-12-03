@@ -46,7 +46,7 @@ func (f *IstioLevel) Type() string {
 func (f *IstioLevel) ToInternalIstioLevel() istioanalysisdiag.Level {
 	levelName := f.String()
 	if levelName == "" {
-		return istioanalysisdiag.Info
+		return istioanalysisdiag.Warning
 	}
 	return istioanalysisdiag.GetUppercaseStringToLevelMap()[strings.ToUpper(levelName)]
 }
