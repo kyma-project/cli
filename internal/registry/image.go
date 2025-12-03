@@ -45,8 +45,8 @@ func importImage(ctx context.Context, imageName string, pushFunc PushFunc, utils
 	if err != nil {
 		return "", clierror.Wrap(err,
 			clierror.New("failed to load image from the local Docker daemon",
-				"make sure Docker daemon is running",
-				"make sure the image exists in the local Docker daemon",
+				"ensure the Docker daemon is running",
+				"ensure the image exists in the local Docker daemon",
 			),
 		)
 	}

@@ -153,7 +153,7 @@ func (cfg *generateConfig) validate() clierror.Error {
 		// check if request token is provided
 		return clierror.New(
 			"ACTIONS_ID_TOKEN_REQUEST_TOKEN env variable is required if --id-token-request-url flag or ACTIONS_ID_TOKEN_REQUEST_URL env were provided",
-			"make sure you're running the command in GitHub Actions environment",
+			"ensure you're running the command in GitHub Actions environment",
 		)
 	}
 	if cfg.server != "" && (cfg.ca == "" && cfg.caData == "") {

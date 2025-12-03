@@ -74,8 +74,8 @@ func Test_importImage(t *testing.T) {
 			},
 			wantErr: clierror.Wrap(errors.New("::::::::: must specify a tag name after the colon"),
 				clierror.New("failed to load image from the local Docker daemon",
-					"make sure Docker daemon is running",
-					"make sure the image exists in the local Docker daemon"),
+					"ensure Docker daemon is running",
+					"ensure the image exists in the local Docker daemon"),
 			),
 		},
 		{
@@ -85,8 +85,8 @@ func Test_importImage(t *testing.T) {
 			},
 			wantErr: clierror.Wrap(errors.New("image 'gcr.io/test:image' can't contain registry 'gcr.io' address"),
 				clierror.New("failed to load image from the local Docker daemon",
-					"make sure Docker daemon is running",
-					"make sure the image exists in the local Docker daemon"),
+					"ensure Docker daemon is running",
+					"ensure the image exists in the local Docker daemon"),
 			),
 		},
 		{
@@ -102,8 +102,8 @@ func Test_importImage(t *testing.T) {
 			},
 			wantErr: clierror.Wrap(errors.New("test-error"),
 				clierror.New("failed to load image from the local Docker daemon",
-					"make sure Docker daemon is running",
-					"make sure the image exists in the local Docker daemon"),
+					"ensure Docker daemon is running",
+					"ensure the image exists in the local Docker daemon"),
 			),
 		},
 		{

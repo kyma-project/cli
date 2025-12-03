@@ -150,7 +150,7 @@ func prepareCommunityPromptMessage(resourcesNames []string) string {
 func prepareCorePromptMessage(moduleName string) string {
 	var buf bytes.Buffer
 	fmt.Fprintf(&buf, "Are you sure you want to delete module %s?\n", moduleName)
-	fmt.Fprintf(&buf, "Before you delete the %s module, make sure the module resources are no longer needed. This action also permanently removes the namespaces, service instances, and service bindings created by the module.\n", moduleName)
+	fmt.Fprintf(&buf, "Before you delete the %s module, ensure the module resources are no longer needed. This action also permanently removes the namespaces, service instances, and service bindings created by the module.\n", moduleName)
 	fmt.Fprintf(&buf, "Are you sure you want to continue?")
 
 	return buf.String()

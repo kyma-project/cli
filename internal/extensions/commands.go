@@ -13,7 +13,7 @@ var (
 	emptyActionRun       = func(cmd *cobra.Command, _ []string) error { return cmd.Help() }
 	unsupportedActionRun = func(_ *cobra.Command, _ []string) {
 		clierror.Check(clierror.New("unsupported action",
-			"make sure the CLI version is compatible with the extension"))
+			"ensure the CLI version is compatible with the extension"))
 	}
 )
 

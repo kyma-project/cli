@@ -23,7 +23,7 @@ func Enable(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRe
 func enable(printer *out.Printer, ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository, module, channel string, defaultCR bool, crs ...unstructured.Unstructured) clierror.Error {
 	if err := validateModuleAvailability(ctx, client, repo, module, channel); err != nil {
 		hints := []string{
-			"make sure you provide a valid module name and channel (or version)",
+			"ensure you provide a valid module name and channel (or version)",
 			"to list available modules, call the `kyma module catalog` command",
 			"to pull available modules, call the `kyma module pull` command",
 		}

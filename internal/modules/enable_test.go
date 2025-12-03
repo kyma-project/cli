@@ -161,7 +161,7 @@ func TestEnable(t *testing.T) {
 		repo := &modulesfake.ModuleTemplatesRepo{}
 
 		hints := []string{
-			"make sure you provide a valid module name and channel (or version)",
+			"ensure you provide a valid module name and channel (or version)",
 			"to list available modules, call the `kyma module catalog` command",
 			"to pull available modules, call the `kyma module pull` command",
 		}
@@ -190,7 +190,7 @@ func TestEnable(t *testing.T) {
 		repo := &modulesfake.ModuleTemplatesRepo{}
 
 		hints := []string{
-			"make sure you provide a valid module name and channel (or version)",
+			"ensure you provide a valid module name and channel (or version)",
 			"to list available modules, call the `kyma module catalog` command",
 			"to pull available modules, call the `kyma module pull` command",
 		}
@@ -222,7 +222,7 @@ func TestEnable(t *testing.T) {
 		repo := &modulesfake.ModuleTemplatesRepo{}
 
 		hints := []string{
-			"make sure you provide a valid module name and channel (or version)",
+			"ensure you provide a valid module name and channel (or version)",
 			"to list available modules, call the `kyma module catalog` command",
 			"to pull available modules, call the `kyma module pull` command",
 		}
