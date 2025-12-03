@@ -133,7 +133,7 @@ func (b *RBACBuilder) validateForRoleBinding() clierror.Error {
 		return clierror.New("subjectName is required")
 	}
 	if b.role == "" && b.clusterrole == "" {
-		return clierror.New("pecify either Role or ClusterRole for RoleBinding")
+		return clierror.New("specify either Role or ClusterRole for RoleBinding")
 	}
 	if b.role != "" && b.clusterrole != "" {
 		return clierror.New("cannot specify both Role and ClusterRole for RoleBinding")
