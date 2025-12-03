@@ -73,6 +73,7 @@ func NewDiagnoseIstioCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().BoolVarP(&cfg.allNamespaces, "all-namespaces", "A", false, "Analyzes all namespaces")
 	cmd.Flags().StringVarP(&cfg.namespace, "namespace", "n", "", "The namespace that the workload instances belongs to")
 	cmd.Flags().VarP(&cfg.outputFormat, "format", "f", "Output format (possible values: json, yaml)")
+	cfg.outputLevel = "warning"
 	cmd.Flags().Var(&cfg.outputLevel, "level", "Output message level (possible values: info, warning, error)")
 	cmd.Flags().StringVarP(&cfg.outputPath, "output", "o", "", "Path to the diagnostic output file. If not provided the output is printed to stdout")
 	cmd.Flags().BoolVar(&cfg.verbose, "verbose", false, "Displays verbose output, including error details during diagnostics collection")
