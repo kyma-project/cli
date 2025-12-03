@@ -21,6 +21,9 @@ kyma alpha diagnose istio [flags]
   # Analyze Istio configuration in a specific namespace
   kyma alpha diagnose istio --namespace my-namespace
 
+  # Print only warnings and errors
+  kyma alpha diagnose istio --level warning
+
   # Output as JSON to a file
   kyma alpha diagnose istio --format json --output istio-diagnostics.json
 ```
@@ -30,6 +33,7 @@ kyma alpha diagnose istio [flags]
 ```text
   -A, --all-namespaces          Analyzes all namespaces
   -f, --format string           Output format (possible values: json, yaml)
+      --level string            Output message level (possible values: info, warning, error)
   -n, --namespace string        The namespace that the workload instances belongs to
   -o, --output string           Path to the diagnostic output file. If not provided the output is printed to stdout
       --timeout duration        Timeout for diagnosis (default "30s")

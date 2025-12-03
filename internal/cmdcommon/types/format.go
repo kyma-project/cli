@@ -38,13 +38,13 @@ func (f *Format) String() string {
 
 func (f *Format) Set(v string) error {
 	for _, format := range availableFormats {
-		if *f == format {
+		if v == format.String() {
 			*f = Format(v)
 			return nil
 		}
 	}
 
-	return errors.New(fmt.Sprintf("invalid output format '%s'", *f))
+	return errors.New(fmt.Sprintf("invalid output format '%s'", v))
 }
 
 func (f *Format) Type() string {
