@@ -115,7 +115,7 @@ func TestDisableCore(t *testing.T) {
 		err := disable(out.NewToWriter(buffer), context.Background(), &fakeKubeClient, "keda")
 		require.Nil(t, err)
 		require.Equal(t, []string{"keda"}, fakeKymaClient.DisabledModules)
-		require.Equal(t, "removing kyma-system/default CR\nwaiting for kyma-system/default CR to be removed\nremoving keda module from the target Kyma environment\nkeda module disabled\n", buffer.String())
+		require.Equal(t, "removing kyma-system/default CR\nwaiting for kyma-system/default CR to be removed\nremoving the keda module from the target Kyma environment\nkeda module disabled\n", buffer.String())
 	})
 
 	t.Run("failed to disable module", func(t *testing.T) {

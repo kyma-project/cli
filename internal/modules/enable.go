@@ -35,7 +35,7 @@ func enable(printer *out.Printer, ctx context.Context, client kube.Client, repo 
 		crPolicy = kyma.CustomResourcePolicyCreateAndDelete
 	}
 
-	printer.Msgfln("adding %s module to the Kyma CR", module)
+	printer.Msgfln("adding the %s module to the Kyma CR", module)
 	err := client.Kyma().EnableModule(ctx, module, channel, crPolicy)
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to enable the module"))
