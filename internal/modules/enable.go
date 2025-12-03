@@ -26,7 +26,6 @@ func enable(printer *out.Printer, ctx context.Context, client kube.Client, repo 
 			"make sure you provide valid module name and channel (or version)",
 			"list available modules by calling the `kyma module catalog` command",
 			"pull available modules by calling the `kyma module pull` command",
-			"if you want to add a community module, use the `--origin` flag",
 		}
 		return clierror.Wrap(err, clierror.New("unknown module name or channel", hints...))
 	}
