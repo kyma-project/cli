@@ -173,7 +173,7 @@ func (apc *appPushConfig) complete() clierror.Error {
 			apc.dockerfileSrcContext, err = os.Getwd()
 			if err != nil {
 				return clierror.Wrap(err, clierror.New("failed to get current working directory",
-					"Please provide the path to the dockerfile context using --dockerfile-context flag"))
+					"Provide the path to the Dockerfile context using --dockerfile-context flag"))
 			}
 		}
 	}
@@ -233,7 +233,7 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 		out.Msgfln("\nCreating service %s/%s", cfg.namespace, cfg.name)
 		err := resources.CreateService(cfg.Ctx, client, cfg.name, cfg.namespace, int32(*cfg.containerPort.Value))
 		if err != nil {
-			return clierror.Wrap(err, clierror.New("failed to create service"))
+			return clierror.Wrap(err, clierror.New("failed to create Service"))
 		}
 	}
 
@@ -243,7 +243,7 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 
 		err := resources.CreateAPIRule(cfg.Ctx, client.RootlessDynamic(), cfg.name, cfg.namespace, cfg.name, uint32(*cfg.containerPort.Value))
 		if err != nil {
-			return clierror.Wrap(err, clierror.New("failed to create API Rule resource", "Make sure API Gateway module is installed", "Make sure APIRule CRD is available in v2 version"))
+			return clierror.Wrap(err, clierror.New("failed to create the APIRule resource", "Make sure the API Gateway module is installed", "Make sure APIRule CRD is available in the v2 version"))
 		}
 
 		// try to get domain from resulting virtual service
@@ -251,12 +251,12 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 		authRes, authErr := resources.CreateSelfSubjectAccessReview(cfg.Ctx, client, "watch", "virtualservices", cfg.namespace, "networking.istio.io")
 
 		if authErr != nil {
-			return clierror.Wrap(authErr, clierror.New("failed to check permissions to get virtualservices"))
+			return clierror.Wrap(authErr, clierror.New("failed to check permissions to get VirtualServices"))
 		}
 		if authRes.Status.Allowed {
 			url, clierr = client.Istio().GetHostFromVirtualServiceByApiruleName(cfg.Ctx, cfg.name, cfg.namespace)
 			if clierr != nil {
-				return clierror.WrapE(clierr, clierror.New("failed to get host address of ApiRule's Virtual Service"))
+				return clierror.WrapE(clierr, clierror.New("failed to get host address of APIRule's VirtualService"))
 			}
 		}
 
@@ -272,12 +272,12 @@ func runAppPush(cfg *appPushConfig) clierror.Error {
 func createDeployment(cfg *appPushConfig, client kube.Client, image, imagePullSecret string) clierror.Error {
 	configmapEnvs, err := envs.BuildFromConfigmap(cfg.Ctx, client, cfg.namespace, cfg.configmapEnvs)
 	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to build envs from configmap"))
+		return clierror.Wrap(err, clierror.New("failed to build envs from ConfigMap"))
 	}
 
 	secretEnvs, err := envs.BuildFromSecret(cfg.Ctx, client, cfg.namespace, cfg.secretEnvs)
 	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to build envs from secret"))
+		return clierror.Wrap(err, clierror.New("failed to build envs from Secret"))
 	}
 
 	fileEnvs, err := envs.BuildFromFile(cfg.fileEnvs)
@@ -307,7 +307,7 @@ func createDeployment(cfg *appPushConfig, client kube.Client, image, imagePullSe
 		Insecure:                   cfg.insecure,
 	})
 	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to create deployment"))
+		return clierror.Wrap(err, clierror.New("failed to create Deployment"))
 	}
 
 	return nil
@@ -317,7 +317,7 @@ func buildAndImportImage(client kube.Client, cfg *appPushConfig, registryConfig 
 	out.Msgln("Building image\n")
 	imageName, err := buildImage(cfg)
 	if err != nil {
-		return "", clierror.Wrap(err, clierror.New("failed to build image from dockerfile"))
+		return "", clierror.Wrap(err, clierror.New("failed to build image from Dockerfile"))
 	}
 
 	pushFunc := registry.NewPushWithPortforwardFunc(
@@ -346,7 +346,7 @@ func buildAndImportImage(client kube.Client, cfg *appPushConfig, registryConfig 
 		pushFunc,
 	)
 	if cliErr != nil {
-		return "", clierror.WrapE(cliErr, clierror.New("failed to import image to in-cluster docker registry"))
+		return "", clierror.WrapE(cliErr, clierror.New("failed to import image to the in-cluster Docker registry"))
 	}
 
 	return pushedImage, nil
