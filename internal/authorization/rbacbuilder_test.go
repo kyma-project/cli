@@ -230,7 +230,7 @@ func TestRBACBuilder_BuildRoleBinding(t *testing.T) {
 					ForSubjectName("owner/repo").
 					ForNamespace("default")
 			},
-			expectedError: "either role or clusterrole must be specified for RoleBinding",
+			expectedError: "specify either Role or ClusterRole for RoleBinding",
 		},
 		{
 			name: "error when both role and clusterrole are specified",
@@ -243,7 +243,7 @@ func TestRBACBuilder_BuildRoleBinding(t *testing.T) {
 					ForClusterRole("cluster-admin").
 					ForNamespace("default")
 			},
-			expectedError: "cannot specify both role and clusterrole for RoleBinding",
+			expectedError: "cannot specify both Role and ClusterRole for RoleBinding",
 		},
 		{
 			name: "error when namespace is missing",
@@ -254,7 +254,7 @@ func TestRBACBuilder_BuildRoleBinding(t *testing.T) {
 					ForSubjectName("owner/repo").
 					ForRole("reader")
 			},
-			expectedError: "namespace is required for RoleBinding",
+			expectedError: "provide namespace for RoleBinding",
 		},
 		{
 			name: "successful build for ServiceAccount",

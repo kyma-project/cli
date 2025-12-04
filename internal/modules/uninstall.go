@@ -25,7 +25,7 @@ func uninstall(printer *out.Printer, ctx context.Context, repo repo.ModuleTempla
 
 	moduleResources, err := repo.Resources(ctx, *moduleTemplate)
 	if err != nil {
-		return clierror.Wrap(err, clierror.New(fmt.Sprintf("failed to get resources for module %v", moduleName)))
+		return clierror.Wrap(err, clierror.New(fmt.Sprintf("failed to get resources for the module %v", moduleName)))
 	}
 
 	// We want to remove resources in the reversed order
