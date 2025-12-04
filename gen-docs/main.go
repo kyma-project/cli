@@ -36,13 +36,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	// TODO: remove when kyma-project.io migrates to _sidebar.ts
-	err = genSidebarTree(command, docsTargetDir)
-	if err != nil {
-		out.Errfln("unable to create _sidebar.md file: %s", err.Error())
-		os.Exit(1)
-	}
-
 	err = genReadme(docsTargetDir)
 	if err != nil {
 		out.Errfln("unable to create README.md file: %s", err.Error())
@@ -105,25 +98,6 @@ func genTSSidebarTree(cmd *cobra.Command, buf *bytes.Buffer) {
 	}
 }
 
-// generates the _sidebar.md file that orders .md files with documentation on the dashboard
-func genSidebarTree(cmd *cobra.Command, dir string) error {
-	buf := bytes.NewBuffer([]byte{})
-
-	sidebarFile, err := os.Create(filepath.Join(dir, "_sidebar.md"))
-	if err != nil {
-		return err
-	}
-	defer sidebarFile.Close()
-
-	buf.WriteString("<!-- markdown-link-check-disable -->\n")
-	buf.WriteString("* [Back to Kyma CLI](/cli/user/README.md)\n")
-	genSidebar(cmd, buf, 0)
-	buf.WriteString("<!-- markdown-link-check-enable -->")
-
-	_, err = buf.WriteTo(sidebarFile)
-	return err
-}
-
 // generates README.md in the gen-docs dir that helps with rendering of the _sidebar for the kyma-project.io
 func genReadme(dir string) error {
 	buf := bytes.NewBuffer([]byte{})
@@ -153,14 +127,6 @@ func genMarkdown(cmd *cobra.Command, w io.Writer) error {
 
 	_, err := buf.WriteTo(w)
 	return err
-}
-
-func genSidebar(cmd *cobra.Command, buf *bytes.Buffer, indentMultiplier int) {
-	fmt.Fprintf(buf, "* [%s](/cli/user/gen-docs/%s)\n", cmd.CommandPath(), cmdFileBasename(cmd))
-
-	for _, subCmd := range cmd.Commands() {
-		genSidebar(subCmd, buf, indentMultiplier+1)
-	}
 }
 
 func printExamples(buf *bytes.Buffer, cmd *cobra.Command) {

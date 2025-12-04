@@ -1,28 +1,26 @@
 # kyma alpha diagnose
 
-Diagnose cluster health and configuration.
+Runs diagnostic commands to troubleshoot your Kyma cluster.
 
 ## Synopsis
 
-Use this command to quickly assess the health, configuration, and potential issues in your cluster for troubleshooting and support purposes.
+Use diagnostic commands to collect cluster information, analyze logs, and assess the health of your Kyma installation. Choose from available subcommands to target specific diagnostic areas.
 
 ```bash
-kyma alpha diagnose [flags]
+kyma alpha diagnose <command> [flags]
 ```
 
 ## Available Commands
 
 ```text
-  istio - Checks Istio configuration
-  logs  - Aggregates error logs from Pods belonging to the added Kyma modules (requires JSON log format)
+  cluster - Diagnoses cluster health and configuration
+  istio   - Checks Istio configuration
+  logs    - Aggregates error logs from Pods belonging to the added Kyma modules (requires JSON log format)
 ```
 
 ## Flags
 
 ```text
-  -f, --format string           Output format (possible values: json, yaml)
-  -o, --output string           Path to the diagnostic output file. If not provided the output is printed to stdout
-      --verbose                 Display verbose output, including error details during diagnostics collection
       --context string          The name of the kubeconfig context to use
   -h, --help                    Help for the command
       --kubeconfig string       Path to the Kyma kubeconfig file
@@ -32,6 +30,7 @@ kyma alpha diagnose [flags]
 
 ## See also
 
-* [kyma alpha](kyma_alpha.md)                               - Groups command prototypes for which the API may still change
-* [kyma alpha diagnose istio](kyma_alpha_diagnose_istio.md) - Checks Istio configuration
-* [kyma alpha diagnose logs](kyma_alpha_diagnose_logs.md)   - Aggregates error logs from Pods belonging to the added Kyma modules (requires JSON log format)
+* [kyma alpha](kyma_alpha.md)                                   - Groups command prototypes for which the API may still change
+* [kyma alpha diagnose cluster](kyma_alpha_diagnose_cluster.md) - Diagnoses cluster health and configuration
+* [kyma alpha diagnose istio](kyma_alpha_diagnose_istio.md)     - Checks Istio configuration
+* [kyma alpha diagnose logs](kyma_alpha_diagnose_logs.md)       - Aggregates error logs from Pods belonging to the added Kyma modules (requires JSON log format)
