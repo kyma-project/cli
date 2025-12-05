@@ -50,8 +50,9 @@ while ! kubectl get secret object-store-reference-binding --namespace kyma-syste
 
 # Enable Docker Registry
 echo -e "\n--------------------------------------------------------------------------------------\n"
-echo -e "Step5: Enable Docker Registry from experimental channel (with persistent BTP based storage)\n"
-../../bin/kyma module add docker-registry --channel experimental --cr-path k8s-resources/custom-docker-registry.yaml
+echo -e "Step5: Enable Docker Registry community module (with persistent BTP based storage)\n"
+../../bin/kyma module pull docker-registry
+../../bin/kyma module add default/docker-registry-0.10.0 --cr-path k8s-resources/custom-docker-registry.yaml --auto-approve
 
 echo "..waiting for docker registry"
 kubectl wait --for condition=Installed dockerregistries.operator.kyma-project.io/custom-dr -n kyma-system --timeout=360s
@@ -98,6 +99,7 @@ kubectl label namespace default istio-injection=enabled --overwrite
 
 ../../bin/kyma app push --name bookstore --expose --container-port 3000 --mount-service-binding-secret hana-hdi-binding --code-path sample-http-db-nodejs/bookstore
 
+echo -e ""
 kubectl wait --for condition=Available deployment bookstore --timeout=60s
 kubectl wait --for='jsonpath={.status.state}=Ready' apirules.gateway.kyma-project.io/bookstore
 
@@ -113,5 +115,9 @@ if [[ $response != '[{"id":1,"title":"Dune","author":"Frank Herbert"},{"id":2,"t
     exit 1
 fi
 
+# TODO enable after https://github.com/kyma-project/docker-registry/issues/447 is fixed
+# echo -e "\n--------------------------------------------------------------------------------------\n"
+# echo -e "Step11: Uninstalling community module \n"
+# ../../bin/kyma module delete default/docker-registry-0.10.0 
 
 exit 0
