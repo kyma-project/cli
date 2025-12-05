@@ -16,8 +16,6 @@ kubectl delete serviceinstances.services.cloud.sap.com -A --all
 kubectl delete secret -n kyma-system remote-service-manager-credentials
 
 rm tf/btp-access-credentials-secret.yaml || true
-rm tf/hana-admin-creds.json || true
-rm tf/creds.json || true
 
 rm tf/terraform.tfstate.backup || true
 rm tf/terraform.tfstate || true
