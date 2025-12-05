@@ -26,6 +26,7 @@ type diagnoseLogsConfig struct {
 	since        time.Duration
 	lines        int64
 	timeout      time.Duration
+	strict       bool
 }
 
 func NewDiagnoseLogsCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
@@ -80,6 +81,7 @@ Logs that don't match this JSON structure are ignored during error detection.`,
 	cmd.Flags().DurationVar(&cfg.since, "since", 0, "Log time range (e.g., 10m, 1h, 30s)")
 	cmd.Flags().Int64Var(&cfg.lines, "lines", 200, "Number of recent log lines to analyze per container (filters for error-level entries from these lines)")
 	cmd.Flags().DurationVar(&cfg.timeout, "timeout", 30*time.Second, "Timeout for log collection operations")
+	cmd.Flags().BoolVar(&cfg.strict, "strict", false, "Only display logs that conform to the structured format")
 
 	return cmd
 }
@@ -98,7 +100,7 @@ func diagnoseLogs(cfg *diagnoseLogsConfig) clierror.Error {
 		return clierror.Wrap(err, clierror.New("failed to select modules for log collection"))
 	}
 
-	logOpts := diagnostics.LogOptions{Since: cfg.since, Lines: cfg.lines}
+	logOpts := diagnostics.LogOptions{Since: cfg.since, Lines: cfg.lines, Strict: cfg.strict}
 	collector := diagnostics.NewModuleLogsCollector(kubeClient, modules, logOpts)
 	moduleLogs := collector.Run(ctx)
 
