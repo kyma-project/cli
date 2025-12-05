@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/kyma-project/cli.v3/internal/clierror"
@@ -14,6 +16,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/spf13/cobra"
 	istioformatting "istio.io/istio/istioctl/pkg/util/formatting"
+	istioanalysisdiag "istio.io/istio/pkg/config/analysis/diag"
 	istioresource "istio.io/istio/pkg/config/resource"
 	istiolog "istio.io/istio/pkg/log"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,6 +31,7 @@ type diagnoseIstioConfig struct {
 	namespace     string
 	allNamespaces bool
 	outputFormat  types.Format
+	outputLevel   types.IstioLevel
 	outputPath    string
 	verbose       bool
 	timeout       time.Duration
@@ -49,6 +53,9 @@ func NewDiagnoseIstioCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
   # Analyze Istio configuration in a specific namespace
   kyma alpha diagnose istio --namespace my-namespace
 
+  # Print only warnings and errors
+  kyma alpha diagnose istio --level warning
+
   # Output as JSON to a file
   kyma alpha diagnose istio --format json --output istio-diagnostics.json`,
 
@@ -66,6 +73,8 @@ func NewDiagnoseIstioCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().BoolVarP(&cfg.allNamespaces, "all-namespaces", "A", false, "Analyzes all namespaces")
 	cmd.Flags().StringVarP(&cfg.namespace, "namespace", "n", "", "The namespace that the workload instances belongs to")
 	cmd.Flags().VarP(&cfg.outputFormat, "format", "f", "Output format (possible values: json, yaml)")
+	cfg.outputLevel = "warning"
+	cmd.Flags().Var(&cfg.outputLevel, "level", "Output message level (possible values: info, warning, error)")
 	cmd.Flags().StringVarP(&cfg.outputPath, "output", "o", "", "Path to the diagnostic output file. If not provided the output is printed to stdout")
 	cmd.Flags().BoolVar(&cfg.verbose, "verbose", false, "Displays verbose output, including error details during diagnostics collection")
 	cmd.Flags().DurationVar(&cfg.timeout, "timeout", 30*time.Second, "Timeout for diagnosis")
@@ -95,11 +104,23 @@ func diagnoseIstio(cfg *diagnoseIstioConfig) clierror.Error {
 		return err
 	}
 
+	diagnosticData.Messages = filterDataByLevel(diagnosticData.Messages, cfg.outputLevel.ToInternalIstioLevel())
+
 	err = printIstioOutput(diagnosticData, cfg.outputFormat, cfg.outputPath)
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func filterDataByLevel(messages istioanalysisdiag.Messages, minLevel istioanalysisdiag.Level) istioanalysisdiag.Messages {
+	var filtered []istioanalysisdiag.Message
+	for _, msg := range messages {
+		if msg.Type.Level().IsWorseThanOrEqualTo(minLevel) {
+			filtered = append(filtered, msg)
+		}
+	}
+	return filtered
 }
 
 func calculateNamespace(allNamespaces bool, namespace string) string {
@@ -190,6 +211,10 @@ func printIstioOutput(analysisResult *istioanalysislocal.AnalysisResult, format 
 	if err != nil {
 		return clierror.Wrap(err, clierror.New("failed to format output"))
 	}
+	re := regexp.MustCompile(`(?m)^\t+`)
+	output = re.ReplaceAllStringFunc(output, func(match string) string {
+		return strings.Repeat("  ", len(match))
+	})
 	printer.Msgfln(output)
 	return nil
 }

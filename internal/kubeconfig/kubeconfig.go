@@ -49,7 +49,7 @@ func Prepare(ctx context.Context, client kube.Client, name, namespace, time, out
 			var loopErr error
 			secret, loopErr = client.Static().CoreV1().Secrets(namespace).Get(ctx, name, metav1.GetOptions{})
 			if loopErr != nil {
-				return nil, clierror.Wrap(loopErr, clierror.New("failed to get secret"))
+				return nil, clierror.Wrap(loopErr, clierror.New("failed to get Secret"))
 			}
 		}
 

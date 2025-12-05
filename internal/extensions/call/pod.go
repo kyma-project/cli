@@ -37,7 +37,7 @@ func (c *PodCaller) Call(method, path string, parameters map[string]string) ([]b
 		c.podSelector,
 	)
 	if err != nil {
-		return nil, clierror.Wrap(err, clierror.New("failed to get target pod"))
+		return nil, clierror.Wrap(err, clierror.New("failed to get target Pod"))
 	}
 
 	req, err := buildRequest(method, targetPod.GetName(), targetPod.GetNamespace(), c.podPort, path, parameters)
@@ -53,7 +53,7 @@ func (c *PodCaller) Call(method, path string, parameters map[string]string) ([]b
 		req,
 	)
 	if err != nil {
-		return nil, clierror.Wrap(err, clierror.New("failed to send request to target pod"))
+		return nil, clierror.Wrap(err, clierror.New("failed to send request to target Pod"))
 	}
 	defer resp.Body.Close()
 

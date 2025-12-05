@@ -27,10 +27,10 @@ func disable(printer *out.Printer, ctx context.Context, client kube.Client, modu
 		return clierr
 	}
 
-	printer.Msgfln("removing %s module from the target Kyma environment", module)
+	printer.Msgfln("removing the %s module from the target Kyma environment", module)
 	err := client.Kyma().DisableModule(ctx, module)
 	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to disable module"))
+		return clierror.Wrap(err, clierror.New("failed to disable the module"))
 	}
 
 	printer.Msgfln("%s module disabled", module)
@@ -40,7 +40,7 @@ func disable(printer *out.Printer, ctx context.Context, client kube.Client, modu
 func removeModuleCR(printer *out.Printer, ctx context.Context, client kube.Client, module string) clierror.Error {
 	info, err := client.Kyma().GetModuleInfo(ctx, module)
 	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to get module info from the target Kyma environment"))
+		return clierror.Wrap(err, clierror.New("failed to get the module info from the target Kyma environment"))
 	}
 
 	if info.Spec.CustomResourcePolicy == kyma.CustomResourcePolicyCreateAndDelete {

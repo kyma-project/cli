@@ -78,7 +78,7 @@ func TestEnable(t *testing.T) {
 
 		err := enable(out.NewToWriter(buffer), context.Background(), &client, repo, "keda", "fast", true)
 		require.Nil(t, err)
-		require.Equal(t, "adding keda module to the Kyma CR\nkeda module enabled\n", buffer.String())
+		require.Equal(t, "adding the keda module to the Kyma CR\nkeda module enabled\n", buffer.String())
 		require.Equal(t, []fake.FakeEnabledModule{expectedEnabledModule}, kymaClient.EnabledModules)
 	})
 
@@ -112,7 +112,7 @@ func TestEnable(t *testing.T) {
 
 		err := enable(out.NewToWriter(buffer), context.Background(), &client, repo, "keda", "", true)
 		require.Nil(t, err)
-		require.Equal(t, "adding keda module to the Kyma CR\nkeda module enabled\n", buffer.String())
+		require.Equal(t, "adding the keda module to the Kyma CR\nkeda module enabled\n", buffer.String())
 		require.Equal(t, []fake.FakeEnabledModule{expectedEnabledModule}, kymaClient.EnabledModules)
 	})
 
@@ -142,7 +142,7 @@ func TestEnable(t *testing.T) {
 
 		err := enable(out.NewToWriter(buffer), context.Background(), &client, repo, "keda", "fast", false, testKedaCR)
 		require.Nil(t, err)
-		require.Equal(t, "adding keda module to the Kyma CR\nwaiting for module to be ready\napplying kyma-system/default cr\nkeda module enabled\n", buffer.String())
+		require.Equal(t, "adding the keda module to the Kyma CR\nwaiting for module to be ready\napplying kyma-system/default cr\nkeda module enabled\n", buffer.String())
 		require.Equal(t, []fake.FakeEnabledModule{expectedEnabledModule}, kymaClient.EnabledModules)
 		require.Equal(t, []unstructured.Unstructured{testKedaCR}, rootlessDynamicClient.ApplyObjs)
 	})
@@ -161,10 +161,9 @@ func TestEnable(t *testing.T) {
 		repo := &modulesfake.ModuleTemplatesRepo{}
 
 		hints := []string{
-			"make sure you provide valid module name and channel (or version)",
-			"list available modules by calling the `kyma module catalog` command",
-			"pull available modules by calling the `kyma module pull` command",
-			"if you want to add a community module, use the `--origin` flag",
+			"ensure you provide a valid module name and channel (or version)",
+			"to list available modules, call the `kyma module catalog` command",
+			"to pull available modules, call the `kyma module pull` command",
 		}
 
 		expectedCliErr := clierror.Wrap(
@@ -191,10 +190,9 @@ func TestEnable(t *testing.T) {
 		repo := &modulesfake.ModuleTemplatesRepo{}
 
 		hints := []string{
-			"make sure you provide valid module name and channel (or version)",
-			"list available modules by calling the `kyma module catalog` command",
-			"pull available modules by calling the `kyma module pull` command",
-			"if you want to add a community module, use the `--origin` flag",
+			"ensure you provide a valid module name and channel (or version)",
+			"to list available modules, call the `kyma module catalog` command",
+			"to pull available modules, call the `kyma module pull` command",
 		}
 
 		expectedCliErr := clierror.Wrap(
@@ -224,10 +222,9 @@ func TestEnable(t *testing.T) {
 		repo := &modulesfake.ModuleTemplatesRepo{}
 
 		hints := []string{
-			"make sure you provide valid module name and channel (or version)",
-			"list available modules by calling the `kyma module catalog` command",
-			"pull available modules by calling the `kyma module pull` command",
-			"if you want to add a community module, use the `--origin` flag",
+			"ensure you provide a valid module name and channel (or version)",
+			"to list available modules, call the `kyma module catalog` command",
+			"to pull available modules, call the `kyma module pull` command",
 		}
 
 		expectedCliErr := clierror.Wrap(
@@ -257,12 +254,12 @@ func TestEnable(t *testing.T) {
 
 		expectedCliErr := clierror.Wrap(
 			errors.New("test error"),
-			clierror.New("failed to check module state"),
+			clierror.New("failed to check the module state"),
 		)
 
 		err := enable(out.NewToWriter(buffer), context.Background(), &client, repo, "keda", "fast", false, testKedaCR)
 		require.Equal(t, expectedCliErr, err)
-		require.Equal(t, "adding keda module to the Kyma CR\nwaiting for module to be ready\n", buffer.String())
+		require.Equal(t, "adding the keda module to the Kyma CR\nwaiting for module to be ready\n", buffer.String())
 	})
 
 	t.Run("failed to apply custom resource", func(t *testing.T) {
@@ -287,11 +284,11 @@ func TestEnable(t *testing.T) {
 
 		expectedCliErr := clierror.Wrap(
 			errors.New("test error"),
-			clierror.New("failed to apply custom cr from path"),
+			clierror.New("failed to apply a custom CR from path"),
 		)
 
 		err := enable(out.NewToWriter(buffer), context.Background(), &client, repo, "keda", "fast", false, testKedaCR)
 		require.Equal(t, expectedCliErr, err)
-		require.Equal(t, "adding keda module to the Kyma CR\nwaiting for module to be ready\napplying kyma-system/default cr\n", buffer.String())
+		require.Equal(t, "adding the keda module to the Kyma CR\nwaiting for module to be ready\napplying kyma-system/default cr\n", buffer.String())
 	})
 }

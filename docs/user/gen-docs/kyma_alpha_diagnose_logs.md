@@ -60,4 +60,4 @@ kyma alpha diagnose logs [flags]
 
 ## See also
 
-* [kyma alpha diagnose](kyma_alpha_diagnose.md) - Diagnose cluster health and configuration
+* [kyma alpha diagnose](kyma_alpha_diagnose.md) - Runs diagnostic commands to troubleshoot your Kyma cluster

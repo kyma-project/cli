@@ -97,7 +97,7 @@ func manageModuleMissingInKyma(cfg *manageConfig, client kube.Client) clierror.E
 		return nil
 	}
 	if !errors.Is(err, modules.ErrModuleInstalledVersionNotInKymaChannel) {
-		return clierror.Wrap(err, clierror.New("failed to set module as managed"))
+		return clierror.Wrap(err, clierror.New("failed to set the module as managed"))
 	}
 
 	// If not found, prompt for alternative channel
@@ -134,7 +134,7 @@ func promptForAlternativeChannel(channelsAndVersions map[string]string) (string,
 	}
 
 	out.Msgln("The version of the module you have installed is not available in the default Kyma channel.")
-	out.Msgln("To proceed, please select one of the available channels below to manage the module with the desired version.")
+	out.Msgln("To proceed, select one of the available channels to manage the module with the desired version.")
 
 	channelPrompt := prompt.NewOneOfEnumList("Available versions:\n", "Type the option number: ", channelOpts)
 	selectedChannel, err := channelPrompt.Prompt()

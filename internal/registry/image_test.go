@@ -73,9 +73,9 @@ func Test_importImage(t *testing.T) {
 				imageName: ":::::::::",
 			},
 			wantErr: clierror.Wrap(errors.New("::::::::: must specify a tag name after the colon"),
-				clierror.New("failed to load image from local docker daemon",
-					"make sure docker daemon is running",
-					"make sure the image exists in the local docker daemon"),
+				clierror.New("failed to load the image from the local Docker daemon",
+					"ensure the Docker daemon is running",
+					"ensure the image exists in the local Docker daemon"),
 			),
 		},
 		{
@@ -84,9 +84,9 @@ func Test_importImage(t *testing.T) {
 				imageName: "gcr.io/test:image",
 			},
 			wantErr: clierror.Wrap(errors.New("image 'gcr.io/test:image' can't contain registry 'gcr.io' address"),
-				clierror.New("failed to load image from local docker daemon",
-					"make sure docker daemon is running",
-					"make sure the image exists in the local docker daemon"),
+				clierror.New("failed to load the image from the local Docker daemon",
+					"ensure the Docker daemon is running",
+					"ensure the image exists in the local Docker daemon"),
 			),
 		},
 		{
@@ -101,9 +101,9 @@ func Test_importImage(t *testing.T) {
 				},
 			},
 			wantErr: clierror.Wrap(errors.New("test-error"),
-				clierror.New("failed to load image from local docker daemon",
-					"make sure docker daemon is running",
-					"make sure the image exists in the local docker daemon"),
+				clierror.New("failed to load the image from the local Docker daemon",
+					"ensure the Docker daemon is running",
+					"ensure the image exists in the local Docker daemon"),
 			),
 		},
 		{
@@ -145,7 +145,7 @@ func Test_importImage(t *testing.T) {
 			wantErr: clierror.Wrap(errors.New("registries must be valid RFC 3986 URI authorities: <    >"),
 				clierror.New(
 					"failed to push image to the in-cluster registry",
-					"pushing through portforward may be unstable, try exposing the registry in the Registr CR",
+					"pushing through portforward may be unstable, expose the registry in the Registry CR",
 				)),
 		},
 		{
@@ -174,7 +174,7 @@ func Test_importImage(t *testing.T) {
 			wantErr: clierror.Wrap(errors.New("test error"),
 				clierror.New(
 					"failed to push image to the in-cluster registry",
-					"pushing through portforward may be unstable, try exposing the registry in the Registr CR",
+					"pushing through portforward may be unstable, expose the registry in the Registry CR",
 				),
 			),
 		},

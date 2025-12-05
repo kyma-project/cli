@@ -40,12 +40,12 @@ func runUnmanage(cfg *unmanageConfig) clierror.Error {
 
 	err := client.Kyma().UnmanageModule(cfg.Ctx, cfg.module)
 	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to set module as unmanaged"))
+		return clierror.Wrap(err, clierror.New("failed to set the module as unmanaged"))
 	}
 
 	err = client.Kyma().WaitForModuleState(cfg.Ctx, cfg.module, "Unmanaged")
 	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to check module state"))
+		return clierror.Wrap(err, clierror.New("failed to check the module state"))
 	}
 
 	out.Msgfln("Module %s set to unmanaged", cfg.module)

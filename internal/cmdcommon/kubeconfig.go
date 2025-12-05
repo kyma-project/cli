@@ -41,7 +41,7 @@ func (kcc *kubeClientConfig) GetKubeClient() (kube.Client, error) {
 func (kcc *kubeClientConfig) GetKubeClientWithClierr() (kube.Client, clierror.Error) {
 	if kcc.kubeClientErr != nil {
 		return nil, clierror.Wrap(kcc.kubeClientErr,
-			clierror.New("failed to create connection with the target Kyma environment", "Make sure that kubeconfig is proper."),
+			clierror.New("failed to create connection with the target Kyma environment", "Make sure that kubeconfig is correct."),
 		)
 	}
 

@@ -31,7 +31,7 @@ func Test_getGithubToken(t *testing.T) {
 		{
 			name:      "wrong URL",
 			url:       "doesnotexist",
-			wantedErr: clierror.Wrap(errors.New("Get \"doesnotexist\": unsupported protocol scheme \"\""), clierror.New("failed to get token from Github")),
+			wantedErr: clierror.Wrap(errors.New("Get \"doesnotexist\": unsupported protocol scheme \"\""), clierror.New("failed to get token from GitHub")),
 		},
 		{
 			name: "token request",
