@@ -3,7 +3,6 @@ package docker
 import (
 	"context"
 	"io"
-	"os"
 
 	"github.com/docker/cli/cli/streams"
 	"github.com/docker/docker/api/types/container"
@@ -11,6 +10,7 @@ import (
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/go-connections/nat"
+	"github.com/kyma-project/cli.v3/internal/out"
 )
 
 const (
@@ -53,7 +53,7 @@ func (c *Client) PullImageAndStartContainer(ctx context.Context, opts ContainerR
 	}
 	defer r.Close()
 
-	streamer := streams.NewOut(os.Stdout)
+	streamer := streams.NewOut(out.New())
 	if err = jsonmessage.DisplayJSONMessagesToStream(r, streamer, nil); err != nil {
 		return "", err
 	}
