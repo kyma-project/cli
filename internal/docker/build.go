@@ -7,7 +7,6 @@ import (
 
 	"github.com/docker/cli/cli/command/image/build"
 	dockerbuild "github.com/docker/docker/api/types/build"
-	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/pkg/progress"
 	"github.com/docker/docker/pkg/streamformatter"
@@ -17,27 +16,11 @@ import (
 	"github.com/pkg/errors"
 )
 
-type Client struct {
-	client client.APIClient
-}
-
 type BuildOptions struct {
 	ImageName      string
 	BuildContext   string
 	DockerfilePath string
 	Args           map[string]*string
-}
-
-func NewClient() (*Client, error) {
-	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-	if err != nil {
-		return nil, err
-	}
-	return &Client{client: cli}, nil
-}
-
-func NewTestClient(mock client.APIClient) *Client {
-	return &Client{client: mock}
 }
 
 // Build validates the build context, creates a tar archive of it, builds the image,
