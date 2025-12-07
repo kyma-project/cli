@@ -35,7 +35,7 @@ func ManageModuleInKymaCR(ctx context.Context, client kube.Client, moduleName, p
 
 	err = client.Kyma().WaitForModuleState(ctx, moduleName, "Ready", "Warning")
 	if err != nil {
-		return fmt.Errorf("failed to check module state: %v", err)
+		return fmt.Errorf("failed to check the module state: %v", err)
 	}
 
 	return nil

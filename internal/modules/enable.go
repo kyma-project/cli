@@ -23,10 +23,9 @@ func Enable(ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRe
 func enable(printer *out.Printer, ctx context.Context, client kube.Client, repo repo.ModuleTemplatesRepository, module, channel string, defaultCR bool, crs ...unstructured.Unstructured) clierror.Error {
 	if err := validateModuleAvailability(ctx, client, repo, module, channel); err != nil {
 		hints := []string{
-			"make sure you provide valid module name and channel (or version)",
-			"list available modules by calling the `kyma module catalog` command",
-			"pull available modules by calling the `kyma module pull` command",
-			"if you want to add a community module, use the `--origin` flag",
+			"ensure you provide a valid module name and channel (or version)",
+			"to list available modules, call the `kyma module catalog` command",
+			"to pull available modules, call the `kyma module pull` command",
 		}
 		return clierror.Wrap(err, clierror.New("unknown module name or channel", hints...))
 	}
@@ -36,10 +35,10 @@ func enable(printer *out.Printer, ctx context.Context, client kube.Client, repo 
 		crPolicy = kyma.CustomResourcePolicyCreateAndDelete
 	}
 
-	printer.Msgfln("adding %s module to the Kyma CR", module)
+	printer.Msgfln("adding the %s module to the Kyma CR", module)
 	err := client.Kyma().EnableModule(ctx, module, channel, crPolicy)
 	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to enable module"))
+		return clierror.Wrap(err, clierror.New("failed to enable the module"))
 	}
 
 	clierr := applyCustomCR(printer, ctx, client, module, crs...)
@@ -63,14 +62,14 @@ func applyCustomCR(printer *out.Printer, ctx context.Context, client kube.Client
 	printer.Msgln("waiting for module to be ready")
 	err := client.Kyma().WaitForModuleState(ctx, module, "Ready", "Warning")
 	if err != nil {
-		return clierror.Wrap(err, clierror.New("failed to check module state"))
+		return clierror.Wrap(err, clierror.New("failed to check the module state"))
 	}
 
 	for _, cr := range crs {
 		printer.Msgfln("applying %s/%s cr", cr.GetNamespace(), cr.GetName())
 		err = client.RootlessDynamic().Apply(ctx, &cr, false)
 		if err != nil {
-			return clierror.Wrap(err, clierror.New("failed to apply custom cr from path"))
+			return clierror.Wrap(err, clierror.New("failed to apply a custom CR from path"))
 		}
 	}
 

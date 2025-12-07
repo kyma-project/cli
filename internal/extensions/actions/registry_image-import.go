@@ -20,7 +20,7 @@ type registryImageImportActionConfig struct {
 func (c *registryImageImportActionConfig) validate() clierror.Error {
 	imageElems := strings.Split(c.Image, ":")
 	if len(imageElems) != 2 {
-		return clierror.New(fmt.Sprintf("image '%s' not in expected format 'image:tag'", c.Image))
+		return clierror.New(fmt.Sprintf("image '%s' not in the expected format 'image:tag'", c.Image))
 	}
 
 	return nil
@@ -81,7 +81,7 @@ func (a *registryImageImportAction) Run(cmd *cobra.Command, _ []string) clierror
 		pushFunc,
 	)
 	if err != nil {
-		return clierror.WrapE(err, clierror.New("failed to import image to in-cluster docker registry"))
+		return clierror.WrapE(err, clierror.New("failed to import image to the in-cluster Docker registry"))
 	}
 
 	pullImageName := fmt.Sprintf("%s/%s", registryConfig.SecretData.PullRegAddr, pushedImage)

@@ -38,7 +38,7 @@ func newDeleteCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
   ## Delete a community module and auto-approve the deletion
   #  passed argument must be in the format <namespace>/<module-template-name>
-  #  the module must be pulled from the catalog first using the 'kyma module pull' command
+  #  the format of the passed argument can be read from the 'kyma module catalog' command from the 'origin' column
   kyma module delete my-namespace/my-community-module-1.0.0 --auto-approve`,
 
 		Aliases: []string{"del"},
@@ -150,7 +150,7 @@ func prepareCommunityPromptMessage(resourcesNames []string) string {
 func prepareCorePromptMessage(moduleName string) string {
 	var buf bytes.Buffer
 	fmt.Fprintf(&buf, "Are you sure you want to delete module %s?\n", moduleName)
-	fmt.Fprintf(&buf, "Before you delete the %s module, make sure the module resources are no longer needed. This action also permanently removes the namespaces, service instances, and service bindings created by the module.\n", moduleName)
+	fmt.Fprintf(&buf, "Before you delete the %s module, ensure the module resources are no longer needed. This action also permanently removes the namespaces, service instances, and service bindings created by the module.\n", moduleName)
 	fmt.Fprintf(&buf, "Are you sure you want to continue?")
 
 	return buf.String()

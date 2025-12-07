@@ -42,8 +42,10 @@ func (c *client) GetHostFromVirtualServiceByApiruleName(ctx context.Context, nam
 		Version:  "v1",
 		Resource: "virtualservices",
 	}
+	var timeoutSeconds int64 = 20
 	u, err := c.dynamic.Resource(gvr).Namespace(namespace).Watch(ctx, metav1.ListOptions{
-		LabelSelector: fmt.Sprintf("apirule.gateway.kyma-project.io/v1beta1=%s.%s", name, namespace),
+		LabelSelector:  fmt.Sprintf("apirule.gateway.kyma-project.io/name=%s", name),
+		TimeoutSeconds: &timeoutSeconds,
 	})
 	if err != nil {
 		return "", clierror.Wrap(err, clierror.New("while watching VirtualServices in namespace %s", namespace))
