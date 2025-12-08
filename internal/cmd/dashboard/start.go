@@ -21,8 +21,8 @@ func NewDashboardStartCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "start [flags]",
-		Short: "Run Kyma dashboard locally",
-		Long:  `Use this command to run the Kyma dashboard locally in a docker container and open it directly in a web browser.`,
+		Short: `Runs Kyma dashboard locally.`,
+		Long:  `Use this command to run Kyma dashboard locally in a Docker container and open it directly in a web browser.`,
 		Run: func(_ *cobra.Command, _ []string) {
 			clierror.Check(runDashboardStart(&dashboardStartConfig{}))
 		}}

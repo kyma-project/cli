@@ -13,8 +13,8 @@ kyma dashboard <command> [flags]
 ## Available Commands
 
 ```text
-  start - Runs Kyma dashboard locally
-  stop  - Terminates the locally running Kyma dashboard
+  start - Runs Kyma dashboard locally.
+  stop  - Terminates the locally running Kyma dashboard.
 ```
 
 ## Flags
@@ -24,11 +24,11 @@ kyma dashboard <command> [flags]
   -h, --help                    Help for the command
       --kubeconfig string       Path to the Kyma kubeconfig file
       --show-extensions-error   Prints a possible error when fetching extensions fails
-      --skip-extensions         Skips fetching extensions from the target Kyma environment
+      --skip-extensions         Skip fetching extensions from the target Kyma environment
 ```
 
 ## See also
 
 * [kyma](kyma.md)                                 - A simple set of commands to manage a Kyma cluster
-* [kyma dashboard start](kyma_dashboard_start.md) - Runs Kyma dashboard locally
-* [kyma dashboard stop](kyma_dashboard_stop.md)   - Terminates the locally running Kyma dashboard
+* [kyma dashboard start](kyma_dashboard_start.md) - Runs Kyma dashboard locally.
+* [kyma dashboard stop](kyma_dashboard_stop.md)   - Terminates the locally running Kyma dashboard.

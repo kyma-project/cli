@@ -9,8 +9,8 @@ import (
 func NewDashboardStopCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "stop [flags]",
-		Short: "Run Kyma dashboard locally",
-		Long:  `Use this command to run the Kyma dashboard locally in a docker container and open it directly in a web browser.`,
+		Short: `Terminates the locally running Kyma dashboard.`,
+		Long:  `Use this command to terminate the locally running Kyma dashboard in a Docker container.`,
 		Run: func(_ *cobra.Command, _ []string) {
 			clierror.Check(runDashboardStop())
 		}}

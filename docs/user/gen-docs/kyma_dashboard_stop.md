@@ -17,9 +17,9 @@ kyma dashboard stop [flags]
   -h, --help                    Help for the command
       --kubeconfig string       Path to the Kyma kubeconfig file
       --show-extensions-error   Prints a possible error when fetching extensions fails
-      --skip-extensions         Skips fetching extensions from the target Kyma environment
+      --skip-extensions         Skip fetching extensions from the target Kyma environment
 ```
 
 ## See also
 
-* [kyma dashboard](kyma_dashboard.md) - Manages Kyma dashboard locally
+* [kyma dashboard](kyma_dashboard.md) - Manages Kyma dashboard locally.
