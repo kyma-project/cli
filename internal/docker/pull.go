@@ -13,10 +13,6 @@ import (
 	"github.com/kyma-project/cli.v3/internal/out"
 )
 
-const (
-	defaultRegistry = "index.docker.io"
-)
-
 // ErrorMessage is used to parse error messages coming from Docker
 type ErrorMessage struct {
 	Error string
