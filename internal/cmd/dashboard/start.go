@@ -8,10 +8,10 @@ import (
 
 type dashboardStartConfig struct {
 	*cmdcommon.KymaConfig
-	port           string
-	containerName  string
-	kubeconfigPath string
-	verbose        bool
+	port          string
+	containerName string
+	//kubeconfigPath string <- to be used in a future PR
+	//verbose        bool	<- to be used in a future PR
 }
 
 func NewDashboardStartCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
