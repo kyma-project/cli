@@ -1,10 +1,10 @@
 # kyma dashboard stop
 
-Run Kyma dashboard locally.
+Terminates the locally running Kyma dashboard.
 
 ## Synopsis
 
-Use this command to run the Kyma dashboard locally in a docker container and open it directly in a web browser.
+Use this command to terminate the locally running Kyma dashboard in a Docker container.
 
 ```bash
 kyma dashboard stop [flags]
@@ -17,7 +17,7 @@ kyma dashboard stop [flags]
   -h, --help                    Help for the command
       --kubeconfig string       Path to the Kyma kubeconfig file
       --show-extensions-error   Prints a possible error when fetching extensions fails
-      --skip-extensions         Skip fetching extensions from the target Kyma environment
+      --skip-extensions         Skips fetching extensions from the target Kyma environment
 ```
 
 ## See also
