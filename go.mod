@@ -17,6 +17,7 @@ require (
 	github.com/kyma-project/api-gateway v0.0.0-20250814120053-7d617def4106
 	github.com/moby/go-archive v0.1.0
 	github.com/moby/term v0.5.2
+	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
