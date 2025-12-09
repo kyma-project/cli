@@ -8,7 +8,6 @@ import (
 	"github.com/kyma-project/cli.v3/internal/modulesv2/dtos"
 	"github.com/kyma-project/cli.v3/internal/modulesv2/entities"
 	modulesfake "github.com/kyma-project/cli.v3/internal/modulesv2/fake"
-	"github.com/kyma-project/cli.v3/internal/modulesv2/testfactories"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -60,12 +59,12 @@ func TestCatalogService_Run(t *testing.T) {
 			},
 			clusterManagedByKLM: true,
 			listCoreResult: []*entities.CoreModuleTemplate{
-				testfactories.CoreModuleTemplate(&testfactories.Params{
+				modulesfake.CoreModuleTemplate(&modulesfake.Params{
 					ModuleName: "module1",
 					Version:    "1.0.0",
 					Channel:    "fast",
 				}),
-				testfactories.CoreModuleTemplate(&testfactories.Params{
+				modulesfake.CoreModuleTemplate(&modulesfake.Params{
 					ModuleName: "module2",
 					Version:    "2.0.0",
 					Channel:    "regular",
@@ -95,7 +94,7 @@ func TestCatalogService_Run(t *testing.T) {
 			},
 			clusterManagedByKLM: false,
 			listCoreResult: []*entities.CoreModuleTemplate{
-				testfactories.CoreModuleTemplate(nil),
+				modulesfake.CoreModuleTemplate(nil),
 			},
 			listExternalCommunityResult: []*entities.CommunityModuleTemplate{},
 			expectedResults:             []dtos.CatalogResult{},
@@ -110,12 +109,12 @@ func TestCatalogService_Run(t *testing.T) {
 			},
 			clusterManagedByKLM: false,
 			listLocalCommunityResult: []*entities.CommunityModuleTemplate{
-				testfactories.CommunityModuleTemplate(&testfactories.CommunityParams{
+				modulesfake.CommunityModuleTemplate(&modulesfake.CommunityParams{
 					ModuleName: "community-module1",
 					Version:    "1.0.0",
 					Namespace:  "kyma-system",
 				}),
-				testfactories.CommunityModuleTemplate(&testfactories.CommunityParams{
+				modulesfake.CommunityModuleTemplate(&modulesfake.CommunityParams{
 					ModuleName: "community-module2",
 					Version:    "2.0.0",
 					Namespace:  "default",
@@ -145,11 +144,11 @@ func TestCatalogService_Run(t *testing.T) {
 			},
 			clusterManagedByKLM: false,
 			listExternalCommunityResult: []*entities.CommunityModuleTemplate{
-				testfactories.CommunityModuleTemplate(&testfactories.CommunityParams{
+				modulesfake.CommunityModuleTemplate(&modulesfake.CommunityParams{
 					ModuleName: "external-module1",
 					Version:    "1.0.0",
 				}),
-				testfactories.CommunityModuleTemplate(&testfactories.CommunityParams{
+				modulesfake.CommunityModuleTemplate(&modulesfake.CommunityParams{
 					ModuleName: "external-module2",
 					Version:    "2.0.0",
 				}),
@@ -177,20 +176,20 @@ func TestCatalogService_Run(t *testing.T) {
 			},
 			clusterManagedByKLM: true,
 			listCoreResult: []*entities.CoreModuleTemplate{
-				testfactories.CoreModuleTemplate(&testfactories.Params{
+				modulesfake.CoreModuleTemplate(&modulesfake.Params{
 					ModuleName: "core-module",
 					Version:    "1.0.0",
 				}),
 			},
 			listLocalCommunityResult: []*entities.CommunityModuleTemplate{
-				testfactories.CommunityModuleTemplate(&testfactories.CommunityParams{
+				modulesfake.CommunityModuleTemplate(&modulesfake.CommunityParams{
 					ModuleName: "local-community",
 					Version:    "1.0.0",
 					Namespace:  "kyma-system",
 				}),
 			},
 			listExternalCommunityResult: []*entities.CommunityModuleTemplate{
-				testfactories.CommunityModuleTemplate(&testfactories.CommunityParams{
+				modulesfake.CommunityModuleTemplate(&modulesfake.CommunityParams{
 					ModuleName: "external-community",
 					Version:    "1.0.0",
 				}),

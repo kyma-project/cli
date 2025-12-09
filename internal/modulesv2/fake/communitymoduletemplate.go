@@ -1,4 +1,4 @@
-package testfactories
+package fake
 
 import "github.com/kyma-project/cli.v3/internal/modulesv2/entities"
 
