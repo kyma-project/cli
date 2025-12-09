@@ -38,18 +38,18 @@ func (m *moduleOperations) Catalog() (*CatalogService, error) {
 	return catalogService, nil
 }
 
-func setupDIContainer(kymaConfig *cmdcommon.KymaConfig) *di.DIContainer {
-	container := di.NewDIContainer()
+func setupDIContainer(kymaConfig *cmdcommon.KymaConfig) *di.Container {
+	container := di.NewContainer()
 
-	di.RegisterTyped(container, func(c *di.DIContainer) (kube.Client, error) {
+	di.RegisterTyped(container, func(c *di.Container) (kube.Client, error) {
 		return kymaConfig.GetKubeClient()
 	})
 
-	di.RegisterTyped(container, func(c *di.DIContainer) (repository.ExternalModuleTemplateRepository, error) {
+	di.RegisterTyped(container, func(c *di.Container) (repository.ExternalModuleTemplateRepository, error) {
 		return repository.NewExternalModuleTemplateRepository(), nil
 	})
 
-	di.RegisterTyped(container, func(c *di.DIContainer) (repository.ModuleTemplatesRepository, error) {
+	di.RegisterTyped(container, func(c *di.Container) (repository.ModuleTemplatesRepository, error) {
 		kubeClient, err := di.GetTyped[kube.Client](c)
 		if err != nil {
 			return nil, err
@@ -63,7 +63,7 @@ func setupDIContainer(kymaConfig *cmdcommon.KymaConfig) *di.DIContainer {
 		return repository.NewModuleTemplatesRepository(kubeClient, externalRepo), nil
 	})
 
-	di.RegisterTyped(container, func(c *di.DIContainer) (repository.ClusterMetadataRepository, error) {
+	di.RegisterTyped(container, func(c *di.Container) (repository.ClusterMetadataRepository, error) {
 		kubeClient, err := di.GetTyped[kube.Client](c)
 		if err != nil {
 			return nil, err
@@ -72,7 +72,7 @@ func setupDIContainer(kymaConfig *cmdcommon.KymaConfig) *di.DIContainer {
 		return repository.NewClusterMetadataRepository(kubeClient), nil
 	})
 
-	di.RegisterTyped(container, func(c *di.DIContainer) (*CatalogService, error) {
+	di.RegisterTyped(container, func(c *di.Container) (*CatalogService, error) {
 		moduleRepo, err := di.GetTyped[repository.ModuleTemplatesRepository](c)
 		if err != nil {
 			return nil, err

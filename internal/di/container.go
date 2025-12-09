@@ -5,23 +5,23 @@ import (
 	"reflect"
 )
 
-// DIContainer is a simple dependency injection container for singleton instances
-type DIContainer struct {
+// Container is a simple dependency injection container for singleton instances
+type Container struct {
 	instances map[reflect.Type]interface{}
 	factories map[reflect.Type]Factory
 }
 
-type Factory func(container *DIContainer) (interface{}, error)
+type Factory func(container *Container) (interface{}, error)
 
-func NewDIContainer() *DIContainer {
-	return &DIContainer{
+func NewContainer() *Container {
+	return &Container{
 		instances: make(map[reflect.Type]interface{}),
 		factories: make(map[reflect.Type]Factory),
 	}
 }
 
 // Get retrieves or creates a singleton instance of the specified type
-func (c *DIContainer) Get(targetType reflect.Type) (interface{}, error) {
+func (c *Container) Get(targetType reflect.Type) (interface{}, error) {
 	// Fast path: check if instance already exists
 	if instance, exists := c.instances[targetType]; exists {
 		return instance, nil
@@ -49,7 +49,7 @@ func (c *DIContainer) Get(targetType reflect.Type) (interface{}, error) {
 }
 
 // GetTyped is a generic helper to get a singleton instance with type safety
-func GetTyped[T any](c *DIContainer) (T, error) {
+func GetTyped[T any](c *Container) (T, error) {
 	var zero T
 	targetType := reflect.TypeOf((*T)(nil)).Elem()
 
@@ -67,10 +67,10 @@ func GetTyped[T any](c *DIContainer) (T, error) {
 }
 
 // RegisterTyped is a generic helper to register a factory with type safety
-// Usage: RegisterTyped[MyInterface](container, func(c *DIContainer) (MyInterface, error) { ... })
-func RegisterTyped[T any](c *DIContainer, factory func(*DIContainer) (T, error)) {
+// Usage: RegisterTyped[MyInterface](container, func(c *Container) (MyInterface, error) { ... })
+func RegisterTyped[T any](c *Container, factory func(*Container) (T, error)) {
 	targetType := reflect.TypeOf((*T)(nil)).Elem()
-	c.factories[targetType] = func(container *DIContainer) (interface{}, error) {
+	c.factories[targetType] = func(container *Container) (interface{}, error) {
 		return factory(container)
 	}
 }

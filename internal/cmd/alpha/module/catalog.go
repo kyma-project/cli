@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type catalogV2Config struct {
+type catalogConfig struct {
 	*cmdcommon.KymaConfig
 
 	origin       []string
@@ -17,7 +17,7 @@ type catalogV2Config struct {
 }
 
 func NewCatalogV2CMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
-	cfg := catalogV2Config{
+	cfg := catalogConfig{
 		KymaConfig: kymaConfig,
 	}
 
@@ -57,7 +57,7 @@ func NewCatalogV2CMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	return cmd
 }
 
-func catalogModules(cfg *catalogV2Config) clierror.Error {
+func catalogModules(cfg *catalogConfig) clierror.Error {
 	moduleOperations := modulesv2.NewModuleOperations(cmdcommon.NewKymaConfig())
 
 	catalogOperation, err := moduleOperations.Catalog()
