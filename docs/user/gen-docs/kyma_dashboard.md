@@ -1,0 +1,34 @@
+# kyma dashboard
+
+Manages Kyma dashboard locally.
+
+## Synopsis
+
+Use this command to manage Kyma dashboard locally in a Docker container.
+
+```bash
+kyma dashboard <command> [flags]
+```
+
+## Available Commands
+
+```text
+  start - Runs Kyma dashboard locally.
+  stop  - Terminates the locally running Kyma dashboard.
+```
+
+## Flags
+
+```text
+      --context string          The name of the kubeconfig context to use
+  -h, --help                    Help for the command
+      --kubeconfig string       Path to the Kyma kubeconfig file
+      --show-extensions-error   Prints a possible error when fetching extensions fails
+      --skip-extensions         Skip fetching extensions from the target Kyma environment
+```
+
+## See also
+
+* [kyma](kyma.md)                                 - A simple set of commands to manage a Kyma cluster
+* [kyma dashboard start](kyma_dashboard_start.md) - Runs Kyma dashboard locally.
+* [kyma dashboard stop](kyma_dashboard_stop.md)   - Terminates the locally running Kyma dashboard.
