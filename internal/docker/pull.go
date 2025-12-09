@@ -7,7 +7,6 @@ import (
 	"github.com/docker/cli/cli/streams"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
-	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/go-connections/nat"
 	"github.com/kyma-project/cli.v3/internal/out"
@@ -16,15 +15,6 @@ import (
 // ErrorMessage is used to parse error messages coming from Docker
 type ErrorMessage struct {
 	Error string
-}
-
-type ContainerRunOpts struct {
-	ContainerName string
-	Envs          []string
-	Image         string
-	Mounts        []mount.Mount
-	NetworkMode   string
-	Ports         map[string]string
 }
 
 // PullImageAndStartContainer creates, pulls and starts a container

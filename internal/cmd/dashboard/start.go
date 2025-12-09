@@ -1,17 +1,20 @@
 package dashboard
 
 import (
+	"context"
+
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
+	"github.com/kyma-project/cli.v3/internal/docker"
 	"github.com/spf13/cobra"
 )
 
 type dashboardStartConfig struct {
 	*cmdcommon.KymaConfig
-	port          string
-	containerName string
-	//kubeconfigPath string <- to be used in a future PR
-	//verbose        bool	<- to be used in a future PR
+	port           string
+	containerName  string
+	kubeconfigPath string
+	verbose        bool
 }
 
 func NewDashboardStartCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
@@ -34,6 +37,19 @@ func NewDashboardStartCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 }
 
 func runDashboardStart(cfg *dashboardStartConfig) clierror.Error {
-	//To be implemented in a future PR
+
+	dash := docker.New(cfg.containerName, cfg.port, cfg.kubeconfigPath, cfg.verbose)
+
+	if err := dash.Start(); err != nil {
+		return clierror.Wrap(err, clierror.New("failed to start kyma dashboard"))
+	}
+
+	if err := dash.Open(""); err != nil {
+		return clierror.Wrap(err, clierror.New("failed to build envs from configmap"))
+	}
+
+	if err := dash.Watch(context.Background()); err != nil {
+		return clierror.Wrap(err, clierror.New("failed to start kyma dashboard"))
+	}
 	return nil
 }
