@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/docker/docker/api/types/mount"
+	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/pkg/browser"
 )
 
@@ -55,7 +56,7 @@ func (c *Container) Start() error {
 	var envs []string
 
 	opts := c.containerOpts(envs)
-	fmt.Print("\n")
+	out.Msg("\n")
 	if c.id, err = c.docker.PullImageAndStartContainer(context.Background(), opts); err != nil {
 		return fmt.Errorf("unable to start container: %w", err)
 	}
