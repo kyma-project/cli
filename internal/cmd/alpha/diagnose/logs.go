@@ -104,7 +104,7 @@ func diagnoseLogs(cfg *diagnoseLogsConfig) clierror.Error {
 	collector := diagnostics.NewModuleLogsCollector(kubeClient, modules, logOpts)
 	moduleLogs := collector.Run(ctx)
 
-	if err := renderLogs(moduleLogs.Logs, cfg.outputPath, cfg.outputFormat); err != nil {
+	if err := renderLogs(moduleLogs, cfg.outputPath, cfg.outputFormat); err != nil {
 		return clierror.Wrap(err, clierror.New("failed to render logs to output"))
 	}
 

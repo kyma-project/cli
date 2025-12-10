@@ -77,8 +77,9 @@ func TestExtractStructuredOrErrorLogs_StrictMode(t *testing.T) {
 		"This line contains error but is not JSON\n"
 	rc := io.NopCloser(bytes.NewBufferString(logData))
 
-	filtered := collector.extractStructuredOrErrorLogs(rc, "pod-x", "container-y")
+	filtered, err := collector.extractStructuredOrErrorLogs(rc)
 	assert.Equal(t, 2, len(filtered))
+	assert.NoError(t, err)
 	assert.Contains(t, filtered[0], `"level":"error"`)
 	assert.Contains(t, filtered[1], `"level":"warning"`)
 }
@@ -98,7 +99,8 @@ func TestExtractStructuredOrErrorLogs_DefaultMode(t *testing.T) {
 		"Fatal exception occurred\n"
 	rc := io.NopCloser(bytes.NewBufferString(logData))
 
-	filtered := collector.extractStructuredOrErrorLogs(rc, "pod-x", "container-y")
+	filtered, err := collector.extractStructuredOrErrorLogs(rc)
+	assert.NoError(t, err)
 	assert.Equal(t, 5, len(filtered))
 	assert.Contains(t, filtered[0], "error")
 	assert.Contains(t, filtered[1], "error")
@@ -118,7 +120,8 @@ func TestExtractStructuredOrErrorLogs_DefaultMode_FalsePositives(t *testing.T) {
 		"Real error occurred\n"
 	rc := io.NopCloser(bytes.NewBufferString(logData))
 
-	filtered := collector.extractStructuredOrErrorLogs(rc, "pod-x", "container-y")
+	filtered, err := collector.extractStructuredOrErrorLogs(rc)
+	assert.NoError(t, err)
 	assert.Equal(t, 1, len(filtered))
 	assert.Contains(t, filtered[0], "Real error")
 }

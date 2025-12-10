@@ -50,6 +50,7 @@ kyma alpha diagnose logs [flags]
       --module stringSlice      Restrict to specific module(s). Can be used multiple times. When no value is present then logs from all Kyma CR modules are gathered (default "[]")
   -o, --output string           Path to the diagnostic output file. If not provided the output is printed to stdout
       --since duration          Log time range (e.g., 10m, 1h, 30s) (default "0s")
+      --strict                  Only display logs that conform to the structured format
       --timeout duration        Timeout for log collection operations (default "30s")
       --context string          The name of the kubeconfig context to use
   -h, --help                    Help for the command

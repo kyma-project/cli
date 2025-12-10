@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -18,7 +19,8 @@ import (
 )
 
 type ModuleLogs struct {
-	Logs map[string][]string
+	Logs   map[string][]string
+	Errors map[string][]string
 }
 
 type LogOptions struct {
@@ -56,38 +58,46 @@ func NewModuleLogsCollector(client kube.Client, modules []string, options LogOpt
 
 func (c *ModuleLogsCollector) Run(ctx context.Context) ModuleLogs {
 	logs := make(map[string][]string)
+	errs := make(map[string][]string)
 
 	for _, module := range c.modules {
-		moduleLogs := c.collectModuleLogs(ctx, module)
+		moduleLogs, moduleErrs := c.collectModuleLogs(ctx, module)
 		// merge moduleLogs into result
 		for k, v := range moduleLogs {
 			logs[k] = append(logs[k], v...)
 		}
+		for k, v := range moduleErrs {
+			errs[k] = append(errs[k], v...)
+		}
 	}
-	return ModuleLogs{Logs: logs}
+	return ModuleLogs{Logs: logs, Errors: errs}
 }
 
 // collectModuleLogs collects error logs from a single module and returns its map
-func (c *ModuleLogsCollector) collectModuleLogs(ctx context.Context, moduleName string) map[string][]string {
+func (c *ModuleLogsCollector) collectModuleLogs(ctx context.Context, moduleName string) (map[string][]string, map[string][]string) {
 	collected := make(map[string][]string)
+	errs := make(map[string][]string)
 	pods, err := c.getPodsForModule(ctx, moduleName)
 	if err != nil {
 		if ctx.Err() == context.DeadlineExceeded {
-			out.Errfln("Logs collection for module %s cancelled due to timeout", moduleName)
+			errs[moduleName] = append(errs[moduleName], "logs collection cancelled due to timeout")
 		} else {
-			out.Errfln("Failed to get pods for module %s: %v", moduleName, err)
+			errs[moduleName] = append(errs[moduleName], fmt.Sprintf("failed to get pods: %v", err))
 		}
-		return collected
+		return collected, errs
 	}
 
 	for i := range pods {
-		podLogs := c.collectPodLogs(ctx, &pods[i])
+		podLogs, podErrs := c.collectPodLogs(ctx, &pods[i])
 		for k, v := range podLogs {
 			collected[k] = append(collected[k], v...)
 		}
+		for k, v := range podErrs {
+			errs[k] = append(errs[k], v...)
+		}
 	}
 
-	return collected
+	return collected, errs
 }
 
 func (c *ModuleLogsCollector) getPodsForModule(ctx context.Context, moduleName string) ([]corev1.Pod, error) {
@@ -119,20 +129,24 @@ func (c *ModuleLogsCollector) getPodsForModule(ctx context.Context, moduleName s
 	return podsList, nil
 }
 
-func (c *ModuleLogsCollector) collectPodLogs(ctx context.Context, pod *corev1.Pod) map[string][]string {
+func (c *ModuleLogsCollector) collectPodLogs(ctx context.Context, pod *corev1.Pod) (map[string][]string, map[string][]string) {
 	containers := append(pod.Spec.Containers, pod.Spec.InitContainers...)
 	collected := make(map[string][]string)
+	errors := make(map[string][]string)
 
 	for _, container := range containers {
-		containerLogs := c.collectContainerLogs(ctx, pod, container.Name)
+		containerLogs, err := c.collectContainerLogs(ctx, pod, container.Name)
 		key := fmt.Sprintf("%s/%s", pod.Name, container.Name)
+		if err != nil {
+			errors[key] = append(errors[key], err.Error())
+		}
 		collected[key] = append(collected[key], containerLogs...)
 	}
 
-	return collected
+	return collected, errors
 }
 
-func (c *ModuleLogsCollector) collectContainerLogs(ctx context.Context, pod *corev1.Pod, containerName string) []string {
+func (c *ModuleLogsCollector) collectContainerLogs(ctx context.Context, pod *corev1.Pod, containerName string) ([]string, error) {
 	logOptions := c.buildPodLogOptions(containerName)
 
 	req := c.client.Static().CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, logOptions)
@@ -140,20 +154,20 @@ func (c *ModuleLogsCollector) collectContainerLogs(ctx context.Context, pod *cor
 	logStream, err := req.Stream(ctx)
 	if err != nil {
 		if ctx.Err() == context.DeadlineExceeded {
-			out.Errfln("Logs collection cancelled due to timeout for target: %v", fmt.Sprintf("%s/%s", pod.Name, containerName))
+			return []string{}, errors.New("logs collection cancelled due to timeout")
+
 		}
-		out.Errfln("Failed to get log stream for container %s in pod %s: %v", containerName, pod.Name, err)
-		return []string{}
+		return []string{}, fmt.Errorf("failed to get log stream: %v", err)
 	}
 	defer logStream.Close()
 
-	return c.extractStructuredOrErrorLogs(logStream, pod.Name, containerName)
+	return c.extractStructuredOrErrorLogs(logStream)
 }
 
 // extractStructuredOrErrorLogs parses each log line strictly as JSON and only keeps lines
 // that contain the keys: level, msg, and ts. Non-JSON lines or JSON without these keys are ignored.
 // Only entries whose level is one of error, fatal, panic are returned.
-func (c *ModuleLogsCollector) extractStructuredOrErrorLogs(logStream io.ReadCloser, podName, containerName string) []string {
+func (c *ModuleLogsCollector) extractStructuredOrErrorLogs(logStream io.ReadCloser) ([]string, error) {
 	scanner := bufio.NewScanner(logStream)
 	var collected []string
 
@@ -167,10 +181,10 @@ func (c *ModuleLogsCollector) extractStructuredOrErrorLogs(logStream io.ReadClos
 	}
 
 	if err := scanner.Err(); err != nil {
-		out.Errfln("Error reading logs from pod %s container %s: %v", podName, containerName, err)
+		return collected, fmt.Errorf("error reading logs %v", err)
 	}
 
-	return collected
+	return collected, nil
 }
 
 func (c *ModuleLogsCollector) getParseStrategy() func(string) bool {
