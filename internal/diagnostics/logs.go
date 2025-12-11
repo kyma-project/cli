@@ -189,9 +189,9 @@ func (c *ModuleLogsCollector) extractStructuredOrErrorLogs(logStream io.ReadClos
 
 func (c *ModuleLogsCollector) getParseStrategy() func(string) bool {
 	if c.strict {
-		return c.parseLogsStrict
+		return parseLogsStrict
 	}
-	return c.parseLogsDefault
+	return parseLogsDefault
 }
 
 func (c *ModuleLogsCollector) buildPodLogOptions(containerName string) *corev1.PodLogOptions {
@@ -200,7 +200,7 @@ func (c *ModuleLogsCollector) buildPodLogOptions(containerName string) *corev1.P
 	return &clone
 }
 
-func (c *ModuleLogsCollector) parseLogsStrict(line string) bool {
+func parseLogsStrict(line string) bool {
 	var obj map[string]any
 
 	if err := json.Unmarshal([]byte(line), &obj); err != nil {
@@ -221,7 +221,7 @@ func (c *ModuleLogsCollector) parseLogsStrict(line string) bool {
 	return true
 }
 
-func (c *ModuleLogsCollector) parseLogsDefault(line string) bool {
+func parseLogsDefault(line string) bool {
 	lineLower := strings.ToLower(line)
 
 	errorKeywords := []string{
@@ -239,7 +239,8 @@ func (c *ModuleLogsCollector) parseLogsDefault(line string) bool {
 
 func containsFalsePositives(line string) bool {
 	falsePositives := []string{
-		"\"error\": null", "\"error\":null",
+		"\"error\": null",
+		"\"error\":null",
 	}
 
 	for _, fp := range falsePositives {
