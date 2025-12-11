@@ -53,7 +53,7 @@ Use this command to list all available Kyma modules. # long description of the c
 
 The parents help:
 
-```bash
+```console
 $ kyma module --help
 
 Use this command to manage modules in the Kyma cluster.
@@ -67,7 +67,7 @@ Available Commands:
 
 The commands help:
 
-```bash
+```console
 $ kyma module catalog --help
 
 Use this command to list all available Kyma modules. # long description of the catalog command
@@ -104,7 +104,7 @@ _ = cmd.Flags().MarkHidden("community")
 
 The commands help looks:
 
-```bash
+```console
 $ kyma module add --help
 
 ...
@@ -153,7 +153,7 @@ For the following examples:
 
 The help will displays:
 
-```bash
+```console
 $ kyma module add --help
 
 Use this command to add a module.
