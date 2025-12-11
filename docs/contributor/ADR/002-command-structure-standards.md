@@ -26,15 +26,23 @@ Runnable commands:
 explain [flags] # runnable command without argument
 create <name> [flags] # runnable command that receive one required arg and optional flags
 scale <name> <replicas> [flags] # runnable command that can receive two arguments and optional flags
-delete <name\s> # runnable command that receive at least one argument and has no flags
-get [<name>] [flags] # runnable command that receive optional one argument and optional flags
+delete <name>... # runnable command that receive at least one argument and has no flags
+get [<name>...] [flags] # runnable command that receive optional one argument and optional flags
+module-deploy (<name>|<namespacedName>|<filepath>)... [flags] # runnable command that deploy module based on at least one argument in one of three types
 ```
+
+Important elements:
+
+- `<>` - means this is positional argument
+- `[]` - means elemts are optional
+- `...` - means at least one element is required (this applies only for positional arguments)
+- `(a|b)` - means element `a` or `b` is possible
 
 ### Name details
 
 The command name must be a verb or noun. In most cases, it is recommended to use nouns to define domain-related command groups (like `kyma function`, `kyma app`, or `kyma apirule`) and verbs to define runnable operations around the domain (like `kyma app push`, `kyma function create`, `kyma apirule expose`). This rule is only a suggestion, and it depends on the use case. For example, the `kyma diagnose` command works as a runnable command and command group at the same (`kyma diagnose logs`) time, and because of this, it's not a noun. On the other hand, the `kyma registry config` in another example, where after the noun is another noun (runnable noun), but in this case, the `config` word is shorter than `get-config`.
 
-After the first word, there must be a description of possible arguments/commands. If the command is a non-runnable command group, then it should contain `<command>`, which means that this command accepts only one argument, and this argument is the command name. If command is runnable then is must describes possible inputs (if allowed) in the following format: `<arg_name>` for single, required argument, `(<arg_name>...)` for at least one required argument, `[<arg_name>]` for one optional argument, `[<arg_name>...]` for optional arguments list of the same type. If the command receives more than one argument type, then it is possible to describe many arguments separated by a space. For example: `scale <name> <replicas>`
+After the first word, there must be a description of possible arguments/commands. If the command is a non-runnable command group, then it should contain `<command>`, which means that this command accepts only one argument, and this argument is the command name. If command is runnable then is must describes possible inputs (if allowed) in the following format: `<arg_name>` for single, required argument, `<arg_name>...` for at least one required argument, `[<arg_name>...]` for one optional argument, `<arg_name>...` for optional arguments list of the same type. If the command receives more than one argument type, then it is possible to describe many arguments separated by a space. For example: `scale <name> <replicas>`
 
 The last element must be optional flags represented by the `[flags]` element. In our case, it must be a part of every command because we add persistent flags for the parent `kyma` command, and these flags are valid for every sub-command.
 
