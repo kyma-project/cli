@@ -28,37 +28,71 @@ type authorizeConfig struct {
 }
 
 func NewAuthorizeCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
-	cfg := authorizeConfig{
-		KymaConfig: kymaConfig,
-	}
-
-	validAuthTargets := []string{"user", "group", "serviceaccount"}
-
 	cmd := &cobra.Command{
-		Use:   "authorize <authTarget> [flags]",
+		Use:   "authorize",
 		Short: "Authorize a subject (user, group, or service account) with Kyma RBAC resources",
 		Long:  "Create a RoleBinding or ClusterRoleBinding that grants access to a Kyma role or cluster role for a user, group, or service account.",
-		Example: `  # Bind a user to a namespaced Role (RoleBinding)
+	}
+
+	cmd.AddCommand(NewAuthorizeUserCMD(kymaConfig))
+	cmd.AddCommand(NewAuthorizeGroupCMD(kymaConfig))
+	cmd.AddCommand(NewAuthorizeServiceAccountCMD(kymaConfig))
+	cmd.AddCommand(NewAuthorizeRepositoryCMD(kymaConfig))
+
+	return cmd
+}
+
+func NewAuthorizeUserCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
+	return newAuthorizeSubjectCMD(kymaConfig, "user", "User", `  # Bind a user to a namespaced Role (RoleBinding)
   kyma alpha authorize user --name alice --role view --namespace dev
 
   # Bind multiple users to a namespaced Role (RoleBinding)
   kyma alpha authorize user --name alice,bob,james --role view --namespace dev
 
-  # Bind a group cluster-wide to a ClusterRole (ClusterRoleBinding)
-  kyma alpha authorize group --name team-observability --clusterrole kyma-read-all --cluster-wide
-
-  # Bind a service account to a ClusterRole within a namespace (RoleBinding referencing a ClusterRole)
-  kyma alpha authorize serviceaccount --name deployer-sa --clusterrole edit --namespace staging
+  # Bind a user cluster-wide to a ClusterRole (ClusterRoleBinding)
+  kyma alpha authorize user --name ci-bot --clusterrole kyma-admin --cluster-wide
 
   # Preview (dry-run) the YAML for a RoleBinding without applying
-  kyma alpha authorize user --name bob --role operator --namespace ops --dry-run -o yaml
+  kyma alpha authorize user --name bob --role operator --namespace ops --dry-run -o yaml`)
+}
+
+func NewAuthorizeGroupCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
+	return newAuthorizeSubjectCMD(kymaConfig, "group", "Group", `  # Bind a group cluster-wide to a ClusterRole (ClusterRoleBinding)
+  kyma alpha authorize group --name team-observability --clusterrole kyma-read-all --cluster-wide
+
+  # Bind a group to a namespaced Role (RoleBinding)
+  kyma alpha authorize group --name developers --role edit --namespace dev
 
   # Generate JSON for a cluster-wide binding
-  kyma alpha authorize user --name ci-bot --clusterrole kyma-admin --cluster-wide -o json`,
-		Args:      cobra.ExactArgs(1),
-		ValidArgs: validAuthTargets,
+  kyma alpha authorize group --name ops-team --clusterrole cluster-admin --cluster-wide -o json
+  
+  # Preview (dry-run) the YAML for a RoleBinding without applying
+  kyma alpha authorize group --name ops-team --role edit --namespace dev --dry-run -o yaml`)
+}
+
+func NewAuthorizeServiceAccountCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
+	cfg := authorizeConfig{
+		KymaConfig: kymaConfig,
+		authTarget: "serviceaccount",
+	}
+
+	cmd := &cobra.Command{
+		Use:   "serviceaccount",
+		Short: "Authorize a ServiceAccount with Kyma RBAC resources",
+		Long:  "Create a RoleBinding or ClusterRoleBinding that grants access to a Kyma role or cluster role for a ServiceAccount.",
+		Example: `  # Bind a service account to a ClusterRole within a namespace (RoleBinding referencing a ClusterRole)
+  kyma alpha authorize serviceaccount --name deployer-sa --clusterrole edit --namespace staging
+
+  # Bind a service account cluster-wide to a ClusterRole (ClusterRoleBinding)
+  kyma alpha authorize serviceaccount --name system-bot --clusterrole cluster-admin --cluster-wide
+
+  # Specify a different namespace for the service account subject
+  kyma alpha authorize serviceaccount --name remote-sa --sa-namespace tools --clusterrole view --namespace dev
+   
+  # Preview (dry-run) the YAML for a RoleBinding without applying
+  kyma alpha authorize serviceaccount --name remote-sa --role edit --namespace dev --dry-run -o yaml 
+  `,
 		PreRun: func(cmd *cobra.Command, args []string) {
-			cfg.authTarget = args[0]
 			clierror.Check(flags.Validate(cmd.Flags(),
 				flags.MarkRequired("name"),
 				flags.MarkExactlyOneRequired("role", "clusterrole"),
@@ -76,11 +110,44 @@ func NewAuthorizeCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cmd.Flags().StringVar(&cfg.role, "role", "", "Role name to bind (creates RoleBinding in specified namespace)")
 	cmd.Flags().StringVar(&cfg.clusterrole, "clusterrole", "", "ClusterRole name to bind (for ClusterRoleBinding with --cluster-wide, or RoleBinding in namespace)")
 	cmd.Flags().StringSliceVar(&cfg.name, "name", []string{}, "Name(s) of the subject(s) to authorize (required)")
-	cmd.Flags().StringVar(&cfg.serviceAccountNamespace, "sa-namespace", "", "Namespace for the service account subject. Defaults to the RoleBinding namespace when not specified.")
 	cmd.Flags().BoolVar(&cfg.dryRun, "dry-run", false, "Preview the YAML/JSON output without applying resources to the cluster")
 	cmd.Flags().VarP(&cfg.outputFormat, "output", "o", "Output format for dry-run (yaml or json)")
+	cmd.Flags().StringVar(&cfg.serviceAccountNamespace, "sa-namespace", "", "Namespace for the service account subject. Defaults to the RoleBinding namespace when not specified.")
 
-	cmd.AddCommand(NewAuthorizeRepositoryCMD(kymaConfig))
+	return cmd
+}
+
+func newAuthorizeSubjectCMD(kymaConfig *cmdcommon.KymaConfig, authTarget, subjectType, examples string) *cobra.Command {
+	cfg := authorizeConfig{
+		KymaConfig: kymaConfig,
+		authTarget: authTarget,
+	}
+
+	cmd := &cobra.Command{
+		Use:     authTarget,
+		Short:   fmt.Sprintf("Authorize a %s with Kyma RBAC resources", subjectType),
+		Long:    fmt.Sprintf("Create a RoleBinding or ClusterRoleBinding that grants access to a Kyma role or cluster role for a %s.", subjectType),
+		Example: examples,
+		PreRun: func(cmd *cobra.Command, args []string) {
+			clierror.Check(flags.Validate(cmd.Flags(),
+				flags.MarkRequired("name"),
+				flags.MarkExactlyOneRequired("role", "clusterrole"),
+				flags.MarkPrerequisites("role", "namespace"),
+				flags.MarkPrerequisites("cluster-wide", "clusterrole"),
+			))
+		},
+		Run: func(cmd *cobra.Command, args []string) {
+			clierror.Check(authorize(&cfg))
+		},
+	}
+
+	cmd.Flags().StringVar(&cfg.namespace, "namespace", "", "Namespace for RoleBinding (required when binding a Role or binding a ClusterRole to a specific namespace)")
+	cmd.Flags().BoolVar(&cfg.clusterWide, "cluster-wide", false, "Create a ClusterRoleBinding for cluster-wide access (requires --clusterrole)")
+	cmd.Flags().StringVar(&cfg.role, "role", "", "Role name to bind (creates RoleBinding in specified namespace)")
+	cmd.Flags().StringVar(&cfg.clusterrole, "clusterrole", "", "ClusterRole name to bind (for ClusterRoleBinding with --cluster-wide, or RoleBinding in namespace)")
+	cmd.Flags().StringSliceVar(&cfg.name, "name", []string{}, "Name(s) of the subject(s) to authorize (required)")
+	cmd.Flags().BoolVar(&cfg.dryRun, "dry-run", false, "Preview the YAML/JSON output without applying resources to the cluster")
+	cmd.Flags().VarP(&cfg.outputFormat, "output", "o", "Output format for dry-run (yaml or json)")
 
 	return cmd
 }
