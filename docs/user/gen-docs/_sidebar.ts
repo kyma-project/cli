@@ -11,6 +11,8 @@ export default [
   { text: 'kyma alpha hana map', link: './gen-docs/kyma_alpha_hana_map' },
   { text: 'kyma alpha kubeconfig', link: './gen-docs/kyma_alpha_kubeconfig' },
   { text: 'kyma alpha kubeconfig generate', link: './gen-docs/kyma_alpha_kubeconfig_generate' },
+  { text: 'kyma alpha module', link: './gen-docs/kyma_alpha_module' },
+  { text: 'kyma alpha module catalog', link: './gen-docs/kyma_alpha_module_catalog' },
   { text: 'kyma alpha provision', link: './gen-docs/kyma_alpha_provision' },
   { text: 'kyma alpha reference-instance', link: './gen-docs/kyma_alpha_reference-instance' },
   { text: 'kyma app', link: './gen-docs/kyma_app' },
