@@ -63,22 +63,88 @@ func TestRun_MultipleModules_WithMatchingDeployments(t *testing.T) {
 	}
 }
 
-func TestExtractStructuredOrErrorLogs_Filters(t *testing.T) {
+func TestExtractStructuredOrErrorLogs_StrictMode(t *testing.T) {
 	kubeClient := createMockKubeClient([]runtime.Object{})
-	collector := NewModuleLogsCollector(kubeClient, []string{}, LogOptions{})
+	collector := NewModuleLogsCollector(kubeClient, []string{}, LogOptions{Strict: true})
 
-	// Build a fake log stream matching mockLogsHandler output
+	// Build a fake log stream with mixed content
 	logData := "" +
 		"{\"level\":\"info\",\"message\":\"startup\",\"timestamp\":\"1\"}\n" +
 		"{\"level\":\"error\",\"message\":\"failed A\",\"timestamp\":\"2\"}\n" +
 		"{\"level\":\"warning\",\"message\":\"boom\",\"timestamp\":\"3\"}\n" +
-		"not json\n"
+		"not json\n" +
+		"{\"level\":\"error\"}\n" + // Missing message and timestamp
+		"This line contains error but is not JSON\n"
 	rc := io.NopCloser(bytes.NewBufferString(logData))
 
-	filtered := collector.extractStructuredOrErrorLogs(rc, "pod-x", "container-y")
+	filtered, err := collector.extractStructuredOrErrorLogs(rc)
 	assert.Equal(t, 2, len(filtered))
+	assert.NoError(t, err)
 	assert.Contains(t, filtered[0], `"level":"error"`)
 	assert.Contains(t, filtered[1], `"level":"warning"`)
+}
+
+func TestExtractStructuredOrErrorLogs_DefaultMode(t *testing.T) {
+	kubeClient := createMockKubeClient([]runtime.Object{})
+	collector := NewModuleLogsCollector(kubeClient, []string{}, LogOptions{Strict: false})
+
+	// Build a fake log stream with mixed content
+	logData := "" +
+		"{\"level\":\"info\",\"message\":\"startup\",\"timestamp\":\"1\"}\n" +
+		"{\"level\":\"error\",\"message\":\"failed A\",\"timestamp\":\"2\"}\n" +
+		"This line contains error keyword\n" +
+		"This line has warning in it\n" +
+		"Just a normal log line\n" +
+		"Application failed to start\n" +
+		"Fatal exception occurred\n"
+	rc := io.NopCloser(bytes.NewBufferString(logData))
+
+	filtered, err := collector.extractStructuredOrErrorLogs(rc)
+	assert.NoError(t, err)
+	assert.Equal(t, 5, len(filtered))
+	assert.Contains(t, filtered[0], "error")
+	assert.Contains(t, filtered[1], "error")
+	assert.Contains(t, filtered[2], "warning")
+	assert.Contains(t, filtered[3], "failed")
+	assert.Contains(t, filtered[4], "Fatal")
+}
+
+func TestExtractStructuredOrErrorLogs_DefaultMode_FalsePositives(t *testing.T) {
+	kubeClient := createMockKubeClient([]runtime.Object{})
+	collector := NewModuleLogsCollector(kubeClient, []string{}, LogOptions{Strict: false})
+
+	// Test false positive filtering
+	logData := "" +
+		"{\"error\": null, \"message\": \"success\"}\n" +
+		"{\"error\":null}\n" +
+		"Real error occurred\n" +
+		"{\"error\": null, \"exception\": \"connection failed\"}\n" + // Has false positive BUT also real error
+		"Operation warning: {\"error\":null}\n" // Has false positive BUT also real error keyword
+
+	rc := io.NopCloser(bytes.NewBufferString(logData))
+
+	filtered, err := collector.extractStructuredOrErrorLogs(rc)
+	assert.NoError(t, err)
+	assert.Equal(t, 3, len(filtered), "Should capture lines with real errors even if they have false positives")
+	assert.Contains(t, filtered[0], "Real error")
+	assert.Contains(t, filtered[1], "exception")
+	assert.Contains(t, filtered[2], "warning")
+}
+
+func TestExtractStructuredOrErrorLogs_DefaultMode_OnlyFalsePositives(t *testing.T) {
+	kubeClient := createMockKubeClient([]runtime.Object{})
+	collector := NewModuleLogsCollector(kubeClient, []string{}, LogOptions{Strict: false})
+
+	// Test that lines with ONLY false positives are filtered out
+	logData := "" +
+		"{\"error\": null, \"message\": \"success\"}\n" +
+		"{\"error\":null}\n" +
+		"Just a normal log line\n"
+	rc := io.NopCloser(bytes.NewBufferString(logData))
+
+	filtered, err := collector.extractStructuredOrErrorLogs(rc)
+	assert.NoError(t, err)
+	assert.Equal(t, 0, len(filtered), "Lines with only false positives should be filtered out")
 }
 
 // Helper functions
