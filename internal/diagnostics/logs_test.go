@@ -117,13 +117,34 @@ func TestExtractStructuredOrErrorLogs_DefaultMode_FalsePositives(t *testing.T) {
 	logData := "" +
 		"{\"error\": null, \"message\": \"success\"}\n" +
 		"{\"error\":null}\n" +
-		"Real error occurred\n"
+		"Real error occurred\n" +
+		"{\"error\": null, \"exception\": \"connection failed\"}\n" + // Has false positive BUT also real error
+		"Operation warning: {\"error\":null}\n" // Has false positive BUT also real error keyword
+
 	rc := io.NopCloser(bytes.NewBufferString(logData))
 
 	filtered, err := collector.extractStructuredOrErrorLogs(rc)
 	assert.NoError(t, err)
-	assert.Equal(t, 1, len(filtered))
+	assert.Equal(t, 3, len(filtered), "Should capture lines with real errors even if they have false positives")
 	assert.Contains(t, filtered[0], "Real error")
+	assert.Contains(t, filtered[1], "exception")
+	assert.Contains(t, filtered[2], "warning")
+}
+
+func TestExtractStructuredOrErrorLogs_DefaultMode_OnlyFalsePositives(t *testing.T) {
+	kubeClient := createMockKubeClient([]runtime.Object{})
+	collector := NewModuleLogsCollector(kubeClient, []string{}, LogOptions{Strict: false})
+
+	// Test that lines with ONLY false positives are filtered out
+	logData := "" +
+		"{\"error\": null, \"message\": \"success\"}\n" +
+		"{\"error\":null}\n" +
+		"Just a normal log line\n"
+	rc := io.NopCloser(bytes.NewBufferString(logData))
+
+	filtered, err := collector.extractStructuredOrErrorLogs(rc)
+	assert.NoError(t, err)
+	assert.Equal(t, 0, len(filtered), "Lines with only false positives should be filtered out")
 }
 
 // Helper functions
