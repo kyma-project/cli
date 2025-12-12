@@ -19,8 +19,8 @@ import (
 )
 
 type ModuleLogs struct {
-	Logs   map[string][]string
-	Errors map[string][]string
+	Logs   map[string][]string `json:"logs" yaml:"logs"`
+	Errors map[string][]string `json:"errors" yaml:"errors"`
 }
 
 type LogOptions struct {
@@ -171,11 +171,11 @@ func (c *ModuleLogsCollector) extractStructuredOrErrorLogs(logStream io.ReadClos
 	scanner := bufio.NewScanner(logStream)
 	var collected []string
 
-	isErrorOrWarning := c.getParseStrategy()
+	shouldIncludeLine := c.getLogsFilteringStrategy()
 
 	for scanner.Scan() {
 		line := scanner.Text()
-		if isErrorOrWarning(line) {
+		if shouldIncludeLine(line) {
 			collected = append(collected, line)
 		}
 	}
@@ -187,7 +187,7 @@ func (c *ModuleLogsCollector) extractStructuredOrErrorLogs(logStream io.ReadClos
 	return collected, nil
 }
 
-func (c *ModuleLogsCollector) getParseStrategy() func(string) bool {
+func (c *ModuleLogsCollector) getLogsFilteringStrategy() func(string) bool {
 	if c.strict {
 		return parseLogsStrict
 	}
@@ -224,12 +224,16 @@ func parseLogsStrict(line string) bool {
 func parseLogsDefault(line string) bool {
 	lineLower := strings.ToLower(line)
 
+	if onlyContainsFalsePositives(lineLower) {
+		return false
+	}
+
 	errorKeywords := []string{
 		"error", "exception", "fatal", "panic", "fail", "failed", "failure", "warning", "warn",
 	}
 
 	for _, keyword := range errorKeywords {
-		if strings.Contains(lineLower, keyword) && !containsFalsePositives(lineLower) {
+		if strings.Contains(lineLower, keyword) {
 			return true
 		}
 	}
@@ -237,17 +241,39 @@ func parseLogsDefault(line string) bool {
 	return false
 }
 
-func containsFalsePositives(line string) bool {
+func onlyContainsFalsePositives(line string) bool {
 	falsePositives := []string{
 		"\"error\": null",
 		"\"error\":null",
 	}
 
+	hasFalsePositive := false
 	for _, fp := range falsePositives {
 		if strings.Contains(line, fp) {
-			return true
+			hasFalsePositive = true
+			break
 		}
 	}
 
-	return false
+	if !hasFalsePositive {
+		return false
+	}
+
+	cleanedLine := line
+	for _, fp := range falsePositives {
+		cleanedLine = strings.ReplaceAll(cleanedLine, fp, "")
+	}
+	cleanedLineLower := strings.ToLower(cleanedLine)
+
+	errorKeywords := []string{
+		"error", "exception", "fatal", "panic", "fail", "failed", "failure", "warning", "warn",
+	}
+
+	for _, keyword := range errorKeywords {
+		if strings.Contains(cleanedLineLower, keyword) {
+			return false
+		}
+	}
+
+	return true
 }
