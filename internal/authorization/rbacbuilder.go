@@ -181,7 +181,7 @@ func (b *RBACBuilder) validateBindingName() clierror.Error {
 	// Check if it starts with alphanumeric
 	if len(b.bindingName) > 0 {
 		firstChar := b.bindingName[0]
-		if !((firstChar >= 'a' && firstChar <= 'z') || (firstChar >= '0' && firstChar <= '9')) {
+		if (firstChar < 'a' || firstChar > 'z') && (firstChar < '0' || firstChar > '9') {
 			return clierror.New(
 				fmt.Sprintf("binding name '%s' must start with a lowercase alphanumeric character", b.bindingName),
 			)
@@ -191,7 +191,7 @@ func (b *RBACBuilder) validateBindingName() clierror.Error {
 	// Check if it ends with alphanumeric
 	if len(b.bindingName) > 0 {
 		lastChar := b.bindingName[len(b.bindingName)-1]
-		if !((lastChar >= 'a' && lastChar <= 'z') || (lastChar >= '0' && lastChar <= '9')) {
+		if (lastChar < 'a' || lastChar > 'z') && (lastChar < '0' || lastChar > '9') {
 			return clierror.New(
 				fmt.Sprintf("binding name '%s' must end with a lowercase alphanumeric character", b.bindingName),
 			)
