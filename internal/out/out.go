@@ -3,7 +3,7 @@
 // - General output messages (Msg, Msgf, Msgln, Msgfln) write to stdout by default and can be disabled
 // - Priority messages (Prio, Priof, Prioln, Priofln) write to stdout by default and cannot be disabled
 // - Verbose messages (Verbose, Verbosef, Verboseln, Verbosefln) write to stdout when enabled
-// - Debug messages (Dev, Devf, Devln, Devfln) write to stdout when enabled
+// - Debug messages (Dev, Devf, Devln, Devfln) write to stdout when enabled via --debug flag
 // - Error messages (Err, Errf, Errln, Errfln) write to stderr by default
 // Printer can be configured with different writers to redirect output as needed to files, buffers, etc.
 package out
