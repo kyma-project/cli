@@ -32,7 +32,6 @@ func (c *Client) PullImageAndStartContainer(ctx context.Context, opts ContainerR
 	}
 
 	var r io.ReadCloser
-	//mozliwosc dlugiego pullowania, wskazanie writera do streams out
 	r, err := c.client.ImagePull(ctx, config.Image, image.PullOptions{})
 	if err != nil {
 		return "", err
