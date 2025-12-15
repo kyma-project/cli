@@ -12,7 +12,7 @@ require (
 	github.com/go-test/deep v1.1.1
 	github.com/google/go-containerregistry v0.20.7
 	github.com/itchyny/gojq v0.12.18
-	github.com/jedib0t/go-pretty/v6 v6.7.5
+	github.com/jedib0t/go-pretty/v6 v6.7.7
 	github.com/joho/godotenv v1.5.1
 	github.com/kyma-project/api-gateway v0.0.0-20250814120053-7d617def4106
 	github.com/moby/go-archive v0.1.0
