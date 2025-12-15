@@ -92,7 +92,7 @@ The longer one describes exactly what the command is doing. It can be multiline,
 
 ## Flags
 
-Flags are elements of the command that can be added using the `cobra.Command{}.Flags()` function.
+Flags are elements of the command that can be added using the `cobra.Command{}.Flags()` and `cobra.Command{}.PersistentFlags()` functions.
 
 ### Flags in practice
 
@@ -138,6 +138,8 @@ Flag shorthand should be added only to flags that are often used in most cases t
 Flags can be marked as hidden. This functionality may be helpful while some flags are deprecated and their functionality is removed or moved. Hiding the flag allows us to validate later if the user uses it and display a well-crafted error with detailed information on what is happening and where such functionality was moved to.
 
 To validate flags, the [flags](../../../internal/flags/validate.go) package must be used to keep all validations of all commands in the same shape. Functionality of this package can be run in the `cobra.Command{}.PreRun`.
+
+Persistent flags need to meet all requirements above and additionally should be implemented only in common use-cases for all referred commands. These flag types can introduce confusion when implemented for commands and don't provide any functionality.
 
 ## Examples
 
