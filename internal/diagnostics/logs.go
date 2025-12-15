@@ -200,6 +200,10 @@ func (c *ModuleLogsCollector) buildPodLogOptions(containerName string) *corev1.P
 	return &clone
 }
 
+var errorKeywords = []string{
+	"error", "exception", "fatal", "panic", "fail", "failed", "failure", "warning", "warn",
+}
+
 func parseLogsStrict(line string) bool {
 	var obj map[string]any
 
@@ -226,10 +230,6 @@ func parseLogsDefault(line string) bool {
 
 	if onlyContainsFalsePositives(lineLower) {
 		return false
-	}
-
-	errorKeywords := []string{
-		"error", "exception", "fatal", "panic", "fail", "failed", "failure", "warning", "warn",
 	}
 
 	for _, keyword := range errorKeywords {
@@ -264,10 +264,6 @@ func onlyContainsFalsePositives(line string) bool {
 		cleanedLine = strings.ReplaceAll(cleanedLine, fp, "")
 	}
 	cleanedLineLower := strings.ToLower(cleanedLine)
-
-	errorKeywords := []string{
-		"error", "exception", "fatal", "panic", "fail", "failed", "failure", "warning", "warn",
-	}
 
 	for _, keyword := range errorKeywords {
 		if strings.Contains(cleanedLineLower, keyword) {
