@@ -200,10 +200,6 @@ func (c *ModuleLogsCollector) buildPodLogOptions(containerName string) *corev1.P
 	return &clone
 }
 
-var errorKeywords = []string{
-	"error", "exception", "fatal", "panic", "fail", "failed", "failure", "warning", "warn",
-}
-
 func parseLogsStrict(line string) bool {
 	var obj map[string]any
 
@@ -214,7 +210,8 @@ func parseLogsStrict(line string) bool {
 	lvlRaw, hasLevel := obj["level"]
 	_, hasMessage := obj["message"]
 	_, hasTimestamp := obj["timestamp"]
-	if !hasLevel || (!hasMessage && !hasTimestamp) {
+	hasAllRequiredKeys := hasLevel && hasMessage && hasTimestamp
+	if !hasAllRequiredKeys {
 		return false
 	}
 	lvl := fmt.Sprintf("%v", lvlRaw)
@@ -232,8 +229,27 @@ func parseLogsDefault(line string) bool {
 		return false
 	}
 
-	for _, keyword := range errorKeywords {
-		if strings.Contains(lineLower, keyword) {
+	return hasErrors(lineLower)
+}
+
+func onlyContainsFalsePositives(line string) bool {
+	hasFalsePositive := hasFalsePositives(line)
+	if !hasFalsePositive {
+		return false
+	}
+
+	cleanedLine := line
+	for _, fp := range getFalsePositives() {
+		cleanedLine = strings.ReplaceAll(cleanedLine, fp, "")
+	}
+	cleanedLineLower := strings.ToLower(cleanedLine)
+
+	return !hasErrors(cleanedLineLower)
+}
+
+func hasErrors(line string) bool {
+	for _, keyword := range getErrorKeywords() {
+		if strings.Contains(line, keyword) {
 			return true
 		}
 	}
@@ -241,35 +257,25 @@ func parseLogsDefault(line string) bool {
 	return false
 }
 
-func onlyContainsFalsePositives(line string) bool {
-	falsePositives := []string{
+func hasFalsePositives(line string) bool {
+	for _, fp := range getFalsePositives() {
+		if strings.Contains(line, fp) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func getErrorKeywords() []string {
+	return []string{
+		"error", "exception", "fatal", "panic", "fail", "failed", "failure", "warning", "warn",
+	}
+}
+
+func getFalsePositives() []string {
+	return []string{
 		"\"error\": null",
 		"\"error\":null",
 	}
-
-	hasFalsePositive := false
-	for _, fp := range falsePositives {
-		if strings.Contains(line, fp) {
-			hasFalsePositive = true
-			break
-		}
-	}
-
-	if !hasFalsePositive {
-		return false
-	}
-
-	cleanedLine := line
-	for _, fp := range falsePositives {
-		cleanedLine = strings.ReplaceAll(cleanedLine, fp, "")
-	}
-	cleanedLineLower := strings.ToLower(cleanedLine)
-
-	for _, keyword := range errorKeywords {
-		if strings.Contains(cleanedLineLower, keyword) {
-			return false
-		}
-	}
-
-	return true
 }
