@@ -1,9 +1,9 @@
 package dashboard
 
 import (
+	"github.com/kyma-project/cli.v3/internal/busola"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
-	"github.com/kyma-project/cli.v3/internal/docker"
 	"github.com/spf13/cobra"
 )
 
@@ -37,7 +37,7 @@ func NewDashboardStartCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 }
 
 func runDashboardStart(cfg *dashboardStartConfig) clierror.Error {
-	dash, err := docker.New(
+	dash, err := busola.New(
 		cfg.containerName,
 		cfg.port,
 		cfg.verbose,

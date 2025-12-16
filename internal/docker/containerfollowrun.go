@@ -10,7 +10,7 @@ import (
 )
 
 func (c *Client) ContainerFollowRun(ctx context.Context, containerID string, forwardOutput bool) error {
-	buf, err := c.client.ContainerAttach(ctx, containerID, container.AttachOptions{
+	buf, err := c.ContainerAttach(ctx, containerID, container.AttachOptions{
 		Stdout: true,
 		Stderr: true,
 		Stream: true,
@@ -22,8 +22,8 @@ func (c *Client) ContainerFollowRun(ctx context.Context, containerID string, for
 
 	dstout, dsterr := io.Discard, io.Discard
 	if forwardOutput {
-		dstout = out.New()
-		dsterr = out.New()
+		dstout = out.Default.MsgWriter()
+		dsterr = out.Default.ErrWriter()
 	}
 
 	_, err = stdcopy.StdCopy(dstout, dsterr, buf.Reader)

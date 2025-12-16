@@ -1,10 +1,11 @@
-package docker
+package busola
 
 import (
 	"context"
 	"fmt"
 
-	"github.com/docker/docker/api/types/mount"
+	"github.com/docker/docker/api/types/container"
+	"github.com/kyma-project/cli.v3/internal/docker"
 	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/pkg/browser"
 )
@@ -18,22 +19,13 @@ type Container struct {
 	name    string
 	id      string
 	port    string
-	docker  *Client
+	docker  *docker.Client
 	verbose bool
-}
-
-type ContainerRunOpts struct {
-	ContainerName string
-	Envs          []string
-	Image         string
-	Mounts        []mount.Mount
-	NetworkMode   string
-	Ports         map[string]string
 }
 
 // New creates a new dashboard container with the given configuration
 func New(name, port string, verbose bool) (*Container, error) {
-	dockerClient, err := NewClient()
+	dockerClient, err := docker.NewClient()
 	if err != nil {
 		return nil, fmt.Errorf("could not create docker client: %w", err)
 	}
@@ -77,19 +69,15 @@ func (c *Container) Watch(ctx context.Context) error {
 }
 
 // Stop stops the dashboard container.
-func (c *Container) Stop(ctx context.Context, log func(...interface{})) error {
-	log(fmt.Sprintf("\r- Removing container %s...\n", c.id))
-
-	if err := c.docker.Stop(ctx, c.id); err != nil {
-		log(err)
+func (c *Container) Stop(ctx context.Context) error {
+	if err := c.docker.ContainerStop(ctx, c.id, container.StopOptions{}); err != nil {
 		return err
 	}
-
 	return nil
 }
 
-func (c *Container) containerOpts(envs []string) ContainerRunOpts {
-	containerRunOpts := ContainerRunOpts{
+func (c *Container) containerOpts(envs []string) docker.ContainerRunOpts {
+	containerRunOpts := docker.ContainerRunOpts{
 		Envs:          envs,
 		ContainerName: c.name,
 		Image:         dashboardImage,

@@ -7,6 +7,7 @@ import (
 	"github.com/docker/cli/cli/streams"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/go-connections/nat"
 	"github.com/kyma-project/cli.v3/internal/out"
@@ -15,6 +16,15 @@ import (
 // ErrorMessage is used to parse error messages coming from Docker
 type ErrorMessage struct {
 	Error string
+}
+
+type ContainerRunOpts struct {
+	ContainerName string
+	Envs          []string
+	Image         string
+	Mounts        []mount.Mount
+	NetworkMode   string
+	Ports         map[string]string
 }
 
 // PullImageAndStartContainer creates, pulls and starts a container
@@ -32,7 +42,7 @@ func (c *Client) PullImageAndStartContainer(ctx context.Context, opts ContainerR
 	}
 
 	var r io.ReadCloser
-	r, err := c.client.ImagePull(ctx, config.Image, image.PullOptions{})
+	r, err := c.ImagePull(ctx, config.Image, image.PullOptions{})
 	if err != nil {
 		return "", err
 	}
@@ -43,12 +53,12 @@ func (c *Client) PullImageAndStartContainer(ctx context.Context, opts ContainerR
 		return "", err
 	}
 
-	body, err := c.client.ContainerCreate(ctx, config, hostConfig, nil, nil, opts.ContainerName)
+	body, err := c.ContainerCreate(ctx, config, hostConfig, nil, nil, opts.ContainerName)
 	if err != nil {
 		return "", err
 	}
 
-	err = c.client.ContainerStart(ctx, body.ID, container.StartOptions{})
+	err = c.ContainerStart(ctx, body.ID, container.StartOptions{})
 	if err != nil {
 		return "", err
 	}
