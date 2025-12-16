@@ -70,10 +70,7 @@ func (c *Container) Watch(ctx context.Context) error {
 
 // Stop stops the dashboard container.
 func (c *Container) Stop(ctx context.Context) error {
-	if err := c.docker.ContainerStop(ctx, c.id, container.StopOptions{}); err != nil {
-		return err
-	}
-	return nil
+	return c.docker.ContainerStop(ctx, c.id, container.StopOptions{})
 }
 
 func (c *Container) containerOpts(envs []string) docker.ContainerRunOpts {
