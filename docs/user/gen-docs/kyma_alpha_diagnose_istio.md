@@ -37,7 +37,6 @@ kyma alpha diagnose istio [flags]
   -n, --namespace string        The namespace that the workload instances belongs to
   -o, --output string           Path to the diagnostic output file. If not provided the output is printed to stdout
       --timeout duration        Timeout for diagnosis (default "30s")
-      --verbose                 Displays verbose output, including error details during diagnostics collection
       --context string          The name of the kubeconfig context to use
   -h, --help                    Help for the command
       --kubeconfig string       Path to the Kyma kubeconfig file
