@@ -5,7 +5,7 @@ import (
 )
 
 type Client struct {
-	client client.APIClient
+	client.APIClient
 }
 
 func NewClient() (*Client, error) {
@@ -13,9 +13,9 @@ func NewClient() (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Client{client: cli}, nil
+	return &Client{APIClient: cli}, nil
 }
 
 func NewTestClient(mock client.APIClient) *Client {
-	return &Client{client: mock}
+	return &Client{APIClient: mock}
 }

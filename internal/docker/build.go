@@ -57,7 +57,7 @@ func (c *Client) Build(ctx context.Context, opts BuildOptions) error {
 	progressOutput := streamformatter.NewProgressOutput(out.Default.MsgWriter())
 	bodyProgressReader := progress.NewProgressReader(buildCtx, progressOutput, 0, "", "Sending build context to Docker daemon")
 
-	response, err := c.client.ImageBuild(
+	response, err := c.ImageBuild(
 		ctx,
 		bodyProgressReader,
 		dockerbuild.ImageBuildOptions{
