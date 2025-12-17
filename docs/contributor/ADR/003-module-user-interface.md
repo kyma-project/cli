@@ -4,11 +4,11 @@ Creation date: 2025.10.11
 
 ## Introduction
 
-In this ADR I would propose new api for most basic functionalities in the `kyma module` commands group (mostly around handling community modules). This ADR is build based in the following [issue](https://github.com/kyma-project/cli/issues/2765) and its goal is to keep all most important informations in one place.
+In this ADR, I propose a new API for the most basic functionalities in the `kyma module` commands group (mostly around handling community modules). This ADR is built based on the following [issue](https://github.com/kyma-project/cli/issues/2765) and its goal is to keep all important information in one place.
 
 ## Description
 
-In the latest release (`3.2.0`), operations on community modules are not intuitive - for example to to delete a module, the user should first list installed modules to figure out which are installed, then print the catalog to get the origin of the module, and then use this origin to remove the community module. The flow:
+In the latest release (`3.2.0`), operations on community modules are not intuitive. For example, to delete a module, the user must first list the installed modules, then print the catalog to get the origin of the module, and then use this origin to remove the community module. The flow:
 
 ```bash
 $ kyma module list
@@ -74,7 +74,7 @@ The proposition of changes:
     default/registry-proxy    0.14.0
     ```
 
-- Remote catalog should not be a part of the default output of the `module catalog` command. Instead of that, to display modules available to pull, the user should add the `--remote` or `--remote=<URL>` flag.
+- Remote catalog should not be a part of the default output of the `module catalog` command. Instead, to display modules available to pull, the user should add the `--remote` or `--remote=<URL>` flag.
 
     ```bash
     $ kyma module catalog --remote
@@ -147,13 +147,8 @@ Warning:
 
 The community module docker-registry in version 0.9.0 is installed
 
-
-
 ##########################
 # some time later when new version of the community docker-registry is out
-
-
-
 
 # Pull new module version
 $ kyma module pull docker-registry --namespace default
@@ -179,10 +174,10 @@ $ kyma module delete default/docker-registry
 
 ## Reasons
 
-The module API should be easy to manage and consistent from users perspective. It should allow users managing clusters in CI/CD system and on local machine. To do so we've collected all suggestions from previous tasks like:
+The module API should be easy to manage and consistent from the user's perspective. It should allow users to manage clusters in the CI/CD system and on a local machine. To do so, we've collected all suggestions from previous tasks, like:
 
 - [Issue 2734](https://github.com/kyma-project/cli/issues/2734#issuecomment-3593132479)
 - [Issue 2675](https://github.com/kyma-project/cli/issues/2675#issuecomment-3499464158)
 - [Issue 2670](https://github.com/kyma-project/cli/issues/2670#issuecomment-3487979099)
 
-Main goal is to allow managing community module in more generic way, and separate this flow from this about core modules at the same time. It should be easy to figure out which module is in local catalog (on a cluster) and which one is available on remote and should be pulled first. Also user should be intuitive for a user which module is community and which is core one.
+The main goal is to allow managing the community modules in a more generic way and separate this flow from the core modules' flow. It should be easy to figure out which module is in the local catalog (on a cluster) and which one is available on the remote and should be pulled first. Additionally, it should be intuitive for users to know which module is a community and which is the core one.
