@@ -14,7 +14,9 @@ kyma dashboard start [flags]
 
 ```text
       --container-name string   Specify the name of the local container. (default "kyma-dashboard")
+  -o, --open                    Specify if the browser should open after executing the command.
   -p, --port string             Specify the port on which the local dashboard will be exposed. (default "3001")
+  -v, --verbose                 Enable verbose output with detailed logs.
       --context string          The name of the kubeconfig context to use
   -h, --help                    Help for the command
       --kubeconfig string       Path to the Kyma kubeconfig file

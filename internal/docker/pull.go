@@ -42,8 +42,7 @@ func (c *Client) PullImageAndStartContainer(ctx context.Context, opts ContainerR
 	}
 
 	var r io.ReadCloser
-	//mozliwosc dlugiego pullowania, wskazanie writera do streams out
-	r, err := c.client.ImagePull(ctx, config.Image, image.PullOptions{})
+	r, err := c.ImagePull(ctx, config.Image, image.PullOptions{})
 	if err != nil {
 		return "", err
 	}
@@ -54,12 +53,12 @@ func (c *Client) PullImageAndStartContainer(ctx context.Context, opts ContainerR
 		return "", err
 	}
 
-	body, err := c.client.ContainerCreate(ctx, config, hostConfig, nil, nil, opts.ContainerName)
+	body, err := c.ContainerCreate(ctx, config, hostConfig, nil, nil, opts.ContainerName)
 	if err != nil {
 		return "", err
 	}
 
-	err = c.client.ContainerStart(ctx, body.ID, container.StartOptions{})
+	err = c.ContainerStart(ctx, body.ID, container.StartOptions{})
 	if err != nil {
 		return "", err
 	}
