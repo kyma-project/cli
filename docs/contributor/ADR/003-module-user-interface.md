@@ -29,7 +29,7 @@ $ kyma module delete default/cap-operator-0.20.1
 
 The proposition of changes:
 
-- To simplify the low and build similarities to the should split the tables (`module list` and `module catalog`) into two tables, first for core modules, and the second one for community modules.
+- To simplify the view and build similarities to the `Busola`, we should split the tables (`module list` and `module catalog`) into two tables, first for core modules, and the second one for community modules.
 
     ```bash
     $ kyma module list
