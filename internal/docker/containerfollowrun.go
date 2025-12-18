@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"os"
+	"os/signal"
 	"time"
 
 	"github.com/docker/docker/api/types/container"
@@ -29,6 +30,7 @@ func (c *Client) ContainerFollowRun(containerID string, forwardOutput bool) erro
 	}
 
 	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt)
 
 	done := make(chan struct{})
 
@@ -44,6 +46,7 @@ func (c *Client) ContainerFollowRun(containerID string, forwardOutput bool) erro
 		_ = c.ContainerStop(stopCtx, containerID, container.StopOptions{})
 
 		<-done
+	case <-done:
 	}
 
 	return nil
