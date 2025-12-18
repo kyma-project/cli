@@ -63,7 +63,7 @@ func (c *Container) Open() error {
 	return nil
 }
 
-// Watch attaches to the running docker container and forwards its output.
+// Watch attaches to the running docker container, streams its output, and handles graceful shutdown on user interrupt.
 func (c *Container) Watch() error {
 	return c.docker.ContainerFollowRun(c.id, c.verbose)
 }
