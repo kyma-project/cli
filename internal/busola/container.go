@@ -53,8 +53,8 @@ func (c *Container) Start() error {
 }
 
 // Opens the kyma dashboard in a browser.
-func (c *Container) Open(path string) error {
-	url := fmt.Sprintf("http://localhost:%s%s/clusters", c.port, path)
+func (c *Container) Open() error {
+	url := fmt.Sprintf("http://localhost:%s/clusters", c.port)
 
 	err := browser.OpenURL(url)
 	if err != nil {
