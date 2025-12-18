@@ -64,8 +64,8 @@ func (c *Container) Open() error {
 }
 
 // Watch attaches to the running docker container and forwards its output.
-func (c *Container) Watch(ctx context.Context) error {
-	return c.docker.ContainerFollowRun(ctx, c.id, c.verbose)
+func (c *Container) Watch() error {
+	return c.docker.ContainerFollowRun(c.id, c.verbose)
 }
 
 // Stop stops the dashboard container.

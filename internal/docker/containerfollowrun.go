@@ -11,8 +11,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/out"
 )
 
-func (c *Client) ContainerFollowRun(ctx context.Context, containerID string, forwardOutput bool) error {
-	// Attach to the container
+func (c *Client) ContainerFollowRun(containerID string, forwardOutput bool) error {
 	buf, err := c.ContainerAttach(context.Background(), containerID, container.AttachOptions{
 		Stdout: true,
 		Stderr: true,

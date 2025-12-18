@@ -1,8 +1,6 @@
 package dashboard
 
 import (
-	"context"
-
 	"github.com/kyma-project/cli.v3/internal/busola"
 	"github.com/kyma-project/cli.v3/internal/clierror"
 	"github.com/kyma-project/cli.v3/internal/cmdcommon"
@@ -58,7 +56,7 @@ func runDashboard(cfg *dashboardConfig) clierror.Error {
 		return clierror.Wrap(err, clierror.New("failed to open kyma dashboard"))
 	}
 
-	if err = dash.Watch(context.Background()); err != nil {
+	if err = dash.Watch(); err != nil {
 		return clierror.Wrap(err, clierror.New("failed to watch kyma dashboard"))
 	}
 
