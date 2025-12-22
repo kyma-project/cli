@@ -158,23 +158,29 @@ func (r *moduleTemplatesRepo) RunningAssociatedResourcesOfModule(ctx context.Con
 func (r *moduleTemplatesRepo) Resources(ctx context.Context, moduleTemplate kyma.ModuleTemplate) ([]map[string]any, error) {
 	var parsedResources []map[string]any
 
-	for _, resource := range moduleTemplate.Spec.Resources {
-		resourceYamls, err := getFileFromURL(resource.Link)
-		resourceYamlsArr := strings.Split(string(resourceYamls), "---")
-		if err != nil {
-			return nil, fmt.Errorf("failed to fetch resource YAMLs from %s: %w", resource.Link, err)
+	resources := kyma.Resource{}
+	for _, res := range moduleTemplate.Spec.Resources {
+		if res.Name == "rawManifest" {
+			resources = res
+			break
 		}
+	}
 
-		for _, yamlStr := range resourceYamlsArr {
-			if strings.TrimSpace(yamlStr) == "" {
-				continue
-			}
-			var res map[string]any
-			if err := yaml.Unmarshal([]byte(yamlStr), &res); err != nil {
-				return nil, fmt.Errorf("failed to parse module resource YAML for %s:%s - %w", moduleTemplate.Spec.ModuleName, moduleTemplate.Spec.Version, err)
-			}
-			parsedResources = append(parsedResources, res)
+	resourceYamls, err := getFileFromURL(resources.Link)
+	resourceYamlsArr := strings.Split(string(resourceYamls), "---")
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch resource YAMLs from %s: %w", resources.Link, err)
+	}
+
+	for _, yamlStr := range resourceYamlsArr {
+		if strings.TrimSpace(yamlStr) == "" {
+			continue
 		}
+		var res map[string]any
+		if err := yaml.Unmarshal([]byte(yamlStr), &res); err != nil {
+			return nil, fmt.Errorf("failed to parse module resource YAML for %s:%s - %w", moduleTemplate.Spec.ModuleName, moduleTemplate.Spec.Version, err)
+		}
+		parsedResources = append(parsedResources, res)
 	}
 
 	return parsedResources, nil
