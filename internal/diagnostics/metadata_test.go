@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/kyma-project/cli.v3/internal/cmd/version"
 	kube_fake "github.com/kyma-project/cli.v3/internal/kube/fake"
 	"github.com/kyma-project/cli.v3/internal/out"
 	corev1 "k8s.io/api/core/v1"
@@ -98,6 +99,7 @@ func TestEnrichMetadataWithShootInfo(t *testing.T) {
 				assert.Equal(t, tc.shootInfoConfigMap.Data["region"], metadata.Region)
 				assert.Equal(t, tc.shootInfoConfigMap.Data["shootName"], metadata.ShootName)
 				assert.Equal(t, tc.shootInfoConfigMap.Data["extensions"], strings.Join(metadata.GardenerExtensions, ","))
+				assert.Equal(t, version.GetVersion(), metadata.CliVersion)
 			} else {
 				assert.Empty(t, metadata.Provider)
 				assert.Empty(t, metadata.KubernetesVersion)

@@ -9,6 +9,10 @@ var (
 	version = "local"
 )
 
+func GetVersion() string {
+	return version
+}
+
 func NewCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "version",

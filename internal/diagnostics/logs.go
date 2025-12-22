@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -18,12 +19,14 @@ import (
 )
 
 type ModuleLogs struct {
-	Logs map[string][]string
+	Logs   map[string][]string `json:"logs" yaml:"logs"`
+	Errors map[string][]string `json:"errors" yaml:"errors"`
 }
 
 type LogOptions struct {
-	Since time.Duration
-	Lines int64
+	Since  time.Duration
+	Lines  int64
+	Strict bool
 }
 
 type ModuleLogsCollector struct {
@@ -31,6 +34,7 @@ type ModuleLogsCollector struct {
 	*out.Printer
 	modules        []string
 	podLogTemplate *corev1.PodLogOptions // immutable template for each container
+	strict         bool
 }
 
 func NewModuleLogsCollector(client kube.Client, modules []string, options LogOptions) *ModuleLogsCollector {
@@ -48,39 +52,52 @@ func NewModuleLogsCollector(client kube.Client, modules []string, options LogOpt
 		Printer:        out.Default,
 		modules:        modules,
 		podLogTemplate: podOpts,
+		strict:         options.Strict,
 	}
 }
 
 func (c *ModuleLogsCollector) Run(ctx context.Context) ModuleLogs {
 	logs := make(map[string][]string)
+	errs := make(map[string][]string)
 
 	for _, module := range c.modules {
-		moduleLogs := c.collectModuleLogs(ctx, module)
+		moduleLogs, moduleErrs := c.collectModuleLogs(ctx, module)
 		// merge moduleLogs into result
 		for k, v := range moduleLogs {
 			logs[k] = append(logs[k], v...)
 		}
+		for k, v := range moduleErrs {
+			errs[k] = append(errs[k], v...)
+		}
 	}
-	return ModuleLogs{Logs: logs}
+	return ModuleLogs{Logs: logs, Errors: errs}
 }
 
 // collectModuleLogs collects error logs from a single module and returns its map
-func (c *ModuleLogsCollector) collectModuleLogs(ctx context.Context, moduleName string) map[string][]string {
+func (c *ModuleLogsCollector) collectModuleLogs(ctx context.Context, moduleName string) (map[string][]string, map[string][]string) {
 	collected := make(map[string][]string)
+	errs := make(map[string][]string)
 	pods, err := c.getPodsForModule(ctx, moduleName)
 	if err != nil {
-		out.Errfln("Failed to get pods for module %s: %v", moduleName, err)
-		return collected
+		if ctx.Err() == context.DeadlineExceeded {
+			errs[moduleName] = append(errs[moduleName], "logs collection cancelled due to timeout")
+		} else {
+			errs[moduleName] = append(errs[moduleName], fmt.Sprintf("failed to get pods: %v", err))
+		}
+		return collected, errs
 	}
 
 	for i := range pods {
-		podLogs := c.collectPodLogs(ctx, &pods[i])
+		podLogs, podErrs := c.collectPodLogs(ctx, &pods[i])
 		for k, v := range podLogs {
 			collected[k] = append(collected[k], v...)
 		}
+		for k, v := range podErrs {
+			errs[k] = append(errs[k], v...)
+		}
 	}
 
-	return collected
+	return collected, errs
 }
 
 func (c *ModuleLogsCollector) getPodsForModule(ctx context.Context, moduleName string) ([]corev1.Pod, error) {
@@ -112,70 +129,153 @@ func (c *ModuleLogsCollector) getPodsForModule(ctx context.Context, moduleName s
 	return podsList, nil
 }
 
-func (c *ModuleLogsCollector) collectPodLogs(ctx context.Context, pod *corev1.Pod) map[string][]string {
+func (c *ModuleLogsCollector) collectPodLogs(ctx context.Context, pod *corev1.Pod) (map[string][]string, map[string][]string) {
 	containers := append(pod.Spec.Containers, pod.Spec.InitContainers...)
 	collected := make(map[string][]string)
+	errors := make(map[string][]string)
 
 	for _, container := range containers {
-		containerLogs := c.collectContainerLogs(ctx, pod, container.Name)
+		containerLogs, err := c.collectContainerLogs(ctx, pod, container.Name)
 		key := fmt.Sprintf("%s/%s", pod.Name, container.Name)
+		if err != nil {
+			errors[key] = append(errors[key], err.Error())
+		}
 		collected[key] = append(collected[key], containerLogs...)
 	}
 
-	return collected
+	return collected, errors
 }
 
-func (c *ModuleLogsCollector) collectContainerLogs(ctx context.Context, pod *corev1.Pod, containerName string) []string {
+func (c *ModuleLogsCollector) collectContainerLogs(ctx context.Context, pod *corev1.Pod, containerName string) ([]string, error) {
 	logOptions := c.buildPodLogOptions(containerName)
 
 	req := c.client.Static().CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, logOptions)
 
 	logStream, err := req.Stream(ctx)
 	if err != nil {
-		out.Errfln("Failed to get log stream for container %s in pod %s: %v", containerName, pod.Name, err)
-		return []string{}
+		if ctx.Err() == context.DeadlineExceeded {
+			return []string{}, errors.New("logs collection cancelled due to timeout")
+
+		}
+		return []string{}, fmt.Errorf("failed to get log stream: %v", err)
 	}
 	defer logStream.Close()
 
-	return c.extractStructuredOrErrorLogs(logStream, pod.Name, containerName)
+	return c.extractStructuredOrErrorLogs(logStream)
 }
 
 // extractStructuredOrErrorLogs parses each log line strictly as JSON and only keeps lines
 // that contain the keys: level, msg, and ts. Non-JSON lines or JSON without these keys are ignored.
 // Only entries whose level is one of error, fatal, panic are returned.
-func (c *ModuleLogsCollector) extractStructuredOrErrorLogs(logStream io.ReadCloser, podName, containerName string) []string {
+func (c *ModuleLogsCollector) extractStructuredOrErrorLogs(logStream io.ReadCloser) ([]string, error) {
 	scanner := bufio.NewScanner(logStream)
 	var collected []string
 
+	shouldIncludeLine := c.getLogsFilteringStrategy()
+
 	for scanner.Scan() {
 		line := scanner.Text()
-		var obj map[string]any
-		if err := json.Unmarshal([]byte(line), &obj); err != nil {
-			// Not JSON -> ignore
-			continue
+		if shouldIncludeLine(line) {
+			collected = append(collected, line)
 		}
-		lvlRaw, hasLevel := obj["level"]
-		_, hasMsg := obj["message"]
-		_, hasTs := obj["timestamp"]
-		if !hasLevel || (!hasMsg && !hasTs) {
-			continue
-		}
-		lvl := fmt.Sprintf("%v", lvlRaw)
-		if !strings.EqualFold(lvl, "error") && !strings.EqualFold(lvl, "warning") {
-			continue
-		}
-		collected = append(collected, line)
 	}
 
 	if err := scanner.Err(); err != nil {
-		out.Errfln("Error reading logs from pod %s container %s: %v", podName, containerName, err)
+		return collected, fmt.Errorf("error reading logs %v", err)
 	}
 
-	return collected
+	return collected, nil
+}
+
+func (c *ModuleLogsCollector) getLogsFilteringStrategy() func(string) bool {
+	if c.strict {
+		return parseLogsStrict
+	}
+	return parseLogsDefault
 }
 
 func (c *ModuleLogsCollector) buildPodLogOptions(containerName string) *corev1.PodLogOptions {
 	clone := *c.podLogTemplate
 	clone.Container = containerName
 	return &clone
+}
+
+func parseLogsStrict(line string) bool {
+	var obj map[string]any
+
+	if err := json.Unmarshal([]byte(line), &obj); err != nil {
+		// Not JSON -> ignore
+		return false
+	}
+	lvlRaw, hasLevel := obj["level"]
+	_, hasMessage := obj["message"]
+	_, hasTimestamp := obj["timestamp"]
+	hasAllRequiredKeys := hasLevel && hasMessage && hasTimestamp
+	if !hasAllRequiredKeys {
+		return false
+	}
+	lvl := fmt.Sprintf("%v", lvlRaw)
+	if !strings.EqualFold(lvl, "error") && !strings.EqualFold(lvl, "warn") && !strings.EqualFold(lvl, "warning") {
+		return false
+	}
+
+	return true
+}
+
+func parseLogsDefault(line string) bool {
+	lineLower := strings.ToLower(line)
+
+	if onlyContainsFalsePositives(lineLower) {
+		return false
+	}
+
+	return hasErrors(lineLower)
+}
+
+func onlyContainsFalsePositives(line string) bool {
+	hasFalsePositive := hasFalsePositives(line)
+	if !hasFalsePositive {
+		return false
+	}
+
+	cleanedLine := line
+	for _, fp := range getFalsePositives() {
+		cleanedLine = strings.ReplaceAll(cleanedLine, fp, "")
+	}
+	cleanedLineLower := strings.ToLower(cleanedLine)
+
+	return !hasErrors(cleanedLineLower)
+}
+
+func hasErrors(line string) bool {
+	for _, keyword := range getErrorKeywords() {
+		if strings.Contains(line, keyword) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func hasFalsePositives(line string) bool {
+	for _, fp := range getFalsePositives() {
+		if strings.Contains(line, fp) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func getErrorKeywords() []string {
+	return []string{
+		"error", "exception", "fatal", "panic", "fail", "failed", "failure", "warning", "warn",
+	}
+}
+
+func getFalsePositives() []string {
+	return []string{
+		"\"error\": null",
+		"\"error\":null",
+	}
 }
