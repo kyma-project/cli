@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/kyma-project/cli.v3/internal/cmd/version"
 	"github.com/kyma-project/cli.v3/internal/kube"
 	"github.com/kyma-project/cli.v3/internal/out"
 	"github.com/stretchr/testify/assert/yaml"
@@ -23,6 +24,7 @@ type Metadata struct {
 	NATGatewayIPs      []string `json:"natGatewayIPs" yaml:"natGatewayIPs"`
 	GardenerExtensions []string `json:"gardenerExtensions" yaml:"gardenerExtensions"`
 	KubeAPIServer      string   `json:"kubeAPIServer" yaml:"kubeAPIServer"`
+	CliVersion         string   `json:"cliVersion" yaml:"cliVersion"`
 }
 
 type MetadataCollector struct {
@@ -45,6 +47,8 @@ func (mc *MetadataCollector) Run(ctx context.Context) Metadata {
 	mc.enrichMetadataWithKymaInfo(ctx, &metadata)
 	mc.enrichMetadataWithKymaProvisioningInfo(ctx, &metadata)
 	mc.enrichMetadataWithClusterConfigInfo(ctx, &metadata)
+
+	metadata.CliVersion = version.GetVersion()
 
 	return metadata
 }
