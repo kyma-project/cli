@@ -33,7 +33,6 @@ type diagnoseIstioConfig struct {
 	outputFormat  types.Format
 	outputLevel   types.IstioLevel
 	outputPath    string
-	verbose       bool
 	timeout       time.Duration
 }
 
@@ -76,17 +75,12 @@ func NewDiagnoseIstioCMD(kymaConfig *cmdcommon.KymaConfig) *cobra.Command {
 	cfg.outputLevel = "warning"
 	cmd.Flags().Var(&cfg.outputLevel, "level", "Output message level (possible values: info, warning, error)")
 	cmd.Flags().StringVarP(&cfg.outputPath, "output", "o", "", "Path to the diagnostic output file. If not provided the output is printed to stdout")
-	cmd.Flags().BoolVar(&cfg.verbose, "verbose", false, "Displays verbose output, including error details during diagnostics collection")
 	cmd.Flags().DurationVar(&cfg.timeout, "timeout", 30*time.Second, "Timeout for diagnosis")
 
 	return cmd
 }
 
 func diagnoseIstio(cfg *diagnoseIstioConfig) clierror.Error {
-	if cfg.verbose {
-		out.EnableVerbose()
-	}
-
 	client, clierr := cfg.GetKubeClientWithClierr()
 	if clierr != nil {
 		return clierr
